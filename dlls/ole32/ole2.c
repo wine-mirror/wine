@@ -253,9 +253,10 @@ void WINAPI DECLSPEC_HOTPATCH OleUninitialize(void)
 /******************************************************************************
  *		OleInitializeWOW	[OLE32.@]
  */
-HRESULT WINAPI OleInitializeWOW(DWORD x, DWORD y) {
-        FIXME("(0x%08x, 0x%08x),stub!\n",x, y);
-        return 0;
+HRESULT WINAPI OleInitializeWOW(DWORD x, DWORD y)
+{
+    FIXME("%#lx, %#lx stub!\n", x, y);
+    return 0;
 }
 
 /*************************************************************
@@ -664,7 +665,7 @@ HRESULT WINAPI OleRegGetUserType(REFCLSID clsid, DWORD form, LPOLESTR *usertype)
   HRESULT hres;
   LONG    ret;
 
-  TRACE("(%s, %u, %p)\n", debugstr_guid(clsid), form, usertype);
+  TRACE("%s, %lu, %p.\n", debugstr_guid(clsid), form, usertype);
 
   if (!usertype)
     return E_INVALIDARG;
@@ -735,7 +736,7 @@ HRESULT WINAPI DoDragDrop (
   HWND            hwndTrackWindow;
   MSG             msg;
 
-  TRACE("(%p, %p, %08x, %p)\n", pDataObject, pDropSource, dwOKEffect, pdwEffect);
+  TRACE("%p, %p, %#lx, %p.\n", pDataObject, pDropSource, dwOKEffect, pdwEffect);
 
   if (!pDataObject || !pDropSource || !pdwEffect)
       return E_INVALIDARG;
@@ -844,7 +845,7 @@ HRESULT WINAPI OleRegGetMiscStatus(
   LONG    result;
   HRESULT hr;
 
-  TRACE("(%s, %d, %p)\n", debugstr_guid(clsid), dwAspect, pdwStatus);
+  TRACE("%s, %ld, %p.\n", debugstr_guid(clsid), dwAspect, pdwStatus);
 
   if (!pdwStatus) return E_INVALIDARG;
 
@@ -934,7 +935,7 @@ static HRESULT WINAPI EnumOLEVERB_Next(
     EnumOLEVERB *This = impl_from_IEnumOLEVERB(iface);
     HRESULT hr = S_OK;
 
-    TRACE("(%d, %p, %p)\n", celt, rgelt, pceltFetched);
+    TRACE("%p, %lu, %p, %p.\n", iface, celt, rgelt, pceltFetched);
 
     if (pceltFetched)
         *pceltFetched = 0;
@@ -954,14 +955,14 @@ static HRESULT WINAPI EnumOLEVERB_Next(
         }
         else if (res != ERROR_SUCCESS)
         {
-            ERR("RegEnumKeyW failed with error %d\n", res);
+            ERR("RegEnumKeyW failed with error %ld\n", res);
             hr = REGDB_E_READREGDB;
             break;
         }
         res = RegQueryValueW(This->hkeyVerb, wszSubKey, NULL, &cbData);
         if (res != ERROR_SUCCESS)
         {
-            ERR("RegQueryValueW failed with error %d\n", res);
+            ERR("RegQueryValueW failed with error %ld\n", res);
             hr = REGDB_E_READREGDB;
             break;
         }
@@ -974,7 +975,7 @@ static HRESULT WINAPI EnumOLEVERB_Next(
         res = RegQueryValueW(This->hkeyVerb, wszSubKey, pwszOLEVERB, &cbData);
         if (res != ERROR_SUCCESS)
         {
-            ERR("RegQueryValueW failed with error %d\n", res);
+            ERR("RegQueryValueW failed with error %ld\n", res);
             hr = REGDB_E_READREGDB;
             CoTaskMemFree(pwszOLEVERB);
             break;
@@ -1020,7 +1021,7 @@ static HRESULT WINAPI EnumOLEVERB_Skip(
 {
     EnumOLEVERB *This = impl_from_IEnumOLEVERB(iface);
 
-    TRACE("(%d)\n", celt);
+    TRACE("%p, %lu.\n", iface, celt);
 
     This->index += celt;
     return S_OK;
@@ -1108,7 +1109,7 @@ HRESULT WINAPI OleRegEnumVerbs (REFCLSID clsid, LPENUMOLEVERB* ppenum)
         else if (res == REGDB_E_KEYMISSING)
             ERR("no Verbs key for class %s\n", debugstr_guid(clsid));
         else
-            ERR("failed to open Verbs key for CLSID %s with error %d\n",
+            ERR("failed to open Verbs key for CLSID %s with error %ld\n",
                 debugstr_guid(clsid), res);
         return res;
     }
@@ -1117,7 +1118,7 @@ HRESULT WINAPI OleRegEnumVerbs (REFCLSID clsid, LPENUMOLEVERB* ppenum)
                           NULL, NULL, NULL, NULL, NULL, NULL);
     if (res != ERROR_SUCCESS)
     {
-        ERR("failed to get subkey count with error %d\n", GetLastError());
+        ERR("failed to get subkey count with error %ld\n", GetLastError());
         return REGDB_E_READREGDB;
     }
 
@@ -1602,7 +1603,7 @@ static LRESULT CALLBACK OLEMenu_CallWndProc(INT code, WPARAM wParam, LPARAM lPar
   OleMenuHookItem *pHookItem = NULL;
   WORD fuFlags;
 
-  TRACE("%i, %04lx, %08lx\n", code, wParam, lParam );
+  TRACE("%i, %#Ix, %#Ix.\n", code, wParam, lParam );
 
   /* Check if we're being asked to process the message */
   if ( HC_ACTION != code )
@@ -1707,7 +1708,7 @@ static LRESULT CALLBACK OLEMenu_GetMsgProc(INT code, WPARAM wParam, LPARAM lPara
   OleMenuHookItem *pHookItem = NULL;
   WORD wCode;
 
-  TRACE("%i, %04lx, %08lx\n", code, wParam, lParam );
+  TRACE("%i, %#Ix, %#Ix.\n", code, wParam, lParam );
 
   /* Check if we're being asked to process a  messages */
   if ( HC_ACTION != code )
@@ -1943,7 +1944,7 @@ BOOL WINAPI IsAccelerator(HACCEL hAccel, int cAccelEntries, LPMSG lpMsg, WORD* l
     }
 
     TRACE_(accel)("hAccel=%p, cAccelEntries=%d,"
-		"msg->hwnd=%p, msg->message=%04x, wParam=%08lx, lParam=%08lx\n",
+		"msg->hwnd=%p, msg->message=%04x, wParam=%#Ix, lParam=%#Ix\n",
 		hAccel, cAccelEntries,
 		lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam);
     for(i = 0; i < cAccelEntries; i++)
@@ -1964,7 +1965,7 @@ BOOL WINAPI IsAccelerator(HACCEL hAccel, int cAccelEntries, LPMSG lpMsg, WORD* l
 	    if(lpAccelTbl[i].fVirt & FVIRTKEY)
 	    {
 		INT mask = 0;
-		TRACE_(accel)("found accel for virt_key %04lx (scan %04x)\n",
+		TRACE_(accel)("found accel for virt_key %Ix (scan %04x)\n",
 				lpMsg->wParam, HIWORD(lpMsg->lParam) & 0xff);
 		if(GetKeyState(VK_SHIFT) & 0x8000) mask |= FSHIFT;
 		if(GetKeyState(VK_CONTROL) & 0x8000) mask |= FCONTROL;
@@ -2463,7 +2464,7 @@ HRESULT WINAPI OleCreate(
     IUnknown * pUnk = NULL;
     IOleObject *pOleObject = NULL;
 
-    TRACE("(%s, %s, %d, %p, %p, %p, %p)\n", debugstr_guid(rclsid),
+    TRACE("%s, %s, %ld, %p, %p, %p, %p.\n", debugstr_guid(rclsid),
         debugstr_guid(riid), renderopt, pFormatEtc, pClientSite, pStg, ppvObj);
 
     hres = CoCreateInstance(rclsid, 0, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER, riid, (LPVOID*)&pUnk);
@@ -2488,7 +2489,7 @@ HRESULT WINAPI OleCreate(
         {
             TRACE("trying to set stg %p\n", pStg);
             hres = IPersistStorage_InitNew(pPS, pStg);
-            TRACE("-- result 0x%08x\n", hres);
+            TRACE("-- result %#lx\n", hres);
             IPersistStorage_Release(pPS);
         }
     }
@@ -2497,7 +2498,7 @@ HRESULT WINAPI OleCreate(
     {
         TRACE("trying to set clientsite %p\n", pClientSite);
         hres = IOleObject_SetClientSite(pOleObject, pClientSite);
-        TRACE("-- result 0x%08x\n", hres);
+        TRACE("-- result %#lx\n", hres);
     }
 
     if (pOleObject)
@@ -2851,7 +2852,7 @@ HRESULT WINAPI OleCreateFromDataEx(IDataObject *data, REFIID iid, DWORD flags,
     HRESULT hr;
     UINT src_cf;
 
-    FIXME("(%p, %s, %08x, %08x, %d, %p, %p, %p, %p, %p, %p, %p): stub\n",
+    FIXME("%p, %s, %#lx, %#lx, %ld, %p, %p, %p, %p, %p, %p, %p: stub\n",
           data, debugstr_guid(iid), flags, renderopt, num_cache_fmts, adv_flags, cache_fmts,
           sink, conns, client_site, stg, obj);
 
@@ -2884,7 +2885,7 @@ HRESULT WINAPI OleCreateFromData(IDataObject *data, REFIID iid, DWORD renderopt,
 HRESULT WINAPI OleCreateLinkFromData(IDataObject *data, REFIID iid, DWORD renderopt, FORMATETC *fmt,
         IOleClientSite *client_site, IStorage *stg, void **obj)
 {
-    FIXME("%p,%s,%08x,%p,%p,%p,%p: semi-stub\n",
+    FIXME("%p, %s, %#lx, %p, %p, %p, %p: semi-stub\n",
           data, debugstr_guid(iid), renderopt, fmt, client_site, stg, obj);
     return OleCreateFromData(data, iid, renderopt, fmt, client_site, stg, obj);
 }
@@ -2904,8 +2905,7 @@ HRESULT WINAPI OleCreateStaticFromData(IDataObject *data, REFIID iid, DWORD rend
     STGMEDIUM stgmedium;
     LPOLESTR ole_typename;
 
-    TRACE("(%p, %s, 0x%08x, %p, %p, %p, %p)\n",
-          data, debugstr_guid(iid), renderopt, fmt, client_site, stg, obj);
+    TRACE("%p, %s, %#lx, %p, %p, %p, %p.\n", data, debugstr_guid(iid), renderopt, fmt, client_site, stg, obj);
 
     if (!obj || !stg)
         return E_INVALIDARG;
@@ -3007,11 +3007,11 @@ HRESULT WINAPI OleCreateFromFileEx(REFCLSID clsid, const OLECHAR *filename, REFI
     IOleCache *cache = NULL;
     ULONG i;
 
-    TRACE("cls %s, %s, iid %s, flags %d, render opts %d, num fmts %d, adv flags %p, fmts %p\n", debugstr_guid(clsid),
+    TRACE("cls %s, %s, iid %s, flags %ld, render opts %ld, num fmts %ld, adv flags %p, fmts %p\n", debugstr_guid(clsid),
           debugstr_w(filename), debugstr_guid(iid), flags, renderopt, num_fmts, adv_flags, fmts);
     TRACE("sink %p, conns %p, client site %p, storage %p, obj %p\n", sink, conns, client_site, stg, obj);
     for (i = 0; i < num_fmts; i++)
-        TRACE("\t%d: fmt %s adv flags %d\n", i, debugstr_formatetc(fmts + i), adv_flags[i]);
+        TRACE("\t%ld: fmt %s adv flags %ld\n", i, debugstr_formatetc(fmts + i), adv_flags[i]);
 
     hr = CreateFileMoniker( filename, &mon );
     if (FAILED(hr)) return hr;

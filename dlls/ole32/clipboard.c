@@ -277,7 +277,7 @@ static inline HRESULT get_ole_clipbrd(ole_clipbrd **clipbrd)
 static inline const char *dump_fmtetc(FORMATETC *fmt)
 {
     if (!fmt) return "(null)";
-    return wine_dbg_sprintf("cf %04x ptd %p aspect %x lindex %d tymed %x",
+    return wine_dbg_sprintf("cf %04x ptd %p aspect %lx lindex %ld tymed %lx",
                             fmt->cfFormat, fmt->ptd, fmt->dwAspect, fmt->lindex, fmt->tymed);
 }
 
@@ -338,9 +338,11 @@ static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_QueryInterface
 static ULONG WINAPI OLEClipbrd_IEnumFORMATETC_AddRef(LPENUMFORMATETC iface)
 {
   enum_fmtetc *This = impl_from_IEnumFORMATETC(iface);
-  TRACE("(%p)->(count=%u)\n",This, This->ref);
+  ULONG ref = InterlockedIncrement(&This->ref);
 
-  return InterlockedIncrement(&This->ref);
+  TRACE("%p, refcount %lu.\n", iface, ref);
+
+  return ref;
 }
 
 /************************************************************************
@@ -351,11 +353,10 @@ static ULONG WINAPI OLEClipbrd_IEnumFORMATETC_AddRef(LPENUMFORMATETC iface)
 static ULONG WINAPI OLEClipbrd_IEnumFORMATETC_Release(LPENUMFORMATETC iface)
 {
   enum_fmtetc *This = impl_from_IEnumFORMATETC(iface);
-  ULONG ref;
+  ULONG ref = InterlockedDecrement(&This->ref);
 
-  TRACE("(%p)->(count=%u)\n",This, This->ref);
+  TRACE("%p, refcount %lu.\n", iface, ref);
 
-  ref = InterlockedDecrement(&This->ref);
   if (!ref)
   {
     TRACE("() - destroying IEnumFORMATETC(%p)\n",This);
@@ -415,7 +416,7 @@ static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_Next
 static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_Skip(LPENUMFORMATETC iface, ULONG celt)
 {
   enum_fmtetc *This = impl_from_IEnumFORMATETC(iface);
-  TRACE("(%p)->(num=%u)\n", This, celt);
+  TRACE("%p, %lu.\n", iface, celt);
 
   This->pos += celt;
   if (This->pos > This->data->count)
@@ -650,7 +651,7 @@ static HRESULT render_embed_source_hack(IDataObject *data, LPFORMATETC fmt)
 
     if (FAILED(hr = IDataObject_GetDataHere(theOleClipboard->src_data, fmt, &std)))
     {
-        WARN("() : IDataObject_GetDataHere failed to render clipboard data! (%x)\n", hr);
+        WARN("() : IDataObject_GetDataHere failed to render clipboard data! (%lx)\n", hr);
         GlobalFree(hStorage);
         return hr;
     }
@@ -1025,7 +1026,7 @@ static HRESULT render_format(IDataObject *data, LPFORMATETC fmt)
     }
     else
     {
-        FIXME("Unhandled tymed %x\n", fmt->tymed);
+        FIXME("Unhandled tymed %lx\n", fmt->tymed);
         hr = DV_E_FORMATETC;
     }
 
@@ -1089,10 +1090,11 @@ static HRESULT WINAPI snapshot_QueryInterface(IDataObject *iface,
 static ULONG WINAPI snapshot_AddRef(IDataObject *iface)
 {
     snapshot *This = impl_from_IDataObject(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(count=%u)\n", This, This->ref);
+    TRACE("%p, refcount %lu.\n", iface, ref);
 
-    return InterlockedIncrement(&This->ref);
+    return ref;
 }
 
 /************************************************************************
@@ -1101,11 +1103,9 @@ static ULONG WINAPI snapshot_AddRef(IDataObject *iface)
 static ULONG WINAPI snapshot_Release(IDataObject *iface)
 {
     snapshot *This = impl_from_IDataObject(iface);
-    ULONG ref;
+    ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(count=%u)\n", This, This->ref);
-
-    ref = InterlockedDecrement(&This->ref);
+    TRACE("%p, refcount %lu.\n", iface, ref);
 
     if (ref == 0)
     {
@@ -1263,7 +1263,7 @@ static HRESULT get_priv_data(ole_priv_data **data)
             else
                 TRACE("cf %04x\n", cf);
         }
-        TRACE("count %d\n", count);
+        TRACE("count %ld\n", count);
         size += count * sizeof(ret->entries[0]);
 
         /* There are holes in fmtetc so zero init */
@@ -1532,7 +1532,7 @@ static HRESULT WINAPI snapshot_GetData(IDataObject *iface, FORMATETC *fmt,
         hr = get_stgmed_for_bitmap((HBITMAP)h, med);
     else
     {
-        FIXME("Unhandled tymed - mask %x req tymed %x\n", mask, fmt->tymed);
+        FIXME("Unhandled tymed - mask %lx req tymed %lx\n", mask, fmt->tymed);
         hr = E_FAIL;
         goto end;
     }
@@ -1558,7 +1558,7 @@ static HRESULT WINAPI snapshot_GetDataHere(IDataObject *iface, FORMATETC *fmt,
 
     if ( !fmt || !med ) return E_INVALIDARG;
 
-    TRACE("(%p, %p {%s}, %p (tymed %x)\n", iface, fmt, dump_fmtetc(fmt), med, med->tymed);
+    TRACE("%p, %p {%s}, %p (tymed %lx)\n", iface, fmt, dump_fmtetc(fmt), med, med->tymed);
 
     if ( !OpenClipboard(NULL)) return CLIPBRD_E_CANT_OPEN;
 
@@ -1642,7 +1642,7 @@ static HRESULT WINAPI snapshot_GetDataHere(IDataObject *iface, FORMATETC *fmt,
         break;
     }
     default:
-        FIXME("Unhandled tymed - supported %x req tymed %x\n", supported, med->tymed);
+        FIXME("Unhandled tymed - supported %x req tymed %lx\n", supported, med->tymed);
         hr = E_FAIL;
         goto end;
     }
@@ -1710,7 +1710,7 @@ static HRESULT WINAPI snapshot_EnumFormatEtc(IDataObject *iface, DWORD dir,
     HRESULT hr;
     ole_priv_data *data = NULL;
 
-    TRACE("(%p, %x, %p)\n", iface, dir, enum_fmt);
+    TRACE("%p, %lx, %p.\n", iface, dir, enum_fmt);
 
     *enum_fmt = NULL;
 
@@ -1737,7 +1737,7 @@ static HRESULT WINAPI snapshot_DAdvise(IDataObject *iface, FORMATETC *fmt,
                                        DWORD flags, IAdviseSink *sink,
                                        DWORD *conn)
 {
-    TRACE("(%p, %p, %x, %p, %p): not implemented\n", iface, fmt, flags, sink, conn);
+    TRACE("%p, %p, %lx, %p, %p.\n", iface, fmt, flags, sink, conn);
     return E_NOTIMPL;
 }
 
@@ -1748,7 +1748,7 @@ static HRESULT WINAPI snapshot_DAdvise(IDataObject *iface, FORMATETC *fmt,
  */
 static HRESULT WINAPI snapshot_DUnadvise(IDataObject* iface, DWORD conn)
 {
-    TRACE("(%p, %d): not implemented\n", iface, conn);
+    TRACE("%p, %ld.\n", iface, conn);
     return E_NOTIMPL;
 }
 

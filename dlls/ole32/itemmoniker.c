@@ -198,7 +198,7 @@ static ULONG WINAPI ItemMonikerImpl_Release(IMoniker* iface)
     ItemMonikerImpl *moniker = impl_from_IMoniker(iface);
     ULONG refcount = InterlockedDecrement(&moniker->ref);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -286,7 +286,7 @@ static HRESULT item_moniker_load_string_record(IStream *stream, WCHAR **ret)
 
         if (str_len % sizeof(WCHAR))
         {
-            WARN("Unexpected Unicode name length %d.\n", str_len);
+            WARN("Unexpected Unicode name length %ld.\n", str_len);
             hr = E_FAIL;
             goto end;
         }
@@ -491,16 +491,10 @@ static HRESULT WINAPI ItemMonikerImpl_BindToStorage(IMoniker *iface, IBindCtx *p
     return hr;
 }
 
-/******************************************************************************
- *        ItemMoniker_Reduce
- ******************************************************************************/
-static HRESULT WINAPI ItemMonikerImpl_Reduce(IMoniker* iface,
-                                             IBindCtx* pbc,
-                                             DWORD dwReduceHowFar,
-                                             IMoniker** ppmkToLeft,
-                                             IMoniker** ppmkReduced)
+static HRESULT WINAPI ItemMonikerImpl_Reduce(IMoniker* iface, IBindCtx* pbc,
+        DWORD dwReduceHowFar, IMoniker** ppmkToLeft, IMoniker** ppmkReduced)
 {
-    TRACE("(%p,%p,%d,%p,%p)\n",iface,pbc,dwReduceHowFar,ppmkToLeft,ppmkReduced);
+    TRACE("%p, %p, %ld, %p, %p.\n", iface, pbc, dwReduceHowFar, ppmkToLeft, ppmkReduced);
 
     if (ppmkReduced==NULL)
         return E_POINTER;
@@ -864,7 +858,7 @@ static HRESULT WINAPI ItemMonikerROTDataImpl_GetComparisonData(IROTData *iface, 
     int delim_len, i;
     WCHAR *ptrW;
 
-    TRACE("(%p, %p, %u, %p)\n", iface, buffer, max_len, data_len);
+    TRACE("%p, %p, %lu, %p.\n", iface, buffer, max_len, data_len);
 
     delim_len = This->itemDelimiter && This->itemDelimiter[0] ? lstrlenW(This->itemDelimiter) : 0;
     *data_len = sizeof(CLSID) + sizeof(WCHAR) + (delim_len + name_len) * sizeof(WCHAR);

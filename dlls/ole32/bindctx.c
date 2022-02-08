@@ -118,7 +118,7 @@ static ULONG WINAPI BindCtxImpl_Release(IBindCtx* iface)
     BindCtxImpl *context = impl_from_IBindCtx(iface);
     ULONG refcount = InterlockedDecrement(&context->ref);
 
-    TRACE("%p refcount %d.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -234,7 +234,7 @@ BindCtxImpl_SetBindOptions(IBindCtx* iface,BIND_OPTS *pbindopts)
 
     if (pbindopts->cbStruct > sizeof(This->options))
     {
-        WARN("invalid size %u.\n", pbindopts->cbStruct);
+        WARN("invalid size %lu.\n", pbindopts->cbStruct);
         return E_INVALIDARG;
     }
     memcpy(&This->options, pbindopts, pbindopts->cbStruct);
@@ -492,7 +492,7 @@ HRESULT WINAPI CreateBindCtx(DWORD reserved, IBindCtx **bind_context)
 {
     BindCtxImpl *object;
 
-    TRACE("%#x, %p\n", reserved, bind_context);
+    TRACE("%#lx, %p.\n", reserved, bind_context);
 
     if (!bind_context) return E_INVALIDARG;
 
@@ -500,7 +500,7 @@ HRESULT WINAPI CreateBindCtx(DWORD reserved, IBindCtx **bind_context)
 
     if (reserved)
     {
-        WARN("reserved should be 0, not 0x%x\n", reserved);
+        WARN("reserved should be 0, not %#lx.\n", reserved);
         return E_INVALIDARG;
     }
 
@@ -539,7 +539,7 @@ HRESULT WINAPI BindMoniker(LPMONIKER pmk, DWORD grfOpt, REFIID riid, LPVOID * pp
     HRESULT res;
     IBindCtx * pbc;
 
-    TRACE("(%p, %x, %s, %p)\n", pmk, grfOpt, debugstr_guid(riid), ppvResult);
+    TRACE("%p, %lx, %s, %p.\n", pmk, grfOpt, debugstr_guid(riid), ppvResult);
 
     res = CreateBindCtx(grfOpt, &pbc);
     if (SUCCEEDED(res))

@@ -505,7 +505,7 @@ static HRESULT WINAPI COMCAT_ICatInformation_GetCategoryDesc(
     HKEY key;
     HRESULT res;
 
-    TRACE("CATID: %s LCID: %x\n",debugstr_guid(rcatid), lcid);
+    TRACE("CATID: %s LCID: %lx\n",debugstr_guid(rcatid), lcid);
 
     if (rcatid == NULL || ppszDesc == NULL) return E_INVALIDARG;
 
@@ -589,10 +589,10 @@ static HRESULT WINAPI COMCAT_ICatInformation_IsClassOfCategories(
 
     if (TRACE_ON(ole)) {
 	ULONG count;
-	TRACE("CLSID: %s Implemented %u\n",debugstr_guid(rclsid),cImplemented);
+	TRACE("CLSID: %s Implemented %lu\n",debugstr_guid(rclsid),cImplemented);
 	for (count = 0; count < cImplemented; ++count)
 	    TRACE("    %s\n",debugstr_guid(&rgcatidImpl[count]));
-	TRACE("Required %u\n",cRequired);
+	TRACE("Required %lu\n",cRequired);
 	for (count = 0; count < cRequired; ++count)
 	    TRACE("    %s\n",debugstr_guid(&rgcatidReq[count]));
     }

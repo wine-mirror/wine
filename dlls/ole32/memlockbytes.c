@@ -160,7 +160,7 @@ HRESULT WINAPI GetHGlobalFromILockBytes(ILockBytes* iface, HGLOBAL* phglobal)
   /* It is not our lockbytes implementation, so use a more generic way */
   hres = ILockBytes_Stat(iface,&stbuf,STATFLAG_NONAME);
   if (hres != S_OK) {
-     ERR("Cannot ILockBytes_Stat, %x\n",hres);
+     ERR("Cannot ILockBytes_Stat, %lx\n",hres);
      return hres;
   }
   TRACE("cbSize is %s\n", wine_dbgstr_longlong(stbuf.cbSize.QuadPart));
@@ -171,11 +171,11 @@ HRESULT WINAPI GetHGlobalFromILockBytes(ILockBytes* iface, HGLOBAL* phglobal)
   hres = ILockBytes_ReadAt(iface, start, GlobalLock(*phglobal), stbuf.cbSize.u.LowPart, &xread);
   GlobalUnlock(*phglobal);
   if (hres != S_OK) {
-    FIXME("%p->ReadAt failed with %x\n",iface,hres);
+    FIXME("%p->ReadAt failed with %lx\n",iface,hres);
     return hres;
   }
   if (stbuf.cbSize.u.LowPart != xread) {
-    FIXME("Read size is not requested size %d vs %d?\n",stbuf.cbSize.u.LowPart, xread);
+    FIXME("Read size is not requested size %ld vs %ld?\n",stbuf.cbSize.u.LowPart, xread);
   }
   return S_OK;
 }

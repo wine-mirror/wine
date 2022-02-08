@@ -215,7 +215,7 @@ static inline DataCache *impl_from_IAdviseSink( IAdviseSink *iface )
 
 const char *debugstr_formatetc(const FORMATETC *formatetc)
 {
-    return wine_dbg_sprintf("{ cfFormat = 0x%x, ptd = %p, dwAspect = %d, lindex = %d, tymed = %d }",
+    return wine_dbg_sprintf("{ cfFormat = 0x%x, ptd = %p, dwAspect = %ld, lindex = %ld, tymed = %ld }",
         formatetc->cfFormat, formatetc->ptd, formatetc->dwAspect,
         formatetc->lindex, formatetc->tymed);
 }
@@ -353,7 +353,7 @@ static HRESULT check_valid_formatetc( const FORMATETC *fmt )
         return CACHE_S_FORMATETC_NOTSUPPORTED;
     else
     {
-        WARN("invalid clipformat/tymed combination: %d/%d\n", fmt->cfFormat, fmt->tymed);
+        WARN("invalid clipformat/tymed combination: %d/%ld\n", fmt->cfFormat, fmt->tymed);
         return DV_E_TYMED;
     }
 }
@@ -427,7 +427,7 @@ static void DataCache_FireOnViewChange(
   DWORD      aspect,
   LONG       lindex)
 {
-  TRACE("(%p, %x, %d)\n", this, aspect, lindex);
+  TRACE("%p, %lx, %ld.\n", this, aspect, lindex);
 
   /*
    * The sink supplies a filter when it registers
@@ -2018,7 +2018,7 @@ static HRESULT WINAPI DataCache_Draw(
   HRESULT                hres;
   DataCacheEntry        *cache_entry;
 
-  TRACE("(%p, %x, %d, %p, %p, %p, %p, %p, %p, %lx)\n",
+  TRACE("%p, %lx, %ld, %p, %p, %p, %p, %p, %p, %Ix.\n",
 	iface,
 	dwDrawAspect,
 	lindex,
@@ -2184,7 +2184,7 @@ static HRESULT WINAPI DataCache_SetAdvise(
 {
   DataCache *this = impl_from_IViewObject2(iface);
 
-  TRACE("(%p, %x, %x, %p)\n", iface, aspects, advf, pAdvSink);
+  TRACE("%p, %lx, %lx, %p.\n", iface, aspects, advf, pAdvSink);
 
   /*
    * A call to this function removes the previous sink
@@ -2274,8 +2274,7 @@ static HRESULT WINAPI DataCache_GetExtent(
   HRESULT                hres = E_FAIL;
   DataCacheEntry        *cache_entry;
 
-  TRACE("(%p, %x, %d, %p, %p)\n",
-	iface, dwDrawAspect, lindex, ptd, lpsizel);
+  TRACE("%p, %lx, %ld, %p, %p.\n", iface, dwDrawAspect, lindex, ptd, lpsizel);
 
   if (lpsizel==NULL)
     return E_POINTER;
@@ -2284,7 +2283,7 @@ static HRESULT WINAPI DataCache_GetExtent(
   lpsizel->cy = 0;
 
   if (lindex!=-1)
-    FIXME("Unimplemented flag lindex = %d\n", lindex);
+    FIXME("Unimplemented flag lindex = %ld\n", lindex);
 
   /*
    * Right now, we support only the callback from
@@ -2445,7 +2444,7 @@ static HRESULT WINAPI DataCache_Cache(
     HRESULT hr;
     FORMATETC fmt_cpy;
 
-    TRACE("(%p, 0x%x, %p)\n", pformatetc, advf, pdwConnection);
+    TRACE("%p, %#lx, %p.\n", pformatetc, advf, pdwConnection);
 
     if (!pformatetc || !pdwConnection)
         return E_INVALIDARG;
@@ -2496,7 +2495,7 @@ static HRESULT WINAPI DataCache_Uncache(
     DataCache *This = impl_from_IOleCache2(iface);
     DataCacheEntry *cache_entry;
 
-    TRACE("(%d)\n", dwConnection);
+    TRACE("%ld\n", dwConnection);
 
     LIST_FOR_EACH_ENTRY(cache_entry, &This->cache_list, DataCacheEntry, entry)
         if (cache_entry->id == dwConnection)
@@ -2505,7 +2504,7 @@ static HRESULT WINAPI DataCache_Uncache(
             return S_OK;
         }
 
-    WARN("no connection found for %d\n", dwConnection);
+    WARN("no connection found for %ld\n", dwConnection);
 
     return OLE_E_NOCONNECTION;
 }
@@ -2626,7 +2625,7 @@ static HRESULT WINAPI DataCache_UpdateCache( IOleCache2 *iface, IDataObject *dat
     int i, slots = 0;
     BOOL done_one = FALSE;
 
-    TRACE( "(%p %p %08x %p)\n", iface, data, mode, reserved );
+    TRACE("%p, %p, %#lx, %p.\n", iface, data, mode, reserved );
 
     LIST_FOR_EACH_ENTRY( cache_entry, &This->cache_list, DataCacheEntry, entry )
     {
@@ -2705,7 +2704,7 @@ static HRESULT WINAPI DataCache_DiscardCache(
     DataCacheEntry *cache_entry;
     HRESULT hr = S_OK;
 
-    TRACE("(%d)\n", dwDiscardOptions);
+    TRACE("%ld\n", dwDiscardOptions);
 
     if (dwDiscardOptions == DISCARDCACHE_SAVEIFDIRTY)
         hr = DataCache_Save(&This->IPersistStorage_iface, This->presentationStorage, TRUE);

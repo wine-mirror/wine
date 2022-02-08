@@ -95,7 +95,7 @@ static StdGITEntry* StdGlobalInterfaceTable_FindEntry(StdGlobalInterfaceTableImp
 {
   StdGITEntry* e;
 
-  TRACE("This=%p, cookie=0x%x\n", This, cookie);
+  TRACE("%p, %#lx.\n", This, cookie);
 
   LIST_FOR_EACH_ENTRY(e, &This->list, StdGITEntry, entry) {
     if (e->cookie == cookie)
@@ -205,7 +205,7 @@ StdGlobalInterfaceTable_RegisterInterfaceInGlobal(
   
   LeaveCriticalSection(&git_section);
   
-  TRACE("Cookie is 0x%x\n", entry->cookie);
+  TRACE("Cookie is %#lx\n", entry->cookie);
   return S_OK;
 }
 
@@ -217,7 +217,7 @@ StdGlobalInterfaceTable_RevokeInterfaceFromGlobal(
   StdGITEntry* entry;
   HRESULT hr;
 
-  TRACE("iface=%p, dwCookie=0x%x\n", iface, dwCookie);
+  TRACE("%p, %#lx.\n", iface, dwCookie);
 
   EnterCriticalSection(&git_section);
 
@@ -236,7 +236,7 @@ StdGlobalInterfaceTable_RevokeInterfaceFromGlobal(
   hr = CoReleaseMarshalData(entry->stream);
   if (hr != S_OK)
   {
-    WARN("Failed to release marshal data, hr = 0x%08x\n", hr);
+    WARN("Failed to release marshal data, hr = %#lx\n", hr);
     return hr;
   }
   IStream_Release(entry->stream);
@@ -255,13 +255,13 @@ StdGlobalInterfaceTable_GetInterfaceFromGlobal(
   HRESULT hres;
   IStream *stream;
 
-  TRACE("dwCookie=0x%x, riid=%s, ppv=%p\n", dwCookie, debugstr_guid(riid), ppv);
+  TRACE("%#lx, %s, %p.\n", dwCookie, debugstr_guid(riid), ppv);
 
   EnterCriticalSection(&git_section);
 
   entry = StdGlobalInterfaceTable_FindEntry(This, dwCookie);
   if (entry == NULL) {
-    WARN("Entry for cookie 0x%x not found\n", dwCookie);
+    WARN("Entry for cookie %#lx not found\n", dwCookie);
     LeaveCriticalSection(&git_section);
     return E_INVALIDARG;
   }
@@ -273,7 +273,7 @@ StdGlobalInterfaceTable_GetInterfaceFromGlobal(
   LeaveCriticalSection(&git_section);
 
   if (hres != S_OK) {
-    WARN("Failed to clone stream with error 0x%08x\n", hres);
+    WARN("Failed to clone stream with error %#lx.\n", hres);
     return hres;
   }
 

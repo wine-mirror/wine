@@ -106,7 +106,7 @@ ULONG __RPC_USER HMETAFILE_UserSize(ULONG *pFlags, ULONG StartingSize, HMETAFILE
 {
     ULONG size = StartingSize;
 
-    TRACE("(%s, %d, &%p\n", debugstr_user_flags(pFlags), StartingSize, *phmf);
+    TRACE("%s, %lu, &%p.\n", debugstr_user_flags(pFlags), StartingSize, *phmf);
 
     ALIGN_LENGTH(size, 3);
 
@@ -302,7 +302,7 @@ void __RPC_USER HMETAFILE_UserFree(ULONG *pFlags, HMETAFILE *phmf)
 */
 ULONG __RPC_USER HENHMETAFILE_UserSize(ULONG *pFlags, ULONG size, HENHMETAFILE *phEmf)
 {
-    TRACE("(%s, %d, %p\n", debugstr_user_flags(pFlags), size, *phEmf);
+    TRACE("%s, %lu, %p.\n", debugstr_user_flags(pFlags), size, *phEmf);
 
     ALIGN_LENGTH(size, 3);
 
@@ -498,7 +498,7 @@ void __RPC_USER HENHMETAFILE_UserFree(ULONG *pFlags, HENHMETAFILE *phEmf)
  */
 ULONG __RPC_USER HMETAFILEPICT_UserSize(ULONG *pFlags, ULONG size, HMETAFILEPICT *phMfp)
 {
-    TRACE("(%s, %d, &%p)\n", debugstr_user_flags(pFlags), size, *phMfp);
+    TRACE("%s, %lu, &%p.\n", debugstr_user_flags(pFlags), size, *phMfp);
 
     ALIGN_LENGTH(size, 3);
 
@@ -721,7 +721,7 @@ ULONG __RPC_USER STGMEDIUM_UserSize(ULONG *pFlags, ULONG StartingSize, STGMEDIUM
 {
     ULONG size = StartingSize;
 
-    TRACE("(%s, %d, %p\n", debugstr_user_flags(pFlags), StartingSize, pStgMedium);
+    TRACE("%s, %lu, %p.\n", debugstr_user_flags(pFlags), StartingSize, pStgMedium);
 
     ALIGN_LENGTH(size, 3);
 
@@ -961,7 +961,7 @@ unsigned char * __RPC_USER STGMEDIUM_UserUnmarshal(ULONG *pFlags, unsigned char 
             pBuffer += sizeof(DWORD);
             if (*(DWORD *)pBuffer != 0)
             {
-                ERR("invalid offset %d\n", *(DWORD *)pBuffer);
+                ERR("invalid offset %ld\n", *(DWORD *)pBuffer);
                 RpcRaiseException(RPC_S_INVALID_BOUND);
                 return NULL;
             }
@@ -970,14 +970,13 @@ unsigned char * __RPC_USER STGMEDIUM_UserUnmarshal(ULONG *pFlags, unsigned char 
             pBuffer += sizeof(DWORD);
             if (conformance != variance)
             {
-                ERR("conformance (%d) and variance (%d) should be equal\n",
-                    conformance, variance);
+                ERR("conformance (%ld) and variance (%ld) should be equal\n", conformance, variance);
                 RpcRaiseException(RPC_S_INVALID_BOUND);
                 return NULL;
             }
             if (conformance > 0x7fffffff)
             {
-                ERR("conformance 0x%x too large\n", conformance);
+                ERR("conformance %#lx too large\n", conformance);
                 RpcRaiseException(RPC_S_INVALID_BOUND);
                 return NULL;
             }
@@ -1141,7 +1140,7 @@ ULONG __RPC_USER SNB_UserSize(ULONG *pFlags, ULONG StartingSize, SNB *pSnb)
 {
     ULONG size = StartingSize;
 
-    TRACE("(%s, %d, %p\n", debugstr_user_flags(pFlags), StartingSize, pSnb);
+    TRACE("%s, %lu, %p.\n", debugstr_user_flags(pFlags), StartingSize, pSnb);
 
     ALIGN_LENGTH(size, 3);
 
@@ -1305,7 +1304,7 @@ HRESULT CALLBACK IEnumUnknown_Next_Proxy(
     ULONG *pceltFetched)
 {
     ULONG fetched;
-    TRACE("(%p)->(%d, %p, %p)\n", This, celt, rgelt, pceltFetched);
+    TRACE("%p, %lu, %p, %p.\n", This, celt, rgelt, pceltFetched);
     if (!pceltFetched) pceltFetched = &fetched;
     return IEnumUnknown_RemoteNext_Proxy(This, celt, rgelt, pceltFetched);
 }
@@ -1317,7 +1316,7 @@ HRESULT __RPC_STUB IEnumUnknown_Next_Stub(
     ULONG *pceltFetched)
 {
     HRESULT hr;
-    TRACE("(%p)->(%d, %p, %p)\n", This, celt, rgelt, pceltFetched);
+    TRACE("%p, %lu, %p, %p.\n", This, celt, rgelt, pceltFetched);
     *pceltFetched = 0;
     hr = IEnumUnknown_Next(This, celt, rgelt, pceltFetched);
     if (hr == S_OK) *pceltFetched = celt;
@@ -1363,7 +1362,7 @@ HRESULT CALLBACK IEnumMoniker_Next_Proxy(
     ULONG *pceltFetched)
 {
     ULONG fetched;
-    TRACE("(%p)->(%d, %p, %p)\n", This, celt, rgelt, pceltFetched);
+    TRACE("%p, %lu, %p, %p.\n", This, celt, rgelt, pceltFetched);
     if (!pceltFetched) pceltFetched = &fetched;
     return IEnumMoniker_RemoteNext_Proxy(This, celt, rgelt, pceltFetched);
 }
@@ -1375,7 +1374,7 @@ HRESULT __RPC_STUB IEnumMoniker_Next_Stub(
     ULONG *pceltFetched)
 {
     HRESULT hr;
-    TRACE("(%p)->(%d, %p, %p)\n", This, celt, rgelt, pceltFetched);
+    TRACE("%p, %lu, %p, %p.\n", This, celt, rgelt, pceltFetched);
     *pceltFetched = 0;
     hr = IEnumMoniker_Next(This, celt, rgelt, pceltFetched);
     if (hr == S_OK) *pceltFetched = celt;
@@ -1449,7 +1448,7 @@ HRESULT CALLBACK IEnumString_Next_Proxy(
     ULONG *pceltFetched)
 {
     ULONG fetched;
-    TRACE("(%p)->(%d, %p, %p)\n", This, celt, rgelt, pceltFetched);
+    TRACE("%p, %lu, %p, %p.\n", This, celt, rgelt, pceltFetched);
     if (!pceltFetched) pceltFetched = &fetched;
     return IEnumString_RemoteNext_Proxy(This, celt, rgelt, pceltFetched);
 }
@@ -1461,7 +1460,7 @@ HRESULT __RPC_STUB IEnumString_Next_Stub(
     ULONG *pceltFetched)
 {
     HRESULT hr;
-    TRACE("(%p)->(%d, %p, %p)\n", This, celt, rgelt, pceltFetched);
+    TRACE("%p, %lu, %p, %p.\n", This, celt, rgelt, pceltFetched);
     *pceltFetched = 0;
     hr = IEnumString_Next(This, celt, rgelt, pceltFetched);
     if (hr == S_OK) *pceltFetched = celt;
@@ -1477,7 +1476,7 @@ HRESULT CALLBACK ISequentialStream_Read_Proxy(
     ULONG read;
     HRESULT hr;
 
-    TRACE("(%p)->(%p, %d, %p)\n", This, pv, cb, pcbRead);
+    TRACE("%p, %p, %lu, %p.\n", This, pv, cb, pcbRead);
 
     hr = ISequentialStream_RemoteRead_Proxy(This, pv, cb, &read);
     if(pcbRead) *pcbRead = read;
@@ -1491,7 +1490,7 @@ HRESULT __RPC_STUB ISequentialStream_Read_Stub(
     ULONG cb,
     ULONG *pcbRead)
 {
-    TRACE("(%p)->(%p, %d, %p)\n", This, pv, cb, pcbRead);
+    TRACE("%p, %p, %lu, %p.\n", This, pv, cb, pcbRead);
     return ISequentialStream_Read(This, pv, cb, pcbRead);
 }
 
@@ -1504,7 +1503,7 @@ HRESULT CALLBACK ISequentialStream_Write_Proxy(
     ULONG written;
     HRESULT hr;
 
-    TRACE("(%p)->(%p, %d, %p)\n", This, pv, cb, pcbWritten);
+    TRACE("%p, %p, %lu, %p.\n", This, pv, cb, pcbWritten);
 
     hr = ISequentialStream_RemoteWrite_Proxy(This, pv, cb, &written);
     if(pcbWritten) *pcbWritten = written;
@@ -1518,7 +1517,7 @@ HRESULT __RPC_STUB ISequentialStream_Write_Stub(
     ULONG cb,
     ULONG *pcbWritten)
 {
-    TRACE("(%p)->(%p, %d, %p)\n", This, pv, cb, pcbWritten);
+    TRACE("%p, %p, %lu, %p.\n", This, pv, cb, pcbWritten);
     return ISequentialStream_Write(This, pv, cb, pcbWritten);
 }
 
@@ -1531,7 +1530,7 @@ HRESULT CALLBACK IStream_Seek_Proxy(
     ULARGE_INTEGER newpos;
     HRESULT hr;
 
-    TRACE("(%p)->(%s, %d, %p)\n", This, wine_dbgstr_longlong(dlibMove.QuadPart), dwOrigin, plibNewPosition);
+    TRACE("%p, %s, %ld, %p.\n", This, wine_dbgstr_longlong(dlibMove.QuadPart), dwOrigin, plibNewPosition);
 
     hr = IStream_RemoteSeek_Proxy(This, dlibMove, dwOrigin, &newpos);
     if(plibNewPosition) *plibNewPosition = newpos;
@@ -1545,7 +1544,7 @@ HRESULT __RPC_STUB IStream_Seek_Stub(
     DWORD dwOrigin,
     ULARGE_INTEGER *plibNewPosition)
 {
-    TRACE("(%p)->(%s, %d, %p)\n", This, wine_dbgstr_longlong(dlibMove.QuadPart), dwOrigin, plibNewPosition);
+    TRACE("%p, %s, %ld, %p.\n", This, wine_dbgstr_longlong(dlibMove.QuadPart), dwOrigin, plibNewPosition);
     return IStream_Seek(This, dlibMove, dwOrigin, plibNewPosition);
 }
 
@@ -1587,7 +1586,7 @@ HRESULT CALLBACK IEnumSTATSTG_Next_Proxy(
     ULONG *pceltFetched)
 {
     ULONG fetched;
-    TRACE("(%p)->(%d, %p, %p)\n", This, celt, rgelt, pceltFetched);
+    TRACE("%p, %lu, %p, %p.\n", This, celt, rgelt, pceltFetched);
     if (!pceltFetched) pceltFetched = &fetched;
     return IEnumSTATSTG_RemoteNext_Proxy(This, celt, rgelt, pceltFetched);
 }
@@ -1599,7 +1598,7 @@ HRESULT __RPC_STUB IEnumSTATSTG_Next_Stub(
     ULONG *pceltFetched)
 {
     HRESULT hr;
-    TRACE("(%p)->(%d, %p, %p)\n", This, celt, rgelt, pceltFetched);
+    TRACE("%p, %lu, %p, %p.\n", This, celt, rgelt, pceltFetched);
     *pceltFetched = 0;
     hr = IEnumSTATSTG_Next(This, celt, rgelt, pceltFetched);
     if (hr == S_OK) *pceltFetched = celt;
@@ -1614,7 +1613,7 @@ HRESULT CALLBACK IStorage_OpenStream_Proxy(
     DWORD reserved2,
     IStream **ppstm)
 {
-    TRACE("(%p)->(%s, %p, %08x, %d %p)\n", This, debugstr_w(pwcsName), reserved1, grfMode, reserved2, ppstm);
+    TRACE("%p, %s, %p, %#lx, %ld, %p.\n", This, debugstr_w(pwcsName), reserved1, grfMode, reserved2, ppstm);
     if(reserved1) WARN("reserved1 %p\n", reserved1);
 
     return IStorage_RemoteOpenStream_Proxy(This, pwcsName, 0, NULL, grfMode, reserved2, ppstm);
@@ -1629,8 +1628,8 @@ HRESULT __RPC_STUB IStorage_OpenStream_Stub(
     DWORD reserved2,
     IStream **ppstm)
 {
-    TRACE("(%p)->(%s, %d, %p, %08x, %d %p)\n", This, debugstr_w(pwcsName), cbReserved1, reserved1, grfMode, reserved2, ppstm);
-    if(cbReserved1 || reserved1) WARN("cbReserved1 %d reserved1 %p\n", cbReserved1, reserved1);
+    TRACE("%p, %s, %ld, %p, %#lx, %ld, %p.\n", This, debugstr_w(pwcsName), cbReserved1, reserved1, grfMode, reserved2, ppstm);
+    if(cbReserved1 || reserved1) WARN("cbReserved1 %ld reserved1 %p\n", cbReserved1, reserved1);
 
     return IStorage_OpenStream(This, pwcsName, NULL, grfMode, reserved2, ppstm);
 }
@@ -1642,7 +1641,7 @@ HRESULT CALLBACK IStorage_EnumElements_Proxy(
     DWORD reserved3,
     IEnumSTATSTG **ppenum)
 {
-    TRACE("(%p)->(%d, %p, %d, %p)\n", This, reserved1, reserved2, reserved3, ppenum);
+    TRACE("%p, %ld, %p, %ld, %p.\n", This, reserved1, reserved2, reserved3, ppenum);
     if(reserved2) WARN("reserved2 %p\n", reserved2);
 
     return IStorage_RemoteEnumElements_Proxy(This, reserved1, 0, NULL, reserved3, ppenum);
@@ -1656,8 +1655,8 @@ HRESULT __RPC_STUB IStorage_EnumElements_Stub(
     DWORD reserved3,
     IEnumSTATSTG **ppenum)
 {
-    TRACE("(%p)->(%d, %d, %p, %d, %p)\n", This, reserved1, cbReserved2, reserved2, reserved3, ppenum);
-    if(cbReserved2 || reserved2) WARN("cbReserved2 %d reserved2 %p\n", cbReserved2, reserved2);
+    TRACE("%p, %ld, %ld, %p, %ld, %p.\n", This, reserved1, cbReserved2, reserved2, reserved3, ppenum);
+    if(cbReserved2 || reserved2) WARN("cbReserved2 %ld reserved2 %p\n", cbReserved2, reserved2);
 
     return IStorage_EnumElements(This, reserved1, NULL, reserved3, ppenum);
 }
@@ -1672,7 +1671,7 @@ HRESULT CALLBACK ILockBytes_ReadAt_Proxy(
     ULONG read;
     HRESULT hr;
 
-    TRACE("(%p)->(%s, %p, %d, %p)\n", This, wine_dbgstr_longlong(ulOffset.QuadPart), pv, cb, pcbRead);
+    TRACE("%p, %s, %p, %lu, %p.\n", This, wine_dbgstr_longlong(ulOffset.QuadPart), pv, cb, pcbRead);
 
     hr = ILockBytes_RemoteReadAt_Proxy(This, ulOffset, pv, cb, &read);
     if(pcbRead) *pcbRead = read;
@@ -1687,7 +1686,7 @@ HRESULT __RPC_STUB ILockBytes_ReadAt_Stub(
     ULONG cb,
     ULONG *pcbRead)
 {
-    TRACE("(%p)->(%s, %p, %d, %p)\n", This, wine_dbgstr_longlong(ulOffset.QuadPart), pv, cb, pcbRead);
+    TRACE("%p, %s, %p, %lu, %p.\n", This, wine_dbgstr_longlong(ulOffset.QuadPart), pv, cb, pcbRead);
     return ILockBytes_ReadAt(This, ulOffset, pv, cb, pcbRead);
 }
 
@@ -1701,7 +1700,7 @@ HRESULT CALLBACK ILockBytes_WriteAt_Proxy(
     ULONG written;
     HRESULT hr;
 
-    TRACE("(%p)->(%s, %p, %d, %p)\n", This, wine_dbgstr_longlong(ulOffset.QuadPart), pv, cb, pcbWritten);
+    TRACE("%p, %s, %p, %lu, %p.\n", This, wine_dbgstr_longlong(ulOffset.QuadPart), pv, cb, pcbWritten);
 
     hr = ILockBytes_RemoteWriteAt_Proxy(This, ulOffset, pv, cb, &written);
     if(pcbWritten) *pcbWritten = written;
@@ -1716,7 +1715,7 @@ HRESULT __RPC_STUB ILockBytes_WriteAt_Stub(
     ULONG cb,
     ULONG *pcbWritten)
 {
-    TRACE("(%p)->(%s, %p, %d, %p)\n", This, wine_dbgstr_longlong(ulOffset.QuadPart), pv, cb, pcbWritten);
+    TRACE("%p, %s, %p, %lu, %p.\n", This, wine_dbgstr_longlong(ulOffset.QuadPart), pv, cb, pcbWritten);
     return ILockBytes_WriteAt(This, ulOffset, pv, cb, pcbWritten);
 }
 
@@ -1729,7 +1728,7 @@ HRESULT CALLBACK IFillLockBytes_FillAppend_Proxy(
     ULONG written;
     HRESULT hr;
 
-    TRACE("(%p)->(%p, %d, %p)\n", This, pv, cb, pcbWritten);
+    TRACE("%p, %p, %lu, %p.\n", This, pv, cb, pcbWritten);
 
     hr = IFillLockBytes_RemoteFillAppend_Proxy(This, pv, cb, &written);
     if(pcbWritten) *pcbWritten = written;
@@ -1743,7 +1742,7 @@ HRESULT __RPC_STUB IFillLockBytes_FillAppend_Stub(
     ULONG cb,
     ULONG *pcbWritten)
 {
-    TRACE("(%p)->(%p, %d, %p)\n", This, pv, cb, pcbWritten);
+    TRACE("%p, %p, %lu, %p.\n", This, pv, cb, pcbWritten);
     return IFillLockBytes_FillAppend(This, pv, cb, pcbWritten);
 }
 
@@ -1757,7 +1756,7 @@ HRESULT CALLBACK IFillLockBytes_FillAt_Proxy(
     ULONG written;
     HRESULT hr;
 
-    TRACE("(%p)->(%s, %p, %d, %p)\n", This, wine_dbgstr_longlong(ulOffset.QuadPart), pv, cb, pcbWritten);
+    TRACE("%p, %s, %p, %lu, %p.\n", This, wine_dbgstr_longlong(ulOffset.QuadPart), pv, cb, pcbWritten);
 
     hr = IFillLockBytes_RemoteFillAt_Proxy(This, ulOffset, pv, cb, &written);
     if(pcbWritten) *pcbWritten = written;
@@ -1772,7 +1771,7 @@ HRESULT __RPC_STUB IFillLockBytes_FillAt_Stub(
     ULONG cb,
     ULONG *pcbWritten)
 {
-    TRACE("(%p)->(%s, %p, %d, %p)\n", This, wine_dbgstr_longlong(ulOffset.QuadPart), pv, cb, pcbWritten);
+    TRACE("%p, %s, %p, %ld, %p.\n", This, wine_dbgstr_longlong(ulOffset.QuadPart), pv, cb, pcbWritten);
     return IFillLockBytes_FillAt(This, ulOffset, pv, cb, pcbWritten);
 }
 
@@ -1807,7 +1806,7 @@ HRESULT CALLBACK IEnumSTATDATA_Next_Proxy(
     ULONG *pceltFetched)
 {
     ULONG fetched;
-    TRACE("(%p)->(%d, %p, %p)\n", This, celt, rgelt, pceltFetched);
+    TRACE("%p, %ld, %p, %p.\n", This, celt, rgelt, pceltFetched);
     if (!pceltFetched) pceltFetched = &fetched;
     return IEnumSTATDATA_RemoteNext_Proxy(This, celt, rgelt, pceltFetched);
 }
@@ -1819,7 +1818,7 @@ HRESULT __RPC_STUB IEnumSTATDATA_Next_Stub(
     ULONG *pceltFetched)
 {
     HRESULT hr;
-    TRACE("(%p)->(%d, %p, %p)\n", This, celt, rgelt, pceltFetched);
+    TRACE("%p, %lu, %p, %p.\n", This, celt, rgelt, pceltFetched);
     *pceltFetched = 0;
     hr = IEnumSTATDATA_Next(This, celt, rgelt, pceltFetched);
     if (hr == S_OK) *pceltFetched = celt;
@@ -1850,7 +1849,7 @@ void CALLBACK IAdviseSink_OnViewChange_Proxy(
     DWORD dwAspect,
     LONG lindex)
 {
-    TRACE("(%p)->(%d, %d)\n", This, dwAspect, lindex);
+    TRACE("%p, %ld, %ld.\n", This, dwAspect, lindex);
     IAdviseSink_RemoteOnViewChange_Proxy(This, dwAspect, lindex);
 }
 
@@ -1859,7 +1858,7 @@ HRESULT __RPC_STUB IAdviseSink_OnViewChange_Stub(
     DWORD dwAspect,
     LONG lindex)
 {
-    TRACE("(%p)->(%d, %d)\n", This, dwAspect, lindex);
+    TRACE("%p, %ld, %ld.\n", This, dwAspect, lindex);
     IAdviseSink_OnViewChange(This, dwAspect, lindex);
     return S_OK;
 }
@@ -2054,7 +2053,7 @@ HRESULT CALLBACK IOleCache2_UpdateCache_Proxy(
     DWORD grfUpdf,
     LPVOID pReserved)
 {
-    TRACE("(%p, %p, 0x%08x, %p)\n", This, pDataObject, grfUpdf, pReserved);
+    TRACE("%p, %p, %#lx, %p.\n", This, pDataObject, grfUpdf, pReserved);
     return IOleCache2_RemoteUpdateCache_Proxy(This, pDataObject, grfUpdf, (LONG_PTR)pReserved);
 }
 
@@ -2064,7 +2063,7 @@ HRESULT __RPC_STUB IOleCache2_UpdateCache_Stub(
     DWORD grfUpdf,
     LONG_PTR pReserved)
 {
-    TRACE("(%p, %p, 0x%08x, %li)\n", This, pDataObject, grfUpdf, pReserved);
+    TRACE("%p, %p, %#lx, %Id.\n", This, pDataObject, grfUpdf, pReserved);
     return IOleCache2_UpdateCache(This, pDataObject, grfUpdf, (void*)pReserved);
 }
 
@@ -2075,7 +2074,7 @@ HRESULT CALLBACK IEnumOLEVERB_Next_Proxy(
     ULONG *pceltFetched)
 {
     ULONG fetched;
-    TRACE("(%p)->(%d, %p, %p)\n", This, celt, rgelt, pceltFetched);
+    TRACE("%p, %lu, %p, %p.\n", This, celt, rgelt, pceltFetched);
     if (!pceltFetched) pceltFetched = &fetched;
     return IEnumOLEVERB_RemoteNext_Proxy(This, celt, rgelt, pceltFetched);
 }
@@ -2087,7 +2086,7 @@ HRESULT __RPC_STUB IEnumOLEVERB_Next_Stub(
     ULONG *pceltFetched)
 {
     HRESULT hr;
-    TRACE("(%p)->(%d, %p, %p)\n", This, celt, rgelt, pceltFetched);
+    TRACE("%p, %lu, %p, %p.\n", This, celt, rgelt, pceltFetched);
     *pceltFetched = 0;
     hr = IEnumOLEVERB_Next(This, celt, rgelt, pceltFetched);
     if (hr == S_OK) *pceltFetched = celt;

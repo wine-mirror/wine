@@ -129,7 +129,7 @@ static ULONG WINAPI FileMonikerImpl_Release(IMoniker* iface)
     FileMonikerImpl *moniker = impl_from_IMoniker(iface);
     ULONG ref = InterlockedDecrement(&moniker->ref);
 
-    TRACE("(%p, refcount %d)\n", iface, ref);
+    TRACE("%p, refcount %lu.\n", iface, ref);
 
     if (!ref)
     {
@@ -611,7 +611,7 @@ FileMonikerImpl_BindToStorage(IMoniker* iface, IBindCtx* pbc, IMoniker* pmkToLef
 static HRESULT WINAPI FileMonikerImpl_Reduce(IMoniker *iface, IBindCtx *pbc, DWORD howfar,
         IMoniker **toleft, IMoniker **reduced)
 {
-    TRACE("%p, %p, %d, %p, %p.\n", iface, pbc, howfar, toleft, reduced);
+    TRACE("%p, %p, %ld, %p, %p.\n", iface, pbc, howfar, toleft, reduced);
 
     if (!pbc || !reduced)
         return E_INVALIDARG;
@@ -1233,7 +1233,7 @@ FileMonikerROTDataImpl_GetComparisonData(IROTData* iface, BYTE* pbData,
     int i;
     LPWSTR pszFileName;
 
-    TRACE("(%p, %u, %p)\n", pbData, cbMax, pcbData);
+    TRACE("%p, %p, %lu, %p.\n", iface, pbData, cbMax, pcbData);
 
     *pcbData = sizeof(CLSID) + len * sizeof(WCHAR);
     if (cbMax < *pcbData)

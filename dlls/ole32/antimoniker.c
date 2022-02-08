@@ -122,7 +122,7 @@ static ULONG WINAPI AntiMonikerImpl_AddRef(IMoniker *iface)
     AntiMonikerImpl *moniker = impl_from_IMoniker(iface);
     ULONG refcount = InterlockedIncrement(&moniker->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -135,7 +135,7 @@ static ULONG WINAPI AntiMonikerImpl_Release(IMoniker *iface)
     AntiMonikerImpl *moniker = impl_from_IMoniker(iface);
     ULONG refcount = InterlockedDecrement(&moniker->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -261,14 +261,11 @@ AntiMonikerImpl_BindToStorage(IMoniker* iface, IBindCtx* pbc, IMoniker* pmkToLef
     return E_NOTIMPL;
 }
 
-/******************************************************************************
- *        AntiMoniker_Reduce
- ******************************************************************************/
 static HRESULT WINAPI
 AntiMonikerImpl_Reduce(IMoniker* iface, IBindCtx* pbc, DWORD dwReduceHowFar,
                        IMoniker** ppmkToLeft, IMoniker** ppmkReduced)
 {
-    TRACE("(%p,%p,%d,%p,%p)\n",iface,pbc,dwReduceHowFar,ppmkToLeft,ppmkReduced);
+    TRACE("%p, %p, %ld, %p, %p.\n", iface, pbc, dwReduceHowFar, ppmkToLeft, ppmkReduced);
 
     if (ppmkReduced==NULL)
         return E_POINTER;
@@ -556,7 +553,7 @@ AntiMonikerROTDataImpl_GetComparisonData(IROTData *iface, BYTE *data, ULONG data
 {
     AntiMonikerImpl *moniker = impl_from_IROTData(iface);
 
-    TRACE("%p, %p, %u, %p.\n", iface, data, data_len, data_req);
+    TRACE("%p, %p, %lu, %p.\n", iface, data, data_len, data_req);
 
     *data_req = sizeof(CLSID) + sizeof(DWORD);
     if (data_len < *data_req)

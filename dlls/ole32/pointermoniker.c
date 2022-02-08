@@ -95,7 +95,7 @@ static ULONG WINAPI PointerMonikerImpl_AddRef(IMoniker *iface)
     PointerMonikerImpl *moniker = impl_from_IMoniker(iface);
     ULONG refcount = InterlockedIncrement(&moniker->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -105,7 +105,7 @@ static ULONG WINAPI PointerMonikerImpl_Release(IMoniker *iface)
     PointerMonikerImpl *moniker = impl_from_IMoniker(iface);
     ULONG refcount = InterlockedDecrement(&moniker->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -230,7 +230,7 @@ static HRESULT WINAPI
 PointerMonikerImpl_Reduce(IMoniker* iface, IBindCtx* pbc, DWORD dwReduceHowFar,
                        IMoniker** ppmkToLeft, IMoniker** ppmkReduced)
 {
-    TRACE("(%p,%p,%d,%p,%p)\n",iface,pbc,dwReduceHowFar,ppmkToLeft,ppmkReduced);
+    TRACE("%p, %p, %ld, %p, %p.\n", iface, pbc, dwReduceHowFar, ppmkToLeft, ppmkReduced);
 
     if (ppmkReduced==NULL)
         return E_POINTER;
@@ -509,7 +509,7 @@ static HRESULT WINAPI pointer_moniker_marshal_GetUnmarshalClass(IMarshal *iface,
 {
     PointerMonikerImpl *moniker = impl_from_IMarshal(iface);
 
-    TRACE("%p, %s, %p, %x, %p, %x, %p.\n", iface, debugstr_guid(riid), pv, dwDestContext, pvDestContext,
+    TRACE("%p, %s, %p, %lx, %p, %lx, %p.\n", iface, debugstr_guid(riid), pv, dwDestContext, pvDestContext,
             mshlflags, clsid);
 
     return IMoniker_GetClassID(&moniker->IMoniker_iface, clsid);
@@ -520,7 +520,7 @@ static HRESULT WINAPI pointer_moniker_marshal_GetMarshalSizeMax(IMarshal *iface,
 {
     PointerMonikerImpl *moniker = impl_from_IMarshal(iface);
 
-    TRACE("%p, %s, %p, %d, %p, %#x, %p.\n", iface, debugstr_guid(riid), pv, dwDestContext, pvDestContext,
+    TRACE("%p, %s, %p, %ld, %p, %#lx, %p.\n", iface, debugstr_guid(riid), pv, dwDestContext, pvDestContext,
             mshlflags, size);
 
     return CoGetMarshalSizeMax(size, &IID_IUnknown, moniker->pObject, dwDestContext, pvDestContext, mshlflags);
@@ -531,7 +531,7 @@ static HRESULT WINAPI pointer_moniker_marshal_MarshalInterface(IMarshal *iface, 
 {
     PointerMonikerImpl *moniker = impl_from_IMarshal(iface);
 
-    TRACE("%p, %s, %p, %x, %p, %x.\n", stream, debugstr_guid(riid), pv,
+    TRACE("%p, %s, %p, %lx, %p, %lx.\n", stream, debugstr_guid(riid), pv,
         dwDestContext, pvDestContext, mshlflags);
 
     return CoMarshalInterface(stream, &IID_IUnknown, moniker->pObject, dwDestContext,
@@ -550,7 +550,7 @@ static HRESULT WINAPI pointer_moniker_marshal_UnmarshalInterface(IMarshal *iface
     hr = CoUnmarshalInterface(stream, &IID_IUnknown, (void **)&object);
     if (FAILED(hr))
     {
-        ERR("Couldn't unmarshal moniker, hr = %#x.\n", hr);
+        ERR("Couldn't unmarshal moniker, hr = %#lx.\n", hr);
         return hr;
     }
 
@@ -570,7 +570,7 @@ static HRESULT WINAPI pointer_moniker_marshal_ReleaseMarshalData(IMarshal *iface
 
 static HRESULT WINAPI pointer_moniker_marshal_DisconnectObject(IMarshal *iface, DWORD reserved)
 {
-    TRACE("%p, %#x.\n", iface, reserved);
+    TRACE("%p, %#lx.\n", iface, reserved);
 
     return S_OK;
 }
@@ -699,7 +699,7 @@ static ULONG WINAPI ObjrefMonikerImpl_AddRef(IMoniker *iface)
     ObjrefMonikerImpl *moniker = objref_impl_from_IMoniker(iface);
     ULONG refcount = InterlockedIncrement(&moniker->refcount);
 
-    TRACE("%p, refcount %u\n", iface, refcount);
+    TRACE("%p, refcount %lu\n", iface, refcount);
 
     return refcount;
 }
@@ -709,7 +709,7 @@ static ULONG WINAPI ObjrefMonikerImpl_Release(IMoniker *iface)
     ObjrefMonikerImpl *moniker = objref_impl_from_IMoniker(iface);
     ULONG refcount = InterlockedDecrement(&moniker->refcount);
 
-    TRACE("%p, refcount %u\n", iface, refcount);
+    TRACE("%p, refcount %lu\n", iface, refcount);
 
     if (!refcount)
     {
@@ -772,7 +772,7 @@ static HRESULT WINAPI ObjrefMonikerImpl_BindToStorage(IMoniker *iface, IBindCtx 
 static HRESULT WINAPI ObjrefMonikerImpl_Reduce(IMoniker *iface, IBindCtx *pbc, DWORD howfar,
         IMoniker **left, IMoniker **reduced)
 {
-    FIXME("(%p,%p,%d,%p,%p): stub\n", iface, pbc, howfar, left, reduced);
+    FIXME("%p, %p, %ld, %p, %p: stub\n", iface, pbc, howfar, left, reduced);
     return E_NOTIMPL;
 }
 
@@ -930,7 +930,7 @@ static HRESULT WINAPI objref_moniker_marshal_GetUnmarshalClass(IMarshal *iface, 
 {
     ObjrefMonikerImpl *moniker = objref_impl_from_IMarshal(iface);
 
-    TRACE("(%p,%s,%p,%08x,%p,%x,%p)\n", iface, debugstr_guid(riid), pv, dwDestContext, pvDestContext,
+    TRACE("%p, %s, %p, %#lx, %p, %#lx, %p.\n", iface, debugstr_guid(riid), pv, dwDestContext, pvDestContext,
             mshlflags, clsid);
 
     return IMoniker_GetClassID(&moniker->IMoniker_iface, clsid);
@@ -941,7 +941,7 @@ static HRESULT WINAPI objref_moniker_marshal_GetMarshalSizeMax(IMarshal *iface, 
 {
     ObjrefMonikerImpl *moniker = objref_impl_from_IMarshal(iface);
 
-    TRACE("(%p,%s,%p,%08x,%p,%08x,%p)\n", iface, debugstr_guid(riid), pv, dwDestContext, pvDestContext,
+    TRACE("%p, %s, %p, %#lx, %p, %#lx, %p.\n", iface, debugstr_guid(riid), pv, dwDestContext, pvDestContext,
             mshlflags, size);
 
     return CoGetMarshalSizeMax(size, &IID_IUnknown, moniker->pObject, dwDestContext, pvDestContext, mshlflags);
@@ -952,7 +952,7 @@ static HRESULT WINAPI objref_moniker_marshal_MarshalInterface(IMarshal *iface, I
 {
     ObjrefMonikerImpl *moniker = objref_impl_from_IMarshal(iface);
 
-    TRACE("(%p,%s,%p,%08x,%p,%08x)\n", stream, debugstr_guid(riid), pv, dwDestContext, pvDestContext, mshlflags);
+    TRACE("%p, %s, %p, %#lx, %p, %#lx\n", stream, debugstr_guid(riid), pv, dwDestContext, pvDestContext, mshlflags);
 
     return CoMarshalInterface(stream, &IID_IUnknown, moniker->pObject, dwDestContext, pvDestContext, mshlflags);
 }
@@ -969,7 +969,7 @@ static HRESULT WINAPI objref_moniker_marshal_UnmarshalInterface(IMarshal *iface,
     hr = CoUnmarshalInterface(stream, &IID_IUnknown, (void **)&object);
     if (FAILED(hr))
     {
-        ERR("Couldn't unmarshal moniker, hr = %#x.\n", hr);
+        ERR("Couldn't unmarshal moniker, hr = %#lx.\n", hr);
         return hr;
     }
 
@@ -988,7 +988,7 @@ static HRESULT WINAPI objref_moniker_marshal_ReleaseMarshalData(IMarshal *iface,
 
 static HRESULT WINAPI objref_moniker_marshal_DisconnectObject(IMarshal *iface, DWORD reserved)
 {
-    TRACE("(%p,%08x)\n", iface, reserved);
+    TRACE("%p, %#lx.\n", iface, reserved);
     return S_OK;
 }
 

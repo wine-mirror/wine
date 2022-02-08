@@ -373,7 +373,7 @@ static ULONG WINAPI ISynchronize_fnAddRef(ISynchronize *iface)
 {
     MREImpl *This = impl_from_ISynchronize(iface);
     LONG ref = InterlockedIncrement(&This->ref);
-    TRACE("%p - ref %d\n", This, ref);
+    TRACE("%p, refcount %ld.\n", iface, ref);
 
     return ref;
 }
@@ -382,7 +382,7 @@ static ULONG WINAPI ISynchronize_fnRelease(ISynchronize *iface)
 {
     MREImpl *This = impl_from_ISynchronize(iface);
     LONG ref = InterlockedDecrement(&This->ref);
-    TRACE("%p - ref %d\n", This, ref);
+    TRACE("%p, refcount %ld.\n", iface, ref);
 
     if(!ref)
     {
@@ -397,7 +397,7 @@ static HRESULT WINAPI ISynchronize_fnWait(ISynchronize *iface, DWORD dwFlags, DW
 {
     MREImpl *This = impl_from_ISynchronize(iface);
     DWORD index;
-    TRACE("%p (%08x, %08x)\n", This, dwFlags, dwMilliseconds);
+    TRACE("%p, %#lx, %#lx.\n", iface, dwFlags, dwMilliseconds);
     return CoWaitForMultipleHandles(dwFlags, dwMilliseconds, 1, &This->event, &index);
 }
 
@@ -929,7 +929,7 @@ HRESULT Handler_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID reserved)
 {
-    TRACE("%p 0x%x %p\n", hinstDLL, fdwReason, reserved);
+    TRACE("%p, %#lx, %p.\n", hinstDLL, fdwReason, reserved);
 
     switch(fdwReason) {
     case DLL_PROCESS_ATTACH:

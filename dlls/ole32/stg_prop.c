@@ -211,7 +211,7 @@ static ULONG WINAPI enum_stat_prop_stg_AddRef(IEnumSTATPROPSTG *iface)
     struct enum_stat_prop_stg *penum = impl_from_IEnumSTATPROPSTG(iface);
     LONG refcount = InterlockedIncrement(&penum->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -221,7 +221,7 @@ static ULONG WINAPI enum_stat_prop_stg_Release(IEnumSTATPROPSTG *iface)
     struct enum_stat_prop_stg *penum = impl_from_IEnumSTATPROPSTG(iface);
     LONG refcount = InterlockedDecrement(&penum->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -239,7 +239,7 @@ static HRESULT WINAPI enum_stat_prop_stg_Next(IEnumSTATPROPSTG *iface, ULONG cel
     ULONG count = 0;
     WCHAR *name;
 
-    TRACE("%p, %u, %p, %p.\n", iface, celt, ret, fetched);
+    TRACE("%p, %lu, %p, %p.\n", iface, celt, ret, fetched);
 
     if (penum->current == ~0u)
         penum->current = 0;
@@ -267,7 +267,7 @@ static HRESULT WINAPI enum_stat_prop_stg_Next(IEnumSTATPROPSTG *iface, ULONG cel
 
 static HRESULT WINAPI enum_stat_prop_stg_Skip(IEnumSTATPROPSTG *iface, ULONG celt)
 {
-    FIXME("%p, %u.\n", iface, celt);
+    FIXME("%p, %lu.\n", iface, celt);
 
     return S_OK;
 }
@@ -486,7 +486,7 @@ static HRESULT WINAPI IPropertyStorage_fnReadMultiple(
     HRESULT hr = S_OK;
     ULONG i;
 
-    TRACE("(%p, %d, %p, %p)\n", iface, cpspec, rgpspec, rgpropvar);
+    TRACE("%p, %lu, %p, %p\n", iface, cpspec, rgpspec, rgpropvar);
 
     if (!cpspec)
         return S_FALSE;
@@ -613,7 +613,7 @@ static HRESULT PropertyStorage_StringCopy(LPCSTR src, UINT srcCP, LPSTR *dst, UI
             HeapFree(GetProcessHeap(), 0, wideStr_tmp);
         }
     }
-    TRACE("returning 0x%08x (%s)\n", hr,
+    TRACE("returning %#lx (%s)\n", hr,
      dstCP == CP_UNICODE ? debugstr_w((LPCWSTR)*dst) : debugstr_a(*dst));
     return hr;
 }
@@ -671,7 +671,7 @@ static HRESULT PropertyStorage_StorePropWithId(PropertyStorage_impl *This,
     case VT_VECTOR|VT_I1:
         This->format = 1;
     }
-    TRACE("Setting 0x%08x to type %d\n", propid, propvar->vt);
+    TRACE("Setting %#lx to type %d\n", propid, propvar->vt);
     if (prop)
     {
         PropVariantClear(prop);
@@ -727,7 +727,7 @@ static HRESULT PropertyStorage_StoreNameWithId(PropertyStorage_impl *This,
             if (strlen(name) >= MAX_VERSION_0_PROP_NAME_LENGTH)
                 This->format = 1;
         }
-        TRACE("Adding prop name %s, propid %d\n",
+        TRACE("Adding prop name %s, propid %ld\n",
          This->codePage == CP_UNICODE ? debugstr_w((LPCWSTR)name) :
          debugstr_a(name), id);
         dictionary_insert(This->name_to_propid, name, UlongToPtr(id));
@@ -750,7 +750,7 @@ static HRESULT WINAPI IPropertyStorage_fnWriteMultiple(
     HRESULT hr = S_OK;
     ULONG i;
 
-    TRACE("(%p, %d, %p, %p)\n", iface, cpspec, rgpspec, rgpropvar);
+    TRACE("%p, %lu, %p, %p.\n", iface, cpspec, rgpspec, rgpropvar);
 
     if (cpspec && (!rgpspec || !rgpropvar))
         return E_INVALIDARG;
@@ -849,7 +849,7 @@ static HRESULT WINAPI IPropertyStorage_fnDeleteMultiple(
     ULONG i;
     HRESULT hr;
 
-    TRACE("(%p, %d, %p)\n", iface, cpspec, rgpspec);
+    TRACE("%p, %ld, %p.\n", iface, cpspec, rgpspec);
 
     if (cpspec && !rgpspec)
         return E_INVALIDARG;
@@ -895,7 +895,7 @@ static HRESULT WINAPI IPropertyStorage_fnReadPropertyNames(
     ULONG i;
     HRESULT hr = S_FALSE;
 
-    TRACE("(%p, %d, %p, %p)\n", iface, cpropid, rgpropid, rglpwstrName);
+    TRACE("%p, %ld, %p, %p.\n", iface, cpropid, rgpropid, rglpwstrName);
 
     if (cpropid && (!rgpropid || !rglpwstrName))
         return E_INVALIDARG;
@@ -935,7 +935,7 @@ static HRESULT WINAPI IPropertyStorage_fnWritePropertyNames(
     ULONG i;
     HRESULT hr;
 
-    TRACE("(%p, %d, %p, %p)\n", iface, cpropid, rgpropid, rglpwstrName);
+    TRACE("%p, %lu, %p, %p.\n", iface, cpropid, rgpropid, rglpwstrName);
 
     if (cpropid && (!rgpropid || !rglpwstrName))
         return E_INVALIDARG;
@@ -968,7 +968,7 @@ static HRESULT WINAPI IPropertyStorage_fnDeletePropertyNames(
     ULONG i;
     HRESULT hr;
 
-    TRACE("(%p, %d, %p)\n", iface, cpropid, rgpropid);
+    TRACE("%p, %ld, %p.\n", iface, cpropid, rgpropid);
 
     if (cpropid && !rgpropid)
         return E_INVALIDARG;
@@ -1003,7 +1003,7 @@ static HRESULT WINAPI IPropertyStorage_fnCommit(
     PropertyStorage_impl *This = impl_from_IPropertyStorage(iface);
     HRESULT hr;
 
-    TRACE("(%p, 0x%08x)\n", iface, grfCommitFlags);
+    TRACE("%p, %#lx.\n", iface, grfCommitFlags);
 
     if (!(This->grfMode & STGM_READWRITE))
         return STG_E_ACCESSDENIED;
@@ -1149,7 +1149,7 @@ static void PropertyStorage_PropNameDestroy(void *k, void *d, void *extra)
 static int PropertyStorage_PropCompare(const void *a, const void *b,
  void *extra)
 {
-    TRACE("(%u, %u)\n", PtrToUlong(a), PtrToUlong(b));
+    TRACE("%lu, %lu.\n", PtrToUlong(a), PtrToUlong(b));
     return PtrToUlong(a) - PtrToUlong(b);
 }
 
@@ -1279,12 +1279,12 @@ static HRESULT propertystorage_read_scalar(PROPVARIANT *prop, const struct read_
     case VT_INT:
     case VT_I4:
         hr = buffer_read_dword(buffer, offset, (DWORD *)&prop->lVal);
-        TRACE("Read long %d\n", prop->lVal);
+        TRACE("Read long %ld\n", prop->lVal);
         break;
     case VT_UINT:
     case VT_UI4:
         hr = buffer_read_dword(buffer, offset, &prop->ulVal);
-        TRACE("Read ulong %d\n", prop->ulVal);
+        TRACE("Read ulong %ld\n", prop->ulVal);
         break;
     case VT_I8:
         hr = buffer_read_uint64(buffer, offset, (ULARGE_INTEGER *)&prop->hVal);
@@ -1398,7 +1398,7 @@ static HRESULT propertystorage_read_scalar(PROPVARIANT *prop, const struct read_
         if (prop->blob.pBlobData)
         {
             hr = buffer_read_len(buffer, offset, prop->blob.pBlobData, count);
-            TRACE("Read blob value of size %d\n", count);
+            TRACE("Read blob value of size %ld\n", count);
         }
         else
             hr = STG_E_INSUFFICIENTMEMORY;
@@ -1583,7 +1583,7 @@ static HRESULT PropertyStorage_ReadHeaderFromStream(IStream *stm,
     {
         if (count != sizeof(buf))
         {
-            WARN("read only %d\n", count);
+            WARN("read only %ld\n", count);
             hr = STG_E_INVALIDHEADER;
         }
         else
@@ -1600,7 +1600,7 @@ static HRESULT PropertyStorage_ReadHeaderFromStream(IStream *stm,
              &hdr->reserved);
         }
     }
-    TRACE("returning 0x%08x\n", hr);
+    TRACE("returning %#lx\n", hr);
     return hr;
 }
 
@@ -1618,7 +1618,7 @@ static HRESULT PropertyStorage_ReadFmtIdOffsetFromStream(IStream *stm,
     {
         if (count != sizeof(buf))
         {
-            WARN("read only %d\n", count);
+            WARN("read only %ld\n", count);
             hr = STG_E_INVALIDHEADER;
         }
         else
@@ -1629,7 +1629,7 @@ static HRESULT PropertyStorage_ReadFmtIdOffsetFromStream(IStream *stm,
              &fmt->dwOffset);
         }
     }
-    TRACE("returning 0x%08x\n", hr);
+    TRACE("returning %#lx\n", hr);
     return hr;
 }
 
@@ -1647,7 +1647,7 @@ static HRESULT PropertyStorage_ReadSectionHeaderFromStream(IStream *stm,
     {
         if (count != sizeof(buf))
         {
-            WARN("read only %d\n", count);
+            WARN("read only %ld\n", count);
             hr = STG_E_INVALIDHEADER;
         }
         else
@@ -1658,7 +1658,7 @@ static HRESULT PropertyStorage_ReadSectionHeaderFromStream(IStream *stm,
              cProperties), &hdr->cProperties);
         }
     }
-    TRACE("returning 0x%08x\n", hr);
+    TRACE("returning %#lx\n", hr);
     return hr;
 }
 
@@ -1677,7 +1677,7 @@ static HRESULT PropertyStorage_ReadDictionary(PropertyStorage_impl *This, const 
     if (FAILED(hr = buffer_read_dword(buffer, offset, &numEntries)))
         return hr;
 
-    TRACE("Reading %d entries:\n", numEntries);
+    TRACE("Reading %ld entries:\n", numEntries);
 
     offset += sizeof(DWORD);
 
@@ -1697,7 +1697,7 @@ static HRESULT PropertyStorage_ReadDictionary(PropertyStorage_impl *This, const 
         if (FAILED(hr = buffer_test_offset(buffer, offset, This->codePage == CP_UNICODE ?
                 ALIGNED_LENGTH(cbEntry * sizeof(WCHAR), 3) : cbEntry)))
         {
-            WARN("Broken name length for entry %d.\n", i);
+            WARN("Broken name length for entry %ld.\n", i);
             return hr;
         }
 
@@ -1709,11 +1709,11 @@ static HRESULT PropertyStorage_ReadDictionary(PropertyStorage_impl *This, const 
 
         if (ch)
         {
-            WARN("Dictionary entry name %d is not null-terminated.\n", i);
+            WARN("Dictionary entry name %ld is not null-terminated.\n", i);
             return E_FAIL;
         }
 
-        TRACE("Reading entry with ID %#x, %d chars, name %s.\n", propid, cbEntry, This->codePage == CP_UNICODE ?
+        TRACE("Reading entry with ID %#lx, %ld chars, name %s.\n", propid, cbEntry, This->codePage == CP_UNICODE ?
                 debugstr_wn((WCHAR *)buffer->data, cbEntry) : debugstr_an((char *)buffer->data, cbEntry));
 
         hr = PropertyStorage_StoreNameWithId(This, (char *)buffer->data + offset, This->codePage, propid);
@@ -1796,8 +1796,7 @@ static HRESULT PropertyStorage_ReadFromStream(PropertyStorage_impl *This)
         goto end;
     if (fmtOffset.dwOffset > stat.cbSize.u.LowPart)
     {
-        WARN("invalid offset %d (stream length is %d)\n", fmtOffset.dwOffset,
-         stat.cbSize.u.LowPart);
+        WARN("invalid offset %ld (stream length is %ld)\n", fmtOffset.dwOffset, stat.cbSize.u.LowPart);
         hr = STG_E_INVALIDHEADER;
         goto end;
     }
@@ -1814,7 +1813,7 @@ static HRESULT PropertyStorage_ReadFromStream(PropertyStorage_impl *This)
     /* The section size includes the section header, so check it */
     if (sectionHdr.cbSection < sizeof(PROPERTYSECTIONHEADER))
     {
-        WARN("section header too small, got %d\n", sectionHdr.cbSection);
+        WARN("section header too small, got %ld\n", sectionHdr.cbSection);
         hr = STG_E_INVALIDHEADER;
         goto end;
     }
@@ -1831,7 +1830,7 @@ static HRESULT PropertyStorage_ReadFromStream(PropertyStorage_impl *This)
     hr = IStream_Read(This->stm, read_buffer.data, read_buffer.size, &count);
     if (FAILED(hr))
         goto end;
-    TRACE("Reading %d properties:\n", sectionHdr.cProperties);
+    TRACE("Reading %ld properties:\n", sectionHdr.cProperties);
     for (i = 0; SUCCEEDED(hr) && i < sectionHdr.cProperties; i++)
     {
         PROPERTYIDOFFSET *idOffset = (PROPERTYIDOFFSET *)(read_buffer.data +
@@ -1853,7 +1852,7 @@ static HRESULT PropertyStorage_ReadFromStream(PropertyStorage_impl *This)
                  * later.
                  */
                 dictOffset = idOffset->dwOffset;
-                TRACE("Dictionary offset is %d\n", dictOffset);
+                TRACE("Dictionary offset is %ld\n", dictOffset);
             }
             else
             {
@@ -1864,8 +1863,7 @@ static HRESULT PropertyStorage_ReadFromStream(PropertyStorage_impl *This)
                         idOffset->dwOffset - sizeof(PROPERTYSECTIONHEADER), This->codePage,
                         Allocate_CoTaskMemAlloc, NULL)))
                 {
-                    TRACE("Read property with ID 0x%08x, type %d\n",
-                     idOffset->propid, prop.vt);
+                    TRACE("Read property with ID %#lx, type %d\n", idOffset->propid, prop.vt);
                     switch(idOffset->propid)
                     {
                     case PID_CODEPAGE:
@@ -1901,7 +1899,7 @@ static HRESULT PropertyStorage_ReadFromStream(PropertyStorage_impl *This)
     }
     if (!This->locale)
         This->locale = LOCALE_SYSTEM_DEFAULT;
-    TRACE("Code page is %d, locale is %d\n", This->codePage, This->locale);
+    TRACE("Code page is %d, locale is %ld\n", This->codePage, This->locale);
     if (dictOffset)
         hr = PropertyStorage_ReadDictionary(This, &read_buffer, dictOffset - sizeof(PROPERTYSECTIONHEADER));
 
@@ -2088,7 +2086,7 @@ static HRESULT PropertyStorage_WriteDictionaryToStream(
     if (closure.bytesWritten % sizeof(DWORD))
     {
         DWORD padding = sizeof(DWORD) - closure.bytesWritten % sizeof(DWORD);
-        TRACE("adding %d bytes of padding\n", padding);
+        TRACE("adding %ld bytes of padding\n", padding);
         *sectionOffset += padding;
     }
 
@@ -2109,7 +2107,7 @@ static HRESULT PropertyStorage_WritePropertyToStream(PropertyStorage_impl *This,
     assert(var);
     assert(sectionOffset);
 
-    TRACE("%p, %d, 0x%08x, (%d), (%d)\n", This, propNum, propid, var->vt,
+    TRACE("%p, %ld, %#lx, %d, %ld.\n", This, propNum, propid, var->vt,
      *sectionOffset);
 
     seek.QuadPart = SECTIONHEADER_OFFSET + sizeof(PROPERTYSECTIONHEADER) +
@@ -2288,7 +2286,7 @@ static HRESULT PropertyStorage_WritePropertyToStream(PropertyStorage_impl *This,
         if (bytesWritten % sizeof(DWORD))
         {
             DWORD padding = sizeof(DWORD) - bytesWritten % sizeof(DWORD);
-            TRACE("adding %d bytes of padding\n", padding);
+            TRACE("adding %ld bytes of padding\n", padding);
             *sectionOffset += padding;
         }
     }
@@ -2578,7 +2576,7 @@ static HRESULT PropertyStorage_ConstructEmpty(IStream *stm,
         else
             ps->codePage = CP_UNICODE;
         ps->locale = LOCALE_SYSTEM_DEFAULT;
-        TRACE("Code page is %d, locale is %d\n", ps->codePage, ps->locale);
+        TRACE("Code page is %d, locale is %ld\n", ps->codePage, ps->locale);
         *pps = &ps->IPropertyStorage_iface;
         TRACE("PropertyStorage %p constructed\n", ps);
         hr = S_OK;
@@ -2626,7 +2624,7 @@ static ULONG WINAPI enum_stat_propset_stg_AddRef(IEnumSTATPROPSETSTG *iface)
     struct enum_stat_propset_stg *psenum = impl_from_IEnumSTATPROPSETSTG(iface);
     LONG refcount = InterlockedIncrement(&psenum->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -2636,7 +2634,7 @@ static ULONG WINAPI enum_stat_propset_stg_Release(IEnumSTATPROPSETSTG *iface)
     struct enum_stat_propset_stg *psenum = impl_from_IEnumSTATPROPSETSTG(iface);
     LONG refcount = InterlockedDecrement(&psenum->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -2653,7 +2651,7 @@ static HRESULT WINAPI enum_stat_propset_stg_Next(IEnumSTATPROPSETSTG *iface, ULO
     struct enum_stat_propset_stg *psenum = impl_from_IEnumSTATPROPSETSTG(iface);
     ULONG count = 0;
 
-    TRACE("%p, %u, %p, %p.\n", iface, celt, ret, fetched);
+    TRACE("%p, %lu, %p, %p.\n", iface, celt, ret, fetched);
 
     if (psenum->current == ~0u)
         psenum->current = 0;
@@ -2669,7 +2667,7 @@ static HRESULT WINAPI enum_stat_propset_stg_Next(IEnumSTATPROPSETSTG *iface, ULO
 
 static HRESULT WINAPI enum_stat_propset_stg_Skip(IEnumSTATPROPSETSTG *iface, ULONG celt)
 {
-    FIXME("%p, %u.\n", iface, celt);
+    FIXME("%p, %lu.\n", iface, celt);
 
     return S_OK;
 }
@@ -2840,7 +2838,7 @@ static HRESULT WINAPI IPropertySetStorage_fnCreate(
     IStream *stm = NULL;
     HRESULT r;
 
-    TRACE("%p %s %08x %08x %p\n", This, debugstr_guid(rfmtid), grfFlags,
+    TRACE("%p, %s %#lx, %#lx, %p.\n", This, debugstr_guid(rfmtid), grfFlags,
      grfMode, ppprstg);
 
     /* be picky */
@@ -2879,7 +2877,7 @@ static HRESULT WINAPI IPropertySetStorage_fnCreate(
     IStream_Release( stm );
 
 end:
-    TRACE("returning 0x%08x\n", r);
+    TRACE("returning %#lx\n", r);
     return r;
 }
 
@@ -2897,7 +2895,7 @@ static HRESULT WINAPI IPropertySetStorage_fnOpen(
     WCHAR name[CCH_MAX_PROPSTG_NAME + 1];
     HRESULT r;
 
-    TRACE("%p %s %08x %p\n", This, debugstr_guid(rfmtid), grfMode, ppprstg);
+    TRACE("%p, %s, %#lx, %p.\n", This, debugstr_guid(rfmtid), grfMode, ppprstg);
 
     /* be picky */
     if (grfMode != (STGM_READWRITE|STGM_SHARE_EXCLUSIVE) &&
@@ -2926,7 +2924,7 @@ static HRESULT WINAPI IPropertySetStorage_fnOpen(
     IStream_Release( stm );
 
 end:
-    TRACE("returning 0x%08x\n", r);
+    TRACE("returning %#lx\n", r);
     return r;
 }
 
@@ -3205,7 +3203,7 @@ SERIALIZEDPROPERTYVALUE* WINAPI StgConvertVariantToProperty(const PROPVARIANT *p
     USHORT CodePage, SERIALIZEDPROPERTYVALUE *pprop, ULONG *pcb, PROPID pid,
     BOOLEAN fReserved, ULONG *pcIndirect)
 {
-    FIXME("%p,%d,%p,%p,%d,%d,%p\n", pvar, CodePage, pprop, pcb, pid, fReserved, pcIndirect);
+    FIXME("%p, %d, %p, %p, %ld, %d, %p.\n", pvar, CodePage, pprop, pcb, pid, fReserved, pcIndirect);
 
     return NULL;
 }
@@ -3217,7 +3215,7 @@ HRESULT WINAPI StgCreatePropStg(IUnknown *unk, REFFMTID fmt, const CLSID *clsid,
     IStream *stm;
     HRESULT r;
 
-    TRACE("%p %s %s %08x %d %p\n", unk, debugstr_guid(fmt), debugstr_guid(clsid), flags, reserved, prop_stg);
+    TRACE("%p, %s, %s, %#lx, %ld, %p.\n", unk, debugstr_guid(fmt), debugstr_guid(clsid), flags, reserved, prop_stg);
 
     if (!fmt || reserved)
     {
@@ -3251,7 +3249,7 @@ HRESULT WINAPI StgCreatePropStg(IUnknown *unk, REFFMTID fmt, const CLSID *clsid,
     }
 
 end:
-    TRACE("returning 0x%08x\n", r);
+    TRACE("returning %#lx\n", r);
     return r;
 }
 
@@ -3262,7 +3260,7 @@ HRESULT WINAPI StgOpenPropStg(IUnknown *unk, REFFMTID fmt, DWORD flags,
     IStream *stm;
     HRESULT r;
 
-    TRACE("%p %s %08x %d %p\n", unk, debugstr_guid(fmt), flags, reserved, prop_stg);
+    TRACE("%p, %s, %#lx, %ld, %p.\n", unk, debugstr_guid(fmt), flags, reserved, prop_stg);
 
     if (!fmt || reserved)
     {
@@ -3296,6 +3294,6 @@ HRESULT WINAPI StgOpenPropStg(IUnknown *unk, REFFMTID fmt, DWORD flags,
     }
 
 end:
-    TRACE("returning 0x%08x\n", r);
+    TRACE("returning %#lx\n", r);
     return r;
 }

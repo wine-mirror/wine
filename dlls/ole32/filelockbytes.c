@@ -189,7 +189,7 @@ static HRESULT WINAPI FileLockBytesImpl_ReadAt(
     LARGE_INTEGER offset;
     ULONG cbRead;
 
-    TRACE("(%p)-> %i %p %i %p\n",This, ulOffset.u.LowPart, pv, cb, pcbRead);
+    TRACE("%p, %ld, %p, %lu, %p.\n", iface, ulOffset.u.LowPart, pv, cb, pcbRead);
 
     /* verify a sane environment */
     if (!This) return E_FAIL;
@@ -244,7 +244,7 @@ static HRESULT WINAPI FileLockBytesImpl_WriteAt(
     LARGE_INTEGER offset;
     ULONG cbWritten;
 
-    TRACE("(%p)-> %i %p %i %p\n",This, ulOffset.u.LowPart, pv, cb, pcbWritten);
+    TRACE("%p, %ld, %p, %lu, %p.\n", iface, ulOffset.u.LowPart, pv, cb, pcbWritten);
 
     /* verify a sane environment */
     if (!This) return E_FAIL;
@@ -297,7 +297,7 @@ static HRESULT WINAPI FileLockBytesImpl_SetSize(ILockBytes* iface, ULARGE_INTEGE
     HRESULT hr = S_OK;
     LARGE_INTEGER newpos;
 
-    TRACE("new size %u\n", newSize.u.LowPart);
+    TRACE("new size %lu\n", newSize.u.LowPart);
 
     newpos.QuadPart = newSize.QuadPart;
     if (SetFilePointerEx(This->hfile, newpos, NULL, FILE_BEGIN))
@@ -316,7 +316,7 @@ static HRESULT get_lock_error(void)
     case ERROR_ACCESS_DENIED:  return STG_E_ACCESSDENIED; break;
     case ERROR_NOT_SUPPORTED:  return STG_E_INVALIDFUNCTION; break;
     default:
-        FIXME("no mapping for error %d\n", GetLastError());
+        FIXME("no mapping for error %ld\n", GetLastError());
         return STG_E_INVALIDFUNCTION;
     }
 }
@@ -328,7 +328,7 @@ static HRESULT WINAPI FileLockBytesImpl_LockRegion(ILockBytes* iface,
     OVERLAPPED ol;
     DWORD lock_flags = LOCKFILE_FAIL_IMMEDIATELY;
 
-    TRACE("ofs %u count %u flags %x\n", libOffset.u.LowPart, cb.u.LowPart, dwLockType);
+    TRACE("ofs %lu count %lu flags %lx\n", libOffset.u.LowPart, cb.u.LowPart, dwLockType);
 
     if (dwLockType & LOCK_WRITE)
         return STG_E_INVALIDFUNCTION;
@@ -351,7 +351,7 @@ static HRESULT WINAPI FileLockBytesImpl_UnlockRegion(ILockBytes* iface,
     FileLockBytesImpl* This = impl_from_ILockBytes(iface);
     OVERLAPPED ol;
 
-    TRACE("ofs %u count %u flags %x\n", libOffset.u.LowPart, cb.u.LowPart, dwLockType);
+    TRACE("ofs %lu count %lu flags %lx\n", libOffset.u.LowPart, cb.u.LowPart, dwLockType);
 
     if (dwLockType & LOCK_WRITE)
         return STG_E_INVALIDFUNCTION;

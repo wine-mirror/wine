@@ -133,7 +133,7 @@ static ULONG WINAPI ClassMoniker_Release(IMoniker* iface)
     ClassMoniker *moniker = impl_from_IMoniker(iface);
     ULONG ref = InterlockedDecrement(&moniker->ref);
 
-    TRACE("%p refcount %d\n", iface, ref);
+    TRACE("%p, refcount %lu.\n", iface, ref);
 
     if (!ref)
     {
@@ -190,7 +190,7 @@ static HRESULT WINAPI ClassMoniker_Load(IMoniker *iface, IStream *stream)
         heap_free(moniker->data);
         if (!(moniker->data = heap_alloc(moniker->header.data_len)))
         {
-            WARN("Failed to allocate moniker data of size %u.\n", moniker->header.data_len);
+            WARN("Failed to allocate moniker data of size %lu.\n", moniker->header.data_len);
             moniker->header.data_len = 0;
             return E_OUTOFMEMORY;
         }
@@ -278,16 +278,10 @@ static HRESULT WINAPI ClassMoniker_BindToStorage(IMoniker* iface,
     return IMoniker_BindToObject(iface, pbc, pmkToLeft, riid, ppvResult);
 }
 
-/******************************************************************************
- *        ClassMoniker_Reduce
- ******************************************************************************/
-static HRESULT WINAPI ClassMoniker_Reduce(IMoniker* iface,
-                                      IBindCtx* pbc,
-                                      DWORD dwReduceHowFar,
-                                      IMoniker** ppmkToLeft,
-                                      IMoniker** ppmkReduced)
+static HRESULT WINAPI ClassMoniker_Reduce(IMoniker* iface, IBindCtx *pbc,
+        DWORD dwReduceHowFar, IMoniker **ppmkToLeft, IMoniker **ppmkReduced)
 {
-    TRACE("(%p,%p,%d,%p,%p)\n",iface,pbc,dwReduceHowFar,ppmkToLeft,ppmkReduced);
+    TRACE("%p, %p, %ld, %p, %p.\n", iface, pbc, dwReduceHowFar, ppmkToLeft, ppmkReduced);
 
     if (!ppmkReduced)
         return E_POINTER;
@@ -547,7 +541,7 @@ static HRESULT WINAPI ClassMonikerROTData_GetComparisonData(IROTData* iface,
 {
     ClassMoniker *This = impl_from_IROTData(iface);
 
-    TRACE("(%p, %u, %p)\n", pbData, cbMax, pcbData);
+    TRACE("%p, %p, %lu, %p.\n", iface, pbData, cbMax, pcbData);
 
     *pcbData = 2*sizeof(CLSID);
     if (cbMax < *pcbData)
