@@ -677,11 +677,6 @@ static const IPinVtbl source_vtbl =
     source_NewSegment,
 };
 
-HRESULT WINAPI BaseOutputPinImpl_InitAllocator(struct strmbase_source *This, IMemAllocator **pMemAlloc)
-{
-    return CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER, &IID_IMemAllocator, (LPVOID*)pMemAlloc);
-}
-
 HRESULT WINAPI BaseOutputPinImpl_DecideAllocator(struct strmbase_source *This,
         IMemInputPin *pPin, IMemAllocator **pAlloc)
 {
@@ -690,8 +685,8 @@ HRESULT WINAPI BaseOutputPinImpl_DecideAllocator(struct strmbase_source *This,
     hr = IMemInputPin_GetAllocator(pPin, pAlloc);
 
     if (hr == VFW_E_NO_ALLOCATOR)
-        /* Input pin provides no allocator, use standard memory allocator */
-        hr = BaseOutputPinImpl_InitAllocator(This, pAlloc);
+        hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL,
+                CLSCTX_INPROC_SERVER, &IID_IMemAllocator, (void **)pAlloc);
 
     if (SUCCEEDED(hr))
     {
