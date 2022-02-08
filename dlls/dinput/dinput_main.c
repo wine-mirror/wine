@@ -137,7 +137,7 @@ static void dinput_device_internal_unacquire( IDirectInputDevice8W *iface )
     LeaveCriticalSection( &impl->crit );
 }
 
-static HRESULT dinput_create( REFIID riid, LPVOID *ppDI, struct dinput **out )
+static HRESULT dinput_create( REFIID iid, void **out, struct dinput **out_impl )
 {
     struct dinput *impl = calloc( 1, sizeof(struct dinput) );
     HRESULT hr;
@@ -150,48 +150,46 @@ static HRESULT dinput_create( REFIID riid, LPVOID *ppDI, struct dinput **out )
     impl->IDirectInput8W_iface.lpVtbl = &dinput8_vtbl;
     impl->IDirectInputJoyConfig8_iface.lpVtbl = &joy_config_vtbl;
 
-    hr = IDirectInput_QueryInterface( &impl->IDirectInput7A_iface, riid, ppDI );
+    hr = IDirectInput_QueryInterface( &impl->IDirectInput7A_iface, iid, out );
     if (FAILED(hr))
     {
         free( impl );
         return hr;
     }
 
-    if (out) *out = impl;
+    if (out_impl) *out_impl = impl;
     return DI_OK;
 }
 
 /******************************************************************************
  *	DirectInputCreateEx (DINPUT.@)
  */
-HRESULT WINAPI DirectInputCreateEx(
-	HINSTANCE hinst, DWORD dwVersion, REFIID riid, LPVOID *ppDI,
-	LPUNKNOWN punkOuter)
+HRESULT WINAPI DirectInputCreateEx( HINSTANCE hinst, DWORD version, REFIID iid, void **out, IUnknown *outer )
 {
     struct dinput *impl;
     HRESULT hr;
 
-    TRACE("(%p,%04x,%s,%p,%p)\n", hinst, dwVersion, debugstr_guid(riid), ppDI, punkOuter);
+    TRACE( "hinst %p, version %#x, iid %s, out %p, outer %p.\n", hinst, version, debugstr_guid( iid ), out, outer );
 
-    if (IsEqualGUID( &IID_IDirectInputA,  riid ) ||
-        IsEqualGUID( &IID_IDirectInput2A, riid ) ||
-        IsEqualGUID( &IID_IDirectInput7A, riid ) ||
-        IsEqualGUID( &IID_IDirectInputW,  riid ) ||
-        IsEqualGUID( &IID_IDirectInput2W, riid ) ||
-        IsEqualGUID( &IID_IDirectInput7W, riid ))
+    if (IsEqualGUID( &IID_IDirectInputA,  iid ) ||
+        IsEqualGUID( &IID_IDirectInput2A, iid ) ||
+        IsEqualGUID( &IID_IDirectInput7A, iid ) ||
+        IsEqualGUID( &IID_IDirectInputW,  iid ) ||
+        IsEqualGUID( &IID_IDirectInput2W, iid ) ||
+        IsEqualGUID( &IID_IDirectInput7W, iid ))
     {
-        hr = dinput_create( riid, ppDI, &impl );
+        hr = dinput_create( iid, out, &impl );
         if (FAILED(hr))
             return hr;
     }
     else
         return DIERR_NOINTERFACE;
 
-    hr = IDirectInput_Initialize( &impl->IDirectInput7A_iface, hinst, dwVersion );
+    hr = IDirectInput_Initialize( &impl->IDirectInput7A_iface, hinst, version );
     if (FAILED(hr))
     {
         IDirectInput_Release( &impl->IDirectInput7A_iface );
-        *ppDI = NULL;
+        *out = NULL;
         return hr;
     }
 
@@ -201,17 +199,14 @@ HRESULT WINAPI DirectInputCreateEx(
 /******************************************************************************
  *	DirectInput8Create (DINPUT8.@)
  */
-HRESULT WINAPI DECLSPEC_HOTPATCH DirectInput8Create(HINSTANCE hinst,
-    DWORD version, REFIID iid, void **out, IUnknown *outer)
+HRESULT WINAPI DECLSPEC_HOTPATCH DirectInput8Create( HINSTANCE hinst, DWORD version, REFIID iid, void **out, IUnknown *outer )
 {
     struct dinput *impl;
     HRESULT hr;
 
-    TRACE("hinst %p, version %#x, iid %s, out %p, outer %p.\n",
-        hinst, version, debugstr_guid(iid), out, outer);
+    TRACE( "hinst %p, version %#x, iid %s, out %p, outer %p.\n", hinst, version, debugstr_guid( iid ), out, outer );
 
-    if (!out)
-        return E_POINTER;
+    if (!out) return E_POINTER;
 
     if (!IsEqualGUID(&IID_IDirectInput8A, iid) &&
         !IsEqualGUID(&IID_IDirectInput8W, iid) &&
@@ -258,27 +253,27 @@ HRESULT WINAPI DECLSPEC_HOTPATCH DirectInput8Create(HINSTANCE hinst,
 /******************************************************************************
  *	DirectInputCreateA (DINPUT.@)
  */
-HRESULT WINAPI DECLSPEC_HOTPATCH DirectInputCreateA(HINSTANCE hinst, DWORD dwVersion, LPDIRECTINPUTA *ppDI, LPUNKNOWN punkOuter)
+HRESULT WINAPI DECLSPEC_HOTPATCH DirectInputCreateA( HINSTANCE hinst, DWORD version, IDirectInputA **out, IUnknown *outer )
 {
-    return DirectInputCreateEx(hinst, dwVersion, &IID_IDirectInput7A, (LPVOID *)ppDI, punkOuter);
+    return DirectInputCreateEx( hinst, version, &IID_IDirectInput7A, (void **)out, outer );
 }
 
 /******************************************************************************
  *	DirectInputCreateW (DINPUT.@)
  */
-HRESULT WINAPI DECLSPEC_HOTPATCH DirectInputCreateW(HINSTANCE hinst, DWORD dwVersion, LPDIRECTINPUTW *ppDI, LPUNKNOWN punkOuter)
+HRESULT WINAPI DECLSPEC_HOTPATCH DirectInputCreateW( HINSTANCE hinst, DWORD version, IDirectInputW **out, IUnknown *outer )
 {
-    return DirectInputCreateEx(hinst, dwVersion, &IID_IDirectInput7W, (LPVOID *)ppDI, punkOuter);
+    return DirectInputCreateEx( hinst, version, &IID_IDirectInput7W, (void **)out, outer );
 }
 
-static DWORD diactionformat_priorityW(LPDIACTIONFORMATW lpdiaf, DWORD genre)
+static DWORD diactionformat_priorityW( DIACTIONFORMATW *action_format, DWORD genre )
 {
     int i;
     DWORD priorityFlags = 0;
 
     /* If there's at least one action for the device it's priority 1 */
-    for(i=0; i < lpdiaf->dwNumActions; i++)
-        if ((lpdiaf->rgoAction[i].dwSemantic & genre) == genre)
+    for (i = 0; i < action_format->dwNumActions; i++)
+        if ((action_format->rgoAction[i].dwSemantic & genre) == genre)
             priorityFlags |= DIEDBS_MAPPEDPRI1;
 
     return priorityFlags;
@@ -1454,8 +1449,10 @@ void check_dinput_events(void)
     MsgWaitForMultipleObjectsEx(0, NULL, 0, QS_ALLINPUT, 0);
 }
 
-BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved)
+BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, void *reserved )
 {
+    TRACE( "inst %p, reason %u, reserved %p.\n", inst, reason, reserved );
+
     switch(reason)
     {
       case DLL_PROCESS_ATTACH:
