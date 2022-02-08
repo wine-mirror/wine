@@ -1290,11 +1290,10 @@ __int64 CDECL _lseeki64(int fd, __int64 offset, int whence)
     return -1;
   }
 
-  TRACE(":fd (%d) to %s pos %s\n",
-        fd,wine_dbgstr_longlong(offset),
-        (whence==SEEK_SET)?"SEEK_SET":
-        (whence==SEEK_CUR)?"SEEK_CUR":
-        (whence==SEEK_END)?"SEEK_END":"UNKNOWN");
+  TRACE(":fd (%d) to %#I64x pos %s\n",
+          fd, offset, (whence == SEEK_SET) ? "SEEK_SET" :
+          (whence == SEEK_CUR) ? "SEEK_CUR" :
+          (whence == SEEK_END) ? "SEEK_END" : "UNKNOWN");
 
   /* The MoleBox protection scheme expects msvcrt to use SetFilePointer only,
    * so a LARGE_INTEGER offset cannot be passed directly via SetFilePointerEx. */
@@ -1468,7 +1467,7 @@ int CDECL _chsize_s(int fd, __int64 size)
     __int64 cur, pos;
     BOOL ret = FALSE;
 
-    TRACE("(fd=%d, size=%s)\n", fd, wine_dbgstr_longlong(size));
+    TRACE("(fd=%d, size=%#I64x)\n", fd, size);
 
     if (!MSVCRT_CHECK_PMT(size >= 0)) return EINVAL;
 
@@ -3061,9 +3060,8 @@ int CDECL _stat64(const char* path, struct _stat64 * buf)
   buf->st_atime = dw;
   RtlTimeToSecondsSince1970((LARGE_INTEGER *)&hfi.ftLastWriteTime, &dw);
   buf->st_mtime = buf->st_ctime = dw;
-  TRACE("%d %d 0x%08x%08x %d %d %d\n", buf->st_mode,buf->st_nlink,
-        (int)(buf->st_size >> 32),(int)buf->st_size,
-        (int)buf->st_atime,(int)buf->st_mtime,(int)buf->st_ctime);
+  TRACE("%d %d %#I64x %I64d %I64d %I64d\n", buf->st_mode, buf->st_nlink,
+          buf->st_size, buf->st_atime, buf->st_mtime, buf->st_ctime);
   return 0;
 }
 
@@ -3212,9 +3210,8 @@ int CDECL _wstat64(const wchar_t* path, struct _stat64 * buf)
   buf->st_atime = dw;
   RtlTimeToSecondsSince1970((LARGE_INTEGER *)&hfi.ftLastWriteTime, &dw);
   buf->st_mtime = buf->st_ctime = dw;
-  TRACE("%d %d 0x%08x%08x %d %d %d\n", buf->st_mode,buf->st_nlink,
-        (int)(buf->st_size >> 32),(int)buf->st_size,
-        (int)buf->st_atime,(int)buf->st_mtime,(int)buf->st_ctime);
+  TRACE("%d %d %#I64x %I64d %I64d %I64d\n", buf->st_mode, buf->st_nlink,
+          buf->st_size, buf->st_atime, buf->st_mtime, buf->st_ctime);
   return 0;
 }
 
@@ -5272,7 +5269,7 @@ int CDECL _stdio_common_vfprintf(unsigned __int64 options, FILE *file, const cha
                                         _locale_t locale, va_list valist)
 {
     if (options & ~UCRTBASE_PRINTF_MASK)
-        FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
+        FIXME("options %#I64x not handled\n", options);
 
     return vfprintf_helper(options & UCRTBASE_PRINTF_MASK, file, format, locale, valist);
 }
@@ -5284,7 +5281,7 @@ int CDECL __stdio_common_vfprintf_p(unsigned __int64 options, FILE *file, const 
                                           _locale_t locale, va_list valist)
 {
     if (options & ~UCRTBASE_PRINTF_MASK)
-        FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
+        FIXME("options %#I64x not handled\n", options);
 
     return vfprintf_helper((options & UCRTBASE_PRINTF_MASK) | MSVCRT_PRINTF_POSITIONAL_PARAMS
             | MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER, file, format, locale, valist);
@@ -5298,7 +5295,7 @@ int CDECL __stdio_common_vfprintf_s(unsigned __int64 options, FILE *file, const 
                                           _locale_t locale, va_list valist)
 {
     if (options & ~UCRTBASE_PRINTF_MASK)
-        FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
+        FIXME("options %#I64x not handled\n", options);
 
     return vfprintf_helper((options & UCRTBASE_PRINTF_MASK) | MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER,
             file, format, locale, valist);
@@ -5311,7 +5308,7 @@ int CDECL __stdio_common_vfwprintf(unsigned __int64 options, FILE *file, const w
                                          _locale_t locale, va_list valist)
 {
     if (options & ~UCRTBASE_PRINTF_MASK)
-        FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
+        FIXME("options %#I64x not handled\n", options);
 
     return vfwprintf_helper(options & UCRTBASE_PRINTF_MASK, file, format, locale, valist);
 }
@@ -5323,7 +5320,7 @@ int CDECL __stdio_common_vfwprintf_p(unsigned __int64 options, FILE *file, const
                                            _locale_t locale, va_list valist)
 {
     if (options & ~UCRTBASE_PRINTF_MASK)
-        FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
+        FIXME("options %#I64x not handled\n", options);
 
     return vfwprintf_helper((options & UCRTBASE_PRINTF_MASK) | MSVCRT_PRINTF_POSITIONAL_PARAMS
             | MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER, file, format, locale, valist);
@@ -5337,7 +5334,7 @@ int CDECL __stdio_common_vfwprintf_s(unsigned __int64 options, FILE *file, const
                                            _locale_t locale, va_list valist)
 {
     if (options & ~UCRTBASE_PRINTF_MASK)
-        FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
+        FIXME("options %#I64x not handled\n", options);
 
     return vfwprintf_helper((options & UCRTBASE_PRINTF_MASK) | MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER,
             file, format, locale, valist);

@@ -674,7 +674,7 @@ int CDECL __stdio_common_vsscanf(unsigned __int64 options,
      * scanf. LEGACY_MSVCRT_COMPATIBILITY affects parsing of nan/inf,
      * but parsing of those isn't implemented at all yet. */
     if (options & ~UCRTBASE_SCANF_MASK)
-        FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
+        FIXME("options %#I64x not handled\n", options);
     if (options & _CRT_INTERNAL_SCANF_SECURECRT)
         return vsnscanf_s_l(input, length, format, locale, valist);
     else
@@ -694,7 +694,7 @@ int CDECL __stdio_common_vswscanf(unsigned __int64 options,
      * scanf. LEGACY_MSVCRT_COMPATIBILITY affects parsing of nan/inf,
      * but parsing of those isn't implemented at all yet. */
     if (options & ~UCRTBASE_SCANF_MASK)
-        FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
+        FIXME("options %#I64x not handled\n", options);
     if (options & _CRT_INTERNAL_SCANF_SECURECRT)
         return vsnwscanf_s_l(input, length, format, locale, valist);
     else
@@ -711,7 +711,7 @@ int CDECL __stdio_common_vfscanf(unsigned __int64 options,
                                        va_list valist)
 {
     if (options & ~_CRT_INTERNAL_SCANF_SECURECRT)
-        FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
+        FIXME("options %#I64x not handled\n", options);
     if (options & _CRT_INTERNAL_SCANF_SECURECRT)
         return vfscanf_s_l(file, format, locale, valist);
     else
@@ -728,7 +728,7 @@ int CDECL __stdio_common_vfwscanf(unsigned __int64 options,
                                         va_list valist)
 {
     if (options & ~_CRT_INTERNAL_SCANF_SECURECRT)
-        FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
+        FIXME("options %#I64x not handled\n", options);
     if (options & _CRT_INTERNAL_SCANF_SECURECRT)
         return vfwscanf_s_l(file, format, locale, valist);
     else

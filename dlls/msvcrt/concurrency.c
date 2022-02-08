@@ -2731,7 +2731,7 @@ void __cdecl Concurrency_wait(unsigned int time)
 /* ?_Trace_agents@Concurrency@@YAXW4Agents_EventType@1@_JZZ */
 void WINAPIV _Trace_agents(/*enum Concurrency::Agents_EventType*/int type, __int64 id, ...)
 {
-    FIXME("(%d %s)\n", type, wine_dbgstr_longlong(id));
+    FIXME("(%d %#I64x)\n", type, id);
 }
 #endif
 

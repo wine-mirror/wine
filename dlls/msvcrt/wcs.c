@@ -919,7 +919,7 @@ int CDECL __stdio_common_vsprintf( unsigned __int64 options, char *str, size_t l
     int ret;
 
     if (options & ~UCRTBASE_PRINTF_MASK)
-        FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
+        FIXME("options %#I64x not handled\n", options);
     ret = pf_printf_a(puts_clbk_str_c99_a,
             &ctx, format, (_locale_t)locale, options & UCRTBASE_PRINTF_MASK, arg_clbk_valist, NULL, &valist);
     puts_clbk_str_a(&ctx, 1, &nullbyte);
@@ -1110,7 +1110,7 @@ int CDECL __stdio_common_vsnprintf_s( unsigned __int64 options,
         const char *format, _locale_t locale, va_list valist )
 {
     if (options & ~UCRTBASE_PRINTF_MASK)
-        FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
+        FIXME("options %#I64x not handled\n", options);
     return vsnprintf_s_l_opt(str, sizeOfBuffer, count, format, options & UCRTBASE_PRINTF_MASK, locale, valist);
 }
 
@@ -1122,7 +1122,7 @@ int CDECL __stdio_common_vsnwprintf_s( unsigned __int64 options,
         const wchar_t *format, _locale_t locale, va_list valist )
 {
     if (options & ~UCRTBASE_PRINTF_MASK)
-        FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
+        FIXME("options %#I64x not handled\n", options);
     return vsnwprintf_s_l_opt(str, sizeOfBuffer, count, format, options & UCRTBASE_PRINTF_MASK, locale, valist);
 }
 
@@ -1144,7 +1144,7 @@ int CDECL __stdio_common_vsprintf_s( unsigned __int64 options,
         _locale_t locale, va_list valist )
 {
     if (options & ~UCRTBASE_PRINTF_MASK)
-        FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
+        FIXME("options %#I64x not handled\n", options);
     return vsnprintf_s_l_opt(str, INT_MAX, count, format, options & UCRTBASE_PRINTF_MASK, locale, valist);
 }
 
@@ -1419,7 +1419,7 @@ int CDECL __stdio_common_vswprintf_p( unsigned __int64 options,
         _locale_t locale, va_list valist )
 {
     if (options & ~UCRTBASE_PRINTF_MASK)
-        FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
+        FIXME("options %#I64x not handled\n", options);
     return vswprintf_p_l_opt(str, count, format, options & UCRTBASE_PRINTF_MASK, locale, valist);
 }
 #endif
@@ -1532,7 +1532,7 @@ int CDECL __stdio_common_vswprintf( unsigned __int64 options,
     int ret;
 
     if (options & ~UCRTBASE_PRINTF_MASK)
-        FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
+        FIXME("options %#I64x not handled\n", options);
     ret = pf_printf_w(puts_clbk_str_c99_w,
             &ctx, format, locale, options & UCRTBASE_PRINTF_MASK, arg_clbk_valist, NULL, &valist);
     puts_clbk_str_w(&ctx, 1, L"");
@@ -1795,7 +1795,7 @@ int CDECL __stdio_common_vsprintf_p(unsigned __int64 options, char *buffer, size
         const char *format, _locale_t locale, va_list args)
 {
     if (options & ~UCRTBASE_PRINTF_MASK)
-        FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
+        FIXME("options %#I64x not handled\n", options);
     return vsprintf_p_l_opt(buffer, length, format, options & UCRTBASE_PRINTF_MASK, locale, args);
 }
 #endif

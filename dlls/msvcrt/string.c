@@ -377,8 +377,8 @@ int fpnum_double(struct fpnum *fp, double *d)
         return 0;
     }
 
-    TRACE("%c %s *2^%d (round %d)\n", fp->sign == -1 ? '-' : '+',
-            wine_dbgstr_longlong(fp->m), fp->exp, fp->mod);
+    TRACE("%c %#I64x *2^%d (round %d)\n", fp->sign == -1 ? '-' : '+',
+            fp->m, fp->exp, fp->mod);
     if (!fp->m)
     {
         *d = fp->sign * 0.0;
@@ -467,7 +467,7 @@ int fpnum_double(struct fpnum *fp, double *d)
     bits |= (ULONGLONG)fp->exp << (MANT_BITS - 1);
     bits |= fp->m & (((ULONGLONG)1 << (MANT_BITS - 1)) - 1);
 
-    TRACE("returning %s\n", wine_dbgstr_longlong(bits));
+    TRACE("returning %#I64x\n", bits);
     *d = *(double*)&bits;
     return 0;
 }
@@ -496,8 +496,8 @@ int fpnum_ldouble(struct fpnum *fp, MSVCRT__LDOUBLE *d)
         return 0;
     }
 
-    TRACE("%c %s *2^%d (round %d)\n", fp->sign == -1 ? '-' : '+',
-            wine_dbgstr_longlong(fp->m), fp->exp, fp->mod);
+    TRACE("%c %#I64x *2^%d (round %d)\n", fp->sign == -1 ? '-' : '+',
+            fp->m, fp->exp, fp->mod);
     if (!fp->m)
     {
         d->x80[0] = 0;
