@@ -56,6 +56,7 @@ enum property_type
 
 struct window
 {
+    struct object    obj;             /* object header */
     struct window   *parent;          /* parent window */
     user_handle_t    owner;           /* owner of this window */
     struct list      children;        /* list of children in Z-order */
@@ -96,6 +97,33 @@ struct window
     char            *extra_bytes;     /* extra bytes storage */
 };
 
+static void window_dump( struct object *obj, int verbose );
+static void window_destroy( struct object *obj );
+
+static const struct object_ops window_ops =
+{
+    sizeof(struct window),    /* size */
+    &no_type,                 /* type */
+    window_dump,              /* dump */
+    no_add_queue,             /* add_queue */
+    NULL,                     /* remove_queue */
+    NULL,                     /* signaled */
+    NULL,                     /* satisfied */
+    no_signal,                /* signal */
+    no_get_fd,                /* get_fd */
+    default_map_access,       /* map_access */
+    default_get_sd,           /* get_sd */
+    default_set_sd,           /* set_sd */
+    no_get_full_name,         /* get_full_name */
+    no_lookup_name,           /* lookup_name */
+    no_link_name,             /* link_name */
+    NULL,                     /* unlink_name */
+    no_open_file,             /* open_file */
+    no_kernel_obj_list,       /* get_kernel_obj_list */
+    no_close_handle,          /* close_handle */
+    window_destroy            /* destroy */
+};
+
 /* flags that can be set by the client */
 #define PAINT_HAS_SURFACE        SET_WINPOS_PAINT_SURFACE
 #define PAINT_HAS_PIXEL_FORMAT   SET_WINPOS_PIXEL_FORMAT
@@ -128,6 +156,31 @@ static struct window *taskman_window;
 #define WINPTR_BOTTOM    ((struct window *)2L)
 #define WINPTR_TOPMOST   ((struct window *)3L)
 #define WINPTR_NOTOPMOST ((struct window *)4L)
+
+static void window_dump( struct object *obj, int verbose )
+{
+    struct window *win = (struct window *)obj;
+    assert( obj->ops == &window_ops );
+    fprintf( stderr, "window %p handle %x\n", win, win->handle );
+}
+
+static void window_destroy( struct object *obj )
+{
+    struct window *win = (struct window *)obj;
+
+    assert( !win->handle );
+
+    if (win->win_region) free_region( win->win_region );
+    if (win->update_region) free_region( win->update_region );
+    if (win->class) release_class( win->class );
+    free( win->text );
+
+    if (win->nb_extra_bytes)
+    {
+        memset( win->extra_bytes, 0x55, win->nb_extra_bytes );
+        free( win->extra_bytes );
+    }
+}
 
 /* retrieve a pointer to a window from its handle */
 static inline struct window *get_window( user_handle_t handle )
@@ -483,9 +536,7 @@ static struct window *create_window( struct window *parent, struct window *owner
         goto failed;
     }
 
-    if (!(win = mem_alloc( sizeof(*win) ))) goto failed;
-    if (!(win->handle = alloc_user_handle( win, USER_WINDOW ))) goto failed;
-
+    if (!(win = alloc_object( &window_ops ))) goto failed;
     win->parent         = parent;
     win->owner          = owner ? owner->handle : 0;
     win->thread         = current;
@@ -523,6 +574,7 @@ static struct window *create_window( struct window *parent, struct window *owner
         memset( win->extra_bytes, 0, extra_bytes );
         win->nb_extra_bytes = extra_bytes;
     }
+    if (!(win->handle = alloc_user_handle( win, USER_WINDOW ))) goto failed;
 
     /* if parent belongs to a different thread and the window isn't */
     /* top-level, attach the two threads */
@@ -559,9 +611,12 @@ static struct window *create_window( struct window *parent, struct window *owner
 failed:
     if (win)
     {
-        if (win->handle) free_user_handle( win->handle );
-        free( win->extra_bytes );
-        free( win );
+        if (win->handle)
+        {
+            free_user_handle( win->handle );
+            win->handle = 0;
+        }
+        release_object( win );
     }
     release_object( desktop );
     release_class( class );
@@ -578,7 +633,7 @@ void destroy_thread_windows( struct thread *thread )
     {
         if (win->thread != thread) continue;
         if (is_desktop_window( win )) detach_window_thread( win );
-        else destroy_window( win );
+        else free_window_handle( win );
     }
 }
 
@@ -1878,8 +1933,10 @@ static void set_window_region( struct window *win, struct region *region, int re
 
 
 /* destroy a window */
-void destroy_window( struct window *win )
+void free_window_handle( struct window *win )
 {
+    assert( win->handle );
+
     /* hide the window */
     if (is_visible(win))
     {
@@ -1897,9 +1954,9 @@ void destroy_window( struct window *win )
 
     /* destroy all children */
     while (!list_empty(&win->children))
-        destroy_window( LIST_ENTRY( list_head(&win->children), struct window, entry ));
+        free_window_handle( LIST_ENTRY( list_head(&win->children), struct window, entry ));
     while (!list_empty(&win->unlinked))
-        destroy_window( LIST_ENTRY( list_head(&win->unlinked), struct window, entry ));
+        free_window_handle( LIST_ENTRY( list_head(&win->unlinked), struct window, entry ));
 
     /* reset global window pointers, if the corresponding window is destroyed */
     if (win == shell_window) shell_window = NULL;
@@ -1908,7 +1965,6 @@ void destroy_window( struct window *win )
     if (win == taskman_window) taskman_window = NULL;
     free_hotkeys( win->desktop, win->handle );
     cleanup_clipboard_window( win->desktop, win->handle );
-    free_user_handle( win->handle );
     destroy_properties( win );
     list_remove( &win->entry );
     if (is_desktop_window(win))
@@ -1924,16 +1980,10 @@ void destroy_window( struct window *win )
     }
 
     detach_window_thread( win );
-    if (win->win_region) free_region( win->win_region );
-    if (win->update_region) free_region( win->update_region );
-    if (win->class) release_class( win->class );
-    free( win->text );
-    if (win->nb_extra_bytes)
-    {
-        memset( win->extra_bytes, 0x55, win->nb_extra_bytes );
-        free( win->extra_bytes );
-    }
-    free( win );
+
+    free_user_handle( win->handle );
+    win->handle = 0;
+    release_object( win );
 }
 
 
@@ -2016,7 +2066,7 @@ DECL_HANDLER(destroy_window)
     struct window *win = get_window( req->handle );
     if (win)
     {
-        if (!is_desktop_window(win)) destroy_window( win );
+        if (!is_desktop_window(win)) free_window_handle( win );
         else if (win->thread == current) detach_window_thread( win );
         else set_error( STATUS_ACCESS_DENIED );
     }
