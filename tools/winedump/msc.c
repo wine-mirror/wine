@@ -1319,15 +1319,13 @@ static void init_symbol_dumper(struct symbol_dumper* sd)
 {
     sd->depth = 0;
     sd->alloc = 16;
-    sd->stack = malloc(sd->alloc * sizeof(sd->stack[0]));
+    sd->stack = xmalloc(sd->alloc * sizeof(sd->stack[0]));
 }
 
 static void push_symbol_dumper(struct symbol_dumper* sd, const union codeview_symbol* sym, unsigned end)
 {
     if (!sd->stack) return;
-    if (sd->depth >= sd->alloc &&
-        !(sd->stack = realloc(sd->stack, (sd->alloc *= 2) * sizeof(sd->stack[0]))))
-        return;
+    if (sd->depth >= sd->alloc) sd->stack = xrealloc(sd->stack, (sd->alloc *= 2) * sizeof(sd->stack[0]));
     sd->stack[sd->depth].end = end;
     sd->stack[sd->depth].sym = sym;
     sd->depth++;

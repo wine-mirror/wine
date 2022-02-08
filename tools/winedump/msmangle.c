@@ -490,8 +490,6 @@ static char *demangle_datatype (char **str, compound_type *ct,
         iter++;
         /* Apply our constraints to the base type (struct xxx *) */
         stripped = xstrdup (sym->arg_text [0]);
-        if (!stripped)
-          fatal ("Out of Memory");
 
         /* If we're a reference, re-use the pointer already in the type */
         if (!(ct->flags & CT_BY_REFERENCE))

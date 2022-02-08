@@ -657,8 +657,8 @@ static void init_argv0_dir( const char *argv0 )
 #elif defined (__FreeBSD__) || defined(__DragonFly__)
     static int pathname[] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
     size_t path_size = PATH_MAX;
-    char *path = malloc( path_size );
-    if (path && !sysctl( pathname, sizeof(pathname)/sizeof(pathname[0]), path, &path_size, NULL, 0 ))
+    char *path = xmalloc( path_size );
+    if (!sysctl( pathname, sizeof(pathname)/sizeof(pathname[0]), path, &path_size, NULL, 0 ))
         dir = realpath( path, NULL );
     free( path );
 #else
@@ -1114,7 +1114,7 @@ static void build(struct options* opts)
      *    -xlll:  lll is the language (c, c++, etc.)
      */
 
-    output_file = strdup( opts->output_name ? opts->output_name : "a.out" );
+    output_file = xstrdup( opts->output_name ? opts->output_name : "a.out" );
 
     /* 'winegcc -o app xxx.exe.so' only creates the load script */
     if (opts->files.count == 1 && strendswith(opts->files.str[0], ".exe.so"))
@@ -1648,7 +1648,7 @@ int main(int argc, char **argv)
             switch (opts.args.str[i][1])
 	    {
 		case 'B':
-		    str = strdup(option_arg);
+		    str = xstrdup(option_arg);
 		    if (strendswith(str, "/")) str[strlen(str) - 1] = 0;
                     strarray_add(&opts.prefix, str);
                     raw_linker_arg = 1;
@@ -1824,17 +1824,17 @@ int main(int argc, char **argv)
                         {
                             if (!strcmp(Wl.str[j], "--image-base") && j < Wl.count - 1)
                             {
-                                opts.image_base = strdup( Wl.str[++j] );
+                                opts.image_base = xstrdup( Wl.str[++j] );
                                 continue;
                             }
                             if (!strcmp(Wl.str[j], "--section-alignment") && j < Wl.count - 1)
                             {
-                                opts.section_align = strdup( Wl.str[++j] );
+                                opts.section_align = xstrdup( Wl.str[++j] );
                                 continue;
                             }
                             if (!strcmp(Wl.str[j], "--file-alignment") && j < Wl.count - 1)
                             {
-                                opts.file_align = strdup( Wl.str[++j] );
+                                opts.file_align = xstrdup( Wl.str[++j] );
                                 continue;
                             }
                             if (!strcmp(Wl.str[j], "--large-address-aware"))
@@ -1849,12 +1849,12 @@ int main(int argc, char **argv)
                             }
                             if (!strcmp(Wl.str[j], "--subsystem") && j < Wl.count - 1)
                             {
-                                opts.subsystem = strdup( Wl.str[++j] );
+                                opts.subsystem = xstrdup( Wl.str[++j] );
                                 continue;
                             }
                             if (!strcmp(Wl.str[j], "--entry") && j < Wl.count - 1)
                             {
-                                opts.entry_point = strdup( Wl.str[++j] );
+                                opts.entry_point = xstrdup( Wl.str[++j] );
                                 continue;
                             }
                             if (!strcmp(Wl.str[j], "-delayload") && j < Wl.count - 1)
@@ -1864,7 +1864,7 @@ int main(int argc, char **argv)
                             }
                             if (!strcmp(Wl.str[j], "--debug-file") && j < Wl.count - 1)
                             {
-                                opts.debug_file = strdup( Wl.str[++j] );
+                                opts.debug_file = xstrdup( Wl.str[++j] );
                                 continue;
                             }
                             if (!strcmp(Wl.str[j], "--whole-archive") ||
@@ -1877,7 +1877,7 @@ int main(int argc, char **argv)
                             }
                             if (!strcmp(Wl.str[j], "--out-implib"))
                             {
-                                opts.out_implib = strdup( Wl.str[++j] );
+                                opts.out_implib = xstrdup( Wl.str[++j] );
                                 continue;
                             }
                             if (!strcmp(Wl.str[j], "-static")) linking = -1;

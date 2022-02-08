@@ -521,7 +521,7 @@ arg_list: arg					{ check_arg_attrs($1); $$ = append_var( NULL, $1 ); }
 	;
 
 args:	  arg_list
-	| arg_list ',' ELLIPSIS			{ $$ = append_var( $1, make_var(strdup("...")) ); }
+	| arg_list ',' ELLIPSIS			{ $$ = append_var( $1, make_var(xstrdup("...")) ); }
 	;
 
 /* split into two rules to get bison to resolve a tVOID conflict */
@@ -3107,9 +3107,9 @@ static void check_async_uuid(type_t *iface)
         if (args) LIST_FOR_EACH_ENTRY(arg, args, var_t, entry)
         {
             if (is_attr(arg->attrs, ATTR_IN) || !is_attr(arg->attrs, ATTR_OUT))
-                begin_args = append_var(begin_args, copy_var(arg, strdup(arg->name), arg_in_attrs));
+                begin_args = append_var(begin_args, copy_var(arg, xstrdup(arg->name), arg_in_attrs));
             if (is_attr(arg->attrs, ATTR_OUT))
-                finish_args = append_var(finish_args, copy_var(arg, strdup(arg->name), arg_out_attrs));
+                finish_args = append_var(finish_args, copy_var(arg, xstrdup(arg->name), arg_out_attrs));
         }
 
         begin_func = copy_var(func, strmake("Begin_%s", func->name), NULL);
