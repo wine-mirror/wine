@@ -7476,7 +7476,7 @@ ostreambuf_iterator_char* __thiscall num_put_char_do_put_long(const num_put *thi
     char tmp[48]; /* 22(8^22>2^64)*2(separators between every digit) + 3(strlen("+0x"))+1 */
     char fmt[7]; /* strlen("%+#lld")+1 */
 
-    TRACE("(%p %p %p %d %d)\n", this, ret, base, fill, v);
+    TRACE("(%p %p %p %d %ld)\n", this, ret, base, fill, v);
 
     return num_put_char__Iput(this, ret, dest, base, fill, tmp,
             sprintf(tmp, num_put_char__Ifmt(this, fmt, "ld", base->fmtfl), v));
@@ -7492,7 +7492,7 @@ DEFINE_THISCALL_WRAPPER(num_put_char_put_long, 32)
 ostreambuf_iterator_char* __thiscall num_put_char_put_long(const num_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, ios_base *base, char fill, LONG v)
 {
-    TRACE("(%p %p %p %d %d)\n", this, ret, base, fill, v);
+    TRACE("(%p %p %p %d %ld)\n", this, ret, base, fill, v);
     return call_num_put_char_do_put_long(this, ret, dest, base, fill, v);
 }
 
@@ -7518,7 +7518,7 @@ ostreambuf_iterator_char* __thiscall num_put_char_do_put_ulong(const num_put *th
     char tmp[48]; /* 22(8^22>2^64)*2(separators between every digit) + 3(strlen("+0x"))+1 */
     char fmt[7]; /* strlen("%+#lld")+1 */
 
-    TRACE("(%p %p %p %d %d)\n", this, ret, base, fill, v);
+    TRACE("(%p %p %p %d %ld)\n", this, ret, base, fill, v);
 
     return num_put_char__Iput(this, ret, dest, base, fill, tmp,
             sprintf(tmp, num_put_char__Ifmt(this, fmt, "lu", base->fmtfl), v));
@@ -7534,7 +7534,7 @@ DEFINE_THISCALL_WRAPPER(num_put_char_put_ulong, 32)
 ostreambuf_iterator_char* __thiscall num_put_char_put_ulong(const num_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, ios_base *base, char fill, ULONG v)
 {
-    TRACE("(%p %p %p %d %d)\n", this, ret, base, fill, v);
+    TRACE("(%p %p %p %d %ld)\n", this, ret, base, fill, v);
     return call_num_put_char_do_put_ulong(this, ret, dest, base, fill, v);
 }
 
@@ -8375,7 +8375,7 @@ ostreambuf_iterator_wchar* __thiscall num_put_wchar_do_put_long(const num_put *t
     char tmp[48]; /* 22(8^22>2^64)*2(separators between every digit) + 3(strlen("+0x"))+1 */
     char fmt[7]; /* strlen("%+#lld")+1 */
 
-    TRACE("(%p %p %p %d %d)\n", this, ret, base, fill, v);
+    TRACE("(%p %p %p %d %ld)\n", this, ret, base, fill, v);
 
     return num_put_wchar__Iput(this, ret, dest, base, fill, tmp,
             sprintf(tmp, num_put_wchar__Ifmt(this, fmt, "ld", base->fmtfl), v));
@@ -8394,7 +8394,7 @@ ostreambuf_iterator_wchar* __thiscall num_put_short_do_put_long(const num_put *t
     char tmp[48]; /* 22(8^22>2^64)*2(separators between every digit) + 3(strlen("+0x"))+1 */
     char fmt[7]; /* strlen("%+#lld")+1 */
 
-    TRACE("(%p %p %p %d %d)\n", this, ret, base, fill, v);
+    TRACE("(%p %p %p %d %ld)\n", this, ret, base, fill, v);
 
     return num_put_short__Iput(this, ret, dest, base, fill, tmp,
             sprintf(tmp, num_put_wchar__Ifmt(this, fmt, "ld", base->fmtfl), v));
@@ -8412,7 +8412,7 @@ DEFINE_THISCALL_WRAPPER(num_put_wchar_put_long, 32)
 ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_long(const num_put *this, ostreambuf_iterator_wchar *ret,
         ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, LONG v)
 {
-    TRACE("(%p %p %p %d %d)\n", this, ret, base, fill, v);
+    TRACE("(%p %p %p %d %ld)\n", this, ret, base, fill, v);
     return call_num_put_wchar_do_put_long(this, ret, dest, base, fill, v);
 }
 
@@ -8438,7 +8438,7 @@ ostreambuf_iterator_wchar* __thiscall num_put_wchar_do_put_ulong(const num_put *
     char tmp[48]; /* 22(8^22>2^64)*2(separators between every digit) + 3(strlen("+0x"))+1 */
     char fmt[7]; /* strlen("%+#lld")+1 */
 
-    TRACE("(%p %p %p %d %d)\n", this, ret, base, fill, v);
+    TRACE("(%p %p %p %d %ld)\n", this, ret, base, fill, v);
 
     return num_put_wchar__Iput(this, ret, dest, base, fill, tmp,
             sprintf(tmp, num_put_wchar__Ifmt(this, fmt, "lu", base->fmtfl), v));
@@ -8457,7 +8457,7 @@ ostreambuf_iterator_wchar* __thiscall num_put_short_do_put_ulong(const num_put *
     char tmp[48]; /* 22(8^22>2^64)*2(separators between every digit) + 3(strlen("+0x"))+1 */
     char fmt[7]; /* strlen("%+#lld")+1 */
 
-    TRACE("(%p %p %p %d %d)\n", this, ret, base, fill, v);
+    TRACE("(%p %p %p %d %ld)\n", this, ret, base, fill, v);
 
     return num_put_short__Iput(this, ret, dest, base, fill, tmp,
             sprintf(tmp, num_put_wchar__Ifmt(this, fmt, "lu", base->fmtfl), v));
@@ -8475,7 +8475,7 @@ DEFINE_THISCALL_WRAPPER(num_put_wchar_put_ulong, 32)
 ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_ulong(const num_put *this, ostreambuf_iterator_wchar *ret,
         ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, ULONG v)
 {
-    TRACE("(%p %p %p %d %d)\n", this, ret, base, fill, v);
+    TRACE("(%p %p %p %d %ld)\n", this, ret, base, fill, v);
     return call_num_put_wchar_do_put_ulong(this, ret, dest, base, fill, v);
 }
 

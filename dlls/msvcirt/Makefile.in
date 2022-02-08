@@ -1,5 +1,5 @@
 MODULE    = msvcirt.dll
-EXTRADEFS = -DWINE_NO_LONG_TYPES -D_MSVCIRT
+EXTRADEFS = -D_MSVCIRT
 PARENTSRC = ../msvcp90
 IMPORTS   = msvcrt
 

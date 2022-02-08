@@ -634,7 +634,7 @@ DEFINE_THISCALL_WRAPPER(streambuf_seekoff, 16)
 #define call_streambuf_seekoff(this, off, dir, mode) CALL_VTBL_FUNC(this, 12, streampos, (streambuf*, streamoff, ios_seek_dir, int), (this, off, dir, mode))
 streampos __thiscall streambuf_seekoff(streambuf *this, streamoff offset, ios_seek_dir dir, int mode)
 {
-    TRACE("(%p %d %d %d)\n", this, offset, dir, mode);
+    TRACE("(%p %ld %d %d)\n", this, offset, dir, mode);
     return EOF;
 }
 
@@ -643,7 +643,7 @@ streampos __thiscall streambuf_seekoff(streambuf *this, streamoff offset, ios_se
 DEFINE_THISCALL_WRAPPER(streambuf_seekpos, 12)
 streampos __thiscall streambuf_seekpos(streambuf *this, streampos pos, int mode)
 {
-    TRACE("(%p %d %d)\n", this, pos, mode);
+    TRACE("(%p %ld %d)\n", this, pos, mode);
     return call_streambuf_seekoff(this, pos, SEEKDIR_beg, mode);
 }
 
@@ -1181,7 +1181,7 @@ int __thiscall filebuf_overflow(filebuf *this, int c)
 DEFINE_THISCALL_WRAPPER(filebuf_seekoff, 16)
 streampos __thiscall filebuf_seekoff(filebuf *this, streamoff offset, ios_seek_dir dir, int mode)
 {
-    TRACE("(%p %d %d %d)\n", this, offset, dir, mode);
+    TRACE("(%p %ld %d %d)\n", this, offset, dir, mode);
     if (call_streambuf_sync(&this->base) == EOF)
         return EOF;
     return _lseek(this->fd, offset, dir);
@@ -1520,7 +1520,7 @@ streampos __thiscall strstreambuf_seekoff(strstreambuf *this, streamoff offset, 
 {
     char *base[3];
 
-    TRACE("(%p %d %d %d)\n", this, offset, dir, mode);
+    TRACE("(%p %ld %d %d)\n", this, offset, dir, mode);
 
     if ((unsigned int)dir > SEEKDIR_end || !(mode & (OPENMODE_in|OPENMODE_out)))
         return EOF;
@@ -1720,7 +1720,7 @@ int __thiscall stdiobuf_pbackfail(stdiobuf *this, int c)
 DEFINE_THISCALL_WRAPPER(stdiobuf_seekoff, 16)
 streampos __thiscall stdiobuf_seekoff(stdiobuf *this, streamoff offset, ios_seek_dir dir, int mode)
 {
-    TRACE("(%p %d %d %d)\n", this, offset, dir, mode);
+    TRACE("(%p %ld %d %d)\n", this, offset, dir, mode);
     call_streambuf_overflow(&this->base, EOF);
     if (fseek(this->file, offset, dir))
         return EOF;
@@ -2070,7 +2070,7 @@ LONG __thiscall ios_flags_set(ios *this, LONG flags)
 {
     LONG prev = this->flags;
 
-    TRACE("(%p %x)\n", this, flags);
+    TRACE("(%p %lx)\n", this, flags);
 
     this->flags = flags;
     return prev;
@@ -2225,7 +2225,7 @@ LONG __thiscall ios_setf(ios *this, LONG flags)
 {
     LONG prev = this->flags;
 
-    TRACE("(%p %x)\n", this, flags);
+    TRACE("(%p %lx)\n", this, flags);
 
     ios_lock(this);
     this->flags |= flags;
@@ -2240,7 +2240,7 @@ LONG __thiscall ios_setf_mask(ios *this, LONG flags, LONG mask)
 {
     LONG prev = this->flags;
 
-    TRACE("(%p %x %x)\n", this, flags, mask);
+    TRACE("(%p %lx %lx)\n", this, flags, mask);
 
     ios_lock(this);
     this->flags = (this->flags & (~mask)) | (flags & mask);
@@ -2311,7 +2311,7 @@ LONG __thiscall ios_unsetf(ios *this, LONG flags)
 {
     LONG prev = this->flags;
 
-    TRACE("(%p %x)\n", this, flags);
+    TRACE("(%p %lx)\n", this, flags);
 
     ios_lock(this);
     this->flags &= ~flags;
@@ -2607,7 +2607,7 @@ ostream* __thiscall ostream_seekp(ostream *this, streampos pos)
 {
     ios *base = ostream_get_ios(this);
 
-    TRACE("(%p %d)\n", this, pos);
+    TRACE("(%p %ld)\n", this, pos);
 
     ios_lockbuf(base);
     if (streambuf_seekpos(base->sb, pos, OPENMODE_out) == EOF)
@@ -2623,7 +2623,7 @@ ostream* __thiscall ostream_seekp_offset(ostream *this, streamoff off, ios_seek_
 {
     ios *base = ostream_get_ios(this);
 
-    TRACE("(%p %d %d)\n", this, off, dir);
+    TRACE("(%p %ld %d)\n", this, off, dir);
 
     ios_lockbuf(base);
     if (call_streambuf_seekoff(base->sb, off, dir, OPENMODE_out) == EOF)
@@ -3749,7 +3749,7 @@ istream* __thiscall istream_seekg(istream *this, streampos pos)
 {
     ios *base = istream_get_ios(this);
 
-    TRACE("(%p %d)\n", this, pos);
+    TRACE("(%p %ld)\n", this, pos);
 
     ios_lockbuf(base);
     if (streambuf_seekpos(base->sb, pos, OPENMODE_in) == EOF)
@@ -3765,7 +3765,7 @@ istream* __thiscall istream_seekg_offset(istream *this, streamoff off, ios_seek_
 {
     ios *base = istream_get_ios(this);
 
-    TRACE("(%p %d %d)\n", this, off, dir);
+    TRACE("(%p %ld %d)\n", this, off, dir);
 
     ios_lockbuf(base);
     if (call_streambuf_seekoff(base->sb, off, dir, OPENMODE_in) == EOF)
@@ -4010,7 +4010,7 @@ static LONG istream_internal_read_integer(istream *this, LONG min_value, LONG ma
     int num_base;
     LONG ret;
 
-    TRACE("(%p %d %d %d)\n", this, min_value, max_value, set_flag);
+    TRACE("(%p %ld %ld %d)\n", this, min_value, max_value, set_flag);
 
     num_base = istream_getint(this, buffer);
     errno = 0;
@@ -4035,7 +4035,7 @@ static ULONG istream_internal_read_unsigned_integer(istream *this, LONG min_valu
     int num_base;
     ULONG ret;
 
-    TRACE("(%p %d %u)\n", this, min_value, max_value);
+    TRACE("(%p %ld %lu)\n", this, min_value, max_value);
 
     num_base = istream_getint(this, buffer);
     errno = 0;

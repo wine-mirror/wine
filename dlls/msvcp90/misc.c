@@ -1224,13 +1224,13 @@ typedef int (__cdecl *_Thrd_start_t)(void*);
 
 int __cdecl _Thrd_equal(_Thrd_t a, _Thrd_t b)
 {
-    TRACE("(%p %u %p %u)\n", a.hnd, a.id, b.hnd, b.id);
+    TRACE("(%p %lu %p %lu)\n", a.hnd, a.id, b.hnd, b.id);
     return a.id == b.id;
 }
 
 int __cdecl _Thrd_lt(_Thrd_t a, _Thrd_t b)
 {
-    TRACE("(%p %u %p %u)\n", a.hnd, a.id, b.hnd, b.id);
+    TRACE("(%p %lu %p %lu)\n", a.hnd, a.id, b.hnd, b.id);
     return a.id < b.id;
 }
 
@@ -1258,7 +1258,7 @@ static _Thrd_t thread_current(void)
     }
     ret.id  = GetCurrentThreadId();
 
-    TRACE("(%p %u)\n", ret.hnd, ret.id);
+    TRACE("(%p %lu)\n", ret.hnd, ret.id);
     return ret;
 }
 
@@ -1284,7 +1284,7 @@ ULONGLONG __cdecl _Thrd_current(void)
 
 int __cdecl _Thrd_join(_Thrd_t thr, int *code)
 {
-    TRACE("(%p %u %p)\n", thr.hnd, thr.id, code);
+    TRACE("(%p %lu %p)\n", thr.hnd, thr.id, code);
     if (WaitForSingleObject(thr.hnd, INFINITE))
         return _THRD_ERROR;
 
@@ -1469,7 +1469,7 @@ void __thiscall _Pad__Release(_Pad *this)
 BOOL CDECL MSVCP__crtInitializeCriticalSectionEx(
         CRITICAL_SECTION *cs, DWORD spin_count, DWORD flags)
 {
-    TRACE("(%p %x %x)\n", cs, spin_count, flags);
+    TRACE("(%p %lx %lx)\n", cs, spin_count, flags);
     return InitializeCriticalSectionEx(cs, spin_count, flags);
 }
 
@@ -1479,7 +1479,7 @@ BOOL CDECL MSVCP__crtInitializeCriticalSectionEx(
 HANDLE CDECL MSVCP__crtCreateEventExW(
         SECURITY_ATTRIBUTES *attribs, LPCWSTR name, DWORD flags, DWORD access)
 {
-    TRACE("(%p %s 0x%08x 0x%08x)\n", attribs, debugstr_w(name), flags, access);
+    TRACE("(%p %s 0x%08lx 0x%08lx)\n", attribs, debugstr_w(name), flags, access);
     return CreateEventExW(attribs, name, flags, access);
 }
 
@@ -1514,7 +1514,7 @@ HANDLE CDECL MSVCP__crtCreateSemaphoreExW(
         SECURITY_ATTRIBUTES *attribs, LONG initial_count, LONG max_count, LPCWSTR name,
         DWORD flags, DWORD access)
 {
-    TRACE("(%p %d %d %s 0x%08x 0x%08x)\n", attribs, initial_count, max_count, debugstr_w(name),
+    TRACE("(%p %ld %ld %s 0x%08lx 0x%08lx)\n", attribs, initial_count, max_count, debugstr_w(name),
             flags, access);
     return CreateSemaphoreExW(attribs, initial_count, max_count, name, flags, access);
 }
@@ -1544,7 +1544,7 @@ VOID CDECL MSVCP__crtCloseThreadpoolTimer(TP_TIMER *timer)
 VOID CDECL MSVCP__crtSetThreadpoolTimer(TP_TIMER *timer,
         FILETIME *due_time, DWORD period, DWORD window_length)
 {
-    TRACE("(%p %p 0x%08x 0x%08x)\n", timer, due_time, period, window_length);
+    TRACE("(%p %p 0x%08lx 0x%08lx)\n", timer, due_time, period, window_length);
     return SetThreadpoolTimer(timer, due_time, period, window_length);
 }
 
@@ -1699,7 +1699,7 @@ const char* __cdecl _Syserror_map(int err)
 /* ?_Winerror_message@std@@YAKKPEADK@Z */
 ULONG __cdecl _Winerror_message(ULONG err, char *buf, ULONG size)
 {
-    TRACE("(%u %p %u)\n", err, buf, size);
+    TRACE("(%lu %p %lu)\n", err, buf, size);
 
     return FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
             NULL, err, 0, buf, size, NULL);
