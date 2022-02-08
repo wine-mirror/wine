@@ -165,7 +165,7 @@ HRESULT WINAPI DirectInputCreateEx( HINSTANCE hinst, DWORD version, REFIID iid, 
     IUnknown *unknown;
     HRESULT hr;
 
-    TRACE( "hinst %p, version %#x, iid %s, out %p, outer %p.\n", hinst, version, debugstr_guid( iid ), out, outer );
+    TRACE( "hinst %p, version %#lx, iid %s, out %p, outer %p.\n", hinst, version, debugstr_guid( iid ), out, outer );
 
     if (!IsEqualGUID( &IID_IDirectInputA, iid ) &&
         !IsEqualGUID( &IID_IDirectInputW, iid ) &&
@@ -198,7 +198,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH DirectInput8Create( HINSTANCE hinst, DWORD vers
     IUnknown *unknown;
     HRESULT hr;
 
-    TRACE( "hinst %p, version %#x, iid %s, out %p, outer %p.\n", hinst, version, debugstr_guid( iid ), out, outer );
+    TRACE( "hinst %p, version %#lx, iid %s, out %p, outer %p.\n", hinst, version, debugstr_guid( iid ), out, outer );
 
     if (!out) return E_POINTER;
 
@@ -295,7 +295,7 @@ static HRESULT WINAPI dinput7_EnumDevices( IDirectInput7W *iface, DWORD type, LP
 {
     struct dinput *impl = impl_from_IDirectInput7W( iface );
 
-    TRACE( "iface %p, type %#x, callback %p, context %p, flags %#x.\n", iface, type, callback, context, flags );
+    TRACE( "iface %p, type %#lx, callback %p, context %p, flags %#lx.\n", iface, type, callback, context, flags );
 
     if (!callback) return DIERR_INVALIDPARAM;
 
@@ -310,7 +310,7 @@ static ULONG WINAPI dinput7_AddRef( IDirectInput7W *iface )
 {
     struct dinput *impl = impl_from_IDirectInput7W( iface );
     ULONG ref = InterlockedIncrement( &impl->ref );
-    TRACE( "iface %p increasing refcount to %u.\n", iface, ref );
+    TRACE( "iface %p increasing refcount to %lu.\n", iface, ref );
     return ref;
 }
 
@@ -319,7 +319,7 @@ static ULONG WINAPI dinput7_Release( IDirectInput7W *iface )
     struct dinput *impl = impl_from_IDirectInput7W( iface );
     ULONG ref = InterlockedDecrement( &impl->ref );
 
-    TRACE( "iface %p decreasing refcount to %u.\n", iface, ref );
+    TRACE( "iface %p decreasing refcount to %lu.\n", iface, ref );
 
     if (ref == 0)
     {
@@ -380,7 +380,7 @@ static LRESULT WINAPI di_em_win_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
     UINT size = sizeof(ri);
     int rim = GET_RAWINPUT_CODE_WPARAM( wparam );
 
-    TRACE( "%p %d %lx %lx\n", hwnd, msg, wparam, lparam );
+    TRACE( "%p %d %Ix %Ix\n", hwnd, msg, wparam, lparam );
 
     if (msg == WM_INPUT && (rim == RIM_INPUT || rim == RIM_INPUTSINK))
     {
@@ -462,7 +462,7 @@ static HRESULT WINAPI dinput7_Initialize( IDirectInput7W *iface, HINSTANCE hinst
 {
     struct dinput *impl = impl_from_IDirectInput7W( iface );
 
-    TRACE( "iface %p, hinst %p, version %#x.\n", iface, hinst, version );
+    TRACE( "iface %p, hinst %p, version %#lx.\n", iface, hinst, version );
 
     if (!hinst)
         return DIERR_INVALIDPARAM;
@@ -505,7 +505,7 @@ static HRESULT WINAPI dinput7_RunControlPanel( IDirectInput7W *iface, HWND owner
     STARTUPINFOW si = {0};
     PROCESS_INFORMATION pi;
 
-    TRACE( "iface %p, owner %p, flags %#x.\n", iface, owner, flags );
+    TRACE( "iface %p, owner %p, flags %#lx.\n", iface, owner, flags );
 
     if (owner && !IsWindow( owner )) return E_HANDLE;
     if (flags) return DIERR_INVALIDPARAM;
@@ -604,7 +604,7 @@ static HRESULT WINAPI dinput8_EnumDevices( IDirectInput8W *iface, DWORD type, LP
     unsigned int i = 0;
     HRESULT hr;
 
-    TRACE( "iface %p, type %#x, callback %p, context %p, flags %#x.\n", iface, type, callback, context, flags );
+    TRACE( "iface %p, type %#lx, callback %p, context %p, flags %#lx.\n", iface, type, callback, context, flags );
 
     if (!callback) return DIERR_INVALIDPARAM;
 
@@ -662,7 +662,7 @@ static HRESULT WINAPI dinput8_Initialize( IDirectInput8W *iface, HINSTANCE hinst
 {
     struct dinput *impl = impl_from_IDirectInput8W( iface );
 
-    TRACE( "iface %p, hinst %p, version %#x.\n", iface, hinst, version );
+    TRACE( "iface %p, hinst %p, version %#lx.\n", iface, hinst, version );
 
     if (!hinst)
         return DIERR_INVALIDPARAM;
@@ -762,7 +762,7 @@ static HRESULT WINAPI dinput8_EnumDevicesBySemantics( IDirectInput8W *iface, con
     HRESULT hr;
     int remain;
 
-    FIXME( "iface %p, username %s, action_format %p, callback %p, context %p, flags %#x stub!\n",
+    FIXME( "iface %p, username %s, action_format %p, callback %p, context %p, flags %#lx stub!\n",
            iface, debugstr_w(username), action_format, callback, context, flags );
 
     didevi.dwSize = sizeof(didevi);
@@ -828,7 +828,7 @@ static HRESULT WINAPI dinput8_EnumDevicesBySemantics( IDirectInput8W *iface, con
 static HRESULT WINAPI dinput8_ConfigureDevices( IDirectInput8W *iface, LPDICONFIGUREDEVICESCALLBACK callback,
                                                 DICONFIGUREDEVICESPARAMSW *params, DWORD flags, void *context )
 {
-    FIXME( "iface %p, callback %p, params %p, flags %#x, context %p stub!\n", iface, callback,
+    FIXME( "iface %p, callback %p, params %p, flags %#lx, context %p stub!\n", iface, callback,
            params, flags, context );
 
     /* Call helper function in config.c to do the real work */
@@ -876,7 +876,7 @@ static HRESULT WINAPI joy_config_Unacquire( IDirectInputJoyConfig8 *iface )
 
 static HRESULT WINAPI joy_config_SetCooperativeLevel( IDirectInputJoyConfig8 *iface, HWND hwnd, DWORD flags )
 {
-    FIXME( "iface %p, hwnd %p, flags %#x stub!\n", iface, hwnd, flags );
+    FIXME( "iface %p, hwnd %p, flags %#lx stub!\n", iface, hwnd, flags );
     return E_NOTIMPL;
 }
 
@@ -895,14 +895,14 @@ static HRESULT WINAPI joy_config_EnumTypes( IDirectInputJoyConfig8 *iface, LPDIJ
 static HRESULT WINAPI joy_config_GetTypeInfo( IDirectInputJoyConfig8 *iface, const WCHAR *name,
                                               DIJOYTYPEINFO *info, DWORD flags )
 {
-    FIXME( "iface %p, name %s, info %p, flags %#x stub!\n", iface, debugstr_w(name), info, flags );
+    FIXME( "iface %p, name %s, info %p, flags %#lx stub!\n", iface, debugstr_w(name), info, flags );
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI joy_config_SetTypeInfo( IDirectInputJoyConfig8 *iface, const WCHAR *name,
                                               const DIJOYTYPEINFO *info, DWORD flags, WCHAR *new_name )
 {
-    FIXME( "iface %p, name %s, info %p, flags %#x, new_name %s stub!\n",
+    FIXME( "iface %p, name %s, info %p, flags %#lx, new_name %s stub!\n",
            iface, debugstr_w(name), info, flags, debugstr_w(new_name) );
     return E_NOTIMPL;
 }
@@ -933,7 +933,7 @@ static HRESULT WINAPI joy_config_GetConfig( IDirectInputJoyConfig8 *iface, UINT 
     struct find_device_from_index_params params = {.index = id};
     HRESULT hr;
 
-    FIXME( "iface %p, id %u, info %p, flags %#x stub!\n", iface, id, info, flags );
+    FIXME( "iface %p, id %u, info %p, flags %#lx stub!\n", iface, id, info, flags );
 
 #define X(x) if (flags & x) FIXME("\tflags |= "#x"\n");
     X(DIJC_GUIDINSTANCE)
@@ -952,7 +952,7 @@ static HRESULT WINAPI joy_config_GetConfig( IDirectInputJoyConfig8 *iface, UINT 
 
 static HRESULT WINAPI joy_config_SetConfig( IDirectInputJoyConfig8 *iface, UINT id, const DIJOYCONFIG *info, DWORD flags )
 {
-    FIXME( "iface %p, id %u, info %p, flags %#x stub!\n", iface, id, info, flags );
+    FIXME( "iface %p, id %u, info %p, flags %#lx stub!\n", iface, id, info, flags );
     return E_NOTIMPL;
 }
 
@@ -964,13 +964,13 @@ static HRESULT WINAPI joy_config_DeleteConfig( IDirectInputJoyConfig8 *iface, UI
 
 static HRESULT WINAPI joy_config_GetUserValues( IDirectInputJoyConfig8 *iface, DIJOYUSERVALUES *info, DWORD flags )
 {
-    FIXME( "iface %p, info %p, flags %#x stub!\n", iface, info, flags );
+    FIXME( "iface %p, info %p, flags %#lx stub!\n", iface, info, flags );
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI joy_config_SetUserValues( IDirectInputJoyConfig8 *iface, const DIJOYUSERVALUES *info, DWORD flags )
 {
-    FIXME( "iface %p, info %p, flags %#x stub!\n", iface, info, flags );
+    FIXME( "iface %p, info %p, flags %#lx stub!\n", iface, info, flags );
     return E_NOTIMPL;
 }
 
@@ -982,7 +982,7 @@ static HRESULT WINAPI joy_config_AddNewHardware( IDirectInputJoyConfig8 *iface, 
 
 static HRESULT WINAPI joy_config_OpenTypeKey( IDirectInputJoyConfig8 *iface, const WCHAR *name, DWORD security, HKEY *key )
 {
-    FIXME( "iface %p, name %s, security %u, key %p stub!\n", iface, debugstr_w(name), security, key );
+    FIXME( "iface %p, name %s, security %lu, key %p stub!\n", iface, debugstr_w(name), security, key );
     return E_NOTIMPL;
 }
 
@@ -1150,13 +1150,13 @@ static LRESULT CALLBACK LL_hook_proc( int code, WPARAM wparam, LPARAM lparam )
     EnterCriticalSection( &dinput_hook_crit );
     LIST_FOR_EACH_ENTRY( impl, &acquired_mouse_list, struct dinput_device, entry )
     {
-        TRACE( "calling dinput_mouse_hook (%p %lx %lx)\n", impl, wparam, lparam );
+        TRACE( "calling dinput_mouse_hook (%p %Ix %Ix)\n", impl, wparam, lparam );
         skip |= dinput_mouse_hook( &impl->IDirectInputDevice8W_iface, wparam, lparam );
     }
     LIST_FOR_EACH_ENTRY( impl, &acquired_keyboard_list, struct dinput_device, entry )
     {
         if (impl->use_raw_input) continue;
-        TRACE( "calling dinput_keyboard_hook (%p %lx %lx)\n", impl, wparam, lparam );
+        TRACE( "calling dinput_keyboard_hook (%p %Ix %Ix)\n", impl, wparam, lparam );
         skip |= dinput_keyboard_hook( &impl->IDirectInputDevice8W_iface, wparam, lparam );
     }
     LeaveCriticalSection( &dinput_hook_crit );
@@ -1263,7 +1263,7 @@ static DWORD WINAPI dinput_thread_proc( void *params )
 
             finished_event = (HANDLE)msg.lParam;
 
-            TRACE( "Processing hook change notification wp:%ld lp:%#lx\n", msg.wParam, msg.lParam );
+            TRACE( "Processing hook change notification wparam %#Ix, lparam %#Ix.\n", msg.wParam, msg.lParam );
 
             if (!msg.wParam)
             {
@@ -1308,7 +1308,7 @@ static DWORD WINAPI dinput_thread_proc( void *params )
         LeaveCriticalSection( &dinput_hook_crit );
     }
 
-    if (ret != events_count) ERR("Unexpected termination, ret %#x\n", ret);
+    if (ret != events_count) ERR("Unexpected termination, ret %#lx\n", ret);
 
 done:
     DestroyWindow( di_em_win );
@@ -1321,10 +1321,10 @@ static BOOL WINAPI dinput_thread_start_once( INIT_ONCE *once, void *param, void 
     HANDLE start_event;
 
     start_event = CreateEventW( NULL, FALSE, FALSE, NULL );
-    if (!start_event) ERR( "failed to create start event, error %u\n", GetLastError() );
+    if (!start_event) ERR( "failed to create start event, error %lu\n", GetLastError() );
 
     dinput_thread = CreateThread( NULL, 0, dinput_thread_proc, start_event, 0, &dinput_thread_id );
-    if (!dinput_thread) ERR( "failed to create internal thread, error %u\n", GetLastError() );
+    if (!dinput_thread) ERR( "failed to create internal thread, error %lu\n", GetLastError() );
 
     WaitForSingleObject( start_event, INFINITE );
     CloseHandle( start_event );
@@ -1426,7 +1426,7 @@ void check_dinput_events(void)
 
 BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, void *reserved )
 {
-    TRACE( "inst %p, reason %u, reserved %p.\n", inst, reason, reserved );
+    TRACE( "inst %p, reason %lu, reserved %p.\n", inst, reason, reserved );
 
     switch(reason)
     {

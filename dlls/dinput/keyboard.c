@@ -95,8 +95,8 @@ int dinput_keyboard_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lpa
         wparam != WM_SYSKEYDOWN && wparam != WM_SYSKEYUP)
         return 0;
 
-    TRACE("(%p) wp %08lx, lp %08lx, vk %02x, scan %02x\n",
-          iface, wparam, lparam, hook->vkCode, hook->scanCode);
+    TRACE( "iface %p, wparam %#Ix, lparam %#Ix, vkCode %#lx, scanCode %#lx.\n", iface, wparam,
+           lparam, hook->vkCode, hook->scanCode );
 
     switch (hook->vkCode)
     {
@@ -129,7 +129,7 @@ int dinput_keyboard_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lpa
 
 static DWORD get_keyboard_subtype(void)
 {
-    DWORD kbd_type, kbd_subtype, dev_subtype;
+    INT kbd_type, kbd_subtype, dev_subtype;
     kbd_type = GetKeyboardType(0);
     kbd_subtype = GetKeyboardType(1);
 
@@ -138,7 +138,7 @@ static DWORD get_keyboard_subtype(void)
     else if (kbd_type == 7 && kbd_subtype == 2)
         dev_subtype = DIDEVTYPEKEYBOARD_JAPAN106;
     else {
-        FIXME("Unknown keyboard type=%u, subtype=%u\n", kbd_type, kbd_subtype);
+        FIXME( "Unknown keyboard type %d, subtype %d\n", kbd_type, kbd_subtype );
         dev_subtype = DIDEVTYPEKEYBOARD_PCENH;
     }
     return dev_subtype;
@@ -149,7 +149,7 @@ HRESULT keyboard_enum_device( DWORD type, DWORD flags, DIDEVICEINSTANCEW *instan
     BYTE subtype = get_keyboard_subtype();
     DWORD size;
 
-    TRACE( "type %#x, flags %#x, instance %p, version %#04x\n", type, flags, instance, version );
+    TRACE( "type %#lx, flags %#lx, instance %p, version %#lx.\n", type, flags, instance, version );
 
     size = instance->dwSize;
     memset( instance, 0, size );
@@ -169,7 +169,7 @@ HRESULT keyboard_create_device( struct dinput *dinput, const GUID *guid, IDirect
     struct keyboard *impl;
     HRESULT hr;
 
-    TRACE( "dinput %p, guid %s, out %p\n", dinput, debugstr_guid( guid ), out );
+    TRACE( "dinput %p, guid %s, out %p.\n", dinput, debugstr_guid( guid ), out );
 
     *out = NULL;
     if (!IsEqualGUID( &GUID_SysKeyboard, guid )) return DIERR_DEVICENOTREG;
