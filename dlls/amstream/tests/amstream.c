@@ -1140,7 +1140,8 @@ static HRESULT WINAPI testsource_DecideAllocator(struct strmbase_source *iface, 
      * when it is able to do so it's behavior changes slightly
      * (e.g. it uses dynamic format change instead of reconnecting in SetFormat).
      * We don't yet implement the custom allocator so force the standard one for now. */
-    hr = BaseOutputPinImpl_InitAllocator(iface, alloc);
+    hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMemAllocator, (void **)alloc);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     IMemInputPin_GetAllocatorRequirements(pin, &props);
