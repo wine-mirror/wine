@@ -271,6 +271,16 @@ static HRESULT WINAPI WMSyncReader_SetOutputSetting(IWMSyncReader2 *iface, DWORD
         FIXME("Ignoring VideoSampleDurations setting.\n");
         return S_OK;
     }
+    if (!wcscmp(name, L"EnableDiscreteOutput"))
+    {
+        FIXME("Ignoring EnableDiscreteOutput setting.\n");
+        return S_OK;
+    }
+    if (!wcscmp(name, L"SpeakerConfig"))
+    {
+        FIXME("Ignoring SpeakerConfig setting.\n");
+        return S_OK;
+    }
     else
     {
         FIXME("Unknown setting %s; returning E_NOTIMPL.\n", debugstr_w(name));
