@@ -726,6 +726,240 @@ static void test_enum_thread_windows(void)
     CloseHandle( handle );
 }
 
+struct test_thread_exit_parent_params
+{
+    HWND hwnd;
+    HANDLE created_event;
+    HANDLE stop_event;
+};
+
+static DWORD CALLBACK test_thread_exit_parent_thread( void *args )
+{
+    struct test_thread_exit_parent_params *params = args;
+    DWORD ret;
+    MSG msg;
+
+    params->hwnd = CreateWindowW( L"static", L"parent", WS_OVERLAPPEDWINDOW|WS_VISIBLE,
+                                  100, 100, 200, 200, 0, 0, 0, NULL );
+    ok( params->hwnd != 0, "CreateWindowExW failed, error %u\n", GetLastError() );
+    flush_events( TRUE );
+    SetEvent( params->created_event );
+
+    do
+    {
+        while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
+        ret = MsgWaitForMultipleObjects( 1, &params->stop_event, FALSE, INFINITE, QS_ALLINPUT );
+    }
+    while (ret != WAIT_OBJECT_0);
+
+    return 0;
+}
+
+static LRESULT CALLBACK test_thread_exit_wnd_proc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
+{
+    if (msg == WM_USER) return 0xdeadbeef;
+    if (msg == WM_USER + 1) return 0xfeedcafe;
+    return DefWindowProcW( hwnd, msg, wp, lp );
+}
+
+static void test_thread_exit_destroy(void)
+{
+    struct test_thread_exit_parent_params params;
+    HWND adopter, child1, child2, child3;
+    WNDPROC old_wndproc, wndproc;
+    WCHAR buffer[MAX_PATH];
+    HANDLE thread;
+    DWORD ret;
+    HRGN rgn;
+    HWND tmp;
+    MSG msg;
+
+    params.created_event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    params.stop_event = CreateEventW( NULL, FALSE, FALSE, NULL );
+
+    adopter = CreateWindowW( L"static", L"adopter", WS_OVERLAPPEDWINDOW|WS_VISIBLE,
+                             300, 100, 200, 200, 0, 0, 0, NULL );
+    ok( adopter != 0, "CreateWindowExW failed, error %u\n", GetLastError() );
+    flush_events( TRUE );
+
+    thread = CreateThread( NULL, 0, test_thread_exit_parent_thread, &params, 0, NULL );
+    ok( thread != 0, "CreateThread failed, error %u\n", GetLastError() );
+    WaitForSingleObject( params.created_event, INFINITE );
+
+    child1 = CreateWindowW( L"static", L"child1", WS_CHILD|WS_VISIBLE,
+                            50, 50, 50, 50, params.hwnd, 0, 0, NULL );
+    ok( child1 != 0, "CreateWindowExW failed, error %u\n", GetLastError() );
+    child2 = CreateWindowW( L"static", L"child2", WS_CHILD|WS_VISIBLE,
+                            100, 50, 50, 50, params.hwnd, 0, 0, NULL );
+    ok( child2 != 0, "CreateWindowExW failed, error %u\n", GetLastError() );
+    child3 = CreateWindowW( L"static", L"child3", WS_CHILD|WS_VISIBLE,
+                            50, 100, 50, 50, params.hwnd, 0, 0, NULL );
+    ok( child3 != 0, "CreateWindowExW failed, error %u\n", GetLastError() );
+    flush_events( TRUE );
+
+    trace("parent %p adopter %p child1 %p child2 %p child3 %p\n", params.hwnd, adopter, child1, child2, child3);
+
+    SetActiveWindow( child1 );
+    SetFocus( child1 );
+    SetCapture( child1 );
+
+    ok( GetActiveWindow() == params.hwnd, "GetActiveWindow %p, expected %p\n", GetActiveWindow(), params.hwnd );
+    ok( GetFocus() == child1, "GetFocus %p, expected %p\n", GetFocus(), child1 );
+    ok( GetCapture() == child1, "GetCapture %p, expected %p\n", GetCapture(), child1 );
+
+    ret = SetPropW( child1, L"myprop", UlongToHandle(0xdeadbeef) );
+    ok( ret, "SetPropW failed, error %u\n", GetLastError() );
+    ret = SetPropW( child2, L"myprop", UlongToHandle(0xdeadbeef) );
+    ok( ret, "SetPropW failed, error %u\n", GetLastError() );
+
+    old_wndproc = (WNDPROC)GetWindowLongPtrW( child1, GWLP_WNDPROC );
+    ok( old_wndproc != NULL, "GetWindowLongPtrW GWLP_WNDPROC failed, error %u\n", GetLastError() );
+
+    ret = GetWindowLongW( child1, GWL_STYLE );
+    ok( ret == (WS_CHILD|WS_VISIBLE), "GetWindowLongW returned %#x\n", ret );
+
+    SetEvent( params.stop_event );
+    ret = WaitForSingleObject( thread, INFINITE );
+    ok( ret == WAIT_OBJECT_0, "WaitForSingleObject returned %#x\n", ret );
+    CloseHandle( thread );
+
+    /* child windows should all still be alive but hidden */
+    ret = IsWindow( child1 );
+    ok( ret, "IsWindow returned %u\n", ret );
+    ret = IsWindow( child2 );
+    ok( ret, "IsWindow returned %u\n", ret );
+    ret = IsWindow( child3 );
+    ok( ret, "IsWindow returned %u\n", ret );
+
+    todo_wine
+    ok( GetActiveWindow() == adopter, "GetActiveWindow %p, expected %p\n", GetActiveWindow(), adopter );
+    todo_wine
+    ok( GetFocus() == adopter, "GetFocus %p, expected %p\n", GetFocus(), adopter );
+    ok( GetCapture() == child1, "GetCapture %p, expected %p\n", GetCapture(), child1 );
+
+    SetActiveWindow( child1 );
+    SetFocus( child1 );
+    SetCapture( child1 );
+
+    todo_wine
+    ok( GetActiveWindow() == adopter, "GetActiveWindow %p, expected %p\n", GetActiveWindow(), adopter );
+    todo_wine
+    ok( GetFocus() == adopter, "GetFocus %p, expected %p\n", GetFocus(), adopter );
+    ok( GetCapture() == child1, "GetCapture %p, expected %p\n", GetCapture(), child1 );
+
+    SetLastError( 0xdeadbeef );
+    ret = GetWindowLongW( child1, GWL_STYLE );
+    todo_wine
+    ok( ret == WS_CHILD, "GetWindowLongW returned %#x\n", ret );
+    ok( GetLastError() == 0xdeadbeef, "GetWindowLongW error %u\n", GetLastError() );
+    ret = SetWindowLongW( child1, GWL_STYLE, WS_CHILD|WS_VISIBLE );
+    ok( ret, "SetWindowLongW failed, error %u\n", GetLastError() );
+    ret = GetWindowLongW( child1, GWL_STYLE );
+    ok( ret == (WS_CHILD|WS_VISIBLE), "GetWindowLongW returned %#x\n", ret );
+
+    /* and cannot be adopted */
+    SetLastError( 0xdeadbeef );
+    tmp = GetParent( child1 );
+    ok( tmp == params.hwnd, "GetParent returned %p, error %u\n", tmp, GetLastError() );
+    ok( GetLastError() == 0xdeadbeef, "GetWindowLongW error %u\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    tmp = SetParent( child1, adopter );
+    ok( tmp == 0, "SetParent returned %p\n", tmp );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    tmp = SetParent( child3, adopter );
+    ok( tmp == 0, "SetParent returned %p\n", tmp );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    tmp = GetParent( child1 );
+    todo_wine
+    ok( tmp == params.hwnd, "GetParent returned %p, error %u\n", tmp, GetLastError() );
+    ok( GetLastError() == 0xdeadbeef, "GetWindowLongW error %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    ret = GetWindowLongW( params.hwnd, GWL_STYLE );
+    ok( ret == 0, "GetWindowLongW returned %#x\n", ret );
+    ok( GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "GetWindowLongW error %u\n", GetLastError() );
+
+    wndproc = (WNDPROC)GetWindowLongPtrW( child1, GWLP_WNDPROC );
+    ok( wndproc != NULL, "GetWindowLongPtrW GWLP_WNDPROC failed, error %u\n", GetLastError() );
+    ok( wndproc == old_wndproc, "GetWindowLongPtrW GWLP_WNDPROC returned %p\n", wndproc );
+
+    tmp = GetPropW( child1, L"myprop" );
+    ok( HandleToULong(tmp) == 0xdeadbeef, "GetPropW returned %p\n", tmp );
+    tmp = GetPropW( child2, L"myprop" );
+    ok( HandleToULong(tmp) == 0xdeadbeef, "GetPropW returned %p\n", tmp );
+
+    /* destroying child1 ourselves succeeds */
+    ret = DestroyWindow( child1 );
+    ok( ret, "DestroyWindow returned %u\n", ret );
+    ret = DestroyWindow( child1 );
+    ok( !ret, "DestroyWindow returned %u\n", ret );
+    ret = IsWindow( child1 );
+    ok( !ret, "IsWindow returned %u\n", ret );
+
+    tmp = GetPropW( child1, L"myprop" );
+    ok( HandleToULong(tmp) == 0, "GetPropW returned %p\n", tmp );
+
+    /* child2 is still alive, for now */
+    ret = IsWindow( child2 );
+    ok( ret, "IsWindow returned %u\n", ret );
+
+    SetLastError( 0xdeadbeef );
+    ret = SetWindowPos( child2, HWND_TOPMOST, 0, 0, 100, 100, SWP_NOSIZE|SWP_NOMOVE );
+    todo_wine
+    ok( !ret, "SetWindowPos succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "SetWindowPos returned error %u\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = SetWindowPos( child2, 0, 10, 10, 200, 200, SWP_NOZORDER | SWP_NOACTIVATE );
+    todo_wine
+    ok( !ret, "SetWindowPos succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "SetWindowPos returned error %u\n", GetLastError() );
+
+    rgn = CreateRectRgn( 5, 5, 15, 15 );
+    SetLastError( 0xdeadbeef );
+    ret = SetWindowRgn( child2, rgn, TRUE );
+    ok( ret, "SetWindowRgn failed, error %u\n", GetLastError() );
+    DeleteObject( rgn );
+
+    wndproc = (WNDPROC)SetWindowLongPtrW( child2, GWLP_WNDPROC, (LONG_PTR)test_thread_exit_wnd_proc );
+    ret = SendMessageW( child2, WM_USER, 0, 0 );
+    ok( ret == 0xdeadbeef, "SendMessageW returned %u, error %u\n", ret, GetLastError() );
+    ret = SendMessageW( child2, WM_USER + 1, 0, 0 );
+    ok( ret == 0xfeedcafe, "SendMessageW returned %u, error %u\n", ret, GetLastError() );
+    ret = SendMessageW( child2, WM_USER + 2, 0, 0 );
+    ok( ret == 0, "SendMessageW returned %u, error %u\n", ret, GetLastError() );
+
+    ret = GetWindowTextW( child2, buffer, ARRAY_SIZE(buffer) );
+    ok( ret == 6, "GetWindowTextW returned %u\n", ret );
+    ok( !wcscmp( buffer, L"child2" ), "GetWindowTextW returned %s\n", debugstr_w( buffer ) );
+    ret = IsWindow( child2 );
+    ok( ret, "IsWindow returned %u\n", ret );
+
+    /* but peeking any message should reap them all */
+    PeekMessageW( &msg, child2, 0, 0, PM_REMOVE );
+
+    tmp = GetPropW( child2, L"myprop" );
+    ok( HandleToULong(tmp) == 0, "GetPropW returned %p\n", tmp );
+
+    ret = IsWindow( child2 );
+    ok( !ret, "IsWindow returned %u\n", ret );
+    ret = IsWindow( child3 );
+    todo_wine
+    ok( !ret, "IsWindow returned %u\n", ret );
+    ret = DestroyWindow( child2 );
+    ok( !ret, "DestroyWindow returned %u\n", ret );
+
+    DestroyWindow( adopter );
+
+    CloseHandle( params.created_event );
+    CloseHandle( params.stop_event );
+}
+
 static struct wm_gettext_override_data
 {
     BOOL   enabled; /* when 1 bypasses default procedure */
@@ -12668,6 +12902,7 @@ START_TEST(win)
     test_CreateWindow();
     test_parent_owner();
     test_enum_thread_windows();
+    test_thread_exit_destroy();
 
     test_icons();
     test_SetWindowPos(hwndMain, hwndMain2);
