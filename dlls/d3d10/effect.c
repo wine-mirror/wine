@@ -1402,7 +1402,7 @@ static D3D10_SHADER_VARIABLE_TYPE d3d10_variable_type(DWORD t, BOOL is_object,
 
 static HRESULT parse_fx10_type(const char *data, size_t data_size, DWORD offset, struct d3d10_effect_type *t)
 {
-    DWORD typeinfo, type_flags, type_kind;
+    uint32_t typeinfo, type_flags, type_kind;
     const char *ptr;
     unsigned int i;
 
