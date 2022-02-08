@@ -1177,9 +1177,12 @@ static HRESULT WINAPI AviMuxOut_DecideAllocator(struct strmbase_source *base,
 
     TRACE("(%p)->(%p %p)\n", base, pPin, pAlloc);
 
-    hr = BaseOutputPinImpl_InitAllocator(base, pAlloc);
-    if(FAILED(hr))
+    if (FAILED(hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL,
+            CLSCTX_INPROC_SERVER, &IID_IMemAllocator, (void **)pAlloc)))
+    {
+        ERR("Failed to create allocator, hr %#x.\n", hr);
         return hr;
+    }
 
     hr = IMemInputPin_GetAllocatorRequirements(pPin, &req);
     if(FAILED(hr))
