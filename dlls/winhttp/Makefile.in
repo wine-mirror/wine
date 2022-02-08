@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = winhttp.dll
 IMPORTLIB = winhttp
 IMPORTS   = uuid jsproxy user32 advapi32 ws2_32

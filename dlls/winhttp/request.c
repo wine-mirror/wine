@@ -299,7 +299,7 @@ DWORD process_header( struct request *request, const WCHAR *field, const WCHAR *
     int index;
     struct header hdr;
 
-    TRACE("%s: %s 0x%08x\n", debugstr_w(field), debugstr_w(value), flags);
+    TRACE( "%s: %s %#lx\n", debugstr_w(field), debugstr_w(value), flags );
 
     if ((index = get_header_index( request, field, 0, request_only )) >= 0)
     {
@@ -405,12 +405,12 @@ DWORD add_request_headers( struct request *request, const WCHAR *headers, DWORD 
 /***********************************************************************
  *          WinHttpAddRequestHeaders (winhttp.@)
  */
-BOOL WINAPI WinHttpAddRequestHeaders( HINTERNET hrequest, LPCWSTR headers, DWORD len, DWORD flags )
+BOOL WINAPI WinHttpAddRequestHeaders( HINTERNET hrequest, const WCHAR *headers, DWORD len, DWORD flags )
 {
     DWORD ret;
     struct request *request;
 
-    TRACE("%p, %s, %u, 0x%08x\n", hrequest, debugstr_wn(headers, len), len, flags);
+    TRACE( "%p, %s, %lu, %#lx\n", hrequest, debugstr_wn(headers, len), len, flags );
 
     if (!headers || !len)
     {
@@ -637,7 +637,7 @@ static DWORD query_headers( struct request *request, DWORD level, const WCHAR *n
         if (attr >= ARRAY_SIZE(attribute_table)) return ERROR_INVALID_PARAMETER;
         if (!attribute_table[attr])
         {
-            FIXME("attribute %u not implemented\n", attr);
+            FIXME( "attribute %lu not implemented\n", attr );
             return ERROR_WINHTTP_HEADER_NOT_FOUND;
         }
         TRACE("attribute %s\n", debugstr_w(attribute_table[attr]));
@@ -698,12 +698,13 @@ static DWORD query_headers( struct request *request, DWORD level, const WCHAR *n
 /***********************************************************************
  *          WinHttpQueryHeaders (winhttp.@)
  */
-BOOL WINAPI WinHttpQueryHeaders( HINTERNET hrequest, DWORD level, LPCWSTR name, LPVOID buffer, LPDWORD buflen, LPDWORD index )
+BOOL WINAPI WinHttpQueryHeaders( HINTERNET hrequest, DWORD level, const WCHAR *name, void *buffer, DWORD *buflen,
+                                 DWORD *index )
 {
     DWORD ret;
     struct request *request;
 
-    TRACE("%p, 0x%08x, %s, %p, %p, %p\n", hrequest, level, debugstr_w(name), buffer, buflen, index);
+    TRACE( "%p, %#lx, %s, %p, %p, %p\n", hrequest, level, debugstr_w(name), buffer, buflen, index );
 
     if (!(request = (struct request *)grab_object( hrequest )))
     {
@@ -1047,7 +1048,7 @@ static BOOL do_authorization( struct request *request, DWORD target, DWORD schem
         break;
 
     default:
-        WARN("unknown target %x\n", target);
+        WARN( "unknown target %#lx\n", target );
         return FALSE;
     }
     authinfo = *auth_ptr;
@@ -1126,8 +1127,8 @@ static BOOL do_authorization( struct request *request, DWORD target, DWORD schem
             }
             if (status != SEC_E_OK)
             {
-                WARN("AcquireCredentialsHandleW for scheme %s failed with error 0x%08x\n",
-                     debugstr_w(auth_schemes[scheme].str), status);
+                WARN( "AcquireCredentialsHandleW for scheme %s failed with error %#lx\n",
+                     debugstr_w(auth_schemes[scheme].str), status );
                 free( authinfo );
                 return FALSE;
             }
@@ -1199,7 +1200,7 @@ static BOOL do_authorization( struct request *request, DWORD target, DWORD schem
         }
         else
         {
-            ERR("InitializeSecurityContextW failed with error 0x%08x\n", status);
+            ERR( "InitializeSecurityContextW failed with error %#lx\n", status );
             free( out.pvBuffer );
             destroy_authinfo( authinfo );
             *auth_ptr = NULL;
@@ -1437,7 +1438,7 @@ static DWORD ensure_cred_handle( struct request *request )
 
     if (status != SEC_E_OK)
     {
-        WARN( "AcquireCredentialsHandleW failed: 0x%08x\n", status );
+        WARN( "AcquireCredentialsHandleW failed: %#lx\n", status );
         return status;
     }
     return ERROR_SUCCESS;
@@ -1735,7 +1736,7 @@ static DWORD start_next_chunk( struct request *request, BOOL notify )
             else if (ch >= 'A' && ch <= 'F') chunk_size = chunk_size * 16 + ch - 'A' + 10;
             else if (ch == ';' || ch == '\r' || ch == '\n')
             {
-                TRACE("reading %u byte chunk\n", chunk_size);
+                TRACE( "reading %lu byte chunk\n", chunk_size );
 
                 if (request->content_length == ~0u) request->content_length = chunk_size;
                 else request->content_length += chunk_size;
@@ -1847,7 +1848,7 @@ static DWORD read_data( struct request *request, void *buffer, DWORD size, DWORD
     if (request->read_chunked && !request->read_chunked_size) ret = refill_buffer( request, async );
 
 done:
-    TRACE( "retrieved %u bytes (%u/%u)\n", bytes_read, request->content_read, request->content_length );
+    TRACE( "retrieved %u bytes (%lu/%lu)\n", bytes_read, request->content_read, request->content_length );
     if (end_of_read_data( request )) finished_reading( request );
     if (async)
     {
@@ -2117,12 +2118,12 @@ static DWORD send_request( struct request *request, const WCHAR *headers, DWORD 
     if (headers && (ret = add_request_headers( request, headers, headers_len,
                                                WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE )))
     {
-        TRACE("failed to add request headers: %u\n", ret);
+        TRACE( "failed to add request headers: %lu\n", ret );
         return ret;
     }
     if (!(request->hdr.disable_flags & WINHTTP_DISABLE_COOKIES) && (ret = add_cookie_headers( request )))
     {
-        WARN("failed to add cookie headers: %u\n", ret);
+        WARN( "failed to add cookie headers: %lu\n", ret );
         return ret;
     }
 
@@ -2181,14 +2182,14 @@ static void CALLBACK task_send_request( TP_CALLBACK_INSTANCE *instance, void *ct
 /***********************************************************************
  *          WinHttpSendRequest (winhttp.@)
  */
-BOOL WINAPI WinHttpSendRequest( HINTERNET hrequest, LPCWSTR headers, DWORD headers_len,
-                                LPVOID optional, DWORD optional_len, DWORD total_len, DWORD_PTR context )
+BOOL WINAPI WinHttpSendRequest( HINTERNET hrequest, const WCHAR *headers, DWORD headers_len,
+                                void *optional, DWORD optional_len, DWORD total_len, DWORD_PTR context )
 {
     DWORD ret;
     struct request *request;
 
-    TRACE("%p, %s, %u, %p, %u, %u, %lx\n", hrequest, debugstr_wn(headers, headers_len), headers_len, optional,
-          optional_len, total_len, context);
+    TRACE( "%p, %s, %lu, %p, %lu, %lu, %Ix\n", hrequest, debugstr_wn(headers, headers_len), headers_len, optional,
+          optional_len, total_len, context );
 
     if (!(request = (struct request *)grab_object( hrequest )))
     {
@@ -2266,7 +2267,7 @@ static DWORD set_credentials( struct request *request, DWORD target, DWORD schem
         break;
     }
     default:
-        WARN("unknown target %u\n", target);
+        WARN( "unknown target %lu\n", target );
         return ERROR_INVALID_PARAMETER;
     }
     return ERROR_SUCCESS;
@@ -2275,13 +2276,13 @@ static DWORD set_credentials( struct request *request, DWORD target, DWORD schem
 /***********************************************************************
  *          WinHttpSetCredentials (winhttp.@)
  */
-BOOL WINAPI WinHttpSetCredentials( HINTERNET hrequest, DWORD target, DWORD scheme, LPCWSTR username,
-                                   LPCWSTR password, LPVOID params )
+BOOL WINAPI WinHttpSetCredentials( HINTERNET hrequest, DWORD target, DWORD scheme, const WCHAR *username,
+                                   const WCHAR *password, void *params )
 {
     DWORD ret;
     struct request *request;
 
-    TRACE("%p, %x, 0x%08x, %s, %p, %p\n", hrequest, target, scheme, debugstr_w(username), password, params);
+    TRACE( "%p, %lu, %#lx, %s, %p, %p\n", hrequest, target, scheme, debugstr_w(username), password, params );
 
     if (!(request = (struct request *)grab_object( hrequest )))
     {
@@ -2319,7 +2320,7 @@ static DWORD handle_authorization( struct request *request, DWORD status )
         break;
 
     default:
-        ERR("unhandled status %u\n", status);
+        ERR( "unhandled status %lu\n", status );
         return ERROR_WINHTTP_INTERNAL_ERROR;
     }
 
@@ -2834,7 +2835,7 @@ static DWORD query_data_available( struct request *request, DWORD *available, BO
     }
 
 done:
-    TRACE("%u bytes available\n", count);
+    TRACE( "%lu bytes available\n", count );
     if (async)
     {
         if (!ret) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE, &count, sizeof(count) );
@@ -2922,13 +2923,13 @@ static void CALLBACK task_read_data( TP_CALLBACK_INSTANCE *instance, void *ctx, 
 /***********************************************************************
  *          WinHttpReadData (winhttp.@)
  */
-BOOL WINAPI WinHttpReadData( HINTERNET hrequest, LPVOID buffer, DWORD to_read, LPDWORD read )
+BOOL WINAPI WinHttpReadData( HINTERNET hrequest, void *buffer, DWORD to_read, DWORD *read )
 {
     DWORD ret;
     struct request *request;
     BOOL async;
 
-    TRACE("%p, %p, %d, %p\n", hrequest, buffer, to_read, read);
+    TRACE( "%p, %p, %lu, %p\n", hrequest, buffer, to_read, read );
 
     if (!(request = (struct request *)grab_object( hrequest )))
     {
@@ -3003,12 +3004,12 @@ static void CALLBACK task_write_data( TP_CALLBACK_INSTANCE *instance, void *ctx,
 /***********************************************************************
  *          WinHttpWriteData (winhttp.@)
  */
-BOOL WINAPI WinHttpWriteData( HINTERNET hrequest, LPCVOID buffer, DWORD to_write, LPDWORD written )
+BOOL WINAPI WinHttpWriteData( HINTERNET hrequest, const void *buffer, DWORD to_write, DWORD *written )
 {
     DWORD ret;
     struct request *request;
 
-    TRACE("%p, %p, %d, %p\n", hrequest, buffer, to_write, written);
+    TRACE( "%p, %p, %lu, %p\n", hrequest, buffer, to_write, written );
 
     if (!(request = (struct request *)grab_object( hrequest )))
     {
@@ -3048,7 +3049,7 @@ BOOL WINAPI WinHttpWriteData( HINTERNET hrequest, LPCVOID buffer, DWORD to_write
 
 static BOOL socket_query_option( struct object_header *hdr, DWORD option, void *buffer, DWORD *buflen )
 {
-    FIXME("unimplemented option %u\n", option);
+    FIXME( "unimplemented option %lu\n", option );
     SetLastError( ERROR_WINHTTP_INVALID_OPTION );
     return FALSE;
 }
@@ -3069,7 +3070,7 @@ static void socket_destroy( struct object_header *hdr )
 
 static BOOL socket_set_option( struct object_header *hdr, DWORD option, void *buffer, DWORD buflen )
 {
-    FIXME("unimplemented option %u\n", option);
+    FIXME( "unimplemented option %lu\n", option );
     SetLastError( ERROR_WINHTTP_INVALID_OPTION );
     return FALSE;
 }
@@ -3087,7 +3088,7 @@ HINTERNET WINAPI WinHttpWebSocketCompleteUpgrade( HINTERNET hrequest, DWORD_PTR 
     struct request *request;
     HINTERNET hsocket = NULL;
 
-    TRACE("%p, %08lx\n", hrequest, context);
+    TRACE( "%p, %Ix\n", hrequest, context );
 
     if (!(request = (struct request *)grab_object( hrequest )))
     {
@@ -3146,13 +3147,12 @@ static DWORD send_bytes( struct socket *socket, char *bytes, int len, int *sent,
 static DWORD send_frame( struct socket *socket, enum socket_opcode opcode, USHORT status, const char *buf,
                          DWORD buflen, BOOL final, WSAOVERLAPPED *ovr )
 {
-    DWORD i, offset = 2, len = buflen;
-    DWORD buffer_size, ret = 0;
+    DWORD i, offset = 2, len = buflen, buffer_size, ret = 0;
     int sent_size;
     char hdr[14];
     char *ptr;
 
-    TRACE( "sending %02x frame, len %u.\n", opcode, len );
+    TRACE( "sending %02x frame, len %lu\n", opcode, len );
 
     if (opcode == SOCKET_OPCODE_CLOSE) len += sizeof(status);
 
@@ -3188,7 +3188,7 @@ static DWORD send_frame( struct socket *socket, enum socket_opcode opcode, USHOR
         new_size = min( buffer_size, MAX_FRAME_BUFFER_SIZE );
         if (!(new = realloc( socket->send_frame_buffer, new_size )))
         {
-            ERR("Out of memory, buffer_size %u.\n", buffer_size);
+            ERR( "out of memory, buffer_size %lu\n", buffer_size);
             return ERROR_OUTOFMEMORY;
         }
         socket->send_frame_buffer = new;
@@ -3360,7 +3360,7 @@ DWORD WINAPI WinHttpWebSocketSend( HINTERNET hsocket, WINHTTP_WEB_SOCKET_BUFFER_
     struct socket *socket;
     DWORD ret = 0;
 
-    TRACE("%p, %u, %p, %u\n", hsocket, type, buf, len);
+    TRACE( "%p, %u, %p, %lu\n", hsocket, type, buf, len );
 
     if (len && !buf) return ERROR_INVALID_PARAMETER;
     if (type != WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE && type != WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE)
@@ -3729,7 +3729,7 @@ DWORD WINAPI WinHttpWebSocketReceive( HINTERNET hsocket, void *buf, DWORD len, D
     struct socket *socket;
     DWORD ret;
 
-    TRACE("%p, %p, %u, %p, %p\n", hsocket, buf, len, ret_len, ret_type);
+    TRACE( "%p, %p, %lu, %p, %p\n", hsocket, buf, len, ret_len, ret_type );
 
     if (!buf || !len) return ERROR_INVALID_PARAMETER;
 
@@ -3874,7 +3874,7 @@ DWORD WINAPI WinHttpWebSocketShutdown( HINTERNET hsocket, USHORT status, void *r
     struct socket *socket;
     DWORD ret;
 
-    TRACE("%p, %u, %p, %u\n", hsocket, status, reason, len);
+    TRACE( "%p, %u, %p, %lu\n", hsocket, status, reason, len );
 
     if ((len && !reason) || len > sizeof(socket->reason)) return ERROR_INVALID_PARAMETER;
 
@@ -3949,7 +3949,7 @@ DWORD WINAPI WinHttpWebSocketClose( HINTERNET hsocket, USHORT status, void *reas
     struct socket *socket;
     DWORD ret;
 
-    TRACE("%p, %u, %p, %u\n", hsocket, status, reason, len);
+    TRACE( "%p, %u, %p, %lu\n", hsocket, status, reason, len );
 
     if ((len && !reason) || len > sizeof(socket->reason)) return ERROR_INVALID_PARAMETER;
 
@@ -4022,7 +4022,7 @@ DWORD WINAPI WinHttpWebSocketQueryCloseStatus( HINTERNET hsocket, USHORT *status
     struct socket *socket;
     DWORD ret;
 
-    TRACE("%p, %p, %p, %u, %p\n", hsocket, status, reason, len, ret_len);
+    TRACE( "%p, %p, %p, %lu, %p\n", hsocket, status, reason, len, ret_len );
 
     if (!status || (len && !reason) || !ret_len) return ERROR_INVALID_PARAMETER;
 
@@ -4218,7 +4218,7 @@ static HRESULT get_typeinfo( enum type_id tid, ITypeInfo **ret )
         hr = LoadRegTypeLib( &LIBID_WinHttp, 5, 1, LOCALE_SYSTEM_DEFAULT, &typelib );
         if (FAILED(hr))
         {
-            ERR("LoadRegTypeLib failed: %08x\n", hr);
+            ERR( "LoadRegTypeLib failed: %#lx\n", hr );
             return hr;
         }
         if (InterlockedCompareExchangePointer( (void **)&winhttp_typelib, typelib, NULL ))
@@ -4231,7 +4231,7 @@ static HRESULT get_typeinfo( enum type_id tid, ITypeInfo **ret )
         hr = ITypeLib_GetTypeInfoOfGuid( winhttp_typelib, winhttp_tid_id[tid], &typeinfo );
         if (FAILED(hr))
         {
-            ERR("GetTypeInfoOfGuid(%s) failed: %08x\n", debugstr_guid(winhttp_tid_id[tid]), hr);
+            ERR( "GetTypeInfoOfGuid(%s) failed: %#lx\n", debugstr_guid(winhttp_tid_id[tid]), hr );
             return hr;
         }
         if (InterlockedCompareExchangePointer( (void **)(winhttp_typeinfo + tid), typeinfo, NULL ))
@@ -4261,7 +4261,7 @@ static HRESULT WINAPI winhttp_request_GetTypeInfo(
     ITypeInfo **info )
 {
     struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
-    TRACE("%p, %u, %u, %p\n", request, index, lcid, info);
+    TRACE( "%p, %u, %lu, %p\n", request, index, lcid, info );
 
     return get_typeinfo( IWinHttpRequest_tid, info );
 }
@@ -4278,7 +4278,7 @@ static HRESULT WINAPI winhttp_request_GetIDsOfNames(
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("%p, %s, %p, %u, %u, %p\n", request, debugstr_guid(riid), names, count, lcid, dispid);
+    TRACE( "%p, %s, %p, %u, %lu, %p\n", request, debugstr_guid(riid), names, count, lcid, dispid );
 
     if (!names || !count || !dispid) return E_INVALIDARG;
 
@@ -4306,8 +4306,8 @@ static HRESULT WINAPI winhttp_request_Invoke(
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("%p, %d, %s, %d, %d, %p, %p, %p, %p\n", request, member, debugstr_guid(riid),
-          lcid, flags, params, result, excep_info, arg_err);
+    TRACE( "%p, %ld, %s, %lu, %d, %p, %p, %p, %p\n", request, member, debugstr_guid(riid),
+           lcid, flags, params, result, excep_info, arg_err );
 
     if (!IsEqualIID( riid, &IID_NULL )) return DISP_E_UNKNOWNINTERFACE;
 
@@ -4331,7 +4331,7 @@ static HRESULT WINAPI winhttp_request_Invoke(
 
             hr = IWinHttpRequest_put_Option( &request->IWinHttpRequest_iface, V_I4( &option ), params->rgvarg[0] );
             if (FAILED(hr))
-                WARN("put_Option(%d) failed: %x\n", V_I4( &option ), hr);
+                WARN( "put_Option(%ld) failed: %#lx\n", V_I4( &option ), hr );
             return hr;
         }
         else if (flags & (DISPATCH_PROPERTYGET | DISPATCH_METHOD))
@@ -4341,7 +4341,7 @@ static HRESULT WINAPI winhttp_request_Invoke(
 
             hr = IWinHttpRequest_get_Option( &request->IWinHttpRequest_iface, V_I4( &option ), result );
             if (FAILED(hr))
-                WARN("get_Option(%d) failed: %x\n", V_I4( &option ), hr);
+                WARN( "get_Option(%ld) failed: %#lx\n", V_I4( &option ), hr );
             return hr;
         }
 
@@ -4370,8 +4370,8 @@ static HRESULT WINAPI winhttp_request_SetProxy(
     struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
     DWORD err = ERROR_SUCCESS;
 
-    TRACE("%p, %u, %s, %s\n", request, proxy_setting, debugstr_variant(&proxy_server),
-          debugstr_variant(&bypass_list));
+    TRACE( "%p, %lu, %s, %s\n", request, proxy_setting, debugstr_variant(&proxy_server),
+           debugstr_variant(&bypass_list) );
 
     EnterCriticalSection( &request->cs );
     switch (proxy_setting)
@@ -4424,7 +4424,7 @@ static HRESULT WINAPI winhttp_request_SetCredentials(
     DWORD target, scheme = WINHTTP_AUTH_SCHEME_BASIC; /* FIXME: query supported schemes */
     DWORD err = ERROR_SUCCESS;
 
-    TRACE("%p, %s, %p, 0x%08x\n", request, debugstr_w(username), password, flags);
+    TRACE( "%p, %s, %p, %#lx\n", request, debugstr_w(username), password, flags );
 
     EnterCriticalSection( &request->cs );
     if (request->state < REQUEST_STATE_OPEN)
@@ -5508,7 +5508,7 @@ static HRESULT WINAPI winhttp_request_SetTimeouts(
 {
     struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
 
-    TRACE("%p, %d, %d, %d, %d\n", request, resolve_timeout, connect_timeout, send_timeout, receive_timeout);
+    TRACE( "%p, %ld, %ld, %ld, %ld\n", request, resolve_timeout, connect_timeout, send_timeout, receive_timeout );
 
     EnterCriticalSection( &request->cs );
     request->resolve_timeout = resolve_timeout;

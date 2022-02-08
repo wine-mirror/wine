@@ -48,7 +48,7 @@ static ULONG_PTR max_handles;
 struct object_header *addref_object( struct object_header *hdr )
 {
     ULONG refs = InterlockedIncrement( &hdr->refs );
-    TRACE("%p -> refcount = %d\n", hdr, refs);
+    TRACE( "%p -> refcount = %lu\n", hdr, refs );
     return hdr;
 }
 
@@ -64,21 +64,21 @@ struct object_header *grab_object( HINTERNET hinternet )
 
     LeaveCriticalSection( &handle_cs );
 
-    TRACE("handle 0x%lx -> %p\n", handle, hdr);
+    TRACE( "handle %Ix -> %p\n", handle, hdr );
     return hdr;
 }
 
 void release_object( struct object_header *hdr )
 {
     ULONG refs = InterlockedDecrement( &hdr->refs );
-    TRACE("object %p refcount = %d\n", hdr, refs);
+    TRACE( "object %p refcount = %lu\n", hdr, refs );
     if (!refs)
     {
         if (hdr->type == WINHTTP_HANDLE_TYPE_REQUEST) close_connection( (struct request *)hdr );
 
         send_callback( hdr, WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, &hdr->handle, sizeof(HINTERNET) );
 
-        TRACE("destroying object %p\n", hdr);
+        TRACE( "destroying object %p\n", hdr );
         hdr->vtbl->destroy( hdr );
     }
 }
@@ -134,7 +134,7 @@ BOOL free_handle( HINTERNET hinternet )
         if (handles[handle])
         {
             hdr = handles[handle];
-            TRACE("destroying handle 0x%lx for object %p\n", handle + 1, hdr);
+            TRACE( "destroying handle %Ix for object %p\n", handle + 1, hdr );
             handles[handle] = NULL;
             ret = TRUE;
         }

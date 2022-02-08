@@ -170,7 +170,7 @@ static DWORD parse_port( const WCHAR *str, DWORD len, INTERNET_PORT *ret )
 /***********************************************************************
  *          WinHttpCrackUrl (winhttp.@)
  */
-BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONENTSW uc )
+BOOL WINAPI WinHttpCrackUrl( const WCHAR *url, DWORD len, DWORD flags, URL_COMPONENTSW *uc )
 {
     WCHAR *p, *q, *r, *url_transformed = NULL;
     INTERNET_SCHEME scheme_number = 0;
@@ -178,7 +178,7 @@ BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONEN
     BOOL overflow = FALSE;
     DWORD err;
 
-    TRACE("%s, %d, %x, %p\n", debugstr_wn(url, len), len, flags, uc);
+    TRACE( "%s, %lu, %#lx, %p\n", debugstr_wn(url, len), len, flags, uc );
 
     if (!url || !uc || uc->dwStructSize != sizeof(*uc))
     {
@@ -427,12 +427,12 @@ static BOOL get_url_length( URL_COMPONENTS *uc, DWORD flags, DWORD *len )
 /***********************************************************************
  *          WinHttpCreateUrl (winhttp.@)
  */
-BOOL WINAPI WinHttpCreateUrl( LPURL_COMPONENTS uc, DWORD flags, LPWSTR url, LPDWORD required )
+BOOL WINAPI WinHttpCreateUrl( URL_COMPONENTS *uc, DWORD flags, WCHAR *url, DWORD *required )
 {
     DWORD len, len_escaped;
     INTERNET_SCHEME scheme;
 
-    TRACE("%p, 0x%08x, %p, %p\n", uc, flags, url, required);
+    TRACE( "%p, %#lx, %p, %p\n", uc, flags, url, required );
 
     if (!uc || uc->dwStructSize != sizeof(URL_COMPONENTS) || !required)
     {
