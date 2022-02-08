@@ -97,7 +97,7 @@ static ULONG WINAPI enum_media_types_AddRef(IEnumMediaTypes *iface)
 {
     struct enum_media_types *enummt = impl_from_IEnumMediaTypes(iface);
     ULONG refcount = InterlockedIncrement(&enummt->refcount);
-    TRACE("%p increasing refcount to %u.\n", enummt, refcount);
+    TRACE("%p increasing refcount to %lu.\n", enummt, refcount);
     return refcount;
 }
 
@@ -106,7 +106,7 @@ static ULONG WINAPI enum_media_types_Release(IEnumMediaTypes *iface)
     struct enum_media_types *enummt = impl_from_IEnumMediaTypes(iface);
     ULONG refcount = InterlockedDecrement(&enummt->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", enummt, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", enummt, refcount);
     if (!refcount)
     {
         IPin_Release(&enummt->pin->IPin_iface);
@@ -123,7 +123,7 @@ static HRESULT WINAPI enum_media_types_Next(IEnumMediaTypes *iface, ULONG count,
     unsigned int i;
     HRESULT hr;
 
-    TRACE("enummt %p, count %u, mts %p, ret_count %p.\n", enummt, count, mts, ret_count);
+    TRACE("enummt %p, count %lu, mts %p, ret_count %p.\n", enummt, count, mts, ret_count);
 
     if (!enummt->pin->ops->pin_get_media_type)
     {
@@ -169,7 +169,7 @@ static HRESULT WINAPI enum_media_types_Skip(IEnumMediaTypes *iface, ULONG count)
 {
     struct enum_media_types *enummt = impl_from_IEnumMediaTypes(iface);
 
-    TRACE("enummt %p, count %u.\n", enummt, count);
+    TRACE("enummt %p, count %lu.\n", enummt, count);
 
     enummt->index += count;
 
@@ -758,7 +758,7 @@ HRESULT WINAPI BaseOutputPinImpl_AttemptConnection(struct strmbase_source *This,
         FreeMediaType(&This->pin.mt);
     }
 
-    TRACE(" -- %x\n", hr);
+    TRACE("Returning %#lx.\n", hr);
     return hr;
 }
 

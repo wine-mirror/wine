@@ -46,7 +46,7 @@ HRESULT strmbase_get_typeinfo(enum strmbase_type_id tid, ITypeInfo **ret)
         hr = LoadRegTypeLib(&LIBID_QuartzTypeLib, 1, 0, LOCALE_SYSTEM_DEFAULT, &typelib);
         if (FAILED(hr))
         {
-            ERR("Failed to load typelib, hr %#x.\n", hr);
+            ERR("Failed to load typelib, hr %#lx.\n", hr);
             return hr;
         }
         if (InterlockedCompareExchangePointer((void **)&control_typelib, typelib, NULL))
@@ -59,7 +59,7 @@ HRESULT strmbase_get_typeinfo(enum strmbase_type_id tid, ITypeInfo **ret)
         hr = ITypeLib_GetTypeInfoOfGuid(control_typelib, control_tid_id[tid], &typeinfo);
         if (FAILED(hr))
         {
-            ERR("Failed to get type info for %s, hr %#x.\n", debugstr_guid(control_tid_id[tid]), hr);
+            ERR("Failed to get type info for %s, hr %#lx.\n", debugstr_guid(control_tid_id[tid]), hr);
             return hr;
         }
         if (InterlockedCompareExchangePointer((void **)(control_typeinfo + tid), typeinfo, NULL))

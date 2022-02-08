@@ -60,7 +60,7 @@ static const char *debugstr_fourcc(DWORD fourcc)
     char str[4] = {fourcc, fourcc >> 8, fourcc >> 16, fourcc >> 24};
     if (isprint(str[0]) && isprint(str[1]) && isprint(str[2]) && isprint(str[3]))
         return wine_dbgstr_an(str, 4);
-    return wine_dbg_sprintf("%#x", fourcc);
+    return wine_dbg_sprintf("%#lx", fourcc);
 }
 
 void strmbase_dump_media_type(const AM_MEDIA_TYPE *mt)
@@ -71,7 +71,7 @@ void strmbase_dump_media_type(const AM_MEDIA_TYPE *mt)
             mt, strmbase_debugstr_guid(&mt->majortype), strmbase_debugstr_guid(&mt->subtype));
     if (mt->bFixedSizeSamples) TRACE(", fixed size samples");
     if (mt->bTemporalCompression) TRACE(", temporal compression");
-    if (mt->lSampleSize) TRACE(", sample size %d", mt->lSampleSize);
+    if (mt->lSampleSize) TRACE(", sample size %ld", mt->lSampleSize);
     if (mt->pUnk) TRACE(", pUnk %p", mt->pUnk);
     TRACE(", format type %s.\n", strmbase_debugstr_guid(&mt->formattype));
 
@@ -83,7 +83,7 @@ void strmbase_dump_media_type(const AM_MEDIA_TYPE *mt)
     {
         WAVEFORMATEX *wfx = (WAVEFORMATEX *)mt->pbFormat;
 
-        TRACE("tag %#x, %u channels, sample rate %u, %u bytes/sec, alignment %u, %u bits/sample.\n",
+        TRACE("tag %#x, %u channels, sample rate %lu, %lu bytes/sec, alignment %u, %u bits/sample.\n",
                 wfx->wFormatTag, wfx->nChannels, wfx->nSamplesPerSec,
                 wfx->nAvgBytesPerSec, wfx->nBlockAlign, wfx->wBitsPerSample);
 
@@ -107,17 +107,17 @@ void strmbase_dump_media_type(const AM_MEDIA_TYPE *mt)
 
         if (!IsRectEmpty(&vih->rcSource)) TRACE("source %s, ", wine_dbgstr_rect(&vih->rcSource));
         if (!IsRectEmpty(&vih->rcTarget)) TRACE("target %s, ", wine_dbgstr_rect(&vih->rcTarget));
-        if (vih->dwBitRate) TRACE("bitrate %u, ", vih->dwBitRate);
-        if (vih->dwBitErrorRate) TRACE("error rate %u, ", vih->dwBitErrorRate);
+        if (vih->dwBitRate) TRACE("bitrate %lu, ", vih->dwBitRate);
+        if (vih->dwBitErrorRate) TRACE("error rate %lu, ", vih->dwBitErrorRate);
         TRACE("%s sec/frame, ", debugstr_time(vih->AvgTimePerFrame));
-        TRACE("size %dx%d, %u planes, %u bpp, compression %s, image size %u",
+        TRACE("size %ldx%ld, %u planes, %u bpp, compression %s, image size %lu",
                 vih->bmiHeader.biWidth, vih->bmiHeader.biHeight, vih->bmiHeader.biPlanes,
                 vih->bmiHeader.biBitCount, debugstr_fourcc(vih->bmiHeader.biCompression),
                 vih->bmiHeader.biSizeImage);
         if (vih->bmiHeader.biXPelsPerMeter || vih->bmiHeader.biYPelsPerMeter)
-            TRACE(", resolution %dx%d", vih->bmiHeader.biXPelsPerMeter, vih->bmiHeader.biYPelsPerMeter);
-        if (vih->bmiHeader.biClrUsed) TRACE(", %d colours", vih->bmiHeader.biClrUsed);
-        if (vih->bmiHeader.biClrImportant) TRACE(", %d important colours", vih->bmiHeader.biClrImportant);
+            TRACE(", resolution %ldx%ld", vih->bmiHeader.biXPelsPerMeter, vih->bmiHeader.biYPelsPerMeter);
+        if (vih->bmiHeader.biClrUsed) TRACE(", %lu colours", vih->bmiHeader.biClrUsed);
+        if (vih->bmiHeader.biClrImportant) TRACE(", %lu important colours", vih->bmiHeader.biClrImportant);
         TRACE(".\n");
     }
     else if (IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo2) && mt->cbFormat >= sizeof(VIDEOINFOHEADER2))
@@ -126,13 +126,13 @@ void strmbase_dump_media_type(const AM_MEDIA_TYPE *mt)
 
         if (!IsRectEmpty(&vih->rcSource)) TRACE("source %s, ", wine_dbgstr_rect(&vih->rcSource));
         if (!IsRectEmpty(&vih->rcTarget)) TRACE("target %s, ", wine_dbgstr_rect(&vih->rcTarget));
-        if (vih->dwBitRate) TRACE("bitrate %u, ", vih->dwBitRate);
-        if (vih->dwBitErrorRate) TRACE("error rate %u, ", vih->dwBitErrorRate);
+        if (vih->dwBitRate) TRACE("bitrate %lu, ", vih->dwBitRate);
+        if (vih->dwBitErrorRate) TRACE("error rate %lu, ", vih->dwBitErrorRate);
         TRACE("%s sec/frame, ", debugstr_time(vih->AvgTimePerFrame));
-        if (vih->dwInterlaceFlags) TRACE("interlace flags %#x, ", vih->dwInterlaceFlags);
-        if (vih->dwCopyProtectFlags) TRACE("copy-protection flags %#x, ", vih->dwCopyProtectFlags);
-        TRACE("aspect ratio %u/%u, ", vih->dwPictAspectRatioX, vih->dwPictAspectRatioY);
-        if (vih->u.dwControlFlags) TRACE("control flags %#x, ", vih->u.dwControlFlags);
+        if (vih->dwInterlaceFlags) TRACE("interlace flags %#lx, ", vih->dwInterlaceFlags);
+        if (vih->dwCopyProtectFlags) TRACE("copy-protection flags %#lx, ", vih->dwCopyProtectFlags);
+        TRACE("aspect ratio %lu/%lu, ", vih->dwPictAspectRatioX, vih->dwPictAspectRatioY);
+        if (vih->u.dwControlFlags) TRACE("control flags %#lx, ", vih->u.dwControlFlags);
         if (vih->u.dwControlFlags & AMCONTROL_COLORINFO_PRESENT)
         {
             const DXVA_ExtendedFormat *colorimetry = (const DXVA_ExtendedFormat *)&vih->u.dwControlFlags;
@@ -141,14 +141,14 @@ void strmbase_dump_media_type(const AM_MEDIA_TYPE *mt)
                     colorimetry->VideoChromaSubsampling, colorimetry->NominalRange, colorimetry->VideoTransferMatrix,
                     colorimetry->VideoLighting, colorimetry->VideoPrimaries, colorimetry->VideoTransferFunction);
         }
-        TRACE("size %dx%d, %u planes, %u bpp, compression %s, image size %u",
+        TRACE("size %ldx%ld, %u planes, %u bpp, compression %s, image size %lu",
                 vih->bmiHeader.biWidth, vih->bmiHeader.biHeight, vih->bmiHeader.biPlanes,
                 vih->bmiHeader.biBitCount, debugstr_fourcc(vih->bmiHeader.biCompression),
                 vih->bmiHeader.biSizeImage);
         if (vih->bmiHeader.biXPelsPerMeter || vih->bmiHeader.biYPelsPerMeter)
-            TRACE(", resolution %dx%d", vih->bmiHeader.biXPelsPerMeter, vih->bmiHeader.biYPelsPerMeter);
-        if (vih->bmiHeader.biClrUsed) TRACE(", %d colours", vih->bmiHeader.biClrUsed);
-        if (vih->bmiHeader.biClrImportant) TRACE(", %d important colours", vih->bmiHeader.biClrImportant);
+            TRACE(", resolution %ldx%ld", vih->bmiHeader.biXPelsPerMeter, vih->bmiHeader.biYPelsPerMeter);
+        if (vih->bmiHeader.biClrUsed) TRACE(", %lu colours", vih->bmiHeader.biClrUsed);
+        if (vih->bmiHeader.biClrImportant) TRACE(", %lu important colours", vih->bmiHeader.biClrImportant);
         TRACE(".\n");
     }
     else

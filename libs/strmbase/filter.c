@@ -87,7 +87,7 @@ static ULONG WINAPI enum_pins_AddRef(IEnumPins *iface)
 {
     struct enum_pins *enum_pins = impl_from_IEnumPins(iface);
     ULONG refcount = InterlockedIncrement(&enum_pins->refcount);
-    TRACE("%p increasing refcount to %u.\n", enum_pins, refcount);
+    TRACE("%p increasing refcount to %lu.\n", enum_pins, refcount);
     return refcount;
 }
 
@@ -96,7 +96,7 @@ static ULONG WINAPI enum_pins_Release(IEnumPins *iface)
     struct enum_pins *enum_pins = impl_from_IEnumPins(iface);
     ULONG refcount = InterlockedDecrement(&enum_pins->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", enum_pins, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", enum_pins, refcount);
     if (!refcount)
     {
         IBaseFilter_Release(&enum_pins->filter->IBaseFilter_iface);
@@ -110,7 +110,7 @@ static HRESULT WINAPI enum_pins_Next(IEnumPins *iface, ULONG count, IPin **pins,
     struct enum_pins *enum_pins = impl_from_IEnumPins(iface);
     unsigned int i;
 
-    TRACE("iface %p, count %u, pins %p, ret_count %p.\n", iface, count, pins, ret_count);
+    TRACE("iface %p, count %lu, pins %p, ret_count %p.\n", iface, count, pins, ret_count);
 
     if (!pins)
         return E_POINTER;
@@ -144,7 +144,7 @@ static HRESULT WINAPI enum_pins_Skip(IEnumPins *iface, ULONG count)
 {
     struct enum_pins *enum_pins = impl_from_IEnumPins(iface);
 
-    TRACE("iface %p, count %u.\n", iface, count);
+    TRACE("iface %p, count %lu.\n", iface, count);
 
     if (enum_pins->version != enum_pins->filter->pin_version)
         return VFW_E_ENUM_OUT_OF_SYNC;
@@ -241,7 +241,7 @@ static ULONG WINAPI filter_inner_AddRef(IUnknown *iface)
     struct strmbase_filter *filter = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedIncrement(&filter->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", filter, refcount);
+    TRACE("%p increasing refcount to %lu.\n", filter, refcount);
 
     return refcount;
 }
@@ -251,7 +251,7 @@ static ULONG WINAPI filter_inner_Release(IUnknown *iface)
     struct strmbase_filter *filter = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedDecrement(&filter->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", filter, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", filter, refcount);
 
     if (!refcount)
         filter->ops->filter_destroy(filter);
@@ -368,7 +368,7 @@ static HRESULT WINAPI filter_GetState(IBaseFilter *iface, DWORD timeout, FILTER_
     struct strmbase_filter *filter = impl_from_IBaseFilter(iface);
     HRESULT hr = S_OK;
 
-    TRACE("filter %p %s, timeout %u, state %p.\n", filter, debugstr_w(filter->name), timeout, state);
+    TRACE("filter %p %s, timeout %lu, state %p.\n", filter, debugstr_w(filter->name), timeout, state);
 
     EnterCriticalSection(&filter->filter_cs);
 

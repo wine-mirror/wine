@@ -220,7 +220,10 @@ HRESULT WINAPI SourceSeekingImpl_SetPositions(IMediaSeeking * iface, LONGLONG * 
     BOOL bChangeCurrent = FALSE, bChangeStop = FALSE;
     LONGLONG llNewCurrent, llNewStop;
 
-    TRACE("(%p, %x, %p, %x)\n", pCurrent, dwCurrentFlags, pStop, dwStopFlags);
+    TRACE("iface %p, current %s, current_flags %#lx, stop %s, stop_flags %#lx.\n", iface,
+            pCurrent ? debugstr_time(*pCurrent) : "<null>", dwCurrentFlags,
+            pStop ? debugstr_time(*pStop): "<null>", dwStopFlags);
+
     EnterCriticalSection(&This->cs);
 
     llNewCurrent = Adjust(This->llCurrent, pCurrent, dwCurrentFlags);
@@ -231,7 +234,7 @@ HRESULT WINAPI SourceSeekingImpl_SetPositions(IMediaSeeking * iface, LONGLONG * 
     if (llNewStop != This->llStop)
         bChangeStop = TRUE;
 
-    TRACE("Old: %u, New: %u\n", (DWORD)(This->llCurrent/10000000), (DWORD)(llNewCurrent/10000000));
+    TRACE("Seeking from %s to %s.\n", debugstr_time(This->llCurrent), debugstr_time(llNewCurrent));
 
     This->llCurrent = llNewCurrent;
     This->llStop = llNewStop;

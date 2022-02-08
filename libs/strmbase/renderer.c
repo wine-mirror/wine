@@ -526,7 +526,7 @@ static HRESULT WINAPI quality_control_Notify(IQualityControl *iface, IBaseFilter
     struct strmbase_renderer *filter = impl_from_IQualityControl(iface);
     HRESULT hr = S_FALSE;
 
-    TRACE("filter %p, sender %p, type %#x, proportion %u, late %s, timestamp %s.\n",
+    TRACE("filter %p, sender %p, type %#x, proportion %ld, late %s, timestamp %s.\n",
             filter, sender, q.Type, q.Proportion, debugstr_time(q.Late), debugstr_time(q.TimeStamp));
 
     if (filter->qc_sink)
