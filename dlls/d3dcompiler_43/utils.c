@@ -21,9 +21,6 @@
  *
  */
 
-#ifndef WINE_NO_LONG_TYPES
-#define WINE_NO_LONG_TYPES
-#endif
 #include <stdio.h>
 
 #include "d3dcompiler_private.h"
@@ -146,7 +143,7 @@ const char *debug_print_srcmod(DWORD mod)
         WINE_D3DCOMPILER_TO_STR(BWRITERSPSM_ABSNEG);
         WINE_D3DCOMPILER_TO_STR(BWRITERSPSM_NOT);
         default:
-            FIXME("Unrecognized source modifier %#x.\n", mod);
+            FIXME("Unrecognized source modifier %#lx.\n", mod);
             return "unrecognized_src_mod";
     }
 }
@@ -207,15 +204,15 @@ static const char *get_regname(const struct shader_reg *reg)
     switch (reg->type)
     {
         case BWRITERSPR_TEMP:
-            return wine_dbg_sprintf("r%u", reg->regnum);
+            return wine_dbg_sprintf("r%lu", reg->regnum);
         case BWRITERSPR_INPUT:
-            return wine_dbg_sprintf("v%u", reg->regnum);
+            return wine_dbg_sprintf("v%lu", reg->regnum);
         case BWRITERSPR_CONST:
-            return wine_dbg_sprintf("c%u", reg->regnum);
+            return wine_dbg_sprintf("c%lu", reg->regnum);
         case BWRITERSPR_ADDR:
-            return wine_dbg_sprintf("a%u", reg->regnum);
+            return wine_dbg_sprintf("a%lu", reg->regnum);
         case BWRITERSPR_TEXTURE:
-            return wine_dbg_sprintf("t%u", reg->regnum);
+            return wine_dbg_sprintf("t%lu", reg->regnum);
         case BWRITERSPR_RASTOUT:
             switch (reg->regnum)
             {
@@ -225,21 +222,21 @@ static const char *get_regname(const struct shader_reg *reg)
                 default: return "Unexpected RASTOUT";
             }
         case BWRITERSPR_ATTROUT:
-            return wine_dbg_sprintf("oD%u", reg->regnum);
+            return wine_dbg_sprintf("oD%lu", reg->regnum);
         case BWRITERSPR_TEXCRDOUT:
-            return wine_dbg_sprintf("oT%u", reg->regnum);
+            return wine_dbg_sprintf("oT%lu", reg->regnum);
         case BWRITERSPR_OUTPUT:
-            return wine_dbg_sprintf("o%u", reg->regnum);
+            return wine_dbg_sprintf("o%lu", reg->regnum);
         case BWRITERSPR_CONSTINT:
-            return wine_dbg_sprintf("i%u", reg->regnum);
+            return wine_dbg_sprintf("i%lu", reg->regnum);
         case BWRITERSPR_COLOROUT:
-            return wine_dbg_sprintf("oC%u", reg->regnum);
+            return wine_dbg_sprintf("oC%lu", reg->regnum);
         case BWRITERSPR_DEPTHOUT:
             return "oDepth";
         case BWRITERSPR_SAMPLER:
-            return wine_dbg_sprintf("s%u", reg->regnum);
+            return wine_dbg_sprintf("s%lu", reg->regnum);
         case BWRITERSPR_CONSTBOOL:
-            return wine_dbg_sprintf("b%u", reg->regnum);
+            return wine_dbg_sprintf("b%lu", reg->regnum);
         case BWRITERSPR_LOOP:
             return "aL";
         case BWRITERSPR_MISCTYPE:
@@ -250,11 +247,11 @@ static const char *get_regname(const struct shader_reg *reg)
                 default: return "unexpected misctype";
             }
         case BWRITERSPR_LABEL:
-            return wine_dbg_sprintf("l%u", reg->regnum);
+            return wine_dbg_sprintf("l%lu", reg->regnum);
         case BWRITERSPR_PREDICATE:
-            return wine_dbg_sprintf("p%u", reg->regnum);
+            return wine_dbg_sprintf("p%lu", reg->regnum);
         default:
-            return wine_dbg_sprintf("unknown regname %#x", reg->type);
+            return wine_dbg_sprintf("unknown regname %#lx", reg->type);
     }
 }
 
@@ -323,7 +320,7 @@ static const char *debug_print_relarg(const struct shader_reg *reg)
     short_swizzle = debug_print_swizzle(reg->rel_reg->u.swizzle);
 
     if (reg->rel_reg->type == BWRITERSPR_ADDR)
-        return wine_dbg_sprintf("[a%u%s]", reg->rel_reg->regnum, short_swizzle);
+        return wine_dbg_sprintf("[a%lu%s]", reg->rel_reg->regnum, short_swizzle);
     else if(reg->rel_reg->type == BWRITERSPR_LOOP && reg->rel_reg->regnum == 0)
         return wine_dbg_sprintf("[aL%s]", short_swizzle);
     else
@@ -519,19 +516,19 @@ void skip_dword_unknown(const char **ptr, unsigned int count)
     for (i = 0; i < count; ++i)
     {
         d = read_dword(ptr);
-        FIXME("\t0x%08x\n", d);
+        FIXME("\t0x%08lx\n", d);
     }
 }
 
 static void write_dword_unknown(char **ptr, DWORD d)
 {
-    FIXME("Writing unknown DWORD 0x%08x\n", d);
+    FIXME("Writing unknown DWORD 0x%08lx.\n", d);
     write_dword(ptr, d);
 }
 
 HRESULT dxbc_add_section(struct dxbc *dxbc, DWORD tag, const char *data, DWORD data_size)
 {
-    TRACE("dxbc %p, tag %s, size %#x.\n", dxbc, debugstr_an((const char *)&tag, 4), data_size);
+    TRACE("dxbc %p, tag %s, size %#lx.\n", dxbc, debugstr_an((const char *)&tag, 4), data_size);
 
     if (dxbc->count >= dxbc->size)
     {
@@ -605,7 +602,7 @@ HRESULT dxbc_parse(const char *data, SIZE_T data_size, struct dxbc *dxbc)
     skip_dword_unknown(&ptr, 1);
 
     total_size = read_dword(&ptr);
-    TRACE("total size: %#x\n", total_size);
+    TRACE("total size: %#lx\n", total_size);
 
     if (data_size != total_size)
     {
@@ -614,7 +611,7 @@ HRESULT dxbc_parse(const char *data, SIZE_T data_size, struct dxbc *dxbc)
     }
 
     chunk_count = read_dword(&ptr);
-    TRACE("chunk count: %#x\n", chunk_count);
+    TRACE("chunk count: %#lx\n", chunk_count);
 
     hr = dxbc_init(dxbc, chunk_count);
     if (FAILED(hr))
@@ -630,7 +627,7 @@ HRESULT dxbc_parse(const char *data, SIZE_T data_size, struct dxbc *dxbc)
         DWORD chunk_offset;
 
         chunk_offset = read_dword(&ptr);
-        TRACE("chunk %u at offset %#x\n", i, chunk_offset);
+        TRACE("chunk %u at offset %#lx\n", i, chunk_offset);
 
         chunk_ptr = data + chunk_offset;
 

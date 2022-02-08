@@ -245,7 +245,7 @@ BOOL record_declaration(struct bwriter_shader *shader, DWORD usage,
         struct declaration *newdecl;
         for(i = 0; i < *num; i++) {
             if((*decl)[i].regnum == regnum && ((*decl)[i].writemask & writemask)) {
-                WARN("Declaration of register %u already exists, writemask match 0x%x\n",
+                WARN("Declaration of register %lu already exists, writemask match %#lx.\n",
                       regnum, (*decl)[i].writemask & writemask);
             }
         }
@@ -285,7 +285,7 @@ BOOL record_sampler(struct bwriter_shader *shader, DWORD samptype, DWORD mod, DW
 
         for(i = 0; i < shader->num_samplers; i++) {
             if(shader->samplers[i].regnum == regnum) {
-                WARN("Sampler %u already declared\n", regnum);
+                WARN("Sampler %lu already declared.\n", regnum);
                 /* This is not an error as far as the assembler is concerned.
                  * Direct3D might refuse to load the compiled shader though
                  */
@@ -456,7 +456,7 @@ static DWORD d3d9_srcmod(DWORD bwriter_srcmod)
         case BWRITERSPSM_ABSNEG:     return D3DSPSM_ABSNEG;
         case BWRITERSPSM_NOT:        return D3DSPSM_NOT;
         default:
-            FIXME("Unhandled BWRITERSPSM token %#x.\n", bwriter_srcmod);
+            FIXME("Unhandled BWRITERSPSM token %#lx.\n", bwriter_srcmod);
             return 0;
     }
 }
@@ -483,7 +483,7 @@ static DWORD d3d9_comparetype(DWORD asmshader_comparetype)
         case BWRITER_COMPARISON_NE:     return D3DSPC_NE;
         case BWRITER_COMPARISON_LE:     return D3DSPC_LE;
         default:
-            FIXME("Unexpected BWRITER_COMPARISON type %#x.\n", asmshader_comparetype);
+            FIXME("Unexpected BWRITER_COMPARISON type %#lx.\n", asmshader_comparetype);
             return 0;
     }
 }
@@ -495,7 +495,7 @@ static DWORD d3d9_sampler(DWORD bwriter_sampler)
     if (bwriter_sampler == BWRITERSTT_2D)       return D3DSTT_2D;
     if (bwriter_sampler == BWRITERSTT_CUBE)     return D3DSTT_CUBE;
     if (bwriter_sampler == BWRITERSTT_VOLUME)   return D3DSTT_VOLUME;
-    FIXME("Unexpected BWRITERSAMPLER_TEXTURE_TYPE type %#x.\n", bwriter_sampler);
+    FIXME("Unexpected BWRITERSAMPLER_TEXTURE_TYPE type %#lx.\n", bwriter_sampler);
 
     return 0;
 }
@@ -521,7 +521,7 @@ static DWORD d3d9_register(DWORD bwriter_register)
     if (bwriter_register == BWRITERSPR_LABEL)       return D3DSPR_LABEL;
     if (bwriter_register == BWRITERSPR_PREDICATE)   return D3DSPR_PREDICATE;
 
-    FIXME("Unexpected BWRITERSPR %#x.\n", bwriter_register);
+    FIXME("Unexpected BWRITERSPR %#lx.\n", bwriter_register);
     return ~0U;
 }
 
@@ -620,7 +620,7 @@ static DWORD d3d9_opcode(DWORD bwriter_opcode)
         case BWRITERSIO_TEXLDB:      return D3DSIO_TEX | D3DSI_TEXLD_BIAS;
 
         default:
-            FIXME("Unhandled BWRITERSIO token %#x.\n", bwriter_opcode);
+            FIXME("Unhandled BWRITERSIO token %#lx.\n", bwriter_opcode);
             return ~0U;
     }
 }
@@ -715,29 +715,29 @@ static HRESULT vs_find_builtin_varyings(struct bc_writer *This, const struct bwr
             case BWRITERDECLUSAGE_POSITION:
             case BWRITERDECLUSAGE_POSITIONT:
                 if(usage_idx > 0) {
-                    WARN("dcl_position%u not supported in sm 1/2 shaders\n", usage_idx);
+                    WARN("dcl_position%lu not supported in sm 1/2 shaders.\n", usage_idx);
                     return E_INVALIDARG;
                 }
-                TRACE("o%u is oPos\n", regnum);
+                TRACE("o%lu is oPos.\n", regnum);
                 This->oPos_regnum = regnum;
                 break;
 
             case BWRITERDECLUSAGE_COLOR:
                 if(usage_idx > 1) {
-                    WARN("dcl_color%u not supported in sm 1/2 shaders\n", usage_idx);
+                    WARN("dcl_color%lu not supported in sm 1/2 shaders.\n", usage_idx);
                     return E_INVALIDARG;
                 }
                 if(writemask != BWRITERSP_WRITEMASK_ALL) {
                     WARN("Only WRITEMASK_ALL is supported on color in sm 1/2\n");
                     return E_INVALIDARG;
                 }
-                TRACE("o%u is oD%u\n", regnum, usage_idx);
+                TRACE("o%lu is oD%lu.\n", regnum, usage_idx);
                 This->oD_regnum[usage_idx] = regnum;
                 break;
 
             case BWRITERDECLUSAGE_TEXCOORD:
                 if(usage_idx >= 8) {
-                    WARN("dcl_color%u not supported in sm 1/2 shaders\n", usage_idx);
+                    WARN("dcl_color%lu not supported in sm 1/2 shaders.\n", usage_idx);
                     return E_INVALIDARG;
                 }
                 if(writemask != (BWRITERSP_WRITEMASK_0) &&
@@ -747,23 +747,23 @@ static HRESULT vs_find_builtin_varyings(struct bc_writer *This, const struct bwr
                     WARN("Partial writemasks not supported on texture coordinates in sm 1 and 2\n");
                     return E_INVALIDARG;
                 }
-                TRACE("o%u is oT%u\n", regnum, usage_idx);
+                TRACE("o%lu is oT%lu.\n", regnum, usage_idx);
                 This->oT_regnum[usage_idx] = regnum;
                 break;
 
             case BWRITERDECLUSAGE_PSIZE:
                 if(usage_idx > 0) {
-                    WARN("dcl_psize%u not supported in sm 1/2 shaders\n", usage_idx);
+                    WARN("dcl_psize%lu not supported in sm 1/2 shaders.\n", usage_idx);
                     return E_INVALIDARG;
                 }
-                TRACE("o%u writemask 0x%08x is oPts\n", regnum, writemask);
+                TRACE("o%lu writemask 0x%08lx is oPts.\n", regnum, writemask);
                 This->oPts_regnum = regnum;
                 This->oPts_mask = writemask;
                 break;
 
             case BWRITERDECLUSAGE_FOG:
                 if(usage_idx > 0) {
-                    WARN("dcl_fog%u not supported in sm 1 shaders\n", usage_idx);
+                    WARN("dcl_fog%lu not supported in sm 1 shaders.\n", usage_idx);
                     return E_INVALIDARG;
                 }
                 if(writemask != BWRITERSP_WRITEMASK_0 && writemask != BWRITERSP_WRITEMASK_1 &&
@@ -771,13 +771,13 @@ static HRESULT vs_find_builtin_varyings(struct bc_writer *This, const struct bwr
                     WARN("Unsupported fog writemask\n");
                     return E_INVALIDARG;
                 }
-                TRACE("o%u writemask 0x%08x is oFog\n", regnum, writemask);
+                TRACE("o%lu writemask 0x%08lx is oFog.\n", regnum, writemask);
                 This->oFog_regnum = regnum;
                 This->oFog_mask = writemask;
                 break;
 
             default:
-                WARN("Varying type %u is not supported in shader model 1.x\n", usage);
+                WARN("Varying type %lu is not supported in shader model 1.x.\n", usage);
                 return E_INVALIDARG;
         }
     }
@@ -825,20 +825,20 @@ static HRESULT find_ps_builtin_semantics(struct bc_writer *This,
         switch(usage) {
             case BWRITERDECLUSAGE_COLOR:
                 if(usage_idx > 1) {
-                    WARN("dcl_color%u not supported in sm 1 shaders\n", usage_idx);
+                    WARN("dcl_color%lu not supported in sm 1 shaders\n", usage_idx);
                     return E_INVALIDARG;
                 }
                 if(writemask != BWRITERSP_WRITEMASK_ALL) {
                     WARN("Only WRITEMASK_ALL is supported on color in sm 1\n");
                     return E_INVALIDARG;
                 }
-                TRACE("v%u is v%u\n", regnum, usage_idx);
+                TRACE("v%lu is v%lu\n", regnum, usage_idx);
                 This->v_regnum[usage_idx] = regnum;
                 break;
 
             case BWRITERDECLUSAGE_TEXCOORD:
                 if(usage_idx > texcoords) {
-                    WARN("dcl_texcoord%u not supported in this shader version\n", usage_idx);
+                    WARN("dcl_texcoord%lu not supported in this shader version\n", usage_idx);
                     return E_INVALIDARG;
                 }
                 if(writemask != (BWRITERSP_WRITEMASK_0) &&
@@ -849,12 +849,12 @@ static HRESULT find_ps_builtin_semantics(struct bc_writer *This,
                 } else {
                     writemask = BWRITERSP_WRITEMASK_ALL;
                 }
-                TRACE("v%u is t%u\n", regnum, usage_idx);
+                TRACE("v%lu is t%lu\n", regnum, usage_idx);
                 This->t_regnum[usage_idx] = regnum;
                 break;
 
             default:
-                WARN("Varying type %u is not supported in shader model 1.x\n", usage);
+                WARN("Varying type %lu is not supported in shader model 1.x\n", usage);
                 return E_INVALIDARG;
         }
     }
@@ -934,7 +934,7 @@ static DWORD map_vs_output(struct bc_writer *This, DWORD regnum, DWORD mask, DWO
     /* The varying must be undeclared - if an unsupported varying was declared,
      * the vs_find_builtin_varyings function would have caught it and this code
      * would not run */
-    WARN("Undeclared varying %u\n", regnum);
+    WARN("Undeclared varying %lu.\n", regnum);
     This->state = E_INVALIDARG;
     return -1;
 }
@@ -961,7 +961,7 @@ static void vs_12_dstreg(struct bc_writer *This, const struct shader_reg *reg,
             /* These registers are mapped to input and output regs. They can be encoded in the bytecode,
             * but are unexpected. If we hit this path it might be due to an error.
             */
-            FIXME("Unexpected register type %u\n", reg->type);
+            FIXME("Unexpected register type %lu.\n", reg->type);
             /* drop through */
         case BWRITERSPR_INPUT:
         case BWRITERSPR_TEMP:
@@ -1050,7 +1050,7 @@ static void vs_1_x_srcreg(struct bc_writer *This, const struct shader_reg *reg,
             /* These registers are mapped to input and output regs. They can be encoded in the bytecode,
              * but are unexpected. If we hit this path it might be due to an error.
              */
-            FIXME("Unexpected register type %u\n", reg->type);
+            FIXME("Unexpected register type %lu.\n", reg->type);
             /* drop through */
         case BWRITERSPR_INPUT:
         case BWRITERSPR_TEMP:
@@ -1163,7 +1163,7 @@ static void ps_1_0123_srcreg(struct bc_writer *This, const struct shader_reg *re
     if(reg->srcmod == BWRITERSPSM_DZ || reg->srcmod == BWRITERSPSM_DW ||
        reg->srcmod == BWRITERSPSM_ABS || reg->srcmod == BWRITERSPSM_ABSNEG ||
        reg->srcmod == BWRITERSPSM_NOT) {
-        WARN("Invalid source modifier %u for <= ps_1_3\n", reg->srcmod);
+        WARN("Invalid source modifier %lu for <= ps_1_3.\n", reg->srcmod);
         This->state = E_INVALIDARG;
         return;
     }
@@ -1292,7 +1292,7 @@ static void instr_ps_1_0123_texld(struct bc_writer *This,
 
     if(instr->src[1].type != BWRITERSPR_SAMPLER ||
        instr->src[1].regnum > 3) {
-        WARN("Unsupported sampler type %u regnum %u\n",
+        WARN("Unsupported sampler type %lu regnum %lu.\n",
              instr->src[1].type, instr->src[1].regnum);
         This->state = E_INVALIDARG;
         return;
@@ -1307,7 +1307,7 @@ static void instr_ps_1_0123_texld(struct bc_writer *This,
        (idx == 1 && instr->dst.regnum != T1_REG) ||
        (idx == 2 && instr->dst.regnum != T2_REG) ||
        (idx == 3 && instr->dst.regnum != T3_REG)) {
-        WARN("Sampling from sampler s%u to register r%u is not possible in ps_1_x\n",
+        WARN("Sampling from sampler s%lu to register r%lu is not possible in ps_1_x.\n",
              idx, instr->dst.regnum);
         This->state = E_INVALIDARG;
         return;
@@ -1315,7 +1315,7 @@ static void instr_ps_1_0123_texld(struct bc_writer *This,
     if(instr->src[0].type == BWRITERSPR_INPUT) {
         /* A simple non-dependent read tex instruction */
         if(instr->src[0].regnum != This->t_regnum[idx]) {
-            WARN("Cannot sample from s%u with texture address data from interpolator %u\n",
+            WARN("Cannot sample from s%lu with texture address data from interpolator %lu.\n",
                  idx, instr->src[0].regnum);
             This->state = E_INVALIDARG;
             return;
@@ -1337,7 +1337,7 @@ static void instr_ps_1_0123_texld(struct bc_writer *This,
             TRACE("writing texreg2gb\n");
             This->funcs->opcode(This, instr, D3DSIO_TEXREG2GB & D3DSI_OPCODE_MASK, buffer);
         } else {
-            WARN("Unsupported src addr swizzle in dependent texld: 0x%08x\n", instr->src[0].u.swizzle);
+            WARN("Unsupported src addr swizzle in dependent texld: 0x%08lx.\n", instr->src[0].u.swizzle);
             This->state = E_INVALIDARG;
             return;
         }
@@ -1462,7 +1462,7 @@ static void ps_1_4_srcreg(struct bc_writer *This, const struct shader_reg *reg,
 
     if(reg->srcmod == BWRITERSPSM_ABS || reg->srcmod == BWRITERSPSM_ABSNEG ||
        reg->srcmod == BWRITERSPSM_NOT) {
-        WARN("Invalid source modifier %u for ps_1_4\n", reg->srcmod);
+        WARN("Invalid source modifier %lu for ps_1_4.\n", reg->srcmod);
         This->state = E_INVALIDARG;
         return;
     }
@@ -1538,7 +1538,7 @@ static void instr_ps_1_4_texld(struct bc_writer *This,
                                struct bytecode_buffer *buffer) {
     if(instr->src[1].type != BWRITERSPR_SAMPLER ||
        instr->src[1].regnum > 5) {
-        WARN("Unsupported sampler type %u regnum %u\n",
+        WARN("Unsupported sampler type %lu regnum %lu.\n",
              instr->src[1].type, instr->src[1].regnum);
         This->state = E_INVALIDARG;
         return;
@@ -1549,7 +1549,7 @@ static void instr_ps_1_4_texld(struct bc_writer *This,
     }
 
     if(instr->src[1].regnum != instr->dst.regnum) {
-        WARN("Sampling from sampler s%u to register r%u is not possible in ps_1_4\n",
+        WARN("Sampling from sampler s%lu to register r%lu is not possible in ps_1_4.\n",
              instr->src[1].regnum, instr->dst.regnum);
         This->state = E_INVALIDARG;
         return;
@@ -1654,7 +1654,7 @@ static void vs_2_srcreg(struct bc_writer *This,
             /* These registers are mapped to input and output regs. They can be encoded in the bytecode,
              * but are unexpected. If we hit this path it might be due to an error.
              */
-            FIXME("Unexpected register type %u\n", reg->type);
+            FIXME("Unexpected register type %lu.\n", reg->type);
             /* drop through */
         case BWRITERSPR_INPUT:
         case BWRITERSPR_TEMP:
@@ -1920,8 +1920,9 @@ static void ps_2_srcreg(struct bc_writer *This,
                 WARN("Predicate register not supported in ps_2_0\n");
                 This->state = E_INVALIDARG;
             }
-            if(reg->regnum) {
-                WARN("Predicate register with regnum %u not supported\n",
+            if (reg->regnum)
+            {
+                WARN("Predicate register with regnum %lu not supported.\n",
                      reg->regnum);
                 This->state = E_INVALIDARG;
             }
@@ -2130,7 +2131,7 @@ static void sm_3_srcreg(struct bc_writer *This,
     if(reg->rel_reg) {
         if (reg->type == BWRITERSPR_CONST && shader->type == ST_PIXEL)
         {
-            WARN("c%u[...] is unsupported in ps_3_0\n", reg->regnum);
+            WARN("c%lu[...] is unsupported in ps_3_0.\n", reg->regnum);
             This->state = E_INVALIDARG;
             return;
         }
@@ -2359,7 +2360,7 @@ static HRESULT call_instr_handler(struct bc_writer *writer,
     while(writer->funcs->instructions[i].opcode != BWRITERSIO_END) {
         if(instr->opcode == writer->funcs->instructions[i].opcode) {
             if(!writer->funcs->instructions[i].func) {
-                WARN("Opcode %u not supported by this profile\n", instr->opcode);
+                WARN("Opcode %lu not supported by this profile.\n", instr->opcode);
                 return E_INVALIDARG;
             }
             writer->funcs->instructions[i].func(writer, instr, buffer);
@@ -2368,7 +2369,7 @@ static HRESULT call_instr_handler(struct bc_writer *writer,
         i++;
     }
 
-    FIXME("Unhandled instruction %u - %s\n", instr->opcode,
+    FIXME("Unhandled instruction %lu - %s.\n", instr->opcode,
           debug_print_opcode(instr->opcode));
     return E_INVALIDARG;
 }

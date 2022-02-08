@@ -73,8 +73,8 @@ static void asmparser_end(struct asm_parser *This) {
 
 static void asmparser_constF(struct asm_parser *This, DWORD reg, float x, float y, float z, float w) {
     if(!This->shader) return;
-    TRACE("Adding float constant %u at pos %u\n", reg, This->shader->num_cf);
-    TRACE_(parsed_shader)("def c%u, %f, %f, %f, %f\n", reg, x, y, z, w);
+    TRACE("Adding float constant %lu at pos %u.\n", reg, This->shader->num_cf);
+    TRACE_(parsed_shader)("def c%lu, %f, %f, %f, %f\n", reg, x, y, z, w);
     if(!add_constF(This->shader, reg, x, y, z, w)) {
         ERR("Out of memory\n");
         set_parse_status(&This->status, PARSE_ERR);
@@ -83,8 +83,8 @@ static void asmparser_constF(struct asm_parser *This, DWORD reg, float x, float 
 
 static void asmparser_constB(struct asm_parser *This, DWORD reg, BOOL x) {
     if(!This->shader) return;
-    TRACE("Adding boolean constant %u at pos %u\n", reg, This->shader->num_cb);
-    TRACE_(parsed_shader)("def b%u, %s\n", reg, x ? "true" : "false");
+    TRACE("Adding boolean constant %lu at pos %u.\n", reg, This->shader->num_cb);
+    TRACE_(parsed_shader)("def b%lu, %s\n", reg, x ? "true" : "false");
     if(!add_constB(This->shader, reg, x)) {
         ERR("Out of memory\n");
         set_parse_status(&This->status, PARSE_ERR);
@@ -93,8 +93,8 @@ static void asmparser_constB(struct asm_parser *This, DWORD reg, BOOL x) {
 
 static void asmparser_constI(struct asm_parser *This, DWORD reg, INT x, INT y, INT z, INT w) {
     if(!This->shader) return;
-    TRACE("Adding integer constant %u at pos %u\n", reg, This->shader->num_ci);
-    TRACE_(parsed_shader)("def i%u, %d, %d, %d, %d\n", reg, x, y, z, w);
+    TRACE("Adding integer constant %lu at pos %u.\n", reg, This->shader->num_ci);
+    TRACE_(parsed_shader)("def i%lu, %d, %d, %d, %d\n", reg, x, y, z, w);
     if(!add_constI(This->shader, reg, x, y, z, w)) {
         ERR("Out of memory\n");
         set_parse_status(&This->status, PARSE_ERR);
@@ -240,7 +240,7 @@ static struct shader_reg map_oldps_register(const struct shader_reg *reg, BOOL t
                     case 6:     ret.regnum = T6_VARYING; break;
                     case 7:     ret.regnum = T7_VARYING; break;
                     default:
-                        FIXME("Unexpected TEXTURE register t%u\n", reg->regnum);
+                        FIXME("Unexpected TEXTURE register t%lu.\n", reg->regnum);
                         return *reg;
                 }
                 return ret;
@@ -253,7 +253,7 @@ static struct shader_reg map_oldps_register(const struct shader_reg *reg, BOOL t
                     case 2:     ret.regnum = T2_REG; break;
                     case 3:     ret.regnum = T3_REG; break;
                     default:
-                        FIXME("Unexpected TEXTURE register t%u\n", reg->regnum);
+                        FIXME("Unexpected TEXTURE register t%lu.\n", reg->regnum);
                         return *reg;
                 }
                 return ret;
@@ -620,7 +620,7 @@ static struct shader_reg map_oldvs_register(const struct shader_reg *reg) {
                     ret.u.writemask = OPTS_WRITEMASK;
                     break;
                 default:
-                    FIXME("Unhandled RASTOUT register %u\n", reg->regnum);
+                    FIXME("Unhandled RASTOUT register %lu.\n", reg->regnum);
                     return *reg;
             }
             return ret;
@@ -638,7 +638,7 @@ static struct shader_reg map_oldvs_register(const struct shader_reg *reg) {
                 case 6: ret.regnum = OT6_REG; break;
                 case 7: ret.regnum = OT7_REG; break;
                 default:
-                    FIXME("Unhandled TEXCRDOUT regnum %u\n", reg->regnum);
+                    FIXME("Unhandled TEXCRDOUT regnum %lu.\n", reg->regnum);
                     return *reg;
             }
             return ret;
@@ -650,7 +650,7 @@ static struct shader_reg map_oldvs_register(const struct shader_reg *reg) {
                 case 0: ret.regnum = OD0_REG; break;
                 case 1: ret.regnum = OD1_REG; break;
                 default:
-                    FIXME("Unhandled ATTROUT regnum %u\n", reg->regnum);
+                    FIXME("Unhandled ATTROUT regnum %lu.\n", reg->regnum);
                     return *reg;
             }
             return ret;

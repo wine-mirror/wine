@@ -689,7 +689,7 @@ static HRESULT assemble_shader(const char *preproc_shader,
     SlDeleteShader(shader);
     if (FAILED(hr))
     {
-        ERR("Failed to write bytecode, hr %#x.\n", hr);
+        ERR("Failed to write bytecode, hr %#lx.\n", hr);
         return D3DXERR_INVALIDDATA;
     }
 
@@ -716,7 +716,7 @@ HRESULT WINAPI D3DAssemble(const void *data, SIZE_T datasize, const char *filena
 {
     HRESULT hr;
 
-    TRACE("data %p, datasize %lu, filename %s, defines %p, include %p, sflags %#x, "
+    TRACE("data %p, datasize %Iu, filename %s, defines %p, include %p, sflags %#x, "
             "shader %p, error_messages %p.\n",
             data, datasize, debugstr_a(filename), defines, include, flags, shader, error_messages);
 
@@ -745,9 +745,9 @@ HRESULT WINAPI D3DCompile2(const void *data, SIZE_T data_size, const char *filen
 {
     HRESULT hr;
 
-    TRACE("data %p, data_size %lu, filename %s, defines %p, include %p, entrypoint %s, "
+    TRACE("data %p, data_size %Iu, filename %s, defines %p, include %p, entrypoint %s, "
             "target %s, sflags %#x, eflags %#x, secondary_flags %#x, secondary_data %p, "
-            "secondary_data_size %lu, shader %p, error_messages %p.\n",
+            "secondary_data_size %Iu, shader %p, error_messages %p.\n",
             data, data_size, debugstr_a(filename), defines, include, debugstr_a(entrypoint),
             debugstr_a(target), sflags, eflags, secondary_flags, secondary_data,
             secondary_data_size, shader, error_messages);
@@ -776,7 +776,7 @@ HRESULT WINAPI D3DCompile(const void *data, SIZE_T data_size, const char *filena
         const D3D_SHADER_MACRO *defines, ID3DInclude *include, const char *entrypoint,
         const char *target, UINT sflags, UINT eflags, ID3DBlob **shader, ID3DBlob **error_messages)
 {
-    TRACE("data %p, data_size %lu, filename %s, defines %p, include %p, entrypoint %s, "
+    TRACE("data %p, data_size %Iu, filename %s, defines %p, include %p, entrypoint %s, "
             "target %s, sflags %#x, eflags %#x, shader %p, error_messages %p.\n",
             data, data_size, debugstr_a(filename), defines, include, debugstr_a(entrypoint),
             debugstr_a(target), sflags, eflags, shader, error_messages);
@@ -792,7 +792,7 @@ HRESULT WINAPI D3DPreprocess(const void *data, SIZE_T size, const char *filename
     HRESULT hr;
     ID3DBlob *buffer;
 
-    TRACE("data %p, size %lu, filename %s, defines %p, include %p, shader %p, error_messages %p\n",
+    TRACE("data %p, size %Iu, filename %s, defines %p, include %p, shader %p, error_messages %p.\n",
           data, size, debugstr_a(filename), defines, include, shader, error_messages);
 
     if (!data)
@@ -827,7 +827,7 @@ cleanup:
 
 HRESULT WINAPI D3DDisassemble(const void *data, SIZE_T size, UINT flags, const char *comments, ID3DBlob **disassembly)
 {
-    FIXME("data %p, size %lu, flags %#x, comments %p, disassembly %p stub!\n",
+    FIXME("data %p, size %Iu, flags %#x, comments %p, disassembly %p stub!\n",
             data, size, flags, comments, disassembly);
     return E_NOTIMPL;
 }
@@ -881,6 +881,6 @@ end:
 
 HRESULT WINAPI D3DLoadModule(const void *data, SIZE_T size, ID3D11Module **module)
 {
-    FIXME("data %p, size %lu, module %p stub!\n", data, size, module);
+    FIXME("data %p, size %Iu, module %p stub!\n", data, size, module);
     return E_NOTIMPL;
 }

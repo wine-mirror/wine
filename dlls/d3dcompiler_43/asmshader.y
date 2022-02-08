@@ -1108,7 +1108,7 @@ writemask:            '.' wm_components
                             }
                             else {
                                 $$ = $2.writemask;
-                                TRACE("Writemask: %x\n", $$);
+                                TRACE("Writemask: %lx\n", $$);
                             }
                         }
 
@@ -1136,7 +1136,7 @@ wm_components:        COMPONENT
 swizzle:              /* empty */
                         {
                             $$ = BWRITERVS_NOSWIZZLE;
-                            TRACE("Default swizzle: %08x\n", $$);
+                            TRACE("Default swizzle: %08lx\n", $$);
                         }
                     | '.' sw_components
                         {
@@ -1156,7 +1156,7 @@ swizzle:              /* empty */
                                 for(i = $2.idx; i < 4; i++){
                                     $$ |= last << (2 * i);
                                 }
-                                TRACE("Got a swizzle: %08x\n", $$);
+                                TRACE("Got a swizzle: %08lx\n", $$);
                             }
                         }
 
@@ -1303,7 +1303,7 @@ sreg:                   sreg_name rel_reg swizzle
                                     set_parse_status(&asm_ctx.status,  PARSE_ERR);
                                     break;
                                 default:
-                                    FIXME("Unhandled combination of NEGATE and %u\n", $4);
+                                    FIXME("Unhandled combination of NEGATE and %lu\n", $4);
                             }
                             $$.u.swizzle = $5;
                         }
