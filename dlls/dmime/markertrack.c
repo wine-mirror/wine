@@ -64,7 +64,7 @@ static ULONG WINAPI IDirectMusicTrackImpl_AddRef(IDirectMusicTrack *iface)
     IDirectMusicMarkerTrack *This = impl_from_IDirectMusicTrack(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -74,7 +74,7 @@ static ULONG WINAPI IDirectMusicTrackImpl_Release(IDirectMusicTrack *iface)
     IDirectMusicMarkerTrack *This = impl_from_IDirectMusicTrack(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if (!ref) {
         HeapFree(GetProcessHeap(), 0, This);
@@ -97,7 +97,7 @@ static HRESULT WINAPI IDirectMusicTrackImpl_InitPlay(IDirectMusicTrack *iface,
         void **ppStateData, DWORD dwVirtualTrack8ID, DWORD dwFlags)
 {
         IDirectMusicMarkerTrack *This = impl_from_IDirectMusicTrack(iface);
-	FIXME("(%p, %p, %p, %p, %d, %d): stub\n", This, pSegmentState, pPerformance, ppStateData, dwVirtualTrack8ID, dwFlags);
+	FIXME("(%p, %p, %p, %p, %ld, %ld): stub\n", This, pSegmentState, pPerformance, ppStateData, dwVirtualTrack8ID, dwFlags);
 	return S_OK;
 }
 
@@ -113,7 +113,7 @@ static HRESULT WINAPI IDirectMusicTrackImpl_Play(IDirectMusicTrack *iface, void 
         IDirectMusicPerformance *pPerf, IDirectMusicSegmentState *pSegSt, DWORD dwVirtualID)
 {
         IDirectMusicMarkerTrack *This = impl_from_IDirectMusicTrack(iface);
-	FIXME("(%p, %p, %d, %d, %d, %d, %p, %p, %d): stub\n", This, pStateData, mtStart, mtEnd, mtOffset, dwFlags, pPerf, pSegSt, dwVirtualID);
+	FIXME("(%p, %p, %ld, %ld, %ld, %ld, %p, %p, %ld): stub\n", This, pStateData, mtStart, mtEnd, mtOffset, dwFlags, pPerf, pSegSt, dwVirtualID);
 	return S_OK;
 }
 
@@ -122,7 +122,7 @@ static HRESULT WINAPI IDirectMusicTrackImpl_GetParam(IDirectMusicTrack *iface, R
 {
     IDirectMusicMarkerTrack *This = impl_from_IDirectMusicTrack(iface);
 
-    TRACE("(%p, %s, %d, %p, %p)\n", This, debugstr_dmguid(type), time, next, param);
+    TRACE("(%p, %s, %ld, %p, %p)\n", This, debugstr_dmguid(type), time, next, param);
 
     if (!param)
         return E_POINTER;
@@ -144,7 +144,7 @@ static HRESULT WINAPI IDirectMusicTrackImpl_SetParam(IDirectMusicTrack *iface, R
 {
     IDirectMusicMarkerTrack *This = impl_from_IDirectMusicTrack(iface);
 
-    TRACE("(%p, %s, %d, %p): not supported\n", This, debugstr_dmguid(type), time, param);
+    TRACE("(%p, %s, %ld, %p): not supported\n", This, debugstr_dmguid(type), time, param);
     return DMUS_E_SET_UNSUPPORTED;
 }
 
@@ -183,7 +183,7 @@ static HRESULT WINAPI IDirectMusicTrackImpl_Clone(IDirectMusicTrack *iface, MUSI
         MUSIC_TIME mtEnd, IDirectMusicTrack **ppTrack)
 {
         IDirectMusicMarkerTrack *This = impl_from_IDirectMusicTrack(iface);
-	FIXME("(%p, %d, %d, %p): stub\n", This, mtStart, mtEnd, ppTrack);
+	FIXME("(%p, %ld, %ld, %p): stub\n", This, mtStart, mtEnd, ppTrack);
 	return S_OK;
 }
 

@@ -72,7 +72,7 @@ static ULONG WINAPI tempo_track_AddRef(IDirectMusicTrack8 *iface)
     IDirectMusicTempoTrack *This = impl_from_IDirectMusicTrack8(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -82,7 +82,7 @@ static ULONG WINAPI tempo_track_Release(IDirectMusicTrack8 *iface)
     IDirectMusicTempoTrack *This = impl_from_IDirectMusicTrack8(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if (!ref) {
         heap_free(This->items);
@@ -108,7 +108,7 @@ static HRESULT WINAPI tempo_track_InitPlay(IDirectMusicTrack8 *iface,
 
   LPDMUS_PRIVATE_TEMPO_PLAY_STATE pState = NULL;
 
-  FIXME("(%p, %p, %p, %p, %d, %d): semi-stub\n", This, pSegmentState, pPerformance, ppStateData, dwVirtualTrack8ID, dwFlags);
+  FIXME("(%p, %p, %p, %p, %ld, %ld): semi-stub\n", This, pSegmentState, pPerformance, ppStateData, dwVirtualTrack8ID, dwFlags);
 
   pState = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_TEMPO_PLAY_STATE));
   if (NULL == pState)
@@ -141,7 +141,7 @@ static HRESULT WINAPI tempo_track_Play(IDirectMusicTrack8 *iface, void *pStateDa
         IDirectMusicPerformance *pPerf, IDirectMusicSegmentState *pSegSt, DWORD dwVirtualID)
 {
   IDirectMusicTempoTrack *This = impl_from_IDirectMusicTrack8(iface);
-  FIXME("(%p, %p, %d, %d, %d, %d, %p, %p, %d): stub\n", This, pStateData, mtStart, mtEnd, mtOffset, dwFlags, pPerf, pSegSt, dwVirtualID);
+  FIXME("(%p, %p, %ld, %ld, %ld, %ld, %p, %p, %ld): stub\n", This, pStateData, mtStart, mtEnd, mtOffset, dwFlags, pPerf, pSegSt, dwVirtualID);
   /** should use IDirectMusicPerformance_SendPMsg here */
   return S_OK;
 }
@@ -153,7 +153,7 @@ static HRESULT WINAPI tempo_track_GetParam(IDirectMusicTrack8 *iface, REFGUID ty
     DMUS_TEMPO_PARAM *prm = param;
     unsigned int i;
 
-    TRACE("(%p, %s, %d, %p, %p)\n", This, debugstr_dmguid(type), time, next, param);
+    TRACE("(%p, %s, %ld, %p, %p)\n", This, debugstr_dmguid(type), time, next, param);
 
     if (!param)
         return E_POINTER;
@@ -190,7 +190,7 @@ static HRESULT WINAPI tempo_track_SetParam(IDirectMusicTrack8 *iface, REFGUID ty
 {
     IDirectMusicTempoTrack *This = impl_from_IDirectMusicTrack8(iface);
 
-    TRACE("(%p, %s, %d, %p)\n", This, debugstr_dmguid(type), time, param);
+    TRACE("(%p, %s, %ld, %p)\n", This, debugstr_dmguid(type), time, param);
 
     if (IsEqualGUID(type, &GUID_DisableTempo)) {
         if (!param)
@@ -250,7 +250,7 @@ static HRESULT WINAPI tempo_track_Clone(IDirectMusicTrack8 *iface, MUSIC_TIME mt
         MUSIC_TIME mtEnd, IDirectMusicTrack **ppTrack)
 {
   IDirectMusicTempoTrack *This = impl_from_IDirectMusicTrack8(iface);
-  FIXME("(%p, %d, %d, %p): stub\n", This, mtStart, mtEnd, ppTrack);
+  FIXME("(%p, %ld, %ld, %p): stub\n", This, mtStart, mtEnd, ppTrack);
   return S_OK;
 }
 
@@ -259,7 +259,7 @@ static HRESULT WINAPI tempo_track_PlayEx(IDirectMusicTrack8 *iface, void *pState
         IDirectMusicPerformance *pPerf, IDirectMusicSegmentState *pSegSt, DWORD dwVirtualID)
 {
   IDirectMusicTempoTrack *This = impl_from_IDirectMusicTrack8(iface);
-  FIXME("(%p, %p, 0x%s, 0x%s, 0x%s, %d, %p, %p, %d): stub\n", This, pStateData, wine_dbgstr_longlong(rtStart),
+  FIXME("(%p, %p, 0x%s, 0x%s, 0x%s, %ld, %p, %p, %ld): stub\n", This, pStateData, wine_dbgstr_longlong(rtStart),
       wine_dbgstr_longlong(rtEnd), wine_dbgstr_longlong(rtOffset), dwFlags, pPerf, pSegSt, dwVirtualID);
   return S_OK;
 }
@@ -269,7 +269,7 @@ static HRESULT WINAPI tempo_track_GetParamEx(IDirectMusicTrack8 *iface, REFGUID 
         DWORD dwFlags)
 {
   IDirectMusicTempoTrack *This = impl_from_IDirectMusicTrack8(iface);
-  FIXME("(%p, %s, 0x%s, %p, %p, %p, %d): stub\n", This, debugstr_dmguid(rguidType),
+  FIXME("(%p, %s, 0x%s, %p, %p, %p, %ld): stub\n", This, debugstr_dmguid(rguidType),
       wine_dbgstr_longlong(rtTime), prtNext, pParam, pStateData, dwFlags);
   return S_OK;
 }
@@ -278,7 +278,7 @@ static HRESULT WINAPI tempo_track_SetParamEx(IDirectMusicTrack8 *iface, REFGUID 
         REFERENCE_TIME rtTime, void *pParam, void *pStateData, DWORD dwFlags)
 {
   IDirectMusicTempoTrack *This = impl_from_IDirectMusicTrack8(iface);
-  FIXME("(%p, %s, 0x%s, %p, %p, %d): stub\n", This, debugstr_dmguid(rguidType),
+  FIXME("(%p, %s, 0x%s, %p, %p, %ld): stub\n", This, debugstr_dmguid(rguidType),
       wine_dbgstr_longlong(rtTime), pParam, pStateData, dwFlags);
   return S_OK;
 }
@@ -288,7 +288,7 @@ static HRESULT WINAPI tempo_track_Compose(IDirectMusicTrack8 *iface, IUnknown *c
 {
     IDirectMusicTempoTrack *This = impl_from_IDirectMusicTrack8(iface);
 
-    TRACE("(%p, %p, %d, %p): method not implemented\n", This, context, trackgroup, track);
+    TRACE("(%p, %p, %ld, %p): method not implemented\n", This, context, trackgroup, track);
     return E_NOTIMPL;
 }
 
@@ -297,7 +297,7 @@ static HRESULT WINAPI tempo_track_Join(IDirectMusicTrack8 *iface, IDirectMusicTr
         IDirectMusicTrack **ppResultTrack)
 {
   IDirectMusicTempoTrack *This = impl_from_IDirectMusicTrack8(iface);
-  FIXME("(%p, %p, %d, %p, %d, %p): stub\n", This, pNewTrack, mtJoin, pContext, dwTrackGroup, ppResultTrack);
+  FIXME("(%p, %p, %ld, %p, %ld, %p): stub\n", This, pNewTrack, mtJoin, pContext, dwTrackGroup, ppResultTrack);
   return S_OK;
 }
 
@@ -351,7 +351,7 @@ static HRESULT WINAPI tempo_IPersistStream_Load(IPersistStream *iface, IStream *
 
     for (i = 0; i < This->count; i++) {
         TRACE_(dmfile)("DMUS_IO_TEMPO_ITEM #%u\n", i);
-        TRACE_(dmfile)(" - lTime = %u\n", This->items[i].lTime);
+        TRACE_(dmfile)(" - lTime = %lu\n", This->items[i].lTime);
         TRACE_(dmfile)(" - dblTempo = %g\n", This->items[i].dblTempo);
     }
 

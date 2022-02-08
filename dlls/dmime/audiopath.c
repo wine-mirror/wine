@@ -94,7 +94,7 @@ static ULONG WINAPI IDirectMusicAudioPathImpl_AddRef (IDirectMusicAudioPath *ifa
     struct IDirectMusicAudioPathImpl *This = impl_from_IDirectMusicAudioPath(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p): AddRef from %d\n", This, ref - 1);
+    TRACE("(%p): ref=%ld\n", This, ref);
 
     DMIME_LockModule();
     return ref;
@@ -105,7 +105,7 @@ static ULONG WINAPI IDirectMusicAudioPathImpl_Release (IDirectMusicAudioPath *if
     struct IDirectMusicAudioPathImpl *This = impl_from_IDirectMusicAudioPath(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p): ReleaseRef to %d\n", This, ref);
+    TRACE("(%p): ref=%ld\n", This, ref);
 
     if (ref == 0) {
         if (This->pPrimary)
@@ -126,7 +126,7 @@ static HRESULT WINAPI IDirectMusicAudioPathImpl_GetObjectInPath (IDirectMusicAud
 	struct IDirectMusicAudioPathImpl *This = impl_from_IDirectMusicAudioPath(iface);
 	HRESULT hr;
 
-	FIXME("(%p, %d, %d, %d, %s, %d, %s, %p): stub\n", This, dwPChannel, dwStage, dwBuffer, debugstr_dmguid(guidObject),
+	FIXME("(%p, %ld, %ld, %ld, %s, %d, %s, %p): stub\n", This, dwPChannel, dwStage, dwBuffer, debugstr_dmguid(guidObject),
             dwIndex, debugstr_dmguid(iidInterface), ppObject);
 	    
 	switch (dwStage) {
@@ -238,14 +238,14 @@ static HRESULT WINAPI IDirectMusicAudioPathImpl_Activate(IDirectMusicAudioPath *
 static HRESULT WINAPI IDirectMusicAudioPathImpl_SetVolume (IDirectMusicAudioPath *iface, LONG lVolume, DWORD dwDuration)
 {
   struct IDirectMusicAudioPathImpl *This = impl_from_IDirectMusicAudioPath(iface);
-  FIXME("(%p, %i, %d): stub\n", This, lVolume, dwDuration);
+  FIXME("(%p, %li, %ld): stub\n", This, lVolume, dwDuration);
   return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicAudioPathImpl_ConvertPChannel (IDirectMusicAudioPath *iface, DWORD dwPChannelIn, DWORD* pdwPChannelOut)
 {
   struct IDirectMusicAudioPathImpl *This = impl_from_IDirectMusicAudioPath(iface);
-  FIXME("(%p, %d, %p): stub\n", This, dwPChannelIn, pdwPChannelOut);
+  FIXME("(%p, %ld, %p): stub\n", This, dwPChannelIn, pdwPChannelOut);
   return S_OK;
 }
 

@@ -61,7 +61,7 @@ static ULONG WINAPI DirectMusicSegmentState8_AddRef(IDirectMusicSegmentState8 *i
     IDirectMusicSegmentState8Impl *This = impl_from_IDirectMusicSegmentState8(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p): %d\n", This, ref);
+    TRACE("(%p): %ld\n", This, ref);
 
     DMIME_LockModule();
 
@@ -73,7 +73,7 @@ static ULONG WINAPI DirectMusicSegmentState8_Release(IDirectMusicSegmentState8 *
     IDirectMusicSegmentState8Impl *This = impl_from_IDirectMusicSegmentState8(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p): %d\n", This, ref);
+    TRACE("(%p): %ld\n", This, ref);
 
     if (ref == 0)
         HeapFree(GetProcessHeap(), 0, This);
@@ -120,13 +120,13 @@ static HRESULT WINAPI DirectMusicSegmentState8_GetStartPoint(IDirectMusicSegment
 
 static HRESULT WINAPI DirectMusicSegmentState8_SetTrackConfig(IDirectMusicSegmentState8 *iface, REFGUID rguidTrackClassID, DWORD dwGroupBits, DWORD dwIndex, DWORD dwFlagsOn, DWORD dwFlagsOff) {
     IDirectMusicSegmentState8Impl *This = impl_from_IDirectMusicSegmentState8(iface);
-    FIXME("(%p, %s, %d, %d, %d, %d): stub\n", This, debugstr_dmguid(rguidTrackClassID), dwGroupBits, dwIndex, dwFlagsOn, dwFlagsOff);
+    FIXME("(%p, %s, %ld, %ld, %ld, %ld): stub\n", This, debugstr_dmguid(rguidTrackClassID), dwGroupBits, dwIndex, dwFlagsOn, dwFlagsOff);
     return S_OK;
 }
 
 static HRESULT WINAPI DirectMusicSegmentState8_GetObjectInPath(IDirectMusicSegmentState8 *iface, DWORD dwPChannel, DWORD dwStage, DWORD dwBuffer, REFGUID guidObject, DWORD dwIndex, REFGUID iidInterface, void** ppObject) {
     IDirectMusicSegmentState8Impl *This = impl_from_IDirectMusicSegmentState8(iface);
-    FIXME("(%p, %d, %d, %d, %s, %d, %s, %p): stub\n", This, dwPChannel, dwStage, dwBuffer, debugstr_dmguid(guidObject), dwIndex, debugstr_dmguid(iidInterface), ppObject);
+    FIXME("(%p, %ld, %ld, %ld, %s, %ld, %s, %p): stub\n", This, dwPChannel, dwStage, dwBuffer, debugstr_dmguid(guidObject), dwIndex, debugstr_dmguid(iidInterface), ppObject);
     return S_OK;
 }
 

@@ -85,7 +85,7 @@ static ULONG WINAPI wave_track_AddRef(IDirectMusicTrack8 *iface)
     IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -95,7 +95,7 @@ static ULONG WINAPI wave_track_Release(IDirectMusicTrack8 *iface)
     IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if (!ref) {
         struct wave_item *item, *item2;
@@ -131,7 +131,7 @@ static HRESULT WINAPI wave_track_InitPlay(IDirectMusicTrack8 *iface,
         void **ppStateData, DWORD dwVirtualTrack8ID, DWORD dwFlags)
 {
         IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %p, %p, %p, %d, %d): stub\n", This, pSegmentState, pPerformance, ppStateData, dwVirtualTrack8ID, dwFlags);
+	FIXME("(%p, %p, %p, %p, %ld, %ld): stub\n", This, pSegmentState, pPerformance, ppStateData, dwVirtualTrack8ID, dwFlags);
 	return S_OK;
 }
 
@@ -147,7 +147,7 @@ static HRESULT WINAPI wave_track_Play(IDirectMusicTrack8 *iface, void *pStateDat
         IDirectMusicPerformance *pPerf, IDirectMusicSegmentState *pSegSt, DWORD dwVirtualID)
 {
         IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %p, %d, %d, %d, %d, %p, %p, %d): stub\n", This, pStateData, mtStart, mtEnd, mtOffset, dwFlags, pPerf, pSegSt, dwVirtualID);
+	FIXME("(%p, %p, %ld, %ld, %ld, %ld, %p, %p, %ld): stub\n", This, pStateData, mtStart, mtEnd, mtOffset, dwFlags, pPerf, pSegSt, dwVirtualID);
 	return S_OK;
 }
 
@@ -156,7 +156,7 @@ static HRESULT WINAPI wave_track_GetParam(IDirectMusicTrack8 *iface, REFGUID typ
 {
     IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
 
-    TRACE("(%p, %s, %d, %p, %p): not supported\n", This, debugstr_dmguid(type), time, next, param);
+    TRACE("(%p, %s, %ld, %p, %p): not supported\n", This, debugstr_dmguid(type), time, next, param);
     return DMUS_E_GET_UNSUPPORTED;
 }
 
@@ -165,7 +165,7 @@ static HRESULT WINAPI wave_track_SetParam(IDirectMusicTrack8 *iface, REFGUID typ
 {
     IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
 
-    TRACE("(%p, %s, %d, %p)\n", This, debugstr_dmguid(type), time, param);
+    TRACE("(%p, %s, %ld, %p)\n", This, debugstr_dmguid(type), time, param);
 
     if (IsEqualGUID(type, &GUID_Disable_Auto_Download)) {
         FIXME("GUID_Disable_Auto_Download not handled yet\n");
@@ -239,7 +239,7 @@ static HRESULT WINAPI wave_track_Clone(IDirectMusicTrack8 *iface, MUSIC_TIME mtS
         MUSIC_TIME mtEnd, IDirectMusicTrack **ppTrack)
 {
         IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %d, %d, %p): stub\n", This, mtStart, mtEnd, ppTrack);
+	FIXME("(%p, %ld, %ld, %p): stub\n", This, mtStart, mtEnd, ppTrack);
 	return S_OK;
 }
 
@@ -248,7 +248,7 @@ static HRESULT WINAPI wave_track_PlayEx(IDirectMusicTrack8 *iface, void *pStateD
         IDirectMusicPerformance *pPerf, IDirectMusicSegmentState *pSegSt, DWORD dwVirtualID)
 {
         IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %p, 0x%s, 0x%s, 0x%s, %d, %p, %p, %d): stub\n", This, pStateData, wine_dbgstr_longlong(rtStart),
+	FIXME("(%p, %p, 0x%s, 0x%s, 0x%s, %ld, %p, %p, %ld): stub\n", This, pStateData, wine_dbgstr_longlong(rtStart),
 	    wine_dbgstr_longlong(rtEnd), wine_dbgstr_longlong(rtOffset), dwFlags, pPerf, pSegSt, dwVirtualID);
 	return S_OK;
 }
@@ -258,7 +258,7 @@ static HRESULT WINAPI wave_track_GetParamEx(IDirectMusicTrack8 *iface, REFGUID r
         DWORD dwFlags)
 {
         IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %s, 0x%s, %p, %p, %p, %d): stub\n", This, debugstr_dmguid(rguidType),
+	FIXME("(%p, %s, 0x%s, %p, %p, %p, %ld): stub\n", This, debugstr_dmguid(rguidType),
 	    wine_dbgstr_longlong(rtTime), prtNext, pParam, pStateData, dwFlags);
 	return S_OK;
 }
@@ -267,7 +267,7 @@ static HRESULT WINAPI wave_track_SetParamEx(IDirectMusicTrack8 *iface, REFGUID r
         REFERENCE_TIME rtTime, void *pParam, void *pStateData, DWORD dwFlags)
 {
         IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %s, 0x%s, %p, %p, %d): stub\n", This, debugstr_dmguid(rguidType),
+	FIXME("(%p, %s, 0x%s, %p, %p, %ld): stub\n", This, debugstr_dmguid(rguidType),
 	    wine_dbgstr_longlong(rtTime), pParam, pStateData, dwFlags);
 	return S_OK;
 }
@@ -277,7 +277,7 @@ static HRESULT WINAPI wave_track_Compose(IDirectMusicTrack8 *iface, IUnknown *co
 {
     IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
 
-    TRACE("(%p, %p, %d, %p): method not implemented\n", This, context, trackgroup, track);
+    TRACE("(%p, %p, %ld, %p): method not implemented\n", This, context, trackgroup, track);
     return E_NOTIMPL;
 }
 
@@ -285,7 +285,7 @@ static HRESULT WINAPI wave_track_Join(IDirectMusicTrack8 *iface, IDirectMusicTra
         MUSIC_TIME join, IUnknown *context, DWORD trackgroup, IDirectMusicTrack **resulttrack)
 {
     IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
-    TRACE("(%p, %p, %d, %p, %d, %p): method not implemented\n", This, newtrack, join, context,
+    TRACE("(%p, %p, %ld, %p, %ld, %p): method not implemented\n", This, newtrack, join, context,
             trackgroup, resulttrack);
     return E_NOTIMPL;
 }
@@ -341,15 +341,15 @@ static HRESULT parse_wave_item(struct wave_part *part, IStream *stream, struct c
     }
 
     TRACE("Found DMUS_IO_WAVE_ITEM_HEADER\n");
-    TRACE("\tlVolume %d\n", item->header.lVolume);
-    TRACE("\tdwVariations %d\n", item->header.dwVariations);
+    TRACE("\tlVolume %ld\n", item->header.lVolume);
+    TRACE("\tdwVariations %ld\n", item->header.dwVariations);
     TRACE("\trtTime %s\n", wine_dbgstr_longlong(item->header.rtTime));
     TRACE("\trtStartOffset %s\n", wine_dbgstr_longlong(item->header.rtStartOffset));
     TRACE("\trtReserved %s\n", wine_dbgstr_longlong(item->header.rtReserved));
     TRACE("\trtDuration %s\n", wine_dbgstr_longlong(item->header.rtDuration));
-    TRACE("\tdwLoopStart %d\n", item->header.dwLoopStart);
-    TRACE("\tdwLoopEnd %d\n", item->header.dwLoopEnd);
-    TRACE("\tdwFlags %#08x\n", item->header.dwFlags);
+    TRACE("\tdwLoopStart %ld\n", item->header.dwLoopStart);
+    TRACE("\tdwLoopEnd %ld\n", item->header.dwLoopEnd);
+    TRACE("\tdwFlags %#08lx\n", item->header.dwFlags);
     TRACE("\twVolumeRange %d\n", item->header.wVolumeRange);
     TRACE("\twPitchRange %d\n", item->header.wPitchRange);
 
@@ -394,12 +394,12 @@ static HRESULT parse_wave_part(IDirectMusicWaveTrack *This, IStream *stream,
     }
 
     TRACE("Found DMUS_IO_WAVE_PART_HEADER\n");
-    TRACE("\tlVolume %d\n", part->header.lVolume);
-    TRACE("\tdwVariations %d\n", part->header.dwVariations);
-    TRACE("\tdwPChannel %d\n", part->header.dwPChannel);
-    TRACE("\tdwLockToPart %d\n", part->header.dwLockToPart);
-    TRACE("\tdwFlags %#08x\n", part->header.dwFlags);
-    TRACE("\tdwIndex %d\n", part->header.dwIndex);
+    TRACE("\tlVolume %ld\n", part->header.lVolume);
+    TRACE("\tdwVariations %ld\n", part->header.dwVariations);
+    TRACE("\tdwPChannel %ld\n", part->header.dwPChannel);
+    TRACE("\tdwLockToPart %ld\n", part->header.dwLockToPart);
+    TRACE("\tdwFlags %#08lx\n", part->header.dwFlags);
+    TRACE("\tdwIndex %ld\n", part->header.dwIndex);
 
     /* Array of wave items */
     while ((hr = stream_next_chunk(stream, &chunk)) == S_OK)
@@ -447,8 +447,8 @@ static HRESULT WINAPI wave_IPersistStream_Load(IPersistStream *iface, IStream *s
         return hr;
 
     TRACE("Found DMUS_IO_WAVE_TRACK_HEADER\n");
-    TRACE("\tlVolume %d\n", This->header.lVolume);
-    TRACE("\tdwFlags %#08x\n", This->header.dwFlags);
+    TRACE("\tlVolume %ld\n", This->header.lVolume);
+    TRACE("\tdwFlags %#08lx\n", This->header.dwFlags);
 
     /* Array of wave parts */
     while ((hr = stream_next_chunk(stream, &chunk)) == S_OK)

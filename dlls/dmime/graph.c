@@ -73,7 +73,7 @@ static ULONG WINAPI DirectMusicGraph_AddRef(IDirectMusicGraph *iface)
     IDirectMusicGraphImpl *This = impl_from_IDirectMusicGraph(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p): %d\n", This, ref);
+    TRACE("(%p): %ld\n", This, ref);
 
     DMIME_LockModule();
     return ref;
@@ -84,7 +84,7 @@ static ULONG WINAPI DirectMusicGraph_Release(IDirectMusicGraph *iface)
     IDirectMusicGraphImpl *This = impl_from_IDirectMusicGraph(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p): %d\n", This, ref);
+    TRACE("(%p): %ld\n", This, ref);
 
     if (ref == 0)
         HeapFree(GetProcessHeap(), 0, This);
@@ -108,7 +108,7 @@ static HRESULT WINAPI DirectMusicGraph_InsertTool(IDirectMusicGraph *iface, IDir
     LPDMUS_PRIVATE_GRAPH_TOOL pIt = NULL;
     LPDMUS_PRIVATE_GRAPH_TOOL pNewTool = NULL;
 
-    FIXME("(%p, %p, %p, %d, %i): use of pdwPChannels\n", This, pTool, pdwPChannels, cPChannels, lIndex);
+    FIXME("(%p, %p, %p, %ld, %li): use of pdwPChannels\n", This, pTool, pdwPChannels, cPChannels, lIndex);
   
     if (!pTool)
         return E_POINTER;
@@ -150,7 +150,7 @@ static HRESULT WINAPI DirectMusicGraph_GetTool(IDirectMusicGraph *iface, DWORD d
     struct list* pEntry = NULL;
     LPDMUS_PRIVATE_GRAPH_TOOL pIt = NULL;
 
-    TRACE("(%p, %d, %p)\n", This, dwIndex, ppTool);
+    TRACE("(%p, %ld, %p)\n", This, dwIndex, ppTool);
 
     LIST_FOR_EACH (pEntry, &This->Tools)
     {
