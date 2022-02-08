@@ -22,6 +22,9 @@
  * The functions are e.g.: D3DGet*SignatureBlob, D3DReflect
  */
 
+#ifndef WINE_NO_LONG_TYPES
+#define WINE_NO_LONG_TYPES
+#endif
 #define COBJMACROS
 #include "initguid.h"
 #include "d3dcompiler.h"
