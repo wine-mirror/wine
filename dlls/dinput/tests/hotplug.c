@@ -86,7 +86,7 @@ static BOOL test_input_lost( DWORD version )
     DIJOYSTATE2 state;
     HRESULT hr;
 
-    winetest_push_context( "%#x", version );
+    winetest_push_context( "%#lx", version );
 
     GetCurrentDirectoryW( ARRAY_SIZE(cwd), cwd );
     GetTempPathW( ARRAY_SIZE(tempdir), tempdir );
@@ -97,53 +97,53 @@ static BOOL test_input_lost( DWORD version )
     if (FAILED(hr = dinput_test_create_device( version, &devinst, &device ))) goto done;
 
     hr = IDirectInputDevice8_SetDataFormat( device, &c_dfDIJoystick2 );
-    ok( hr == DI_OK, "SetDataFormat returned %#x\n", hr );
+    ok( hr == DI_OK, "SetDataFormat returned %#lx\n", hr );
     hr = IDirectInputDevice8_SetCooperativeLevel( device, 0, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND );
-    ok( hr == DI_OK, "SetCooperativeLevel returned %#x\n", hr );
+    ok( hr == DI_OK, "SetCooperativeLevel returned %#lx\n", hr );
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_BUFFERSIZE, &buffer_size.diph );
-    ok( hr == DI_OK, "SetProperty returned %#x\n", hr );
+    ok( hr == DI_OK, "SetProperty returned %#lx\n", hr );
 
     hr = IDirectInputDevice8_Acquire( device );
-    ok( hr == DI_OK, "Acquire returned %#x\n", hr );
+    ok( hr == DI_OK, "Acquire returned %#lx\n", hr );
     hr = IDirectInputDevice8_GetDeviceState( device, sizeof(state), &state );
-    ok( hr == DI_OK, "GetDeviceState returned %#x\n", hr );
+    ok( hr == DI_OK, "GetDeviceState returned %#lx\n", hr );
     size = version < 0x0800 ? sizeof(DIDEVICEOBJECTDATA_DX3) : sizeof(DIDEVICEOBJECTDATA);
     count = 1;
     hr = IDirectInputDevice8_GetDeviceData( device, size, objdata, &count, DIGDD_PEEK );
-    ok( hr == DI_OK, "GetDeviceData returned %#x\n", hr );
-    ok( count == 0, "got %u expected %u\n", count, 0 );
+    ok( hr == DI_OK, "GetDeviceData returned %#lx\n", hr );
+    ok( count == 0, "got %lu expected 0\n", count );
 
     pnp_driver_stop();
 
     hr = IDirectInputDevice8_GetDeviceState( device, sizeof(state), &state );
-    ok( hr == DIERR_INPUTLOST, "GetDeviceState returned %#x\n", hr );
+    ok( hr == DIERR_INPUTLOST, "GetDeviceState returned %#lx\n", hr );
     hr = IDirectInputDevice8_GetDeviceState( device, sizeof(state), &state );
-    ok( hr == DIERR_INPUTLOST, "GetDeviceState returned %#x\n", hr );
+    ok( hr == DIERR_INPUTLOST, "GetDeviceState returned %#lx\n", hr );
     hr = IDirectInputDevice8_GetDeviceData( device, size, objdata, &count, DIGDD_PEEK );
-    ok( hr == DIERR_INPUTLOST, "GetDeviceData returned %#x\n", hr );
+    ok( hr == DIERR_INPUTLOST, "GetDeviceData returned %#lx\n", hr );
     hr = IDirectInputDevice8_Poll( device );
-    ok( hr == DIERR_INPUTLOST, "Poll returned: %#x\n", hr );
+    ok( hr == DIERR_INPUTLOST, "Poll returned: %#lx\n", hr );
 
     hr = IDirectInputDevice8_Acquire( device );
-    ok( hr == DIERR_UNPLUGGED, "Acquire returned %#x\n", hr );
+    ok( hr == DIERR_UNPLUGGED, "Acquire returned %#lx\n", hr );
     hr = IDirectInputDevice8_GetDeviceState( device, sizeof(state), &state );
-    ok( hr == DIERR_NOTACQUIRED, "GetDeviceState returned %#x\n", hr );
+    ok( hr == DIERR_NOTACQUIRED, "GetDeviceState returned %#lx\n", hr );
     hr = IDirectInputDevice8_GetDeviceData( device, size, objdata, &count, DIGDD_PEEK );
-    ok( hr == DIERR_NOTACQUIRED, "GetDeviceData returned %#x\n", hr );
+    ok( hr == DIERR_NOTACQUIRED, "GetDeviceData returned %#lx\n", hr );
     hr = IDirectInputDevice8_Unacquire( device );
-    ok( hr == DI_NOEFFECT, "Unacquire returned: %#x\n", hr );
+    ok( hr == DI_NOEFFECT, "Unacquire returned: %#lx\n", hr );
 
     dinput_driver_start( report_desc, sizeof(report_desc), &hid_caps, NULL, 0 );
 
     hr = IDirectInputDevice8_Acquire( device );
     todo_wine
-    ok( hr == DIERR_UNPLUGGED, "Acquire returned %#x\n", hr );
+    ok( hr == DIERR_UNPLUGGED, "Acquire returned %#lx\n", hr );
     hr = IDirectInputDevice8_GetDeviceState( device, sizeof(state), &state );
     todo_wine
-    ok( hr == DIERR_NOTACQUIRED, "GetDeviceState returned %#x\n", hr );
+    ok( hr == DIERR_NOTACQUIRED, "GetDeviceState returned %#lx\n", hr );
 
     ref = IDirectInputDevice8_Release( device );
-    ok( ref == 0, "Release returned %d\n", ref );
+    ok( ref == 0, "Release returned %ld\n", ref );
 
 done:
     pnp_driver_stop();
@@ -192,7 +192,7 @@ static LRESULT CALLBACK devnotify_wndproc( HWND hwnd, UINT msg, WPARAM wparam, L
         }
 
         ok( hwnd == device_change_hwnd, "got hwnd %p\n", hwnd );
-        ok( header->dbch_devicetype == DBT_DEVTYP_DEVICEINTERFACE, "got dbch_devicetype %u\n",
+        ok( header->dbch_devicetype == DBT_DEVTYP_DEVICEINTERFACE, "got dbch_devicetype %lu\n",
             header->dbch_devicetype );
 
         winetest_push_context( "%u", device_change_count );
@@ -200,7 +200,7 @@ static LRESULT CALLBACK devnotify_wndproc( HWND hwnd, UINT msg, WPARAM wparam, L
         ok( IsEqualGUID( &iface->dbcc_classguid, &expect_guid ), "got dbch_classguid %s\n",
             debugstr_guid( &iface->dbcc_classguid ) );
         ok( iface->dbcc_size >= offsetof( DEV_BROADCAST_DEVICEINTERFACE_W, dbcc_name[wcslen( iface->dbcc_name ) + 1] ),
-            "got dbcc_size %u\n", iface->dbcc_size );
+            "got dbcc_size %lu\n", iface->dbcc_size );
         ok( !wcsncmp( iface->dbcc_name, expect_prefix, wcslen( expect_prefix ) ),
             "got dbcc_name %s\n", debugstr_w(iface->dbcc_name) );
 
@@ -211,9 +211,9 @@ static LRESULT CALLBACK devnotify_wndproc( HWND hwnd, UINT msg, WPARAM wparam, L
         ok( all_lower( upper_end, name_end ), "got dbcc_name %s\n", debugstr_w(iface->dbcc_name) );
 
         if (device_change_count++ >= device_change_expect / 2)
-            ok( wparam == DBT_DEVICEREMOVECOMPLETE, "got wparam %#x\n", (DWORD)wparam );
+            ok( wparam == DBT_DEVICEREMOVECOMPLETE, "got wparam %#Ix\n", wparam );
         else
-            ok( wparam == DBT_DEVICEARRIVAL, "got wparam %#x\n", (DWORD)wparam );
+            ok( wparam == DBT_DEVICEARRIVAL, "got wparam %#Ix\n", wparam );
 
         winetest_pop_context();
     }
@@ -245,22 +245,22 @@ static void test_RegisterDeviceNotification(void)
     RegisterClassExW( &class );
 
     hwnd = CreateWindowW( class.lpszClassName, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, NULL );
-    ok( !!hwnd, "CreateWindowW failed, error %u\n", GetLastError() );
+    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
 
     SetLastError( 0xdeadbeef );
     devnotify = RegisterDeviceNotificationA( NULL, NULL, 0 );
     ok( !devnotify, "RegisterDeviceNotificationA succeeded\n" );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError() );
 
     SetLastError( 0xdeadbeef );
     devnotify = RegisterDeviceNotificationA( (HWND)0xdeadbeef, NULL, 0 );
     ok( !devnotify, "RegisterDeviceNotificationA succeeded\n" );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError() );
 
     SetLastError( 0xdeadbeef );
     devnotify = RegisterDeviceNotificationA( hwnd, NULL, 2 );
     ok( !devnotify, "RegisterDeviceNotificationA succeeded\n" );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError() );
 
     SetLastError( 0xdeadbeef );
     memset( header, 0, sizeof(DEV_BROADCAST_OEM) );
@@ -269,7 +269,7 @@ static void test_RegisterDeviceNotification(void)
     devnotify = RegisterDeviceNotificationA( hwnd, header, 0 );
     ok( !devnotify, "RegisterDeviceNotificationA succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_DATA || GetLastError() == ERROR_SERVICE_SPECIFIC_ERROR,
-        "got error %u\n", GetLastError() );
+        "got error %lu\n", GetLastError() );
 
     SetLastError( 0xdeadbeef );
     memset( header, 0, sizeof(DEV_BROADCAST_DEVNODE) );
@@ -278,7 +278,7 @@ static void test_RegisterDeviceNotification(void)
     devnotify = RegisterDeviceNotificationA( hwnd, header, 0 );
     ok( !devnotify, "RegisterDeviceNotificationA succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_DATA || GetLastError() == ERROR_SERVICE_SPECIFIC_ERROR,
-        "got error %u\n", GetLastError() );
+        "got error %lu\n", GetLastError() );
 
     SetLastError( 0xdeadbeef );
     memset( header, 0, sizeof(DEV_BROADCAST_VOLUME) );
@@ -287,7 +287,7 @@ static void test_RegisterDeviceNotification(void)
     devnotify = RegisterDeviceNotificationA( hwnd, header, 0 );
     ok( !devnotify, "RegisterDeviceNotificationA succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_DATA || GetLastError() == ERROR_SERVICE_SPECIFIC_ERROR,
-        "got error %u\n", GetLastError() );
+        "got error %lu\n", GetLastError() );
 
     SetLastError( 0xdeadbeef );
     memset( header, 0, sizeof(DEV_BROADCAST_PORT_A) );
@@ -296,7 +296,7 @@ static void test_RegisterDeviceNotification(void)
     devnotify = RegisterDeviceNotificationA( hwnd, header, 0 );
     ok( !devnotify, "RegisterDeviceNotificationA succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_DATA || GetLastError() == ERROR_SERVICE_SPECIFIC_ERROR,
-        "got error %u\n", GetLastError() );
+        "got error %lu\n", GetLastError() );
 
     SetLastError( 0xdeadbeef );
     memset( header, 0, sizeof(DEV_BROADCAST_NET) );
@@ -305,10 +305,10 @@ static void test_RegisterDeviceNotification(void)
     devnotify = RegisterDeviceNotificationA( hwnd, header, 0 );
     ok( !devnotify, "RegisterDeviceNotificationA succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_DATA || GetLastError() == ERROR_SERVICE_SPECIFIC_ERROR,
-        "got error %u\n", GetLastError() );
+        "got error %lu\n", GetLastError() );
 
     devnotify = RegisterDeviceNotificationA( hwnd, &iface_filter_a, DEVICE_NOTIFY_WINDOW_HANDLE );
-    ok( !!devnotify, "RegisterDeviceNotificationA failed, error %u\n", GetLastError() );
+    ok( !!devnotify, "RegisterDeviceNotificationA failed, error %lu\n", GetLastError() );
     while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
 
     device_change_count = 0;
@@ -316,9 +316,9 @@ static void test_RegisterDeviceNotification(void)
     device_change_hwnd = hwnd;
     device_change_all = FALSE;
     stop_event = CreateEventW( NULL, FALSE, FALSE, NULL );
-    ok( !!stop_event, "CreateEventW failed, error %u\n", GetLastError() );
+    ok( !!stop_event, "CreateEventW failed, error %lu\n", GetLastError() );
     thread = CreateThread( NULL, 0, dinput_test_device_thread, stop_event, 0, NULL );
-    ok( !!thread, "CreateThread failed, error %u\n", GetLastError() );
+    ok( !!thread, "CreateThread failed, error %lu\n", GetLastError() );
 
     while (device_change_count < device_change_expect)
     {
@@ -341,7 +341,7 @@ static void test_RegisterDeviceNotification(void)
     strcpy( ((DEV_BROADCAST_DEVICEINTERFACE_A *)buffer)->dbcc_name, "device name" );
     ((DEV_BROADCAST_DEVICEINTERFACE_A *)buffer)->dbcc_size += strlen( "device name" ) + 1;
     devnotify = RegisterDeviceNotificationA( hwnd, buffer, DEVICE_NOTIFY_WINDOW_HANDLE );
-    ok( !!devnotify, "RegisterDeviceNotificationA failed, error %u\n", GetLastError() );
+    ok( !!devnotify, "RegisterDeviceNotificationA failed, error %lu\n", GetLastError() );
     while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
 
     device_change_count = 0;
@@ -349,9 +349,9 @@ static void test_RegisterDeviceNotification(void)
     device_change_hwnd = hwnd;
     device_change_all = FALSE;
     stop_event = CreateEventW( NULL, FALSE, FALSE, NULL );
-    ok( !!stop_event, "CreateEventW failed, error %u\n", GetLastError() );
+    ok( !!stop_event, "CreateEventW failed, error %lu\n", GetLastError() );
     thread = CreateThread( NULL, 0, dinput_test_device_thread, stop_event, 0, NULL );
-    ok( !!thread, "CreateThread failed, error %u\n", GetLastError() );
+    ok( !!thread, "CreateThread failed, error %lu\n", GetLastError() );
 
     while (device_change_count < device_change_expect)
     {
@@ -371,7 +371,7 @@ static void test_RegisterDeviceNotification(void)
     UnregisterDeviceNotification( devnotify );
 
     devnotify = RegisterDeviceNotificationA( hwnd, &iface_filter_a, DEVICE_NOTIFY_ALL_INTERFACE_CLASSES );
-    ok( !!devnotify, "RegisterDeviceNotificationA failed, error %u\n", GetLastError() );
+    ok( !!devnotify, "RegisterDeviceNotificationA failed, error %lu\n", GetLastError() );
     while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
 
     device_change_count = 0;
@@ -379,9 +379,9 @@ static void test_RegisterDeviceNotification(void)
     device_change_hwnd = hwnd;
     device_change_all = TRUE;
     stop_event = CreateEventW( NULL, FALSE, FALSE, NULL );
-    ok( !!stop_event, "CreateEventW failed, error %u\n", GetLastError() );
+    ok( !!stop_event, "CreateEventW failed, error %lu\n", GetLastError() );
     thread = CreateThread( NULL, 0, dinput_test_device_thread, stop_event, 0, NULL );
-    ok( !!thread, "CreateThread failed, error %u\n", GetLastError() );
+    ok( !!thread, "CreateThread failed, error %lu\n", GetLastError() );
 
     while (device_change_count < device_change_expect)
     {

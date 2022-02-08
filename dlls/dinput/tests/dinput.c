@@ -66,7 +66,7 @@ static HRESULT direct_input_create( DWORD version, IDirectInputA **out )
     HRESULT hr;
     if (version < 0x800) hr = DirectInputCreateA( hInstance, version, out, NULL );
     else hr = DirectInput8Create( hInstance, version, &IID_IDirectInput8A, (void **)out, NULL );
-    if (FAILED(hr)) win_skip( "Failed to instantiate a IDirectInput instance, hr %#x\n", hr );
+    if (FAILED(hr)) win_skip( "Failed to instantiate a IDirectInput instance, hr %#lx\n", hr );
     return hr;
 }
 
@@ -159,7 +159,7 @@ static void test_CoCreateInstance( DWORD version )
                                 &IID_IDirectInput8A, (void **)&dinput );
     if (FAILED(hr))
     {
-        win_skip( "Failed to instantiate a IDirectInput instance, hr %#x\n", hr );
+        win_skip( "Failed to instantiate a IDirectInput instance, hr %#lx\n", hr );
         return;
     }
 
@@ -167,7 +167,7 @@ static void test_CoCreateInstance( DWORD version )
                                                 &IID_IDirectInputA, (void **)&unknown );
     else hr = CoCreateInstance( &CLSID_DirectInput8, &outer, CLSCTX_INPROC_SERVER,
                                 &IID_IDirectInput8A, (void **)&unknown );
-    ok( hr == CLASS_E_NOAGGREGATION, "CoCreateInstance returned %#x\n", hr );
+    ok( hr == CLASS_E_NOAGGREGATION, "CoCreateInstance returned %#lx\n", hr );
     if (SUCCEEDED( hr )) IUnknown_Release( unknown );
 
     for (i = 0; i < ARRAY_SIZE(create_device_tests); i++)
@@ -176,7 +176,7 @@ static void test_CoCreateInstance( DWORD version )
         if (create_device_tests[i].pdev) device = (void *)0xdeadbeef;
         hr = IDirectInput_CreateDevice( dinput, create_device_tests[i].rguid,
                                         create_device_tests[i].pdev ? &device : NULL, NULL );
-        ok( hr == create_device_tests[i].expected_hr, "CreateDevice returned %#x\n", hr );
+        ok( hr == create_device_tests[i].expected_hr, "CreateDevice returned %#lx\n", hr );
         if (create_device_tests[i].pdev) ok( device == NULL, "got device %p\n", device );
         winetest_pop_context();
     }
@@ -186,33 +186,33 @@ static void test_CoCreateInstance( DWORD version )
         winetest_push_context( "%u", i );
         hr = IDirectInput_EnumDevices( dinput, enum_devices_tests[i].dwDevType,
                                        enum_devices_tests[i].lpCallback, NULL, enum_devices_tests[i].dwFlags );
-        ok( hr == enum_devices_tests[i].expected_hr, "EnumDevice returned %#x\n", hr );
+        ok( hr == enum_devices_tests[i].expected_hr, "EnumDevice returned %#lx\n", hr );
         winetest_pop_context();
     }
 
     hr = IDirectInput_GetDeviceStatus( dinput, NULL );
-    ok( hr == E_POINTER, "GetDeviceStatus returned %#x\n", hr );
+    ok( hr == E_POINTER, "GetDeviceStatus returned %#lx\n", hr );
 
     hr = IDirectInput_GetDeviceStatus( dinput, &GUID_Unknown );
-    ok( hr == DIERR_NOTINITIALIZED, "GetDeviceStatus returned %#x\n", hr );
+    ok( hr == DIERR_NOTINITIALIZED, "GetDeviceStatus returned %#lx\n", hr );
 
     hr = IDirectInput_GetDeviceStatus( dinput, &GUID_SysMouse );
-    ok( hr == DIERR_NOTINITIALIZED, "GetDeviceStatus returned %#x\n", hr );
+    ok( hr == DIERR_NOTINITIALIZED, "GetDeviceStatus returned %#lx\n", hr );
 
     hr = IDirectInput_RunControlPanel( dinput, NULL, 0 );
-    ok( hr == DIERR_NOTINITIALIZED, "RunControlPanel returned %#x\n", hr );
+    ok( hr == DIERR_NOTINITIALIZED, "RunControlPanel returned %#lx\n", hr );
 
     hr = IDirectInput_RunControlPanel( dinput, NULL, ~0u );
-    ok( hr == DIERR_INVALIDPARAM, "RunControlPanel returned %#x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "RunControlPanel returned %#lx\n", hr );
 
     hr = IDirectInput_RunControlPanel( dinput, (HWND)0xdeadbeef, 0 );
-    ok( hr == E_HANDLE, "RunControlPanel returned %#x\n", hr );
+    ok( hr == E_HANDLE, "RunControlPanel returned %#lx\n", hr );
 
     hr = IDirectInput_RunControlPanel( dinput, (HWND)0xdeadbeef, ~0u );
-    ok( hr == E_HANDLE, "RunControlPanel returned %#x\n", hr );
+    ok( hr == E_HANDLE, "RunControlPanel returned %#lx\n", hr );
 
     ref = IDirectInput_Release( dinput );
-    ok( ref == 0, "Release returned %d\n", ref );
+    ok( ref == 0, "Release returned %ld\n", ref );
 }
 
 static void test_DirectInputCreate( DWORD version )
@@ -249,7 +249,7 @@ static void test_DirectInputCreate( DWORD version )
 
     unknown = (void *)0xdeadbeef;
     hr = DirectInputCreateW( hInstance, version, (IDirectInputW **)&unknown, &outer );
-    ok( hr == DI_OK, "DirectInputCreateW returned %#x\n", hr );
+    ok( hr == DI_OK, "DirectInputCreateW returned %#lx\n", hr );
     ok( unknown == NULL, "got IUnknown %p\n", unknown );
 
     for (i = 0; i < ARRAY_SIZE(create_tests); i++)
@@ -258,7 +258,7 @@ static void test_DirectInputCreate( DWORD version )
         unknown = (void *)0xdeadbeef;
         hr = DirectInputCreateW( create_tests[i].instance, create_tests[i].version, (IDirectInputW **)create_tests[i].out, NULL );
         todo_wine_if(i == 3 && version == 0x300)
-        ok( hr == create_tests[i].expected_hr, "DirectInputCreateEx returned %#x\n", hr );
+        ok( hr == create_tests[i].expected_hr, "DirectInputCreateEx returned %#lx\n", hr );
         if (SUCCEEDED(hr)) IUnknown_Release( unknown );
         else ok( unknown == create_tests[i].expect_out, "got IUnknown %p\n", unknown );
         winetest_pop_context();
@@ -321,7 +321,7 @@ static void test_DirectInputCreateEx( DWORD version )
 
     unknown = (void *)0xdeadbeef;
     hr = pDirectInputCreateEx( hInstance, version, &IID_IDirectInputW, (void **)&unknown, &outer );
-    ok( hr == DI_OK, "DirectInputCreateW returned %#x\n", hr );
+    ok( hr == DI_OK, "DirectInputCreateW returned %#lx\n", hr );
     ok( unknown == NULL, "got IUnknown %p\n", unknown );
 
     for (i = 0; i < ARRAY_SIZE(create_tests); i++)
@@ -331,7 +331,7 @@ static void test_DirectInputCreateEx( DWORD version )
         hr = pDirectInputCreateEx( create_tests[i].instance, create_tests[i].version, create_tests[i].iid,
                                    (void **)create_tests[i].out, NULL );
         todo_wine_if( version == 0x300 && i == 7 )
-        ok( hr == create_tests[i].expected_hr, "DirectInputCreateEx returned %#x\n", hr );
+        ok( hr == create_tests[i].expected_hr, "DirectInputCreateEx returned %#lx\n", hr );
         if (SUCCEEDED(hr)) IUnknown_Release( unknown );
         else ok( unknown == create_tests[i].expect_out, "got IUnknown %p\n", unknown );
         winetest_pop_context();
@@ -342,7 +342,7 @@ static void test_DirectInputCreateEx( DWORD version )
         winetest_push_context( "%u", i );
         unknown = (void *)0xdeadbeef;
         hr = pDirectInputCreateEx( hInstance, version, dinput8_interfaces[i], (void **)&unknown, NULL );
-        ok( hr == DIERR_NOINTERFACE, "DirectInputCreateEx returned %#x\n", hr );
+        ok( hr == DIERR_NOINTERFACE, "DirectInputCreateEx returned %#lx\n", hr );
         ok( unknown == (void *)0xdeadbeef, "got IUnknown %p\n", unknown );
         winetest_pop_context();
     }
@@ -352,8 +352,8 @@ static void test_DirectInputCreateEx( DWORD version )
         winetest_push_context( "%u", i );
         unknown = NULL;
         hr = pDirectInputCreateEx( hInstance, version, dinput7_interfaces[i], (void **)&unknown, NULL );
-        if (version < 0x800) ok( hr == DI_OK, "DirectInputCreateEx returned %#x\n", hr );
-        else ok( hr == DIERR_OLDDIRECTINPUTVERSION, "DirectInputCreateEx returned %#x\n", hr );
+        if (version < 0x800) ok( hr == DI_OK, "DirectInputCreateEx returned %#lx\n", hr );
+        else ok( hr == DIERR_OLDDIRECTINPUTVERSION, "DirectInputCreateEx returned %#lx\n", hr );
         if (version < 0x800) ok( unknown != NULL, "got IUnknown NULL\n" );
         else ok( unknown == NULL, "got IUnknown %p\n", unknown );
         if (unknown) IUnknown_Release( unknown );
@@ -411,7 +411,7 @@ static void test_DirectInput8Create( DWORD version )
 
     unknown = (void *)0xdeadbeef;
     hr = DirectInput8Create( hInstance, version, &IID_IDirectInput8W, (void **)&unknown, &outer );
-    ok( hr == DI_OK, "DirectInputCreateW returned %#x\n", hr );
+    ok( hr == DI_OK, "DirectInputCreateW returned %#lx\n", hr );
     ok( unknown == NULL, "got IUnknown %p\n", unknown );
 
     for (i = 0; i < ARRAY_SIZE(create_tests); i++)
@@ -420,7 +420,7 @@ static void test_DirectInput8Create( DWORD version )
         unknown = (void *)0xdeadbeef;
         hr = DirectInput8Create( create_tests[i].instance, create_tests[i].version, create_tests[i].iid,
                                  (void **)create_tests[i].out, NULL );
-        ok( hr == create_tests[i].expected_hr, "DirectInput8Create returned %#x\n", hr );
+        ok( hr == create_tests[i].expected_hr, "DirectInput8Create returned %#lx\n", hr );
         if (SUCCEEDED(hr)) IUnknown_Release( unknown );
         else ok( unknown == create_tests[i].expect_out, "got IUnknown %p\n", unknown );
         winetest_pop_context();
@@ -431,7 +431,7 @@ static void test_DirectInput8Create( DWORD version )
         winetest_push_context( "%u", i );
         unknown = (void *)0xdeadbeef;
         hr = DirectInput8Create( hInstance, version, dinput7_interfaces[i], (void **)&unknown, NULL );
-        ok( hr == DIERR_NOINTERFACE, "DirectInput8Create returned %#x\n", hr );
+        ok( hr == DIERR_NOINTERFACE, "DirectInput8Create returned %#lx\n", hr );
         ok( unknown == NULL, "got IUnknown %p\n", unknown );
         winetest_pop_context();
     }
@@ -441,9 +441,9 @@ static void test_DirectInput8Create( DWORD version )
         winetest_push_context( "%u", i );
         unknown = NULL;
         hr = DirectInput8Create( hInstance, version, dinput8_interfaces[i], (void **)&unknown, NULL );
-        if (i == 2) ok( hr == DIERR_NOINTERFACE, "DirectInput8Create returned %#x\n", hr );
-        else if (version == 0x800) ok( hr == DI_OK, "DirectInput8Create returned %#x\n", hr );
-        else ok( hr == DIERR_BETADIRECTINPUTVERSION, "DirectInput8Create returned %#x\n", hr );
+        if (i == 2) ok( hr == DIERR_NOINTERFACE, "DirectInput8Create returned %#lx\n", hr );
+        else if (version == 0x800) ok( hr == DI_OK, "DirectInput8Create returned %#lx\n", hr );
+        else ok( hr == DIERR_BETADIRECTINPUTVERSION, "DirectInput8Create returned %#lx\n", hr );
         if (i == 2) ok( unknown == NULL, "got IUnknown %p\n", unknown );
         else if (version == 0x800) ok( unknown != NULL, "got NULL IUnknown\n" );
         else ok( unknown == NULL, "got IUnknown %p\n", unknown );
@@ -463,21 +463,21 @@ static void test_QueryInterface( DWORD version )
     if (FAILED(hr = direct_input_create( version, &dinput ))) return;
 
     hr = IDirectInput_QueryInterface( dinput, NULL, NULL );
-    ok( hr == E_POINTER, "QueryInterface returned 0x%08x\n", hr );
+    ok( hr == E_POINTER, "QueryInterface returned %#lx\n", hr );
 
     iface = (void *)0xdeadbeef;
     hr = IDirectInput_QueryInterface( dinput, NULL, (void **)&iface );
-    ok( hr == E_POINTER, "QueryInterface returned 0x%08x\n", hr );
+    ok( hr == E_POINTER, "QueryInterface returned %#lx\n", hr );
     ok( iface == (void *)0xdeadbeef, "Output interface pointer is %p\n", iface );
 
     hr = IDirectInput_QueryInterface( dinput, &IID_IUnknown, NULL );
-    ok( hr == E_POINTER, "QueryInterface returned 0x%08x\n", hr );
+    ok( hr == E_POINTER, "QueryInterface returned %#lx\n", hr );
 
     hr = IDirectInput_QueryInterface( dinput, &IID_IUnknown, (void **)&iface );
-    ok( hr == S_OK, "QueryInterface returned 0x%08x\n", hr );
+    ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
     ok( iface != NULL, "got iface NULL\n" );
     ref = IUnknown_Release( iface );
-    ok( ref == 1, "Release returned %u\n", ref );
+    ok( ref == 1, "Release returned %lu\n", ref );
 
     for (i = 0; i < ARRAY_SIZE(dinput7_interfaces); i++)
     {
@@ -486,15 +486,15 @@ static void test_QueryInterface( DWORD version )
         hr = IDirectInput_QueryInterface( dinput, dinput7_interfaces[i], (void **)&iface );
         if (version >= 0x800)
         {
-            ok( hr == E_NOINTERFACE, "QueryInterface returned 0x%08x\n", hr );
+            ok( hr == E_NOINTERFACE, "QueryInterface returned %#lx\n", hr );
             ok( iface == NULL, "got iface %p\n", iface );
         }
         else
         {
-            ok( hr == S_OK, "QueryInterface returned 0x%08x\n", hr );
+            ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
             ok( iface != NULL, "got iface NULL\n" );
             ref = IUnknown_Release( iface );
-            ok( ref == 1, "Release returned %u\n", ref );
+            ok( ref == 1, "Release returned %lu\n", ref );
         }
         winetest_pop_context();
     }
@@ -507,16 +507,16 @@ static void test_QueryInterface( DWORD version )
         if (version < 0x800)
         {
             todo_wine_if(i == 2)
-            ok( hr == E_NOINTERFACE, "QueryInterface returned 0x%08x\n", hr );
+            ok( hr == E_NOINTERFACE, "QueryInterface returned %#lx\n", hr );
             todo_wine_if(i == 2)
             ok( iface == NULL, "got iface %p\n", iface );
         }
         else
         {
-            ok( hr == S_OK, "QueryInterface returned 0x%08x\n", hr );
+            ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
             ok( iface != NULL, "got iface NULL\n" );
             ref = IUnknown_Release( iface );
-            ok( ref == 1, "Release returned %u\n", ref );
+            ok( ref == 1, "Release returned %lu\n", ref );
         }
         winetest_pop_context();
     }
@@ -524,29 +524,29 @@ static void test_QueryInterface( DWORD version )
     if (version < 0x800)
     {
         hr = IUnknown_QueryInterface( dinput, &IID_IDirectInputA, (void **)&iface );
-        ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputA) failed: %08x\n", hr );
+        ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputA) failed: %#lx\n", hr );
         hr = IUnknown_QueryInterface( dinput, &IID_IDirectInput2A, (void **)&tmp_iface );
-        ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInput2A) failed: %08x\n", hr );
+        ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInput2A) failed: %#lx\n", hr );
         ok( tmp_iface == iface, "IID_IDirectInput2A iface differs from IID_IDirectInputA\n" );
         IUnknown_Release( tmp_iface );
         hr = IUnknown_QueryInterface( dinput, &IID_IDirectInput7A, (void **)&tmp_iface );
-        ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInput7A) failed: %08x\n", hr );
+        ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInput7A) failed: %#lx\n", hr );
         ok( tmp_iface == iface, "IID_IDirectInput7A iface differs from IID_IDirectInputA\n" );
         IUnknown_Release( tmp_iface );
         IUnknown_Release( iface );
 
         hr = IUnknown_QueryInterface( dinput, &IID_IUnknown, (void **)&iface );
-        ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IUnknown) failed: %08x\n", hr );
+        ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IUnknown) failed: %#lx\n", hr );
         hr = IUnknown_QueryInterface( dinput, &IID_IDirectInputW, (void **)&tmp_iface );
-        ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputW) failed: %08x\n", hr );
+        ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputW) failed: %#lx\n", hr );
         ok( tmp_iface == iface, "IID_IDirectInputW iface differs from IID_IUnknown\n" );
         IUnknown_Release( tmp_iface );
         hr = IUnknown_QueryInterface( dinput, &IID_IDirectInput2W, (void **)&tmp_iface );
-        ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInput2W) failed: %08x\n", hr );
+        ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInput2W) failed: %#lx\n", hr );
         ok( tmp_iface == iface, "IID_IDirectInput2W iface differs from IID_IUnknown\n" );
         IUnknown_Release( tmp_iface );
         hr = IUnknown_QueryInterface( dinput, &IID_IDirectInput7W, (void **)&tmp_iface );
-        ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInput7W) failed: %08x\n", hr );
+        ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInput7W) failed: %#lx\n", hr );
         ok( tmp_iface == iface, "IID_IDirectInput7W iface differs from IID_IUnknown\n" );
         IUnknown_Release( tmp_iface );
         IUnknown_Release( iface );
@@ -554,7 +554,7 @@ static void test_QueryInterface( DWORD version )
 
     ref = IDirectInput_Release( dinput );
     todo_wine_if( version < 0x800 )
-    ok( ref == 0, "Release returned %u\n", ref );
+    ok( ref == 0, "Release returned %lu\n", ref );
 }
 
 static void test_CreateDevice( DWORD version )
@@ -567,31 +567,31 @@ static void test_CreateDevice( DWORD version )
     if (FAILED(hr = direct_input_create( version, &dinput ))) return;
 
     hr = IDirectInput_CreateDevice( dinput, NULL, NULL, NULL );
-    ok( hr == E_POINTER, "CreateDevice returned 0x%08x\n", hr );
+    ok( hr == E_POINTER, "CreateDevice returned %#lx\n", hr );
 
     device = (void *)0xdeadbeef;
     hr = IDirectInput_CreateDevice( dinput, NULL, &device, NULL );
-    ok( hr == E_POINTER, "CreateDevice returned 0x%08x\n", hr );
+    ok( hr == E_POINTER, "CreateDevice returned %#lx\n", hr );
     ok( device == NULL, "Output interface pointer is %p\n", device );
 
     hr = IDirectInput_CreateDevice( dinput, &GUID_Unknown, NULL, NULL );
-    ok( hr == E_POINTER, "CreateDevice returned 0x%08x\n", hr );
+    ok( hr == E_POINTER, "CreateDevice returned %#lx\n", hr );
 
     device = (void *)0xdeadbeef;
     hr = IDirectInput_CreateDevice( dinput, &GUID_Unknown, &device, NULL );
-    ok( hr == DIERR_DEVICENOTREG, "CreateDevice returned 0x%08x\n", hr );
+    ok( hr == DIERR_DEVICENOTREG, "CreateDevice returned %#lx\n", hr );
     ok( device == NULL, "Output interface pointer is %p\n", device );
 
     hr = IDirectInput_CreateDevice( dinput, &GUID_SysMouse, NULL, NULL );
-    ok( hr == E_POINTER, "CreateDevice returned 0x%08x\n", hr );
+    ok( hr == E_POINTER, "CreateDevice returned %#lx\n", hr );
 
     hr = IDirectInput_CreateDevice( dinput, &GUID_SysMouse, &device, NULL );
-    ok( hr == DI_OK, "CreateDevice returned 0x%08x\n", hr );
+    ok( hr == DI_OK, "CreateDevice returned %#lx\n", hr );
 
     ref = IDirectInputDevice_Release( device );
-    ok( ref == 0, "Release returned %u\n", ref );
+    ok( ref == 0, "Release returned %lu\n", ref );
     ref = IDirectInput_Release( dinput );
-    ok( ref == 0, "Release returned %u\n", ref );
+    ok( ref == 0, "Release returned %lu\n", ref );
 }
 
 struct enum_devices_test
@@ -613,7 +613,7 @@ static BOOL CALLBACK enum_devices_callback(const DIDEVICEINSTANCEA *instance, vo
         trace( "---- Device Information ----\n"
                "Product Name  : %s\n"
                "Instance Name : %s\n"
-               "devType       : 0x%08x\n"
+               "devType       : 0x%#lx\n"
                "GUID Product  : %s\n"
                "GUID Instance : %s\n"
                "HID Page      : 0x%04x\n"
@@ -677,52 +677,52 @@ static void test_EnumDevices( DWORD version )
     if (FAILED(hr = direct_input_create( version, &dinput ))) return;
 
     hr = IDirectInput_EnumDevices( dinput, 0, NULL, NULL, 0 );
-    ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned 0x%08x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned %#lx\n", hr );
 
     hr = IDirectInput_EnumDevices( dinput, 0, NULL, NULL, ~0u );
-    ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned 0x%08x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned %#lx\n", hr );
 
     /* Test crashes on Wine. */
     if (0)
     {
         hr = IDirectInput_EnumDevices( dinput, 0, enum_devices_callback, NULL, ~0u );
-        ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned 0x%08x\n", hr );
+        ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned %#lx\n", hr );
     }
 
     hr = IDirectInput_EnumDevices( dinput, 0xdeadbeef, NULL, NULL, 0 );
-    ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned 0x%08x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned %#lx\n", hr );
 
     hr = IDirectInput_EnumDevices( dinput, 0xdeadbeef, NULL, NULL, ~0u );
-    ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned 0x%08x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned %#lx\n", hr );
 
     hr = IDirectInput_EnumDevices( dinput, 0xdeadbeef, enum_devices_callback, NULL, 0 );
-    ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned 0x%08x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned %#lx\n", hr );
 
     hr = IDirectInput_EnumDevices( dinput, 0xdeadbeef, enum_devices_callback, NULL, ~0u );
-    ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned 0x%08x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned %#lx\n", hr );
 
     enum_test.device_count = 0;
     enum_test.return_value = DIENUM_CONTINUE;
     hr = IDirectInput_EnumDevices( dinput, 0, enum_devices_callback, &enum_test, 0 );
-    ok( hr == DI_OK, "EnumDevices returned 0x%08x\n", hr );
+    ok( hr == DI_OK, "EnumDevices returned %#lx\n", hr );
     ok(enum_test.device_count != 0, "Device count is %u\n", enum_test.device_count);
 
     /* Enumeration only stops with an explicit DIENUM_STOP. */
     enum_test_return.device_count = 0;
     enum_test_return.return_value = 42;
     hr = IDirectInput_EnumDevices( dinput, 0, enum_devices_callback, &enum_test_return, 0 );
-    ok( hr == DI_OK, "EnumDevices returned 0x%08x\n", hr );
+    ok( hr == DI_OK, "EnumDevices returned %#lx\n", hr );
     ok(enum_test_return.device_count == enum_test.device_count,
        "Device count is %u vs. %u\n", enum_test_return.device_count, enum_test.device_count);
 
     enum_test.device_count = 0;
     enum_test.return_value = DIENUM_STOP;
     hr = IDirectInput_EnumDevices( dinput, 0, enum_devices_callback, &enum_test, 0 );
-    ok( hr == DI_OK, "EnumDevices returned 0x%08x\n", hr );
+    ok( hr == DI_OK, "EnumDevices returned %#lx\n", hr );
     ok(enum_test.device_count == 1, "Device count is %u\n", enum_test.device_count);
 
     ref = IDirectInput_Release( dinput );
-    ok( ref == 0, "Release returned %u\n", ref );
+    ok( ref == 0, "Release returned %lu\n", ref );
 }
 
 static void test_GetDeviceStatus( DWORD version )
@@ -734,17 +734,17 @@ static void test_GetDeviceStatus( DWORD version )
     if (FAILED(hr = direct_input_create( version, &dinput ))) return;
 
     hr = IDirectInput_GetDeviceStatus( dinput, NULL );
-    ok( hr == E_POINTER, "GetDeviceStatus returned %#x\n", hr );
+    ok( hr == E_POINTER, "GetDeviceStatus returned %#lx\n", hr );
 
     hr = IDirectInput_GetDeviceStatus( dinput, &GUID_Unknown );
     todo_wine
-    ok( hr == DIERR_DEVICENOTREG, "GetDeviceStatus returned %#x\n", hr );
+    ok( hr == DIERR_DEVICENOTREG, "GetDeviceStatus returned %#lx\n", hr );
 
     hr = IDirectInput_GetDeviceStatus( dinput, &GUID_SysMouse );
-    ok( hr == DI_OK, "GetDeviceStatus returned %#x\n", hr );
+    ok( hr == DI_OK, "GetDeviceStatus returned %#lx\n", hr );
 
     ref = IDirectInput_Release( dinput );
-    ok( ref == 0, "Release returned %u\n", ref );
+    ok( ref == 0, "Release returned %lu\n", ref );
 }
 
 static void test_Initialize( DWORD version )
@@ -756,28 +756,28 @@ static void test_Initialize( DWORD version )
     if (FAILED(hr = direct_input_create( version, &dinput ))) return;
 
     hr = IDirectInput_Initialize( dinput, NULL, 0 );
-    ok( hr == DIERR_INVALIDPARAM, "Initialize returned %#x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "Initialize returned %#lx\n", hr );
 
     hr = IDirectInput_Initialize( dinput, NULL, version );
-    if (version == 0x300) todo_wine ok( hr == S_OK, "Initialize returned %#x\n", hr );
-    else ok( hr == DIERR_INVALIDPARAM, "Initialize returned %#x\n", hr );
+    if (version == 0x300) todo_wine ok( hr == S_OK, "Initialize returned %#lx\n", hr );
+    else ok( hr == DIERR_INVALIDPARAM, "Initialize returned %#lx\n", hr );
 
     hr = IDirectInput_Initialize( dinput, hInstance, 0 );
-    ok( hr == DIERR_NOTINITIALIZED, "Initialize returned %#x\n", hr );
+    ok( hr == DIERR_NOTINITIALIZED, "Initialize returned %#lx\n", hr );
 
     hr = IDirectInput_Initialize( dinput, hInstance, version - 1 );
-    ok( hr == DIERR_BETADIRECTINPUTVERSION, "Initialize returned %#x\n", hr );
+    ok( hr == DIERR_BETADIRECTINPUTVERSION, "Initialize returned %#lx\n", hr );
 
     hr = IDirectInput_Initialize( dinput, hInstance, version + 1 );
-    if (version >= 0x700) ok( hr == DIERR_OLDDIRECTINPUTVERSION, "Initialize returned %#x\n", hr );
-    else ok( hr == DIERR_BETADIRECTINPUTVERSION, "Initialize returned %#x\n", hr );
+    if (version >= 0x700) ok( hr == DIERR_OLDDIRECTINPUTVERSION, "Initialize returned %#lx\n", hr );
+    else ok( hr == DIERR_BETADIRECTINPUTVERSION, "Initialize returned %#lx\n", hr );
 
     /* Parameters are still validated after successful initialization. */
     hr = IDirectInput_Initialize( dinput, hInstance, 0 );
-    ok( hr == DIERR_NOTINITIALIZED, "Initialize returned %#x\n", hr );
+    ok( hr == DIERR_NOTINITIALIZED, "Initialize returned %#lx\n", hr );
 
     ref = IDirectInput_Release( dinput );
-    ok( ref == 0, "Release returned %u\n", ref );
+    ok( ref == 0, "Release returned %lu\n", ref );
 }
 
 static void test_RunControlPanel( DWORD version )
@@ -791,23 +791,23 @@ static void test_RunControlPanel( DWORD version )
     if (winetest_interactive)
     {
         hr = IDirectInput_RunControlPanel( dinput, NULL, 0 );
-        ok( hr == S_OK, "RunControlPanel returned %#x\n", hr );
+        ok( hr == S_OK, "RunControlPanel returned %#lx\n", hr );
 
         hr = IDirectInput_RunControlPanel( dinput, GetDesktopWindow(), 0 );
-        ok( hr == S_OK, "RunControlPanel returned %#x\n", hr );
+        ok( hr == S_OK, "RunControlPanel returned %#lx\n", hr );
     }
 
     hr = IDirectInput_RunControlPanel( dinput, NULL, ~0u );
-    ok( hr == DIERR_INVALIDPARAM, "RunControlPanel returned %#x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "RunControlPanel returned %#lx\n", hr );
 
     hr = IDirectInput_RunControlPanel( dinput, (HWND)0xdeadbeef, 0 );
-    ok( hr == E_HANDLE, "RunControlPanel returned %#x\n", hr );
+    ok( hr == E_HANDLE, "RunControlPanel returned %#lx\n", hr );
 
     hr = IDirectInput_RunControlPanel( dinput, (HWND)0xdeadbeef, ~0u );
-    ok( hr == E_HANDLE, "RunControlPanel returned %#x\n", hr );
+    ok( hr == E_HANDLE, "RunControlPanel returned %#lx\n", hr );
 
     ref = IDirectInput_Release( dinput );
-    ok( ref == 0, "Release returned %u\n", ref );
+    ok( ref == 0, "Release returned %lu\n", ref );
 }
 
 static void test_DirectInputJoyConfig8(void)
@@ -822,14 +822,14 @@ static void test_DirectInputJoyConfig8(void)
     hr = DirectInputCreateA(hInstance, DIRECTINPUT_VERSION, &pDI, NULL);
     if (FAILED(hr))
     {
-        win_skip("Failed to instantiate a IDirectInputA instance: 0x%08x\n", hr);
+        win_skip("Failed to instantiate a IDirectInputA instance: 0x%#lx\n", hr);
         return;
     }
 
     hr = IDirectInput_QueryInterface(pDI, &IID_IDirectInputJoyConfig8, (void **)&pDIJC);
     if (FAILED(hr))
     {
-        win_skip("Failed to instantiate a IDirectInputJoyConfig8 instance: 0x%08x\n", hr);
+        win_skip("Failed to instantiate a IDirectInputJoyConfig8 instance: 0x%#lx\n", hr);
         return;
     }
 
@@ -843,12 +843,12 @@ static void test_DirectInputJoyConfig8(void)
         hr = IDirectInputJoyConfig8_GetConfig(pDIJC, i, &info, DIJC_GUIDINSTANCE);
 
         ok (hr == DI_OK || hr == DIERR_NOMOREITEMS,
-           "IDirectInputJoyConfig8_GetConfig returned 0x%08x\n", hr);
+           "IDirectInputJoyConfig8_GetConfig returned %#lx\n", hr);
 
         if (SUCCEEDED(hr))
         {
             hr = IDirectInput_CreateDevice(pDI, &info.guidInstance, &pDID, NULL);
-            ok( SUCCEEDED(hr), "CreateDevice failed with guid from GetConfig hr = 0x%08x\n", hr );
+            ok( SUCCEEDED(hr), "CreateDevice failed with guid from GetConfig hr = 0x%#lx\n", hr );
             IDirectInputDevice_Release(pDID);
         }
     }
@@ -896,7 +896,7 @@ static BOOL CALLBACK enum_semantics_callback( const DIDEVICEINSTANCEA *lpddi, ID
         data->first_remaining = dwRemaining;
     }
     ok( dwRemaining == data->first_remaining - data->device_count,
-        "enum semantics remaining devices is wrong, expected %d, had %d\n",
+        "enum semantics remaining devices is wrong, expected %ld, had %ld\n",
         data->first_remaining - data->device_count, dwRemaining );
     data->device_count++;
 
@@ -916,10 +916,10 @@ static BOOL CALLBACK set_action_map_callback( const DIDEVICEINSTANCEA *lpddi, ID
     /* Building and setting an action map */
     /* It should not use any pre-stored mappings so we use DIDBAM_INITIALIZE */
     hr = IDirectInputDevice8_BuildActionMap( lpdid, data->action_format, NULL, DIDBAM_INITIALIZE );
-    ok( SUCCEEDED(hr), "BuildActionMap failed hr=%08x\n", hr );
+    ok( SUCCEEDED(hr), "BuildActionMap failed hr=%#lx\n", hr );
 
     hr = IDirectInputDevice8_SetActionMap( lpdid, data->action_format, data->username, 0 );
-    ok( SUCCEEDED(hr), "SetActionMap failed hr=%08x\n", hr );
+    ok( SUCCEEDED(hr), "SetActionMap failed hr=%#lx\n", hr );
 
     return DIENUM_CONTINUE;
 }
@@ -936,7 +936,7 @@ static void test_EnumDevicesBySemantics(void)
     hr = DirectInput8Create( hInstance, 0x800, &IID_IDirectInput8A, (void **)&dinput, NULL );
     if (FAILED(hr))
     {
-        win_skip( "Failed to instantiate a IDirectInputA instance: 0x%08x\n", hr );
+        win_skip( "Failed to instantiate a IDirectInputA instance: 0x%#lx\n", hr );
         return;
     }
 
@@ -956,7 +956,7 @@ static void test_EnumDevicesBySemantics(void)
     data.device_count = 0;
     hr = IDirectInput8_EnumDevicesBySemantics( dinput, NULL, &action_format, enum_semantics_callback,
                                                &data, DIEDBSFL_ATTACHEDONLY );
-    ok( data.device_count > 0, "EnumDevicesBySemantics did not call the callback hr=%08x\n", hr );
+    ok( data.device_count > 0, "EnumDevicesBySemantics did not call the callback hr=%#lx\n", hr );
     ok( data.keyboard, "EnumDevicesBySemantics should enumerate the keyboard\n" );
     ok( data.mouse, "EnumDevicesBySemantics should enumerate the mouse\n" );
 
@@ -966,7 +966,7 @@ static void test_EnumDevicesBySemantics(void)
     data.device_count = 0;
     hr = IDirectInput8_EnumDevicesBySemantics( dinput, NULL, &action_format, enum_semantics_callback,
                                                &data, DIEDBSFL_FORCEFEEDBACK );
-    ok( SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%08x\n", hr );
+    ok( SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%#lx\n", hr );
     ok( !data.keyboard, "Keyboard should not be enumerated when asking for forcefeedback\n" );
     ok( !data.mouse, "Mouse should not be enumerated when asking for forcefeedback\n" );
 
@@ -975,7 +975,7 @@ static void test_EnumDevicesBySemantics(void)
     data.device_count = 0;
     hr = IDirectInput8_EnumDevicesBySemantics( dinput, NULL, &action_format, enum_semantics_callback,
                                                &data, DIEDBSFL_AVAILABLEDEVICES );
-    ok( SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%08x\n", hr );
+    ok( SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%#lx\n", hr );
     ok( data.device_count > 0,
         "There should be devices available before action mapping available=%d\n", data.device_count );
 
@@ -987,19 +987,19 @@ static void test_EnumDevicesBySemantics(void)
     data.device_count = 0;
     hr = IDirectInput8_EnumDevicesBySemantics( dinput, "Sh4d0w M4g3", &action_format,
                                                enum_semantics_callback, &data, DIEDBSFL_THISUSER );
-    ok( SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%08x\n", hr );
+    ok( SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%#lx\n", hr );
     ok( data.device_count == 0, "No devices should be assigned for this user assigned=%d\n", data.device_count );
 
     /* This enumeration builds and sets the action map for all devices with a NULL username */
     hr = IDirectInput8_EnumDevicesBySemantics( dinput, NULL, &action_format, set_action_map_callback,
                                                &data, DIEDBSFL_ATTACHEDONLY );
-    ok( SUCCEEDED(hr), "EnumDevicesBySemantics failed: hr=%08x\n", hr );
+    ok( SUCCEEDED(hr), "EnumDevicesBySemantics failed: hr=%#lx\n", hr );
 
     /* After a successful action mapping we should have no devices available */
     data.device_count = 0;
     hr = IDirectInput8_EnumDevicesBySemantics( dinput, NULL, &action_format, enum_semantics_callback,
                                                &data, DIEDBSFL_AVAILABLEDEVICES );
-    ok( SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%08x\n", hr );
+    ok( SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%#lx\n", hr );
     ok( data.device_count == 0, "No device should be available after action mapping available=%d\n",
         data.device_count );
 
@@ -1007,20 +1007,20 @@ static void test_EnumDevicesBySemantics(void)
     data.username = "Sh4d0w M4g3";
     hr = IDirectInput8_EnumDevicesBySemantics( dinput, NULL, &action_format, set_action_map_callback,
                                                &data, DIEDBSFL_ATTACHEDONLY );
-    ok( SUCCEEDED(hr), "EnumDevicesBySemantics failed: hr=%08x\n", hr );
+    ok( SUCCEEDED(hr), "EnumDevicesBySemantics failed: hr=%#lx\n", hr );
 
     /* Testing with the default user, DIEDBSFL_THISUSER has no effect */
     data.device_count = 0;
     hr = IDirectInput8_EnumDevicesBySemantics( dinput, NULL, &action_format,
                                                enum_semantics_callback, &data, DIEDBSFL_THISUSER );
-    ok( SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%08x\n", hr );
+    ok( SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%#lx\n", hr );
     ok( data.device_count == device_total, "THISUSER has no effect with NULL username owned=%d, expected=%d\n",
         data.device_count, device_total );
 
     /* Using an empty user string is the same as passing NULL, DIEDBSFL_THISUSER has no effect */
     data.device_count = 0;
     hr = IDirectInput8_EnumDevicesBySemantics( dinput, "", &action_format, enum_semantics_callback, &data, DIEDBSFL_THISUSER );
-    ok( SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%08x\n", hr );
+    ok( SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%#lx\n", hr );
     ok( data.device_count == device_total, "THISUSER has no effect with \"\" as username owned=%d, expected=%d\n",
         data.device_count, device_total );
 
@@ -1028,14 +1028,14 @@ static void test_EnumDevicesBySemantics(void)
     data.device_count = 0;
     hr = IDirectInput8_EnumDevicesBySemantics( dinput, "Ninja Brian", &action_format,
                                                enum_semantics_callback, &data, DIEDBSFL_THISUSER );
-    ok( SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%08x\n", hr );
+    ok( SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%#lx\n", hr );
     ok( data.device_count == 0, "This user should own no devices owned=%d\n", data.device_count );
 
     /* Sh4d0w M4g3 has ownership of all devices */
     data.device_count = 0;
     hr = IDirectInput8_EnumDevicesBySemantics( dinput, "Sh4d0w M4g3", &action_format,
                                                enum_semantics_callback, &data, DIEDBSFL_THISUSER );
-    ok( SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%08x\n", hr );
+    ok( SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%#lx\n", hr );
     ok( data.device_count == device_total, "This user should own %d devices owned=%d\n",
         device_total, data.device_count );
 
@@ -1044,7 +1044,7 @@ static void test_EnumDevicesBySemantics(void)
     data.device_count = 0;
     hr = IDirectInput8_EnumDevicesBySemantics( dinput, NULL, &action_format, enum_semantics_callback, NULL, 0 );
     todo_wine
-    ok( FAILED(hr), "EnumDevicesBySemantics succeeded with invalid GUID hr=%08x\n", hr );
+    ok( FAILED(hr), "EnumDevicesBySemantics succeeded with invalid GUID hr=%#lx\n", hr );
 
     IDirectInput8_Release( dinput );
 }
@@ -1065,7 +1065,7 @@ START_TEST(dinput)
 
     for (i = 0; i < ARRAY_SIZE(dinput_versions); i++)
     {
-        winetest_push_context( "%#x", dinput_versions[i] );
+        winetest_push_context( "%#lx", dinput_versions[i] );
         test_DirectInputCreate( dinput_versions[i] );
         test_DirectInputCreateEx( dinput_versions[i] );
         test_DirectInput8Create( dinput_versions[i] );

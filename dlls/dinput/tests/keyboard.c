@@ -49,7 +49,7 @@ static HKL activate_keyboard_layout(LANGID langid, HKL *hkl_orig)
     HKL hkl, hkl_current;
     char hkl_name[64];
 
-    sprintf(hkl_name, "%08x", langid);
+    sprintf(hkl_name, "%#x", langid);
     trace("Loading keyboard layout %s\n", hkl_name);
     hkl = LoadKeyboardLayoutA(hkl_name, 0);
     if (!hkl)
@@ -70,7 +70,7 @@ static HKL activate_keyboard_layout(LANGID langid, HKL *hkl_orig)
          * setxkbmap fr && LANG=fr_FR.UTF-8 make test
          * setxkbmap de && LANG=de_DE.UTF-8 make test
          */
-        skip("current %08x != langid %08x\n", LOWORD(hkl_current), langid);
+        skip("current %#x != langid %#x\n", LOWORD(hkl_current), langid);
         return 0;
     }
 
@@ -106,42 +106,42 @@ static void acquire_tests(IDirectInputA *pDI, HWND hwnd)
     df.rgodf = dodf;
 
     hr = IDirectInput_CreateDevice(pDI, &GUID_SysKeyboard, &pKeyboard, NULL);
-    ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %#lx\n", hr);
     if (FAILED(hr)) return;
 
     hr = IDirectInputDevice_SetDataFormat(pKeyboard, &c_dfDIKeyboard);
-    ok(SUCCEEDED(hr), "IDirectInputDevice_SetDataFormat() failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_SetDataFormat() failed: %#lx\n", hr);
     hr = IDirectInputDevice_SetCooperativeLevel(pKeyboard, NULL, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
-    ok(SUCCEEDED(hr), "IDirectInputDevice_SetCooperativeLevel() failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_SetCooperativeLevel() failed: %#lx\n", hr);
     hr = IDirectInputDevice_GetDeviceState(pKeyboard, 10, kbd_state);
-    ok(hr == DIERR_NOTACQUIRED, "IDirectInputDevice_GetDeviceState(10,) should have failed: %08x\n", hr);
+    ok(hr == DIERR_NOTACQUIRED, "IDirectInputDevice_GetDeviceState(10,) should have failed: %#lx\n", hr);
     hr = IDirectInputDevice_GetDeviceState(pKeyboard, sizeof(kbd_state), kbd_state);
-    ok(hr == DIERR_NOTACQUIRED, "IDirectInputDevice_GetDeviceState() should have failed: %08x\n", hr);
+    ok(hr == DIERR_NOTACQUIRED, "IDirectInputDevice_GetDeviceState() should have failed: %#lx\n", hr);
     hr = IDirectInputDevice_Unacquire(pKeyboard);
-    ok(hr == S_FALSE, "IDirectInputDevice_Unacquire() should have failed: %08x\n", hr);
+    ok(hr == S_FALSE, "IDirectInputDevice_Unacquire() should have failed: %#lx\n", hr);
     hr = IDirectInputDevice_Acquire(pKeyboard);
-    ok(SUCCEEDED(hr), "IDirectInputDevice_Acquire() failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_Acquire() failed: %#lx\n", hr);
     hr = IDirectInputDevice_Acquire(pKeyboard);
-    ok(hr == S_FALSE, "IDirectInputDevice_Acquire() should have failed: %08x\n", hr);
+    ok(hr == S_FALSE, "IDirectInputDevice_Acquire() should have failed: %#lx\n", hr);
     hr = IDirectInputDevice_GetDeviceState(pKeyboard, 10, kbd_state);
-    ok(hr == DIERR_INVALIDPARAM, "IDirectInputDevice_GetDeviceState(10,) should have failed: %08x\n", hr);
+    ok(hr == DIERR_INVALIDPARAM, "IDirectInputDevice_GetDeviceState(10,) should have failed: %#lx\n", hr);
     hr = IDirectInputDevice_GetDeviceState(pKeyboard, sizeof(kbd_state), kbd_state);
-    ok(SUCCEEDED(hr), "IDirectInputDevice_GetDeviceState() failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_GetDeviceState() failed: %#lx\n", hr);
     hr = IDirectInputDevice_Unacquire(pKeyboard);
-    ok(SUCCEEDED(hr), "IDirectInputDevice_Uncquire() failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_Uncquire() failed: %#lx\n", hr);
     hr = IDirectInputDevice_SetDataFormat( pKeyboard , &df );
-    ok(SUCCEEDED(hr), "IDirectInputDevice_SetDataFormat() failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_SetDataFormat() failed: %#lx\n", hr);
     hr = IDirectInputDevice_Acquire(pKeyboard);
-    ok(SUCCEEDED(hr), "IDirectInputDevice_Acquire() failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_Acquire() failed: %#lx\n", hr);
     hr = IDirectInputDevice_GetDeviceState(pKeyboard, sizeof(custom_state), custom_state);
-    ok(SUCCEEDED(hr), "IDirectInputDevice_GetDeviceState(4,) failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_GetDeviceState(4,) failed: %#lx\n", hr);
     hr = IDirectInputDevice_GetDeviceState(pKeyboard, sizeof(kbd_state), kbd_state);
-    ok(hr == DIERR_INVALIDPARAM, "IDirectInputDevice_GetDeviceState(256,) should have failed: %08x\n", hr);
+    ok(hr == DIERR_INVALIDPARAM, "IDirectInputDevice_GetDeviceState(256,) should have failed: %#lx\n", hr);
 
     memset(custom_state, 0x56, sizeof(custom_state));
     IDirectInputDevice_GetDeviceState(pKeyboard, sizeof(custom_state), custom_state);
     for (i = 0; i < ARRAY_SIZE(custom_state); i++)
-        ok(custom_state[i] == 0, "Should be zeroed, got 0x%08x\n", custom_state[i]);
+        ok(custom_state[i] == 0, "Should be zeroed, got 0x%#lx\n", custom_state[i]);
 
     /* simulate some keyboard input */
     SetFocus(hwnd);
@@ -149,20 +149,20 @@ static void acquire_tests(IDirectInputA *pDI, HWND hwnd)
 
     keybd_event('Q', 0, 0, 0);
     hr = IDirectInputDevice_GetDeviceState(pKeyboard, sizeof(custom_state), custom_state);
-    ok(SUCCEEDED(hr), "IDirectInputDevice_GetDeviceState() failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_GetDeviceState() failed: %#lx\n", hr);
     if (!custom_state[0])
         win_skip("Keyboard event not processed, skipping test\n");
     else
     {
         /* unacquiring should reset the device state */
         hr = IDirectInputDevice_Unacquire(pKeyboard);
-        ok(SUCCEEDED(hr), "IDirectInputDevice_Unacquire() failed: %08x\n", hr);
+        ok(SUCCEEDED(hr), "IDirectInputDevice_Unacquire() failed: %#lx\n", hr);
         hr = IDirectInputDevice_Acquire(pKeyboard);
-        ok(SUCCEEDED(hr), "IDirectInputDevice_Acquire() failed: %08x\n", hr);
+        ok(SUCCEEDED(hr), "IDirectInputDevice_Acquire() failed: %#lx\n", hr);
         hr = IDirectInputDevice_GetDeviceState(pKeyboard, sizeof(custom_state), custom_state);
-        ok(SUCCEEDED(hr), "IDirectInputDevice_GetDeviceState failed: %08x\n", hr);
+        ok(SUCCEEDED(hr), "IDirectInputDevice_GetDeviceState failed: %#lx\n", hr);
         for (i = 0; i < ARRAY_SIZE(custom_state); i++)
-            ok(custom_state[i] == 0, "Should be zeroed, got 0x%08x\n", custom_state[i]);
+            ok(custom_state[i] == 0, "Should be zeroed, got 0x%#lx\n", custom_state[i]);
     }
     keybd_event('Q', 0, KEYEVENTF_KEYUP, 0);
 
@@ -172,7 +172,7 @@ static void acquire_tests(IDirectInputA *pDI, HWND hwnd)
        "Unexpected raw devices registered: %d\n", prev_raw_devices_count);
 
     hr = IDirectInputDevice_Acquire(pKeyboard);
-    ok(SUCCEEDED(hr), "IDirectInputDevice_Acquire() failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_Acquire() failed: %#lx\n", hr);
 
     raw_devices_count = 0;
     GetRegisteredRawInputDevices(NULL, &raw_devices_count, sizeof(RAWINPUTDEVICE));
@@ -180,7 +180,7 @@ static void acquire_tests(IDirectInputA *pDI, HWND hwnd)
        "Unexpected raw devices registered: %d\n", raw_devices_count);
 
     hr = IDirectInputDevice_Unacquire(pKeyboard);
-    ok(SUCCEEDED(hr), "IDirectInputDevice_Unacquire() failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_Unacquire() failed: %#lx\n", hr);
 
     IUnknown_Release(pKeyboard);
 
@@ -220,33 +220,33 @@ static void test_set_coop(IDirectInputA *pDI, HWND hwnd)
     HWND child;
 
     hr = IDirectInput_CreateDevice(pDI, &GUID_SysKeyboard, &pKeyboard, NULL);
-    ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %#lx\n", hr);
     if (FAILED(hr)) return;
 
     for (i=0; i<16; i++)
     {
         hr = IDirectInputDevice_SetCooperativeLevel(pKeyboard, NULL, i);
-        ok(hr == SetCoop_null_window[i], "SetCooperativeLevel(NULL, %d): %08x\n", i, hr);
+        ok(hr == SetCoop_null_window[i], "SetCooperativeLevel(NULL, %d): %#lx\n", i, hr);
     }
     for (i=0; i<16; i++)
     {
         hr = IDirectInputDevice_SetCooperativeLevel(pKeyboard, (HWND)0x400000, i);
-        ok(hr == SetCoop_invalid_window[i], "SetCooperativeLevel(invalid, %d): %08x\n", i, hr);
+        ok(hr == SetCoop_invalid_window[i], "SetCooperativeLevel(invalid, %d): %#lx\n", i, hr);
     }
     for (i=0; i<16; i++)
     {
         hr = IDirectInputDevice_SetCooperativeLevel(pKeyboard, hwnd, i);
-        ok(hr == SetCoop_real_window[i], "SetCooperativeLevel(hwnd, %d): %08x\n", i, hr);
+        ok(hr == SetCoop_real_window[i], "SetCooperativeLevel(hwnd, %d): %#lx\n", i, hr);
     }
 
     child = CreateWindowA("static", "Title", WS_CHILD | WS_VISIBLE, 10, 10, 50, 50, hwnd, NULL,
                           NULL, NULL);
-    ok(child != NULL, "err: %d\n", GetLastError());
+    ok(child != NULL, "err: %lu\n", GetLastError());
 
     for (i=0; i<16; i++)
     {
         hr = IDirectInputDevice_SetCooperativeLevel(pKeyboard, child, i);
-        ok(hr == SetCoop_child_window[i], "SetCooperativeLevel(child, %d): %08x\n", i, hr);
+        ok(hr == SetCoop_child_window[i], "SetCooperativeLevel(child, %d): %#lx\n", i, hr);
     }
 
     DestroyWindow(child);
@@ -261,7 +261,7 @@ static void test_get_prop(IDirectInputA *pDI, HWND hwnd)
     DIPROPDWORD vidpid;
 
     hr = IDirectInput_CreateDevice(pDI, &GUID_SysKeyboard, &pKeyboard, NULL);
-    ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %#lx\n", hr);
     if (FAILED(hr)) return;
 
     memset(&diprg, 0, sizeof(diprg));
@@ -271,7 +271,7 @@ static void test_get_prop(IDirectInputA *pDI, HWND hwnd)
     diprg.diph.dwObj        = 0;
 
     hr = IDirectInputDevice_GetProperty(pKeyboard, DIPROP_RANGE, &diprg.diph);
-    ok(hr == DIERR_UNSUPPORTED, "IDirectInputDevice_GetProperty() did not return DIPROP_RANGE but: %08x\n", hr);
+    ok(hr == DIERR_UNSUPPORTED, "IDirectInputDevice_GetProperty() did not return DIPROP_RANGE but: %#lx\n", hr);
 
     memset(&vidpid, 0, sizeof(vidpid));
     vidpid.diph.dwSize       = sizeof(DIPROPDWORD);
@@ -280,7 +280,7 @@ static void test_get_prop(IDirectInputA *pDI, HWND hwnd)
     vidpid.diph.dwObj        = 0;
 
     hr = IDirectInputDevice_GetProperty(pKeyboard, DIPROP_VIDPID, &vidpid.diph);
-    ok(hr == DIERR_UNSUPPORTED, "got %08x\n", hr);
+    ok(hr == DIERR_UNSUPPORTED, "got %#lx\n", hr);
 
     IUnknown_Release(pKeyboard);
 }
@@ -293,30 +293,30 @@ static void test_capabilities(IDirectInputA *pDI, HWND hwnd)
     int kbd_type, kbd_subtype, dev_subtype;
 
     hr = IDirectInput_CreateDevice(pDI, &GUID_SysKeyboard, &pKeyboard, NULL);
-    ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %#lx\n", hr);
     if (FAILED(hr)) return;
 
     caps.dwSize = sizeof(caps);
     hr = IDirectInputDevice_GetCapabilities(pKeyboard, &caps);
 
-    ok (SUCCEEDED(hr), "GetCapabilities failed: 0x%08x\n", hr);
-    ok (caps.dwFlags & DIDC_ATTACHED, "GetCapabilities dwFlags: 0x%08x\n", caps.dwFlags);
+    ok (SUCCEEDED(hr), "GetCapabilities failed: 0x%#lx\n", hr);
+    ok (caps.dwFlags & DIDC_ATTACHED, "GetCapabilities dwFlags: 0x%#lx\n", caps.dwFlags);
     ok (GET_DIDEVICE_TYPE(caps.dwDevType) == DIDEVTYPE_KEYBOARD,
-        "GetCapabilities invalid device type for dwDevType: 0x%08x\n", caps.dwDevType);
+        "GetCapabilities invalid device type for dwDevType: 0x%#lx\n", caps.dwDevType);
     kbd_type = GetKeyboardType(0);
     kbd_subtype = GetKeyboardType(1);
     dev_subtype = GET_DIDEVICE_SUBTYPE(caps.dwDevType);
     if (kbd_type == 4 || (kbd_type == 7 && kbd_subtype == 0))
         ok (dev_subtype == DIDEVTYPEKEYBOARD_PCENH,
-            "GetCapabilities invalid device subtype for dwDevType: 0x%08x (%04x:%04x)\n",
+            "GetCapabilities invalid device subtype for dwDevType: 0x%#lx (%04x:%04x)\n",
             caps.dwDevType, kbd_type, kbd_subtype);
     else if (kbd_type == 7 && kbd_subtype == 2)
         ok (dev_subtype == DIDEVTYPEKEYBOARD_JAPAN106,
-            "GetCapabilities invalid device subtype for dwDevType: 0x%08x (%04x:%04x)\n",
+            "GetCapabilities invalid device subtype for dwDevType: 0x%#lx (%04x:%04x)\n",
             caps.dwDevType, kbd_type, kbd_subtype);
     else
         ok (dev_subtype != DIDEVTYPEKEYBOARD_UNKNOWN,
-            "GetCapabilities invalid device subtype for dwDevType: 0x%08x (%04x:%04x)\n",
+            "GetCapabilities invalid device subtype for dwDevType: 0x%#lx (%04x:%04x)\n",
             caps.dwDevType, kbd_type, kbd_subtype);
 
     IUnknown_Release(pKeyboard);
@@ -383,14 +383,14 @@ static void test_dik_codes(IDirectInputA *dI, HWND hwnd, LANGID langid)
     if (!map) return;
 
     hr = IDirectInput_CreateDevice(dI, &GUID_SysKeyboard, &device, NULL);
-    ok(hr == S_OK, "CreateDevice() failed: %08x\n", hr);
+    ok(hr == S_OK, "CreateDevice() failed: %#lx\n", hr);
     hr = IDirectInputDevice_SetDataFormat(device, &c_dfDIKeyboard);
-    ok(hr == S_OK, "SetDataFormat() failed: %08x\n", hr);
+    ok(hr == S_OK, "SetDataFormat() failed: %#lx\n", hr);
     hr = IDirectInputDevice_Acquire(device);
-    ok(hr == S_OK, "Acquire() failed: %08x\n", hr);
+    ok(hr == S_OK, "Acquire() failed: %#lx\n", hr);
     caps.dwSize = sizeof( caps );
     hr = IDirectInputDevice_GetCapabilities(device, &caps);
-    ok(hr == S_OK, "GetDeviceInstance() failed: %08x\n", hr);
+    ok(hr == S_OK, "GetDeviceInstance() failed: %#lx\n", hr);
     if (expected[i].type != GET_DIDEVICE_SUBTYPE(caps.dwDevType)) {
         skip("Keyboard type(%u) doesn't match for lang %04x\n",
              GET_DIDEVICE_SUBTYPE(caps.dwDevType), langid);
@@ -447,14 +447,14 @@ static void test_dik_codes(IDirectInputA *dI, HWND hwnd, LANGID langid)
         DispatchMessageA(&msg);
 
         n = MapVirtualKeyExA(msg.wParam, MAPVK_VK_TO_CHAR, hkl);
-        trace("keydown wParam: %#08lx (%c) lParam: %#08lx, MapVirtualKey(MAPVK_VK_TO_CHAR) = %c\n",
+        trace("keydown wParam: %#Ix (%c) lParam: %#Ix, MapVirtualKey(MAPVK_VK_TO_CHAR) = %c\n",
               msg.wParam, isprint(LOWORD(msg.wParam)) ? LOWORD(msg.wParam) : '?',
               msg.lParam, isprint(n) ? n : '?');
 
         pump_messages();
 
         hr = IDirectInputDevice_GetDeviceState(device, sizeof(kbd_state), kbd_state);
-        ok(hr == S_OK, "GetDeviceState() failed: %08x\n", hr);
+        ok(hr == S_OK, "GetDeviceState() failed: %#lx\n", hr);
 
         /* this never happens on real hardware but tesbot VMs seem to have timing issues */
         if (i == 0 && kbd_state[map[0].dik] != 0x80)
@@ -488,23 +488,23 @@ static void test_GetDeviceInfo(IDirectInputA *pDI)
     DIDEVICEINSTANCE_DX3A inst3A;
 
     hr = IDirectInput_CreateDevice(pDI, &GUID_SysKeyboard, &pKey, NULL);
-    ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %#lx\n", hr);
     if (FAILED(hr)) return;
 
     instA.dwSize = sizeof(instA);
     hr = IDirectInputDevice_GetDeviceInfo(pKey, &instA);
-    ok(SUCCEEDED(hr), "got %08x\n", hr);
+    ok(SUCCEEDED(hr), "got %#lx\n", hr);
 
     inst3A.dwSize = sizeof(inst3A);
     hr = IDirectInputDevice_GetDeviceInfo(pKey, (DIDEVICEINSTANCEA *)&inst3A);
-    ok(SUCCEEDED(hr), "got %08x\n", hr);
+    ok(SUCCEEDED(hr), "got %#lx\n", hr);
 
-    ok(instA.dwSize != inst3A.dwSize, "got %d, %d \n", instA.dwSize, inst3A.dwSize);
+    ok(instA.dwSize != inst3A.dwSize, "got %ld, %ld \n", instA.dwSize, inst3A.dwSize);
     ok(IsEqualGUID(&instA.guidInstance, &inst3A.guidInstance), "got %s, %s\n",
             wine_dbgstr_guid(&instA.guidInstance), wine_dbgstr_guid(&inst3A.guidInstance) );
     ok(IsEqualGUID(&instA.guidProduct, &inst3A.guidProduct), "got %s, %s\n",
             wine_dbgstr_guid(&instA.guidProduct), wine_dbgstr_guid(&inst3A.guidProduct) );
-    ok(instA.dwDevType == inst3A.dwDevType, "got %d, %d\n", instA.dwDevType, inst3A.dwDevType);
+    ok(instA.dwDevType == inst3A.dwDevType, "got %ld, %ld\n", instA.dwDevType, inst3A.dwDevType);
 
     IUnknown_Release(pKey);
 }
@@ -523,12 +523,12 @@ static void keyboard_tests(DWORD version)
         skip("Tests require a newer dinput version\n");
         return;
     }
-    ok(SUCCEEDED(hr), "DirectInputCreateA() failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "DirectInputCreateA() failed: %#lx\n", hr);
     if (FAILED(hr)) return;
 
     hwnd = CreateWindowA("static", "Title", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 10, 10, 200, 200,
                          NULL, NULL, NULL, NULL);
-    ok(hwnd != NULL, "err: %d\n", GetLastError());
+    ok(hwnd != NULL, "err: %lu\n", GetLastError());
     SetForegroundWindow( hwnd );
 
     if (hwnd)
@@ -549,7 +549,7 @@ static void keyboard_tests(DWORD version)
 
     DestroyWindow(hwnd);
     if (pDI) ref = IUnknown_Release(pDI);
-    ok(!ref, "IDirectInput_Release() reference count = %d\n", ref);
+    ok(!ref, "IDirectInput_Release() reference count = %ld\n", ref);
 }
 
 START_TEST(keyboard)

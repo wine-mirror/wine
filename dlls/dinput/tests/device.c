@@ -60,7 +60,7 @@ static const DIDATAFORMAT data_format = {
 static BOOL CALLBACK enum_callback(const DIDEVICEOBJECTINSTANCEA *oi, void *info)
 {
     if (winetest_debug > 1)
-        trace(" Type:%4x Ofs:%3d Flags:%08x Name:%s\n",
+        trace(" Type:%#lx Ofs:%3ld Flags:%#lx Name:%s\n",
               oi->dwType, oi->dwOfs, oi->dwFlags, oi->tszName);
     (*(int*)info)++;
     return DIENUM_CONTINUE;
@@ -69,7 +69,7 @@ static BOOL CALLBACK enum_callback(const DIDEVICEOBJECTINSTANCEA *oi, void *info
 static BOOL CALLBACK enum_type_callback(const DIDEVICEOBJECTINSTANCEA *oi, void *info)
 {
     DWORD expected = *(DWORD*)info;
-    ok (expected & DIDFT_GETTYPE(oi->dwType), "EnumObjects() enumerated wrong type for obj %s, expected: %08x got: %08x\n", oi->tszName, expected, oi->dwType);
+    ok (expected & DIDFT_GETTYPE(oi->dwType), "EnumObjects() enumerated wrong type for obj %s, expected: %#lx got: %#lx\n", oi->tszName, expected, oi->dwType);
     return DIENUM_CONTINUE;
 }
 
@@ -85,24 +85,24 @@ static void test_object_info(IDirectInputDeviceA *device, HWND hwnd)
     DIDEVICEOBJECTDATA buffer[5];
 
     hr = IDirectInputDevice_EnumObjects(device, NULL, &cnt, DIDFT_ALL);
-    ok(hr == DIERR_INVALIDPARAM, "IDirectInputDevice_EnumObjects returned %08x, expected %08x\n", hr, DIERR_INVALIDPARAM);
+    ok(hr == DIERR_INVALIDPARAM, "IDirectInputDevice_EnumObjects returned %#lx, expected %#lx\n", hr, DIERR_INVALIDPARAM);
 
     hr = IDirectInputDevice_EnumObjects(device, enum_callback, &cnt, DIDFT_ALL);
-    ok(SUCCEEDED(hr), "EnumObjects() failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "EnumObjects() failed: %#lx\n", hr);
 
     hr = IDirectInputDevice_SetDataFormat(device, &data_format);
-    ok(SUCCEEDED(hr), "SetDataFormat() failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "SetDataFormat() failed: %#lx\n", hr);
 
     hr = IDirectInputDevice_EnumObjects(device, enum_callback, &cnt1, DIDFT_ALL);
-    ok(SUCCEEDED(hr), "EnumObjects() failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "EnumObjects() failed: %#lx\n", hr);
     if (0) /* fails for joystick only */
-    ok(cnt == cnt1, "Enum count changed from %d to %d\n", cnt, cnt1);
+    ok(cnt == cnt1, "Enum count changed from %lu to %u\n", cnt, cnt1);
 
     /* Testing EnumObjects with different types of device objects */
     for (type_index=0; type_index < ARRAY_SIZE(obj_types); type_index++)
     {
         hr = IDirectInputDevice_EnumObjects(device, enum_type_callback, &obj_types[type_index], obj_types[type_index]);
-        ok(SUCCEEDED(hr), "EnumObjects() failed: %08x\n", hr);
+        ok(SUCCEEDED(hr), "EnumObjects() failed: %#lx\n", hr);
     }
 
     /* Test buffered mode */
@@ -114,59 +114,59 @@ static void test_object_info(IDirectInputDeviceA *device, HWND hwnd)
     dp.dwData = UINT_MAX;
 
     hr = IDirectInputDevice_GetProperty(device, DIPROP_BUFFERSIZE, &dp.diph);
-    ok(hr == DI_OK, "Failed: %08x\n", hr);
-    ok(dp.dwData == 0, "got %d\n", dp.dwData);
+    ok(hr == DI_OK, "Failed: %#lx\n", hr);
+    ok(dp.dwData == 0, "got %ld\n", dp.dwData);
 
     dp.dwData = UINT_MAX;
     hr = IDirectInputDevice_SetProperty(device, DIPROP_BUFFERSIZE, (LPCDIPROPHEADER)&dp.diph);
-    ok(hr == DI_OK, "SetProperty() failed: %08x\n", hr);
+    ok(hr == DI_OK, "SetProperty() failed: %#lx\n", hr);
 
     dp.dwData = 0;
     hr = IDirectInputDevice_GetProperty(device, DIPROP_BUFFERSIZE, &dp.diph);
-    ok(hr == DI_OK, "Failed: %08x\n", hr);
-    ok(dp.dwData == UINT_MAX, "got %d\n", dp.dwData);
+    ok(hr == DI_OK, "Failed: %#lx\n", hr);
+    ok(dp.dwData == UINT_MAX, "got %ld\n", dp.dwData);
 
     dp.dwData = 0;
     hr = IDirectInputDevice_SetProperty(device, DIPROP_BUFFERSIZE, (LPCDIPROPHEADER)&dp.diph);
-    ok(hr == DI_OK, "SetProperty() failed: %08x\n", hr);
+    ok(hr == DI_OK, "SetProperty() failed: %#lx\n", hr);
     cnt = 5;
     hr = IDirectInputDevice_GetDeviceData(device, sizeof(buffer[0]), buffer, &cnt, 0);
-    ok(hr == DI_OK && cnt == 5, "GetDeviceData() failed: %08x cnt: %d\n", hr, cnt);
+    ok(hr == DI_OK && cnt == 5, "GetDeviceData() failed: %#lx cnt: %ld\n", hr, cnt);
     hr = IDirectInputDevice_GetDeviceData(device, sizeof(DIDEVICEOBJECTDATA_DX3), buffer, &cnt, 0);
-    ok(hr == DIERR_NOTBUFFERED, "GetDeviceData() should have failed: %08x\n", hr);
+    ok(hr == DIERR_NOTBUFFERED, "GetDeviceData() should have failed: %#lx\n", hr);
     IDirectInputDevice_Acquire(device);
     hr = IDirectInputDevice_GetDeviceData(device, sizeof(DIDEVICEOBJECTDATA_DX3), buffer, &cnt, 0);
-    ok(hr == DIERR_NOTBUFFERED, "GetDeviceData() should have failed: %08x\n", hr);
+    ok(hr == DIERR_NOTBUFFERED, "GetDeviceData() should have failed: %#lx\n", hr);
     IDirectInputDevice_Unacquire(device);
 
     dp.dwData = 20;
     hr = IDirectInputDevice_SetProperty(device, DIPROP_BUFFERSIZE, (LPCDIPROPHEADER)&dp.diph);
-    ok(hr == DI_OK, "SetProperty() failed: %08x\n", hr);
+    ok(hr == DI_OK, "SetProperty() failed: %#lx\n", hr);
     cnt = 5;
     hr = IDirectInputDevice_GetDeviceData(device, sizeof(buffer[0]), buffer, &cnt, 0);
-    ok(hr == DI_OK, "GetDeviceData() failed: %08x\n", hr);
+    ok(hr == DI_OK, "GetDeviceData() failed: %#lx\n", hr);
     hr = IDirectInputDevice_GetDeviceData(device, sizeof(DIDEVICEOBJECTDATA_DX3), buffer, &cnt, 0);
-    ok(hr == DIERR_NOTACQUIRED, "GetDeviceData() should have failed: %08x\n", hr);
+    ok(hr == DIERR_NOTACQUIRED, "GetDeviceData() should have failed: %#lx\n", hr);
     hr = IDirectInputDevice_Acquire(device);
-    ok(hr == DI_OK, "Acquire() failed: %08x\n", hr);
+    ok(hr == DI_OK, "Acquire() failed: %#lx\n", hr);
     cnt = 1;
     hr = IDirectInputDevice_GetDeviceData(device, sizeof(buffer[0]), buffer, &cnt, 0);
-    ok(hr == DI_OK, "GetDeviceData() failed: %08x\n", hr);
+    ok(hr == DI_OK, "GetDeviceData() failed: %#lx\n", hr);
     hr = IDirectInputDevice_Unacquire(device);
-    ok(hr == DI_OK, "Unacquire() failed: %08x\n", hr);
+    ok(hr == DI_OK, "Unacquire() failed: %#lx\n", hr);
     cnt = 1;
     hr = IDirectInputDevice_GetDeviceData(device, sizeof(buffer[0]), buffer, &cnt, 0);
-    ok(hr == DI_OK, "GetDeviceData() failed: %08x\n", hr);
+    ok(hr == DI_OK, "GetDeviceData() failed: %#lx\n", hr);
 
     hr = IDirectInputDevice_GetObjectInfo(device, NULL, 16, DIPH_BYOFFSET);
-    ok(hr == E_POINTER, "IDirectInputDevice_GetObjectInfo returned %08x, expected %08x\n", hr, E_POINTER);
+    ok(hr == E_POINTER, "IDirectInputDevice_GetObjectInfo returned %#lx, expected %#lx\n", hr, E_POINTER);
 
     obj_info.dwSize = 1;
     hr = IDirectInputDevice_GetObjectInfo(device, &obj_info, 16, DIPH_BYOFFSET);
-    ok(hr == DIERR_INVALIDPARAM, "IDirectInputDevice_GetObjectInfo returned %08x, expected %08x\n", hr, DIERR_INVALIDPARAM);
+    ok(hr == DIERR_INVALIDPARAM, "IDirectInputDevice_GetObjectInfo returned %#lx, expected %#lx\n", hr, DIERR_INVALIDPARAM);
     obj_info.dwSize = 0xdeadbeef;
     hr = IDirectInputDevice_GetObjectInfo(device, &obj_info, 16, DIPH_BYOFFSET);
-    ok(hr == DIERR_INVALIDPARAM, "IDirectInputDevice_GetObjectInfo returned %08x, expected %08x\n", hr, DIERR_INVALIDPARAM);
+    ok(hr == DIERR_INVALIDPARAM, "IDirectInputDevice_GetObjectInfo returned %#lx, expected %#lx\n", hr, DIERR_INVALIDPARAM);
 
     /* No need to test devices without axis */
     obj_info.dwSize = sizeof(obj_info);
@@ -178,22 +178,22 @@ static void test_object_info(IDirectInputDeviceA *device, HWND hwnd)
         dp.diph.dwObj = 16;
         dp.dwData = DIPROPAXISMODE_ABS;
         hr = IDirectInputDevice_SetProperty(device, DIPROP_AXISMODE, &dp.diph);
-        ok(hr == DIERR_UNSUPPORTED, "SetProperty() returned: %08x\n", hr);
+        ok(hr == DIERR_UNSUPPORTED, "SetProperty() returned: %#lx\n", hr);
         dp.diph.dwHow = DIPH_DEVICE;
         hr = IDirectInputDevice_SetProperty(device, DIPROP_AXISMODE, &dp.diph);
-        ok(hr == DIERR_INVALIDPARAM, "SetProperty() returned: %08x\n", hr);
+        ok(hr == DIERR_INVALIDPARAM, "SetProperty() returned: %#lx\n", hr);
         dp.diph.dwObj = 0;
         hr = IDirectInputDevice_SetProperty(device, DIPROP_AXISMODE, &dp.diph);
-        ok(hr == DI_OK, "SetProperty() failed: %08x\n", hr);
+        ok(hr == DI_OK, "SetProperty() failed: %#lx\n", hr);
 
         /* Cannot change mode while acquired */
         hr = IDirectInputDevice_Acquire(device);
-        ok(hr == DI_OK, "Acquire() failed: %08x\n", hr);
+        ok(hr == DI_OK, "Acquire() failed: %#lx\n", hr);
 
         hr = IDirectInputDevice_SetProperty(device, DIPROP_AXISMODE, &dp.diph);
-        ok(hr == DIERR_ACQUIRED, "SetProperty() returned: %08x\n", hr);
+        ok(hr == DIERR_ACQUIRED, "SetProperty() returned: %#lx\n", hr);
         hr = IDirectInputDevice_Unacquire(device);
-        ok(hr == DI_OK, "Unacquire() failed: %08x\n", hr);
+        ok(hr == DI_OK, "Unacquire() failed: %#lx\n", hr);
     }
 
     /* Reset buffer size */
@@ -203,7 +203,7 @@ static void test_object_info(IDirectInputDeviceA *device, HWND hwnd)
     dp.diph.dwObj = 0;
     dp.dwData = 0;
     hr = IDirectInputDevice_SetProperty(device, DIPROP_BUFFERSIZE, (LPCDIPROPHEADER)&dp.diph);
-    ok(hr == DI_OK, "SetProperty() failed: %08x\n", hr);
+    ok(hr == DI_OK, "SetProperty() failed: %#lx\n", hr);
 }
 
 struct enum_data
@@ -222,49 +222,49 @@ static BOOL CALLBACK enum_devices(const DIDEVICEINSTANCEA *lpddi, void *pvRef)
     IUnknown *iface, *tmp_iface;
 
     hr = IDirectInput_GetDeviceStatus(data->pDI, &lpddi->guidInstance);
-    ok(hr == DI_OK, "IDirectInput_GetDeviceStatus() failed: %08x\n", hr);
+    ok(hr == DI_OK, "IDirectInput_GetDeviceStatus() failed: %#lx\n", hr);
 
     if (hr == DI_OK)
     {
         hr = IDirectInput_CreateDevice(data->pDI, &lpddi->guidInstance, &device, NULL);
-        ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %08x\n", hr);
+        ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %#lx\n", hr);
         trace("Testing device %p \"%s\"\n", device, lpddi->tszInstanceName);
 
         hr = IUnknown_QueryInterface(device, &IID_IDirectInputDevice2A, (LPVOID*)&obj);
-        ok(SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputDevice2A) failed: %08x\n", hr);
+        ok(SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputDevice2A) failed: %#lx\n", hr);
         test_object_info(obj, data->hwnd);
         IUnknown_Release(obj);
         obj = NULL;
 
         hr = IUnknown_QueryInterface(device, &IID_IDirectInputDevice2W, (LPVOID*)&obj);
-        ok(SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputDevice2W) failed: %08x\n", hr);
+        ok(SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputDevice2W) failed: %#lx\n", hr);
         test_object_info(obj, data->hwnd);
         IUnknown_Release(obj);
 
         hr = IUnknown_QueryInterface( device, &IID_IDirectInputDeviceA, (void **)&iface );
-        ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputDeviceA) failed: %08x\n", hr );
+        ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputDeviceA) failed: %#lx\n", hr );
         hr = IUnknown_QueryInterface( device, &IID_IDirectInputDevice2A, (void **)&tmp_iface );
-        ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputDevice2A) failed: %08x\n", hr );
+        ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputDevice2A) failed: %#lx\n", hr );
         ok( tmp_iface == iface, "IDirectInputDevice2A iface differs from IDirectInputDeviceA\n" );
         IUnknown_Release( tmp_iface );
         hr = IUnknown_QueryInterface( device, &IID_IDirectInputDevice7A, (void **)&tmp_iface );
-        ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputDevice7A) failed: %08x\n", hr );
+        ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputDevice7A) failed: %#lx\n", hr );
         ok( tmp_iface == iface, "IDirectInputDevice7A iface differs from IDirectInputDeviceA\n" );
         IUnknown_Release( tmp_iface );
         IUnknown_Release( iface );
 
         hr = IUnknown_QueryInterface( device, &IID_IUnknown, (void **)&iface );
-        ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IUnknown) failed: %08x\n", hr );
+        ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IUnknown) failed: %#lx\n", hr );
         hr = IUnknown_QueryInterface( device, &IID_IDirectInputDeviceW, (void **)&tmp_iface );
-        ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputDeviceW) failed: %08x\n", hr );
+        ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputDeviceW) failed: %#lx\n", hr );
         ok( tmp_iface == iface, "IDirectInputDeviceW iface differs from IUnknown\n" );
         IUnknown_Release( tmp_iface );
         hr = IUnknown_QueryInterface( device, &IID_IDirectInputDevice2W, (void **)&tmp_iface );
-        ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputDevice2W) failed: %08x\n", hr );
+        ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputDevice2W) failed: %#lx\n", hr );
         ok( tmp_iface == iface, "IDirectInputDevice2W iface differs from IUnknown\n" );
         IUnknown_Release( tmp_iface );
         hr = IUnknown_QueryInterface( device, &IID_IDirectInputDevice7W, (void **)&tmp_iface );
-        ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputDevice7W) failed: %08x\n", hr );
+        ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputDevice7W) failed: %#lx\n", hr );
         ok( tmp_iface == iface, "IDirectInputDevice7W iface differs from IUnknown\n" );
         IUnknown_Release( tmp_iface );
         IUnknown_Release( iface );
@@ -275,11 +275,11 @@ static BOOL CALLBACK enum_devices(const DIDEVICEINSTANCEA *lpddi, void *pvRef)
         {
             data->tested_product_creation = TRUE;
             hr = IDirectInput_CreateDevice(data->pDI, &lpddi->guidProduct, &device, NULL);
-            ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %08x\n", hr);
+            ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %#lx\n", hr);
 
             ddi2.dwSize = sizeof(ddi2);
             hr = IDirectInputDevice_GetDeviceInfo(device, &ddi2);
-            ok(SUCCEEDED(hr), "IDirectInput_GetDeviceInfo failed: %08x\n", hr);
+            ok(SUCCEEDED(hr), "IDirectInput_GetDeviceInfo failed: %#lx\n", hr);
 
             ok(IsEqualGUID(&lpddi->guidProduct, &ddi2.guidProduct), "Product GUIDs do not match. Expected %s, got %s\n", debugstr_guid(&lpddi->guidProduct), debugstr_guid(&ddi2.guidProduct));
             ok(IsEqualGUID(&ddi2.guidProduct, &ddi2.guidInstance), "Instance GUID should equal product GUID. Expected %s, got %s\n", debugstr_guid(&ddi2.guidProduct), debugstr_guid(&ddi2.guidInstance));
@@ -357,8 +357,8 @@ static BOOL wait_for_device_data_and_discard_(int line, IDirectInputDeviceA *dev
     {
         cnt = 10;
         hr = IDirectInputDevice_GetDeviceData(device, sizeof(DIDEVICEOBJECTDATA_DX3), NULL, &cnt, 0);
-        ok_(__FILE__, line)(SUCCEEDED(hr), "IDirectInputDevice_GetDeviceData() failed: %08x\n", hr);
-        ok_(__FILE__, line)(cnt == 0 || cnt == 1, "Unexpected number of events: %d\n", cnt);
+        ok_(__FILE__, line)(SUCCEEDED(hr), "IDirectInputDevice_GetDeviceData() failed: %#lx\n", hr);
+        ok_(__FILE__, line)(cnt == 0 || cnt == 1, "Unexpected number of events: %lu\n", cnt);
     } while (cnt != 1 && (GetTickCount() - start_time < 500));
 
     return cnt == 1;
@@ -371,7 +371,7 @@ static void acquire_and_wait_(int line, IDirectInputDeviceA *device, DWORD valid
     int tries = 2;
 
     hr = IDirectInputDevice_Acquire(device);
-    ok(SUCCEEDED(hr), "IDirectInputDevice_Acquire() failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_Acquire() failed: %#lx\n", hr);
 
     do
     {
@@ -393,11 +393,11 @@ void overlapped_format_tests(IDirectInputA *pDI, HWND hwnd)
     SetFocus(hwnd);
 
     hr = IDirectInput_CreateDevice(pDI, &GUID_SysKeyboard, &keyboard, NULL);
-    ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %#lx\n", hr);
 
     /* test overlapped slider - default value 0 */
     hr = IDirectInputDevice_SetDataFormat(keyboard, &overlapped_slider_format);
-    ok(SUCCEEDED(hr), "IDirectInputDevice_SetDataFormat() failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_SetDataFormat() failed: %#lx\n", hr);
 
     dp.diph.dwSize = sizeof(DIPROPDWORD);
     dp.diph.dwHeaderSize = sizeof(DIPROPHEADER);
@@ -405,7 +405,7 @@ void overlapped_format_tests(IDirectInputA *pDI, HWND hwnd)
     dp.diph.dwObj = 0;
     dp.dwData = 10;
     hr = IDirectInputDevice_SetProperty(keyboard, DIPROP_BUFFERSIZE, &dp.diph);
-    ok(SUCCEEDED(hr), "IDirectInputDevice_SetProperty() failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_SetProperty() failed: %#lx\n", hr);
 
     acquire_and_wait(keyboard, DIK_F);
 
@@ -416,7 +416,7 @@ void overlapped_format_tests(IDirectInputA *pDI, HWND hwnd)
 
     memset(&state, 0xFF, sizeof(state));
     hr = IDirectInputDevice_GetDeviceState(keyboard, sizeof(state), &state);
-    ok(SUCCEEDED(hr), "IDirectInputDevice_GetDeviceState() failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_GetDeviceState() failed: %#lx\n", hr);
 
     ok(state.keys[0] == 0x00, "key A should be still up\n");
     ok(state.keys[1] == 0x00, "key S should be still up\n");
@@ -430,11 +430,11 @@ void overlapped_format_tests(IDirectInputA *pDI, HWND hwnd)
             "Timed out while waiting for injected events to be picked up by DirectInput.\n");
 
     hr = IDirectInputDevice_Unacquire(keyboard);
-    ok(SUCCEEDED(hr), "IDirectInputDevice_Unacquire() failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_Unacquire() failed: %#lx\n", hr);
 
     /* test overlapped pov - default value - 0xFFFFFFFF */
     hr = IDirectInputDevice_SetDataFormat(keyboard, &overlapped_pov_format);
-    ok(SUCCEEDED(hr), "IDirectInputDevice_SetDataFormat() failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_SetDataFormat() failed: %#lx\n", hr);
 
     acquire_and_wait(keyboard, DIK_F);
 
@@ -445,7 +445,7 @@ void overlapped_format_tests(IDirectInputA *pDI, HWND hwnd)
 
     memset(&state, 0xFF, sizeof(state));
     hr = IDirectInputDevice_GetDeviceState(keyboard, sizeof(state), &state);
-    ok(SUCCEEDED(hr), "IDirectInputDevice_GetDeviceState() failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_GetDeviceState() failed: %#lx\n", hr);
 
     ok(state.keys[0] == 0xFF, "key state should have been overwritten by the overlapped POV\n");
     ok(state.keys[1] == 0xFF, "key state should have been overwritten by the overlapped POV\n");
@@ -475,19 +475,19 @@ static void device_tests(void)
         skip("Tests require a newer dinput version\n");
         return;
     }
-    ok(SUCCEEDED(hr), "DirectInputCreateA() failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "DirectInputCreateA() failed: %#lx\n", hr);
     if (FAILED(hr)) return;
 
     hr = IDirectInput_Initialize(pDI, hInstance, DIRECTINPUT_VERSION);
-    ok(SUCCEEDED(hr), "Initialize() failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "Initialize() failed: %#lx\n", hr);
     if (FAILED(hr)) return;
 
     hr = IUnknown_QueryInterface(pDI, &IID_IDirectInput2W, (LPVOID*)&obj);
-    ok(SUCCEEDED(hr), "QueryInterface(IDirectInput7W) failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "QueryInterface(IDirectInput7W) failed: %#lx\n", hr);
 
     hwnd = CreateWindowA("static", "Title", WS_OVERLAPPEDWINDOW, 10, 10, 200, 200, NULL, NULL,
                          NULL, NULL);
-    ok(hwnd != NULL, "err: %d\n", GetLastError());
+    ok(hwnd != NULL, "err: %ld\n", GetLastError());
     if (hwnd)
     {
         ShowWindow(hwnd, SW_SHOW);
@@ -496,7 +496,7 @@ static void device_tests(void)
         data.hwnd = hwnd;
         data.tested_product_creation = FALSE;
         hr = IDirectInput_EnumDevices(pDI, 0, enum_devices, &data, DIEDFL_ALLDEVICES);
-        ok(SUCCEEDED(hr), "IDirectInput_EnumDevices() failed: %08x\n", hr);
+        ok(SUCCEEDED(hr), "IDirectInput_EnumDevices() failed: %#lx\n", hr);
 
         if (!data.tested_product_creation) winetest_skip("Device creation using product GUID not tested\n");
 
@@ -507,7 +507,7 @@ static void device_tests(void)
             IDirectInputDeviceA *device = NULL;
 
             hr = IDirectInput_CreateDevice(pDI, &GUID_Joystick, &device, NULL);
-            ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %08x\n", hr);
+            ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %#lx\n", hr);
             if (device) IUnknown_Release(device);
         }
 

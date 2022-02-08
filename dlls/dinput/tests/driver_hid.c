@@ -117,16 +117,16 @@ static void expect_queue_reset( struct expect_queue *queue, void *buffer, unsign
     tmp = missing;
     while (tmp != missing_end)
     {
-        winetest_push_context( "%s expect[%d]", context, tmp - missing );
+        winetest_push_context( "%s expect[%Id]", context, tmp - missing );
         if (tmp->broken)
         {
             todo_wine_if( tmp->todo )
-            win_skip( "broken (code %#x id %u len %u)\n", tmp->code, tmp->report_id, tmp->report_len );
+            win_skip( "broken (code %#lx id %u len %u)\n", tmp->code, tmp->report_id, tmp->report_len );
         }
         else
         {
             todo_wine_if( tmp->todo )
-            ok( tmp->wine_only, "missing (code %#x id %u len %u)\n", tmp->code, tmp->report_id, tmp->report_len );
+            ok( tmp->wine_only, "missing (code %#lx id %u len %u)\n", tmp->code, tmp->report_id, tmp->report_len );
         }
         winetest_pop_context();
         tmp++;
@@ -236,24 +236,24 @@ static void expect_queue_next( struct expect_queue *queue, ULONG code, HID_XFER_
 
     ok( tmp != &queue->spurious, "%s got spurious packet\n", context );
 
-    winetest_push_context( "%s expect[%d]", context, tmp - queue->buffer );
+    winetest_push_context( "%s expect[%Id]", context, tmp - queue->buffer );
     todo_wine_if( tmp->todo )
-    ok( !tmp->wine_only, "found code %#x id %u len %u\n", tmp->code, tmp->report_id, tmp->report_len );
+    ok( !tmp->wine_only, "found code %#lx id %u len %u\n", tmp->code, tmp->report_id, tmp->report_len );
     winetest_pop_context();
 
     tmp = missing;
     while (tmp != missing_end)
     {
-        winetest_push_context( "%s expect[%d]", context, tmp - missing );
+        winetest_push_context( "%s expect[%Id]", context, tmp - missing );
         if (tmp->broken)
         {
             todo_wine_if( tmp->todo )
-            win_skip( "broken (code %#x id %u len %u)\n", tmp->code, tmp->report_id, tmp->report_len );
+            win_skip( "broken (code %#lx id %u len %u)\n", tmp->code, tmp->report_id, tmp->report_len );
         }
         else
         {
             todo_wine_if( tmp->todo )
-            ok( tmp->wine_only, "missing (code %#x id %u len %u)\n", tmp->code, tmp->report_id, tmp->report_len );
+            ok( tmp->wine_only, "missing (code %#lx id %u len %u)\n", tmp->code, tmp->report_id, tmp->report_len );
         }
         winetest_pop_context();
         tmp++;
@@ -480,7 +480,7 @@ static void check_buffer_( int line, HID_XFER_PACKET *packet, struct hid_expect 
     for (i = 0; i < packet->reportBufferLen;)
     {
         char buffer[256], *buf = buffer;
-        buf += sprintf( buf, "%08x ", i );
+        buf += sprintf( buf, "%08lx ", i );
         do buf += sprintf( buf, " %02x", packet->reportBuffer[i] );
         while (++i % 16 && i < packet->reportBufferLen);
         ok( 0, "  %s\n", buffer );
@@ -502,7 +502,7 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
     KIRQL irql;
     LONG index;
 
-    if (winetest_debug > 1) trace( "ioctl %#x\n", code );
+    if (winetest_debug > 1) trace( "ioctl %#lx\n", code );
 
     ok( got_start_device, "expected IRP_MN_START_DEVICE before any ioctls\n" );
 
@@ -519,7 +519,7 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
         return STATUS_DELETE_PENDING;
     }
 
-    winetest_push_context( "id %d%s", report_id, polled ? " poll" : "" );
+    winetest_push_context( "id %ld%s", report_id, polled ? " poll" : "" );
 
     switch (code)
     {
@@ -527,8 +527,8 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
     {
         HID_DESCRIPTOR *desc = irp->UserBuffer;
 
-        ok( !in_size, "got input size %u\n", in_size );
-        ok( out_size == sizeof(*desc), "got output size %u\n", out_size );
+        ok( !in_size, "got input size %lu\n", in_size );
+        ok( out_size == sizeof(*desc), "got output size %lu\n", out_size );
 
         if (out_size == sizeof(*desc))
         {
@@ -548,8 +548,8 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
     }
 
     case IOCTL_HID_GET_REPORT_DESCRIPTOR:
-        ok( !in_size, "got input size %u\n", in_size );
-        ok( out_size == report_descriptor_len, "got output size %u\n", out_size );
+        ok( !in_size, "got input size %lu\n", in_size );
+        ok( out_size == report_descriptor_len, "got output size %lu\n", out_size );
 
         if (out_size == report_descriptor_len)
         {
@@ -560,8 +560,8 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
         break;
 
     case IOCTL_HID_GET_DEVICE_ATTRIBUTES:
-        ok( !in_size, "got input size %u\n", in_size );
-        ok( out_size == sizeof(attributes), "got output size %u\n", out_size );
+        ok( !in_size, "got input size %lu\n", in_size );
+        ok( out_size == sizeof(attributes), "got output size %lu\n", out_size );
 
         if (out_size == sizeof(attributes))
         {
@@ -574,8 +574,8 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
     case IOCTL_HID_READ_REPORT:
     {
         ULONG expected_size = caps.InputReportByteLength - (report_id ? 0 : 1);
-        ok( !in_size, "got input size %u\n", in_size );
-        ok( out_size == expected_size, "got output size %u\n", out_size );
+        ok( !in_size, "got input size %lu\n", in_size );
+        ok( out_size == expected_size, "got output size %lu\n", out_size );
         ret = input_queue_read( &input_queue, irp );
         break;
     }
@@ -585,15 +585,15 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
         HID_XFER_PACKET *packet = irp->UserBuffer;
         ULONG expected_size = caps.OutputReportByteLength - (report_id ? 0 : 1);
 
-        ok( in_size == sizeof(*packet), "got input size %u\n", in_size );
-        ok( !out_size, "got output size %u\n", out_size );
-        ok( packet->reportBufferLen >= expected_size, "got report size %u\n", packet->reportBufferLen );
+        ok( in_size == sizeof(*packet), "got input size %lu\n", in_size );
+        ok( !out_size, "got output size %lu\n", out_size );
+        ok( packet->reportBufferLen >= expected_size, "got report size %lu\n", packet->reportBufferLen );
 
         expect_queue_next( &expect_queue, code, packet, &index, &expect, TRUE, context, sizeof(context) );
-        winetest_push_context( "%s expect[%d]", context, index );
-        ok( code == expect.code, "got %#x, expected %#x\n", code, expect.code );
+        winetest_push_context( "%s expect[%ld]", context, index );
+        ok( code == expect.code, "got %#lx, expected %#lx\n", code, expect.code );
         ok( packet->reportId == expect.report_id, "got id %u\n", packet->reportId );
-        ok( packet->reportBufferLen == expect.report_len, "got len %u\n", packet->reportBufferLen );
+        ok( packet->reportBufferLen == expect.report_len, "got len %lu\n", packet->reportBufferLen );
         check_buffer( packet, &expect );
         winetest_pop_context();
 
@@ -606,17 +606,17 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
     {
         HID_XFER_PACKET *packet = irp->UserBuffer;
         ULONG expected_size = caps.InputReportByteLength - (report_id ? 0 : 1);
-        ok( !in_size, "got input size %u\n", in_size );
-        ok( out_size == sizeof(*packet), "got output size %u\n", out_size );
+        ok( !in_size, "got input size %lu\n", in_size );
+        ok( out_size == sizeof(*packet), "got output size %lu\n", out_size );
 
-        ok( packet->reportBufferLen >= expected_size, "got len %u\n", packet->reportBufferLen );
+        ok( packet->reportBufferLen >= expected_size, "got len %lu\n", packet->reportBufferLen );
         ok( !!packet->reportBuffer, "got buffer %p\n", packet->reportBuffer );
 
         expect_queue_next( &expect_queue, code, packet, &index, &expect, FALSE, context, sizeof(context) );
-        winetest_push_context( "%s expect[%d]", context, index );
-        ok( code == expect.code, "got %#x, expected %#x\n", code, expect.code );
+        winetest_push_context( "%s expect[%ld]", context, index );
+        ok( code == expect.code, "got %#lx, expected %#lx\n", code, expect.code );
         ok( packet->reportId == expect.report_id, "got id %u\n", packet->reportId );
-        ok( packet->reportBufferLen == expect.report_len, "got len %u\n", packet->reportBufferLen );
+        ok( packet->reportBufferLen == expect.report_len, "got len %lu\n", packet->reportBufferLen );
         winetest_pop_context();
 
         irp->IoStatus.Information = expect.ret_length ? expect.ret_length : expect.report_len;
@@ -629,17 +629,17 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
     {
         HID_XFER_PACKET *packet = irp->UserBuffer;
         ULONG expected_size = caps.OutputReportByteLength - (report_id ? 0 : 1);
-        ok( in_size == sizeof(*packet), "got input size %u\n", in_size );
-        ok( !out_size, "got output size %u\n", out_size );
+        ok( in_size == sizeof(*packet), "got input size %lu\n", in_size );
+        ok( !out_size, "got output size %lu\n", out_size );
 
-        ok( packet->reportBufferLen >= expected_size, "got len %u\n", packet->reportBufferLen );
+        ok( packet->reportBufferLen >= expected_size, "got len %lu\n", packet->reportBufferLen );
         ok( !!packet->reportBuffer, "got buffer %p\n", packet->reportBuffer );
 
         expect_queue_next( &expect_queue, code, packet, &index, &expect, TRUE, context, sizeof(context) );
-        winetest_push_context( "%s expect[%d]", context, index );
-        ok( code == expect.code, "got %#x, expected %#x\n", code, expect.code );
+        winetest_push_context( "%s expect[%ld]", context, index );
+        ok( code == expect.code, "got %#lx, expected %#lx\n", code, expect.code );
         ok( packet->reportId == expect.report_id, "got id %u\n", packet->reportId );
-        ok( packet->reportBufferLen == expect.report_len, "got len %u\n", packet->reportBufferLen );
+        ok( packet->reportBufferLen == expect.report_len, "got len %lu\n", packet->reportBufferLen );
         check_buffer( packet, &expect );
         winetest_pop_context();
 
@@ -652,17 +652,17 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
     {
         HID_XFER_PACKET *packet = irp->UserBuffer;
         ULONG expected_size = caps.FeatureReportByteLength - (report_id ? 0 : 1);
-        ok( !in_size, "got input size %u\n", in_size );
-        ok( out_size == sizeof(*packet), "got output size %u\n", out_size );
+        ok( !in_size, "got input size %lu\n", in_size );
+        ok( out_size == sizeof(*packet), "got output size %lu\n", out_size );
 
-        ok( packet->reportBufferLen >= expected_size, "got len %u\n", packet->reportBufferLen );
+        ok( packet->reportBufferLen >= expected_size, "got len %lu\n", packet->reportBufferLen );
         ok( !!packet->reportBuffer, "got buffer %p\n", packet->reportBuffer );
 
         expect_queue_next( &expect_queue, code, packet, &index, &expect, FALSE, context, sizeof(context) );
-        winetest_push_context( "%s expect[%d]", context, index );
-        ok( code == expect.code, "got %#x, expected %#x\n", code, expect.code );
+        winetest_push_context( "%s expect[%ld]", context, index );
+        ok( code == expect.code, "got %#lx, expected %#lx\n", code, expect.code );
         ok( packet->reportId == expect.report_id, "got id %u\n", packet->reportId );
-        ok( packet->reportBufferLen == expect.report_len, "got len %u\n", packet->reportBufferLen );
+        ok( packet->reportBufferLen == expect.report_len, "got len %lu\n", packet->reportBufferLen );
         winetest_pop_context();
 
         irp->IoStatus.Information = expect.ret_length ? expect.ret_length : expect.report_len;
@@ -675,17 +675,17 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
     {
         HID_XFER_PACKET *packet = irp->UserBuffer;
         ULONG expected_size = caps.FeatureReportByteLength - (report_id ? 0 : 1);
-        ok( in_size == sizeof(*packet), "got input size %u\n", in_size );
-        ok( !out_size, "got output size %u\n", out_size );
+        ok( in_size == sizeof(*packet), "got input size %lu\n", in_size );
+        ok( !out_size, "got output size %lu\n", out_size );
 
-        ok( packet->reportBufferLen >= expected_size, "got len %u\n", packet->reportBufferLen );
+        ok( packet->reportBufferLen >= expected_size, "got len %lu\n", packet->reportBufferLen );
         ok( !!packet->reportBuffer, "got buffer %p\n", packet->reportBuffer );
 
         expect_queue_next( &expect_queue, code, packet, &index, &expect, TRUE, context, sizeof(context) );
-        winetest_push_context( "%s expect[%d]", context, index );
-        ok( code == expect.code, "got %#x, expected %#x\n", code, expect.code );
+        winetest_push_context( "%s expect[%ld]", context, index );
+        ok( code == expect.code, "got %#lx, expected %#lx\n", code, expect.code );
         ok( packet->reportId == expect.report_id, "got id %u\n", packet->reportId );
-        ok( packet->reportBufferLen == expect.report_len, "got len %u\n", packet->reportBufferLen );
+        ok( packet->reportBufferLen == expect.report_len, "got len %lu\n", packet->reportBufferLen );
         check_buffer( packet, &expect );
         winetest_pop_context();
 
@@ -703,7 +703,7 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
     }
 
     default:
-        ok( 0, "unexpected ioctl %#x\n", code );
+        ok( 0, "unexpected ioctl %#lx\n", code );
         ret = STATUS_NOT_IMPLEMENTED;
     }
 
@@ -765,7 +765,7 @@ static NTSTATUS WINAPI driver_add_device( DRIVER_OBJECT *driver, DEVICE_OBJECT *
     ok( ext->NextDeviceObject->AttachedDevice == fdo, "wrong attached device\n" );
 
     ret = IoRegisterDeviceInterface( ext->PhysicalDeviceObject, &control_class, NULL, &control_symlink );
-    ok( !ret, "got %#x\n", ret );
+    ok( !ret, "got %#lx\n", ret );
 
     fdo->Flags &= ~DO_DEVICE_INITIALIZING;
     return STATUS_SUCCESS;
@@ -815,7 +815,7 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *registry )
 
     InitializeObjectAttributes( &attr, registry, 0, NULL, NULL );
     ret = ZwOpenKey( &hkey, KEY_ALL_ACCESS, &attr );
-    ok( !ret, "ZwOpenKey returned %#x\n", ret );
+    ok( !ret, "ZwOpenKey returned %#lx\n", ret );
 
     buffer = ExAllocatePool( PagedPool, info_size + EXPECT_QUEUE_BUFFER_SIZE );
     ok( buffer != NULL, "ExAllocatePool failed\n" );
@@ -824,53 +824,53 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *registry )
     RtlInitUnicodeString( &name_str, L"ReportID" );
     size = info_size + sizeof(report_id);
     ret = ZwQueryValueKey( hkey, &name_str, KeyValuePartialInformation, buffer, size, &size );
-    ok( !ret, "ZwQueryValueKey returned %#x\n", ret );
+    ok( !ret, "ZwQueryValueKey returned %#lx\n", ret );
     memcpy( &report_id, buffer + info_size, size - info_size );
 
     RtlInitUnicodeString( &name_str, L"PolledMode" );
     size = info_size + sizeof(polled);
     ret = ZwQueryValueKey( hkey, &name_str, KeyValuePartialInformation, buffer, size, &size );
-    ok( !ret, "ZwQueryValueKey returned %#x\n", ret );
+    ok( !ret, "ZwQueryValueKey returned %#lx\n", ret );
     memcpy( &polled, buffer + info_size, size - info_size );
     params.DevicesArePolled = polled;
 
     RtlInitUnicodeString( &name_str, L"Descriptor" );
     size = info_size + sizeof(report_descriptor_buf);
     ret = ZwQueryValueKey( hkey, &name_str, KeyValuePartialInformation, buffer, size, &size );
-    ok( !ret, "ZwQueryValueKey returned %#x\n", ret );
+    ok( !ret, "ZwQueryValueKey returned %#lx\n", ret );
     memcpy( report_descriptor_buf, buffer + info_size, size - info_size );
     report_descriptor_len = size - info_size;
 
     RtlInitUnicodeString( &name_str, L"Attributes" );
     size = info_size + sizeof(attributes);
     ret = ZwQueryValueKey( hkey, &name_str, KeyValuePartialInformation, buffer, size, &size );
-    ok( !ret, "ZwQueryValueKey returned %#x\n", ret );
+    ok( !ret, "ZwQueryValueKey returned %#lx\n", ret );
     memcpy( &attributes, buffer + info_size, size - info_size );
 
     RtlInitUnicodeString( &name_str, L"Caps" );
     size = info_size + sizeof(caps);
     ret = ZwQueryValueKey( hkey, &name_str, KeyValuePartialInformation, buffer, size, &size );
-    ok( !ret, "ZwQueryValueKey returned %#x\n", ret );
+    ok( !ret, "ZwQueryValueKey returned %#lx\n", ret );
     memcpy( &caps, buffer + info_size, size - info_size );
 
     expect_queue_init( &expect_queue );
     RtlInitUnicodeString( &name_str, L"Expect" );
     size = info_size + EXPECT_QUEUE_BUFFER_SIZE;
     ret = ZwQueryValueKey( hkey, &name_str, KeyValuePartialInformation, buffer, size, &size );
-    ok( !ret, "ZwQueryValueKey returned %#x\n", ret );
+    ok( !ret, "ZwQueryValueKey returned %#lx\n", ret );
     expect_queue_reset( &expect_queue, buffer + info_size, size - info_size );
 
     input_queue_init( &input_queue );
     RtlInitUnicodeString( &name_str, L"Input" );
     size = info_size + EXPECT_QUEUE_BUFFER_SIZE;
     ret = ZwQueryValueKey( hkey, &name_str, KeyValuePartialInformation, buffer, size, &size );
-    ok( !ret, "ZwQueryValueKey returned %#x\n", ret );
+    ok( !ret, "ZwQueryValueKey returned %#lx\n", ret );
     input_queue_reset( &input_queue, buffer + info_size, size - info_size );
 
     RtlInitUnicodeString( &name_str, L"Context" );
     size = info_size + sizeof(expect_queue.context);
     ret = ZwQueryValueKey( hkey, &name_str, KeyValuePartialInformation, buffer, size, &size );
-    ok( !ret, "ZwQueryValueKey returned %#x\n", ret );
+    ok( !ret, "ZwQueryValueKey returned %#lx\n", ret );
     memcpy( expect_queue.context, buffer + info_size, size - info_size );
 
     driver->DriverExtension->AddDevice = driver_add_device;
@@ -885,7 +885,7 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *registry )
     ExFreePool( buffer );
 
     ret = HidRegisterMinidriver( &params );
-    ok( !ret, "got %#x\n", ret );
+    ok( !ret, "got %#lx\n", ret );
 
     hidclass_driver_ioctl = driver->MajorFunction[IRP_MJ_DEVICE_CONTROL];
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = driver_ioctl;

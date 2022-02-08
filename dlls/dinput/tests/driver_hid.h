@@ -61,8 +61,8 @@ struct winetest_shared_data
     int running_under_wine;
     int winetest_report_success;
     int winetest_debug;
-    int failures;
-    int todo_failures;
+    LONG failures;
+    LONG todo_failures;
 };
 
 #ifndef __WINE_WINE_TEST_H
@@ -238,7 +238,7 @@ static inline void winetest_cleanup_( const char *file )
 
     if (winetest_debug)
     {
-        kprintf( "%04x:%s: %d tests executed (%d marked as todo, %d %s), %d skipped.\n",
+        kprintf( "%04lx:%s: %ld tests executed (%ld marked as todo, %ld %s), %ld skipped.\n",
                  (DWORD)(DWORD_PTR)PsGetCurrentProcessId(), test_name,
                  successes + failures + todo_successes + todo_failures, todo_successes, failures + todo_failures,
                  (failures + todo_failures != 1) ? "failures" : "failure", skipped );

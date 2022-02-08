@@ -72,23 +72,23 @@ static BOOL CALLBACK check_objects( const DIDEVICEOBJECTINSTANCEW *obj, void *ar
     ok( params->index < params->expect_count, "unexpected extra object\n" );
     if (params->index >= params->expect_count) exp = &unexpected_obj;
 
-    check_member( *obj, *exp, "%u", dwSize );
+    check_member( *obj, *exp, "%lu", dwSize );
     todo_wine_if( todo->guid )
     check_member_guid( *obj, *exp, guidType );
     todo_wine_if( params->version < 0x700 && (obj->dwType & DIDFT_BUTTON) )
-    check_member( *obj, *exp, "%#x", dwOfs );
+    check_member( *obj, *exp, "%#lx", dwOfs );
     todo_wine_if( todo->type )
-    check_member( *obj, *exp, "%#x", dwType );
-    check_member( *obj, *exp, "%#x", dwFlags );
+    check_member( *obj, *exp, "%#lx", dwType );
+    check_member( *obj, *exp, "%#lx", dwFlags );
     if (!localized) todo_wine_if( todo->name ) check_member_wstr( *obj, *exp, tszName );
-    check_member( *obj, *exp, "%u", dwFFMaxForce );
-    check_member( *obj, *exp, "%u", dwFFForceResolution );
+    check_member( *obj, *exp, "%lu", dwFFMaxForce );
+    check_member( *obj, *exp, "%lu", dwFFForceResolution );
     check_member( *obj, *exp, "%u", wCollectionNumber );
     check_member( *obj, *exp, "%u", wDesignatorIndex );
     check_member( *obj, *exp, "%#04x", wUsagePage );
     todo_wine_if( todo->usage )
     check_member( *obj, *exp, "%#04x", wUsage );
-    check_member( *obj, *exp, "%#04x", dwDimension );
+    check_member( *obj, *exp, "%#lx", dwDimension );
     check_member( *obj, *exp, "%#04x", wExponent );
     check_member( *obj, *exp, "%u", wReportId );
 
@@ -116,11 +116,11 @@ static BOOL CALLBACK check_effects( const DIEFFECTINFOW *effect, void *args )
     ok( params->index < params->expect_count, "unexpected extra object\n" );
     if (params->index >= params->expect_count) exp = &unexpected_effect;
 
-    check_member( *effect, *exp, "%u", dwSize );
+    check_member( *effect, *exp, "%lu", dwSize );
     check_member_guid( *effect, *exp, guid );
-    check_member( *effect, *exp, "%#x", dwEffType );
-    check_member( *effect, *exp, "%#x", dwStaticParams );
-    check_member( *effect, *exp, "%#x", dwDynamicParams );
+    check_member( *effect, *exp, "%#lx", dwEffType );
+    check_member( *effect, *exp, "%#lx", dwStaticParams );
+    check_member( *effect, *exp, "%#lx", dwDynamicParams );
     check_member_wstr( *effect, *exp, tszName );
 
     winetest_pop_context();
@@ -158,7 +158,7 @@ static BOOL CALLBACK check_created_effect_objects( IDirectInputEffect *effect, v
 
     IDirectInputEffect_AddRef( effect );
     ref = IDirectInputEffect_Release( effect );
-    ok( ref == 1, "got ref %u, expected 1\n", ref );
+    ok( ref == 1, "got ref %lu, expected 1\n", ref );
     return DIENUM_CONTINUE;
 }
 
@@ -179,111 +179,111 @@ static void check_dinput_devices( DWORD version, DIDEVICEINSTANCEW *devinst )
     if (version >= 0x800)
     {
         hr = DirectInput8Create( instance, version, &IID_IDirectInput8W, (void **)&di8, NULL );
-        ok( hr == DI_OK, "DirectInput8Create returned %#x\n", hr );
+        ok( hr == DI_OK, "DirectInput8Create returned %#lx\n", hr );
 
         hr = IDirectInput8_EnumDevices( di8, DI8DEVCLASS_ALL, NULL, NULL, DIEDFL_ALLDEVICES );
-        ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#x\n", hr );
+        ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#lx\n", hr );
         hr = IDirectInput8_EnumDevices( di8, DI8DEVCLASS_ALL, enum_device_count, &count, 0xdeadbeef );
-        ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#x\n", hr );
+        ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#lx\n", hr );
         hr = IDirectInput8_EnumDevices( di8, 0xdeadbeef, enum_device_count, &count, DIEDFL_ALLDEVICES );
-        ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#x\n", hr );
+        ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#lx\n", hr );
 
         count = 0;
         hr = IDirectInput8_EnumDevices( di8, DI8DEVCLASS_ALL, enum_device_count, &count, DIEDFL_ALLDEVICES );
-        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
-        ok( count == 3, "got count %u, expected 0\n", count );
+        ok( hr == DI_OK, "EnumDevices returned: %#lx\n", hr );
+        ok( count == 3, "got count %lu, expected 0\n", count );
         count = 0;
         hr = IDirectInput8_EnumDevices( di8, DI8DEVCLASS_DEVICE, enum_device_count, &count, DIEDFL_ALLDEVICES );
-        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
-        ok( count == 0, "got count %u, expected 0\n", count );
+        ok( hr == DI_OK, "EnumDevices returned: %#lx\n", hr );
+        ok( count == 0, "got count %lu, expected 0\n", count );
         count = 0;
         hr = IDirectInput8_EnumDevices( di8, DI8DEVCLASS_POINTER, enum_device_count, &count,
                                         DIEDFL_INCLUDEALIASES | DIEDFL_INCLUDEPHANTOMS | DIEDFL_INCLUDEHIDDEN );
-        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
+        ok( hr == DI_OK, "EnumDevices returned: %#lx\n", hr );
         todo_wine
-        ok( count == 3, "got count %u, expected 3\n", count );
+        ok( count == 3, "got count %lu, expected 3\n", count );
         count = 0;
         hr = IDirectInput8_EnumDevices( di8, DI8DEVCLASS_KEYBOARD, enum_device_count, &count,
                                         DIEDFL_INCLUDEALIASES | DIEDFL_INCLUDEPHANTOMS | DIEDFL_INCLUDEHIDDEN );
-        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
+        ok( hr == DI_OK, "EnumDevices returned: %#lx\n", hr );
         todo_wine
-        ok( count == 3, "got count %u, expected 3\n", count );
+        ok( count == 3, "got count %lu, expected 3\n", count );
         count = 0;
         hr = IDirectInput8_EnumDevices( di8, DI8DEVCLASS_GAMECTRL, enum_device_count, &count,
                                         DIEDFL_INCLUDEALIASES | DIEDFL_INCLUDEPHANTOMS | DIEDFL_INCLUDEHIDDEN );
-        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
-        ok( count == 1, "got count %u, expected 1\n", count );
+        ok( hr == DI_OK, "EnumDevices returned: %#lx\n", hr );
+        ok( count == 1, "got count %lu, expected 1\n", count );
 
         count = 0;
         hr = IDirectInput8_EnumDevices( di8, (devinst->dwDevType & 0xff), enum_device_count, &count, DIEDFL_ALLDEVICES );
-        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
-        ok( count == 1, "got count %u, expected 1\n", count );
+        ok( hr == DI_OK, "EnumDevices returned: %#lx\n", hr );
+        ok( count == 1, "got count %lu, expected 1\n", count );
 
         count = 0;
         hr = IDirectInput8_EnumDevices( di8, (devinst->dwDevType & 0xff), enum_device_count, &count, DIEDFL_FORCEFEEDBACK );
-        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
-        if (IsEqualGUID( &devinst->guidFFDriver, &GUID_NULL )) ok( count == 0, "got count %u, expected 0\n", count );
-        else ok( count == 1, "got count %u, expected 1\n", count );
+        ok( hr == DI_OK, "EnumDevices returned: %#lx\n", hr );
+        if (IsEqualGUID( &devinst->guidFFDriver, &GUID_NULL )) ok( count == 0, "got count %lu, expected 0\n", count );
+        else ok( count == 1, "got count %lu, expected 1\n", count );
 
         count = 0;
         hr = IDirectInput8_EnumDevices( di8, (devinst->dwDevType & 0xff) + 1, enum_device_count, &count, DIEDFL_ALLDEVICES );
-        if ((devinst->dwDevType & 0xff) != DI8DEVTYPE_SUPPLEMENTAL) ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
-        else ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#x\n", hr );
-        ok( count == 0, "got count %u, expected 0\n", count );
+        if ((devinst->dwDevType & 0xff) != DI8DEVTYPE_SUPPLEMENTAL) ok( hr == DI_OK, "EnumDevices returned: %#lx\n", hr );
+        else ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#lx\n", hr );
+        ok( count == 0, "got count %lu, expected 0\n", count );
     }
     else
     {
         hr = DirectInputCreateEx( instance, version, &IID_IDirectInput2W, (void **)&di, NULL );
-        ok( hr == DI_OK, "DirectInputCreateEx returned %#x\n", hr );
+        ok( hr == DI_OK, "DirectInputCreateEx returned %#lx\n", hr );
 
         hr = IDirectInput_EnumDevices( di, 0, NULL, NULL, DIEDFL_ALLDEVICES );
-        ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#x\n", hr );
+        ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#lx\n", hr );
         hr = IDirectInput_EnumDevices( di, 0, enum_device_count, &count, 0xdeadbeef );
-        ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#x\n", hr );
+        ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#lx\n", hr );
         hr = IDirectInput_EnumDevices( di, 0xdeadbeef, enum_device_count, &count, DIEDFL_ALLDEVICES );
-        ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#x\n", hr );
+        ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#lx\n", hr );
         hr = IDirectInput_EnumDevices( di, 0, enum_device_count, &count, DIEDFL_INCLUDEHIDDEN );
-        ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#x\n", hr );
+        ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#lx\n", hr );
 
         count = 0;
         hr = IDirectInput_EnumDevices( di, 0, enum_device_count, &count, DIEDFL_ALLDEVICES );
-        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
-        ok( count == 3, "got count %u, expected 0\n", count );
+        ok( hr == DI_OK, "EnumDevices returned: %#lx\n", hr );
+        ok( count == 3, "got count %lu, expected 0\n", count );
         count = 0;
         hr = IDirectInput_EnumDevices( di, DIDEVTYPE_DEVICE, enum_device_count, &count, DIEDFL_ALLDEVICES );
-        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
-        ok( count == 0, "got count %u, expected 0\n", count );
+        ok( hr == DI_OK, "EnumDevices returned: %#lx\n", hr );
+        ok( count == 0, "got count %lu, expected 0\n", count );
         count = 0;
         hr = IDirectInput_EnumDevices( di, DIDEVTYPE_MOUSE, enum_device_count, &count,
                                        DIEDFL_INCLUDEALIASES | DIEDFL_INCLUDEPHANTOMS );
-        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
+        ok( hr == DI_OK, "EnumDevices returned: %#lx\n", hr );
         todo_wine
-        ok( count == 3, "got count %u, expected 3\n", count );
+        ok( count == 3, "got count %lu, expected 3\n", count );
         count = 0;
         hr = IDirectInput_EnumDevices( di, DIDEVTYPE_KEYBOARD, enum_device_count, &count,
                                        DIEDFL_INCLUDEALIASES | DIEDFL_INCLUDEPHANTOMS );
-        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
+        ok( hr == DI_OK, "EnumDevices returned: %#lx\n", hr );
         todo_wine
-        ok( count == 3, "got count %u, expected 3\n", count );
+        ok( count == 3, "got count %lu, expected 3\n", count );
         count = 0;
         hr = IDirectInput_EnumDevices( di, DIDEVTYPE_JOYSTICK, enum_device_count, &count,
                                        DIEDFL_INCLUDEALIASES | DIEDFL_INCLUDEPHANTOMS );
-        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
-        ok( count == 1, "got count %u, expected 1\n", count );
+        ok( hr == DI_OK, "EnumDevices returned: %#lx\n", hr );
+        ok( count == 1, "got count %lu, expected 1\n", count );
 
         count = 0;
         hr = IDirectInput_EnumDevices( di, (devinst->dwDevType & 0xff), enum_device_count, &count, DIEDFL_ALLDEVICES );
-        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
-        ok( count == 1, "got count %u, expected 1\n", count );
+        ok( hr == DI_OK, "EnumDevices returned: %#lx\n", hr );
+        ok( count == 1, "got count %lu, expected 1\n", count );
 
         count = 0;
         hr = IDirectInput_EnumDevices( di, (devinst->dwDevType & 0xff), enum_device_count, &count, DIEDFL_FORCEFEEDBACK );
-        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
-        if (IsEqualGUID( &devinst->guidFFDriver, &GUID_NULL )) ok( count == 0, "got count %u, expected 0\n", count );
-        else ok( count == 1, "got count %u, expected 1\n", count );
+        ok( hr == DI_OK, "EnumDevices returned: %#lx\n", hr );
+        if (IsEqualGUID( &devinst->guidFFDriver, &GUID_NULL )) ok( count == 0, "got count %lu, expected 0\n", count );
+        else ok( count == 1, "got count %lu, expected 1\n", count );
 
         hr = IDirectInput_EnumDevices( di, 0x14, enum_device_count, &count, DIEDFL_ALLDEVICES );
-        ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#x\n", hr );
+        ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#lx\n", hr );
     }
 }
 
@@ -502,89 +502,89 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
     GUID guid;
 
     hr = IDirectInputDevice8_CreateEffect( device, &GUID_Sine, NULL, NULL, NULL );
-    ok( hr == E_POINTER, "CreateEffect returned %#x\n", hr );
+    ok( hr == E_POINTER, "CreateEffect returned %#lx\n", hr );
     hr = IDirectInputDevice8_CreateEffect( device, NULL, NULL, &effect, NULL );
-    ok( hr == E_POINTER, "CreateEffect returned %#x\n", hr );
+    ok( hr == E_POINTER, "CreateEffect returned %#lx\n", hr );
     hr = IDirectInputDevice8_CreateEffect( device, &GUID_NULL, NULL, &effect, NULL );
-    ok( hr == DIERR_DEVICENOTREG, "CreateEffect returned %#x\n", hr );
+    ok( hr == DIERR_DEVICENOTREG, "CreateEffect returned %#lx\n", hr );
 
     hr = IDirectInputDevice8_CreateEffect( device, &GUID_Sine, NULL, &effect, NULL );
-    ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
+    ok( hr == DI_OK, "CreateEffect returned %#lx\n", hr );
     if (hr != DI_OK) return;
 
     hr = IDirectInputDevice8_EnumCreatedEffectObjects( device, check_no_created_effect_objects, effect, 0xdeadbeef );
-    ok( hr == DIERR_INVALIDPARAM, "EnumCreatedEffectObjects returned %#x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "EnumCreatedEffectObjects returned %#lx\n", hr );
     check_params.expect_effect = effect;
     hr = IDirectInputDevice8_EnumCreatedEffectObjects( device, check_created_effect_objects, &check_params, 0 );
-    ok( hr == DI_OK, "EnumCreatedEffectObjects returned %#x\n", hr );
-    ok( check_params.count == 1, "got count %u, expected 1\n", check_params.count );
+    ok( hr == DI_OK, "EnumCreatedEffectObjects returned %#lx\n", hr );
+    ok( check_params.count == 1, "got count %lu, expected 1\n", check_params.count );
 
     hr = IDirectInputEffect_Initialize( effect, NULL, version, &GUID_Sine );
-    ok( hr == DIERR_INVALIDPARAM, "Initialize returned %#x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "Initialize returned %#lx\n", hr );
     hr = IDirectInputEffect_Initialize( effect, instance, 0x800 - (version - 0x700), &GUID_Sine );
     if (version == 0x800)
     {
         todo_wine
-        ok( hr == DIERR_BETADIRECTINPUTVERSION, "Initialize returned %#x\n", hr );
+        ok( hr == DIERR_BETADIRECTINPUTVERSION, "Initialize returned %#lx\n", hr );
     }
     else
     {
         todo_wine
-        ok( hr == DIERR_OLDDIRECTINPUTVERSION, "Initialize returned %#x\n", hr );
+        ok( hr == DIERR_OLDDIRECTINPUTVERSION, "Initialize returned %#lx\n", hr );
     }
     hr = IDirectInputEffect_Initialize( effect, instance, 0, &GUID_Sine );
     todo_wine
-    ok( hr == DIERR_NOTINITIALIZED, "Initialize returned %#x\n", hr );
+    ok( hr == DIERR_NOTINITIALIZED, "Initialize returned %#lx\n", hr );
     hr = IDirectInputEffect_Initialize( effect, instance, version, NULL );
-    ok( hr == E_POINTER, "Initialize returned %#x\n", hr );
+    ok( hr == E_POINTER, "Initialize returned %#lx\n", hr );
 
     hr = IDirectInputEffect_Initialize( effect, instance, version, &GUID_NULL );
-    ok( hr == DIERR_DEVICENOTREG, "Initialize returned %#x\n", hr );
+    ok( hr == DIERR_DEVICENOTREG, "Initialize returned %#lx\n", hr );
     hr = IDirectInputEffect_Initialize( effect, instance, version, &GUID_Sine );
-    ok( hr == DI_OK, "Initialize returned %#x\n", hr );
+    ok( hr == DI_OK, "Initialize returned %#lx\n", hr );
     hr = IDirectInputEffect_Initialize( effect, instance, version, &GUID_Square );
-    ok( hr == DI_OK, "Initialize returned %#x\n", hr );
+    ok( hr == DI_OK, "Initialize returned %#lx\n", hr );
 
     hr = IDirectInputEffect_GetEffectGuid( effect, NULL );
-    ok( hr == E_POINTER, "GetEffectGuid returned %#x\n", hr );
+    ok( hr == E_POINTER, "GetEffectGuid returned %#lx\n", hr );
     hr = IDirectInputEffect_GetEffectGuid( effect, &guid );
-    ok( hr == DI_OK, "GetEffectGuid returned %#x\n", hr );
+    ok( hr == DI_OK, "GetEffectGuid returned %#lx\n", hr );
     ok( IsEqualGUID( &guid, &GUID_Square ), "got guid %s, expected %s\n", debugstr_guid( &guid ),
         debugstr_guid( &GUID_Square ) );
 
     hr = IDirectInputEffect_GetParameters( effect, NULL, 0 );
-    ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
+    ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
     hr = IDirectInputEffect_GetParameters( effect, NULL, DIEP_DURATION );
-    ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
+    ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
     hr = IDirectInputEffect_GetParameters( effect, &desc, 0 );
-    ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#lx\n", hr );
     desc.dwSize = sizeof(DIEFFECT_DX5) + 2;
     hr = IDirectInputEffect_GetParameters( effect, &desc, 0 );
-    ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#lx\n", hr );
     desc.dwSize = sizeof(DIEFFECT_DX5);
     hr = IDirectInputEffect_GetParameters( effect, &desc, 0 );
-    ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
+    ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_STARTDELAY );
-    ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#lx\n", hr );
     desc.dwSize = sizeof(DIEFFECT_DX6);
     hr = IDirectInputEffect_GetParameters( effect, &desc, 0 );
-    ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
+    ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
 
     set_hid_expect( file, expect_reset, sizeof(expect_reset) );
     hr = IDirectInputDevice8_Unacquire( device );
-    ok( hr == DI_OK, "Unacquire returned: %#x\n", hr );
+    ok( hr == DI_OK, "Unacquire returned: %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DURATION );
-    ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
+    ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
     set_hid_expect( file, expect_acquire, sizeof(expect_acquire) );
     hr = IDirectInputDevice8_Acquire( device );
-    ok( hr == DI_OK, "Acquire returned: %#x\n", hr );
+    ok( hr == DI_OK, "Acquire returned: %#lx\n", hr );
     wait_hid_expect( file, 100 ); /* device gain reports are written asynchronously */
 
     desc.dwDuration = 0xdeadbeef;
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DURATION );
-    ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    check_member( desc, expect_desc_init, "%u", dwDuration );
+    ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
+    check_member( desc, expect_desc_init, "%lu", dwDuration );
     memset( &desc, 0xcd, sizeof(desc) );
     desc.dwSize = version >= 0x700 ? sizeof(DIEFFECT_DX6) : sizeof(DIEFFECT_DX5);
     desc.dwFlags = 0;
@@ -592,25 +592,25 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
     flags = DIEP_GAIN | DIEP_SAMPLEPERIOD | DIEP_TRIGGERREPEATINTERVAL |
             (version >= 0x700 ? DIEP_STARTDELAY : 0);
     hr = IDirectInputEffect_GetParameters( effect, &desc, flags );
-    ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    check_member( desc, expect_desc_init, "%u", dwSamplePeriod );
-    check_member( desc, expect_desc_init, "%u", dwGain );
-    if (version >= 0x700) check_member( desc, expect_desc_init, "%u", dwStartDelay );
-    else ok( desc.dwStartDelay == 0xdeadbeef, "got dwStartDelay %#x\n", desc.dwStartDelay );
-    check_member( desc, expect_desc_init, "%u", dwTriggerRepeatInterval );
+    ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
+    check_member( desc, expect_desc_init, "%lu", dwSamplePeriod );
+    check_member( desc, expect_desc_init, "%lu", dwGain );
+    if (version >= 0x700) check_member( desc, expect_desc_init, "%lu", dwStartDelay );
+    else ok( desc.dwStartDelay == 0xdeadbeef, "got dwStartDelay %#lx\n", desc.dwStartDelay );
+    check_member( desc, expect_desc_init, "%lu", dwTriggerRepeatInterval );
 
     memset( &desc, 0xcd, sizeof(desc) );
     desc.dwSize = version >= 0x700 ? sizeof(DIEFFECT_DX6) : sizeof(DIEFFECT_DX5);
     desc.dwFlags = 0;
     desc.lpEnvelope = NULL;
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_ENVELOPE );
-    ok( hr == E_POINTER, "GetParameters returned %#x\n", hr );
+    ok( hr == E_POINTER, "GetParameters returned %#lx\n", hr );
     desc.lpEnvelope = &envelope;
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_ENVELOPE );
-    ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#lx\n", hr );
     envelope.dwSize = sizeof(DIENVELOPE);
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_ENVELOPE );
-    ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
+    ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
 
     desc.dwFlags = 0;
     desc.cAxes = 0;
@@ -620,183 +620,183 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
     desc.cbTypeSpecificParams = 0;
     desc.lpvTypeSpecificParams = NULL;
     hr = IDirectInputEffect_GetParameters( effect, &desc, version >= 0x700 ? DIEP_ALLPARAMS : DIEP_ALLPARAMS_DX5 );
-    ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#lx\n", hr );
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_TRIGGERBUTTON );
-    ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#lx\n", hr );
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_AXES );
-    ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#lx\n", hr );
     desc.dwFlags = DIEFF_OBJECTOFFSETS;
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-    ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#lx\n", hr );
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_TRIGGERBUTTON );
-    ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    check_member( desc, expect_desc_init, "%#x", dwTriggerButton );
+    ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
+    check_member( desc, expect_desc_init, "%#lx", dwTriggerButton );
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_AXES );
-    ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    check_member( desc, expect_desc_init, "%u", cAxes );
+    ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
+    check_member( desc, expect_desc_init, "%lu", cAxes );
     desc.dwFlags = DIEFF_OBJECTIDS;
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-    ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#lx\n", hr );
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_TRIGGERBUTTON );
-    ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    check_member( desc, expect_desc_init, "%#x", dwTriggerButton );
+    ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
+    check_member( desc, expect_desc_init, "%#lx", dwTriggerButton );
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_AXES );
-    ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    check_member( desc, expect_desc_init, "%u", cAxes );
+    ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
+    check_member( desc, expect_desc_init, "%lu", cAxes );
     desc.dwFlags |= DIEFF_CARTESIAN;
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-    ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    ok( desc.dwFlags == DIEFF_OBJECTIDS, "got flags %#x, expected %#x\n", desc.dwFlags, DIEFF_OBJECTIDS );
+    ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
+    ok( desc.dwFlags == DIEFF_OBJECTIDS, "got flags %#lx, expected %#x\n", desc.dwFlags, DIEFF_OBJECTIDS );
     desc.dwFlags |= DIEFF_POLAR;
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-    ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#x\n", hr );
-    ok( desc.dwFlags == DIEFF_OBJECTIDS, "got flags %#x, expected %#x\n", desc.dwFlags, DIEFF_OBJECTIDS );
+    ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#lx\n", hr );
+    ok( desc.dwFlags == DIEFF_OBJECTIDS, "got flags %#lx, expected %#x\n", desc.dwFlags, DIEFF_OBJECTIDS );
     desc.dwFlags |= DIEFF_SPHERICAL;
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-    ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    check_member( desc, expect_desc_init, "%u", cAxes );
-    ok( desc.dwFlags == DIEFF_OBJECTIDS, "got flags %#x, expected %#x\n", desc.dwFlags, DIEFF_OBJECTIDS );
+    ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
+    check_member( desc, expect_desc_init, "%lu", cAxes );
+    ok( desc.dwFlags == DIEFF_OBJECTIDS, "got flags %#lx, expected %#x\n", desc.dwFlags, DIEFF_OBJECTIDS );
 
     desc.dwFlags |= DIEFF_SPHERICAL;
     desc.cAxes = 2;
     desc.rgdwAxes = axes;
     desc.rglDirection = directions;
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_AXES | DIEP_DIRECTION );
-    ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    check_member( desc, expect_desc_init, "%u", cAxes );
-    check_member( desc, expect_desc_init, "%u", rgdwAxes[0] );
-    check_member( desc, expect_desc_init, "%u", rgdwAxes[1] );
+    ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
+    check_member( desc, expect_desc_init, "%lu", cAxes );
+    check_member( desc, expect_desc_init, "%lu", rgdwAxes[0] );
+    check_member( desc, expect_desc_init, "%lu", rgdwAxes[1] );
     check_member( desc, expect_desc_init, "%p", rglDirection );
-    ok( desc.dwFlags == DIEFF_OBJECTIDS, "got flags %#x, expected %#x\n", desc.dwFlags, DIEFF_OBJECTIDS );
+    ok( desc.dwFlags == DIEFF_OBJECTIDS, "got flags %#lx, expected %#x\n", desc.dwFlags, DIEFF_OBJECTIDS );
 
     desc.dwFlags |= DIEFF_SPHERICAL;
     desc.lpEnvelope = &envelope;
     desc.cbTypeSpecificParams = sizeof(periodic);
     desc.lpvTypeSpecificParams = &periodic;
     hr = IDirectInputEffect_GetParameters( effect, &desc, version >= 0x700 ? DIEP_ALLPARAMS : DIEP_ALLPARAMS_DX5 );
-    ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    check_member( desc, expect_desc_init, "%u", dwDuration );
-    check_member( desc, expect_desc_init, "%u", dwSamplePeriod );
-    check_member( desc, expect_desc_init, "%u", dwGain );
-    check_member( desc, expect_desc_init, "%#x", dwTriggerButton );
-    check_member( desc, expect_desc_init, "%u", dwTriggerRepeatInterval );
-    check_member( desc, expect_desc_init, "%u", cAxes );
-    check_member( desc, expect_desc_init, "%u", rgdwAxes[0] );
-    check_member( desc, expect_desc_init, "%u", rgdwAxes[1] );
+    ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
+    check_member( desc, expect_desc_init, "%lu", dwDuration );
+    check_member( desc, expect_desc_init, "%lu", dwSamplePeriod );
+    check_member( desc, expect_desc_init, "%lu", dwGain );
+    check_member( desc, expect_desc_init, "%#lx", dwTriggerButton );
+    check_member( desc, expect_desc_init, "%lu", dwTriggerRepeatInterval );
+    check_member( desc, expect_desc_init, "%lu", cAxes );
+    check_member( desc, expect_desc_init, "%lu", rgdwAxes[0] );
+    check_member( desc, expect_desc_init, "%lu", rgdwAxes[1] );
     check_member( desc, expect_desc_init, "%p", rglDirection );
     check_member( desc, expect_desc_init, "%p", lpEnvelope );
-    check_member( desc, expect_desc_init, "%u", cbTypeSpecificParams );
-    if (version >= 0x700) check_member( desc, expect_desc_init, "%u", dwStartDelay );
-    else ok( desc.dwStartDelay == 0xcdcdcdcd, "got dwStartDelay %#x\n", desc.dwStartDelay );
+    check_member( desc, expect_desc_init, "%lu", cbTypeSpecificParams );
+    if (version >= 0x700) check_member( desc, expect_desc_init, "%lu", dwStartDelay );
+    else ok( desc.dwStartDelay == 0xcdcdcdcd, "got dwStartDelay %#lx\n", desc.dwStartDelay );
 
     set_hid_expect( file, expect_reset, sizeof(expect_reset) );
     hr = IDirectInputDevice8_Unacquire( device );
-    ok( hr == DI_OK, "Unacquire returned: %#x\n", hr );
+    ok( hr == DI_OK, "Unacquire returned: %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
     hr = IDirectInputEffect_Download( effect );
-    ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "Download returned %#x\n", hr );
+    ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "Download returned %#lx\n", hr );
     set_hid_expect( file, expect_acquire, sizeof(expect_acquire) );
     hr = IDirectInputDevice8_Acquire( device );
-    ok( hr == DI_OK, "Acquire returned: %#x\n", hr );
+    ok( hr == DI_OK, "Acquire returned: %#lx\n", hr );
     wait_hid_expect( file, 100 ); /* device gain reports are written asynchronously */
 
     hr = IDirectInputEffect_Download( effect );
-    ok( hr == DIERR_INCOMPLETEEFFECT, "Download returned %#x\n", hr );
+    ok( hr == DIERR_INCOMPLETEEFFECT, "Download returned %#lx\n", hr );
     hr = IDirectInputEffect_Unload( effect );
-    ok( hr == DI_NOEFFECT, "Unload returned %#x\n", hr );
+    ok( hr == DI_NOEFFECT, "Unload returned %#lx\n", hr );
 
     hr = IDirectInputEffect_SetParameters( effect, NULL, DIEP_NODOWNLOAD );
-    ok( hr == E_POINTER, "SetParameters returned %#x\n", hr );
+    ok( hr == E_POINTER, "SetParameters returned %#lx\n", hr );
     memset( &desc, 0, sizeof(desc) );
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_NODOWNLOAD );
-    ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#lx\n", hr );
     desc.dwSize = version >= 0x700 ? sizeof(DIEFFECT_DX6) : sizeof(DIEFFECT_DX5);
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_NODOWNLOAD );
-    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
+    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#lx\n", hr );
 
     set_hid_expect( file, expect_reset, sizeof(expect_reset) );
     hr = IDirectInputDevice8_Unacquire( device );
-    ok( hr == DI_OK, "Unacquire returned: %#x\n", hr );
+    ok( hr == DI_OK, "Unacquire returned: %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
     hr = IDirectInputEffect_SetParameters( effect, &expect_desc, DIEP_DURATION );
-    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
+    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#lx\n", hr );
     set_hid_expect( file, expect_acquire, sizeof(expect_acquire) );
     hr = IDirectInputDevice8_Acquire( device );
-    ok( hr == DI_OK, "Acquire returned: %#x\n", hr );
+    ok( hr == DI_OK, "Acquire returned: %#lx\n", hr );
     wait_hid_expect( file, 100 ); /* device gain reports are written asynchronously */
 
     hr = IDirectInputEffect_SetParameters( effect, &expect_desc, DIEP_DURATION | DIEP_NODOWNLOAD );
-    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
+    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#lx\n", hr );
 
     desc.dwTriggerButton = -1;
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DURATION );
-    ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    check_member( desc, expect_desc, "%u", dwDuration );
-    check_member( desc, expect_desc_init, "%u", dwSamplePeriod );
-    check_member( desc, expect_desc_init, "%u", dwGain );
-    check_member( desc, expect_desc_init, "%#x", dwTriggerButton );
-    check_member( desc, expect_desc_init, "%u", dwTriggerRepeatInterval );
-    check_member( desc, expect_desc_init, "%u", cAxes );
+    ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
+    check_member( desc, expect_desc, "%lu", dwDuration );
+    check_member( desc, expect_desc_init, "%lu", dwSamplePeriod );
+    check_member( desc, expect_desc_init, "%lu", dwGain );
+    check_member( desc, expect_desc_init, "%#lx", dwTriggerButton );
+    check_member( desc, expect_desc_init, "%lu", dwTriggerRepeatInterval );
+    check_member( desc, expect_desc_init, "%lu", cAxes );
     check_member( desc, expect_desc_init, "%p", rglDirection );
     check_member( desc, expect_desc_init, "%p", lpEnvelope );
-    check_member( desc, expect_desc_init, "%u", cbTypeSpecificParams );
-    check_member( desc, expect_desc_init, "%u", dwStartDelay );
+    check_member( desc, expect_desc_init, "%lu", cbTypeSpecificParams );
+    check_member( desc, expect_desc_init, "%lu", dwStartDelay );
 
     hr = IDirectInputEffect_Download( effect );
-    ok( hr == DIERR_INCOMPLETEEFFECT, "Download returned %#x\n", hr );
+    ok( hr == DIERR_INCOMPLETEEFFECT, "Download returned %#lx\n", hr );
     hr = IDirectInputEffect_Unload( effect );
-    ok( hr == DI_NOEFFECT, "Unload returned %#x\n", hr );
+    ok( hr == DI_NOEFFECT, "Unload returned %#lx\n", hr );
 
     flags = DIEP_GAIN | DIEP_SAMPLEPERIOD | DIEP_TRIGGERREPEATINTERVAL | DIEP_NODOWNLOAD;
     if (version >= 0x700) flags |= DIEP_STARTDELAY;
     hr = IDirectInputEffect_SetParameters( effect, &expect_desc, flags );
-    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
+    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#lx\n", hr );
     desc.dwDuration = 0;
     flags = DIEP_DURATION | DIEP_GAIN | DIEP_SAMPLEPERIOD | DIEP_TRIGGERREPEATINTERVAL;
     if (version >= 0x700) flags |= DIEP_STARTDELAY;
     hr = IDirectInputEffect_GetParameters( effect, &desc, flags );
-    ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    check_member( desc, expect_desc, "%u", dwDuration );
-    check_member( desc, expect_desc, "%u", dwSamplePeriod );
-    check_member( desc, expect_desc, "%u", dwGain );
-    check_member( desc, expect_desc_init, "%#x", dwTriggerButton );
-    check_member( desc, expect_desc, "%u", dwTriggerRepeatInterval );
-    check_member( desc, expect_desc_init, "%u", cAxes );
+    ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
+    check_member( desc, expect_desc, "%lu", dwDuration );
+    check_member( desc, expect_desc, "%lu", dwSamplePeriod );
+    check_member( desc, expect_desc, "%lu", dwGain );
+    check_member( desc, expect_desc_init, "%#lx", dwTriggerButton );
+    check_member( desc, expect_desc, "%lu", dwTriggerRepeatInterval );
+    check_member( desc, expect_desc_init, "%lu", cAxes );
     check_member( desc, expect_desc_init, "%p", rglDirection );
     check_member( desc, expect_desc_init, "%p", lpEnvelope );
-    check_member( desc, expect_desc_init, "%u", cbTypeSpecificParams );
-    if (version >= 0x700) check_member( desc, expect_desc, "%u", dwStartDelay );
-    else ok( desc.dwStartDelay == 0, "got dwStartDelay %#x\n", desc.dwStartDelay );
+    check_member( desc, expect_desc_init, "%lu", cbTypeSpecificParams );
+    if (version >= 0x700) check_member( desc, expect_desc, "%lu", dwStartDelay );
+    else ok( desc.dwStartDelay == 0, "got dwStartDelay %#lx\n", desc.dwStartDelay );
 
     hr = IDirectInputEffect_Download( effect );
-    ok( hr == DIERR_INCOMPLETEEFFECT, "Download returned %#x\n", hr );
+    ok( hr == DIERR_INCOMPLETEEFFECT, "Download returned %#lx\n", hr );
     hr = IDirectInputEffect_Unload( effect );
-    ok( hr == DI_NOEFFECT, "Unload returned %#x\n", hr );
+    ok( hr == DI_NOEFFECT, "Unload returned %#lx\n", hr );
 
     desc.lpEnvelope = NULL;
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_ENVELOPE | DIEP_NODOWNLOAD );
-    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
+    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#lx\n", hr );
     desc.lpEnvelope = &envelope;
     envelope.dwSize = 0;
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_ENVELOPE | DIEP_NODOWNLOAD );
-    ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#lx\n", hr );
 
     hr = IDirectInputEffect_SetParameters( effect, &expect_desc, DIEP_ENVELOPE | DIEP_NODOWNLOAD );
-    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
+    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#lx\n", hr );
 
     desc.lpEnvelope = &envelope;
     envelope.dwSize = sizeof(DIENVELOPE);
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_ENVELOPE );
-    ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    check_member( envelope, expect_envelope, "%u", dwAttackLevel );
-    check_member( envelope, expect_envelope, "%u", dwAttackTime );
-    check_member( envelope, expect_envelope, "%u", dwFadeLevel );
-    check_member( envelope, expect_envelope, "%u", dwFadeTime );
+    ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
+    check_member( envelope, expect_envelope, "%lu", dwAttackLevel );
+    check_member( envelope, expect_envelope, "%lu", dwAttackTime );
+    check_member( envelope, expect_envelope, "%lu", dwFadeLevel );
+    check_member( envelope, expect_envelope, "%lu", dwFadeTime );
 
     hr = IDirectInputEffect_Download( effect );
-    ok( hr == DIERR_INCOMPLETEEFFECT, "Download returned %#x\n", hr );
+    ok( hr == DIERR_INCOMPLETEEFFECT, "Download returned %#lx\n", hr );
     hr = IDirectInputEffect_Unload( effect );
-    ok( hr == DI_NOEFFECT, "Unload returned %#x\n", hr );
+    ok( hr == DI_NOEFFECT, "Unload returned %#lx\n", hr );
 
     desc.dwFlags = 0;
     desc.cAxes = 0;
@@ -807,11 +807,11 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
     desc.lpvTypeSpecificParams = NULL;
     flags = version >= 0x700 ? DIEP_ALLPARAMS : DIEP_ALLPARAMS_DX5;
     hr = IDirectInputEffect_SetParameters( effect, &desc, flags | DIEP_NODOWNLOAD );
-    ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#lx\n", hr );
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_TRIGGERBUTTON | DIEP_NODOWNLOAD );
-    ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#lx\n", hr );
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_AXES | DIEP_NODOWNLOAD );
-    ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#lx\n", hr );
 
     desc.dwFlags = DIEFF_OBJECTOFFSETS;
     desc.cAxes = 1;
@@ -819,190 +819,190 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
     desc.rgdwAxes[0] = DIJOFS_X;
     desc.dwTriggerButton = DIJOFS_BUTTON( 1 );
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_DIRECTION | DIEP_NODOWNLOAD );
-    ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#lx\n", hr );
     hr = IDirectInputEffect_SetParameters( effect, &expect_desc, DIEP_AXES | DIEP_TRIGGERBUTTON | DIEP_NODOWNLOAD );
-    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
+    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#lx\n", hr );
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_AXES | DIEP_TRIGGERBUTTON | DIEP_NODOWNLOAD );
-    ok( hr == DIERR_ALREADYINITIALIZED, "SetParameters returned %#x\n", hr );
+    ok( hr == DIERR_ALREADYINITIALIZED, "SetParameters returned %#lx\n", hr );
 
     desc.cAxes = 0;
     desc.dwFlags = DIEFF_OBJECTIDS;
     desc.rgdwAxes = axes;
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_AXES | DIEP_TRIGGERBUTTON );
-    ok( hr == DIERR_MOREDATA, "GetParameters returned %#x\n", hr );
-    check_member( desc, expect_desc, "%u", cAxes );
+    ok( hr == DIERR_MOREDATA, "GetParameters returned %#lx\n", hr );
+    check_member( desc, expect_desc, "%lu", cAxes );
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_AXES | DIEP_TRIGGERBUTTON );
-    ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    check_member( desc, expect_desc, "%#x", dwTriggerButton );
-    check_member( desc, expect_desc, "%u", cAxes );
-    check_member( desc, expect_desc, "%u", rgdwAxes[0] );
-    check_member( desc, expect_desc, "%u", rgdwAxes[1] );
-    check_member( desc, expect_desc, "%u", rgdwAxes[2] );
+    ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
+    check_member( desc, expect_desc, "%#lx", dwTriggerButton );
+    check_member( desc, expect_desc, "%lu", cAxes );
+    check_member( desc, expect_desc, "%lu", rgdwAxes[0] );
+    check_member( desc, expect_desc, "%lu", rgdwAxes[1] );
+    check_member( desc, expect_desc, "%lu", rgdwAxes[2] );
 
     desc.dwFlags = DIEFF_OBJECTOFFSETS;
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_AXES | DIEP_TRIGGERBUTTON );
-    ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    ok( desc.dwTriggerButton == 0x30, "got %#x expected %#x\n", desc.dwTriggerButton, 0x30 );
-    ok( desc.rgdwAxes[0] == 8, "got %#x expected %#x\n", desc.rgdwAxes[0], 8 );
-    ok( desc.rgdwAxes[1] == 0, "got %#x expected %#x\n", desc.rgdwAxes[1], 0 );
-    ok( desc.rgdwAxes[2] == 4, "got %#x expected %#x\n", desc.rgdwAxes[2], 4 );
+    ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
+    ok( desc.dwTriggerButton == 0x30, "got %#lx expected %#x\n", desc.dwTriggerButton, 0x30 );
+    ok( desc.rgdwAxes[0] == 8, "got %#lx expected %#x\n", desc.rgdwAxes[0], 8 );
+    ok( desc.rgdwAxes[1] == 0, "got %#lx expected %#x\n", desc.rgdwAxes[1], 0 );
+    ok( desc.rgdwAxes[2] == 4, "got %#lx expected %#x\n", desc.rgdwAxes[2], 4 );
 
     hr = IDirectInputEffect_Download( effect );
-    ok( hr == DIERR_INCOMPLETEEFFECT, "Download returned %#x\n", hr );
+    ok( hr == DIERR_INCOMPLETEEFFECT, "Download returned %#lx\n", hr );
     hr = IDirectInputEffect_Unload( effect );
-    ok( hr == DI_NOEFFECT, "Unload returned %#x\n", hr );
+    ok( hr == DI_NOEFFECT, "Unload returned %#lx\n", hr );
 
     desc.dwFlags = DIEFF_CARTESIAN;
     desc.cAxes = 0;
     desc.rglDirection = directions;
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_DIRECTION | DIEP_NODOWNLOAD );
-    ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#lx\n", hr );
     desc.cAxes = 3;
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_DIRECTION | DIEP_NODOWNLOAD );
-    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
+    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#lx\n", hr );
     desc.dwFlags = DIEFF_POLAR;
     desc.cAxes = 3;
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_DIRECTION | DIEP_NODOWNLOAD );
-    ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#lx\n", hr );
 
     hr = IDirectInputEffect_SetParameters( effect, &expect_desc, DIEP_DIRECTION | DIEP_NODOWNLOAD );
-    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
+    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#lx\n", hr );
 
     desc.dwFlags = DIEFF_SPHERICAL;
     desc.cAxes = 1;
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-    ok( hr == DIERR_MOREDATA, "GetParameters returned %#x\n", hr );
-    ok( desc.dwFlags == DIEFF_SPHERICAL, "got flags %#x, expected %#x\n", desc.dwFlags, DIEFF_SPHERICAL );
-    check_member( desc, expect_desc, "%u", cAxes );
+    ok( hr == DIERR_MOREDATA, "GetParameters returned %#lx\n", hr );
+    ok( desc.dwFlags == DIEFF_SPHERICAL, "got flags %#lx, expected %#x\n", desc.dwFlags, DIEFF_SPHERICAL );
+    check_member( desc, expect_desc, "%lu", cAxes );
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-    ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    check_member( desc, expect_desc, "%u", cAxes );
-    ok( desc.rglDirection[0] == 3000, "got rglDirection[0] %d expected %d\n", desc.rglDirection[0], 3000 );
-    ok( desc.rglDirection[1] == 30000, "got rglDirection[1] %d expected %d\n", desc.rglDirection[1], 30000 );
-    ok( desc.rglDirection[2] == 0, "got rglDirection[2] %d expected %d\n", desc.rglDirection[2], 0 );
+    ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
+    check_member( desc, expect_desc, "%lu", cAxes );
+    ok( desc.rglDirection[0] == 3000, "got rglDirection[0] %ld expected %d\n", desc.rglDirection[0], 3000 );
+    ok( desc.rglDirection[1] == 30000, "got rglDirection[1] %ld expected %d\n", desc.rglDirection[1], 30000 );
+    ok( desc.rglDirection[2] == 0, "got rglDirection[2] %ld expected %d\n", desc.rglDirection[2], 0 );
     desc.dwFlags = DIEFF_CARTESIAN;
     desc.cAxes = 2;
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-    ok( hr == DIERR_MOREDATA, "GetParameters returned %#x\n", hr );
-    ok( desc.dwFlags == DIEFF_CARTESIAN, "got flags %#x, expected %#x\n", desc.dwFlags, DIEFF_CARTESIAN );
-    check_member( desc, expect_desc, "%u", cAxes );
+    ok( hr == DIERR_MOREDATA, "GetParameters returned %#lx\n", hr );
+    ok( desc.dwFlags == DIEFF_CARTESIAN, "got flags %#lx, expected %#x\n", desc.dwFlags, DIEFF_CARTESIAN );
+    check_member( desc, expect_desc, "%lu", cAxes );
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-    ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    check_member( desc, expect_desc, "%u", cAxes );
-    ok( desc.rglDirection[0] == 4330, "got rglDirection[0] %d expected %d\n", desc.rglDirection[0], 4330 );
-    ok( desc.rglDirection[1] == 2500, "got rglDirection[1] %d expected %d\n", desc.rglDirection[1], 2500 );
-    ok( desc.rglDirection[2] == -8660, "got rglDirection[2] %d expected %d\n", desc.rglDirection[2], -8660 );
+    ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
+    check_member( desc, expect_desc, "%lu", cAxes );
+    ok( desc.rglDirection[0] == 4330, "got rglDirection[0] %ld expected %d\n", desc.rglDirection[0], 4330 );
+    ok( desc.rglDirection[1] == 2500, "got rglDirection[1] %ld expected %d\n", desc.rglDirection[1], 2500 );
+    ok( desc.rglDirection[2] == -8660, "got rglDirection[2] %ld expected %d\n", desc.rglDirection[2], -8660 );
     desc.dwFlags = DIEFF_POLAR;
     desc.cAxes = 3;
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-    ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#lx\n", hr );
 
     hr = IDirectInputEffect_Download( effect );
-    ok( hr == DIERR_INCOMPLETEEFFECT, "Download returned %#x\n", hr );
+    ok( hr == DIERR_INCOMPLETEEFFECT, "Download returned %#lx\n", hr );
     hr = IDirectInputEffect_Unload( effect );
-    ok( hr == DI_NOEFFECT, "Unload returned %#x\n", hr );
+    ok( hr == DI_NOEFFECT, "Unload returned %#lx\n", hr );
 
     desc.cbTypeSpecificParams = 0;
     desc.lpvTypeSpecificParams = &periodic;
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_TYPESPECIFICPARAMS | DIEP_NODOWNLOAD );
-    ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#lx\n", hr );
     desc.cbTypeSpecificParams = sizeof(DIPERIODIC);
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_TYPESPECIFICPARAMS | DIEP_NODOWNLOAD );
-    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
+    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#lx\n", hr );
     hr = IDirectInputEffect_SetParameters( effect, &expect_desc, DIEP_TYPESPECIFICPARAMS | DIEP_NODOWNLOAD );
-    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
+    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#lx\n", hr );
 
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_TYPESPECIFICPARAMS );
-    ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    check_member( periodic, expect_periodic, "%u", dwMagnitude );
-    check_member( periodic, expect_periodic, "%d", lOffset );
-    check_member( periodic, expect_periodic, "%u", dwPhase );
-    check_member( periodic, expect_periodic, "%u", dwPeriod );
+    ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
+    check_member( periodic, expect_periodic, "%lu", dwMagnitude );
+    check_member( periodic, expect_periodic, "%ld", lOffset );
+    check_member( periodic, expect_periodic, "%lu", dwPhase );
+    check_member( periodic, expect_periodic, "%lu", dwPeriod );
 
     hr = IDirectInputEffect_Start( effect, 1, DIES_NODOWNLOAD );
-    ok( hr == DIERR_NOTDOWNLOADED, "Start returned %#x\n", hr );
+    ok( hr == DIERR_NOTDOWNLOADED, "Start returned %#lx\n", hr );
     hr = IDirectInputEffect_Stop( effect );
-    ok( hr == DIERR_NOTDOWNLOADED, "Stop returned %#x\n", hr );
+    ok( hr == DIERR_NOTDOWNLOADED, "Stop returned %#lx\n", hr );
 
     set_hid_expect( file, expect_download, 3 * sizeof(struct hid_expect) );
     hr = IDirectInputEffect_Download( effect );
-    ok( hr == DI_OK, "Download returned %#x\n", hr );
+    ok( hr == DI_OK, "Download returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     hr = IDirectInputEffect_Download( effect );
-    ok( hr == DI_NOEFFECT, "Download returned %#x\n", hr );
+    ok( hr == DI_NOEFFECT, "Download returned %#lx\n", hr );
 
     hr = IDirectInputEffect_Start( effect, 1, 0xdeadbeef );
-    ok( hr == DIERR_INVALIDPARAM, "Start returned %#x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "Start returned %#lx\n", hr );
 
     set_hid_expect( file, &expect_start_solo, sizeof(expect_start_solo) );
     hr = IDirectInputEffect_Start( effect, 1, DIES_SOLO );
-    ok( hr == DI_OK, "Start returned %#x\n", hr );
+    ok( hr == DI_OK, "Start returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, &expect_stop, sizeof(expect_stop) );
     hr = IDirectInputEffect_Stop( effect );
-    ok( hr == DI_OK, "Stop returned %#x\n", hr );
+    ok( hr == DI_OK, "Stop returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, &expect_start, sizeof(expect_start) );
     hr = IDirectInputEffect_Start( effect, 1, 0 );
-    ok( hr == DI_OK, "Start returned %#x\n", hr );
+    ok( hr == DI_OK, "Start returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, &expect_start_4, sizeof(expect_start_4) );
     hr = IDirectInputEffect_Start( effect, 4, 0 );
-    ok( hr == DI_OK, "Start returned %#x\n", hr );
+    ok( hr == DI_OK, "Start returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, &expect_start_0, sizeof(expect_start_4) );
     hr = IDirectInputEffect_Start( effect, 0, 0 );
-    ok( hr == DI_OK, "Start returned %#x\n", hr );
+    ok( hr == DI_OK, "Start returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, expect_unload, sizeof(struct hid_expect) );
     hr = IDirectInputEffect_Unload( effect );
-    ok( hr == DI_OK, "Unload returned %#x\n", hr );
+    ok( hr == DI_OK, "Unload returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, expect_download, 4 * sizeof(struct hid_expect) );
     hr = IDirectInputEffect_SetParameters( effect, &expect_desc, DIEP_START );
-    ok( hr == DI_OK, "SetParameters returned %#x\n", hr );
+    ok( hr == DI_OK, "SetParameters returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, expect_unload, sizeof(struct hid_expect) );
     hr = IDirectInputEffect_Unload( effect );
-    ok( hr == DI_OK, "Unload returned %#x\n", hr );
+    ok( hr == DI_OK, "Unload returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, expect_download, 3 * sizeof(struct hid_expect) );
     hr = IDirectInputEffect_Download( effect );
-    ok( hr == DI_OK, "Download returned %#x\n", hr );
+    ok( hr == DI_OK, "Download returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, expect_unload, 2 * sizeof(struct hid_expect) );
     hr = IDirectInputDevice8_Unacquire( device );
-    ok( hr == DI_OK, "Unacquire returned: %#x\n", hr );
+    ok( hr == DI_OK, "Unacquire returned: %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     hr = IDirectInputEffect_Start( effect, 1, DIES_NODOWNLOAD );
-    ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "Start returned %#x\n", hr );
+    ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "Start returned %#lx\n", hr );
     hr = IDirectInputEffect_Stop( effect );
-    ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "Stop returned %#x\n", hr );
+    ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "Stop returned %#lx\n", hr );
 
     set_hid_expect( file, expect_acquire, sizeof(expect_acquire) );
     hr = IDirectInputDevice8_Acquire( device );
-    ok( hr == DI_OK, "Acquire returned: %#x\n", hr );
+    ok( hr == DI_OK, "Acquire returned: %#lx\n", hr );
     wait_hid_expect( file, 100 ); /* device gain reports are written asynchronously */
 
     hr = IDirectInputEffect_Unload( effect );
-    ok( hr == DI_NOEFFECT, "Unload returned %#x\n", hr );
+    ok( hr == DI_NOEFFECT, "Unload returned %#lx\n", hr );
 
     ref = IDirectInputEffect_Release( effect );
-    ok( ref == 0, "Release returned %d\n", ref );
+    ok( ref == 0, "Release returned %ld\n", ref );
 
     hr = IDirectInputDevice8_CreateEffect( device, &GUID_Sine, NULL, &effect, NULL );
-    ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
+    ok( hr == DI_OK, "CreateEffect returned %#lx\n", hr );
 
     desc.dwFlags = DIEFF_POLAR | DIEFF_OBJECTIDS;
     desc.cAxes = 2;
@@ -1012,50 +1012,50 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
     desc.rglDirection[1] = 0;
     desc.rglDirection[2] = 0;
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_AXES | DIEP_DIRECTION | DIEP_NODOWNLOAD );
-    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
+    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#lx\n", hr );
     desc.rglDirection[0] = 0;
 
     desc.dwFlags = DIEFF_SPHERICAL;
     desc.cAxes = 1;
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-    ok( hr == DIERR_MOREDATA, "GetParameters returned %#x\n", hr );
-    ok( desc.dwFlags == DIEFF_SPHERICAL, "got flags %#x, expected %#x\n", desc.dwFlags, DIEFF_SPHERICAL );
-    ok( desc.cAxes == 2, "got cAxes %u expected 2\n", desc.cAxes );
+    ok( hr == DIERR_MOREDATA, "GetParameters returned %#lx\n", hr );
+    ok( desc.dwFlags == DIEFF_SPHERICAL, "got flags %#lx, expected %#x\n", desc.dwFlags, DIEFF_SPHERICAL );
+    ok( desc.cAxes == 2, "got cAxes %lu expected 2\n", desc.cAxes );
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-    ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    ok( desc.cAxes == 2, "got cAxes %u expected 2\n", desc.cAxes );
-    ok( desc.rglDirection[0] == 30000, "got rglDirection[0] %d expected %d\n", desc.rglDirection[0], 30000 );
-    ok( desc.rglDirection[1] == 0, "got rglDirection[1] %d expected %d\n", desc.rglDirection[1], 0 );
-    ok( desc.rglDirection[2] == 0, "got rglDirection[2] %d expected %d\n", desc.rglDirection[2], 0 );
+    ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
+    ok( desc.cAxes == 2, "got cAxes %lu expected 2\n", desc.cAxes );
+    ok( desc.rglDirection[0] == 30000, "got rglDirection[0] %ld expected %d\n", desc.rglDirection[0], 30000 );
+    ok( desc.rglDirection[1] == 0, "got rglDirection[1] %ld expected %d\n", desc.rglDirection[1], 0 );
+    ok( desc.rglDirection[2] == 0, "got rglDirection[2] %ld expected %d\n", desc.rglDirection[2], 0 );
 
     desc.dwFlags = DIEFF_CARTESIAN;
     desc.cAxes = 1;
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-    ok( hr == DIERR_MOREDATA, "GetParameters returned %#x\n", hr );
-    ok( desc.dwFlags == DIEFF_CARTESIAN, "got flags %#x, expected %#x\n", desc.dwFlags, DIEFF_CARTESIAN );
-    ok( desc.cAxes == 2, "got cAxes %u expected 2\n", desc.cAxes );
+    ok( hr == DIERR_MOREDATA, "GetParameters returned %#lx\n", hr );
+    ok( desc.dwFlags == DIEFF_CARTESIAN, "got flags %#lx, expected %#x\n", desc.dwFlags, DIEFF_CARTESIAN );
+    ok( desc.cAxes == 2, "got cAxes %lu expected 2\n", desc.cAxes );
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-    ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    ok( desc.cAxes == 2, "got cAxes %u expected 2\n", desc.cAxes );
-    ok( desc.rglDirection[0] == 5000, "got rglDirection[0] %d expected %d\n", desc.rglDirection[0], 5000 );
-    ok( desc.rglDirection[1] == -8660, "got rglDirection[1] %d expected %d\n", desc.rglDirection[1], -8660 );
-    ok( desc.rglDirection[2] == 0, "got rglDirection[2] %d expected %d\n", desc.rglDirection[2], 0 );
+    ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
+    ok( desc.cAxes == 2, "got cAxes %lu expected 2\n", desc.cAxes );
+    ok( desc.rglDirection[0] == 5000, "got rglDirection[0] %ld expected %d\n", desc.rglDirection[0], 5000 );
+    ok( desc.rglDirection[1] == -8660, "got rglDirection[1] %ld expected %d\n", desc.rglDirection[1], -8660 );
+    ok( desc.rglDirection[2] == 0, "got rglDirection[2] %ld expected %d\n", desc.rglDirection[2], 0 );
 
     desc.dwFlags = DIEFF_POLAR;
     desc.cAxes = 1;
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-    ok( hr == DIERR_MOREDATA, "GetParameters returned %#x\n", hr );
-    ok( desc.dwFlags == DIEFF_POLAR, "got flags %#x, expected %#x\n", desc.dwFlags, DIEFF_POLAR );
-    ok( desc.cAxes == 2, "got cAxes %u expected 2\n", desc.cAxes );
+    ok( hr == DIERR_MOREDATA, "GetParameters returned %#lx\n", hr );
+    ok( desc.dwFlags == DIEFF_POLAR, "got flags %#lx, expected %#x\n", desc.dwFlags, DIEFF_POLAR );
+    ok( desc.cAxes == 2, "got cAxes %lu expected 2\n", desc.cAxes );
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-    ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    ok( desc.cAxes == 2, "got cAxes %u expected 2\n", desc.cAxes );
-    ok( desc.rglDirection[0] == 3000, "got rglDirection[0] %d expected %d\n", desc.rglDirection[0], 3000 );
-    ok( desc.rglDirection[1] == 0, "got rglDirection[1] %d expected %d\n", desc.rglDirection[1], 0 );
-    ok( desc.rglDirection[2] == 0, "got rglDirection[2] %d expected %d\n", desc.rglDirection[2], 0 );
+    ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
+    ok( desc.cAxes == 2, "got cAxes %lu expected 2\n", desc.cAxes );
+    ok( desc.rglDirection[0] == 3000, "got rglDirection[0] %ld expected %d\n", desc.rglDirection[0], 3000 );
+    ok( desc.rglDirection[1] == 0, "got rglDirection[1] %ld expected %d\n", desc.rglDirection[1], 0 );
+    ok( desc.rglDirection[2] == 0, "got rglDirection[2] %ld expected %d\n", desc.rglDirection[2], 0 );
 
     ref = IDirectInputEffect_Release( effect );
-    ok( ref == 0, "Release returned %d\n", ref );
+    ok( ref == 0, "Release returned %ld\n", ref );
 
     for (i = 1; i < 4; i++)
     {
@@ -1110,9 +1110,9 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
                            0x01, i >= 2 ? 0x3f : 0, i >= 3 ? 0x00 : 0},
         };
 
-        winetest_push_context( "%u axes", i );
+        winetest_push_context( "%lu axes", i );
         hr = IDirectInputDevice8_CreateEffect( device, &GUID_Sine, NULL, &effect, NULL );
-        ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
+        ok( hr == DI_OK, "CreateEffect returned %#lx\n", hr );
 
         desc.dwFlags = DIEFF_OBJECTIDS;
         desc.cAxes = i;
@@ -1123,7 +1123,7 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
         desc.rglDirection[1] = 0;
         desc.rglDirection[2] = 0;
         hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_AXES | DIEP_NODOWNLOAD );
-        ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
+        ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#lx\n", hr );
 
         desc.dwFlags = DIEFF_CARTESIAN;
         desc.cAxes = i == 3 ? 2 : 3;
@@ -1131,44 +1131,44 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
         desc.rglDirection[1] = 2000;
         desc.rglDirection[2] = 3000;
         hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_DIRECTION | DIEP_NODOWNLOAD );
-        ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#x\n", hr );
+        ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#lx\n", hr );
         desc.cAxes = i;
         hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_DIRECTION | DIEP_NODOWNLOAD );
-        ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
+        ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#lx\n", hr );
 
         desc.dwFlags = DIEFF_SPHERICAL;
         desc.cAxes = i;
         hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-        ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
+        ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
         desc.cAxes = 3;
         memset( desc.rglDirection, 0xcd, 3 * sizeof(LONG) );
         hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-        ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-        ok( desc.cAxes == i, "got cAxes %u expected 2\n", desc.cAxes );
+        ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
+        ok( desc.cAxes == i, "got cAxes %lu expected 2\n", desc.cAxes );
         if (i == 1)
         {
-            ok( desc.rglDirection[0] == 0, "got rglDirection[0] %d expected %d\n", desc.rglDirection[0], 0 );
-            ok( desc.rglDirection[1] == 0xcdcdcdcd, "got rglDirection[1] %d expected %d\n",
+            ok( desc.rglDirection[0] == 0, "got rglDirection[0] %ld expected %d\n", desc.rglDirection[0], 0 );
+            ok( desc.rglDirection[1] == 0xcdcdcdcd, "got rglDirection[1] %ld expected %d\n",
                 desc.rglDirection[1], 0xcdcdcdcd );
-            ok( desc.rglDirection[2] == 0xcdcdcdcd, "got rglDirection[2] %d expected %d\n",
+            ok( desc.rglDirection[2] == 0xcdcdcdcd, "got rglDirection[2] %ld expected %d\n",
                 desc.rglDirection[2], 0xcdcdcdcd );
         }
         else
         {
-            ok( desc.rglDirection[0] == 6343, "got rglDirection[0] %d expected %d\n",
+            ok( desc.rglDirection[0] == 6343, "got rglDirection[0] %ld expected %d\n",
                 desc.rglDirection[0], 6343 );
             if (i == 2)
             {
-                ok( desc.rglDirection[1] == 0, "got rglDirection[1] %d expected %d\n",
+                ok( desc.rglDirection[1] == 0, "got rglDirection[1] %ld expected %d\n",
                     desc.rglDirection[1], 0 );
-                ok( desc.rglDirection[2] == 0xcdcdcdcd, "got rglDirection[2] %d expected %d\n",
+                ok( desc.rglDirection[2] == 0xcdcdcdcd, "got rglDirection[2] %ld expected %d\n",
                     desc.rglDirection[2], 0xcdcdcdcd );
             }
             else
             {
-                ok( desc.rglDirection[1] == 5330, "got rglDirection[1] %d expected %d\n",
+                ok( desc.rglDirection[1] == 5330, "got rglDirection[1] %ld expected %d\n",
                     desc.rglDirection[1], 5330 );
-                ok( desc.rglDirection[2] == 0, "got rglDirection[2] %d expected %d\n",
+                ok( desc.rglDirection[2] == 0, "got rglDirection[2] %ld expected %d\n",
                     desc.rglDirection[2], 0 );
             }
         }
@@ -1176,48 +1176,48 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
         desc.dwFlags = DIEFF_CARTESIAN;
         desc.cAxes = i;
         hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-        ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
+        ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
         desc.cAxes = 3;
         memset( desc.rglDirection, 0xcd, 3 * sizeof(LONG) );
         hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-        ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-        ok( desc.cAxes == i, "got cAxes %u expected 2\n", desc.cAxes );
-        ok( desc.rglDirection[0] == 1000, "got rglDirection[0] %d expected %d\n", desc.rglDirection[0], 1000 );
+        ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
+        ok( desc.cAxes == i, "got cAxes %lu expected 2\n", desc.cAxes );
+        ok( desc.rglDirection[0] == 1000, "got rglDirection[0] %ld expected %d\n", desc.rglDirection[0], 1000 );
         if (i == 1)
-            ok( desc.rglDirection[1] == 0xcdcdcdcd, "got rglDirection[1] %d expected %d\n",
+            ok( desc.rglDirection[1] == 0xcdcdcdcd, "got rglDirection[1] %ld expected %d\n",
                 desc.rglDirection[1], 0xcdcdcdcd );
         else
-            ok( desc.rglDirection[1] == 2000, "got rglDirection[1] %d expected %d\n",
+            ok( desc.rglDirection[1] == 2000, "got rglDirection[1] %ld expected %d\n",
                 desc.rglDirection[1], 2000 );
         if (i <= 2)
-            ok( desc.rglDirection[2] == 0xcdcdcdcd, "got rglDirection[2] %d expected %d\n",
+            ok( desc.rglDirection[2] == 0xcdcdcdcd, "got rglDirection[2] %ld expected %d\n",
                 desc.rglDirection[2], 0xcdcdcdcd );
         else
-            ok( desc.rglDirection[2] == 3000, "got rglDirection[2] %d expected %d\n",
+            ok( desc.rglDirection[2] == 3000, "got rglDirection[2] %ld expected %d\n",
                 desc.rglDirection[2], 3000 );
 
         desc.dwFlags = DIEFF_POLAR;
         desc.cAxes = 1;
         hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-        if (i != 2) ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#x\n", hr );
-        else ok( hr == DIERR_MOREDATA, "GetParameters returned %#x\n", hr );
+        if (i != 2) ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#lx\n", hr );
+        else ok( hr == DIERR_MOREDATA, "GetParameters returned %#lx\n", hr );
         desc.cAxes = 3;
         memset( desc.rglDirection, 0xcd, 3 * sizeof(LONG) );
         hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-        if (i != 2) ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#x\n", hr );
+        if (i != 2) ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#lx\n", hr );
         else
         {
-            ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-            ok( desc.cAxes == i, "got cAxes %u expected 2\n", desc.cAxes );
-            ok( desc.rglDirection[0] == 15343, "got rglDirection[0] %d expected %d\n",
+            ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
+            ok( desc.cAxes == i, "got cAxes %lu expected 2\n", desc.cAxes );
+            ok( desc.rglDirection[0] == 15343, "got rglDirection[0] %ld expected %d\n",
                 desc.rglDirection[0], 15343 );
-            ok( desc.rglDirection[1] == 0, "got rglDirection[1] %d expected %d\n", desc.rglDirection[1], 0 );
-            ok( desc.rglDirection[2] == 0xcdcdcdcd, "got rglDirection[2] %d expected %d\n",
+            ok( desc.rglDirection[1] == 0, "got rglDirection[1] %ld expected %d\n", desc.rglDirection[1], 0 );
+            ok( desc.rglDirection[2] == 0xcdcdcdcd, "got rglDirection[2] %ld expected %d\n",
                 desc.rglDirection[2], 0xcdcdcdcd );
         }
 
         ref = IDirectInputEffect_Release( effect );
-        ok( ref == 0, "Release returned %d\n", ref );
+        ok( ref == 0, "Release returned %ld\n", ref );
 
         desc = expect_desc;
         desc.dwFlags = DIEFF_SPHERICAL | DIEFF_OBJECTIDS;
@@ -1231,9 +1231,9 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
         expect_directions[2] = expect_spherical;
         set_hid_expect( file, expect_directions, sizeof(expect_directions) );
         hr = IDirectInputDevice8_CreateEffect( device, &GUID_Sine, &desc, &effect, NULL );
-        ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
+        ok( hr == DI_OK, "CreateEffect returned %#lx\n", hr );
         ref = IDirectInputEffect_Release( effect );
-        ok( ref == 0, "Release returned %d\n", ref );
+        ok( ref == 0, "Release returned %ld\n", ref );
         set_hid_expect( file, NULL, 0 );
 
         desc = expect_desc;
@@ -1248,9 +1248,9 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
         expect_directions[2] = expect_cartesian;
         set_hid_expect( file, expect_directions, sizeof(expect_directions) );
         hr = IDirectInputDevice8_CreateEffect( device, &GUID_Sine, &desc, &effect, NULL );
-        ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
+        ok( hr == DI_OK, "CreateEffect returned %#lx\n", hr );
         ref = IDirectInputEffect_Release( effect );
-        ok( ref == 0, "Release returned %d\n", ref );
+        ok( ref == 0, "Release returned %ld\n", ref );
         set_hid_expect( file, NULL, 0 );
 
         if (i == 2)
@@ -1267,9 +1267,9 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
             expect_directions[2] = expect_polar;
             set_hid_expect( file, expect_directions, sizeof(expect_directions) );
             hr = IDirectInputDevice8_CreateEffect( device, &GUID_Sine, &desc, &effect, NULL );
-            ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
+            ok( hr == DI_OK, "CreateEffect returned %#lx\n", hr );
             ref = IDirectInputEffect_Release( effect );
-            ok( ref == 0, "Release returned %d\n", ref );
+            ok( ref == 0, "Release returned %ld\n", ref );
             set_hid_expect( file, NULL, 0 );
         }
 
@@ -1277,58 +1277,58 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
     }
 
     hr = IDirectInputDevice8_CreateEffect( device, &GUID_Sine, NULL, &effect, NULL );
-    ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
+    ok( hr == DI_OK, "CreateEffect returned %#lx\n", hr );
 
     set_hid_expect( file, expect_download_2, sizeof(expect_download_2) );
     flags = version >= 0x700 ? DIEP_ALLPARAMS : DIEP_ALLPARAMS_DX5;
     hr = IDirectInputEffect_SetParameters( effect, &expect_desc, flags );
-    ok( hr == DI_OK, "SetParameters returned %#x\n", hr );
+    ok( hr == DI_OK, "SetParameters returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
     desc = expect_desc;
     desc.dwDuration = INFINITE;
     desc.dwTriggerButton = DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( 0 ) | DIDFT_FFEFFECTTRIGGER,
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_NODOWNLOAD | DIEP_DURATION | DIEP_TRIGGERBUTTON );
-    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
+    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#lx\n", hr );
     set_hid_expect( file, expect_update, sizeof(expect_update) );
     hr = IDirectInputEffect_SetParameters( effect, &expect_desc, 0 );
-    ok( hr == DI_OK, "SetParameters returned %#x\n", hr );
+    ok( hr == DI_OK, "SetParameters returned %#lx\n", hr );
     wait_hid_expect( file, 100 ); /* these updates are sent asynchronously */
     desc = expect_desc;
     desc.dwDuration = INFINITE;
     desc.dwTriggerButton = DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( 0 ) | DIDFT_FFEFFECTTRIGGER,
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_NODOWNLOAD | DIEP_DURATION | DIEP_TRIGGERBUTTON );
-    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
+    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#lx\n", hr );
     set_hid_expect( file, expect_update, sizeof(expect_update) );
     hr = IDirectInputEffect_SetParameters( effect, &expect_desc, 0 );
-    ok( hr == DI_OK, "SetParameters returned %#x\n", hr );
+    ok( hr == DI_OK, "SetParameters returned %#lx\n", hr );
     wait_hid_expect( file, 100 ); /* these updates are sent asynchronously */
 
     desc = expect_desc;
     desc.lpEnvelope = &envelope;
     desc.lpEnvelope->dwAttackTime = 1000;
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_NODOWNLOAD | DIEP_ENVELOPE );
-    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
+    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#lx\n", hr );
     set_hid_expect( file, expect_set_envelope, sizeof(expect_set_envelope) );
     hr = IDirectInputEffect_SetParameters( effect, &expect_desc, 0 );
-    ok( hr == DI_OK, "SetParameters returned %#x\n", hr );
+    ok( hr == DI_OK, "SetParameters returned %#lx\n", hr );
     wait_hid_expect( file, 100 ); /* these updates are sent asynchronously */
 
     set_hid_expect( file, &expect_stop, sizeof(expect_stop) );
     ref = IDirectInputEffect_Release( effect );
-    ok( ref == 0, "Release returned %d\n", ref );
+    ok( ref == 0, "Release returned %ld\n", ref );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, expect_reset, sizeof(expect_reset) );
     hr = IDirectInputDevice8_Unacquire( device );
-    ok( hr == DI_OK, "Acquire returned: %#x\n", hr );
+    ok( hr == DI_OK, "Acquire returned: %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
     hr = IDirectInputDevice8_CreateEffect( device, &GUID_Sine, &expect_desc, &effect, NULL );
-    ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
+    ok( hr == DI_OK, "CreateEffect returned %#lx\n", hr );
     ref = IDirectInputEffect_Release( effect );
-    ok( ref == 0, "Release returned %d\n", ref );
+    ok( ref == 0, "Release returned %ld\n", ref );
     set_hid_expect( file, expect_acquire, sizeof(expect_acquire) );
     hr = IDirectInputDevice8_Acquire( device );
-    ok( hr == DI_OK, "Acquire returned: %#x\n", hr );
+    ok( hr == DI_OK, "Acquire returned: %#lx\n", hr );
     wait_hid_expect( file, 100 ); /* device gain reports are written asynchronously */
 }
 
@@ -1481,7 +1481,7 @@ static void test_condition_effect( IDirectInputDevice8W *device, HANDLE file, DW
     };
     struct check_created_effect_params check_params = {0};
     DIENVELOPE envelope = {.dwSize = sizeof(DIENVELOPE)};
-    DICONDITION condition[2] = {0};
+    DICONDITION condition[2] = {{0}};
     IDirectInputEffect *effect;
     LONG directions[4] = {0};
     DWORD axes[4] = {0};
@@ -1502,70 +1502,70 @@ static void test_condition_effect( IDirectInputDevice8W *device, HANDLE file, DW
 
     set_hid_expect( file, expect_create, sizeof(expect_create) );
     hr = IDirectInputDevice8_CreateEffect( device, &GUID_Spring, &expect_desc, &effect, NULL );
-    ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
+    ok( hr == DI_OK, "CreateEffect returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     check_params.expect_effect = effect;
     hr = IDirectInputDevice8_EnumCreatedEffectObjects( device, check_created_effect_objects, &check_params, 0 );
-    ok( hr == DI_OK, "EnumCreatedEffectObjects returned %#x\n", hr );
-    ok( check_params.count == 1, "got count %u, expected 1\n", check_params.count );
+    ok( hr == DI_OK, "EnumCreatedEffectObjects returned %#lx\n", hr );
+    ok( check_params.count == 1, "got count %lu, expected 1\n", check_params.count );
 
     hr = IDirectInputEffect_GetEffectGuid( effect, &guid );
-    ok( hr == DI_OK, "GetEffectGuid returned %#x\n", hr );
+    ok( hr == DI_OK, "GetEffectGuid returned %#lx\n", hr );
     ok( IsEqualGUID( &guid, &GUID_Spring ), "got guid %s, expected %s\n", debugstr_guid( &guid ),
         debugstr_guid( &GUID_Spring ) );
 
     hr = IDirectInputEffect_GetParameters( effect, &desc, version >= 0x700 ? DIEP_ALLPARAMS : DIEP_ALLPARAMS_DX5 );
-    ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    check_member( desc, expect_desc, "%u", dwDuration );
-    check_member( desc, expect_desc, "%u", dwSamplePeriod );
-    check_member( desc, expect_desc, "%u", dwGain );
-    check_member( desc, expect_desc, "%#x", dwTriggerButton );
-    check_member( desc, expect_desc, "%u", dwTriggerRepeatInterval );
-    check_member( desc, expect_desc, "%u", cAxes );
-    check_member( desc, expect_desc, "%#x", rgdwAxes[0] );
-    check_member( desc, expect_desc, "%#x", rgdwAxes[1] );
-    check_member( desc, expect_desc, "%d", rglDirection[0] );
-    check_member( desc, expect_desc, "%d", rglDirection[1] );
-    check_member( desc, expect_desc, "%u", cbTypeSpecificParams );
-    if (version >= 0x700) check_member( desc, expect_desc, "%u", dwStartDelay );
-    else ok( desc.dwStartDelay == 0, "got dwStartDelay %#x\n", desc.dwStartDelay );
-    check_member( envelope, expect_envelope, "%u", dwAttackLevel );
-    check_member( envelope, expect_envelope, "%u", dwAttackTime );
-    check_member( envelope, expect_envelope, "%u", dwFadeLevel );
-    check_member( envelope, expect_envelope, "%u", dwFadeTime );
-    check_member( condition[0], expect_condition[0], "%d", lOffset );
-    check_member( condition[0], expect_condition[0], "%d", lPositiveCoefficient );
-    check_member( condition[0], expect_condition[0], "%d", lNegativeCoefficient );
-    check_member( condition[0], expect_condition[0], "%u", dwPositiveSaturation );
-    check_member( condition[0], expect_condition[0], "%u", dwNegativeSaturation );
-    check_member( condition[0], expect_condition[0], "%d", lDeadBand );
-    check_member( condition[1], expect_condition[1], "%d", lOffset );
-    check_member( condition[1], expect_condition[1], "%d", lPositiveCoefficient );
-    check_member( condition[1], expect_condition[1], "%d", lNegativeCoefficient );
-    check_member( condition[1], expect_condition[1], "%u", dwPositiveSaturation );
-    check_member( condition[1], expect_condition[1], "%u", dwNegativeSaturation );
-    check_member( condition[1], expect_condition[1], "%d", lDeadBand );
+    ok( hr == DI_OK, "GetParameters returned %#lx\n", hr );
+    check_member( desc, expect_desc, "%lu", dwDuration );
+    check_member( desc, expect_desc, "%lu", dwSamplePeriod );
+    check_member( desc, expect_desc, "%lu", dwGain );
+    check_member( desc, expect_desc, "%#lx", dwTriggerButton );
+    check_member( desc, expect_desc, "%lu", dwTriggerRepeatInterval );
+    check_member( desc, expect_desc, "%lu", cAxes );
+    check_member( desc, expect_desc, "%#lx", rgdwAxes[0] );
+    check_member( desc, expect_desc, "%#lx", rgdwAxes[1] );
+    check_member( desc, expect_desc, "%ld", rglDirection[0] );
+    check_member( desc, expect_desc, "%ld", rglDirection[1] );
+    check_member( desc, expect_desc, "%lu", cbTypeSpecificParams );
+    if (version >= 0x700) check_member( desc, expect_desc, "%lu", dwStartDelay );
+    else ok( desc.dwStartDelay == 0, "got dwStartDelay %#lx\n", desc.dwStartDelay );
+    check_member( envelope, expect_envelope, "%lu", dwAttackLevel );
+    check_member( envelope, expect_envelope, "%lu", dwAttackTime );
+    check_member( envelope, expect_envelope, "%lu", dwFadeLevel );
+    check_member( envelope, expect_envelope, "%lu", dwFadeTime );
+    check_member( condition[0], expect_condition[0], "%ld", lOffset );
+    check_member( condition[0], expect_condition[0], "%ld", lPositiveCoefficient );
+    check_member( condition[0], expect_condition[0], "%ld", lNegativeCoefficient );
+    check_member( condition[0], expect_condition[0], "%lu", dwPositiveSaturation );
+    check_member( condition[0], expect_condition[0], "%lu", dwNegativeSaturation );
+    check_member( condition[0], expect_condition[0], "%ld", lDeadBand );
+    check_member( condition[1], expect_condition[1], "%ld", lOffset );
+    check_member( condition[1], expect_condition[1], "%ld", lPositiveCoefficient );
+    check_member( condition[1], expect_condition[1], "%ld", lNegativeCoefficient );
+    check_member( condition[1], expect_condition[1], "%lu", dwPositiveSaturation );
+    check_member( condition[1], expect_condition[1], "%lu", dwNegativeSaturation );
+    check_member( condition[1], expect_condition[1], "%ld", lDeadBand );
 
     set_hid_expect( file, &expect_destroy, sizeof(expect_destroy) );
     ref = IDirectInputEffect_Release( effect );
-    ok( ref == 0, "Release returned %d\n", ref );
+    ok( ref == 0, "Release returned %ld\n", ref );
     set_hid_expect( file, NULL, 0 );
 
     desc = expect_desc;
     desc.cAxes = 1;
     hr = IDirectInputDevice8_CreateEffect( device, &GUID_Spring, &desc, &effect, NULL );
-    ok( hr == DIERR_INVALIDPARAM, "CreateEffect returned %#x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "CreateEffect returned %#lx\n", hr );
     desc.cbTypeSpecificParams = 1 * sizeof(DICONDITION);
     desc.lpvTypeSpecificParams = (void *)&expect_condition[1];
     set_hid_expect( file, expect_create_1, sizeof(expect_create_1) );
     hr = IDirectInputDevice8_CreateEffect( device, &GUID_Spring, &desc, &effect, NULL );
-    ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
+    ok( hr == DI_OK, "CreateEffect returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, &expect_destroy, sizeof(expect_destroy) );
     ref = IDirectInputEffect_Release( effect );
-    ok( ref == 0, "Release returned %d\n", ref );
+    ok( ref == 0, "Release returned %ld\n", ref );
     set_hid_expect( file, NULL, 0 );
 
     desc = expect_desc;
@@ -1578,12 +1578,12 @@ static void test_condition_effect( IDirectInputDevice8W *device, HANDLE file, DW
     desc.lpvTypeSpecificParams = (void *)&expect_condition[1];
     set_hid_expect( file, expect_create_2, sizeof(expect_create_2) );
     hr = IDirectInputDevice8_CreateEffect( device, &GUID_Spring, &desc, &effect, NULL );
-    ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
+    ok( hr == DI_OK, "CreateEffect returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, &expect_destroy, sizeof(expect_destroy) );
     ref = IDirectInputEffect_Release( effect );
-    ok( ref == 0, "Release returned %d\n", ref );
+    ok( ref == 0, "Release returned %ld\n", ref );
     set_hid_expect( file, NULL, 0 );
 
     desc = expect_desc;
@@ -1598,35 +1598,35 @@ static void test_condition_effect( IDirectInputDevice8W *device, HANDLE file, DW
     desc.lpvTypeSpecificParams = (void *)&expect_condition[1];
     set_hid_expect( file, expect_create_3, sizeof(expect_create_3) );
     hr = IDirectInputDevice8_CreateEffect( device, &GUID_Spring, &desc, &effect, NULL );
-    ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
+    ok( hr == DI_OK, "CreateEffect returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, &expect_destroy, sizeof(expect_destroy) );
     ref = IDirectInputEffect_Release( effect );
-    ok( ref == 0, "Release returned %d\n", ref );
+    ok( ref == 0, "Release returned %ld\n", ref );
     set_hid_expect( file, NULL, 0 );
 
     hr = IDirectInputDevice8_CreateEffect( device, &GUID_Spring, NULL, &effect, NULL );
-    ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
+    ok( hr == DI_OK, "CreateEffect returned %#lx\n", hr );
     desc = expect_desc;
     desc.cAxes = 0;
     desc.cbTypeSpecificParams = 1 * sizeof(DICONDITION);
     desc.lpvTypeSpecificParams = (void *)&expect_condition[0];
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_TYPESPECIFICPARAMS | DIEP_NODOWNLOAD );
-    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
+    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#lx\n", hr );
     desc.cbTypeSpecificParams = 0 * sizeof(DICONDITION);
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_TYPESPECIFICPARAMS );
-    ok( hr == DIERR_MOREDATA, "SetParameters returned %#x\n", hr );
-    ok( desc.cbTypeSpecificParams == 1 * sizeof(DICONDITION), "got %u\n", desc.cbTypeSpecificParams );
+    ok( hr == DIERR_MOREDATA, "SetParameters returned %#lx\n", hr );
+    ok( desc.cbTypeSpecificParams == 1 * sizeof(DICONDITION), "got %lu\n", desc.cbTypeSpecificParams );
     desc.cbTypeSpecificParams = 0 * sizeof(DICONDITION);
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_TYPESPECIFICPARAMS | DIEP_NODOWNLOAD );
-    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
+    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#lx\n", hr );
     desc.cbTypeSpecificParams = 0 * sizeof(DICONDITION);
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_TYPESPECIFICPARAMS );
-    ok( hr == DI_OK, "SetParameters returned %#x\n", hr );
-    ok( desc.cbTypeSpecificParams == 0 * sizeof(DICONDITION), "got %u\n", desc.cbTypeSpecificParams );
+    ok( hr == DI_OK, "SetParameters returned %#lx\n", hr );
+    ok( desc.cbTypeSpecificParams == 0 * sizeof(DICONDITION), "got %lu\n", desc.cbTypeSpecificParams );
     ref = IDirectInputEffect_Release( effect );
-    ok( ref == 0, "Release returned %d\n", ref );
+    ok( ref == 0, "Release returned %ld\n", ref );
 }
 
 static BOOL test_force_feedback_joystick( DWORD version )
@@ -2786,7 +2786,7 @@ static BOOL test_force_feedback_joystick( DWORD version )
     HRESULT hr;
     HWND hwnd;
 
-    winetest_push_context( "%#x", version );
+    winetest_push_context( "%#lx", version );
 
     GetCurrentDirectoryW( ARRAY_SIZE(cwd), cwd );
     GetTempPathW( ARRAY_SIZE(tempdir), tempdir );
@@ -2799,12 +2799,12 @@ static BOOL test_force_feedback_joystick( DWORD version )
     check_dinput_devices( version, &devinst );
 
     hr = IDirectInputDevice8_GetDeviceInfo( device, &devinst );
-    ok( hr == DI_OK, "GetDeviceInfo returned %#x\n", hr );
-    check_member( devinst, expect_devinst, "%d", dwSize );
+    ok( hr == DI_OK, "GetDeviceInfo returned %#lx\n", hr );
+    check_member( devinst, expect_devinst, "%lu", dwSize );
     todo_wine
     check_member_guid( devinst, expect_devinst, guidInstance );
     check_member_guid( devinst, expect_devinst, guidProduct );
-    check_member( devinst, expect_devinst, "%#x", dwDevType );
+    check_member( devinst, expect_devinst, "%#lx", dwDevType );
     todo_wine
     check_member_wstr( devinst, expect_devinst, tszInstanceName );
     todo_wine
@@ -2815,100 +2815,100 @@ static BOOL test_force_feedback_joystick( DWORD version )
 
     caps.dwSize = sizeof(DIDEVCAPS);
     hr = IDirectInputDevice8_GetCapabilities( device, &caps );
-    ok( hr == DI_OK, "GetCapabilities returned %#x\n", hr );
-    check_member( caps, expect_caps, "%d", dwSize );
-    check_member( caps, expect_caps, "%#x", dwFlags );
-    check_member( caps, expect_caps, "%#x", dwDevType );
-    check_member( caps, expect_caps, "%d", dwAxes );
-    check_member( caps, expect_caps, "%d", dwButtons );
-    check_member( caps, expect_caps, "%d", dwPOVs );
-    check_member( caps, expect_caps, "%d", dwFFSamplePeriod );
-    check_member( caps, expect_caps, "%d", dwFFMinTimeResolution );
-    check_member( caps, expect_caps, "%d", dwFirmwareRevision );
-    check_member( caps, expect_caps, "%d", dwHardwareRevision );
-    check_member( caps, expect_caps, "%d", dwFFDriverVersion );
+    ok( hr == DI_OK, "GetCapabilities returned %#lx\n", hr );
+    check_member( caps, expect_caps, "%lu", dwSize );
+    check_member( caps, expect_caps, "%#lx", dwFlags );
+    check_member( caps, expect_caps, "%#lx", dwDevType );
+    check_member( caps, expect_caps, "%lu", dwAxes );
+    check_member( caps, expect_caps, "%lu", dwButtons );
+    check_member( caps, expect_caps, "%lu", dwPOVs );
+    check_member( caps, expect_caps, "%lu", dwFFSamplePeriod );
+    check_member( caps, expect_caps, "%lu", dwFFMinTimeResolution );
+    check_member( caps, expect_caps, "%lu", dwFirmwareRevision );
+    check_member( caps, expect_caps, "%lu", dwHardwareRevision );
+    check_member( caps, expect_caps, "%lu", dwFFDriverVersion );
 
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFGAIN, &prop_dword.diph );
-    ok( hr == DI_OK, "GetProperty DIPROP_FFGAIN returned %#x\n", hr );
-    ok( prop_dword.dwData == 10000, "got %u expected %u\n", prop_dword.dwData, 10000 );
+    ok( hr == DI_OK, "GetProperty DIPROP_FFGAIN returned %#lx\n", hr );
+    ok( prop_dword.dwData == 10000, "got %lu expected %u\n", prop_dword.dwData, 10000 );
 
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
-    ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "GetProperty DIPROP_FFLOAD returned %#x\n", hr );
+    ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "GetProperty DIPROP_FFLOAD returned %#lx\n", hr );
 
     hr = IDirectInputDevice8_EnumObjects( device, check_objects, &check_objects_params, DIDFT_ALL );
-    ok( hr == DI_OK, "EnumObjects returned %#x\n", hr );
+    ok( hr == DI_OK, "EnumObjects returned %#lx\n", hr );
     ok( check_objects_params.index >= check_objects_params.expect_count, "missing %u objects\n",
         check_objects_params.expect_count - check_objects_params.index );
 
     res = 0;
     hr = IDirectInputDevice8_EnumEffects( device, check_effect_count, &res, 0xfe );
-    ok( hr == DI_OK, "EnumEffects returned %#x\n", hr );
-    ok( res == 0, "got %u expected %u\n", res, 0 );
+    ok( hr == DI_OK, "EnumEffects returned %#lx\n", hr );
+    ok( res == 0, "got %lu expected %u\n", res, 0 );
     res = 0;
     hr = IDirectInputDevice8_EnumEffects( device, check_effect_count, &res, DIEFT_PERIODIC );
-    ok( hr == DI_OK, "EnumEffects returned %#x\n", hr );
-    ok( res == 2, "got %u expected %u\n", res, 2 );
+    ok( hr == DI_OK, "EnumEffects returned %#lx\n", hr );
+    ok( res == 2, "got %lu expected %u\n", res, 2 );
     hr = IDirectInputDevice8_EnumEffects( device, check_effects, &check_effects_params, DIEFT_ALL );
-    ok( hr == DI_OK, "EnumEffects returned %#x\n", hr );
+    ok( hr == DI_OK, "EnumEffects returned %#lx\n", hr );
     ok( check_effects_params.index >= check_effects_params.expect_count, "missing %u effects\n",
         check_effects_params.expect_count - check_effects_params.index );
 
     effectinfo.dwSize = sizeof(DIEFFECTINFOW);
     hr = IDirectInputDevice8_GetEffectInfo( device, &effectinfo, &GUID_Sine );
-    ok( hr == DI_OK, "GetEffectInfo returned %#x\n", hr );
+    ok( hr == DI_OK, "GetEffectInfo returned %#lx\n", hr );
     check_member_guid( effectinfo, expect_effects[1], guid );
-    check_member( effectinfo, expect_effects[1], "%#x", dwEffType );
-    check_member( effectinfo, expect_effects[1], "%#x", dwStaticParams );
-    check_member( effectinfo, expect_effects[1], "%#x", dwDynamicParams );
+    check_member( effectinfo, expect_effects[1], "%#lx", dwEffType );
+    check_member( effectinfo, expect_effects[1], "%#lx", dwStaticParams );
+    check_member( effectinfo, expect_effects[1], "%#lx", dwDynamicParams );
     check_member_wstr( effectinfo, expect_effects[1], tszName );
 
     hr = IDirectInputDevice8_SetDataFormat( device, &c_dfDIJoystick2 );
-    ok( hr == DI_OK, "SetDataFormat returned: %#x\n", hr );
+    ok( hr == DI_OK, "SetDataFormat returned: %#lx\n", hr );
 
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_GUIDANDPATH, &prop_guid_path.diph );
-    ok( hr == DI_OK, "GetProperty DIPROP_GUIDANDPATH returned %#x\n", hr );
+    ok( hr == DI_OK, "GetProperty DIPROP_GUIDANDPATH returned %#lx\n", hr );
 
     file = CreateFileW( prop_guid_path.wszPath, FILE_READ_ACCESS | FILE_WRITE_ACCESS,
                         FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
                         FILE_FLAG_OVERLAPPED | FILE_FLAG_NO_BUFFERING, NULL );
-    ok( file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError() );
+    ok( file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
 
     hwnd = CreateWindowW( L"static", L"dinput", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 10, 10, 200, 200,
                           NULL, NULL, NULL, NULL );
 
     hr = IDirectInputDevice8_SetCooperativeLevel( device, hwnd, DISCL_BACKGROUND | DISCL_NONEXCLUSIVE );
-    ok( hr == DI_OK, "SetCooperativeLevel returned: %#x\n", hr );
+    ok( hr == DI_OK, "SetCooperativeLevel returned: %#lx\n", hr );
 
     prop_dword.diph.dwHow = DIPH_BYUSAGE;
     prop_dword.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
     prop_dword.dwData = DIPROPAUTOCENTER_ON;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_AUTOCENTER, &prop_dword.diph );
-    ok( hr == DIERR_UNSUPPORTED, "SetProperty DIPROP_AUTOCENTER returned %#x\n", hr );
+    ok( hr == DIERR_UNSUPPORTED, "SetProperty DIPROP_AUTOCENTER returned %#lx\n", hr );
     prop_dword.diph.dwHow = DIPH_DEVICE;
     prop_dword.diph.dwObj = 0;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_AUTOCENTER, &prop_dword.diph );
-    ok( hr == DI_OK, "SetProperty DIPROP_AUTOCENTER returned %#x\n", hr );
+    ok( hr == DI_OK, "SetProperty DIPROP_AUTOCENTER returned %#lx\n", hr );
 
     hr = IDirectInputDevice8_Acquire( device );
-    ok( hr == DI_OK, "Acquire returned: %#x\n", hr );
+    ok( hr == DI_OK, "Acquire returned: %#lx\n", hr );
 
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_FFGAIN, &prop_dword.diph );
-    ok( hr == DIERR_INVALIDPARAM, "SetProperty DIPROP_FFGAIN returned %#x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "SetProperty DIPROP_FFGAIN returned %#lx\n", hr );
     prop_dword.dwData = 1000;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_FFGAIN, &prop_dword.diph );
-    ok( hr == DI_OK, "SetProperty DIPROP_FFGAIN returned %#x\n", hr );
+    ok( hr == DI_OK, "SetProperty DIPROP_FFGAIN returned %#lx\n", hr );
 
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
-    ok( hr == DIERR_READONLY, "SetProperty DIPROP_FFLOAD returned %#x\n", hr );
+    ok( hr == DIERR_READONLY, "SetProperty DIPROP_FFLOAD returned %#lx\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
-    ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "GetProperty DIPROP_FFLOAD returned %#x\n", hr );
+    ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "GetProperty DIPROP_FFLOAD returned %#lx\n", hr );
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
-    ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "GetForceFeedbackState returned %#x\n", hr );
+    ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "GetForceFeedbackState returned %#lx\n", hr );
     hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_RESET );
-    ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "SendForceFeedbackCommand returned %#x\n", hr );
+    ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "SendForceFeedbackCommand returned %#lx\n", hr );
 
     escape.dwSize = sizeof(DIEFFESCAPE);
     escape.dwCommand = 0;
@@ -2918,79 +2918,79 @@ static BOOL test_force_feedback_joystick( DWORD version )
     escape.cbOutBuffer = 10;
     hr = IDirectInputDevice8_Escape( device, &escape );
     todo_wine
-    ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "Escape returned: %#x\n", hr );
+    ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "Escape returned: %#lx\n", hr );
 
     hr = IDirectInputDevice8_Unacquire( device );
-    ok( hr == DI_OK, "Unacquire returned: %#x\n", hr );
+    ok( hr == DI_OK, "Unacquire returned: %#lx\n", hr );
     hr = IDirectInputDevice8_SetCooperativeLevel( device, hwnd, DISCL_BACKGROUND | DISCL_EXCLUSIVE );
-    ok( hr == DI_OK, "SetCooperativeLevel returned: %#x\n", hr );
+    ok( hr == DI_OK, "SetCooperativeLevel returned: %#lx\n", hr );
 
     set_hid_expect( file, expect_acquire, sizeof(expect_acquire) );
     hr = IDirectInputDevice8_Acquire( device );
-    ok( hr == DI_OK, "Acquire returned: %#x\n", hr );
+    ok( hr == DI_OK, "Acquire returned: %#lx\n", hr );
     wait_hid_expect( file, 100 ); /* device gain reports are written asynchronously */
 
     set_hid_expect( file, &expect_set_device_gain_2, sizeof(expect_set_device_gain_2) );
     prop_dword.dwData = 2000;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_FFGAIN, &prop_dword.diph );
-    ok( hr == DI_OK, "SetProperty DIPROP_FFGAIN returned %#x\n", hr );
+    ok( hr == DI_OK, "SetProperty DIPROP_FFGAIN returned %#lx\n", hr );
     wait_hid_expect( file, 100 ); /* device gain reports are written asynchronously */
 
     set_hid_expect( file, &expect_set_device_gain_1, sizeof(expect_set_device_gain_1) );
     prop_dword.dwData = 1000;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_FFGAIN, &prop_dword.diph );
-    ok( hr == DI_OK, "SetProperty DIPROP_FFGAIN returned %#x\n", hr );
+    ok( hr == DI_OK, "SetProperty DIPROP_FFGAIN returned %#lx\n", hr );
     wait_hid_expect( file, 100 ); /* device gain reports are written asynchronously */
 
     hr = IDirectInputDevice8_Escape( device, &escape );
     todo_wine
-    ok( hr == DIERR_UNSUPPORTED, "Escape returned: %#x\n", hr );
+    ok( hr == DIERR_UNSUPPORTED, "Escape returned: %#lx\n", hr );
 
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
     todo_wine
-    ok( hr == 0x80040301, "GetProperty DIPROP_FFLOAD returned %#x\n", hr );
+    ok( hr == 0x80040301, "GetProperty DIPROP_FFLOAD returned %#lx\n", hr );
     res = 0xdeadbeef;
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
     todo_wine
-    ok( hr == 0x80040301, "GetForceFeedbackState returned %#x\n", hr );
+    ok( hr == 0x80040301, "GetForceFeedbackState returned %#lx\n", hr );
 
     hr = IDirectInputDevice8_SendForceFeedbackCommand( device, 0xdeadbeef );
-    ok( hr == DIERR_INVALIDPARAM, "SendForceFeedbackCommand returned %#x\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "SendForceFeedbackCommand returned %#lx\n", hr );
 
     set_hid_expect( file, expect_acquire, sizeof(expect_acquire) );
     hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_RESET );
-    ok( hr == DI_OK, "SendForceFeedbackCommand returned %#x\n", hr );
+    ok( hr == DI_OK, "SendForceFeedbackCommand returned %#lx\n", hr );
     wait_hid_expect( file, 100 ); /* device gain reports are written asynchronously */
 
     hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_STOPALL );
-    ok( hr == HIDP_STATUS_USAGE_NOT_FOUND, "SendForceFeedbackCommand returned %#x\n", hr );
+    ok( hr == HIDP_STATUS_USAGE_NOT_FOUND, "SendForceFeedbackCommand returned %#lx\n", hr );
     hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_PAUSE );
-    ok( hr == HIDP_STATUS_USAGE_NOT_FOUND, "SendForceFeedbackCommand returned %#x\n", hr );
+    ok( hr == HIDP_STATUS_USAGE_NOT_FOUND, "SendForceFeedbackCommand returned %#lx\n", hr );
     hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_CONTINUE );
-    ok( hr == HIDP_STATUS_USAGE_NOT_FOUND, "SendForceFeedbackCommand returned %#x\n", hr );
+    ok( hr == HIDP_STATUS_USAGE_NOT_FOUND, "SendForceFeedbackCommand returned %#lx\n", hr );
     hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_SETACTUATORSON );
-    ok( hr == HIDP_STATUS_USAGE_NOT_FOUND, "SendForceFeedbackCommand returned %#x\n", hr );
+    ok( hr == HIDP_STATUS_USAGE_NOT_FOUND, "SendForceFeedbackCommand returned %#lx\n", hr );
     hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_SETACTUATORSOFF );
-    ok( hr == HIDP_STATUS_USAGE_NOT_FOUND, "SendForceFeedbackCommand returned %#x\n", hr );
+    ok( hr == HIDP_STATUS_USAGE_NOT_FOUND, "SendForceFeedbackCommand returned %#lx\n", hr );
 
     objdata.dwOfs = 0x1e;
     objdata.dwData = 0x80;
     res = 1;
     hr = IDirectInputDevice8_SendDeviceData( device, sizeof(DIDEVICEOBJECTDATA), &objdata, &res, 0 );
-    if (version < 0x800) ok( hr == DI_OK, "SendDeviceData returned %#x\n", hr );
-    else todo_wine ok( hr == DIERR_INVALIDPARAM, "SendDeviceData returned %#x\n", hr );
+    if (version < 0x800) ok( hr == DI_OK, "SendDeviceData returned %#lx\n", hr );
+    else todo_wine ok( hr == DIERR_INVALIDPARAM, "SendDeviceData returned %#lx\n", hr );
 
     test_periodic_effect( device, file, version );
     test_condition_effect( device, file, version );
 
     set_hid_expect( file, expect_reset, sizeof(expect_reset) );
     hr = IDirectInputDevice8_Unacquire( device );
-    ok( hr == DI_OK, "Unacquire returned: %#x\n", hr );
+    ok( hr == DI_OK, "Unacquire returned: %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     ref = IDirectInputDevice8_Release( device );
-    ok( ref == 0, "Release returned %d\n", ref );
+    ok( ref == 0, "Release returned %ld\n", ref );
 
     DestroyWindow( hwnd );
     CloseHandle( file );
@@ -3909,370 +3909,370 @@ static void test_device_managed_effect(void)
     if (FAILED(hr = dinput_test_create_device( DIRECTINPUT_VERSION, &devinst, &device ))) goto done;
 
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_GUIDANDPATH, &prop_guid_path.diph );
-    ok( hr == DI_OK, "GetProperty DIPROP_GUIDANDPATH returned %#x\n", hr );
+    ok( hr == DI_OK, "GetProperty DIPROP_GUIDANDPATH returned %#lx\n", hr );
     file = CreateFileW( prop_guid_path.wszPath, FILE_READ_ACCESS | FILE_WRITE_ACCESS,
                         FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
                         FILE_FLAG_OVERLAPPED | FILE_FLAG_NO_BUFFERING, NULL );
-    ok( file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError() );
+    ok( file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
 
     hwnd = CreateWindowW( L"static", L"dinput", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 10, 10, 200, 200,
                           NULL, NULL, NULL, NULL );
 
     event = CreateEventW( NULL, FALSE, FALSE, NULL );
-    ok( event != NULL, "CreateEventW failed, last error %u\n", GetLastError() );
+    ok( event != NULL, "CreateEventW failed, last error %lu\n", GetLastError() );
     hr = IDirectInputDevice8_SetEventNotification( device, event );
-    ok( hr == DI_OK, "SetEventNotification returned: %#x\n", hr );
+    ok( hr == DI_OK, "SetEventNotification returned: %#lx\n", hr );
     hr = IDirectInputDevice8_SetCooperativeLevel( device, hwnd, DISCL_BACKGROUND | DISCL_EXCLUSIVE );
-    ok( hr == DI_OK, "SetCooperativeLevel returned: %#x\n", hr );
+    ok( hr == DI_OK, "SetCooperativeLevel returned: %#lx\n", hr );
     hr = IDirectInputDevice8_SetDataFormat( device, &c_dfDIJoystick2 );
-    ok( hr == DI_OK, "SetDataFormat returned: %#x\n", hr );
+    ok( hr == DI_OK, "SetDataFormat returned: %#lx\n", hr );
 
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
-    ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "GetProperty DIPROP_FFLOAD returned %#x\n", hr );
+    ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "GetProperty DIPROP_FFLOAD returned %#lx\n", hr );
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
-    ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "GetForceFeedbackState returned %#x\n", hr );
+    ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "GetForceFeedbackState returned %#lx\n", hr );
     hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_RESET );
-    ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "SendForceFeedbackCommand returned %#x\n", hr );
+    ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "SendForceFeedbackCommand returned %#lx\n", hr );
 
     set_hid_expect( file, expect_acquire, sizeof(expect_acquire) );
     hr = IDirectInputDevice8_Acquire( device );
-    ok( hr == DI_OK, "Acquire returned: %#x\n", hr );
+    ok( hr == DI_OK, "Acquire returned: %#lx\n", hr );
     wait_hid_expect( file, 100 );
 
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
-    ok( hr == DI_OK, "GetProperty DIPROP_FFLOAD returned %#x\n", hr );
-    ok( prop_dword.dwData == 0, "got DIPROP_FFLOAD %#x\n", prop_dword.dwData );
+    ok( hr == DI_OK, "GetProperty DIPROP_FFLOAD returned %#lx\n", hr );
+    ok( prop_dword.dwData == 0, "got DIPROP_FFLOAD %#lx\n", prop_dword.dwData );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     res = 0xdeadbeef;
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
-    ok( hr == DI_OK, "GetForceFeedbackState returned %#x\n", hr );
+    ok( hr == DI_OK, "GetForceFeedbackState returned %#lx\n", hr );
     flags = DIGFFS_STOPPED | DIGFFS_EMPTY;
-    ok( res == flags, "got state %#x\n", res );
+    ok( res == flags, "got state %#lx\n", res );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
-    ok( hr == DI_OK, "GetProperty DIPROP_FFLOAD returned %#x\n", hr );
-    ok( prop_dword.dwData == 0, "got DIPROP_FFLOAD %#x\n", prop_dword.dwData );
+    ok( hr == DI_OK, "GetProperty DIPROP_FFLOAD returned %#lx\n", hr );
+    ok( prop_dword.dwData == 0, "got DIPROP_FFLOAD %#lx\n", prop_dword.dwData );
     set_hid_expect( file, NULL, 0 );
 
     send_hid_input( file, device_state_input, sizeof(struct hid_expect) );
     res = WaitForSingleObject( event, 100 );
-    ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#x\n", res );
+    ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
     send_hid_input( file, device_state_input, sizeof(device_state_input) );
     res = WaitForSingleObject( event, 100 );
-    ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#x\n", res );
+    ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", res );
 
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     res = 0xdeadbeef;
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
-    ok( hr == DI_OK, "GetForceFeedbackState returned %#x\n", hr );
+    ok( hr == DI_OK, "GetForceFeedbackState returned %#lx\n", hr );
     flags = DIGFFS_PAUSED | DIGFFS_EMPTY | DIGFFS_ACTUATORSON | DIGFFS_POWERON |
             DIGFFS_SAFETYSWITCHON | DIGFFS_USERFFSWITCHON;
-    ok( res == flags, "got state %#x\n", res );
+    ok( res == flags, "got state %#lx\n", res );
     set_hid_expect( file, NULL, 0 );
 
     hr = IDirectInputDevice8_CreateEffect( device, &GUID_Spring, NULL, &effect, NULL );
-    ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
+    ok( hr == DI_OK, "CreateEffect returned %#lx\n", hr );
 
     hr = IDirectInputEffect_GetEffectStatus( effect, NULL );
-    ok( hr == E_POINTER, "GetEffectStatus returned %#x\n", hr );
+    ok( hr == E_POINTER, "GetEffectStatus returned %#lx\n", hr );
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
-    ok( hr == DIERR_NOTDOWNLOADED, "GetEffectStatus returned %#x\n", hr );
-    ok( res == 0, "got status %#x\n", res );
+    ok( hr == DIERR_NOTDOWNLOADED, "GetEffectStatus returned %#lx\n", hr );
+    ok( res == 0, "got status %#lx\n", res );
 
     flags = DIEP_ALLPARAMS;
     hr = IDirectInputEffect_SetParameters( effect, &expect_desc, flags | DIEP_NODOWNLOAD );
-    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
+    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#lx\n", hr );
 
     set_hid_expect( file, expect_reset, sizeof(struct hid_expect) );
     hr = IDirectInputDevice8_Unacquire( device );
-    ok( hr == DI_OK, "Unacquire returned: %#x\n", hr );
+    ok( hr == DI_OK, "Unacquire returned: %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
-    ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "GetEffectStatus returned %#x\n", hr );
+    ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "GetEffectStatus returned %#lx\n", hr );
 
     set_hid_expect( file, expect_acquire, sizeof(expect_acquire) );
     hr = IDirectInputDevice8_Acquire( device );
-    ok( hr == DI_OK, "Acquire returned: %#x\n", hr );
+    ok( hr == DI_OK, "Acquire returned: %#lx\n", hr );
     wait_hid_expect( file, 100 );
 
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
-    ok( hr == DIERR_NOTDOWNLOADED, "GetEffectStatus returned %#x\n", hr );
-    ok( res == 0, "got status %#x\n", res );
+    ok( hr == DIERR_NOTDOWNLOADED, "GetEffectStatus returned %#lx\n", hr );
+    ok( res == 0, "got status %#lx\n", res );
 
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     res = 0xdeadbeef;
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
-    ok( hr == DI_OK, "GetForceFeedbackState returned %#x\n", hr );
+    ok( hr == DI_OK, "GetForceFeedbackState returned %#lx\n", hr );
     flags = DIGFFS_STOPPED | DIGFFS_EMPTY;
-    ok( res == flags, "got state %#x\n", res );
+    ok( res == flags, "got state %#lx\n", res );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, expect_create, sizeof(expect_create) );
     hr = IDirectInputEffect_Download( effect );
-    ok( hr == DI_OK, "Download returned %#x\n", hr );
+    ok( hr == DI_OK, "Download returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
-    ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
-    ok( res == 0, "got status %#x\n", res );
+    ok( hr == DI_OK, "GetEffectStatus returned %#lx\n", hr );
+    ok( res == 0, "got status %#lx\n", res );
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     res = 0xdeadbeef;
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
-    ok( hr == DI_OK, "GetForceFeedbackState returned %#x\n", hr );
+    ok( hr == DI_OK, "GetForceFeedbackState returned %#lx\n", hr );
     flags = DIGFFS_STOPPED;
-    ok( res == flags, "got state %#x\n", res );
+    ok( res == flags, "got state %#lx\n", res );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
-    ok( hr == DI_OK, "GetProperty DIPROP_FFLOAD returned %#x\n", hr );
-    ok( prop_dword.dwData == 0, "got DIPROP_FFLOAD %#x\n", prop_dword.dwData );
+    ok( hr == DI_OK, "GetProperty DIPROP_FFLOAD returned %#lx\n", hr );
+    ok( prop_dword.dwData == 0, "got DIPROP_FFLOAD %#lx\n", prop_dword.dwData );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, &expect_start, sizeof(expect_start) );
     hr = IDirectInputEffect_Start( effect, 1, DIES_NODOWNLOAD );
-    ok( hr == DI_OK, "Start returned %#x\n", hr );
+    ok( hr == DI_OK, "Start returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, expect_create_2, sizeof(expect_create_2) );
     hr = IDirectInputDevice8_CreateEffect( device, &GUID_Spring, &expect_desc, &effect2, NULL );
-    ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
+    ok( hr == DI_OK, "CreateEffect returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
     set_hid_expect( file, &expect_start_2, sizeof(expect_start_2) );
     hr = IDirectInputEffect_Start( effect2, 1, DIES_SOLO );
-    ok( hr == DI_OK, "Start returned %#x\n", hr );
+    ok( hr == DI_OK, "Start returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect2, &res );
-    ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
-    ok( res == DIEGES_PLAYING, "got status %#x\n", res );
+    ok( hr == DI_OK, "GetEffectStatus returned %#lx\n", hr );
+    ok( res == DIEGES_PLAYING, "got status %#lx\n", res );
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
-    ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
-    ok( res == DIEGES_PLAYING, "got status %#x\n", res );
+    ok( hr == DI_OK, "GetEffectStatus returned %#lx\n", hr );
+    ok( res == DIEGES_PLAYING, "got status %#lx\n", res );
     set_hid_expect( file, &expect_stop_2, sizeof(expect_stop_2) );
     hr = IDirectInputEffect_Stop( effect2 );
-    ok( hr == DI_OK, "Stop returned %#x\n", hr );
+    ok( hr == DI_OK, "Stop returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect2, &res );
-    ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
-    ok( res == 0, "got status %#x\n", res );
+    ok( hr == DI_OK, "GetEffectStatus returned %#lx\n", hr );
+    ok( res == 0, "got status %#lx\n", res );
     set_hid_expect( file, expect_destroy_2, sizeof(expect_destroy_2) );
     ref = IDirectInputEffect_Release( effect2 );
-    ok( ref == 0, "Release returned %d\n", ref );
+    ok( ref == 0, "Release returned %ld\n", ref );
     set_hid_expect( file, NULL, 0 );
 
     /* sending commands has no direct effect on status */
     set_hid_expect( file, expect_stop_all, sizeof(expect_stop_all) );
     hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_STOPALL );
-    ok( hr == DI_OK, "SendForceFeedbackCommand returned %#x\n", hr );
+    ok( hr == DI_OK, "SendForceFeedbackCommand returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
-    ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
-    ok( res == DIEGES_PLAYING, "got status %#x\n", res );
+    ok( hr == DI_OK, "GetEffectStatus returned %#lx\n", hr );
+    ok( res == DIEGES_PLAYING, "got status %#lx\n", res );
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     res = 0xdeadbeef;
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
-    ok( hr == DI_OK, "GetForceFeedbackState returned %#x\n", hr );
+    ok( hr == DI_OK, "GetForceFeedbackState returned %#lx\n", hr );
     flags = DIGFFS_STOPPED;
-    ok( res == flags, "got state %#x\n", res );
+    ok( res == flags, "got state %#lx\n", res );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, expect_device_pause, sizeof(expect_device_pause) );
     hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_PAUSE );
-    ok( hr == DI_OK, "SendForceFeedbackCommand returned %#x\n", hr );
+    ok( hr == DI_OK, "SendForceFeedbackCommand returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
-    ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
-    ok( res == DIEGES_PLAYING, "got status %#x\n", res );
+    ok( hr == DI_OK, "GetEffectStatus returned %#lx\n", hr );
+    ok( res == DIEGES_PLAYING, "got status %#lx\n", res );
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     res = 0xdeadbeef;
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
-    ok( hr == DI_OK, "GetForceFeedbackState returned %#x\n", hr );
+    ok( hr == DI_OK, "GetForceFeedbackState returned %#lx\n", hr );
     flags = DIGFFS_STOPPED;
-    ok( res == flags, "got state %#x\n", res );
+    ok( res == flags, "got state %#lx\n", res );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, expect_device_continue, sizeof(expect_device_continue) );
     hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_CONTINUE );
-    ok( hr == DI_OK, "SendForceFeedbackCommand returned %#x\n", hr );
+    ok( hr == DI_OK, "SendForceFeedbackCommand returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
-    ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
-    ok( res == DIEGES_PLAYING, "got status %#x\n", res );
+    ok( hr == DI_OK, "GetEffectStatus returned %#lx\n", hr );
+    ok( res == DIEGES_PLAYING, "got status %#lx\n", res );
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     res = 0xdeadbeef;
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
-    ok( hr == DI_OK, "GetForceFeedbackState returned %#x\n", hr );
+    ok( hr == DI_OK, "GetForceFeedbackState returned %#lx\n", hr );
     flags = DIGFFS_STOPPED;
-    ok( res == flags, "got state %#x\n", res );
+    ok( res == flags, "got state %#lx\n", res );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, expect_disable_actuators, sizeof(expect_disable_actuators) );
     hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_SETACTUATORSOFF );
-    ok( hr == DI_OK, "SendForceFeedbackCommand returned %#x\n", hr );
+    ok( hr == DI_OK, "SendForceFeedbackCommand returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
-    ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
-    ok( res == DIEGES_PLAYING, "got status %#x\n", res );
+    ok( hr == DI_OK, "GetEffectStatus returned %#lx\n", hr );
+    ok( res == DIEGES_PLAYING, "got status %#lx\n", res );
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     res = 0xdeadbeef;
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
-    ok( hr == DI_OK, "GetForceFeedbackState returned %#x\n", hr );
+    ok( hr == DI_OK, "GetForceFeedbackState returned %#lx\n", hr );
     flags = DIGFFS_STOPPED;
-    ok( res == flags, "got state %#x\n", res );
+    ok( res == flags, "got state %#lx\n", res );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, expect_enable_actuators, sizeof(expect_enable_actuators) );
     hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_SETACTUATORSON );
-    ok( hr == DI_OK, "SendForceFeedbackCommand returned %#x\n", hr );
+    ok( hr == DI_OK, "SendForceFeedbackCommand returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
-    ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
-    ok( res == DIEGES_PLAYING, "got status %#x\n", res );
+    ok( hr == DI_OK, "GetEffectStatus returned %#lx\n", hr );
+    ok( res == DIEGES_PLAYING, "got status %#lx\n", res );
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     res = 0xdeadbeef;
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
-    ok( hr == DI_OK, "GetForceFeedbackState returned %#x\n", hr );
+    ok( hr == DI_OK, "GetForceFeedbackState returned %#lx\n", hr );
     flags = DIGFFS_STOPPED;
-    ok( res == flags, "got state %#x\n", res );
+    ok( res == flags, "got state %#lx\n", res );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, &expect_stop, sizeof(expect_stop) );
     hr = IDirectInputEffect_Stop( effect );
-    ok( hr == DI_OK, "Stop returned %#x\n", hr );
+    ok( hr == DI_OK, "Stop returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
-    ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
-    ok( res == 0, "got status %#x\n", res );
+    ok( hr == DI_OK, "GetEffectStatus returned %#lx\n", hr );
+    ok( res == 0, "got status %#lx\n", res );
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     res = 0xdeadbeef;
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
-    ok( hr == DI_OK, "GetForceFeedbackState returned %#x\n", hr );
+    ok( hr == DI_OK, "GetForceFeedbackState returned %#lx\n", hr );
     flags = DIGFFS_STOPPED;
-    ok( res == flags, "got state %#x\n", res );
+    ok( res == flags, "got state %#lx\n", res );
     set_hid_expect( file, NULL, 0 );
 
     send_hid_input( file, device_state_input_0, sizeof(device_state_input_0) );
     res = WaitForSingleObject( event, 100 );
-    ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#x\n", res );
+    ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", res );
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     res = 0xdeadbeef;
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
-    ok( hr == DI_OK, "GetForceFeedbackState returned %#x\n", hr );
+    ok( hr == DI_OK, "GetForceFeedbackState returned %#lx\n", hr );
     flags = DIGFFS_PAUSED | DIGFFS_ACTUATORSON | DIGFFS_POWERON | DIGFFS_SAFETYSWITCHON | DIGFFS_USERFFSWITCHON;
-    ok( res == flags, "got state %#x\n", res );
+    ok( res == flags, "got state %#lx\n", res );
     set_hid_expect( file, NULL, 0 );
 
     send_hid_input( file, device_state_input_1, sizeof(device_state_input_1) );
     res = WaitForSingleObject( event, 100 );
-    ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#x\n", res );
+    ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", res );
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
-    ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
-    ok( res == DIEGES_PLAYING, "got status %#x\n", res );
+    ok( hr == DI_OK, "GetEffectStatus returned %#lx\n", hr );
+    ok( res == DIEGES_PLAYING, "got status %#lx\n", res );
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     res = 0xdeadbeef;
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
-    ok( hr == DI_OK, "GetForceFeedbackState returned %#x\n", hr );
+    ok( hr == DI_OK, "GetForceFeedbackState returned %#lx\n", hr );
     flags = DIGFFS_ACTUATORSOFF | DIGFFS_POWEROFF | DIGFFS_SAFETYSWITCHOFF | DIGFFS_USERFFSWITCHOFF;
-    ok( res == flags, "got state %#x\n", res );
+    ok( res == flags, "got state %#lx\n", res );
     set_hid_expect( file, NULL, 0 );
 
     send_hid_input( file, device_state_input_2, sizeof(device_state_input_2) );
     res = WaitForSingleObject( event, 100 );
-    ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#x\n", res );
+    ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", res );
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
-    ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
-    ok( res == 0, "got status %#x\n", res );
+    ok( hr == DI_OK, "GetEffectStatus returned %#lx\n", hr );
+    ok( res == 0, "got status %#lx\n", res );
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     res = 0xdeadbeef;
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
-    ok( hr == DI_OK, "GetForceFeedbackState returned %#x\n", hr );
+    ok( hr == DI_OK, "GetForceFeedbackState returned %#lx\n", hr );
     flags = DIGFFS_PAUSED | DIGFFS_ACTUATORSON | DIGFFS_POWEROFF | DIGFFS_SAFETYSWITCHOFF | DIGFFS_USERFFSWITCHOFF;
-    ok( res == flags, "got state %#x\n", res );
+    ok( res == flags, "got state %#lx\n", res );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, &expect_stop, sizeof(expect_stop) );
     hr = IDirectInputEffect_Stop( effect );
-    ok( hr == DI_OK, "Stop returned %#x\n", hr );
+    ok( hr == DI_OK, "Stop returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
-    ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
-    ok( res == 0, "got status %#x\n", res );
+    ok( hr == DI_OK, "GetEffectStatus returned %#lx\n", hr );
+    ok( res == 0, "got status %#lx\n", res );
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     res = 0xdeadbeef;
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
-    ok( hr == DI_OK, "GetForceFeedbackState returned %#x\n", hr );
+    ok( hr == DI_OK, "GetForceFeedbackState returned %#lx\n", hr );
     flags = DIGFFS_PAUSED | DIGFFS_ACTUATORSON | DIGFFS_POWEROFF | DIGFFS_SAFETYSWITCHOFF | DIGFFS_USERFFSWITCHOFF;
-    ok( res == flags, "got state %#x\n", res );
+    ok( res == flags, "got state %#lx\n", res );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, expect_destroy, sizeof(expect_destroy) );
     hr = IDirectInputEffect_Unload( effect );
-    ok( hr == DI_OK, "Unload returned %#x\n", hr );
+    ok( hr == DI_OK, "Unload returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
-    ok( hr == DIERR_NOTDOWNLOADED, "GetEffectStatus returned %#x\n", hr );
-    ok( res == 0, "got status %#x\n", res );
+    ok( hr == DIERR_NOTDOWNLOADED, "GetEffectStatus returned %#lx\n", hr );
+    ok( res == 0, "got status %#lx\n", res );
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     res = 0xdeadbeef;
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
-    ok( hr == DI_OK, "GetForceFeedbackState returned %#x\n", hr );
+    ok( hr == DI_OK, "GetForceFeedbackState returned %#lx\n", hr );
     flags = DIGFFS_EMPTY | DIGFFS_PAUSED | DIGFFS_ACTUATORSON | DIGFFS_POWEROFF |
             DIGFFS_SAFETYSWITCHOFF | DIGFFS_USERFFSWITCHOFF;
-    ok( res == flags, "got state %#x\n", res );
+    ok( res == flags, "got state %#lx\n", res );
     set_hid_expect( file, NULL, 0 );
 
     ref = IDirectInputEffect_Release( effect );
-    ok( ref == 0, "Release returned %d\n", ref );
+    ok( ref == 0, "Release returned %ld\n", ref );
 
     /* start delay has no direct effect on effect status */
     desc = expect_desc;
     desc.dwStartDelay = 32767000;
     set_hid_expect( file, expect_create_delay, sizeof(expect_create_delay) );
     hr = IDirectInputDevice8_CreateEffect( device, &GUID_Spring, &desc, &effect, NULL );
-    ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
+    ok( hr == DI_OK, "CreateEffect returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
-    ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
-    ok( res == 0, "got status %#x\n", res );
+    ok( hr == DI_OK, "GetEffectStatus returned %#lx\n", hr );
+    ok( res == 0, "got status %#lx\n", res );
     set_hid_expect( file, &expect_start, sizeof(expect_start) );
     hr = IDirectInputEffect_Start( effect, 1, 0 );
-    ok( hr == DI_OK, "Start returned %#x\n", hr );
+    ok( hr == DI_OK, "Start returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
-    ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
-    ok( res == DIEGES_PLAYING, "got status %#x\n", res );
+    ok( hr == DI_OK, "GetEffectStatus returned %#lx\n", hr );
+    ok( res == DIEGES_PLAYING, "got status %#lx\n", res );
     set_hid_expect( file, expect_destroy, sizeof(expect_destroy) );
     ref = IDirectInputEffect_Release( effect );
-    ok( ref == 0, "Release returned %d\n", ref );
+    ok( ref == 0, "Release returned %ld\n", ref );
     set_hid_expect( file, NULL, 0 );
 
     /* duration has no direct effect on effect status */
@@ -4281,33 +4281,33 @@ static void test_device_managed_effect(void)
     desc.dwStartDelay = 0;
     set_hid_expect( file, expect_create_duration, sizeof(expect_create_duration) );
     hr = IDirectInputDevice8_CreateEffect( device, &GUID_Spring, &desc, &effect, NULL );
-    ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
+    ok( hr == DI_OK, "CreateEffect returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
-    ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
-    ok( res == 0, "got status %#x\n", res );
+    ok( hr == DI_OK, "GetEffectStatus returned %#lx\n", hr );
+    ok( res == 0, "got status %#lx\n", res );
     set_hid_expect( file, &expect_start, sizeof(expect_start) );
     hr = IDirectInputEffect_Start( effect, 1, 0 );
-    ok( hr == DI_OK, "Start returned %#x\n", hr );
+    ok( hr == DI_OK, "Start returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
     Sleep( 100 );
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
-    ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
-    ok( res == DIEGES_PLAYING, "got status %#x\n", res );
+    ok( hr == DI_OK, "GetEffectStatus returned %#lx\n", hr );
+    ok( res == DIEGES_PLAYING, "got status %#lx\n", res );
     set_hid_expect( file, expect_destroy, sizeof(expect_destroy) );
     ref = IDirectInputEffect_Release( effect );
-    ok( ref == 0, "Release returned %d\n", ref );
+    ok( ref == 0, "Release returned %ld\n", ref );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, expect_reset, sizeof(struct hid_expect) );
     hr = IDirectInputDevice8_Unacquire( device );
-    ok( hr == DI_OK, "Unacquire returned: %#x\n", hr );
+    ok( hr == DI_OK, "Unacquire returned: %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     ref = IDirectInputDevice8_Release( device );
-    ok( ref == 0, "Release returned %d\n", ref );
+    ok( ref == 0, "Release returned %ld\n", ref );
 
     DestroyWindow( hwnd );
     CloseHandle( event );

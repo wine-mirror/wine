@@ -105,35 +105,35 @@ static const CERT_CONTEXT *testsign_sign( const WCHAR *filename )
     if (!ret && GetLastError() == NTE_EXISTS)
     {
         ret = CryptAcquireContextW( &provider, container_name, NULL, PROV_RSA_FULL, CRYPT_DELETEKEYSET );
-        ok( ret, "Failed to delete container, error %#x\n", GetLastError() );
+        ok( ret, "Failed to delete container, error %#lx\n", GetLastError() );
         ret = CryptAcquireContextW( &provider, container_name, NULL, PROV_RSA_FULL, CRYPT_NEWKEYSET );
     }
-    ok( ret, "Failed to create container, error %#x\n", GetLastError() );
+    ok( ret, "Failed to create container, error %#lx\n", GetLastError() );
 
     ret = CryptGenKey( provider, AT_SIGNATURE, CRYPT_EXPORTABLE, &key );
-    ok( ret, "Failed to create key, error %#x\n", GetLastError() );
+    ok( ret, "Failed to create key, error %#lx\n", GetLastError() );
     ret = CryptDestroyKey( key );
-    ok( ret, "Failed to destroy key, error %#x\n", GetLastError() );
+    ok( ret, "Failed to destroy key, error %#lx\n", GetLastError() );
     ret = CryptGetUserKey( provider, AT_SIGNATURE, &key );
-    ok( ret, "Failed to get user key, error %#x\n", GetLastError() );
+    ok( ret, "Failed to get user key, error %#lx\n", GetLastError() );
     ret = CryptDestroyKey( key );
-    ok( ret, "Failed to destroy key, error %#x\n", GetLastError() );
+    ok( ret, "Failed to destroy key, error %#lx\n", GetLastError() );
 
     size = sizeof(encoded_name);
     ret = CertStrToNameW( X509_ASN_ENCODING, L"CN=winetest_cert", CERT_X500_NAME_STR, NULL,
                           encoded_name, &size, NULL );
-    ok( ret, "Failed to convert name, error %#x\n", GetLastError() );
+    ok( ret, "Failed to convert name, error %#lx\n", GetLastError() );
     key_info.CertIssuer.cbData = size;
     key_info.CertIssuer.pbData = encoded_name;
 
     size = sizeof(public_key_info_buffer);
     ret = CryptExportPublicKeyInfo( provider, AT_SIGNATURE, X509_ASN_ENCODING, public_key_info, &size );
-    ok( ret, "Failed to export public key, error %#x\n", GetLastError() );
+    ok( ret, "Failed to export public key, error %#lx\n", GetLastError() );
     cert_info.SubjectPublicKeyInfo = *public_key_info;
 
     size = sizeof(hash_buffer);
     ret = CryptHashPublicKeyInfo( provider, CALG_MD5, 0, X509_ASN_ENCODING, public_key_info, hash_buffer, &size );
-    ok( ret, "Failed to hash public key, error %#x\n", GetLastError() );
+    ok( ret, "Failed to hash public key, error %#lx\n", GetLastError() );
 
     key_info.KeyId.cbData = size;
     key_info.KeyId.pbData = hash_buffer;
@@ -144,7 +144,7 @@ static const CERT_CONTEXT *testsign_sign( const WCHAR *filename )
 
     size = sizeof(encoded_key_id);
     ret = CryptEncodeObject( X509_ASN_ENCODING, X509_AUTHORITY_KEY_ID, &key_info, encoded_key_id, &size );
-    ok( ret, "Failed to convert name, error %#x\n", GetLastError() );
+    ok( ret, "Failed to convert name, error %#lx\n", GetLastError() );
 
     extension.pszObjId = (char *)szOID_AUTHORITY_KEY_IDENTIFIER;
     extension.fCritical = TRUE;
@@ -165,14 +165,14 @@ static const CERT_CONTEXT *testsign_sign( const WCHAR *filename )
     size = sizeof(cert_buffer);
     ret = CryptSignAndEncodeCertificate( provider, AT_SIGNATURE, X509_ASN_ENCODING, X509_CERT_TO_BE_SIGNED,
                                          &cert_info, &algid, NULL, cert_buffer, &size );
-    ok( ret, "Failed to create certificate, error %#x\n", GetLastError() );
+    ok( ret, "Failed to create certificate, error %#lx\n", GetLastError() );
 
     cert = CertCreateCertificateContext( X509_ASN_ENCODING, cert_buffer, size );
-    ok( !!cert, "Failed to create context, error %#x\n", GetLastError() );
+    ok( !!cert, "Failed to create context, error %#lx\n", GetLastError() );
 
     size = sizeof(provider_nameA);
     ret = CryptGetProvParam( provider, PP_NAME, provider_nameA, &size, 0 );
-    ok( ret, "Failed to get prov param, error %#x\n", GetLastError() );
+    ok( ret, "Failed to get prov param, error %#lx\n", GetLastError() );
     MultiByteToWideChar( CP_ACP, 0, (char *)provider_nameA, -1, provider_nameW, ARRAY_SIZE(provider_nameW) );
 
     provider_info.pwszContainerName = (WCHAR *)container_name;
@@ -180,41 +180,41 @@ static const CERT_CONTEXT *testsign_sign( const WCHAR *filename )
     provider_info.dwProvType = PROV_RSA_FULL;
     provider_info.dwKeySpec = AT_SIGNATURE;
     ret = CertSetCertificateContextProperty( cert, CERT_KEY_PROV_INFO_PROP_ID, 0, &provider_info );
-    ok( ret, "Failed to set provider info, error %#x\n", GetLastError() );
+    ok( ret, "Failed to set provider info, error %#lx\n", GetLastError() );
 
     ret = CryptReleaseContext( provider, 0 );
-    ok( ret, "failed to release context, error %u\n", GetLastError() );
+    ok( ret, "failed to release context, error %lu\n", GetLastError() );
 
     root_store = CertOpenStore( CERT_STORE_PROV_SYSTEM_REGISTRY_W, 0, 0, CERT_SYSTEM_STORE_LOCAL_MACHINE, L"root" );
     if (!root_store && GetLastError() == ERROR_ACCESS_DENIED)
     {
         win_skip( "Failed to open root store.\n" );
         ret = CertFreeCertificateContext( cert );
-        ok( ret, "Failed to free certificate, error %u\n", GetLastError() );
+        ok( ret, "Failed to free certificate, error %lu\n", GetLastError() );
         return NULL;
     }
-    ok( !!root_store, "Failed to open store, error %u\n", GetLastError() );
+    ok( !!root_store, "Failed to open store, error %lu\n", GetLastError() );
     ret = CertAddCertificateContextToStore( root_store, cert, CERT_STORE_ADD_ALWAYS, NULL );
     if (!ret && GetLastError() == ERROR_ACCESS_DENIED)
     {
         win_skip( "Failed to add self-signed certificate to store.\n" );
         ret = CertFreeCertificateContext( cert );
-        ok( ret, "Failed to free certificate, error %u\n", GetLastError() );
+        ok( ret, "Failed to free certificate, error %lu\n", GetLastError() );
         ret = CertCloseStore( root_store, CERT_CLOSE_STORE_CHECK_FLAG );
-        ok( ret, "Failed to close store, error %u\n", GetLastError() );
+        ok( ret, "Failed to close store, error %lu\n", GetLastError() );
         return NULL;
     }
-    ok( ret, "Failed to add certificate, error %u\n", GetLastError() );
+    ok( ret, "Failed to add certificate, error %lu\n", GetLastError() );
     ret = CertCloseStore( root_store, CERT_CLOSE_STORE_CHECK_FLAG );
-    ok( ret, "Failed to close store, error %u\n", GetLastError() );
+    ok( ret, "Failed to close store, error %lu\n", GetLastError() );
 
     pub_store = CertOpenStore( CERT_STORE_PROV_SYSTEM_REGISTRY_W, 0, 0,
                                CERT_SYSTEM_STORE_LOCAL_MACHINE, L"trustedpublisher" );
-    ok( !!pub_store, "Failed to open store, error %u\n", GetLastError() );
+    ok( !!pub_store, "Failed to open store, error %lu\n", GetLastError() );
     ret = CertAddCertificateContextToStore( pub_store, cert, CERT_STORE_ADD_ALWAYS, NULL );
-    ok( ret, "Failed to add certificate, error %u\n", GetLastError() );
+    ok( ret, "Failed to add certificate, error %lu\n", GetLastError() );
     ret = CertCloseStore( pub_store, CERT_CLOSE_STORE_CHECK_FLAG );
-    ok( ret, "Failed to close store, error %u\n", GetLastError() );
+    ok( ret, "Failed to close store, error %lu\n", GetLastError() );
 
     subject.dwSubjectChoice = 1;
     subject.pdwIndex = &index;
@@ -231,7 +231,7 @@ static const CERT_CONTEXT *testsign_sign( const WCHAR *filename )
     authcode.pwszInfo = L"";
     hr = pSignerSign( &subject, &signer, &signature, NULL, NULL, NULL, NULL );
     todo_wine
-    ok( hr == S_OK || broken( hr == NTE_BAD_ALGID ) /* < 7 */, "Failed to sign, hr %#x\n", hr );
+    ok( hr == S_OK || broken( hr == NTE_BAD_ALGID ) /* < 7 */, "Failed to sign, hr %#lx\n", hr );
 
     return cert;
 }
@@ -244,29 +244,29 @@ static void testsign_cleanup( const CERT_CONTEXT *cert )
     BOOL ret;
 
     root_store = CertOpenStore( CERT_STORE_PROV_SYSTEM_REGISTRY_W, 0, 0, CERT_SYSTEM_STORE_LOCAL_MACHINE, L"root" );
-    ok( !!root_store, "Failed to open store, error %u\n", GetLastError() );
+    ok( !!root_store, "Failed to open store, error %lu\n", GetLastError() );
     store_cert = CertFindCertificateInStore( root_store, X509_ASN_ENCODING, 0, CERT_FIND_EXISTING, cert, NULL );
-    ok( !!store_cert, "Failed to find root certificate, error %u\n", GetLastError() );
+    ok( !!store_cert, "Failed to find root certificate, error %lu\n", GetLastError() );
     ret = CertDeleteCertificateFromStore( store_cert );
-    ok( ret, "Failed to remove certificate, error %u\n", GetLastError() );
+    ok( ret, "Failed to remove certificate, error %lu\n", GetLastError() );
     ret = CertCloseStore( root_store, CERT_CLOSE_STORE_CHECK_FLAG );
-    ok( ret, "Failed to close store, error %u\n", GetLastError() );
+    ok( ret, "Failed to close store, error %lu\n", GetLastError() );
 
     pub_store = CertOpenStore( CERT_STORE_PROV_SYSTEM_REGISTRY_W, 0, 0,
                                CERT_SYSTEM_STORE_LOCAL_MACHINE, L"trustedpublisher" );
-    ok( !!pub_store, "Failed to open store, error %u\n", GetLastError() );
+    ok( !!pub_store, "Failed to open store, error %lu\n", GetLastError() );
     store_cert = CertFindCertificateInStore( pub_store, X509_ASN_ENCODING, 0, CERT_FIND_EXISTING, cert, NULL );
-    ok( !!store_cert, "Failed to find publisher certificate, error %u\n", GetLastError() );
+    ok( !!store_cert, "Failed to find publisher certificate, error %lu\n", GetLastError() );
     ret = CertDeleteCertificateFromStore( store_cert );
-    ok( ret, "Failed to remove certificate, error %u\n", GetLastError() );
+    ok( ret, "Failed to remove certificate, error %lu\n", GetLastError() );
     ret = CertCloseStore( pub_store, CERT_CLOSE_STORE_CHECK_FLAG );
-    ok( ret, "Failed to close store, error %u\n", GetLastError() );
+    ok( ret, "Failed to close store, error %lu\n", GetLastError() );
 
     ret = CertFreeCertificateContext( cert );
-    ok( ret, "Failed to free certificate, error %u\n", GetLastError() );
+    ok( ret, "Failed to free certificate, error %lu\n", GetLastError() );
 
     ret = CryptAcquireContextW( &provider, container_name, NULL, PROV_RSA_FULL, CRYPT_DELETEKEYSET );
-    ok( ret, "Failed to delete container, error %#x\n", GetLastError() );
+    ok( ret, "Failed to delete container, error %#lx\n", GetLastError() );
 }
 
 static void load_resource( const WCHAR *name, WCHAR *filename )
@@ -281,7 +281,7 @@ static void load_resource( const WCHAR *name, WCHAR *filename )
     GetTempFileNameW( path, name, 0, filename );
 
     file = CreateFileW( filename, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
-    ok( file != INVALID_HANDLE_VALUE, "failed to create %s, error %u\n", debugstr_w(filename), GetLastError() );
+    ok( file != INVALID_HANDLE_VALUE, "failed to create %s, error %lu\n", debugstr_w(filename), GetLastError() );
 
     res = FindResourceW( NULL, name, L"TESTDLL" );
     ok( res != 0, "couldn't find resource\n" );
@@ -357,7 +357,7 @@ static void add_file_to_catalog( HANDLE catalog, const WCHAR *file )
 
     ret = CryptSIPRetrieveSubjectGuidForCatalogFile( file, NULL, &subject_guid );
     todo_wine
-    ok( ret, "Failed to get subject guid, error %u\n", GetLastError() );
+    ok( ret, "Failed to get subject guid, error %lu\n", GetLastError() );
 
     size = 0;
     subject_info.pgSubjectType = &subject_guid;
@@ -367,12 +367,12 @@ static void add_file_to_catalog( HANDLE catalog, const WCHAR *file )
                            SPC_EXC_PE_PAGE_HASHES_FLAG | 0x10000;
     ret = CryptSIPCreateIndirectData( &subject_info, &size, NULL );
     todo_wine
-    ok( ret, "Failed to get indirect data size, error %u\n", GetLastError() );
+    ok( ret, "Failed to get indirect data size, error %lu\n", GetLastError() );
 
     indirect_data = malloc( size );
     ret = CryptSIPCreateIndirectData( &subject_info, &size, indirect_data );
     todo_wine
-    ok( ret, "Failed to get indirect data, error %u\n", GetLastError() );
+    ok( ret, "Failed to get indirect data, error %lu\n", GetLastError() );
     if (ret)
     {
         memset( hash_buffer, 0, sizeof(hash_buffer) );
@@ -381,19 +381,19 @@ static void add_file_to_catalog( HANDLE catalog, const WCHAR *file )
 
         member = CryptCATPutMemberInfo( catalog, (WCHAR *)file, hash_buffer, &subject_guid,
                                         0, size, (BYTE *)indirect_data );
-        ok( !!member, "Failed to write member, error %u\n", GetLastError() );
+        ok( !!member, "Failed to write member, error %lu\n", GetLastError() );
 
         if (wcsrchr( file, '\\' )) filepart = wcsrchr( file, '\\' ) + 1;
 
         ret = !!CryptCATPutAttrInfo( catalog, member, (WCHAR *)L"File",
                                      CRYPTCAT_ATTR_NAMEASCII | CRYPTCAT_ATTR_DATAASCII | CRYPTCAT_ATTR_AUTHENTICATED,
                                      (wcslen( filepart ) + 1) * 2, (BYTE *)filepart );
-        ok( ret, "Failed to write attr, error %u\n", GetLastError() );
+        ok( ret, "Failed to write attr, error %lu\n", GetLastError() );
 
         ret = !!CryptCATPutAttrInfo( catalog, member, (WCHAR *)L"OSAttr",
                                      CRYPTCAT_ATTR_NAMEASCII | CRYPTCAT_ATTR_DATAASCII | CRYPTCAT_ATTR_AUTHENTICATED,
                                      sizeof(L"2:6.0"), (BYTE *)L"2:6.0" );
-        ok( ret, "Failed to write attr, error %u\n", GetLastError() );
+        ok( ret, "Failed to write attr, error %lu\n", GetLastError() );
     }
 }
 
@@ -407,9 +407,9 @@ static void unload_driver( SC_HANDLE service )
         BOOL ret;
         Sleep( 100 );
         ret = QueryServiceStatus( service, &status );
-        ok( ret, "QueryServiceStatus failed: %u\n", GetLastError() );
+        ok( ret, "QueryServiceStatus failed: %lu\n", GetLastError() );
     }
-    ok( status.dwCurrentState == SERVICE_STOPPED, "expected SERVICE_STOPPED, got %d\n", status.dwCurrentState );
+    ok( status.dwCurrentState == SERVICE_STOPPED, "expected SERVICE_STOPPED, got %lu\n", status.dwCurrentState );
 
     DeleteService( service );
     CloseServiceHandle( service );
@@ -427,35 +427,35 @@ void pnp_driver_stop(void)
     BOOL ret;
 
     set = SetupDiCreateDeviceInfoList( NULL, NULL );
-    ok( set != INVALID_HANDLE_VALUE, "failed to create device list, error %u\n", GetLastError() );
+    ok( set != INVALID_HANDLE_VALUE, "failed to create device list, error %lu\n", GetLastError() );
 
     ret = SetupDiOpenDeviceInfoW( set, L"root\\winetest\\0", NULL, 0, &device );
     if (!ret && GetLastError() == ERROR_NO_SUCH_DEVINST)
     {
         ret = SetupDiDestroyDeviceInfoList( set );
-        ok( ret, "failed to destroy set, error %u\n", GetLastError() );
+        ok( ret, "failed to destroy set, error %lu\n", GetLastError() );
         return;
     }
-    ok( ret, "failed to open device, error %u\n", GetLastError() );
+    ok( ret, "failed to open device, error %lu\n", GetLastError() );
 
     ret = SetupDiCallClassInstaller( DIF_REMOVE, set, &device );
-    ok( ret, "failed to remove device, error %u\n", GetLastError() );
+    ok( ret, "failed to remove device, error %lu\n", GetLastError() );
 
     file = CreateFileW( L"\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}", 0, 0,
                         NULL, OPEN_EXISTING, 0, NULL );
     ok( file == INVALID_HANDLE_VALUE, "expected failure\n" );
-    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "got error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "got error %lu\n", GetLastError() );
 
     ret = SetupDiDestroyDeviceInfoList( set );
-    ok( ret, "failed to destroy set, error %u\n", GetLastError() );
+    ok( ret, "failed to destroy set, error %lu\n", GetLastError() );
 
     /* Windows stops the service but does not delete it. */
     manager = OpenSCManagerW( NULL, NULL, SC_MANAGER_CONNECT );
-    ok( !!manager, "failed to open service manager, error %u\n", GetLastError() );
+    ok( !!manager, "failed to open service manager, error %lu\n", GetLastError() );
 
     service = OpenServiceW( manager, L"winetest", SERVICE_STOP | DELETE );
     if (service) unload_driver( service );
-    else ok( GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST, "got error %u\n", GetLastError() );
+    else ok( GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST, "got error %lu\n", GetLastError() );
 
     CloseServiceHandle( manager );
 
@@ -463,7 +463,7 @@ void pnp_driver_stop(void)
     do
     {
         ReadFile( okfile, buffer, sizeof(buffer), &size, NULL );
-        printf( "%.*s", size, buffer );
+        printf( "%.*s", (int)size, buffer );
     } while (size == sizeof(buffer));
     SetFilePointer( okfile, 0, NULL, FILE_BEGIN );
     SetEndOfFile( okfile );
@@ -473,19 +473,19 @@ void pnp_driver_stop(void)
 
     GetFullPathNameW( L"winetest.inf", ARRAY_SIZE(path), path, NULL );
     ret = SetupCopyOEMInfW( path, NULL, 0, 0, dest, ARRAY_SIZE(dest), NULL, &filepart );
-    ok( ret, "Failed to copy INF, error %u\n", GetLastError() );
+    ok( ret, "Failed to copy INF, error %lu\n", GetLastError() );
     ret = SetupUninstallOEMInfW( filepart, 0, NULL );
-    ok( ret, "Failed to uninstall INF, error %u\n", GetLastError() );
+    ok( ret, "Failed to uninstall INF, error %lu\n", GetLastError() );
 
     ret = DeleteFileW( L"winetest.cat" );
-    ok( ret, "Failed to delete file, error %u\n", GetLastError() );
+    ok( ret, "Failed to delete file, error %lu\n", GetLastError() );
     ret = DeleteFileW( L"winetest.inf" );
-    ok( ret, "Failed to delete file, error %u\n", GetLastError() );
+    ok( ret, "Failed to delete file, error %lu\n", GetLastError() );
     ret = DeleteFileW( L"winetest.sys" );
-    ok( ret, "Failed to delete file, error %u\n", GetLastError() );
+    ok( ret, "Failed to delete file, error %lu\n", GetLastError() );
     /* Windows 10 apparently deletes the image in SetupUninstallOEMInf(). */
     ret = DeleteFileW( L"C:/windows/system32/drivers/winetest.sys" );
-    ok( ret || GetLastError() == ERROR_FILE_NOT_FOUND, "Failed to delete file, error %u\n", GetLastError() );
+    ok( ret || GetLastError() == ERROR_FILE_NOT_FOUND, "Failed to delete file, error %lu\n", GetLastError() );
 }
 
 BOOL pnp_driver_start( const WCHAR *resource )
@@ -506,7 +506,7 @@ BOOL pnp_driver_start( const WCHAR *resource )
 
     load_resource( resource, filename );
     ret = MoveFileExW( filename, L"winetest.sys", MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING );
-    ok( ret, "failed to move file, error %u\n", GetLastError() );
+    ok( ret, "failed to move file, error %lu\n", GetLastError() );
 
     f = fopen( "winetest.inf", "w" );
     ok( !!f, "failed to open winetest.inf: %s\n", strerror( errno ) );
@@ -516,26 +516,26 @@ BOOL pnp_driver_start( const WCHAR *resource )
     /* Create the catalog file. */
 
     catalog = CryptCATOpen( (WCHAR *)L"winetest.cat", CRYPTCAT_OPEN_CREATENEW, 0, CRYPTCAT_VERSION_1, 0 );
-    ok( catalog != INVALID_HANDLE_VALUE, "Failed to create catalog, error %u\n", GetLastError() );
+    ok( catalog != INVALID_HANDLE_VALUE, "Failed to create catalog, error %lu\n", GetLastError() );
 
     add_file_to_catalog( catalog, L"winetest.sys" );
     add_file_to_catalog( catalog, L"winetest.inf" );
 
     ret = CryptCATPersistStore( catalog );
     todo_wine
-    ok( ret, "Failed to write catalog, error %u\n", GetLastError() );
+    ok( ret, "Failed to write catalog, error %lu\n", GetLastError() );
 
     ret = CryptCATClose( catalog );
-    ok( ret, "Failed to close catalog, error %u\n", GetLastError() );
+    ok( ret, "Failed to close catalog, error %lu\n", GetLastError() );
 
     if (!(cert = testsign_sign( L"winetest.cat" )))
     {
         ret = DeleteFileW( L"winetest.cat" );
-        ok( ret, "Failed to delete file, error %u\n", GetLastError() );
+        ok( ret, "Failed to delete file, error %lu\n", GetLastError() );
         ret = DeleteFileW( L"winetest.inf" );
-        ok( ret, "Failed to delete file, error %u\n", GetLastError() );
+        ok( ret, "Failed to delete file, error %lu\n", GetLastError() );
         ret = DeleteFileW( L"winetest.sys" );
-        ok( ret, "Failed to delete file, error %u\n", GetLastError() );
+        ok( ret, "Failed to delete file, error %lu\n", GetLastError() );
         winetest_mute_threshold = old_mute_threshold;
         return FALSE;
     }
@@ -543,35 +543,35 @@ BOOL pnp_driver_start( const WCHAR *resource )
     /* Install the driver. */
 
     set = SetupDiCreateDeviceInfoList( NULL, NULL );
-    ok( set != INVALID_HANDLE_VALUE, "failed to create device list, error %u\n", GetLastError() );
+    ok( set != INVALID_HANDLE_VALUE, "failed to create device list, error %lu\n", GetLastError() );
 
     ret = SetupDiCreateDeviceInfoW( set, L"root\\winetest\\0", &GUID_NULL, NULL, NULL, 0, &device );
-    ok( ret, "failed to create device, error %#x\n", GetLastError() );
+    ok( ret, "failed to create device, error %#lx\n", GetLastError() );
 
     ret = SetupDiSetDeviceRegistryPropertyW( set, &device, SPDRP_HARDWAREID, (const BYTE *)hardware_id,
                                              sizeof(hardware_id) );
-    ok( ret, "failed to create set hardware ID, error %u\n", GetLastError() );
+    ok( ret, "failed to create set hardware ID, error %lu\n", GetLastError() );
 
     ret = SetupDiCallClassInstaller( DIF_REGISTERDEVICE, set, &device );
-    ok( ret, "failed to register device, error %u\n", GetLastError() );
+    ok( ret, "failed to register device, error %lu\n", GetLastError() );
 
     ret = SetupDiDestroyDeviceInfoList( set );
-    ok( ret, "failed to destroy set, error %u\n", GetLastError() );
+    ok( ret, "failed to destroy set, error %lu\n", GetLastError() );
 
     GetFullPathNameW( L"winetest.inf", ARRAY_SIZE(path), path, NULL );
 
     ret = UpdateDriverForPlugAndPlayDevicesW( NULL, hardware_id, path, INSTALLFLAG_FORCE, &need_reboot );
-    ok( ret, "failed to install device, error %u\n", GetLastError() );
+    ok( ret, "failed to install device, error %lu\n", GetLastError() );
     ok( !need_reboot, "expected no reboot necessary\n" );
 
     testsign_cleanup( cert );
 
     /* Check that the service is created and started. */
     manager = OpenSCManagerW( NULL, NULL, SC_MANAGER_CONNECT );
-    ok( !!manager, "failed to open service manager, error %u\n", GetLastError() );
+    ok( !!manager, "failed to open service manager, error %lu\n", GetLastError() );
 
     service = OpenServiceW( manager, L"winetest", SERVICE_START );
-    ok( !!service, "failed to open service, error %u\n", GetLastError() );
+    ok( !!service, "failed to open service, error %lu\n", GetLastError() );
 
     ret = StartServiceW( service, 0, NULL );
     ok( !ret, "service didn't start automatically\n" );
@@ -579,7 +579,7 @@ BOOL pnp_driver_start( const WCHAR *resource )
     {
         /* If Secure Boot is enabled or the machine is 64-bit, it will reject an unsigned driver. */
         ok( GetLastError() == ERROR_DRIVER_BLOCKED || GetLastError() == ERROR_INVALID_IMAGE_HASH,
-            "unexpected error %u\n", GetLastError() );
+            "unexpected error %lu\n", GetLastError() );
         win_skip( "Failed to start service; probably your machine doesn't accept unsigned drivers.\n" );
     }
 
@@ -687,12 +687,12 @@ static inline void check_hidp_value_caps_( int line, HIDP_VALUE_CAPS *caps, cons
     check_member_( __FILE__, line, *caps, *exp, "%d", HasNull );
     check_member_( __FILE__, line, *caps, *exp, "%d", BitSize );
     check_member_( __FILE__, line, *caps, *exp, "%d", ReportCount );
-    check_member_( __FILE__, line, *caps, *exp, "%d", UnitsExp );
-    check_member_( __FILE__, line, *caps, *exp, "%d", Units );
-    check_member_( __FILE__, line, *caps, *exp, "%d", LogicalMin );
-    check_member_( __FILE__, line, *caps, *exp, "%d", LogicalMax );
-    check_member_( __FILE__, line, *caps, *exp, "%d", PhysicalMin );
-    check_member_( __FILE__, line, *caps, *exp, "%d", PhysicalMax );
+    check_member_( __FILE__, line, *caps, *exp, "%ld", UnitsExp );
+    check_member_( __FILE__, line, *caps, *exp, "%ld", Units );
+    check_member_( __FILE__, line, *caps, *exp, "%ld", LogicalMin );
+    check_member_( __FILE__, line, *caps, *exp, "%ld", LogicalMax );
+    check_member_( __FILE__, line, *caps, *exp, "%ld", PhysicalMin );
+    check_member_( __FILE__, line, *caps, *exp, "%ld", PhysicalMax );
 
     if (!caps->IsRange && !exp->IsRange)
     {
@@ -736,9 +736,9 @@ BOOL sync_ioctl_( const char *file, int line, HANDLE device, DWORD code, void *i
     if (!ret && GetLastError() == ERROR_IO_PENDING)
     {
         res = WaitForSingleObject( ovl.hEvent, timeout );
-        ok_(file, line)( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#x\n", res );
+        ok_(file, line)( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", res );
         ret = GetOverlappedResult( device, &ovl, &out_len, FALSE );
-        ok_(file, line)( ret, "GetOverlappedResult returned %u\n", GetLastError() );
+        ok_(file, line)( ret, "GetOverlappedResult returned %lu\n", GetLastError() );
     }
     CloseHandle( ovl.hEvent );
 
@@ -763,15 +763,15 @@ void set_hid_expect_( const char *file, int line, HANDLE device, struct hid_expe
 
     fill_context( line, context, ARRAY_SIZE(context) );
     ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_SET_CONTEXT, context, ARRAY_SIZE(context), NULL, 0, INFINITE );
-    ok_(file, line)( ret, "IOCTL_WINETEST_HID_SET_CONTEXT failed, last error %u\n", GetLastError() );
+    ok_(file, line)( ret, "IOCTL_WINETEST_HID_SET_CONTEXT failed, last error %lu\n", GetLastError() );
     ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_SET_EXPECT, expect, expect_size, NULL, 0, INFINITE );
-    ok_(file, line)( ret, "IOCTL_WINETEST_HID_SET_EXPECT failed, last error %u\n", GetLastError() );
+    ok_(file, line)( ret, "IOCTL_WINETEST_HID_SET_EXPECT failed, last error %lu\n", GetLastError() );
 }
 
 void wait_hid_expect_( const char *file, int line, HANDLE device, DWORD timeout )
 {
     BOOL ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_WAIT_EXPECT, NULL, 0, NULL, 0, timeout );
-    ok_(file, line)( ret, "IOCTL_WINETEST_HID_WAIT_EXPECT failed, last error %u\n", GetLastError() );
+    ok_(file, line)( ret, "IOCTL_WINETEST_HID_WAIT_EXPECT failed, last error %lu\n", GetLastError() );
 
     set_hid_expect_( file, line, device, NULL, 0 );
 }
@@ -783,9 +783,9 @@ void send_hid_input_( const char *file, int line, HANDLE device, struct hid_expe
 
     fill_context( line, context, ARRAY_SIZE(context) );
     ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_SET_CONTEXT, context, ARRAY_SIZE(context), NULL, 0, INFINITE );
-    ok_(file, line)( ret, "IOCTL_WINETEST_HID_SET_CONTEXT failed, last error %u\n", GetLastError() );
+    ok_(file, line)( ret, "IOCTL_WINETEST_HID_SET_CONTEXT failed, last error %lu\n", GetLastError() );
     ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_SEND_INPUT, expect, expect_size, NULL, 0, INFINITE );
-    ok_(file, line)( ret, "IOCTL_WINETEST_HID_SEND_INPUT failed, last error %u\n", GetLastError() );
+    ok_(file, line)( ret, "IOCTL_WINETEST_HID_SEND_INPUT failed, last error %lu\n", GetLastError() );
 }
 
 static void test_hidp_get_input( HANDLE file, int report_id, ULONG report_len, PHIDP_PREPARSED_DATA preparsed )
@@ -817,18 +817,18 @@ static void test_hidp_get_input( HANDLE file, int report_id, ULONG report_len, P
 
     memset( report, 0xcd, sizeof(report) );
     status = HidP_InitializeReportForID( HidP_Input, report_id, preparsed, report, report_len );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_InitializeReportForID returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_InitializeReportForID returned %#lx\n", status );
 
     SetLastError( 0xdeadbeef );
     ret = HidD_GetInputReport( file, report, 0 );
     ok( !ret, "HidD_GetInputReport succeeded\n" );
-    ok( GetLastError() == ERROR_INVALID_USER_BUFFER, "HidD_GetInputReport returned error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_INVALID_USER_BUFFER, "HidD_GetInputReport returned error %lu\n", GetLastError() );
 
     SetLastError( 0xdeadbeef );
     ret = HidD_GetInputReport( file, report, report_len - 1 );
     ok( !ret, "HidD_GetInputReport succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_PARAMETER || broken( GetLastError() == ERROR_CRC ),
-        "HidD_GetInputReport returned error %u\n", GetLastError() );
+        "HidD_GetInputReport returned error %lu\n", GetLastError() );
 
     if (!report_id)
     {
@@ -855,13 +855,13 @@ static void test_hidp_get_input( HANDLE file, int report_id, ULONG report_len, P
     ret = HidD_GetInputReport( file, buffer, report_len );
     if (report_id || broken( !ret ) /* w7u */)
     {
-        ok( !ret, "HidD_GetInputReport succeeded, last error %u\n", GetLastError() );
+        ok( !ret, "HidD_GetInputReport succeeded, last error %lu\n", GetLastError() );
         ok( GetLastError() == ERROR_INVALID_PARAMETER || broken( GetLastError() == ERROR_CRC ),
-            "HidD_GetInputReport returned error %u\n", GetLastError() );
+            "HidD_GetInputReport returned error %lu\n", GetLastError() );
     }
     else
     {
-        ok( ret, "HidD_GetInputReport failed, last error %u\n", GetLastError() );
+        ok( ret, "HidD_GetInputReport failed, last error %lu\n", GetLastError() );
         ok( buffer[0] == 0x5a, "got buffer[0] %x, expected 0x5a\n", (BYTE)buffer[0] );
     }
 
@@ -869,14 +869,14 @@ static void test_hidp_get_input( HANDLE file, int report_id, ULONG report_len, P
 
     SetLastError( 0xdeadbeef );
     ret = HidD_GetInputReport( file, report, report_len );
-    ok( ret, "HidD_GetInputReport failed, last error %u\n", GetLastError() );
+    ok( ret, "HidD_GetInputReport failed, last error %lu\n", GetLastError() );
     ok( report[0] == report_id, "got report[0] %02x, expected %02x\n", report[0], report_id );
 
     SetLastError( 0xdeadbeef );
     length = report_len * 2;
     ret = sync_ioctl( file, IOCTL_HID_GET_INPUT_REPORT, NULL, 0, report, &length, INFINITE );
-    ok( ret, "IOCTL_HID_GET_INPUT_REPORT failed, last error %u\n", GetLastError() );
-    ok( length == 3, "got length %u, expected 3\n", length );
+    ok( ret, "IOCTL_HID_GET_INPUT_REPORT failed, last error %lu\n", GetLastError() );
+    ok( length == 3, "got length %lu, expected 3\n", length );
     ok( report[0] == report_id, "got report[0] %02x, expected %02x\n", report[0], report_id );
 
     set_hid_expect( file, NULL, 0 );
@@ -911,18 +911,18 @@ static void test_hidp_get_feature( HANDLE file, int report_id, ULONG report_len,
 
     memset( report, 0xcd, sizeof(report) );
     status = HidP_InitializeReportForID( HidP_Feature, report_id, preparsed, report, report_len );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_InitializeReportForID returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_InitializeReportForID returned %#lx\n", status );
 
     SetLastError( 0xdeadbeef );
     ret = HidD_GetFeature( file, report, 0 );
     ok( !ret, "HidD_GetFeature succeeded\n" );
-    ok( GetLastError() == ERROR_INVALID_USER_BUFFER, "HidD_GetFeature returned error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_INVALID_USER_BUFFER, "HidD_GetFeature returned error %lu\n", GetLastError() );
 
     SetLastError( 0xdeadbeef );
     ret = HidD_GetFeature( file, report, report_len - 1 );
     ok( !ret, "HidD_GetFeature succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_PARAMETER || broken( GetLastError() == ERROR_CRC ),
-        "HidD_GetFeature returned error %u\n", GetLastError() );
+        "HidD_GetFeature returned error %lu\n", GetLastError() );
 
     if (!report_id)
     {
@@ -949,13 +949,13 @@ static void test_hidp_get_feature( HANDLE file, int report_id, ULONG report_len,
     ret = HidD_GetFeature( file, buffer, report_len );
     if (report_id || broken( !ret ))
     {
-        ok( !ret, "HidD_GetFeature succeeded, last error %u\n", GetLastError() );
+        ok( !ret, "HidD_GetFeature succeeded, last error %lu\n", GetLastError() );
         ok( GetLastError() == ERROR_INVALID_PARAMETER || broken( GetLastError() == ERROR_CRC ),
-            "HidD_GetFeature returned error %u\n", GetLastError() );
+            "HidD_GetFeature returned error %lu\n", GetLastError() );
     }
     else
     {
-        ok( ret, "HidD_GetFeature failed, last error %u\n", GetLastError() );
+        ok( ret, "HidD_GetFeature failed, last error %lu\n", GetLastError() );
         ok( buffer[0] == 0x5a, "got buffer[0] %x, expected 0x5a\n", (BYTE)buffer[0] );
     }
 
@@ -963,14 +963,14 @@ static void test_hidp_get_feature( HANDLE file, int report_id, ULONG report_len,
 
     SetLastError( 0xdeadbeef );
     ret = HidD_GetFeature( file, report, report_len );
-    ok( ret, "HidD_GetFeature failed, last error %u\n", GetLastError() );
+    ok( ret, "HidD_GetFeature failed, last error %lu\n", GetLastError() );
     ok( report[0] == report_id, "got report[0] %02x, expected %02x\n", report[0], report_id );
 
     length = report_len * 2;
     SetLastError( 0xdeadbeef );
     ret = sync_ioctl( file, IOCTL_HID_GET_FEATURE, NULL, 0, report, &length, INFINITE );
-    ok( ret, "IOCTL_HID_GET_FEATURE failed, last error %u\n", GetLastError() );
-    ok( length == 3, "got length %u, expected 3\n", length );
+    ok( ret, "IOCTL_HID_GET_FEATURE failed, last error %lu\n", GetLastError() );
+    ok( length == 3, "got length %lu, expected 3\n", length );
     ok( report[0] == report_id, "got report[0] %02x, expected %02x\n", report[0], report_id );
 
     set_hid_expect( file, NULL, 0 );
@@ -1009,18 +1009,18 @@ static void test_hidp_set_feature( HANDLE file, int report_id, ULONG report_len,
 
     memset( report, 0xcd, sizeof(report) );
     status = HidP_InitializeReportForID( HidP_Feature, report_id, preparsed, report, report_len );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_InitializeReportForID returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_InitializeReportForID returned %#lx\n", status );
 
     SetLastError( 0xdeadbeef );
     ret = HidD_SetFeature( file, report, 0 );
     ok( !ret, "HidD_SetFeature succeeded\n" );
-    ok( GetLastError() == ERROR_INVALID_USER_BUFFER, "HidD_SetFeature returned error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_INVALID_USER_BUFFER, "HidD_SetFeature returned error %lu\n", GetLastError() );
 
     SetLastError( 0xdeadbeef );
     ret = HidD_SetFeature( file, report, report_len - 1 );
     ok( !ret, "HidD_SetFeature succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_PARAMETER || broken( GetLastError() == ERROR_CRC ),
-        "HidD_SetFeature returned error %u\n", GetLastError() );
+        "HidD_SetFeature returned error %lu\n", GetLastError() );
 
     if (!report_id)
     {
@@ -1047,32 +1047,32 @@ static void test_hidp_set_feature( HANDLE file, int report_id, ULONG report_len,
     ret = HidD_SetFeature( file, buffer, report_len );
     if (report_id || broken( !ret ))
     {
-        ok( !ret, "HidD_SetFeature succeeded, last error %u\n", GetLastError() );
+        ok( !ret, "HidD_SetFeature succeeded, last error %lu\n", GetLastError() );
         ok( GetLastError() == ERROR_INVALID_PARAMETER || broken( GetLastError() == ERROR_CRC ),
-            "HidD_SetFeature returned error %u\n", GetLastError() );
+            "HidD_SetFeature returned error %lu\n", GetLastError() );
     }
     else
     {
-        ok( ret, "HidD_SetFeature failed, last error %u\n", GetLastError() );
+        ok( ret, "HidD_SetFeature failed, last error %lu\n", GetLastError() );
     }
 
     set_hid_expect( file, expect, sizeof(expect) );
 
     SetLastError( 0xdeadbeef );
     ret = HidD_SetFeature( file, report, report_len );
-    ok( ret, "HidD_SetFeature failed, last error %u\n", GetLastError() );
+    ok( ret, "HidD_SetFeature failed, last error %lu\n", GetLastError() );
 
     length = report_len * 2;
     SetLastError( 0xdeadbeef );
     ret = sync_ioctl( file, IOCTL_HID_SET_FEATURE, NULL, 0, report, &length, INFINITE );
     ok( !ret, "IOCTL_HID_SET_FEATURE succeeded\n" );
-    ok( GetLastError() == ERROR_INVALID_USER_BUFFER, "IOCTL_HID_SET_FEATURE returned error %u\n",
+    ok( GetLastError() == ERROR_INVALID_USER_BUFFER, "IOCTL_HID_SET_FEATURE returned error %lu\n",
         GetLastError() );
     length = 0;
     SetLastError( 0xdeadbeef );
     ret = sync_ioctl( file, IOCTL_HID_SET_FEATURE, report, report_len * 2, NULL, &length, INFINITE );
-    ok( ret, "IOCTL_HID_SET_FEATURE failed, last error %u\n", GetLastError() );
-    ok( length == 3, "got length %u, expected 3\n", length );
+    ok( ret, "IOCTL_HID_SET_FEATURE failed, last error %lu\n", GetLastError() );
+    ok( length == 3, "got length %lu, expected 3\n", length );
 
     set_hid_expect( file, NULL, 0 );
 }
@@ -1106,21 +1106,21 @@ static void test_hidp_set_output( HANDLE file, int report_id, ULONG report_len, 
 
     memset( report, 0xcd, sizeof(report) );
     status = HidP_InitializeReportForID( HidP_Output, report_id, preparsed, report, report_len );
-    ok( status == HIDP_STATUS_REPORT_DOES_NOT_EXIST, "HidP_InitializeReportForID returned %#x\n", status );
+    ok( status == HIDP_STATUS_REPORT_DOES_NOT_EXIST, "HidP_InitializeReportForID returned %#lx\n", status );
     memset( report, 0, report_len );
     report[0] = report_id;
 
     SetLastError( 0xdeadbeef );
     ret = HidD_SetOutputReport( file, report, 0 );
     ok( !ret, "HidD_SetOutputReport succeeded\n" );
-    ok( GetLastError() == ERROR_INVALID_USER_BUFFER, "HidD_SetOutputReport returned error %u\n",
+    ok( GetLastError() == ERROR_INVALID_USER_BUFFER, "HidD_SetOutputReport returned error %lu\n",
         GetLastError() );
 
     SetLastError( 0xdeadbeef );
     ret = HidD_SetOutputReport( file, report, report_len - 1 );
     ok( !ret, "HidD_SetOutputReport succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_PARAMETER || broken( GetLastError() == ERROR_CRC ),
-        "HidD_SetOutputReport returned error %u\n", GetLastError() );
+        "HidD_SetOutputReport returned error %lu\n", GetLastError() );
 
     if (!report_id)
     {
@@ -1142,32 +1142,32 @@ static void test_hidp_set_output( HANDLE file, int report_id, ULONG report_len, 
     ret = HidD_SetOutputReport( file, buffer, report_len );
     if (report_id || broken( !ret ))
     {
-        ok( !ret, "HidD_SetOutputReport succeeded, last error %u\n", GetLastError() );
+        ok( !ret, "HidD_SetOutputReport succeeded, last error %lu\n", GetLastError() );
         ok( GetLastError() == ERROR_INVALID_PARAMETER || broken( GetLastError() == ERROR_CRC ),
-            "HidD_SetOutputReport returned error %u\n", GetLastError() );
+            "HidD_SetOutputReport returned error %lu\n", GetLastError() );
     }
     else
     {
-        ok( ret, "HidD_SetOutputReport failed, last error %u\n", GetLastError() );
+        ok( ret, "HidD_SetOutputReport failed, last error %lu\n", GetLastError() );
     }
 
     set_hid_expect( file, expect, sizeof(expect) );
 
     SetLastError( 0xdeadbeef );
     ret = HidD_SetOutputReport( file, report, report_len );
-    ok( ret, "HidD_SetOutputReport failed, last error %u\n", GetLastError() );
+    ok( ret, "HidD_SetOutputReport failed, last error %lu\n", GetLastError() );
 
     length = report_len * 2;
     SetLastError( 0xdeadbeef );
     ret = sync_ioctl( file, IOCTL_HID_SET_OUTPUT_REPORT, NULL, 0, report, &length, INFINITE );
     ok( !ret, "IOCTL_HID_SET_OUTPUT_REPORT succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_USER_BUFFER,
-        "IOCTL_HID_SET_OUTPUT_REPORT returned error %u\n", GetLastError() );
+        "IOCTL_HID_SET_OUTPUT_REPORT returned error %lu\n", GetLastError() );
     length = 0;
     SetLastError( 0xdeadbeef );
     ret = sync_ioctl( file, IOCTL_HID_SET_OUTPUT_REPORT, report, report_len * 2, NULL, &length, INFINITE );
-    ok( ret, "IOCTL_HID_SET_OUTPUT_REPORT failed, last error %u\n", GetLastError() );
-    ok( length == 3, "got length %u, expected 3\n", length );
+    ok( ret, "IOCTL_HID_SET_OUTPUT_REPORT failed, last error %lu\n", GetLastError() );
+    ok( length == 3, "got length %lu, expected 3\n", length );
 
     set_hid_expect( file, NULL, 0 );
 }
@@ -1191,14 +1191,14 @@ static void test_write_file( HANDLE file, int report_id, ULONG report_len )
     SetLastError( 0xdeadbeef );
     ret = WriteFile( file, report, 0, &length, NULL );
     ok( !ret, "WriteFile succeeded\n" );
-    ok( GetLastError() == ERROR_INVALID_USER_BUFFER, "WriteFile returned error %u\n", GetLastError() );
-    ok( length == 0, "WriteFile returned %x\n", length );
+    ok( GetLastError() == ERROR_INVALID_USER_BUFFER, "WriteFile returned error %lu\n", GetLastError() );
+    ok( length == 0, "WriteFile returned %#lx\n", length );
     SetLastError( 0xdeadbeef );
     ret = WriteFile( file, report, report_len - 1, &length, NULL );
     ok( !ret, "WriteFile succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == ERROR_INVALID_USER_BUFFER,
-        "WriteFile returned error %u\n", GetLastError() );
-    ok( length == 0, "WriteFile returned %x\n", length );
+        "WriteFile returned error %lu\n", GetLastError() );
+    ok( length == 0, "WriteFile returned %#lx\n", length );
 
     set_hid_expect( file, &expect, sizeof(expect) );
 
@@ -1209,8 +1209,8 @@ static void test_write_file( HANDLE file, int report_id, ULONG report_len )
     if (report_id || broken( !ret ) /* w7u */)
     {
         ok( !ret, "WriteFile succeeded\n" );
-        ok( GetLastError() == ERROR_INVALID_PARAMETER, "WriteFile returned error %u\n", GetLastError() );
-        ok( length == 0, "WriteFile wrote %u\n", length );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "WriteFile returned error %lu\n", GetLastError() );
+        ok( length == 0, "WriteFile wrote %lu\n", length );
         SetLastError( 0xdeadbeef );
         report[0] = report_id;
         ret = WriteFile( file, report, report_len, &length, NULL );
@@ -1218,13 +1218,13 @@ static void test_write_file( HANDLE file, int report_id, ULONG report_len )
 
     if (report_id)
     {
-        ok( ret, "WriteFile failed, last error %u\n", GetLastError() );
-        ok( length == 2, "WriteFile wrote %u\n", length );
+        ok( ret, "WriteFile failed, last error %lu\n", GetLastError() );
+        ok( length == 2, "WriteFile wrote %lu\n", length );
     }
     else
     {
-        ok( ret, "WriteFile failed, last error %u\n", GetLastError() );
-        ok( length == 3, "WriteFile wrote %u\n", length );
+        ok( ret, "WriteFile failed, last error %lu\n", GetLastError() );
+        ok( length == 3, "WriteFile wrote %lu\n", length );
     }
 
     set_hid_expect( file, NULL, 0 );
@@ -1408,27 +1408,27 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
     BOOL ret;
 
     ret = HidD_GetPreparsedData( file, &preparsed_data );
-    ok( ret, "HidD_GetPreparsedData failed with error %u\n", GetLastError() );
+    ok( ret, "HidD_GetPreparsedData failed with error %lu\n", GetLastError() );
 
     memset( buffer, 0, sizeof(buffer) );
     status = HidP_GetCaps( (PHIDP_PREPARSED_DATA)buffer, &caps );
-    ok( status == HIDP_STATUS_INVALID_PREPARSED_DATA, "HidP_GetCaps returned %#x\n", status );
+    ok( status == HIDP_STATUS_INVALID_PREPARSED_DATA, "HidP_GetCaps returned %#lx\n", status );
     status = HidP_GetCaps( preparsed_data, &caps );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetCaps returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetCaps returned %#lx\n", status );
     check_hidp_caps( &caps, expect_caps );
 
     collection_count = 0;
     status = HidP_GetLinkCollectionNodes( collections, &collection_count, preparsed_data );
-    ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetLinkCollectionNodes returned %#x\n", status );
+    ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetLinkCollectionNodes returned %#lx\n", status );
     ok( collection_count == caps.NumberLinkCollectionNodes,
-        "got %d collection nodes, expected %d\n", collection_count, caps.NumberLinkCollectionNodes );
+        "got %ld collection nodes, expected %d\n", collection_count, caps.NumberLinkCollectionNodes );
     collection_count = ARRAY_SIZE(collections);
     status = HidP_GetLinkCollectionNodes( collections, &collection_count, (PHIDP_PREPARSED_DATA)buffer );
-    ok( status == HIDP_STATUS_INVALID_PREPARSED_DATA, "HidP_GetLinkCollectionNodes returned %#x\n", status );
+    ok( status == HIDP_STATUS_INVALID_PREPARSED_DATA, "HidP_GetLinkCollectionNodes returned %#lx\n", status );
     status = HidP_GetLinkCollectionNodes( collections, &collection_count, preparsed_data );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetLinkCollectionNodes returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetLinkCollectionNodes returned %#lx\n", status );
     ok( collection_count == caps.NumberLinkCollectionNodes,
-        "got %d collection nodes, expected %d\n", collection_count, caps.NumberLinkCollectionNodes );
+        "got %ld collection nodes, expected %d\n", collection_count, caps.NumberLinkCollectionNodes );
 
     for (i = 0; i < ARRAY_SIZE(expect_collections); ++i)
     {
@@ -1439,20 +1439,20 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
 
     count = ARRAY_SIZE(button_caps);
     status = HidP_GetButtonCaps( HidP_Output, button_caps, &count, preparsed_data );
-    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetButtonCaps returned %#x\n", status );
+    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetButtonCaps returned %#lx\n", status );
     status = HidP_GetButtonCaps( HidP_Feature + 1, button_caps, &count, preparsed_data );
-    ok( status == HIDP_STATUS_INVALID_REPORT_TYPE, "HidP_GetButtonCaps returned %#x\n", status );
+    ok( status == HIDP_STATUS_INVALID_REPORT_TYPE, "HidP_GetButtonCaps returned %#lx\n", status );
     count = 0;
     status = HidP_GetButtonCaps( HidP_Input, button_caps, &count, preparsed_data );
-    ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetButtonCaps returned %#x\n", status );
+    ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetButtonCaps returned %#lx\n", status );
     ok( count == caps.NumberInputButtonCaps, "HidP_GetButtonCaps returned count %d, expected %d\n",
         count, caps.NumberInputButtonCaps );
     count = ARRAY_SIZE(button_caps);
     status = HidP_GetButtonCaps( HidP_Input, button_caps, &count, (PHIDP_PREPARSED_DATA)buffer );
-    ok( status == HIDP_STATUS_INVALID_PREPARSED_DATA, "HidP_GetButtonCaps returned %#x\n", status );
+    ok( status == HIDP_STATUS_INVALID_PREPARSED_DATA, "HidP_GetButtonCaps returned %#lx\n", status );
     memset( button_caps, 0, sizeof(button_caps) );
     status = HidP_GetButtonCaps( HidP_Input, button_caps, &count, preparsed_data );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetButtonCaps returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetButtonCaps returned %#lx\n", status );
     ok( count == caps.NumberInputButtonCaps, "HidP_GetButtonCaps returned count %d, expected %d\n",
         count, caps.NumberInputButtonCaps );
 
@@ -1465,58 +1465,58 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
 
     count = ARRAY_SIZE(button_caps) - 1;
     status = HidP_GetSpecificButtonCaps( HidP_Output, 0, 0, 0, button_caps, &count, preparsed_data );
-    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetSpecificButtonCaps returned %#x\n", status );
+    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetSpecificButtonCaps returned %#lx\n", status );
     status = HidP_GetSpecificButtonCaps( HidP_Feature + 1, 0, 0, 0, button_caps, &count, preparsed_data );
-    ok( status == HIDP_STATUS_INVALID_REPORT_TYPE, "HidP_GetSpecificButtonCaps returned %#x\n", status );
+    ok( status == HIDP_STATUS_INVALID_REPORT_TYPE, "HidP_GetSpecificButtonCaps returned %#lx\n", status );
     count = 0;
     status = HidP_GetSpecificButtonCaps( HidP_Input, 0, 0, 0, button_caps, &count, preparsed_data );
-    ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetSpecificButtonCaps returned %#x\n", status );
+    ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetSpecificButtonCaps returned %#lx\n", status );
     ok( count == caps.NumberInputButtonCaps, "HidP_GetSpecificButtonCaps returned count %d, expected %d\n",
         count, caps.NumberInputButtonCaps );
     count = ARRAY_SIZE(button_caps) - 1;
     status = HidP_GetSpecificButtonCaps( HidP_Input, 0, 0, 0, button_caps, &count, (PHIDP_PREPARSED_DATA)buffer );
-    ok( status == HIDP_STATUS_INVALID_PREPARSED_DATA, "HidP_GetSpecificButtonCaps returned %#x\n", status );
+    ok( status == HIDP_STATUS_INVALID_PREPARSED_DATA, "HidP_GetSpecificButtonCaps returned %#lx\n", status );
 
     status = HidP_GetSpecificButtonCaps( HidP_Input, 0, 0, 0, button_caps + 1, &count, preparsed_data );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetSpecificButtonCaps returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetSpecificButtonCaps returned %#lx\n", status );
     ok( count == caps.NumberInputButtonCaps, "HidP_GetSpecificButtonCaps returned count %d, expected %d\n",
         count, caps.NumberInputButtonCaps );
     check_hidp_button_caps( &button_caps[1], &button_caps[0] );
 
     status = HidP_GetSpecificButtonCaps( HidP_Input, HID_USAGE_PAGE_BUTTON, 0, 5, button_caps + 1,
                                          &count, preparsed_data );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetSpecificButtonCaps returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetSpecificButtonCaps returned %#lx\n", status );
     ok( count == 1, "HidP_GetSpecificButtonCaps returned count %d, expected %d\n", count, 1 );
     check_hidp_button_caps( &button_caps[1], &button_caps[0] );
 
     count = 0xbeef;
     status = HidP_GetSpecificButtonCaps( HidP_Input, 0xfffe, 0, 0, button_caps, &count, preparsed_data );
-    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetSpecificButtonCaps returned %#x\n", status );
+    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetSpecificButtonCaps returned %#lx\n", status );
     ok( count == 0, "HidP_GetSpecificButtonCaps returned count %d, expected %d\n", count, 0 );
     count = 0xbeef;
     status = HidP_GetSpecificButtonCaps( HidP_Input, 0, 0xfffe, 0, button_caps, &count, preparsed_data );
-    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetSpecificButtonCaps returned %#x\n", status );
+    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetSpecificButtonCaps returned %#lx\n", status );
     ok( count == 0, "HidP_GetSpecificButtonCaps returned count %d, expected %d\n", count, 0 );
     count = 0xbeef;
     status = HidP_GetSpecificButtonCaps( HidP_Input, 0, 0, 0xfffe, button_caps, &count, preparsed_data );
-    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetSpecificButtonCaps returned %#x\n", status );
+    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetSpecificButtonCaps returned %#lx\n", status );
     ok( count == 0, "HidP_GetSpecificButtonCaps returned count %d, expected %d\n", count, 0 );
 
     count = ARRAY_SIZE(value_caps);
     status = HidP_GetValueCaps( HidP_Output, value_caps, &count, preparsed_data );
-    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetValueCaps returned %#x\n", status );
+    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetValueCaps returned %#lx\n", status );
     status = HidP_GetValueCaps( HidP_Feature + 1, value_caps, &count, preparsed_data );
-    ok( status == HIDP_STATUS_INVALID_REPORT_TYPE, "HidP_GetValueCaps returned %#x\n", status );
+    ok( status == HIDP_STATUS_INVALID_REPORT_TYPE, "HidP_GetValueCaps returned %#lx\n", status );
     count = 0;
     status = HidP_GetValueCaps( HidP_Input, value_caps, &count, preparsed_data );
-    ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetValueCaps returned %#x\n", status );
+    ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetValueCaps returned %#lx\n", status );
     ok( count == caps.NumberInputValueCaps, "HidP_GetValueCaps returned count %d, expected %d\n",
         count, caps.NumberInputValueCaps );
     count = ARRAY_SIZE(value_caps);
     status = HidP_GetValueCaps( HidP_Input, value_caps, &count, (PHIDP_PREPARSED_DATA)buffer );
-    ok( status == HIDP_STATUS_INVALID_PREPARSED_DATA, "HidP_GetValueCaps returned %#x\n", status );
+    ok( status == HIDP_STATUS_INVALID_PREPARSED_DATA, "HidP_GetValueCaps returned %#lx\n", status );
     status = HidP_GetValueCaps( HidP_Input, value_caps, &count, preparsed_data );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetValueCaps returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetValueCaps returned %#lx\n", status );
     ok( count == caps.NumberInputValueCaps, "HidP_GetValueCaps returned count %d, expected %d\n",
         count, caps.NumberInputValueCaps );
 
@@ -1529,20 +1529,20 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
 
     count = ARRAY_SIZE(value_caps) - 4;
     status = HidP_GetSpecificValueCaps( HidP_Output, 0, 0, 0, value_caps, &count, preparsed_data );
-    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetSpecificValueCaps returned %#x\n", status );
+    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetSpecificValueCaps returned %#lx\n", status );
     status = HidP_GetSpecificValueCaps( HidP_Feature + 1, 0, 0, 0, value_caps, &count, preparsed_data );
-    ok( status == HIDP_STATUS_INVALID_REPORT_TYPE, "HidP_GetSpecificValueCaps returned %#x\n", status );
+    ok( status == HIDP_STATUS_INVALID_REPORT_TYPE, "HidP_GetSpecificValueCaps returned %#lx\n", status );
     count = 0;
     status = HidP_GetSpecificValueCaps( HidP_Input, 0, 0, 0, value_caps, &count, preparsed_data );
-    ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetSpecificValueCaps returned %#x\n", status );
+    ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetSpecificValueCaps returned %#lx\n", status );
     ok( count == caps.NumberInputValueCaps, "HidP_GetSpecificValueCaps returned count %d, expected %d\n",
         count, caps.NumberInputValueCaps );
     count = ARRAY_SIZE(value_caps) - 4;
     status = HidP_GetSpecificValueCaps( HidP_Input, 0, 0, 0, value_caps + 4, &count, (PHIDP_PREPARSED_DATA)buffer );
-    ok( status == HIDP_STATUS_INVALID_PREPARSED_DATA, "HidP_GetSpecificValueCaps returned %#x\n", status );
+    ok( status == HIDP_STATUS_INVALID_PREPARSED_DATA, "HidP_GetSpecificValueCaps returned %#lx\n", status );
 
     status = HidP_GetSpecificValueCaps( HidP_Input, 0, 0, 0, value_caps + 4, &count, preparsed_data );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetSpecificValueCaps returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetSpecificValueCaps returned %#lx\n", status );
     ok( count == caps.NumberInputValueCaps, "HidP_GetSpecificValueCaps returned count %d, expected %d\n",
         count, caps.NumberInputValueCaps );
     check_hidp_value_caps( &value_caps[4], &value_caps[0] );
@@ -1553,38 +1553,38 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
     count = 1;
     status = HidP_GetSpecificValueCaps( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_HATSWITCH,
                                         value_caps + 4, &count, preparsed_data );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetSpecificValueCaps returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetSpecificValueCaps returned %#lx\n", status );
     ok( count == 1, "HidP_GetSpecificValueCaps returned count %d, expected %d\n", count, 1 );
     check_hidp_value_caps( &value_caps[4], &value_caps[3] );
 
     count = 0xdead;
     status = HidP_GetSpecificValueCaps( HidP_Input, 0xfffe, 0, 0, value_caps, &count, preparsed_data );
-    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetSpecificValueCaps returned %#x\n", status );
+    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetSpecificValueCaps returned %#lx\n", status );
     ok( count == 0, "HidP_GetSpecificValueCaps returned count %d, expected %d\n", count, 0 );
     count = 0xdead;
     status = HidP_GetSpecificValueCaps( HidP_Input, 0, 0xfffe, 0, value_caps, &count, preparsed_data );
-    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetSpecificValueCaps returned %#x\n", status );
+    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetSpecificValueCaps returned %#lx\n", status );
     ok( count == 0, "HidP_GetSpecificValueCaps returned count %d, expected %d\n", count, 0 );
     count = 0xdead;
     status = HidP_GetSpecificValueCaps( HidP_Input, 0, 0, 0xfffe, value_caps, &count, preparsed_data );
-    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetSpecificValueCaps returned %#x\n", status );
+    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetSpecificValueCaps returned %#lx\n", status );
     ok( count == 0, "HidP_GetSpecificValueCaps returned count %d, expected %d\n", count, 0 );
 
     status = HidP_InitializeReportForID( HidP_Input, 0, (PHIDP_PREPARSED_DATA)buffer, report, sizeof(report) );
-    ok( status == HIDP_STATUS_INVALID_PREPARSED_DATA, "HidP_InitializeReportForID returned %#x\n", status );
+    ok( status == HIDP_STATUS_INVALID_PREPARSED_DATA, "HidP_InitializeReportForID returned %#lx\n", status );
     status = HidP_InitializeReportForID( HidP_Feature + 1, 0, preparsed_data, report, sizeof(report) );
-    ok( status == HIDP_STATUS_INVALID_REPORT_TYPE, "HidP_InitializeReportForID returned %#x\n", status );
+    ok( status == HIDP_STATUS_INVALID_REPORT_TYPE, "HidP_InitializeReportForID returned %#lx\n", status );
     status = HidP_InitializeReportForID( HidP_Input, 0, preparsed_data, report, sizeof(report) );
-    ok( status == HIDP_STATUS_INVALID_REPORT_LENGTH, "HidP_InitializeReportForID returned %#x\n", status );
+    ok( status == HIDP_STATUS_INVALID_REPORT_LENGTH, "HidP_InitializeReportForID returned %#lx\n", status );
     status = HidP_InitializeReportForID( HidP_Input, 0, preparsed_data, report, caps.InputReportByteLength + 1 );
-    ok( status == HIDP_STATUS_INVALID_REPORT_LENGTH, "HidP_InitializeReportForID returned %#x\n", status );
+    ok( status == HIDP_STATUS_INVALID_REPORT_LENGTH, "HidP_InitializeReportForID returned %#lx\n", status );
     status = HidP_InitializeReportForID( HidP_Input, 1 - report_id, preparsed_data, report,
                                          caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_REPORT_DOES_NOT_EXIST, "HidP_InitializeReportForID returned %#x\n", status );
+    ok( status == HIDP_STATUS_REPORT_DOES_NOT_EXIST, "HidP_InitializeReportForID returned %#lx\n", status );
 
     memset( report, 0xcd, sizeof(report) );
     status = HidP_InitializeReportForID( HidP_Input, report_id, preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_InitializeReportForID returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_InitializeReportForID returned %#lx\n", status );
 
     memset( buffer, 0xcd, sizeof(buffer) );
     memset( buffer, 0, caps.InputReportByteLength );
@@ -1593,167 +1593,167 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
 
     status = HidP_SetUsageValueArray( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X, buffer,
                                       sizeof(buffer), preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_NOT_VALUE_ARRAY, "HidP_SetUsageValueArray returned %#x\n", status );
+    ok( status == HIDP_STATUS_NOT_VALUE_ARRAY, "HidP_SetUsageValueArray returned %#lx\n", status );
     memset( buffer, 0xcd, sizeof(buffer) );
     status = HidP_SetUsageValueArray( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_HATSWITCH,
                                       buffer, 0, preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_SetUsageValueArray returned %#x\n", status );
+    ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_SetUsageValueArray returned %#lx\n", status );
     status = HidP_SetUsageValueArray( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_HATSWITCH,
                                       buffer, 8, preparsed_data, report, caps.InputReportByteLength );
     todo_wine
-    ok( status == HIDP_STATUS_NOT_IMPLEMENTED, "HidP_SetUsageValueArray returned %#x\n", status );
+    ok( status == HIDP_STATUS_NOT_IMPLEMENTED, "HidP_SetUsageValueArray returned %#lx\n", status );
 
     status = HidP_GetUsageValueArray( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X, buffer,
                                       sizeof(buffer), preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_NOT_VALUE_ARRAY, "HidP_GetUsageValueArray returned %#x\n", status );
+    ok( status == HIDP_STATUS_NOT_VALUE_ARRAY, "HidP_GetUsageValueArray returned %#lx\n", status );
     memset( buffer, 0xcd, sizeof(buffer) );
     status = HidP_GetUsageValueArray( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_HATSWITCH,
                                       buffer, 0, preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetUsageValueArray returned %#x\n", status );
+    ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetUsageValueArray returned %#lx\n", status );
     status = HidP_GetUsageValueArray( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_HATSWITCH,
                                       buffer, 8, preparsed_data, report, caps.InputReportByteLength );
     todo_wine
-    ok( status == HIDP_STATUS_NOT_IMPLEMENTED, "HidP_GetUsageValueArray returned %#x\n", status );
+    ok( status == HIDP_STATUS_NOT_IMPLEMENTED, "HidP_GetUsageValueArray returned %#lx\n", status );
 
     value = -128;
     status = HidP_SetUsageValue( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X, value,
                                  preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#lx\n", status );
     value = 0xdeadbeef;
     status = HidP_GetUsageValue( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X, &value,
                                  preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#x\n", status );
-    ok( value == 0x80, "got value %x, expected %#x\n", value, 0x80 );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#lx\n", status );
+    ok( value == 0x80, "got value %#lx, expected %#x\n", value, 0x80 );
     value = 0xdeadbeef;
     status = HidP_GetScaledUsageValue( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X,
                                        (LONG *)&value, preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetScaledUsageValue returned %#x\n", status );
-    ok( value == -128, "got value %x, expected %#x\n", value, -128 );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetScaledUsageValue returned %#lx\n", status );
+    ok( value == -128, "got value %#lx, expected %#x\n", value, -128 );
 
     value = 127;
     status = HidP_SetUsageValue( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X, value,
                                  preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#lx\n", status );
     value = 0xdeadbeef;
     status = HidP_GetScaledUsageValue( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X,
                                        (LONG *)&value, preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetScaledUsageValue returned %#x\n", status );
-    ok( value == 127, "got value %x, expected %#x\n", value, 127 );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetScaledUsageValue returned %#lx\n", status );
+    ok( value == 127, "got value %#lx, expected %#x\n", value, 127 );
 
     value = 0;
     status = HidP_SetUsageValue( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X, value,
                                  preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#lx\n", status );
     value = 0xdeadbeef;
     status = HidP_GetScaledUsageValue( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X,
                                        (LONG *)&value, preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetScaledUsageValue returned %#x\n", status );
-    ok( value == 0, "got value %x, expected %#x\n", value, 0 );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetScaledUsageValue returned %#lx\n", status );
+    ok( value == 0, "got value %#lx, expected %#x\n", value, 0 );
 
     value = 0x7fffffff;
     status = HidP_SetUsageValue( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z, value,
                                  preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#lx\n", status );
     value = 0xdeadbeef;
     status = HidP_GetScaledUsageValue( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
                                        (LONG *)&value, preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_VALUE_OUT_OF_RANGE, "HidP_GetScaledUsageValue returned %#x\n", status );
-    ok( value == 0, "got value %x, expected %#x\n", value, 0 );
+    ok( status == HIDP_STATUS_VALUE_OUT_OF_RANGE, "HidP_GetScaledUsageValue returned %#lx\n", status );
+    ok( value == 0, "got value %#lx, expected %#x\n", value, 0 );
     value = 0xdeadbeef;
     status = HidP_GetUsageValue( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z, &value,
                                  preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#x\n", status );
-    ok( value == 0x7fffffff, "got value %x, expected %#x\n", value, 0x7fffffff );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#lx\n", status );
+    ok( value == 0x7fffffff, "got value %#lx, expected %#x\n", value, 0x7fffffff );
 
     value = 0x3fffffff;
     status = HidP_SetUsageValue( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z, value,
                                  preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#lx\n", status );
     value = 0xdeadbeef;
     status = HidP_GetScaledUsageValue( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
                                        (LONG *)&value, preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetScaledUsageValue returned %#x\n", status );
-    ok( value == 0x7fffffff, "got value %x, expected %#x\n", value, 0x7fffffff );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetScaledUsageValue returned %#lx\n", status );
+    ok( value == 0x7fffffff, "got value %#lx, expected %#x\n", value, 0x7fffffff );
 
     value = 0;
     status = HidP_SetUsageValue( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z, value,
                                  preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#lx\n", status );
     value = 0xdeadbeef;
     status = HidP_GetScaledUsageValue( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
                                        (LONG *)&value, preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetScaledUsageValue returned %#x\n", status );
-    ok( value == 0x80000000, "got value %x, expected %#x\n", value, 0x80000000 );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetScaledUsageValue returned %#lx\n", status );
+    ok( value == 0x80000000, "got value %#lx, expected %#x\n", value, 0x80000000 );
 
     value = 0;
     status = HidP_SetUsageValue( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RX, value,
                                  preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#lx\n", status );
     value = 0xdeadbeef;
     status = HidP_GetScaledUsageValue( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RX,
                                        (LONG *)&value, preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetScaledUsageValue returned %#x\n", status );
-    ok( value == 0, "got value %x, expected %#x\n", value, 0 );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetScaledUsageValue returned %#lx\n", status );
+    ok( value == 0, "got value %#lx, expected %#x\n", value, 0 );
 
     value = 0xfeedcafe;
     status = HidP_SetUsageValue( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RY, value,
                                  preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#lx\n", status );
     value = 0xdeadbeef;
     status = HidP_GetScaledUsageValue( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RY,
                                        (LONG *)&value, preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_BAD_LOG_PHY_VALUES, "HidP_GetScaledUsageValue returned %#x\n", status );
-    ok( value == 0, "got value %x, expected %#x\n", value, 0 );
+    ok( status == HIDP_STATUS_BAD_LOG_PHY_VALUES, "HidP_GetScaledUsageValue returned %#lx\n", status );
+    ok( value == 0, "got value %#lx, expected %#x\n", value, 0 );
     status = HidP_SetScaledUsageValue( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RY,
                                        0, preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_BAD_LOG_PHY_VALUES, "HidP_GetScaledUsageValue returned %#x\n", status );
+    ok( status == HIDP_STATUS_BAD_LOG_PHY_VALUES, "HidP_GetScaledUsageValue returned %#lx\n", status );
 
     value = HidP_MaxUsageListLength( HidP_Feature + 1, 0, preparsed_data );
-    ok( value == 0, "HidP_MaxUsageListLength(HidP_Feature + 1, 0) returned %d, expected %d\n", value, 0 );
+    ok( value == 0, "HidP_MaxUsageListLength(HidP_Feature + 1, 0) returned %ld, expected %d\n", value, 0 );
     value = HidP_MaxUsageListLength( HidP_Input, 0, preparsed_data );
-    ok( value == 50, "HidP_MaxUsageListLength(HidP_Input, 0) returned %d, expected %d\n", value, 50 );
+    ok( value == 50, "HidP_MaxUsageListLength(HidP_Input, 0) returned %ld, expected %d\n", value, 50 );
     value = HidP_MaxUsageListLength( HidP_Input, HID_USAGE_PAGE_BUTTON, preparsed_data );
-    ok( value == 32, "HidP_MaxUsageListLength(HidP_Input, HID_USAGE_PAGE_BUTTON) returned %d, expected %d\n",
+    ok( value == 32, "HidP_MaxUsageListLength(HidP_Input, HID_USAGE_PAGE_BUTTON) returned %ld, expected %d\n",
         value, 32 );
     value = HidP_MaxUsageListLength( HidP_Input, HID_USAGE_PAGE_LED, preparsed_data );
-    ok( value == 8, "HidP_MaxUsageListLength(HidP_Input, HID_USAGE_PAGE_LED) returned %d, expected %d\n",
+    ok( value == 8, "HidP_MaxUsageListLength(HidP_Input, HID_USAGE_PAGE_LED) returned %ld, expected %d\n",
         value, 8 );
     value = HidP_MaxUsageListLength( HidP_Feature, HID_USAGE_PAGE_BUTTON, preparsed_data );
-    ok( value == 8, "HidP_MaxUsageListLength(HidP_Feature, HID_USAGE_PAGE_BUTTON) returned %d, expected %d\n",
+    ok( value == 8, "HidP_MaxUsageListLength(HidP_Feature, HID_USAGE_PAGE_BUTTON) returned %ld, expected %d\n",
         value, 8 );
     value = HidP_MaxUsageListLength( HidP_Feature, HID_USAGE_PAGE_LED, preparsed_data );
-    ok( value == 0, "HidP_MaxUsageListLength(HidP_Feature, HID_USAGE_PAGE_LED) returned %d, expected %d\n",
+    ok( value == 0, "HidP_MaxUsageListLength(HidP_Feature, HID_USAGE_PAGE_LED) returned %ld, expected %d\n",
         value, 0 );
 
     usages[0] = 0xff;
     value = 1;
     status = HidP_SetUsages( HidP_Input, HID_USAGE_PAGE_BUTTON, 0, usages, &value, preparsed_data,
                              report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_SetUsages returned %#x\n", status );
+    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_SetUsages returned %#lx\n", status );
     usages[1] = 2;
     usages[2] = 0xff;
     value = 3;
     status = HidP_SetUsages( HidP_Input, HID_USAGE_PAGE_BUTTON, 0, usages, &value, preparsed_data,
                              report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_SetUsages returned %#x\n", status );
+    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_SetUsages returned %#lx\n", status );
     usages[0] = 4;
     usages[1] = 6;
     value = 2;
     status = HidP_SetUsages( HidP_Input, HID_USAGE_PAGE_BUTTON, 0, usages, &value, preparsed_data,
                              report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsages returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsages returned %#lx\n", status );
     usages[0] = 4;
     usages[1] = 6;
     value = 2;
     status = HidP_SetUsages( HidP_Input, HID_USAGE_PAGE_LED, 0, usages, &value, preparsed_data,
                              report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsages returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsages returned %#lx\n", status );
 
     value = ARRAY_SIZE(usages);
     status = HidP_GetUsages( HidP_Input, HID_USAGE_PAGE_KEYBOARD, 0, usages, &value, preparsed_data,
                              report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsages returned %#x\n", status );
-    ok( value == 0, "got usage count %d, expected %d\n", value, 2 );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsages returned %#lx\n", status );
+    ok( value == 0, "got usage count %ld, expected %d\n", value, 2 );
 
     usages[0] = 0x9;
     usages[1] = 0xb;
@@ -1764,32 +1764,32 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
     memcpy( buffer, report, caps.InputReportByteLength );
     status = HidP_SetUsages( HidP_Input, HID_USAGE_PAGE_KEYBOARD, 0, usages, &value, preparsed_data,
                              report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_SetUsages returned %#x\n", status );
+    ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_SetUsages returned %#lx\n", status );
     buffer[13] = 2;
     buffer[14] = 4;
     ok( !memcmp( buffer, report, caps.InputReportByteLength ), "unexpected report data\n" );
 
     status = HidP_SetUsageValue( HidP_Input, HID_USAGE_PAGE_LED, 0, 6, 1, preparsed_data, report,
                                  caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_SetUsageValue returned %#x\n", status );
+    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_SetUsageValue returned %#lx\n", status );
 
     value = 0xdeadbeef;
     status = HidP_GetUsageValue( HidP_Input, HID_USAGE_PAGE_LED, 0, 6, &value, preparsed_data,
                                  report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_SetUsageValue returned %#x\n", status );
-    ok( value == 0xdeadbeef, "got value %x, expected %#x\n", value, 0xdeadbeef );
+    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_SetUsageValue returned %#lx\n", status );
+    ok( value == 0xdeadbeef, "got value %#lx, expected %#x\n", value, 0xdeadbeef );
 
     value = 1;
     status = HidP_GetUsages( HidP_Input, HID_USAGE_PAGE_BUTTON, 0, usages, &value, preparsed_data,
                              report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetUsages returned %#x\n", status );
-    ok( value == 2, "got usage count %d, expected %d\n", value, 2 );
+    ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetUsages returned %#lx\n", status );
+    ok( value == 2, "got usage count %ld, expected %d\n", value, 2 );
     value = ARRAY_SIZE(usages);
     memset( usages, 0xcd, sizeof(usages) );
     status = HidP_GetUsages( HidP_Input, HID_USAGE_PAGE_BUTTON, 0, usages, &value, preparsed_data,
                              report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsages returned %#x\n", status );
-    ok( value == 2, "got usage count %d, expected %d\n", value, 2 );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsages returned %#lx\n", status );
+    ok( value == 2, "got usage count %ld, expected %d\n", value, 2 );
     ok( usages[0] == 4, "got usages[0] %x, expected %x\n", usages[0], 4 );
     ok( usages[1] == 6, "got usages[1] %x, expected %x\n", usages[1], 6 );
 
@@ -1797,8 +1797,8 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
     memset( usages, 0xcd, sizeof(usages) );
     status = HidP_GetUsages( HidP_Input, HID_USAGE_PAGE_LED, 0, usages, &value, preparsed_data,
                              report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsages returned %#x\n", status );
-    ok( value == 2, "got usage count %d, expected %d\n", value, 2 );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsages returned %#lx\n", status );
+    ok( value == 2, "got usage count %ld, expected %d\n", value, 2 );
     ok( usages[0] == 6, "got usages[0] %x, expected %x\n", usages[0], 6 );
     ok( usages[1] == 4, "got usages[1] %x, expected %x\n", usages[1], 4 );
 
@@ -1806,8 +1806,8 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
     memset( usage_and_pages, 0xcd, sizeof(usage_and_pages) );
     status = HidP_GetUsagesEx( HidP_Input, 0, usage_and_pages, &value, preparsed_data, report,
                                caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsagesEx returned %#x\n", status );
-    ok( value == 6, "got usage count %d, expected %d\n", value, 4 );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsagesEx returned %#lx\n", status );
+    ok( value == 6, "got usage count %ld, expected %d\n", value, 4 );
     ok( usage_and_pages[0].UsagePage == HID_USAGE_PAGE_BUTTON, "got usage_and_pages[0] UsagePage %x, expected %x\n",
         usage_and_pages[0].UsagePage, HID_USAGE_PAGE_BUTTON );
     ok( usage_and_pages[1].UsagePage == HID_USAGE_PAGE_BUTTON, "got usage_and_pages[1] UsagePage %x, expected %x\n",
@@ -1834,26 +1834,26 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
         usage_and_pages[5].Usage, 4 );
 
     value = HidP_MaxDataListLength( HidP_Feature + 1, preparsed_data );
-    ok( value == 0, "HidP_MaxDataListLength(HidP_Feature + 1) returned %d, expected %d\n", value, 0 );
+    ok( value == 0, "HidP_MaxDataListLength(HidP_Feature + 1) returned %ld, expected %d\n", value, 0 );
     value = HidP_MaxDataListLength( HidP_Input, preparsed_data );
-    ok( value == 58, "HidP_MaxDataListLength(HidP_Input) returned %d, expected %d\n", value, 58 );
+    ok( value == 58, "HidP_MaxDataListLength(HidP_Input) returned %ld, expected %d\n", value, 58 );
     value = HidP_MaxDataListLength( HidP_Output, preparsed_data );
-    ok( value == 0, "HidP_MaxDataListLength(HidP_Output) returned %d, expected %d\n", value, 0 );
+    ok( value == 0, "HidP_MaxDataListLength(HidP_Output) returned %ld, expected %d\n", value, 0 );
     value = HidP_MaxDataListLength( HidP_Feature, preparsed_data );
-    ok( value == 14, "HidP_MaxDataListLength(HidP_Feature) returned %d, expected %d\n", value, 14 );
+    ok( value == 14, "HidP_MaxDataListLength(HidP_Feature) returned %ld, expected %d\n", value, 14 );
 
     value = 1;
     status = HidP_GetData( HidP_Input, data, &value, preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetData returned %#x\n", status );
-    ok( value == 11, "got data count %d, expected %d\n", value, 11 );
+    ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetData returned %#lx\n", status );
+    ok( value == 11, "got data count %ld, expected %d\n", value, 11 );
     memset( data, 0, sizeof(data) );
     status = HidP_GetData( HidP_Input, data, &value, preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetData returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetData returned %#lx\n", status );
     for (i = 0; i < ARRAY_SIZE(expect_data); ++i)
     {
         winetest_push_context( "data[%d]", i );
         check_member( data[i], expect_data[i], "%d", DataIndex );
-        check_member( data[i], expect_data[i], "%d", RawValue );
+        check_member( data[i], expect_data[i], "%ld", RawValue );
         winetest_pop_context();
     }
 
@@ -1861,43 +1861,43 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
 
     memset( report, 0, caps.InputReportByteLength );
     status = HidP_InitializeReportForID( HidP_Input, report_id, preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_InitializeReportForID returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_InitializeReportForID returned %#lx\n", status );
     value = 2;
     usages[0] = 0x8e;
     usages[1] = 0x8f;
     status = HidP_SetUsages( HidP_Input, HID_USAGE_PAGE_KEYBOARD, 0, usages, &value, preparsed_data,
                              report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsages returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsages returned %#lx\n", status );
     ok( report[caps.InputReportByteLength - 2] == 3, "unexpected usage index %d, expected 3\n",
         report[caps.InputReportByteLength - 2] );
     ok( report[caps.InputReportByteLength - 1] == 4, "unexpected usage index %d, expected 4\n",
         report[caps.InputReportByteLength - 1] );
     status = HidP_UnsetUsages( HidP_Input, HID_USAGE_PAGE_KEYBOARD, 0, usages, &value,
                                preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_UnsetUsages returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_UnsetUsages returned %#lx\n", status );
     ok( report[caps.InputReportByteLength - 2] == 0, "unexpected usage index %d, expected 0\n",
         report[caps.InputReportByteLength - 2] );
     ok( report[caps.InputReportByteLength - 1] == 0, "unexpected usage index %d, expected 0\n",
         report[caps.InputReportByteLength - 1] );
     status = HidP_UnsetUsages( HidP_Input, HID_USAGE_PAGE_KEYBOARD, 0, usages, &value,
                                preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_BUTTON_NOT_PRESSED, "HidP_UnsetUsages returned %#x\n", status );
+    ok( status == HIDP_STATUS_BUTTON_NOT_PRESSED, "HidP_UnsetUsages returned %#lx\n", status );
     value = 1;
     usages[0] = 0x8c;
     status = HidP_SetUsages( HidP_Input, HID_USAGE_PAGE_KEYBOARD, 0, usages, &value, preparsed_data,
                              report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsages returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsages returned %#lx\n", status );
     ok( report[caps.InputReportByteLength - 2] == 1, "unexpected usage index %d, expected 1\n",
         report[caps.InputReportByteLength - 2] );
 
     memset( report, 0xcd, sizeof(report) );
     status = HidP_InitializeReportForID( HidP_Feature, 3, preparsed_data, report, caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_REPORT_DOES_NOT_EXIST, "HidP_InitializeReportForID returned %#x\n", status );
+    ok( status == HIDP_STATUS_REPORT_DOES_NOT_EXIST, "HidP_InitializeReportForID returned %#lx\n", status );
 
     memset( report, 0xcd, sizeof(report) );
     status = HidP_InitializeReportForID( HidP_Feature, report_id, preparsed_data, report,
                                          caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_InitializeReportForID returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_InitializeReportForID returned %#lx\n", status );
 
     memset( buffer, 0xcd, sizeof(buffer) );
     memset( buffer, 0, caps.FeatureReportByteLength );
@@ -1916,35 +1916,35 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
     status = HidP_SetUsageValue( HidP_Feature, HID_USAGE_PAGE_ORDINAL, waveform_list, 3,
                                  HID_USAGE_HAPTICS_WAVEFORM_RUMBLE, (PHIDP_PREPARSED_DATA)buffer,
                                  report, caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_INVALID_PREPARSED_DATA, "HidP_SetUsageValue returned %#x\n", status );
+    ok( status == HIDP_STATUS_INVALID_PREPARSED_DATA, "HidP_SetUsageValue returned %#lx\n", status );
     status = HidP_SetUsageValue( HidP_Feature + 1, HID_USAGE_PAGE_ORDINAL, waveform_list, 3,
                                  HID_USAGE_HAPTICS_WAVEFORM_RUMBLE, preparsed_data, report,
                                  caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_INVALID_REPORT_TYPE, "HidP_SetUsageValue returned %#x\n", status );
+    ok( status == HIDP_STATUS_INVALID_REPORT_TYPE, "HidP_SetUsageValue returned %#lx\n", status );
     status = HidP_SetUsageValue( HidP_Feature, HID_USAGE_PAGE_ORDINAL, waveform_list, 3,
                                  HID_USAGE_HAPTICS_WAVEFORM_RUMBLE, preparsed_data, report,
                                  caps.FeatureReportByteLength + 1 );
-    ok( status == HIDP_STATUS_INVALID_REPORT_LENGTH, "HidP_SetUsageValue returned %#x\n", status );
+    ok( status == HIDP_STATUS_INVALID_REPORT_LENGTH, "HidP_SetUsageValue returned %#lx\n", status );
     report[0] = 1 - report_id;
     status = HidP_SetUsageValue( HidP_Feature, HID_USAGE_PAGE_ORDINAL, waveform_list, 3,
                                  HID_USAGE_HAPTICS_WAVEFORM_RUMBLE, preparsed_data, report,
                                  caps.FeatureReportByteLength );
     ok( status == (report_id ? HIDP_STATUS_SUCCESS : HIDP_STATUS_INCOMPATIBLE_REPORT_ID),
-        "HidP_SetUsageValue returned %#x\n", status );
+        "HidP_SetUsageValue returned %#lx\n", status );
     report[0] = 2;
     status = HidP_SetUsageValue( HidP_Feature, HID_USAGE_PAGE_ORDINAL, waveform_list, 3,
                                  HID_USAGE_HAPTICS_WAVEFORM_RUMBLE, preparsed_data, report,
                                  caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_INCOMPATIBLE_REPORT_ID, "HidP_SetUsageValue returned %#x\n", status );
+    ok( status == HIDP_STATUS_INCOMPATIBLE_REPORT_ID, "HidP_SetUsageValue returned %#lx\n", status );
     report[0] = report_id;
     status = HidP_SetUsageValue( HidP_Feature, HID_USAGE_PAGE_ORDINAL, 0xdead, 3, HID_USAGE_HAPTICS_WAVEFORM_RUMBLE,
                                  preparsed_data, report, caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_SetUsageValue returned %#x\n", status );
+    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_SetUsageValue returned %#lx\n", status );
 
     status = HidP_SetUsageValue( HidP_Feature, HID_USAGE_PAGE_ORDINAL, waveform_list, 3,
                                  HID_USAGE_HAPTICS_WAVEFORM_RUMBLE, preparsed_data, report,
                                  caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#lx\n", status );
 
     memset( buffer, 0xcd, sizeof(buffer) );
     memset( buffer, 0, caps.FeatureReportByteLength );
@@ -1955,123 +1955,123 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
 
     status = HidP_GetUsageValue( HidP_Feature, HID_USAGE_PAGE_ORDINAL, waveform_list, 3, &value,
                                  (PHIDP_PREPARSED_DATA)buffer, report, caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_INVALID_PREPARSED_DATA, "HidP_GetUsageValue returned %#x\n", status );
+    ok( status == HIDP_STATUS_INVALID_PREPARSED_DATA, "HidP_GetUsageValue returned %#lx\n", status );
     status = HidP_GetUsageValue( HidP_Feature + 1, HID_USAGE_PAGE_ORDINAL, waveform_list, 3, &value,
                                  preparsed_data, report, caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_INVALID_REPORT_TYPE, "HidP_GetUsageValue returned %#x\n", status );
+    ok( status == HIDP_STATUS_INVALID_REPORT_TYPE, "HidP_GetUsageValue returned %#lx\n", status );
     status = HidP_GetUsageValue( HidP_Feature, HID_USAGE_PAGE_ORDINAL, waveform_list, 3, &value,
                                  preparsed_data, report, caps.FeatureReportByteLength + 1 );
-    ok( status == HIDP_STATUS_INVALID_REPORT_LENGTH, "HidP_GetUsageValue returned %#x\n", status );
+    ok( status == HIDP_STATUS_INVALID_REPORT_LENGTH, "HidP_GetUsageValue returned %#lx\n", status );
     report[0] = 1 - report_id;
     status = HidP_GetUsageValue( HidP_Feature, HID_USAGE_PAGE_ORDINAL, waveform_list, 3, &value,
                                  preparsed_data, report, caps.FeatureReportByteLength );
     ok( status == (report_id ? HIDP_STATUS_SUCCESS : HIDP_STATUS_INCOMPATIBLE_REPORT_ID),
-        "HidP_GetUsageValue returned %#x\n", status );
+        "HidP_GetUsageValue returned %#lx\n", status );
     report[0] = 2;
     status = HidP_GetUsageValue( HidP_Feature, HID_USAGE_PAGE_ORDINAL, waveform_list, 3, &value,
                                  preparsed_data, report, caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_INCOMPATIBLE_REPORT_ID, "HidP_GetUsageValue returned %#x\n", status );
+    ok( status == HIDP_STATUS_INCOMPATIBLE_REPORT_ID, "HidP_GetUsageValue returned %#lx\n", status );
     report[0] = report_id;
     status = HidP_GetUsageValue( HidP_Feature, HID_USAGE_PAGE_ORDINAL, 0xdead, 3, &value,
                                  preparsed_data, report, caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetUsageValue returned %#x\n", status );
+    ok( status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetUsageValue returned %#lx\n", status );
 
     value = 0xdeadbeef;
     status = HidP_GetUsageValue( HidP_Feature, HID_USAGE_PAGE_ORDINAL, waveform_list, 3, &value,
                                  preparsed_data, report, caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#x\n", status );
-    ok( value == HID_USAGE_HAPTICS_WAVEFORM_RUMBLE, "got value %x, expected %#x\n", value,
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#lx\n", status );
+    ok( value == HID_USAGE_HAPTICS_WAVEFORM_RUMBLE, "got value %#lx, expected %#x\n", value,
         HID_USAGE_HAPTICS_WAVEFORM_RUMBLE );
 
     memset( buffer, 0xff, sizeof(buffer) );
     status = HidP_SetUsageValueArray( HidP_Feature, HID_USAGE_PAGE_HAPTICS, 0,
                                       HID_USAGE_HAPTICS_WAVEFORM_CUTOFF_TIME, buffer, 0,
                                       preparsed_data, report, caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_SetUsageValueArray returned %#x\n", status );
+    ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_SetUsageValueArray returned %#lx\n", status );
     status = HidP_SetUsageValueArray( HidP_Feature, HID_USAGE_PAGE_HAPTICS, 0,
                                       HID_USAGE_HAPTICS_WAVEFORM_CUTOFF_TIME, buffer, 64,
                                       preparsed_data, report, caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValueArray returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValueArray returned %#lx\n", status );
     ok( !memcmp( report + 9, buffer, 8 ), "unexpected report data\n" );
 
     memset( buffer, 0, sizeof(buffer) );
     status = HidP_GetUsageValueArray( HidP_Feature, HID_USAGE_PAGE_HAPTICS, 0,
                                       HID_USAGE_HAPTICS_WAVEFORM_CUTOFF_TIME, buffer, 0,
                                       preparsed_data, report, caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetUsageValueArray returned %#x\n", status );
+    ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetUsageValueArray returned %#lx\n", status );
     status = HidP_GetUsageValueArray( HidP_Feature, HID_USAGE_PAGE_HAPTICS, 0,
                                       HID_USAGE_HAPTICS_WAVEFORM_CUTOFF_TIME, buffer, 64,
                                       preparsed_data, report, caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValueArray returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValueArray returned %#lx\n", status );
     memset( buffer + 16, 0xff, 8 );
     ok( !memcmp( buffer, buffer + 16, 16 ), "unexpected report value\n" );
 
     value = 0x7fffffff;
     status = HidP_SetUsageValue( HidP_Feature, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
                                  value, preparsed_data, report, caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#lx\n", status );
     value = 0xdeadbeef;
     status = HidP_GetScaledUsageValue( HidP_Feature, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
                                        (LONG *)&value, preparsed_data, report, caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_VALUE_OUT_OF_RANGE, "HidP_GetScaledUsageValue returned %#x\n", status );
-    ok( value == 0, "got value %x, expected %#x\n", value, 0 );
+    ok( status == HIDP_STATUS_VALUE_OUT_OF_RANGE, "HidP_GetScaledUsageValue returned %#lx\n", status );
+    ok( value == 0, "got value %#lx, expected %#x\n", value, 0 );
     value = 0xdeadbeef;
     status = HidP_GetUsageValue( HidP_Feature, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
                                  &value, preparsed_data, report, caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#x\n", status );
-    ok( value == 0x7fffffff, "got value %x, expected %#x\n", value, 0x7fffffff );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#lx\n", status );
+    ok( value == 0x7fffffff, "got value %#lx, expected %#x\n", value, 0x7fffffff );
 
     value = 0x7fff;
     status = HidP_SetUsageValue( HidP_Feature, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
                                  value, preparsed_data, report, caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#lx\n", status );
     value = 0xdeadbeef;
     status = HidP_GetScaledUsageValue( HidP_Feature, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
                                        (LONG *)&value, preparsed_data, report, caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetScaledUsageValue returned %#x\n", status );
-    ok( value == 0x0003ffff, "got value %x, expected %#x\n", value, 0x0003ffff );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetScaledUsageValue returned %#lx\n", status );
+    ok( value == 0x0003ffff, "got value %#lx, expected %#x\n", value, 0x0003ffff );
 
     value = 0;
     status = HidP_SetUsageValue( HidP_Feature, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
                                  value, preparsed_data, report, caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#lx\n", status );
     value = 0xdeadbeef;
     status = HidP_GetScaledUsageValue( HidP_Feature, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
                                        (LONG *)&value, preparsed_data, report, caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetScaledUsageValue returned %#x\n", status );
-    ok( value == 0xfff90000, "got value %x, expected %#x\n", value, 0xfff90000 );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetScaledUsageValue returned %#lx\n", status );
+    ok( value == 0xfff90000, "got value %#lx, expected %#x\n", value, 0xfff90000 );
     status = HidP_SetScaledUsageValue( HidP_Feature, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
                                        0x1000, preparsed_data, report, caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetScaledUsageValue returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetScaledUsageValue returned %#lx\n", status );
     value = 0;
     status = HidP_GetUsageValue( HidP_Feature, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
                                  &value, preparsed_data, report, caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#x\n", status );
-    ok( value == 0xfffff518, "got value %x, expected %#x\n", value, 0xfffff518 );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#lx\n", status );
+    ok( value == 0xfffff518, "got value %#lx, expected %#x\n", value, 0xfffff518 );
     status = HidP_SetScaledUsageValue( HidP_Feature, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
                                        0, preparsed_data, report, caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetScaledUsageValue returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetScaledUsageValue returned %#lx\n", status );
     value = 0;
     status = HidP_GetUsageValue( HidP_Feature, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
                                  &value, preparsed_data, report, caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#x\n", status );
-    ok( value == 0xfffff45e, "got value %x, expected %#x\n", value, 0xfffff45e );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#lx\n", status );
+    ok( value == 0xfffff45e, "got value %#lx, expected %#x\n", value, 0xfffff45e );
     status = HidP_SetScaledUsageValue( HidP_Feature, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
                                        0xdead, preparsed_data, report, caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetScaledUsageValue returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetScaledUsageValue returned %#lx\n", status );
     value = 0;
     status = HidP_GetUsageValue( HidP_Feature, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
                                  &value, preparsed_data, report, caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#x\n", status );
-    ok( value == 0xfffffe7d, "got value %x, expected %#x\n", value, 0xfffffe7d );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#lx\n", status );
+    ok( value == 0xfffffe7d, "got value %#lx, expected %#x\n", value, 0xfffffe7d );
     status = HidP_SetScaledUsageValue( HidP_Feature, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
                                        0xbeef, preparsed_data, report, caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetScaledUsageValue returned %#x\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetScaledUsageValue returned %#lx\n", status );
     value = 0;
     status = HidP_GetUsageValue( HidP_Feature, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
                                  &value, preparsed_data, report, caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#x\n", status );
-    ok( value == 0xfffffd0b, "got value %x, expected %#x\n", value, 0xfffffd0b );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#lx\n", status );
+    ok( value == 0xfffffd0b, "got value %#lx, expected %#x\n", value, 0xfffffd0b );
 
     test_hidp_get_input( file, report_id, caps.InputReportByteLength, preparsed_data );
     test_hidp_get_feature( file, report_id, caps.FeatureReportByteLength, preparsed_data );
@@ -2082,14 +2082,14 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
     memset( report, 0xcd, sizeof(report) );
     SetLastError( 0xdeadbeef );
     ret = ReadFile( file, report, 0, &value, NULL );
-    ok( !ret && GetLastError() == ERROR_INVALID_USER_BUFFER, "ReadFile failed, last error %u\n",
+    ok( !ret && GetLastError() == ERROR_INVALID_USER_BUFFER, "ReadFile failed, last error %lu\n",
         GetLastError() );
-    ok( value == 0, "ReadFile returned %x\n", value );
+    ok( value == 0, "ReadFile returned %lx\n", value );
     SetLastError( 0xdeadbeef );
     ret = ReadFile( file, report, caps.InputReportByteLength - 1, &value, NULL );
-    ok( !ret && GetLastError() == ERROR_INVALID_USER_BUFFER, "ReadFile failed, last error %u\n",
+    ok( !ret && GetLastError() == ERROR_INVALID_USER_BUFFER, "ReadFile failed, last error %lu\n",
         GetLastError() );
-    ok( value == 0, "ReadFile returned %x\n", value );
+    ok( value == 0, "ReadFile returned %lx\n", value );
 
     if (polled)
     {
@@ -2126,8 +2126,8 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
         memset( report, 0xcd, sizeof(report) );
         SetLastError( 0xdeadbeef );
         ret = ReadFile( file, report, caps.InputReportByteLength, &value, NULL );
-        ok( ret, "ReadFile failed, last error %u\n", GetLastError() );
-        ok( value == (report_id ? 3 : 4), "ReadFile returned %x\n", value );
+        ok( ret, "ReadFile failed, last error %lu\n", GetLastError() );
+        ok( value == (report_id ? 3 : 4), "ReadFile returned %lx\n", value );
         ok( report[0] == report_id, "unexpected report data\n" );
 
         overlapped.hEvent = CreateEventW( NULL, FALSE, FALSE, NULL );
@@ -2137,10 +2137,10 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
         SetLastError( 0xdeadbeef );
         while (ReadFile( async_file, report, caps.InputReportByteLength, NULL, &overlapped ))
             ResetEvent( overlapped.hEvent );
-        ok( GetLastError() == ERROR_IO_PENDING, "ReadFile returned error %u\n", GetLastError() );
+        ok( GetLastError() == ERROR_IO_PENDING, "ReadFile returned error %lu\n", GetLastError() );
         ret = GetOverlappedResult( async_file, &overlapped, &value, TRUE );
-        ok( ret, "GetOverlappedResult failed, last error %u\n", GetLastError() );
-        ok( value == (report_id ? 3 : 4), "GetOverlappedResult returned length %u, expected %u\n",
+        ok( ret, "GetOverlappedResult failed, last error %lu\n", GetLastError() );
+        ok( value == (report_id ? 3 : 4), "GetOverlappedResult returned length %lu, expected %u\n",
             value, (report_id ? 3 : 4) );
         ResetEvent( overlapped.hEvent );
 
@@ -2150,22 +2150,22 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
         SetLastError( 0xdeadbeef );
         ret = ReadFile( async_file, report, caps.InputReportByteLength, NULL, &overlapped );
         ok( !ret, "ReadFile succeeded\n" );
-        ok( GetLastError() == ERROR_IO_PENDING, "ReadFile returned error %u\n", GetLastError() );
+        ok( GetLastError() == ERROR_IO_PENDING, "ReadFile returned error %lu\n", GetLastError() );
 
         SetLastError( 0xdeadbeef );
         ret = ReadFile( async_file, buffer, caps.InputReportByteLength, NULL, &overlapped2 );
         ok( !ret, "ReadFile succeeded\n" );
-        ok( GetLastError() == ERROR_IO_PENDING, "ReadFile returned error %u\n", GetLastError() );
+        ok( GetLastError() == ERROR_IO_PENDING, "ReadFile returned error %lu\n", GetLastError() );
 
         /* wait for second report to be ready */
         ret = GetOverlappedResult( async_file, &overlapped2, &value, TRUE );
-        ok( ret, "GetOverlappedResult failed, last error %u\n", GetLastError() );
-        ok( value == (report_id ? 3 : 4), "GetOverlappedResult returned length %u, expected %u\n",
+        ok( ret, "GetOverlappedResult failed, last error %lu\n", GetLastError() );
+        ok( value == (report_id ? 3 : 4), "GetOverlappedResult returned length %lu, expected %u\n",
             value, (report_id ? 3 : 4) );
         /* first report should be ready and the same */
         ret = GetOverlappedResult( async_file, &overlapped, &value, FALSE );
-        ok( ret, "GetOverlappedResult failed, last error %u\n", GetLastError() );
-        ok( value == (report_id ? 3 : 4), "GetOverlappedResult returned length %u, expected %u\n",
+        ok( ret, "GetOverlappedResult failed, last error %lu\n", GetLastError() );
+        ok( value == (report_id ? 3 : 4), "GetOverlappedResult returned length %lu, expected %u\n",
             value, (report_id ? 3 : 4) );
         ok( memcmp( report, buffer + caps.InputReportByteLength, caps.InputReportByteLength ),
             "expected different report\n" );
@@ -2174,29 +2174,29 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
         value = 10;
         SetLastError( 0xdeadbeef );
         ret = sync_ioctl( file, IOCTL_HID_SET_POLL_FREQUENCY_MSEC, &value, sizeof(ULONG), NULL, NULL, INFINITE );
-        ok( ret, "IOCTL_HID_SET_POLL_FREQUENCY_MSEC failed last error %u\n", GetLastError() );
+        ok( ret, "IOCTL_HID_SET_POLL_FREQUENCY_MSEC failed last error %lu\n", GetLastError() );
 
         Sleep( 600 );
 
         SetLastError( 0xdeadbeef );
         ret = ReadFile( async_file, report, caps.InputReportByteLength, NULL, &overlapped );
         ok( !ret, "ReadFile succeeded\n" );
-        ok( GetLastError() == ERROR_IO_PENDING, "ReadFile returned error %u\n", GetLastError() );
+        ok( GetLastError() == ERROR_IO_PENDING, "ReadFile returned error %lu\n", GetLastError() );
 
         SetLastError( 0xdeadbeef );
         ret = ReadFile( async_file, buffer, caps.InputReportByteLength, NULL, &overlapped2 );
         ok( !ret, "ReadFile succeeded\n" );
-        ok( GetLastError() == ERROR_IO_PENDING, "ReadFile returned error %u\n", GetLastError() );
+        ok( GetLastError() == ERROR_IO_PENDING, "ReadFile returned error %lu\n", GetLastError() );
 
         /* wait for second report to be ready */
         ret = GetOverlappedResult( async_file, &overlapped2, &value, TRUE );
-        ok( ret, "GetOverlappedResult failed, last error %u\n", GetLastError() );
-        ok( value == (report_id ? 3 : 4), "GetOverlappedResult returned length %u, expected %u\n",
+        ok( ret, "GetOverlappedResult failed, last error %lu\n", GetLastError() );
+        ok( value == (report_id ? 3 : 4), "GetOverlappedResult returned length %lu, expected %u\n",
             value, (report_id ? 3 : 4) );
         /* first report should be ready and the same */
         ret = GetOverlappedResult( async_file, &overlapped, &value, FALSE );
-        ok( ret, "GetOverlappedResult failed, last error %u\n", GetLastError() );
-        ok( value == (report_id ? 3 : 4), "GetOverlappedResult returned length %u, expected %u\n",
+        ok( ret, "GetOverlappedResult failed, last error %lu\n", GetLastError() );
+        ok( value == (report_id ? 3 : 4), "GetOverlappedResult returned length %lu, expected %u\n",
             value, (report_id ? 3 : 4) );
         ok( !memcmp( report, buffer, caps.InputReportByteLength ), "expected identical reports\n" );
 
@@ -2208,12 +2208,12 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
         memset( report, 0, sizeof(report) );
         ret = ReadFile( async_file, report, caps.InputReportByteLength, NULL, &overlapped );
         ok( !ret, "ReadFile succeeded\n" );
-        ok( GetLastError() == ERROR_IO_PENDING, "ReadFile returned error %u\n", GetLastError() );
+        ok( GetLastError() == ERROR_IO_PENDING, "ReadFile returned error %lu\n", GetLastError() );
 
         ret = GetOverlappedResult( async_file, &overlapped, &value, TRUE );
-        ok( ret, "GetOverlappedResult failed, last error %u\n", GetLastError() );
+        ok( ret, "GetOverlappedResult failed, last error %lu\n", GetLastError() );
         ok( value == report_id ? 2 : caps.InputReportByteLength - 1,
-            "got length %u, expected %u\n", value, report_id ? 2 : caps.InputReportByteLength - 1 );
+            "got length %lu, expected %u\n", value, report_id ? 2 : caps.InputReportByteLength - 1 );
 
         CloseHandle( overlapped.hEvent );
         CloseHandle( overlapped2.hEvent );
@@ -2255,21 +2255,21 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
         memset( report, 0, sizeof(report) );
         ret = ReadFile( async_file, report, caps.InputReportByteLength, NULL, &overlapped );
         ok( !ret, "ReadFile succeeded\n" );
-        ok( GetLastError() == ERROR_IO_PENDING, "ReadFile returned error %u\n", GetLastError() );
+        ok( GetLastError() == ERROR_IO_PENDING, "ReadFile returned error %lu\n", GetLastError() );
         Sleep( 50 );
         ret = GetOverlappedResult( async_file, &overlapped, &value, FALSE );
         ok( !ret, "GetOverlappedResult succeeded\n" );
-        ok( GetLastError() == ERROR_IO_INCOMPLETE, "GetOverlappedResult returned error %u\n", GetLastError() );
+        ok( GetLastError() == ERROR_IO_INCOMPLETE, "GetOverlappedResult returned error %lu\n", GetLastError() );
 
         SetLastError( 0xdeadbeef );
         memset( buffer, 0, sizeof(buffer) );
         ret = ReadFile( async_file, buffer, caps.InputReportByteLength, NULL, &overlapped2 );
         ok( !ret, "ReadFile succeeded\n" );
-        ok( GetLastError() == ERROR_IO_PENDING, "ReadFile returned error %u\n", GetLastError() );
+        ok( GetLastError() == ERROR_IO_PENDING, "ReadFile returned error %lu\n", GetLastError() );
         Sleep( 50 );
         ret = GetOverlappedResult( async_file, &overlapped2, &value, FALSE );
         ok( !ret, "GetOverlappedResult succeeded\n" );
-        ok( GetLastError() == ERROR_IO_INCOMPLETE, "GetOverlappedResult returned error %u\n", GetLastError() );
+        ok( GetLastError() == ERROR_IO_INCOMPLETE, "GetOverlappedResult returned error %lu\n", GetLastError() );
 
         memset( report + caps.InputReportByteLength, 0xa5, 5 );
         if (report_id) report[caps.InputReportByteLength] = report_id;
@@ -2278,13 +2278,13 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
 
         /* first read should be completed */
         ret = GetOverlappedResult( async_file, &overlapped, &value, TRUE );
-        ok( ret, "GetOverlappedResult failed, last error %u\n", GetLastError() );
-        ok( value == caps.InputReportByteLength, "got length %u, expected %u\n", value, caps.InputReportByteLength );
+        ok( ret, "GetOverlappedResult failed, last error %lu\n", GetLastError() );
+        ok( value == caps.InputReportByteLength, "got length %lu, expected %u\n", value, caps.InputReportByteLength );
         /* second read should still be pending */
         Sleep( 50 );
         ret = GetOverlappedResult( async_file, &overlapped2, &value, FALSE );
         ok( !ret, "GetOverlappedResult succeeded\n" );
-        ok( GetLastError() == ERROR_IO_INCOMPLETE, "GetOverlappedResult returned error %u\n", GetLastError() );
+        ok( GetLastError() == ERROR_IO_INCOMPLETE, "GetOverlappedResult returned error %lu\n", GetLastError() );
 
         memset( buffer + caps.InputReportByteLength, 0x3b, 5 );
         if (report_id) buffer[caps.InputReportByteLength] = report_id;
@@ -2294,8 +2294,8 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
         send_hid_input( file, expect, sizeof(expect) );
 
         ret = GetOverlappedResult( async_file, &overlapped2, &value, TRUE );
-        ok( ret, "GetOverlappedResult failed, last error %u\n", GetLastError() );
-        ok( value == caps.InputReportByteLength, "got length %u, expected %u\n", value, caps.InputReportByteLength );
+        ok( ret, "GetOverlappedResult failed, last error %lu\n", GetLastError() );
+        ok( value == caps.InputReportByteLength, "got length %lu, expected %u\n", value, caps.InputReportByteLength );
 
         off = report_id ? 0 : 1;
         ok( memcmp( report, buffer, caps.InputReportByteLength ), "expected different report\n" );
@@ -2308,13 +2308,13 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
         memset( report, 0, sizeof(report) );
         ret = ReadFile( async_file, report, caps.InputReportByteLength, NULL, &overlapped );
         ok( !ret, "ReadFile succeeded\n" );
-        ok( GetLastError() == ERROR_IO_PENDING, "ReadFile returned error %u\n", GetLastError() );
+        ok( GetLastError() == ERROR_IO_PENDING, "ReadFile returned error %lu\n", GetLastError() );
 
         send_hid_input( file, expect_small, sizeof(expect_small) );
 
         ret = GetOverlappedResult( async_file, &overlapped, &value, TRUE );
-        ok( ret, "GetOverlappedResult failed, last error %u\n", GetLastError() );
-        ok( value == caps.InputReportByteLength, "got length %u, expected %u\n", value, caps.InputReportByteLength );
+        ok( ret, "GetOverlappedResult failed, last error %lu\n", GetLastError() );
+        ok( value == caps.InputReportByteLength, "got length %lu, expected %u\n", value, caps.InputReportByteLength );
 
         CloseHandle( overlapped.hEvent );
         CloseHandle( overlapped2.hEvent );
@@ -2339,22 +2339,22 @@ static void test_hid_device( DWORD report_id, DWORD polled, const HIDP_CAPS *exp
     unsigned int i;
     HDEVINFO set;
 
-    winetest_push_context( "id %d%s", report_id, polled ? " poll" : "" );
+    winetest_push_context( "id %ld%s", report_id, polled ? " poll" : "" );
 
     set = SetupDiGetClassDevsW( &GUID_DEVINTERFACE_HID, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT );
-    ok( set != INVALID_HANDLE_VALUE, "failed to get device list, error %#x\n", GetLastError() );
+    ok( set != INVALID_HANDLE_VALUE, "failed to get device list, error %#lx\n", GetLastError() );
 
     for (i = 0; SetupDiEnumDeviceInfo( set, i, &device ); ++i)
     {
         ret = SetupDiEnumDeviceInterfaces( set, &device, &GUID_DEVINTERFACE_HID, 0, &iface );
-        ok( ret, "failed to get interface, error %#x\n", GetLastError() );
+        ok( ret, "failed to get interface, error %#lx\n", GetLastError() );
         ok( IsEqualGUID( &iface.InterfaceClassGuid, &GUID_DEVINTERFACE_HID ), "wrong class %s\n",
             debugstr_guid( &iface.InterfaceClassGuid ) );
-        ok( iface.Flags == SPINT_ACTIVE, "got flags %#x\n", iface.Flags );
+        ok( iface.Flags == SPINT_ACTIVE, "got flags %#lx\n", iface.Flags );
 
         iface_detail->cbSize = sizeof(*iface_detail);
         ret = SetupDiGetDeviceInterfaceDetailW( set, &iface, iface_detail, sizeof(buffer), NULL, NULL );
-        ok( ret, "failed to get interface path, error %#x\n", GetLastError() );
+        ok( ret, "failed to get interface path, error %#lx\n", GetLastError() );
 
         if (wcsstr( iface_detail->DevicePath, L"\\\\?\\hid#winetest#1" ))
         {
@@ -2370,112 +2370,112 @@ static void test_hid_device( DWORD report_id, DWORD polled, const HIDP_CAPS *exp
 
     file = CreateFileW( iface_detail->DevicePath, FILE_READ_ACCESS | FILE_WRITE_ACCESS,
                         FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL );
-    ok( file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError() );
+    ok( file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
 
     count = 0xdeadbeef;
     SetLastError( 0xdeadbeef );
     ret = HidD_GetNumInputBuffers( file, &count );
-    ok( ret, "HidD_GetNumInputBuffers failed last error %u\n", GetLastError() );
-    ok( count == 32, "HidD_GetNumInputBuffers returned %u\n", count );
+    ok( ret, "HidD_GetNumInputBuffers failed last error %lu\n", GetLastError() );
+    ok( count == 32, "HidD_GetNumInputBuffers returned %lu\n", count );
 
     SetLastError( 0xdeadbeef );
     ret = HidD_SetNumInputBuffers( file, 1 );
     ok( !ret, "HidD_SetNumInputBuffers succeeded\n" );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "HidD_SetNumInputBuffers returned error %u\n",
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "HidD_SetNumInputBuffers returned error %lu\n",
         GetLastError() );
     SetLastError( 0xdeadbeef );
     ret = HidD_SetNumInputBuffers( file, 513 );
     ok( !ret, "HidD_SetNumInputBuffers succeeded\n" );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "HidD_SetNumInputBuffers returned error %u\n",
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "HidD_SetNumInputBuffers returned error %lu\n",
         GetLastError() );
 
     SetLastError( 0xdeadbeef );
     ret = HidD_SetNumInputBuffers( file, 16 );
-    ok( ret, "HidD_SetNumInputBuffers failed last error %u\n", GetLastError() );
+    ok( ret, "HidD_SetNumInputBuffers failed last error %lu\n", GetLastError() );
 
     count = 0xdeadbeef;
     SetLastError( 0xdeadbeef );
     ret = HidD_GetNumInputBuffers( file, &count );
-    ok( ret, "HidD_GetNumInputBuffers failed last error %u\n", GetLastError() );
-    ok( count == 16, "HidD_GetNumInputBuffers returned %u\n", count );
+    ok( ret, "HidD_GetNumInputBuffers failed last error %lu\n", GetLastError() );
+    ok( count == 16, "HidD_GetNumInputBuffers returned %lu\n", count );
 
     async_file = CreateFileW( iface_detail->DevicePath, FILE_READ_ACCESS | FILE_WRITE_ACCESS,
                               FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
                               FILE_FLAG_OVERLAPPED | FILE_FLAG_NO_BUFFERING, NULL );
-    ok( async_file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError() );
+    ok( async_file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
 
     count = 0xdeadbeef;
     SetLastError( 0xdeadbeef );
     ret = HidD_GetNumInputBuffers( async_file, &count );
-    ok( ret, "HidD_GetNumInputBuffers failed last error %u\n", GetLastError() );
-    ok( count == 32, "HidD_GetNumInputBuffers returned %u\n", count );
+    ok( ret, "HidD_GetNumInputBuffers failed last error %lu\n", GetLastError() );
+    ok( count == 32, "HidD_GetNumInputBuffers returned %lu\n", count );
 
     SetLastError( 0xdeadbeef );
     ret = HidD_SetNumInputBuffers( async_file, 2 );
-    ok( ret, "HidD_SetNumInputBuffers failed last error %u\n", GetLastError() );
+    ok( ret, "HidD_SetNumInputBuffers failed last error %lu\n", GetLastError() );
 
     count = 0xdeadbeef;
     SetLastError( 0xdeadbeef );
     ret = HidD_GetNumInputBuffers( async_file, &count );
-    ok( ret, "HidD_GetNumInputBuffers failed last error %u\n", GetLastError() );
-    ok( count == 2, "HidD_GetNumInputBuffers returned %u\n", count );
+    ok( ret, "HidD_GetNumInputBuffers failed last error %lu\n", GetLastError() );
+    ok( count == 2, "HidD_GetNumInputBuffers returned %lu\n", count );
     count = 0xdeadbeef;
     SetLastError( 0xdeadbeef );
     ret = HidD_GetNumInputBuffers( file, &count );
-    ok( ret, "HidD_GetNumInputBuffers failed last error %u\n", GetLastError() );
-    ok( count == 16, "HidD_GetNumInputBuffers returned %u\n", count );
+    ok( ret, "HidD_GetNumInputBuffers failed last error %lu\n", GetLastError() );
+    ok( count == 16, "HidD_GetNumInputBuffers returned %lu\n", count );
 
     if (polled)
     {
         out_len = sizeof(ULONG);
         SetLastError( 0xdeadbeef );
         ret = sync_ioctl( file, IOCTL_HID_GET_POLL_FREQUENCY_MSEC, NULL, 0, &poll_freq, &out_len, INFINITE );
-        ok( ret, "IOCTL_HID_GET_POLL_FREQUENCY_MSEC failed last error %u\n", GetLastError() );
-        ok( out_len == sizeof(ULONG), "got out_len %u, expected sizeof(ULONG)\n", out_len );
+        ok( ret, "IOCTL_HID_GET_POLL_FREQUENCY_MSEC failed last error %lu\n", GetLastError() );
+        ok( out_len == sizeof(ULONG), "got out_len %lu, expected sizeof(ULONG)\n", out_len );
         todo_wine
-        ok( poll_freq == 5, "got poll_freq %u, expected 5\n", poll_freq );
+        ok( poll_freq == 5, "got poll_freq %lu, expected 5\n", poll_freq );
 
         out_len = 0;
         poll_freq = 500;
         SetLastError( 0xdeadbeef );
         ret = sync_ioctl( file, IOCTL_HID_SET_POLL_FREQUENCY_MSEC, &poll_freq, sizeof(ULONG), NULL, &out_len, INFINITE );
-        ok( ret, "IOCTL_HID_SET_POLL_FREQUENCY_MSEC failed last error %u\n", GetLastError() );
-        ok( out_len == 0, "got out_len %u, expected 0\n", out_len );
+        ok( ret, "IOCTL_HID_SET_POLL_FREQUENCY_MSEC failed last error %lu\n", GetLastError() );
+        ok( out_len == 0, "got out_len %lu, expected 0\n", out_len );
 
         out_len = 0;
         poll_freq = 10001;
         SetLastError( 0xdeadbeef );
         ret = sync_ioctl( file, IOCTL_HID_SET_POLL_FREQUENCY_MSEC, &poll_freq, sizeof(ULONG), NULL, &out_len, INFINITE );
-        ok( ret, "IOCTL_HID_SET_POLL_FREQUENCY_MSEC failed last error %u\n", GetLastError() );
-        ok( out_len == 0, "got out_len %u, expected 0\n", out_len );
+        ok( ret, "IOCTL_HID_SET_POLL_FREQUENCY_MSEC failed last error %lu\n", GetLastError() );
+        ok( out_len == 0, "got out_len %lu, expected 0\n", out_len );
 
         out_len = 0;
         poll_freq = 0;
         SetLastError( 0xdeadbeef );
         ret = sync_ioctl( file, IOCTL_HID_SET_POLL_FREQUENCY_MSEC, &poll_freq, sizeof(ULONG), NULL, &out_len, INFINITE );
-        ok( ret, "IOCTL_HID_SET_POLL_FREQUENCY_MSEC failed last error %u\n", GetLastError() );
-        ok( out_len == 0, "got out_len %u, expected 0\n", out_len );
+        ok( ret, "IOCTL_HID_SET_POLL_FREQUENCY_MSEC failed last error %lu\n", GetLastError() );
+        ok( out_len == 0, "got out_len %lu, expected 0\n", out_len );
 
         out_len = sizeof(ULONG);
         SetLastError( 0xdeadbeef );
         ret = sync_ioctl( file, IOCTL_HID_GET_POLL_FREQUENCY_MSEC, NULL, 0, &poll_freq, &out_len, INFINITE );
-        ok( ret, "IOCTL_HID_GET_POLL_FREQUENCY_MSEC failed last error %u\n", GetLastError() );
-        ok( out_len == sizeof(ULONG), "got out_len %u, expected sizeof(ULONG)\n", out_len );
-        ok( poll_freq == 10000, "got poll_freq %u, expected 10000\n", poll_freq );
+        ok( ret, "IOCTL_HID_GET_POLL_FREQUENCY_MSEC failed last error %lu\n", GetLastError() );
+        ok( out_len == sizeof(ULONG), "got out_len %lu, expected sizeof(ULONG)\n", out_len );
+        ok( poll_freq == 10000, "got poll_freq %lu, expected 10000\n", poll_freq );
 
         out_len = 0;
         poll_freq = 500;
         SetLastError( 0xdeadbeef );
         ret = sync_ioctl( file, IOCTL_HID_SET_POLL_FREQUENCY_MSEC, &poll_freq, sizeof(ULONG), NULL, &out_len, INFINITE );
-        ok( ret, "IOCTL_HID_SET_POLL_FREQUENCY_MSEC failed last error %u\n", GetLastError() );
-        ok( out_len == 0, "got out_len %u, expected 0\n", out_len );
+        ok( ret, "IOCTL_HID_SET_POLL_FREQUENCY_MSEC failed last error %lu\n", GetLastError() );
+        ok( out_len == 0, "got out_len %lu, expected 0\n", out_len );
 
         out_len = sizeof(ULONG);
         SetLastError( 0xdeadbeef );
         ret = sync_ioctl( async_file, IOCTL_HID_GET_POLL_FREQUENCY_MSEC, NULL, 0, &poll_freq, &out_len, INFINITE );
-        ok( ret, "IOCTL_HID_GET_POLL_FREQUENCY_MSEC failed last error %u\n", GetLastError() );
-        ok( out_len == sizeof(ULONG), "got out_len %u, expected sizeof(ULONG)\n", out_len );
-        ok( poll_freq == 500, "got poll_freq %u, expected 500\n", poll_freq );
+        ok( ret, "IOCTL_HID_GET_POLL_FREQUENCY_MSEC failed last error %lu\n", GetLastError() );
+        ok( out_len == sizeof(ULONG), "got out_len %lu, expected sizeof(ULONG)\n", out_len );
+        ok( poll_freq == 500, "got poll_freq %lu, expected 500\n", poll_freq );
     }
 
     test_hidp( file, async_file, report_id, polled, expect_caps );
@@ -2487,7 +2487,7 @@ static void test_hid_device( DWORD report_id, DWORD polled, const HIDP_CAPS *exp
     InitializeObjectAttributes( &attr, &string, OBJ_CASE_INSENSITIVE, NULL, NULL );
     status = NtOpenFile( &file, SYNCHRONIZE, &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT );
     todo_wine
-    ok( status == STATUS_UNSUCCESSFUL, "got %#x\n", status );
+    ok( status == STATUS_UNSUCCESSFUL, "got %#lx\n", status );
 
     winetest_pop_context();
 }
@@ -2782,32 +2782,32 @@ static void test_hid_driver( DWORD report_id, DWORD polled )
 
     status = RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Services\\winetest",
                               0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL );
-    ok( !status, "RegCreateKeyExW returned %#x\n", status );
+    ok( !status, "RegCreateKeyExW returned %#lx\n", status );
 
     status = RegSetValueExW( hkey, L"ReportID", 0, REG_DWORD, (void *)&report_id, sizeof(report_id) );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok( !status, "RegSetValueExW returned %#lx\n", status );
 
     status = RegSetValueExW( hkey, L"PolledMode", 0, REG_DWORD, (void *)&polled, sizeof(polled) );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok( !status, "RegSetValueExW returned %#lx\n", status );
 
     status = RegSetValueExW( hkey, L"Descriptor", 0, REG_BINARY, (void *)report_desc, sizeof(report_desc) );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok( !status, "RegSetValueExW returned %#lx\n", status );
 
     status = RegSetValueExW( hkey, L"Attributes", 0, REG_BINARY, (void *)&attributes, sizeof(attributes) );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok( !status, "RegSetValueExW returned %#lx\n", status );
 
     status = RegSetValueExW( hkey, L"Caps", 0, REG_BINARY, (void *)&caps, sizeof(caps) );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok( !status, "RegSetValueExW returned %#lx\n", status );
 
     status = RegSetValueExW( hkey, L"Expect", 0, REG_BINARY, NULL, 0 );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok( !status, "RegSetValueExW returned %#lx\n", status );
 
     status = RegSetValueExW( hkey, L"Input", 0, REG_BINARY, (void *)&expect_in, polled ? sizeof(expect_in) : 0 );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok( !status, "RegSetValueExW returned %#lx\n", status );
 
     fill_context( __LINE__, context, ARRAY_SIZE(context) );
     status = RegSetValueExW( hkey, L"Context", 0, REG_BINARY, (void *)context, sizeof(context) );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok( !status, "RegSetValueExW returned %#lx\n", status );
 
     if (pnp_driver_start( L"driver_hid.dll" )) test_hid_device( report_id, polled, &caps );
 
@@ -3142,48 +3142,48 @@ static void test_hidp_kdr(void)
 
     status = RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Services\\winetest",
                               0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL );
-    ok( !status, "RegCreateKeyExW returned %#x\n", status );
+    ok( !status, "RegCreateKeyExW returned %#lx\n", status );
 
     status = RegSetValueExW( hkey, L"ReportID", 0, REG_DWORD, (void *)&report_id, sizeof(report_id) );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok( !status, "RegSetValueExW returned %#lx\n", status );
 
     status = RegSetValueExW( hkey, L"PolledMode", 0, REG_DWORD, (void *)&polled, sizeof(polled) );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok( !status, "RegSetValueExW returned %#lx\n", status );
 
     status = RegSetValueExW( hkey, L"Descriptor", 0, REG_BINARY, (void *)report_desc, sizeof(report_desc) );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok( !status, "RegSetValueExW returned %#lx\n", status );
 
     status = RegSetValueExW( hkey, L"Attributes", 0, REG_BINARY, (void *)&attributes, sizeof(attributes) );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok( !status, "RegSetValueExW returned %#lx\n", status );
 
     status = RegSetValueExW( hkey, L"Caps", 0, REG_BINARY, (void *)&expect_hidp_caps, sizeof(expect_hidp_caps) );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok( !status, "RegSetValueExW returned %#lx\n", status );
 
     status = RegSetValueExW( hkey, L"Expect", 0, REG_BINARY, NULL, 0 );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok( !status, "RegSetValueExW returned %#lx\n", status );
 
     status = RegSetValueExW( hkey, L"Input", 0, REG_BINARY, NULL, 0 );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok( !status, "RegSetValueExW returned %#lx\n", status );
 
     fill_context( __LINE__, context, ARRAY_SIZE(context) );
     status = RegSetValueExW( hkey, L"Context", 0, REG_BINARY, (void *)context, sizeof(context) );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok( !status, "RegSetValueExW returned %#lx\n", status );
 
     if (!pnp_driver_start( L"driver_hid.dll" )) goto done;
 
     set = SetupDiGetClassDevsW( &GUID_DEVINTERFACE_HID, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT );
-    ok( set != INVALID_HANDLE_VALUE, "failed to get device list, error %#x\n", GetLastError() );
+    ok( set != INVALID_HANDLE_VALUE, "failed to get device list, error %#lx\n", GetLastError() );
     for (i = 0; SetupDiEnumDeviceInfo( set, i, &device ); ++i)
     {
         ret = SetupDiEnumDeviceInterfaces( set, &device, &GUID_DEVINTERFACE_HID, 0, &iface );
-        ok( ret, "failed to get interface, error %#x\n", GetLastError() );
+        ok( ret, "failed to get interface, error %#lx\n", GetLastError() );
         ok( IsEqualGUID( &iface.InterfaceClassGuid, &GUID_DEVINTERFACE_HID ), "wrong class %s\n",
             debugstr_guid( &iface.InterfaceClassGuid ) );
-        ok( iface.Flags == SPINT_ACTIVE, "got flags %#x\n", iface.Flags );
+        ok( iface.Flags == SPINT_ACTIVE, "got flags %#lx\n", iface.Flags );
 
         iface_detail->cbSize = sizeof(*iface_detail);
         ret = SetupDiGetDeviceInterfaceDetailW( set, &iface, iface_detail, sizeof(buffer), NULL, NULL );
-        ok( ret, "failed to get interface path, error %#x\n", GetLastError() );
+        ok( ret, "failed to get interface path, error %#lx\n", GetLastError() );
 
         if (wcsstr( iface_detail->DevicePath, L"\\\\?\\hid#winetest#1" )) break;
     }
@@ -3191,10 +3191,10 @@ static void test_hidp_kdr(void)
 
     file = CreateFileW( iface_detail->DevicePath, FILE_READ_ACCESS | FILE_WRITE_ACCESS,
                         FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL );
-    ok( file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError() );
+    ok( file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
 
     ret = HidD_GetPreparsedData( file, &preparsed_data );
-    ok( ret, "HidD_GetPreparsedData failed with error %u\n", GetLastError() );
+    ok( ret, "HidD_GetPreparsedData failed with error %lu\n", GetLastError() );
 
     kdr = (struct hidp_kdr *)preparsed_data;
     ok( !strncmp( kdr->magic, expect_kdr.magic, 8 ), "got %s expected %s\n",
@@ -3225,7 +3225,7 @@ static void test_hidp_kdr(void)
 
         for (i = 0; i < min( ARRAY_SIZE(expect_caps), kdr->caps_size / sizeof(struct hidp_kdr_caps) ); ++i)
         {
-            winetest_push_context( "caps[%d]", i );
+            winetest_push_context( "caps[%ld]", i );
             check_member( kdr->caps[i], expect_caps[i], "%04x", usage_page );
             check_member( kdr->caps[i], expect_caps[i], "%d", report_id );
             check_member( kdr->caps[i], expect_caps[i], "%d", start_bit );
@@ -3233,20 +3233,20 @@ static void test_hidp_kdr(void)
             check_member( kdr->caps[i], expect_caps[i], "%d", report_count );
             check_member( kdr->caps[i], expect_caps[i], "%d", start_byte );
             check_member( kdr->caps[i], expect_caps[i], "%d", total_bits );
-            check_member( kdr->caps[i], expect_caps[i], "%#x", bit_field );
+            check_member( kdr->caps[i], expect_caps[i], "%#lx", bit_field );
             check_member( kdr->caps[i], expect_caps[i], "%d", end_byte );
             check_member( kdr->caps[i], expect_caps[i], "%d", link_collection );
             check_member( kdr->caps[i], expect_caps[i], "%04x", link_usage_page );
             check_member( kdr->caps[i], expect_caps[i], "%04x", link_usage );
-            check_member( kdr->caps[i], expect_caps[i], "%#x", flags );
-            check_member( kdr->caps[i], expect_caps[i], "%#x", padding[0] );
-            check_member( kdr->caps[i], expect_caps[i], "%#x", padding[1] );
-            check_member( kdr->caps[i], expect_caps[i], "%#x", padding[2] );
-            check_member( kdr->caps[i], expect_caps[i], "%#x", padding[3] );
-            check_member( kdr->caps[i], expect_caps[i], "%#x", padding[4] );
-            check_member( kdr->caps[i], expect_caps[i], "%#x", padding[5] );
-            check_member( kdr->caps[i], expect_caps[i], "%#x", padding[6] );
-            check_member( kdr->caps[i], expect_caps[i], "%#x", padding[7] );
+            check_member( kdr->caps[i], expect_caps[i], "%#lx", flags );
+            check_member( kdr->caps[i], expect_caps[i], "%#lx", padding[0] );
+            check_member( kdr->caps[i], expect_caps[i], "%#lx", padding[1] );
+            check_member( kdr->caps[i], expect_caps[i], "%#lx", padding[2] );
+            check_member( kdr->caps[i], expect_caps[i], "%#lx", padding[3] );
+            check_member( kdr->caps[i], expect_caps[i], "%#lx", padding[4] );
+            check_member( kdr->caps[i], expect_caps[i], "%#lx", padding[5] );
+            check_member( kdr->caps[i], expect_caps[i], "%#lx", padding[6] );
+            check_member( kdr->caps[i], expect_caps[i], "%#lx", padding[7] );
             check_member( kdr->caps[i], expect_caps[i], "%04x", usage_min );
             check_member( kdr->caps[i], expect_caps[i], "%04x", usage_max );
             check_member( kdr->caps[i], expect_caps[i], "%d", string_min );
@@ -3257,26 +3257,26 @@ static void test_hidp_kdr(void)
             check_member( kdr->caps[i], expect_caps[i], "%#x", data_index_max );
             check_member( kdr->caps[i], expect_caps[i], "%d", null_value );
             check_member( kdr->caps[i], expect_caps[i], "%d", unknown );
-            check_member( kdr->caps[i], expect_caps[i], "%d", logical_min );
-            check_member( kdr->caps[i], expect_caps[i], "%d", logical_max );
-            check_member( kdr->caps[i], expect_caps[i], "%d", physical_min );
-            check_member( kdr->caps[i], expect_caps[i], "%d", physical_max );
-            check_member( kdr->caps[i], expect_caps[i], "%#x", units );
-            check_member( kdr->caps[i], expect_caps[i], "%#x", units_exp );
+            check_member( kdr->caps[i], expect_caps[i], "%ld", logical_min );
+            check_member( kdr->caps[i], expect_caps[i], "%ld", logical_max );
+            check_member( kdr->caps[i], expect_caps[i], "%ld", physical_min );
+            check_member( kdr->caps[i], expect_caps[i], "%ld", physical_max );
+            check_member( kdr->caps[i], expect_caps[i], "%#lx", units );
+            check_member( kdr->caps[i], expect_caps[i], "%#lx", units_exp );
             winetest_pop_context();
         }
 
         for (i = 0; i < ARRAY_SIZE(expect_nodes); ++i)
         {
             struct hidp_kdr_node *nodes = (struct hidp_kdr_node *)((char *)kdr->caps + kdr->caps_size);
-            winetest_push_context( "nodes[%d]", i );
+            winetest_push_context( "nodes[%ld]", i );
             check_member( nodes[i], expect_nodes[i], "%04x", usage );
             check_member( nodes[i], expect_nodes[i], "%04x", usage_page );
             check_member( nodes[i], expect_nodes[i], "%d", parent );
             check_member( nodes[i], expect_nodes[i], "%d", number_of_children );
             check_member( nodes[i], expect_nodes[i], "%d", next_sibling );
             check_member( nodes[i], expect_nodes[i], "%d", first_child );
-            check_member( nodes[i], expect_nodes[i], "%#x", collection_type );
+            check_member( nodes[i], expect_nodes[i], "%#lx", collection_type );
             winetest_pop_context();
         }
     }
@@ -3341,24 +3341,24 @@ BOOL dinput_driver_start_( const char *file, int line, const BYTE *desc_buf, ULO
 
     status = RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Services\\winetest",
                               0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL );
-    ok_(file, line)( !status, "RegCreateKeyExW returned %#x\n", status );
+    ok_(file, line)( !status, "RegCreateKeyExW returned %#lx\n", status );
     status = RegSetValueExW( hkey, L"ReportID", 0, REG_DWORD, (void *)&report_id, sizeof(report_id) );
-    ok_(file, line)( !status, "RegSetValueExW returned %#x\n", status );
+    ok_(file, line)( !status, "RegSetValueExW returned %#lx\n", status );
     status = RegSetValueExW( hkey, L"PolledMode", 0, REG_DWORD, (void *)&polled, sizeof(polled) );
-    ok_(file, line)( !status, "RegSetValueExW returned %#x\n", status );
+    ok_(file, line)( !status, "RegSetValueExW returned %#lx\n", status );
     status = RegSetValueExW( hkey, L"Descriptor", 0, REG_BINARY, (void *)desc_buf, desc_len );
-    ok_(file, line)( !status, "RegSetValueExW returned %#x\n", status );
+    ok_(file, line)( !status, "RegSetValueExW returned %#lx\n", status );
     status = RegSetValueExW( hkey, L"Attributes", 0, REG_BINARY, (void *)&attributes, sizeof(attributes) );
-    ok_(file, line)( !status, "RegSetValueExW returned %#x\n", status );
+    ok_(file, line)( !status, "RegSetValueExW returned %#lx\n", status );
     status = RegSetValueExW( hkey, L"Caps", 0, REG_BINARY, (void *)caps, sizeof(*caps) );
-    ok_(file, line)( !status, "RegSetValueExW returned %#x\n", status );
+    ok_(file, line)( !status, "RegSetValueExW returned %#lx\n", status );
     status = RegSetValueExW( hkey, L"Expect", 0, REG_BINARY, (void *)expect, expect_size );
-    ok_(file, line)( !status, "RegSetValueExW returned %#x\n", status );
+    ok_(file, line)( !status, "RegSetValueExW returned %#lx\n", status );
     status = RegSetValueExW( hkey, L"Input", 0, REG_BINARY, NULL, 0 );
-    ok_(file, line)( !status, "RegSetValueExW returned %#x\n", status );
+    ok_(file, line)( !status, "RegSetValueExW returned %#lx\n", status );
     fill_context( line, context, ARRAY_SIZE(context) );
     status = RegSetValueExW( hkey, L"Context", 0, REG_BINARY, (void *)context, sizeof(context) );
-    ok_(file, line)( !status, "RegSetValueExW returned %#x\n", status );
+    ok_(file, line)( !status, "RegSetValueExW returned %#lx\n", status );
 
     return pnp_driver_start( L"driver_hid.dll" );
 }
@@ -3385,7 +3385,7 @@ BOOL dinput_test_init_( const char *file, int line )
         win_skip( "Failed to create test data mapping.\n" );
         return FALSE;
     }
-    ok( !!test_data_mapping, "got error %u\n", GetLastError() );
+    ok( !!test_data_mapping, "got error %lu\n", GetLastError() );
     test_data = MapViewOfFile( test_data_mapping, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 1024 );
     test_data->running_under_wine = !strcmp( winetest_platform, "wine" );
     test_data->winetest_report_success = winetest_report_success;
@@ -3393,7 +3393,7 @@ BOOL dinput_test_init_( const char *file, int line )
 
     okfile = CreateFileW( L"C:\\windows\\winetest_dinput_okfile", GENERIC_READ | GENERIC_WRITE,
                           FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, 0, NULL );
-    ok( okfile != INVALID_HANDLE_VALUE, "failed to create file, error %u\n", GetLastError() );
+    ok( okfile != INVALID_HANDLE_VALUE, "failed to create file, error %lu\n", GetLastError() );
 
     subtest( "driver_hid" );
     return TRUE;
@@ -3426,53 +3426,53 @@ HRESULT dinput_test_create_device( DWORD version, DIDEVICEINSTANCEW *devinst, ID
         hr = DirectInput8Create( instance, version, &IID_IDirectInput8W, (void **)&di8, NULL );
         if (FAILED(hr))
         {
-            win_skip( "DirectInput8Create returned %#x\n", hr );
+            win_skip( "DirectInput8Create returned %#lx\n", hr );
             return hr;
         }
 
         hr = IDirectInput8_EnumDevices( di8, DI8DEVCLASS_ALL, find_test_device, devinst, DIEDFL_ALLDEVICES );
-        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
+        ok( hr == DI_OK, "EnumDevices returned: %#lx\n", hr );
         if (!IsEqualGUID( &devinst->guidProduct, &expect_guid_product ))
         {
             win_skip( "device not found, skipping tests\n" );
             ref = IDirectInput8_Release( di8 );
-            ok( ref == 0, "Release returned %d\n", ref );
+            ok( ref == 0, "Release returned %ld\n", ref );
             return DIERR_DEVICENOTREG;
         }
 
         hr = IDirectInput8_CreateDevice( di8, &expect_guid_product, device, NULL );
-        ok( hr == DI_OK, "CreateDevice returned %#x\n", hr );
+        ok( hr == DI_OK, "CreateDevice returned %#lx\n", hr );
 
         ref = IDirectInput8_Release( di8 );
         todo_wine
-        ok( ref == 0, "Release returned %d\n", ref );
+        ok( ref == 0, "Release returned %ld\n", ref );
     }
     else
     {
         hr = DirectInputCreateEx( instance, version, &IID_IDirectInput2W, (void **)&di, NULL );
         if (FAILED(hr))
         {
-            win_skip( "DirectInputCreateEx returned %#x\n", hr );
+            win_skip( "DirectInputCreateEx returned %#lx\n", hr );
             return hr;
         }
 
         hr = IDirectInput_EnumDevices( di, 0, find_test_device, devinst, DIEDFL_ALLDEVICES );
-        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
+        ok( hr == DI_OK, "EnumDevices returned: %#lx\n", hr );
         if (!IsEqualGUID( &devinst->guidProduct, &expect_guid_product ))
         {
             win_skip( "device not found, skipping tests\n" );
 
             ref = IDirectInput_Release( di );
-            ok( ref == 0, "Release returned %d\n", ref );
+            ok( ref == 0, "Release returned %ld\n", ref );
             return DIERR_DEVICENOTREG;
         }
 
         hr = IDirectInput_CreateDevice( di, &expect_guid_product, (IDirectInputDeviceW **)device, NULL );
-        ok( hr == DI_OK, "CreateDevice returned %#x\n", hr );
+        ok( hr == DI_OK, "CreateDevice returned %#lx\n", hr );
 
         ref = IDirectInput_Release( di );
         todo_wine
-        ok( ref == 0, "Release returned %d\n", ref );
+        ok( ref == 0, "Release returned %ld\n", ref );
     }
 
     return DI_OK;
@@ -3536,24 +3536,24 @@ DWORD WINAPI dinput_test_device_thread( void *stop_event )
 
     status = RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Services\\winetest",
                               0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL );
-    ok( !status, "RegCreateKeyExW returned %#x\n", status );
+    ok( !status, "RegCreateKeyExW returned %#lx\n", status );
     status = RegSetValueExW( hkey, L"ReportID", 0, REG_DWORD, (void *)&report_id, sizeof(report_id) );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok( !status, "RegSetValueExW returned %#lx\n", status );
     status = RegSetValueExW( hkey, L"PolledMode", 0, REG_DWORD, (void *)&polled, sizeof(polled) );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok( !status, "RegSetValueExW returned %#lx\n", status );
     status = RegSetValueExW( hkey, L"Descriptor", 0, REG_BINARY, (void *)gamepad_desc, sizeof(gamepad_desc) );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok( !status, "RegSetValueExW returned %#lx\n", status );
     status = RegSetValueExW( hkey, L"Attributes", 0, REG_BINARY, (void *)&attributes, sizeof(attributes) );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok( !status, "RegSetValueExW returned %#lx\n", status );
     status = RegSetValueExW( hkey, L"Caps", 0, REG_BINARY, (void *)&caps, sizeof(caps) );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok( !status, "RegSetValueExW returned %#lx\n", status );
     status = RegSetValueExW( hkey, L"Expect", 0, REG_BINARY, (void *)NULL, 0 );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok( !status, "RegSetValueExW returned %#lx\n", status );
     status = RegSetValueExW( hkey, L"Input", 0, REG_BINARY, NULL, 0 );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok( !status, "RegSetValueExW returned %#lx\n", status );
     fill_context( __LINE__, context, ARRAY_SIZE(context) );
     status = RegSetValueExW( hkey, L"Context", 0, REG_BINARY, (void *)context, sizeof(context) );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok( !status, "RegSetValueExW returned %#lx\n", status );
 
     pnp_driver_start( L"driver_hid.dll" );
     WaitForSingleObject( stop_event, INFINITE );
