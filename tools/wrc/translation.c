@@ -274,18 +274,12 @@ static int compare_cursor_group(cursor_group_t *cursor_group1, cursor_group_t *c
 
 static int compare_control(control_t *control1, control_t *control2) {
 	int different = 0;
-	char *nameid = NULL;
 	int ignore_style;
 	if(((control1 && !control2) || (!control1 && control2)))
 		different = 1;
 	if(different || !control1 || !control2)
 		return different;
-	nameid = strdup(get_nameid_str(control1->ctlclass));
-	if(strcmp(nameid, get_nameid_str(control2->ctlclass)))
-		different = 1;
-	free(nameid);
-        if (different)
-            return different;
+        if (compare_name_id( control1->ctlclass, control2->ctlclass )) return 1;
 
         /* allow the translators to set some styles */
         ignore_style = 0;
@@ -324,7 +318,6 @@ static int compare_control(control_t *control1, control_t *control2) {
 
 static int compare_dialog(dialog_t *dialog1, dialog_t *dialog2) {
 	int different = 0;
-	char *nameid = NULL;
 	control_t *ctrl1, *ctrl2;
 	if(((dialog1->memopt != dialog2->memopt) ||
 	   (dialog1->lvc.version != dialog2->lvc.version) ||
@@ -355,14 +348,9 @@ static int compare_dialog(dialog_t *dialog1, dialog_t *dialog2) {
 		  ((dialog1->gothelpid && !dialog2->gothelpid) ||
 		  (!dialog1->gothelpid && dialog2->gothelpid)))
 			different = 1;
-	nameid = strdup(get_nameid_str(dialog1->menu));
-	if(!different && strcmp(nameid, get_nameid_str(dialog2->menu)))
-		different = 1;
-	free(nameid);
-	nameid = strdup(get_nameid_str(dialog1->dlgclass));
-	if(!different && strcmp(nameid, get_nameid_str(dialog2->dlgclass)))
-		different = 1;
-	free(nameid);
+
+        if (!different && compare_name_id( dialog1->menu, dialog2->menu )) return 1;
+        if (!different && compare_name_id( dialog1->dlgclass, dialog2->dlgclass )) return 1;
 
         ctrl1 = dialog1->controls;
         ctrl2 = dialog2->controls;
@@ -570,15 +558,11 @@ static int compare_stringtable(stringtable_t *stringtable1, stringtable_t *strin
 
 static int compare_user(user_t *user1, user_t *user2) {
 	int different = 0;
-	char *nameid = NULL;
 	if(((user1->memopt != user2->memopt) ||
 	   (user1->data->lvc.version != user2->data->lvc.version) ||
 	   (user1->data->lvc.characts != user2->data->lvc.characts)))
 		different = 1;
-	nameid = strdup(get_nameid_str(user1->type));
-	if(!different && strcmp(nameid, get_nameid_str(user2->type)))
-		different = 1;
-	free(nameid);
+        if (!different) different = compare_name_id( user1->type, user2->type );
 	return different;
 }
 
