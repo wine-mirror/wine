@@ -111,7 +111,6 @@ F:	dlls/qedit/
 F:	dlls/quartz/
 F:	dlls/strmbase/
 F:	dlls/winegstreamer/quartz_parser.c
-F:	dlls/wineqtdecoder/
 
 DirectWrite
 M:	Nikolay Sivov <nsivov@codeweavers.com>
