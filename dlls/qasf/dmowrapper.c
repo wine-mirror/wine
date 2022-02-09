@@ -86,7 +86,7 @@ static HRESULT WINAPI buffer_SetLength(IMediaBuffer *iface, DWORD len)
 {
     struct buffer *buffer = impl_from_IMediaBuffer(iface);
 
-    TRACE("iface %p, len %u.\n", iface, len);
+    TRACE("iface %p, len %lu.\n", iface, len);
 
     return IMediaSample_SetActualDataLength(buffer->sample, len);
 }
@@ -216,7 +216,7 @@ static HRESULT process_output(struct dmo_wrapper *filter, IMediaObject *dmo)
             if (FAILED(hr = IMemAllocator_GetBuffer(filter->sources[i].pin.pAllocator,
                     &filter->sources[i].buffer.sample, NULL, NULL, 0)))
             {
-                ERR("Failed to get sample, hr %#x.\n", hr);
+                ERR("Failed to get sample, hr %#lx.\n", hr);
                 goto out;
             }
             buffers[i].pBuffer = &filter->sources[i].buffer.IMediaBuffer_iface;
@@ -263,7 +263,7 @@ static HRESULT process_output(struct dmo_wrapper *filter, IMediaObject *dmo)
             {
                 if (FAILED(hr = IMemInputPin_Receive(filter->sources[i].pin.pMemInputPin, sample)))
                 {
-                    WARN("Downstream sink returned %#x.\n", hr);
+                    WARN("Downstream sink returned %#lx.\n", hr);
                     goto out;
                 }
                 IMediaSample_SetActualDataLength(sample, 0);
@@ -300,7 +300,7 @@ static HRESULT WINAPI dmo_wrapper_sink_Receive(struct strmbase_sink *iface, IMed
     {
         if (FAILED(hr = IMediaObject_Discontinuity(dmo, index)))
         {
-            ERR("Discontinuity() failed, hr %#x.\n", hr);
+            ERR("Discontinuity() failed, hr %#lx.\n", hr);
             goto out;
         }
 
@@ -324,7 +324,7 @@ static HRESULT WINAPI dmo_wrapper_sink_Receive(struct strmbase_sink *iface, IMed
     if (FAILED(hr = IMediaObject_ProcessInput(dmo, index,
             &filter->input_buffer.IMediaBuffer_iface, flags, start, stop - start)))
     {
-        ERR("ProcessInput() failed, hr %#x.\n", hr);
+        ERR("ProcessInput() failed, hr %#lx.\n", hr);
         goto out;
     }
 
@@ -346,11 +346,11 @@ static HRESULT dmo_wrapper_sink_eos(struct strmbase_sink *iface)
     IUnknown_QueryInterface(filter->dmo, &IID_IMediaObject, (void **)&dmo);
 
     if (FAILED(hr = IMediaObject_Discontinuity(dmo, index)))
-        ERR("Discontinuity() failed, hr %#x.\n", hr);
+        ERR("Discontinuity() failed, hr %#lx.\n", hr);
 
     process_output(filter, dmo);
     if (FAILED(hr = IMediaObject_Flush(dmo)))
-        ERR("Flush() failed, hr %#x.\n", hr);
+        ERR("Flush() failed, hr %#lx.\n", hr);
 
     for (i = 0; i < filter->source_count; ++i)
     {
@@ -372,7 +372,7 @@ static HRESULT dmo_wrapper_end_flush(struct strmbase_sink *iface)
     IUnknown_QueryInterface(filter->dmo, &IID_IMediaObject, (void **)&dmo);
 
     if (FAILED(hr = IMediaObject_Flush(dmo)))
-        ERR("Flush() failed, hr %#x.\n", hr);
+        ERR("Flush() failed, hr %#lx.\n", hr);
 
     for (i = 0; i < filter->source_count; ++i)
     {
