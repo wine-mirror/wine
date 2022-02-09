@@ -40,7 +40,7 @@ static ULONG WINAPI inner_AddRef(IUnknown *iface)
 {
     struct graph_builder *builder = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedIncrement(&builder->refcount);
-    TRACE("%p increasing refcount to %u.\n", builder, refcount);
+    TRACE("%p increasing refcount to %lu.\n", builder, refcount);
     return refcount;
 }
 
@@ -48,7 +48,7 @@ static ULONG WINAPI inner_Release(IUnknown *iface)
 {
     struct graph_builder *builder = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedDecrement(&builder->refcount);
-    TRACE("%p decreasing refcount to %u.\n", builder, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", builder, refcount);
     if (!refcount)
         free(builder);
     return refcount;
@@ -119,7 +119,7 @@ static HRESULT WINAPI graph_builder_GetDvdInterface(IDvdGraphBuilder *iface, REF
 
 static HRESULT WINAPI graph_builder_RenderDvdVideoVolume(IDvdGraphBuilder *iface, const WCHAR *path, DWORD flags, AM_DVD_RENDERSTATUS *status)
 {
-    FIXME("iface %p, path %s, flags %#x, status %p, stub!\n", iface, debugstr_w(path), flags, status);
+    FIXME("iface %p, path %s, flags %#lx, status %p, stub!\n", iface, debugstr_w(path), flags, status);
     return E_NOTIMPL;
 }
 
