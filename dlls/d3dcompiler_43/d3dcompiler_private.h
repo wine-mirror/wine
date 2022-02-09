@@ -575,6 +575,4 @@ static inline void write_u32(char **ptr, uint32_t u32)
     *ptr += sizeof(u32);
 }
 
-void skip_u32_unknown(const char **ptr, unsigned int count) DECLSPEC_HIDDEN;
-
 #endif /* __WINE_D3DCOMPILER_PRIVATE_H */
