@@ -1278,8 +1278,8 @@ static HRESULT parse_fx10_shader(const char *data, size_t data_size, DWORD offse
         return E_FAIL;
     }
 
-    /* We got a shader VertexShader vs = NULL, so it is fine to skip this. */
-    if (!dxbc_size) return S_OK;
+    if (!dxbc_size)
+        return S_OK;
 
     if (FAILED(hr = D3D10ReflectShader(ptr, dxbc_size, &v->u.shader.reflection)))
         return hr;
