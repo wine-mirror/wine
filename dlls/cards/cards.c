@@ -92,7 +92,7 @@ BOOL WINAPI cdtDrawExt(HDC hdc, int x, int y, int dx, int dy, int card, int mode
 	BOOL eraseFlag = FALSE;
 	BOOL drawFlag = TRUE;
 
-	TRACE("(%p, %d, %d, %d, %d, %d, %d, %d)\n", hdc, x, y, dx, dy, card, mode, color);
+	TRACE("(%p, %d, %d, %d, %d, %d, %d, %ld)\n", hdc, x, y, dx, dy, card, mode, color);
 
 	roundCornersFlag = !(mode & MODEFLAG_DONT_ROUND_CORNERS) &&
 			   (dx == cardWidth) && (dy == cardHeight);
@@ -238,7 +238,7 @@ BOOL WINAPI cdtDrawExt(HDC hdc, int x, int y, int dx, int dy, int card, int mode
  */
 BOOL WINAPI cdtDraw(HDC hdc, int x, int y, int card, int mode, DWORD color)
 {
-	TRACE("(%p, %d, %d, %d, %d, %d)\n", hdc, x, y, card, mode, color);
+	TRACE("(%p, %d, %d, %d, %d, %ld)\n", hdc, x, y, card, mode, color);
 
 	return cdtDrawExt(hdc, x, y, cardWidth, cardHeight, card, mode, color);
 }
