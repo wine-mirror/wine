@@ -343,7 +343,7 @@ static HRESULT WINAPI ProgressDialog_StartProgressDialog(IProgressDialog *iface,
     struct create_params params;
     HANDLE hThread;
 
-    TRACE("(%p, %p, %x, %p)\n", iface, punkEnableModeless, dwFlags, reserved);
+    TRACE("(%p, %p, %lx, %p)\n", iface, punkEnableModeless, dwFlags, reserved);
     if (punkEnableModeless || reserved)
         FIXME("Reserved parameters not null (%p, %p)\n", punkEnableModeless, reserved);
     if (dwFlags & PROGDLG_NOTIME)
@@ -509,7 +509,7 @@ static HRESULT WINAPI ProgressDialog_SetLine(IProgressDialog *iface, DWORD dwLin
     ProgressDialog *This = impl_from_IProgressDialog(iface);
     HWND hwnd;
 
-    TRACE("(%p, %d, %s, %d)\n", This, dwLineNum, wine_dbgstr_w(pwzLine), bPath);
+    TRACE("(%p, %ld, %s, %d)\n", This, dwLineNum, wine_dbgstr_w(pwzLine), bPath);
 
     if (reserved)
         FIXME("reserved pointer not null (%p)\n", reserved);
@@ -556,7 +556,7 @@ static HRESULT WINAPI ProgressDialog_Timer(IProgressDialog *iface, DWORD dwTimer
 {
     ProgressDialog *This = impl_from_IProgressDialog(iface);
 
-    FIXME("(%p, %d, %p) - stub\n", This, dwTimerAction, reserved);
+    FIXME("(%p, %ld, %p) - stub\n", This, dwTimerAction, reserved);
 
     if (reserved)
         FIXME("Reserved field not NULL but %p\n", reserved);

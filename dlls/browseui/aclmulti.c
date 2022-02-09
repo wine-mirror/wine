@@ -140,7 +140,7 @@ static HRESULT WINAPI ACLMulti_Next(IEnumString *iface, ULONG celt, LPOLESTR *rg
 {
     ACLMulti *This = impl_from_IEnumString(iface);
 
-    TRACE("(%p, %d, %p, %p)\n", iface, celt, rgelt, pceltFetched);
+    TRACE("(%p, %ld, %p, %p)\n", iface, celt, rgelt, pceltFetched);
     while (This->currObj < This->nObjs)
     {
         if (This->objs[This->currObj].pEnum)

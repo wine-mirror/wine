@@ -94,7 +94,7 @@ static ULONG WINAPI ACLShellSource_AddRef(IEnumString *iface)
 {
     ACLShellSource *This = impl_from_IEnumString(iface);
     ULONG ref = InterlockedIncrement(&This->refCount);
-    TRACE("(%p)->(%u)\n", This, ref);
+    TRACE("(%p)->(%lu)\n", This, ref);
     return ref;
 }
 
@@ -103,7 +103,7 @@ static ULONG WINAPI ACLShellSource_Release(IEnumString *iface)
     ACLShellSource *This = impl_from_IEnumString(iface);
     ULONG ref = InterlockedDecrement(&This->refCount);
 
-    TRACE("(%p)->(%u)\n", This, ref);
+    TRACE("(%p)->(%lu)\n", This, ref);
 
     if (ref == 0)
         ACLShellSource_Destructor(This);
@@ -114,14 +114,14 @@ static HRESULT WINAPI ACLShellSource_Next(IEnumString *iface, ULONG celt, LPOLES
     ULONG *fetched)
 {
     ACLShellSource *This = impl_from_IEnumString(iface);
-    FIXME("(%p)->(%u %p %p): stub\n", This, celt, rgelt, fetched);
+    FIXME("(%p)->(%lu %p %p): stub\n", This, celt, rgelt, fetched);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ACLShellSource_Skip(IEnumString *iface, ULONG celt)
 {
     ACLShellSource *This = impl_from_IEnumString(iface);
-    FIXME("(%p)->(%u): stub\n", This, celt);
+    FIXME("(%p)->(%lu): stub\n", This, celt);
     return E_NOTIMPL;
 }
 
