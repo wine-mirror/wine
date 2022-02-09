@@ -534,6 +534,12 @@ static void wait_on_sample(struct media_stream *stream, IUnknown *token)
 
     TRACE("%p, %p\n", stream, token);
 
+    if (stream->eos)
+    {
+        IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEError, &GUID_NULL, MF_E_END_OF_STREAM, &empty_var);
+        return;
+    }
+
     for (;;)
     {
         if (!wg_parser_stream_get_event(stream->wg_stream, &event))
