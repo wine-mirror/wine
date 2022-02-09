@@ -27,40 +27,40 @@ WINE_DEFAULT_DEBUG_CHANNEL(difxapi);
 
 DWORD WINAPI DriverPackagePreinstallA(LPCSTR inf, DWORD flags)
 {
-    FIXME("(%s, %u) stub\n", wine_dbgstr_a(inf), flags);
+    FIXME("(%s, %lu) stub\n", wine_dbgstr_a(inf), flags);
     return ERROR_SUCCESS;
 }
 
 DWORD WINAPI DriverPackagePreinstallW(LPCWSTR inf, DWORD flags)
 {
-    FIXME("(%s, %u) stub\n", wine_dbgstr_w(inf), flags);
+    FIXME("(%s, %lu) stub\n", wine_dbgstr_w(inf), flags);
     return ERROR_SUCCESS;
 }
 
 DWORD WINAPI DriverPackageInstallA(LPCSTR inf, DWORD flags, PCINSTALLERINFO_A info, BOOL *reboot)
 {
-    FIXME("(%s, %u, %p, %p) stub\n", wine_dbgstr_a(inf), flags, info, reboot);
+    FIXME("(%s, %lu, %p, %p) stub\n", wine_dbgstr_a(inf), flags, info, reboot);
     if (reboot) *reboot = FALSE;
     return ERROR_SUCCESS;
 }
 
 DWORD WINAPI DriverPackageInstallW(LPCWSTR inf, DWORD flags, PCINSTALLERINFO_W info, BOOL *reboot)
 {
-    FIXME("(%s, %u, %p, %p) stub\n", wine_dbgstr_w(inf), flags, info, reboot);
+    FIXME("(%s, %lu, %p, %p) stub\n", wine_dbgstr_w(inf), flags, info, reboot);
     if (reboot) *reboot = FALSE;
     return ERROR_SUCCESS;
 }
 
 DWORD WINAPI DriverPackageUninstallA(LPCSTR inf, DWORD flags, PCINSTALLERINFO_A info, BOOL *reboot)
 {
-    FIXME("(%s, %u, %p, %p) stub\n", wine_dbgstr_a(inf), flags, info, reboot);
+    FIXME("(%s, %lu, %p, %p) stub\n", wine_dbgstr_a(inf), flags, info, reboot);
     if (reboot) *reboot = FALSE;
     return ERROR_SUCCESS;
 }
 
 DWORD WINAPI DriverPackageUninstallW(LPCWSTR inf, DWORD flags, PCINSTALLERINFO_W info, BOOL *reboot)
 {
-    FIXME("(%s, %u, %p, %p) stub\n", wine_dbgstr_w(inf), flags, info, reboot);
+    FIXME("(%s, %lu, %p, %p) stub\n", wine_dbgstr_w(inf), flags, info, reboot);
     if (reboot) *reboot = FALSE;
     return ERROR_SUCCESS;
 }
