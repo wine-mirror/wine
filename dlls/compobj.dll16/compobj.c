@@ -143,7 +143,7 @@ ULONG CDECL IMalloc16_fnAddRef(IMalloc16 *iface)
 {
     IMalloc16Impl *malloc = impl_from_IMalloc16(iface);
     ULONG refcount = InterlockedIncrement(&malloc->refcount);
-    TRACE("%p increasing refcount to %u.\n", malloc, refcount);
+    TRACE("%p increasing refcount to %lu.\n", malloc, refcount);
     return refcount;
 }
 
@@ -154,7 +154,7 @@ ULONG CDECL IMalloc16_fnRelease(SEGPTR iface)
 {
     IMalloc16Impl *malloc = impl_from_IMalloc16(MapSL(iface));
     ULONG refcount = InterlockedDecrement(&malloc->refcount);
-    TRACE("%p decreasing refcount to %u.\n", malloc, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", malloc, refcount);
     if (!refcount)
     {
         UnMapLS(iface);
@@ -169,7 +169,7 @@ ULONG CDECL IMalloc16_fnRelease(SEGPTR iface)
 SEGPTR CDECL IMalloc16_fnAlloc(IMalloc16* iface,DWORD cb) {
         IMalloc16Impl *This = impl_from_IMalloc16(iface);
 
-	TRACE("(%p)->Alloc(%d)\n",This,cb);
+	TRACE("(%p)->Alloc(%ld)\n",This,cb);
         return MapLS( HeapAlloc( GetProcessHeap(), 0, cb ) );
 }
 
@@ -180,7 +180,7 @@ VOID CDECL IMalloc16_fnFree(IMalloc16* iface,SEGPTR pv)
 {
     void *ptr = MapSL(pv);
     IMalloc16Impl *This = impl_from_IMalloc16(iface);
-    TRACE("(%p)->Free(%08x)\n",This,pv);
+    TRACE("(%p)->Free(%08lx)\n",This,pv);
     UnMapLS(pv);
     HeapFree( GetProcessHeap(), 0, ptr );
 }
@@ -193,7 +193,7 @@ SEGPTR CDECL IMalloc16_fnRealloc(IMalloc16* iface,SEGPTR pv,DWORD cb)
     SEGPTR ret;
     IMalloc16Impl *This = impl_from_IMalloc16(iface);
 
-    TRACE("(%p)->Realloc(%08x,%d)\n",This,pv,cb);
+    TRACE("(%p)->Realloc(%08lx,%ld)\n",This,pv,cb);
     if (!pv)
 	ret = IMalloc16_fnAlloc(iface, cb);
     else if (cb) {
@@ -213,7 +213,7 @@ DWORD CDECL IMalloc16_fnGetSize(IMalloc16* iface,SEGPTR pv)
 {
         IMalloc16Impl *This = impl_from_IMalloc16(iface);
 
-        TRACE("(%p)->GetSize(%08x)\n",This,pv);
+        TRACE("(%p)->GetSize(%08lx)\n",This,pv);
         return HeapSize( GetProcessHeap(), 0, MapSL(pv) );
 }
 
@@ -301,11 +301,11 @@ HRESULT WINAPI CoCreateStandardMalloc16(MEMCTX context, SEGPTR *malloc)
  */
 SEGPTR WINAPI CoMemAlloc(DWORD size, MEMCTX context, DWORD unknown)
 {
-    TRACE("size %u, context %d, unknown %#x.\n", size, context, unknown);
+    TRACE("size %lu, context %d, unknown %#lx.\n", size, context, unknown);
     if (context != MEMCTX_TASK)
         FIXME("Ignoring context %d.\n", context);
     if (unknown)
-        FIXME("Ignoring unknown parameter %#x.\n", unknown);
+        FIXME("Ignoring unknown parameter %#lx.\n", unknown);
 
     return call_IMalloc_Alloc(compobj_malloc, size);
 }
@@ -504,7 +504,7 @@ HRESULT WINAPI CoRegisterClassObject16(
 	DWORD flags,        /* [in] REGCLS flags indicating how connections are made */
 	LPDWORD lpdwRegister
 ) {
-	FIXME("(%s,%p,0x%08x,0x%08x,%p),stub\n",
+	FIXME("(%s,%p,0x%08lx,0x%08lx,%p),stub\n",
 		debugstr_guid(rclsid),pUnk,dwClsContext,flags,lpdwRegister
 	);
 	return 0;
@@ -516,7 +516,7 @@ HRESULT WINAPI CoRegisterClassObject16(
  */
 HRESULT WINAPI CoRevokeClassObject16(DWORD dwRegister) /* [in] token on class obj */
 {
-    FIXME("(0x%08x),stub!\n", dwRegister);
+    FIXME("(0x%08lx),stub!\n", dwRegister);
     return 0;
 }
 
@@ -613,7 +613,7 @@ HRESULT WINAPI CoGetState16(LPDWORD state)
  */
 BOOL WINAPI COMPOBJ_DllEntryPoint(DWORD Reason, HINSTANCE16 hInst, WORD ds, WORD HeapSize, DWORD res1, WORD res2)
 {
-        TRACE("(%08x, %04x, %04x, %04x, %08x, %04x)\n", Reason, hInst, ds, HeapSize, res1, res2);
+        TRACE("(%08lx, %04x, %04x, %04x, %08lx, %04x)\n", Reason, hInst, ds, HeapSize, res1, res2);
         return TRUE;
 }
 
@@ -738,7 +738,7 @@ HRESULT WINAPI CoGetClassObject16(
         WOWCallback16Ex((DWORD) DllGetClassObject, WCB16_PASCAL, sizeof(args), args, &dwRet);
         if (dwRet != S_OK)
         {
-            ERR("DllGetClassObject returned error 0x%08x\n", dwRet);
+            ERR("DllGetClassObject returned error 0x%08lx\n", dwRet);
             FreeLibrary16(dll);
             return dwRet;
         }
@@ -768,7 +768,7 @@ HRESULT WINAPI CoCreateInstance16(
 	REFIID iid,
 	LPVOID *ppv)
 {
-  FIXME("(%s, %p, %x, %s, %p), stub!\n",
+  FIXME("(%s, %p, %lx, %s, %p), stub!\n",
 	debugstr_guid(rclsid), pUnkOuter, dwClsContext, debugstr_guid(iid),
 	ppv
   );
@@ -780,6 +780,6 @@ HRESULT WINAPI CoCreateInstance16(
  */
 HRESULT WINAPI CoDisconnectObject16( LPUNKNOWN lpUnk, DWORD reserved )
 {
-  FIXME("(%p, 0x%08x): stub!\n", lpUnk, reserved);
+  FIXME("(%p, 0x%08lx): stub!\n", lpUnk, reserved);
   return E_NOTIMPL;
 }
