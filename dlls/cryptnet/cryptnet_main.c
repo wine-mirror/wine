@@ -145,7 +145,7 @@ static BOOL WINAPI CRYPT_GetUrlFromCertificateIssuer(LPCSTR pszUrlOid,
                         }
                     }
                     else
-                        FIXME("unsupported alt name type %d\n",
+                        FIXME("unsupported alt name type %ld\n",
                          aia->rgAccDescr[i].AccessLocation.dwAltNameChoice);
                 }
             if (!pcbUrlArray)
@@ -358,7 +358,7 @@ BOOL WINAPI CryptGetObjectUrl(LPCSTR pszUrlOid, LPVOID pvPara, DWORD dwFlags,
     HCRYPTOIDFUNCADDR hFunc = NULL;
     BOOL ret = FALSE;
 
-    TRACE("(%s, %p, %08x, %p, %p, %p, %p, %p)\n", debugstr_a(pszUrlOid),
+    TRACE("(%s, %p, %08lx, %p, %p, %p, %p, %p)\n", debugstr_a(pszUrlOid),
      pvPara, dwFlags, pUrlArray, pcbUrlArray, pUrlInfo, pcbUrlInfo, pvReserved);
 
     if (IS_INTOID(pszUrlOid))
@@ -404,7 +404,7 @@ BOOL WINAPI CryptRetrieveObjectByUrlA(LPCSTR pszURL, LPCSTR pszObjectOid,
     BOOL ret = FALSE;
     int len;
 
-    TRACE("(%s, %s, %08x, %d, %p, %p, %p, %p, %p)\n", debugstr_a(pszURL),
+    TRACE("(%s, %s, %08lx, %ld, %p, %p, %p, %p, %p)\n", debugstr_a(pszURL),
      debugstr_a(pszObjectOid), dwRetrievalFlags, dwTimeout, ppvObject,
      hAsyncRetrieve, pCredentials, pvVerify, pAuxInfo);
 
@@ -842,7 +842,7 @@ static BOOL WINAPI FTP_RetrieveEncodedObjectW(LPCWSTR pszURL,
  void **ppvFreeContext, HCRYPTASYNC hAsyncRetrieve,
  PCRYPT_CREDENTIALS pCredentials, PCRYPT_RETRIEVE_AUX_INFO pAuxInfo)
 {
-    FIXME("(%s, %s, %08x, %d, %p, %p, %p, %p, %p, %p)\n", debugstr_w(pszURL),
+    FIXME("(%s, %s, %08lx, %ld, %p, %p, %p, %p, %p, %p)\n", debugstr_w(pszURL),
      debugstr_a(pszObjectOid), dwRetrievalFlags, dwTimeout, pObject,
      ppfnFreeObject, ppvFreeContext, hAsyncRetrieve, pCredentials, pAuxInfo);
 
@@ -861,7 +861,7 @@ static BOOL WINAPI HTTP_RetrieveEncodedObjectW(LPCWSTR pszURL,
 {
     BOOL ret = FALSE;
 
-    TRACE("(%s, %s, %08x, %d, %p, %p, %p, %p, %p, %p)\n", debugstr_w(pszURL),
+    TRACE("(%s, %s, %08lx, %ld, %p, %p, %p, %p, %p, %p)\n", debugstr_w(pszURL),
      debugstr_a(pszObjectOid), dwRetrievalFlags, dwTimeout, pObject,
      ppfnFreeObject, ppvFreeContext, hAsyncRetrieve, pCredentials, pAuxInfo);
 
@@ -971,7 +971,7 @@ static BOOL WINAPI File_RetrieveEncodedObjectW(LPCWSTR pszURL,
     URL_COMPONENTSW components = { sizeof(components), 0 };
     BOOL ret;
 
-    TRACE("(%s, %s, %08x, %d, %p, %p, %p, %p, %p, %p)\n", debugstr_w(pszURL),
+    TRACE("(%s, %s, %08lx, %ld, %p, %p, %p, %p, %p, %p)\n", debugstr_w(pszURL),
      debugstr_a(pszObjectOid), dwRetrievalFlags, dwTimeout, pObject,
      ppfnFreeObject, ppvFreeContext, hAsyncRetrieve, pCredentials, pAuxInfo);
 
@@ -1477,7 +1477,7 @@ BOOL WINAPI CryptRetrieveObjectByUrlW(LPCWSTR pszURL, LPCSTR pszObjectOid,
     ContextDllCreateObjectContext create;
     HCRYPTOIDFUNCADDR hRetrieve = 0, hCreate = 0;
 
-    TRACE("(%s, %s, %08x, %d, %p, %p, %p, %p, %p)\n", debugstr_w(pszURL),
+    TRACE("(%s, %s, %08lx, %ld, %p, %p, %p, %p, %p)\n", debugstr_w(pszURL),
      debugstr_a(pszObjectOid), dwRetrievalFlags, dwTimeout, ppvObject,
      hAsyncRetrieve, pCredentials, pvVerify, pAuxInfo);
 
@@ -1546,7 +1546,7 @@ static FILE *open_cached_revocation_file(const CRYPT_INTEGER_BLOB *serial, const
 
     if (FAILED(hr = SHGetKnownFolderPath(&FOLDERID_LocalAppDataLow, 0, NULL, &appdata_path)))
     {
-        ERR("Failed to get LocalAppDataLow path, hr %#x.\n", hr);
+        ERR("Failed to get LocalAppDataLow path, hr %#lx.\n", hr);
         return INVALID_HANDLE_VALUE;
     }
 
@@ -1617,7 +1617,7 @@ static BOOL find_cached_revocation_status(const CRYPT_INTEGER_BLOB *serial,
         return FALSE;
     }
 
-    TRACE("Using cached status %#x, reason %#x.\n", status->dwError, status->dwReason);
+    TRACE("Using cached status %#lx, reason %#lx.\n", status->dwError, status->dwReason);
     return TRUE;
 }
 
@@ -1742,7 +1742,7 @@ static DWORD verify_cert_revocation_from_aia_ext(const CRYPT_DATA_BLOB *value, c
                     FIXME("OCSP URL = %s\n",
                      debugstr_w(aia->rgAccDescr[i].AccessLocation.u.pwszURL));
                 else
-                    FIXME("unsupported AccessLocation type %d\n",
+                    FIXME("unsupported AccessLocation type %ld\n",
                      aia->rgAccDescr[i].AccessLocation.dwAltNameChoice);
             }
         LocalFree(aia);
@@ -1902,7 +1902,7 @@ BOOL WINAPI CertDllVerifyRevocation(DWORD dwEncodingType, DWORD dwRevType,
     FILETIME now;
     LPFILETIME pTime = NULL;
 
-    TRACE("(%08x, %d, %d, %p, %08x, %p, %p)\n", dwEncodingType, dwRevType,
+    TRACE("(%08lx, %ld, %ld, %p, %08lx, %p, %p)\n", dwEncodingType, dwRevType,
      cContext, rgpvContext, dwFlags, pRevPara, pRevStatus);
 
     if (pRevStatus->cbSize != sizeof(OLD_CERT_REVOCATION_STATUS) &&
@@ -1943,6 +1943,6 @@ BOOL WINAPI CertDllVerifyRevocation(DWORD dwEncodingType, DWORD dwRevType,
         SetLastError(error);
         pRevStatus->dwError = error;
     }
-    TRACE("returning %d (%08x)\n", !error, error);
+    TRACE("returning %d (%08lx)\n", !error, error);
     return !error;
 }
