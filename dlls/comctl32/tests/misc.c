@@ -848,7 +848,7 @@ static void test_themed_background(void)
         {WC_BUTTONA, BS_RADIOBUTTON, radiobutton_seq},
         {WC_BUTTONA, BS_3STATE, checkbox_seq},
         {WC_BUTTONA, BS_AUTO3STATE, checkbox_seq},
-        {WC_BUTTONA, BS_GROUPBOX, groupbox_seq, TRUE},
+        {WC_BUTTONA, BS_GROUPBOX, groupbox_seq},
         {WC_BUTTONA, BS_USERBUTTON, pushbutton_seq},
         {WC_BUTTONA, BS_AUTORADIOBUTTON, radiobutton_seq},
         {WC_BUTTONA, BS_PUSHBOX, radiobutton_seq, TRUE},
@@ -962,7 +962,6 @@ static void test_themed_background(void)
 
                 /* WM_CTLCOLORSTATIC is used to fill text background */
                 color = GetPixel(hdc, 10, 10);
-                todo_wine
                 ok(color == 0x808080, "Expected color %#x, got %#x.\n", 0x808080, color);
             }
 

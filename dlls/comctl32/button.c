@@ -2914,10 +2914,20 @@ static void GB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
     HFONT font, hPrevFont = NULL;
     BOOL created_font = FALSE;
     TEXTMETRICW textMetric;
+    HBRUSH brush;
+    HWND parent;
+    HRESULT hr;
     LONG style;
     int part;
 
-    HRESULT hr = GetThemeFont(theme, hDC, BP_GROUPBOX, state, TMT_FONT, &lf);
+    /* DrawThemeParentBackground() is used for filling content background. The brush from
+     * WM_CTLCOLORSTATIC is used for filling text background */
+    parent = GetParent(infoPtr->hwnd);
+    if (!parent)
+        parent = infoPtr->hwnd;
+    brush = (HBRUSH)SendMessageW(parent, WM_CTLCOLORSTATIC, (WPARAM)hDC, (LPARAM)infoPtr->hwnd);
+
+    hr = GetThemeFont(theme, hDC, BP_GROUPBOX, state, TMT_FONT, &lf);
     if (SUCCEEDED(hr)) {
         font = CreateFontIndirectW(&lf);
         if (!font)
@@ -2969,6 +2979,7 @@ static void GB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
             SelectClipRgn(hDC, textRegion);
             DeleteObject(textRegion);
         }
+        FillRect(hDC, &textRect, brush ? brush : GetSysColorBrush(COLOR_BTNFACE));
         BUTTON_DrawThemedLabel(infoPtr, hDC, dtFlags, &imageRect, &textRect, theme, part, state);
     }
 
