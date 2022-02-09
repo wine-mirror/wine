@@ -39,7 +39,7 @@ static HINSTANCE hInstance;
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    TRACE("(0x%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
+    TRACE("(0x%p, %ld, %p)\n", hinstDLL, fdwReason, lpvReserved);
 
     switch (fdwReason)
     {
@@ -83,7 +83,7 @@ HRESULT WINAPI CertTrustInit(CRYPT_PROVIDER_DATA *pProvData)
     if (pProvData->padwTrustStepErrors &&
      !pProvData->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_WVTINIT])
         ret = S_OK;
-    TRACE("returning %08x\n", ret);
+    TRACE("returning %08lx\n", ret);
     return ret;
 }
 
@@ -92,7 +92,7 @@ HRESULT WINAPI CertTrustInit(CRYPT_PROVIDER_DATA *pProvData)
  */
 BOOL WINAPI CertTrustCertPolicy(CRYPT_PROVIDER_DATA *pProvData, DWORD idxSigner, BOOL fCounterSignerChain, DWORD idxCounterSigner)
 {
-    FIXME("(%p, %d, %s, %d)\n", pProvData, idxSigner, fCounterSignerChain ? "TRUE" : "FALSE", idxCounterSigner);
+    FIXME("(%p, %ld, %s, %ld)\n", pProvData, idxSigner, fCounterSignerChain ? "TRUE" : "FALSE", idxCounterSigner);
     return FALSE;
 }
 
@@ -295,7 +295,7 @@ HRESULT WINAPI CertTrustFinalPolicy(CRYPT_PROVIDER_DATA *data)
     TRACE("(%p)\n", data);
 
     if (data->pWintrustData->dwUIChoice != WTD_UI_NONE)
-        FIXME("unimplemented for UI choice %d\n",
+        FIXME("unimplemented for UI choice %ld\n",
          data->pWintrustData->dwUIChoice);
     if (pCert)
     {
@@ -354,7 +354,7 @@ HRESULT WINAPI CertTrustFinalPolicy(CRYPT_PROVIDER_DATA *data)
      */
     if (!ret)
         data->dwFinalError = err;
-    TRACE("returning %d (%08x)\n", S_OK, data->dwFinalError);
+    TRACE("returning %ld (%08lx)\n", S_OK, data->dwFinalError);
     return S_OK;
 }
 
