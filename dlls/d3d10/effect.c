@@ -837,16 +837,6 @@ static BOOL d3d_array_reserve(void **elements, SIZE_T *capacity, SIZE_T count, S
     return TRUE;
 }
 
-static uint32_t read_u32(const char **ptr)
-{
-    uint32_t u32;
-
-    memcpy(&u32, *ptr, sizeof(u32));
-    *ptr += sizeof(u32);
-
-    return u32;
-}
-
 static BOOL require_space(size_t offset, size_t count, size_t size, size_t data_size)
 {
     return !count || (data_size - offset) / count >= size;
