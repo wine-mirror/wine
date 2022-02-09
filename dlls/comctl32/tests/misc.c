@@ -843,14 +843,14 @@ static void test_themed_background(void)
         {ANIMATE_CLASSA, 0, empty_seq, TRUE},
         {WC_BUTTONA, BS_PUSHBUTTON, pushbutton_seq},
         {WC_BUTTONA, BS_DEFPUSHBUTTON, defpushbutton_seq},
-        {WC_BUTTONA, BS_CHECKBOX, checkbox_seq, TRUE},
-        {WC_BUTTONA, BS_AUTOCHECKBOX, checkbox_seq, TRUE},
-        {WC_BUTTONA, BS_RADIOBUTTON, radiobutton_seq, TRUE},
-        {WC_BUTTONA, BS_3STATE, checkbox_seq, TRUE},
-        {WC_BUTTONA, BS_AUTO3STATE, checkbox_seq, TRUE},
+        {WC_BUTTONA, BS_CHECKBOX, checkbox_seq},
+        {WC_BUTTONA, BS_AUTOCHECKBOX, checkbox_seq},
+        {WC_BUTTONA, BS_RADIOBUTTON, radiobutton_seq},
+        {WC_BUTTONA, BS_3STATE, checkbox_seq},
+        {WC_BUTTONA, BS_AUTO3STATE, checkbox_seq},
         {WC_BUTTONA, BS_GROUPBOX, groupbox_seq, TRUE},
         {WC_BUTTONA, BS_USERBUTTON, pushbutton_seq},
-        {WC_BUTTONA, BS_AUTORADIOBUTTON, radiobutton_seq, TRUE},
+        {WC_BUTTONA, BS_AUTORADIOBUTTON, radiobutton_seq},
         {WC_BUTTONA, BS_PUSHBOX, radiobutton_seq, TRUE},
         {WC_BUTTONA, BS_OWNERDRAW, ownerdrawbutton_seq},
         {WC_BUTTONA, BS_SPLITBUTTON, splitbutton_seq},
@@ -950,7 +950,8 @@ static void test_themed_background(void)
             {
                 /* WM_CTLCOLORSTATIC is used to fill background */
                 color = GetPixel(hdc, 40, 40);
-                todo_wine
+                /* BS_PUSHBOX is unimplemented on Wine */
+                todo_wine_if(i == 11)
                 ok(color == 0x808080, "Expected color %#x, got %#x.\n", 0x808080, color);
             }
             else if (tests[i].seq == groupbox_seq)

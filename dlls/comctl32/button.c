@@ -2796,6 +2796,7 @@ static void CB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
     UINT btn_type = get_button_type( dwStyle );
     int part = (btn_type == BS_RADIOBUTTON) || (btn_type == BS_AUTORADIOBUTTON) ? BP_RADIOBUTTON : BP_CHECKBOX;
     NMCUSTOMDRAW nmcd;
+    HBRUSH brush;
     LRESULT cdrf;
     LOGFONTW lf;
     HWND parent;
@@ -2859,6 +2860,10 @@ static void CB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
     if (cdrf & CDRF_SKIPDEFAULT) goto cleanup;
 
     DrawThemeParentBackground(infoPtr->hwnd, hDC, NULL);
+    /* Tests show that the brush from WM_CTLCOLORSTATIC is used for filling background after a
+     * DrawThemeParentBackground() call */
+    brush = (HBRUSH)SendMessageW(parent, WM_CTLCOLORSTATIC, (WPARAM)hDC, (LPARAM)infoPtr->hwnd);
+    FillRect(hDC, &client_rect, brush ? brush : GetSysColorBrush(COLOR_BTNFACE));
 
     if (cdrf & CDRF_NOTIFYPOSTERASE)
     {
