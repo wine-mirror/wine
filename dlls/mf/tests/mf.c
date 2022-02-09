@@ -5815,8 +5815,12 @@ static void test_wma_decoder(void)
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Audio, MFAudioFormat_Float};
     MFT_OUTPUT_STREAM_INFO output_info;
     MFT_INPUT_STREAM_INFO input_info;
+    const BYTE *wma_encoded_data;
+    ULONG wma_encoded_data_len;
     IMFMediaType *media_type;
     IMFTransform *transform;
+    IMFSample *sample;
+    HRSRC resource;
     GUID class_id;
     ULONG i, ret;
     HRESULT hr;
@@ -5971,6 +5975,36 @@ static void test_wma_decoder(void)
     ok(output_info.dwFlags == 0, "got dwFlags %#x\n", output_info.dwFlags);
     ok(output_info.cbSize == sizeof(wma_decoded_data), "got cbSize %#x\n", output_info.cbSize);
     ok(output_info.cbAlignment == 1, "got cbAlignment %#x\n", output_info.cbAlignment);
+
+    /* resource is generated using test_wma_encoder output file */
+    resource = FindResourceW(NULL, L"wmadata.bin", (const WCHAR *)RT_RCDATA);
+    ok(resource != 0, "FindResourceW failed, error %u\n", GetLastError());
+    wma_encoded_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
+    wma_encoded_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
+    ok(wma_encoded_data_len % wma_block_size == 0, "got wma encoded length %u\n", wma_encoded_data_len);
+
+    sample = create_sample(wma_encoded_data, wma_block_size / 2);
+    hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+    todo_wine
+    ok(hr == S_OK, "ProcessInput returned %#x\n", hr);
+    ret = IMFSample_Release(sample);
+    ok(ret == 0, "Release returned %u\n", ret);
+    sample = create_sample(wma_encoded_data + wma_block_size, wma_block_size - wma_block_size / 2);
+    hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+    todo_wine
+    ok(hr == S_OK, "ProcessInput returned %#x\n", hr);
+    ret = IMFSample_Release(sample);
+    ok(ret == 0, "Release returned %u\n", ret);
+    sample = create_sample(wma_encoded_data, wma_block_size);
+    hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+    todo_wine
+    ok(hr == S_OK, "ProcessInput returned %#x\n", hr);
+    hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+    todo_wine
+    ok(hr == MF_E_NOTACCEPTING, "ProcessInput returned %#x\n", hr);
+    ret = IMFSample_Release(sample);
+    todo_wine
+    ok(ret == 1, "Release returned %u\n", ret);
 
     ret = IMFTransform_Release(transform);
     ok(ret == 0, "Release returned %u\n", ret);
