@@ -46,6 +46,7 @@ static HMODULE hComctl32;
 enum seq_index
 {
     CHILD_SEQ_INDEX,
+    PARENT_SEQ_INDEX,
     NUM_MSG_SEQUENCES
 };
 
@@ -652,6 +653,331 @@ static void test_WM_SYSCOLORCHANGE(void)
     DestroyWindow(parent);
 }
 
+static const struct message empty_seq[] =
+{
+    {0}
+};
+
+static const struct message wm_erasebkgnd_seq[] =
+{
+    {WM_ERASEBKGND, sent},
+    {0}
+};
+
+static const struct message wm_ctlcolorstatic_seq[] =
+{
+    {WM_CTLCOLORSTATIC, sent},
+    {0}
+};
+
+static const struct message drawthemeparentbackground_seq[] =
+{
+    {WM_ERASEBKGND, sent},
+    {WM_PRINTCLIENT, sent},
+    {0}
+};
+
+static const struct message drawthemeparentbackground_optional_seq[] =
+{
+    {WM_ERASEBKGND, sent | optional},
+    {WM_PRINTCLIENT, sent | optional},
+    {0}
+};
+
+static const struct message pushbutton_seq[] =
+{
+    {WM_ERASEBKGND, sent},
+    {WM_PRINTCLIENT, sent},
+    {WM_CTLCOLORBTN, sent},
+    {0}
+};
+
+static const struct message defpushbutton_seq[] =
+{
+    {WM_ERASEBKGND, sent},
+    {WM_PRINTCLIENT, sent},
+    {WM_CTLCOLORBTN, sent},
+    {WM_ERASEBKGND, sent | optional},
+    {WM_PRINTCLIENT, sent | optional},
+    {WM_CTLCOLORBTN, sent | optional},
+    {0}
+};
+
+static const struct message checkbox_seq[] =
+{
+    {WM_ERASEBKGND, sent | optional},
+    {WM_PRINTCLIENT, sent | optional},
+    {WM_CTLCOLORSTATIC, sent},
+    {0}
+};
+
+static const struct message radiobutton_seq[] =
+{
+    {WM_ERASEBKGND, sent},
+    {WM_PRINTCLIENT, sent},
+    {WM_CTLCOLORSTATIC, sent},
+    {0}
+};
+
+static const struct message groupbox_seq[] =
+{
+    {WM_CTLCOLORSTATIC, sent},
+    {WM_ERASEBKGND, sent},
+    {WM_PRINTCLIENT, sent},
+    {0}
+};
+
+static const struct message ownerdrawbutton_seq[] =
+{
+    {WM_CTLCOLORBTN, sent},
+    {WM_CTLCOLORBTN, sent},
+    {0}
+};
+
+static const struct message splitbutton_seq[] =
+{
+    {WM_ERASEBKGND, sent},
+    {WM_PRINTCLIENT, sent},
+    /* Either WM_CTLCOLORSTATIC or WM_CTLCOLORBTN */
+    {WM_CTLCOLORSTATIC, sent | optional},
+    {WM_CTLCOLORBTN, sent | optional},
+    /* BS_DEFSPLITBUTTON or BS_DEFCOMMANDLINK */
+    {WM_ERASEBKGND, sent | optional},
+    {WM_PRINTCLIENT, sent | optional},
+    {WM_CTLCOLORSTATIC, sent | optional},
+    {WM_CTLCOLORBTN, sent | optional},
+    {0}
+};
+
+static const struct message combobox_seq[] =
+{
+    {WM_ERASEBKGND, sent | optional},
+    {WM_PRINTCLIENT, sent | optional},
+    {WM_CTLCOLOREDIT, sent},
+    {WM_CTLCOLORLISTBOX, sent},
+    {WM_CTLCOLORLISTBOX, sent | optional},
+    {WM_CTLCOLOREDIT, sent | optional},
+    {WM_CTLCOLOREDIT, sent | optional},
+    {0}
+};
+
+static const struct message edit_seq[] =
+{
+    {WM_CTLCOLOREDIT, sent},
+    {WM_CTLCOLOREDIT, sent | optional},
+    {0}
+};
+
+static const struct message listbox_seq[] =
+{
+    {WM_CTLCOLORLISTBOX, sent},
+    {WM_CTLCOLORLISTBOX, sent},
+    {0}
+};
+
+static const struct message treeview_seq[] =
+{
+    {WM_CTLCOLOREDIT, sent | optional},
+    {WM_CTLCOLOREDIT, sent | optional},
+    {0}
+};
+
+static const struct message scrollbar_seq[] =
+{
+    {WM_CTLCOLORSCROLLBAR, sent},
+    {WM_CTLCOLORSCROLLBAR, sent | optional},
+    {0}
+};
+
+static LRESULT WINAPI test_themed_background_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
+{
+    struct message msg = {0};
+    HBRUSH brush;
+    RECT rect;
+
+    if (message == WM_ERASEBKGND || message == WM_PRINTCLIENT || (message >= WM_CTLCOLORMSGBOX
+        && message <= WM_CTLCOLORSTATIC))
+    {
+        msg.message = message;
+        msg.flags = sent;
+        add_message(sequences, PARENT_SEQ_INDEX, &msg);
+    }
+
+    if (message == WM_ERASEBKGND)
+    {
+        brush = CreateSolidBrush(RGB(255, 0, 0));
+        GetClientRect(hwnd, &rect);
+        FillRect((HDC)wp, &rect, brush);
+        DeleteObject(brush);
+        return 1;
+    }
+    else if (message >= WM_CTLCOLORMSGBOX && message <= WM_CTLCOLORSTATIC)
+    {
+        return (LRESULT)GetStockObject(GRAY_BRUSH);
+    }
+
+    return DefWindowProcA(hwnd, message, wp, lp);
+}
+
+static void test_themed_background(void)
+{
+    DPI_AWARENESS_CONTEXT (WINAPI *pSetThreadDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
+    DPI_AWARENESS_CONTEXT old_context = NULL;
+    BOOL (WINAPI *pIsThemeActive)(void);
+    HWND child, parent;
+    HMODULE uxtheme;
+    COLORREF color;
+    WNDCLASSA cls;
+    HDC hdc;
+    int i;
+
+    static const struct test
+    {
+        const CHAR *class_name;
+        DWORD style;
+        const struct message *seq;
+        BOOL todo;
+    }
+    tests[] =
+    {
+        {ANIMATE_CLASSA, 0, empty_seq, TRUE},
+        {WC_BUTTONA, BS_PUSHBUTTON, pushbutton_seq, TRUE},
+        {WC_BUTTONA, BS_DEFPUSHBUTTON, defpushbutton_seq, TRUE},
+        {WC_BUTTONA, BS_CHECKBOX, checkbox_seq, TRUE},
+        {WC_BUTTONA, BS_AUTOCHECKBOX, checkbox_seq, TRUE},
+        {WC_BUTTONA, BS_RADIOBUTTON, radiobutton_seq, TRUE},
+        {WC_BUTTONA, BS_3STATE, checkbox_seq, TRUE},
+        {WC_BUTTONA, BS_AUTO3STATE, checkbox_seq, TRUE},
+        {WC_BUTTONA, BS_GROUPBOX, groupbox_seq, TRUE},
+        {WC_BUTTONA, BS_USERBUTTON, pushbutton_seq, TRUE},
+        {WC_BUTTONA, BS_AUTORADIOBUTTON, radiobutton_seq, TRUE},
+        {WC_BUTTONA, BS_PUSHBOX, radiobutton_seq, TRUE},
+        {WC_BUTTONA, BS_OWNERDRAW, ownerdrawbutton_seq},
+        {WC_BUTTONA, BS_SPLITBUTTON, splitbutton_seq},
+        {WC_BUTTONA, BS_DEFSPLITBUTTON, splitbutton_seq},
+        {WC_BUTTONA, BS_COMMANDLINK, splitbutton_seq},
+        {WC_BUTTONA, BS_DEFCOMMANDLINK, splitbutton_seq},
+        {WC_COMBOBOXA, 0, combobox_seq, TRUE},
+        {WC_COMBOBOXEXA, 0, drawthemeparentbackground_optional_seq},
+        {DATETIMEPICK_CLASSA, 0, drawthemeparentbackground_optional_seq, TRUE},
+        {WC_EDITA, 0, edit_seq},
+        {WC_HEADERA, 0, empty_seq},
+        {HOTKEY_CLASSA, 0, empty_seq, TRUE},
+        {WC_IPADDRESSA, 0, empty_seq},
+        {WC_LISTBOXA, 0, listbox_seq, TRUE},
+        {WC_LISTVIEWA, 0, empty_seq},
+        {MONTHCAL_CLASSA, 0, empty_seq},
+        {WC_NATIVEFONTCTLA, 0, empty_seq},
+        {WC_PAGESCROLLERA, 0, wm_erasebkgnd_seq},
+        {PROGRESS_CLASSA, 0, drawthemeparentbackground_optional_seq},
+        {REBARCLASSNAMEA, 0, empty_seq},
+        {WC_STATICA, SS_LEFT, wm_ctlcolorstatic_seq},
+        {WC_STATICA, SS_ICON, wm_ctlcolorstatic_seq},
+        {WC_STATICA, SS_BLACKRECT, wm_ctlcolorstatic_seq, TRUE},
+        {WC_STATICA, SS_OWNERDRAW, wm_ctlcolorstatic_seq},
+        {WC_STATICA, SS_BITMAP, wm_ctlcolorstatic_seq},
+        {WC_STATICA, SS_ENHMETAFILE, wm_ctlcolorstatic_seq},
+        {WC_STATICA, SS_ETCHEDHORZ, wm_ctlcolorstatic_seq, TRUE},
+        {STATUSCLASSNAMEA, 0, empty_seq},
+        {"SysLink", 0, wm_ctlcolorstatic_seq},
+        {WC_TABCONTROLA, 0, drawthemeparentbackground_seq, TRUE},
+        {TOOLBARCLASSNAMEA, 0, empty_seq, TRUE},
+        {TOOLTIPS_CLASSA, 0, empty_seq},
+        {TRACKBAR_CLASSA, 0, wm_ctlcolorstatic_seq, TRUE},
+        {WC_TREEVIEWA, 0, treeview_seq},
+        {UPDOWN_CLASSA, 0, empty_seq},
+        {WC_SCROLLBARA, 0, scrollbar_seq, TRUE},
+        {WC_SCROLLBARA, SBS_SIZEBOX, empty_seq, TRUE},
+        {WC_SCROLLBARA, SBS_SIZEGRIP, empty_seq, TRUE},
+    };
+
+    uxtheme = LoadLibraryA("uxtheme.dll");
+    pIsThemeActive = (void *)GetProcAddress(uxtheme, "IsThemeActive");
+    if (!pIsThemeActive())
+    {
+        skip("Theming is inactive.\n");
+        FreeLibrary(uxtheme);
+        return;
+    }
+    FreeLibrary(uxtheme);
+
+    pSetThreadDpiAwarenessContext = (void *)GetProcAddress(GetModuleHandleA("user32.dll"),
+                                                           "SetThreadDpiAwarenessContext");
+    if (pSetThreadDpiAwarenessContext)
+        pSetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
+
+    memset(&cls, 0, sizeof(cls));
+    cls.hInstance = GetModuleHandleA(0);
+    cls.hCursor = LoadCursorA(0, (LPCSTR)IDC_ARROW);
+    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
+    cls.lpfnWndProc = test_themed_background_proc;
+    cls.lpszClassName = "ParentClass";
+    RegisterClassA(&cls);
+
+    parent = CreateWindowA(cls.lpszClassName, "parent", WS_POPUP | WS_VISIBLE, 100, 100, 100, 100,
+                           0, 0, 0, 0);
+    ok(parent != NULL, "CreateWindowA failed, error %u.\n", GetLastError());
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        winetest_push_context("%s %#x", tests[i].class_name, tests[i].style);
+
+        child = CreateWindowA(tests[i].class_name, "    ", WS_CHILD | WS_VISIBLE | tests[i].style,
+                              0, 0, 50, 50, parent, 0, 0, 0);
+        ok(child != NULL, "CreateWindowA failed, error %u.\n", GetLastError());
+        flush_events();
+        flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+        RedrawWindow(child, NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_ERASENOW | RDW_FRAME);
+        ok_sequence(sequences, PARENT_SEQ_INDEX, tests[i].seq, "paint background", tests[i].todo);
+
+        /* For message sequences that contain both DrawThemeParentBackground() messages and
+         * WM_CTLCOLOR*, do a color test to check which is really in effect for controls that can be
+         * tested automatically. For WM_ERASEBKGND from DrawThemeParentBackground(), a red brush is
+         * used. For WM_CTLCOLOR*, a gray brush is returned. If there are only WM_CTLCOLOR* messages
+         * in the message sequence, then surely DrawThemeParentBackground() is not used.
+         *
+         * For tests that use pushbutton_seq and defpushbutton_seq, manual tests on XP show that
+         * a brush from WM_CTLCOLORBTN is used to fill background even after a successful
+         * DrawThemeParentBackground(). This behavior can be verified by returning a gray or hollow
+         * brush in test_themed_background_proc() when handling WM_CTLCOLORBTN. It can't be tested
+         * automatically here because stock Windows themes don't use transparent button bitmaps */
+        if (tests[i].seq == radiobutton_seq || tests[i].seq == groupbox_seq)
+        {
+            hdc = GetDC(child);
+
+            if (tests[i].seq == radiobutton_seq)
+            {
+                /* WM_CTLCOLORSTATIC is used to fill background */
+                color = GetPixel(hdc, 40, 40);
+                todo_wine
+                ok(color == 0x808080, "Expected color %#x, got %#x.\n", 0x808080, color);
+            }
+            else if (tests[i].seq == groupbox_seq)
+            {
+                /* DrawThemeParentBackground() is used to fill content background */
+                color = GetPixel(hdc, 40, 40);
+                ok(color == 0xff, "Expected color %#x, got %#x.\n", 0xff, color);
+
+                /* WM_CTLCOLORSTATIC is used to fill text background */
+                color = GetPixel(hdc, 10, 10);
+                todo_wine
+                ok(color == 0x808080, "Expected color %#x, got %#x.\n", 0x808080, color);
+            }
+
+            ReleaseDC(child, hdc);
+        }
+
+        DestroyWindow(child);
+        winetest_pop_context();
+    }
+
+    DestroyWindow(parent);
+    UnregisterClassA(cls.lpszClassName, GetModuleHandleA(0));
+    if (pSetThreadDpiAwarenessContext)
+        pSetThreadDpiAwarenessContext(old_context);
+}
+
 START_TEST(misc)
 {
     ULONG_PTR ctx_cookie;
@@ -675,6 +1001,7 @@ START_TEST(misc)
     test_comctl32_classes(TRUE);
     test_builtin_classes();
     test_LoadIconWithScaleDown();
+    test_themed_background();
     test_WM_THEMECHANGED();
     test_WM_SYSCOLORCHANGE();
 
