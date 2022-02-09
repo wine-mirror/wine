@@ -337,70 +337,69 @@ typedef struct _TEST_URL_COMBINE {
     const char *url1;
     const char *url2;
     DWORD flags;
-    HRESULT expectret;
     const char *expecturl;
 } TEST_URL_COMBINE;
 
 static const TEST_URL_COMBINE TEST_COMBINE[] = {
-    {"http://www.winehq.org/tests", "tests1", 0, S_OK, "http://www.winehq.org/tests1"},
-    {"http://www.%77inehq.org/tests", "tests1", 0, S_OK, "http://www.%77inehq.org/tests1"},
-    /*FIXME {"http://www.winehq.org/tests", "../tests2", 0, S_OK, "http://www.winehq.org/tests2"},*/
-    {"http://www.winehq.org/tests/", "../tests3", 0, S_OK, "http://www.winehq.org/tests3"},
-    {"http://www.winehq.org/tests/test1", "test2", 0, S_OK, "http://www.winehq.org/tests/test2"},
-    {"http://www.winehq.org/tests/../tests", "tests4", 0, S_OK, "http://www.winehq.org/tests4"},
-    {"http://www.winehq.org/tests/../tests/", "tests5", 0, S_OK, "http://www.winehq.org/tests/tests5"},
-    {"http://www.winehq.org/tests/../tests/", "/tests6/..", 0, S_OK, "http://www.winehq.org/"},
-    {"http://www.winehq.org/tests/../tests/..", "tests7/..", 0, S_OK, "http://www.winehq.org/"},
-    {"http://www.winehq.org/tests/?query=x&return=y", "tests8", 0, S_OK, "http://www.winehq.org/tests/tests8"},
-    {"http://www.winehq.org/tests/#example", "tests9", 0, S_OK, "http://www.winehq.org/tests/tests9"},
-    {"http://www.winehq.org/tests/../tests/", "/tests10/..", URL_DONT_SIMPLIFY, S_OK, "http://www.winehq.org/tests10/.."},
-    {"http://www.winehq.org/tests/../", "tests11", URL_DONT_SIMPLIFY, S_OK, "http://www.winehq.org/tests/../tests11"},
-    {"http://www.winehq.org/test12", "#", 0, S_OK, "http://www.winehq.org/test12#"},
-    {"http://www.winehq.org/test13#aaa", "#bbb", 0, S_OK, "http://www.winehq.org/test13#bbb"},
-    {"http://www.winehq.org/test14#aaa/bbb#ccc", "#", 0, S_OK, "http://www.winehq.org/test14#"},
-    {"http://www.winehq.org/tests/?query=x/y/z", "tests15", 0, S_OK, "http://www.winehq.org/tests/tests15"},
-    {"http://www.winehq.org/tests/?query=x/y/z#example", "tests16", 0, S_OK, "http://www.winehq.org/tests/tests16"},
-    {"file:///C:\\dir\\file.txt", "test.txt", 0, S_OK, "file:///C:/dir/test.txt"},
-    {"file:///C:\\dir\\file.txt#hash\\hash", "test.txt", 0, S_OK, "file:///C:/dir/file.txt#hash/test.txt"},
-    {"file:///C:\\dir\\file.html#hash\\hash", "test.html", 0, S_OK, "file:///C:/dir/test.html"},
-    {"file:///C:\\dir\\file.htm#hash\\hash", "test.htm", 0, S_OK, "file:///C:/dir/test.htm"},
-    {"file:///C:\\dir\\file.hTmL#hash\\hash", "test.hTmL", 0, S_OK, "file:///C:/dir/test.hTmL"},
-    {"file:///C:\\dir.html\\file.txt#hash\\hash", "test.txt", 0, S_OK, "file:///C:/dir.html/file.txt#hash/test.txt"},
-    {"C:\\winehq\\winehq.txt", "C:\\Test\\test.txt", 0, S_OK, "file:///C:/Test/test.txt"},
-    {"http://www.winehq.org/test/", "test%20file.txt", 0, S_OK, "http://www.winehq.org/test/test%20file.txt"},
-    {"http://www.winehq.org/test/", "test%20file.txt", URL_FILE_USE_PATHURL, S_OK, "http://www.winehq.org/test/test%20file.txt"},
-    {"http://www.winehq.org%2ftest/", "test%20file.txt", URL_FILE_USE_PATHURL, S_OK, "http://www.winehq.org%2ftest/test%20file.txt"},
-    {"xxx:@MSITStore:file.chm/file.html", "dir/file", 0, S_OK, "xxx:dir/file"},
-    {"mk:@MSITStore:file.chm::/file.html", "/dir/file", 0, S_OK, "mk:@MSITStore:file.chm::/dir/file"},
-    {"mk:@MSITStore:file.chm::/file.html", "mk:@MSITStore:file.chm::/dir/file", 0, S_OK, "mk:@MSITStore:file.chm::/dir/file"},
-    {"foo:today", "foo:calendar", 0, S_OK, "foo:calendar"},
-    {"foo:today", "bar:calendar", 0, S_OK, "bar:calendar"},
-    {"foo:/today", "foo:calendar", 0, S_OK, "foo:/calendar"},
-    {"Foo:/today/", "fOo:calendar", 0, S_OK, "foo:/today/calendar"},
-    {"mk:@MSITStore:dir/test.chm::dir/index.html", "image.jpg", 0, S_OK, "mk:@MSITStore:dir/test.chm::dir/image.jpg"},
-    {"mk:@MSITStore:dir/test.chm::dir/dir2/index.html", "../image.jpg", 0, S_OK, "mk:@MSITStore:dir/test.chm::dir/image.jpg"},
+    {"http://www.winehq.org/tests", "tests1", 0, "http://www.winehq.org/tests1"},
+    {"http://www.%77inehq.org/tests", "tests1", 0, "http://www.%77inehq.org/tests1"},
+    /*FIXME {"http://www.winehq.org/tests", "../tests2", 0, "http://www.winehq.org/tests2"},*/
+    {"http://www.winehq.org/tests/", "../tests3", 0, "http://www.winehq.org/tests3"},
+    {"http://www.winehq.org/tests/test1", "test2", 0, "http://www.winehq.org/tests/test2"},
+    {"http://www.winehq.org/tests/../tests", "tests4", 0, "http://www.winehq.org/tests4"},
+    {"http://www.winehq.org/tests/../tests/", "tests5", 0, "http://www.winehq.org/tests/tests5"},
+    {"http://www.winehq.org/tests/../tests/", "/tests6/..", 0, "http://www.winehq.org/"},
+    {"http://www.winehq.org/tests/../tests/..", "tests7/..", 0, "http://www.winehq.org/"},
+    {"http://www.winehq.org/tests/?query=x&return=y", "tests8", 0, "http://www.winehq.org/tests/tests8"},
+    {"http://www.winehq.org/tests/#example", "tests9", 0, "http://www.winehq.org/tests/tests9"},
+    {"http://www.winehq.org/tests/../tests/", "/tests10/..", URL_DONT_SIMPLIFY, "http://www.winehq.org/tests10/.."},
+    {"http://www.winehq.org/tests/../", "tests11", URL_DONT_SIMPLIFY, "http://www.winehq.org/tests/../tests11"},
+    {"http://www.winehq.org/test12", "#", 0, "http://www.winehq.org/test12#"},
+    {"http://www.winehq.org/test13#aaa", "#bbb", 0, "http://www.winehq.org/test13#bbb"},
+    {"http://www.winehq.org/test14#aaa/bbb#ccc", "#", 0, "http://www.winehq.org/test14#"},
+    {"http://www.winehq.org/tests/?query=x/y/z", "tests15", 0, "http://www.winehq.org/tests/tests15"},
+    {"http://www.winehq.org/tests/?query=x/y/z#example", "tests16", 0, "http://www.winehq.org/tests/tests16"},
+    {"file:///C:\\dir\\file.txt", "test.txt", 0, "file:///C:/dir/test.txt"},
+    {"file:///C:\\dir\\file.txt#hash\\hash", "test.txt", 0, "file:///C:/dir/file.txt#hash/test.txt"},
+    {"file:///C:\\dir\\file.html#hash\\hash", "test.html", 0, "file:///C:/dir/test.html"},
+    {"file:///C:\\dir\\file.htm#hash\\hash", "test.htm", 0, "file:///C:/dir/test.htm"},
+    {"file:///C:\\dir\\file.hTmL#hash\\hash", "test.hTmL", 0, "file:///C:/dir/test.hTmL"},
+    {"file:///C:\\dir.html\\file.txt#hash\\hash", "test.txt", 0, "file:///C:/dir.html/file.txt#hash/test.txt"},
+    {"C:\\winehq\\winehq.txt", "C:\\Test\\test.txt", 0, "file:///C:/Test/test.txt"},
+    {"http://www.winehq.org/test/", "test%20file.txt", 0, "http://www.winehq.org/test/test%20file.txt"},
+    {"http://www.winehq.org/test/", "test%20file.txt", URL_FILE_USE_PATHURL, "http://www.winehq.org/test/test%20file.txt"},
+    {"http://www.winehq.org%2ftest/", "test%20file.txt", URL_FILE_USE_PATHURL, "http://www.winehq.org%2ftest/test%20file.txt"},
+    {"xxx:@MSITStore:file.chm/file.html", "dir/file", 0, "xxx:dir/file"},
+    {"mk:@MSITStore:file.chm::/file.html", "/dir/file", 0, "mk:@MSITStore:file.chm::/dir/file"},
+    {"mk:@MSITStore:file.chm::/file.html", "mk:@MSITStore:file.chm::/dir/file", 0, "mk:@MSITStore:file.chm::/dir/file"},
+    {"foo:today", "foo:calendar", 0, "foo:calendar"},
+    {"foo:today", "bar:calendar", 0, "bar:calendar"},
+    {"foo:/today", "foo:calendar", 0, "foo:/calendar"},
+    {"Foo:/today/", "fOo:calendar", 0, "foo:/today/calendar"},
+    {"mk:@MSITStore:dir/test.chm::dir/index.html", "image.jpg", 0, "mk:@MSITStore:dir/test.chm::dir/image.jpg"},
+    {"mk:@MSITStore:dir/test.chm::dir/dir2/index.html", "../image.jpg", 0, "mk:@MSITStore:dir/test.chm::dir/image.jpg"},
     /* UrlCombine case 2 tests.  Schemes do not match */
-    {"outbind://xxxxxxxxx","http://wine1/dir",0, S_OK,"http://wine1/dir"},
-    {"xxxx://xxxxxxxxx","http://wine2/dir",0, S_OK,"http://wine2/dir"},
-    {"ftp://xxxxxxxxx/","http://wine3/dir",0, S_OK,"http://wine3/dir"},
-    {"outbind://xxxxxxxxx","http://wine4/dir",URL_PLUGGABLE_PROTOCOL, S_OK,"http://wine4/dir"},
-    {"xxx://xxxxxxxxx","http://wine5/dir",URL_PLUGGABLE_PROTOCOL, S_OK,"http://wine5/dir"},
-    {"ftp://xxxxxxxxx/","http://wine6/dir",URL_PLUGGABLE_PROTOCOL, S_OK,"http://wine6/dir"},
-    {"http://xxxxxxxxx","outbind://wine7/dir",0, S_OK,"outbind://wine7/dir"},
-    {"xxx://xxxxxxxxx","ftp://wine8/dir",0, S_OK,"ftp://wine8/dir"},
-    {"ftp://xxxxxxxxx/","xxx://wine9/dir",0, S_OK,"xxx://wine9/dir"},
-    {"http://xxxxxxxxx","outbind://wine10/dir",URL_PLUGGABLE_PROTOCOL, S_OK,"outbind://wine10/dir"},
-    {"xxx://xxxxxxxxx","ftp://wine11/dir",URL_PLUGGABLE_PROTOCOL, S_OK,"ftp://wine11/dir"},
-    {"ftp://xxxxxxxxx/","xxx://wine12/dir",URL_PLUGGABLE_PROTOCOL, S_OK,"xxx://wine12/dir"},
-    {"http://xxxxxxxxx","outbind:wine13/dir",0, S_OK,"outbind:wine13/dir"},
-    {"xxx://xxxxxxxxx","ftp:wine14/dir",0, S_OK,"ftp:wine14/dir"},
-    {"ftp://xxxxxxxxx/","xxx:wine15/dir",0, S_OK,"xxx:wine15/dir"},
-    {"outbind://xxxxxxxxx/","http:wine16/dir",0, S_OK,"http:wine16/dir"},
-    {"http://xxxxxxxxx","outbind:wine17/dir",URL_PLUGGABLE_PROTOCOL, S_OK,"outbind:wine17/dir"},
-    {"xxx://xxxxxxxxx","ftp:wine18/dir",URL_PLUGGABLE_PROTOCOL, S_OK,"ftp:wine18/dir"},
-    {"ftp://xxxxxxxxx/","xXx:wine19/dir",URL_PLUGGABLE_PROTOCOL, S_OK,"xxx:wine19/dir"},
-    {"outbind://xxxxxxxxx/","http:wine20/dir",URL_PLUGGABLE_PROTOCOL, S_OK,"http:wine20/dir"},
-    {"file:///c:/dir/file.txt","index.html?test=c:/abc",URL_ESCAPE_SPACES_ONLY|URL_DONT_ESCAPE_EXTRA_INFO,S_OK,"file:///c:/dir/index.html?test=c:/abc"}
+    {"outbind://xxxxxxxxx", "http://wine1/dir", 0, "http://wine1/dir"},
+    {"xxxx://xxxxxxxxx", "http://wine2/dir", 0, "http://wine2/dir"},
+    {"ftp://xxxxxxxxx/", "http://wine3/dir", 0, "http://wine3/dir"},
+    {"outbind://xxxxxxxxx", "http://wine4/dir", URL_PLUGGABLE_PROTOCOL, "http://wine4/dir"},
+    {"xxx://xxxxxxxxx", "http://wine5/dir", URL_PLUGGABLE_PROTOCOL, "http://wine5/dir"},
+    {"ftp://xxxxxxxxx/", "http://wine6/dir", URL_PLUGGABLE_PROTOCOL, "http://wine6/dir"},
+    {"http://xxxxxxxxx", "outbind://wine7/dir", 0, "outbind://wine7/dir"},
+    {"xxx://xxxxxxxxx", "ftp://wine8/dir", 0, "ftp://wine8/dir"},
+    {"ftp://xxxxxxxxx/", "xxx://wine9/dir", 0, "xxx://wine9/dir"},
+    {"http://xxxxxxxxx", "outbind://wine10/dir", URL_PLUGGABLE_PROTOCOL, "outbind://wine10/dir"},
+    {"xxx://xxxxxxxxx", "ftp://wine11/dir", URL_PLUGGABLE_PROTOCOL, "ftp://wine11/dir"},
+    {"ftp://xxxxxxxxx/", "xxx://wine12/dir", URL_PLUGGABLE_PROTOCOL, "xxx://wine12/dir"},
+    {"http://xxxxxxxxx", "outbind:wine13/dir", 0, "outbind:wine13/dir"},
+    {"xxx://xxxxxxxxx", "ftp:wine14/dir", 0, "ftp:wine14/dir"},
+    {"ftp://xxxxxxxxx/", "xxx:wine15/dir", 0, "xxx:wine15/dir"},
+    {"outbind://xxxxxxxxx/", "http:wine16/dir", 0, "http:wine16/dir"},
+    {"http://xxxxxxxxx", "outbind:wine17/dir", URL_PLUGGABLE_PROTOCOL, "outbind:wine17/dir"},
+    {"xxx://xxxxxxxxx", "ftp:wine18/dir", URL_PLUGGABLE_PROTOCOL, "ftp:wine18/dir"},
+    {"ftp://xxxxxxxxx/", "xXx:wine19/dir", URL_PLUGGABLE_PROTOCOL, "xxx:wine19/dir"},
+    {"outbind://xxxxxxxxx/", "http:wine20/dir", URL_PLUGGABLE_PROTOCOL, "http:wine20/dir"},
+    {"file:///c:/dir/file.txt", "index.html?test=c:/abc", URL_ESCAPE_SPACES_ONLY|URL_DONT_ESCAPE_EXTRA_INFO, "file:///c:/dir/index.html?test=c:/abc"}
 };
 
 /* ################ */
@@ -1160,7 +1159,7 @@ static void test_UrlCanonicalizeW(void)
 
 /* ########################### */
 
-static void test_url_combine(const char *szUrl1, const char *szUrl2, DWORD dwFlags, HRESULT dwExpectReturn, const char *szExpectUrl)
+static void check_url_combine(const char *szUrl1, const char *szUrl2, DWORD dwFlags, const char *szExpectUrl)
 {
     HRESULT hr;
     CHAR szReturnUrl[INTERNET_MAX_URL_LENGTH];
@@ -1188,11 +1187,9 @@ static void test_url_combine(const char *szUrl1, const char *szUrl2, DWORD dwFla
     ok(dwSize == dwExpectLen+1, "Got length %d, expected %d\n", dwSize, dwExpectLen+1);
 
     hr = UrlCombineA(szUrl1, szUrl2, szReturnUrl, &dwSize, dwFlags);
-    ok(hr == dwExpectReturn, "UrlCombineA returned 0x%08x, expected 0x%08x\n", hr, dwExpectReturn);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     ok(dwSize == dwExpectLen, "Got length %d, expected %d\n", dwSize, dwExpectLen);
-    if(SUCCEEDED(hr)) {
-        ok(strcmp(szReturnUrl,szExpectUrl)==0, "Expected %s, but got %s\n", szExpectUrl, szReturnUrl);
-    }
+    ok(!strcmp(szReturnUrl, szExpectUrl), "Expected %s, got %s.\n", szExpectUrl, szReturnUrl);
 
     dwSize = 0;
     hr = UrlCombineW(wszUrl1, wszUrl2, NULL, &dwSize, dwFlags);
@@ -1205,13 +1202,12 @@ static void test_url_combine(const char *szUrl1, const char *szUrl2, DWORD dwFla
     ok(dwSize == dwExpectLen+1, "Got length %d, expected %d\n", dwSize, dwExpectLen+1);
 
     hr = UrlCombineW(wszUrl1, wszUrl2, wszReturnUrl, &dwSize, dwFlags);
-    ok(hr == dwExpectReturn, "UrlCombineW returned 0x%08x, expected 0x%08x\n", hr, dwExpectReturn);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     ok(dwSize == dwExpectLen, "Got length %d, expected %d\n", dwSize, dwExpectLen);
-    if(SUCCEEDED(hr)) {
-        wszConvertedUrl = GetWideString(szReturnUrl);
-        ok(lstrcmpW(wszReturnUrl, wszConvertedUrl)==0, "Strings didn't match between ansi and unicode UrlCombine!\n");
-        FreeWideString(wszConvertedUrl);
-    }
+    wszConvertedUrl = GetWideString(szReturnUrl);
+    ok(!wcscmp(wszReturnUrl, wszConvertedUrl), "Expected %s, got %s.\n",
+            debugstr_w(wszConvertedUrl), debugstr_w(wszReturnUrl));
+    FreeWideString(wszConvertedUrl);
 
     FreeWideString(wszUrl1);
     FreeWideString(wszUrl2);
@@ -1224,8 +1220,7 @@ static void test_UrlCombine(void)
 {
     unsigned int i;
     for (i = 0; i < ARRAY_SIZE(TEST_COMBINE); i++) {
-        test_url_combine(TEST_COMBINE[i].url1, TEST_COMBINE[i].url2, TEST_COMBINE[i].flags,
-                         TEST_COMBINE[i].expectret, TEST_COMBINE[i].expecturl);
+        check_url_combine(TEST_COMBINE[i].url1, TEST_COMBINE[i].url2, TEST_COMBINE[i].flags, TEST_COMBINE[i].expecturl);
     }
 }
 
