@@ -40,14 +40,14 @@ static ITaskFolder *get_tasks_root_folder(void)
     V_VT(&empty) = VT_EMPTY;
     hres = ITaskService_Connect(service, empty, empty, empty, empty);
     if (FAILED(hres)) {
-        FIXME("Connect failed: %08x\n", hres);
+        FIXME("Connect failed: %08lx\n", hres);
         return NULL;
     }
 
     hres = ITaskService_GetFolder(service, NULL, &root);
     ITaskService_Release(service);
     if (FAILED(hres)) {
-        FIXME("GetFolder failed: %08x\n", hres);
+        FIXME("GetFolder failed: %08lx\n", hres);
         return NULL;
     }
 
@@ -70,7 +70,7 @@ static IRegisteredTask *get_registered_task(const WCHAR *name)
     SysFreeString(str);
     ITaskFolder_Release(root);
     if (FAILED(hres)) {
-        FIXME("GetTask failed: %08x\n", hres);
+        FIXME("GetTask failed: %08lx\n", hres);
         return NULL;
     }
 
@@ -183,7 +183,7 @@ static int change_command(int argc, WCHAR *argv[])
         hres = IRegisteredTask_put_Enabled(task, VARIANT_TRUE);
         if (FAILED(hres)) {
             IRegisteredTask_Release(task);
-            FIXME("put_Enabled failed: %08x\n", hres);
+            FIXME("put_Enabled failed: %08lx\n", hres);
             return 1;
         }
     }
