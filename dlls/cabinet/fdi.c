@@ -482,7 +482,7 @@ static char *FDI_read_string(FDI_Int *fdi, INT_PTR hf, long cabsize)
   unsigned int i;
   cab_UBYTE *buf = NULL;
 
-  TRACE("(fdi == %p, hf == %ld, cabsize == %ld)\n", fdi, hf, cabsize);
+  TRACE("(fdi == %p, hf == %Id, cabsize == %ld)\n", fdi, hf, cabsize);
 
   do {
     if (len > maxlen) len = maxlen;
@@ -541,7 +541,7 @@ static BOOL FDI_read_entries(
   cab_UBYTE buf[64], block_resv;
   char *prevname = NULL, *previnfo = NULL, *nextname = NULL, *nextinfo = NULL;
 
-  TRACE("(fdi == ^%p, hf == %ld, pfdici == ^%p)\n", fdi, hf, pfdici);
+  TRACE("(fdi == ^%p, hf == %Id, pfdici == ^%p)\n", fdi, hf, pfdici);
 
   /* read in the CFHEADER */
   if (fdi->read(hf, buf, cfhead_SIZEOF) != cfhead_SIZEOF) {
@@ -698,7 +698,7 @@ BOOL __cdecl FDIIsCabinet(HFDI hfdi, INT_PTR hf, PFDICABINETINFO pfdici)
   BOOL rv;
   FDI_Int *fdi = get_fdi_ptr( hfdi );
 
-  TRACE("(hfdi == ^%p, hf == ^%ld, pfdici == ^%p)\n", hfdi, hf, pfdici);
+  TRACE("(hfdi == ^%p, hf == ^%Id, pfdici == ^%p)\n", hfdi, hf, pfdici);
 
   if (!fdi) return FALSE;
 
