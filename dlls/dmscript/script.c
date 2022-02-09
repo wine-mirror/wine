@@ -76,7 +76,7 @@ static ULONG WINAPI IDirectMusicScriptImpl_AddRef(IDirectMusicScript *iface)
     IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -86,7 +86,7 @@ static ULONG WINAPI IDirectMusicScriptImpl_Release(IDirectMusicScript *iface)
     IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if (!ref) {
         HeapFree(GetProcessHeap(), 0, This->pHeader);
@@ -139,7 +139,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_SetVariableNumber(IDirectMusicScrip
         WCHAR *pwszVariableName, LONG lValue, DMUS_SCRIPT_ERRORINFO *pErrorInfo)
 {
   IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
-  FIXME("(%p, %s, %i, %p): stub\n", This, debugstr_w(pwszVariableName), lValue, pErrorInfo);
+  FIXME("(%p, %s, %li, %p): stub\n", This, debugstr_w(pwszVariableName), lValue, pErrorInfo);
   return S_OK;
 }
 
@@ -171,7 +171,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_EnumRoutine(IDirectMusicScript *ifa
         WCHAR *pwszName)
 {
   IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
-  FIXME("(%p, %d, %p): stub\n", This, dwIndex, pwszName);
+  FIXME("(%p, %ld, %p): stub\n", This, dwIndex, pwszName);
   return S_OK;
 }
 
@@ -179,7 +179,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_EnumVariable(IDirectMusicScript *if
         WCHAR *pwszName)
 {
   IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
-  FIXME("(%p, %d, %p): stub\n", This, dwIndex, pwszName);
+  FIXME("(%p, %ld, %p): stub\n", This, dwIndex, pwszName);
   return S_OK;
 }
 
@@ -259,7 +259,7 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 
 	FIXME("(%p, %p): Loading not implemented yet\n", This, pStm);
 	IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
-	TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+	TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 	switch (Chunk.fccID) {	
 		case FOURCC_RIFF: {
 			IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);				
@@ -272,7 +272,7 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 					do {
 						IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
 						StreamCount += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-						TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+						TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 						switch (Chunk.fccID) { 
 						        case DMUS_FOURCC_SCRIPT_CHUNK: {
 							        TRACE_(dmfile)(": script header chunk\n");
@@ -284,7 +284,7 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 							        TRACE_(dmfile)(": script version chunk\n");
 								This->pVersion = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, Chunk.dwSize);
 								IStream_Read (pStm, This->pVersion, Chunk.dwSize, NULL); 
-								TRACE_(dmfile)("version: 0x%08x.0x%08x\n", This->pVersion->dwVersionMS, This->pVersion->dwVersionLS);
+								TRACE_(dmfile)("version: 0x%08lx.0x%08lx\n", This->pVersion->dwVersionMS, This->pVersion->dwVersionLS);
 								break;
 						        }
 						        case DMUS_FOURCC_SCRIPTLANGUAGE_CHUNK: {
@@ -385,7 +385,7 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 										do {
 											IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
 											ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-											TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+											TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 											switch (Chunk.fccID) {
 												/* don't ask me why, but M$ puts INFO elements in UNFO list sometimes
                                               (though strings seem to be valid unicode) */
@@ -431,7 +431,7 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 													break;						
 												}
 											}
-											TRACE_(dmfile)(": ListCount[0] = %d < ListSize[0] = %d\n", ListCount[0], ListSize[0]);
+											TRACE_(dmfile)(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
 										} while (ListCount[0] < ListSize[0]);
 										break;
 									}
@@ -451,7 +451,7 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 								break;						
 							}
 						}
-						TRACE_(dmfile)(": StreamCount[0] = %d < StreamSize[0] = %d\n", StreamCount, StreamSize);
+						TRACE_(dmfile)(": StreamCount[0] = %ld < StreamSize[0] = %ld\n", StreamCount, StreamSize);
 					} while (StreamCount < StreamSize);
 					break;
 				}
