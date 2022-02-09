@@ -128,7 +128,7 @@ static IClassFactoryImpl dm_container_CF = {{&classfactory_vtbl}, create_dmconta
  */
 HRESULT WINAPI DllCanUnloadNow (void)
 {
-    TRACE("() ref=%d\n", module_ref);
+    TRACE("() ref=%ld\n", module_ref);
 
     return module_ref ? S_FALSE : S_OK;
 }

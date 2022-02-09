@@ -48,7 +48,7 @@ const char *debugstr_DMUS_IO_CONTAINER_HEADER (LPDMUS_IO_CONTAINER_HEADER pHeade
 		char buffer[1024], *ptr = buffer;
 
 		ptr += sprintf(ptr, "DMUS_IO_CONTAINER_HEADER (%p):", pHeader);
-		ptr += sprintf(ptr, "\n - dwFlags = %#x%s", pHeader->dwFlags,
+		ptr += sprintf(ptr, "\n - dwFlags = %#lx%s", pHeader->dwFlags,
                         pHeader->dwFlags & DMUS_CONTAINER_NOLOADS ? " (DMUS_CONTAINER_NOLOADS)" : "");
 
 		return wine_dbg_sprintf("%s", buffer);
@@ -63,7 +63,7 @@ const char *debugstr_DMUS_IO_CONTAINED_OBJECT_HEADER (LPDMUS_IO_CONTAINED_OBJECT
 		
 		ptr += sprintf(ptr, "DMUS_IO_CONTAINED_OBJECT_HEADER (%p):", pHeader);
 		ptr += sprintf(ptr, "\n - guidClassID = %s", debugstr_dmguid(&pHeader->guidClassID));
-		ptr += sprintf(ptr, "\n - dwFlags = %#x%s", pHeader->dwFlags,
+		ptr += sprintf(ptr, "\n - dwFlags = %#lx%s", pHeader->dwFlags,
                         pHeader->dwFlags & DMUS_CONTAINED_OBJF_KEEP ? " (DMUS_CONTAINED_OBJF_KEEP)" : "");
 		ptr += sprintf(ptr, "\n - ckid = %s", debugstr_fourcc (pHeader->ckid));
 		ptr += sprintf(ptr, "\n - fccType = %s", debugstr_fourcc (pHeader->fccType));

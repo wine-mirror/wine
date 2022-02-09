@@ -110,7 +110,7 @@ static HRESULT WINAPI IDirectMusicLoaderFileStream_IStream_QueryInterface (LPSTR
 
 static ULONG WINAPI IDirectMusicLoaderFileStream_IStream_AddRef (LPSTREAM iface) {
 	ICOM_THIS_MULTI(IDirectMusicLoaderFileStream, StreamVtbl, iface);
-	TRACE("(%p): AddRef from %d\n", This, This->dwRef);
+	TRACE("(%p): AddRef from %ld\n", This, This->dwRef);
 	return InterlockedIncrement (&This->dwRef);
 }
 
@@ -118,7 +118,7 @@ static ULONG WINAPI IDirectMusicLoaderFileStream_IStream_Release (LPSTREAM iface
 	ICOM_THIS_MULTI(IDirectMusicLoaderFileStream, StreamVtbl, iface);
 	
 	DWORD dwRef = InterlockedDecrement (&This->dwRef);
-	TRACE("(%p): ReleaseRef to %d\n", This, dwRef);
+	TRACE("(%p): ReleaseRef to %ld\n", This, dwRef);
 	if (dwRef == 0) {
 		if (This->hFile)
 			IDirectMusicLoaderFileStream_Detach (iface);
@@ -132,12 +132,12 @@ static HRESULT WINAPI IDirectMusicLoaderFileStream_IStream_Read (LPSTREAM iface,
 	ICOM_THIS_MULTI(IDirectMusicLoaderFileStream, StreamVtbl, iface);
     ULONG cbRead;
 	
-	TRACE_(dmfileraw)("(%p, %p, 0x%08X, %p)\n", This, pv, cb, pcbRead);
+	TRACE_(dmfileraw)("(%p, %p, %#lx, %p)\n", This, pv, cb, pcbRead);
     if (This->hFile == INVALID_HANDLE_VALUE) return E_FAIL;
     if (pcbRead == NULL) pcbRead = &cbRead;
     if (!ReadFile (This->hFile, pv, cb, pcbRead, NULL) || *pcbRead != cb) return E_FAIL;
 	
-	TRACE_(dmfileraw)(": data (size = 0x%08X): %s\n", *pcbRead, debugstr_an(pv, *pcbRead));
+	TRACE_(dmfileraw)(": data (size = %#lx): %s\n", *pcbRead, debugstr_an(pv, *pcbRead));
     return S_OK;
 }
 
@@ -194,12 +194,12 @@ static HRESULT WINAPI IDirectMusicLoaderFileStream_IStream_Write (LPSTREAM iface
 	ICOM_THIS_MULTI(IDirectMusicLoaderFileStream, StreamVtbl, iface);
     ULONG cbWrite;
 	
-	TRACE_(dmfileraw)("(%p, %p, 0x%08X, %p)\n", This, pv, cb, pcbWritten);
+	TRACE_(dmfileraw)("(%p, %p, %#lx, %p)\n", This, pv, cb, pcbWritten);
     if (This->hFile == INVALID_HANDLE_VALUE) return E_FAIL;
     if (pcbWritten == NULL) pcbWritten = &cbWrite;
     if (!WriteFile (This->hFile, pv, cb, pcbWritten, NULL) || *pcbWritten != cb) return E_FAIL;
 	
-	TRACE_(dmfileraw)(": data (size = 0x%08X): %s\n", *pcbWritten, debugstr_an(pv, *pcbWritten));
+	TRACE_(dmfileraw)(": data (size = %#lx): %s\n", *pcbWritten, debugstr_an(pv, *pcbWritten));
     return S_OK;
 }
 
@@ -358,7 +358,7 @@ static HRESULT WINAPI IDirectMusicLoaderResourceStream_IStream_QueryInterface (L
 
 static ULONG WINAPI IDirectMusicLoaderResourceStream_IStream_AddRef (LPSTREAM iface) {
 	ICOM_THIS_MULTI(IDirectMusicLoaderResourceStream, StreamVtbl, iface);
-	TRACE("(%p): AddRef from %d\n", This, This->dwRef);
+	TRACE("(%p): AddRef from %ld\n", This, This->dwRef);
 	return InterlockedIncrement (&This->dwRef);
 }
 
@@ -366,7 +366,7 @@ static ULONG WINAPI IDirectMusicLoaderResourceStream_IStream_Release (LPSTREAM i
 	ICOM_THIS_MULTI(IDirectMusicLoaderResourceStream, StreamVtbl, iface);
 	
 	DWORD dwRef = InterlockedDecrement (&This->dwRef);
-	TRACE("(%p): ReleaseRef to %d\n", This, dwRef);
+	TRACE("(%p): ReleaseRef to %ld\n", This, dwRef);
 	if (dwRef == 0) {
 		IDirectMusicLoaderResourceStream_Detach (iface);
 		HeapFree (GetProcessHeap(), 0, This);
@@ -379,7 +379,7 @@ static HRESULT WINAPI IDirectMusicLoaderResourceStream_IStream_Read (LPSTREAM if
 	LPBYTE pByte;
 	ICOM_THIS_MULTI(IDirectMusicLoaderResourceStream, StreamVtbl, iface);
 	
-	TRACE_(dmfileraw)("(%p, %p, 0x%08X, %p)\n", This, pv, cb, pcbRead);
+	TRACE_(dmfileraw)("(%p, %p, %#lx, %p)\n", This, pv, cb, pcbRead);
 	if ((This->llPos + cb) > This->llMemLength) {
 		WARN_(dmfileraw)(": requested size out of range\n");
 		return E_FAIL;
@@ -391,7 +391,7 @@ static HRESULT WINAPI IDirectMusicLoaderResourceStream_IStream_Read (LPSTREAM if
 	/* FIXME: error checking would be nice */
 	if (pcbRead) *pcbRead = cb;
 	
-	TRACE_(dmfileraw)(": data (size = 0x%08X): %s\n", cb, debugstr_an(pv, cb));
+	TRACE_(dmfileraw)(": data (size = %#lx): %s\n", cb, debugstr_an(pv, cb));
     return S_OK;
 }
 
@@ -618,7 +618,7 @@ static HRESULT WINAPI IDirectMusicLoaderGenericStream_IStream_QueryInterface (LP
 
 static ULONG WINAPI IDirectMusicLoaderGenericStream_IStream_AddRef (LPSTREAM iface) {
 	ICOM_THIS_MULTI(IDirectMusicLoaderGenericStream, StreamVtbl, iface);
-	TRACE("(%p): AddRef from %d\n", This, This->dwRef);
+	TRACE("(%p): AddRef from %ld\n", This, This->dwRef);
 	return InterlockedIncrement (&This->dwRef);
 }
 
@@ -626,7 +626,7 @@ static ULONG WINAPI IDirectMusicLoaderGenericStream_IStream_Release (LPSTREAM if
 	ICOM_THIS_MULTI(IDirectMusicLoaderGenericStream, StreamVtbl, iface);
 	
 	DWORD dwRef = InterlockedDecrement (&This->dwRef);
-	TRACE("(%p): ReleaseRef to %d\n", This, dwRef);
+	TRACE("(%p): ReleaseRef to %ld\n", This, dwRef);
 	if (dwRef == 0) {
 		IDirectMusicLoaderGenericStream_Detach (iface);
 		HeapFree (GetProcessHeap(), 0, This);
@@ -638,7 +638,7 @@ static ULONG WINAPI IDirectMusicLoaderGenericStream_IStream_Release (LPSTREAM if
 static HRESULT WINAPI IDirectMusicLoaderGenericStream_IStream_Read (LPSTREAM iface, void* pv, ULONG cb, ULONG* pcbRead) {
 	ICOM_THIS_MULTI(IDirectMusicLoaderGenericStream, StreamVtbl, iface);
 
-	TRACE_(dmfileraw)("(%p, %p, 0x%08X, %p): redirecting to low-level stream\n", This, pv, cb, pcbRead);
+	TRACE_(dmfileraw)("(%p, %p, %#lx, %p): redirecting to low-level stream\n", This, pv, cb, pcbRead);
 	if (!This->pStream)
 		return E_FAIL;
 
@@ -677,7 +677,7 @@ static HRESULT WINAPI IDirectMusicLoaderGenericStream_IStream_Clone (LPSTREAM if
 
 static HRESULT WINAPI IDirectMusicLoaderGenericStream_IStream_Write (LPSTREAM iface, const void* pv, ULONG cb, ULONG* pcbWritten) {
 	ICOM_THIS_MULTI(IDirectMusicLoaderGenericStream, StreamVtbl, iface);	
-	TRACE_(dmfileraw)("(%p, %p, 0x%08X, %p): redirecting to low-level stream\n", This, pv, cb, pcbWritten);
+	TRACE_(dmfileraw)("(%p, %p, %#lx, %p): redirecting to low-level stream\n", This, pv, cb, pcbWritten);
 	if (!This->pStream)
 		return E_FAIL;
 
@@ -704,7 +704,7 @@ static HRESULT WINAPI IDirectMusicLoaderGenericStream_IStream_CopyTo (LPSTREAM i
 
 static HRESULT WINAPI IDirectMusicLoaderGenericStream_IStream_Commit (LPSTREAM iface, DWORD grfCommitFlags) {
 	ICOM_THIS_MULTI(IDirectMusicLoaderGenericStream, StreamVtbl, iface);	
-	TRACE("(%p, 0x%08X): redirecting to low-level stream\n", This, grfCommitFlags);
+	TRACE("(%p, %#lx): redirecting to low-level stream\n", This, grfCommitFlags);
 	if (!This->pStream)
 		return E_FAIL;
 
@@ -722,7 +722,7 @@ static HRESULT WINAPI IDirectMusicLoaderGenericStream_IStream_Revert (LPSTREAM i
 
 static HRESULT WINAPI IDirectMusicLoaderGenericStream_IStream_LockRegion (LPSTREAM iface, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType) {
 	ICOM_THIS_MULTI(IDirectMusicLoaderGenericStream, StreamVtbl, iface);	
-	TRACE("(%p, %s, %s, 0x%08X): redirecting to low-level stream\n", This, wine_dbgstr_longlong(libOffset.QuadPart), wine_dbgstr_longlong(cb.QuadPart), dwLockType);
+	TRACE("(%p, %s, %s, %#lx): redirecting to low-level stream\n", This, wine_dbgstr_longlong(libOffset.QuadPart), wine_dbgstr_longlong(cb.QuadPart), dwLockType);
 	if (!This->pStream)
 		return E_FAIL;
 
@@ -731,7 +731,7 @@ static HRESULT WINAPI IDirectMusicLoaderGenericStream_IStream_LockRegion (LPSTRE
 
 static HRESULT WINAPI IDirectMusicLoaderGenericStream_IStream_UnlockRegion (LPSTREAM iface, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType) {
 	ICOM_THIS_MULTI(IDirectMusicLoaderGenericStream, StreamVtbl, iface);	
-	TRACE("(%p, %s, %s, 0x%08X): redirecting to low-level stream\n", This, wine_dbgstr_longlong(libOffset.QuadPart), wine_dbgstr_longlong(cb.QuadPart), dwLockType);
+	TRACE("(%p, %s, %s, %#lx): redirecting to low-level stream\n", This, wine_dbgstr_longlong(libOffset.QuadPart), wine_dbgstr_longlong(cb.QuadPart), dwLockType);
 	if (!This->pStream)
 		return E_FAIL;
 
@@ -740,7 +740,7 @@ static HRESULT WINAPI IDirectMusicLoaderGenericStream_IStream_UnlockRegion (LPST
 
 static HRESULT WINAPI IDirectMusicLoaderGenericStream_IStream_Stat (LPSTREAM iface, STATSTG* pstatstg, DWORD grfStatFlag) {
 	ICOM_THIS_MULTI(IDirectMusicLoaderGenericStream, StreamVtbl, iface);	
-	TRACE("(%p, %p, 0x%08X): redirecting to low-level stream\n", This, pstatstg, grfStatFlag);
+	TRACE("(%p, %p, %#lx): redirecting to low-level stream\n", This, pstatstg, grfStatFlag);
 	if (!This->pStream)
 		return E_FAIL;
 

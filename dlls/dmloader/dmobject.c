@@ -226,10 +226,10 @@ void dump_DMUS_OBJECTDESC(DMUS_OBJECTDESC *desc)
         return;
 
     TRACE_(dmfile)("DMUS_OBJECTDESC (%p):", desc);
-    TRACE_(dmfile)(" - dwSize = %u\n", desc->dwSize);
+    TRACE_(dmfile)(" - dwSize = %lu\n", desc->dwSize);
 
 #define X(flag) if (desc->dwValidData & flag) TRACE_(dmfile)(#flag " ")
-    TRACE_(dmfile)(" - dwValidData = %#08x ( ", desc->dwValidData);
+    TRACE_(dmfile)(" - dwValidData = %#08lx ( ", desc->dwValidData);
     X(DMUS_OBJ_OBJECT);
     X(DMUS_OBJ_CLASS);
     X(DMUS_OBJ_NAME);
@@ -285,7 +285,7 @@ const char *debugstr_chunk(const struct chunk_entry *chunk)
         return "(null)";
     if (chunk->id == FOURCC_RIFF || chunk->id == FOURCC_LIST)
         type = wine_dbg_sprintf("type %s, ", debugstr_fourcc(chunk->type));
-    return wine_dbg_sprintf("%s chunk, %ssize %u", debugstr_fourcc(chunk->id), type, chunk->size);
+    return wine_dbg_sprintf("%s chunk, %ssize %lu", debugstr_fourcc(chunk->id), type, chunk->size);
 }
 
 static HRESULT stream_read(IStream *stream, void *data, ULONG size)
@@ -295,10 +295,10 @@ static HRESULT stream_read(IStream *stream, void *data, ULONG size)
 
     hr = IStream_Read(stream, data, size, &read);
     if (FAILED(hr))
-        TRACE_(dmfile)("IStream_Read failed: %08x\n", hr);
+        TRACE_(dmfile)("IStream_Read failed: %#lx\n", hr);
     else if (!read && read < size) {
         /* All or nothing: Handle a partial read due to end of stream as an error */
-        TRACE_(dmfile)("Short read: %u < %u\n", read, size);
+        TRACE_(dmfile)("Short read: %lu < %lu\n", read, size);
         return E_FAIL;
     }
 
@@ -393,7 +393,7 @@ HRESULT stream_chunk_get_array(IStream *stream, const struct chunk_entry *chunk,
     if (FAILED(hr = stream_read(stream, &size, sizeof(DWORD))))
         return hr;
     if (size != elem_size) {
-        WARN_(dmfile)("%s: Array element size mismatch: got %u, expected %u\n",
+        WARN_(dmfile)("%s: Array element size mismatch: got %lu, expected %lu\n",
                 debugstr_chunk(chunk), size, elem_size);
         return DMUS_E_UNSUPPORTED_STREAM;
     }
@@ -420,7 +420,7 @@ HRESULT stream_chunk_get_data(IStream *stream, const struct chunk_entry *chunk, 
         ULONG size)
 {
     if (chunk->size != size) {
-        WARN_(dmfile)("Chunk %s (size %u, offset %s) doesn't contains the expected data size %u\n",
+        WARN_(dmfile)("Chunk %s (size %lu, offset %s) doesn't contains the expected data size %lu\n",
                 debugstr_fourcc(chunk->id), chunk->size,
                 wine_dbgstr_longlong(chunk->offset.QuadPart), size);
         return E_FAIL;
@@ -567,7 +567,7 @@ HRESULT dmobj_parsedescriptor(IStream *stream, const struct chunk_entry *riff,
     struct chunk_entry chunk = {.parent = riff};
     HRESULT hr;
 
-    TRACE("Looking for %#x in %p: %s\n", supported, stream, debugstr_chunk(riff));
+    TRACE("Looking for %#lx in %p: %s\n", supported, stream, debugstr_chunk(riff));
 
     desc->dwValidData = 0;
     desc->dwSize = sizeof(*desc);
@@ -612,7 +612,7 @@ HRESULT dmobj_parsedescriptor(IStream *stream, const struct chunk_entry *riff,
                 break;
         }
     }
-    TRACE("Found %#x\n", desc->dwValidData);
+    TRACE("Found %#lx\n", desc->dwValidData);
 
     return hr;
 }
@@ -636,7 +636,7 @@ HRESULT dmobj_parsereference(IStream *stream, const struct chunk_entry *list,
         WARN("Failed to read data of %s\n", debugstr_chunk(&chunk));
         return hr;
     }
-    TRACE("REFERENCE guidClassID %s, dwValidData %#x\n", debugstr_dmguid(&reference.guidClassID),
+    TRACE("REFERENCE guidClassID %s, dwValidData %#lx\n", debugstr_dmguid(&reference.guidClassID),
             reference.dwValidData);
 
     if (FAILED(hr = dmobj_parsedescriptor(stream, list, &desc, reference.dwValidData)))

@@ -138,7 +138,7 @@ static ULONG WINAPI IDirectMusicLoaderImpl_AddRef(IDirectMusicLoader8 *iface)
     IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(): new ref = %u\n", iface, ref);
+    TRACE("(%p)->(): new ref = %lu\n", iface, ref);
 
     return ref;
 }
@@ -148,7 +148,7 @@ static ULONG WINAPI IDirectMusicLoaderImpl_Release(IDirectMusicLoader8 *iface)
     IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(): new ref = %u\n", iface, ref);
+    TRACE("(%p)->(): new ref = %lu\n", iface, ref);
 
     if (!ref) {
         unsigned int i;
@@ -402,7 +402,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_GetObject(IDirectMusicLoader8 *ifac
 		IStream_Release(pStream);
 		IPersistStream_Release(pPersistStream);
 		IDirectMusicObject_Release(pObject);
-		WARN(": failed to (completely) load object (%08x)\n", result);
+		WARN(": failed to (completely) load object (%#lx)\n", result);
 		return result;
 	}
 	/* get descriptor */
@@ -534,7 +534,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_SetObject(IDirectMusicLoader8 *ifac
 	hr = CoCreateInstance (&pDesc->guidClass, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicObject, (LPVOID*)&pObject);
         if (FAILED(hr)) {
 		IStream_Release(pStream);
-		ERR("Object creation of %s failed 0x%08x\n", debugstr_guid(&pDesc->guidClass),hr);
+		ERR("Object creation of %s failed %#lx\n", debugstr_guid(&pDesc->guidClass),hr);
 		return DMUS_E_LOADER_FAILEDOPEN;
         }
 
@@ -786,7 +786,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_EnumObject(IDirectMusicLoader8 *ifa
 	IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
 	DWORD dwCount = 0;
         struct cache_entry *pObjectEntry;
-	TRACE("(%p, %s, %d, %p)\n", This, debugstr_dmguid(rguidClass), dwIndex, pDesc);
+	TRACE("(%p, %s, %ld, %p)\n", This, debugstr_dmguid(rguidClass), dwIndex, pDesc);
 
 	DM_STRUCT_INIT(pDesc);
 
