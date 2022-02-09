@@ -59,7 +59,7 @@ static ULONG WINAPI group_manager_AddRef(ISharedPropertyGroupManager *iface)
     struct group_manager *manager = impl_from_ISharedPropertyGroupManager(iface);
     ULONG refcount = InterlockedIncrement(&manager->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -69,7 +69,7 @@ static ULONG WINAPI group_manager_Release(ISharedPropertyGroupManager *iface)
     struct group_manager *manager = impl_from_ISharedPropertyGroupManager(iface);
     ULONG refcount = InterlockedDecrement(&manager->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -83,14 +83,14 @@ static HRESULT WINAPI group_manager_GetTypeInfoCount(ISharedPropertyGroupManager
 static HRESULT WINAPI group_manager_GetTypeInfo(ISharedPropertyGroupManager *iface, UINT index, LCID lcid,
         ITypeInfo **info)
 {
-    FIXME("iface %p, index %u, lcid %u, info %p: stub.\n", iface, index, lcid, info);
+    FIXME("iface %p, index %u, lcid %lu, info %p: stub.\n", iface, index, lcid, info);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI group_manager_GetIDsOfNames(ISharedPropertyGroupManager *iface, REFIID riid,
         LPOLESTR *names, UINT count, LCID lcid, DISPID *dispid)
 {
-    FIXME("iface %p, riid %s, names %p, count %u, lcid %u, dispid %p: stub.\n",
+    FIXME("iface %p, riid %s, names %p, count %u, lcid %lu, dispid %p: stub.\n",
             iface, debugstr_guid(riid), names, count, lcid, dispid);
 
     return E_NOTIMPL;
@@ -99,7 +99,7 @@ static HRESULT WINAPI group_manager_GetIDsOfNames(ISharedPropertyGroupManager *i
 static HRESULT WINAPI group_manager_Invoke(ISharedPropertyGroupManager *iface, DISPID member, REFIID riid,
         LCID lcid, WORD flags, DISPPARAMS *params, VARIANT *result, EXCEPINFO *except, UINT *argerr)
 {
-    FIXME("iface %p, member %u, riid %s, lcid %u, flags %x, params %p, result %p, except %p, argerr %p: stub.\n",
+    FIXME("iface %p, member %lu, riid %s, lcid %lu, flags %x, params %p, result %p, except %p, argerr %p: stub.\n",
             iface, member, debugstr_guid(riid), lcid, flags, params, result, except, argerr);
     return E_NOTIMPL;
 }
