@@ -48,7 +48,7 @@ static const WCHAR empty[] = {0};
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    TRACE("(0x%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
+    TRACE("(0x%p, %ld, %p)\n", hinstDLL, fdwReason, lpvReserved);
 
     switch (fdwReason)
     {
@@ -1298,7 +1298,7 @@ BOOL WINAPI CryptUIDlgCertMgr(PCCRYPTUI_CERT_MGR_STRUCT pCryptUICertMgr)
 
     if (pCryptUICertMgr->dwSize != sizeof(CRYPTUI_CERT_MGR_STRUCT))
     {
-        WARN("unexpected size %d\n", pCryptUICertMgr->dwSize);
+        WARN("unexpected size %ld\n", pCryptUICertMgr->dwSize);
         SetLastError(E_INVALIDARG);
         return FALSE;
     }
@@ -1605,7 +1605,7 @@ HCERTSTORE WINAPI CryptUIDlgSelectStoreW(PCRYPTUI_SELECTSTORE_INFO_W info)
 
     if (info->dwSize != sizeof(CRYPTUI_SELECTSTORE_INFO_W))
     {
-        WARN("unexpected size %d\n", info->dwSize);
+        WARN("unexpected size %ld\n", info->dwSize);
         SetLastError(E_INVALIDARG);
         return NULL;
     }
@@ -1627,7 +1627,7 @@ HCERTSTORE WINAPI CryptUIDlgSelectStoreA(PCRYPTUI_SELECTSTORE_INFO_A info)
 
     if (info->dwSize != sizeof(CRYPTUI_SELECTSTORE_INFO_A))
     {
-        WARN("unexpected size %d\n", info->dwSize);
+        WARN("unexpected size %ld\n", info->dwSize);
         SetLastError(E_INVALIDARG);
         return NULL;
     }
@@ -1706,7 +1706,7 @@ static DWORD CALLBACK read_text_callback(DWORD_PTR dwCookie, LPBYTE buf,
     struct ReadStringStruct *string = (struct ReadStringStruct *)dwCookie;
     LONG cch = min(cb / sizeof(WCHAR), string->len - string->pos);
 
-    TRACE("(%p, %p, %d, %p)\n", string, buf, cb, pcb);
+    TRACE("(%p, %p, %ld, %p)\n", string, buf, cb, pcb);
 
     memmove(buf, string->buf + string->pos, cch * sizeof(WCHAR));
     string->pos += cch;
@@ -2497,7 +2497,7 @@ static INT_PTR CALLBACK general_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
     PROPSHEETPAGEW *page;
     PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo;
 
-    TRACE("(%p, %08x, %08lx, %08lx)\n", hwnd, msg, wp, lp);
+    TRACE("(%p, %08x, %08Ix, %08Ix)\n", hwnd, msg, wp, lp);
 
     switch (msg)
     {
@@ -3586,7 +3586,7 @@ static INT_PTR CALLBACK cert_properties_general_dlg_proc(HWND hwnd, UINT msg,
 {
     PROPSHEETPAGEW *page;
 
-    TRACE("(%p, %08x, %08lx, %08lx)\n", hwnd, msg, wp, lp);
+    TRACE("(%p, %08x, %08Ix, %08Ix)\n", hwnd, msg, wp, lp);
 
     switch (msg)
     {
@@ -3781,7 +3781,7 @@ static INT_PTR CALLBACK detail_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
     PROPSHEETPAGEW *page;
     struct detail_data *data;
 
-    TRACE("(%p, %08x, %08lx, %08lx)\n", hwnd, msg, wp, lp);
+    TRACE("(%p, %08x, %08Ix, %08Ix)\n", hwnd, msg, wp, lp);
 
     switch (msg)
     {
@@ -4138,7 +4138,7 @@ static INT_PTR CALLBACK hierarchy_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
     INT_PTR ret = 0;
     HWND tree = GetDlgItem(hwnd, IDC_CERTPATH);
 
-    TRACE("(%p, %08x, %08lx, %08lx)\n", hwnd, msg, wp, lp);
+    TRACE("(%p, %08x, %08Ix, %08Ix)\n", hwnd, msg, wp, lp);
 
     switch (msg)
     {
@@ -4267,7 +4267,7 @@ static int CALLBACK cert_prop_sheet_proc(HWND hwnd, UINT msg, LPARAM lp)
 {
     RECT rc;
 
-    TRACE("(%p, %08x, %08lx)\n", hwnd, msg, lp);
+    TRACE("(%p, %08x, %08Ix)\n", hwnd, msg, lp);
 
     switch (msg)
     {
@@ -4469,7 +4469,7 @@ BOOL WINAPI CryptUIDlgViewContext(DWORD dwContextType, LPVOID pvContext,
 {
     BOOL ret;
 
-    TRACE("(%d, %p, %p, %s, %08x, %p)\n", dwContextType, pvContext, hwnd,
+    TRACE("(%ld, %p, %p, %s, %08lx, %p)\n", dwContextType, pvContext, hwnd,
      debugstr_w(pwszTitle), dwFlags, pvReserved);
 
     switch (dwContextType)
@@ -4487,7 +4487,7 @@ BOOL WINAPI CryptUIDlgViewContext(DWORD dwContextType, LPVOID pvContext,
         break;
     }
     default:
-        FIXME("unimplemented for context type %d\n", dwContextType);
+        FIXME("unimplemented for context type %ld\n", dwContextType);
         SetLastError(E_INVALIDARG);
         ret = FALSE;
     }
@@ -5335,7 +5335,7 @@ static BOOL do_import(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardTitle,
          pImportSrc->u.hCertStore, hDestCertStore);
         break;
     default:
-        WARN("unknown source type: %u\n", pImportSrc->dwSubjectChoice);
+        WARN("unknown source type: %lu\n", pImportSrc->dwSubjectChoice);
         SetLastError(E_INVALIDARG);
         ret = FALSE;
     }
@@ -5536,7 +5536,7 @@ BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardT
 {
     BOOL ret;
 
-    TRACE("(0x%08x, %p, %s, %p, %p)\n", dwFlags, hwndParent, debugstr_w(pwszWizardTitle),
+    TRACE("(0x%08lx, %p, %s, %p, %p)\n", dwFlags, hwndParent, debugstr_w(pwszWizardTitle),
           pImportSrc, hDestCertStore);
 
     if (pImportSrc &&
@@ -6967,7 +6967,7 @@ BOOL WINAPI CryptUIWizExport(DWORD dwFlags, HWND hwndParent,
 {
     BOOL ret;
 
-    TRACE("(%08x, %p, %s, %p, %p)\n", dwFlags, hwndParent,
+    TRACE("(%08lx, %p, %s, %p, %p)\n", dwFlags, hwndParent,
      debugstr_w(pwszWizardTitle), pExportInfo, pvoid);
 
     if (!(dwFlags & CRYPTUI_WIZ_NO_UI))
@@ -7409,7 +7409,7 @@ PCCERT_CONTEXT WINAPI CryptUIDlgSelectCertificateW(PCCRYPTUI_SELECTCERTIFICATE_S
 
     if (pcsc->dwSize != sizeof(*pcsc) && pcsc->dwSize != sizeof(*pcsc) - sizeof(HCERTSTORE))
     {
-        WARN("unexpected size %d\n", pcsc->dwSize);
+        WARN("unexpected size %ld\n", pcsc->dwSize);
         SetLastError(E_INVALIDARG);
         return NULL;
     }
@@ -7511,7 +7511,7 @@ PCCERT_CONTEXT WINAPI CryptUIDlgSelectCertificateA(PCCRYPTUI_SELECTCERTIFICATE_S
 
     if (pcsc->dwSize != sizeof(*pcsc) && pcsc->dwSize != sizeof(*pcsc) - sizeof(HCERTSTORE))
     {
-        WARN("unexpected size %d\n", pcsc->dwSize);
+        WARN("unexpected size %ld\n", pcsc->dwSize);
         SetLastError(E_INVALIDARG);
         return NULL;
     }
@@ -7548,7 +7548,7 @@ PCCERT_CONTEXT WINAPI CryptUIDlgSelectCertificateFromStore(HCERTSTORE hCertStore
 {
     CRYPTUI_SELECTCERTIFICATE_STRUCTW sc;
 
-    TRACE("%p %p %s %s %x %x %p\n", hCertStore, hwnd, debugstr_w(pwszTitle), debugstr_w(pwszDisplayString), dwDontUseColumn, dwFlags, pvReserved);
+    TRACE("%p %p %s %s %lx %lx %p\n", hCertStore, hwnd, debugstr_w(pwszTitle), debugstr_w(pwszDisplayString), dwDontUseColumn, dwFlags, pvReserved);
 
     memset(&sc, 0, sizeof(sc));
 
@@ -7566,6 +7566,6 @@ PCCERT_CONTEXT WINAPI CryptUIDlgSelectCertificateFromStore(HCERTSTORE hCertStore
 BOOL WINAPI CryptUIWizDigitalSign(DWORD flags, HWND parent, LPCWSTR title, PCCRYPTUI_WIZ_DIGITAL_SIGN_INFO info,
                                   PCCRYPTUI_WIZ_DIGITAL_SIGN_CONTEXT *context)
 {
-    FIXME("%d %p %s %p %p: stub\n", flags, parent, debugstr_w(title), info, context);
+    FIXME("%ld %p %s %p %p: stub\n", flags, parent, debugstr_w(title), info, context);
     return FALSE;
 }
