@@ -43,7 +43,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 INT16 WINAPI FontFamilyEnumProc16( SEGPTR logfont, SEGPTR metrics,
                                    UINT16 nFontType, LPARAM lParam )
 {
-    FIXME( "%08x %08x %u %lx\n", logfont, metrics, nFontType, lParam );
+    FIXME( "%08lx %08lx %u %lx\n", logfont, metrics, nFontType, lParam );
     return 0;
 }
 
@@ -53,7 +53,7 @@ INT16 WINAPI FontFamilyEnumProc16( SEGPTR logfont, SEGPTR metrics,
 INT16 WINAPI FontStyleEnumProc16( SEGPTR logfont, SEGPTR metrics,
                                   UINT16 nFontType, LPARAM lParam )
 {
-    FIXME( "%08x %08x %u %lx\n", logfont, metrics, nFontType, lParam );
+    FIXME( "%08lx %08lx %u %lx\n", logfont, metrics, nFontType, lParam );
     return 0;
 }
 

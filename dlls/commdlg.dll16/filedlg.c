@@ -218,7 +218,7 @@ static LRESULT call_hook16( WNDPROC16 hook, HWND hwnd, UINT msg, WPARAM wp, LPAR
     CONTEXT context;
     WORD params[5];
 
-    TRACE( "%p: %p %08x %lx %lx: stub\n", hook, hwnd, msg, wp, lp );
+    TRACE( "%p: %p %08x %x %lx: stub\n", hook, hwnd, msg, wp, lp );
 
     memset( &context, 0, sizeof(context) );
     context.SegDs = context.SegEs = CURRENT_SS;
