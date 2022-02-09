@@ -480,10 +480,3 @@ BOOL WINAPI GetConsoleFontInfo(HANDLE hConsole, BOOL maximize, DWORD numfonts, C
     SetLastError(LOWORD(E_NOTIMPL) /* win10 1709+ */);
     return FALSE;
 }
-
-BOOL WINAPI SetCurrentConsoleFontEx(HANDLE hConsole, BOOL maxwindow, CONSOLE_FONT_INFOEX *cfix)
-{
-    FIXME("(%p %d %p): stub!\n", hConsole, maxwindow, cfix);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
-}

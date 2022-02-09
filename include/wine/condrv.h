@@ -155,6 +155,7 @@ struct condrv_output_info_params
 #define SET_CONSOLE_OUTPUT_INFO_DISPLAY_WINDOW  0x0010
 #define SET_CONSOLE_OUTPUT_INFO_MAX_SIZE        0x0020
 #define SET_CONSOLE_OUTPUT_INFO_POPUP_ATTR      0x0040
+#define SET_CONSOLE_OUTPUT_INFO_FONT            0x0080
 
 /* IOCTL_CONDRV_FILL_OUTPUT params */
 struct condrv_fill_output_params

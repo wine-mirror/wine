@@ -652,7 +652,8 @@ static HFONT select_font_config( struct console_config *config, unsigned int cp,
     return font;
 }
 
-static void fill_logfont( LOGFONTW *lf, const WCHAR *name, unsigned int height, unsigned int weight )
+static void fill_logfont( LOGFONTW *lf, const WCHAR *face_name, size_t face_name_size,
+                          unsigned int height, unsigned int weight )
 {
     lf->lfHeight         = height;
     lf->lfWidth          = 0;
@@ -667,7 +668,9 @@ static void fill_logfont( LOGFONTW *lf, const WCHAR *name, unsigned int height, 
     lf->lfClipPrecision  = CLIP_DEFAULT_PRECIS;
     lf->lfQuality        = DEFAULT_QUALITY;
     lf->lfPitchAndFamily = FIXED_PITCH | FF_DONTCARE;
-    lstrcpyW( lf->lfFaceName, name );
+    face_name_size = min( face_name_size, sizeof(lf->lfFaceName) - sizeof(WCHAR) );
+    memcpy( lf->lfFaceName, face_name, face_name_size );
+    lf->lfFaceName[face_name_size / sizeof(WCHAR)] = 0;
 }
 
 static BOOL set_console_font( struct console *console, const LOGFONTW *logfont )
@@ -705,6 +708,7 @@ static BOOL set_console_font( struct console *console, const LOGFONTW *logfont )
 
     font_info->width  = tm.tmAveCharWidth;
     font_info->height = tm.tmHeight + tm.tmExternalLeading;
+    font_info->pitch_family = tm.tmPitchAndFamily;
     font_info->weight = tm.tmWeight;
 
     free( font_info->face_name );
@@ -851,15 +855,15 @@ static int WINAPI get_first_font_enum( const LOGFONTW *lf, const TEXTMETRICW *tm
 
 
 /* sets logfont as the new font for the console */
-static void update_console_font( struct console *console, const WCHAR *font,
-                                 unsigned int height, unsigned int weight )
+void update_console_font( struct console *console, const WCHAR *face_name, size_t face_name_size,
+                          unsigned int height, unsigned int weight )
 {
     struct font_chooser fc;
     LOGFONTW lf;
 
-    if (font[0] && height && weight)
+    if (face_name[0] && height && weight)
     {
-        fill_logfont( &lf, font, height, weight );
+        fill_logfont( &lf, face_name, face_name_size, height, weight );
         if (set_console_font( console, &lf )) return;
     }
 
@@ -1581,8 +1585,9 @@ static BOOL select_font( struct dialog_info *di )
     if (font_idx < 0 || size_idx < 0 || size_idx >= di->font_count)
         return FALSE;
 
-    fill_logfont( &lf, di->font[size_idx].faceName, di->font[size_idx].height,
-                  di->font[size_idx].weight );
+    fill_logfont( &lf, di->font[size_idx].faceName,
+                  wcslen(di->font[size_idx].faceName) * sizeof(WCHAR),
+                  di->font[size_idx].height, di->font[size_idx].weight );
     font = select_font_config( &config, di->console->output_cp, di->console->win, &lf );
     if (!font) return FALSE;
 
@@ -1702,7 +1707,9 @@ static INT_PTR WINAPI font_dialog_proc( HWND dialog, UINT msg, WPARAM wparam, LP
                 {
                     LOGFONTW lf;
 
-                    fill_logfont( &lf, di->font[val].faceName, di->font[val].height, di->font[val].weight );
+                    fill_logfont( &lf, di->font[val].faceName,
+                                  wcslen(di->font[val].faceName) * sizeof(WCHAR),
+                                  di->font[val].height, di->font[val].weight );
                     DeleteObject( select_font_config( &di->config, di->console->output_cp,
                                                       di->console->win, &lf ));
                 }
@@ -1901,7 +1908,8 @@ static void apply_config( struct console *console, const struct console_config *
         memcmp( console->active->font.face_name, config->face_name,
                 console->active->font.face_len * sizeof(WCHAR) ))
     {
-        update_console_font( console, config->face_name, config->cell_height, config->font_weight );
+        update_console_font( console, config->face_name, wcslen(config->face_name) * sizeof(WCHAR),
+                             config->cell_height, config->font_weight );
     }
 
     update_window( console );

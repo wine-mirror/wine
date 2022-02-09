@@ -1303,6 +1303,42 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleWindowInfo( HANDLE handle, BOOL absolute
 }
 
 
+/******************************************************************************
+ *	SetCurrentConsoleFontEx   (kernelbase.@)
+ */
+BOOL WINAPI SetCurrentConsoleFontEx( HANDLE handle, BOOL maxwindow, CONSOLE_FONT_INFOEX *info )
+{
+    struct
+    {
+        struct condrv_output_info_params params;
+        WCHAR face_name[LF_FACESIZE];
+    } data;
+
+    size_t size;
+
+    TRACE( "(%p %d %p)\n", handle, maxwindow, info );
+
+    if (info->cbSize != sizeof(*info))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    data.params.mask = SET_CONSOLE_OUTPUT_INFO_FONT;
+
+    data.params.info.font_width  = info->dwFontSize.X;
+    data.params.info.font_height = info->dwFontSize.Y;
+    data.params.info.font_pitch_family = info->FontFamily;
+    data.params.info.font_weight = info->FontWeight;
+
+    size = wcsnlen( info->FaceName, LF_FACESIZE - 1 ) * sizeof(WCHAR);
+    memcpy( data.face_name, info->FaceName, size );
+
+    size += sizeof(struct condrv_output_info_params);
+    return console_ioctl( handle, IOCTL_CONDRV_SET_OUTPUT_INFO, &data, size, NULL, 0, NULL );
+}
+
+
 /***********************************************************************
  *            ReadConsoleInputA   (kernelbase.@)
  */

@@ -130,16 +130,20 @@ struct screen_buffer
     struct wine_rb_entry   entry;               /* map entry */
 };
 
-BOOL init_window( struct console *console );
-void init_message_window( struct console *console );
-void update_window_region( struct console *console, const RECT *update );
-void update_window_config( struct console *console, BOOL delay );
-
+/* conhost.c */
 NTSTATUS write_console_input( struct console *console, const INPUT_RECORD *records,
                               unsigned int count, BOOL flush );
 
 void notify_screen_buffer_size( struct screen_buffer *screen_buffer );
 NTSTATUS change_screen_buffer_size( struct screen_buffer *screen_buffer, int new_width, int new_height );
+
+/* window.c */
+void update_console_font( struct console *console, const WCHAR *face_name, size_t face_name_size,
+                          unsigned int height, unsigned int weight );
+BOOL init_window( struct console *console );
+void init_message_window( struct console *console );
+void update_window_region( struct console *console, const RECT *update );
+void update_window_config( struct console *console, BOOL delay );
 
 static inline void empty_update_rect( struct screen_buffer *screen_buffer, RECT *rect )
 {

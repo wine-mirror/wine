@@ -1830,7 +1830,7 @@ NTSTATUS change_screen_buffer_size( struct screen_buffer *screen_buffer, int new
 }
 
 static NTSTATUS set_output_info( struct screen_buffer *screen_buffer,
-                                 const struct condrv_output_info_params *params )
+                                 const struct condrv_output_info_params *params, size_t in_size )
 {
     const struct condrv_output_info *info = &params->info;
     NTSTATUS status;
@@ -1916,6 +1916,24 @@ static NTSTATUS set_output_info( struct screen_buffer *screen_buffer,
     {
         screen_buffer->max_width  = info->max_width;
         screen_buffer->max_height = info->max_height;
+    }
+    if (params->mask & SET_CONSOLE_OUTPUT_INFO_FONT)
+    {
+        WCHAR *face_name = (WCHAR *)(params + 1);
+        size_t face_name_size = in_size - sizeof(*params);
+        unsigned int height = info->font_height;
+        unsigned int weight = FW_NORMAL;
+
+        if (!face_name_size)
+        {
+            face_name = screen_buffer->font.face_name;
+            face_name_size = screen_buffer->font.face_len * sizeof(WCHAR);
+        }
+
+        if (!height) height = 12;
+        if (info->font_weight >= FW_SEMIBOLD) weight = FW_BOLD;
+
+        update_console_font( screen_buffer->console, face_name, face_name_size, height, weight );
     }
 
     if (is_active( screen_buffer ))
@@ -2429,8 +2447,9 @@ static NTSTATUS screen_buffer_ioctl( struct screen_buffer *screen_buffer, unsign
         return get_output_info( screen_buffer, out_size );
 
     case IOCTL_CONDRV_SET_OUTPUT_INFO:
-        if (in_size != sizeof(struct condrv_output_info_params) || *out_size) return STATUS_INVALID_PARAMETER;
-        return set_output_info( screen_buffer, in_data );
+        if (in_size < sizeof(struct condrv_output_info_params) || *out_size)
+            return STATUS_INVALID_PARAMETER;
+        return set_output_info( screen_buffer, in_data, in_size );
 
     case IOCTL_CONDRV_FILL_OUTPUT:
         if (in_size != sizeof(struct condrv_fill_output_params) || *out_size != sizeof(DWORD))
