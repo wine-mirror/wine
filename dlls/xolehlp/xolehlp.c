@@ -68,7 +68,7 @@ static ULONG WINAPI ResourceManager_AddRef(IResourceManager *iface)
     ResourceManager *This = impl_from_IResourceManager(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     return ref;
 }
@@ -78,7 +78,7 @@ static ULONG WINAPI ResourceManager_Release(IResourceManager *iface)
     ResourceManager *This = impl_from_IResourceManager(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     if (ref == 0)
     {
@@ -98,7 +98,7 @@ static HRESULT WINAPI ResourceManager_Enlist(IResourceManager *iface,
 static HRESULT WINAPI ResourceManager_Reenlist(IResourceManager *iface,
         byte *pPrepInfo,ULONG cbPrepInfo,DWORD lTimeout,XACTSTAT *pXactStat)
 {
-    FIXME("(%p, %p, %u, %u, %p): stub\n", iface, pPrepInfo, cbPrepInfo, lTimeout, pXactStat);
+    FIXME("(%p, %p, %lu, %lu, %p): stub\n", iface, pPrepInfo, cbPrepInfo, lTimeout, pXactStat);
     return E_NOTIMPL;
 }
 static HRESULT WINAPI ResourceManager_ReenlistmentComplete(IResourceManager *iface)
@@ -186,7 +186,7 @@ static ULONG WINAPI TransactionOptions_AddRef(ITransactionOptions *iface)
     TransactionOptions *This = impl_from_ITransactionOptions(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     return ref;
 }
@@ -196,7 +196,7 @@ static ULONG WINAPI TransactionOptions_Release(ITransactionOptions *iface)
     TransactionOptions *This = impl_from_ITransactionOptions(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     if (ref == 0)
     {
@@ -211,7 +211,7 @@ static HRESULT WINAPI TransactionOptions_SetOptions(ITransactionOptions *iface,
     TransactionOptions *This = impl_from_ITransactionOptions(iface);
 
     if (!pOptions) return E_INVALIDARG;
-    TRACE("(%p, %u, %s)\n", iface, pOptions->ulTimeout, debugstr_a(pOptions->szDescription));
+    TRACE("(%p, %lu, %s)\n", iface, pOptions->ulTimeout, debugstr_a(pOptions->szDescription));
     This->opts = *pOptions;
     return S_OK;
 }
@@ -295,7 +295,7 @@ static ULONG WINAPI Transaction_AddRef(ITransaction *iface)
     Transaction *This = impl_from_ITransaction(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     return ref;
 }
@@ -305,7 +305,7 @@ static ULONG WINAPI Transaction_Release(ITransaction *iface)
     Transaction *This = impl_from_ITransaction(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     if (ref == 0)
     {
@@ -317,7 +317,7 @@ static ULONG WINAPI Transaction_Release(ITransaction *iface)
 static HRESULT WINAPI Transaction_Commit(ITransaction *iface,
     BOOL fRetaining, DWORD grfTC, DWORD grfRM)
 {
-    FIXME("(%p, %d, %08x, %08x): stub\n", iface, fRetaining, grfTC, grfRM);
+    FIXME("(%p, %d, %08lx, %08lx): stub\n", iface, fRetaining, grfTC, grfRM);
     return E_NOTIMPL;
 }
 static HRESULT WINAPI Transaction_Abort(ITransaction *iface,
@@ -425,7 +425,7 @@ static ULONG WINAPI TransactionDispenser_AddRef(ITransactionDispenser *iface)
     TransactionManager *This = impl_from_ITransactionDispenser(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     return ref;
 }
@@ -435,7 +435,7 @@ static ULONG WINAPI TransactionDispenser_Release(ITransactionDispenser *iface)
     TransactionManager *This = impl_from_ITransactionDispenser(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     if (ref == 0)
     {
@@ -460,7 +460,7 @@ static HRESULT WINAPI TransactionDispenser_BeginTransaction(ITransactionDispense
         ITransactionOptions *pOptions,
         ITransaction **ppTransaction)
 {
-    FIXME("(%p, %p, %08x, %08x, %p, %p): semi-stub\n", iface, punkOuter,
+    FIXME("(%p, %p, %08lx, %08lx, %p, %p): semi-stub\n", iface, punkOuter,
         isoLevel, isoFlags, pOptions, ppTransaction);
 
     if (!ppTransaction) return E_INVALIDARG;
@@ -556,7 +556,7 @@ static HRESULT WINAPI TransactionImportWhereabouts_GetWhereaboutsSize(ITransacti
 static HRESULT WINAPI TransactionImportWhereabouts_GetWhereabouts(ITransactionImportWhereabouts *iface,
         ULONG cbWhereabouts, BYTE *rgbWhereabouts,ULONG *pcbUsed)
 {
-    FIXME("(%p, %u, %p, %p): stub returning fake value\n", iface, cbWhereabouts, rgbWhereabouts, pcbUsed);
+    FIXME("(%p, %lu, %p, %p): stub returning fake value\n", iface, cbWhereabouts, rgbWhereabouts, pcbUsed);
 
     if (!rgbWhereabouts || !pcbUsed) return E_INVALIDARG;
     *rgbWhereabouts = 0;
@@ -597,7 +597,7 @@ static ULONG WINAPI TransactionImport_Release(ITransactionImport *iface)
 static HRESULT WINAPI TransactionImport_Import(ITransactionImport *iface,
     ULONG cbTransactionCookie, byte *rgbTransactionCookie, IID *piid, void **ppvTransaction)
 {
-    FIXME("(%p, %u, %p, %s, %p): stub\n", iface, cbTransactionCookie, rgbTransactionCookie, debugstr_guid(piid), ppvTransaction);
+    FIXME("(%p, %lu, %p, %s, %p): stub\n", iface, cbTransactionCookie, rgbTransactionCookie, debugstr_guid(piid), ppvTransaction);
 
     if (!rgbTransactionCookie || !piid || !ppvTransaction) return E_INVALIDARG;
     return E_NOTIMPL;
@@ -653,7 +653,7 @@ static BOOL is_local_machineW( const WCHAR *server )
 HRESULT CDECL DtcGetTransactionManager(char *host, char *tm_name, REFIID riid,
         DWORD dwReserved1, WORD wcbReserved2, void *pvReserved2, void **ppv)
 {
-    TRACE("(%s, %s, %s, %d, %d, %p, %p)\n", debugstr_a(host), debugstr_a(tm_name),
+    TRACE("(%s, %s, %s, %ld, %d, %p, %p)\n", debugstr_a(host), debugstr_a(tm_name),
           debugstr_guid(riid), dwReserved1, wcbReserved2, pvReserved2, ppv);
 
     if (!is_local_machineA(host))
@@ -667,7 +667,7 @@ HRESULT CDECL DtcGetTransactionManager(char *host, char *tm_name, REFIID riid,
 HRESULT CDECL DtcGetTransactionManagerExA(CHAR *host, CHAR *tm_name, REFIID riid,
         DWORD options, void *config, void **ppv)
 {
-    TRACE("(%s, %s, %s, %d, %p, %p)\n", debugstr_a(host), debugstr_a(tm_name),
+    TRACE("(%s, %s, %s, %ld, %p, %p)\n", debugstr_a(host), debugstr_a(tm_name),
           debugstr_guid(riid), options, config, ppv);
 
     if (!is_local_machineA(host))
@@ -681,7 +681,7 @@ HRESULT CDECL DtcGetTransactionManagerExA(CHAR *host, CHAR *tm_name, REFIID riid
 HRESULT CDECL DtcGetTransactionManagerExW(WCHAR *host, WCHAR *tm_name, REFIID riid,
         DWORD options, void *config, void **ppv)
 {
-    TRACE("(%s, %s, %s, %d, %p, %p)\n", debugstr_w(host), debugstr_w(tm_name),
+    TRACE("(%s, %s, %s, %ld, %p, %p)\n", debugstr_w(host), debugstr_w(tm_name),
             debugstr_guid(riid), options, config, ppv);
 
     if (!is_local_machineW(host))
