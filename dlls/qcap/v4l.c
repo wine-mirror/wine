@@ -558,8 +558,8 @@ static NTSTATUS v4l_device_create( void *args )
     }
 
     TRACE("Format: %d bpp - %dx%d.\n", device->current_caps->video_info.bmiHeader.biBitCount,
-            device->current_caps->video_info.bmiHeader.biWidth,
-            device->current_caps->video_info.bmiHeader.biHeight);
+            (int)device->current_caps->video_info.bmiHeader.biWidth,
+            (int)device->current_caps->video_info.bmiHeader.biHeight);
 
     *params->device = (ULONG_PTR)device;
     return S_OK;

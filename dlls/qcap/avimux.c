@@ -684,7 +684,7 @@ static ULONG WINAPI ConfigAviMux_Release(IConfigAviMux *iface)
 static HRESULT WINAPI ConfigAviMux_SetMasterStream(IConfigAviMux *iface, LONG iStream)
 {
     AviMux *This = impl_from_IConfigAviMux(iface);
-    FIXME("(%p)->(%d)\n", This, iStream);
+    FIXME("filter %p, index %ld, stub!\n", This, iStream);
     return E_NOTIMPL;
 }
 
@@ -925,7 +925,7 @@ static HRESULT WINAPI MediaSeeking_SetPositions(IMediaSeeking *iface, LONGLONG *
         DWORD dwCurrentFlags, LONGLONG *pStop, DWORD dwStopFlags)
 {
     AviMux *This = impl_from_IMediaSeeking(iface);
-    FIXME("(%p)->(%p %x %p %x)\n", This, pCurrent, dwCurrentFlags, pStop, dwStopFlags);
+    FIXME("(%p)->(%p %#lx %p %#lx)\n", This, pCurrent, dwCurrentFlags, pStop, dwStopFlags);
     return E_NOTIMPL;
 }
 
@@ -1180,7 +1180,7 @@ static HRESULT WINAPI AviMuxOut_DecideAllocator(struct strmbase_source *base,
     if (FAILED(hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL,
             CLSCTX_INPROC_SERVER, &IID_IMemAllocator, (void **)pAlloc)))
     {
-        ERR("Failed to create allocator, hr %#x.\n", hr);
+        ERR("Failed to create allocator, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -1232,13 +1232,14 @@ static ULONG WINAPI AviMuxOut_QualityControl_Release(IQualityControl *iface)
 }
 
 static HRESULT WINAPI AviMuxOut_QualityControl_Notify(IQualityControl *iface,
-        IBaseFilter *pSelf, Quality q)
+        IBaseFilter *sender, Quality q)
 {
-    AviMux *This = impl_from_out_IQualityControl(iface);
-    FIXME("(%p)->(%p { 0x%x %u %s %s })\n", This, pSelf,
-            q.Type, q.Proportion,
-            wine_dbgstr_longlong(q.Late),
-            wine_dbgstr_longlong(q.TimeStamp));
+    AviMux *filter = impl_from_out_IQualityControl(iface);
+
+    FIXME("filter %p, sender %p, type %#x, proportion %ld, late %s, timestamp %s, stub!\n",
+            filter, sender, q.Type, q.Proportion,
+            wine_dbgstr_longlong(q.Late), wine_dbgstr_longlong(q.TimeStamp));
+
     return E_NOTIMPL;
 }
 
@@ -1518,14 +1519,14 @@ static ULONG WINAPI AviMuxIn_AMStreamControl_Release(IAMStreamControl *iface)
 static HRESULT WINAPI AviMuxIn_AMStreamControl_StartAt(IAMStreamControl *iface,
         const REFERENCE_TIME *start, DWORD cookie)
 {
-    FIXME("iface %p, start %p, cookie %#x, stub!\n", iface, start, cookie);
+    FIXME("iface %p, start %p, cookie %#lx, stub!\n", iface, start, cookie);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI AviMuxIn_AMStreamControl_StopAt(IAMStreamControl *iface,
         const REFERENCE_TIME *stop, BOOL send_extra, DWORD cookie)
 {
-    FIXME("iface %p, stop %p, send_extra %d, cookie %#x, stub!\n", iface, stop, send_extra, cookie);
+    FIXME("iface %p, stop %p, send_extra %d, cookie %#lx, stub!\n", iface, stop, send_extra, cookie);
     return E_NOTIMPL;
 }
 
@@ -1639,7 +1640,7 @@ static HRESULT WINAPI AviMuxIn_MemInputPin_ReceiveMultiple(IMemInputPin *iface,
     AviMuxIn *avimuxin = AviMuxIn_from_IMemInputPin(iface);
     HRESULT hr = S_OK;
 
-    TRACE("pin %p, pSamples %p, nSamples %d, nSamplesProcessed %p.\n",
+    TRACE("pin %p, pSamples %p, nSamples %ld, nSamplesProcessed %p.\n",
             avimuxin, pSamples, nSamples, nSamplesProcessed);
 
     for(*nSamplesProcessed=0; *nSamplesProcessed<nSamples; (*nSamplesProcessed)++)
@@ -1758,7 +1759,7 @@ static ULONG WINAPI AviMuxIn_QualityControl_Release(IQualityControl *iface)
 static HRESULT WINAPI AviMuxIn_QualityControl_Notify(IQualityControl *iface,
         IBaseFilter *filter, Quality q)
 {
-    FIXME("iface %p, filter %p, type %u, proportion %d, late %s, timestamp %s, stub!\n",
+    FIXME("iface %p, filter %p, type %u, proportion %ld, late %s, timestamp %s, stub!\n",
             iface, filter, q.Type, q.Proportion, wine_dbgstr_longlong(q.Late),
             wine_dbgstr_longlong(q.TimeStamp));
     return E_NOTIMPL;

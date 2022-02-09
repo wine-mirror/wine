@@ -104,16 +104,17 @@ fnCaptureGraphBuilder2_AddRef(ICaptureGraphBuilder2 * iface)
     CaptureGraphImpl *This = impl_from_ICaptureGraphBuilder2(iface);
     DWORD ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p/%p)->() AddRef from %d\n", This, iface, ref - 1);
+    TRACE("%p increasing refcount to %lu.\n", This, ref);
+
     return ref;
 }
 
 static ULONG WINAPI fnCaptureGraphBuilder2_Release(ICaptureGraphBuilder2 * iface)
 {
     CaptureGraphImpl *This = impl_from_ICaptureGraphBuilder2(iface);
-    DWORD ref = InterlockedDecrement(&This->ref);
+    ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p/%p)->() Release from %d\n", This, iface, ref + 1);
+    TRACE("%p decreasing refcount to %lu.\n", This, ref);
 
     if (!ref)
     {
@@ -224,7 +225,7 @@ static BOOL pin_matches(IPin *pin, PIN_DIRECTION dir, const GUID *category,
     IPin *peer;
 
     if (FAILED(hr = IPin_QueryDirection(pin, &candidate_dir)))
-        ERR("Failed to query direction, hr %#x.\n", hr);
+        ERR("Failed to query direction, hr %#lx.\n", hr);
 
     if (dir != candidate_dir)
         return FALSE;
@@ -272,7 +273,7 @@ static HRESULT find_interface_recurse(PIN_DIRECTION dir, const GUID *category,
 
     if (FAILED(hr = IBaseFilter_EnumPins(filter, &enumpins)))
     {
-        ERR("Failed to enumerate pins, hr %#x.\n", hr);
+        ERR("Failed to enumerate pins, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -442,7 +443,7 @@ static HRESULT match_smart_tee_pin(CaptureGraphImpl *This,
             }
         }
         if (FAILED(hr)) {
-            TRACE("adding SmartTee failed with hr=0x%08x\n", hr);
+            TRACE("adding SmartTee failed with hr=0x%08lx\n", hr);
             hr = E_INVALIDARG;
             goto end;
         }
@@ -467,7 +468,7 @@ end:
         IPin_Release(peer);
     if (smartTee)
         IBaseFilter_Release(smartTee);
-    TRACE("for %s returning hr=0x%08x, *source_out=%p\n", IsEqualIID(pCategory, &PIN_CATEGORY_CAPTURE) ? "capture" : "preview", hr, source_out ? *source_out : 0);
+    TRACE("for %s returning hr=0x%08lx, *source_out=%p\n", IsEqualIID(pCategory, &PIN_CATEGORY_CAPTURE) ? "capture" : "preview", hr, source_out ? *source_out : 0);
     return hr;
 }
 

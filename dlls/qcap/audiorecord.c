@@ -115,7 +115,7 @@ static HRESULT WINAPI PPB_Load(IPersistPropertyBag *iface, IPropertyBag *pPropBa
     hr = IPropertyBag_Read(pPropBag, L"WaveInID", &var, pErrorLog);
     if (SUCCEEDED(hr))
     {
-        FIXME("FIXME: implement opening waveIn device %d\n", V_I4(&var));
+        FIXME("FIXME: implement opening waveIn device %ld\n", V_I4(&var));
     }
 
     return hr;
