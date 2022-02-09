@@ -35,67 +35,67 @@ static void test_engine_options(void)
     HRESULT hr;
 
     hr = DebugCreate(&IID_IDebugControl, (void **)&control);
-    ok(hr == S_OK, "Failed to create engine object, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create engine object, hr %#lx.\n", hr);
 
     options = 0xf;
     hr = control->lpVtbl->GetEngineOptions(control, &options);
-    ok(hr == S_OK, "Failed to get engine options, hr %#x.\n", hr);
-    ok(options == 0, "Unexpected options %#x.\n", options);
+    ok(hr == S_OK, "Failed to get engine options, hr %#lx.\n", hr);
+    ok(options == 0, "Unexpected options %#lx.\n", options);
 
     hr = control->lpVtbl->AddEngineOptions(control, DEBUG_ENGOPT_INITIAL_BREAK);
-    ok(hr == S_OK, "Failed to add engine options, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to add engine options, hr %#lx.\n", hr);
 
     options = 0;
     hr = control->lpVtbl->GetEngineOptions(control, &options);
-    ok(hr == S_OK, "Failed to get engine options, hr %#x.\n", hr);
-    ok(options == DEBUG_ENGOPT_INITIAL_BREAK, "Unexpected options %#x.\n", options);
+    ok(hr == S_OK, "Failed to get engine options, hr %#lx.\n", hr);
+    ok(options == DEBUG_ENGOPT_INITIAL_BREAK, "Unexpected options %#lx.\n", options);
 
     hr = control->lpVtbl->AddEngineOptions(control, 0x01000000);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     options = 0;
     hr = control->lpVtbl->GetEngineOptions(control, &options);
-    ok(hr == S_OK, "Failed to get engine options, hr %#x.\n", hr);
-    ok(options == DEBUG_ENGOPT_INITIAL_BREAK, "Unexpected options %#x.\n", options);
+    ok(hr == S_OK, "Failed to get engine options, hr %#lx.\n", hr);
+    ok(options == DEBUG_ENGOPT_INITIAL_BREAK, "Unexpected options %#lx.\n", options);
 
     hr = control->lpVtbl->RemoveEngineOptions(control, 0x01000000);
-    ok(hr == S_OK, "Failed to remove options, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to remove options, hr %#lx.\n", hr);
 
     hr = control->lpVtbl->AddEngineOptions(control, DEBUG_ENGOPT_IGNORE_DBGHELP_VERSION);
-    ok(hr == S_OK, "Failed to add engine options, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to add engine options, hr %#lx.\n", hr);
 
     options = 0;
     hr = control->lpVtbl->GetEngineOptions(control, &options);
-    ok(hr == S_OK, "Failed to get engine options, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get engine options, hr %#lx.\n", hr);
     ok(options == (DEBUG_ENGOPT_INITIAL_BREAK | DEBUG_ENGOPT_IGNORE_DBGHELP_VERSION),
-            "Unexpected options %#x.\n", options);
+            "Unexpected options %#lx.\n", options);
 
     hr = control->lpVtbl->RemoveEngineOptions(control, DEBUG_ENGOPT_INITIAL_BREAK);
-    ok(hr == S_OK, "Failed to remove options, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to remove options, hr %#lx.\n", hr);
 
     options = 0;
     hr = control->lpVtbl->GetEngineOptions(control, &options);
-    ok(hr == S_OK, "Failed to get engine options, hr %#x.\n", hr);
-    ok(options == DEBUG_ENGOPT_IGNORE_DBGHELP_VERSION, "Unexpected options %#x.\n", options);
+    ok(hr == S_OK, "Failed to get engine options, hr %#lx.\n", hr);
+    ok(options == DEBUG_ENGOPT_IGNORE_DBGHELP_VERSION, "Unexpected options %#lx.\n", options);
 
     hr = control->lpVtbl->SetEngineOptions(control, DEBUG_ENGOPT_INITIAL_BREAK);
-    ok(hr == S_OK, "Failed to set options, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to set options, hr %#lx.\n", hr);
 
     options = 0;
     hr = control->lpVtbl->GetEngineOptions(control, &options);
-    ok(hr == S_OK, "Failed to get engine options, hr %#x.\n", hr);
-    ok(options == DEBUG_ENGOPT_INITIAL_BREAK, "Unexpected options %#x.\n", options);
+    ok(hr == S_OK, "Failed to get engine options, hr %#lx.\n", hr);
+    ok(options == DEBUG_ENGOPT_INITIAL_BREAK, "Unexpected options %#lx.\n", options);
 
     hr = control->lpVtbl->SetEngineOptions(control, 0x01000000);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = control->lpVtbl->SetEngineOptions(control, 0x01000000 | DEBUG_ENGOPT_IGNORE_DBGHELP_VERSION);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     options = 0;
     hr = control->lpVtbl->GetEngineOptions(control, &options);
-    ok(hr == S_OK, "Failed to get engine options, hr %#x.\n", hr);
-    ok(options == DEBUG_ENGOPT_INITIAL_BREAK, "Unexpected options %#x.\n", options);
+    ok(hr == S_OK, "Failed to get engine options, hr %#lx.\n", hr);
+    ok(options == DEBUG_ENGOPT_INITIAL_BREAK, "Unexpected options %#lx.\n", options);
 
     control->lpVtbl->Release(control);
 }
@@ -264,13 +264,13 @@ static void test_attach(void)
     BOOL ret;
 
     hr = DebugCreate(&IID_IDebugClient, (void **)&client);
-    ok(hr == S_OK, "Failed to create engine object, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create engine object, hr %#lx.\n", hr);
 
     hr = client->lpVtbl->QueryInterface(client, &IID_IDebugControl, (void **)&control);
-    ok(hr == S_OK, "Failed to get interface pointer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get interface pointer, hr %#lx.\n", hr);
 
     hr = client->lpVtbl->SetEventCallbacks(client, &event_callbacks);
-    ok(hr == S_OK, "Failed to set event callbacks, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to set event callbacks, hr %#lx.\n", hr);
 
     event = CreateEventA(NULL, FALSE, FALSE, event_name);
     ok(event != NULL, "Failed to create event.\n");
@@ -284,7 +284,7 @@ static void test_attach(void)
 
     /* Non-invasive mode. */
     hr = client->lpVtbl->AttachProcess(client, 0, info.dwProcessId, DEBUG_ATTACH_NONINVASIVE);
-    ok(hr == S_OK, "Failed to attach to process, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to attach to process, hr %#lx.\n", hr);
 
     is_debugged = TRUE;
     ret = CheckRemoteDebuggerPresent(info.hProcess, &is_debugged);
@@ -292,7 +292,7 @@ static void test_attach(void)
     ok(!is_debugged, "Unexpected mode.\n");
 
     hr = control->lpVtbl->WaitForEvent(control, 0, INFINITE);
-    ok(hr == S_OK, "Waiting for event failed, hr %#x.\n", hr);
+    ok(hr == S_OK, "Waiting for event failed, hr %#lx.\n", hr);
 
     is_debugged = TRUE;
     ret = CheckRemoteDebuggerPresent(info.hProcess, &is_debugged);
@@ -300,11 +300,11 @@ static void test_attach(void)
     ok(!is_debugged, "Unexpected mode.\n");
 
     hr = client->lpVtbl->DetachProcesses(client);
-    ok(hr == S_OK, "Failed to detach, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to detach, hr %#lx.\n", hr);
 
     hr = client->lpVtbl->EndSession(client, DEBUG_END_ACTIVE_DETACH);
     todo_wine
-    ok(hr == S_OK, "Failed to end session, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to end session, hr %#lx.\n", hr);
 
     SetEvent(event);
 
@@ -322,7 +322,7 @@ static void test_attach(void)
 static void test_module_information(void)
 {
     static const char *event_name = "dbgeng_test_event";
-    unsigned int loaded, unloaded, index, length;
+    ULONG loaded, unloaded, index, length;
     DEBUG_MODULE_PARAMETERS params[2];
     IDebugDataSpaces *dataspaces;
     PROCESS_INFORMATION info;
@@ -336,19 +336,19 @@ static void test_module_information(void)
     BOOL ret;
 
     hr = DebugCreate(&IID_IDebugClient, (void **)&client);
-    ok(hr == S_OK, "Failed to create engine object, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create engine object, hr %#lx.\n", hr);
 
     hr = client->lpVtbl->QueryInterface(client, &IID_IDebugControl, (void **)&control);
-    ok(hr == S_OK, "Failed to get interface pointer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get interface pointer, hr %#lx.\n", hr);
 
     hr = client->lpVtbl->QueryInterface(client, &IID_IDebugSymbols2, (void **)&symbols);
-    ok(hr == S_OK, "Failed to get interface pointer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get interface pointer, hr %#lx.\n", hr);
 
     hr = client->lpVtbl->QueryInterface(client, &IID_IDebugDataSpaces, (void **)&dataspaces);
-    ok(hr == S_OK, "Failed to get interface pointer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get interface pointer, hr %#lx.\n", hr);
 
     hr = control->lpVtbl->IsPointer64Bit(control);
-    ok(hr == E_UNEXPECTED, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_UNEXPECTED, "Unexpected hr %#lx.\n", hr);
 
     event = CreateEventA(NULL, FALSE, FALSE, event_name);
     ok(event != NULL, "Failed to create event.\n");
@@ -357,120 +357,120 @@ static void test_module_information(void)
     ok(ret, "Failed to create target process.\n");
 
     hr = control->lpVtbl->SetEngineOptions(control, DEBUG_ENGOPT_INITIAL_BREAK);
-    ok(hr == S_OK, "Failed to set engine options, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to set engine options, hr %#lx.\n", hr);
 
     hr = client->lpVtbl->AttachProcess(client, 0, info.dwProcessId, DEBUG_ATTACH_NONINVASIVE);
-    ok(hr == S_OK, "Failed to attach to process, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to attach to process, hr %#lx.\n", hr);
 
     hr = control->lpVtbl->IsPointer64Bit(control);
-    ok(hr == E_UNEXPECTED, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_UNEXPECTED, "Unexpected hr %#lx.\n", hr);
 
     hr = control->lpVtbl->WaitForEvent(control, 0, INFINITE);
-    ok(hr == S_OK, "Waiting for event failed, hr %#x.\n", hr);
+    ok(hr == S_OK, "Waiting for event failed, hr %#lx.\n", hr);
 
     hr = control->lpVtbl->IsPointer64Bit(control);
-    ok(SUCCEEDED(hr), "Failed to get pointer length, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to get pointer length, hr %#lx.\n", hr);
 
     /* Number of modules. */
     hr = symbols->lpVtbl->GetNumberModules(symbols, &loaded, &unloaded);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    ok(loaded > 0, "Unexpected module count %u.\n", loaded);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(loaded > 0, "Unexpected module count %lu.\n", loaded);
 
     /* Module base. */
     hr = symbols->lpVtbl->GetModuleByIndex(symbols, loaded, &base);
-    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+    ok(FAILED(hr), "Unexpected hr %#lx.\n", hr);
 
     base = 0;
     hr = symbols->lpVtbl->GetModuleByIndex(symbols, 0, &base);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!!base, "Unexpected module base.\n");
 
     hr = symbols->lpVtbl->GetModuleByOffset(symbols, 0, 0, &index, &base);
-    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+    ok(FAILED(hr), "Unexpected hr %#lx.\n", hr);
 
     hr = symbols->lpVtbl->GetModuleByOffset(symbols, base, 0, &index, &base);
-    ok(hr == S_OK, "Failed to get module, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get module, hr %#lx.\n", hr);
 
     hr = symbols->lpVtbl->GetModuleByOffset(symbols, base, 0, NULL, NULL);
-    ok(hr == S_OK, "Failed to get module, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get module, hr %#lx.\n", hr);
 
     hr = symbols->lpVtbl->GetModuleByOffset(symbols, base + 1, 0, NULL, NULL);
-    ok(hr == S_OK, "Failed to get module, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get module, hr %#lx.\n", hr);
 
     hr = symbols->lpVtbl->GetModuleByOffset(symbols, base, loaded, NULL, NULL);
-    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+    ok(FAILED(hr), "Unexpected hr %#lx.\n", hr);
 
     /* Parameters. */
     base = 0;
     hr = symbols->lpVtbl->GetModuleByIndex(symbols, 0, &base);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!!base, "Unexpected module base.\n");
 
     hr = symbols->lpVtbl->GetModuleParameters(symbols, 1, NULL, 0, params);
-    ok(hr == S_OK, "Failed to get module parameters, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get module parameters, hr %#lx.\n", hr);
     ok(params[0].Base == base, "Unexpected module base.\n");
 
     hr = symbols->lpVtbl->GetModuleParameters(symbols, 1, &base, 100, params);
-    ok(hr == S_OK, "Failed to get module parameters, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get module parameters, hr %#lx.\n", hr);
     ok(params[0].Base == base, "Unexpected module base.\n");
 
     bases[0] = base + 1;
     bases[1] = base;
     hr = symbols->lpVtbl->GetModuleParameters(symbols, 2, bases, 0, params);
-    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* XP */, "Failed to get module parameters, hr %#x.\n", hr);
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* XP */, "Failed to get module parameters, hr %#lx.\n", hr);
     ok(params[0].Base == DEBUG_INVALID_OFFSET, "Unexpected module base.\n");
     ok(params[0].Size == 0, "Unexpected module size.\n");
     ok(params[1].Base == base, "Unexpected module base.\n");
     ok(params[1].Size != 0, "Unexpected module size.\n");
 
     hr = symbols->lpVtbl->GetModuleParameters(symbols, 1, bases, 0, params);
-    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* XP */, "Failed to get module parameters, hr %#x.\n", hr);
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* XP */, "Failed to get module parameters, hr %#lx.\n", hr);
 
     hr = symbols->lpVtbl->GetModuleParameters(symbols, 1, bases, loaded, params);
-    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* XP */, "Failed to get module parameters, hr %#x.\n", hr);
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* XP */, "Failed to get module parameters, hr %#lx.\n", hr);
 
     hr = symbols->lpVtbl->GetModuleParameters(symbols, 1, NULL, loaded, params);
-    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+    ok(FAILED(hr), "Unexpected hr %#lx.\n", hr);
 
     /* Image name. */
     hr = symbols->lpVtbl->GetModuleNameString(symbols, DEBUG_MODNAME_IMAGE, 0, 0, buffer, sizeof(buffer), &length);
-    ok(hr == S_OK, "Failed to get image name, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get image name, hr %#lx.\n", hr);
     ok(strlen(buffer) + 1 == length, "Unexpected length.\n");
 
     hr = symbols->lpVtbl->GetModuleNameString(symbols, DEBUG_MODNAME_IMAGE, 0, 0, NULL, sizeof(buffer), &length);
-    ok(hr == S_OK, "Failed to get image name, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get image name, hr %#lx.\n", hr);
     ok(length > 0, "Unexpected length.\n");
 
     hr = symbols->lpVtbl->GetModuleNameString(symbols, DEBUG_MODNAME_IMAGE, DEBUG_ANY_ID, base, buffer, sizeof(buffer),
             &length);
-    ok(hr == S_OK, "Failed to get image name, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get image name, hr %#lx.\n", hr);
     ok(strlen(buffer) + 1 == length, "Unexpected length.\n");
 
     hr = symbols->lpVtbl->GetModuleNameString(symbols, DEBUG_MODNAME_IMAGE, 0, 0, buffer, length - 1, &length);
-    ok(hr == S_FALSE, "Failed to get image name, hr %#x.\n", hr);
-    ok(strlen(buffer) + 2 == length, "Unexpected length %u.\n", length);
+    ok(hr == S_FALSE, "Failed to get image name, hr %#lx.\n", hr);
+    ok(strlen(buffer) + 2 == length, "Unexpected length %lu.\n", length);
 
     hr = symbols->lpVtbl->GetModuleNameString(symbols, DEBUG_MODNAME_IMAGE, 0, 0, NULL, length - 1, NULL);
-    ok(hr == S_FALSE, "Failed to get image name, hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Failed to get image name, hr %#lx.\n", hr);
 
     /* Read memory. */
     base = 0;
     hr = symbols->lpVtbl->GetModuleByIndex(symbols, 0, &base);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!!base, "Unexpected module base.\n");
 
     hr = dataspaces->lpVtbl->ReadVirtual(dataspaces, base, buffer, sizeof(buffer), &length);
-    ok(hr == S_OK, "Failed to read process memory, hr %#x.\n", hr);
-    ok(length == sizeof(buffer), "Unexpected length %u.\n", length);
+    ok(hr == S_OK, "Failed to read process memory, hr %#lx.\n", hr);
+    ok(length == sizeof(buffer), "Unexpected length %lu.\n", length);
     ok(buffer[0] == 'M' && buffer[1] == 'Z', "Unexpected contents.\n");
 
     memset(buffer, 0, sizeof(buffer));
     hr = dataspaces->lpVtbl->ReadVirtual(dataspaces, base, buffer, sizeof(buffer), NULL);
-    ok(hr == S_OK, "Failed to read process memory, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to read process memory, hr %#lx.\n", hr);
     ok(buffer[0] == 'M' && buffer[1] == 'Z', "Unexpected contents.\n");
 
     hr = client->lpVtbl->DetachProcesses(client);
-    ok(hr == S_OK, "Failed to detach, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to detach, hr %#lx.\n", hr);
 
     SetEvent(event);
     wait_child_process(info.hProcess);
