@@ -46,7 +46,7 @@ static HRESULT load_typelib(void)
 
     hr = LoadRegTypeLib(&LIBID_DHTMLEDLib, 1, 0, LOCALE_SYSTEM_DEFAULT, &tl);
     if (FAILED(hr)) {
-        ERR("LoadRegTypeLib failed: %08x\n", hr);
+        ERR("LoadRegTypeLib failed: %08lx\n", hr);
         return hr;
     }
 
@@ -85,7 +85,7 @@ static HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo)
         hr = ITypeLib_GetTypeInfoOfGuid(typelib, tid_ids[tid], &ti);
         if (FAILED(hr))
         {
-            ERR("GetTypeInfoOfGuid(%s) failed: %08x\n", debugstr_guid(tid_ids[tid]), hr);
+            ERR("GetTypeInfoOfGuid(%s) failed: %08lx\n", debugstr_guid(tid_ids[tid]), hr);
             return hr;
         }
 
@@ -192,7 +192,7 @@ static ULONG dhtml_edit_addref(DHTMLEditImpl *This)
 {
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -291,7 +291,7 @@ static ULONG dhtml_edit_release(DHTMLEditImpl *This)
 {
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if (!ref)
     {
@@ -332,7 +332,7 @@ static HRESULT WINAPI DHTMLEdit_GetTypeInfo(IDHTMLEdit *iface, UINT type_index, 
     DHTMLEditImpl *This = impl_from_IDHTMLEdit(iface);
     HRESULT hr;
 
-    TRACE("(%p)->(%u, %08x, %p)\n", This, type_index, lcid, type_info);
+    TRACE("(%p)->(%u, %08lx, %p)\n", This, type_index, lcid, type_info);
 
     hr = get_typeinfo(IDHTMLEdit_tid, type_info);
     if (SUCCEEDED(hr))
@@ -347,7 +347,7 @@ static HRESULT WINAPI DHTMLEdit_GetIDsOfNames(IDHTMLEdit *iface, REFIID iid, OLE
     ITypeInfo *ti;
     HRESULT hr;
 
-    TRACE("(%p)->(%s, %p, %u, %08x, %p)\n", This, debugstr_guid(iid), names, name_count, lcid, disp_ids);
+    TRACE("(%p)->(%s, %p, %u, %08lx, %p)\n", This, debugstr_guid(iid), names, name_count, lcid, disp_ids);
 
     hr = get_typeinfo(IDHTMLEdit_tid, &ti);
     if (FAILED(hr))
@@ -363,7 +363,7 @@ static HRESULT WINAPI DHTMLEdit_Invoke(IDHTMLEdit *iface, DISPID member, REFIID 
     ITypeInfo *ti;
     HRESULT hr;
 
-    TRACE("(%p)->(%d, %s, %08x, 0x%x, %p, %p, %p, %p)\n",
+    TRACE("(%p)->(%ld, %s, %08lx, 0x%x, %p, %p, %p, %p)\n",
           This, member, debugstr_guid(iid), lcid, flags, params, ret, exception_info, error_index);
 
     hr = get_typeinfo(IDHTMLEdit_tid, &ti);
@@ -594,7 +594,7 @@ static HRESULT WINAPI DHTMLEdit_get_SnapToGridX(IDHTMLEdit *iface, LONG *value)
 static HRESULT WINAPI DHTMLEdit_put_SnapToGridX(IDHTMLEdit *iface, LONG value)
 {
     DHTMLEditImpl *This = impl_from_IDHTMLEdit(iface);
-    FIXME("(%p)->(%d) stub\n", This, value);
+    FIXME("(%p)->(%ld) stub\n", This, value);
     return E_NOTIMPL;
 }
 
@@ -608,7 +608,7 @@ static HRESULT WINAPI DHTMLEdit_get_SnapToGridY(IDHTMLEdit *iface, LONG *value)
 static HRESULT WINAPI DHTMLEdit_put_SnapToGridY(IDHTMLEdit *iface, LONG value)
 {
     DHTMLEditImpl *This = impl_from_IDHTMLEdit(iface);
-    FIXME("(%p)->(%d) stub\n", This, value);
+    FIXME("(%p)->(%ld) stub\n", This, value);
     return E_NOTIMPL;
 }
 
@@ -833,21 +833,21 @@ static HRESULT WINAPI OleObject_SetHostNames(IOleObject *iface,
 static HRESULT WINAPI OleObject_Close(IOleObject *iface, DWORD save)
 {
     DHTMLEditImpl *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%u) stub\n", This, save);
+    FIXME("(%p)->(%lu) stub\n", This, save);
     return S_OK;
 }
 
 static HRESULT WINAPI OleObject_SetMoniker(IOleObject *iface, DWORD moniker_id, IMoniker *value)
 {
     DHTMLEditImpl *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%u, %p) stub\n", This, moniker_id, value);
+    FIXME("(%p)->(%lu, %p) stub\n", This, moniker_id, value);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleObject_GetMoniker(IOleObject *iface, DWORD assign, DWORD moniker_id, IMoniker **value)
 {
     DHTMLEditImpl *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%u, %p) stub\n", This, moniker_id, value);
+    FIXME("(%p)->(%lu, %p) stub\n", This, moniker_id, value);
     *value = NULL;
     return E_NOTIMPL;
 }
@@ -855,14 +855,14 @@ static HRESULT WINAPI OleObject_GetMoniker(IOleObject *iface, DWORD assign, DWOR
 static HRESULT WINAPI OleObject_InitFromData(IOleObject *iface, IDataObject *data_obj, BOOL creation, DWORD reserved)
 {
     DHTMLEditImpl *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%p, %u, %u) stub\n", This, data_obj, creation, reserved);
+    FIXME("(%p)->(%p, %u, %lu) stub\n", This, data_obj, creation, reserved);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleObject_GetClipboardData(IOleObject *iface, DWORD reserved, IDataObject **value)
 {
     DHTMLEditImpl *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%u, %p) stub\n", This, reserved, value);
+    FIXME("(%p)->(%lu, %p) stub\n", This, reserved, value);
     *value = NULL;
     return E_NOTIMPL;
 }
@@ -871,7 +871,7 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG verb, MSG *msg, I
                                        LONG index, HWND parent, const RECT *pos)
 {
     DHTMLEditImpl *This = impl_from_IOleObject(iface);
-    TRACE("(%p)->(%d, %p, %p, %d, %p, %p) stub\n", This, verb, msg, active_site, index, parent, pos);
+    TRACE("(%p)->(%ld, %p, %p, %ld, %p, %p) stub\n", This, verb, msg, active_site, index, parent, pos);
 
     if (verb == OLEIVERB_INPLACEACTIVATE)
     {
@@ -914,7 +914,7 @@ static HRESULT WINAPI OleObject_GetUserClassID(IOleObject *iface, CLSID *clsid)
 static HRESULT WINAPI OleObject_GetUserType(IOleObject *iface, DWORD type_type, OLECHAR **type)
 {
     DHTMLEditImpl *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%u, %p) stub\n", This, type_type, type);
+    FIXME("(%p)->(%lu, %p) stub\n", This, type_type, type);
     *type = NULL;
     return E_NOTIMPL;
 }
@@ -922,7 +922,7 @@ static HRESULT WINAPI OleObject_GetUserType(IOleObject *iface, DWORD type_type, 
 static HRESULT WINAPI OleObject_SetExtent(IOleObject *iface, DWORD aspect, SIZEL *size_limit)
 {
     DHTMLEditImpl *This = impl_from_IOleObject(iface);
-    TRACE("(%p)->(%u, %p)\n", This, aspect, size_limit);
+    TRACE("(%p)->(%lu, %p)\n", This, aspect, size_limit);
 
     if(aspect != DVASPECT_CONTENT)
         return DV_E_DVASPECT;
@@ -934,7 +934,7 @@ static HRESULT WINAPI OleObject_SetExtent(IOleObject *iface, DWORD aspect, SIZEL
 static HRESULT WINAPI OleObject_GetExtent(IOleObject *iface, DWORD aspect, SIZEL *size_limit)
 {
     DHTMLEditImpl *This = impl_from_IOleObject(iface);
-    TRACE("(%p)->(%u, %p)\n", This, aspect, size_limit);
+    TRACE("(%p)->(%lu, %p)\n", This, aspect, size_limit);
 
     if(aspect != DVASPECT_CONTENT)
         return E_FAIL;
@@ -954,7 +954,7 @@ static HRESULT WINAPI OleObject_Advise(IOleObject *iface, IAdviseSink *sink, DWO
 static HRESULT WINAPI OleObject_Unadvise(IOleObject *iface, DWORD conn)
 {
     DHTMLEditImpl *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%u) stub\n", This, conn);
+    FIXME("(%p)->(%lu) stub\n", This, conn);
     return E_NOTIMPL;
 }
 
@@ -969,7 +969,7 @@ static HRESULT WINAPI OleObject_EnumAdvise(IOleObject *iface, IEnumSTATDATA **ad
 static HRESULT WINAPI OleObject_GetMiscStatus(IOleObject *iface, DWORD aspect, DWORD *status)
 {
     DHTMLEditImpl *This = impl_from_IOleObject(iface);
-    TRACE("(%p)->(%u, %p)\n", This, aspect, status);
+    TRACE("(%p)->(%lu, %p)\n", This, aspect, status);
 
     return OleRegGetMiscStatus(&CLSID_DHTMLEdit, aspect, status);
 }
@@ -1033,7 +1033,7 @@ static HRESULT WINAPI ProvideClassInfo2_GetClassInfo(IProvideClassInfo2 *iface, 
 static HRESULT WINAPI ProvideClassInfo2_GetGUID(IProvideClassInfo2 *iface, DWORD dwGuidKind, GUID *pGUID)
 {
     DHTMLEditImpl *This = impl_from_IProvideClassInfo2(iface);
-    FIXME("(%p)->(%d %p)\n", This, dwGuidKind, pGUID);
+    FIXME("(%p)->(%ld %p)\n", This, dwGuidKind, pGUID);
     return E_NOTIMPL;
 }
 
@@ -1217,7 +1217,7 @@ static HRESULT WINAPI OleControl_OnMnemonic(IOleControl *iface, MSG *msg)
 static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DISPID dispID)
 {
     DHTMLEditImpl *This = impl_from_IOleControl(iface);
-    FIXME("(%p)->(%d)\n", This, dispID);
+    FIXME("(%p)->(%ld)\n", This, dispID);
     return E_NOTIMPL;
 }
 
@@ -1259,7 +1259,7 @@ static HRESULT WINAPI ViewObjectEx_Draw(IViewObjectEx *iface, DWORD drawaspect, 
 {
     DHTMLEditImpl *This = impl_from_IViewObjectEx(iface);
 
-    FIXME("(%p)->(%d %d %p %p %p %p %p %p %p %lu)\n", This, drawaspect, index, aspect, device, target_dev,
+    FIXME("(%p)->(%ld %ld %p %p %p %p %p %p %p %Iu)\n", This, drawaspect, index, aspect, device, target_dev,
         hdc_draw, bounds, win_bounds, fn_continue, cont);
 
     return E_NOTIMPL;
@@ -1270,7 +1270,7 @@ static HRESULT WINAPI ViewObjectEx_GetColorSet(IViewObjectEx *iface, DWORD drawa
 {
     DHTMLEditImpl *This = impl_from_IViewObjectEx(iface);
 
-    FIXME("(%p)->(%d %d %p %p %p %p)\n", This, drawaspect, index, aspect, device, hic_target,
+    FIXME("(%p)->(%ld %ld %p %p %p %p)\n", This, drawaspect, index, aspect, device, hic_target,
         colorset);
 
     return E_NOTIMPL;
@@ -1281,7 +1281,7 @@ static HRESULT WINAPI ViewObjectEx_Freeze(IViewObjectEx *iface, DWORD drawaspect
 {
     DHTMLEditImpl *This = impl_from_IViewObjectEx(iface);
 
-    FIXME("(%p)->(%d %d %p %p)\n", This, drawaspect, index, aspect, freeze);
+    FIXME("(%p)->(%ld %ld %p %p)\n", This, drawaspect, index, aspect, freeze);
 
     return E_NOTIMPL;
 }
@@ -1290,7 +1290,7 @@ static HRESULT WINAPI ViewObjectEx_Unfreeze(IViewObjectEx *iface, DWORD freeze)
 {
     DHTMLEditImpl *This = impl_from_IViewObjectEx(iface);
 
-    FIXME("(%p)->(%d)\n", This, freeze);
+    FIXME("(%p)->(%ld)\n", This, freeze);
 
     return E_NOTIMPL;
 }
@@ -1299,7 +1299,7 @@ static HRESULT WINAPI ViewObjectEx_SetAdvise(IViewObjectEx *iface, DWORD aspects
 {
     DHTMLEditImpl *This = impl_from_IViewObjectEx(iface);
 
-    FIXME("(%p)->(%d %d %p)\n", This, aspects, advf, sink);
+    FIXME("(%p)->(%ld %ld %p)\n", This, aspects, advf, sink);
 
     return E_NOTIMPL;
 }
@@ -1318,7 +1318,7 @@ static HRESULT WINAPI ViewObjectEx_GetExtent(IViewObjectEx *iface, DWORD draw_as
 {
     DHTMLEditImpl *This = impl_from_IViewObjectEx(iface);
 
-    FIXME("(%p)->(%d %d %p %p)\n", This, draw_aspect, index, device, size);
+    FIXME("(%p)->(%ld %ld %p %p)\n", This, draw_aspect, index, device, size);
 
     return E_NOTIMPL;
 }
@@ -1327,7 +1327,7 @@ static HRESULT WINAPI ViewObjectEx_GetRect(IViewObjectEx *iface, DWORD aspect, R
 {
     DHTMLEditImpl *This = impl_from_IViewObjectEx(iface);
 
-    FIXME("(%p)->(%d %p)\n", This, aspect, rect);
+    FIXME("(%p)->(%ld %p)\n", This, aspect, rect);
 
     return E_NOTIMPL;
 }
@@ -1347,7 +1347,7 @@ static HRESULT WINAPI ViewObjectEx_QueryHitPoint(IViewObjectEx *iface, DWORD asp
 {
     DHTMLEditImpl *This = impl_from_IViewObjectEx(iface);
 
-    FIXME("(%p)->(%d %s %s %d %p)\n", This, aspect, wine_dbgstr_rect(bounds), wine_dbgstr_point(&pt), close_hint, hit_result);
+    FIXME("(%p)->(%ld %s %s %ld %p)\n", This, aspect, wine_dbgstr_rect(bounds), wine_dbgstr_point(&pt), close_hint, hit_result);
 
     return E_NOTIMPL;
 }
@@ -1357,7 +1357,7 @@ static HRESULT WINAPI ViewObjectEx_QueryHitRect(IViewObjectEx *iface, DWORD aspe
 {
     DHTMLEditImpl *This = impl_from_IViewObjectEx(iface);
 
-    FIXME("(%p)->(%d %s %s %d %p)\n", This, aspect, wine_dbgstr_rect(bounds), wine_dbgstr_rect(loc), close_hint, hit_result);
+    FIXME("(%p)->(%ld %s %s %ld %p)\n", This, aspect, wine_dbgstr_rect(bounds), wine_dbgstr_rect(loc), close_hint, hit_result);
 
     return E_NOTIMPL;
 }
@@ -1367,7 +1367,7 @@ static HRESULT WINAPI ViewObjectEx_GetNaturalExtent(IViewObjectEx *iface, DWORD 
 {
     DHTMLEditImpl *This = impl_from_IViewObjectEx(iface);
 
-    FIXME("(%p)->(%d %d %p %p %p %p)\n", This, aspect, index, device, target_hdc, extent_info, size);
+    FIXME("(%p)->(%ld %ld %p %p %p %p)\n", This, aspect, index, device, target_hdc, extent_info, size);
 
     return E_NOTIMPL;
 }
@@ -1454,7 +1454,7 @@ static HRESULT WINAPI OleInPlaceObjectWindowless_OnWindowMessage(IOleInPlaceObje
         UINT msg, WPARAM wParam, LPARAM lParam, LRESULT *lpResult)
 {
     DHTMLEditImpl *This = impl_from_IOleInPlaceObjectWindowless(iface);
-    FIXME("(%p)->(%u %lu %lu %p)\n", This, msg, wParam, lParam, lpResult);
+    FIXME("(%p)->(%u %Iu %Iu %p)\n", This, msg, wParam, lParam, lpResult);
     return E_NOTIMPL;
 }
 
@@ -1676,7 +1676,7 @@ static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *
 static HRESULT WINAPI ConnectionPoint_Unadvise(IConnectionPoint *iface, DWORD cookie)
 {
     ConnectionPoint *This = impl_from_IConnectionPoint(iface);
-    FIXME("%p, %d\n", This, cookie);
+    FIXME("%p, %ld\n", This, cookie);
     return E_NOTIMPL;
 }
 
