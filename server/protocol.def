@@ -1451,8 +1451,7 @@ enum server_fd_type
 @REQ(recv_socket)
     int          oob;           /* are we receiving OOB data? */
     async_data_t async;         /* async I/O parameters */
-    unsigned int status;        /* status of initial call */
-    unsigned int total;         /* number of bytes already read */
+    int          force_async;   /* Force asynchronous mode? */
 @REPLY
     obj_handle_t wait;          /* handle to wait on for blocking recv */
     unsigned int options;       /* device open options */

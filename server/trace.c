@@ -2032,8 +2032,7 @@ static void dump_recv_socket_request( const struct recv_socket_request *req )
 {
     fprintf( stderr, " oob=%d", req->oob );
     dump_async_data( ", async=", &req->async );
-    fprintf( stderr, ", status=%08x", req->status );
-    fprintf( stderr, ", total=%08x", req->total );
+    fprintf( stderr, ", force_async=%d", req->force_async );
 }
 
 static void dump_recv_socket_reply( const struct recv_socket_reply *req )

@@ -3396,7 +3396,7 @@ struct object *create_socket_device( struct object *root, const struct unicode_s
 DECL_HANDLER(recv_socket)
 {
     struct sock *sock = (struct sock *)get_handle_obj( current->process, req->async.handle, 0, &sock_ops );
-    unsigned int status = req->status;
+    unsigned int status = STATUS_PENDING;
     timeout_t timeout = 0;
     struct async *async;
     struct fd *fd;
@@ -3404,29 +3404,16 @@ DECL_HANDLER(recv_socket)
     if (!sock) return;
     fd = sock->fd;
 
-    /* recv() returned EWOULDBLOCK, i.e. no data available yet */
-    if (status == STATUS_DEVICE_NOT_READY && !sock->nonblocking)
+    if (!req->force_async && !sock->nonblocking && is_fd_overlapped( fd ))
+        timeout = (timeout_t)sock->rcvtimeo * -10000;
+
+    if (sock->rd_shutdown) status = STATUS_PIPE_DISCONNECTED;
+    else if (!async_queued( &sock->read_q ))
     {
-        /* Set a timeout on the async if necessary.
-         *
-         * We want to do this *only* if the client gave us STATUS_DEVICE_NOT_READY.
-         * If the client gave us STATUS_PENDING, it expects the async to always
-         * block (it was triggered by WSARecv*() with a valid OVERLAPPED
-         * structure) and for the timeout not to be respected. */
-        if (is_fd_overlapped( fd ))
-            timeout = (timeout_t)sock->rcvtimeo * -10000;
-
-        status = STATUS_PENDING;
-    }
-
-    if ((status == STATUS_PENDING || status == STATUS_DEVICE_NOT_READY) && sock->rd_shutdown)
-        status = STATUS_PIPE_DISCONNECTED;
-
-    /* NOTE: If read_q is not empty, we cannot really tell if the already queued asyncs
-     * NOTE: will not consume all available data; if there's no data available,
-     * NOTE: the current request won't be immediately satiable. */
-    if ((status == STATUS_PENDING || status == STATUS_DEVICE_NOT_READY) && !async_queued( &sock->read_q ))
-    {
+        /* If read_q is not empty, we cannot really tell if the already queued
+         * asyncs will not consume all available data; if there's no data
+         * available, the current request won't be immediately satiable.
+         */
         struct pollfd pollfd;
         pollfd.fd = get_unix_fd( sock->fd );
         pollfd.events = req->oob ? POLLPRI : POLLIN;
@@ -3440,17 +3427,14 @@ DECL_HANDLER(recv_socket)
         }
     }
 
+    if (status == STATUS_PENDING && !req->force_async && sock->nonblocking)
+        status = STATUS_DEVICE_NOT_READY;
+
     sock->pending_events &= ~(req->oob ? AFD_POLL_OOB : AFD_POLL_READ);
     sock->reported_events &= ~(req->oob ? AFD_POLL_OOB : AFD_POLL_READ);
 
     if ((async = create_request_async( fd, get_fd_comp_flags( fd ), &req->async )))
     {
-        if (status == STATUS_SUCCESS)
-        {
-            struct iosb *iosb = async_get_iosb( async );
-            iosb->result = req->total;
-            release_object( iosb );
-        }
         set_error( status );
 
         if (timeout)

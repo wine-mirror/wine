@@ -1764,8 +1764,8 @@ struct recv_socket_request
     struct request_header __header;
     int          oob;
     async_data_t async;
-    unsigned int status;
-    unsigned int total;
+    int          force_async;
+    char __pad_60[4];
 };
 struct recv_socket_reply
 {
@@ -6284,7 +6284,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 745
+#define SERVER_PROTOCOL_VERSION 746
 
 /* ### protocol_version end ### */
 

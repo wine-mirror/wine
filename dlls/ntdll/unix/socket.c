@@ -737,13 +737,9 @@ static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
         }
     }
 
-    status = force_async ? STATUS_PENDING : STATUS_DEVICE_NOT_READY;
-    information = 0;
-
     SERVER_START_REQ( recv_socket )
     {
-        req->status = status;
-        req->total  = information;
+        req->force_async = force_async;
         req->async  = server_async( handle, &async->io, event, apc, apc_user, iosb_client_ptr(io) );
         req->oob    = !!(unix_flags & MSG_OOB);
         status = wine_server_call( req );
