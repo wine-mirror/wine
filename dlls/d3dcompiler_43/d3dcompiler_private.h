@@ -33,6 +33,7 @@
 #include "objbase.h"
 
 #include "d3dcompiler.h"
+#include "utils.h"
 
 #include <assert.h>
 #include <stdint.h>
@@ -567,15 +568,6 @@ void dxbc_destroy(struct dxbc *dxbc) DECLSPEC_HIDDEN;
 HRESULT dxbc_parse(const char *data, SIZE_T data_size, struct dxbc *dxbc) DECLSPEC_HIDDEN;
 HRESULT dxbc_add_section(struct dxbc *dxbc, DWORD tag, const char *data, size_t data_size) DECLSPEC_HIDDEN;
 HRESULT dxbc_init(struct dxbc *dxbc, unsigned int size) DECLSPEC_HIDDEN;
-
-static inline uint32_t read_u32(const char **ptr)
-{
-    uint32_t r;
-
-    memcpy(&r, *ptr, sizeof(r));
-    *ptr += sizeof(r);
-    return r;
-}
 
 static inline void write_u32(char **ptr, uint32_t u32)
 {
