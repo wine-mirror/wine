@@ -185,7 +185,7 @@ PCCRL_CONTEXT WINAPI CertCreateCRLContext(DWORD dwCertEncodingType,
     BYTE *data = NULL;
     DWORD size = 0;
 
-    TRACE("(%08x, %p, %d)\n", dwCertEncodingType, pbCrlEncoded,
+    TRACE("(%08lx, %p, %ld)\n", dwCertEncodingType, pbCrlEncoded,
      cbCrlEncoded);
 
     if ((dwCertEncodingType & CERT_ENCODING_TYPE_MASK) != X509_ASN_ENCODING)
@@ -228,7 +228,7 @@ BOOL WINAPI CertAddEncodedCRLToStore(HCERTSTORE hCertStore,
      pbCrlEncoded, cbCrlEncoded);
     BOOL ret;
 
-    TRACE("(%p, %08x, %p, %d, %08x, %p)\n", hCertStore, dwCertEncodingType,
+    TRACE("(%p, %08lx, %p, %ld, %08lx, %p)\n", hCertStore, dwCertEncodingType,
      pbCrlEncoded, cbCrlEncoded, dwAddDisposition, ppCrlContext);
 
     if (crl)
@@ -385,7 +385,7 @@ PCCRL_CONTEXT WINAPI CertFindCRLInStore(HCERTSTORE hCertStore,
     PCCRL_CONTEXT ret;
     CrlCompareFunc compare;
 
-    TRACE("(%p, %d, %d, %d, %p, %p)\n", hCertStore, dwCertEncodingType,
+    TRACE("(%p, %ld, %ld, %ld, %p, %p)\n", hCertStore, dwCertEncodingType,
 	 dwFindFlags, dwFindType, pvFindPara, pPrevCrlContext);
 
     switch (dwFindType)
@@ -403,7 +403,7 @@ PCCRL_CONTEXT WINAPI CertFindCRLInStore(HCERTSTORE hCertStore,
         compare = compare_crl_issued_for;
         break;
     default:
-        FIXME("find type %08x unimplemented\n", dwFindType);
+        FIXME("find type %08lx unimplemented\n", dwFindType);
         compare = NULL;
     }
 
@@ -436,7 +436,7 @@ PCCRL_CONTEXT WINAPI CertGetCRLFromStore(HCERTSTORE hCertStore,
      CERT_STORE_DELTA_CRL_FLAG;
     PCCRL_CONTEXT ret;
 
-    TRACE("(%p, %p, %p, %08x)\n", hCertStore, pIssuerContext, pPrevCrlContext,
+    TRACE("(%p, %p, %p, %08lx)\n", hCertStore, pIssuerContext, pPrevCrlContext,
      *pdwFlags);
 
     if (*pdwFlags & ~supportedFlags)
@@ -489,7 +489,7 @@ BOOL WINAPI CertFreeCRLContext(PCCRL_CONTEXT pCrlContext)
 DWORD WINAPI CertEnumCRLContextProperties(PCCRL_CONTEXT pCRLContext,
  DWORD dwPropId)
 {
-    TRACE("(%p, %d)\n", pCRLContext, dwPropId);
+    TRACE("(%p, %ld)\n", pCRLContext, dwPropId);
 
     return ContextPropertyList_EnumPropIDs(crl_from_ptr(pCRLContext)->base.properties, dwPropId);
 }
@@ -518,7 +518,7 @@ static BOOL CRLContext_GetProperty(crl_t *crl, DWORD dwPropId,
     BOOL ret;
     CRYPT_DATA_BLOB blob;
 
-    TRACE("(%p, %d, %p, %p)\n", crl, dwPropId, pvData, pcbData);
+    TRACE("(%p, %ld, %p, %p)\n", crl, dwPropId, pvData, pcbData);
 
     if (crl->base.properties)
         ret = ContextPropertyList_FindProperty(crl->base.properties, dwPropId, &blob);
@@ -568,7 +568,7 @@ BOOL WINAPI CertGetCRLContextProperty(PCCRL_CONTEXT pCRLContext,
 {
     BOOL ret;
 
-    TRACE("(%p, %d, %p, %p)\n", pCRLContext, dwPropId, pvData, pcbData);
+    TRACE("(%p, %ld, %p, %p)\n", pCRLContext, dwPropId, pvData, pcbData);
 
     switch (dwPropId)
     {
@@ -607,7 +607,7 @@ static BOOL CRLContext_SetProperty(crl_t *crl, DWORD dwPropId,
 {
     BOOL ret;
 
-    TRACE("(%p, %d, %08x, %p)\n", crl, dwPropId, dwFlags, pvData);
+    TRACE("(%p, %ld, %08lx, %p)\n", crl, dwPropId, dwFlags, pvData);
 
     if (!crl->base.properties)
         ret = FALSE;
@@ -649,7 +649,7 @@ static BOOL CRLContext_SetProperty(crl_t *crl, DWORD dwPropId,
              pvData, sizeof(FILETIME));
             break;
         default:
-            FIXME("%d: stub\n", dwPropId);
+            FIXME("%ld: stub\n", dwPropId);
             ret = FALSE;
         }
     }
@@ -662,7 +662,7 @@ BOOL WINAPI CertSetCRLContextProperty(PCCRL_CONTEXT pCRLContext,
 {
     BOOL ret;
 
-    TRACE("(%p, %d, %08x, %p)\n", pCRLContext, dwPropId, dwFlags, pvData);
+    TRACE("(%p, %ld, %08lx, %p)\n", pCRLContext, dwPropId, dwFlags, pvData);
 
     /* Handle special cases for "read-only"/invalid prop IDs.  Windows just
      * crashes on most of these, I'll be safer.
@@ -719,7 +719,7 @@ static BOOL compare_dist_point_name(const CRL_DIST_POINT_NAME *name1,
                              entry1->u.DirectoryName.cbData);
                             break;
                         default:
-                            FIXME("unimplemented for type %d\n",
+                            FIXME("unimplemented for type %ld\n",
                              entry1->dwAltNameChoice);
                             match = FALSE;
                         }
@@ -778,7 +778,7 @@ BOOL WINAPI CertIsValidCRLForCertificate(PCCERT_CONTEXT pCert,
     PCERT_EXTENSION ext;
     BOOL ret;
 
-    TRACE("(%p, %p, %08x, %p)\n", pCert, pCrl, dwFlags, pvReserved);
+    TRACE("(%p, %p, %08lx, %p)\n", pCert, pCrl, dwFlags, pvReserved);
 
     if (!pCert)
         return TRUE;
@@ -845,7 +845,7 @@ BOOL WINAPI CertFindCertificateInCRL(PCCERT_CONTEXT pCert,
  PCCRL_CONTEXT pCrlContext, DWORD dwFlags, void *pvReserved,
  PCRL_ENTRY *ppCrlEntry)
 {
-    TRACE("(%p, %p, %08x, %p, %p)\n", pCert, pCrlContext, dwFlags, pvReserved,
+    TRACE("(%p, %p, %08lx, %p, %p)\n", pCert, pCrlContext, dwFlags, pvReserved,
      ppCrlEntry);
 
     *ppCrlEntry = CRYPT_FindCertificateInCRL(pCert->pCertInfo,
@@ -859,7 +859,7 @@ BOOL WINAPI CertVerifyCRLRevocation(DWORD dwCertEncodingType,
     DWORD i;
     PCRL_ENTRY entry = NULL;
 
-    TRACE("(%08x, %p, %d, %p)\n", dwCertEncodingType, pCertId, cCrlInfo,
+    TRACE("(%08lx, %p, %ld, %p)\n", dwCertEncodingType, pCertId, cCrlInfo,
      rgpCrlInfo);
 
     for (i = 0; !entry && i < cCrlInfo; i++)

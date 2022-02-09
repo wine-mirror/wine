@@ -352,7 +352,7 @@ BOOL WINAPI CryptSIPRetrieveSubjectGuid
     {
         DWORD fileLen = GetFileSize(hFile, NULL);
 
-        TRACE("fileLen = %d\n", fileLen);
+        TRACE("fileLen = %ld\n", fileLen);
         /* Sanity-check length */
         if (hdr[1] < 0x80 && fileLen == 2 + hdr[1])
         {
@@ -657,7 +657,7 @@ error:
 BOOL WINAPI CryptSIPLoad
        (const GUID *pgSubject, DWORD dwFlags, SIP_DISPATCH_INFO *pSipDispatch)
 {
-    TRACE("(%s %d %p)\n", debugstr_guid(pgSubject), dwFlags, pSipDispatch);
+    TRACE("(%s %ld %p)\n", debugstr_guid(pgSubject), dwFlags, pSipDispatch);
 
     if (!pgSubject || dwFlags != 0 || !pSipDispatch)
     {
@@ -708,7 +708,7 @@ BOOL WINAPI CryptSIPGetSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pdwEn
     WINE_SIP_PROVIDER *sip;
     BOOL ret = FALSE;
 
-    TRACE("(%p %p %d %p %p)\n", pSubjectInfo, pdwEncodingType, dwIndex,
+    TRACE("(%p %p %ld %p %p)\n", pSubjectInfo, pdwEncodingType, dwIndex,
           pcbSignedDataMsg, pbSignedDataMsg);
 
     if ((sip = CRYPT_GetCachedSIP(pSubjectInfo->pgSubjectType)))
@@ -727,7 +727,7 @@ BOOL WINAPI CryptSIPPutSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD pdwEnc
     WINE_SIP_PROVIDER *sip;
     BOOL ret = FALSE;
 
-    TRACE("(%p %d %p %d %p)\n", pSubjectInfo, pdwEncodingType, pdwIndex,
+    TRACE("(%p %ld %p %ld %p)\n", pSubjectInfo, pdwEncodingType, pdwIndex,
           cbSignedDataMsg, pbSignedDataMsg);
 
     if ((sip = CRYPT_GetCachedSIP(pSubjectInfo->pgSubjectType)))
@@ -746,7 +746,7 @@ BOOL WINAPI CryptSIPRemoveSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo,
     WINE_SIP_PROVIDER *sip;
     BOOL ret = FALSE;
 
-    TRACE("(%p %d)\n", pSubjectInfo, dwIndex);
+    TRACE("(%p %ld)\n", pSubjectInfo, dwIndex);
 
     if ((sip = CRYPT_GetCachedSIP(pSubjectInfo->pgSubjectType)))
         ret = sip->info.pfRemove(pSubjectInfo, dwIndex);

@@ -106,31 +106,31 @@ BOOL WINAPI I_CryptCreateLruCache(void *unknown, HLRUCACHE *out)
 
 BOOL WINAPI I_CryptFindLruEntry(DWORD unk0, DWORD unk1)
 {
-    FIXME("(%08x, %08x): stub!\n", unk0, unk1);
+    FIXME("(%08lx, %08lx): stub!\n", unk0, unk1);
     return FALSE;
 }
 
 BOOL WINAPI I_CryptFindLruEntryData(DWORD unk0, DWORD unk1, DWORD unk2)
 {
-    FIXME("(%08x, %08x, %08x): stub!\n", unk0, unk1, unk2);
+    FIXME("(%08lx, %08lx, %08lx): stub!\n", unk0, unk1, unk2);
     return FALSE;
 }
 
 BOOL WINAPI I_CryptCreateLruEntry(HLRUCACHE h, DWORD unk0, DWORD unk1)
 {
-    FIXME("(%p, %08x, %08x): stub!\n", h, unk0, unk1);
+    FIXME("(%p, %08lx, %08lx): stub!\n", h, unk0, unk1);
     return FALSE;
 }
 
 DWORD WINAPI I_CryptFlushLruCache(HLRUCACHE h, DWORD unk0, DWORD unk1)
 {
-    FIXME("(%p, %08x, %08x): stub!\n", h, unk0, unk1);
+    FIXME("(%p, %08lx, %08lx): stub!\n", h, unk0, unk1);
     return 0;
 }
 
 HLRUCACHE WINAPI I_CryptFreeLruCache(HLRUCACHE h, DWORD unk0, DWORD unk1)
 {
-    FIXME("(%p, %08x, %08x): stub!\n", h, unk0, unk1);
+    FIXME("(%p, %08lx, %08lx): stub!\n", h, unk0, unk1);
     return h;
 }
 
@@ -177,7 +177,7 @@ BOOL WINAPI I_CryptFreeTls(DWORD dwTlsIndex, DWORD unknown)
 {
     BOOL ret;
 
-    TRACE("(%d, %d)\n", dwTlsIndex, unknown);
+    TRACE("(%ld, %ld)\n", dwTlsIndex, unknown);
 
     ret = TlsFree(dwTlsIndex);
     if (!ret) SetLastError( E_INVALIDARG );
@@ -186,7 +186,7 @@ BOOL WINAPI I_CryptFreeTls(DWORD dwTlsIndex, DWORD unknown)
 
 BOOL WINAPI I_CryptGetOssGlobal(DWORD x)
 {
-    FIXME("%08x\n", x);
+    FIXME("%08lx\n", x);
     return FALSE;
 }
 
@@ -281,44 +281,44 @@ DWORD WINAPI I_CryptInstallOssGlobal(DWORD x, DWORD y, DWORD z)
 {
     static int ret = 8;
     ret++;
-    FIXME("%08x %08x %08x, return value %d\n", x, y, z,ret);
+    FIXME("%08lx %08lx %08lx, return value %d\n", x, y, z,ret);
     return ret;
 }
 
 BOOL WINAPI I_CryptInstallAsn1Module(ASN1module_t x, DWORD y, void* z)
 {
-    FIXME("(%p %08x %p): stub\n", x, y, z);
+    FIXME("(%p %08lx %p): stub\n", x, y, z);
     return TRUE;
 }
 
 BOOL WINAPI I_CryptUninstallAsn1Module(HCRYPTASN1MODULE x)
 {
-    FIXME("(%08x): stub\n", x);
+    FIXME("(%08lx): stub\n", x);
     return TRUE;
 }
 
 ASN1decoding_t WINAPI I_CryptGetAsn1Decoder(HCRYPTASN1MODULE x)
 {
-    FIXME("(%08x): stub\n", x);
+    FIXME("(%08lx): stub\n", x);
     return NULL;
 }
 
 ASN1encoding_t WINAPI I_CryptGetAsn1Encoder(HCRYPTASN1MODULE x)
 {
-    FIXME("(%08x): stub\n", x);
+    FIXME("(%08lx): stub\n", x);
     return NULL;
 }
 
 BOOL WINAPI CryptProtectMemory(void *data, DWORD len, DWORD flags)
 {
     static int fixme_once;
-    if (!fixme_once++) FIXME("(%p %u %08x): stub\n", data, len, flags);
+    if (!fixme_once++) FIXME("(%p %lu %08lx): stub\n", data, len, flags);
     return TRUE;
 }
 
 BOOL WINAPI CryptUnprotectMemory(void *data, DWORD len, DWORD flags)
 {
     static int fixme_once;
-    if (!fixme_once++) FIXME("(%p %u %08x): stub\n", data, len, flags);
+    if (!fixme_once++) FIXME("(%p %lu %08lx): stub\n", data, len, flags);
     return TRUE;
 }

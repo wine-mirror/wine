@@ -34,7 +34,7 @@ DWORD WINAPI CertRDNValueToStrA(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
 {
     DWORD ret = 0, len;
 
-    TRACE("(%d, %p, %p, %d)\n", dwValueType, pValue, psz, csz);
+    TRACE("(%ld, %p, %p, %ld)\n", dwValueType, pValue, psz, csz);
 
     switch (dwValueType)
     {
@@ -82,7 +82,7 @@ DWORD WINAPI CertRDNValueToStrA(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
         }
         break;
     default:
-        FIXME("string type %d unimplemented\n", dwValueType);
+        FIXME("string type %ld unimplemented\n", dwValueType);
     }
     if (psz && csz)
     {
@@ -92,7 +92,7 @@ DWORD WINAPI CertRDNValueToStrA(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
     }
     else
         ret++;
-    TRACE("returning %d (%s)\n", ret, debugstr_a(psz));
+    TRACE("returning %ld (%s)\n", ret, debugstr_a(psz));
     return ret;
 }
 
@@ -101,7 +101,7 @@ DWORD WINAPI CertRDNValueToStrW(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
 {
     DWORD ret = 0, len, i, strLen;
 
-    TRACE("(%d, %p, %p, %d)\n", dwValueType, pValue, psz, csz);
+    TRACE("(%ld, %p, %p, %ld)\n", dwValueType, pValue, psz, csz);
 
     switch (dwValueType)
     {
@@ -142,7 +142,7 @@ DWORD WINAPI CertRDNValueToStrW(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
         }
         break;
     default:
-        FIXME("string type %d unimplemented\n", dwValueType);
+        FIXME("string type %ld unimplemented\n", dwValueType);
     }
     if (psz && csz)
     {
@@ -152,7 +152,7 @@ DWORD WINAPI CertRDNValueToStrW(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
     }
     else
         ret++;
-    TRACE("returning %d (%s)\n", ret, debugstr_w(psz));
+    TRACE("returning %ld (%s)\n", ret, debugstr_w(psz));
     return ret;
 }
 
@@ -181,7 +181,7 @@ static DWORD quote_rdn_value_to_str_a(DWORD dwValueType,
     DWORD ret = 0, len, i;
     BOOL needsQuotes = FALSE;
 
-    TRACE("(%d, %p, %p, %d)\n", dwValueType, pValue, psz, csz);
+    TRACE("(%ld, %p, %p, %ld)\n", dwValueType, pValue, psz, csz);
 
     switch (dwValueType)
     {
@@ -270,7 +270,7 @@ static DWORD quote_rdn_value_to_str_a(DWORD dwValueType,
         }
         break;
     default:
-        FIXME("string type %d unimplemented\n", dwValueType);
+        FIXME("string type %ld unimplemented\n", dwValueType);
     }
     if (psz && csz)
     {
@@ -280,7 +280,7 @@ static DWORD quote_rdn_value_to_str_a(DWORD dwValueType,
     }
     else
         ret++;
-    TRACE("returning %d (%s)\n", ret, debugstr_a(psz));
+    TRACE("returning %ld (%s)\n", ret, debugstr_a(psz));
     return ret;
 }
 
@@ -290,7 +290,7 @@ static DWORD quote_rdn_value_to_str_w(DWORD dwValueType,
     DWORD ret = 0, len, i, strLen;
     BOOL needsQuotes = FALSE;
 
-    TRACE("(%d, %p, %p, %d)\n", dwValueType, pValue, psz, csz);
+    TRACE("(%ld, %p, %p, %ld)\n", dwValueType, pValue, psz, csz);
 
     switch (dwValueType)
     {
@@ -373,7 +373,7 @@ static DWORD quote_rdn_value_to_str_w(DWORD dwValueType,
         }
         break;
     default:
-        FIXME("string type %d unimplemented\n", dwValueType);
+        FIXME("string type %ld unimplemented\n", dwValueType);
     }
     if (psz && csz)
     {
@@ -383,7 +383,7 @@ static DWORD quote_rdn_value_to_str_w(DWORD dwValueType,
     }
     else
         ret++;
-    TRACE("returning %d (%s)\n", ret, debugstr_w(psz));
+    TRACE("returning %ld (%s)\n", ret, debugstr_w(psz));
     return ret;
 }
 
@@ -396,7 +396,7 @@ static DWORD CRYPT_AddPrefixA(LPCSTR prefix, LPSTR psz, DWORD csz)
 {
     DWORD chars;
 
-    TRACE("(%s, %p, %d)\n", debugstr_a(prefix), psz, csz);
+    TRACE("(%s, %p, %ld)\n", debugstr_a(prefix), psz, csz);
 
     if (psz)
     {
@@ -424,10 +424,10 @@ DWORD WINAPI CertNameToStrA(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
     BOOL bRet;
     CERT_NAME_INFO *info;
 
-    TRACE("(%d, %p, %08x, %p, %d)\n", dwCertEncodingType, pName, dwStrType,
+    TRACE("(%ld, %p, %08lx, %p, %ld)\n", dwCertEncodingType, pName, dwStrType,
      psz, csz);
     if (dwStrType & unsupportedFlags)
-        FIXME("unsupported flags: %08x\n", dwStrType & unsupportedFlags);
+        FIXME("unsupported flags: %08lx\n", dwStrType & unsupportedFlags);
 
     bRet = CryptDecodeObjectEx(dwCertEncodingType, X509_NAME, pName->pbData,
      pName->cbData, CRYPT_DECODE_ALLOC_FLAG, NULL, &info, &bytes);
@@ -530,7 +530,7 @@ static DWORD CRYPT_AddPrefixAToW(LPCSTR prefix, LPWSTR psz, DWORD csz)
 {
     DWORD chars;
 
-    TRACE("(%s, %p, %d)\n", debugstr_a(prefix), psz, csz);
+    TRACE("(%s, %p, %ld)\n", debugstr_a(prefix), psz, csz);
 
     if (psz)
     {
@@ -556,7 +556,7 @@ static DWORD CRYPT_AddPrefixW(LPCWSTR prefix, LPWSTR psz, DWORD csz)
 {
     DWORD chars;
 
-    TRACE("(%s, %p, %d)\n", debugstr_w(prefix), psz, csz);
+    TRACE("(%s, %p, %ld)\n", debugstr_w(prefix), psz, csz);
 
     if (psz)
     {
@@ -582,7 +582,7 @@ DWORD cert_name_to_str_with_indent(DWORD dwCertEncodingType, DWORD indentLevel,
     CERT_NAME_INFO *info;
 
     if (dwStrType & unsupportedFlags)
-        FIXME("unsupported flags: %08x\n", dwStrType & unsupportedFlags);
+        FIXME("unsupported flags: %08lx\n", dwStrType & unsupportedFlags);
 
     bRet = CryptDecodeObjectEx(dwCertEncodingType, X509_NAME, pName->pbData,
      pName->cbData, CRYPT_DECODE_ALLOC_FLAG, NULL, &info, &bytes);
@@ -698,7 +698,7 @@ DWORD WINAPI CertNameToStrW(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
 {
     BOOL ret;
 
-    TRACE("(%d, %p, %08x, %p, %d)\n", dwCertEncodingType, pName, dwStrType,
+    TRACE("(%ld, %p, %08lx, %p, %ld)\n", dwCertEncodingType, pName, dwStrType,
      psz, csz);
 
     ret = cert_name_to_str_with_indent(dwCertEncodingType, 0, pName, dwStrType,
@@ -714,7 +714,7 @@ BOOL WINAPI CertStrToNameA(DWORD dwCertEncodingType, LPCSTR pszX500,
     BOOL ret;
     int len;
 
-    TRACE("(%08x, %s, %08x, %p, %p, %p, %p)\n", dwCertEncodingType,
+    TRACE("(%08lx, %s, %08lx, %p, %p, %p, %p)\n", dwCertEncodingType,
      debugstr_a(pszX500), dwStrType, pvReserved, pbEncoded, pcbEncoded,
      ppszError);
 
@@ -1025,7 +1025,7 @@ BOOL WINAPI CertStrToNameW(DWORD dwCertEncodingType, LPCWSTR pszX500,
     DWORD i;
     BOOL ret = TRUE;
 
-    TRACE("(%08x, %s, %08x, %p, %p, %p, %p)\n", dwCertEncodingType,
+    TRACE("(%08lx, %s, %08lx, %p, %p, %p, %p)\n", dwCertEncodingType,
      debugstr_w(pszX500), dwStrType, pvReserved, pbEncoded, pcbEncoded,
      ppszError);
 
@@ -1118,7 +1118,7 @@ DWORD WINAPI CertGetNameStringA(PCCERT_CONTEXT pCertContext, DWORD dwType,
 {
     DWORD ret;
 
-    TRACE("(%p, %d, %08x, %p, %p, %d)\n", pCertContext, dwType, dwFlags,
+    TRACE("(%p, %ld, %08lx, %p, %p, %ld)\n", pCertContext, dwType, dwFlags,
      pvTypePara, pszNameString, cchNameString);
 
     if (pszNameString)
@@ -1221,7 +1221,7 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
     PCERT_NAME_BLOB name;
     LPCSTR altNameOID;
 
-    TRACE("(%p, %d, %08x, %p, %p, %d)\n", pCertContext, dwType,
+    TRACE("(%p, %ld, %08lx, %p, %p, %ld)\n", pCertContext, dwType,
      dwFlags, pvTypePara, pszNameString, cchNameString);
 
     if (!pCertContext)
@@ -1410,7 +1410,7 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
         break;
     }
     default:
-        FIXME("unimplemented for type %d\n", dwType);
+        FIXME("unimplemented for type %ld\n", dwType);
         ret = 0;
     }
 done:

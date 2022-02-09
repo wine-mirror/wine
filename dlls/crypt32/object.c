@@ -328,7 +328,7 @@ static BOOL CRYPT_QuerySerializedStoreFromBlob(const CRYPT_DATA_BLOB *blob,
      CERT_STORE_CREATE_NEW_FLAG, NULL);
     BOOL ret;
 
-    TRACE("(%d, %p)\n", blob->cbData, blob->pbData);
+    TRACE("(%ld, %p)\n", blob->cbData, blob->pbData);
 
     ret = CRYPT_ReadSerializedStoreFromBlob(blob, store);
     if (ret)
@@ -358,7 +358,7 @@ static BOOL CRYPT_QuerySerializedStoreObject(DWORD dwObjectType,
         return CRYPT_QuerySerializedStoreFromBlob(pvObject,
          pdwMsgAndCertEncodingType, pdwContentType, phCertStore, phMsg);
     default:
-        FIXME("unimplemented for type %d\n", dwObjectType);
+        FIXME("unimplemented for type %ld\n", dwObjectType);
         SetLastError(E_INVALIDARG); /* FIXME: is this the correct error? */
         return FALSE;
     }
@@ -481,7 +481,7 @@ static BOOL CRYPT_QueryMessageObject(DWORD dwObjectType, const void *pvObject,
     DWORD encodingType = X509_ASN_ENCODING | PKCS_7_ASN_ENCODING;
     DWORD formatType = 0;
 
-    TRACE("(%d, %p, %08x, %08x, %p, %p, %p, %p, %p)\n", dwObjectType, pvObject,
+    TRACE("(%ld, %p, %08lx, %08lx, %p, %p, %p, %p, %p)\n", dwObjectType, pvObject,
      dwExpectedContentTypeFlags, dwExpectedFormatTypeFlags,
      pdwMsgAndCertEncodingType, pdwContentType, pdwFormatType, phCertStore,
      phMsg);
@@ -631,7 +631,7 @@ static BOOL CRYPT_QueryEmbeddedMessageObject(DWORD dwObjectType,
 
     if (dwObjectType != CERT_QUERY_OBJECT_FILE)
     {
-        WARN("don't know what to do for type %d embedded signed messages\n",
+        WARN("don't know what to do for type %ld embedded signed messages\n",
          dwObjectType);
         SetLastError(E_INVALIDARG);
         return FALSE;
@@ -703,7 +703,7 @@ static BOOL CRYPT_QueryPFXObject(DWORD dwObjectType, const void *pvObject,
     CRYPT_DATA_BLOB blob = {0}, *ptr;
     BOOL ret;
 
-    TRACE("(%d, %p, %08x, %08x, %p, %p, %p, %p, %p)\n", dwObjectType, pvObject,
+    TRACE("(%ld, %p, %08lx, %08lx, %p, %p, %p, %p, %p)\n", dwObjectType, pvObject,
      dwExpectedContentTypeFlags, dwExpectedFormatTypeFlags,
      pdwMsgAndCertEncodingType, pdwContentType, pdwFormatType, phCertStore,
      phMsg);
@@ -747,7 +747,7 @@ BOOL WINAPI CryptQueryObject(DWORD dwObjectType, const void *pvObject,
      CERT_QUERY_CONTENT_FLAG_PKCS10 | CERT_QUERY_CONTENT_FLAG_CERT_PAIR;
     BOOL ret = TRUE;
 
-    TRACE("(%08x, %p, %08x, %08x, %08x, %p, %p, %p, %p, %p, %p)\n",
+    TRACE("(%08lx, %p, %08lx, %08lx, %08lx, %p, %p, %p, %p, %p, %p)\n",
      dwObjectType, pvObject, dwExpectedContentTypeFlags,
      dwExpectedFormatTypeFlags, dwFlags, pdwMsgAndCertEncodingType,
      pdwContentType, pdwFormatType, phCertStore, phMsg, ppvContext);
@@ -755,7 +755,7 @@ BOOL WINAPI CryptQueryObject(DWORD dwObjectType, const void *pvObject,
     if (dwObjectType != CERT_QUERY_OBJECT_BLOB &&
      dwObjectType != CERT_QUERY_OBJECT_FILE)
     {
-        WARN("unsupported type %d\n", dwObjectType);
+        WARN("unsupported type %ld\n", dwObjectType);
         SetLastError(E_INVALIDARG);
         return FALSE;
     }
@@ -766,7 +766,7 @@ BOOL WINAPI CryptQueryObject(DWORD dwObjectType, const void *pvObject,
         return FALSE;
     }
     if (dwExpectedContentTypeFlags & unimplementedTypes)
-        WARN("unimplemented for types %08x\n",
+        WARN("unimplemented for types %08lx\n",
          dwExpectedContentTypeFlags & unimplementedTypes);
 
     if (pdwFormatType)
@@ -1290,14 +1290,14 @@ static BOOL CRYPT_FormatAltNameEntry(DWORD dwFormatStrType, DWORD indentLevel,
         }
         else
         {
-            FIXME("unknown IP address format (%d bytes)\n",
+            FIXME("unknown IP address format (%ld bytes)\n",
              entry->u.IPAddress.cbData);
             ret = FALSE;
         }
         break;
     }
     default:
-        FIXME("unimplemented for %d\n", entry->dwAltNameChoice);
+        FIXME("unimplemented for %ld\n", entry->dwAltNameChoice);
         ret = FALSE;
     }
     if (ret)
@@ -2590,7 +2590,7 @@ BOOL WINAPI CryptFormatObject(DWORD dwCertEncodingType, DWORD dwFormatType,
     HCRYPTOIDFUNCADDR hFunc = NULL;
     BOOL ret = FALSE;
 
-    TRACE("(%08x, %d, %08x, %p, %s, %p, %d, %p, %p)\n", dwCertEncodingType,
+    TRACE("(%08lx, %ld, %08lx, %p, %s, %p, %ld, %p, %p)\n", dwCertEncodingType,
      dwFormatType, dwFormatStrType, pFormatStruct, debugstr_a(lpszStructType),
      pbEncoded, cbEncoded, pbFormat, pcbFormat);
 

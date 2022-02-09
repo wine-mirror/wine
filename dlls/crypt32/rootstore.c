@@ -166,7 +166,7 @@ static void check_and_store_certs(HCERTSTORE from, HCERTSTORE to)
         } while (cert);
         CertFreeCertificateChainEngine(engine);
     }
-    TRACE("Added %d root certificates\n", root_count);
+    TRACE("Added %ld root certificates\n", root_count);
 }
 
 static const BYTE authenticode[] = {
@@ -605,7 +605,7 @@ static void add_ms_root_certs(HCERTSTORE to)
     for (i = 0; i < ARRAY_SIZE(msRootCerts); i++)
         if (!CertAddEncodedCertificateToStore(to, X509_ASN_ENCODING,
          msRootCerts[i].pb, msRootCerts[i].cb, CERT_STORE_ADD_NEW, NULL))
-            WARN("adding root cert %d failed: %08x\n", i, GetLastError());
+            WARN("adding root cert %ld failed: %08lx\n", i, GetLastError());
 }
 
 /* Reads certificates from the list of known locations into store.  Stops when
@@ -685,7 +685,7 @@ void CRYPT_ImportSystemRootCertsToReg(void)
             if (!rc)
             {
                 if (!CRYPT_SerializeContextsToReg(key, REG_OPTION_VOLATILE, pCertInterface, store))
-                    ERR("Failed to import system certs into registry, %08x\n", GetLastError());
+                    ERR("Failed to import system certs into registry, %08lx\n", GetLastError());
                 RegCloseKey(key);
             }
             CertCloseStore(store, 0);

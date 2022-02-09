@@ -75,7 +75,7 @@ BOOL ContextPropertyList_FindProperty(CONTEXT_PROPERTY_LIST *list, DWORD id,
     CONTEXT_PROPERTY *prop;
     BOOL ret = FALSE;
 
-    TRACE("(%p, %d, %p)\n", list, id, blob);
+    TRACE("(%p, %ld, %p)\n", list, id, blob);
 
     EnterCriticalSection(&list->cs);
     LIST_FOR_EACH_ENTRY(prop, &list->properties, CONTEXT_PROPERTY, entry)

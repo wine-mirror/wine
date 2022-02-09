@@ -111,7 +111,7 @@ BOOL WINAPI I_CertUpdateStore(HCERTSTORE store1, HCERTSTORE store2, DWORD unk0,
      pCRLInterface, pCTLInterface };
     DWORD i;
 
-    TRACE("(%p, %p, %08x, %08x)\n", store1, store2, unk0, unk1);
+    TRACE("(%p, %p, %08lx, %08lx)\n", store1, store2, unk0, unk1);
     if (!warned)
     {
         FIXME("semi-stub\n");
@@ -317,7 +317,7 @@ static BOOL MemStore_deleteCTL(WINECRYPT_CERTSTORE *store, context_t *context)
 static void MemStore_addref(WINECRYPT_CERTSTORE *store)
 {
     LONG ref = InterlockedIncrement(&store->ref);
-    TRACE("ref = %d\n", ref);
+    TRACE("ref = %ld\n", ref);
 }
 
 static DWORD MemStore_release(WINECRYPT_CERTSTORE *cert_store, DWORD flags)
@@ -326,10 +326,10 @@ static DWORD MemStore_release(WINECRYPT_CERTSTORE *cert_store, DWORD flags)
     LONG ref;
 
     if(flags & ~CERT_CLOSE_STORE_CHECK_FLAG)
-        FIXME("Unimplemented flags %x\n", flags);
+        FIXME("Unimplemented flags %lx\n", flags);
 
     ref = InterlockedDecrement(&store->hdr.ref);
-    TRACE("(%p) ref=%d\n", store, ref);
+    TRACE("(%p) ref=%ld\n", store, ref);
     if(ref)
         return (flags & CERT_CLOSE_STORE_CHECK_FLAG) ? CRYPT_E_PENDING_CLOSE : ERROR_SUCCESS;
 
@@ -374,7 +374,7 @@ static WINECRYPT_CERTSTORE *CRYPT_MemOpenStore(HCRYPTPROV hCryptProv,
 {
     WINE_MEMSTORE *store;
 
-    TRACE("(%ld, %08x, %p)\n", hCryptProv, dwFlags, pvPara);
+    TRACE("(%Id, %08lx, %p)\n", hCryptProv, dwFlags, pvPara);
 
     if (dwFlags & CERT_STORE_DELETE_FLAG)
     {
@@ -410,7 +410,7 @@ static WINECRYPT_CERTSTORE *CRYPT_SysRegOpenStoreW(HCRYPTPROV hCryptProv,
     HKEY root;
     LPCWSTR base;
 
-    TRACE("(%ld, %08x, %s)\n", hCryptProv, dwFlags,
+    TRACE("(%Id, %08lx, %s)\n", hCryptProv, dwFlags,
      debugstr_w(pvPara));
 
     if (!pvPara)
@@ -512,7 +512,7 @@ static WINECRYPT_CERTSTORE *CRYPT_SysRegOpenStoreA(HCRYPTPROV hCryptProv,
     int len;
     WINECRYPT_CERTSTORE *ret = NULL;
 
-    TRACE("(%ld, %08x, %s)\n", hCryptProv, dwFlags,
+    TRACE("(%Id, %08lx, %s)\n", hCryptProv, dwFlags,
      debugstr_a(pvPara));
 
     if (!pvPara)
@@ -541,7 +541,7 @@ static WINECRYPT_CERTSTORE *CRYPT_SysOpenStoreW(HCRYPTPROV hCryptProv,
     HCERTSTORE store = 0;
     BOOL ret;
 
-    TRACE("(%ld, %08x, %s)\n", hCryptProv, dwFlags,
+    TRACE("(%Id, %08lx, %s)\n", hCryptProv, dwFlags,
      debugstr_w(pvPara));
 
     if (!pvPara)
@@ -613,7 +613,7 @@ static WINECRYPT_CERTSTORE *CRYPT_SysOpenStoreA(HCRYPTPROV hCryptProv,
     int len;
     WINECRYPT_CERTSTORE *ret = NULL;
 
-    TRACE("(%ld, %08x, %s)\n", hCryptProv, dwFlags,
+    TRACE("(%Id, %08lx, %s)\n", hCryptProv, dwFlags,
      debugstr_a(pvPara));
 
     if (!pvPara)
@@ -640,7 +640,7 @@ static void WINAPI CRYPT_MsgCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 {
     HCRYPTMSG msg = hCertStore;
 
-    TRACE("(%p, %08x)\n", msg, dwFlags);
+    TRACE("(%p, %08lx)\n", msg, dwFlags);
     CryptMsgClose(msg);
 }
 
@@ -655,7 +655,7 @@ static WINECRYPT_CERTSTORE *CRYPT_MsgOpenStore(HCRYPTPROV hCryptProv,
     HCRYPTMSG msg = (HCRYPTMSG)pvPara;
     WINECRYPT_CERTSTORE *memStore;
 
-    TRACE("(%ld, %08x, %p)\n", hCryptProv, dwFlags, pvPara);
+    TRACE("(%Id, %08lx, %p)\n", hCryptProv, dwFlags, pvPara);
 
     memStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
      CERT_STORE_CREATE_NEW_FLAG, NULL);
@@ -736,7 +736,7 @@ static WINECRYPT_CERTSTORE *CRYPT_PKCSOpenStore(HCRYPTPROV hCryptProv,
     DWORD msgOpenFlags = dwFlags & CERT_STORE_NO_CRYPT_RELEASE_FLAG ? 0 :
      CMSG_CRYPT_RELEASE_CONTEXT_FLAG;
 
-    TRACE("(%ld, %08x, %p)\n", hCryptProv, dwFlags, pvPara);
+    TRACE("(%Id, %08lx, %p)\n", hCryptProv, dwFlags, pvPara);
 
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, msgOpenFlags, CMSG_SIGNED,
      hCryptProv, NULL, NULL);
@@ -773,7 +773,7 @@ static WINECRYPT_CERTSTORE *CRYPT_SerializedOpenStore(HCRYPTPROV hCryptProv,
     HCERTSTORE store;
     const CRYPT_DATA_BLOB *data = pvPara;
 
-    TRACE("(%ld, %08x, %p)\n", hCryptProv, dwFlags, pvPara);
+    TRACE("(%Id, %08lx, %p)\n", hCryptProv, dwFlags, pvPara);
 
     if (dwFlags & CERT_STORE_DELETE_FLAG)
     {
@@ -799,9 +799,9 @@ static WINECRYPT_CERTSTORE *CRYPT_PhysOpenStoreW(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara)
 {
     if (dwFlags & CERT_SYSTEM_STORE_RELOCATE_FLAG)
-        FIXME("(%ld, %08x, %p): stub\n", hCryptProv, dwFlags, pvPara);
+        FIXME("(%Id, %08lx, %p): stub\n", hCryptProv, dwFlags, pvPara);
     else
-        FIXME("(%ld, %08x, %s): stub\n", hCryptProv, dwFlags,
+        FIXME("(%Id, %08lx, %s): stub\n", hCryptProv, dwFlags,
          debugstr_w(pvPara));
     return NULL;
 }
@@ -813,7 +813,7 @@ HCERTSTORE WINAPI CertOpenStore(LPCSTR lpszStoreProvider,
     WINECRYPT_CERTSTORE *hcs;
     StoreOpenFunc openFunc = NULL;
 
-    TRACE("(%s, %08x, %08lx, %08x, %p)\n", debugstr_a(lpszStoreProvider),
+    TRACE("(%s, %08lx, %08Ix, %08lx, %p)\n", debugstr_a(lpszStoreProvider),
           dwMsgAndCertEncodingType, hCryptProv, dwFlags, pvPara);
 
     if (IS_INTOID(lpszStoreProvider))
@@ -959,7 +959,7 @@ BOOL WINAPI CertAddCRLContextToStore(HCERTSTORE hCertStore,
     BOOL ret = TRUE;
     PCCRL_CONTEXT toAdd = NULL, existing = NULL;
 
-    TRACE("(%p, %p, %08x, %p)\n", hCertStore, pCrlContext,
+    TRACE("(%p, %p, %08lx, %p)\n", hCertStore, pCrlContext,
      dwAddDisposition, ppStoreContext);
 
     /* Weird case to pass a test */
@@ -1047,7 +1047,7 @@ BOOL WINAPI CertAddCRLContextToStore(HCERTSTORE hCertStore,
             toAdd = CertDuplicateCRLContext(pCrlContext);
         break;
     default:
-        FIXME("Unimplemented add disposition %d\n", dwAddDisposition);
+        FIXME("Unimplemented add disposition %ld\n", dwAddDisposition);
         ret = FALSE;
     }
 
@@ -1123,7 +1123,7 @@ BOOL WINAPI CertCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
     WINECRYPT_CERTSTORE *hcs = hCertStore;
     DWORD res;
 
-    TRACE("(%p, %08x)\n", hCertStore, dwFlags);
+    TRACE("(%p, %08lx)\n", hCertStore, dwFlags);
 
     if( ! hCertStore )
         return TRUE;
@@ -1146,7 +1146,7 @@ BOOL WINAPI CertControlStore(HCERTSTORE hCertStore, DWORD dwFlags,
     WINECRYPT_CERTSTORE *hcs = hCertStore;
     BOOL ret;
 
-    TRACE("(%p, %08x, %d, %p)\n", hCertStore, dwFlags, dwCtrlType,
+    TRACE("(%p, %08lx, %ld, %p)\n", hCertStore, dwFlags, dwCtrlType,
      pvCtrlPara);
 
     if (!hcs)
@@ -1169,7 +1169,7 @@ BOOL WINAPI CertGetStoreProperty(HCERTSTORE hCertStore, DWORD dwPropId,
     WINECRYPT_CERTSTORE *store = hCertStore;
     BOOL ret = FALSE;
 
-    TRACE("(%p, %d, %p, %p)\n", hCertStore, dwPropId, pvData, pcbData);
+    TRACE("(%p, %ld, %p, %p)\n", hCertStore, dwPropId, pvData, pcbData);
 
     switch (dwPropId)
     {
@@ -1233,7 +1233,7 @@ BOOL WINAPI CertSetStoreProperty(HCERTSTORE hCertStore, DWORD dwPropId,
     WINECRYPT_CERTSTORE *store = hCertStore;
     BOOL ret = FALSE;
 
-    TRACE("(%p, %d, %08x, %p)\n", hCertStore, dwPropId, dwFlags, pvData);
+    TRACE("(%p, %ld, %08lx, %p)\n", hCertStore, dwPropId, dwFlags, pvData);
 
     if (!store->properties)
         store->properties = ContextPropertyList_Create();
@@ -1265,7 +1265,7 @@ static LONG CRYPT_OpenParentStore(DWORD dwFlags,
     HKEY root;
     LPCWSTR base;
 
-    TRACE("(%08x, %p)\n", dwFlags, pvSystemStoreLocationPara);
+    TRACE("(%08lx, %p)\n", dwFlags, pvSystemStoreLocationPara);
 
     switch (dwFlags & CERT_SYSTEM_STORE_LOCATION_MASK)
     {
@@ -1320,7 +1320,7 @@ BOOL WINAPI CertEnumSystemStore(DWORD dwFlags, void *pvSystemStoreLocationPara,
     HKEY key;
     CERT_SYSTEM_STORE_INFO info = { sizeof(info) };
 
-    TRACE("(%08x, %p, %p, %p)\n", dwFlags, pvSystemStoreLocationPara, pvArg,
+    TRACE("(%08lx, %p, %p, %p)\n", dwFlags, pvSystemStoreLocationPara, pvArg,
         pfnEnum);
 
     rc = CRYPT_OpenParentStore(dwFlags, pvArg, &key);
@@ -1356,10 +1356,10 @@ BOOL WINAPI CertEnumPhysicalStore(const void *pvSystemStore, DWORD dwFlags,
  void *pvArg, PFN_CERT_ENUM_PHYSICAL_STORE pfnEnum)
 {
     if (dwFlags & CERT_SYSTEM_STORE_RELOCATE_FLAG)
-        FIXME("(%p, %08x, %p, %p): stub\n", pvSystemStore, dwFlags, pvArg,
+        FIXME("(%p, %08lx, %p, %p): stub\n", pvSystemStore, dwFlags, pvArg,
          pfnEnum);
     else
-        FIXME("(%s, %08x, %p, %p): stub\n", debugstr_w(pvSystemStore),
+        FIXME("(%s, %08lx, %p, %p): stub\n", debugstr_w(pvSystemStore),
          dwFlags, pvArg,
          pfnEnum);
     return FALSE;
@@ -1369,10 +1369,10 @@ BOOL WINAPI CertRegisterPhysicalStore(const void *pvSystemStore, DWORD dwFlags,
  LPCWSTR pwszStoreName, PCERT_PHYSICAL_STORE_INFO pStoreInfo, void *pvReserved)
 {
     if (dwFlags & CERT_SYSTEM_STORE_RELOCATE_FLAG)
-        FIXME("(%p, %08x, %s, %p, %p): stub\n", pvSystemStore, dwFlags,
+        FIXME("(%p, %08lx, %s, %p, %p): stub\n", pvSystemStore, dwFlags,
          debugstr_w(pwszStoreName), pStoreInfo, pvReserved);
     else
-        FIXME("(%s, %08x, %s, %p, %p): stub\n", debugstr_w(pvSystemStore),
+        FIXME("(%s, %08lx, %s, %p, %p): stub\n", debugstr_w(pvSystemStore),
          dwFlags, debugstr_w(pwszStoreName), pStoreInfo, pvReserved);
     return FALSE;
 }
@@ -1380,7 +1380,7 @@ BOOL WINAPI CertRegisterPhysicalStore(const void *pvSystemStore, DWORD dwFlags,
 BOOL WINAPI CertUnregisterPhysicalStore(const void *pvSystemStore, DWORD dwFlags,
  LPCWSTR pwszStoreName)
 {
-    FIXME("(%p, %08x, %s): stub\n", pvSystemStore, dwFlags, debugstr_w(pwszStoreName));
+    FIXME("(%p, %08lx, %s): stub\n", pvSystemStore, dwFlags, debugstr_w(pwszStoreName));
     return TRUE;
 }
 
@@ -1391,11 +1391,11 @@ BOOL WINAPI CertRegisterSystemStore(const void *pvSystemStore, DWORD dwFlags,
 
     if (dwFlags & CERT_SYSTEM_STORE_RELOCATE_FLAG )
     {
-        FIXME("(%p, %08x, %p, %p): flag not supported\n", pvSystemStore, dwFlags, pStoreInfo, pvReserved);
+        FIXME("(%p, %08lx, %p, %p): flag not supported\n", pvSystemStore, dwFlags, pStoreInfo, pvReserved);
         return FALSE;
     }
 
-    TRACE("(%s, %08x, %p, %p)\n", debugstr_w(pvSystemStore), dwFlags, pStoreInfo, pvReserved);
+    TRACE("(%s, %08lx, %p, %p)\n", debugstr_w(pvSystemStore), dwFlags, pStoreInfo, pvReserved);
 
     hstore = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY_W, 0, 0, dwFlags, pvSystemStore);
     if (hstore)
@@ -1413,10 +1413,10 @@ BOOL WINAPI CertUnregisterSystemStore(const void *pvSystemStore, DWORD dwFlags)
 
     if (dwFlags & CERT_SYSTEM_STORE_RELOCATE_FLAG)
     {
-        FIXME("(%p, %08x): flag not supported\n", pvSystemStore, dwFlags);
+        FIXME("(%p, %08lx): flag not supported\n", pvSystemStore, dwFlags);
         return FALSE;
     }
-    TRACE("(%s, %08x)\n", debugstr_w(pvSystemStore), dwFlags);
+    TRACE("(%s, %08lx)\n", debugstr_w(pvSystemStore), dwFlags);
 
     hstore = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY_W, 0, 0, dwFlags | CERT_STORE_OPEN_EXISTING_FLAG, pvSystemStore);
     if (hstore == NULL)

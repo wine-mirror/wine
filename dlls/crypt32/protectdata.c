@@ -330,7 +330,7 @@ BOOL serialize(const struct protect_data_t *pInfo, DATA_BLOB *pSerial)
 
     if (ptr - pSerial->pbData != dwStruct)
     {
-        ERR("struct size changed!? expected %u\n", dwStruct);
+        ERR("struct size changed!? expected %lu\n", dwStruct);
         LocalFree(pSerial->pbData);
         pSerial->pbData=NULL;
         pSerial->cbData=0;
@@ -475,7 +475,7 @@ BOOL unserialize(const DATA_BLOB *pSerial, struct protect_data_t *pInfo)
     {
         /* this is an impossible-to-reach test, but if the padding
          * issue is ever understood, this may become more useful */
-        ERR("loaded corrupt structure! (used %u expected %u)\n", index, size);
+        ERR("loaded corrupt structure! (used %lu expected %lu)\n", index, size);
         status=FALSE;
     }
 
@@ -772,15 +772,15 @@ report(const DATA_BLOB* pDataIn, const DATA_BLOB* pOptionalEntropy,
     TRACE("pPromptStruct: %p\n", pPromptStruct);
     if (pPromptStruct)
     {
-        TRACE("  cbSize: 0x%x\n", pPromptStruct->cbSize);
-        TRACE("  dwPromptFlags: 0x%x\n", pPromptStruct->dwPromptFlags);
+        TRACE("  cbSize: 0x%lx\n", pPromptStruct->cbSize);
+        TRACE("  dwPromptFlags: 0x%lx\n", pPromptStruct->dwPromptFlags);
         TRACE("  hwndApp: %p\n", pPromptStruct->hwndApp);
         TRACE("  szPrompt: %p %s\n",
               pPromptStruct->szPrompt,
               pPromptStruct->szPrompt ? debugstr_w(pPromptStruct->szPrompt)
               : "");
     }
-    TRACE("dwFlags: 0x%04x\n", dwFlags);
+    TRACE("dwFlags: 0x%04lx\n", dwFlags);
     TRACE_DATA_BLOB(pDataIn);
     if (pOptionalEntropy)
     {
@@ -888,7 +888,7 @@ BOOL WINAPI CryptProtectData(DATA_BLOB* pDataIn,
         ERR("CryptEncrypt\n");
         goto free_hash;
     }
-    TRACE("required encrypted storage: %u\n", dwLength);
+    TRACE("required encrypted storage: %lu\n", dwLength);
 
     /* copy plain text into cipher area for CryptEncrypt call */
     protect_data.cipher.cbData=dwLength;
@@ -905,7 +905,7 @@ BOOL WINAPI CryptProtectData(DATA_BLOB* pDataIn,
     if (!CryptEncrypt(hKey, hHash, TRUE, 0, protect_data.cipher.pbData,
                       &dwLength, protect_data.cipher.cbData))
     {
-        ERR("CryptEncrypt %u\n", GetLastError());
+        ERR("CryptEncrypt %lu\n", GetLastError());
         goto free_hash;
     }
     protect_data.cipher.cbData=dwLength;

@@ -62,7 +62,7 @@ BOOL WINAPI CertAddEncodedCertificateToStore(HCERTSTORE hCertStore,
      pbCertEncoded, cbCertEncoded);
     BOOL ret;
 
-    TRACE("(%p, %08x, %p, %d, %08x, %p)\n", hCertStore, dwCertEncodingType,
+    TRACE("(%p, %08lx, %p, %ld, %08lx, %p)\n", hCertStore, dwCertEncodingType,
      pbCertEncoded, cbCertEncoded, dwAddDisposition, ppCertContext);
 
     if (cert)
@@ -82,7 +82,7 @@ BOOL WINAPI CertAddEncodedCertificateToSystemStoreA(LPCSTR pszCertStoreName,
     HCERTSTORE store;
     BOOL ret = FALSE;
 
-    TRACE("(%s, %p, %d)\n", debugstr_a(pszCertStoreName), pbCertEncoded,
+    TRACE("(%s, %p, %ld)\n", debugstr_a(pszCertStoreName), pbCertEncoded,
      cbCertEncoded);
 
     store = CertOpenSystemStoreA(0, pszCertStoreName);
@@ -101,7 +101,7 @@ BOOL WINAPI CertAddEncodedCertificateToSystemStoreW(LPCWSTR pszCertStoreName,
     HCERTSTORE store;
     BOOL ret = FALSE;
 
-    TRACE("(%s, %p, %d)\n", debugstr_w(pszCertStoreName), pbCertEncoded,
+    TRACE("(%s, %p, %ld)\n", debugstr_w(pszCertStoreName), pbCertEncoded,
      cbCertEncoded);
 
     store = CertOpenSystemStoreW(0, pszCertStoreName);
@@ -200,7 +200,7 @@ static BOOL add_cert_to_store(WINECRYPT_CERTSTORE *store, const CERT_CONTEXT *ce
         break;
     }
     default:
-        FIXME("Unimplemented add disposition %d\n", add_disposition);
+        FIXME("Unimplemented add disposition %ld\n", add_disposition);
         SetLastError(E_INVALIDARG);
         return FALSE;
     }
@@ -287,7 +287,7 @@ BOOL WINAPI CertAddCertificateContextToStore(HCERTSTORE hCertStore, PCCERT_CONTE
 {
     WINECRYPT_CERTSTORE *store = hCertStore;
 
-    TRACE("(%p, %p, %08x, %p)\n", hCertStore, pCertContext, dwAddDisposition, ppStoreContext);
+    TRACE("(%p, %p, %08lx, %p)\n", hCertStore, pCertContext, dwAddDisposition, ppStoreContext);
 
     return add_cert_to_store(store, pCertContext, dwAddDisposition, FALSE, ppStoreContext);
 }
@@ -300,7 +300,7 @@ BOOL WINAPI CertAddCertificateLinkToStore(HCERTSTORE hCertStore,
     WINECRYPT_CERTSTORE *store = (WINECRYPT_CERTSTORE*)hCertStore;
 
     if (!(calls++))
-        FIXME("(%p, %p, %08x, %p): semi-stub\n", hCertStore, pCertContext,
+        FIXME("(%p, %p, %08lx, %p): semi-stub\n", hCertStore, pCertContext,
          dwAddDisposition, ppCertContext);
     if (store->dwMagic != WINE_CRYPTCERTSTORE_MAGIC)
         return FALSE;
@@ -321,7 +321,7 @@ PCCERT_CONTEXT WINAPI CertCreateCertificateContext(DWORD dwCertEncodingType,
     PCERT_INFO certInfo = NULL;
     DWORD size = 0;
 
-    TRACE("(%08x, %p, %d)\n", dwCertEncodingType, pbCertEncoded,
+    TRACE("(%08lx, %p, %ld)\n", dwCertEncodingType, pbCertEncoded,
      cbCertEncoded);
 
     if ((dwCertEncodingType & CERT_ENCODING_TYPE_MASK) != X509_ASN_ENCODING)
@@ -382,7 +382,7 @@ DWORD WINAPI CertEnumCertificateContextProperties(PCCERT_CONTEXT pCertContext,
     cert_t *cert = cert_from_ptr(pCertContext);
     DWORD ret;
 
-    TRACE("(%p, %d)\n", pCertContext, dwPropId);
+    TRACE("(%p, %ld)\n", pCertContext, dwPropId);
 
     if (cert->base.properties)
         ret = ContextPropertyList_EnumPropIDs(cert->base.properties, dwPropId);
@@ -518,7 +518,7 @@ static BOOL CertContext_GetProperty(cert_t *cert, DWORD dwPropId,
     BOOL ret;
     CRYPT_DATA_BLOB blob;
 
-    TRACE("(%p, %d, %p, %p)\n", cert, dwPropId, pvData, pcbData);
+    TRACE("(%p, %ld, %p, %p)\n", cert, dwPropId, pvData, pcbData);
 
     if (cert->base.properties)
         ret = ContextPropertyList_FindProperty(cert->base.properties, dwPropId, &blob);
@@ -619,7 +619,7 @@ BOOL WINAPI CertGetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
     cert_t *cert = cert_from_ptr(pCertContext);
     BOOL ret;
 
-    TRACE("(%p, %d, %p, %p)\n", pCertContext, dwPropId, pvData, pcbData);
+    TRACE("(%p, %ld, %p, %p)\n", pCertContext, dwPropId, pvData, pcbData);
 
     switch (dwPropId)
     {
@@ -710,7 +710,7 @@ static BOOL CertContext_SetProperty(cert_t *cert, DWORD dwPropId,
 {
     BOOL ret;
 
-    TRACE("(%p, %d, %08x, %p)\n", cert, dwPropId, dwFlags, pvData);
+    TRACE("(%p, %ld, %08lx, %p)\n", cert, dwPropId, dwFlags, pvData);
 
     if (!cert->base.properties)
         ret = FALSE;
@@ -815,7 +815,7 @@ static BOOL CertContext_SetProperty(cert_t *cert, DWORD dwPropId,
             break;
         }
         default:
-            FIXME("%d: stub\n", dwPropId);
+            FIXME("%ld: stub\n", dwPropId);
             ret = FALSE;
         }
     }
@@ -828,7 +828,7 @@ BOOL WINAPI CertSetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
 {
     BOOL ret;
 
-    TRACE("(%p, %d, %08x, %p)\n", pCertContext, dwPropId, dwFlags, pvData);
+    TRACE("(%p, %ld, %08lx, %p)\n", pCertContext, dwPropId, dwFlags, pvData);
 
     /* Handle special cases for "read-only"/invalid prop IDs.  Windows just
      * crashes on most of these, I'll be safer.
@@ -915,7 +915,7 @@ BOOL WINAPI CryptAcquireCertificatePrivateKey(PCCERT_CONTEXT pCert,
     DWORD size;
     PCCERT_CONTEXT cert_in_store = NULL;
 
-    TRACE("(%p, %08x, %p, %p, %p, %p)\n", pCert, dwFlags, pvReserved,
+    TRACE("(%p, %08lx, %p, %p, %p, %p)\n", pCert, dwFlags, pvReserved,
      phCryptProv, pdwKeySpec, pfCallerFreeProv);
 
     if (dwFlags & CRYPT_ACQUIRE_USE_PROV_INFO_FLAG)
@@ -1123,7 +1123,7 @@ static BOOL find_matching_provider(PCCERT_CONTEXT pCert, DWORD dwFlags)
     DWORD index = 0, cbProvName = 0;
     CRYPT_KEY_PROV_INFO keyProvInfo;
 
-    TRACE("(%p, %08x)\n", pCert, dwFlags);
+    TRACE("(%p, %08lx)\n", pCert, dwFlags);
 
     memset(&keyProvInfo, 0, sizeof(keyProvInfo));
     while (ret && !found)
@@ -1212,7 +1212,7 @@ BOOL WINAPI CryptFindCertificateKeyProvInfo(PCCERT_CONTEXT pCert,
 {
     BOOL matches;
 
-    TRACE("(%p, %08x, %p)\n", pCert, dwFlags, pvReserved);
+    TRACE("(%p, %08lx, %p)\n", pCert, dwFlags, pvReserved);
 
     matches = cert_prov_info_matches_cert(pCert);
     if (!matches)
@@ -1225,7 +1225,7 @@ BOOL WINAPI CertCompareCertificate(DWORD dwCertEncodingType,
 {
     BOOL ret;
 
-    TRACE("(%08x, %p, %p)\n", dwCertEncodingType, pCertId1, pCertId2);
+    TRACE("(%08lx, %p, %p)\n", dwCertEncodingType, pCertId1, pCertId2);
 
     ret = CertCompareCertificateName(dwCertEncodingType, &pCertId1->Issuer,
      &pCertId2->Issuer) && CertCompareIntegerBlob(&pCertId1->SerialNumber,
@@ -1239,7 +1239,7 @@ BOOL WINAPI CertCompareCertificateName(DWORD dwCertEncodingType,
 {
     BOOL ret;
 
-    TRACE("(%08x, %p, %p)\n", dwCertEncodingType, pCertName1, pCertName2);
+    TRACE("(%08lx, %p, %p)\n", dwCertEncodingType, pCertName1, pCertName2);
 
     if (pCertName1->cbData == pCertName2->cbData)
     {
@@ -1303,7 +1303,7 @@ BOOL WINAPI CertComparePublicKeyInfo(DWORD dwCertEncodingType,
 {
     BOOL ret;
 
-    TRACE("(%08x, %p, %p)\n", dwCertEncodingType, pPublicKey1, pPublicKey2);
+    TRACE("(%08lx, %p, %p)\n", dwCertEncodingType, pPublicKey1, pPublicKey2);
 
     /* RSA public key data should start with ASN_SEQUENCE,
      * otherwise it's not a RSA_CSP_PUBLICKEYBLOB.
@@ -1327,7 +1327,7 @@ BOOL WINAPI CertComparePublicKeyInfo(DWORD dwCertEncodingType,
             ret = FALSE;
         break;
     default:
-        WARN("Unknown encoding type %08x\n", dwCertEncodingType);
+        WARN("Unknown encoding type %08lx\n", dwCertEncodingType);
         /* FALLTHROUGH */
     case X509_ASN_ENCODING:
     {
@@ -1364,7 +1364,7 @@ DWORD WINAPI CertGetPublicKeyLength(DWORD dwCertEncodingType,
 {
     DWORD len = 0;
 
-    TRACE("(%08x, %p)\n", dwCertEncodingType, pPublicKey);
+    TRACE("(%08lx, %p)\n", dwCertEncodingType, pPublicKey);
 
     if (GET_CERT_ENCODING_TYPE(dwCertEncodingType) != X509_ASN_ENCODING)
     {
@@ -1818,7 +1818,7 @@ PCCERT_CONTEXT WINAPI CertFindCertificateInStore(HCERTSTORE hCertStore,
     CertCompareFunc compare = NULL;
     CERT_ID cert_id;
 
-    TRACE("(%p, %08x, %08x, %08x, %p, %p)\n", hCertStore, dwCertEncodingType,
+    TRACE("(%p, %08lx, %08lx, %08lx, %p, %p)\n", hCertStore, dwCertEncodingType,
 	 dwFlags, dwType, pvPara, pPrevCertContext);
 
     switch (dwType >> CERT_COMPARE_SHIFT)
@@ -1865,7 +1865,7 @@ PCCERT_CONTEXT WINAPI CertFindCertificateInStore(HCERTSTORE hCertStore,
         compare = compare_cert_by_signature_hash;
         break;
     default:
-        FIXME("find type %08x unimplemented\n", dwType);
+        FIXME("find type %08lx unimplemented\n", dwType);
     }
 
     if (find)
@@ -1884,7 +1884,7 @@ PCCERT_CONTEXT WINAPI CertFindCertificateInStore(HCERTSTORE hCertStore,
 PCCERT_CONTEXT WINAPI CertGetSubjectCertificateFromStore(HCERTSTORE hCertStore,
  DWORD dwCertEncodingType, PCERT_INFO pCertId)
 {
-    TRACE("(%p, %08x, %p)\n", hCertStore, dwCertEncodingType, pCertId);
+    TRACE("(%p, %08lx, %p)\n", hCertStore, dwCertEncodingType, pCertId);
 
     if (!pCertId)
     {
@@ -1943,7 +1943,7 @@ PCCERT_CONTEXT WINAPI CertGetIssuerCertificateFromStore(HCERTSTORE hCertStore,
 {
     PCCERT_CONTEXT ret;
 
-    TRACE("(%p, %p, %p, %08x)\n", hCertStore, pSubjectContext,
+    TRACE("(%p, %p, %p, %08lx)\n", hCertStore, pSubjectContext,
      pPrevIssuerContext, *pdwFlags);
 
     if (!pSubjectContext)
@@ -1990,7 +1990,7 @@ BOOL WINAPI CertVerifyRevocation(DWORD dwEncodingType, DWORD dwRevType,
 {
     BOOL ret;
 
-    TRACE("(%08x, %d, %d, %p, %08x, %p, %p)\n", dwEncodingType, dwRevType,
+    TRACE("(%08lx, %ld, %ld, %p, %08lx, %p, %p)\n", dwEncodingType, dwRevType,
      cContext, rgpvContext, dwFlags, pRevPara, pRevStatus);
 
     if (pRevStatus->cbSize != sizeof(OLD_CERT_REVOCATION_STATUS) &&
@@ -2062,7 +2062,7 @@ PCRYPT_ATTRIBUTE WINAPI CertFindAttribute(LPCSTR pszObjId, DWORD cAttr,
     PCRYPT_ATTRIBUTE ret = NULL;
     DWORD i;
 
-    TRACE("%s %d %p\n", debugstr_a(pszObjId), cAttr, rgAttr);
+    TRACE("%s %ld %p\n", debugstr_a(pszObjId), cAttr, rgAttr);
 
     if (!cAttr)
         return NULL;
@@ -2084,7 +2084,7 @@ PCERT_EXTENSION WINAPI CertFindExtension(LPCSTR pszObjId, DWORD cExtensions,
     PCERT_EXTENSION ret = NULL;
     DWORD i;
 
-    TRACE("%s %d %p\n", debugstr_a(pszObjId), cExtensions, rgExtensions);
+    TRACE("%s %ld %p\n", debugstr_a(pszObjId), cExtensions, rgExtensions);
 
     if (!cExtensions)
         return NULL;
@@ -2189,7 +2189,7 @@ BOOL WINAPI CertIsRDNAttrsInCertificateName(DWORD dwCertEncodingType,
     DWORD size;
     BOOL ret;
 
-    TRACE("(%08x, %08x, %p, %p)\n", dwCertEncodingType, dwFlags, pCertName,
+    TRACE("(%08lx, %08lx, %p, %p)\n", dwCertEncodingType, dwFlags, pCertName,
      pRDN);
 
     type = dwFlags & CERT_UNICODE_IS_RDN_ATTRS_FLAG ? X509_UNICODE_NAME :
@@ -2244,7 +2244,7 @@ BOOL WINAPI CryptHashCertificate(HCRYPTPROV_LEGACY hCryptProv, ALG_ID Algid,
     BOOL ret = TRUE;
     HCRYPTHASH hHash = 0;
 
-    TRACE("(%08lx, %d, %08x, %p, %d, %p, %p)\n", hCryptProv, Algid, dwFlags,
+    TRACE("(%08Ix, %d, %08lx, %p, %ld, %p, %p)\n", hCryptProv, Algid, dwFlags,
      pbEncoded, cbEncoded, pbComputedHash, pcbComputedHash);
 
     if (!hCryptProv)
@@ -2276,7 +2276,7 @@ BOOL WINAPI CryptHashCertificate2(LPCWSTR pwszCNGHashAlgid, DWORD dwFlags,
     DWORD hash_len;
     DWORD hash_len_size;
 
-    TRACE("(%s, %08x, %p, %p, %d, %p, %p)\n", debugstr_w(pwszCNGHashAlgid),
+    TRACE("(%s, %08lx, %p, %p, %ld, %p, %p)\n", debugstr_w(pwszCNGHashAlgid),
      dwFlags, pvReserved, pbEncoded, cbEncoded, pbComputedHash, pcbComputedHash);
 
     if ((status = BCryptOpenAlgorithmProvider(&alg, pwszCNGHashAlgid, NULL, 0)))
@@ -2326,7 +2326,7 @@ BOOL WINAPI CryptHashPublicKeyInfo(HCRYPTPROV_LEGACY hCryptProv, ALG_ID Algid,
     BOOL ret = TRUE;
     HCRYPTHASH hHash = 0;
 
-    TRACE("(%08lx, %d, %08x, %d, %p, %p, %p)\n", hCryptProv, Algid, dwFlags,
+    TRACE("(%08Ix, %d, %08lx, %ld, %p, %p, %p)\n", hCryptProv, Algid, dwFlags,
      dwCertEncodingType, pInfo, pbComputedHash, pcbComputedHash);
 
     if (!hCryptProv)
@@ -2371,7 +2371,7 @@ BOOL WINAPI CryptHashToBeSigned(HCRYPTPROV_LEGACY hCryptProv,
     CERT_SIGNED_CONTENT_INFO *info;
     DWORD size;
 
-    TRACE("(%08lx, %08x, %p, %d, %p, %d)\n", hCryptProv, dwCertEncodingType,
+    TRACE("(%08Ix, %08lx, %p, %ld, %p, %ld)\n", hCryptProv, dwCertEncodingType,
      pbEncoded, cbEncoded, pbComputedHash, *pcbComputedHash);
 
     ret = CryptDecodeObjectEx(dwCertEncodingType, X509_CERT,
@@ -2417,7 +2417,7 @@ BOOL WINAPI CryptSignCertificate(HCRYPTPROV_OR_NCRYPT_KEY_HANDLE hCryptProv,
     PCCRYPT_OID_INFO info;
     HCRYPTHASH hHash;
 
-    TRACE("(%08lx, %d, %d, %p, %d, %p, %p, %p, %p)\n", hCryptProv,
+    TRACE("(%08Ix, %ld, %ld, %p, %ld, %p, %p, %p, %p)\n", hCryptProv,
      dwKeySpec, dwCertEncodingType, pbEncodedToBeSigned, cbEncodedToBeSigned,
      pSignatureAlgorithm, pvHashAuxInfo, pbSignature, pcbSignature);
 
@@ -2475,7 +2475,7 @@ BOOL WINAPI CryptSignAndEncodeCertificate(HCRYPTPROV_OR_NCRYPT_KEY_HANDLE hCrypt
     BOOL ret;
     DWORD encodedSize, hashSize;
 
-    TRACE("(%08lx, %d, %d, %s, %p, %p, %p, %p, %p)\n", hCryptProv, dwKeySpec,
+    TRACE("(%08Ix, %ld, %ld, %s, %p, %p, %p, %p, %p)\n", hCryptProv, dwKeySpec,
      dwCertEncodingType, debugstr_a(lpszStructType), pvStructInfo,
      pSignatureAlgorithm, pvHashAuxInfo, pbEncoded, pcbEncoded);
 
@@ -2732,7 +2732,7 @@ static BOOL CNG_ImportRSAPubKey(CERT_PUBLIC_KEY_INFO *info, BCRYPT_KEY_HANDLE *k
 
     modulus_len = size - sizeof(*hdr) - sizeof(*rsapubkey);
     if (modulus_len != rsapubkey->bitlen / 8)
-        FIXME("RSA pubkey has wrong modulus_len %u\n", modulus_len);
+        FIXME("RSA pubkey has wrong modulus_len %lu\n", modulus_len);
 
     size = sizeof(*rsakey) + sizeof(ULONG) + modulus_len;
 
@@ -2871,7 +2871,7 @@ static BOOL CNG_VerifySignature(HCRYPTPROV_LEGACY hCryptProv, DWORD dwCertEncodi
                 status = BCryptVerifySignature(key, NULL, hash_value, hash_len, sig_value, sig_len, 0);
                 if (status)
                 {
-                    FIXME("Failed to verify signature: %08x\n", status);
+                    FIXME("Failed to verify signature: %08lx\n", status);
                     SetLastError(RtlNtStatusToDosError(status));
                     ret = FALSE;
                 }
@@ -2910,7 +2910,7 @@ BOOL WINAPI CryptVerifyCertificateSignatureEx(HCRYPTPROV_LEGACY hCryptProv,
     BOOL ret = TRUE;
     CRYPT_DATA_BLOB subjectBlob;
 
-    TRACE("(%08lx, %d, %d, %p, %d, %p, %08x, %p)\n", hCryptProv,
+    TRACE("(%08Ix, %ld, %ld, %p, %ld, %p, %08lx, %p)\n", hCryptProv,
      dwCertEncodingType, dwSubjectType, pvSubject, dwIssuerType, pvIssuer,
      dwFlags, pvReserved);
 
@@ -3002,7 +3002,7 @@ BOOL WINAPI CertGetIntendedKeyUsage(DWORD dwCertEncodingType,
     PCERT_EXTENSION ext;
     BOOL ret = FALSE;
 
-    TRACE("(%08x, %p, %p, %d)\n", dwCertEncodingType, pCertInfo, pbKeyUsage,
+    TRACE("(%08lx, %p, %p, %ld)\n", dwCertEncodingType, pCertInfo, pbKeyUsage,
      cbKeyUsage);
 
     ext = CertFindExtension(szOID_KEY_USAGE, pCertInfo->cExtension,
@@ -3046,7 +3046,7 @@ BOOL WINAPI CertGetEnhancedKeyUsage(PCCERT_CONTEXT pCertContext, DWORD dwFlags,
         return FALSE;
     }
 
-    TRACE("(%p, %08x, %p, %d)\n", pCertContext, dwFlags, pUsage, *pcbUsage);
+    TRACE("(%p, %08lx, %p, %ld)\n", pCertContext, dwFlags, pUsage, *pcbUsage);
 
     if (!(dwFlags & CERT_FIND_EXT_ONLY_ENHKEY_USAGE_FLAG))
     {
@@ -3353,7 +3353,7 @@ BOOL WINAPI CertGetValidUsages(DWORD cCerts, PCCERT_CONTEXT *rghCerts,
     BOOL allUsagesValid = TRUE;
     CERT_ENHKEY_USAGE validUsages = { 0, NULL };
 
-    TRACE("(%d, %p, %d, %p, %d)\n", cCerts, rghCerts, *cNumOIDs,
+    TRACE("(%ld, %p, %d, %p, %ld)\n", cCerts, rghCerts, *cNumOIDs,
      rghOIDs, *pcbOIDs);
 
     for (i = 0; i < cCerts; i++)
@@ -3749,7 +3749,7 @@ PCCERT_CONTEXT WINAPI CertCreateSelfSignCertificate(HCRYPTPROV_OR_NCRYPT_KEY_HAN
     PCERT_PUBLIC_KEY_INFO pubKey = NULL;
     DWORD pubKeySize = 0, dwKeySpec;
 
-    TRACE("(%08lx, %p, %08x, %p, %p, %p, %p, %p)\n", hProv,
+    TRACE("(%08Ix, %p, %08lx, %p, %p, %p, %p, %p)\n", hProv,
      pSubjectIssuerBlob, dwFlags, pKeyProvInfo, pSignatureAlgorithm, pStartTime,
      pExtensions, pExtensions);
 
@@ -3858,7 +3858,7 @@ BOOL WINAPI CertVerifyCTLUsage(DWORD dwEncodingType, DWORD dwSubjectType,
                                PCTL_VERIFY_USAGE_PARA pVerifyUsagePara,
                                PCTL_VERIFY_USAGE_STATUS pVerifyUsageStatus)
 {
-    FIXME("(0x%x, %d, %p, %p, 0x%x, %p, %p): stub\n", dwEncodingType,
+    FIXME("(0x%lx, %ld, %p, %p, 0x%lx, %p, %p): stub\n", dwEncodingType,
           dwSubjectType, pvSubject, pSubjectUsage, dwFlags, pVerifyUsagePara,
           pVerifyUsageStatus);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -3869,12 +3869,12 @@ const void * WINAPI CertCreateContext(DWORD dwContextType, DWORD dwEncodingType,
                                       const BYTE *pbEncoded, DWORD cbEncoded,
                                       DWORD dwFlags, PCERT_CREATE_CONTEXT_PARA pCreatePara)
 {
-    TRACE("(0x%x, 0x%x, %p, %d, 0x%08x, %p)\n", dwContextType, dwEncodingType,
+    TRACE("(0x%lx, 0x%lx, %p, %ld, 0x%08lx, %p)\n", dwContextType, dwEncodingType,
           pbEncoded, cbEncoded, dwFlags, pCreatePara);
 
     if (dwFlags)
     {
-        FIXME("dwFlags 0x%08x not handled\n", dwFlags);
+        FIXME("dwFlags 0x%08lx not handled\n", dwFlags);
         return NULL;
     }
     if (pCreatePara)
@@ -3892,7 +3892,7 @@ const void * WINAPI CertCreateContext(DWORD dwContextType, DWORD dwEncodingType,
     case CERT_STORE_CTL_CONTEXT:
         return CertCreateCTLContext(dwEncodingType, pbEncoded, cbEncoded);
     default:
-        WARN("unknown context type: 0x%x\n", dwContextType);
+        WARN("unknown context type: 0x%lx\n", dwContextType);
         return NULL;
     }
 }
@@ -3900,7 +3900,7 @@ const void * WINAPI CertCreateContext(DWORD dwContextType, DWORD dwEncodingType,
 BOOL WINAPI CryptSetKeyIdentifierProperty(const CRYPT_HASH_BLOB *pKeyIdentifier, DWORD dwPropId,
     DWORD dwFlags, LPCWSTR pwszComputerName, void *pvReserved, const void *pvData)
 {
-    FIXME("(%p, 0x%x, 0x%x, %s, %p, %p): stub\n", pKeyIdentifier, dwPropId, dwFlags,
+    FIXME("(%p, 0x%lx, 0x%lx, %s, %p, %p): stub\n", pKeyIdentifier, dwPropId, dwFlags,
         debugstr_w(pwszComputerName), pvReserved, pvData);
     return FALSE;
 }

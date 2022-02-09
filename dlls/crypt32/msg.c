@@ -46,7 +46,7 @@ typedef BOOL (*CryptMsgControlFunc)(HCRYPTMSG hCryptMsg, DWORD dwFlags,
 static BOOL CRYPT_DefaultMsgControl(HCRYPTMSG hCryptMsg, DWORD dwFlags,
  DWORD dwCtrlType, const void *pvCtrlPara)
 {
-    TRACE("(%p, %08x, %d, %p)\n", hCryptMsg, dwFlags, dwCtrlType, pvCtrlPara);
+    TRACE("(%p, %08lx, %ld, %p)\n", hCryptMsg, dwFlags, dwCtrlType, pvCtrlPara);
     SetLastError(E_INVALIDARG);
     return FALSE;
 }
@@ -439,7 +439,7 @@ static BOOL CHashEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
     CHashEncodeMsg *msg = hCryptMsg;
     BOOL ret = FALSE;
 
-    TRACE("(%p, %d, %d, %p, %p)\n", hCryptMsg, dwParamType, dwIndex,
+    TRACE("(%p, %ld, %ld, %p, %p)\n", hCryptMsg, dwParamType, dwIndex,
      pvData, pcbData);
 
     switch (dwParamType)
@@ -506,7 +506,7 @@ static BOOL CHashEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
     CHashEncodeMsg *msg = hCryptMsg;
     BOOL ret = FALSE;
 
-    TRACE("(%p, %p, %d, %d)\n", hCryptMsg, pbData, cbData, fFinal);
+    TRACE("(%p, %p, %ld, %d)\n", hCryptMsg, pbData, cbData, fFinal);
 
     if (msg->base.state == MsgStateFinalized)
         SetLastError(CRYPT_E_MSG_ERROR);
@@ -2034,7 +2034,7 @@ HCRYPTMSG WINAPI CryptMsgOpenToEncode(DWORD dwMsgEncodingType, DWORD dwFlags,
 {
     HCRYPTMSG msg = NULL;
 
-    TRACE("(%08x, %08x, %08x, %p, %s, %p)\n", dwMsgEncodingType, dwFlags,
+    TRACE("(%08lx, %08lx, %08lx, %p, %s, %p)\n", dwMsgEncodingType, dwFlags,
      dwMsgType, pvMsgEncodeInfo, debugstr_a(pszInnerContentObjID), pStreamInfo);
 
     if (GET_CMSG_ENCODING_TYPE(dwMsgEncodingType) != PKCS_7_ASN_ENCODING)
@@ -2471,13 +2471,13 @@ static BOOL CDecodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
     CDecodeMsg *msg = hCryptMsg;
     BOOL ret = FALSE;
 
-    TRACE("(%p, %p, %d, %d)\n", hCryptMsg, pbData, cbData, fFinal);
+    TRACE("(%p, %p, %ld, %d)\n", hCryptMsg, pbData, cbData, fFinal);
 
     if (msg->base.state == MsgStateFinalized)
         SetLastError(CRYPT_E_MSG_ERROR);
     else if (msg->base.streamed)
     {
-        FIXME("(%p, %p, %d, %d): streamed update stub\n", hCryptMsg, pbData,
+        FIXME("(%p, %p, %ld, %d): streamed update stub\n", hCryptMsg, pbData,
          cbData, fFinal);
         switch (msg->base.state)
         {
@@ -2728,7 +2728,7 @@ static BOOL CRYPT_CopySignerInfo(void *pvData, DWORD *pcbData,
     DWORD size = sizeof(CMSG_SIGNER_INFO), rdnSize = 0;
     BOOL ret;
 
-    TRACE("(%p, %d, %p)\n", pvData, pvData ? *pcbData : 0, in);
+    TRACE("(%p, %ld, %p)\n", pvData, pvData ? *pcbData : 0, in);
 
     if (in->SignerId.dwIdChoice == CERT_ID_ISSUER_SERIAL_NUMBER)
     {
@@ -2800,7 +2800,7 @@ static BOOL CRYPT_CopyCMSSignerInfo(void *pvData, DWORD *pcbData,
     DWORD size = sizeof(CMSG_CMS_SIGNER_INFO);
     BOOL ret;
 
-    TRACE("(%p, %d, %p)\n", pvData, pvData ? *pcbData : 0, in);
+    TRACE("(%p, %ld, %p)\n", pvData, pvData ? *pcbData : 0, in);
 
     if (in->SignerId.dwIdChoice == CERT_ID_ISSUER_SERIAL_NUMBER)
     {
@@ -2867,7 +2867,7 @@ static BOOL CRYPT_CopySignerCertInfo(void *pvData, DWORD *pcbData,
     DWORD size = sizeof(CERT_INFO), rdnSize = 0;
     BOOL ret;
 
-    TRACE("(%p, %d, %p)\n", pvData, pvData ? *pcbData : 0, in);
+    TRACE("(%p, %ld, %p)\n", pvData, pvData ? *pcbData : 0, in);
 
     if (in->SignerId.dwIdChoice == CERT_ID_ISSUER_SERIAL_NUMBER)
     {
@@ -2918,7 +2918,7 @@ static BOOL CRYPT_CopyRecipientInfo(void *pvData, DWORD *pcbData,
     DWORD size = sizeof(CERT_INFO);
     BOOL ret;
 
-    TRACE("(%p, %d, %p)\n", pvData, pvData ? *pcbData : 0, in);
+    TRACE("(%p, %ld, %p)\n", pvData, pvData ? *pcbData : 0, in);
 
     size += in->SerialNumber.cbData;
     size += in->Issuer.cbData;
@@ -2989,7 +2989,7 @@ static BOOL CDecodeEnvelopedMsg_GetParam(CDecodeMsg *msg, DWORD dwParamType,
             SetLastError(CRYPT_E_INVALID_MSG_TYPE);
         break;
     default:
-        FIXME("unimplemented for %d\n", dwParamType);
+        FIXME("unimplemented for %ld\n", dwParamType);
         SetLastError(CRYPT_E_INVALID_MSG_TYPE);
     }
     return ret;
@@ -3000,7 +3000,7 @@ static BOOL CRYPT_CopyAttr(void *pvData, DWORD *pcbData, const CRYPT_ATTRIBUTES 
     DWORD size;
     BOOL ret;
 
-    TRACE("(%p, %d, %p)\n", pvData, pvData ? *pcbData : 0, attr);
+    TRACE("(%p, %ld, %p)\n", pvData, pvData ? *pcbData : 0, attr);
 
     size = CRYPT_SizeOfAttributes(attr);
     if (!pvData)
@@ -3225,7 +3225,7 @@ static BOOL CDecodeSignedMsg_GetParam(CDecodeMsg *msg, DWORD dwParamType,
             SetLastError(CRYPT_E_INVALID_MSG_TYPE);
         break;
     default:
-        FIXME("unimplemented for %d\n", dwParamType);
+        FIXME("unimplemented for %ld\n", dwParamType);
         SetLastError(CRYPT_E_INVALID_MSG_TYPE);
     }
     return ret;
@@ -3384,7 +3384,7 @@ static BOOL CDecodeSignedMsg_VerifySignature(CDecodeMsg *msg, PCERT_INFO info)
         }
         else
         {
-            FIXME("signer %d: unimplemented for key id\n", i);
+            FIXME("signer %ld: unimplemented for key id\n", i);
         }
     }
     if (ret)
@@ -3424,7 +3424,7 @@ static BOOL CDecodeSignedMsg_VerifySignatureEx(CDecodeMsg *msg,
             break;
         }
         default:
-            FIXME("unimplemented for signer type %d\n", para->dwSignerType);
+            FIXME("unimplemented for signer type %ld\n", para->dwSignerType);
             SetLastError(CRYPT_E_SIGNER_NOT_FOUND);
         }
     }
@@ -3608,7 +3608,7 @@ HCRYPTMSG WINAPI CryptMsgOpenToDecode(DWORD dwMsgEncodingType, DWORD dwFlags,
 {
     CDecodeMsg *msg;
 
-    TRACE("(%08x, %08x, %08x, %08lx, %p, %p)\n", dwMsgEncodingType,
+    TRACE("(%08lx, %08lx, %08lx, %08Ix, %p, %p)\n", dwMsgEncodingType,
      dwFlags, dwMsgType, hCryptProv, pRecipientInfo, pStreamInfo);
 
     if (GET_CMSG_ENCODING_TYPE(dwMsgEncodingType) != PKCS_7_ASN_ENCODING)
@@ -3671,7 +3671,7 @@ BOOL WINAPI CryptMsgUpdate(HCRYPTMSG hCryptMsg, const BYTE *pbData,
 {
     CryptMsgBase *msg = hCryptMsg;
 
-    TRACE("(%p, %p, %d, %d)\n", hCryptMsg, pbData, cbData, fFinal);
+    TRACE("(%p, %p, %ld, %d)\n", hCryptMsg, pbData, cbData, fFinal);
 
     return msg->update(hCryptMsg, pbData, cbData, fFinal);
 }
@@ -3681,7 +3681,7 @@ BOOL WINAPI CryptMsgGetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
 {
     CryptMsgBase *msg = hCryptMsg;
 
-    TRACE("(%p, %d, %d, %p, %p)\n", hCryptMsg, dwParamType, dwIndex,
+    TRACE("(%p, %ld, %ld, %p, %p)\n", hCryptMsg, dwParamType, dwIndex,
      pvData, pcbData);
     return msg->get_param(hCryptMsg, dwParamType, dwIndex, pvData, pcbData);
 }
@@ -3691,7 +3691,7 @@ BOOL WINAPI CryptMsgControl(HCRYPTMSG hCryptMsg, DWORD dwFlags,
 {
     CryptMsgBase *msg = hCryptMsg;
 
-    TRACE("(%p, %08x, %d, %p)\n", hCryptMsg, dwFlags, dwCtrlType,
+    TRACE("(%p, %08lx, %ld, %p)\n", hCryptMsg, dwFlags, dwCtrlType,
      pvCtrlPara);
     return msg->control(hCryptMsg, dwFlags, dwCtrlType, pvCtrlPara);
 }
@@ -3728,7 +3728,7 @@ BOOL WINAPI CryptMsgGetAndVerifySigner(HCRYPTMSG hCryptMsg, DWORD cSignerStore,
     PCCERT_CONTEXT signerCert = NULL;
     BOOL ret = FALSE;
 
-    TRACE("(%p, %d, %p, %08x, %p, %p)\n", hCryptMsg, cSignerStore,
+    TRACE("(%p, %ld, %p, %08lx, %p, %p)\n", hCryptMsg, cSignerStore,
      rghSignerStore, dwFlags, ppSigner, pdwSignerIndex);
 
     /* Clear output parameters */
@@ -3817,7 +3817,7 @@ BOOL WINAPI CryptMsgVerifyCountersignatureEncoded(HCRYPTPROV_LEGACY hCryptProv,
  PBYTE pbSignerInfoCountersignature, DWORD cbSignerInfoCountersignature,
  CERT_INFO *pciCountersigner)
 {
-    FIXME("(%08lx, %08x, %p, %d, %p, %d, %p): stub\n", hCryptProv,
+    FIXME("(%08Ix, %08lx, %p, %ld, %p, %ld, %p): stub\n", hCryptProv,
      dwEncodingType, pbSignerInfo, cbSignerInfo, pbSignerInfoCountersignature,
      cbSignerInfoCountersignature, pciCountersigner);
     return FALSE;
@@ -3828,7 +3828,7 @@ BOOL WINAPI CryptMsgVerifyCountersignatureEncodedEx(HCRYPTPROV_LEGACY hCryptProv
  PBYTE pbSignerInfoCountersignature, DWORD cbSignerInfoCountersignature,
  DWORD dwSignerType, void *pvSigner, DWORD dwFlags, void *pvReserved)
 {
-    FIXME("(%08lx, %08x, %p, %d, %p, %d, %d, %p, %08x, %p): stub\n", hCryptProv,
+    FIXME("(%08Ix, %08lx, %p, %ld, %p, %ld, %ld, %p, %08lx, %p): stub\n", hCryptProv,
      dwEncodingType, pbSignerInfo, cbSignerInfo, pbSignerInfoCountersignature,
      cbSignerInfoCountersignature, dwSignerType, pvSigner, dwFlags, pvReserved);
     return FALSE;
@@ -3842,12 +3842,12 @@ BOOL WINAPI CryptMsgEncodeAndSignCTL(DWORD dwMsgEncodingType,
     BYTE *pbCtlContent;
     DWORD cbCtlContent;
 
-    TRACE("(%08x, %p, %p, %08x, %p, %p)\n", dwMsgEncodingType, pCtlInfo,
+    TRACE("(%08lx, %p, %p, %08lx, %p, %p)\n", dwMsgEncodingType, pCtlInfo,
      pSignInfo, dwFlags, pbEncoded, pcbEncoded);
 
     if (dwFlags)
     {
-        FIXME("unimplemented for flags %08x\n", dwFlags);
+        FIXME("unimplemented for flags %08lx\n", dwFlags);
         return FALSE;
     }
     if ((ret = CryptEncodeObjectEx(dwMsgEncodingType, PKCS_CTL, pCtlInfo,
@@ -3868,12 +3868,12 @@ BOOL WINAPI CryptMsgSignCTL(DWORD dwMsgEncodingType, BYTE *pbCtlContent,
     BOOL ret;
     HCRYPTMSG msg;
 
-    TRACE("(%08x, %p, %d, %p, %08x, %p, %p)\n", dwMsgEncodingType,
+    TRACE("(%08lx, %p, %ld, %p, %08lx, %p, %p)\n", dwMsgEncodingType,
      pbCtlContent, cbCtlContent, pSignInfo, dwFlags, pbEncoded, pcbEncoded);
 
     if (dwFlags)
     {
-        FIXME("unimplemented for flags %08x\n", dwFlags);
+        FIXME("unimplemented for flags %08lx\n", dwFlags);
         return FALSE;
     }
     msg = CryptMsgOpenToEncode(dwMsgEncodingType, 0, CMSG_SIGNED, pSignInfo,

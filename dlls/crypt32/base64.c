@@ -246,7 +246,7 @@ BOOL WINAPI CryptBinaryToStringA(const BYTE *pbBinary,
 {
     BinaryToStringAFunc encoder = NULL;
 
-    TRACE("(%p, %d, %08x, %p, %p)\n", pbBinary, cbBinary, dwFlags, pszString,
+    TRACE("(%p, %ld, %08lx, %p, %p)\n", pbBinary, cbBinary, dwFlags, pszString,
      pcchString);
 
     if (!pbBinary)
@@ -275,7 +275,7 @@ BOOL WINAPI CryptBinaryToStringA(const BYTE *pbBinary,
     case CRYPT_STRING_HEXASCII:
     case CRYPT_STRING_HEXADDR:
     case CRYPT_STRING_HEXASCIIADDR:
-        FIXME("Unimplemented type %d\n", dwFlags & 0x0fffffff);
+        FIXME("Unimplemented type %ld\n", dwFlags & 0x0fffffff);
         /* fall through */
     default:
         SetLastError(ERROR_INVALID_PARAMETER);
@@ -584,7 +584,7 @@ BOOL WINAPI CryptBinaryToStringW(const BYTE *pbBinary,
 {
     BinaryToStringWFunc encoder = NULL;
 
-    TRACE("(%p, %d, %08x, %p, %p)\n", pbBinary, cbBinary, dwFlags, pszString,
+    TRACE("(%p, %ld, %08lx, %p, %p)\n", pbBinary, cbBinary, dwFlags, pszString,
      pcchString);
 
     if (!pbBinary)
@@ -618,7 +618,7 @@ BOOL WINAPI CryptBinaryToStringW(const BYTE *pbBinary,
     case CRYPT_STRING_HEXASCII:
     case CRYPT_STRING_HEXADDR:
     case CRYPT_STRING_HEXASCIIADDR:
-        FIXME("Unimplemented type %d\n", dwFlags & 0x0fffffff);
+        FIXME("Unimplemented type %ld\n", dwFlags & 0x0fffffff);
         /* fall through */
     default:
         SetLastError(ERROR_INVALID_PARAMETER);
@@ -890,7 +890,7 @@ BOOL WINAPI CryptStringToBinaryA(LPCSTR pszString,
     StringToBinaryAFunc decoder;
     LONG ret;
 
-    TRACE("(%s, %d, %08x, %p, %p, %p, %p)\n", debugstr_an(pszString, cchString ? cchString : -1),
+    TRACE("(%s, %ld, %08lx, %p, %p, %p, %p)\n", debugstr_an(pszString, cchString ? cchString : -1),
      cchString, dwFlags, pbBinary, pcbBinary, pdwSkip, pdwFlags);
 
     if (!pszString)
@@ -931,7 +931,7 @@ BOOL WINAPI CryptStringToBinaryA(LPCSTR pszString,
     case CRYPT_STRING_HEXASCII:
     case CRYPT_STRING_HEXADDR:
     case CRYPT_STRING_HEXASCIIADDR:
-        FIXME("Unimplemented type %d\n", dwFlags & 0x7fffffff);
+        FIXME("Unimplemented type %ld\n", dwFlags & 0x7fffffff);
         /* fall through */
     default:
         SetLastError(ERROR_INVALID_PARAMETER);
@@ -1101,7 +1101,7 @@ BOOL WINAPI CryptStringToBinaryW(LPCWSTR pszString,
     StringToBinaryWFunc decoder;
     LONG ret;
 
-    TRACE("(%s, %d, %08x, %p, %p, %p, %p)\n", debugstr_wn(pszString, cchString ? cchString : -1),
+    TRACE("(%s, %ld, %08lx, %p, %p, %p, %p)\n", debugstr_wn(pszString, cchString ? cchString : -1),
      cchString, dwFlags, pbBinary, pcbBinary, pdwSkip, pdwFlags);
 
     if (!pszString)
@@ -1142,7 +1142,7 @@ BOOL WINAPI CryptStringToBinaryW(LPCWSTR pszString,
     case CRYPT_STRING_HEXASCII:
     case CRYPT_STRING_HEXADDR:
     case CRYPT_STRING_HEXASCIIADDR:
-        FIXME("Unimplemented type %d\n", dwFlags & 0x7fffffff);
+        FIXME("Unimplemented type %ld\n", dwFlags & 0x7fffffff);
         /* fall through */
     default:
         SetLastError(ERROR_INVALID_PARAMETER);

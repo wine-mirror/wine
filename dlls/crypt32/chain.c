@@ -609,7 +609,7 @@ static BOOL CRYPT_CheckBasicConstraintsForCA(CertificateChainEngine *engine,
         chainConstraints->fCA = constraints.fCA;
         if (!constraints.fCA)
         {
-            TRACE_(chain)("chain element %d can't be a CA\n", remainingCAs + 1);
+            TRACE_(chain)("chain element %ld can't be a CA\n", remainingCAs + 1);
             validBasicConstraints = FALSE;
         }
         else if (constraints.fPathLenConstraint)
@@ -621,7 +621,7 @@ static BOOL CRYPT_CheckBasicConstraintsForCA(CertificateChainEngine *engine,
              constraints.dwPathLenConstraint <
              chainConstraints->dwPathLenConstraint)
             {
-                TRACE_(chain)("setting path length constraint to %d\n",
+                TRACE_(chain)("setting path length constraint to %ld\n",
                  chainConstraints->dwPathLenConstraint);
                 chainConstraints->fPathLenConstraint = TRUE;
                 chainConstraints->dwPathLenConstraint =
@@ -632,7 +632,7 @@ static BOOL CRYPT_CheckBasicConstraintsForCA(CertificateChainEngine *engine,
     if (chainConstraints->fPathLenConstraint &&
      remainingCAs > chainConstraints->dwPathLenConstraint)
     {
-        TRACE_(chain)("remaining CAs %d exceed max path length %d\n",
+        TRACE_(chain)("remaining CAs %ld exceed max path length %ld\n",
          remainingCAs, chainConstraints->dwPathLenConstraint);
         validBasicConstraints = FALSE;
         *pathLengthConstraintViolated = TRUE;
@@ -818,7 +818,7 @@ static BOOL ip_address_matches(const CRYPT_DATA_BLOB *constraint,
 {
     BOOL match = FALSE;
 
-    TRACE("(%d, %p), (%d, %p)\n", constraint->cbData, constraint->pbData,
+    TRACE("(%ld, %p), (%ld, %p)\n", constraint->cbData, constraint->pbData,
      name->cbData, name->pbData);
 
     /* RFC5280, section 4.2.1.10, iPAddress syntax: either 8 or 32 bytes, for
@@ -911,7 +911,7 @@ static BOOL alt_name_matches(const CERT_ALT_NAME_ENTRY *name,
              &name->u.DirectoryName);
             break;
         default:
-            ERR("name choice %d unsupported in this context\n",
+            ERR("name choice %ld unsupported in this context\n",
              constraint->dwAltNameChoice);
             *trustErrorStatus |=
              CERT_TRUST_HAS_NOT_SUPPORTED_NAME_CONSTRAINT;
@@ -987,7 +987,7 @@ static void compare_alt_name_with_constraints(const CERT_EXTENSION *altNameExt,
              &subjectAltName->rgAltEntry[i], nameConstraints,
              trustErrorStatus))
             {
-                TRACE_(chain)("subject alternate name form %d excluded\n",
+                TRACE_(chain)("subject alternate name form %ld excluded\n",
                  subjectAltName->rgAltEntry[i].dwAltNameChoice);
                 *trustErrorStatus |=
                  CERT_TRUST_HAS_EXCLUDED_NAME_CONSTRAINT;
@@ -997,7 +997,7 @@ static void compare_alt_name_with_constraints(const CERT_EXTENSION *altNameExt,
              &subjectAltName->rgAltEntry[i], nameConstraints,
              trustErrorStatus, &nameFormPresent) && nameFormPresent)
             {
-                TRACE_(chain)("subject alternate name form %d not permitted\n",
+                TRACE_(chain)("subject alternate name form %ld not permitted\n",
                  subjectAltName->rgAltEntry[i].dwAltNameChoice);
                 *trustErrorStatus |=
                  CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT;
@@ -1446,7 +1446,7 @@ static void dump_alt_name_entry(const CERT_ALT_NAME_ENTRY *entry)
         TRACE_(chain)("CERT_ALT_NAME_URL: %s\n", debugstr_w(entry->u.pwszURL));
         break;
     case CERT_ALT_NAME_IP_ADDRESS:
-        TRACE_(chain)("CERT_ALT_NAME_IP_ADDRESS: %d bytes\n",
+        TRACE_(chain)("CERT_ALT_NAME_IP_ADDRESS: %ld bytes\n",
          entry->u.IPAddress.cbData);
         break;
     case CERT_ALT_NAME_REGISTERED_ID:
@@ -1454,7 +1454,7 @@ static void dump_alt_name_entry(const CERT_ALT_NAME_ENTRY *entry)
          debugstr_a(entry->u.pszRegisteredID));
         break;
     default:
-        TRACE_(chain)("dwAltNameChoice = %d\n", entry->dwAltNameChoice);
+        TRACE_(chain)("dwAltNameChoice = %ld\n", entry->dwAltNameChoice);
     }
 }
 
@@ -1470,7 +1470,7 @@ static void dump_alt_name(LPCSTR type, const CERT_EXTENSION *ext)
     {
         DWORD i;
 
-        TRACE_(chain)("%d alt name entries:\n", name->cAltEntry);
+        TRACE_(chain)("%ld alt name entries:\n", name->cAltEntry);
         for (i = 0; i < name->cAltEntry; i++)
             dump_alt_name_entry(&name->rgAltEntry[i]);
         LocalFree(name);
@@ -1489,7 +1489,7 @@ static void dump_basic_constraints(const CERT_EXTENSION *ext)
         TRACE_(chain)("SubjectType: %02x\n", info->SubjectType.pbData[0]);
         TRACE_(chain)("%s path length constraint\n",
          info->fPathLenConstraint ? "has" : "doesn't have");
-        TRACE_(chain)("path length=%d\n", info->dwPathLenConstraint);
+        TRACE_(chain)("path length=%ld\n", info->dwPathLenConstraint);
         LocalFree(info);
     }
 }
@@ -1507,7 +1507,7 @@ static void dump_basic_constraints2(const CERT_EXTENSION *ext)
         TRACE_(chain)("can%s be a CA\n", constraints.fCA ? "" : "not");
         TRACE_(chain)("%s path length constraint\n",
          constraints.fPathLenConstraint ? "has" : "doesn't have");
-        TRACE_(chain)("path length=%d\n", constraints.dwPathLenConstraint);
+        TRACE_(chain)("path length=%ld\n", constraints.dwPathLenConstraint);
     }
 }
 
@@ -1541,7 +1541,7 @@ static void dump_key_usage(const CERT_EXTENSION *ext)
 static void dump_general_subtree(const CERT_GENERAL_SUBTREE *subtree)
 {
     dump_alt_name_entry(&subtree->Base);
-    TRACE_(chain)("dwMinimum = %d, fMaximum = %d, dwMaximum = %d\n",
+    TRACE_(chain)("dwMinimum = %ld, fMaximum = %d, dwMaximum = %ld\n",
      subtree->dwMinimum, subtree->fMaximum, subtree->dwMaximum);
 }
 
@@ -1557,11 +1557,11 @@ static void dump_name_constraints(const CERT_EXTENSION *ext)
     {
         DWORD i;
 
-        TRACE_(chain)("%d permitted subtrees:\n",
+        TRACE_(chain)("%ld permitted subtrees:\n",
          nameConstraints->cPermittedSubtree);
         for (i = 0; i < nameConstraints->cPermittedSubtree; i++)
             dump_general_subtree(&nameConstraints->rgPermittedSubtree[i]);
-        TRACE_(chain)("%d excluded subtrees:\n",
+        TRACE_(chain)("%ld excluded subtrees:\n",
          nameConstraints->cExcludedSubtree);
         for (i = 0; i < nameConstraints->cExcludedSubtree; i++)
             dump_general_subtree(&nameConstraints->rgExcludedSubtree[i]);
@@ -1580,12 +1580,12 @@ static void dump_cert_policies(const CERT_EXTENSION *ext)
     {
         DWORD i, j;
 
-        TRACE_(chain)("%d policies:\n", policies->cPolicyInfo);
+        TRACE_(chain)("%ld policies:\n", policies->cPolicyInfo);
         for (i = 0; i < policies->cPolicyInfo; i++)
         {
             TRACE_(chain)("policy identifier: %s\n",
              debugstr_a(policies->rgPolicyInfo[i].pszPolicyIdentifier));
-            TRACE_(chain)("%d policy qualifiers:\n",
+            TRACE_(chain)("%ld policy qualifiers:\n",
              policies->rgPolicyInfo[i].cPolicyQualifier);
             for (j = 0; j < policies->rgPolicyInfo[i].cPolicyQualifier; j++)
                 TRACE_(chain)("%s\n", debugstr_a(
@@ -1607,7 +1607,7 @@ static void dump_enhanced_key_usage(const CERT_EXTENSION *ext)
     {
         DWORD i;
 
-        TRACE_(chain)("%d usages:\n", usage->cUsageIdentifier);
+        TRACE_(chain)("%ld usages:\n", usage->cUsageIdentifier);
         for (i = 0; i < usage->cUsageIdentifier; i++)
             TRACE_(chain)("%s\n", usage->rgpszUsageIdentifier[i]);
         LocalFree(usage);
@@ -1687,7 +1687,7 @@ static void dump_element(PCCERT_CONTEXT cert)
     LPWSTR name = NULL;
     DWORD len, i;
 
-    TRACE_(chain)("%p: version %d\n", cert, cert->pCertInfo->dwVersion);
+    TRACE_(chain)("%p: version %ld\n", cert, cert->pCertInfo->dwVersion);
     len = CertGetNameStringW(cert, CERT_NAME_SIMPLE_DISPLAY_TYPE,
      CERT_NAME_ISSUER_FLAG, NULL, NULL, 0);
     name = CryptMemAlloc(len * sizeof(WCHAR));
@@ -1711,7 +1711,7 @@ static void dump_element(PCCERT_CONTEXT cert)
     TRACE_(chain)("valid from %s to %s\n",
      filetime_to_str(&cert->pCertInfo->NotBefore),
      filetime_to_str(&cert->pCertInfo->NotAfter));
-    TRACE_(chain)("%d extensions\n", cert->pCertInfo->cExtension);
+    TRACE_(chain)("%ld extensions\n", cert->pCertInfo->cExtension);
     for (i = 0; i < cert->pCertInfo->cExtension; i++)
         dump_extension(&cert->pCertInfo->rgExtension[i]);
 }
@@ -1866,7 +1866,7 @@ static BOOL CRYPT_IsCertVersionValid(PCCERT_CONTEXT cert)
         /* Do nothing, all fields are allowed for V3 certs */
         break;
     default:
-        WARN_(chain)("invalid cert version %d\n", cert->pCertInfo->dwVersion);
+        WARN_(chain)("invalid cert version %ld\n", cert->pCertInfo->dwVersion);
         ret = FALSE;
     }
     return ret;
@@ -1881,7 +1881,7 @@ static void CRYPT_CheckSimpleChain(CertificateChainEngine *engine,
     CERT_BASIC_CONSTRAINTS2_INFO constraints = { FALSE, FALSE, 0 };
     DWORD status;
 
-    TRACE_(chain)("checking chain with %d elements for time %s\n",
+    TRACE_(chain)("checking chain with %ld elements for time %s\n",
      chain->cElement, filetime_to_str(time));
     for (i = chain->cElement - 1; i >= 0; i--)
     {
@@ -2027,7 +2027,7 @@ static PCCERT_CONTEXT CRYPT_FindIssuer(const CertificateChainEngine *engine, con
              0, (void**)&new_cert, NULL, NULL, NULL, NULL);
             if(!res)
             {
-                TRACE("CryptRetrieveObjectByUrlW failed: %u\n", GetLastError());
+                TRACE("CryptRetrieveObjectByUrlW failed: %lu\n", GetLastError());
                 continue;
             }
 
@@ -2723,7 +2723,7 @@ static void CRYPT_VerifyChainRevocation(PCERT_CHAIN_CONTEXT chain,
                         error = CERT_TRUST_IS_REVOKED;
                         break;
                     default:
-                        WARN("unmapped error %08x\n", revocationStatus.dwError);
+                        WARN("unmapped error %08lx\n", revocationStatus.dwError);
                         error = 0;
                     }
                     if (element)
@@ -2859,16 +2859,16 @@ static void dump_usage_match(LPCSTR name, const CERT_USAGE_MATCH *usageMatch)
 
 static void dump_chain_para(const CERT_CHAIN_PARA *pChainPara)
 {
-    TRACE_(chain)("%d\n", pChainPara->cbSize);
+    TRACE_(chain)("%ld\n", pChainPara->cbSize);
     if (pChainPara->cbSize >= sizeof(CERT_CHAIN_PARA_NO_EXTRA_FIELDS))
         dump_usage_match("RequestedUsage", &pChainPara->RequestedUsage);
     if (pChainPara->cbSize >= sizeof(CERT_CHAIN_PARA))
     {
         dump_usage_match("RequestedIssuancePolicy",
          &pChainPara->RequestedIssuancePolicy);
-        TRACE_(chain)("%d\n", pChainPara->dwUrlRetrievalTimeout);
+        TRACE_(chain)("%ld\n", pChainPara->dwUrlRetrievalTimeout);
         TRACE_(chain)("%d\n", pChainPara->fCheckRevocationFreshnessTime);
-        TRACE_(chain)("%d\n", pChainPara->dwRevocationFreshnessTime);
+        TRACE_(chain)("%ld\n", pChainPara->dwRevocationFreshnessTime);
     }
 }
 
@@ -2881,7 +2881,7 @@ BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
     BOOL ret;
     CertificateChain *chain = NULL;
 
-    TRACE("(%p, %p, %s, %p, %p, %08x, %p, %p)\n", hChainEngine, pCertContext,
+    TRACE("(%p, %p, %s, %p, %p, %08lx, %p, %p)\n", hChainEngine, pCertContext,
      debugstr_filetime(pTime), hAdditionalStore, pChainPara, dwFlags,
      pvReserved, ppChainContext);
 
@@ -2930,7 +2930,7 @@ BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
         CRYPT_VerifyChainRevocation(pChain, pTime, hAdditionalStore,
          pChainPara, dwFlags);
         CRYPT_CheckUsages(pChain, pChainPara);
-        TRACE_(chain)("error status: %08x\n",
+        TRACE_(chain)("error status: %08lx\n",
          pChain->TrustStatus.dwErrorStatus);
         if (ppChainContext)
             *ppChainContext = pChain;
@@ -2970,7 +2970,7 @@ PCCERT_CHAIN_CONTEXT WINAPI CertFindChainInStore(HCERTSTORE store,
  DWORD certEncodingType, DWORD findFlags, DWORD findType,
  const void *findPara, PCCERT_CHAIN_CONTEXT prevChainContext)
 {
-    FIXME("(%p, %08x, %08x, %d, %p, %p): stub\n", store, certEncodingType,
+    FIXME("(%p, %08lx, %08lx, %ld, %p, %p): stub\n", store, certEncodingType,
      findFlags, findType, findPara, prevChainContext);
     return NULL;
 }
@@ -3076,8 +3076,8 @@ static void dump_authenticode_extra_chain_policy_para(
 {
     if (extraPara)
     {
-        TRACE_(chain)("cbSize = %d\n", extraPara->cbSize);
-        TRACE_(chain)("dwRegPolicySettings = %08x\n",
+        TRACE_(chain)("cbSize = %ld\n", extraPara->cbSize);
+        TRACE_(chain)("dwRegPolicySettings = %08lx\n",
          extraPara->dwRegPolicySettings);
         TRACE_(chain)("pSignerInfo = %p\n", extraPara->pSignerInfo);
     }
@@ -3439,9 +3439,9 @@ static void dump_ssl_extra_chain_policy_para(HTTPSPolicyCallbackData *sslPara)
 {
     if (sslPara)
     {
-        TRACE_(chain)("cbSize = %d\n", sslPara->u.cbSize);
-        TRACE_(chain)("dwAuthType = %d\n", sslPara->dwAuthType);
-        TRACE_(chain)("fdwChecks = %08x\n", sslPara->fdwChecks);
+        TRACE_(chain)("cbSize = %ld\n", sslPara->u.cbSize);
+        TRACE_(chain)("dwAuthType = %ld\n", sslPara->dwAuthType);
+        TRACE_(chain)("fdwChecks = %08lx\n", sslPara->fdwChecks);
         TRACE_(chain)("pwszServerName = %s\n",
          debugstr_w(sslPara->pwszServerName));
     }
@@ -3742,8 +3742,8 @@ static void dump_policy_para(PCERT_CHAIN_POLICY_PARA para)
 {
     if (para)
     {
-        TRACE_(chain)("cbSize = %d\n", para->cbSize);
-        TRACE_(chain)("dwFlags = %08x\n", para->dwFlags);
+        TRACE_(chain)("cbSize = %ld\n", para->cbSize);
+        TRACE_(chain)("dwFlags = %08lx\n", para->dwFlags);
         TRACE_(chain)("pvExtraPolicyPara = %p\n", para->pvExtraPolicyPara);
     }
 }
@@ -3798,6 +3798,6 @@ BOOL WINAPI CertVerifyCertificateChainPolicy(LPCSTR szPolicyOID,
          pPolicyStatus);
     if (hFunc)
         CryptFreeOIDFunctionAddress(hFunc, 0);
-    TRACE("returning %d (%08x)\n", ret, pPolicyStatus->dwError);
+    TRACE("returning %d (%08lx)\n", ret, pPolicyStatus->dwError);
     return ret;
 }
