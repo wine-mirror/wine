@@ -1681,10 +1681,11 @@ static BOOL wined3d_query_vk_issue(struct wined3d_query *query, uint32_t flags)
             return false;
         }
 
-        /* A query needs to either begin and end inside a single render pass,
-         * or begin and end outside of a render pass. Occlusion queries, if issued
-         * outside of a render pass, are queued up and only begun when a render
-         * pass is started, to avoid interrupting it when the query ends. */
+        /* A query needs to either begin and end inside a single render pass
+         * or begin and end outside of a render pass. Occlusion queries, if
+         * issued outside of a render pass, are queued up and only begun when
+         * a render pass is started, to avoid interrupting the render pass
+         * when the query ends. */
         if (context_vk->vk_render_pass)
         {
             wined3d_query_vk_begin(query_vk, context_vk, vk_command_buffer);
