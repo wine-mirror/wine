@@ -149,6 +149,9 @@ LRESULT WINAPI UXTHEME_DefDlgProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, BOO
         SetBrushOrgEx(hdc, old_org.x, old_org.y, NULL);
         return TRUE;
     }
+    case WM_CTLCOLORMSGBOX:
+    case WM_CTLCOLORBTN:
+    case WM_CTLCOLORDLG:
     case WM_CTLCOLORSTATIC:
     {
         dlgproc = (WNDPROC)GetWindowLongPtrW(hwnd, DWLP_DLGPROC);

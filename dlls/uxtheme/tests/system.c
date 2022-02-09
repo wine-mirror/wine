@@ -1854,7 +1854,6 @@ static void test_EnableThemeDialogTexture(void)
         }
         else
         {
-            todo_wine_if(msg != WM_CTLCOLORSTATIC)
             ok(org.x == -1 && org.y == -2, "Expected (-1,-2), got %s.\n", wine_dbgstr_point(&org));
         }
 
@@ -1863,7 +1862,6 @@ static void test_EnableThemeDialogTexture(void)
         ok(old_mode != 0, "SetBkMode failed.\n");
         SendMessageW(dialog, msg, (WPARAM)child_hdc, (LPARAM)child);
         mode = SetBkMode(child_hdc, old_mode);
-        todo_wine_if(msg != WM_CTLCOLORSTATIC)
         ok(mode == TRANSPARENT, "Expected mode %#x, got %#x.\n", TRANSPARENT, mode);
 
         /* Test that some WM_CTLCOLOR* messages change background color when dialog texture is on */
@@ -1879,24 +1877,18 @@ static void test_EnableThemeDialogTexture(void)
         memset(&log_brush, 0, sizeof(log_brush));
         count = GetObjectA(brush, sizeof(log_brush), &log_brush);
         ok(count == sizeof(log_brush), "GetObjectA failed, error %u.\n", GetLastError());
-        todo_wine_if(msg != WM_CTLCOLORSTATIC)
         ok(log_brush.lbColor == 0, "Expected brush color %#x, got %#x.\n", 0, log_brush.lbColor);
-        todo_wine_if(msg != WM_CTLCOLORSTATIC)
         ok(log_brush.lbStyle == BS_PATTERN, "Expected brush style %#x, got %#x.\n", BS_PATTERN,
            log_brush.lbStyle);
 
         memset(&bmp, 0, sizeof(bmp));
         count = GetObjectA((HBITMAP)log_brush.lbHatch, sizeof(bmp), &bmp);
-        todo_wine_if(msg != WM_CTLCOLORSTATIC)
         ok(count == sizeof(bmp), "GetObjectA failed, error %u.\n", GetLastError());
-        todo_wine_if(msg != WM_CTLCOLORSTATIC)
         ok(bmp.bmWidth == size.cx, "Expected width %d, got %d.\n", size.cx, bmp.bmWidth);
-        todo_wine_if(msg != WM_CTLCOLORSTATIC)
         ok(bmp.bmHeight == size.cy, "Expected height %d, got %d.\n", size.cy, bmp.bmHeight);
 
         /* Test that DefDlgProcA/W() are hooked for some WM_CTLCOLOR* messages */
         brush = (HBRUSH)SendMessageW(dialog, msg, (WPARAM)child_hdc, (LPARAM)child);
-        todo_wine_if(msg != WM_CTLCOLORSTATIC)
         ok(brush != GetSysColorBrush(COLOR_BTNFACE), "Expected a different brush.\n");
         brush2 = (HBRUSH)DefDlgProcW(dialog, msg, (WPARAM)child_hdc, (LPARAM)child);
         ok(brush2 == brush, "Expected the same brush.\n");
@@ -1905,24 +1897,21 @@ static void test_EnableThemeDialogTexture(void)
 
         /* Test that DefWindowProcA/W() are also hooked for some WM_CTLCOLOR* messages */
         brush = (HBRUSH)SendMessageW(dialog, msg, (WPARAM)child_hdc, (LPARAM)child);
-        todo_wine_if(msg != WM_CTLCOLORSTATIC)
         ok(brush != GetSysColorBrush(COLOR_BTNFACE), "Expected a different brush.\n");
         if (msg != WM_CTLCOLORDLG)
         {
             brush2 = (HBRUSH)DefWindowProcW(dialog, msg, (WPARAM)child_hdc, (LPARAM)child);
-            todo_wine_if(msg == WM_CTLCOLORSTATIC)
+            todo_wine
             ok(brush2 == brush, "Expected the same brush.\n");
             brush2 = (HBRUSH)DefWindowProcA(dialog, msg, (WPARAM)child_hdc, (LPARAM)child);
-            todo_wine_if(msg == WM_CTLCOLORSTATIC)
+            todo_wine
             ok(brush2 == brush, "Expected the same brush.\n");
         }
         else
         {
             brush2 = (HBRUSH)DefWindowProcW(dialog, msg, (WPARAM)child_hdc, (LPARAM)child);
-            todo_wine
             ok(brush2 != brush, "Expected a different brush.\n");
             brush2 = (HBRUSH)DefWindowProcA(dialog, msg, (WPARAM)child_hdc, (LPARAM)child);
-            todo_wine
             ok(brush2 != brush, "Expected a different brush.\n");
         }
 
