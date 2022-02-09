@@ -267,7 +267,7 @@ static ULONG WINAPI video_stream_sink_AddRef(IMFStreamSink *iface)
     struct video_stream *stream = impl_from_IMFStreamSink(iface);
     ULONG refcount = InterlockedIncrement(&stream->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -296,7 +296,7 @@ static HRESULT WINAPI video_stream_sink_GetEvent(IMFStreamSink *iface, DWORD fla
 {
     struct video_stream *stream = impl_from_IMFStreamSink(iface);
 
-    TRACE("%p, %#x, %p.\n", iface, flags, event);
+    TRACE("%p, %#lx, %p.\n", iface, flags, event);
 
     return IMFMediaEventQueue_GetEvent(stream->event_queue, flags, event);
 }
@@ -325,7 +325,7 @@ static HRESULT WINAPI video_stream_sink_QueueEvent(IMFStreamSink *iface, MediaEv
 {
     struct video_stream *stream = impl_from_IMFStreamSink(iface);
 
-    TRACE("%p, %d, %s, %#x, %p.\n", iface, event_type, debugstr_guid(ext_type), hr, value);
+    TRACE("%p, %ld, %s, %#lx, %p.\n", iface, event_type, debugstr_guid(ext_type), hr, value);
 
     return IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, event_type, ext_type, hr, value);
 }
@@ -403,7 +403,7 @@ static HRESULT WINAPI video_stream_sink_ProcessSample(IMFStreamSink *iface, IMFS
         hr = MF_E_NO_CLOCK;
     else if (FAILED(hr = IMFSample_GetSampleTime(sample, &timestamp)))
     {
-        WARN("No sample timestamp, hr %#x.\n", hr);
+        WARN("No sample timestamp, hr %#lx.\n", hr);
     }
     else if (stream->parent->state == EVR_STATE_RUNNING || stream->flags & EVR_STREAM_PREROLLING)
     {
@@ -551,7 +551,7 @@ static HRESULT WINAPI video_stream_typehandler_GetMediaTypeCount(IMFMediaTypeHan
 static HRESULT WINAPI video_stream_typehandler_GetMediaTypeByIndex(IMFMediaTypeHandler *iface, DWORD index,
         IMFMediaType **type)
 {
-    TRACE("%p, %u, %p.\n", iface, index, type);
+    TRACE("%p, %lu, %p.\n", iface, index, type);
 
     return MF_E_NO_MORE_TYPES;
 }
@@ -1153,7 +1153,7 @@ static ULONG WINAPI video_renderer_sink_AddRef(IMFMediaSink *iface)
 {
     struct video_renderer *renderer = impl_from_IMFMediaSink(iface);
     ULONG refcount = InterlockedIncrement(&renderer->refcount);
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
     return refcount;
 }
 
@@ -1162,7 +1162,7 @@ static ULONG WINAPI video_renderer_sink_Release(IMFMediaSink *iface)
     struct video_renderer *renderer = impl_from_IMFMediaSink(iface);
     ULONG refcount = InterlockedDecrement(&renderer->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -1230,7 +1230,7 @@ static HRESULT WINAPI video_renderer_sink_AddStreamSink(IMFMediaSink *iface, DWO
     struct video_renderer *renderer = impl_from_IMFMediaSink(iface);
     HRESULT hr;
 
-    TRACE("%p, %#x, %p, %p.\n", iface, id, media_type, stream_sink);
+    TRACE("%p, %#lx, %p, %p.\n", iface, id, media_type, stream_sink);
 
     /* Rely on mixer for stream id validation. */
 
@@ -1254,7 +1254,7 @@ static HRESULT WINAPI video_renderer_sink_RemoveStreamSink(IMFMediaSink *iface, 
     HRESULT hr;
     size_t i;
 
-    TRACE("%p, %#x.\n", iface, id);
+    TRACE("%p, %#lx.\n", iface, id);
 
     /* Rely on mixer for stream id validation. */
 
@@ -1309,7 +1309,7 @@ static HRESULT WINAPI video_renderer_sink_GetStreamSinkByIndex(IMFMediaSink *ifa
     struct video_renderer *renderer = impl_from_IMFMediaSink(iface);
     HRESULT hr = S_OK;
 
-    TRACE("%p, %u, %p.\n", iface, index, stream);
+    TRACE("%p, %lu, %p.\n", iface, index, stream);
 
     EnterCriticalSection(&renderer->cs);
     if (renderer->flags & EVR_SHUT_DOWN)
@@ -1335,7 +1335,7 @@ static HRESULT WINAPI video_renderer_sink_GetStreamSinkById(IMFMediaSink *iface,
     HRESULT hr = S_OK;
     size_t i;
 
-    TRACE("%p, %#x, %p.\n", iface, id, stream);
+    TRACE("%p, %#lx, %p.\n", iface, id, stream);
 
     EnterCriticalSection(&renderer->cs);
     if (renderer->flags & EVR_SHUT_DOWN)
@@ -1747,7 +1747,7 @@ static HRESULT WINAPI video_renderer_InitializeRenderer(IMFVideoRenderer *iface,
         IMFTransform_AddRef(mixer);
     else if (FAILED(hr = video_renderer_create_mixer(NULL, &mixer)))
     {
-        WARN("Failed to create default mixer object, hr %#x.\n", hr);
+        WARN("Failed to create default mixer object, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -1755,7 +1755,7 @@ static HRESULT WINAPI video_renderer_InitializeRenderer(IMFVideoRenderer *iface,
         IMFVideoPresenter_AddRef(presenter);
     else if (FAILED(hr = video_renderer_create_presenter(renderer, NULL, &presenter)))
     {
-        WARN("Failed to create default presenter, hr %#x.\n", hr);
+        WARN("Failed to create default presenter, hr %#lx.\n", hr);
         IMFTransform_Release(mixer);
         return hr;
     }
@@ -1810,7 +1810,7 @@ static HRESULT WINAPI video_renderer_events_GetEvent(IMFMediaEventGenerator *ifa
 {
     struct video_renderer *renderer = impl_from_IMFMediaEventGenerator(iface);
 
-    TRACE("%p, %#x, %p.\n", iface, flags, event);
+    TRACE("%p, %#lx, %p.\n", iface, flags, event);
 
     return IMFMediaEventQueue_GetEvent(renderer->event_queue, flags, event);
 }
@@ -1840,7 +1840,7 @@ static HRESULT WINAPI video_renderer_events_QueueEvent(IMFMediaEventGenerator *i
 {
     struct video_renderer *renderer = impl_from_IMFMediaEventGenerator(iface);
 
-    TRACE("%p, %u, %s, %#x, %p.\n", iface, event_type, debugstr_guid(ext_type), hr, value);
+    TRACE("%p, %lu, %s, %#lx, %p.\n", iface, event_type, debugstr_guid(ext_type), hr, value);
 
     return IMFMediaEventQueue_QueueEventParamVar(renderer->event_queue, event_type, ext_type, hr, value);
 }
@@ -2143,7 +2143,7 @@ static HRESULT WINAPI video_renderer_service_lookup_LookupService(IMFTopologySer
     struct video_renderer *renderer = impl_from_IMFTopologyServiceLookup(iface);
     HRESULT hr = S_OK;
 
-    TRACE("%p, %u, %u, %s, %s, %p, %p.\n", iface, lookup_type, index, debugstr_guid(service), debugstr_guid(riid),
+    TRACE("%p, %u, %lu, %s, %s, %p, %p.\n", iface, lookup_type, index, debugstr_guid(service), debugstr_guid(riid),
             objects, num_objects);
 
     EnterCriticalSection(&renderer->cs);
@@ -2237,7 +2237,7 @@ static HRESULT WINAPI video_renderer_event_sink_Notify(IMediaEventSink *iface, L
     HRESULT hr = S_OK;
     unsigned int idx;
 
-    TRACE("%p, %d, %ld, %ld.\n", iface, event, param1, param2);
+    TRACE("%p, %ld, %Id, %Id.\n", iface, event, param1, param2);
 
     EnterCriticalSection(&renderer->cs);
 
@@ -2275,7 +2275,7 @@ static HRESULT WINAPI video_renderer_event_sink_Notify(IMediaEventSink *iface, L
     }
     else
     {
-        WARN("Unhandled event %d.\n", event);
+        WARN("Unhandled event %ld.\n", event);
         hr = MF_E_UNEXPECTED;
     }
 

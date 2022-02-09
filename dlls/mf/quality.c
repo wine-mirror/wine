@@ -86,7 +86,7 @@ static ULONG WINAPI standard_quality_manager_AddRef(IMFQualityManager *iface)
     struct quality_manager *manager = impl_from_IMFQualityManager(iface);
     ULONG refcount = InterlockedIncrement(&manager->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -96,7 +96,7 @@ static ULONG WINAPI standard_quality_manager_Release(IMFQualityManager *iface)
     struct quality_manager *manager = impl_from_IMFQualityManager(iface);
     ULONG refcount = InterlockedDecrement(&manager->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -178,7 +178,7 @@ static HRESULT WINAPI standard_quality_manager_NotifyPresentationClock(IMFQualit
 static HRESULT WINAPI standard_quality_manager_NotifyProcessInput(IMFQualityManager *iface, IMFTopologyNode *node,
         LONG input_index, IMFSample *sample)
 {
-    TRACE("%p, %p, %d, %p stub.\n", iface, node, input_index, sample);
+    TRACE("%p, %p, %ld, %p stub.\n", iface, node, input_index, sample);
 
     return E_NOTIMPL;
 }
@@ -186,7 +186,7 @@ static HRESULT WINAPI standard_quality_manager_NotifyProcessInput(IMFQualityMana
 static HRESULT WINAPI standard_quality_manager_NotifyProcessOutput(IMFQualityManager *iface, IMFTopologyNode *node,
         LONG output_index, IMFSample *sample)
 {
-    TRACE("%p, %p, %d, %p stub.\n", iface, node, output_index, sample);
+    TRACE("%p, %p, %ld, %p stub.\n", iface, node, output_index, sample);
 
     return E_NOTIMPL;
 }

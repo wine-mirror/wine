@@ -158,7 +158,7 @@ static ULONG WINAPI sink_notification_AddRef(IUnknown *iface)
     struct sink_notification *notification = impl_sink_notification_from_IUnknown(iface);
     ULONG refcount = InterlockedIncrement(&notification->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -168,7 +168,7 @@ static ULONG WINAPI sink_notification_Release(IUnknown *iface)
     struct sink_notification *notification = impl_sink_notification_from_IUnknown(iface);
     ULONG refcount = InterlockedDecrement(&notification->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -253,7 +253,7 @@ static ULONG WINAPI present_clock_AddRef(IMFPresentationClock *iface)
     struct presentation_clock *clock = impl_from_IMFPresentationClock(iface);
     ULONG refcount = InterlockedIncrement(&clock->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -265,7 +265,7 @@ static ULONG WINAPI present_clock_Release(IMFPresentationClock *iface)
     struct clock_timer *timer, *timer2;
     struct clock_sink *sink, *sink2;
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -312,7 +312,7 @@ static HRESULT WINAPI present_clock_GetCorrelatedTime(IMFPresentationClock *ifac
     struct presentation_clock *clock = impl_from_IMFPresentationClock(iface);
     HRESULT hr = MF_E_CLOCK_NO_TIME_SOURCE;
 
-    TRACE("%p, %#x, %p, %p.\n", iface, reserved, clock_time, system_time);
+    TRACE("%p, %#lx, %p, %p.\n", iface, reserved, clock_time, system_time);
 
     EnterCriticalSection(&clock->cs);
     if (clock->time_source)
@@ -335,7 +335,7 @@ static HRESULT WINAPI present_clock_GetState(IMFPresentationClock *iface, DWORD 
 {
     struct presentation_clock *clock = impl_from_IMFPresentationClock(iface);
 
-    TRACE("%p, %#x, %p.\n", iface, reserved, state);
+    TRACE("%p, %#lx, %p.\n", iface, reserved, state);
 
     EnterCriticalSection(&clock->cs);
     *state = clock->state;
@@ -816,7 +816,7 @@ static HRESULT present_clock_schedule_timer(struct presentation_clock *clock, DW
     {
         if (FAILED(hr = IMFPresentationTimeSource_GetCorrelatedTime(clock->time_source, 0, &clocktime, &systime)))
         {
-            WARN("Failed to get clock time, hr %#x.\n", hr);
+            WARN("Failed to get clock time, hr %#lx.\n", hr);
             return hr;
         }
         time -= clocktime;
@@ -885,7 +885,7 @@ static HRESULT WINAPI present_clock_timer_SetTimer(IMFTimer *iface, DWORD flags,
     struct clock_timer *clock_timer;
     HRESULT hr;
 
-    TRACE("%p, %#x, %s, %p, %p, %p.\n", iface, flags, debugstr_time(time), callback, state, cancel_key);
+    TRACE("%p, %#lx, %s, %p, %p, %p.\n", iface, flags, debugstr_time(time), callback, state, cancel_key);
 
     if (!(clock_timer = calloc(1, sizeof(*clock_timer))))
         return E_OUTOFMEMORY;

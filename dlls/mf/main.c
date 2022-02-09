@@ -73,7 +73,7 @@ static ULONG WINAPI activate_object_AddRef(IMFActivate *iface)
     struct activate_object *activate = impl_from_IMFActivate(iface);
     ULONG refcount = InterlockedIncrement(&activate->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -83,7 +83,7 @@ static ULONG WINAPI activate_object_Release(IMFActivate *iface)
     struct activate_object *activate = impl_from_IMFActivate(iface);
     ULONG refcount = InterlockedDecrement(&activate->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -597,7 +597,7 @@ static ULONG WINAPI file_scheme_handler_AddRef(IMFSchemeHandler *iface)
     struct file_scheme_handler *handler = impl_from_IMFSchemeHandler(iface);
     ULONG refcount = InterlockedIncrement(&handler->refcount);
 
-    TRACE("%p, refcount %u.\n", handler, refcount);
+    TRACE("%p, refcount %lu.\n", handler, refcount);
 
     return refcount;
 }
@@ -608,7 +608,7 @@ static ULONG WINAPI file_scheme_handler_Release(IMFSchemeHandler *iface)
     ULONG refcount = InterlockedDecrement(&handler->refcount);
     struct file_scheme_handler_result *result, *next;
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -665,7 +665,7 @@ static ULONG WINAPI create_object_context_AddRef(IUnknown *iface)
     struct create_object_context *context = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedIncrement(&context->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -675,7 +675,7 @@ static ULONG WINAPI create_object_context_Release(IUnknown *iface)
     struct create_object_context *context = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedDecrement(&context->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -703,7 +703,7 @@ static HRESULT WINAPI file_scheme_handler_BeginCreateObject(IMFSchemeHandler *if
     IMFAsyncResult *caller, *item;
     HRESULT hr;
 
-    TRACE("%p, %s, %#x, %p, %p, %p, %p.\n", iface, debugstr_w(url), flags, props, cancel_cookie, callback, state);
+    TRACE("%p, %s, %#lx, %p, %p, %p, %p.\n", iface, debugstr_w(url), flags, props, cancel_cookie, callback, state);
 
     if (cancel_cookie)
         *cancel_cookie = NULL;
@@ -1238,7 +1238,7 @@ static ULONG WINAPI simple_type_handler_AddRef(IMFMediaTypeHandler *iface)
     struct simple_type_handler *handler = impl_from_IMFMediaTypeHandler(iface);
     ULONG refcount = InterlockedIncrement(&handler->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -1248,7 +1248,7 @@ static ULONG WINAPI simple_type_handler_Release(IMFMediaTypeHandler *iface)
     struct simple_type_handler *handler = impl_from_IMFMediaTypeHandler(iface);
     ULONG refcount = InterlockedDecrement(&handler->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -1304,7 +1304,7 @@ static HRESULT WINAPI simple_type_handler_GetMediaTypeByIndex(IMFMediaTypeHandle
 {
     struct simple_type_handler *handler = impl_from_IMFMediaTypeHandler(iface);
 
-    TRACE("%p, %u, %p.\n", iface, index, type);
+    TRACE("%p, %lu, %p.\n", iface, index, type);
 
     if (index > 0)
         return MF_E_NO_MORE_TYPES;

@@ -72,7 +72,7 @@ static ULONG WINAPI sample_copier_transform_AddRef(IMFTransform *iface)
     struct sample_copier *transform = impl_from_IMFTransform(iface);
     ULONG refcount = InterlockedIncrement(&transform->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -82,7 +82,7 @@ static ULONG WINAPI sample_copier_transform_Release(IMFTransform *iface)
     struct sample_copier *transform = impl_from_IMFTransform(iface);
     ULONG refcount = InterlockedDecrement(&transform->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -120,7 +120,7 @@ static HRESULT WINAPI sample_copier_transform_GetStreamCount(IMFTransform *iface
 static HRESULT WINAPI sample_copier_transform_GetStreamIDs(IMFTransform *iface, DWORD input_size, DWORD *inputs,
         DWORD output_size, DWORD *outputs)
 {
-    TRACE("%p, %u, %p, %u, %p.\n", iface, input_size, inputs, output_size, outputs);
+    TRACE("%p, %lu, %p, %lu, %p.\n", iface, input_size, inputs, output_size, outputs);
 
     return E_NOTIMPL;
 }
@@ -129,7 +129,7 @@ static HRESULT WINAPI sample_copier_transform_GetInputStreamInfo(IMFTransform *i
 {
     struct sample_copier *transform = impl_from_IMFTransform(iface);
 
-    TRACE("%p, %u, %p.\n", iface, id, info);
+    TRACE("%p, %lu, %p.\n", iface, id, info);
 
     memset(info, 0, sizeof(*info));
 
@@ -145,7 +145,7 @@ static HRESULT WINAPI sample_copier_transform_GetOutputStreamInfo(IMFTransform *
 {
     struct sample_copier *transform = impl_from_IMFTransform(iface);
 
-    TRACE("%p, %u, %p.\n", iface, id, info);
+    TRACE("%p, %lu, %p.\n", iface, id, info);
 
     memset(info, 0, sizeof(*info));
 
@@ -171,7 +171,7 @@ static HRESULT WINAPI sample_copier_transform_GetAttributes(IMFTransform *iface,
 static HRESULT WINAPI sample_copier_transform_GetInputStreamAttributes(IMFTransform *iface, DWORD id,
         IMFAttributes **attributes)
 {
-    TRACE("%p, %u, %p.\n", iface, id, attributes);
+    TRACE("%p, %lu, %p.\n", iface, id, attributes);
 
     return E_NOTIMPL;
 }
@@ -179,21 +179,21 @@ static HRESULT WINAPI sample_copier_transform_GetInputStreamAttributes(IMFTransf
 static HRESULT WINAPI sample_copier_transform_GetOutputStreamAttributes(IMFTransform *iface, DWORD id,
         IMFAttributes **attributes)
 {
-    TRACE("%p, %u, %p.\n", iface, id, attributes);
+    TRACE("%p, %lu, %p.\n", iface, id, attributes);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI sample_copier_transform_DeleteInputStream(IMFTransform *iface, DWORD id)
 {
-    TRACE("%p, %u.\n", iface, id);
+    TRACE("%p, %lu.\n", iface, id);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI sample_copier_transform_AddInputStreams(IMFTransform *iface, DWORD streams, DWORD *ids)
 {
-    TRACE("%p, %u, %p.\n", iface, streams, ids);
+    TRACE("%p, %lu, %p.\n", iface, streams, ids);
 
     return E_NOTIMPL;
 }
@@ -204,7 +204,7 @@ static HRESULT WINAPI sample_copier_transform_GetInputAvailableType(IMFTransform
     static const GUID *types[] = { &MFMediaType_Video, &MFMediaType_Audio };
     HRESULT hr;
 
-    TRACE("%p, %u, %u, %p.\n", iface, id, index, type);
+    TRACE("%p, %lu, %lu, %p.\n", iface, id, index, type);
 
     if (id)
         return MF_E_INVALIDSTREAMNUMBER;
@@ -225,7 +225,7 @@ static HRESULT WINAPI sample_copier_transform_GetOutputAvailableType(IMFTransfor
     IMFMediaType *cloned_type = NULL;
     HRESULT hr = S_OK;
 
-    TRACE("%p, %u, %u, %p.\n", iface, id, index, type);
+    TRACE("%p, %lu, %lu, %p.\n", iface, id, index, type);
 
     EnterCriticalSection(&transform->cs);
     if (transform->buffer_type)
@@ -326,7 +326,7 @@ static HRESULT WINAPI sample_copier_transform_SetInputType(IMFTransform *iface, 
 {
     struct sample_copier *transform = impl_from_IMFTransform(iface);
 
-    TRACE("%p, %u, %p, %#x.\n", iface, id, type, flags);
+    TRACE("%p, %lu, %p, %#lx.\n", iface, id, type, flags);
 
     return sample_copier_set_media_type(transform, TRUE, id, type, flags);
 }
@@ -335,7 +335,7 @@ static HRESULT WINAPI sample_copier_transform_SetOutputType(IMFTransform *iface,
 {
     struct sample_copier *transform = impl_from_IMFTransform(iface);
 
-    TRACE("%p, %u, %p, %#x.\n", iface, id, type, flags);
+    TRACE("%p, %lu, %p, %#lx.\n", iface, id, type, flags);
 
     return sample_copier_set_media_type(transform, FALSE, id, type, flags);
 }
@@ -371,7 +371,7 @@ static HRESULT WINAPI sample_copier_transform_GetInputCurrentType(IMFTransform *
 {
     struct sample_copier *transform = impl_from_IMFTransform(iface);
 
-    TRACE("%p, %u, %p.\n", iface, id, type);
+    TRACE("%p, %lu, %p.\n", iface, id, type);
 
     return sample_copier_get_current_type(transform, id, SAMPLE_COPIER_INPUT_TYPE_SET, type);
 }
@@ -380,7 +380,7 @@ static HRESULT WINAPI sample_copier_transform_GetOutputCurrentType(IMFTransform 
 {
     struct sample_copier *transform = impl_from_IMFTransform(iface);
 
-    TRACE("%p, %u, %p.\n", iface, id, type);
+    TRACE("%p, %lu, %p.\n", iface, id, type);
 
     return sample_copier_get_current_type(transform, id, SAMPLE_COPIER_OUTPUT_TYPE_SET, type);
 }
@@ -390,7 +390,7 @@ static HRESULT WINAPI sample_copier_transform_GetInputStatus(IMFTransform *iface
     struct sample_copier *transform = impl_from_IMFTransform(iface);
     HRESULT hr = S_OK;
 
-    TRACE("%p, %u, %p.\n", iface, id, flags);
+    TRACE("%p, %lu, %p.\n", iface, id, flags);
 
     if (id)
         return MF_E_INVALIDSTREAMNUMBER;
@@ -431,7 +431,7 @@ static HRESULT WINAPI sample_copier_transform_SetOutputBounds(IMFTransform *ifac
 
 static HRESULT WINAPI sample_copier_transform_ProcessEvent(IMFTransform *iface, DWORD id, IMFMediaEvent *event)
 {
-    FIXME("%p, %u, %p.\n", iface, id, event);
+    FIXME("%p, %lu, %p.\n", iface, id, event);
 
     return E_NOTIMPL;
 }
@@ -463,7 +463,7 @@ static HRESULT WINAPI sample_copier_transform_ProcessInput(IMFTransform *iface, 
     struct sample_copier *transform = impl_from_IMFTransform(iface);
     HRESULT hr = S_OK;
 
-    TRACE("%p, %u, %p, %#x.\n", iface, id, sample, flags);
+    TRACE("%p, %lu, %p, %#lx.\n", iface, id, sample, flags);
 
     if (id)
         return MF_E_INVALIDSTREAMNUMBER;
@@ -492,7 +492,7 @@ static HRESULT WINAPI sample_copier_transform_ProcessOutput(IMFTransform *iface,
     HRESULT hr = S_OK;
     LONGLONG time;
 
-    TRACE("%p, %#x, %u, %p, %p.\n", iface, flags, count, buffers, status);
+    TRACE("%p, %#lx, %lu, %p, %p.\n", iface, flags, count, buffers, status);
 
     EnterCriticalSection(&transform->cs);
     if (!(transform->flags & SAMPLE_COPIER_OUTPUT_TYPE_SET))
