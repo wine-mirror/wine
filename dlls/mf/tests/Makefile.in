@@ -4,3 +4,5 @@ IMPORTS   = mf mfplat mfuuid ole32 user32 propsys
 
 C_SRCS = \
 	mf.c
+
+RC_SRCS = resource.rc
