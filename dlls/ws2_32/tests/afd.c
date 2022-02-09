@@ -1387,6 +1387,12 @@ static void test_recv(void)
     todo_wine ok(!io.Status, "got %#x\n", io.Status);
     todo_wine ok(io.Information == 1, "got %#Ix\n", io.Information);
     todo_wine ok(buffer[0] == 'a', "got %s\n", debugstr_an(buffer, io.Information));
+    if (ret == STATUS_PENDING)
+    {
+        CancelIo((HANDLE)client);
+        ret = WaitForSingleObject(event, 100);
+        ok(!ret, "wait timed out\n");
+    }
 
     params.msg_flags = AFD_MSG_NOT_OOB | AFD_MSG_PEEK;
 
