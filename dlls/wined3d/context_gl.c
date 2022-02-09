@@ -3113,6 +3113,23 @@ void wined3d_context_gl_destroy_bo(struct wined3d_context_gl *context_gl, struct
     bo->id = 0;
 }
 
+static bool use_buffer_chunk_suballocation(const struct wined3d_gl_info *gl_info, GLenum binding)
+{
+    switch (binding)
+    {
+        case GL_ATOMIC_COUNTER_BUFFER:
+        case GL_DRAW_INDIRECT_BUFFER:
+        case GL_PIXEL_UNPACK_BUFFER:
+            return true;
+
+        case GL_TEXTURE_BUFFER:
+            return gl_info->supported[ARB_TEXTURE_BUFFER_RANGE];
+
+        default:
+            return false;
+    }
+}
+
 bool wined3d_context_gl_create_bo(struct wined3d_context_gl *context_gl, GLsizeiptr size,
         GLenum binding, GLenum usage, bool coherent, GLbitfield flags, struct wined3d_bo_gl *bo)
 {
@@ -3127,19 +3144,15 @@ bool wined3d_context_gl_create_bo(struct wined3d_context_gl *context_gl, GLsizei
 
     if (gl_info->supported[ARB_BUFFER_STORAGE])
     {
-        switch (binding)
+        if (use_buffer_chunk_suballocation(gl_info, binding))
         {
-            case GL_ATOMIC_COUNTER_BUFFER:
-            case GL_DRAW_INDIRECT_BUFFER:
-            case GL_PIXEL_UNPACK_BUFFER:
-                if ((memory = wined3d_context_gl_allocate_memory(context_gl, memory_type_idx, size, &id)))
-                    buffer_offset = memory->offset;
-                break;
-
-            default:
-                WARN_(d3d_perf)("Not allocating chunk memory for binding type %#x.\n", binding);
-                id = wined3d_context_gl_allocate_vram_chunk_buffer(context_gl, memory_type_idx, size);
-                break;
+            if ((memory = wined3d_context_gl_allocate_memory(context_gl, memory_type_idx, size, &id)))
+                buffer_offset = memory->offset;
+        }
+        else
+        {
+            WARN_(d3d_perf)("Not allocating chunk memory for binding type %#x.\n", binding);
+            id = wined3d_context_gl_allocate_vram_chunk_buffer(context_gl, memory_type_idx, size);
         }
 
         if (!id)
