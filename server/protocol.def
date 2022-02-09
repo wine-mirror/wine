@@ -2163,6 +2163,16 @@ enum message_type
 @END
 
 
+/* Notify direct completion of async and close the wait handle if not blocking */
+@REQ(set_async_direct_result)
+    obj_handle_t   handle;        /* wait handle */
+    apc_param_t    information;   /* IO_STATUS_BLOCK Information */
+    unsigned int   status;        /* completion status */
+@REPLY
+    obj_handle_t   handle;        /* wait handle, or NULL if closed */
+@END
+
+
 /* Perform a read on a file object */
 @REQ(read)
     async_data_t   async;         /* async I/O parameters */

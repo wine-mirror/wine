@@ -2905,6 +2905,23 @@ struct get_async_result_reply
 
 
 
+struct set_async_direct_result_request
+{
+    struct request_header __header;
+    obj_handle_t   handle;
+    apc_param_t    information;
+    unsigned int   status;
+    char __pad_28[4];
+};
+struct set_async_direct_result_reply
+{
+    struct reply_header __header;
+    obj_handle_t   handle;
+    char __pad_12[4];
+};
+
+
+
 struct read_request
 {
     struct request_header __header;
@@ -5547,6 +5564,7 @@ enum request
     REQ_register_async,
     REQ_cancel_async,
     REQ_get_async_result,
+    REQ_set_async_direct_result,
     REQ_read,
     REQ_write,
     REQ_ioctl,
@@ -5828,6 +5846,7 @@ union generic_request
     struct register_async_request register_async_request;
     struct cancel_async_request cancel_async_request;
     struct get_async_result_request get_async_result_request;
+    struct set_async_direct_result_request set_async_direct_result_request;
     struct read_request read_request;
     struct write_request write_request;
     struct ioctl_request ioctl_request;
@@ -6107,6 +6126,7 @@ union generic_reply
     struct register_async_reply register_async_reply;
     struct cancel_async_reply cancel_async_reply;
     struct get_async_result_reply get_async_result_reply;
+    struct set_async_direct_result_reply set_async_direct_result_reply;
     struct read_reply read_reply;
     struct write_reply write_reply;
     struct ioctl_reply ioctl_reply;
@@ -6262,7 +6282,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 743
+#define SERVER_PROTOCOL_VERSION 744
 
 /* ### protocol_version end ### */
 

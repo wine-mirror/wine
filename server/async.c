@@ -338,6 +338,31 @@ obj_handle_t async_handoff( struct async *async, data_size_t *result, int force_
         return async->wait_handle;
     }
 
+    if (get_error() == STATUS_ALERTED)
+    {
+        /* give the client opportunity to complete synchronously.  after the
+         * client performs the I/O, it reports the result back to the server
+         * via the set_async_direct_result request.  if it turns out that the
+         * I/O request is not actually immediately satiable, the client may
+         * then choose to re-queue the async by reporting STATUS_PENDING
+         * instead.
+         *
+         * since we're deferring the initial I/O (to the client), we mark the
+         * async as having unknown initial status (unknown_status = 1).  note
+         * that we don't reuse async_set_unknown_status() here.  this is because
+         * the one responsible for performing the I/O is not the device driver,
+         * but instead the client that requested the I/O in the first place.
+         *
+         * also, async_set_unknown_status() would set direct_result to zero
+         * forcing APC_ASYNC_IO to fire in async_terminate(), which is not
+         * useful due to subtle semantic differences between synchronous and
+         * asynchronous completion.
+         */
+        async->unknown_status = 1;
+        async_terminate( async, STATUS_ALERTED );
+        return async->wait_handle;
+    }
+
     async->initial_status = get_error();
 
     if (!async->pending && NT_ERROR( get_error() ))
@@ -727,4 +752,51 @@ DECL_HANDLER(get_async_result)
         }
     }
     set_error( iosb->status );
+}
+
+/* notify direct completion of async and close the wait handle if not blocking */
+DECL_HANDLER(set_async_direct_result)
+{
+    struct async *async = (struct async *)get_handle_obj( current->process, req->handle, 0, &async_ops );
+    unsigned int status = req->status;
+
+    if (!async) return;
+
+    if (!async->unknown_status || !async->terminated || !async->alerted)
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        release_object( &async->obj );
+        return;
+    }
+
+    async_set_initial_status( async, status );
+
+    if (status == STATUS_PENDING)
+    {
+        async->direct_result = 0;
+        async->pending = 1;
+    }
+
+    /* if the I/O has completed successfully, the client would have already
+     * set the IOSB. therefore, we can skip waiting on wait_handle and do
+     * async_set_result() directly.
+     */
+    async_set_result( &async->obj, status, req->information );
+
+    /* close wait handle here to avoid extra server round trip, if the I/O
+     * either has completed, or is pending and not blocking.
+     */
+    if (status != STATUS_PENDING || !async->blocking)
+    {
+        close_handle( async->thread->process, async->wait_handle );
+        async->wait_handle = 0;
+    }
+
+    /* report back to the client whether the wait handle has been closed.
+     * handle will be 0 if closed by us; otherwise the original value is
+     * retained
+     */
+    reply->handle = async->wait_handle;
+
+    release_object( &async->obj );
 }

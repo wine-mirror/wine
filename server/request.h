@@ -242,6 +242,7 @@ DECL_HANDLER(set_serial_info);
 DECL_HANDLER(register_async);
 DECL_HANDLER(cancel_async);
 DECL_HANDLER(get_async_result);
+DECL_HANDLER(set_async_direct_result);
 DECL_HANDLER(read);
 DECL_HANDLER(write);
 DECL_HANDLER(ioctl);
@@ -522,6 +523,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_register_async,
     (req_handler)req_cancel_async,
     (req_handler)req_get_async_result,
+    (req_handler)req_set_async_direct_result,
     (req_handler)req_read,
     (req_handler)req_write,
     (req_handler)req_ioctl,
@@ -1396,6 +1398,12 @@ C_ASSERT( sizeof(struct cancel_async_request) == 32 );
 C_ASSERT( FIELD_OFFSET(struct get_async_result_request, user_arg) == 16 );
 C_ASSERT( sizeof(struct get_async_result_request) == 24 );
 C_ASSERT( sizeof(struct get_async_result_reply) == 8 );
+C_ASSERT( FIELD_OFFSET(struct set_async_direct_result_request, handle) == 12 );
+C_ASSERT( FIELD_OFFSET(struct set_async_direct_result_request, information) == 16 );
+C_ASSERT( FIELD_OFFSET(struct set_async_direct_result_request, status) == 24 );
+C_ASSERT( sizeof(struct set_async_direct_result_request) == 32 );
+C_ASSERT( FIELD_OFFSET(struct set_async_direct_result_reply, handle) == 8 );
+C_ASSERT( sizeof(struct set_async_direct_result_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct read_request, async) == 16 );
 C_ASSERT( FIELD_OFFSET(struct read_request, pos) == 56 );
 C_ASSERT( sizeof(struct read_request) == 64 );
