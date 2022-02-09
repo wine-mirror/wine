@@ -204,92 +204,90 @@ static const TEST_URL_CANONICALIZE TEST_CANONICALIZE[] = {
 typedef struct _TEST_URL_ESCAPE {
     const char *url;
     DWORD flags;
-    DWORD expectescaped;
-    HRESULT expectret;
     const char *expecturl;
 } TEST_URL_ESCAPE;
 
 static const TEST_URL_ESCAPE TEST_ESCAPE[] = {
-    {"http://www.winehq.org/tests0", 0, 0, S_OK, "http://www.winehq.org/tests0"},
-    {"http://www.winehq.org/tests1\n", 0, 0, S_OK, "http://www.winehq.org/tests1%0A"},
-    {"http://www.winehq.org/tests2\r", 0, 0, S_OK, "http://www.winehq.org/tests2%0D"},
-    {"http://www.winehq.org/tests3\r", URL_ESCAPE_SPACES_ONLY|URL_ESCAPE_UNSAFE, 0, S_OK, "http://www.winehq.org/tests3\r"},
-    {"http://www.winehq.org/tests4\r", URL_ESCAPE_SPACES_ONLY, 0, S_OK, "http://www.winehq.org/tests4\r"},
-    {"http://www.winehq.org/tests5\r", URL_WININET_COMPATIBILITY|URL_ESCAPE_SPACES_ONLY, 0, S_OK, "http://www.winehq.org/tests5\r"},
-    {"/direct/swhelp/series6/6.2i_latestservicepack.dat\r", URL_ESCAPE_SPACES_ONLY, 0, S_OK, "/direct/swhelp/series6/6.2i_latestservicepack.dat\r"},
+    {"http://www.winehq.org/tests0", 0, "http://www.winehq.org/tests0"},
+    {"http://www.winehq.org/tests1\n", 0, "http://www.winehq.org/tests1%0A"},
+    {"http://www.winehq.org/tests2\r", 0, "http://www.winehq.org/tests2%0D"},
+    {"http://www.winehq.org/tests3\r", URL_ESCAPE_SPACES_ONLY|URL_ESCAPE_UNSAFE, "http://www.winehq.org/tests3\r"},
+    {"http://www.winehq.org/tests4\r", URL_ESCAPE_SPACES_ONLY, "http://www.winehq.org/tests4\r"},
+    {"http://www.winehq.org/tests5\r", URL_WININET_COMPATIBILITY|URL_ESCAPE_SPACES_ONLY, "http://www.winehq.org/tests5\r"},
+    {"/direct/swhelp/series6/6.2i_latestservicepack.dat\r", URL_ESCAPE_SPACES_ONLY, "/direct/swhelp/series6/6.2i_latestservicepack.dat\r"},
 
-    {"file://////foo/bar\\baz", 0, 0, S_OK, "file://foo/bar/baz"},
-    {"file://///foo/bar\\baz", 0, 0, S_OK, "file://foo/bar/baz"},
-    {"file:////foo/bar\\baz", 0, 0, S_OK, "file://foo/bar/baz"},
-    {"file:///localhost/foo/bar\\baz", 0, 0, S_OK, "file:///localhost/foo/bar/baz"},
-    {"file:///foo/bar\\baz", 0, 0, S_OK, "file:///foo/bar/baz"},
-    {"file://loCalHost/foo/bar\\baz", 0, 0, S_OK, "file:///foo/bar/baz"},
-    {"file://foo/bar\\baz", 0, 0, S_OK, "file://foo/bar/baz"},
-    {"file:/localhost/foo/bar\\baz", 0, 0, S_OK, "file:///localhost/foo/bar/baz"},
-    {"file:/foo/bar\\baz", 0, 0, S_OK, "file:///foo/bar/baz"},
-    {"file:foo/bar\\baz", 0, 0, S_OK, "file:foo/bar/baz"},
-    {"file:\\foo/bar\\baz", 0, 0, S_OK, "file:///foo/bar/baz"},
-    {"file:\\\\foo/bar\\baz", 0, 0, S_OK, "file://foo/bar/baz"},
-    {"file:\\\\\\foo/bar\\baz", 0, 0, S_OK, "file:///foo/bar/baz"},
-    {"file:\\\\localhost\\foo/bar\\baz", 0, 0, S_OK, "file:///foo/bar/baz"},
-    {"file:///f oo/b?a r\\baz", 0, 0, S_OK, "file:///f%20oo/b?a r\\baz"},
-    {"file:///foo/b#a r\\baz", 0, 0, S_OK, "file:///foo/b%23a%20r/baz"},
-    {"file:///f o^&`{}|][\"<>\\%o/b#a r\\baz", 0, 0, S_OK, "file:///f%20o%5E%26%60%7B%7D%7C%5D%5B%22%3C%3E/%o/b%23a%20r/baz"},
-    {"file:///f o%o/b?a r\\b%az", URL_ESCAPE_PERCENT, 0, S_OK, "file:///f%20o%25o/b?a r\\b%az"},
-    {"file:/foo/bar\\baz", URL_ESCAPE_SEGMENT_ONLY, 0, S_OK, "file:%2Ffoo%2Fbar%5Cbaz"},
+    {"file://////foo/bar\\baz", 0, "file://foo/bar/baz"},
+    {"file://///foo/bar\\baz", 0, "file://foo/bar/baz"},
+    {"file:////foo/bar\\baz", 0, "file://foo/bar/baz"},
+    {"file:///localhost/foo/bar\\baz", 0, "file:///localhost/foo/bar/baz"},
+    {"file:///foo/bar\\baz", 0, "file:///foo/bar/baz"},
+    {"file://loCalHost/foo/bar\\baz", 0, "file:///foo/bar/baz"},
+    {"file://foo/bar\\baz", 0, "file://foo/bar/baz"},
+    {"file:/localhost/foo/bar\\baz", 0, "file:///localhost/foo/bar/baz"},
+    {"file:/foo/bar\\baz", 0, "file:///foo/bar/baz"},
+    {"file:foo/bar\\baz", 0, "file:foo/bar/baz"},
+    {"file:\\foo/bar\\baz", 0, "file:///foo/bar/baz"},
+    {"file:\\\\foo/bar\\baz", 0, "file://foo/bar/baz"},
+    {"file:\\\\\\foo/bar\\baz", 0, "file:///foo/bar/baz"},
+    {"file:\\\\localhost\\foo/bar\\baz", 0, "file:///foo/bar/baz"},
+    {"file:///f oo/b?a r\\baz", 0, "file:///f%20oo/b?a r\\baz"},
+    {"file:///foo/b#a r\\baz", 0, "file:///foo/b%23a%20r/baz"},
+    {"file:///f o^&`{}|][\"<>\\%o/b#a r\\baz", 0, "file:///f%20o%5E%26%60%7B%7D%7C%5D%5B%22%3C%3E/%o/b%23a%20r/baz"},
+    {"file:///f o%o/b?a r\\b%az", URL_ESCAPE_PERCENT, "file:///f%20o%25o/b?a r\\b%az"},
+    {"file:/foo/bar\\baz", URL_ESCAPE_SEGMENT_ONLY, "file:%2Ffoo%2Fbar%5Cbaz"},
 
-    {"foo/b%ar\\ba?z\\", URL_ESCAPE_SEGMENT_ONLY, 0, S_OK, "foo%2Fb%ar%5Cba%3Fz%5C"},
-    {"foo/b%ar\\ba?z\\", URL_ESCAPE_PERCENT | URL_ESCAPE_SEGMENT_ONLY, 0, S_OK, "foo%2Fb%25ar%5Cba%3Fz%5C"},
-    {"foo/bar\\ba?z\\", 0, 0, S_OK, "foo/bar%5Cba?z\\"},
-    {"/foo/bar\\ba?z\\", 0, 0, S_OK, "/foo/bar%5Cba?z\\"},
-    {"/foo/bar\\ba#z\\", 0, 0, S_OK, "/foo/bar%5Cba#z\\"},
-    {"/foo/%5C", 0, 0, S_OK, "/foo/%5C"},
-    {"/foo/%5C", URL_ESCAPE_PERCENT, 0, S_OK, "/foo/%255C"},
+    {"foo/b%ar\\ba?z\\", URL_ESCAPE_SEGMENT_ONLY, "foo%2Fb%ar%5Cba%3Fz%5C"},
+    {"foo/b%ar\\ba?z\\", URL_ESCAPE_PERCENT | URL_ESCAPE_SEGMENT_ONLY, "foo%2Fb%25ar%5Cba%3Fz%5C"},
+    {"foo/bar\\ba?z\\", 0, "foo/bar%5Cba?z\\"},
+    {"/foo/bar\\ba?z\\", 0, "/foo/bar%5Cba?z\\"},
+    {"/foo/bar\\ba#z\\", 0, "/foo/bar%5Cba#z\\"},
+    {"/foo/%5C", 0, "/foo/%5C"},
+    {"/foo/%5C", URL_ESCAPE_PERCENT, "/foo/%255C"},
 
-    {"http://////foo/bar\\baz", 0, 0, S_OK, "http://////foo/bar/baz"},
-    {"http://///foo/bar\\baz", 0, 0, S_OK, "http://///foo/bar/baz"},
-    {"http:////foo/bar\\baz", 0, 0, S_OK, "http:////foo/bar/baz"},
-    {"http:///foo/bar\\baz", 0, 0, S_OK, "http:///foo/bar/baz"},
-    {"http://localhost/foo/bar\\baz", 0, 0, S_OK, "http://localhost/foo/bar/baz"},
-    {"http://foo/bar\\baz", 0, 0, S_OK, "http://foo/bar/baz"},
-    {"http:/foo/bar\\baz", 0, 0, S_OK, "http:/foo/bar/baz"},
-    {"http:foo/bar\\ba?z\\", 0, 0, S_OK, "http:foo%2Fbar%2Fba?z\\"},
-    {"http:foo/bar\\ba#z\\", 0, 0, S_OK, "http:foo%2Fbar%2Fba#z\\"},
-    {"http:\\foo/bar\\baz", 0, 0, S_OK, "http:/foo/bar/baz"},
-    {"http:\\\\foo/bar\\baz", 0, 0, S_OK, "http://foo/bar/baz"},
-    {"http:\\\\\\foo/bar\\baz", 0, 0, S_OK, "http:///foo/bar/baz"},
-    {"http:\\\\\\\\foo/bar\\baz", 0, 0, S_OK, "http:////foo/bar/baz"},
-    {"http:/fo ?o/b ar\\baz", 0, 0, S_OK, "http:/fo%20?o/b ar\\baz"},
-    {"http:fo ?o/b ar\\baz", 0, 0, S_OK, "http:fo%20?o/b ar\\baz"},
-    {"http:/foo/bar\\baz", URL_ESCAPE_SEGMENT_ONLY, 0, S_OK, "http:%2Ffoo%2Fbar%5Cbaz"},
+    {"http://////foo/bar\\baz", 0, "http://////foo/bar/baz"},
+    {"http://///foo/bar\\baz", 0, "http://///foo/bar/baz"},
+    {"http:////foo/bar\\baz", 0, "http:////foo/bar/baz"},
+    {"http:///foo/bar\\baz", 0, "http:///foo/bar/baz"},
+    {"http://localhost/foo/bar\\baz", 0, "http://localhost/foo/bar/baz"},
+    {"http://foo/bar\\baz", 0, "http://foo/bar/baz"},
+    {"http:/foo/bar\\baz", 0, "http:/foo/bar/baz"},
+    {"http:foo/bar\\ba?z\\", 0, "http:foo%2Fbar%2Fba?z\\"},
+    {"http:foo/bar\\ba#z\\", 0, "http:foo%2Fbar%2Fba#z\\"},
+    {"http:\\foo/bar\\baz", 0, "http:/foo/bar/baz"},
+    {"http:\\\\foo/bar\\baz", 0, "http://foo/bar/baz"},
+    {"http:\\\\\\foo/bar\\baz", 0, "http:///foo/bar/baz"},
+    {"http:\\\\\\\\foo/bar\\baz", 0, "http:////foo/bar/baz"},
+    {"http:/fo ?o/b ar\\baz", 0, "http:/fo%20?o/b ar\\baz"},
+    {"http:fo ?o/b ar\\baz", 0, "http:fo%20?o/b ar\\baz"},
+    {"http:/foo/bar\\baz", URL_ESCAPE_SEGMENT_ONLY, "http:%2Ffoo%2Fbar%5Cbaz"},
 
-    {"https://foo/bar\\baz", 0, 0, S_OK, "https://foo/bar/baz"},
-    {"https:/foo/bar\\baz", 0, 0, S_OK, "https:/foo/bar/baz"},
-    {"https:\\foo/bar\\baz", 0, 0, S_OK, "https:/foo/bar/baz"},
+    {"https://foo/bar\\baz", 0, "https://foo/bar/baz"},
+    {"https:/foo/bar\\baz", 0, "https:/foo/bar/baz"},
+    {"https:\\foo/bar\\baz", 0, "https:/foo/bar/baz"},
 
-    {"foo:////foo/bar\\baz", 0, 0, S_OK, "foo:////foo/bar%5Cbaz"},
-    {"foo:///foo/bar\\baz", 0, 0, S_OK, "foo:///foo/bar%5Cbaz"},
-    {"foo://localhost/foo/bar\\baz", 0, 0, S_OK, "foo://localhost/foo/bar%5Cbaz"},
-    {"foo://foo/bar\\baz", 0, 0, S_OK, "foo://foo/bar%5Cbaz"},
-    {"foo:/foo/bar\\baz", 0, 0, S_OK, "foo:/foo/bar%5Cbaz"},
-    {"foo:foo/bar\\baz", 0, 0, S_OK, "foo:foo%2Fbar%5Cbaz"},
-    {"foo:\\foo/bar\\baz", 0, 0, S_OK, "foo:%5Cfoo%2Fbar%5Cbaz"},
-    {"foo:/foo/bar\\ba?\\z", 0, 0, S_OK, "foo:/foo/bar%5Cba?\\z"},
-    {"foo:/foo/bar\\ba#\\z", 0, 0, S_OK, "foo:/foo/bar%5Cba#\\z"},
+    {"foo:////foo/bar\\baz", 0, "foo:////foo/bar%5Cbaz"},
+    {"foo:///foo/bar\\baz", 0, "foo:///foo/bar%5Cbaz"},
+    {"foo://localhost/foo/bar\\baz", 0, "foo://localhost/foo/bar%5Cbaz"},
+    {"foo://foo/bar\\baz", 0, "foo://foo/bar%5Cbaz"},
+    {"foo:/foo/bar\\baz", 0, "foo:/foo/bar%5Cbaz"},
+    {"foo:foo/bar\\baz", 0, "foo:foo%2Fbar%5Cbaz"},
+    {"foo:\\foo/bar\\baz", 0, "foo:%5Cfoo%2Fbar%5Cbaz"},
+    {"foo:/foo/bar\\ba?\\z", 0, "foo:/foo/bar%5Cba?\\z"},
+    {"foo:/foo/bar\\ba#\\z", 0, "foo:/foo/bar%5Cba#\\z"},
 
-    {"mailto:/fo/o@b\\%a?\\r.b#\\az", 0, 0, S_OK, "mailto:%2Ffo%2Fo@b%5C%a%3F%5Cr.b%23%5Caz"},
-    {"mailto:fo/o@b\\%a?\\r.b#\\az", 0, 0, S_OK, "mailto:fo%2Fo@b%5C%a%3F%5Cr.b%23%5Caz"},
-    {"mailto:fo/o@b\\%a?\\r.b#\\az", URL_ESCAPE_PERCENT, 0, S_OK, "mailto:fo%2Fo@b%5C%25a%3F%5Cr.b%23%5Caz"},
+    {"mailto:/fo/o@b\\%a?\\r.b#\\az", 0, "mailto:%2Ffo%2Fo@b%5C%a%3F%5Cr.b%23%5Caz"},
+    {"mailto:fo/o@b\\%a?\\r.b#\\az", 0, "mailto:fo%2Fo@b%5C%a%3F%5Cr.b%23%5Caz"},
+    {"mailto:fo/o@b\\%a?\\r.b#\\az", URL_ESCAPE_PERCENT, "mailto:fo%2Fo@b%5C%25a%3F%5Cr.b%23%5Caz"},
 
-    {"ftp:fo/o@bar.baz/foo/bar", 0, 0, S_OK, "ftp:fo%2Fo@bar.baz%2Ffoo%2Fbar"},
-    {"ftp:/fo/o@bar.baz/foo/bar", 0, 0, S_OK, "ftp:/fo/o@bar.baz/foo/bar"},
-    {"ftp://fo/o@bar.baz/fo?o\\bar", 0, 0, S_OK, "ftp://fo/o@bar.baz/fo?o\\bar"},
-    {"ftp://fo/o@bar.baz/fo#o\\bar", 0, 0, S_OK, "ftp://fo/o@bar.baz/fo#o\\bar"},
-    {"ftp://localhost/o@bar.baz/fo#o\\bar", 0, 0, S_OK, "ftp://localhost/o@bar.baz/fo#o\\bar"},
-    {"ftp:///fo/o@bar.baz/foo/bar", 0, 0, S_OK, "ftp:///fo/o@bar.baz/foo/bar"},
-    {"ftp:////fo/o@bar.baz/foo/bar", 0, 0, S_OK, "ftp:////fo/o@bar.baz/foo/bar"},
+    {"ftp:fo/o@bar.baz/foo/bar", 0, "ftp:fo%2Fo@bar.baz%2Ffoo%2Fbar"},
+    {"ftp:/fo/o@bar.baz/foo/bar", 0, "ftp:/fo/o@bar.baz/foo/bar"},
+    {"ftp://fo/o@bar.baz/fo?o\\bar", 0, "ftp://fo/o@bar.baz/fo?o\\bar"},
+    {"ftp://fo/o@bar.baz/fo#o\\bar", 0, "ftp://fo/o@bar.baz/fo#o\\bar"},
+    {"ftp://localhost/o@bar.baz/fo#o\\bar", 0, "ftp://localhost/o@bar.baz/fo#o\\bar"},
+    {"ftp:///fo/o@bar.baz/foo/bar", 0, "ftp:///fo/o@bar.baz/foo/bar"},
+    {"ftp:////fo/o@bar.baz/foo/bar", 0, "ftp:////fo/o@bar.baz/foo/bar"},
 
-    {"ftp\x1f\1end/", 0, 0, S_OK, "ftp%1F%01end/"}
+    {"ftp\x1f\1end/", 0, "ftp%1F%01end/"}
 };
 
 typedef struct _TEST_URL_ESCAPEW {
@@ -869,8 +867,7 @@ static void test_UrlEscapeA(void)
 
         size = INTERNET_MAX_URL_LENGTH;
         ret = UrlEscapeA(TEST_ESCAPE[i].url, ret_url, &size, TEST_ESCAPE[i].flags);
-        ok(ret == TEST_ESCAPE[i].expectret, "UrlEscapeA returned 0x%08x instead of 0x%08x for \"%s\"\n",
-            ret, TEST_ESCAPE[i].expectret, TEST_ESCAPE[i].url);
+        ok(ret == S_OK, "Got unexpected hr %#x for %s.\n", ret, debugstr_a(TEST_ESCAPE[i].url));
         ok(!strcmp(ret_url, TEST_ESCAPE[i].expecturl), "Expected \"%s\", but got \"%s\" for \"%s\"\n",
             TEST_ESCAPE[i].expecturl, ret_url, TEST_ESCAPE[i].url);
     }
@@ -953,8 +950,7 @@ static void test_UrlEscapeW(void)
         urlW = GetWideString(TEST_ESCAPE[i].url);
         expected_urlW = GetWideString(TEST_ESCAPE[i].expecturl);
         ret = UrlEscapeW(urlW, ret_urlW, &size, TEST_ESCAPE[i].flags);
-        ok(ret == TEST_ESCAPE[i].expectret, "UrlEscapeW returned 0x%08x instead of 0x%08x for %s\n",
-           ret, TEST_ESCAPE[i].expectret, wine_dbgstr_w(urlW));
+        ok(ret == S_OK, "Got unexpected hr %#x for %s.\n", ret, debugstr_w(urlW));
         ok(!lstrcmpW(ret_urlW, expected_urlW), "Expected %s, but got %s for %s flags %08x\n",
             wine_dbgstr_w(expected_urlW), wine_dbgstr_w(ret_urlW), wine_dbgstr_w(urlW), TEST_ESCAPE[i].flags);
         FreeWideString(urlW);
