@@ -612,11 +612,11 @@ DEFINE_RTTI_DATA0(basic_streambuf_wchar, 0,
 DEFINE_RTTI_DATA0(basic_streambuf_short, 0,
         ".?AV?$basic_streambuf@GU?$char_traits@G@std@@@std@@")
 DEFINE_RTTI_DATA1(basic_filebuf_char, 0, &basic_streambuf_char_rtti_base_descriptor,
-        ".?AV?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@")
-DEFINE_RTTI_DATA1(basic_filebuf_wchar, 0, &basic_streambuf_wchar_rtti_base_descriptor,
-        ".?AV?$basic_filebuf@GU?$char_traits@G@std@@@std@@")
-DEFINE_RTTI_DATA1(basic_filebuf_short, 0, &basic_streambuf_short_rtti_base_descriptor,
         ".?AV?$basic_filebuf@DU?$char_traits@D@std@@@std@@")
+DEFINE_RTTI_DATA1(basic_filebuf_wchar, 0, &basic_streambuf_wchar_rtti_base_descriptor,
+        ".?AV?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@")
+DEFINE_RTTI_DATA1(basic_filebuf_short, 0, &basic_streambuf_short_rtti_base_descriptor,
+        ".?AV?$basic_filebuf@GU?$char_traits@G@std@@@std@@")
 DEFINE_RTTI_DATA1(basic_stringbuf_char, 0, &basic_streambuf_char_rtti_base_descriptor,
         ".?AV?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@")
 DEFINE_RTTI_DATA1(basic_stringbuf_wchar, 0, &basic_streambuf_wchar_rtti_base_descriptor,
@@ -10653,8 +10653,8 @@ basic_istream_wchar* __thiscall basic_istream_wchar_read_long(basic_istream_wcha
                 IOS_LOCALE(basic_istream_wchar_get_basic_ios(this)->strbuf)));
 }
 
-/* ??5?$basic_istream@_WU?$char_traits@_W@std@@@std@@QAEAAV01@AAJ@Z */
-/* ??5?$basic_istream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV01@AEAJ@Z */
+/* ??5?$basic_istream@GU?$char_traits@G@std@@@std@@QAEAAV01@AAJ@Z */
+/* ??5?$basic_istream@GU?$char_traits@G@std@@@std@@QEAAAEAV01@AEAJ@Z */
 DEFINE_THISCALL_WRAPPER(basic_istream_short_read_long, 8)
 basic_istream_wchar* __thiscall basic_istream_short_read_long(basic_istream_wchar *this, LONG *v)
 {
