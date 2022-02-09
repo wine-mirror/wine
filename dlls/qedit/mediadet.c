@@ -79,7 +79,7 @@ static HRESULT get_filter_info(IMoniker *moniker, GUID *clsid, VARIANT *var)
 
     if (FAILED(hr = IMoniker_BindToStorage(moniker, NULL, NULL, &IID_IPropertyBag, (void **)&prop_bag)))
     {
-        ERR("Failed to get property bag, hr %#x.\n", hr);
+        ERR("Failed to get property bag, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -87,7 +87,7 @@ static HRESULT get_filter_info(IMoniker *moniker, GUID *clsid, VARIANT *var)
     V_VT(var) = VT_BSTR;
     if (FAILED(hr = IPropertyBag_Read(prop_bag, L"CLSID", var, NULL)))
     {
-        ERR("Failed to get CLSID, hr %#x.\n", hr);
+        ERR("Failed to get CLSID, hr %#lx.\n", hr);
         IPropertyBag_Release(prop_bag);
         return hr;
     }
@@ -95,7 +95,7 @@ static HRESULT get_filter_info(IMoniker *moniker, GUID *clsid, VARIANT *var)
     VariantClear(var);
 
     if (FAILED(hr = IPropertyBag_Read(prop_bag, L"FriendlyName", var, NULL)))
-        ERR("Failed to get name, hr %#x.\n", hr);
+        ERR("Failed to get name, hr %#lx.\n", hr);
 
     IPropertyBag_Release(prop_bag);
     return hr;
@@ -135,20 +135,20 @@ static HRESULT find_splitter(MediaDetImpl *detector)
 
     if (FAILED(hr = IBaseFilter_EnumPins(detector->source, &enum_pins)))
     {
-        ERR("Failed to enumerate source pins, hr %#x.\n", hr);
+        ERR("Failed to enumerate source pins, hr %#lx.\n", hr);
         return hr;
     }
     hr = IEnumPins_Next(enum_pins, 1, &source_pin, NULL);
     IEnumPins_Release(enum_pins);
     if (hr != S_OK)
     {
-        ERR("Failed to get source pin, hr %#x.\n", hr);
+        ERR("Failed to get source pin, hr %#lx.\n", hr);
         return hr;
     }
 
     if (FAILED(hr = get_pin_media_type(source_pin, &mt)))
     {
-        ERR("Failed to get media type, hr %#x.\n", hr);
+        ERR("Failed to get media type, hr %#lx.\n", hr);
         IPin_Release(source_pin);
         return hr;
     }
@@ -248,28 +248,28 @@ static HRESULT WINAPI MediaDet_inner_QueryInterface(IUnknown *iface, REFIID riid
 
 static ULONG WINAPI MediaDet_inner_AddRef(IUnknown *iface)
 {
-    MediaDetImpl *This = impl_from_IUnknown(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
+    MediaDetImpl *detector = impl_from_IUnknown(iface);
+    ULONG refcount = InterlockedIncrement(&detector->ref);
 
-    TRACE("(%p) new ref = %u\n", This, ref);
+    TRACE("%p increasing refcount to %lu.\n", detector, refcount);
 
-    return ref;
+    return refcount;
 }
 
 static ULONG WINAPI MediaDet_inner_Release(IUnknown *iface)
 {
-    MediaDetImpl *This = impl_from_IUnknown(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
+    MediaDetImpl *detector = impl_from_IUnknown(iface);
+    ULONG refcount = InterlockedDecrement(&detector->ref);
 
-    TRACE("(%p) new ref = %u\n", This, ref);
+    TRACE("%p decreasing refcount to %lu.\n", detector, refcount);
 
-    if (ref == 0)
+    if (!refcount)
     {
-        MD_cleanup(This);
-        CoTaskMemFree(This);
+        MD_cleanup(detector);
+        CoTaskMemFree(detector);
     }
 
-    return ref;
+    return refcount;
 }
 
 static const IUnknownVtbl mediadet_vtbl =
@@ -464,7 +464,7 @@ static HRESULT WINAPI MediaDet_put_CurrentStream(IMediaDet* iface, LONG newVal)
     MediaDetImpl *This = impl_from_IMediaDet(iface);
     HRESULT hr;
 
-    TRACE("(%p)->(%d)\n", This, newVal);
+    TRACE("detector %p, index %ld.\n", This, newVal);
 
     if (This->num_streams == -1)
     {
@@ -623,7 +623,7 @@ static HRESULT WINAPI MediaDet_GetBitmapBits(IMediaDet* iface,
                                              LONG Width, LONG Height)
 {
     MediaDetImpl *This = impl_from_IMediaDet(iface);
-    FIXME("(%p)->(%f %p %p %d %d): not implemented!\n", This, StreamTime, pBufferSize, pBuffer,
+    FIXME("(%p)->(%.16e %p %p %ld %ld): not implemented!\n", This, StreamTime, pBufferSize, pBuffer,
           Width, Height);
     return E_NOTIMPL;
 }
@@ -633,7 +633,7 @@ static HRESULT WINAPI MediaDet_WriteBitmapBits(IMediaDet* iface,
                                                LONG Height, BSTR Filename)
 {
     MediaDetImpl *This = impl_from_IMediaDet(iface);
-    FIXME("(%p)->(%f %d %d %p): not implemented!\n", This, StreamTime, Width, Height, Filename);
+    FIXME("(%p)->(%.16e %ld %ld %p): not implemented!\n", This, StreamTime, Width, Height, Filename);
     return E_NOTIMPL;
 }
 

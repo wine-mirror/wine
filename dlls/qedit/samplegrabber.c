@@ -163,7 +163,7 @@ static void SampleGrabber_callback(struct sample_grabber *This, IMediaSample *sa
 		ref = IMediaSample_Release(sample) + 1 - ref;
 		if (ref)
 		{
-		    ERR("(%p) Callback referenced sample %p by %u\n", This, sample, ref);
+		    ERR("(%p) Callback referenced sample %p by %lu\n", This, sample, ref);
 		    /* ugly as hell but some apps are sooo buggy */
 		    while (ref--)
 			IMediaSample_Release(sample);
@@ -181,7 +181,7 @@ static void SampleGrabber_callback(struct sample_grabber *This, IMediaSample *sa
         case -1:
             break;
         default:
-            FIXME("unsupported method %d\n", This->grabberMethod);
+            FIXME("Unknown method %ld.\n", This->grabberMethod);
             /* do not bother us again */
             This->grabberMethod = -1;
     }
@@ -315,7 +315,9 @@ static HRESULT WINAPI
 SampleGrabber_ISampleGrabber_SetCallback(ISampleGrabber *iface, ISampleGrabberCB *cb, LONG whichMethod)
 {
     struct sample_grabber *This = impl_from_ISampleGrabber(iface);
-    TRACE("(%p)->(%p, %u)\n", This, cb, whichMethod);
+
+    TRACE("filter %p, callback %p, method %ld.\n", This, cb, whichMethod);
+
     if (This->grabberIface)
         ISampleGrabberCB_Release(This->grabberIface);
     This->grabberIface = cb;
@@ -413,7 +415,9 @@ SampleGrabber_IMemInputPin_ReceiveMultiple(IMemInputPin *iface, IMediaSample **s
 {
     struct sample_grabber *This = impl_from_IMemInputPin(iface);
     LONG idx;
-    TRACE("(%p)->(%p, %u, %p) output = %p, grabber = %p\n", This, samples, nSamples, nProcessed, This->source.pMemInputPin, This->grabberIface);
+
+    TRACE("filter %p, samples %p, count %lu, ret_count %p.\n", This, samples, nSamples, nProcessed);
+
     if (!samples || !nProcessed)
         return E_POINTER;
     if ((This->filter.state != State_Running) || (This->oneShot == OneShot_Past))
@@ -615,7 +619,7 @@ static HRESULT WINAPI sample_grabber_source_DecideAllocator(struct strmbase_sour
         if (FAILED(hr = IFilterGraph_QueryInterface(filter->filter.graph,
                 &IID_IFilterGraph2, (void **)&graph)))
         {
-            ERR("Failed to get IFilterGraph2 interface, hr %#x.\n", hr);
+            ERR("Failed to get IFilterGraph2 interface, hr %#lx.\n", hr);
             return hr;
         }
 
