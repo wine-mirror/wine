@@ -50,7 +50,7 @@ HRESULT CALLBACK IDispatchEx_InvokeEx_Proxy(IDispatchEx* This, DISPID id, LCID l
     UINT *ref_idx = &dummy_idx;
     DWORD dword_flags = wFlags & 0xf;
 
-    TRACE("(%p)->(%08x, %04x, %04x, %p, %p, %p, %p)\n", This, id, lcid, wFlags,
+    TRACE("(%p)->(%08lx, %04lx, %04x, %p, %p, %p, %p)\n", This, id, lcid, wFlags,
           pdp, pvarRes, pei, pspCaller);
 
     if(!pvarRes)
@@ -118,7 +118,7 @@ HRESULT __RPC_STUB IDispatchEx_InvokeEx_Stub(IDispatchEx* This, DISPID id, LCID 
     UINT arg;
     VARTYPE *vt_list = NULL;
 
-    TRACE("(%p)->(%08x, %04x, %08x, %p, %p, %p, %p, %d, %p, %p)\n", This, id, lcid, dwFlags,
+    TRACE("(%p)->(%08lx, %04lx, %08lx, %p, %p, %p, %p, %d, %p, %p)\n", This, id, lcid, dwFlags,
           pdp, result, pei, pspCaller, byref_args, ref_idx, ref_arg);
 
     VariantInit(result);
