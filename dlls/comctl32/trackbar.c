@@ -899,6 +899,7 @@ TRACKBAR_Refresh (TRACKBAR_INFO *infoPtr, HDC hdcDst)
     HBITMAP hOldBmp = 0, hOffScreenBmp = 0;
     NMCUSTOMDRAW nmcd;
     int gcdrf, icdrf;
+    HBRUSH brush;
 
     if (infoPtr->flags & TB_THUMBCHANGED) {
         TRACKBAR_UpdateThumb (infoPtr);
@@ -943,14 +944,9 @@ TRACKBAR_Refresh (TRACKBAR_INFO *infoPtr, HDC hdcDst)
     /* Erase background */
     if (gcdrf == CDRF_DODEFAULT ||
         notify_customdraw(infoPtr, &nmcd, CDDS_PREERASE) != CDRF_SKIPDEFAULT) {
-        if (GetWindowTheme (infoPtr->hwndSelf)) {
-            DrawThemeParentBackground (infoPtr->hwndSelf, hdc, 0);
-        }
-        else {
-            HBRUSH brush = (HBRUSH)SendMessageW(infoPtr->hwndNotify, WM_CTLCOLORSTATIC,
-                    (WPARAM)hdc, (LPARAM)infoPtr->hwndSelf);
-            FillRect (hdc, &rcClient, brush ? brush : GetSysColorBrush(COLOR_BTNFACE));
-        }
+        brush = (HBRUSH)SendMessageW(infoPtr->hwndNotify, WM_CTLCOLORSTATIC, (WPARAM)hdc,
+                                     (LPARAM)infoPtr->hwndSelf);
+        FillRect(hdc, &rcClient, brush ? brush : GetSysColorBrush(COLOR_BTNFACE));
         if (gcdrf != CDRF_DODEFAULT)
 	    notify_customdraw(infoPtr, &nmcd, CDDS_POSTERASE);
     }

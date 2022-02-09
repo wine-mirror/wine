@@ -883,7 +883,7 @@ static void test_themed_background(void)
         {WC_TABCONTROLA, 0, drawthemeparentbackground_seq, TRUE},
         {TOOLBARCLASSNAMEA, 0, empty_seq, TRUE},
         {TOOLTIPS_CLASSA, 0, empty_seq},
-        {TRACKBAR_CLASSA, 0, wm_ctlcolorstatic_seq, TRUE},
+        {TRACKBAR_CLASSA, 0, wm_ctlcolorstatic_seq},
         {WC_TREEVIEWA, 0, treeview_seq},
         {UPDOWN_CLASSA, 0, empty_seq},
         {WC_SCROLLBARA, 0, scrollbar_seq, TRUE},
