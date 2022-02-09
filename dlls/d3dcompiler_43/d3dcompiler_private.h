@@ -35,6 +35,7 @@
 #include "d3dcompiler.h"
 
 #include <assert.h>
+#include <stdint.h>
 
 /*
  * This doesn't belong here, but for some functions it is possible to return that value,
@@ -66,31 +67,36 @@ enum bwriter_comparison_type
     BWRITER_COMPARISON_LE
 };
 
-struct constant {
-    DWORD                   regnum;
-    union {
+struct constant
+{
+    unsigned int regnum;
+    union
+    {
         float               f;
-        INT                 i;
+        int                 i;
         BOOL                b;
-        DWORD               d;
-    }                       value[4];
+        uint32_t            d;
+    } value[4];
 };
 
-struct shader_reg {
-    DWORD                   type;
-    DWORD                   regnum;
-    struct shader_reg       *rel_reg;
-    DWORD                   srcmod;
-    union {
-        DWORD               swizzle;
-        DWORD               writemask;
-    } u;
+struct shader_reg
+{
+    uint32_t type;
+    unsigned int regnum;
+    struct shader_reg *rel_reg;
+    uint32_t srcmod;
+    union
+    {
+        uint32_t swizzle;
+        uint32_t writemask;
+    };
 };
 
-struct instruction {
-    DWORD                   opcode;
-    DWORD                   dstmod;
-    DWORD                   shift;
+struct instruction
+{
+    uint32_t                opcode;
+    uint32_t                dstmod;
+    uint32_t                shift;
     enum bwriter_comparison_type comptype;
     BOOL                    has_dst;
     struct shader_reg       dst;
@@ -101,21 +107,24 @@ struct instruction {
     BOOL                    coissue;
 };
 
-struct declaration {
-    DWORD                   usage, usage_idx;
-    DWORD                   regnum;
-    DWORD                   mod;
-    DWORD                   writemask;
+struct declaration
+{
+    uint32_t                usage, usage_idx;
+    uint32_t                regnum;
+    uint32_t                mod;
+    uint32_t                writemask;
     BOOL                    builtin;
 };
 
-struct samplerdecl {
-    DWORD                   type;
-    DWORD                   regnum;
-    DWORD                   mod;
+struct samplerdecl
+{
+    uint32_t                type;
+    uint32_t                regnum;
+    uint32_t                mod;
 };
 
-struct bwriter_shader {
+struct bwriter_shader
+{
     enum shader_type        type;
     unsigned char major_version, minor_version;
 
@@ -163,25 +172,28 @@ struct asm_parser;
 /* This structure is only used in asmshader.y, but since the .l file accesses the semantic types
  * too it has to know it as well
  */
-struct rel_reg {
+struct rel_reg
+{
     BOOL            has_rel_reg;
-    DWORD           type;
-    DWORD           additional_offset;
-    DWORD           rel_regnum;
-    DWORD           swizzle;
+    uint32_t        type;
+    uint32_t        additional_offset;
+    uint32_t        rel_regnum;
+    uint32_t        swizzle;
 };
 
 #define MAX_SRC_REGS 4
 
-struct src_regs {
+struct src_regs
+{
     struct shader_reg reg[MAX_SRC_REGS];
     unsigned int      count;
 };
 
-struct asmparser_backend {
-    void (*constF)(struct asm_parser *This, DWORD reg, float x, float y, float z, float w);
-    void (*constI)(struct asm_parser *This, DWORD reg, INT x, INT y, INT z, INT w);
-    void (*constB)(struct asm_parser *This, DWORD reg, BOOL x);
+struct asmparser_backend
+{
+    void (*constF)(struct asm_parser *This, uint32_t reg, float x, float y, float z, float w);
+    void (*constI)(struct asm_parser *This, uint32_t reg, int x, int y, int z, int w);
+    void (*constB)(struct asm_parser *This, uint32_t reg, BOOL x);
 
     void (*dstreg)(struct asm_parser *This, struct instruction *instr,
                    const struct shader_reg *dst);
@@ -192,28 +204,28 @@ struct asmparser_backend {
                       const struct shader_reg *predicate);
     void (*coissue)(struct asm_parser *This);
 
-    void (*dcl_output)(struct asm_parser *This, DWORD usage, DWORD num,
+    void (*dcl_output)(struct asm_parser *This, uint32_t usage, uint32_t num,
                        const struct shader_reg *reg);
-    void (*dcl_input)(struct asm_parser *This, DWORD usage, DWORD num,
-                      DWORD mod, const struct shader_reg *reg);
-    void (*dcl_sampler)(struct asm_parser *This, DWORD samptype, DWORD mod,
-                        DWORD regnum, unsigned int line_no);
+    void (*dcl_input)(struct asm_parser *This, uint32_t usage, uint32_t num,
+                      uint32_t mod, const struct shader_reg *reg);
+    void (*dcl_sampler)(struct asm_parser *This, uint32_t samptype, uint32_t mod,
+                        uint32_t regnum, unsigned int line_no);
 
     void (*end)(struct asm_parser *This);
 
-    void (*instr)(struct asm_parser *parser, DWORD opcode, DWORD mod, DWORD shift,
+    void (*instr)(struct asm_parser *parser, uint32_t opcode, uint32_t mod, uint32_t shift,
             enum bwriter_comparison_type comp, const struct shader_reg *dst,
             const struct src_regs *srcs, int expectednsrcs);
 };
 
 struct instruction *alloc_instr(unsigned int srcs) DECLSPEC_HIDDEN;
 BOOL add_instruction(struct bwriter_shader *shader, struct instruction *instr) DECLSPEC_HIDDEN;
-BOOL add_constF(struct bwriter_shader *shader, DWORD reg, float x, float y, float z, float w) DECLSPEC_HIDDEN;
-BOOL add_constI(struct bwriter_shader *shader, DWORD reg, INT x, INT y, INT z, INT w) DECLSPEC_HIDDEN;
-BOOL add_constB(struct bwriter_shader *shader, DWORD reg, BOOL x) DECLSPEC_HIDDEN;
-BOOL record_declaration(struct bwriter_shader *shader, DWORD usage, DWORD usage_idx,
-        DWORD mod, BOOL output, DWORD regnum, DWORD writemask, BOOL builtin) DECLSPEC_HIDDEN;
-BOOL record_sampler(struct bwriter_shader *shader, DWORD samptype, DWORD mod, DWORD regnum) DECLSPEC_HIDDEN;
+BOOL add_constF(struct bwriter_shader *shader, uint32_t reg, float x, float y, float z, float w) DECLSPEC_HIDDEN;
+BOOL add_constI(struct bwriter_shader *shader, uint32_t reg, int x, int y, int z, int w) DECLSPEC_HIDDEN;
+BOOL add_constB(struct bwriter_shader *shader, uint32_t reg, BOOL x) DECLSPEC_HIDDEN;
+BOOL record_declaration(struct bwriter_shader *shader, uint32_t usage, uint32_t usage_idx,
+        uint32_t mod, BOOL output, uint32_t regnum, uint32_t writemask, BOOL builtin) DECLSPEC_HIDDEN;
+BOOL record_sampler(struct bwriter_shader *shader, uint32_t samptype, uint32_t mod, uint32_t regnum) DECLSPEC_HIDDEN;
 
 #define MESSAGEBUFFER_INITIAL_SIZE 256
 
@@ -280,13 +292,13 @@ static inline void set_parse_status(enum parse_status *current, enum parse_statu
 }
 
 /* Debug utility routines */
-const char *debug_print_srcmod(DWORD mod) DECLSPEC_HIDDEN;
-const char *debug_print_dstmod(DWORD mod) DECLSPEC_HIDDEN;
-const char *debug_print_shift(DWORD shift) DECLSPEC_HIDDEN;
+const char *debug_print_srcmod(uint32_t mod) DECLSPEC_HIDDEN;
+const char *debug_print_dstmod(uint32_t mod) DECLSPEC_HIDDEN;
+const char *debug_print_shift(uint32_t shift) DECLSPEC_HIDDEN;
 const char *debug_print_dstreg(const struct shader_reg *reg) DECLSPEC_HIDDEN;
 const char *debug_print_srcreg(const struct shader_reg *reg) DECLSPEC_HIDDEN;
-const char *debug_print_comp(DWORD comp) DECLSPEC_HIDDEN;
-const char *debug_print_opcode(DWORD opcode) DECLSPEC_HIDDEN;
+const char *debug_print_comp(uint32_t comp) DECLSPEC_HIDDEN;
+const char *debug_print_opcode(uint32_t opcode) DECLSPEC_HIDDEN;
 
 /* Used to signal an incorrect swizzle/writemask */
 #define SWIZZLE_ERR ~0U
@@ -516,7 +528,7 @@ enum bwriterdeclusage
 #define T3_REG          5
 
 struct bwriter_shader *SlAssembleShader(const char *text, char **messages) DECLSPEC_HIDDEN;
-HRESULT shader_write_bytecode(const struct bwriter_shader *shader, DWORD **result, DWORD *size) DECLSPEC_HIDDEN;
+HRESULT shader_write_bytecode(const struct bwriter_shader *shader, uint32_t **result, uint32_t *size) DECLSPEC_HIDDEN;
 void SlDeleteShader(struct bwriter_shader *shader) DECLSPEC_HIDDEN;
 
 #define MAKE_TAG(ch0, ch1, ch2, ch3) \
@@ -553,23 +565,24 @@ struct dxbc
 HRESULT dxbc_write_blob(struct dxbc *dxbc, ID3DBlob **blob) DECLSPEC_HIDDEN;
 void dxbc_destroy(struct dxbc *dxbc) DECLSPEC_HIDDEN;
 HRESULT dxbc_parse(const char *data, SIZE_T data_size, struct dxbc *dxbc) DECLSPEC_HIDDEN;
-HRESULT dxbc_add_section(struct dxbc *dxbc, DWORD tag, const char *data, DWORD data_size) DECLSPEC_HIDDEN;
+HRESULT dxbc_add_section(struct dxbc *dxbc, DWORD tag, const char *data, size_t data_size) DECLSPEC_HIDDEN;
 HRESULT dxbc_init(struct dxbc *dxbc, unsigned int size) DECLSPEC_HIDDEN;
 
-static inline DWORD read_dword(const char **ptr)
+static inline uint32_t read_u32(const char **ptr)
 {
-    DWORD r;
+    uint32_t r;
+
     memcpy(&r, *ptr, sizeof(r));
     *ptr += sizeof(r);
     return r;
 }
 
-static inline void write_dword(char **ptr, DWORD d)
+static inline void write_u32(char **ptr, uint32_t u32)
 {
-    memcpy(*ptr, &d, sizeof(d));
-    *ptr += sizeof(d);
+    memcpy(*ptr, &u32, sizeof(u32));
+    *ptr += sizeof(u32);
 }
 
-void skip_dword_unknown(const char **ptr, unsigned int count) DECLSPEC_HIDDEN;
+void skip_u32_unknown(const char **ptr, unsigned int count) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_D3DCOMPILER_PRIVATE_H */

@@ -36,7 +36,7 @@ enum D3DCOMPILER_SIGNATURE_ELEMENT_SIZE
 struct d3dcompiler_shader_signature
 {
     D3D11_SIGNATURE_PARAMETER_DESC *elements;
-    UINT element_count;
+    unsigned int element_count;
     char *string_data;
 };
 
@@ -45,7 +45,7 @@ struct d3dcompiler_shader_reflection_type
     ID3D11ShaderReflectionType ID3D11ShaderReflectionType_iface;
     ID3D10ShaderReflectionType ID3D10ShaderReflectionType_iface;
 
-    DWORD id;
+    uint32_t id;
     struct wine_rb_entry entry;
 
     struct d3dcompiler_shader_reflection *reflection;
@@ -58,7 +58,7 @@ struct d3dcompiler_shader_reflection_type
 struct d3dcompiler_shader_reflection_type_member
 {
     char *name;
-    DWORD offset;
+    uint32_t offset;
     struct d3dcompiler_shader_reflection_type *type;
 };
 
@@ -109,7 +109,7 @@ struct d3dcompiler_shader_reflection
 
     enum D3DCOMPILER_REFLECTION_VERSION interface_version;
 
-    DWORD target;
+    uint32_t target;
     char *creator;
     UINT flags;
     UINT version;
@@ -154,7 +154,7 @@ struct d3dcompiler_shader_reflection
     struct wine_rb_tree types;
 };
 
-static struct d3dcompiler_shader_reflection_type *get_reflection_type(struct d3dcompiler_shader_reflection *reflection, const char *data, DWORD offset);
+static struct d3dcompiler_shader_reflection_type *get_reflection_type(struct d3dcompiler_shader_reflection *reflection, const char *data, uint32_t offset);
 
 static const struct ID3D11ShaderReflectionConstantBufferVtbl d3dcompiler_shader_reflection_constant_buffer_vtbl;
 static const struct ID3D11ShaderReflectionVariableVtbl d3dcompiler_shader_reflection_variable_vtbl;
@@ -207,7 +207,7 @@ static BOOL copy_name(const char *ptr, char **name)
     return TRUE;
 }
 
-static BOOL copy_value(const char *ptr, void **value, DWORD size)
+static BOOL copy_value(const char *ptr, void **value, uint32_t size)
 {
     if (!ptr || !size) return TRUE;
 
@@ -226,7 +226,7 @@ static BOOL copy_value(const char *ptr, void **value, DWORD size)
 static int d3dcompiler_shader_reflection_type_compare(const void *key, const struct wine_rb_entry *entry)
 {
     const struct d3dcompiler_shader_reflection_type *t = WINE_RB_ENTRY_VALUE(entry, const struct d3dcompiler_shader_reflection_type, entry);
-    const DWORD *id = key;
+    const uint32_t *id = key;
 
     return *id - t->id;
 }
@@ -1087,119 +1087,119 @@ static const struct ID3D11ShaderReflectionTypeVtbl d3dcompiler_shader_reflection
     d3dcompiler_shader_reflection_type_ImplementsInterface,
 };
 
-static HRESULT d3dcompiler_parse_stat(struct d3dcompiler_shader_reflection *r, const char *data, DWORD data_size)
+static HRESULT d3dcompiler_parse_stat(struct d3dcompiler_shader_reflection *r, const char *data, size_t data_size)
 {
     const char *ptr = data;
-    DWORD size = data_size >> 2;
+    size_t size = data_size >> 2;
 
-    TRACE("Size %lu\n", size);
+    TRACE("Size %Iu.\n", size);
 
-    r->instruction_count = read_dword(&ptr);
-    TRACE("InstructionCount: %u\n", r->instruction_count);
+    r->instruction_count = read_u32(&ptr);
+    TRACE("InstructionCount: %u.\n", r->instruction_count);
 
-    r->temp_register_count = read_dword(&ptr);
-    TRACE("TempRegisterCount: %u\n", r->temp_register_count);
+    r->temp_register_count = read_u32(&ptr);
+    TRACE("TempRegisterCount: %u.\n", r->temp_register_count);
 
-    r->def_count = read_dword(&ptr);
-    TRACE("DefCount: %u\n", r->def_count);
+    r->def_count = read_u32(&ptr);
+    TRACE("DefCount: %u.\n", r->def_count);
 
-    r->dcl_count = read_dword(&ptr);
-    TRACE("DclCount: %u\n", r->dcl_count);
+    r->dcl_count = read_u32(&ptr);
+    TRACE("DclCount: %u.\n", r->dcl_count);
 
-    r->float_instruction_count = read_dword(&ptr);
-    TRACE("FloatInstructionCount: %u\n", r->float_instruction_count);
+    r->float_instruction_count = read_u32(&ptr);
+    TRACE("FloatInstructionCount: %u.\n", r->float_instruction_count);
 
-    r->int_instruction_count = read_dword(&ptr);
-    TRACE("IntInstructionCount: %u\n", r->int_instruction_count);
+    r->int_instruction_count = read_u32(&ptr);
+    TRACE("IntInstructionCount: %u.\n", r->int_instruction_count);
 
-    r->uint_instruction_count = read_dword(&ptr);
-    TRACE("UintInstructionCount: %u\n", r->uint_instruction_count);
+    r->uint_instruction_count = read_u32(&ptr);
+    TRACE("UintInstructionCount: %u.\n", r->uint_instruction_count);
 
-    r->static_flow_control_count = read_dword(&ptr);
-    TRACE("StaticFlowControlCount: %u\n", r->static_flow_control_count);
+    r->static_flow_control_count = read_u32(&ptr);
+    TRACE("StaticFlowControlCount: %u.\n", r->static_flow_control_count);
 
-    r->dynamic_flow_control_count = read_dword(&ptr);
-    TRACE("DynamicFlowControlCount: %u\n", r->dynamic_flow_control_count);
+    r->dynamic_flow_control_count = read_u32(&ptr);
+    TRACE("DynamicFlowControlCount: %u.\n", r->dynamic_flow_control_count);
 
-    r->macro_instruction_count = read_dword(&ptr);
-    TRACE("MacroInstructionCount: %u\n", r->macro_instruction_count);
+    r->macro_instruction_count = read_u32(&ptr);
+    TRACE("MacroInstructionCount: %u.\n", r->macro_instruction_count);
 
-    r->temp_array_count = read_dword(&ptr);
-    TRACE("TempArrayCount: %u\n", r->temp_array_count);
+    r->temp_array_count = read_u32(&ptr);
+    TRACE("TempArrayCount: %u.\n", r->temp_array_count);
 
-    r->array_instruction_count = read_dword(&ptr);
-    TRACE("ArrayInstructionCount: %u\n", r->array_instruction_count);
+    r->array_instruction_count = read_u32(&ptr);
+    TRACE("ArrayInstructionCount: %u.\n", r->array_instruction_count);
 
-    r->cut_instruction_count = read_dword(&ptr);
-    TRACE("CutInstructionCount: %u\n", r->cut_instruction_count);
+    r->cut_instruction_count = read_u32(&ptr);
+    TRACE("CutInstructionCount: %u.\n", r->cut_instruction_count);
 
-    r->emit_instruction_count = read_dword(&ptr);
-    TRACE("EmitInstructionCount: %u\n", r->emit_instruction_count);
+    r->emit_instruction_count = read_u32(&ptr);
+    TRACE("EmitInstructionCount: %u.\n", r->emit_instruction_count);
 
-    r->texture_normal_instructions = read_dword(&ptr);
-    TRACE("TextureNormalInstructions: %u\n", r->texture_normal_instructions);
+    r->texture_normal_instructions = read_u32(&ptr);
+    TRACE("TextureNormalInstructions: %u.\n", r->texture_normal_instructions);
 
-    r->texture_load_instructions = read_dword(&ptr);
-    TRACE("TextureLoadInstructions: %u\n", r->texture_load_instructions);
+    r->texture_load_instructions = read_u32(&ptr);
+    TRACE("TextureLoadInstructions: %u.\n", r->texture_load_instructions);
 
-    r->texture_comp_instructions = read_dword(&ptr);
-    TRACE("TextureCompInstructions: %u\n", r->texture_comp_instructions);
+    r->texture_comp_instructions = read_u32(&ptr);
+    TRACE("TextureCompInstructions: %u.\n", r->texture_comp_instructions);
 
-    r->texture_bias_instructions = read_dword(&ptr);
-    TRACE("TextureBiasInstructions: %u\n", r->texture_bias_instructions);
+    r->texture_bias_instructions = read_u32(&ptr);
+    TRACE("TextureBiasInstructions: %u.\n", r->texture_bias_instructions);
 
-    r->texture_gradient_instructions = read_dword(&ptr);
-    TRACE("TextureGradientInstructions: %u\n", r->texture_gradient_instructions);
+    r->texture_gradient_instructions = read_u32(&ptr);
+    TRACE("TextureGradientInstructions: %u.\n", r->texture_gradient_instructions);
 
-    r->mov_instruction_count = read_dword(&ptr);
-    TRACE("MovInstructionCount: %u\n", r->mov_instruction_count);
+    r->mov_instruction_count = read_u32(&ptr);
+    TRACE("MovInstructionCount: %u.\n", r->mov_instruction_count);
 
-    skip_dword_unknown(&ptr, 1);
+    skip_u32_unknown(&ptr, 1);
 
-    r->conversion_instruction_count = read_dword(&ptr);
-    TRACE("ConversionInstructionCount: %u\n", r->conversion_instruction_count);
+    r->conversion_instruction_count = read_u32(&ptr);
+    TRACE("ConversionInstructionCount: %u.\n", r->conversion_instruction_count);
 
-    skip_dword_unknown(&ptr, 1);
+    skip_u32_unknown(&ptr, 1);
 
-    r->input_primitive = read_dword(&ptr);
-    TRACE("InputPrimitive: %x\n", r->input_primitive);
+    r->input_primitive = read_u32(&ptr);
+    TRACE("InputPrimitive: %x.\n", r->input_primitive);
 
-    r->gs_output_topology = read_dword(&ptr);
-    TRACE("GSOutputTopology: %x\n", r->gs_output_topology);
+    r->gs_output_topology = read_u32(&ptr);
+    TRACE("GSOutputTopology: %x.\n", r->gs_output_topology);
 
-    r->gs_max_output_vertex_count = read_dword(&ptr);
-    TRACE("GSMaxOutputVertexCount: %u\n", r->gs_max_output_vertex_count);
+    r->gs_max_output_vertex_count = read_u32(&ptr);
+    TRACE("GSMaxOutputVertexCount: %u.\n", r->gs_max_output_vertex_count);
 
-    skip_dword_unknown(&ptr, 2);
+    skip_u32_unknown(&ptr, 2);
 
     /* old dx10 stat size */
     if (size == 28) return S_OK;
 
-    skip_dword_unknown(&ptr, 1);
+    skip_u32_unknown(&ptr, 1);
 
     /* dx10 stat size */
     if (size == 29) return S_OK;
 
-    skip_dword_unknown(&ptr, 1);
+    skip_u32_unknown(&ptr, 1);
 
-    r->c_control_points = read_dword(&ptr);
-    TRACE("cControlPoints: %u\n", r->c_control_points);
+    r->c_control_points = read_u32(&ptr);
+    TRACE("cControlPoints: %u.\n", r->c_control_points);
 
-    r->hs_output_primitive = read_dword(&ptr);
-    TRACE("HSOutputPrimitive: %x\n", r->hs_output_primitive);
+    r->hs_output_primitive = read_u32(&ptr);
+    TRACE("HSOutputPrimitive: %x.\n", r->hs_output_primitive);
 
-    r->hs_partitioning = read_dword(&ptr);
-    TRACE("HSPartitioning: %x\n", r->hs_partitioning);
+    r->hs_partitioning = read_u32(&ptr);
+    TRACE("HSPartitioning: %x.\n", r->hs_partitioning);
 
-    r->tessellator_domain = read_dword(&ptr);
-    TRACE("TessellatorDomain: %x\n", r->tessellator_domain);
+    r->tessellator_domain = read_u32(&ptr);
+    TRACE("TessellatorDomain: %x.\n", r->tessellator_domain);
 
-    skip_dword_unknown(&ptr, 3);
+    skip_u32_unknown(&ptr, 3);
 
     /* dx11 stat size */
     if (size == 37) return S_OK;
 
-    FIXME("Unhandled size %lu.\n", size);
+    FIXME("Unhandled size %Iu.\n", size);
 
     return E_FAIL;
 }
@@ -1207,9 +1207,9 @@ static HRESULT d3dcompiler_parse_stat(struct d3dcompiler_shader_reflection *r, c
 static HRESULT d3dcompiler_parse_type_members(struct d3dcompiler_shader_reflection *ref,
         struct d3dcompiler_shader_reflection_type_member *member, const char *data, const char **ptr)
 {
-    DWORD offset;
+    uint32_t offset;
 
-    offset = read_dword(ptr);
+    offset = read_u32(ptr);
     if (!copy_name(data + offset, &member->name))
     {
         ERR("Failed to copy name.\n");
@@ -1217,8 +1217,8 @@ static HRESULT d3dcompiler_parse_type_members(struct d3dcompiler_shader_reflecti
     }
     TRACE("Member name: %s.\n", debugstr_a(member->name));
 
-    offset = read_dword(ptr);
-    TRACE("Member type offset: %#lx\n", offset);
+    offset = read_u32(ptr);
+    TRACE("Member type offset: %x.\n", offset);
 
     member->type = get_reflection_type(ref, data, offset);
     if (!member->type)
@@ -1228,45 +1228,45 @@ static HRESULT d3dcompiler_parse_type_members(struct d3dcompiler_shader_reflecti
         return E_FAIL;
     }
 
-    member->offset = read_dword(ptr);
-    TRACE("Member offset %#lx\n", member->offset);
+    member->offset = read_u32(ptr);
+    TRACE("Member offset %x.\n", member->offset);
 
     return S_OK;
 }
 
-static HRESULT d3dcompiler_parse_type(struct d3dcompiler_shader_reflection_type *type, const char *data, DWORD offset)
+static HRESULT d3dcompiler_parse_type(struct d3dcompiler_shader_reflection_type *type, const char *data, uint32_t offset)
 {
     const char *ptr = data + offset;
-    DWORD temp;
+    uint32_t temp;
     D3D11_SHADER_TYPE_DESC *desc;
     unsigned int i;
     struct d3dcompiler_shader_reflection_type_member *members = NULL;
     HRESULT hr;
-    DWORD member_offset;
+    uint32_t member_offset;
 
     desc = &type->desc;
 
-    temp = read_dword(&ptr);
+    temp = read_u32(&ptr);
     desc->Class = temp & 0xffff;
     desc->Type = temp >> 16;
     TRACE("Class %s, Type %s\n", debug_d3dcompiler_shader_variable_class(desc->Class),
             debug_d3dcompiler_shader_variable_type(desc->Type));
 
-    temp = read_dword(&ptr);
+    temp = read_u32(&ptr);
     desc->Rows = temp & 0xffff;
     desc->Columns = temp >> 16;
     TRACE("Rows %u, Columns %u\n", desc->Rows, desc->Columns);
 
-    temp = read_dword(&ptr);
+    temp = read_u32(&ptr);
     desc->Elements = temp & 0xffff;
     desc->Members = temp >> 16;
     TRACE("Elements %u, Members %u\n", desc->Elements, desc->Members);
 
-    member_offset = read_dword(&ptr);
-    TRACE("Member Offset %lu\n", member_offset);
+    member_offset = read_u32(&ptr);
+    TRACE("Member Offset %u.\n", member_offset);
 
     if ((type->reflection->target & D3DCOMPILER_SHADER_TARGET_VERSION_MASK) >= 0x500)
-        skip_dword_unknown(&ptr, 4);
+        skip_u32_unknown(&ptr, 4);
 
     if (desc->Members)
     {
@@ -1292,7 +1292,7 @@ static HRESULT d3dcompiler_parse_type(struct d3dcompiler_shader_reflection_type 
 
     if ((type->reflection->target & D3DCOMPILER_SHADER_TARGET_VERSION_MASK) >= 0x500)
     {
-        offset = read_dword(&ptr);
+        offset = read_u32(&ptr);
         if (!copy_name(data + offset, &type->name))
         {
             ERR("Failed to copy name.\n");
@@ -1316,7 +1316,7 @@ err_out:
     return hr;
 }
 
-static struct d3dcompiler_shader_reflection_type *get_reflection_type(struct d3dcompiler_shader_reflection *reflection, const char *data, DWORD offset)
+static struct d3dcompiler_shader_reflection_type *get_reflection_type(struct d3dcompiler_shader_reflection *reflection, const char *data, uint32_t offset)
 {
     struct d3dcompiler_shader_reflection_type *type;
     struct wine_rb_entry *entry;
@@ -1357,7 +1357,7 @@ static struct d3dcompiler_shader_reflection_type *get_reflection_type(struct d3d
 }
 
 static HRESULT d3dcompiler_parse_variables(struct d3dcompiler_shader_reflection_constant_buffer *cb,
-        const char *data, DWORD data_size, const char *ptr)
+        const char *data, size_t data_size, const char *ptr)
 {
     struct d3dcompiler_shader_reflection_variable *variables;
     unsigned int i;
@@ -1373,13 +1373,13 @@ static HRESULT d3dcompiler_parse_variables(struct d3dcompiler_shader_reflection_
     for (i = 0; i < cb->variable_count; i++)
     {
         struct d3dcompiler_shader_reflection_variable *v = &variables[i];
-        DWORD offset;
+        uint32_t offset;
 
         v->ID3D11ShaderReflectionVariable_iface.lpVtbl = &d3dcompiler_shader_reflection_variable_vtbl;
         v->ID3D10ShaderReflectionVariable_iface.lpVtbl = &d3d10_shader_reflection_variable_vtbl;
         v->constant_buffer = cb;
 
-        offset = read_dword(&ptr);
+        offset = read_u32(&ptr);
         if (!copy_name(data + offset, &v->name))
         {
             ERR("Failed to copy name.\n");
@@ -1388,17 +1388,17 @@ static HRESULT d3dcompiler_parse_variables(struct d3dcompiler_shader_reflection_
         }
         TRACE("Variable name: %s.\n", debugstr_a(v->name));
 
-        v->start_offset = read_dword(&ptr);
+        v->start_offset = read_u32(&ptr);
         TRACE("Variable offset: %u\n", v->start_offset);
 
-        v->size = read_dword(&ptr);
+        v->size = read_u32(&ptr);
         TRACE("Variable size: %u\n", v->size);
 
-        v->flags = read_dword(&ptr);
+        v->flags = read_u32(&ptr);
         TRACE("Variable flags: %u\n", v->flags);
 
-        offset = read_dword(&ptr);
-        TRACE("Variable type offset: %#lx.\n", offset);
+        offset = read_u32(&ptr);
+        TRACE("Variable type offset: %x.\n", offset);
         v->type = get_reflection_type(cb->reflection, data, offset);
         if (!v->type)
         {
@@ -1407,8 +1407,8 @@ static HRESULT d3dcompiler_parse_variables(struct d3dcompiler_shader_reflection_
             goto err_out;
         }
 
-        offset = read_dword(&ptr);
-        TRACE("Variable default value offset: %#lx.\n", offset);
+        offset = read_u32(&ptr);
+        TRACE("Variable default value offset: %x.\n", offset);
         if (!copy_value(data + offset, &v->default_value, offset ? v->size : 0))
         {
             ERR("Failed to copy name.\n");
@@ -1417,7 +1417,7 @@ static HRESULT d3dcompiler_parse_variables(struct d3dcompiler_shader_reflection_
         }
 
         if ((cb->reflection->target & D3DCOMPILER_SHADER_TARGET_VERSION_MASK) >= 0x500)
-            skip_dword_unknown(&ptr, 4);
+            skip_u32_unknown(&ptr, 4);
     }
 
     cb->variables = variables;
@@ -1433,50 +1433,50 @@ err_out:
     return hr;
 }
 
-static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, const char *data, DWORD data_size)
+static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, const char *data, size_t data_size)
 {
     struct d3dcompiler_shader_reflection_constant_buffer *constant_buffers = NULL;
-    DWORD offset, cbuffer_offset, resource_offset, creator_offset;
+    uint32_t offset, cbuffer_offset, resource_offset, creator_offset;
     unsigned int i, string_data_offset, string_data_size;
     D3D12_SHADER_INPUT_BIND_DESC *bound_resources = NULL;
     char *string_data = NULL, *creator = NULL;
-    DWORD size = data_size >> 2;
+    size_t size = data_size >> 2;
+    uint32_t target_version;
     const char *ptr = data;
-    DWORD target_version;
     HRESULT hr;
 
-    TRACE("Size %lu\n", size);
+    TRACE("Size %Iu.\n", size);
 
-    r->constant_buffer_count = read_dword(&ptr);
-    TRACE("Constant buffer count: %u\n", r->constant_buffer_count);
+    r->constant_buffer_count = read_u32(&ptr);
+    TRACE("Constant buffer count: %u.\n", r->constant_buffer_count);
 
-    cbuffer_offset = read_dword(&ptr);
-    TRACE("Constant buffer offset: %#lx\n", cbuffer_offset);
+    cbuffer_offset = read_u32(&ptr);
+    TRACE("Constant buffer offset: %#x.\n", cbuffer_offset);
 
-    r->bound_resource_count = read_dword(&ptr);
-    TRACE("Bound resource count: %u\n", r->bound_resource_count);
+    r->bound_resource_count = read_u32(&ptr);
+    TRACE("Bound resource count: %u.\n", r->bound_resource_count);
 
-    resource_offset = read_dword(&ptr);
-    TRACE("Bound resource offset: %#lx\n", resource_offset);
+    resource_offset = read_u32(&ptr);
+    TRACE("Bound resource offset: %#x.\n", resource_offset);
 
-    r->target = read_dword(&ptr);
-    TRACE("Target: %#lx\n", r->target);
+    r->target = read_u32(&ptr);
+    TRACE("Target: %#x.\n", r->target);
 
     target_version = r->target & D3DCOMPILER_SHADER_TARGET_VERSION_MASK;
 
 #if D3D_COMPILER_VERSION < 47
     if (target_version >= 0x501)
     {
-        WARN("Target version %#lx is not supported in d3dcompiler %u.\n", target_version, D3D_COMPILER_VERSION);
+        WARN("Target version %#x is not supported in d3dcompiler %u.\n", target_version, D3D_COMPILER_VERSION);
         return E_INVALIDARG;
     }
 #endif
 
-    r->flags = read_dword(&ptr);
-    TRACE("Flags: %u\n", r->flags);
+    r->flags = read_u32(&ptr);
+    TRACE("Flags: %u.\n", r->flags);
 
-    creator_offset = read_dword(&ptr);
-    TRACE("Creator at offset %#lx.\n", creator_offset);
+    creator_offset = read_u32(&ptr);
+    TRACE("Creator at offset %#x.\n", creator_offset);
 
     if (!copy_name(data + creator_offset, &creator))
     {
@@ -1488,13 +1488,13 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
     /* todo: Parse RD11 */
     if (target_version >= 0x500)
     {
-        skip_dword_unknown(&ptr, 8);
+        skip_u32_unknown(&ptr, 8);
     }
 
     if (r->bound_resource_count)
     {
         /* 8 for each bind desc */
-        string_data_offset = resource_offset + r->bound_resource_count * 8 * sizeof(DWORD);
+        string_data_offset = resource_offset + r->bound_resource_count * 8 * sizeof(uint32_t);
         string_data_size = (cbuffer_offset ? cbuffer_offset : creator_offset) - string_data_offset;
 
         string_data = HeapAlloc(GetProcessHeap(), 0, string_data_size);
@@ -1519,36 +1519,36 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
         {
             D3D12_SHADER_INPUT_BIND_DESC *desc = &bound_resources[i];
 
-            offset = read_dword(&ptr);
+            offset = read_u32(&ptr);
             desc->Name = string_data + (offset - string_data_offset);
-            TRACE("Input bind Name: %s\n", debugstr_a(desc->Name));
+            TRACE("Input bind Name: %s.\n", debugstr_a(desc->Name));
 
-            desc->Type = read_dword(&ptr);
-            TRACE("Input bind Type: %#x\n", desc->Type);
+            desc->Type = read_u32(&ptr);
+            TRACE("Input bind Type: %#x.\n", desc->Type);
 
-            desc->ReturnType = read_dword(&ptr);
-            TRACE("Input bind ReturnType: %#x\n", desc->ReturnType);
+            desc->ReturnType = read_u32(&ptr);
+            TRACE("Input bind ReturnType: %#x.\n", desc->ReturnType);
 
-            desc->Dimension = read_dword(&ptr);
-            TRACE("Input bind Dimension: %#x\n", desc->Dimension);
+            desc->Dimension = read_u32(&ptr);
+            TRACE("Input bind Dimension: %#x.\n", desc->Dimension);
 
-            desc->NumSamples = read_dword(&ptr);
-            TRACE("Input bind NumSamples: %u\n", desc->NumSamples);
+            desc->NumSamples = read_u32(&ptr);
+            TRACE("Input bind NumSamples: %u.\n", desc->NumSamples);
 
-            desc->BindPoint = read_dword(&ptr);
-            TRACE("Input bind BindPoint: %u\n", desc->BindPoint);
+            desc->BindPoint = read_u32(&ptr);
+            TRACE("Input bind BindPoint: %u.\n", desc->BindPoint);
 
-            desc->BindCount = read_dword(&ptr);
-            TRACE("Input bind BindCount: %u\n", desc->BindCount);
+            desc->BindCount = read_u32(&ptr);
+            TRACE("Input bind BindCount: %u.\n", desc->BindCount);
 
-            desc->uFlags = read_dword(&ptr);
-            TRACE("Input bind uFlags: %u\n", desc->uFlags);
+            desc->uFlags = read_u32(&ptr);
+            TRACE("Input bind uFlags: %u.\n", desc->uFlags);
 
             if (target_version >= 0x501)
             {
-                desc->Space = read_dword(&ptr);
+                desc->Space = read_u32(&ptr);
                 TRACE("Input bind Space %u.\n", desc->Space);
-                desc->uID = read_dword(&ptr);
+                desc->uID = read_u32(&ptr);
                 TRACE("Input bind uID %u.\n", desc->uID);
             }
             else
@@ -1578,7 +1578,7 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
             cb->ID3D10ShaderReflectionConstantBuffer_iface.lpVtbl = &d3d10_shader_reflection_constant_buffer_vtbl;
             cb->reflection = r;
 
-            offset = read_dword(&ptr);
+            offset = read_u32(&ptr);
             if (!copy_name(data + offset, &cb->name))
             {
                 ERR("Failed to copy name.\n");
@@ -1587,11 +1587,11 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
             }
             TRACE("Name: %s.\n", debugstr_a(cb->name));
 
-            cb->variable_count = read_dword(&ptr);
-            TRACE("Variable count: %u\n", cb->variable_count);
+            cb->variable_count = read_u32(&ptr);
+            TRACE("Variable count: %u.\n", cb->variable_count);
 
-            offset = read_dword(&ptr);
-            TRACE("Variable offset: %#lx\n", offset);
+            offset = read_u32(&ptr);
+            TRACE("Variable offset: %x.\n", offset);
 
             hr = d3dcompiler_parse_variables(cb, data, data_size, data + offset);
             if (hr != S_OK)
@@ -1600,14 +1600,14 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
                 goto err_out;
             }
 
-            cb->size = read_dword(&ptr);
-            TRACE("Cbuffer size: %u\n", cb->size);
+            cb->size = read_u32(&ptr);
+            TRACE("Cbuffer size: %u.\n", cb->size);
 
-            cb->flags = read_dword(&ptr);
-            TRACE("Cbuffer flags: %u\n", cb->flags);
+            cb->flags = read_u32(&ptr);
+            TRACE("Cbuffer flags: %u.\n", cb->flags);
 
-            cb->type = read_dword(&ptr);
-            TRACE("Cbuffer type: %#x\n", cb->type);
+            cb->type = read_u32(&ptr);
+            TRACE("Cbuffer type: %#x.\n", cb->type);
         }
     }
 
@@ -1633,14 +1633,13 @@ err_out:
 
 static HRESULT d3dcompiler_parse_signature(struct d3dcompiler_shader_signature *s, struct dxbc_section *section)
 {
+    enum D3DCOMPILER_SIGNATURE_ELEMENT_SIZE element_size;
     D3D11_SIGNATURE_PARAMETER_DESC *d;
     unsigned int string_data_offset;
-    unsigned int string_data_size;
     const char *ptr = section->data;
+    unsigned int string_data_size;
+    unsigned int i, count;
     char *string_data;
-    unsigned int i;
-    DWORD count;
-    enum D3DCOMPILER_SIGNATURE_ELEMENT_SIZE element_size;
 
     switch (section->tag)
     {
@@ -1660,10 +1659,10 @@ static HRESULT d3dcompiler_parse_signature(struct d3dcompiler_shader_signature *
             break;
     }
 
-    count = read_dword(&ptr);
-    TRACE("%lu elements\n", count);
+    count = read_u32(&ptr);
+    TRACE("%u elements\n", count);
 
-    skip_dword_unknown(&ptr, 1);
+    skip_u32_unknown(&ptr, 1);
 
     d = HeapAlloc(GetProcessHeap(), 0, count * sizeof(*d));
     if (!d)
@@ -1672,8 +1671,8 @@ static HRESULT d3dcompiler_parse_signature(struct d3dcompiler_shader_signature *
         return E_OUTOFMEMORY;
     }
 
-    /* 2 DWORDs for the header, element_size for each element. */
-    string_data_offset = 2 * sizeof(DWORD) + count * element_size * sizeof(DWORD);
+    /* 2 u32s for the header, element_size for each element. */
+    string_data_offset = 2 * sizeof(uint32_t) + count * element_size * sizeof(uint32_t);
     string_data_size = section->data_size - string_data_offset;
 
     string_data = HeapAlloc(GetProcessHeap(), 0, string_data_size);
@@ -1687,8 +1686,7 @@ static HRESULT d3dcompiler_parse_signature(struct d3dcompiler_shader_signature *
 
     for (i = 0; i < count; ++i)
     {
-        UINT name_offset;
-        DWORD mask;
+        uint32_t name_offset, mask;
 
 #if D3D_COMPILER_VERSION >= 46
         /* FIXME */
@@ -1696,20 +1694,20 @@ static HRESULT d3dcompiler_parse_signature(struct d3dcompiler_shader_signature *
 #endif
         if (element_size == D3DCOMPILER_SIGNATURE_ELEMENT_SIZE7)
         {
-            d[i].Stream = read_dword(&ptr);
+            d[i].Stream = read_u32(&ptr);
         }
         else
         {
             d[i].Stream = 0;
         }
 
-        name_offset = read_dword(&ptr);
+        name_offset = read_u32(&ptr);
         d[i].SemanticName = string_data + (name_offset - string_data_offset);
-        d[i].SemanticIndex = read_dword(&ptr);
-        d[i].SystemValueType = read_dword(&ptr);
-        d[i].ComponentType = read_dword(&ptr);
-        d[i].Register = read_dword(&ptr);
-        mask = read_dword(&ptr);
+        d[i].SemanticIndex = read_u32(&ptr);
+        d[i].SystemValueType = read_u32(&ptr);
+        d[i].ComponentType = read_u32(&ptr);
+        d[i].Register = read_u32(&ptr);
+        mask = read_u32(&ptr);
         d[i].ReadWriteMask = (mask >> 8) & 0xff;
         d[i].Mask = mask & 0xff;
 
@@ -1737,11 +1735,11 @@ static HRESULT d3dcompiler_parse_signature(struct d3dcompiler_shader_signature *
     return S_OK;
 }
 
-static HRESULT d3dcompiler_parse_shdr(struct d3dcompiler_shader_reflection *r, const char *data, DWORD data_size)
+static HRESULT d3dcompiler_parse_shdr(struct d3dcompiler_shader_reflection *r, const char *data, size_t data_size)
 {
     const char *ptr = data;
 
-    r->version = read_dword(&ptr);
+    r->version = read_u32(&ptr);
     TRACE("Shader version: %u\n", r->version);
 
     /* todo: Check if anything else is needed from the shdr or shex blob. */
@@ -2353,8 +2351,8 @@ HRESULT WINAPI D3D10ReflectShader(const void *data, SIZE_T data_size, ID3D10Shad
 HRESULT WINAPI D3DReflect(const void *data, SIZE_T data_size, REFIID riid, void **reflector)
 {
     struct d3dcompiler_shader_reflection *object;
+    const uint32_t *temp = data;
     HRESULT hr;
-    const DWORD *temp = data;
 
     TRACE("data %p, data_size %Iu, riid %s, blob %p.\n", data, data_size, debugstr_guid(riid), reflector);
 

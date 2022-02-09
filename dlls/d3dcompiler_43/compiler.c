@@ -633,14 +633,13 @@ cleanup:
     return hr;
 }
 
-static HRESULT assemble_shader(const char *preproc_shader,
-        ID3DBlob **shader_blob, ID3DBlob **error_messages)
+static HRESULT assemble_shader(const char *preproc_shader, ID3DBlob **shader_blob, ID3DBlob **error_messages)
 {
     struct bwriter_shader *shader;
     char *messages = NULL;
-    HRESULT hr;
-    DWORD *res, size;
+    uint32_t *res, size;
     ID3DBlob *buffer;
+    HRESULT hr;
     char *pos;
 
     shader = SlAssembleShader(preproc_shader, &messages);

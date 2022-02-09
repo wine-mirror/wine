@@ -54,7 +54,7 @@ static void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
             return;
         }
         reg->rel_reg->type = rel->type;
-        reg->rel_reg->u.swizzle = rel->swizzle;
+        reg->rel_reg->swizzle = rel->swizzle;
         reg->rel_reg->regnum = rel->rel_regnum;
     }
 }
@@ -75,26 +75,26 @@ int asmshader_lex(void);
     BOOL                immbool;
     unsigned int        regnum;
     struct shader_reg   reg;
-    DWORD               srcmod;
-    DWORD               writemask;
+    uint32_t            srcmod;
+    uint32_t            writemask;
     struct {
-        DWORD           writemask;
-        DWORD           idx;
-        DWORD           last;
+        uint32_t        writemask;
+        uint32_t        idx;
+        uint32_t        last;
     } wm_components;
-    DWORD               swizzle;
+    uint32_t            swizzle;
     struct {
-        DWORD           swizzle;
-        DWORD           idx;
+        uint32_t        swizzle;
+        uint32_t        idx;
     } sw_components;
-    DWORD               component;
+    uint32_t            component;
     struct {
-        DWORD           mod;
-        DWORD           shift;
+        uint32_t        mod;
+        uint32_t        shift;
     } modshift;
     enum bwriter_comparison_type comptype;
     struct {
-        DWORD           dclusage;
+        uint32_t        dclusage;
         unsigned int    regnum;
     } declaration;
     enum bwritersampler_texture_type samplertype;
@@ -569,7 +569,7 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 reg.regnum = $3;
                                 reg.rel_reg = NULL;
                                 reg.srcmod = 0;
-                                reg.u.writemask = BWRITERSP_WRITEMASK_ALL;
+                                reg.writemask = BWRITERSP_WRITEMASK_ALL;
                                 asm_ctx.funcs->dcl_output(&asm_ctx, $2.dclusage, $2.regnum, &reg);
                             }
                     | INSTR_DCL dclusage REG_OUTPUT writemask
@@ -581,7 +581,7 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 reg.regnum = $3;
                                 reg.rel_reg = NULL;
                                 reg.srcmod = 0;
-                                reg.u.writemask = $4;
+                                reg.writemask = $4;
                                 asm_ctx.funcs->dcl_output(&asm_ctx, $2.dclusage, $2.regnum, &reg);
                             }
                     | INSTR_DCL dclusage omods dcl_inputreg
@@ -604,7 +604,7 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 reg.regnum = $4.regnum;
                                 reg.rel_reg = NULL;
                                 reg.srcmod = 0;
-                                reg.u.writemask = BWRITERSP_WRITEMASK_ALL;
+                                reg.writemask = BWRITERSP_WRITEMASK_ALL;
                                 asm_ctx.funcs->dcl_input(&asm_ctx, $2.dclusage, $2.regnum, $3.mod, &reg);
                             }
                     | INSTR_DCL dclusage omods dcl_inputreg writemask
@@ -627,7 +627,7 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 reg.regnum = $4.regnum;
                                 reg.rel_reg = NULL;
                                 reg.srcmod = 0;
-                                reg.u.writemask = $5;
+                                reg.writemask = $5;
                                 asm_ctx.funcs->dcl_input(&asm_ctx, $2.dclusage, $2.regnum, $3.mod, &reg);
                             }
                     | INSTR_DCL omods dcl_inputreg
@@ -649,7 +649,7 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 reg.regnum = $3.regnum;
                                 reg.rel_reg = NULL;
                                 reg.srcmod = 0;
-                                reg.u.writemask = BWRITERSP_WRITEMASK_ALL;
+                                reg.writemask = BWRITERSP_WRITEMASK_ALL;
                                 asm_ctx.funcs->dcl_input(&asm_ctx, 0, 0, $2.mod, &reg);
                             }
                     | INSTR_DCL omods dcl_inputreg writemask
@@ -671,7 +671,7 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 reg.regnum = $3.regnum;
                                 reg.rel_reg = NULL;
                                 reg.srcmod = 0;
-                                reg.u.writemask = $4;
+                                reg.writemask = $4;
                                 asm_ctx.funcs->dcl_input(&asm_ctx, 0, 0, $2.mod, &reg);
                             }
                     | INSTR_DCL sampdcl omods REG_SAMPLER
@@ -988,7 +988,7 @@ dreg:                 dreg_name rel_reg
                             {
                                 $$.regnum = $1.regnum;
                                 $$.type = $1.type;
-                                $$.u.writemask = BWRITERSP_WRITEMASK_ALL;
+                                $$.writemask = BWRITERSP_WRITEMASK_ALL;
                                 $$.srcmod = BWRITERSPSM_NONE;
                                 set_rel_reg(&$$, &$2);
                             }
@@ -996,7 +996,7 @@ dreg:                 dreg_name rel_reg
                             {
                                 $$.regnum = $1.regnum;
                                 $$.type = $1.type;
-                                $$.u.writemask = $2;
+                                $$.writemask = $2;
                                 $$.srcmod = BWRITERSPSM_NONE;
                                 $$.rel_reg = NULL;
                             }
@@ -1108,7 +1108,7 @@ writemask:            '.' wm_components
                             }
                             else {
                                 $$ = $2.writemask;
-                                TRACE("Writemask: %lx\n", $$);
+                                TRACE("Writemask: %x\n", $$);
                             }
                         }
 
@@ -1136,7 +1136,7 @@ wm_components:        COMPONENT
 swizzle:              /* empty */
                         {
                             $$ = BWRITERVS_NOSWIZZLE;
-                            TRACE("Default swizzle: %08lx\n", $$);
+                            TRACE("Default swizzle: %08x\n", $$);
                         }
                     | '.' sw_components
                         {
@@ -1148,7 +1148,7 @@ swizzle:              /* empty */
                                 $$ = BWRITERVS_NOSWIZZLE;
                             }
                             else {
-                                DWORD last, i;
+                                uint32_t last, i;
 
                                 $$ = $2.swizzle;
                                 /* Fill the swizzle by extending the last component */
@@ -1156,7 +1156,7 @@ swizzle:              /* empty */
                                 for(i = $2.idx; i < 4; i++){
                                     $$ |= last << (2 * i);
                                 }
-                                TRACE("Got a swizzle: %08lx\n", $$);
+                                TRACE("Got a swizzle: %08x\n", $$);
                             }
                         }
 
@@ -1262,7 +1262,7 @@ sreg:                   sreg_name rel_reg swizzle
                         {
                             $$.type = $1.type;
                             $$.regnum = $1.regnum;
-                            $$.u.swizzle = $3;
+                            $$.swizzle = $3;
                             $$.srcmod = BWRITERSPSM_NONE;
                             set_rel_reg(&$$, &$2);
                         }
@@ -1272,7 +1272,7 @@ sreg:                   sreg_name rel_reg swizzle
                             $$.regnum = $1.regnum;
                             set_rel_reg(&$$, &$2);
                             $$.srcmod = $3;
-                            $$.u.swizzle = $4;
+                            $$.swizzle = $4;
                         }
                     | '-' sreg_name rel_reg swizzle
                         {
@@ -1280,7 +1280,7 @@ sreg:                   sreg_name rel_reg swizzle
                             $$.regnum = $2.regnum;
                             $$.srcmod = BWRITERSPSM_NEG;
                             set_rel_reg(&$$, &$3);
-                            $$.u.swizzle = $4;
+                            $$.swizzle = $4;
                         }
                     | '-' sreg_name rel_reg smod swizzle
                         {
@@ -1303,9 +1303,9 @@ sreg:                   sreg_name rel_reg swizzle
                                     set_parse_status(&asm_ctx.status,  PARSE_ERR);
                                     break;
                                 default:
-                                    FIXME("Unhandled combination of NEGATE and %lu\n", $4);
+                                    FIXME("Unhandled combination of NEGATE and %u\n", $4);
                             }
-                            $$.u.swizzle = $5;
+                            $$.swizzle = $5;
                         }
                     | IMMVAL '-' sreg_name rel_reg swizzle
                         {
@@ -1319,7 +1319,7 @@ sreg:                   sreg_name rel_reg swizzle
                             $$.regnum = $3.regnum;
                             $$.srcmod = BWRITERSPSM_COMP;
                             set_rel_reg(&$$, &$4);
-                            $$.u.swizzle = $5;
+                            $$.swizzle = $5;
                         }
                     | IMMVAL '-' sreg_name rel_reg smod swizzle
                         {
@@ -1341,7 +1341,7 @@ sreg:                   sreg_name rel_reg swizzle
                             $$.regnum = $2.regnum;
                             $$.rel_reg = NULL;
                             $$.srcmod = BWRITERSPSM_NOT;
-                            $$.u.swizzle = $3;
+                            $$.swizzle = $3;
                         }
 
 rel_reg:               /* empty */
@@ -1659,7 +1659,7 @@ predicate:            '(' REG_PREDICATE swizzle ')'
                             $$.regnum = 0;
                             $$.rel_reg = NULL;
                             $$.srcmod = BWRITERSPSM_NONE;
-                            $$.u.swizzle = $3;
+                            $$.swizzle = $3;
                         }
                     | '(' SMOD_NOT REG_PREDICATE swizzle ')'
                         {
@@ -1667,7 +1667,7 @@ predicate:            '(' REG_PREDICATE swizzle ')'
                             $$.regnum = 0;
                             $$.rel_reg = NULL;
                             $$.srcmod = BWRITERSPSM_NOT;
-                            $$.u.swizzle = $4;
+                            $$.swizzle = $4;
                         }
 
 %%

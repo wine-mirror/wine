@@ -113,28 +113,34 @@ BOOL add_instruction(struct bwriter_shader *shader, struct instruction *instr) {
     return TRUE;
 }
 
-BOOL add_constF(struct bwriter_shader *shader, DWORD reg, float x, float y, float z, float w) {
+BOOL add_constF(struct bwriter_shader *shader, uint32_t reg, float x, float y, float z, float w)
+{
     struct constant *newconst;
 
-    if(shader->num_cf) {
+    if (shader->num_cf)
+    {
         struct constant **newarray;
-        newarray = d3dcompiler_realloc(shader->constF,
-                               sizeof(*shader->constF) * (shader->num_cf + 1));
-        if(!newarray) {
+        newarray = d3dcompiler_realloc(shader->constF, sizeof(*shader->constF) * (shader->num_cf + 1));
+        if (!newarray)
+        {
             ERR("Failed to grow the constants array\n");
             return FALSE;
         }
         shader->constF = newarray;
-    } else {
+    }
+    else
+    {
         shader->constF = d3dcompiler_alloc(sizeof(*shader->constF));
-        if(!shader->constF) {
+        if (!shader->constF)
+        {
             ERR("Failed to allocate the constants array\n");
             return FALSE;
         }
     }
 
     newconst = d3dcompiler_alloc(sizeof(*newconst));
-    if(!newconst) {
+    if (!newconst)
+    {
         ERR("Failed to allocate a new constant\n");
         return FALSE;
     }
@@ -149,28 +155,34 @@ BOOL add_constF(struct bwriter_shader *shader, DWORD reg, float x, float y, floa
     return TRUE;
 }
 
-BOOL add_constI(struct bwriter_shader *shader, DWORD reg, INT x, INT y, INT z, INT w) {
+BOOL add_constI(struct bwriter_shader *shader, uint32_t reg, int x, int y, int z, int w)
+{
     struct constant *newconst;
 
-    if(shader->num_ci) {
+    if (shader->num_ci)
+    {
         struct constant **newarray;
-        newarray = d3dcompiler_realloc(shader->constI,
-                               sizeof(*shader->constI) * (shader->num_ci + 1));
-        if(!newarray) {
+        newarray = d3dcompiler_realloc(shader->constI, sizeof(*shader->constI) * (shader->num_ci + 1));
+        if (!newarray)
+        {
             ERR("Failed to grow the constants array\n");
             return FALSE;
         }
         shader->constI = newarray;
-    } else {
+    }
+    else
+    {
         shader->constI = d3dcompiler_alloc(sizeof(*shader->constI));
-        if(!shader->constI) {
+        if (!shader->constI)
+        {
             ERR("Failed to allocate the constants array\n");
             return FALSE;
         }
     }
 
     newconst = d3dcompiler_alloc(sizeof(*newconst));
-    if(!newconst) {
+    if (!newconst)
+    {
         ERR("Failed to allocate a new constant\n");
         return FALSE;
     }
@@ -185,28 +197,34 @@ BOOL add_constI(struct bwriter_shader *shader, DWORD reg, INT x, INT y, INT z, I
     return TRUE;
 }
 
-BOOL add_constB(struct bwriter_shader *shader, DWORD reg, BOOL x) {
+BOOL add_constB(struct bwriter_shader *shader, uint32_t reg, BOOL x)
+{
     struct constant *newconst;
 
-    if(shader->num_cb) {
+    if (shader->num_cb)
+    {
         struct constant **newarray;
-        newarray = d3dcompiler_realloc(shader->constB,
-                               sizeof(*shader->constB) * (shader->num_cb + 1));
-        if(!newarray) {
+        newarray = d3dcompiler_realloc(shader->constB, sizeof(*shader->constB) * (shader->num_cb + 1));
+        if (!newarray)
+        {
             ERR("Failed to grow the constants array\n");
             return FALSE;
         }
         shader->constB = newarray;
-    } else {
+    }
+    else
+    {
         shader->constB = d3dcompiler_alloc(sizeof(*shader->constB));
-        if(!shader->constB) {
+        if (!shader->constB)
+        {
             ERR("Failed to allocate the constants array\n");
             return FALSE;
         }
     }
 
     newconst = d3dcompiler_alloc(sizeof(*newconst));
-    if(!newconst) {
+    if (!newconst)
+    {
         ERR("Failed to allocate a new constant\n");
         return FALSE;
     }
@@ -218,41 +236,50 @@ BOOL add_constB(struct bwriter_shader *shader, DWORD reg, BOOL x) {
     return TRUE;
 }
 
-BOOL record_declaration(struct bwriter_shader *shader, DWORD usage,
-                        DWORD usage_idx, DWORD mod, BOOL output,
-                        DWORD regnum, DWORD writemask, BOOL builtin) {
-    unsigned int *num;
+BOOL record_declaration(struct bwriter_shader *shader, uint32_t usage, uint32_t usage_idx,
+        uint32_t mod, BOOL output, uint32_t regnum, uint32_t writemask, BOOL builtin)
+{
     struct declaration **decl;
-    unsigned int i;
+    unsigned int i, *num;
 
-    if(!shader) return FALSE;
+    if (!shader)
+        return FALSE;
 
-    if(output) {
+    if (output)
+    {
         num = &shader->num_outputs;
         decl = &shader->outputs;
-    } else {
+    }
+    else
+    {
         num = &shader->num_inputs;
         decl = &shader->inputs;
     }
 
-    if(*num == 0) {
+    if (*num == 0)
+    {
         *decl = d3dcompiler_alloc(sizeof(**decl));
-        if(!*decl) {
+        if (!*decl)
+        {
             ERR("Error allocating declarations array\n");
             return FALSE;
         }
-    } else {
+    }
+    else
+    {
         struct declaration *newdecl;
-        for(i = 0; i < *num; i++) {
-            if((*decl)[i].regnum == regnum && ((*decl)[i].writemask & writemask)) {
-                WARN("Declaration of register %lu already exists, writemask match %#lx.\n",
+
+        for (i = 0; i < *num; i++)
+        {
+            if ((*decl)[i].regnum == regnum && ((*decl)[i].writemask & writemask))
+                WARN("Declaration of register %u already exists, writemask match 0x%x\n",
                       regnum, (*decl)[i].writemask & writemask);
-            }
         }
 
         newdecl = d3dcompiler_realloc(*decl,
                               sizeof(**decl) * ((*num) + 1));
-        if(!newdecl) {
+        if (!newdecl)
+        {
             ERR("Error reallocating declarations array\n");
             return FALSE;
         }
@@ -269,32 +296,38 @@ BOOL record_declaration(struct bwriter_shader *shader, DWORD usage,
     return TRUE;
 }
 
-BOOL record_sampler(struct bwriter_shader *shader, DWORD samptype, DWORD mod, DWORD regnum) {
+BOOL record_sampler(struct bwriter_shader *shader, uint32_t samptype, uint32_t mod, uint32_t regnum) {
     unsigned int i;
 
-    if(!shader) return FALSE;
+    if (!shader)
+        return FALSE;
 
-    if(shader->num_samplers == 0) {
+    if (shader->num_samplers == 0)
+    {
         shader->samplers = d3dcompiler_alloc(sizeof(*shader->samplers));
-        if(!shader->samplers) {
+        if (!shader->samplers)
+        {
             ERR("Error allocating samplers array\n");
             return FALSE;
         }
-    } else {
+    }
+    else
+    {
         struct samplerdecl *newarray;
 
-        for(i = 0; i < shader->num_samplers; i++) {
-            if(shader->samplers[i].regnum == regnum) {
-                WARN("Sampler %lu already declared.\n", regnum);
+        for (i = 0; i < shader->num_samplers; i++)
+        {
+            if (shader->samplers[i].regnum == regnum)
+            {
+                WARN("Sampler %u already declared\n", regnum);
                 /* This is not an error as far as the assembler is concerned.
-                 * Direct3D might refuse to load the compiled shader though
-                 */
+                 * Direct3D might refuse to load the compiled shader though */
             }
         }
 
-        newarray = d3dcompiler_realloc(shader->samplers,
-                               sizeof(*shader->samplers) * (shader->num_samplers + 1));
-        if(!newarray) {
+        newarray = d3dcompiler_realloc(shader->samplers, sizeof(*shader->samplers) * (shader->num_samplers + 1));
+        if (!newarray)
+        {
             ERR("Error reallocating samplers array\n");
             return FALSE;
         }
@@ -310,7 +343,7 @@ BOOL record_sampler(struct bwriter_shader *shader, DWORD samptype, DWORD mod, DW
 
 struct bytecode_buffer
 {
-    DWORD *data;
+    uint32_t *data;
     unsigned int size, alloc_size;
     HRESULT state;
 };
@@ -329,13 +362,13 @@ struct bytecode_backend
     void (*srcreg)(struct bc_writer *writer, const struct shader_reg *reg,
             struct bytecode_buffer *buffer);
     void (*dstreg)(struct bc_writer *writer, const struct shader_reg *reg,
-            struct bytecode_buffer *buffer, DWORD shift, DWORD mod);
+            struct bytecode_buffer *buffer, uint32_t shift, uint32_t mod);
     void (*opcode)(struct bc_writer *writer, const struct instruction *instr,
-            DWORD token, struct bytecode_buffer *buffer);
+            uint32_t token, struct bytecode_buffer *buffer);
 
     const struct instr_handler_table
     {
-        DWORD opcode;
+        uint32_t opcode;
         instr_writer func;
     } *instructions;
 };
@@ -348,16 +381,16 @@ struct bc_writer
     HRESULT state;
 
     /* Vertex shader varying mapping. */
-    DWORD oPos_regnum, oD_regnum[2], oT_regnum[8], oFog_regnum, oFog_mask, oPts_regnum, oPts_mask;
+    uint32_t oPos_regnum, oD_regnum[2], oT_regnum[8], oFog_regnum, oFog_mask, oPts_regnum, oPts_mask;
 
     /* Pixel shader varying mapping. */
-    DWORD t_regnum[8], v_regnum[2];
+    uint32_t t_regnum[8], v_regnum[2];
 };
 
 
 /* shader bytecode buffer manipulation functions.
- * allocate_buffer creates a new buffer structure, put_dword adds a new
- * DWORD to the buffer. In the rare case of a memory allocation failure
+ * allocate_buffer creates a new buffer structure, put_u32 adds a new
+ * uint32_t to the buffer. In the rare case of a memory allocation failure
  * when trying to grow the buffer a flag is set in the buffer to mark it
  * invalid. This avoids return value checking and passing in many places
  */
@@ -370,8 +403,10 @@ static struct bytecode_buffer *allocate_buffer(void) {
     return ret;
 }
 
-static void put_dword(struct bytecode_buffer *buffer, DWORD value) {
-    if(FAILED(buffer->state)) return;
+static void put_u32(struct bytecode_buffer *buffer, uint32_t value)
+{
+    if (FAILED(buffer->state))
+        return;
 
     if (!array_reserve((void **)&buffer->data, &buffer->alloc_size, buffer->size + 1, sizeof(*buffer->data)))
     {
@@ -384,7 +419,7 @@ static void put_dword(struct bytecode_buffer *buffer, DWORD value) {
 
 /* bwriter -> d3d9 conversion functions. */
 
-static DWORD sm1_version(const struct bwriter_shader *shader)
+static uint32_t sm1_version(const struct bwriter_shader *shader)
 {
     switch (shader->type)
     {
@@ -398,9 +433,9 @@ static DWORD sm1_version(const struct bwriter_shader *shader)
     }
 }
 
-static DWORD d3d9_swizzle(DWORD bwriter_swizzle)
+static uint32_t d3d9_swizzle(uint32_t bwriter_swizzle)
 {
-    DWORD ret = 0;
+    uint32_t ret = 0;
 
     if ((bwriter_swizzle & BWRITERVS_X_X) == BWRITERVS_X_X) ret |= D3DVS_X_X;
     if ((bwriter_swizzle & BWRITERVS_X_Y) == BWRITERVS_X_Y) ret |= D3DVS_X_Y;
@@ -425,9 +460,9 @@ static DWORD d3d9_swizzle(DWORD bwriter_swizzle)
     return ret;
 }
 
-static DWORD d3d9_writemask(DWORD bwriter_writemask)
+static uint32_t d3d9_writemask(uint32_t bwriter_writemask)
 {
-    DWORD ret = 0;
+    uint32_t ret = 0;
 
     if (bwriter_writemask & BWRITERSP_WRITEMASK_0) ret |= D3DSP_WRITEMASK_0;
     if (bwriter_writemask & BWRITERSP_WRITEMASK_1) ret |= D3DSP_WRITEMASK_1;
@@ -437,7 +472,7 @@ static DWORD d3d9_writemask(DWORD bwriter_writemask)
     return ret;
 }
 
-static DWORD d3d9_srcmod(DWORD bwriter_srcmod)
+static uint32_t d3d9_srcmod(uint32_t bwriter_srcmod)
 {
     switch (bwriter_srcmod)
     {
@@ -456,14 +491,14 @@ static DWORD d3d9_srcmod(DWORD bwriter_srcmod)
         case BWRITERSPSM_ABSNEG:     return D3DSPSM_ABSNEG;
         case BWRITERSPSM_NOT:        return D3DSPSM_NOT;
         default:
-            FIXME("Unhandled BWRITERSPSM token %#lx.\n", bwriter_srcmod);
+            FIXME("Unhandled BWRITERSPSM token %#x.\n", bwriter_srcmod);
             return 0;
     }
 }
 
-static DWORD d3d9_dstmod(DWORD bwriter_mod)
+static uint32_t d3d9_dstmod(uint32_t bwriter_mod)
 {
-    DWORD ret = 0;
+    uint32_t ret = 0;
 
     if (bwriter_mod & BWRITERSPDM_SATURATE)         ret |= D3DSPDM_SATURATE;
     if (bwriter_mod & BWRITERSPDM_PARTIALPRECISION) ret |= D3DSPDM_PARTIALPRECISION;
@@ -472,7 +507,7 @@ static DWORD d3d9_dstmod(DWORD bwriter_mod)
     return ret;
 }
 
-static DWORD d3d9_comparetype(DWORD asmshader_comparetype)
+static uint32_t d3d9_comparetype(uint32_t asmshader_comparetype)
 {
     switch (asmshader_comparetype)
     {
@@ -483,24 +518,24 @@ static DWORD d3d9_comparetype(DWORD asmshader_comparetype)
         case BWRITER_COMPARISON_NE:     return D3DSPC_NE;
         case BWRITER_COMPARISON_LE:     return D3DSPC_LE;
         default:
-            FIXME("Unexpected BWRITER_COMPARISON type %#lx.\n", asmshader_comparetype);
+            FIXME("Unexpected BWRITER_COMPARISON type %#x.\n", asmshader_comparetype);
             return 0;
     }
 }
 
-static DWORD d3d9_sampler(DWORD bwriter_sampler)
+static uint32_t d3d9_sampler(uint32_t bwriter_sampler)
 {
     if (bwriter_sampler == BWRITERSTT_UNKNOWN)  return D3DSTT_UNKNOWN;
     if (bwriter_sampler == BWRITERSTT_1D)       return D3DSTT_1D;
     if (bwriter_sampler == BWRITERSTT_2D)       return D3DSTT_2D;
     if (bwriter_sampler == BWRITERSTT_CUBE)     return D3DSTT_CUBE;
     if (bwriter_sampler == BWRITERSTT_VOLUME)   return D3DSTT_VOLUME;
-    FIXME("Unexpected BWRITERSAMPLER_TEXTURE_TYPE type %#lx.\n", bwriter_sampler);
+    FIXME("Unexpected BWRITERSAMPLER_TEXTURE_TYPE type %#x.\n", bwriter_sampler);
 
     return 0;
 }
 
-static DWORD d3d9_register(DWORD bwriter_register)
+static uint32_t d3d9_register(uint32_t bwriter_register)
 {
     if (bwriter_register == BWRITERSPR_TEMP)        return D3DSPR_TEMP;
     if (bwriter_register == BWRITERSPR_INPUT)       return D3DSPR_INPUT;
@@ -521,11 +556,11 @@ static DWORD d3d9_register(DWORD bwriter_register)
     if (bwriter_register == BWRITERSPR_LABEL)       return D3DSPR_LABEL;
     if (bwriter_register == BWRITERSPR_PREDICATE)   return D3DSPR_PREDICATE;
 
-    FIXME("Unexpected BWRITERSPR %#lx.\n", bwriter_register);
+    FIXME("Unexpected BWRITERSPR %#x.\n", bwriter_register);
     return ~0U;
 }
 
-static DWORD d3d9_opcode(DWORD bwriter_opcode)
+static uint32_t d3d9_opcode(uint32_t bwriter_opcode)
 {
     switch (bwriter_opcode)
     {
@@ -620,12 +655,12 @@ static DWORD d3d9_opcode(DWORD bwriter_opcode)
         case BWRITERSIO_TEXLDB:      return D3DSIO_TEX | D3DSI_TEXLD_BIAS;
 
         default:
-            FIXME("Unhandled BWRITERSIO token %#lx.\n", bwriter_opcode);
+            FIXME("Unhandled BWRITERSIO token %#x.\n", bwriter_opcode);
             return ~0U;
     }
 }
 
-static DWORD d3dsp_register( D3DSHADER_PARAM_REGISTER_TYPE type, DWORD num )
+static uint32_t d3dsp_register(D3DSHADER_PARAM_REGISTER_TYPE type, uint32_t num)
 {
     return ((type << D3DSP_REGTYPE_SHIFT) & D3DSP_REGTYPE_MASK) |
            ((type << D3DSP_REGTYPE_SHIFT2) & D3DSP_REGTYPE_MASK2) |
@@ -635,43 +670,44 @@ static DWORD d3dsp_register( D3DSHADER_PARAM_REGISTER_TYPE type, DWORD num )
 /******************************************************
  * Implementation of the writer functions starts here *
  ******************************************************/
-static void write_declarations(struct bc_writer *This, struct bytecode_buffer *buffer,
-        const struct declaration *decls, unsigned int num, DWORD type)
+static void write_declarations(struct bc_writer *writer, struct bytecode_buffer *buffer,
+        const struct declaration *decls, unsigned int num, uint32_t type)
 {
-    DWORD i;
-    DWORD instr_dcl = D3DSIO_DCL;
-    DWORD token;
+    uint32_t instr_dcl = D3DSIO_DCL;
+    uint32_t token;
+    unsigned int i;
     struct shader_reg reg;
 
     ZeroMemory(&reg, sizeof(reg));
 
-    if (This->shader->major_version > 1)
+    if (writer->shader->major_version > 1)
         instr_dcl |= 2 << D3DSI_INSTLENGTH_SHIFT;
 
     for(i = 0; i < num; i++) {
         if(decls[i].builtin) continue;
 
         /* Write the DCL instruction */
-        put_dword(buffer, instr_dcl);
+        put_u32(buffer, instr_dcl);
 
         /* Write the usage and index */
         token = (1u << 31); /* Bit 31 of non-instruction opcodes is 1 */
         token |= (decls[i].usage << D3DSP_DCL_USAGE_SHIFT) & D3DSP_DCL_USAGE_MASK;
         token |= (decls[i].usage_idx << D3DSP_DCL_USAGEINDEX_SHIFT) & D3DSP_DCL_USAGEINDEX_MASK;
-        put_dword(buffer, token);
+        put_u32(buffer, token);
 
         /* Write the dest register */
         reg.type = type;
         reg.regnum = decls[i].regnum;
-        reg.u.writemask = decls[i].writemask;
-        This->funcs->dstreg(This, &reg, buffer, 0, decls[i].mod);
+        reg.writemask = decls[i].writemask;
+        writer->funcs->dstreg(writer, &reg, buffer, 0, decls[i].mod);
     }
 }
 
-static void write_const(struct constant **consts, int num, DWORD opcode, DWORD reg_type, struct bytecode_buffer *buffer, BOOL len) {
-    int i;
-    DWORD instr_def = opcode;
-    const DWORD reg = (1u << 31) | d3dsp_register( reg_type, 0 ) | D3DSP_WRITEMASK_ALL;
+static void write_const(struct constant **consts, int num, uint32_t opcode, uint32_t reg_type, struct bytecode_buffer *buffer, BOOL len)
+{
+    const uint32_t reg = (1u << 31) | d3dsp_register( reg_type, 0 ) | D3DSP_WRITEMASK_ALL;
+    uint32_t instr_def = opcode;
+    unsigned int i;
 
     if(len) {
         if(opcode == D3DSIO_DEFB)
@@ -682,14 +718,14 @@ static void write_const(struct constant **consts, int num, DWORD opcode, DWORD r
 
     for(i = 0; i < num; i++) {
         /* Write the DEF instruction */
-        put_dword(buffer, instr_def);
+        put_u32(buffer, instr_def);
 
-        put_dword(buffer, reg | (consts[i]->regnum & D3DSP_REGNUM_MASK));
-        put_dword(buffer, consts[i]->value[0].d);
+        put_u32(buffer, reg | (consts[i]->regnum & D3DSP_REGNUM_MASK));
+        put_u32(buffer, consts[i]->value[0].d);
         if(opcode != D3DSIO_DEFB) {
-            put_dword(buffer, consts[i]->value[1].d);
-            put_dword(buffer, consts[i]->value[2].d);
-            put_dword(buffer, consts[i]->value[3].d);
+            put_u32(buffer, consts[i]->value[1].d);
+            put_u32(buffer, consts[i]->value[2].d);
+            put_u32(buffer, consts[i]->value[3].d);
         }
     }
 }
@@ -699,85 +735,97 @@ static void write_constF(const struct bwriter_shader *shader, struct bytecode_bu
 }
 
 /* This function looks for VS 1/2 registers mapping to VS 3 output registers */
-static HRESULT vs_find_builtin_varyings(struct bc_writer *This, const struct bwriter_shader *shader) {
-    DWORD i;
-    DWORD usage, usage_idx, writemask, regnum;
+static HRESULT vs_find_builtin_varyings(struct bc_writer *writer, const struct bwriter_shader *shader)
+{
+    uint32_t usage, usage_idx, writemask, regnum;
+    unsigned int i;
 
-    for(i = 0; i < shader->num_outputs; i++) {
-        if(!shader->outputs[i].builtin) continue;
+    for (i = 0; i < shader->num_outputs; i++)
+    {
+        if (!shader->outputs[i].builtin)
+            continue;
 
         usage = shader->outputs[i].usage;
         usage_idx = shader->outputs[i].usage_idx;
         writemask = shader->outputs[i].writemask;
         regnum = shader->outputs[i].regnum;
 
-        switch(usage) {
+        switch (usage)
+        {
             case BWRITERDECLUSAGE_POSITION:
             case BWRITERDECLUSAGE_POSITIONT:
-                if(usage_idx > 0) {
-                    WARN("dcl_position%lu not supported in sm 1/2 shaders.\n", usage_idx);
+                if (usage_idx > 0)
+                {
+                    WARN("dcl_position%u not supported in sm 1/2 shaders.\n", usage_idx);
                     return E_INVALIDARG;
                 }
-                TRACE("o%lu is oPos.\n", regnum);
-                This->oPos_regnum = regnum;
+                TRACE("o%u is oPos.\n", regnum);
+                writer->oPos_regnum = regnum;
                 break;
 
             case BWRITERDECLUSAGE_COLOR:
-                if(usage_idx > 1) {
-                    WARN("dcl_color%lu not supported in sm 1/2 shaders.\n", usage_idx);
+                if (usage_idx > 1)
+                {
+                    WARN("dcl_color%u not supported in sm 1/2 shaders.\n", usage_idx);
                     return E_INVALIDARG;
                 }
-                if(writemask != BWRITERSP_WRITEMASK_ALL) {
+                if (writemask != BWRITERSP_WRITEMASK_ALL)
+                {
                     WARN("Only WRITEMASK_ALL is supported on color in sm 1/2\n");
                     return E_INVALIDARG;
                 }
-                TRACE("o%lu is oD%lu.\n", regnum, usage_idx);
-                This->oD_regnum[usage_idx] = regnum;
+                TRACE("o%u is oD%u.\n", regnum, usage_idx);
+                writer->oD_regnum[usage_idx] = regnum;
                 break;
 
             case BWRITERDECLUSAGE_TEXCOORD:
-                if(usage_idx >= 8) {
-                    WARN("dcl_color%lu not supported in sm 1/2 shaders.\n", usage_idx);
+                if (usage_idx >= 8)
+                {
+                    WARN("dcl_color%u not supported in sm 1/2 shaders.\n", usage_idx);
                     return E_INVALIDARG;
                 }
-                if(writemask != (BWRITERSP_WRITEMASK_0) &&
-                   writemask != (BWRITERSP_WRITEMASK_0 | BWRITERSP_WRITEMASK_1) &&
-                   writemask != (BWRITERSP_WRITEMASK_0 | BWRITERSP_WRITEMASK_1 | BWRITERSP_WRITEMASK_2) &&
-                   writemask != (BWRITERSP_WRITEMASK_ALL)) {
+                if (writemask != (BWRITERSP_WRITEMASK_0)
+                        && writemask != (BWRITERSP_WRITEMASK_0 | BWRITERSP_WRITEMASK_1)
+                        && writemask != (BWRITERSP_WRITEMASK_0 | BWRITERSP_WRITEMASK_1 | BWRITERSP_WRITEMASK_2)
+                        && writemask != (BWRITERSP_WRITEMASK_ALL))
+                {
                     WARN("Partial writemasks not supported on texture coordinates in sm 1 and 2\n");
                     return E_INVALIDARG;
                 }
-                TRACE("o%lu is oT%lu.\n", regnum, usage_idx);
-                This->oT_regnum[usage_idx] = regnum;
+                TRACE("o%u is oT%u.\n", regnum, usage_idx);
+                writer->oT_regnum[usage_idx] = regnum;
                 break;
 
             case BWRITERDECLUSAGE_PSIZE:
-                if(usage_idx > 0) {
-                    WARN("dcl_psize%lu not supported in sm 1/2 shaders.\n", usage_idx);
+                if (usage_idx > 0)
+                {
+                    WARN("dcl_psize%u not supported in sm 1/2 shaders.\n", usage_idx);
                     return E_INVALIDARG;
                 }
-                TRACE("o%lu writemask 0x%08lx is oPts.\n", regnum, writemask);
-                This->oPts_regnum = regnum;
-                This->oPts_mask = writemask;
+                TRACE("o%u writemask 0x%08x is oPts.\n", regnum, writemask);
+                writer->oPts_regnum = regnum;
+                writer->oPts_mask = writemask;
                 break;
 
             case BWRITERDECLUSAGE_FOG:
-                if(usage_idx > 0) {
-                    WARN("dcl_fog%lu not supported in sm 1 shaders.\n", usage_idx);
+                if (usage_idx > 0)
+                {
+                    WARN("dcl_fog%u not supported in sm 1 shaders.\n", usage_idx);
                     return E_INVALIDARG;
                 }
-                if(writemask != BWRITERSP_WRITEMASK_0 && writemask != BWRITERSP_WRITEMASK_1 &&
-                   writemask != BWRITERSP_WRITEMASK_2 && writemask != BWRITERSP_WRITEMASK_3) {
+                if (writemask != BWRITERSP_WRITEMASK_0 && writemask != BWRITERSP_WRITEMASK_1
+                        && writemask != BWRITERSP_WRITEMASK_2 && writemask != BWRITERSP_WRITEMASK_3)
+                {
                     WARN("Unsupported fog writemask\n");
                     return E_INVALIDARG;
                 }
-                TRACE("o%lu writemask 0x%08lx is oFog.\n", regnum, writemask);
-                This->oFog_regnum = regnum;
-                This->oFog_mask = writemask;
+                TRACE("o%u writemask 0x%08x is oFog.\n", regnum, writemask);
+                writer->oFog_regnum = regnum;
+                writer->oFog_mask = writemask;
                 break;
 
             default:
-                WARN("Varying type %lu is not supported in shader model 1.x.\n", usage);
+                WARN("Varying type %u is not supported in shader model 1.x.\n", usage);
                 return E_INVALIDARG;
         }
     }
@@ -805,56 +853,63 @@ static void vs_1_x_header(struct bc_writer *This, const struct bwriter_shader *s
     write_constF(shader, buffer, FALSE);
 }
 
-static HRESULT find_ps_builtin_semantics(struct bc_writer *This,
-                                         const struct bwriter_shader *shader,
-                                         DWORD texcoords) {
-    DWORD i;
-    DWORD usage, usage_idx, writemask, regnum;
+static HRESULT find_ps_builtin_semantics(struct bc_writer *writer, const struct bwriter_shader *shader,
+        uint32_t texcoords)
+{
+    uint32_t usage, usage_idx, writemask, regnum;
+    unsigned int i;
 
-    This->v_regnum[0] = -1; This->v_regnum[1] = -1;
-    for(i = 0; i < 8; i++) This->t_regnum[i] = -1;
+    writer->v_regnum[0] = -1;
+    writer->v_regnum[1] = -1;
+    for (i = 0; i < 8; i++)
+        writer->t_regnum[i] = -1;
 
-    for(i = 0; i < shader->num_inputs; i++) {
-        if(!shader->inputs[i].builtin) continue;
+    for (i = 0; i < shader->num_inputs; i++)
+    {
+        if (!shader->inputs[i].builtin)
+            continue;
 
         usage = shader->inputs[i].usage;
         usage_idx = shader->inputs[i].usage_idx;
         writemask = shader->inputs[i].writemask;
         regnum = shader->inputs[i].regnum;
 
-        switch(usage) {
+        switch (usage)
+        {
             case BWRITERDECLUSAGE_COLOR:
-                if(usage_idx > 1) {
-                    WARN("dcl_color%lu not supported in sm 1 shaders\n", usage_idx);
+                if (usage_idx > 1)
+                {
+                    WARN("dcl_color%u not supported in sm 1 shaders\n", usage_idx);
                     return E_INVALIDARG;
                 }
-                if(writemask != BWRITERSP_WRITEMASK_ALL) {
+                if (writemask != BWRITERSP_WRITEMASK_ALL)
+                {
                     WARN("Only WRITEMASK_ALL is supported on color in sm 1\n");
                     return E_INVALIDARG;
                 }
-                TRACE("v%lu is v%lu\n", regnum, usage_idx);
-                This->v_regnum[usage_idx] = regnum;
+                TRACE("v%u is v%u\n", regnum, usage_idx);
+                writer->v_regnum[usage_idx] = regnum;
                 break;
 
             case BWRITERDECLUSAGE_TEXCOORD:
-                if(usage_idx > texcoords) {
-                    WARN("dcl_texcoord%lu not supported in this shader version\n", usage_idx);
+                if (usage_idx > texcoords)
+                {
+                    WARN("dcl_texcoord%u not supported in this shader version\n", usage_idx);
                     return E_INVALIDARG;
                 }
-                if(writemask != (BWRITERSP_WRITEMASK_0) &&
-                   writemask != (BWRITERSP_WRITEMASK_0 | BWRITERSP_WRITEMASK_1) &&
-                   writemask != (BWRITERSP_WRITEMASK_0 | BWRITERSP_WRITEMASK_1 | BWRITERSP_WRITEMASK_2) &&
-                   writemask != (BWRITERSP_WRITEMASK_ALL)) {
+                if (writemask != (BWRITERSP_WRITEMASK_0)
+                        && writemask != (BWRITERSP_WRITEMASK_0 | BWRITERSP_WRITEMASK_1)
+                        && writemask != (BWRITERSP_WRITEMASK_0 | BWRITERSP_WRITEMASK_1 | BWRITERSP_WRITEMASK_2)
+                        && writemask != (BWRITERSP_WRITEMASK_ALL))
                     WARN("Partial writemasks not supported on texture coordinates in sm 1 and 2\n");
-                } else {
+                else
                     writemask = BWRITERSP_WRITEMASK_ALL;
-                }
-                TRACE("v%lu is t%lu\n", regnum, usage_idx);
-                This->t_regnum[usage_idx] = regnum;
+                TRACE("v%u is t%u\n", regnum, usage_idx);
+                writer->t_regnum[usage_idx] = regnum;
                 break;
 
             default:
-                WARN("Varying type %lu is not supported in shader model 1.x\n", usage);
+                WARN("Varying type %u is not supported in shader model 1.x\n", usage);
                 return E_INVALIDARG;
         }
     }
@@ -901,59 +956,66 @@ static void ps_1_4_header(struct bc_writer *This, const struct bwriter_shader *s
     write_constF(shader, buffer, FALSE);
 }
 
-static void end(struct bc_writer *This, const struct bwriter_shader *shader, struct bytecode_buffer *buffer) {
-    put_dword(buffer, D3DSIO_END);
+static void end(struct bc_writer *writer, const struct bwriter_shader *shader, struct bytecode_buffer *buffer)
+{
+    put_u32(buffer, D3DSIO_END);
 }
 
-static DWORD map_vs_output(struct bc_writer *This, DWORD regnum, DWORD mask, DWORD *has_components) {
-    DWORD i;
+static uint32_t map_vs_output(struct bc_writer *writer, uint32_t regnum, uint32_t mask, BOOL *has_components)
+{
+    unsigned int i;
 
     *has_components = TRUE;
-    if(regnum == This->oPos_regnum) {
+    if (regnum == writer->oPos_regnum)
+    {
         return d3dsp_register( D3DSPR_RASTOUT, D3DSRO_POSITION );
     }
-    if(regnum == This->oFog_regnum && mask == This->oFog_mask) {
+    if (regnum == writer->oFog_regnum && mask == writer->oFog_mask)
+    {
         *has_components = FALSE;
         return d3dsp_register( D3DSPR_RASTOUT, D3DSRO_FOG ) | D3DSP_WRITEMASK_ALL;
     }
-    if(regnum == This->oPts_regnum && mask == This->oPts_mask) {
+    if (regnum == writer->oPts_regnum && mask == writer->oPts_mask)
+    {
         *has_components = FALSE;
         return d3dsp_register( D3DSPR_RASTOUT, D3DSRO_POINT_SIZE ) | D3DSP_WRITEMASK_ALL;
     }
-    for(i = 0; i < 2; i++) {
-        if(regnum == This->oD_regnum[i]) {
+    for (i = 0; i < 2; i++)
+    {
+        if (regnum == writer->oD_regnum[i])
             return d3dsp_register( D3DSPR_ATTROUT, i );
-        }
     }
-    for(i = 0; i < 8; i++) {
-        if(regnum == This->oT_regnum[i]) {
+    for (i = 0; i < 8; i++)
+    {
+        if (regnum == writer->oT_regnum[i])
             return d3dsp_register( D3DSPR_TEXCRDOUT, i );
-        }
     }
 
     /* The varying must be undeclared - if an unsupported varying was declared,
      * the vs_find_builtin_varyings function would have caught it and this code
      * would not run */
-    WARN("Undeclared varying %lu.\n", regnum);
-    This->state = E_INVALIDARG;
+    WARN("Undeclared varying %u.\n", regnum);
+    writer->state = E_INVALIDARG;
     return -1;
 }
 
-static void vs_12_dstreg(struct bc_writer *This, const struct shader_reg *reg,
-                         struct bytecode_buffer *buffer,
-                         DWORD shift, DWORD mod) {
-    DWORD token = (1u << 31); /* Bit 31 of registers is 1 */
-    DWORD has_wmask;
+static void vs_12_dstreg(struct bc_writer *writer, const struct shader_reg *reg, struct bytecode_buffer *buffer,
+        uint32_t shift, uint32_t mod)
+{
+    uint32_t token = (1u << 31); /* Bit 31 of registers is 1 */
+    BOOL has_wmask;
 
-    if(reg->rel_reg) {
+    if (reg->rel_reg)
+    {
         WARN("Relative addressing not supported for destination registers\n");
-        This->state = E_INVALIDARG;
+        writer->state = E_INVALIDARG;
         return;
     }
 
-    switch(reg->type) {
+    switch (reg->type)
+    {
         case BWRITERSPR_OUTPUT:
-            token |= map_vs_output(This, reg->regnum, reg->u.writemask, &has_wmask);
+            token |= map_vs_output(writer, reg->regnum, reg->writemask, &has_wmask);
             break;
 
         case BWRITERSPR_RASTOUT:
@@ -961,7 +1023,7 @@ static void vs_12_dstreg(struct bc_writer *This, const struct shader_reg *reg,
             /* These registers are mapped to input and output regs. They can be encoded in the bytecode,
             * but are unexpected. If we hit this path it might be due to an error.
             */
-            FIXME("Unexpected register type %lu.\n", reg->type);
+            FIXME("Unexpected register type %u.\n", reg->type);
             /* drop through */
         case BWRITERSPR_INPUT:
         case BWRITERSPR_TEMP:
@@ -971,9 +1033,10 @@ static void vs_12_dstreg(struct bc_writer *This, const struct shader_reg *reg,
             break;
 
         case BWRITERSPR_ADDR:
-            if(reg->regnum != 0) {
+            if (reg->regnum != 0)
+            {
                 WARN("Only a0 exists\n");
-                This->state = E_INVALIDARG;
+                writer->state = E_INVALIDARG;
                 return;
             }
             token |= d3dsp_register( D3DSPR_ADDR, 0 );
@@ -981,15 +1044,16 @@ static void vs_12_dstreg(struct bc_writer *This, const struct shader_reg *reg,
             break;
 
         case BWRITERSPR_PREDICATE:
-            if (This->shader->major_version != 2 || This->shader->minor_version != 1)
+            if (writer->shader->major_version != 2 || writer->shader->minor_version != 1)
             {
                 WARN("Predicate register is allowed only in vs_2_x\n");
-                This->state = E_INVALIDARG;
+                writer->state = E_INVALIDARG;
                 return;
             }
-            if(reg->regnum != 0) {
+            if (reg->regnum != 0)
+            {
                 WARN("Only predicate register p0 exists\n");
-                This->state = E_INVALIDARG;
+                writer->state = E_INVALIDARG;
                 return;
             }
             token |= d3dsp_register( D3DSPR_PREDICATE, 0 );
@@ -998,7 +1062,7 @@ static void vs_12_dstreg(struct bc_writer *This, const struct shader_reg *reg,
 
         default:
             WARN("Invalid register type for 1.x-2.x vertex shader\n");
-            This->state = E_INVALIDARG;
+            writer->state = E_INVALIDARG;
             return;
     }
 
@@ -1009,24 +1073,24 @@ static void vs_12_dstreg(struct bc_writer *This, const struct shader_reg *reg,
     token |= (shift << D3DSP_DSTSHIFT_SHIFT) & D3DSP_DSTSHIFT_MASK;
     token |= d3d9_dstmod(mod);
 
-    if(has_wmask) {
-        token |= d3d9_writemask(reg->u.writemask);
-    }
-    put_dword(buffer, token);
+    if (has_wmask)
+        token |= d3d9_writemask(reg->writemask);
+    put_u32(buffer, token);
 }
 
-static void vs_1_x_srcreg(struct bc_writer *This, const struct shader_reg *reg,
-                          struct bytecode_buffer *buffer) {
-    DWORD token = (1u << 31); /* Bit 31 of registers is 1 */
-    DWORD has_swizzle;
-    DWORD component;
+static void vs_1_x_srcreg(struct bc_writer *writer, const struct shader_reg *reg, struct bytecode_buffer *buffer)
+{
+    uint32_t token = (1u << 31); /* Bit 31 of registers is 1 */
+    uint32_t component;
+    BOOL has_swizzle;
 
-    switch(reg->type) {
+    switch (reg->type)
+    {
         case BWRITERSPR_OUTPUT:
-            /* Map the swizzle to a writemask, the format expected
-               by map_vs_output
-             */
-            switch(reg->u.swizzle) {
+            /* Map the swizzle to a writemask, the format expected by
+             * map_vs_output */
+            switch (reg->swizzle)
+            {
                 case BWRITERVS_SWIZZLE_X:
                     component = BWRITERSP_WRITEMASK_0;
                     break;
@@ -1042,27 +1106,28 @@ static void vs_1_x_srcreg(struct bc_writer *This, const struct shader_reg *reg,
                 default:
                     component = 0;
             }
-            token |= map_vs_output(This, reg->regnum, component, &has_swizzle);
+            token |= map_vs_output(writer, reg->regnum, component, &has_swizzle);
             break;
 
         case BWRITERSPR_RASTOUT:
         case BWRITERSPR_ATTROUT:
-            /* These registers are mapped to input and output regs. They can be encoded in the bytecode,
-             * but are unexpected. If we hit this path it might be due to an error.
-             */
-            FIXME("Unexpected register type %lu.\n", reg->type);
+            /* These registers are mapped to input and output regs. They can
+             * be encoded in the bytecode, but are unexpected. If we hit this
+             * path it might be due to an error. */
+            FIXME("Unexpected register type %u.\n", reg->type);
             /* drop through */
         case BWRITERSPR_INPUT:
         case BWRITERSPR_TEMP:
         case BWRITERSPR_CONST:
         case BWRITERSPR_ADDR:
-            token |= d3dsp_register( reg->type, reg->regnum );
-            if(reg->rel_reg) {
-                if(reg->rel_reg->type != BWRITERSPR_ADDR ||
-                   reg->rel_reg->regnum != 0 ||
-                   reg->rel_reg->u.swizzle != BWRITERVS_SWIZZLE_X) {
+            token |= d3dsp_register(reg->type, reg->regnum);
+            if (reg->rel_reg)
+            {
+                if (reg->rel_reg->type != BWRITERSPR_ADDR || reg->rel_reg->regnum != 0
+                        || reg->rel_reg->swizzle != BWRITERVS_SWIZZLE_X)
+                {
                     WARN("Relative addressing in vs_1_x is only allowed with a0.x\n");
-                    This->state = E_INVALIDARG;
+                    writer->state = E_INVALIDARG;
                     return;
                 }
                 token |= D3DVS_ADDRMODE_RELATIVE & D3DVS_ADDRESSMODE_MASK;
@@ -1071,73 +1136,76 @@ static void vs_1_x_srcreg(struct bc_writer *This, const struct shader_reg *reg,
 
         default:
             WARN("Invalid register type for 1.x vshader\n");
-            This->state = E_INVALIDARG;
+            writer->state = E_INVALIDARG;
             return;
     }
 
-    token |= d3d9_swizzle(reg->u.swizzle) & D3DVS_SWIZZLE_MASK; /* already shifted */
+    token |= d3d9_swizzle(reg->swizzle) & D3DVS_SWIZZLE_MASK; /* already shifted */
 
     token |= d3d9_srcmod(reg->srcmod);
-    put_dword(buffer, token);
+    put_u32(buffer, token);
 }
 
-static void write_srcregs(struct bc_writer *This, const struct instruction *instr,
-                          struct bytecode_buffer *buffer){
+static void write_srcregs(struct bc_writer *writer, const struct instruction *instr, struct bytecode_buffer *buffer)
+{
     unsigned int i;
-    if(instr->has_predicate){
-        This->funcs->srcreg(This, &instr->predicate, buffer);
-    }
-    for(i = 0; i < instr->num_srcs; i++){
-        This->funcs->srcreg(This, &instr->src[i], buffer);
-    }
+
+    if (instr->has_predicate)
+        writer->funcs->srcreg(writer, &instr->predicate, buffer);
+
+    for (i = 0; i < instr->num_srcs; ++i)
+        writer->funcs->srcreg(writer, &instr->src[i], buffer);
 }
 
-static DWORD map_ps13_temp(struct bc_writer *This, const struct shader_reg *reg) {
-    if(reg->regnum == T0_REG) {
-        return d3dsp_register( D3DSPR_TEXTURE, 0 );
-    } else if(reg->regnum == T1_REG) {
-        return d3dsp_register( D3DSPR_TEXTURE, 1 );
-    } else if(reg->regnum == T2_REG) {
-        return d3dsp_register( D3DSPR_TEXTURE, 2 );
-    } else if(reg->regnum == T3_REG) {
-        return d3dsp_register( D3DSPR_TEXTURE, 3 );
-    } else {
-        return d3dsp_register( D3DSPR_TEMP, reg->regnum );
-    }
+static uint32_t map_ps13_temp(struct bc_writer *writer, const struct shader_reg *reg)
+{
+    if (reg->regnum == T0_REG)
+        return d3dsp_register(D3DSPR_TEXTURE, 0);
+    if (reg->regnum == T1_REG)
+        return d3dsp_register(D3DSPR_TEXTURE, 1);
+    if(reg->regnum == T2_REG)
+        return d3dsp_register(D3DSPR_TEXTURE, 2);
+    if (reg->regnum == T3_REG)
+        return d3dsp_register(D3DSPR_TEXTURE, 3);
+    return d3dsp_register(D3DSPR_TEMP, reg->regnum);
 }
 
-static DWORD map_ps_input(struct bc_writer *This,
-                          const struct shader_reg *reg) {
-    DWORD i;
+static uint32_t map_ps_input(struct bc_writer *writer, const struct shader_reg *reg)
+{
+    unsigned int i;
+
     /* Map color interpolators */
-    for(i = 0; i < 2; i++) {
-        if(reg->regnum == This->v_regnum[i]) {
-            return d3dsp_register( D3DSPR_INPUT, i );
-        }
+    for (i = 0; i < ARRAY_SIZE(writer->v_regnum); ++i)
+    {
+        if (reg->regnum == writer->v_regnum[i])
+            return d3dsp_register(D3DSPR_INPUT, i);
     }
-    for(i = 0; i < 8; i++) {
-        if(reg->regnum == This->t_regnum[i]) {
-            return d3dsp_register( D3DSPR_TEXTURE, i );
-        }
+    for (i = 0; i < ARRAY_SIZE(writer->t_regnum); ++i)
+    {
+        if(reg->regnum == writer->t_regnum[i])
+            return d3dsp_register(D3DSPR_TEXTURE, i);
     }
 
     WARN("Invalid ps 1/2 varying\n");
-    This->state = E_INVALIDARG;
+    writer->state = E_INVALIDARG;
     return 0;
 }
 
-static void ps_1_0123_srcreg(struct bc_writer *This, const struct shader_reg *reg,
-                             struct bytecode_buffer *buffer) {
-    DWORD token = (1u << 31); /* Bit 31 of registers is 1 */
-    if(reg->rel_reg) {
+static void ps_1_0123_srcreg(struct bc_writer *writer, const struct shader_reg *reg, struct bytecode_buffer *buffer)
+{
+    uint32_t token = 1u << 31;
+
+    if (reg->rel_reg)
+    {
         WARN("Relative addressing not supported in <= ps_3_0\n");
-        This->state = E_INVALIDARG;
+        writer->state = E_INVALIDARG;
         return;
     }
 
-    switch(reg->type) {
+    switch (reg->type)
+    {
         case BWRITERSPR_INPUT:
-            token |= map_ps_input(This, reg);
+            token |= map_ps_input(writer, reg);
             break;
 
             /* Take care about the texture temporaries. There's a problem: They aren't
@@ -1145,7 +1213,7 @@ static void ps_1_0123_srcreg(struct bc_writer *This, const struct shader_reg *re
              * to map ps_1_3 shaders to the common shader structure
              */
         case BWRITERSPR_TEMP:
-            token |= map_ps13_temp(This, reg);
+            token |= map_ps13_temp(writer, reg);
             break;
 
         case BWRITERSPR_CONST: /* Can be mapped 1:1 */
@@ -1154,92 +1222,93 @@ static void ps_1_0123_srcreg(struct bc_writer *This, const struct shader_reg *re
 
         default:
             WARN("Invalid register type for <= ps_1_3 shader\n");
-            This->state = E_INVALIDARG;
+            writer->state = E_INVALIDARG;
             return;
     }
 
-    token |= d3d9_swizzle(reg->u.swizzle) & D3DVS_SWIZZLE_MASK; /* already shifted */
+    token |= d3d9_swizzle(reg->swizzle) & D3DVS_SWIZZLE_MASK; /* already shifted */
 
-    if(reg->srcmod == BWRITERSPSM_DZ || reg->srcmod == BWRITERSPSM_DW ||
-       reg->srcmod == BWRITERSPSM_ABS || reg->srcmod == BWRITERSPSM_ABSNEG ||
-       reg->srcmod == BWRITERSPSM_NOT) {
-        WARN("Invalid source modifier %lu for <= ps_1_3.\n", reg->srcmod);
-        This->state = E_INVALIDARG;
+    if(reg->srcmod == BWRITERSPSM_DZ || reg->srcmod == BWRITERSPSM_DW
+            || reg->srcmod == BWRITERSPSM_ABS || reg->srcmod == BWRITERSPSM_ABSNEG
+            || reg->srcmod == BWRITERSPSM_NOT)
+    {
+        WARN("Invalid source modifier %u for <= ps_1_3\n", reg->srcmod);
+        writer->state = E_INVALIDARG;
         return;
     }
     token |= d3d9_srcmod(reg->srcmod);
-    put_dword(buffer, token);
+    put_u32(buffer, token);
 }
 
-static void ps_1_0123_dstreg(struct bc_writer *This, const struct shader_reg *reg,
-                             struct bytecode_buffer *buffer,
-                             DWORD shift, DWORD mod) {
-    DWORD token = (1u << 31); /* Bit 31 of registers is 1 */
+static void ps_1_0123_dstreg(struct bc_writer *writer, const struct shader_reg *reg, struct bytecode_buffer *buffer,
+        uint32_t shift, uint32_t mod)
+{
+    uint32_t token = (1u << 31); /* Bit 31 of registers is 1 */
 
-    if(reg->rel_reg) {
+    if (reg->rel_reg)
+    {
         WARN("Relative addressing not supported for destination registers\n");
-        This->state = E_INVALIDARG;
+        writer->state = E_INVALIDARG;
         return;
     }
 
-    switch(reg->type) {
+    switch (reg->type)
+    {
         case BWRITERSPR_TEMP:
-            token |= map_ps13_temp(This, reg);
+            token |= map_ps13_temp(writer, reg);
             break;
 
         /* texkill uses the input register as a destination parameter */
         case BWRITERSPR_INPUT:
-            token |= map_ps_input(This, reg);
+            token |= map_ps_input(writer, reg);
             break;
 
         default:
             WARN("Invalid dest register type for 1.x pshader\n");
-            This->state = E_INVALIDARG;
+            writer->state = E_INVALIDARG;
             return;
     }
 
     token |= (shift << D3DSP_DSTSHIFT_SHIFT) & D3DSP_DSTSHIFT_MASK;
     token |= d3d9_dstmod(mod);
 
-    token |= d3d9_writemask(reg->u.writemask);
-    put_dword(buffer, token);
+    token |= d3d9_writemask(reg->writemask);
+    put_u32(buffer, token);
 }
 
 /* The length of an instruction consists of the destination register (if any),
  * the number of source registers, the number of address registers used for
- * indirect addressing, and optionally the predicate register
- */
-static DWORD instrlen(const struct instruction *instr, unsigned int srcs, unsigned int dsts) {
+ * indirect addressing, and optionally the predicate register */
+static unsigned int instrlen(const struct instruction *instr, unsigned int srcs, unsigned int dsts)
+{
+    unsigned int ret = srcs + dsts + (instr->has_predicate ? 1 : 0);
     unsigned int i;
-    DWORD ret = srcs + dsts + (instr->has_predicate ? 1 : 0);
 
-    if(dsts){
-        if(instr->dst.rel_reg) ret++;
-    }
-    for(i = 0; i < srcs; i++) {
-        if(instr->src[i].rel_reg) ret++;
-    }
+    if (dsts && instr->dst.rel_reg)
+        ++ret;
+    for (i = 0; i < srcs; ++i)
+        if (instr->src[i].rel_reg)
+            ++ret;
     return ret;
 }
 
-static void sm_1_x_opcode(struct bc_writer *This,
-                          const struct instruction *instr,
-                          DWORD token, struct bytecode_buffer *buffer) {
-    /* In sm_1_x instruction length isn't encoded */
-    if(instr->coissue){
+static void sm_1_x_opcode(struct bc_writer *writer, const struct instruction *instr, uint32_t token,
+        struct bytecode_buffer *buffer)
+{
+    /* Instruction length isn't encoded in sm_1_x. */
+    if (instr->coissue)
         token |= D3DSI_COISSUE;
-    }
-    put_dword(buffer, token);
+    put_u32(buffer, token);
 }
 
-static void instr_handler(struct bc_writer *This,
-                          const struct instruction *instr,
-                          struct bytecode_buffer *buffer) {
-    DWORD token = d3d9_opcode(instr->opcode);
+static void instr_handler(struct bc_writer *writer, const struct instruction *instr, struct bytecode_buffer *buffer)
+{
+    uint32_t token = d3d9_opcode(instr->opcode);
 
-    This->funcs->opcode(This, instr, token, buffer);
-    if(instr->has_dst) This->funcs->dstreg(This, &instr->dst, buffer, instr->shift, instr->dstmod);
-    write_srcregs(This, instr, buffer);
+    writer->funcs->opcode(writer, instr, token, buffer);
+    if (instr->has_dst)
+        writer->funcs->dstreg(writer, &instr->dst, buffer, instr->shift, instr->dstmod);
+    write_srcregs(writer, instr, buffer);
 }
 
 static const struct instr_handler_table vs_1_x_handlers[] = {
@@ -1283,113 +1352,131 @@ static const struct bytecode_backend vs_1_x_backend = {
     vs_1_x_handlers
 };
 
-static void instr_ps_1_0123_texld(struct bc_writer *This,
-                                  const struct instruction *instr,
-                                  struct bytecode_buffer *buffer) {
-    DWORD idx;
+static void instr_ps_1_0123_texld(struct bc_writer *writer, const struct instruction *instr,
+        struct bytecode_buffer *buffer)
+{
     struct shader_reg reg;
-    DWORD swizzlemask;
+    uint32_t swizzlemask;
+    uint32_t idx;
 
-    if(instr->src[1].type != BWRITERSPR_SAMPLER ||
-       instr->src[1].regnum > 3) {
-        WARN("Unsupported sampler type %lu regnum %lu.\n",
-             instr->src[1].type, instr->src[1].regnum);
-        This->state = E_INVALIDARG;
+    if (instr->src[1].type != BWRITERSPR_SAMPLER || instr->src[1].regnum > 3)
+    {
+        WARN("Unsupported sampler type %u regnum %u.\n", instr->src[1].type, instr->src[1].regnum);
+        writer->state = E_INVALIDARG;
         return;
-    } else if(instr->dst.type != BWRITERSPR_TEMP) {
+    }
+    else if (instr->dst.type != BWRITERSPR_TEMP)
+    {
         WARN("Can only sample into a temp register\n");
-        This->state = E_INVALIDARG;
+        writer->state = E_INVALIDARG;
         return;
     }
 
     idx = instr->src[1].regnum;
-    if((idx == 0 && instr->dst.regnum != T0_REG) ||
-       (idx == 1 && instr->dst.regnum != T1_REG) ||
-       (idx == 2 && instr->dst.regnum != T2_REG) ||
-       (idx == 3 && instr->dst.regnum != T3_REG)) {
-        WARN("Sampling from sampler s%lu to register r%lu is not possible in ps_1_x.\n",
-             idx, instr->dst.regnum);
-        This->state = E_INVALIDARG;
+    if ((idx == 0 && instr->dst.regnum != T0_REG) || (idx == 1 && instr->dst.regnum != T1_REG)
+            || (idx == 2 && instr->dst.regnum != T2_REG) || (idx == 3 && instr->dst.regnum != T3_REG))
+    {
+        WARN("Sampling from sampler s%u to register r%u is not possible in ps_1_x\n", idx, instr->dst.regnum);
+        writer->state = E_INVALIDARG;
         return;
     }
-    if(instr->src[0].type == BWRITERSPR_INPUT) {
+    if (instr->src[0].type == BWRITERSPR_INPUT)
+    {
         /* A simple non-dependent read tex instruction */
-        if(instr->src[0].regnum != This->t_regnum[idx]) {
-            WARN("Cannot sample from s%lu with texture address data from interpolator %lu.\n",
-                 idx, instr->src[0].regnum);
-            This->state = E_INVALIDARG;
+        if (instr->src[0].regnum != writer->t_regnum[idx])
+        {
+            WARN("Cannot sample from s%u with texture address data from interpolator %u\n", idx, instr->src[0].regnum);
+            writer->state = E_INVALIDARG;
             return;
         }
-        This->funcs->opcode(This, instr, D3DSIO_TEX & D3DSI_OPCODE_MASK, buffer);
+        writer->funcs->opcode(writer, instr, D3DSIO_TEX & D3DSI_OPCODE_MASK, buffer);
 
         /* map the temp dstreg to the ps_1_3 texture temporary register */
-        This->funcs->dstreg(This, &instr->dst, buffer, instr->shift, instr->dstmod);
-    } else if(instr->src[0].type == BWRITERSPR_TEMP) {
-
+        writer->funcs->dstreg(writer, &instr->dst, buffer, instr->shift, instr->dstmod);
+    }
+    else if (instr->src[0].type == BWRITERSPR_TEMP)
+    {
         swizzlemask = 3 | (3 << 2) | (3 << 4);
-        if((instr->src[0].u.swizzle & swizzlemask) == (BWRITERVS_X_X | BWRITERVS_Y_Y | BWRITERVS_Z_Z)) {
+        if ((instr->src[0].swizzle & swizzlemask) == (BWRITERVS_X_X | BWRITERVS_Y_Y | BWRITERVS_Z_Z))
+        {
             TRACE("writing texreg2rgb\n");
-            This->funcs->opcode(This, instr, D3DSIO_TEXREG2RGB & D3DSI_OPCODE_MASK, buffer);
-        } else if(instr->src[0].u.swizzle == (BWRITERVS_X_W | BWRITERVS_Y_X | BWRITERVS_Z_X | BWRITERVS_W_X)) {
+            writer->funcs->opcode(writer, instr, D3DSIO_TEXREG2RGB & D3DSI_OPCODE_MASK, buffer);
+        }
+        else if (instr->src[0].swizzle == (BWRITERVS_X_W | BWRITERVS_Y_X | BWRITERVS_Z_X | BWRITERVS_W_X))
+        {
             TRACE("writing texreg2ar\n");
-            This->funcs->opcode(This, instr, D3DSIO_TEXREG2AR & D3DSI_OPCODE_MASK, buffer);
-        } else if(instr->src[0].u.swizzle == (BWRITERVS_X_Y | BWRITERVS_Y_Z | BWRITERVS_Z_Z | BWRITERVS_W_Z)) {
+            writer->funcs->opcode(writer, instr, D3DSIO_TEXREG2AR & D3DSI_OPCODE_MASK, buffer);
+        }
+        else if (instr->src[0].swizzle == (BWRITERVS_X_Y | BWRITERVS_Y_Z | BWRITERVS_Z_Z | BWRITERVS_W_Z))
+        {
             TRACE("writing texreg2gb\n");
-            This->funcs->opcode(This, instr, D3DSIO_TEXREG2GB & D3DSI_OPCODE_MASK, buffer);
-        } else {
-            WARN("Unsupported src addr swizzle in dependent texld: 0x%08lx.\n", instr->src[0].u.swizzle);
-            This->state = E_INVALIDARG;
+            writer->funcs->opcode(writer, instr, D3DSIO_TEXREG2GB & D3DSI_OPCODE_MASK, buffer);
+        }
+        else
+        {
+            WARN("Unsupported src addr swizzle in dependent texld: 0x%08x\n", instr->src[0].swizzle);
+            writer->state = E_INVALIDARG;
             return;
         }
 
-        /* Dst and src reg can be mapped normally. Both registers are temporary registers in the
-         * source shader and have to be mapped to the temporary form of the texture registers. However,
-         * the src reg doesn't have a swizzle
-         */
-        This->funcs->dstreg(This, &instr->dst, buffer, instr->shift, instr->dstmod);
+        /* Dst and src reg can be mapped normally. Both registers are
+         * temporary registers in the source shader and have to be mapped to
+         * the temporary form of the texture registers. However, the src reg
+         * doesn't have a swizzle. */
+        writer->funcs->dstreg(writer, &instr->dst, buffer, instr->shift, instr->dstmod);
         reg = instr->src[0];
-        reg.u.swizzle = BWRITERVS_NOSWIZZLE;
-        This->funcs->srcreg(This, &reg, buffer);
-    } else {
+        reg.swizzle = BWRITERVS_NOSWIZZLE;
+        writer->funcs->srcreg(writer, &reg, buffer);
+    }
+    else
+    {
         WARN("Invalid address data source register\n");
-        This->state = E_INVALIDARG;
+        writer->state = E_INVALIDARG;
         return;
     }
 }
 
-static void instr_ps_1_0123_mov(struct bc_writer *This,
-                                const struct instruction *instr,
-                                struct bytecode_buffer *buffer) {
-    DWORD token = D3DSIO_MOV & D3DSI_OPCODE_MASK;
+static void instr_ps_1_0123_mov(struct bc_writer *writer, const struct instruction *instr,
+        struct bytecode_buffer *buffer)
+{
+    uint32_t token = D3DSIO_MOV & D3DSI_OPCODE_MASK;
 
-    if(instr->dst.type == BWRITERSPR_TEMP && instr->src[0].type == BWRITERSPR_INPUT) {
-        if((instr->dst.regnum == T0_REG && instr->src[0].regnum == This->t_regnum[0]) ||
-           (instr->dst.regnum == T1_REG && instr->src[0].regnum == This->t_regnum[1]) ||
-           (instr->dst.regnum == T2_REG && instr->src[0].regnum == This->t_regnum[2]) ||
-           (instr->dst.regnum == T3_REG && instr->src[0].regnum == This->t_regnum[3])) {
-            if(instr->dstmod & BWRITERSPDM_SATURATE) {
-                This->funcs->opcode(This, instr, D3DSIO_TEXCOORD & D3DSI_OPCODE_MASK, buffer);
+    if (instr->dst.type == BWRITERSPR_TEMP && instr->src[0].type == BWRITERSPR_INPUT)
+    {
+        if ((instr->dst.regnum == T0_REG && instr->src[0].regnum == writer->t_regnum[0])
+                || (instr->dst.regnum == T1_REG && instr->src[0].regnum == writer->t_regnum[1])
+                || (instr->dst.regnum == T2_REG && instr->src[0].regnum == writer->t_regnum[2])
+                || (instr->dst.regnum == T3_REG && instr->src[0].regnum == writer->t_regnum[3]))
+        {
+            if (instr->dstmod & BWRITERSPDM_SATURATE)
+            {
+                writer->funcs->opcode(writer, instr, D3DSIO_TEXCOORD & D3DSI_OPCODE_MASK, buffer);
                 /* Remove the SATURATE flag, it's implicit to the instruction */
-                This->funcs->dstreg(This, &instr->dst, buffer, instr->shift, instr->dstmod & (~BWRITERSPDM_SATURATE));
-                return;
-            } else {
-                WARN("A varying -> temp copy is only supported with the SATURATE modifier in <=ps_1_3\n");
-                This->state = E_INVALIDARG;
+                writer->funcs->dstreg(writer, &instr->dst, buffer, instr->shift, instr->dstmod & (~BWRITERSPDM_SATURATE));
                 return;
             }
-        } else if(instr->src[0].regnum == This->v_regnum[0] ||
-                  instr->src[0].regnum == This->v_regnum[1]) {
+            else
+            {
+                WARN("A varying -> temp copy is only supported with the SATURATE modifier in <=ps_1_3\n");
+                writer->state = E_INVALIDARG;
+                return;
+            }
+        }
+        else if (instr->src[0].regnum == writer->v_regnum[0] || instr->src[0].regnum == writer->v_regnum[1])
+        {
             /* Handled by the normal mov below. Just drop out of the if condition */
-        } else {
+        }
+        else
+        {
             WARN("Unsupported varying -> temp mov in <= ps_1_3\n");
-            This->state = E_INVALIDARG;
+            writer->state = E_INVALIDARG;
             return;
         }
     }
 
-    This->funcs->opcode(This, instr, token, buffer);
-    This->funcs->dstreg(This, &instr->dst, buffer, instr->shift, instr->dstmod);
-    This->funcs->srcreg(This, &instr->src[0], buffer);
+    writer->funcs->opcode(writer, instr, token, buffer);
+    writer->funcs->dstreg(writer, &instr->dst, buffer, instr->shift, instr->dstmod);
+    writer->funcs->srcreg(writer, &instr->src[0], buffer);
 }
 
 static const struct instr_handler_table ps_1_0123_handlers[] = {
@@ -1432,18 +1519,21 @@ static const struct bytecode_backend ps_1_0123_backend = {
     ps_1_0123_handlers
 };
 
-static void ps_1_4_srcreg(struct bc_writer *This, const struct shader_reg *reg,
-                          struct bytecode_buffer *buffer) {
-    DWORD token = (1u << 31); /* Bit 31 of registers is 1 */
-    if(reg->rel_reg) {
-        WARN("Relative addressing not supported in <= ps_3_0\n");
-        This->state = E_INVALIDARG;
+static void ps_1_4_srcreg(struct bc_writer *writer, const struct shader_reg *reg, struct bytecode_buffer *buffer)
+{
+    uint32_t token = 1u << 31; /* Bit 31 of registers is 1. */
+
+    if (reg->rel_reg)
+    {
+        WARN("Relative addressing not supported in <= ps_3_0.\n");
+        writer->state = E_INVALIDARG;
         return;
     }
 
-    switch(reg->type) {
+    switch (reg->type)
+    {
         case BWRITERSPR_INPUT:
-            token |= map_ps_input(This, reg);
+            token |= map_ps_input(writer, reg);
             break;
 
         /* Can be mapped 1:1 */
@@ -1454,110 +1544,117 @@ static void ps_1_4_srcreg(struct bc_writer *This, const struct shader_reg *reg,
 
         default:
             WARN("Invalid register type for ps_1_4 shader\n");
-            This->state = E_INVALIDARG;
+            writer->state = E_INVALIDARG;
             return;
     }
 
-    token |= d3d9_swizzle(reg->u.swizzle) & D3DVS_SWIZZLE_MASK; /* already shifted */
+    token |= d3d9_swizzle(reg->swizzle) & D3DVS_SWIZZLE_MASK; /* already shifted */
 
-    if(reg->srcmod == BWRITERSPSM_ABS || reg->srcmod == BWRITERSPSM_ABSNEG ||
-       reg->srcmod == BWRITERSPSM_NOT) {
-        WARN("Invalid source modifier %lu for ps_1_4.\n", reg->srcmod);
-        This->state = E_INVALIDARG;
+    if (reg->srcmod == BWRITERSPSM_ABS || reg->srcmod == BWRITERSPSM_ABSNEG || reg->srcmod == BWRITERSPSM_NOT)
+    {
+        WARN("Invalid source modifier %u for ps_1_4\n", reg->srcmod);
+        writer->state = E_INVALIDARG;
         return;
     }
     token |= d3d9_srcmod(reg->srcmod);
-    put_dword(buffer, token);
+    put_u32(buffer, token);
 }
 
-static void ps_1_4_dstreg(struct bc_writer *This, const struct shader_reg *reg,
-                          struct bytecode_buffer *buffer,
-                          DWORD shift, DWORD mod) {
-    DWORD token = (1u << 31); /* Bit 31 of registers is 1 */
+static void ps_1_4_dstreg(struct bc_writer *writer, const struct shader_reg *reg, struct bytecode_buffer *buffer,
+        uint32_t shift, uint32_t mod)
+{
+    uint32_t token = 1u << 31; /* Bit 31 of registers is 1. */
 
-    if(reg->rel_reg) {
+    if (reg->rel_reg)
+    {
         WARN("Relative addressing not supported for destination registers\n");
-        This->state = E_INVALIDARG;
+        writer->state = E_INVALIDARG;
         return;
     }
 
-    switch(reg->type) {
+    switch (reg->type)
+    {
         case BWRITERSPR_TEMP: /* 1:1 mapping */
             token |= d3dsp_register( reg->type, reg->regnum );
             break;
 
 	/* For texkill */
         case BWRITERSPR_INPUT:
-            token |= map_ps_input(This, reg);
+            token |= map_ps_input(writer, reg);
             break;
 
         default:
             WARN("Invalid dest register type for 1.x pshader\n");
-            This->state = E_INVALIDARG;
+            writer->state = E_INVALIDARG;
             return;
     }
 
     token |= (shift << D3DSP_DSTSHIFT_SHIFT) & D3DSP_DSTSHIFT_MASK;
     token |= d3d9_dstmod(mod);
 
-    token |= d3d9_writemask(reg->u.writemask);
-    put_dword(buffer, token);
+    token |= d3d9_writemask(reg->writemask);
+    put_u32(buffer, token);
 }
 
-static void instr_ps_1_4_mov(struct bc_writer *This,
-                             const struct instruction *instr,
-                             struct bytecode_buffer *buffer) {
-    DWORD token = D3DSIO_MOV & D3DSI_OPCODE_MASK;
+static void instr_ps_1_4_mov(struct bc_writer *writer, const struct instruction *instr,
+        struct bytecode_buffer *buffer)
+{
+    uint32_t token = D3DSIO_MOV & D3DSI_OPCODE_MASK;
 
-    if(instr->dst.type == BWRITERSPR_TEMP && instr->src[0].type == BWRITERSPR_INPUT) {
-        if(instr->src[0].regnum == This->t_regnum[0] ||
-           instr->src[0].regnum == This->t_regnum[1] ||
-           instr->src[0].regnum == This->t_regnum[2] ||
-           instr->src[0].regnum == This->t_regnum[3] ||
-           instr->src[0].regnum == This->t_regnum[4] ||
-           instr->src[0].regnum == This->t_regnum[5]) {
+    if (instr->dst.type == BWRITERSPR_TEMP && instr->src[0].type == BWRITERSPR_INPUT)
+    {
+        if (instr->src[0].regnum == writer->t_regnum[0] || instr->src[0].regnum == writer->t_regnum[1]
+                || instr->src[0].regnum == writer->t_regnum[2] || instr->src[0].regnum == writer->t_regnum[3]
+                || instr->src[0].regnum == writer->t_regnum[4] || instr->src[0].regnum == writer->t_regnum[5])
+        {
             /* Similar to a regular mov, but a different opcode */
             token = D3DSIO_TEXCOORD & D3DSI_OPCODE_MASK;
-        } else if(instr->src[0].regnum == This->v_regnum[0] ||
-                  instr->src[0].regnum == This->v_regnum[1]) {
+        }
+        else if (instr->src[0].regnum == writer->v_regnum[0] || instr->src[0].regnum == writer->v_regnum[1])
+        {
             /* Handled by the normal mov below. Just drop out of the if condition */
-        } else {
+        }
+        else
+        {
             WARN("Unsupported varying -> temp mov in ps_1_4\n");
-            This->state = E_INVALIDARG;
+            writer->state = E_INVALIDARG;
             return;
         }
     }
 
-    This->funcs->opcode(This, instr, token, buffer);
-    This->funcs->dstreg(This, &instr->dst, buffer, instr->shift, instr->dstmod);
-    This->funcs->srcreg(This, &instr->src[0], buffer);
+    writer->funcs->opcode(writer, instr, token, buffer);
+    writer->funcs->dstreg(writer, &instr->dst, buffer, instr->shift, instr->dstmod);
+    writer->funcs->srcreg(writer, &instr->src[0], buffer);
 }
 
-static void instr_ps_1_4_texld(struct bc_writer *This,
-                               const struct instruction *instr,
-                               struct bytecode_buffer *buffer) {
-    if(instr->src[1].type != BWRITERSPR_SAMPLER ||
-       instr->src[1].regnum > 5) {
-        WARN("Unsupported sampler type %lu regnum %lu.\n",
+static void instr_ps_1_4_texld(struct bc_writer *writer, const struct instruction *instr,
+        struct bytecode_buffer *buffer)
+{
+    if (instr->src[1].type != BWRITERSPR_SAMPLER || instr->src[1].regnum > 5)
+    {
+        WARN("Unsupported sampler type %u regnum %u.\n",
              instr->src[1].type, instr->src[1].regnum);
-        This->state = E_INVALIDARG;
+        writer->state = E_INVALIDARG;
         return;
-    } else if(instr->dst.type != BWRITERSPR_TEMP) {
+    }
+    else if (instr->dst.type != BWRITERSPR_TEMP)
+    {
         WARN("Can only sample into a temp register\n");
-        This->state = E_INVALIDARG;
+        writer->state = E_INVALIDARG;
         return;
     }
 
-    if(instr->src[1].regnum != instr->dst.regnum) {
-        WARN("Sampling from sampler s%lu to register r%lu is not possible in ps_1_4.\n",
+    if (instr->src[1].regnum != instr->dst.regnum)
+    {
+        WARN("Sampling from sampler s%u to register r%u is not possible in ps_1_4.\n",
              instr->src[1].regnum, instr->dst.regnum);
-        This->state = E_INVALIDARG;
+        writer->state = E_INVALIDARG;
         return;
     }
 
-    This->funcs->opcode(This, instr, D3DSIO_TEX & D3DSI_OPCODE_MASK, buffer);
-    This->funcs->dstreg(This, &instr->dst, buffer, instr->shift, instr->dstmod);
-    This->funcs->srcreg(This, &instr->src[0], buffer);
+    writer->funcs->opcode(writer, instr, D3DSIO_TEX & D3DSI_OPCODE_MASK, buffer);
+    writer->funcs->dstreg(writer, &instr->dst, buffer, instr->shift, instr->dstmod);
+    writer->funcs->srcreg(writer, &instr->src[0], buffer);
 }
 
 static const struct instr_handler_table ps_1_4_handlers[] = {
@@ -1617,20 +1714,20 @@ static void vs_2_header(struct bc_writer *This,
     write_constI(shader, buffer, TRUE);
 }
 
-static void vs_2_srcreg(struct bc_writer *This,
-                        const struct shader_reg *reg,
-                        struct bytecode_buffer *buffer) {
-    DWORD token = (1u << 31); /* Bit 31 of registers is 1 */
-    DWORD has_swizzle;
-    DWORD component;
-    DWORD d3d9reg;
+static void vs_2_srcreg(struct bc_writer *writer, const struct shader_reg *reg, struct bytecode_buffer *buffer)
+{
+    uint32_t token = 1u << 31; /* Bit 31 of registers is 1 */
+    uint32_t component;
+    uint32_t d3d9reg;
+    BOOL has_swizzle;
 
-    switch(reg->type) {
+    switch (reg->type)
+    {
         case BWRITERSPR_OUTPUT:
-            /* Map the swizzle to a writemask, the format expected
-               by map_vs_output
-             */
-            switch(reg->u.swizzle) {
+            /* Map the swizzle to a writemask, the format expected by
+             * map_vs_output. */
+            switch (reg->swizzle)
+            {
                 case BWRITERVS_SWIZZLE_X:
                     component = BWRITERSP_WRITEMASK_0;
                     break;
@@ -1646,7 +1743,7 @@ static void vs_2_srcreg(struct bc_writer *This,
                 default:
                     component = 0;
             }
-            token |= map_vs_output(This, reg->regnum, component, &has_swizzle);
+            token |= map_vs_output(writer, reg->regnum, component, &has_swizzle);
             break;
 
         case BWRITERSPR_RASTOUT:
@@ -1654,7 +1751,7 @@ static void vs_2_srcreg(struct bc_writer *This,
             /* These registers are mapped to input and output regs. They can be encoded in the bytecode,
              * but are unexpected. If we hit this path it might be due to an error.
              */
-            FIXME("Unexpected register type %lu.\n", reg->type);
+            FIXME("Unexpected register type %u.\n", reg->type);
             /* drop through */
         case BWRITERSPR_INPUT:
         case BWRITERSPR_TEMP:
@@ -1664,66 +1761,67 @@ static void vs_2_srcreg(struct bc_writer *This,
         case BWRITERSPR_CONSTBOOL:
         case BWRITERSPR_LABEL:
             d3d9reg = d3d9_register(reg->type);
-            token |= d3dsp_register( d3d9reg, reg->regnum );
+            token |= d3dsp_register(d3d9reg, reg->regnum);
             break;
 
         case BWRITERSPR_LOOP:
-            if(reg->regnum != 0) {
+            if (reg->regnum != 0)
+            {
                 WARN("Only regnum 0 is supported for the loop index register in vs_2_0\n");
-                This->state = E_INVALIDARG;
+                writer->state = E_INVALIDARG;
                 return;
             }
-            token |= d3dsp_register( D3DSPR_LOOP, 0 );
+            token |= d3dsp_register(D3DSPR_LOOP, 0);
             break;
 
         case BWRITERSPR_PREDICATE:
-            if (This->shader->major_version != 2 || This->shader->minor_version != 1)
+            if (writer->shader->major_version != 2 || writer->shader->minor_version != 1)
             {
                 WARN("Predicate register is allowed only in vs_2_x\n");
-                This->state = E_INVALIDARG;
+                writer->state = E_INVALIDARG;
                 return;
             }
-            if(reg->regnum > 0) {
+            if (reg->regnum > 0)
+            {
                 WARN("Only predicate register 0 is supported\n");
-                This->state = E_INVALIDARG;
+                writer->state = E_INVALIDARG;
                 return;
             }
-            token |= d3dsp_register( D3DSPR_PREDICATE, 0 );
+            token |= d3dsp_register(D3DSPR_PREDICATE, 0);
             break;
 
         default:
             WARN("Invalid register type for 2.0 vshader\n");
-            This->state = E_INVALIDARG;
+            writer->state = E_INVALIDARG;
             return;
     }
 
-    token |= d3d9_swizzle(reg->u.swizzle) & D3DVS_SWIZZLE_MASK; /* already shifted */
-
+    token |= d3d9_swizzle(reg->swizzle) & D3DVS_SWIZZLE_MASK; /* already shifted */
     token |= d3d9_srcmod(reg->srcmod);
 
-    if(reg->rel_reg)
+    if (reg->rel_reg)
         token |= D3DVS_ADDRMODE_RELATIVE & D3DVS_ADDRESSMODE_MASK;
 
-    put_dword(buffer, token);
+    put_u32(buffer, token);
 
-    /* vs_2_0 and newer write the register containing the index explicitly in the
-     * binary code
-     */
-    if(token & D3DVS_ADDRMODE_RELATIVE)
-        vs_2_srcreg(This, reg->rel_reg, buffer);
+    /* vs_2_0 and newer write the register containing the index explicitly in
+     * the binary code. */
+    if (token & D3DVS_ADDRMODE_RELATIVE)
+        vs_2_srcreg(writer, reg->rel_reg, buffer);
 }
 
-static void sm_2_opcode(struct bc_writer *This,
-                        const struct instruction *instr,
-                        DWORD token, struct bytecode_buffer *buffer) {
-    /* From sm 2 onwards instruction length is encoded in the opcode field */
-    int dsts = instr->has_dst ? 1 : 0;
-    token |= instrlen(instr, instr->num_srcs, dsts) << D3DSI_INSTLENGTH_SHIFT;
-    if(instr->comptype)
+static void sm_2_opcode(struct bc_writer *writer, const struct instruction *instr, uint32_t token,
+        struct bytecode_buffer *buffer)
+{
+    unsigned int dst_count = instr->has_dst ? 1 : 0;
+
+    /* From SM 2 onwards instruction length is encoded in the opcode field. */
+    token |= instrlen(instr, instr->num_srcs, dst_count) << D3DSI_INSTLENGTH_SHIFT;
+    if (instr->comptype)
         token |= (d3d9_comparetype(instr->comptype) << 16) & (0xf << 16);
-    if(instr->has_predicate)
+    if (instr->has_predicate)
         token |= D3DSHADER_INSTRUCTION_PREDICATED;
-    put_dword(buffer,token);
+    put_u32(buffer,token);
 }
 
 static const struct instr_handler_table vs_2_0_handlers[] = {
@@ -1852,22 +1950,24 @@ static const struct bytecode_backend vs_2_x_backend = {
     vs_2_x_handlers
 };
 
-static void write_samplers(const struct bwriter_shader *shader, struct bytecode_buffer *buffer) {
-    DWORD i;
-    DWORD instr_dcl = D3DSIO_DCL | (2 << D3DSI_INSTLENGTH_SHIFT);
-    DWORD token;
-    const DWORD reg = (1u << 31) | d3dsp_register( D3DSPR_SAMPLER, 0 ) | D3DSP_WRITEMASK_ALL;
+static void write_samplers(const struct bwriter_shader *shader, struct bytecode_buffer *buffer)
+{
+    const uint32_t reg = (1u << 31) | d3dsp_register(D3DSPR_SAMPLER, 0) | D3DSP_WRITEMASK_ALL;
+    uint32_t instr_dcl = D3DSIO_DCL | (2 << D3DSI_INSTLENGTH_SHIFT);
+    unsigned int i;
+    uint32_t token;
 
-    for(i = 0; i < shader->num_samplers; i++) {
+    for (i = 0; i < shader->num_samplers; ++i)
+    {
         /* Write the DCL instruction */
-        put_dword(buffer, instr_dcl);
-        token = (1u << 31);
+        put_u32(buffer, instr_dcl);
+        token = 1u << 31;
         /* Already shifted */
-        token |= (d3d9_sampler(shader->samplers[i].type)) & D3DSP_TEXTURETYPE_MASK;
-        put_dword(buffer, token);
+        token |= d3d9_sampler(shader->samplers[i].type) & D3DSP_TEXTURETYPE_MASK;
+        put_u32(buffer, token);
         token = reg | (shader->samplers[i].regnum & D3DSP_REGNUM_MASK);
         token |= d3d9_dstmod(shader->samplers[i].mod);
-        put_dword(buffer, token);
+        put_u32(buffer, token);
     }
 }
 
@@ -1885,20 +1985,22 @@ static void ps_2_header(struct bc_writer *This, const struct bwriter_shader *sha
     write_constI(shader, buffer, TRUE);
 }
 
-static void ps_2_srcreg(struct bc_writer *This,
-                        const struct shader_reg *reg,
-                        struct bytecode_buffer *buffer) {
-    DWORD token = (1u << 31); /* Bit 31 of registers is 1 */
-    DWORD d3d9reg;
-    if(reg->rel_reg) {
+static void ps_2_srcreg(struct bc_writer *writer, const struct shader_reg *reg, struct bytecode_buffer *buffer)
+{
+    uint32_t token = 1u << 31; /* Bit 31 of registers is 1 */
+    uint32_t d3d9reg;
+
+    if (reg->rel_reg)
+    {
         WARN("Relative addressing not supported in <= ps_3_0\n");
-        This->state = E_INVALIDARG;
+        writer->state = E_INVALIDARG;
         return;
     }
 
-    switch(reg->type) {
+    switch (reg->type)
+    {
         case BWRITERSPR_INPUT:
-            token |= map_ps_input(This, reg);
+            token |= map_ps_input(writer, reg);
             break;
 
             /* Can be mapped 1:1 */
@@ -1911,82 +2013,82 @@ static void ps_2_srcreg(struct bc_writer *This,
         case BWRITERSPR_LABEL:
         case BWRITERSPR_DEPTHOUT:
             d3d9reg = d3d9_register(reg->type);
-            token |= d3dsp_register( d3d9reg, reg->regnum );
+            token |= d3dsp_register(d3d9reg, reg->regnum);
             break;
 
         case BWRITERSPR_PREDICATE:
-            if (This->shader->minor_version == 0)
+            if (writer->shader->minor_version == 0)
             {
                 WARN("Predicate register not supported in ps_2_0\n");
-                This->state = E_INVALIDARG;
+                writer->state = E_INVALIDARG;
             }
             if (reg->regnum)
             {
-                WARN("Predicate register with regnum %lu not supported.\n",
-                     reg->regnum);
-                This->state = E_INVALIDARG;
+                WARN("Predicate register with regnum %u not supported.\n", reg->regnum);
+                writer->state = E_INVALIDARG;
             }
-            token |= d3dsp_register( D3DSPR_PREDICATE, 0 );
+            token |= d3dsp_register(D3DSPR_PREDICATE, 0);
             break;
 
         default:
             WARN("Invalid register type for ps_2_0 shader\n");
-            This->state = E_INVALIDARG;
+            writer->state = E_INVALIDARG;
             return;
     }
 
-    token |= d3d9_swizzle(reg->u.swizzle) & D3DVS_SWIZZLE_MASK; /* already shifted */
+    token |= d3d9_swizzle(reg->swizzle) & D3DVS_SWIZZLE_MASK; /* already shifted */
 
     token |= d3d9_srcmod(reg->srcmod);
-    put_dword(buffer, token);
+    put_u32(buffer, token);
 }
 
-static void ps_2_0_dstreg(struct bc_writer *This,
-                          const struct shader_reg *reg,
-                          struct bytecode_buffer *buffer,
-                          DWORD shift, DWORD mod) {
-    DWORD token = (1u << 31); /* Bit 31 of registers is 1 */
-    DWORD d3d9reg;
+static void ps_2_0_dstreg(struct bc_writer *writer, const struct shader_reg *reg, struct bytecode_buffer *buffer,
+        uint32_t shift, uint32_t mod)
+{
+    uint32_t token = 1u << 31; /* Bit 31 of registers is 1 */
+    uint32_t d3d9reg;
 
-    if(reg->rel_reg) {
+    if (reg->rel_reg)
+    {
         WARN("Relative addressing not supported for destination registers\n");
-        This->state = E_INVALIDARG;
+        writer->state = E_INVALIDARG;
         return;
     }
 
-    switch(reg->type) {
+    switch (reg->type)
+    {
         case BWRITERSPR_TEMP: /* 1:1 mapping */
         case BWRITERSPR_COLOROUT:
         case BWRITERSPR_DEPTHOUT:
             d3d9reg = d3d9_register(reg->type);
-            token |= d3dsp_register( d3d9reg, reg->regnum );
+            token |= d3dsp_register(d3d9reg, reg->regnum);
             break;
 
         case BWRITERSPR_PREDICATE:
-            if (This->shader->minor_version == 0)
+            if (writer->shader->minor_version == 0)
             {
                 WARN("Predicate register not supported in ps_2_0\n");
-                This->state = E_INVALIDARG;
+                writer->state = E_INVALIDARG;
             }
-            token |= d3dsp_register( D3DSPR_PREDICATE, reg->regnum );
+            token |= d3dsp_register(D3DSPR_PREDICATE, reg->regnum);
             break;
 
 	/* texkill uses the input register as a destination parameter */
         case BWRITERSPR_INPUT:
-            token |= map_ps_input(This, reg);
+            token |= map_ps_input(writer, reg);
             break;
 
         default:
             WARN("Invalid dest register type for 2.x pshader\n");
-            This->state = E_INVALIDARG;
+            writer->state = E_INVALIDARG;
             return;
     }
 
     token |= (shift << D3DSP_DSTSHIFT_SHIFT) & D3DSP_DSTSHIFT_MASK;
     token |= d3d9_dstmod(mod);
 
-    token |= d3d9_writemask(reg->u.writemask);
-    put_dword(buffer, token);
+    token |= d3d9_writemask(reg->writemask);
+    put_u32(buffer, token);
 }
 
 static const struct instr_handler_table ps_2_0_handlers[] = {
@@ -2116,23 +2218,23 @@ static void sm_3_header(struct bc_writer *This, const struct bwriter_shader *sha
     write_samplers(shader, buffer);
 }
 
-static void sm_3_srcreg(struct bc_writer *This,
-                        const struct shader_reg *reg,
-                        struct bytecode_buffer *buffer) {
-    const struct bwriter_shader *shader = This->shader;
-    DWORD token = (1u << 31); /* Bit 31 of registers is 1 */
-    DWORD d3d9reg;
+static void sm_3_srcreg(struct bc_writer *writer, const struct shader_reg *reg, struct bytecode_buffer *buffer)
+{
+    const struct bwriter_shader *shader = writer->shader;
+    uint32_t token = 1u << 31; /* Bit 31 of registers is 1 */
+    uint32_t d3d9reg;
 
     d3d9reg = d3d9_register(reg->type);
-    token |= d3dsp_register( d3d9reg, reg->regnum );
-    token |= d3d9_swizzle(reg->u.swizzle) & D3DVS_SWIZZLE_MASK;
+    token |= d3dsp_register(d3d9reg, reg->regnum);
+    token |= d3d9_swizzle(reg->swizzle) & D3DVS_SWIZZLE_MASK;
     token |= d3d9_srcmod(reg->srcmod);
 
-    if(reg->rel_reg) {
+    if (reg->rel_reg)
+    {
         if (reg->type == BWRITERSPR_CONST && shader->type == ST_PIXEL)
         {
-            WARN("c%lu[...] is unsupported in ps_3_0.\n", reg->regnum);
-            This->state = E_INVALIDARG;
+            WARN("c%u[...] is unsupported in ps_3_0.\n", reg->regnum);
+            writer->state = E_INVALIDARG;
             return;
         }
 
@@ -2140,54 +2242,54 @@ static void sm_3_srcreg(struct bc_writer *This,
                 || reg->rel_reg->type == BWRITERSPR_LOOP) && reg->rel_reg->regnum == 0)
         {
             token |= D3DVS_ADDRMODE_RELATIVE & D3DVS_ADDRESSMODE_MASK;
-        } else {
+        }
+        else
+        {
             WARN("Unsupported relative addressing register\n");
-            This->state = E_INVALIDARG;
+            writer->state = E_INVALIDARG;
             return;
         }
     }
 
-    put_dword(buffer, token);
+    put_u32(buffer, token);
 
-    /* vs_2_0 and newer write the register containing the index explicitly in the
-     * binary code
-     */
-    if(token & D3DVS_ADDRMODE_RELATIVE) {
-        sm_3_srcreg(This, reg->rel_reg, buffer);
-    }
+    /* vs_2_0 and newer write the register containing the index explicitly in
+     * the binary code. */
+    if (token & D3DVS_ADDRMODE_RELATIVE)
+        sm_3_srcreg(writer, reg->rel_reg, buffer);
 }
 
-static void sm_3_dstreg(struct bc_writer *This,
-                        const struct shader_reg *reg,
-                        struct bytecode_buffer *buffer,
-                        DWORD shift, DWORD mod) {
-    const struct bwriter_shader *shader = This->shader;
-    DWORD token = (1u << 31); /* Bit 31 of registers is 1 */
-    DWORD d3d9reg;
+static void sm_3_dstreg(struct bc_writer *writer, const struct shader_reg *reg, struct bytecode_buffer *buffer,
+        uint32_t shift, uint32_t mod)
+{
+    const struct bwriter_shader *shader = writer->shader;
+    uint32_t token = 1u << 31; /* Bit 31 of registers is 1 */
+    uint32_t d3d9reg;
 
-    if(reg->rel_reg) {
+    if (reg->rel_reg)
+    {
         if (shader->type == ST_VERTEX && reg->type == BWRITERSPR_OUTPUT)
         {
             token |= D3DVS_ADDRMODE_RELATIVE & D3DVS_ADDRESSMODE_MASK;
-        } else {
+        }
+        else
+        {
             WARN("Relative addressing not supported for this shader type or register type\n");
-            This->state = E_INVALIDARG;
+            writer->state = E_INVALIDARG;
             return;
         }
     }
 
     d3d9reg = d3d9_register(reg->type);
-    token |= d3dsp_register( d3d9reg, reg->regnum );
+    token |= d3dsp_register(d3d9reg, reg->regnum);
     token |= d3d9_dstmod(mod);
-    token |= d3d9_writemask(reg->u.writemask);
-    put_dword(buffer, token);
+    token |= d3d9_writemask(reg->writemask);
+    put_u32(buffer, token);
 
-    /* vs_2_0 and newer write the register containing the index explicitly in the
-     * binary code
-     */
-    if(token & D3DVS_ADDRMODE_RELATIVE) {
-        sm_3_srcreg(This, reg->rel_reg, buffer);
-    }
+    /* vs_2_0 and newer write the register containing the index explicitly in
+     * the binary code. */
+    if (token & D3DVS_ADDRMODE_RELATIVE)
+        sm_3_srcreg(writer, reg->rel_reg, buffer);
 }
 
 static const struct instr_handler_table vs_3_handlers[] = {
@@ -2352,29 +2454,30 @@ shader_backends[] =
     {ST_PIXEL, 3, 0, &ps_3_backend},
 };
 
-static HRESULT call_instr_handler(struct bc_writer *writer,
-                                  const struct instruction *instr,
-                                  struct bytecode_buffer *buffer) {
-    DWORD i=0;
+static HRESULT call_instr_handler(struct bc_writer *writer, const struct instruction *instr,
+        struct bytecode_buffer *buffer)
+{
+    unsigned int i;
 
-    while(writer->funcs->instructions[i].opcode != BWRITERSIO_END) {
-        if(instr->opcode == writer->funcs->instructions[i].opcode) {
-            if(!writer->funcs->instructions[i].func) {
-                WARN("Opcode %lu not supported by this profile.\n", instr->opcode);
+    for (i = 0; writer->funcs->instructions[i].opcode != BWRITERSIO_END; ++i)
+    {
+        if (instr->opcode == writer->funcs->instructions[i].opcode)
+        {
+            if (!writer->funcs->instructions[i].func)
+            {
+                WARN("Opcode %u not supported by this profile.\n", instr->opcode);
                 return E_INVALIDARG;
             }
             writer->funcs->instructions[i].func(writer, instr, buffer);
             return S_OK;
         }
-        i++;
     }
 
-    FIXME("Unhandled instruction %lu - %s.\n", instr->opcode,
-          debug_print_opcode(instr->opcode));
+    FIXME("Unhandled instruction %u - %s.\n", instr->opcode, debug_print_opcode(instr->opcode));
     return E_INVALIDARG;
 }
 
-HRESULT shader_write_bytecode(const struct bwriter_shader *shader, DWORD **result, DWORD *size)
+HRESULT shader_write_bytecode(const struct bwriter_shader *shader, uint32_t **result, uint32_t *size)
 {
     struct bc_writer *writer;
     struct bytecode_buffer *buffer = NULL;
@@ -2419,7 +2522,7 @@ HRESULT shader_write_bytecode(const struct bwriter_shader *shader, DWORD **resul
     }
 
     /* Write shader type and version */
-    put_dword(buffer, sm1_version(shader));
+    put_u32(buffer, sm1_version(shader));
 
     writer->funcs->header(writer, shader, buffer);
     if(FAILED(writer->state)) {
@@ -2446,7 +2549,7 @@ HRESULT shader_write_bytecode(const struct bwriter_shader *shader, DWORD **resul
         goto error;
     }
 
-    *size = buffer->size * sizeof(DWORD);
+    *size = buffer->size * sizeof(uint32_t);
     *result = buffer->data;
     buffer->data = NULL;
     hr = S_OK;

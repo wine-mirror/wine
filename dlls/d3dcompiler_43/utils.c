@@ -125,7 +125,7 @@ const char *debug_d3dcompiler_d3d_blob_part(D3D_BLOB_PART part)
     }
 }
 
-const char *debug_print_srcmod(DWORD mod)
+const char *debug_print_srcmod(uint32_t mod)
 {
     switch (mod)
     {
@@ -143,14 +143,14 @@ const char *debug_print_srcmod(DWORD mod)
         WINE_D3DCOMPILER_TO_STR(BWRITERSPSM_ABSNEG);
         WINE_D3DCOMPILER_TO_STR(BWRITERSPSM_NOT);
         default:
-            FIXME("Unrecognized source modifier %#lx.\n", mod);
+            FIXME("Unrecognized source modifier %#x.\n", mod);
             return "unrecognized_src_mod";
     }
 }
 
 #undef WINE_D3DCOMPILER_TO_STR
 
-const char *debug_print_dstmod(DWORD mod)
+const char *debug_print_dstmod(uint32_t mod)
 {
     switch (mod)
     {
@@ -175,7 +175,7 @@ const char *debug_print_dstmod(DWORD mod)
     }
 }
 
-const char *debug_print_shift(DWORD shift)
+const char *debug_print_shift(uint32_t shift)
 {
     static const char * const shiftstrings[] =
     {
@@ -204,15 +204,15 @@ static const char *get_regname(const struct shader_reg *reg)
     switch (reg->type)
     {
         case BWRITERSPR_TEMP:
-            return wine_dbg_sprintf("r%lu", reg->regnum);
+            return wine_dbg_sprintf("r%u", reg->regnum);
         case BWRITERSPR_INPUT:
-            return wine_dbg_sprintf("v%lu", reg->regnum);
+            return wine_dbg_sprintf("v%u", reg->regnum);
         case BWRITERSPR_CONST:
-            return wine_dbg_sprintf("c%lu", reg->regnum);
+            return wine_dbg_sprintf("c%u", reg->regnum);
         case BWRITERSPR_ADDR:
-            return wine_dbg_sprintf("a%lu", reg->regnum);
+            return wine_dbg_sprintf("a%u", reg->regnum);
         case BWRITERSPR_TEXTURE:
-            return wine_dbg_sprintf("t%lu", reg->regnum);
+            return wine_dbg_sprintf("t%u", reg->regnum);
         case BWRITERSPR_RASTOUT:
             switch (reg->regnum)
             {
@@ -222,21 +222,21 @@ static const char *get_regname(const struct shader_reg *reg)
                 default: return "Unexpected RASTOUT";
             }
         case BWRITERSPR_ATTROUT:
-            return wine_dbg_sprintf("oD%lu", reg->regnum);
+            return wine_dbg_sprintf("oD%u", reg->regnum);
         case BWRITERSPR_TEXCRDOUT:
-            return wine_dbg_sprintf("oT%lu", reg->regnum);
+            return wine_dbg_sprintf("oT%u", reg->regnum);
         case BWRITERSPR_OUTPUT:
-            return wine_dbg_sprintf("o%lu", reg->regnum);
+            return wine_dbg_sprintf("o%u", reg->regnum);
         case BWRITERSPR_CONSTINT:
-            return wine_dbg_sprintf("i%lu", reg->regnum);
+            return wine_dbg_sprintf("i%u", reg->regnum);
         case BWRITERSPR_COLOROUT:
-            return wine_dbg_sprintf("oC%lu", reg->regnum);
+            return wine_dbg_sprintf("oC%u", reg->regnum);
         case BWRITERSPR_DEPTHOUT:
             return "oDepth";
         case BWRITERSPR_SAMPLER:
-            return wine_dbg_sprintf("s%lu", reg->regnum);
+            return wine_dbg_sprintf("s%u", reg->regnum);
         case BWRITERSPR_CONSTBOOL:
-            return wine_dbg_sprintf("b%lu", reg->regnum);
+            return wine_dbg_sprintf("b%u", reg->regnum);
         case BWRITERSPR_LOOP:
             return "aL";
         case BWRITERSPR_MISCTYPE:
@@ -247,15 +247,15 @@ static const char *get_regname(const struct shader_reg *reg)
                 default: return "unexpected misctype";
             }
         case BWRITERSPR_LABEL:
-            return wine_dbg_sprintf("l%lu", reg->regnum);
+            return wine_dbg_sprintf("l%u", reg->regnum);
         case BWRITERSPR_PREDICATE:
-            return wine_dbg_sprintf("p%lu", reg->regnum);
+            return wine_dbg_sprintf("p%u", reg->regnum);
         default:
-            return wine_dbg_sprintf("unknown regname %#lx", reg->type);
+            return wine_dbg_sprintf("unknown regname %#x", reg->type);
     }
 }
 
-static const char *debug_print_writemask(DWORD mask)
+static const char *debug_print_writemask(uint32_t mask)
 {
     char ret[6];
     unsigned char pos = 1;
@@ -271,11 +271,11 @@ static const char *debug_print_writemask(DWORD mask)
     return wine_dbg_sprintf("%s", ret);
 }
 
-static const char *debug_print_swizzle(DWORD arg)
+static const char *debug_print_swizzle(uint32_t arg)
 {
     char ret[6];
     unsigned int i;
-    DWORD swizzle[4];
+    uint32_t swizzle[4];
 
     switch (arg)
     {
@@ -317,10 +317,10 @@ static const char *debug_print_relarg(const struct shader_reg *reg)
     const char *short_swizzle;
     if (!reg->rel_reg) return "";
 
-    short_swizzle = debug_print_swizzle(reg->rel_reg->u.swizzle);
+    short_swizzle = debug_print_swizzle(reg->rel_reg->swizzle);
 
     if (reg->rel_reg->type == BWRITERSPR_ADDR)
-        return wine_dbg_sprintf("[a%lu%s]", reg->rel_reg->regnum, short_swizzle);
+        return wine_dbg_sprintf("[a%u%s]", reg->rel_reg->regnum, short_swizzle);
     else if(reg->rel_reg->type == BWRITERSPR_LOOP && reg->rel_reg->regnum == 0)
         return wine_dbg_sprintf("[aL%s]", short_swizzle);
     else
@@ -331,7 +331,7 @@ const char *debug_print_dstreg(const struct shader_reg *reg)
 {
     return wine_dbg_sprintf("%s%s%s", get_regname(reg),
             debug_print_relarg(reg),
-            debug_print_writemask(reg->u.writemask));
+            debug_print_writemask(reg->writemask));
 }
 
 const char *debug_print_srcreg(const struct shader_reg *reg)
@@ -341,64 +341,64 @@ const char *debug_print_srcreg(const struct shader_reg *reg)
         case BWRITERSPSM_NONE:
             return wine_dbg_sprintf("%s%s%s", get_regname(reg),
                     debug_print_relarg(reg),
-                    debug_print_swizzle(reg->u.swizzle));
+                    debug_print_swizzle(reg->swizzle));
         case BWRITERSPSM_NEG:
             return wine_dbg_sprintf("-%s%s%s", get_regname(reg),
                     debug_print_relarg(reg),
-                    debug_print_swizzle(reg->u.swizzle));
+                    debug_print_swizzle(reg->swizzle));
         case BWRITERSPSM_BIAS:
             return wine_dbg_sprintf("%s%s_bias%s", get_regname(reg),
                     debug_print_relarg(reg),
-                    debug_print_swizzle(reg->u.swizzle));
+                    debug_print_swizzle(reg->swizzle));
         case BWRITERSPSM_BIASNEG:
             return wine_dbg_sprintf("-%s%s_bias%s", get_regname(reg),
                     debug_print_relarg(reg),
-                    debug_print_swizzle(reg->u.swizzle));
+                    debug_print_swizzle(reg->swizzle));
         case BWRITERSPSM_SIGN:
             return wine_dbg_sprintf("%s%s_bx2%s", get_regname(reg),
                     debug_print_relarg(reg),
-                    debug_print_swizzle(reg->u.swizzle));
+                    debug_print_swizzle(reg->swizzle));
         case BWRITERSPSM_SIGNNEG:
             return wine_dbg_sprintf("-%s%s_bx2%s", get_regname(reg),
                     debug_print_relarg(reg),
-                    debug_print_swizzle(reg->u.swizzle));
+                    debug_print_swizzle(reg->swizzle));
         case BWRITERSPSM_COMP:
             return wine_dbg_sprintf("1 - %s%s%s", get_regname(reg),
                     debug_print_relarg(reg),
-                    debug_print_swizzle(reg->u.swizzle));
+                    debug_print_swizzle(reg->swizzle));
         case BWRITERSPSM_X2:
             return wine_dbg_sprintf("%s%s_x2%s", get_regname(reg),
                     debug_print_relarg(reg),
-                    debug_print_swizzle(reg->u.swizzle));
+                    debug_print_swizzle(reg->swizzle));
         case BWRITERSPSM_X2NEG:
             return wine_dbg_sprintf("-%s%s_x2%s", get_regname(reg),
                     debug_print_relarg(reg),
-                    debug_print_swizzle(reg->u.swizzle));
+                    debug_print_swizzle(reg->swizzle));
         case BWRITERSPSM_DZ:
             return wine_dbg_sprintf("%s%s_dz%s", get_regname(reg),
                     debug_print_relarg(reg),
-                    debug_print_swizzle(reg->u.swizzle));
+                    debug_print_swizzle(reg->swizzle));
         case BWRITERSPSM_DW:
             return wine_dbg_sprintf("%s%s_dw%s", get_regname(reg),
                     debug_print_relarg(reg),
-                    debug_print_swizzle(reg->u.swizzle));
+                    debug_print_swizzle(reg->swizzle));
         case BWRITERSPSM_ABS:
             return wine_dbg_sprintf("%s%s_abs%s", get_regname(reg),
                     debug_print_relarg(reg),
-                    debug_print_swizzle(reg->u.swizzle));
+                    debug_print_swizzle(reg->swizzle));
         case BWRITERSPSM_ABSNEG:
             return wine_dbg_sprintf("-%s%s_abs%s", get_regname(reg),
                     debug_print_relarg(reg),
-                    debug_print_swizzle(reg->u.swizzle));
+                    debug_print_swizzle(reg->swizzle));
         case BWRITERSPSM_NOT:
             return wine_dbg_sprintf("!%s%s%s", get_regname(reg),
                     debug_print_relarg(reg),
-                    debug_print_swizzle(reg->u.swizzle));
+                    debug_print_swizzle(reg->swizzle));
     }
     return "Unknown modifier";
 }
 
-const char *debug_print_comp(DWORD comp)
+const char *debug_print_comp(uint32_t comp)
 {
     switch (comp)
     {
@@ -413,7 +413,7 @@ const char *debug_print_comp(DWORD comp)
     }
 }
 
-const char *debug_print_opcode(DWORD opcode)
+const char *debug_print_opcode(uint32_t opcode)
 {
     switch (opcode)
     {
@@ -507,28 +507,28 @@ const char *debug_print_opcode(DWORD opcode)
     }
 }
 
-void skip_dword_unknown(const char **ptr, unsigned int count)
+void skip_u32_unknown(const char **ptr, unsigned int count)
 {
     unsigned int i;
-    DWORD d;
+    uint32_t u32;
 
-    FIXME("Skipping %u unknown DWORDs:\n", count);
+    FIXME("Skipping %u unknown u32s:\n", count);
     for (i = 0; i < count; ++i)
     {
-        d = read_dword(ptr);
-        FIXME("\t0x%08lx\n", d);
+        u32 = read_u32(ptr);
+        FIXME("\t0x%08x\n", u32);
     }
 }
 
-static void write_dword_unknown(char **ptr, DWORD d)
+static void write_u32_unknown(char **ptr, uint32_t u32)
 {
-    FIXME("Writing unknown DWORD 0x%08lx.\n", d);
-    write_dword(ptr, d);
+    FIXME("Writing unknown u32 0x%08x.\n", u32);
+    write_u32(ptr, u32);
 }
 
-HRESULT dxbc_add_section(struct dxbc *dxbc, DWORD tag, const char *data, DWORD data_size)
+HRESULT dxbc_add_section(struct dxbc *dxbc, DWORD tag, const char *data, size_t data_size)
 {
-    TRACE("dxbc %p, tag %s, size %#lx.\n", dxbc, debugstr_an((const char *)&tag, 4), data_size);
+    TRACE("dxbc %p, tag %s, size %#Ix.\n", dxbc, debugstr_an((const char *)&tag, 4), data_size);
 
     if (dxbc->count >= dxbc->size)
     {
@@ -576,10 +576,10 @@ HRESULT dxbc_init(struct dxbc *dxbc, unsigned int size)
 
 HRESULT dxbc_parse(const char *data, SIZE_T data_size, struct dxbc *dxbc)
 {
+    uint32_t tag, total_size, chunk_count;
     const char *ptr = data;
-    HRESULT hr;
     unsigned int i;
-    DWORD tag, total_size, chunk_count;
+    HRESULT hr;
 
     if (!data)
     {
@@ -587,7 +587,7 @@ HRESULT dxbc_parse(const char *data, SIZE_T data_size, struct dxbc *dxbc)
         return E_FAIL;
     }
 
-    tag = read_dword(&ptr);
+    tag = read_u32(&ptr);
     TRACE("tag: %s.\n", debugstr_an((const char *)&tag, 4));
 
     if (tag != TAG_DXBC)
@@ -597,12 +597,12 @@ HRESULT dxbc_parse(const char *data, SIZE_T data_size, struct dxbc *dxbc)
     }
 
     /* checksum? */
-    skip_dword_unknown(&ptr, 4);
+    skip_u32_unknown(&ptr, 4);
 
-    skip_dword_unknown(&ptr, 1);
+    skip_u32_unknown(&ptr, 1);
 
-    total_size = read_dword(&ptr);
-    TRACE("total size: %#lx\n", total_size);
+    total_size = read_u32(&ptr);
+    TRACE("total size: %#x\n", total_size);
 
     if (data_size != total_size)
     {
@@ -610,8 +610,8 @@ HRESULT dxbc_parse(const char *data, SIZE_T data_size, struct dxbc *dxbc)
         return D3DERR_INVALIDCALL;
     }
 
-    chunk_count = read_dword(&ptr);
-    TRACE("chunk count: %#lx\n", chunk_count);
+    chunk_count = read_u32(&ptr);
+    TRACE("chunk count: %#x\n", chunk_count);
 
     hr = dxbc_init(dxbc, chunk_count);
     if (FAILED(hr))
@@ -622,17 +622,17 @@ HRESULT dxbc_parse(const char *data, SIZE_T data_size, struct dxbc *dxbc)
 
     for (i = 0; i < chunk_count; ++i)
     {
-        DWORD chunk_tag, chunk_size;
+        uint32_t chunk_tag, chunk_size;
         const char *chunk_ptr;
-        DWORD chunk_offset;
+        uint32_t chunk_offset;
 
-        chunk_offset = read_dword(&ptr);
-        TRACE("chunk %u at offset %#lx\n", i, chunk_offset);
+        chunk_offset = read_u32(&ptr);
+        TRACE("chunk %u at offset %#x\n", i, chunk_offset);
 
         chunk_ptr = data + chunk_offset;
 
-        chunk_tag = read_dword(&chunk_ptr);
-        chunk_size = read_dword(&chunk_ptr);
+        chunk_tag = read_u32(&chunk_ptr);
+        chunk_size = read_u32(&chunk_ptr);
 
         hr = dxbc_add_section(dxbc, chunk_tag, chunk_ptr, chunk_size);
         if (FAILED(hr))
@@ -676,35 +676,35 @@ HRESULT dxbc_write_blob(struct dxbc *dxbc, ID3DBlob **blob)
 
     ptr = ID3D10Blob_GetBufferPointer(object);
 
-    write_dword(&ptr, TAG_DXBC);
+    write_u32(&ptr, TAG_DXBC);
 
     /* signature(?) */
-    write_dword_unknown(&ptr, 0);
-    write_dword_unknown(&ptr, 0);
-    write_dword_unknown(&ptr, 0);
-    write_dword_unknown(&ptr, 0);
+    write_u32_unknown(&ptr, 0);
+    write_u32_unknown(&ptr, 0);
+    write_u32_unknown(&ptr, 0);
+    write_u32_unknown(&ptr, 0);
 
     /* seems to be always 1 */
-    write_dword_unknown(&ptr, 1);
+    write_u32_unknown(&ptr, 1);
 
     /* DXBC size */
-    write_dword(&ptr, size);
+    write_u32(&ptr, size);
 
     /* chunk count */
-    write_dword(&ptr, dxbc->count);
+    write_u32(&ptr, dxbc->count);
 
     /* write the chunk offsets */
     for (i = 0; i < dxbc->count; ++i)
     {
-        write_dword(&ptr, offset);
+        write_u32(&ptr, offset);
         offset += 8 + dxbc->sections[i].data_size;
     }
 
     /* write the chunks */
     for (i = 0; i < dxbc->count; ++i)
     {
-        write_dword(&ptr, dxbc->sections[i].tag);
-        write_dword(&ptr, dxbc->sections[i].data_size);
+        write_u32(&ptr, dxbc->sections[i].tag);
+        write_u32(&ptr, dxbc->sections[i].data_size);
         memcpy(ptr, dxbc->sections[i].data, dxbc->sections[i].data_size);
         ptr += dxbc->sections[i].data_size;
     }
