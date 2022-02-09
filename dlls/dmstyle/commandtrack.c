@@ -67,7 +67,7 @@ static ULONG WINAPI command_track_AddRef(IDirectMusicTrack8 *iface)
     IDirectMusicCommandTrack *This = impl_from_IDirectMusicTrack8(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -77,7 +77,7 @@ static ULONG WINAPI command_track_Release(IDirectMusicTrack8 *iface)
     IDirectMusicCommandTrack *This = impl_from_IDirectMusicTrack8(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if (!ref) {
         HeapFree(GetProcessHeap(), 0, This);
@@ -99,7 +99,7 @@ static HRESULT WINAPI command_track_InitPlay(IDirectMusicTrack8 *iface,
         void **ppStateData, DWORD dwVirtualTrack8ID, DWORD dwFlags)
 {
         IDirectMusicCommandTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %p, %p, %p, %d, %d): stub\n", This, pSegmentState, pPerformance, ppStateData, dwVirtualTrack8ID, dwFlags);
+	FIXME("(%p, %p, %p, %p, %ld, %ld): stub\n", This, pSegmentState, pPerformance, ppStateData, dwVirtualTrack8ID, dwFlags);
 	return S_OK;
 }
 
@@ -115,7 +115,7 @@ static HRESULT WINAPI command_track_Play(IDirectMusicTrack8 *iface, void *pState
         IDirectMusicPerformance *pPerf, IDirectMusicSegmentState *pSegSt, DWORD dwVirtualID)
 {
         IDirectMusicCommandTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %p, %d, %d, %d, %d, %p, %p, %d): stub\n", This, pStateData, mtStart, mtEnd, mtOffset, dwFlags, pPerf, pSegSt, dwVirtualID);
+	FIXME("(%p, %p, %ld, %ld, %ld, %ld, %p, %p, %ld): stub\n", This, pStateData, mtStart, mtEnd, mtOffset, dwFlags, pPerf, pSegSt, dwVirtualID);
 	return S_OK;
 }
 
@@ -124,7 +124,7 @@ static HRESULT WINAPI command_track_GetParam(IDirectMusicTrack8 *iface, REFGUID 
 {
     IDirectMusicCommandTrack *This = impl_from_IDirectMusicTrack8(iface);
 
-    TRACE("(%p, %s, %d, %p, %p):\n", This, debugstr_dmguid(type), time, next, param);
+    TRACE("(%p, %s, %ld, %p, %p):\n", This, debugstr_dmguid(type), time, next, param);
 
     if (!type)
         return E_POINTER;
@@ -148,7 +148,7 @@ static HRESULT WINAPI command_track_SetParam(IDirectMusicTrack8 *iface, REFGUID 
 {
     IDirectMusicCommandTrack *This = impl_from_IDirectMusicTrack8(iface);
 
-    TRACE("(%p, %s, %d, %p)\n", This, debugstr_dmguid(type), time, param);
+    TRACE("(%p, %s, %ld, %p)\n", This, debugstr_dmguid(type), time, param);
 
     if (!type)
         return E_POINTER;
@@ -204,7 +204,7 @@ static HRESULT WINAPI command_track_Clone(IDirectMusicTrack8 *iface, MUSIC_TIME 
         MUSIC_TIME mtEnd, IDirectMusicTrack **ppTrack)
 {
         IDirectMusicCommandTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %d, %d, %p): stub\n", This, mtStart, mtEnd, ppTrack);
+	FIXME("(%p, %ld, %ld, %p): stub\n", This, mtStart, mtEnd, ppTrack);
 	return S_OK;
 }
 
@@ -213,7 +213,7 @@ static HRESULT WINAPI command_track_PlayEx(IDirectMusicTrack8 *iface, void *pSta
         IDirectMusicPerformance *pPerf, IDirectMusicSegmentState *pSegSt, DWORD dwVirtualID)
 {
         IDirectMusicCommandTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %p, 0x%s, 0x%s, 0x%s, %d, %p, %p, %d): stub\n", This, pStateData, wine_dbgstr_longlong(rtStart),
+	FIXME("(%p, %p, 0x%s, 0x%s, 0x%s, %ld, %p, %p, %ld): stub\n", This, pStateData, wine_dbgstr_longlong(rtStart),
 	    wine_dbgstr_longlong(rtEnd), wine_dbgstr_longlong(rtOffset), dwFlags, pPerf, pSegSt, dwVirtualID);
 	return S_OK;
 }
@@ -223,7 +223,7 @@ static HRESULT WINAPI command_track_GetParamEx(IDirectMusicTrack8 *iface, REFGUI
         void *pStateData, DWORD dwFlags)
 {
         IDirectMusicCommandTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %s, 0x%s, %p, %p, %p, %d): stub\n", This, debugstr_dmguid(rguidType),
+	FIXME("(%p, %s, 0x%s, %p, %p, %p, %ld): stub\n", This, debugstr_dmguid(rguidType),
 	    wine_dbgstr_longlong(rtTime), prtNext, pParam, pStateData, dwFlags);
 	return S_OK;
 }
@@ -232,7 +232,7 @@ static HRESULT WINAPI command_track_SetParamEx(IDirectMusicTrack8 *iface, REFGUI
         REFERENCE_TIME rtTime, void *pParam, void *pStateData, DWORD dwFlags)
 {
         IDirectMusicCommandTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %s, 0x%s, %p, %p, %d): stub\n", This, debugstr_dmguid(rguidType),
+	FIXME("(%p, %s, 0x%s, %p, %p, %ld): stub\n", This, debugstr_dmguid(rguidType),
 	    wine_dbgstr_longlong(rtTime), pParam, pStateData, dwFlags);
 	return S_OK;
 }
@@ -242,7 +242,7 @@ static HRESULT WINAPI command_track_Compose(IDirectMusicTrack8 *iface, IUnknown 
 {
     IDirectMusicCommandTrack *This = impl_from_IDirectMusicTrack8(iface);
 
-    TRACE("(%p, %p, %d, %p): method not implemented\n", This, context, trackgroup, track);
+    TRACE("(%p, %p, %ld, %p): method not implemented\n", This, context, trackgroup, track);
     return E_NOTIMPL;
 }
 
@@ -251,7 +251,7 @@ static HRESULT WINAPI command_track_Join(IDirectMusicTrack8 *iface, IDirectMusic
         IDirectMusicTrack **ppResultTrack)
 {
         IDirectMusicCommandTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %p, %d, %p, %d, %p): stub\n", This, pNewTrack, mtJoin, pContext, dwTrackGroup, ppResultTrack);
+	FIXME("(%p, %p, %ld, %p, %ld, %p): stub\n", This, pNewTrack, mtJoin, pContext, dwTrackGroup, ppResultTrack);
 	return S_OK;
 }
 
@@ -290,14 +290,14 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 	
 	IStream_Read (pStm, &chunkID, sizeof(FOURCC), NULL);
 	IStream_Read (pStm, &chunkSize, sizeof(DWORD), NULL);
-	TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (chunkID), chunkSize);
+	TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (chunkID), chunkSize);
 	switch (chunkID) {
 		case DMUS_FOURCC_COMMANDTRACK_CHUNK: {
 			DWORD count;
 			TRACE_(dmfile)(": command track chunk\n");
 			IStream_Read (pStm, &dwSizeOfStruct, sizeof(DWORD), NULL);
 			if (dwSizeOfStruct != sizeof(DMUS_IO_COMMAND)) {
-				TRACE_(dmfile)(": declared size of struct (=%d) != actual size; indicates older direct music version\n", dwSizeOfStruct);
+				TRACE_(dmfile)(": declared size of struct (=%ld) != actual size; indicates older direct music version\n", dwSizeOfStruct);
 			}
 			chunkSize -= sizeof(DWORD); /* now chunk size is one DWORD shorter */
 			nrCommands = chunkSize/dwSizeOfStruct; /* and this is the number of commands */
@@ -329,7 +329,7 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 		LIST_FOR_EACH (listEntry, &This->Commands) {
 			tmpEntry = LIST_ENTRY (listEntry, DMUS_PRIVATE_COMMAND, entry);
 			TRACE("    - Command[%i]:\n", r);
-			TRACE("       - mtTime = %i\n", tmpEntry->pCommand.mtTime);
+			TRACE("       - mtTime = %li\n", tmpEntry->pCommand.mtTime);
 			TRACE("       - wMeasure = %d\n", tmpEntry->pCommand.wMeasure);
 			TRACE("       - bBeat = %i\n", tmpEntry->pCommand.bBeat);
 			TRACE("       - bCommand = %i\n", tmpEntry->pCommand.bCommand);

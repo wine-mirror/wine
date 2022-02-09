@@ -68,7 +68,7 @@ static ULONG WINAPI chord_track_AddRef(IDirectMusicTrack8 *iface)
     IDirectMusicChordTrack *This = impl_from_IDirectMusicTrack8(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -78,7 +78,7 @@ static ULONG WINAPI chord_track_Release(IDirectMusicTrack8 *iface)
     IDirectMusicChordTrack *This = impl_from_IDirectMusicTrack8(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if (!ref) {
         HeapFree(GetProcessHeap(), 0, This);
@@ -100,7 +100,7 @@ static HRESULT WINAPI chord_track_InitPlay(IDirectMusicTrack8 *iface,
         void **ppStateData, DWORD dwVirtualTrack8ID, DWORD dwFlags)
 {
   IDirectMusicChordTrack *This = impl_from_IDirectMusicTrack8(iface);
-  FIXME("(%p, %p, %p, %p, %d, %d): stub\n", This, pSegmentState, pPerformance, ppStateData, dwVirtualTrack8ID, dwFlags);
+  FIXME("(%p, %p, %p, %p, %ld, %ld): stub\n", This, pSegmentState, pPerformance, ppStateData, dwVirtualTrack8ID, dwFlags);
   return S_OK;
 }
 
@@ -116,7 +116,7 @@ static HRESULT WINAPI chord_track_Play(IDirectMusicTrack8 *iface, void *pStateDa
         IDirectMusicPerformance *pPerf, IDirectMusicSegmentState *pSegSt, DWORD dwVirtualID)
 {
   IDirectMusicChordTrack *This = impl_from_IDirectMusicTrack8(iface);
-  FIXME("(%p, %p, %d, %d, %d, %d, %p, %p, %d): stub\n", This, pStateData, mtStart, mtEnd, mtOffset, dwFlags, pPerf, pSegSt, dwVirtualID);
+  FIXME("(%p, %p, %ld, %ld, %ld, %ld, %p, %p, %ld): stub\n", This, pStateData, mtStart, mtEnd, mtOffset, dwFlags, pPerf, pSegSt, dwVirtualID);
   return S_OK;
 }
 
@@ -125,7 +125,7 @@ static HRESULT WINAPI chord_track_GetParam(IDirectMusicTrack8 *iface, REFGUID ty
 {
     IDirectMusicChordTrack *This = impl_from_IDirectMusicTrack8(iface);
 
-    TRACE("(%p, %s, %d, %p, %p):\n", This, debugstr_dmguid(type), time, next, param);
+    TRACE("(%p, %s, %ld, %p, %p):\n", This, debugstr_dmguid(type), time, next, param);
 
     if (!type)
         return E_POINTER;
@@ -146,7 +146,7 @@ static HRESULT WINAPI chord_track_SetParam(IDirectMusicTrack8 *iface, REFGUID ty
 {
     IDirectMusicChordTrack *This = impl_from_IDirectMusicTrack8(iface);
 
-    TRACE("(%p, %s, %d, %p)\n", This, debugstr_dmguid(type), time, param);
+    TRACE("(%p, %s, %ld, %p)\n", This, debugstr_dmguid(type), time, param);
 
     if (!type)
         return E_POINTER;
@@ -194,7 +194,7 @@ static HRESULT WINAPI chord_track_Clone(IDirectMusicTrack8 *iface, MUSIC_TIME mt
         MUSIC_TIME mtEnd, IDirectMusicTrack **ppTrack)
 {
   IDirectMusicChordTrack *This = impl_from_IDirectMusicTrack8(iface);
-  FIXME("(%p, %d, %d, %p): stub\n", This, mtStart, mtEnd, ppTrack);
+  FIXME("(%p, %ld, %ld, %p): stub\n", This, mtStart, mtEnd, ppTrack);
   return S_OK;
 }
 
@@ -203,7 +203,7 @@ static HRESULT WINAPI chord_track_PlayEx(IDirectMusicTrack8 *iface, void *pState
         IDirectMusicPerformance *pPerf, IDirectMusicSegmentState *pSegSt, DWORD dwVirtualID)
 {
   IDirectMusicChordTrack *This = impl_from_IDirectMusicTrack8(iface);
-  FIXME("(%p, %p, 0x%s, 0x%s, 0x%s, %d, %p, %p, %d): stub\n", This, pStateData, wine_dbgstr_longlong(rtStart),
+  FIXME("(%p, %p, 0x%s, 0x%s, 0x%s, %ld, %p, %p, %ld): stub\n", This, pStateData, wine_dbgstr_longlong(rtStart),
       wine_dbgstr_longlong(rtEnd), wine_dbgstr_longlong(rtOffset), dwFlags, pPerf, pSegSt, dwVirtualID);
   return S_OK;
 }
@@ -213,7 +213,7 @@ static HRESULT WINAPI chord_track_GetParamEx(IDirectMusicTrack8 *iface, REFGUID 
         DWORD dwFlags)
 {
   IDirectMusicChordTrack *This = impl_from_IDirectMusicTrack8(iface);
-  FIXME("(%p, %s, 0x%s, %p, %p, %p, %d): stub\n", This, debugstr_dmguid(rguidType),
+  FIXME("(%p, %s, 0x%s, %p, %p, %p, %ld): stub\n", This, debugstr_dmguid(rguidType),
       wine_dbgstr_longlong(rtTime), prtNext, pParam, pStateData, dwFlags);
   return S_OK;
 }
@@ -222,7 +222,7 @@ static HRESULT WINAPI chord_track_SetParamEx(IDirectMusicTrack8 *iface, REFGUID 
         REFERENCE_TIME rtTime, void *pParam, void *pStateData, DWORD dwFlags)
 {
   IDirectMusicChordTrack *This = impl_from_IDirectMusicTrack8(iface);
-  FIXME("(%p, %s, 0x%s, %p, %p, %d): stub\n", This, debugstr_dmguid(rguidType),
+  FIXME("(%p, %s, 0x%s, %p, %p, %ld): stub\n", This, debugstr_dmguid(rguidType),
       wine_dbgstr_longlong(rtTime), pParam, pStateData, dwFlags);
   return S_OK;
 }
@@ -232,7 +232,7 @@ static HRESULT WINAPI chord_track_Compose(IDirectMusicTrack8 *iface, IUnknown *c
 {
     IDirectMusicChordTrack *This = impl_from_IDirectMusicTrack8(iface);
 
-    TRACE("(%p, %p, %d, %p): method not implemented\n", This, context, trackgroup, track);
+    TRACE("(%p, %p, %ld, %p): method not implemented\n", This, context, trackgroup, track);
     return E_NOTIMPL;
 }
 
@@ -241,7 +241,7 @@ static HRESULT WINAPI chord_track_Join(IDirectMusicTrack8 *iface, IDirectMusicTr
         IDirectMusicTrack **ppResultTrack)
 {
   IDirectMusicChordTrack *This = impl_from_IDirectMusicTrack8(iface);
-  FIXME("(%p, %p, %d, %p, %d, %p): stub\n", This, pNewTrack, mtJoin, pContext, dwTrackGroup, ppResultTrack);
+  FIXME("(%p, %p, %ld, %p, %ld, %p): stub\n", This, pNewTrack, mtJoin, pContext, dwTrackGroup, ppResultTrack);
   return S_OK;
 }
 
@@ -284,12 +284,12 @@ static HRESULT parse_chordtrack_list(IDirectMusicChordTrack *This, DMUS_PRIVATE_
   do {
     IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
     ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-    TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+    TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
     switch (Chunk.fccID) { 
     case DMUS_FOURCC_CHORDTRACKHEADER_CHUNK: {
       TRACE_(dmfile)(": Chord track header chunk\n");
       IStream_Read (pStm, &This->dwScale, sizeof(DWORD), NULL);
-      TRACE_(dmfile)(" - dwScale: %d\n", This->dwScale);
+      TRACE_(dmfile)(" - dwScale: %ld\n", This->dwScale);
       break;
     }
     case DMUS_FOURCC_CHORDTRACKBODY_CHUNK: {
@@ -302,28 +302,28 @@ static HRESULT parse_chordtrack_list(IDirectMusicChordTrack *This, DMUS_PRIVATE_
       TRACE_(dmfile)(": Chord track body chunk\n");
 
       IStream_Read (pStm, &sz, sizeof(DWORD), NULL);
-      TRACE_(dmfile)(" - sizeof(DMUS_IO_CHORD): %d\n", sz);
+      TRACE_(dmfile)(" - sizeof(DMUS_IO_CHORD): %ld\n", sz);
       if (sz != sizeof(DMUS_IO_CHORD)) return E_FAIL;
       IStream_Read (pStm, &body, sizeof(DMUS_IO_CHORD), NULL);
       TRACE_(dmfile)(" - wszName: %s\n", debugstr_w(body.wszName));
-      TRACE_(dmfile)(" - mtTime: %u\n", body.mtTime);
+      TRACE_(dmfile)(" - mtTime: %lu\n", body.mtTime);
       TRACE_(dmfile)(" - wMeasure: %u\n", body.wMeasure);
       TRACE_(dmfile)(" - bBeat:  %u\n", body.bBeat);
       TRACE_(dmfile)(" - bFlags: 0x%02x\n", body.bFlags);
       
       IStream_Read (pStm, &num, sizeof(DWORD), NULL);
-      TRACE_(dmfile)(" - # DMUS_IO_SUBCHORDS: %d\n", num);
+      TRACE_(dmfile)(" - # DMUS_IO_SUBCHORDS: %ld\n", num);
       IStream_Read (pStm, &sz, sizeof(DWORD), NULL);
-      TRACE_(dmfile)(" - sizeof(DMUS_IO_SUBCHORDS): %d\n", sz);
+      TRACE_(dmfile)(" - sizeof(DMUS_IO_SUBCHORDS): %ld\n", sz);
       if (sz != sizeof(DMUS_IO_SUBCHORD)) return E_FAIL;
 
       for (it = 0; it < num; ++it) {
 	IStream_Read (pStm, &subchords, sizeof(DMUS_IO_SUBCHORD), NULL);
-	TRACE_(dmfile)("DMUS_IO_SUBCHORD #%d\n", it+1);
-	TRACE_(dmfile)(" - dwChordPattern: %u\n", subchords.dwChordPattern);
-	TRACE_(dmfile)(" - dwScalePattern: %u\n", subchords.dwScalePattern);
-	TRACE_(dmfile)(" - dwInversionPoints: %u\n", subchords.dwInversionPoints);
-	TRACE_(dmfile)(" - dwLevels: %u\n", subchords.dwLevels);
+	TRACE_(dmfile)("DMUS_IO_SUBCHORD #%ld\n", it+1);
+	TRACE_(dmfile)(" - dwChordPattern: %lu\n", subchords.dwChordPattern);
+	TRACE_(dmfile)(" - dwScalePattern: %lu\n", subchords.dwScalePattern);
+	TRACE_(dmfile)(" - dwInversionPoints: %lu\n", subchords.dwInversionPoints);
+	TRACE_(dmfile)(" - dwLevels: %lu\n", subchords.dwLevels);
 	TRACE_(dmfile)(" - bChordRoot:  %u\n", subchords.bChordRoot);
 	TRACE_(dmfile)(" - bScaleRoot: %u\n", subchords.bScaleRoot);
       }
@@ -336,7 +336,7 @@ static HRESULT parse_chordtrack_list(IDirectMusicChordTrack *This, DMUS_PRIVATE_
       break;		
     }
     }
-    TRACE_(dmfile)(": ListCount[0] = %d < ListSize[0] = %d\n", ListCount[0], ListSize[0]);
+    TRACE_(dmfile)(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
   } while (ListCount[0] < ListSize[0]);
 
   return S_OK;
@@ -357,11 +357,11 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
   TRACE("(%p, %p): Loading\n", This, pStm);
 
   IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
-  TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+  TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
   switch (Chunk.fccID) {	
   case FOURCC_LIST: {
     IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);
-    TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+    TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
     switch (Chunk.fccID) { 
     case DMUS_FOURCC_CHORDTRACK_LIST: {
       TRACE_(dmfile)(": Chord track list\n");

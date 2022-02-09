@@ -167,7 +167,7 @@ HRESULT IDirectMusicUtils_IPersistStream_ParseReference (LPPERSISTSTREAM iface, 
   do {
     IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
     ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-    TRACE(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+    TRACE(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 
     hr = IDirectMusicUtils_IPersistStream_ParseDescGeneric(&Chunk, pStm, &ref_desc);
     if (FAILED(hr)) return hr;
@@ -179,7 +179,7 @@ HRESULT IDirectMusicUtils_IPersistStream_ParseReference (LPPERSISTSTREAM iface, 
 	if (Chunk.dwSize != sizeof(DMUS_IO_REFERENCE)) return E_FAIL;
 	IStream_Read (pStm, &ref, sizeof(DMUS_IO_REFERENCE), NULL);
 	TRACE(" - guidClassID: %s\n", debugstr_dmguid(&ref.guidClassID));
-	TRACE(" - dwValidData: %u\n", ref.dwValidData);
+	TRACE(" - dwValidData: %lu\n", ref.dwValidData);
 	break;
       } 
       default: {
@@ -190,7 +190,7 @@ HRESULT IDirectMusicUtils_IPersistStream_ParseReference (LPPERSISTSTREAM iface, 
       }
       }
     }
-    TRACE(": ListCount[0] = %d < ListSize[0] = %d\n", ListCount[0], ListSize[0]);
+    TRACE(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
   } while (ListCount[0] < ListSize[0]);
 
   ref_desc.dwValidData |= DMUS_OBJ_CLASS;
