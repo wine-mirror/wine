@@ -293,39 +293,38 @@ static const TEST_URL_ESCAPE TEST_ESCAPE[] = {
 typedef struct _TEST_URL_ESCAPEW {
     const WCHAR url[INTERNET_MAX_URL_LENGTH];
     DWORD flags;
-    HRESULT expectret;
     const WCHAR expecturl[INTERNET_MAX_URL_LENGTH];
     const WCHAR win7url[INTERNET_MAX_URL_LENGTH];  /* <= Win7 */
     const WCHAR vistaurl[INTERNET_MAX_URL_LENGTH]; /* <= Vista/2k8 */
 } TEST_URL_ESCAPEW;
 
 static const TEST_URL_ESCAPEW TEST_ESCAPEW[] = {
-    {{' ','<','>','"',0},  URL_ESCAPE_AS_UTF8, S_OK, {'%','2','0','%','3','C','%','3','E','%','2','2',0}},
-    {{'{','}','|','\\',0}, URL_ESCAPE_AS_UTF8, S_OK, {'%','7','B','%','7','D','%','7','C','%','5','C',0}},
-    {{'^',']','[','`',0},  URL_ESCAPE_AS_UTF8, S_OK, {'%','5','E','%','5','D','%','5','B','%','6','0',0}},
-    {{'&','/','?','#',0},  URL_ESCAPE_AS_UTF8, S_OK, {'%','2','6','/','?','#',0}},
-    {{'M','a','s','s',0},  URL_ESCAPE_AS_UTF8, S_OK, {'M','a','s','s',0}},
+    {{' ','<','>','"',0},  URL_ESCAPE_AS_UTF8, {'%','2','0','%','3','C','%','3','E','%','2','2',0}},
+    {{'{','}','|','\\',0}, URL_ESCAPE_AS_UTF8, {'%','7','B','%','7','D','%','7','C','%','5','C',0}},
+    {{'^',']','[','`',0},  URL_ESCAPE_AS_UTF8, {'%','5','E','%','5','D','%','5','B','%','6','0',0}},
+    {{'&','/','?','#',0},  URL_ESCAPE_AS_UTF8, {'%','2','6','/','?','#',0}},
+    {{'M','a','s','s',0},  URL_ESCAPE_AS_UTF8, {'M','a','s','s',0}},
 
     /* broken < Win8/10 */
 
-    {{'M','a',0xdf,0},  URL_ESCAPE_AS_UTF8, S_OK, {'M','a','%','C','3','%','9','F',0},
+    {{'M','a',0xdf,0},  URL_ESCAPE_AS_UTF8, {'M','a','%','C','3','%','9','F',0},
                                                   {'M','a','%','D','F',0}},
     /* 0x2070E */
-    {{0xd841,0xdf0e,0}, URL_ESCAPE_AS_UTF8, S_OK, {'%','F','0','%','A','0','%','9','C','%','8','E',0},
+    {{0xd841,0xdf0e,0}, URL_ESCAPE_AS_UTF8, {'%','F','0','%','A','0','%','9','C','%','8','E',0},
                                                   {'%','E','F','%','B','F','%','B','D','%','E','F','%','B','F','%','B','D',0},
                                                   {0xd841,0xdf0e,0}},
     /* 0x27A3E */
-    {{0xd85e,0xde3e,0}, URL_ESCAPE_AS_UTF8, S_OK, {'%','F','0','%','A','7','%','A','8','%','B','E',0},
+    {{0xd85e,0xde3e,0}, URL_ESCAPE_AS_UTF8, {'%','F','0','%','A','7','%','A','8','%','B','E',0},
                                                   {'%','E','F','%','B','F','%','B','D','%','E','F','%','B','F','%','B','D',0},
                                                   {0xd85e,0xde3e,0}},
 
-    {{0xd85e,0},        URL_ESCAPE_AS_UTF8, S_OK, {'%','E','F','%','B','F','%','B','D',0},
+    {{0xd85e,0},        URL_ESCAPE_AS_UTF8, {'%','E','F','%','B','F','%','B','D',0},
                                                   {0xd85e,0}},
-    {{0xd85e,0x41},     URL_ESCAPE_AS_UTF8, S_OK, {'%','E','F','%','B','F','%','B','D','A',0},
+    {{0xd85e,0x41},     URL_ESCAPE_AS_UTF8, {'%','E','F','%','B','F','%','B','D','A',0},
                                                   {0xd85e,'A',0}},
-    {{0xdc00,0},        URL_ESCAPE_AS_UTF8, S_OK, {'%','E','F','%','B','F','%','B','D',0},
+    {{0xdc00,0},        URL_ESCAPE_AS_UTF8, {'%','E','F','%','B','F','%','B','D',0},
                                                   {0xdc00,0}},
-    {{0xffff,0},        URL_ESCAPE_AS_UTF8, S_OK, {'%','E','F','%','B','F','%','B','F',0},
+    {{0xffff,0},        URL_ESCAPE_AS_UTF8, {'%','E','F','%','B','F','%','B','F',0},
                                                   {0xffff,0}},
 };
 
@@ -962,8 +961,7 @@ static void test_UrlEscapeW(void)
 
         size = INTERNET_MAX_URL_LENGTH;
         ret = UrlEscapeW(TEST_ESCAPEW[i].url, ret_url, &size, TEST_ESCAPEW[i].flags);
-        ok(ret == TEST_ESCAPEW[i].expectret, "UrlEscapeW returned 0x%08x instead of 0x%08x for \"%s\"\n",
-           ret, TEST_ESCAPEW[i].expectret, wine_dbgstr_w(TEST_ESCAPEW[i].url));
+        ok(ret == S_OK, "Got unexpected hr %#x for %s.\n", ret, debugstr_w(TEST_ESCAPEW[i].url));
         ok(!lstrcmpW(ret_url, TEST_ESCAPEW[i].expecturl) ||
            broken(!lstrcmpW(ret_url, TEST_ESCAPEW[i].vistaurl)) ||
            broken(!lstrcmpW(ret_url, TEST_ESCAPEW[i].win7url)),
