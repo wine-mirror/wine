@@ -686,6 +686,7 @@ static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
     NTSTATUS status;
     unsigned int i;
     ULONG options;
+    BOOL nonblocking, alerted;
 
     if (unix_flags & MSG_OOB)
     {
@@ -756,16 +757,29 @@ static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
         status = wine_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );
         options     = reply->options;
-        if ((!NT_ERROR(status) || wait_handle) && status != STATUS_PENDING)
+        nonblocking = reply->nonblocking;
+    }
+    SERVER_END_REQ;
+
+    alerted = status == STATUS_ALERTED;
+    if (alerted)
+    {
+        status = try_recv( fd, async, &information );
+        if (status == STATUS_DEVICE_NOT_READY && (force_async || !nonblocking))
+            status = STATUS_PENDING;
+    }
+
+    if (status != STATUS_PENDING)
+    {
+        if (!NT_ERROR(status) || (wait_handle && !alerted))
         {
             io->Status = status;
             io->Information = information;
         }
+        release_fileio( &async->io );
     }
-    SERVER_END_REQ;
 
-    if (status != STATUS_PENDING) release_fileio( &async->io );
-
+    if (alerted) set_async_direct_result( &wait_handle, status, information );
     if (wait_handle) status = wait_async( wait_handle, options & FILE_SYNCHRONOUS_IO_ALERT );
     return status;
 }

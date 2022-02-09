@@ -3422,6 +3422,24 @@ DECL_HANDLER(recv_socket)
     if ((status == STATUS_PENDING || status == STATUS_DEVICE_NOT_READY) && sock->rd_shutdown)
         status = STATUS_PIPE_DISCONNECTED;
 
+    /* NOTE: If read_q is not empty, we cannot really tell if the already queued asyncs
+     * NOTE: will not consume all available data; if there's no data available,
+     * NOTE: the current request won't be immediately satiable. */
+    if ((status == STATUS_PENDING || status == STATUS_DEVICE_NOT_READY) && !async_queued( &sock->read_q ))
+    {
+        struct pollfd pollfd;
+        pollfd.fd = get_unix_fd( sock->fd );
+        pollfd.events = req->oob ? POLLPRI : POLLIN;
+        pollfd.revents = 0;
+        if (poll(&pollfd, 1, 0) >= 0 && pollfd.revents)
+        {
+            /* Give the client opportunity to complete synchronously.
+             * If it turns out that the I/O request is not actually immediately satiable,
+             * the client may then choose to re-queue the async (with STATUS_PENDING). */
+            status = STATUS_ALERTED;
+        }
+    }
+
     sock->pending_events &= ~(req->oob ? AFD_POLL_OOB : AFD_POLL_READ);
     sock->reported_events &= ~(req->oob ? AFD_POLL_OOB : AFD_POLL_READ);
 
@@ -3438,7 +3456,7 @@ DECL_HANDLER(recv_socket)
         if (timeout)
             async_set_timeout( async, timeout, STATUS_IO_TIMEOUT );
 
-        if (status == STATUS_PENDING)
+        if (status == STATUS_PENDING || status == STATUS_ALERTED)
             queue_async( &sock->read_q, async );
 
         /* always reselect; we changed reported_events above */
@@ -3446,6 +3464,7 @@ DECL_HANDLER(recv_socket)
 
         reply->wait = async_handoff( async, NULL, 0 );
         reply->options = get_fd_options( fd );
+        reply->nonblocking = sock->nonblocking;
         release_object( async );
     }
     release_object( sock );

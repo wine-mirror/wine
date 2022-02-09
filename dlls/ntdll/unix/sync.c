@@ -2510,3 +2510,29 @@ NTSTATUS WINAPI NtWaitForAlertByThreadId( const void *address, const LARGE_INTEG
 }
 
 #endif
+
+/* Notify direct completion of async and close the wait handle if it is no longer needed.
+ * This function is a no-op (returns status as-is) if the supplied handle is NULL.
+ */
+void set_async_direct_result( HANDLE *optional_handle, NTSTATUS status, ULONG_PTR information )
+{
+    NTSTATUS ret;
+
+    if (!*optional_handle) return;
+
+    SERVER_START_REQ( set_async_direct_result )
+    {
+        req->handle      = wine_server_obj_handle( *optional_handle );
+        req->status      = status;
+        req->information = information;
+        ret = wine_server_call( req );
+        if (ret == STATUS_SUCCESS)
+            *optional_handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+
+    if (ret != STATUS_SUCCESS)
+        ERR( "cannot report I/O result back to server: %08x\n", ret );
+
+    return;
+}

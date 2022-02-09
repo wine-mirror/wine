@@ -274,6 +274,7 @@ extern NTSTATUS get_device_info( int fd, struct _FILE_FS_DEVICE_INFORMATION *inf
 extern void init_files(void) DECLSPEC_HIDDEN;
 extern void init_cpu_info(void) DECLSPEC_HIDDEN;
 extern void add_completion( HANDLE handle, ULONG_PTR value, NTSTATUS status, ULONG info, BOOL async ) DECLSPEC_HIDDEN;
+extern void set_async_direct_result( HANDLE *optional_handle, NTSTATUS status, ULONG_PTR information );
 
 extern void dbg_init(void) DECLSPEC_HIDDEN;
 
