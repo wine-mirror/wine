@@ -7813,8 +7813,8 @@ static void test_shutdown(void)
 
     WSASetLastError(0xdeadbeef);
     ret = recv(server, buffer, sizeof(buffer), 0);
-    todo_wine ok(ret == -1, "got %d\n", ret);
-    todo_wine ok(WSAGetLastError() == WSAESHUTDOWN, "got error %u\n", WSAGetLastError());
+    ok(ret == -1, "got %d\n", ret);
+    ok(WSAGetLastError() == WSAESHUTDOWN, "got error %u\n", WSAGetLastError());
 
     ret = send(server, "test", 5, 0);
     ok(ret == 5, "got %d\n", ret);
@@ -7908,8 +7908,8 @@ static void test_shutdown(void)
 
     WSASetLastError(0xdeadbeef);
     ret = recv(server, buffer, sizeof(buffer), 0);
-    todo_wine ok(ret == -1, "got %d\n", ret);
-    todo_wine ok(WSAGetLastError() == WSAESHUTDOWN, "got error %u\n", WSAGetLastError());
+    ok(ret == -1, "got %d\n", ret);
+    ok(WSAGetLastError() == WSAESHUTDOWN, "got error %u\n", WSAGetLastError());
 
     WSASetLastError(0xdeadbeef);
     ret = send(server, "test", 5, 0);

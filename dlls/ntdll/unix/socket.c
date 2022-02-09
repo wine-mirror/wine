@@ -737,16 +737,8 @@ static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
         }
     }
 
-    status = try_recv( fd, async, &information );
-
-    if (status != STATUS_SUCCESS && status != STATUS_BUFFER_OVERFLOW && status != STATUS_DEVICE_NOT_READY)
-    {
-        release_fileio( &async->io );
-        return status;
-    }
-
-    if (status == STATUS_DEVICE_NOT_READY && force_async)
-        status = STATUS_PENDING;
+    status = force_async ? STATUS_PENDING : STATUS_DEVICE_NOT_READY;
+    information = 0;
 
     SERVER_START_REQ( recv_socket )
     {
