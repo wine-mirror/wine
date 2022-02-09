@@ -65,7 +65,7 @@ static ULONG WINAPI signpost_track_AddRef(IDirectMusicTrack8 *iface)
     IDirectMusicSignPostTrack *This = impl_from_IDirectMusicTrack8(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -75,7 +75,7 @@ static ULONG WINAPI signpost_track_Release(IDirectMusicTrack8 *iface)
     IDirectMusicSignPostTrack *This = impl_from_IDirectMusicTrack8(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if (!ref) {
         HeapFree(GetProcessHeap(), 0, This);
@@ -97,7 +97,7 @@ static HRESULT WINAPI signpost_track_InitPlay(IDirectMusicTrack8 *iface,
         void **ppStateData, DWORD dwVirtualTrack8ID, DWORD dwFlags)
 {
         IDirectMusicSignPostTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %p, %p, %p, %d, %d): stub\n", This, pSegmentState, pPerformance, ppStateData, dwVirtualTrack8ID, dwFlags);
+	FIXME("(%p, %p, %p, %p, %ld, %ld): stub\n", This, pSegmentState, pPerformance, ppStateData, dwVirtualTrack8ID, dwFlags);
 	return S_OK;
 }
 
@@ -113,7 +113,7 @@ static HRESULT WINAPI signpost_track_Play(IDirectMusicTrack8 *iface, void *pStat
         IDirectMusicPerformance *pPerf, IDirectMusicSegmentState *pSegSt, DWORD dwVirtualID)
 {
         IDirectMusicSignPostTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %p, %d, %d, %d, %d, %p, %p, %d): stub\n", This, pStateData, mtStart, mtEnd, mtOffset, dwFlags, pPerf, pSegSt, dwVirtualID);
+	FIXME("(%p, %p, %ld, %ld, %ld, %ld, %p, %p, %ld): stub\n", This, pStateData, mtStart, mtEnd, mtOffset, dwFlags, pPerf, pSegSt, dwVirtualID);
 	return S_OK;
 }
 
@@ -122,7 +122,7 @@ static HRESULT WINAPI signpost_track_GetParam(IDirectMusicTrack8 *iface, REFGUID
 {
     IDirectMusicSignPostTrack *This = impl_from_IDirectMusicTrack8(iface);
 
-    TRACE("(%p, %s, %d, %p, %p): method not implemented\n", This, debugstr_dmguid(type), time,
+    TRACE("(%p, %s, %ld, %p, %p): method not implemented\n", This, debugstr_dmguid(type), time,
             next, param);
     return E_NOTIMPL;
 }
@@ -132,7 +132,7 @@ static HRESULT WINAPI signpost_track_SetParam(IDirectMusicTrack8 *iface, REFGUID
 {
     IDirectMusicSignPostTrack *This = impl_from_IDirectMusicTrack8(iface);
 
-    TRACE("(%p, %s, %d, %p): method not implemented\n", This, debugstr_dmguid(type), time, param);
+    TRACE("(%p, %s, %ld, %p): method not implemented\n", This, debugstr_dmguid(type), time, param);
     return E_NOTIMPL;
 }
 
@@ -164,7 +164,7 @@ static HRESULT WINAPI signpost_track_Clone(IDirectMusicTrack8 *iface, MUSIC_TIME
         MUSIC_TIME mtEnd, IDirectMusicTrack **ppTrack)
 {
         IDirectMusicSignPostTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %d, %d, %p): stub\n", This, mtStart, mtEnd, ppTrack);
+	FIXME("(%p, %ld, %ld, %p): stub\n", This, mtStart, mtEnd, ppTrack);
 	return S_OK;
 }
 
@@ -173,7 +173,7 @@ static HRESULT WINAPI signpost_track_PlayEx(IDirectMusicTrack8 *iface, void *pSt
         IDirectMusicPerformance *pPerf, IDirectMusicSegmentState *pSegSt, DWORD dwVirtualID)
 {
         IDirectMusicSignPostTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %p, 0x%s, 0x%s, 0x%s, %d, %p, %p, %d): stub\n", This, pStateData, wine_dbgstr_longlong(rtStart),
+	FIXME("(%p, %p, 0x%s, 0x%s, 0x%s, %ld, %p, %p, %ld): stub\n", This, pStateData, wine_dbgstr_longlong(rtStart),
 	    wine_dbgstr_longlong(rtEnd), wine_dbgstr_longlong(rtOffset), dwFlags, pPerf, pSegSt, dwVirtualID);
 	return S_OK;
 }
@@ -183,7 +183,7 @@ static HRESULT WINAPI signpost_track_GetParamEx(IDirectMusicTrack8 *iface, REFGU
 {
     IDirectMusicSignPostTrack *This = impl_from_IDirectMusicTrack8(iface);
 
-    TRACE("(%p, %s, %s, %p, %p, %p, %x): method not implemented\n", This, debugstr_dmguid(type),
+    TRACE("(%p, %s, %s, %p, %p, %p, %lx): method not implemented\n", This, debugstr_dmguid(type),
             wine_dbgstr_longlong(time), next, param, state, flags);
     return E_NOTIMPL;
 }
@@ -193,7 +193,7 @@ static HRESULT WINAPI signpost_track_SetParamEx(IDirectMusicTrack8 *iface, REFGU
 {
     IDirectMusicSignPostTrack *This = impl_from_IDirectMusicTrack8(iface);
 
-    TRACE("(%p, %s, %s, %p, %p, %x): method not implemented\n", This, debugstr_dmguid(type),
+    TRACE("(%p, %s, %s, %p, %p, %lx): method not implemented\n", This, debugstr_dmguid(type),
             wine_dbgstr_longlong(time), param, state, flags);
     return E_NOTIMPL;
 }
@@ -202,7 +202,7 @@ static HRESULT WINAPI signpost_track_Compose(IDirectMusicTrack8 *iface, IUnknown
         DWORD dwTrackGroup, IDirectMusicTrack **ppResultTrack)
 {
         IDirectMusicSignPostTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %p, %d, %p): stub\n", This, pContext, dwTrackGroup, ppResultTrack);
+	FIXME("(%p, %p, %ld, %p): stub\n", This, pContext, dwTrackGroup, ppResultTrack);
 	return S_OK;
 }
 
@@ -211,7 +211,7 @@ static HRESULT WINAPI signpost_track_Join(IDirectMusicTrack8 *iface, IDirectMusi
         IDirectMusicTrack **ppResultTrack)
 {
         IDirectMusicSignPostTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %p, %d, %p, %d, %p): stub\n", This, pNewTrack, mtJoin, pContext, dwTrackGroup, ppResultTrack);
+	FIXME("(%p, %p, %ld, %p, %ld, %p): stub\n", This, pNewTrack, mtJoin, pContext, dwTrackGroup, ppResultTrack);
 	return S_OK;
 }
 

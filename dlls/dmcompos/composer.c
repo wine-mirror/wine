@@ -55,7 +55,7 @@ static ULONG WINAPI IDirectMusicComposerImpl_AddRef(IDirectMusicComposer *iface)
     IDirectMusicComposerImpl *This = impl_from_IDirectMusicComposer(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -65,7 +65,7 @@ static ULONG WINAPI IDirectMusicComposerImpl_Release(IDirectMusicComposer *iface
     IDirectMusicComposerImpl *This = impl_from_IDirectMusicComposer(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if (ref == 0) {
         HeapFree(GetProcessHeap(), 0, This);
@@ -100,7 +100,7 @@ static HRESULT WINAPI IDirectMusicComposerImpl_ComposeTransition(IDirectMusicCom
         IDirectMusicSegment **ppTransSeg)
 {
         IDirectMusicComposerImpl *This = impl_from_IDirectMusicComposer(iface);
-	FIXME("(%p, %p, %p, %d, %d, %d, %p, %p): stub\n", This, pFromSeg, pToSeg, mtTime, wCommand, dwFlags, pChordMap, ppTransSeg);
+	FIXME("(%p, %p, %p, %ld, %d, %ld, %p, %p): stub\n", This, pFromSeg, pToSeg, mtTime, wCommand, dwFlags, pChordMap, ppTransSeg);
 	return S_OK;
 }
 
@@ -110,7 +110,7 @@ static HRESULT WINAPI IDirectMusicComposerImpl_AutoTransition(IDirectMusicCompos
         IDirectMusicSegmentState **ppToSegState, IDirectMusicSegmentState **ppTransSegState)
 {
         IDirectMusicComposerImpl *This = impl_from_IDirectMusicComposer(iface);
-	FIXME("(%p, %p, %d, %d, %p, %p, %p, %p): stub\n", This, pPerformance, wCommand, dwFlags, pChordMap, ppTransSeg, ppToSegState, ppTransSegState);
+	FIXME("(%p, %p, %d, %ld, %p, %p, %p, %p): stub\n", This, pPerformance, wCommand, dwFlags, pChordMap, ppTransSeg, ppToSegState, ppTransSegState);
 	return S_OK;
 }
 
