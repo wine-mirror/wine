@@ -841,15 +841,15 @@ static void test_themed_background(void)
     tests[] =
     {
         {ANIMATE_CLASSA, 0, empty_seq, TRUE},
-        {WC_BUTTONA, BS_PUSHBUTTON, pushbutton_seq, TRUE},
-        {WC_BUTTONA, BS_DEFPUSHBUTTON, defpushbutton_seq, TRUE},
+        {WC_BUTTONA, BS_PUSHBUTTON, pushbutton_seq},
+        {WC_BUTTONA, BS_DEFPUSHBUTTON, defpushbutton_seq},
         {WC_BUTTONA, BS_CHECKBOX, checkbox_seq, TRUE},
         {WC_BUTTONA, BS_AUTOCHECKBOX, checkbox_seq, TRUE},
         {WC_BUTTONA, BS_RADIOBUTTON, radiobutton_seq, TRUE},
         {WC_BUTTONA, BS_3STATE, checkbox_seq, TRUE},
         {WC_BUTTONA, BS_AUTO3STATE, checkbox_seq, TRUE},
         {WC_BUTTONA, BS_GROUPBOX, groupbox_seq, TRUE},
-        {WC_BUTTONA, BS_USERBUTTON, pushbutton_seq, TRUE},
+        {WC_BUTTONA, BS_USERBUTTON, pushbutton_seq},
         {WC_BUTTONA, BS_AUTORADIOBUTTON, radiobutton_seq, TRUE},
         {WC_BUTTONA, BS_PUSHBOX, radiobutton_seq, TRUE},
         {WC_BUTTONA, BS_OWNERDRAW, ownerdrawbutton_seq},

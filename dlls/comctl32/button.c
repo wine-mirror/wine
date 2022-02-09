@@ -2729,6 +2729,7 @@ static void PB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
 {
     RECT bgRect, labelRect, imageRect, textRect, focusRect;
     NMCUSTOMDRAW nmcd;
+    HBRUSH brush;
     LRESULT cdrf;
     HWND parent;
 
@@ -2748,7 +2749,13 @@ static void PB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
     if (cdrf & CDRF_SKIPDEFAULT) return;
 
     if (IsThemeBackgroundPartiallyTransparent(theme, BP_PUSHBUTTON, state))
+    {
         DrawThemeParentBackground(infoPtr->hwnd, hDC, NULL);
+        /* Tests show that the brush from WM_CTLCOLORBTN is used for filling background after a
+         * DrawThemeParentBackground() call */
+        brush = (HBRUSH)SendMessageW(parent, WM_CTLCOLORBTN, (WPARAM)hDC, (LPARAM)infoPtr->hwnd);
+        FillRect(hDC, &bgRect, brush ? brush : GetSysColorBrush(COLOR_BTNFACE));
+    }
     DrawThemeBackground(theme, hDC, BP_PUSHBUTTON, state, &bgRect, NULL);
 
     if (cdrf & CDRF_NOTIFYPOSTERASE)
