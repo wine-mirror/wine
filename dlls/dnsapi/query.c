@@ -106,13 +106,11 @@ exit:
 
 static const char *debugstr_query_request(const DNS_QUERY_REQUEST *req)
 {
-    if (!req)
-        return "(null)";
-
-    return wine_dbg_sprintf("{%d %s %s %x%08x %p %d %p %p}", req->Version,
+    if (!req) return "(null)";
+    return wine_dbg_sprintf("{%lu %s %s %I64x %p %lu %p %p}", req->Version,
             debugstr_w(req->QueryName), debugstr_type(req->QueryType),
-            (UINT32)(req->QueryOptions>>32u), (UINT32)req->QueryOptions, req->pDnsServerList,
-            req->InterfaceIndex, req->pQueryCompletionCallback, req->pQueryContext);
+            req->QueryOptions, req->pDnsServerList, req->InterfaceIndex,
+            req->pQueryCompletionCallback, req->pQueryContext);
 }
 
 /******************************************************************************
@@ -121,7 +119,7 @@ static const char *debugstr_query_request(const DNS_QUERY_REQUEST *req)
  */
 DNS_STATUS WINAPI DnsQueryEx(DNS_QUERY_REQUEST *request, DNS_QUERY_RESULT *result, DNS_QUERY_CANCEL *cancel)
 {
-    FIXME("(%s %p %p)\n", debugstr_query_request(request), result, cancel);
+    FIXME("(%s, %p, %p)\n", debugstr_query_request(request), result, cancel);
     return DNS_ERROR_RCODE_NOT_IMPLEMENTED;
 }
 
@@ -129,14 +127,14 @@ DNS_STATUS WINAPI DnsQueryEx(DNS_QUERY_REQUEST *request, DNS_QUERY_RESULT *resul
  * DnsQuery_A           [DNSAPI.@]
  *
  */
-DNS_STATUS WINAPI DnsQuery_A( PCSTR name, WORD type, DWORD options, PVOID servers,
-                              PDNS_RECORDA *result, PVOID *reserved )
+DNS_STATUS WINAPI DnsQuery_A( const char *name, WORD type, DWORD options, void *servers, DNS_RECORDA **result,
+                              void **reserved )
 {
     WCHAR *nameW;
     DNS_RECORDW *resultW;
     DNS_STATUS status;
 
-    TRACE( "(%s,%s,0x%08x,%p,%p,%p)\n", debugstr_a(name), debugstr_type( type ),
+    TRACE( "(%s, %s, %#lx, %p, %p, %p)\n", debugstr_a(name), debugstr_type( type ),
            options, servers, result, reserved );
 
     if (!name || !result)
@@ -164,15 +162,15 @@ DNS_STATUS WINAPI DnsQuery_A( PCSTR name, WORD type, DWORD options, PVOID server
  * DnsQuery_UTF8              [DNSAPI.@]
  *
  */
-DNS_STATUS WINAPI DnsQuery_UTF8( PCSTR name, WORD type, DWORD options, PVOID servers,
-                                 PDNS_RECORDA *result, PVOID *reserved )
+DNS_STATUS WINAPI DnsQuery_UTF8( const char *name, WORD type, DWORD options, void *servers, DNS_RECORDA **result,
+                                 void **reserved )
 {
     DNS_STATUS ret = DNS_ERROR_RCODE_NOT_IMPLEMENTED;
     unsigned char answer[4096];
     DWORD len = sizeof(answer);
     struct query_params query_params = { name, type, options, answer, &len };
 
-    TRACE( "(%s,%s,0x%08x,%p,%p,%p)\n", debugstr_a(name), debugstr_type( type ),
+    TRACE( "(%s, %s, %#lx, %p, %p, %p)\n", debugstr_a(name), debugstr_type( type ),
            options, servers, result, reserved );
 
     if (!name || !result)
@@ -218,14 +216,14 @@ DNS_STATUS WINAPI DnsQuery_UTF8( PCSTR name, WORD type, DWORD options, PVOID ser
  * DnsQuery_W              [DNSAPI.@]
  *
  */
-DNS_STATUS WINAPI DnsQuery_W( PCWSTR name, WORD type, DWORD options, PVOID servers,
-                              PDNS_RECORDW *result, PVOID *reserved )
+DNS_STATUS WINAPI DnsQuery_W( const WCHAR *name, WORD type, DWORD options, void *servers, DNS_RECORDW **result,
+                              void **reserved )
 {
     char *nameU;
     DNS_RECORDA *resultA;
     DNS_STATUS status;
 
-    TRACE( "(%s,%s,0x%08x,%p,%p,%p)\n", debugstr_w(name), debugstr_type( type ),
+    TRACE( "(%s, %s, %#lx, %p, %p, %p)\n", debugstr_w(name), debugstr_type( type ),
            options, servers, result, reserved );
 
     if (!name || !result)
@@ -329,13 +327,12 @@ err:
  * DnsQueryConfig          [DNSAPI.@]
  *
  */
-DNS_STATUS WINAPI DnsQueryConfig( DNS_CONFIG_TYPE config, DWORD flag, PCWSTR adapter,
-                                  PVOID reserved, PVOID buffer, PDWORD len )
+DNS_STATUS WINAPI DnsQueryConfig( DNS_CONFIG_TYPE config, DWORD flag, const WCHAR *adapter, void *reserved,
+                                  void *buffer, DWORD *len )
 {
     DNS_STATUS ret = ERROR_INVALID_PARAMETER;
 
-    TRACE( "(%d,0x%08x,%s,%p,%p,%p)\n", config, flag, debugstr_w(adapter),
-           reserved, buffer, len );
+    TRACE( "(%d, %#lx, %s, %p, %p, %p)\n", config, flag, debugstr_w(adapter), reserved, buffer, len );
 
     if (!len) return ERROR_INVALID_PARAMETER;
 

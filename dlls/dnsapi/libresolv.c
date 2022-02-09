@@ -314,7 +314,7 @@ static NTSTATUS resolv_set_serverlist( void *args )
     if (addrs->AddrCount > MAXNS)
     {
         WARN( "too many servers: %d only using the first: %d\n",
-              addrs->AddrCount, MAXNS );
+              (UINT)addrs->AddrCount, MAXNS );
         _res.nscount = MAXNS;
     }
     else _res.nscount = addrs->AddrCount;

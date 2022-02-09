@@ -46,20 +46,22 @@ static void test_DnsQuery(void)
         skip("query timed out\n");
         return;
     }
-    ok(status == ERROR_SUCCESS, "got %d\n", status);
+    ok(status == ERROR_SUCCESS, "got %ld\n", status);
     DnsRecordListFree(rec, DnsFreeRecordList);
 
     status = DnsQuery_W(L"", DNS_TYPE_SRV, DNS_QUERY_STANDARD, NULL, &rec, NULL);
-    ok(status == DNS_ERROR_RCODE_NAME_ERROR || status == DNS_INFO_NO_RECORDS || status == ERROR_INVALID_NAME /* XP */, "got %u\n", status);
+    ok(status == DNS_ERROR_RCODE_NAME_ERROR || status == DNS_INFO_NO_RECORDS || status == ERROR_INVALID_NAME /* XP */,
+       "got %ld\n", status);
 
     wcscpy(domain, L"_ldap._tcp.deadbeef");
     status = DnsQuery_W(domain, DNS_TYPE_SRV, DNS_QUERY_STANDARD, NULL, &rec, NULL);
-    ok(status == DNS_ERROR_RCODE_NAME_ERROR || status == DNS_INFO_NO_RECORDS || status == ERROR_INVALID_NAME /* XP */, "got %u\n", status);
+    ok(status == DNS_ERROR_RCODE_NAME_ERROR || status == DNS_INFO_NO_RECORDS || status == ERROR_INVALID_NAME /* XP */,
+       "got %ld\n", status);
 
     wcscpy(domain, L"_ldap._tcp.dc._msdcs.");
     size = ARRAY_SIZE(domain) - wcslen(domain);
     ret = GetComputerNameExW(ComputerNameDnsDomain, domain + wcslen(domain), &size);
-    ok(ret, "GetComputerNameEx error %u\n", GetLastError());
+    ok(ret, "GetComputerNameEx error %lu\n", GetLastError());
     if (!size)
     {
         skip("computer is not in a domain\n");
@@ -67,7 +69,7 @@ static void test_DnsQuery(void)
     }
 
     status = DnsQuery_W(domain, DNS_TYPE_SRV, DNS_QUERY_STANDARD, NULL, &rec, NULL);
-    trace("DnsQuery_W(%s) => %d\n", wine_dbgstr_w(domain), status);
+    trace("DnsQuery_W(%s) => %ld\n", wine_dbgstr_w(domain), status);
     if (status != ERROR_SUCCESS)
     {
         skip("domain %s doesn't have an SRV entry\n", wine_dbgstr_w(domain));
@@ -81,7 +83,8 @@ static void test_DnsQuery(void)
 
     /* IPv4 */
     status = DnsQuery_W(name, DNS_TYPE_A, DNS_QUERY_STANDARD, NULL, &rec, NULL);
-    ok(status == ERROR_SUCCESS || status == DNS_ERROR_RCODE_NAME_ERROR, "DnsQuery_W(%s) => %d\n", wine_dbgstr_w(name), status);
+    ok(status == ERROR_SUCCESS || status == DNS_ERROR_RCODE_NAME_ERROR, "DnsQuery_W(%s) => %ld\n",
+       wine_dbgstr_w(name), status);
     if (status == ERROR_SUCCESS)
     {
         SOCKADDR_IN addr;
@@ -92,7 +95,7 @@ static void test_DnsQuery(void)
         addr.sin_addr.s_addr = rec->Data.A.IpAddress;
         size = sizeof(buf);
         ret = WSAAddressToStringW((SOCKADDR *)&addr, sizeof(addr), NULL, buf, &size);
-        ok(!ret, "WSAAddressToStringW error %d\n", ret);
+        ok(!ret, "WSAAddressToStringW error %lu\n", ret);
         trace("WSAAddressToStringW => %s\n", wine_dbgstr_w(buf));
 
         DnsRecordListFree(rec, DnsFreeRecordList);
@@ -100,7 +103,8 @@ static void test_DnsQuery(void)
 
     /* IPv6 */
     status = DnsQuery_W(name, DNS_TYPE_AAAA, DNS_QUERY_STANDARD, NULL, &rec, NULL);
-    ok(status == ERROR_SUCCESS || status == DNS_ERROR_RCODE_NAME_ERROR, "DnsQuery_W(%s) => %d\n", wine_dbgstr_w(name), status);
+    ok(status == ERROR_SUCCESS || status == DNS_ERROR_RCODE_NAME_ERROR, "DnsQuery_W(%s) => %ld\n",
+       wine_dbgstr_w(name), status);
     if (status == ERROR_SUCCESS)
     {
         SOCKADDR_IN6 addr;
@@ -112,7 +116,7 @@ static void test_DnsQuery(void)
         memcpy(addr.sin6_addr.s6_addr, &rec->Data.AAAA.Ip6Address, sizeof(rec->Data.AAAA.Ip6Address));
         size = sizeof(buf);
         ret = WSAAddressToStringW((SOCKADDR *)&addr, sizeof(addr), NULL, buf, &size);
-        ok(!ret, "WSAAddressToStringW error %d\n", ret);
+        ok(!ret, "WSAAddressToStringW error %lu\n", ret);
         trace("WSAAddressToStringW => %s\n", wine_dbgstr_w(buf));
 
         DnsRecordListFree(rec, DnsFreeRecordList);
@@ -138,7 +142,8 @@ static IP_ADAPTER_ADDRESSES *get_adapters(void)
 
 static void test_DnsQueryConfig( void )
 {
-    DWORD err, size, i, ipv6_count;
+    DNS_STATUS err;
+    DWORD size, i, ipv6_count;
     WCHAR name[MAX_ADAPTER_NAME_LENGTH + 1];
     IP_ADAPTER_ADDRESSES *adapters, *ptr;
     DNS_ADDR_ARRAY *ipv4, *ipv6, *unspec;
@@ -157,61 +162,61 @@ static void test_DnsQueryConfig( void )
         ipv4 = malloc( size );
         size--;
         err = DnsQueryConfig( DnsConfigDnsServersIpv4, 0, name, NULL, ipv4, &size );
-        ok( err == ERROR_MORE_DATA, "got %d\n", err );
+        ok( err == ERROR_MORE_DATA, "got %ld\n", err );
         size++;
         err = DnsQueryConfig( DnsConfigDnsServersIpv4, 0, name, NULL, ipv4, &size );
-        ok( !err, "got %d\n", err );
+        ok( !err, "got %ld\n", err );
 
-        ok( ipv4->AddrCount == ipv4->MaxCount, "got %d vs %d\n", ipv4->AddrCount, ipv4->MaxCount );
-        ok( !ipv4->Tag, "got %08x\n", ipv4->Tag );
+        ok( ipv4->AddrCount == ipv4->MaxCount, "got %lu vs %lu\n", ipv4->AddrCount, ipv4->MaxCount );
+        ok( !ipv4->Tag, "got %#lx\n", ipv4->Tag );
         ok( !ipv4->Family, "got %d\n", ipv4->Family );
-        ok( !ipv4->WordReserved, "got %04x\n", ipv4->WordReserved );
-        ok( !ipv4->Flags, "got %08x\n", ipv4->Flags );
-        ok( !ipv4->MatchFlag, "got %08x\n", ipv4->MatchFlag );
-        ok( !ipv4->Reserved1, "got %08x\n", ipv4->Reserved1 );
-        ok( !ipv4->Reserved2, "got %08x\n", ipv4->Reserved2 );
+        ok( !ipv4->WordReserved, "got %#x\n", ipv4->WordReserved );
+        ok( !ipv4->Flags, "got %#lx\n", ipv4->Flags );
+        ok( !ipv4->MatchFlag, "got %#lx\n", ipv4->MatchFlag );
+        ok( !ipv4->Reserved1, "got %#lx\n", ipv4->Reserved1 );
+        ok( !ipv4->Reserved2, "got %#lx\n", ipv4->Reserved2 );
 
         size = 0;
         err = DnsQueryConfig( DnsConfigDnsServerList, 0, name, NULL, NULL, &size );
-        ok( !err, "got %d\n", err );
+        ok( !err, "got %ld\n", err );
         ip4_array = malloc( size );
         err = DnsQueryConfig( DnsConfigDnsServerList, 0, name, NULL, ip4_array, &size );
-        ok( !err, "got %d\n", err );
+        ok( !err, "got %ld\n", err );
 
-        ok( ipv4->AddrCount == ip4_array->AddrCount, "got %d vs %d\n", ipv4->AddrCount, ip4_array->AddrCount );
+        ok( ipv4->AddrCount == ip4_array->AddrCount, "got %lu vs %lu\n", ipv4->AddrCount, ip4_array->AddrCount );
 
         for (i = 0; i < ipv4->AddrCount; i++)
         {
             SOCKADDR_IN *sa = (SOCKADDR_IN *)ipv4->AddrArray[i].MaxSa;
 
             ok( sa->sin_family == AF_INET, "got %d\n", sa->sin_family );
-            ok( sa->sin_addr.s_addr == ip4_array->AddrArray[i], "got %08x vs %08x\n",
+            ok( sa->sin_addr.s_addr == ip4_array->AddrArray[i], "got %#lx vs %#lx\n",
                 sa->sin_addr.s_addr, ip4_array->AddrArray[i] );
-            ok( ipv4->AddrArray[i].Data.DnsAddrUserDword[0] == sizeof(*sa), "got %d\n",
+            ok( ipv4->AddrArray[i].Data.DnsAddrUserDword[0] == sizeof(*sa), "got %lu\n",
                 ipv4->AddrArray[i].Data.DnsAddrUserDword[0] );
         }
 
         size = 0;
         err = DnsQueryConfig( DnsConfigDnsServersIpv6, 0, name, NULL, NULL, &size );
-        ok( !err || err == DNS_ERROR_NO_DNS_SERVERS, "got %d\n", err );
+        ok( !err || err == DNS_ERROR_NO_DNS_SERVERS, "got %ld\n", err );
         ipv6_count = 0;
         ipv6 = NULL;
         if (!err)
         {
             ipv6 = malloc( size );
             err = DnsQueryConfig( DnsConfigDnsServersIpv6, 0, name, NULL, ipv6, &size );
-            ok( !err, "got %d\n", err );
+            ok( !err, "got %ld\n", err );
             ipv6_count = ipv6->AddrCount;
         }
 
         size = 0;
         err = DnsQueryConfig( DnsConfigDnsServersUnspec, 0, name, NULL, NULL, &size );
-        ok( !err, "got %d\n", err );
+        ok( !err, "got %ld\n", err );
         unspec = malloc( size );
         err = DnsQueryConfig( DnsConfigDnsServersUnspec, 0, name, NULL, unspec, &size );
-        ok( !err, "got %d\n", err );
+        ok( !err, "got %ld\n", err );
 
-        ok( unspec->AddrCount == ipv4->AddrCount + ipv6_count, "got %d vs %d + %d\n",
+        ok( unspec->AddrCount == ipv4->AddrCount + ipv6_count, "got %lu vs %lu + %lu\n",
             unspec->AddrCount, ipv4->AddrCount, ipv6_count );
 
         free( ip4_array );

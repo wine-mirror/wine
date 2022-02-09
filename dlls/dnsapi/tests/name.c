@@ -150,7 +150,7 @@ static void test_DnsValidateName_A( void )
     {
         status = DnsValidateName_A( test_data[i].name, test_data[i].format );
         ok( status == test_data[i].status || broken(status == test_data[i].status_broken),
-            "%d: \'%s\': got %d, expected %d\n", i, test_data[i].name, status, test_data[i].status );
+            "%u: \'%s\': got %ld, expected %ld\n", i, test_data[i].name, status, test_data[i].status );
     }
 }
 
@@ -213,7 +213,7 @@ static void test_DnsFlushResolverCacheEntry_A(void)
     ret = DnsFlushResolverCacheEntry_A( NULL );
     err = GetLastError();
     ok( !ret, "got %d\n", ret );
-    ok( err == 0xdeadbeef, "got %u\n", err );
+    ok( err == 0xdeadbeef, "got %lu\n", err );
 
     ret = DnsFlushResolverCacheEntry_A( "localhost" );
     ok( ret, "got %d\n", ret );

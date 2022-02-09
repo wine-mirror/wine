@@ -36,7 +36,7 @@ unixlib_handle_t resolv_handle = 0;
 
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
-    TRACE( "(%p,%u,%p)\n", hinst, reason, reserved );
+    TRACE( "(%p, %lu, %p)\n", hinst, reason, reserved );
 
     switch (reason)
     {
@@ -56,10 +56,9 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
  * DnsAcquireContextHandle_A              [DNSAPI.@]
  *
  */
-DNS_STATUS WINAPI DnsAcquireContextHandle_A( DWORD flags, PVOID cred,
-                                             PHANDLE context )
+DNS_STATUS WINAPI DnsAcquireContextHandle_A( DWORD flags, void *cred, HANDLE *context )
 {
-    FIXME( "(0x%08x,%p,%p) stub\n", flags, cred, context );
+    FIXME( "(%#lx, %p, %p) stub\n", flags, cred, context );
 
     *context = (HANDLE)0xdeadbeef;
     return ERROR_SUCCESS;
@@ -69,10 +68,9 @@ DNS_STATUS WINAPI DnsAcquireContextHandle_A( DWORD flags, PVOID cred,
  * DnsAcquireContextHandle_UTF8              [DNSAPI.@]
  *
  */
-DNS_STATUS WINAPI DnsAcquireContextHandle_UTF8( DWORD flags, PVOID cred,
-                                                PHANDLE context )
+DNS_STATUS WINAPI DnsAcquireContextHandle_UTF8( DWORD flags, void *cred, HANDLE *context )
 {
-    FIXME( "(0x%08x,%p,%p) stub\n", flags, cred, context );
+    FIXME( "(%#lx, %p, %p) stub\n", flags, cred, context );
 
     *context = (HANDLE)0xdeadbeef;
     return ERROR_SUCCESS;
@@ -82,10 +80,9 @@ DNS_STATUS WINAPI DnsAcquireContextHandle_UTF8( DWORD flags, PVOID cred,
  * DnsAcquireContextHandle_W              [DNSAPI.@]
  *
  */
-DNS_STATUS WINAPI DnsAcquireContextHandle_W( DWORD flags, PVOID cred,
-                                             PHANDLE context )
+DNS_STATUS WINAPI DnsAcquireContextHandle_W( DWORD flags, void *cred, HANDLE *context )
 {
-    FIXME( "(0x%08x,%p,%p) stub\n", flags, cred, context );
+    FIXME( "(%#lx, %p, %p) stub\n", flags, cred, context );
 
     *context = (HANDLE)0xdeadbeef;
     return ERROR_SUCCESS;
@@ -156,12 +153,10 @@ VOID WINAPI DnsReleaseContextHandle( HANDLE context )
  * DnsModifyRecordsInSet_A                 [DNSAPI.@]
  *
  */
-DNS_STATUS WINAPI DnsModifyRecordsInSet_A( PDNS_RECORDA add, PDNS_RECORDA delete,
-                                           DWORD options, HANDLE context,
-                                           PVOID servers, PVOID reserved )
+DNS_STATUS WINAPI DnsModifyRecordsInSet_A( DNS_RECORDA *add, DNS_RECORDA *delete, DWORD options, HANDLE context,
+                                           void *servers, void *reserved )
 {
-    FIXME( "(%p,%p,0x%08x,%p,%p,%p) stub\n", add, delete, options,
-           context, servers, reserved );
+    FIXME( "(%p, %p, %#lx, %p, %p, %p) stub\n", add, delete, options, context, servers, reserved );
     return ERROR_SUCCESS;
 }
 
@@ -169,12 +164,10 @@ DNS_STATUS WINAPI DnsModifyRecordsInSet_A( PDNS_RECORDA add, PDNS_RECORDA delete
  * DnsModifyRecordsInSet_UTF8              [DNSAPI.@]
  *
  */
-DNS_STATUS WINAPI DnsModifyRecordsInSet_UTF8( PDNS_RECORDA add, PDNS_RECORDA delete,
-                                              DWORD options, HANDLE context,
-                                              PVOID servers, PVOID reserved )
+DNS_STATUS WINAPI DnsModifyRecordsInSet_UTF8( DNS_RECORDA *add, DNS_RECORDA *delete, DWORD options, HANDLE context,
+                                              void *servers, void *reserved )
 {
-    FIXME( "(%p,%p,0x%08x,%p,%p,%p) stub\n", add, delete, options,
-           context, servers, reserved );
+    FIXME( "(%p, %p, %#lx, %p, %p, %p) stub\n", add, delete, options, context, servers, reserved );
     return ERROR_SUCCESS;
 }
 
@@ -182,12 +175,10 @@ DNS_STATUS WINAPI DnsModifyRecordsInSet_UTF8( PDNS_RECORDA add, PDNS_RECORDA del
  * DnsModifyRecordsInSet_W                 [DNSAPI.@]
  *
  */
-DNS_STATUS WINAPI DnsModifyRecordsInSet_W( PDNS_RECORDW add, PDNS_RECORDW delete,
-                                           DWORD options, HANDLE context,
-                                           PVOID servers, PVOID reserved )
+DNS_STATUS WINAPI DnsModifyRecordsInSet_W( DNS_RECORDW *add, DNS_RECORDW *delete, DWORD options, HANDLE context,
+                                           void *servers, void *reserved )
 {
-    FIXME( "(%p,%p,0x%08x,%p,%p,%p) stub\n", add, delete, options,
-           context, servers, reserved );
+    FIXME( "(%p, %p, %#lx, %p, %p, %p) stub\n", add, delete, options, context, servers, reserved );
     return ERROR_SUCCESS;
 }
 
@@ -195,12 +186,10 @@ DNS_STATUS WINAPI DnsModifyRecordsInSet_W( PDNS_RECORDW add, PDNS_RECORDW delete
  * DnsWriteQuestionToBuffer_UTF8          [DNSAPI.@]
  *
  */
-BOOL WINAPI DnsWriteQuestionToBuffer_UTF8( PDNS_MESSAGE_BUFFER buffer, PDWORD size,
-                                           PCSTR name, WORD type, WORD xid,
-                                           BOOL recurse )
+BOOL WINAPI DnsWriteQuestionToBuffer_UTF8( DNS_MESSAGE_BUFFER *buffer, DWORD *size, const char *name, WORD type,
+                                           WORD xid, BOOL recurse )
 {
-    FIXME( "(%p,%p,%s,%d,%d,%d) stub\n", buffer, size, debugstr_a(name),
-           type, xid, recurse );
+    FIXME( "(%p, %p, %s, %d, %d, %d) stub\n", buffer, size, debugstr_a(name), type, xid, recurse );
     return FALSE;
 }
 
@@ -208,12 +197,10 @@ BOOL WINAPI DnsWriteQuestionToBuffer_UTF8( PDNS_MESSAGE_BUFFER buffer, PDWORD si
  * DnsWriteQuestionToBuffer_W              [DNSAPI.@]
  *
  */
-BOOL WINAPI DnsWriteQuestionToBuffer_W( PDNS_MESSAGE_BUFFER buffer, PDWORD size,
-                                        PCWSTR name, WORD type, WORD xid,
-                                        BOOL recurse )
+BOOL WINAPI DnsWriteQuestionToBuffer_W( DNS_MESSAGE_BUFFER *buffer, DWORD *size, const WCHAR *name, WORD type,
+                                        WORD xid, BOOL recurse )
 {
-    FIXME( "(%p,%p,%s,%d,%d,%d) stub\n", buffer, size, debugstr_w(name),
-           type, xid, recurse );
+    FIXME( "(%p, %p, %s, %d, %d, %d) stub\n", buffer, size, debugstr_w(name), type, xid, recurse );
     return FALSE;
 }
 
@@ -221,12 +208,10 @@ BOOL WINAPI DnsWriteQuestionToBuffer_W( PDNS_MESSAGE_BUFFER buffer, PDWORD size,
  * DnsReplaceRecordSetA                    [DNSAPI.@]
  *
  */
-DNS_STATUS WINAPI DnsReplaceRecordSetA( PDNS_RECORDA set, DWORD options,
-                                        HANDLE context, PVOID servers,
-                                        PVOID reserved )
+DNS_STATUS WINAPI DnsReplaceRecordSetA( DNS_RECORDA *set, DWORD options, HANDLE context, void *servers,
+                                        void *reserved )
 {
-    FIXME( "(%p,0x%08x,%p,%p,%p) stub\n", set, options, context,
-           servers, reserved );
+    FIXME( "(%p, %#lx, %p, %p, %p) stub\n", set, options, context, servers, reserved );
     return ERROR_SUCCESS;
 }
 
@@ -234,12 +219,10 @@ DNS_STATUS WINAPI DnsReplaceRecordSetA( PDNS_RECORDA set, DWORD options,
  * DnsReplaceRecordSetUTF8                 [DNSAPI.@]
  *
  */
-DNS_STATUS WINAPI DnsReplaceRecordSetUTF8( PDNS_RECORDA set, DWORD options,
-                                           HANDLE context, PVOID servers,
-                                           PVOID reserved )
+DNS_STATUS WINAPI DnsReplaceRecordSetUTF8( DNS_RECORDA *set, DWORD options, HANDLE context, void *servers,
+                                           void *reserved )
 {
-    FIXME( "(%p,0x%08x,%p,%p,%p) stub\n", set, options, context,
-           servers, reserved );
+    FIXME( "(%p, %#lx, %p, %p, %p) stub\n", set, options, context, servers, reserved );
     return ERROR_SUCCESS;
 }
 
@@ -247,11 +230,9 @@ DNS_STATUS WINAPI DnsReplaceRecordSetUTF8( PDNS_RECORDA set, DWORD options,
  * DnsReplaceRecordSetW                    [DNSAPI.@]
  *
  */
-DNS_STATUS WINAPI DnsReplaceRecordSetW( PDNS_RECORDW set, DWORD options,
-                                        HANDLE context, PVOID servers,
-                                        PVOID reserved )
+DNS_STATUS WINAPI DnsReplaceRecordSetW( DNS_RECORDW *set, DWORD options, HANDLE context, void *servers,
+                                        void *reserved )
 {
-    FIXME( "(%p,0x%08x,%p,%p,%p) stub\n", set, options, context,
-           servers, reserved );
+    FIXME( "(%p, %#lx, %p, %p, %p) stub\n", set, options, context, servers, reserved );
     return ERROR_SUCCESS;
 }

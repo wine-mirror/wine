@@ -202,58 +202,58 @@ static void test_DnsExtractRecordsFromMessage(void)
 
     ret = DnsExtractRecordsFromMessage_UTF8( (DNS_MESSAGE_BUFFER *)msg_empty, sizeof(msg_empty) - 1, &rec );
     ok( ret == ERROR_INVALID_PARAMETER || broken(ret == DNS_ERROR_BAD_PACKET) /* win7 */,
-        "failed %u\n", ret );
+        "failed %ld\n", ret );
 
     ret = DnsExtractRecordsFromMessage_UTF8( (DNS_MESSAGE_BUFFER *)msg_empty, sizeof(msg_empty), &rec );
-    ok( ret == DNS_ERROR_BAD_PACKET, "failed %u\n", ret );
+    ok( ret == DNS_ERROR_BAD_PACKET, "failed %ld\n", ret );
 
     ret = DnsExtractRecordsFromMessage_UTF8( (DNS_MESSAGE_BUFFER *)msg_empty_answer, sizeof(msg_empty_answer), &rec );
-    ok( ret == DNS_ERROR_BAD_PACKET, "failed %u\n", ret );
+    ok( ret == DNS_ERROR_BAD_PACKET, "failed %ld\n", ret );
 
     rec = (void *)0xdeadbeef;
     ret = DnsExtractRecordsFromMessage_UTF8( (DNS_MESSAGE_BUFFER *)msg_question, sizeof(msg_question), &rec );
-    ok( !ret, "failed %u\n", ret );
+    ok( !ret, "failed %ld\n", ret );
     ok( !rec, "record %p\n", rec );
 
     rec = (void *)0xdeadbeef;
     ret = DnsExtractRecordsFromMessage_UTF8( (DNS_MESSAGE_BUFFER *)msg_winehq, sizeof(msg_winehq), &rec );
-    ok( !ret, "failed %u\n", ret );
+    ok( !ret, "failed %ld\n", ret );
     ok( rec != NULL, "record not set\n" );
     ok( !strcmp( rec->pName, "winehq.org" ), "wrong name %s\n", rec->pName );
     ok( rec->Flags.S.Section == DnsSectionAnswer, "wrong section %u\n", rec->Flags.S.Section );
     ok( rec->Flags.S.CharSet == DnsCharSetUtf8, "wrong charset %u\n", rec->Flags.S.CharSet );
     ok( rec->wType == DNS_TYPE_A, "wrong type %u\n", rec->wType );
     ok( rec->wDataLength == sizeof(DNS_A_DATA), "wrong len %u\n", rec->wDataLength );
-    ok( rec->dwTtl == 0x04050607, "wrong ttl %x\n", rec->dwTtl );
-    ok( rec->Data.A.IpAddress == 0x7c510404, "wrong addr %08x\n", rec->Data.A.IpAddress );
+    ok( rec->dwTtl == 0x04050607, "wrong ttl %#lx\n", rec->dwTtl );
+    ok( rec->Data.A.IpAddress == 0x7c510404, "wrong addr %#lx\n", rec->Data.A.IpAddress );
     ok( !rec->pNext, "next record %p\n", rec->pNext );
     DnsRecordListFree( (DNS_RECORD *)rec, DnsFreeRecordList );
 
     recW = (void *)0xdeadbeef;
     ret = DnsExtractRecordsFromMessage_W( (DNS_MESSAGE_BUFFER *)msg_winehq, sizeof(msg_winehq), &recW );
-    ok( !ret, "failed %u\n", ret );
+    ok( !ret, "failed %ld\n", ret );
     ok( recW != NULL, "record not set\n" );
     ok( !wcscmp( recW->pName, L"winehq.org" ), "wrong name %s\n", debugstr_w(recW->pName) );
     DnsRecordListFree( (DNS_RECORD *)recW, DnsFreeRecordList );
 
     ret = DnsExtractRecordsFromMessage_UTF8( (DNS_MESSAGE_BUFFER *)msg_invchars, sizeof(msg_invchars), &rec );
-    ok( !ret, "failed %u\n", ret );
+    ok( !ret, "failed %ld\n", ret );
     ok( !strcmp( rec->pName, "a$.b\\.c..\td" ), "wrong name %s\n", rec->pName );
     DnsRecordListFree( (DNS_RECORD *)rec, DnsFreeRecordList );
 
     ret = DnsExtractRecordsFromMessage_UTF8( (DNS_MESSAGE_BUFFER *)msg_root, sizeof(msg_root), &rec );
-    ok( !ret, "failed %u\n", ret );
+    ok( !ret, "failed %ld\n", ret );
     ok( !strcmp( rec->pName, "." ), "wrong name %s\n", rec->pName );
     DnsRecordListFree( (DNS_RECORD *)rec, DnsFreeRecordList );
 
     ret = DnsExtractRecordsFromMessage_UTF8( (DNS_MESSAGE_BUFFER *)msg_label, sizeof(msg_label), &rec );
-    ok( ret == DNS_ERROR_BAD_PACKET, "failed %u\n", ret );
+    ok( ret == DNS_ERROR_BAD_PACKET, "failed %ld\n", ret );
 
     ret = DnsExtractRecordsFromMessage_UTF8( (DNS_MESSAGE_BUFFER *)msg_loop, sizeof(msg_loop), &rec );
-    ok( ret == DNS_ERROR_BAD_PACKET, "failed %u\n", ret );
+    ok( ret == DNS_ERROR_BAD_PACKET, "failed %ld\n", ret );
 
     ret = DnsExtractRecordsFromMessage_UTF8( (DNS_MESSAGE_BUFFER *)msg_types, sizeof(msg_types), &rec );
-    ok( !ret, "failed %u\n", ret );
+    ok( !ret, "failed %ld\n", ret );
     r = rec;
     ok( r != NULL, "record not set\n" );
     ok( !strcmp( r->pName, "winehq.org" ), "wrong name %s\n", r->pName );
@@ -271,15 +271,15 @@ static void test_DnsExtractRecordsFromMessage(void)
     ok( r != NULL, "record not set\n" );
     ok( !strcmp( r->pName, "winehq.org" ), "wrong name %s\n", r->pName );
     ok( r->wType == DNS_TYPE_AAAA, "wrong type %u\n", r->wType );
-    ok( r->Data.AAAA.Ip6Address.IP6Dword[0] == 0x04030201, "wrong addr %x\n",
+    ok( r->Data.AAAA.Ip6Address.IP6Dword[0] == 0x04030201, "wrong addr %#lx\n",
         r->Data.AAAA.Ip6Address.IP6Dword[0] );
-    ok( r->Data.AAAA.Ip6Address.IP6Dword[1] == 0x08070605, "wrong addr %x\n",
+    ok( r->Data.AAAA.Ip6Address.IP6Dword[1] == 0x08070605, "wrong addr %#lx\n",
         r->Data.AAAA.Ip6Address.IP6Dword[1] );
-    ok( r->Data.AAAA.Ip6Address.IP6Dword[2] == 0x0c0b0a09, "wrong addr %x\n",
+    ok( r->Data.AAAA.Ip6Address.IP6Dword[2] == 0x0c0b0a09, "wrong addr %#lx\n",
         r->Data.AAAA.Ip6Address.IP6Dword[2] );
-    ok( r->Data.AAAA.Ip6Address.IP6Dword[3] == 0x000f0e0d, "wrong addr %x\n",
+    ok( r->Data.AAAA.Ip6Address.IP6Dword[3] == 0x000f0e0d, "wrong addr %#lx\n",
         r->Data.AAAA.Ip6Address.IP6Dword[3] );
-    ok( r->wDataLength == sizeof(DNS_AAAA_DATA), "wrong len %x\n", r->wDataLength );
+    ok( r->wDataLength == sizeof(DNS_AAAA_DATA), "wrong len %u\n", r->wDataLength );
     r = r->pNext;
     ok( r != NULL, "record not set\n" );
     ok( !strcmp( r->pName, "winehq.org" ), "wrong name %s\n", r->pName );
@@ -296,7 +296,7 @@ static void test_DnsExtractRecordsFromMessage(void)
     ok( r != NULL, "record not set\n" );
     ok( !strcmp( r->pName, "t.x" ), "wrong name %s\n", r->pName );
     ok( r->wType == DNS_TYPE_TEXT, "wrong type %u\n", r->wType );
-    ok( r->Data.TXT.dwStringCount == 3, "wrong count %u\n", r->Data.TXT.dwStringCount );
+    ok( r->Data.TXT.dwStringCount == 3, "wrong count %lu\n", r->Data.TXT.dwStringCount );
     ok( !strcmp( r->Data.TXT.pStringArray[0], "zy" ), "wrong string %s\n", r->Data.TXT.pStringArray[0] );
     ok( !strcmp( r->Data.TXT.pStringArray[1], "" ), "wrong string %s\n", r->Data.TXT.pStringArray[1] );
     ok( !strcmp( r->Data.TXT.pStringArray[2], "XY\xc3\xa9" ), "wrong string %s\n", r->Data.TXT.pStringArray[2] );
@@ -306,7 +306,7 @@ static void test_DnsExtractRecordsFromMessage(void)
     DnsRecordListFree( (DNS_RECORD *)rec, DnsFreeRecordList );
 
     ret = DnsExtractRecordsFromMessage_W( (DNS_MESSAGE_BUFFER *)msg_types, sizeof(msg_types), &recW );
-    ok( !ret, "failed %u\n", ret );
+    ok( !ret, "failed %ld\n", ret );
     rW = recW;
     ok( rW != NULL, "record not set\n" );
     ok( !wcscmp( rW->pName, L"winehq.org" ), "wrong name %s\n", debugstr_w(rW->pName) );
@@ -328,7 +328,7 @@ static void test_DnsExtractRecordsFromMessage(void)
     ok( r != NULL, "record not set\n" );
     ok( !wcscmp( rW->pName, L"t.x" ), "wrong name %s\n", debugstr_w(rW->pName) );
     ok( rW->wType == DNS_TYPE_TEXT, "wrong type %u\n", rW->wType );
-    ok( rW->Data.TXT.dwStringCount == 3, "wrong count %u\n", rW->Data.TXT.dwStringCount );
+    ok( rW->Data.TXT.dwStringCount == 3, "wrong count %lu\n", rW->Data.TXT.dwStringCount );
     ok( !wcscmp( rW->Data.TXT.pStringArray[0], L"zy" ), "wrong string %s\n", debugstr_w(rW->Data.TXT.pStringArray[0]) );
     ok( !wcscmp( rW->Data.TXT.pStringArray[1], L"" ), "wrong string %s\n", debugstr_w(rW->Data.TXT.pStringArray[1]) );
     ok( !wcscmp( rW->Data.TXT.pStringArray[2], L"XY\x00e9" ), "wrong string %s\n", debugstr_w(rW->Data.TXT.pStringArray[2]) );
