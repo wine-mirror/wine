@@ -150,7 +150,7 @@ static void COMDLG32_UpdateCurrentDir(const FileOpenDlgInfos *fodInfos)
 /* copied from shell32 to avoid linking to it */
 static BOOL COMDLG32_StrRetToStrNW (LPVOID dest, DWORD len, LPSTRRET src, LPCITEMIDLIST pidl)
 {
-        TRACE("dest=%p len=0x%x strret=%p pidl=%p\n", dest , len, src, pidl);
+        TRACE("dest=%p len=0x%lx strret=%p pidl=%p\n", dest , len, src, pidl);
 
 	switch (src->uType)
 	{
@@ -252,7 +252,7 @@ static ULONG WINAPI IShellBrowserImpl_AddRef(IShellBrowser * iface)
     IShellBrowserImpl *This = impl_from_IShellBrowser(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p,%u)\n", This, ref - 1);
+    TRACE("(%p,%lu)\n", This, ref - 1);
 
     return ref;
 }
@@ -265,7 +265,7 @@ static ULONG WINAPI IShellBrowserImpl_Release(IShellBrowser * iface)
     IShellBrowserImpl *This = impl_from_IShellBrowser(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p,%u)\n", This, ref + 1);
+    TRACE("(%p,%lu)\n", This, ref + 1);
 
     if (!ref)
         heap_free(This);
@@ -448,7 +448,7 @@ static HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
             &fodInfos->ShellInfos.folderSettings, fodInfos->Shell.FOIShellBrowser,
             &rectView, &hwndView)))
     {
-        WARN("Failed to create view window, hr %#x.\n", hRes);
+        WARN("Failed to create view window, hr %#lx.\n", hRes);
         return hRes;
     }
 
@@ -513,7 +513,7 @@ static HRESULT WINAPI IShellBrowserImpl_GetViewStateStream(IShellBrowser *iface,
 {
     IShellBrowserImpl *This = impl_from_IShellBrowser(iface);
 
-    FIXME("(%p 0x%08x %p)\n", This, grfMode, ppStrm);
+    FIXME("(%p 0x%08lx %p)\n", This, grfMode, ppStrm);
 
     /* Feature not implemented */
     return E_NOTIMPL;
@@ -602,7 +602,7 @@ static HRESULT WINAPI IShellBrowserImpl_SendControlMsg(IShellBrowser *iface,
     IShellBrowserImpl *This = impl_from_IShellBrowser(iface);
     LRESULT lres;
 
-    TRACE("(%p)->(0x%08x 0x%08x 0x%08lx 0x%08lx %p)\n", This, id, uMsg, wParam, lParam, pret);
+    TRACE("(%p)->(0x%08x 0x%08x 0x%08Ix 0x%08Ix %p)\n", This, id, uMsg, wParam, lParam, pret);
 
     switch (id)
     {
@@ -903,7 +903,7 @@ static LRESULT send_includeitem_notification(HWND hwndParentDlg, LPCITEMIDLIST p
                 hook_result = SendMessageA(fodInfos->DlgInfos.hwndCustomDlg, WM_NOTIFY, 0, (LPARAM)&ofnNotify);
         }
     }
-    TRACE("Retval: 0x%08lx\n", hook_result);
+    TRACE("Retval: 0x%08Ix\n", hook_result);
     return hook_result;
 }
 

@@ -237,7 +237,7 @@ static HRESULT events_OnOverwrite(FileDialogImpl *This, IShellItem *shellitem)
     {
         TRACE("Notifying %p\n", cursor);
         hr = IFileDialogEvents_OnOverwrite(cursor->pfde, (IFileDialog*)&This->IFileDialog2_iface, shellitem, &response);
-        TRACE("<-- hr=%x response=%u\n", hr, response);
+        TRACE("<-- hr=%lx response=%u\n", hr, response);
         if(FAILED(hr) && hr != E_NOTIMPL)
             break;
     }
@@ -294,7 +294,7 @@ static HRESULT cctrl_event_OnButtonClicked(FileDialogImpl *This, DWORD ctl_id)
 static HRESULT cctrl_event_OnItemSelected(FileDialogImpl *This, DWORD ctl_id, DWORD item_id)
 {
     events_client *cursor;
-    TRACE("%p %i %i\n", This, ctl_id, item_id);
+    TRACE("%p %li %li\n", This, ctl_id, item_id);
 
     LIST_FOR_EACH_ENTRY(cursor, &This->events_clients, events_client, entry)
     {
@@ -622,7 +622,7 @@ static HRESULT on_default_action(FileDialogImpl *This)
     case ONOPEN_BROWSE:
         hr = IExplorerBrowser_BrowseToObject(This->peb, (IUnknown*)psf_parent, SBSP_DEFBROWSER);
         if(FAILED(hr))
-            ERR("Failed to browse to directory: %08x\n", hr);
+            ERR("Failed to browse to directory: %08lx\n", hr);
 
         IShellFolder_Release(psf_parent);
         break;
@@ -823,7 +823,7 @@ static inline customctrl *get_cctrl_from_dlgid(FileDialogImpl *This, DWORD dlgid
                 return sub_ctrl;
     }
 
-    ERR("Failed to find control with dialog id %d\n", dlgid);
+    ERR("Failed to find control with dialog id %ld\n", dlgid);
     return NULL;
 }
 
@@ -844,7 +844,7 @@ static inline customctrl *get_cctrl(FileDialogImpl *This, DWORD ctlid)
     if (This->hmenu_opendropdown && This->cctrl_opendropdown.id == ctlid)
         return &This->cctrl_opendropdown;
 
-    TRACE("No existing control with control id %d\n", ctlid);
+    TRACE("No existing control with control id %ld\n", ctlid);
     return NULL;
 }
 
@@ -1026,7 +1026,7 @@ static LRESULT notifysink_on_bn_clicked(FileDialogImpl *This, HWND hwnd, WPARAM 
 {
     customctrl *ctrl = get_cctrl_from_dlgid(This, LOWORD(wparam));
 
-    TRACE("%p, %lx\n", This, wparam);
+    TRACE("%p, %Ix\n", This, wparam);
 
     if(ctrl)
     {
@@ -1045,7 +1045,7 @@ static LRESULT notifysink_on_bn_clicked(FileDialogImpl *This, HWND hwnd, WPARAM 
 static LRESULT notifysink_on_cbn_selchange(FileDialogImpl *This, HWND hwnd, WPARAM wparam)
 {
     customctrl *ctrl = get_cctrl_from_dlgid(This, LOWORD(wparam));
-    TRACE("%p, %p (%lx)\n", This, ctrl, wparam);
+    TRACE("%p, %p (%Ix)\n", This, ctrl, wparam);
 
     if(ctrl)
     {
@@ -1065,7 +1065,7 @@ static LRESULT notifysink_on_tvn_dropdown(FileDialogImpl *This, LPARAM lparam)
     TBBUTTON tbb;
     UINT idcmd;
 
-    TRACE("%p, %p (%lx)\n", This, ctrl, lparam);
+    TRACE("%p, %p (%Ix)\n", This, ctrl, lparam);
 
     if(ctrl)
     {
@@ -1651,7 +1651,7 @@ static void update_layout(FileDialogImpl *This)
 
     if(dialog_rc.right < min_width || dialog_rc.bottom < min_height)
     {
-        TRACE("Dialog size (%d, %d) too small, not updating layout\n", dialog_rc.right, dialog_rc.bottom);
+        TRACE("Dialog size (%ld, %ld) too small, not updating layout\n", dialog_rc.right, dialog_rc.bottom);
         return;
     }
 
@@ -1881,7 +1881,7 @@ static HRESULT init_explorerbrowser(FileDialogImpl *This)
         hr = IObjectWithSite_SetSite(client, (IUnknown*)&This->IFileDialog2_iface);
         IObjectWithSite_Release(client);
         if(FAILED(hr))
-            ERR("SetSite failed, 0x%08x\n", hr);
+            ERR("SetSite failed, 0x%08lx\n", hr);
     }
 
     /* Browse somewhere */
@@ -2251,11 +2251,11 @@ static HRESULT create_dialog(FileDialogImpl *This, HWND parent)
     This->dlg_hwnd = NULL;
     if(res == -1)
     {
-        ERR("Failed to show dialog (LastError: %d)\n", GetLastError());
+        ERR("Failed to show dialog (LastError: %ld)\n", GetLastError());
         return E_FAIL;
     }
 
-    TRACE("Returning 0x%08x\n", (HRESULT)res);
+    TRACE("Returning 0x%08lx\n", (HRESULT)res);
     return (HRESULT)res;
 }
 
@@ -2328,7 +2328,7 @@ static ULONG WINAPI IFileDialog2_fnAddRef(IFileDialog2 *iface)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
     LONG ref = InterlockedIncrement(&This->ref);
-    TRACE("%p - ref %d\n", This, ref);
+    TRACE("%p - ref %ld\n", This, ref);
 
     return ref;
 }
@@ -2337,7 +2337,7 @@ static ULONG WINAPI IFileDialog2_fnRelease(IFileDialog2 *iface)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
     LONG ref = InterlockedDecrement(&This->ref);
-    TRACE("%p - ref %d\n", This, ref);
+    TRACE("%p - ref %ld\n", This, ref);
 
     if(!ref)
     {
@@ -2466,7 +2466,7 @@ static HRESULT WINAPI IFileDialog2_fnUnadvise(IFileDialog2 *iface, DWORD dwCooki
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
     events_client *client, *found = NULL;
-    TRACE("%p (%d)\n", This, dwCookie);
+    TRACE("%p (%ld)\n", This, dwCookie);
 
     LIST_FOR_EACH_ENTRY(client, &This->events_clients, events_client, entry)
     {
@@ -2491,7 +2491,7 @@ static HRESULT WINAPI IFileDialog2_fnUnadvise(IFileDialog2 *iface, DWORD dwCooki
 static HRESULT WINAPI IFileDialog2_fnSetOptions(IFileDialog2 *iface, FILEOPENDIALOGOPTIONS fos)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
-    TRACE("%p (0x%x)\n", This, fos);
+    TRACE("%p (0x%lx)\n", This, fos);
 
     if (fos & ~(FOS_OVERWRITEPROMPT | FOS_STRICTFILETYPES | FOS_NOCHANGEDIR | FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM
             | FOS_ALLNONSTORAGEITEMS | FOS_NOVALIDATE | FOS_ALLOWMULTISELECT | FOS_PATHMUSTEXIST | FOS_FILEMUSTEXIST
@@ -2499,7 +2499,7 @@ static HRESULT WINAPI IFileDialog2_fnSetOptions(IFileDialog2 *iface, FILEOPENDIA
             | FOS_HIDEPINNEDPLACES | FOS_NODEREFERENCELINKS | FOS_DONTADDTORECENT | FOS_FORCESHOWHIDDEN
             | FOS_DEFAULTNOMINIMODE | FOS_FORCEPREVIEWPANEON | FOS_SUPPORTSTREAMABLEITEMS))
     {
-        WARN("Invalid option %#x\n", fos);
+        WARN("Invalid option %#lx\n", fos);
         return E_INVALIDARG;
     }
 
@@ -2714,7 +2714,7 @@ static HRESULT WINAPI IFileDialog2_fnSetDefaultExtension(IFileDialog2 *iface, LP
 static HRESULT WINAPI IFileDialog2_fnClose(IFileDialog2 *iface, HRESULT hr)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
-    TRACE("%p (0x%08x)\n", This, hr);
+    TRACE("%p (0x%08lx)\n", This, hr);
 
     if(This->dlg_hwnd)
         EndDialog(This->dlg_hwnd, hr);
@@ -3497,7 +3497,7 @@ static HRESULT WINAPI ICommDlgBrowser3_fnOnStateChange(ICommDlgBrowser3 *iface,
     FileDialogImpl *This = impl_from_ICommDlgBrowser3(iface);
     IDataObject *new_selection;
     HRESULT hr;
-    TRACE("%p (%p, %x)\n", This, shv, uChange);
+    TRACE("%p (%p, %lx)\n", This, shv, uChange);
 
     switch(uChange)
     {
@@ -3552,7 +3552,7 @@ static HRESULT WINAPI ICommDlgBrowser3_fnIncludeObject(ICommDlgBrowser3 *iface,
     }
     if(FAILED(hr))
     {
-        ERR("Failed to get shellitem (%08x).\n", hr);
+        ERR("Failed to get shellitem (%08lx).\n", hr);
         return S_OK;
     }
 
@@ -3585,7 +3585,7 @@ static HRESULT WINAPI ICommDlgBrowser3_fnNotify(ICommDlgBrowser3 *iface,
                                                 IShellView *ppshv, DWORD dwNotifyType)
 {
     FileDialogImpl *This = impl_from_ICommDlgBrowser3(iface);
-    FIXME("Stub: %p (%p, 0x%x)\n", This, ppshv, dwNotifyType);
+    FIXME("Stub: %p (%p, 0x%lx)\n", This, ppshv, dwNotifyType);
     return E_NOTIMPL;
 }
 
@@ -3725,7 +3725,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnEnableOpenDropDown(IFileDialogCusto
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
     MENUINFO mi;
-    TRACE("%p (%d)\n", This, dwIDCtl);
+    TRACE("%p (%ld)\n", This, dwIDCtl);
 
     if (This->hmenu_opendropdown || get_cctrl(This, dwIDCtl))
         return E_UNEXPECTED;
@@ -3760,7 +3760,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnAddMenu(IFileDialogCustomize *iface
     customctrl *ctrl;
     TBBUTTON tbb;
     HRESULT hr;
-    TRACE("%p (%d, %p)\n", This, dwIDCtl, pszLabel);
+    TRACE("%p (%ld, %p)\n", This, dwIDCtl, pszLabel);
 
     hr = cctrl_create_new(This, dwIDCtl, NULL, TOOLBARCLASSNAMEW,
                           TBSTYLE_FLAT | CCS_NODIVIDER, 0,
@@ -3791,7 +3791,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnAddPushButton(IFileDialogCustomize 
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
     customctrl *ctrl;
     HRESULT hr;
-    TRACE("%p (%d, %p)\n", This, dwIDCtl, pszLabel);
+    TRACE("%p (%ld, %p)\n", This, dwIDCtl, pszLabel);
 
     hr = cctrl_create_new(This, dwIDCtl, pszLabel, WC_BUTTONW, BS_MULTILINE, 0,
                           This->cctrl_def_height, &ctrl);
@@ -3807,7 +3807,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnAddComboBox(IFileDialogCustomize *i
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
     customctrl *ctrl;
     HRESULT hr;
-    TRACE("%p (%d)\n", This, dwIDCtl);
+    TRACE("%p (%ld)\n", This, dwIDCtl);
 
     hr =  cctrl_create_new(This, dwIDCtl, NULL, WC_COMBOBOXW, CBS_DROPDOWNLIST, 0,
                            This->cctrl_def_height, &ctrl);
@@ -3823,7 +3823,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnAddRadioButtonList(IFileDialogCusto
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
     customctrl *ctrl;
     HRESULT hr;
-    TRACE("%p (%d)\n", This, dwIDCtl);
+    TRACE("%p (%ld)\n", This, dwIDCtl);
 
     hr =  cctrl_create_new(This, dwIDCtl, NULL, L"RadioButtonList", 0, 0, 0, &ctrl);
     if(SUCCEEDED(hr))
@@ -3843,7 +3843,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnAddCheckButton(IFileDialogCustomize
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
     customctrl *ctrl;
     HRESULT hr;
-    TRACE("%p (%d, %p, %d)\n", This, dwIDCtl, pszLabel, bChecked);
+    TRACE("%p (%ld, %p, %d)\n", This, dwIDCtl, pszLabel, bChecked);
 
     hr = cctrl_create_new(This, dwIDCtl, pszLabel, WC_BUTTONW, BS_AUTOCHECKBOX|BS_MULTILINE, 0,
                           This->cctrl_def_height, &ctrl);
@@ -3863,7 +3863,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnAddEditBox(IFileDialogCustomize *if
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
     customctrl *ctrl;
     HRESULT hr;
-    TRACE("%p (%d, %p)\n", This, dwIDCtl, pszText);
+    TRACE("%p (%ld, %p)\n", This, dwIDCtl, pszText);
 
     hr = cctrl_create_new(This, dwIDCtl, pszText, WC_EDITW, ES_AUTOHSCROLL, WS_EX_CLIENTEDGE,
                           This->cctrl_def_height, &ctrl);
@@ -3879,7 +3879,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnAddSeparator(IFileDialogCustomize *
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
     customctrl *ctrl;
     HRESULT hr;
-    TRACE("%p (%d)\n", This, dwIDCtl);
+    TRACE("%p (%ld)\n", This, dwIDCtl);
 
     hr = cctrl_create_new(This, dwIDCtl, NULL, WC_STATICW, SS_ETCHEDHORZ, 0,
                           GetSystemMetrics(SM_CYEDGE), &ctrl);
@@ -3896,7 +3896,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnAddText(IFileDialogCustomize *iface
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
     customctrl *ctrl;
     HRESULT hr;
-    TRACE("%p (%d, %p)\n", This, dwIDCtl, pszText);
+    TRACE("%p (%ld, %p)\n", This, dwIDCtl, pszText);
 
     hr = cctrl_create_new(This, dwIDCtl, pszText, WC_STATICW, 0, 0,
                           This->cctrl_def_height, &ctrl);
@@ -3912,7 +3912,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnSetControlLabel(IFileDialogCustomiz
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
     customctrl *ctrl = get_cctrl(This, dwIDCtl);
-    TRACE("%p (%d, %p)\n", This, dwIDCtl, pszLabel);
+    TRACE("%p (%ld, %p)\n", This, dwIDCtl, pszLabel);
 
     if(!ctrl) return E_INVALIDARG;
 
@@ -3940,7 +3940,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnGetControlState(IFileDialogCustomiz
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
     customctrl *ctrl = get_cctrl(This, dwIDCtl);
-    TRACE("%p (%d, %p)\n", This, dwIDCtl, pdwState);
+    TRACE("%p (%ld, %p)\n", This, dwIDCtl, pdwState);
 
     if(!ctrl || ctrl->type == IDLG_CCTRL_OPENDROPDOWN) return E_NOTIMPL;
 
@@ -3954,7 +3954,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnSetControlState(IFileDialogCustomiz
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
     customctrl *ctrl = get_cctrl(This,dwIDCtl);
-    TRACE("%p (%d, %x)\n", This, dwIDCtl, dwState);
+    TRACE("%p (%ld, %x)\n", This, dwIDCtl, dwState);
 
     if(ctrl && ctrl->hwnd)
     {
@@ -3987,7 +3987,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnGetEditBoxText(IFileDialogCustomize
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
     customctrl *ctrl = get_cctrl(This, dwIDCtl);
     WCHAR len, *text;
-    TRACE("%p (%d, %p)\n", This, dwIDCtl, ppszText);
+    TRACE("%p (%ld, %p)\n", This, dwIDCtl, ppszText);
 
     if(!ctrl || !ctrl->hwnd || !(len = SendMessageW(ctrl->hwnd, WM_GETTEXTLENGTH, 0, 0)))
         return E_FAIL;
@@ -4006,7 +4006,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnSetEditBoxText(IFileDialogCustomize
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
     customctrl *ctrl = get_cctrl(This, dwIDCtl);
-    TRACE("%p (%d, %s)\n", This, dwIDCtl, debugstr_w(pszText));
+    TRACE("%p (%ld, %s)\n", This, dwIDCtl, debugstr_w(pszText));
 
     if(!ctrl || ctrl->type != IDLG_CCTRL_EDITBOX)
         return E_FAIL;
@@ -4021,7 +4021,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnGetCheckButtonState(IFileDialogCust
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
     customctrl *ctrl = get_cctrl(This, dwIDCtl);
-    TRACE("%p (%d, %p)\n", This, dwIDCtl, pbChecked);
+    TRACE("%p (%ld, %p)\n", This, dwIDCtl, pbChecked);
 
     if(ctrl && ctrl->hwnd)
         *pbChecked = (SendMessageW(ctrl->hwnd, BM_GETCHECK, 0, 0) == BST_CHECKED);
@@ -4035,7 +4035,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnSetCheckButtonState(IFileDialogCust
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
     customctrl *ctrl = get_cctrl(This, dwIDCtl);
-    TRACE("%p (%d, %d)\n", This, dwIDCtl, bChecked);
+    TRACE("%p (%ld, %d)\n", This, dwIDCtl, bChecked);
 
     if(ctrl && ctrl->hwnd)
         SendMessageW(ctrl->hwnd, BM_SETCHECK, bChecked ? BST_CHECKED:BST_UNCHECKED, 0);
@@ -4054,7 +4054,7 @@ static UINT get_combobox_index_from_id(HWND cb_hwnd, DWORD dwIDItem)
         if(SendMessageW(cb_hwnd, CB_GETITEMDATA, i, 0) == dwIDItem)
             return i;
 
-    TRACE("Item with id %d not found in combobox %p (item count: %d)\n", dwIDItem, cb_hwnd, count);
+    TRACE("Item with id %ld not found in combobox %p (item count: %d)\n", dwIDItem, cb_hwnd, count);
     return -1;
 }
 
@@ -4066,7 +4066,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnAddControlItem(IFileDialogCustomize
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
     customctrl *ctrl = get_cctrl(This, dwIDCtl);
     HRESULT hr;
-    TRACE("%p (%d, %d, %s)\n", This, dwIDCtl, dwIDItem, debugstr_w(pszLabel));
+    TRACE("%p (%ld, %ld, %s)\n", This, dwIDCtl, dwIDItem, debugstr_w(pszLabel));
 
     if(!ctrl) return E_FAIL;
 
@@ -4144,7 +4144,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnRemoveControlItem(IFileDialogCustom
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
     customctrl *ctrl = get_cctrl(This, dwIDCtl);
-    TRACE("%p (%d, %d)\n", This, dwIDCtl, dwIDItem);
+    TRACE("%p (%ld, %ld)\n", This, dwIDCtl, dwIDItem);
 
     if(!ctrl) return E_FAIL;
 
@@ -4224,7 +4224,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnRemoveAllControlItems(IFileDialogCu
                                                                    DWORD dwIDCtl)
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
-    TRACE("%p (%d)\n", This, dwIDCtl);
+    TRACE("%p (%ld)\n", This, dwIDCtl);
 
     /* Not implemented by native */
     return E_NOTIMPL;
@@ -4237,7 +4237,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnGetControlItemState(IFileDialogCust
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
     customctrl *ctrl = get_cctrl(This, dwIDCtl);
-    TRACE("%p (%d, %d, %p)\n", This, dwIDCtl, dwIDItem, pdwState);
+    TRACE("%p (%ld, %ld, %p)\n", This, dwIDCtl, dwIDItem, pdwState);
 
     if(!ctrl) return E_FAIL;
 
@@ -4273,7 +4273,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnSetControlItemState(IFileDialogCust
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
     customctrl *ctrl = get_cctrl(This, dwIDCtl);
-    TRACE("%p (%d, %d, %x)\n", This, dwIDCtl, dwIDItem, dwState);
+    TRACE("%p (%ld, %ld, %x)\n", This, dwIDCtl, dwIDItem, dwState);
 
     if(!ctrl) return E_FAIL;
 
@@ -4396,7 +4396,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnGetSelectedControlItem(IFileDialogC
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
     customctrl *ctrl = get_cctrl(This, dwIDCtl);
-    TRACE("%p (%d, %p)\n", This, dwIDCtl, pdwIDItem);
+    TRACE("%p (%ld, %p)\n", This, dwIDCtl, pdwIDItem);
 
     if(!ctrl) return E_FAIL;
 
@@ -4460,7 +4460,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnSetSelectedControlItem(IFileDialogC
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
     customctrl *ctrl = get_cctrl(This, dwIDCtl);
-    TRACE("%p (%d, %d)\n", This, dwIDCtl, dwIDItem);
+    TRACE("%p (%ld, %ld)\n", This, dwIDCtl, dwIDItem);
 
     if(!ctrl) return E_INVALIDARG;
 
@@ -4506,7 +4506,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnStartVisualGroup(IFileDialogCustomi
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
     customctrl *vg;
     HRESULT hr;
-    TRACE("%p (%d, %s)\n", This, dwIDCtl, debugstr_w(pszLabel));
+    TRACE("%p (%ld, %s)\n", This, dwIDCtl, debugstr_w(pszLabel));
 
     if(This->cctrl_active_vg)
         return E_UNEXPECTED;
@@ -4536,7 +4536,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnMakeProminent(IFileDialogCustomize 
                                                            DWORD dwIDCtl)
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
-    FIXME("stub - %p (%d)\n", This, dwIDCtl);
+    FIXME("stub - %p (%ld)\n", This, dwIDCtl);
     return S_OK;
 }
 
@@ -4546,7 +4546,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnSetControlItemText(IFileDialogCusto
                                                                 LPCWSTR pszLabel)
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
-    FIXME("stub - %p (%d, %d, %s)\n", This, dwIDCtl, dwIDItem, debugstr_w(pszLabel));
+    FIXME("stub - %p (%ld, %ld, %s)\n", This, dwIDCtl, dwIDItem, debugstr_w(pszLabel));
     return E_NOTIMPL;
 }
 
@@ -4637,7 +4637,7 @@ static HRESULT FileDialog_constructor(IUnknown *pUnkOuter, REFIID riid, void **p
     hr = init_custom_controls(fdimpl);
     if(FAILED(hr))
     {
-        ERR("Failed to initialize custom controls (0x%08x).\n", hr);
+        ERR("Failed to initialize custom controls (0x%08lx).\n", hr);
         IFileDialog2_Release(&fdimpl->IFileDialog2_iface);
         return E_FAIL;
     }

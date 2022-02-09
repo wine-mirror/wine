@@ -67,7 +67,7 @@ static const char GPA_string[] = "Failed to get entry point %s for hinst = %p\n"
 
 BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD Reason, LPVOID Reserved)
 {
-	TRACE("(%p, %d, %p)\n", hInstance, Reason, Reserved);
+	TRACE("(%p, %ld, %p)\n", hInstance, Reason, Reserved);
 
 	switch(Reason)
 	{
@@ -118,7 +118,7 @@ void *COMDLG32_AllocMem(int size)
  */
 void COMDLG32_SetCommDlgExtendedError(DWORD err)
 {
-	TRACE("(%08x)\n", err);
+	TRACE("(%08lx)\n", err);
         if (COMDLG32_TlsIndex == TLS_OUT_OF_INDEXES)
 	  COMDLG32_TlsIndex = TlsAlloc();
 	if (COMDLG32_TlsIndex != TLS_OUT_OF_INDEXES)

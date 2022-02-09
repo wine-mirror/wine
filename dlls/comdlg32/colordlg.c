@@ -851,7 +851,7 @@ static LRESULT CC_WMInitDialog( HWND hDlg, WPARAM wParam, LPARAM lParam )
    POINT point;
    CCPRIV *lpp;
 
-   TRACE("WM_INITDIALOG lParam=%08lX\n", lParam);
+   TRACE("WM_INITDIALOG lParam=%08IX\n", lParam);
 
    if (cc->lStructSize != sizeof(CHOOSECOLORW))
    {
@@ -958,7 +958,7 @@ static LRESULT CC_WMCommand(CCPRIV *lpp, WPARAM wParam, LPARAM lParam, WORD noti
     HDC hdc;
     COLORREF *cr;
 
-    TRACE("CC_WMCommand wParam=%lx lParam=%lx\n", wParam, lParam);
+    TRACE("CC_WMCommand wParam=%Ix lParam=%Ix\n", wParam, lParam);
     switch (LOWORD(wParam))
     {
         case COLOR_RED:  /* edit notify RGB */

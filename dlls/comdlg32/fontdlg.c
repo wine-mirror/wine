@@ -496,7 +496,7 @@ static INT AddFontStyle( const ENUMLOGFONTEXW *lpElfex, const NEWTEXTMETRICEXW *
     HDC hdc;
 
     TRACE("(nFontType=%d)\n",nFontType);
-    TRACE("  %s h=%d w=%d e=%d o=%d wg=%d i=%d u=%d s=%d"
+    TRACE("  %s h=%ld w=%ld e=%ld o=%ld wg=%ld i=%d u=%d s=%d"
             " ch=%d op=%d cp=%d q=%d pf=%xh\n",
             debugstr_w(lplf->lfFaceName),lplf->lfHeight,lplf->lfWidth,
             lplf->lfEscapement,lplf->lfOrientation,
@@ -619,7 +619,7 @@ static LRESULT CFn_WMInitDialog(HWND hDlg, LPARAM lParam, LPCHOOSEFONTW lpcf)
 
     SetPropW(hDlg, strWineFontData, lpcf);
     lpxx=lpcf->lpLogFont;
-    TRACE("WM_INITDIALOG lParam=%08lX\n", lParam);
+    TRACE("WM_INITDIALOG lParam=%08IX\n", lParam);
 
     if (lpcf->lStructSize != sizeof(CHOOSEFONTW))
     {
@@ -937,7 +937,7 @@ static LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam, LPCHOOSEFO
         }
     }
 
-    TRACE("WM_COMMAND wParam=%08X lParam=%08lX\n", (LONG)wParam, lParam);
+    TRACE("WM_COMMAND wParam=%08lX lParam=%08IX\n", (LONG)wParam, lParam);
     switch (LOWORD(wParam))
     {
     case cmb1:
@@ -998,7 +998,7 @@ static LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam, LPCHOOSEFO
             WINDOWINFO wininfo;
             LPLOGFONTW lpxx=lpcf->lpLogFont;
 
-            TRACE("WM_COMMAND/cmb2,3 =%08lX\n", lParam);
+            TRACE("WM_COMMAND/cmb2,3 =%08IX\n", lParam);
 
             /* face name */
             i=SendDlgItemMessageW(hDlg,cmb1,CB_GETCURSEL,0,0);
@@ -1244,7 +1244,7 @@ static INT_PTR CALLBACK FormatCharDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, 
     case WM_CHOOSEFONT_GETLOGFONT:
     {
         LOGFONTA *logfont = (LOGFONTA *)lParam;
-        TRACE("WM_CHOOSEFONT_GETLOGFONT lParam=%08lX\n", lParam);
+        TRACE("WM_CHOOSEFONT_GETLOGFONT lParam=%08IX\n", lParam);
         memcpy( logfont, lpcfw->lpLogFont, FIELD_OFFSET( LOGFONTA, lfFaceName ));
         WideCharToMultiByte( CP_ACP, 0, lpcfw->lpLogFont->lfFaceName, LF_FACESIZE,
                              logfont->lfFaceName, LF_FACESIZE, NULL, NULL );
@@ -1294,7 +1294,7 @@ static INT_PTR CALLBACK FormatCharDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam, 
     case WM_DESTROY:
         return TRUE;
     case WM_CHOOSEFONT_GETLOGFONT:
-        TRACE("WM_CHOOSEFONT_GETLOGFONT lParam=%08lX\n", lParam);
+        TRACE("WM_CHOOSEFONT_GETLOGFONT lParam=%08IX\n", lParam);
         memcpy( (LOGFONTW *)lParam, lpcf->lpLogFont, sizeof(LOGFONTW) );
         break;
     case WM_PAINT:

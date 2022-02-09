@@ -178,7 +178,7 @@ static DRIVER_INFO_3W * get_driver_infoW(HANDLE hprn)
     if (res)
         return di3;
 
-    TRACE("GetPrinterDriverW failed with %u\n", GetLastError());
+    TRACE("GetPrinterDriverW failed with %lu\n", GetLastError());
     HeapFree(GetProcessHeap(), 0, di3);
     return NULL;
 }
@@ -198,7 +198,7 @@ static DRIVER_INFO_3A * get_driver_infoA(HANDLE hprn)
     if (res)
         return di3;
 
-    TRACE("GetPrinterDriverA failed with %u\n", GetLastError());
+    TRACE("GetPrinterDriverA failed with %lu\n", GetLastError());
     HeapFree(GetProcessHeap(), 0, di3);
     return NULL;
 }
@@ -225,7 +225,7 @@ static PRINTER_INFO_2W * get_printer_infoW(HANDLE hprn)
     if (res)
         return pi2;
 
-    TRACE("GetPrinterW failed with %u\n", GetLastError());
+    TRACE("GetPrinterW failed with %lu\n", GetLastError());
     HeapFree(GetProcessHeap(), 0, pi2);
     return NULL;
 }
@@ -245,7 +245,7 @@ static PRINTER_INFO_2A * get_printer_infoA(HANDLE hprn)
     if (res)
         return pi2;
 
-    TRACE("GetPrinterA failed with %u\n", GetLastError());
+    TRACE("GetPrinterA failed with %lu\n", GetLastError());
     HeapFree(GetProcessHeap(), 0, pi2);
     return NULL;
 }
@@ -1232,12 +1232,12 @@ static BOOL PRINTDLG_ChangePrinterA(HWND hDlg, char *name, PRINT_PTRA *PrintStru
 		    {
 			if(dpiX == Resolutions[i])
 			    IsDefault = TRUE;
-			sprintf(buf, "%d dpi", Resolutions[i]);
+			sprintf(buf, "%ld dpi", Resolutions[i]);
 		    } else
 		    {
 			if(dpiX == Resolutions[i] && dpiY == Resolutions[i+1])
 			    IsDefault = TRUE;
-			sprintf(buf, "%d dpi x %d dpi", Resolutions[i], Resolutions[i+1]);
+			sprintf(buf, "%ld dpi x %ld dpi", Resolutions[i], Resolutions[i+1]);
 		    }
 
 		    Index = SendMessageA(hQuality, CB_ADDSTRING, 0, (LPARAM)buf);
@@ -2249,7 +2249,7 @@ BOOL WINAPI PrintDlgA(LPPRINTDLGA lppd)
 	}
 	TRACE("(%p): hwndOwner = %p, hDevMode = %p, hDevNames = %p\n"
               "pp. %d-%d, min p %d, max p %d, copies %d, hinst %p\n"
-              "flags %08x (%s)\n",
+              "flags %08lx (%s)\n",
 	      lppd, lppd->hwndOwner, lppd->hDevMode, lppd->hDevNames,
 	      lppd->nFromPage, lppd->nToPage, lppd->nMinPage, lppd->nMaxPage,
 	      lppd->nCopies, lppd->hInstance, lppd->Flags, flagstr);
@@ -2285,7 +2285,7 @@ BOOL WINAPI PrintDlgA(LPPRINTDLGA lppd)
 	GetPrinterDriverA(hprn, NULL, 3, NULL, 0, &needed);
 	dbuf = HeapAlloc(GetProcessHeap(),0,needed);
 	if (!GetPrinterDriverA(hprn, NULL, 3, (LPBYTE)dbuf, needed, &needed)) {
-	    ERR("GetPrinterDriverA failed, le %d, fix your config for printer %s!\n",
+	    ERR("GetPrinterDriverA failed, le %ld, fix your config for printer %s!\n",
 	        GetLastError(),pbuf->pPrinterName);
 	    HeapFree(GetProcessHeap(), 0, dbuf);
 	    HeapFree(GetProcessHeap(), 0, pbuf);
@@ -2400,7 +2400,7 @@ BOOL WINAPI PrintDlgW(LPPRINTDLGW lppd)
 	}
 	TRACE("(%p): hwndOwner = %p, hDevMode = %p, hDevNames = %p\n"
               "pp. %d-%d, min p %d, max p %d, copies %d, hinst %p\n"
-              "flags %08x (%s)\n",
+              "flags %08lx (%s)\n",
 	      lppd, lppd->hwndOwner, lppd->hDevMode, lppd->hDevNames,
 	      lppd->nFromPage, lppd->nToPage, lppd->nMinPage, lppd->nMaxPage,
 	      lppd->nCopies, lppd->hInstance, lppd->Flags, flagstr);
@@ -2436,7 +2436,7 @@ BOOL WINAPI PrintDlgW(LPPRINTDLGW lppd)
 	GetPrinterDriverW(hprn, NULL, 3, NULL, 0, &needed);
 	dbuf = HeapAlloc(GetProcessHeap(),0,needed);
 	if (!GetPrinterDriverW(hprn, NULL, 3, (LPBYTE)dbuf, needed, &needed)) {
-	    ERR("GetPrinterDriverA failed, le %d, fix your config for printer %s!\n",
+	    ERR("GetPrinterDriverA failed, le %ld, fix your config for printer %s!\n",
 	        GetLastError(),debugstr_w(pbuf->pPrinterName));
 	    HeapFree(GetProcessHeap(), 0, dbuf);
 	    HeapFree(GetProcessHeap(), 0, pbuf);
@@ -3180,7 +3180,7 @@ static void pagesetup_change_preview(const pagesetup_data *data)
     }
     x = (data->rtDrawRect.right + data->rtDrawRect.left - width) / 2;
     y = (data->rtDrawRect.bottom + data->rtDrawRect.top - height) / 2;
-    TRACE("draw rect %s x=%d, y=%d, w=%d, h=%d\n",
+    TRACE("draw rect %s x=%ld, y=%ld, w=%ld, h=%ld\n",
           wine_dbgstr_rect(&data->rtDrawRect), x, y, width, height);
 
     MoveWindow(GetDlgItem(data->hDlg, rct2), x + width, y + shadow, shadow, height, FALSE);
@@ -3348,7 +3348,7 @@ static BOOL pagesetup_wm_command(HWND hDlg, WPARAM wParam, LPARAM lParam, pagese
     WORD msg = HIWORD(wParam);
     WORD id  = LOWORD(wParam);
 
-    TRACE("loword (lparam) %d, wparam 0x%lx, lparam %08lx\n",
+    TRACE("loword (lparam) %d, wparam 0x%Ix, lparam %08Ix\n",
 	    LOWORD(lParam),wParam,lParam);
     switch (id)  {
     case IDOK:
@@ -3778,7 +3778,7 @@ static void pagesetup_dump_dlg_struct(const pagesetup_data *data)
             }
         }
         TRACE("%s: (%p): hwndOwner = %p, hDevMode = %p, hDevNames = %p\n"
-              "hinst %p, flags %08x (%s)\n",
+              "hinst %p, flags %08lx (%s)\n",
               data->unicode ? "unicode" : "ansi",
               data->u.dlgw, data->u.dlgw->hwndOwner, data->u.dlgw->hDevMode,
               data->u.dlgw->hDevNames, data->u.dlgw->hInstance,
@@ -4025,7 +4025,7 @@ HRESULT WINAPI PrintDlgExA(LPPRINTDLGEXA lppd)
         if (!lppd->nPropertyPages)
             return E_INVALIDARG;
 
-        FIXME("custom property sheets (%d at %p) not supported\n", lppd->nPropertyPages, lppd->lphPropertyPages);
+        FIXME("custom property sheets (%ld at %p) not supported\n", lppd->nPropertyPages, lppd->lphPropertyPages);
     }
 
     /* Use PD_NOPAGENUMS or set nMaxPageRanges and lpPageRanges */
@@ -4178,7 +4178,7 @@ HRESULT WINAPI PrintDlgExW(LPPRINTDLGEXW lppd)
         if (!lppd->nPropertyPages)
             return E_INVALIDARG;
 
-        FIXME("custom property sheets (%d at %p) not supported\n", lppd->nPropertyPages, lppd->lphPropertyPages);
+        FIXME("custom property sheets (%ld at %p) not supported\n", lppd->nPropertyPages, lppd->lphPropertyPages);
     }
 
     /* Use PD_NOPAGENUMS or set nMaxPageRanges and lpPageRanges */
