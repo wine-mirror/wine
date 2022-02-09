@@ -5116,7 +5116,7 @@ static void test_chunked_read(void)
     header[0] = 0;
     len = sizeof(header);
     ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_TRANSFER_ENCODING, NULL, header, &len, 0 );
-    ok( ret, "failed to get TRANSFER_ENCODING header (error %lu\n", GetLastError() );
+    ok( ret, "failed to get TRANSFER_ENCODING header with error %lu\n", GetLastError() );
     ok( !lstrcmpW( header, L"chunked" ), "wrong transfer encoding %s\n", wine_dbgstr_w(header) );
     trace( "transfer encoding: %s\n", wine_dbgstr_w(header) );
 
