@@ -242,24 +242,24 @@ static const char* macho_map_range(const struct macho_file_map* fmap, ULONG_PTR 
     const void*     aligned_ptr;
     HANDLE          mapping;
 
-    TRACE("(%p/%p, 0x%08lx, 0x%08lx)\n", fmap, fmap->handle, offset, len);
+    TRACE("(%p/%p, 0x%08Ix, 0x%08Ix)\n", fmap, fmap->handle, offset, len);
 
     macho_calc_range(fmap, offset, len, &aligned_offset, &aligned_map_end, &misalign);
 
     if (!(mapping = CreateFileMappingW(fmap->handle, NULL, PAGE_READONLY, 0, 0, NULL)))
     {
-        ERR("map creation %p failed %u size %lu\n", fmap->handle, GetLastError(), aligned_map_end);
+        ERR("map creation %p failed %lu size %Iu\n", fmap->handle, GetLastError(), aligned_map_end);
         return IMAGE_NO_MAP;
     }
     aligned_ptr = MapViewOfFile(mapping, FILE_MAP_READ, 0, aligned_offset, aligned_map_end - aligned_offset);
     CloseHandle(mapping);
     if (!aligned_ptr)
     {
-        ERR("map failed %u\n", GetLastError());
+        ERR("map failed %lu\n", GetLastError());
         return IMAGE_NO_MAP;
     }
 
-    TRACE("Mapped (0x%08lx - 0x%08lx) to %p\n", aligned_offset, aligned_map_end, aligned_ptr);
+    TRACE("Mapped (0x%08Ix - 0x%08Ix) to %p\n", aligned_offset, aligned_map_end, aligned_ptr);
 
     if (base)
         *base = aligned_ptr;
@@ -274,7 +274,7 @@ static const char* macho_map_range(const struct macho_file_map* fmap, ULONG_PTR 
 static void macho_unmap_range(const char** base, const void** mapped, const struct macho_file_map* fmap,
                               ULONG_PTR offset, ULONG_PTR len)
 {
-    TRACE("(%p, %p, %p/%p, 0x%08lx, 0x%08lx)\n", base, mapped, fmap, fmap->handle, offset, len);
+    TRACE("(%p, %p, %p/%p, 0x%08Ix, 0x%08Ix)\n", base, mapped, fmap, fmap->handle, offset, len);
 
     if ((mapped && *mapped != IMAGE_NO_MAP) || (base && *base != IMAGE_NO_MAP))
     {
@@ -311,7 +311,7 @@ static BOOL macho_map_ranges(const struct macho_file_map* fmap,
     ULONG_PTR aligned_offset1, aligned_map_end1;
     ULONG_PTR aligned_offset2, aligned_map_end2;
 
-    TRACE("(%p/%p, 0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx, %p, %p)\n", fmap, fmap->handle,
+    TRACE("(%p/%p, 0x%08Ix, 0x%08Ix, 0x%08Ix, 0x%08Ix, %p, %p)\n", fmap, fmap->handle,
             offset1, len1, offset2, len2, mapped1, mapped2);
 
     macho_calc_range(fmap, offset1, len1, &aligned_offset1, &aligned_map_end1, NULL);
@@ -363,7 +363,7 @@ static void macho_unmap_ranges(const struct macho_file_map* fmap,
     ULONG_PTR       aligned_offset1, aligned_map_end1;
     ULONG_PTR       aligned_offset2, aligned_map_end2;
 
-    TRACE("(%p/%p, 0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx, %p/%p, %p/%p)\n", fmap, fmap->handle,
+    TRACE("(%p/%p, 0x%08Ix, 0x%08Ix, 0x%08Ix, 0x%08Ix, %p/%p, %p/%p)\n", fmap, fmap->handle,
             offset1, len1, offset2, len2, mapped1, *mapped1, mapped2, *mapped2);
 
     macho_calc_range(fmap, offset1, len1, &aligned_offset1, &aligned_map_end1, NULL);
@@ -648,9 +648,9 @@ static int macho_load_section_info(struct image_file_map* ifm, const struct mach
         sections = (const void *)(sc + 1);
     }
 
-    TRACE("(%p/%p, %p, %p) before: 0x%08lx - 0x%08lx\n", fmap, fmap->handle, lc, user,
+    TRACE("(%p/%p, %p, %p) before: 0x%08Ix - 0x%08Ix\n", fmap, fmap->handle, lc, user,
             (ULONG_PTR)fmap->segs_start, (ULONG_PTR)fmap->segs_size);
-    TRACE("Segment command vm: 0x%08lx - 0x%08lx\n", (ULONG_PTR)vmaddr,
+    TRACE("Segment command vm: 0x%08Ix - 0x%08Ix\n", (ULONG_PTR)vmaddr,
             (ULONG_PTR)(vmaddr + vmsize));
 
     /* Images in the dyld shared cache have their segments mapped non-contiguously.
@@ -674,7 +674,7 @@ static int macho_load_section_info(struct image_file_map* ifm, const struct mach
         tmp = (vmaddr + vmsize + page_mask) & ~page_mask;
         if (fmap->segs_size < tmp) fmap->segs_size = tmp;
 
-        TRACE("after: 0x%08lx - 0x%08lx\n", (ULONG_PTR)fmap->segs_start, (ULONG_PTR)fmap->segs_size);
+        TRACE("after: 0x%08Ix - 0x%08Ix\n", (ULONG_PTR)fmap->segs_start, (ULONG_PTR)fmap->segs_size);
     }
 
     for (i = 0; i < nsects; i++)
@@ -777,7 +777,7 @@ static BOOL macho_map_file(struct process *pcs, const WCHAR *filenameW,
 
     if (!ReadFile(fmap->handle, &fat_header, sizeof(fat_header), &bytes_read, NULL) || bytes_read != sizeof(fat_header))
     {
-        TRACE("failed to read fat header: %u\n", GetLastError());
+        TRACE("failed to read fat header: %lu\n", GetLastError());
         goto done;
     }
     TRACE("... got possible fat header\n");
@@ -859,7 +859,7 @@ static BOOL macho_map_file(struct process *pcs, const WCHAR *filenameW,
     }
 
     fmap->segs_size -= fmap->segs_start;
-    TRACE("segs_start: 0x%08lx, segs_size: 0x%08lx\n", (ULONG_PTR)fmap->segs_start,
+    TRACE("segs_start: 0x%08Ix, segs_size: 0x%08Ix\n", (ULONG_PTR)fmap->segs_start,
             (ULONG_PTR)fmap->segs_size);
 
     if (macho_enum_load_commands(ifm, MACHO_LC_UUID, find_uuid, NULL) < 0)
@@ -973,7 +973,7 @@ static void macho_stabs_def_cb(struct module* module, ULONG_PTR load_offset,
     struct macho_debug_info*    mdi = user;
     struct symtab_elt*          ste;
 
-    TRACE("(%p, 0x%08lx, %s, 0x%08lx, %d, %d, %u, %p, %p/%p/%p)\n", module, load_offset,
+    TRACE("(%p, 0x%08Ix, %s, 0x%08Ix, %d, %d, %u, %p, %p/%p/%p)\n", module, load_offset,
             debugstr_a(name), offset, is_public, is_global, sectidx,
             compiland, mdi, mdi->fmap, mdi->fmap->handle);
 
@@ -1065,7 +1065,7 @@ static void macho_finish_stabs(struct module* module, struct hash_table* ht_symt
                 func = (struct symt_function*)sym;
                 if (func->address == module->format_info[DFI_MACHO]->u.macho_info->load_addr)
                 {
-                    TRACE("Adjusting function %p/%s!%s from 0x%08lx to 0x%08lx\n", func,
+                    TRACE("Adjusting function %p/%s!%s from 0x%08Ix to 0x%08Ix\n", func,
                           debugstr_w(module->modulename), sym->hash_elt.name,
                           func->address, ste->addr);
                     func->address = ste->addr;
@@ -1082,7 +1082,7 @@ static void macho_finish_stabs(struct module* module, struct hash_table* ht_symt
                 case DataIsFileStatic:
                     if (data->u.var.offset == module->format_info[DFI_MACHO]->u.macho_info->load_addr)
                     {
-                        TRACE("Adjusting data symbol %p/%s!%s from 0x%08lx to 0x%08lx\n",
+                        TRACE("Adjusting data symbol %p/%s!%s from 0x%08Ix to 0x%08Ix\n",
                               data, debugstr_w(module->modulename), sym->hash_elt.name,
                               data->u.var.offset, ste->addr);
                         data->u.var.offset = ste->addr;
@@ -1154,7 +1154,7 @@ static void macho_finish_stabs(struct module* module, struct hash_table* ht_symt
                 symt_get_info(module, &sym->symt, TI_GET_LENGTH,   &size);
                 symt_get_info(module, &sym->symt, TI_GET_DATAKIND, &kind);
                 if (size && kind == (ste->is_global ? DataIsGlobal : DataIsFileStatic))
-                    FIXME("Duplicate in %s: %s<%08lx> %s<%s-%s>\n",
+                    FIXME("Duplicate in %s: %s<%08Ix> %s<%s-%s>\n",
                           debugstr_w(module->modulename),
                           ste->ht_elt.name, ste->addr,
                           sym->hash_elt.name,
@@ -1462,7 +1462,7 @@ static BOOL macho_load_file(struct process* pcs, const WCHAR* filename,
     BOOL                    split_segs;
     struct image_file_map   fmap;
 
-    TRACE("(%p/%p, %s, 0x%08lx, %p/0x%08x)\n", pcs, pcs->handle, debugstr_w(filename),
+    TRACE("(%p/%p, %s, 0x%08Ix, %p/0x%08x)\n", pcs, pcs->handle, debugstr_w(filename),
             load_addr, macho_info, macho_info->flags);
 
     split_segs = image_uses_split_segs(pcs, load_addr);
@@ -1549,7 +1549,7 @@ static BOOL macho_search_and_load_file(struct process* pcs, const WCHAR* filenam
     const WCHAR*        p;
     struct macho_load_params load_params;
 
-    TRACE("(%p/%p, %s, 0x%08lx, %p)\n", pcs, pcs->handle, debugstr_w(filename), load_addr,
+    TRACE("(%p/%p, %s, 0x%08Ix, %p)\n", pcs, pcs->handle, debugstr_w(filename), load_addr,
             macho_info);
 
     if (filename == NULL || *filename == '\0') return FALSE;
@@ -1673,7 +1673,7 @@ static BOOL macho_enum_sync_cb(const WCHAR* name, ULONG_PTR addr, void* user)
 {
     struct macho_sync*  ms = user;
 
-    TRACE("(%s, 0x%08lx, %p)\n", debugstr_w(name), addr, user);
+    TRACE("(%s, 0x%08Ix, %p)\n", debugstr_w(name), addr, user);
     macho_search_and_load_file(ms->pcs, name, addr, &ms->macho_info);
     return TRUE;
 }
@@ -1759,7 +1759,7 @@ static BOOL macho_load_cb(const WCHAR* name, ULONG_PTR addr, void* user)
     struct macho_load*  ml = user;
     const WCHAR*        p;
 
-    TRACE("(%s, 0x%08lx, %p)\n", debugstr_w(name), addr, user);
+    TRACE("(%s, 0x%08Ix, %p)\n", debugstr_w(name), addr, user);
 
     /* memcmp is needed for matches when bufstr contains also version information
      * ml->name: libc.so, name: libc.so.6.0
@@ -1784,7 +1784,7 @@ static struct module* macho_load_module(struct process* pcs, const WCHAR* name, 
 {
     struct macho_load   ml;
 
-    TRACE("(%p/%p, %s, 0x%08lx)\n", pcs, pcs->handle, debugstr_w(name), addr);
+    TRACE("(%p/%p, %s, 0x%08Ix)\n", pcs, pcs->handle, debugstr_w(name), addr);
 
     ml.macho_info.flags = MACHO_INFO_MODULE;
     ml.ret = FALSE;
@@ -1916,6 +1916,6 @@ BOOL macho_read_wine_loader_dbg_info(struct process* pcs, ULONG_PTR addr)
     macho_info.module->format_info[DFI_MACHO]->u.macho_info->is_loader = 1;
     module_set_module(macho_info.module, S_WineLoaderW);
     pcs->loader = &macho_loader_ops;
-    TRACE("Found macho debug header %#lx\n", pcs->dbg_hdr_addr);
+    TRACE("Found macho debug header %#Ix\n", pcs->dbg_hdr_addr);
     return TRUE;
 }

@@ -141,7 +141,7 @@ static BOOL fetch_thread_info(struct dump_context* dc, int thd_idx,
 
     if ((hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, tid)) == NULL)
     {
-        FIXME("Couldn't open thread %u (%u)\n", tid, GetLastError());
+        FIXME("Couldn't open thread %lu (%lu)\n", tid, GetLastError());
         return FALSE;
     }
     

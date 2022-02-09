@@ -252,7 +252,7 @@ static BOOL i386_stack_walk(struct cpu_stack_walk *csw, STACKFRAME64 *frame,
                 p = sw_xlat_addr(csw, &tmp);
                 if (!sw_read_mem(csw, p, &frame16, sizeof(frame16)))
                 {
-                    WARN("Bad stack frame 0x%08x\n", p);
+                    WARN("Bad stack frame 0x%08lx\n", p);
                     goto done_err;
                 }
                 curr_switch = (DWORD_PTR)frame16.frame32;
@@ -316,7 +316,7 @@ static BOOL i386_stack_walk(struct cpu_stack_walk *csw, STACKFRAME64 *frame,
 
                 if (!sw_read_mem(csw, p, &frame16, sizeof(frame16)))
                 {
-                    WARN("Bad stack frame 0x%08x\n", p);
+                    WARN("Bad stack frame 0x%08lx\n", p);
                     goto done_err;
                 }
                 curr_switch = (DWORD_PTR)frame16.frame32;
@@ -333,16 +333,16 @@ static BOOL i386_stack_walk(struct cpu_stack_walk *csw, STACKFRAME64 *frame,
 
                 if (!sw_read_mem(csw, p, &frame16, sizeof(frame16)))
                 {
-                    WARN("Bad stack frame 0x%08x\n", p);
+                    WARN("Bad stack frame 0x%08lx\n", p);
                     goto done_err;
                 }
 
                 TRACE("Got a 16 bit stack switch:"
                       "\n\tframe32: %p"
-                      "\n\tedx:%08x ecx:%08x ebp:%08x"
+                      "\n\tedx:%08lx ecx:%08lx ebp:%08lx"
                       "\n\tds:%04x es:%04x fs:%04x gs:%04x"
-                      "\n\tcall_from_ip:%08x module_cs:%04x relay=%08x"
-                      "\n\tentry_ip:%04x entry_point:%08x"
+                      "\n\tcall_from_ip:%08lx module_cs:%04lx relay=%08lx"
+                      "\n\tentry_ip:%04x entry_point:%08lx"
                       "\n\tbp:%04x ip:%04x cs:%04x\n",
                       frame16.frame32,
                       frame16.edx, frame16.ecx, frame16.ebp,
@@ -403,7 +403,7 @@ static BOOL i386_stack_walk(struct cpu_stack_walk *csw, STACKFRAME64 *frame,
                 frame->AddrStack.Offset = context->x86.Esp;
                 frame->AddrFrame.Offset = context->x86.Ebp;
                 if (frame->AddrReturn.Offset != context->x86.Eip)
-                    FIXME("new PC=%s different from Eip=%x\n",
+                    FIXME("new PC=%s different from Eip=%lx\n",
                           wine_dbgstr_longlong(frame->AddrReturn.Offset), context->x86.Eip);
                 frame->AddrPC.Offset = context->x86.Eip;
             }

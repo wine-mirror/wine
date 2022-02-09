@@ -147,7 +147,7 @@ BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
     BOOL                        ret;
     struct cpu*                 cpu;
 
-    TRACE("(%d, %p, %p, %p, %p, %p, %p, %p, %p)\n",
+    TRACE("(%ld, %p, %p, %p, %p, %p, %p, %p, %p)\n",
           MachineType, hProcess, hThread, frame32, ctx,
           f_read_mem, FunctionTableAccessRoutine,
           GetModuleBaseRoutine, f_xlat_adr);
@@ -217,7 +217,7 @@ BOOL WINAPI StackWalk64(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
     struct cpu_stack_walk       csw;
     struct cpu*                 cpu;
 
-    TRACE("(%d, %p, %p, %p, %p, %p, %p, %p, %p)\n",
+    TRACE("(%ld, %p, %p, %p, %p, %p, %p, %p, %p)\n",
           MachineType, hProcess, hThread, frame, ctx,
           f_read_mem, FunctionTableAccessRoutine,
           GetModuleBaseRoutine, f_xlat_adr);
@@ -276,7 +276,7 @@ BOOL WINAPI StackWalkEx(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
     struct cpu*                 cpu;
     DWORD64                     addr;
 
-    TRACE("(%d, %p, %p, %p, %p, %p, %p, %p, %p, 0x%x)\n",
+    TRACE("(%ld, %p, %p, %p, %p, %p, %p, %p, %p, 0x%lx)\n",
           MachineType, hProcess, hThread, frame, ctx,
           f_read_mem, FunctionTableAccessRoutine,
           GetModuleBaseRoutine, f_xlat_adr, flags);
@@ -293,7 +293,7 @@ BOOL WINAPI StackWalkEx(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
     }
     if (flags != 0)
     {
-        FIXME("Unsupported yet flags 0x%x\n", flags);
+        FIXME("Unsupported yet flags 0x%lx\n", flags);
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
@@ -315,7 +315,7 @@ BOOL WINAPI StackWalkEx(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
         DWORD depth = symt_get_inlinesite_depth(hProcess, addr);
         if (IFC_DEPTH(frame->InlineFrameContext) + 1 < depth) /* move to next inlined function? */
         {
-            TRACE("found inline ctx: depth=%u current=%u++\n",
+            TRACE("found inline ctx: depth=%lu current=%lu++\n",
                   depth, frame->InlineFrameContext);
             frame->InlineFrameContext++; /* just increase index, FIXME detect overflow */
         }
@@ -331,7 +331,7 @@ BOOL WINAPI StackWalkEx(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
         {
             addr = sw_xlat_addr(&csw, &frame->AddrPC);
             frame->InlineFrameContext = symt_get_inlinesite_depth(hProcess, addr) == 0 ? IFC_MODE_REGULAR : IFC_MODE_INLINE;
-            TRACE("setting IFC mode to %x\n", frame->InlineFrameContext);
+            TRACE("setting IFC mode to %lx\n", frame->InlineFrameContext);
         }
     }
 

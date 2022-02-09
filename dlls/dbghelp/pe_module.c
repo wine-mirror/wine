@@ -87,7 +87,7 @@ static const char* pe_map_section(struct image_section_map* ism)
 
         if (fmap->sect[ism->sidx].shdr.Misc.VirtualSize > fmap->sect[ism->sidx].shdr.SizeOfRawData)
         {
-            FIXME("Section %ld: virtual (0x%x) > raw (0x%x) size - not supported\n",
+            FIXME("Section %Id: virtual (0x%lx) > raw (0x%lx) size - not supported\n",
                   ism->sidx, fmap->sect[ism->sidx].shdr.Misc.VirtualSize,
                   fmap->sect[ism->sidx].shdr.SizeOfRawData);
             return IMAGE_NO_MAP;
@@ -407,7 +407,7 @@ static BOOL pe_locate_with_coff_symbol_table(struct module* module)
                     sym->u.var.kind == loc_absolute &&
                     !strcmp(sym->hash_elt.name, name))
                 {
-                    TRACE("Changing absolute address for %d.%s: %lx -> %s\n",
+                    TRACE("Changing absolute address for %d.%s: %Ix -> %s\n",
                           isym->SectionNumber, name, sym->u.var.offset,
                           wine_dbgstr_longlong(module->module.BaseOfImage +
                                                fmap->u.pe.sect[isym->SectionNumber - 1].shdr.VirtualAddress +
@@ -715,7 +715,7 @@ static BOOL pe_load_export_debug_info(const struct process* pcs, struct module* 
                 for (j = 0; j < exports->NumberOfNames; j++)
                     if ((ordinals[j] == i) && names[j]) break;
                 if (j < exports->NumberOfNames) continue;
-                snprintf(buffer, sizeof(buffer), "%d", i + exports->Base);
+                snprintf(buffer, sizeof(buffer), "%ld", i + exports->Base);
                 symt_new_public(module, NULL, buffer, FALSE, base + functions[i], 1);
             }
         }

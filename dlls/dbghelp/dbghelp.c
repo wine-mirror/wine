@@ -137,11 +137,11 @@ const char* wine_dbgstr_addr(const ADDRESS64* addr)
     case AddrModeFlat:
         return wine_dbg_sprintf("flat<%s>", wine_dbgstr_longlong(addr->Offset));
     case AddrMode1616:
-        return wine_dbg_sprintf("1616<%04x:%04x>", addr->Segment, (DWORD)addr->Offset);
+        return wine_dbg_sprintf("1616<%04x:%04lx>", addr->Segment, (DWORD)addr->Offset);
     case AddrMode1632:
-        return wine_dbg_sprintf("1632<%04x:%08x>", addr->Segment, (DWORD)addr->Offset);
+        return wine_dbg_sprintf("1632<%04x:%08lx>", addr->Segment, (DWORD)addr->Offset);
     case AddrModeReal:
-        return wine_dbg_sprintf("real<%04x:%04x>", addr->Segment, (DWORD)addr->Offset);
+        return wine_dbg_sprintf("real<%04x:%04lx>", addr->Segment, (DWORD)addr->Offset);
     default:
         return "unknown";
     }
@@ -409,9 +409,9 @@ static BOOL check_live_target(struct process* pcs, BOOL wow64, BOOL child_wow64)
 
     if (!base) return FALSE;
 
-    TRACE("got debug info address %#lx from PEB %p\n", base, pbi.PebBaseAddress);
+    TRACE("got debug info address %#Ix from PEB %p\n", base, pbi.PebBaseAddress);
     if (!elf_read_wine_loader_dbg_info(pcs, base) && !macho_read_wine_loader_dbg_info(pcs, base))
-        WARN("couldn't load process debug info at %#lx\n", base);
+        WARN("couldn't load process debug info at %#Ix\n", base);
     return TRUE;
 }
 
@@ -688,7 +688,7 @@ BOOL WINAPI SymSetScopeFromIndex(HANDLE hProcess, ULONG64 addr, DWORD index)
     struct module_pair pair;
     struct symt* sym;
 
-    TRACE("(%p %#I64x %u)\n", hProcess, addr, index);
+    TRACE("(%p %#I64x %lu)\n", hProcess, addr, index);
 
     if (!module_init_pair(&pair, hProcess, addr)) return FALSE;
     sym = symt_index2ptr(pair.effective, index);
@@ -708,7 +708,7 @@ BOOL WINAPI SymSetScopeFromInlineContext(HANDLE hProcess, ULONG64 addr, DWORD in
     struct module_pair pair;
     struct symt_inlinesite* inlined;
 
-    TRACE("(%p %I64x %x)\n", hProcess, addr, inlinectx);
+    TRACE("(%p %I64x %lx)\n", hProcess, addr, inlinectx);
 
     switch (IFC_MODE(inlinectx))
     {
@@ -770,7 +770,7 @@ static BOOL CALLBACK reg_cb64to32(HANDLE hProcess, ULONG action, ULONG64 data, U
     case CBA_EVENT:
     case CBA_READ_MEMORY:
     default:
-        FIXME("No mapping for action %u\n", action);
+        FIXME("No mapping for action %lu\n", action);
         return FALSE;
     }
     return pcs->reg_cb32(hProcess, action, data32, (PVOID)(DWORD_PTR)user);
@@ -783,7 +783,7 @@ BOOL pcs_callback(const struct process* pcs, ULONG action, void* data)
 {
     IMAGEHLP_DEFERRED_SYMBOL_LOAD64 idsl;
 
-    TRACE("%p %u %p\n", pcs, action, data);
+    TRACE("%p %lu %p\n", pcs, action, data);
 
     if (!pcs->reg_cb) return FALSE;
     if (!pcs->reg_is_unicode)
@@ -815,7 +815,7 @@ BOOL pcs_callback(const struct process* pcs, ULONG action, void* data)
         case CBA_EVENT:
         case CBA_READ_MEMORY:
         default:
-            FIXME("No mapping for action %u\n", action);
+            FIXME("No mapping for action %lu\n", action);
             return FALSE;
         }
     }

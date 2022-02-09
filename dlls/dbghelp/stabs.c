@@ -255,7 +255,7 @@ static struct symt** stabs_find_ref(LONG_PTR filenr, LONG_PTR subnr)
 	}
         ret = &idef->vector[subnr];
     }
-    TRACE("(%ld,%ld) => %p (%p)\n", filenr, subnr, ret, *ret);
+    TRACE("(%Id,%Id) => %p (%p)\n", filenr, subnr, ret, *ret);
     return ret;
 }
 
@@ -974,7 +974,7 @@ static int stabs_pts_read_type_def(struct ParseTypedefData* ptd, const char* typ
 
     *stabs_find_ref(filenr1, subnr1) = *ret_dt = new_dt;
 
-    TRACE("Adding (%ld,%ld) %s\n", filenr1, subnr1, debugstr_a(typename));
+    TRACE("Adding (%Id,%Id) %s\n", filenr1, subnr1, debugstr_a(typename));
 
     return 0;
 }
@@ -1449,7 +1449,7 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
                 case 35:
                 case 36: loc.reg = CV_REG_MM0 + n_value - 29; break;
                 default:
-                    FIXME("Unknown register value (%lu)\n", (ULONG_PTR)n_value);
+                    FIXME("Unknown register value (%Iu)\n", (ULONG_PTR)n_value);
                     loc.reg = CV_REG_NONE;
                     break;
                 }
@@ -1609,7 +1609,7 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
 	case N_EXCL:
             if (stabs_add_include(stabs_find_include(ptr, n_value)) < 0)
             {
-                ERR("Excluded header not found (%s,%ld)\n", ptr, (ULONG_PTR)n_value);
+                ERR("Excluded header not found (%s,%Id)\n", ptr, (ULONG_PTR)n_value);
                 module_reset_debug_info(module);
                 ret = FALSE;
                 goto done;
@@ -1657,7 +1657,7 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
             break;
         }
         stabbuff[0] = '\0';
-        TRACE("0x%02x %lx %s\n",
+        TRACE("0x%02x %Ix %s\n",
               stab_ptr->n_type, (ULONG_PTR)n_value, debugstr_a(strs + stab_ptr->n_strx));
     }
     module->module.SymType = SymDia;

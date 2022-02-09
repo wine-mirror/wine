@@ -693,7 +693,7 @@ static struct symt* codeview_add_type_array(struct codeview_type_parse* ctp,
     if (symt_get_info(ctp->module, elem, TI_GET_LENGTH, &elem_size) && elem_size)
     {
         if (arr_len % (DWORD)elem_size)
-            FIXME("array size should be a multiple of element size %u %u\n", arr_len, (DWORD)elem_size);
+            FIXME("array size should be a multiple of element size %u %lu\n", arr_len, (DWORD)elem_size);
         count = arr_len / (unsigned)elem_size;
     }
     return &symt_new_array(ctp->module, 0, count, elem, index)->symt;
@@ -1465,7 +1465,7 @@ static void codeview_snarf_linetab(const struct msc_debug_info* msc_dbg, const B
                     /* FIXME: at least labels support line numbers */
                     if (!symt_check_tag(&func->symt, SymTagFunction) && !symt_check_tag(&func->symt, SymTagInlineSite))
                     {
-                        WARN("--not a func at %04x:%08x %lx tag=%d\n",
+                        WARN("--not a func at %04x:%08x %Ix tag=%d\n",
                              ltb->seg, ltb->offsets[k], addr, func ? func->symt.tag : -1);
                         func = NULL;
                         break;
@@ -1871,7 +1871,7 @@ static BOOL cv_dbgsubsect_find_inlinee(const struct msc_debug_info* msc_dbg,
             }
             break;
         default:
-            FIXME("Unknown signature %x in INLINEELINES subsection\n", *(DWORD*)CV_RECORD_AFTER(hdr));
+            FIXME("Unknown signature %lx in INLINEELINES subsection\n", *(DWORD*)CV_RECORD_AFTER(hdr));
             break;
         }
     }
@@ -3069,7 +3069,7 @@ static BOOL pdb_init_type_parse(const struct msc_debug_info* msc_dbg,
     case 20040203:      /* VC 8.0 */
         break;
     default:
-        ERR("-Unknown type info version %d\n", types.version);
+        ERR("-Unknown type info version %ld\n", types.version);
         return FALSE;
     }
 
@@ -3150,7 +3150,7 @@ static BOOL pdb_init(const struct pdb_lookup* pdb_lookup, struct pdb_file_info* 
         case 19970604:      /* VC 6.0 */
             break;
         default:
-            ERR("-Unknown root block version %d\n", root->Version);
+            ERR("-Unknown root block version %ld\n", root->Version);
         }
         if (pdb_lookup->kind != PDB_JG)
         {
@@ -3162,12 +3162,12 @@ static BOOL pdb_init(const struct pdb_lookup* pdb_lookup, struct pdb_file_info* 
         pdb_file->u.jg.timestamp = root->TimeDateStamp;
         pdb_file->age = root->Age;
         if (root->TimeDateStamp == pdb_lookup->timestamp) (*matched)++;
-        else WARN("Found %s, but wrong signature: %08x %08x\n",
+        else WARN("Found %s, but wrong signature: %08lx %08lx\n",
                   pdb_lookup->filename, root->TimeDateStamp, pdb_lookup->timestamp);
         if (root->Age == pdb_lookup->age) (*matched)++;
-        else WARN("Found %s, but wrong age: %08x %08x\n",
+        else WARN("Found %s, but wrong age: %08lx %08lx\n",
                   pdb_lookup->filename, root->Age, pdb_lookup->age);
-        TRACE("found JG for %s: age=%x timestamp=%x\n",
+        TRACE("found JG for %s: age=%lx timestamp=%lx\n",
               pdb_lookup->filename, root->Age, root->TimeDateStamp);
         pdb_load_stream_name_table(pdb_file, &root->names[0], root->cbNames);
 
@@ -3193,7 +3193,7 @@ static BOOL pdb_init(const struct pdb_lookup* pdb_lookup, struct pdb_file_info* 
         case 20000404:
             break;
         default:
-            ERR("-Unknown root block version %d\n", root->Version);
+            ERR("-Unknown root block version %ld\n", root->Version);
         }
         pdb_file->kind = PDB_DS;
         pdb_file->u.ds.guid = root->guid;
@@ -3203,9 +3203,9 @@ static BOOL pdb_init(const struct pdb_lookup* pdb_lookup, struct pdb_file_info* 
                   pdb_lookup->filename, debugstr_guid(&root->guid),
                      debugstr_guid(&pdb_lookup->guid));
         if (root->Age == pdb_lookup->age) (*matched)++;
-        else WARN("Found %s, but wrong age: %08x %08x\n",
+        else WARN("Found %s, but wrong age: %08lx %08lx\n",
                   pdb_lookup->filename, root->Age, pdb_lookup->age);
-        TRACE("found DS for %s: age=%x guid=%s\n",
+        TRACE("found DS for %s: age=%lx guid=%s\n",
               pdb_lookup->filename, root->Age, debugstr_guid(&root->guid));
         pdb_load_stream_name_table(pdb_file, &root->names[0], root->cbNames);
 
@@ -3284,7 +3284,7 @@ static void pdb_process_symbol_imports(const struct process* pcs,
                 imp_pdb_lookup.kind = PDB_JG;
                 imp_pdb_lookup.timestamp = imp->TimeDateStamp;
                 imp_pdb_lookup.age = imp->Age;
-                TRACE("got for %s: age=%u ts=%x\n",
+                TRACE("got for %s: age=%lu ts=%lx\n",
                       imp->filename, imp->Age, imp->TimeDateStamp);
                 pdb_process_internal(pcs, msc_dbg, &imp_pdb_lookup, pdb_module_info, i);
             }
@@ -3359,7 +3359,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
         case 19990903:
             break;
         default:
-            ERR("-Unknown symbol info version %d %08x\n",
+            ERR("-Unknown symbol info version %ld %08lx\n",
                 symbols.version, symbols.version);
         }
 
@@ -3377,7 +3377,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
             pdb_file->fpoext_stream = psi->FPO_EXT;
             break;
         default:
-            FIXME("Unknown PDB_STREAM_INDEXES size (%d)\n", symbols.stream_index_size);
+            FIXME("Unknown PDB_STREAM_INDEXES size (%ld)\n", symbols.stream_index_size);
             break;
         }
         files_image = pdb_read_strings(pdb_file);
@@ -3673,7 +3673,7 @@ static BOOL  pev_binop(struct pevaluator* pev, char op)
     case '%': c = v1 % v2; break;
     default: return PEV_ERROR1(pev, "binop: unknown op (%c)", op);
     }
-    snprintf(res, sizeof(res), "%ld", c);
+    snprintf(res, sizeof(res), "%Id", c);
     pev_push(pev, res);
     return TRUE;
 }
@@ -3686,8 +3686,8 @@ static BOOL  pev_deref(struct pevaluator* pev)
 
     if (!pev_pop_val(pev, &v1)) return FALSE;
     if (!sw_read_mem(pev->csw, v1, &v2, pev->csw->cpu->word_size))
-        return PEV_ERROR1(pev, "deref: cannot read mem at %lx\n", v1);
-    snprintf(res, sizeof(res), "%ld", v2);
+        return PEV_ERROR1(pev, "deref: cannot read mem at %Ix\n", v1);
+    snprintf(res, sizeof(res), "%Id", v2);
     pev_push(pev, res);
     return TRUE;
 }
@@ -3802,7 +3802,7 @@ BOOL pdb_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip,
     if (!module_init_pair(&pair, csw->hProcess, ip)) return FALSE;
     if (!pair.effective->format_info[DFI_PDB]) return FALSE;
     pdb_info = pair.effective->format_info[DFI_PDB]->u.pdb_info;
-    TRACE("searching %lx => %lx\n", ip, ip - (DWORD_PTR)pair.effective->module.BaseOfImage);
+    TRACE("searching %Ix => %Ix\n", ip, ip - (DWORD_PTR)pair.effective->module.BaseOfImage);
     ip -= (DWORD_PTR)pair.effective->module.BaseOfImage;
 
     strbase = pdb_read_strings(&pdb_info->pdb_files[0]);
@@ -3817,7 +3817,7 @@ BOOL pdb_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip,
         {
             if (fpoext[i].start <= ip && ip < fpoext[i].start + fpoext[i].func_size)
             {
-                TRACE("\t%08x %08x %8x %8x %4x %4x %4x %08x %s\n",
+                TRACE("\t%08lx %08lx %8lx %8lx %4lx %4x %4x %08lx %s\n",
                       fpoext[i].start, fpoext[i].func_size, fpoext[i].locals_size,
                       fpoext[i].params_size, fpoext[i].maxstack_size, fpoext[i].prolog_size,
                       fpoext[i].savedregs_size, fpoext[i].flags,
@@ -3951,7 +3951,7 @@ static BOOL codeview_process_info(const struct process* pcs,
     {
         const OMFSignatureRSDS* rsds = (const OMFSignatureRSDS*)msc_dbg->root;
 
-        TRACE("Got RSDS type of PDB file: guid=%s age=%08x name=%s\n",
+        TRACE("Got RSDS type of PDB file: guid=%s age=%08lx name=%s\n",
               wine_dbgstr_guid(&rsds->guid), rsds->age, rsds->name);
         pdb_lookup.filename = rsds->name;
         pdb_lookup.kind = PDB_DS;
@@ -3961,7 +3961,7 @@ static BOOL codeview_process_info(const struct process* pcs,
         break;
     }
     default:
-        ERR("Unknown CODEVIEW signature %08x in module %s\n",
+        ERR("Unknown CODEVIEW signature %08lx in module %s\n",
             *signature, debugstr_w(msc_dbg->module->modulename));
         break;
     }

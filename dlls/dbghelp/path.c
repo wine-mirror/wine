@@ -389,7 +389,7 @@ BOOL WINAPI SymFindFileInPathW(HANDLE hProcess, PCWSTR searchPath, PCWSTR full_p
     WCHAR*              ptr;
     const WCHAR*        filename;
 
-    TRACE("(hProcess = %p, searchPath = %s, full_path = %s, id = %p, two = 0x%08x, three = 0x%08x, flags = 0x%08x, buffer = %p, cb = %p, user = %p)\n",
+    TRACE("(hProcess = %p, searchPath = %s, full_path = %s, id = %p, two = 0x%08lx, three = 0x%08lx, flags = 0x%08lx, buffer = %p, cb = %p, user = %p)\n",
           hProcess, debugstr_w(searchPath), debugstr_w(full_path),
           id, two, three, flags, buffer, cb, user);
 
@@ -617,7 +617,7 @@ BOOL path_find_symbol_file(const struct process* pcs, const struct module* modul
     const WCHAR*        filename;
     WCHAR*              searchPath = pcs->search_path;
 
-    TRACE("(pcs = %p, full_path = %s, guid = %s, dw1 = 0x%08x, dw2 = 0x%08x, buffer = %p)\n",
+    TRACE("(pcs = %p, full_path = %s, guid = %s, dw1 = 0x%08lx, dw2 = 0x%08lx, buffer = %p)\n",
           pcs, debugstr_a(full_path), debugstr_guid(guid), dw1, dw2, buffer);
 
     mf.guid = guid;
