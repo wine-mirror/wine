@@ -346,19 +346,14 @@ BOOL WINAPI DECLSPEC_HOTPATCH AdjustWindowRectExForDpi( LPRECT rect, DWORD style
  *
  * Handle a WM_NCCALCSIZE message. Called from DefWindowProc().
  */
-LRESULT NC_HandleNCCalcSize( HWND hwnd, WPARAM wparam, RECT *winRect )
+void NC_HandleNCCalcSize( HWND hwnd, WPARAM wparam, RECT *winRect )
 {
     RECT tmpRect = { 0, 0, 0, 0 };
-    LRESULT result = 0;
-    LONG cls_style = GetClassLongW(hwnd, GCL_STYLE);
     LONG style = GetWindowLongW( hwnd, GWL_STYLE );
     LONG exStyle = GetWindowLongW( hwnd, GWL_EXSTYLE );
 
     if (winRect == NULL)
-        return 0;
-
-    if (cls_style & CS_VREDRAW) result |= WVR_VREDRAW;
-    if (cls_style & CS_HREDRAW) result |= WVR_HREDRAW;
+        return;
 
     if (!(style & WS_MINIMIZE))
     {
@@ -413,7 +408,6 @@ LRESULT NC_HandleNCCalcSize( HWND hwnd, WPARAM wparam, RECT *winRect )
         winRect->right = winRect->left;
         winRect->bottom = winRect->top;
     }
-    return result;
 }
 
 

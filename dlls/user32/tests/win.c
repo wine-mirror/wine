@@ -1475,7 +1475,6 @@ static void test_nonclient_area(HWND hwnd)
 
     rc = rc_window;
     ret = DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rc);
-todo_wine_if(ret != 0)
     ok(!ret, "got %08lx\n", ret);
     MapWindowPoints(0, hwnd, (LPPOINT)&rc, 2);
     ok(EqualRect(&rc, &rc_client),
@@ -1494,7 +1493,6 @@ todo_wine_if(ret != 0)
 
     rc = rc_window;
     ret = DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rc);
-todo_wine_if(ret != 0)
     ok(!ret, "got %08lx\n", ret);
     MapWindowPoints(0, hwnd, (LPPOINT)&rc, 2);
     ok(EqualRect(&rc, &rc_client),
@@ -12966,25 +12964,21 @@ static void test_WM_NCCALCSIZE(void)
     params.lppos = &winpos;
 
     ret = SendMessageW(hwnd, WM_NCCALCSIZE, TRUE, (LPARAM)&params);
-todo_wine
     ok(!ret, "got %08lx\n", ret);
     ok(EqualRect(&params.rgrc[0], &client_rect), "got %s\n", wine_dbgstr_rect(&params.rgrc[0]));
 
     params.rgrc[0] = window_rect;
     ret = DefWindowProcA(hwnd, WM_NCCALCSIZE, TRUE, (LPARAM)&params);
-todo_wine
     ok(!ret, "got %08lx\n", ret);
     ok(EqualRect(&params.rgrc[0], &client_rect), "got %s\n", wine_dbgstr_rect(&params.rgrc[0]));
 
     GetWindowRect(hwnd, &window_rect);
     ret = SendMessageW(hwnd, WM_NCCALCSIZE, FALSE, (LPARAM)&window_rect);
-todo_wine
     ok(!ret, "got %08lx\n", ret);
     ok(EqualRect(&window_rect, &client_rect), "got %s\n", wine_dbgstr_rect(&window_rect));
 
     GetWindowRect(hwnd, &window_rect);
     ret = DefWindowProcA(hwnd, WM_NCCALCSIZE, FALSE, (LPARAM)&window_rect);
-todo_wine
     ok(!ret, "got %08lx\n", ret);
     ok(EqualRect(&window_rect, &client_rect), "got %s\n", wine_dbgstr_rect(&window_rect));
 
