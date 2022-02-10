@@ -456,6 +456,7 @@ static bool wined3d_context_vk_create_slab_bo(struct wined3d_context_vk *context
     *bo = slab->bo;
     bo->memory = NULL;
     bo->slab = slab;
+    bo->b.map_ptr = NULL;
     bo->b.buffer_offset = idx * object_size;
     bo->b.memory_offset = slab->bo.b.memory_offset + bo->b.buffer_offset;
     bo->size = size;
