@@ -100,7 +100,7 @@ static ULONG WINAPI dpvserver_AddRef(IDirectPlayVoiceServer *iface)
     IDirectPlayVoiceServerImpl *This = impl_from_IDirectPlayVoiceServer(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%u\n", This, ref);
+    TRACE("(%p) ref=%lu\n", This, ref);
 
     return ref;
 }
@@ -110,7 +110,7 @@ static ULONG WINAPI dpvserver_Release(IDirectPlayVoiceServer *iface)
     IDirectPlayVoiceServerImpl *This = impl_from_IDirectPlayVoiceServer(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%u\n", This, ref);
+    TRACE("(%p) ref=%lu\n", This, ref);
 
     if (!ref)
     {
@@ -123,21 +123,21 @@ static HRESULT WINAPI dpvserver_Initialize(IDirectPlayVoiceServer *iface, IUnkno
                                 void *pUserContext, DWORD *lpdwMessageMask, DWORD dwMessageMaskElements)
 {
     IDirectPlayVoiceServerImpl *This = impl_from_IDirectPlayVoiceServer(iface);
-    FIXME("%p %p %p %p %p %d\n", This, lpVoid, pMessageHandler, pUserContext,lpdwMessageMask, dwMessageMaskElements);
+    FIXME("%p %p %p %p %p %ld\n", This, lpVoid, pMessageHandler, pUserContext,lpdwMessageMask, dwMessageMaskElements);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI dpvserver_StartSession(IDirectPlayVoiceServer *iface, PDVSESSIONDESC pSessionDesc, DWORD dwFlags)
 {
     IDirectPlayVoiceServerImpl *This = impl_from_IDirectPlayVoiceServer(iface);
-    FIXME("%p %p %d\n", This, pSessionDesc, dwFlags);
+    FIXME("%p %p %ld\n", This, pSessionDesc, dwFlags);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI dpvserver_StopSession(IDirectPlayVoiceServer *iface, DWORD dwFlags)
 {
     IDirectPlayVoiceServerImpl *This = impl_from_IDirectPlayVoiceServer(iface);
-    FIXME("%p %d\n", This, dwFlags);
+    FIXME("%p %ld\n", This, dwFlags);
     return E_NOTIMPL;
 }
 
@@ -166,7 +166,7 @@ static HRESULT WINAPI dpvserver_GetCompressionTypes(IDirectPlayVoiceServer *ifac
                                 DWORD *pdwNumElements, DWORD dwFlags)
 {
     IDirectPlayVoiceServerImpl *This = impl_from_IDirectPlayVoiceServer(iface);
-    FIXME("%p %p %p %p %d semi-stub\n", This, pData, pdwDataSize, pdwNumElements, dwFlags);
+    FIXME("%p %p %p %p %ld semi-stub\n", This, pData, pdwDataSize, pdwNumElements, dwFlags);
     return DPVOICE_GetCompressionTypes(pData, pdwDataSize, pdwNumElements, dwFlags);
 }
 
@@ -174,7 +174,7 @@ static HRESULT WINAPI dpvserver_SetTransmitTargets(IDirectPlayVoiceServer *iface
                                 DWORD dwNumTargets, DWORD dwFlags)
 {
     IDirectPlayVoiceServerImpl *This = impl_from_IDirectPlayVoiceServer(iface);
-    FIXME("%p %d %p %d %d\n", This, dvSource, pdvIDTargets, dwNumTargets, dwFlags);
+    FIXME("%p %ld %p %ld %ld\n", This, dvSource, pdvIDTargets, dwNumTargets, dwFlags);
     return E_NOTIMPL;
 }
 
@@ -182,14 +182,14 @@ static HRESULT WINAPI dpvserver_GetTransmitTargets(IDirectPlayVoiceServer *iface
                                 DWORD *pdwNumTargets, DWORD dwFlags)
 {
     IDirectPlayVoiceServerImpl *This = impl_from_IDirectPlayVoiceServer(iface);
-    FIXME("%p %d %p %p %d\n", This, dvSource, pdvIDTargets, pdwNumTargets, dwFlags);
+    FIXME("%p %ld %p %p %ld\n", This, dvSource, pdvIDTargets, pdwNumTargets, dwFlags);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI dpvserver_SetNotifyMask(IDirectPlayVoiceServer *iface, DWORD *pdwMessageMask, DWORD dwMessageMaskElements)
 {
     IDirectPlayVoiceServerImpl *This = impl_from_IDirectPlayVoiceServer(iface);
-    FIXME("%p %p %d\n", This, pdwMessageMask, dwMessageMaskElements);
+    FIXME("%p %p %ld\n", This, pdwMessageMask, dwMessageMaskElements);
     return E_NOTIMPL;
 }
 

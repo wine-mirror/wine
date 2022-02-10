@@ -74,7 +74,7 @@ static ULONG WINAPI dpvclient_AddRef(IDirectPlayVoiceClient *iface)
     IDirectPlayVoiceClientImpl *This = impl_from_IDirectPlayVoiceClient(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%u\n", This, ref);
+    TRACE("(%p) ref=%lu\n", This, ref);
 
     return ref;
 }
@@ -84,7 +84,7 @@ static ULONG WINAPI dpvclient_Release(IDirectPlayVoiceClient *iface)
     IDirectPlayVoiceClientImpl *This = impl_from_IDirectPlayVoiceClient(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%u\n", This, ref);
+    TRACE("(%p) ref=%lu\n", This, ref);
 
     if (!ref)
     {
@@ -97,7 +97,7 @@ static HRESULT WINAPI dpvclient_Initialize(IDirectPlayVoiceClient *iface,LPUNKNO
                                 void *pUserContext, DWORD *pdwMessageMask, DWORD dwMessageMaskElements)
 {
     IDirectPlayVoiceClientImpl *This = impl_from_IDirectPlayVoiceClient(iface);
-    FIXME("%p %p %p %p %p %d\n", This, pVoid, pMessageHandler, pUserContext,pdwMessageMask, dwMessageMaskElements);
+    FIXME("%p %p %p %p %p %ld\n", This, pVoid, pMessageHandler, pUserContext,pdwMessageMask, dwMessageMaskElements);
     return E_NOTIMPL;
 }
 
@@ -105,14 +105,14 @@ static HRESULT WINAPI dpvclient_Connect(IDirectPlayVoiceClient *iface, PDVSOUNDD
                                 PDVCLIENTCONFIG pdvClientConfig, DWORD dwFlags)
 {
     IDirectPlayVoiceClientImpl *This = impl_from_IDirectPlayVoiceClient(iface);
-    FIXME("%p %p %p %d\n", This, pSoundDeviceConfig, pdvClientConfig, dwFlags);
+    FIXME("%p %p %p %ld\n", This, pSoundDeviceConfig, pdvClientConfig, dwFlags);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI dpvclient_Disconnect(IDirectPlayVoiceClient *iface, DWORD dwFlags)
 {
     IDirectPlayVoiceClientImpl *This = impl_from_IDirectPlayVoiceClient(iface);
-    FIXME("%p %d\n", This, dwFlags);
+    FIXME("%p %ld\n", This, dwFlags);
     return E_NOTIMPL;
 }
 
@@ -148,7 +148,7 @@ static HRESULT WINAPI dpvclient_GetCompressionTypes(IDirectPlayVoiceClient *ifac
                                 DWORD *pdwDataSize, DWORD *pdwNumElements, DWORD dwFlags)
 {
     IDirectPlayVoiceClientImpl *This = impl_from_IDirectPlayVoiceClient(iface);
-    FIXME("%p %p %p %p %d semi-stub\n", This, pData, pdwDataSize, pdwNumElements, dwFlags);
+    FIXME("%p %p %p %p %ld semi-stub\n", This, pData, pdwDataSize, pdwNumElements, dwFlags);
     return DPVOICE_GetCompressionTypes(pData, pdwDataSize, pdwNumElements, dwFlags);
 }
 
@@ -156,7 +156,7 @@ static HRESULT WINAPI dpvclient_SetTransmitTargets(IDirectPlayVoiceClient *iface
                                 DWORD dwNumTargets, DWORD dwFlags)
 {
     IDirectPlayVoiceClientImpl *This = impl_from_IDirectPlayVoiceClient(iface);
-    FIXME("%p %p %d %d\n", This, pdvIDTargets, dwNumTargets, dwFlags);
+    FIXME("%p %p %ld %ld\n", This, pdvIDTargets, dwNumTargets, dwFlags);
     return E_NOTIMPL;
 }
 
@@ -164,7 +164,7 @@ static HRESULT WINAPI dpvclient_GetTransmitTargets(IDirectPlayVoiceClient *iface
                                 DWORD *pdwNumTargets, DWORD dwFlags)
 {
     IDirectPlayVoiceClientImpl *This = impl_from_IDirectPlayVoiceClient(iface);
-    FIXME("%p %p %d\n", This, pdwNumTargets, dwFlags);
+    FIXME("%p %p %ld\n", This, pdwNumTargets, dwFlags);
     return E_NOTIMPL;
 }
 
@@ -173,21 +173,21 @@ static HRESULT WINAPI dpvclient_Create3DSoundBuffer(IDirectPlayVoiceClient *ifac
                                 LPDIRECTSOUND3DBUFFER *lpUserBuffer)
 {
     IDirectPlayVoiceClientImpl *This = impl_from_IDirectPlayVoiceClient(iface);
-    FIXME("%p %d %p %d %d %p\n", This, dvID, lpdsSourceBuffer, dwPriority, dwFlags, lpUserBuffer);
+    FIXME("%p %ld %p %ld %ld %p\n", This, dvID, lpdsSourceBuffer, dwPriority, dwFlags, lpUserBuffer);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI dpvclient_Delete3DSoundBuffer(IDirectPlayVoiceClient *iface, DVID dvID, LPDIRECTSOUND3DBUFFER *lpUserBuffer)
 {
     IDirectPlayVoiceClientImpl *This = impl_from_IDirectPlayVoiceClient(iface);
-    FIXME("%p %d %p\n", This, dvID, lpUserBuffer);
+    FIXME("%p %ld %p\n", This, dvID, lpUserBuffer);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI dpvclient_SetNotifyMask(IDirectPlayVoiceClient *iface, DWORD *pdwMessageMask, DWORD dwMessageMaskElements)
 {
     IDirectPlayVoiceClientImpl *This = impl_from_IDirectPlayVoiceClient(iface);
-    FIXME("%p %p %d\n", This, pdwMessageMask, dwMessageMaskElements);
+    FIXME("%p %p %ld\n", This, pdwMessageMask, dwMessageMaskElements);
     return E_NOTIMPL;
 }
 
@@ -261,7 +261,7 @@ static ULONG WINAPI dpvtest_AddRef(IDirectPlayVoiceTest *iface)
     IDirectPlayVoiceTestImpl *This = impl_from_IDirectPlayVoiceTest(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%u\n", This, ref);
+    TRACE("(%p) ref=%lu\n", This, ref);
 
     return ref;
 }
@@ -271,7 +271,7 @@ static ULONG WINAPI dpvtest_Release(IDirectPlayVoiceTest *iface)
     IDirectPlayVoiceTestImpl *This = impl_from_IDirectPlayVoiceTest(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%u\n", This, ref);
+    TRACE("(%p) ref=%lu\n", This, ref);
 
     if (!ref)
     {
@@ -284,7 +284,7 @@ static HRESULT WINAPI dpvtest_CheckAudioSetup(IDirectPlayVoiceTest *iface, const
                      HWND hwndParent, DWORD dwFlags)
 {
     IDirectPlayVoiceTestImpl *This = impl_from_IDirectPlayVoiceTest(iface);
-    FIXME("%p %s %s %p %d\n", This, debugstr_guid(pguidPlaybackDevice),
+    FIXME("%p %s %s %p %ld\n", This, debugstr_guid(pguidPlaybackDevice),
             debugstr_guid(pguidCaptureDevice), hwndParent, dwFlags);
     return E_NOTIMPL;
 }
