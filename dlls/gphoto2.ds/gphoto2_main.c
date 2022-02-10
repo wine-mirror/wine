@@ -481,7 +481,7 @@ unixlib_handle_t gphoto2_handle = 0;
 
 BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    TRACE("%p,%x,%p\n", hinstDLL, fdwReason, lpvReserved);
+    TRACE("%p,%lx,%p\n", hinstDLL, fdwReason, lpvReserved);
 
     switch (fdwReason)
     {
@@ -943,7 +943,7 @@ DS_Entry ( pTW_IDENTITY pOrigin,
 {
     TW_UINT16 twRC = TWRC_SUCCESS;  /* Return Code */
 
-    TRACE("(DG=%d DAT=%d MSG=%d)\n", DG, DAT, MSG);
+    TRACE("(DG=%ld DAT=%d MSG=%d)\n", DG, DAT, MSG);
 
     switch (DG)
     {
