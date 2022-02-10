@@ -85,7 +85,7 @@ static ULONG WINAPI dispspec_Release(IDsDisplaySpecifier *iface)
 static HRESULT WINAPI dispspec_SetServer(IDsDisplaySpecifier *iface, LPCWSTR server, LPCWSTR user,
                                          LPCWSTR password, DWORD flags)
 {
-    FIXME("%p,%s,%s,%p,%08x: stub\n", iface, debugstr_w(server), debugstr_w(user), password, flags);
+    FIXME("%p,%s,%s,%p,%08lx: stub\n", iface, debugstr_w(server), debugstr_w(user), password, flags);
     return E_NOTIMPL;
 }
 
@@ -105,14 +105,14 @@ static HRESULT WINAPI dispspec_GetDisplaySpecifier(IDsDisplaySpecifier *iface, L
 static HRESULT WINAPI dispspec_GetIconLocation(IDsDisplaySpecifier *iface, LPCWSTR object,
                                                DWORD flags, LPWSTR buffer, INT size, INT *id)
 {
-    FIXME("%p,%s,%08x,%p,%d,%p: stub\n", iface, debugstr_w(object), flags, buffer, size, id);
+    FIXME("%p,%s,%08lx,%p,%d,%p: stub\n", iface, debugstr_w(object), flags, buffer, size, id);
     return E_NOTIMPL;
 }
 
 static HICON WINAPI dispspec_GetIcon(IDsDisplaySpecifier *iface, LPCWSTR object,
                                      DWORD flags, INT cx, INT cy)
 {
-    FIXME("%p,%s,%08x,%dx%d: stub\n", iface, debugstr_w(object), flags, cx, cy);
+    FIXME("%p,%s,%08lx,%dx%d: stub\n", iface, debugstr_w(object), flags, cx, cy);
     return 0;
 }
 
@@ -133,7 +133,7 @@ static HRESULT WINAPI dispspec_GetFriendlyAttributeName(IDsDisplaySpecifier *ifa
 static BOOL WINAPI dispspec_IsClassContainer(IDsDisplaySpecifier *iface, LPCWSTR object,
                                              LPCWSTR path, DWORD flags)
 {
-    FIXME("%p,%s,%s,%08x: stub\n", iface, debugstr_w(object), debugstr_w(path), flags);
+    FIXME("%p,%s,%s,%08lx: stub\n", iface, debugstr_w(object), debugstr_w(path), flags);
     return FALSE;
 }
 
@@ -147,7 +147,7 @@ static HRESULT WINAPI dispspec_GetClassCreationInfo(IDsDisplaySpecifier *iface, 
 static HRESULT WINAPI dispspec_EnumClassAttributes(IDsDisplaySpecifier *iface, LPCWSTR object,
                                                    LPDSENUMATTRIBUTES cb, LPARAM param)
 {
-    FIXME("%p,%s,%p,%08lx: stub\n", iface, debugstr_w(object), cb, param);
+    FIXME("%p,%s,%p,%08Ix: stub\n", iface, debugstr_w(object), cb, param);
     return E_NOTIMPL;
 }
 
@@ -237,7 +237,7 @@ static ULONG WINAPI factory_AddRef(IClassFactory *iface)
     class_factory *factory = impl_from_IClassFactory(iface);
     ULONG ref = InterlockedIncrement(&factory->ref);
 
-    TRACE("(%p) ref %u\n", iface, ref);
+    TRACE("(%p) ref %lu\n", iface, ref);
 
     return ref;
 }
@@ -247,7 +247,7 @@ static ULONG WINAPI factory_Release(IClassFactory *iface)
     class_factory *factory = impl_from_IClassFactory(iface);
     ULONG ref = InterlockedDecrement(&factory->ref);
 
-    TRACE("(%p) ref %u\n", iface, ref);
+    TRACE("(%p) ref %lu\n", iface, ref);
 
     if (!ref)
         heap_free(factory);
