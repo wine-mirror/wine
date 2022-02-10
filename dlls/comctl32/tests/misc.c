@@ -531,7 +531,8 @@ static const struct message wm_themechanged_paint_erase_seq[] =
 {
     {WM_THEMECHANGED, sent | wparam | lparam},
     {WM_PAINT, sent | wparam | lparam},
-    {WM_ERASEBKGND, sent | defwinproc},
+    /* TestBot w7u_2qxl VM occasionally doesn't send WM_ERASEBKGND, hence the 'optional' */
+    {WM_ERASEBKGND, sent | defwinproc | optional},
     {0},
 };
 
