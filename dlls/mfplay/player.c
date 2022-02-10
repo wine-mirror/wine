@@ -1047,8 +1047,8 @@ static HRESULT media_player_create_item_from_url(struct media_player *player,
     {
         *ret = NULL;
 
-        if (SUCCEEDED(hr = IMFSourceResolver_CreateObjectFromURL(player->resolver, url, MF_RESOLUTION_MEDIASOURCE,
-                player->propstore, &obj_type, &object)))
+        if (SUCCEEDED(hr = IMFSourceResolver_CreateObjectFromURL(player->resolver, url, MF_RESOLUTION_MEDIASOURCE
+                | MF_RESOLUTION_CONTENT_DOES_NOT_HAVE_TO_MATCH_EXTENSION_OR_MIME_TYPE, player->propstore, &obj_type, &object)))
         {
             hr = media_item_set_source(item, object);
             IUnknown_Release(object);
@@ -1066,8 +1066,9 @@ static HRESULT media_player_create_item_from_url(struct media_player *player,
     {
         if (ret) *ret = NULL;
 
-        hr = IMFSourceResolver_BeginCreateObjectFromURL(player->resolver, url, MF_RESOLUTION_MEDIASOURCE,
-            player->propstore, NULL, &player->resolver_callback, (IUnknown *)&item->IMFPMediaItem_iface);
+        hr = IMFSourceResolver_BeginCreateObjectFromURL(player->resolver, url, MF_RESOLUTION_MEDIASOURCE
+                | MF_RESOLUTION_CONTENT_DOES_NOT_HAVE_TO_MATCH_EXTENSION_OR_MIME_TYPE, player->propstore, NULL,
+                &player->resolver_callback, (IUnknown *)&item->IMFPMediaItem_iface);
 
         IMFPMediaItem_Release(&item->IMFPMediaItem_iface);
     }
@@ -1123,8 +1124,8 @@ static HRESULT media_player_create_item_from_object(struct media_player *player,
     if (sync)
     {
         if (stream)
-            hr = IMFSourceResolver_CreateObjectFromByteStream(player->resolver, stream, NULL,
-                    MF_RESOLUTION_MEDIASOURCE, player->propstore, &obj_type, &object);
+            hr = IMFSourceResolver_CreateObjectFromByteStream(player->resolver, stream, NULL, MF_RESOLUTION_MEDIASOURCE
+                    | MF_RESOLUTION_CONTENT_DOES_NOT_HAVE_TO_MATCH_EXTENSION_OR_MIME_TYPE, player->propstore, &obj_type, &object);
         else
             IUnknown_AddRef(object);
 
@@ -1145,8 +1146,9 @@ static HRESULT media_player_create_item_from_object(struct media_player *player,
     {
         if (stream)
         {
-            hr = IMFSourceResolver_BeginCreateObjectFromByteStream(player->resolver, stream, NULL, MF_RESOLUTION_MEDIASOURCE,
-                    player->propstore, NULL, &player->resolver_callback, (IUnknown *)&item->IMFPMediaItem_iface);
+            hr = IMFSourceResolver_BeginCreateObjectFromByteStream(player->resolver, stream, NULL, MF_RESOLUTION_MEDIASOURCE
+                    | MF_RESOLUTION_CONTENT_DOES_NOT_HAVE_TO_MATCH_EXTENSION_OR_MIME_TYPE, player->propstore, NULL,
+                    &player->resolver_callback, (IUnknown *)&item->IMFPMediaItem_iface);
         }
         else
         {
