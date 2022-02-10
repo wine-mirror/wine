@@ -2083,15 +2083,17 @@ struct wined3d_query_pool_vk
 
     struct list *free_list;
     VkQueryPool vk_query_pool;
+    VkEvent vk_event;
+
     uint32_t allocated[WINED3D_BITMAP_SIZE(WINED3D_QUERY_POOL_SIZE)];
     uint32_t completed[WINED3D_BITMAP_SIZE(WINED3D_QUERY_POOL_SIZE)];
 };
 
 bool wined3d_query_pool_vk_allocate_query(struct wined3d_query_pool_vk *pool_vk, size_t *idx) DECLSPEC_HIDDEN;
+void wined3d_query_pool_vk_mark_free(struct wined3d_context_vk *context_vk, struct wined3d_query_pool_vk *pool_vk,
+        uint32_t start, uint32_t count) DECLSPEC_HIDDEN;
 void wined3d_query_pool_vk_cleanup(struct wined3d_query_pool_vk *pool_vk,
         struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
-void wined3d_query_pool_vk_reset(struct wined3d_query_pool_vk *pool_vk, struct wined3d_context_vk *context_vk,
-        VkCommandBuffer vk_command_buffer) DECLSPEC_HIDDEN;
 bool wined3d_query_pool_vk_init(struct wined3d_query_pool_vk *pool_vk, struct wined3d_context_vk *context_vk,
         enum wined3d_query_type type, struct list *free_pools) DECLSPEC_HIDDEN;
 
@@ -2439,6 +2441,7 @@ enum wined3d_retired_object_type_vk
     WINED3D_RETIRED_BUFFER_VIEW_VK,
     WINED3D_RETIRED_IMAGE_VIEW_VK,
     WINED3D_RETIRED_SAMPLER_VK,
+    WINED3D_RETIRED_QUERY_POOL_VK,
 };
 
 struct wined3d_retired_object_vk
@@ -2461,6 +2464,12 @@ struct wined3d_retired_object_vk
         VkBufferView vk_buffer_view;
         VkImageView vk_image_view;
         VkSampler vk_sampler;
+        struct
+        {
+            struct wined3d_query_pool_vk *pool_vk;
+            uint32_t start;
+            uint32_t count;
+        } queries;
     } u;
     uint64_t command_buffer_id;
 };
