@@ -7695,7 +7695,7 @@ static void test_ShowWindow_owned(HWND hwndMain)
 {
     MONITORINFO mon_info = {sizeof(mon_info)};
     RECT rect, orig, expect, nc;
-    BOOL ret;
+    LPARAM ret;
     HWND hwnd, hwnd2;
     LONG style;
 
@@ -7722,7 +7722,7 @@ static void test_ShowWindow_owned(HWND hwndMain)
        wine_dbgstr_rect(&orig), wine_dbgstr_rect(&rect));
 
     ret = ShowWindow(hwnd, SW_SHOW);
-    ok(!ret, "wrong ret %d\n", ret);
+    ok(!ret, "wrong ret %lu\n", ret);
     style = GetWindowLongA(hwnd, GWL_STYLE);
     ok(!(style & WS_DISABLED), "window should not be disabled\n");
     ok(style & WS_VISIBLE, "window should be visible\n");
@@ -7733,7 +7733,7 @@ static void test_ShowWindow_owned(HWND hwndMain)
        wine_dbgstr_rect(&orig), wine_dbgstr_rect(&rect));
 
     ret = ShowWindow(hwnd, SW_MINIMIZE);
-    ok(ret, "wrong ret %d\n", ret);
+    ok(ret, "wrong ret %lu\n", ret);
     style = GetWindowLongA(hwnd, GWL_STYLE);
     ok(!(style & WS_DISABLED), "window should not be disabled\n");
     ok(style & WS_VISIBLE, "window should be visible\n");
@@ -7747,7 +7747,7 @@ static void test_ShowWindow_owned(HWND hwndMain)
        wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
     /* shouldn't be able to resize minimized windows */
     ret = SetWindowPos(hwnd, 0, 0, 0, 200, 200, SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER);
-    ok(ret, "wrong ret %d\n", ret);
+    ok(ret, "wrong ret %lu\n", ret);
     GetWindowRect(hwnd, &rect);
     todo_wine
     ok(EqualRect(&expect, &rect), "expected %s, got %s\n",
@@ -7763,7 +7763,7 @@ static void test_ShowWindow_owned(HWND hwndMain)
      * on top of each other) */
     OffsetRect(&expect, GetSystemMetrics(SM_CXMINIMIZED), 0);
     ret = ShowWindow(hwnd2, SW_MINIMIZE);
-    ok(ret, "wrong ret %d\n", ret);
+    ok(ret, "wrong ret %lu\n", ret);
     style = GetWindowLongA(hwnd2, GWL_STYLE);
     ok(!(style & WS_DISABLED), "window should not be disabled\n");
     ok(style & WS_VISIBLE, "window should be visible\n");
@@ -7774,8 +7774,8 @@ static void test_ShowWindow_owned(HWND hwndMain)
     ok(EqualRect(&expect, &rect), "expected %s, got %s\n",
        wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
 
-    ShowWindow(hwnd, SW_RESTORE);
-    ok(ret, "wrong ret %d\n", ret);
+    ret = ShowWindow(hwnd, SW_RESTORE);
+    ok(ret, "wrong ret %lu\n", ret);
     style = GetWindowLongA(hwnd, GWL_STYLE);
     ok(!(style & WS_DISABLED), "window should not be disabled\n");
     ok(style & WS_VISIBLE, "window should be visible\n");
@@ -7785,8 +7785,8 @@ static void test_ShowWindow_owned(HWND hwndMain)
     ok(EqualRect(&orig, &rect), "expected %s, got %s\n",
        wine_dbgstr_rect(&orig), wine_dbgstr_rect(&rect));
 
-    ShowWindow(hwnd, SW_MAXIMIZE);
-    ok(ret, "wrong ret %d\n", ret);
+    ret = ShowWindow(hwnd, SW_MAXIMIZE);
+    ok(ret, "wrong ret %lu\n", ret);
     style = GetWindowLongA(hwnd, GWL_STYLE);
     ok(!(style & WS_DISABLED), "window should not be disabled\n");
     ok(style & WS_VISIBLE, "window should be visible\n");
@@ -7800,14 +7800,14 @@ static void test_ShowWindow_owned(HWND hwndMain)
        wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
     /* maximized windows can be resized */
     ret = SetWindowPos(hwnd, 0, 300, 300, 200, 200, SWP_NOACTIVATE | SWP_NOZORDER);
-    ok(ret, "wrong ret %d\n", ret);
+    ok(ret, "wrong ret %lu\n", ret);
     GetWindowRect(hwnd, &rect);
     SetRect(&expect, 300, 300, 500, 500);
     ok(EqualRect(&expect, &rect), "expected %s, got %s\n",
        wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
 
-    ShowWindow(hwnd, SW_RESTORE);
-    ok(ret, "wrong ret %d\n", ret);
+    ret = ShowWindow(hwnd, SW_RESTORE);
+    ok(ret, "wrong ret %lu\n", ret);
     style = GetWindowLongA(hwnd, GWL_STYLE);
     ok(!(style & WS_DISABLED), "window should not be disabled\n");
     ok(style & WS_VISIBLE, "window should be visible\n");
@@ -7824,7 +7824,7 @@ static void test_ShowWindow_owned(HWND hwndMain)
 static void test_ShowWindow_child(HWND hwndMain)
 {
     RECT rect, orig, expect, nc;
-    BOOL ret;
+    LPARAM ret;
     HWND hwnd, hwnd2;
     LONG style;
     POINT pt = {0};
@@ -7854,7 +7854,7 @@ static void test_ShowWindow_child(HWND hwndMain)
        wine_dbgstr_rect(&orig), wine_dbgstr_rect(&rect));
 
     ret = ShowWindow(hwnd, SW_SHOW);
-    ok(!ret, "wrong ret %d\n", ret);
+    ok(!ret, "wrong ret %lu\n", ret);
     style = GetWindowLongA(hwnd, GWL_STYLE);
     ok(!(style & WS_DISABLED), "window should not be disabled\n");
     ok(style & WS_VISIBLE, "window should be visible\n");
@@ -7865,7 +7865,7 @@ static void test_ShowWindow_child(HWND hwndMain)
        wine_dbgstr_rect(&orig), wine_dbgstr_rect(&rect));
 
     ret = ShowWindow(hwnd, SW_MINIMIZE);
-    ok(ret, "wrong ret %d\n", ret);
+    ok(ret, "wrong ret %lu\n", ret);
     style = GetWindowLongA(hwnd, GWL_STYLE);
     ok(!(style & WS_DISABLED), "window should not be disabled\n");
     ok(style & WS_VISIBLE, "window should be visible\n");
@@ -7880,7 +7880,7 @@ static void test_ShowWindow_child(HWND hwndMain)
        wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
     /* shouldn't be able to resize minimized windows */
     ret = SetWindowPos(hwnd, 0, 0, 0, 200, 200, SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER);
-    ok(ret, "wrong ret %d\n", ret);
+    ok(ret, "wrong ret %lu\n", ret);
     GetWindowRect(hwnd, &rect);
     ok(EqualRect(&expect, &rect), "expected %s, got %s\n",
        wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
@@ -7895,7 +7895,7 @@ static void test_ShowWindow_child(HWND hwndMain)
      * fit more than one per row */
     OffsetRect(&expect, 0, -GetSystemMetrics(SM_CYMINIMIZED));
     ret = ShowWindow(hwnd2, SW_MINIMIZE);
-    ok(ret, "wrong ret %d\n", ret);
+    ok(ret, "wrong ret %lu\n", ret);
     style = GetWindowLongA(hwnd2, GWL_STYLE);
     ok(!(style & WS_DISABLED), "window should not be disabled\n");
     ok(style & WS_VISIBLE, "window should be visible\n");
@@ -7905,8 +7905,8 @@ static void test_ShowWindow_child(HWND hwndMain)
     ok(EqualRect(&expect, &rect), "expected %s, got %s\n",
        wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
 
-    ShowWindow(hwnd, SW_RESTORE);
-    ok(ret, "wrong ret %d\n", ret);
+    ret = ShowWindow(hwnd, SW_RESTORE);
+    ok(ret, "wrong ret %lu\n", ret);
     style = GetWindowLongA(hwnd, GWL_STYLE);
     ok(!(style & WS_DISABLED), "window should not be disabled\n");
     ok(style & WS_VISIBLE, "window should be visible\n");
@@ -7916,8 +7916,8 @@ static void test_ShowWindow_child(HWND hwndMain)
     ok(EqualRect(&orig, &rect), "expected %s, got %s\n",
        wine_dbgstr_rect(&orig), wine_dbgstr_rect(&rect));
 
-    ShowWindow(hwnd, SW_MAXIMIZE);
-    ok(ret, "wrong ret %d\n", ret);
+    ret = ShowWindow(hwnd, SW_MAXIMIZE);
+    ok(ret, "wrong ret %lu\n", ret);
     style = GetWindowLongA(hwnd, GWL_STYLE);
     ok(!(style & WS_DISABLED), "window should not be disabled\n");
     ok(style & WS_VISIBLE, "window should be visible\n");
@@ -7932,15 +7932,15 @@ static void test_ShowWindow_child(HWND hwndMain)
        wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
     /* maximized windows can be resized */
     ret = SetWindowPos(hwnd, 0, 300, 300, 200, 200, SWP_NOACTIVATE | SWP_NOZORDER);
-    ok(ret, "wrong ret %d\n", ret);
+    ok(ret, "wrong ret %lu\n", ret);
     GetWindowRect(hwnd, &rect);
     SetRect(&expect, 300, 300, 500, 500);
     OffsetRect(&expect, pt.x, pt.y);
     ok(EqualRect(&expect, &rect), "expected %s, got %s\n",
        wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
 
-    ShowWindow(hwnd, SW_RESTORE);
-    ok(ret, "wrong ret %d\n", ret);
+    ret = ShowWindow(hwnd, SW_RESTORE);
+    ok(ret, "wrong ret %lu\n", ret);
     style = GetWindowLongA(hwnd, GWL_STYLE);
     ok(!(style & WS_DISABLED), "window should not be disabled\n");
     ok(style & WS_VISIBLE, "window should be visible\n");
@@ -7957,7 +7957,7 @@ static void test_ShowWindow_child(HWND hwndMain)
 static void test_ShowWindow_mdichild(HWND hwndMain)
 {
     RECT rect, orig, expect, nc;
-    BOOL ret;
+    LPARAM ret;
     HWND mdiclient, hwnd, hwnd2;
     LONG style;
     POINT pt = {0};
@@ -7993,7 +7993,7 @@ static void test_ShowWindow_mdichild(HWND hwndMain)
        wine_dbgstr_rect(&orig), wine_dbgstr_rect(&rect));
 
     ret = ShowWindow(hwnd, SW_MINIMIZE);
-    ok(ret, "wrong ret %d\n", ret);
+    ok(ret, "wrong ret %lu\n", ret);
     style = GetWindowLongA(hwnd, GWL_STYLE);
     ok(!(style & WS_DISABLED), "window should not be disabled\n");
     ok(style & WS_VISIBLE, "window should be visible\n");
@@ -8008,7 +8008,7 @@ static void test_ShowWindow_mdichild(HWND hwndMain)
        wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
     /* shouldn't be able to resize minimized windows */
     ret = SetWindowPos(hwnd, 0, 0, 0, 200, 200, SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER);
-    ok(ret, "wrong ret %d\n", ret);
+    ok(ret, "wrong ret %lu\n", ret);
     GetWindowRect(hwnd, &rect);
     ok(EqualRect(&expect, &rect), "expected %s, got %s\n",
        wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
@@ -8023,7 +8023,7 @@ static void test_ShowWindow_mdichild(HWND hwndMain)
      * fit more than one per row */
     OffsetRect(&expect, 0, -GetSystemMetrics(SM_CYMINIMIZED));
     ret = ShowWindow(hwnd2, SW_MINIMIZE);
-    ok(ret, "wrong ret %d\n", ret);
+    ok(ret, "wrong ret %lu\n", ret);
     style = GetWindowLongA(hwnd2, GWL_STYLE);
     ok(!(style & WS_DISABLED), "window should not be disabled\n");
     ok(style & WS_VISIBLE, "window should be visible\n");
@@ -8033,8 +8033,8 @@ static void test_ShowWindow_mdichild(HWND hwndMain)
     ok(EqualRect(&expect, &rect), "expected %s, got %s\n",
        wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
 
-    ShowWindow(hwnd, SW_RESTORE);
-    ok(ret, "wrong ret %d\n", ret);
+    ret = ShowWindow(hwnd, SW_RESTORE);
+    ok(ret, "wrong ret %lu\n", ret);
     style = GetWindowLongA(hwnd, GWL_STYLE);
     ok(!(style & WS_DISABLED), "window should not be disabled\n");
     ok(style & WS_VISIBLE, "window should be visible\n");
@@ -8044,8 +8044,8 @@ static void test_ShowWindow_mdichild(HWND hwndMain)
     ok(EqualRect(&orig, &rect), "expected %s, got %s\n",
        wine_dbgstr_rect(&orig), wine_dbgstr_rect(&rect));
 
-    ShowWindow(hwnd, SW_MAXIMIZE);
-    ok(ret, "wrong ret %d\n", ret);
+    ret = ShowWindow(hwnd, SW_MAXIMIZE);
+    ok(ret, "wrong ret %lu\n", ret);
     style = GetWindowLongA(hwnd, GWL_STYLE);
     ok(!(style & WS_DISABLED), "window should not be disabled\n");
     ok(style & WS_VISIBLE, "window should be visible\n");
@@ -8060,15 +8060,15 @@ static void test_ShowWindow_mdichild(HWND hwndMain)
        wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
     /* maximized windows can be resized */
     ret = SetWindowPos(hwnd, 0, 300, 300, 200, 200, SWP_NOACTIVATE | SWP_NOZORDER);
-    ok(ret, "wrong ret %d\n", ret);
+    ok(ret, "wrong ret %lu\n", ret);
     GetWindowRect(hwnd, &rect);
     SetRect(&expect, 300, 300, 500, 500);
     OffsetRect(&expect, pt.x, pt.y);
     ok(EqualRect(&expect, &rect), "expected %s, got %s\n",
        wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
 
-    ShowWindow(hwnd, SW_RESTORE);
-    ok(ret, "wrong ret %d\n", ret);
+    ret = ShowWindow(hwnd, SW_RESTORE);
+    ok(ret, "wrong ret %lu\n", ret);
     style = GetWindowLongA(hwnd, GWL_STYLE);
     ok(!(style & WS_DISABLED), "window should not be disabled\n");
     ok(style & WS_VISIBLE, "window should be visible\n");
