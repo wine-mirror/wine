@@ -1156,9 +1156,27 @@ void wined3d_buffer_update_sub_resource(struct wined3d_buffer *buffer, struct wi
     }
 
     if (upload_bo->addr.buffer_object && upload_bo->addr.buffer_object == buffer->buffer_object)
-        wined3d_context_flush_bo_address(context, &upload_bo->addr, size);
+    {
+        struct wined3d_range range;
+
+        /* We need to flush changes, which is implicitly done by
+         * wined3d_context_unmap_bo_address() even if we aren't actually going
+         * to unmap.
+         *
+         * We would also like to free up virtual address space used by this BO
+         * if it's at a premium—note that this BO was allocated for an
+         * accelerated map. Hence we unmap the BO instead of merely flushing it;
+         * if we don't care about unmapping BOs then
+         * wined3d_context_unmap_bo_address() will flush and return.
+         */
+        range.offset = offset;
+        range.size = size;
+        wined3d_context_unmap_bo_address(context, (const struct wined3d_bo_address *)&upload_bo->addr, 1, &range);
+    }
     else
+    {
         wined3d_buffer_copy_bo_address(buffer, context, offset, &upload_bo->addr, size);
+    }
 }
 
 static void wined3d_buffer_init_data(struct wined3d_buffer *buffer,
