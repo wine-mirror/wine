@@ -1435,7 +1435,7 @@ static HRESULT media_engine_set_source(struct media_engine *engine, IMFByteStrea
 
     if (url || bytestream)
     {
-        flags = MF_RESOLUTION_MEDIASOURCE;
+        flags = MF_RESOLUTION_MEDIASOURCE | MF_RESOLUTION_CONTENT_DOES_NOT_HAVE_TO_MATCH_EXTENSION_OR_MIME_TYPE;
         if (engine->flags & MF_MEDIA_ENGINE_DISABLE_LOCAL_PLUGINS)
             flags |= MF_RESOLUTION_DISABLE_LOCAL_PLUGINS;
 
