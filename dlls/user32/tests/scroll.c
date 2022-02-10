@@ -802,7 +802,6 @@ static void test_visual(void)
 
         hdc = GetDC(hwnd);
         color = GetPixel(hdc, 5, 5);
-        todo_wine_if(bThemeActive)
         ok(color == colors[1], "Expected color %#x, got %#x.\n", colors[1], color);
 
         ReleaseDC(hwnd, hdc);

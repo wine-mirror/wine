@@ -62,8 +62,9 @@ void WINAPI UXTHEME_ScrollBarDraw(HWND hwnd, HDC dc, INT bar, enum SCROLL_HITTES
         else
             state = SZB_RIGHTALIGN;
 
-        if (IsThemeBackgroundPartiallyTransparent(theme, SBP_SIZEBOX, state))
-            DrawThemeParentBackground(hwnd, dc, NULL);
+        /* Tests show that COLOR_BTNFACE is used instead of DrawThemeParentBackground() for drawing
+         * background */
+        FillRect(dc, rect, GetSysColorBrush(COLOR_BTNFACE));
         DrawThemeBackground(theme, dc, SBP_SIZEBOX, state, rect, NULL);
     } else {
         int uppertrackstate, lowertrackstate, thumbstate;
