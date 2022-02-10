@@ -774,6 +774,46 @@ static void test_subclass(void)
     DestroyWindow(hwnd);
 }
 
+static void test_visual(void)
+{
+    static const int color_indices[] = {COLOR_SCROLLBAR, COLOR_BTNFACE};
+    static const DWORD styles[] = {SBS_SIZEBOX, SBS_SIZEGRIP};
+    COLORREF old_colors[2], colors[2], color;
+    HWND hwnd;
+    BOOL ret;
+    HDC hdc;
+    int i;
+
+    old_colors[0] = GetSysColor(color_indices[0]);
+    old_colors[1] = GetSysColor(color_indices[1]);
+    colors[0] = RGB(0x11, 0x22, 0x33);
+    colors[1] = RGB(0xaa, 0xbb, 0xcc);
+    ret = SetSysColors(ARRAY_SIZE(color_indices), color_indices, colors);
+    ok(ret, "SetSysColors failed, error %u.\n", GetLastError());
+
+    for (i = 0; i < ARRAY_SIZE(styles); ++i)
+    {
+        winetest_push_context("style %#x", styles[i]);
+
+        hwnd = CreateWindowA("ScrollBar", "", WS_POPUP | WS_VISIBLE | styles[i], 0, 0, 20, 20, 0, 0,
+                             0, 0);
+        ok(hwnd != NULL, "CreateWindowA failed, error %u.\n", GetLastError());
+        RedrawWindow(hwnd, NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_ERASENOW | RDW_FRAME);
+
+        hdc = GetDC(hwnd);
+        color = GetPixel(hdc, 5, 5);
+        todo_wine_if(styles[i] == SBS_SIZEBOX || bThemeActive)
+        ok(color == colors[1], "Expected color %#x, got %#x.\n", colors[1], color);
+
+        ReleaseDC(hwnd, hdc);
+        DestroyWindow(hwnd);
+        winetest_pop_context();
+    }
+
+    ret = SetSysColors(ARRAY_SIZE(color_indices), color_indices, old_colors);
+    ok(ret, "SetSysColors failed, error %u.\n", GetLastError());
+}
+
 START_TEST ( scroll )
 {
     WNDCLASSA wc;
@@ -809,6 +849,8 @@ START_TEST ( scroll )
             bThemeActive = pIsThemeActive();
         FreeLibrary(hUxtheme);
     }
+
+    test_visual();
 
     scrollbar_test_default( 0);
     scrollbar_test_default( WS_HSCROLL);
