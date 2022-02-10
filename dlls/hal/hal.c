@@ -161,20 +161,20 @@ void WINAPI WRITE_PORT_UCHAR(UCHAR *port, UCHAR value)
 
 void WINAPI WRITE_PORT_ULONG(ULONG *port, ULONG value)
 {
-    FIXME("(%p %d) stub!\n", port, value);
+    FIXME("(%p %ld) stub!\n", port, value);
 }
 #endif /* __i386__ || __arm__ || __arm64__ */
 
 ULONG WINAPI HalGetBusData(BUS_DATA_TYPE BusDataType, ULONG BusNumber, ULONG SlotNumber, PVOID Buffer, ULONG Length)
 {
-    FIXME("(%u %u %u %p %u) stub!\n", BusDataType, BusNumber, SlotNumber, Buffer, Length);
+    FIXME("(%u %lu %lu %p %lu) stub!\n", BusDataType, BusNumber, SlotNumber, Buffer, Length);
     /* Claim that there is no such bus */
     return 0;
 }
 
 ULONG WINAPI HalGetBusDataByOffset(BUS_DATA_TYPE BusDataType, ULONG BusNumber, ULONG SlotNumber, PVOID Buffer, ULONG Offset, ULONG Length)
 {
-    FIXME("(%u %u %u %p %u %u) stub!\n", BusDataType, BusNumber, SlotNumber, Buffer, Offset, Length);
+    FIXME("(%u %lu %lu %p %lu %lu) stub!\n", BusDataType, BusNumber, SlotNumber, Buffer, Offset, Length);
     /* Claim that there is no such bus */
     return 0;
 }
@@ -182,7 +182,7 @@ ULONG WINAPI HalGetBusDataByOffset(BUS_DATA_TYPE BusDataType, ULONG BusNumber, U
 BOOLEAN WINAPI HalTranslateBusAddress(INTERFACE_TYPE InterfaceType, ULONG BusNumber, PHYSICAL_ADDRESS BusAddress,
 		                              PULONG AddressSpace, PPHYSICAL_ADDRESS TranslatedAddress)
 {
-    FIXME("(%d %d %s %p %p) stub!\n", InterfaceType, BusNumber,
+    FIXME("(%d %ld %s %p %p) stub!\n", InterfaceType, BusNumber,
 		wine_dbgstr_longlong(BusAddress.QuadPart), AddressSpace, TranslatedAddress);
     return FALSE;
 }
