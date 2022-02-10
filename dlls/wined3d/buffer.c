@@ -1002,7 +1002,8 @@ static HRESULT buffer_resource_sub_resource_map(struct wined3d_resource *resourc
              * but it's safe because the client thread will wait for the
              * map to return, thus completely serializing this call with
              * other client code. */
-            buffer->resource.client.addr = addr;
+            if (wined3d_map_persistent())
+                buffer->resource.client.addr = addr;
 
             if (((DWORD_PTR)buffer->map_ptr) & (RESOURCE_ALIGNMENT - 1))
             {
