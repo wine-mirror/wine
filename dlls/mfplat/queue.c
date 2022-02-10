@@ -16,13 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdarg.h>
-
 #define COBJMACROS
-#define NONAMELESSUNION
-
-#include "wine/debug.h"
-#include "wine/list.h"
 
 #include "mfplat_private.h"
 #include "rtworkq.h"

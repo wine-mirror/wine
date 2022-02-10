@@ -36,7 +36,6 @@
 #include "d3d11.h"
 #include "uuids.h"
 
-#include "wine/debug.h"
 #include "wine/list.h"
 
 #include "mfplat_private.h"
