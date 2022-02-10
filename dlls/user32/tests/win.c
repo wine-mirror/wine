@@ -1003,6 +1003,7 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 	}
 	case WM_WINDOWPOSCHANGED:
 	{
+            LRESULT ret;
             RECT rc1, rc2;
 	    WINDOWPOS *winpos = (WINDOWPOS *)lparam;
 	    ok(winpos->x >= -32768 && winpos->x <= 32767, "bad winpos->x %d\n", winpos->x);
@@ -1023,7 +1024,8 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
                wine_dbgstr_rect(&rc2));
 
             GetClientRect(hwnd, &rc2);
-            DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rc1);
+            ret = DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rc1);
+            ok(!ret, "got %08lx\n", ret);
             MapWindowPoints(0, hwnd, (LPPOINT)&rc1, 2);
             ok(EqualRect(&rc1, &rc2), "rects do not match %s / %s\n", wine_dbgstr_rect(&rc1),
                wine_dbgstr_rect(&rc2));
@@ -1076,6 +1078,13 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
             break;
         case WM_MOUSEACTIVATE:
             return MA_ACTIVATE;
+
+        case WM_NCCALCSIZE:
+        {
+            LRESULT ret = DefWindowProcA(hwnd, WM_NCCALCSIZE, wparam, lparam);
+            ok(!ret, "got %08lx (%08lx %08lx)\n", ret, wparam, lparam);
+            return ret;
+        }
     }
 
     return DefWindowProcA(hwnd, msg, wparam, lparam);
@@ -1106,6 +1115,13 @@ static LRESULT WINAPI main_window_procW(HWND hwnd, UINT msg, WPARAM wparam, LPAR
                 return 0;
             }
             break;
+
+        case WM_NCCALCSIZE:
+        {
+            LRESULT ret = DefWindowProcA(hwnd, WM_NCCALCSIZE, wparam, lparam);
+            ok(!ret, "got %08lx (%08lx %08lx)\n", ret, wparam, lparam);
+            return ret;
+        }
     }
 
     return DefWindowProcA(hwnd, msg, wparam, lparam);
@@ -1131,6 +1147,13 @@ static LRESULT WINAPI tool_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 		ok(!got_getminmaxinfo, "tool: WM_GETMINMAXINFO should NOT have been received before WM_NCCREATE\n");
 	    break;
 	}
+
+        case WM_NCCALCSIZE:
+        {
+            LRESULT ret = DefWindowProcA(hwnd, WM_NCCALCSIZE, wparam, lparam);
+            ok(!ret, "got %08lx (%08lx %08lx)\n", ret, wparam, lparam);
+            return ret;
+        }
     }
 
     return DefWindowProcA(hwnd, msg, wparam, lparam);
@@ -1395,6 +1418,14 @@ static LRESULT CALLBACK test_standard_scrollbar_proc(HWND hwnd, UINT msg, WPARAM
         DeleteObject(region);
         return 0;
     }
+
+    case WM_NCCALCSIZE:
+    {
+        LRESULT ret = DefWindowProcA(hwnd, WM_NCCALCSIZE, wp, lp);
+        ok(!ret, "got %08lx (%08lx %08lx)\n", ret, wp, lp);
+        return ret;
+    }
+
     default:
         return DefWindowProcA(hwnd, msg, wp, lp);
     }
@@ -1443,7 +1474,9 @@ static void test_nonclient_area(HWND hwnd)
 
 
     rc = rc_window;
-    DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rc);
+    ret = DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rc);
+todo_wine_if(ret != 0)
+    ok(!ret, "got %08lx\n", ret);
     MapWindowPoints(0, hwnd, (LPPOINT)&rc, 2);
     ok(EqualRect(&rc, &rc_client),
        "client rect does not match: style:exstyle=0x%08x:0x%08x, menu=%d client=%s, calc=%s\n",
@@ -1460,7 +1493,9 @@ static void test_nonclient_area(HWND hwnd)
     FixedAdjustWindowRectEx(&rc_window, style, menu, exstyle);
 
     rc = rc_window;
-    DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rc);
+    ret = DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rc);
+todo_wine_if(ret != 0)
+    ok(!ret, "got %08lx\n", ret);
     MapWindowPoints(0, hwnd, (LPPOINT)&rc, 2);
     ok(EqualRect(&rc, &rc_client),
        "synthetic rect does not match: style:exstyle=0x%08x:0x%08x, menu=%d, client=%s, calc=%s\n",
@@ -2353,6 +2388,7 @@ static LRESULT WINAPI mdi_child_wnd_proc_2(HWND hwnd, UINT msg, WPARAM wparam, L
 
         case WM_WINDOWPOSCHANGED:
         {
+            LRESULT ret;
             WINDOWPOS *winpos = (WINDOWPOS *)lparam;
             RECT rc1, rc2;
 
@@ -2364,7 +2400,8 @@ static LRESULT WINAPI mdi_child_wnd_proc_2(HWND hwnd, UINT msg, WPARAM wparam, L
                wine_dbgstr_rect(&rc1), wine_dbgstr_rect(&rc2));
             GetWindowRect(hwnd, &rc1);
             GetClientRect(hwnd, &rc2);
-            DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rc1);
+            ret = DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rc1);
+            ok(!ret, "got %08lx\n", ret);
             MapWindowPoints(0, hwnd, (LPPOINT)&rc1, 2);
             ok(EqualRect(&rc1, &rc2), "rects do not match, window=%s client=%s\n",
                wine_dbgstr_rect(&rc1), wine_dbgstr_rect(&rc2));
@@ -2390,7 +2427,15 @@ static LRESULT WINAPI mdi_child_wnd_proc_2(HWND hwnd, UINT msg, WPARAM wparam, L
 
             return 1;
         }
+
+        case WM_NCCALCSIZE:
+        {
+            LRESULT ret = DefWindowProcA(hwnd, WM_NCCALCSIZE, wparam, lparam);
+            ok(!ret, "got %08lx (%08lx %08lx)\n", ret, wparam, lparam);
+            return ret;
+        }
     }
+
     return DefWindowProcA(hwnd, msg, wparam, lparam);
 }
 
@@ -2444,6 +2489,13 @@ static LRESULT WINAPI mdi_main_wnd_procA(HWND hwnd, UINT msg, WPARAM wparam, LPA
                "DefWindowProc should not change WINDOWPOS values\n");
 
             return 1;
+        }
+
+        case WM_NCCALCSIZE:
+        {
+            LRESULT ret = DefFrameProcA(hwnd, mdi_client, WM_NCCALCSIZE, wparam, lparam);
+            ok(!ret, "got %08lx (%08lx %08lx)\n", ret, wparam, lparam);
+            return ret;
         }
 
         case WM_CLOSE:
@@ -4657,11 +4709,13 @@ static void test_validatergn(HWND hwnd)
 
 static void nccalchelper(HWND hwnd, INT x, INT y, RECT *prc)
 {
+    LRESULT ret;
     RECT rc;
     MoveWindow( hwnd, 0, 0, x, y, 0);
     GetWindowRect( hwnd, prc);
     rc = *prc;
-    DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)prc);
+    ret = DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)prc);
+    ok(!ret, "got %08lx\n", ret);
     if (winetest_debug > 1)
         trace("window rect is %s, nccalc rect is %s\n", wine_dbgstr_rect(&rc), wine_dbgstr_rect(prc));
 }
@@ -6553,11 +6607,14 @@ static LRESULT CALLBACK winsizes_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM
     }
     case WM_NCCALCSIZE:
     {
+        LRESULT ret;
         RECT rect, *r = (RECT *)lp;
         GetWindowRect( hwnd, &rect );
         ok( EqualRect( &rect, r ), "passed rect %s doesn't match window rect %s\n",
             wine_dbgstr_rect( r ), wine_dbgstr_rect( &rect ));
-        return DefWindowProcA(hwnd, msg, wp, lp);
+        ret = DefWindowProcA(hwnd, msg, wp, lp);
+        ok(!ret, "got %08lx\n", ret);
+        return ret;
     }
     default:
         return DefWindowProcA(hwnd, msg, wp, lp);
@@ -7467,7 +7524,8 @@ static void test_ShowWindow(void)
     /* test NC area */
     GetWindowRect(hwnd, &rc);
     SetRect(&rcNonClient, rc.left, rc.top, rc.left, rc.top);
-    DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rc);
+    ret = DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rc);
+    ok(!ret, "got %08lx\n", ret);
     ok(EqualRect(&rc, &rcNonClient), "expected %s, got %s\n",
        wine_dbgstr_rect(&rcNonClient), wine_dbgstr_rect(&rc));
 
@@ -7755,7 +7813,8 @@ static void test_ShowWindow_owned(HWND hwndMain)
     /* test NC area */
     GetWindowRect(hwnd, &rect);
     SetRect(&nc, rect.left, rect.top, rect.left, rect.top);
-    DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rect);
+    ret = DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rect);
+    ok(!ret, "got %08lx\n", ret);
     ok(EqualRect(&rect, &nc), "expected %s, got %s\n",
        wine_dbgstr_rect(&nc), wine_dbgstr_rect(&rect));
 
@@ -7887,7 +7946,8 @@ static void test_ShowWindow_child(HWND hwndMain)
     /* test NC area */
     GetWindowRect(hwnd, &rect);
     SetRect(&nc, rect.left, rect.top, rect.left, rect.top);
-    DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rect);
+    ret = DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rect);
+    ok(!ret, "got %08lx\n", ret);
     ok(EqualRect(&rect, &nc), "expected %s, got %s\n",
        wine_dbgstr_rect(&nc), wine_dbgstr_rect(&rect));
 
@@ -8015,7 +8075,8 @@ static void test_ShowWindow_mdichild(HWND hwndMain)
     /* test NC area */
     GetWindowRect(hwnd, &rect);
     SetRect(&nc, rect.left, rect.top, rect.left, rect.top);
-    DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rect);
+    ret = DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rect);
+    ok(!ret, "got %08lx\n", ret);
     ok(EqualRect(&rect, &nc), "expected %s, got %s\n",
        wine_dbgstr_rect(&nc), wine_dbgstr_rect(&rect));
 
@@ -9049,6 +9110,12 @@ static LRESULT CALLBACK fullscreen_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPAR
             ok(minmax->ptMaxSize.y >= mi.rcMonitor.bottom, "%d >= %d\n", minmax->ptMaxSize.y, mi.rcMonitor.bottom);
             break;
         }
+        case WM_NCCALCSIZE:
+        {
+            LRESULT ret = DefWindowProcA(hwnd, WM_NCCALCSIZE, wp, lp);
+            ok(!ret, "got %08lx (%08lx %08lx)\n", ret, wp, lp);
+            return ret;
+        }
     }
     return DefWindowProcA(hwnd, msg, wp, lp);
 }
@@ -9307,6 +9374,13 @@ static LRESULT WINAPI test_thick_child_size_winproc(HWND hwnd, UINT msg, WPARAM 
                 expectedPosX, expectedPosY, actualPosX, actualPosY, test_thick_child_name);
 
             break;
+        }
+
+        case WM_NCCALCSIZE:
+        {
+            LRESULT ret = DefWindowProcA(hwnd, WM_NCCALCSIZE, wparam, lparam);
+            ok(!ret, "got %08lx (%08lx %08lx)\n", ret, wparam, lparam);
+            return ret;
         }
     }
 
@@ -12848,6 +12922,75 @@ static void test_ncdestroy(void)
     DestroyWindow(hwnd);
 }
 
+static void test_WM_NCCALCSIZE(void)
+{
+    WNDCLASSA cls;
+    HWND hwnd;
+    NCCALCSIZE_PARAMS params;
+    WINDOWPOS winpos;
+    RECT client_rect, window_rect;
+    LRESULT ret;
+
+    cls.style = CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW;
+    cls.lpfnWndProc = DefWindowProcA;
+    cls.cbClsExtra = 0;
+    cls.cbWndExtra = 0;
+    cls.hInstance = GetModuleHandleA(0);
+    cls.hIcon = 0;
+    cls.hCursor = LoadCursorA(0, (LPCSTR)IDC_ARROW);
+    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
+    cls.lpszMenuName = NULL;
+    cls.lpszClassName = "dummy_window_class";
+    ret = RegisterClassA(&cls);
+    ok(ret, "RegisterClass error %u\n", GetLastError());
+
+    hwnd = CreateWindowExA(0, "dummy_window_class", NULL,
+                           WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP,
+                           100, 100, 200, 200, 0, 0, GetModuleHandleA(NULL), NULL);
+    ok(hwnd != 0, "CreateWindowEx error %u\n", GetLastError());
+
+    GetWindowRect(hwnd, &window_rect);
+    params.rgrc[0] = window_rect;
+    params.rgrc[1] = window_rect;
+    GetClientRect(hwnd, &client_rect);
+    MapWindowPoints(hwnd, 0, (POINT *)&client_rect, 2);
+    params.rgrc[2] = client_rect;
+
+    winpos.hwnd = hwnd;
+    winpos.hwndInsertAfter = HWND_TOP;
+    winpos.x = window_rect.left;
+    winpos.y = window_rect.top;
+    winpos.cx = window_rect.right - window_rect.left;
+    winpos.cy = window_rect.bottom - window_rect.top;
+    winpos.flags = SWP_NOMOVE;
+    params.lppos = &winpos;
+
+    ret = SendMessageW(hwnd, WM_NCCALCSIZE, TRUE, (LPARAM)&params);
+todo_wine
+    ok(!ret, "got %08lx\n", ret);
+    ok(EqualRect(&params.rgrc[0], &client_rect), "got %s\n", wine_dbgstr_rect(&params.rgrc[0]));
+
+    params.rgrc[0] = window_rect;
+    ret = DefWindowProcA(hwnd, WM_NCCALCSIZE, TRUE, (LPARAM)&params);
+todo_wine
+    ok(!ret, "got %08lx\n", ret);
+    ok(EqualRect(&params.rgrc[0], &client_rect), "got %s\n", wine_dbgstr_rect(&params.rgrc[0]));
+
+    GetWindowRect(hwnd, &window_rect);
+    ret = SendMessageW(hwnd, WM_NCCALCSIZE, FALSE, (LPARAM)&window_rect);
+todo_wine
+    ok(!ret, "got %08lx\n", ret);
+    ok(EqualRect(&window_rect, &client_rect), "got %s\n", wine_dbgstr_rect(&window_rect));
+
+    GetWindowRect(hwnd, &window_rect);
+    ret = DefWindowProcA(hwnd, WM_NCCALCSIZE, FALSE, (LPARAM)&window_rect);
+todo_wine
+    ok(!ret, "got %08lx\n", ret);
+    ok(EqualRect(&window_rect, &client_rect), "got %s\n", wine_dbgstr_rect(&window_rect));
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(win)
 {
     char **argv;
@@ -13029,6 +13172,7 @@ START_TEST(win)
     test_SC_SIZE();
     test_cancel_mode();
     test_DragDetect();
+    test_WM_NCCALCSIZE();
 
     /* add the tests above this line */
     if (hhook) UnhookWindowsHookEx(hhook);
