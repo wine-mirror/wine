@@ -161,7 +161,7 @@ HRESULT GAMEUX_buildGameRegistryPath(GAME_INSTALL_SCOPE installScope,
     if(SUCCEEDED(hr))
         lstrcpyW(*lpRegistryPath, sRegistryPath);
 
-    TRACE("result: 0x%x, path: %s\n", hr, debugstr_w(*lpRegistryPath));
+    TRACE("result: 0x%lx, path: %s\n", hr, debugstr_w(*lpRegistryPath));
     return hr;
 }
 /*******************************************************************************
@@ -247,7 +247,7 @@ static HRESULT GAMEUX_WriteRegistryRecord(struct GAMEUX_GAME_DATA *GameData)
     }
 
     HeapFree(GetProcessHeap(), 0, lpRegistryKey);
-    TRACE("returning 0x%x\n", hr);
+    TRACE("returning 0x%lx\n", hr);
     return hr;
 }
 /*******************************************************************************
@@ -536,7 +536,7 @@ static HRESULT GAMEUX_RegisterGame(LPCWSTR sGDFBinaryPath,
         CloseHandle(thread);
         if(ret != WAIT_OBJECT_0)
         {
-            ERR("Wait failed (%#x).\n", ret);
+            ERR("Wait failed (%#lx).\n", ret);
             hr = E_FAIL;
             goto done;
         }
@@ -549,7 +549,7 @@ static HRESULT GAMEUX_RegisterGame(LPCWSTR sGDFBinaryPath,
 
 done:
     GAMEUX_uninitGameData(&GameData);
-    TRACE("returning 0x%08x\n", hr);
+    TRACE("returning 0x%08lx\n", hr);
     return hr;
 }
 /*******************************************************************************
@@ -685,7 +685,7 @@ static HRESULT GAMEUX_UpdateGame(LPGUID InstanceID) {
     }
 
     HeapFree(GetProcessHeap(), 0, lpRegistryPath);
-    TRACE("returning 0x%x\n", hr);
+    TRACE("returning 0x%lx\n", hr);
     return hr;
 }
 /*******************************************************************************
@@ -818,7 +818,7 @@ static ULONG WINAPI GameExplorerImpl_AddRef(IGameExplorer *iface)
 
     ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p): ref=%d\n", This, ref);
+    TRACE("(%p): ref=%ld\n", This, ref);
     return ref;
 }
 
@@ -828,7 +828,7 @@ static ULONG WINAPI GameExplorerImpl_Release(IGameExplorer *iface)
     LONG ref;
 
     ref = InterlockedDecrement(&This->ref);
-    TRACE("(%p): ref=%d\n", This, ref);
+    TRACE("(%p): ref=%ld\n", This, ref);
 
     if(ref == 0)
     {
