@@ -451,7 +451,7 @@ static HRESULT WINAPI ItemMonikerImpl_BindToObject(IMoniker* iface,
     if (SUCCEEDED(hr))
     {
         if (FAILED(hr = set_container_lock(container, pbc)))
-            WARN("Failed to lock container, hr %#x.\n", hr);
+            WARN("Failed to lock container, hr %#lx.\n", hr);
 
         hr = IOleItemContainer_GetObject(container, This->itemName, get_bind_speed_from_bindctx(pbc), pbc,
                 riid, ppvResult);
@@ -482,7 +482,7 @@ static HRESULT WINAPI ItemMonikerImpl_BindToStorage(IMoniker *iface, IBindCtx *p
     if (SUCCEEDED(hr))
     {
         if (FAILED(hr = set_container_lock(container, pbc)))
-            WARN("Failed to lock container, hr %#x.\n", hr);
+            WARN("Failed to lock container, hr %#lx.\n", hr);
 
         hr = IOleItemContainer_GetObjectStorage(container, moniker->itemName, pbc, riid, ppvResult);
         IOleItemContainer_Release(container);

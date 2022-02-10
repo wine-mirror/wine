@@ -89,11 +89,11 @@
 #define __HRESULT_FROM_WIN32(x)   ((HRESULT)(x) > 0 ? ((HRESULT) (((x) & 0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000)) : (HRESULT)(x) )
 #ifndef _HRESULT_DEFINED
 #define _HRESULT_DEFINED
-# ifdef _MSC_VER
-typedef long            HRESULT;
-# else
-typedef int             HRESULT;
-# endif
+#if !defined(__LP64__) && !defined(WINE_NO_LONG_TYPES)
+typedef long HRESULT;
+#else
+typedef int HRESULT;
+#endif
 #endif
 static inline HRESULT HRESULT_FROM_WIN32(unsigned int x)
 {

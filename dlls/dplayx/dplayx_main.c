@@ -107,7 +107,7 @@ HRESULT WINAPI DllCanUnloadNow(void)
    *        as well?
    */
 
-  TRACE( ": returning 0x%08x\n", hr );
+  TRACE( ": returning %#lx\n", hr );
 
   return hr;
 }
