@@ -84,7 +84,7 @@ static ULONG WINAPI IDxDiagProviderImpl_AddRef(IDxDiagProvider *iface)
     IDxDiagProviderImpl *This = impl_from_IDxDiagProvider(iface);
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(ref before=%u)\n", This, refCount - 1);
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
 
     DXDIAGN_LockModule();
 
@@ -96,7 +96,7 @@ static ULONG WINAPI IDxDiagProviderImpl_Release(IDxDiagProvider *iface)
     IDxDiagProviderImpl *This = impl_from_IDxDiagProvider(iface);
     ULONG refCount = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(ref before=%u)\n", This, refCount + 1);
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
 
     if (!refCount) {
         free_information_tree(This->info_root);
@@ -825,7 +825,7 @@ static const WCHAR *vendor_id_to_manufacturer_string(DWORD vendor_id)
             return vendors[i].name;
     }
 
-    FIXME("Unknown PCI vendor ID 0x%04x.\n", vendor_id);
+    FIXME("Unknown PCI vendor ID 0x%04lx.\n", vendor_id);
 
     return L"Unknown";
 }

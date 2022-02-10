@@ -42,7 +42,7 @@ LONG DXDIAGN_refCount = 0;
 /* At process attach */
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-  TRACE("%p,%x,%p\n", hInstDLL, fdwReason, lpvReserved);
+  TRACE("%p,%lx,%p\n", hInstDLL, fdwReason, lpvReserved);
   if (fdwReason == DLL_PROCESS_ATTACH) {
       dxdiagn_instance = hInstDLL;
       DisableThreadLibraryCalls(hInstDLL);
