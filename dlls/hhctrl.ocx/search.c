@@ -83,7 +83,7 @@ static WCHAR *SearchCHM_File(IStorage *pStorage, const WCHAR *file, const char *
 
     hres = IStorage_OpenStream(pStorage, file, NULL, STGM_READ, 0, &temp_stream);
     if(FAILED(hres)) {
-        FIXME("Could not open '%s' stream: %08x\n", debugstr_w(file), hres);
+        FIXME("Could not open '%s' stream: %08lx\n", debugstr_w(file), hres);
         goto cleanup;
     }
 
@@ -162,7 +162,7 @@ static SearchItem *SearchCHM_Storage(SearchItem *item, IStorage *pStorage,
     hres = IStorage_EnumElements(pStorage, 0, NULL, 0, &elem);
     if(hres != S_OK)
     {
-        FIXME("Could not enumerate '/' storage elements: %08x\n", hres);
+        FIXME("Could not enumerate '/' storage elements: %08lx\n", hres);
         return NULL;
     }
     while (IEnumSTATSTG_Next(elem, 1, &entries, &retr) == NOERROR)
@@ -206,7 +206,7 @@ static SearchItem *SearchCHM_Folder(SearchItem *item, IStorage *pStorage,
     hres = IStorage_OpenStorage(pStorage, folder, NULL, STGM_READ, NULL, 0, &temp_storage);
     if(FAILED(hres))
     {
-        FIXME("Could not open '%s' storage object: %08x\n", debugstr_w(folder), hres);
+        FIXME("Could not open '%s' storage object: %08lx\n", debugstr_w(folder), hres);
         return NULL;
     }
     item = SearchCHM_Storage(item, temp_storage, needle);

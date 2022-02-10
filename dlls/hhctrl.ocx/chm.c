@@ -55,7 +55,7 @@ static LPCSTR GetChmString(CHMInfo *chm, DWORD offset)
         pos.QuadPart = offset & ~BLOCK_MASK;
         hres = IStream_Seek(chm->strings_stream, pos, STREAM_SEEK_SET, NULL);
         if(FAILED(hres)) {
-            WARN("Seek failed: %08x\n", hres);
+            WARN("Seek failed: %08lx\n", hres);
             return NULL;
         }
 
@@ -64,7 +64,7 @@ static LPCSTR GetChmString(CHMInfo *chm, DWORD offset)
         hres = IStream_Read(chm->strings_stream, chm->strings[offset >> BLOCK_BITS],
                             BLOCK_SIZE, &read);
         if(FAILED(hres)) {
-            WARN("Read failed: %08x\n", hres);
+            WARN("Read failed: %08lx\n", hres);
             heap_free(chm->strings[offset >> BLOCK_BITS]);
             chm->strings[offset >> BLOCK_BITS] = NULL;
             return NULL;
@@ -72,7 +72,7 @@ static LPCSTR GetChmString(CHMInfo *chm, DWORD offset)
     }
 
     str = chm->strings[offset >> BLOCK_BITS] + (offset & BLOCK_MASK);
-    TRACE("offset %#x => %s\n", offset, debugstr_a(str));
+    TRACE("offset %#lx => %s\n", offset, debugstr_a(str));
     return str;
 }
 
@@ -92,12 +92,12 @@ static BOOL ReadChmSystem(CHMInfo *chm)
 
     hres = IStorage_OpenStream(chm->pStorage, wszSYSTEM, NULL, STGM_READ, 0, &stream);
     if(FAILED(hres)) {
-        WARN("Could not open #SYSTEM stream: %08x\n", hres);
+        WARN("Could not open #SYSTEM stream: %08lx\n", hres);
         return FALSE;
     }
 
     IStream_Read(stream, &ver, sizeof(ver), &read);
-    TRACE("version is %x\n", ver);
+    TRACE("version is %lx\n", ver);
 
     buf = heap_alloc(8*sizeof(DWORD));
     buf_size = 8*sizeof(DWORD);
@@ -132,7 +132,7 @@ static BOOL ReadChmSystem(CHMInfo *chm)
             break;
         case 0x4:
             /* TODO: Currently only the Locale ID is loaded from this field */
-            TRACE("Locale is: %d\n", *(LCID*)&buf[0]);
+            TRACE("Locale is: %ld\n", *(LCID*)&buf[0]);
             if(!GetLocaleInfoW(*(LCID*)&buf[0], LOCALE_IDEFAULTANSICODEPAGE|LOCALE_RETURN_NUMBER,
                                (WCHAR *)&chm->codePage, sizeof(chm->codePage)/sizeof(WCHAR)))
                 chm->codePage = CP_ACP;
@@ -150,13 +150,13 @@ static BOOL ReadChmSystem(CHMInfo *chm)
             TRACE("Version is %s\n", debugstr_an(buf, entry.len));
             break;
         case 0xa:
-            TRACE("Time is %08x\n", *(DWORD*)buf);
+            TRACE("Time is %08lx\n", *(DWORD*)buf);
             break;
         case 0xc:
-            TRACE("Number of info types: %d\n", *(DWORD*)buf);
+            TRACE("Number of info types: %ld\n", *(DWORD*)buf);
             break;
         case 0xf:
-            TRACE("Check sum: %x\n", *(DWORD*)buf);
+            TRACE("Check sum: %lx\n", *(DWORD*)buf);
             break;
         default:
             TRACE("unhandled code %x, size %x\n", entry.code, entry.len);
@@ -181,13 +181,13 @@ LPWSTR FindContextAlias(CHMInfo *chm, DWORD index)
 
     hres = IStorage_OpenStream(chm->pStorage, wszIVB, NULL, STGM_READ, 0, &ivb_stream);
     if(FAILED(hres)) {
-        WARN("Could not open #IVB stream: %08x\n", hres);
+        WARN("Could not open #IVB stream: %08lx\n", hres);
         return NULL;
     }
 
     hres = IStream_Read(ivb_stream, &size, sizeof(size), &read);
     if(FAILED(hres)) {
-        WARN("Read failed: %08x\n", hres);
+        WARN("Read failed: %08lx\n", hres);
         IStream_Release(ivb_stream);
         return NULL;
     }
@@ -196,7 +196,7 @@ LPWSTR FindContextAlias(CHMInfo *chm, DWORD index)
     hres = IStream_Read(ivb_stream, buf, size, &read);
     IStream_Release(ivb_stream);
     if(FAILED(hres)) {
-        WARN("Read failed: %08x\n", hres);
+        WARN("Read failed: %08lx\n", hres);
         heap_free(buf);
         return NULL;
     }
@@ -261,7 +261,7 @@ void MergeChmProperties(HH_WINTYPEW *src, HHInfo *info, BOOL override)
     DWORD merge = override ? src->fsValidMembers : src->fsValidMembers & ~dst->fsValidMembers;
 
     if (unhandled_params)
-        FIXME("Unsupported fsValidMembers fields: 0x%x\n", unhandled_params);
+        FIXME("Unsupported fsValidMembers fields: 0x%lx\n", unhandled_params);
 
     dst->fsValidMembers |= merge;
     if (dst->cbStruct == 0)
@@ -543,7 +543,7 @@ IStream *GetChmStream(CHMInfo *info, LPCWSTR parent_chm, ChmPath *chm_file)
                 chm_file->chm_file ? chm_file->chm_file : parent_chm, NULL,
                 STGM_READ | STGM_SHARE_DENY_WRITE, NULL, 0, &storage);
         if(FAILED(hres)) {
-            WARN("Could not open storage: %08x\n", hres);
+            WARN("Could not open storage: %08lx\n", hres);
             return NULL;
         }
     }else {
@@ -554,7 +554,7 @@ IStream *GetChmStream(CHMInfo *info, LPCWSTR parent_chm, ChmPath *chm_file)
     hres = IStorage_OpenStream(storage, chm_file->chm_index, NULL, STGM_READ, 0, &stream);
     IStorage_Release(storage);
     if(FAILED(hres))
-        WARN("Could not open stream: %08x\n", hres);
+        WARN("Could not open stream: %08lx\n", hres);
 
     return stream;
 }
@@ -583,7 +583,7 @@ WCHAR *GetDocumentTitle(CHMInfo *info, LPCWSTR document)
     hres = IStorage_OpenStream(storage, document, NULL, STGM_READ, 0, &str);
     IStorage_Release(storage);
     if(FAILED(hres))
-        WARN("Could not open stream: %08x\n", hres);
+        WARN("Could not open stream: %08lx\n", hres);
 
     stream_init(&stream, str);
     strbuf_init(&node);
@@ -635,20 +635,20 @@ CHMInfo *OpenCHM(LPCWSTR szFile)
     hres = CoCreateInstance(&CLSID_ITStorage, NULL, CLSCTX_INPROC_SERVER,
             &IID_IITStorage, (void **) &ret->pITStorage) ;
     if(FAILED(hres)) {
-        WARN("Could not create ITStorage: %08x\n", hres);
+        WARN("Could not create ITStorage: %08lx\n", hres);
         return CloseCHM(ret);
     }
 
     hres = IITStorage_StgOpenStorage(ret->pITStorage, szFile, NULL,
             STGM_READ | STGM_SHARE_DENY_WRITE, NULL, 0, &ret->pStorage);
     if(FAILED(hres)) {
-        WARN("Could not open storage: %08x\n", hres);
+        WARN("Could not open storage: %08lx\n", hres);
         return CloseCHM(ret);
     }
     hres = IStorage_OpenStream(ret->pStorage, wszSTRINGS, NULL, STGM_READ, 0,
             &ret->strings_stream);
     if(FAILED(hres)) {
-        WARN("Could not open #STRINGS stream: %08x\n", hres);
+        WARN("Could not open #STRINGS stream: %08lx\n", hres);
         /* It's not critical, so we pass */
     }
 

@@ -201,7 +201,7 @@ static HRESULT navigate_url(HHInfo *info, LPCWSTR surl)
     VariantClear(&url);
 
     if(FAILED(hres))
-        TRACE("Navigation failed: %08x\n", hres);
+        TRACE("Navigation failed: %08lx\n", hres);
 
     return hres;
 }
@@ -242,7 +242,7 @@ static BOOL AppendFullPathURL(LPCWSTR file, LPWSTR buf, LPCWSTR index)
     TRACE("%s %p %s\n", debugstr_w(file), buf, debugstr_w(index));
 
     if (!GetFullPathNameW(file, ARRAY_SIZE(full_path), full_path, NULL)) {
-        WARN("GetFullPathName failed: %u\n", GetLastError());
+        WARN("GetFullPathName failed: %lu\n", GetLastError());
         return FALSE;
     }
 
@@ -272,7 +272,7 @@ static void DoSync(HHInfo *info)
 
     if (FAILED(hres))
     {
-        WARN("get_LocationURL failed: %08x\n", hres);
+        WARN("get_LocationURL failed: %08lx\n", hres);
         return;
     }
 
@@ -954,7 +954,7 @@ static void TB_AddButtonsFromFlags(HHInfo *pHHInfo, TBBUTTON *pButtons, DWORD dw
         HHWIN_BUTTON_FAVORITES | HHWIN_BUTTON_JUMP1 | HHWIN_BUTTON_JUMP2 |
         HHWIN_BUTTON_ZOOM | HHWIN_BUTTON_TOC_NEXT | HHWIN_BUTTON_TOC_PREV);
     if (unsupported)
-        FIXME("got asked for unsupported buttons: %06x\n", unsupported);
+        FIXME("got asked for unsupported buttons: %06lx\n", unsupported);
 
     if (dwButtonFlags & HHWIN_BUTTON_EXPAND)
     {
