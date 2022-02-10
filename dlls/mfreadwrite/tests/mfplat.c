@@ -877,13 +877,10 @@ skip_read_sample:
 
     refcount = get_refcount(attributes);
     hr = MFCreateSourceReaderFromByteStream(stream, attributes, &reader);
-todo_wine {
     ok(hr == S_OK, "Failed to create source reader, hr %#x.\n", hr);
     ok(get_refcount(attributes) > refcount, "Unexpected refcount.\n");
-}
     IMFAttributes_Release(attributes);
-    if (hr == S_OK)
-        IMFSourceReader_Release(reader);
+    IMFSourceReader_Release(reader);
 
     IMFByteStream_Release(stream);
 }
