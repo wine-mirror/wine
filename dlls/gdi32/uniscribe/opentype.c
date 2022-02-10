@@ -1638,7 +1638,7 @@ static void GPOS_convert_design_units_to_device(const OUTLINETEXTMETRICW *otm, c
 {
     int emHeight = otm->otmTextMetrics.tmAscent + otm->otmTextMetrics.tmDescent - otm->otmTextMetrics.tmInternalLeading;
 
-    TRACE("emHeight %i lfWidth %i\n",emHeight, logfont->lfWidth);
+    TRACE("emHeight %i lfWidth %li\n",emHeight, logfont->lfWidth);
     *devX = (desX * emHeight) / (double)otm->otmEMSquare;
     *devY = (desY * emHeight) / (double)otm->otmEMSquare;
     if (logfont->lfWidth)
@@ -2607,7 +2607,7 @@ static void usp10_script_cache_add_script_list(ScriptCache *script_cache,
     if (!(count = GET_BE_WORD(list->ScriptCount)))
         return;
 
-    TRACE("Adding %lu scripts.\n", count);
+    TRACE("Adding %Iu scripts.\n", count);
 
     initial_count = script_cache->script_count;
     for (i = 0; i < count; ++i)
@@ -2725,7 +2725,7 @@ static void usp10_script_add_language_list(LoadedScript *script,
     if (!(count = GET_BE_WORD(list->LangSysCount)))
         return;
 
-    TRACE("Adding %lu languages.\n", count);
+    TRACE("Adding %Iu languages.\n", count);
 
     initial_count = script->language_count;
     for (i = 0; i < count; ++i)

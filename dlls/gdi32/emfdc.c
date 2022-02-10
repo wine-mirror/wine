@@ -51,7 +51,7 @@ static BOOL emfdc_record( struct emf *emf, EMR *emr )
     DWORD len, size;
     ENHMETAHEADER *emh;
 
-    TRACE( "record %d, size %d\n", emr->iType, emr->nSize );
+    TRACE( "record %ld, size %ld\n", emr->iType, emr->nSize );
 
     assert( !(emr->nSize & 3) );
 
@@ -252,7 +252,7 @@ static BOOL emf_parse_user_bitmapinfo( BITMAPINFOHEADER *dst, const BITMAPINFOHE
     }
     else
     {
-        WARN( "(%u): unknown/wrong size for header\n", info->biSize );
+        WARN( "(%lu): unknown/wrong size for header\n", info->biSize );
         return FALSE;
     }
 
@@ -1204,7 +1204,7 @@ BOOL EMFDC_ExtTextOut( DC_ATTR *dc_attr, INT x, INT y, UINT flags, const RECT *r
 
     size = sizeof(*emr) + ((count+1) & ~1) * sizeof(WCHAR) + count * sizeof(INT);
 
-    TRACE( "%s %s count %d size = %d\n", debugstr_wn(str, count),
+    TRACE( "%s %s count %d size = %ld\n", debugstr_wn(str, count),
            wine_dbgstr_rect(rect), count, size );
     emr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size );
 

@@ -371,7 +371,7 @@ static BOOL BIDI_Reorder( HDC hDC,               /* [in] Display DC */
     DWORD cMaxGlyphs = 0;
     BOOL  doGlyphs = TRUE;
 
-    TRACE("%s, %d, 0x%08x lpOutString=%p, lpOrder=%p\n",
+    TRACE("%s, %d, 0x%08lx lpOutString=%p, lpOrder=%p\n",
           debugstr_wn(lpString, uCount), uCount, dwFlags,
           lpOutString, lpOrder);
 
@@ -622,7 +622,7 @@ static BOOL BIDI_Reorder( HDC hDC,               /* [in] Display DC */
                     if (res == USP_E_SCRIPT_NOT_IN_FONT)
                         TRACE("Unable to shape with currently selected font\n");
                     else
-                        FIXME("Unable to shape string (%x)\n",res);
+                        FIXME("Unable to shape string (%lx)\n",res);
                     j = nItems;
                     doGlyphs = FALSE;
                     HeapFree(GetProcessHeap(), 0, *lpGlyphs);
@@ -1135,7 +1135,7 @@ DWORD WINAPI GetCharacterPlacementW( HDC hdc, const WCHAR *str, INT count, INT m
     SIZE size;
     DWORD ret = 0;
 
-    TRACE("%s, %d, %d, 0x%08x\n", debugstr_wn(str, count), count, max_extent, flags);
+    TRACE("%s, %d, %d, 0x%08lx\n", debugstr_wn(str, count), count, max_extent, flags);
 
     if (!count)
         return 0;
@@ -1143,14 +1143,14 @@ DWORD WINAPI GetCharacterPlacementW( HDC hdc, const WCHAR *str, INT count, INT m
     if (!result)
         return GetTextExtentPoint32W( hdc, str, count, &size ) ? MAKELONG(size.cx, size.cy) : 0;
 
-    TRACE( "lStructSize=%d, lpOutString=%p, lpOrder=%p, lpDx=%p, lpCaretPos=%p\n"
+    TRACE( "lStructSize=%ld, lpOutString=%p, lpOrder=%p, lpDx=%p, lpCaretPos=%p\n"
            "lpClass=%p, lpGlyphs=%p, nGlyphs=%u, nMaxFit=%d\n",
            result->lStructSize, result->lpOutString, result->lpOrder,
            result->lpDx, result->lpCaretPos, result->lpClass,
            result->lpGlyphs, result->nGlyphs, result->nMaxFit );
 
     if (flags & ~(GCP_REORDER | GCP_USEKERNING))
-        FIXME( "flags 0x%08x ignored\n", flags );
+        FIXME( "flags 0x%08lx ignored\n", flags );
     if (result->lpClass)
         FIXME( "classes not implemented\n" );
     if (result->lpCaretPos && (flags & GCP_REORDER))
@@ -1243,7 +1243,7 @@ DWORD WINAPI GetCharacterPlacementA( HDC hdc, const char *str, INT count, INT ma
     DWORD ret;
     UINT font_cp;
 
-    TRACE( "%s, %d, %d, 0x%08x\n", debugstr_an(str, count), count, max_extent, flags );
+    TRACE( "%s, %d, %d, 0x%08lx\n", debugstr_an(str, count), count, max_extent, flags );
 
     strW = text_mbtowc( hdc, str, count, &countW, &font_cp );
 
@@ -1942,7 +1942,7 @@ DWORD WINAPI GetGlyphIndicesA( HDC hdc, const char *str, INT count, WORD *indice
     WCHAR *strW;
     INT countW;
 
-    TRACE( "(%p, %s, %d, %p, 0x%x)\n", hdc, debugstr_an(str, count), count, indices, flags );
+    TRACE( "(%p, %s, %d, %p, 0x%lx)\n", hdc, debugstr_an(str, count), count, indices, flags );
 
     strW = text_mbtowc( hdc, str, count, &countW, NULL );
     ret = NtGdiGetGlyphIndicesW( hdc, strW, countW, indices, flags );
@@ -2460,7 +2460,7 @@ BOOL WINAPI RemoveFontResourceExW( const WCHAR *str, DWORD flags, void *dv )
  */
 BOOL WINAPI GetFontResourceInfoW( const WCHAR *str, DWORD *size, void *buffer, DWORD type )
 {
-    FIXME( "%s %p(%d) %p %d\n", debugstr_w(str), size, size ? *size : 0, buffer, type );
+    FIXME( "%s %p(%ld) %p %ld\n", debugstr_w(str), size, size ? *size : 0, buffer, type );
     return FALSE;
 }
 
@@ -2668,7 +2668,7 @@ BOOL WINAPI CreateScalableFontResourceW( DWORD hidden, const WCHAR *resource_fil
     WCHAR path[MAX_PATH];
     BOOL ret;
 
-    TRACE("(%d, %s, %s, %s)\n", hidden, debugstr_w(resource_file),
+    TRACE("(%ld, %s, %s, %s)\n", hidden, debugstr_w(resource_file),
           debugstr_w(font_file), debugstr_w(font_path) );
 
     if (!font_file) goto done;

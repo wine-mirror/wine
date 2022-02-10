@@ -752,7 +752,7 @@ static BOOL metadc_stretchblt( HDC hdc, INT x_dst, INT y_dst, INT width_dst, INT
     mr->rdFunction = type;
     bmi = (BITMAPINFO *)&mr->rdParm[bitmap_offset];
     bmi->bmiHeader = src_info.bmiHeader;
-    TRACE( "size = %u  rop=%x\n", size, rop );
+    TRACE( "size = %u  rop=%lx\n", size, rop );
 
     ret = GetDIBits( hdc_src, bitmap, 0, src_info.bmiHeader.biHeight, (BYTE *)bmi + bmi_size,
                      bmi, DIB_RGB_COLORS );

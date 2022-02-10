@@ -71,7 +71,7 @@ INT WINAPI EnumICMProfilesW(HDC hdc, ICMENUMPROCW func, LPARAM lparam)
     WCHAR profile[MAX_PATH];
     DWORD size = ARRAYSIZE(profile);
 
-    TRACE( "%p, %p, 0x%08lx\n", hdc, func, lparam );
+    TRACE( "%p, %p, 0x%08Ix\n", hdc, func, lparam );
 
     if (!func) return -1;
     if (!__wine_get_icm_profile( hdc, FALSE, &size, profile )) return -1;
@@ -139,7 +139,7 @@ BOOL WINAPI GetICMProfileW(HDC hdc, LPDWORD size, LPWSTR filename)
  */
 BOOL WINAPI GetLogColorSpaceA(HCOLORSPACE colorspace, LPLOGCOLORSPACEA buffer, DWORD size)
 {
-    FIXME("%p %p 0x%08x stub\n", colorspace, buffer, size);
+    FIXME("%p %p 0x%08lx stub\n", colorspace, buffer, size);
     return FALSE;
 }
 
@@ -148,7 +148,7 @@ BOOL WINAPI GetLogColorSpaceA(HCOLORSPACE colorspace, LPLOGCOLORSPACEA buffer, D
  */
 BOOL WINAPI GetLogColorSpaceW(HCOLORSPACE colorspace, LPLOGCOLORSPACEW buffer, DWORD size)
 {
-    FIXME("%p %p 0x%08x stub\n", colorspace, buffer, size);
+    FIXME("%p %p 0x%08lx stub\n", colorspace, buffer, size);
     return FALSE;
 }
 
@@ -197,7 +197,7 @@ BOOL WINAPI SetICMProfileW(HDC hdc, LPWSTR filename)
  */
 BOOL WINAPI UpdateICMRegKeyA(DWORD reserved, LPSTR cmid, LPSTR filename, UINT command)
 {
-    FIXME("0x%08x, %s, %s, 0x%08x stub\n", reserved, debugstr_a(cmid), debugstr_a(filename), command);
+    FIXME("0x%08lx, %s, %s, 0x%08x stub\n", reserved, debugstr_a(cmid), debugstr_a(filename), command);
     return TRUE;
 }
 
@@ -206,6 +206,6 @@ BOOL WINAPI UpdateICMRegKeyA(DWORD reserved, LPSTR cmid, LPSTR filename, UINT co
  */
 BOOL WINAPI UpdateICMRegKeyW(DWORD reserved, LPWSTR cmid, LPWSTR filename, UINT command)
 {
-    FIXME("0x%08x, %s, %s, 0x%08x stub\n", reserved, debugstr_w(cmid), debugstr_w(filename), command);
+    FIXME("0x%08lx, %s, %s, 0x%08x stub\n", reserved, debugstr_w(cmid), debugstr_w(filename), command);
     return TRUE;
 }
