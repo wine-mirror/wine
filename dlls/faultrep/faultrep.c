@@ -100,6 +100,6 @@ BOOL WINAPI AddERExcludedApplicationA(LPCSTR lpAppFileName)
  */
 EFaultRepRetVal WINAPI ReportFault(LPEXCEPTION_POINTERS pep, DWORD dwOpt)
 {
-    FIXME("%p 0x%x stub\n", pep, dwOpt);
+    FIXME("%p 0x%lx stub\n", pep, dwOpt);
     return frrvOk;
 }
