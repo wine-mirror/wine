@@ -3215,15 +3215,15 @@ HRESULT WINAPI MFConvertColorInfoToDXVA(DWORD *dxva_info, const MFVIDEOFORMAT *f
 
 struct frame_rate
 {
-    UINT64 rate;
-    UINT64 frame_time;
+    UINT64 key;
+    UINT64 value;
 };
 
 static int __cdecl frame_rate_compare(const void *a, const void *b)
 {
-    const UINT64 *rate = a;
+    const UINT64 *key = a;
     const struct frame_rate *known_rate = b;
-    return *rate == known_rate->rate ? 0 : ( *rate < known_rate->rate ? 1 : -1 );
+    return *key == known_rate->key ? 0 : ( *key < known_rate->key ? 1 : -1 );
 }
 
 /***********************************************************************
@@ -3252,10 +3252,68 @@ HRESULT WINAPI MFFrameRateToAverageTimePerFrame(UINT32 numerator, UINT32 denomin
     if ((entry = bsearch(&rate, known_rates, ARRAY_SIZE(known_rates), sizeof(*known_rates),
             frame_rate_compare)))
     {
-        *avgframetime = entry->frame_time;
+        *avgframetime = entry->value;
     }
     else
         *avgframetime = numerator ? denominator * (UINT64)10000000 / numerator : 0;
+
+    return S_OK;
+}
+
+static unsigned int get_gcd(unsigned int a, unsigned int b)
+{
+    unsigned int m;
+
+    while (b)
+    {
+        m = a % b;
+        a = b;
+        b = m;
+    }
+
+    return a;
+}
+
+/***********************************************************************
+ *      MFAverageTimePerFrameToFrameRate (mfplat.@)
+ */
+HRESULT WINAPI MFAverageTimePerFrameToFrameRate(UINT64 avgtime, UINT32 *numerator, UINT32 *denominator)
+{
+    static const struct frame_rate known_rates[] =
+    {
+#define KNOWN_RATE(ft,n,d) { ft, ((UINT64)n << 32) | d }
+        KNOWN_RATE(417188, 24000, 1001),
+        KNOWN_RATE(416667,    24,    1),
+        KNOWN_RATE(400000,    25,    1),
+        KNOWN_RATE(333667, 30000, 1001),
+        KNOWN_RATE(333333,    30,    1),
+        KNOWN_RATE(200000,    50,    1),
+        KNOWN_RATE(166833, 60000, 1001),
+        KNOWN_RATE(166667,    60,    1),
+#undef KNOWN_RATE
+    };
+    const struct frame_rate *entry;
+    unsigned int gcd;
+
+    TRACE("%s, %p, %p.\n", wine_dbgstr_longlong(avgtime), numerator, denominator);
+
+    if ((entry = bsearch(&avgtime, known_rates, ARRAY_SIZE(known_rates), sizeof(*known_rates),
+            frame_rate_compare)))
+    {
+        *numerator = entry->value >> 32;
+        *denominator = entry->value;
+    }
+    else if (avgtime)
+    {
+        if (avgtime > 100000000) avgtime = 100000000;
+        gcd = get_gcd(10000000, avgtime);
+        *numerator = 10000000 / gcd;
+        *denominator = avgtime / gcd;
+    }
+    else
+    {
+        *numerator = *denominator = 0;
+    }
 
     return S_OK;
 }

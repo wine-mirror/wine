@@ -20,7 +20,7 @@
 @ stdcall MFAllocateWorkQueue(ptr)
 @ stdcall MFAllocateWorkQueueEx(long ptr) rtworkq.RtwqAllocateWorkQueue
 @ stub MFAppendCollection
-@ stub MFAverageTimePerFrameToFrameRate
+@ stdcall MFAverageTimePerFrameToFrameRate(int64 ptr ptr)
 @ stdcall MFBeginCreateFile(long long long wstr ptr ptr ptr)
 @ stub MFBeginGetHostByName
 @ stdcall MFBeginRegisterWorkQueueWithMMCSS(long wstr long ptr ptr)

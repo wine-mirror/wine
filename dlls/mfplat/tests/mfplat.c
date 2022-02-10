@@ -6399,6 +6399,53 @@ static void test_MFFrameRateToAverageTimePerFrame(void)
     }
 }
 
+static void test_MFAverageTimePerFrameToFrameRate(void)
+{
+    static const struct frame_rate_test
+    {
+        unsigned int numerator;
+        unsigned int denominator;
+        UINT64 avgtime;
+    } frame_rate_tests[] =
+    {
+        { 60000, 1001, 166833 },
+        { 30000, 1001, 333667 },
+        { 24000, 1001, 417188 },
+        { 60, 1, 166667 },
+        { 30, 1, 333333 },
+        { 50, 1, 200000 },
+        { 25, 1, 400000 },
+        { 24, 1, 416667 },
+
+        { 1000000, 25641, 256410 },
+        { 10000000, 83333, 83333 },
+        { 1, 10, 100000000 },
+        { 1, 10, 100000001 },
+        { 1, 10, 200000000 },
+        { 1,  1,  10000000 },
+        { 1,  2,  20000000 },
+        { 5,  1,   2000000 },
+        { 10, 1,   1000000 },
+    };
+    unsigned int i, numerator, denominator;
+    HRESULT hr;
+
+    numerator = denominator = 1;
+    hr = MFAverageTimePerFrameToFrameRate(0, &numerator, &denominator);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!numerator && !denominator, "Unexpected output %u/%u.\n", numerator, denominator);
+
+    for (i = 0; i < ARRAY_SIZE(frame_rate_tests); ++i)
+    {
+        numerator = denominator = 12345;
+        hr = MFAverageTimePerFrameToFrameRate(frame_rate_tests[i].avgtime, &numerator, &denominator);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(numerator == frame_rate_tests[i].numerator && denominator == frame_rate_tests[i].denominator,
+                "%u: unexpected %u/%u, expected %u/%u.\n", i, numerator, denominator, frame_rate_tests[i].numerator,
+                frame_rate_tests[i].denominator);
+    }
+}
+
 static void test_MFMapDXGIFormatToDX9Format(void)
 {
     static const struct format_pair
@@ -7874,6 +7921,7 @@ START_TEST(mfplat)
     test_MFCreateDXSurfaceBuffer();
     test_MFCreateTrackedSample();
     test_MFFrameRateToAverageTimePerFrame();
+    test_MFAverageTimePerFrameToFrameRate();
     test_MFMapDXGIFormatToDX9Format();
     test_d3d11_surface_buffer();
     test_d3d12_surface_buffer();
