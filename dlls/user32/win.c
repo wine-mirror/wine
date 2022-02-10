@@ -1216,6 +1216,15 @@ void destroy_thread_windows(void)
         win->obj.handle = *free_list_ptr;
         free_list_ptr = (WND **)&win->obj.handle;
     }
+    if (free_list)
+    {
+        SERVER_START_REQ( destroy_window )
+        {
+            req->handle = 0; /* destroy all thread windows */
+            wine_server_call( req );
+        }
+        SERVER_END_REQ;
+    }
     USER_Unlock();
 
     while ((win = free_list))

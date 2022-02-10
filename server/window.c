@@ -2101,8 +2101,13 @@ DECL_HANDLER(set_parent)
 /* destroy a window */
 DECL_HANDLER(destroy_window)
 {
-    struct window *win = get_window( req->handle );
-    if (win)
+    struct window *win;
+
+    if (!req->handle)
+    {
+        destroy_thread_windows( current );
+    }
+    else if ((win = get_window( req->handle )))
     {
         if (!is_desktop_window(win)) free_window_handle( win );
         else if (win->thread == current) detach_window_thread( win );
