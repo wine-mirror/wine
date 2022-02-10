@@ -45,7 +45,7 @@ LONG EFRAME_refCount = 0;
  */
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD fdwReason, LPVOID fImpLoad)
 {
-    TRACE("%p, 0x%x, %p\n", hinst, fdwReason, fImpLoad);
+    TRACE("%p, 0x%lx, %p\n", hinst, fdwReason, fImpLoad);
     switch (fdwReason)
     {
     case DLL_PROCESS_ATTACH:
@@ -61,7 +61,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD fdwReason, LPVOID fImpLoad)
  */
 HRESULT WINAPI DllCanUnloadNow(void)
 {
-    TRACE("refCount is %d\n", EFRAME_refCount);
+    TRACE("refCount is %ld\n", EFRAME_refCount);
     return EFRAME_refCount ? S_FALSE : S_OK;
 }
 
