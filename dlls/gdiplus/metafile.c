@@ -1777,7 +1777,7 @@ static GpStatus metafile_deserialize_image(const BYTE *record_data, UINT data_si
             break;
         }
         default:
-            WARN("Invalid bitmap type %d.\n", bitmapdata->Type);
+            WARN("Invalid bitmap type %ld.\n", bitmapdata->Type);
             return InvalidParameter;
         }
         break;
@@ -1810,7 +1810,7 @@ static GpStatus metafile_deserialize_image(const BYTE *record_data, UINT data_si
             break;
         }
         default:
-            FIXME("metafile type %d not supported.\n", metafiledata->Type);
+            FIXME("metafile type %ld not supported.\n", metafiledata->Type);
             return NotImplemented;
         }
         break;
@@ -1980,7 +1980,7 @@ static GpStatus metafile_read_region_node(struct memory_buffer *mbuf, GpRegion *
         *count += 1;
         return Ok;
     default:
-        FIXME("element type %#x is not supported\n", *type);
+        FIXME("element type %#lx is not supported\n", *type);
         break;
     }
 
@@ -2151,7 +2151,7 @@ static GpStatus metafile_deserialize_brush(const BYTE *record_data, UINT data_si
         break;
     }
     default:
-        FIXME("brush type %u is not supported.\n", data->Type);
+        FIXME("brush type %lu is not supported.\n", data->Type);
         return NotImplemented;
     }
 

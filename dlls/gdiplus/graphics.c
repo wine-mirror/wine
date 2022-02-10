@@ -297,7 +297,7 @@ static INT prepare_dc(GpGraphics *graphics, GpPen *pen)
         TRACE("dashes are: ");
         for(i = 0; i < numdashes; i++){
             dash_array[i] = gdip_round(width * pen->dashes[i]);
-            TRACE("%d, ", dash_array[i]);
+            TRACE("%ld, ", dash_array[i]);
         }
         TRACE("\n and the pen style is %x\n", pen->style);
 
@@ -3132,7 +3132,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
         BOOL do_resampling = FALSE;
         BOOL use_software = FALSE;
 
-        TRACE("graphics: %.2fx%.2f dpi, fmt %#x, scale %f, image: %.2fx%.2f dpi, fmt %#x, color %08x\n",
+        TRACE("graphics: %.2fx%.2f dpi, fmt %#x, scale %f, image: %.2fx%.2f dpi, fmt %#x, color %08lx\n",
             graphics->xres, graphics->yres,
             graphics->image && graphics->image->type == ImageTypeBitmap ? ((GpBitmap *)graphics->image)->format : 0,
             graphics->scale, image->xres, image->yres, bitmap->format,
@@ -5049,7 +5049,7 @@ GpStatus WINGDIPAPI GdipGraphicsClear(GpGraphics *graphics, ARGB color)
     GpRectF wnd_rect;
     CompositingMode prev_comp_mode;
 
-    TRACE("(%p, %x)\n", graphics, color);
+    TRACE("(%p, %lx)\n", graphics, color);
 
     if(!graphics)
         return InvalidParameter;

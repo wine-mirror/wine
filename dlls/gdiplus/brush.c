@@ -271,7 +271,7 @@ GpStatus get_hatch_data(GpHatchStyle hatchstyle, const unsigned char **result)
  */
 GpStatus WINGDIPAPI GdipCreateHatchBrush(GpHatchStyle hatchstyle, ARGB forecol, ARGB backcol, GpHatch **brush)
 {
-    TRACE("(%d, %d, %d, %p)\n", hatchstyle, forecol, backcol, brush);
+    TRACE("(%d, %ld, %ld, %p)\n", hatchstyle, forecol, backcol, brush);
 
     if(!brush)  return InvalidParameter;
 
@@ -372,7 +372,7 @@ GpStatus WINGDIPAPI GdipCreateLineBrush(GDIPCONST GpPointF* startpoint,
     GpStatus stat;
     GpRectF rect;
 
-    TRACE("(%s, %s, %x, %x, %d, %p)\n", debugstr_pointf(startpoint),
+    TRACE("(%s, %s, %lx, %lx, %d, %p)\n", debugstr_pointf(startpoint),
           debugstr_pointf(endpoint), startcolor, endcolor, wrap, line);
 
     if(!line || !startpoint || !endpoint || wrap == WrapModeClamp)
@@ -415,7 +415,7 @@ GpStatus WINGDIPAPI GdipCreateLineBrushI(GDIPCONST GpPoint* startpoint,
     GpPointF stF;
     GpPointF endF;
 
-    TRACE("(%p, %p, %x, %x, %d, %p)\n", startpoint, endpoint,
+    TRACE("(%p, %p, %lx, %lx, %d, %p)\n", startpoint, endpoint,
           startcolor, endcolor, wrap, line);
 
     if(!startpoint || !endpoint)
@@ -435,7 +435,7 @@ GpStatus WINGDIPAPI GdipCreateLineBrushFromRect(GDIPCONST GpRectF* rect,
 {
     float angle;
 
-    TRACE("(%s, %x, %x, %d, %d, %p)\n", debugstr_rectf(rect), startcolor, endcolor, mode,
+    TRACE("(%s, %lx, %lx, %d, %d, %p)\n", debugstr_rectf(rect), startcolor, endcolor, mode,
           wrap, line);
 
     if(!line || !rect)
@@ -468,7 +468,7 @@ GpStatus WINGDIPAPI GdipCreateLineBrushFromRectI(GDIPCONST GpRect* rect,
 {
     GpRectF rectF;
 
-    TRACE("(%p, %x, %x, %d, %d, %p)\n", rect, startcolor, endcolor, mode,
+    TRACE("(%p, %lx, %lx, %d, %d, %p)\n", rect, startcolor, endcolor, mode,
           wrap, line);
 
     set_rect(&rectF, rect->X, rect->Y, rect->Width, rect->Height);
@@ -487,7 +487,7 @@ GpStatus WINGDIPAPI GdipCreateLineBrushFromRectWithAngle(GDIPCONST GpRectF* rect
     REAL sin_angle, cos_angle, sin_cos_angle;
     GpPointF start, end;
 
-    TRACE("(%s, %x, %x, %.2f, %d, %d, %p)\n", debugstr_rectf(rect), startcolor, endcolor, angle, isAngleScalable,
+    TRACE("(%s, %lx, %lx, %.2f, %d, %d, %p)\n", debugstr_rectf(rect), startcolor, endcolor, angle, isAngleScalable,
           wrap, line);
 
     if (!rect || !line || wrap == WrapModeClamp)
@@ -586,7 +586,7 @@ GpStatus WINGDIPAPI GdipCreateLineBrushFromRectWithAngleI(GDIPCONST GpRect* rect
     ARGB startcolor, ARGB endcolor, REAL angle, BOOL isAngleScalable, GpWrapMode wrap,
     GpLineGradient **line)
 {
-    TRACE("(%p, %x, %x, %.2f, %d, %d, %p)\n", rect, startcolor, endcolor, angle, isAngleScalable,
+    TRACE("(%p, %lx, %lx, %.2f, %d, %d, %p)\n", rect, startcolor, endcolor, angle, isAngleScalable,
           wrap, line);
 
     return GdipCreateLineBrushFromRectI(rect, startcolor, endcolor, LinearGradientModeForwardDiagonal,
@@ -752,7 +752,7 @@ GpStatus WINGDIPAPI GdipCreatePathGradientFromPath(GDIPCONST GpPath* path,
  */
 GpStatus WINGDIPAPI GdipCreateSolidFill(ARGB color, GpSolidFill **sf)
 {
-    TRACE("(%x, %p)\n", color, sf);
+    TRACE("(%lx, %p)\n", color, sf);
 
     if(!sf)  return InvalidParameter;
 
@@ -1652,7 +1652,7 @@ GpStatus WINGDIPAPI GdipGetPathGradientPresetBlendCount(GpPathGradient *brush,
 GpStatus WINGDIPAPI GdipSetPathGradientCenterColor(GpPathGradient *grad,
     ARGB argb)
 {
-    TRACE("(%p, %x)\n", grad, argb);
+    TRACE("(%p, %lx)\n", grad, argb);
 
     if(!grad || grad->brush.bt != BrushTypePathGradient)
         return InvalidParameter;
@@ -1920,7 +1920,7 @@ GpStatus WINGDIPAPI GdipTranslatePathGradientTransform(GpPathGradient *grad,
 
 GpStatus WINGDIPAPI GdipSetSolidFillColor(GpSolidFill *sf, ARGB argb)
 {
-    TRACE("(%p, %x)\n", sf, argb);
+    TRACE("(%p, %lx)\n", sf, argb);
 
     if(!sf)
         return InvalidParameter;
@@ -1965,7 +1965,7 @@ GpStatus WINGDIPAPI GdipSetTextureWrapMode(GpTexture *brush, GpWrapMode wrapmode
 GpStatus WINGDIPAPI GdipSetLineColors(GpLineGradient *brush, ARGB color1,
     ARGB color2)
 {
-    TRACE("(%p, %x, %x)\n", brush, color1, color2);
+    TRACE("(%p, %lx, %lx)\n", brush, color1, color2);
 
     if(!brush || brush->brush.bt != BrushTypeLinearGradient)
         return InvalidParameter;

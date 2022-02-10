@@ -772,7 +772,7 @@ static GpStatus read_element(struct memory_buffer *mbuf, GpRegion *region, regio
     type = buffer_read(mbuf, sizeof(*type));
     if (!type) return Ok;
 
-    TRACE("type %#x\n", *type);
+    TRACE("type %#lx\n", *type);
 
     node->type = *type;
 
@@ -844,7 +844,7 @@ static GpStatus read_element(struct memory_buffer *mbuf, GpRegion *region, regio
         }
         if (!VALID_MAGIC(path_header->magic))
         {
-            ERR("invalid path header magic %#x\n", path_header->magic);
+            ERR("invalid path header magic %#lx\n", path_header->magic);
             return InvalidParameter;
         }
 
@@ -866,7 +866,7 @@ static GpStatus read_element(struct memory_buffer *mbuf, GpRegion *region, regio
         path->pathdata.Count = path_header->count;
 
         if (path_header->flags & ~FLAGS_INTPATH)
-            FIXME("unhandled path flags %#x\n", path_header->flags);
+            FIXME("unhandled path flags %#lx\n", path_header->flags);
 
         if (path_header->flags & FLAGS_INTPATH)
         {
@@ -876,7 +876,7 @@ static GpStatus read_element(struct memory_buffer *mbuf, GpRegion *region, regio
             pt = buffer_read(mbuf, sizeof(*pt) * path_header->count);
             if (!pt)
             {
-                ERR("failed to read packed %u path points\n", path_header->count);
+                ERR("failed to read packed %lu path points\n", path_header->count);
                 return InvalidParameter;
             }
 
@@ -893,7 +893,7 @@ static GpStatus read_element(struct memory_buffer *mbuf, GpRegion *region, regio
             ptf = buffer_read(mbuf, sizeof(*ptf) * path_header->count);
             if (!ptf)
             {
-                ERR("failed to read %u path points\n", path_header->count);
+                ERR("failed to read %lu path points\n", path_header->count);
                 return InvalidParameter;
             }
             memcpy(path->pathdata.Points, ptf, sizeof(*ptf) * path_header->count);
@@ -902,7 +902,7 @@ static GpStatus read_element(struct memory_buffer *mbuf, GpRegion *region, regio
         types = buffer_read(mbuf, path_header->count);
         if (!types)
         {
-            ERR("failed to read %u path types\n", path_header->count);
+            ERR("failed to read %lu path types\n", path_header->count);
             return InvalidParameter;
         }
         memcpy(path->pathdata.Types, types, path_header->count);
@@ -910,7 +910,7 @@ static GpStatus read_element(struct memory_buffer *mbuf, GpRegion *region, regio
         {
             if (!buffer_read(mbuf, 4 - (path_header->count & 3)))
             {
-                ERR("failed to read rounding %u bytes\n", 4 - (path_header->count & 3));
+                ERR("failed to read rounding %lu bytes\n", 4 - (path_header->count & 3));
                 return InvalidParameter;
             }
         }
@@ -925,7 +925,7 @@ static GpStatus read_element(struct memory_buffer *mbuf, GpRegion *region, regio
         return Ok;
 
     default:
-        FIXME("element type %#x is not supported\n", *type);
+        FIXME("element type %#lx is not supported\n", *type);
         break;
     }
 
@@ -1174,7 +1174,7 @@ static GpStatus get_region_hrgn(struct region_element *element, GpGraphics *grap
             return Ok;
         }
         default:
-            FIXME("GdipGetRegionHRgn unimplemented for region type=%x\n", element->type);
+            FIXME("GdipGetRegionHRgn unimplemented for region type=%lx\n", element->type);
             *hrgn = NULL;
             return NotImplemented;
     }

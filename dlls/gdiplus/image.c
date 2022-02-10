@@ -1455,7 +1455,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromGdiDib(GDIPCONST BITMAPINFO* info,
 
     height = abs(info->bmiHeader.biHeight);
     stride = ((info->bmiHeader.biWidth * info->bmiHeader.biBitCount + 31) >> 3) & ~3;
-    TRACE("height %u, stride %u, image size %u\n", height, stride, height * stride);
+    TRACE("height %lu, stride %lu, image size %lu\n", height, stride, height * stride);
 
     memcpy(bmbits, bits, height * stride);
 
@@ -1519,7 +1519,7 @@ GpStatus WINGDIPAPI GdipCreateHBITMAPFromBitmap(GpBitmap* bitmap,
     LPBYTE bits;
     BOOL unlock;
 
-    TRACE("(%p,%p,%x)\n", bitmap, hbmReturn, background);
+    TRACE("(%p,%p,%lx)\n", bitmap, hbmReturn, background);
 
     if (!bitmap || !hbmReturn) return InvalidParameter;
     if (!image_lock(&bitmap->image, &unlock)) return ObjectBusy;
@@ -2540,7 +2540,7 @@ GpStatus WINGDIPAPI GdipGetPropertyItemSize(GpImage *image, PROPID propid, UINT 
     IWICMetadataReader *reader;
     PROPVARIANT id, value;
 
-    TRACE("(%p,%#x,%p)\n", image, propid, size);
+    TRACE("(%p,%#lx,%p)\n", image, propid, size);
 
     if (!size || !image) return InvalidParameter;
 
@@ -2688,7 +2688,7 @@ GpStatus WINGDIPAPI GdipGetPropertyItem(GpImage *image, PROPID propid, UINT size
     IWICMetadataReader *reader;
     PROPVARIANT id, value;
 
-    TRACE("(%p,%#x,%u,%p)\n", image, propid, size, buffer);
+    TRACE("(%p,%#lx,%u,%p)\n", image, propid, size, buffer);
 
     if (!image || !buffer) return InvalidParameter;
 
@@ -4319,7 +4319,7 @@ static GpStatus get_decoder_info(IStream* stream, const struct image_codec **res
         }
     }
 
-    TRACE("no match for %i byte signature %x %x %x %x %x %x %x %x\n", bytesread,
+    TRACE("no match for %lu byte signature %x %x %x %x %x %x %x %x\n", bytesread,
         signature[0],signature[1],signature[2],signature[3],
         signature[4],signature[5],signature[6],signature[7]);
 
@@ -4444,7 +4444,7 @@ GpStatus WINGDIPAPI GdipRemovePropertyItem(GpImage *image, PROPID propId)
 {
     static int calls;
 
-    TRACE("(%p,%u)\n", image, propId);
+    TRACE("(%p,%lu)\n", image, propId);
 
     if(!image)
         return InvalidParameter;
@@ -4461,7 +4461,7 @@ GpStatus WINGDIPAPI GdipSetPropertyItem(GpImage *image, GDIPCONST PropertyItem* 
 
     if (!image || !item) return InvalidParameter;
 
-    TRACE("(%p,%p:%#x,%u,%u,%p)\n", image, item, item->id, item->type, item->length, item->value);
+    TRACE("(%p,%p:%#lx,%u,%lu,%p)\n", image, item, item->id, item->type, item->length, item->value);
 
     if(!(calls++))
         FIXME("not implemented\n");
@@ -5252,7 +5252,7 @@ static PixelFormat get_16bpp_format(HBITMAP hbm)
     }
     else
     {
-        FIXME("unrecognized bitfields %x,%x,%x\n", bmh.bV4RedMask,
+        FIXME("unrecognized bitfields %lx,%lx,%lx\n", bmh.bV4RedMask,
             bmh.bV4GreenMask, bmh.bV4BlueMask);
         result = PixelFormatUndefined;
     }

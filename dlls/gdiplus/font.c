@@ -354,7 +354,7 @@ GpStatus WINGDIPAPI GdipGetFontSize(GpFont *font, REAL *size)
     if (!(font && size)) return InvalidParameter;
 
     *size = get_font_size(font);
-    TRACE("%s,%d => %f\n", debugstr_w(font->family->FamilyName), font->otm.otmTextMetrics.tmHeight, *size);
+    TRACE("%s,%ld => %f\n", debugstr_w(font->family->FamilyName), font->otm.otmTextMetrics.tmHeight, *size);
 
     return Ok;
 }
@@ -398,7 +398,7 @@ GpStatus WINGDIPAPI GdipGetFontStyle(GpFont *font, INT *style)
         return InvalidParameter;
 
     *style = get_font_style(font);
-    TRACE("%s,%d => %d\n", debugstr_w(font->family->FamilyName), font->otm.otmTextMetrics.tmHeight, *style);
+    TRACE("%s,%ld => %d\n", debugstr_w(font->family->FamilyName), font->otm.otmTextMetrics.tmHeight, *style);
 
     return Ok;
 }
@@ -421,7 +421,7 @@ GpStatus WINGDIPAPI GdipGetFontUnit(GpFont *font, Unit *unit)
     if (!(font && unit)) return InvalidParameter;
 
     *unit = font->unit;
-    TRACE("%s,%d => %d\n", debugstr_w(font->family->FamilyName), font->otm.otmTextMetrics.tmHeight, *unit);
+    TRACE("%s,%ld => %d\n", debugstr_w(font->family->FamilyName), font->otm.otmTextMetrics.tmHeight, *unit);
 
     return Ok;
 }
@@ -509,7 +509,7 @@ GpStatus WINGDIPAPI GdipGetLogFontW(GpFont *font, GpGraphics *graphics, LOGFONTW
     lf->lfPitchAndFamily = 0;
     lstrcpyW(lf->lfFaceName, font->family->FamilyName);
 
-    TRACE("=> %s,%d\n", debugstr_w(lf->lfFaceName), lf->lfHeight);
+    TRACE("=> %s,%ld\n", debugstr_w(lf->lfFaceName), lf->lfHeight);
 
     return Ok;
 }
@@ -561,7 +561,7 @@ GpStatus WINGDIPAPI GdipGetFontHeight(GDIPCONST GpFont *font,
     if (!graphics)
     {
         *height = font_height;
-        TRACE("%s,%d => %f\n",
+        TRACE("%s,%ld => %f\n",
               debugstr_w(font->family->FamilyName), font->otm.otmTextMetrics.tmHeight, *height);
         return Ok;
     }
@@ -571,7 +571,7 @@ GpStatus WINGDIPAPI GdipGetFontHeight(GDIPCONST GpFont *font,
 
     *height = pixels_to_units(font_height, graphics->unit, dpi, graphics->printer_display);
 
-    TRACE("%s,%d(unit %d) => %f\n",
+    TRACE("%s,%ld(unit %d) => %f\n",
           debugstr_w(font->family->FamilyName), font->otm.otmTextMetrics.tmHeight, graphics->unit, *height);
     return Ok;
 }
@@ -612,7 +612,7 @@ GpStatus WINGDIPAPI GdipGetFontHeightGivenDPI(GDIPCONST GpFont *font, REAL dpi, 
 
     *height = (REAL)line_spacing * font_size / (REAL)em_height;
 
-    TRACE("%s,%d => %f\n",
+    TRACE("%s,%ld => %f\n",
           debugstr_w(font->family->FamilyName), font->otm.otmTextMetrics.tmHeight, *height);
 
     return Ok;
@@ -1489,7 +1489,7 @@ GpStatus WINGDIPAPI GdipPrivateAddMemoryFont(GpFontCollection* fontCollection,
         return OutOfMemory;
 
     font = AddFontMemResourceEx((void*)memory, length, NULL, &count);
-    TRACE("%s: %p/%u\n", debugstr_w(name), font, count);
+    TRACE("%s: %p/%lu\n", debugstr_w(name), font, count);
     if (!font || !count)
         ret = InvalidParameter;
     else
