@@ -80,7 +80,7 @@ static ULONG WINAPI IKsPrivatePropertySetImpl_AddRef(LPKSPROPERTYSET iface)
 {
     IKsPrivatePropertySetImpl *This = impl_from_IKsPropertySet(iface);
     ULONG ref = InterlockedIncrement(&(This->ref));
-    TRACE("(%p) ref %d\n", This, ref);
+    TRACE("(%p) ref %ld\n", This, ref);
     return ref;
 }
 
@@ -88,7 +88,7 @@ static ULONG WINAPI IKsPrivatePropertySetImpl_Release(LPKSPROPERTYSET iface)
 {
     IKsPrivatePropertySetImpl *This = impl_from_IKsPropertySet(iface);
     ULONG ref = InterlockedDecrement(&(This->ref));
-    TRACE("(%p) ref %d\n", This, ref);
+    TRACE("(%p) ref %ld\n", This, ref);
 
     if (!ref) {
         HeapFree(GetProcessHeap(), 0, This);
@@ -124,7 +124,7 @@ static HRESULT DSPROPERTY_WaveDeviceMappingW(
     PDSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_W_DATA ppd = pPropData;
     struct search_data search;
 
-    TRACE("(pPropData=%p,cbPropData=%d,pcbReturned=%p)\n",
+    TRACE("(pPropData=%p,cbPropData=%ld,pcbReturned=%p)\n",
           pPropData,cbPropData,pcbReturned);
 
     if (!ppd) {
@@ -164,7 +164,7 @@ static HRESULT DSPROPERTY_WaveDeviceMappingA(
     DWORD len;
     HRESULT hr;
 
-    TRACE("(pPropData=%p,cbPropData=%d,pcbReturned=%p)\n",
+    TRACE("(pPropData=%p,cbPropData=%ld,pcbReturned=%p)\n",
       pPropData,cbPropData,pcbReturned);
 
     if (!ppd || !ppd->DeviceName) {
@@ -201,7 +201,7 @@ static HRESULT DSPROPERTY_DescriptionW(
     PROPVARIANT pv;
     HRESULT hr;
 
-    TRACE("pPropData=%p,cbPropData=%d,pcbReturned=%p)\n",
+    TRACE("pPropData=%p,cbPropData=%ld,pcbReturned=%p)\n",
           pPropData,cbPropData,pcbReturned);
 
     TRACE("DeviceId=%s\n",debugstr_guid(&ppd->DeviceId));
@@ -233,7 +233,7 @@ static HRESULT DSPROPERTY_DescriptionW(
     hr = IMMDevice_OpenPropertyStore(mmdevice, STGM_READ, &ps);
     if(FAILED(hr)){
         IMMDevice_Release(mmdevice);
-        WARN("OpenPropertyStore failed: %08x\n", hr);
+        WARN("OpenPropertyStore failed: %08lx\n", hr);
         return hr;
     }
 
@@ -242,7 +242,7 @@ static HRESULT DSPROPERTY_DescriptionW(
     if(FAILED(hr)){
         IPropertyStore_Release(ps);
         IMMDevice_Release(mmdevice);
-        WARN("GetValue(FriendlyName) failed: %08x\n", hr);
+        WARN("GetValue(FriendlyName) failed: %08lx\n", hr);
         return hr;
     }
 
@@ -257,7 +257,7 @@ static HRESULT DSPROPERTY_DescriptionW(
 
     if (pcbReturned) {
         *pcbReturned = sizeof(*ppd);
-        TRACE("*pcbReturned=%d\n", *pcbReturned);
+        TRACE("*pcbReturned=%ld\n", *pcbReturned);
     }
 
     return S_OK;
@@ -306,7 +306,7 @@ static HRESULT DSPROPERTY_EnumerateW(
     PDSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W_DATA ppd = pPropData;
     HRESULT hr;
 
-    TRACE("(pPropData=%p,cbPropData=%d,pcbReturned=%p)\n",
+    TRACE("(pPropData=%p,cbPropData=%ld,pcbReturned=%p)\n",
           pPropData,cbPropData,pcbReturned);
 
     if (pcbReturned)
@@ -501,7 +501,7 @@ static HRESULT WINAPI IKsPrivatePropertySetImpl_Get(
     PULONG pcbReturned )
 {
     IKsPrivatePropertySetImpl *This = impl_from_IKsPropertySet(iface);
-    TRACE("(iface=%p,guidPropSet=%s,dwPropID=%d,pInstanceData=%p,cbInstanceData=%d,pPropData=%p,cbPropData=%d,pcbReturned=%p)\n",
+    TRACE("(iface=%p,guidPropSet=%s,dwPropID=%lu,pInstanceData=%p,cbInstanceData=%lu,pPropData=%p,cbPropData=%lu,pcbReturned=%p)\n",
           This,debugstr_guid(guidPropSet),dwPropID,pInstanceData,cbInstanceData,pPropData,cbPropData,pcbReturned);
 
     if ( IsEqualGUID( &DSPROPSETID_DirectSoundDevice, guidPropSet) ) {
@@ -523,7 +523,7 @@ static HRESULT WINAPI IKsPrivatePropertySetImpl_Get(
         case DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W:
             return DSPROPERTY_EnumerateW(pPropData,cbPropData,pcbReturned);
         default:
-            FIXME("unsupported ID: %d\n",dwPropID);
+            FIXME("unsupported ID: %ld\n",dwPropID);
             break;
         }
     } else {
@@ -532,7 +532,7 @@ static HRESULT WINAPI IKsPrivatePropertySetImpl_Get(
 
     if (pcbReturned) {
         *pcbReturned = 0;
-        FIXME("*pcbReturned=%d\n", *pcbReturned);
+        FIXME("*pcbReturned=%ld\n", *pcbReturned);
     }
 
     return E_PROP_ID_UNSUPPORTED;
@@ -549,7 +549,7 @@ static HRESULT WINAPI IKsPrivatePropertySetImpl_Set(
 {
     IKsPrivatePropertySetImpl *This = impl_from_IKsPropertySet(iface);
 
-    FIXME("(%p,%s,%d,%p,%d,%p,%d), stub!\n",This,debugstr_guid(guidPropSet),dwPropID,pInstanceData,cbInstanceData,pPropData,cbPropData);
+    FIXME("(%p,%s,%ld,%p,%ld,%p,%ld), stub!\n",This,debugstr_guid(guidPropSet),dwPropID,pInstanceData,cbInstanceData,pPropData,cbPropData);
     return E_PROP_ID_UNSUPPORTED;
 }
 
@@ -560,7 +560,7 @@ static HRESULT WINAPI IKsPrivatePropertySetImpl_QuerySupport(
     PULONG pTypeSupport )
 {
     IKsPrivatePropertySetImpl *This = impl_from_IKsPropertySet(iface);
-    TRACE("(%p,%s,%d,%p)\n",This,debugstr_guid(guidPropSet),dwPropID,pTypeSupport);
+    TRACE("(%p,%s,%ld,%p)\n",This,debugstr_guid(guidPropSet),dwPropID,pTypeSupport);
 
     if ( IsEqualGUID( &DSPROPSETID_DirectSoundDevice, guidPropSet) ) {
 	switch (dwPropID) {
@@ -589,7 +589,7 @@ static HRESULT WINAPI IKsPrivatePropertySetImpl_QuerySupport(
 	    *pTypeSupport = KSPROPERTY_SUPPORT_GET;
 	    return S_OK;
 	default:
-            FIXME("unsupported ID: %d\n",dwPropID);
+            FIXME("unsupported ID: %ld\n",dwPropID);
 	    break;
 	}
     } else {

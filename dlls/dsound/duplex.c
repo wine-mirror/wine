@@ -107,7 +107,7 @@ static ULONG WINAPI IUnknownImpl_AddRef(IUnknown *iface)
     IDirectSoundFullDuplexImpl *This = impl_from_IUnknown(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(ref == 1)
         InterlockedIncrement(&This->numIfaces);
@@ -119,7 +119,7 @@ static ULONG WINAPI IUnknownImpl_Release(IUnknown *iface)
     IDirectSoundFullDuplexImpl *This = impl_from_IUnknown(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if (!ref && !InterlockedDecrement(&This->numIfaces))
         fullduplex_destroy(This);
@@ -154,7 +154,7 @@ static ULONG WINAPI IDirectSoundFullDuplexImpl_AddRef(IDirectSoundFullDuplex *if
     IDirectSoundFullDuplexImpl *This = impl_from_IDirectSoundFullDuplex(iface);
     ULONG ref = InterlockedIncrement(&This->refdsfd);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(ref == 1)
         InterlockedIncrement(&This->numIfaces);
@@ -166,7 +166,7 @@ static ULONG WINAPI IDirectSoundFullDuplexImpl_Release(IDirectSoundFullDuplex *i
     IDirectSoundFullDuplexImpl *This = impl_from_IDirectSoundFullDuplex(iface);
     ULONG ref = InterlockedDecrement(&This->refdsfd);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if (!ref && !InterlockedDecrement(&This->numIfaces))
         fullduplex_destroy(This);
@@ -183,7 +183,7 @@ static HRESULT WINAPI IDirectSoundFullDuplexImpl_Initialize(IDirectSoundFullDupl
     IDirectSoundCapture8 *dsc8 = NULL;
     HRESULT hr;
 
-    TRACE("(%p,%s,%s,%p,%p,%p,%x,%p,%p)\n", This, debugstr_guid(capture_dev),
+    TRACE("(%p,%s,%s,%p,%p,%p,%lx,%p,%p)\n", This, debugstr_guid(capture_dev),
             debugstr_guid(render_dev), cbufdesc, bufdesc, hwnd, level, dscb8, dsb8);
 
     if (!dscb8 || !dsb8)
@@ -330,7 +330,7 @@ HRESULT WINAPI DirectSoundFullDuplexCreate(const GUID *capture_dev, const GUID *
 {
     HRESULT hr;
 
-    TRACE("(%s,%s,%p,%p,%p,%x,%p,%p,%p,%p)\n", debugstr_guid(capture_dev),
+    TRACE("(%s,%s,%p,%p,%p,%lx,%p,%p,%p,%p)\n", debugstr_guid(capture_dev),
             debugstr_guid(render_dev), cbufdesc, bufdesc, hwnd, level, dsfd, dscb8, dsb8,
             outer_unk);
 

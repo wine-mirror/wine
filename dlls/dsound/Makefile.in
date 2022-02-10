@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = dsound.dll
 IMPORTLIB = dsound
 IMPORTS   = dxguid uuid winmm ole32 advapi32 user32
