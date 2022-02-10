@@ -81,7 +81,7 @@ static ULONG WINAPI effect_inner_AddRef(IUnknown *iface)
     struct effect *effect = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedIncrement(&effect->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", effect, refcount);
+    TRACE("%p increasing refcount to %lu.\n", effect, refcount);
     return refcount;
 }
 
@@ -90,7 +90,7 @@ static ULONG WINAPI effect_inner_Release(IUnknown *iface)
     struct effect *effect = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedDecrement(&effect->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", effect, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", effect, refcount);
 
     if (!refcount)
     {
@@ -139,25 +139,25 @@ static HRESULT WINAPI effect_GetStreamCount(IMediaObject *iface, DWORD *input, D
 
 static HRESULT WINAPI effect_GetInputStreamInfo(IMediaObject *iface, DWORD index, DWORD *flags)
 {
-    FIXME("iface %p, index %u, flags %p, stub!\n", iface, index, flags);
+    FIXME("iface %p, index %lu, flags %p, stub!\n", iface, index, flags);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI effect_GetOutputStreamInfo(IMediaObject *iface, DWORD index, DWORD *flags)
 {
-    FIXME("iface %p, index %u, flags %p, stub!\n", iface, index, flags);
+    FIXME("iface %p, index %lu, flags %p, stub!\n", iface, index, flags);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI effect_GetInputType(IMediaObject *iface, DWORD index, DWORD type_index, DMO_MEDIA_TYPE *type)
 {
-    FIXME("iface %p, index %u, type_index %u, type %p, stub!\n", iface, index, type_index, type);
+    FIXME("iface %p, index %lu, type_index %lu, type %p, stub!\n", iface, index, type_index, type);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI effect_GetOutputType(IMediaObject *iface, DWORD index, DWORD type_index, DMO_MEDIA_TYPE *type)
 {
-    FIXME("iface %p, index %u, type_index %u, type %p, stub!\n", iface, index, type_index, type);
+    FIXME("iface %p, index %lu, type_index %lu, type %p, stub!\n", iface, index, type_index, type);
     return E_NOTIMPL;
 }
 
@@ -166,7 +166,7 @@ static HRESULT WINAPI effect_SetInputType(IMediaObject *iface, DWORD index, cons
     struct effect *effect = impl_from_IMediaObject(iface);
     const WAVEFORMATEX *format;
 
-    TRACE("iface %p, index %u, type %p, flags %#x.\n", iface, index, type, flags);
+    TRACE("iface %p, index %lu, type %p, flags %#lx.\n", iface, index, type, flags);
 
     if (flags & DMO_SET_TYPEF_CLEAR)
     {
@@ -227,7 +227,7 @@ static HRESULT WINAPI effect_SetOutputType(IMediaObject *iface, DWORD index, con
     struct effect *effect = impl_from_IMediaObject(iface);
     HRESULT hr;
 
-    TRACE("iface %p, index %u, type %p, flags %#x.\n", iface, index, type, flags);
+    TRACE("iface %p, index %lu, type %p, flags %#lx.\n", iface, index, type, flags);
 
     if (flags & DMO_SET_TYPEF_CLEAR)
         return S_OK;
@@ -251,38 +251,38 @@ static HRESULT WINAPI effect_SetOutputType(IMediaObject *iface, DWORD index, con
 
 static HRESULT WINAPI effect_GetInputCurrentType(IMediaObject *iface, DWORD index, DMO_MEDIA_TYPE *type)
 {
-    FIXME("iface %p, index %u, type %p, stub!\n", iface, index, type);
+    FIXME("iface %p, index %lu, type %p, stub!\n", iface, index, type);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI effect_GetOutputCurrentType(IMediaObject *iface, DWORD index, DMO_MEDIA_TYPE *type)
 {
-    FIXME("iface %p, index %u, type %p, stub!\n", iface, index, type);
+    FIXME("iface %p, index %lu, type %p, stub!\n", iface, index, type);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI effect_GetInputSizeInfo(IMediaObject *iface, DWORD index,
         DWORD *size, DWORD *lookahead, DWORD *alignment)
 {
-    FIXME("iface %p, index %u, size %p, lookahead %p, alignment %p, stub!\n", iface, index, size, lookahead, alignment);
+    FIXME("iface %p, index %lu, size %p, lookahead %p, alignment %p, stub!\n", iface, index, size, lookahead, alignment);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI effect_GetOutputSizeInfo(IMediaObject *iface, DWORD index, DWORD *size, DWORD *alignment)
 {
-    FIXME("iface %p, index %u, size %p, alignment %p, stub!\n", iface, index, size, alignment);
+    FIXME("iface %p, index %lu, size %p, alignment %p, stub!\n", iface, index, size, alignment);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI effect_GetInputMaxLatency(IMediaObject *iface, DWORD index, REFERENCE_TIME *latency)
 {
-    FIXME("iface %p, index %u, latency %p, stub!\n", iface, index, latency);
+    FIXME("iface %p, index %lu, latency %p, stub!\n", iface, index, latency);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI effect_SetInputMaxLatency(IMediaObject *iface, DWORD index, REFERENCE_TIME latency)
 {
-    FIXME("iface %p, index %u, latency %s, stub!\n", iface, index, wine_dbgstr_longlong(latency));
+    FIXME("iface %p, index %lu, latency %s, stub!\n", iface, index, wine_dbgstr_longlong(latency));
     return E_NOTIMPL;
 }
 
@@ -294,7 +294,7 @@ static HRESULT WINAPI effect_Flush(IMediaObject *iface)
 
 static HRESULT WINAPI effect_Discontinuity(IMediaObject *iface, DWORD index)
 {
-    FIXME("iface %p, index %u, stub!\n", iface, index);
+    FIXME("iface %p, index %lu, stub!\n", iface, index);
     return E_NOTIMPL;
 }
 
@@ -312,14 +312,14 @@ static HRESULT WINAPI effect_FreeStreamingResources(IMediaObject *iface)
 
 static HRESULT WINAPI effect_GetInputStatus(IMediaObject *iface, DWORD index, DWORD *flags)
 {
-    FIXME("iface %p, index %u, flags %p, stub!\n", iface, index, flags);
+    FIXME("iface %p, index %lu, flags %p, stub!\n", iface, index, flags);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI effect_ProcessInput(IMediaObject *iface, DWORD index,
     IMediaBuffer *buffer, DWORD flags, REFERENCE_TIME timestamp, REFERENCE_TIME timelength)
 {
-    FIXME("iface %p, index %u, buffer %p, flags %#x, timestamp %s, timelength %s, stub!\n",
+    FIXME("iface %p, index %lu, buffer %p, flags %#lx, timestamp %s, timelength %s, stub!\n",
             iface, index, buffer, flags, wine_dbgstr_longlong(timestamp), wine_dbgstr_longlong(timelength));
     return E_NOTIMPL;
 }
@@ -327,13 +327,13 @@ static HRESULT WINAPI effect_ProcessInput(IMediaObject *iface, DWORD index,
 static HRESULT WINAPI effect_ProcessOutput(IMediaObject *iface, DWORD flags,
         DWORD count, DMO_OUTPUT_DATA_BUFFER *buffers, DWORD *status)
 {
-    FIXME("iface %p, flags %#x, count %u, buffers %p, status %p, stub!\n", iface, flags, count, buffers, status);
+    FIXME("iface %p, flags %#lx, count %lu, buffers %p, status %p, stub!\n", iface, flags, count, buffers, status);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI effect_Lock(IMediaObject *iface, LONG lock)
 {
-    FIXME("iface %p, lock %d, stub!\n", iface, lock);
+    FIXME("iface %p, lock %ld, stub!\n", iface, lock);
     return E_NOTIMPL;
 }
 
@@ -391,7 +391,7 @@ static ULONG WINAPI effect_inplace_Release(IMediaObjectInPlace *iface)
 static HRESULT WINAPI effect_inplace_Process(IMediaObjectInPlace *iface, ULONG size,
         BYTE *data, REFERENCE_TIME start, DWORD flags)
 {
-    FIXME("iface %p, size %u, data %p, start %s, flags %#x, stub!\n",
+    FIXME("iface %p, size %lu, data %p, start %s, flags %#lx, stub!\n",
             iface, size, data, wine_dbgstr_longlong(start), flags);
     return E_NOTIMPL;
 }
@@ -599,7 +599,7 @@ static HRESULT WINAPI reverb_params_SetPreset(IDirectSoundFXI3DL2Reverb *iface, 
 {
     struct reverb *effect = impl_from_IDirectSoundFXI3DL2Reverb(iface);
 
-    FIXME("effect %p, preset %u, stub!\n", effect, preset);
+    FIXME("effect %p, preset %lu, stub!\n", effect, preset);
 
     return E_NOTIMPL;
 }
@@ -617,7 +617,7 @@ static HRESULT WINAPI reverb_params_SetQuality(IDirectSoundFXI3DL2Reverb *iface,
 {
     struct reverb *effect = impl_from_IDirectSoundFXI3DL2Reverb(iface);
 
-    FIXME("effect %p, quality %u, stub!\n", effect, quality);
+    FIXME("effect %p, quality %lu, stub!\n", effect, quality);
 
     return E_NOTIMPL;
 }
