@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = fltlib.dll
 
 EXTRADLLFLAGS = -Wb,--prefer-native
