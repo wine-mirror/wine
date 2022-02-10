@@ -152,7 +152,8 @@ static void compress_write(struct zip_archive *archive, void *data, ULONG size)
         archive->position += written;
 
     if (FAILED(archive->write_result))
-        WARN("Failed to write output %p, size %u, written %u, hr %#x.\n", data, size, written, archive->write_result);
+        WARN("Failed to write output %p, size %lu, written %lu, hr %#lx.\n",
+                data, size, written, archive->write_result);
 }
 
 void compress_finalize_archive(struct zip_archive *archive)

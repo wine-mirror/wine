@@ -70,7 +70,7 @@ static ULONG WINAPI opc_filestream_AddRef(IStream *iface)
     struct opc_filestream *stream = impl_from_IStream(iface);
     ULONG refcount = InterlockedIncrement(&stream->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -80,7 +80,7 @@ static ULONG WINAPI opc_filestream_Release(IStream *iface)
     struct opc_filestream *stream = impl_from_IStream(iface);
     ULONG refcount = InterlockedDecrement(&stream->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -96,7 +96,7 @@ static HRESULT WINAPI opc_filestream_Read(IStream *iface, void *buff, ULONG size
     struct opc_filestream *stream = impl_from_IStream(iface);
     DWORD read = 0;
 
-    TRACE("iface %p, buff %p, size %u, num_read %p.\n", iface, buff, size, num_read);
+    TRACE("%p, %p, %lu, %p.\n", iface, buff, size, num_read);
 
     if (!num_read)
         num_read = &read;
@@ -104,7 +104,7 @@ static HRESULT WINAPI opc_filestream_Read(IStream *iface, void *buff, ULONG size
     *num_read = 0;
     if (!ReadFile(stream->hfile, buff, size, num_read, NULL))
     {
-        WARN("Failed to read file, error %d.\n", GetLastError());
+        WARN("Failed to read file, error %ld.\n", GetLastError());
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
@@ -116,7 +116,7 @@ static HRESULT WINAPI opc_filestream_Write(IStream *iface, const void *data, ULO
     struct opc_filestream *stream = impl_from_IStream(iface);
     DWORD written = 0;
 
-    TRACE("iface %p, data %p, size %u, num_written %p.\n", iface, data, size, num_written);
+    TRACE("%p, %p, %lu, %p.\n", iface, data, size, num_written);
 
     if (!num_written)
         num_written = &written;
@@ -124,7 +124,7 @@ static HRESULT WINAPI opc_filestream_Write(IStream *iface, const void *data, ULO
     *num_written = 0;
     if (!WriteFile(stream->hfile, data, size, num_written, NULL))
     {
-        WARN("Failed to write to file, error %d.\n", GetLastError());
+        WARN("Failed to write to file, error %ld.\n", GetLastError());
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
@@ -135,7 +135,7 @@ static HRESULT WINAPI opc_filestream_Seek(IStream *iface, LARGE_INTEGER move, DW
 {
     struct opc_filestream *stream = impl_from_IStream(iface);
 
-    TRACE("iface %p, move %s, origin %d, newpos %p.\n", iface, wine_dbgstr_longlong(move.QuadPart), origin, newpos);
+    TRACE("%p, %s, %ld, %p.\n", iface, wine_dbgstr_longlong(move.QuadPart), origin, newpos);
 
     if (!SetFilePointerEx(stream->hfile, move, (LARGE_INTEGER *)newpos, origin))
         return HRESULT_FROM_WIN32(GetLastError());
@@ -161,7 +161,7 @@ static HRESULT WINAPI opc_filestream_CopyTo(IStream *iface, IStream *dest, ULARG
 
 static HRESULT WINAPI opc_filestream_Commit(IStream *iface, DWORD flags)
 {
-    FIXME("iface %p, flags %#x stub!\n", iface, flags);
+    FIXME("%p, %#lx stub!\n", iface, flags);
 
     return E_NOTIMPL;
 }
@@ -176,7 +176,7 @@ static HRESULT WINAPI opc_filestream_Revert(IStream *iface)
 static HRESULT WINAPI opc_filestream_LockRegion(IStream *iface, ULARGE_INTEGER offset,
         ULARGE_INTEGER size, DWORD lock_type)
 {
-    FIXME("iface %p, offset %s, size %s, lock_type %d stub!\n", iface, wine_dbgstr_longlong(offset.QuadPart),
+    FIXME("%p, %s, %s, %ld stub!\n", iface, wine_dbgstr_longlong(offset.QuadPart),
             wine_dbgstr_longlong(size.QuadPart), lock_type);
 
     return E_NOTIMPL;
@@ -185,7 +185,7 @@ static HRESULT WINAPI opc_filestream_LockRegion(IStream *iface, ULARGE_INTEGER o
 static HRESULT WINAPI opc_filestream_UnlockRegion(IStream *iface, ULARGE_INTEGER offset, ULARGE_INTEGER size,
         DWORD lock_type)
 {
-    FIXME("iface %p, offset %s, size %s, lock_type %d stub!\n", iface, wine_dbgstr_longlong(offset.QuadPart),
+    FIXME("%p, %s, %s, %ld stub!\n", iface, wine_dbgstr_longlong(offset.QuadPart),
             wine_dbgstr_longlong(size.QuadPart), lock_type);
 
     return E_NOTIMPL;
@@ -196,7 +196,7 @@ static HRESULT WINAPI opc_filestream_Stat(IStream *iface, STATSTG *statstg, DWOR
     struct opc_filestream *stream = impl_from_IStream(iface);
     BY_HANDLE_FILE_INFORMATION fi;
 
-    TRACE("iface %p, statstg %p, flag %d.\n", iface, statstg, flag);
+    TRACE("%p, %p, %#lx.\n", iface, statstg, flag);
 
     if (!statstg)
         return E_POINTER;
@@ -332,13 +332,13 @@ static HRESULT WINAPI opc_factory_CreatePartUri(IOpcFactory *iface, LPCWSTR uri,
 
     if (FAILED(hr = CreateUri(uri, Uri_CREATE_ALLOW_RELATIVE, 0, &part_uri)))
     {
-        WARN("Failed to create uri, hr %#x.\n", hr);
+        WARN("Failed to create uri, hr %#lx.\n", hr);
         return hr;
     }
 
     if (FAILED(hr = CreateUri(L"/", Uri_CREATE_ALLOW_RELATIVE, 0, &root_uri)))
     {
-        WARN("Failed to create root uri, hr %#x.\n", hr);
+        WARN("Failed to create root uri, hr %#lx.\n", hr);
         IUri_Release(part_uri);
         return hr;
     }
@@ -348,7 +348,7 @@ static HRESULT WINAPI opc_factory_CreatePartUri(IOpcFactory *iface, LPCWSTR uri,
     IUri_Release(part_uri);
     if (FAILED(hr))
     {
-        WARN("Failed to combine URIs, hr %#x.\n", hr);
+        WARN("Failed to combine URIs, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -360,8 +360,7 @@ static HRESULT WINAPI opc_factory_CreatePartUri(IOpcFactory *iface, LPCWSTR uri,
 static HRESULT WINAPI opc_factory_CreateStreamOnFile(IOpcFactory *iface, LPCWSTR filename,
         OPC_STREAM_IO_MODE io_mode, SECURITY_ATTRIBUTES *sa, DWORD flags, IStream **stream)
 {
-    TRACE("iface %p, filename %s, io_mode %d, sa %p, flags %#x, stream %p.\n", iface, debugstr_w(filename),
-            io_mode, sa, flags, stream);
+    TRACE("%p, %s, %d, %p, %#lx, %p.\n", iface, debugstr_w(filename), io_mode, sa, flags, stream);
 
     return opc_filestream_create(filename, io_mode, sa, flags, stream);
 }
