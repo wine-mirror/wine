@@ -1185,7 +1185,6 @@ static WND *next_thread_window( HWND *hwnd )
     WND *win;
     WORD index = *hwnd ? USER_HANDLE_TO_INDEX( *hwnd ) + 1 : 0;
 
-    USER_Lock();
     while (index < NB_USER_HANDLES)
     {
         if (!(ptr = user_handles[index++])) continue;
@@ -1195,7 +1194,6 @@ static WND *next_thread_window( HWND *hwnd )
         *hwnd = ptr->handle;
         return win;
     }
-    USER_Unlock();
     return NULL;
 }
 
@@ -1207,29 +1205,33 @@ static WND *next_thread_window( HWND *hwnd )
  */
 void destroy_thread_windows(void)
 {
-    WND *wndPtr;
+    WND *win, *free_list = NULL, **free_list_ptr = &free_list;
     HWND hwnd = 0;
-    HMENU menu, sys_menu;
-    struct window_surface *surface;
 
-    while ((wndPtr = next_thread_window( &hwnd )))
+    USER_Lock();
+    while ((win = next_thread_window( &hwnd )))
     {
-        /* destroy the client-side storage */
+        free_dce( win->dce, win->obj.handle );
+        InterlockedCompareExchangePointer( &user_handles[USER_HANDLE_TO_INDEX(hwnd)], NULL, win );
+        win->obj.handle = *free_list_ptr;
+        free_list_ptr = (WND **)&win->obj.handle;
+    }
+    USER_Unlock();
 
-        menu = ((wndPtr->dwStyle & (WS_CHILD | WS_POPUP)) != WS_CHILD) ? (HMENU)wndPtr->wIDmenu : 0;
-        sys_menu = wndPtr->hSysMenu;
-        free_dce( wndPtr->dce, hwnd );
-        surface = wndPtr->surface;
-        InterlockedCompareExchangePointer( &user_handles[USER_HANDLE_TO_INDEX(hwnd)], NULL, wndPtr );
-        WIN_ReleasePtr( wndPtr );
-        HeapFree( GetProcessHeap(), 0, wndPtr );
-        if (menu) DestroyMenu( menu );
-        if (sys_menu) DestroyMenu( sys_menu );
-        if (surface)
+    while ((win = free_list))
+    {
+        free_list = win->obj.handle;
+        TRACE( "destroying %p\n", win );
+
+        if ((win->dwStyle & (WS_CHILD | WS_POPUP)) != WS_CHILD && win->wIDmenu)
+            DestroyMenu( UlongToHandle(win->wIDmenu) );
+        if (win->hSysMenu) DestroyMenu( win->hSysMenu );
+        if (win->surface)
         {
-            register_window_surface( surface, NULL );
-            window_surface_release( surface );
+            register_window_surface( win->surface, NULL );
+            window_surface_release( win->surface );
         }
+        HeapFree( GetProcessHeap(), 0, win );
     }
 }
 
