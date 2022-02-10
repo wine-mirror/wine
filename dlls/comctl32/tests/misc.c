@@ -881,7 +881,7 @@ static void test_themed_background(void)
         {WC_STATICA, SS_ETCHEDHORZ, wm_ctlcolorstatic_seq, TRUE},
         {STATUSCLASSNAMEA, 0, empty_seq},
         {"SysLink", 0, wm_ctlcolorstatic_seq},
-        {WC_TABCONTROLA, 0, drawthemeparentbackground_seq, TRUE},
+        {WC_TABCONTROLA, 0, drawthemeparentbackground_seq},
         {TOOLBARCLASSNAMEA, 0, empty_seq, TRUE},
         {TOOLTIPS_CLASSA, 0, empty_seq},
         {TRACKBAR_CLASSA, 0, wm_ctlcolorstatic_seq},

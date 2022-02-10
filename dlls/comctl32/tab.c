@@ -2315,9 +2315,14 @@ static void TAB_DrawBorder(const TAB_INFO *infoPtr, HDC hdc)
   TRACE("border=(%s)\n", wine_dbgstr_rect(&rect));
 
   if (theme)
+  {
+      DrawThemeParentBackground(infoPtr->hwnd, hdc, &rect);
       DrawThemeBackground (theme, hdc, TABP_PANE, 0, &rect, NULL);
+  }
   else
+  {
       DrawEdge(hdc, &rect, EDGE_RAISED, BF_SOFT|BF_RECT);
+  }
 }
 
 /******************************************************************************
