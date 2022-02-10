@@ -130,7 +130,7 @@ HRESULT get_typeinfo( enum type_id tid, ITypeInfo **ret )
         hr = LoadRegTypeLib( &LIBID_NetFwPublicTypeLib, 1, 0, LOCALE_SYSTEM_DEFAULT, &lib );
         if (FAILED(hr))
         {
-            ERR("LoadRegTypeLib failed: %08x\n", hr);
+            ERR("LoadRegTypeLib failed: %08lx\n", hr);
             return hr;
         }
         if (InterlockedCompareExchangePointer( (void **)&typelib, lib, NULL ))
@@ -143,7 +143,7 @@ HRESULT get_typeinfo( enum type_id tid, ITypeInfo **ret )
         hr = ITypeLib_GetTypeInfoOfGuid( typelib, tid_id[tid], &info );
         if (FAILED(hr))
         {
-            ERR("GetTypeInfoOfGuid(%s) failed: %08x\n", debugstr_guid(tid_id[tid]), hr);
+            ERR("GetTypeInfoOfGuid(%s) failed: %08lx\n", debugstr_guid(tid_id[tid]), hr);
             return hr;
         }
         if (InterlockedCompareExchangePointer( (void **)(typeinfo + tid), info, NULL ))
@@ -174,7 +174,7 @@ static HRESULT WINAPI fw_app_GetTypeInfo(
 {
     fw_app *This = impl_from_INetFwAuthorizedApplication( iface );
 
-    TRACE("%p %u %u %p\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("%p %u %lu %p\n", This, iTInfo, lcid, ppTInfo);
     return get_typeinfo( INetFwAuthorizedApplication_tid, ppTInfo );
 }
 
@@ -190,7 +190,7 @@ static HRESULT WINAPI fw_app_GetIDsOfNames(
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("%p %s %p %u %u %p\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("%p %s %p %u %lu %p\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo( INetFwAuthorizedApplication_tid, &typeinfo );
     if (SUCCEEDED(hr))
@@ -216,7 +216,7 @@ static HRESULT WINAPI fw_app_Invoke(
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("%p %d %s %d %d %p %p %p %p\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("%p %ld %s %ld %d %p %p %p %p\n", This, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo( INetFwAuthorizedApplication_tid, &typeinfo );
@@ -519,7 +519,7 @@ static HRESULT WINAPI fw_apps_GetTypeInfo(
 {
     fw_apps *This = impl_from_INetFwAuthorizedApplications( iface );
 
-    TRACE("%p %u %u %p\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("%p %u %lu %p\n", This, iTInfo, lcid, ppTInfo);
     return get_typeinfo( INetFwAuthorizedApplications_tid, ppTInfo );
 }
 
@@ -535,7 +535,7 @@ static HRESULT WINAPI fw_apps_GetIDsOfNames(
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("%p %s %p %u %u %p\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("%p %s %p %u %lu %p\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo( INetFwAuthorizedApplications_tid, &typeinfo );
     if (SUCCEEDED(hr))
@@ -561,7 +561,7 @@ static HRESULT WINAPI fw_apps_Invoke(
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("%p %d %s %d %d %p %p %p %p\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("%p %ld %s %ld %d %p %p %p %p\n", This, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo( INetFwAuthorizedApplications_tid, &typeinfo );

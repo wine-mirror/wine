@@ -319,7 +319,7 @@ static BOOL open_gateway_connection(void)
     upnp_gateway_connection.connection = WinHttpConnect ( upnp_gateway_connection.session, hostname, url.nPort, 0 );
     if (!upnp_gateway_connection.connection)
     {
-        WARN( "WinHttpConnect error %u.\n", GetLastError() );
+        WARN( "WinHttpConnect error %lu.\n", GetLastError() );
         return FALSE;
     }
     return TRUE;
@@ -344,13 +344,13 @@ static BOOL get_control_url(void)
 
     if (!WinHttpSendRequest( request, WINHTTP_NO_ADDITIONAL_HEADERS, 0, NULL, 0, 0, 0 ))
     {
-        WARN( "Error sending request %u.\n", GetLastError() );
+        WARN( "Error sending request %lu.\n", GetLastError() );
         WinHttpCloseHandle( request );
         return FALSE;
     }
     if (!WinHttpReceiveResponse(request, NULL))
     {
-        WARN( "Error receiving response %u.\n", GetLastError() );
+        WARN( "Error receiving response %lu.\n", GetLastError() );
         WinHttpCloseHandle( request );
         return FALSE;
     }
@@ -358,7 +358,7 @@ static BOOL get_control_url(void)
     if (!WinHttpQueryHeaders( request, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
                               NULL, &status, &size, NULL) || status != HTTP_STATUS_OK )
     {
-        WARN( "Error response from server, error %u, http status %u.\n", GetLastError(), status );
+        WARN( "Error response from server, error %lu, http status %lu.\n", GetLastError(), status );
         WinHttpCloseHandle( request );
         return FALSE;
     }
@@ -456,12 +456,12 @@ static BOOL request_service( const WCHAR *function, const struct xml_value_desc 
             upnp_gateway_connection.version, function );
     if (!WinHttpSendRequest( request, request_headers, -1, request_data, request_len, request_len, 0 ))
     {
-        WARN( "Error sending request %u.\n", GetLastError() );
+        WARN( "Error sending request %lu.\n", GetLastError() );
         goto done;
     }
     if (!WinHttpReceiveResponse(request, NULL))
     {
-        WARN( "Error receiving response %u.\n", GetLastError() );
+        WARN( "Error receiving response %lu.\n", GetLastError() );
         goto done;
     }
     size = sizeof(*http_status);
@@ -607,7 +607,7 @@ static void update_mapping_list(void)
             new_mappings[index].enabled = VARIANT_FALSE;
         new_mappings[index].descr = mapping_move_bstr( &mapping_desc[PM_DESC].value );
 
-        TRACE( "%s %s %s:%u -> %s:%u, enabled %d.\n", debugstr_w(new_mappings[index].descr),
+        TRACE( "%s %s %s:%lu -> %s:%lu, enabled %d.\n", debugstr_w(new_mappings[index].descr),
                debugstr_w(new_mappings[index].protocol), debugstr_w(new_mappings[index].external_ip),
                new_mappings[index].external, debugstr_w(new_mappings[index].client),
                new_mappings[index].internal, new_mappings[index].enabled );
@@ -638,7 +638,7 @@ static BOOL remove_port_mapping( LONG port, BSTR protocol )
                            NULL, 0, &status, &error_str );
     if (ret && status != HTTP_STATUS_OK)
     {
-        WARN( "status %u, server returned error %s.\n", status, debugstr_w(error_str) );
+        WARN( "status %lu, server returned error %s.\n", status, debugstr_w(error_str) );
         SysFreeString( error_str );
         ret = FALSE;
     }
@@ -680,7 +680,7 @@ static BOOL add_port_mapping( LONG external, BSTR protocol, LONG internal, BSTR 
                            NULL, 0, &status, &error_str );
     if (ret && status != HTTP_STATUS_OK)
     {
-        WARN( "status %u, server returned error %s.\n", status, debugstr_w(error_str) );
+        WARN( "status %lu, server returned error %s.\n", status, debugstr_w(error_str) );
         SysFreeString( error_str );
         ret = FALSE;
     }
@@ -940,7 +940,7 @@ static HRESULT WINAPI static_port_mapping_GetTypeInfo(
 {
     struct static_port_mapping *mapping = impl_from_IStaticPortMapping( iface );
 
-    TRACE("%p %u %u %p\n", mapping, iTInfo, lcid, ppTInfo);
+    TRACE("%p %u %lu %p\n", mapping, iTInfo, lcid, ppTInfo);
     return get_typeinfo( IStaticPortMapping_tid, ppTInfo );
 }
 
@@ -956,7 +956,7 @@ static HRESULT WINAPI static_port_mapping_GetIDsOfNames(
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("%p %s %p %u %u %p\n", mapping, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("%p %s %p %u %lu %p\n", mapping, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo( IStaticPortMapping_tid, &typeinfo );
     if (SUCCEEDED(hr))
@@ -982,7 +982,7 @@ static HRESULT WINAPI static_port_mapping_Invoke(
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("%p %d %s %d %d %p %p %p %p\n", mapping, dispIdMember, debugstr_guid(riid),
+    TRACE("%p %ld %s %ld %d %p %p %p %p\n", mapping, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo( IStaticPortMapping_tid, &typeinfo );
@@ -1121,7 +1121,7 @@ static HRESULT WINAPI static_port_mapping_EditInternalPort(
     IStaticPortMapping *iface,
     LONG value )
 {
-    FIXME( "iface %p, value %d stub.\n", iface, value );
+    FIXME( "iface %p, value %ld stub.\n", iface, value );
 
     return E_NOTIMPL;
 }
@@ -1225,7 +1225,7 @@ static HRESULT WINAPI port_mapping_enum_Next( IEnumVARIANT *iface, ULONG celt, V
     unsigned int i, count;
     HRESULT ret;
 
-    TRACE( "iface %p, celt %u, var %p, fetched %p.\n", iface, celt, var, fetched );
+    TRACE( "iface %p, celt %lu, var %p, fetched %p.\n", iface, celt, var, fetched );
 
     if (fetched) *fetched = 0;
     if (!celt) return S_OK;
@@ -1261,7 +1261,7 @@ static HRESULT WINAPI port_mapping_enum_Skip( IEnumVARIANT *iface, ULONG celt )
     struct port_mapping_enum *mapping_enum = impl_from_IEnumVARIANT( iface );
     unsigned int count = get_port_mapping_count();
 
-    TRACE( "iface %p, celt %u.\n", iface, celt );
+    TRACE( "iface %p, celt %lu.\n", iface, celt );
 
     mapping_enum->index += celt;
     return mapping_enum->index <= count ? S_OK : S_FALSE;
@@ -1395,7 +1395,7 @@ static HRESULT WINAPI static_ports_GetTypeInfo(
 {
     struct static_port_mapping_collection *ports = impl_from_IStaticPortMappingCollection( iface );
 
-    TRACE("%p %u %u %p\n", ports, iTInfo, lcid, ppTInfo);
+    TRACE("%p %u %lu %p\n", ports, iTInfo, lcid, ppTInfo);
     return get_typeinfo( IStaticPortMappingCollection_tid, ppTInfo );
 }
 
@@ -1411,7 +1411,7 @@ static HRESULT WINAPI static_ports_GetIDsOfNames(
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("%p %s %p %u %u %p\n", ports, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("%p %s %p %u %lu %p\n", ports, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo( IStaticPortMappingCollection_tid, &typeinfo );
     if (SUCCEEDED(hr))
@@ -1437,7 +1437,7 @@ static HRESULT WINAPI static_ports_Invoke(
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("%p %d %s %d %d %p %p %p %p\n", ports, dispIdMember, debugstr_guid(riid),
+    TRACE("%p %ld %s %ld %d %p %p %p %p\n", ports, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo( IStaticPortMappingCollection_tid, &typeinfo );
@@ -1471,7 +1471,7 @@ static HRESULT WINAPI static_ports_get_Item(
     struct port_mapping mapping_data;
     HRESULT ret;
 
-    TRACE( "iface %p, port %d, protocol %s.\n", iface, port, debugstr_w(protocol) );
+    TRACE( "iface %p, port %ld, protocol %s.\n", iface, port, debugstr_w(protocol) );
 
     if (!mapping) return E_POINTER;
     *mapping = NULL;
@@ -1499,7 +1499,7 @@ static HRESULT WINAPI static_ports_Remove(
     LONG port,
     BSTR protocol )
 {
-    TRACE( "iface %p, port %d, protocol %s.\n", iface, port, debugstr_w(protocol) );
+    TRACE( "iface %p, port %ld, protocol %s.\n", iface, port, debugstr_w(protocol) );
 
     if (!is_valid_protocol( protocol )) return E_INVALIDARG;
     if (port < 0 || port > 65535) return E_INVALIDARG;
@@ -1522,7 +1522,7 @@ static HRESULT WINAPI static_ports_Add(
     struct port_mapping mapping_data;
     HRESULT ret;
 
-    TRACE( "iface %p, external %d, protocol %s, internal %d, client %s, enabled %d, descritption %s, mapping %p.\n",
+    TRACE( "iface %p, external %ld, protocol %s, internal %ld, client %s, enabled %d, descritption %s, mapping %p.\n",
            iface, external, debugstr_w(protocol), internal, debugstr_w(client), enabled, debugstr_w(description),
            mapping );
 
@@ -1667,7 +1667,7 @@ static HRESULT WINAPI fw_port_GetTypeInfo(
 {
     fw_port *This = impl_from_INetFwOpenPort( iface );
 
-    TRACE("%p %u %u %p\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("%p %u %lu %p\n", This, iTInfo, lcid, ppTInfo);
     return get_typeinfo( INetFwOpenPort_tid, ppTInfo );
 }
 
@@ -1683,7 +1683,7 @@ static HRESULT WINAPI fw_port_GetIDsOfNames(
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("%p %s %p %u %u %p\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("%p %s %p %u %lu %p\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo( INetFwOpenPort_tid, &typeinfo );
     if (SUCCEEDED(hr))
@@ -1709,7 +1709,7 @@ static HRESULT WINAPI fw_port_Invoke(
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("%p %d %s %d %d %p %p %p %p\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("%p %ld %s %ld %d %p %p %p %p\n", This, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo( INetFwOpenPort_tid, &typeinfo );
@@ -1809,7 +1809,7 @@ static HRESULT WINAPI fw_port_put_Port(
 {
     fw_port *This = impl_from_INetFwOpenPort( iface );
 
-    TRACE("%p %d\n", This, portNumber);
+    TRACE("%p %ld\n", This, portNumber);
     This->port = portNumber;
     return S_OK;
 }
@@ -2007,7 +2007,7 @@ static HRESULT WINAPI fw_ports_GetTypeInfo(
 {
     fw_ports *This = impl_from_INetFwOpenPorts( iface );
 
-    TRACE("%p %u %u %p\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("%p %u %lu %p\n", This, iTInfo, lcid, ppTInfo);
     return get_typeinfo( INetFwOpenPorts_tid, ppTInfo );
 }
 
@@ -2023,7 +2023,7 @@ static HRESULT WINAPI fw_ports_GetIDsOfNames(
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("%p %s %p %u %u %p\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("%p %s %p %u %lu %p\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo( INetFwOpenPorts_tid, &typeinfo );
     if (SUCCEEDED(hr))
@@ -2049,7 +2049,7 @@ static HRESULT WINAPI fw_ports_Invoke(
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("%p %d %s %d %d %p %p %p %p\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("%p %ld %s %ld %d %p %p %p %p\n", This, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo( INetFwOpenPorts_tid, &typeinfo );
@@ -2091,7 +2091,7 @@ static HRESULT WINAPI fw_ports_Remove(
 {
     fw_ports *This = impl_from_INetFwOpenPorts( iface );
 
-    FIXME("%p, %d, %u\n", This, portNumber, ipProtocol);
+    FIXME("%p, %ld, %u\n", This, portNumber, ipProtocol);
     return E_NOTIMPL;
 }
 
@@ -2104,7 +2104,7 @@ static HRESULT WINAPI fw_ports_Item(
     HRESULT hr;
     fw_ports *This = impl_from_INetFwOpenPorts( iface );
 
-    FIXME("%p, %d, %u, %p\n", This, portNumber, ipProtocol, openPort);
+    FIXME("%p, %ld, %u, %p\n", This, portNumber, ipProtocol, openPort);
 
     hr = NetFwOpenPort_create( NULL, (void **)openPort );
     if (SUCCEEDED(hr))
@@ -2226,7 +2226,7 @@ static HRESULT WINAPI upnpnat_GetTypeInfo(IUPnPNAT *iface, UINT iTInfo, LCID lci
 {
     upnpnat *This = impl_from_IUPnPNAT( iface );
 
-    TRACE("%p %u %u %p\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("%p %u %lu %p\n", This, iTInfo, lcid, ppTInfo);
     return get_typeinfo( IUPnPNAT_tid, ppTInfo );
 }
 
@@ -2237,7 +2237,7 @@ static HRESULT WINAPI upnpnat_GetIDsOfNames(IUPnPNAT *iface, REFIID riid, LPOLES
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("%p %s %p %u %u %p\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("%p %s %p %u %lu %p\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo( IUPnPNAT_tid, &typeinfo );
     if (SUCCEEDED(hr))
@@ -2256,7 +2256,7 @@ static HRESULT WINAPI upnpnat_Invoke(IUPnPNAT *iface, DISPID dispIdMember, REFII
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("%p %d %s %d %d %p %p %p %p\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("%p %ld %s %ld %d %p %p %p %p\n", This, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo( IUPnPNAT_tid, &typeinfo );

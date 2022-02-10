@@ -129,7 +129,7 @@ static HRESULT WINAPI netfw_rules_GetTypeInfo(
 {
     fw_rules *This = impl_from_INetFwRules( iface );
 
-    TRACE("%p %u %u %p\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("%p %u %lu %p\n", This, iTInfo, lcid, ppTInfo);
     return get_typeinfo( INetFwRules_tid, ppTInfo );
 }
 
@@ -145,7 +145,7 @@ static HRESULT WINAPI netfw_rules_GetIDsOfNames(
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("%p %s %p %u %u %p\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("%p %s %p %u %lu %p\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo( INetFwRules_tid, &typeinfo );
     if (SUCCEEDED(hr))
@@ -171,7 +171,7 @@ static HRESULT WINAPI netfw_rules_Invoke(
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("%p %d %s %d %d %p %p %p %p\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("%p %ld %s %ld %d %p %p %p %p\n", This, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo( INetFwRules_tid, &typeinfo );
@@ -340,7 +340,7 @@ static HRESULT WINAPI fw_policy_GetTypeInfo(
 {
     fw_policy *This = impl_from_INetFwPolicy( iface );
 
-    TRACE("%p %u %u %p\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("%p %u %lu %p\n", This, iTInfo, lcid, ppTInfo);
     return get_typeinfo( INetFwPolicy_tid, ppTInfo );
 }
 
@@ -356,7 +356,7 @@ static HRESULT WINAPI fw_policy_GetIDsOfNames(
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("%p %s %p %u %u %p\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("%p %s %p %u %lu %p\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo( INetFwPolicy_tid, &typeinfo );
     if (SUCCEEDED(hr))
@@ -382,7 +382,7 @@ static HRESULT WINAPI fw_policy_Invoke(
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("%p %d %s %d %d %p %p %p %p\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("%p %ld %s %ld %d %p %p %p %p\n", This, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo( INetFwPolicy_tid, &typeinfo );
@@ -505,7 +505,7 @@ static HRESULT WINAPI fwpolicy2_GetTypeInfo(INetFwPolicy2 *iface, UINT iTInfo, L
 {
     fw_policy2 *This = impl_from_INetFwPolicy2( iface );
 
-    TRACE("%p %u %u %p\n", This, iTInfo, lcid, info);
+    TRACE("%p %u %lu %p\n", This, iTInfo, lcid, info);
     return get_typeinfo( INetFwPolicy2_tid, info );
 }
 
@@ -516,7 +516,7 @@ static HRESULT WINAPI fwpolicy2_GetIDsOfNames(INetFwPolicy2 *iface, REFIID riid,
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("%p %s %p %u %u %p\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("%p %s %p %u %lu %p\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo( INetFwPolicy2_tid, &typeinfo );
     if (SUCCEEDED(hr))
@@ -534,7 +534,7 @@ static HRESULT WINAPI fwpolicy2_Invoke(INetFwPolicy2 *iface, DISPID dispIdMember
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("%p %d %s %d %d %p %p %p %p\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("%p %ld %s %ld %d %p %p %p %p\n", This, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo( INetFwPolicy2_tid, &typeinfo );
@@ -661,7 +661,7 @@ static HRESULT WINAPI fwpolicy2_EnableRuleGroup(INetFwPolicy2 *iface, LONG bitma
 {
     fw_policy2 *This = impl_from_INetFwPolicy2( iface );
 
-    FIXME("%p %d %s %d\n", This, bitmask, debugstr_w(group), enable);
+    FIXME("%p %ld %s %d\n", This, bitmask, debugstr_w(group), enable);
     return E_NOTIMPL;
 }
 
@@ -669,7 +669,7 @@ static HRESULT WINAPI fwpolicy2_IsRuleGroupEnabled(INetFwPolicy2 *iface, LONG bi
 {
     fw_policy2 *This = impl_from_INetFwPolicy2( iface );
 
-    FIXME("%p %d %s %p\n", This, bitmask, debugstr_w(group), enabled);
+    FIXME("%p %ld %s %p\n", This, bitmask, debugstr_w(group), enabled);
     return E_NOTIMPL;
 }
 

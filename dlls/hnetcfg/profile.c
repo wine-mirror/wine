@@ -106,7 +106,7 @@ static HRESULT WINAPI fw_profile_GetTypeInfo(
 {
     fw_profile *This = impl_from_INetFwProfile( iface );
 
-    TRACE("%p %u %u %p\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("%p %u %lu %p\n", This, iTInfo, lcid, ppTInfo);
     return get_typeinfo( INetFwProfile_tid, ppTInfo );
 }
 
@@ -122,7 +122,7 @@ static HRESULT WINAPI fw_profile_GetIDsOfNames(
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("%p %s %p %u %u %p\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("%p %s %p %u %lu %p\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo( INetFwProfile_tid, &typeinfo );
     if (SUCCEEDED(hr))
@@ -148,7 +148,7 @@ static HRESULT WINAPI fw_profile_Invoke(
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("%p %d %s %d %d %p %p %p %p\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("%p %ld %s %ld %d %p %p %p %p\n", This, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo( INetFwProfile_tid, &typeinfo );

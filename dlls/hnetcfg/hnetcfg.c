@@ -118,7 +118,7 @@ static hnetcfg_cf upnpnat_cf = { { &hnetcfg_cf_vtbl }, IUPnPNAT_create };
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID reserved)
 {
-    TRACE("(0x%p, %d, %p)\n", hInstDLL, fdwReason, reserved);
+    TRACE("(0x%p, %ld, %p)\n", hInstDLL, fdwReason, reserved);
 
     switch(fdwReason) {
         case DLL_PROCESS_ATTACH:
