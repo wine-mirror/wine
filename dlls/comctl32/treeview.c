@@ -5447,18 +5447,25 @@ TREEVIEW_MouseMove (TREEVIEW_INFO * infoPtr, LPARAM lParam)
 /* Draw themed border */
 static BOOL TREEVIEW_NCPaint (const TREEVIEW_INFO *infoPtr, HRGN region, LPARAM lParam)
 {
-    HTHEME theme = GetWindowTheme (infoPtr->hwnd);
+    int cxEdge, cyEdge;
+    LONG ex_style;
+    HTHEME theme;
     HDC dc;
     RECT r;
     HRGN cliprgn;
-    int cxEdge = GetSystemMetrics (SM_CXEDGE),
-        cyEdge = GetSystemMetrics (SM_CYEDGE);
 
+    ex_style = GetWindowLongW(infoPtr->hwnd, GWL_EXSTYLE);
+    if (!(ex_style & WS_EX_CLIENTEDGE))
+        return DefWindowProcW(infoPtr->hwnd, WM_NCPAINT, (WPARAM)region, lParam);
+
+    theme = GetWindowTheme(infoPtr->hwnd);
     if (!theme)
         return DefWindowProcW (infoPtr->hwnd, WM_NCPAINT, (WPARAM)region, lParam);
 
     GetWindowRect(infoPtr->hwnd, &r);
 
+    cxEdge = GetSystemMetrics(SM_CXEDGE);
+    cyEdge = GetSystemMetrics(SM_CYEDGE);
     cliprgn = CreateRectRgn (r.left + cxEdge, r.top + cyEdge,
         r.right - cxEdge, r.bottom - cyEdge);
     if (region != (HRGN)1)
