@@ -1073,7 +1073,7 @@ static void  NC_DoNCPaint( HWND  hwnd, HRGN  clip )
         else
             r.left = r.right - GetSystemMetrics(SM_CXVSCROLL) + 1;
         r.top  = r.bottom - GetSystemMetrics(SM_CYHSCROLL) + 1;
-        FillRect( hdc, &r,  GetSysColorBrush(COLOR_SCROLLBAR) );
+        FillRect( hdc, &r, GetSysColorBrush( COLOR_BTNFACE ) );
     }
 
     ReleaseDC( hwnd, hdc );

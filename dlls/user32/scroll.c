@@ -585,7 +585,7 @@ void WINAPI USER_ScrollBarDraw( HWND hwnd, HDC hdc, INT nBar, enum SCROLL_HITTES
         {
             RECT rc = *rect;
 
-            FillRect( hdc, &rc, GetSysColorBrush( COLOR_SCROLLBAR ) );
+            FillRect( hdc, &rc, GetSysColorBrush( COLOR_BTNFACE ) );
             rc.left = max( rc.left, rc.right - GetSystemMetrics( SM_CXVSCROLL ) - 1 );
             rc.top = max( rc.top, rc.bottom - GetSystemMetrics( SM_CYHSCROLL ) - 1 );
             DrawFrameControl( hdc, &rc, DFC_SCROLL, DFCS_SCROLLSIZEGRIP );
@@ -594,7 +594,7 @@ void WINAPI USER_ScrollBarDraw( HWND hwnd, HDC hdc, INT nBar, enum SCROLL_HITTES
 
         if (style & SBS_SIZEBOX)
         {
-            FillRect( hdc, rect, GetSysColorBrush( COLOR_SCROLLBAR ) );
+            FillRect( hdc, rect, GetSysColorBrush( COLOR_BTNFACE ) );
             return;
         }
     }
