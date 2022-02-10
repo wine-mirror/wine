@@ -66,7 +66,7 @@ static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
     struct query_class_factory *This = impl_from_IClassFactory(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) increasing refcount to %u\n", iface, ref);
+    TRACE("(%p) increasing refcount to %lu\n", iface, ref);
 
     return ref;
 }
@@ -76,7 +76,7 @@ static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
     struct query_class_factory *This = impl_from_IClassFactory(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) decreasing refcount to %u\n", iface, ref);
+    TRACE("(%p) decreasing refcount to %lu\n", iface, ref);
 
     if (ref == 0)
         HeapFree(GetProcessHeap(), 0, This);
@@ -144,7 +144,7 @@ static ULONG WINAPI CommonQuery_AddRef(ICommonQuery *iface)
     struct common_query *This = impl_from_ICommonQuery(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) increasing refcount to %u\n", iface, ref);
+    TRACE("(%p) increasing refcount to %lu\n", iface, ref);
 
     return ref;
 }
@@ -154,7 +154,7 @@ static ULONG WINAPI CommonQuery_Release(ICommonQuery *iface)
     struct common_query *This = impl_from_ICommonQuery(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) decreasing refcount to %u\n", iface, ref);
+    TRACE("(%p) decreasing refcount to %lu\n", iface, ref);
 
     if (ref == 0)
         HeapFree(GetProcessHeap(), 0, This);
