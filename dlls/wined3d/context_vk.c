@@ -1446,6 +1446,7 @@ bool wined3d_context_vk_allocate_query(struct wined3d_context_vk *context_vk,
         if (wined3d_query_pool_vk_allocate_query(pool_vk, &idx))
             goto done;
         list_remove(&pool_vk->entry);
+        list_init(&pool_vk->entry);
     }
 
     if (!(pool_vk = heap_alloc_zero(sizeof(*pool_vk))))
