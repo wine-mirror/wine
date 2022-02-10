@@ -55,58 +55,58 @@ static void test_directory(void)
 
     hr = CoCreateInstance(&CLSID_DirectMusicLoader, NULL, CLSCTX_INPROC, &IID_IDirectMusicLoader8,
             (void**)&loader);
-    ok(hr == S_OK, "Couldn't create Loader %#x\n", hr);
+    ok(hr == S_OK, "Couldn't create Loader %#lx\n", hr);
 
     /* ScanDirectory without a previous SetSearchDirectory isn't failing */
     hr = IDirectMusicLoader_ScanDirectory(loader, &CLSID_DirectMusicContainer, con, NULL);
-    ok(hr == S_FALSE, "ScanDirectory for \"con\" files failed with %#x\n", hr);
+    ok(hr == S_FALSE, "ScanDirectory for \"con\" files failed with %#lx\n", hr);
 
     /* SetSearchDirectory with invalid path */
     hr = IDirectMusicLoader_SetSearchDirectory(loader, &GUID_DirectMusicAllTypes, NULL, 0);
-    ok(hr == E_POINTER, "SetSearchDirectory failed with %#x\n", hr);
+    ok(hr == E_POINTER, "SetSearchDirectory failed with %#lx\n", hr);
     hr = IDirectMusicLoader_SetSearchDirectory(loader, &GUID_DirectMusicAllTypes, invalid_path, 0);
-    ok(hr == DMUS_E_LOADER_BADPATH, "SetSearchDirectory failed with %#x\n", hr);
+    ok(hr == DMUS_E_LOADER_BADPATH, "SetSearchDirectory failed with %#lx\n", hr);
 
     /* SetSearchDirectory with the current directory */
     GetCurrentDirectoryW(ARRAY_SIZE(path), path);
     hr = IDirectMusicLoader_SetSearchDirectory(loader, &GUID_DirectMusicAllTypes, path, 0);
-    ok(hr == S_OK, "SetSearchDirectory failed with %#x\n", hr);
+    ok(hr == S_OK, "SetSearchDirectory failed with %#lx\n", hr);
 
     /* Two consecutive SetSearchDirectory with the same path */
     GetTempPathW(ARRAY_SIZE(path), path);
     hr = IDirectMusicLoader_SetSearchDirectory(loader, &GUID_DirectMusicAllTypes, path, 0);
-    ok(hr == S_OK, "SetSearchDirectory failed with %#x\n", hr);
+    ok(hr == S_OK, "SetSearchDirectory failed with %#lx\n", hr);
     hr = IDirectMusicLoader_SetSearchDirectory(loader, &GUID_DirectMusicAllTypes, path, 0);
-    ok(hr == S_FALSE, "Second SetSearchDirectory failed with %#x\n", hr);
+    ok(hr == S_FALSE, "Second SetSearchDirectory failed with %#lx\n", hr);
     hr = IDirectMusicLoader_SetSearchDirectory(loader, &CLSID_DirectSoundWave, path, 0);
-    ok(hr == S_OK, "SetSearchDirectory failed with %#x\n", hr);
+    ok(hr == S_OK, "SetSearchDirectory failed with %#lx\n", hr);
     hr = IDirectMusicLoader_SetSearchDirectory(loader, &CLSID_DirectSoundWave, path, 0);
-    ok(hr == S_FALSE, "Second SetSearchDirectory failed with %#x\n", hr);
+    ok(hr == S_FALSE, "Second SetSearchDirectory failed with %#lx\n", hr);
 
     /* Invalid GUIDs */
     if (0)
         IDirectMusicLoader_SetSearchDirectory(loader, NULL, path, 0); /* Crashes on Windows */
     hr = IDirectMusicLoader_SetSearchDirectory(loader, &IID_IDirectMusicLoader8, path, 0);
-    ok(hr == S_OK, "SetSearchDirectory failed with %#x\n", hr);
+    ok(hr == S_OK, "SetSearchDirectory failed with %#lx\n", hr);
     hr = IDirectMusicLoader_ScanDirectory(loader, &GUID_DirectMusicAllTypes, con, NULL);
-    ok(hr == REGDB_E_CLASSNOTREG, "ScanDirectory failed, received %#x\n", hr);
+    ok(hr == REGDB_E_CLASSNOTREG, "ScanDirectory failed, received %#lx\n", hr);
 
     /* NULL extension is not an error */
     hr = IDirectMusicLoader_ScanDirectory(loader, &CLSID_DirectSoundWave, NULL, NULL);
-    ok(hr == S_FALSE, "ScanDirectory for \"wav\" files failed, received %#x\n", hr);
+    ok(hr == S_FALSE, "ScanDirectory for \"wav\" files failed, received %#lx\n", hr);
 
     IDirectMusicLoader_Release(loader);
 
     /* An empty path is a valid path */
     hr = CoCreateInstance(&CLSID_DirectMusicLoader, NULL, CLSCTX_INPROC, &IID_IDirectMusicLoader8,
             (void**)&loader);
-    ok(hr == S_OK, "Couldn't create Loader %#x\n", hr);
+    ok(hr == S_OK, "Couldn't create Loader %#lx\n", hr);
     hr = IDirectMusicLoader_SetSearchDirectory(loader, &GUID_DirectMusicAllTypes, empty, 0);
-    ok(hr == S_OK, "SetSearchDirectory failed with %#x\n", hr);
+    ok(hr == S_OK, "SetSearchDirectory failed with %#lx\n", hr);
     hr = IDirectMusicLoader_SetSearchDirectory(loader, &GUID_DirectMusicAllTypes, empty, 0);
-    ok(hr == S_FALSE, "SetSearchDirectory failed with %#x\n", hr);
+    ok(hr == S_FALSE, "SetSearchDirectory failed with %#lx\n", hr);
     hr = IDirectMusicLoader_ScanDirectory(loader, &CLSID_DirectMusicContainer, con, NULL);
-    ok(hr == S_FALSE, "ScanDirectory for \"con\" files failed with %#x\n", hr);
+    ok(hr == S_FALSE, "ScanDirectory for \"con\" files failed with %#lx\n", hr);
     IDirectMusicLoader_Release(loader);
 }
 
@@ -117,33 +117,33 @@ static void test_caching(void)
 
     hr = CoCreateInstance(&CLSID_DirectMusicLoader, NULL, CLSCTX_INPROC, &IID_IDirectMusicLoader8,
             (void**)&loader);
-    ok(hr == S_OK, "Couldn't create Loader %#x\n", hr);
+    ok(hr == S_OK, "Couldn't create Loader %#lx\n", hr);
 
     /* Invalid GUID */
     if (0) /* Crashes on Windows */
         IDirectMusicLoader_EnableCache(loader, NULL, TRUE);
     hr = IDirectMusicLoader_EnableCache(loader, &IID_IDirectMusicLoader8, TRUE);
-    ok(hr == S_FALSE, "EnableCache failed with %#x\n", hr);
+    ok(hr == S_FALSE, "EnableCache failed with %#lx\n", hr);
 
     /* Caching is enabled by default */
     hr = IDirectMusicLoader_EnableCache(loader, &CLSID_DirectMusicContainer, TRUE);
-    ok(hr == S_FALSE, "EnableCache failed with %#x\n", hr);
+    ok(hr == S_FALSE, "EnableCache failed with %#lx\n", hr);
     hr = IDirectMusicLoader_EnableCache(loader, &GUID_DirectMusicAllTypes, TRUE);
-    ok(hr == S_FALSE, "EnableCache failed with %#x\n", hr);
+    ok(hr == S_FALSE, "EnableCache failed with %#lx\n", hr);
 
     /* Disabling/enabling the cache for all types */
     hr = IDirectMusicLoader_EnableCache(loader, &GUID_DirectMusicAllTypes, FALSE);
-    ok(hr == S_OK, "EnableCache failed with %#x\n", hr);
+    ok(hr == S_OK, "EnableCache failed with %#lx\n", hr);
     hr = IDirectMusicLoader_EnableCache(loader, &CLSID_DirectMusicContainer, FALSE);
-    ok(hr == S_FALSE, "EnableCache failed with %#x\n", hr);
+    ok(hr == S_FALSE, "EnableCache failed with %#lx\n", hr);
     hr = IDirectMusicLoader_EnableCache(loader, &GUID_DirectMusicAllTypes, TRUE);
-    ok(hr == S_OK, "EnableCache failed with %#x\n", hr);
+    ok(hr == S_OK, "EnableCache failed with %#lx\n", hr);
     hr = IDirectMusicLoader_EnableCache(loader, &CLSID_DirectMusicContainer, FALSE);
-    ok(hr == S_OK, "EnableCache failed with %#x\n", hr);
+    ok(hr == S_OK, "EnableCache failed with %#lx\n", hr);
     hr = IDirectMusicLoader_EnableCache(loader, &GUID_DirectMusicAllTypes, TRUE);
-    ok(hr == S_FALSE, "EnableCache failed with %#x\n", hr);
+    ok(hr == S_FALSE, "EnableCache failed with %#lx\n", hr);
     hr = IDirectMusicLoader_EnableCache(loader, &CLSID_DirectMusicContainer, TRUE);
-    ok(hr == S_FALSE, "EnableCache failed with %#x\n", hr);
+    ok(hr == S_FALSE, "EnableCache failed with %#lx\n", hr);
 
     IDirectMusicLoader_Release(loader);
 }
@@ -154,10 +154,10 @@ static void test_release_object(void)
     IDirectMusicLoader8* loader = NULL;
 
     hr = CoCreateInstance(&CLSID_DirectMusicLoader, NULL, CLSCTX_INPROC, &IID_IDirectMusicLoader8, (void**)&loader);
-    ok(hr == S_OK, "Couldn't create Loader %08x\n", hr);
+    ok(hr == S_OK, "Couldn't create Loader %08lx\n", hr);
 
     hr = IDirectMusicLoader_ReleaseObject(loader, NULL);
-    ok(hr == E_POINTER, "Expected E_POINTER, received %#x\n", hr);
+    ok(hr == E_POINTER, "Expected E_POINTER, received %#lx\n", hr);
 
     IDirectMusicLoader_Release(loader);
 }
@@ -186,7 +186,7 @@ static void test_simple_playing(void)
     hr = CoCreateInstance(&CLSID_DirectMusicLoader, NULL,
             CLSCTX_INPROC_SERVER, &IID_IDirectMusicLoader8,
             (void**)&loader);
-    ok(hr == S_OK, "Couldn't create Loader %08x\n", hr);
+    ok(hr == S_OK, "Couldn't create Loader %08lx\n", hr);
 
     hr = IDirectMusicPerformance8_InitAudio(perf, &music, &dsound, NULL,
             DMUS_APATH_DYNAMIC_STEREO, 64, DMUS_AUDIOF_ALL, NULL);
@@ -194,13 +194,13 @@ static void test_simple_playing(void)
         skip("No audio driver.\n");
         return;
     }
-    ok(hr == S_OK, "InitAudio failed: %08x\n", hr);
+    ok(hr == S_OK, "InitAudio failed: %08lx\n", hr);
     ok(music != NULL, "Didn't get IDirectMusic pointer\n");
     ok(dsound != NULL, "Didn't get IDirectSound pointer\n");
 
     hr = IDirectMusicPerformance8_CreateStandardAudioPath(perf,
             DMUS_APATH_DYNAMIC_STEREO, 64, TRUE, &path);
-    ok(hr == S_OK, "CreateStandardAudioPath failed: %08x\n", hr);
+    ok(hr == S_OK, "CreateStandardAudioPath failed: %08lx\n", hr);
     ok(path != NULL, "Didn't get IDirectMusicAudioPath pointer\n");
 
     desc.dwSize = sizeof(DMUS_OBJECTDESC);
@@ -210,29 +210,29 @@ static void test_simple_playing(void)
     desc.llMemLength = sizeof(mp3file);
     hr = IDirectMusicLoader8_GetObject(loader, &desc, &IID_IDirectMusicSegment8,
             (void**)&segment);
-    ok(hr == DMUS_E_UNSUPPORTED_STREAM, "GetObject gave wrong error: %08x\n", hr);
+    ok(hr == DMUS_E_UNSUPPORTED_STREAM, "GetObject gave wrong error: %08lx\n", hr);
     ok(segment == NULL, "Didn't get NULL IDirectMusicSegment pointer\n");
 
     desc.pbMemData = rifffile;
     desc.llMemLength = sizeof(rifffile);
     hr = IDirectMusicLoader8_GetObject(loader, &desc, &IID_IDirectMusicSegment8,
             (void**)&segment);
-    ok(hr == S_OK, "GetObject failed: %08x\n", hr);
+    ok(hr == S_OK, "GetObject failed: %08lx\n", hr);
     ok(segment != NULL, "Didn't get IDirectMusicSegment pointer\n");
 
     hr = IDirectMusicSegment8_Download(segment, (IUnknown*)path);
-    ok(hr == S_OK, "Download failed: %08x\n", hr);
+    ok(hr == S_OK, "Download failed: %08lx\n", hr);
 
     hr = IDirectMusicSegment8_SetRepeats(segment, 1);
-    ok(hr == S_OK, "SetRepeats failed: %08x\n", hr);
+    ok(hr == S_OK, "SetRepeats failed: %08lx\n", hr);
 
     hr = IDirectMusicPerformance8_PlaySegmentEx(perf, (IUnknown*)segment,
             NULL, NULL, DMUS_SEGF_SECONDARY, 0, &state, NULL, (IUnknown*)path);
-    ok(hr == S_OK, "PlaySegmentEx failed: %08x\n", hr);
+    ok(hr == S_OK, "PlaySegmentEx failed: %08lx\n", hr);
     ok(state != NULL, "Didn't get IDirectMusicSegmentState pointer\n");
 
     hr = IDirectMusicPerformance8_CloseDown(perf);
-    ok(hr == S_OK, "CloseDown failed: %08x\n", hr);
+    ok(hr == S_OK, "CloseDown failed: %08lx\n", hr);
 
     IDirectSound_Release(dsound);
     IDirectMusicSegmentState_Release(state);
@@ -253,25 +253,25 @@ static void test_COM(void)
     hr = CoCreateInstance(&CLSID_DirectMusicLoader, (IUnknown *)0xdeadbeef, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void**)&dml8);
     ok(hr == CLASS_E_NOAGGREGATION,
-            "DirectMusicLoader create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);
+            "DirectMusicLoader create failed: %08lx, expected CLASS_E_NOAGGREGATION\n", hr);
     ok(!dml8, "dml8 = %p\n", dml8);
 
     /* Invalid RIID */
     hr = CoCreateInstance(&CLSID_DirectMusicLoader, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectMusicObject, (void**)&dml8);
-    ok(hr == E_NOINTERFACE, "DirectMusicLoader create failed: %08x, expected E_NOINTERFACE\n", hr);
+    ok(hr == E_NOINTERFACE, "DirectMusicLoader create failed: %08lx, expected E_NOINTERFACE\n", hr);
 
     /* Same refcount for all DirectMusicLoader interfaces */
     hr = CoCreateInstance(&CLSID_DirectMusicLoader, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectMusicLoader8, (void**)&dml8);
-    ok(hr == S_OK, "DirectMusicLoader create failed: %08x, expected S_OK\n", hr);
+    ok(hr == S_OK, "DirectMusicLoader create failed: %08lx, expected S_OK\n", hr);
     refcount = IDirectMusicLoader8_AddRef(dml8);
-    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
 
     hr = IDirectMusicLoader8_QueryInterface(dml8, &IID_IUnknown, (void**)&unk);
-    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08x\n", hr);
+    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08lx\n", hr);
     refcount = IUnknown_AddRef(unk);
-    ok(refcount == 4, "refcount == %u, expected 4\n", refcount);
+    ok(refcount == 4, "refcount == %lu, expected 4\n", refcount);
     refcount = IUnknown_Release(unk);
 
     while (IDirectMusicLoader8_Release(dml8));
@@ -290,37 +290,37 @@ static void test_COM_container(void)
     hr = CoCreateInstance(&CLSID_DirectMusicContainer, (IUnknown *)0xdeadbeef, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void**)&dmc);
     ok(hr == CLASS_E_NOAGGREGATION,
-            "DirectMusicContainer create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);
+            "DirectMusicContainer create failed: %08lx, expected CLASS_E_NOAGGREGATION\n", hr);
     ok(!dmc, "dmc = %p\n", dmc);
 
     /* Invalid RIID */
     hr = CoCreateInstance(&CLSID_DirectMusicContainer, NULL, CLSCTX_INPROC_SERVER,
             &IID_IClassFactory, (void**)&dmc);
-    ok(hr == E_NOINTERFACE, "DirectMusicContainer create failed: %08x, expected E_NOINTERFACE\n", hr);
+    ok(hr == E_NOINTERFACE, "DirectMusicContainer create failed: %08lx, expected E_NOINTERFACE\n", hr);
 
     /* Same refcount for all DirectMusicContainer interfaces */
     hr = CoCreateInstance(&CLSID_DirectMusicContainer, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectMusicContainer, (void**)&dmc);
-    ok(hr == S_OK, "DirectMusicContainer create failed: %08x, expected S_OK\n", hr);
+    ok(hr == S_OK, "DirectMusicContainer create failed: %08lx, expected S_OK\n", hr);
     refcount = IDirectMusicContainer_AddRef(dmc);
-    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
 
     hr = IDirectMusicContainer_QueryInterface(dmc, &IID_IDirectMusicObject, (void**)&dmo);
-    ok(hr == S_OK, "QueryInterface for IID_IDirectMusicObject failed: %08x\n", hr);
+    ok(hr == S_OK, "QueryInterface for IID_IDirectMusicObject failed: %08lx\n", hr);
     refcount = IDirectMusicObject_AddRef(dmo);
-    ok(refcount == 4, "refcount == %u, expected 4\n", refcount);
+    ok(refcount == 4, "refcount == %lu, expected 4\n", refcount);
     refcount = IDirectMusicObject_Release(dmo);
 
     hr = IDirectMusicContainer_QueryInterface(dmc, &IID_IPersistStream, (void**)&ps);
-    ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08x\n", hr);
+    ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08lx\n", hr);
     refcount = IPersistStream_AddRef(ps);
-    ok(refcount == 5, "refcount == %u, expected 5\n", refcount);
+    ok(refcount == 5, "refcount == %lu, expected 5\n", refcount);
     refcount = IPersistStream_Release(ps);
 
     hr = IDirectMusicContainer_QueryInterface(dmc, &IID_IUnknown, (void**)&unk);
-    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08x\n", hr);
+    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08lx\n", hr);
     refcount = IUnknown_AddRef(unk);
-    ok(refcount == 6, "refcount == %u, expected 6\n", refcount);
+    ok(refcount == 6, "refcount == %lu, expected 6\n", refcount);
     refcount = IUnknown_Release(unk);
 
     while (IDirectMusicContainer_Release(dmc));
@@ -338,56 +338,56 @@ static void test_container(void)
 
     hr = CoCreateInstance(&CLSID_DirectMusicContainer, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectMusicContainer, (void**)&dmc);
-    ok(hr == S_OK, "DirectMusicContainer create failed: %08x, expected S_OK\n", hr);
+    ok(hr == S_OK, "DirectMusicContainer create failed: %08lx, expected S_OK\n", hr);
 
     /* IDirectMusicObject */
     hr = IDirectMusicContainer_QueryInterface(dmc, &IID_IDirectMusicObject, (void**)&dmo);
-    ok(hr == S_OK, "QueryInterface for IID_IDirectMusicObject failed: %08x\n", hr);
+    ok(hr == S_OK, "QueryInterface for IID_IDirectMusicObject failed: %08lx\n", hr);
     hr = IDirectMusicObject_GetDescriptor(dmo, NULL);
-    ok(hr == E_POINTER, "IDirectMusicObject_GetDescriptor: expected E_POINTER, got  %08x\n", hr);
+    ok(hr == E_POINTER, "IDirectMusicObject_GetDescriptor: expected E_POINTER, got  %08lx\n", hr);
     hr = IDirectMusicObject_SetDescriptor(dmo, NULL);
-    ok(hr == E_POINTER, "IDirectMusicObject_SetDescriptor: expected E_POINTER, got  %08x\n", hr);
+    ok(hr == E_POINTER, "IDirectMusicObject_SetDescriptor: expected E_POINTER, got  %08lx\n", hr);
     ZeroMemory(&desc, sizeof(desc));
     hr = IDirectMusicObject_GetDescriptor(dmo, &desc);
-    ok(hr == S_OK, "IDirectMusicObject_GetDescriptor failed: %08x\n", hr);
+    ok(hr == S_OK, "IDirectMusicObject_GetDescriptor failed: %08lx\n", hr);
     ZeroMemory(&desc, sizeof(desc));
     desc.dwSize = 1;  /* size is ignored */
     hr = IDirectMusicObject_GetDescriptor(dmo, &desc);
-    ok(hr == S_OK, "IDirectMusicObject_GetDescriptor failed: %08x\n", hr);
+    ok(hr == S_OK, "IDirectMusicObject_GetDescriptor failed: %08lx\n", hr);
     ok(desc.dwValidData == DMUS_OBJ_CLASS,
-            "Fresh object has more valid data (%08x) than DMUS_OBJ_CLASS\n", desc.dwValidData);
+            "Fresh object has more valid data (%#lx) than DMUS_OBJ_CLASS\n", desc.dwValidData);
     /* DMUS_OBJ_CLASS is immutable */
     desc.dwValidData = DMUS_OBJ_CLASS;
     desc.dwSize = 1;  /* size is ignored */
     hr = IDirectMusicObject_SetDescriptor(dmo, &desc);
-    ok(hr == S_FALSE , "IDirectMusicObject_SetDescriptor failed: %08x\n", hr);
-    ok(!desc.dwValidData, "dwValidData wasn't cleared:  %08x\n", desc.dwValidData);
+    ok(hr == S_FALSE , "IDirectMusicObject_SetDescriptor failed: %08lx\n", hr);
+    ok(!desc.dwValidData, "dwValidData wasn't cleared:  %#lx\n", desc.dwValidData);
     desc.dwValidData = DMUS_OBJ_CLASS;
     desc.guidClass = CLSID_DirectMusicSegment;
     hr = IDirectMusicObject_SetDescriptor(dmo, &desc);
-    ok(hr == S_FALSE && !desc.dwValidData, "IDirectMusicObject_SetDescriptor failed: %08x\n", hr);
+    ok(hr == S_FALSE && !desc.dwValidData, "IDirectMusicObject_SetDescriptor failed: %08lx\n", hr);
     hr = IDirectMusicObject_GetDescriptor(dmo, &desc);
-    ok(hr == S_OK, "IDirectMusicObject_GetDescriptor failed: %08x\n", hr);
+    ok(hr == S_OK, "IDirectMusicObject_GetDescriptor failed: %08lx\n", hr);
     ok(IsEqualGUID(&desc.guidClass, &CLSID_DirectMusicContainer),
             "guidClass changed, should be CLSID_DirectMusicContainer\n");
 
     /* IPersistStream */
     hr = IDirectMusicContainer_QueryInterface(dmc, &IID_IPersistStream, (void**)&ps);
-    ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08x\n", hr);
+    ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08lx\n", hr);
     hr = IPersistStream_GetClassID(ps, NULL);
-    ok(hr == E_POINTER, "IPersistStream_GetClassID failed: %08x\n", hr);
+    ok(hr == E_POINTER, "IPersistStream_GetClassID failed: %08lx\n", hr);
     hr = IPersistStream_GetClassID(ps, &class);
-    ok(hr == S_OK, "IPersistStream_GetClassID failed: %08x\n", hr);
+    ok(hr == S_OK, "IPersistStream_GetClassID failed: %08lx\n", hr);
     ok(IsEqualGUID(&class, &CLSID_DirectMusicContainer),
             "Expected class CLSID_DirectMusicContainer got %s\n", wine_dbgstr_guid(&class));
 
     /* Unimplemented IPersistStream methods */
     hr = IPersistStream_IsDirty(ps);
-    ok(hr == S_FALSE, "IPersistStream_IsDirty failed: %08x\n", hr);
+    ok(hr == S_FALSE, "IPersistStream_IsDirty failed: %08lx\n", hr);
     hr = IPersistStream_GetSizeMax(ps, &size);
-    ok(hr == E_NOTIMPL, "IPersistStream_GetSizeMax failed: %08x\n", hr);
+    ok(hr == E_NOTIMPL, "IPersistStream_GetSizeMax failed: %08lx\n", hr);
     hr = IPersistStream_Save(ps, NULL, TRUE);
-    ok(hr == E_NOTIMPL, "IPersistStream_Save failed: %08x\n", hr);
+    ok(hr == E_NOTIMPL, "IPersistStream_Save failed: %08lx\n", hr);
 
     while (IDirectMusicContainer_Release(dmc));
 }
@@ -501,15 +501,15 @@ static void test_parsedescriptor(void)
 
     hr = CoCreateInstance(&CLSID_DirectMusicContainer, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectMusicObject, (void **)&dmo);
-    ok(hr == S_OK, "DirectMusicContainer create failed: %08x, expected S_OK\n", hr);
+    ok(hr == S_OK, "DirectMusicContainer create failed: %08lx, expected S_OK\n", hr);
 
     /* Nothing loaded */
     memset(&desc, 0, sizeof(desc));
     hr = IDirectMusicObject_GetDescriptor(dmo, &desc);
-    ok(hr == S_OK, "GetDescriptor failed: %08x, expected S_OK\n", hr);
+    ok(hr == S_OK, "GetDescriptor failed: %08lx, expected S_OK\n", hr);
     ok(desc.dwValidData == DMUS_OBJ_CLASS /* XP */ ||
             broken(desc.dwValidData == (DMUS_OBJ_OBJECT | DMUS_OBJ_CLASS)), /* Vista and above */
-            "Got valid data %#x, expected DMUS_OBJ_OBJECT\n", desc.dwValidData);
+            "Got valid data %#lx, expected DMUS_OBJ_OBJECT\n", desc.dwValidData);
     ok(IsEqualGUID(&desc.guidClass, &CLSID_DirectMusicContainer),
             "Got class guid %s, expected CLSID_DirectMusicContainer\n",
             wine_dbgstr_guid(&desc.guidClass));
@@ -518,11 +518,11 @@ static void test_parsedescriptor(void)
     stream = gen_riff_stream(empty);
     memset(&desc, 0, sizeof(desc));
     hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
-    ok(hr == E_INVALIDARG, "ParseDescriptor failed: %08x, expected E_INVALIDARG\n", hr);
+    ok(hr == E_INVALIDARG, "ParseDescriptor failed: %08lx, expected E_INVALIDARG\n", hr);
     desc.dwSize = sizeof(desc);
     hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
-    ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
-    ok(desc.dwValidData == DMUS_OBJ_CLASS, "Got valid data %#x, expected DMUS_OBJ_CLASS\n",
+    ok(hr == S_OK, "ParseDescriptor failed: %08lx, expected S_OK\n", hr);
+    ok(desc.dwValidData == DMUS_OBJ_CLASS, "Got valid data %#lx, expected DMUS_OBJ_CLASS\n",
             desc.dwValidData);
     ok(IsEqualGUID(&desc.guidClass, &CLSID_DirectMusicContainer),
             "Got class guid %s, expected CLSID_DirectMusicContainer\n",
@@ -532,11 +532,11 @@ static void test_parsedescriptor(void)
     /* NULL pointers */
     memset(&desc, 0, sizeof(desc));
     hr = IDirectMusicObject_ParseDescriptor(dmo, NULL, &desc);
-    ok(hr == E_POINTER, "ParseDescriptor failed: %08x, expected E_POINTER\n", hr);
+    ok(hr == E_POINTER, "ParseDescriptor failed: %08lx, expected E_POINTER\n", hr);
     hr = IDirectMusicObject_ParseDescriptor(dmo, stream, NULL);
-    ok(hr == E_INVALIDARG, "ParseDescriptor failed: %08x, expected E_INVALIDARG\n", hr);
+    ok(hr == E_INVALIDARG, "ParseDescriptor failed: %08lx, expected E_INVALIDARG\n", hr);
     hr = IDirectMusicObject_ParseDescriptor(dmo, NULL, NULL);
-    ok(hr == E_POINTER, "ParseDescriptor failed: %08x, expected E_POINTER\n", hr);
+    ok(hr == E_POINTER, "ParseDescriptor failed: %08lx, expected E_POINTER\n", hr);
 
     /* Wrong form */
     empty[1] = DMUS_FOURCC_SEGMENT_FORM;
@@ -545,7 +545,7 @@ static void test_parsedescriptor(void)
     desc.dwSize = sizeof(desc);
     hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
     ok(hr == DMUS_E_DESCEND_CHUNK_FAIL,
-            "ParseDescriptor failed: %08x, expected DMUS_E_DESCEND_CHUNK_FAIL\n", hr);
+            "ParseDescriptor failed: %08lx, expected DMUS_E_DESCEND_CHUNK_FAIL\n", hr);
     IStream_Release(stream);
 
     /* All desc chunks */
@@ -553,9 +553,9 @@ static void test_parsedescriptor(void)
     memset(&desc, 0, sizeof(desc));
     desc.dwSize = sizeof(desc);
     hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
-    ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
+    ok(hr == S_OK, "ParseDescriptor failed: %08lx, expected S_OK\n", hr);
     valid = DMUS_OBJ_OBJECT|DMUS_OBJ_CLASS|DMUS_OBJ_NAME|DMUS_OBJ_CATEGORY|DMUS_OBJ_VERSION;
-    ok(desc.dwValidData == valid, "Got valid data %#x, expected %#x\n", desc.dwValidData, valid);
+    ok(desc.dwValidData == valid, "Got valid data %#lx, expected %#lx\n", desc.dwValidData, valid);
     ok(IsEqualGUID(&desc.guidClass, &CLSID_DirectMusicContainer),
             "Got class guid %s, expected CLSID_DirectMusicContainer\n",
             wine_dbgstr_guid(&desc.guidClass));
@@ -571,8 +571,8 @@ static void test_parsedescriptor(void)
     memset(&desc, 0, sizeof(desc));
     desc.dwSize = sizeof(desc);
     hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
-    ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
-    ok(desc.dwValidData == DMUS_OBJ_CLASS, "Got valid data %#x, expected DMUS_OBJ_CLASS\n",
+    ok(hr == S_OK, "ParseDescriptor failed: %08lx, expected S_OK\n", hr);
+    ok(desc.dwValidData == DMUS_OBJ_CLASS, "Got valid data %#lx, expected DMUS_OBJ_CLASS\n",
             desc.dwValidData);
     IStream_Release(stream);
 
@@ -582,8 +582,8 @@ static void test_parsedescriptor(void)
     memset(&desc, 0, sizeof(desc));
     desc.dwSize = sizeof(desc);
     hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
-    ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
-    ok(desc.dwValidData == DMUS_OBJ_CLASS, "Got valid data %#x, expected DMUS_OBJ_CLASS\n",
+    ok(hr == S_OK, "ParseDescriptor failed: %08lx, expected S_OK\n", hr);
+    ok(desc.dwValidData == DMUS_OBJ_CLASS, "Got valid data %#lx, expected DMUS_OBJ_CLASS\n",
             desc.dwValidData);
     IStream_Release(stream);
 
@@ -592,9 +592,9 @@ static void test_parsedescriptor(void)
     memset(&desc, 0, sizeof(desc));
     desc.dwSize = sizeof(desc);
     hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
-    ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
+    ok(hr == S_OK, "ParseDescriptor failed: %08lx, expected S_OK\n", hr);
     valid = DMUS_OBJ_OBJECT|DMUS_OBJ_CLASS|DMUS_OBJ_NAME|DMUS_OBJ_CATEGORY|DMUS_OBJ_VERSION;
-    ok(desc.dwValidData == valid, "Got valid data %#x, expected %#x\n", desc.dwValidData, valid);
+    ok(desc.dwValidData == valid, "Got valid data %#lx, expected %#lx\n", desc.dwValidData, valid);
     ok(!lstrcmpW(desc.wszName, L"UNAM"), "Got name '%s', expected 'UNAM'\n",
             wine_dbgstr_w(desc.wszName));
     IStream_Release(stream);
