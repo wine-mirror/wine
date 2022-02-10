@@ -582,7 +582,7 @@ static void layout_get_font_metrics(struct dwrite_textlayout *layout, IDWriteFon
     if (is_layout_gdi_compatible(layout)) {
         HRESULT hr = IDWriteFontFace_GetGdiCompatibleMetrics(fontface, emsize, layout->ppdip, &layout->transform, fontmetrics);
         if (FAILED(hr))
-            WARN("failed to get compat metrics, 0x%08x\n", hr);
+            WARN("failed to get compat metrics, 0x%08lx\n", hr);
     }
     else
         IDWriteFontFace_GetMetrics(fontface, fontmetrics);
@@ -651,7 +651,7 @@ static HRESULT layout_resolve_fonts(struct dwrite_textlayout *layout)
 
     if (FAILED(hr = IDWriteFactory5_GetSystemFontCollection((IDWriteFactory5 *)layout->factory, FALSE,
             (IDWriteFontCollection1 **)&sys_collection, FALSE))) {
-        WARN("Failed to get system collection, hr %#x.\n", hr);
+        WARN("Failed to get system collection, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -661,7 +661,7 @@ static HRESULT layout_resolve_fonts(struct dwrite_textlayout *layout)
     }
     else {
         if (FAILED(hr = IDWriteFactory7_GetSystemFontFallback(layout->factory, &fallback))) {
-            WARN("Failed to get system fallback, hr %#x.\n", hr);
+            WARN("Failed to get system fallback, hr %#lx.\n", hr);
             goto fatal;
         }
     }
@@ -691,7 +691,7 @@ static HRESULT layout_resolve_fonts(struct dwrite_textlayout *layout)
             hr = IDWriteFont_CreateFontFace(font, &run->run.fontFace);
             IDWriteFont_Release(font);
             if (FAILED(hr)) {
-                WARN("Failed to create font face, hr %#x.\n", hr);
+                WARN("Failed to create font face, hr %#lx.\n", hr);
                 break;
             }
 
@@ -720,7 +720,7 @@ static HRESULT layout_resolve_fonts(struct dwrite_textlayout *layout)
                 &font,
                 &scale);
             if (FAILED(hr)) {
-                WARN("%s: failed to map family %s, collection %p, hr %#x.\n", debugstr_rundescr(&run->descr),
+                WARN("%s: failed to map family %s, collection %p, hr %#lx.\n", debugstr_rundescr(&run->descr),
                         debugstr_w(range->fontfamily), range->collection, hr);
                 goto fatal;
             }
@@ -728,7 +728,7 @@ static HRESULT layout_resolve_fonts(struct dwrite_textlayout *layout)
             hr = IDWriteFont_CreateFontFace(font, &run->run.fontFace);
             IDWriteFont_Release(font);
             if (FAILED(hr)) {
-                WARN("Failed to create font face, hr %#x.\n", hr);
+                WARN("Failed to create font face, hr %#lx.\n", hr);
                 goto fatal;
             }
 
@@ -942,7 +942,7 @@ static HRESULT layout_shape_get_glyphs(struct dwrite_textlayout *layout, struct 
     }
 
     if (FAILED(hr))
-        WARN("%s: shaping failed, hr %#x.\n", debugstr_rundescr(&run->descr), hr);
+        WARN("%s: shaping failed, hr %#lx.\n", debugstr_rundescr(&run->descr), hr);
 
     run->run.glyphIndices = run->glyphs;
     run->descr.clusterMap = run->clustermap;
@@ -1056,7 +1056,7 @@ static HRESULT layout_shape_get_positions(struct dwrite_textlayout *layout, stru
     {
         memset(run->advances, 0, run->glyphcount * sizeof(*run->advances));
         memset(run->offsets, 0, run->glyphcount * sizeof(*run->offsets));
-        WARN("%s: failed to get glyph placement info, hr %#x.\n", debugstr_rundescr(&run->descr), hr);
+        WARN("%s: failed to get glyph placement info, hr %#lx.\n", debugstr_rundescr(&run->descr), hr);
     }
 
     if (SUCCEEDED(hr))
@@ -1116,12 +1116,12 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
     layout->cluster_count = 0;
 
     if (FAILED(hr = layout_itemize(layout))) {
-        WARN("Itemization failed, hr %#x.\n", hr);
+        WARN("Itemization failed, hr %#lx.\n", hr);
         return hr;
     }
 
     if (FAILED(hr = layout_resolve_fonts(layout))) {
-        WARN("Failed to resolve layout fonts, hr %#x.\n", hr);
+        WARN("Failed to resolve layout fonts, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -1164,7 +1164,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         }
 
         if (FAILED(hr = layout_shape_run(layout, run)))
-            WARN("%s: shaping failed, hr %#x.\n", debugstr_rundescr(&run->descr), hr);
+            WARN("%s: shaping failed, hr %#lx.\n", debugstr_rundescr(&run->descr), hr);
 
         /* baseline derived from font metrics */
         layout_get_font_metrics(layout, run->run.fontFace, run->run.fontEmSize, &fontmetrics);
@@ -1202,7 +1202,7 @@ static HRESULT layout_compute(struct dwrite_textlayout *layout)
         if (FAILED(hr = IDWriteTextAnalyzer2_AnalyzeLineBreakpoints(analyzer,
                 (IDWriteTextAnalysisSource *)&layout->IDWriteTextAnalysisSource1_iface,
                 0, layout->len, (IDWriteTextAnalysisSink *)&layout->IDWriteTextAnalysisSink1_iface)))
-            WARN("Line breakpoints analysis failed, hr %#x.\n", hr);
+            WARN("Line breakpoints analysis failed, hr %#lx.\n", hr);
     }
 
     free(layout->actual_breakpoints);
@@ -1290,7 +1290,7 @@ static void layout_get_erun_font_metrics(struct dwrite_textlayout *layout, struc
             &layout->transform,
             metrics);
         if (FAILED(hr))
-            WARN("failed to get font metrics, 0x%08x\n", hr);
+            WARN("failed to get font metrics, 0x%08lx\n", hr);
     }
     else
         IDWriteFontFace_GetMetrics(erun->run->u.regular.run.fontFace, metrics);
@@ -1926,7 +1926,7 @@ static void layout_add_line(struct dwrite_textlayout *layout, UINT32 first_clust
             append_trimming_run = TRUE;
         }
         else
-            WARN("Failed to get trimming sign metrics, lines won't be trimmed, hr %#x.\n", hr);
+            WARN("Failed to get trimming sign metrics, lines won't be trimmed, hr %#lx.\n", hr);
 
         width = trimmed_width + sign_metrics.width;
     }
@@ -2862,7 +2862,7 @@ static ULONG WINAPI dwritetextlayout_AddRef(IDWriteTextLayout4 *iface)
     struct dwrite_textlayout *layout = impl_from_IDWriteTextLayout4(iface);
     ULONG refcount = InterlockedIncrement(&layout->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -2872,7 +2872,7 @@ static ULONG WINAPI dwritetextlayout_Release(IDWriteTextLayout4 *iface)
     struct dwrite_textlayout *layout = impl_from_IDWriteTextLayout4(iface);
     ULONG refcount = InterlockedDecrement(&layout->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -3715,7 +3715,7 @@ static void layout_get_erun_bbox(struct dwrite_textlayout *layout, struct layout
 
         if (FAILED(hr = compute_glyph_origins(&glyph_run, layout->measuringmode, baseline_origin, &layout->transform, origins)))
         {
-            WARN("Failed to compute glyph origins, hr %#x.\n", hr);
+            WARN("Failed to compute glyph origins, hr %#lx.\n", hr);
             free(origins);
             return;
         }
@@ -3751,7 +3751,7 @@ static void layout_get_inlineobj_bbox(struct dwrite_textlayout *layout, struct l
     HRESULT hr;
 
     if (FAILED(hr = IDWriteInlineObject_GetMetrics(run->object, &metrics))) {
-        WARN("Failed to get inline object metrics, hr %#x.\n", hr);
+        WARN("Failed to get inline object metrics, hr %#lx.\n", hr);
         memset(bbox, 0, sizeof(*bbox));
         return;
     }
@@ -5303,7 +5303,7 @@ static ULONG WINAPI dwritetypography_AddRef(IDWriteTypography *iface)
     struct dwrite_typography *typography = impl_from_IDWriteTypography(iface);
     ULONG refcount = InterlockedIncrement(&typography->refcount);
 
-    TRACE("%p, refcount %d.\n", iface, refcount);
+    TRACE("%p, refcount %ld.\n", iface, refcount);
 
     return refcount;
 }
@@ -5313,7 +5313,7 @@ static ULONG WINAPI dwritetypography_Release(IDWriteTypography *iface)
     struct dwrite_typography *typography = impl_from_IDWriteTypography(iface);
     ULONG refcount = InterlockedDecrement(&typography->refcount);
 
-    TRACE("%p, refcount %d.\n", iface, refcount);
+    TRACE("%p, refcount %ld.\n", iface, refcount);
 
     if (!refcount)
     {

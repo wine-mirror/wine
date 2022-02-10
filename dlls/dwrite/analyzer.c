@@ -1093,7 +1093,7 @@ static void get_number_substitutes(IDWriteNumberSubstitution *substitution, BOOL
             case 1:
             default:
                 if (value != 1)
-                    WARN("Unknown IDIGITSUBSTITUTION value %u, locale %s.\n", value, debugstr_w(numbersubst->locale));
+                    WARN("Unknown IDIGITSUBSTITUTION value %lu, locale %s.\n", value, debugstr_w(numbersubst->locale));
             }
         }
         else
@@ -1905,7 +1905,7 @@ static ULONG WINAPI dwritenumbersubstitution_AddRef(IDWriteNumberSubstitution *i
     struct dwrite_numbersubstitution *object = impl_from_IDWriteNumberSubstitution(iface);
     ULONG refcount = InterlockedIncrement(&object->refcount);
 
-    TRACE("%p, refcount %d.\n", iface, refcount);
+    TRACE("%p, refcount %ld.\n", iface, refcount);
 
     return refcount;
 }
@@ -1915,7 +1915,7 @@ static ULONG WINAPI dwritenumbersubstitution_Release(IDWriteNumberSubstitution *
     struct dwrite_numbersubstitution *object = impl_from_IDWriteNumberSubstitution(iface);
     ULONG refcount = InterlockedDecrement(&object->refcount);
 
-    TRACE("%p, refcount %d.\n", iface, refcount);
+    TRACE("%p, refcount %ld.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -2122,7 +2122,7 @@ static HRESULT fallback_get_fallback_font(struct dwrite_fontfallback *fallback, 
 
     hr = fallback_map_characters(*mapped_font, text, length, mapped_length);
     if (FAILED(hr))
-        WARN("Mapping with fallback family %s failed, hr %#x.\n", debugstr_w(mapping->families[i]), hr);
+        WARN("Mapping with fallback family %s failed, hr %#lx.\n", debugstr_w(mapping->families[i]), hr);
 
     if (!*mapped_length) {
         IDWriteFont_Release(*mapped_font);
@@ -2247,7 +2247,7 @@ static ULONG WINAPI customfontfallback_AddRef(IDWriteFontFallback1 *iface)
     struct dwrite_fontfallback *fallback = impl_from_IDWriteFontFallback1(iface);
     ULONG refcount = InterlockedIncrement(&fallback->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -2257,7 +2257,7 @@ static ULONG WINAPI customfontfallback_Release(IDWriteFontFallback1 *iface)
     struct dwrite_fontfallback *fallback = impl_from_IDWriteFontFallback1(iface);
     ULONG refcount = InterlockedDecrement(&fallback->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -2320,7 +2320,7 @@ static ULONG WINAPI fontfallbackbuilder_AddRef(IDWriteFontFallbackBuilder *iface
     struct dwrite_fontfallback_builder *fallbackbuilder = impl_from_IDWriteFontFallbackBuilder(iface);
     ULONG refcount = InterlockedIncrement(&fallbackbuilder->refcount);
 
-    TRACE("%p, refcount %d.\n", iface, refcount);
+    TRACE("%p, refcount %ld.\n", iface, refcount);
 
     return refcount;
 }
@@ -2331,7 +2331,7 @@ static ULONG WINAPI fontfallbackbuilder_Release(IDWriteFontFallbackBuilder *ifac
     ULONG refcount = InterlockedDecrement(&fallbackbuilder->refcount);
     size_t i;
 
-    TRACE("%p, refcount %d.\n", iface, refcount);
+    TRACE("%p, refcount %ld.\n", iface, refcount);
 
     if (!refcount)
     {

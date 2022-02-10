@@ -251,7 +251,7 @@ static ULONG WINAPI rendertarget_AddRef(IDWriteBitmapRenderTarget1 *iface)
     struct rendertarget *target = impl_from_IDWriteBitmapRenderTarget1(iface);
     ULONG refcount = InterlockedIncrement(&target->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -261,7 +261,7 @@ static ULONG WINAPI rendertarget_Release(IDWriteBitmapRenderTarget1 *iface)
     struct rendertarget *target = impl_from_IDWriteBitmapRenderTarget1(iface);
     ULONG refcount = InterlockedDecrement(&target->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -352,7 +352,7 @@ static HRESULT WINAPI rendertarget_DrawGlyphRun(IDWriteBitmapRenderTarget1 *ifac
     RECT target_rect, bounds;
     HRESULT hr;
 
-    TRACE("%p, %.8e, %.8e, %d, %p, %p, 0x%08x, %p.\n", iface, originX, originY,
+    TRACE("%p, %.8e, %.8e, %d, %p, %p, 0x%08lx, %p.\n", iface, originX, originY,
         measuring_mode, run, params, color, bbox_ret);
 
     SetRectEmpty(bbox_ret);
@@ -364,7 +364,7 @@ static HRESULT WINAPI rendertarget_DrawGlyphRun(IDWriteBitmapRenderTarget1 *ifac
         return E_INVALIDARG;
 
     if (FAILED(hr = IDWriteFontFace_QueryInterface(run->fontFace, &IID_IDWriteFontFace3, (void **)&fontface))) {
-        WARN("Failed to get IDWriteFontFace2 interface, hr %#x.\n", hr);
+        WARN("Failed to get IDWriteFontFace2 interface, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -435,7 +435,7 @@ static HRESULT WINAPI rendertarget_DrawGlyphRun(IDWriteBitmapRenderTarget1 *ifac
             gridfitmode, target->antialiasmode, originX, originY, &analysis);
     if (FAILED(hr))
     {
-        WARN("failed to create analysis instance, 0x%08x\n", hr);
+        WARN("failed to create analysis instance, 0x%08lx\n", hr);
         return hr;
     }
 
@@ -445,7 +445,7 @@ static HRESULT WINAPI rendertarget_DrawGlyphRun(IDWriteBitmapRenderTarget1 *ifac
     if (FAILED(hr) || IsRectEmpty(&bounds)) {
         hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_CLEARTYPE_3x1, &bounds);
         if (FAILED(hr)) {
-            WARN("GetAlphaTextureBounds() failed, 0x%08x\n", hr);
+            WARN("GetAlphaTextureBounds() failed, 0x%08lx\n", hr);
             IDWriteGlyphRunAnalysis_Release(analysis);
             return hr;
         }
@@ -655,7 +655,7 @@ static ULONG WINAPI gdiinterop_AddRef(IDWriteGdiInterop1 *iface)
     struct gdiinterop *interop = impl_from_IDWriteGdiInterop1(iface);
     LONG refcount = InterlockedIncrement(&interop->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -665,7 +665,7 @@ static ULONG WINAPI gdiinterop_Release(IDWriteGdiInterop1 *iface)
     struct gdiinterop *interop = impl_from_IDWriteGdiInterop1(iface);
     LONG refcount = InterlockedDecrement(&interop->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -860,7 +860,7 @@ static HRESULT WINAPI gdiinterop1_CreateFontFromLOGFONT(IDWriteGdiInterop1 *ifac
     else {
         hr = IDWriteFactory5_GetSystemFontCollection((IDWriteFactory5 *)interop->factory, FALSE, (IDWriteFontCollection1 **)&collection, FALSE);
         if (FAILED(hr)) {
-            ERR("failed to get system font collection: 0x%08x.\n", hr);
+            ERR("failed to get system font collection: 0x%08lx.\n", hr);
             return hr;
         }
     }
@@ -958,7 +958,7 @@ static ULONG WINAPI memresourcestream_AddRef(IDWriteFontFileStream *iface)
     struct memresource_stream *stream = impl_from_IDWriteFontFileStream(iface);
     ULONG refcount = InterlockedIncrement(&stream->refcount);
 
-    TRACE("%p, refcount %d.\n", iface, refcount);
+    TRACE("%p, refcount %ld.\n", iface, refcount);
 
     return refcount;
 }
@@ -968,7 +968,7 @@ static ULONG WINAPI memresourcestream_Release(IDWriteFontFileStream *iface)
     struct memresource_stream *stream = impl_from_IDWriteFontFileStream(iface);
     ULONG refcount = InterlockedDecrement(&stream->refcount);
 
-    TRACE("%p, refcount %d.\n", iface, refcount);
+    TRACE("%p, refcount %ld.\n", iface, refcount);
 
     if (!refcount)
         free(stream);

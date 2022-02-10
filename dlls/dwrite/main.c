@@ -104,7 +104,7 @@ static ULONG WINAPI renderingparams_AddRef(IDWriteRenderingParams3 *iface)
     struct renderingparams *params = impl_from_IDWriteRenderingParams3(iface);
     ULONG refcount = InterlockedIncrement(&params->refcount);
 
-    TRACE("%p, refcount %d.\n", iface, refcount);
+    TRACE("%p, refcount %ld.\n", iface, refcount);
 
     return refcount;
 }
@@ -114,7 +114,7 @@ static ULONG WINAPI renderingparams_Release(IDWriteRenderingParams3 *iface)
     struct renderingparams *params = impl_from_IDWriteRenderingParams3(iface);
     ULONG refcount = InterlockedDecrement(&params->refcount);
 
-    TRACE("%p, refcount %d.\n", iface, refcount);
+    TRACE("%p, refcount %ld.\n", iface, refcount);
 
     if (!refcount)
         free(params);
@@ -299,7 +299,7 @@ static ULONG WINAPI localizedstrings_AddRef(IDWriteLocalizedStrings *iface)
     struct localizedstrings *strings = impl_from_IDWriteLocalizedStrings(iface);
     ULONG refcount = InterlockedIncrement(&strings->refcount);
 
-    TRACE("%p, refcount %d.\n", iface, refcount);
+    TRACE("%p, refcount %ld.\n", iface, refcount);
 
     return refcount;
 }
@@ -310,7 +310,7 @@ static ULONG WINAPI localizedstrings_Release(IDWriteLocalizedStrings *iface)
     ULONG refcount = InterlockedDecrement(&strings->refcount);
     size_t i;
 
-    TRACE("%p, refcount %d.\n", iface, refcount);
+    TRACE("%p, refcount %ld.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -715,7 +715,7 @@ static IDWriteFontCollection1 *factory_get_system_collection(struct dwritefactor
 
     if (FAILED(hr = get_system_fontcollection(&factory->IDWriteFactory7_iface, &collection)))
     {
-        WARN("Failed to create system font collection, hr %#x.\n", hr);
+        WARN("Failed to create system font collection, hr %#lx.\n", hr);
         return NULL;
     }
 
@@ -754,7 +754,7 @@ static ULONG WINAPI dwritefactory_AddRef(IDWriteFactory7 *iface)
     struct dwritefactory *factory = impl_from_IDWriteFactory7(iface);
     ULONG refcount = InterlockedIncrement(&factory->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -764,7 +764,7 @@ static ULONG WINAPI dwritefactory_Release(IDWriteFactory7 *iface)
     struct dwritefactory *factory = impl_from_IDWriteFactory7(iface);
     ULONG refcount = InterlockedDecrement(&factory->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
         release_dwritefactory(factory);
@@ -968,7 +968,7 @@ HRESULT factory_get_cached_fontface(IDWriteFactory7 *iface, IDWriteFontFile * co
         if (cached_key_size == key_size && !memcmp(cached_key, key, key_size))
         {
             if (FAILED(hr = IDWriteFontFace5_QueryInterface(cached->fontface, riid, obj)))
-                WARN("Failed to get %s from fontface, hr %#x.\n", debugstr_guid(riid), hr);
+                WARN("Failed to get %s from fontface, hr %#lx.\n", debugstr_guid(riid), hr);
 
             TRACE("returning cached fontface %p\n", cached->fontface);
             break;
@@ -1335,7 +1335,7 @@ static HRESULT WINAPI dwritefactory1_GetEudcFontCollection(IDWriteFactory7 *ifac
         if (FAILED(hr = get_eudc_fontcollection(iface, &eudc_collection)))
         {
             *collection = NULL;
-            WARN("Failed to get EUDC collection, hr %#x.\n", hr);
+            WARN("Failed to get EUDC collection, hr %#lx.\n", hr);
             return hr;
         }
 
@@ -1634,7 +1634,7 @@ static HRESULT create_system_fontset(IDWriteFactory7 *factory, REFIID riid, void
             if (i != j && !wcsicmp(paths[i], paths[j])) continue;
 
             if (FAILED(hr = IDWriteFontSetBuilder2_AddFontFile(builder, paths[i])) && hr != DWRITE_E_FILEFORMAT)
-                WARN("Failed to add font file, hr %#x, path %s.\n", hr, debugstr_w(paths[i]));
+                WARN("Failed to add font file, hr %#lx, path %s.\n", hr, debugstr_w(paths[i]));
 
             j = i;
         }

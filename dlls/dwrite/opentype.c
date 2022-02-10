@@ -1777,7 +1777,7 @@ void dwrite_cmap_init(struct dwrite_cmap *cmap, IDWriteFontFile *file, unsigned 
     /* For fontface stream is already available and preset. */
     if (!cmap->stream && FAILED(hr = get_filestream_from_file(file, &cmap->stream)))
     {
-        WARN("Failed to get file stream, hr %#x.\n", hr);
+        WARN("Failed to get file stream, hr %#lx.\n", hr);
         goto failed;
     }
 
@@ -2274,7 +2274,7 @@ static void get_name_record_locale(enum OPENTYPE_PLATFORM_ID platform, USHORT la
     case OPENTYPE_PLATFORM_WIN:
         if (!LCIDToLocaleName(MAKELCID(lang_id, SORT_DEFAULT), locale, locale_len, 0))
         {
-            FIXME("failed to get locale name for lcid=0x%08x\n", MAKELCID(lang_id, SORT_DEFAULT));
+            FIXME("failed to get locale name for lcid=0x%08lx\n", MAKELCID(lang_id, SORT_DEFAULT));
             wcscpy(locale, L"en-US");
         }
         break;
@@ -2488,7 +2488,7 @@ static HRESULT opentype_get_font_strings_from_meta(const struct file_stream_desc
         version = table_read_be_dword(&meta, 0);
         if (version != 1)
         {
-            WARN("Unexpected meta table version %d.\n", version);
+            WARN("Unexpected meta table version %ld.\n", version);
             goto end;
         }
 

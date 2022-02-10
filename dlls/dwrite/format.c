@@ -239,7 +239,7 @@ static ULONG WINAPI dwritetextformat_AddRef(IDWriteTextFormat3 *iface)
     struct dwrite_textformat *format = impl_from_IDWriteTextFormat3(iface);
     ULONG refcount = InterlockedIncrement(&format->refcount);
 
-    TRACE("%p, refcount %d.\n", iface, refcount);
+    TRACE("%p, refcount %ld.\n", iface, refcount);
 
     return refcount;
 }
@@ -249,7 +249,7 @@ static ULONG WINAPI dwritetextformat_Release(IDWriteTextFormat3 *iface)
     struct dwrite_textformat *format = impl_from_IDWriteTextFormat3(iface);
     ULONG refcount = InterlockedDecrement(&format->refcount);
 
-    TRACE("%p, refcount %d.\n", iface, refcount);
+    TRACE("%p, refcount %ld.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -772,7 +772,7 @@ static ULONG WINAPI dwritetrimmingsign_AddRef(IDWriteInlineObject *iface)
     struct dwrite_trimmingsign *sign = impl_from_IDWriteInlineObject(iface);
     ULONG refcount = InterlockedIncrement(&sign->refcount);
 
-    TRACE("%p, refcount %d.\n", iface, refcount);
+    TRACE("%p, refcount %ld.\n", iface, refcount);
 
     return refcount;
 }
@@ -782,7 +782,7 @@ static ULONG WINAPI dwritetrimmingsign_Release(IDWriteInlineObject *iface)
     struct dwrite_trimmingsign *sign = impl_from_IDWriteInlineObject(iface);
     ULONG refcount = InterlockedDecrement(&sign->refcount);
 
-    TRACE("%p, refcount %d.\n", iface, refcount);
+    TRACE("%p, refcount %ld.\n", iface, refcount);
 
     if (!refcount)
     {
