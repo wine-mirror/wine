@@ -548,7 +548,7 @@ static struct window_surface *create_surface( const BITMAPINFO *info )
     surface->bits               = (char *)info + surface->info_size;
     memcpy( &surface->info, info, surface->info_size );
 
-    TRACE( "created %p %ux%u for info %p bits %p\n",
+    TRACE( "created %p %lux%lu for info %p bits %p\n",
            surface, surface->header.rect.right, surface->header.rect.bottom, info, surface->bits );
     return &surface->header;
 }
@@ -2138,7 +2138,7 @@ void WINAPI PlayMetaFileRecord16( HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr, 
  */
 BOOL16 WINAPI SetDCHook16( HDC16 hdc16, FARPROC16 hookProc, DWORD dwHookData )
 {
-    FIXME( "%04x %p %x: not supported\n", hdc16, hookProc, dwHookData );
+    FIXME( "%04x %p %lx: not supported\n", hdc16, hookProc, dwHookData );
     return FALSE;
 }
 
@@ -2204,7 +2204,7 @@ UINT16 WINAPI GetBoundsRect16( HDC16 hdc, LPRECT16 rect, UINT16 flags)
  */
 WORD WINAPI EngineEnumerateFont16(LPSTR fontname, FARPROC16 proc, DWORD data )
 {
-    FIXME("(%s,%p,%x),stub\n",fontname,proc,data);
+    FIXME("(%s,%p,%lx),stub\n",fontname,proc,data);
     return 0;
 }
 
@@ -2251,7 +2251,7 @@ WORD WINAPI EngineRealizeFont16(LPLOGFONT16 lplogFont, LPTEXTXFORM16 lptextxform
  */
 WORD WINAPI EngineRealizeFontExt16(LONG l1, LONG l2, LONG l3, LONG l4)
 {
-    FIXME("(%08x,%08x,%08x,%08x),stub\n",l1,l2,l3,l4);
+    FIXME("(%08lx,%08lx,%08lx,%08lx),stub\n",l1,l2,l3,l4);
 
     return 0;
 }
@@ -3668,7 +3668,7 @@ BOOL16 WINAPI SetLayout16( HDC16 hdc, DWORD layout )
  */
 BOOL16 WINAPI SetSolidBrush16(HBRUSH16 hBrush, COLORREF newColor )
 {
-    FIXME( "%04x %08x no longer supported\n", hBrush, newColor );
+    FIXME( "%04x %08lx no longer supported\n", hBrush, newColor );
     return FALSE;
 }
 
