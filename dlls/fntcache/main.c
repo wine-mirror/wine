@@ -50,7 +50,7 @@ static DWORD WINAPI service_handler( DWORD ctrl, DWORD event_type, void *event_d
         SetEvent( stop_event );
         return NO_ERROR;
     default:
-        FIXME( "got service ctrl %x\n", ctrl );
+        FIXME( "got service ctrl %lx\n", ctrl );
         status.dwCurrentState = SERVICE_RUNNING;
         SetServiceStatus( service_handle, &status );
         return NO_ERROR;
