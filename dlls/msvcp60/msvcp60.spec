@@ -945,8 +945,8 @@
 @ cdecl -arch=win64 ??1?$basic_ios@GU?$char_traits@G@std@@@std@@UEAA@XZ(ptr) basic_ios_wchar_dtor
 @ thiscall -arch=win32 ??1?$basic_iostream@DU?$char_traits@D@std@@@std@@UAE@XZ(ptr) basic_iostream_char_dtor
 @ cdecl -arch=win64 ??1?$basic_iostream@DU?$char_traits@D@std@@@std@@UEAA@XZ(ptr) basic_iostream_char_dtor
-@ thiscall -arch=win32 ??1?$basic_iostream@GU?$char_traits@G@std@@@std@@UAE@XZ(ptr) basic_iostream_wchar_dtor
-@ cdecl -arch=win64 ??1?$basic_iostream@GU?$char_traits@G@std@@@std@@UEAA@XZ(ptr) basic_iostream_wchar_dtor
+@ thiscall -arch=win32 ??1?$basic_iostream@GU?$char_traits@G@std@@@std@@UAE@XZ(ptr) basic_iostream_short_dtor
+@ cdecl -arch=win64 ??1?$basic_iostream@GU?$char_traits@G@std@@@std@@UEAA@XZ(ptr) basic_iostream_short_dtor
 @ thiscall -arch=win32 ??1?$basic_istream@DU?$char_traits@D@std@@@std@@UAE@XZ(ptr) basic_istream_char_dtor
 @ cdecl -arch=win64 ??1?$basic_istream@DU?$char_traits@D@std@@@std@@UEAA@XZ(ptr) basic_istream_char_dtor
 @ thiscall -arch=win32 ??1?$basic_istream@GU?$char_traits@G@std@@@std@@UAE@XZ(ptr) basic_istream_wchar_dtor
@@ -1841,8 +1841,8 @@
 @ extern ??_8?$basic_ifstream@GU?$char_traits@G@std@@@std@@7B@ basic_ifstream_short_vbtable
 @ extern ??_8?$basic_iostream@DU?$char_traits@D@std@@@std@@7B?$basic_istream@DU?$char_traits@D@std@@@1@@ basic_iostream_char_vbtable1
 @ extern ??_8?$basic_iostream@DU?$char_traits@D@std@@@std@@7B?$basic_ostream@DU?$char_traits@D@std@@@1@@ basic_iostream_char_vbtable2
-@ extern ??_8?$basic_iostream@GU?$char_traits@G@std@@@std@@7B?$basic_istream@GU?$char_traits@G@std@@@1@@ basic_iostream_wchar_vbtable1
-@ extern ??_8?$basic_iostream@GU?$char_traits@G@std@@@std@@7B?$basic_ostream@GU?$char_traits@G@std@@@1@@ basic_iostream_wchar_vbtable2
+@ extern ??_8?$basic_iostream@GU?$char_traits@G@std@@@std@@7B?$basic_istream@GU?$char_traits@G@std@@@1@@ basic_iostream_short_vbtable1
+@ extern ??_8?$basic_iostream@GU?$char_traits@G@std@@@std@@7B?$basic_ostream@GU?$char_traits@G@std@@@1@@ basic_iostream_short_vbtable2
 @ extern ??_8?$basic_istream@DU?$char_traits@D@std@@@std@@7B@ basic_istream_char_vbtable
 @ extern ??_8?$basic_istream@GU?$char_traits@G@std@@@std@@7B@ basic_istream_short_vbtable
 @ extern ??_8?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@7B@ basic_istringstream_char_vbtable
@@ -1867,8 +1867,8 @@
 @ cdecl -arch=win64 ??_D?$basic_ifstream@GU?$char_traits@G@std@@@std@@QEAAXXZ(ptr) basic_ifstream_short_vbase_dtor
 @ thiscall -arch=win32 ??_D?$basic_iostream@DU?$char_traits@D@std@@@std@@QAEXXZ(ptr) basic_iostream_char_vbase_dtor
 @ cdecl -arch=win64 ??_D?$basic_iostream@DU?$char_traits@D@std@@@std@@QEAAXXZ(ptr) basic_iostream_char_vbase_dtor
-@ thiscall -arch=win32 ??_D?$basic_iostream@GU?$char_traits@G@std@@@std@@QAEXXZ(ptr) basic_iostream_wchar_vbase_dtor
-@ cdecl -arch=win64 ??_D?$basic_iostream@GU?$char_traits@G@std@@@std@@QEAAXXZ(ptr) basic_iostream_wchar_vbase_dtor
+@ thiscall -arch=win32 ??_D?$basic_iostream@GU?$char_traits@G@std@@@std@@QAEXXZ(ptr) basic_iostream_short_vbase_dtor
+@ cdecl -arch=win64 ??_D?$basic_iostream@GU?$char_traits@G@std@@@std@@QEAAXXZ(ptr) basic_iostream_short_vbase_dtor
 @ thiscall -arch=win32 ??_D?$basic_istream@DU?$char_traits@D@std@@@std@@QAEXXZ(ptr) basic_istream_char_vbase_dtor
 @ cdecl -arch=win64 ??_D?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAXXZ(ptr) basic_istream_char_vbase_dtor
 @ thiscall -arch=win32 ??_D?$basic_istream@GU?$char_traits@G@std@@@std@@QAEXXZ(ptr) basic_istream_wchar_vbase_dtor
