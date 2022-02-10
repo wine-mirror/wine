@@ -84,7 +84,7 @@ static ULONG WINAPI IAssemblyEnumImpl_AddRef(IAssemblyEnum *iface)
     IAssemblyEnumImpl *This = impl_from_IAssemblyEnum(iface);
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(ref before = %u)\n", This, refCount - 1);
+    TRACE("(%p)->(ref before = %lu)\n", This, refCount - 1);
 
     return refCount;
 }
@@ -95,7 +95,7 @@ static ULONG WINAPI IAssemblyEnumImpl_Release(IAssemblyEnum *iface)
     ULONG refCount = InterlockedDecrement(&This->ref);
     struct list *item, *cursor;
 
-    TRACE("(%p)->(ref before = %u)\n", This, refCount + 1);
+    TRACE("(%p)->(ref before = %lu)\n", This, refCount + 1);
 
     if (!refCount)
     {
@@ -122,7 +122,7 @@ static HRESULT WINAPI IAssemblyEnumImpl_GetNextAssembly(IAssemblyEnum *iface,
     IAssemblyEnumImpl *asmenum = impl_from_IAssemblyEnum(iface);
     ASMNAME *asmname;
 
-    TRACE("(%p, %p, %p, %d)\n", iface, pvReserved, ppName, dwFlags);
+    TRACE("(%p, %p, %p, %ld)\n", iface, pvReserved, ppName, dwFlags);
 
     if (!ppName)
         return E_INVALIDARG;
@@ -466,7 +466,7 @@ HRESULT WINAPI CreateAssemblyEnum(IAssemblyEnum **pEnum, IUnknown *pUnkReserved,
     IAssemblyEnumImpl *asmenum;
     HRESULT hr;
 
-    TRACE("(%p, %p, %p, %08x, %p)\n", pEnum, pUnkReserved,
+    TRACE("(%p, %p, %p, %08lx, %p)\n", pEnum, pUnkReserved,
           pName, dwFlags, pvReserved);
 
     if (!pEnum)

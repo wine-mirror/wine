@@ -66,7 +66,7 @@ HRESULT WINAPI CreateInstallReferenceEnum(IInstallReferenceEnum **ppRefEnum,
                                           IAssemblyName *pName, DWORD dwFlags,
                                           LPVOID pvReserved)
 {
-    FIXME("(%p, %p, %08x, %p) stub!\n", ppRefEnum, pName, dwFlags, pvReserved);
+    FIXME("(%p, %p, %08lx, %p) stub!\n", ppRefEnum, pName, dwFlags, pvReserved);
     return E_NOTIMPL;
 }
 

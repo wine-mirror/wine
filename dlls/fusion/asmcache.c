@@ -182,7 +182,7 @@ static ULONG WINAPI IAssemblyCacheImpl_AddRef(IAssemblyCache *iface)
     IAssemblyCacheImpl *This = impl_from_IAssemblyCache(iface);
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(ref before = %u)\n", This, refCount - 1);
+    TRACE("(%p)->(ref before = %lu)\n", This, refCount - 1);
 
     return refCount;
 }
@@ -192,7 +192,7 @@ static ULONG WINAPI IAssemblyCacheImpl_Release(IAssemblyCache *iface)
     IAssemblyCacheImpl *cache = impl_from_IAssemblyCache(iface);
     ULONG refCount = InterlockedDecrement( &cache->ref );
 
-    TRACE("(%p)->(ref before = %u)\n", cache, refCount + 1);
+    TRACE("(%p)->(ref before = %lu)\n", cache, refCount + 1);
 
     if (!refCount)
     {
@@ -226,7 +226,7 @@ static HRESULT WINAPI IAssemblyCacheImpl_UninstallAssembly(IAssemblyCache *iface
     ULONG disp;
     DWORD len;
 
-    TRACE("(%p, 0%08x, %s, %p, %p)\n", iface, dwFlags,
+    TRACE("(%p, 0%08lx, %s, %p, %p)\n", iface, dwFlags,
           debugstr_w(pszAssemblyName), pRefData, pulDisposition);
 
     if (pRefData)
@@ -305,7 +305,7 @@ static HRESULT WINAPI IAssemblyCacheImpl_QueryAssemblyInfo(IAssemblyCache *iface
     IAssemblyEnum *asmenum = NULL;
     HRESULT hr;
 
-    TRACE("(%p, %d, %s, %p)\n", iface, dwFlags,
+    TRACE("(%p, %ld, %s, %p)\n", iface, dwFlags,
           debugstr_w(pszAssemblyName), pAsmInfo);
 
     if (pAsmInfo)
@@ -364,7 +364,7 @@ static HRESULT WINAPI IAssemblyCacheImpl_CreateAssemblyCacheItem(IAssemblyCache 
 {
     IAssemblyCacheItemImpl *item;
 
-    FIXME("(%p, %d, %p, %p, %s) semi-stub!\n", iface, dwFlags, pvReserved,
+    FIXME("(%p, %ld, %p, %p, %s) semi-stub!\n", iface, dwFlags, pvReserved,
           ppAsmItem, debugstr_w(pszAssemblyName));
 
     if (!ppAsmItem)
@@ -435,7 +435,7 @@ static HRESULT WINAPI IAssemblyCacheImpl_InstallAssembly(IAssemblyCache *iface,
     DWORD i, count = 0, src_len, dst_len = ARRAY_SIZE(format_v40);
     HRESULT hr;
 
-    TRACE("(%p, %d, %s, %p)\n", iface, dwFlags,
+    TRACE("(%p, %ld, %s, %p)\n", iface, dwFlags,
           debugstr_w(pszManifestFilePath), pRefData);
 
     if (!pszManifestFilePath || !*pszManifestFilePath)
@@ -553,7 +553,7 @@ HRESULT WINAPI CreateAssemblyCache(IAssemblyCache **ppAsmCache, DWORD dwReserved
 {
     IAssemblyCacheImpl *cache;
 
-    TRACE("(%p, %d)\n", ppAsmCache, dwReserved);
+    TRACE("(%p, %ld)\n", ppAsmCache, dwReserved);
 
     if (!ppAsmCache)
         return E_INVALIDARG;
@@ -607,7 +607,7 @@ static ULONG WINAPI IAssemblyCacheItemImpl_AddRef(IAssemblyCacheItem *iface)
     IAssemblyCacheItemImpl *This = impl_from_IAssemblyCacheItem(iface);
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(ref before = %u)\n", This, refCount - 1);
+    TRACE("(%p)->(ref before = %lu)\n", This, refCount - 1);
 
     return refCount;
 }
@@ -617,7 +617,7 @@ static ULONG WINAPI IAssemblyCacheItemImpl_Release(IAssemblyCacheItem *iface)
     IAssemblyCacheItemImpl *This = impl_from_IAssemblyCacheItem(iface);
     ULONG refCount = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(ref before = %u)\n", This, refCount + 1);
+    TRACE("(%p)->(ref before = %lu)\n", This, refCount + 1);
 
     if (!refCount)
         heap_free(This);
@@ -633,7 +633,7 @@ static HRESULT WINAPI IAssemblyCacheItemImpl_CreateStream(IAssemblyCacheItem *if
                                                         IStream **ppIStream,
                                                         ULARGE_INTEGER *puliMaxSize)
 {
-    FIXME("(%p, %d, %s, %d, %d, %p, %p) stub!\n", iface, dwFlags,
+    FIXME("(%p, %ld, %s, %ld, %ld, %p, %p) stub!\n", iface, dwFlags,
           debugstr_w(pszStreamName), dwFormat, dwFormatFlags, ppIStream, puliMaxSize);
 
     return E_NOTIMPL;
@@ -643,7 +643,7 @@ static HRESULT WINAPI IAssemblyCacheItemImpl_Commit(IAssemblyCacheItem *iface,
                                                   DWORD dwFlags,
                                                   ULONG *pulDisposition)
 {
-    FIXME("(%p, %d, %p) stub!\n", iface, dwFlags, pulDisposition);
+    FIXME("(%p, %ld, %p) stub!\n", iface, dwFlags, pulDisposition);
     return E_NOTIMPL;
 }
 

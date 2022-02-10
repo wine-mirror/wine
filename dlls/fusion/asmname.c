@@ -100,7 +100,7 @@ static ULONG WINAPI IAssemblyNameImpl_AddRef(IAssemblyName *iface)
     IAssemblyNameImpl *This = impl_from_IAssemblyName(iface);
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(ref before = %u)\n", This, refCount - 1);
+    TRACE("(%p)->(ref before = %lu)\n", This, refCount - 1);
 
     return refCount;
 }
@@ -110,7 +110,7 @@ static ULONG WINAPI IAssemblyNameImpl_Release(IAssemblyName *iface)
     IAssemblyNameImpl *This = impl_from_IAssemblyName(iface);
     ULONG refCount = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(ref before = %u)\n", This, refCount + 1);
+    TRACE("(%p)->(ref before = %lu)\n", This, refCount + 1);
 
     if (!refCount)
     {
@@ -130,7 +130,7 @@ static HRESULT WINAPI IAssemblyNameImpl_SetProperty(IAssemblyName *iface,
                                                     LPVOID pvProperty,
                                                     DWORD cbProperty)
 {
-    FIXME("(%p, %d, %p, %d) stub!\n", iface, PropertyId, pvProperty, cbProperty);
+    FIXME("(%p, %ld, %p, %ld) stub!\n", iface, PropertyId, pvProperty, cbProperty);
     return E_NOTIMPL;
 }
 
@@ -142,7 +142,7 @@ static HRESULT WINAPI IAssemblyNameImpl_GetProperty(IAssemblyName *iface,
     IAssemblyNameImpl *name = impl_from_IAssemblyName(iface);
     DWORD size;
 
-    TRACE("(%p, %d, %p, %p)\n", iface, PropertyId, pvProperty, pcbProperty);
+    TRACE("(%p, %ld, %p, %p)\n", iface, PropertyId, pvProperty, pcbProperty);
 
     size = *pcbProperty;
     switch (PropertyId)
@@ -268,7 +268,7 @@ static HRESULT WINAPI IAssemblyNameImpl_GetDisplayName(IAssemblyName *iface,
     WCHAR verstr[30], *cultureval = NULL;
     DWORD size;
 
-    TRACE("(%p, %p, %p, %d)\n", iface, szDisplayName,
+    TRACE("(%p, %p, %p, %ld)\n", iface, szDisplayName,
           pccDisplayName, dwDisplayFlags);
 
     if (dwDisplayFlags == 0)
@@ -398,7 +398,7 @@ static HRESULT WINAPI IAssemblyNameImpl_Reserved(IAssemblyName *iface,
                                                  DWORD cbReserved,
                                                  LPVOID *ppReserved)
 {
-    TRACE("(%p, %s, %p, %p, %s, %s, %p, %d, %p)\n", iface,
+    TRACE("(%p, %s, %p, %p, %s, %s, %p, %ld, %p)\n", iface,
           debugstr_guid(refIID), pUnkReserved1, pUnkReserved2,
           debugstr_w(szReserved), wine_dbgstr_longlong(llReserved),
           pvReserved, cbReserved, ppReserved);
@@ -459,7 +459,7 @@ static HRESULT WINAPI IAssemblyNameImpl_IsEqual(IAssemblyName *iface,
     IAssemblyNameImpl *name1 = impl_from_IAssemblyName(iface);
     IAssemblyNameImpl *name2 = impl_from_IAssemblyName(pName);
 
-    TRACE("(%p, %p, 0x%08x)\n", iface, pName, flags);
+    TRACE("(%p, %p, 0x%08lx)\n", iface, pName, flags);
 
     if (!pName) return S_FALSE;
     if (flags & ~ASM_CMPF_IL_ALL) FIXME("unsupported flags\n");
@@ -798,7 +798,7 @@ HRESULT WINAPI CreateAssemblyNameObject(IAssemblyName **ppAssemblyNameObj,
     IAssemblyNameImpl *name;
     HRESULT hr;
 
-    TRACE("(%p, %s, %08x, %p)\n", ppAssemblyNameObj,
+    TRACE("(%p, %s, %08lx, %p)\n", ppAssemblyNameObj,
           debugstr_w(szAssemblyName), dwFlags, pvReserved);
 
     if (!ppAssemblyNameObj)
