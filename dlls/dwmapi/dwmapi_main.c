@@ -115,7 +115,7 @@ HRESULT WINAPI DwmSetWindowAttribute(HWND hwnd, DWORD attributenum, LPCVOID attr
 {
     static BOOL once;
 
-    if (!once++) FIXME("(%p, %x, %p, %x) stub\n", hwnd, attributenum, attribute, size);
+    if (!once++) FIXME("(%p, %lx, %p, %lx) stub\n", hwnd, attributenum, attribute, size);
 
     return S_OK;
 }
@@ -197,7 +197,7 @@ BOOL WINAPI DwmDefWindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, 
  */
 HRESULT WINAPI DwmGetWindowAttribute(HWND hwnd, DWORD attribute, PVOID pv_attribute, DWORD size)
 {
-    FIXME("(%p %d %p %d) stub\n", hwnd, attribute, pv_attribute, size);
+    FIXME("(%p %ld %p %ld) stub\n", hwnd, attribute, pv_attribute, size);
 
     return E_NOTIMPL;
 }
@@ -265,7 +265,7 @@ HRESULT WINAPI DwmSetPresentParameters(HWND hwnd, DWM_PRESENT_PARAMETERS *params
  */
 HRESULT WINAPI DwmSetIconicLivePreviewBitmap(HWND hwnd, HBITMAP hbmp, POINT *pos, DWORD flags)
 {
-    FIXME("(%p %p %p %x) stub\n", hwnd, hbmp, pos, flags);
+    FIXME("(%p %p %p %lx) stub\n", hwnd, hbmp, pos, flags);
     return S_OK;
 };
 
@@ -274,7 +274,7 @@ HRESULT WINAPI DwmSetIconicLivePreviewBitmap(HWND hwnd, HBITMAP hbmp, POINT *pos
  */
 HRESULT WINAPI DwmSetIconicThumbnail(HWND hwnd, HBITMAP hbmp, DWORD flags)
 {
-    FIXME("(%p %p %x) stub\n", hwnd, hbmp, flags);
+    FIXME("(%p %p %lx) stub\n", hwnd, hbmp, flags);
     return S_OK;
 };
 
