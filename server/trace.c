@@ -2907,12 +2907,11 @@ static void dump_set_window_info_request( const struct set_window_info_request *
     fprintf( stderr, ", handle=%08x", req->handle );
     fprintf( stderr, ", style=%08x", req->style );
     fprintf( stderr, ", ex_style=%08x", req->ex_style );
-    fprintf( stderr, ", id=%08x", req->id );
+    fprintf( stderr, ", extra_size=%u", req->extra_size );
     dump_uint64( ", instance=", &req->instance );
     dump_uint64( ", user_data=", &req->user_data );
-    fprintf( stderr, ", extra_offset=%d", req->extra_offset );
-    fprintf( stderr, ", extra_size=%u", req->extra_size );
     dump_uint64( ", extra_value=", &req->extra_value );
+    fprintf( stderr, ", extra_offset=%d", req->extra_offset );
 }
 
 static void dump_set_window_info_reply( const struct set_window_info_reply *req )
@@ -2922,7 +2921,7 @@ static void dump_set_window_info_reply( const struct set_window_info_reply *req 
     dump_uint64( ", old_instance=", &req->old_instance );
     dump_uint64( ", old_user_data=", &req->old_user_data );
     dump_uint64( ", old_extra_value=", &req->old_extra_value );
-    fprintf( stderr, ", old_id=%08x", req->old_id );
+    dump_uint64( ", old_id=", &req->old_id );
 }
 
 static void dump_set_parent_request( const struct set_parent_request *req )

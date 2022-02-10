@@ -74,7 +74,7 @@ struct window
     struct region   *update_region;   /* update region (relative to window rect) */
     unsigned int     style;           /* window style */
     unsigned int     ex_style;        /* window extended style */
-    unsigned int     id;              /* window id */
+    lparam_t         id;              /* window id */
     mod_handle_t     instance;        /* creator instance */
     unsigned int     is_unicode : 1;  /* ANSI or unicode */
     unsigned int     is_linked : 1;   /* is it linked into the parent z-order list? */
@@ -2245,7 +2245,7 @@ DECL_HANDLER(set_window_info)
         else win->ex_style = (req->ex_style & ~WS_EX_TOPMOST) | (win->ex_style & WS_EX_TOPMOST);
         if (!(win->ex_style & WS_EX_LAYERED)) win->is_layered = 0;
     }
-    if (req->flags & SET_WIN_ID) win->id = req->id;
+    if (req->flags & SET_WIN_ID) win->id = req->extra_value;
     if (req->flags & SET_WIN_INSTANCE) win->instance = req->instance;
     if (req->flags & SET_WIN_UNICODE) win->is_unicode = req->is_unicode;
     if (req->flags & SET_WIN_USERDATA) win->user_data = req->user_data;

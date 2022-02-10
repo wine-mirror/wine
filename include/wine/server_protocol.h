@@ -3112,12 +3112,12 @@ struct set_window_info_request
     user_handle_t  handle;
     unsigned int   style;
     unsigned int   ex_style;
-    unsigned int   id;
+    data_size_t    extra_size;
     mod_handle_t   instance;
     lparam_t       user_data;
-    int            extra_offset;
-    data_size_t    extra_size;
     lparam_t       extra_value;
+    int            extra_offset;
+    char __pad_60[4];
 };
 struct set_window_info_reply
 {
@@ -3127,8 +3127,7 @@ struct set_window_info_reply
     mod_handle_t   old_instance;
     lparam_t       old_user_data;
     lparam_t       old_extra_value;
-    unsigned int   old_id;
-    char __pad_44[4];
+    lparam_t       old_id;
 };
 #define SET_WIN_STYLE     0x01
 #define SET_WIN_EXSTYLE   0x02
@@ -6263,7 +6262,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 742
+#define SERVER_PROTOCOL_VERSION 743
 
 /* ### protocol_version end ### */
 

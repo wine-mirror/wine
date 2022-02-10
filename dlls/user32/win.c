@@ -2715,7 +2715,7 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
             break;
         case GWLP_ID:
             req->flags = SET_WIN_ID;
-            req->id = newval;
+            req->extra_value = newval;
             break;
         case GWLP_HINSTANCE:
             req->flags = SET_WIN_INSTANCE;
