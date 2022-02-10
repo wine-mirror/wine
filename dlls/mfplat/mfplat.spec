@@ -71,7 +71,7 @@
 @ stdcall MFCreateStreamDescriptor(long long ptr ptr)
 @ stdcall MFCreateSystemTimeSource(ptr)
 @ stub MFCreateSystemUnderlyingClock
-@ stub MFCreateTempFile
+@ stdcall MFCreateTempFile(long long long ptr)
 @ stdcall MFCreateTrackedSample(ptr)
 @ stdcall MFCreateTransformActivate(ptr)
 @ stub MFCreateURLFromPath

@@ -52,6 +52,9 @@
 #include "initguid.h"
 #include "mfd3d12.h"
 
+#include "bcrypt.h"
+#include "pathcch.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
 struct local_handler
@@ -4576,11 +4579,8 @@ static const IMFGetServiceVtbl bytestream_file_getservice_vtbl =
     bytestream_file_getservice_GetService,
 };
 
-/***********************************************************************
- *      MFCreateFile (mfplat.@)
- */
-HRESULT WINAPI MFCreateFile(MF_FILE_ACCESSMODE accessmode, MF_FILE_OPENMODE openmode, MF_FILE_FLAGS flags,
-                            LPCWSTR url, IMFByteStream **bytestream)
+static HRESULT create_file_bytestream(MF_FILE_ACCESSMODE accessmode, MF_FILE_OPENMODE openmode, MF_FILE_FLAGS flags,
+        const WCHAR *path, BOOL is_tempfile, IMFByteStream **bytestream)
 {
     DWORD capabilities = MFBYTESTREAM_IS_SEEKABLE | MFBYTESTREAM_DOES_NOT_USE_NETWORK;
     DWORD filecreation_disposition = 0, fileaccessmode = 0, fileattributes = 0;
@@ -4589,8 +4589,6 @@ HRESULT WINAPI MFCreateFile(MF_FILE_ACCESSMODE accessmode, MF_FILE_OPENMODE open
     FILETIME writetime;
     HANDLE file;
     HRESULT hr;
-
-    TRACE("%d, %d, %#x, %s, %p.\n", accessmode, openmode, flags, debugstr_w(url), bytestream);
 
     switch (accessmode)
     {
@@ -4630,12 +4628,12 @@ HRESULT WINAPI MFCreateFile(MF_FILE_ACCESSMODE accessmode, MF_FILE_OPENMODE open
 
     if (flags & MF_FILEFLAGS_NOBUFFERING)
         fileattributes |= FILE_FLAG_NO_BUFFERING;
+    if (is_tempfile)
+        fileattributes |= FILE_FLAG_DELETE_ON_CLOSE;
 
     /* Open HANDLE to file */
-    file = CreateFileW(url, fileaccessmode, filesharemode, NULL,
-                       filecreation_disposition, fileattributes, 0);
-
-    if(file == INVALID_HANDLE_VALUE)
+    file = CreateFileW(path, fileaccessmode, filesharemode, NULL, filecreation_disposition, fileattributes, 0);
+    if (file == INVALID_HANDLE_VALUE)
         return HRESULT_FROM_WIN32(GetLastError());
 
     if (!(object = calloc(1, sizeof(*object))))
@@ -4660,17 +4658,59 @@ HRESULT WINAPI MFCreateFile(MF_FILE_ACCESSMODE accessmode, MF_FILE_OPENMODE open
     object->capabilities = capabilities;
     object->hfile = file;
 
-    if (GetFileTime(file, NULL, NULL, &writetime))
+    if (!is_tempfile && GetFileTime(file, NULL, NULL, &writetime))
     {
         IMFAttributes_SetBlob(&object->attributes.IMFAttributes_iface, &MF_BYTESTREAM_LAST_MODIFIED_TIME,
                 (const UINT8 *)&writetime, sizeof(writetime));
     }
 
-    IMFAttributes_SetString(&object->attributes.IMFAttributes_iface, &MF_BYTESTREAM_ORIGIN_NAME, url);
+    IMFAttributes_SetString(&object->attributes.IMFAttributes_iface, &MF_BYTESTREAM_ORIGIN_NAME, path);
 
     *bytestream = &object->IMFByteStream_iface;
 
     return S_OK;
+}
+
+/***********************************************************************
+ *      MFCreateFile (mfplat.@)
+ */
+HRESULT WINAPI MFCreateFile(MF_FILE_ACCESSMODE accessmode, MF_FILE_OPENMODE openmode, MF_FILE_FLAGS flags,
+        const WCHAR *path, IMFByteStream **bytestream)
+{
+    TRACE("%d, %d, %#x, %s, %p.\n", accessmode, openmode, flags, debugstr_w(path), bytestream);
+
+    return create_file_bytestream(accessmode, openmode, flags, path, FALSE, bytestream);
+}
+
+/***********************************************************************
+ *      MFCreateTempFile (mfplat.@)
+ */
+HRESULT WINAPI MFCreateTempFile(MF_FILE_ACCESSMODE accessmode, MF_FILE_OPENMODE openmode, MF_FILE_FLAGS flags,
+        IMFByteStream **bytestream)
+{
+    WCHAR name[24], tmppath[MAX_PATH], *path;
+    ULONG64 rnd;
+    size_t len;
+    HRESULT hr;
+
+    TRACE("%d, %d, %#x, %p.\n", accessmode, openmode, flags, bytestream);
+
+    BCryptGenRandom(NULL, (UCHAR *)&rnd, sizeof(rnd), BCRYPT_USE_SYSTEM_PREFERRED_RNG);
+    swprintf(name, ARRAY_SIZE(name), L"MFP%llX.TMP", rnd);
+    GetTempPathW(ARRAY_SIZE(tmppath), tmppath);
+
+    len = wcslen(tmppath) + wcslen(name) + 2;
+    if (!(path = malloc(len * sizeof(*path))))
+        return E_OUTOFMEMORY;
+
+    wcscpy(path, tmppath);
+    PathCchAppend(path, len, name);
+
+    hr = create_file_bytestream(accessmode, openmode, flags, path, TRUE, bytestream);
+
+    free(path);
+
+    return hr;
 }
 
 struct bytestream_wrapper
