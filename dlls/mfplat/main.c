@@ -6159,39 +6159,14 @@ static HRESULT resolver_create_registered_handler(HKEY hkey, REFIID riid, void *
     return hr;
 }
 
-static HRESULT resolver_get_bytestream_handler(IMFByteStream *stream, const WCHAR *url, DWORD flags,
-        IMFByteStreamHandler **handler)
+static HRESULT resolver_create_bytestream_handler(IMFByteStream *stream, DWORD flags, const WCHAR *mime,
+        const WCHAR *extension, IMFByteStreamHandler **handler)
 {
     static const HKEY hkey_roots[2] = { HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE };
-    WCHAR *mimeW = NULL, *urlW = NULL;
-    IMFAttributes *attributes;
-    const WCHAR *url_ext;
     HRESULT hr = E_FAIL;
     unsigned int i, j;
-    UINT32 length;
 
     *handler = NULL;
-
-    /* MIME type */
-    if (SUCCEEDED(IMFByteStream_QueryInterface(stream, &IID_IMFAttributes, (void **)&attributes)))
-    {
-        IMFAttributes_GetAllocatedString(attributes, &MF_BYTESTREAM_CONTENT_TYPE, &mimeW, &length);
-        if (!url)
-        {
-            IMFAttributes_GetAllocatedString(attributes, &MF_BYTESTREAM_ORIGIN_NAME, &urlW, &length);
-            url = urlW;
-        }
-        IMFAttributes_Release(attributes);
-    }
-
-    /* Extension */
-    url_ext = url ? wcsrchr(url, '.') : NULL;
-
-    if (!url_ext && !mimeW)
-    {
-        CoTaskMemFree(urlW);
-        return MF_E_UNSUPPORTED_BYTESTREAM_TYPE;
-    }
 
     if (!(flags & MF_RESOLUTION_DISABLE_LOCAL_PLUGINS))
     {
@@ -6201,8 +6176,8 @@ static HRESULT resolver_get_bytestream_handler(IMFByteStream *stream, const WCHA
 
         LIST_FOR_EACH_ENTRY(local_handler, &local_bytestream_handlers, struct local_handler, entry)
         {
-            if ((mimeW && !lstrcmpiW(mimeW, local_handler->u.bytestream.mime))
-                    || (url_ext && !lstrcmpiW(url_ext, local_handler->u.bytestream.extension)))
+            if ((mime && !lstrcmpiW(mime, local_handler->u.bytestream.mime))
+                    || (extension && !lstrcmpiW(extension, local_handler->u.bytestream.extension)))
             {
                 if (SUCCEEDED(hr = IMFActivate_ActivateObject(local_handler->activate, &IID_IMFByteStreamHandler,
                         (void **)handler)))
@@ -6213,16 +6188,12 @@ static HRESULT resolver_get_bytestream_handler(IMFByteStream *stream, const WCHA
         LeaveCriticalSection(&local_handlers_section);
 
         if (*handler)
-        {
-            CoTaskMemFree(mimeW);
-            CoTaskMemFree(urlW);
             return hr;
-        }
     }
 
     for (i = 0, hr = E_FAIL; i < ARRAY_SIZE(hkey_roots); ++i)
     {
-        const WCHAR *namesW[2] = { mimeW, url_ext };
+        const WCHAR *namesW[2] = { mime, extension };
         HKEY hkey, hkey_handler;
 
         if (RegOpenKeyW(hkey_roots[i], L"Software\\Microsoft\\Windows Media Foundation\\ByteStreamHandlers", &hkey))
@@ -6249,14 +6220,161 @@ static HRESULT resolver_get_bytestream_handler(IMFByteStream *stream, const WCHA
             break;
     }
 
-    if (FAILED(hr))
+    return hr;
+}
+
+static HRESULT resolver_get_bytestream_url_hint(IMFByteStream *stream, WCHAR const **url)
+{
+    static const unsigned char asfmagic[]  = {0x30,0x26,0xb2,0x75,0x8e,0x66,0xcf,0x11,0xa6,0xd9,0x00,0xaa,0x00,0x62,0xce,0x6c};
+    static const unsigned char wavmagic[]  = { 'R', 'I', 'F', 'F',0x00,0x00,0x00,0x00, 'W', 'A', 'V', 'E', 'f', 'm', 't', ' '};
+    static const unsigned char wavmask[]   = {0xff,0xff,0xff,0xff,0x00,0x00,0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
+    static const unsigned char isommagic[] = {0x00,0x00,0x00,0x00, 'f', 't', 'y', 'p', 'i', 's', 'o', 'm',0x00,0x00,0x00,0x00};
+    static const unsigned char mp4_magic[] = {0x00,0x00,0x00,0x00, 'f', 't', 'y', 'p', 'M', 'S', 'N', 'V',0x00,0x00,0x00,0x00};
+    static const unsigned char mp42magic[] = {0x00,0x00,0x00,0x00, 'f', 't', 'y', 'p', 'm', 'p', '4', '2',0x00,0x00,0x00,0x00};
+    static const unsigned char mp4vmagic[] = {0x00,0x00,0x00,0x00, 'f', 't', 'y', 'p', 'M', '4', 'V', ' ',0x00,0x00,0x00,0x00};
+    static const unsigned char mp4mask[]   = {0x00,0x00,0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00,0x00,0x00,0x00};
+    static const struct stream_content_url_hint
     {
-        static const GUID CLSID_GStreamerByteStreamHandler = {0x317df618, 0x5e5a, 0x468a, {0x9f, 0x15, 0xd8, 0x27, 0xa9, 0xa0, 0x81, 0x62}};
-        hr = CoCreateInstance(&CLSID_GStreamerByteStreamHandler, NULL, CLSCTX_INPROC_SERVER, &IID_IMFByteStreamHandler, (void **)handler);
+        const unsigned char *magic;
+        const WCHAR *url;
+        const unsigned char *mask;
+    }
+    url_hints[] =
+    {
+        { asfmagic,  L".asf" },
+        { wavmagic,  L".wav", wavmask },
+        { isommagic, L".mp4", mp4mask },
+        { mp42magic, L".mp4", mp4mask },
+        { mp4_magic, L".mp4", mp4mask },
+        { mp4vmagic, L".m4v", mp4mask },
+    };
+    unsigned char buffer[4 * sizeof(unsigned int)], pattern[4 * sizeof(unsigned int)];
+    IMFAttributes *attributes;
+    DWORD length = 0, caps = 0;
+    unsigned int i, j;
+    QWORD position;
+    HRESULT hr;
+
+    *url = NULL;
+
+    if (SUCCEEDED(IMFByteStream_QueryInterface(stream, &IID_IMFAttributes, (void **)&attributes)))
+    {
+        UINT32 string_length = 0;
+        IMFAttributes_GetStringLength(attributes, &MF_BYTESTREAM_CONTENT_TYPE, &string_length);
+        IMFAttributes_Release(attributes);
+
+        if (string_length)
+            return S_OK;
+    }
+
+    if (FAILED(hr = IMFByteStream_GetCapabilities(stream, &caps)))
+        return hr;
+
+    if (!(caps & MFBYTESTREAM_IS_SEEKABLE))
+        return MF_E_UNSUPPORTED_BYTESTREAM_TYPE;
+
+    if (FAILED(hr = IMFByteStream_GetCurrentPosition(stream, &position)))
+        return hr;
+
+    hr = IMFByteStream_Read(stream, buffer, sizeof(buffer), &length);
+    IMFByteStream_SetCurrentPosition(stream, position);
+    if (FAILED(hr))
+        return hr;
+
+    if (length < sizeof(buffer))
+        return S_OK;
+
+    for (i = 0; i < ARRAY_SIZE(url_hints); ++i)
+    {
+        memcpy(pattern, buffer, sizeof(buffer));
+        if (url_hints[i].mask)
+        {
+            unsigned int *mask = (unsigned int *)url_hints[i].mask;
+            unsigned int *data = (unsigned int *)pattern;
+
+            for (j = 0; j < sizeof(buffer) / sizeof(unsigned int); ++j)
+                data[j] &= mask[j];
+
+        }
+        if (!memcmp(pattern, url_hints[i].magic, sizeof(pattern)))
+        {
+            *url = url_hints[i].url;
+            break;
+        }
+    }
+
+    if (*url)
+        TRACE("Content type guessed as %s from %s.\n", debugstr_w(*url), debugstr_an((char *)buffer, length));
+    else
+        WARN("Unrecognized content type %s.\n", debugstr_an((char *)buffer, length));
+
+    return S_OK;
+}
+
+static HRESULT resolver_create_gstreamer_handler(IMFByteStreamHandler **handler)
+{
+    static const GUID CLSID_GStreamerByteStreamHandler = {0x317df618, 0x5e5a, 0x468a, {0x9f, 0x15, 0xd8, 0x27, 0xa9, 0xa0, 0x81, 0x62}};
+    return CoCreateInstance(&CLSID_GStreamerByteStreamHandler, NULL, CLSCTX_INPROC_SERVER, &IID_IMFByteStreamHandler, (void **)handler);
+}
+
+static HRESULT resolver_get_bytestream_handler(IMFByteStream *stream, const WCHAR *url, DWORD flags,
+        IMFByteStreamHandler **handler)
+{
+    WCHAR *mimeW = NULL, *urlW = NULL;
+    IMFAttributes *attributes;
+    const WCHAR *url_ext;
+    HRESULT hr = E_FAIL;
+    UINT32 length;
+
+    *handler = NULL;
+
+    /* MIME type */
+    if (SUCCEEDED(IMFByteStream_QueryInterface(stream, &IID_IMFAttributes, (void **)&attributes)))
+    {
+        IMFAttributes_GetAllocatedString(attributes, &MF_BYTESTREAM_CONTENT_TYPE, &mimeW, &length);
+        if (!url)
+        {
+            IMFAttributes_GetAllocatedString(attributes, &MF_BYTESTREAM_ORIGIN_NAME, &urlW, &length);
+            url = urlW;
+        }
+        IMFAttributes_Release(attributes);
+    }
+
+    /* Extension */
+    url_ext = url ? wcsrchr(url, '.') : NULL;
+
+    /* If content type was provided by the caller, it's tried first. Otherwise an attempt to deduce
+       content type from the content itself is made.
+
+       TODO: wine specific fallback to predefined handler could be replaced by normally registering
+       this handler for all possible types.
+     */
+
+    if (url_ext || mimeW)
+    {
+        hr = resolver_create_bytestream_handler(stream, flags, mimeW, url_ext, handler);
+
+        if (FAILED(hr))
+            hr = resolver_create_gstreamer_handler(handler);
     }
 
     CoTaskMemFree(mimeW);
     CoTaskMemFree(urlW);
+
+    if (SUCCEEDED(hr))
+        return hr;
+
+    if (!(flags & MF_RESOLUTION_CONTENT_DOES_NOT_HAVE_TO_MATCH_EXTENSION_OR_MIME_TYPE))
+        return MF_E_UNSUPPORTED_BYTESTREAM_TYPE;
+
+    if (FAILED(hr = resolver_get_bytestream_url_hint(stream, &url_ext)))
+        return hr;
+
+    hr = resolver_create_bytestream_handler(stream, flags, NULL, url_ext, handler);
+
+    if (FAILED(hr))
+        hr = resolver_create_gstreamer_handler(handler);
+
     return hr;
 }
 
