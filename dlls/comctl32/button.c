@@ -396,7 +396,7 @@ static int get_draw_state(const BUTTON_INFO *infoPtr)
     static const int pushlike_cb_states[3][DRAW_STATE_COUNT] =
     {
         { PBS_NORMAL, PBS_DISABLED, PBS_HOT, PBS_PRESSED, PBS_NORMAL },
-        { PBS_PRESSED, PBS_PRESSED, PBS_HOT, PBS_PRESSED, PBS_PRESSED },
+        { PBS_PRESSED, PBS_PRESSED, PBS_PRESSED, PBS_PRESSED, PBS_PRESSED },
         { PBS_NORMAL, PBS_DISABLED, PBS_HOT, PBS_PRESSED, PBS_NORMAL }
     };
     static const int rb_states[2][DRAW_STATE_COUNT] =
@@ -407,7 +407,7 @@ static int get_draw_state(const BUTTON_INFO *infoPtr)
     static const int pushlike_rb_states[2][DRAW_STATE_COUNT] =
     {
         { PBS_NORMAL, PBS_DISABLED, PBS_HOT, PBS_PRESSED, PBS_NORMAL },
-        { PBS_PRESSED, PBS_PRESSED, PBS_HOT, PBS_PRESSED, PBS_PRESSED }
+        { PBS_PRESSED, PBS_PRESSED, PBS_PRESSED, PBS_PRESSED, PBS_PRESSED }
     };
     static const int gb_states[DRAW_STATE_COUNT] = { GBS_NORMAL, GBS_DISABLED, GBS_NORMAL, GBS_NORMAL, GBS_NORMAL };
     LONG style = GetWindowLongW(infoPtr->hwnd, GWL_STYLE);
