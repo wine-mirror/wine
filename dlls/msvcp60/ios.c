@@ -417,11 +417,6 @@ const int basic_ifstream_char_vbtable[] = {0, sizeof(basic_ifstream_char)};
 /* ??_7?$basic_ifstream@DU?$char_traits@D@std@@@std@@6B@ */
 extern const vtable_ptr basic_ifstream_char_vtable;
 
-/* ??_8?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@7B@ */
-const int basic_ifstream_wchar_vbtable[] = {0, sizeof(basic_ifstream_wchar)};
-/* ??_7?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@6B@ */
-extern const vtable_ptr basic_ifstream_wchar_vtable;
-
 /* ??_8?$basic_ifstream@GU?$char_traits@G@std@@@std@@7B@ */
 const int basic_ifstream_short_vbtable[] = {0, sizeof(basic_ifstream_wchar)};
 /* ??_7?$basic_ifstream@GU?$char_traits@G@std@@@std@@6B@ */
@@ -565,10 +560,6 @@ DEFINE_RTTI_DATA4(basic_ifstream_char, sizeof(basic_ifstream_char),
         &basic_istream_char_rtti_base_descriptor, &basic_ios_char_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
         ".?AV?$basic_ifstream@DU?$char_traits@D@std@@@std@@")
-DEFINE_RTTI_DATA4(basic_ifstream_wchar, sizeof(basic_ifstream_wchar),
-        &basic_istream_wchar_rtti_base_descriptor, &basic_ios_wchar_rtti_base_descriptor,
-        &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@")
 DEFINE_RTTI_DATA4(basic_ifstream_short, sizeof(basic_ifstream_wchar),
         &basic_istream_short_rtti_base_descriptor, &basic_ios_short_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
@@ -789,10 +780,8 @@ __ASM_BLOCK_BEGIN(ios_vtables)
             VTABLE_ADD_FUNC(basic_ofstream_wchar_vector_dtor));
     __ASM_VTABLE(basic_ifstream_char,
             VTABLE_ADD_FUNC(basic_ifstream_char_vector_dtor));
-    __ASM_VTABLE(basic_ifstream_wchar,
-            VTABLE_ADD_FUNC(basic_ifstream_wchar_vector_dtor));
     __ASM_VTABLE(basic_ifstream_short,
-            VTABLE_ADD_FUNC(basic_ifstream_wchar_vector_dtor));
+            VTABLE_ADD_FUNC(basic_ifstream_short_vector_dtor));
     __ASM_VTABLE(basic_fstream_char,
             VTABLE_ADD_FUNC(basic_fstream_char_vector_dtor));
     __ASM_VTABLE(basic_fstream_short,
@@ -10876,27 +10865,27 @@ basic_filebuf_char* __thiscall basic_ifstream_char_rdbuf(const basic_ifstream_ch
     return (basic_filebuf_char*)&this->filebuf;
 }
 
-static inline basic_ios_wchar* basic_ifstream_wchar_to_basic_ios(basic_ifstream_wchar *ptr)
+static inline basic_ios_wchar* basic_ifstream_short_to_basic_ios(basic_ifstream_wchar *ptr)
 {
-    return (basic_ios_wchar*)((char*)ptr+basic_ifstream_wchar_vbtable[1]);
+    return (basic_ios_wchar*)((char*)ptr+basic_ifstream_short_vbtable[1]);
 }
 
-static inline basic_ifstream_wchar* basic_ifstream_wchar_from_basic_ios(basic_ios_wchar *ptr)
+static inline basic_ifstream_wchar* basic_ifstream_short_from_basic_ios(basic_ios_wchar *ptr)
 {
-    return (basic_ifstream_wchar*)((char*)ptr-basic_ifstream_wchar_vbtable[1]);
+    return (basic_ifstream_wchar*)((char*)ptr-basic_ifstream_short_vbtable[1]);
 }
 
-/* ??0?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@QAE@XZ */
-/* ??0?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@QEAA@XZ */
-DEFINE_THISCALL_WRAPPER(basic_ifstream_wchar_ctor, 8)
-basic_ifstream_wchar* __thiscall basic_ifstream_wchar_ctor(basic_ifstream_wchar *this, bool virt_init)
+/* ??0?$basic_ifstream@GU?$char_traits@G@std@@@std@@QAE@XZ */
+/* ??0?$basic_ifstream@GU?$char_traits@G@std@@@std@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(basic_ifstream_short_ctor, 8)
+basic_ifstream_wchar* __thiscall basic_ifstream_short_ctor(basic_ifstream_wchar *this, bool virt_init)
 {
     basic_ios_wchar *basic_ios;
 
     TRACE("(%p %d)\n", this, virt_init);
 
     if(virt_init) {
-        this->base.vbtable = basic_ifstream_wchar_vbtable;
+        this->base.vbtable = basic_ifstream_short_vbtable;
         basic_ios = basic_istream_wchar_get_basic_ios(&this->base);
         basic_ios_wchar_ctor(basic_ios);
     }else {
@@ -10905,41 +10894,7 @@ basic_ifstream_wchar* __thiscall basic_ifstream_wchar_ctor(basic_ifstream_wchar 
 
     basic_filebuf_wchar_ctor(&this->filebuf);
     basic_istream_wchar_ctor(&this->base, &this->filebuf.base, FALSE, FALSE);
-    basic_ios->base.vtable = &basic_ifstream_wchar_vtable;
-    return this;
-}
-
-/* ??0?$basic_ifstream@GU?$char_traits@G@std@@@std@@QAE@XZ */
-/* ??0?$basic_ifstream@GU?$char_traits@G@std@@@std@@QEAA@XZ */
-DEFINE_THISCALL_WRAPPER(basic_ifstream_short_ctor, 8)
-basic_ifstream_wchar* __thiscall basic_ifstream_short_ctor(basic_ifstream_wchar *this, bool virt_init)
-{
-    basic_ifstream_wchar_ctor(this, virt_init);
-    basic_istream_wchar_get_basic_ios(&this->base)->base.vtable = &basic_ifstream_short_vtable;
-    return this;
-}
-
-/* ??0?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@QAE@PAU_iobuf@@@Z */
-/* ??0?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@QEAA@PEAU_iobuf@@@Z */
-DEFINE_THISCALL_WRAPPER(basic_ifstream_wchar_ctor_file, 12)
-basic_ifstream_wchar* __thiscall basic_ifstream_wchar_ctor_file(
-        basic_ifstream_wchar *this, FILE *file, bool virt_init)
-{
-    basic_ios_wchar *basic_ios;
-
-    TRACE("(%p %p %d)\n", this, file, virt_init);
-
-    if(virt_init) {
-        this->base.vbtable = basic_ifstream_wchar_vbtable;
-        basic_ios = basic_istream_wchar_get_basic_ios(&this->base);
-        basic_ios_wchar_ctor(basic_ios);
-    }else {
-        basic_ios = basic_istream_wchar_get_basic_ios(&this->base);
-    }
-
-    basic_filebuf_wchar_ctor_file(&this->filebuf, file);
-    basic_istream_wchar_ctor(&this->base, &this->filebuf.base, FALSE, FALSE);
-    basic_ios->base.vtable = &basic_ifstream_wchar_vtable;
+    basic_ios->base.vtable = &basic_ifstream_short_vtable;
     return this;
 }
 
@@ -10949,8 +10904,21 @@ DEFINE_THISCALL_WRAPPER(basic_ifstream_short_ctor_file, 12)
 basic_ifstream_wchar* __thiscall basic_ifstream_short_ctor_file(
         basic_ifstream_wchar *this, FILE *file, bool virt_init)
 {
-    basic_ifstream_wchar_ctor_file(this, file, virt_init);
-    basic_istream_wchar_get_basic_ios(&this->base)->base.vtable = &basic_ifstream_short_vtable;
+    basic_ios_wchar *basic_ios;
+
+    TRACE("(%p %p %d)\n", this, file, virt_init);
+
+    if(virt_init) {
+        this->base.vbtable = basic_ifstream_short_vbtable;
+        basic_ios = basic_istream_wchar_get_basic_ios(&this->base);
+        basic_ios_wchar_ctor(basic_ios);
+    }else {
+        basic_ios = basic_istream_wchar_get_basic_ios(&this->base);
+    }
+
+    basic_filebuf_wchar_ctor_file(&this->filebuf, file);
+    basic_istream_wchar_ctor(&this->base, &this->filebuf.base, FALSE, FALSE);
+    basic_ios->base.vtable = &basic_ifstream_short_vtable;
     return this;
 }
 
@@ -10981,14 +10949,12 @@ basic_ifstream_wchar* __thiscall basic_ifstream_short_ctor_name(basic_ifstream_w
     return this;
 }
 
-/* ??1?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@UAE@XZ */
-/* ??1?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@UEAA@XZ */
 /* ??1?$basic_ifstream@GU?$char_traits@G@std@@@std@@UAE@XZ */
 /* ??1?$basic_ifstream@GU?$char_traits@G@std@@@std@@UEAA@XZ */
-DEFINE_THISCALL_WRAPPER(basic_ifstream_wchar_dtor, 4)
-void __thiscall basic_ifstream_wchar_dtor(basic_ios_wchar *base)
+DEFINE_THISCALL_WRAPPER(basic_ifstream_short_dtor, 4)
+void __thiscall basic_ifstream_short_dtor(basic_ios_wchar *base)
 {
-    basic_ifstream_wchar *this = basic_ifstream_wchar_from_basic_ios(base);
+    basic_ifstream_wchar *this = basic_ifstream_short_from_basic_ios(base);
 
     TRACE("(%p)\n", this);
 
@@ -10996,23 +10962,21 @@ void __thiscall basic_ifstream_wchar_dtor(basic_ios_wchar *base)
     basic_filebuf_wchar_dtor(&this->filebuf);
 }
 
-/* ??_D?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@QAEXXZ */
-/* ??_D?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@QEAAXXZ */
 /* ??_D?$basic_ifstream@GU?$char_traits@G@std@@@std@@QAEXXZ */
 /* ??_D?$basic_ifstream@GU?$char_traits@G@std@@@std@@QEAAXXZ */
-DEFINE_THISCALL_WRAPPER(basic_ifstream_wchar_vbase_dtor, 4)
-void __thiscall basic_ifstream_wchar_vbase_dtor(basic_ifstream_wchar *this)
+DEFINE_THISCALL_WRAPPER(basic_ifstream_short_vbase_dtor, 4)
+void __thiscall basic_ifstream_short_vbase_dtor(basic_ifstream_wchar *this)
 {
     TRACE("(%p)\n", this);
 
-    basic_ifstream_wchar_dtor(basic_ifstream_wchar_to_basic_ios(this));
+    basic_ifstream_short_dtor(basic_ifstream_short_to_basic_ios(this));
     basic_ios_wchar_dtor(basic_istream_wchar_get_basic_ios(&this->base));
 }
 
-DEFINE_THISCALL_WRAPPER(basic_ifstream_wchar_vector_dtor, 8)
-basic_ifstream_wchar* __thiscall basic_ifstream_wchar_vector_dtor(basic_ios_wchar *base, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(basic_ifstream_short_vector_dtor, 8)
+basic_ifstream_wchar* __thiscall basic_ifstream_short_vector_dtor(basic_ios_wchar *base, unsigned int flags)
 {
-    basic_ifstream_wchar *this = basic_ifstream_wchar_from_basic_ios(base);
+    basic_ifstream_wchar *this = basic_ifstream_short_from_basic_ios(base);
 
     TRACE("(%p %x)\n", this, flags);
 
@@ -11021,10 +10985,10 @@ basic_ifstream_wchar* __thiscall basic_ifstream_wchar_vector_dtor(basic_ios_wcha
         INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
-            basic_ifstream_wchar_vbase_dtor(this+i);
+            basic_ifstream_short_vbase_dtor(this+i);
         operator_delete(ptr);
     } else {
-        basic_ifstream_wchar_vbase_dtor(this);
+        basic_ifstream_short_vbase_dtor(this);
         if(flags & 1)
             operator_delete(this);
     }
@@ -11032,12 +10996,10 @@ basic_ifstream_wchar* __thiscall basic_ifstream_wchar_vector_dtor(basic_ios_wcha
     return this;
 }
 
-/* ?close@?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@QAEXXZ */
-/* ?close@?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@QEAAXXZ */
 /* ?close@?$basic_ifstream@GU?$char_traits@G@std@@@std@@QAEXXZ */
 /* ?close@?$basic_ifstream@GU?$char_traits@G@std@@@std@@QEAAXXZ */
-DEFINE_THISCALL_WRAPPER(basic_ifstream_wchar_close, 4)
-void __thiscall basic_ifstream_wchar_close(basic_ifstream_wchar *this)
+DEFINE_THISCALL_WRAPPER(basic_ifstream_short_close, 4)
+void __thiscall basic_ifstream_short_close(basic_ifstream_wchar *this)
 {
     TRACE("(%p)\n", this);
 
@@ -11047,12 +11009,10 @@ void __thiscall basic_ifstream_wchar_close(basic_ifstream_wchar *this)
     }
 }
 
-/* ?is_open@?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@QBE_NXZ */
-/* ?is_open@?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@QEBA_NXZ */
 /* ?is_open@?$basic_ifstream@GU?$char_traits@G@std@@@std@@QBE_NXZ */
 /* ?is_open@?$basic_ifstream@GU?$char_traits@G@std@@@std@@QEBA_NXZ */
-DEFINE_THISCALL_WRAPPER(basic_ifstream_wchar_is_open, 4)
-bool __thiscall basic_ifstream_wchar_is_open(const basic_ifstream_wchar *this)
+DEFINE_THISCALL_WRAPPER(basic_ifstream_short_is_open, 4)
+bool __thiscall basic_ifstream_short_is_open(const basic_ifstream_wchar *this)
 {
     TRACE("(%p)\n", this);
     return basic_filebuf_wchar_is_open(&this->filebuf);
@@ -11060,8 +11020,8 @@ bool __thiscall basic_ifstream_wchar_is_open(const basic_ifstream_wchar *this)
 
 /* ?open@?$basic_ifstream@GU?$char_traits@G@std@@@std@@QAEXPBDH@Z */
 /* ?open@?$basic_ifstream@GU?$char_traits@G@std@@@std@@QEAAXPEBDH@Z */
-DEFINE_THISCALL_WRAPPER(basic_ifstream_wchar_open, 12)
-void __thiscall basic_ifstream_wchar_open(basic_ifstream_wchar *this,
+DEFINE_THISCALL_WRAPPER(basic_ifstream_short_open, 12)
+void __thiscall basic_ifstream_short_open(basic_ifstream_wchar *this,
         const char *name, int mode)
 {
     TRACE("(%p %s %d)\n", this, name, mode);
@@ -11074,19 +11034,17 @@ void __thiscall basic_ifstream_wchar_open(basic_ifstream_wchar *this,
 
 /* ?open@?$basic_ifstream@GU?$char_traits@G@std@@@std@@QAEXPBDF@Z */
 /* ?open@?$basic_ifstream@GU?$char_traits@G@std@@@std@@QEAAXPEBDF@Z */
-DEFINE_THISCALL_WRAPPER(basic_ifstream_wchar_open_old, 12)
-void __thiscall basic_ifstream_wchar_open_old(basic_ifstream_wchar *this,
+DEFINE_THISCALL_WRAPPER(basic_ifstream_short_open_old, 12)
+void __thiscall basic_ifstream_short_open_old(basic_ifstream_wchar *this,
         const char *name, short mode)
 {
-    basic_ifstream_wchar_open(this, name, mode);
+    basic_ifstream_short_open(this, name, mode);
 }
 
-/* ?rdbuf@?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@QBEPAV?$basic_filebuf@_WU?$char_traits@_W@std@@@2@XZ */
-/* ?rdbuf@?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@QEBAPEAV?$basic_filebuf@_WU?$char_traits@_W@std@@@2@XZ */
 /* ?rdbuf@?$basic_ifstream@GU?$char_traits@G@std@@@std@@QBEPAV?$basic_filebuf@GU?$char_traits@G@std@@@2@XZ */
 /* ?rdbuf@?$basic_ifstream@GU?$char_traits@G@std@@@std@@QEBAPEAV?$basic_filebuf@GU?$char_traits@G@std@@@2@XZ */
-DEFINE_THISCALL_WRAPPER(basic_ifstream_wchar_rdbuf, 4)
-basic_filebuf_wchar* __thiscall basic_ifstream_wchar_rdbuf(const basic_ifstream_wchar *this)
+DEFINE_THISCALL_WRAPPER(basic_ifstream_short_rdbuf, 4)
+basic_filebuf_wchar* __thiscall basic_ifstream_short_rdbuf(const basic_ifstream_wchar *this)
 {
     TRACE("(%p)\n", this);
     return (basic_filebuf_wchar*)&this->filebuf;
@@ -13308,7 +13266,6 @@ void init_io(void *base)
     init_basic_ofstream_wchar_rtti(base);
     init_basic_ofstream_short_rtti(base);
     init_basic_ifstream_char_rtti(base);
-    init_basic_ifstream_wchar_rtti(base);
     init_basic_ifstream_short_rtti(base);
     init_basic_fstream_char_rtti(base);
     init_basic_fstream_short_rtti(base);
