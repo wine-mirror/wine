@@ -32,7 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dplay);
 
 static HRESULT WINAPI DPWSCB_EnumSessions( LPDPSP_ENUMSESSIONSDATA data )
 {
-    FIXME( "(%p,%d,%p,%u) stub\n",
+    FIXME( "(%p,%ld,%p,%u) stub\n",
            data->lpMessage, data->dwMessageSize,
            data->lpISP, data->bReturnStatus );
     return DPERR_UNSUPPORTED;
@@ -40,7 +40,7 @@ static HRESULT WINAPI DPWSCB_EnumSessions( LPDPSP_ENUMSESSIONSDATA data )
 
 static HRESULT WINAPI DPWSCB_Reply( LPDPSP_REPLYDATA data )
 {
-    FIXME( "(%p,%p,%d,%d,%p) stub\n",
+    FIXME( "(%p,%p,%ld,%ld,%p) stub\n",
            data->lpSPMessageHeader, data->lpMessage, data->dwMessageSize,
            data->idNameServer, data->lpISP );
     return DPERR_UNSUPPORTED;
@@ -48,7 +48,7 @@ static HRESULT WINAPI DPWSCB_Reply( LPDPSP_REPLYDATA data )
 
 static HRESULT WINAPI DPWSCB_Send( LPDPSP_SENDDATA data )
 {
-    FIXME( "(0x%08x,%d,%d,%p,%d,%u,%p) stub\n",
+    FIXME( "(0x%08lx,%ld,%ld,%p,%ld,%u,%p) stub\n",
            data->dwFlags, data->idPlayerTo, data->idPlayerFrom,
            data->lpMessage, data->dwMessageSize,
            data->bSystemMessage, data->lpISP );
@@ -57,7 +57,7 @@ static HRESULT WINAPI DPWSCB_Send( LPDPSP_SENDDATA data )
 
 static HRESULT WINAPI DPWSCB_CreatePlayer( LPDPSP_CREATEPLAYERDATA data )
 {
-    FIXME( "(%d,0x%08x,%p,%p) stub\n",
+    FIXME( "(%ld,0x%08lx,%p,%p) stub\n",
            data->idPlayer, data->dwFlags,
            data->lpSPMessageHeader, data->lpISP );
     return DPERR_UNSUPPORTED;
@@ -65,14 +65,14 @@ static HRESULT WINAPI DPWSCB_CreatePlayer( LPDPSP_CREATEPLAYERDATA data )
 
 static HRESULT WINAPI DPWSCB_DeletePlayer( LPDPSP_DELETEPLAYERDATA data )
 {
-    FIXME( "(%d,0x%08x,%p) stub\n",
+    FIXME( "(%ld,0x%08lx,%p) stub\n",
            data->idPlayer, data->dwFlags, data->lpISP );
     return DPERR_UNSUPPORTED;
 }
 
 static HRESULT WINAPI DPWSCB_GetAddress( LPDPSP_GETADDRESSDATA data )
 {
-    FIXME( "(%d,0x%08x,%p,%p,%p) stub\n",
+    FIXME( "(%ld,0x%08lx,%p,%p,%p) stub\n",
            data->idPlayer, data->dwFlags, data->lpAddress,
            data->lpdwAddressSize, data->lpISP );
     return DPERR_UNSUPPORTED;
@@ -80,7 +80,7 @@ static HRESULT WINAPI DPWSCB_GetAddress( LPDPSP_GETADDRESSDATA data )
 
 static HRESULT WINAPI DPWSCB_GetCaps( LPDPSP_GETCAPSDATA data )
 {
-    TRACE( "(%d,%p,0x%08x,%p)\n",
+    TRACE( "(%ld,%p,0x%08lx,%p)\n",
            data->idPlayer, data->lpCaps, data->dwFlags, data->lpISP );
 
     data->lpCaps->dwFlags = ( DPCAPS_ASYNCSUPPORTED |
@@ -110,7 +110,7 @@ static HRESULT WINAPI DPWSCB_GetCaps( LPDPSP_GETCAPSDATA data )
 
 static HRESULT WINAPI DPWSCB_Open( LPDPSP_OPENDATA data )
 {
-    FIXME( "(%u,%p,%p,%u,0x%08x,0x%08x) stub\n",
+    FIXME( "(%u,%p,%p,%u,0x%08lx,0x%08lx) stub\n",
            data->bCreate, data->lpSPMessageHeader, data->lpISP,
            data->bReturnStatus, data->dwOpenFlags, data->dwSessionFlags );
     return DPERR_UNSUPPORTED;
@@ -137,7 +137,7 @@ static HRESULT WINAPI DPWSCB_GetAddressChoices( LPDPSP_GETADDRESSCHOICESDATA dat
 
 static HRESULT WINAPI DPWSCB_SendEx( LPDPSP_SENDEXDATA data )
 {
-    FIXME( "(%p,0x%08x,%d,%d,%p,%d,%d,%d,%d,%p,%p,%u) stub\n",
+    FIXME( "(%p,0x%08lx,%ld,%ld,%p,%ld,%ld,%ld,%ld,%p,%p,%u) stub\n",
            data->lpISP, data->dwFlags, data->idPlayerTo, data->idPlayerFrom,
            data->lpSendBuffers, data->cBuffers, data->dwMessageSize,
            data->dwPriority, data->dwTimeout, data->lpDPContext,
@@ -147,7 +147,7 @@ static HRESULT WINAPI DPWSCB_SendEx( LPDPSP_SENDEXDATA data )
 
 static HRESULT WINAPI DPWSCB_SendToGroupEx( LPDPSP_SENDTOGROUPEXDATA data )
 {
-    FIXME( "(%p,0x%08x,%d,%d,%p,%d,%d,%d,%d,%p,%p) stub\n",
+    FIXME( "(%p,0x%08lx,%ld,%ld,%p,%ld,%ld,%ld,%ld,%p,%p) stub\n",
            data->lpISP, data->dwFlags, data->idGroupTo, data->idPlayerFrom,
            data->lpSendBuffers, data->cBuffers, data->dwMessageSize,
            data->dwPriority, data->dwTimeout, data->lpDPContext,
@@ -157,7 +157,7 @@ static HRESULT WINAPI DPWSCB_SendToGroupEx( LPDPSP_SENDTOGROUPEXDATA data )
 
 static HRESULT WINAPI DPWSCB_Cancel( LPDPSP_CANCELDATA data )
 {
-    FIXME( "(%p,0x%08x,%p,%d,0x%08x,0x%08x) stub\n",
+    FIXME( "(%p,0x%08lx,%p,%ld,0x%08lx,0x%08lx) stub\n",
            data->lpISP, data->dwFlags, data->lprglpvSPMsgID, data->cSPMsgID,
            data->dwMinPriority, data->dwMaxPriority );
     return DPERR_UNSUPPORTED;
@@ -165,7 +165,7 @@ static HRESULT WINAPI DPWSCB_Cancel( LPDPSP_CANCELDATA data )
 
 static HRESULT WINAPI DPWSCB_GetMessageQueue( LPDPSP_GETMESSAGEQUEUEDATA data )
 {
-    FIXME( "(%p,0x%08x,%d,%d,%p,%p) stub\n",
+    FIXME( "(%p,0x%08lx,%ld,%ld,%p,%p) stub\n",
            data->lpISP, data->dwFlags, data->idFrom, data->idTo,
            data->lpdwNumMsgs, data->lpdwNumBytes );
     return DPERR_UNSUPPORTED;
