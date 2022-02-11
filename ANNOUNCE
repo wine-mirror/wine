@@ -1,17 +1,17 @@
-The Wine development release 7.1 is now available.
+The Wine development release 7.2 is now available.
 
 What's new in this release (see below for details):
-  - Vulkan 1.3 support.
-  - A number of theming fixes.
-  - WebSocket improvements.
-  - Improved cursor clipping on macOS.
-  - IDL compiler fixes for C++.
+  - Large scale cleanup to support 'long' type with MSVCRT.
+  - Mono engine updated to version 7.1.1.
+  - More theming fixes in common controls.
+  - Beginnings of a WMA decoder.
+  - Support for 64-bit time_t.
   - Various bug fixes.
 
 The source is available from the following locations:
 
-  https://dl.winehq.org/wine/source/7.x/wine-7.1.tar.xz
-  http://mirrors.ibiblio.org/wine/source/7.x/wine-7.1.tar.xz
+  https://dl.winehq.org/wine/source/7.x/wine-7.2.tar.xz
+  http://mirrors.ibiblio.org/wine/source/7.x/wine-7.2.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -27,544 +27,744 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 7.1 (total 42):
+Bugs fixed in 7.2 (total 23):
 
-  10924  Netbeans 6.x installer hangs or exits silently
-  15635  Siemens SIMATIC STEP 7: can't use Next or Cancel when installing
-  20415  eRightSoft SUPER v2009-b35 window unviewable and non-responsive
-  21935  AceMegaCodecsPack gives error message on install
-  25053  Final fantasy 7 videos do not play, though supported by gst-ffmpeg
-  27679  Arx Fatalis does not play intro movie (video: indeo 5.0)
-  33756  Word 2003: Formula symbols get outside formula frame
-  34753  Rising Kingdoms Demo intro videos are not played
-  35063  Multiple InstallShield technology based installers report "unable to create InstallDriver instance" (Peachtree Pro Accounting 2007, Age of Empires 3)
-  39795  when working jriver mediacenter suddenly crash.
-  42660  QTranslate crashes inside jscript.dll
-  43899  x360ce closes after launch
-  45016  Far Cry 5 crashes at startup
-  45597  Flicker in GTAIV
-  47975  X3 Albion Prelude - Unhandled page fault on read access
-  48523  dlls/toolhelp16.dll16 LocalFirst and LocalNext only return LMEM_FIXED handles
-  48606  HexChat: Check for update fails
-  49213  TeamViewer 15.x crashes on startup
-  50370  Gothic 1 doesn't start correctly when screen resolution of the game matches display resolution
-  50433  'MsiBreak' custom action debugging aid should use custom action's name from 'CustomAction' table (currently uses 'Target' field)
-  50539  SetWindowRgn doesn't work correctly
-  50544  Application crashes when external database called
-  50849  Multiple .NET 4.x app installers using WiX v3 'InvokeOutOfProcManagedCustomAction, CAInvokeMethod->Invoke_3 return incorrect result with Wine-Mono (Elgato Stream Deck 4.9.3, Garmin Express 6.13)
-  50901  Google Chrome 89.0.4389.114 exits at startup
-  51163  WinOffice Pro 5.3 stops after splashscreen, needs WMI class SoftwareLicensingProduct
-  51354  WRC 7 needs ID3DUserDefinedAnnotation interface
-  51491  Project CARS 2 periodically crashes during a race
-  51706  Msi HANDLE_CustomType1 fails to load dll [patch]
-  51758  Wine's time zone information has gaps in "Dynamic DST" causing InvalidTimeZoneException
-  51860  Missing include for uid_t on musl-based systems
-  51868  Pokémon Banished Platinum - Fails To Load Script(s) in Wine
-  51900  regression: REAPER scrollbars flash between themed and non-themed
-  52062  dinput HID joystick doesn't implement effect state reports.
-  52158  Age of Empires 3 Definitive Edition multiplayer fails to start AES problem
-  52163  postgresql-9.3 installer expects scrrun:filesys_GetTempName to return filename with TMP suffix
-  52261  Sekiro: Shadows Die Twice GOTY crashes right before gameplay starts
-  52285  7-zip: column titles are not rendered initially when using a theme
-  52298  Opening PPT with Freeoffice Presentations crashes on unimplemented function ole32.dll.OleConvertIStorageToOLESTREAMEx
-  52339  EzViz: Program does not respond after clicking once
-  52383  WXWork has high CPU usage on login screen
-  52426  BCryptSignHash mishandles empty arguments
-  52446  Normal dlls with native subsystem id are no longer processed when importing system dlls with uppercase names
+  12732  Nota Bene crashes on install
+  33086  QQ 2013 Beta2: text in input box can't display normally
+  34326  uplive.exe from TypeEasy crashes
+  36566  Half-Life's (CD Version) Menu refuses to work after a while
+  37609  Macromedia Freehand 9 demo hangs during startup
+  38809  QQ 7.3 Light crashes randomly
+  40827  VMWare VSphere 4.x/5.x/6.x clients fail to install
+  44202  undname.c fails to parse symbols with rvalue-reference semantics '&&'
+  46284  Call of Juarez crashes with unimplemented function d3dx9_29.dll.D3DXSHProjectCubeMap
+  47463  QQ 9.1.5 crash on start.
+  48815  user32:win "unexpected 0x738 message" Windows 10 failures
+  50352  Maximum sockets per process is set very low
+  50842  The 64-bit msado15:msado15 test crashes
+  51130  user32:win test_SetActiveWindow() has 2 failures on Vista to Windows 8.1
+  51392  user32:monitor breaks user32:win
+  51513  Multiple applications (PG Offline 4.0.907, lessmsi v1.10.0, MIDIopsy 1.2, Quickroute) crash on start with IndexOutOfRangeException with Wine-Mono
+  51754  Iris Down CountDown Crash at start - dotnet4.5
+  51798  MAmidiMEmo doesn't start up ("System.resources" is required)
+  52433  TASInput (Mupen64-RR-Lua): checkbox is not cleared correctly
+  52436  In Light Blue theme, checkable toggle buttons (BS_AUTOCHECKBOX) look unchecked when hovered
+  52490  Clipboard.GetText() doesn't work
+  52494  shell32 progman_dde tests crash if run immediately after prefix creation
+  52510  alt:V mod for Grand Theft Auto V fails due to missing concrt140._Byte_reverse_table@details@Concurrency@@3QBEB
 
 ----------------------------------------------------------------
 
-Changes since 7.0:
+Changes since 7.1:
 
-Alex Henrie (1):
-      user32: Send EVENT_OBJECT_FOCUS when the focus changes.
+Alex Henrie (12):
+      msi: Fix memory leak in get_fusion_filename (Coverity).
+      winhttp: Fix memory leak on error path in WinHttpCrackUrl (Coverity).
+      adsldp: Fix memory leak on error path in search_ExecuteSearch (Coverity).
+      conhost: Fix memory leak on error path in create_screen_buffer (cppcheck).
+      dbghelp: Fix memory leak on error path in dwarf2_read_range (cppcheck).
+      ws2_32: Fix memory leak on error path in get_local_ips (cppcheck).
+      ws2_32: Fix memory leaks on error paths in unix_gethostby* (scan-build).
+      explorer: Only try to destroy the IShellWindows object if it exists.
+      sane: Fix memory leak in create_item (Coverity).
+      winspool: Fix memory leaks on error path in DeviceCapabilitiesA (Coverity).
+      user32/tests: Expect DialogBoxParam to set ERROR_CANNOT_FIND_WND_CLASS.
+      shell32/tests: Wait for window to close in check_window_exists.
 
-Alexandre Julliard (47):
-      configure: No longer disable mountmgr.sys in a Windows build.
-      tools: Use flush_output_buffer() in a few more places.
-      tools: Add a helper function to read the contents of a file.
-      makefiles: Get rid of the documentation rules.
-      user.exe: Make sure that the thunk selector doesn't get freed.
-      faudio: Import upstream release 22.01.
-      mpg123: Import upstream release 1.29.3.
-      jpeg: Import upstream release 9e.
-      makefiles: Add helper functions to open generated include files.
-      makefiles: Also look for generated includes in the source file directory.
-      makefiles: Compare the full path when looking for generated include files.
-      makefiles: Add dependencies for files generated in maintainer mode.
-      makefiles: Add a maintainer-clean target.
-      makefiles: Specify the bison prefix directly in the source files.
-      wrc: Add a workaround for older bison versions.
-      wrc: Avoid using Windows types where possible.
-      widl: Avoid using Windows types where possible.
-      include: Define a few more intrinsic functions.
-      include: Fix prototype mismatch for server functions.
-      server: Define a server-side structure for LUID_AND_ATTRIBUTES.
-      server: Define a server-side structure for SID_AND_ATTRIBUTES.
-      server: Define a server-side structure for ACL.
-      server: Define a server-side structure for ACE.
-      server: Define a server-side structure for SID.
-      server: Don't depend on the TOKEN_GROUPS structure on the server side.
-      include: Remove the wine_ prefix on rbtree functions.
-      include: Add casts for types that may be defined as long.
-      d3drm: Fix a prototype mismatch.
-      d3dx10: Fix a prototype mismatch.
-      mmsystem: Fix some prototype mismatches.
-      win32u: Fix some prototype mismatches.
-      windows.globalization: Fix some prototype mismatches.
-      winevulkan: Fix some prototype mismatches.
-      wow64win: Fix some prototype mismatches.
-      mfmediaengine: Remove unnecessary import library.
-      include: Use long type by default in GUID definition.
-      include: Add casts to avoid printf format warnings with 'long' types.
-      winecrt0: Use the correct integral type.
-      compstui: Fix printf format warnings on 64-bit.
-      d3dx11: Fix printf format warnings on 64-bit.
-      gamingtcui: Fix printf format warnings on 64-bit.
-      loadperf: Fix printf format warnings on 64-bit.
-      msvcp60/tests: Fix printf format warnings on 64-bit.
-      opencl: Fix printf format warnings on 64-bit.
-      include: Add support for defining Win32 types as 'long' where possible.
-      makefiles: Force -Wformat for PE modules when using 'long' types.
-      makefiles: Disable printf format warnings for non-PE msvcrt modules.
+Alexandre Julliard (9):
+      ntdll: Consistently use time_t in timezone matching.
+      configure: Enable 64-bit time_t on Linux.
+      configure: Only define _TIME_BITS together with _FILE_OFFSET_BITS.
+      msado15: Fix some LONG/LONG_PTR mismatches.
+      faudio: Import upstream release 22.02.
+      make_xftmpl: Use the standard output buffer routines.
+      winebuild: Store length of Unicode strings explicitly.
+      wrc: Use compare_name_id() for resource translations.
+      tools: Consistently use xmalloc/xrealloc/xstrdup everywhere.
 
-Alistair Leslie-Hughes (8):
-      msado15: Return early if Execute doesn't return a rowset.
-      msdasql: Connect to DSN in IDBInitialize Initialize.
-      include: Add trnlcl.idl.
-      include: Add trnobj.idl.
-      msdasql/tests: Test for ITransaction* interfaces on a session.
-      msdasql: Fix logic when dumping diagnostics records.
-      msdasql: Implement ICommandPrepare Prepare.
-      msdasql: Add ITransactionJoin to session interface.
+Alistair Leslie-Hughes (11):
+      msdasql: Fix printf format warnings with long types.
+      msdasql: Add ITransaction to session interface.
+      msdasql/tests: Fix printf format warnings with long types.
+      dpnet: Fix long types printf warnings.
+      xactengine: Fix long types printf warnings.
+      dplayx: Build without -DWINE_NO_LONG_TYPES.
+      xactengine3_7/tests: Build without -DWINE_NO_LONG_TYPES.
+      msdasql: ICommandText Execute use ODBC to fetch results.
+      xolehlp: Build without -DWINE_NO_LONG_TYPES.
+      wow64: Build without -DWINE_NO_LONG_TYPES.
+      xaudio2_7/tests: Build without -DWINE_NO_LONG_TYPES.
 
-Andrew Eikum (1):
-      winmm: Don't process audio data during waveOutWrite while playing.
+Andrey Gusev (2):
+      api-ms-win-security-lsalookup-ansi-l2-1-0: Add dll.
+      winegstreamer: Handle EnableDiscreteOutput and SpeakerConfig settings in WMSyncReader_SetOutputSetting().
 
-Andrey Gusev (1):
-      d3d11: Implement the ID3DUserDefinedAnnotation interface.
+André Zwing (4):
+      shlwapi: Fix some spec file entries.
+      advapi32: Fix some spec file entries.
+      mfplat: Remove duplicated space in spec.
+      ntdll: Fix some spec file entries.
 
-Arkadiusz Hiler (8):
-      dinput/tests: Don't consider extra IOCTL_HID_GET_STRING an error.
-      dinput/tests: Add static asserts for arrays that have to match in size.
-      include: Add HID_USAGE_SIMULATION_CLUTCH.
-      dinput/tests: Test HID device with steering wheel and various pedal combinations.
-      dinput: Implement HID wheel type detection.
-      winebus.sys: Enable extended BT reports for DualShock 4 controllers when requested.
-      winebus.sys: Process quirky DualSense bluetooth reports.
-      hidclass.sys: Add input.inf that matches all HID devices.
+Aurimas Fišeras (1):
+      po: Update Lithuanian translation.
 
-Ben Shefte (1):
-      ntdll: Use case insensitive comparison in is_import_dll_system().
+Bastien Orivel (1):
+      ws2_32: Fix setsockopt(TCP_NODELAY) when optlen is less than 4.
 
-Bernhard Kölbl (7):
-      widl: Allow optional interface parameter on the [activatable] attribute.
-      widl: Add support for the [overload] attribute.
-      combase/tests: Add tests for the hstring_private struct.
-      combase: Introduce a hstring_header struct to hstring_private.
-      combase: Move length from hstring_private to hstring_header.
-      combase: Add padding and string reference pointer to hstring_header.
-      combase: Reorder hstring_private elements.
+Bernhard Kölbl (5):
+      include/windows.foundation.collections.idl: Add IVector<T> interface.
+      include/windows.foundation.idl: Add IAsyncAction interface.
+      include/windows.foundation.idl: Add more declares.
+      include/windows.globalization.idl: Add Language class and interfaces.
+      include: Add windows.media.speechrecognition.idl.
 
-Connor McAdams (9):
-      secur32/tests: Add more DTLS tests.
-      secur32: Set phNewContext to phContext in schan_InitializeSecurityContextW().
-      secur32: Validate output buffer size in schan_InitializeSecurityContextW().
-      secur32: Add support for setting DTLS timeouts.
-      secur32: Clear SECBUFFER_ALERT output buffer count in schan_InitializeSecurityContextW.
-      secur32: Properly handle NULL pInput argument for DTLS contexts in schan_InitializeSecurityContextW.
-      secur32: Switch back to non-blocking mode for DTLS sessions.
-      secur32/tests: Add tests for DTLS handshake retransmission.
-      secur32: Fix trace in schannel pull_adapter function.
+Daniel Lehman (3):
+      msxml3/tests: Add test saving XML with non-english characters.
+      msxml3: Make utf-8 the default encoding.
+      include: Add _sscanf_l.
 
-Conor McCarthy (1):
-      dxgi: Allow sampling of Vulkan swapchain images for D3D12.
+Derek Lesho (1):
+      userenv: Set ProgramData in CreateEnvironmentBlock.
 
-Damjan Jovanovic (1):
-      ntdll: Use the correct amd64 trap codes on *BSD.
+Dmitry Timoshkov (4):
+      user32/tests: Actually test ShowWindow() return value.
+      user32/tests: Add more missing ShowWindow() return value checks.
+      user32/tests: Add more tests for WM_NCCALCSIZE.
+      user32: DefWindowProc(WM_NCCALCSIZE) should return 0.
 
-Daniel Lehman (9):
-      msvcp140: Add importlib.
-      msvcp140_atomic_wait: Add stub dll.
-      msvcp140_atomic_wait: Implement __std_parallel_algorithms_hw_threads.
-      msvcp140_atomic_wait/tests: Add test for threadpool_work functions.
-      msvcp140_atomic_wait: Implement __std_create_threadpool_work.
-      msvcp140_atomic_wait: Implement __std_submit_threadpool_work.
-      msvcp140_atomic_wait: Implement __std_wait_for_threadpool_work_callbacks.
-      msvcp140_atomic_wait: Implement __std_close_threadpool_work.
-      msvcp140_atomic_wait: Implement __std_bulk_submit_threadpool_work.
-
-Dean M Greer (1):
-      winemac.drv: Fix compile with pre macOS 10.12 SDKs.
-
-Dmitry Timoshkov (1):
-      ieframe: Clear a being invalidated history entry.
-
-Eric Pouech (18):
-      msi: Don't call RegCloseKey with uninitialized value.
-      dwrite: Adjust implementation to match prototype.
-      include/winternl.h: Fix prototype definition.
-      rpcss: Fix implementation declaration to match prototype.
-      wscript: Use correct integral type.
-      start: Wrap child inside a job so it gets killed when start.exe terminates.
-      cmd: Bail out when full path name exceeds MAX_PATH.
-      cmd/tests: Test paths that exceed MAX_PATH.
-      find: Use correct integral type.
-      progman: Use correct integral type.
-      rpcss: Use correct integral type.
-      include: Fix signedness in wine_dbgstr_variant().
+Eric Pouech (207):
+      evr: Use correct integral type.
+      include/msvcrt: Add attribute((format)) to printf and scanf -like APIs.
+      include: Define HandleToU?Long to return a long (as SDK does).
       winedbg: Use correct integral type.
-      winetest: Use correct integral type.
-      adsldp: Use correct integral type.
-      comctl32: Use correct integral type.
-      comdlg32: Use correct integral type.
-      crypt32: Use correct integral type.
+      dbgeng: Use correct integral type.
+      dsound: Use correct integral type.
+      itss: Use correct integral type.
+      joy.cpl: Use correct integral type.
+      ntdll: Use correct integral type.
+      include/basetsd.h: Define PtrTo(Ul|L)ong to return a long (as SDK does).
+      dwrite: Use correct integral types.
+      jscript: Use correct integral type.
+      mshtml: Use correct integral type.
+      msxml3: Use correct integral type.
+      oleaut32: Use correct integral type.
+      oledb32: Use correct integral type.
+      comdlg32: Removed useless casts to long.
+      kernelbase: Removed useless casts to long.
+      mciseq: Removed useless casts to long.
+      bcrypt: In unixlib, don't use Windows long type.
+      kerberos: In unixlib, don't use Windows long type.
+      netapi32: In unixlib, don't use Windows long type.
+      win32u: Change NtGdiPolyPolyDraw parameter to ULONG.
+      msvcrt*: Use correct integral type.
+      d2d1: Build without -DWINE_NO_LONG_TYPES.
+      d3d10_1: Build without -DWINE_NO_LONG_TYPES.
+      windowscodecs: Remove useless casts to long.
+      ole32: Use correct integral type.
+      riched20: Use correct integral type.
+      scrobj: Use correct integral type.
+      setupapi: Use correct integral type.
+      shell32: Use correct integral type.
+      taskschd: Use correct integral type.
+      user32: Use correct integral type.
+      mfplay: Use correct integral type.
+      mfmediaengine: Use correct integral type.
+      mfreadwrite: Use correct integral types.
+      uxtheme: Use correct integral type.
+      mf: Use correct integral types.
+      mfplat: Use correct integral types.
+      vbscript: Use correct integral type.
+      conhost/tests: Enable compilation with long types.
+      find/tests: Enable compilation with long types.
+      fsutil/tests: Enable compilation with long types.
+      regedit/tests: Enable compilation with long types.
+      reg/tests: Enable compilation with long types.
+      schtasks/tests: Enable compilation with long types.
+      services/tests: Enable compilation with long types.
+      wscript/tests: Enable compilation with long types.
+      xcopy/tests: Enable compilation with long types.
+      msvcrt: Use correct integral types in structs.
+      msvcp: Use correct integral types.
+      msvcrt: Add cast to avoid 'long' types warning in _beginthreadex.
+      msvcrt: Add casts to avoid 'long' types warning in locale functions.
+      d3dx11/tests: Build without -DWINE_NO_LONG_TYPES.
+      d2d1/tests: Build without -DWINE_NO_LONG_TYPES.
+      d3d10_1/tests: Build without -DWINE_NO_LONG_TYPES.
+      wldap32: Fix compilation in 32-bit.
+      attrib: Enable compilation with long types.
+      cabarc: Enable compilation with long types.
+      chcp.com: Enable compilation with long types.
+      conhost: Enable compilation with long types.
+      [cw]script: Enable compilation with long types.
+      dxdiag: Enable compilation with long types.
+      eject: Enable compilation with long types.
+      explorer: Enable compilation with long types.
+      fsutil: Enable compilation with long types.
+      msiexec: Enable compilation with long types.
+      net: Enable compilation with long types.
+      netstat: Enable compilation with long types.
+      ping: Enable compilation with long types.
+      plugplay: Enable compilation with long types.
+      presentationfontcache: Enable compilation with long types.
+      regedit: Enable compilation with long types.
+      reg: Enable compilation with long types.
+      regsvr32: Enable compilation with long types.
+      rpcss: Enable compilation with long types.
+      wbemprox: Use correct integral type.
+      winhttp: Use correct integral type.
+      wldap32: Use correct integral type.
+      winmm: Use correct integral type.
+      xaudio2_7: Use correct integral type.
+      msvcr*: Use correct integral type in Interlocked* calls.
+      msvcrt: Use correct integral type in _except1.
+      gdiplus: Use correct integral type.
+      vcomp: Use correct integral type.
+      windowscodecs: Use correct integral type.
+      sc: Enable compilation with long types.
+      services: Enable compilation with long types.
+      spoolsv: Enable compilation with long types.
+      start: Enable compilation with long types.
+      svchost: Enable compilation with long types.
+      termsv: Enable compilation with long types.
+      uninstaller: Enable compilation with long types.
+      whoami: Enable compilation with long types.
+      wineboot: Enable compilation with long types.
+      winebrowser: Enable compilation with long types.
+      winecfg: Enable compilation with long types.
+      wineconsole: Enable compilation with long types.
+      winedbg: Enable compilation with long types.
+      winedevice: Enable compilation with long types.
+      winemenubuilder: Enable compilation with long types.
+      winemsibuilder: Enable compilation with long types.
+      winetest: Enable compilation with long types.
+      winhlp32: Enable compilation with long types.
+      winmgmt: Enable compilation with long types.
+      winoldap.mod16: Enable compilation with long types.
+      wordpad: Enable compilation with long types.
+      wuauserv: Enable compilation with long types.
+      wusa: Enable compilation with long types.
+      xcopy: Enable compilation with long types.
+      msi: Use correct integral type.
+      acledit: Enable compilation with long types.
+      aclui: Enable compilation with long types.
+      activeds: Enable compilation with long types.
+      actxprxy: Enable compilation with long types.
+      adsldp: Enable compilation with long types.
+      advapi32: Enable compilation with long types.
+      advpack: Enable compilation with long types.
+      amsi: Enable compilation with long types.
+      amstream: Enable compilation with long types.
+      apphelp: Enable compilation with long types.
+      appwiz.cpl: Enable compilation with long types.
+      atl: Enable compilation with long types.
+      authz: Enable compilation with long types.
+      avicap32: Enable compilation with long types.
+      avifil32: Enable compilation with long types.
+      msvcp: Build without -DWINE_NO_LONG_TYPES.
+      msvcr: Build without -DWINE_NO_LONG_TYPES.
+      d3d10/tests: Build without -DWINE_NO_LONG_TYPES.
+      d3dcompiler/tests: Build without -DWINE_NO_LONG_TYPES.
+      d3d10: Build without -DWINE_NO_LONG_TYPES.
+      d3dcompiler: Build without -DWINE_NO_LONG_TYPES.
+      schtasks: Enable compilation with long types.
+      browseui: Enable compilation with long types.
+      cabinet: Enable compilation with long types.
+      cards: Enable compilation with long types.
+      clusapi: Enable compilation with long types.
+      comdlg32: Enable compilation with long types.
+      commdlg.dll16: Enable compilation with long types.
+      compobj.dll16: Enable compilation with long types.
+      comsvcs: Enable compilation with long types.
+      crypt32: Enable compilation with long types.
+      cryptdlg: Enable compilation with long types.
+      cryptnet: Enable compilation with long types.
+      cryptui: Enable compilation with long types.
+      credui: Enable compilation with long types.
+      davclnt: Enable compilation with long types.
+      dbghelp: Enable compilation with long types.
+      dhcpcsvc: Enable compilation with long types.
+      dhtmled.ocx: Enable compilation with long types.
+      difxapi: Enable compilation with long types.
+      directmanipulation: Enable compilation with long types.
+      dispex: Enable compilation with long types.
+      mf: Build without -DWINE_NO_LONG_TYPES.
+      xapofx1_1: Enable compilation with long types.
+      dmcompos: Enable compilation with long types.
+      dmloader: Enable compilation with long types.
+      dmscript: Enable compilation with long types.
+      dmstyle: Enable compilation with long types.
+      dpvoice: Enable compilation with long types.
+      dpwsockx: Enable compilation with long types.
+      dsdmo: Enable compilation with long types.
+      dsquery: Enable compilation with long types.
+      dssenh: Enable compilation with long types.
+      dsuiext: Enable compilation with long types.
+      dwmapi: Enable compilation with long types.
+      dxdiagn: Enable compilation with long types.
+      explorerframe: Enable compilation with long types.
+      faultrep: Enable compilation with long types.
+      fltlib: Enable compilation with long types.
+      fntcache: Enable compilation with long types.
+      fontsub: Enable compilation with long types.
+      fusion: Enable compilation with long types.
+      gameux: Enable compilation with long types.
+      gdi.exe16: Enable compilation with long types.
+      gphoto2.ds: Enable compilation with long types.
+      hal: Enable compilation with long types.
+      hhctrl.ocx: Enable compilation with long types.
+      hlink: Enable compilation with long types.
+      hnetcfg: Enable compilation with long types.
+      gdi32: Enable compilation with long types.
+      mfplay: Build without -DWINE_NO_LONG_TYPES.
+      mfmediaengine: Build without -DWINE_NO_LONG_TYPES.
+      iccvid: Enable compilation with long types.
+      ieframe: Enable compilation with long types.
+      ifsmgr.vxd: Enable compilation with long types.
+      imaadp32.acm: Enable compilation with long types.
+      imagehlp: Enable compilation with long types.
+      imm32: Enable compilation with long types.
+      inetcomm: Enable compilation with long types.
+      inetcpl.cpl: Enable compilation with long types.
+      inetmib1: Enable compilation with long types.
+      infosoft: Enable compilation with long types.
+      inseng: Enable compilation with long types.
+      iphlpapi: Enable compilation with long types.
+      itss: Enable compilation with long types.
+      joy.cpl: Enable compilation with long types.
+      jscript: Enable compilation with long types.
+      jsproxy: Enable compilation with long types.
+      kernel32: Enable compilation with long types.
+      kernelbase: Enable compilation with long types.
+      krnl386.exe16: Enable compilation with long types.
+      ktmw32: Enable compilation with long types.
+      l3codeca.acm: Enable compilation with long types.
+      localspl: Enable compilation with long types.
+      localui: Enable compilation with long types.
 
-Fabian Maurer (33):
-      adsldp/tests: Fix misleading indentation warnings.
-      advapi32/tests: Avoid "misleading indentation" warnings.
-      comctl32/tests: Avoid "misleading indentation" warnings.
-      comdlg32/tests: Avoid "misleading indentation" warnings.
-      comsvcs/tests: Avoid "misleading indentation" warnings.
-      crypt32/tests: Avoid "misleading indentation" warnings.
-      dbgeng/tests: Avoid "misleading indentation" warnings.
-      d2d1/tests: Avoid "misleading indentation" warnings.
-      d3d10/tests: Avoid "misleading indentation" warnings.
-      d3dcompiler/tests: Avoid "misleading indentation" warnings.
-      d3dx10_43/tests: Avoid "misleading indentation" warnings.
-      d3dx9_36/tests: Avoid "misleading indentation" warnings.
-      dwrite/tests: Avoid "misleading indentation" warnings.
-      dxva2/tests: Avoid "misleading indentation" warnings.
-      evr/tests: Avoid "misleading indentation" warnings.
-      hlink/tests: Avoid "misleading indentation" warnings.
-      kernel32/tests: Avoid "misleading indentation" warnings.
-      msscript/tests: Avoid "misleading indentation" warnings.
-      msvfw32/tests: Avoid "misleading indentation" warnings.
-      ntdll/tests: Avoid "misleading indentation" warnings.
-      ntoskrnl/tests: Avoid "misleading indentation" warnings.
-      ole32/tests: Avoid "misleading indentation" warnings.
-      oleaut32/tests: Avoid "misleading indentation" warnings.
-      oledb32/tests: Avoid "misleading indentation" warnings.
-      opcservices/tests: Avoid "misleading indentation" warnings.
-      gdi32/tests: Avoid "misleading indentation" warnings.
-      gdiplus/tests: Avoid "misleading indentation" warnings.
-      mf/tests: Avoid "misleading indentation" warnings.
-      mfplay/tests: Avoid "misleading indentation" warnings.
-      nsi/tests: Avoid "misleading indentation" warnings.
-      mlang/tests: Avoid "misleading indentation" warnings.
-      msi/tests: Avoid "misleading indentation" warnings.
-      msvcirt/tests: Avoid "misleading indentation" warnings.
+Esme Povirk (16):
+      include: Add ISymUnmanagedWriter definition.
+      diasymreader: Add stub dll.
+      diasymreader: Register CLSID_CorSymWriter_SXS.
+      mscoree: Update Wine Mono to 7.1.1.
+      mscoree: Use wide string syntax in create_monodata.
+      mscoree: Fix a misleading parameter name.
+      mscoree: Add support for unmanaged classes in .NET Framework.
+      diasymreader: Stub ISymUnmanagedWriter.
+      diasymreader: Stub ISymUnmanagedWriter5.
+      diasymreader: Return success from SymWriter_Initialize.
+      diasymreader: Implement SymWriter_GetDebugInfo.
+      diasymreader: Stub IPdbWriter.
+      diasymreader: Implement SymWriter_GetSignatureAge.
+      diasymreader: Return success from methods with no output variables.
+      diasymreader: Return success from SymWriter_OpenScope.
+      diasymreader: Stub ISymUnmanagedDocumentWriter.
 
-Florian Will (1):
-      gdiplus: Disable PNG encoding filters.
+Fabian Maurer (24):
+      mfplat/tests: Avoid "misleading indentation" warnings.
+      msacm32/tests: Avoid "misleading indentation" warnings.
+      propsys/tests: Avoid "misleading indentation" warnings.
+      psapi/tests: Avoid "misleading indentation" warnings.
+      quartz/tests: Avoid "misleading indentation" warnings.
+      riched20/tests: Avoid "misleading indentation" warnings.
+      rpcrt4/tests: Avoid "misleading indentation" warnings.
+      schedsvc/tests: Avoid "misleading indentation" warnings.
+      scrrun/tests: Avoid "misleading indentation" warnings.
+      secur32/tests: Avoid "misleading indentation" warnings.
+      setupapi/tests: Avoid "misleading indentation" warnings.
+      shell32/tests: Avoid "misleading indentation" warnings.
+      shlwapi/tests: Avoid "misleading indentation" warnings.
+      taskschd/tests: Avoid "misleading indentation" warnings.
+      user32/tests: Avoid "misleading indentation" warnings.
+      uxtheme/tests: Avoid "misleading indentation" warnings.
+      wbemdisp/tests: Avoid "misleading indentation" warnings.
+      wbemprox/tests: Avoid "misleading indentation" warnings.
+      wiaservc/tests: Avoid "misleading indentation" warnings.
+      windowscodecs/tests: Avoid "misleading indentation" warnings.
+      winhttp/tests: Avoid "misleading indentation" warnings.
+      wininet/tests: Avoid "misleading indentation" warnings.
+      ws2_32/tests: Avoid "misleading indentation" warnings.
+      xmllite/tests: Avoid "misleading indentation" warnings.
 
-Gabriel Ivăncescu (4):
-      ddraw: Use WINED3D_SWAPCHAIN_NO_WINDOW_CHANGES only if window is not in foreground.
-      ddraw: Use WINED3D_SWAPCHAIN_NO_WINDOW_CHANGES also if DDSCL_NOWINDOWCHANGES is set.
-      ddraw: Remove topmost style when going from exclusive mode to normal.
-      mshtml: Fix leak on failure in return_nsstr.
+Floris Renaud (1):
+      po: Update Dutch translation.
 
-Georg Lehmann (3):
-      winevulkan: Update to VK spec version 1.2.203.
-      winevulkan: Update to VK spec version 1.3.204.
-      winevulkan: Support Vulkan 1.3.
+Hans Leidekker (17):
+      wbemprox: Use CRT allocation functions.
+      wbemdisp: Use CRT allocation functions.
+      webservices: Use CRT allocation functions.
+      msi: Use CRT allocation functions.
+      msi/tests: Use CRT allocation functions.
+      kerberos: Build without -DWINE_NO_LONG_TYPES.
+      bcrypt: Build without -DWINE_NO_LONG_TYPES.
+      msi: Build without -DWINE_NO_LONG_TYPES.
+      msi/tests: Build without -DWINE_NO_LONG_TYPES.
+      msi/tests: Correctly free usersid.
+      winhttp/tests: Remove unused include.
+      winhttp/tests: Build without -DWINE_NO_LONG_TYPES.
+      winhttp: Build without -DWINE_NO_LONG_TYPES.
+      bcrypt/tests: Build without -DWINE_NO_LONG_TYPES.
+      dnsapi: Build without -DWINE_NO_LONG_TYPES.
+      msv1_0: Build without -DWINE_NO_LONG_TYPES.
+      mscms: Build without -DWINE_NO_LONG_TYPES.
 
-Gerald Pfeifer (1):
-      iphlpapi: Zero-init prefix_len to avoid a compiler warning.
+Henri Verbeet (9):
+      wined3d: Introduce a wined3d_bo_gl_unmap() helper.
+      wined3d: Use wined3d_bit_scan() in shader_generate_arb_declarations().
+      wined3d: Use wined3d_bit_scan() in shader_arb_generate_pshader().
+      d2d1: Return numeric configuration settings as uint32_t.
+      d2d1/tests: Pass the hash size as DWORD in compare_sha1().
+      d2d1/tests: Declare "level" as D3D_FEATURE_LEVEL in create_d3d11_device().
+      wined3d: Use the chunk allocator for GL indirect draw buffers.
+      d3d10: Return the read value from read_dword().
+      d3d10: Store the type fields in parse_fx10_type() as uint32_t.
 
-Giovanni Mascellani (2):
-      mfmediaengine: Fix a memory leak.
-      mfmediaengine: Add a IMFMediaEngineEx stub.
+Hugh McMaster (1):
+      kernelbase: Implement SetCurrentConsoleFontEx.
 
-Hans Leidekker (1):
-      msi: Use custom action name for MsiBreak handling.
+Huw D. M. Davies (1):
+      mountmgr: Fix long type warning.
 
-Henri Verbeet (30):
-      wined3d: Discard texture resources before unloading them in wined3d_texture_destroy_object().
-      wined3d: Use wined3d_mask_from_size() in wined3d_ffp_get_vs_settings().
-      wined3d: Use wined3d_mask_from_size() in wined3d_ffp_get_fs_settings().
-      wined3d: Properly compare integers in wined3d_pipeline_layout_vk_compare().
-      wined3d: Properly compare integers in wined3d_so_desc_compare().
-      wined3d: Properly compare integers in wined3d_bo_slab_vk_compare().
-      wined3d: Properly compare integers in wined3d_graphics_pipeline_vk_compare().
-      wined3d: Use wined3d_mask_from_size() in geometry_shader_init_stream_output().
-      wined3d: Use wined3d_mask_from_size() in find_ps_compile_args().
-      wined3d: Use wined3d_mask_from_size() in stateblock_savedstates_set_all().
-      d3d11/tests: Add some tests for ID3DUserDefinedAnnotation.
-      wined3d: Use wined3d_mask_from_size() in shader_glsl_store_uav().
-      wined3d: Use wined3d_mask_from_size() in shader_glsl_gather4().
-      wined3d: Use wined3d_mask_from_size() in shader_glsl_generate_stream_output_setup().
-      wined3d: Use wined3d_mask_from_size() in set_glsl_shader_program().
-      wined3d: Use wined3d_uint32_compare() in compare_sig().
-      wined3d: Use wined3d_uint32_compare() in glsl_program_key_compare().
-      wined3d: Use wined3d_bit_scan() in vshader_get_input().
-      wined3d: Use wined3d_bit_scan() in wined3d_device_process_vertices().
-      wined3d: Use wined3d_bit_scan() in context_update_stream_info().
-      wined3d: Get rid of a superfluous cast.
-      wined3d: Use wined3d_bit_scan() in context_preload_textures().
-      wined3d: Use wined3d_bit_scan() in draw_primitive_immediate_mode().
-      wined3d: Use wined3d_bit_scan() in wined3d_context_gl_map_fixed_function_samplers().
-      wined3d: Use wined3d_bit_scan() in set_glsl_shader_program().
-      wined3d: Use wined3d_bit_scan() in shader_glsl_load_constants_i().
-      wined3d: Use wined3d_bit_scan() in shader_glsl_load_constantsB().
-      wined3d: Use wined3d_bit_scan() in shader_generate_glsl_declarations().
-      wined3d: Use wined3d_bit_scan() in shader_glsl_generate_fragment_shader().
-      wined3d: Use wined3d_bit_scan() in shader_arb_load_np2fixup_constants().
+Jacek Caban (10):
+      server: Allocate extra_bytes separately from window struct.
+      server: Make window struct a server object.
+      server: Keep a reference to parent in window objects.
+      server: Don't immediately destroy child windows belonging to different thread in free_window_handle.
+      server: Don't allow orphaned windows in set_parent request.
+      server: Orphan child windows when unlinking them from parent.
+      server: Don't allow creating children of orphaned windows.
+      user32: Use a single lock in destroy_thread_windows.
+      user32: Destroy window server objects from destroy_thread_windows.
+      server: Store all 64 bits of window id.
 
-Huw D. M. Davies (4):
-      winepulse: Remove unused member "mute".
-      widl: Remove the uuid_t typedef which causes conflicts on macOS.
-      winepulse: Remove unnecessary alloc_size.
-      winecoreaudio: Remove unnecessary buffer sizes.
+Jactry Zeng (2):
+      dwmapi: Correct parameter types of DwmGetColorizationColor().
+      d2d1: Implement d2d_bitmap_CopyFromBitmap().
 
-Jacek Caban (2):
-      server: Use console_add_queue for console output.
-      user32: Remove _wassert workaround.
+Jan Sikorski (3):
+      wined3d: Use a separate heap for deferred resource upload buffers.
+      wined3d: Reinitialize query pool's free list entry when it runs out.
+      wined3d: Avoid waiting for a command buffer to finish executing to read off its queries.
 
-Jan Sikorski (19):
-      wined3d: Acquire depth/stencil state references for command lists by inspecting CS packets.
-      wined3d: Acquire rasterizer state references for command lists by inspecting CS packets.
-      wined3d: Acquire blend state references for command lists by inspecting CS packets.
-      wined3d: Acquire references to render-target views for command lists by inspecting CS packets.
-      wined3d: Acquire references to shader resource views for command lists by inspecting CS packets.
-      wined3d: Acquire references to unordered-access views for command lists by inspecting CS packets.
-      wined3d: Acquire references to depth/stencil views for command lists by inspecting CS packets.
-      wined3d: Acquire references to constant buffers for command lists by inspecting CS packets.
-      wined3d: Acquire references to cleared unordered-access views for command lists by inspecting CS packets.
-      wined3d: Acquire references to cleared render-target views for command lists by inspecting CS packets.
-      wined3d: Acquire references to indirect dispatch buffers for command lists by inspecting CS packets.
-      wined3d: Acquire references to indirect draw buffers for command lists by inspecting CS packets.
-      wined3d: Acquire references to index buffers for command lists by inspecting CS packets.
-      wined3d: Acquire references to stream output buffers for command lists by inspecting CS packets.
-      wined3d: Acquire references to vertex buffers for command lists by inspecting CS packets.
-      wined3d: Acquire references to updated resources for command lists by inspecting CS packets.
-      wined3d: Acquire references to blitted resources for command lists by inspecting CS packets.
-      wined3d: Acquire references to unordered-access view counter buffers for command lists by inspecting CS packets.
-      wined3d: Acquire references to mip-map generation shader resource views for command lists by inspecting CS packets.
+Jinoh Kang (4):
+      server: Allow calling async_handoff() with status code STATUS_ALERTED.
+      server: Attempt to complete I/O request immediately in recv_socket.
+      ntdll: Don't call try_recv before server call in sock_recv.
+      server: Replace redundant recv_socket status fields with force_async boolean field.
 
-Jinoh Kang (1):
-      ntdll/unix: Zero-extend IP_TOS byte to INT.
+Kevin Puetz (1):
+      winegcc: --out-implib needs to propagate -m32/-m64 to winebuild.
 
-Liam Murphy (1):
-      winmm/tests: Demonstrate that WOM_DONE is not invoked reentrantly.
+Matteo Bruni (9):
+      winhttp/tests: Fix typo in an ok() message.
+      d3dcompiler: Use more consistent integer data types.
+      d3d10: Get rid of a comment.
+      d3d10: Use more consistent integer data types.
+      d3dcompiler: Move read_u32() to a new utils.h private header.
+      d3d10: Use read_u32() implementation from d3dcompiler.
+      d3dcompiler: Move skip_u32_unknown() declaration to utils.h.
+      wined3d: Improve comment in wined3d_query_vk_issue().
+      wined3d: Skip non-color outputs in SM4 shader output mapping.
 
-Louis Lenders (2):
-      wbemprox: Add some properties of SoftwareLicensingProduct class.
-      ole32: Add stub for OleConvertIStorageToOLESTREAMEx.
+Michael Stefaniuc (19):
+      dmsynth/tests: Build without -DWINE_NO_LONG_TYPES.
+      dmusic/tests: Build without -DWINE_NO_LONG_TYPES.
+      dmsynth: Build without -DWINE_NO_LONG_TYPES.
+      dmusic: Build without -DWINE_NO_LONG_TYPES.
+      dmusic: Don't trace both the This and iface pointers.
+      dswave/tests: Build without -DWINE_NO_LONG_TYPES.
+      dswave: Build without -DWINE_NO_LONG_TYPES.
+      dmime: Fix the size of the DMUS_PORTPARAMS.
+      dmime: The soft synth doesn't supports sharing the channel groups.
+      dmsynth: Implement the synth's Open and Close methods.
+      dmsynth/tests: Add some synth Open/Close tests.
+      dmime/tests: Build without -DWINE_NO_LONG_TYPES.
+      dmime: Build without -DWINE_NO_LONG_TYPES.
+      dmband/tests: Build without -DWINE_NO_LONG_TYPES.
+      dmband: Build without -DWINE_NO_LONG_TYPES.
+      dmcompos/tests: Build without -DWINE_NO_LONG_TYPES.
+      dmloader/tests: Build without -DWINE_NO_LONG_TYPES.
+      dmscript/tests: Build without -DWINE_NO_LONG_TYPES.
+      dmstyle/tests: Build without -DWINE_NO_LONG_TYPES.
 
-Matteo Bruni (1):
-      d3dcompiler/tests: Use the relevant d3dcompiler version in blob tests.
+Nikolay Sivov (41):
+      scrrun: Fix long types warnings.
+      rtworkq: Fix long types warnings.
+      mf/tests: Remove remaining kernel32 heap calls.
+      wshom: Fix long types warnings.
+      evr: Fix long types warnings.
+      evr/presenter: Initial implementation of GetCurrentImage().
+      xmllite: Fix long types warnings.
+      d3d11: Always initialize out view pointer in CreateShaderResourceView().
+      d3d11: Always initialize out view pointer in CreateUnorderedAccessView().
+      d3d11: Always initialize out view pointer in CreateDepthStencilView().
+      t2embed: Fix long types warnings.
+      scrrun/tests: Add some tests for DoOpenPipeStream().
+      evr/mixer: Remove incorrect trace.
+      kernel32: Add messages for some of the WSA error codes.
+      msxml3: Fix long types warnings in traces.
+      dxva2: Fix long types warnings in traces.
+      dbgeng: Fix long types warnings in traces.
+      comctl32: Fix long types warnings in traces.
+      rtworkq/tests: Build without WINE_NO_LONG_TYPES.
+      xmllite/tests: Build without WINE_NO_LONG_TYPES.
+      mshtml: Implement layerX/layerY properties for mouse event.
+      combase: Build without WINE_NO_LONG_TYPES.
+      ole32: Build without WINE_NO_LONG_TYPES.
+      evr/tests: Build without WINE_NO_LONG_TYPES.
+      dbgeng/tests: Build without -DWINE_NO_LONG_TYPES.
+      include: Update another HRESULT definition.
+      opcservices: Build without -DWINE_NO_LONG_TYPES.
+      opcservices/tests: Build without -DWINE_NO_LONG_TYPES.
+      mfplat: Remove duplicated includes.
+      mfplat: Implement MFCreateTempFile().
+      mfplat: Better handle source resolution when content type is not specified for the stream.
+      mfplay: Use resolver functionality for content type resolution.
+      mfmediaengine: Use resolver functionality for content type resolution.
+      mfreadwrite/reader: Use resolver functionality for content type resolution.
+      mfplat: Implement MFAverageTimePerFrameToFrameRate().
+      wshom/tests: Build without -DWINE_NO_LONG_TYPES.
+      scrrun/tests: Build without -DWINE_NO_LONG_TYPES.
+      shcore: Build without -DWINE_NO_LONG_TYPES.
+      combase/tests: Build without -DWINE_NO_LONG_TYPES.
+      mfplay/tests: Build without -DWINE_NO_LONG_TYPES.
+      mfreadwrite/reader: Stop media source when shutdown is not allowed.
 
-Michael Stefaniuc (17):
-      dmsynth: Drop "synth" from the synth_sink field.
-      dmsynth: Activate the sink from the synth Activate() method.
-      dmsynth: Avoid hungarian notation in the synth object.
-      dmsynth: Disconnect old sink, addref and init new sink.
-      dmusic: Call SetSynkSink() first to initialize the Synth.
-      dmsynth: Pass the master clock on to the sink.
-      dmusic: Get rid of the SynthPortImpl typedef.
-      dmusic: Remove SynthPortImpl from the method and vtbl names.
-      dmusic/tests: Fix an object leak.
-      dmusic: Send the master clock to the synth and not a latency clock.
-      dmusic: The synth port needs to get the latency clock from the synth.
-      dmsynth: Implement SetMasterClock() for the sink.
-      dmsynth: Implement the sink Init method.
-      dmusic: Implement the E_NOTIMPL methods of the synth port.
-      dmsynth: Add error handling to the synth GetPortCaps method.
-      dmusic: Forward the synth port GetCaps to the synth method.
-      dmusic/tests: Add some initial synth port tests.
+Paul Gofman (22):
+      hnetcfg: Use CRT allocation functions.
+      hnetcfg/tests: Add tests for static port mapping collection.
+      hnetcfg: Return stub interface from upnpnat_get_StaticPortMappingCollection() if UPNP IGD is found.
+      hnetcfg: Get gateway description location in init_gateway_connection().
+      hnetcfg: Open connection to gateway in init_gateway_connection().
+      hnetcfg: Get control URL for WANIPConnection service in init_gateway_connection().
+      win32u: Use get_dc_obj() in GetDCHook() and SetDCHook().
+      hnetcfg: Fix realloc handling in fw_app_put_ProcessImageFileName().
+      hnetcfg: Get port mapping list in init_gateway_connection().
+      hnetcfg: Implement static_ports_get_Item().
+      hnetcfg: Implement static_ports_get_Count().
+      hnetcfg: Implement static_ports__NewEnum().
+      hnetcfg: Implement static_ports_Remove().
+      hnetcfg: Implement static_ports_Add().
+      winhttp: Use lock when attempting to send frame synchronously().
+      hnetcfg: Don't use _GetValue() if text element is missing in get_xml_elements().
+      hnetcfg: Handle NULL strings in update_mapping_list().
+      hnetcfg/tests: Don't leak IEnumVARIANT reference in test_static_port_mapping_collection().
+      hnetcfg/tests: Don't test removing the same mapping twice.
+      server: Always update cached socket name after connect.
+      ws2_32: Trace status on operation failure.
+      wined3d: Use StretchBlt() in swapchain_blit_gdi().
 
-Nikolay Sivov (44):
-      dwrite/tests: Use CRT memory allocation functions.
-      mfplat: Implement MFTGetInfo().
-      mfreadwrite/tests: Use CRT allocation functions.
-      dwrite: Implement GetMatchingFontsByLOGFONT().
-      dwrite: Move text format object implementation to a separate file.
-      mf/samplegrabber: Cancel pending sample timer.
-      mfmediaengine: Add IMFGetService stub.
-      mfmediaengine/tests: Do not use stack variables for async notification callbacks.
-      d3d10/effect: Add a structure to keep shader variables references.
-      d3d10/effect: Add arrays for all state variables.
-      d3d10/effect: Store state variables references in their own arrays.
-      d3d10/effect: Fix iteration in GetBackingStore() for sampler states.
-      d3d10/effect: Fix iteration in GetBackingStore() for blend states.
-      include: Fixup DWRITE_COLOR_GLYPH_RUN1 definition.
-      dwrite: Partially implement newer TranslateColorGlyphRun() variant.
-      dwrite/tests: Use a better invalid value to make a test pass reliably.
-      comctl32/listview: Add partial implementation of LVM_GETNEXTITEMINDEX.
-      wshom: Use CRT allocation functions.
-      d3d10/effect: Fix iteration in GetBackingStore() for depth stencil states.
-      d3d10/effect: Fix iteration in GetBackingStore() for rasterizer states.
-      d3d10/effect: Fix index access in GetSampler().
-      d3d10/effect: Fix index access in GetRasterizerState().
-      d3d10/effect: Fix index access in GetDepthStencilState().
-      d3d10/effect: Fix index access in GetBlendState().
-      version: Use same Windows 10 build number for version information.
-      scrrun: Use CRT allocation functions.
-      scrrun/dictionary: Remove typedef from object data type.
-      mf: Move standard quality manager stub to a separate file.
-      mf/tests: Add another format to Video Processor supported formats list.
-      mfreadwrite/reader: Add m4v format magic.
-      shell32: Ignore KF_FLAG_NOT_PARENT_RELATIVE in SHGetKnownFolderPath().
-      d3dcompiler: Implement D3DWriteBlobToFile().
-      d3d10/tests: Add a test with fx_4_1 binary.
-      mfmediaengine: Implement SetSourceFromByteStream().
-      mfmediaengine: Implement audio renderer configuration methods.
-      comctl32/tests: Add some tests for TBBUTTON.iBitmap for separators.
-      include: Add some ListView flags.
-      mfmediaengine: Handle shutdown state in GetCurrentSource().
-      mfmediaengine: Handle shutdown state in Play().
-      mfmediaengine: Handle shutdown state in Pause().
-      mfmediaengine: Handle shutdown state in GetBuffered().
-      mfmediaengine: Handle shutdown state in a few stubs.
-      mfmediaengine: Improve AddRange() behavior for intersecting ranges.
-      dwrite/tests: Remove remaining kernel32 heap calls.
+Piotr Caban (29):
+      msvcrt: Fix fmaf not to depend on rounding mode.
+      msvcrt: Don't set SSE control word in _except1.
+      msvcrt: Don't use fegetenv in nearbyint.
+      msvcrt: Don't use fegetenv in nearbyintf.
+      msvcrt: Use InitOnceExecuteOnce to allocate TLS index.
+      ucrtbase: Add support for r-value demangling in unDName.
+      msvcrt: Use %#I64x format in traces.
+      msvcrt: Print 0x prefix with %#x format in traces.
+      msvcp: Print 0x prefix with %#x format in traces.
+      msvcp60: Use %Id format when tracing streamoff and streamsize.
+      msvcp60: Remove STREAMSIZE_BITS definition.
+      msvcp60: Remove code specific to newer versions of the dll.
+      msvcp: Remove typos in mangled names.
+      msvcp90: Remove STREAMSIZE_BITS definition.
+      msvcp60: Remove basic_stringstream<wchar> code.
+      msvcp60: Remove basic_istringstream<wchar> code.
+      msvcp60: Remove basic_ostringstream<wchar> code.
+      msvcp60: Remove basic_fstream<wchar> code.
+      msvcp60: Remove basic_ifstream<wchar> code.
+      msvcp60: Remove basic_ofstream<wchar> code.
+      msvcp60: Remove basic_iostream<wchar> code.
+      msvcp60: Remove basic_istream<wchar> code.
+      msvcp60: Remove basic_ostream<wchar> code.
+      msvcp60: Remove basic_streambuf<wchar> code.
+      msvcp60: Remove basic_filebuf<wchar> code.
+      msvcp60: Remove basic_streambuf<wchar> code.
+      msvcp60: Remove basic_ios<wchar> code.
+      msvcp60: Add missing exports.
+      msvcp60: Remove unused functions from ios.c file.
 
-Paul Gofman (39):
-      concrt140: Add ?_Byte_reverse_table@details@Concurrency@@3QBEB data export.
-      msvcp110: Add ?_Byte_reverse_table@details@Concurrency@@3QBEB data export.
-      msvcp120: Add ?_Byte_reverse_table@details@Concurrency@@3QBEB data export.
-      winhttp/tests: Also test async websockets with secure connection.
-      winhttp: Use separate SSL read and write buffers.
-      winhttp: Use a buffer for sending frame in send_frame().
-      winhttp: Allow receive on shutdown web socket.
-      winhttp: Consider short read from netconn_recv() in receive_bytes().
-      winhttp: Drain frames until close frame in socket_close().
-      winhttp: Factor out socket_send_complete() function.
-      winhttp: Count queued websocket send operations.
-      winhttp: Allow synchronous nonblocking send in WinHttpWebSocketSend() when possible.
-      server: Release correct sockets in poll_socket().
-      winhttp: Return ERROR_INVALID_OPERATION when websocket is in the wrong state.
-      winhttp: Set socket state to shutdown right away in WinHttpWebSocketShutdown().
-      winhttp: Factor out send_socket_shutdown() function.
-      winhttp: Use send_socket_shutdown() in WinHttpWebSocketClose().
-      winhttp: Move close callback call to task_socket_close().
-      winhttp: Factor out receive_close_status() function.
-      winhttp: Process server close frame in handle_control_frame().
-      winhttp/tests: Test closing websocket when receive is pending.
-      winhttp: Set socket close state in WinHttpWebSocketClose().
-      winhttp: Move receive callback call to task_socket_receive().
-      winhttp: Count queued websocket receive operations.
-      winhttp: Send callback for pending receives right away when closing websocket.
-      winhttp: Return error from WinHttpWebSocketQueryCloseStatus() if close frame was not received.
-      winhttp: Remove an extra pending_sends increment in WinHttpWebSocketSend().
-      winhttp: Append mask to output frame even if buffer length is zero.
-      winhttp: Attemp sync websocket send even if data doesn't fit SSL buffer.
-      winhttp: Attemp sync websocket send even if data doesn't fit frame buffer.
-      winhttp: Allow synchronous nonblocking send in send_socket_shutdown().
-      winhttp: Allow synchronous nonblocking send in socket_send_pong().
-      winhttp: Pass server initiated websocket close request to application.
-      winhttp/tests: Test shutting down websocket when receive is pending.
-      winhttp: Don't mind socket state in WinHttpWebSocketQueryCloseStatus().
-      winhttp: Factor out socket_close_complete() function.
-      winhttp: Don't queue socket_close() in WinHttpWebSocketClose() if close frame is already received.
-      winhttp: Don't allow socket transfers after receiving close frame.
-      winhttp: Don't allow queueing websocket receive if another is pending.
+Rémi Bernon (35):
+      windows.gaming.input/tests: Fix printf warnings with long types.
+      xinput1_3/tests: Fix printf warnings with long types.
+      winebus.sys: Fix warnings with long integer types.
+      hid: Fix printf format warnings with long types.
+      hid: Use msvcrt allocation functions.
+      user32/tests: Tweak window size to fix Win10 results.
+      user32/tests: Ignore messages for UserAdapterWindowClass windows.
+      user32/tests: Add proper tests for SetActiveWindow(0).
+      user32/tests: Add some possible broken results on Win7.
+      hidclass.sys: Fix printf format warnings with long types.
+      winehid.sys: Fix printf format warnings with long types.
+      winehid.sys: Build with nameless unions.
+      winegstreamer: Stub implement WMA decoder DMO / MF transform.
+      winegstreamer: Implement WMA decoder IMFTransform_SetInputType.
+      winegstreamer: Implement WMA decoder GetOutputAvailableType.
+      winegstreamer: Implement WMA decoder SetOutputType.
+      winegstreamer: Implement WMA decoder GetOutputStreamInfo.
+      winegstreamer: Implement WMA decoder GetInputStreamInfo.
+      dinput/tests: Merge dinput8.c tests with dinput.c.
+      dinput/tests: Add some CoCreateInstance and aggregation tests.
+      dinput: Cleanup DllGetClassObject and IClassFactory implementation.
+      dinput: Cleanup IDirectInputJoyConfig8 names and traces.
+      dinput: Cleanup IDirectInput7W names and traces.
+      dinput: Cleanup IDirectInput8W names and traces.
+      user32/tests: Move test_mdi early in the test list.
+      dinput: Rename IDirectInputImpl to struct dinput.
+      dinput: Use consistent parameter names and types.
+      dinput: Canonicalize DirectInput(8) instance creation.
+      dinput: Fix printf warnings with long types.
+      dinput/tests: Fix printf warnings with long types.
+      user32/tests: Add a test for child window destruction on thread exit.
+      mf/tests: Add some WMA encoder ProcessOutput tests.
+      mf/tests: Add some WMA decoder ProcessInput tests.
+      mf/tests: Add some WMA decoder ProcessOutput tests.
+      mfreadwrite/reader: Use separate refcount for events callbacks.
 
-Piotr Caban (2):
-      msvcrt: Add support for demangling char{8,16,32}_t types.
-      msvcrt: Fix Pi constants while computing acosf.
+Stefan Dösinger (13):
+      d3d9/tests: Try to make test_cursor_pos more reliable.
+      d3d8/tests: Try to make test_cursor_pos more reliable.
+      d3d9/tests: Skip test_cursor_pos if we can't move the cursor.
+      d3d8/tests: Skip test_cursor_pos if we can't move the cursor.
+      d3d9/tests: Ignore random testbot failures in test_cursor.
+      d3d8/tests: Ignore random testbot failures in test_cursor.
+      ddraw/tests: Skip a crashy test on WARP.
+      ddraw/tests: Disable color keying in ddraw1 test_texture_load.
+      ddraw/tests: Mark random WARP behavior broken in test_ck_default.
+      include: InterlockedExchangeAdd64 msvc intrinsic does not exist in x86.
+      include: Remove an incorrect InterlockedCompareExchange128 function.
+      makedep: Fix some signed vs unsigned msvc warnings.
+      ddraw/tests: Account for random WARP behavior in test_texturemapblend.
 
-Piotr Kleski (1):
-      bcrypt: Return BCryptSignHash len when only output is NULL.
+Zebediah Figura (102):
+      tiff: Explictly link to zlib.
+      ntdll: Implement wcsnlen().
+      kernelbase: Use wcsnlen().
+      kernelbase: Use ntdll ctype functions.
+      wined3d: Allow DISCARD maps to be accelerated even on 32-bit architectures.
+      user32: Remove no longer needed assert() workarounds for MinGW.
+      wininet: Use CHAR_BIT from msvcrt limits.h.
+      winsta: Remove useless IDL attributes from TS_ALL_PROCESSES_INFO.
+      user32/tests: Remove unnecessary redefinitions of SPI_GETDESKWALLPAPER.
+      ws2_32/tests: Add tests for WSAStartup().
+      ws2_32: Always fill the WSADATA structure in WSAStartup().
+      ws2_32: Cap the negotiated winsock version to 1.1 or 2.2.
+      ws2_32: Return 32767 or 0 in the iMaxSockets field.
+      ws2_32: Return 65467 or 0 in the iMaxUdpDg field.
+      ws2_32: Return WSAEFAULT instead of WSAEINVAL from WSAStartup() if "data" is NULL.
+      shell32: Move file menu definitions to shlmenu.c.
+      shell32: Move PIDL definitions from undocshell.h to pidl.h.
+      shell32: Do not redefine SHCNRF_* flags.
+      shell32: Move dialog definitions to dialog.c.
+      shell32: Move IShellFolderViewCB definitions to shlview.c.
+      quartz/vmr9: Get rid of a broken check for hardware acceleration support in VMR9DefaultAllocatorPresenterImpl_create().
+      quartz/vmr9: Pass the already retrieved caps pointer to VMR9_SurfaceAllocator_SetAllocationSettings().
+      quartz/filtergraph: Implement the IDispatch methods for IMediaControl.
+      quartz/filtergraph: Implement the IDispatch methods for IMediaPosition.
+      quartz/filtergraph: Implement the IDispatch methods for IMediaEvent.
+      devenum: Build without -DWINE_NO_LONG_TYPES.
+      shell32: Move SHWaitForFileToOpen() flags to shellord.c.
+      shell32: Move RegisterShellHook() definitions to shellord.c.
+      shell32: Move SHCreateLinks() flags to shlfolder.c.
+      shell32: Move explorer window messages definitions to shell32_main.h.
+      shell32: Move StrRetToStrN*() helpers to shell32_main.h.
+      quartz/tests: Test more interfaces exposed by the filter graph.
+      quartz/filtergraph: Remove "#if 1" from CheckCircularConnection().
+      quartz/filtergraph: Remove redundant checks for pin direction from CheckCircularConnection().
+      quartz/filtergraph: Clean up CheckCircularConnection().
+      opencl: Rename cl_{enums,types} to header_{enums,types}.
+      opencl: Factor out parse_feature().
+      opencl: Export unsuffixed KHR_gl_sharing functions.
+      winegstreamer: Build without -DWINE_NO_LONG_TYPES.
+      winegstreamer: Constify some static variables.
+      shlwapi: Use the public definition of shared shell memory allocation functions.
+      shell32: Remove redundant definitions of undocumented shell functions.
+      shell32/tests: Remove pointless redefinition of FOF_NORECURSION.
+      quartz: Build without -DWINE_NO_LONG_TYPES.
+      quartz: Use IMemAllocator::GetBuffer() directly.
+      winegstreamer: Use IMemAllocator::GetBuffer() directly.
+      amstream/tests: Use IMemAllocator::GetBuffer() directly.
+      qcap/vfwcapture: Allow changing state while unconnected.
+      qcap: Use IMemAllocator::GetBuffer() and IMediaSample::SetTime() directly.
+      strmbase: Remove the no longer used BaseOutputPinImpl_GetDeliveryBuffer() helper.
+      ws2_32: Avoid an unnecessary goto.
+      ws2_32: Build without -DWINE_NO_LONG_TYPES.
+      d2d1/tests: Don't run the 32-bit tests multithreaded.
+      d3d10core/tests: Don't run the 32-bit tests multithreaded.
+      d3d11/tests: Don't run the 32-bit tests multithreaded.
+      dxgi/tests: Don't run the 32-bit tests multithreaded.
+      setupapi/tests: Test queuing the same copy operation twice.
+      setupapi/tests: Add more tests for SetupInstallFilesFromInfSection().
+      setupapi: Use the source path if the target path is missing in SetupQueueRename().
+      setupapi: Also handle DelFiles and RenFiles directives in SetupInstallFilesFromInfSection().
+      setupapi: Use SetupInstallFilesFromInfSectionW() in SetupInstallFromInfSectionW().
+      d3dx9: Implement D3DXSHProjectCubeMap().
+      winegstreamer: Release stream_cs on error in stream_thread().
+      qcap: Use CoCreateInstance() directly instead of BaseOutputPinImpl_InitAllocator().
+      amstream/tests: Use CoCreateInstance() directly instead of BaseOutputPinImpl_InitAllocator().
+      strmbase: Get rid of the BaseOutputPinImpl_InitAllocator() helper.
+      maintainers: Remove wineqtdecoder.
+      strmbase: Build without -DWINE_NO_LONG_TYPES.
+      wined3d: Use the chunk allocator for GL atomic counter buffers.
+      wined3d: Use the chunk allocator for GL pixel unpack buffers.
+      qasf: Build without -DWINE_NO_LONG_TYPES.
+      qcap: Build without -DWINE_NO_LONG_TYPES.
+      qdvd: Build without -DWINE_NO_LONG_TYPES.
+      shlwapi/tests: Link directly to Url*() functions.
+      shlwapi/tests: Get rid of the redundant "expectret" field of TEST_URL_CANONICALIZE.
+      shlwapi/tests: Get rid of the redundant "expectret" field of TEST_URL_COMBINE.
+      shlwapi/tests: Get rid of the redundant "expectret" and "expectescaped" fields of TEST_ESCAPE.
+      shlwapi/tests: Get rid of the redundant "expectret" field of TEST_ESCAPEW.
+      d3dx9: Return D3DERR_INVALIDCALL from ID3DXEffect::BeginPass() if the effect is not started.
+      d3dx9: Pass the "flags" argument to D3DXFXCreateEffectEx() as compiler flags, not effect flags.
+      d3dx9: Don't mark annotation variables as dirty.
+      d3dx9/tests: Test setting annotation values.
+      qedit: Build without -DWINE_NO_LONG_TYPES.
+      wined3d: Use the chunk allocator for GL texture buffers.
+      wined3d: Use the chunk allocator for GL uniform buffers.
+      ws2_32/tests: Cancel a call that currently incorrectly returns STATUS_PENDING.
+      wined3d: Initialize map_ptr to NULL in wined3d_context_vk_create_slab_bo().
+      wined3d: Set resource->client.addr in buffer_resource_sub_resource_map() only if persistently mapping.
+      wined3d: Call wined3d_context_unmap_bo_address() when updating a buffer BO.
+      ws2_32/tests: Use winetest_push_context() in test_WSAStringToAddress().
+      ws2_32/tests: Do not use a loop to test ASCII and Unicode in test_WSAAddressToString().
+      ws2_32/tests: Use winetest_push_context() in test_WSAAddressToString().
+      ws2_32/tests: Use winetest_push_context() in test_inet_pton().
+      include: Define NTSTATUS fields using int in afd.h.
+      shlwapi/tests: Remove workarounds from url.c for no longer supported Windows versions.
+      shlwapi/tests: Use wide character string literals in url.c.
+      shlwapi/tests: Simplify length calculation in test_UrlApplyScheme().
+      shlwapi/tests: Put the UrlGetPart() tests in a table.
+      shlwapi/tests: Add more tests for UrlGetPart().
+      wined3d: Always set map_ptr for mapped OpenGL BOs.
+      wined3d: Introduce wined3d_lock_init() and wined3d_lock_cleanup() helpers.
+      wined3d: Always submit UPDATE_SUB_RESOURCE ops when uploading if not mapping persistently.
 
-Robert Wilhelm (2):
-      scrrun: Add test for GetTempName.
-      scrrun: Generate temp name with tmp suffix.
-
-Rémi Bernon (36):
-      dinput/tests: Load the test driver in the WinePlugPlay group.
-      include: Define MEDIASUBTYPE_MSAUDIO1 in wmcodecdsp.idl.
-      mf/tests: Simplify static media type definition.
-      mf/tests: Add some WMA decoder creation tests.
-      dinput/tests: Add some tests for DIERR_INPUTLOST conditions.
-      dinput: Introduce new is_exclusively_acquired helper.
-      dinput: Use an enumeration instead of BOOL for acquired status.
-      dinput: Return DIERR_INPUTLOST when device is removed.
-      mf/tests: Add some WMA encoder creation tests.
-      mf/tests: Add some WMA encoder ProcessInput tests.
-      mf/tests: Add some WMA decoder SetInputType tests.
-      mf/tests: Add some WMA decoder SetOutputType tests.
-      mf/tests: Add some WMA decoder GetInputAvailableType tests.
-      mf/tests: Add some WMA decoder GetOutputAvailableType tests.
-      widl: Do not generate C++ enum typedefs in WinRT mode.
-      widl: Clarify declaration type names vs (reference) type names.
-      widl: Fix nested parameterized types C / short name output.
-      widl: Use "string" for HSTRING in signatures for generated UUID.
-      widl: Fix sign handling in parameterized types signatures.
-      mf/tests: Add some WMA decoder GetInputStreamInfo tests.
-      mf/tests: Add some WMA decoder GetOutputStreamInfo tests.
-      setupapi/tests: Add possible test_need_media results for Win10.
-      setupapi/tests: Add some service installation flags tests.
-      wine.inf: Start PlugPlay service on prefix initialization.
-      dinput/tests: Add some RegisterDeviceNotificationA and hotplug tests.
-      wine.inf: Start EventLogService on prefix initialization.
-      plugplay: Use ncacn_np instead of ncalrpc transport.
-      include: Add more WMA GUIDs to wmcodecdsp.idl.
-      wmadmod: Introduce new DLL and tests.
-      user32: Add a filter member to device_notification_details.
-      user32: Remove FIXME from RegisterDeviceNotificationA.
-      sechost: Support device interface notifications filtering.
-      ntoskrnl.exe: Enforce path case in WM_DEVICECHANGE notifications.
-      xinput1_3: Fix printf format warnings with long types.
-      windows.gaming.input: Fix printf format warnings with long types.
-      winexinput.sys: Fix warnings from long integer types.
-
-Stefan Dösinger (9):
-      d3d11/tests: Disable cross-device ContextState tests.
-      d3d11/tests: Ignore random WARP failures in test_pipeline_statistics_query.
-      d3d9/tests: Accept Nvidia results in test_sample_mask as broken.
-      d3d8/tests: Accept Nvidia results in test_sample_mask as broken.
-      d3d8/tests: Accept a broken Windows 10 20H? result.
-      d3d8/tests: Accept new WARP test failure in test_updatetexture().
-      ddraw/tests: Accept broken depth readback of new-ish AMD GPUs.
-      ddraw/tests: Treat refresh rates with 1 hz difference as equal.
-      ddraw/tests: Don't insist on a different refresh rate if no refresh rate was requested.
-
-Tim Clem (8):
-      winemac.drv: Allow foregrounding WS_EX_NOACTIVATE windows.
-      winemac.drv: Use Cocoa nonactivating panels for WS_EX_NOACTIVATE windows.
-      winemac.drv: Don't activate the app if its first window is WS_EX_NOACTIVATE.
-      winemac.drv: Factor out cursor clipping code to its own class.
-      winemac.drv: Create a protocol to represent a cursor clipping handler.
-      winemac.drv: Factor common cursor clipping methods into functions.
-      winemac.drv: Add a cursor clipping implementation using -setMouseConfinementRect:.
-      winemac.drv: Use -setMouseConfinementRect: for cursor clipping by default.
-
-Zebediah Figura (11):
-      winhttp: Remove unused ole32 import.
-      d3d11: Implement ID3D11RasterizerState1.
-      d3d11: Implement ID3D11Device1::CreateRasterizerState1().
-      server: Allocate enough space for the backslash in dup_nt_name() (Valgrind).
-      d3d11: Report D3D11_FORMAT_SUPPORT_IA_VERTEX_BUFFER.
-      d3d11: Report D3D11_FORMAT_SUPPORT_IA_INDEX_BUFFER.
-      wined3d: Handle structured buffers in wined3d_unordered_access_view_vk_clear().
-      include: Define InterlockedExchangeAdd64() and InterlockedExchangeAddSizeT().
-      wined3d: Use wined3d_buffer_load_location() in wined3d_buffer_get_memory().
-      wined3d: Prefer mapping a BO if the buffer has WINED3D_BUFFER_USE_BO set.
-      wined3d: Introduce WINED3D_LOCATION_CLEARED and use it for the initial state of buffers.
-
-Zhiyi Zhang (20):
-      comctl32/listview: Support themed check boxes for LVS_EX_CHECKBOXES style.
-      comctl32/treeview: Support themed check boxes for TVS_CHECKBOXES style.
-      comctl32/status: Remove redundant background drawing code.
-      comctl32/status: Calculate border for part background only when theming is off.
-      comctl32/status: Do not draw background for status text.
-      uxtheme/tests: Add EnableThemeDialogTexture() tests.
-      comctl32/tests: Remove WM_CTLCOLORSTATIC tests for static controls.
-      comctl32/tests: Remove WM_CTLCOLORSTATIC tests for property sheets.
-      uxtheme: Do not call SetWindowTheme() in EnableThemeDialogTexture().
-      uxtheme: Make IsThemeDialogTextureEnabled() return TRUE for all valid flags without ETDT_DISABLE.
-      uxtheme: Allow EnableThemeDialogTexture() to set flags in multiple steps.
-      uxtheme: Hook DefDlgProc() for dialog theming.
-      comctl32/button: Enable parent dialog tab texture.
-      comctl32/static: Enable parent dialog tab texture.
-      comctl32/propsheet: Handle page dialog tab texture in DefDlgProc().
-      user32: Avoid recalculating the non-client hit-test value for NC_HandleNCMouseMove().
-      user32/tests: Test painting standard scroll bars in hovered state.
-      user32: Draw standard scroll bars in hovered state only when they were previously painted by DefWinProc().
-      uxtheme: Search TMT_IMAGEFILE1~7 first when drawing background for parts without glyph images.
-      uxtheme: Do not resize source image even if destination is smaller than sizing margins.
+Zhiyi Zhang (24):
+      comctl32/treeview: Support HiDPI for unthemed item check boxes.
+      comctl32/treeview: Use DFCS_MONO style for item check boxes.
+      uxtheme/tests: Test more WM_CTLCOLOR* messages for dialog theming.
+      uxtheme: Use tab background as dialog texture for more WM_CTLCOLOR* messages.
+      comctl32/tests: Add themed background tests.
+      comctl32/trackbar: Always use brush from WM_CTLCOLORSTATIC to fill background.
+      comctl32/button: Use the brush from WM_CTLCOLORBTN to fill background for push buttons.
+      comctl32/button: Use the brush from WM_CTLCOLORSTATIC to fill background for checkboxes and radio buttons.
+      comctl32/button: Use the brush from WM_CTLCOLORSTATIC to fill text background for group boxes.
+      comctl32/tests: Fix occasional test failures on TestBot w7u_2qxl.
+      comctl32/tab: Always draw parent background when themed.
+      user32/tests: Test scroll bars use COLOR_BTNFACE instead of COLOR_SCROLLBAR to fill background.
+      user32: Use COLOR_BTNFACE to fill scroll bar background.
+      uxtheme: Use COLOR_BTNFACE to fill scroll bar background.
+      comctl32/treeview: Do not draw client edge without WS_EX_CLIENTEDGE.
+      comctl32/button: Use pressed state when a pushlike checkbox or radio button is checked and hovered.
+      light.msstyles: Use stretch sizing type for scroll bar arrow button background.
+      light.msstyles: Adjust scroll bar arrow width and height to 17 pixels.
+      light.msstyles: Fill checkbox background with white pixels.
+      light.msstyles: Fill radio button background with white pixels.
+      light.msstyles: Fill combo box background with white pixels.
+      light.msstyles: Do not use transparent tab pane edges.
+      light.msstyles: Do not use transparent edges for trackbar horizontal and vertical thumb.
+      light.msstyles: Do not use transparent treeview parts.
 
 --
 Alexandre Julliard
