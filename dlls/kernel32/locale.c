@@ -384,7 +384,7 @@ INT WINAPI GetGeoInfoA(GEOID geoid, GEOTYPE geotype, LPSTR data, int data_len, L
     WCHAR *buffW;
     INT len;
 
-    TRACE("%d %d %p %d %d\n", geoid, geotype, data, data_len, lang);
+    TRACE("%ld %ld %p %d %d\n", geoid, geotype, data, data_len, lang);
 
     len = GetGeoInfoW(geoid, geotype, NULL, 0, lang);
     if (!len)

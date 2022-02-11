@@ -290,10 +290,10 @@ HANDLE WINAPI CreateToolhelp32Snapshot( DWORD flags, DWORD process )
     ULONG               num_pcs, num_thd, num_mod;
     HANDLE              hSnapShot = 0;
 
-    TRACE("%x,%x\n", flags, process );
+    TRACE("%lx,%lx\n", flags, process );
     if (!(flags & (TH32CS_SNAPPROCESS|TH32CS_SNAPTHREAD|TH32CS_SNAPMODULE)))
     {
-        FIXME("flags %x not implemented\n", flags );
+        FIXME("flags %lx not implemented\n", flags );
         SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
         return INVALID_HANDLE_VALUE;
     }
@@ -349,7 +349,7 @@ static BOOL next_thread( HANDLE hSnapShot, LPTHREADENTRY32 lpte, BOOL first )
     if (lpte->dwSize < sizeof(THREADENTRY32))
     {
         SetLastError( ERROR_INSUFFICIENT_BUFFER );
-        WARN("Result buffer too small (%d)\n", lpte->dwSize);
+        WARN("Result buffer too small (%ld)\n", lpte->dwSize);
         return FALSE;
     }
     if ((snap = MapViewOfFile( hSnapShot, FILE_MAP_ALL_ACCESS, 0, 0, 0 )))
@@ -404,7 +404,7 @@ static BOOL process_next( HANDLE hSnapShot, LPPROCESSENTRY32W lppe,
     if (lppe->dwSize < sz)
     {
         SetLastError( ERROR_INSUFFICIENT_BUFFER );
-        WARN("Result buffer too small (%d)\n", lppe->dwSize);
+        WARN("Result buffer too small (%ld)\n", lppe->dwSize);
         return FALSE;
     }
     if ((snap = MapViewOfFile( hSnapShot, FILE_MAP_ALL_ACCESS, 0, 0, 0 )))
@@ -494,7 +494,7 @@ static BOOL module_nextW( HANDLE hSnapShot, LPMODULEENTRY32W lpme, BOOL first )
     if (lpme->dwSize < sizeof (MODULEENTRY32W))
     {
         SetLastError( ERROR_INSUFFICIENT_BUFFER );
-        WARN("Result buffer too small (was: %d)\n", lpme->dwSize);
+        WARN("Result buffer too small (was: %ld)\n", lpme->dwSize);
         return FALSE;
     }
     if ((snap = MapViewOfFile( hSnapShot, FILE_MAP_ALL_ACCESS, 0, 0, 0 )))
@@ -546,7 +546,7 @@ static BOOL module_nextA( HANDLE handle, LPMODULEENTRY32 lpme, BOOL first )
     if (lpme->dwSize < sizeof(MODULEENTRY32))
     {
         SetLastError( ERROR_INSUFFICIENT_BUFFER );
-        WARN("Result buffer too small (was: %d)\n", lpme->dwSize);
+        WARN("Result buffer too small (was: %ld)\n", lpme->dwSize);
         return FALSE;
     }
 

@@ -72,7 +72,7 @@ HANDLE WINAPI OpenConsoleW(LPCWSTR name, DWORD access, BOOL inherit, DWORD creat
 {
     SECURITY_ATTRIBUTES sa;
 
-    TRACE("(%s, 0x%08x, %d, %u)\n", debugstr_w(name), access, inherit, creation);
+    TRACE("(%s, 0x%08lx, %d, %lu)\n", debugstr_w(name), access, inherit, creation);
 
     if (!name || (wcsicmp( L"CONIN$", name ) && wcsicmp( L"CONOUT$", name )) || creation != OPEN_EXISTING)
     {
@@ -221,7 +221,7 @@ BOOL WINAPI GetConsoleDisplayMode(LPDWORD lpModeFlags)
 BOOL WINAPI SetConsoleDisplayMode(HANDLE hConsoleOutput, DWORD dwFlags,
                                   COORD *lpNewScreenBufferDimensions)
 {
-    TRACE("(%p, %x, (%d, %d))\n", hConsoleOutput, dwFlags,
+    TRACE("(%p, %lx, (%d, %d))\n", hConsoleOutput, dwFlags,
           lpNewScreenBufferDimensions->X, lpNewScreenBufferDimensions->Y);
     if (dwFlags == 1)
     {
@@ -242,7 +242,7 @@ BOOL WINAPI SetConsoleDisplayMode(HANDLE hConsoleOutput, DWORD dwFlags,
 DWORD WINAPI GetConsoleAliasW(LPWSTR lpSource, LPWSTR lpTargetBuffer,
                               DWORD TargetBufferLength, LPWSTR lpExename)
 {
-    FIXME("(%s,%p,%d,%s): stub\n", debugstr_w(lpSource), lpTargetBuffer, TargetBufferLength, debugstr_w(lpExename));
+    FIXME("(%s,%p,%ld,%s): stub\n", debugstr_w(lpSource), lpTargetBuffer, TargetBufferLength, debugstr_w(lpExename));
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return 0;
 }
@@ -252,7 +252,7 @@ DWORD WINAPI GetConsoleAliasW(LPWSTR lpSource, LPWSTR lpTargetBuffer,
  */
 DWORD WINAPI GetConsoleProcessList(LPDWORD processlist, DWORD processcount)
 {
-    FIXME("(%p,%d): stub\n", processlist, processcount);
+    FIXME("(%p,%ld): stub\n", processlist, processcount);
 
     if (!processlist || processcount < 1)
     {
@@ -266,7 +266,7 @@ DWORD WINAPI GetConsoleProcessList(LPDWORD processlist, DWORD processcount)
 /* Undocumented, called by native doskey.exe */
 DWORD WINAPI GetConsoleCommandHistoryA(DWORD unknown1, DWORD unknown2, DWORD unknown3)
 {
-    FIXME(": (0x%x, 0x%x, 0x%x) stub!\n", unknown1, unknown2, unknown3);
+    FIXME(": (0x%lx, 0x%lx, 0x%lx) stub!\n", unknown1, unknown2, unknown3);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return 0;
 }
@@ -274,7 +274,7 @@ DWORD WINAPI GetConsoleCommandHistoryA(DWORD unknown1, DWORD unknown2, DWORD unk
 /* Undocumented, called by native doskey.exe */
 DWORD WINAPI GetConsoleCommandHistoryW(DWORD unknown1, DWORD unknown2, DWORD unknown3)
 {
-    FIXME(": (0x%x, 0x%x, 0x%x) stub!\n", unknown1, unknown2, unknown3);
+    FIXME(": (0x%lx, 0x%lx, 0x%lx) stub!\n", unknown1, unknown2, unknown3);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return 0;
 }
@@ -364,14 +364,14 @@ DWORD WINAPI GetNumberOfConsoleFonts(void)
 
 BOOL WINAPI SetConsoleFont(HANDLE hConsole, DWORD index)
 {
-    FIXME("(%p, %u): stub!\n", hConsole, index);
+    FIXME("(%p, %lu): stub!\n", hConsole, index);
     SetLastError(LOWORD(E_NOTIMPL) /* win10 1709+ */);
     return FALSE;
 }
 
 BOOL WINAPI SetConsoleKeyShortcuts(BOOL set, BYTE keys, VOID *a, DWORD b)
 {
-    FIXME(": (%u %u %p %u) stub!\n", set, keys, a, b);
+    FIXME(": (%u %u %p %lu) stub!\n", set, keys, a, b);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -476,7 +476,7 @@ COORD WINAPI GetConsoleFontSize(HANDLE hConsole, DWORD index)
 
 BOOL WINAPI GetConsoleFontInfo(HANDLE hConsole, BOOL maximize, DWORD numfonts, CONSOLE_FONT_INFO *info)
 {
-    FIXME("(%p %d %u %p): stub!\n", hConsole, maximize, numfonts, info);
+    FIXME("(%p %d %lu %p): stub!\n", hConsole, maximize, numfonts, info);
     SetLastError(LOWORD(E_NOTIMPL) /* win10 1709+ */);
     return FALSE;
 }

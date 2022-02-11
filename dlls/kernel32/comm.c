@@ -622,7 +622,7 @@ BOOL WINAPI SetDefaultCommConfigW(LPCWSTR lpszDevice, LPCOMMCONFIG lpCommConfig,
     HMODULE hConfigModule;
     BOOL r = FALSE;
 
-    TRACE("(%s, %p, %u)\n", debugstr_w(lpszDevice), lpCommConfig, dwSize);
+    TRACE("(%s, %p, %lu)\n", debugstr_w(lpszDevice), lpCommConfig, dwSize);
 
     hConfigModule = LoadLibraryW(lpszSerialUI);
     if(!hConfigModule)
@@ -652,7 +652,7 @@ BOOL WINAPI SetDefaultCommConfigA(LPCSTR lpszDevice, LPCOMMCONFIG lpCommConfig, 
     LPWSTR lpDeviceW = NULL;
     DWORD len;
 
-    TRACE("(%s, %p, %u)\n", debugstr_a(lpszDevice), lpCommConfig, dwSize);
+    TRACE("(%s, %p, %lu)\n", debugstr_a(lpszDevice), lpCommConfig, dwSize);
 
     if (lpszDevice)
     {
@@ -687,7 +687,7 @@ BOOL WINAPI GetDefaultCommConfigW(
     HMODULE hConfigModule;
     DWORD   res = ERROR_INVALID_PARAMETER;
 
-    TRACE("(%s, %p, %p)  *lpdwSize: %u\n", debugstr_w(lpszName), lpCC, lpdwSize, lpdwSize ? *lpdwSize : 0 );
+    TRACE("(%s, %p, %p)  *lpdwSize: %lu\n", debugstr_w(lpszName), lpCC, lpdwSize, lpdwSize ? *lpdwSize : 0 );
     hConfigModule = LoadLibraryW(lpszSerialUI);
 
     if (hConfigModule) {
@@ -722,7 +722,7 @@ BOOL WINAPI GetDefaultCommConfigA(
 	BOOL ret = FALSE;
 	UNICODE_STRING lpszNameW;
 
-	TRACE("(%s, %p, %p)  *lpdwSize: %u\n", debugstr_a(lpszName), lpCC, lpdwSize, lpdwSize ? *lpdwSize : 0 );
+	TRACE("(%s, %p, %p)  *lpdwSize: %lu\n", debugstr_a(lpszName), lpCC, lpdwSize, lpdwSize ? *lpdwSize : 0 );
 	if(lpszName) RtlCreateUnicodeStringFromAsciiz(&lpszNameW,lpszName);
 	else lpszNameW.Buffer = NULL;
 

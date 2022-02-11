@@ -416,7 +416,7 @@ LONG WINAPI LZSeek( HFILE fd, LONG off, INT type )
 	struct	lzstate	*lzs;
 	LONG	newwanted;
 
-	TRACE("(%d,%d,%d)\n",fd,off,type);
+	TRACE("(%d,%ld,%d)\n",fd,off,type);
 	/* not compressed? just use normal _llseek() */
         if (!(lzs = GET_LZ_STATE(fd))) return _llseek(fd,off,type);
 	newwanted = lzs->realwanted;

@@ -124,7 +124,7 @@ BOOL WINAPI VerifyVersionInfoW( LPOSVERSIONINFOEXW info, DWORD dwTypeMask,
 {
     OSVERSIONINFOEXW ver;
 
-    TRACE("(%p 0x%x 0x%s)\n", info, dwTypeMask, wine_dbgstr_longlong(dwlConditionMask));
+    TRACE("(%p 0x%lx 0x%s)\n", info, dwTypeMask, wine_dbgstr_longlong(dwlConditionMask));
 
     ver.dwOSVersionInfoSize = sizeof(ver);
     if (!GetVersionExW((OSVERSIONINFOW*)&ver)) return FALSE;

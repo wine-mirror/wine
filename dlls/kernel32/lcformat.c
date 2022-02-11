@@ -135,7 +135,7 @@ static WCHAR* NLS_GetLocaleString(LCID lcid, DWORD dwFlags)
 }
 
 #define GET_LOCALE_NUMBER(num, type) num = NLS_GetLocaleNumber(lcid, type|dwFlags); \
-  TRACE( #type ": %d (%08x)\n", (DWORD)num, (DWORD)num)
+  TRACE( #type ": %ld (%08lx)\n", (DWORD)num, (DWORD)num)
 
 #define GET_LOCALE_STRING(str, type) str = NLS_GetLocaleString(lcid, type|dwFlags); \
   TRACE( #type ": %s\n", debugstr_w(str))
@@ -185,7 +185,7 @@ static const NLS_FORMAT_NODE *NLS_GetFormats(LCID lcid, DWORD dwFlags)
 
   dwFlags &= LOCALE_NOUSEROVERRIDE;
 
-  TRACE("(0x%04x,0x%08x)\n", lcid, dwFlags);
+  TRACE("(0x%04lx,0x%08lx)\n", lcid, dwFlags);
 
   /* See if we have already cached the locales number format */
   while (node && (node->lcid != lcid || node->dwFlags != dwFlags) && node->next)
@@ -333,7 +333,7 @@ static BOOL NLS_IsUnicodeOnlyLcid(LCID lcid)
   case LANG_MARATHI:
   case LANG_PUNJABI:
   case LANG_SANSKRIT:
-    TRACE("lcid 0x%08x: langid 0x%04x is Unicode Only\n", lcid, PRIMARYLANGID(lcid));
+    TRACE("lcid 0x%08lx: langid 0x%04x is Unicode Only\n", lcid, PRIMARYLANGID(lcid));
     return TRUE;
   default:
     return FALSE;
@@ -747,7 +747,7 @@ static INT NLS_GetDateTimeFormatA(LCID lcid, DWORD dwFlags,
   WCHAR szFormat[128], szOut[128];
   INT iRet, cchOutW;
 
-  TRACE("(0x%04x,0x%08x,%p,%s,%p,%d)\n", lcid, dwFlags, lpTime,
+  TRACE("(0x%04lx,0x%08lx,%p,%s,%p,%d)\n", lcid, dwFlags, lpTime,
         debugstr_a(lpFormat), lpStr, cchOut);
 
   if ((cchOut && !lpStr) || NLS_IsUnicodeOnlyLcid(lcid))
@@ -826,7 +826,7 @@ static INT NLS_GetDateTimeFormatA(LCID lcid, DWORD dwFlags,
 INT WINAPI GetDateFormatA( LCID lcid, DWORD dwFlags, const SYSTEMTIME* lpTime,
                            LPCSTR lpFormat, LPSTR lpDateStr, INT cchOut)
 {
-  TRACE("(0x%04x,0x%08x,%p,%s,%p,%d)\n",lcid, dwFlags, lpTime,
+  TRACE("(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",lcid, dwFlags, lpTime,
         debugstr_a(lpFormat), lpDateStr, cchOut);
 
   return NLS_GetDateTimeFormatA(lcid, dwFlags | DATE_DATEVARSONLY, lpTime,
@@ -858,7 +858,7 @@ INT WINAPI GetDateFormatEx(LPCWSTR localename, DWORD flags,
                            const SYSTEMTIME* date, LPCWSTR format,
                            LPWSTR outbuf, INT bufsize, LPCWSTR calendar)
 {
-  TRACE("(%s,0x%08x,%p,%s,%p,%d,%s)\n", debugstr_w(localename), flags,
+  TRACE("(%s,0x%08lx,%p,%s,%p,%d,%s)\n", debugstr_w(localename), flags,
         date, debugstr_w(format), outbuf, bufsize, debugstr_w(calendar));
 
   /* Parameter is currently reserved and Windows errors if set */
@@ -881,7 +881,7 @@ INT WINAPI GetDateFormatEx(LPCWSTR localename, DWORD flags,
 INT WINAPI GetDateFormatW(LCID lcid, DWORD dwFlags, const SYSTEMTIME* lpTime,
                           LPCWSTR lpFormat, LPWSTR lpDateStr, INT cchOut)
 {
-  TRACE("(0x%04x,0x%08x,%p,%s,%p,%d)\n", lcid, dwFlags, lpTime,
+  TRACE("(0x%04lx,0x%08lx,%p,%s,%p,%d)\n", lcid, dwFlags, lpTime,
         debugstr_w(lpFormat), lpDateStr, cchOut);
 
   return NLS_GetDateTimeFormatW(lcid, dwFlags|DATE_DATEVARSONLY, lpTime,
@@ -932,7 +932,7 @@ INT WINAPI GetDateFormatW(LCID lcid, DWORD dwFlags, const SYSTEMTIME* lpTime,
 INT WINAPI GetTimeFormatA(LCID lcid, DWORD dwFlags, const SYSTEMTIME* lpTime,
                           LPCSTR lpFormat, LPSTR lpTimeStr, INT cchOut)
 {
-  TRACE("(0x%04x,0x%08x,%p,%s,%p,%d)\n",lcid, dwFlags, lpTime,
+  TRACE("(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",lcid, dwFlags, lpTime,
         debugstr_a(lpFormat), lpTimeStr, cchOut);
 
   return NLS_GetDateTimeFormatA(lcid, dwFlags|TIME_TIMEVARSONLY, lpTime,
@@ -963,7 +963,7 @@ INT WINAPI GetTimeFormatEx(LPCWSTR localename, DWORD flags,
                            const SYSTEMTIME* time, LPCWSTR format,
                            LPWSTR outbuf, INT bufsize)
 {
-  TRACE("(%s,0x%08x,%p,%s,%p,%d)\n", debugstr_w(localename), flags, time,
+  TRACE("(%s,0x%08lx,%p,%s,%p,%d)\n", debugstr_w(localename), flags, time,
         debugstr_w(format), outbuf, bufsize);
 
   return NLS_GetDateTimeFormatW(LocaleNameToLCID(localename, 0),
@@ -979,7 +979,7 @@ INT WINAPI GetTimeFormatEx(LPCWSTR localename, DWORD flags,
 INT WINAPI GetTimeFormatW(LCID lcid, DWORD dwFlags, const SYSTEMTIME* lpTime,
                           LPCWSTR lpFormat, LPWSTR lpTimeStr, INT cchOut)
 {
-  TRACE("(0x%04x,0x%08x,%p,%s,%p,%d)\n",lcid, dwFlags, lpTime,
+  TRACE("(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",lcid, dwFlags, lpTime,
         debugstr_w(lpFormat), lpTimeStr, cchOut);
 
   return NLS_GetDateTimeFormatW(lcid, dwFlags|TIME_TIMEVARSONLY, lpTime,
@@ -1023,7 +1023,7 @@ INT WINAPI GetNumberFormatA(LCID lcid, DWORD dwFlags,
   const NUMBERFMTW *pfmt = NULL;
   INT iRet;
 
-  TRACE("(0x%04x,0x%08x,%s,%p,%p,%d)\n", lcid, dwFlags, debugstr_a(lpszValue),
+  TRACE("(0x%04lx,0x%08lx,%s,%p,%p,%d)\n", lcid, dwFlags, debugstr_a(lpszValue),
         lpFormat, lpNumberStr, cchOut);
 
   if (NLS_IsUnicodeOnlyLcid(lcid))
@@ -1105,7 +1105,7 @@ INT WINAPI GetNumberFormatW(LCID lcid, DWORD dwFlags,
   DWORD dwState = 0, dwDecimals = 0, dwGroupCount = 0, dwCurrentGroupCount = 0;
   INT iRet;
 
-  TRACE("(0x%04x,0x%08x,%s,%p,%p,%d)\n", lcid, dwFlags, debugstr_w(lpszValue),
+  TRACE("(0x%04lx,0x%08lx,%s,%p,%p,%d)\n", lcid, dwFlags, debugstr_w(lpszValue),
         lpFormat, lpNumberStr, cchOut);
 
   if (!lpszValue || cchOut < 0 || (cchOut > 0 && !lpNumberStr) ||
@@ -1340,7 +1340,7 @@ INT WINAPI GetNumberFormatEx(LPCWSTR name, DWORD flags,
 {
   LCID lcid;
 
-  TRACE("(%s,0x%08x,%s,%p,%p,%d)\n", debugstr_w(name), flags,
+  TRACE("(%s,0x%08lx,%s,%p,%p,%d)\n", debugstr_w(name), flags,
         debugstr_w(value), format, number, numout);
 
   lcid = LocaleNameToLCID(name, 0);
@@ -1387,7 +1387,7 @@ INT WINAPI GetCurrencyFormatA(LCID lcid, DWORD dwFlags,
   const CURRENCYFMTW *pfmt = NULL;
   INT iRet;
 
-  TRACE("(0x%04x,0x%08x,%s,%p,%p,%d)\n", lcid, dwFlags, debugstr_a(lpszValue),
+  TRACE("(0x%04lx,0x%08lx,%s,%p,%p,%d)\n", lcid, dwFlags, debugstr_a(lpszValue),
         lpFormat, lpCurrencyStr, cchOut);
 
   if (NLS_IsUnicodeOnlyLcid(lcid))
@@ -1495,7 +1495,7 @@ INT WINAPI GetCurrencyFormatW(LCID lcid, DWORD dwFlags,
   DWORD dwState = 0, dwDecimals = 0, dwGroupCount = 0, dwCurrentGroupCount = 0, dwFmt;
   INT iRet;
 
-  TRACE("(0x%04x,0x%08x,%s,%p,%p,%d)\n", lcid, dwFlags, debugstr_w(lpszValue),
+  TRACE("(0x%04lx,0x%08lx,%s,%p,%p,%d)\n", lcid, dwFlags, debugstr_w(lpszValue),
         lpFormat, lpCurrencyStr, cchOut);
 
   if (!lpszValue || cchOut < 0 || (cchOut > 0 && !lpCurrencyStr) ||
@@ -1749,7 +1749,7 @@ error:
 int WINAPI GetCurrencyFormatEx(LPCWSTR localename, DWORD flags, LPCWSTR value,
                                 const CURRENCYFMTW *format, LPWSTR str, int len)
 {
-    TRACE("(%s,0x%08x,%s,%p,%p,%d)\n", debugstr_w(localename), flags,
+    TRACE("(%s,0x%08lx,%s,%p,%p,%d)\n", debugstr_w(localename), flags,
             debugstr_w(value), format, str, len);
 
     return GetCurrencyFormatW( LocaleNameToLCID(localename, 0), flags, value, format, str, len);
@@ -1785,6 +1785,6 @@ int WINAPI GetCalendarInfoA( LCID lcid, CALID id, CALTYPE type, LPSTR data, int 
  */
 int WINAPI SetCalendarInfoA( LCID lcid, CALID id, CALTYPE type, LPCSTR data)
 {
-    FIXME("(%08x,%08x,%08x,%s): stub\n", lcid, id, type, debugstr_a(data));
+    FIXME("(%08lx,%08lx,%08lx,%s): stub\n", lcid, id, type, debugstr_a(data));
     return 0;
 }

@@ -566,7 +566,7 @@ BOOL WINAPI GetNamedPipeHandleStateA(
     WCHAR *username = NULL;
     BOOL ret;
 
-    WARN("%p %p %p %p %p %p %d: semi-stub\n", hNamedPipe, lpState, lpCurInstances,
+    WARN("%p %p %p %p %p %p %ld: semi-stub\n", hNamedPipe, lpState, lpCurInstances,
          lpMaxCollectionCount, lpCollectDataTimeout, lpUsername, nUsernameMaxSize);
 
     if (lpUsername && nUsernameMaxSize &&
@@ -593,7 +593,7 @@ BOOL WINAPI CallNamedPipeA(
     LPWSTR str = NULL;
     BOOL ret;
 
-    TRACE("%s %p %d %p %d %p %d\n",
+    TRACE("%s %p %ld %p %ld %p %ld\n",
            debugstr_a(lpNamedPipeName), lpInput, dwInputSize,
            lpOutput, dwOutputSize, lpBytesRead, nTimeout);
 
@@ -623,7 +623,7 @@ HANDLE WINAPI CreateMailslotA( LPCSTR lpName, DWORD nMaxMessageSize,
     HANDLE handle;
     LPWSTR name = NULL;
 
-    TRACE("%s %d %d %p\n", debugstr_a(lpName),
+    TRACE("%s %ld %ld %p\n", debugstr_a(lpName),
           nMaxMessageSize, lReadTimeout, sa);
 
     if( lpName )
@@ -665,7 +665,7 @@ HANDLE WINAPI CreateMailslotW( LPCWSTR lpName, DWORD nMaxMessageSize,
     LARGE_INTEGER timeout;
     IO_STATUS_BLOCK iosb;
 
-    TRACE("%s %d %d %p\n", debugstr_w(lpName),
+    TRACE("%s %ld %ld %p\n", debugstr_w(lpName),
           nMaxMessageSize, lReadTimeout, sa);
 
     if (!RtlDosPathNameToNtPathName_U( lpName, &nameW, NULL, NULL ))
@@ -767,7 +767,7 @@ BOOL WINAPI SetMailslotInfo( HANDLE hMailslot, DWORD dwReadTimeout)
     FILE_MAILSLOT_SET_INFORMATION info;
     IO_STATUS_BLOCK iosb;
 
-    TRACE("%p %d\n", hMailslot, dwReadTimeout);
+    TRACE("%p %ld\n", hMailslot, dwReadTimeout);
 
     if (dwReadTimeout != MAILSLOT_WAIT_FOREVER)
         info.ReadTimeout.QuadPart = (ULONGLONG)dwReadTimeout * -10000;

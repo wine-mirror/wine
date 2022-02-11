@@ -51,7 +51,7 @@ static DWORD set_error_from_status( NTSTATUS status )
 BOOL WINAPI BackupRead( HANDLE file, LPBYTE buffer, DWORD to_read,
     LPDWORD read, BOOL abort, BOOL security, LPVOID *context )
 {
-    FIXME( "(%p, %p, %d, %p, %d, %d, %p)\n", file, buffer,
+    FIXME( "(%p, %p, %ld, %p, %d, %d, %p)\n", file, buffer,
            to_read, read, abort, security, context );
     SetLastError( ERROR_NOT_SUPPORTED );
     return FALSE;
@@ -66,7 +66,7 @@ BOOL WINAPI BackupRead( HANDLE file, LPBYTE buffer, DWORD to_read,
 BOOL WINAPI BackupSeek( HANDLE file, DWORD seek_low, DWORD seek_high,
     LPDWORD seeked_low, LPDWORD seeked_high, LPVOID *context )
 {
-    FIXME( "(%p, %d, %d, %p, %p, %p)\n", file, seek_low,
+    FIXME( "(%p, %ld, %ld, %p, %p, %p)\n", file, seek_low,
            seek_high, seeked_low, seeked_high, context );
     SetLastError( ERROR_NOT_SUPPORTED );
     return FALSE;
@@ -81,7 +81,7 @@ BOOL WINAPI BackupSeek( HANDLE file, DWORD seek_low, DWORD seek_high,
 BOOL WINAPI BackupWrite( HANDLE file, LPBYTE buffer, DWORD to_write,
     LPDWORD written, BOOL abort, BOOL security, LPVOID *context )
 {
-    FIXME( "(%p, %p, %d, %p, %d, %d, %p)\n", file, buffer,
+    FIXME( "(%p, %p, %ld, %p, %d, %d, %p)\n", file, buffer,
            to_write, written, abort, security, context );
     SetLastError( ERROR_NOT_SUPPORTED );
     return FALSE;
@@ -100,7 +100,7 @@ DWORD WINAPI CreateTapePartition( HANDLE device, DWORD method,
     TAPE_CREATE_PARTITION part;
     IO_STATUS_BLOCK io;
 
-    TRACE( "(%p, %d, %d, %d)\n", device, method, count, size );
+    TRACE( "(%p, %ld, %ld, %ld)\n", device, method, count, size );
 
     part.Method = method;
     part.Count = count;
@@ -124,7 +124,7 @@ DWORD WINAPI EraseTape( HANDLE device, DWORD type, BOOL immediate )
     TAPE_ERASE erase;
     IO_STATUS_BLOCK io;
 
-    TRACE( "(%p, %d, %d)\n", device, type, immediate );
+    TRACE( "(%p, %ld, %d)\n", device, type, immediate );
 
     erase.Type = type;
     erase.Immediate = immediate;
@@ -147,7 +147,7 @@ DWORD WINAPI GetTapeParameters( HANDLE device, DWORD operation,
     NTSTATUS status = STATUS_INVALID_PARAMETER;
     IO_STATUS_BLOCK io;
 
-    TRACE( "(%p, %d, %p, %p)\n", device, operation, size, info );
+    TRACE( "(%p, %ld, %p, %p)\n", device, operation, size, info );
 
     switch (operation)
     {
@@ -160,7 +160,7 @@ DWORD WINAPI GetTapeParameters( HANDLE device, DWORD operation,
             IOCTL_TAPE_GET_MEDIA_PARAMS, NULL, 0, info, *size ); 
         break;
     default:
-        ERR( "Unhandled operation: 0x%08x\n", operation );
+        ERR( "Unhandled operation: 0x%08lx\n", operation );
     }
 
     return set_error_from_status( status );
@@ -179,7 +179,7 @@ DWORD WINAPI GetTapePosition( HANDLE device, DWORD type, LPDWORD partition,
     TAPE_GET_POSITION in, out;
     IO_STATUS_BLOCK io;
 
-    TRACE( "(%p, %d, %p, %p, %p)\n", device, type, partition, offset_low,
+    TRACE( "(%p, %ld, %p, %p, %p)\n", device, type, partition, offset_low,
            offset_high );
 
     memset( &in, 0, sizeof(TAPE_GET_POSITION) );
@@ -230,7 +230,7 @@ DWORD WINAPI PrepareTape( HANDLE device, DWORD operation, BOOL immediate )
     TAPE_PREPARE prep;
     IO_STATUS_BLOCK io;
 
-    TRACE( "(%p, %d, %d)\n", device, operation, immediate );
+    TRACE( "(%p, %ld, %d)\n", device, operation, immediate );
 
     prep.Operation = operation;
     prep.Immediate = immediate;
@@ -252,7 +252,7 @@ DWORD WINAPI SetTapeParameters( HANDLE device, DWORD operation, LPVOID info )
     NTSTATUS status = STATUS_INVALID_PARAMETER;
     IO_STATUS_BLOCK io;
 
-    TRACE( "(%p, %d, %p)\n", device, operation, info );
+    TRACE( "(%p, %ld, %p)\n", device, operation, info );
 
     switch (operation)
     {
@@ -267,7 +267,7 @@ DWORD WINAPI SetTapeParameters( HANDLE device, DWORD operation, LPVOID info )
             NULL, 0 );
         break;
     default:
-        ERR( "Unhandled operation: 0x%08x\n", operation );
+        ERR( "Unhandled operation: 0x%08lx\n", operation );
     }
 
     return set_error_from_status( status );
@@ -286,7 +286,7 @@ DWORD WINAPI SetTapePosition( HANDLE device, DWORD method, DWORD partition,
     TAPE_SET_POSITION pos;
     IO_STATUS_BLOCK io;
 
-    TRACE( "(%p, %d, %d, %d, %d, %d)\n", device, method, partition,
+    TRACE( "(%p, %ld, %ld, %ld, %ld, %d)\n", device, method, partition,
            offset_low, offset_high, immediate );
 
     pos.Method = method;
@@ -314,7 +314,7 @@ DWORD WINAPI WriteTapemark( HANDLE device, DWORD type, DWORD count,
     TAPE_WRITE_MARKS marks;
     IO_STATUS_BLOCK io;
 
-    TRACE( "(%p, %d, %d, %d)\n", device, type, count, immediate );
+    TRACE( "(%p, %ld, %ld, %d)\n", device, type, count, immediate );
 
     marks.Type = type;
     marks.Count = count;

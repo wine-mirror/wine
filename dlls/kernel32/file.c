@@ -169,7 +169,7 @@ LONG WINAPI _hwrite( HFILE handle, LPCSTR buffer, LONG count )
 {
     DWORD result;
 
-    TRACE("%d %p %d\n", handle, buffer, count );
+    TRACE("%d %p %ld\n", handle, buffer, count );
 
     if (!count)
     {
@@ -392,7 +392,7 @@ BOOL WINAPI KERNEL32_DeviceIoControl( HANDLE handle, DWORD code, void *in_buff, 
                                       void *out_buff, DWORD out_count, DWORD *returned,
                                       OVERLAPPED *overlapped )
 {
-    TRACE( "(%p,%#x,%p,%d,%p,%d,%p,%p)\n",
+    TRACE( "(%p,%#lx,%p,%ld,%p,%ld,%p,%p)\n",
            handle, code, in_buff, in_count, out_buff, out_count, returned, overlapped );
 
     /* Check if this is a user defined control code for a VxD */

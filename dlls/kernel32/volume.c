@@ -251,7 +251,7 @@ BOOL WINAPI SetVolumeLabelW( LPCWSTR root, LPCWSTR label )
     }
     else
     {
-        TRACE( "cannot open device %s: err %d\n", debugstr_w(device), GetLastError() );
+        TRACE( "cannot open device %s: err %ld\n", debugstr_w(device), GetLastError() );
         if (GetLastError() == ERROR_ACCESS_DENIED) return FALSE;
     }
 
@@ -323,7 +323,7 @@ BOOL WINAPI GetVolumeNameForVolumeMountPointA( LPCSTR path, LPSTR volume, DWORD 
     WCHAR volumeW[50], *pathW = NULL;
     DWORD len = min(ARRAY_SIZE(volumeW), size );
 
-    TRACE("(%s, %p, %x)\n", debugstr_a(path), volume, size);
+    TRACE("(%s, %p, %lx)\n", debugstr_a(path), volume, size);
 
     if (!path || !(pathW = FILE_name_AtoW( path, TRUE )))
         return FALSE;
@@ -415,7 +415,7 @@ BOOL WINAPI GetVolumePathNameA(LPCSTR filename, LPSTR volumepathname, DWORD bufl
     BOOL ret;
     WCHAR *filenameW = NULL, *volumeW = NULL;
 
-    TRACE("(%s, %p, %d)\n", debugstr_a(filename), volumepathname, buflen);
+    TRACE("(%s, %p, %ld)\n", debugstr_a(filename), volumepathname, buflen);
 
     if (filename && !(filenameW = FILE_name_AtoW( filename, FALSE )))
         return FALSE;
@@ -506,7 +506,7 @@ BOOL WINAPI FindNextVolumeA( HANDLE handle, LPSTR volume, DWORD len )
  */
 HANDLE WINAPI FindFirstVolumeMountPointA(LPCSTR root, LPSTR mount_point, DWORD len)
 {
-    FIXME("(%s, %p, %d), stub!\n", debugstr_a(root), mount_point, len);
+    FIXME("(%s, %p, %ld), stub!\n", debugstr_a(root), mount_point, len);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return INVALID_HANDLE_VALUE;
 }
@@ -516,7 +516,7 @@ HANDLE WINAPI FindFirstVolumeMountPointA(LPCSTR root, LPSTR mount_point, DWORD l
  */
 HANDLE WINAPI FindFirstVolumeMountPointW(LPCWSTR root, LPWSTR mount_point, DWORD len)
 {
-    FIXME("(%s, %p, %d), stub!\n", debugstr_w(root), mount_point, len);
+    FIXME("(%s, %p, %ld), stub!\n", debugstr_w(root), mount_point, len);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return INVALID_HANDLE_VALUE;
 }
