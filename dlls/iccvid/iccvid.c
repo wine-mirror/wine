@@ -743,8 +743,8 @@ static void ICCVID_dump_BITMAPINFO(const BITMAPINFO * bmi)
     TRACE(
         "planes = %d\n"
         "bpp    = %d\n"
-        "height = %d\n"
-        "width  = %d\n"
+        "height = %ld\n"
+        "width  = %ld\n"
         "compr  = %s\n",
         bmi->bmiHeader.biPlanes,
         bmi->bmiHeader.biBitCount,
@@ -759,7 +759,7 @@ static inline int ICCVID_CheckMask(RGBQUAD bmiColors[3], COLORREF redMask, COLOR
     COLORREF realBlueMask = MAKECOLOUR32(bmiColors[1].rgbRed, bmiColors[1].rgbGreen, bmiColors[1].rgbBlue);
     COLORREF realGreenMask = MAKECOLOUR32(bmiColors[2].rgbRed, bmiColors[2].rgbGreen, bmiColors[2].rgbBlue);
 
-    TRACE("\nbmiColors[0] = 0x%08x\nbmiColors[1] = 0x%08x\nbmiColors[2] = 0x%08x\n",
+    TRACE("\nbmiColors[0] = 0x%08lx\nbmiColors[1] = 0x%08lx\nbmiColors[2] = 0x%08lx\n",
         realRedMask, realBlueMask, realGreenMask);
         
     if ((realRedMask == redMask) &&
@@ -888,7 +888,7 @@ static LRESULT ICCVID_Decompress( ICCVID_Info *info, ICDECOMPRESS *icd, DWORD si
     LONG width, height;
     BOOL inverted;
 
-    TRACE("ICM_DECOMPRESS %p %p %d\n", info, icd, size);
+    TRACE("ICM_DECOMPRESS %p %p %ld\n", info, icd, size);
 
     if( (info==NULL) || (info->dwMagic!=ICCVID_MAGIC) )
         return ICERR_BADPARAM;
@@ -913,7 +913,7 @@ static LRESULT ICCVID_DecompressEx( ICCVID_Info *info, ICDECOMPRESSEX *icd, DWOR
     LONG width, height;
     BOOL inverted;
 
-    TRACE("ICM_DECOMPRESSEX %p %p %d\n", info, icd, size);
+    TRACE("ICM_DECOMPRESSEX %p %p %ld\n", info, icd, size);
 
     if( (info==NULL) || (info->dwMagic!=ICCVID_MAGIC) )
         return ICERR_BADPARAM;
@@ -979,7 +979,7 @@ LRESULT WINAPI ICCVID_DriverProc( DWORD_PTR dwDriverId, HDRVR hdrvr, UINT msg,
 {
     ICCVID_Info *info = (ICCVID_Info *) dwDriverId;
 
-    TRACE("%ld %p %d %ld %ld\n", dwDriverId, hdrvr, msg, lParam1, lParam2);
+    TRACE("%Id %p %d %Id %Id\n", dwDriverId, hdrvr, msg, lParam1, lParam2);
 
     switch( msg )
     {
@@ -1043,14 +1043,14 @@ LRESULT WINAPI ICCVID_DriverProc( DWORD_PTR dwDriverId, HDRVR hdrvr, UINT msg,
         return ICERR_UNSUPPORTED;
 
     default:
-        FIXME("Unknown message: %04x %ld %ld\n", msg, lParam1, lParam2);
+        FIXME("Unknown message: %04x %Id %Id\n", msg, lParam1, lParam2);
     }
     return ICERR_UNSUPPORTED;
 }
 
 BOOL WINAPI DllMain(HINSTANCE hModule, DWORD dwReason, LPVOID lpReserved)
 {
-    TRACE("(%p,%d,%p)\n", hModule, dwReason, lpReserved);
+    TRACE("(%p,%ld,%p)\n", hModule, dwReason, lpReserved);
 
     switch (dwReason)
     {
