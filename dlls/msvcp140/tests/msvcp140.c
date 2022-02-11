@@ -301,7 +301,7 @@ static BOOL init(void)
 static void test_thrd(void)
 {
     ok(p__Thrd_id() == GetCurrentThreadId(),
-        "expected same id, got _Thrd_id %u GetCurrentThreadId %u\n",
+        "expected same id, got _Thrd_id %u GetCurrentThreadId %lu\n",
         p__Thrd_id(), GetCurrentThreadId());
 }
 
@@ -529,7 +529,7 @@ static void test_chore(void)
     ok(chore.callback == chore_callback, "chore.callback = %p, expected %p\n", chore.callback, chore_callback);
     ok(chore.arg == event, "chore.arg = %p, expected %p\n", chore.arg, event);
     wait = WaitForSingleObject(event, 500);
-    ok(wait == WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", wait);
+    ok(wait == WAIT_OBJECT_0, "WaitForSingleObject returned %ld\n", wait);
 
     if(!GetProcAddress(GetModuleHandleA("kernel32"), "CreateThreadpoolWork"))
     {
@@ -545,12 +545,12 @@ static void test_chore(void)
     ok(old_chore.work != chore.work, "new threadpool work was not created\n");
     p__Release_chore(&old_chore);
     wait = WaitForSingleObject(event, 500);
-    ok(wait == WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", wait);
+    ok(wait == WAIT_OBJECT_0, "WaitForSingleObject returned %ld\n", wait);
 
     ret = p__Reschedule_chore(&chore);
     ok(!ret, "_Reschedule_chore returned %d\n", ret);
     wait = WaitForSingleObject(event, 500);
-    ok(wait == WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", wait);
+    ok(wait == WAIT_OBJECT_0, "WaitForSingleObject returned %ld\n", wait);
 
     p__Release_chore(&chore);
     ok(!chore.work, "chore.work != NULL\n");
@@ -1256,12 +1256,12 @@ static void test__Winerror_message(void)
     ret = p__Winerror_message(0, buf, sizeof(buf));
     ok(ret == ret_fm || (ret_fm > 2 && buf_fm[ret_fm - 1] == '\n' &&
                 buf_fm[ret_fm - 2] == '\r' && ret + 2 == ret_fm),
-            "ret = %u, expected %u\n", ret, ret_fm);
+            "ret = %lu, expected %lu\n", ret, ret_fm);
     ok(!strncmp(buf, buf_fm, ret), "buf = %s, expected %s\n", buf, buf_fm);
 
     memset(buf, 'a', sizeof(buf));
     ret = p__Winerror_message(0, buf, 2);
-    ok(!ret, "ret = %u\n", ret);
+    ok(!ret, "ret = %lu\n", ret);
     ok(buf[0] == 'a', "buf = %s\n", buf);
 }
 
