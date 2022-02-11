@@ -43,7 +43,7 @@ DECLSPEC_HIDDEN HMODULE hcpl;
  */
 BOOL WINAPI DllMain(HINSTANCE hdll, DWORD reason, LPVOID reserved)
 {
-    TRACE("(%p, %d, %p)\n", hdll, reason, reserved);
+    TRACE("(%p, %ld, %p)\n", hdll, reason, reserved);
 
     switch (reason)
     {
@@ -297,7 +297,7 @@ static INT_PTR CALLBACK list_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
     static struct JoystickData *data;
     int sel;
 
-    TRACE("(%p, 0x%08x/%d, 0x%lx)\n", hwnd, msg, msg, lparam);
+    TRACE("(%p, 0x%08x/%d, 0x%Ix)\n", hwnd, msg, msg, lparam);
     switch (msg)
     {
         case WM_INITDIALOG:
@@ -417,10 +417,10 @@ static INT_PTR CALLBACK list_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
 static void dump_joy_state(DIJOYSTATE* st)
 {
     int i;
-    TRACE("Ax (% 5d,% 5d,% 5d)\n", st->lX,st->lY, st->lZ);
-    TRACE("RAx (% 5d,% 5d,% 5d)\n", st->lRx, st->lRy, st->lRz);
-    TRACE("Slider (% 5d,% 5d)\n", st->rglSlider[0], st->rglSlider[1]);
-    TRACE("Pov (% 5d,% 5d,% 5d,% 5d)\n", st->rgdwPOV[0], st->rgdwPOV[1], st->rgdwPOV[2], st->rgdwPOV[3]);
+    TRACE("Ax (% 5ld,% 5ld,% 5ld)\n", st->lX,st->lY, st->lZ);
+    TRACE("RAx (% 5ld,% 5ld,% 5ld)\n", st->lRx, st->lRy, st->lRz);
+    TRACE("Slider (% 5ld,% 5ld)\n", st->rglSlider[0], st->rglSlider[1]);
+    TRACE("Pov (% 5ld,% 5ld,% 5ld,% 5ld)\n", st->rgdwPOV[0], st->rgdwPOV[1], st->rgdwPOV[2], st->rgdwPOV[3]);
 
     TRACE("Buttons ");
     for(i=0; i < TEST_MAX_BUTTONS; i++)
@@ -616,7 +616,7 @@ static INT_PTR CALLBACK test_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
 {
     static HANDLE thread;
     static struct JoystickData *data;
-    TRACE("(%p, 0x%08x/%d, 0x%lx)\n", hwnd, msg, msg, lparam);
+    TRACE("(%p, 0x%08x/%d, 0x%Ix)\n", hwnd, msg, msg, lparam);
 
     switch (msg)
     {
@@ -876,7 +876,7 @@ static BOOL CALLBACK ff_effects_callback(const DIEFFECTINFOW *pdei, void *pvRef)
 
     if (FAILED(hr))
     {
-        FIXME("Failed to create effect with type %s, hr %#x\n", debugstr_guid(&pdei->guid), hr);
+        FIXME("Failed to create effect with type %s, hr %#lx\n", debugstr_guid(&pdei->guid), hr);
         return DIENUM_CONTINUE;
     }
 
@@ -903,7 +903,7 @@ static INT_PTR CALLBACK ff_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
 {
     static HANDLE thread;
     static struct JoystickData *data;
-    TRACE("(%p, 0x%08x/%d, 0x%lx)\n", hwnd, msg, msg, lparam);
+    TRACE("(%p, 0x%08x/%d, 0x%Ix)\n", hwnd, msg, msg, lparam);
 
     switch (msg)
     {
@@ -973,7 +973,7 @@ static INT_PTR CALLBACK ff_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
  */
 static int CALLBACK propsheet_callback(HWND hwnd, UINT msg, LPARAM lparam)
 {
-    TRACE("(%p, 0x%08x/%d, 0x%lx)\n", hwnd, msg, msg, lparam);
+    TRACE("(%p, 0x%08x/%d, 0x%Ix)\n", hwnd, msg, msg, lparam);
     switch (msg)
     {
         case PSCB_INITIALIZED:
@@ -1060,7 +1060,7 @@ static void display_cpl_sheets(HWND parent, struct JoystickData *data)
 LONG CALLBACK CPlApplet(HWND hwnd, UINT command, LPARAM lParam1, LPARAM lParam2)
 {
     static struct JoystickData data;
-    TRACE("(%p, %u, 0x%lx, 0x%lx)\n", hwnd, command, lParam1, lParam2);
+    TRACE("(%p, %u, 0x%Ix, 0x%Ix)\n", hwnd, command, lParam1, lParam2);
 
     switch (command)
     {
@@ -1073,7 +1073,7 @@ LONG CALLBACK CPlApplet(HWND hwnd, UINT command, LPARAM lParam1, LPARAM lParam2)
 
             if (FAILED(hr))
             {
-                ERR("Failed to initialize DirectInput: 0x%08x\n", hr);
+                ERR("Failed to initialize DirectInput: 0x%08lx\n", hr);
                 return FALSE;
             }
 
