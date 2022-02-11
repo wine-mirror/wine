@@ -96,7 +96,7 @@ static HRESULT parse_uidl_response(POP3Transport *This, POP3UIDL *uidl)
             if ((p = strchr(This->ptr, ' ')))
             {
                 while (*p == ' ') p++;
-                sscanf(p, "%u", &uidl->dwPopId);
+                sscanf(p, "%lu", &uidl->dwPopId);
                 if ((p = strchr(p, ' ')))
                 {
                     while (*p == ' ') p++;
@@ -117,7 +117,7 @@ static HRESULT parse_uidl_response(POP3Transport *This, POP3UIDL *uidl)
             This->state = STATE_DONE;
             return S_OK;
         }
-        sscanf(This->response, "%u", &uidl->dwPopId);
+        sscanf(This->response, "%lu", &uidl->dwPopId);
         if ((p = strchr(This->response, ' ')))
         {
             while (*p == ' ') p++;
@@ -145,7 +145,7 @@ static HRESULT parse_stat_response(POP3Transport *This, POP3STAT *stat)
         if ((p = strchr(This->ptr, ' ')))
         {
             while (*p == ' ') p++;
-            sscanf(p, "%u %u", &stat->cMessages, &stat->cbMessages);
+            sscanf(p, "%lu %lu", &stat->cMessages, &stat->cbMessages);
             This->valid_info = TRUE;
             This->state = STATE_DONE;
             return S_OK;
@@ -172,7 +172,7 @@ static HRESULT parse_list_response(POP3Transport *This, POP3LIST *list)
             if ((p = strchr(This->ptr, ' ')))
             {
                 while (*p == ' ') p++;
-                sscanf(p, "%u %u", &list->dwPopId, &list->cbSize);
+                sscanf(p, "%lu %lu", &list->dwPopId, &list->cbSize);
                 This->valid_info = TRUE;
             }
             This->state = STATE_DONE;
@@ -188,11 +188,11 @@ static HRESULT parse_list_response(POP3Transport *This, POP3LIST *list)
             This->state = STATE_DONE;
             return S_OK;
         }
-        sscanf(This->response, "%u", &list->dwPopId);
+        sscanf(This->response, "%lu", &list->dwPopId);
         if ((p = strchr(This->response, ' ')))
         {
             while (*p == ' ') p++;
-            sscanf(p, "%u", &list->cbSize);
+            sscanf(p, "%lu", &list->cbSize);
             This->valid_info = TRUE;
             return S_OK;
         }
@@ -858,7 +858,7 @@ static HRESULT WINAPI POP3Transport_InitNew(IPOP3Transport *iface,
 static HRESULT WINAPI POP3Transport_MarkItem(IPOP3Transport *iface, POP3MARKTYPE marktype,
     DWORD dwPopId, boolean fMarked)
 {
-    FIXME("(%u, %u, %d)\n", marktype, dwPopId, fMarked);
+    FIXME("(%u, %lu, %d)\n", marktype, dwPopId, fMarked);
     return E_NOTIMPL;
 }
 
@@ -917,13 +917,13 @@ static HRESULT WINAPI POP3Transport_CommandPASS(IPOP3Transport *iface, LPSTR pas
 static HRESULT WINAPI POP3Transport_CommandLIST(
     IPOP3Transport *iface, POP3CMDTYPE cmdtype, DWORD dwPopId)
 {
-    static const char list[] = "LIST %u\r\n";
+    static const char list[] = "LIST %lu\r\n";
     static char list_all[] = "LIST\r\n";
     POP3Transport *This = (POP3Transport *)iface;
     char *command;
     int len;
 
-    TRACE("(%u, %u)\n", cmdtype, dwPopId);
+    TRACE("(%u, %lu)\n", cmdtype, dwPopId);
 
     if (dwPopId)
     {
@@ -944,12 +944,12 @@ static HRESULT WINAPI POP3Transport_CommandLIST(
 static HRESULT WINAPI POP3Transport_CommandTOP(
     IPOP3Transport *iface, POP3CMDTYPE cmdtype, DWORD dwPopId, DWORD cPreviewLines)
 {
-    static const char top[] = "TOP %u %u\r\n";
+    static const char top[] = "TOP %lu %lu\r\n";
     POP3Transport *This = (POP3Transport *)iface;
     char *command;
     int len;
 
-    TRACE("(%u, %u, %u)\n", cmdtype, dwPopId, cPreviewLines);
+    TRACE("(%u, %lu, %lu)\n", cmdtype, dwPopId, cPreviewLines);
 
     len = sizeof(top) + 20 + 2; /* 2 * "4294967296" + "\r\n" */
     if (!(command = HeapAlloc(GetProcessHeap(), 0, len))) return S_FALSE;
@@ -1016,13 +1016,13 @@ static HRESULT WINAPI POP3Transport_CommandRSET(IPOP3Transport *iface)
 static HRESULT WINAPI POP3Transport_CommandUIDL(
     IPOP3Transport *iface, POP3CMDTYPE cmdtype, DWORD dwPopId)
 {
-    static const char uidl[] = "UIDL %u\r\n";
+    static const char uidl[] = "UIDL %lu\r\n";
     static char uidl_all[] = "UIDL\r\n";
     POP3Transport *This = (POP3Transport *)iface;
     char *command;
     int len;
 
-    TRACE("(%u, %u)\n", cmdtype, dwPopId);
+    TRACE("(%u, %lu)\n", cmdtype, dwPopId);
 
     if (dwPopId)
     {
@@ -1043,12 +1043,12 @@ static HRESULT WINAPI POP3Transport_CommandUIDL(
 static HRESULT WINAPI POP3Transport_CommandDELE(
     IPOP3Transport *iface, POP3CMDTYPE cmdtype, DWORD dwPopId)
 {
-    static const char dele[] = "DELE %u\r\n";
+    static const char dele[] = "DELE %lu\r\n";
     POP3Transport *This = (POP3Transport *)iface;
     char *command;
     int len;
 
-    TRACE("(%u, %u)\n", cmdtype, dwPopId);
+    TRACE("(%u, %lu)\n", cmdtype, dwPopId);
 
     len = sizeof(dele) + 10 + 2; /* "4294967296" + "\r\n" */
     if (!(command = HeapAlloc(GetProcessHeap(), 0, len))) return S_FALSE;
@@ -1065,12 +1065,12 @@ static HRESULT WINAPI POP3Transport_CommandDELE(
 static HRESULT WINAPI POP3Transport_CommandRETR(
     IPOP3Transport *iface, POP3CMDTYPE cmdtype, DWORD dwPopId)
 {
-    static const char retr[] = "RETR %u\r\n";
+    static const char retr[] = "RETR %lu\r\n";
     POP3Transport *This = (POP3Transport *)iface;
     char *command;
     int len;
 
-    TRACE("(%u, %u)\n", cmdtype, dwPopId);
+    TRACE("(%u, %lu)\n", cmdtype, dwPopId);
 
     len = sizeof(retr) + 10 + 2; /* "4294967296" + "\r\n" */
     if (!(command = HeapAlloc(GetProcessHeap(), 0, len))) return S_FALSE;
