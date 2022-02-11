@@ -596,19 +596,99 @@ static void test_UrlGetPart(void)
         DWORD flags;
         HRESULT hr;
         const char *expect;
+        BOOL todo_hr, todo_result;
     }
     tests[] =
     {
         {"hi", URL_PART_SCHEME, 0, S_FALSE, ""},
+        {"hi", URL_PART_USERNAME, 0, E_FAIL, .todo_hr = TRUE},
+        {"hi", URL_PART_PASSWORD, 0, E_FAIL, .todo_hr = TRUE},
+        {"hi", URL_PART_HOSTNAME, 0, E_FAIL},
+        {"hi", URL_PART_PORT, 0, E_FAIL, .todo_hr = TRUE},
         {"hi", URL_PART_QUERY, 0, S_FALSE, ""},
+
         {"http://foo:bar@localhost:21/internal.php?query=x&return=y", URL_PART_SCHEME, 0, S_OK, "http"},
         {"http://foo:bar@localhost:21/internal.php?query=x&return=y", URL_PART_USERNAME, 0, S_OK, "foo"},
         {"http://foo:bar@localhost:21/internal.php?query=x&return=y", URL_PART_PASSWORD, 0, S_OK, "bar"},
         {"http://foo:bar@localhost:21/internal.php?query=x&return=y", URL_PART_HOSTNAME, 0, S_OK, "localhost"},
         {"http://foo:bar@localhost:21/internal.php?query=x&return=y", URL_PART_PORT, 0, S_OK, "21"},
-        {"http://foo:bar@localhost:21/internal.php?query=x&return=y", URL_PART_QUERY, 0, S_OK, "query=x&return=y"},
+        {"http://foo:bar@localhost:21/internal.php?query=x&return=y", URL_PART_QUERY, 0, S_OK, "query=x&return=y", .todo_result = TRUE},
+        {"http://foo:bar@localhost:21/internal.php#anchor", URL_PART_QUERY, 0, S_FALSE, ""},
+        {"http://foo:bar@localhost:21/internal.php?query=x&return=y", URL_PART_SCHEME, URL_PARTFLAG_KEEPSCHEME, S_OK, "http", .todo_result = TRUE},
+        {"http://foo:bar@localhost:21/internal.php?query=x&return=y", URL_PART_USERNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "http:foo"},
+        {"http://foo:bar@localhost:21/internal.php?query=x&return=y", URL_PART_PASSWORD, URL_PARTFLAG_KEEPSCHEME, S_OK, "http:bar"},
+        {"http://foo:bar@localhost:21/internal.php?query=x&return=y", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "http:localhost"},
+        {"http://foo:bar@localhost:21/internal.php?query=x&return=y", URL_PART_PORT, URL_PARTFLAG_KEEPSCHEME, S_OK, "http:21"},
+        {"http://foo:bar@localhost:21/internal.php?query=x&return=y", URL_PART_QUERY, URL_PARTFLAG_KEEPSCHEME, S_OK, "query=x&return=y", .todo_result = TRUE},
+
+        {"http://localhost/", URL_PART_USERNAME, 0, E_INVALIDARG, .todo_hr = TRUE},
+        {"http://localhost/", URL_PART_PASSWORD, 0, E_INVALIDARG, .todo_hr = TRUE},
+        {"http://localhost/", URL_PART_HOSTNAME, 0, S_OK, "localhost"},
+        {"http://localhost/", URL_PART_PORT, 0, E_INVALIDARG, .todo_hr = TRUE},
+        {"http://localhost/", URL_PART_QUERY, 0, S_FALSE, ""},
+
+        {"http://localhost:port/", URL_PART_USERNAME, 0, E_INVALIDARG, .todo_hr = TRUE},
+        {"http://localhost:port/", URL_PART_PASSWORD, 0, E_INVALIDARG, .todo_hr = TRUE},
+        {"http://localhost:port/", URL_PART_HOSTNAME, 0, S_OK, "localhost"},
+        {"http://localhost:port/", URL_PART_PORT, 0, S_OK, "port", .todo_hr = TRUE},
+        {"http://:", URL_PART_HOSTNAME, 0, S_FALSE, ""},
+        {"http://:", URL_PART_PORT, 0, S_FALSE, ""},
+
+        {"http://user@localhost", URL_PART_USERNAME, 0, S_OK, "user"},
+        {"http://user@localhost", URL_PART_PASSWORD, 0, E_INVALIDARG, .todo_hr = TRUE},
+        {"http://user@localhost", URL_PART_HOSTNAME, 0, S_OK, "localhost"},
+        {"http://user@localhost", URL_PART_PORT, 0, E_INVALIDARG, .todo_hr = TRUE},
+        {"http://@", URL_PART_USERNAME, 0, S_FALSE, ""},
+        {"http://@", URL_PART_PASSWORD, 0, E_INVALIDARG, .todo_hr = TRUE},
+        {"http://@", URL_PART_HOSTNAME, 0, S_FALSE, ""},
+
+        {"http://user:pass@localhost", URL_PART_USERNAME, 0, S_OK, "user"},
+        {"http://user:pass@localhost", URL_PART_PASSWORD, 0, S_OK, "pass"},
+        {"http://user:pass@localhost", URL_PART_HOSTNAME, 0, S_OK, "localhost"},
+        {"http://user:pass@localhost", URL_PART_PORT, 0, E_INVALIDARG, .todo_hr = TRUE},
+        {"http://:@", URL_PART_USERNAME, 0, S_FALSE, ""},
+        {"http://:@", URL_PART_PASSWORD, 0, S_FALSE, ""},
+        {"http://:@", URL_PART_HOSTNAME, 0, S_FALSE, ""},
+
+        {"http://host:port:q", URL_PART_HOSTNAME, 0, S_OK, "host"},
+        {"http://host:port:q", URL_PART_PORT, 0, S_OK, "port:q", .todo_hr = TRUE},
+        {"http://user:pass:q@host", URL_PART_USERNAME, 0, S_OK, "user", .todo_hr = TRUE},
+        {"http://user:pass:q@host", URL_PART_PASSWORD, 0, S_OK, "pass:q", .todo_hr = TRUE},
+        {"http://user@host@q", URL_PART_USERNAME, 0, S_OK, "user"},
+        {"http://user@host@q", URL_PART_HOSTNAME, 0, S_OK, "host@q", .todo_result = TRUE},
+
+        {"http:localhost/index.html", URL_PART_HOSTNAME, 0, E_FAIL, .todo_hr = TRUE},
+        {"http:/localhost/index.html", URL_PART_HOSTNAME, 0, E_FAIL, .todo_hr = TRUE},
+
+        {"http://localhost\\index.html", URL_PART_HOSTNAME, 0, S_OK, "localhost", .todo_hr = TRUE},
+        {"http:/\\localhost/index.html", URL_PART_HOSTNAME, 0, S_OK, "localhost", .todo_hr = TRUE},
+        {"http:\\/localhost/index.html", URL_PART_HOSTNAME, 0, S_OK, "localhost", .todo_hr = TRUE},
+
+        {"ftp://localhost\\index.html", URL_PART_HOSTNAME, 0, S_OK, "localhost", .todo_hr = TRUE},
+        {"ftp:/\\localhost/index.html", URL_PART_HOSTNAME, 0, S_OK, "localhost", .todo_hr = TRUE},
+        {"ftp:\\/localhost/index.html", URL_PART_HOSTNAME, 0, S_OK, "localhost", .todo_hr = TRUE},
+
+        {"http://host?a:b@c:d", URL_PART_HOSTNAME, 0, S_OK, "host", .todo_result = TRUE},
+        {"http://host?a:b@c:d", URL_PART_QUERY, 0, S_OK, "a:b@c:d", .todo_hr = TRUE},
+        {"http://host#a:b@c:d", URL_PART_HOSTNAME, 0, S_OK, "host", .todo_hr = TRUE},
+        {"http://host#a:b@c:d", URL_PART_QUERY, 0, S_FALSE, ""},
+
+        /* All characters, other than those with special meaning, are allowed. */
         {"http://foo:bar@google.*.com:21/internal.php?query=x&return=y", URL_PART_HOSTNAME, 0, S_OK, "google.*.com"},
+        {"http:// !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff:pass@host", URL_PART_USERNAME, 0, S_OK, " !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff", .todo_hr = TRUE},
+        {"http://user: !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff@host", URL_PART_PASSWORD, 0, S_OK, " !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff", .todo_hr = TRUE},
+        {"http:// !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff", URL_PART_HOSTNAME, 0, S_OK, " !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff", .todo_hr = TRUE},
+        {"http://host: !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff", URL_PART_PORT, 0, S_OK, " !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff", .todo_hr = TRUE},
+
+        {"http:///index.html", URL_PART_HOSTNAME, 0, S_FALSE, ""},
+        {"http:///index.html", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "http:", .todo_hr = TRUE},
         {"file://h o s t/c:/windows/file", URL_PART_HOSTNAME, 0, S_OK, "h o s t"},
+        {"file://h o s t/c:/windows/file", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "h o s t", .todo_result = TRUE},
+        {"file://foo:bar@localhost:21/file?query=x", URL_PART_USERNAME, 0, E_FAIL, .todo_hr = TRUE},
+        {"file://foo:bar@localhost:21/file?query=x", URL_PART_PASSWORD, 0, E_FAIL, .todo_hr = TRUE},
+        {"file://foo:bar@localhost:21/file?query=x", URL_PART_HOSTNAME, 0, S_OK, "foo:bar@localhost:21", .todo_result = TRUE},
+        {"file://foo:bar@localhost:21/file?query=x", URL_PART_PORT, 0, E_FAIL, .todo_hr = TRUE},
+        {"file://foo:bar@localhost:21/file?query=x", URL_PART_QUERY, 0, S_OK, "query=x", .todo_result = TRUE},
         {"http://user:pass 123@www.wine hq.org", URL_PART_HOSTNAME, 0, S_OK, "www.wine hq.org"},
         {"http://user:pass 123@www.wine hq.org", URL_PART_PASSWORD, 0, S_OK, "pass 123"},
         {"about:blank", URL_PART_SCHEME, 0, S_OK, "about"},
@@ -623,10 +703,52 @@ static void test_UrlGetPart(void)
         {"res://some.dll/find.dlg", URL_PART_SCHEME, 0, S_OK, "res"},
         {"res://some.dll/find.dlg", URL_PART_QUERY, 0, S_FALSE, ""},
         {"http://www.winehq.org", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "http:www.winehq.org"},
+        {"file:///index.html", URL_PART_HOSTNAME, 0, S_FALSE, ""},
+        {"file:///index.html", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_FALSE, ""},
         {"file://c:\\index.htm", URL_PART_HOSTNAME, 0, S_FALSE, ""},
+        {"file://c:\\index.htm", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_FALSE, ""},
         {"file:some text", URL_PART_HOSTNAME, 0, S_FALSE, ""},
         {"index.htm", URL_PART_HOSTNAME, 0, E_FAIL},
+        {"sChEmE-.+:", URL_PART_SCHEME, 0, S_OK, "scheme-.+", .todo_hr = TRUE},
+        {"scheme_:", URL_PART_SCHEME, 0, S_FALSE, ""},
+        {"scheme :", URL_PART_SCHEME, 0, S_FALSE, ""},
+        {"sch eme:", URL_PART_SCHEME, 0, S_FALSE, ""},
+        {":", URL_PART_SCHEME, 0, S_FALSE, ""},
+        {"a:", URL_PART_SCHEME, 0, S_FALSE, "", .todo_hr = TRUE},
+        {"0:", URL_PART_SCHEME, 0, S_FALSE, "", .todo_hr = TRUE},
+        {"ab:", URL_PART_SCHEME, 0, S_OK, "ab"},
+
+        {"about://hostname/", URL_PART_HOSTNAME, 0, E_FAIL},
+        {"file://hostname/", URL_PART_HOSTNAME, 0, S_OK, "hostname"},
+        {"ftp://hostname/", URL_PART_HOSTNAME, 0, S_OK, "hostname"},
+        {"gopher://hostname/", URL_PART_HOSTNAME, 0, S_OK, "hostname"},
+        {"http://hostname/", URL_PART_HOSTNAME, 0, S_OK, "hostname"},
+        {"https://hostname/", URL_PART_HOSTNAME, 0, S_OK, "hostname"},
+        {"javascript://hostname/", URL_PART_HOSTNAME, 0, E_FAIL},
+        {"local://hostname/", URL_PART_HOSTNAME, 0, E_FAIL},
+        {"mailto://hostname/", URL_PART_HOSTNAME, 0, E_FAIL},
+        {"mk://hostname/", URL_PART_HOSTNAME, 0, E_FAIL},
+        {"news://hostname/", URL_PART_HOSTNAME, 0, S_OK, "hostname", .todo_hr = TRUE},
+        {"nntp://hostname/", URL_PART_HOSTNAME, 0, S_OK, "hostname", .todo_hr = TRUE},
+        {"res://hostname/", URL_PART_HOSTNAME, 0, E_FAIL},
+        {"shell://hostname/", URL_PART_HOSTNAME, 0, E_FAIL},
+        {"snews://hostname/", URL_PART_HOSTNAME, 0, S_OK, "hostname", .todo_hr = TRUE},
+        {"telnet://hostname/", URL_PART_HOSTNAME, 0, S_OK, "hostname"},
+        {"vbscript://hostname/", URL_PART_HOSTNAME, 0, E_FAIL},
+        {"wais://hostname/", URL_PART_HOSTNAME, 0, E_FAIL},
+
+        {"file://hostname/", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "hostname", .todo_result = TRUE},
+        {"ftp://hostname/", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "ftp:hostname"},
+        {"gopher://hostname/", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "gopher:hostname"},
+        {"http://hostname/", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "http:hostname"},
+        {"https://hostname/", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "https:hostname"},
+        {"news://hostname/", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "news:hostname", .todo_hr = TRUE},
+        {"nntp://hostname/", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "nntp:hostname", .todo_hr = TRUE},
+        {"snews://hostname/", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "snews:hostname", .todo_hr = TRUE},
+        {"telnet://hostname/", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "telnet:hostname"},
     };
+
+    winetest_mute_threshold = 5;
 
     hr = UrlGetPartA(NULL, NULL, NULL, URL_PART_SCHEME, 0);
     ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
@@ -660,10 +782,13 @@ static void test_UrlGetPart(void)
         size = 1;
         strcpy(buffer, "x");
         hr = UrlGetPartA(url, buffer, &size, part, flags);
-        if (tests[i].hr == S_OK)
-            ok(hr == E_POINTER, "Got hr %#x.\n", hr);
-        else
-            ok(hr == tests[i].hr, "Got hr %#x.\n", hr);
+        todo_wine_if (tests[i].todo_hr || !strcmp(url, "http://host?a:b@c:d"))
+        {
+            if (tests[i].hr == S_OK)
+                ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+            else
+                ok(hr == tests[i].hr, "Got hr %#x.\n", hr);
+        }
 
         if (hr == S_FALSE)
         {
@@ -673,22 +798,35 @@ static void test_UrlGetPart(void)
         else
         {
             if (hr == E_POINTER)
-                todo_wine_if (part == URL_PART_QUERY && expect[0])
-                    ok(size == strlen(expect) + 1, "Got size %u.\n", size);
+            {
+                if (expect)
+                {
+                    todo_wine_if (tests[i].todo_hr || tests[i].todo_result)
+                        ok(size == strlen(expect) + 1, "Got size %u.\n", size);
+                }
+            }
             else
-                ok(size == 1, "Got size %u.\n", size);
-            ok(!strcmp(buffer, "x"), "Got result %s.\n", debugstr_a(buffer));
+            {
+                todo_wine_if (hr == S_OK)
+                    ok(size == 1, "Got size %u.\n", size);
+            }
+            todo_wine_if (hr == S_OK)
+                ok(!strcmp(buffer, "x"), "Got result %s.\n", debugstr_a(buffer));
         }
 
         size = sizeof(buffer);
         strcpy(buffer, "x");
         hr = UrlGetPartA(url, buffer, &size, part, flags);
-        ok(hr == tests[i].hr, "Got hr %#x.\n", hr);
+        todo_wine_if (tests[i].todo_hr)
+            ok(hr == tests[i].hr, "Got hr %#x.\n", hr);
         if (SUCCEEDED(hr))
         {
             ok(size == strlen(buffer), "Got size %u.\n", size);
-            todo_wine_if (part == URL_PART_QUERY && expect[0])
-                ok(!strcmp(buffer, expect), "Got result %s.\n", debugstr_a(buffer));
+            if (expect)
+            {
+                todo_wine_if (tests[i].todo_hr || tests[i].todo_result)
+                    ok(!strcmp(buffer, expect), "Got result %s.\n", debugstr_a(buffer));
+            }
         }
         else
         {
@@ -697,16 +835,51 @@ static void test_UrlGetPart(void)
         }
 
         MultiByteToWideChar(CP_ACP, 0, url, -1, urlW, ARRAY_SIZE(urlW));
+
+        size = 1;
+        wcscpy(bufferW, L"x");
+        hr = UrlGetPartW(urlW, bufferW, &size, part, flags);
+        todo_wine_if ((tests[i].todo_hr || tests[i].hr == S_FALSE) && !(strchr(url, '"') && part == URL_PART_USERNAME))
+        {
+            if (tests[i].hr == S_OK)
+                ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+            else
+                ok(hr == (tests[i].hr == S_FALSE ? S_OK : tests[i].hr), "Got hr %#x.\n", hr);
+        }
+
+        if (hr == S_OK)
+        {
+            ok(!size, "Got size %u.\n", size);
+            ok(!buffer[0], "Got result %s.\n", debugstr_a(buffer));
+        }
+        else
+        {
+            if (hr == E_POINTER)
+            {
+                if (expect)
+                {
+                    todo_wine_if (tests[i].todo_hr || tests[i].todo_result)
+                        ok(size == strlen(expect) + 1, "Got size %u.\n", size);
+                }
+            }
+            else
+            {
+                todo_wine ok(size == 1, "Got size %u.\n", size);
+            }
+            todo_wine ok(!wcscmp(bufferW, L"x"), "Got result %s.\n", debugstr_w(bufferW));
+        }
+
         size = ARRAY_SIZE(bufferW);
         wcscpy(bufferW, L"x");
         hr = UrlGetPartW(urlW, bufferW, &size, part, flags);
-        todo_wine_if (tests[i].hr == S_FALSE)
+        todo_wine_if ((tests[i].hr == S_FALSE || tests[i].todo_hr) && strcmp(url, "a:") && strcmp(url, "0:"))
             ok(hr == (tests[i].hr == S_FALSE ? S_OK : tests[i].hr), "Got hr %#x.\n", hr);
         if (SUCCEEDED(hr))
         {
             ok(size == wcslen(bufferW), "Got size %u.\n", size);
             MultiByteToWideChar(CP_ACP, 0, buffer, -1, expectW, ARRAY_SIZE(expectW));
-            ok(!wcscmp(bufferW, expectW), "Got result %s.\n", debugstr_w(bufferW));
+            todo_wine_if (strstr(url, "news") || strstr(url, "nntp"))
+                ok(!wcscmp(bufferW, expectW), "Got result %s.\n", debugstr_w(bufferW));
         }
         else
         {
@@ -716,6 +889,8 @@ static void test_UrlGetPart(void)
 
         winetest_pop_context();
     }
+
+    winetest_mute_threshold = 42;
 }
 
 /* ########################### */
