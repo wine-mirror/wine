@@ -540,7 +540,7 @@ static void test__GetConcurrency(void)
 
     GetSystemInfo(&si);
     c = (*p__GetConcurrency)();
-    ok(c == si.dwNumberOfProcessors, "expected %u, got %u\n", si.dwNumberOfProcessors, c);
+    ok(c == si.dwNumberOfProcessors, "expected %lu, got %u\n", si.dwNumberOfProcessors, c);
 }
 
 static void test_gettnames(void* (CDECL *p_gettnames)(void))
@@ -587,7 +587,7 @@ static void test_gettnames(void* (CDECL *p_gettnames)(void))
 
     ok(ret->str[42] + strlen(ret->str[42]) + 1 == (char*)ret->wstr[0] ||
             ret->str[42] + strlen(ret->str[42]) + 2 == (char*)ret->wstr[0],
-            "ret->str[42] = %p len = %d, ret->wstr[0] = %p\n",
+            "ret->str[42] = %p len = %Id, ret->wstr[0] = %p\n",
             ret->str[42], strlen(ret->str[42]), ret->wstr[0]);
     p_free(ret);
 
@@ -749,11 +749,11 @@ static void test_critical_section(void)
     thread = (HANDLE)_beginthreadex(NULL, 0, test_critical_section_lock, NULL, 0, NULL);
     ok(thread != INVALID_HANDLE_VALUE, "_beginthread failed (%d)\n", errno);
     ret = WaitForSingleObject(thread, 100);
-    ok(ret == WAIT_TIMEOUT, "WaitForSingleObject returned  %d\n", ret);
+    ok(ret == WAIT_TIMEOUT, "WaitForSingleObject returned  %ld\n", ret);
     enter_flag = 1;
     call_func1(p_critical_section_unlock, &cs);
     ret = WaitForSingleObject(thread, INFINITE);
-    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", ret);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %ld\n", ret);
     ret = CloseHandle(thread);
     ok(ret, "CloseHandle failed\n");
 
@@ -762,7 +762,7 @@ static void test_critical_section(void)
     thread = (HANDLE)_beginthreadex(NULL, 0, test_critical_section_try_lock, NULL, 0, NULL);
     ok(thread != INVALID_HANDLE_VALUE, "_beginthread failed (%d)\n", errno);
     ret = WaitForSingleObject(thread, INFINITE);
-    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", ret);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %ld\n", ret);
     ret = CloseHandle(thread);
     ok(ret, "CloseHandle failed\n");
     call_func1(p_critical_section_unlock, &cs);
@@ -773,7 +773,7 @@ static void test_critical_section(void)
     thread = (HANDLE)_beginthreadex(NULL, 0, test_critical_section_try_lock, NULL, 0, NULL);
     ok(thread != INVALID_HANDLE_VALUE, "_beginthread failed (%d)\n", errno);
     ret = WaitForSingleObject(thread, INFINITE);
-    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", ret);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %ld\n", ret);
     ret = CloseHandle(thread);
     ok(ret, "CloseHandle failed\n");
     thread = (HANDLE)_beginthreadex(NULL, 0, test_critical_section_try_lock_for, NULL, 0, NULL);
@@ -782,7 +782,7 @@ static void test_critical_section(void)
     Sleep(10);
     call_func1(p_critical_section_unlock, &cs);
     ret = WaitForSingleObject(thread, INFINITE);
-    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", ret);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %ld\n", ret);
     ret = CloseHandle(thread);
     ok(ret, "CloseHandle failed\n");
 
@@ -791,11 +791,11 @@ static void test_critical_section(void)
     thread = (HANDLE)_beginthreadex(NULL, 0, test_critical_section_scoped_lock, NULL, 0, NULL);
     ok(thread != INVALID_HANDLE_VALUE, "_beginthread failed (%d)\n", errno);
     ret = WaitForSingleObject(thread, 100);
-    ok(ret == WAIT_TIMEOUT, "WaitForSingleObject returned  %d\n", ret);
+    ok(ret == WAIT_TIMEOUT, "WaitForSingleObject returned  %ld\n", ret);
     enter_flag = 1;
     call_func1(p_critical_section_unlock, &cs);
     ret = WaitForSingleObject(thread, INFINITE);
-    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", ret);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %ld\n", ret);
     ret = CloseHandle(thread);
     ok(ret, "CloseHandle failed\n");
     call_func1(p_critical_section_dtor, &cs);
@@ -1063,10 +1063,10 @@ static void test__Condition_variable(void)
 
     call_func1(p__Condition_variable_notify_one, &cv);
     ret = WaitForSingleObject(threads[1], 500);
-    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", ret);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %ld\n", ret);
     call_func1(p__Condition_variable_notify_one, &cv);
     ret = WaitForSingleObject(threads[0], 500);
-    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", ret);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %ld\n", ret);
 
     CloseHandle(threads[0]);
     CloseHandle(threads[1]);
