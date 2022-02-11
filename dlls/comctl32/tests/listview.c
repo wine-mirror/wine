@@ -413,15 +413,6 @@ static const struct message listview_header_set_imagelist[] = {
     { 0 }
 };
 
-static const struct message parent_insert_focused_seq[] = {
-    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGING },
-    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGING },
-    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGED },
-    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGED },
-    { WM_NOTIFY, sent|id, 0, 0, LVN_INSERTITEM },
-    { 0 }
-};
-
 static const struct message parent_report_cd_seq[] = {
     { WM_NOTIFY, sent|id|custdraw, 0, 0, NM_CUSTOMDRAW, CDDS_PREPAINT },
     { WM_NOTIFY, sent|id|custdraw, 0, 0, NM_CUSTOMDRAW, CDDS_ITEMPREPAINT },
@@ -5920,6 +5911,136 @@ static void test_deleteitem(void)
     DestroyWindow(hwnd);
 }
 
+static const struct message parent_insert_focused0_seq[] = {
+    { WM_NOTIFY, sent|id|wparam|lparam, 0, LVIF_STATE, LVN_ITEMCHANGING },
+    { WM_NOTIFY, sent|id|wparam|lparam, 0, LVIF_STATE, LVN_ITEMCHANGED },
+    { WM_NOTIFY, sent|id, 0, 0, LVN_INSERTITEM },
+    { 0 }
+};
+
+static const struct message parent_insert_focused1_seq[] = {
+    { WM_NOTIFY, sent|id|wparam|lparam, 1, LVIF_STATE, LVN_ITEMCHANGING },
+    { WM_NOTIFY, sent|id|wparam|lparam, 0, LVIF_STATE, LVN_ITEMCHANGING },
+    { WM_NOTIFY, sent|id|wparam|lparam, 0, LVIF_STATE, LVN_ITEMCHANGED },
+    { WM_NOTIFY, sent|id|wparam|lparam, 1, LVIF_STATE, LVN_ITEMCHANGED },
+    { WM_NOTIFY, sent|id, 0, 0, LVN_INSERTITEM },
+    { 0 }
+};
+
+static const struct message parent_insert_item_seq[] = {
+    { WM_NOTIFY, sent|id, 0, 0, LVN_INSERTITEM },
+    { 0 }
+};
+
+static const struct message parent_insert_selected_seq[] = {
+    { WM_NOTIFY, sent|id|wparam|lparam, 3, LVIF_STATE, LVN_ITEMCHANGING },
+    { WM_NOTIFY, sent|id|wparam|lparam, 3, LVIF_STATE, LVN_ITEMCHANGED },
+    { WM_NOTIFY, sent|id, 0, 0, LVN_INSERTITEM },
+    { 0 }
+};
+
+#define LVIS_ALL (LVIS_FOCUSED | LVIS_SELECTED | LVIS_CUT | LVIS_DROPHILITED | LVIS_ACTIVATING)
+
+static void test_LVM_INSERTITEM(void)
+{
+    static const struct
+    {
+        UINT mask, state, stateMask;
+    } insert_item[] =
+    {
+        { LVIF_STATE, LVIS_FOCUSED, LVIS_FOCUSED },
+        { LVIF_STATE, LVIS_FOCUSED, 0 },
+        { LVIF_STATE, 0, LVIS_FOCUSED },
+
+        { LVIF_STATE, LVIS_SELECTED, LVIS_SELECTED },
+        { LVIF_STATE, LVIS_SELECTED, 0 },
+        { LVIF_STATE, 0, LVIS_SELECTED },
+
+        { LVIF_STATE, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED },
+        { LVIF_STATE, LVIS_FOCUSED | LVIS_SELECTED, 0 },
+        { LVIF_STATE, 0, LVIS_FOCUSED | LVIS_SELECTED },
+
+        { LVIF_STATE, LVIS_FOCUSED, LVIS_ALL },
+        { LVIF_STATE, LVIS_SELECTED, LVIS_ALL },
+        { LVIF_STATE, LVIS_CUT, LVIS_ALL },
+        { LVIF_STATE, LVIS_DROPHILITED, LVIS_ALL },
+        { LVIF_STATE, LVIS_ACTIVATING, LVIS_ALL },
+
+        { LVIF_STATE, LVIS_ALL, LVIS_ALL },
+        { LVIF_STATE, LVIS_ALL, 0 },
+        { LVIF_STATE, 0, LVIS_ALL },
+
+        { LVIF_STATE | LVIF_PARAM, 0, 0 },
+        { LVIF_STATE | LVIF_PARAM, LVIS_FOCUSED, LVIS_FOCUSED },
+        { LVIF_STATE | LVIF_PARAM, LVIS_FOCUSED, 0 },
+        { LVIF_STATE | LVIF_PARAM, 0, LVIS_FOCUSED },
+
+        { LVIF_STATE | LVIF_PARAM, LVIS_SELECTED, LVIS_SELECTED },
+        { LVIF_STATE | LVIF_PARAM, LVIS_SELECTED, 0 },
+        { LVIF_STATE | LVIF_PARAM, 0, LVIS_SELECTED },
+
+        { LVIF_STATE, 0, 0 },
+        { LVIF_PARAM, 0, 0 },
+
+        { LVIF_PARAM | LVIF_TEXT | LVIF_IMAGE, 0, 0 },
+        { LVIF_PARAM | LVIF_TEXT | LVIF_IMAGE, LVIS_FOCUSED, LVIS_FOCUSED },
+        { LVIF_PARAM | LVIF_TEXT | LVIF_IMAGE, LVIS_FOCUSED, 0 },
+        { LVIF_PARAM | LVIF_TEXT | LVIF_IMAGE, 0, LVIS_FOCUSED },
+
+        { LVIF_STATE | LVIF_PARAM | LVIF_TEXT | LVIF_IMAGE, 0, 0 },
+        { LVIF_STATE | LVIF_PARAM | LVIF_TEXT | LVIF_IMAGE, LVIS_FOCUSED, LVIS_FOCUSED },
+        { LVIF_STATE | LVIF_PARAM | LVIF_TEXT | LVIF_IMAGE, LVIS_FOCUSED, 0 },
+        { LVIF_STATE | LVIF_PARAM | LVIF_TEXT | LVIF_IMAGE, 0, LVIS_FOCUSED },
+
+        { LVIF_STATE | LVIF_PARAM | LVIF_TEXT | LVIF_IMAGE, 0, 0 },
+        { LVIF_STATE | LVIF_PARAM | LVIF_TEXT | LVIF_IMAGE, LVIS_ALL, LVIS_ALL },
+        { LVIF_STATE | LVIF_PARAM | LVIF_TEXT | LVIF_IMAGE, LVIS_ALL, 0 },
+        { LVIF_STATE | LVIF_PARAM | LVIF_TEXT | LVIF_IMAGE, 0, LVIS_ALL },
+    };
+    LVITEMA item;
+    UINT state;
+    HWND hwnd;
+    INT ret, i;
+    char buf[256];
+
+    for (i = 0; i < ARRAYSIZE(insert_item); i++)
+    {
+        hwnd = create_listview_control(LVS_REPORT);
+
+        flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+        item.mask = insert_item[i].mask;
+        item.state = insert_item[i].state;
+        item.stateMask = insert_item[i].stateMask;
+        item.pszText = (LPSTR)"Hello World!";
+        item.iImage = I_IMAGECALLBACK;
+        item.iItem = 0;
+        item.iSubItem = 0;
+        item.lParam = 0xdeadbeef;
+        ret = SendMessageA(hwnd, LVM_INSERTITEMA, 0, (LPARAM)&item);
+        ok(ret == 0, "%d: got %d\n", i, ret);
+
+        if ((insert_item[i].mask & LVIF_STATE) && (insert_item[i].state & (LVIS_FOCUSED | LVIS_SELECTED)))
+        {
+            sprintf(buf, "%d: insert focused", i);
+            ok_sequence(sequences, PARENT_SEQ_INDEX, parent_insert_focused0_seq, buf, TRUE);
+        }
+        else
+        {
+            sprintf(buf, "%d: insert item", i);
+            ok_sequence(sequences, PARENT_SEQ_INDEX, parent_insert_item_seq, buf, FALSE);
+        }
+
+        state = SendMessageA(hwnd, LVM_GETITEMSTATE, 0, LVIS_ALL);
+        if ((insert_item[i].mask & LVIF_STATE) && insert_item[i].state)
+            ok(state == insert_item[i].state, "%d: expected %#x, got %#x\n", i, insert_item[i].state, state);
+        else
+            ok(state == 0, "%d: expected 0, got %#x\n", i, state);
+
+        DestroyWindow(hwnd);
+    }
+}
+
 static void test_insertitem(void)
 {
     LVITEMA item;
@@ -5929,6 +6050,8 @@ static void test_insertitem(void)
 
     hwnd = create_listview_control(LVS_REPORT);
 
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
     /* insert item 0 focused */
     item.mask = LVIF_STATE;
     item.state = LVIS_FOCUSED;
@@ -5937,11 +6060,10 @@ static void test_insertitem(void)
     item.iSubItem = 0;
     ret = SendMessageA(hwnd, LVM_INSERTITEMA, 0, (LPARAM)&item);
     ok(ret == 0, "got %d\n", ret);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_insert_focused0_seq, "insert focused 0", TRUE);
 
     state = SendMessageA(hwnd, LVM_GETITEMSTATE, 0, LVIS_FOCUSED);
     ok(state == LVIS_FOCUSED, "got %x\n", state);
-
-    flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     /* insert item 1, focus shift */
     item.mask = LVIF_STATE;
@@ -5951,8 +6073,7 @@ static void test_insertitem(void)
     item.iSubItem = 0;
     ret = SendMessageA(hwnd, LVM_INSERTITEMA, 0, (LPARAM)&item);
     ok(ret == 1, "got %d\n", ret);
-
-    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_insert_focused_seq, "insert focused", TRUE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_insert_focused1_seq, "insert focused 1", TRUE);
 
     state = SendMessageA(hwnd, LVM_GETITEMSTATE, 1, LVIS_FOCUSED);
     ok(state == LVIS_FOCUSED, "got %x\n", state);
@@ -5965,9 +6086,43 @@ static void test_insertitem(void)
     item.iSubItem = 0;
     ret = SendMessageA(hwnd, LVM_INSERTITEMA, 0, (LPARAM)&item);
     ok(ret == 2, "got %d\n", ret);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_insert_item_seq, "insert focused 2", FALSE);
 
     state = SendMessageA(hwnd, LVM_GETITEMSTATE, 1, LVIS_FOCUSED);
     ok(state == LVIS_FOCUSED, "got %x\n", state);
+
+    /* insert item 3 */
+    item.mask = LVIF_STATE | LVIF_PARAM;
+    item.state = LVIS_SELECTED;
+    item.stateMask = LVIS_SELECTED;
+    item.iItem = 3;
+    item.iSubItem = 0;
+    item.lParam = 0xdeadbeef;
+    ret = SendMessageA(hwnd, LVM_INSERTITEMA, 0, (LPARAM)&item);
+    ok(ret == 3, "got %d\n", ret);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_insert_selected_seq, "insert selected", TRUE);
+
+    /* insert item 4 */
+    item.mask = LVIF_PARAM;
+    item.state = 0;
+    item.stateMask = 0;
+    item.iItem = 4;
+    item.iSubItem = 0;
+    item.lParam = 0xdeadbeef;
+    ret = SendMessageA(hwnd, LVM_INSERTITEMA, 0, (LPARAM)&item);
+    ok(ret == 4, "got %d\n", ret);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_insert_item_seq, "insert param", FALSE);
+
+    /* insert item 5 */
+    item.mask = LVIF_STATE;
+    item.state = 0;
+    item.stateMask = 0;
+    item.iItem = 5;
+    item.iSubItem = 0;
+    item.lParam = 0xdeadbeef;
+    ret = SendMessageA(hwnd, LVM_INSERTITEMA, 0, (LPARAM)&item);
+    ok(ret == 5, "got %d\n", ret);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_insert_item_seq, "insert state", FALSE);
 
     DestroyWindow(hwnd);
 }
@@ -6718,6 +6873,7 @@ START_TEST(listview)
     test_imagelists();
     test_deleteitem();
     test_insertitem();
+    test_LVM_INSERTITEM();
     test_header_proc();
     test_oneclickactivate();
     test_callback_mask();
