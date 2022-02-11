@@ -472,7 +472,17 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
     if (defwndproc_counter) msg.flags |= defwinproc;
     msg.wParam = wParam;
     msg.lParam = lParam;
-    if (message == WM_NOTIFY && lParam) msg.id = ((NMHDR*)lParam)->code;
+    if (message == WM_NOTIFY && lParam)
+    {
+        NMLISTVIEW *nmlv = (NMLISTVIEW *)lParam;
+
+        msg.id = nmlv->hdr.code;
+        if (msg.id == LVN_ITEMCHANGING || msg.id == LVN_ITEMCHANGED)
+        {
+            msg.wParam = nmlv->iItem;
+            msg.lParam = nmlv->uChanged;
+        }
+    }
     if (message == WM_COMMAND) msg.id = HIWORD(wParam);
 
     /* log system messages, except for painting */
