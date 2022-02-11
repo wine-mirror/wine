@@ -4114,11 +4114,12 @@ bool __thiscall ios_base_operator_bool(const ios_base *this)
     return (this->state & (IOSTATE_failbit|IOSTATE_badbit)) == 0;
 }
 
-/* ?_Addstd@ios_base@std@@SAXPAV12@@Z */
-/* ?_Addstd@ios_base@std@@SAXPEAV12@@Z */
-void __cdecl ios_base_Addstd(ios_base *add)
+/* ?_Addstd@ios_base@std@@IAEXXZ */
+/* ?_Addstd@ios_base@std@@IEAAXXZ */
+DEFINE_THISCALL_WRAPPER(ios_base_Addstd, 4)
+void __thiscall ios_base_Addstd(ios_base *this)
 {
-    FIXME("(%p) stub\n", add);
+    FIXME("(%p) stub\n", this);
 }
 
 /* ?_Index_func@ios_base@std@@CAAAHXZ */
