@@ -32,7 +32,6 @@
 static const char* TEST_URL_1 = "http://www.winehq.org/tests?date=10/10/1923";
 static const char* TEST_URL_2 = "http://localhost:8080/tests%2e.html?date=Mon%2010/10/1923";
 static const char* TEST_URL_3 = "http://foo:bar@localhost:21/internal.php?query=x&return=y";
-static const char* TEST_URL_4 = "http://foo:bar@google.*.com:21/internal.php?query=x&return=y";
 
 static const WCHAR winehqW[] = L"http://www.winehq.org/";
 static const char winehqA[] = "http://www.winehq.org/";
@@ -582,185 +581,141 @@ static void test_UrlHash(void)
   hash_url(TEST_URL_3);
 }
 
-/* ########################### */
-
-static void test_url_part(const char* szUrl, DWORD dwPart, DWORD dwFlags, const char* szExpected)
-{
-  CHAR szPart[INTERNET_MAX_URL_LENGTH];
-  WCHAR wszPart[INTERNET_MAX_URL_LENGTH];
-  LPWSTR wszUrl = GetWideString(szUrl);
-  LPWSTR wszConvertedPart;
-  HRESULT res;
-  DWORD dwSize;
-
-  dwSize = 1;
-  res = UrlGetPartA(szUrl, szPart, &dwSize, dwPart, dwFlags);
-  ok(res == E_POINTER, "UrlGetPart for \"%s\" gave: 0x%08x\n", szUrl, res);
-  todo_wine_if (dwPart == URL_PART_QUERY)
-  ok(dwSize == strlen(szExpected) + 1,
-          "UrlGetPart for \"%s\" gave size: %u\n", szUrl, dwSize);
-
-  dwSize = INTERNET_MAX_URL_LENGTH;
-  res = UrlGetPartA(szUrl, szPart, &dwSize, dwPart, dwFlags);
-  ok(res == S_OK,
-    "UrlGetPartA for \"%s\" part 0x%08x returned 0x%x and \"%s\"\n",
-    szUrl, dwPart, res, szPart);
-
-  dwSize = INTERNET_MAX_URL_LENGTH;
-  res = UrlGetPartW(wszUrl, wszPart, &dwSize, dwPart, dwFlags);
-  ok(res == S_OK,
-    "UrlGetPartW for \"%s\" part 0x%08x returned 0x%x\n",
-    szUrl, dwPart, res);
-
-  wszConvertedPart = GetWideString(szPart);
-
-  ok(lstrcmpW(wszPart,wszConvertedPart)==0,
-      "Strings didn't match between ansi and unicode UrlGetPart!\n");
-
-  FreeWideString(wszConvertedPart);
-  FreeWideString(wszUrl);
-
-  todo_wine_if (dwPart == URL_PART_QUERY)
-  ok(!strcmp(szPart,szExpected),
-	 "Expected %s, but got %s\n", szExpected, szPart);
-}
-
-/* ########################### */
-
 static void test_UrlGetPart(void)
 {
-  const char* file_url = "file://h o s t/c:/windows/file";
-  const char* http_url = "http://user:pass 123@www.wine hq.org";
-  const char* res_url = "res://some.dll/find.dlg";
-  const char* about_url = "about:blank";
-  const char* excid_url = "x-excid://36C00000/guid:{048B4E89-2E92-496F-A837-33BA02FF6D32}/Message.htm";
-  const char* foo_url = "foo://bar-url/test";
-  const char* short_url = "ascheme:";
+    WCHAR bufferW[200];
+    char buffer[200];
+    unsigned int i;
+    HRESULT hr;
+    DWORD size;
 
-  CHAR szPart[INTERNET_MAX_URL_LENGTH];
-  WCHAR bufW[5];
-  DWORD dwSize;
-  HRESULT res;
+    static const struct
+    {
+        const char *url;
+        DWORD part;
+        DWORD flags;
+        HRESULT hr;
+        const char *expect;
+    }
+    tests[] =
+    {
+        {"hi", URL_PART_SCHEME, 0, S_FALSE, ""},
+        {"hi", URL_PART_QUERY, 0, S_FALSE, ""},
+        {"http://foo:bar@localhost:21/internal.php?query=x&return=y", URL_PART_SCHEME, 0, S_OK, "http"},
+        {"http://foo:bar@localhost:21/internal.php?query=x&return=y", URL_PART_USERNAME, 0, S_OK, "foo"},
+        {"http://foo:bar@localhost:21/internal.php?query=x&return=y", URL_PART_PASSWORD, 0, S_OK, "bar"},
+        {"http://foo:bar@localhost:21/internal.php?query=x&return=y", URL_PART_HOSTNAME, 0, S_OK, "localhost"},
+        {"http://foo:bar@localhost:21/internal.php?query=x&return=y", URL_PART_PORT, 0, S_OK, "21"},
+        {"http://foo:bar@localhost:21/internal.php?query=x&return=y", URL_PART_QUERY, 0, S_OK, "query=x&return=y"},
+        {"http://foo:bar@google.*.com:21/internal.php?query=x&return=y", URL_PART_HOSTNAME, 0, S_OK, "google.*.com"},
+        {"file://h o s t/c:/windows/file", URL_PART_HOSTNAME, 0, S_OK, "h o s t"},
+        {"http://user:pass 123@www.wine hq.org", URL_PART_HOSTNAME, 0, S_OK, "www.wine hq.org"},
+        {"http://user:pass 123@www.wine hq.org", URL_PART_PASSWORD, 0, S_OK, "pass 123"},
+        {"about:blank", URL_PART_SCHEME, 0, S_OK, "about"},
+        {"about:blank", URL_PART_HOSTNAME, 0, E_FAIL},
+        {"x-excid://36C00000/guid:{048B4E89-2E92-496F-A837-33BA02FF6D32}/Message.htm", URL_PART_SCHEME, 0, S_OK, "x-excid"},
+        {"x-excid://36C00000/guid:{048B4E89-2E92-496F-A837-33BA02FF6D32}/Message.htm", URL_PART_HOSTNAME, 0, E_FAIL},
+        {"x-excid://36C00000/guid:{048B4E89-2E92-496F-A837-33BA02FF6D32}/Message.htm", URL_PART_QUERY, 0, S_FALSE, ""},
+        {"foo://bar-url/test", URL_PART_SCHEME, 0, S_OK, "foo"},
+        {"foo://bar-url/test", URL_PART_HOSTNAME, 0, E_FAIL},
+        {"foo://bar-url/test", URL_PART_QUERY, 0, S_FALSE, ""},
+        {"ascheme:", URL_PART_SCHEME, 0, S_OK, "ascheme"},
+        {"res://some.dll/find.dlg", URL_PART_SCHEME, 0, S_OK, "res"},
+        {"res://some.dll/find.dlg", URL_PART_QUERY, 0, S_FALSE, ""},
+        {"http://www.winehq.org", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "http:www.winehq.org"},
+        {"file://c:\\index.htm", URL_PART_HOSTNAME, 0, S_FALSE, ""},
+        {"file:some text", URL_PART_HOSTNAME, 0, S_FALSE, ""},
+        {"index.htm", URL_PART_HOSTNAME, 0, E_FAIL},
+    };
 
-  res = UrlGetPartA(NULL, NULL, NULL, URL_PART_SCHEME, 0);
-  ok(res == E_INVALIDARG, "null params gave: 0x%08x\n", res);
+    hr = UrlGetPartA(NULL, NULL, NULL, URL_PART_SCHEME, 0);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
-  res = UrlGetPartA(NULL, szPart, &dwSize, URL_PART_SCHEME, 0);
-  ok(res == E_INVALIDARG, "null URL gave: 0x%08x\n", res);
+    hr = UrlGetPartA(NULL, buffer, &size, URL_PART_SCHEME, 0);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
-  res = UrlGetPartA(res_url, NULL, &dwSize, URL_PART_SCHEME, 0);
-  ok(res == E_INVALIDARG, "null szPart gave: 0x%08x\n", res);
+    hr = UrlGetPartA("res://some.dll/find.dlg", NULL, &size, URL_PART_SCHEME, 0);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
-  res = UrlGetPartA(res_url, szPart, NULL, URL_PART_SCHEME, 0);
-  ok(res == E_INVALIDARG, "null URL gave: 0x%08x\n", res);
+    hr = UrlGetPartA("res://some.dll/find.dlg", buffer, NULL, URL_PART_SCHEME, 0);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
-  dwSize = 0;
-  szPart[0]='x'; szPart[1]=0;
-  res = UrlGetPartA("hi", szPart, &dwSize, URL_PART_SCHEME, 0);
-  ok(res == E_INVALIDARG, "UrlGetPartA(*pcchOut = 0) returned %08X\n", res);
-  ok(szPart[0] == 'x' && szPart[1] == 0, "UrlGetPartA(*pcchOut = 0) modified szPart: \"%s\"\n", szPart);
-  ok(dwSize == 0, "dwSize = %d\n", dwSize);
+    size = 0;
+    strcpy(buffer, "x");
+    hr = UrlGetPartA("hi", buffer, &size, URL_PART_SCHEME, 0);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(!strcmp(buffer, "x"), "Got result %s.\n", debugstr_a(buffer));
+    ok(!size, "Got size %u.\n", size);
 
-  dwSize = sizeof szPart;
-  szPart[0]='x'; szPart[1]=0;
-  res = UrlGetPartA("hi", szPart, &dwSize, URL_PART_SCHEME, 0);
-  ok (res==S_FALSE, "UrlGetPartA(\"hi\") returned %08X\n", res);
-  ok(szPart[0]==0, "UrlGetPartA(\"hi\") return \"%s\" instead of \"\"\n", szPart);
-  ok(dwSize == 0, "dwSize = %d\n", dwSize);
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        WCHAR urlW[200], expectW[200];
+        const char *expect = tests[i].expect;
+        const char *url = tests[i].url;
+        DWORD flags = tests[i].flags;
+        DWORD part = tests[i].part;
 
-  /* UrlGetPartW returns S_OK instead of S_FALSE */
-  dwSize = sizeof szPart;
-  bufW[0]='x'; bufW[1]=0;
-  res = UrlGetPartW(L"hi", bufW, &dwSize, URL_PART_SCHEME, 0);
-  todo_wine ok(res==S_OK, "UrlGetPartW(\"hi\") returned %08X\n", res);
-  ok(bufW[0] == 0, "UrlGetPartW(\"hi\") return \"%c\"\n", bufW[0]);
-  ok(dwSize == 0, "dwSize = %d\n", dwSize);
+        winetest_push_context("URL %s, part %#x, flags %#x", debugstr_a(url), part, flags);
 
-  dwSize = sizeof szPart;
-  szPart[0]='x'; szPart[1]=0;
-  res = UrlGetPartA("hi", szPart, &dwSize, URL_PART_QUERY, 0);
-  ok (res==S_FALSE, "UrlGetPartA(\"hi\") returned %08X\n", res);
-  ok(szPart[0]==0, "UrlGetPartA(\"hi\") return \"%s\" instead of \"\"\n", szPart);
-  ok(dwSize == 0, "dwSize = %d\n", dwSize);
+        size = 1;
+        strcpy(buffer, "x");
+        hr = UrlGetPartA(url, buffer, &size, part, flags);
+        if (tests[i].hr == S_OK)
+            ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+        else
+            ok(hr == tests[i].hr, "Got hr %#x.\n", hr);
 
-  test_url_part(TEST_URL_3, URL_PART_HOSTNAME, 0, "localhost");
-  test_url_part(TEST_URL_3, URL_PART_PORT, 0, "21");
-  test_url_part(TEST_URL_3, URL_PART_USERNAME, 0, "foo");
-  test_url_part(TEST_URL_3, URL_PART_PASSWORD, 0, "bar");
-  test_url_part(TEST_URL_3, URL_PART_SCHEME, 0, "http");
-  test_url_part(TEST_URL_3, URL_PART_QUERY, 0, "query=x&return=y");
+        if (hr == S_FALSE)
+        {
+            ok(!size, "Got size %u.\n", size);
+            ok(!buffer[0], "Got result %s.\n", debugstr_a(buffer));
+        }
+        else
+        {
+            if (hr == E_POINTER)
+                todo_wine_if (part == URL_PART_QUERY && expect[0])
+                    ok(size == strlen(expect) + 1, "Got size %u.\n", size);
+            else
+                ok(size == 1, "Got size %u.\n", size);
+            ok(!strcmp(buffer, "x"), "Got result %s.\n", debugstr_a(buffer));
+        }
 
-  test_url_part(TEST_URL_4, URL_PART_HOSTNAME, 0, "google.*.com");
+        size = sizeof(buffer);
+        strcpy(buffer, "x");
+        hr = UrlGetPartA(url, buffer, &size, part, flags);
+        ok(hr == tests[i].hr, "Got hr %#x.\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            ok(size == strlen(buffer), "Got size %u.\n", size);
+            todo_wine_if (part == URL_PART_QUERY && expect[0])
+                ok(!strcmp(buffer, expect), "Got result %s.\n", debugstr_a(buffer));
+        }
+        else
+        {
+            ok(size == sizeof(buffer), "Got size %u.\n", size);
+            ok(!strcmp(buffer, "x"), "Got result %s.\n", debugstr_a(buffer));
+        }
 
-  test_url_part(file_url, URL_PART_HOSTNAME, 0, "h o s t");
+        MultiByteToWideChar(CP_ACP, 0, url, -1, urlW, ARRAY_SIZE(urlW));
+        size = ARRAY_SIZE(bufferW);
+        wcscpy(bufferW, L"x");
+        hr = UrlGetPartW(urlW, bufferW, &size, part, flags);
+        todo_wine_if (tests[i].hr == S_FALSE)
+            ok(hr == (tests[i].hr == S_FALSE ? S_OK : tests[i].hr), "Got hr %#x.\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            ok(size == wcslen(bufferW), "Got size %u.\n", size);
+            MultiByteToWideChar(CP_ACP, 0, buffer, -1, expectW, ARRAY_SIZE(expectW));
+            ok(!wcscmp(bufferW, expectW), "Got result %s.\n", debugstr_w(bufferW));
+        }
+        else
+        {
+            todo_wine ok(size == ARRAY_SIZE(bufferW), "Got size %u.\n", size);
+            todo_wine ok(!wcscmp(bufferW, L"x"), "Got result %s.\n", debugstr_w(bufferW));
+        }
 
-  test_url_part(http_url, URL_PART_HOSTNAME, 0, "www.wine hq.org");
-  test_url_part(http_url, URL_PART_PASSWORD, 0, "pass 123");
-
-  test_url_part(about_url, URL_PART_SCHEME, 0, "about");
-
-  test_url_part(excid_url, URL_PART_SCHEME, 0, "x-excid");
-  test_url_part(foo_url, URL_PART_SCHEME, 0, "foo");
-  test_url_part(short_url, URL_PART_SCHEME, 0, "ascheme");
-
-  dwSize = sizeof(szPart);
-  res = UrlGetPartA(about_url, szPart, &dwSize, URL_PART_HOSTNAME, 0);
-  ok(res==E_FAIL, "returned %08x\n", res);
-
-  test_url_part(res_url, URL_PART_SCHEME, 0, "res");
-  test_url_part("http://www.winehq.org", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, "http:www.winehq.org");
-
-  dwSize = sizeof szPart;
-  szPart[0]='x'; szPart[1]=0;
-  res = UrlGetPartA(res_url, szPart, &dwSize, URL_PART_QUERY, 0);
-  ok(res==S_FALSE, "UrlGetPartA returned %08X\n", res);
-  ok(szPart[0]==0, "UrlGetPartA gave \"%s\" instead of \"\"\n", szPart);
-  ok(dwSize == 0, "dwSize = %d\n", dwSize);
-
-  dwSize = sizeof(szPart);
-  res = UrlGetPartA("file://c:\\index.htm", szPart, &dwSize, URL_PART_HOSTNAME, 0);
-  ok(res==S_FALSE, "returned %08x\n", res);
-  ok(dwSize == 0, "dwSize = %d\n", dwSize);
-
-  dwSize = sizeof(szPart);
-  szPart[0] = 'x'; szPart[1] = '\0';
-  res = UrlGetPartA("file:some text", szPart, &dwSize, URL_PART_HOSTNAME, 0);
-  ok(res==S_FALSE, "returned %08x\n", res);
-  ok(szPart[0] == '\0', "szPart[0] = %c\n", szPart[0]);
-  ok(dwSize == 0, "dwSize = %d\n", dwSize);
-
-  dwSize = sizeof(szPart);
-  szPart[0] = 'x'; szPart[1] = '\0';
-  res = UrlGetPartA("index.htm", szPart, &dwSize, URL_PART_HOSTNAME, 0);
-  ok(res==E_FAIL, "returned %08x\n", res);
-
-  dwSize = sizeof(szPart);
-  szPart[0] = 'x'; szPart[1] = '\0';
-  res = UrlGetPartA(excid_url, szPart, &dwSize, URL_PART_HOSTNAME, 0);
-  ok(res==E_FAIL, "returned %08x\n", res);
-  ok(szPart[0] == 'x', "szPart[0] = %c\n", szPart[0]);
-  ok(dwSize == sizeof(szPart), "dwSize = %d\n", dwSize);
-
-  dwSize = sizeof(szPart);
-  szPart[0] = 'x'; szPart[1] = '\0';
-  res = UrlGetPartA(excid_url, szPart, &dwSize, URL_PART_QUERY, 0);
-  ok(res==S_FALSE, "returned %08x\n", res);
-  ok(szPart[0] == 0, "szPart[0] = %c\n", szPart[0]);
-  ok(dwSize == 0, "dwSize = %d\n", dwSize);
-
-  dwSize = sizeof(szPart);
-  szPart[0] = 'x'; szPart[1] = '\0';
-  res = UrlGetPartA(foo_url, szPart, &dwSize, URL_PART_HOSTNAME, 0);
-  ok(res==E_FAIL, "returned %08x\n", res);
-  ok(szPart[0] == 'x', "szPart[0] = %c\n", szPart[0]);
-  ok(dwSize == sizeof(szPart), "dwSize = %d\n", dwSize);
-
-  dwSize = sizeof(szPart);
-  szPart[0] = 'x'; szPart[1] = '\0';
-  res = UrlGetPartA(foo_url, szPart, &dwSize, URL_PART_QUERY, 0);
-  ok(res==S_FALSE, "returned %08x\n", res);
-  ok(szPart[0] == 0, "szPart[0] = %c\n", szPart[0]);
-  ok(dwSize == 0, "dwSize = %d\n", dwSize);
+        winetest_pop_context();
+    }
 }
 
 /* ########################### */
