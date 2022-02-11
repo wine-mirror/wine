@@ -56,7 +56,7 @@ static void test___std_parallel_algorithms_hw_threads(void)
 
     GetSystemInfo(&si);
     nthr = p___std_parallel_algorithms_hw_threads();
-    ok(nthr == si.dwNumberOfProcessors, "expected %u, got %u\n", si.dwNumberOfProcessors, nthr);
+    ok(nthr == si.dwNumberOfProcessors, "expected %lu, got %u\n", si.dwNumberOfProcessors, nthr);
 }
 
 static PTP_WORK cb_work;
@@ -102,7 +102,7 @@ static void test_threadpool_work(void)
     p___std_submit_threadpool_work(work);
     p___std_wait_for_threadpool_work_callbacks(work, FALSE);
     p___std_close_threadpool_work(work);
-    ok(workcalled == 1, "expected work to be called once, got %d\n", workcalled);
+    ok(workcalled == 1, "expected work to be called once, got %ld\n", workcalled);
     ok(cb_work == work, "expected %p, got %p\n", work, cb_work);
     ok(cb_context == &workcalled, "expected %p, got %p\n", &workcalled, cb_context);
 
@@ -113,7 +113,7 @@ static void test_threadpool_work(void)
     p___std_bulk_submit_threadpool_work(work, 13);
     p___std_wait_for_threadpool_work_callbacks(work, FALSE);
     p___std_close_threadpool_work(work);
-    ok(workcalled == 13, "expected work to be called 13 times, got %d\n", workcalled);
+    ok(workcalled == 13, "expected work to be called 13 times, got %ld\n", workcalled);
 
     workcalled = 0;
     work = p___std_create_threadpool_work(threadpool_workcallback, &workcalled, NULL);
@@ -121,7 +121,7 @@ static void test_threadpool_work(void)
     p___std_bulk_submit_threadpool_work(work, 0);
     p___std_wait_for_threadpool_work_callbacks(work, FALSE);
     p___std_close_threadpool_work(work);
-    ok(workcalled == 0, "expected no work, got %d\n", workcalled);
+    ok(workcalled == 0, "expected no work, got %ld\n", workcalled);
 
     /* test with environment */
     cb_event = CreateEventW(NULL, TRUE, FALSE, NULL);
@@ -136,7 +136,7 @@ static void test_threadpool_work(void)
     p___std_close_threadpool_work(work);
     ret = WaitForSingleObject(cb_event, 1000);
     ok(ret == WAIT_OBJECT_0, "expected finalization callback to be called\n");
-    ok(workcalled == 2, "expected work to be called twice, got %d\n", workcalled);
+    ok(workcalled == 2, "expected work to be called twice, got %ld\n", workcalled);
     CloseHandle(cb_event);
 
     /* test with environment version 3 */
@@ -147,7 +147,7 @@ static void test_threadpool_work(void)
     work = p___std_create_threadpool_work(threadpool_workcallback, &workcalled,
                                           (TP_CALLBACK_ENVIRON *)&environment3);
     gle = GetLastError();
-    ok(gle == 0xdeadbeef, "expected 0xdeadbeef, got %x\n", gle);
+    ok(gle == 0xdeadbeef, "expected 0xdeadbeef, got %lx\n", gle);
     ok(!!work, "failed to create threadpool_work\n");
     p___std_close_threadpool_work(work);
 
@@ -158,7 +158,7 @@ static void test_threadpool_work(void)
     work = p___std_create_threadpool_work(threadpool_workcallback, &workcalled,
                                           (TP_CALLBACK_ENVIRON *)&environment3);
     gle = GetLastError();
-    ok(gle == ERROR_INVALID_PARAMETER, "expected %d, got %d\n", ERROR_INVALID_PARAMETER, gle);
+    ok(gle == ERROR_INVALID_PARAMETER, "expected %d, got %ld\n", ERROR_INVALID_PARAMETER, gle);
     ok(!work, "expected failure\n");
 }
 
