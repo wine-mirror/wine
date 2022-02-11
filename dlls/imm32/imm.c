@@ -404,7 +404,7 @@ static IMMThreadData *IMM_GetThreadData(HWND hwnd, DWORD thread)
     data->IInitializeSpy_iface.lpVtbl = &InitializeSpyVtbl;
     data->threadID = thread;
     list_add_head(&ImmThreadDataList,&data->entry);
-    TRACE("Thread Data Created (%x)\n",thread);
+    TRACE("Thread Data Created (%lx)\n",thread);
     return data;
 }
 
@@ -560,7 +560,7 @@ static void IMM_FreeAllImmHkl(void)
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
 {
-    TRACE("%p, %x, %p\n",hInstDLL,fdwReason,lpReserved);
+    TRACE("%p, %lx, %p\n",hInstDLL,fdwReason,lpReserved);
     switch (fdwReason)
     {
         case DLL_PROCESS_ATTACH:
@@ -795,7 +795,7 @@ static BOOL CALLBACK _ImmAssociateContextExEnumProc(HWND hwnd, LPARAM lParam)
  */
 BOOL WINAPI ImmAssociateContextEx(HWND hWnd, HIMC hIMC, DWORD dwFlags)
 {
-    TRACE("(%p, %p, 0x%x):\n", hWnd, hIMC, dwFlags);
+    TRACE("(%p, %p, 0x%lx):\n", hWnd, hIMC, dwFlags);
 
     if (!hWnd)
         return FALSE;
@@ -820,7 +820,7 @@ BOOL WINAPI ImmAssociateContextEx(HWND hWnd, HIMC hIMC, DWORD dwFlags)
         EnumChildWindows(hWnd,_ImmAssociateContextExEnumProc,(LPARAM)hIMC);
         return TRUE;
     default:
-        FIXME("Unknown dwFlags 0x%x\n",dwFlags);
+        FIXME("Unknown dwFlags 0x%lx\n",dwFlags);
         return FALSE;
     }
 }
@@ -833,7 +833,7 @@ BOOL WINAPI ImmConfigureIMEA(
 {
     ImmHkl *immHkl = IMM_GetImmHkl(hKL);
 
-    TRACE("(%p, %p, %d, %p):\n", hKL, hWnd, dwMode, lpData);
+    TRACE("(%p, %p, %ld, %p):\n", hKL, hWnd, dwMode, lpData);
 
     if (dwMode == IME_CONFIG_REGISTERWORD && !lpData)
         return FALSE;
@@ -868,7 +868,7 @@ BOOL WINAPI ImmConfigureIMEW(
 {
     ImmHkl *immHkl = IMM_GetImmHkl(hKL);
 
-    TRACE("(%p, %p, %d, %p):\n", hKL, hWnd, dwMode, lpData);
+    TRACE("(%p, %p, %ld, %p):\n", hKL, hWnd, dwMode, lpData);
 
     if (dwMode == IME_CONFIG_REGISTERWORD && !lpData)
         return FALSE;
@@ -1057,7 +1057,7 @@ UINT WINAPI ImmEnumRegisterWordA(
   LPCSTR lpszRegister, LPVOID lpData)
 {
     ImmHkl *immHkl = IMM_GetImmHkl(hKL);
-    TRACE("(%p, %p, %s, %d, %s, %p):\n", hKL, lpfnEnumProc,
+    TRACE("(%p, %p, %s, %ld, %s, %p):\n", hKL, lpfnEnumProc,
         debugstr_a(lpszReading), dwStyle, debugstr_a(lpszRegister), lpData);
     if (immHkl->hIME && immHkl->pImeEnumRegisterWord)
     {
@@ -1092,7 +1092,7 @@ UINT WINAPI ImmEnumRegisterWordW(
   LPCWSTR lpszRegister, LPVOID lpData)
 {
     ImmHkl *immHkl = IMM_GetImmHkl(hKL);
-    TRACE("(%p, %p, %s, %d, %s, %p):\n", hKL, lpfnEnumProc,
+    TRACE("(%p, %p, %s, %ld, %s, %p):\n", hKL, lpfnEnumProc,
         debugstr_w(lpszReading), dwStyle, debugstr_w(lpszRegister), lpData);
     if (immHkl->hIME && immHkl->pImeEnumRegisterWord)
     {
@@ -1209,7 +1209,7 @@ DWORD WINAPI ImmGetCandidateListA(
     LPCANDIDATELIST candlist;
     DWORD ret = 0;
 
-    TRACE("%p, %d, %p, %d\n", hIMC, dwIndex, lpCandList, dwBufLen);
+    TRACE("%p, %ld, %p, %ld\n", hIMC, dwIndex, lpCandList, dwBufLen);
 
     if (!data || !data->IMC.hCandInfo)
        return 0;
@@ -1312,7 +1312,7 @@ DWORD WINAPI ImmGetCandidateListW(
     LPCANDIDATELIST candlist;
     DWORD ret = 0;
 
-    TRACE("%p, %d, %p, %d\n", hIMC, dwIndex, lpCandList, dwBufLen);
+    TRACE("%p, %ld, %p, %ld\n", hIMC, dwIndex, lpCandList, dwBufLen);
 
     if (!data || !data->IMC.hCandInfo)
        return 0;
@@ -1347,7 +1347,7 @@ BOOL WINAPI ImmGetCandidateWindow(
 {
     InputContextData *data = get_imc_data(hIMC);
 
-    TRACE("%p, %d, %p\n", hIMC, dwIndex, lpCandidate);
+    TRACE("%p, %ld, %p\n", hIMC, dwIndex, lpCandidate);
 
     if (!data || !lpCandidate)
         return FALSE;
@@ -1587,7 +1587,7 @@ static LONG ImmGetCompositionStringT( HIMC hIMC, DWORD dwIndex, LPVOID lpBuf,
     LPCOMPOSITIONSTRING compstr;
     LPBYTE compdata;
 
-    TRACE("(%p, 0x%x, %p, %d)\n", hIMC, dwIndex, lpBuf, dwBufLen);
+    TRACE("(%p, 0x%lx, %p, %ld)\n", hIMC, dwIndex, lpBuf, dwBufLen);
 
     if (!data)
        return FALSE;
@@ -1661,7 +1661,7 @@ static LONG ImmGetCompositionStringT( HIMC hIMC, DWORD dwIndex, LPVOID lpBuf,
         rc = CopyCompOffsetIMEtoClient(data, compstr->dwDeltaStart, compdata + compstr->dwCompStrOffset, unicode);
         break;
     default:
-        FIXME("Unhandled index 0x%x\n",dwIndex);
+        FIXME("Unhandled index 0x%lx\n",dwIndex);
         break;
     }
 
@@ -1748,7 +1748,7 @@ DWORD WINAPI ImmGetConversionListA(
   DWORD dwBufLen, UINT uFlag)
 {
     ImmHkl *immHkl = IMM_GetImmHkl(hKL);
-    TRACE("(%p, %p, %s, %p, %d, %d):\n", hKL, hIMC, debugstr_a(pSrc), lpDst,
+    TRACE("(%p, %p, %s, %p, %ld, %d):\n", hKL, hIMC, debugstr_a(pSrc), lpDst,
                 dwBufLen, uFlag);
     if (immHkl->hIME && immHkl->pImeConversionList)
     {
@@ -1786,7 +1786,7 @@ DWORD WINAPI ImmGetConversionListW(
   DWORD dwBufLen, UINT uFlag)
 {
     ImmHkl *immHkl = IMM_GetImmHkl(hKL);
-    TRACE("(%p, %p, %s, %p, %d, %d):\n", hKL, hIMC, debugstr_w(pSrc), lpDst,
+    TRACE("(%p, %p, %s, %p, %ld, %d):\n", hKL, hIMC, debugstr_w(pSrc), lpDst,
                 dwBufLen, uFlag);
     if (immHkl->hIME && immHkl->pImeConversionList)
     {
@@ -1870,7 +1870,7 @@ BOOL WINAPI __wine_register_window(HWND hwnd)
         return FALSE;
     }
     thread_data->windowRefs++;
-    TRACE("windowRefs=%u, hwndDefault=%p\n",
+    TRACE("windowRefs=%lu, hwndDefault=%p\n",
           thread_data->windowRefs, thread_data->hwndDefault);
 
     /* Create default IME window */
@@ -1913,7 +1913,7 @@ void WINAPI __wine_unregister_window(HWND hwnd)
     if (!thread_data) return;
 
     thread_data->windowRefs--;
-    TRACE("windowRefs=%u, hwndDefault=%p\n",
+    TRACE("windowRefs=%lu, hwndDefault=%p\n",
           thread_data->windowRefs, thread_data->hwndDefault);
 
     /* Destroy default IME window */
@@ -1994,7 +1994,7 @@ UINT WINAPI ImmGetDescriptionW(HKL hKL, LPWSTR lpszDescription, UINT uBufLen)
 DWORD WINAPI ImmGetGuideLineA(
   HIMC hIMC, DWORD dwIndex, LPSTR lpBuf, DWORD dwBufLen)
 {
-  FIXME("(%p, %d, %s, %d): stub\n",
+  FIXME("(%p, %ld, %s, %ld): stub\n",
     hIMC, dwIndex, debugstr_a(lpBuf), dwBufLen
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -2006,7 +2006,7 @@ DWORD WINAPI ImmGetGuideLineA(
  */
 DWORD WINAPI ImmGetGuideLineW(HIMC hIMC, DWORD dwIndex, LPWSTR lpBuf, DWORD dwBufLen)
 {
-  FIXME("(%p, %d, %s, %d): stub\n",
+  FIXME("(%p, %ld, %s, %ld): stub\n",
     hIMC, dwIndex, debugstr_w(lpBuf), dwBufLen
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -2119,7 +2119,7 @@ DWORD WINAPI ImmGetProperty(HKL hKL, DWORD fdwIndex)
     DWORD rc = 0;
     ImmHkl *kbd;
 
-    TRACE("(%p, %d)\n", hKL, fdwIndex);
+    TRACE("(%p, %ld)\n", hKL, fdwIndex);
     kbd = IMM_GetImmHkl(hKL);
 
     if (kbd && kbd->hIME)
@@ -2233,7 +2233,7 @@ UINT WINAPI ImmGetVirtualKey(HWND hWnd)
   case VER_PLATFORM_WIN32_NT:
       return 0;
   default:
-      FIXME("%d not supported\n",version.dwPlatformId);
+      FIXME("%ld not supported\n",version.dwPlatformId);
       return VK_PROCESSKEY;
   }
 }
@@ -2336,7 +2336,7 @@ BOOL WINAPI ImmIsIME(HKL hKL)
 BOOL WINAPI ImmIsUIMessageA(
   HWND hWndIME, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    TRACE("(%p, %x, %ld, %ld)\n", hWndIME, msg, wParam, lParam);
+    TRACE("(%p, %x, %Id, %Id)\n", hWndIME, msg, wParam, lParam);
     if ((msg >= WM_IME_STARTCOMPOSITION && msg <= WM_IME_KEYLAST) ||
             (msg == WM_IME_SETCONTEXT) ||
             (msg == WM_IME_NOTIFY) ||
@@ -2358,7 +2358,7 @@ BOOL WINAPI ImmIsUIMessageA(
 BOOL WINAPI ImmIsUIMessageW(
   HWND hWndIME, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    TRACE("(%p, %x, %ld, %ld)\n", hWndIME, msg, wParam, lParam);
+    TRACE("(%p, %x, %Id, %Id)\n", hWndIME, msg, wParam, lParam);
     if ((msg >= WM_IME_STARTCOMPOSITION && msg <= WM_IME_KEYLAST) ||
             (msg == WM_IME_SETCONTEXT) ||
             (msg == WM_IME_NOTIFY) ||
@@ -2382,7 +2382,7 @@ BOOL WINAPI ImmNotifyIME(
 {
     InputContextData *data = get_imc_data(hIMC);
 
-    TRACE("(%p, %d, %d, %d)\n",
+    TRACE("(%p, %ld, %ld, %ld)\n",
         hIMC, dwAction, dwIndex, dwValue);
 
     if (hIMC == NULL)
@@ -2406,7 +2406,7 @@ BOOL WINAPI ImmRegisterWordA(
   HKL hKL, LPCSTR lpszReading, DWORD dwStyle, LPCSTR lpszRegister)
 {
     ImmHkl *immHkl = IMM_GetImmHkl(hKL);
-    TRACE("(%p, %s, %d, %s):\n", hKL, debugstr_a(lpszReading), dwStyle,
+    TRACE("(%p, %s, %ld, %s):\n", hKL, debugstr_a(lpszReading), dwStyle,
                     debugstr_a(lpszRegister));
     if (immHkl->hIME && immHkl->pImeRegisterWord)
     {
@@ -2436,7 +2436,7 @@ BOOL WINAPI ImmRegisterWordW(
   HKL hKL, LPCWSTR lpszReading, DWORD dwStyle, LPCWSTR lpszRegister)
 {
     ImmHkl *immHkl = IMM_GetImmHkl(hKL);
-    TRACE("(%p, %s, %d, %s):\n", hKL, debugstr_w(lpszReading), dwStyle,
+    TRACE("(%p, %s, %ld, %s):\n", hKL, debugstr_w(lpszReading), dwStyle,
                     debugstr_w(lpszRegister));
     if (immHkl->hIME && immHkl->pImeRegisterWord)
     {
@@ -2480,7 +2480,7 @@ LRESULT WINAPI ImmRequestMessageA(HIMC hIMC, WPARAM wParam, LPARAM lParam)
 {
     InputContextData *data = get_imc_data(hIMC);
 
-    TRACE("%p %ld %ld\n", hIMC, wParam, wParam);
+    TRACE("%p %Id %Id\n", hIMC, wParam, wParam);
 
     if (data) return SendMessageA(data->IMC.hWnd, WM_IME_REQUEST, wParam, lParam);
 
@@ -2495,7 +2495,7 @@ LRESULT WINAPI ImmRequestMessageW(HIMC hIMC, WPARAM wParam, LPARAM lParam)
 {
     InputContextData *data = get_imc_data(hIMC);
 
-    TRACE("%p %ld %ld\n", hIMC, wParam, wParam);
+    TRACE("%p %Id %Id\n", hIMC, wParam, wParam);
 
     if (data) return SendMessageW(data->IMC.hWnd, WM_IME_REQUEST, wParam, lParam);
 
@@ -2519,7 +2519,7 @@ BOOL WINAPI ImmSetCandidateWindow(
     if (IMM_IsCrossThreadAccess(NULL, hIMC))
         return FALSE;
 
-    TRACE("\t%x, %x, %s, %s\n",
+    TRACE("\t%lx, %lx, %s, %s\n",
           lpCandidate->dwIndex, lpCandidate->dwStyle,
           wine_dbgstr_point(&lpCandidate->ptCurrentPos),
           wine_dbgstr_rect(&lpCandidate->rcArea));
@@ -2599,7 +2599,7 @@ BOOL WINAPI ImmSetCompositionStringA(
     BOOL rc;
     InputContextData *data = get_imc_data(hIMC);
 
-    TRACE("(%p, %d, %p, %d, %p, %d):\n",
+    TRACE("(%p, %ld, %p, %ld, %p, %ld):\n",
             hIMC, dwIndex, lpComp, dwCompLen, lpRead, dwReadLen);
 
     if (!data)
@@ -2654,7 +2654,7 @@ BOOL WINAPI ImmSetCompositionStringW(
     BOOL rc;
     InputContextData *data = get_imc_data(hIMC);
 
-    TRACE("(%p, %d, %p, %d, %p, %d):\n",
+    TRACE("(%p, %ld, %p, %ld, %p, %ld):\n",
             hIMC, dwIndex, lpComp, dwCompLen, lpRead, dwReadLen);
 
     if (!data)
@@ -2709,7 +2709,7 @@ BOOL WINAPI ImmSetCompositionWindow(
 
     TRACE("(%p, %p)\n", hIMC, lpCompForm);
     if (lpCompForm)
-        TRACE("\t%x, %s, %s\n", lpCompForm->dwStyle,
+        TRACE("\t%lx, %s, %s\n", lpCompForm->dwStyle,
               wine_dbgstr_point(&lpCompForm->ptCurrentPos),
               wine_dbgstr_rect(&lpCompForm->rcArea));
 
@@ -2748,7 +2748,7 @@ BOOL WINAPI ImmSetConversionStatus(
     DWORD oldConversion, oldSentence;
     InputContextData *data = get_imc_data(hIMC);
 
-    TRACE("%p %d %d\n", hIMC, fdwConversion, fdwSentence);
+    TRACE("%p %ld %ld\n", hIMC, fdwConversion, fdwSentence);
 
     if (!data)
     {
@@ -2878,7 +2878,7 @@ BOOL WINAPI ImmShowSoftKeyboard(HWND hSoftWnd, int nCmdShow)
  */
 BOOL WINAPI ImmSimulateHotKey(HWND hWnd, DWORD dwHotKeyID)
 {
-  FIXME("(%p, %d): stub\n", hWnd, dwHotKeyID);
+  FIXME("(%p, %ld): stub\n", hWnd, dwHotKeyID);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -2890,7 +2890,7 @@ BOOL WINAPI ImmUnregisterWordA(
   HKL hKL, LPCSTR lpszReading, DWORD dwStyle, LPCSTR lpszUnregister)
 {
     ImmHkl *immHkl = IMM_GetImmHkl(hKL);
-    TRACE("(%p, %s, %d, %s):\n", hKL, debugstr_a(lpszReading), dwStyle,
+    TRACE("(%p, %s, %ld, %s):\n", hKL, debugstr_a(lpszReading), dwStyle,
             debugstr_a(lpszUnregister));
     if (immHkl->hIME && immHkl->pImeUnregisterWord)
     {
@@ -2920,7 +2920,7 @@ BOOL WINAPI ImmUnregisterWordW(
   HKL hKL, LPCWSTR lpszReading, DWORD dwStyle, LPCWSTR lpszUnregister)
 {
     ImmHkl *immHkl = IMM_GetImmHkl(hKL);
-    TRACE("(%p, %s, %d, %s):\n", hKL, debugstr_w(lpszReading), dwStyle,
+    TRACE("(%p, %s, %ld, %s):\n", hKL, debugstr_w(lpszReading), dwStyle,
             debugstr_w(lpszUnregister));
     if (immHkl->hIME && immHkl->pImeUnregisterWord)
     {
@@ -2951,7 +2951,7 @@ DWORD WINAPI ImmGetImeMenuItemsA( HIMC hIMC, DWORD dwFlags, DWORD dwType,
     DWORD dwSize)
 {
     InputContextData *data = get_imc_data(hIMC);
-    TRACE("(%p, %i, %i, %p, %p, %i):\n", hIMC, dwFlags, dwType,
+    TRACE("(%p, %li, %li, %p, %p, %li):\n", hIMC, dwFlags, dwType,
         lpImeParentMenu, lpImeMenu, dwSize);
 
     if (!data)
@@ -3022,7 +3022,7 @@ DWORD WINAPI ImmGetImeMenuItemsW( HIMC hIMC, DWORD dwFlags, DWORD dwType,
    DWORD dwSize)
 {
     InputContextData *data = get_imc_data(hIMC);
-    TRACE("(%p, %i, %i, %p, %p, %i):\n", hIMC, dwFlags, dwType,
+    TRACE("(%p, %li, %li, %p, %p, %li):\n", hIMC, dwFlags, dwType,
         lpImeParentMenu, lpImeMenu, dwSize);
 
     if (!data)
@@ -3190,7 +3190,7 @@ BOOL WINAPI ImmGenerateMessage(HIMC hIMC)
         return FALSE;
     }
 
-    TRACE("%i messages queued\n",data->IMC.dwNumMsgBuf);
+    TRACE("%li messages queued\n",data->IMC.dwNumMsgBuf);
     if (data->IMC.dwNumMsgBuf > 0)
     {
         LPTRANSMSG lpTransMsg;
@@ -3290,7 +3290,7 @@ BOOL WINAPI ImmProcessKey(HWND hwnd, HKL hKL, UINT vKey, LPARAM lKeyData, DWORD 
     HIMC imc = ImmGetContext(hwnd);
     BYTE state[256];
 
-    TRACE("%p %p %x %x %x\n",hwnd, hKL, vKey, (UINT)lKeyData, unknown);
+    TRACE("%p %p %x %x %lx\n",hwnd, hKL, vKey, (UINT)lKeyData, unknown);
 
     if (imc)
         data = imc;
@@ -3352,7 +3352,7 @@ BOOL WINAPI ImmEnumInputContext(DWORD idThread, IMCENUMPROC lpfn, LPARAM lParam)
 
 BOOL WINAPI ImmGetHotKey(DWORD hotkey, UINT *modifiers, UINT *key, HKL hkl)
 {
-    FIXME("%x, %p, %p, %p: stub\n", hotkey, modifiers, key, hkl);
+    FIXME("%lx, %p, %p, %p: stub\n", hotkey, modifiers, key, hkl);
     return FALSE;
 }
 
