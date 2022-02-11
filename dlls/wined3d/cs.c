@@ -3113,7 +3113,10 @@ static bool wined3d_cs_map_upload_bo(struct wined3d_device_context *context, str
         if (bo)
         {
             map_ptr += bo->memory_offset;
-            if (!bo->coherent)
+            /* If we are not mapping all buffers persistently, use
+             * UPDATE_SUB_RESOURCE as a means of telling the CS thread to try
+             * to unmap the resource, so that we can free VA space. */
+            if (!bo->coherent || !wined3d_map_persistent())
                 client->mapped_upload.flags |= UPLOAD_BO_UPLOAD_ON_UNMAP;
         }
         map_desc->data = resource_offset_map_pointer(resource, sub_resource_idx, map_ptr, box);
