@@ -72,6 +72,7 @@ enum media_stream_flags
     STREAM_FLAG_SAMPLE_REQUESTED = 0x1, /* Protects from making multiple sample requests. */
     STREAM_FLAG_SELECTED = 0x2,         /* Mirrors descriptor, used to simplify tests when starting the source. */
     STREAM_FLAG_PRESENTED = 0x4,        /* Set if stream was selected last time Start() was called. */
+    STREAM_FLAG_STOPPED = 0x8,          /* Received MEStreamStopped */
 };
 
 struct stream_transform
@@ -172,6 +173,7 @@ struct source_reader
     CRITICAL_SECTION cs;
     CONDITION_VARIABLE sample_event;
     CONDITION_VARIABLE state_event;
+    CONDITION_VARIABLE stop_event;
 };
 
 static inline struct source_reader *impl_from_IMFSourceReader(IMFSourceReader *iface)
@@ -585,6 +587,8 @@ static HRESULT source_reader_source_state_handler(struct source_reader *reader, 
     LeaveCriticalSection(&reader->cs);
 
     WakeAllConditionVariable(&reader->state_event);
+    if (event_type == MESourceStopped)
+        WakeAllConditionVariable(&reader->stop_event);
 
     return S_OK;
 }
@@ -640,7 +644,8 @@ static HRESULT WINAPI source_reader_source_events_callback_Invoke(IMFAsyncCallba
 
     IMFMediaEvent_Release(event);
 
-    IMFMediaSource_BeginGetEvent(source, iface, (IUnknown *)source);
+    if (event_type != MESourceStopped)
+        IMFMediaSource_BeginGetEvent(source, iface, (IUnknown *)source);
 
     return S_OK;
 }
@@ -856,6 +861,9 @@ static HRESULT source_reader_media_stream_state_handler(struct source_reader *re
                 case MEStreamStarted:
                     stream->state = STREAM_STATE_READY;
                     break;
+                case MEStreamStopped:
+                    stream->flags |= STREAM_FLAG_STOPPED;
+                    break;
                 case MEStreamTick:
                     value.vt = VT_EMPTY;
                     hr = SUCCEEDED(IMFMediaEvent_GetValue(event, &value)) && value.vt == VT_I8 ? S_OK : E_UNEXPECTED;
@@ -874,6 +882,9 @@ static HRESULT source_reader_media_stream_state_handler(struct source_reader *re
     }
 
     LeaveCriticalSection(&reader->cs);
+
+    if (event_type == MEStreamStopped)
+        WakeAllConditionVariable(&reader->stop_event);
 
     return S_OK;
 }
@@ -904,6 +915,7 @@ static HRESULT WINAPI source_reader_stream_events_callback_Invoke(IMFAsyncCallba
             break;
         case MEStreamSeeked:
         case MEStreamStarted:
+        case MEStreamStopped:
         case MEStreamTick:
         case MEEndOfStream:
             hr = source_reader_media_stream_state_handler(reader, stream, event);
@@ -917,7 +929,8 @@ static HRESULT WINAPI source_reader_stream_events_callback_Invoke(IMFAsyncCallba
 
     IMFMediaEvent_Release(event);
 
-    IMFMediaStream_BeginGetEvent(stream, iface, (IUnknown *)stream);
+    if (event_type != MEStreamStopped)
+        IMFMediaStream_BeginGetEvent(stream, iface, (IUnknown *)stream);
 
     return S_OK;
 }
@@ -1379,6 +1392,22 @@ static ULONG WINAPI src_reader_AddRef(IMFSourceReader *iface)
     return refcount;
 }
 
+static BOOL source_reader_is_source_stopped(const struct source_reader *reader)
+{
+    unsigned int i;
+
+    if (reader->source_state != SOURCE_STATE_STOPPED)
+        return FALSE;
+
+    for (i = 0; i < reader->stream_count; ++i)
+    {
+        if (reader->streams[i].stream && !(reader->streams[i].flags & STREAM_FLAG_STOPPED))
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
 static ULONG WINAPI src_reader_Release(IMFSourceReader *iface)
 {
     struct source_reader *reader = impl_from_IMFSourceReader(iface);
@@ -1390,6 +1419,17 @@ static ULONG WINAPI src_reader_Release(IMFSourceReader *iface)
     {
         if (reader->flags & SOURCE_READER_SHUTDOWN_ON_RELEASE)
             IMFMediaSource_Shutdown(reader->source);
+        else if (SUCCEEDED(IMFMediaSource_Stop(reader->source)))
+        {
+            EnterCriticalSection(&reader->cs);
+
+            while (!source_reader_is_source_stopped(reader))
+            {
+                SleepConditionVariableCS(&reader->stop_event, &reader->cs, INFINITE);
+            }
+
+            LeaveCriticalSection(&reader->cs);
+        }
         source_reader_release(reader);
     }
 
@@ -2298,6 +2338,7 @@ static HRESULT create_source_reader_from_source(IMFMediaSource *source, IMFAttri
     InitializeCriticalSection(&object->cs);
     InitializeConditionVariable(&object->sample_event);
     InitializeConditionVariable(&object->state_event);
+    InitializeConditionVariable(&object->stop_event);
 
     if (FAILED(hr = IMFMediaSource_CreatePresentationDescriptor(object->source, &object->descriptor)))
         goto failed;
