@@ -952,29 +952,29 @@ static void test_inet_pton(void)
         WCHAR inputW[32];
         DWORD addr;
 
+        winetest_push_context( "Address %s", debugstr_a(ipv4_tests[i].input) );
+
         WSASetLastError(0xdeadbeef);
         addr = 0xdeadbeef;
         ret = p_inet_pton(AF_INET, ipv4_tests[i].input, &addr);
-        ok(ret == ipv4_tests[i].ret, "%s: got %d\n", debugstr_a(ipv4_tests[i].input), ret);
-        ok(WSAGetLastError() == 0xdeadbeef, "%s: got error %u\n",
-                debugstr_a(ipv4_tests[i].input), WSAGetLastError());
-        ok(addr == ipv4_tests[i].addr, "%s: got addr %#08x\n", debugstr_a(ipv4_tests[i].input), addr);
+        ok(ret == ipv4_tests[i].ret, "got %d\n", ret);
+        ok(WSAGetLastError() == 0xdeadbeef, "got error %u\n", WSAGetLastError());
+        ok(addr == ipv4_tests[i].addr, "got addr %#08x\n", addr);
 
         MultiByteToWideChar(CP_ACP, 0, ipv4_tests[i].input, -1, inputW, ARRAY_SIZE(inputW));
         WSASetLastError(0xdeadbeef);
         addr = 0xdeadbeef;
         ret = pInetPtonW(AF_INET, inputW, &addr);
-        ok(ret == ipv4_tests[i].ret, "%s: got %d\n", debugstr_a(ipv4_tests[i].input), ret);
-        ok(WSAGetLastError() == (ret ? 0xdeadbeef : WSAEINVAL), "%s: got error %u\n",
-                debugstr_a(ipv4_tests[i].input), WSAGetLastError());
-        ok(addr == ipv4_tests[i].addr, "%s: got addr %#08x\n", debugstr_a(ipv4_tests[i].input), addr);
+        ok(ret == ipv4_tests[i].ret, "got %d\n", ret);
+        ok(WSAGetLastError() == (ret ? 0xdeadbeef : WSAEINVAL), "got error %u\n", WSAGetLastError());
+        ok(addr == ipv4_tests[i].addr, "got addr %#08x\n", addr);
 
         WSASetLastError(0xdeadbeef);
         addr = inet_addr(ipv4_tests[i].input);
-        ok(addr == ipv4_tests[i].ret ? ipv4_tests[i].addr : INADDR_NONE,
-                "%s: got addr %#08x\n", debugstr_a(ipv4_tests[i].input), addr);
-        ok(WSAGetLastError() == 0xdeadbeef, "%s: got error %u\n",
-                debugstr_a(ipv4_tests[i].input), WSAGetLastError());
+        ok(addr == ipv4_tests[i].ret ? ipv4_tests[i].addr : INADDR_NONE, "got addr %#08x\n", addr);
+        ok(WSAGetLastError() == 0xdeadbeef, "got error %u\n", WSAGetLastError());
+
+        winetest_pop_context();
     }
 
     for (i = 0; i < ARRAY_SIZE(ipv6_tests); ++i)
@@ -982,24 +982,24 @@ static void test_inet_pton(void)
         unsigned short addr[8];
         WCHAR inputW[64];
 
+        winetest_push_context( "Address %s", debugstr_a(ipv6_tests[i].input) );
+
         WSASetLastError(0xdeadbeef);
         memset(addr, 0xab, sizeof(addr));
         ret = p_inet_pton(AF_INET6, ipv6_tests[i].input, addr);
-        ok(ret == ipv6_tests[i].ret, "%s: got %d\n", debugstr_a(ipv6_tests[i].input), ret);
-        ok(WSAGetLastError() == 0xdeadbeef, "%s: got error %u\n",
-                debugstr_a(ipv6_tests[i].input), WSAGetLastError());
-        ok(!memcmp(addr, ipv6_tests[i].addr, sizeof(addr)),
-                "%s: address didn't match\n", debugstr_a(ipv6_tests[i].input));
+        ok(ret == ipv6_tests[i].ret, "got %d\n", ret);
+        ok(WSAGetLastError() == 0xdeadbeef, "got error %u\n", WSAGetLastError());
+        ok(!memcmp(addr, ipv6_tests[i].addr, sizeof(addr)), "address didn't match\n");
 
         MultiByteToWideChar(CP_ACP, 0, ipv6_tests[i].input, -1, inputW, ARRAY_SIZE(inputW));
         WSASetLastError(0xdeadbeef);
         memset(addr, 0xab, sizeof(addr));
         ret = pInetPtonW(AF_INET6, inputW, addr);
-        ok(ret == ipv6_tests[i].ret, "%s: got %d\n", debugstr_a(ipv6_tests[i].input), ret);
-        ok(WSAGetLastError() == (ret ? 0xdeadbeef : WSAEINVAL), "%s: got error %u\n",
-                debugstr_a(ipv6_tests[i].input), WSAGetLastError());
-        ok(!memcmp(addr, ipv6_tests[i].addr, sizeof(addr)),
-                "%s: address didn't match\n", debugstr_a(ipv6_tests[i].input));
+        ok(ret == ipv6_tests[i].ret, "got %d\n", ret);
+        ok(WSAGetLastError() == (ret ? 0xdeadbeef : WSAEINVAL), "got error %u\n", WSAGetLastError());
+        ok(!memcmp(addr, ipv6_tests[i].addr, sizeof(addr)), "address didn't match\n");
+
+        winetest_pop_context();
     }
 }
 
