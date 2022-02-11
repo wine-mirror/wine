@@ -1174,7 +1174,7 @@ static void INT21_SequentialReadFromFCB( CONTEXT *context )
         record_number = 128 * fcb->current_block_number + fcb->record_within_current_block;
         position = SetFilePointer(handle, record_number * fcb->logical_record_size, NULL, 0);
         if (position != record_number * fcb->logical_record_size) {
-            TRACE("seek(%d, %d, 0) failed with %u\n",
+            TRACE("seek(%d, %ld, 0) failed with %lu\n",
                   fcb->file_number, record_number * fcb->logical_record_size, position);
             AL_result = 0x01; /* end of file, no data read */
         } else {
@@ -1190,7 +1190,7 @@ static void INT21_SequentialReadFromFCB( CONTEXT *context )
                     AL_result = 0x03; /* end of file, partial record read */
                 } /* if */
             } else {
-                TRACE("successful read %d bytes from record %d (position %u) of file %d (handle %p)\n",
+                TRACE("successful read %d bytes from record %ld (position %lu) of file %d (handle %p)\n",
                     bytes_read, record_number, position, fcb->file_number, handle);
                 AL_result = 0x00; /* successful */
             } /* if */
@@ -1254,7 +1254,7 @@ static void INT21_SequentialWriteToFCB( CONTEXT *context )
         record_number = 128 * fcb->current_block_number + fcb->record_within_current_block;
         position = SetFilePointer(handle, record_number * fcb->logical_record_size, NULL, 0);
         if (position != record_number * fcb->logical_record_size) {
-            TRACE("seek(%d, %d, 0) failed with %u\n",
+            TRACE("seek(%d, %ld, 0) failed with %lu\n",
                   fcb->file_number, record_number * fcb->logical_record_size, position);
             AL_result = 0x01; /* disk full */
         } else {
@@ -1265,7 +1265,7 @@ static void INT21_SequentialWriteToFCB( CONTEXT *context )
                       fcb->file_number, disk_transfer_area, fcb->logical_record_size, bytes_written);
                 AL_result = 0x01; /* disk full */
             } else {
-                TRACE("successful written %d bytes from record %d (position %u) of file %d (handle %p)\n",
+                TRACE("successful written %d bytes from record %ld (position %lu) of file %d (handle %p)\n",
                     bytes_written, record_number, position, fcb->file_number, handle);
                 AL_result = 0x00; /* successful */
             } /* if */
@@ -1330,7 +1330,7 @@ static void INT21_ReadRandomRecordFromFCB( CONTEXT *context )
     } else {
         position = SetFilePointer(handle, record_number * fcb->logical_record_size, NULL, 0);
         if (position != record_number * fcb->logical_record_size) {
-            TRACE("seek(%d, %d, 0) failed with %u\n",
+            TRACE("seek(%d, %ld, 0) failed with %lu\n",
                   fcb->file_number, record_number * fcb->logical_record_size, position);
             AL_result = 0x01; /* end of file, no data read */
         } else {
@@ -1346,7 +1346,7 @@ static void INT21_ReadRandomRecordFromFCB( CONTEXT *context )
                     AL_result = 0x03; /* end of file, partial record read */
                 } /* if */
             } else {
-                TRACE("successful read %d bytes from record %d (position %u) of file %d (handle %p)\n",
+                TRACE("successful read %d bytes from record %ld (position %lu) of file %d (handle %p)\n",
                     bytes_read, record_number, position, fcb->file_number, handle);
                 AL_result = 0x00; /* successful */
             } /* if */
@@ -1403,7 +1403,7 @@ static void INT21_WriteRandomRecordToFCB( CONTEXT *context )
     } else {
         position = SetFilePointer(handle, record_number * fcb->logical_record_size, NULL, 0);
         if (position != record_number * fcb->logical_record_size) {
-            TRACE("seek(%d, %d, 0) failed with %u\n",
+            TRACE("seek(%d, %ld, 0) failed with %lu\n",
                   fcb->file_number, record_number * fcb->logical_record_size, position);
             AL_result = 0x01; /* disk full */
         } else {
@@ -1414,7 +1414,7 @@ static void INT21_WriteRandomRecordToFCB( CONTEXT *context )
                       fcb->file_number, disk_transfer_area, fcb->logical_record_size, bytes_written);
                 AL_result = 0x01; /* disk full */
             } else {
-                TRACE("successful written %d bytes from record %d (position %u) of file %d (handle %p)\n",
+                TRACE("successful written %d bytes from record %ld (position %lu) of file %d (handle %p)\n",
                     bytes_written, record_number, position, fcb->file_number, handle);
                 AL_result = 0x00; /* successful */
             } /* if */
@@ -1482,7 +1482,7 @@ static void INT21_RandomBlockReadFromFCB( CONTEXT *context )
     } else {
         position = SetFilePointer(handle, record_number * fcb->logical_record_size, NULL, 0);
         if (position != record_number * fcb->logical_record_size) {
-            TRACE("seek(%d, %d, 0) failed with %u\n",
+            TRACE("seek(%d, %ld, 0) failed with %lu\n",
                   fcb->file_number, record_number * fcb->logical_record_size, position);
             records_read = 0;
             AL_result = 0x01; /* end of file, no data read */
@@ -1503,7 +1503,7 @@ static void INT21_RandomBlockReadFromFCB( CONTEXT *context )
                     AL_result = 0x03; /* end of file, partial record read */
                 } /* if */
             } else {
-                TRACE("successful read %d bytes from record %d (position %u) of file %d (handle %p)\n",
+                TRACE("successful read %d bytes from record %ld (position %lu) of file %d (handle %p)\n",
                     bytes_read, record_number, position, fcb->file_number, handle);
                 records_read = records_requested;
                 AL_result = 0x00; /* successful */
@@ -1573,7 +1573,7 @@ static void INT21_RandomBlockWriteToFCB( CONTEXT *context )
     } else {
         position = SetFilePointer(handle, record_number * fcb->logical_record_size, NULL, 0);
         if (position != record_number * fcb->logical_record_size) {
-            TRACE("seek(%d, %d, 0) failed with %u\n",
+            TRACE("seek(%d, %ld, 0) failed with %lu\n",
                   fcb->file_number, record_number * fcb->logical_record_size, position);
             records_written = 0;
             AL_result = 0x01; /* disk full */
@@ -1588,7 +1588,7 @@ static void INT21_RandomBlockWriteToFCB( CONTEXT *context )
                 records_written = bytes_written / fcb->logical_record_size;
                 AL_result = 0x01; /* disk full */
             } else {
-                TRACE("successful write %d bytes from record %d (position %u) of file %d (handle %p)\n",
+                TRACE("successful write %d bytes from record %ld (position %lu) of file %d (handle %p)\n",
                     bytes_written, record_number, position, fcb->file_number, handle);
                 records_written = records_requested;
                 AL_result = 0x00; /* successful */
@@ -3347,7 +3347,7 @@ static BOOL INT21_CreateTempFile( CONTEXT *context )
 
     for (;;)
     {
-        sprintf( p, "wine%04x.%03d", GetCurrentThreadId(), counter );
+        sprintf( p, "wine%04lx.%03d", GetCurrentThreadId(), counter );
         counter = (counter + 1) % 1000;
 
         SET_AX( context, 
@@ -3817,7 +3817,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
     BOOL bSetDOSExtendedError = FALSE;
 
     TRACE( "AX=%04x BX=%04x CX=%04x DX=%04x "
-           "SI=%04x DI=%04x DS=%04x ES=%04x EFL=%08x\n",
+           "SI=%04x DI=%04x DS=%04x ES=%04x EFL=%08lx\n",
            AX_reg(context), BX_reg(context), 
            CX_reg(context), DX_reg(context),
            SI_reg(context), DI_reg(context),
@@ -3886,7 +3886,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
         break;
 
     case 0x09: /* WRITE STRING TO STANDARD OUTPUT */
-        TRACE("WRITE '$'-terminated string from %04X:%04X to stdout\n",
+        TRACE("WRITE '$'-terminated string from %04lX:%04X to stdout\n",
 	      context->SegDs, DX_reg(context) );
         {
             LPSTR data = CTX_SEG_OFF_TO_LIN( context, 
@@ -3993,7 +3993,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
         break;
 
     case 0x1a: /* SET DISK TRANSFER AREA ADDRESS */
-        TRACE( "SET DISK TRANSFER AREA ADDRESS %04X:%04X\n",
+        TRACE( "SET DISK TRANSFER AREA ADDRESS %04lX:%04X\n",
                context->SegDs, DX_reg(context) );
         {
             TDB *task = GlobalLock16( GetCurrentTask() );
@@ -4361,7 +4361,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
         break;
 
     case 0x3f: /* "READ" - READ FROM FILE OR DEVICE */
-        TRACE( "READ from %d to %04X:%04X for %d bytes\n",
+        TRACE( "READ from %d to %04lX:%04X for %d bytes\n",
                BX_reg(context),
                context->SegDs,
                DX_reg(context),
@@ -4391,7 +4391,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
         break;
 
     case 0x40:  /* "WRITE" - WRITE TO FILE OR DEVICE */
-        TRACE( "WRITE from %04X:%04X to handle %d for %d byte\n",
+        TRACE( "WRITE from %04lX:%04X to handle %d for %d byte\n",
                context->SegDs, DX_reg(context),
                BX_reg(context), CX_reg(context) );
         {
@@ -4426,7 +4426,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
         break;
 
     case 0x42: /* "LSEEK" - SET CURRENT FILE POSITION */
-        TRACE( "LSEEK handle %d offset %d from %s\n",
+        TRACE( "LSEEK handle %d offset %ld from %s\n",
                BX_reg(context), 
                MAKELONG( DX_reg(context), CX_reg(context) ),
                (AL_reg(context) == 0) ? 
@@ -4520,7 +4520,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
 	break;
 
     case 0x49: /* FREE MEMORY */
-        TRACE( "FREE MEMORY segment %04X\n", context->SegEs );
+        TRACE( "FREE MEMORY segment %04lX\n", context->SegEs );
         {
             BOOL ok = !GlobalDOSFree16( context->SegEs );
 
@@ -4536,7 +4536,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
         break;
 
     case 0x4a: /* RESIZE MEMORY BLOCK */
-        TRACE( "RESIZE MEMORY segment %04X to %d paragraphs\n",
+        TRACE( "RESIZE MEMORY segment %04lX to %d paragraphs\n",
                context->SegEs, BX_reg(context) );
         {
             FIXME( "Resize memory block - unsupported under Win16\n" );
@@ -4677,14 +4677,14 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
             switch (AL_reg(context))
             {
             case 0x00: /* LOCK */
-                TRACE( "lock handle %d offset %d length %d\n",
+                TRACE( "lock handle %d offset %ld length %ld\n",
                        BX_reg(context), offset, length );
                 if (!LockFile( handle, offset, 0, length, 0 ))
                     bSetDOSExtendedError = TRUE;
                 break;
 
             case 0x01: /* UNLOCK */
-                TRACE( "unlock handle %d offset %d length %d\n",
+                TRACE( "unlock handle %d offset %ld length %ld\n",
                        BX_reg(context), offset, length );
                 if (!UnlockFile( handle, offset, 0, length, 0 ))
                     bSetDOSExtendedError = TRUE;
@@ -4873,10 +4873,10 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
 
     /* Print error code if carry flag is set. */
     if (context->EFlags & 0x0001)
-        TRACE("failed, error %d\n", GetLastError() );
+        TRACE("failed, error %ld\n", GetLastError() );
 
     TRACE( "returning: AX=%04x BX=%04x CX=%04x DX=%04x "
-           "SI=%04x DI=%04x DS=%04x ES=%04x EFL=%08x\n",
+           "SI=%04x DI=%04x DS=%04x ES=%04x EFL=%08lx\n",
            AX_reg(context), BX_reg(context), 
            CX_reg(context), DX_reg(context), 
            SI_reg(context), DI_reg(context),

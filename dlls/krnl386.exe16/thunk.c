@@ -274,14 +274,14 @@ static LPVOID _loadthunk(LPCSTR module, LPCSTR func, LPCSTR module32,
 
     if (TD32 && TD16->checksum != TD32->checksum)
     {
-        ERR("(%s, %s, %s): Wrong checksum %08x (should be %08x)\n",
+        ERR("(%s, %s, %s): Wrong checksum %08lx (should be %08lx)\n",
                    module, func, module32, TD16->checksum, TD32->checksum);
         return 0;
     }
 
     if (!TD32 && checksum && checksum != *(LPDWORD)TD16)
     {
-        ERR("(%s, %s, %s): Wrong checksum %08x (should be %08x)\n",
+        ERR("(%s, %s, %s): Wrong checksum %08lx (should be %08lx)\n",
                    module, func, module32, *(LPDWORD)TD16, checksum);
         return 0;
     }
@@ -324,14 +324,14 @@ UINT WINAPI ThunkConnect32(
     {
         directionSL = TRUE;
 
-        TRACE("SL01 thunk %s (%p) <- %s (%s), Reason: %d\n",
+        TRACE("SL01 thunk %s (%p) <- %s (%s), Reason: %ld\n",
               module32, TD, module16, thunkfun16, dwReason);
     }
     else if (!strncmp(TD->magic, "LS01", 4))
     {
         directionSL = FALSE;
 
-        TRACE("LS01 thunk %s (%p) -> %s (%s), Reason: %d\n",
+        TRACE("LS01 thunk %s (%p) -> %s (%s), Reason: %ld\n",
               module32, TD, module16, thunkfun16, dwReason);
     }
     else
@@ -370,7 +370,7 @@ UINT WINAPI ThunkConnect32(
                 tdb->next = SL32->data->targetDB;   /* FIXME: not thread-safe! */
                 SL32->data->targetDB = tdb;
 
-                TRACE("Process %08x allocated TargetDB entry for ThunkDataSL %p\n",
+                TRACE("Process %08lx allocated TargetDB entry for ThunkDataSL %p\n",
                       GetCurrentProcessId(), SL32->data);
             }
             else
@@ -992,11 +992,11 @@ DWORD WINAPIV SSCall(
     DWORD i,ret;
     DWORD *args = ((DWORD *)&fun) + 1;
 
-    TRACE("(%d,0x%08x,%p,[",nr,flags,fun);
-    for (i = 0; i < nr/4; i++) TRACE("0x%08x,",args[i]);
+    TRACE("(%ld,0x%08lx,%p,[",nr,flags,fun);
+    for (i = 0; i < nr/4; i++) TRACE("0x%08lx,",args[i]);
     TRACE("])\n");
     ret = call_entry_point( fun, nr / sizeof(DWORD), args );
-    TRACE(" returning %d ...\n",ret);
+    TRACE(" returning %ld ...\n",ret);
     return ret;
 }
 
@@ -1079,7 +1079,7 @@ void WINAPI
 FreeSLCallback(
 	DWORD x	/* [in] 16 bit callback (segmented pointer?) */
 ) {
-	FIXME("(0x%08x): stub\n",x);
+	FIXME("(0x%08lx): stub\n",x);
 }
 
 /**********************************************************************
@@ -1234,7 +1234,7 @@ void WINAPI __regs_K32Thk1632Prolog( CONTEXT *context )
       WORD  stackSel  = SELECTOROF(frame32->frame16);
       DWORD stackBase = GetSelectorBase(stackSel);
 
-      TRACE("before SYSTHUNK hack: EBP: %08x ESP: %08x cur_stack: %04x:%04x\n",
+      TRACE("before SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %04x:%04x\n",
             context->Ebp, context->Esp, CURRENT_SS, CURRENT_SP);
 
       memset(frame16, '\0', sizeof(STACK16FRAME));
@@ -1248,7 +1248,7 @@ void WINAPI __regs_K32Thk1632Prolog( CONTEXT *context )
       context->Esp = (DWORD)stack32 + 4;
       context->Ebp = context->Esp + argSize;
 
-      TRACE("after  SYSTHUNK hack: EBP: %08x ESP: %08x cur_stack: %04x:%04x\n",
+      TRACE("after  SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %04x:%04x\n",
             context->Ebp, context->Esp, CURRENT_SS, CURRENT_SP);
    }
 
@@ -1279,7 +1279,7 @@ void WINAPI __regs_K32Thk1632Epilog( CONTEXT *context )
 
       DWORD nArgsPopped = context->Esp - (DWORD)stack32;
 
-      TRACE("before SYSTHUNK hack: EBP: %08x ESP: %08x cur_stack: %04x:%04x\n",
+      TRACE("before SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %04x:%04x\n",
             context->Ebp, context->Esp, CURRENT_SS, CURRENT_SP);
 
       kernel_get_thread_data()->stack = (SEGPTR)frame16->frame32;
@@ -1287,7 +1287,7 @@ void WINAPI __regs_K32Thk1632Epilog( CONTEXT *context )
       context->Esp = (DWORD)stack16 + nArgsPopped;
       context->Ebp = frame16->ebp;
 
-      TRACE("after  SYSTHUNK hack: EBP: %08x ESP: %08x cur_stack: %04x:%04x\n",
+      TRACE("after  SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %04x:%04x\n",
             context->Ebp, context->Esp, CURRENT_SS, CURRENT_SP);
    }
 }
@@ -1336,14 +1336,14 @@ UINT WINAPI ThunkConnect16(
     {
         directionSL = TRUE;
 
-        TRACE("SL01 thunk %s (%p) -> %s (%s), Reason: %d\n",
+        TRACE("SL01 thunk %s (%p) -> %s (%s), Reason: %ld\n",
               module16, TD, module32, thunkfun32, dwReason);
     }
     else if (!strncmp(TD->magic, "LS01", 4))
     {
         directionSL = FALSE;
 
-        TRACE("LS01 thunk %s (%p) <- %s (%s), Reason: %d\n",
+        TRACE("LS01 thunk %s (%p) <- %s (%s), Reason: %ld\n",
               module16, TD, module32, thunkfun32, dwReason);
     }
     else
@@ -1510,7 +1510,7 @@ void WINAPI C16ThkSL01(CONTEXT *context)
         DWORD targetNr = LOWORD(context->Ecx) / 4;
         struct SLTargetDB *tdb;
 
-        TRACE("Process %08x calling target %d of ThunkDataSL %p\n",
+        TRACE("Process %08lx calling target %ld of ThunkDataSL %p\n",
               GetCurrentProcessId(), targetNr, td);
 
         for (tdb = td->targetDB; tdb; tdb = tdb->next)
@@ -1531,7 +1531,7 @@ void WINAPI C16ThkSL01(CONTEXT *context)
         {
             context->Edx = tdb->targetTable[targetNr];
 
-            TRACE("Call target is %08x\n", context->Edx);
+            TRACE("Call target is %08lx\n", context->Edx);
         }
         else
         {
@@ -1542,7 +1542,7 @@ void WINAPI C16ThkSL01(CONTEXT *context)
             context->SegCs  = stack[3];
             context->Esp += td->apiDB[targetNr].nrArgBytes + 4;
 
-            ERR("Process %08x did not ThunkConnect32 %s to %s\n",
+            ERR("Process %08lx did not ThunkConnect32 %s to %s\n",
                 GetCurrentProcessId(), td->pszDll32, td->pszDll16);
         }
     }
@@ -2288,7 +2288,7 @@ void WINAPI HouseCleanLogicallyDeadHandles(void)
  */
 BOOL WINAPI _KERNEL32_100(HANDLE threadid,DWORD exitcode,DWORD x)
 {
-	FIXME("(%p,%d,0x%08x): stub\n",threadid,exitcode,x);
+	FIXME("(%p,%ld,0x%08lx): stub\n",threadid,exitcode,x);
 	return TRUE;
 }
 
@@ -2301,7 +2301,7 @@ BOOL WINAPI _KERNEL32_100(HANDLE threadid,DWORD exitcode,DWORD x)
  */
 DWORD WINAPI _KERNEL32_99(DWORD x)
 {
-	FIXME("(0x%08x): stub\n",x);
+	FIXME("(0x%08lx): stub\n",x);
 	return 1;
 }
 
@@ -2572,7 +2572,7 @@ static DWORD WOW_CallProc32W16( FARPROC proc32, DWORD nrofargs, DWORD *args )
     else ret = call_entry_point( proc32, nrofargs & ~CPEX_DEST_CDECL, args );
     RestoreThunkLock( mutex_count );
 
-    TRACE("returns %08x\n",ret);
+    TRACE("returns %08lx\n",ret);
     return ret;
 }
 
@@ -2584,7 +2584,7 @@ DWORD WINAPIV CallProc32W16( DWORD nrofargs, DWORD argconvmask, FARPROC proc32, 
     DWORD args[32];
     unsigned int i;
 
-    TRACE("(%d,%d,%p args[",nrofargs,argconvmask,proc32);
+    TRACE("(%ld,%ld,%p args[",nrofargs,argconvmask,proc32);
 
     for (i=0;i<nrofargs;i++)
     {
@@ -2593,14 +2593,14 @@ DWORD WINAPIV CallProc32W16( DWORD nrofargs, DWORD argconvmask, FARPROC proc32, 
             SEGPTR ptr = VA_ARG16( valist, SEGPTR );
             /* pascal convention, have to reverse the arguments order */
             args[nrofargs - i - 1] = (DWORD)MapSL(ptr);
-            TRACE("%08x(%p),",ptr,MapSL(ptr));
+            TRACE("%08lx(%p),",ptr,MapSL(ptr));
         }
         else
         {
             DWORD arg = VA_ARG16( valist, DWORD );
             /* pascal convention, have to reverse the arguments order */
             args[nrofargs - i - 1] = arg;
-            TRACE("%d,", arg);
+            TRACE("%ld,", arg);
         }
     }
     TRACE("])\n");
@@ -2619,7 +2619,7 @@ DWORD WINAPIV CallProcEx32W16( DWORD nrofargs, DWORD argconvmask, FARPROC proc32
     DWORD args[32];
     unsigned int i, count = min( 32, nrofargs & ~CPEX_DEST_CDECL );
 
-    TRACE("(%s,%d,%d,%p args[", nrofargs & CPEX_DEST_CDECL ? "cdecl": "stdcall",
+    TRACE("(%s,%ld,%ld,%p args[", nrofargs & CPEX_DEST_CDECL ? "cdecl": "stdcall",
           nrofargs & ~CPEX_DEST_CDECL, argconvmask, proc32);
 
     for (i = 0; i < count; i++)
@@ -2628,13 +2628,13 @@ DWORD WINAPIV CallProcEx32W16( DWORD nrofargs, DWORD argconvmask, FARPROC proc32
         {
             SEGPTR ptr = VA_ARG16( valist, SEGPTR );
             args[i] = (DWORD)MapSL(ptr);
-            TRACE("%08x(%p),",ptr,MapSL(ptr));
+            TRACE("%08lx(%p),",ptr,MapSL(ptr));
         }
         else
         {
             DWORD arg = VA_ARG16( valist, DWORD );
             args[i] = arg;
-            TRACE("%d,", arg);
+            TRACE("%ld,", arg);
         }
     }
     TRACE("])\n");
@@ -2660,6 +2660,6 @@ DWORD WINAPIV WOW16Call(WORD x, WORD y, WORD z, VA_LIST16 args)
         }
         calladdr = VA_ARG16(args,DWORD);
         stack16_pop( 3*sizeof(WORD) + x + sizeof(DWORD) );
-        FIXME(") calling address was 0x%08x\n",calladdr);
+        FIXME(") calling address was 0x%08lx\n",calladdr);
         return 0;
 }

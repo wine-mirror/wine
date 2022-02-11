@@ -653,11 +653,11 @@ DWORD WINAPI MapProcessHandle( HANDLE hProcess )
  */
 void WINAPI SetProcessDword( DWORD dwProcessID, INT offset, DWORD value )
 {
-    TRACE("(%d, %d)\n", dwProcessID, offset );
+    TRACE("(%ld, %d)\n", dwProcessID, offset );
 
     if (dwProcessID && dwProcessID != GetCurrentProcessId())
     {
-        ERR("%d: process %x not accessible\n", offset, dwProcessID);
+        ERR("%d: process %lx not accessible\n", offset, dwProcessID);
         return;
     }
 
@@ -697,11 +697,11 @@ DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset )
     DWORD               x, y;
     STARTUPINFOW        siw;
 
-    TRACE("(%d, %d)\n", dwProcessID, offset );
+    TRACE("(%ld, %d)\n", dwProcessID, offset );
 
     if (dwProcessID && dwProcessID != GetCurrentProcessId())
     {
-        ERR("%d: process %x not accessible\n", offset, dwProcessID);
+        ERR("%d: process %lx not accessible\n", offset, dwProcessID);
         return 0;
     }
 
@@ -808,7 +808,7 @@ DWORD WINAPI WaitForMultipleObjectsEx16( DWORD count, const HANDLE *handles,
  */
 VOID WINAPI VWin32_BoostThreadGroup( DWORD threadId, INT boost )
 {
-    FIXME("(0x%08x,%d): stub\n", threadId, boost);
+    FIXME("(0x%08lx,%d): stub\n", threadId, boost);
 }
 
 
@@ -817,7 +817,7 @@ VOID WINAPI VWin32_BoostThreadGroup( DWORD threadId, INT boost )
  */
 VOID WINAPI VWin32_BoostThreadStatic( DWORD threadId, INT boost )
 {
-    FIXME("(0x%08x,%d): stub\n", threadId, boost);
+    FIXME("(0x%08lx,%d): stub\n", threadId, boost);
 }
 
 /***********************************************************************

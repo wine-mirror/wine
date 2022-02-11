@@ -215,7 +215,7 @@ void WINAPI __wine_snoop_entry( CONTEXT *context )
 		dll=dll->next;
 	}
 	if (!dll) {
-		FIXME("entrypoint 0x%08x not found\n",entry);
+		FIXME("entrypoint 0x%08lx not found\n",entry);
 		return; /* oops */
 	}
 	while (*rets) {
@@ -246,7 +246,7 @@ void WINAPI __wine_snoop_entry( CONTEXT *context )
 	context->SegCs = HIWORD(fun->origfun);
 
 
-	TRACE("\1CALL %s.%d: %s(", dll->name, ordinal, fun->name);
+	TRACE("\1CALL %s.%ld: %s(", dll->name, ordinal, fun->name);
 	if (fun->nrofargs>0) {
 		max = fun->nrofargs;
 		if (max>16) max=16;
@@ -276,7 +276,7 @@ void WINAPI __wine_snoop_return( CONTEXT *context )
 	}
 	context->Eip = LOWORD(ret->origreturn);
 	context->SegCs  = HIWORD(ret->origreturn);
-        TRACE("\1RET  %s.%d: %s(", ret->dll->name, ret->ordinal, ret->dll->funs[ret->ordinal].name);
+        TRACE("\1RET  %s.%ld: %s(", ret->dll->name, ret->ordinal, ret->dll->funs[ret->ordinal].name);
 	if (ret->args) {
 		int	i,max;
 

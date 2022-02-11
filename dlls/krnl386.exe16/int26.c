@@ -39,8 +39,8 @@ BOOL DOSVM_RawWrite(BYTE drive, DWORD begin, DWORD nr_sect, BYTE *dataptr, BOOL 
     HANDLE h;
     DWORD w;
 
-    TRACE( "abs diskwrite, drive %d, sector %d, "
-           "count %d, buffer %p\n",
+    TRACE( "abs diskwrite, drive %d, sector %ld, "
+           "count %ld, buffer %p\n",
            drive, begin, nr_sect, dataptr );
 
     root[4] += drive;

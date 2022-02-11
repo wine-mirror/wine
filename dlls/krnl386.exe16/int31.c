@@ -63,7 +63,7 @@ static LPVOID DPMI_xalloc( DWORD len )
             if (!xflag && (lastvalloced<oldlastv)) 
             { 
                 /* wrapped */
-                FIXME( "failed to allocate linearly growing memory (%u bytes), "
+                FIXME( "failed to allocate linearly growing memory (%lu bytes), "
                        "using non-linear growing...\n", len );
                 xflag++;
             }
@@ -75,7 +75,7 @@ static LPVOID DPMI_xalloc( DWORD len )
                 xflag++;
 
             if ((xflag==2) && (lastvalloced < oldlastv)) {
-                FIXME( "failed to allocate any memory of %u bytes!\n", len );
+                FIXME( "failed to allocate any memory of %lu bytes!\n", len );
                 return NULL;
             }
         }
@@ -253,7 +253,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT *context )
         {
             DWORD base = MAKELONG( DX_reg(context), CX_reg(context) );
             WORD  sel = BX_reg(context);
-            TRACE( "set selector base address (0x%04x,0x%08x)\n", sel, base );
+            TRACE( "set selector base address (0x%04x,0x%08lx)\n", sel, base );
 
             /* check if Win16 app wants to access lower 64K of DOS memory */
             if (base < 0x10000) DOSMEM_MapDosLayout();
@@ -265,7 +265,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT *context )
     case 0x0008:  /* Set selector limit */
         {
             DWORD limit = MAKELONG( DX_reg(context), CX_reg(context) );
-            TRACE( "set selector limit (0x%04x,0x%08x)\n",
+            TRACE( "set selector limit (0x%04x,0x%08lx)\n",
                    BX_reg(context), limit );
             SetSelectorLimit16( BX_reg(context), limit );
         }
@@ -385,7 +385,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT *context )
         break;
 
     case 0x0205:  /* Set protected mode interrupt vector */
-        TRACE("set protected mode interrupt handler (0x%02x,0x%04x:0x%08x)\n",
+        TRACE("set protected mode interrupt handler (0x%02x,0x%04x:0x%08lx)\n",
               BL_reg(context), CX_reg(context), context->Edx);
         {
             FARPROC16 handler;
@@ -497,7 +497,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT *context )
             DWORD size = MAKELONG( CX_reg(context), BX_reg(context) );
             BYTE *ptr;
 
-            TRACE( "allocate memory block (%u bytes)\n", size );
+            TRACE( "allocate memory block (%lu bytes)\n", size );
 
             ptr = DPMI_xalloc( size );
             if (!ptr)
@@ -518,7 +518,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT *context )
     case 0x0502:  /* Free memory block */
         {
             DWORD handle = MAKELONG( DI_reg(context), SI_reg(context) );
-            TRACE( "free memory block (0x%08x)\n", handle );
+            TRACE( "free memory block (0x%08lx)\n", handle );
             DPMI_xfree( (void *)handle );
         }
         break;
@@ -529,7 +529,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT *context )
             DWORD handle = MAKELONG( DI_reg(context), SI_reg(context) );
             BYTE *ptr;
 
-            TRACE( "resize memory block (0x%08x, %u bytes)\n", handle, size );
+            TRACE( "resize memory block (0x%08lx, %lu bytes)\n", handle, size );
 
             ptr = DPMI_xrealloc( (void *)handle, size );
             if (!ptr)
@@ -591,7 +591,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT *context )
         break;
 
     case 0x0800:  /* Physical address mapping */
-        FIXME( "physical address mapping (0x%08x) - unimplemented\n",
+        FIXME( "physical address mapping (0x%08lx) - unimplemented\n",
                MAKELONG(CX_reg(context),BX_reg(context)) );
         break;
 

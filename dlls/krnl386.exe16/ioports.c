@@ -177,7 +177,7 @@ static void set_timer(unsigned timer)
             /* speaker on ? */
             if ((parport_8255[1] & 3) == 3)
             {
-                TRACE("Beep (freq: %d) !\n", 1193180 / val);
+                TRACE("Beep (freq: %ld) !\n", 1193180 / val);
                 Beep(1193180 / val, 20);
             }
             break;
@@ -329,7 +329,7 @@ DWORD DOSVM_inport( int port, int size )
  */
 void DOSVM_outport( int port, int size, DWORD value )
 {
-    TRACE("IO: 0x%x (%d-byte value) to port 0x%04x\n", value, size, port );
+    TRACE("IO: 0x%lx (%d-byte value) to port 0x%04x\n", value, size, port );
 
     DOSMEM_InitDosMemory();
 

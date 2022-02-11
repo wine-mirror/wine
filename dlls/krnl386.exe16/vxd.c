@@ -252,7 +252,7 @@ void WINAPI DECLSPEC_HIDDEN __regs_VxDCall( CONTEXT *context )
     if (proc) context->Eax = proc( service, context );
     else
     {
-        FIXME( "Unknown/unimplemented VxD (%08x)\n", service);
+        FIXME( "Unknown/unimplemented VxD (%08lx)\n", service);
         context->Eax = 0xffffffff; /* FIXME */
     }
 }
@@ -414,7 +414,7 @@ void WINAPI __wine_vxd_vxdloader( CONTEXT *context )
 	break;
 
     case 0x0001: /* load device */
-	FIXME("load device %04x:%04x (%s)\n",
+	FIXME("load device %04lx:%04x (%s)\n",
 	      context->SegDs, DX_reg(context),
 	      debugstr_a(MapSL(MAKESEGPTR(context->SegDs, DX_reg(context)))));
 	SET_AX( context, 0x0000 );
@@ -424,7 +424,7 @@ void WINAPI __wine_vxd_vxdloader( CONTEXT *context )
 	break;
 
     case 0x0002: /* unload device */
-	FIXME("unload device (%08x)\n", context->Ebx);
+	FIXME("unload device (%08lx)\n", context->Ebx);
 	SET_AX( context, 0x0000 );
 	RESET_CFLAG(context);
 	break;
@@ -518,7 +518,7 @@ void WINAPI __wine_vxd_shell( CONTEXT *context )
 	break;
 
     case 0x0106:   /* install timeout callback */
-	TRACE("VxD Shell: ignoring shell callback (%d sec.)\n", context->Ebx);
+	TRACE("VxD Shell: ignoring shell callback (%ld sec.)\n", context->Ebx);
 	SET_CFLAG(context);
 	break;
 
@@ -887,7 +887,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
          * Output:  EAX: 0 if OK
          */
 
-        TRACE("[0001] EBX=%x ECX=%x EDX=%x ESI=%x EDI=%x\n",
+        TRACE("[0001] EBX=%lx ECX=%lx EDX=%lx ESI=%lx EDI=%lx\n",
                    context->Ebx, context->Ecx, context->Edx,
                    context->Esi, context->Edi);
 
@@ -910,7 +910,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
          * Output:  EAX: Size of area changed
          */
 
-        TRACE("[0002] EBX=%x ECX=%x EDX=%x\n",
+        TRACE("[0002] EBX=%lx ECX=%lx EDX=%lx\n",
                    context->Ebx, context->Ecx, context->Edx);
 
         /* FIXME */
@@ -928,7 +928,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
          *               Bit 1: Read-Write if set, Read-Only if clear
          */
 
-        TRACE("[0003] EDX=%x\n", context->Edx);
+        TRACE("[0003] EDX=%lx\n", context->Edx);
 
         /* FIXME */
 
@@ -999,7 +999,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
                 LPBYTE addr = module->baseAddr + pe_seg->VirtualAddress;
 
                 TRACE("MapModule: "
-                           "Section %d at %08x from %08x len %08x\n",
+                           "Section %d at %08lx from %08lx len %08lx\n",
                            i, (DWORD)addr, off, len);
 
                 if (   _llseek(image, off, SEEK_SET) != off
@@ -1019,7 +1019,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
             IMAGE_BASE_RELOCATION *r = (IMAGE_BASE_RELOCATION *)
                 (dir->Size? module->baseAddr + dir->VirtualAddress : 0);
 
-            TRACE("MapModule: Reloc delta %08x\n", module->relocDelta);
+            TRACE("MapModule: Reloc delta %08lx\n", module->relocDelta);
 
             while (r && r->VirtualAddress)
             {
@@ -1027,7 +1027,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
                 WORD *TypeOffset = (WORD *)(r + 1);
                 unsigned int count = (r->SizeOfBlock - sizeof(*r)) / sizeof(*TypeOffset);
 
-                TRACE("MapModule: %d relocations for page %08x\n",
+                TRACE("MapModule: %d relocations for page %08lx\n",
                            count, (DWORD)page);
 
                 for(i = 0; i < count; i++)
@@ -1070,7 +1070,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
          * Output:  EAX: 1 if OK
          */
 
-        TRACE("UnMapModule: %x\n", W32S_APP2WINE(context->Edx));
+        TRACE("UnMapModule: %lx\n", W32S_APP2WINE(context->Edx));
 
         /* As we didn't map anything, there's nothing to unmap ... */
 
@@ -1101,12 +1101,12 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
         DWORD  prot   = stack[4];
         DWORD  result;
 
-        TRACE("VirtualAlloc(%x, %x, %x, %x, %x)\n",
+        TRACE("VirtualAlloc(%lx, %lx, %lx, %lx, %lx)\n",
                    (DWORD)retv, (DWORD)base, size, type, prot);
 
         if (type & 0x80000000)
         {
-            WARN("VirtualAlloc: strange type %x\n", type);
+            WARN("VirtualAlloc: strange type %lx\n", type);
             type &= 0x7fffffff;
         }
 
@@ -1149,7 +1149,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
         DWORD  type   = stack[3];
         DWORD  result;
 
-        TRACE("VirtualFree(%x, %x, %x, %x)\n",
+        TRACE("VirtualFree(%lx, %lx, %lx, %lx)\n",
                    (DWORD)retv, (DWORD)base, size, type);
 
         result = VirtualFree(base, size, type);
@@ -1187,7 +1187,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
         DWORD *old_prot = (DWORD *)W32S_APP2WINE(stack[4]);
         DWORD  result;
 
-        TRACE("VirtualProtect(%x, %x, %x, %x, %x)\n",
+        TRACE("VirtualProtect(%lx, %lx, %lx, %lx, %lx)\n",
                    (DWORD)retv, (DWORD)base, size, new_prot, (DWORD)old_prot);
 
         result = VirtualProtect(base, size, new_prot, old_prot);
@@ -1224,7 +1224,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
         DWORD  len    = stack[3];
         DWORD  result;
 
-        TRACE("VirtualQuery(%x, %x, %x, %x)\n",
+        TRACE("VirtualQuery(%lx, %lx, %lx, %lx)\n",
                    (DWORD)retv, (DWORD)base, (DWORD)info, len);
 
         result = VirtualQuery(base, info, len);
@@ -1244,7 +1244,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
          * Output:  EAX: NtStatus
          */
 
-        TRACE("[000a] ECX=%x EDX=%x\n",
+        TRACE("[000a] ECX=%lx EDX=%lx\n",
                    context->Ecx, context->Edx);
 
         /* FIXME */
@@ -1260,7 +1260,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
          * Output:  EAX: NtStatus
          */
 
-        TRACE("[000b] ECX=%x\n", context->Ecx);
+        TRACE("[000b] ECX=%lx\n", context->Ecx);
 
         /* FIXME */
 
@@ -1275,7 +1275,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
          * Output:  EDX: Previous Debug Flags
          */
 
-        FIXME("[000c] EDX=%x\n", context->Edx);
+        FIXME("[000c] EDX=%lx\n", context->Edx);
 
         /* FIXME */
 
@@ -1312,7 +1312,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
         HANDLE result = INVALID_HANDLE_VALUE;
         char name[128];
 
-        TRACE("NtCreateSection(%x, %x, %x, %x, %x, %x, %x, %x)\n",
+        TRACE("NtCreateSection(%lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx)\n",
                    (DWORD)retv, flags1, atom, (DWORD)size, protect, flags2,
                    (DWORD)hFile, psp);
 
@@ -1329,7 +1329,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
         if (result == INVALID_HANDLE_VALUE)
             WARN("NtCreateSection: failed!\n");
         else
-            TRACE("NtCreateSection: returned %x\n", (DWORD)result);
+            TRACE("NtCreateSection: returned %lx\n", (DWORD)result);
 
         if (result != INVALID_HANDLE_VALUE)
             *retv            = result,
@@ -1360,7 +1360,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
         HANDLE result = INVALID_HANDLE_VALUE;
         char name[128];
 
-        TRACE("NtOpenSection(%x, %x, %x)\n",
+        TRACE("NtOpenSection(%lx, %lx, %lx)\n",
                    (DWORD)retv, protect, atom);
 
         if (atom && GlobalGetAtomNameA(atom, name, sizeof(name)))
@@ -1373,7 +1373,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
         if (result == INVALID_HANDLE_VALUE)
             WARN("NtOpenSection: failed!\n");
         else
-            TRACE("NtOpenSection: returned %x\n", (DWORD)result);
+            TRACE("NtOpenSection: returned %lx\n", (DWORD)result);
 
         if (result != INVALID_HANDLE_VALUE)
             *retv            = result,
@@ -1399,7 +1399,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
         HANDLE handle   = (HANDLE)stack[0];
         DWORD *id       = (DWORD *)W32S_APP2WINE(stack[1]);
 
-        TRACE("NtCloseSection(%x, %x)\n", (DWORD)handle, (DWORD)id);
+        TRACE("NtCloseSection(%lx, %lx)\n", (DWORD)handle, (DWORD)id);
 
         CloseHandle(handle);
         if (id) *id = 0; /* FIXME */
@@ -1422,7 +1422,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
         HANDLE handle   = (HANDLE)stack[0];
         HANDLE new_handle;
 
-        TRACE("NtDupSection(%x)\n", (DWORD)handle);
+        TRACE("NtDupSection(%lx)\n", (DWORD)handle);
 
         DuplicateHandle( GetCurrentProcess(), handle,
                          GetCurrentProcess(), &new_handle,
@@ -1478,12 +1478,12 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
         }
 
         TRACE("NtMapViewOfSection"
-                   "(%x, %x, %x, %x, %x, %x, %x, %x, %x, %x)\n",
+                   "(%lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx)\n",
                    (DWORD)SectionHandle, ProcessHandle, (DWORD)BaseAddress,
                    ZeroBits, CommitSize, (DWORD)SectionOffset, (DWORD)ViewSize,
                    InheritDisposition, AllocationType, Protect);
         TRACE("NtMapViewOfSection: "
-                   "base=%x, offset=%x, size=%x, access=%x\n",
+                   "base=%lx, offset=%lx, size=%lx, access=%lx\n",
                    (DWORD)address, SectionOffset? SectionOffset->u.LowPart : 0,
                    ViewSize? *ViewSize : 0, access);
 
@@ -1492,7 +1492,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
                             SectionOffset? SectionOffset->u.LowPart  : 0,
                             ViewSize? *ViewSize : 0, address);
 
-        TRACE("NtMapViewOfSection: result=%x\n", result);
+        TRACE("NtMapViewOfSection: result=%lx\n", result);
 
         if (W32S_WINE2APP(result))
         {
@@ -1519,7 +1519,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
         DWORD  ProcessHandle  = stack[0]; /* ignored */
         LPBYTE BaseAddress    = (LPBYTE)W32S_APP2WINE(stack[1]);
 
-        TRACE("NtUnmapViewOfSection(%x, %x)\n",
+        TRACE("NtUnmapViewOfSection(%lx, %lx)\n",
                    ProcessHandle, (DWORD)BaseAddress);
 
         UnmapViewOfFile(BaseAddress);
@@ -1550,10 +1550,10 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
         LPBYTE address = (LPBYTE)(BaseAddress? W32S_APP2WINE(*BaseAddress) : 0);
         DWORD  size    = ViewSize? *ViewSize : 0;
 
-        TRACE("NtFlushVirtualMemory(%x, %x, %x, %x)\n",
+        TRACE("NtFlushVirtualMemory(%lx, %lx, %lx, %lx)\n",
                    ProcessHandle, (DWORD)BaseAddress, (DWORD)ViewSize,
                    (DWORD)unknown);
-        TRACE("NtFlushVirtualMemory: base=%x, size=%x\n",
+        TRACE("NtFlushVirtualMemory: base=%lx, size=%lx\n",
                    (DWORD)address, size);
 
         FlushViewOfFile(address, size);
@@ -1574,7 +1574,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
          * Output:  None
          */
 
-        FIXME("[0014] ECX=%x EDX=%x\n",
+        FIXME("[0014] ECX=%lx EDX=%lx\n",
                    context->Ecx, context->Edx);
 
         /* FIXME */
@@ -1588,7 +1588,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
          * Output:  None
          */
 
-        TRACE("[0015] EDX=%x\n", context->Edx);
+        TRACE("[0015] EDX=%lx\n", context->Edx);
 
         /* We don't care, as we always have a coprocessor anyway */
         break;
@@ -1628,7 +1628,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
          * Output:  None
          */
 
-        FIXME("[0017] EBX=%x CX=%x\n",
+        FIXME("[0017] EBX=%lx CX=%x\n",
                    context->Ebx, CX_reg(context));
 
         /* FIXME */
@@ -1654,7 +1654,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
         DWORD  size   = stack[2];
         DWORD  result;
 
-        TRACE("VirtualLock(%x, %x, %x)\n",
+        TRACE("VirtualLock(%lx, %lx, %lx)\n",
                    (DWORD)retv, (DWORD)base, size);
 
         result = VirtualLock(base, size);
@@ -1688,7 +1688,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
         DWORD  size   = stack[2];
         DWORD  result;
 
-        TRACE("VirtualUnlock(%x, %x, %x)\n",
+        TRACE("VirtualUnlock(%lx, %lx, %lx)\n",
                    (DWORD)retv, (DWORD)base, size);
 
         result = VirtualUnlock(base, size);
@@ -1748,7 +1748,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
         struct Win32sMemoryInfo *info =
                        (struct Win32sMemoryInfo *)W32S_APP2WINE(context->Esi);
 
-        FIXME("KGlobalMemStat(%x)\n", (DWORD)info);
+        FIXME("KGlobalMemStat(%lx)\n", (DWORD)info);
 
         /* FIXME */
     }
@@ -1762,7 +1762,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
          * Output:  None
          */
 
-        TRACE("[001c] ECX=%x\n", context->Ecx);
+        TRACE("[001c] ECX=%lx\n", context->Ecx);
 
         /* FIXME */
         break;
@@ -1788,12 +1788,12 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
         DWORD  prot   = stack[3];
         DWORD  result;
 
-        TRACE("VirtualAlloc16(%x, %x, %x, %x)\n",
+        TRACE("VirtualAlloc16(%lx, %lx, %lx, %lx)\n",
                    (DWORD)base, size, type, prot);
 
         if (type & 0x80000000)
         {
-            WARN("VirtualAlloc16: strange type %x\n", type);
+            WARN("VirtualAlloc16: strange type %lx\n", type);
             type &= 0x7fffffff;
         }
 
@@ -1805,7 +1805,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
         else
             context->Edx = 0,
             context->Eax = STATUS_NO_MEMORY;  /* FIXME */
-	TRACE("VirtualAlloc16: returning base %x\n", context->Edx);
+	TRACE("VirtualAlloc16: returning base %lx\n", context->Edx);
     }
     break;
 
@@ -1828,7 +1828,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
         DWORD  type   = stack[2];
         DWORD  result;
 
-        TRACE("VirtualFree16(%x, %x, %x)\n",
+        TRACE("VirtualFree16(%lx, %lx, %lx)\n",
                    (DWORD)base, size, type);
 
         result = VirtualFree(base, size, type);
@@ -1856,7 +1856,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
         DWORD *ptr = (DWORD *)W32S_APP2WINE(context->Ecx);
         BOOL set = context->Edx;
 
-        TRACE("FWorkingSetSize(%x, %x)\n", (DWORD)ptr, (DWORD)set);
+        TRACE("FWorkingSetSize(%lx, %lx)\n", (DWORD)ptr, (DWORD)set);
 
         if (set)
             /* We do it differently ... */;

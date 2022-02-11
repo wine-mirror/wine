@@ -869,7 +869,7 @@ HGLOBAL16 WINAPI AllocResource16( HMODULE16 hModule, HRSRC16 hRsrc, DWORD size)
     NE_MODULE *pModule = NE_GetPtr( hModule );
     if (!pModule || !pModule->ne_rsrctab || !hRsrc) return 0;
 
-    TRACE("module=%04x res=%04x size=%d\n", hModule, hRsrc, size );
+    TRACE("module=%04x res=%04x size=%ld\n", hModule, hRsrc, size );
 
     sizeShift = *(WORD *)((char *)pModule + pModule->ne_rsrctab);
     pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);

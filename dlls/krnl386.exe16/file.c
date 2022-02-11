@@ -418,7 +418,7 @@ LONG WINAPI WIN16_hread( HFILE16 hFile, SEGPTR buffer, LONG count )
 {
     LONG maxlen;
 
-    TRACE("%d %08x %d\n", hFile, (DWORD)buffer, count );
+    TRACE("%d %08lx %ld\n", hFile, (DWORD)buffer, count );
 
     /* Some programs pass a count larger than the allocated buffer */
     maxlen = GetSelectorLimit16( SELECTOROF(buffer) ) - OFFSETOF(buffer) + 1;

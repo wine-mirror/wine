@@ -39,8 +39,8 @@ BOOL DOSVM_RawRead(BYTE drive, DWORD begin, DWORD nr_sect, BYTE *dataptr, BOOL f
     WCHAR root[] = {'\\','\\','.','\\','A',':',0};
     HANDLE h;
 
-    TRACE( "abs diskread, drive %d, sector %d, "
-           "count %d, buffer %p\n",
+    TRACE( "abs diskread, drive %d, sector %ld, "
+           "count %ld, buffer %p\n",
            drive, begin, nr_sect, dataptr );
 
     root[4] += drive;

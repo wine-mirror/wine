@@ -487,7 +487,7 @@ LPVOID DOSMEM_MapRealToLinear(DWORD x)
    LPVOID       lin;
 
    lin = DOSMEM_dosmem + HIWORD(x) * 16 + LOWORD(x);
-   TRACE_(selector)("(0x%08x) returns %p.\n", x, lin );
+   TRACE_(selector)("(0x%08lx) returns %p.\n", x, lin );
    return lin;
 }
 

@@ -518,7 +518,7 @@ int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT *conte
     if (!j)  /* register function */
     {
         args32[nb_args++] = (int)context;
-        TRACE( ") ret=%04x:%04x ax=%04x bx=%04x cx=%04x dx=%04x si=%04x di=%04x bp=%04x ss:sp=%04x:%04x ds=%04x es=%04x efl=%08x\n",
+        TRACE( ") ret=%04x:%04x ax=%04x bx=%04x cx=%04x dx=%04x si=%04x di=%04x bp=%04x ss:sp=%04x:%04x ds=%04x es=%04x efl=%08lx\n",
                frame->cs, frame->ip, (WORD)context->Eax, (WORD)context->Ebx, (WORD)context->Ecx,
                (WORD)context->Edx, (WORD)context->Esi, (WORD)context->Edi, (WORD)context->Ebp,
                (WORD)context->SegSs, (WORD)context->Esp, (WORD)context->SegDs, (WORD)context->SegEs, context->EFlags );
@@ -534,7 +534,7 @@ int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT *conte
     TRACE( "\1Ret  %s.%d: %s() ", module, ordinal, func );
     if (!j)  /* register function */
     {
-        TRACE( "retval=none ret=%04x:%04x ax=%04x bx=%04x cx=%04x dx=%04x si=%04x di=%04x ds=%04x es=%04x efl=%08x\n",
+        TRACE( "retval=none ret=%04x:%04x ax=%04x bx=%04x cx=%04x dx=%04x si=%04x di=%04x ds=%04x es=%04x efl=%08lx\n",
                (WORD)context->SegCs, LOWORD(context->Eip), (WORD)context->Eax, (WORD)context->Ebx,
                (WORD)context->Ecx, (WORD)context->Edx, (WORD)context->Esi, (WORD)context->Edi,
                (WORD)context->SegDs, (WORD)context->SegEs, context->EFlags );
