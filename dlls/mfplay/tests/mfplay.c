@@ -37,7 +37,7 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
     expected_hr = supported ? S_OK : E_NOINTERFACE;
 
     hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
-    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#lx, expected %#lx.\n", hr, expected_hr);
     if (SUCCEEDED(hr))
         IUnknown_Release(unk);
 }
@@ -88,40 +88,40 @@ static void test_create_player(void)
     HRESULT hr;
 
     hr = MFPCreateMediaPlayer(NULL, FALSE, 0, NULL, NULL, NULL);
-    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+    ok(FAILED(hr), "Unexpected hr %#lx.\n", hr);
 
     hr = MFPCreateMediaPlayer(NULL, TRUE, 0, NULL, NULL, NULL);
-    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+    ok(FAILED(hr), "Unexpected hr %#lx.\n", hr);
 
     player = (void *)0xdeadbeef;
     hr = MFPCreateMediaPlayer(NULL, TRUE, 0, NULL, NULL, &player);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(!player, "Unexpected pointer %p.\n", player);
 
     hr = MFPCreateMediaPlayer(L"doesnotexist.mp4", FALSE, 0, &callback, NULL, NULL);
-    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     hr = MFPCreateMediaPlayer(L"doesnotexist.mp4", FALSE, 0, &callback, NULL, &player);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "Unexpected hr %#x.\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "Unexpected hr %#lx.\n", hr);
 
     hr = MFPCreateMediaPlayer(NULL, TRUE, 0, &callback, NULL, &player);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = MFPCreateMediaPlayer(NULL, FALSE, 0, NULL, NULL, &player);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     check_interface(player, &IID_IMFPMediaPlayer, TRUE);
     check_interface(player, &IID_IPropertyStore, TRUE);
 
     hr = IMFPMediaPlayer_QueryInterface(player, &IID_IPropertyStore, (void **)&propstore);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     check_interface(propstore, &IID_IMFPMediaPlayer, TRUE);
 
     hr = IPropertyStore_QueryInterface(propstore, &IID_IUnknown, (void **)&unk);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFPMediaPlayer_QueryInterface(player, &IID_IUnknown, (void **)&unk2);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(unk == unk2, "Unexpected interface.\n");
     IUnknown_Release(unk);
     IUnknown_Release(unk2);
@@ -131,10 +131,10 @@ static void test_create_player(void)
     IMFPMediaPlayer_Release(player);
 
     hr = MFPCreateMediaPlayer(NULL, FALSE, 0, &callback, (HWND)0x1, &player);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetVideoWindow(player, &window);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(window == (HWND)0x1, "Unexpected window.\n");
 
     IMFPMediaPlayer_Release(player);
@@ -155,89 +155,89 @@ static void test_shutdown(void)
     HRESULT hr;
 
     hr = MFPCreateMediaPlayer(NULL, FALSE, 0, NULL, NULL, &player);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetState(player, &state);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(state == MFP_MEDIAPLAYER_STATE_EMPTY, "Unexpected state %d.\n", state);
 
     hr = IMFPMediaPlayer_Shutdown(player);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     /* Check methods in shutdown state. */
     hr = IMFPMediaPlayer_Play(player);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_Pause(player);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_Stop(player);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetSupportedRates(player, TRUE, &slowest, &fastest);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetState(player, &state);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(state == MFP_MEDIAPLAYER_STATE_SHUTDOWN, "Unexpected state %d.\n", state);
 
     hr = IMFPMediaPlayer_GetIdealVideoSize(player, &min_size, &max_size);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetVideoSourceRect(player, &rect);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetBorderColor(player, &color);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetAspectRatioMode(player, &mode);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetNativeVideoSize(player, &size, &size);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_SetBorderColor(player, 0);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_SetAspectRatioMode(player, MFVideoARMode_None);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_UpdateVideo(player);
     todo_wine
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_CreateMediaItemFromURL(player, L"url", TRUE, 0, &item);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_ClearMediaItem(player);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetMediaItem(player, &item);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetVideoWindow(player, &window);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetDuration(player, NULL, NULL);
-    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetDuration(player, &MFP_POSITIONTYPE_100NS, NULL);
-    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetDuration(player, &MFP_POSITIONTYPE_100NS, &propvar);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetPosition(player, NULL, NULL);
-    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetPosition(player, &MFP_POSITIONTYPE_100NS, NULL);
-    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetPosition(player, &MFP_POSITIONTYPE_100NS, &propvar);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_Shutdown(player);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     IMFPMediaPlayer_Release(player);
 }
@@ -249,20 +249,20 @@ static void test_media_item(void)
     HRESULT hr;
 
     hr = MFPCreateMediaPlayer(NULL, FALSE, 0, NULL, NULL, &player);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_SetMediaItem(player, NULL);
-    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     /* Async mode, no callback was specified. */
     hr = IMFPMediaPlayer_CreateMediaItemFromURL(player, L"url", FALSE, 0, &item);
-    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_CreateMediaItemFromURL(player, L"url", FALSE, 0, NULL);
-    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_CreateMediaItemFromURL(player, L"url", TRUE, 0, NULL);
-    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     IMFPMediaPlayer_Release(player);
 }
@@ -282,82 +282,82 @@ static void test_video_control(void)
     ok(!!window, "Failed to create output window.\n");
 
     hr = MFPCreateMediaPlayer(NULL, FALSE, 0, NULL, window, &player);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     /* No active media item */
 
     rect.left = rect.top = 0.0f;
     rect.right = rect.bottom = 1.0f;
     hr = IMFPMediaPlayer_SetVideoSourceRect(player, &rect);
-    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_SetVideoSourceRect(player, NULL);
-    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_SetBorderColor(player, 0);
-    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_SetAspectRatioMode(player, MFVideoARMode_None);
-    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetVideoSourceRect(player, &rect);
-    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetBorderColor(player, &color);
-    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetAspectRatioMode(player, &mode);
-    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetIdealVideoSize(player, &size, &size);
-    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetNativeVideoSize(player, &size, &size);
-    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_UpdateVideo(player);
     todo_wine
-    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#lx.\n", hr);
 
     IMFPMediaPlayer_Release(player);
 
     /* No active media item, no output window.*/
 
     hr = MFPCreateMediaPlayer(NULL, FALSE, 0, NULL, NULL, &player);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     rect.left = rect.top = 0.0f;
     rect.right = rect.bottom = 1.0f;
     hr = IMFPMediaPlayer_SetVideoSourceRect(player, &rect);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_WINDOW_HANDLE), "Unexpected hr %#x.\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_WINDOW_HANDLE), "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_SetVideoSourceRect(player, NULL);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_WINDOW_HANDLE), "Unexpected hr %#x.\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_WINDOW_HANDLE), "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_SetBorderColor(player, 0);
-    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_SetAspectRatioMode(player, MFVideoARMode_None);
-    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetVideoSourceRect(player, &rect);
-    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetBorderColor(player, &color);
-    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetAspectRatioMode(player, &mode);
-    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetIdealVideoSize(player, &size, &size);
-    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetNativeVideoSize(player, &size, &size);
-    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_UpdateVideo(player);
     todo_wine
-    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#lx.\n", hr);
 
     IMFPMediaPlayer_Release(player);
 
@@ -371,32 +371,32 @@ static void test_duration(void)
     HRESULT hr;
 
     hr = MFPCreateMediaPlayer(NULL, FALSE, 0, NULL, NULL, &player);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     /* No media item. */
     hr = IMFPMediaPlayer_GetDuration(player, NULL, NULL);
-    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetDuration(player, &MFP_POSITIONTYPE_100NS, NULL);
-    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetDuration(player, &IID_IUnknown, &propvar);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetDuration(player, &MFP_POSITIONTYPE_100NS, &propvar);
-    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetPosition(player, NULL, NULL);
-    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetPosition(player, &MFP_POSITIONTYPE_100NS, NULL);
-    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetPosition(player, &IID_IUnknown, &propvar);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetPosition(player, &MFP_POSITIONTYPE_100NS, &propvar);
-    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#lx.\n", hr);
 
     IMFPMediaPlayer_Release(player);
 }
