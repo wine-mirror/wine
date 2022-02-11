@@ -261,14 +261,14 @@ static void ok_sequence_(struct msg_sequence **seq, int sequence_index,
                         failcount++;
                         dump++;
                         ok_(file, line) (FALSE,
-                            "%s: in msg 0x%04x expecting id 0x%x got 0x%x\n",
+                            "%s: in msg 0x%04x expecting id %d got %d\n",
                             context, expected->message, expected->id, actual->id);
                     }
                 }
                 else
                 {
                     ok_(file, line) (expected->id == actual->id,
-                        "%s: in msg 0x%04x expecting id 0x%x got 0x%x\n",
+                        "%s: in msg 0x%04x expecting id %d got %d\n",
                         context, expected->message, expected->id, actual->id);
                     if (expected->id != actual->id) dump++;
                 }
