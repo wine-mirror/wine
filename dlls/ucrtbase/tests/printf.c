@@ -74,7 +74,7 @@ static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
     ok(function == NULL, "function is not NULL\n");
     ok(file == NULL, "file is not NULL\n");
     ok(line == 0, "line = %u\n", line);
-    ok(arg == 0, "arg = %lx\n", (UINT_PTR)arg);
+    ok(arg == 0, "arg = %Ix\n", arg);
 }
 
 static int WINAPIV vsprintf_wrapper(unsigned __int64 options, char *str,
@@ -838,7 +838,7 @@ static void test_printf_fp(void)
 
             r = vsprintf_wrapper(flags[j], buf, sizeof(buf), tests[i].fmt, tests[i].d);
             ok(r == strlen(res) || broken(broken_res && r == strlen(broken_res)),
-                    "%d,%d) r = %d, expected %d\n", i, j, r, strlen(res));
+                    "%d,%d) r = %d, expected %Id\n", i, j, r, strlen(res));
             ok(!strcmp(buf, res) || broken(broken_res && !strcmp(buf, broken_res)),
                     "%d,%d) buf = %s, expected %s\n", i, j, buf, res);
         }

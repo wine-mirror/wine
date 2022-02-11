@@ -1168,17 +1168,17 @@ static void test_exit(const char *argv0)
     ret = WaitForSingleObject(proc.hProcess, INFINITE);
     ok(ret == WAIT_OBJECT_0, "child process wait failed\n");
     GetExitCodeProcess(proc.hProcess, &ret);
-    ok(ret == 1, "child process exited with code %d\n", ret);
+    ok(ret == 1, "child process exited with code %ld\n", ret);
     CloseHandle(proc.hProcess);
     CloseHandle(proc.hThread);
-    ok(!*failures, "%d tests failed in child process\n", *failures);
+    ok(!*failures, "%ld tests failed in child process\n", *failures);
     free_failures_counter(failures, failures_map);
 
 
     ret = WaitForSingleObject(exit_event, 0);
-    ok(ret == WAIT_OBJECT_0, "exit_event was not set (%x)\n", ret);
+    ok(ret == WAIT_OBJECT_0, "exit_event was not set (%lx)\n", ret);
     ret = WaitForSingleObject(quick_exit_event, 0);
-    ok(ret == WAIT_TIMEOUT, "quick_exit_event should not have be set (%x)\n", ret);
+    ok(ret == WAIT_TIMEOUT, "quick_exit_event should not have be set (%lx)\n", ret);
 
     CloseHandle(exit_event);
     CloseHandle(quick_exit_event);
@@ -1190,7 +1190,7 @@ static void CDECL at_exit_func1(void)
 {
     HANDLE exit_event = CreateEventA(NULL, FALSE, FALSE, "exit_event");
 
-    ok(exit_event != NULL, "CreateEvent failed: %d\n", GetLastError());
+    ok(exit_event != NULL, "CreateEvent failed: %ld\n", GetLastError());
     ok(atexit_called == 1, "atexit_called = %d\n", atexit_called);
     atexit_called++;
     SetEvent(exit_event);
@@ -1211,7 +1211,7 @@ static void CDECL at_quick_exit_func1(void)
 {
     HANDLE quick_exit_event = CreateEventA(NULL, FALSE, FALSE, "quick_exit_event");
 
-    ok(quick_exit_event != NULL, "CreateEvent failed: %d\n", GetLastError());
+    ok(quick_exit_event != NULL, "CreateEvent failed: %ld\n", GetLastError());
     ok(atquick_exit_called == 1, "atquick_exit_called = %d\n", atquick_exit_called);
     atquick_exit_called++;
     SetEvent(quick_exit_event);
@@ -1269,16 +1269,16 @@ static void test_quick_exit(const char *argv0)
     ret = WaitForSingleObject(proc.hProcess, INFINITE);
     ok(ret == WAIT_OBJECT_0, "child process wait failed\n");
     GetExitCodeProcess(proc.hProcess, &ret);
-    ok(ret == 2, "child process exited with code %d\n", ret);
+    ok(ret == 2, "child process exited with code %ld\n", ret);
     CloseHandle(proc.hProcess);
     CloseHandle(proc.hThread);
-    ok(!*failures, "%d tests failed in child process\n", *failures);
+    ok(!*failures, "%ld tests failed in child process\n", *failures);
     free_failures_counter(failures, failures_map);
 
     ret = WaitForSingleObject(quick_exit_event, 0);
-    ok(ret == WAIT_OBJECT_0, "quick_exit_event was not set (%x)\n", ret);
+    ok(ret == WAIT_OBJECT_0, "quick_exit_event was not set (%lx)\n", ret);
     ret = WaitForSingleObject(exit_event, 0);
-    ok(ret == WAIT_TIMEOUT, "exit_event should not have be set (%x)\n", ret);
+    ok(ret == WAIT_TIMEOUT, "exit_event should not have be set (%lx)\n", ret);
 
     CloseHandle(exit_event);
     CloseHandle(quick_exit_event);

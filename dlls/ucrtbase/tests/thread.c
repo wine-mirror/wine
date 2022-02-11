@@ -45,11 +45,11 @@ static char *get_thread_dll_path(void)
     strcat(path, dll_name);
 
     file = CreateFileA(path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
-    ok(file != INVALID_HANDLE_VALUE, "Failed to create file %s: %u.\n",
+    ok(file != INVALID_HANDLE_VALUE, "Failed to create file %s: %lu.\n",
             debugstr_a(path), GetLastError());
 
     res = FindResourceA(NULL, dll_name, "TESTDLL");
-    ok(!!res, "Failed to load resource: %u\n", GetLastError());
+    ok(!!res, "Failed to load resource: %lu\n", GetLastError());
     ptr = LockResource(LoadResource(GetModuleHandleA(NULL), res));
     WriteFile(file, ptr, SizeofResource( GetModuleHandleA(NULL), res), &written, NULL);
     ok(written == SizeofResource(GetModuleHandleA(NULL), res), "Failed to write resource\n");
@@ -62,7 +62,7 @@ static void set_thead_dll_detach_event(HANDLE dll, HANDLE event)
 {
     void WINAPI (*_set_detach_event)(HANDLE event);
     _set_detach_event = (void*) GetProcAddress(dll, "set_detach_event");
-    ok(_set_detach_event != NULL, "Failed to get set_detach_event: %u\n", GetLastError());
+    ok(_set_detach_event != NULL, "Failed to get set_detach_event: %lu\n", GetLastError());
     _set_detach_event(event);
 }
 
@@ -79,52 +79,52 @@ static void test_thread_library_reference(char *thread_dll,
     args.exit_method = exit_method;
 
     detach_event = CreateEventA(NULL, FALSE, FALSE, NULL);
-    ok(detach_event != NULL, "Failed to create an event: %u\n", GetLastError());
+    ok(detach_event != NULL, "Failed to create an event: %lu\n", GetLastError());
     args.confirm_running = CreateEventA(NULL, FALSE, FALSE, NULL);
-    ok(args.confirm_running != NULL, "Failed to create an event: %u\n", GetLastError());
+    ok(args.confirm_running != NULL, "Failed to create an event: %lu\n", GetLastError());
     args.past_free = CreateEventA(NULL, FALSE, FALSE, NULL);
-    ok(args.past_free != NULL, "Failed to create an event: %u\n", GetLastError());
+    ok(args.past_free != NULL, "Failed to create an event: %lu\n", GetLastError());
 
     dll = LoadLibraryA(thread_dll);
-    ok(dll != NULL, "Failed to load the test dll: %u\n", GetLastError());
+    ok(dll != NULL, "Failed to load the test dll: %lu\n", GetLastError());
 
     set_thead_dll_detach_event(dll, detach_event);
 
     if (beginthread_method == use_beginthreadex)
     {
         _beginthreadex_start_routine_t proc = (void*) GetProcAddress(dll, "stdcall_thread_proc");
-        ok(proc != NULL, "Failed to get stdcall_thread_proc: %u\n", GetLastError());
+        ok(proc != NULL, "Failed to get stdcall_thread_proc: %lu\n", GetLastError());
         thread_handle = _beginthreadex(NULL, 0, proc, &args, 0, NULL);
     }
     else
     {
         _beginthread_start_routine_t proc = (void*) GetProcAddress(dll, "cdecl_thread_proc");
-        ok(proc != NULL, "Failed to get stdcall_thread_proc: %u\n", GetLastError());
+        ok(proc != NULL, "Failed to get stdcall_thread_proc: %lu\n", GetLastError());
         thread_handle = _beginthread(proc, 0, &args);
     }
 
     ok(thread_handle != -1 && thread_handle != 0, "Failed to begin thread: %u\n", errno);
 
     ret = FreeLibrary(dll);
-    ok(ret, "Failed to free the library: %u\n", GetLastError());
+    ok(ret, "Failed to free the library: %lu\n", GetLastError());
 
     ret = WaitForSingleObject(args.confirm_running, 200);
-    ok(ret == WAIT_OBJECT_0, "Event was not signaled, ret: %u, err: %u\n", ret, GetLastError());
+    ok(ret == WAIT_OBJECT_0, "Event was not signaled, ret: %lu, err: %lu\n", ret, GetLastError());
 
     ret = WaitForSingleObject(detach_event, 0);
-    ok(ret == WAIT_TIMEOUT, "Thread detach happened unexpectedly signaling an event, ret: %d, err: %u\n", ret, GetLastError());
+    ok(ret == WAIT_TIMEOUT, "Thread detach happened unexpectedly signaling an event, ret: %ld, err: %lu\n", ret, GetLastError());
 
     ret = SetEvent(args.past_free);
-    ok(ret, "Failed to signal event: %d\n", GetLastError());
+    ok(ret, "Failed to signal event: %ld\n", GetLastError());
 
     if (beginthread_method == use_beginthreadex)
     {
         ret = WaitForSingleObject((HANDLE)thread_handle, 200);
-        ok(ret == WAIT_OBJECT_0, "Thread has not exited, ret: %d, err: %u\n", ret, GetLastError());
+        ok(ret == WAIT_OBJECT_0, "Thread has not exited, ret: %ld, err: %lu\n", ret, GetLastError());
     }
 
     ret = WaitForSingleObject(detach_event, 200);
-    ok(ret == WAIT_OBJECT_0, "Detach event was not signaled, ret: %d, err: %u\n", ret, GetLastError());
+    ok(ret == WAIT_OBJECT_0, "Detach event was not signaled, ret: %ld, err: %lu\n", ret, GetLastError());
 
     if (beginthread_method == use_beginthreadex)
         CloseHandle((HANDLE)thread_handle);
@@ -153,14 +153,14 @@ static void test_thread_invalid_params(void)
     errno = 0;
     handler_called = FALSE;
     hThread = _beginthreadex(NULL, 0, NULL, NULL, 0, NULL);
-    ok(hThread == 0, "_beginthreadex unexpected ret: %d\n", hThread);
+    ok(hThread == 0, "_beginthreadex unexpected ret: %Iu\n", hThread);
     ok(errno == EINVAL, "_beginthreadex unexpected errno: %d\n", errno);
     ok(handler_called, "Expected invalid_parameter_handler to be called\n");
 
     errno = 0;
     handler_called = FALSE;
     hThread = _beginthread(NULL, 0, NULL);
-    ok(hThread == -1, "_beginthread unexpected ret: %d\n", hThread);
+    ok(hThread == -1, "_beginthread unexpected ret: %Iu\n", hThread);
     ok(errno == EINVAL, "_beginthread unexpected errno: %d\n", errno);
     ok(handler_called, "Expected invalid_parameter_handler to be called\n");
 
@@ -178,7 +178,7 @@ START_TEST(thread)
     test_thread_library_reference(thread_dll, use_beginthreadex, thread_exit_endthreadex);
 
     ret = DeleteFileA(thread_dll);
-    ok(ret, "Failed to remove the test dll, err: %u\n", GetLastError());
+    ok(ret, "Failed to remove the test dll, err: %lu\n", GetLastError());
 
     test_thread_invalid_params();
 }
