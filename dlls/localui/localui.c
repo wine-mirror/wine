@@ -134,7 +134,7 @@ static BOOL dlg_configure_lpt(HANDLE hXcv, HWND hWnd)
     res = DialogBoxParamW(LOCALUI_hInstance, MAKEINTRESOURCEW(LPTCONFIG_DIALOG), hWnd,
                                dlgproc_lptconfig, (LPARAM) &data);
 
-    TRACE("got %u with %u\n", res, GetLastError());
+    TRACE("got %u with %lu\n", res, GetLastError());
 
     if (!res) SetLastError(ERROR_CANCELLED);
     return res;
@@ -270,7 +270,7 @@ static INT_PTR CALLBACK dlgproc_addport(HWND hwnd, UINT msg, WPARAM wparam, LPAR
                             (lstrlenW(data->portname) + 1) * sizeof(WCHAR),
                             (PBYTE) &dummy, 0, &len, &status);
 
-            TRACE("got %u with status %u\n", res, status);
+            TRACE("got %lu with status %lu\n", res, status);
             if (res && (status == ERROR_SUCCESS)) {
                 /* The caller must free data->portname */
                 EndDialog(hwnd, TRUE);
@@ -334,7 +334,7 @@ static INT_PTR CALLBACK dlgproc_lptconfig(HWND hwnd, UINT msg, WPARAM wparam, LP
                         (PBYTE) &dummy, 0,
                         (PBYTE) &data->value, sizeof(data->value), &len, &status);
 
-        TRACE("got %u with status %u\n", res, status);
+        TRACE("got %lu with status %lu\n", res, status);
 
         /* Set current setting as the initial value in the Dialog */
         SetDlgItemInt(hwnd, LPTCONFIG_EDIT, data->value, FALSE);
@@ -349,7 +349,7 @@ static INT_PTR CALLBACK dlgproc_lptconfig(HWND hwnd, UINT msg, WPARAM wparam, LP
             res = GetDlgItemInt(hwnd, LPTCONFIG_EDIT, (BOOL *) &status, FALSE);
             /* length is in WCHAR, including the '\0' */
             GetDlgItemTextW(hwnd, LPTCONFIG_EDIT, bufferW, ARRAY_SIZE(bufferW));
-            TRACE("got %s and %u (translated: %u)\n", debugstr_w(bufferW), res, status);
+            TRACE("got %s and %lu (translated: %lu)\n", debugstr_w(bufferW), res, status);
 
             /* native localui.dll use the same limits */
             if ((res > 0) && (res < 1000000) && status) {
@@ -359,7 +359,7 @@ static INT_PTR CALLBACK dlgproc_lptconfig(HWND hwnd, UINT msg, WPARAM wparam, LP
                         (lstrlenW(bufferW) +1) * sizeof(WCHAR),
                         (PBYTE) &dummy, 0, &len, &status);
 
-                TRACE("got %u with status %u\n", res, status);
+                TRACE("got %lu with status %lu\n", res, status);
                 EndDialog(hwnd, TRUE);
                 return TRUE;
             }
@@ -489,7 +489,7 @@ static BOOL WINAPI localui_AddPortUI(PCWSTR pName, HWND hWnd, PCWSTR pMonitorNam
         res = DialogBoxParamW(LOCALUI_hInstance, MAKEINTRESOURCEW(ADDPORT_DIALOG), hWnd,
                                dlgproc_addport, (LPARAM) &data);
 
-        TRACE("got %u with %u for %s\n", res, GetLastError(), debugstr_w(data.portname));
+        TRACE("got %lu with %lu for %s\n", res, GetLastError(), debugstr_w(data.portname));
 
         if (ppPortName) *ppPortName = NULL;
 
@@ -498,7 +498,7 @@ static BOOL WINAPI localui_AddPortUI(PCWSTR pName, HWND hWnd, PCWSTR pMonitorNam
                             (lstrlenW(data.portname)+1) * sizeof(WCHAR),
                             (PBYTE) &dummy, 0, &needed, &status);
 
-            TRACE("got %u with status %u\n", res, status);
+            TRACE("got %lu with status %lu\n", res, status);
             if (res && (status == ERROR_SUCCESS) && ppPortName) {
                 /* Native localui uses GlobalAlloc also.
                    The caller must GlobalFree the buffer */
@@ -520,7 +520,7 @@ static BOOL WINAPI localui_AddPortUI(PCWSTR pName, HWND hWnd, PCWSTR pMonitorNam
         ClosePrinter(hXcv);
     }
 
-    TRACE("=> %u with %u\n", res, GetLastError());
+    TRACE("=> %lu with %lu\n", res, GetLastError());
     return res;
 }
 
@@ -652,7 +652,7 @@ PMONITORUI WINAPI InitializePrintMonitorUI(void)
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    TRACE("(%p, %d, %p)\n",hinstDLL, fdwReason, lpvReserved);
+    TRACE("(%p, %ld, %p)\n",hinstDLL, fdwReason, lpvReserved);
 
     switch(fdwReason)
     {
