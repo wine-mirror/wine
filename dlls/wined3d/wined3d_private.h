@@ -5650,6 +5650,21 @@ struct wined3d_shader_limits
     unsigned int packed_input;
 };
 
+#define wined3d_lock_init(lock, name) wined3d_lock_init_(lock, __FILE__ ": " name)
+static inline void wined3d_lock_init_(CRITICAL_SECTION *lock, const char *name)
+{
+    InitializeCriticalSection(lock);
+    if (lock->DebugInfo != (RTL_CRITICAL_SECTION_DEBUG *)-1)
+        lock->DebugInfo->Spare[0] = (DWORD_PTR)name;
+}
+
+static inline void wined3d_lock_cleanup(CRITICAL_SECTION *lock)
+{
+    if (lock->DebugInfo != (RTL_CRITICAL_SECTION_DEBUG *)-1)
+        lock->DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection(lock);
+}
+
 #ifdef __GNUC__
 #define PRINTF_ATTR(fmt,args) __attribute__((format (printf,fmt,args)))
 #else
