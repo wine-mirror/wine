@@ -459,8 +459,9 @@ static void swapchain_blit_gdi(struct wined3d_swapchain *swapchain,
     if (!(dst_dc = GetDCEx(swapchain->win_handle, 0, DCX_USESTYLE | DCX_CACHE)))
         ERR("Failed to get destination DC.\n");
 
-    if (!BitBlt(dst_dc, dst_rect->left, dst_rect->top, dst_rect->right - dst_rect->left,
-            dst_rect->bottom - dst_rect->top, src_dc, src_rect->left, src_rect->top, SRCCOPY))
+    if (!StretchBlt(dst_dc, dst_rect->left, dst_rect->top, dst_rect->right - dst_rect->left,
+            dst_rect->bottom - dst_rect->top, src_dc, src_rect->left, src_rect->top,
+            src_rect->right - src_rect->left, src_rect->bottom - src_rect->top, SRCCOPY))
         ERR("Failed to blit.\n");
 
     ReleaseDC(swapchain->win_handle, dst_dc);
