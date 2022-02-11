@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = localspl.dll
 IMPORTS   = spoolss user32 advapi32
 
