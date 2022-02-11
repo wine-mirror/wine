@@ -51,13 +51,13 @@ BOOL WINAPI BindImageEx(DWORD flags, const char *module, const char *dll_path,
     LOADED_IMAGE image;
     ULONG size;
 
-    TRACE("flags %#x, module %s, dll_path %s, symbol_path %s, cb %p.\n",
+    TRACE("flags %#lx, module %s, dll_path %s, symbol_path %s, cb %p.\n",
             flags, debugstr_a(module), debugstr_a(dll_path), debugstr_a(symbol_path), cb);
 
     if (!(flags & BIND_NO_UPDATE))
         FIXME("Image modification is not implemented.\n");
     if (flags & ~BIND_NO_UPDATE)
-        FIXME("Ignoring flags %#x.\n", flags);
+        FIXME("Ignoring flags %#lx.\n", flags);
 
     if (!MapAndLoad(module, dll_path, &image, TRUE, TRUE))
         return FALSE;
@@ -84,7 +84,7 @@ BOOL WINAPI BindImageEx(DWORD flags, const char *module, const char *dll_path,
 
         if (!(dll_name = ImageRvaToVa(image.FileHeader, image.MappedAddress, import->Name, 0)))
         {
-            ERR("Failed to get VA for import name RVA %#x.\n", import->Name);
+            ERR("Failed to get VA for import name RVA %#lx.\n", import->Name);
             continue;
         }
 
@@ -99,7 +99,7 @@ BOOL WINAPI BindImageEx(DWORD flags, const char *module, const char *dll_path,
         thunk_rva = import->OriginalFirstThunk ? import->OriginalFirstThunk : import->FirstThunk;
         if (!(thunk = ImageRvaToVa(image.FileHeader, image.MappedAddress, thunk_rva, 0)))
         {
-            ERR("Failed to get VA for import thunk RVA %#x.\n", thunk_rva);
+            ERR("Failed to get VA for import thunk RVA %#lx.\n", thunk_rva);
             continue;
         }
 
@@ -117,7 +117,7 @@ BOOL WINAPI BindImageEx(DWORD flags, const char *module, const char *dll_path,
 
                 if (!(name = ImageRvaToVa(image.FileHeader, image.MappedAddress, thunk->u1.AddressOfData, 0)))
                 {
-                    ERR("Failed to get VA for name RVA %#x.\n", thunk->u1.AddressOfData);
+                    ERR("Failed to get VA for name RVA %#Ix.\n", thunk->u1.AddressOfData);
                     continue;
                 }
 
@@ -168,7 +168,7 @@ PIMAGE_NT_HEADERS WINAPI CheckSumMappedFile(
   DWORD CalcSum;
   DWORD HdrSum;
 
-  TRACE("(%p, %d, %p, %p)\n", BaseAddress, FileLength, HeaderSum, CheckSum);
+  TRACE("(%p, %ld, %p, %p)\n", BaseAddress, FileLength, HeaderSum, CheckSum);
 
   CalcSum = CalcCheckSum(0, BaseAddress, (FileLength + 1) / sizeof(WORD));
   header = RtlImageNtHeader(BaseAddress);
@@ -349,7 +349,7 @@ BOOL WINAPI ReBaseImage(
   ULONG_PTR *NewImageBase, ULONG TimeStamp)
 {
   FIXME(
-    "(%s, %s, %d, %d, %d, %d, %p, %p, %p, %p, %d): stub\n",
+    "(%s, %s, %d, %d, %d, %ld, %p, %p, %p, %p, %ld): stub\n",
       debugstr_a(CurrentImageName),debugstr_a(SymbolPath), fReBase,
       fRebaseSysfileOk, fGoingDown, CheckImageSize, OldImageSize,
       OldImageBase, NewImageSize, NewImageBase, TimeStamp
@@ -387,7 +387,7 @@ BOOL WINAPI SplitSymbols(
   PSTR ImageName, PCSTR SymbolsPath,
   PSTR SymbolFilePath, ULONG Flags)
 {
-  FIXME("(%s, %s, %s, %d): stub\n",
+  FIXME("(%s, %s, %s, %ld): stub\n",
     debugstr_a(ImageName), debugstr_a(SymbolsPath),
     debugstr_a(SymbolFilePath), Flags
   );
@@ -417,7 +417,7 @@ BOOL WINAPI UpdateDebugInfoFileEx(
   PCSTR ImageFileName, PCSTR SymbolPath, PSTR DebugFilePath,
   PIMAGE_NT_HEADERS32 NtHeaders, DWORD OldChecksum)
 {
-  FIXME("(%s, %s, %s, %p, %d): stub\n",
+  FIXME("(%s, %s, %s, %p, %ld): stub\n",
     debugstr_a(ImageFileName), debugstr_a(SymbolPath),
     debugstr_a(DebugFilePath), NtHeaders, OldChecksum
   );

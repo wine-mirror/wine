@@ -153,7 +153,7 @@ BOOL WINAPI MapAndLoad(PCSTR pszImageName, PCSTR pszDllPath, PLOADED_IMAGE pLoad
                         NULL, OPEN_EXISTING, 0, NULL);
     if (hFile == INVALID_HANDLE_VALUE)
     {
-        WARN("CreateFile: Error = %d\n", GetLastError());
+        WARN("CreateFile: Error = %ld\n", GetLastError());
         goto Error;
     }
 
@@ -162,7 +162,7 @@ BOOL WINAPI MapAndLoad(PCSTR pszImageName, PCSTR pszDllPath, PLOADED_IMAGE pLoad
                                       0, 0, NULL);
     if (!hFileMapping)
     {
-        WARN("CreateFileMapping: Error = %d\n", GetLastError());
+        WARN("CreateFileMapping: Error = %ld\n", GetLastError());
         goto Error;
     }
 
@@ -170,7 +170,7 @@ BOOL WINAPI MapAndLoad(PCSTR pszImageName, PCSTR pszDllPath, PLOADED_IMAGE pLoad
     CloseHandle(hFileMapping);
     if (!mapping)
     {
-        WARN("MapViewOfFile: Error = %d\n", GetLastError());
+        WARN("MapViewOfFile: Error = %ld\n", GetLastError());
         goto Error;
     }
 
