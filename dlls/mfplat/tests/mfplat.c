@@ -896,6 +896,44 @@ todo_wine
         video_stream = (IMFMediaStream *)var.punkVal;
     }
 
+    hr = IMFMediaSource_Pause(mediasource);
+    ok(hr == S_OK, "Failed to pause media source, hr %#x.\n", hr);
+    if (get_event((IMFMediaEventGenerator *)mediasource, MESourcePaused, &var))
+        ok(var.vt == VT_EMPTY, "Unexpected value type.\n");
+
+    var.vt = VT_EMPTY;
+    hr = IMFMediaSource_Start(mediasource, descriptor, &GUID_NULL, &var);
+    ok(hr == S_OK, "Failed to start media source, hr %#x.\n", hr);
+
+    if (get_event((IMFMediaEventGenerator *)mediasource, MESourceStarted, &var))
+        ok(var.vt == VT_EMPTY, "Unexpected value type.\n");
+
+    hr = IMFMediaSource_Pause(mediasource);
+    ok(hr == S_OK, "Failed to pause media source, hr %#x.\n", hr);
+    if (get_event((IMFMediaEventGenerator *)mediasource, MESourcePaused, &var))
+        ok(var.vt == VT_EMPTY, "Unexpected value type.\n");
+
+    var.vt = VT_I8;
+    var.uhVal.QuadPart = 0;
+    hr = IMFMediaSource_Start(mediasource, descriptor, &GUID_NULL, &var);
+    ok(hr == S_OK, "Failed to start media source, hr %#x.\n", hr);
+
+    if (get_event((IMFMediaEventGenerator *)mediasource, MESourceSeeked, &var))
+        ok(var.vt == VT_I8, "Unexpected value type.\n");
+
+    hr = IMFMediaSource_Stop(mediasource);
+    ok(hr == S_OK, "Failed to pause media source, hr %#x.\n", hr);
+    if (get_event((IMFMediaEventGenerator *)mediasource, MESourceStopped, &var))
+        ok(var.vt == VT_EMPTY, "Unexpected value type.\n");
+
+    var.vt = VT_I8;
+    var.uhVal.QuadPart = 0;
+    hr = IMFMediaSource_Start(mediasource, descriptor, &GUID_NULL, &var);
+    ok(hr == S_OK, "Failed to start media source, hr %#x.\n", hr);
+
+    if (get_event((IMFMediaEventGenerator *)mediasource, MESourceStarted, &var))
+        ok(var.vt == VT_I8, "Unexpected value type.\n");
+
     sample_count = 10;
 
     for (i = 0; i < sample_count; ++i)

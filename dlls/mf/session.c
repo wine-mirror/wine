@@ -2321,6 +2321,8 @@ static enum object_state session_get_object_state_for_event(MediaEventType event
 {
     switch (event)
     {
+        case MESourceSeeked:
+        case MEStreamSeeked:
         case MESourceStarted:
         case MEStreamStarted:
         case MEStreamSinkStarted:
@@ -2497,6 +2499,7 @@ static void session_set_source_object_state(struct media_session *session, IUnkn
 
     switch (event_type)
     {
+        case MESourceSeeked:
         case MESourceStarted:
         case MESourcePaused:
         case MESourceStopped:
@@ -2511,6 +2514,7 @@ static void session_set_source_object_state(struct media_session *session, IUnkn
                 }
             }
             break;
+        case MEStreamSeeked:
         case MEStreamStarted:
         case MEStreamPaused:
         case MEStreamStopped:
@@ -3197,6 +3201,10 @@ static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IM
 
     switch (event_type)
     {
+        case MESourceSeeked:
+        case MEStreamSeeked:
+            FIXME("Source/stream seeking, semi-stub!\n");
+            /* fallthrough */
         case MESourceStarted:
         case MESourcePaused:
         case MESourceStopped:
