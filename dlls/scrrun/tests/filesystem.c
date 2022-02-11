@@ -69,10 +69,10 @@ static IDrive *get_fixed_drive(void)
     HRESULT hr;
 
     hr = IFileSystem3_get_Drives(fs3, &drives);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDriveCollection_get__NewEnum(drives, (IUnknown**)&iter);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     IDriveCollection_Release(drives);
 
     while (1) {
@@ -84,14 +84,14 @@ static IDrive *get_fixed_drive(void)
             drive = NULL;
             break;
         }
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
         hr = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IDrive, (void**)&drive);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         VariantClear(&var);
 
         hr = IDrive_get_DriveType(drive, &type);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         if (type == Fixed)
             break;
 
@@ -112,13 +112,13 @@ static void _test_provideclassinfo(IDispatch *disp, const GUID *guid, int line)
     HRESULT hr;
 
     hr = IDispatch_QueryInterface(disp, &IID_IProvideClassInfo, (void **)&classinfo);
-    ok_(__FILE__,line) (hr == S_OK, "Failed to get IProvideClassInfo, %#x.\n", hr);
+    ok_(__FILE__,line) (hr == S_OK, "Failed to get IProvideClassInfo, %#lx.\n", hr);
 
     hr = IProvideClassInfo_GetClassInfo(classinfo, &ti);
-    ok_(__FILE__,line) (hr == S_OK, "GetClassInfo() failed, %#x.\n", hr);
+    ok_(__FILE__,line) (hr == S_OK, "GetClassInfo() failed, %#lx.\n", hr);
 
     hr = ITypeInfo_GetTypeAttr(ti, &attr);
-    ok_(__FILE__,line) (hr == S_OK, "GetTypeAttr() failed, %#x.\n", hr);
+    ok_(__FILE__,line) (hr == S_OK, "GetTypeAttr() failed, %#lx.\n", hr);
 
     ok_(__FILE__,line) (IsEqualGUID(&attr->guid, guid), "Unexpected typeinfo %s, expected %s\n", wine_dbgstr_guid(&attr->guid),
         wine_dbgstr_guid(guid));
@@ -153,59 +153,59 @@ static void test_interfaces(void)
     test_provideclassinfo(disp, &CLSID_FileSystemObject);
 
     hr = IDispatch_QueryInterface(disp, &IID_IObjectWithSite, (void**)&site);
-    ok(hr == E_NOINTERFACE, "got 0x%08x, expected 0x%08x\n", hr, E_NOINTERFACE);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#lx.\n", hr);
 
     hr = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
-    ok(hr == E_NOINTERFACE, "got 0x%08x, expected 0x%08x\n", hr, E_NOINTERFACE);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#lx.\n", hr);
 
     b = VARIANT_TRUE;
     hr = IFileSystem3_FileExists(fs3, NULL, &b);
-    ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(b == VARIANT_FALSE, "got %x\n", b);
 
     hr = IFileSystem3_FileExists(fs3, NULL, NULL);
-    ok(hr == E_POINTER, "got 0x%08x, expected 0x%08x\n", hr, E_POINTER);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     path = SysAllocString(L"path");
     b = VARIANT_TRUE;
     hr = IFileSystem3_FileExists(fs3, path, &b);
-    ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(b == VARIANT_FALSE, "got %x\n", b);
     SysFreeString(path);
 
     path = SysAllocString(file_path);
     b = VARIANT_FALSE;
     hr = IFileSystem3_FileExists(fs3, path, &b);
-    ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(b == VARIANT_TRUE, "got %x\n", b);
     SysFreeString(path);
 
     path = SysAllocString(windows_path);
     b = VARIANT_TRUE;
     hr = IFileSystem3_FileExists(fs3, path, &b);
-    ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(b == VARIANT_FALSE, "got %x\n", b);
     SysFreeString(path);
 
     /* Folder Exists */
     hr = IFileSystem3_FolderExists(fs3, NULL, NULL);
-    ok(hr == E_POINTER, "got 0x%08x, expected 0x%08x\n", hr, E_POINTER);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     path = SysAllocString(windows_path);
     hr = IFileSystem3_FolderExists(fs3, path, &b);
-    ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(b == VARIANT_TRUE, "Folder doesn't exists\n");
     SysFreeString(path);
 
     path = SysAllocString(L"c:\\Nonexistent");
     hr = IFileSystem3_FolderExists(fs3, path, &b);
-    ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(b == VARIANT_FALSE, "Folder exists\n");
     SysFreeString(path);
 
     path = SysAllocString(file_path);
     hr = IFileSystem3_FolderExists(fs3, path, &b);
-    ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(b == VARIANT_FALSE, "Folder exists\n");
     SysFreeString(path);
 
@@ -222,13 +222,13 @@ static void test_createfolder(void)
 
     get_temp_path(NULL, buffW);
     ret = CreateDirectoryW(buffW, NULL);
-    ok(ret, "got %d, %d\n", ret, GetLastError());
+    ok(ret, "Unexpected retval %d, error %ld.\n", ret, GetLastError());
 
     /* create existing directory */
     path = SysAllocString(buffW);
     folder = (void*)0xdeabeef;
     hr = IFileSystem3_CreateFolder(fs3, path, &folder);
-    ok(hr == CTL_E_FILEALREADYEXISTS, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_FILEALREADYEXISTS, "Unexpected hr %#lx.\n", hr);
     ok(folder == NULL, "got %p\n", folder);
     SysFreeString(path);
     RemoveDirectoryW(buffW);
@@ -250,98 +250,98 @@ static void test_textstream(void)
     name = SysAllocString(testfileW);
     b = VARIANT_FALSE;
     hr = IFileSystem3_FileExists(fs3, name, &b);
-    ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(b == VARIANT_TRUE, "got %x\n", b);
 
     /* different mode combinations */
     hr = IFileSystem3_OpenTextFile(fs3, name, ForWriting | ForAppending, VARIANT_FALSE, TristateFalse, &stream);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = IFileSystem3_OpenTextFile(fs3, name, ForReading | ForAppending, VARIANT_FALSE, TristateFalse, &stream);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = IFileSystem3_OpenTextFile(fs3, name, ForWriting | ForReading, VARIANT_FALSE, TristateFalse, &stream);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = IFileSystem3_OpenTextFile(fs3, name, ForAppending, VARIANT_FALSE, TristateFalse, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = ITextStream_Read(stream, 1, &data);
-    ok(hr == CTL_E_BADFILEMODE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_BADFILEMODE, "Unexpected hr %#lx.\n", hr);
     ITextStream_Release(stream);
 
     hr = IFileSystem3_OpenTextFile(fs3, name, ForWriting, VARIANT_FALSE, TristateFalse, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = ITextStream_Read(stream, 1, &data);
-    ok(hr == CTL_E_BADFILEMODE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_BADFILEMODE, "Unexpected hr %#lx.\n", hr);
     ITextStream_Release(stream);
 
     hr = IFileSystem3_OpenTextFile(fs3, name, ForReading, VARIANT_FALSE, TristateFalse, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     /* try to write when open for reading */
     hr = ITextStream_WriteLine(stream, name);
-    ok(hr == CTL_E_BADFILEMODE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_BADFILEMODE, "Unexpected hr %#lx.\n", hr);
 
     hr = ITextStream_Write(stream, name);
-    ok(hr == CTL_E_BADFILEMODE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_BADFILEMODE, "Unexpected hr %#lx.\n", hr);
 
     hr = ITextStream_get_AtEndOfStream(stream, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     b = 10;
     hr = ITextStream_get_AtEndOfStream(stream, &b);
-    ok(hr == S_OK || broken(hr == S_FALSE), "got 0x%08x\n", hr);
+    ok(hr == S_OK || broken(hr == S_FALSE), "Unexpected hr %#lx.\n", hr);
     ok(b == VARIANT_TRUE, "got 0x%x\n", b);
 
     ITextStream_Release(stream);
 
     hr = IFileSystem3_OpenTextFile(fs3, name, ForWriting, VARIANT_FALSE, TristateFalse, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     b = 10;
     hr = ITextStream_get_AtEndOfStream(stream, &b);
-    ok(hr == CTL_E_BADFILEMODE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_BADFILEMODE, "Unexpected hr %#lx.\n", hr);
     ok(b == VARIANT_TRUE || broken(b == 10), "got 0x%x\n", b);
 
     b = 10;
     hr = ITextStream_get_AtEndOfLine(stream, &b);
 todo_wine {
-    ok(hr == CTL_E_BADFILEMODE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_BADFILEMODE, "Unexpected hr %#lx.\n", hr);
     ok(b == VARIANT_FALSE || broken(b == 10), "got 0x%x\n", b);
 }
     hr = ITextStream_Read(stream, 1, &data);
-    ok(hr == CTL_E_BADFILEMODE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_BADFILEMODE, "Unexpected hr %#lx.\n", hr);
 
     hr = ITextStream_ReadLine(stream, &data);
-    ok(hr == CTL_E_BADFILEMODE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_BADFILEMODE, "Unexpected hr %#lx.\n", hr);
 
     hr = ITextStream_ReadAll(stream, &data);
-    ok(hr == CTL_E_BADFILEMODE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_BADFILEMODE, "Unexpected hr %#lx.\n", hr);
 
     ITextStream_Release(stream);
 
     hr = IFileSystem3_OpenTextFile(fs3, name, ForAppending, VARIANT_FALSE, TristateFalse, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     b = 10;
     hr = ITextStream_get_AtEndOfStream(stream, &b);
-    ok(hr == CTL_E_BADFILEMODE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_BADFILEMODE, "Unexpected hr %#lx.\n", hr);
     ok(b == VARIANT_TRUE || broken(b == 10), "got 0x%x\n", b);
 
     b = 10;
     hr = ITextStream_get_AtEndOfLine(stream, &b);
 todo_wine {
-    ok(hr == CTL_E_BADFILEMODE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_BADFILEMODE, "Unexpected hr %#lx.\n", hr);
     ok(b == VARIANT_FALSE || broken(b == 10), "got 0x%x\n", b);
 }
     hr = ITextStream_Read(stream, 1, &data);
-    ok(hr == CTL_E_BADFILEMODE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_BADFILEMODE, "Unexpected hr %#lx.\n", hr);
 
     hr = ITextStream_ReadLine(stream, &data);
-    ok(hr == CTL_E_BADFILEMODE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_BADFILEMODE, "Unexpected hr %#lx.\n", hr);
 
     hr = ITextStream_ReadAll(stream, &data);
-    ok(hr == CTL_E_BADFILEMODE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_BADFILEMODE, "Unexpected hr %#lx.\n", hr);
 
     ITextStream_Release(stream);
 
@@ -352,10 +352,10 @@ todo_wine {
     CloseHandle(file);
 
     hr = IFileSystem3_OpenTextFile(fs3, name, ForReading, VARIANT_FALSE, TristateFalse, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     b = 10;
     hr = ITextStream_get_AtEndOfStream(stream, &b);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(b == VARIANT_FALSE, "got 0x%x\n", b);
     ITextStream_Release(stream);
 
@@ -376,7 +376,7 @@ static void test_GetFileVersion(void)
 
     path = SysAllocString(filenameW);
     hr = IFileSystem3_GetFileVersion(fs3, path, &version);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(*version != 0, "got %s\n", wine_dbgstr_w(version));
     SysFreeString(version);
     SysFreeString(path);
@@ -387,7 +387,7 @@ static void test_GetFileVersion(void)
     path = SysAllocString(filenameW);
     version = (void*)0xdeadbeef;
     hr = IFileSystem3_GetFileVersion(fs3, path, &version);
-    ok(broken(hr == S_OK) || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "got 0x%08x\n", hr);
+    ok(broken(hr == S_OK) || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "Unexpected hr %#lx.\n", hr);
     if (hr == S_OK)
     {
         ok(*version == 0, "got %s\n", wine_dbgstr_w(version));
@@ -421,13 +421,13 @@ static void test_GetParentFolderName(void)
     int i;
 
     hr = IFileSystem3_GetParentFolderName(fs3, NULL, NULL);
-    ok(hr == E_POINTER, "GetParentFolderName returned %x, expected E_POINTER\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     for(i=0; i < ARRAY_SIZE(tests); i++) {
         result = (BSTR)0xdeadbeef;
         path = tests[i].path ? SysAllocString(tests[i].path) : NULL;
         hr = IFileSystem3_GetParentFolderName(fs3, path, &result);
-        ok(hr == S_OK, "%d) GetParentFolderName returned %x, expected S_OK\n", i, hr);
+        ok(hr == S_OK, "%d: unexpected hr %#lx.\n", i, hr);
         if(!tests[i].result)
             ok(!result, "%d) result = %s\n", i, wine_dbgstr_w(result));
         else
@@ -458,13 +458,13 @@ static void test_GetFileName(void)
     int i;
 
     hr = IFileSystem3_GetFileName(fs3, NULL, NULL);
-    ok(hr == E_POINTER, "GetFileName returned %x, expected E_POINTER\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     for(i=0; i < ARRAY_SIZE(tests); i++) {
         result = (BSTR)0xdeadbeef;
         path = tests[i].path ? SysAllocString(tests[i].path) : NULL;
         hr = IFileSystem3_GetFileName(fs3, path, &result);
-        ok(hr == S_OK, "%d) GetFileName returned %x, expected S_OK\n", i, hr);
+        ok(hr == S_OK, "%d: unexpected hr %#lx.\n", i, hr);
         if(!tests[i].result)
             ok(!result, "%d) result = %s\n", i, wine_dbgstr_w(result));
         else
@@ -480,10 +480,10 @@ static void test_GetTempName(void)
     HRESULT hr;
 
     hr = IFileSystem3_GetTempName(fs3, NULL);
-    ok(hr == E_POINTER, "GetTempName returned %x, expected E_POINTER\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
     result = (BSTR)0xdeadbeef;
     hr = IFileSystem3_GetTempName(fs3, &result);
-    ok(hr == S_OK, "GetTempName returned %x, expected S_OK\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!!wcsstr( result,L".tmp"), "GetTempName returned %s, expected .tmp suffix\n", debugstr_w(result));
     SysFreeString(result);
 }
@@ -511,13 +511,13 @@ static void test_GetBaseName(void)
     int i;
 
     hr = IFileSystem3_GetBaseName(fs3, NULL, NULL);
-    ok(hr == E_POINTER, "GetBaseName returned %x, expected E_POINTER\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     for(i=0; i < ARRAY_SIZE(tests); i++) {
         result = (BSTR)0xdeadbeef;
         path = tests[i].path ? SysAllocString(tests[i].path) : NULL;
         hr = IFileSystem3_GetBaseName(fs3, path, &result);
-        ok(hr == S_OK, "%d) GetBaseName returned %x, expected S_OK\n", i, hr);
+        ok(hr == S_OK, "%d, unexpected hr %#lx.\n", i, hr);
         if(!tests[i].result)
             ok(!result, "%d) result = %s\n", i, wine_dbgstr_w(result));
         else
@@ -541,10 +541,10 @@ static void test_GetAbsolutePathName(void)
     HRESULT hr;
 
     hr = IFileSystem3_GetAbsolutePathName(fs3, NULL, NULL);
-    ok(hr == E_POINTER, "GetAbsolutePathName returned %x, expected E_POINTER\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     hr = IFileSystem3_GetAbsolutePathName(fs3, NULL, &result);
-    ok(hr == S_OK, "GetAbsolutePathName returned %x, expected S_OK\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     GetFullPathNameW(L".", MAX_PATH, buf, NULL);
     ok(!lstrcmpiW(buf, result), "result = %s, expected %s\n", wine_dbgstr_w(result), wine_dbgstr_w(buf));
     SysFreeString(result);
@@ -558,14 +558,14 @@ static void test_GetAbsolutePathName(void)
 
     path = SysAllocString(dir_match1);
     hr = IFileSystem3_GetAbsolutePathName(fs3, path, &result);
-    ok(hr == S_OK, "GetAbsolutePathName returned %x, expected S_OK\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     GetFullPathNameW(dir_match1, MAX_PATH, buf2, NULL);
     ok(!lstrcmpiW(buf2, result), "result = %s, expected %s\n", wine_dbgstr_w(result), wine_dbgstr_w(buf2));
     SysFreeString(result);
 
     ok(CreateDirectoryW(dir1, NULL), "CreateDirectory(%s) failed\n", wine_dbgstr_w(dir1));
     hr = IFileSystem3_GetAbsolutePathName(fs3, path, &result);
-    ok(hr == S_OK, "GetAbsolutePathName returned %x, expected S_OK\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     GetFullPathNameW(dir1, MAX_PATH, buf, NULL);
     ok(!lstrcmpiW(buf, result) || broken(!lstrcmpiW(buf2, result)), "result = %s, expected %s\n",
                 wine_dbgstr_w(result), wine_dbgstr_w(buf));
@@ -573,7 +573,7 @@ static void test_GetAbsolutePathName(void)
 
     ok(CreateDirectoryW(dir2, NULL), "CreateDirectory(%s) failed\n", wine_dbgstr_w(dir2));
     hr = IFileSystem3_GetAbsolutePathName(fs3, path, &result);
-    ok(hr == S_OK, "GetAbsolutePathName returned %x, expected S_OK\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if(!lstrcmpiW(buf, result) || !lstrcmpiW(buf2, result)) {
         ok(!lstrcmpiW(buf, result) || broken(!lstrcmpiW(buf2, result)), "result = %s, expected %s\n",
                 wine_dbgstr_w(result), wine_dbgstr_w(buf));
@@ -587,7 +587,7 @@ static void test_GetAbsolutePathName(void)
     SysFreeString(path);
     path = SysAllocString(dir_match2);
     hr = IFileSystem3_GetAbsolutePathName(fs3, path, &result);
-    ok(hr == S_OK, "GetAbsolutePathName returned %x, expected S_OK\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     GetFullPathNameW(dir_match2, MAX_PATH, buf, NULL);
     ok(!lstrcmpiW(buf, result), "result = %s, expected %s\n", wine_dbgstr_w(result), wine_dbgstr_w(buf));
     SysFreeString(result);
@@ -614,14 +614,14 @@ static void test_GetFile(void)
 
     path = SysAllocString(pathW);
     hr = IFileSystem3_GetFile(fs3, path, NULL);
-    ok(hr == E_POINTER, "GetFile returned %x, expected E_POINTER\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
     hr = IFileSystem3_GetFile(fs3, NULL, &file);
-    ok(hr == E_INVALIDARG, "GetFile returned %x, expected E_INVALIDARG\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     file = (IFile*)0xdeadbeef;
     hr = IFileSystem3_GetFile(fs3, path, &file);
     ok(!file, "file != NULL\n");
-    ok(hr == CTL_E_FILENOTFOUND, "GetFile returned %x, expected CTL_E_FILENOTFOUND\n", hr);
+    ok(hr == CTL_E_FILENOTFOUND, "Unexpected hr %#lx.\n", hr);
 
     hf = CreateFileW(pathW, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_READONLY, NULL);
     if(hf == INVALID_HANDLE_VALUE) {
@@ -632,21 +632,21 @@ static void test_GetFile(void)
     CloseHandle(hf);
 
     hr = IFileSystem3_GetFile(fs3, path, &file);
-    ok(hr == S_OK, "GetFile returned %x, expected S_OK\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IFile_get_DateLastModified(file, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     date = 0.0;
     hr = IFile_get_DateLastModified(file, &date);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(date > 0.0, "got %f\n", date);
 
     hr = IFile_get_Path(file, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     hr = IFile_get_Path(file, &str);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!lstrcmpiW(str, pathW), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
@@ -656,53 +656,52 @@ static void test_GetFile(void)
 
     hr = IFile_get_Attributes(file, &fa);
     gfa = GetFileAttributesW(pathW) & FILE_ATTR_MASK;
-    ok(hr == S_OK, "get_Attributes returned %x, expected S_OK\n", hr);
-    ok(fa == gfa, "fa = %x, expected %x\n", fa, gfa);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(fa == gfa, "Unexpected flags %#x, expected %lx.\n", fa, gfa);
 
     hr = IFile_put_Attributes(file, gfa | FILE_ATTRIBUTE_READONLY);
-    ok(hr == S_OK, "put_Attributes failed: %08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     new_gfa = GetFileAttributesW(pathW) & FILE_ATTR_MASK;
-    ok(new_gfa == (gfa|FILE_ATTRIBUTE_READONLY), "new_gfa = %x, expected %x\n", new_gfa, gfa|FILE_ATTRIBUTE_READONLY);
+    ok(new_gfa == (gfa|FILE_ATTRIBUTE_READONLY), "Unexpected flags %#lx, expected %lx\n", new_gfa, gfa|FILE_ATTRIBUTE_READONLY);
 
     hr = IFile_get_Attributes(file, &fa);
-    ok(hr == S_OK, "get_Attributes returned %x, expected S_OK\n", hr);
-    ok(fa == new_gfa, "fa = %x, expected %x\n", fa, new_gfa);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(fa == new_gfa, "Unexpected flags %#x, expected %lx.\n", fa, new_gfa);
 
     hr = IFile_put_Attributes(file, gfa);
-    ok(hr == S_OK, "put_Attributes failed: %08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     new_gfa = GetFileAttributesW(pathW) & FILE_ATTR_MASK;
-    ok(new_gfa == gfa, "new_gfa = %x, expected %x\n", new_gfa, gfa);
+    ok(new_gfa == gfa, "Unexpected flags %#lx, expected %lx.\n", new_gfa, gfa);
 
     hr = IFile_get_Attributes(file, &fa);
-    ok(hr == S_OK, "get_Attributes returned %x, expected S_OK\n", hr);
-    ok(fa == gfa, "fa = %x, expected %x\n", fa, gfa);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(fa == gfa, "Unexpected flags %#x, expected %lx.\n", fa, gfa);
 
     hr = IFile_get_Size(file, &size);
-    ok(hr == S_OK, "get_Size returned %x, expected S_OK\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(V_VT(&size) == VT_I4, "V_VT(&size) = %d, expected VT_I4\n", V_VT(&size));
-    ok(V_I4(&size) == 0, "V_I4(&size) = %d, expected 0\n", V_I4(&size));
+    ok(V_I4(&size) == 0, "V_I4(&size) = %ld, expected 0\n", V_I4(&size));
     IFile_Release(file);
 
     hr = IFileSystem3_DeleteFile(fs3, path, FALSE);
-    ok(hr==CTL_E_PERMISSIONDENIED || broken(hr==S_OK),
-            "DeleteFile returned %x, expected CTL_E_PERMISSIONDENIED\n", hr);
+    ok(hr == CTL_E_PERMISSIONDENIED || broken(hr == S_OK), "Unexpected hr %#lx.\n", hr);
     if(hr != S_OK) {
         hr = IFileSystem3_DeleteFile(fs3, path, TRUE);
-        ok(hr == S_OK, "DeleteFile returned %x, expected S_OK\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     }
     hr = IFileSystem3_DeleteFile(fs3, path, TRUE);
-    ok(hr == CTL_E_FILENOTFOUND, "DeleteFile returned %x, expected CTL_E_FILENOTFOUND\n", hr);
+    ok(hr == CTL_E_FILENOTFOUND, "Unexpected hr %#lx.\n", hr);
 
     SysFreeString(path);
 
     /* try with directory */
     lstrcatW(pathW, L"\\");
     ret = CreateDirectoryW(pathW, NULL);
-    ok(ret, "got %d, error %d\n", ret, GetLastError());
+    ok(ret, "Unexpected retval %d, error %ld.\n", ret, GetLastError());
 
     path = SysAllocString(pathW);
     hr = IFileSystem3_GetFile(fs3, path, &file);
-    ok(hr == CTL_E_FILENOTFOUND, "GetFile returned %x, expected S_OK\n", hr);
+    ok(hr == CTL_E_FILENOTFOUND, "Unexpected hr %#lx.\n", hr);
     SysFreeString(path);
 
     RemoveDirectoryW(pathW);
@@ -743,36 +742,36 @@ static void test_CopyFolder(void)
     create_path(filesystem3_dir, dstW, tmp);
     bdst = SysAllocString(tmp);
     hr = IFileSystem3_CopyFile(fs3, bsrc, bdst, VARIANT_TRUE);
-    ok(hr == CTL_E_FILENOTFOUND, "CopyFile returned %x, expected CTL_E_FILENOTFOUND\n", hr);
+    ok(hr == CTL_E_FILENOTFOUND, "Unexpected hr %#lx.\n", hr);
 
     hr = IFileSystem3_CopyFolder(fs3, bsrc, bdst, VARIANT_TRUE);
-    ok(hr == CTL_E_PATHNOTFOUND, "CopyFolder returned %x, expected CTL_E_PATHNOTFOUND\n", hr);
+    ok(hr == CTL_E_PATHNOTFOUND, "Unexpected hr %#lx.\n", hr);
 
     ok(create_file(bsrc), "can't create %s file\n", wine_dbgstr_w(bsrc));
     hr = IFileSystem3_CopyFile(fs3, bsrc, bdst, VARIANT_TRUE);
-    ok(hr == S_OK, "CopyFile returned %x, expected S_OK\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IFileSystem3_CopyFolder(fs3, bsrc, bdst, VARIANT_TRUE);
-    ok(hr == CTL_E_PATHNOTFOUND, "CopyFolder returned %x, expected CTL_E_PATHNOTFOUND\n", hr);
+    ok(hr == CTL_E_PATHNOTFOUND, "Unexpected hr %#lx.\n", hr);
 
     hr = IFileSystem3_DeleteFile(fs3, bsrc, VARIANT_FALSE);
-    ok(hr == S_OK, "DeleteFile returned %x, expected S_OK\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     ok(CreateDirectoryW(bsrc, NULL), "can't create %s\n", wine_dbgstr_w(bsrc));
     hr = IFileSystem3_CopyFile(fs3, bsrc, bdst, VARIANT_TRUE);
-    ok(hr == CTL_E_FILENOTFOUND, "CopyFile returned %x, expected CTL_E_FILENOTFOUND\n", hr);
+    ok(hr == CTL_E_FILENOTFOUND, "Unexpected hr %#lx.\n", hr);
 
     hr = IFileSystem3_CopyFolder(fs3, bsrc, bdst, VARIANT_TRUE);
-    ok(hr == CTL_E_FILEALREADYEXISTS, "CopyFolder returned %x, expected CTL_E_FILEALREADYEXISTS\n", hr);
+    ok(hr == CTL_E_FILEALREADYEXISTS, "Unexpected hr %#lx.\n", hr);
 
     hr = IFileSystem3_DeleteFile(fs3, bdst, VARIANT_TRUE);
-    ok(hr == S_OK, "DeleteFile returned %x, expected S_OK\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IFileSystem3_CopyFolder(fs3, bsrc, bdst, VARIANT_TRUE);
-    ok(hr == S_OK, "CopyFolder returned %x, expected S_OK\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IFileSystem3_CopyFolder(fs3, bsrc, bdst, VARIANT_TRUE);
-    ok(hr == S_OK, "CopyFolder returned %x, expected S_OK\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     create_path(tmp, src1W, tmp);
     ok(GetFileAttributesW(tmp) == INVALID_FILE_ATTRIBUTES,
             "%s file exists\n", wine_dbgstr_w(tmp));
@@ -782,7 +781,7 @@ static void test_CopyFolder(void)
     SysFreeString(bdst);
     bdst = SysAllocString(tmp);
     hr = IFileSystem3_CopyFolder(fs3, bsrc, bdst, VARIANT_TRUE);
-    ok(hr == S_OK, "CopyFolder returned %x, expected S_OK\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     create_path(tmp, src1W, tmp);
     ok(GetFileAttributesW(tmp) != INVALID_FILE_ATTRIBUTES,
             "%s directory doesn't exist\n", wine_dbgstr_w(tmp));
@@ -795,17 +794,17 @@ static void test_CopyFolder(void)
     SysFreeString(bsrc);
     bsrc = SysAllocString(tmp);
     hr = IFileSystem3_CopyFolder(fs3, bsrc, bdst, VARIANT_TRUE);
-    ok(hr == S_OK, "CopyFolder returned %x, expected S_OK\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     create_path(filesystem3_dir, dstW, tmp);
     create_path(tmp, src1W, tmp);
     ok(GetFileAttributesW(tmp) != INVALID_FILE_ATTRIBUTES,
             "%s directory doesn't exist\n", wine_dbgstr_w(tmp));
 
     hr = IFileSystem3_DeleteFolder(fs3, bdst, VARIANT_FALSE);
-    ok(hr == S_OK, "DeleteFolder returned %x, expected S_OK\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IFileSystem3_CopyFolder(fs3, bsrc, bdst, VARIANT_TRUE);
-    ok(hr == CTL_E_PATHNOTFOUND, "CopyFolder returned %x, expected CTL_E_PATHNOTFOUND\n", hr);
+    ok(hr == CTL_E_PATHNOTFOUND, "Unexpected hr %#lx.\n", hr);
 
     create_path(filesystem3_dir, src1W, tmp);
     SysFreeString(bsrc);
@@ -813,19 +812,19 @@ static void test_CopyFolder(void)
     create_path(tmp, src1W, tmp);
     ok(create_file(tmp), "can't create %s file\n", wine_dbgstr_w(tmp));
     hr = IFileSystem3_CopyFolder(fs3, bsrc, bdst, VARIANT_FALSE);
-    ok(hr == S_OK, "CopyFolder returned %x, expected S_OK\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IFileSystem3_CopyFolder(fs3, bsrc, bdst, VARIANT_FALSE);
-    ok(hr == CTL_E_FILEALREADYEXISTS, "CopyFolder returned %x, expected CTL_E_FILEALREADYEXISTS\n", hr);
+    ok(hr == CTL_E_FILEALREADYEXISTS, "Unexpected hr %#lx.\n", hr);
 
     hr = IFileSystem3_CopyFolder(fs3, bsrc, bdst, VARIANT_TRUE);
-    ok(hr == S_OK, "CopyFolder returned %x, expected S_OK\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     SysFreeString(bsrc);
     SysFreeString(bdst);
 
     bsrc = SysAllocString(filesystem3_dir);
     hr = IFileSystem3_DeleteFolder(fs3, bsrc, VARIANT_FALSE);
-    ok(hr == S_OK, "DeleteFolder returned %x, expected S_OK\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     SysFreeString(bsrc);
 }
 
@@ -868,18 +867,18 @@ static void test_BuildPath(void)
     int i = 0;
 
     hr = IFileSystem3_BuildPath(fs3, NULL, NULL, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     ret = (BSTR)0xdeadbeef;
     hr = IFileSystem3_BuildPath(fs3, NULL, NULL, &ret);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(*ret == 0, "got %p\n", ret);
     SysFreeString(ret);
 
     ret = (BSTR)0xdeadbeef;
     path = bstr_from_str("path");
     hr = IFileSystem3_BuildPath(fs3, path, NULL, &ret);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!lstrcmpW(ret, path), "got %s\n", wine_dbgstr_w(ret));
     SysFreeString(ret);
     SysFreeString(path);
@@ -887,7 +886,7 @@ static void test_BuildPath(void)
     ret = (BSTR)0xdeadbeef;
     path = bstr_from_str("path");
     hr = IFileSystem3_BuildPath(fs3, NULL, path, &ret);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!lstrcmpW(ret, path), "got %s\n", wine_dbgstr_w(ret));
     SysFreeString(ret);
     SysFreeString(path);
@@ -901,7 +900,7 @@ static void test_BuildPath(void)
         name = bstr_from_str(ptr->name);
         result = bstr_from_str(ptr->result);
         hr = IFileSystem3_BuildPath(fs3, path, name, &ret);
-        ok(hr == S_OK, "%d: got 0x%08x\n", i, hr);
+        ok(hr == S_OK, "%d: Unexpected hr %#lx.\n", i, hr);
         if (hr == S_OK)
         {
             ok(!lstrcmpW(ret, result), "%d: got wrong path %s, expected %s\n", i, wine_dbgstr_w(ret),
@@ -926,28 +925,28 @@ static void test_GetFolder(void)
 
     folder = (void*)0xdeadbeef;
     hr = IFileSystem3_GetFolder(fs3, NULL, &folder);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(folder == NULL, "got %p\n", folder);
 
     hr = IFileSystem3_GetFolder(fs3, NULL, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     /* something that doesn't exist */
     str = SysAllocString(L"dummy");
 
     hr = IFileSystem3_GetFolder(fs3, str, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     folder = (void*)0xdeadbeef;
     hr = IFileSystem3_GetFolder(fs3, str, &folder);
-    ok(hr == CTL_E_PATHNOTFOUND, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_PATHNOTFOUND, "Unexpected hr %#lx.\n", hr);
     ok(folder == NULL, "got %p\n", folder);
     SysFreeString(str);
 
     GetWindowsDirectoryW(buffW, MAX_PATH);
     str = SysAllocString(buffW);
     hr = IFileSystem3_GetFolder(fs3, str, &folder);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     SysFreeString(str);
     test_provideclassinfo(folder, &CLSID_Folder);
     IFolder_Release(folder);
@@ -961,17 +960,17 @@ static void _test_clone(IEnumVARIANT *enumvar, BOOL position_inherited, LONG cou
     VARIANT var, var2;
 
     hr = IEnumVARIANT_Reset(enumvar);
-    ok(hr == S_OK, "%d: got 0x%08x\n", line, hr);
+    ok(hr == S_OK, "%d: Unexpected hr %#lx.\n", line, hr);
 
     VariantInit(&var);
     fetched = -1;
     hr = IEnumVARIANT_Next(enumvar, 1, &var, &fetched);
-    ok(hr == S_OK, "%d: got 0x%08x\n", line, hr);
-    ok(fetched == 1, "%d: got %d\n", line, fetched);
+    ok(hr == S_OK, "%d: Unexpected hr %#lx.\n", line, hr);
+    ok(fetched == 1, "%d: unexpected value %lu.\n", line, fetched);
 
     /* clone enumerator */
     hr = IEnumVARIANT_Clone(enumvar, &clone);
-    ok(hr == S_OK, "%d: got 0x%08x\n", line, hr);
+    ok(hr == S_OK, "%d: Unexpected hr %#lx.\n", line, hr);
     ok(clone != enumvar, "%d: got %p, %p\n", line, enumvar, clone);
 
     /* check if clone inherits position */
@@ -980,21 +979,21 @@ static void _test_clone(IEnumVARIANT *enumvar, BOOL position_inherited, LONG cou
     hr = IEnumVARIANT_Next(clone, 1, &var2, &fetched);
     if (position_inherited && count == 1)
     {
-        ok(hr == S_FALSE, "%d: got 0x%08x\n", line, hr);
-        ok(fetched == 0, "%d: got %d\n", line, fetched);
+        ok(hr == S_FALSE, "%d: Unexpected hr %#lx.\n", line, hr);
+        ok(!fetched, "%d: unexpected value %lu.\n", line, fetched);
     }
     else
     {
-        ok(hr == S_OK, "%d: got 0x%08x\n", line, hr);
-        ok(fetched == 1, "%d: got %d\n", line, fetched);
+        ok(hr == S_OK, "%d: Unexpected hr %#lx.\n", line, hr);
+        ok(fetched == 1, "%d: unexpected value %lu.\n", line, fetched);
         if (!position_inherited)
             todo_wine ok(V_DISPATCH(&var) == V_DISPATCH(&var2), "%d: values don't match\n", line);
         else
         {
             fetched = -1;
             hr = IEnumVARIANT_Next(enumvar, 1, &var, &fetched);
-            ok(hr == S_OK, "%d: got 0x%08x\n", line, hr);
-            ok(fetched == 1, "%d: got %d\n", line, fetched);
+            ok(hr == S_OK, "%d: Unexpected hr %#lx.\n", line, hr);
+            ok(fetched == 1, "%d: unexpected value %lu.\n", line, fetched);
             todo_wine ok(V_DISPATCH(&var) == V_DISPATCH(&var2), "%d: values don't match\n", line);
         }
     }
@@ -1004,7 +1003,7 @@ static void _test_clone(IEnumVARIANT *enumvar, BOOL position_inherited, LONG cou
     IEnumVARIANT_Release(clone);
 
     hr = IEnumVARIANT_Reset(enumvar);
-    ok(hr == S_OK, "%d: got 0x%08x\n", line, hr);
+    ok(hr == S_OK, "%d: Unexpected hr %#lx.\n", line, hr);
 }
 #define test_clone(a, b, c) _test_clone(a, b, c, __LINE__)
 
@@ -1017,7 +1016,7 @@ static void test_FolderCollection(void)
     IFolderCollection *folders;
     WCHAR buffW[MAX_PATH], pathW[MAX_PATH];
     IEnumVARIANT *enumvar;
-    LONG count, ref, ref2, i;
+    LONG count, ref, ref2;
     IUnknown *unk, *unk2;
     IFolder *folder;
     ULONG fetched;
@@ -1025,23 +1024,24 @@ static void test_FolderCollection(void)
     HRESULT hr;
     BSTR str;
     int found_a = 0, found_b = 0, found_c = 0;
+    unsigned int i;
 
     get_temp_path(L"foo", buffW);
     CreateDirectoryW(buffW, NULL);
 
     str = SysAllocString(buffW);
     hr = IFileSystem3_GetFolder(fs3, str, &folder);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     SysFreeString(str);
 
     hr = IFolder_get_SubFolders(folder, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     hr = IFolder_get_Path(folder, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     hr = IFolder_get_Path(folder, &str);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!lstrcmpiW(buffW, str), "got %s, expected %s\n", wine_dbgstr_w(str), wine_dbgstr_w(buffW));
     SysFreeString(str);
 
@@ -1054,14 +1054,14 @@ static void test_FolderCollection(void)
     CreateDirectoryW(pathW, NULL);
 
     hr = IFolder_get_SubFolders(folder, &folders);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     test_provideclassinfo(folders, &CLSID_Folders);
     IFolder_Release(folder);
 
     count = 0;
     hr = IFolderCollection_get_Count(folders, &count);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(count == 2, "got %d\n", count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 2, "Unexpected value %lu.\n", count);
 
     lstrcpyW(pathW, buffW);
     lstrcatW(pathW, cW);
@@ -1070,37 +1070,37 @@ static void test_FolderCollection(void)
     /* every time property is requested it scans directory */
     count = 0;
     hr = IFolderCollection_get_Count(folders, &count);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(count == 3, "got %d\n", count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 3, "Unexpected value %lu.\n", count);
 
     hr = IFolderCollection_get__NewEnum(folders, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     hr = IFolderCollection_QueryInterface(folders, &IID_IEnumVARIANT, (void**)&unk);
-    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#lx.\n", hr);
 
     /* NewEnum creates new instance each time it's called */
     ref = GET_REFCOUNT(folders);
 
     unk = NULL;
     hr = IFolderCollection_get__NewEnum(folders, &unk);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     ref2 = GET_REFCOUNT(folders);
-    ok(ref2 == ref + 1, "got %d, %d\n", ref2, ref);
+    ok(ref2 == ref + 1, "Unexpected value %ld, %ld.\n", ref2, ref);
 
     unk2 = NULL;
     hr = IFolderCollection_get__NewEnum(folders, &unk2);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(unk != unk2, "got %p, %p\n", unk2, unk);
     IUnknown_Release(unk2);
 
     /* now get IEnumVARIANT */
     ref = GET_REFCOUNT(folders);
     hr = IUnknown_QueryInterface(unk, &IID_IEnumVARIANT, (void**)&enumvar);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ref2 = GET_REFCOUNT(folders);
-    ok(ref2 == ref, "got %d, %d\n", ref2, ref);
+    ok(ref2 == ref, "Unexpected value %ld, %ld.\n", ref2, ref);
 
     test_clone(enumvar, FALSE, count);
 
@@ -1109,16 +1109,16 @@ static void test_FolderCollection(void)
         VariantInit(&var);
         fetched = 0;
         hr = IEnumVARIANT_Next(enumvar, 1, &var, &fetched);
-        ok(hr == S_OK, "%d: got 0x%08x\n", i, hr);
-        ok(fetched == 1, "%d: got %d\n", i, fetched);
+        ok(hr == S_OK, "%d: Unexpected hr %#lx.\n", i, hr);
+        ok(fetched == 1, "%d: unexpected value %lu.\n", i, fetched);
         ok(V_VT(&var) == VT_DISPATCH, "%d: got type %d\n", i, V_VT(&var));
 
         hr = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IFolder, (void**)&folder);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
         str = NULL;
         hr = IFolder_get_Name(folder, &str);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         if (!lstrcmpW(str, aW + 1))
             found_a++;
         else if (!lstrcmpW(str, bW + 1))
@@ -1140,26 +1140,26 @@ static void test_FolderCollection(void)
     VariantInit(&var);
     fetched = -1;
     hr = IEnumVARIANT_Next(enumvar, 1, &var, &fetched);
-    ok(hr == S_FALSE, "got 0x%08x\n", hr);
-    ok(fetched == 0, "got %d\n", fetched);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(!fetched, "Unexpected value %lu.\n", fetched);
 
     hr = IEnumVARIANT_Reset(enumvar);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IEnumVARIANT_Skip(enumvar, 2);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IEnumVARIANT_Skip(enumvar, 0);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     VariantInit(&var2[0]);
     VariantInit(&var2[1]);
     fetched = -1;
     hr = IEnumVARIANT_Next(enumvar, 0, var2, &fetched);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(fetched == 0, "got %d\n", fetched);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!fetched, "Unexpected value %lu.\n", fetched);
     fetched = -1;
     hr = IEnumVARIANT_Next(enumvar, 2, var2, &fetched);
-    ok(hr == S_FALSE, "got 0x%08x\n", hr);
-    ok(fetched == 1, "got %d\n", fetched);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(fetched == 1, "Unexpected value %lu.\n", fetched);
     ok(V_VT(&var2[0]) == VT_DISPATCH, "got type %d\n", V_VT(&var2[0]));
     VariantClear(&var2[0]);
     VariantClear(&var2[1]);
@@ -1192,7 +1192,7 @@ static void test_FileCollection(void)
     IFileCollection *files;
     IFile *file;
     IEnumVARIANT *enumvar;
-    LONG count, ref, ref2, i;
+    LONG count, ref, ref2;
     IUnknown *unk, *unk2;
     ULONG fetched;
     VARIANT var, var2[2];
@@ -1200,17 +1200,18 @@ static void test_FileCollection(void)
     BSTR str;
     HANDLE file_a, file_b, file_c;
     int found_a = 0, found_b = 0, found_c = 0;
+    unsigned int i;
 
     get_temp_path(L"\\foo", buffW);
     CreateDirectoryW(buffW, NULL);
 
     str = SysAllocString(buffW);
     hr = IFileSystem3_GetFolder(fs3, str, &folder);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     SysFreeString(str);
 
     hr = IFolder_get_Files(folder, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     lstrcpyW(pathW, buffW);
     lstrcatW(pathW, aW);
@@ -1222,14 +1223,14 @@ static void test_FileCollection(void)
                          FILE_FLAG_DELETE_ON_CLOSE, 0);
 
     hr = IFolder_get_Files(folder, &files);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     test_provideclassinfo(files, &CLSID_Files);
     IFolder_Release(folder);
 
     count = 0;
     hr = IFileCollection_get_Count(files, &count);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(count == 2, "got %d\n", count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 2, "Unexpected value %lu.\n", count);
 
     lstrcpyW(pathW, buffW);
     lstrcatW(pathW, cW);
@@ -1239,37 +1240,37 @@ static void test_FileCollection(void)
     /* every time property is requested it scans directory */
     count = 0;
     hr = IFileCollection_get_Count(files, &count);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(count == 3, "got %d\n", count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 3, "Unexpected value %lu.\n", count);
 
     hr = IFileCollection_get__NewEnum(files, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     hr = IFileCollection_QueryInterface(files, &IID_IEnumVARIANT, (void**)&unk);
-    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#lx.\n", hr);
 
     /* NewEnum creates new instance each time it's called */
     ref = GET_REFCOUNT(files);
 
     unk = NULL;
     hr = IFileCollection_get__NewEnum(files, &unk);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     ref2 = GET_REFCOUNT(files);
-    ok(ref2 == ref + 1, "got %d, %d\n", ref2, ref);
+    ok(ref2 == ref + 1, "Unexpected value %ld, %ld.\n", ref2, ref);
 
     unk2 = NULL;
     hr = IFileCollection_get__NewEnum(files, &unk2);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(unk != unk2, "got %p, %p\n", unk2, unk);
     IUnknown_Release(unk2);
 
     /* now get IEnumVARIANT */
     ref = GET_REFCOUNT(files);
     hr = IUnknown_QueryInterface(unk, &IID_IEnumVARIANT, (void**)&enumvar);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ref2 = GET_REFCOUNT(files);
-    ok(ref2 == ref, "got %d, %d\n", ref2, ref);
+    ok(ref2 == ref, "Unexpected value %ld, %ld.\n", ref2, ref);
 
     test_clone(enumvar, FALSE, count);
 
@@ -1278,17 +1279,17 @@ static void test_FileCollection(void)
         VariantInit(&var);
         fetched = 0;
         hr = IEnumVARIANT_Next(enumvar, 1, &var, &fetched);
-        ok(hr == S_OK, "%d: got 0x%08x\n", i, hr);
-        ok(fetched == 1, "%d: got %d\n", i, fetched);
+        ok(hr == S_OK, "%d: Unexpected hr %#lx.\n", i, hr);
+        ok(fetched == 1, "%d: unexpected value %lu.\n", i, fetched);
         ok(V_VT(&var) == VT_DISPATCH, "%d: got type %d\n", i, V_VT(&var));
 
         hr = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IFile, (void **)&file);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         test_provideclassinfo(file, &CLSID_File);
 
         str = NULL;
         hr = IFile_get_Name(file, &str);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         if (!lstrcmpW(str, aW + 1))
             found_a++;
         else if (!lstrcmpW(str, bW + 1))
@@ -1310,26 +1311,26 @@ static void test_FileCollection(void)
     VariantInit(&var);
     fetched = -1;
     hr = IEnumVARIANT_Next(enumvar, 1, &var, &fetched);
-    ok(hr == S_FALSE, "got 0x%08x\n", hr);
-    ok(fetched == 0, "got %d\n", fetched);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(!fetched, "Unexpected value %lu.\n", fetched);
 
     hr = IEnumVARIANT_Reset(enumvar);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IEnumVARIANT_Skip(enumvar, 2);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IEnumVARIANT_Skip(enumvar, 0);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     VariantInit(&var2[0]);
     VariantInit(&var2[1]);
-    fetched = -1;
+    fetched = 1;
     hr = IEnumVARIANT_Next(enumvar, 0, var2, &fetched);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(fetched == 0, "got %d\n", fetched);
-    fetched = -1;
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!fetched, "Unexpected value %lu.\n", fetched);
+    fetched = 0;
     hr = IEnumVARIANT_Next(enumvar, 2, var2, &fetched);
-    ok(hr == S_FALSE, "got 0x%08x\n", hr);
-    ok(fetched == 1, "got %d\n", fetched);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(fetched == 1, "Unexpected value %lu.\n", fetched);
     ok(V_VT(&var2[0]) == VT_DISPATCH, "got type %d\n", V_VT(&var2[0]));
     VariantClear(&var2[0]);
     VariantClear(&var2[1]);
@@ -1355,35 +1356,35 @@ static void test_DriveCollection(void)
     LONG count;
 
     hr = IFileSystem3_get_Drives(fs3, &drives);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     test_provideclassinfo(drives, &CLSID_Drives);
 
     hr = IDriveCollection_get__NewEnum(drives, (IUnknown**)&enumvar);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDriveCollection_get_Count(drives, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     count = 0;
     hr = IDriveCollection_get_Count(drives, &count);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(count > 0, "got %d\n", count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count > 0, "Unexpected value %ld.\n", count);
 
     V_VT(&var) = VT_EMPTY;
-    fetched = -1;
+    fetched = 1;
     hr = IEnumVARIANT_Next(enumvar, 0, &var, &fetched);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(fetched == 0, "got %d\n", fetched);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!fetched, "Unexpected value %lu.\n", fetched);
 
     hr = IEnumVARIANT_Skip(enumvar, 0);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IEnumVARIANT_Skip(enumvar, count);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IEnumVARIANT_Skip(enumvar, 1);
-    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
 
     test_clone(enumvar, TRUE, count);
 
@@ -1393,39 +1394,39 @@ static void test_DriveCollection(void)
         BSTR str;
 
         hr = IDrive_get_DriveType(drive, &type);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
         hr = IDrive_get_DriveLetter(drive, NULL);
-        ok(hr == E_POINTER, "got 0x%08x\n", hr);
+        ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
         hr = IDrive_get_DriveLetter(drive, &str);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         ok(SysStringLen(str) == 1, "got string %s\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         hr = IDrive_get_IsReady(drive, NULL);
-        ok(hr == E_POINTER, "got 0x%08x\n", hr);
+        ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
         hr = IDrive_get_TotalSize(drive, NULL);
-        ok(hr == E_POINTER, "got 0x%08x\n", hr);
+        ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
         hr = IDrive_get_AvailableSpace(drive, NULL);
-        ok(hr == E_POINTER, "got 0x%08x\n", hr);
+        ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
         hr = IDrive_get_FreeSpace(drive, NULL);
-        ok(hr == E_POINTER, "got 0x%08x\n", hr);
+        ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
         if (type == Fixed) {
             VARIANT_BOOL ready = VARIANT_FALSE;
             VARIANT size;
 
             hr = IDrive_get_IsReady(drive, &ready);
-            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
             ok(ready == VARIANT_TRUE, "got %x\n", ready);
 
             if (ready != VARIANT_TRUE) {
                 hr = IDrive_get_DriveLetter(drive, &str);
-                ok(hr == S_OK, "got 0x%08x\n", hr);
+                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
                 skip("Drive %s is not ready, skipping some tests\n", wine_dbgstr_w(str));
 
@@ -1436,30 +1437,30 @@ static void test_DriveCollection(void)
 
             V_VT(&size) = VT_EMPTY;
             hr = IDrive_get_TotalSize(drive, &size);
-            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
             ok(V_VT(&size) == VT_R8 || V_VT(&size) == VT_I4, "got %d\n", V_VT(&size));
             if (V_VT(&size) == VT_R8)
                 ok(V_R8(&size) > 0, "got %f\n", V_R8(&size));
             else
-                ok(V_I4(&size) > 0, "got %d\n", V_I4(&size));
+                ok(V_I4(&size) > 0, "got %ld\n", V_I4(&size));
 
             V_VT(&size) = VT_EMPTY;
             hr = IDrive_get_AvailableSpace(drive, &size);
-            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
             ok(V_VT(&size) == VT_R8 || V_VT(&size) == VT_I4, "got %d\n", V_VT(&size));
             if (V_VT(&size) == VT_R8)
                 ok(V_R8(&size) > (double)INT_MAX, "got %f\n", V_R8(&size));
             else
-                ok(V_I4(&size) > 0, "got %d\n", V_I4(&size));
+                ok(V_I4(&size) > 0, "got %ld\n", V_I4(&size));
 
             V_VT(&size) = VT_EMPTY;
             hr = IDrive_get_FreeSpace(drive, &size);
-            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
             ok(V_VT(&size) == VT_R8 || V_VT(&size) == VT_I4, "got %d\n", V_VT(&size));
             if (V_VT(&size) == VT_R8)
                 ok(V_R8(&size) > 0, "got %f\n", V_R8(&size));
             else
-                ok(V_I4(&size) > 0, "got %d\n", V_I4(&size));
+                ok(V_I4(&size) > 0, "got %ld\n", V_I4(&size));
         }
         VariantClear(&var);
     }
@@ -1491,27 +1492,27 @@ static void test_CreateTextFile(void)
     /* dir doesn't exist */
     nameW = SysAllocString(pathW);
     hr = IFileSystem3_CreateTextFile(fs3, nameW, VARIANT_FALSE, VARIANT_FALSE, &stream);
-    ok(hr == CTL_E_PATHNOTFOUND, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_PATHNOTFOUND, "Unexpected hr %#lx.\n", hr);
 
     ret = CreateDirectoryW(dirW, NULL);
-    ok(ret, "got %d, %d\n", ret, GetLastError());
+    ok(ret, "Unexpected retval %d, error %ld.\n", ret, GetLastError());
 
     hr = IFileSystem3_CreateTextFile(fs3, nameW, VARIANT_FALSE, VARIANT_FALSE, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     test_provideclassinfo(stream, &CLSID_TextStream);
 
     hr = ITextStream_Read(stream, 1, &str);
-    ok(hr == CTL_E_BADFILEMODE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_BADFILEMODE, "Unexpected hr %#lx.\n", hr);
 
     hr = ITextStream_Close(stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = ITextStream_Read(stream, 1, &str);
-    ok(hr == CTL_E_BADFILEMODE || hr == E_VAR_NOT_SET, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_BADFILEMODE || hr == E_VAR_NOT_SET, "Unexpected hr %#lx.\n", hr);
 
     hr = ITextStream_Close(stream);
-    ok(hr == S_FALSE || hr == E_VAR_NOT_SET, "got 0x%08x\n", hr);
+    ok(hr == S_FALSE || hr == E_VAR_NOT_SET, "Unexpected hr %#lx.\n", hr);
 
     ITextStream_Release(stream);
 
@@ -1522,16 +1523,16 @@ static void test_CreateTextFile(void)
 
     /* try to create again with no-overwrite mode */
     hr = IFileSystem3_CreateTextFile(fs3, nameW, VARIANT_FALSE, VARIANT_FALSE, &stream);
-    ok(hr == CTL_E_FILEALREADYEXISTS, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_FILEALREADYEXISTS, "Unexpected hr %#lx.\n", hr);
 
     /* now overwrite */
     hr = IFileSystem3_CreateTextFile(fs3, nameW, VARIANT_TRUE, VARIANT_FALSE, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ITextStream_Release(stream);
 
     /* overwrite in Unicode mode, check for BOM */
     hr = IFileSystem3_CreateTextFile(fs3, nameW, VARIANT_TRUE, VARIANT_TRUE, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ITextStream_Release(stream);
 
     /* check contents */
@@ -1539,7 +1540,7 @@ static void test_CreateTextFile(void)
     ok(file != INVALID_HANDLE_VALUE, "got %p\n", file);
     r = 0;
     ret = ReadFile(file, buffW, sizeof(buffW), &r, NULL);
-    ok(ret && r == 2, "read %d, got %d, %d\n", r, ret, GetLastError());
+    ok(ret && r == 2, "Read %ld, got %d, error %ld.\n", r, ret, GetLastError());
 
     ok( buffW[0] == 0xfeff, "got %04x\n", buffW[0] );
     CloseHandle(file);
@@ -1566,29 +1567,29 @@ static void test_FolderCreateTextFile(void)
     lstrcatW(pathW, nameW);
 
     ret = CreateDirectoryW(dirW, NULL);
-    ok(ret, "got %d, %d\n", ret, GetLastError());
+    ok(ret, "Unexpected retval %d, error %ld.\n", ret, GetLastError());
 
     str = SysAllocString(dirW);
     hr = IFileSystem3_GetFolder(fs3, str, &folder);
-    ok(ret, "got %d, %d\n", ret, GetLastError());
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     SysFreeString(str);
 
     hr = IFolder_CreateTextFile(folder, nameW, VARIANT_FALSE, VARIANT_FALSE, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     test_provideclassinfo(stream, &CLSID_TextStream);
 
     hr = ITextStream_Read(stream, 1, &str);
-    ok(hr == CTL_E_BADFILEMODE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_BADFILEMODE, "Unexpected hr %#lx.\n", hr);
 
     hr = ITextStream_Close(stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = ITextStream_Read(stream, 1, &str);
-    ok(hr == CTL_E_BADFILEMODE || hr == E_VAR_NOT_SET, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_BADFILEMODE || hr == E_VAR_NOT_SET, "Unexpected hr %#lx.\n", hr);
 
     hr = ITextStream_Close(stream);
-    ok(hr == S_FALSE || hr == E_VAR_NOT_SET, "got 0x%08x\n", hr);
+    ok(hr == S_FALSE || hr == E_VAR_NOT_SET, "Unexpected hr %#lx.\n", hr);
 
     ITextStream_Release(stream);
 
@@ -1599,16 +1600,16 @@ static void test_FolderCreateTextFile(void)
 
     /* try to create again with no-overwrite mode */
     hr = IFolder_CreateTextFile(folder, nameW, VARIANT_FALSE, VARIANT_FALSE, &stream);
-    ok(hr == CTL_E_FILEALREADYEXISTS, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_FILEALREADYEXISTS, "Unexpected hr %#lx.\n", hr);
 
     /* now overwrite */
     hr = IFolder_CreateTextFile(folder, nameW, VARIANT_TRUE, VARIANT_FALSE, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ITextStream_Release(stream);
 
     /* overwrite in Unicode mode, check for BOM */
     hr = IFolder_CreateTextFile(folder, nameW, VARIANT_TRUE, VARIANT_TRUE, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ITextStream_Release(stream);
 
     /* check contents */
@@ -1616,7 +1617,7 @@ static void test_FolderCreateTextFile(void)
     ok(file != INVALID_HANDLE_VALUE, "got %p\n", file);
     r = 0;
     ret = ReadFile(file, buffW, sizeof(buffW), &r, NULL);
-    ok(ret && r==2, "read %d, got %d, %d\n", r, ret, GetLastError());
+    ok(ret && r == 2, "Read %ld, got %d, error %ld.\n", r, ret, GetLastError());
     buffW[r/sizeof(WCHAR)] = 0;
 
     buff2W[0] = 0xfeff;
@@ -1644,15 +1645,15 @@ static void test_WriteLine(void)
     get_temp_filepath(testfileW, pathW, dirW);
 
     ret = CreateDirectoryW(dirW, NULL);
-    ok(ret, "got %d, %d\n", ret, GetLastError());
+    ok(ret, "Unexpected retval %d, error %ld.\n", ret, GetLastError());
 
     /* create as ASCII file first */
     nameW = SysAllocString(pathW);
     hr = IFileSystem3_CreateTextFile(fs3, nameW, VARIANT_FALSE, VARIANT_FALSE, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = ITextStream_WriteLine(stream, nameW);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ITextStream_Release(stream);
 
     /* check contents */
@@ -1660,7 +1661,7 @@ static void test_WriteLine(void)
     ok(file != INVALID_HANDLE_VALUE, "got %p\n", file);
     r = 0;
     ret = ReadFile(file, buffA, sizeof(buffA), &r, NULL);
-    ok(ret && r, "read %d, got %d, %d\n", r, ret, GetLastError());
+    ok(ret && r, "Read %ld, got %d, error %ld.\n", r, ret, GetLastError());
 
     len = MultiByteToWideChar(CP_ACP, 0, buffA, r, buffW, ARRAY_SIZE(buffW));
     buffW[len] = 0;
@@ -1672,10 +1673,10 @@ static void test_WriteLine(void)
 
     /* same for unicode file */
     hr = IFileSystem3_CreateTextFile(fs3, nameW, VARIANT_FALSE, VARIANT_TRUE, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = ITextStream_WriteLine(stream, nameW);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ITextStream_Release(stream);
 
     /* check contents */
@@ -1683,7 +1684,7 @@ static void test_WriteLine(void)
     ok(file != INVALID_HANDLE_VALUE, "got %p\n", file);
     r = 0;
     ret = ReadFile(file, buffW, sizeof(buffW), &r, NULL);
-    ok(ret && r, "read %d, got %d, %d\n", r, ret, GetLastError());
+    ok(ret && r, "Read %ld, got %d, error %ld.\n", r, ret, GetLastError());
     buffW[r/sizeof(WCHAR)] = 0;
 
     buff2W[0] = 0xfeff;
@@ -1714,43 +1715,43 @@ static void test_ReadAll(void)
     get_temp_filepath(testfileW, pathW, dirW);
 
     ret = CreateDirectoryW(dirW, NULL);
-    ok(ret, "got %d, %d\n", ret, GetLastError());
+    ok(ret, "Unexpected retval %d, error %ld.\n", ret, GetLastError());
 
     /* Unicode file -> read with ascii stream */
     nameW = SysAllocString(pathW);
     hr = IFileSystem3_CreateTextFile(fs3, nameW, VARIANT_FALSE, VARIANT_TRUE, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     str = SysAllocString(firstlineW);
     hr = ITextStream_WriteLine(stream, str);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     SysFreeString(str);
 
     str = SysAllocString(secondlineW);
     hr = ITextStream_WriteLine(stream, str);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     SysFreeString(str);
 
     hr = ITextStream_ReadAll(stream, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     str = (void*)0xdeadbeef;
     hr = ITextStream_ReadAll(stream, &str);
-    ok(hr == CTL_E_BADFILEMODE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_BADFILEMODE, "Unexpected hr %#lx.\n", hr);
     ok(str == NULL || broken(str == (void*)0xdeadbeef) /* win2k */, "got %p\n", str);
 
     ITextStream_Release(stream);
 
     hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateFalse, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = ITextStream_ReadAll(stream, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     /* Buffer content is not interpreted - BOM is kept, all data is converted to WCHARs */
     str = NULL;
     hr = ITextStream_ReadAll(stream, &str);
-    ok(hr == S_FALSE || broken(hr == S_OK) /* win2k */, "got 0x%08x\n", hr);
+    ok(hr == S_FALSE || broken(hr == S_OK) /* win2k */, "Unexpected hr %#lx.\n", hr);
     buffW[0] = 0;
     lstrcpyA(buffA, utf16bom);
     lstrcatA(buffA, "first");
@@ -1761,7 +1762,7 @@ static void test_ReadAll(void)
 
     /* Unicode file -> read with unicode stream */
     hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateTrue, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     lstrcpyW(buffW, firstlineW);
     lstrcatW(buffW, L"\r\n");
@@ -1769,30 +1770,30 @@ static void test_ReadAll(void)
     lstrcatW(buffW, L"\r\n");
     str = NULL;
     hr = ITextStream_ReadAll(stream, &str);
-    ok(hr == S_FALSE || broken(hr == S_OK) /* win2k */, "got 0x%08x\n", hr);
+    ok(hr == S_FALSE || broken(hr == S_OK) /* win2k */, "Unexpected hr %#lx.\n", hr);
     ok(!lstrcmpW(buffW, str), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     /* ReadAll one more time */
     str = (void*)0xdeadbeef;
     hr = ITextStream_ReadAll(stream, &str);
-    ok(hr == CTL_E_ENDOFFILE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_ENDOFFILE, "Unexpected hr %#lx.\n", hr);
     ok(str == NULL || broken(str == (void*)0xdeadbeef) /* win2k */, "got %p\n", str);
 
     /* ReadLine fails the same way */
     str = (void*)0xdeadbeef;
     hr = ITextStream_ReadLine(stream, &str);
-    ok(hr == CTL_E_ENDOFFILE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_ENDOFFILE, "Unexpected hr %#lx.\n", hr);
     ok(str == NULL || broken(str == (void*)0xdeadbeef) /* win2k */, "got %p\n", str);
     ITextStream_Release(stream);
 
     /* Open again and skip first line before ReadAll */
     hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateTrue, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     str = NULL;
     hr = ITextStream_ReadLine(stream, &str);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(str != NULL, "got %p\n", str);
     ok(!wcscmp(str, firstlineW), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
@@ -1801,7 +1802,7 @@ static void test_ReadAll(void)
     lstrcatW(buffW, L"\r\n");
     str = NULL;
     hr = ITextStream_ReadAll(stream, &str);
-    ok(hr == S_FALSE || broken(hr == S_OK) /* win2k */, "got 0x%08x\n", hr);
+    ok(hr == S_FALSE || broken(hr == S_OK) /* win2k */, "Unexpected hr %#lx.\n", hr);
     ok(!lstrcmpW(buffW, str), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
     ITextStream_Release(stream);
@@ -1809,19 +1810,19 @@ static void test_ReadAll(void)
     /* ASCII file, read with Unicode stream */
     /* 1. one byte content, not enough for Unicode read */
     hr = IFileSystem3_CreateTextFile(fs3, nameW, VARIANT_TRUE, VARIANT_FALSE, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     str = SysAllocString(aW);
     hr = ITextStream_Write(stream, str);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     SysFreeString(str);
     ITextStream_Release(stream);
 
     hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateTrue, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     str = (void*)0xdeadbeef;
     hr = ITextStream_ReadAll(stream, &str);
-    ok(hr == CTL_E_ENDOFFILE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_ENDOFFILE, "Unexpected hr %#lx.\n", hr);
     ok(str == NULL || broken(str == (void*)0xdeadbeef) /* win2k */, "got %p\n", str);
 
     ITextStream_Release(stream);
@@ -1846,59 +1847,59 @@ static void test_Read(void)
     get_temp_filepath(testfileW, pathW, dirW);
 
     ret = CreateDirectoryW(dirW, NULL);
-    ok(ret, "got %d, %d\n", ret, GetLastError());
+    ok(ret, "Unexpected retval %d, error %ld.\n", ret, GetLastError());
 
     /* Unicode file -> read with ascii stream */
     nameW = SysAllocString(pathW);
     hr = IFileSystem3_CreateTextFile(fs3, nameW, VARIANT_FALSE, VARIANT_TRUE, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     str = SysAllocString(firstlineW);
     hr = ITextStream_WriteLine(stream, str);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     SysFreeString(str);
 
     str = SysAllocString(secondlineW);
     hr = ITextStream_WriteLine(stream, str);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     SysFreeString(str);
 
     hr = ITextStream_Read(stream, 0, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     hr = ITextStream_Read(stream, 1, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     hr = ITextStream_Read(stream, -1, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     str = (void*)0xdeadbeef;
     hr = ITextStream_Read(stream, 1, &str);
-    ok(hr == CTL_E_BADFILEMODE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_BADFILEMODE, "Unexpected hr %#lx.\n", hr);
     ok(str == NULL, "got %p\n", str);
 
     ITextStream_Release(stream);
 
     hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateFalse, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = ITextStream_Read(stream, 1, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     str = (void*)0xdeadbeef;
     hr = ITextStream_Read(stream, -1, &str);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(str == NULL, "got %p\n", str);
 
     str = (void*)0xdeadbeef;
     hr = ITextStream_Read(stream, 0, &str);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(str == NULL, "got %p\n", str);
 
     /* Buffer content is not interpreted - BOM is kept, all data is converted to WCHARs */
     str = NULL;
     hr = ITextStream_Read(stream, 2, &str);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     buffW[0] = 0;
     lstrcpyA(buffA, utf16bom);
@@ -1911,7 +1912,7 @@ static void test_Read(void)
 
     /* Unicode file -> read with unicode stream */
     hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateTrue, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     lstrcpyW(buffW, firstlineW);
     lstrcatW(buffW, L"\r\n");
@@ -1919,30 +1920,30 @@ static void test_Read(void)
     lstrcatW(buffW, L"\r\n");
     str = NULL;
     hr = ITextStream_Read(stream, 500, &str);
-    ok(hr == S_FALSE || broken(hr == S_OK) /* win2k */, "got 0x%08x\n", hr);
+    ok(hr == S_FALSE || broken(hr == S_OK) /* win2k */, "Unexpected hr %#lx.\n", hr);
     ok(!lstrcmpW(buffW, str), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     /* ReadAll one more time */
     str = (void*)0xdeadbeef;
     hr = ITextStream_Read(stream, 10, &str);
-    ok(hr == CTL_E_ENDOFFILE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_ENDOFFILE, "Unexpected hr %#lx.\n", hr);
     ok(str == NULL, "got %p\n", str);
 
     /* ReadLine fails the same way */
     str = (void*)0xdeadbeef;
     hr = ITextStream_ReadLine(stream, &str);
-    ok(hr == CTL_E_ENDOFFILE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_ENDOFFILE, "Unexpected hr %#lx.\n", hr);
     ok(str == NULL || broken(str == (void*)0xdeadbeef), "got %p\n", str);
     ITextStream_Release(stream);
 
     /* Open again and skip first line before ReadAll */
     hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateTrue, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     str = NULL;
     hr = ITextStream_ReadLine(stream, &str);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(str != NULL, "got %p\n", str);
     SysFreeString(str);
 
@@ -1950,14 +1951,14 @@ static void test_Read(void)
     lstrcatW(buffW, L"\r\n");
     str = NULL;
     hr = ITextStream_Read(stream, 100, &str);
-    ok(hr == S_FALSE || broken(hr == S_OK) /* win2k */, "got 0x%08x\n", hr);
+    ok(hr == S_FALSE || broken(hr == S_OK) /* win2k */, "Unexpected hr %#lx.\n", hr);
     ok(!lstrcmpW(buffW, str), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
     ITextStream_Release(stream);
 
     /* default read will use Unicode */
     hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateUseDefault, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     lstrcpyW(buffW, firstlineW);
     lstrcatW(buffW, L"\r\n");
@@ -1965,7 +1966,7 @@ static void test_Read(void)
     lstrcatW(buffW, L"\r\n");
     str = NULL;
     hr = ITextStream_Read(stream, 500, &str);
-    ok(hr == S_FALSE || broken(hr == S_OK) /* win2003 */, "got 0x%08x\n", hr);
+    ok(hr == S_FALSE || broken(hr == S_OK) /* win2003 */, "Unexpected hr %#lx.\n", hr);
     ok(!lstrcmpW(buffW, str), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
@@ -1973,22 +1974,22 @@ static void test_Read(void)
 
     /* default append will use Unicode */
     hr = IFileSystem3_OpenTextFile(fs3, nameW, ForAppending, VARIANT_FALSE, TristateUseDefault, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     str = SysAllocString(L"123");
     hr = ITextStream_Write(stream, str);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     SysFreeString(str);
 
     ITextStream_Release(stream);
 
     hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateTrue, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     lstrcatW(buffW, L"123");
     str = NULL;
     hr = ITextStream_Read(stream, 500, &str);
-    ok(hr == S_FALSE || broken(hr == S_OK) /* win2003 */, "got 0x%08x\n", hr);
+    ok(hr == S_FALSE || broken(hr == S_OK) /* win2003 */, "Unexpected hr %#lx.\n", hr);
     ok(!lstrcmpW(buffW, str), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
@@ -1996,60 +1997,60 @@ static void test_Read(void)
 
     /* default write will use ASCII */
     hr = IFileSystem3_OpenTextFile(fs3, nameW, ForWriting, VARIANT_FALSE, TristateUseDefault, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     str = SysAllocString(L"123");
     hr = ITextStream_Write(stream, str);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     SysFreeString(str);
 
     ITextStream_Release(stream);
 
     hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateFalse, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     str = (void*)0xdeadbeef;
     hr = ITextStream_Read(stream, 500, &str);
-    ok(hr == S_FALSE || broken(hr == S_OK) /* win2003 */, "got 0x%08x\n", hr);
+    ok(hr == S_FALSE || broken(hr == S_OK) /* win2003 */, "Unexpected hr %#lx.\n", hr);
     ok(!wcscmp(str, L"123"), "got %s\n", wine_dbgstr_w(str));
 
     ITextStream_Release(stream);
     /* ASCII file, read with default stream */
     hr = IFileSystem3_CreateTextFile(fs3, nameW, VARIANT_TRUE, VARIANT_FALSE, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     str = SysAllocString(L"test");
     hr = ITextStream_Write(stream, str);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     SysFreeString(str);
     ITextStream_Release(stream);
 
     hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateUseDefault, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     str = (void*)0xdeadbeef;
     hr = ITextStream_Read(stream, 500, &str);
-    ok(hr == S_FALSE || broken(hr == S_OK) /* win2003 */, "got 0x%08x\n", hr);
+    ok(hr == S_FALSE || broken(hr == S_OK) /* win2003 */, "Unexpected hr %#lx.\n", hr);
     ok(!wcscmp(str, L"test"), "got %s\n", wine_dbgstr_w(str));
 
     ITextStream_Release(stream);
 
     /* default append will use Unicode */
     hr = IFileSystem3_OpenTextFile(fs3, nameW, ForAppending, VARIANT_FALSE, TristateUseDefault, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     str = SysAllocString(L"123");
     hr = ITextStream_Write(stream, str);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     SysFreeString(str);
 
     ITextStream_Release(stream);
 
     hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateFalse, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     str = NULL;
     hr = ITextStream_Read(stream, 500, &str);
-    ok(hr == S_FALSE || broken(hr == S_OK) /* win2003 */, "got 0x%08x\n", hr);
+    ok(hr == S_FALSE || broken(hr == S_OK) /* win2003 */, "Unexpected hr %#lx.\n", hr);
     ok(!lstrcmpW(L"test123", str), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
@@ -2057,21 +2058,21 @@ static void test_Read(void)
 
     /* default write will use ASCII as well */
     hr = IFileSystem3_OpenTextFile(fs3, nameW, ForWriting, VARIANT_FALSE, TristateUseDefault, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     str = SysAllocString(L"test string");
     hr = ITextStream_Write(stream, str);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     SysFreeString(str);
 
     ITextStream_Release(stream);
 
     hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateFalse, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     str = (void*)0xdeadbeef;
     hr = ITextStream_Read(stream, 500, &str);
-    ok(hr == S_FALSE || broken(hr == S_OK) /* win2003 */, "got 0x%08x\n", hr);
+    ok(hr == S_FALSE || broken(hr == S_OK) /* win2003 */, "Unexpected hr %#lx.\n", hr);
     ok(!wcscmp(str, L"test string"), "got %s\n", wine_dbgstr_w(str));
 
     ITextStream_Release(stream);
@@ -2079,19 +2080,19 @@ static void test_Read(void)
     /* ASCII file, read with Unicode stream */
     /* 1. one byte content, not enough for Unicode read */
     hr = IFileSystem3_CreateTextFile(fs3, nameW, VARIANT_TRUE, VARIANT_FALSE, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     str = SysAllocString(L"A");
     hr = ITextStream_Write(stream, str);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     SysFreeString(str);
     ITextStream_Release(stream);
 
     hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateTrue, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     str = (void*)0xdeadbeef;
     hr = ITextStream_Read(stream, 500, &str);
-    ok(hr == CTL_E_ENDOFFILE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_ENDOFFILE, "Unexpected hr %#lx.\n", hr);
     ok(str == NULL, "got %p\n", str);
 
     ITextStream_Release(stream);
@@ -2099,25 +2100,25 @@ static void test_Read(void)
     /* ASCII file, read with Unicode stream */
     /* 3. one byte content, 2 are interpreted as a character, 3rd is lost */
     hr = IFileSystem3_CreateTextFile(fs3, nameW, VARIANT_TRUE, VARIANT_FALSE, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     str = SysAllocString(L"abc");
     hr = ITextStream_Write(stream, str);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     SysFreeString(str);
     ITextStream_Release(stream);
 
     hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateTrue, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     str = NULL;
     hr = ITextStream_Read(stream, 500, &str);
-    ok(hr == S_FALSE || broken(hr == S_OK) /* win2003 */, "got 0x%08x\n", hr);
+    ok(hr == S_FALSE || broken(hr == S_OK) /* win2003 */, "Unexpected hr %#lx.\n", hr);
     ok(SysStringLen(str) == 1, "len = %u\n", SysStringLen(str));
     SysFreeString(str);
 
     str = (void*)0xdeadbeef;
     hr = ITextStream_Read(stream, 500, &str);
-    ok(hr == CTL_E_ENDOFFILE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_ENDOFFILE, "Unexpected hr %#lx.\n", hr);
     ok(str == NULL, "got %p\n", str);
 
     ITextStream_Release(stream);
@@ -2143,7 +2144,7 @@ static void test_ReadLine(void)
     get_temp_filepath(L"test.txt", path, dir);
 
     ret = CreateDirectoryW(dir, NULL);
-    ok(ret, "got %d, %d\n", ret, GetLastError());
+    ok(ret, "Unexpected retval %d, error %ld.\n", ret, GetLastError());
 
     file = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
             FILE_ATTRIBUTE_NORMAL, NULL);
@@ -2155,45 +2156,45 @@ static void test_ReadLine(void)
 
     str = SysAllocString(path);
     hr = IFileSystem3_OpenTextFile(fs3, str, ForReading, VARIANT_FALSE, TristateFalse, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     SysFreeString(str);
 
     for (i = 0; i < 1000; i++)
     {
         hr = ITextStream_ReadLine(stream, &str);
-        ok(hr == S_OK, "ReadLine failed: %08x\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         ok(!wcscmp(str, L"first line"), "ReadLine returned %s\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         hr = ITextStream_ReadLine(stream, &str);
-        ok(hr == S_OK, "ReadLine failed: %08x\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         ok(!wcscmp(str, L"second"), "ReadLine returned %s\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         hr = ITextStream_ReadLine(stream, &str);
-        ok(hr == S_OK, "ReadLine failed: %08x\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         ok(!*str, "ReadLine returned %s\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         hr = ITextStream_ReadLine(stream, &str);
-        ok(hr == S_OK, "ReadLine failed: %08x\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         ok(!wcscmp(str, L"\rt\r\re \rst"), "ReadLine returned %s\n", wine_dbgstr_w(str));
         SysFreeString(str);
     }
 
     str = NULL;
     hr = ITextStream_ReadLine(stream, &str);
-    ok(hr == CTL_E_ENDOFFILE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_ENDOFFILE, "Unexpected hr %#lx.\n", hr);
     ok(!str, "ReadLine returned %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     ITextStream_Release(stream);
 
     ret = DeleteFileW(path);
-    ok(ret, "DeleteFile failed: %u\n", GetLastError());
+    ok(ret, "Unexpected retval %ld.\n", GetLastError());
 
     ret = RemoveDirectoryW(dir);
-    ok(ret, "RemoveDirectory failed: %u\n", GetLastError());
+    ok(ret, "Unexpected retval %ld.\n", GetLastError());
 }
 
 struct driveexists_test {
@@ -2225,16 +2226,16 @@ static void test_DriveExists(void)
     WCHAR root[] = L"?:\\";
 
     hr = IFileSystem3_DriveExists(fs3, NULL, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     ret = VARIANT_TRUE;
     hr = IFileSystem3_DriveExists(fs3, NULL, &ret);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(ret == VARIANT_FALSE, "got %x\n", ret);
 
     drivespec = SysAllocString(root);
     hr = IFileSystem3_DriveExists(fs3, drivespec, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
     SysFreeString(drivespec);
 
     for (; *ptr->drivespec; ptr++) {
@@ -2254,7 +2255,7 @@ static void test_DriveExists(void)
             drivespec[0] = root[0];
             ret = ptr->expected_ret == VARIANT_TRUE ? VARIANT_FALSE : VARIANT_TRUE;
             hr = IFileSystem3_DriveExists(fs3, drivespec, &ret);
-            ok(hr == S_OK, "got 0x%08x for drive spec %s (%s)\n",
+            ok(hr == S_OK, "Unexpected hr %#lx. for drive spec %s (%s)\n",
                     hr, wine_dbgstr_w(drivespec), wine_dbgstr_w(ptr->drivespec));
             ok(ret == ptr->expected_ret, "got %d, expected %d for drive spec %s (%s)\n",
                     ret, ptr->expected_ret, wine_dbgstr_w(drivespec), wine_dbgstr_w(ptr->drivespec));
@@ -2264,7 +2265,7 @@ static void test_DriveExists(void)
 
         ret = ptr->expected_ret == VARIANT_TRUE ? VARIANT_FALSE : VARIANT_TRUE;
         hr = IFileSystem3_DriveExists(fs3, drivespec, &ret);
-        ok(hr == S_OK, "got 0x%08x for drive spec %s (%s)\n",
+        ok(hr == S_OK, "Unexpected hr %#lx. for drive spec %s (%s)\n",
                 hr, wine_dbgstr_w(drivespec), wine_dbgstr_w(ptr->drivespec));
         ok(ret == ptr->expected_ret, "got %d, expected %d for drive spec %s (%s)\n",
                 ret, ptr->expected_ret, wine_dbgstr_w(drivespec), wine_dbgstr_w(ptr->drivespec));
@@ -2296,18 +2297,18 @@ static void test_GetDriveName(void)
     BSTR name;
 
     hr = IFileSystem3_GetDriveName(fs3, NULL, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     name = (void*)0xdeadbeef;
     hr = IFileSystem3_GetDriveName(fs3, NULL, &name);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(name == NULL, "got %p\n", name);
 
     while (*ptr->path) {
         BSTR path = SysAllocString(ptr->path);
         name = (void*)0xdeadbeef;
         hr = IFileSystem3_GetDriveName(fs3, path, &name);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         if (name)
             ok(!lstrcmpW(ptr->drive, name), "got %s, expected %s\n", wine_dbgstr_w(name), wine_dbgstr_w(ptr->drive));
         else
@@ -2333,7 +2334,7 @@ static void test_GetDrive(void)
 
     drive = (void*)0xdeadbeef;
     hr = IFileSystem3_GetDrive(fs3, NULL, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
     ok(drive == (void*)0xdeadbeef, "got %p\n", drive);
 
     for (root[0] = 'A'; root[0] <= 'Z'; root[0]++)
@@ -2346,7 +2347,7 @@ static void test_GetDrive(void)
         drivespec = SysAllocString(root);
         drive = (void*)0xdeadbeef;
         hr = IFileSystem3_GetDrive(fs3, drivespec, &drive);
-        ok(hr == CTL_E_DEVICEUNAVAILABLE, "got 0x%08x\n", hr);
+        ok(hr == CTL_E_DEVICEUNAVAILABLE, "Unexpected hr %#lx.\n", hr);
         ok(drive == NULL, "got %p\n", drive);
         SysFreeString(drivespec);
     }
@@ -2358,7 +2359,7 @@ static void test_GetDrive(void)
     }
 
     hr = IDrive_get_DriveLetter(drive_fixed, &dl_fixed);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     if (FAILED(hr))
         skip("Could not retrieve drive letter of fixed drive, skipping test.\n");
@@ -2383,7 +2384,7 @@ static void test_GetDrive(void)
             drivespec = SysAllocString(ptr->drivespec);
             drive = (void*)0xdeadbeef;
             hr = IFileSystem3_GetDrive(fs3, drivespec, &drive);
-            ok(hr == ptr->res, "got 0x%08x, expected 0x%08x for drive spec %s\n",
+            ok(hr == ptr->res, "Unexpected hr %#lx, expected %#lx for drive spec %s.\n",
                     hr, ptr->res, wine_dbgstr_w(ptr->drivespec));
             ok(!lstrcmpW(ptr->drivespec, drivespec), "GetDrive modified its DriveSpec argument\n");
             SysFreeString(drivespec);
@@ -2391,7 +2392,7 @@ static void test_GetDrive(void)
             if (*ptr->driveletter) {
                 BSTR driveletter;
                 hr = IDrive_get_DriveLetter(drive, &driveletter);
-                ok(hr == S_OK, "got 0x%08x for drive spec %s\n", hr, wine_dbgstr_w(ptr->drivespec));
+                ok(hr == S_OK, "Unexpected hr %#lx. for drive spec %s\n", hr, wine_dbgstr_w(ptr->drivespec));
                 if (SUCCEEDED(hr)) {
                     ok(!lstrcmpW(ptr->driveletter, driveletter), "got %s, expected %s for drive spec %s\n",
                             wine_dbgstr_w(driveletter), wine_dbgstr_w(ptr->driveletter),
@@ -2421,28 +2422,28 @@ static void test_SerialNumber(void)
     }
 
     hr = IDrive_get_SerialNumber(drive, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     serial = 0xdeadbeef;
     hr = IDrive_get_SerialNumber(drive, &serial);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(serial != 0xdeadbeef, "got %x\n", serial);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(serial != 0xdeadbeef, "Unexpected value %#lx.\n", serial);
 
     hr = IDrive_get_FileSystem(drive, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     name = NULL;
     hr = IDrive_get_FileSystem(drive, &name);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(name != NULL, "got %p\n", name);
     SysFreeString(name);
 
     hr = IDrive_get_VolumeName(drive, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     name = NULL;
     hr = IDrive_get_VolumeName(drive, &name);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(name != NULL, "got %p\n", name);
     SysFreeString(name);
 
@@ -2470,7 +2471,7 @@ static void test_GetExtensionName(void)
        path = SysAllocString(extension_tests[i].path);
        ext = NULL;
        hr = IFileSystem3_GetExtensionName(fs3, path, &ext);
-       ok(hr == S_OK, "got 0x%08x\n", hr);
+       ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
        if (*extension_tests[i].ext)
            ok(!lstrcmpW(ext, extension_tests[i].ext), "%d: path %s, got %s, expected %s\n", i,
                wine_dbgstr_w(path), wine_dbgstr_w(ext), wine_dbgstr_w(extension_tests[i].ext));
@@ -2492,36 +2493,36 @@ static void test_GetSpecialFolder(void)
     BSTR path;
 
     hr = IFileSystem3_GetSpecialFolder(fs3, WindowsFolder, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     hr = IFileSystem3_GetSpecialFolder(fs3, TemporaryFolder+1, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     hr = IFileSystem3_GetSpecialFolder(fs3, TemporaryFolder+1, &folder);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = IFileSystem3_GetSpecialFolder(fs3, WindowsFolder, &folder);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IFolder_get_Path(folder, &path);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     GetWindowsDirectoryW(pathW, ARRAY_SIZE(pathW));
     ok(!lstrcmpiW(pathW, path), "got %s, expected %s\n", wine_dbgstr_w(path), wine_dbgstr_w(pathW));
     SysFreeString(path);
     IFolder_Release(folder);
 
     hr = IFileSystem3_GetSpecialFolder(fs3, SystemFolder, &folder);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IFolder_get_Path(folder, &path);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     GetSystemDirectoryW(pathW, ARRAY_SIZE(pathW));
     ok(!lstrcmpiW(pathW, path), "got %s, expected %s\n", wine_dbgstr_w(path), wine_dbgstr_w(pathW));
     SysFreeString(path);
     IFolder_Release(folder);
 
     hr = IFileSystem3_GetSpecialFolder(fs3, TemporaryFolder, &folder);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IFolder_get_Path(folder, &path);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ret = GetTempPathW(ARRAY_SIZE(pathW), pathW);
     if (ret && pathW[ret-1] == '\\')
         pathW[ret-1] = 0;
@@ -2539,56 +2540,56 @@ static void test_MoveFile(void)
 
     str = SysAllocString(L"test.txt");
     hr = IFileSystem3_CreateTextFile(fs3, str, VARIANT_FALSE, VARIANT_FALSE, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     SysFreeString(str);
 
     str = SysAllocString(L"test");
     hr = ITextStream_Write(stream, str);
-    ok(hr == S_OK, "Write failed: %08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     SysFreeString(str);
 
     ITextStream_Release(stream);
 
     str = SysAllocString(L"test2.txt");
     hr = IFileSystem3_CreateTextFile(fs3, str, VARIANT_FALSE, VARIANT_FALSE, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     SysFreeString(str);
     ITextStream_Release(stream);
 
     src = SysAllocString(L"test.txt");
     dst = SysAllocString(L"test3.txt");
     hr = IFileSystem3_MoveFile(fs3, src, dst);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     SysFreeString(src);
     SysFreeString(dst);
 
     str = SysAllocString(L"test.txt");
     hr = IFileSystem3_DeleteFile(fs3, str, VARIANT_TRUE);
-    ok(hr == CTL_E_FILENOTFOUND, "DeleteFile returned %x, expected CTL_E_FILENOTFOUND\n", hr);
+    ok(hr == CTL_E_FILENOTFOUND, "Unexpected hr %#lx.\n", hr);
     SysFreeString(str);
 
     src = SysAllocString(L"test3.txt");
     dst = SysAllocString(L"test2.txt"); /* already exists */
     hr = IFileSystem3_MoveFile(fs3, src, dst);
-    ok(hr == CTL_E_FILEALREADYEXISTS, "got 0x%08x, expected CTL_E_FILEALREADYEXISTS\n", hr);
+    ok(hr == CTL_E_FILEALREADYEXISTS, "Unexpected hr %#lx.\n", hr);
     SysFreeString(src);
     SysFreeString(dst);
 
     src = SysAllocString(L"nonexistent.txt");
     dst = SysAllocString(L"test4.txt");
     hr = IFileSystem3_MoveFile(fs3, src, dst);
-    ok(hr == CTL_E_FILENOTFOUND, "got 0x%08x, expected CTL_E_FILENOTFOUND\n", hr);
+    ok(hr == CTL_E_FILENOTFOUND, "Unexpected hr %#lx.\n", hr);
     SysFreeString(src);
     SysFreeString(dst);
 
     str = SysAllocString(L"test3.txt");
     hr = IFileSystem3_DeleteFile(fs3, str, VARIANT_TRUE);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     SysFreeString(str);
 
     str = SysAllocString(L"test2.txt");
     hr = IFileSystem3_DeleteFile(fs3, str, VARIANT_TRUE);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     SysFreeString(str);
 }
 
@@ -2613,17 +2614,17 @@ static void test_DoOpenPipeStream(void)
 
     hr = pDoOpenPipeStream(piperead, ForReading, &stream_read);
     todo_wine
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (SUCCEEDED(hr))
     {
         ok(!!stream_read, "Unexpected stream pointer.\n");
 
         ret = WriteFile(pipewrite, testdata, sizeof(testdata), &written, NULL);
         ok(ret, "Failed to write to the pipe.\n");
-        ok(written == sizeof(testdata), "Write to anonymous pipe wrote %d bytes.\n", written);
+        ok(written == sizeof(testdata), "Write to anonymous pipe wrote %ld bytes.\n", written);
 
         hr = ITextStream_Read(stream_read, 4, &str);
-        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         ok(!wcscmp(str, L"test"), "Unexpected data read %s.\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
@@ -2644,29 +2645,29 @@ static void test_DoOpenPipeStream(void)
     stream_read = NULL;
     hr = pDoOpenPipeStream(piperead, ForReading, &stream_read);
     todo_wine
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     stream_write = NULL;
     hr = pDoOpenPipeStream(pipewrite, ForWriting, &stream_write);
     todo_wine
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     if (SUCCEEDED(hr))
     {
         str = SysAllocString(L"data");
         hr = ITextStream_Write(stream_write, str);
-        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
         hr = ITextStream_Write(stream_read, str);
-        ok(hr == CTL_E_BADFILEMODE, "Unexpected hr %#x.\n", hr);
+        ok(hr == CTL_E_BADFILEMODE, "Unexpected hr %#lx.\n", hr);
 
         SysFreeString(str);
 
         hr = ITextStream_Read(stream_write, 1, &str);
-        ok(hr == CTL_E_BADFILEMODE, "Unexpected hr %#x.\n", hr);
+        ok(hr == CTL_E_BADFILEMODE, "Unexpected hr %#lx.\n", hr);
 
         hr = ITextStream_Read(stream_read, 4, &str);
-        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         ok(!wcscmp(str, L"data"), "Unexpected data.\n");
         SysFreeString(str);
     }
@@ -2685,8 +2686,9 @@ START_TEST(filesystem)
 
     hr = CoCreateInstance(&CLSID_FileSystemObject, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IFileSystem3, (void**)&fs3);
-    if(FAILED(hr)) {
-        win_skip("Could not create FileSystem object: %08x\n", hr);
+    if(FAILED(hr))
+    {
+        win_skip("Could not create FileSystem object, hr %#lx.\n", hr);
         return;
     }
 
