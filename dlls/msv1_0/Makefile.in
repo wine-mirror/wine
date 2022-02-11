@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = msv1_0.dll
 UNIXLIB   = msv1_0.so
 IMPORTS   = netapi32 advapi32
