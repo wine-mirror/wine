@@ -334,9 +334,6 @@ extern const vtable_ptr basic_streambuf_short_vtable;
 /* ??_7?$basic_filebuf@DU?$char_traits@D@std@@@std@@6B@ */
 extern const vtable_ptr basic_filebuf_char_vtable;
 
-/* ??_7?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@6B@ */
-extern const vtable_ptr basic_filebuf_wchar_vtable;
-
 /* ??_7?$basic_filebuf@GU?$char_traits@G@std@@@std@@6B@ */
 extern const vtable_ptr basic_filebuf_short_vtable;
 
@@ -476,8 +473,6 @@ DEFINE_RTTI_DATA0(basic_streambuf_short, 0,
         ".?AV?$basic_streambuf@GU?$char_traits@G@std@@@std@@")
 DEFINE_RTTI_DATA1(basic_filebuf_char, 0, &basic_streambuf_char_rtti_base_descriptor,
         ".?AV?$basic_filebuf@DU?$char_traits@D@std@@@std@@")
-DEFINE_RTTI_DATA1(basic_filebuf_wchar, 0, &basic_streambuf_wchar_rtti_base_descriptor,
-        ".?AV?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@")
 DEFINE_RTTI_DATA1(basic_filebuf_short, 0, &basic_streambuf_short_rtti_base_descriptor,
         ".?AV?$basic_filebuf@GU?$char_traits@G@std@@@std@@")
 DEFINE_RTTI_DATA1(basic_stringbuf_char, 0, &basic_streambuf_char_rtti_base_descriptor,
@@ -644,33 +639,19 @@ __ASM_BLOCK_BEGIN(ios_vtables)
             VTABLE_ADD_FUNC(basic_filebuf_char_setbuf)
             VTABLE_ADD_FUNC(basic_filebuf_char_sync)
             VTABLE_ADD_FUNC(basic_streambuf_char_imbue));
-    __ASM_VTABLE(basic_filebuf_wchar,
-            VTABLE_ADD_FUNC(basic_filebuf_wchar_vector_dtor)
-            VTABLE_ADD_FUNC(basic_filebuf_wchar_overflow)
-            VTABLE_ADD_FUNC(basic_filebuf_wchar_pbackfail)
-            VTABLE_ADD_FUNC(basic_streambuf_wchar_showmanyc)
-            VTABLE_ADD_FUNC(basic_filebuf_wchar_underflow)
-            VTABLE_ADD_FUNC(basic_filebuf_wchar_uflow)
-            VTABLE_ADD_FUNC(basic_streambuf_wchar_xsgetn)
-            VTABLE_ADD_FUNC(basic_streambuf_wchar_xsputn)
-            VTABLE_ADD_FUNC(basic_filebuf_wchar_seekoff)
-            VTABLE_ADD_FUNC(basic_filebuf_wchar_seekpos)
-            VTABLE_ADD_FUNC(basic_filebuf_wchar_setbuf)
-            VTABLE_ADD_FUNC(basic_filebuf_wchar_sync)
-            VTABLE_ADD_FUNC(basic_streambuf_wchar_imbue));
     __ASM_VTABLE(basic_filebuf_short,
-            VTABLE_ADD_FUNC(basic_filebuf_wchar_vector_dtor)
-            VTABLE_ADD_FUNC(basic_filebuf_wchar_overflow)
-            VTABLE_ADD_FUNC(basic_filebuf_wchar_pbackfail)
+            VTABLE_ADD_FUNC(basic_filebuf_short_vector_dtor)
+            VTABLE_ADD_FUNC(basic_filebuf_short_overflow)
+            VTABLE_ADD_FUNC(basic_filebuf_short_pbackfail)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_showmanyc)
-            VTABLE_ADD_FUNC(basic_filebuf_wchar_underflow)
-            VTABLE_ADD_FUNC(basic_filebuf_wchar_uflow)
+            VTABLE_ADD_FUNC(basic_filebuf_short_underflow)
+            VTABLE_ADD_FUNC(basic_filebuf_short_uflow)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_xsgetn)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_xsputn)
-            VTABLE_ADD_FUNC(basic_filebuf_wchar_seekoff)
-            VTABLE_ADD_FUNC(basic_filebuf_wchar_seekpos)
+            VTABLE_ADD_FUNC(basic_filebuf_short_seekoff)
+            VTABLE_ADD_FUNC(basic_filebuf_short_seekpos)
             VTABLE_ADD_FUNC(basic_filebuf_short_setbuf)
-            VTABLE_ADD_FUNC(basic_filebuf_wchar_sync)
+            VTABLE_ADD_FUNC(basic_filebuf_short_sync)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_imbue));
     __ASM_VTABLE(basic_stringbuf_char,
             VTABLE_ADD_FUNC(basic_stringbuf_char_vector_dtor)
@@ -2797,31 +2778,9 @@ void __thiscall basic_filebuf_char_imbue(basic_filebuf_char *this, const locale 
     basic_filebuf_char__Initcvt_cvt(this, codecvt_char_use_facet(loc));
 }
 
-/* ?_Stinit@?1??_Init@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@IAEXPAU_iobuf@@W4_Initfl@23@@Z@4HA */
-/* ?_Stinit@?1??_Init@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@IEAAXPEAU_iobuf@@W4_Initfl@23@@Z@4HA */
-int basic_filebuf_wchar__Init__Stinit = 0;
-
 /* ?_Stinit@?1??_Init@?$basic_filebuf@GU?$char_traits@G@std@@@std@@IAEXPAU_iobuf@@W4_Initfl@23@@Z@4HA */
 /* ?_Stinit@?1??_Init@?$basic_filebuf@GU?$char_traits@G@std@@@std@@IEAAXPEAU_iobuf@@W4_Initfl@23@@Z@4HA */
 int basic_filebuf_short__Init__Stinit = 0;
-
-/* ?_Init@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@IAEXPAU_iobuf@@W4_Initfl@12@@Z */
-/* ?_Init@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@IEAAXPEAU_iobuf@@W4_Initfl@12@@Z */
-DEFINE_THISCALL_WRAPPER(basic_filebuf_wchar__Init, 12)
-void __thiscall basic_filebuf_wchar__Init(basic_filebuf_wchar *this, FILE *file, basic_filebuf__Initfl which)
-{
-    TRACE("(%p %p %d)\n", this, file, which);
-
-    this->cvt = NULL;
-    this->state0 = basic_filebuf_short__Init__Stinit;
-    this->state = basic_filebuf_short__Init__Stinit;
-    if(which == INITFL_new)
-        this->str = NULL;
-    this->close = (which == INITFL_open);
-    this->file = file;
-
-    basic_streambuf_wchar__Init_empty(&this->base);
-}
 
 /* ?_Init@?$basic_filebuf@GU?$char_traits@G@std@@@std@@IAEXPAU_iobuf@@W4_Initfl@12@@Z */
 /* ?_Init@?$basic_filebuf@GU?$char_traits@G@std@@@std@@IEAAXPEAU_iobuf@@W4_Initfl@12@@Z */
@@ -2841,12 +2800,10 @@ void __thiscall basic_filebuf_short__Init(basic_filebuf_wchar *this, FILE *file,
     basic_streambuf_wchar__Init_empty(&this->base);
 }
 
-/* ?_Initcvt@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@IAEXPAV?$codecvt@_WDH@2@@Z */
-/* ?_Initcvt@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@IEAAXPEAV?$codecvt@_WDH@2@@Z */
 /* ?_Initcvt@?$basic_filebuf@GU?$char_traits@G@std@@@std@@IAEXPAV?$codecvt@GDH@2@@Z */
 /* ?_Initcvt@?$basic_filebuf@GU?$char_traits@G@std@@@std@@IEAAXPEAV?$codecvt@GDH@2@@Z */
-DEFINE_THISCALL_WRAPPER(basic_filebuf_wchar__Initcvt_cvt, 8)
-void __thiscall basic_filebuf_wchar__Initcvt_cvt(basic_filebuf_wchar *this, codecvt_wchar *cvt)
+DEFINE_THISCALL_WRAPPER(basic_filebuf_short__Initcvt_cvt, 8)
+void __thiscall basic_filebuf_short__Initcvt_cvt(basic_filebuf_wchar *this, codecvt_wchar *cvt)
 {
     TRACE("(%p %p)\n", this, cvt);
 
@@ -2860,19 +2817,17 @@ void __thiscall basic_filebuf_wchar__Initcvt_cvt(basic_filebuf_wchar *this, code
 
 /* ?_Initcvt@?$basic_filebuf@GU?$char_traits@G@std@@@std@@IAEXXZ */
 /* ?_Initcvt@?$basic_filebuf@GU?$char_traits@G@std@@@std@@IEAAXXZ */
-DEFINE_THISCALL_WRAPPER(basic_filebuf_wchar__Initcvt, 4)
-void __thiscall basic_filebuf_wchar__Initcvt(basic_filebuf_wchar *this)
+DEFINE_THISCALL_WRAPPER(basic_filebuf_short__Initcvt, 4)
+void __thiscall basic_filebuf_short__Initcvt(basic_filebuf_wchar *this)
 {
     codecvt_wchar *cvt = codecvt_wchar_use_facet(IOS_LOCALE(&this->base));
-    basic_filebuf_wchar__Initcvt_cvt( this, cvt );
+    basic_filebuf_short__Initcvt_cvt( this, cvt );
 }
 
-/* ?close@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QAEPAV12@XZ */
-/* ?close@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QEAAPEAV12@XZ */
 /* ?close@?$basic_filebuf@GU?$char_traits@G@std@@@std@@QAEPAV12@XZ */
 /* ?close@?$basic_filebuf@GU?$char_traits@G@std@@@std@@QEAAPEAV12@XZ */
-DEFINE_THISCALL_WRAPPER(basic_filebuf_wchar_close, 4)
-basic_filebuf_wchar* __thiscall basic_filebuf_wchar_close(basic_filebuf_wchar *this)
+DEFINE_THISCALL_WRAPPER(basic_filebuf_short_close, 4)
+basic_filebuf_wchar* __thiscall basic_filebuf_short_close(basic_filebuf_wchar *this)
 {
     basic_filebuf_wchar *ret = this;
 
@@ -2881,23 +2836,8 @@ basic_filebuf_wchar* __thiscall basic_filebuf_wchar_close(basic_filebuf_wchar *t
     if(!this->file || fclose(this->file))
         return NULL;
 
-    basic_filebuf_wchar__Init(this, NULL, INITFL_close);
+    basic_filebuf_short__Init(this, NULL, INITFL_close);
     return ret;
-}
-
-/* ??0?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QAE@PAU_iobuf@@@Z */
-/* ??0?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QEAA@PEAU_iobuf@@@Z */
-DEFINE_THISCALL_WRAPPER(basic_filebuf_wchar_ctor_file, 8)
-basic_filebuf_wchar* __thiscall basic_filebuf_wchar_ctor_file(basic_filebuf_wchar *this, FILE *file)
-{
-    TRACE("(%p %p)\n", this, file);
-
-    basic_streambuf_wchar_ctor(&this->base);
-    this->base.vtable = &basic_filebuf_wchar_vtable;
-
-    locale_ctor(&this->loc);
-    basic_filebuf_wchar__Init(this, file, INITFL_new);
-    return this;
 }
 
 /* ??0?$basic_filebuf@GU?$char_traits@G@std@@@std@@QAE@PAU_iobuf@@@Z */
@@ -2915,32 +2855,12 @@ basic_filebuf_wchar* __thiscall basic_filebuf_short_ctor_file(basic_filebuf_wcha
     return this;
 }
 
-/* ??_F?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QAEXXZ */
-/* ??_F?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QEAAXXZ */
-DEFINE_THISCALL_WRAPPER(basic_filebuf_wchar_ctor, 4)
-basic_filebuf_wchar* __thiscall basic_filebuf_wchar_ctor(basic_filebuf_wchar *this)
-{
-    return basic_filebuf_wchar_ctor_file(this, NULL);
-}
-
 /* ??_F?$basic_filebuf@GU?$char_traits@G@std@@@std@@QAEXXZ */
 /* ??_F?$basic_filebuf@GU?$char_traits@G@std@@@std@@QEAAXXZ */
 DEFINE_THISCALL_WRAPPER(basic_filebuf_short_ctor, 4)
 basic_filebuf_wchar* __thiscall basic_filebuf_short_ctor(basic_filebuf_wchar *this)
 {
     return basic_filebuf_short_ctor_file(this, NULL);
-}
-
-/* ??0?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QAE@W4_Uninitialized@1@@Z */
-/* ??0?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QEAA@W4_Uninitialized@1@@Z */
-DEFINE_THISCALL_WRAPPER(basic_filebuf_wchar_ctor_uninitialized, 8)
-basic_filebuf_wchar* __thiscall basic_filebuf_wchar_ctor_uninitialized(basic_filebuf_wchar *this, int uninitialized)
-{
-    TRACE("(%p %d)\n", this, uninitialized);
-
-    basic_streambuf_wchar_ctor(&this->base);
-    this->base.vtable = &basic_filebuf_wchar_vtable;
-    return this;
 }
 
 /* ??0?$basic_filebuf@GU?$char_traits@G@std@@@std@@QAE@W4_Uninitialized@1@@Z */
@@ -2956,17 +2876,15 @@ basic_filebuf_wchar* __thiscall basic_filebuf_short_ctor_uninitialized(basic_fil
     return this;
 }
 
-/* ??1?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@UAE@XZ */
-/* ??1?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@UEAA@XZ */
 /* ??1?$basic_filebuf@GU?$char_traits@G@std@@@std@@UAE@XZ */
 /* ??1?$basic_filebuf@GU?$char_traits@G@std@@@std@@UEAA@XZ */
-DEFINE_THISCALL_WRAPPER(basic_filebuf_wchar_dtor, 4)
-void __thiscall basic_filebuf_wchar_dtor(basic_filebuf_wchar *this)
+DEFINE_THISCALL_WRAPPER(basic_filebuf_short_dtor, 4)
+void __thiscall basic_filebuf_short_dtor(basic_filebuf_wchar *this)
 {
     TRACE("(%p)\n", this);
 
     if(this->close)
-        basic_filebuf_wchar_close(this);
+        basic_filebuf_short_close(this);
     if(this->str) {
         MSVCP_basic_string_char_dtor(this->str);
         operator_delete(this->str);
@@ -2975,8 +2893,8 @@ void __thiscall basic_filebuf_wchar_dtor(basic_filebuf_wchar *this)
     basic_streambuf_wchar_dtor(&this->base);
 }
 
-DEFINE_THISCALL_WRAPPER(basic_filebuf_wchar_vector_dtor, 8)
-basic_filebuf_wchar* __thiscall basic_filebuf_wchar_vector_dtor(basic_filebuf_wchar *this, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(basic_filebuf_short_vector_dtor, 8)
+basic_filebuf_wchar* __thiscall basic_filebuf_short_vector_dtor(basic_filebuf_wchar *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
@@ -2984,10 +2902,10 @@ basic_filebuf_wchar* __thiscall basic_filebuf_wchar_vector_dtor(basic_filebuf_wc
         INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
-            basic_filebuf_wchar_dtor(this+i);
+            basic_filebuf_short_dtor(this+i);
         operator_delete(ptr);
     } else {
-        basic_filebuf_wchar_dtor(this);
+        basic_filebuf_short_dtor(this);
         if(flags & 1)
             operator_delete(this);
     }
@@ -2995,37 +2913,13 @@ basic_filebuf_wchar* __thiscall basic_filebuf_wchar_vector_dtor(basic_filebuf_wc
     return this;
 }
 
-/* ?is_open@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QBE_NXZ */
-/* ?is_open@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QEBA_NXZ */
 /* ?is_open@?$basic_filebuf@GU?$char_traits@G@std@@@std@@QBE_NXZ */
 /* ?is_open@?$basic_filebuf@GU?$char_traits@G@std@@@std@@QEBA_NXZ */
-DEFINE_THISCALL_WRAPPER(basic_filebuf_wchar_is_open, 4)
-bool __thiscall basic_filebuf_wchar_is_open(const basic_filebuf_wchar *this)
+DEFINE_THISCALL_WRAPPER(basic_filebuf_short_is_open, 4)
+bool __thiscall basic_filebuf_short_is_open(const basic_filebuf_wchar *this)
 {
     TRACE("(%p)\n", this);
     return this->file != NULL;
-}
-
-/* ?open@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QAEPAV12@PB_WHH@Z */
-/* ?open@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QEAAPEAV12@PEB_WHH@Z */
-/* ?open@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QAEPAV12@PBGHH@Z */
-/* ?open@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QEAAPEAV12@PEBGHH@Z */
-DEFINE_THISCALL_WRAPPER(basic_filebuf_wchar_open_wchar, 16)
-basic_filebuf_wchar* __thiscall basic_filebuf_wchar_open_wchar(basic_filebuf_wchar *this, const wchar_t *name, int mode, int prot)
-{
-    FILE *f = NULL;
-
-    TRACE("(%p %s %d %d)\n", this, debugstr_w(name), mode, prot);
-
-    if(basic_filebuf_wchar_is_open(this))
-        return NULL;
-
-    if(!(f = _Fiopen_wchar(name, mode, prot)))
-        return NULL;
-
-    basic_filebuf_wchar__Init(this, f, INITFL_open);
-    basic_filebuf_wchar__Initcvt_cvt(this, codecvt_wchar_use_facet(IOS_LOCALE(&this->base)));
-    return this;
 }
 
 /* ?open@?$basic_filebuf@GU?$char_traits@G@std@@@std@@QAEPAV12@PB_WHH@Z */
@@ -3039,25 +2933,15 @@ basic_filebuf_wchar* __thiscall basic_filebuf_short_open_wchar(basic_filebuf_wch
 
     TRACE("(%p %s %d %d)\n", this, debugstr_w(name), mode, prot);
 
-    if(basic_filebuf_wchar_is_open(this))
+    if(basic_filebuf_short_is_open(this))
         return NULL;
 
     if(!(f = _Fiopen_wchar(name, mode, prot)))
         return NULL;
 
     basic_filebuf_short__Init(this, f, INITFL_open);
-    basic_filebuf_wchar__Initcvt_cvt(this, codecvt_short_use_facet(IOS_LOCALE(&this->base)));
+    basic_filebuf_short__Initcvt_cvt(this, codecvt_short_use_facet(IOS_LOCALE(&this->base)));
     return this;
-}
-
-/* ?open@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QAEPAV12@PB_WI@Z */
-/* ?open@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QEAAPEAV12@PEB_WI@Z */
-/* ?open@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QAEPAV12@PBGI@Z */
-/* ?open@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QEAAPEAV12@PEBGI@Z */
-DEFINE_THISCALL_WRAPPER(basic_filebuf_wchar_open_wchar_mode, 12)
-basic_filebuf_wchar* __thiscall basic_filebuf_wchar_open_wchar_mode(basic_filebuf_wchar *this, const wchar_t *name, unsigned int mode)
-{
-    return basic_filebuf_wchar_open_wchar(this, name, mode, SH_DENYNO);
 }
 
 /* ?open@?$basic_filebuf@GU?$char_traits@G@std@@@std@@QAEPAV12@PB_WI@Z */
@@ -3068,20 +2952,6 @@ DEFINE_THISCALL_WRAPPER(basic_filebuf_short_open_wchar_mode, 12)
 basic_filebuf_wchar* __thiscall basic_filebuf_short_open_wchar_mode(basic_filebuf_wchar *this, const wchar_t *name, unsigned int mode)
 {
     return basic_filebuf_short_open_wchar(this, name, mode, SH_DENYNO);
-}
-
-/* ?open@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QAEPAV12@PBDHH@Z */
-/* ?open@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QEAAPEAV12@PEBDHH@Z */
-DEFINE_THISCALL_WRAPPER(basic_filebuf_wchar_open, 16)
-basic_filebuf_wchar* __thiscall basic_filebuf_wchar_open(basic_filebuf_wchar *this, const char *name, int mode, int prot)
-{
-    wchar_t nameW[FILENAME_MAX];
-
-    TRACE("(%p %s %d %d)\n", this, name, mode, prot);
-
-    if(mbstowcs_s(NULL, nameW, FILENAME_MAX, name, FILENAME_MAX-1) != 0)
-        return NULL;
-    return basic_filebuf_wchar_open_wchar(this, nameW, mode, prot);
 }
 
 /* ?open@?$basic_filebuf@GU?$char_traits@G@std@@@std@@QAEPAV12@PBDHH@Z */
@@ -3100,37 +2970,25 @@ basic_filebuf_wchar* __thiscall basic_filebuf_short_open(basic_filebuf_wchar *th
 
 /* ?open@?$basic_filebuf@GU?$char_traits@G@std@@@std@@QAEPAV12@PBDF@Z */
 /* ?open@?$basic_filebuf@GU?$char_traits@G@std@@@std@@QEAAPEAV12@PEBDF@Z */
-DEFINE_THISCALL_WRAPPER(basic_filebuf_wchar_open_mode_old, 12)
-basic_filebuf_wchar* __thiscall basic_filebuf_wchar_open_mode_old(basic_filebuf_wchar *this, const char *name, short mode)
+DEFINE_THISCALL_WRAPPER(basic_filebuf_short_open_mode_old, 12)
+basic_filebuf_wchar* __thiscall basic_filebuf_short_open_mode_old(basic_filebuf_wchar *this, const char *name, short mode)
 {
     TRACE("(%p %p %d)\n", this, name, mode);
-    return basic_filebuf_wchar_open(this, name, mode, SH_DENYNO);
+    return basic_filebuf_short_open(this, name, mode, SH_DENYNO);
 }
 
 /* ?open@?$basic_filebuf@GU?$char_traits@G@std@@@std@@QAEPAV12@PBDH@Z */
 /* ?open@?$basic_filebuf@GU?$char_traits@G@std@@@std@@QEAAPEAV12@PEBDH@Z */
-/* ?open@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QAEPAV12@PBDI@Z */
-/* ?open@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QEAAPEAV12@PEBDI@Z */
-DEFINE_THISCALL_WRAPPER(basic_filebuf_wchar_open_mode, 12)
-basic_filebuf_wchar* __thiscall basic_filebuf_wchar_open_mode(basic_filebuf_wchar *this, const char *name, unsigned int mode)
-{
-    return basic_filebuf_wchar_open(this, name, mode, SH_DENYNO);
-}
-
-/* ?open@?$basic_filebuf@GU?$char_traits@G@std@@@std@@QAEPAV12@PBDI@Z */
-/* ?open@?$basic_filebuf@GU?$char_traits@G@std@@@std@@QEAAPEAV12@PEBDI@Z */
 DEFINE_THISCALL_WRAPPER(basic_filebuf_short_open_mode, 12)
 basic_filebuf_wchar* __thiscall basic_filebuf_short_open_mode(basic_filebuf_wchar *this, const char *name, unsigned int mode)
 {
     return basic_filebuf_short_open(this, name, mode, SH_DENYNO);
 }
 
-/* ?overflow@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@MAEGG@Z */
-/* ?overflow@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@MEAAGG@Z */
 /* ?overflow@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MAEGG@Z */
 /* ?overflow@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MEAAGG@Z */
-DEFINE_THISCALL_WRAPPER(basic_filebuf_wchar_overflow, 8)
-unsigned short __thiscall basic_filebuf_wchar_overflow(basic_filebuf_wchar *this, unsigned short c)
+DEFINE_THISCALL_WRAPPER(basic_filebuf_short_overflow, 8)
+unsigned short __thiscall basic_filebuf_short_overflow(basic_filebuf_wchar *this, unsigned short c)
 {
     char *ptr, *to_next;
     wchar_t ch = c;
@@ -3140,7 +2998,7 @@ unsigned short __thiscall basic_filebuf_wchar_overflow(basic_filebuf_wchar *this
 
     TRACE("(%p %d)\n", this, c);
 
-    if(!basic_filebuf_wchar_is_open(this))
+    if(!basic_filebuf_short_is_open(this))
         return WEOF;
     if(c == WEOF)
         return !c;
@@ -3171,16 +3029,14 @@ unsigned short __thiscall basic_filebuf_wchar_overflow(basic_filebuf_wchar *this
     }
 }
 
-/* ?pbackfail@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@MAEGG@Z */
-/* ?pbackfail@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@MEAAGG@Z */
 /* ?pbackfail@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MAEGG@Z */
 /* ?pbackfail@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MEAAGG@Z */
-DEFINE_THISCALL_WRAPPER(basic_filebuf_wchar_pbackfail, 8)
-unsigned short __thiscall basic_filebuf_wchar_pbackfail(basic_filebuf_wchar *this, unsigned short c)
+DEFINE_THISCALL_WRAPPER(basic_filebuf_short_pbackfail, 8)
+unsigned short __thiscall basic_filebuf_short_pbackfail(basic_filebuf_wchar *this, unsigned short c)
 {
     TRACE("(%p %d)\n", this, c);
 
-    if(!basic_filebuf_wchar_is_open(this))
+    if(!basic_filebuf_short_is_open(this))
         return WEOF;
 
     if(basic_streambuf_wchar_gptr(&this->base)>basic_streambuf_wchar_eback(&this->base)
@@ -3211,12 +3067,10 @@ unsigned short __thiscall basic_filebuf_wchar_pbackfail(basic_filebuf_wchar *thi
     return WEOF;
 }
 
-/* ?uflow@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@MAEGXZ */
-/* ?uflow@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@MEAAGXZ */
 /* ?uflow@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MAEGXZ */
 /* ?uflow@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MEAAGXZ */
-DEFINE_THISCALL_WRAPPER(basic_filebuf_wchar_uflow, 4)
-unsigned short __thiscall basic_filebuf_wchar_uflow(basic_filebuf_wchar *this)
+DEFINE_THISCALL_WRAPPER(basic_filebuf_short_uflow, 4)
+unsigned short __thiscall basic_filebuf_short_uflow(basic_filebuf_wchar *this)
 {
     wchar_t ch, *to_next;
     const char *buf_next;
@@ -3224,7 +3078,7 @@ unsigned short __thiscall basic_filebuf_wchar_uflow(basic_filebuf_wchar *this)
 
     TRACE("(%p)\n", this);
 
-    if(!basic_filebuf_wchar_is_open(this))
+    if(!basic_filebuf_short_is_open(this))
         return WEOF;
 
     if(basic_streambuf_wchar_gptr(&this->base) < basic_streambuf_wchar_egptr(&this->base))
@@ -3257,12 +3111,10 @@ unsigned short __thiscall basic_filebuf_wchar_uflow(basic_filebuf_wchar *this)
     }
 }
 
-/* ?underflow@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@MAEGXZ */
-/* ?underflow@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@MEAAGXZ */
 /* ?underflow@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MAEGXZ */
 /* ?underflow@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MEAAGXZ */
-DEFINE_THISCALL_WRAPPER(basic_filebuf_wchar_underflow, 4)
-unsigned short __thiscall basic_filebuf_wchar_underflow(basic_filebuf_wchar *this)
+DEFINE_THISCALL_WRAPPER(basic_filebuf_short_underflow, 4)
+unsigned short __thiscall basic_filebuf_short_underflow(basic_filebuf_wchar *this)
 {
     unsigned short ret;
 
@@ -3279,19 +3131,17 @@ unsigned short __thiscall basic_filebuf_wchar_underflow(basic_filebuf_wchar *thi
 
 /* ?seekoff@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MAE?AV?$fpos@H@2@JW4seekdir@ios_base@2@H@Z */
 /* ?seekoff@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MEAA?AV?$fpos@H@2@_JW4seekdir@ios_base@2@H@Z */
-/* ?seekoff@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@MAE?AV?$fpos@H@2@JHH@Z */
-/* ?seekoff@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@MEAA?AV?$fpos@H@2@_JHH@Z */
 /* ?seekoff@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MAE?AV?$fpos@H@2@JHH@Z */
 /* ?seekoff@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MEAA?AV?$fpos@H@2@_JHH@Z */
-DEFINE_THISCALL_WRAPPER(basic_filebuf_wchar_seekoff, 20)
-fpos_int* __thiscall basic_filebuf_wchar_seekoff(basic_filebuf_wchar *this,
+DEFINE_THISCALL_WRAPPER(basic_filebuf_short_seekoff, 20)
+fpos_int* __thiscall basic_filebuf_short_seekoff(basic_filebuf_wchar *this,
         fpos_int *ret, streamoff off, int way, int mode)
 {
     fpos_t pos;
 
     TRACE("(%p %p %Id %d %d)\n", this, ret, off, way, mode);
 
-    if(!basic_filebuf_wchar_is_open(this) || fseek(this->file, off, way)) {
+    if(!basic_filebuf_short_is_open(this) || fseek(this->file, off, way)) {
         ret->off = -1;
         ret->pos = 0;
         ret->state = 0;
@@ -3305,19 +3155,17 @@ fpos_int* __thiscall basic_filebuf_wchar_seekoff(basic_filebuf_wchar *this,
     return ret;
 }
 
-/* ?seekpos@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@MAE?AV?$fpos@H@2@V32@H@Z */
-/* ?seekpos@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@MEAA?AV?$fpos@H@2@V32@H@Z */
 /* ?seekpos@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MAE?AV?$fpos@H@2@V32@H@Z */
 /* ?seekpos@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MEAA?AV?$fpos@H@2@V32@H@Z */
-DEFINE_THISCALL_WRAPPER(basic_filebuf_wchar_seekpos, 36)
-fpos_int* __thiscall basic_filebuf_wchar_seekpos(basic_filebuf_wchar *this,
+DEFINE_THISCALL_WRAPPER(basic_filebuf_short_seekpos, 36)
+fpos_int* __thiscall basic_filebuf_short_seekpos(basic_filebuf_wchar *this,
         fpos_int *ret, fpos_int pos, int mode)
 {
     fpos_t fpos;
 
     TRACE("(%p %p %s %d)\n", this, ret, debugstr_fpos_int(&pos), mode);
 
-    if(!basic_filebuf_wchar_is_open(this) || fseek(this->file, (LONG)pos.pos, SEEK_SET)
+    if(!basic_filebuf_short_is_open(this) || fseek(this->file, (LONG)pos.pos, SEEK_SET)
             || (pos.off && fseek(this->file, pos.off, SEEK_CUR))) {
         ret->off = -1;
         ret->pos = 0;
@@ -3332,23 +3180,6 @@ fpos_int* __thiscall basic_filebuf_wchar_seekpos(basic_filebuf_wchar *this,
     return ret;
 }
 
-/* ?setbuf@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@MAEPAV?$basic_streambuf@_WU?$char_traits@_W@std@@@2@PA_WH@Z */
-/* ?setbuf@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@MEAAPEAV?$basic_streambuf@_WU?$char_traits@_W@std@@@2@PEA_W_J@Z */
-DEFINE_THISCALL_WRAPPER(basic_filebuf_wchar_setbuf, 12)
-basic_streambuf_wchar* __thiscall basic_filebuf_wchar_setbuf(basic_filebuf_wchar *this, wchar_t *buf, streamsize count)
-{
-    TRACE("(%p %p %Id)\n", this, buf, count);
-
-    if(!basic_filebuf_wchar_is_open(this))
-        return NULL;
-
-    if(setvbuf(this->file, (char*)buf, (buf==NULL && count==0) ? _IONBF : _IOFBF, count*sizeof(wchar_t)))
-        return NULL;
-
-    basic_filebuf_wchar__Init(this, this->file, INITFL_open);
-    return &this->base;
-}
-
 /* ?setbuf@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MAEPAV?$basic_streambuf@GU?$char_traits@G@std@@@2@PAGH@Z */
 /* ?setbuf@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MEAAPEAV?$basic_streambuf@GU?$char_traits@G@std@@@2@PEAG_J@Z */
 DEFINE_THISCALL_WRAPPER(basic_filebuf_short_setbuf, 12)
@@ -3356,7 +3187,7 @@ basic_streambuf_wchar* __thiscall basic_filebuf_short_setbuf(basic_filebuf_wchar
 {
     TRACE("(%p %p %Id)\n", this, buf, count);
 
-    if(!basic_filebuf_wchar_is_open(this))
+    if(!basic_filebuf_short_is_open(this))
         return NULL;
 
     if(setvbuf(this->file, (char*)buf, (buf==NULL && count==0) ? _IONBF : _IOFBF, count*sizeof(wchar_t)))
@@ -3366,30 +3197,19 @@ basic_streambuf_wchar* __thiscall basic_filebuf_short_setbuf(basic_filebuf_wchar
     return &this->base;
 }
 
-/* ?sync@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@MAEHXZ */
-/* ?sync@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@MEAAHXZ */
 /* ?sync@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MAEHXZ */
 /* ?sync@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MEAAHXZ */
-DEFINE_THISCALL_WRAPPER(basic_filebuf_wchar_sync, 4)
-int __thiscall basic_filebuf_wchar_sync(basic_filebuf_wchar *this)
+DEFINE_THISCALL_WRAPPER(basic_filebuf_short_sync, 4)
+int __thiscall basic_filebuf_short_sync(basic_filebuf_wchar *this)
 {
     TRACE("(%p)\n", this);
 
-    if(!basic_filebuf_wchar_is_open(this))
+    if(!basic_filebuf_short_is_open(this))
         return 0;
 
     if(call_basic_streambuf_wchar_overflow(&this->base, WEOF) == WEOF)
         return 0;
     return fflush(this->file);
-}
-
-/* ?imbue@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@MAEXABVlocale@2@@Z */
-/* ?imbue@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@MEAAXAEBVlocale@2@@Z */
-DEFINE_THISCALL_WRAPPER(basic_filebuf_wchar_imbue, 8)
-void __thiscall basic_filebuf_wchar_imbue(basic_filebuf_wchar *this, const locale *loc)
-{
-    TRACE("(%p %p)\n", this, loc);
-    basic_filebuf_wchar__Initcvt_cvt(this, codecvt_wchar_use_facet(loc));
 }
 
 /* ?imbue@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MAEXABVlocale@2@@Z */
@@ -3398,7 +3218,7 @@ DEFINE_THISCALL_WRAPPER(basic_filebuf_short_imbue, 8)
 void __thiscall basic_filebuf_short_imbue(basic_filebuf_wchar *this, const locale *loc)
 {
     TRACE("(%p %p)\n", this, loc);
-    basic_filebuf_wchar__Initcvt_cvt(this, codecvt_short_use_facet(loc));
+    basic_filebuf_short__Initcvt_cvt(this, codecvt_short_use_facet(loc));
 }
 
 /* ?_Getstate@?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AAEHH@Z */
@@ -9834,7 +9654,7 @@ basic_ofstream_wchar* __thiscall basic_ofstream_short_ctor(basic_ofstream_wchar 
         basic_ios = basic_ostream_short_get_basic_ios(&this->base);
     }
 
-    basic_filebuf_wchar_ctor(&this->filebuf);
+    basic_filebuf_short_ctor(&this->filebuf);
     basic_ostream_short_ctor(&this->base, &this->filebuf.base, FALSE, TRUE, FALSE);
     basic_ios->base.vtable = &basic_ofstream_short_vtable;
     return this;
@@ -9858,7 +9678,7 @@ basic_ofstream_wchar* __thiscall basic_ofstream_short_ctor_file(
         basic_ios = basic_ostream_short_get_basic_ios(&this->base);
     }
 
-    basic_filebuf_wchar_ctor_file(&this->filebuf, file);
+    basic_filebuf_short_ctor_file(&this->filebuf, file);
     basic_ostream_short_ctor(&this->base, &this->filebuf.base, FALSE, TRUE, FALSE);
     basic_ios->base.vtable = &basic_ofstream_short_vtable;
     return this;
@@ -9884,7 +9704,7 @@ basic_ofstream_wchar* __thiscall basic_ofstream_short_ctor_name(basic_ofstream_w
 
     basic_ofstream_short_ctor(this, virt_init);
 
-    if(!basic_filebuf_wchar_open(&this->filebuf, name, mode|OPENMODE_out, _SH_DENYNO)) {
+    if(!basic_filebuf_short_open(&this->filebuf, name, mode|OPENMODE_out, _SH_DENYNO)) {
         basic_ios_wchar *basic_ios = basic_ostream_short_get_basic_ios(&this->base);
         basic_ios_wchar_setstate(basic_ios, IOSTATE_failbit);
     }
@@ -9901,7 +9721,7 @@ void __thiscall basic_ofstream_short_dtor(basic_ios_wchar *base)
     TRACE("(%p)\n", this);
 
     basic_ostream_short_dtor(basic_ostream_short_to_basic_ios(&this->base));
-    basic_filebuf_wchar_dtor(&this->filebuf);
+    basic_filebuf_short_dtor(&this->filebuf);
 }
 
 /* ??_D?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAEXXZ */
@@ -9945,7 +9765,7 @@ void __thiscall basic_ofstream_short_close(basic_ofstream_wchar *this)
 {
     TRACE("(%p)\n", this);
 
-    if(!basic_filebuf_wchar_close(&this->filebuf)) {
+    if(!basic_filebuf_short_close(&this->filebuf)) {
         basic_ios_wchar *basic_ios = basic_ostream_short_get_basic_ios(&this->base);
         basic_ios_wchar_setstate(basic_ios, IOSTATE_failbit);
     }
@@ -9957,7 +9777,7 @@ DEFINE_THISCALL_WRAPPER(basic_ofstream_short_is_open, 4)
 bool __thiscall basic_ofstream_short_is_open(const basic_ofstream_wchar *this)
 {
     TRACE("(%p)\n", this);
-    return basic_filebuf_wchar_is_open(&this->filebuf);
+    return basic_filebuf_short_is_open(&this->filebuf);
 }
 
 /* ?open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAEXPBDH@Z */
@@ -9968,7 +9788,7 @@ void __thiscall basic_ofstream_short_open(basic_ofstream_wchar *this,
 {
     TRACE("(%p %s %d)\n", this, name, mode);
 
-    if(!basic_filebuf_wchar_open(&this->filebuf, name, mode|OPENMODE_out, _SH_DENYNO)) {
+    if(!basic_filebuf_short_open(&this->filebuf, name, mode|OPENMODE_out, _SH_DENYNO)) {
         basic_ios_wchar *basic_ios = basic_ostream_short_get_basic_ios(&this->base);
         basic_ios_wchar_setstate(basic_ios, IOSTATE_failbit);
     }
@@ -10204,7 +10024,7 @@ basic_ifstream_wchar* __thiscall basic_ifstream_short_ctor(basic_ifstream_wchar 
         basic_ios = basic_istream_short_get_basic_ios(&this->base);
     }
 
-    basic_filebuf_wchar_ctor(&this->filebuf);
+    basic_filebuf_short_ctor(&this->filebuf);
     basic_istream_short_ctor(&this->base, &this->filebuf.base, FALSE, FALSE);
     basic_ios->base.vtable = &basic_ifstream_short_vtable;
     return this;
@@ -10228,7 +10048,7 @@ basic_ifstream_wchar* __thiscall basic_ifstream_short_ctor_file(
         basic_ios = basic_istream_short_get_basic_ios(&this->base);
     }
 
-    basic_filebuf_wchar_ctor_file(&this->filebuf, file);
+    basic_filebuf_short_ctor_file(&this->filebuf, file);
     basic_istream_short_ctor(&this->base, &this->filebuf.base, FALSE, FALSE);
     basic_ios->base.vtable = &basic_ifstream_short_vtable;
     return this;
@@ -10254,7 +10074,7 @@ basic_ifstream_wchar* __thiscall basic_ifstream_short_ctor_name(basic_ifstream_w
 
     basic_ifstream_short_ctor(this, virt_init);
 
-    if(!basic_filebuf_wchar_open(&this->filebuf, name, mode|OPENMODE_in, _SH_DENYNO)) {
+    if(!basic_filebuf_short_open(&this->filebuf, name, mode|OPENMODE_in, _SH_DENYNO)) {
         basic_ios_wchar *basic_ios = basic_istream_short_get_basic_ios(&this->base);
         basic_ios_wchar_setstate(basic_ios, IOSTATE_failbit);
     }
@@ -10271,7 +10091,7 @@ void __thiscall basic_ifstream_short_dtor(basic_ios_wchar *base)
     TRACE("(%p)\n", this);
 
     basic_istream_short_dtor(basic_istream_short_to_basic_ios(&this->base));
-    basic_filebuf_wchar_dtor(&this->filebuf);
+    basic_filebuf_short_dtor(&this->filebuf);
 }
 
 /* ??_D?$basic_ifstream@GU?$char_traits@G@std@@@std@@QAEXXZ */
@@ -10315,7 +10135,7 @@ void __thiscall basic_ifstream_short_close(basic_ifstream_wchar *this)
 {
     TRACE("(%p)\n", this);
 
-    if(!basic_filebuf_wchar_close(&this->filebuf)) {
+    if(!basic_filebuf_short_close(&this->filebuf)) {
         basic_ios_wchar *basic_ios = basic_istream_short_get_basic_ios(&this->base);
         basic_ios_wchar_setstate(basic_ios, IOSTATE_failbit);
     }
@@ -10327,7 +10147,7 @@ DEFINE_THISCALL_WRAPPER(basic_ifstream_short_is_open, 4)
 bool __thiscall basic_ifstream_short_is_open(const basic_ifstream_wchar *this)
 {
     TRACE("(%p)\n", this);
-    return basic_filebuf_wchar_is_open(&this->filebuf);
+    return basic_filebuf_short_is_open(&this->filebuf);
 }
 
 /* ?open@?$basic_ifstream@GU?$char_traits@G@std@@@std@@QAEXPBDH@Z */
@@ -10338,7 +10158,7 @@ void __thiscall basic_ifstream_short_open(basic_ifstream_wchar *this,
 {
     TRACE("(%p %s %d)\n", this, name, mode);
 
-    if(!basic_filebuf_wchar_open(&this->filebuf, name, mode|OPENMODE_in, _SH_DENYNO)) {
+    if(!basic_filebuf_short_open(&this->filebuf, name, mode|OPENMODE_in, _SH_DENYNO)) {
         basic_ios_wchar *basic_ios = basic_istream_short_get_basic_ios(&this->base);
         basic_ios_wchar_setstate(basic_ios, IOSTATE_failbit);
     }
@@ -10577,7 +10397,7 @@ basic_fstream_wchar* __thiscall basic_fstream_short_ctor(basic_fstream_wchar *th
         basic_ios = basic_istream_short_get_basic_ios(&this->base.base1);
     }
 
-    basic_filebuf_wchar_ctor(&this->filebuf);
+    basic_filebuf_short_ctor(&this->filebuf);
     basic_iostream_short_ctor(&this->base, &this->filebuf.base, FALSE);
     basic_ios->base.vtable = &basic_fstream_short_vtable;
     return this;
@@ -10602,7 +10422,7 @@ basic_fstream_wchar* __thiscall basic_fstream_short_ctor_file(basic_fstream_wcha
         basic_ios = basic_istream_short_get_basic_ios(&this->base.base1);
     }
 
-    basic_filebuf_wchar_ctor_file(&this->filebuf, file);
+    basic_filebuf_short_ctor_file(&this->filebuf, file);
     basic_iostream_short_ctor(&this->base, &this->filebuf.base, FALSE);
     basic_ios->base.vtable = &basic_fstream_short_vtable;
     return this;
@@ -10628,7 +10448,7 @@ basic_fstream_wchar* __thiscall basic_fstream_short_ctor_name(basic_fstream_wcha
 
     basic_fstream_short_ctor(this, virt_init);
 
-    if(!basic_filebuf_wchar_open(&this->filebuf, name, mode, _SH_DENYNO)) {
+    if(!basic_filebuf_short_open(&this->filebuf, name, mode, _SH_DENYNO)) {
         basic_ios_wchar *basic_ios = basic_istream_short_get_basic_ios(&this->base.base1);
         basic_ios_wchar_setstate(basic_ios, IOSTATE_failbit);
     }
@@ -10645,7 +10465,7 @@ void __thiscall basic_fstream_short_dtor(basic_ios_wchar *base)
     TRACE("(%p)\n", this);
 
     basic_iostream_short_dtor(basic_iostream_short_to_basic_ios(&this->base));
-    basic_filebuf_wchar_dtor(&this->filebuf);
+    basic_filebuf_short_dtor(&this->filebuf);
 }
 
 /* ??_D?$basic_fstream@GU?$char_traits@G@std@@@std@@QAEXXZ */
@@ -10689,7 +10509,7 @@ void __thiscall basic_fstream_short_close(basic_fstream_wchar *this)
 {
     TRACE("(%p)\n", this);
 
-    if(!basic_filebuf_wchar_close(&this->filebuf)) {
+    if(!basic_filebuf_short_close(&this->filebuf)) {
         basic_ios_wchar *basic_ios = basic_istream_short_get_basic_ios(&this->base.base1);
         basic_ios_wchar_setstate(basic_ios, IOSTATE_failbit);
     }
@@ -10701,18 +10521,18 @@ DEFINE_THISCALL_WRAPPER(basic_fstream_short_is_open, 4)
 bool __thiscall basic_fstream_short_is_open(const basic_fstream_wchar *this)
 {
     TRACE("(%p)\n", this);
-    return basic_filebuf_wchar_is_open(&this->filebuf);
+    return basic_filebuf_short_is_open(&this->filebuf);
 }
 
-/* ?open@?$basic_filebuf@GU?$char_traits@G@std@@@std@@QAEPAV12@PBDH@Z */
-/* ?open@?$basic_filebuf@GU?$char_traits@G@std@@@std@@QEAAPEAV12@PEBDH@Z */
+/* ?open@?$basic_fstream@GU?$char_traits@G@std@@@std@@QAEXPBDH@Z */
+/* ?open@?$basic_fstream@GU?$char_traits@G@std@@@std@@QEAAXPEBDH@Z */
 DEFINE_THISCALL_WRAPPER(basic_fstream_short_open, 12)
 void __thiscall basic_fstream_short_open(basic_fstream_wchar *this,
         const char *name, int mode)
 {
     TRACE("(%p %s %d)\n", this, name, mode);
 
-    if(!basic_filebuf_wchar_open(&this->filebuf, name, mode, _SH_DENYNO)) {
+    if(!basic_filebuf_short_open(&this->filebuf, name, mode, _SH_DENYNO)) {
         basic_ios_wchar *basic_ios = basic_istream_short_get_basic_ios(&this->base.base1);
         basic_ios_wchar_setstate(basic_ios, IOSTATE_failbit);
     }
@@ -12520,7 +12340,6 @@ void init_io(void *base)
     init_basic_streambuf_wchar_rtti(base);
     init_basic_streambuf_short_rtti(base);
     init_basic_filebuf_char_rtti(base);
-    init_basic_filebuf_wchar_rtti(base);
     init_basic_filebuf_short_rtti(base);
     init_basic_stringbuf_char_rtti(base);
     init_basic_stringbuf_short_rtti(base);
@@ -12578,23 +12397,23 @@ void free_io(void)
     basic_filebuf_char_dtor(&filebuf_char_stdin);
 
     basic_istream_short_vbase_dtor(&ucin.obj);
-    basic_filebuf_wchar_dtor(&filebuf_short_stdin);
+    basic_filebuf_short_dtor(&filebuf_short_stdin);
 
     basic_ostream_char_vbase_dtor(&cout.obj);
     basic_filebuf_char_dtor(&filebuf_char_stdout);
 
     basic_ostream_short_vbase_dtor(&ucout.obj);
-    basic_filebuf_wchar_dtor(&filebuf_short_stdout);
+    basic_filebuf_short_dtor(&filebuf_short_stdout);
 
     basic_ostream_char_vbase_dtor(&cerr.obj);
     basic_filebuf_char_dtor(&filebuf_char_stderr);
 
     basic_ostream_short_vbase_dtor(&ucerr.obj);
-    basic_filebuf_wchar_dtor(&filebuf_short_stderr);
+    basic_filebuf_short_dtor(&filebuf_short_stderr);
 
     basic_ostream_char_vbase_dtor(&MSVCP_clog.obj);
     basic_filebuf_char_dtor(&filebuf_char_log);
 
     basic_ostream_short_vbase_dtor(&uclog.obj);
-    basic_filebuf_wchar_dtor(&filebuf_short_log);
+    basic_filebuf_short_dtor(&filebuf_short_log);
 }
