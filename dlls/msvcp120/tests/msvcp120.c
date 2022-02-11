@@ -2070,14 +2070,14 @@ static void test_thrd(void)
     /* test for equal */
     for(i=0; i<ARRAY_SIZE(testeq); i++) {
         ret = p__Thrd_equal(testeq[i].a, testeq[i].b);
-        ok(ret == testeq[i].r, "(%p %u) = (%p %u) expected %d, got %d\n",
+        ok(ret == testeq[i].r, "(%p %lu) = (%p %lu) expected %d, got %d\n",
             testeq[i].a.hnd, testeq[i].a.id, testeq[i].b.hnd, testeq[i].b.id, testeq[i].r, ret);
     }
 
     /* test for less than */
     for(i=0; i<ARRAY_SIZE(testlt); i++) {
         ret = p__Thrd_lt(testlt[i].a, testlt[i].b);
-        ok(ret == testlt[i].r, "(%p %u) < (%p %u) expected %d, got %d\n",
+        ok(ret == testlt[i].r, "(%p %lu) < (%p %lu) expected %d, got %d\n",
             testlt[i].a.hnd, testlt[i].a.id, testlt[i].b.hnd, testlt[i].b.id, testlt[i].r, ret);
     }
 
@@ -2095,8 +2095,8 @@ static void test_thrd(void)
     /* test for current */
     ta = p__Thrd_current();
     tb = p__Thrd_current();
-    ok(ta.id == tb.id, "got a %d b %d\n", ta.id, tb.id);
-    ok(ta.id == GetCurrentThreadId(), "expected %d, got %d\n", GetCurrentThreadId(), ta.id);
+    ok(ta.id == tb.id, "got a %ld b %ld\n", ta.id, tb.id);
+    ok(ta.id == GetCurrentThreadId(), "expected %ld, got %ld\n", GetCurrentThreadId(), ta.id);
     /* the handles can be different if new threads are created at same time */
     ok(ta.hnd != NULL, "handle a is NULL\n");
     ok(tb.hnd != NULL, "handle b is NULL\n");
@@ -2114,7 +2114,7 @@ static void test_thrd(void)
     ok(!ret, "failed to create thread, got %d\n", ret);
     ret = p__Thrd_join(ta, &r);
     ok(!ret, "failed to join thread, got %d\n", ret);
-    ok(ta.id == tb.id, "expected %d, got %d\n", ta.id, tb.id);
+    ok(ta.id == tb.id, "expected %ld, got %ld\n", ta.id, tb.id);
     ok(ta.hnd != tb.hnd, "same handles, got %p\n", ta.hnd);
     ok(r == 0x42, "expected 0x42, got %d\n", r);
     ret = p__Thrd_detach(ta);
@@ -2131,7 +2131,7 @@ static void test_thrd(void)
 struct cndmtx
 {
     HANDLE initialized;
-    int started;
+    LONG started;
     int thread_no;
 
     _Cnd_t cnd;
@@ -2249,7 +2249,7 @@ static void test_cnd(void)
     p__Cnd_register_at_thread_exit(&cnd, &mtx, &r);
     p__Cnd_unregister_at_thread_exit(&mtx);
     p__Cnd_do_broadcast_at_thread_exit();
-    ok(mtx->count == 1, "mtx.count = %d\n", mtx->count);
+    ok(mtx->count == 1, "mtx.count = %ld\n", mtx->count);
 
     p__Cnd_register_at_thread_exit(&cnd, &mtx, &r);
     ok(r == 0xcafe, "r = %x\n", r);
@@ -2341,14 +2341,14 @@ static unsigned int __cdecl vtbl_func__Go(_Pad *this)
     DWORD ret;
 
     ret = WaitForSingleObject(_Pad__Launch_returned, 100);
-    ok(ret == WAIT_TIMEOUT, "WiatForSingleObject returned %x\n", ret);
-    ok(!pad.mtx->count, "pad.mtx.count = %d\n", pad.mtx->count);
+    ok(ret == WAIT_TIMEOUT, "WiatForSingleObject returned %lx\n", ret);
+    ok(!pad.mtx->count, "pad.mtx.count = %ld\n", pad.mtx->count);
     ok(!pad.launched, "pad.launched = %x\n", pad.launched);
     call_func1(p__Pad__Release, &pad);
     ok(pad.launched, "pad.launched = %x\n", pad.launched);
     ret = WaitForSingleObject(_Pad__Launch_returned, 100);
-    ok(ret == WAIT_OBJECT_0, "WiatForSingleObject returned %x\n", ret);
-    ok(pad.mtx->count == 1, "pad.mtx.count = %d\n", pad.mtx->count);
+    ok(ret == WAIT_OBJECT_0, "WiatForSingleObject returned %lx\n", ret);
+    ok(pad.mtx->count == 1, "pad.mtx.count = %ld\n", pad.mtx->count);
     return 0;
 }
 
@@ -2394,7 +2394,7 @@ static void test__Pad(void)
     memset(&pad, 0xfe, sizeof(pad));
     call_func1(p__Pad_ctor, &pad);
     ok(!pad.launched, "pad.launched = %x\n", pad.launched);
-    ok(pad.mtx->count == 1, "pad.mtx.count = %d\n", pad.mtx->count);
+    ok(pad.mtx->count == 1, "pad.mtx.count = %ld\n", pad.mtx->count);
 
     pad.vtable = &pfunc;
     call_func2(p__Pad__Launch, &pad, &thrd);
@@ -2784,7 +2784,7 @@ static void test_queue_base_v4(void)
 
     thread[1] = CreateThread(NULL, 0, queue_push_thread, &queue, 0, NULL);
     ret = WaitForSingleObject(thread[1], 100);
-    ok(ret == WAIT_TIMEOUT, "WaitForSingleObject returned %x\n", ret);
+    ok(ret == WAIT_TIMEOUT, "WaitForSingleObject returned %lx\n", ret);
 
     SetEvent(block_end);
     WaitForSingleObject(thread[0], INFINITE);
@@ -2807,7 +2807,7 @@ static void test_queue_base_v4(void)
 
     thread[1] = CreateThread(NULL, 0, queue_pop_thread, &queue, 0, NULL);
     ret = WaitForSingleObject(thread[1], 100);
-    ok(ret == WAIT_TIMEOUT, "WaitForSingleObject returned %x\n", ret);
+    ok(ret == WAIT_TIMEOUT, "WaitForSingleObject returned %lx\n", ret);
 
     SetEvent(block_end);
     WaitForSingleObject(thread[0], INFINITE);
