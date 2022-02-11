@@ -611,7 +611,7 @@ BLUE_INI TEXTFILE
 "BgType = ImageFile\r\n"
 "SizingMargins = 5, 5, 5, 5\r\n"
 "ContentMargins = 0, 0, 3, 3\r\n"
-"SizingType = Tile\r\n"
+"SizingType = Stretch\r\n"
 "ImageFile = blue_scrollbar_arrows.bmp\r\n"
 "ImageCount = 16\r\n"
 "ImageLayout = Vertical\r\n"
