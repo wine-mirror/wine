@@ -5,18 +5,21 @@
    <cc:Work rdf:about="">
     <dc:format>image/svg+xml</dc:format>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:title/>
    </cc:Work>
   </rdf:RDF>
  </metadata>
  <g fill="none" stroke-width="2">
-  <circle cx="11" cy="11" r="10" stroke="#aeaeae"/>
-  <circle cx="11" cy="33" r="10" stroke="#3096fa"/>
-  <circle cx="11" cy="55" r="10" stroke="#2979ff"/>
+  <g fill="#fff">
+   <circle cx="11" cy="11" r="10" stroke="#aeaeae"/>
+   <circle cx="11" cy="33" r="10" stroke="#3096fa"/>
+   <circle cx="11" cy="55" r="10" stroke="#2979ff"/>
+  </g>
   <circle cx="11" cy="77" r="10" stroke="#aeaeae"/>
-  <circle cx="11" cy="99" r="10" stroke="#aeaeae"/>
-  <circle cx="11" cy="121" r="10" stroke="#3096fa"/>
-  <circle cx="11.055" cy="143" r="10" stroke="#2979ff"/>
+  <g fill="#fff">
+   <circle cx="11" cy="99" r="10" stroke="#aeaeae"/>
+   <circle cx="11" cy="121" r="10" stroke="#3096fa"/>
+   <circle cx="11.055" cy="143" r="10" stroke="#2979ff"/>
+  </g>
   <circle cx="11" cy="165" r="10" stroke="#aeaeae"/>
  </g>
  <path d="m17 99a6 6 0 0 1-6 6 6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6z"/>

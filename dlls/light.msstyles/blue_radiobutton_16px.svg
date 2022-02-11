@@ -5,24 +5,25 @@
    <cc:Work rdf:about="">
     <dc:format>image/svg+xml</dc:format>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:title/>
    </cc:Work>
   </rdf:RDF>
  </metadata>
- <path d="m13 72a5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5 5 5 0 0 1 5 5z"/>
  <g fill="none">
-  <circle cx="8" cy="8" r="7.5" stroke="#aeaeae"/>
-  <circle cx="8" cy="24" r="7.5" stroke="#3096fa"/>
-  <circle cx="8" cy="40" r="7.5" stroke="#2979ff"/>
+  <g fill="#fff">
+   <circle cx="8" cy="8" r="7.5" stroke="#aeaeae"/>
+   <circle cx="8" cy="24" r="7.5" stroke="#3096fa"/>
+   <circle cx="8" cy="40" r="7.5" stroke="#2979ff"/>
+  </g>
   <circle cx="8" cy="56" r="7.5" stroke="#aeaeae"/>
-  <circle cx="8" cy="72" r="7.5" stroke="#aeaeae"/>
-  <circle cx="8" cy="88" r="7.5" stroke="#3096fa"/>
-  <circle cx="8" cy="104" r="7.5" stroke="#2979ff"/>
+  <g fill="#fff">
+   <circle cx="8" cy="72" r="7.5" stroke="#aeaeae"/>
+   <circle cx="8" cy="88" r="7.5" stroke="#3096fa"/>
+   <circle cx="8" cy="104" r="7.5" stroke="#2979ff"/>
+  </g>
   <circle cx="8" cy="120" r="7.5" stroke="#aeaeae"/>
  </g>
- <g>
-  <path d="m13 88a5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5 5 5 0 0 1 5 5z" fill="#3096fa" stroke="#3096fa"/>
-  <path d="m13 104a5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5 5 5 0 0 1 5 5z" fill="#2979ff"/>
-  <path d="m13 120a5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5 5 5 0 0 1 5 5z" fill="#aeaeae"/>
- </g>
+ <path d="m13 72a5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5 5 5 0 0 1 5 5z"/>
+ <path d="m12.5 88a4.5 4.5 0 0 1-4.5 4.5 4.5 4.5 0 0 1-4.5-4.5 4.5 4.5 0 0 1 4.5-4.5 4.5 4.5 0 0 1 4.5 4.5z" fill="#3096fa" stroke="#3096fa"/>
+ <path d="m13 104a5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5 5 5 0 0 1 5 5z" fill="#2979ff"/>
+ <path d="m13 120a5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5 5 5 0 0 1 5 5z" fill="#aeaeae"/>
 </svg>
