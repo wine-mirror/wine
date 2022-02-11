@@ -141,7 +141,7 @@ NTSTATUS WINAPI wow64_NtAcceptConnectPort( UINT *args )
     LPC_SECTION_WRITE *write = get_ptr( &args );
     LPC_SECTION_READ *read = get_ptr( &args );
 
-    FIXME( "%p %u %p %u %p %p: stub\n", handle_ptr, id, msg, accept, write, read );
+    FIXME( "%p %lu %p %u %p %p: stub\n", handle_ptr, id, msg, accept, write, read );
     return STATUS_NOT_IMPLEMENTED;
 }
 

@@ -455,9 +455,9 @@ static void init_syscall_table( HMODULE module, ULONG idx, const SYSTEM_SERVICE_
                     thunks[start_pos + table_pos] = (syscall_thunk)orig_table->ServiceTable[wrap_pos++];
                     max_pos = max( table_pos, max_pos );
                 }
-                else ERR( "invalid syscall id %04x for %s\n", id, name );
+                else ERR( "invalid syscall id %04lx for %s\n", id, name );
             }
-            else ERR( "wrong syscall table id %04x for %s\n", id, name );
+            else ERR( "wrong syscall table id %04lx for %s\n", id, name );
         }
         else if (res > 0)
         {
@@ -465,7 +465,7 @@ static void init_syscall_table( HMODULE module, ULONG idx, const SYSTEM_SERVICE_
             wrap_pos++;
             exp_pos--;  /* try again */
         }
-        else FIXME( "missing wrapper for syscall %04x %s\n", id, name );
+        else FIXME( "missing wrapper for syscall %04lx %s\n", id, name );
     }
 
     for ( ; wrap_pos < orig_table->ServiceLimit; wrap_pos++)
@@ -492,7 +492,7 @@ static HMODULE load_64bit_module( const WCHAR *name )
     RtlInitUnicodeString( &str, path );
     if ((status = LdrLoadDll( NULL, 0, &str, &module )))
     {
-        ERR( "failed to load dll %x\n", status );
+        ERR( "failed to load dll %lx\n", status );
         NtTerminateProcess( GetCurrentProcess(), status );
     }
     return module;
@@ -535,7 +535,7 @@ static HMODULE load_32bit_module( const WCHAR *name )
     if (!status) return module;
 
 failed:
-    ERR( "failed to load dll %x\n", status );
+    ERR( "failed to load dll %lx\n", status );
     NtTerminateProcess( GetCurrentProcess(), status );
     return NULL;
 }

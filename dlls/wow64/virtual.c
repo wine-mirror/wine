@@ -77,7 +77,7 @@ NTSTATUS WINAPI wow64_NtAllocateVirtualMemoryEx( UINT *args )
     SIZE_T size;
     NTSTATUS status;
 
-    if (count) FIXME( "%d extended parameters %p\n", count, params );
+    if (count) FIXME( "%ld extended parameters %p\n", count, params );
     status = NtAllocateVirtualMemoryEx( process, addr_32to64( &addr, addr32 ), size_32to64( &size, size32 ),
                                         type, protect, params, count );
     if (!status)
@@ -430,7 +430,7 @@ NTSTATUS WINAPI wow64_NtSetLdtEntries( UINT *args )
     ULONG entry2_low = get_ulong( &args );
     ULONG entry2_high = get_ulong( &args );
 
-    FIXME( "%04x %08x %08x %04x %08x %08x: stub\n",
+    FIXME( "%04lx %08lx %08lx %04lx %08lx %08lx: stub\n",
            sel1, entry1_low, entry1_high, sel2, entry2_low, entry2_high );
     return STATUS_NOT_IMPLEMENTED;
 }

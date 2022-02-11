@@ -110,7 +110,7 @@ NTSTATUS WINAPI wow64_NtAdjustGroupsToken( UINT *args )
     TOKEN_GROUPS32 *prev = get_ptr( &args );
     ULONG *retlen = get_ptr( &args );
 
-    FIXME( "%p %d %p %u %p %p\n", handle, reset, groups, len, prev, retlen );
+    FIXME( "%p %d %p %lu %p %p\n", handle, reset, groups, len, prev, retlen );
     return STATUS_NOT_IMPLEMENTED;
 }
 
@@ -146,7 +146,7 @@ NTSTATUS WINAPI wow64_NtCreateLowBoxToken( UINT *args )
     ULONG handle_count = get_ulong( &args );
     ULONG *handles32 = get_ptr( &args );
 
-    FIXME( "%p %p %x %p %p %u %p %u %p: stub\n",
+    FIXME( "%p %p %lx %p %p %lu %p %lu %p: stub\n",
            handle_ptr, token, access, attr32, sid, count, capabilities32, handle_count, handles32 );
 
     *handle_ptr = 0;

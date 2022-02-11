@@ -349,7 +349,7 @@ NTSTATUS WINAPI wow64_NtQueryMultipleValueKey( UINT *args )
     ULONG len = get_ulong( &args );
     ULONG *retlen = get_ptr( &args );
 
-    FIXME( "%p %p %u %p %u %p: stub\n", handle, info, count, ptr, len, retlen );
+    FIXME( "%p %p %lu %p %lu %p: stub\n", handle, info, count, ptr, len, retlen );
     return STATUS_SUCCESS;
 }
 

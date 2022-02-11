@@ -365,7 +365,7 @@ static void call_user_exception_dispatcher( EXCEPTION_RECORD32 *rec, void *ctx32
             ctx.EFlags &= ~(0x100|0x400|0x40000);
             NtSetInformationThread( GetCurrentThread(), ThreadWow64Context, &ctx, sizeof(ctx) );
 
-            TRACE( "exception %08x dispatcher %08x stack %08x eip %08x\n",
+            TRACE( "exception %08lx dispatcher %08lx stack %08lx eip %08lx\n",
                    rec->ExceptionCode, ctx.Eip, ctx.Esp, stack->context.Eip );
         }
         break;
@@ -392,7 +392,7 @@ static void call_user_exception_dispatcher( EXCEPTION_RECORD32 *rec, void *ctx32
             else ctx.Cpsr &= ~0x20;
             NtSetInformationThread( GetCurrentThread(), ThreadWow64Context, &ctx, sizeof(ctx) );
 
-            TRACE( "exception %08x dispatcher %08x stack %08x pc %08x\n",
+            TRACE( "exception %08lx dispatcher %08lx stack %08lx pc %08lx\n",
                    rec->ExceptionCode, ctx.Pc, ctx.Sp, stack->context.Sp );
         }
         break;
@@ -516,7 +516,7 @@ NTSTATUS WINAPI wow64_NtCreateThread( UINT *args )
     void *initial_teb = get_ptr( &args );
     BOOLEAN suspended = get_ulong( &args );
 
-    FIXME( "%p %x %p %p %p %p %p %u: stub\n", handle_ptr, access, attr32, process,
+    FIXME( "%p %lx %p %p %p %p %p %u: stub\n", handle_ptr, access, attr32, process,
            id32, context, initial_teb, suspended );
     return STATUS_NOT_IMPLEMENTED;
 }
