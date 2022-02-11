@@ -175,7 +175,7 @@ static ULONG WINAPI media_event_AddRef(IUnknown *iface)
     struct media_event *event = impl_event_from_IUnknown(iface);
     ULONG refcount = InterlockedIncrement(&event->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -185,7 +185,7 @@ static ULONG WINAPI media_event_Release(IUnknown *iface)
     struct media_event *event = impl_event_from_IUnknown(iface);
     ULONG refcount = InterlockedDecrement(&event->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -330,7 +330,7 @@ static ULONG WINAPI media_item_AddRef(IMFPMediaItem *iface)
     struct media_item *item = impl_from_IMFPMediaItem(iface);
     ULONG refcount = InterlockedIncrement(&item->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -340,7 +340,7 @@ static ULONG WINAPI media_item_Release(IMFPMediaItem *iface)
     struct media_item *item = impl_from_IMFPMediaItem(iface);
     ULONG refcount = InterlockedDecrement(&item->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -419,7 +419,7 @@ static HRESULT WINAPI media_item_SetUserData(IMFPMediaItem *iface, DWORD_PTR use
 {
     struct media_item *item = impl_from_IMFPMediaItem(iface);
 
-    TRACE("%p, %lx.\n", iface, user_data);
+    TRACE("%p, %Ix.\n", iface, user_data);
 
     item->user_data = user_data;
 
@@ -607,7 +607,7 @@ static HRESULT WINAPI media_item_GetStreamSelection(IMFPMediaItem *iface, DWORD 
     IMFStreamDescriptor *sd;
     HRESULT hr;
 
-    TRACE("%p, %u, %p.\n", iface, index, selected);
+    TRACE("%p, %lu, %p.\n", iface, index, selected);
 
     if (SUCCEEDED(hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(item->pd, index, selected, &sd)))
         IMFStreamDescriptor_Release(sd);
@@ -619,7 +619,7 @@ static HRESULT WINAPI media_item_SetStreamSelection(IMFPMediaItem *iface, DWORD 
 {
     struct media_item *item = impl_from_IMFPMediaItem(iface);
 
-    TRACE("%p, %u, %d.\n", iface, index, select);
+    TRACE("%p, %lu, %d.\n", iface, index, select);
 
     return select ? IMFPresentationDescriptor_SelectStream(item->pd, index) :
             IMFPresentationDescriptor_DeselectStream(item->pd, index);
@@ -633,7 +633,7 @@ static HRESULT WINAPI media_item_GetStreamAttribute(IMFPMediaItem *iface, DWORD 
     BOOL selected;
     HRESULT hr;
 
-    TRACE("%p, %u, %s, %p.\n", iface, index, debugstr_guid(key), value);
+    TRACE("%p, %lu, %s, %p.\n", iface, index, debugstr_guid(key), value);
 
     if (SUCCEEDED(hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(item->pd, index, &selected, &sd)))
     {
@@ -681,7 +681,7 @@ static HRESULT WINAPI media_item_SetStreamSink(IMFPMediaItem *iface, DWORD index
     BOOL selected;
     HRESULT hr;
 
-    TRACE("%p, %u, %p.\n", iface, index, sink);
+    TRACE("%p, %lu, %p.\n", iface, index, sink);
 
     if (FAILED(hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(item->pd, index, &selected, &sd)))
         return hr;
@@ -778,7 +778,7 @@ static HRESULT media_item_set_source(struct media_item *item, IUnknown *object)
 
     if (FAILED(hr = IMFMediaSource_CreatePresentationDescriptor(source, &pd)))
     {
-        WARN("Failed to get presentation descriptor, hr %#x.\n", hr);
+        WARN("Failed to get presentation descriptor, hr %#lx.\n", hr);
         IMFMediaSource_Release(source);
         return hr;
     }
@@ -834,7 +834,7 @@ static ULONG WINAPI media_player_AddRef(IMFPMediaPlayer *iface)
     struct media_player *player = impl_from_IMFPMediaPlayer(iface);
     ULONG refcount = InterlockedIncrement(&player->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -844,7 +844,7 @@ static ULONG WINAPI media_player_Release(IMFPMediaPlayer *iface)
     struct media_player *player = impl_from_IMFPMediaPlayer(iface);
     ULONG refcount = InterlockedDecrement(&player->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -1082,7 +1082,7 @@ static HRESULT WINAPI media_player_CreateMediaItemFromURL(IMFPMediaPlayer *iface
     struct media_player *player = impl_from_IMFPMediaPlayer(iface);
     HRESULT hr;
 
-    TRACE("%p, %s, %d, %lx, %p.\n", iface, debugstr_w(url), sync, user_data, item);
+    TRACE("%p, %s, %d, %Ix, %p.\n", iface, debugstr_w(url), sync, user_data, item);
 
     EnterCriticalSection(&player->cs);
     if (player->state == MFP_MEDIAPLAYER_STATE_SHUTDOWN)
@@ -1174,7 +1174,7 @@ static HRESULT WINAPI media_player_CreateMediaItemFromObject(IMFPMediaPlayer *if
     struct media_player *player = impl_from_IMFPMediaPlayer(iface);
     HRESULT hr;
 
-    TRACE("%p, %p, %d, %lx, %p.\n", iface, object, sync, user_data, item);
+    TRACE("%p, %p, %d, %Ix, %p.\n", iface, object, sync, user_data, item);
 
     EnterCriticalSection(&player->cs);
     if (player->state == MFP_MEDIAPLAYER_STATE_SHUTDOWN)
@@ -1249,12 +1249,12 @@ static HRESULT media_item_create_topology(struct media_player *player, struct me
         else if (IsEqualGUID(&major, &MFMediaType_Audio))
         {
             if (FAILED(hr = MFCreateAudioRendererActivate((IMFActivate **)&sink)))
-                WARN("Failed to create SAR activation object, hr %#x.\n", hr);
+                WARN("Failed to create SAR activation object, hr %#lx.\n", hr);
         }
         else if (IsEqualGUID(&major, &MFMediaType_Video) && player->output_window && !video_added)
         {
             if (FAILED(hr = MFCreateVideoRendererActivate(player->output_window, (IMFActivate **)&sink)))
-                WARN("Failed to create EVR activation object, hr %#x.\n", hr);
+                WARN("Failed to create EVR activation object, hr %#lx.\n", hr);
             video_added = SUCCEEDED(hr);
         }
 
@@ -1482,7 +1482,7 @@ static HRESULT WINAPI media_player_SetAspectRatioMode(IMFPMediaPlayer *iface, DW
     IMFVideoDisplayControl *display_control;
     HRESULT hr;
 
-    TRACE("%p, %u.\n", iface, mode);
+    TRACE("%p, %lu.\n", iface, mode);
 
     if (SUCCEEDED(hr = media_player_get_display_control(player, &display_control)))
     {
@@ -1535,7 +1535,7 @@ static HRESULT WINAPI media_player_SetBorderColor(IMFPMediaPlayer *iface, COLORR
     IMFVideoDisplayControl *display_control;
     HRESULT hr;
 
-    TRACE("%p, %#x.\n", iface, color);
+    TRACE("%p, %#lx.\n", iface, color);
 
     if (SUCCEEDED(hr = media_player_get_display_control(player, &display_control)))
     {
@@ -1678,7 +1678,7 @@ static HRESULT WINAPI media_player_propstore_GetAt(IPropertyStore *iface, DWORD 
 {
     struct media_player *player = impl_from_IPropertyStore(iface);
 
-    TRACE("%p, %u, %p.\n", iface, prop, key);
+    TRACE("%p, %lu, %p.\n", iface, prop, key);
 
     return IPropertyStore_GetAt(player->propstore, prop, key);
 }
@@ -1784,7 +1784,7 @@ static HRESULT WINAPI media_player_resolver_callback_Invoke(IMFAsyncCallback *if
     }
 
     if (FAILED(hr))
-        WARN("Failed to set media source, hr %#x.\n", hr);
+        WARN("Failed to set media source, hr %#lx.\n", hr);
 
     if (FAILED(media_event_create(player, MFP_EVENT_TYPE_MEDIAITEM_CREATED, hr,
             &item->IMFPMediaItem_iface, &event)))
@@ -2111,7 +2111,7 @@ HRESULT WINAPI MFPCreateMediaPlayer(const WCHAR *url, BOOL start_playback, MFP_C
     {
         if (FAILED(hr = media_player_create_item_from_url(object, url, TRUE, 0, &item)))
         {
-            WARN("Failed to create media item, hr %#x.\n", hr);
+            WARN("Failed to create media item, hr %#lx.\n", hr);
             goto failed;
         }
 
@@ -2119,7 +2119,7 @@ HRESULT WINAPI MFPCreateMediaPlayer(const WCHAR *url, BOOL start_playback, MFP_C
         IMFPMediaItem_Release(item);
         if (FAILED(hr))
         {
-            WARN("Failed to set media item, hr %#x.\n", hr);
+            WARN("Failed to set media item, hr %#lx.\n", hr);
             goto failed;
         }
 
