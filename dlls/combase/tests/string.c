@@ -514,7 +514,7 @@ static void test_hstring_struct(void)
     ok(prv->header.flags == 0, "Expected 0 in flags field, got %#x.\n", prv->header.flags);
     ok(prv->header.length == 6, "Expected 6 in length field, got %u.\n", prv->header.length);
     ok(prv->header.str == prv->buffer, "Expected str to point at buffer, instead pointing at %p.\n", prv->header.str);
-    ok(prv->refcount == 1, "Expected 1 in refcount, got %u.\n", prv->refcount);
+    ok(prv->refcount == 1, "Expected 1 in refcount, got %lu.\n", prv->refcount);
     ok(wcscmp(input_string, prv->buffer) == 0, "Expected strings to match.\n");
     ok(prv->buffer[prv->header.length] == '\0', "Expected buffer to be null terminated.\n");
 
@@ -522,13 +522,13 @@ static void test_hstring_struct(void)
 
     prv2 = CONTAINING_RECORD(str2, struct hstring_private, header);
 
-    ok(prv->refcount == 2, "Expected 2 in refcount, got %u.\n", prv->refcount);
-    ok(prv2->refcount == 2, "Expected 2 in refcount, got %u.\n", prv2->refcount);
+    ok(prv->refcount == 2, "Expected 2 in refcount, got %lu.\n", prv->refcount);
+    ok(prv2->refcount == 2, "Expected 2 in refcount, got %lu.\n", prv2->refcount);
     ok(wcscmp(input_string, prv2->buffer) == 0, "Expected strings to match.\n");
 
     ok(WindowsDeleteString(str) == S_OK, "Failed to delete string.\n");
 
-    ok(prv->refcount == 1, "Expected 1 in refcount, got %u.\n", prv->refcount);
+    ok(prv->refcount == 1, "Expected 1 in refcount, got %lu.\n", prv->refcount);
 
     ok(WindowsDeleteString(str) == S_OK, "Failed to delete string.\n");
 

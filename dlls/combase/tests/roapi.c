@@ -37,27 +37,27 @@ static void test_ActivationFactories(void)
 
     hr = WindowsCreateString(L"Windows.Data.Xml.Dom.XmlDocument",
                               ARRAY_SIZE(L"Windows.Data.Xml.Dom.XmlDocument") - 1, &str);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = WindowsCreateString(L"Does.Not.Exist", ARRAY_SIZE(L"Does.Not.Exist") - 1, &str2);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = RoInitialize(RO_INIT_MULTITHREADED);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = RoGetActivationFactory(str2, &IID_IActivationFactory, (void **)&factory);
-    ok(hr == REGDB_E_CLASSNOTREG, "got %08x\n", hr);
+    ok(hr == REGDB_E_CLASSNOTREG, "Unexpected hr %#lx.\n", hr);
 
     hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
-    todo_wine ok(hr == S_OK, "got %08x\n", hr);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if(factory)
         IActivationFactory_Release(factory);
 
     hr = RoActivateInstance(str2, &inspect);
-    ok(hr == REGDB_E_CLASSNOTREG, "got %08x\n", hr);
+    ok(hr == REGDB_E_CLASSNOTREG, "Unexpected hr %#lx.\n", hr);
 
     hr = RoActivateInstance(str, &inspect);
-    todo_wine ok(hr == S_OK, "got %08x\n", hr);
+    todo_wine ok(hr == S_OK, "UNexpected hr %#lx.\n", hr);
     if(inspect)
         IInspectable_Release(inspect);
 
