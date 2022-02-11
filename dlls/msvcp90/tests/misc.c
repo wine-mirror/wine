@@ -167,7 +167,7 @@ static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
     ok(function == NULL, "function is not NULL\n");
     ok(file == NULL, "file is not NULL\n");
     ok(line == 0, "line = %u\n", line);
-    ok(arg == 0, "arg = %lx\n", (UINT_PTR)arg);
+    ok(arg == 0, "arg = %Ix\n", arg);
     invalid_parameter++;
 }
 
@@ -585,7 +585,7 @@ static void test__Getctype(void)
     _locale_t locale;
 
     ret = p__Getctype();
-    ok(ret.handle == 0, "ret.handle = %d\n", ret.handle);
+    ok(ret.handle == 0, "ret.handle = %ld\n", ret.handle);
     ok(ret.page == 0, "ret.page = %d\n", ret.page);
     ok(ret.delfl == 1, "ret.delfl = %d\n", ret.delfl);
     ok(ret.table[0] == 32, "ret.table[0] = %d\n", ret.table[0]);
@@ -595,7 +595,7 @@ static void test__Getctype(void)
     locale->locinfo->lc_handle[LC_COLLATE] = 0x1234567;
     p__free_locale(locale);
     ret = p__Getctype();
-    ok(ret.handle == 0x1234567, "ret.handle = %d\n", ret.handle);
+    ok(ret.handle == 0x1234567, "ret.handle = %ld\n", ret.handle);
     ok(ret.page == 0, "ret.page = %d\n", ret.page);
     ok(ret.delfl == 1, "ret.delfl = %d\n", ret.delfl);
     ok(ret.table[0] == 32, "ret.table[0] = %d\n", ret.table[0]);
@@ -619,7 +619,7 @@ static void test__Getcoll(void)
     locale->locinfo->lc_handle[LC_COLLATE] = 0x7654321;
     p__free_locale(locale);
     call__Getcoll(ret);
-    ok(ret.handle == 0x7654321, "ret.handle = %x\n", ret.handle);
+    ok(ret.handle == 0x7654321, "ret.handle = %lx\n", ret.handle);
     ok(ret.page == 0, "ret.page = %x\n", ret.page);
 }
 
