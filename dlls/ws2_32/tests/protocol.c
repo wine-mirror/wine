@@ -1403,12 +1403,11 @@ static void test_WSAStringToAddress(void)
         { "", { 0, 0, 0, 0, 0, 0, 0, 0 }, 0, WSAEINVAL },
     };
 
+    int len, ret, expected_len;
     WCHAR inputW[64];
-    INT len, ret, expected_len, expected_ret;
-    short expected_family;
     SOCKADDR_IN sockaddr;
     SOCKADDR_IN6 sockaddr6;
-    int i, j;
+    unsigned int i, j;
 
     len = 0;
     WSASetLastError( 0 );
@@ -1420,11 +1419,15 @@ static void test_WSAStringToAddress(void)
 
     for (i = 0; i < 2; i++)
     {
+        winetest_push_context( i ? "unicode" : "ascii" );
+
         for (j = 0; j < ARRAY_SIZE(ipv4_tests); j++)
         {
             len = sizeof(sockaddr) + 10;
             expected_len = ipv4_tests[j].error ? len : sizeof(sockaddr);
             memset( &sockaddr, 0xab, sizeof(sockaddr) );
+
+            winetest_push_context( "addr %s", debugstr_a(ipv4_tests[j].input) );
 
             WSASetLastError( 0 );
             if (i == 0)
@@ -1436,26 +1439,16 @@ static void test_WSAStringToAddress(void)
                 MultiByteToWideChar( CP_ACP, 0, ipv4_tests[j].input, -1, inputW, ARRAY_SIZE(inputW) );
                 ret = WSAStringToAddressW( inputW, AF_INET, NULL, (SOCKADDR *)&sockaddr, &len );
             }
-            expected_ret = ipv4_tests[j].error ? SOCKET_ERROR : 0;
-            expected_family = ipv4_tests[j].error ? 0 : AF_INET;
-            ok( ret == expected_ret,
-                "WSAStringToAddress(%s) returned %d, expected %d\n",
-                wine_dbgstr_a( ipv4_tests[j].input ), ret, expected_ret );
-            ok( WSAGetLastError() == ipv4_tests[j].error,
-                "WSAStringToAddress(%s) gave error %d, expected %d\n",
-                wine_dbgstr_a( ipv4_tests[j].input ), WSAGetLastError(), ipv4_tests[j].error );
-            ok( sockaddr.sin_family == expected_family,
-                "WSAStringToAddress(%s) gave family %d, expected %d\n",
-                wine_dbgstr_a( ipv4_tests[j].input ), sockaddr.sin_family, expected_family );
+            ok( ret == (ipv4_tests[j].error ? SOCKET_ERROR : 0), "got %d\n", ret );
+            ok( WSAGetLastError() == ipv4_tests[j].error, "got error %d\n", WSAGetLastError() );
+            ok( sockaddr.sin_family == (ipv4_tests[j].error ? 0 : AF_INET),
+                "got family %#x\n", sockaddr.sin_family );
             ok( sockaddr.sin_addr.s_addr == htonl( ipv4_tests[j].address ),
-                "WSAStringToAddress(%s) gave address %08x, expected %08x\n",
-                wine_dbgstr_a( ipv4_tests[j].input ), sockaddr.sin_addr.s_addr, htonl( ipv4_tests[j].address) );
-            ok( sockaddr.sin_port == htons( ipv4_tests[j].port ),
-                "WSAStringToAddress(%s) gave port %04x, expected %04x\n",
-                wine_dbgstr_a( ipv4_tests[j].input ), sockaddr.sin_port, htons( ipv4_tests[j].port ) );
-            ok( len == expected_len,
-                "WSAStringToAddress(%s) gave length %d, expected %d\n",
-                wine_dbgstr_a( ipv4_tests[j].input ), len, expected_len );
+                "got addr %08x\n", sockaddr.sin_addr.s_addr );
+            ok( sockaddr.sin_port == htons( ipv4_tests[j].port ), "got port %u\n", sockaddr.sin_port );
+            ok( len == expected_len, "got len %d\n", len );
+
+            winetest_pop_context();
         }
 
         for (j = 0; j < ARRAY_SIZE(ipv6_tests); j++)
@@ -1479,41 +1472,28 @@ static void test_WSAStringToAddress(void)
                 win_skip("IPv6 not supported\n");
                 break;
             }
-            expected_ret = ipv6_tests[j].error ? SOCKET_ERROR : 0;
-            expected_family = ipv6_tests[j].error ? 0 : AF_INET6;
-            ok( ret == expected_ret,
-                "WSAStringToAddress(%s) returned %d, expected %d\n",
-                wine_dbgstr_a( ipv6_tests[j].input ), ret, expected_ret );
-            ok( WSAGetLastError() == ipv6_tests[j].error,
-                "WSAStringToAddress(%s) gave error %d, expected %d\n",
-                wine_dbgstr_a( ipv6_tests[j].input ), WSAGetLastError(), ipv6_tests[j].error );
-            ok( sockaddr6.sin6_family == expected_family,
-                "WSAStringToAddress(%s) gave family %d, expected %d\n",
-                wine_dbgstr_a( ipv4_tests[j].input ), sockaddr6.sin6_family, expected_family );
-            ok( memcmp(&sockaddr6.sin6_addr, ipv6_tests[j].address, sizeof(sockaddr6.sin6_addr)) == 0,
-                "WSAStringToAddress(%s) gave address %x:%x:%x:%x:%x:%x:%x:%x, expected %x:%x:%x:%x:%x:%x:%x:%x\n",
-                wine_dbgstr_a( ipv6_tests[j].input ),
+
+            winetest_push_context( "addr %s", debugstr_a(ipv6_tests[j].input) );
+
+            ok( ret == (ipv6_tests[j].error ? SOCKET_ERROR : 0), "got %d\n", ret );
+            ok( WSAGetLastError() == ipv6_tests[j].error, "got error %d\n", WSAGetLastError() );
+            ok( sockaddr6.sin6_family == (ipv6_tests[j].error ? 0 : AF_INET6),
+                "got family %#x\n", sockaddr6.sin6_family );
+            ok( !memcmp( &sockaddr6.sin6_addr, ipv6_tests[j].address, sizeof(sockaddr6.sin6_addr) ),
+                "got addr %x:%x:%x:%x:%x:%x:%x:%x\n",
                 sockaddr6.sin6_addr.s6_words[0], sockaddr6.sin6_addr.s6_words[1],
                 sockaddr6.sin6_addr.s6_words[2], sockaddr6.sin6_addr.s6_words[3],
                 sockaddr6.sin6_addr.s6_words[4], sockaddr6.sin6_addr.s6_words[5],
-                sockaddr6.sin6_addr.s6_words[6], sockaddr6.sin6_addr.s6_words[7],
-                ipv6_tests[j].address[0], ipv6_tests[j].address[1],
-                ipv6_tests[j].address[2], ipv6_tests[j].address[3],
-                ipv6_tests[j].address[4], ipv6_tests[j].address[5],
-                ipv6_tests[j].address[6], ipv6_tests[j].address[7] );
-            ok( sockaddr6.sin6_scope_id == 0,
-                "WSAStringToAddress(%s) gave scope %d, expected 0\n",
-                wine_dbgstr_a( ipv6_tests[j].input ), sockaddr6.sin6_scope_id );
-            ok( sockaddr6.sin6_port == ipv6_tests[j].port,
-                "WSAStringToAddress(%s) gave port %04x, expected %04x\n",
-                wine_dbgstr_a( ipv6_tests[j].input ), sockaddr6.sin6_port, ipv6_tests[j].port );
-            ok( sockaddr6.sin6_flowinfo == 0,
-                "WSAStringToAddress(%s) gave flowinfo %d, expected 0\n",
-                wine_dbgstr_a( ipv6_tests[j].input ), sockaddr6.sin6_flowinfo );
-            ok( len == expected_len,
-                "WSAStringToAddress(%s) gave length %d, expected %d\n",
-                wine_dbgstr_a( ipv6_tests[j].input ), len, expected_len );
+                sockaddr6.sin6_addr.s6_words[6], sockaddr6.sin6_addr.s6_words[7] );
+            ok( !sockaddr6.sin6_scope_id, "got scope id %u\n", sockaddr6.sin6_scope_id );
+            ok( sockaddr6.sin6_port == ipv6_tests[j].port, "got port %u\n", sockaddr6.sin6_port );
+            ok( !sockaddr6.sin6_flowinfo, "got flowinfo %u\n", sockaddr6.sin6_flowinfo );
+            ok( len == expected_len, "got len %d\n", len );
+
+            winetest_pop_context();
         }
+
+        winetest_pop_context();
     }
 }
 
