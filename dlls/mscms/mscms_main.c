@@ -37,9 +37,9 @@ static void lcms_error_handler(cmsContext ctx, cmsUInt32Number error, const char
     TRACE("%u %s\n", error, debugstr_a(text));
 }
 
-BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
+BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, void *reserved )
 {
-    TRACE( "(%p, %d, %p)\n", hinst, reason, reserved );
+    TRACE( "(%p, %lu, %p)\n", hinst, reason, reserved );
 
     switch (reason)
     {
