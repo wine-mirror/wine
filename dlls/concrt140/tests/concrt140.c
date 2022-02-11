@@ -187,9 +187,9 @@ static void test_Timer(void)
     call_func1(p__Timer__Start, &timer);
     ok(timer.timer != NULL, "timer = NULL\n");
     ret = WaitForSingleObject(callback_called, 1000);
-    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", ret);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %lu\n", ret);
     ret = WaitForSingleObject(callback_called, 1000);
-    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", ret);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %lu\n", ret);
     call_func1(p__Timer__Stop, &timer);
     ok(!timer.timer, "timer != NULL\n");
     call_func1(p__Timer_dtor, &timer);
@@ -200,9 +200,9 @@ static void test_Timer(void)
     call_func1(p__Timer__Start, &timer);
     ok(timer.timer != NULL, "timer = NULL\n");
     ret = WaitForSingleObject(callback_called, 1000);
-    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", ret);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %lu\n", ret);
     ret = WaitForSingleObject(callback_called, 100);
-    ok(ret == WAIT_TIMEOUT, "WaitForSingleObject returned %d\n", ret);
+    ok(ret == WAIT_TIMEOUT, "WaitForSingleObject returned %lu\n", ret);
     call_func1(p__Timer_dtor, &timer);
 
     call_func3(p__Timer_ctor, &timer, 0, TRUE);
@@ -210,9 +210,9 @@ static void test_Timer(void)
     call_func1(p__Timer__Start, &timer);
     ok(timer.timer != NULL, "timer = NULL\n");
     ret = WaitForSingleObject(callback_called, 1000);
-    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", ret);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %lu\n", ret);
     ret = WaitForSingleObject(callback_called, 100);
-    ok(ret == WAIT_TIMEOUT, "WaitForSingleObject returned %d\n", ret);
+    ok(ret == WAIT_TIMEOUT, "WaitForSingleObject returned %lu\n", ret);
     call_func1(p__Timer__Stop, &timer);
     ok(!timer.timer, "timer != NULL\n");
     call_func1(p__Timer_dtor, &timer);
