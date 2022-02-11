@@ -1897,7 +1897,7 @@ HGLRC context_create_wgl_attribs(const struct wined3d_gl_info *gl_info, HDC hdc,
 }
 
 static BOOL wined3d_context_gl_create_wgl_ctx(struct wined3d_context_gl *context_gl,
-        struct wined3d_swapchain_gl *swapchain_gl)
+        struct wined3d_swapchain_gl *swapchain_gl, BOOL *new_drawable)
 {
     enum wined3d_swap_effect swap_effect = swapchain_gl->s.state.desc.swap_effect;
     const struct wined3d_format *colour_format, *ds_format;
@@ -1919,6 +1919,8 @@ static BOOL wined3d_context_gl_create_wgl_ctx(struct wined3d_context_gl *context
     target_bind_flags = target->bind_flags;
 
     swap_effect_copy = swap_effect == WINED3D_SWAP_EFFECT_COPY || swap_effect == WINED3D_SWAP_EFFECT_COPY_VSYNC;
+
+    *new_drawable = !GetPixelFormat(context_gl->dc);
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER)
     {
@@ -2018,7 +2020,7 @@ static BOOL wined3d_context_gl_create_wgl_ctx(struct wined3d_context_gl *context
         }
         context_gl->dc_is_private = TRUE;
 
-        return wined3d_context_gl_create_wgl_ctx(context_gl, swapchain_gl);
+        return wined3d_context_gl_create_wgl_ctx(context_gl, swapchain_gl, new_drawable);
     }
 
     share_ctx = device->context_count ? wined3d_context_gl(device->contexts[0])->gl_ctx : NULL;
@@ -2064,6 +2066,7 @@ HRESULT wined3d_context_gl_init(struct wined3d_context_gl *context_gl, struct wi
     const struct wined3d_d3d_info *d3d_info;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_device *device;
+    BOOL new_drawable;
     unsigned int i;
 
     TRACE("context_gl %p, swapchain %p.\n", context_gl, swapchain_gl);
@@ -2142,7 +2145,7 @@ HRESULT wined3d_context_gl_init(struct wined3d_context_gl *context_gl, struct wi
             sizeof(*context_gl->texture_type))))
         goto fail;
 
-    if (!wined3d_context_gl_create_wgl_ctx(context_gl, swapchain_gl))
+    if (!wined3d_context_gl_create_wgl_ctx(context_gl, swapchain_gl, &new_drawable))
         goto fail;
 
     /* Set up the context defaults. */
@@ -2299,6 +2302,14 @@ HRESULT wined3d_context_gl_init(struct wined3d_context_gl *context_gl, struct wi
     gl_info->gl_ops.gl.p_glScissor(0, 0, 0, 0);
     checkGLcall("glScissor");
 
+    if (new_drawable)
+    {
+        gl_info->gl_ops.gl.p_glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        gl_info->gl_ops.gl.p_glClearDepth(1.0f);
+        gl_info->gl_ops.gl.p_glClearStencil(0);
+        gl_info->gl_ops.gl.p_glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        checkGLcall("glClear");
+    }
     return WINED3D_OK;
 
 fail:
