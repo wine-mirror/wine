@@ -546,7 +546,7 @@ static int eq_nan(UINT64 ai, double b)
 static int eq_nanf(DWORD ai, float b)
 {
     DWORD bi = *(DWORD*)&b;
-    ok(ai == bi, "comparing %08x and %08x\n", ai, bi);
+    ok(ai == bi, "comparing %08lx and %08lx\n", ai, bi);
     return ai == bi;
 }
 
@@ -623,38 +623,38 @@ static void test_thread_handle_close(void)
     ok(hThread != INVALID_HANDLE_VALUE, "_beginthread failed (%d)\n", errno);
     WaitForSingleObject(hThread, INFINITE);
     ret = CloseHandle(hThread);
-    ok(!ret, "ret = %d\n", ret);
+    ok(!ret, "ret = %ld\n", ret);
 
     hThread = (HANDLE)_beginthread(test_thread_func, 0, (void*)1);
     ok(hThread != INVALID_HANDLE_VALUE, "_beginthread failed (%d)\n", errno);
     WaitForSingleObject(hThread, INFINITE);
     ret = CloseHandle(hThread);
-    ok(!ret, "ret = %d\n", ret);
+    ok(!ret, "ret = %ld\n", ret);
 
     hThread = (HANDLE)_beginthread(test_thread_func, 0, (void*)2);
     ok(hThread != INVALID_HANDLE_VALUE, "_beginthread failed (%d)\n", errno);
     Sleep(150);
     ret = WaitForSingleObject(hThread, INFINITE);
-    ok(ret == WAIT_OBJECT_0, "ret = %d\n", ret);
+    ok(ret == WAIT_OBJECT_0, "ret = %ld\n", ret);
     ret = CloseHandle(hThread);
-    ok(ret, "ret = %d\n", ret);
+    ok(ret, "ret = %ld\n", ret);
 
     hThread = (HANDLE)_beginthread(test_thread_func, 0, (void*)3);
     ok(hThread != INVALID_HANDLE_VALUE, "_beginthread failed (%d)\n", errno);
     Sleep(150);
     ret = WaitForSingleObject(hThread, INFINITE);
-    ok(ret == WAIT_OBJECT_0, "ret = %d\n", ret);
+    ok(ret == WAIT_OBJECT_0, "ret = %ld\n", ret);
     ret = CloseHandle(hThread);
-    ok(ret, "ret = %d\n", ret);
+    ok(ret, "ret = %ld\n", ret);
 
     /* _beginthreadex: handle is not closed on _endthread */
     hThread = (HANDLE)_beginthreadex(NULL,0, test_thread_func_ex, NULL, 0, NULL);
     ok(hThread != NULL, "_beginthreadex failed (%d)\n", errno);
     Sleep(150);
     ret = WaitForSingleObject(hThread, INFINITE);
-    ok(ret == WAIT_OBJECT_0, "ret = %d\n", ret);
+    ok(ret == WAIT_OBJECT_0, "ret = %ld\n", ret);
     ret = CloseHandle(hThread);
-    ok(ret, "ret = %d\n", ret);
+    ok(ret, "ret = %ld\n", ret);
 }
 
 static void test_thread_suspended(void)
@@ -665,9 +665,9 @@ static void test_thread_suspended(void)
     hThread = (HANDLE)_beginthreadex(NULL, 0, test_thread_func_ex, NULL, CREATE_SUSPENDED, NULL);
     ok(hThread != NULL, "_beginthreadex failed (%d)\n", errno);
     ret = ResumeThread(hThread);
-    ok(ret == 1, "suspend count = %d\n", ret);
+    ok(ret == 1, "suspend count = %ld\n", ret);
     ret = WaitForSingleObject(hThread, 200);
-    ok(ret == WAIT_OBJECT_0, "ret = %d\n", ret);
+    ok(ret == WAIT_OBJECT_0, "ret = %ld\n", ret);
 }
 
 static int __cdecl _lfind_s_comp(void *ctx, const void *l, const void *r)

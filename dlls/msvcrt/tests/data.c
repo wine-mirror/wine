@@ -91,12 +91,12 @@ static void test_initvar( HMODULE hmsvcrt )
     winminor = *pp_winminor;
     winmajor = *pp_winmajor;
     GetVersionExA( &osvi);
-    ok( winminor == osvi.dwMinorVersion, "Wrong value for _winminor %02x expected %02x\n",
+    ok( winminor == osvi.dwMinorVersion, "Wrong value for _winminor %02x expected %02lx\n",
             winminor, osvi.dwMinorVersion);
-    ok( winmajor == osvi.dwMajorVersion, "Wrong value for _winmajor %02x expected %02x\n",
+    ok( winmajor == osvi.dwMajorVersion, "Wrong value for _winmajor %02x expected %02lx\n",
             winmajor, osvi.dwMajorVersion);
     ok( winver == ((osvi.dwMajorVersion << 8) | osvi.dwMinorVersion),
-            "Wrong value for _winver %02x expected %02x\n",
+            "Wrong value for _winver %02x expected %02lx\n",
             winver, ((osvi.dwMajorVersion << 8) | osvi.dwMinorVersion));
     if( !pp_osver || !pp_osplatform ) {
         win_skip("_osver variables are not available\n");
@@ -107,10 +107,10 @@ static void test_initvar( HMODULE hmsvcrt )
     ok( osver == (osvi.dwBuildNumber & 0xffff) ||
             ((osvi.dwBuildNumber >> 24) == osvi.dwMajorVersion &&
                  ((osvi.dwBuildNumber >> 16) & 0xff) == osvi.dwMinorVersion), /* 95/98/ME */
-            "Wrong value for _osver %04x expected %04x\n",
+            "Wrong value for _osver %04x expected %04lx\n",
             osver, osvi.dwBuildNumber);
     ok(osplatform == osvi.dwPlatformId,
-            "Wrong value for _osplatform %x expected %x\n",
+            "Wrong value for _osplatform %x expected %lx\n",
             osplatform, osvi.dwPlatformId);
 }
 

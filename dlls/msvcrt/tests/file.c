@@ -263,7 +263,7 @@ static void test_readmode( BOOL ascii_mode )
     ok(fgets(buffer,2*BUFSIZ+256,file) !=0,"padding line fgets failed unexpected in %s\n", IOMODE);
     l = ftell(file);
     pl = 2*BUFSIZ-2;
-    ok(l == pl,"padding line ftell got %d should be %d in %s\n", l, pl, IOMODE);
+    ok(l == pl,"padding line ftell got %ld should be %d in %s\n", l, pl, IOMODE);
     ok(lstrlenA(buffer) == pl+ao,"padding line fgets got size %d should be %d in %s\n",
      lstrlenA(buffer), pl+ao, IOMODE);
     for (fp=0; fp<strlen(outbuffer); fp++)
@@ -271,23 +271,23 @@ static void test_readmode( BOOL ascii_mode )
     fp++;
     ok(fgets(buffer,256,file) !=0,"line 1 fgets failed unexpected in %s\n", IOMODE);
     l = ftell(file);
-    ok(l == pl+fp,"line 1 ftell got %d should be %d in %s\n", l, pl+fp, IOMODE);
+    ok(l == pl+fp,"line 1 ftell got %ld should be %d in %s\n", l, pl+fp, IOMODE);
     ok(lstrlenA(buffer) == fp+ao,"line 1 fgets got size %d should be %d in %s\n",
      lstrlenA(buffer), fp+ao, IOMODE);
     /* test a seek back across the buffer boundary */
     l = pl;
     ok(fseek(file,l,SEEK_SET)==0,"seek failure in %s\n", IOMODE);
     l = ftell(file);
-    ok(l == pl,"ftell after seek got %d should be %d in %s\n", l, pl, IOMODE);
+    ok(l == pl,"ftell after seek got %ld should be %d in %s\n", l, pl, IOMODE);
     ok(fgets(buffer,256,file) !=0,"second read of line 1 fgets failed unexpected in %s\n", IOMODE);
     l = ftell(file);
-    ok(l == pl+fp,"second read of line 1 ftell got %d should be %d in %s\n", l, pl+fp, IOMODE);
+    ok(l == pl+fp,"second read of line 1 ftell got %ld should be %d in %s\n", l, pl+fp, IOMODE);
     ok(lstrlenA(buffer) == fp+ao,"second read of line 1 fgets got size %d should be %d in %s\n",
      lstrlenA(buffer), fp+ao, IOMODE);
     ok(fgets(buffer,256,file) !=0,"line 2 fgets failed unexpected in %s\n", IOMODE);
     fp += 2;
     l = ftell(file);
-    ok(l == pl+fp,"line 2 ftell got %d should be %d in %s\n", l, pl+fp, IOMODE);
+    ok(l == pl+fp,"line 2 ftell got %ld should be %d in %s\n", l, pl+fp, IOMODE);
     ok(lstrlenA(buffer) == 2+ao,"line 2 fgets got size %d should be %d in %s\n",
      lstrlenA(buffer), 2+ao, IOMODE);
     
@@ -299,7 +299,7 @@ static void test_readmode( BOOL ascii_mode )
     i=fread(buffer,1,BUFSIZ+strlen(outbuffer),file);
     ok(i==BUFSIZ+j,"fread failed, expected %d got %d in %s\n", BUFSIZ+j, i, IOMODE);
     l = ftell(file);
-    ok(l == pl+j-(ao*4)-5,"ftell after fread got %d should be %d in %s\n", l, pl+j-(ao*4)-5, IOMODE);
+    ok(l == pl+j-(ao*4)-5,"ftell after fread got %ld should be %d in %s\n", l, pl+j-(ao*4)-5, IOMODE);
     for (m=0; m<3; m++)
         ok(buffer[m]==padbuffer[m+(BUFSIZ-4)%strlen(padbuffer)],"expected %c got %c\n", padbuffer[m], buffer[m]);
     m+=BUFSIZ+2+ao;
@@ -781,10 +781,10 @@ static void test_fgetwc( void )
   tempfh = fopen(tempf,"rt"); /* open in TEXT mode */
   fgetws(wtextW,LLEN,tempfh);
   l=ftell(tempfh);
-  ok(l==BUFSIZ-2, "ftell expected %d got %d\n", BUFSIZ-2, l);
+  ok(l==BUFSIZ-2, "ftell expected %d got %ld\n", BUFSIZ-2, l);
   fgetws(wtextW,LLEN,tempfh);
   l=ftell(tempfh);
-  ok(l==BUFSIZ-2+strlen(mytext), "ftell expected %d got %d\n", BUFSIZ-2+lstrlenA(mytext), l);
+  ok(l==BUFSIZ-2+strlen(mytext), "ftell expected %d got %ld\n", BUFSIZ-2+lstrlenA(mytext), l);
   mytextW = AtoW (mytext);
   aptr = mytextW;
   wptr = wtextW;
@@ -817,25 +817,25 @@ static void test_fgetwc( void )
   fgetws(wtextW,j,tempfh);
   l=ftell(tempfh);
   j=(j-1)*sizeof(WCHAR);
-  ok(l==j, "ftell expected %d got %d\n", j, l);
+  ok(l==j, "ftell expected %d got %ld\n", j, l);
   i=fgetc(tempfh);
   ok(i=='a', "fgetc expected %d got %d\n", 0x61, i);
   l=ftell(tempfh);
   j++;
-  ok(l==j, "ftell expected %d got %d\n", j, l);
+  ok(l==j, "ftell expected %d got %ld\n", j, l);
   fgetws(wtextW,3,tempfh);
   ok(wtextW[0]=='\r',"expected carriage return got %04hx\n", wtextW[0]);
   ok(wtextW[1]=='\n',"expected newline got %04hx\n", wtextW[1]);
   l=ftell(tempfh);
   j += 4;
-  ok(l==j, "ftell expected %d got %d\n", j, l);
+  ok(l==j, "ftell expected %d got %ld\n", j, l);
   for(i=0; i<strlen(mytext); i++)
     wtextW[i] = 0;
   /* the first time we get the string, it should be entirely within the local buffer */
   fgetws(wtextW,LLEN,tempfh);
   l=ftell(tempfh);
   j += (strlen(mytext)-1)*sizeof(WCHAR);
-  ok(l==j, "ftell expected %d got %d\n", j, l);
+  ok(l==j, "ftell expected %d got %ld\n", j, l);
   diff_found = FALSE;
   aptr = mytextW;
   wptr = wtextW;
@@ -1162,7 +1162,7 @@ static void test_ctrlz( void )
   ok(i==j, "returned string length expected %d got %d\n", j, i);
   j+=4; /* ftell should indicate the true end of file */
   l=ftell(tempfh);
-  ok(l==j, "ftell expected %d got %d\n", j, l);
+  ok(l==j, "ftell expected %d got %ld\n", j, l);
   ok(feof(tempfh), "did not get EOF\n");
   fclose(tempfh);
   
@@ -1172,7 +1172,7 @@ static void test_ctrlz( void )
   j=strlen(mytext)+3; /* should get through newline */
   ok(i==j, "returned string length expected %d got %d\n", j, i);
   l=ftell(tempfh);
-  ok(l==j, "ftell expected %d got %d\n", j, l);
+  ok(l==j, "ftell expected %d got %ld\n", j, l);
   ok(fgets(buffer,256,tempfh) != 0,"fgets failed unexpected\n");
   i=strlen(buffer);
   ok(i==1, "returned string length expected %d got %d\n", 1, i);
@@ -1598,7 +1598,7 @@ static void test_file_inherit( const char* selfname )
     arg_v[3] = buffer; sprintf(buffer, "%d", fd);
     arg_v[4] = 0;
     ret = _spawnvp(_P_WAIT, selfname, arg_v);
-    ok(ret == 0, "_spawnvp returned %d, errno %d\n", ret, errno);
+    ok(ret == 0, "_spawnvp returned %Id, errno %d\n", ret, errno);
     ok(tell(fd) == 8, "bad position %lu expecting 8\n", tell(fd));
     lseek(fd, 0, SEEK_SET);
     ok(read(fd, buffer, sizeof (buffer)) == 8 && memcmp(buffer, "Success", 8) == 0, "Couldn't read back the data\n");
@@ -1612,7 +1612,7 @@ static void test_file_inherit( const char* selfname )
     arg_v[3] = buffer; sprintf(buffer, "%d", fd);
     arg_v[4] = 0;
     ret = _spawnvp(_P_WAIT, selfname, arg_v);
-    ok(ret == 0, "_spawnvp returned %d, errno %d\n", ret, errno);
+    ok(ret == 0, "_spawnvp returned %Id, errno %d\n", ret, errno);
     ok(tell(fd) == 0, "bad position %lu expecting 0\n", tell(fd));
     ok(read(fd, buffer, sizeof (buffer)) == 0, "Found unexpected data (%s)\n", buffer);
     close (fd);
@@ -1802,7 +1802,7 @@ static void test_invalid_stdin( const char* selfname )
     }
 
     ret = RegOpenCurrentUser(KEY_READ, &key);
-    ok(!ret, "RegOpenCurrentUser failed: %x\n", ret);
+    ok(!ret, "RegOpenCurrentUser failed: %lx\n", ret);
 
     sa.nLength = sizeof(sa);
     sa.lpSecurityDescriptor = NULL;
@@ -1821,7 +1821,7 @@ static void test_invalid_stdin( const char* selfname )
     wait_child_process(proc.hProcess);
 
     ret = RegCloseKey(key);
-    ok(!ret, "RegCloseKey failed: %x\n", ret);
+    ok(!ret, "RegCloseKey failed: %lx\n", ret);
 }
 
 static void test_tmpnam( void )
@@ -1865,14 +1865,14 @@ static void test_chsize( void )
     ok( _chsize( fd, sizeof(temptext) / 2 ) == 0, "_chsize() failed\n" );
 
     pos = _lseek( fd, 0, SEEK_CUR );
-    ok( cur == pos, "File pointer changed from: %d to: %d\n", cur, pos );
+    ok( cur == pos, "File pointer changed from: %ld to: %ld\n", cur, pos );
     ok( _filelength( fd ) == sizeof(temptext) / 2, "Wrong file size\n" );
 
     /* enlarge the file */
     ok( _chsize( fd, sizeof(temptext) * 2 ) == 0, "_chsize() failed\n" ); 
 
     pos = _lseek( fd, 0, SEEK_CUR );
-    ok( cur == pos, "File pointer changed from: %d to: %d\n", cur, pos );
+    ok( cur == pos, "File pointer changed from: %ld to: %ld\n", cur, pos );
     ok( _filelength( fd ) == sizeof(temptext) * 2, "Wrong file size\n" );
 
     _close( fd );
@@ -2481,7 +2481,7 @@ static void test_stdin(void)
             "GetStdHandle(STD_INPUT_HANDLE) != _get_osfhandle(STDIN_FILENO)\n");
 
     r = SetStdHandle(STD_INPUT_HANDLE, INVALID_HANDLE_VALUE);
-    ok(r == TRUE, "SetStdHandle returned %x, expected TRUE\n", r);
+    ok(r == TRUE, "SetStdHandle returned %lx, expected TRUE\n", r);
     h = GetStdHandle(STD_INPUT_HANDLE);
     ok(h == INVALID_HANDLE_VALUE, "h = %p\n", h);
 

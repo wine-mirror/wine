@@ -224,7 +224,7 @@ static void test_mktime(void)
 
     ok (res != TIME_ZONE_ID_INVALID, "GetTimeZoneInformation failed\n");
     WideCharToMultiByte( CP_ACP, 0, tzinfo.StandardName, -1, buffer, sizeof(buffer), NULL, NULL );
-    trace( "bias %d std %d dst %d zone %s\n",
+    trace( "bias %ld std %ld dst %ld zone %s\n",
            tzinfo.Bias, tzinfo.StandardBias, tzinfo.DaylightBias, buffer );
     /* Bias may be positive or negative, to use offset of one day */
     my_tm = *localtime(&ref);  /* retrieve current dst flag */
@@ -244,14 +244,14 @@ static void test_mktime(void)
     sav_tm = my_tm;
 
     local_time = mktime(&my_tm);
-    ok(local_time == ref, "mktime returned %u, expected %u\n",
+    ok(local_time == ref, "mktime returned %lu, expected %lu\n",
        (DWORD)local_time, (DWORD)ref);
     /* now test some unnormalized struct tm's */
     my_tm = sav_tm;
     my_tm.tm_sec += 60;
     my_tm.tm_min -= 1;
     local_time = mktime(&my_tm);
-    ok(local_time == ref, "Unnormalized mktime returned %u, expected %u\n",
+    ok(local_time == ref, "Unnormalized mktime returned %lu, expected %lu\n",
         (DWORD)local_time, (DWORD)ref);
     ok( my_tm.tm_year == sav_tm.tm_year && my_tm.tm_mon == sav_tm.tm_mon &&
         my_tm.tm_mday == sav_tm.tm_mday && my_tm.tm_hour == sav_tm.tm_hour &&
@@ -265,7 +265,7 @@ static void test_mktime(void)
     my_tm.tm_min -= 60;
     my_tm.tm_hour += 1;
     local_time = mktime(&my_tm);
-    ok(local_time == ref, "Unnormalized mktime returned %u, expected %u\n",
+    ok(local_time == ref, "Unnormalized mktime returned %lu, expected %lu\n",
        (DWORD)local_time, (DWORD)ref);
     ok( my_tm.tm_year == sav_tm.tm_year && my_tm.tm_mon == sav_tm.tm_mon &&
         my_tm.tm_mday == sav_tm.tm_mday && my_tm.tm_hour == sav_tm.tm_hour &&
@@ -279,7 +279,7 @@ static void test_mktime(void)
     my_tm.tm_mon -= 12;
     my_tm.tm_year += 1;
     local_time = mktime(&my_tm);
-    ok(local_time == ref, "Unnormalized mktime returned %u, expected %u\n",
+    ok(local_time == ref, "Unnormalized mktime returned %lu, expected %lu\n",
        (DWORD)local_time, (DWORD)ref);
     ok( my_tm.tm_year == sav_tm.tm_year && my_tm.tm_mon == sav_tm.tm_mon &&
         my_tm.tm_mday == sav_tm.tm_mday && my_tm.tm_hour == sav_tm.tm_hour &&
@@ -293,7 +293,7 @@ static void test_mktime(void)
     my_tm.tm_mon += 12;
     my_tm.tm_year -= 1;
     local_time = mktime(&my_tm);
-    ok(local_time == ref, "Unnormalized mktime returned %u, expected %u\n",
+    ok(local_time == ref, "Unnormalized mktime returned %lu, expected %lu\n",
        (DWORD)local_time, (DWORD)ref);
     ok( my_tm.tm_year == sav_tm.tm_year && my_tm.tm_mon == sav_tm.tm_mon &&
         my_tm.tm_mday == sav_tm.tm_mday && my_tm.tm_hour == sav_tm.tm_hour &&
@@ -315,7 +315,7 @@ static void test_mktime(void)
     _snprintf(TZ_env,255,"TZ=%s",(getenv("TZ")?getenv("TZ"):""));
     putenv("TZ=GMT");
     nulltime = mktime(&my_tm);
-    ok(nulltime == ref,"mktime returned 0x%08x\n",(DWORD)nulltime);
+    ok(nulltime == ref,"mktime returned 0x%08lx\n",(DWORD)nulltime);
     putenv(TZ_env);
 }
 

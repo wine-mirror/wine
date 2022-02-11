@@ -1707,58 +1707,58 @@ static void test_strtol(void)
     /* errno is modified on W2K8+ */
     errno = EBADF;
     l = strtol("-1234", &e, 0);
-    ok(l==-1234, "wrong value %d\n", l);
+    ok(l==-1234, "wrong value %ld\n", l);
     ok(errno == EBADF || broken(errno == 0), "wrong errno %d\n", errno);
     errno = EBADF;
     ul = strtoul("1234", &e, 0);
-    ok(ul==1234, "wrong value %u\n", ul);
+    ok(ul==1234, "wrong value %lu\n", ul);
     ok(errno == EBADF || broken(errno == 0), "wrong errno %d\n", errno);
 
     errno = EBADF;
     l = strtol("2147483647L", &e, 0);
-    ok(l==2147483647, "wrong value %d\n", l);
+    ok(l==2147483647, "wrong value %ld\n", l);
     ok(errno == EBADF || broken(errno == 0), "wrong errno %d\n", errno);
     errno = EBADF;
     l = strtol("-2147483648L", &e, 0);
-    ok(l==-2147483647L - 1, "wrong value %d\n", l);
+    ok(l==-2147483647L - 1, "wrong value %ld\n", l);
     ok(errno == EBADF || broken(errno == 0), "wrong errno %d\n", errno);
     errno = EBADF;
     ul = strtoul("4294967295UL", &e, 0);
-    ok(ul==4294967295ul, "wrong value %u\n", ul);
+    ok(ul==4294967295ul, "wrong value %lu\n", ul);
     ok(errno == EBADF || broken(errno == 0), "wrong errno %d\n", errno);
 
     errno = 0;
     l = strtol("9223372036854775807L", &e, 0);
-    ok(l==2147483647, "wrong value %d\n", l);
+    ok(l==2147483647, "wrong value %ld\n", l);
     ok(errno == ERANGE, "wrong errno %d\n", errno);
     errno = 0;
     ul = strtoul("9223372036854775807L", &e, 0);
-    ok(ul==4294967295ul, "wrong value %u\n", ul);
+    ok(ul==4294967295ul, "wrong value %lu\n", ul);
     ok(errno == ERANGE, "wrong errno %d\n", errno);
 
     errno = 0;
     ul = strtoul("-2", NULL, 0);
-    ok(ul == -2, "wrong value %u\n", ul);
+    ok(ul == -2, "wrong value %lu\n", ul);
     ok(errno == 0, "wrong errno %d\n", errno);
 
     errno = 0;
     ul = strtoul("-4294967294", NULL, 0);
-    ok(ul == 2, "wrong value %u\n", ul);
+    ok(ul == 2, "wrong value %lu\n", ul);
     ok(errno == 0, "wrong errno %d\n", errno);
 
     errno = 0;
     ul = strtoul("-4294967295", NULL, 0);
-    ok(ul==1, "wrong value %u\n", ul);
+    ok(ul==1, "wrong value %lu\n", ul);
     ok(errno == 0, "wrong errno %d\n", errno);
 
     errno = 0;
     ul = strtoul("-4294967296", NULL, 0);
-    ok(ul == 1, "wrong value %u\n", ul);
+    ok(ul == 1, "wrong value %lu\n", ul);
     ok(errno == ERANGE, "wrong errno %d\n", errno);
 
     errno = 0;
     l = strtol(neg, &e, 0);
-    ok(l == 0, "wrong value %d\n", l);
+    ok(l == 0, "wrong value %ld\n", l);
     ok(errno == 0, "wrong errno %d\n", errno);
     ok(e == neg, "e = %p, neg = %p\n", e, neg);
 }
@@ -2349,7 +2349,7 @@ static void test__wcstombs_s_l(void)
         memset(out, 0xcc, sizeof(out));
         err = p_wcstombs_s_l(&ret, tests[i].str ? out : NULL, tests[i].len,
                              tests[i].wstr, tests[i].wlen, locale);
-        ok(ret == tests[i].ret, "%d: expected ret %d, got %d for '%s' in locale %s\n", i, tests[i].ret, ret,
+        ok(ret == tests[i].ret, "%d: expected ret %Id, got %Id for '%s' in locale %s\n", i, tests[i].ret, ret,
             wine_dbgstr_w(tests[i].wstr), tests[i].locale);
         ok(err == tests[i].err, "%d: expected err %d, got %d for '%s' in locale %s\n", i, tests[i].err, err,
             wine_dbgstr_w(tests[i].wstr), tests[i].locale);
