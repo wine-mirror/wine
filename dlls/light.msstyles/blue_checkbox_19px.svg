@@ -5,10 +5,10 @@
    <cc:Work rdf:about="">
     <dc:format>image/svg+xml</dc:format>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:title/>
    </cc:Work>
   </rdf:RDF>
  </metadata>
+ <rect width="19" height="228" fill="#fff" fill-opacity=".98444"/>
  <g transform="matrix(.95 0 0 .9499 .051376 .05137)" fill="none" stroke-width="1.0527">
   <path d="m2.9e-6 0h36.923v36.965h-36.923z"/>
   <rect x=".47226" y=".47227" width="18.947" height="18.95" rx="2.1053" ry="2.1055" stroke="#aeaeae"/>

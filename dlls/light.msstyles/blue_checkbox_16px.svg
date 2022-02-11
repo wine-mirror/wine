@@ -5,10 +5,10 @@
    <cc:Work rdf:about="">
     <dc:format>image/svg+xml</dc:format>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:title/>
    </cc:Work>
   </rdf:RDF>
  </metadata>
+ <rect width="16" height="192" fill="#fff" fill-opacity=".98444"/>
  <g fill="none">
   <rect x=".5" y=".5" width="15" height="15" rx="2" ry="2" stroke="#aeaeae"/>
   <rect x=".5" y="16.5" width="15" height="15" rx="2" ry="2" stroke="#3096fa"/>
@@ -27,10 +27,8 @@
  <path d="m5.8182 90.91-2.8636-3.1343-0.95455 1.0448 3.8182 4.1791 8.1818-8.9552-0.95455-1.0448z" fill="#3096fa"/>
  <path d="m5.8182 106.91-2.8636-3.1343-0.95455 1.0448 3.8182 4.1791 8.1818-8.9552-0.95455-1.0448z" fill="#2979ff"/>
  <path d="m5.8182 122.91-2.8636-3.1343-0.95454 1.0448 3.8182 4.1791 8.1818-8.9552-0.95455-1.0448z"/>
- <g>
-  <path d="m2 135h12v2h-12z"/>
-  <path d="m2 151h12v2h-12z" fill="#3096fa"/>
-  <path d="m2 167h12v2h-12z" fill="#2979ff"/>
-  <path d="m2 183h12v2h-12z"/>
- </g>
+ <path d="m2 135h12v2h-12z"/>
+ <path d="m2 151h12v2h-12z" fill="#3096fa"/>
+ <path d="m2 167h12v2h-12z" fill="#2979ff"/>
+ <path d="m2 183h12v2h-12z"/>
 </svg>

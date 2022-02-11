@@ -5,10 +5,10 @@
    <cc:Work rdf:about="">
     <dc:format>image/svg+xml</dc:format>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:title/>
    </cc:Work>
   </rdf:RDF>
  </metadata>
+ <rect width="28" height="336" fill="#fff" fill-opacity=".98444"/>
  <rect x=".99999" y="1" width="26" height="26" rx="2" ry="2" fill="none" stroke="#aeaeae" stroke-width="2"/>
  <path d="m10.045 130.87-4.534-4.7014-1.5114 1.5672 6.0454 6.2686 12.955-13.433-1.5114-1.5672z"/>
  <path d="m4 237h20v2h-20z"/>
@@ -32,9 +32,9 @@
   <rect x="1.0113" y="250.81" width="22.985" height="23.213" rx="1.7692" ry="1.7844" stroke="#2979ff"/>
   <rect x="1.0113" y="275.79" width="22.985" height="23.213" rx="1.7692" ry="1.7844" stroke="#aeaeae"/>
  </g>
- <g transform="matrix(1.1765 0 0 1.1208 -.70588 -.12081)">
-  <path d="m4 236.54h17v1.7844h-17z" fill="#3096fa" stroke-width=".77367"/>
-  <path d="m4 261.53h17v1.7844h-17z" fill="#2979ff" stroke-width=".77367"/>
-  <path d="m4 286.51h17v1.7844h-17z" fill="#aeaeae" stroke-width=".77367"/>
+ <g transform="matrix(1.1765 0 0 1.1208 -.70588 -.12081)" stroke-width=".77367">
+  <path d="m4 236.54h17v1.7844h-17z" fill="#3096fa"/>
+  <path d="m4 261.53h17v1.7844h-17z" fill="#2979ff"/>
+  <path d="m4 286.51h17v1.7844h-17z" fill="#aeaeae"/>
  </g>
 </svg>
