@@ -195,33 +195,33 @@ static const char *debugstr_sid( PSID sid )
     case 0:
         return wine_dbg_sprintf("S-%d-%d", psid->Revision, auth);
     case 1:
-        return wine_dbg_sprintf("S-%d-%d-%u", psid->Revision, auth,
+        return wine_dbg_sprintf("S-%d-%d-%lu", psid->Revision, auth,
                                 psid->SubAuthority[0]);
     case 2:
-        return wine_dbg_sprintf("S-%d-%d-%u-%u", psid->Revision, auth,
+        return wine_dbg_sprintf("S-%d-%d-%lu-%lu", psid->Revision, auth,
                                 psid->SubAuthority[0], psid->SubAuthority[1]);
     case 3:
-        return wine_dbg_sprintf("S-%d-%d-%u-%u-%u", psid->Revision, auth,
+        return wine_dbg_sprintf("S-%d-%d-%lu-%lu-%lu", psid->Revision, auth,
                                 psid->SubAuthority[0], psid->SubAuthority[1], psid->SubAuthority[2]);
     case 4:
-        return wine_dbg_sprintf("S-%d-%d-%u-%u-%u-%u", psid->Revision, auth,
+        return wine_dbg_sprintf("S-%d-%d-%lu-%lu-%lu-%lu", psid->Revision, auth,
                                 psid->SubAuthority[0], psid->SubAuthority[1], psid->SubAuthority[2],
                                 psid->SubAuthority[3]);
     case 5:
-        return wine_dbg_sprintf("S-%d-%d-%u-%u-%u-%u-%u", psid->Revision, auth,
+        return wine_dbg_sprintf("S-%d-%d-%lu-%lu-%lu-%lu-%lu", psid->Revision, auth,
                                 psid->SubAuthority[0], psid->SubAuthority[1], psid->SubAuthority[2],
                                 psid->SubAuthority[3], psid->SubAuthority[4]);
     case 6:
-        return wine_dbg_sprintf("S-%d-%d-%u-%u-%u-%u-%u-%u", psid->Revision, auth,
+        return wine_dbg_sprintf("S-%d-%d-%lu-%lu-%lu-%lu-%lu-%lu", psid->Revision, auth,
                                 psid->SubAuthority[3], psid->SubAuthority[1], psid->SubAuthority[2],
                                 psid->SubAuthority[0], psid->SubAuthority[4], psid->SubAuthority[5]);
     case 7:
-        return wine_dbg_sprintf("S-%d-%d-%u-%u-%u-%u-%u-%u-%u", psid->Revision, auth,
+        return wine_dbg_sprintf("S-%d-%d-%lu-%lu-%lu-%lu-%lu-%lu-%lu", psid->Revision, auth,
                                 psid->SubAuthority[0], psid->SubAuthority[1], psid->SubAuthority[2],
                                 psid->SubAuthority[3], psid->SubAuthority[4], psid->SubAuthority[5],
                                 psid->SubAuthority[6]);
     case 8:
-        return wine_dbg_sprintf("S-%d-%d-%u-%u-%u-%u-%u-%u-%u-%u", psid->Revision, auth,
+        return wine_dbg_sprintf("S-%d-%d-%lu-%lu-%lu-%lu-%lu-%lu-%lu-%lu", psid->Revision, auth,
                                 psid->SubAuthority[0], psid->SubAuthority[1], psid->SubAuthority[2],
                                 psid->SubAuthority[3], psid->SubAuthority[4], psid->SubAuthority[5],
                                 psid->SubAuthority[6], psid->SubAuthority[7]);
@@ -556,7 +556,7 @@ BOOL WINAPI AdjustTokenPrivileges( HANDLE token, BOOL disable, PTOKEN_PRIVILEGES
 {
     NTSTATUS status;
 
-    TRACE("(%p %d %p %d %p %p)\n", token, disable, new, len, prev, ret_len );
+    TRACE("(%p %d %p %ld %p %p)\n", token, disable, new, len, prev, ret_len );
 
     status = NtAdjustPrivilegesToken( token, disable, new, len, prev, ret_len );
     SetLastError( RtlNtStatusToDosError( status ));
@@ -624,7 +624,7 @@ BOOL WINAPI CheckTokenMembership( HANDLE token, PSID sid_to_check, PBOOL is_memb
 
     for (i = 0; i < token_groups->GroupCount; i++)
     {
-        TRACE("Groups[%d]: {0x%x, %s}\n", i,
+        TRACE("Groups[%ld]: {0x%lx, %s}\n", i,
             token_groups->Groups[i].Attributes,
             debugstr_sid(token_groups->Groups[i].Sid));
         if ((token_groups->Groups[i].Attributes & SE_GROUP_ENABLED) &&
@@ -654,7 +654,7 @@ BOOL WINAPI CreateRestrictedToken( HANDLE token, DWORD flags,
     TOKEN_GROUPS *nt_disable_sids = NULL, *nt_restrict_sids = NULL;
     NTSTATUS status = STATUS_NO_MEMORY;
 
-    TRACE("token %p, flags %#x, disable_sids %u %p, delete_privs %u %p, restrict_sids %u %p, ret %p\n",
+    TRACE("token %p, flags %#lx, disable_sids %lu %p, delete_privs %lu %p, restrict_sids %lu %p, ret %p\n",
             token, flags, disable_sid_count, disable_sids, delete_priv_count, delete_privs,
             restrict_sid_count, restrict_sids, ret);
 
@@ -704,7 +704,7 @@ BOOL WINAPI DuplicateTokenEx( HANDLE token, DWORD access, LPSECURITY_ATTRIBUTES 
 {
     OBJECT_ATTRIBUTES attr;
 
-    TRACE("%p 0x%08x 0x%08x 0x%08x %p\n", token, access, level, type, ret );
+    TRACE("%p 0x%08lx 0x%08x 0x%08x %p\n", token, access, level, type, ret );
 
     InitializeObjectAttributes( &attr, NULL, (sa && sa->bInheritHandle) ? OBJ_INHERIT : 0,
                                 NULL, sa ? sa->lpSecurityDescriptor : NULL );
@@ -717,7 +717,7 @@ BOOL WINAPI DuplicateTokenEx( HANDLE token, DWORD access, LPSECURITY_ATTRIBUTES 
 BOOL WINAPI GetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS class,
                                  LPVOID info, DWORD len, LPDWORD retlen )
 {
-    TRACE("(%p, %s, %p, %d, %p):\n",
+    TRACE("(%p, %s, %p, %ld, %p):\n",
           token,
           (class == TokenUser) ? "TokenUser" :
           (class == TokenGroups) ? "TokenGroups" :
@@ -881,7 +881,7 @@ BOOL WINAPI SetThreadToken( PHANDLE thread, HANDLE token )
  */
 BOOL WINAPI SetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS class, LPVOID info, DWORD len )
 {
-    TRACE("(%p, %s, %p, %d)\n",
+    TRACE("(%p, %s, %p, %ld)\n",
           token,
           (class == TokenUser) ? "TokenUser" :
           (class == TokenGroups) ? "TokenGroups" :
@@ -927,7 +927,7 @@ BOOL WINAPI ConvertToAutoInheritPrivateObjectSecurity( PSECURITY_DESCRIPTOR pare
  */
 HANDLE WINAPI CreateBoundaryDescriptorW( LPCWSTR name, ULONG flags )
 {
-    FIXME("%s %u - stub\n", debugstr_w(name), flags);
+    FIXME("%s %lu - stub\n", debugstr_w(name), flags);
     return NULL;
 }
 
@@ -952,7 +952,7 @@ BOOL WINAPI CreatePrivateObjectSecurityEx( PSECURITY_DESCRIPTOR parent, PSECURIT
     DWORD needed, offset;
     BYTE *buffer;
 
-    FIXME( "%p %p %p %p %d %u %p %p - returns fake SECURITY_DESCRIPTOR\n",
+    FIXME( "%p %p %p %p %d %lu %p %p - returns fake SECURITY_DESCRIPTOR\n",
            parent, creator, descr, type, is_container, flags, token, mapping );
 
     needed = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
@@ -1025,7 +1025,7 @@ BOOL WINAPI GetFileSecurityW( LPCWSTR name, SECURITY_INFORMATION info,
     NTSTATUS status;
     DWORD access = 0;
 
-    TRACE( "(%s,%d,%p,%d,%p)\n", debugstr_w(name), info, descr, len, ret_len );
+    TRACE( "(%s,%ld,%p,%ld,%p)\n", debugstr_w(name), info, descr, len, ret_len );
 
     if (info & (OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION))
         access |= READ_CONTROL;
@@ -1060,7 +1060,7 @@ BOOL WINAPI GetPrivateObjectSecurity( PSECURITY_DESCRIPTOR obj_descr, SECURITY_I
     PACL pacl;
     PSID psid;
 
-    TRACE("(%p,0x%08x,%p,0x%08x,%p)\n", obj_descr, info, ret_descr, len, ret_len );
+    TRACE("(%p,0x%08lx,%p,0x%08lx,%p)\n", obj_descr, info, ret_descr, len, ret_len );
 
     if (!InitializeSecurityDescriptor(&desc, SECURITY_DESCRIPTOR_REVISION)) return FALSE;
 
@@ -1200,7 +1200,7 @@ BOOL WINAPI SetFileSecurityW( LPCWSTR name, SECURITY_INFORMATION info, PSECURITY
     DWORD access = 0;
     NTSTATUS status;
 
-    TRACE( "(%s, 0x%x, %p)\n", debugstr_w(name), info, descr );
+    TRACE( "(%s, 0x%lx, %p)\n", debugstr_w(name), info, descr );
 
     if (info & (OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION)) access |= WRITE_OWNER;
     if (info & SACL_SECURITY_INFORMATION) access |= ACCESS_SYSTEM_SECURITY;
@@ -1229,7 +1229,7 @@ BOOL WINAPI SetPrivateObjectSecurity( SECURITY_INFORMATION info, PSECURITY_DESCR
                                       PSECURITY_DESCRIPTOR *obj_descr, PGENERIC_MAPPING mapping,
                                       HANDLE token )
 {
-    FIXME( "0x%08x %p %p %p %p - stub\n", info, descr, obj_descr, mapping, token );
+    FIXME( "0x%08lx %p %p %p %p - stub\n", info, descr, obj_descr, mapping, token );
     return TRUE;
 }
 
@@ -1240,7 +1240,7 @@ BOOL WINAPI SetPrivateObjectSecurityEx( SECURITY_INFORMATION info, PSECURITY_DES
                                         PSECURITY_DESCRIPTOR *obj_descr, ULONG flags,
                                         PGENERIC_MAPPING mapping, HANDLE token )
 {
-    FIXME( "0x%08x %p %p %u %p %p - stub\n", info, descr, obj_descr, flags, mapping, token );
+    FIXME( "0x%08lx %p %p %lu %p %p - stub\n", info, descr, obj_descr, flags, mapping, token );
     return TRUE;
 }
 
@@ -1312,7 +1312,7 @@ BOOL WINAPI AccessCheckAndAuditAlarmW( LPCWSTR subsystem, LPVOID id, LPWSTR type
                                        PGENERIC_MAPPING mapping, BOOL creation,
                                        LPDWORD granted, LPBOOL status, LPBOOL on_close )
 {
-    FIXME( "stub (%s,%p,%s,%s,%p,%08x,%p,%x,%p,%p,%p)\n", debugstr_w(subsystem),
+    FIXME( "stub (%s,%p,%s,%s,%p,%08lx,%p,%x,%p,%p,%p)\n", debugstr_w(subsystem),
            id, debugstr_w(type_name), debugstr_w(name), descr, access, mapping,
            creation, granted, status, on_close );
     return TRUE;
@@ -1522,7 +1522,7 @@ BOOL WINAPI ObjectOpenAuditAlarmW( LPCWSTR subsystem, LPVOID id, LPWSTR type, LP
                                    DWORD granted, PPRIVILEGE_SET privs, BOOL creation,
                                    BOOL access, LPBOOL on_close )
 {
-    FIXME( "stub (%s,%p,%s,%s,%p,%p,0x%08x,0x%08x,%p,%x,%x,%p)\n", debugstr_w(subsystem),
+    FIXME( "stub (%s,%p,%s,%s,%p,%p,0x%08lx,0x%08lx,%p,%x,%x,%p)\n", debugstr_w(subsystem),
            id, debugstr_w(type), debugstr_w(name), descr, token, desired, granted,
            privs, creation, access, on_close );
     return TRUE;
@@ -1534,7 +1534,7 @@ BOOL WINAPI ObjectOpenAuditAlarmW( LPCWSTR subsystem, LPVOID id, LPWSTR type, LP
 BOOL WINAPI ObjectPrivilegeAuditAlarmW( LPCWSTR subsystem, LPVOID id, HANDLE token,
                                         DWORD desired, PPRIVILEGE_SET privs, BOOL granted )
 {
-    FIXME( "stub (%s,%p,%p,0x%08x,%p,%x)\n", debugstr_w(subsystem), id, token, desired, privs, granted );
+    FIXME( "stub (%s,%p,%p,0x%08lx,%p,%x)\n", debugstr_w(subsystem), id, token, desired, privs, granted );
     return TRUE;
 }
 
@@ -1553,7 +1553,7 @@ BOOL WINAPI PrivilegedServiceAuditAlarmW( LPCWSTR subsystem, LPCWSTR service, HA
  */
 BOOL WINAPI SetAclInformation( PACL acl, LPVOID info, DWORD len, ACL_INFORMATION_CLASS class )
 {
-    FIXME( "%p %p 0x%08x 0x%08x - stub\n", acl, info, len, class );
+    FIXME( "%p %p 0x%08lx 0x%08x - stub\n", acl, info, len, class );
     return TRUE;
 }
 
@@ -1562,6 +1562,6 @@ BOOL WINAPI SetAclInformation( PACL acl, LPVOID info, DWORD len, ACL_INFORMATION
  */
 BOOL WINAPI SetCachedSigningLevel( PHANDLE source, ULONG count, ULONG flags, HANDLE file )
 {
-    FIXME( "%p %u %u %p - stub\n", source, count, flags, file );
+    FIXME( "%p %lu %lu %p - stub\n", source, count, flags, file );
     return TRUE;
 }

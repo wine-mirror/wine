@@ -198,7 +198,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetVolumeInformationW( LPCWSTR root, LPWSTR label,
 
     if (status)
     {
-        TRACE( "cannot open device %s: %x\n", debugstr_w(nt_name.Buffer), status );
+        TRACE( "cannot open device %s: %lx\n", debugstr_w(nt_name.Buffer), status );
         if (status == STATUS_ACCESS_DENIED)
             MESSAGE( "wine: Read access denied for device %s, FS volume label and serial are not available.\n", debugstr_w(nt_name.Buffer) );
         status = NtOpenFile( &handle, SYNCHRONIZE, &attr, &io, 0,
@@ -264,7 +264,7 @@ BOOL WINAPI GetVolumeNameForVolumeMountPointW( LPCWSTR path, LPWSTR volume, DWOR
     BOOL ret = FALSE;
     DWORD br;
 
-    TRACE("(%s, %p, %x)\n", debugstr_w(path), volume, size);
+    TRACE("(%s, %p, %lx)\n", debugstr_w(path), volume, size);
     if (path[lstrlenW(path)-1] != '\\')
     {
         SetLastError( ERROR_INVALID_NAME );
@@ -309,7 +309,7 @@ BOOL WINAPI GetVolumeNameForVolumeMountPointW( LPCWSTR path, LPWSTR volume, DWOR
     /* We will then take that and get the volume name        */
     nonpersist_name = (WCHAR *)(input + 1);
     status = read_nt_symlink( symlink_name, nonpersist_name, (i_size - sizeof(*input)) / sizeof(WCHAR) );
-    TRACE("read_nt_symlink got stat=%x, for %s, got <%s>\n", status,
+    TRACE("read_nt_symlink got stat=%lx, for %s, got <%s>\n", status,
             debugstr_w(symlink_name), debugstr_w(nonpersist_name));
     if (status != STATUS_SUCCESS)
     {
@@ -333,7 +333,7 @@ BOOL WINAPI GetVolumeNameForVolumeMountPointW( LPCWSTR path, LPWSTR volume, DWOR
         goto err_ret;
 
     /* Verify and return the data, note string is not null terminated  */
-    TRACE("found %d matching mount points\n", output->NumberOfMountPoints);
+    TRACE("found %ld matching mount points\n", output->NumberOfMountPoints);
     if (output->NumberOfMountPoints < 1)
     {
         SetLastError( ERROR_NO_VOLUME_ID );
@@ -390,10 +390,10 @@ BOOL WINAPI DECLSPEC_HOTPATCH DefineDosDeviceW( DWORD flags, const WCHAR *device
     NTSTATUS status;
     HANDLE handle;
 
-    TRACE("%#x, %s, %s\n", flags, debugstr_w(device), debugstr_w(target));
+    TRACE("%#lx, %s, %s\n", flags, debugstr_w(device), debugstr_w(target));
 
     if (flags & ~(DDD_RAW_TARGET_PATH | DDD_REMOVE_DEFINITION))
-        FIXME("Ignoring flags %#x.\n", flags & ~(DDD_RAW_TARGET_PATH | DDD_REMOVE_DEFINITION));
+        FIXME("Ignoring flags %#lx.\n", flags & ~(DDD_RAW_TARGET_PATH | DDD_REMOVE_DEFINITION));
 
     lstrcatW( link_name, device );
     RtlInitUnicodeString( &nt_name, link_name );
@@ -721,7 +721,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetDiskFreeSpaceW( LPCWSTR root, LPDWORD cluster_s
     if (sector_bytes) *sector_bytes = info.BytesPerSector;
     if (free_clusters) *free_clusters = info.AvailableAllocationUnits.u.LowPart;
     if (total_clusters) *total_clusters = info.TotalAllocationUnits.u.LowPart;
-    TRACE("%#08x, %#08x, %#08x, %#08x\n", info.SectorsPerAllocationUnit, info.BytesPerSector,
+    TRACE("%#08lx, %#08lx, %#08lx, %#08lx\n", info.SectorsPerAllocationUnit, info.BytesPerSector,
           info.AvailableAllocationUnits.u.LowPart, info.TotalAllocationUnits.u.LowPart);
     return TRUE;
 }
@@ -941,7 +941,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetVolumePathNamesForVolumeNameW( LPCWSTR volumena
     BOOL ret = FALSE;
     UINT i, j;
 
-    TRACE("%s, %p, %u, %p\n", debugstr_w(volumename), volumepathname, buflen, returnlen);
+    TRACE("%s, %p, %lu, %p\n", debugstr_w(volumename), volumepathname, buflen, returnlen);
 
     if (!volumename || (len = lstrlenW( volumename )) != 49)
     {
@@ -1112,7 +1112,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH FindNextVolumeW( HANDLE handle, LPWSTR volume, DWO
         volume[1] = '\\';  /* map \??\ to \\?\ */
         volume[size / sizeof(WCHAR)] = '\\';  /* Windows appends a backslash */
         volume[size / sizeof(WCHAR) + 1] = 0;
-        TRACE( "returning entry %u %s\n", data->Size - 1, debugstr_w(volume) );
+        TRACE( "returning entry %lu %s\n", data->Size - 1, debugstr_w(volume) );
         return TRUE;
     }
     SetLastError( ERROR_NO_MORE_FILES );

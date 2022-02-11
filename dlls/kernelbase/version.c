@@ -248,7 +248,7 @@ done:
             && nt->OptionalHeader.MinorOperatingSystemVersion >= 3)))
     {
         if (current_version.dwMajorVersion > 10)
-            FIXME("Unsupported current_version.dwMajorVersion %u.\n", current_version.dwMajorVersion);
+            FIXME("Unsupported current_version.dwMajorVersion %lu.\n", current_version.dwMajorVersion);
 
         ver = nt->OptionalHeader.MajorOperatingSystemVersion >= 10 ? NULL : &windows8_1_version_info;
     }
@@ -628,7 +628,7 @@ static void print_vffi_debug(const VS_FIXEDFILEINFO *vffi)
     {
         WORD mode = LOWORD(vffi->dwFileVersionMS);
         WORD ver_rev = HIWORD(vffi->dwFileVersionLS);
-        TRACE("fileversion=%u.%u.%u.%u (%s.major.minor.release), ",
+        TRACE("fileversion=%lu.%u.%u.%u (%s.major.minor.release), ",
             (vffi->dwFileVersionMS),
             HIBYTE(ver_rev), LOBYTE(ver_rev), LOWORD(vffi->dwFileVersionLS),
             (mode == 3) ? "Usermode" : ((mode <= 2) ? "Kernelmode" : "?") );
@@ -643,7 +643,7 @@ static void print_vffi_debug(const VS_FIXEDFILEINFO *vffi)
           HIWORD(vffi->dwProductVersionMS),LOWORD(vffi->dwProductVersionMS),
           HIWORD(vffi->dwProductVersionLS),LOWORD(vffi->dwProductVersionLS));
 
-    TRACE("flagmask=0x%x, flags=0x%x %s%s%s%s%s%s\n",
+    TRACE("flagmask=0x%lx, flags=0x%lx %s%s%s%s%s%s\n",
           vffi->dwFileFlagsMask, vffi->dwFileFlags,
           (vffi->dwFileFlags & VS_FF_DEBUG) ? "DEBUG," : "",
           (vffi->dwFileFlags & VS_FF_PRERELEASE) ? "PRERELEASE," : "",
@@ -664,7 +664,7 @@ static void print_vffi_debug(const VS_FIXEDFILEINFO *vffi)
     case VOS_NT:TRACE("NT,");break;
     case VOS_UNKNOWN:
     default:
-        TRACE("UNKNOWN(0x%x),",vffi->dwFileOS&0xFFFF0000);break;
+        TRACE("UNKNOWN(0x%lx),",vffi->dwFileOS&0xFFFF0000);break;
     }
 
     switch (LOWORD(vffi->dwFileOS))
@@ -689,7 +689,7 @@ static void print_vffi_debug(const VS_FIXEDFILEINFO *vffi)
         {
             if(versioned_printer) /* NT3.x/NT4.0 or old w2k Driver  */
                 TRACE(",PRINTER");
-            TRACE(" (subtype=0x%x)", vffi->dwFileSubtype);
+            TRACE(" (subtype=0x%lx)", vffi->dwFileSubtype);
         }
         break;
     case VFT_DRV:
@@ -710,7 +710,7 @@ static void print_vffi_debug(const VS_FIXEDFILEINFO *vffi)
         case VFT2_DRV_VERSIONED_PRINTER:TRACE("VERSIONED_PRINTER");break;
         case VFT2_UNKNOWN:
         default:
-            TRACE("UNKNOWN(0x%x)",vffi->dwFileSubtype);break;
+            TRACE("UNKNOWN(0x%lx)",vffi->dwFileSubtype);break;
         }
         break;
     case VFT_FONT:
@@ -720,18 +720,18 @@ static void print_vffi_debug(const VS_FIXEDFILEINFO *vffi)
         case VFT2_FONT_RASTER:TRACE("RASTER");break;
         case VFT2_FONT_VECTOR:TRACE("VECTOR");break;
         case VFT2_FONT_TRUETYPE:TRACE("TRUETYPE");break;
-        default:TRACE("UNKNOWN(0x%x)",vffi->dwFileSubtype);break;
+        default:TRACE("UNKNOWN(0x%lx)",vffi->dwFileSubtype);break;
         }
         break;
     case VFT_VXD:TRACE("filetype=VXD");break;
     case VFT_STATIC_LIB:TRACE("filetype=STATIC_LIB");break;
     case VFT_UNKNOWN:
     default:
-        TRACE("filetype=Unknown(0x%x)",vffi->dwFileType);break;
+        TRACE("filetype=Unknown(0x%lx)",vffi->dwFileType);break;
     }
 
     TRACE("\n");
-    TRACE("filedate=0x%x.0x%x\n",vffi->dwFileDateMS,vffi->dwFileDateLS);
+    TRACE("filedate=0x%lx.0x%lx\n",vffi->dwFileDateMS,vffi->dwFileDateLS);
 }
 
 /***********************************************************************
@@ -758,7 +758,7 @@ DWORD WINAPI GetFileVersionInfoSizeExW( DWORD flags, LPCWSTR filename, LPDWORD r
     DWORD len, offset, magic = 1;
     HMODULE hModule;
 
-    TRACE("(0x%x,%s,%p)\n", flags, debugstr_w(filename), ret_handle );
+    TRACE("(0x%lx,%s,%p)\n", flags, debugstr_w(filename), ret_handle );
 
     if (ret_handle) *ret_handle = 0;
 
@@ -773,7 +773,7 @@ DWORD WINAPI GetFileVersionInfoSizeExW( DWORD flags, LPCWSTR filename, LPDWORD r
         return 0;
     }
     if (flags & ~FILE_VER_GET_LOCALISED)
-        FIXME("flags 0x%x ignored\n", flags & ~FILE_VER_GET_LOCALISED);
+        FIXME("flags 0x%lx ignored\n", flags & ~FILE_VER_GET_LOCALISED);
 
     if ((hModule = LoadLibraryExW( filename, 0, LOAD_LIBRARY_AS_DATAFILE )))
     {
@@ -846,7 +846,7 @@ DWORD WINAPI GetFileVersionInfoSizeExA( DWORD flags, LPCSTR filename, LPDWORD ha
     UNICODE_STRING filenameW;
     DWORD retval;
 
-    TRACE("(0x%x,%s,%p)\n", flags, debugstr_a(filename), handle );
+    TRACE("(0x%lx,%s,%p)\n", flags, debugstr_a(filename), handle );
 
     if(filename)
         RtlCreateUnicodeStringFromAsciiz(&filenameW, filename);
@@ -870,7 +870,7 @@ BOOL WINAPI GetFileVersionInfoExW( DWORD flags, LPCWSTR filename, DWORD ignored,
     HMODULE hModule;
     VS_VERSION_INFO_STRUCT32* vvis = data;
 
-    TRACE("(0x%x,%s,%d,size=%d,data=%p)\n",
+    TRACE("(0x%lx,%s,%ld,size=%ld,data=%p)\n",
           flags, debugstr_w(filename), ignored, datasize, data );
 
     if (!data)
@@ -879,7 +879,7 @@ BOOL WINAPI GetFileVersionInfoExW( DWORD flags, LPCWSTR filename, DWORD ignored,
         return FALSE;
     }
     if (flags & ~FILE_VER_GET_LOCALISED)
-        FIXME("flags 0x%x ignored\n", flags & ~FILE_VER_GET_LOCALISED);
+        FIXME("flags 0x%lx ignored\n", flags & ~FILE_VER_GET_LOCALISED);
 
     if ((hModule = LoadLibraryExW( filename, 0, LOAD_LIBRARY_AS_DATAFILE )))
     {
@@ -950,7 +950,7 @@ BOOL WINAPI GetFileVersionInfoExA( DWORD flags, LPCSTR filename, DWORD handle, D
     UNICODE_STRING filenameW;
     BOOL retval;
 
-    TRACE("(0x%x,%s,%d,size=%d,data=%p)\n",
+    TRACE("(0x%lx,%s,%ld,size=%ld,data=%p)\n",
           flags, debugstr_a(filename), handle, datasize, data );
 
     if(filename)
@@ -1290,7 +1290,7 @@ DWORD WINAPI VerFindFileA( DWORD flags, LPCSTR filename, LPCSTR win_dir, LPCSTR 
     const char *destDir;
     char winDir[MAX_PATH], systemDir[MAX_PATH];
 
-    TRACE("flags = %x filename=%s windir=%s appdir=%s curdirlen=%p(%u) destdirlen=%p(%u)\n",
+    TRACE("flags = %lx filename=%s windir=%s appdir=%s curdirlen=%p(%u) destdirlen=%p(%u)\n",
           flags, debugstr_a(filename), debugstr_a(win_dir), debugstr_a(app_dir),
           curdir_len, curdir_len ? *curdir_len : 0, dest_len, dest_len ? *dest_len : 0 );
 
@@ -1358,7 +1358,7 @@ DWORD WINAPI VerFindFileA( DWORD flags, LPCSTR filename, LPCSTR win_dir, LPCSTR 
         *curdir_len = len;
     }
 
-    TRACE("ret = %u (%s%s%s) curdir=%s destdir=%s\n", retval,
+    TRACE("ret = %lu (%s%s%s) curdir=%s destdir=%s\n", retval,
           (retval & VFF_CURNEDEST) ? "VFF_CURNEDEST " : "",
           (retval & VFF_FILEINUSE) ? "VFF_FILEINUSE " : "",
           (retval & VFF_BUFFTOOSMALL) ? "VFF_BUFFTOOSMALL " : "",
@@ -1377,7 +1377,7 @@ DWORD WINAPI VerFindFileW( DWORD flags, LPCWSTR filename, LPCWSTR win_dir, LPCWS
     const WCHAR *curDir;
     const WCHAR *destDir;
 
-    TRACE("flags = %x filename=%s windir=%s appdir=%s curdirlen=%p(%u) destdirlen=%p(%u)\n",
+    TRACE("flags = %lx filename=%s windir=%s appdir=%s curdirlen=%p(%u) destdirlen=%p(%u)\n",
           flags, debugstr_w(filename), debugstr_w(win_dir), debugstr_w(app_dir),
           curdir_len, curdir_len ? *curdir_len : 0, dest_len, dest_len ? *dest_len : 0 );
 
@@ -1437,7 +1437,7 @@ DWORD WINAPI VerFindFileW( DWORD flags, LPCWSTR filename, LPCWSTR win_dir, LPCWS
         *curdir_len = len;
     }
 
-    TRACE("ret = %u (%s%s%s) curdir=%s destdir=%s\n", retval,
+    TRACE("ret = %lu (%s%s%s) curdir=%s destdir=%s\n", retval,
           (retval & VFF_CURNEDEST) ? "VFF_CURNEDEST " : "",
           (retval & VFF_FILEINUSE) ? "VFF_FILEINUSE " : "",
           (retval & VFF_BUFFTOOSMALL) ? "VFF_BUFFTOOSMALL " : "",
@@ -1486,7 +1486,7 @@ BOOL WINAPI GetVersionExA( OSVERSIONINFOA *info )
     if (info->dwOSVersionInfoSize != sizeof(OSVERSIONINFOA) &&
         info->dwOSVersionInfoSize != sizeof(OSVERSIONINFOEXA))
     {
-        WARN( "wrong OSVERSIONINFO size from app (got: %d)\n", info->dwOSVersionInfoSize );
+        WARN( "wrong OSVERSIONINFO size from app (got: %ld)\n", info->dwOSVersionInfoSize );
         SetLastError( ERROR_INSUFFICIENT_BUFFER );
         return FALSE;
     }
@@ -1523,7 +1523,7 @@ BOOL WINAPI GetVersionExW( OSVERSIONINFOW *info )
     if (info->dwOSVersionInfoSize != sizeof(OSVERSIONINFOW) &&
         info->dwOSVersionInfoSize != sizeof(OSVERSIONINFOEXW))
     {
-        WARN( "wrong OSVERSIONINFO size from app (got: %d)\n", info->dwOSVersionInfoSize );
+        WARN( "wrong OSVERSIONINFO size from app (got: %ld)\n", info->dwOSVersionInfoSize );
         return FALSE;
     }
 

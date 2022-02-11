@@ -260,7 +260,7 @@ UINT WINAPI DECLSPEC_HOTPATCH ResetWriteWatch( void *base, SIZE_T size )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH SetSystemFileCacheSize( SIZE_T mincache, SIZE_T maxcache, DWORD flags )
 {
-    FIXME( "stub: %ld %ld %d\n", mincache, maxcache, flags );
+    FIXME( "stub: %Id %Id %ld\n", mincache, maxcache, flags );
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return FALSE;
 }
@@ -329,7 +329,7 @@ LPVOID WINAPI DECLSPEC_HOTPATCH VirtualAllocFromApp( void *addr, SIZE_T size,
 {
     LPVOID ret = addr;
 
-    TRACE_(virtual)( "addr %p, size %p, type %#x, protect %#x.\n", addr, (void *)size, type, protect );
+    TRACE_(virtual)( "addr %p, size %p, type %#lx, protect %#lx.\n", addr, (void *)size, type, protect );
 
     if (protect == PAGE_EXECUTE || protect == PAGE_EXECUTE_READ || protect == PAGE_EXECUTE_READWRITE
             || protect == PAGE_EXECUTE_WRITECOPY)
@@ -349,7 +349,7 @@ LPVOID WINAPI DECLSPEC_HOTPATCH VirtualAllocFromApp( void *addr, SIZE_T size,
 BOOL WINAPI /* DECLSPEC_HOTPATCH */ PrefetchVirtualMemory( HANDLE process, ULONG_PTR count,
                                                            WIN32_MEMORY_RANGE_ENTRY *addresses, ULONG flags )
 {
-    FIXME( "process %p, count %p, addresses %p, flags %#x stub.\n", process, (void *)count, addresses, flags );
+    FIXME( "process %p, count %p, addresses %p, flags %#lx stub.\n", process, (void *)count, addresses, flags );
     return TRUE;
 }
 
@@ -1079,7 +1079,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GlobalMemoryStatusEx( MEMORYSTATUSEX *status )
     if (status->ullTotalPhys)
         status->dwMemoryLoad = (status->ullTotalPhys - status->ullAvailPhys) / (status->ullTotalPhys / 100);
 
-    TRACE_(virtual)( "MemoryLoad %d, TotalPhys %s, AvailPhys %s, TotalPageFile %s,"
+    TRACE_(virtual)( "MemoryLoad %ld, TotalPhys %s, AvailPhys %s, TotalPageFile %s,"
                      "AvailPageFile %s, TotalVirtual %s, AvailVirtual %s\n",
                     status->dwMemoryLoad, wine_dbgstr_longlong(status->ullTotalPhys),
                     wine_dbgstr_longlong(status->ullAvailPhys), wine_dbgstr_longlong(status->ullTotalPageFile),
@@ -1096,7 +1096,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GlobalMemoryStatusEx( MEMORYSTATUSEX *status )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH MapUserPhysicalPages( void *addr, ULONG_PTR page_count, ULONG_PTR *pages )
 {
-    FIXME( "stub: %p %lu %p\n", addr, page_count, pages );
+    FIXME( "stub: %p %Iu %p\n", addr, page_count, pages );
     *pages = 0;
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return FALSE;
@@ -1114,7 +1114,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH MapUserPhysicalPages( void *addr, ULONG_PTR page_c
 BOOL WINAPI DECLSPEC_HOTPATCH AllocateUserPhysicalPagesNuma( HANDLE process, ULONG_PTR *pages,
                                                              ULONG_PTR *userarray, DWORD node )
 {
-    if (node) FIXME( "Ignoring preferred node %u\n", node );
+    if (node) FIXME( "Ignoring preferred node %lu\n", node );
     return AllocateUserPhysicalPages( process, pages, userarray );
 }
 
@@ -1126,7 +1126,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileMappingNumaW( HANDLE file, LPSECURITY_
                                                         DWORD protect, DWORD size_high, DWORD size_low,
                                                         LPCWSTR name, DWORD node )
 {
-    if (node) FIXME( "Ignoring preferred node %u\n", node );
+    if (node) FIXME( "Ignoring preferred node %lu\n", node );
     return CreateFileMappingW( file, sa, protect, size_high, size_low, name );
 }
 
@@ -1177,7 +1177,7 @@ BOOL WINAPI GetSystemCpuSetInformation(SYSTEM_CPU_SET_INFORMATION *info, ULONG b
                                             HANDLE process, ULONG flags)
 {
     if (flags)
-        FIXME("Unsupported flags %#x.\n", flags);
+        FIXME("Unsupported flags %#lx.\n", flags);
 
     *return_length = 0;
 
@@ -1191,7 +1191,7 @@ BOOL WINAPI GetSystemCpuSetInformation(SYSTEM_CPU_SET_INFORMATION *info, ULONG b
  */
 BOOL WINAPI SetThreadSelectedCpuSets(HANDLE thread, const ULONG *cpu_set_ids, ULONG count)
 {
-    FIXME( "thread %p, cpu_set_ids %p, count %u stub.\n", thread, cpu_set_ids, count );
+    FIXME( "thread %p, cpu_set_ids %p, count %lu stub.\n", thread, cpu_set_ids, count );
 
     return TRUE;
 }
@@ -1236,7 +1236,7 @@ LPVOID WINAPI DECLSPEC_HOTPATCH MapViewOfFileExNuma( HANDLE handle, DWORD access
                                                      DWORD offset_low, SIZE_T count, LPVOID addr,
                                                      DWORD node )
 {
-    if (node) FIXME( "Ignoring preferred node %u\n", node );
+    if (node) FIXME( "Ignoring preferred node %lu\n", node );
     return MapViewOfFileEx( handle, access, offset_high, offset_low, count, addr );
 }
 
@@ -1247,7 +1247,7 @@ LPVOID WINAPI DECLSPEC_HOTPATCH MapViewOfFileExNuma( HANDLE handle, DWORD access
 LPVOID WINAPI DECLSPEC_HOTPATCH VirtualAllocExNuma( HANDLE process, void *addr, SIZE_T size,
                                                     DWORD type, DWORD protect, DWORD node )
 {
-    if (node) FIXME( "Ignoring preferred node %u\n", node );
+    if (node) FIXME( "Ignoring preferred node %lu\n", node );
     return VirtualAllocEx( process, addr, size, type, protect );
 }
 
@@ -1277,7 +1277,7 @@ BOOL WINAPI InitializeContext2( void *buffer, DWORD context_flags, CONTEXT **con
     ULONG orig_length;
     NTSTATUS status;
 
-    TRACE( "buffer %p, context_flags %#x, context %p, ret_length %p, compaction_mask %s.\n",
+    TRACE( "buffer %p, context_flags %#lx, context %p, ret_length %p, compaction_mask %s.\n",
             buffer, context_flags, context, length, wine_dbgstr_longlong(compaction_mask) );
 
     orig_length = *length;
@@ -1460,7 +1460,7 @@ BOOL WINAPI GetXStateFeaturesMask( CONTEXT *context, DWORD64 *feature_mask )
  */
 UINT WINAPI EnumSystemFirmwareTables( DWORD provider, void *buffer, DWORD size )
 {
-    FIXME( "(0x%08x, %p, %d)\n", provider, buffer, size );
+    FIXME( "(0x%08lx, %p, %ld)\n", provider, buffer, size );
     return 0;
 }
 
@@ -1473,7 +1473,7 @@ UINT WINAPI GetSystemFirmwareTable( DWORD provider, DWORD id, void *buffer, DWOR
     SYSTEM_FIRMWARE_TABLE_INFORMATION *info;
     ULONG buffer_size = offsetof( SYSTEM_FIRMWARE_TABLE_INFORMATION, TableBuffer ) + size;
 
-    TRACE( "(0x%08x, 0x%08x, %p, %d)\n", provider, id, buffer, size );
+    TRACE( "(0x%08lx, 0x%08lx, %p, %ld)\n", provider, id, buffer, size );
 
     if (!(info = RtlAllocateHeap( GetProcessHeap(), 0, buffer_size )))
     {

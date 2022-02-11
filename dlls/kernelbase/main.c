@@ -195,7 +195,7 @@ PERF_COUNTERSET_INSTANCE WINAPI *PerfCreateInstance( HANDLE handle, const GUID *
     unsigned int i;
     ULONG size;
 
-    FIXME( "handle %p, guid %s, name %s, id %u semi-stub.\n", handle, debugstr_guid(guid), debugstr_w(name), id );
+    FIXME( "handle %p, guid %s, name %s, id %lu semi-stub.\n", handle, debugstr_guid(guid), debugstr_w(name), id );
 
     if (!prov || !guid || !name)
     {
@@ -274,7 +274,7 @@ ULONG WINAPI PerfSetCounterSetInfo( HANDLE handle, PERF_COUNTERSET_INFO *templat
     struct counterset_template *new;
     unsigned int i;
 
-    FIXME( "handle %p, template %p, size %u semi-stub.\n", handle, template, size );
+    FIXME( "handle %p, template %p, size %lu semi-stub.\n", handle, template, size );
 
     if (!prov || !template) return ERROR_INVALID_PARAMETER;
     if (!template->NumCounters) return ERROR_INVALID_PARAMETER;
@@ -320,7 +320,7 @@ ULONG WINAPI PerfSetCounterRefValue(HANDLE provider, PERF_COUNTERSET_INSTANCE *i
     struct counterset_instance *inst;
     unsigned int i;
 
-    FIXME( "provider %p, instance %p, counterid %u, address %p semi-stub.\n",
+    FIXME( "provider %p, instance %p, counterid %lu, address %p semi-stub.\n",
            provider, instance, counterid, address );
 
     if (!prov || !instance || !address) return ERROR_INVALID_PARAMETER;
@@ -438,7 +438,7 @@ HRESULT WINAPI QISearch(void *base, const QITAB *table, REFIID riid, void **obj)
 
     for (ptr = table; ptr->piid; ++ptr)
     {
-        TRACE("trying (offset %d) %s\n", ptr->dwOffset, debugstr_guid(ptr->piid));
+        TRACE("trying (offset %ld) %s\n", ptr->dwOffset, debugstr_guid(ptr->piid));
         if (IsEqualIID(riid, ptr->piid))
         {
             unk = (IUnknown *)((BYTE *)base + ptr->dwOffset);
@@ -469,7 +469,7 @@ HRESULT WINAPI GetAcceptLanguagesA(LPSTR langbuf, DWORD *buflen)
     WCHAR *langbufW;
     HRESULT hr;
 
-    TRACE("%p, %p, *%p: %d\n", langbuf, buflen, buflen, buflen ? *buflen : -1);
+    TRACE("%p, %p, *%p: %ld\n", langbuf, buflen, buflen, buflen ? *buflen : -1);
 
     if (!langbuf || !buflen || !*buflen)
         return E_FAIL;
@@ -538,7 +538,7 @@ HRESULT WINAPI GetAcceptLanguagesW(WCHAR *langbuf, DWORD *buflen)
     LONG lres;
     DWORD len;
 
-    TRACE("%p, %p, *%p: %d\n", langbuf, buflen, buflen, buflen ? *buflen : -1);
+    TRACE("%p, %p, *%p: %ld\n", langbuf, buflen, buflen, buflen ? *buflen : -1);
 
     if (!langbuf || !buflen || !*buflen)
         return E_FAIL;

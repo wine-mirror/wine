@@ -530,7 +530,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessInternalW( HANDLE token, const WCHAR 
     if (flags & (IDLE_PRIORITY_CLASS | HIGH_PRIORITY_CLASS | REALTIME_PRIORITY_CLASS |
                  CREATE_DEFAULT_ERROR_MODE | CREATE_NO_WINDOW |
                  PROFILE_USER | PROFILE_KERNEL | PROFILE_SERVER))
-        WARN( "(%s,...): ignoring some flags in %x\n", debugstr_w(app_name), flags );
+        WARN( "(%s,...): ignoring some flags in %lx\n", debugstr_w(app_name), flags );
 
     if (cur_dir)
     {
@@ -646,7 +646,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessInternalW( HANDLE token, const WCHAR 
         info->dwProcessId = HandleToUlong( rtl_info.ClientId.UniqueProcess );
         info->dwThreadId  = HandleToUlong( rtl_info.ClientId.UniqueThread );
         if (!(flags & CREATE_SUSPENDED)) NtResumeThread( rtl_info.Thread, NULL );
-        TRACE( "started process pid %04x tid %04x\n", info->dwProcessId, info->dwThreadId );
+        TRACE( "started process pid %04lx tid %04lx\n", info->dwProcessId, info->dwThreadId );
     }
 
  done:
@@ -855,7 +855,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetProcessId( HANDLE process )
 BOOL WINAPI /* DECLSPEC_HOTPATCH */ GetProcessMitigationPolicy( HANDLE process, PROCESS_MITIGATION_POLICY policy,
                                                           void *buffer, SIZE_T length )
 {
-    FIXME( "(%p, %u, %p, %lu): stub\n", process, policy, buffer, length );
+    FIXME( "(%p, %u, %p, %Iu): stub\n", process, policy, buffer, length );
     return TRUE;
 }
 
@@ -1128,7 +1128,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetPriorityClass( HANDLE process, DWORD class )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH SetProcessAffinityUpdateMode( HANDLE process, DWORD flags )
 {
-    FIXME( "(%p,0x%08x): stub\n", process, flags );
+    FIXME( "(%p,0x%08lx): stub\n", process, flags );
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return FALSE;
 }
@@ -1152,7 +1152,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetProcessGroupAffinity( HANDLE process, const GRO
 BOOL WINAPI /* DECLSPEC_HOTPATCH */ SetProcessMitigationPolicy( PROCESS_MITIGATION_POLICY policy,
                                                           void *buffer, SIZE_T length )
 {
-    FIXME( "(%d, %p, %lu): stub\n", policy, buffer, length );
+    FIXME( "(%d, %p, %Iu): stub\n", policy, buffer, length );
     return TRUE;
 }
 
@@ -1172,7 +1172,7 @@ BOOL WINAPI /* DECLSPEC_HOTPATCH */ SetProcessPriorityBoost( HANDLE process, BOO
  */
 BOOL WINAPI DECLSPEC_HOTPATCH SetProcessShutdownParameters( DWORD level, DWORD flags )
 {
-    FIXME( "(%08x, %08x): partial stub.\n", level, flags );
+    FIXME( "(%08lx, %08lx): partial stub.\n", level, flags );
     shutdown_flags = flags;
     shutdown_priority = level;
     return TRUE;
@@ -1380,7 +1380,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH ExpandEnvironmentStringsW( LPCWSTR src, LPWSTR ds
     NTSTATUS status;
     DWORD res;
 
-    TRACE( "(%s %p %u)\n", debugstr_w(src), dst, len );
+    TRACE( "(%s %p %lu)\n", debugstr_w(src), dst, len );
 
     RtlInitUnicodeString( &us_src, src );
 
@@ -1553,7 +1553,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetEnvironmentVariableW( LPCWSTR name, LPWSTR val
     NTSTATUS status;
     DWORD len;
 
-    TRACE( "(%s %p %u)\n", debugstr_w(name), val, size );
+    TRACE( "(%s %p %lu)\n", debugstr_w(name), val, size );
 
     RtlInitUnicodeString( &us_name, name );
     us_value.Length = 0;
@@ -1648,7 +1648,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH InitializeProcThreadAttributeList( struct _PROC_TH
     SIZE_T needed;
     BOOL ret = FALSE;
 
-    TRACE( "(%p %d %x %p)\n", list, count, flags, size );
+    TRACE( "(%p %ld %lx %p)\n", list, count, flags, size );
 
     needed = FIELD_OFFSET( struct _PROC_THREAD_ATTRIBUTE_LIST, attrs[count] );
     if (list && *size >= needed)
@@ -1676,7 +1676,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH UpdateProcThreadAttribute( struct _PROC_THREAD_ATT
     DWORD mask;
     struct proc_thread_attr *entry;
 
-    TRACE( "(%p %x %08lx %p %ld %p %p)\n", list, flags, attr, value, size, prev_ret, size_ret );
+    TRACE( "(%p %lx %08Ix %p %Id %p %p)\n", list, flags, attr, value, size, prev_ret, size_ret );
 
     if (list->count >= list->size)
     {
@@ -1744,7 +1744,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH UpdateProcThreadAttribute( struct _PROC_THREAD_ATT
 
     default:
         SetLastError( ERROR_NOT_SUPPORTED );
-        FIXME( "Unhandled attribute %lu\n", attr & PROC_THREAD_ATTRIBUTE_NUMBER );
+        FIXME( "Unhandled attribute %Iu\n", attr & PROC_THREAD_ATTRIBUTE_NUMBER );
         return FALSE;
     }
 

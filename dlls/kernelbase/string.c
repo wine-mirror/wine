@@ -836,13 +836,13 @@ BOOL WINAPI StrToInt64ExA(const char *str, DWORD flags, LONGLONG *ret)
     BOOL negative = FALSE;
     LONGLONG value = 0;
 
-    TRACE("%s, %#x, %p\n", wine_dbgstr_a(str), flags, ret);
+    TRACE("%s, %#lx, %p\n", wine_dbgstr_a(str), flags, ret);
 
     if (!str || !ret)
         return FALSE;
 
     if (flags > STIF_SUPPORT_HEX)
-        WARN("Unknown flags %#x\n", flags);
+        WARN("Unknown flags %#lx\n", flags);
 
     /* Skip leading space, '+', '-' */
     while (*str == ' ' || *str == '\t' || *str == '\n') str++;
@@ -899,13 +899,13 @@ BOOL WINAPI StrToInt64ExW(const WCHAR *str, DWORD flags, LONGLONG *ret)
     BOOL negative = FALSE;
     LONGLONG value = 0;
 
-    TRACE("%s, %#x, %p\n", wine_dbgstr_w(str), flags, ret);
+    TRACE("%s, %#lx, %p\n", wine_dbgstr_w(str), flags, ret);
 
     if (!str || !ret)
         return FALSE;
 
     if (flags > STIF_SUPPORT_HEX)
-        WARN("Unknown flags %#x.\n", flags);
+        WARN("Unknown flags %#lx.\n", flags);
 
     /* Skip leading space, '+', '-' */
     while (*str == ' ' || *str == '\t' || *str == '\n') str++;
@@ -962,7 +962,7 @@ BOOL WINAPI StrToIntExA(const char *str, DWORD flags, INT *ret)
     LONGLONG value;
     BOOL res;
 
-    TRACE("%s, %#x, %p\n", wine_dbgstr_a(str), flags, ret);
+    TRACE("%s, %#lx, %p\n", wine_dbgstr_a(str), flags, ret);
 
     res = StrToInt64ExA(str, flags, &value);
     if (res) *ret = value;
@@ -974,7 +974,7 @@ BOOL WINAPI StrToIntExW(const WCHAR *str, DWORD flags, INT *ret)
     LONGLONG value;
     BOOL res;
 
-    TRACE("%s, %#x, %p\n", wine_dbgstr_w(str), flags, ret);
+    TRACE("%s, %#lx, %p\n", wine_dbgstr_w(str), flags, ret);
 
     res = StrToInt64ExW(str, flags, &value);
     if (res) *ret = value;
@@ -1415,7 +1415,7 @@ WCHAR * WINAPI StrCatBuffW(WCHAR *str, const WCHAR *cat, INT max_len)
 
 DWORD WINAPI StrCatChainW(WCHAR *str, DWORD max_len, DWORD at, const WCHAR *cat)
 {
-    TRACE("%s, %u, %d, %s\n", wine_dbgstr_w(str), max_len, at, wine_dbgstr_w(cat));
+    TRACE("%s, %lu, %ld, %s\n", wine_dbgstr_w(str), max_len, at, wine_dbgstr_w(cat));
 
     if (at == -1)
         at = lstrlenW(str);

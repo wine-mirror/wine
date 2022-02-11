@@ -810,9 +810,9 @@ void init_locale(void)
     if (!RegQueryValueExW( intl_key, L"Locale", NULL, NULL, (BYTE *)bufferW, &count ))
     {
         if (wcstoul( bufferW, NULL, 16 ) == user_lcid) return;  /* already set correctly */
-        TRACE( "updating registry, locale changed %s -> %08x\n", debugstr_w(bufferW), user_lcid );
+        TRACE( "updating registry, locale changed %s -> %08lx\n", debugstr_w(bufferW), user_lcid );
     }
-    else TRACE( "updating registry, locale changed none -> %08x\n", user_lcid );
+    else TRACE( "updating registry, locale changed none -> %08lx\n", user_lcid );
     swprintf( bufferW, ARRAY_SIZE(bufferW), L"%08x", user_lcid );
     RegSetValueExW( intl_key, L"Locale", 0, REG_SZ,
                     (BYTE *)bufferW, (lstrlenW(bufferW) + 1) * sizeof(WCHAR) );
@@ -2803,7 +2803,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumDateFormats( DATEFMT_ENUMPROCW proc, 
         lctype = LOCALE_SYEARMONTH;
         break;
     default:
-        FIXME( "unknown date format 0x%08x\n", flags );
+        FIXME( "unknown date format 0x%08lx\n", flags );
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
@@ -2946,7 +2946,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumSystemLanguageGroups( LANGUAGEGROUP_E
 
         if (!(flags & LGRPID_SUPPORTED) && !wcstoul( value, NULL, 10 )) continue;
         if (!LoadStringW( kernel32_handle, 0x2000 + id, descr, ARRAY_SIZE(descr) )) descr[0] = 0;
-        TRACE( "%p: %u %s %s %x %lx\n", proc, id, debugstr_w(name), debugstr_w(descr), flags, param );
+        TRACE( "%p: %lu %s %s %lx %Ix\n", proc, id, debugstr_w(name), debugstr_w(descr), flags, param );
         if (!unicode)
         {
             char nameA[10], descrA[80];
@@ -2985,7 +2985,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumTimeFormats( TIMEFMT_ENUMPROCW proc, 
         lctype = LOCALE_SSHORTTIME;
         break;
     default:
-        FIXME( "Unknown time format %x\n", flags );
+        FIXME( "Unknown time format %lx\n", flags );
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
@@ -3080,7 +3080,7 @@ INT WINAPI CompareStringEx( const WCHAR *locale, DWORD flags, const WCHAR *str1,
 
     if (flags & semistub_flags)
     {
-        if (!once++) FIXME( "semi-stub behavior for flag(s) 0x%x\n", flags & semistub_flags );
+        if (!once++) FIXME( "semi-stub behavior for flag(s) 0x%lx\n", flags & semistub_flags );
     }
 
     if (len1 < 0) len1 = lstrlenW(str1);
@@ -3380,7 +3380,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumSystemGeoID( GEOCLASS class, GEOID parent, GEO
 {
     INT i;
 
-    TRACE( "(%d, %d, %p)\n", class, parent, proc );
+    TRACE( "(%ld, %ld, %p)\n", class, parent, proc );
 
     if (!proc)
     {
@@ -3560,7 +3560,7 @@ INT WINAPI DECLSPEC_HOTPATCH FindNLSStringEx( const WCHAR *locale, DWORD flags, 
     DWORD mask = flags;
     int offset, inc, count;
 
-    TRACE( "%s %x %s %d %s %d %p %p %p %ld\n", wine_dbgstr_w(locale), flags,
+    TRACE( "%s %lx %s %d %s %d %p %p %p %Id\n", wine_dbgstr_w(locale), flags,
            wine_dbgstr_w(src), srclen, wine_dbgstr_w(value), valuelen, found,
            version, reserved, handle );
 
@@ -3602,7 +3602,7 @@ INT WINAPI DECLSPEC_HOTPATCH FindStringOrdinal( DWORD flag, const WCHAR *src, IN
 {
     INT offset, inc, count;
 
-    TRACE( "%#x %s %d %s %d %d\n", flag, wine_dbgstr_w(src), src_size,
+    TRACE( "%#lx %s %d %s %d %d\n", flag, wine_dbgstr_w(src), src_size,
            wine_dbgstr_w(val), val_size, ignore_case );
 
     if (!src || !val)
@@ -3736,7 +3736,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH FormatMessageA( DWORD flags, const void *source, 
     WCHAR *result, *message = NULL;
     NTSTATUS status;
 
-    TRACE( "(0x%x,%p,%#x,0x%x,%p,%u,%p)\n", flags, source, msgid, langid, buffer, size, args );
+    TRACE( "(0x%lx,%p,%#lx,0x%lx,%p,%lu,%p)\n", flags, source, msgid, langid, buffer, size, args );
 
     if (flags & FORMAT_MESSAGE_ALLOCATE_BUFFER)
     {
@@ -3818,7 +3818,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH FormatMessageW( DWORD flags, const void *source, 
     WCHAR *message = NULL;
     NTSTATUS status;
 
-    TRACE( "(0x%x,%p,%#x,0x%x,%p,%u,%p)\n", flags, source, msgid, langid, buffer, size, args );
+    TRACE( "(0x%lx,%p,%#lx,0x%lx,%p,%lu,%p)\n", flags, source, msgid, langid, buffer, size, args );
 
     if (!buffer)
     {
@@ -4067,14 +4067,14 @@ INT WINAPI DECLSPEC_HOTPATCH GetCalendarInfoW( LCID lcid, CALID calendar, CALTYP
         return GetLocaleInfoW( lcid, LOCALE_ICALENDARTYPE, data, count );
 
     case CAL_SCALNAME:
-        FIXME( "Unimplemented caltype %d\n", calinfo );
+        FIXME( "Unimplemented caltype %ld\n", calinfo );
         if (data) *data = 0;
         return 1;
 
     case CAL_IYEAROFFSETRANGE:
     case CAL_SERASTRING:
     case CAL_SABBREVERASTRING:
-        FIXME( "Unimplemented caltype %d\n", calinfo );
+        FIXME( "Unimplemented caltype %ld\n", calinfo );
         return 0;
 
     case CAL_SSHORTDATE:
@@ -4151,7 +4151,7 @@ INT WINAPI DECLSPEC_HOTPATCH GetCalendarInfoW( LCID lcid, CALID calendar, CALTYP
         }
         break;
     default:
-        FIXME( "Unknown caltype %d\n", calinfo );
+        FIXME( "Unknown caltype %ld\n", calinfo );
         SetLastError( ERROR_INVALID_FLAGS );
         return 0;
     }
@@ -4262,7 +4262,7 @@ done:
 BOOL WINAPI /* DECLSPEC_HOTPATCH */ GetFileMUIInfo( DWORD flags, const WCHAR *path,
                                                     FILEMUIINFO *info, DWORD *size )
 {
-    FIXME( "stub: %u, %s, %p, %p\n", flags, debugstr_w(path), info, size );
+    FIXME( "stub: %lu, %s, %p, %p\n", flags, debugstr_w(path), info, size );
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return FALSE;
 }
@@ -4276,7 +4276,7 @@ BOOL WINAPI /* DECLSPEC_HOTPATCH */ GetFileMUIPath( DWORD flags, const WCHAR *fi
                                                     WCHAR *muipath, ULONG *muipathlen,
                                                     ULONGLONG *enumerator )
 {
-    FIXME( "stub: 0x%x, %s, %s, %p, %p, %p, %p\n", flags, debugstr_w(filepath),
+    FIXME( "stub: 0x%lx, %s, %s, %p, %p, %p, %p\n", flags, debugstr_w(filepath),
            debugstr_w(language), languagelen, muipath, muipathlen, enumerator );
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return FALSE;
@@ -4293,7 +4293,7 @@ INT WINAPI DECLSPEC_HOTPATCH GetGeoInfoW( GEOID id, GEOTYPE type, WCHAR *data, i
     const WCHAR *str = bufferW;
     int len;
 
-    TRACE( "%d %d %p %d %d\n", id, type, data, count, lang );
+    TRACE( "%ld %ld %p %d %d\n", id, type, data, count, lang );
 
     if (!ptr)
     {
@@ -4332,11 +4332,11 @@ INT WINAPI DECLSPEC_HOTPATCH GetGeoInfoW( GEOID id, GEOTYPE type, WCHAR *data, i
     case GEO_CURRENCYCODE:
     case GEO_CURRENCYSYMBOL:
     case GEO_NAME:
-        FIXME( "type %d is not supported\n", type );
+        FIXME( "type %ld is not supported\n", type );
         SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
         return 0;
     default:
-        WARN( "unrecognized type %d\n", type );
+        WARN( "unrecognized type %ld\n", type );
         SetLastError( ERROR_INVALID_FLAGS );
         return 0;
     }
@@ -4358,7 +4358,7 @@ INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoA( LCID lcid, LCTYPE lctype, char *buf
     WCHAR *bufferW;
     INT lenW, ret;
 
-    TRACE( "lcid=0x%x lctype=0x%x %p %d\n", lcid, lctype, buffer, len );
+    TRACE( "lcid=0x%lx lctype=0x%lx %p %d\n", lcid, lctype, buffer, len );
 
     if (len < 0 || (len && !buffer))
     {
@@ -4417,7 +4417,7 @@ INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoW( LCID lcid, LCTYPE lctype, WCHAR *bu
     lcid = ConvertDefaultLocale( lcid );
     lctype = LOWORD(lctype);
 
-    TRACE( "(lcid=0x%x,lctype=0x%x,%p,%d)\n", lcid, lctype, buffer, len );
+    TRACE( "(lcid=0x%lx,lctype=0x%lx,%p,%d)\n", lcid, lctype, buffer, len );
 
     /* first check for overrides in the registry */
 
@@ -4510,7 +4510,7 @@ INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoW( LCID lcid, LCTYPE lctype, WCHAR *bu
         }
         HeapFree( GetProcessHeap(), 0, tmp );
 
-        TRACE( "(lcid=0x%x,lctype=0x%x,%p,%d) returning number %d\n",
+        TRACE( "(lcid=0x%lx,lctype=0x%lx,%p,%d) returning number %d\n",
                lcid, lctype, buffer, len, number );
     }
     else
@@ -4518,7 +4518,7 @@ INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoW( LCID lcid, LCTYPE lctype, WCHAR *bu
         memcpy( buffer, p + 1, ret * sizeof(WCHAR) );
         if (lctype != LOCALE_FONTSIGNATURE) buffer[ret-1] = 0;
 
-        TRACE( "(lcid=0x%x,lctype=0x%x,%p,%d) returning %d %s\n",
+        TRACE( "(lcid=0x%lx,lctype=0x%lx,%p,%d) returning %d %s\n",
                lcid, lctype, buffer, len, ret, debugstr_w(buffer) );
     }
     return ret;
@@ -4532,7 +4532,7 @@ INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoEx( const WCHAR *locale, LCTYPE info, 
 {
     LCID lcid = LocaleNameToLCID( locale, 0 );
 
-    TRACE( "%s lcid=0x%x 0x%x\n", debugstr_w(locale), lcid, info );
+    TRACE( "%s lcid=0x%lx 0x%lx\n", debugstr_w(locale), lcid, info );
 
     if (!lcid) return 0;
 
@@ -4904,7 +4904,7 @@ GEOID WINAPI DECLSPEC_HOTPATCH GetUserGeoID( GEOCLASS geoclass )
         name = L"Region";
         break;
     default:
-        WARN("Unknown geoclass %d\n", geoclass);
+        WARN("Unknown geoclass %ld\n", geoclass);
         return GEOID_NOT_AVAILABLE;
     }
     if (!RegOpenKeyExW( intl_key, L"Geo", 0, KEY_ALL_ACCESS, &hkey ))
@@ -5237,7 +5237,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH IsValidNLSVersion( NLS_FUNCTION func, const WCHAR
 INT WINAPI DECLSPEC_HOTPATCH LCIDToLocaleName( LCID lcid, WCHAR *name, INT count, DWORD flags )
 {
     static int once;
-    if (flags && !once++) FIXME( "unsupported flags %x\n", flags );
+    if (flags && !once++) FIXME( "unsupported flags %lx\n", flags );
 
     return GetLocaleInfoW( lcid, LOCALE_SNAME | LOCALE_NOUSEROVERRIDE, name, count );
 }
@@ -5259,7 +5259,7 @@ INT WINAPI DECLSPEC_HOTPATCH LCMapStringEx( const WCHAR *locale, DWORD flags, co
     if (handle)
     {
         static int once;
-        if (!once++) FIXME( "unsupported lparam %lx\n", handle );
+        if (!once++) FIXME( "unsupported lparam %Ix\n", handle );
     }
 
     if (!src || !srclen || dstlen < 0)
@@ -5299,7 +5299,7 @@ INT WINAPI DECLSPEC_HOTPATCH LCMapStringEx( const WCHAR *locale, DWORD flags, co
         }
         if (srclen < 0) srclen = lstrlenW(src);
 
-        TRACE( "(%s,0x%08x,%s,%d,%p,%d)\n",
+        TRACE( "(%s,0x%08lx,%s,%d,%p,%d)\n",
                debugstr_w(locale), flags, debugstr_wn(src, srclen), srclen, dst, dstlen );
 
         if ((ret = get_sortkey( flags, src, srclen, (char *)dst, dstlen ))) ret++;
@@ -5324,7 +5324,7 @@ INT WINAPI DECLSPEC_HOTPATCH LCMapStringEx( const WCHAR *locale, DWORD flags, co
 
     if (srclen < 0) srclen = lstrlenW(src) + 1;
 
-    TRACE( "(%s,0x%08x,%s,%d,%p,%d)\n",
+    TRACE( "(%s,0x%08lx,%s,%d,%p,%d)\n",
            debugstr_w(locale), flags, debugstr_wn(src, srclen), srclen, dst, dstlen );
 
     if (!dst) /* return required string length */
@@ -5650,7 +5650,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetLocaleInfoW( LCID lcid, LCTYPE lctype, const WC
         return FALSE;
     }
 
-    TRACE( "setting %x (%s) to %s\n", lctype, debugstr_w(value->name), debugstr_w(data) );
+    TRACE( "setting %lx (%s) to %s\n", lctype, debugstr_w(value->name), debugstr_w(data) );
 
     /* FIXME: should check that data to set is sane */
 
@@ -5696,7 +5696,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetLocaleInfoW( LCID lcid, LCTYPE lctype, const WC
  */
 INT WINAPI /* DECLSPEC_HOTPATCH */ SetCalendarInfoW( LCID lcid, CALID calendar, CALTYPE type, const WCHAR *data )
 {
-    FIXME( "(%08x,%08x,%08x,%s): stub\n", lcid, calendar, type, debugstr_w(data) );
+    FIXME( "(%08lx,%08lx,%08lx,%s): stub\n", lcid, calendar, type, debugstr_w(data) );
     return 0;
 }
 

@@ -229,7 +229,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH RegisterWaitForSingleObjectEx( HANDLE handle, WA
 {
     HANDLE ret;
 
-    TRACE( "%p %p %p %d %d\n", handle, callback, context, timeout, flags );
+    TRACE( "%p %p %p %ld %ld\n", handle, callback, context, timeout, flags );
 
     handle = normalize_std_handle( handle );
     if (!set_ntstatus( RtlRegisterWait( &ret, handle, callback, context, timeout, flags ))) return NULL;
@@ -246,7 +246,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH SignalObjectAndWait( HANDLE signal, HANDLE wait,
     NTSTATUS status;
     LARGE_INTEGER time;
 
-    TRACE( "%p %p %d %d\n", signal, wait, timeout, alertable );
+    TRACE( "%p %p %ld %d\n", signal, wait, timeout, alertable );
 
     status = NtSignalAndWaitForSingleObject( signal, wait, alertable, get_nt_timeout( &time, timeout ) );
     if (HIWORD(status))
@@ -778,7 +778,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetWaitableTimerEx( HANDLE handle, const LARGE_INT
                                                   REASON_CONTEXT *context, ULONG tolerabledelay )
 {
     static int once;
-    if (!once++) FIXME( "(%p, %p, %d, %p, %p, %p, %d) semi-stub\n",
+    if (!once++) FIXME( "(%p, %p, %ld, %p, %p, %p, %ld) semi-stub\n",
                         handle, when, period, callback, arg, context, tolerabledelay );
 
     return SetWaitableTimer( handle, when, period, callback, arg, FALSE );
@@ -1016,7 +1016,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateIoCompletionPort( HANDLE handle, HANDLE po
     IO_STATUS_BLOCK iosb;
     HANDLE ret = port;
 
-    TRACE( "(%p, %p, %08lx, %08x)\n", handle, port, key, threads );
+    TRACE( "(%p, %p, %08Ix, %08lx)\n", handle, port, key, threads );
 
     if (!port)
     {
@@ -1053,7 +1053,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetQueuedCompletionStatus( HANDLE port, LPDWORD co
     IO_STATUS_BLOCK iosb;
     LARGE_INTEGER wait_time;
 
-    TRACE( "(%p,%p,%p,%p,%d)\n", port, count, key, overlapped, timeout );
+    TRACE( "(%p,%p,%p,%p,%ld)\n", port, count, key, overlapped, timeout );
 
     *overlapped = NULL;
     status = NtRemoveIoCompletion( port, key, (PULONG_PTR)overlapped, &iosb,
@@ -1081,7 +1081,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetQueuedCompletionStatusEx( HANDLE port, OVERLAPP
     LARGE_INTEGER time;
     NTSTATUS ret;
 
-    TRACE( "%p %p %u %p %u %u\n", port, entries, count, written, timeout, alertable );
+    TRACE( "%p %p %lu %p %lu %u\n", port, entries, count, written, timeout, alertable );
 
     ret = NtRemoveIoCompletionEx( port, (FILE_IO_COMPLETION_INFORMATION *)entries, count,
                                   written, get_nt_timeout( &time, timeout ), alertable );
@@ -1099,7 +1099,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetQueuedCompletionStatusEx( HANDLE port, OVERLAPP
 BOOL WINAPI DECLSPEC_HOTPATCH PostQueuedCompletionStatus( HANDLE port, DWORD count,
                                                           ULONG_PTR key, LPOVERLAPPED overlapped )
 {
-    TRACE( "%p %d %08lx %p\n", port, count, key, overlapped );
+    TRACE( "%p %ld %08Ix %p\n", port, count, key, overlapped );
 
     return set_ntstatus( NtSetIoCompletion( port, key, (ULONG_PTR)overlapped, STATUS_SUCCESS, count ));
 }
@@ -1121,7 +1121,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH CallNamedPipeW( LPCWSTR name, LPVOID input, DWORD 
     BOOL ret;
     DWORD mode;
 
-    TRACE( "%s %p %d %p %d %p %d\n", debugstr_w(name),
+    TRACE( "%s %p %ld %p %ld %p %ld\n", debugstr_w(name),
            input, in_size, output, out_size, read_size, timeout );
 
     pipe = CreateFileW( name, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL );
@@ -1185,7 +1185,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateNamedPipeW( LPCWSTR name, DWORD open_mode,
     IO_STATUS_BLOCK iosb;
     LARGE_INTEGER time;
 
-    TRACE( "(%s, %#08x, %#08x, %d, %d, %d, %d, %p)\n", debugstr_w(name),
+    TRACE( "(%s, %#08lx, %#08lx, %ld, %ld, %ld, %ld, %p)\n", debugstr_w(name),
            open_mode, pipe_mode, instances, out_buff, in_buff, timeout, sa );
 
     if (!RtlDosPathNameToNtPathName_U( name, &nt_name, NULL, NULL ))
@@ -1318,7 +1318,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetNamedPipeHandleStateW( HANDLE pipe, DWORD *stat
 {
     IO_STATUS_BLOCK io;
 
-    FIXME( "%p %p %p %p %p %p %d: semi-stub\n", pipe, state, instances, max_count, timeout, user, size );
+    FIXME( "%p %p %p %p %p %p %ld: semi-stub\n", pipe, state, instances, max_count, timeout, user, size );
 
     if (max_count) *max_count = 0;
     if (timeout) *timeout = 0;
@@ -1417,7 +1417,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetNamedPipeHandleState( HANDLE pipe, LPDWORD mode
     IO_STATUS_BLOCK iosb;
     NTSTATUS status = STATUS_SUCCESS;
 
-    TRACE( "%p %p/%d %p %p\n", pipe, mode, mode ? *mode : 0, count, timeout );
+    TRACE( "%p %p/%ld %p %p\n", pipe, mode, mode ? *mode : 0, count, timeout );
     if (count || timeout) FIXME( "Unsupported arguments\n" );
 
     if (mode)
@@ -1447,7 +1447,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH TransactNamedPipe( HANDLE handle, LPVOID write_buf
     void *cvalue = NULL;
     NTSTATUS status;
 
-    TRACE( "%p %p %u %p %u %p %p\n", handle,
+    TRACE( "%p %p %lu %p %lu %p %p\n", handle,
            write_buf, write_size, read_buf, read_size, bytes_read, overlapped );
 
     if (overlapped)
@@ -1488,7 +1488,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH WaitNamedPipeW( LPCWSTR name, DWORD timeout )
     ULONG wait_size;
     HANDLE pipe_dev;
 
-    TRACE( "%s 0x%08x\n", debugstr_w(name), timeout );
+    TRACE( "%s 0x%08lx\n", debugstr_w(name), timeout );
 
     if (!RtlDosPathNameToNtPathName_U( name, &nt_name, NULL, NULL )) return FALSE;
 

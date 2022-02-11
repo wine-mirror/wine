@@ -512,7 +512,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetThreadGroupAffinity( HANDLE thread, const GROUP
  */
 DWORD WINAPI DECLSPEC_HOTPATCH SetThreadIdealProcessor( HANDLE thread, DWORD proc )
 {
-    FIXME( "(%p %u): stub\n", thread, proc );
+    FIXME( "(%p %lu): stub\n", thread, proc );
     if (proc > MAXIMUM_PROCESSORS)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
