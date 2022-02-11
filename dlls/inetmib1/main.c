@@ -1318,7 +1318,7 @@ BOOL WINAPI SnmpExtensionInit(DWORD dwUptimeReference,
     AsnObjectIdentifier myOid = DEFINE_OID(mib2System);
     UINT i;
 
-    TRACE("(%d, %p, %p)\n", dwUptimeReference, phSubagentTrapEvent,
+    TRACE("(%ld, %p, %p)\n", dwUptimeReference, phSubagentTrapEvent,
         pFirstSupportedRegion);
 
     minSupportedIDLength = UINT_MAX;
@@ -1447,7 +1447,7 @@ BOOL WINAPI SnmpExtensionQuery(BYTE bPduType, SnmpVarBindList *pVarBindList,
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    TRACE("(0x%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
+    TRACE("(0x%p, %ld, %p)\n", hinstDLL, fdwReason, lpvReserved);
 
     switch (fdwReason)
     {
