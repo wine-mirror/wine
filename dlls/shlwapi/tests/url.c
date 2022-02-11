@@ -34,11 +34,8 @@ static const char* TEST_URL_2 = "http://localhost:8080/tests%2e.html?date=Mon%20
 static const char* TEST_URL_3 = "http://foo:bar@localhost:21/internal.php?query=x&return=y";
 static const char* TEST_URL_4 = "http://foo:bar@google.*.com:21/internal.php?query=x&return=y";
 
-static const WCHAR winehqW[] = {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g','/',0};
-static const  CHAR winehqA[] = {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g','/',0};
-
-/* ################ */
-
+static const WCHAR winehqW[] = L"http://www.winehq.org/";
+static const char winehqA[] = "http://www.winehq.org/";
 static const CHAR untouchedA[] = "untouched";
 
 #define TEST_APPLY_MAX_LENGTH INTERNET_MAX_URL_LENGTH
@@ -298,31 +295,20 @@ typedef struct _TEST_URL_ESCAPEW {
 } TEST_URL_ESCAPEW;
 
 static const TEST_URL_ESCAPEW TEST_ESCAPEW[] = {
-    {{' ','<','>','"',0},  URL_ESCAPE_AS_UTF8, {'%','2','0','%','3','C','%','3','E','%','2','2',0}},
-    {{'{','}','|','\\',0}, URL_ESCAPE_AS_UTF8, {'%','7','B','%','7','D','%','7','C','%','5','C',0}},
-    {{'^',']','[','`',0},  URL_ESCAPE_AS_UTF8, {'%','5','E','%','5','D','%','5','B','%','6','0',0}},
-    {{'&','/','?','#',0},  URL_ESCAPE_AS_UTF8, {'%','2','6','/','?','#',0}},
-    {{'M','a','s','s',0},  URL_ESCAPE_AS_UTF8, {'M','a','s','s',0}},
+    {L" <>\"", URL_ESCAPE_AS_UTF8, L"%20%3C%3E%22"},
+    {L"{}|\\", URL_ESCAPE_AS_UTF8, L"%7B%7D%7C%5C"},
+    {L"^][`", URL_ESCAPE_AS_UTF8, L"%5E%5D%5B%60"},
+    {L"&/?#", URL_ESCAPE_AS_UTF8, L"%26/?#"},
+    {L"Mass", URL_ESCAPE_AS_UTF8, L"Mass"},
 
     /* broken < Win8/10 */
-
-    {{'M','a',0xdf,0},  URL_ESCAPE_AS_UTF8, {'M','a','%','C','3','%','9','F',0},
-                                                  {'M','a','%','D','F',0}},
-    /* 0x2070E */
-    {{0xd841,0xdf0e,0}, URL_ESCAPE_AS_UTF8, {'%','F','0','%','A','0','%','9','C','%','8','E',0},
-                                                  {'%','E','F','%','B','F','%','B','D','%','E','F','%','B','F','%','B','D',0}},
-    /* 0x27A3E */
-    {{0xd85e,0xde3e,0}, URL_ESCAPE_AS_UTF8, {'%','F','0','%','A','7','%','A','8','%','B','E',0},
-                                                  {'%','E','F','%','B','F','%','B','D','%','E','F','%','B','F','%','B','D',0}},
-
-    {{0xd85e,0},        URL_ESCAPE_AS_UTF8, {'%','E','F','%','B','F','%','B','D',0},
-                                                  {0xd85e,0}},
-    {{0xd85e,0x41},     URL_ESCAPE_AS_UTF8, {'%','E','F','%','B','F','%','B','D','A',0},
-                                                  {0xd85e,'A',0}},
-    {{0xdc00,0},        URL_ESCAPE_AS_UTF8, {'%','E','F','%','B','F','%','B','D',0},
-                                                  {0xdc00,0}},
-    {{0xffff,0},        URL_ESCAPE_AS_UTF8, {'%','E','F','%','B','F','%','B','F',0},
-                                                  {0xffff,0}},
+    {L"Ma\xdf", URL_ESCAPE_AS_UTF8, L"Ma%C3%9F", L"Ma%DF"},
+    {L"\xd841\xdf0e", URL_ESCAPE_AS_UTF8, L"%F0%A0%9C%8E", L"%EF%BF%BD%EF%BF%BD"}, /* 0x2070E */
+    {L"\xd85e\xde3e", URL_ESCAPE_AS_UTF8, L"%F0%A7%A8%BE", L"%EF%BF%BD%EF%BF%BD"}, /* 0x27A3E */
+    {L"\xd85e", URL_ESCAPE_AS_UTF8, L"%EF%BF%BD", L"\xd85e"},
+    {L"\xd85eQ", URL_ESCAPE_AS_UTF8, L"%EF%BF%BDQ", L"\xd85eQ"},
+    {L"\xdc00", URL_ESCAPE_AS_UTF8, L"%EF%BF%BD", L"\xdc00"},
+    {L"\xffff", URL_ESCAPE_AS_UTF8, L"%EF%BF%BF", L"\xffff"},
 };
 
 /* ################ */
@@ -863,12 +849,8 @@ static void test_UrlEscapeA(void)
 
 static void test_UrlEscapeW(void)
 {
-    static const WCHAR path_test[] = {'/','t','e','s','t',0};
-    static const WCHAR naW[] = {'f','t','p',31,255,250,0x2122,'e','n','d','/',0};
-    static const WCHAR naescapedW[] = {'f','t','p','%','1','F','%','F','F','%','F','A',0x2122,'e','n','d','/',0};
-    static const WCHAR out[] = {'f','o','o','%','2','0','b','a','r',0};
-    WCHAR overwrite[] = {'f','o','o',' ','b','a','r',0,0,0};
     WCHAR ret_urlW[INTERNET_MAX_URL_LENGTH];
+    WCHAR overwrite[10] = L"foo bar";
     WCHAR empty_string[] = {0};
     DWORD size;
     HRESULT ret;
@@ -877,35 +859,35 @@ static void test_UrlEscapeW(void)
 
     /* Check error paths */
 
-    ret = UrlEscapeW(path_test, NULL, NULL, URL_ESCAPE_SPACES_ONLY);
+    ret = UrlEscapeW(L"/test", NULL, NULL, URL_ESCAPE_SPACES_ONLY);
     ok(ret == E_INVALIDARG, "got %x, expected %x\n", ret, E_INVALIDARG);
 
     size = 0;
-    ret = UrlEscapeW(path_test, NULL, &size, URL_ESCAPE_SPACES_ONLY);
+    ret = UrlEscapeW(L"/test", NULL, &size, URL_ESCAPE_SPACES_ONLY);
     ok(ret == E_INVALIDARG, "got %x, expected %x\n", ret, E_INVALIDARG);
     ok(size == 0, "got %d, expected %d\n", size, 0);
 
-    ret = UrlEscapeW(path_test, empty_string, NULL, URL_ESCAPE_SPACES_ONLY);
+    ret = UrlEscapeW(L"/test", empty_string, NULL, URL_ESCAPE_SPACES_ONLY);
     ok(ret == E_INVALIDARG, "got %x, expected %x\n", ret, E_INVALIDARG);
 
     size = 0;
-    ret = UrlEscapeW(path_test, empty_string, &size, URL_ESCAPE_SPACES_ONLY);
+    ret = UrlEscapeW(L"/test", empty_string, &size, URL_ESCAPE_SPACES_ONLY);
     ok(ret == E_INVALIDARG, "got %x, expected %x\n", ret, E_INVALIDARG);
     ok(size == 0, "got %d, expected %d\n", size, 0);
 
-    ret = UrlEscapeW(path_test, NULL, NULL, URL_ESCAPE_SPACES_ONLY);
+    ret = UrlEscapeW(L"/test", NULL, NULL, URL_ESCAPE_SPACES_ONLY);
     ok(ret == E_INVALIDARG, "got %x, expected %x\n", ret, E_INVALIDARG);
 
     size = 1;
-    ret = UrlEscapeW(path_test, NULL, &size, URL_ESCAPE_SPACES_ONLY);
+    ret = UrlEscapeW(L"/test", NULL, &size, URL_ESCAPE_SPACES_ONLY);
     ok(ret == E_INVALIDARG, "got %x, expected %x\n", ret, E_INVALIDARG);
     ok(size == 1, "got %d, expected %d\n", size, 1);
 
-    ret = UrlEscapeW(path_test, empty_string, NULL, URL_ESCAPE_SPACES_ONLY);
+    ret = UrlEscapeW(L"/test", empty_string, NULL, URL_ESCAPE_SPACES_ONLY);
     ok(ret == E_INVALIDARG, "got %x, expected %x\n", ret, E_INVALIDARG);
 
     size = 1;
-    ret = UrlEscapeW(path_test, empty_string, &size, URL_ESCAPE_SPACES_ONLY);
+    ret = UrlEscapeW(L"/test", empty_string, &size, URL_ESCAPE_SPACES_ONLY);
     ok(ret == E_POINTER, "got %x, expected %x\n", ret, E_POINTER);
     ok(size == 6, "got %d, expected %d\n", size, 6);
 
@@ -915,7 +897,7 @@ static void test_UrlEscapeW(void)
     ret = UrlEscapeW(overwrite, overwrite, &size, URL_ESCAPE_SPACES_ONLY);
     ok(ret == S_OK, "got %x, expected S_OK\n", ret);
     ok(size == 9, "got %d, expected 9\n", size);
-    ok(!lstrcmpW(overwrite, out), "got %s, expected %s\n", wine_dbgstr_w(overwrite), wine_dbgstr_w(out));
+    ok(!wcscmp(overwrite, L"foo%20bar"), "Got unexpected string %s.\n", debugstr_w(overwrite));
 
     size = 1;
     wc = 127;
@@ -926,9 +908,9 @@ static void test_UrlEscapeW(void)
 
     /* non-ASCII range */
     size = ARRAY_SIZE(ret_urlW);
-    ret = UrlEscapeW(naW, ret_urlW, &size, 0);
+    ret = UrlEscapeW(L"ftp\x1f\xff\xfa\x2122q/", ret_urlW, &size, 0);
     ok(ret == S_OK, "got %x, expected S_OK\n", ret);
-    ok(!lstrcmpW(naescapedW, ret_urlW), "got %s, expected %s\n", wine_dbgstr_w(ret_urlW), wine_dbgstr_w(naescapedW));
+    ok(!wcscmp(ret_urlW, L"ftp%1F%FF%FA\x2122q/"), "Got unexpected string %s.\n", debugstr_w(ret_urlW));
 
     for (i = 0; i < ARRAY_SIZE(TEST_ESCAPE); i++) {
 
@@ -1128,7 +1110,7 @@ static void test_UrlCanonicalizeW(void)
         BOOL choped;
         int pos;
 
-        MultiByteToWideChar(CP_ACP, 0, "http://www.winehq.org/X", -1, szUrl, ARRAY_SIZE(szUrl));
+        wcscpy(szUrl, L"http://www.winehq.org/X");
         pos = lstrlenW(szUrl) - 1;
         szUrl[pos] = i;
         urllen = INTERNET_MAX_URL_LENGTH;
@@ -1310,9 +1292,8 @@ static void test_UrlUnescape(void)
     static char inplace[] = "file:///C:/Program%20Files";
     static char another_inplace[] = "file:///C:/Program%20Files";
     static const char expected[] = "file:///C:/Program Files";
-    static WCHAR inplaceW[] = {'f','i','l','e',':','/','/','/','C',':','/','P','r','o','g','r','a','m',' ','F','i','l','e','s',0};
-    static WCHAR another_inplaceW[] ={'f','i','l','e',':','/','/','/',
-                'C',':','/','P','r','o','g','r','a','m','%','2','0','F','i','l','e','s',0};
+    static WCHAR inplaceW[] = L"file:///C:/Program Files";
+    static WCHAR another_inplaceW[] = L"file:///C:/Program%20Files";
     HRESULT res;
 
     for (i = 0; i < ARRAY_SIZE(TEST_URL_UNESCAPE); i++) {
