@@ -339,7 +339,7 @@ static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
     ok(function == NULL, "function is not NULL\n");
     ok(file == NULL, "file is not NULL\n");
     ok(line == 0, "line = %u\n", line);
-    ok(arg == 0, "arg = %lx\n", (UINT_PTR)arg);
+    ok(arg == 0, "arg = %Ix\n", arg);
     ok(errno != 0xdeadbeef, "errno not set\n");
 }
 
@@ -353,7 +353,7 @@ static BOOL init(void)
     SetLastError(0xdeadbeef);
     hcrt = LoadLibraryA("msvcr90.dll");
     if (!hcrt) {
-        win_skip("msvcr90.dll not installed (got %d)\n", GetLastError());
+        win_skip("msvcr90.dll not installed (got %ld)\n", GetLastError());
         return FALSE;
     }
 
@@ -1181,7 +1181,7 @@ static void test_getptd(void)
     int dec, sign;
     void *mbcinfo, *locinfo;
 
-    ok(ptd->tid == tid, "ptd->tid = %x, expected %x\n", ptd->tid, tid);
+    ok(ptd->tid == tid, "ptd->tid = %lx, expected %lx\n", ptd->tid, tid);
     ok(ptd->handle == INVALID_HANDLE_VALUE, "ptd->handle = %p\n", ptd->handle);
     ok(p_errno() == &ptd->thread_errno, "ptd->thread_errno is different then _errno()\n");
     ok(p_doserrno() == &ptd->thread_doserrno, "ptd->thread_doserrno is different then __doserrno()\n");
@@ -1258,7 +1258,7 @@ struct block_file_arg
     FILE *write;
     HANDLE init;
     HANDLE finish;
-    int deadlock_test;
+    LONG deadlock_test;
 };
 
 static DWORD WINAPI block_file(void *arg)
