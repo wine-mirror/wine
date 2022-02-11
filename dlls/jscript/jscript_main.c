@@ -158,7 +158,7 @@ static IClassFactory JScriptEncodeFactory = { &JScriptEncodeFactoryVtbl };
  */
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
-    TRACE("(%p %d %p)\n", hInstDLL, fdwReason, lpv);
+    TRACE("(%p %ld %p)\n", hInstDLL, fdwReason, lpv);
 
     switch(fdwReason) {
     case DLL_PROCESS_ATTACH:
@@ -200,7 +200,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
  */
 HRESULT WINAPI DllCanUnloadNow(void)
 {
-    TRACE("() ref=%d\n", module_ref);
+    TRACE("() ref=%ld\n", module_ref);
 
     return module_ref ? S_FALSE : S_OK;
 }

@@ -620,7 +620,7 @@ HRESULT create_regexp(script_ctx_t *ctx, jsstr_t *src, DWORD flags, jsdisp_t **r
     if(!str)
         return E_OUTOFMEMORY;
 
-    TRACE("%s %x\n", debugstr_wn(str, jsstr_length(src)), flags);
+    TRACE("%s %lx\n", debugstr_wn(str, jsstr_length(src)), flags);
 
     hres = alloc_regexp(ctx, NULL, &regexp);
     if(FAILED(hres))

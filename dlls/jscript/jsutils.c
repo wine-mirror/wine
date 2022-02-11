@@ -1000,7 +1000,7 @@ static ULONG WINAPI JSCaller_AddRef(IServiceProvider *iface)
     JSCaller *This = impl_from_IServiceProvider(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -1010,7 +1010,7 @@ static ULONG WINAPI JSCaller_Release(IServiceProvider *iface)
     JSCaller *This = impl_from_IServiceProvider(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
         assert(!This->ctx);

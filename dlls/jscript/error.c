@@ -396,7 +396,7 @@ static jsstr_t *format_error_message(HRESULT error, const WCHAR *arg)
 HRESULT throw_error(script_ctx_t *ctx, HRESULT error, const WCHAR *str)
 {
     jsexcept_t *ei = ctx->ei;
-    TRACE("%08x\n", error);
+    TRACE("%08lx\n", error);
     reset_ei(ei);
     ei->error = error;
     if(str)

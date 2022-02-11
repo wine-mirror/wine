@@ -156,7 +156,7 @@ static HRESULT ActiveXObject_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
 
     if(ctx->safeopt != (INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER)
         && ctx->safeopt != INTERFACE_USES_DISPEX) {
-        FIXME("Unsupported safeopt %x\n", ctx->safeopt);
+        FIXME("Unsupported safeopt %lx\n", ctx->safeopt);
         return E_NOTIMPL;
     }
 

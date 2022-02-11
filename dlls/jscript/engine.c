@@ -837,7 +837,7 @@ static HRESULT interp_forin(script_ctx_t *ctx)
     id = get_number(stack_top(ctx));
 
     if(!stack_topn_exprval(ctx, 1, &prop_ref)) {
-        FIXME("invalid ref: %08x\n", prop_ref.u.hres);
+        FIXME("invalid ref: %08lx\n", prop_ref.u.hres);
         return E_FAIL;
     }
 
@@ -992,7 +992,7 @@ static HRESULT interp_pop_scope(script_ctx_t *ctx)
     if(ctx->call_ctx->scope->ref > 1) {
         HRESULT hres = detach_variable_object(ctx, ctx->call_ctx, FALSE);
         if(FAILED(hres))
-            ERR("Failed to detach variable object: %08x\n", hres);
+            ERR("Failed to detach variable object: %08lx\n", hres);
     }
 
     scope_pop(&ctx->call_ctx->scope);
@@ -1073,7 +1073,7 @@ static HRESULT interp_throw_ref(script_ctx_t *ctx)
 {
     const HRESULT arg = get_op_uint(ctx, 0);
 
-    TRACE("%08x\n", arg);
+    TRACE("%08lx\n", arg);
 
     return arg;
 }
@@ -1084,7 +1084,7 @@ static HRESULT interp_throw_type(script_ctx_t *ctx)
     jsstr_t *str = get_op_str(ctx, 1);
     const WCHAR *ptr;
 
-    TRACE("%08x %s\n", hres, debugstr_jsstr(str));
+    TRACE("%08lx %s\n", hres, debugstr_jsstr(str));
 
     ptr = jsstr_flatten(str);
     return ptr ? throw_error(ctx, hres, ptr) : E_OUTOFMEMORY;
@@ -1320,7 +1320,7 @@ static HRESULT interp_memberid(script_ctx_t *ctx)
             exprval_set_exception(&ref, JS_E_INVALID_PROPERTY);
             hres = S_OK;
         }else {
-            ERR("failed %08x\n", hres);
+            ERR("failed %08lx\n", hres);
             return hres;
         }
     }
@@ -2705,7 +2705,7 @@ static HRESULT interp_to_string(script_ctx_t *ctx)
     hres = to_string(ctx, v, &str);
     jsval_release(v);
     if(FAILED(hres)) {
-        WARN("failed %08x\n", hres);
+        WARN("failed %08lx\n", hres);
         return hres;
     }
 
@@ -2765,7 +2765,7 @@ static HRESULT interp_set_member(script_ctx_t *ctx)
         jsstr_release(get_string(namev));
     }
     if(FAILED(hres)) {
-        WARN("failed %08x\n", hres);
+        WARN("failed %08lx\n", hres);
         jsval_release(value);
         return hres;
     }
@@ -2913,7 +2913,7 @@ static void pop_call_frame(script_ctx_t *ctx)
     if(frame->scope && frame->scope->ref > 1) {
         HRESULT hres = detach_variable_object(ctx, frame, TRUE);
         if(FAILED(hres))
-            ERR("Failed to detach variable object: %08x\n", hres);
+            ERR("Failed to detach variable object: %08lx\n", hres);
     }
 
     if(frame->arguments_obj)
@@ -2984,7 +2984,7 @@ static HRESULT unwind_exception(script_ctx_t *ctx, HRESULT exception_hres)
         jsdisp_t *error_obj;
         jsval_t msg;
 
-        WARN("Exception %08x %s", exception_hres, debugstr_jsval(ei->valid_value ? ei->value : jsval_undefined()));
+        WARN("Exception %08lx %s", exception_hres, debugstr_jsval(ei->valid_value ? ei->value : jsval_undefined()));
         if(ei->valid_value && jsval_type(ei->value) == JSV_OBJECT) {
             error_obj = to_jsdisp(get_object(ei->value));
             if(error_obj) {
@@ -3125,7 +3125,7 @@ static HRESULT bind_event_target(script_ctx_t *ctx, function_code_t *func, jsdis
         hres = IBindEventHandler_BindHandler(target, func->name, (IDispatch*)&func_obj->IDispatchEx_iface);
         IBindEventHandler_Release(target);
         if(FAILED(hres))
-            WARN("BindEvent failed: %08x\n", hres);
+            WARN("BindEvent failed: %08lx\n", hres);
     }else {
         FIXME("No IBindEventHandler, not yet supported binding\n");
     }

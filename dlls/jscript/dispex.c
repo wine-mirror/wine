@@ -346,7 +346,7 @@ static HRESULT ensure_prop_name(jsdisp_t *This, const WCHAR *name, DWORD create_
 
     hres = find_prop_name_prot(This, string_hash(name), name, &prop);
     if(SUCCEEDED(hres) && (!prop || prop->type == PROP_DELETED)) {
-        TRACE("creating prop %s flags %x\n", debugstr_w(name), create_flags);
+        TRACE("creating prop %s flags %lx\n", debugstr_w(name), create_flags);
 
         if(prop) {
             prop->type = PROP_JSVAL;
@@ -467,7 +467,7 @@ static HRESULT prop_get(jsdisp_t *This, dispex_prop_t *prop,  jsval_t *r)
     }
 
     if(FAILED(hres)) {
-        TRACE("fail %08x\n", hres);
+        TRACE("fail %08lx\n", hres);
         return hres;
     }
 
@@ -738,7 +738,7 @@ static ULONG WINAPI ScriptTypeInfo_AddRef(ITypeInfo *iface)
     ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -749,7 +749,7 @@ static ULONG WINAPI ScriptTypeInfo_Release(ITypeInfo *iface)
     LONG ref = InterlockedDecrement(&This->ref);
     UINT i;
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if (!ref)
     {
@@ -870,7 +870,7 @@ static HRESULT WINAPI ScriptTypeInfo_GetNames(ITypeInfo *iface, MEMBERID memid, 
     HRESULT hr;
     UINT i = 0;
 
-    TRACE("(%p)->(%d %p %u %p)\n", This, memid, rgBstrNames, cMaxNames, pcNames);
+    TRACE("(%p)->(%ld %p %u %p)\n", This, memid, rgBstrNames, cMaxNames, pcNames);
 
     if (!rgBstrNames || !pcNames) return E_INVALIDARG;
     if (memid <= 0) return TYPE_E_ELEMENTNOTFOUND;
@@ -1001,7 +1001,7 @@ static HRESULT WINAPI ScriptTypeInfo_Invoke(ITypeInfo *iface, PVOID pvInstance, 
     IDispatch *disp;
     HRESULT hr;
 
-    TRACE("(%p)->(%p %d %d %p %p %p %p)\n", This, pvInstance, memid, wFlags,
+    TRACE("(%p)->(%p %ld %d %p %p %p %p)\n", This, pvInstance, memid, wFlags,
           pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     if (!pvInstance) return E_INVALIDARG;
@@ -1035,7 +1035,7 @@ static HRESULT WINAPI ScriptTypeInfo_GetDocumentation(ITypeInfo *iface, MEMBERID
     dispex_prop_t *var;
     HRESULT hr;
 
-    TRACE("(%p)->(%d %p %p %p %p)\n", This, memid, pBstrName, pBstrDocString, pdwHelpContext, pBstrHelpFile);
+    TRACE("(%p)->(%ld %p %p %p %p)\n", This, memid, pBstrName, pBstrDocString, pdwHelpContext, pBstrHelpFile);
 
     if (pBstrDocString) *pBstrDocString = NULL;
     if (pdwHelpContext) *pdwHelpContext = 0;
@@ -1086,7 +1086,7 @@ static HRESULT WINAPI ScriptTypeInfo_GetDllEntry(ITypeInfo *iface, MEMBERID memi
     ITypeInfo *disp_typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%d %d %p %p %p)\n", This, memid, invKind, pBstrDllName, pBstrName, pwOrdinal);
+    TRACE("(%p)->(%ld %d %p %p %p)\n", This, memid, invKind, pBstrDllName, pBstrName, pwOrdinal);
 
     if (pBstrDllName) *pBstrDllName = NULL;
     if (pBstrName) *pBstrName = NULL;
@@ -1107,7 +1107,7 @@ static HRESULT WINAPI ScriptTypeInfo_GetRefTypeInfo(ITypeInfo *iface, HREFTYPE h
     ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
     HRESULT hr;
 
-    TRACE("(%p)->(%x %p)\n", This, hRefType, ppTInfo);
+    TRACE("(%p)->(%lx %p)\n", This, hRefType, ppTInfo);
 
     if (!ppTInfo || (INT)hRefType < 0) return E_INVALIDARG;
 
@@ -1130,7 +1130,7 @@ static HRESULT WINAPI ScriptTypeInfo_AddressOfMember(ITypeInfo *iface, MEMBERID 
     ITypeInfo *disp_typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%d %d %p)\n", This, memid, invKind, ppv);
+    TRACE("(%p)->(%ld %d %p)\n", This, memid, invKind, ppv);
 
     if (!ppv) return E_INVALIDARG;
     *ppv = NULL;
@@ -1163,7 +1163,7 @@ static HRESULT WINAPI ScriptTypeInfo_GetMops(ITypeInfo *iface, MEMBERID memid, B
     ITypeInfo *disp_typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%d %p)\n", This, memid, pBstrMops);
+    TRACE("(%p)->(%ld %p)\n", This, memid, pBstrMops);
 
     if (!pBstrMops) return E_INVALIDARG;
 
@@ -1268,7 +1268,7 @@ static HRESULT WINAPI ScriptTypeComp_Bind(ITypeComp *iface, LPOLESTR szName, ULO
     HRESULT hr;
     UINT i;
 
-    TRACE("(%p)->(%s %08x %d %p %p %p)\n", This, debugstr_w(szName), lHashVal,
+    TRACE("(%p)->(%s %08lx %d %p %p %p)\n", This, debugstr_w(szName), lHashVal,
           wFlags, ppTInfo, pDescKind, pBindPtr);
 
     if (!szName || !ppTInfo || !pDescKind || !pBindPtr)
@@ -1322,7 +1322,7 @@ static HRESULT WINAPI ScriptTypeComp_BindType(ITypeComp *iface, LPOLESTR szName,
     ITypeComp *disp_typecomp;
     HRESULT hr;
 
-    TRACE("(%p)->(%s %08x %p %p)\n", This, debugstr_w(szName), lHashVal, ppTInfo, ppTComp);
+    TRACE("(%p)->(%s %08lx %p %p)\n", This, debugstr_w(szName), lHashVal, ppTInfo, ppTComp);
 
     if (!szName || !ppTInfo || !ppTComp)
         return E_INVALIDARG;
@@ -1386,7 +1386,7 @@ static ULONG WINAPI DispatchEx_Release(IDispatchEx *iface)
 {
     jsdisp_t *This = impl_from_IDispatchEx(iface);
     ULONG ref = --This->ref;
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
     if(!ref)
         jsdisp_free(This);
     return ref;
@@ -1413,7 +1413,7 @@ static HRESULT WINAPI DispatchEx_GetTypeInfo(IDispatchEx *iface, UINT iTInfo, LC
     ScriptTypeInfo *typeinfo;
     unsigned pos;
 
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("(%p)->(%u %lu %p)\n", This, iTInfo, lcid, ppTInfo);
 
     if (iTInfo != 0) return DISP_E_BADINDEX;
 
@@ -1508,7 +1508,7 @@ static HRESULT WINAPI DispatchEx_GetIDsOfNames(IDispatchEx *iface, REFIID riid,
     UINT i;
     HRESULT hres;
 
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+    TRACE("(%p)->(%s %p %u %lu %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
           lcid, rgDispId);
 
     if(cNames == 0)
@@ -1534,7 +1534,7 @@ static HRESULT WINAPI DispatchEx_Invoke(IDispatchEx *iface, DISPID dispIdMember,
 {
     jsdisp_t *This = impl_from_IDispatchEx(iface);
 
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("(%p)->(%ld %s %ld %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     return IDispatchEx_InvokeEx(&This->IDispatchEx_iface, dispIdMember, lcid, wFlags,
@@ -1545,10 +1545,10 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
 {
     jsdisp_t *This = impl_from_IDispatchEx(iface);
 
-    TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(bstrName), grfdex, pid);
+    TRACE("(%p)->(%s %lx %p)\n", This, debugstr_w(bstrName), grfdex, pid);
 
     if(grfdex & ~(fdexNameCaseSensitive|fdexNameEnsure|fdexNameImplicit|FDEX_VERSION_MASK)) {
-        FIXME("Unsupported grfdex %x\n", grfdex);
+        FIXME("Unsupported grfdex %lx\n", grfdex);
         return E_NOTIMPL;
     }
 
@@ -1563,7 +1563,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     jsexcept_t ei;
     HRESULT hres;
 
-    TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
+    TRACE("(%p)->(%lx %lx %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
 
     if(pvarRes)
         V_VT(pvarRes) = VT_EMPTY;
@@ -1689,10 +1689,10 @@ static HRESULT WINAPI DispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR bst
     BOOL b;
     HRESULT hres;
 
-    TRACE("(%p)->(%s %x)\n", This, debugstr_w(bstrName), grfdex);
+    TRACE("(%p)->(%s %lx)\n", This, debugstr_w(bstrName), grfdex);
 
     if(grfdex & ~(fdexNameCaseSensitive|fdexNameEnsure|fdexNameImplicit|FDEX_VERSION_MASK))
-        FIXME("Unsupported grfdex %x\n", grfdex);
+        FIXME("Unsupported grfdex %lx\n", grfdex);
 
     hres = find_prop_name(This, string_hash(bstrName), bstrName, &prop);
     if(FAILED(hres))
@@ -1711,7 +1711,7 @@ static HRESULT WINAPI DispatchEx_DeleteMemberByDispID(IDispatchEx *iface, DISPID
     dispex_prop_t *prop;
     BOOL b;
 
-    TRACE("(%p)->(%x)\n", This, id);
+    TRACE("(%p)->(%lx)\n", This, id);
 
     prop = get_prop(This, id);
     if(!prop) {
@@ -1725,7 +1725,7 @@ static HRESULT WINAPI DispatchEx_DeleteMemberByDispID(IDispatchEx *iface, DISPID
 static HRESULT WINAPI DispatchEx_GetMemberProperties(IDispatchEx *iface, DISPID id, DWORD grfdexFetch, DWORD *pgrfdex)
 {
     jsdisp_t *This = impl_from_IDispatchEx(iface);
-    FIXME("(%p)->(%x %x %p)\n", This, id, grfdexFetch, pgrfdex);
+    FIXME("(%p)->(%lx %lx %p)\n", This, id, grfdexFetch, pgrfdex);
     return E_NOTIMPL;
 }
 
@@ -1734,7 +1734,7 @@ static HRESULT WINAPI DispatchEx_GetMemberName(IDispatchEx *iface, DISPID id, BS
     jsdisp_t *This = impl_from_IDispatchEx(iface);
     dispex_prop_t *prop;
 
-    TRACE("(%p)->(%x %p)\n", This, id, pbstrName);
+    TRACE("(%p)->(%lx %p)\n", This, id, pbstrName);
 
     prop = get_prop(This, id);
     if(!prop)
@@ -1752,7 +1752,7 @@ static HRESULT WINAPI DispatchEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex,
     jsdisp_t *This = impl_from_IDispatchEx(iface);
     HRESULT hres = S_FALSE;
 
-    TRACE("(%p)->(%x %x %p)\n", This, grfdex, id, pid);
+    TRACE("(%p)->(%lx %lx %p)\n", This, grfdex, id, pid);
 
     if(id != DISPID_VALUE)
         hres = jsdisp_next_prop(This, id, JSDISP_ENUM_ALL, pid);
@@ -2048,7 +2048,7 @@ static HRESULT disp_invoke(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD f
     }
 
     if(hres == DISP_E_EXCEPTION) {
-        TRACE("DISP_E_EXCEPTION: %08x %s %s\n", ei.scode, debugstr_w(ei.bstrSource), debugstr_w(ei.bstrDescription));
+        TRACE("DISP_E_EXCEPTION: %08lx %s %s\n", ei.scode, debugstr_w(ei.bstrSource), debugstr_w(ei.bstrDescription));
         reset_ei(ctx->ei);
         ctx->ei->error = (SUCCEEDED(ei.scode) || ei.scode == DISP_E_EXCEPTION) ? E_FAIL : ei.scode;
         if(ei.bstrSource)
@@ -2608,7 +2608,7 @@ HRESULT jsdisp_define_property(jsdisp_t *obj, const WCHAR *name, property_desc_t
         return S_OK;
     }
 
-    TRACE("existing prop %s prop flags %x desc flags %x desc mask %x\n", debugstr_w(name),
+    TRACE("existing prop %s prop flags %lx desc flags %x desc mask %x\n", debugstr_w(name),
           prop->flags, desc->flags, desc->mask);
 
     if(!(prop->flags & PROPF_CONFIGURABLE)) {

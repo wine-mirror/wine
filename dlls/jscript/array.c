@@ -122,7 +122,7 @@ static HRESULT Array_set_length(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t val
     DWORD i;
     HRESULT hres;
 
-    TRACE("%p %d\n", This, This->length);
+    TRACE("%p %ld\n", This, This->length);
 
     hres = to_number(ctx, value, &len);
     if(FAILED(hres))
@@ -701,7 +701,7 @@ static HRESULT Array_sort(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigne
                 vtab[i] = jsval_undefined();
                 hres = S_OK;
             } else if(FAILED(hres)) {
-                WARN("Could not get elem %d: %08x\n", i, hres);
+                WARN("Could not get elem %ld: %08lx\n", i, hres);
                 break;
             }
         }

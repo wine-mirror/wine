@@ -1151,7 +1151,7 @@ static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
                 hres = regexp_match_next(ctx, regexp, REM_NO_PARENS, jsstr, &match_ptr);
                 if(hres != S_OK)
                     break;
-                TRACE("got match %d %d\n", (int)(match_result.cp - match_result.match_len - str), match_result.match_len);
+                TRACE("got match %d %ld\n", (int)(match_result.cp - match_result.match_len - str), match_result.match_len);
                 if(!match_result.match_len) {
                     /* If an empty string is matched, prevent including any match in the result */
                     if(!length) {
@@ -1163,7 +1163,7 @@ static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
                         hres = regexp_match_next(ctx, regexp, REM_NO_PARENS, jsstr, &match_ptr);
                         if(hres != S_OK)
                             break;
-                        TRACE("retried, got match %d %d\n", (int)(match_result.cp - match_result.match_len - str),
+                        TRACE("retried, got match %d %ld\n", (int)(match_result.cp - match_result.match_len - str),
                               match_result.match_len);
                     }
                     if(!match_result.match_len && match_result.cp == str + length)
@@ -1461,7 +1461,7 @@ static HRESULT String_trim(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsig
 
     hres = to_flat_string(ctx, jsval_disp(jsthis->u.disp), &jsstr, &str);
     if(FAILED(hres)) {
-        WARN("to_flat_string failed: %08x\n", hres);
+        WARN("to_flat_string failed: %08lx\n", hres);
         return hres;
     }
     len = jsstr_length(jsstr);

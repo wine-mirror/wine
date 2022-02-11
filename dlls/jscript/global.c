@@ -160,7 +160,7 @@ HRESULT JSGlobal_eval(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned a
     TRACE("parsing %s\n", debugstr_jsval(argv[0]));
     hres = compile_script(ctx, src, 0, 0, NULL, NULL, TRUE, FALSE, frame ? frame->bytecode->named_item : NULL, &code);
     if(FAILED(hres)) {
-        WARN("parse (%s) failed: %08x\n", debugstr_jsval(argv[0]), hres);
+        WARN("parse (%s) failed: %08lx\n", debugstr_jsval(argv[0]), hres);
         return hres;
     }
 
