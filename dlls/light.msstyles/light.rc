@@ -144,8 +144,8 @@ BLUE_INI TEXTFILE
 "EdgeFillColor = 255 255 255\r\n"
 
 "\r\n[SysMetrics]\r\n"
-"ScrollbarWidth = 16\r\n"
-"ScrollbarHeight = 16\r\n"
+"ScrollbarWidth = 17\r\n"
+"ScrollbarHeight = 17\r\n"
 
 "\r\n; System colors\r\n"
 "Scrollbar = 255 255 255\r\n"
