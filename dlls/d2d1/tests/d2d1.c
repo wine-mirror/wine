@@ -4802,10 +4802,11 @@ static void test_shared_bitmap(BOOL d3d11)
 static void test_bitmap_updates(BOOL d3d11)
 {
     D2D1_BITMAP_PROPERTIES bitmap_desc;
+    ID2D1Bitmap *bitmap, *dst_bitmap;
+    D2D1_RECT_U dst_rect, src_rect;
     struct d2d1_test_context ctx;
+    D2D1_POINT_2U dst_point;
     ID2D1RenderTarget *rt;
-    D2D1_RECT_U dst_rect;
-    ID2D1Bitmap *bitmap;
     D2D1_COLOR_F color;
     D2D1_RECT_F rect;
     D2D1_SIZE_U size;
@@ -4882,6 +4883,40 @@ static void test_bitmap_updates(BOOL d3d11)
 
     match = compare_surface(&ctx, "cb8136c91fbbdc76bb83b8c09edc1907b0a5d0a6");
     ok(match, "Surface does not match.\n");
+
+    ID2D1RenderTarget_BeginDraw(rt);
+    set_color(&color, 0.0f, 0.0f, 1.0f, 1.0f);
+    ID2D1RenderTarget_Clear(rt, &color);
+    bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+    hr = ID2D1RenderTarget_CreateBitmap(rt, size, NULL, 0, &bitmap_desc, &dst_bitmap);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1Bitmap_CopyFromBitmap(dst_bitmap, NULL, bitmap, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    dst_point.x = 1; dst_point.y = 1;
+    hr = ID2D1Bitmap_CopyFromBitmap(dst_bitmap, &dst_point, bitmap, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    dst_point.x = 0; dst_point.y = 1;
+    set_rect_u(&src_rect, 1, 1, 3, 3);
+    hr = ID2D1Bitmap_CopyFromBitmap(dst_bitmap, &dst_point, bitmap, &src_rect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    dst_point.x = 1; dst_point.y = 0;
+    set_rect_u(&src_rect, 2, 2, 1, 1);
+    hr = ID2D1Bitmap_CopyFromBitmap(dst_bitmap, &dst_point, bitmap, &src_rect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    set_rect_u(&src_rect, 1, 1, 2, 2);
+    hr = ID2D1Bitmap_CopyFromBitmap(dst_bitmap, NULL, bitmap, &src_rect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    set_rect(&rect, 320.0f, 0.0f, 640.0f, 240.0f);
+    ID2D1RenderTarget_DrawBitmap(rt, dst_bitmap, &rect, 1.0f,
+            D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, NULL);
+
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    match = compare_surface(&ctx, "a1758bd644d897f75d43769ba26456af70cd9056");
+    ok(match, "Surface does not match.\n");
+    ID2D1Bitmap_Release(dst_bitmap);
 
     ID2D1Bitmap_Release(bitmap);
     release_test_context(&ctx);

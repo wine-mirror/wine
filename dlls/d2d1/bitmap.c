@@ -133,9 +133,33 @@ static void STDMETHODCALLTYPE d2d_bitmap_GetDpi(ID2D1Bitmap1 *iface, float *dpi_
 static HRESULT STDMETHODCALLTYPE d2d_bitmap_CopyFromBitmap(ID2D1Bitmap1 *iface,
         const D2D1_POINT_2U *dst_point, ID2D1Bitmap *bitmap, const D2D1_RECT_U *src_rect)
 {
-    FIXME("iface %p, dst_point %p, bitmap %p, src_rect %p stub!\n", iface, dst_point, bitmap, src_rect);
+    struct d2d_bitmap *src_bitmap = unsafe_impl_from_ID2D1Bitmap(bitmap);
+    struct d2d_bitmap *dst_bitmap = impl_from_ID2D1Bitmap1(iface);
+    ID3D11DeviceContext *context;
+    ID3D11Device *device;
+    D3D11_BOX box;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, dst_point %p, bitmap %p, src_rect %p.\n", iface, dst_point, bitmap, src_rect);
+
+    if (src_rect)
+    {
+        box.left = src_rect->left;
+        box.top = src_rect->top;
+        box.front = 0;
+        box.right = src_rect->right;
+        box.bottom = src_rect->bottom;
+        box.back = 1;
+    }
+
+    ID3D11Resource_GetDevice(dst_bitmap->resource, &device);
+    ID3D11Device_GetImmediateContext(device, &context);
+    ID3D11DeviceContext_CopySubresourceRegion(context, dst_bitmap->resource, 0,
+            dst_point ? dst_point->x : 0, dst_point ? dst_point->y : 0, 0,
+            src_bitmap->resource, 0, src_rect ? &box : NULL);
+    ID3D11DeviceContext_Release(context);
+    ID3D11Device_Release(device);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_bitmap_CopyFromRenderTarget(ID2D1Bitmap1 *iface,
