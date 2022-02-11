@@ -209,7 +209,7 @@ static HRESULT media_engine_lock_d3d_device(struct media_engine *engine, ID3D11D
     {
         if (FAILED(hr = IMFDXGIDeviceManager_OpenDeviceHandle(engine->device_manager, &engine->device_handle)))
         {
-            WARN("Failed to open device handle, hr %#x.\n", hr);
+            WARN("Failed to open device handle, hr %#lx.\n", hr);
             return hr;
         }
     }
@@ -225,7 +225,7 @@ static HRESULT media_engine_lock_d3d_device(struct media_engine *engine, ID3D11D
 
         if (FAILED(hr = IMFDXGIDeviceManager_OpenDeviceHandle(engine->device_manager, &engine->device_handle)))
         {
-            WARN("Failed to open a device handle, hr %#x.\n", hr);
+            WARN("Failed to open a device handle, hr %#lx.\n", hr);
             return hr;
         }
         hr = IMFDXGIDeviceManager_LockDevice(engine->device_manager, engine->device_handle, &IID_ID3D11Device,
@@ -335,7 +335,7 @@ static HRESULT media_engine_create_d3d11_video_frame_resources(struct media_engi
 
     if (FAILED(hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &resource_data, &engine->video_frame.d3d11.vb)))
     {
-        WARN("Failed to create a vertex buffer, hr %#x.\n", hr);
+        WARN("Failed to create a vertex buffer, hr %#lx.\n", hr);
         goto failed;
     }
 
@@ -344,7 +344,7 @@ static HRESULT media_engine_create_d3d11_video_frame_resources(struct media_engi
 
     if (FAILED(hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &engine->video_frame.d3d11.ps_cb)))
     {
-        WARN("Failed to create a buffer, hr %#x.\n", hr);
+        WARN("Failed to create a buffer, hr %#lx.\n", hr);
         goto failed;
     }
 
@@ -363,14 +363,14 @@ static HRESULT media_engine_create_d3d11_video_frame_resources(struct media_engi
 
     if (FAILED(hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &engine->video_frame.d3d11.source)))
     {
-        WARN("Failed to create source texture, hr %#x.\n", hr);
+        WARN("Failed to create source texture, hr %#lx.\n", hr);
         goto failed;
     }
 
     if (FAILED(hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)engine->video_frame.d3d11.source,
             NULL, &engine->video_frame.d3d11.srv)))
     {
-        WARN("Failed to create SRV, hr %#x.\n", hr);
+        WARN("Failed to create SRV, hr %#lx.\n", hr);
         goto failed;
     }
 
@@ -383,7 +383,7 @@ static HRESULT media_engine_create_d3d11_video_frame_resources(struct media_engi
 
     if (FAILED(hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &engine->video_frame.d3d11.sampler)))
     {
-        WARN("Failed to create a sampler state, hr %#x.\n", hr);
+        WARN("Failed to create a sampler state, hr %#lx.\n", hr);
         goto failed;
     }
 
@@ -391,20 +391,20 @@ static HRESULT media_engine_create_d3d11_video_frame_resources(struct media_engi
     if (FAILED(hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc), vs_code, sizeof(vs_code),
             &engine->video_frame.d3d11.input_layout)))
     {
-        WARN("Failed to create input layout, hr %#x.\n", hr);
+        WARN("Failed to create input layout, hr %#lx.\n", hr);
         goto failed;
     }
 
     /* Shaders */
     if (FAILED(hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &engine->video_frame.d3d11.vs)))
     {
-        WARN("Failed to create the vertex shader, hr %#x.\n", hr);
+        WARN("Failed to create the vertex shader, hr %#lx.\n", hr);
         goto failed;
     }
 
     if (FAILED(hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &engine->video_frame.d3d11.ps)))
     {
-        WARN("Failed to create the pixel shader, hr %#x.\n", hr);
+        WARN("Failed to create the pixel shader, hr %#lx.\n", hr);
         goto failed;
     }
 
@@ -469,7 +469,7 @@ static ULONG WINAPI media_error_AddRef(IMFMediaError *iface)
     struct media_error *me = impl_from_IMFMediaError(iface);
     ULONG refcount = InterlockedIncrement(&me->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -479,7 +479,7 @@ static ULONG WINAPI media_error_Release(IMFMediaError *iface)
     struct media_error *me = impl_from_IMFMediaError(iface);
     ULONG refcount = InterlockedDecrement(&me->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
         free(me);
@@ -519,7 +519,7 @@ static HRESULT WINAPI media_error_SetExtendedErrorCode(IMFMediaError *iface, HRE
 {
     struct media_error *me = impl_from_IMFMediaError(iface);
 
-    TRACE("%p, %#x.\n", iface, code);
+    TRACE("%p, %#lx.\n", iface, code);
 
     me->extended_code = code;
 
@@ -576,7 +576,7 @@ static ULONG WINAPI time_range_AddRef(IMFMediaTimeRange *iface)
     struct time_range *range = impl_from_IMFMediaTimeRange(iface);
     ULONG refcount = InterlockedIncrement(&range->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -586,7 +586,7 @@ static ULONG WINAPI time_range_Release(IMFMediaTimeRange *iface)
     struct time_range *range = impl_from_IMFMediaTimeRange(iface);
     ULONG refcount = InterlockedDecrement(&range->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -610,7 +610,7 @@ static HRESULT WINAPI time_range_GetStart(IMFMediaTimeRange *iface, DWORD idx, d
 {
     struct time_range *range = impl_from_IMFMediaTimeRange(iface);
 
-    TRACE("%p, %u, %p.\n", iface, idx, start);
+    TRACE("%p, %lu, %p.\n", iface, idx, start);
 
     if (idx >= range->count)
         return E_INVALIDARG;
@@ -624,7 +624,7 @@ static HRESULT WINAPI time_range_GetEnd(IMFMediaTimeRange *iface, DWORD idx, dou
 {
     struct time_range *range = impl_from_IMFMediaTimeRange(iface);
 
-    TRACE("%p, %u, %p.\n", iface, idx, end);
+    TRACE("%p, %lu, %p.\n", iface, idx, end);
 
     if (idx >= range->count)
         return E_INVALIDARG;
@@ -814,7 +814,7 @@ static void media_engine_get_frame_size(struct media_engine *engine, IMFTopology
     IMFMediaTypeHandler_Release(handler);
     if (FAILED(hr))
     {
-        WARN("Failed to get current media type %#x.\n", hr);
+        WARN("Failed to get current media type %#lx.\n", hr);
         return;
     }
 
@@ -873,13 +873,13 @@ static HRESULT WINAPI media_engine_session_events_Invoke(IMFAsyncCallback *iface
 
     if (FAILED(hr = IMFMediaSession_EndGetEvent(engine->session, result, &event)))
     {
-        WARN("Failed to get session event, hr %#x.\n", hr);
+        WARN("Failed to get session event, hr %#lx.\n", hr);
         goto failed;
     }
 
     if (FAILED(hr = IMFMediaEvent_GetType(event, &event_type)))
     {
-        WARN("Failed to get event type, hr %#x.\n", hr);
+        WARN("Failed to get event type, hr %#lx.\n", hr);
         goto failed;
     }
 
@@ -955,7 +955,7 @@ failed:
         IMFMediaEvent_Release(event);
 
     if (FAILED(hr = IMFMediaSession_BeginGetEvent(engine->session, iface, NULL)))
-        WARN("Failed to subscribe to session events, hr %#x.\n", hr);
+        WARN("Failed to subscribe to session events, hr %#lx.\n", hr);
 
     return S_OK;
 }
@@ -1086,7 +1086,7 @@ static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMedi
         return hr;
 
     if (FAILED(hr = IMFPresentationDescriptor_GetStreamDescriptorCount(pd, &stream_count)))
-        WARN("Failed to get stream count, hr %#x.\n", hr);
+        WARN("Failed to get stream count, hr %#lx.\n", hr);
 
     /* Enable first video stream and first audio stream. */
 
@@ -1154,10 +1154,10 @@ static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMedi
         if (sd_audio)
         {
             if (FAILED(hr = media_engine_create_source_node(source, pd, sd_audio, &audio_src)))
-                WARN("Failed to create audio source node, hr %#x.\n", hr);
+                WARN("Failed to create audio source node, hr %#lx.\n", hr);
 
             if (FAILED(hr = media_engine_create_audio_renderer(engine, &sar_node)))
-                WARN("Failed to create audio renderer node, hr %#x.\n", hr);
+                WARN("Failed to create audio renderer node, hr %#lx.\n", hr);
 
             if (sar_node && audio_src)
             {
@@ -1175,10 +1175,10 @@ static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMedi
         if (SUCCEEDED(hr) && sd_video)
         {
             if (FAILED(hr = media_engine_create_source_node(source, pd, sd_video, &video_src)))
-                WARN("Failed to create video source node, hr %#x.\n", hr);
+                WARN("Failed to create video source node, hr %#lx.\n", hr);
 
             if (FAILED(hr = media_engine_create_video_renderer(engine, &grabber_node)))
-                WARN("Failed to create video grabber node, hr %#x.\n", hr);
+                WARN("Failed to create video grabber node, hr %#lx.\n", hr);
 
             if (grabber_node && video_src)
             {
@@ -1249,7 +1249,7 @@ static HRESULT WINAPI media_engine_load_handler_Invoke(IMFAsyncCallback *iface, 
         hr = IMFSourceResolver_EndCreateObjectFromURL(engine->resolver, result, &obj_type, &object);
 
     if (FAILED(hr))
-        WARN("Failed to create source object, hr %#x.\n", hr);
+        WARN("Failed to create source object, hr %#lx.\n", hr);
 
     if (object)
     {
@@ -1322,7 +1322,7 @@ static ULONG WINAPI media_engine_AddRef(IMFMediaEngineEx *iface)
     struct media_engine *engine = impl_from_IMFMediaEngineEx(iface);
     ULONG refcount = InterlockedIncrement(&engine->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -1356,7 +1356,7 @@ static ULONG WINAPI media_engine_Release(IMFMediaEngineEx *iface)
     struct media_engine *engine = impl_from_IMFMediaEngineEx(iface);
     ULONG refcount = InterlockedDecrement(&engine->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
         free_media_engine(engine);
@@ -2187,7 +2187,7 @@ static HRESULT media_engine_transfer_to_d3d11_texture(struct media_engine *engin
 
     if (FAILED(hr = media_engine_create_d3d11_video_frame_resources(engine, device)))
     {
-        WARN("Failed to create d3d resources, hr %#x.\n", hr);
+        WARN("Failed to create d3d resources, hr %#lx.\n", hr);
         goto done;
     }
 
@@ -2206,7 +2206,7 @@ static HRESULT media_engine_transfer_to_d3d11_texture(struct media_engine *engin
 
     if (FAILED(hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv)))
     {
-        WARN("Failed to create an rtv, hr %#x.\n", hr);
+        WARN("Failed to create an rtv, hr %#lx.\n", hr);
         goto done;
     }
 
@@ -2456,21 +2456,21 @@ static HRESULT WINAPI media_engine_GetNumberOfStreams(IMFMediaEngineEx *iface, D
 static HRESULT WINAPI media_engine_GetStreamAttribute(IMFMediaEngineEx *iface, DWORD stream_index, REFGUID attribute,
         PROPVARIANT *value)
 {
-    FIXME("%p, %d, %s, %p stub.\n", iface, stream_index, debugstr_guid(attribute), value);
+    FIXME("%p, %ld, %s, %p stub.\n", iface, stream_index, debugstr_guid(attribute), value);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI media_engine_GetStreamSelection(IMFMediaEngineEx *iface, DWORD stream_index, BOOL *enabled)
 {
-    FIXME("%p, %d, %p stub.\n", iface, stream_index, enabled);
+    FIXME("%p, %ld, %p stub.\n", iface, stream_index, enabled);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI media_engine_SetStreamSelection(IMFMediaEngineEx *iface, DWORD stream_index, BOOL enabled)
 {
-    FIXME("%p, %d, %d stub.\n", iface, stream_index, enabled);
+    FIXME("%p, %ld, %d stub.\n", iface, stream_index, enabled);
 
     return E_NOTIMPL;
 }
@@ -3036,7 +3036,7 @@ static HRESULT WINAPI media_engine_factory_CreateInstance(IMFMediaEngineClassFac
     struct media_engine *object;
     HRESULT hr;
 
-    TRACE("%p, %#x, %p, %p.\n", iface, flags, attributes, engine);
+    TRACE("%p, %#lx, %p, %p.\n", iface, flags, attributes, engine);
 
     if (!attributes || !engine)
         return E_POINTER;
