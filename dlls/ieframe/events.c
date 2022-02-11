@@ -167,7 +167,7 @@ static ULONG WINAPI EnumConnections_AddRef(IEnumConnections *iface)
     EnumConnections *This = impl_from_IEnumConnections(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -177,7 +177,7 @@ static ULONG WINAPI EnumConnections_Release(IEnumConnections *iface)
     EnumConnections *This = impl_from_IEnumConnections(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
         IConnectionPoint_Release(&This->cp->IConnectionPoint_iface);
@@ -192,7 +192,7 @@ static HRESULT WINAPI EnumConnections_Next(IEnumConnections *iface, ULONG cConne
     EnumConnections *This = impl_from_IEnumConnections(iface);
     ULONG cnt = 0;
 
-    TRACE("(%p)->(%u %p %p)\n", This, cConnections, pgcd, pcFetched);
+    TRACE("(%p)->(%lu %p %p)\n", This, cConnections, pgcd, pcFetched);
 
     while(cConnections--) {
         while(This->iter < This->cp->sinks_size && !This->cp->sinks[This->iter])
@@ -214,7 +214,7 @@ static HRESULT WINAPI EnumConnections_Next(IEnumConnections *iface, ULONG cConne
 static HRESULT WINAPI EnumConnections_Skip(IEnumConnections *iface, ULONG cConnections)
 {
     EnumConnections *This = impl_from_IEnumConnections(iface);
-    FIXME("(%p)->(%u)\n", This, cConnections);
+    FIXME("(%p)->(%lu)\n", This, cConnections);
     return E_NOTIMPL;
 }
 
@@ -342,7 +342,7 @@ static HRESULT WINAPI ConnectionPoint_Unadvise(IConnectionPoint *iface, DWORD dw
 {
     ConnectionPoint *This = impl_from_IConnectionPoint(iface);
 
-    TRACE("(%p)->(%d)\n", This, dwCookie);
+    TRACE("(%p)->(%ld)\n", This, dwCookie);
 
     if(!dwCookie || dwCookie > This->sinks_size || !This->sinks[dwCookie-1])
         return CONNECT_E_NOCONNECTION;

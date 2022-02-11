@@ -72,13 +72,13 @@ static HRESULT WINAPI ProvideClassInfo_GetGUID(IProvideClassInfo2 *iface,
 {
     WebBrowser *This = impl_from_IProvideClassInfo2(iface);
 
-    TRACE("(%p)->(%d %p)\n", This, dwGuidKind, pGUID);
+    TRACE("(%p)->(%ld %p)\n", This, dwGuidKind, pGUID);
 
     if(!pGUID)
         return E_POINTER;
 
     if (dwGuidKind != GUIDKIND_DEFAULT_SOURCE_DISP_IID) {
-        WARN("Wrong GUID type: %d\n", dwGuidKind);
+        WARN("Wrong GUID type: %ld\n", dwGuidKind);
         *pGUID = IID_NULL;
         return E_FAIL;
     }

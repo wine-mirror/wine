@@ -155,7 +155,7 @@ static ULONG WINAPI WebBrowser_AddRef(IUnknown *iface)
 {
     WebBrowser *This = impl_from_IUnknown(iface);
     LONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
     return ref;
 }
 
@@ -164,7 +164,7 @@ static ULONG WINAPI WebBrowser_Release(IUnknown *iface)
     WebBrowser *This = impl_from_IUnknown(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
         if(This->sink)
@@ -238,7 +238,7 @@ static HRESULT WINAPI WebBrowser_GetTypeInfo(IWebBrowser2 *iface, UINT iTInfo, L
     ITypeInfo *typeinfo;
     HRESULT hres;
 
-    TRACE("(%p)->(%d %d %p)\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("(%p)->(%d %ld %p)\n", This, iTInfo, lcid, ppTInfo);
 
     hres = get_typeinfo(IWebBrowser2_tid, &typeinfo);
     if(FAILED(hres))
@@ -257,7 +257,7 @@ static HRESULT WINAPI WebBrowser_GetIDsOfNames(IWebBrowser2 *iface, REFIID riid,
     ITypeInfo *typeinfo;
     HRESULT hres;
 
-    TRACE("(%p)->(%s %p %d %d %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+    TRACE("(%p)->(%s %p %d %ld %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
           lcid, rgDispId);
 
     hres = get_typeinfo(IWebBrowser2_tid, &typeinfo);
@@ -276,7 +276,7 @@ static HRESULT WINAPI WebBrowser_Invoke(IWebBrowser2 *iface, DISPID dispIdMember
     ITypeInfo *typeinfo;
     HRESULT hres;
 
-    TRACE("(%p)->(%d %s %d %08x %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("(%p)->(%ld %s %ld %08x %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
             lcid, wFlags, pDispParams, pVarResult, pExepInfo, puArgErr);
 
     hres = get_typeinfo(IWebBrowser2_tid, &typeinfo);
@@ -439,7 +439,7 @@ static HRESULT WINAPI WebBrowser_put_Left(IWebBrowser2 *iface, LONG Left)
     WebBrowser *This = impl_from_IWebBrowser2(iface);
     RECT rect;
 
-    TRACE("(%p)->(%d)\n", This, Left);
+    TRACE("(%p)->(%ld)\n", This, Left);
 
     if(!This->inplace)
         return E_UNEXPECTED;
@@ -467,7 +467,7 @@ static HRESULT WINAPI WebBrowser_put_Top(IWebBrowser2 *iface, LONG Top)
     WebBrowser *This = impl_from_IWebBrowser2(iface);
     RECT rect;
 
-    TRACE("(%p)->(%d)\n", This, Top);
+    TRACE("(%p)->(%ld)\n", This, Top);
 
     if(!This->inplace)
         return E_UNEXPECTED;
@@ -495,7 +495,7 @@ static HRESULT WINAPI WebBrowser_put_Width(IWebBrowser2 *iface, LONG Width)
     WebBrowser *This = impl_from_IWebBrowser2(iface);
     RECT rect;
 
-    TRACE("(%p)->(%d)\n", This, Width);
+    TRACE("(%p)->(%ld)\n", This, Width);
 
     if(!This->inplace)
         return E_UNEXPECTED;
@@ -523,7 +523,7 @@ static HRESULT WINAPI WebBrowser_put_Height(IWebBrowser2 *iface, LONG Height)
     WebBrowser *This = impl_from_IWebBrowser2(iface);
     RECT rect;
 
-    TRACE("(%p)->(%d)\n", This, Height);
+    TRACE("(%p)->(%ld)\n", This, Height);
 
     if(!This->inplace)
         return E_UNEXPECTED;

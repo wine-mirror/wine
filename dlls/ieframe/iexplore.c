@@ -672,7 +672,7 @@ static LRESULT WINAPI ie_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
         ShowWindow(hwnd, SW_HIDE);
         return 0;
     case WM_SHOWWINDOW:
-        TRACE("WM_SHOWWINDOW %lx\n", wparam);
+        TRACE("WM_SHOWWINDOW %Ix\n", wparam);
         if(wparam) {
             IWebBrowser2_AddRef(&This->IWebBrowser2_iface);
             InterlockedIncrement(&This->extern_ref);
@@ -874,7 +874,7 @@ static ULONG WINAPI InternetExplorerManager_AddRef(IInternetExplorerManager *ifa
     InternetExplorerManager *This = impl_from_IInternetExplorerManager(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) increasing refcount to %u\n", iface, ref);
+    TRACE("(%p) increasing refcount to %lu\n", iface, ref);
 
     return ref;
 }
@@ -884,7 +884,7 @@ static ULONG WINAPI InternetExplorerManager_Release(IInternetExplorerManager *if
     InternetExplorerManager *This = impl_from_IInternetExplorerManager(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) decreasing refcount to %u\n", iface, ref);
+    TRACE("(%p) decreasing refcount to %lu\n", iface, ref);
 
     if (ref == 0)
     {
@@ -897,7 +897,7 @@ static ULONG WINAPI InternetExplorerManager_Release(IInternetExplorerManager *if
 
 static HRESULT WINAPI InternetExplorerManager_CreateObject(IInternetExplorerManager *iface, DWORD config, LPCWSTR url, REFIID riid, void **ppv)
 {
-    FIXME("(%p)->(0x%x, %s, %s, %p) stub!\n", iface, config, debugstr_w(url), debugstr_guid(riid), ppv);
+    FIXME("(%p)->(0x%lx, %s, %s, %p) stub!\n", iface, config, debugstr_w(url), debugstr_guid(riid), ppv);
 
     return E_NOTIMPL;
 }
@@ -1172,7 +1172,7 @@ DWORD WINAPI IEWinMain(const WCHAR *cmdline, int nShowWindow)
 
     if (FAILED(hres))
     {
-        ERR("failed to register CLSID_InternetExplorer%s: %08x\n", manager ? "Manager" : "", hres);
+        ERR("failed to register CLSID_InternetExplorer%s: %08lx\n", manager ? "Manager" : "", hres);
         CoUninitialize();
         ExitProcess(1);
     }

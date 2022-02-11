@@ -167,7 +167,7 @@ static HRESULT WINAPI PersistMemory_InitNew(IPersistMemory *iface)
 static HRESULT WINAPI PersistMemory_Load(IPersistMemory *iface, LPVOID pMem, ULONG cbSize)
 {
     WebBrowser *This = impl_from_IPersistMemory(iface);
-    FIXME("(%p)->(%p %x)\n", This, pMem, cbSize);
+    FIXME("(%p)->(%p %lx)\n", This, pMem, cbSize);
     return S_OK;
 }
 
@@ -175,7 +175,7 @@ static HRESULT WINAPI PersistMemory_Save(IPersistMemory *iface, LPVOID pMem,
         BOOL fClearDirty, ULONG cbSize)
 {
     WebBrowser *This = impl_from_IPersistMemory(iface);
-    FIXME("(%p)->(%p %x %x)\n", This, pMem, fClearDirty, cbSize);
+    FIXME("(%p)->(%p %x %lx)\n", This, pMem, fClearDirty, cbSize);
     return E_NOTIMPL;
 }
 

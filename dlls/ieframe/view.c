@@ -57,7 +57,7 @@ static HRESULT WINAPI ViewObject_Draw(IViewObject2 *iface, DWORD dwDrawAspect,
         ULONG_PTR dwContinue)
 {
     WebBrowser *This = impl_from_IViewObject2(iface);
-    FIXME("(%p)->(%d %d %p %p %p %p %p %p %p %08lx)\n", This, dwDrawAspect, lindex,
+    FIXME("(%p)->(%ld %ld %p %p %p %p %p %p %p %08Ix)\n", This, dwDrawAspect, lindex,
             pvAspect, ptd, hdcTargetDev, hdcDraw, lprcBounds, lprcWBounds, pfnContinue,
             dwContinue);
     return S_OK;
@@ -68,7 +68,7 @@ static HRESULT WINAPI ViewObject_GetColorSet(IViewObject2 *iface, DWORD dwAspect
         LOGPALETTE **ppColorSet)
 {
     WebBrowser *This = impl_from_IViewObject2(iface);
-    FIXME("(%p)->(%d %d %p %p %p %p)\n", This, dwAspect, lindex, pvAspect, ptd,
+    FIXME("(%p)->(%ld %ld %p %p %p %p)\n", This, dwAspect, lindex, pvAspect, ptd,
             hicTargetDev, ppColorSet);
     return E_NOTIMPL;
 }
@@ -77,14 +77,14 @@ static HRESULT WINAPI ViewObject_Freeze(IViewObject2 *iface, DWORD dwDrawAspect,
                                         void *pvAspect, DWORD *pdwFreeze)
 {
     WebBrowser *This = impl_from_IViewObject2(iface);
-    FIXME("(%p)->(%d %d %p %p)\n", This, dwDrawAspect, lindex, pvAspect, pdwFreeze);
+    FIXME("(%p)->(%ld %ld %p %p)\n", This, dwDrawAspect, lindex, pvAspect, pdwFreeze);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ViewObject_Unfreeze(IViewObject2 *iface, DWORD dwFreeze)
 {
     WebBrowser *This = impl_from_IViewObject2(iface);
-    FIXME("(%p)->(%d)\n", This, dwFreeze);
+    FIXME("(%p)->(%ld)\n", This, dwFreeze);
     return E_NOTIMPL;
 }
 
@@ -93,7 +93,7 @@ static HRESULT WINAPI ViewObject_SetAdvise(IViewObject2 *iface, DWORD aspects, D
 {
     WebBrowser *This = impl_from_IViewObject2(iface);
 
-    TRACE("(%p)->(%d %08x %p)\n", This, aspects, advf, pAdvSink);
+    TRACE("(%p)->(%ld %08lx %p)\n", This, aspects, advf, pAdvSink);
 
     if (aspects || advf) FIXME("aspects and/or flags not supported yet\n");
 
@@ -128,7 +128,7 @@ static HRESULT WINAPI ViewObject_GetExtent(IViewObject2 *iface, DWORD dwAspect, 
         DVTARGETDEVICE *ptd, LPSIZEL lpsizel)
 {
     WebBrowser *This = impl_from_IViewObject2(iface);
-    FIXME("(%p)->(%d %d %p %p)\n", This, dwAspect, lindex, ptd, lpsizel);
+    FIXME("(%p)->(%ld %ld %p %p)\n", This, dwAspect, lindex, ptd, lpsizel);
     return E_NOTIMPL;
 }
 

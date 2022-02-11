@@ -85,7 +85,7 @@ void on_commandstate_change(DocHost *doc_host, LONG command, BOOL enable)
     DISPPARAMS dispparams;
     VARIANTARG params[2];
 
-    TRACE("command=%d enable=%d\n", command, enable);
+    TRACE("command=%ld enable=%d\n", command, enable);
 
     dispparams.cArgs = 2;
     dispparams.cNamedArgs = 0;
@@ -131,9 +131,9 @@ static void notif_complete(DocHost *This, DISPID dispid)
     V_VT(&url) = VT_BSTR;
     V_BSTR(&url) = SysAllocString(This->url);
 
-    TRACE("%d >>>\n", dispid);
+    TRACE("%ld >>>\n", dispid);
     call_sink(This->cps.wbe2, dispid, &dispparams);
-    TRACE("%d <<<\n", dispid);
+    TRACE("%ld <<<\n", dispid);
 
     SysFreeString(V_BSTR(&url));
 }
@@ -164,7 +164,7 @@ static void object_available(DocHost *This)
 
         hres = IUnknown_QueryInterface(This->document, &IID_IOleObject, (void**)&ole_object);
         if(FAILED(hres)) {
-            FIXME("Could not get IOleObject iface: %08x\n", hres);
+            FIXME("Could not get IOleObject iface: %08lx\n", hres);
             return;
         }
 
@@ -172,7 +172,7 @@ static void object_available(DocHost *This)
         hres = IOleObject_DoVerb(ole_object, OLEIVERB_SHOW, NULL, &This->IOleClientSite_iface, -1, This->hwnd, &rect);
         IOleObject_Release(ole_object);
         if(FAILED(hres))
-            FIXME("DoVerb failed: %08x\n", hres);
+            FIXME("DoVerb failed: %08lx\n", hres);
     }
 }
 
@@ -192,7 +192,7 @@ static HRESULT get_doc_ready_state(DocHost *This, READYSTATE *ret)
             &dp, &var, &ei, NULL);
     IDispatch_Release(disp);
     if(FAILED(hres)) {
-        WARN("Invoke(DISPID_READYSTATE failed: %08x\n", hres);
+        WARN("Invoke(DISPID_READYSTATE failed: %08lx\n", hres);
         return hres;
     }
 
@@ -322,11 +322,11 @@ HRESULT dochost_object_available(DocHost *This, IUnknown *doc)
 
         hres = IOleObject_SetClientSite(oleobj, &This->IOleClientSite_iface);
         if(FAILED(hres))
-            FIXME("SetClientSite failed: %08x\n", hres);
+            FIXME("SetClientSite failed: %08lx\n", hres);
 
         IOleObject_Release(oleobj);
     }else {
-        FIXME("Could not get IOleObject iface: %08x\n", hres);
+        FIXME("Could not get IOleObject iface: %08lx\n", hres);
     }
 
     /* FIXME: Call SetAdvise */
@@ -353,7 +353,7 @@ static LRESULT resize_document(DocHost *This, LONG width, LONG height)
 {
     RECT rect = {0, 0, width, height};
 
-    TRACE("(%p)->(%d %d)\n", This, width, height);
+    TRACE("(%p)->(%ld %ld)\n", This, width, height);
 
     if(This->view)
         IOleDocumentView_SetRect(This->view, &rect);
@@ -685,10 +685,10 @@ static HRESULT WINAPI ClOleCommandTarget_QueryStatus(IOleCommandTarget *iface,
     DocHost *This = impl_from_IOleCommandTarget(iface);
     ULONG i;
 
-    TRACE("(%p)->(%s %u %p %p)\n", This, debugstr_guid(pguidCmdGroup), cCmds, prgCmds,
+    TRACE("(%p)->(%s %lu %p %p)\n", This, debugstr_guid(pguidCmdGroup), cCmds, prgCmds,
           pCmdText);
     for(i=0; prgCmds && i < cCmds; i++)
-        TRACE("unsupported command %u (%x)\n", prgCmds[i].cmdID, prgCmds[i].cmdf);
+        TRACE("unsupported command %lu (%lx)\n", prgCmds[i].cmdID, prgCmds[i].cmdf);
 
     return E_NOTIMPL;
 }
@@ -699,7 +699,7 @@ static HRESULT WINAPI ClOleCommandTarget_Exec(IOleCommandTarget *iface,
 {
     DocHost *This = impl_from_IOleCommandTarget(iface);
 
-    TRACE("(%p)->(%s %d %d %s %s)\n", This, debugstr_guid(pguidCmdGroup), nCmdID, nCmdexecopt,
+    TRACE("(%p)->(%s %ld %ld %s %s)\n", This, debugstr_guid(pguidCmdGroup), nCmdID, nCmdexecopt,
             debugstr_variant(pvaIn), debugstr_variant(pvaOut));
 
     if(!pguidCmdGroup) {
@@ -720,7 +720,7 @@ static HRESULT WINAPI ClOleCommandTarget_Exec(IOleCommandTarget *iface,
             notify_download_state(This, V_I4(pvaIn));
             return S_OK;
         default:
-            TRACE("Unimplemented cmdid %d\n", nCmdID);
+            TRACE("Unimplemented cmdid %ld\n", nCmdID);
             return E_NOTIMPL;
         }
     }
@@ -772,7 +772,7 @@ static HRESULT WINAPI ClOleCommandTarget_Exec(IOleCommandTarget *iface,
         }
 
         default:
-            TRACE("unsupported command %d of CGID_DocHostCmdPriv\n", nCmdID);
+            TRACE("unsupported command %ld of CGID_DocHostCmdPriv\n", nCmdID);
             return E_NOTIMPL;
         }
     }
@@ -785,7 +785,7 @@ static HRESULT WINAPI ClOleCommandTarget_Exec(IOleCommandTarget *iface,
             return S_OK;
 
         default:
-            TRACE("Unimplemented cmdid %d of CGID_Explorer\n", nCmdID);
+            TRACE("Unimplemented cmdid %ld of CGID_Explorer\n", nCmdID);
             return E_NOTIMPL;
         }
     }
@@ -793,7 +793,7 @@ static HRESULT WINAPI ClOleCommandTarget_Exec(IOleCommandTarget *iface,
     if(IsEqualGUID(pguidCmdGroup, &CGID_ShellDocView)) {
         switch(nCmdID) {
         default:
-            TRACE("Unimplemented cmdid %d of CGID_ShellDocView\n", nCmdID);
+            TRACE("Unimplemented cmdid %ld of CGID_ShellDocView\n", nCmdID);
             return E_NOTIMPL;
         }
     }
@@ -804,7 +804,7 @@ static HRESULT WINAPI ClOleCommandTarget_Exec(IOleCommandTarget *iface,
         return IOleCommandTarget_Exec(This->olecmd, pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
     }
 
-    TRACE("Unimplemented cmdid %d of group %s\n", nCmdID, debugstr_guid(pguidCmdGroup));
+    TRACE("Unimplemented cmdid %ld of group %s\n", nCmdID, debugstr_guid(pguidCmdGroup));
     return E_NOTIMPL;
 }
 
@@ -846,7 +846,7 @@ static HRESULT WINAPI DocHostUIHandler_ShowContextMenu(IDocHostUIHandler2 *iface
     DocHost *This = impl_from_IDocHostUIHandler2(iface);
     HRESULT hres;
 
-    TRACE("(%p)->(%d %p %p %p)\n", This, dwID, ppt, pcmdtReserved, pdispReserved);
+    TRACE("(%p)->(%ld %p %p %p)\n", This, dwID, ppt, pcmdtReserved, pdispReserved);
 
     if(This->hostui) {
         hres = IDocHostUIHandler_ShowContextMenu(This->hostui, dwID, ppt, pcmdtReserved,
@@ -884,7 +884,7 @@ static HRESULT WINAPI DocHostUIHandler_ShowUI(IDocHostUIHandler2 *iface, DWORD d
         IOleInPlaceFrame *pFrame, IOleInPlaceUIWindow *pDoc)
 {
     DocHost *This = impl_from_IDocHostUIHandler2(iface);
-    FIXME("(%p)->(%d %p %p %p %p)\n", This, dwID, pActiveObject, pCommandTarget,
+    FIXME("(%p)->(%ld %p %p %p %p)\n", This, dwID, pActiveObject, pCommandTarget,
           pFrame, pDoc);
     return E_NOTIMPL;
 }
@@ -945,7 +945,7 @@ static HRESULT WINAPI DocHostUIHandler_TranslateAccelerator(IDocHostUIHandler2 *
 {
     DocHost *This = impl_from_IDocHostUIHandler2(iface);
     HRESULT hr = S_FALSE;
-    TRACE("(%p)->(%p %p %d)\n", This, lpMsg, pguidCmdGroup, nCmdID);
+    TRACE("(%p)->(%p %p %ld)\n", This, lpMsg, pguidCmdGroup, nCmdID);
 
     if(This->hostui)
         hr = IDocHostUIHandler_TranslateAccelerator(This->hostui, lpMsg, pguidCmdGroup, nCmdID);
@@ -958,7 +958,7 @@ static HRESULT WINAPI DocHostUIHandler_GetOptionKeyPath(IDocHostUIHandler2 *ifac
 {
     DocHost *This = impl_from_IDocHostUIHandler2(iface);
 
-    TRACE("(%p)->(%p %d)\n", This, pchKey, dw);
+    TRACE("(%p)->(%p %ld)\n", This, pchKey, dw);
 
     if(This->hostui)
         return IDocHostUIHandler_GetOptionKeyPath(This->hostui, pchKey, dw);
@@ -1002,7 +1002,7 @@ static HRESULT WINAPI DocHostUIHandler_TranslateUrl(IDocHostUIHandler2 *iface,
 {
     DocHost *This = impl_from_IDocHostUIHandler2(iface);
 
-    TRACE("(%p)->(%d %s %p)\n", This, dwTranslate, debugstr_w(pchURLIn), ppchURLOut);
+    TRACE("(%p)->(%ld %s %p)\n", This, dwTranslate, debugstr_w(pchURLIn), ppchURLOut);
 
     if(This->hostui)
         return IDocHostUIHandler_TranslateUrl(This->hostui, dwTranslate,
@@ -1026,7 +1026,7 @@ static HRESULT WINAPI DocHostUIHandler_GetOverrideKeyPath(IDocHostUIHandler2 *if
     IDocHostUIHandler2 *handler;
     HRESULT hres;
 
-    TRACE("(%p)->(%p %d)\n", This, pchKey, dw);
+    TRACE("(%p)->(%p %ld)\n", This, pchKey, dw);
 
     if(!This->hostui)
         return S_OK;
@@ -1092,7 +1092,7 @@ static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, D
 {
     DocHost *This = impl_from_IPropertyNotifySink(iface);
 
-    TRACE("(%p)->(%d)\n", This, dispID);
+    TRACE("(%p)->(%ld)\n", This, dispID);
 
     switch(dispID) {
     case DISPID_READYSTATE: {
@@ -1110,7 +1110,7 @@ static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, D
         break;
     }
     default:
-        FIXME("unimplemented dispid %d\n", dispID);
+        FIXME("unimplemented dispid %ld\n", dispID);
         return E_NOTIMPL;
     }
 
@@ -1120,7 +1120,7 @@ static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, D
 static HRESULT WINAPI PropertyNotifySink_OnRequestEdit(IPropertyNotifySink *iface, DISPID dispID)
 {
     DocHost *This = impl_from_IPropertyNotifySink(iface);
-    FIXME("(%p)->(%d)\n", This, dispID);
+    FIXME("(%p)->(%ld)\n", This, dispID);
     return E_NOTIMPL;
 }
 

@@ -69,7 +69,7 @@ static ULONG WINAPI ShellBrowser_AddRef(
     ShellBrowser *This = impl_from_IShellBrowser(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -79,7 +79,7 @@ static ULONG WINAPI ShellBrowser_Release(IShellBrowser* iface)
     ShellBrowser *This = impl_from_IShellBrowser(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
         assert(!This->doc_host);
@@ -181,7 +181,7 @@ static HRESULT WINAPI ShellBrowser_GetViewStateStream(
         IStream **ppStrm)
 {
     ShellBrowser *This = impl_from_IShellBrowser(iface);
-    FIXME("%p %x %p\n", This, grfMode, ppStrm);
+    FIXME("%p %lx %p\n", This, grfMode, ppStrm);
     return E_NOTIMPL;
 }
 
@@ -312,7 +312,7 @@ static HRESULT WINAPI BrowserService_GetTitle(
         DWORD cchName)
 {
     ShellBrowser *This = impl_from_IBrowserService(iface);
-    FIXME("%p %p %p %d\n", This, psv, pszName, cchName);
+    FIXME("%p %p %p %ld\n", This, psv, pszName, cchName);
     return E_NOTIMPL;
 }
 
@@ -382,7 +382,7 @@ static HRESULT WINAPI BrowserService_DisplayParseError(
         LPCWSTR pwszPath)
 {
     ShellBrowser *This = impl_from_IBrowserService(iface);
-    FIXME("%p %x %s\n", This, hres, debugstr_w(pwszPath));
+    FIXME("%p %lx %s\n", This, hres, debugstr_w(pwszPath));
     return E_NOTIMPL;
 }
 
@@ -392,7 +392,7 @@ static HRESULT WINAPI BrowserService_NavigateToPidl(
         DWORD grfHLNF)
 {
     ShellBrowser *This = impl_from_IBrowserService(iface);
-    FIXME("%p %p %d\n", This, pidl, grfHLNF);
+    FIXME("%p %p %ld\n", This, pidl, grfHLNF);
     return E_NOTIMPL;
 }
 
@@ -447,7 +447,7 @@ static HRESULT WINAPI BrowserService_SetFlags(
         DWORD dwFlagMask)
 {
     ShellBrowser *This = impl_from_IBrowserService(iface);
-    FIXME("%p %x %x\n", This, dwFlags, dwFlagMask);
+    FIXME("%p %lx %lx\n", This, dwFlags, dwFlagMask);
     return E_NOTIMPL;
 }
 
@@ -500,7 +500,7 @@ static HRESULT WINAPI BrowserService_GetBrowserByIndex(
         IUnknown **ppunk)
 {
     ShellBrowser *This = impl_from_IBrowserService(iface);
-    FIXME("%p %x %p\n", This, dwID, ppunk);
+    FIXME("%p %lx %p\n", This, dwID, ppunk);
     return E_NOTIMPL;
 }
 
@@ -660,7 +660,7 @@ static HRESULT WINAPI DocObjectService_FireBeforeNavigate2(
     WCHAR file_path[MAX_PATH];
     DWORD file_path_len = ARRAY_SIZE(file_path);
 
-    TRACE("%p %p %s %x %s %p %d %s %d %p\n", This, pDispatch, debugstr_w(lpszUrl),
+    TRACE("%p %p %s %lx %s %p %ld %s %d %p\n", This, pDispatch, debugstr_w(lpszUrl),
             dwFlags, debugstr_w(lpszFrameName), pPostData, cbPostData,
             debugstr_w(lpszHeaders), fPlayNavSound, pfCancel);
 
@@ -746,7 +746,7 @@ static HRESULT WINAPI DocObjectService_FireNavigateComplete2(
     BSTR url;
     HRESULT hres;
 
-    TRACE("%p %p %x\n", This, pHTMLWindow2, dwFlags);
+    TRACE("%p %p %lx\n", This, pHTMLWindow2, dwFlags);
 
     update_navigation_commands(This->doc_host);
 
@@ -819,7 +819,7 @@ static HRESULT WINAPI DocObjectService_FireDocumentComplete(
     BSTR url;
     HRESULT hres;
 
-    TRACE("%p %p %x\n", This, pHTMLWindow, dwFlags);
+    TRACE("%p %p %lx\n", This, pHTMLWindow, dwFlags);
 
     hres = IHTMLWindow2_QueryInterface(pHTMLWindow, &IID_IHTMLPrivateWindow, (void**)&priv_window);
     if(FAILED(hres))
@@ -991,7 +991,7 @@ static HRESULT WINAPI NewWindowManager_EvaluateNewWindow(INewWindowManager *ifac
         DWORD dwUserActionTime)
 {
     NewWindowManager *This = impl_from_INewWindowManager(iface);
-    FIXME("(%p)->(%s %s %s %s %x %x %d)\n", This, debugstr_w(pszUrl), debugstr_w(pszName), debugstr_w(pszUrlContext),
+    FIXME("(%p)->(%s %s %s %s %x %lx %ld)\n", This, debugstr_w(pszUrl), debugstr_w(pszName), debugstr_w(pszUrlContext),
           debugstr_w(pszFeatures), fReplace, dwFlags, dwUserActionTime);
     return S_OK;
 }
