@@ -400,7 +400,7 @@ LRESULT WINAPI acmDriverMessage(HACMDRIVER had, UINT uMsg, LPARAM lParam1, LPARA
     {
         PWINE_ACMDRIVERID padid;
         LRESULT lResult;
-        LPDRVCONFIGINFO pConfigInfo = NULL;
+        LPDRVCONFIGINFOEX pConfigInfo = NULL;
         LPWSTR section_name = NULL;
         LPWSTR alias_name = NULL;
 
@@ -425,16 +425,15 @@ LRESULT WINAPI acmDriverMessage(HACMDRIVER had, UINT uMsg, LPARAM lParam1, LPARA
             }
         
             if (pAlias != NULL) {
-                /* DRVCONFIGINFO is only 12 bytes long, but native msacm
-                 * reports a 16-byte structure to codecs, so allocate 16 bytes,
-                 * just to be on the safe side.
-                 */
-                const unsigned int iStructSize = 16;
-                pConfigInfo = HeapAlloc(MSACM_hHeap, 0, iStructSize);
+                pConfigInfo = HeapAlloc(MSACM_hHeap, 0, sizeof(*pConfigInfo));
                 if (!pConfigInfo) {
-                    ERR("OOM while supplying DRVCONFIGINFO for DRV_CONFIGURE, using NULL\n");
+                    ERR("OOM while supplying DRVCONFIGINFOEX for DRV_CONFIGURE, using NULL\n");
                 } else {
-                    pConfigInfo->dwDCISize = iStructSize;
+                    /* In some cases (seen in the 32bit world), a DRVCONFIGINFOEX struct is passed
+                     * (with extended size) instead of the documented DRVCONFIGINFO.
+                     * So, always pass a DRVCONFIGINFOEX to be one the safe side
+                     */
+                    pConfigInfo->dwDCISize = sizeof(*pConfigInfo);
 
                     section_name = HeapAlloc(MSACM_hHeap, 0, sizeof(L"Drivers32"));
                     if (section_name) lstrcpyW(section_name, L"Drivers32");
@@ -442,6 +441,7 @@ LRESULT WINAPI acmDriverMessage(HACMDRIVER had, UINT uMsg, LPARAM lParam1, LPARA
                     alias_name = HeapAlloc(MSACM_hHeap, 0, (lstrlenW(pAlias) + 1) * sizeof(WCHAR));
                     if (alias_name) lstrcpyW(alias_name, pAlias);
                     pConfigInfo->lpszDCIAliasName = alias_name;
+                    pConfigInfo->dnDevNode = 0; /* FIXME */
 
                     if (pConfigInfo->lpszDCISectionName == NULL || pConfigInfo->lpszDCIAliasName == NULL) {
                         HeapFree(MSACM_hHeap, 0, alias_name);

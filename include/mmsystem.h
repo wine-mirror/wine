@@ -225,6 +225,12 @@ typedef struct tagDRVCONFIGINFO {
     LPCWSTR  			lpszDCIAliasName;
 } DRVCONFIGINFO, *LPDRVCONFIGINFO;
 
+typedef struct tagDRVCONFIGINFOEX {
+    DWORD   			dwDCISize;
+    LPCWSTR  			lpszDCISectionName;
+    LPCWSTR  			lpszDCIAliasName;
+    DWORD			dnDevNode;
+} DRVCONFIGINFOEX, *LPDRVCONFIGINFOEX;
 
 LRESULT WINAPI DefDriverProc(DWORD_PTR,HDRVR,UINT,LPARAM,LPARAM);
 /* this sounds odd, but it's the way it is. OpenDriverA even disappeared
