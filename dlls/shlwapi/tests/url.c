@@ -38,43 +38,40 @@ static const WCHAR winehqW[] = L"http://www.winehq.org/";
 static const char winehqA[] = "http://www.winehq.org/";
 static const CHAR untouchedA[] = "untouched";
 
-#define TEST_APPLY_MAX_LENGTH INTERNET_MAX_URL_LENGTH
-
 typedef struct _TEST_URL_APPLY {
     const char * url;
     DWORD flags;
     HRESULT res;
-    DWORD newlen;
     const char * newurl;
 } TEST_URL_APPLY;
 
 static const TEST_URL_APPLY TEST_APPLY[] = {
-    {"www.winehq.org", URL_APPLY_GUESSSCHEME | URL_APPLY_DEFAULT, S_OK, 21, "http://www.winehq.org"},
-    {"www.winehq.org", URL_APPLY_GUESSSCHEME, S_OK, 21, "http://www.winehq.org"},
-    {"www.winehq.org", URL_APPLY_DEFAULT, S_OK, 21, "http://www.winehq.org"},
-    {"ftp.winehq.org", URL_APPLY_GUESSSCHEME | URL_APPLY_DEFAULT, S_OK, 20, "ftp://ftp.winehq.org"},
-    {"ftp.winehq.org", URL_APPLY_GUESSSCHEME, S_OK, 20, "ftp://ftp.winehq.org"},
-    {"ftp.winehq.org", URL_APPLY_DEFAULT, S_OK, 21, "http://ftp.winehq.org"},
-    {"winehq.org", URL_APPLY_GUESSSCHEME | URL_APPLY_DEFAULT, S_OK, 17, "http://winehq.org"},
-    {"winehq.org", URL_APPLY_GUESSSCHEME, S_FALSE, TEST_APPLY_MAX_LENGTH, untouchedA},
-    {"winehq.org", URL_APPLY_DEFAULT, S_OK, 17, "http://winehq.org"},
-    {"http://www.winehq.org", URL_APPLY_GUESSSCHEME , S_FALSE, TEST_APPLY_MAX_LENGTH, untouchedA},
-    {"http://www.winehq.org", URL_APPLY_GUESSSCHEME | URL_APPLY_FORCEAPPLY, S_FALSE, TEST_APPLY_MAX_LENGTH, untouchedA},
-    {"http://www.winehq.org", URL_APPLY_GUESSSCHEME | URL_APPLY_FORCEAPPLY | URL_APPLY_DEFAULT, S_OK, 28, "http://http://www.winehq.org"},
-    {"http://www.winehq.org", URL_APPLY_GUESSSCHEME | URL_APPLY_DEFAULT, S_FALSE, TEST_APPLY_MAX_LENGTH, untouchedA},
-    {"", URL_APPLY_GUESSSCHEME | URL_APPLY_DEFAULT, S_OK, 7, "http://"},
-    {"", URL_APPLY_GUESSSCHEME, S_FALSE, TEST_APPLY_MAX_LENGTH, untouchedA},
-    {"", URL_APPLY_DEFAULT, S_OK, 7, "http://"},
-    {"u:\\windows", URL_APPLY_GUESSFILE | URL_APPLY_DEFAULT, S_OK, 18, "file:///u:/windows"},
-    {"u:\\windows", URL_APPLY_GUESSFILE, S_OK, 18, "file:///u:/windows"},
-    {"u:\\windows", URL_APPLY_DEFAULT, S_OK, 17, "http://u:\\windows"},
-    {"file:///c:/windows", URL_APPLY_GUESSFILE , S_FALSE, TEST_APPLY_MAX_LENGTH, untouchedA},
-    {"aa:\\windows", URL_APPLY_GUESSFILE , S_FALSE, TEST_APPLY_MAX_LENGTH, untouchedA},
-    {"\\\\server\\share", URL_APPLY_DEFAULT, S_OK, 21, "http://\\\\server\\share"},
-    {"\\\\server\\share", URL_APPLY_GUESSFILE, S_OK, 19, "file://server/share"},
-    {"\\\\server\\share", URL_APPLY_GUESSSCHEME, S_FALSE, TEST_APPLY_MAX_LENGTH, untouchedA},
-    {"file://server/share", URL_APPLY_GUESSFILE, S_FALSE, TEST_APPLY_MAX_LENGTH, untouchedA},
-    {"file://server/share", URL_APPLY_GUESSSCHEME, S_FALSE, TEST_APPLY_MAX_LENGTH, untouchedA},
+    {"www.winehq.org", URL_APPLY_GUESSSCHEME | URL_APPLY_DEFAULT, S_OK, "http://www.winehq.org"},
+    {"www.winehq.org", URL_APPLY_GUESSSCHEME, S_OK, "http://www.winehq.org"},
+    {"www.winehq.org", URL_APPLY_DEFAULT, S_OK, "http://www.winehq.org"},
+    {"ftp.winehq.org", URL_APPLY_GUESSSCHEME | URL_APPLY_DEFAULT, S_OK, "ftp://ftp.winehq.org"},
+    {"ftp.winehq.org", URL_APPLY_GUESSSCHEME, S_OK, "ftp://ftp.winehq.org"},
+    {"ftp.winehq.org", URL_APPLY_DEFAULT, S_OK, "http://ftp.winehq.org"},
+    {"winehq.org", URL_APPLY_GUESSSCHEME | URL_APPLY_DEFAULT, S_OK, "http://winehq.org"},
+    {"winehq.org", URL_APPLY_GUESSSCHEME, S_FALSE},
+    {"winehq.org", URL_APPLY_DEFAULT, S_OK, "http://winehq.org"},
+    {"http://www.winehq.org", URL_APPLY_GUESSSCHEME, S_FALSE},
+    {"http://www.winehq.org", URL_APPLY_GUESSSCHEME | URL_APPLY_FORCEAPPLY, S_FALSE},
+    {"http://www.winehq.org", URL_APPLY_GUESSSCHEME | URL_APPLY_FORCEAPPLY | URL_APPLY_DEFAULT, S_OK, "http://http://www.winehq.org"},
+    {"http://www.winehq.org", URL_APPLY_GUESSSCHEME | URL_APPLY_DEFAULT, S_FALSE},
+    {"", URL_APPLY_GUESSSCHEME | URL_APPLY_DEFAULT, S_OK, "http://"},
+    {"", URL_APPLY_GUESSSCHEME, S_FALSE},
+    {"", URL_APPLY_DEFAULT, S_OK, "http://"},
+    {"u:\\windows", URL_APPLY_GUESSFILE | URL_APPLY_DEFAULT, S_OK, "file:///u:/windows"},
+    {"u:\\windows", URL_APPLY_GUESSFILE, S_OK, "file:///u:/windows"},
+    {"u:\\windows", URL_APPLY_DEFAULT, S_OK, "http://u:\\windows"},
+    {"file:///c:/windows", URL_APPLY_GUESSFILE, S_FALSE},
+    {"aa:\\windows", URL_APPLY_GUESSFILE, S_FALSE},
+    {"\\\\server\\share", URL_APPLY_DEFAULT, S_OK, "http://\\\\server\\share"},
+    {"\\\\server\\share", URL_APPLY_GUESSFILE, S_OK, "file://server/share"},
+    {"\\\\server\\share", URL_APPLY_GUESSSCHEME, S_FALSE},
+    {"file://server/share", URL_APPLY_GUESSFILE, S_FALSE},
+    {"file://server/share", URL_APPLY_GUESSSCHEME, S_FALSE},
 };
 
 /* ################ */
@@ -482,43 +479,50 @@ static void FreeWideString(LPWSTR wszString)
 
 static void test_UrlApplyScheme(void)
 {
-    CHAR newurl[TEST_APPLY_MAX_LENGTH];
-    WCHAR urlW[TEST_APPLY_MAX_LENGTH];
-    WCHAR newurlW[TEST_APPLY_MAX_LENGTH];
+    WCHAR urlW[INTERNET_MAX_URL_LENGTH], newurlW[INTERNET_MAX_URL_LENGTH], expectW[INTERNET_MAX_URL_LENGTH];
+    char newurl[INTERNET_MAX_URL_LENGTH];
     HRESULT res;
     DWORD len;
     DWORD i;
 
     for (i = 0; i < ARRAY_SIZE(TEST_APPLY); i++) {
-        len = TEST_APPLY_MAX_LENGTH;
-        lstrcpyA(newurl, untouchedA);
+        len = ARRAY_SIZE(newurl);
+        strcpy(newurl, "untouched");
         res = UrlApplySchemeA(TEST_APPLY[i].url, newurl, &len, TEST_APPLY[i].flags);
         ok( res == TEST_APPLY[i].res,
             "#%dA: got HRESULT 0x%x (expected 0x%x)\n", i, res, TEST_APPLY[i].res);
-
-        ok( len == TEST_APPLY[i].newlen,
-            "#%dA: got len %d (expected %d)\n", i, len, TEST_APPLY[i].newlen);
-
-        ok( !lstrcmpA(newurl, TEST_APPLY[i].newurl),
-            "#%dA: got '%s' (expected '%s')\n", i, newurl, TEST_APPLY[i].newurl);
+        if (res == S_OK)
+        {
+            ok(len == strlen(newurl), "Test %u: Expected length %u, got %u.\n", i, strlen(newurl), len);
+            ok(!strcmp(newurl, TEST_APPLY[i].newurl), "Test %u: Expected %s, got %s.\n",
+                    i, debugstr_a(TEST_APPLY[i].newurl), debugstr_a(newurl));
+        }
+        else
+        {
+            ok(len == ARRAY_SIZE(newurl), "Test %u: Got length %u.\n", i, len);
+            ok(!strcmp(newurl, "untouched"), "Test %u: Got %s.\n", i, debugstr_a(newurl));
+        }
 
         /* returned length is in character */
-        len = TEST_APPLY_MAX_LENGTH;
-        lstrcpyA(newurl, untouchedA);
-        MultiByteToWideChar(CP_ACP, 0, newurl, -1, newurlW, len);
-        MultiByteToWideChar(CP_ACP, 0, TEST_APPLY[i].url, -1, urlW, len);
+        MultiByteToWideChar(CP_ACP, 0, TEST_APPLY[i].url, -1, urlW, ARRAY_SIZE(urlW));
+        MultiByteToWideChar(CP_ACP, 0, TEST_APPLY[i].newurl, -1, expectW, ARRAY_SIZE(expectW));
 
+        len = ARRAY_SIZE(newurlW);
+        wcscpy(newurlW, L"untouched");
         res = UrlApplySchemeW(urlW, newurlW, &len, TEST_APPLY[i].flags);
-        WideCharToMultiByte(CP_ACP, 0, newurlW, -1, newurl, TEST_APPLY_MAX_LENGTH, NULL, NULL);
         ok( res == TEST_APPLY[i].res,
             "#%dW: got HRESULT 0x%x (expected 0x%x)\n", i, res, TEST_APPLY[i].res);
-
-        ok( len == TEST_APPLY[i].newlen,
-            "#%dW: got len %d (expected %d)\n", i, len, TEST_APPLY[i].newlen);
-
-        ok( !lstrcmpA(newurl, TEST_APPLY[i].newurl),
-            "#%dW: got '%s' (expected '%s')\n", i, newurl, TEST_APPLY[i].newurl);
-
+        if (res == S_OK)
+        {
+            ok(len == wcslen(newurlW), "Test %u: Expected length %u, got %u.\n", i, wcslen(newurlW), len);
+            ok(!wcscmp(newurlW, expectW), "Test %u: Expected %s, got %s.\n",
+                    i, debugstr_w(expectW), debugstr_w(newurlW));
+        }
+        else
+        {
+            ok(len == ARRAY_SIZE(newurlW), "Test %u: Got length %u.\n", i, len);
+            ok(!wcscmp(newurlW, L"untouched"), "Test %u: Got %s.\n", i, debugstr_w(newurlW));
+        }
     }
 
     /* buffer too small */
@@ -533,16 +537,16 @@ static void test_UrlApplyScheme(void)
 
     /* NULL as parameter. The length and the buffer are not modified */
     lstrcpyA(newurl, untouchedA);
-    len = TEST_APPLY_MAX_LENGTH;
+    len = ARRAY_SIZE(newurl);
     res = UrlApplySchemeA(NULL, newurl, &len, TEST_APPLY[0].flags);
     ok(res == E_INVALIDARG, "got HRESULT 0x%x (expected E_INVALIDARG)\n", res);
-    ok(len == TEST_APPLY_MAX_LENGTH, "got len %d\n", len);
+    ok(len == ARRAY_SIZE(newurl), "got len %d\n", len);
     ok(!lstrcmpA(newurl, untouchedA), "got '%s' (expected '%s')\n", newurl, untouchedA);
 
-    len = TEST_APPLY_MAX_LENGTH;
+    len = ARRAY_SIZE(newurl);
     res = UrlApplySchemeA(TEST_APPLY[0].url, NULL, &len, TEST_APPLY[0].flags);
     ok(res == E_INVALIDARG, "got HRESULT 0x%x (expected E_INVALIDARG)\n", res);
-    ok(len == TEST_APPLY_MAX_LENGTH, "got len %d\n", len);
+    ok(len == ARRAY_SIZE(newurl), "got len %d\n", len);
 
     lstrcpyA(newurl, untouchedA);
     res = UrlApplySchemeA(TEST_APPLY[0].url, newurl, NULL, TEST_APPLY[0].flags);
