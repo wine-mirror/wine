@@ -295,7 +295,6 @@ typedef struct _TEST_URL_ESCAPEW {
     DWORD flags;
     const WCHAR expecturl[INTERNET_MAX_URL_LENGTH];
     const WCHAR win7url[INTERNET_MAX_URL_LENGTH];  /* <= Win7 */
-    const WCHAR vistaurl[INTERNET_MAX_URL_LENGTH]; /* <= Vista/2k8 */
 } TEST_URL_ESCAPEW;
 
 static const TEST_URL_ESCAPEW TEST_ESCAPEW[] = {
@@ -311,12 +310,10 @@ static const TEST_URL_ESCAPEW TEST_ESCAPEW[] = {
                                                   {'M','a','%','D','F',0}},
     /* 0x2070E */
     {{0xd841,0xdf0e,0}, URL_ESCAPE_AS_UTF8, {'%','F','0','%','A','0','%','9','C','%','8','E',0},
-                                                  {'%','E','F','%','B','F','%','B','D','%','E','F','%','B','F','%','B','D',0},
-                                                  {0xd841,0xdf0e,0}},
+                                                  {'%','E','F','%','B','F','%','B','D','%','E','F','%','B','F','%','B','D',0}},
     /* 0x27A3E */
     {{0xd85e,0xde3e,0}, URL_ESCAPE_AS_UTF8, {'%','F','0','%','A','7','%','A','8','%','B','E',0},
-                                                  {'%','E','F','%','B','F','%','B','D','%','E','F','%','B','F','%','B','D',0},
-                                                  {0xd85e,0xde3e,0}},
+                                                  {'%','E','F','%','B','F','%','B','D','%','E','F','%','B','F','%','B','D',0}},
 
     {{0xd85e,0},        URL_ESCAPE_AS_UTF8, {'%','E','F','%','B','F','%','B','D',0},
                                                   {0xd85e,0}},
@@ -414,12 +411,7 @@ static const struct {
     {"c:\\foo/b a%r", "file:///c:/foo/b%20a%25r", S_OK},
     {"c:\\foo\\foo bar", "file:///c:/foo/foo%20bar", S_OK},
     {"file:///c:/foo/bar", "file:///c:/foo/bar", S_FALSE},
-#if 0
-    /* The following test fails on native shlwapi as distributed with Win95/98.
-     * Wine matches the behaviour of later versions.
-     */
     {"xx:c:\\foo\\bar", "xx:c:\\foo\\bar", S_FALSE}
-#endif
 };
 
 /* ################ */
@@ -614,8 +606,8 @@ static void test_url_part(const char* szUrl, DWORD dwPart, DWORD dwFlags, const 
   dwSize = 1;
   res = UrlGetPartA(szUrl, szPart, &dwSize, dwPart, dwFlags);
   ok(res == E_POINTER, "UrlGetPart for \"%s\" gave: 0x%08x\n", szUrl, res);
-  ok(dwSize == strlen(szExpected)+1 ||
-          (*szExpected == '?' && dwSize == strlen(szExpected)),
+  todo_wine_if (dwPart == URL_PART_QUERY)
+  ok(dwSize == strlen(szExpected) + 1,
           "UrlGetPart for \"%s\" gave size: %u\n", szUrl, dwSize);
 
   dwSize = INTERNET_MAX_URL_LENGTH;
@@ -638,9 +630,8 @@ static void test_url_part(const char* szUrl, DWORD dwPart, DWORD dwFlags, const 
   FreeWideString(wszConvertedPart);
   FreeWideString(wszUrl);
 
-  /* Note that v6.0 and later don't return '?' with the query */
-  ok(strcmp(szPart,szExpected)==0 ||
-     (*szExpected=='?' && !strcmp(szPart,szExpected+1)),
+  todo_wine_if (dwPart == URL_PART_QUERY)
+  ok(!strcmp(szPart,szExpected),
 	 "Expected %s, but got %s\n", szExpected, szPart);
 }
 
@@ -707,7 +698,7 @@ static void test_UrlGetPart(void)
   test_url_part(TEST_URL_3, URL_PART_USERNAME, 0, "foo");
   test_url_part(TEST_URL_3, URL_PART_PASSWORD, 0, "bar");
   test_url_part(TEST_URL_3, URL_PART_SCHEME, 0, "http");
-  test_url_part(TEST_URL_3, URL_PART_QUERY, 0, "?query=x&return=y");
+  test_url_part(TEST_URL_3, URL_PART_QUERY, 0, "query=x&return=y");
 
   test_url_part(TEST_URL_4, URL_PART_HOSTNAME, 0, "google.*.com");
 
@@ -855,10 +846,8 @@ static void test_UrlEscapeA(void)
     size = 1;
     empty_string[0] = 127;
     ret = UrlEscapeA("/woningplan/woonkamer basis.swf", empty_string, &size, URL_ESCAPE_AS_UTF8);
-    ok(ret == E_NOTIMPL || broken(ret == E_POINTER), /* < Win7/Win2k8 */
-        "got %x, expected %x\n", ret, E_NOTIMPL);
-    ok(size == 1 || broken(size == 34), /* < Win7/Win2k8 */
-        "got %d, expected %d\n", size, 1);
+    ok(ret == E_NOTIMPL, "Got unexpected hr %#x.\n", ret);
+    ok(size == 1, "Got unexpected size %u.\n", size);
     ok(empty_string[0] == 127, "String has changed, empty_string[0] = %d\n", empty_string[0]);
 
     for (i = 0; i < ARRAY_SIZE(TEST_ESCAPE); i++) {
@@ -962,12 +951,10 @@ static void test_UrlEscapeW(void)
         size = INTERNET_MAX_URL_LENGTH;
         ret = UrlEscapeW(TEST_ESCAPEW[i].url, ret_url, &size, TEST_ESCAPEW[i].flags);
         ok(ret == S_OK, "Got unexpected hr %#x for %s.\n", ret, debugstr_w(TEST_ESCAPEW[i].url));
-        ok(!lstrcmpW(ret_url, TEST_ESCAPEW[i].expecturl) ||
-           broken(!lstrcmpW(ret_url, TEST_ESCAPEW[i].vistaurl)) ||
-           broken(!lstrcmpW(ret_url, TEST_ESCAPEW[i].win7url)),
-            "Expected \"%s\" or \"%s\" or \"%s\", but got \"%s\" for \"%s\"\n",
-            wine_dbgstr_w(TEST_ESCAPEW[i].expecturl), wine_dbgstr_w(TEST_ESCAPEW[i].vistaurl),
-            wine_dbgstr_w(TEST_ESCAPEW[i].win7url), wine_dbgstr_w(ret_url), wine_dbgstr_w(TEST_ESCAPEW[i].url));
+        ok(!wcscmp(ret_url, TEST_ESCAPEW[i].expecturl)
+                || broken(!wcscmp(ret_url, TEST_ESCAPEW[i].win7url)),
+                "Expected %s, but got %s for %s.\n", debugstr_w(TEST_ESCAPEW[i].expecturl),
+                debugstr_w(ret_url), debugstr_w(TEST_ESCAPEW[i].url));
     }
 }
 
@@ -1484,36 +1471,27 @@ static void test_HashData(void)
     /* Test hashing with identically sized input/output buffers. */
     res = HashData(input, 16, output, 16);
     ok(res == S_OK, "Expected HashData to return S_OK, got 0x%08x\n", res);
-    if(res == S_OK)
-       ok(!memcmp(output, expected, sizeof(expected)),
-          "Output buffer did not match expected contents\n");
+    ok(!memcmp(output, expected, sizeof(expected)), "data didn't match\n");
 
     /* Test hashing with larger output buffer. */
     res = HashData(input, 16, output, 32);
     ok(res == S_OK, "Expected HashData to return S_OK, got 0x%08x\n", res);
-    if(res == S_OK)
-       ok(!memcmp(output, expected2, sizeof(expected2)),
-          "Output buffer did not match expected contents\n");
+    ok(!memcmp(output, expected2, sizeof(expected2)), "data didn't match\n");
 
     /* Test hashing with smaller input buffer. */
     res = HashData(input, 8, output, 16);
     ok(res == S_OK, "Expected HashData to return S_OK, got 0x%08x\n", res);
-    if(res == S_OK)
-       ok(!memcmp(output, expected3, sizeof(expected3)),
-          "Output buffer did not match expected contents\n");
+    ok(!memcmp(output, expected3, sizeof(expected3)), "data didn't match\n");
 
     /* Test passing NULL pointers for input/output parameters. */
     res = HashData(NULL, 0, NULL, 0);
-    ok(res == E_INVALIDARG || broken(res == S_OK), /* Windows 2000 */
-       "Expected HashData to return E_INVALIDARG, got 0x%08x\n", res);
+    ok(res == E_INVALIDARG, "Got unexpected hr %#x.\n", res);
 
     res = HashData(input, 0, NULL, 0);
-    ok(res == E_INVALIDARG || broken(res == S_OK), /* Windows 2000 */
-       "Expected HashData to return E_INVALIDARG, got 0x%08x\n", res);
+    ok(res == E_INVALIDARG, "Got unexpected hr %#x.\n", res);
 
     res = HashData(NULL, 0, output, 0);
-    ok(res == E_INVALIDARG || broken(res == S_OK), /* Windows 2000 */
-       "Expected HashData to return E_INVALIDARG, got 0x%08x\n", res);
+    ok(res == E_INVALIDARG, "Got unexpected hr %#x.\n", res);
 
     /* Test passing valid pointers with sizes of zero. */
     for (i = 0; i < ARRAY_SIZE(input); i++)
@@ -1527,16 +1505,10 @@ static void test_HashData(void)
 
     /* The buffers should be unchanged. */
     for (i = 0; i < ARRAY_SIZE(input); i++)
-    {
         ok(input[i] == 0x00, "Expected the input buffer to be unchanged\n");
-        if(input[i] != 0x00) break;
-    }
 
     for (i = 0; i < ARRAY_SIZE(output); i++)
-    {
         ok(output[i] == 0xFF, "Expected the output buffer to be unchanged\n");
-        if(output[i] != 0xFF) break;
-    }
 
     /* Input/output parameters are not validated. */
     res = HashData((BYTE *)0xdeadbeef, 0, (BYTE *)0xdeadbeef, 0);
