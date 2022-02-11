@@ -49,6 +49,7 @@ struct wined3d_command_list
     SIZE_T data_size;
     void *data;
 
+    HANDLE upload_heap;
     SIZE_T resource_count;
     struct wined3d_resource **resources;
 
@@ -3979,6 +3980,7 @@ static void wined3d_cs_packet_incref_objects(struct wined3d_cs_packet *packet)
 struct wined3d_deferred_context
 {
     struct wined3d_device_context c;
+    HANDLE upload_heap;
 
     SIZE_T data_size, data_capacity;
     void *data;
@@ -4108,7 +4110,15 @@ static bool wined3d_deferred_context_map_upload_bo(struct wined3d_device_context
             deferred->upload_count + 1, sizeof(*deferred->uploads)))
         return false;
 
-    if (!(sysmem = heap_alloc(size + RESOURCE_ALIGNMENT - 1)))
+    if (!deferred->upload_heap)
+        deferred->upload_heap = HeapCreate(HEAP_NO_SERIALIZE, 0, 0);
+    if (!deferred->upload_heap)
+    {
+        ERR("Failed to create upload heap.\n");
+        return false;
+    }
+
+    if (!(sysmem = HeapAlloc(deferred->upload_heap, 0, size + RESOURCE_ALIGNMENT - 1)))
         return false;
 
     upload = &deferred->uploads[deferred->upload_count++];
@@ -4253,10 +4263,9 @@ void CDECL wined3d_deferred_context_destroy(struct wined3d_device_context *conte
     heap_free(deferred->resources);
 
     for (i = 0; i < deferred->upload_count; ++i)
-    {
         wined3d_resource_decref(deferred->uploads[i].resource);
-        heap_free(deferred->uploads[i].sysmem);
-    }
+    if (deferred->upload_heap)
+        HeapDestroy(deferred->upload_heap);
     heap_free(deferred->uploads);
 
     for (i = 0; i < deferred->command_list_count; ++i)
@@ -4341,6 +4350,9 @@ HRESULT CDECL wined3d_deferred_context_record_command_list(struct wined3d_device
     deferred->command_list_count = 0;
     deferred->query_count = 0;
 
+    object->upload_heap = deferred->upload_heap;
+    deferred->upload_heap = 0;
+
     /* This is in fact recorded into a subsequent command list. */
     if (restore)
         wined3d_device_context_set_state(&deferred->c, deferred->c.state);
@@ -4357,13 +4369,11 @@ HRESULT CDECL wined3d_deferred_context_record_command_list(struct wined3d_device
 static void wined3d_command_list_destroy_object(void *object)
 {
     struct wined3d_command_list *list = object;
-    SIZE_T i;
 
     TRACE("list %p.\n", list);
 
-    for (i = 0; i < list->upload_count; ++i)
-        heap_free(list->uploads[i].sysmem);
-
+    if (list->upload_heap)
+        HeapDestroy(list->upload_heap);
     heap_free(list);
 }
 
