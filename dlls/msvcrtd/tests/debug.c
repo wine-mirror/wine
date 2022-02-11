@@ -42,7 +42,7 @@ static BOOL init_functions(void)
   HMODULE hModule = LoadLibraryA("msvcrtd.dll");
 
   if (!hModule) {
-    win_skip("LoadLibraryA failed to load msvcrtd.dll with GLE=%d\n", GetLastError());
+    win_skip("LoadLibraryA failed to load msvcrtd.dll with GLE=%ld\n", GetLastError());
     return FALSE;
   }
 
