@@ -43,7 +43,7 @@ HANDLE WINAPI CreateTransaction(LPSECURITY_ATTRIBUTES pattr, LPGUID pguid, DWORD
                                 DWORD level, DWORD flags, DWORD timeout, LPWSTR description)
 {
 
-    FIXME("(%p %p 0x%x 0x%x 0x%x, %u, %s): stub\n",
+    FIXME("(%p %p 0x%lx 0x%lx 0x%lx, %lu, %s): stub\n",
             pattr, pguid, options, level, flags, timeout, debugstr_w(description));
 
     return (HANDLE) 1;
