@@ -82,7 +82,7 @@ static DWORD index_from_urltemplate(URLTEMPLATE value)
     if (!index && value)
         FIXME("URLTEMPLATE 0x%x not supported\n", value);
 
-    TRACE("URLTEMPLATE 0x%08x=> Level %d\n", value, index);
+    TRACE("URLTEMPLATE 0x%08x=> Level %ld\n", value, index);
     return index;
 }
 
@@ -95,7 +95,7 @@ static void update_security_level(secdlg_data *sd, DWORD lv_index, DWORD tb_inde
     WCHAR name[512];
     DWORD current_index;
 
-    TRACE("(%p, lv_index: %u, tb_index: %u)\n", sd, lv_index, tb_index);
+    TRACE("(%p, lv_index: %lu, tb_index: %lu)\n", sd, lv_index, tb_index);
 
     if ((sd->levels[lv_index] != sd->last_level) || (tb_index > 0)) {
         /* show or hide the trackbar */
@@ -106,7 +106,7 @@ static void update_security_level(secdlg_data *sd, DWORD lv_index, DWORD tb_inde
 
         name[0] = 0;
         LoadStringW(hcpl, IDS_SEC_LEVEL0 + current_index, name, ARRAY_SIZE(name));
-        TRACE("new level #%d: %s\n", current_index, debugstr_w(name));
+        TRACE("new level #%ld: %s\n", current_index, debugstr_w(name));
         SetWindowTextW(GetDlgItem(sd->hsec, IDC_SEC_LEVEL), name);
 
         name[0] = 0;
@@ -159,7 +159,7 @@ static void add_zone_to_listview(secdlg_data *sd, DWORD *pindex, DWORD zone)
     WCHAR * ptr;
     HICON icon;
 
-    TRACE("item %d (zone %d)\n", lv_index, zone);
+    TRACE("item %ld (zone %ld)\n", lv_index, zone);
 
     sd->zones[lv_index] = zone;
 
@@ -170,11 +170,11 @@ static void add_zone_to_listview(secdlg_data *sd, DWORD *pindex, DWORD zone)
     if (SUCCEEDED(hr)) {
         TRACE("displayname: %s\n", debugstr_w(za->szDisplayName));
         TRACE("description: %s\n", debugstr_w(za->szDescription));
-        TRACE("minlevel: 0x%x, recommended: 0x%x, current: 0x%x (flags: 0x%x)\n", za->dwTemplateMinLevel,
+        TRACE("minlevel: 0x%lx, recommended: 0x%lx, current: 0x%lx (flags: 0x%lx)\n", za->dwTemplateMinLevel,
              za->dwTemplateRecommended, za->dwTemplateCurrentLevel, za->dwFlags);
 
         if (za->dwFlags & ZAFLAGS_NO_UI ) {
-            TRACE("item %d (zone %d): UI disabled for %s\n", lv_index, zone, debugstr_w(za->szDisplayName));
+            TRACE("item %ld (zone %ld): UI disabled for %s\n", lv_index, zone, debugstr_w(za->szDisplayName));
             return;
         }
 
@@ -199,7 +199,7 @@ static void add_zone_to_listview(secdlg_data *sd, DWORD *pindex, DWORD zone)
                               GetSystemMetrics(SM_CYICON), LR_SHARED);
 
             if (!icon) {
-                FIXME("item %d (zone %d): missing icon #%d in %s\n", lv_index, zone, iconid, debugstr_w(za->szIconPath));
+                FIXME("item %ld (zone %ld): missing icon #%d in %s\n", lv_index, zone, iconid, debugstr_w(za->szIconPath));
             }
 
             /* the failure result (NULL) from LoadImageW let ImageList_AddIcon fail
@@ -207,7 +207,7 @@ static void add_zone_to_listview(secdlg_data *sd, DWORD *pindex, DWORD zone)
             lvitem.iImage = ImageList_AddIcon(sd->himages, icon);
         }
         else
-            FIXME("item %d (zone %d): malformed szIconPath %s\n", lv_index, zone, debugstr_w(za->szIconPath));
+            FIXME("item %ld (zone %ld): malformed szIconPath %s\n", lv_index, zone, debugstr_w(za->szIconPath));
 
         if (ListView_InsertItemW(sd->hlv, &lvitem) >= 0) {
             /* activate first item in the listview */
@@ -223,7 +223,7 @@ static void add_zone_to_listview(secdlg_data *sd, DWORD *pindex, DWORD zone)
         FreeLibrary(hdll);
     }
     else
-        FIXME("item %d (zone %d): GetZoneAttributes failed with 0x%x\n", lv_index, zone, hr);
+        FIXME("item %ld (zone %ld): GetZoneAttributes failed with 0x%lx\n", lv_index, zone, hr);
 }
 
 /*********************************************************************
@@ -330,12 +330,12 @@ static INT_PTR security_on_initdialog(HWND hsec)
 
     hr = security_enum_zones(sd);
     if (FAILED(hr)) {
-        ERR("got 0x%x\n", hr);
+        ERR("got 0x%lx\n", hr);
         security_on_destroy(sd);
         return FALSE;
     }
 
-    TRACE("found %d zones\n", sd->num_zones);
+    TRACE("found %ld zones\n", sd->num_zones);
 
     /* remember ZONEATTRIBUTES for a listview entry */
     sd->zone_attr = heap_alloc(sizeof(ZONEATTRIBUTES) * sd->num_zones);
@@ -384,7 +384,7 @@ static INT_PTR security_on_notify(secdlg_data *sd, WPARAM wparam, LPARAM lparam)
     switch (nm->hdr.code)
     {
         case LVN_ITEMCHANGED:
-            TRACE("LVN_ITEMCHANGED (0x%lx, 0x%lx) from %p with code: %d (item: %d, uNewState: %u)\n",
+            TRACE("LVN_ITEMCHANGED (0x%Ix, 0x%Ix) from %p with code: %d (item: %d, uNewState: %u)\n",
                     wparam, lparam, nm->hdr.hwndFrom, nm->hdr.code, nm->iItem, nm->uNewState);
             if ((nm->uNewState & LVIS_SELECTED) == LVIS_SELECTED) {
                 update_zone_info(sd, nm->iItem);
@@ -392,12 +392,12 @@ static INT_PTR security_on_notify(secdlg_data *sd, WPARAM wparam, LPARAM lparam)
             break;
 
         case PSN_APPLY:
-            TRACE("PSN_APPLY (0x%lx, 0x%lx) from %p with code: %d\n", wparam, lparam,
+            TRACE("PSN_APPLY (0x%Ix, 0x%Ix) from %p with code: %d\n", wparam, lparam,
                     nm->hdr.hwndFrom, nm->hdr.code);
             break;
 
         default:
-            TRACE("WM_NOTIFY (0x%lx, 0x%lx) from %p with code: %d\n", wparam, lparam,
+            TRACE("WM_NOTIFY (0x%Ix, 0x%Ix) from %p with code: %d\n", wparam, lparam,
                     nm->hdr.hwndFrom, nm->hdr.code);
 
     }
@@ -432,7 +432,7 @@ INT_PTR CALLBACK security_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
                     (msg == WM_MOUSEMOVE) || (msg == WM_MOUSEACTIVATE) || (msg == WM_PARENTNOTIFY))
                     return FALSE;
 
-                TRACE("(%p, 0x%08x/%03d, 0x%08lx, 0x%08lx)\n", hwnd, msg, msg, wparam, lparam);
+                TRACE("(%p, 0x%08x/%03d, 0x%08Ix, 0x%08Ix)\n", hwnd, msg, msg, wparam, lparam);
         }
     }
     return FALSE;

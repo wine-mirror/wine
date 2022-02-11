@@ -155,7 +155,7 @@ static DWORD parse_url_from_outside(LPCWSTR url, LPWSTR out, DWORD maxlen)
         return res;
     }
 
-    ERR("failed to get ordinal 170: %d\n", GetLastError());
+    ERR("failed to get ordinal 170: %ld\n", GetLastError());
     FreeLibrary(hdll);
     return 0;
 }
@@ -252,7 +252,7 @@ static INT_PTR general_on_notify(HWND hwnd, WPARAM wparam, LPARAM lparam)
     LONG res;
 
     psn = (PSHNOTIFY *) lparam;
-    TRACE("WM_NOTIFY (%p, 0x%lx, 0x%lx) from %p with code: %d\n", hwnd, wparam, lparam,
+    TRACE("WM_NOTIFY (%p, 0x%Ix, 0x%Ix) from %p with code: %d\n", hwnd, wparam, lparam,
             psn->hdr.hwndFrom, psn->hdr.code);
 
     if (psn->hdr.code == PSN_APPLY)
@@ -262,7 +262,7 @@ static INT_PTR general_on_notify(HWND hwnd, WPARAM wparam, LPARAM lparam)
         TRACE("EDITTEXT has %s\n", debugstr_w(buffer));
 
         res = parse_url_from_outside(buffer, parsed, ARRAY_SIZE(parsed));
-        TRACE("got %d with %s\n", res, debugstr_w(parsed));
+        TRACE("got %ld with %s\n", res, debugstr_w(parsed));
 
         if (res)
         {
@@ -310,7 +310,7 @@ INT_PTR CALLBACK general_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
             if ((msg == WM_SETCURSOR) || (msg == WM_NCHITTEST) || (msg == WM_MOUSEMOVE))
                 return FALSE;
 
-            TRACE("(%p, 0x%08x/%d, 0x%lx, 0x%lx)\n", hwnd, msg, msg, wparam, lparam);
+            TRACE("(%p, 0x%08x/%d, 0x%Ix, 0x%Ix)\n", hwnd, msg, msg, wparam, lparam);
 
     }
     return FALSE;

@@ -166,14 +166,14 @@ static void connections_on_initdialog(HWND hwnd)
         if(!res && type == REG_BINARY)
         {
             if(settings->version != CONNECTION_SETTINGS_VERSION)
-                FIXME("unexpected structure version (%x)\n", settings->version);
+                FIXME("unexpected structure version (%lx)\n", settings->version);
             else if(settings->flags & CONNECTION_SETTINGS_WPAD)
                 CheckDlgButton(hwnd, IDC_USE_WPAD, BST_CHECKED);
         }
         heap_free(settings);
     }
 
-    TRACE("ProxyEnable = %x\n", enabled);
+    TRACE("ProxyEnable = %lx\n", enabled);
     TRACE("ProxyServer = %s\n", wine_dbgstr_w(address));
     TRACE("AutoConfigURL = %s\n", wine_dbgstr_w(pac_url));
 
@@ -262,7 +262,7 @@ static INT_PTR connections_on_notify(HWND hwnd, WPARAM wparam, LPARAM lparam)
         RegCloseKey(hkey);
         return FALSE;
     }
-    TRACE("ProxyEnable set to %x\n", use_proxy);
+    TRACE("ProxyEnable set to %lx\n", use_proxy);
 
     proxy_len = GetDlgItemTextW(hwnd, IDC_EDIT_PROXY_SERVER, proxy, ARRAY_SIZE(proxy));
     if(proxy_len)

@@ -46,7 +46,7 @@ DECLSPEC_HIDDEN HMODULE hcpl;
  */
 BOOL WINAPI DllMain(HINSTANCE hdll, DWORD reason, LPVOID reserved)
 {
-    TRACE("(%p, %d, %p)\n", hdll, reason, reserved);
+    TRACE("(%p, %ld, %p)\n", hdll, reason, reserved);
 
     switch (reason)
     {
@@ -73,7 +73,7 @@ HRESULT WINAPI DllInstall(BOOL bInstall, LPCWSTR cmdline)
 static int CALLBACK propsheet_callback(HWND hwnd, UINT msg, LPARAM lparam)
 {
 
-    TRACE("(%p, 0x%08x/%d, 0x%lx)\n", hwnd, msg, msg, lparam);
+    TRACE("(%p, 0x%08x/%d, 0x%Ix)\n", hwnd, msg, msg, lparam);
     switch (msg)
     {
         case PSCB_INITIALIZED:
@@ -164,7 +164,7 @@ static void display_cpl_sheets(HWND parent)
  */
 LONG CALLBACK CPlApplet(HWND hWnd, UINT command, LPARAM lParam1, LPARAM lParam2)
 {
-    TRACE("(%p, %u, 0x%lx, 0x%lx)\n", hWnd, command, lParam1, lParam2);
+    TRACE("(%p, %u, 0x%Ix, 0x%Ix)\n", hWnd, command, lParam1, lParam2);
 
     switch (command)
     {
