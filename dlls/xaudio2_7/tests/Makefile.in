@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL = xaudio2_7.dll
 IMPORTS = ole32
 
