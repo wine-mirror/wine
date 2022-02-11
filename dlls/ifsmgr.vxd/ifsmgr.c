@@ -107,7 +107,7 @@ BOOL WINAPI IFSMGR_DeviceIoControl(DWORD dwIoControlCode, LPVOID lpvInBuffer, DW
                                   LPDWORD lpcbBytesReturned,
                                   LPOVERLAPPED lpOverlapped)
 {
-    TRACE("(%d,%p,%d,%p,%d,%p,%p): stub\n",
+    TRACE("(%ld,%p,%ld,%p,%ld,%p,%p): stub\n",
           dwIoControlCode, lpvInBuffer,cbInBuffer, lpvOutBuffer,cbOutBuffer,
           lpcbBytesReturned, lpOverlapped);
 
@@ -146,7 +146,7 @@ BOOL WINAPI IFSMGR_DeviceIoControl(DWORD dwIoControlCode, LPVOID lpvInBuffer, DW
         FIXME( "Control 'IFS_IOCTL_GET_NETPRO_NAME_A' not implemented\n");
         return FALSE;
     default:
-        FIXME( "Control %d not implemented\n", dwIoControlCode);
+        FIXME( "Control %ld not implemented\n", dwIoControlCode);
         return FALSE;
     }
 }
