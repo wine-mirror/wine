@@ -1203,6 +1203,8 @@ static void test_WSAAddressToString(void)
 
     for (i = 0; i < ARRAY_SIZE(ipv4_tests); ++i)
     {
+        winetest_push_context( "Test %u", i );
+
         sockaddr.sin_family = AF_INET;
         sockaddr.sin_addr.s_addr = ipv4_tests[i].address;
         sockaddr.sin_port = ipv4_tests[i].port;
@@ -1210,26 +1212,20 @@ static void test_WSAAddressToString(void)
         len = sizeof(output);
         memset( output, 0, len );
         ret = WSAAddressToStringA( (SOCKADDR *)&sockaddr, sizeof(sockaddr), NULL, output, &len );
-        ok( !ret, "ipv4_tests[%d] failed unexpectedly: %d\n", i, WSAGetLastError() );
-        ok( !strcmp( output, ipv4_tests[i].output ),
-            "ipv4_tests[%d]: got address %s, expected %s\n",
-            i, debugstr_a(output), debugstr_a(ipv4_tests[i].output) );
-        ok( len == strlen(ipv4_tests[i].output) + 1,
-            "ipv4_tests[%d]: got length %d, expected %d\n",
-            i, len, strlen(ipv4_tests[i].output) + 1 );
+        ok( !ret, "got error %d\n", WSAGetLastError() );
+        ok( !strcmp( output, ipv4_tests[i].output ), "got string %s\n", debugstr_a(output) );
+        ok( len == strlen(ipv4_tests[i].output) + 1, "got len %u\n", len );
 
         len = sizeof(outputW);
         memset( outputW, 0, len );
         ret = WSAAddressToStringW( (SOCKADDR *)&sockaddr, sizeof(sockaddr), NULL, outputW, &len );
         MultiByteToWideChar( CP_ACP, 0, ipv4_tests[i].output, -1,
                              expected_outputW, ARRAY_SIZE(expected_outputW) );
-        ok( !ret, "ipv4_tests[%d] failed unexpectedly: %d\n", i, WSAGetLastError() );
-        ok( !wcscmp( outputW, expected_outputW ),
-            "ipv4_tests[%d]: got address %s, expected %s\n",
-            i, debugstr_w(outputW), debugstr_w(expected_outputW) );
-        ok( len == wcslen(expected_outputW) + 1,
-            "ipv4_tests[%d]: got length %d, expected %d\n",
-            i, len, wcslen(expected_outputW) + 1 );
+        ok( !ret, "got error %d\n", WSAGetLastError() );
+        ok( !wcscmp( outputW, expected_outputW ), "got string %s\n", debugstr_w(outputW) );
+        ok( len == wcslen(expected_outputW) + 1, "got len %u\n", len );
+
+        winetest_pop_context();
     }
 
     v6 = socket( AF_INET6, SOCK_STREAM, IPPROTO_TCP );
@@ -1242,6 +1238,8 @@ static void test_WSAAddressToString(void)
 
     for (i = 0; i < ARRAY_SIZE(ipv6_tests); ++i)
     {
+        winetest_push_context( "Test %u", i );
+
         sockaddr6.sin6_family = AF_INET6;
         sockaddr6.sin6_scope_id = ipv6_tests[i].scope;
         sockaddr6.sin6_port = ipv6_tests[i].port;
@@ -1249,25 +1247,19 @@ static void test_WSAAddressToString(void)
 
         len = sizeof(output);
         ret = WSAAddressToStringA( (SOCKADDR *)&sockaddr6, sizeof(sockaddr6), NULL, output, &len );
-        ok( !ret, "ipv6_tests[%d] failed unexpectedly: %d\n", i, WSAGetLastError() );
-        ok( !strcmp( output, ipv6_tests[i].output ),
-            "ipv6_tests[%d]: gave address %s, expected %s\n",
-            i, debugstr_a(output), debugstr_a(ipv6_tests[i].output) );
-        ok( len == strlen(ipv6_tests[i].output) + 1,
-            "ipv6_tests[%d]: got length %d, expected %d\n",
-            i, len, strlen(ipv6_tests[i].output) + 1 );
+        ok( !ret, "got error %d\n", WSAGetLastError() );
+        ok( !strcmp( output, ipv6_tests[i].output ), "got string %s\n", debugstr_a(output) );
+        ok( len == strlen(ipv6_tests[i].output) + 1, "got len %u\n", len );
 
         len = sizeof(outputW);
         ret = WSAAddressToStringW( (SOCKADDR *)&sockaddr6, sizeof(sockaddr6), NULL, outputW, &len );
         MultiByteToWideChar( CP_ACP, 0, ipv6_tests[i].output, -1,
                              expected_outputW, ARRAY_SIZE(expected_outputW) );
-        ok( !ret, "ipv6_tests[%d] failed unexpectedly: %d\n", i, WSAGetLastError() );
-        ok( !wcscmp( outputW, expected_outputW ),
-            "ipv6_tests[%d]: got address %s, expected %s\n",
-            i, debugstr_w(outputW), debugstr_w(expected_outputW) );
-        ok( len == wcslen(expected_outputW) + 1,
-            "ipv6_tests[%d]: got length %d, expected %d\n",
-            i, len, wcslen(expected_outputW) + 1 );
+        ok( !ret, "got error %d\n", WSAGetLastError() );
+        ok( !wcscmp( outputW, expected_outputW ), "got string %s\n", debugstr_w(outputW) );
+        ok( len == wcslen(expected_outputW) + 1, "got len %u\n", len );
+
+        winetest_pop_context();
     }
 }
 
