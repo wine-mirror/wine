@@ -2831,7 +2831,6 @@ static void *wined3d_bo_gl_map(struct wined3d_bo_gl *bo, struct wined3d_context_
     const struct wined3d_gl_info *gl_info;
     struct wined3d_bo_user *bo_user;
     struct wined3d_bo_gl tmp;
-    uint8_t *map_ptr;
 
     if (flags & WINED3D_MAP_NOOVERWRITE)
         goto map;
@@ -2869,9 +2868,9 @@ map:
     {
         struct wined3d_allocator_chunk_gl *chunk_gl = wined3d_allocator_chunk_gl(bo->memory->chunk);
 
-        if (!(map_ptr = wined3d_allocator_chunk_gl_map(chunk_gl, context_gl)))
+        if (!(bo->b.map_ptr = wined3d_allocator_chunk_gl_map(chunk_gl, context_gl)))
             ERR("Failed to map chunk.\n");
-        return map_ptr;
+        return bo->b.map_ptr;
     }
 
     gl_info = context_gl->gl_info;
@@ -2906,30 +2905,31 @@ map:
         }
         gl_flags |= GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
 
-        if ((map_ptr = GL_EXTCALL(glMapBufferRange(bo->binding, 0, bo->size, gl_flags))) && wined3d_map_persistent())
-            bo->b.map_ptr = map_ptr;
+        bo->b.map_ptr = GL_EXTCALL(glMapBufferRange(bo->binding, 0, bo->size, gl_flags));
     }
     else if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
     {
-        map_ptr = GL_EXTCALL(glMapBufferRange(bo->binding, 0, bo->size, wined3d_resource_gl_map_flags(bo, flags)));
+        bo->b.map_ptr = GL_EXTCALL(glMapBufferRange(bo->binding, 0, bo->size, wined3d_resource_gl_map_flags(bo, flags)));
     }
     else
     {
-        map_ptr = GL_EXTCALL(glMapBuffer(bo->binding, wined3d_resource_gl_legacy_map_flags(flags)));
+        bo->b.map_ptr = GL_EXTCALL(glMapBuffer(bo->binding, wined3d_resource_gl_legacy_map_flags(flags)));
     }
 
     wined3d_context_gl_bind_bo(context_gl, bo->binding, 0);
     checkGLcall("Map buffer object");
 
-    return map_ptr;
+    return bo->b.map_ptr;
 }
 
 static void wined3d_bo_gl_unmap(struct wined3d_bo_gl *bo, struct wined3d_context_gl *context_gl)
 {
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
 
-    if (bo->b.map_ptr)
+    if (wined3d_map_persistent())
         return;
+
+    bo->b.map_ptr = NULL;
 
     wined3d_context_gl_bind_bo(context_gl, bo->binding, bo->id);
 
