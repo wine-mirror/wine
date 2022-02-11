@@ -84,7 +84,7 @@ static ULONG WINAPI wb_Release(IWordBreaker *iface)
 static HRESULT WINAPI wb_Init( IWordBreaker *iface,
         BOOL fQuery, ULONG ulMaxTokenSize, BOOL *pfLicense )
 {
-    TRACE("%d %u\n", fQuery, ulMaxTokenSize);
+    TRACE("%d %lu\n", fQuery, ulMaxTokenSize);
     *pfLicense = FALSE;
     return S_OK;
 }
@@ -158,7 +158,7 @@ static HRESULT WINAPI wb_ComposePhrase( IWordBreaker *iface,
          const WCHAR *pwcModifier, ULONG cwcModifier,
          ULONG ulAttachmentType, WCHAR *pwcPhrase, ULONG *pcwcPhrase)
 {
-    FIXME("%p %u %p %u %u %p %p\n", pwcNoun, cwcNoun,
+    FIXME("%p %lu %p %lu %lu %p %p\n", pwcNoun, cwcNoun,
           pwcModifier, cwcModifier, ulAttachmentType, pwcPhrase, pcwcPhrase);
     return S_OK;
 }
