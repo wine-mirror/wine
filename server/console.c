@@ -707,6 +707,27 @@ static void propagate_console_signal( struct console *console,
     enum_processes(propagate_console_signal_cb, &csi);
 }
 
+struct console_process_list
+{
+    unsigned int    size;
+    unsigned int    count;
+    process_id_t   *processes;
+    struct console *console;
+};
+
+static int console_process_list_cb(struct process *process, void *user)
+{
+    struct console_process_list *cpl = user;
+
+    if (process->console == cpl->console)
+    {
+        if (cpl->count < cpl->size) cpl->processes[cpl->count] = process->id;
+        cpl->count++;
+    }
+
+    return 0;
+}
+
 /* dumb dump */
 static void console_dump( struct object *obj, int verbose )
 {
@@ -960,6 +981,33 @@ static void console_ioctl( struct fd *fd, ioctl_code_t code, struct async *async
                 return;
             }
             propagate_console_signal( console, event->event, group );
+            return;
+        }
+
+    case IOCTL_CONDRV_GET_PROCESS_LIST:
+        {
+            struct console_process_list cpl;
+            if (get_reply_max_size() < sizeof(unsigned int))
+            {
+                set_error( STATUS_INVALID_PARAMETER );
+                return;
+            }
+
+            cpl.count = 0;
+            cpl.size = 0;
+            cpl.console = console;
+            enum_processes( console_process_list_cb, &cpl );
+            if (cpl.count * sizeof(process_id_t) > get_reply_max_size())
+            {
+                set_reply_data( &cpl.count, sizeof(cpl.count) );
+                set_error( STATUS_BUFFER_TOO_SMALL );
+                return;
+            }
+
+            cpl.size = cpl.count;
+            cpl.count = 0;
+            if ((cpl.processes = set_reply_data_size( cpl.size * sizeof(process_id_t) )))
+                enum_processes( console_process_list_cb, &cpl );
             return;
         }
 
