@@ -691,7 +691,7 @@ HRESULT WINAPI OleTranslateColor(
   COLORREF colorref;
   BYTE b = HIBYTE(HIWORD(clr));
 
-  TRACE("(%08x, %p, %p)\n", clr, hpal, pColorRef);
+  TRACE("%#lx, %p, %p.\n", clr, hpal, pColorRef);
 
   /*
    * In case pColorRef is NULL, provide our own to simplify the code.
@@ -814,7 +814,7 @@ static BOOL actctx_get_typelib_module(REFIID iid, WCHAR *module, DWORD len)
 
     if (tlib->name_len/sizeof(WCHAR) >= len)
     {
-        ERR("need larger module buffer, %u\n", tlib->name_len);
+        ERR("need larger module buffer, %lu.\n", tlib->name_len);
         return FALSE;
     }
 
@@ -979,7 +979,7 @@ static HRESULT WINAPI dispatch_typelib_ps_CreateProxy(IPSFactoryBuffer *iface,
         hr = dispatch_create_proxy(outer, proxy, out);
 
     if (FAILED(hr))
-        ERR("Failed to create proxy, hr %#x.\n", hr);
+        ERR("Failed to create proxy, hr %#lx.\n", hr);
 
     ITypeInfo_ReleaseTypeAttr(typeinfo, attr);
     ITypeInfo_Release(typeinfo);
@@ -1025,7 +1025,7 @@ static HRESULT WINAPI dispatch_typelib_ps_CreateStub(IPSFactoryBuffer *iface,
         hr = dispatch_create_stub(server, stub);
 
     if (FAILED(hr))
-        ERR("Failed to create proxy, hr %#x.\n", hr);
+        ERR("Failed to create proxy, hr %#lx.\n", hr);
 
     ITypeInfo_ReleaseTypeAttr(typeinfo, attr);
     ITypeInfo_Release(typeinfo);
@@ -1173,7 +1173,7 @@ HRESULT WINAPI GetAltMonthNames(LCID lcid, LPOLESTR **str)
         NULL
     };
 
-    TRACE("%#x, %p\n", lcid, str);
+    TRACE("%#lx, %p.\n", lcid, str);
 
     if (PRIMARYLANGID(LANGIDFROMLCID(lcid)) == LANG_ARABIC)
         *str = (LPOLESTR *)arabic_hijri;

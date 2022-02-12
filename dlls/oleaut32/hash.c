@@ -509,7 +509,7 @@ ULONG WINAPI LHashValOfNameSysA( SYSKIND skind, LCID lcid, LPCSTR lpStr)
   ULONG nHiWord, nLoWord = 0x0deadbee;
   const unsigned char *str = (const unsigned char *)lpStr, *pnLookup = NULL;
 
-  TRACE("(%d, 0x%x, %s) %s\n", skind, lcid, debugstr_a(lpStr),
+  TRACE("%d, %#lx, %s, %s.\n", skind, lcid, debugstr_a(lpStr),
     (skind == SYS_WIN16) ? "SYS_WIN16" : (skind == SYS_WIN32) ? "SYS_WIN32" : "");
 
   if (!str)
@@ -520,7 +520,7 @@ ULONG WINAPI LHashValOfNameSysA( SYSKIND skind, LCID lcid, LPCSTR lpStr)
   switch (PRIMARYLANGID(LANGIDFROMLCID(lcid)))
   {
   default:
-    ERR("Unknown lcid %x, treating as latin-based, please report\n", lcid);
+    ERR("Unknown lcid %lx, treating as latin-based, please report\n", lcid);
     /* .. Fall Through .. */
   case LANG_AFRIKAANS:  case LANG_ALBANIAN:   case LANG_ARMENIAN:
   case LANG_ASSAMESE:   case LANG_AZERI:      case LANG_BASQUE:

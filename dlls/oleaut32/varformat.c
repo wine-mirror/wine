@@ -492,7 +492,7 @@ HRESULT WINAPI VarTokenizeFormatString(LPOLESTR lpszFormat, LPBYTE rgbTok,
   DWORD fmt_state = 0;
   LPCWSTR pFormat = lpszFormat;
 
-  TRACE("(%s,%p,%d,%d,%d,0x%08x,%p)\n", debugstr_w(lpszFormat), rgbTok, cbTok,
+  TRACE("%s, %p, %d, %d, %d, %#lx, %p.\n", debugstr_w(lpszFormat), rgbTok, cbTok,
         nFirstDay, nFirstWeek, lcid, pcbActual);
 
   if (!rgbTok ||
@@ -1162,7 +1162,7 @@ static HRESULT VARIANT_FormatNumber(LPVARIANT pVarIn, LPOLESTR lpszFormat,
   const BYTE* pToken = NULL;
   HRESULT hRes = S_OK;
 
-  TRACE("(%s,%s,%p,0x%08x,%p,0x%08x)\n", debugstr_variant(pVarIn), debugstr_w(lpszFormat),
+  TRACE("%s, %s, %p, %#lx, %p, %#lx.\n", debugstr_variant(pVarIn), debugstr_w(lpszFormat),
         rgbTok, dwFlags, pbstrOut, lcid);
 
   V_VT(&vString) = VT_EMPTY;
@@ -1570,7 +1570,7 @@ static HRESULT VARIANT_FormatDate(LPVARIANT pVarIn, LPOLESTR lpszFormat,
   const BYTE* pToken = NULL;
   HRESULT hRes;
 
-  TRACE("(%s,%s,%p,0x%08x,%p,0x%08x)\n", debugstr_variant(pVarIn),
+  TRACE("%s, %s, %p, %#lx, %p, %#lx.\n", debugstr_variant(pVarIn),
         debugstr_w(lpszFormat), rgbTok, dwFlags, pbstrOut, lcid);
 
   V_VT(&vDate) = VT_EMPTY;
@@ -1909,7 +1909,7 @@ static HRESULT VARIANT_FormatString(LPVARIANT pVarIn, LPOLESTR lpszFormat,
   BOOL bUpper = FALSE;
   HRESULT hRes = S_OK;
 
-  TRACE("%s,%s,%p,0x%08x,%p,0x%08x)\n", debugstr_variant(pVarIn), debugstr_w(lpszFormat),
+  TRACE("%s, %s, %p, %#lx, %p, %#lx.\n", debugstr_variant(pVarIn), debugstr_w(lpszFormat),
         rgbTok, dwFlags, pbstrOut, lcid);
 
   V_VT(&vStr) = VT_EMPTY;
@@ -2035,7 +2035,7 @@ HRESULT WINAPI VarFormatFromTokens(LPVARIANT pVarIn, LPOLESTR lpszFormat,
   VARIANT vTmp;
   HRESULT hres;
 
-  TRACE("(%p,%s,%p,%x,%p,0x%08x)\n", pVarIn, debugstr_w(lpszFormat),
+  TRACE("%p, %s, %p, %#lx, %p, %#lx.\n", pVarIn, debugstr_w(lpszFormat),
           rgbTok, dwFlags, pbstrOut, lcid);
 
   if (!pbstrOut)
@@ -2122,7 +2122,7 @@ HRESULT WINAPI VarFormat(LPVARIANT pVarIn, LPOLESTR lpszFormat,
   BYTE buff[256];
   HRESULT hres;
 
-  TRACE("(%s,%s,%d,%d,0x%08x,%p)\n", debugstr_variant(pVarIn), debugstr_w(lpszFormat),
+  TRACE("%s, %s, %d, %d, %#lx, %p.\n", debugstr_variant(pVarIn), debugstr_w(lpszFormat),
         nFirstDay, nFirstWeek, dwFlags, pbstrOut);
 
   if (!pbstrOut)
@@ -2134,7 +2134,7 @@ HRESULT WINAPI VarFormat(LPVARIANT pVarIn, LPOLESTR lpszFormat,
   if (SUCCEEDED(hres))
     hres = VarFormatFromTokens(pVarIn, lpszFormat, buff, dwFlags,
                                pbstrOut, LOCALE_USER_DEFAULT);
-  TRACE("returning 0x%08x, %s\n", hres, debugstr_w(*pbstrOut));
+  TRACE("returning %#lx, %s\n", hres, debugstr_w(*pbstrOut));
   return hres;
 }
 
@@ -2172,7 +2172,7 @@ HRESULT WINAPI VarFormatDateTime(LPVARIANT pVarIn, INT nFormat, ULONG dwFlags, B
   static WCHAR szEmpty[] = L"";
   const BYTE* lpFmt = NULL;
 
-  TRACE("%s,%d,0x%08x,%p)\n", debugstr_variant(pVarIn), nFormat, dwFlags, pbstrOut);
+  TRACE("%s, %d, %#lx, %p.\n", debugstr_variant(pVarIn), nFormat, dwFlags, pbstrOut);
 
   if (!pVarIn || !pbstrOut || nFormat < 0 || nFormat > 4)
     return E_INVALIDARG;
@@ -2224,7 +2224,7 @@ HRESULT WINAPI VarFormatNumber(LPVARIANT pVarIn, INT nDigits, INT nLeading, INT 
   HRESULT hRet;
   VARIANT vStr;
 
-  TRACE("(%s,%d,%d,%d,%d,0x%08x,%p)\n", debugstr_variant(pVarIn), nDigits, nLeading,
+  TRACE("%s, %d, %d, %d, %d, %#lx, %p.\n", debugstr_variant(pVarIn), nDigits, nLeading,
         nParens, nGrouping, dwFlags, pbstrOut);
 
   if (!pVarIn || !pbstrOut || nDigits > 9)
@@ -2329,7 +2329,7 @@ HRESULT WINAPI VarFormatPercent(LPVARIANT pVarIn, INT nDigits, INT nLeading, INT
   HRESULT hRet;
   VARIANT vDbl;
 
-  TRACE("(%s,%d,%d,%d,%d,0x%08x,%p)\n", debugstr_variant(pVarIn), nDigits, nLeading,
+  TRACE("%s, %d, %d, %d, %d, %#lx, %p.\n", debugstr_variant(pVarIn), nDigits, nLeading,
         nParens, nGrouping, dwFlags, pbstrOut);
 
   if (!pVarIn || !pbstrOut || nDigits > 9)
@@ -2403,7 +2403,7 @@ HRESULT WINAPI VarFormatCurrency(LPVARIANT pVarIn, INT nDigits, INT nLeading,
   VARIANT vStr;
   CY cy;
 
-  TRACE("(%s,%d,%d,%d,%d,0x%08x,%p)\n", debugstr_variant(pVarIn), nDigits, nLeading,
+  TRACE("%s, %d, %d, %d, %d, %#lx, %p.\n", debugstr_variant(pVarIn), nDigits, nLeading,
         nParens, nGrouping, dwFlags, pbstrOut);
 
   if (!pVarIn || !pbstrOut || nDigits > 9)
@@ -2512,7 +2512,7 @@ HRESULT WINAPI VarMonthName(INT iMonth, INT fAbbrev, ULONG dwFlags, BSTR *pbstrO
     return E_INVALIDARG;
 
   if (dwFlags)
-    FIXME("Does not support dwFlags 0x%x, ignoring.\n", dwFlags);
+    FIXME("Does not support flags %#lx, ignoring.\n", dwFlags);
 
   if (fAbbrev)
 	localeValue = LOCALE_SABBREVMONTHNAME1 + iMonth - 1;
@@ -2521,7 +2521,7 @@ HRESULT WINAPI VarMonthName(INT iMonth, INT fAbbrev, ULONG dwFlags, BSTR *pbstrO
 
   size = GetLocaleInfoW(LOCALE_USER_DEFAULT,localeValue, NULL, 0);
   if (!size) {
-    ERR("GetLocaleInfo 0x%x failed.\n", localeValue);
+    ERR("GetLocaleInfo %#lx failed.\n", localeValue);
     return HRESULT_FROM_WIN32(GetLastError());
   }
   *pbstrOut = SysAllocStringLen(NULL,size - 1);
@@ -2529,7 +2529,7 @@ HRESULT WINAPI VarMonthName(INT iMonth, INT fAbbrev, ULONG dwFlags, BSTR *pbstrO
     return E_OUTOFMEMORY;
   size = GetLocaleInfoW(LOCALE_USER_DEFAULT,localeValue, *pbstrOut, size);
   if (!size) {
-    ERR("GetLocaleInfo of 0x%x failed in 2nd stage?!\n", localeValue);
+    ERR("GetLocaleInfo of %#lx failed in 2nd stage?!\n", localeValue);
     SysFreeString(*pbstrOut);
     return HRESULT_FROM_WIN32(GetLastError());
   }
@@ -2569,7 +2569,7 @@ HRESULT WINAPI VarWeekdayName(INT iWeekday, INT fAbbrev, INT iFirstDay,
     return E_INVALIDARG;
 
   if (dwFlags)
-    FIXME("Does not support dwFlags 0x%x, ignoring.\n", dwFlags);
+    FIXME("Does not support flags %#lx, ignoring.\n", dwFlags);
 
   /* If we have to use the default firstDay, find which one it is */
   if (iFirstDay == 0) {
@@ -2578,7 +2578,7 @@ HRESULT WINAPI VarWeekdayName(INT iWeekday, INT fAbbrev, INT iFirstDay,
     size = GetLocaleInfoW(LOCALE_USER_DEFAULT, localeValue,
                           (LPWSTR)&firstDay, sizeof(firstDay) / sizeof(WCHAR));
     if (!size) {
-      ERR("GetLocaleInfo 0x%x failed.\n", localeValue);
+      ERR("GetLocaleInfo %#lx failed.\n", localeValue);
       return HRESULT_FROM_WIN32(GetLastError());
     }
     iFirstDay = firstDay + 2;
@@ -2591,7 +2591,7 @@ HRESULT WINAPI VarWeekdayName(INT iWeekday, INT fAbbrev, INT iFirstDay,
   /* Determine the size of the data, allocate memory and retrieve the data */
   size = GetLocaleInfoW(LOCALE_USER_DEFAULT, localeValue, NULL, 0);
   if (!size) {
-    ERR("GetLocaleInfo 0x%x failed.\n", localeValue);
+    ERR("GetLocaleInfo %#lx failed.\n", localeValue);
     return HRESULT_FROM_WIN32(GetLastError());
   }
   *pbstrOut = SysAllocStringLen(NULL, size - 1);
@@ -2599,7 +2599,7 @@ HRESULT WINAPI VarWeekdayName(INT iWeekday, INT fAbbrev, INT iFirstDay,
     return E_OUTOFMEMORY;
   size = GetLocaleInfoW(LOCALE_USER_DEFAULT, localeValue, *pbstrOut, size);
   if (!size) {
-    ERR("GetLocaleInfo 0x%x failed in 2nd stage?!\n", localeValue);
+    ERR("GetLocaleInfo %#lx failed in 2nd stage?!\n", localeValue);
     SysFreeString(*pbstrOut);
     return HRESULT_FROM_WIN32(GetLastError());
   }

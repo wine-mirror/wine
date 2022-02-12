@@ -93,7 +93,7 @@ static ULONG WINAPI PropertyPageSite_AddRef(IPropertyPageSite* iface)
     PropertyPageSite *this = impl_from_IPropertyPageSite(iface);
     LONG ref = InterlockedIncrement(&this->ref);
 
-    TRACE("(%p) ref=%d\n", this, ref);
+    TRACE("%p, refcount %ld.\n", iface, ref);
     return ref;
 }
 
@@ -102,7 +102,7 @@ static ULONG WINAPI PropertyPageSite_Release(IPropertyPageSite* iface)
     PropertyPageSite *this = impl_from_IPropertyPageSite(iface);
     LONG ref = InterlockedDecrement(&this->ref);
 
-    TRACE("(%p) ref=%d\n", this, ref);
+    TRACE("%p, refcount %ld.\n", iface, ref);
     if(!ref)
         HeapFree(GetProcessHeap(), 0, this);
     return ref;
@@ -111,7 +111,7 @@ static ULONG WINAPI PropertyPageSite_Release(IPropertyPageSite* iface)
 static HRESULT WINAPI PropertyPageSite_OnStatusChange(
         IPropertyPageSite *iface, DWORD dwFlags)
 {
-    TRACE("(%p, %x)\n", iface, dwFlags);
+    TRACE("%p, %lx.\n", iface, dwFlags);
     return S_OK;
 }
 
@@ -178,7 +178,7 @@ HRESULT WINAPI OleCreatePropertyFrameIndirect(LPOCPFIPARAMS lpParams)
     if(!lpParams)
         return E_POINTER;
 
-    TRACE("(%d %p %d %d %s %d %p %d %p %d %d)\n", lpParams->cbStructSize,
+    TRACE("%ld, %p, %d, %d, %s, %ld, %p, %ld, %p, %ld, %ld.\n", lpParams->cbStructSize,
             lpParams->hWndOwner, lpParams->x, lpParams->y,
             debugstr_w(lpParams->lpszCaption), lpParams->cObjects,
             lpParams->lplpUnk, lpParams->cPages, lpParams->lpPages,
@@ -286,7 +286,7 @@ HRESULT WINAPI OleCreatePropertyFrameIndirect(LPOCPFIPARAMS lpParams)
         res = IPropertyPage_SetObjects(property_page[i],
                 lpParams->cObjects, lpParams->lplpUnk);
         if(FAILED(res))
-            WARN("SetObjects() failed, hr %#x.\n", res);
+            WARN("SetObjects() failed, hr %#lx.\n", res);
 
         res = IPropertyPage_GetPageInfo(property_page[i], &page_info);
         if(FAILED(res))

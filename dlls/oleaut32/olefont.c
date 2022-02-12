@@ -489,28 +489,20 @@ static HRESULT WINAPI OLEFontImpl_QueryInterface(
   return S_OK;
 }
 
-/************************************************************************
- * OLEFontImpl_AddRef (IUnknown)
- */
-static ULONG WINAPI OLEFontImpl_AddRef(
-  IFont* iface)
+static ULONG WINAPI OLEFontImpl_AddRef(IFont* iface)
 {
   OLEFontImpl *this = impl_from_IFont(iface);
-  TRACE("(%p)->(ref=%d)\n", this, this->ref);
-  return InterlockedIncrement(&this->ref);
+  ULONG ref = InterlockedIncrement(&this->ref);
+  TRACE("%p, refcount %lu.\n", iface, ref);
+  return ref;
 }
 
-/************************************************************************
- * OLEFontImpl_Release (IUnknown)
- */
 static ULONG WINAPI OLEFontImpl_Release(IFont* iface)
 {
   OLEFontImpl *this = impl_from_IFont(iface);
-  ULONG ref;
+  ULONG ref = InterlockedDecrement(&this->ref);
 
-  TRACE("(%p)->(ref=%d)\n", this, this->ref);
-
-  ref = InterlockedDecrement(&this->ref);
+  TRACE("%p, refcount %lu.\n", iface, ref);
 
   if (ref == 0)
   {
@@ -712,15 +704,10 @@ static HRESULT WINAPI OLEFontImpl_get_Size(
   return S_OK;
 }
 
-/************************************************************************
- * OLEFontImpl_put_Size (IFont)
- */
-static HRESULT WINAPI OLEFontImpl_put_Size(
-  IFont* iface,
-  CY     size)
+static HRESULT WINAPI OLEFontImpl_put_Size(IFont *iface, CY size)
 {
   OLEFontImpl *this = impl_from_IFont(iface);
-  TRACE("(%p)->(%d)\n", this, size.s.Lo);
+  TRACE("%p, %ld.\n", iface, size.s.Lo);
   this->description.cySize.s.Hi = 0;
   this->description.cySize.s.Lo = size.s.Lo;
   OLEFont_SendNotify(this, DISPID_FONT_SIZE);
@@ -728,14 +715,7 @@ static HRESULT WINAPI OLEFontImpl_put_Size(
   return S_OK;
 }
 
-/************************************************************************
- * OLEFontImpl_get_Bold (IFont)
- *
- * See Windows documentation for more details on IFont methods.
- */
-static HRESULT WINAPI OLEFontImpl_get_Bold(
-  IFont*  iface,
-  BOOL* pbold)
+static HRESULT WINAPI OLEFontImpl_get_Bold(IFont *iface, BOOL *pbold)
 {
   OLEFontImpl *this = impl_from_IFont(iface);
   TRACE("(%p)->(%p)\n", this, pbold);
@@ -1063,7 +1043,8 @@ static HRESULT WINAPI OLEFontImpl_SetRatio(
   LONG   cyHimetric)
 {
   OLEFontImpl *this = impl_from_IFont(iface);
-  TRACE("(%p)->(%d, %d)\n", this, cyLogical, cyHimetric);
+
+  TRACE("%p, %ld, %ld.\n", iface, cyLogical, cyHimetric);
 
   if(cyLogical == 0 || cyHimetric == 0)
     return E_FAIL;
@@ -1243,9 +1224,9 @@ static HRESULT WINAPI OLEFontImpl_GetTypeInfo(
   }
   hres = ITypeLib_GetTypeInfoOfGuid(tl, &IID_IFontDisp, ppTInfo);
   ITypeLib_Release(tl);
-  if (FAILED(hres)) {
-    FIXME("Did not IDispatch typeinfo from typelib, hres %x\n",hres);
-  }
+  if (FAILED(hres))
+    FIXME("Did not IDispatch typeinfo from typelib, hres %#lx.\n", hres);
+
   return hres;
 }
 
@@ -1302,7 +1283,7 @@ static HRESULT WINAPI OLEFontImpl_Invoke(
   OLEFontImpl *this = impl_from_IDispatch(iface);
   HRESULT hr;
 
-  TRACE("%p->(%d,%s,0x%x,0x%x,%p,%p,%p,%p)\n", this, dispIdMember,
+  TRACE("%p, %ld, %s, %#lx, %#x, %p, %p, %p, %p.\n", iface, dispIdMember,
     debugstr_guid(riid), lcid, wFlags, pDispParams, pVarResult, pExepInfo,
     puArgErr);
 
@@ -1499,7 +1480,7 @@ static HRESULT WINAPI OLEFontImpl_Invoke(
     }
     break;
   default:
-    ERR("member not found for dispid 0x%x\n", dispIdMember);
+    ERR("member not found for dispid %#lx.\n", dispIdMember);
     return DISP_E_MEMBERNOTFOUND;
   }
 }
@@ -2006,7 +1987,7 @@ static HRESULT WINAPI OLEFontImpl_IPersistPropertyBag_Load(
     }
 
     if (FAILED(iRes))
-        WARN("-- 0x%08x\n", iRes);
+        WARN("-- %#lx.\n", iRes);
     return iRes;
 }
 

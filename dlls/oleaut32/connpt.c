@@ -101,9 +101,6 @@ static inline EnumConnectionsImpl *impl_from_IEnumConnections(IEnumConnections *
   return CONTAINING_RECORD(iface, EnumConnectionsImpl, IEnumConnections_iface);
 }
 
-/************************************************************************
- * ConnectionPointImpl_Destroy
- */
 static void ConnectionPointImpl_Destroy(ConnectionPointImpl *Obj)
 {
   DWORD i;
@@ -118,11 +115,6 @@ static void ConnectionPointImpl_Destroy(ConnectionPointImpl *Obj)
   return;
 }
 
-/************************************************************************
- * ConnectionPointImpl_QueryInterface (IUnknown)
- *
- * See Windows documentation for more details on IUnknown methods.
- */
 static HRESULT WINAPI ConnectionPointImpl_QueryInterface(
   IConnectionPoint*  iface,
   REFIID  riid,
@@ -160,47 +152,29 @@ static HRESULT WINAPI ConnectionPointImpl_QueryInterface(
   return S_OK;
 }
 
-
-/************************************************************************
- * ConnectionPointImpl_AddRef (IUnknown)
- *
- * See Windows documentation for more details on IUnknown methods.
- */
 static ULONG WINAPI ConnectionPointImpl_AddRef(IConnectionPoint* iface)
 {
   ConnectionPointImpl *This = impl_from_IConnectionPoint(iface);
   ULONG refCount = InterlockedIncrement(&This->ref);
 
-  TRACE("(%p)->(ref before=%d)\n", This, refCount - 1);
+  TRACE("%p, refcount %lu.\n", iface, refCount);
 
   return refCount;
 }
 
-/************************************************************************
- * ConnectionPointImpl_Release (IUnknown)
- *
- * See Windows documentation for more details on IUnknown methods.
- */
 static ULONG WINAPI ConnectionPointImpl_Release(
       IConnectionPoint* iface)
 {
   ConnectionPointImpl *This = impl_from_IConnectionPoint(iface);
   ULONG refCount = InterlockedDecrement(&This->ref);
 
-  TRACE("(%p)->(ref before=%d)\n", This, refCount + 1);
+  TRACE("%p, refcount %lu.\n", iface, refCount);
 
-  /*
-   * If the reference count goes down to 0, perform suicide.
-   */
   if (!refCount) ConnectionPointImpl_Destroy(This);
 
   return refCount;
 }
 
-/************************************************************************
- * ConnectionPointImpl_GetConnectionInterface (IConnectionPoint)
- *
- */
 static HRESULT WINAPI ConnectionPointImpl_GetConnectionInterface(
 					       IConnectionPoint *iface,
 					       IID              *piid)
@@ -211,10 +185,6 @@ static HRESULT WINAPI ConnectionPointImpl_GetConnectionInterface(
   return S_OK;
 }
 
-/************************************************************************
- * ConnectionPointImpl_GetConnectionPointContainer (IConnectionPoint)
- *
- */
 static HRESULT WINAPI ConnectionPointImpl_GetConnectionPointContainer(
 				      IConnectionPoint           *iface,
 				      IConnectionPointContainer  **ppCPC)
@@ -225,10 +195,6 @@ static HRESULT WINAPI ConnectionPointImpl_GetConnectionPointContainer(
   return IUnknown_QueryInterface(This->Obj, &IID_IConnectionPointContainer, (void**)ppCPC);
 }
 
-/************************************************************************
- * ConnectionPointImpl_Advise (IConnectionPoint)
- *
- */
 static HRESULT WINAPI ConnectionPointImpl_Advise(IConnectionPoint *iface,
 						 IUnknown *lpUnk,
 						 DWORD *pdwCookie)
@@ -258,15 +224,11 @@ static HRESULT WINAPI ConnectionPointImpl_Advise(IConnectionPoint *iface,
 }
 
 
-/************************************************************************
- * ConnectionPointImpl_Unadvise (IConnectionPoint)
- *
- */
-static HRESULT WINAPI ConnectionPointImpl_Unadvise(IConnectionPoint *iface,
-						   DWORD dwCookie)
+static HRESULT WINAPI ConnectionPointImpl_Unadvise(IConnectionPoint *iface, DWORD dwCookie)
 {
   ConnectionPointImpl *This = impl_from_IConnectionPoint(iface);
-  TRACE("(%p)->(%d)\n", This, dwCookie);
+
+  TRACE("%p, %#lx.\n", iface, dwCookie);
 
   if(dwCookie == 0 || dwCookie > This->maxSinks) return E_INVALIDARG;
 
@@ -278,13 +240,7 @@ static HRESULT WINAPI ConnectionPointImpl_Unadvise(IConnectionPoint *iface,
   return S_OK;
 }
 
-/************************************************************************
- * ConnectionPointImpl_EnumConnections (IConnectionPoint)
- *
- */
-static HRESULT WINAPI ConnectionPointImpl_EnumConnections(
-						    IConnectionPoint *iface,
-						    LPENUMCONNECTIONS *ppEnum)
+static HRESULT WINAPI ConnectionPointImpl_EnumConnections(IConnectionPoint *iface, IEnumConnections **ppEnum)
 {
   ConnectionPointImpl *This = impl_from_IConnectionPoint(iface);
   CONNECTDATA *pCD;
@@ -337,9 +293,6 @@ static const IConnectionPointVtbl ConnectionPointImpl_VTable =
 
 static const IEnumConnectionsVtbl EnumConnectionsImpl_VTable;
 
-/************************************************************************
- * EnumConnectionsImpl_Construct
- */
 static EnumConnectionsImpl *EnumConnectionsImpl_Construct(IUnknown *pUnk,
 							  DWORD nSinks,
 							  CONNECTDATA *pCD)
@@ -361,9 +314,6 @@ static EnumConnectionsImpl *EnumConnectionsImpl_Construct(IUnknown *pUnk,
   return Obj;
 }
 
-/************************************************************************
- * EnumConnectionsImpl_Destroy
- */
 static void EnumConnectionsImpl_Destroy(EnumConnectionsImpl *Obj)
 {
   DWORD i;
@@ -376,11 +326,6 @@ static void EnumConnectionsImpl_Destroy(EnumConnectionsImpl *Obj)
   return;
 }
 
-/************************************************************************
- * EnumConnectionsImpl_QueryInterface (IUnknown)
- *
- * See Windows documentation for more details on IUnknown methods.
- */
 static HRESULT WINAPI EnumConnectionsImpl_QueryInterface(
   IEnumConnections*  iface,
   REFIID  riid,
@@ -417,56 +362,37 @@ static HRESULT WINAPI EnumConnectionsImpl_QueryInterface(
   return S_OK;
 }
 
-
-/************************************************************************
- * EnumConnectionsImpl_AddRef (IUnknown)
- *
- * See Windows documentation for more details on IUnknown methods.
- */
 static ULONG WINAPI EnumConnectionsImpl_AddRef(IEnumConnections* iface)
 {
   EnumConnectionsImpl *This = impl_from_IEnumConnections(iface);
   ULONG refCount = InterlockedIncrement(&This->ref);
 
-  TRACE("(%p)->(ref before=%d)\n", This, refCount - 1);
+  TRACE("%p, refcount %lu.\n", iface, refCount);
 
   IUnknown_AddRef(This->pUnk);
   return refCount;
 }
 
-/************************************************************************
- * EnumConnectionsImpl_Release (IUnknown)
- *
- * See Windows documentation for more details on IUnknown methods.
- */
 static ULONG WINAPI EnumConnectionsImpl_Release(IEnumConnections* iface)
 {
   EnumConnectionsImpl *This = impl_from_IEnumConnections(iface);
   ULONG refCount = InterlockedDecrement(&This->ref);
 
-  TRACE("(%p)->(ref before=%d)\n", This, refCount + 1);
+  TRACE("%p, refcount %lu.\n", iface, refCount);
 
   IUnknown_Release(This->pUnk);
 
-  /*
-   * If the reference count goes down to 0, perform suicide.
-   */
   if (!refCount) EnumConnectionsImpl_Destroy(This);
 
   return refCount;
 }
 
-/************************************************************************
- * EnumConnectionsImpl_Next (IEnumConnections)
- *
- */
-static HRESULT WINAPI EnumConnectionsImpl_Next(IEnumConnections* iface,
-					       ULONG cConn, LPCONNECTDATA pCD,
-					       ULONG *pEnum)
+static HRESULT WINAPI EnumConnectionsImpl_Next(IEnumConnections* iface, ULONG cConn, LPCONNECTDATA pCD, ULONG *pEnum)
 {
   EnumConnectionsImpl *This = impl_from_IEnumConnections(iface);
   DWORD nRet = 0;
-  TRACE("(%p)->(%d, %p, %p)\n", This, cConn, pCD, pEnum);
+
+  TRACE("%p, %lu, %p, %p.\n", iface, cConn, pCD, pEnum);
 
   if(pEnum == NULL) {
     if(cConn != 1)
@@ -491,16 +417,11 @@ static HRESULT WINAPI EnumConnectionsImpl_Next(IEnumConnections* iface,
   return S_OK;
 }
 
-
-/************************************************************************
- * EnumConnectionsImpl_Skip (IEnumConnections)
- *
- */
-static HRESULT WINAPI EnumConnectionsImpl_Skip(IEnumConnections* iface,
-					       ULONG cSkip)
+static HRESULT WINAPI EnumConnectionsImpl_Skip(IEnumConnections* iface, ULONG cSkip)
 {
   EnumConnectionsImpl *This = impl_from_IEnumConnections(iface);
-  TRACE("(%p)->(%d)\n", This, cSkip);
+
+  TRACE("%p, %lu.\n", iface, cSkip);
 
   if(This->nCur + cSkip >= This->nConns)
     return S_FALSE;
@@ -510,11 +431,6 @@ static HRESULT WINAPI EnumConnectionsImpl_Skip(IEnumConnections* iface,
   return S_OK;
 }
 
-
-/************************************************************************
- * EnumConnectionsImpl_Reset (IEnumConnections)
- *
- */
 static HRESULT WINAPI EnumConnectionsImpl_Reset(IEnumConnections* iface)
 {
   EnumConnectionsImpl *This = impl_from_IEnumConnections(iface);
@@ -525,13 +441,7 @@ static HRESULT WINAPI EnumConnectionsImpl_Reset(IEnumConnections* iface)
   return S_OK;
 }
 
-
-/************************************************************************
- * EnumConnectionsImpl_Clone (IEnumConnections)
- *
- */
-static HRESULT WINAPI EnumConnectionsImpl_Clone(IEnumConnections* iface,
-						LPENUMCONNECTIONS *ppEnum)
+static HRESULT WINAPI EnumConnectionsImpl_Clone(IEnumConnections* iface, IEnumConnections **ppEnum)
 {
   EnumConnectionsImpl *This = impl_from_IEnumConnections(iface);
   EnumConnectionsImpl *newObj;
