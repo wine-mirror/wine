@@ -246,6 +246,8 @@ void wined3d_device_cleanup(struct wined3d_device *device)
     wine_rb_destroy(&device->depth_stencil_states, device_leftover_depth_stencil_state, NULL);
     wine_rb_destroy(&device->so_descs, device_free_so_desc, NULL);
 
+    wined3d_lock_cleanup(&device->bo_map_lock);
+
     wined3d_decref(device->wined3d);
     device->wined3d = NULL;
 }
@@ -5970,6 +5972,8 @@ HRESULT wined3d_device_init(struct wined3d_device *device, struct wined3d *wined
         hr = E_FAIL;
         goto err;
     }
+
+    wined3d_lock_init(&device->bo_map_lock, "wined3d_device.bo_map_lock");
 
     return WINED3D_OK;
 

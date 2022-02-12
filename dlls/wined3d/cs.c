@@ -20,6 +20,7 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_sync);
 WINE_DECLARE_DEBUG_CHANNEL(fps);
 
@@ -3079,7 +3080,7 @@ static bool wined3d_cs_map_upload_bo(struct wined3d_device_context *context, str
         struct wined3d_client_resource *client = &resource->client;
         struct wined3d_device *device = context->device;
         struct wined3d_bo_address addr;
-        const struct wined3d_bo *bo;
+        struct wined3d_bo *bo;
         uint8_t *map_ptr;
 
         if (flags & WINED3D_MAP_DISCARD)
@@ -3095,13 +3096,29 @@ static bool wined3d_cs_map_upload_bo(struct wined3d_device_context *context, str
             addr = client->addr;
         }
 
-        bo = addr.buffer_object;
-        map_ptr = bo ? bo->map_ptr : NULL;
+        map_ptr = NULL;
+        if ((bo = addr.buffer_object))
+        {
+            wined3d_device_bo_map_lock(device);
+            if ((map_ptr = bo->map_ptr))
+                ++bo->client_map_count;
+            wined3d_device_bo_map_unlock(device);
+
+            if (!map_ptr)
+            {
+                /* adapter_alloc_bo() should have given us a mapped BO if we are
+                 * discarding. */
+                assert(flags & WINED3D_MAP_NOOVERWRITE);
+                WARN_(d3d_perf)("Not accelerating a NOOVERWRITE map because the BO is not mapped.\n");
+                return false;
+            }
+        }
         map_ptr += (uintptr_t)addr.addr;
 
         if (!map_ptr)
         {
-            TRACE("Sub-resource is not mapped.\n");
+            assert(flags & WINED3D_MAP_NOOVERWRITE);
+            WARN_(d3d_perf)("Not accelerating a NOOVERWRITE map because the sub-resource has no valid address.\n");
             return false;
         }
 
@@ -3140,14 +3157,23 @@ static bool wined3d_bo_address_is_null(struct wined3d_const_bo_address *addr)
 }
 
 static bool wined3d_cs_unmap_upload_bo(struct wined3d_device_context *context, struct wined3d_resource *resource,
-        unsigned int sub_resource_idx, struct wined3d_box *box, struct upload_bo *bo)
+        unsigned int sub_resource_idx, struct wined3d_box *box, struct upload_bo *upload_bo)
 {
     struct wined3d_client_resource *client = &resource->client;
+    struct wined3d_device *device = context->device;
+    struct wined3d_bo *bo;
 
     if (wined3d_bo_address_is_null(&client->mapped_upload.addr))
         return false;
 
-    *bo = client->mapped_upload;
+    if ((bo = client->mapped_upload.addr.buffer_object))
+    {
+        wined3d_device_bo_map_lock(device);
+        --bo->client_map_count;
+        wined3d_device_bo_map_unlock(device);
+    }
+
+    *upload_bo = client->mapped_upload;
     *box = client->mapped_box;
     memset(&client->mapped_upload, 0, sizeof(client->mapped_upload));
     memset(&client->mapped_box, 0, sizeof(client->mapped_box));

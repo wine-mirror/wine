@@ -1605,10 +1605,13 @@ do {                                                                \
 
 struct wined3d_bo
 {
+    /* client_map_count and map_ptr are accessed from both the client and CS
+     * threads, and protected by wined3d_device.bo_map_lock. */
     struct list users;
     void *map_ptr;
     size_t buffer_offset;
     size_t memory_offset;
+    unsigned int client_map_count;
     bool coherent;
 };
 
@@ -3946,6 +3949,8 @@ struct wined3d_device
     /* Context management */
     struct wined3d_context **contexts;
     UINT context_count;
+
+    CRITICAL_SECTION bo_map_lock;
 };
 
 void wined3d_device_cleanup(struct wined3d_device *device) DECLSPEC_HIDDEN;
@@ -3966,6 +3971,16 @@ void device_invalidate_state(const struct wined3d_device *device, DWORD state) D
 HRESULT wined3d_device_set_implicit_swapchain(struct wined3d_device *device,
         struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
 void wined3d_device_uninit_3d(struct wined3d_device *device) DECLSPEC_HIDDEN;
+
+static inline void wined3d_device_bo_map_lock(struct wined3d_device *device)
+{
+    EnterCriticalSection(&device->bo_map_lock);
+}
+
+static inline void wined3d_device_bo_map_unlock(struct wined3d_device *device)
+{
+    LeaveCriticalSection(&device->bo_map_lock);
+}
 
 struct wined3d_device_no3d
 {

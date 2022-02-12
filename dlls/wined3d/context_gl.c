@@ -2953,7 +2953,18 @@ static void wined3d_bo_gl_unmap(struct wined3d_bo_gl *bo, struct wined3d_context
         return;
     }
 
+    wined3d_device_bo_map_lock(context_gl->c.device);
+    /* The mapping is still in use by the client (viz. for an accelerated
+     * NOOVERWRITE map). The client will trigger another unmap request when the
+     * d3d application requests to unmap the BO. */
+    if (bo->b.client_map_count)
+    {
+        wined3d_device_bo_map_unlock(context_gl->c.device);
+        TRACE("BO %p is still in use by a client thread; not unmapping.\n", bo);
+        return;
+    }
     bo->b.map_ptr = NULL;
+    wined3d_device_bo_map_unlock(context_gl->c.device);
 
     wined3d_context_gl_bind_bo(context_gl, bo->binding, bo->id);
     GL_EXTCALL(glUnmapBuffer(bo->binding));
@@ -3220,6 +3231,7 @@ bool wined3d_context_gl_create_bo(struct wined3d_context_gl *context_gl, GLsizei
     bo->b.buffer_offset = buffer_offset;
     bo->b.memory_offset = bo->b.buffer_offset;
     bo->b.map_ptr = NULL;
+    bo->b.client_map_count = 0;
 
     return true;
 }

@@ -831,7 +831,18 @@ static void wined3d_bo_vk_unmap(struct wined3d_bo_vk *bo, struct wined3d_context
         return;
     }
 
+    wined3d_device_bo_map_lock(context_vk->c.device);
+    /* The mapping is still in use by the client (viz. for an accelerated
+     * NOOVERWRITE map). The client will trigger another unmap request when the
+     * d3d application requests to unmap the BO. */
+    if (bo->b.client_map_count)
+    {
+        wined3d_device_bo_map_unlock(context_vk->c.device);
+        TRACE("BO %p is still in use by a client thread; not unmapping.\n", bo);
+        return;
+    }
     bo->b.map_ptr = NULL;
+    wined3d_device_bo_map_unlock(context_vk->c.device);
 
     if ((slab = bo->slab))
     {
