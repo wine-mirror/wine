@@ -3470,6 +3470,12 @@ struct wined3d_output
 
 HRESULT wined3d_output_get_gamma_ramp(struct wined3d_output *output, struct wined3d_gamma_ramp *ramp) DECLSPEC_HIDDEN;
 
+#ifdef _WIN64
+#define MAX_PERSISTENT_MAPPED_BYTES SSIZE_MAX
+#else
+#define MAX_PERSISTENT_MAPPED_BYTES (128 * 1024 * 1024)
+#endif
+
 /* The adapter structure */
 struct wined3d_adapter
 {
@@ -3487,6 +3493,8 @@ struct wined3d_adapter
 
     void *formats;
     size_t format_size;
+
+    ssize_t mapped_size;
 
     const struct wined3d_vertex_pipe_ops *vertex_pipe;
     const struct wined3d_fragment_pipe_ops *fragment_pipe;
@@ -3567,6 +3575,7 @@ BOOL wined3d_adapter_gl_init_format_info(struct wined3d_adapter *adapter,
 BOOL wined3d_adapter_no3d_init_format_info(struct wined3d_adapter *adapter) DECLSPEC_HIDDEN;
 BOOL wined3d_adapter_vk_init_format_info(struct wined3d_adapter_vk *adapter_vk,
         const struct wined3d_vk_info *vk_info) DECLSPEC_HIDDEN;
+ssize_t adapter_adjust_mapped_memory(struct wined3d_adapter *adapter, ssize_t size) DECLSPEC_HIDDEN;
 UINT64 adapter_adjust_memory(struct wined3d_adapter *adapter, INT64 amount) DECLSPEC_HIDDEN;
 
 BOOL wined3d_caps_gl_ctx_test_viewport_subpixel_bits(struct wined3d_caps_gl_ctx *ctx) DECLSPEC_HIDDEN;

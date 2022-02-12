@@ -2814,6 +2814,8 @@ static void *wined3d_allocator_chunk_gl_map(struct wined3d_allocator_chunk_gl *c
             ERR("Failed to map chunk memory.\n");
             return NULL;
         }
+
+        adapter_adjust_mapped_memory(context_gl->c.device->adapter, WINED3D_ALLOCATOR_CHUNK_SIZE);
     }
 
     ++chunk_gl->c.map_count;
@@ -2828,12 +2830,14 @@ static void wined3d_allocator_chunk_gl_unmap(struct wined3d_allocator_chunk_gl *
 
     TRACE("chunk_gl %p, context_gl %p.\n", chunk_gl, context_gl);
 
-    if (!--chunk_gl->c.map_count && !wined3d_map_persistent())
-    {
-        wined3d_context_gl_bind_bo(context_gl, GL_PIXEL_UNPACK_BUFFER, chunk_gl->gl_buffer);
-        GL_EXTCALL(glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER));
-        chunk_gl->c.map_ptr = NULL;
-    }
+    if (--chunk_gl->c.map_count)
+        return;
+
+    wined3d_context_gl_bind_bo(context_gl, GL_PIXEL_UNPACK_BUFFER, chunk_gl->gl_buffer);
+    GL_EXTCALL(glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER));
+    chunk_gl->c.map_ptr = NULL;
+
+    adapter_adjust_mapped_memory(context_gl->c.device->adapter, -WINED3D_ALLOCATOR_CHUNK_SIZE);
 }
 
 static void *wined3d_bo_gl_map(struct wined3d_bo_gl *bo, struct wined3d_context_gl *context_gl, uint32_t flags)
@@ -2902,18 +2906,11 @@ map:
          * resources are mapped. On the other hand, we don't want to use the
          * access flags used to create the bo for non-persistent maps, because
          * that may imply dropping GL_MAP_UNSYNCHRONIZED_BIT. */
-        if (wined3d_map_persistent())
-        {
-            gl_flags = bo->flags & ~GL_CLIENT_STORAGE_BIT;
-            if (!(gl_flags & GL_MAP_READ_BIT))
-                gl_flags |= GL_MAP_UNSYNCHRONIZED_BIT;
-            if (gl_flags & GL_MAP_WRITE_BIT)
-                gl_flags |= GL_MAP_FLUSH_EXPLICIT_BIT;
-        }
-        else
-        {
-            gl_flags = wined3d_resource_gl_map_flags(bo, flags);
-        }
+        gl_flags = bo->flags & ~GL_CLIENT_STORAGE_BIT;
+        if (!(gl_flags & GL_MAP_READ_BIT))
+            gl_flags |= GL_MAP_UNSYNCHRONIZED_BIT;
+        if (gl_flags & GL_MAP_WRITE_BIT)
+            gl_flags |= GL_MAP_FLUSH_EXPLICIT_BIT;
         gl_flags |= GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
 
         bo->b.map_ptr = GL_EXTCALL(glMapBufferRange(bo->binding, 0, bo->size, gl_flags));
@@ -2927,6 +2924,9 @@ map:
         bo->b.map_ptr = GL_EXTCALL(glMapBuffer(bo->binding, wined3d_resource_gl_legacy_map_flags(flags)));
     }
 
+    if (bo->b.map_ptr)
+        adapter_adjust_mapped_memory(device_gl->d.adapter, bo->size);
+
     wined3d_context_gl_bind_bo(context_gl, bo->binding, 0);
     checkGLcall("Map buffer object");
 
@@ -2937,20 +2937,30 @@ static void wined3d_bo_gl_unmap(struct wined3d_bo_gl *bo, struct wined3d_context
 {
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
 
-    if (wined3d_map_persistent())
+    if (context_gl->c.device->adapter->mapped_size <= MAX_PERSISTENT_MAPPED_BYTES)
+    {
+        TRACE("Not unmapping BO %p.\n", bo);
         return;
+    }
+
+    if (bo->memory)
+    {
+        struct wined3d_allocator_chunk_gl *chunk_gl = wined3d_allocator_chunk_gl(bo->memory->chunk);
+
+        wined3d_allocator_chunk_gl_unmap(chunk_gl, context_gl);
+        if (!chunk_gl->c.map_ptr)
+            bo->b.map_ptr = NULL;
+        return;
+    }
 
     bo->b.map_ptr = NULL;
 
     wined3d_context_gl_bind_bo(context_gl, bo->binding, bo->id);
-
-    if (bo->memory)
-        wined3d_allocator_chunk_gl_unmap(wined3d_allocator_chunk_gl(bo->memory->chunk), context_gl);
-    else
-        GL_EXTCALL(glUnmapBuffer(bo->binding));
-
+    GL_EXTCALL(glUnmapBuffer(bo->binding));
     wined3d_context_gl_bind_bo(context_gl, bo->binding, 0);
     checkGLcall("Unmap buffer object");
+
+    adapter_adjust_mapped_memory(context_gl->c.device->adapter, -bo->size);
 }
 
 void *wined3d_context_gl_map_bo_address(struct wined3d_context_gl *context_gl,
@@ -3115,6 +3125,7 @@ void wined3d_context_gl_destroy_bo(struct wined3d_context_gl *context_gl, struct
     {
         wined3d_context_gl_bind_bo(context_gl, bo->binding, bo->id);
         GL_EXTCALL(glUnmapBuffer(bo->binding));
+        adapter_adjust_mapped_memory(context_gl->c.device->adapter, -bo->size);
     }
 
     TRACE("Destroying GL buffer %u.\n", bo->id);

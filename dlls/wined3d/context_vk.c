@@ -269,12 +269,17 @@ void *wined3d_allocator_chunk_vk_map(struct wined3d_allocator_chunk_vk *chunk_vk
 
     wined3d_allocator_chunk_vk_lock(chunk_vk);
 
-    if (!chunk_vk->c.map_ptr && (vr = VK_CALL(vkMapMemory(device_vk->vk_device,
-            chunk_vk->vk_memory, 0, VK_WHOLE_SIZE, 0, &chunk_vk->c.map_ptr))) < 0)
+    if (!chunk_vk->c.map_ptr)
     {
-        ERR("Failed to map chunk memory, vr %s.\n", wined3d_debug_vkresult(vr));
-        wined3d_allocator_chunk_vk_unlock(chunk_vk);
-        return NULL;
+        if ((vr = VK_CALL(vkMapMemory(device_vk->vk_device,
+                chunk_vk->vk_memory, 0, VK_WHOLE_SIZE, 0, &chunk_vk->c.map_ptr))) < 0)
+        {
+            ERR("Failed to map chunk memory, vr %s.\n", wined3d_debug_vkresult(vr));
+            wined3d_allocator_chunk_vk_unlock(chunk_vk);
+            return NULL;
+        }
+
+        adapter_adjust_mapped_memory(device_vk->d.adapter, WINED3D_ALLOCATOR_CHUNK_SIZE);
     }
 
     ++chunk_vk->c.map_count;
@@ -305,6 +310,8 @@ void wined3d_allocator_chunk_vk_unmap(struct wined3d_allocator_chunk_vk *chunk_v
     chunk_vk->c.map_ptr = NULL;
 
     wined3d_allocator_chunk_vk_unlock(chunk_vk);
+
+    adapter_adjust_mapped_memory(device_vk->d.adapter, -WINED3D_ALLOCATOR_CHUNK_SIZE);
 }
 
 VkDeviceMemory wined3d_context_vk_allocate_vram_chunk_memory(struct wined3d_context_vk *context_vk,
@@ -1012,7 +1019,10 @@ void wined3d_context_vk_destroy_bo(struct wined3d_context_vk *context_vk, const 
     }
 
     if (bo->b.map_ptr)
+    {
         VK_CALL(vkUnmapMemory(device_vk->vk_device, bo->vk_memory));
+        adapter_adjust_mapped_memory(device_vk->d.adapter, -bo->size);
+    }
     wined3d_context_vk_destroy_vk_memory(context_vk, bo->vk_memory, bo->command_buffer_id);
 }
 

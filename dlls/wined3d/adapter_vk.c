@@ -381,7 +381,10 @@ static void wined3d_allocator_vk_destroy_chunk(struct wined3d_allocator_chunk *c
     vk_info = &device_vk->vk_info;
 
     if (chunk_vk->c.map_ptr)
+    {
         VK_CALL(vkUnmapMemory(device_vk->vk_device, chunk_vk->vk_memory));
+        adapter_adjust_mapped_memory(device_vk->d.adapter, -WINED3D_ALLOCATOR_CHUNK_SIZE);
+    }
     VK_CALL(vkFreeMemory(device_vk->vk_device, chunk_vk->vk_memory, NULL));
     TRACE("Freed memory 0x%s.\n", wine_dbgstr_longlong(chunk_vk->vk_memory));
     wined3d_allocator_chunk_cleanup(&chunk_vk->c);
@@ -801,10 +804,15 @@ static void *wined3d_bo_vk_map(struct wined3d_bo_vk *bo, struct wined3d_context_
             return NULL;
         }
     }
-    else if ((vr = VK_CALL(vkMapMemory(device_vk->vk_device, bo->vk_memory, 0, VK_WHOLE_SIZE, 0, &bo->b.map_ptr))) < 0)
+    else
     {
-        ERR("Failed to map memory, vr %s.\n", wined3d_debug_vkresult(vr));
-        return NULL;
+        if ((vr = VK_CALL(vkMapMemory(device_vk->vk_device, bo->vk_memory, 0, VK_WHOLE_SIZE, 0, &bo->b.map_ptr))) < 0)
+        {
+            ERR("Failed to map memory, vr %s.\n", wined3d_debug_vkresult(vr));
+            return NULL;
+        }
+
+        adapter_adjust_mapped_memory(device_vk->d.adapter, bo->size);
     }
 
     return bo->b.map_ptr;
@@ -812,12 +820,16 @@ static void *wined3d_bo_vk_map(struct wined3d_bo_vk *bo, struct wined3d_context_
 
 static void wined3d_bo_vk_unmap(struct wined3d_bo_vk *bo, struct wined3d_context_vk *context_vk)
 {
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
     const struct wined3d_vk_info *vk_info;
-    struct wined3d_device_vk *device_vk;
     struct wined3d_bo_slab_vk *slab;
 
-    if (wined3d_map_persistent())
+    /* This may race with the client thread, but it's not a hard limit anyway. */
+    if (device_vk->d.adapter->mapped_size <= MAX_PERSISTENT_MAPPED_BYTES)
+    {
+        TRACE("Not unmapping BO %p.\n", bo);
         return;
+    }
 
     bo->b.map_ptr = NULL;
 
@@ -834,8 +846,8 @@ static void wined3d_bo_vk_unmap(struct wined3d_bo_vk *bo, struct wined3d_context
     }
 
     vk_info = context_vk->vk_info;
-    device_vk = wined3d_device_vk(context_vk->c.device);
     VK_CALL(vkUnmapMemory(device_vk->vk_device, bo->vk_memory));
+    adapter_adjust_mapped_memory(device_vk->d.adapter, -bo->size);
 }
 
 static void wined3d_bo_slab_vk_lock(struct wined3d_bo_slab_vk *slab_vk, struct wined3d_context_vk *context_vk)
