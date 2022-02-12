@@ -1304,8 +1304,8 @@ static void test_GetConsoleProcessList(void)
        GetLastError());
 
     /* We should only have 1 process but only for these specific unit tests as
-     * we created our own console. An AttachConsole(ATTACH_PARENT_PROCESS) would
-     * give us two processes for example.
+     * we created our own console. An AttachConsole(ATTACH_PARENT_PROCESS)
+     * gives us two processes - see test_AttachConsole.
      */
     list = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD));
 
@@ -4353,6 +4353,27 @@ static void test_AttachConsole_child(DWORD console_pid)
 
     res = AttachConsole(ATTACH_PARENT_PROCESS);
     ok(res, "AttachConsole failed: %u\n", GetLastError());
+
+    if (pGetConsoleProcessList)
+    {
+        DWORD list[2] = { 0xbabebabe };
+        DWORD pid = GetCurrentProcessId();
+
+        SetLastError(0xdeadbeef);
+        len = pGetConsoleProcessList(list, 1);
+        todo_wine
+        ok(len == 2, "Expected 2 processes, got %d\n", len);
+        ok(list[0] == 0xbabebabe, "Unexpected value in list %u\n", list[0]);
+
+        len = pGetConsoleProcessList(list, 2);
+        todo_wine
+        ok(len == 2, "Expected 2 processes, got %d\n", len);
+        todo_wine
+        ok(list[0] == console_pid || list[1] == console_pid, "Parent PID not in list\n");
+        todo_wine
+        ok(list[0] == pid || list[1] == pid, "PID not in list\n");
+        ok(GetLastError() == 0xdeadbeef, "Unexpected last error: %u\n", GetLastError());
+    }
 
     ok(pipe_in != GetStdHandle(STD_INPUT_HANDLE), "std handle not set to console\n");
     ok(pipe_out != GetStdHandle(STD_OUTPUT_HANDLE), "std handle not set to console\n");
