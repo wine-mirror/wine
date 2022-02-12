@@ -1318,7 +1318,6 @@ static void test_GetConsoleProcessList(void)
 
     SetLastError(0xdeadbeef);
     ret = pGetConsoleProcessList(list, 1);
-    todo_wine
     ok(ret == 1, "Expected 1, got %d\n", ret);
 
     HeapFree(GetProcessHeap(), 0, list);
@@ -1327,7 +1326,6 @@ static void test_GetConsoleProcessList(void)
 
     SetLastError(0xdeadbeef);
     ret = pGetConsoleProcessList(list, ret);
-    todo_wine
     ok(ret == 1, "Expected 1, got %d\n", ret);
 
     if (ret == 1)
@@ -4361,16 +4359,12 @@ static void test_AttachConsole_child(DWORD console_pid)
 
         SetLastError(0xdeadbeef);
         len = pGetConsoleProcessList(list, 1);
-        todo_wine
         ok(len == 2, "Expected 2 processes, got %d\n", len);
         ok(list[0] == 0xbabebabe, "Unexpected value in list %u\n", list[0]);
 
         len = pGetConsoleProcessList(list, 2);
-        todo_wine
         ok(len == 2, "Expected 2 processes, got %d\n", len);
-        todo_wine
         ok(list[0] == console_pid || list[1] == console_pid, "Parent PID not in list\n");
-        todo_wine
         ok(list[0] == pid || list[1] == pid, "PID not in list\n");
         ok(GetLastError() == 0xdeadbeef, "Unexpected last error: %u\n", GetLastError());
     }

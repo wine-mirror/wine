@@ -252,7 +252,11 @@ DWORD WINAPI GetConsoleAliasW(LPWSTR lpSource, LPWSTR lpTargetBuffer,
  */
 DWORD WINAPI GetConsoleProcessList(LPDWORD processlist, DWORD processcount)
 {
-    FIXME("(%p,%ld): stub\n", processlist, processcount);
+    DWORD saved;
+    NTSTATUS status;
+    IO_STATUS_BLOCK io;
+
+    TRACE("(%p,%ld)\n", processlist, processcount);
 
     if (!processlist || processcount < 1)
     {
@@ -260,6 +264,21 @@ DWORD WINAPI GetConsoleProcessList(LPDWORD processlist, DWORD processcount)
         return 0;
     }
 
+    saved = *processlist;
+    status = NtDeviceIoControlFile( RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle,
+                                   NULL, NULL, NULL, &io, IOCTL_CONDRV_GET_PROCESS_LIST,
+                                   NULL, 0, processlist, processcount * sizeof(DWORD) );
+
+    if (!status) return io.Information / sizeof(DWORD);
+    if (status == STATUS_BUFFER_TOO_SMALL)
+    {
+        DWORD ret = *processlist;
+        *processlist = saved;
+        return ret;
+    }
+
+    *processlist = saved;
+    set_ntstatus( status );
     return 0;
 }
 
