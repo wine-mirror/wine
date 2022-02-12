@@ -3088,8 +3088,7 @@ static bool wined3d_cs_map_upload_bo(struct wined3d_device_context *context, str
             if (!device->adapter->adapter_ops->adapter_alloc_bo(device, resource, sub_resource_idx, &addr))
                 return false;
 
-            if (wined3d_map_persistent())
-                client->addr = addr;
+            client->addr = addr;
         }
         else
         {
