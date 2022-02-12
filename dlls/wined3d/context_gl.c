@@ -3139,6 +3139,7 @@ static bool use_buffer_chunk_suballocation(const struct wined3d_gl_info *gl_info
 {
     switch (binding)
     {
+        case GL_ARRAY_BUFFER:
         case GL_ATOMIC_COUNTER_BUFFER:
         case GL_DRAW_INDIRECT_BUFFER:
         case GL_PIXEL_UNPACK_BUFFER:
