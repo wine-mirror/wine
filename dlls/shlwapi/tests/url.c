@@ -782,7 +782,7 @@ static void test_UrlGetPart(void)
         size = 1;
         strcpy(buffer, "x");
         hr = UrlGetPartA(url, buffer, &size, part, flags);
-        todo_wine_if (tests[i].todo_hr || !strcmp(url, "http://host?a:b@c:d"))
+        todo_wine_if (tests[i].todo_hr)
         {
             if (tests[i].hr == S_OK)
                 ok(hr == E_POINTER, "Got hr %#x.\n", hr);
@@ -807,11 +807,9 @@ static void test_UrlGetPart(void)
             }
             else
             {
-                todo_wine_if (hr == S_OK)
-                    ok(size == 1, "Got size %u.\n", size);
+                ok(size == 1, "Got size %u.\n", size);
             }
-            todo_wine_if (hr == S_OK)
-                ok(!strcmp(buffer, "x"), "Got result %s.\n", debugstr_a(buffer));
+            ok(!strcmp(buffer, "x"), "Got result %s.\n", debugstr_a(buffer));
         }
 
         size = sizeof(buffer);

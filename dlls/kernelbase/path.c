@@ -4148,10 +4148,10 @@ HRESULT WINAPI UrlGetPartA(const char *url, char *out, DWORD *out_len, DWORD par
         return hr;
     }
 
-    len2 = WideCharToMultiByte(CP_ACP, 0, outW, len, NULL, 0, NULL, NULL);
+    len2 = WideCharToMultiByte(CP_ACP, 0, outW, len + 1, NULL, 0, NULL, NULL);
     if (len2 > *out_len)
     {
-        *out_len = len2 + 1;
+        *out_len = len2;
         heap_free(inW);
         return E_POINTER;
     }
