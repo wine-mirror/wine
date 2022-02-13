@@ -235,11 +235,15 @@ static void testsign_cleanup(struct testsign_context *ctx)
 
     ret = CertDeleteCertificateFromStore(ctx->root_cert);
     ok(ret, "Failed to remove certificate, error %u\n", GetLastError());
+    ret = CertFreeCertificateContext(ctx->root_cert);
+    ok(ret, "Failed to free certificate context, error %u\n", GetLastError());
     ret = CertCloseStore(ctx->root_store, CERT_CLOSE_STORE_CHECK_FLAG);
     ok(ret, "Failed to close store, error %u\n", GetLastError());
 
     ret = CertDeleteCertificateFromStore(ctx->publisher_cert);
     ok(ret, "Failed to remove certificate, error %u\n", GetLastError());
+    ret = CertFreeCertificateContext(ctx->publisher_cert);
+    ok(ret, "Failed to free certificate context, error %u\n", GetLastError());
     ret = CertCloseStore(ctx->publisher_store, CERT_CLOSE_STORE_CHECK_FLAG);
     ok(ret, "Failed to close store, error %u\n", GetLastError());
 
@@ -1360,6 +1364,8 @@ static void add_file_to_catalog(HANDLE catalog, const WCHAR *file)
                 sizeof(L"2:6.0"), (BYTE *)L"2:6.0");
         ok(ret, "Failed to write attr, error %u\n", GetLastError());
     }
+
+    free(indirect_data);
 }
 
 static const GUID bus_class     = {0xdeadbeef, 0x29ef, 0x4538, {0xa5, 0xfd, 0xb6, 0x95, 0x73, 0xa3, 0x62, 0xc1}};
@@ -1815,6 +1821,8 @@ static void test_pnp_driver(struct testsign_context *ctx)
         ret = SetupDiCallClassInstaller(DIF_REMOVE, set, &device);
         ok(ret, "failed to remove device, error %#x\n", GetLastError());
     }
+
+    SetupDiDestroyDeviceInfoList(set);
 
     /* Windows stops the service but does not delete it. */
     manager = OpenSCManagerA(NULL, NULL, SC_MANAGER_CONNECT);
