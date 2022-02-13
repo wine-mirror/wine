@@ -845,7 +845,7 @@ static void test_UrlGetPart(void)
                 ok(hr == (tests[i].hr == S_FALSE ? S_OK : tests[i].hr), "Got hr %#x.\n", hr);
         }
 
-        if (hr == S_OK)
+        if (SUCCEEDED(hr))
         {
             ok(!size, "Got size %u.\n", size);
             ok(!buffer[0], "Got result %s.\n", debugstr_a(buffer));
@@ -862,9 +862,9 @@ static void test_UrlGetPart(void)
             }
             else
             {
-                todo_wine ok(size == 1, "Got size %u.\n", size);
+                ok(size == 1, "Got size %u.\n", size);
             }
-            todo_wine ok(!wcscmp(bufferW, L"x"), "Got result %s.\n", debugstr_w(bufferW));
+            ok(!wcscmp(bufferW, L"x"), "Got result %s.\n", debugstr_w(bufferW));
         }
 
         size = ARRAY_SIZE(bufferW);
@@ -880,8 +880,11 @@ static void test_UrlGetPart(void)
         }
         else
         {
-            todo_wine ok(size == ARRAY_SIZE(bufferW), "Got size %u.\n", size);
-            todo_wine ok(!wcscmp(bufferW, L"x"), "Got result %s.\n", debugstr_w(bufferW));
+            todo_wine_if (strchr(url, '"') && part == URL_PART_USERNAME)
+            {
+                ok(size == ARRAY_SIZE(bufferW), "Got size %u.\n", size);
+                ok(!wcscmp(bufferW, L"x"), "Got result %s.\n", debugstr_w(bufferW));
+            }
         }
 
         winetest_pop_context();

@@ -4321,8 +4321,6 @@ HRESULT WINAPI UrlGetPartW(const WCHAR *url, WCHAR *out, DWORD *out_len, DWORD p
     if (!url || !out || !out_len || !*out_len)
         return E_INVALIDARG;
 
-    *out = '\0';
-
     addr = wcschr(url, ':');
     if (!addr)
         scheme = URL_SCHEME_UNKNOWN;
@@ -4337,6 +4335,7 @@ HRESULT WINAPI UrlGetPartW(const WCHAR *url, WCHAR *out, DWORD *out_len, DWORD p
         flags &= ~URL_PARTFLAG_KEEPSCHEME;
         if (!pl.scheme_len)
         {
+            *out = '\0';
             *out_len = 0;
             return S_FALSE;
         }
@@ -4358,18 +4357,19 @@ HRESULT WINAPI UrlGetPartW(const WCHAR *url, WCHAR *out, DWORD *out_len, DWORD p
             case URL_SCHEME_SNEWS:
                 break;
             default:
-                *out_len = 0;
                 return E_FAIL;
         }
 
         if (scheme == URL_SCHEME_FILE && (!pl.hostname_len || (pl.hostname_len == 1 && *(pl.hostname + 1) == ':')))
         {
+            *out = '\0';
             *out_len = 0;
             return S_FALSE;
         }
 
         if (!pl.hostname_len)
         {
+            *out = '\0';
             *out_len = 0;
             return S_FALSE;
         }
@@ -4380,6 +4380,7 @@ HRESULT WINAPI UrlGetPartW(const WCHAR *url, WCHAR *out, DWORD *out_len, DWORD p
     case URL_PART_USERNAME:
         if (!pl.username_len)
         {
+            *out = '\0';
             *out_len = 0;
             return S_FALSE;
         }
@@ -4390,6 +4391,7 @@ HRESULT WINAPI UrlGetPartW(const WCHAR *url, WCHAR *out, DWORD *out_len, DWORD p
     case URL_PART_PASSWORD:
         if (!pl.password_len)
         {
+            *out = '\0';
             *out_len = 0;
             return S_FALSE;
         }
@@ -4400,6 +4402,7 @@ HRESULT WINAPI UrlGetPartW(const WCHAR *url, WCHAR *out, DWORD *out_len, DWORD p
     case URL_PART_PORT:
         if (!pl.port_len)
         {
+            *out = '\0';
             *out_len = 0;
             return S_FALSE;
         }
@@ -4411,6 +4414,7 @@ HRESULT WINAPI UrlGetPartW(const WCHAR *url, WCHAR *out, DWORD *out_len, DWORD p
         flags &= ~URL_PARTFLAG_KEEPSCHEME;
         if (!pl.query_len)
         {
+            *out = '\0';
             *out_len = 0;
             return S_FALSE;
         }
@@ -4419,17 +4423,13 @@ HRESULT WINAPI UrlGetPartW(const WCHAR *url, WCHAR *out, DWORD *out_len, DWORD p
         break;
 
     default:
-        *out_len = 0;
         return E_INVALIDARG;
     }
 
     if (flags == URL_PARTFLAG_KEEPSCHEME && scheme != URL_SCHEME_FILE)
     {
         if (!pl.scheme || !pl.scheme_len)
-        {
-            *out_len = 0;
             return E_FAIL;
-        }
         schaddr = pl.scheme;
         schsize = pl.scheme_len;
         if (*out_len < schsize + size + 2)
