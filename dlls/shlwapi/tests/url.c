@@ -614,7 +614,7 @@ static void test_UrlGetPart(void)
         {"http://foo:bar@localhost:21/internal.php?query=x&return=y", URL_PART_PORT, 0, S_OK, "21"},
         {"http://foo:bar@localhost:21/internal.php?query=x&return=y", URL_PART_QUERY, 0, S_OK, "query=x&return=y", .todo_result = TRUE},
         {"http://foo:bar@localhost:21/internal.php#anchor", URL_PART_QUERY, 0, S_FALSE, ""},
-        {"http://foo:bar@localhost:21/internal.php?query=x&return=y", URL_PART_SCHEME, URL_PARTFLAG_KEEPSCHEME, S_OK, "http", .todo_result = TRUE},
+        {"http://foo:bar@localhost:21/internal.php?query=x&return=y", URL_PART_SCHEME, URL_PARTFLAG_KEEPSCHEME, S_OK, "http"},
         {"http://foo:bar@localhost:21/internal.php?query=x&return=y", URL_PART_USERNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "http:foo"},
         {"http://foo:bar@localhost:21/internal.php?query=x&return=y", URL_PART_PASSWORD, URL_PARTFLAG_KEEPSCHEME, S_OK, "http:bar"},
         {"http://foo:bar@localhost:21/internal.php?query=x&return=y", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "http:localhost"},

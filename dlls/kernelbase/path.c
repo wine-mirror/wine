@@ -4334,6 +4334,7 @@ HRESULT WINAPI UrlGetPartW(const WCHAR *url, WCHAR *out, DWORD *out_len, DWORD p
     switch (part)
     {
     case URL_PART_SCHEME:
+        flags &= ~URL_PARTFLAG_KEEPSCHEME;
         if (!pl.scheme_len)
         {
             *out_len = 0;
@@ -4404,6 +4405,7 @@ HRESULT WINAPI UrlGetPartW(const WCHAR *url, WCHAR *out, DWORD *out_len, DWORD p
         break;
 
     case URL_PART_QUERY:
+        flags &= ~URL_PARTFLAG_KEEPSCHEME;
         if (!pl.query_len)
         {
             *out_len = 0;
