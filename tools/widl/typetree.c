@@ -1157,6 +1157,9 @@ static type_t *replace_type_parameters_in_type(type_t *type, typeref_list_t *ori
     case TYPE_INTERFACE:
     case TYPE_RUNTIMECLASS:
     case TYPE_DELEGATE:
+    case TYPE_STRUCT:
+    case TYPE_ENCAPSULATED_UNION:
+    case TYPE_UNION:
         return type;
     case TYPE_PARAMETER:
         if (!orig || !repl) return NULL;
@@ -1194,9 +1197,6 @@ static type_t *replace_type_parameters_in_type(type_t *type, typeref_list_t *ori
         if (t->type_type != TYPE_PARAMETERIZED_TYPE) return find_parameterized_type(type, repl);
         repl = replace_type_parameters_in_type_list(type->details.parameterized.params, orig, repl);
         return replace_type_parameters_in_type(t, t->details.parameterized.params, repl);
-    case TYPE_STRUCT:
-    case TYPE_ENCAPSULATED_UNION:
-    case TYPE_UNION:
     case TYPE_MODULE:
     case TYPE_COCLASS:
     case TYPE_APICONTRACT:
