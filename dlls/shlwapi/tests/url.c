@@ -683,7 +683,7 @@ static void test_UrlGetPart(void)
         {"http:///index.html", URL_PART_HOSTNAME, 0, S_FALSE, ""},
         {"http:///index.html", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "http:", .todo_hr = TRUE},
         {"file://h o s t/c:/windows/file", URL_PART_HOSTNAME, 0, S_OK, "h o s t"},
-        {"file://h o s t/c:/windows/file", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "h o s t", .todo_result = TRUE},
+        {"file://h o s t/c:/windows/file", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "h o s t"},
         {"file://foo:bar@localhost:21/file?query=x", URL_PART_USERNAME, 0, E_FAIL, .todo_hr = TRUE},
         {"file://foo:bar@localhost:21/file?query=x", URL_PART_PASSWORD, 0, E_FAIL, .todo_hr = TRUE},
         {"file://foo:bar@localhost:21/file?query=x", URL_PART_HOSTNAME, 0, S_OK, "foo:bar@localhost:21", .todo_result = TRUE},
@@ -737,7 +737,7 @@ static void test_UrlGetPart(void)
         {"vbscript://hostname/", URL_PART_HOSTNAME, 0, E_FAIL},
         {"wais://hostname/", URL_PART_HOSTNAME, 0, E_FAIL},
 
-        {"file://hostname/", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "hostname", .todo_result = TRUE},
+        {"file://hostname/", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "hostname"},
         {"ftp://hostname/", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "ftp:hostname"},
         {"gopher://hostname/", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "gopher:hostname"},
         {"http://hostname/", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "http:hostname"},

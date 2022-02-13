@@ -4420,7 +4420,7 @@ HRESULT WINAPI UrlGetPartW(const WCHAR *url, WCHAR *out, DWORD *out_len, DWORD p
         return E_INVALIDARG;
     }
 
-    if (flags == URL_PARTFLAG_KEEPSCHEME)
+    if (flags == URL_PARTFLAG_KEEPSCHEME && scheme != URL_SCHEME_FILE)
     {
         if (!pl.scheme || !pl.scheme_len)
         {
