@@ -4347,12 +4347,15 @@ HRESULT WINAPI UrlGetPartW(const WCHAR *url, WCHAR *out, DWORD *out_len, DWORD p
     case URL_PART_HOSTNAME:
         switch (scheme)
         {
-            case URL_SCHEME_FTP:
-            case URL_SCHEME_HTTP:
-            case URL_SCHEME_GOPHER:
-            case URL_SCHEME_TELNET:
             case URL_SCHEME_FILE:
+            case URL_SCHEME_FTP:
+            case URL_SCHEME_GOPHER:
+            case URL_SCHEME_HTTP:
             case URL_SCHEME_HTTPS:
+            case URL_SCHEME_TELNET:
+            case URL_SCHEME_NEWS:
+            case URL_SCHEME_NNTP:
+            case URL_SCHEME_SNEWS:
                 break;
             default:
                 *out_len = 0;

@@ -728,11 +728,11 @@ static void test_UrlGetPart(void)
         {"local://hostname/", URL_PART_HOSTNAME, 0, E_FAIL},
         {"mailto://hostname/", URL_PART_HOSTNAME, 0, E_FAIL},
         {"mk://hostname/", URL_PART_HOSTNAME, 0, E_FAIL},
-        {"news://hostname/", URL_PART_HOSTNAME, 0, S_OK, "hostname", .todo_hr = TRUE},
-        {"nntp://hostname/", URL_PART_HOSTNAME, 0, S_OK, "hostname", .todo_hr = TRUE},
+        {"news://hostname/", URL_PART_HOSTNAME, 0, S_OK, "hostname"},
+        {"nntp://hostname/", URL_PART_HOSTNAME, 0, S_OK, "hostname"},
         {"res://hostname/", URL_PART_HOSTNAME, 0, E_FAIL},
         {"shell://hostname/", URL_PART_HOSTNAME, 0, E_FAIL},
-        {"snews://hostname/", URL_PART_HOSTNAME, 0, S_OK, "hostname", .todo_hr = TRUE},
+        {"snews://hostname/", URL_PART_HOSTNAME, 0, S_OK, "hostname"},
         {"telnet://hostname/", URL_PART_HOSTNAME, 0, S_OK, "hostname"},
         {"vbscript://hostname/", URL_PART_HOSTNAME, 0, E_FAIL},
         {"wais://hostname/", URL_PART_HOSTNAME, 0, E_FAIL},
@@ -742,9 +742,9 @@ static void test_UrlGetPart(void)
         {"gopher://hostname/", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "gopher:hostname"},
         {"http://hostname/", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "http:hostname"},
         {"https://hostname/", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "https:hostname"},
-        {"news://hostname/", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "news:hostname", .todo_hr = TRUE},
-        {"nntp://hostname/", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "nntp:hostname", .todo_hr = TRUE},
-        {"snews://hostname/", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "snews:hostname", .todo_hr = TRUE},
+        {"news://hostname/", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "news:hostname"},
+        {"nntp://hostname/", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "nntp:hostname"},
+        {"snews://hostname/", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "snews:hostname"},
         {"telnet://hostname/", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "telnet:hostname"},
     };
 
@@ -876,8 +876,7 @@ static void test_UrlGetPart(void)
         {
             ok(size == wcslen(bufferW), "Got size %u.\n", size);
             MultiByteToWideChar(CP_ACP, 0, buffer, -1, expectW, ARRAY_SIZE(expectW));
-            todo_wine_if (strstr(url, "news") || strstr(url, "nntp"))
-                ok(!wcscmp(bufferW, expectW), "Got result %s.\n", debugstr_w(bufferW));
+            ok(!wcscmp(bufferW, expectW), "Got result %s.\n", debugstr_w(bufferW));
         }
         else
         {
