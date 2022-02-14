@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = mfreadwrite.dll
 IMPORTS   = ole32 user32 d3d9 dxva2 mfplat mfreadwrite mfuuid
 
