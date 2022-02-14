@@ -4492,6 +4492,8 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
     {
     case NtUserGetClipCursor:
         return get_clip_cursor( (RECT *)arg );
+    case NtUserGetCursorPos:
+        return get_cursor_pos( (POINT *)arg );
     case NtUserGetSysColor:
         return get_sys_color( arg );
     case NtUserRealizePalette:

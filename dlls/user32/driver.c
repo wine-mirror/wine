@@ -136,11 +136,6 @@ static void CDECL nulldrv_SetCursor( HCURSOR cursor )
 {
 }
 
-static BOOL CDECL nulldrv_GetCursorPos( LPPOINT pt )
-{
-    return TRUE;
-}
-
 static BOOL CDECL nulldrv_SetCursorPos( INT x, INT y )
 {
     return TRUE;
@@ -298,11 +293,6 @@ static void CDECL loaderdrv_SetCursor( HCURSOR cursor )
     load_driver()->pSetCursor( cursor );
 }
 
-static BOOL CDECL loaderdrv_GetCursorPos( LPPOINT pt )
-{
-    return load_driver()->pGetCursorPos( pt );
-}
-
 static BOOL CDECL loaderdrv_SetCursorPos( INT x, INT y )
 {
     return load_driver()->pSetCursorPos( x, y );
@@ -371,7 +361,7 @@ static struct user_driver_funcs lazy_load_driver =
     /* cursor/icon functions */
     nulldrv_DestroyCursorIcon,
     loaderdrv_SetCursor,
-    loaderdrv_GetCursorPos,
+    NULL,
     loaderdrv_SetCursorPos,
     loaderdrv_ClipCursor,
     /* clipboard functions */
@@ -431,7 +421,6 @@ void CDECL __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT v
     SET_USER_FUNC(UnregisterHotKey);
     SET_USER_FUNC(DestroyCursorIcon);
     SET_USER_FUNC(SetCursor);
-    SET_USER_FUNC(GetCursorPos);
     SET_USER_FUNC(SetCursorPos);
     SET_USER_FUNC(ClipCursor);
     SET_USER_FUNC(UpdateClipboard);

@@ -97,6 +97,38 @@ BOOL WINAPI NtUserSetCursorPos( INT x, INT y )
 }
 
 /***********************************************************************
+ *	     get_cursor_pos
+ */
+BOOL get_cursor_pos( POINT *pt )
+{
+    BOOL ret;
+    DWORD last_change;
+    UINT dpi;
+
+    if (!pt) return FALSE;
+
+    SERVER_START_REQ( set_cursor )
+    {
+        if ((ret = !wine_server_call( req )))
+        {
+            pt->x = reply->new_x;
+            pt->y = reply->new_y;
+            last_change = reply->last_change;
+        }
+    }
+    SERVER_END_REQ;
+
+    /* query new position from graphics driver if we haven't updated recently */
+    if (ret && NtGetTickCount() - last_change > 100) ret = user_driver->pGetCursorPos( pt );
+    if (ret && (dpi = get_thread_dpi()))
+    {
+        HMONITOR monitor = monitor_from_point( *pt, MONITOR_DEFAULTTOPRIMARY, 0 );
+        *pt = map_dpi_point( *pt, get_monitor_dpi( monitor ), dpi );
+    }
+    return ret;
+}
+
+/***********************************************************************
  *           get_locale_kbd_layout
  */
 static HKL get_locale_kbd_layout(void)

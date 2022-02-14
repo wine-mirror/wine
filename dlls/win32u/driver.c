@@ -1010,6 +1010,11 @@ static void CDECL loaderdrv_SetCursor( HCURSOR cursor )
     load_driver()->pSetCursor( cursor );
 }
 
+static BOOL CDECL loaderdrv_GetCursorPos( POINT *pt )
+{
+    return load_driver()->pGetCursorPos( pt );
+}
+
 static BOOL CDECL loaderdrv_SetCursorPos( INT x, INT y )
 {
     return load_driver()->pSetCursorPos( x, y );
@@ -1049,6 +1054,7 @@ static const struct user_driver_funcs lazy_load_driver =
     .pVkKeyScanEx = loaderdrv_VkKeyScanEx,
     /* cursor/icon functions */
     .pSetCursor = loaderdrv_SetCursor,
+    .pGetCursorPos = loaderdrv_GetCursorPos,
     .pSetCursorPos = loaderdrv_SetCursorPos,
     .pClipCursor = loaderdrv_ClipCursor,
     /* clipboard functions */

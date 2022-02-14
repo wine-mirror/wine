@@ -245,6 +245,9 @@ struct unix_funcs
 /* cursoricon.c */
 extern BOOL get_clip_cursor( RECT *rect ) DECLSPEC_HIDDEN;
 
+/* input.c */
+extern BOOL get_cursor_pos( POINT *pt ) DECLSPEC_HIDDEN;
+
 /* sysparams.c */
 extern RECT get_display_rect( const WCHAR *display ) DECLSPEC_HIDDEN;
 extern UINT get_monitor_dpi( HMONITOR monitor ) DECLSPEC_HIDDEN;

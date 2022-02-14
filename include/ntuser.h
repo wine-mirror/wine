@@ -53,6 +53,7 @@ struct enum_display_monitor_params
 enum
 {
     NtUserGetClipCursor,
+    NtUserGetCursorPos,
     NtUserGetSysColor,
     NtUserGetSysColorBrush,
     NtUserGetSysColorPen,
