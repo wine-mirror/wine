@@ -6422,15 +6422,6 @@ static HRESULT d3dx9_effect_init(struct d3dx_effect *effect, struct IDirect3DDev
     effect->ID3DXEffect_iface.lpVtbl = &ID3DXEffect_Vtbl;
     effect->ref = 1;
 
-    if (pool)
-    {
-        effect->pool = unsafe_impl_from_ID3DXEffectPool(pool);
-        pool->lpVtbl->AddRef(pool);
-    }
-
-    IDirect3DDevice9_AddRef(device);
-    effect->device = device;
-
     effect->flags = flags;
 
     list_init(&effect->parameter_block_list);
@@ -6487,6 +6478,15 @@ static HRESULT d3dx9_effect_init(struct d3dx_effect *effect, struct IDirect3DDev
         TRACE("Tag: %x\n", tag);
     }
 
+    if (pool)
+    {
+        effect->pool = unsafe_impl_from_ID3DXEffectPool(pool);
+        pool->lpVtbl->AddRef(pool);
+    }
+
+    IDirect3DDevice9_AddRef(device);
+    effect->device = device;
+
     if (skip_constants_string)
     {
         skip_constants_buffer = HeapAlloc(GetProcessHeap(), 0,
@@ -6495,7 +6495,8 @@ static HRESULT d3dx9_effect_init(struct d3dx_effect *effect, struct IDirect3DDev
         {
             if (bytecode)
                 ID3D10Blob_Release(bytecode);
-            return E_OUTOFMEMORY;
+            hr = E_OUTOFMEMORY;
+            goto fail;
         }
         strcpy(skip_constants_buffer, skip_constants_string);
 
@@ -6504,7 +6505,8 @@ static HRESULT d3dx9_effect_init(struct d3dx_effect *effect, struct IDirect3DDev
             HeapFree(GetProcessHeap(), 0, skip_constants_buffer);
             if (bytecode)
                 ID3D10Blob_Release(bytecode);
-            return E_OUTOFMEMORY;
+            hr = E_OUTOFMEMORY;
+            goto fail;
         }
     }
     read_dword(&ptr, &offset);
@@ -6518,7 +6520,7 @@ static HRESULT d3dx9_effect_init(struct d3dx_effect *effect, struct IDirect3DDev
         FIXME("Failed to parse effect.\n");
         HeapFree(GetProcessHeap(), 0, skip_constants_buffer);
         HeapFree(GetProcessHeap(), 0, skip_constants);
-        return hr;
+        goto fail;
     }
 
     for (i = 0; i < skip_constants_count; ++i)
@@ -6535,7 +6537,8 @@ static HRESULT d3dx9_effect_init(struct d3dx_effect *effect, struct IDirect3DDev
                             debugstr_a(skip_constants[i]), j);
                     HeapFree(GetProcessHeap(), 0, skip_constants_buffer);
                     HeapFree(GetProcessHeap(), 0, skip_constants);
-                    return D3DERR_INVALIDCALL;
+                    hr = D3DERR_INVALIDCALL;
+                    goto fail;
                 }
             }
         }
@@ -6557,6 +6560,33 @@ static HRESULT d3dx9_effect_init(struct d3dx_effect *effect, struct IDirect3DDev
     }
 
     return D3D_OK;
+
+fail:
+    if (effect->techniques)
+    {
+        for (i = 0; i < effect->technique_count; ++i)
+            free_technique(&effect->techniques[i]);
+        heap_free(effect->techniques);
+    }
+
+    if (effect->parameters)
+    {
+        for (i = 0; i < effect->parameter_count; ++i)
+            free_top_level_parameter(&effect->parameters[i]);
+        heap_free(effect->parameters);
+    }
+
+    if (effect->objects)
+    {
+        for (i = 0; i < effect->object_count; ++i)
+            free_object(&effect->objects[i]);
+        heap_free(effect->objects);
+    }
+
+    IDirect3DDevice9_Release(effect->device);
+    if (pool)
+        pool->lpVtbl->Release(pool);
+    return hr;
 }
 
 HRESULT WINAPI D3DXCreateEffectEx(struct IDirect3DDevice9 *device, const void *srcdata, UINT srcdatalen,
@@ -6593,7 +6623,6 @@ HRESULT WINAPI D3DXCreateEffectEx(struct IDirect3DDevice9 *device, const void *s
     if (FAILED(hr))
     {
         WARN("Failed to create effect object, hr %#x.\n", hr);
-        d3dx_effect_cleanup(object);
         return hr;
     }
 
