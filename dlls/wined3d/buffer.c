@@ -43,8 +43,6 @@ struct wined3d_buffer_ops
             struct wined3d_context *context, unsigned int location);
     void (*buffer_unload_location)(struct wined3d_buffer *buffer,
             struct wined3d_context *context, unsigned int location);
-    void (*buffer_upload_ranges)(struct wined3d_buffer *buffer, struct wined3d_context *context, const void *data,
-            unsigned int data_offset, unsigned int range_count, const struct wined3d_range *ranges);
     void (*buffer_download_ranges)(struct wined3d_buffer *buffer, struct wined3d_context *context, void *data,
             unsigned int data_offset, unsigned int range_count, const struct wined3d_range *ranges);
 };
@@ -516,6 +514,7 @@ ULONG CDECL wined3d_buffer_incref(struct wined3d_buffer *buffer)
 static void buffer_conversion_upload(struct wined3d_buffer *buffer, struct wined3d_context *context)
 {
     unsigned int i, j, range_idx, start, end, vertex_count;
+    struct wined3d_bo_address src, dst;
     BYTE *data;
 
     if (!wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM))
@@ -564,8 +563,11 @@ static void buffer_conversion_upload(struct wined3d_buffer *buffer, struct wined
         }
     }
 
-    buffer->buffer_ops->buffer_upload_ranges(buffer, context,
-            data, 0, buffer->modified_areas, buffer->maps);
+    dst.buffer_object = buffer->buffer_object;
+    dst.addr = NULL;
+    src.buffer_object = NULL;
+    src.addr = data;
+    wined3d_context_copy_bo_address(context, &dst, &src, buffer->modified_areas, buffer->maps);
 
     heap_free(data);
 }
@@ -585,6 +587,7 @@ static void wined3d_buffer_unload_location(struct wined3d_buffer *buffer,
 BOOL wined3d_buffer_load_location(struct wined3d_buffer *buffer,
         struct wined3d_context *context, DWORD location)
 {
+    struct wined3d_bo_address src, dst;
     struct wined3d_range range;
 
     TRACE("buffer %p, context %p, location %s.\n",
@@ -641,9 +644,13 @@ BOOL wined3d_buffer_load_location(struct wined3d_buffer *buffer,
                 memset(buffer->resource.heap_memory, 0, buffer->resource.size);
             }
 
+            dst.buffer_object = buffer->buffer_object;
+            dst.addr = NULL;
+            src.buffer_object = NULL;
+            src.addr = buffer->resource.heap_memory;
+
             if (!buffer->conversion_map)
-                buffer->buffer_ops->buffer_upload_ranges(buffer, context,
-                        buffer->resource.heap_memory, 0, buffer->modified_areas, buffer->maps);
+                wined3d_context_copy_bo_address(context, &dst, &src, buffer->modified_areas, buffer->maps);
             else
                 buffer_conversion_upload(buffer, context);
             break;
@@ -1344,12 +1351,6 @@ static void wined3d_buffer_no3d_unload_location(struct wined3d_buffer *buffer,
     TRACE("buffer %p, context %p, location %s.\n", buffer, context, wined3d_debug_location(location));
 }
 
-static void wined3d_buffer_no3d_upload_ranges(struct wined3d_buffer *buffer, struct wined3d_context *context,
-        const void *data, unsigned int data_offset, unsigned int range_count, const struct wined3d_range *ranges)
-{
-    FIXME("Not implemented.\n");
-}
-
 static void wined3d_buffer_no3d_download_ranges(struct wined3d_buffer *buffer, struct wined3d_context *context,
         void *data, unsigned int data_offset, unsigned int range_count, const struct wined3d_range *ranges)
 {
@@ -1360,7 +1361,6 @@ static const struct wined3d_buffer_ops wined3d_buffer_no3d_ops =
 {
     wined3d_buffer_no3d_prepare_location,
     wined3d_buffer_no3d_unload_location,
-    wined3d_buffer_no3d_upload_ranges,
     wined3d_buffer_no3d_download_ranges,
 };
 
@@ -1420,23 +1420,6 @@ static void wined3d_buffer_gl_unload_location(struct wined3d_buffer *buffer,
 }
 
 /* Context activation is done by the caller. */
-static void wined3d_buffer_gl_upload_ranges(struct wined3d_buffer *buffer, struct wined3d_context *context,
-        const void *data, unsigned int data_offset, unsigned int range_count, const struct wined3d_range *ranges)
-{
-    struct wined3d_bo_address src, dst;
-
-    TRACE("buffer %p, context %p, data %p, data_offset %u, range_count %u, ranges %p.\n",
-            buffer, context, data, data_offset, range_count, ranges);
-
-    dst.buffer_object = buffer->buffer_object;
-    dst.addr = 0;
-    src.buffer_object = NULL;
-    src.addr = (uint8_t *)data - data_offset;
-
-    wined3d_context_copy_bo_address(context, &dst, &src, range_count, ranges);
-}
-
-/* Context activation is done by the caller. */
 static void wined3d_buffer_gl_download_ranges(struct wined3d_buffer *buffer, struct wined3d_context *context,
         void *data, unsigned int data_offset, unsigned int range_count, const struct wined3d_range *ranges)
 {
@@ -1464,7 +1447,6 @@ static const struct wined3d_buffer_ops wined3d_buffer_gl_ops =
 {
     wined3d_buffer_gl_prepare_location,
     wined3d_buffer_gl_unload_location,
-    wined3d_buffer_gl_upload_ranges,
     wined3d_buffer_gl_download_ranges,
 };
 
@@ -1615,53 +1597,6 @@ static void wined3d_buffer_vk_unload_location(struct wined3d_buffer *buffer,
     }
 }
 
-static void wined3d_buffer_vk_upload_ranges(struct wined3d_buffer *buffer, struct wined3d_context *context,
-        const void *data, unsigned int data_offset, unsigned int range_count, const struct wined3d_range *ranges)
-{
-    struct wined3d_context_vk *context_vk = wined3d_context_vk(context);
-    struct wined3d_resource *resource = &buffer->resource;
-    struct wined3d_bo_address src, dst;
-    const struct wined3d_range *range;
-    struct wined3d_bo_vk *dst_bo;
-    unsigned int i = range_count;
-    uint32_t flags;
-    void *map_ptr;
-
-    if (!range_count)
-        return;
-
-    dst.buffer_object = buffer->buffer_object;
-    dst.addr = NULL;
-
-    flags = WINED3D_MAP_WRITE;
-    if (!ranges->offset && ranges->size == resource->size)
-        flags |= WINED3D_MAP_DISCARD;
-
-    dst_bo = wined3d_bo_vk(buffer->buffer_object);
-    if (!(dst_bo->memory_type & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) || (!(flags & WINED3D_MAP_DISCARD)
-            && dst_bo->command_buffer_id > context_vk->completed_command_buffer_id))
-    {
-        src.buffer_object = 0;
-        src.addr = (uint8_t *)data - data_offset;
-        wined3d_context_copy_bo_address(context, &dst, &src, range_count, ranges);
-        return;
-    }
-
-    if (!(map_ptr = wined3d_context_map_bo_address(context, &dst, resource->size, flags)))
-    {
-        FIXME("Failed to map buffer.\n");
-        return;
-    }
-
-    while (i--)
-    {
-        range = &ranges[i];
-        memcpy((uint8_t *)map_ptr + range->offset, (uint8_t *)data + range->offset - data_offset, range->size);
-    }
-
-    wined3d_context_unmap_bo_address(context, &dst, range_count, ranges);
-}
-
 static void wined3d_buffer_vk_download_ranges(struct wined3d_buffer *buffer, struct wined3d_context *context,
         void *data, unsigned int data_offset, unsigned int range_count, const struct wined3d_range *ranges)
 {
@@ -1672,7 +1607,6 @@ static const struct wined3d_buffer_ops wined3d_buffer_vk_ops =
 {
     wined3d_buffer_vk_prepare_location,
     wined3d_buffer_vk_unload_location,
-    wined3d_buffer_vk_upload_ranges,
     wined3d_buffer_vk_download_ranges,
 };
 
