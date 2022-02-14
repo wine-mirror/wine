@@ -5960,7 +5960,7 @@ static void test_pipeline_statistics_query(void)
     get_query_data(context, query, &data, sizeof(data));
 
     /* WARP devices randomly return all-zeroed structures as if the draw did not happen. Flushing and
-     * sleeping a second before ending the query reduces the likelyhood of hitting the bug a lot, but
+     * sleeping a second before ending the query reduces the likelihood of hitting the bug a lot, but
      * does not eliminate it entirely. To make things work reliably ignore such broken results. */
     if (is_warp_device(device) && !memcmp(&data, &zero_data, sizeof(data)))
     {
@@ -7453,8 +7453,8 @@ static void test_device_context_state(void)
      *
      * The tests below suggest that a ContextState object stores its own state
      * for every device it is used with. This isn't entirely true, e.g. the
-     * primitive topology can be transfered between devices, but will cause odd
-     * refcounting behavior afterwards (IAGetPrimitiveTopology will leak 54
+     * primitive topology can be transferred between devices, but will cause
+     * odd refcounting behavior afterwards (IAGetPrimitiveTopology will leak 54
      * references on the context's device for example). */
     if (0)
     {
