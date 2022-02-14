@@ -146,7 +146,7 @@ static ULONG WINAPI SAO_AddRef(ISpatialAudioObject *iface)
 {
     SpatialAudioObjectImpl *This = impl_from_ISpatialAudioObject(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p) new ref %u\n", This, ref);
+    TRACE("(%p) new ref %lu\n", This, ref);
     return ref;
 }
 
@@ -154,7 +154,7 @@ static ULONG WINAPI SAO_Release(ISpatialAudioObject *iface)
 {
     SpatialAudioObjectImpl *This = impl_from_ISpatialAudioObject(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
-    TRACE("(%p) new ref %u\n", This, ref);
+    TRACE("(%p) new ref %lu\n", This, ref);
     if(!ref){
         EnterCriticalSection(&This->sa_stream->lock);
         list_remove(&This->entry);
@@ -272,7 +272,7 @@ static ULONG WINAPI SAORS_AddRef(ISpatialAudioObjectRenderStream *iface)
 {
     SpatialAudioStreamImpl *This = impl_from_ISpatialAudioObjectRenderStream(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p) new ref %u\n", This, ref);
+    TRACE("(%p) new ref %lu\n", This, ref);
     return ref;
 }
 
@@ -280,7 +280,7 @@ static ULONG WINAPI SAORS_Release(ISpatialAudioObjectRenderStream *iface)
 {
     SpatialAudioStreamImpl *This = impl_from_ISpatialAudioObjectRenderStream(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
-    TRACE("(%p) new ref %u\n", This, ref);
+    TRACE("(%p) new ref %lu\n", This, ref);
     if(!ref){
         IAudioClient_Stop(This->client);
         if(This->update_frames != ~0 && This->update_frames > 0)
@@ -325,7 +325,7 @@ static HRESULT WINAPI SAORS_Start(ISpatialAudioObjectRenderStream *iface)
 
     hr = IAudioClient_Start(This->client);
     if(FAILED(hr)){
-        WARN("IAudioClient::Start failed: %08x\n", hr);
+        WARN("IAudioClient::Start failed: %08lx\n", hr);
         return hr;
     }
 
@@ -341,7 +341,7 @@ static HRESULT WINAPI SAORS_Stop(ISpatialAudioObjectRenderStream *iface)
 
     hr = IAudioClient_Stop(This->client);
     if(FAILED(hr)){
-        WARN("IAudioClient::Stop failed: %08x\n", hr);
+        WARN("IAudioClient::Stop failed: %08lx\n", hr);
         return hr;
     }
 
@@ -377,7 +377,7 @@ static HRESULT WINAPI SAORS_BeginUpdatingAudioObjects(ISpatialAudioObjectRenderS
     if(This->update_frames > 0){
         hr = IAudioRenderClient_GetBuffer(This->render, This->update_frames, (BYTE **)&This->buf);
         if(FAILED(hr)){
-            WARN("GetBuffer failed: %08x\n", hr);
+            WARN("GetBuffer failed: %08lx\n", hr);
             This->update_frames = ~0;
             LeaveCriticalSection(&This->lock);
             return hr;
@@ -441,7 +441,7 @@ static HRESULT WINAPI SAORS_EndUpdatingAudioObjects(ISpatialAudioObjectRenderStr
 
         hr = IAudioRenderClient_ReleaseBuffer(This->render, This->update_frames, 0);
         if(FAILED(hr))
-            WARN("ReleaseBuffer failed: %08x\n", hr);
+            WARN("ReleaseBuffer failed: %08lx\n", hr);
     }
 
     This->update_frames = ~0;
@@ -538,7 +538,7 @@ static ULONG WINAPI SAC_AddRef(ISpatialAudioClient *iface)
 {
     SpatialAudioImpl *This = impl_from_ISpatialAudioClient(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p) new ref %u\n", This, ref);
+    TRACE("(%p) new ref %lu\n", This, ref);
     return ref;
 }
 
@@ -546,7 +546,7 @@ static ULONG WINAPI SAC_Release(ISpatialAudioClient *iface)
 {
     SpatialAudioImpl *This = impl_from_ISpatialAudioClient(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
-    TRACE("(%p) new ref %u\n", This, ref);
+    TRACE("(%p) new ref %lu\n", This, ref);
     if (!ref) {
         IMMDevice_Release(This->mmdev);
         heap_free(This);
@@ -637,12 +637,12 @@ static const char *debugstr_fmtex(const WAVEFORMATEX *fmt)
     static char buf[2048];
     if(fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE){
         const WAVEFORMATEXTENSIBLE *fmtex = (const WAVEFORMATEXTENSIBLE *)fmt;
-        snprintf(buf, sizeof(buf), "tag: 0x%x (%s), ch: %u (mask: 0x%x), rate: %u, depth: %u",
+        snprintf(buf, sizeof(buf), "tag: 0x%x (%s), ch: %u (mask: 0x%lx), rate: %lu, depth: %u",
                 fmt->wFormatTag, debugstr_guid(&fmtex->SubFormat),
                 fmt->nChannels, fmtex->dwChannelMask, fmt->nSamplesPerSec,
                 fmt->wBitsPerSample);
     }else{
-        snprintf(buf, sizeof(buf), "tag: 0x%x, ch: %u, rate: %u, depth: %u",
+        snprintf(buf, sizeof(buf), "tag: 0x%x, ch: %u, rate: %lu, depth: %u",
                 fmt->wFormatTag, fmt->nChannels, fmt->nSamplesPerSec,
                 fmt->wBitsPerSample);
     }
@@ -694,13 +694,13 @@ static HRESULT activate_stream(SpatialAudioStreamImpl *stream)
     hr = IMMDevice_Activate(stream->sa_client->mmdev, &IID_IAudioClient,
             CLSCTX_INPROC_SERVER, NULL, (void**)&stream->client);
     if(FAILED(hr)){
-        WARN("Activate failed: %08x\n", hr);
+        WARN("Activate failed: %08lx\n", hr);
         return hr;
     }
 
     hr = IAudioClient_GetDevicePeriod(stream->client, &period, NULL);
     if(FAILED(hr)){
-        WARN("GetDevicePeriod failed: %08x\n", hr);
+        WARN("GetDevicePeriod failed: %08lx\n", hr);
         IAudioClient_Release(stream->client);
         return hr;
     }
@@ -721,21 +721,21 @@ static HRESULT activate_stream(SpatialAudioStreamImpl *stream)
             AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_NOPERSIST,
             period, 0, &stream->stream_fmtex.Format, NULL);
     if(FAILED(hr)){
-        WARN("Initialize failed: %08x\n", hr);
+        WARN("Initialize failed: %08lx\n", hr);
         IAudioClient_Release(stream->client);
         return hr;
     }
 
     hr = IAudioClient_SetEventHandle(stream->client, stream->params.EventHandle);
     if(FAILED(hr)){
-        WARN("SetEventHandle failed: %08x\n", hr);
+        WARN("SetEventHandle failed: %08lx\n", hr);
         IAudioClient_Release(stream->client);
         return hr;
     }
 
     hr = IAudioClient_GetService(stream->client, &IID_IAudioRenderClient, (void**)&stream->render);
     if(FAILED(hr)){
-        WARN("GetService(AudioRenderClient) failed: %08x\n", hr);
+        WARN("GetService(AudioRenderClient) failed: %08lx\n", hr);
         IAudioClient_Release(stream->client);
         return hr;
     }
@@ -931,7 +931,7 @@ HRESULT SpatialAudioClient_Create(IMMDevice *mmdev, ISpatialAudioClient **out)
     hr = IMMDevice_Activate(mmdev, &IID_IAudioClient,
             CLSCTX_INPROC_SERVER, NULL, (void**)&aclient);
     if(FAILED(hr)){
-        WARN("Activate failed: %08x\n", hr);
+        WARN("Activate failed: %08lx\n", hr);
         heap_free(obj);
         return hr;
     }
@@ -962,7 +962,7 @@ HRESULT SpatialAudioClient_Create(IMMDevice *mmdev, ISpatialAudioClient **out)
                sizeof(WAVEFORMATEX) + closest->cbSize);
         CoTaskMemFree(closest);
     } else if(hr != S_OK){
-        WARN("Checking supported formats failed: %08x\n", hr);
+        WARN("Checking supported formats failed: %08lx\n", hr);
         heap_free(obj);
         return hr;
     }

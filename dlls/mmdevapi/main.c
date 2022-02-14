@@ -75,7 +75,7 @@ static BOOL load_driver(const WCHAR *name, DriverFuncs *driver)
 
     driver->module = LoadLibraryW(driver_module);
     if(!driver->module){
-        TRACE("Unable to load %s: %u\n", wine_dbgstr_w(driver_module),
+        TRACE("Unable to load %s: %lu\n", wine_dbgstr_w(driver_module),
                 GetLastError());
         return FALSE;
     }
@@ -159,7 +159,7 @@ static BOOL WINAPI init_driver(INIT_ONCE *once, void *param, void **context)
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    TRACE("(0x%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
+    TRACE("(0x%p, %ld, %p)\n", hinstDLL, fdwReason, lpvReserved);
 
     switch (fdwReason)
     {
@@ -335,7 +335,7 @@ static ULONG WINAPI activate_async_op_AddRef(IActivateAudioInterfaceAsyncOperati
 {
     struct activate_async_op *This = impl_from_IActivateAudioInterfaceAsyncOperation(iface);
     LONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p) refcount now %i\n", This, ref);
+    TRACE("(%p) refcount now %li\n", This, ref);
     return ref;
 }
 
@@ -343,7 +343,7 @@ static ULONG WINAPI activate_async_op_Release(IActivateAudioInterfaceAsyncOperat
 {
     struct activate_async_op *This = impl_from_IActivateAudioInterfaceAsyncOperation(iface);
     LONG ref = InterlockedDecrement(&This->ref);
-    TRACE("(%p) refcount now %i\n", This, ref);
+    TRACE("(%p) refcount now %li\n", This, ref);
     if (!ref) {
         if(This->result_iface)
             IUnknown_Release(This->result_iface);
@@ -399,7 +399,7 @@ static HRESULT get_mmdevice_by_activatepath(const WCHAR *path, IMMDevice **mmdev
 
     hr = MMDevEnum_Create(&IID_IMMDeviceEnumerator, (void**)&devenum);
     if (FAILED(hr)) {
-        WARN("Failed to create MMDeviceEnumerator: %08x\n", hr);
+        WARN("Failed to create MMDeviceEnumerator: %08lx\n", hr);
         return hr;
     }
 
@@ -419,7 +419,7 @@ static HRESULT get_mmdevice_by_activatepath(const WCHAR *path, IMMDevice **mmdev
     }
 
     if (FAILED(hr)) {
-        WARN("Failed to get requested device (%s): %08x\n", debugstr_w(path), hr);
+        WARN("Failed to get requested device (%s): %08lx\n", debugstr_w(path), hr);
         *mmdev = NULL;
         hr = HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
     }
