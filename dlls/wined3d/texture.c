@@ -4953,7 +4953,7 @@ static void wined3d_texture_vk_download_data(struct wined3d_context *context,
         return;
     }
 
-    /* We need to be outside of a render pass for vkCmdPipelineBarrier() and vkCmdCopyBufferToImage() calls below. */
+    /* We need to be outside of a render pass for vkCmdPipelineBarrier() and vkCmdCopyImageToBuffer() calls below. */
     wined3d_context_vk_end_current_render_pass(context_vk);
 
     if (!dst_bo_addr->buffer_object)
