@@ -3547,7 +3547,7 @@ DWORD WINAPI dinput_test_device_thread( void *stop_event )
     ok( !status, "RegSetValueExW returned %#lx\n", status );
     status = RegSetValueExW( hkey, L"Caps", 0, REG_BINARY, (void *)&caps, sizeof(caps) );
     ok( !status, "RegSetValueExW returned %#lx\n", status );
-    status = RegSetValueExW( hkey, L"Expect", 0, REG_BINARY, (void *)NULL, 0 );
+    status = RegSetValueExW( hkey, L"Expect", 0, REG_BINARY, NULL, 0 );
     ok( !status, "RegSetValueExW returned %#lx\n", status );
     status = RegSetValueExW( hkey, L"Input", 0, REG_BINARY, NULL, 0 );
     ok( !status, "RegSetValueExW returned %#lx\n", status );
