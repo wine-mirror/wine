@@ -44,7 +44,7 @@ static INT_PTR WINAPI NPS_ProxyPasswordDialog(
 
     if( uMsg == WM_INITDIALOG )
     {
-        TRACE("WM_INITDIALOG (%08lx)\n", lParam);
+        TRACE("WM_INITDIALOG (%08Ix)\n", lParam);
 
         /* save the parameter list */
         lpAuthDlgStruct = (LPAUTHDLGSTRUCTA) lParam;
@@ -148,7 +148,7 @@ DWORD WINAPI NPSGetSectionNameA( HPROVIDER hProvider, LPCSTR *lpszSectionName )
  */
 DWORD WINAPI NPSSetExtendedErrorA( DWORD NetSpecificError, LPSTR lpExtendedErrorText )
 {
-    FIXME( "(%08x, %s): stub\n", NetSpecificError, debugstr_a(lpExtendedErrorText) );
+    FIXME( "(%08lx, %s): stub\n", NetSpecificError, debugstr_a(lpExtendedErrorText) );
     return WN_NOT_SUPPORTED;
 }
 
@@ -183,7 +183,7 @@ DWORD WINAPI NPSDeviceGetNumberA( LPSTR lpLocalName, LPDWORD lpdwNumber, LPDWORD
  */
 DWORD WINAPI NPSDeviceGetStringA( DWORD dwNumber, DWORD dwType, LPSTR lpLocalName, LPDWORD lpdwBufferSize )
 {
-    FIXME( "(%d, %d, %p, %p): stub\n", dwNumber, dwType, lpLocalName, lpdwBufferSize );
+    FIXME( "(%ld, %ld, %p, %p): stub\n", dwNumber, dwType, lpLocalName, lpdwBufferSize );
     return WN_NOT_SUPPORTED;
 }
 
@@ -210,7 +210,7 @@ LPVOID WINAPI NPSNotifyGetContextA( NOTIFYCALLBACK pfNotifyCallBack )
  */
 DWORD WINAPI PwdGetPasswordStatusA( LPCSTR lpProvider, DWORD dwIndex, LPDWORD status )
 {
-    FIXME("%s %d %p\n", debugstr_a(lpProvider), dwIndex, status );
+    FIXME("%s %ld %p\n", debugstr_a(lpProvider), dwIndex, status );
     *status = 0;
     return WN_SUCCESS;
 }
@@ -220,7 +220,7 @@ DWORD WINAPI PwdGetPasswordStatusA( LPCSTR lpProvider, DWORD dwIndex, LPDWORD st
  */
 DWORD WINAPI PwdGetPasswordStatusW( LPCWSTR lpProvider, DWORD dwIndex, LPDWORD status )
 {
-    FIXME("%s %d %p\n", debugstr_w(lpProvider), dwIndex, status );
+    FIXME("%s %ld %p\n", debugstr_w(lpProvider), dwIndex, status );
     *status = 0;
     return WN_SUCCESS;
 }
@@ -230,7 +230,7 @@ DWORD WINAPI PwdGetPasswordStatusW( LPCWSTR lpProvider, DWORD dwIndex, LPDWORD s
  */
 DWORD WINAPI PwdSetPasswordStatusA( LPCSTR lpProvider, DWORD dwIndex, DWORD status )
 {
-    FIXME("%s %d %d\n", debugstr_a(lpProvider), dwIndex, status );
+    FIXME("%s %ld %ld\n", debugstr_a(lpProvider), dwIndex, status );
     return WN_SUCCESS;
 }
 
@@ -239,7 +239,7 @@ DWORD WINAPI PwdSetPasswordStatusA( LPCSTR lpProvider, DWORD dwIndex, DWORD stat
  */
 DWORD WINAPI PwdSetPasswordStatusW( LPCWSTR lpProvider, DWORD dwIndex, DWORD status )
 {
-    FIXME("%s %d %d\n", debugstr_w(lpProvider), dwIndex, status );
+    FIXME("%s %ld %ld\n", debugstr_w(lpProvider), dwIndex, status );
     return WN_SUCCESS;
 }
 
@@ -260,7 +260,7 @@ typedef struct _CHANGEPWDINFOW {
  */
 DWORD WINAPI PwdChangePasswordA( LPCSTR lpProvider, HWND hWnd, DWORD flags, LPCHANGEPWDINFOA info )
 {
-    FIXME("%s %p %x %p\n", debugstr_a(lpProvider), hWnd, flags, info );
+    FIXME("%s %p %lx %p\n", debugstr_a(lpProvider), hWnd, flags, info );
     return WN_SUCCESS;
 }
 
@@ -269,6 +269,6 @@ DWORD WINAPI PwdChangePasswordA( LPCSTR lpProvider, HWND hWnd, DWORD flags, LPCH
  */
 DWORD WINAPI PwdChangePasswordW( LPCWSTR lpProvider, HWND hWnd, DWORD flags, LPCHANGEPWDINFOW info )
 {
-    FIXME("%s %p %x %p\n", debugstr_w(lpProvider), hWnd, flags, info );
+    FIXME("%s %p %lx %p\n", debugstr_w(lpProvider), hWnd, flags, info );
     return WN_SUCCESS;
 }
