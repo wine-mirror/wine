@@ -328,8 +328,10 @@ static void test_media_item(void)
     hr = IMFPMediaItem_HasAudio(item, &ret, &selected);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+    hr = IMFPMediaItem_IsProtected(item, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
     hr = IMFPMediaItem_IsProtected(item, &ret);
-    todo_wine
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaItem_GetDuration(item, &MFP_POSITIONTYPE_100NS, &propvar);
@@ -379,6 +381,9 @@ static void test_media_item(void)
 
     hr = IMFPMediaItem_HasAudio(item, &ret, &selected);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaItem_IsProtected(item, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaItem_IsProtected(item, &ret);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);

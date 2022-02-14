@@ -627,10 +627,13 @@ static HRESULT WINAPI media_item_IsProtected(IMFPMediaItem *iface, BOOL *protect
 
     TRACE("%p, %p.\n", iface, protected);
 
+    if (!protected)
+        return E_POINTER;
+
     EnterCriticalSection(&item->player->cs);
     if (SUCCEEDED(hr = media_item_get_pd(item, &pd)))
     {
-        *protected = MFRequireProtectedEnvironment(pd) == S_OK;
+        *protected = (hr = MFRequireProtectedEnvironment(pd)) == S_OK;
         IMFPresentationDescriptor_Release(pd);
     }
     LeaveCriticalSection(&item->player->cs);
