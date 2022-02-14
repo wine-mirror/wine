@@ -45,7 +45,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mprapi);
  */
 DWORD APIENTRY MprAdminGetErrorString(DWORD mprerror, LPWSTR *localstr)
 {
-    FIXME("(0x%x/%u, %p): stub!\n", mprerror, mprerror, localstr);
+    FIXME("(0x%lx/%lu, %p): stub!\n", mprerror, mprerror, localstr);
 
     *localstr = NULL;
     return ERROR_MR_MID_NOT_FOUND;
