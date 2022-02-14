@@ -3081,7 +3081,7 @@ static void test_blocking_rw(HANDLE writer, HANDLE reader, DWORD buf_size, BOOL 
     res = pCancelIoEx(reader, &read_overlapped2);
     ok(res, "CancelIoEx failed with error %d\n", GetLastError());
     res = pCancelIoEx(reader, &read_overlapped2);
-    ok(!res, "CancelIOEx succeeded unexpectedly");
+    ok(!res, "CancelIOEx succeeded unexpectedly\n");
     ok(GetLastError() == ERROR_NOT_FOUND,
         "In CancelIoEx failure, expected ERROR_NOT_FOUND, got %d\n", GetLastError());
     test_overlapped_failure(reader, &read_overlapped2, ERROR_OPERATION_ABORTED);
