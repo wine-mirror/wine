@@ -1522,7 +1522,7 @@ static HRESULT WINAPI static_ports_Add(
     struct port_mapping mapping_data;
     HRESULT ret;
 
-    TRACE( "iface %p, external %ld, protocol %s, internal %ld, client %s, enabled %d, descritption %s, mapping %p.\n",
+    TRACE( "iface %p, external %ld, protocol %s, internal %ld, client %s, enabled %d, description %s, mapping %p.\n",
            iface, external, debugstr_w(protocol), internal, debugstr_w(client), enabled, debugstr_w(description),
            mapping );
 
