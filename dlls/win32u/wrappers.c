@@ -808,6 +808,12 @@ HPALETTE WINAPI NtUserSelectPalette( HDC hdc, HPALETTE hpal, WORD bkg )
     return unix_funcs->pNtUserSelectPalette( hdc, hpal, bkg );
 }
 
+BOOL WINAPI NtUserSetCursorPos( INT x, INT y )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserSetCursorPos( x, y );
+}
+
 BOOL WINAPI NtUserSetSysColors( INT count, const INT *colors, const COLORREF *values )
 {
     if (!unix_funcs) return FALSE;

@@ -1181,7 +1181,7 @@
 @ stub NtUserSetCursor
 @ stub NtUserSetCursorContents
 @ stub NtUserSetCursorIconData
-@ stub NtUserSetCursorPos
+@ stdcall NtUserSetCursorPos(long long)
 @ stub NtUserSetDesktopColorTransform
 @ stub NtUserSetDesktopVisualInputSink
 @ stub NtUserSetDialogControlDpiChangeBehavior

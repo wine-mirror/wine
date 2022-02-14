@@ -659,7 +659,7 @@
 # @ stub SetConsoleReserveKeys
 @ stdcall SetCursor(long)
 @ stub SetCursorContents
-@ stdcall SetCursorPos(long long)
+@ stdcall -import SetCursorPos(long long) NtUserSetCursorPos
 @ stdcall SetDebugErrorLevel(long)
 @ stdcall SetDeskWallPaper(str)
 # @ stub SetDeskWallpaper

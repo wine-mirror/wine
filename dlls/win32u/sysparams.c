@@ -1411,6 +1411,19 @@ RECT map_dpi_rect( RECT rect, UINT dpi_from, UINT dpi_to )
     return rect;
 }
 
+/**********************************************************************
+ *              map_dpi_point
+ */
+POINT map_dpi_point( POINT pt, UINT dpi_from, UINT dpi_to )
+{
+    if (dpi_from && dpi_to && dpi_from != dpi_to)
+    {
+        pt.x = muldiv( pt.x, dpi_to, dpi_from );
+        pt.y = muldiv( pt.y, dpi_to, dpi_from );
+    }
+    return pt;
+}
+
 /* map value from system dpi to standard 96 dpi for storing in the registry */
 static int map_from_system_dpi( int val )
 {
@@ -2000,6 +2013,13 @@ HMONITOR monitor_from_rect( const RECT *rect, DWORD flags, UINT dpi )
 
     TRACE( "%s flags %x returning %p\n", wine_dbgstr_rect(rect), flags, ret );
     return ret;
+}
+
+HMONITOR monitor_from_point( POINT pt, DWORD flags, UINT dpi )
+{
+    RECT rect;
+    SetRect( &rect, pt.x, pt.y, pt.x + 1, pt.y + 1 );
+    return monitor_from_rect( &rect, flags, dpi );
 }
 
 /***********************************************************************

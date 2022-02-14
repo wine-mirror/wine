@@ -1005,6 +1005,11 @@ static void CDECL loaderdrv_SetCursor( HCURSOR cursor )
     load_driver()->pSetCursor( cursor );
 }
 
+static BOOL CDECL loaderdrv_SetCursorPos( INT x, INT y )
+{
+    return load_driver()->pSetCursorPos( x, y );
+}
+
 static BOOL CDECL loaderdrv_ClipCursor( const RECT *clip )
 {
     return load_driver()->pClipCursor( clip );
@@ -1039,6 +1044,7 @@ static const struct user_driver_funcs lazy_load_driver =
     .pEnumDisplaySettingsEx = loaderdrv_EnumDisplaySettingsEx,
     .pUpdateDisplayDevices = loaderdrv_UpdateDisplayDevices,
     .pSetCursor = loaderdrv_SetCursor,
+    .pSetCursorPos = loaderdrv_SetCursorPos,
     .pClipCursor = loaderdrv_ClipCursor,
     .pUpdateClipboard = loaderdrv_UpdateClipboard,
     .pScrollDC = nulldrv_ScrollDC,

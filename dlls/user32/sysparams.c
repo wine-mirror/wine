@@ -1184,7 +1184,7 @@ BOOL WINAPI GetPhysicalCursorPos( POINT *point )
  */
 BOOL WINAPI SetPhysicalCursorPos( INT x, INT y )
 {
-    return SetCursorPos( x, y );
+    return NtUserSetCursorPos( x, y );
 }
 
 /***********************************************************************

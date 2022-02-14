@@ -359,37 +359,6 @@ BOOL WINAPI GetCursorInfo( PCURSORINFO pci )
 }
 
 
-/***********************************************************************
- *		SetCursorPos (USER32.@)
- */
-BOOL WINAPI DECLSPEC_HOTPATCH SetCursorPos( INT x, INT y )
-{
-    POINT pt = { x, y };
-    BOOL ret;
-    INT prev_x, prev_y, new_x, new_y;
-    UINT dpi;
-
-    if ((dpi = get_thread_dpi()))
-        pt = map_dpi_point( pt, dpi, get_monitor_dpi( MonitorFromPoint( pt, MONITOR_DEFAULTTOPRIMARY )));
-
-    SERVER_START_REQ( set_cursor )
-    {
-        req->flags = SET_CURSOR_POS;
-        req->x     = pt.x;
-        req->y     = pt.y;
-        if ((ret = !wine_server_call( req )))
-        {
-            prev_x = reply->prev_x;
-            prev_y = reply->prev_y;
-            new_x  = reply->new_x;
-            new_y  = reply->new_y;
-        }
-    }
-    SERVER_END_REQ;
-    if (ret && (prev_x != new_x || prev_y != new_y)) USER_Driver->pSetCursorPos( new_x, new_y );
-    return ret;
-}
-
 /**********************************************************************
  *		SetCapture (USER32.@)
  */

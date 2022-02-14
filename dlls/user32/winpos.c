@@ -2816,7 +2816,7 @@ static LONG start_size_move( HWND hwnd, WPARAM wParam, POINT *capturePoint, LONG
         }
         *capturePoint = pt;
     }
-    SetCursorPos( pt.x, pt.y );
+    NtUserSetCursorPos( pt.x, pt.y );
     SendMessageW( hwnd, WM_SETCURSOR, (WPARAM)hwnd, MAKELONG( hittest, WM_MOUSEMOVE ));
     return hittest;
 }
@@ -2991,7 +2991,7 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
                     draw_moving_frame( parent, hdc, &sizingRect, thickframe );
             }
 
-            if (msg.message == WM_KEYDOWN) SetCursorPos( pt.x, pt.y );
+            if (msg.message == WM_KEYDOWN) NtUserSetCursorPos( pt.x, pt.y );
             else
             {
                 if (!DragFullWindows) draw_moving_frame( parent, hdc, &sizingRect, thickframe );
