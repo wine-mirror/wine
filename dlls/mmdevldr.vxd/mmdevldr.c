@@ -37,7 +37,7 @@ BOOL WINAPI MMDEVLDR_DeviceIoControl(DWORD dwIoControlCode,
                                      LPDWORD lpcbBytesReturned,
                                      LPOVERLAPPED lpOverlapped)
 {
-    FIXME("(%d,%p,%d,%p,%d,%p,%p): stub\n",
+    FIXME("(%ld,%p,%ld,%p,%ld,%p,%p): stub\n",
           dwIoControlCode,
           lpvInBuffer,cbInBuffer,
           lpvOutBuffer,cbOutBuffer,
