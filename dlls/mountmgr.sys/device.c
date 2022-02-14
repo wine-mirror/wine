@@ -717,7 +717,7 @@ static NTSTATUS create_disk_device( enum device_type type, struct disk_device **
     }
     else
     {
-        FIXME( "IoCreateDevice %s got %x\n", debugstr_w(name.Buffer), status );
+        FIXME( "IoCreateDevice %s got %lx\n", debugstr_w(name.Buffer), status );
         RtlFreeUnicodeString( &name );
     }
     return status;
@@ -890,7 +890,7 @@ static BOOL get_volume_device_info( struct volume *volume )
 
     if (!(name = wine_get_dos_file_name( unix_device )))
     {
-        ERR("Failed to convert %s to NT, err %u\n", debugstr_a(unix_device), GetLastError());
+        ERR("Failed to convert %s to NT, err %lu\n", debugstr_a(unix_device), GetLastError());
         return FALSE;
     }
     handle = CreateFileW( name, GENERIC_READ | SYNCHRONIZE, FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -898,7 +898,7 @@ static BOOL get_volume_device_info( struct volume *volume )
     RtlFreeHeap( GetProcessHeap(), 0, name );
     if (handle == INVALID_HANDLE_VALUE)
     {
-        WARN("Failed to open %s, err %u\n", debugstr_a(unix_device), GetLastError());
+        WARN("Failed to open %s, err %lu\n", debugstr_a(unix_device), GetLastError());
         return FALSE;
     }
 
@@ -1008,7 +1008,7 @@ static NTSTATUS set_volume_info( struct volume *volume, struct dos_drive *drive,
         get_filesystem_serial( volume );
     }
 
-    TRACE("fs_type %#x, label %s, serial %08x\n", volume->fs_type, debugstr_w(volume->label), volume->serial);
+    TRACE("fs_type %#x, label %s, serial %08lx\n", volume->fs_type, debugstr_w(volume->label), volume->serial);
 
     if (guid && memcmp( &volume->guid, guid, sizeof(volume->guid) ))
     {
@@ -1526,7 +1526,7 @@ NTSTATUS query_unix_drive( void *buff, SIZE_T insize, SIZE_T outsize, IO_STATUS_
         ptr += strlen(ptr) + 1;
     }
 
-    TRACE( "returning %c: dev %s mount %s type %u\n",
+    TRACE( "returning %c: dev %s mount %s type %lu\n",
            letter, debugstr_a(device), debugstr_a(mount_point), type );
 
     iosb->Information = ptr - (char *)output;
@@ -1622,7 +1622,7 @@ static NTSTATUS WINAPI harddisk_query_volume( DEVICE_OBJECT *device, IRP *irp )
     struct volume *volume;
     NTSTATUS status;
 
-    TRACE( "volume query %x length %u\n", info_class, length );
+    TRACE( "volume query %x length %lu\n", info_class, length );
 
     EnterCriticalSection( &device_section );
     volume = dev->volume;
@@ -1722,7 +1722,7 @@ static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
     struct disk_device *dev = device->DeviceExtension;
     NTSTATUS status;
 
-    TRACE( "ioctl %x insize %u outsize %u\n",
+    TRACE( "ioctl %lx insize %lu outsize %lu\n",
            irpsp->Parameters.DeviceIoControl.IoControlCode,
            irpsp->Parameters.DeviceIoControl.InputBufferLength,
            irpsp->Parameters.DeviceIoControl.OutputBufferLength );
@@ -1794,7 +1794,7 @@ static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
     default:
     {
         ULONG code = irpsp->Parameters.DeviceIoControl.IoControlCode;
-        FIXME("Unsupported ioctl %x (device=%x access=%x func=%x method=%x)\n",
+        FIXME("Unsupported ioctl %lx (device=%lx access=%lx func=%lx method=%lx)\n",
               code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
         status = STATUS_NOT_SUPPORTED;
         break;
@@ -1864,7 +1864,7 @@ static BOOL create_port_device( DRIVER_OBJECT *driver, int n, const char *unix_p
     status = IoCreateDevice( driver, 0, &nt_name, 0, 0, FALSE, &dev_obj );
     if (status != STATUS_SUCCESS)
     {
-        FIXME( "IoCreateDevice %s got %x\n", debugstr_w(nt_name.Buffer), status );
+        FIXME( "IoCreateDevice %s got %lx\n", debugstr_w(nt_name.Buffer), status );
         return FALSE;
     }
     swprintf( symlink_buffer, ARRAY_SIZE(symlink_buffer), symlink_format, n );

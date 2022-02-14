@@ -753,7 +753,7 @@ static DBusMessage *dhcp4_config_option_request( const char *unix_name, const ch
     return reply;
 }
 
-static const char *map_option( ULONG option )
+static const char *map_option( unsigned option )
 {
     switch (option)
     {
@@ -792,7 +792,7 @@ NTSTATUS dhcp_request( void *args )
             ptr->S_un.S_addr = inet_addr( value );
             params->req->offset = params->offset;
             params->req->size   = sizeof(*ptr);
-            TRACE( "returning %08x\n", *(DWORD *)ptr );
+            TRACE( "returning %08x\n", *(unsigned int*)ptr );
         }
         ret = sizeof(*ptr);
         break;
@@ -814,7 +814,7 @@ NTSTATUS dhcp_request( void *args )
         break;
     }
     default:
-        FIXME( "option %u not supported\n", params->req->id );
+        FIXME( "option %u not supported\n", (unsigned int)params->req->id );
         break;
     }
 

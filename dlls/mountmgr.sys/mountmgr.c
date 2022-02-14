@@ -251,7 +251,7 @@ static NTSTATUS define_unix_drive( const void *in_buff, SIZE_T insize )
     {
         enum device_type type = DEVICE_UNKNOWN;
 
-        TRACE( "defining %c: dev %s mount %s type %u\n",
+        TRACE( "defining %c: dev %s mount %s type %lu\n",
                letter, debugstr_a(device), debugstr_a(mount_point), input->type );
         switch (input->type)
         {
@@ -467,7 +467,7 @@ static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
     NTSTATUS status;
     ULONG info = 0;
 
-    TRACE( "ioctl %x insize %u outsize %u\n",
+    TRACE( "ioctl %lx insize %lu outsize %lu\n",
            irpsp->Parameters.DeviceIoControl.IoControlCode,
            irpsp->Parameters.DeviceIoControl.InputBufferLength,
            irpsp->Parameters.DeviceIoControl.OutputBufferLength );
@@ -592,7 +592,7 @@ static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
         else status = STATUS_INVALID_PARAMETER;
         break;
     default:
-        FIXME( "ioctl %x not supported\n", irpsp->Parameters.DeviceIoControl.IoControlCode );
+        FIXME( "ioctl %lx not supported\n", irpsp->Parameters.DeviceIoControl.IoControlCode );
         status = STATUS_NOT_SUPPORTED;
         break;
     }
@@ -641,7 +641,7 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
         status = IoCreateSymbolicLink( &linkW, &nameW );
     if (status)
     {
-        FIXME( "failed to create device error %x\n", status );
+        FIXME( "failed to create device error %lx\n", status );
         return status;
     }
 
