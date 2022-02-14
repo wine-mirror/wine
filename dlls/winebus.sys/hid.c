@@ -323,26 +323,22 @@ BOOL hid_device_add_haptics(struct unix_device *iface)
 
             USAGE(1, HID_USAGE_HAPTICS_WAVEFORM_LIST),
             COLLECTION(1, NamedArray),
-                USAGE_PAGE(1, HID_USAGE_PAGE_ORDINAL),
-                USAGE(1, 3), /* HID_USAGE_HAPTICS_WAVEFORM_RUMBLE */
-                USAGE(1, 4), /* HID_USAGE_HAPTICS_WAVEFORM_BUZZ */
+                USAGE(4, (HID_USAGE_PAGE_ORDINAL<<16)|HAPTICS_WAVEFORM_RUMBLE_ORDINAL), /* HID_USAGE_HAPTICS_WAVEFORM_RUMBLE */
+                USAGE(4, (HID_USAGE_PAGE_ORDINAL<<16)|HAPTICS_WAVEFORM_BUZZ_ORDINAL), /* HID_USAGE_HAPTICS_WAVEFORM_BUZZ */
                 REPORT_COUNT(1, 2),
                 REPORT_SIZE(1, 16),
                 FEATURE(1, Data|Var|Abs|Null),
             END_COLLECTION,
 
-            USAGE_PAGE(2, HID_USAGE_PAGE_HAPTICS),
             USAGE(1, HID_USAGE_HAPTICS_DURATION_LIST),
             COLLECTION(1, NamedArray),
-                USAGE_PAGE(1, HID_USAGE_PAGE_ORDINAL),
-                USAGE(1, 3), /* 0 (HID_USAGE_HAPTICS_WAVEFORM_RUMBLE) */
-                USAGE(1, 4), /* 0 (HID_USAGE_HAPTICS_WAVEFORM_BUZZ) */
+                USAGE(4, (HID_USAGE_PAGE_ORDINAL<<16)|HAPTICS_WAVEFORM_RUMBLE_ORDINAL), /* 0 (HID_USAGE_HAPTICS_WAVEFORM_RUMBLE) */
+                USAGE(4, (HID_USAGE_PAGE_ORDINAL<<16)|HAPTICS_WAVEFORM_BUZZ_ORDINAL), /* 0 (HID_USAGE_HAPTICS_WAVEFORM_BUZZ) */
                 REPORT_COUNT(1, 2),
                 REPORT_SIZE(1, 16),
                 FEATURE(1, Data|Var|Abs|Null),
             END_COLLECTION,
 
-            USAGE_PAGE(2, HID_USAGE_PAGE_HAPTICS),
             USAGE(1, HID_USAGE_HAPTICS_WAVEFORM_CUTOFF_TIME),
             UNIT(2, 0x1001), /* seconds */
             UNIT_EXPONENT(1, -3), /* 10^-3 */
@@ -1042,18 +1038,18 @@ static void hid_device_set_output_report(struct unix_device *iface, HID_XFER_PAC
     if (packet->reportId == haptics->waveform_report)
     {
         struct hid_haptics_waveform *waveform = (struct hid_haptics_waveform *)(packet->reportBuffer + 1);
-        struct hid_haptics_waveform *rumble = haptics->waveforms + HAPTICS_WAVEFORM_RUMBLE_INDEX;
-        struct hid_haptics_waveform *buzz = haptics->waveforms + HAPTICS_WAVEFORM_BUZZ_INDEX;
+        struct hid_haptics_waveform *rumble = haptics->waveforms + HAPTICS_WAVEFORM_RUMBLE_ORDINAL;
+        struct hid_haptics_waveform *buzz = haptics->waveforms + HAPTICS_WAVEFORM_BUZZ_ORDINAL;
         ULONG duration_ms;
 
         io->Information = sizeof(*waveform) + 1;
         assert(packet->reportBufferLen == io->Information);
 
-        if (waveform->manual_trigger == 0 || waveform->manual_trigger > HAPTICS_WAVEFORM_LAST_INDEX)
+        if (waveform->manual_trigger == 0 || waveform->manual_trigger > HAPTICS_WAVEFORM_LAST_ORDINAL)
             io->Status = STATUS_INVALID_PARAMETER;
         else
         {
-            if (waveform->manual_trigger == HAPTICS_WAVEFORM_STOP_INDEX)
+            if (waveform->manual_trigger == HAPTICS_WAVEFORM_STOP_ORDINAL)
                 memset(haptics->waveforms, 0, sizeof(haptics->waveforms));
             else
                 haptics->waveforms[waveform->manual_trigger] = *waveform;

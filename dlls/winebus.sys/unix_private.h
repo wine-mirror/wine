@@ -121,19 +121,25 @@ struct hid_report_descriptor
     BYTE next_report_id[3];
 };
 
-enum haptics_waveform_index
+/* HID spec uses None / Stop names for the first two implicit waveforms,
+ * where Windows SDK headers use STOP / NULL for the corresponding HID
+ * usage constants. We're not actually using the usages anyway are we
+ * stick to the HID spec here.
+ */
+enum haptics_waveform_ordinal
 {
-    HAPTICS_WAVEFORM_STOP_INDEX = 1,
-    HAPTICS_WAVEFORM_NULL_INDEX = 2,
-    HAPTICS_WAVEFORM_RUMBLE_INDEX = 3,
-    HAPTICS_WAVEFORM_BUZZ_INDEX = 4,
-    HAPTICS_WAVEFORM_LAST_INDEX = HAPTICS_WAVEFORM_BUZZ_INDEX,
+    HAPTICS_WAVEFORM_NONE_ORDINAL = 1, /* implicit, not included in waveform_list / duration_list */
+    HAPTICS_WAVEFORM_STOP_ORDINAL = 2, /* implicit, not included in waveform_list / duration_list */
+    HAPTICS_WAVEFORM_RUMBLE_ORDINAL = 3,
+    HAPTICS_WAVEFORM_BUZZ_ORDINAL = 4,
+    HAPTICS_WAVEFORM_FIRST_ORDINAL = HAPTICS_WAVEFORM_RUMBLE_ORDINAL,
+    HAPTICS_WAVEFORM_LAST_ORDINAL = HAPTICS_WAVEFORM_BUZZ_ORDINAL,
 };
 
 struct hid_haptics_features
 {
-    WORD waveform_list[HAPTICS_WAVEFORM_LAST_INDEX - HAPTICS_WAVEFORM_NULL_INDEX];
-    WORD duration_list[HAPTICS_WAVEFORM_LAST_INDEX - HAPTICS_WAVEFORM_NULL_INDEX];
+    WORD waveform_list[HAPTICS_WAVEFORM_LAST_ORDINAL - HAPTICS_WAVEFORM_FIRST_ORDINAL + 1];
+    WORD duration_list[HAPTICS_WAVEFORM_LAST_ORDINAL - HAPTICS_WAVEFORM_FIRST_ORDINAL + 1];
     UINT waveform_cutoff_time_ms;
 };
 
@@ -146,7 +152,7 @@ struct hid_haptics_waveform
 struct hid_haptics
 {
     struct hid_haptics_features features;
-    struct hid_haptics_waveform waveforms[HAPTICS_WAVEFORM_LAST_INDEX + 1];
+    struct hid_haptics_waveform waveforms[HAPTICS_WAVEFORM_LAST_ORDINAL + 1];
     BYTE features_report;
     BYTE waveform_report;
 };
