@@ -60,10 +60,10 @@ static HRESULT exec_query( IWbemServices *services, const WCHAR *str, IEnumWbemC
             }
 
             hr = IWbemClassObject_GetQualifierSet( obj, &qualifiers );
-            ok( hr == S_OK, "got %08x\n", hr );
+            ok( hr == S_OK, "got %#lx\n", hr );
 
             hr = IWbemQualifierSet_GetNames( qualifiers, 0, &names );
-            ok( hr == S_OK, "got %08x\n", hr );
+            ok( hr == S_OK, "got %#lx\n", hr );
 
             SafeArrayDestroy( names );
             IWbemQualifierSet_Release( qualifiers );
@@ -103,29 +103,29 @@ static void test_select( IWbemServices *services )
     UINT i;
 
     hr = IWbemServices_ExecQuery( services, NULL, NULL, 0, NULL, &result );
-    ok( hr == WBEM_E_INVALID_PARAMETER, "query failed %08x\n", hr );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "query failed %#lx\n", hr );
 
     hr = IWbemServices_ExecQuery( services, NULL, query, 0, NULL, &result );
-    ok( hr == WBEM_E_INVALID_PARAMETER, "query failed %08x\n", hr );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "query failed %#lx\n", hr );
 
     hr = IWbemServices_ExecQuery( services, wql, NULL, 0, NULL, &result );
-    ok( hr == WBEM_E_INVALID_PARAMETER, "query failed %08x\n", hr );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "query failed %#lx\n", hr );
 
     hr = IWbemServices_ExecQuery( services, sql, query, 0, NULL, &result );
-    ok( hr == WBEM_E_INVALID_QUERY_TYPE, "query failed %08x\n", hr );
+    ok( hr == WBEM_E_INVALID_QUERY_TYPE, "query failed %#lx\n", hr );
 
     hr = IWbemServices_ExecQuery( services, sql, NULL, 0, NULL, &result );
-    ok( hr == WBEM_E_INVALID_PARAMETER, "query failed %08x\n", hr );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "query failed %#lx\n", hr );
 
     SysFreeString( query );
     query = SysAllocString( L"" );
     hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
-    ok( hr == WBEM_E_INVALID_PARAMETER, "query failed %08x\n", hr );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "query failed %#lx\n", hr );
 
     for (i = 0; i < ARRAY_SIZE( test ); i++)
     {
         hr = exec_query( services, test[i], &result );
-        ok( hr == S_OK, "query %u failed: %08x\n", i, hr );
+        ok( hr == S_OK, "query %u failed: %#lx\n", i, hr );
         if (result) IEnumWbemClassObject_Release( result );
     }
 
@@ -153,7 +153,7 @@ static void test_associators( IWbemServices *services )
     for (i = 0; i < ARRAY_SIZE( test ); i++)
     {
         hr = exec_query( services, test[i], &result );
-        ok( hr == S_OK, "query %u failed: %08x\n", i, hr );
+        ok( hr == S_OK, "query %u failed: %#lx\n", i, hr );
         if (result) IEnumWbemClassObject_Release( result );
     }
 }
@@ -168,20 +168,20 @@ static void test_IEnumWbemClassObject_Next( IWbemServices *services )
     int i;
 
     hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     count = 2;
     hr = IEnumWbemClassObject_Next( result, 10000, 1, NULL, &count );
-    ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
-    ok( count == 2, "expected 0, got %u\n", count );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "got %#lx\n", hr );
+    ok( count == 2, "expected 0, got %lu\n", count );
 
     hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj1, NULL );
-    ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "got %#lx\n", hr );
 
     count = 2;
     hr = IEnumWbemClassObject_Next( result, 10000, 0, &obj1, &count );
-    ok( hr == S_OK, "got %08x\n", hr );
-    ok( count == 0, "expected 0, got %u\n", count );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    ok( count == 0, "expected 0, got %lu\n", count );
 
     for (;;)
     {
@@ -192,25 +192,25 @@ static void test_IEnumWbemClassObject_Next( IWbemServices *services )
     }
 
     hr = IEnumWbemClassObject_Reset( result );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     obj = malloc( num_objects * sizeof( IWbemClassObject * ) );
 
     count = 0;
     hr = IEnumWbemClassObject_Next( result, 10000, num_objects, obj, &count );
-    ok( hr == S_OK, "got %08x\n", hr );
-    ok( count == num_objects, "expected %u, got %u\n", num_objects, count );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    ok( count == num_objects, "expected %lu, got %lu\n", num_objects, count );
 
     for (i = 0; i < count; i++)
         IWbemClassObject_Release( obj[i] );
 
     hr = IEnumWbemClassObject_Reset( result );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     count = 0;
     hr = IEnumWbemClassObject_Next( result, 10000, num_objects + 1, obj, &count );
-    ok( hr == S_FALSE, "got %08x\n", hr );
-    ok( count == num_objects, "expected %u, got %u\n", num_objects, count );
+    ok( hr == S_FALSE, "got %#lx\n", hr );
+    ok( count == num_objects, "expected %lu, got %lu\n", num_objects, count );
 
     for (i = 0; i < count; i++)
         IWbemClassObject_Release( obj[i] );
@@ -230,9 +230,9 @@ static void _check_property( ULONG line, IWbemClassObject *obj, const WCHAR *pro
 
     VariantInit( &val );
     hr = IWbemClassObject_Get( obj, prop, 0, &val, &type, NULL );
-    ok( hr == S_OK, "%u: failed to get description %08x\n", line, hr );
-    ok( V_VT( &val ) == vartype, "%u: unexpected variant type 0x%x\n", line, V_VT(&val) );
-    ok( type == cimtype, "%u: unexpected type 0x%x\n", line, type );
+    ok( hr == S_OK, "%lu: failed to get description %#lx\n", line, hr );
+    ok( V_VT( &val ) == vartype, "%lu: unexpected variant type 0x%x\n", line, V_VT(&val) );
+    ok( type == cimtype, "%lu: unexpected type %#lx\n", line, type );
     switch (V_VT(&val))
     {
     case VT_BSTR:
@@ -242,7 +242,7 @@ static void _check_property( ULONG line, IWbemClassObject *obj, const WCHAR *pro
         trace( "%s: %d\n", wine_dbgstr_w(prop), V_I2(&val) );
         break;
     case VT_I4:
-        trace( "%s: %d\n", wine_dbgstr_w(prop), V_I4(&val) );
+        trace( "%s: %ld\n", wine_dbgstr_w(prop), V_I4(&val) );
         break;
     case VT_R4:
         trace( "%s: %f\n", wine_dbgstr_w(prop), V_R4(&val) );
@@ -278,45 +278,45 @@ static void test_Win32_Service( IWbemServices *services )
     type = 0xdeadbeef;
     VariantInit( &state );
     hr = IWbemClassObject_Get( service, L"State", 0, &state, &type, NULL );
-    ok( hr == S_OK, "failed to get service state %08x\n", hr );
+    ok( hr == S_OK, "failed to get service state %#lx\n", hr );
     ok( V_VT( &state ) == VT_BSTR, "unexpected variant type 0x%x\n", V_VT( &state ) );
-    ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+    ok( type == CIM_STRING, "unexpected type %#lx\n", type );
 
     if (!lstrcmpW( V_BSTR( &state ), L"Stopped" ))
     {
         out = NULL;
         method = SysAllocString( L"StartService" );
         hr = IWbemServices_ExecMethod( services, class, method, 0, NULL, NULL, &out, NULL );
-        ok( hr == S_OK, "failed to execute method %08x\n", hr );
+        ok( hr == S_OK, "failed to execute method %#lx\n", hr );
         SysFreeString( method );
 
         VariantInit( &retval );
         hr = IWbemClassObject_Get( out, L"ReturnValue", 0, &retval, NULL, NULL );
-        ok( hr == S_OK, "failed to get return value %08x\n", hr );
-        ok( !V_I4( &retval ), "unexpected error %u\n", V_UI4( &retval ) );
+        ok( hr == S_OK, "failed to get return value %#lx\n", hr );
+        ok( !V_I4( &retval ), "unexpected error %lu\n", V_UI4( &retval ) );
         IWbemClassObject_Release( out );
     }
     out = NULL;
     method = SysAllocString( L"PauseService" );
     hr = IWbemServices_ExecMethod( services, class, method, 0, NULL, NULL, &out, NULL );
-    ok( hr == S_OK, "failed to execute method %08x\n", hr );
+    ok( hr == S_OK, "failed to execute method %#lx\n", hr );
     SysFreeString( method );
 
     VariantInit( &retval );
     hr = IWbemClassObject_Get( out, L"ReturnValue", 0, &retval, NULL, NULL );
-    ok( hr == S_OK, "failed to get return value %08x\n", hr );
+    ok( hr == S_OK, "failed to get return value %#lx\n", hr );
     ok( V_I4( &retval ), "unexpected success\n" );
     IWbemClassObject_Release( out );
 
     out = NULL;
     method = SysAllocString( L"ResumeService" );
     hr = IWbemServices_ExecMethod( services, class, method, 0, NULL, NULL, &out, NULL );
-    ok( hr == S_OK, "failed to execute method %08x\n", hr );
+    ok( hr == S_OK, "failed to execute method %#lx\n", hr );
     SysFreeString( method );
 
     VariantInit( &retval );
     hr = IWbemClassObject_Get( out, L"ReturnValue", 0, &retval, NULL, NULL );
-    ok( hr == S_OK, "failed to get return value %08x\n", hr );
+    ok( hr == S_OK, "failed to get return value %#lx\n", hr );
     ok( V_I4( &retval ), "unexpected success\n" );
     IWbemClassObject_Release( out );
 
@@ -325,13 +325,13 @@ static void test_Win32_Service( IWbemServices *services )
         out = NULL;
         method = SysAllocString( L"StopService" );
         hr = IWbemServices_ExecMethod( services, class, method, 0, NULL, NULL, &out, NULL );
-        ok( hr == S_OK, "failed to execute method %08x\n", hr );
+        ok( hr == S_OK, "failed to execute method %#lx\n", hr );
         SysFreeString( method );
 
         VariantInit( &retval );
         hr = IWbemClassObject_Get( out, L"ReturnValue", 0, &retval, NULL, NULL );
-        ok( hr == S_OK, "failed to get return value %08x\n", hr );
-        ok( !V_I4( &retval ), "unexpected error %u\n", V_UI4( &retval ) );
+        ok( hr == S_OK, "failed to get return value %#lx\n", hr );
+        ok( !V_I4( &retval ), "unexpected error %lu\n", V_UI4( &retval ) );
         IWbemClassObject_Release( out );
     }
     VariantClear( &state );
@@ -339,20 +339,20 @@ static void test_Win32_Service( IWbemServices *services )
 
     service = NULL;
     hr = IWbemServices_GetObject( services, NULL, 0, NULL, &service, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( !!service, "expected non-NULL service\n" );
 
     VariantInit(&classvar);
     V_VT(&classvar) = VT_BSTR;
     V_BSTR(&classvar) = SysAllocString(L"MyClass");
     hr = IWbemClassObject_Put(service, L"__CLASS", 0, &classvar, 0);
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     VariantClear(&classvar);
     IWbemClassObject_Release( service );
 
     service = NULL;
     hr = IWbemServices_GetObject( services, empty, 0, NULL, &service, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( !!service, "expected non-NULL service\n" );
     IWbemClassObject_Release( service );
 
@@ -362,7 +362,7 @@ static void test_Win32_Service( IWbemServices *services )
     class = SysAllocString( L"Win32_Service.Name=\"nonexistent\"" );
     service = (IWbemClassObject *)0xdeadbeef;
     hr = IWbemServices_GetObject( services, class, 0, NULL, &service, NULL );
-    ok( hr == WBEM_E_NOT_FOUND, "got %#08x\n", hr );
+    ok( hr == WBEM_E_NOT_FOUND, "got %#lx\n", hr );
     ok( service == NULL, "expected NULL service, got %p\n", service );
     SysFreeString( class );
 }
@@ -378,10 +378,10 @@ static void test_Win32_Bios( IWbemServices *services )
     HRESULT hr;
 
     hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
-    ok( hr == S_OK, "IWbemServices_ExecQuery failed %08x\n", hr );
+    ok( hr == S_OK, "IWbemServices_ExecQuery failed %#lx\n", hr );
 
     hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
-    ok( hr == S_OK, "IEnumWbemClassObject_Next failed %08x\n", hr );
+    ok( hr == S_OK, "IEnumWbemClassObject_Next failed %#lx\n", hr );
 
     check_property( obj, L"Description", VT_BSTR, CIM_STRING );
     check_property( obj, L"IdentificationCode", VT_NULL, CIM_STRING );
@@ -392,10 +392,10 @@ static void test_Win32_Bios( IWbemServices *services )
     type = 0xdeadbeef;
     VariantInit( &val );
     hr = IWbemClassObject_Get( obj, L"SerialNumber", 0, &val, &type, NULL );
-    ok( hr == S_OK, "failed to get serial number %08x\n", hr );
+    ok( hr == S_OK, "failed to get serial number %#lx\n", hr );
     ok( V_VT( &val ) == VT_BSTR || V_VT( &val ) == VT_NULL /* Testbot VMs */,
         "unexpected variant type 0x%x\n", V_VT( &val ) );
-    ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+    ok( type == CIM_STRING, "unexpected type %#lx\n", type );
     VariantClear( &val );
 
     check_property( obj, L"SMBIOSBIOSVersion", VT_BSTR, CIM_STRING );
@@ -420,7 +420,7 @@ static void test_Win32_Baseboard( IWbemServices *services )
     HRESULT hr;
 
     hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
-    ok( hr == S_OK, "IWbemServices_ExecQuery failed %08x\n", hr );
+    ok( hr == S_OK, "IWbemServices_ExecQuery failed %#lx\n", hr );
 
     hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
     if (hr != S_OK)
@@ -428,16 +428,16 @@ static void test_Win32_Baseboard( IWbemServices *services )
         win_skip( "Win32_Baseboard not available\n" );
         return;
     }
-    ok( hr == S_OK, "IEnumWbemClassObject_Next failed %08x\n", hr );
+    ok( hr == S_OK, "IEnumWbemClassObject_Next failed %#lx\n", hr );
 
     check_property( obj, L"Manufacturer", VT_BSTR, CIM_STRING );
 
     type = 0xdeadbeef;
     VariantInit( &val );
     hr = IWbemClassObject_Get( obj, L"Model", 0, &val, &type, NULL );
-    ok( hr == S_OK, "failed to get model %08x\n", hr );
+    ok( hr == S_OK, "failed to get model %#lx\n", hr );
     ok( V_VT( &val ) == VT_BSTR || V_VT( &val ) == VT_NULL, "unexpected variant type 0x%x\n", V_VT( &val ) );
-    ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+    ok( type == CIM_STRING, "unexpected type %#lx\n", type );
     trace( "model: %s\n", wine_dbgstr_w(V_BSTR(&val)) );
     VariantClear( &val );
 
@@ -498,15 +498,15 @@ static void test_Win32_Process( IWbemServices *services, BOOL use_full_path )
     }
     names = NULL;
     hr = IWbemClassObject_GetNames( process, NULL, 0, NULL, &names );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( names != NULL, "names not set\n" );
     hr = SafeArrayGetUBound( names, 1, &bound );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     for (i = 0; i <= bound; i++)
     {
         BSTR str;
         hr = SafeArrayGetElement( names, &i, &str );
-        ok( hr == S_OK, "%d: got %08x\n", i, hr );
+        ok( hr == S_OK, "%ld: got %#lx\n", i, hr );
         SysFreeString( str );
     }
     SafeArrayDestroy( names );
@@ -514,116 +514,116 @@ static void test_Win32_Process( IWbemServices *services, BOOL use_full_path )
     sig_in = (void *)0xdeadbeef;
     sig_out = (void *)0xdeadbeef;
     hr = IWbemClassObject_GetMethod( process, L"unknown", 0, &sig_in, &sig_out );
-    ok( hr == WBEM_E_NOT_FOUND, "Got unexpected hr %#x\n", hr );
+    ok( hr == WBEM_E_NOT_FOUND, "Got unexpected hr %#lx\n", hr );
     ok( !sig_in, "Got unexpected sig_in %p.\n", sig_in );
     ok( !sig_out, "Got unexpected sig_out %p.\n", sig_out );
 
     sig_in = (void *)0xdeadbeef;
     sig_out = (void *)0xdeadbeef;
     hr = IWbemClassObject_GetMethod( process, L"Create", 0, &sig_in, &sig_out );
-    ok( hr == S_OK, "Got unexpected hr %#x\n", hr );
+    ok( hr == S_OK, "Got unexpected hr %#lx\n", hr );
     ok( !!sig_in, "Got unexpected sig_in %p.\n", sig_in );
     ok( !!sig_out, "Got unexpected sig_out %p.\n", sig_out );
 
     hr = IWbemClassObject_SpawnInstance( sig_in, 0, &params );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     out = NULL;
     class = SysAllocString( L"Win32_Process" );
     method = SysAllocString( L"Create" );
     hr = IWbemServices_ExecMethod( services, class, method, 0, NULL, params, &out, NULL );
-    ok( hr == S_OK, "failed to execute method %08x\n", hr );
+    ok( hr == S_OK, "failed to execute method %#lx\n", hr );
     SysFreeString( method );
     SysFreeString( class );
 
     VariantInit( &retval );
     hr = IWbemClassObject_Get( out, L"ReturnValue", 0, &retval, &type, NULL );
-    ok( hr == S_OK, "failed to get return value %08x\n", hr );
+    ok( hr == S_OK, "failed to get return value %#lx\n", hr );
     ok( V_VT( &retval ) == VT_I4, "unexpected variant type 0x%x\n", V_VT( &retval ) );
-    ok( V_I4( &retval ) == 21, "unexpected error %u\n", V_I4( &retval ) );
+    ok( V_I4( &retval ) == 21, "unexpected error %ld\n", V_I4( &retval ) );
 
     IWbemClassObject_Release( out );
 
     V_VT( &val ) = VT_BSTR;
     V_BSTR( &val ) = SysAllocString( L"unknown" );
     hr = IWbemClassObject_Put( params, L"CommandLine", 0, &val, 0 );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     VariantClear( &val );
 
     out = NULL;
     class = SysAllocString( L"Win32_Process" );
     method = SysAllocString( L"Create" );
     hr = IWbemServices_ExecMethod( services, class, method, 0, NULL, params, &out, NULL );
-    ok( hr == S_OK, "failed to execute method %08x\n", hr );
+    ok( hr == S_OK, "failed to execute method %#lx\n", hr );
     SysFreeString( method );
     SysFreeString( class );
 
     VariantInit( &retval );
     hr = IWbemClassObject_Get( out, L"ReturnValue", 0, &retval, &type, NULL );
-    ok( hr == S_OK, "failed to get return value %08x\n", hr );
+    ok( hr == S_OK, "failed to get return value %#lx\n", hr );
     ok( V_VT( &retval ) == VT_I4, "unexpected variant type 0x%x\n", V_VT( &retval ) );
-    ok( V_I4( &retval ) == 9, "unexpected error %u\n", V_I4( &retval ) );
+    ok( V_I4( &retval ) == 9, "unexpected error %ld\n", V_I4( &retval ) );
 
     VariantInit( &retval );
     V_VT( &retval ) = VT_I4;
     hr = IWbemClassObject_Get( out, L"ProcessId", 0, &retval, &type, NULL );
-    ok( hr == S_OK, "failed to get return value %08x\n", hr );
-    todo_wine ok( V_VT( &retval ) == VT_NULL && type == CIM_UINT32, "unexpected variant type 0x%x, type %u\n",
+    ok( hr == S_OK, "failed to get return value %#lx\n", hr );
+    todo_wine ok( V_VT( &retval ) == VT_NULL && type == CIM_UINT32, "unexpected variant type %#x, type %lu\n",
             V_VT( &retval ), type );
 
     IWbemClassObject_Release( out );
 
     ret = GetModuleFileNameW( NULL, cmdlineW, MAX_PATH + 1 );
-    ok( ret < MAX_PATH + 1, "Got unexpected ret %u.\n", ret );
+    ok( ret < MAX_PATH + 1, "got unexpected ret %lu\n", ret );
     lstrcatW( cmdlineW, L" query created_process");
     V_VT( &val ) = VT_BSTR;
     V_BSTR( &val ) = SysAllocString( cmdlineW );
     hr = IWbemClassObject_Put( params, L"CommandLine", 0, &val, 0 );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     VariantClear( &val );
 
     out = NULL;
     class = SysAllocString( L"Win32_Process" );
     method = SysAllocString( L"Create" );
     hr = IWbemServices_ExecMethod( services, class, method, 0, NULL, params, &out, NULL );
-    ok( hr == S_OK, "failed to execute method %08x\n", hr );
+    ok( hr == S_OK, "failed to execute method %#lx\n", hr );
     SysFreeString( method );
     SysFreeString( class );
 
     VariantInit( &retval );
     hr = IWbemClassObject_Get( out, L"ReturnValue", 0, &retval, &type, NULL );
-    ok( hr == S_OK, "failed to get return value %08x\n", hr );
+    ok( hr == S_OK, "failed to get return value %#lx\n", hr );
     ok( V_VT( &retval ) == VT_I4, "unexpected variant type 0x%x\n", V_VT( &retval ) );
-    ok( !V_I4( &retval ), "unexpected error %u\n", V_I4( &retval ) );
+    ok( !V_I4( &retval ), "unexpected error %ld\n", V_I4( &retval ) );
 
     VariantInit( &retval );
     V_VT( &retval ) = VT_I4;
     hr = IWbemClassObject_Get( out, L"ProcessId", 0, &retval, &type, NULL );
-    ok( hr == S_OK, "failed to get return value %08x\n", hr );
-    ok( V_VT( &retval ) == VT_I4 && type == CIM_UINT32, "unexpected variant type 0x%x, type %u\n",
+    ok( hr == S_OK, "failed to get return value %#lx\n", hr );
+    ok( V_VT( &retval ) == VT_I4 && type == CIM_UINT32, "unexpected variant type %#x, type %lu\n",
             V_VT( &retval ), type );
     ok( !!V_UI4( &retval ), "unexpected zero pid\n" );
 
     IWbemClassObject_Release( out );
 
     h = OpenProcess( SYNCHRONIZE, FALSE, V_UI4( &retval ));
-    ok( !!h, "failed to open process %#x.\n", V_UI4( &retval ));
+    ok( !!h, "failed to open process %#lx\n", V_UI4( &retval ));
 
     ret = WaitForSingleObject( h, INFINITE );
-    ok( ret == WAIT_OBJECT_0, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError() );
+    ok( ret == WAIT_OBJECT_0, "got unexpected ret %lu, GetLastError() %lu\n", ret, GetLastError() );
     CloseHandle( h );
 
     refcount = IWbemClassObject_Release( params );
-    ok( !refcount, "Got unexpected refcount %u.\n", refcount );
+    ok( !refcount, "got unexpected refcount %lu\n", refcount );
 
     refcount = IWbemClassObject_Release( sig_in );
-    ok( !refcount, "Got unexpected refcount %u.\n", refcount );
+    ok( !refcount, "got unexpected refcount %lu\n", refcount );
     refcount = IWbemClassObject_Release( sig_out );
-    ok( !refcount, "Got unexpected refcount %u.\n", refcount );
+    ok( !refcount, "got unexpected refcount %lu\n", refcount );
 
     sig_in = (void*)0xdeadbeef;
     hr = IWbemClassObject_GetMethod( process, L"getowner", 0, &sig_in, NULL );
-    ok( hr == S_OK, "failed to get GetOwner method %08x\n", hr );
+    ok( hr == S_OK, "failed to get GetOwner method %#lx\n", hr );
     ok( !sig_in, "sig_in != NULL\n");
     IWbemClassObject_Release( process );
 
@@ -633,54 +633,54 @@ static void test_Win32_Process( IWbemServices *services, BOOL use_full_path )
     memcpy( class, full_path, full_path_len * sizeof(WCHAR) );
     wsprintfW( class + full_path_len, L"Win32_Process.Handle=\"%u\"", GetCurrentProcessId() );
     hr = IWbemServices_ExecMethod( services, class, method, 0, NULL, NULL, &out, NULL );
-    ok( hr == S_OK, "failed to execute method %08x\n", hr );
+    ok( hr == S_OK, "failed to execute method %#lx\n", hr );
     SysFreeString( method );
     SysFreeString( class );
 
     type = 0xdeadbeef;
     VariantInit( &retval );
     hr = IWbemClassObject_Get( out, L"ReturnValue", 0, &retval, &type, NULL );
-    ok( hr == S_OK, "failed to get return value %08x\n", hr );
+    ok( hr == S_OK, "failed to get return value %#lx\n", hr );
     ok( V_VT( &retval ) == VT_I4, "unexpected variant type 0x%x\n", V_VT( &retval ) );
-    ok( !V_I4( &retval ), "unexpected error %u\n", V_I4( &retval ) );
-    ok( type == CIM_UINT32, "unexpected type 0x%x\n", type );
+    ok( !V_I4( &retval ), "unexpected error %ld\n", V_I4( &retval ) );
+    ok( type == CIM_UINT32, "unexpected type %#lx\n", type );
 
     check_property( out, L"User", VT_BSTR, CIM_STRING );
     check_property( out, L"Domain", VT_BSTR, CIM_STRING );
 
     hr = IWbemClassObject_GetPropertyQualifierSet( out, L"User", &qualifiers );
-    ok( hr == S_OK, "failed to get qualifier set %08x\n", hr );
+    ok( hr == S_OK, "failed to get qualifier set %#lx\n", hr );
 
     flavor = -1;
     V_I4(&val) = -1;
     V_VT(&val) = VT_ERROR;
     hr = IWbemQualifierSet_Get( qualifiers, L"ID", 0, &val, &flavor );
-    ok( hr == S_OK, "got %08x\n", hr );
-    ok( flavor == expected_flavor, "got %d\n", flavor );
-    ok( V_VT(&val) == VT_I4, "got %u\n", V_VT(&val) );
-    ok( V_I4(&val) == 0, "got %u\n", V_I4(&val) );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    ok( flavor == expected_flavor, "got %ld\n", flavor );
+    ok( V_VT(&val) == VT_I4, "got %#x\n", V_VT(&val) );
+    ok( V_I4(&val) == 0, "got %ld\n", V_I4(&val) );
     VariantClear( &val );
 
     IWbemQualifierSet_Release( qualifiers );
     hr = IWbemClassObject_GetPropertyQualifierSet( out, L"Domain", &qualifiers );
-    ok( hr == S_OK, "failed to get qualifier set %08x\n", hr );
+    ok( hr == S_OK, "failed to get qualifier set %#lx\n", hr );
 
     flavor = -1;
     V_I4(&val) = -1;
     V_VT(&val) = VT_ERROR;
     hr = IWbemQualifierSet_Get( qualifiers, L"ID", 0, &val, &flavor );
-    ok( hr == S_OK, "got %08x\n", hr );
-    ok( flavor == expected_flavor, "got %d\n", flavor );
-    ok( V_VT(&val) == VT_I4, "got %u\n", V_VT(&val) );
-    ok( V_I4(&val) == 1, "got %u\n", V_I4(&val) );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    ok( flavor == expected_flavor, "got %ld\n", flavor );
+    ok( V_VT(&val) == VT_I4, "got %#x\n", V_VT(&val) );
+    ok( V_I4(&val) == 1, "got %ld\n", V_I4(&val) );
     VariantClear( &val );
 
     IWbemQualifierSet_Release( qualifiers );
     hr = IWbemClassObject_GetPropertyQualifierSet( out, L"ReturnValue", &qualifiers );
-    ok( hr == S_OK, "failed to get qualifier set %08x\n", hr );
+    ok( hr == S_OK, "failed to get qualifier set %#lx\n", hr );
 
     hr = IWbemQualifierSet_Get( qualifiers, L"ID", 0, &val, &flavor );
-    ok( hr == WBEM_E_NOT_FOUND, "got %08x\n", hr );
+    ok( hr == WBEM_E_NOT_FOUND, "got %#lx\n", hr );
 
     IWbemQualifierSet_Release( qualifiers );
     IWbemClassObject_Release( out );
@@ -722,33 +722,33 @@ static void test_Win32_ComputerSystem( IWbemServices *services )
     }
 
     hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     type = 0xdeadbeef;
     VariantInit( &value );
     hr = IWbemClassObject_Get( obj, L"MemoryType", 0, &value, &type, NULL );
-    ok( hr == WBEM_E_NOT_FOUND, "got %08x\n", hr );
+    ok( hr == WBEM_E_NOT_FOUND, "got %#lx\n", hr );
 
     check_property( obj, L"Model", VT_BSTR, CIM_STRING );
 
     type = 0xdeadbeef;
     VariantInit( &value );
     hr = IWbemClassObject_Get( obj, L"Name", 0, &value, &type, NULL );
-    ok( hr == S_OK, "failed to get computer name %08x\n", hr );
+    ok( hr == S_OK, "failed to get computer name %#lx\n", hr );
     ok( V_VT( &value ) == VT_BSTR, "unexpected variant type 0x%x\n", V_VT( &value ) );
-    ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+    ok( type == CIM_STRING, "unexpected type %#lx\n", type );
     ok( !lstrcmpiW( V_BSTR( &value ), compname ), "got %s, expected %s\n", wine_dbgstr_w(V_BSTR(&value)), wine_dbgstr_w(compname) );
     VariantClear( &value );
 
     type = 0xdeadbeef;
     VariantInit( &value );
     hr = IWbemClassObject_Get( obj, L"NumberOfLogicalProcessors", 0, &value, &type, NULL );
-    ok( hr == S_OK || broken(hr == WBEM_E_NOT_FOUND) /* win2k3 */, "got %08x\n", hr );
+    ok( hr == S_OK || broken(hr == WBEM_E_NOT_FOUND) /* win2k3 */, "got %#lx\n", hr );
     if (hr == S_OK)
     {
-        ok( V_VT( &value ) == VT_I4, "unexpected variant type 0x%x\n", V_VT( &value ) );
-        ok( type == CIM_UINT32, "unexpected type 0x%x\n", type );
-        trace( "numlogicalprocessors %u\n", V_I4( &value ) );
+        ok( V_VT( &value ) == VT_I4, "unexpected variant type %#x\n", V_VT( &value ) );
+        ok( type == CIM_UINT32, "unexpected type %#lx\n", type );
+        trace( "numlogicalprocessors %ld\n", V_I4( &value ) );
     }
 
     check_property( obj, L"NumberOfProcessors", VT_I4, CIM_UINT32 );
@@ -756,9 +756,9 @@ static void test_Win32_ComputerSystem( IWbemServices *services )
     type = 0xdeadbeef;
     VariantInit( &value );
     hr = IWbemClassObject_Get( obj, L"UserName", 0, &value, &type, NULL );
-    ok( hr == S_OK, "failed to get computer name %08x\n", hr );
+    ok( hr == S_OK, "failed to get computer name %#lx\n", hr );
     ok( V_VT( &value ) == VT_BSTR, "unexpected variant type 0x%x\n", V_VT( &value ) );
-    ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+    ok( type == CIM_STRING, "unexpected type %#lx\n", type );
     ok( !lstrcmpiW( V_BSTR( &value ), username ), "got %s, expected %s\n", wine_dbgstr_w(V_BSTR(&value)), wine_dbgstr_w(username) );
     VariantClear( &value );
 
@@ -781,36 +781,36 @@ static void test_Win32_SystemEnclosure( IWbemServices *services )
     HRESULT hr;
 
     hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
-    ok( hr == S_OK, "IWbemServices_ExecQuery failed %08x\n", hr );
+    ok( hr == S_OK, "IWbemServices_ExecQuery failed %#lx\n", hr );
 
     hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
-    ok( hr == S_OK, "IEnumWbemClassObject_Next failed %08x\n", hr );
+    ok( hr == S_OK, "IEnumWbemClassObject_Next failed %#lx\n", hr );
 
     check_property( obj, L"Caption", VT_BSTR, CIM_STRING );
 
     type = 0xdeadbeef;
     VariantInit( &val );
     hr = IWbemClassObject_Get( obj, L"ChassisTypes", 0, &val, &type, NULL );
-    ok( hr == S_OK, "failed to get chassis types %08x\n", hr );
-    ok( V_VT( &val ) == (VT_I4|VT_ARRAY), "unexpected variant type 0x%x\n", V_VT( &val ) );
-    ok( type == (CIM_UINT16|CIM_FLAG_ARRAY), "unexpected type 0x%x\n", type );
+    ok( hr == S_OK, "failed to get chassis types %#lx\n", hr );
+    ok( V_VT( &val ) == (VT_I4|VT_ARRAY), "unexpected variant type %#x\n", V_VT( &val ) );
+    ok( type == (CIM_UINT16|CIM_FLAG_ARRAY), "unexpected type %#lx\n", type );
     hr = SafeArrayAccessData( V_ARRAY( &val ), (void **)&data );
-    ok( hr == S_OK, "SafeArrayAccessData failed %x\n", hr );
+    ok( hr == S_OK, "SafeArrayAccessData failed %#lx\n", hr );
     if (SUCCEEDED(hr))
     {
         LONG i, lower, upper;
 
         hr = SafeArrayGetLBound( V_ARRAY( &val ), 1, &lower );
-        ok( hr == S_OK, "SafeArrayGetLBound failed %x\n", hr );
+        ok( hr == S_OK, "SafeArrayGetLBound failed %#lx\n", hr );
         hr = SafeArrayGetUBound( V_ARRAY( &val ), 1, &upper );
-        ok( hr == S_OK, "SafeArrayGetUBound failed %x\n", hr );
+        ok( hr == S_OK, "SafeArrayGetUBound failed %#lx\n", hr );
         if (V_VT( &val ) == (VT_I4|VT_ARRAY))
         {
             for (i = 0; i < upper - lower + 1; i++)
-                trace( "chassis type: %u\n", data[i] );
+                trace( "chassis type: %lu\n", data[i] );
         }
         hr = SafeArrayUnaccessData( V_ARRAY( &val ) );
-        ok( hr == S_OK, "SafeArrayUnaccessData failed %x\n", hr );
+        ok( hr == S_OK, "SafeArrayUnaccessData failed %#lx\n", hr );
     }
     VariantClear( &val );
 
@@ -843,7 +843,7 @@ static void test_StdRegProv( IWbemServices *services )
     }
 
     hr = IWbemClassObject_BeginMethodEnumeration( reg, 0 );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     while (IWbemClassObject_NextMethod( reg, 0, &name, &sig_in, &sig_out ) == S_OK)
     {
@@ -853,59 +853,59 @@ static void test_StdRegProv( IWbemServices *services )
     }
 
     hr = IWbemClassObject_EndMethodEnumeration( reg );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = IWbemClassObject_BeginEnumeration( reg, 0 );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     while (IWbemClassObject_Next( reg, 0, &name, NULL, NULL, NULL ) == S_OK)
         SysFreeString( name );
 
     hr = IWbemClassObject_EndEnumeration( reg );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = IWbemClassObject_GetMethod( reg, L"CreateKey", 0, &sig_in, NULL );
-    ok( hr == S_OK, "failed to get CreateKey method %08x\n", hr );
+    ok( hr == S_OK, "failed to get CreateKey method %#lx\n", hr );
 
     hr = IWbemClassObject_SpawnInstance( sig_in, 0, &in );
-    ok( hr == S_OK, "failed to spawn instance %08x\n", hr );
+    ok( hr == S_OK, "failed to spawn instance %#lx\n", hr );
 
     hr = IWbemClassObject_BeginEnumeration( in, 0 );
-    ok( hr == S_OK, "failed to start enumeration %08x\n", hr );
+    ok( hr == S_OK, "failed to start enumeration %#lx\n", hr );
 
     hr = IWbemClassObject_Next( in, 0, &name, NULL, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     SysFreeString( name );
 
     hr = IWbemClassObject_EndEnumeration( in );
-    ok( hr == S_OK, "failed to end enumeration %08x\n", hr );
+    ok( hr == S_OK, "failed to end enumeration %#lx\n", hr );
 
     V_VT( &defkey ) = VT_I4;
     V_I4( &defkey ) = 0x80000001;
     hr = IWbemClassObject_Put( in, L"hDefKey", 0, &defkey, 0 );
-    ok( hr == S_OK, "failed to set root %08x\n", hr );
+    ok( hr == S_OK, "failed to set root %#lx\n", hr );
 
     V_VT( &subkey ) = VT_BSTR;
     V_BSTR( &subkey ) = SysAllocString( L"Software\\StdRegProvTest" );
     hr = IWbemClassObject_Put( in, L"sSubKeyName", 0, &subkey, 0 );
-    ok( hr == S_OK, "failed to set subkey %08x\n", hr );
+    ok( hr == S_OK, "failed to set subkey %#lx\n", hr );
 
     out = NULL;
     method = SysAllocString( L"CreateKey" );
     hr = IWbemServices_ExecMethod( services, class, method, 0, NULL, in, &out, NULL );
-    ok( hr == S_OK, "failed to execute method %08x\n", hr );
+    ok( hr == S_OK, "failed to execute method %#lx\n", hr );
     SysFreeString( method );
 
     type = 0xdeadbeef;
     VariantInit( &retval );
     hr = IWbemClassObject_Get( out, L"ReturnValue", 0, &retval, &type, NULL );
-    ok( hr == S_OK, "failed to get return value %08x\n", hr );
-    ok( V_VT( &retval ) == VT_I4, "unexpected variant type 0x%x\n", V_VT( &retval ) );
-    ok( !V_I4( &retval ), "unexpected error %u\n", V_UI4( &retval ) );
-    ok( type == CIM_UINT32, "unexpected type 0x%x\n", type );
+    ok( hr == S_OK, "failed to get return value %#lx\n", hr );
+    ok( V_VT( &retval ) == VT_I4, "unexpected variant type %#x\n", V_VT( &retval ) );
+    ok( !V_I4( &retval ), "unexpected error %ld\n", V_UI4( &retval ) );
+    ok( type == CIM_UINT32, "unexpected type %#lx\n", type );
 
     res = RegDeleteKeyW( HKEY_CURRENT_USER, L"Software\\StdRegProvTest" );
-    ok( !res, "got %d\n", res );
+    ok( !res, "got %ld\n", res );
 
     VariantClear( &subkey );
     IWbemClassObject_Release( in );
@@ -913,34 +913,34 @@ static void test_StdRegProv( IWbemServices *services )
     IWbemClassObject_Release( sig_in );
 
     hr = IWbemClassObject_GetMethod( reg, L"EnumKey", 0, &sig_in, NULL );
-    ok( hr == S_OK, "failed to get EnumKey method %08x\n", hr );
+    ok( hr == S_OK, "failed to get EnumKey method %#lx\n", hr );
 
     hr = IWbemClassObject_SpawnInstance( sig_in, 0, &in );
-    ok( hr == S_OK, "failed to spawn instance %08x\n", hr );
+    ok( hr == S_OK, "failed to spawn instance %#lx\n", hr );
 
     V_VT( &defkey ) = VT_I4;
     V_I4( &defkey ) = 0x80000002;
     hr = IWbemClassObject_Put( in, L"hDefKey", 0, &defkey, 0 );
-    ok( hr == S_OK, "failed to set root %08x\n", hr );
+    ok( hr == S_OK, "failed to set root %#lx\n", hr );
 
     V_VT( &subkey ) = VT_BSTR;
     V_BSTR( &subkey ) = SysAllocString( L"Software\\microsoft\\Windows\\CurrentVersion" );
     hr = IWbemClassObject_Put( in, L"sSubKeyName", 0, &subkey, 0 );
-    ok( hr == S_OK, "failed to set subkey %08x\n", hr );
+    ok( hr == S_OK, "failed to set subkey %#lx\n", hr );
 
     out = NULL;
     method = SysAllocString( L"EnumKey" );
     hr = IWbemServices_ExecMethod( services, class, method, 0, NULL, in, &out, NULL );
-    ok( hr == S_OK, "failed to execute method %08x\n", hr );
+    ok( hr == S_OK, "failed to execute method %#lx\n", hr );
     SysFreeString( method );
 
     type = 0xdeadbeef;
     VariantInit( &retval );
     hr = IWbemClassObject_Get( out, L"ReturnValue", 0, &retval, &type, NULL );
-    ok( hr == S_OK, "failed to get return value %08x\n", hr );
+    ok( hr == S_OK, "failed to get return value %#lx\n", hr );
     ok( V_VT( &retval ) == VT_I4, "unexpected variant type 0x%x\n", V_VT( &retval ) );
-    ok( !V_I4( &retval ), "unexpected error %u\n", V_UI4( &retval ) );
-    ok( type == CIM_UINT32, "unexpected type 0x%x\n", type );
+    ok( !V_I4( &retval ), "unexpected error %lu\n", V_UI4( &retval ) );
+    ok( type == CIM_UINT32, "unexpected type %#lx\n", type );
 
     check_property( out, L"sNames", VT_BSTR|VT_ARRAY, CIM_STRING|CIM_FLAG_ARRAY );
 
@@ -950,34 +950,34 @@ static void test_StdRegProv( IWbemServices *services )
     IWbemClassObject_Release( sig_in );
 
     hr = IWbemClassObject_GetMethod( reg, L"EnumValues", 0, &sig_in, NULL );
-    ok( hr == S_OK, "failed to get EnumValues method %08x\n", hr );
+    ok( hr == S_OK, "failed to get EnumValues method %#lx\n", hr );
 
     hr = IWbemClassObject_SpawnInstance( sig_in, 0, &in );
-    ok( hr == S_OK, "failed to spawn instance %08x\n", hr );
+    ok( hr == S_OK, "failed to spawn instance %#lx\n", hr );
 
     V_VT( &defkey ) = VT_I4;
     V_I4( &defkey ) = 0x80000002;
     hr = IWbemClassObject_Put( in, L"hDefKey", 0, &defkey, 0 );
-    ok( hr == S_OK, "failed to set root %08x\n", hr );
+    ok( hr == S_OK, "failed to set root %#lx\n", hr );
 
     V_VT( &subkey ) = VT_BSTR;
     V_BSTR( &subkey ) = SysAllocString( L"Software\\microsoft\\Windows\\CurrentVersion" );
     hr = IWbemClassObject_Put( in, L"sSubKeyName", 0, &subkey, 0 );
-    ok( hr == S_OK, "failed to set subkey %08x\n", hr );
+    ok( hr == S_OK, "failed to set subkey %#lx\n", hr );
 
     out = NULL;
     method = SysAllocString( L"EnumValues" );
     hr = IWbemServices_ExecMethod( services, class, method, 0, NULL, in, &out, NULL );
-    ok( hr == S_OK, "failed to execute method %08x\n", hr );
+    ok( hr == S_OK, "failed to execute method %#lx\n", hr );
     SysFreeString( method );
 
     type = 0xdeadbeef;
     VariantInit( &retval );
     hr = IWbemClassObject_Get( out, L"ReturnValue", 0, &retval, &type, NULL );
-    ok( hr == S_OK, "failed to get return value %08x\n", hr );
-    ok( V_VT( &retval ) == VT_I4, "unexpected variant type 0x%x\n", V_VT( &retval ) );
-    ok( !V_I4( &retval ), "unexpected error %u\n", V_I4( &retval ) );
-    ok( type == CIM_UINT32, "unexpected type 0x%x\n", type );
+    ok( hr == S_OK, "failed to get return value %#lx\n", hr );
+    ok( V_VT( &retval ) == VT_I4, "unexpected variant type %#x\n", V_VT( &retval ) );
+    ok( !V_I4( &retval ), "unexpected error %ld\n", V_I4( &retval ) );
+    ok( type == CIM_UINT32, "unexpected type %#lx\n", type );
 
     check_property( out, L"sNames", VT_BSTR|VT_ARRAY, CIM_STRING|CIM_FLAG_ARRAY );
     check_property( out, L"Types", VT_I4|VT_ARRAY, CIM_SINT32|CIM_FLAG_ARRAY );
@@ -988,39 +988,39 @@ static void test_StdRegProv( IWbemServices *services )
     IWbemClassObject_Release( sig_in );
 
     hr = IWbemClassObject_GetMethod( reg, L"GetStringValue", 0, &sig_in, NULL );
-    ok( hr == S_OK, "failed to get GetStringValue method %08x\n", hr );
+    ok( hr == S_OK, "failed to get GetStringValue method %#lx\n", hr );
 
     hr = IWbemClassObject_SpawnInstance( sig_in, 0, &in );
-    ok( hr == S_OK, "failed to spawn instance %08x\n", hr );
+    ok( hr == S_OK, "failed to spawn instance %#lx\n", hr );
 
     V_VT( &defkey ) = VT_I4;
     V_I4( &defkey ) = 0x80000002;
     hr = IWbemClassObject_Put( in, L"hDefKey", 0, &defkey, 0 );
-    ok( hr == S_OK, "failed to set root %08x\n", hr );
+    ok( hr == S_OK, "failed to set root %#lx\n", hr );
 
     V_VT( &subkey ) = VT_BSTR;
     V_BSTR( &subkey ) = SysAllocString( L"Software\\microsoft\\Windows\\CurrentVersion" );
     hr = IWbemClassObject_Put( in, L"sSubKeyName", 0, &subkey, 0 );
-    ok( hr == S_OK, "failed to set subkey %08x\n", hr );
+    ok( hr == S_OK, "failed to set subkey %#lx\n", hr );
 
     V_VT( &valuename ) = VT_BSTR;
     V_BSTR( &valuename ) = SysAllocString( L"ProgramFilesDir" );
     hr = IWbemClassObject_Put( in, L"sValueName", 0, &valuename, 0 );
-    ok( hr == S_OK, "failed to set value name %08x\n", hr );
+    ok( hr == S_OK, "failed to set value name %#lx\n", hr );
 
     out = NULL;
     method = SysAllocString( L"GetStringValue" );
     hr = IWbemServices_ExecMethod( services, class, method, 0, NULL, in, &out, NULL );
-    ok( hr == S_OK, "failed to execute method %08x\n", hr );
+    ok( hr == S_OK, "failed to execute method %#lx\n", hr );
     SysFreeString( method );
 
     type = 0xdeadbeef;
     VariantInit( &retval );
     hr = IWbemClassObject_Get( out, L"ReturnValue", 0, &retval, &type, NULL );
-    ok( hr == S_OK, "failed to get return value %08x\n", hr );
-    ok( V_VT( &retval ) == VT_I4, "unexpected variant type 0x%x\n", V_VT( &retval ) );
-    ok( !V_I4( &retval ), "unexpected error %u\n", V_I4( &retval ) );
-    ok( type == CIM_UINT32, "unexpected type 0x%x\n", type );
+    ok( hr == S_OK, "failed to get return value %#lx\n", hr );
+    ok( V_VT( &retval ) == VT_I4, "unexpected variant type %#x\n", V_VT( &retval ) );
+    ok( !V_I4( &retval ), "unexpected error %ld\n", V_I4( &retval ) );
+    ok( type == CIM_UINT32, "unexpected type %#lx\n", type );
 
     check_property( out, L"sValue", VT_BSTR, CIM_STRING );
 
@@ -1064,14 +1064,14 @@ static ULONG WINAPI sink_Release(
 static HRESULT WINAPI sink_Indicate(
     IWbemObjectSink *iface, LONG count, IWbemClassObject **objects )
 {
-    trace("Indicate: %d, %p\n", count, objects);
+    trace( "Indicate: %ld, %p\n", count, objects );
     return S_OK;
 }
 
 static HRESULT WINAPI sink_SetStatus(
     IWbemObjectSink *iface, LONG flags, HRESULT hresult, BSTR str_param, IWbemClassObject *obj_param )
 {
-    trace("SetStatus: %08x, %08x, %s, %p\n", flags, hresult, wine_dbgstr_w(str_param), obj_param);
+    trace( "SetStatus: %#lx, %#lx, %s, %p\n", flags, hresult, wine_dbgstr_w(str_param), obj_param );
     return S_OK;
 }
 
@@ -1093,15 +1093,15 @@ static void test_notification_query_async( IWbemServices *services )
     HRESULT hr;
 
     hr = IWbemServices_ExecNotificationQueryAsync( services, wql, query, 0, NULL, NULL );
-    ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "got %#lx\n", hr );
 
     prev_sink_refs = sink_refs;
     hr = IWbemServices_ExecNotificationQueryAsync( services, wql, query, 0, NULL, &sink );
-    ok( hr == S_OK || broken(hr == WBEM_E_NOT_FOUND), "got %08x\n", hr );
-    ok( sink_refs > prev_sink_refs || broken(!sink_refs), "got %u refs\n", sink_refs );
+    ok( hr == S_OK || broken(hr == WBEM_E_NOT_FOUND), "got %#lx\n", hr );
+    ok( sink_refs > prev_sink_refs || broken(!sink_refs), "got %lu refs\n", sink_refs );
 
     hr =  IWbemServices_CancelAsyncCall( services, &sink );
-    ok( hr == S_OK || broken(hr == WBEM_E_NOT_FOUND), "got %08x\n", hr );
+    ok( hr == S_OK || broken(hr == WBEM_E_NOT_FOUND), "got %#lx\n", hr );
 
     SysFreeString( wql );
     SysFreeString( query );
@@ -1113,16 +1113,16 @@ static void test_query_async( IWbemServices *services )
     HRESULT hr;
 
     hr = IWbemServices_ExecQueryAsync( services, wql, query, 0, NULL, NULL );
-    ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "got %#lx\n", hr );
 
     hr = IWbemServices_ExecQueryAsync( services, wql, query, 0, NULL, &sink );
-    ok( hr == S_OK || broken(hr == WBEM_E_NOT_FOUND), "got %08x\n", hr );
+    ok( hr == S_OK || broken(hr == WBEM_E_NOT_FOUND), "got %#lx\n", hr );
 
     hr =  IWbemServices_CancelAsyncCall( services, NULL );
-    ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "got %#lx\n", hr );
 
     hr =  IWbemServices_CancelAsyncCall( services, &sink );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     SysFreeString( wql );
     SysFreeString( query );
@@ -1138,15 +1138,15 @@ static void test_query_semisync( IWbemServices *services )
 
     hr = IWbemServices_ExecQuery( services, wql, query, WBEM_FLAG_RETURN_IMMEDIATELY | WBEM_FLAG_FORWARD_ONLY,
             NULL, &result );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     count = 1;
     obj = (void *)0xdeadbeef;
     hr = IEnumWbemClassObject_Next( result, -1, 1, &obj, &count );
     todo_wine
-    ok( hr == WBEM_E_INVALID_CLASS, "Unexpected hr %#x.\n", hr );
-    ok( count == 0, "Unexpected count %u.\n", count );
-    ok( obj == (void *)0xdeadbeef, "Got object %p\n", obj );
+    ok( hr == WBEM_E_INVALID_CLASS, "unexpected hr %#lx\n", hr );
+    ok( count == 0, "unexpected count %lu\n", count );
+    ok( obj == (void *)0xdeadbeef, "got object %p\n", obj );
 
     IEnumWbemClassObject_Release( result );
 
@@ -1161,7 +1161,7 @@ static void test_GetNames( IWbemServices *services )
     HRESULT hr;
 
     hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     for (;;)
     {
@@ -1174,23 +1174,23 @@ static void test_GetNames( IWbemServices *services )
         if (!count) break;
 
         hr = IWbemClassObject_GetNames( obj, NULL, 0, NULL, NULL );
-        ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
+        ok( hr == WBEM_E_INVALID_PARAMETER, "got %#lx\n", hr );
 
         hr = IWbemClassObject_GetNames( obj, NULL, 0, NULL, &names );
-        ok( hr == S_OK, "got %08x\n", hr );
+        ok( hr == S_OK, "got %#lx\n", hr );
         SafeArrayDestroy( names );
 
         hr = IWbemClassObject_GetNames( obj, NULL, WBEM_FLAG_ALWAYS, NULL, &names );
-        ok( hr == S_OK, "got %08x\n", hr );
+        ok( hr == S_OK, "got %#lx\n", hr );
         SafeArrayDestroy( names );
 
         hr = IWbemClassObject_GetNames( obj, NULL, WBEM_FLAG_ALWAYS | WBEM_MASK_CONDITION_ORIGIN, NULL, &names );
-        ok( hr == S_OK, "got %08x\n", hr );
+        ok( hr == S_OK, "got %#lx\n", hr );
         SafeArrayDestroy( names );
 
         VariantInit( &val );
         hr = IWbemClassObject_GetNames( obj, NULL, WBEM_FLAG_NONSYSTEM_ONLY, &val, &names );
-        ok( hr == S_OK, "got %08x\n", hr );
+        ok( hr == S_OK, "got %#lx\n", hr );
 
         SafeArrayDestroy( names );
         IWbemClassObject_Release( obj );
@@ -1229,7 +1229,7 @@ static void test_SystemSecurity( IWbemServices *services )
     out = NULL;
     method = SysAllocString( L"GetSD" );
     hr = IWbemServices_ExecMethod( services, class, method, 0, NULL, NULL, &out, NULL );
-    ok( hr == S_OK || hr == WBEM_E_ACCESS_DENIED, "failed to execute method %08x\n", hr );
+    ok( hr == S_OK || hr == WBEM_E_ACCESS_DENIED, "failed to execute method %#lx\n", hr );
     SysFreeString( method );
 
     if (SUCCEEDED(hr))
@@ -1237,20 +1237,20 @@ static void test_SystemSecurity( IWbemServices *services )
         type = 0xdeadbeef;
         VariantInit( &retval );
         hr = IWbemClassObject_Get( out, L"ReturnValue", 0, &retval, &type, NULL );
-        ok( hr == S_OK, "failed to get return value %08x\n", hr );
-        ok( V_VT( &retval ) == VT_I4, "unexpected variant type 0x%x\n", V_VT( &retval ) );
-        ok( !V_I4( &retval ), "unexpected error %u\n", V_UI4( &retval ) );
-        ok( type == CIM_UINT32, "unexpected type 0x%x\n", type );
+        ok( hr == S_OK, "failed to get return value %#lx\n", hr );
+        ok( V_VT( &retval ) == VT_I4, "unexpected variant type %#x\n", V_VT( &retval ) );
+        ok( !V_I4( &retval ), "unexpected error %lu\n", V_UI4( &retval ) );
+        ok( type == CIM_UINT32, "unexpected type %#lx\n", type );
 
         type = 0xdeadbeef;
         VariantInit( &var_sd );
         hr = IWbemClassObject_Get( out, L"SD", 0, &var_sd, &type, NULL );
-        ok( hr == S_OK, "failed to get names %08x\n", hr );
-        ok( V_VT( &var_sd ) == (VT_UI1|VT_ARRAY), "unexpected variant type 0x%x\n", V_VT( &var_sd ) );
-        ok( type == (CIM_UINT8|CIM_FLAG_ARRAY), "unexpected type 0x%x\n", type );
+        ok( hr == S_OK, "failed to get names %#lx\n", hr );
+        ok( V_VT( &var_sd ) == (VT_UI1|VT_ARRAY), "unexpected variant type %#x\n", V_VT( &var_sd ) );
+        ok( type == (CIM_UINT8|CIM_FLAG_ARRAY), "unexpected type %#lx\n", type );
 
         hr = SafeArrayAccessData( V_ARRAY( &var_sd ), &data );
-        ok( hr == S_OK, "SafeArrayAccessData failed %x\n", hr );
+        ok( hr == S_OK, "SafeArrayAccessData failed %#lx\n", hr );
         if (SUCCEEDED(hr))
         {
             sd = data;
@@ -1262,7 +1262,7 @@ static void test_SystemSecurity( IWbemServices *services )
             ok( EqualSid( (PSID)((LPBYTE)sd + sd->Group), sid_admin ), "unexpected group SID\n" );
 
             hr = SafeArrayUnaccessData( V_ARRAY( &var_sd ) );
-            ok( hr == S_OK, "SafeArrayUnaccessData failed %x\n", hr );
+            ok( hr == S_OK, "SafeArrayUnaccessData failed %#lx\n", hr );
         }
 
         VariantClear( &var_sd );
@@ -1283,7 +1283,7 @@ static void test_Win32_NetworkAdapter( IWbemServices *services )
     DWORD count;
 
     hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     for (;;)
     {
@@ -1301,10 +1301,10 @@ static void test_Win32_NetworkAdapter( IWbemServices *services )
         type = 0xdeadbeef;
         VariantInit( &val );
         hr = IWbemClassObject_Get( obj, L"ServiceName", 0, &val, &type, NULL );
-        ok( hr == S_OK, "failed to get service name %08x\n", hr );
+        ok( hr == S_OK, "failed to get service name %#lx\n", hr );
         ok( V_VT( &val ) == VT_BSTR || broken(V_VT( &val ) == VT_NULL) /* win2k8 */,
             "unexpected variant type 0x%x\n", V_VT( &val ) );
-        ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+        ok( type == CIM_STRING, "unexpected type %#lx\n", type );
         VariantClear( &val );
 
         IWbemClassObject_Release( obj );
@@ -1315,12 +1315,12 @@ static void test_Win32_NetworkAdapter( IWbemServices *services )
 
     query = SysAllocString( L"SELECT * FROM Win32_NetworkAdapter WHERE PNPDeviceID LIKE \"PCI\\\\%\"" );
     hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     SysFreeString( query );
 
     query = SysAllocString( L"SELECT * FROM Win32_NetworkAdapter WHERE PNPDeviceID LIKE \"PCI\\%\"" );
     hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
-    todo_wine ok( hr == WBEM_E_INVALID_QUERY, "got %08x\n", hr );
+    todo_wine ok( hr == WBEM_E_INVALID_QUERY, "got %#lx\n", hr );
     SysFreeString( query );
     SysFreeString( wql );
 }
@@ -1336,7 +1336,7 @@ static void test_Win32_NetworkAdapterConfiguration( IWbemServices *services )
     VARIANT val;
 
     hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     for (;;)
     {
@@ -1350,9 +1350,9 @@ static void test_Win32_NetworkAdapterConfiguration( IWbemServices *services )
         type = 0xdeadbeef;
         VariantInit( &val );
         hr = IWbemClassObject_Get( obj, L"DNSDomain", 0, &val, &type, NULL );
-        ok( hr == S_OK, "got %08x\n", hr );
+        ok( hr == S_OK, "got %#lx\n", hr );
         ok( V_VT( &val ) == VT_BSTR || V_VT( &val ) == VT_NULL, "unexpected variant type 0x%x\n", V_VT( &val ) );
-        ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+        ok( type == CIM_STRING, "unexpected type %#lx\n", type );
         trace( "DNSDomain %s\n", wine_dbgstr_w(V_BSTR( &val )) );
         VariantClear( &val );
 
@@ -1375,18 +1375,18 @@ static void test_Win32_OperatingSystem( IWbemServices *services )
     HRESULT hr;
 
     hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
-    ok( hr == S_OK, "IWbemServices_ExecQuery failed %08x\n", hr );
+    ok( hr == S_OK, "IWbemServices_ExecQuery failed %#lx\n", hr );
 
     hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
-    ok( hr == S_OK, "IEnumWbemClassObject_Next failed %08x\n", hr );
+    ok( hr == S_OK, "IEnumWbemClassObject_Next failed %#lx\n", hr );
 
     hr = IWbemClassObject_BeginEnumeration( obj, 0 );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     while (IWbemClassObject_Next( obj, 0, NULL, NULL, NULL, NULL ) == S_OK) {}
 
     hr = IWbemClassObject_EndEnumeration( obj );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     check_property( obj, L"BuildNumber", VT_BSTR, CIM_STRING );
     check_property( obj, L"Caption", VT_BSTR, CIM_STRING );
@@ -1394,9 +1394,9 @@ static void test_Win32_OperatingSystem( IWbemServices *services )
     type = 0xdeadbeef;
     VariantInit( &val );
     hr = IWbemClassObject_Get( obj, L"CSDVersion", 0, &val, &type, NULL );
-    ok( hr == S_OK, "failed to get csdversion %08x\n", hr );
+    ok( hr == S_OK, "failed to get csdversion %#lx\n", hr );
     ok( V_VT( &val ) == VT_BSTR || V_VT( &val ) == VT_NULL, "unexpected variant type 0x%x\n", V_VT( &val ) );
-    ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+    ok( type == CIM_STRING, "unexpected type %#lx\n", type );
     trace( "csdversion: %s\n", wine_dbgstr_w(V_BSTR( &val )) );
     VariantClear( &val );
 
@@ -1406,22 +1406,22 @@ static void test_Win32_OperatingSystem( IWbemServices *services )
     type = 0xdeadbeef;
     VariantInit( &val );
     hr = IWbemClassObject_Get( obj, L"OperatingSystemSKU", 0, &val, &type, NULL );
-    ok( hr == S_OK || broken(hr == WBEM_E_NOT_FOUND) /* winxp */, "failed to get operatingsystemsku %08x\n", hr );
+    ok( hr == S_OK || broken(hr == WBEM_E_NOT_FOUND) /* winxp */, "failed to get operatingsystemsku %#lx\n", hr );
     if (hr == S_OK)
     {
         ok( V_VT( &val ) == VT_I4, "unexpected variant type 0x%x\n", V_VT( &val ) );
-        ok( type == CIM_UINT32, "unexpected type 0x%x\n", type );
-        trace( "operatingsystemsku: %08x\n", V_I4( &val ) );
+        ok( type == CIM_UINT32, "unexpected type %#lx\n", type );
+        trace( "operatingsystemsku: %#lx\n", V_I4( &val ) );
         VariantClear( &val );
     }
 
     type = 0xdeadbeef;
     VariantInit( &val );
     hr = IWbemClassObject_Get( obj, L"OSProductSuite", 0, &val, &type, NULL );
-    ok( hr == S_OK, "failed to get osproductsuite %08x\n", hr );
+    ok( hr == S_OK, "failed to get osproductsuite %#lx\n", hr );
     ok( V_VT( &val ) == VT_I4 || broken(V_VT( &val ) == VT_NULL) /* winxp */, "unexpected variant type 0x%x\n", V_VT( &val ) );
-    ok( type == CIM_UINT32, "unexpected type 0x%x\n", type );
-    trace( "osproductsuite: %d (%08x)\n", V_I4( &val ), V_I4( &val ) );
+    ok( type == CIM_UINT32, "unexpected type %#lx\n", type );
+    trace( "osproductsuite: %ld (%#lx)\n", V_I4( &val ), V_I4( &val ) );
     VariantClear( &val );
 
     check_property( obj, L"CSName", VT_BSTR, CIM_STRING );
@@ -1460,7 +1460,7 @@ static void test_Win32_ComputerSystemProduct( IWbemServices *services )
     }
 
     hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     check_property( obj, L"IdentifyingNumber", VT_BSTR, CIM_STRING );
     check_property( obj, L"Name", VT_BSTR, CIM_STRING );
@@ -1507,29 +1507,29 @@ static void test_Win32_PhysicalMemory( IWbemServices *services )
         type = 0xdeadbeef;
         VariantInit( &val );
         hr = IWbemClassObject_Get( obj, L"ConfiguredClockSpeed", 0, &val, &type, NULL );
-        ok( hr == S_OK || broken(hr == WBEM_E_NOT_FOUND) /* < win10 */, "got %08x\n", hr );
+        ok( hr == S_OK || broken(hr == WBEM_E_NOT_FOUND) /* < win10 */, "got %#lx\n", hr );
         if (hr == S_OK)
         {
-            ok( V_VT( &val ) == VT_I4, "unexpected variant type 0x%x\n", V_VT( &val ) );
-            ok( type == CIM_UINT32, "unexpected type 0x%x\n", type );
-            trace( "ConfiguredClockSpeed %u\n", V_I4( &val ) );
+            ok( V_VT( &val ) == VT_I4, "unexpected variant type %#x\n", V_VT( &val ) );
+            ok( type == CIM_UINT32, "unexpected type %#lx\n", type );
+            trace( "ConfiguredClockSpeed %ld\n", V_I4( &val ) );
         }
 
         type = 0xdeadbeef;
         VariantInit( &val );
         hr = IWbemClassObject_Get( obj, L"PartNumber", 0, &val, &type, NULL );
-        ok( hr == S_OK, "got %08x\n", hr );
-        ok( V_VT( &val ) == VT_BSTR || V_VT( &val ) == VT_NULL, "unexpected variant type 0x%x\n", V_VT( &val ) );
-        ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+        ok( hr == S_OK, "got %#lx\n", hr );
+        ok( V_VT( &val ) == VT_BSTR || V_VT( &val ) == VT_NULL, "unexpected variant type %#x\n", V_VT( &val ) );
+        ok( type == CIM_STRING, "unexpected type %#lx\n", type );
         trace( "PartNumber %s\n", wine_dbgstr_w(V_BSTR( &val )) );
         VariantClear( &val );
 
         type = 0xdeadbeef;
         VariantInit( &val );
         hr = IWbemClassObject_Get( obj, L"SerialNumber", 0, &val, &type, NULL );
-        ok( hr == S_OK, "got %08x\n", hr );
-        ok( V_VT( &val ) == VT_BSTR || V_VT( &val ) == VT_NULL, "unexpected variant type 0x%x\n", V_VT( &val ) );
-        ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+        ok( hr == S_OK, "got %#lx\n", hr );
+        ok( V_VT( &val ) == VT_BSTR || V_VT( &val ) == VT_NULL, "unexpected variant type %#x\n", V_VT( &val ) );
+        ok( type == CIM_STRING, "unexpected type %#lx\n", type );
         trace( "SerialNumber %s\n", wine_dbgstr_w(V_BSTR( &val )) );
         VariantClear( &val );
 
@@ -1583,7 +1583,7 @@ static void test_Win32_Processor( IWbemServices *services )
     DWORD count;
 
     hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     for (;;)
     {
@@ -1604,23 +1604,23 @@ static void test_Win32_Processor( IWbemServices *services )
         type = 0xdeadbeef;
         VariantInit( &val );
         hr = IWbemClassObject_Get( obj, L"NumberOfLogicalProcessors", 0, &val, &type, NULL );
-        ok( hr == S_OK || broken(hr == WBEM_E_NOT_FOUND) /* win2k3 */, "got %08x\n", hr );
+        ok( hr == S_OK || broken(hr == WBEM_E_NOT_FOUND) /* win2k3 */, "got %#lx\n", hr );
         if (hr == S_OK)
         {
-            ok( V_VT( &val ) == VT_I4, "unexpected variant type 0x%x\n", V_VT( &val ) );
-            ok( type == CIM_UINT32, "unexpected type 0x%x\n", type );
-            trace( "numlogicalprocessors %u\n", V_I4( &val ) );
+            ok( V_VT( &val ) == VT_I4, "unexpected variant type %#x\n", V_VT( &val ) );
+            ok( type == CIM_UINT32, "unexpected type %#lx\n", type );
+            trace( "numlogicalprocessors %ld\n", V_I4( &val ) );
         }
 
         type = 0xdeadbeef;
         VariantInit( &val );
         hr = IWbemClassObject_Get( obj, L"NumberOfCores", 0, &val, &type, NULL );
-        ok( hr == S_OK || broken(hr == WBEM_E_NOT_FOUND) /* win2k3 */, "got %08x\n", hr );
+        ok( hr == S_OK || broken(hr == WBEM_E_NOT_FOUND) /* win2k3 */, "got %#lx\n", hr );
         if (hr == S_OK)
         {
-            ok( V_VT( &val ) == VT_I4, "unexpected variant type 0x%x\n", V_VT( &val ) );
-            ok( type == CIM_UINT32, "unexpected type 0x%x\n", type );
-            trace( "numcores %u\n", V_I4( &val ) );
+            ok( V_VT( &val ) == VT_I4, "unexpected variant type %#x\n", V_VT( &val ) );
+            ok( type == CIM_UINT32, "unexpected type %#lx\n", type );
+            trace( "numcores %ld\n", V_I4( &val ) );
         }
 
         IWbemClassObject_Release( obj );
@@ -1669,9 +1669,9 @@ static void test_Win32_VideoController( IWbemServices *services )
         type = 0xdeadbeef;
         VariantInit( &val );
         hr = IWbemClassObject_Get( obj, L"InstalledDisplayDrivers", 0, &val, &type, NULL );
-        ok( hr == S_OK, "got %08x\n", hr );
+        ok( hr == S_OK, "got %#lx\n", hr );
         ok( V_VT( &val ) == VT_BSTR || V_VT( &val ) == VT_NULL, "unexpected variant type 0x%x\n", V_VT( &val ) );
-        ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+        ok( type == CIM_STRING, "unexpected type %#lx\n", type );
         trace( "installeddisplaydrivers %s\n", wine_dbgstr_w(V_BSTR( &val )) );
         VariantClear( &val );
 
@@ -1738,9 +1738,9 @@ static void test_Win32_Printer( IWbemServices *services )
         type = 0xdeadbeef;
         memset( &val, 0, sizeof(val) );
         hr = IWbemClassObject_Get( obj, L"Location", 0, &val, &type, NULL );
-        ok( hr == S_OK, "got %08x\n", hr );
+        ok( hr == S_OK, "got %#lx\n", hr );
         ok( V_VT( &val ) == VT_BSTR || V_VT( &val ) == VT_NULL, "unexpected variant type 0x%x\n", V_VT( &val ) );
-        ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+        ok( type == CIM_STRING, "unexpected type %#lx\n", type );
         trace( "location %s\n", wine_dbgstr_w(V_BSTR( &val )) );
         VariantClear( &val );
 
@@ -1765,7 +1765,7 @@ static void test_Win32_PnPEntity( IWbemServices *services )
 
     bstr = SysAllocString( L"Win32_PnPEntity" );
     hr = IWbemServices_CreateInstanceEnum( services, bstr, 0, NULL, &enm );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     SysFreeString( bstr );
 
     bstr = SysAllocString( L"DeviceId" );
@@ -1774,7 +1774,7 @@ static void test_Win32_PnPEntity( IWbemServices *services )
         hr = IEnumWbemClassObject_Next( enm, 1000, 1, &obj, &count );
         ok( (count == 1 && (hr == WBEM_S_FALSE || hr == WBEM_S_NO_ERROR)) ||
                 (count == 0 && (hr == WBEM_S_FALSE || hr == WBEM_S_TIMEDOUT)),
-                "got %08x with %u objects returned\n", hr, count );
+                "got %#lx with %lu objects returned\n", hr, count );
 
         if (count == 0)
             break;
@@ -1782,12 +1782,12 @@ static void test_Win32_PnPEntity( IWbemServices *services )
         for (i = 0; i < count; ++i)
         {
             hr = IWbemClassObject_Get( obj, bstr, 0, &val, &type, NULL );
-            ok( hr == S_OK, "got %08x\n", hr );
+            ok( hr == S_OK, "got %#lx\n", hr );
 
             if (SUCCEEDED( hr ))
             {
-                ok( V_VT( &val ) == VT_BSTR, "unexpected variant type 0x%x\n", V_VT( &val ) );
-                ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+                ok( V_VT( &val ) == VT_BSTR, "unexpected variant type %#x\n", V_VT( &val ) );
+                ok( type == CIM_STRING, "unexpected type %#lx\n", type );
                 VariantClear( &val );
             }
         }
@@ -1807,7 +1807,7 @@ static void test_Win32_WinSAT( IWbemServices *services )
     DWORD count;
 
     hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
-    ok( hr == S_OK || broken(hr == WBEM_E_INVALID_CLASS) /* win2k8 */, "got %08x\n", hr );
+    ok( hr == S_OK || broken(hr == WBEM_E_INVALID_CLASS) /* win2k8 */, "got %#lx\n", hr );
     if (hr == WBEM_E_INVALID_CLASS)
     {
         win_skip( "class not found\n" );
@@ -1843,7 +1843,7 @@ static void test_SoftwareLicensingProduct( IWbemServices *services )
     DWORD count;
 
     hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
-    ok( hr == S_OK , "got %08x\n", hr );
+    ok( hr == S_OK , "got %#lx\n", hr );
 
     for (;;)
     {
@@ -1868,7 +1868,7 @@ static void test_Win32_DesktopMonitor( IWbemServices *services )
     DWORD count;
 
     hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     for (;;)
     {
@@ -1894,7 +1894,7 @@ static void test_Win32_DiskDrive( IWbemServices *services )
     DWORD count;
 
     hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     for (;;)
     {
@@ -1920,7 +1920,7 @@ static void test_Win32_DisplayControllerConfiguration( IWbemServices *services )
     DWORD count;
 
     hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     for (;;)
     {
@@ -1951,7 +1951,7 @@ static void test_Win32_QuickFixEngineering( IWbemServices *services )
     CIMTYPE type;
 
     hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     for (;;)
     {
@@ -1961,10 +1961,10 @@ static void test_Win32_QuickFixEngineering( IWbemServices *services )
         type = 0xdeadbeef;
         VariantInit( &caption );
         hr = IWbemClassObject_Get( obj, L"Caption", 0, &caption, &type, NULL );
-        ok( hr == S_OK, "failed to get caption %08x\n", hr );
+        ok( hr == S_OK, "failed to get caption %#lx\n", hr );
         ok( V_VT( &caption ) == VT_BSTR || V_VT( &caption ) == VT_NULL /* winxp */,
-            "unexpected variant type 0x%x\n", V_VT( &caption ) );
-        ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+            "unexpected variant type %#x\n", V_VT( &caption ) );
+        ok( type == CIM_STRING, "unexpected type %#lx\n", type );
 
         check_property( obj, L"HotFixID", VT_BSTR, CIM_STRING );
         IWbemClassObject_Release( obj );
@@ -1986,7 +1986,7 @@ static void test_Win32_SoundDevice( IWbemServices *services )
     DWORD count;
 
     hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     for (;;)
     {
@@ -2037,28 +2037,28 @@ static void test_SystemRestore( IWbemServices *services )
     method = SysAllocString( L"Enable" );
     sig_in = NULL;
     hr = IWbemClassObject_GetMethod( service, method, 0, &sig_in, NULL );
-    ok( hr == S_OK, "failed to get Enable method %08x\n", hr );
+    ok( hr == S_OK, "failed to get Enable method %#lx\n", hr );
 
     hr = IWbemClassObject_SpawnInstance( sig_in, 0, &in );
-    ok( hr == S_OK, "failed to spawn instance %08x\n", hr );
+    ok( hr == S_OK, "failed to spawn instance %#lx\n", hr );
 
     GetWindowsDirectoryW(path, ARRAY_SIZE(path));
     path[3] = 0; /* otherwise XP fails */
     V_VT( &var ) = VT_BSTR;
     V_BSTR( &var ) = SysAllocString( path );
     hr = IWbemClassObject_Put( in, L"Drive", 0, &var, 0 );
-    ok( hr == S_OK, "failed to set Drive %08x\n", hr );
+    ok( hr == S_OK, "failed to set Drive %#lx\n", hr );
     SysFreeString( V_BSTR( &var ) );
 
     out = NULL;
     hr = IWbemServices_ExecMethod( services, class, method, 0, NULL, in, &out, NULL );
-    ok( hr == S_OK || hr == WBEM_E_ACCESS_DENIED, "failed to execute method %08x\n", hr );
+    ok( hr == S_OK || hr == WBEM_E_ACCESS_DENIED, "failed to execute method %#lx\n", hr );
     if (hr == S_OK)
     {
         VariantInit( &var );
         hr = IWbemClassObject_Get( out, L"ReturnValue", 0, &var, NULL, NULL );
-        ok( hr == S_OK, "failed to get return value %08x\n", hr );
-        ok( V_I4( &var ) == ERROR_SUCCESS, "unexpected error %u\n", V_UI4( &var ) );
+        ok( hr == S_OK, "failed to get return value %#lx\n", hr );
+        ok( V_I4( &var ) == ERROR_SUCCESS, "unexpected error %ld\n", V_UI4( &var ) );
 
         IWbemClassObject_Release( out );
     }
@@ -2082,7 +2082,7 @@ static void test_Win32_LogicalDisk( IWbemServices *services )
     DWORD count;
 
     hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     for (;;)
     {
@@ -2109,16 +2109,16 @@ static void test_empty_namespace( IWbemLocator *locator )
     HRESULT hr;
 
     hr = IWbemLocator_ConnectServer( locator, path, NULL, NULL, NULL, 0, NULL, NULL, &services );
-    ok( hr == S_OK, "failed to get IWbemServices interface %08x\n", hr );
+    ok( hr == S_OK, "failed to get IWbemServices interface %#lx\n", hr );
 
     query = SysAllocString( L"SELECT * FROM __ASSOCIATORS" );
     hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
-    ok( hr == WBEM_E_INVALID_CLASS, "Query failed: %08x\n", hr );
+    ok( hr == WBEM_E_INVALID_CLASS, "Query failed: %#lx\n", hr );
     SysFreeString( query );
 
     query = SysAllocString( L"SELECT * FROM Win32_OperatingSystem" );
     hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
-    ok( hr == WBEM_E_INVALID_CLASS, "got %08x\n", hr );
+    ok( hr == WBEM_E_INVALID_CLASS, "got %#lx\n", hr );
     SysFreeString( query );
 
     SysFreeString( wql );
@@ -2139,20 +2139,20 @@ static void test_MSSMBios_RawSMBiosTables( IWbemLocator *locator )
     HRESULT hr;
 
     hr = IWbemLocator_ConnectServer( locator, path, NULL, NULL, NULL, 0, NULL, NULL, &services );
-    ok( hr == S_OK, "failed to get IWbemServices interface %08x\n", hr );
+    ok( hr == S_OK, "failed to get IWbemServices interface %#lx\n", hr );
 
     hr = IWbemServices_CreateInstanceEnum( services, bios, 0, NULL, &iter );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = IEnumWbemClassObject_Next( iter, WBEM_INFINITE, 1, &obj, &count );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     type = 0;
     VariantInit( &val );
     hr = IWbemClassObject_Get( obj, L"SMBiosData", 0, &val, &type, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
-    todo_wine ok( V_VT( &val ) == (VT_UI1 | VT_ARRAY), "got %08x\n", V_VT(&val) );
-    ok( type == (CIM_UINT8 | CIM_FLAG_ARRAY), "got %08x\n", type );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    todo_wine ok( V_VT( &val ) == (VT_UI1 | VT_ARRAY), "got %#x\n", V_VT(&val) );
+    ok( type == (CIM_UINT8 | CIM_FLAG_ARRAY), "got %#lx\n", type );
 
     IWbemClassObject_Release( obj );
     IEnumWbemClassObject_Release( iter );
@@ -2190,17 +2190,17 @@ START_TEST(query)
         return;
     }
     hr = IWbemLocator_ConnectServer( locator, path, NULL, NULL, NULL, 0, NULL, NULL, &services );
-    ok( hr == S_OK, "failed to get IWbemServices interface %08x\n", hr );
+    ok( hr == S_OK, "failed to get IWbemServices interface %#lx\n", hr );
 
     hr = CoQueryProxyBlanket( (IUnknown *)services, NULL, NULL, NULL, NULL, NULL, NULL, NULL );
-    ok( hr == S_OK, "failed to query proxy blanket %08x\n", hr );
+    ok( hr == S_OK, "failed to query proxy blanket %#lx\n", hr );
 
     hr = CoQueryProxyBlanket( (IUnknown *)services, &authn_svc, NULL, NULL, NULL, NULL, NULL, NULL );
-    ok( hr == S_OK, "failed to query proxy blanket %08x\n", hr );
+    ok( hr == S_OK, "failed to query proxy blanket %#lx\n", hr );
 
     hr = CoSetProxyBlanket( (IUnknown *)services, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
                             RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE );
-    ok( hr == S_OK, "failed to set proxy blanket %08x\n", hr );
+    ok( hr == S_OK, "failed to set proxy blanket %#lx\n", hr );
 
     test_GetNames( services );
     test_IEnumWbemClassObject_Next( services );
@@ -2248,10 +2248,10 @@ START_TEST(query)
     /* Some tests need other connection point */
     path = SysAllocString( L"ROOT\\DEFAULT" );
     hr = IWbemLocator_ConnectServer( locator, path, NULL, NULL, NULL, 0, NULL, NULL, &services );
-    ok( hr == S_OK, "failed to get IWbemServices interface %08x\n", hr );
+    ok( hr == S_OK, "failed to get IWbemServices interface %#lx\n", hr );
     hr = CoSetProxyBlanket( (IUnknown *)services, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
                             RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE );
-    ok( hr == S_OK, "failed to set proxy blanket %08x\n", hr );
+    ok( hr == S_OK, "failed to set proxy blanket %#lx\n", hr );
 
     test_StdRegProv( services );
     test_SystemRestore( services );
