@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-
+#include <stdbool.h>
 #include <stdio.h>
 #include <assert.h>
 
@@ -199,6 +199,10 @@ struct d3dx_effect
 
     struct list parameter_block_list;
     struct d3dx_parameter_block *current_parameter_block;
+
+    char *source;
+    SIZE_T source_size;
+    char *skip_constants_string;
 };
 
 #define INITIAL_SHARED_DATA_SIZE 4
@@ -220,6 +224,9 @@ struct ID3DXEffectCompilerImpl
     LONG ref;
 };
 
+static HRESULT d3dx9_effect_init_from_dxbc(struct d3dx_effect *effect,
+        struct IDirect3DDevice9 *device, const char *data, SIZE_T data_size,
+        unsigned int flags, struct ID3DXEffectPool *pool, const char *skip_constants_string);
 static HRESULT d3dx_parse_state(struct d3dx_effect *effect, struct d3dx_state *state,
         const char *data, const char **ptr, struct d3dx_object *objects);
 static void free_parameter(struct d3dx_parameter *param, BOOL element, BOOL child);
@@ -4304,23 +4311,127 @@ static HRESULT WINAPI d3dx_effect_DeleteParameterBlock(ID3DXEffect *iface, D3DXH
 }
 #endif
 
-static HRESULT WINAPI d3dx_effect_CloneEffect(ID3DXEffect *iface, IDirect3DDevice9 *device,
-        ID3DXEffect **new_effect)
+static bool copy_parameter(struct d3dx_effect *dst_effect, const struct d3dx_effect *src_effect,
+        struct d3dx_parameter *dst, const struct d3dx_parameter *src)
 {
-    struct d3dx_effect *effect = impl_from_ID3DXEffect(iface);
+    const char *src_string;
+    char *dst_string;
+    IUnknown *iface;
+    size_t len;
 
-    FIXME("iface %p, device %p, new_effect %p stub.\n", effect, device, new_effect);
+    if ((src->flags & PARAMETER_FLAG_SHARED) && dst_effect->pool)
+        return true;
 
-    if (!new_effect)
+    switch (src->type)
+    {
+        case D3DXPT_VOID:
+        case D3DXPT_BOOL:
+        case D3DXPT_INT:
+        case D3DXPT_FLOAT:
+            memcpy(dst->data, src->data, src->bytes);
+            break;
+
+        case D3DXPT_STRING:
+            src_string = *(char **)src->data;
+            len = strlen(src_string);
+            if (!(dst_string = heap_realloc(*(char **)dst->data, len + 1)))
+                return false;
+            *(char **)dst->data = dst_string;
+            memcpy(dst_string, src_string, len + 1);
+            break;
+
+        case D3DXPT_TEXTURE:
+        case D3DXPT_TEXTURE1D:
+        case D3DXPT_TEXTURE2D:
+        case D3DXPT_TEXTURE3D:
+        case D3DXPT_TEXTURECUBE:
+        case D3DXPT_PIXELSHADER:
+        case D3DXPT_VERTEXSHADER:
+            iface = *(IUnknown **)src->data;
+            if (src_effect->device == dst_effect->device && iface)
+            {
+                if (*(IUnknown **)dst->data)
+                    IUnknown_Release(*(IUnknown **)dst->data);
+                IUnknown_AddRef(iface);
+                *(IUnknown **)dst->data = iface;
+            }
+            break;
+
+        case D3DXPT_SAMPLER:
+        case D3DXPT_SAMPLER1D:
+        case D3DXPT_SAMPLER2D:
+        case D3DXPT_SAMPLER3D:
+        case D3DXPT_SAMPLERCUBE:
+            /* Nothing to do; these parameters are not mutable and cannot be
+             * retrieved using API calls. */
+            break;
+
+        default:
+            FIXME("Unhandled parameter type %#x.\n", src->type);
+    }
+
+    return true;
+}
+
+static HRESULT WINAPI d3dx_effect_CloneEffect(ID3DXEffect *iface, IDirect3DDevice9 *device, ID3DXEffect **out)
+{
+    struct d3dx_effect *src = impl_from_ID3DXEffect(iface);
+    struct d3dx_effect *dst;
+    unsigned int i, j, k;
+    HRESULT hr;
+
+    TRACE("iface %p, device %p, out %p.\n", iface, device, out);
+
+    if (!out)
         return D3DERR_INVALIDCALL;
 
-    if (effect->flags & D3DXFX_NOT_CLONEABLE)
+    if (src->flags & D3DXFX_NOT_CLONEABLE)
         return E_FAIL;
 
     if (!device)
         return D3DERR_INVALIDCALL;
 
-    return E_NOTIMPL;
+    if (!(dst = heap_alloc_zero(sizeof(*dst))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = d3dx9_effect_init_from_dxbc(dst, device, src->source, src->source_size,
+            src->flags, &src->pool->ID3DXEffectPool_iface, src->skip_constants_string)))
+    {
+        heap_free(dst);
+        return hr;
+    }
+
+    for (i = 0; i < src->parameter_count; ++i)
+    {
+        const struct d3dx_top_level_parameter *src_param = &src->parameters[i];
+        struct d3dx_top_level_parameter *dst_param = &dst->parameters[i];
+
+        copy_parameter(dst, src, &dst_param->param, &src_param->param);
+        for (j = 0; j < src_param->annotation_count; ++j)
+            copy_parameter(dst, src, &dst_param->annotations[j], &src_param->annotations[j]);
+    }
+
+    for (i = 0; i < src->technique_count; ++i)
+    {
+        const struct d3dx_technique *src_technique = &src->techniques[i];
+        struct d3dx_technique *dst_technique = &dst->techniques[i];
+
+        for (j = 0; j < src_technique->annotation_count; ++j)
+            copy_parameter(dst, src, &dst_technique->annotations[j], &src_technique->annotations[j]);
+
+        for (j = 0; j < src_technique->pass_count; ++j)
+        {
+            const struct d3dx_pass *src_pass = &src_technique->passes[j];
+            struct d3dx_pass *dst_pass = &dst_technique->passes[j];
+
+            for (k = 0; k < src_pass->annotation_count; ++k)
+                copy_parameter(dst, src, &dst_pass->annotations[k], &src_pass->annotations[k]);
+        }
+    }
+
+    *out = &dst->ID3DXEffect_iface;
+    TRACE("Created effect %p.\n", dst);
+    return D3D_OK;
 }
 
 #if D3DX_SDK_VERSION >= 27
@@ -6418,6 +6529,14 @@ static HRESULT d3dx9_effect_init_from_dxbc(struct d3dx_effect *effect,
     read_dword(&ptr, &tag);
     TRACE("Tag: %x\n", tag);
 
+    if (!(flags & D3DXFX_NOT_CLONEABLE))
+    {
+        if (!(effect->source = malloc(data_size)))
+            return E_OUTOFMEMORY;
+        memcpy(effect->source, data, data_size);
+        effect->source_size = data_size;
+    }
+
     if (pool)
     {
         effect->pool = unsafe_impl_from_ID3DXEffectPool(pool);
@@ -6429,6 +6548,12 @@ static HRESULT d3dx9_effect_init_from_dxbc(struct d3dx_effect *effect,
 
     if (skip_constants_string)
     {
+        if (!(flags & D3DXFX_NOT_CLONEABLE) && !(effect->skip_constants_string = strdup(skip_constants_string)))
+        {
+            hr = E_OUTOFMEMORY;
+            goto fail;
+        }
+
         skip_constants_buffer = HeapAlloc(GetProcessHeap(), 0,
                 sizeof(*skip_constants_buffer) * (strlen(skip_constants_string) + 1));
         if (!skip_constants_buffer)
@@ -6520,6 +6645,8 @@ fail:
     IDirect3DDevice9_Release(effect->device);
     if (pool)
         pool->lpVtbl->Release(pool);
+    free(effect->source);
+    free(effect->skip_constants_string);
     return hr;
 }
 

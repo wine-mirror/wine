@@ -7584,9 +7584,7 @@ static void test_effect_clone(void)
     ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
 
     hr = effect->lpVtbl->CloneEffect(effect, device, &cloned);
-    todo_wine ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    if (hr != D3D_OK)
-        goto out;
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
     ok(cloned != effect, "Expected new effect instance.\n");
 
     hr = cloned->lpVtbl->GetStateManager(cloned, &ret_manager);
@@ -7730,7 +7728,6 @@ static void test_effect_clone(void)
     IDirect3DVertexShader9_Release(vs);
     IDirect3DDevice9_Release(device2);
     DestroyWindow(window2);
-out:
     effect->lpVtbl->Release(effect);
     refcount = state_manager->ID3DXEffectStateManager_iface.lpVtbl->Release(
             &state_manager->ID3DXEffectStateManager_iface);
