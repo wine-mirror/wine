@@ -42,6 +42,34 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
         IUnknown_Release(unk);
 }
 
+static WCHAR *load_resource(const WCHAR *name)
+{
+    static WCHAR pathW[MAX_PATH];
+    DWORD written;
+    HANDLE file;
+    HRSRC res;
+    void *ptr;
+
+    GetTempPathW(ARRAY_SIZE(pathW), pathW);
+    lstrcatW(pathW, name);
+
+    file = CreateFileW(pathW, GENERIC_READ|GENERIC_WRITE, 0,
+                       NULL, CREATE_ALWAYS, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "file creation failed, at %s, error %ld.\n",
+       wine_dbgstr_w(pathW), GetLastError());
+
+    res = FindResourceW(NULL, name, (LPCWSTR)RT_RCDATA);
+    ok(res != 0, "couldn't find resource\n");
+    ptr = LockResource(LoadResource(GetModuleHandleA(NULL), res));
+    WriteFile(file, ptr, SizeofResource(GetModuleHandleA(NULL), res),
+               &written, NULL);
+    ok(written == SizeofResource(GetModuleHandleA(NULL), res),
+       "couldn't write resource\n" );
+    CloseHandle(file);
+
+    return pathW;
+}
+
 static HRESULT WINAPI test_callback_QueryInterface(IMFPMediaPlayerCallback *iface, REFIID riid, void **obj)
 {
     if (IsEqualIID(riid, &IID_IMFPMediaPlayerCallback) ||
@@ -243,8 +271,15 @@ static void test_shutdown(void)
 
 static void test_media_item(void)
 {
-    IMFPMediaPlayer *player;
+    IMFPMediaPlayer *player, *player2;
+    WCHAR *filename, *url;
     IMFPMediaItem *item;
+    DWORD_PTR user_data;
+    PROPVARIANT propvar;
+    unsigned int flags;
+    BOOL ret, selected;
+    IUnknown *object;
+    DWORD count;
     HRESULT hr;
 
     hr = MFPCreateMediaPlayer(NULL, FALSE, 0, NULL, NULL, &player);
@@ -262,6 +297,116 @@ static void test_media_item(void)
 
     hr = IMFPMediaPlayer_CreateMediaItemFromURL(player, L"url", TRUE, 0, NULL);
     ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    filename = load_resource(L"test.mp4");
+
+    hr = IMFPMediaPlayer_CreateMediaItemFromURL(player, filename, TRUE, 123, &item);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaItem_GetMediaPlayer(item, &player2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(player2 == player, "Unexpected player pointer.\n");
+    IMFPMediaPlayer_Release(player2);
+
+    hr = IMFPMediaItem_GetURL(item, &url);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaItem_GetObject(item, &object);
+    ok(hr == MF_E_NOT_FOUND, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaItem_GetUserData(item, &user_data);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(user_data == 123, "Unexpected user data %#Ix.\n", user_data);
+
+    hr = IMFPMediaItem_SetUserData(item, 124);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaItem_HasVideo(item, &ret, &selected);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(ret && selected, "Unexpected flags.\n");
+
+    hr = IMFPMediaItem_HasAudio(item, &ret, &selected);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaItem_IsProtected(item, &ret);
+    todo_wine
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaItem_GetDuration(item, &MFP_POSITIONTYPE_100NS, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaItem_GetNumberOfStreams(item, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaItem_GetStreamSelection(item, 0, &ret);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaItem_SetStreamSelection(item, 0, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaItem_GetStreamAttribute(item, 0, &MF_SD_LANGUAGE, &propvar);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaItem_GetPresentationAttribute(item, &MF_PD_DURATION, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaItem_GetCharacteristics(item, &flags);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* Player shutdown affects created items. */
+    hr = IMFPMediaPlayer_Shutdown(player);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaItem_GetMediaPlayer(item, &player2);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+    ok(!player2, "Unexpected pointer %p.\n", player2);
+
+    hr = IMFPMediaItem_GetURL(item, &url);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaItem_GetObject(item, &object);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaItem_GetUserData(item, &user_data);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(user_data == 124, "Unexpected user data %#Ix.\n", user_data);
+
+    hr = IMFPMediaItem_SetUserData(item, 125);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaItem_HasVideo(item, &ret, &selected);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaItem_HasAudio(item, &ret, &selected);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaItem_IsProtected(item, &ret);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaItem_GetDuration(item, &MFP_POSITIONTYPE_100NS, &propvar);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaItem_GetNumberOfStreams(item, &count);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaItem_GetStreamSelection(item, 0, &ret);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaItem_SetStreamSelection(item, 0, FALSE);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaItem_GetStreamAttribute(item, 0, &MF_SD_LANGUAGE, &propvar);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaItem_GetPresentationAttribute(item, &MF_PD_DURATION, &propvar);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaItem_GetCharacteristics(item, &flags);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+    IMFPMediaItem_Release(item);
+
+    DeleteFileW(filename);
 
     IMFPMediaPlayer_Release(player);
 }
