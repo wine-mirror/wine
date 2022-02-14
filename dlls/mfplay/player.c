@@ -1524,9 +1524,23 @@ static HRESULT WINAPI media_player_GetVideoWindow(IMFPMediaPlayer *iface, HWND *
 
 static HRESULT WINAPI media_player_UpdateVideo(IMFPMediaPlayer *iface)
 {
-    FIXME("%p.\n", iface);
+    struct media_player *player = impl_from_IMFPMediaPlayer(iface);
+    IMFVideoDisplayControl *display_control;
+    HRESULT hr;
+    RECT rect;
 
-    return E_NOTIMPL;
+    TRACE("%p.\n", iface);
+
+    if (SUCCEEDED(hr = media_player_get_display_control(player, &display_control)))
+    {
+        if (GetClientRect(player->output_window, &rect))
+            hr = IMFVideoDisplayControl_SetVideoPosition(display_control, NULL, &rect);
+        if (SUCCEEDED(hr))
+            hr = IMFVideoDisplayControl_RepaintVideo(display_control);
+        IMFVideoDisplayControl_Release(display_control);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI media_player_SetBorderColor(IMFPMediaPlayer *iface, COLORREF color)
