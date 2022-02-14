@@ -127,3 +127,31 @@ BOOL WINAPI NtUserClipCursor( const RECT *rect )
     if (ret) user_driver->pClipCursor( &new_rect );
     return ret;
 }
+
+BOOL get_clip_cursor( RECT *rect )
+{
+    UINT dpi;
+    BOOL ret;
+
+    if (!rect) return FALSE;
+
+    SERVER_START_REQ( set_cursor )
+    {
+        req->flags = 0;
+        if ((ret = !wine_server_call( req )))
+        {
+            rect->left   = reply->new_clip.left;
+            rect->top    = reply->new_clip.top;
+            rect->right  = reply->new_clip.right;
+            rect->bottom = reply->new_clip.bottom;
+        }
+    }
+    SERVER_END_REQ;
+
+    if (ret && (dpi = get_thread_dpi()))
+    {
+        HMONITOR monitor = monitor_from_rect( rect, MONITOR_DEFAULTTOPRIMARY, 0 );
+        *rect = map_dpi_rect( *rect, get_monitor_dpi( monitor ), dpi );
+    }
+    return ret;
+}

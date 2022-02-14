@@ -52,6 +52,7 @@ struct enum_display_monitor_params
 /* NtUserCallOneParam codes, not compatible with Windows */
 enum
 {
+    NtUserGetClipCursor,
     NtUserGetSysColor,
     NtUserGetSysColorBrush,
     NtUserGetSysColorPen,

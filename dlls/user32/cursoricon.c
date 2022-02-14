@@ -1947,32 +1947,7 @@ HCURSOR WINAPI DECLSPEC_HOTPATCH SetCursor( HCURSOR hCursor /* [in] Handle of cu
  */
 BOOL WINAPI DECLSPEC_HOTPATCH GetClipCursor( RECT *rect )
 {
-    DPI_AWARENESS_CONTEXT context;
-    UINT dpi;
-    BOOL ret;
-
-    if (!rect) return FALSE;
-
-    SERVER_START_REQ( set_cursor )
-    {
-        req->flags = 0;
-        if ((ret = !wine_server_call( req )))
-        {
-            rect->left   = reply->new_clip.left;
-            rect->top    = reply->new_clip.top;
-            rect->right  = reply->new_clip.right;
-            rect->bottom = reply->new_clip.bottom;
-        }
-    }
-    SERVER_END_REQ;
-
-    if (ret && (dpi = get_thread_dpi()))
-    {
-        context = SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
-        *rect = map_dpi_rect( *rect, get_monitor_dpi( MonitorFromRect( rect, MONITOR_DEFAULTTOPRIMARY )), dpi );
-        SetThreadDpiAwarenessContext( context );
-    }
-    return ret;
+    return NtUserCallOneParam( (UINT_PTR)rect, NtUserGetClipCursor );
 }
 
 
