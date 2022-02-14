@@ -39,17 +39,17 @@ static BOOL MCIAVI_GetInfoAudio(WINE_MCIAVI* wma, const MMCKINFO* mmckList, MMCK
 	                                        HIBYTE(HIWORD(wma->ash_audio.fccHandler)));
     else
         TRACE("ash.fccHandler=0, no handler specified\n");
-    TRACE("ash.dwFlags=%d\n", 			wma->ash_audio.dwFlags);
+    TRACE("ash.dwFlags=%ld\n", 			wma->ash_audio.dwFlags);
     TRACE("ash.wPriority=%d\n", 		wma->ash_audio.wPriority);
     TRACE("ash.wLanguage=%d\n", 		wma->ash_audio.wLanguage);
-    TRACE("ash.dwInitialFrames=%d\n", 		wma->ash_audio.dwInitialFrames);
-    TRACE("ash.dwScale=%d\n", 			wma->ash_audio.dwScale);
-    TRACE("ash.dwRate=%d\n", 			wma->ash_audio.dwRate);
-    TRACE("ash.dwStart=%d\n", 			wma->ash_audio.dwStart);
-    TRACE("ash.dwLength=%d\n", 		wma->ash_audio.dwLength);
-    TRACE("ash.dwSuggestedBufferSize=%d\n", 	wma->ash_audio.dwSuggestedBufferSize);
-    TRACE("ash.dwQuality=%d\n", 		wma->ash_audio.dwQuality);
-    TRACE("ash.dwSampleSize=%d\n", 		wma->ash_audio.dwSampleSize);
+    TRACE("ash.dwInitialFrames=%ld\n", 		wma->ash_audio.dwInitialFrames);
+    TRACE("ash.dwScale=%ld\n", 			wma->ash_audio.dwScale);
+    TRACE("ash.dwRate=%ld\n", 			wma->ash_audio.dwRate);
+    TRACE("ash.dwStart=%ld\n", 			wma->ash_audio.dwStart);
+    TRACE("ash.dwLength=%ld\n", 		wma->ash_audio.dwLength);
+    TRACE("ash.dwSuggestedBufferSize=%ld\n", 	wma->ash_audio.dwSuggestedBufferSize);
+    TRACE("ash.dwQuality=%ld\n", 		wma->ash_audio.dwQuality);
+    TRACE("ash.dwSampleSize=%ld\n", 		wma->ash_audio.dwSampleSize);
     TRACE("ash.rcFrame=(%d,%d,%d,%d)\n", 	wma->ash_audio.rcFrame.top, wma->ash_audio.rcFrame.left,
 	  wma->ash_audio.rcFrame.bottom, wma->ash_audio.rcFrame.right);
 
@@ -62,7 +62,7 @@ static BOOL MCIAVI_GetInfoAudio(WINE_MCIAVI* wma, const MMCKINFO* mmckList, MMCK
 	return FALSE;
     }
     if (mmckInfo.cksize < sizeof(WAVEFORMAT)) {
-	WARN("Size of strf chunk (%d) < audio format struct\n", mmckInfo.cksize);
+	WARN("Size of strf chunk (%ld) < audio format struct\n", mmckInfo.cksize);
 	return FALSE;
     }
     wma->lpWaveFormat = HeapAlloc(GetProcessHeap(), 0, mmckInfo.cksize);
@@ -75,8 +75,8 @@ static BOOL MCIAVI_GetInfoAudio(WINE_MCIAVI* wma, const MMCKINFO* mmckList, MMCK
 
     TRACE("waveFormat.wFormatTag=%d\n",		wma->lpWaveFormat->wFormatTag);
     TRACE("waveFormat.nChannels=%d\n", 		wma->lpWaveFormat->nChannels);
-    TRACE("waveFormat.nSamplesPerSec=%d\n",	wma->lpWaveFormat->nSamplesPerSec);
-    TRACE("waveFormat.nAvgBytesPerSec=%d\n",	wma->lpWaveFormat->nAvgBytesPerSec);
+    TRACE("waveFormat.nSamplesPerSec=%ld\n",	wma->lpWaveFormat->nSamplesPerSec);
+    TRACE("waveFormat.nAvgBytesPerSec=%ld\n",	wma->lpWaveFormat->nAvgBytesPerSec);
     TRACE("waveFormat.nBlockAlign=%d\n",	wma->lpWaveFormat->nBlockAlign);
     TRACE("waveFormat.wBitsPerSample=%d\n",	wma->lpWaveFormat->wBitsPerSample);
     if (mmckInfo.cksize >= sizeof(WAVEFORMATEX))
@@ -97,17 +97,17 @@ static BOOL MCIAVI_GetInfoVideo(WINE_MCIAVI* wma, const MMCKINFO* mmckList, MMCK
 	                                        HIBYTE(LOWORD(wma->ash_video.fccHandler)),
 	                                        LOBYTE(HIWORD(wma->ash_video.fccHandler)),
 	                                        HIBYTE(HIWORD(wma->ash_video.fccHandler)));
-    TRACE("ash.dwFlags=%d\n", 			wma->ash_video.dwFlags);
+    TRACE("ash.dwFlags=%ld\n", 			wma->ash_video.dwFlags);
     TRACE("ash.wPriority=%d\n", 		wma->ash_video.wPriority);
     TRACE("ash.wLanguage=%d\n", 		wma->ash_video.wLanguage);
-    TRACE("ash.dwInitialFrames=%d\n", 		wma->ash_video.dwInitialFrames);
-    TRACE("ash.dwScale=%d\n", 			wma->ash_video.dwScale);
-    TRACE("ash.dwRate=%d\n", 			wma->ash_video.dwRate);
-    TRACE("ash.dwStart=%d\n", 			wma->ash_video.dwStart);
-    TRACE("ash.dwLength=%d\n", 		wma->ash_video.dwLength);
-    TRACE("ash.dwSuggestedBufferSize=%d\n", 	wma->ash_video.dwSuggestedBufferSize);
-    TRACE("ash.dwQuality=%d\n", 		wma->ash_video.dwQuality);
-    TRACE("ash.dwSampleSize=%d\n", 		wma->ash_video.dwSampleSize);
+    TRACE("ash.dwInitialFrames=%ld\n", 		wma->ash_video.dwInitialFrames);
+    TRACE("ash.dwScale=%ld\n", 			wma->ash_video.dwScale);
+    TRACE("ash.dwRate=%ld\n", 			wma->ash_video.dwRate);
+    TRACE("ash.dwStart=%ld\n", 			wma->ash_video.dwStart);
+    TRACE("ash.dwLength=%ld\n", 		wma->ash_video.dwLength);
+    TRACE("ash.dwSuggestedBufferSize=%ld\n", 	wma->ash_video.dwSuggestedBufferSize);
+    TRACE("ash.dwQuality=%ld\n", 		wma->ash_video.dwQuality);
+    TRACE("ash.dwSampleSize=%ld\n", 		wma->ash_video.dwSampleSize);
     TRACE("ash.rcFrame=(%d,%d,%d,%d)\n", 	wma->ash_video.rcFrame.top, wma->ash_video.rcFrame.left,
 	  wma->ash_video.rcFrame.bottom, wma->ash_video.rcFrame.right);
 
@@ -128,17 +128,17 @@ static BOOL MCIAVI_GetInfoVideo(WINE_MCIAVI* wma, const MMCKINFO* mmckList, MMCK
 
     mmioRead(wma->hFile, (LPSTR)wma->inbih, mmckInfo.cksize);
 
-    TRACE("bih.biSize=%d\n", 		wma->inbih->biSize);
-    TRACE("bih.biWidth=%d\n", 		wma->inbih->biWidth);
-    TRACE("bih.biHeight=%d\n", 	wma->inbih->biHeight);
+    TRACE("bih.biSize=%ld\n", 		wma->inbih->biSize);
+    TRACE("bih.biWidth=%ld\n", 		wma->inbih->biWidth);
+    TRACE("bih.biHeight=%ld\n", 	wma->inbih->biHeight);
     TRACE("bih.biPlanes=%d\n", 		wma->inbih->biPlanes);
     TRACE("bih.biBitCount=%d\n", 	wma->inbih->biBitCount);
-    TRACE("bih.biCompression=%x\n", 	wma->inbih->biCompression);
-    TRACE("bih.biSizeImage=%d\n", 	wma->inbih->biSizeImage);
-    TRACE("bih.biXPelsPerMeter=%d\n", 	wma->inbih->biXPelsPerMeter);
-    TRACE("bih.biYPelsPerMeter=%d\n", 	wma->inbih->biYPelsPerMeter);
-    TRACE("bih.biClrUsed=%d\n", 	wma->inbih->biClrUsed);
-    TRACE("bih.biClrImportant=%d\n", 	wma->inbih->biClrImportant);
+    TRACE("bih.biCompression=%lx\n", 	wma->inbih->biCompression);
+    TRACE("bih.biSizeImage=%ld\n", 	wma->inbih->biSizeImage);
+    TRACE("bih.biXPelsPerMeter=%ld\n", 	wma->inbih->biXPelsPerMeter);
+    TRACE("bih.biYPelsPerMeter=%ld\n", 	wma->inbih->biYPelsPerMeter);
+    TRACE("bih.biClrUsed=%ld\n", 	wma->inbih->biClrUsed);
+    TRACE("bih.biClrImportant=%ld\n", 	wma->inbih->biClrImportant);
 
     SetRect(&wma->source, 0, 0, wma->inbih->biWidth, wma->inbih->biHeight);
     wma->dest = wma->source;
@@ -175,7 +175,7 @@ static BOOL	MCIAVI_AddFrame(WINE_MCIAVI* wma, LPMMCKINFO mmck,
     stream_n <<= 4;
     stream_n |= (p[1] <= '9') ? (p[1] - '0') : (tolower(p[1]) - 'a' + 10);
 
-    TRACE("ckid %4.4s (stream #%d)\n", (LPSTR)&mmck->ckid, stream_n);
+    TRACE("ckid %4.4s (stream #%ld)\n", (LPSTR)&mmck->ckid, stream_n);
 
     /* Some (rare?) AVI files have video streams name XXYY where XX = stream number and YY = TWOCC
      * of the last 2 characters of the biCompression member of the BITMAPINFOHEADER structure.
@@ -197,11 +197,11 @@ static BOOL	MCIAVI_AddFrame(WINE_MCIAVI* wma, LPMMCKINFO mmck,
     case cktypePALchange:
         if (stream_n != wma->video_stream_n)
         {
-            TRACE("data belongs to another video stream #%d\n", stream_n);
+            TRACE("data belongs to another video stream #%ld\n", stream_n);
             return FALSE;
         }
 
-	TRACE("Adding video frame[%d]: %d bytes\n",
+	TRACE("Adding video frame[%ld]: %ld bytes\n",
 	      alb->numVideoFrames, mmck->cksize);
 
 	if (alb->numVideoFrames < wma->dwPlayableVideoFrames) {
@@ -217,11 +217,11 @@ static BOOL	MCIAVI_AddFrame(WINE_MCIAVI* wma, LPMMCKINFO mmck,
     case cktypeWAVEbytes:
         if (stream_n != wma->audio_stream_n)
         {
-            TRACE("data belongs to another audio stream #%d\n", stream_n);
+            TRACE("data belongs to another audio stream #%ld\n", stream_n);
             return FALSE;
         }
 
-	TRACE("Adding audio frame[%d]: %d bytes\n",
+	TRACE("Adding audio frame[%ld]: %ld bytes\n",
 	      alb->numAudioBlocks, mmck->cksize);
 	if (wma->lpWaveFormat) {
 	    if (alb->numAudioBlocks >= alb->numAudioAllocated) {
@@ -286,16 +286,16 @@ BOOL MCIAVI_GetInfo(WINE_MCIAVI* wma)
 
     mmioRead(wma->hFile, (LPSTR)&wma->mah, sizeof(wma->mah));
 
-    TRACE("mah.dwMicroSecPerFrame=%d\n", 	wma->mah.dwMicroSecPerFrame);
-    TRACE("mah.dwMaxBytesPerSec=%d\n", 	wma->mah.dwMaxBytesPerSec);
-    TRACE("mah.dwPaddingGranularity=%d\n", 	wma->mah.dwPaddingGranularity);
-    TRACE("mah.dwFlags=%d\n", 			wma->mah.dwFlags);
-    TRACE("mah.dwTotalFrames=%d\n", 		wma->mah.dwTotalFrames);
-    TRACE("mah.dwInitialFrames=%d\n", 		wma->mah.dwInitialFrames);
-    TRACE("mah.dwStreams=%d\n", 		wma->mah.dwStreams);
-    TRACE("mah.dwSuggestedBufferSize=%d\n",	wma->mah.dwSuggestedBufferSize);
-    TRACE("mah.dwWidth=%d\n", 			wma->mah.dwWidth);
-    TRACE("mah.dwHeight=%d\n", 		wma->mah.dwHeight);
+    TRACE("mah.dwMicroSecPerFrame=%ld\n", 	wma->mah.dwMicroSecPerFrame);
+    TRACE("mah.dwMaxBytesPerSec=%ld\n", 	wma->mah.dwMaxBytesPerSec);
+    TRACE("mah.dwPaddingGranularity=%ld\n", 	wma->mah.dwPaddingGranularity);
+    TRACE("mah.dwFlags=%ld\n", 			wma->mah.dwFlags);
+    TRACE("mah.dwTotalFrames=%ld\n", 		wma->mah.dwTotalFrames);
+    TRACE("mah.dwInitialFrames=%ld\n", 		wma->mah.dwInitialFrames);
+    TRACE("mah.dwStreams=%ld\n", 		wma->mah.dwStreams);
+    TRACE("mah.dwSuggestedBufferSize=%ld\n",	wma->mah.dwSuggestedBufferSize);
+    TRACE("mah.dwWidth=%ld\n", 			wma->mah.dwWidth);
+    TRACE("mah.dwHeight=%ld\n", 		wma->mah.dwHeight);
 
     mmioAscend(wma->hFile, &mmckInfo, 0);
 
@@ -320,7 +320,7 @@ BOOL MCIAVI_GetInfo(WINE_MCIAVI* wma)
 
         mmioRead(wma->hFile, (LPSTR)&strh, sizeof(strh));
 
-        TRACE("Stream #%d fccType %4.4s\n", stream_n, (LPSTR)&strh.fccType);
+        TRACE("Stream #%ld fccType %4.4s\n", stream_n, (LPSTR)&strh.fccType);
 
         if (strh.fccType == streamtypeVIDEO)
         {
@@ -399,18 +399,18 @@ BOOL MCIAVI_GetInfo(WINE_MCIAVI* wma)
 	mmioAscend(wma->hFile, &mmckInfo, 0);
     }
     if (alb.numVideoFrames != wma->dwPlayableVideoFrames) {
-	WARN("AVI header says %d frames, we found %d video frames, reducing playable frames\n",
+	WARN("AVI header says %ld frames, we found %ld video frames, reducing playable frames\n",
 	     wma->dwPlayableVideoFrames, alb.numVideoFrames);
 	wma->dwPlayableVideoFrames = alb.numVideoFrames;
     }
     wma->dwPlayableAudioBlocks = alb.numAudioBlocks;
 
     if (alb.inVideoSize > wma->ash_video.dwSuggestedBufferSize) {
-	WARN("inVideoSize=%d suggestedSize=%d\n", alb.inVideoSize, wma->ash_video.dwSuggestedBufferSize);
+	WARN("inVideoSize=%ld suggestedSize=%ld\n", alb.inVideoSize, wma->ash_video.dwSuggestedBufferSize);
 	wma->ash_video.dwSuggestedBufferSize = alb.inVideoSize;
     }
     if (alb.inAudioSize > wma->ash_audio.dwSuggestedBufferSize) {
-	WARN("inAudioSize=%d suggestedSize=%d\n", alb.inAudioSize, wma->ash_audio.dwSuggestedBufferSize);
+	WARN("inAudioSize=%ld suggestedSize=%ld\n", alb.inAudioSize, wma->ash_audio.dwSuggestedBufferSize);
 	wma->ash_audio.dwSuggestedBufferSize = alb.inAudioSize;
     }
 
@@ -463,17 +463,17 @@ BOOL    MCIAVI_OpenVideo(WINE_MCIAVI* wma)
 	return FALSE;
     }
 
-    TRACE("bih.biSize=%d\n", 		wma->outbih->biSize);
-    TRACE("bih.biWidth=%d\n", 		wma->outbih->biWidth);
-    TRACE("bih.biHeight=%d\n", 	wma->outbih->biHeight);
+    TRACE("bih.biSize=%ld\n", 		wma->outbih->biSize);
+    TRACE("bih.biWidth=%ld\n", 		wma->outbih->biWidth);
+    TRACE("bih.biHeight=%ld\n", 	wma->outbih->biHeight);
     TRACE("bih.biPlanes=%d\n", 		wma->outbih->biPlanes);
     TRACE("bih.biBitCount=%d\n", 	wma->outbih->biBitCount);
-    TRACE("bih.biCompression=%x\n", 	wma->outbih->biCompression);
-    TRACE("bih.biSizeImage=%d\n", 	wma->outbih->biSizeImage);
-    TRACE("bih.biXPelsPerMeter=%d\n", 	wma->outbih->biXPelsPerMeter);
-    TRACE("bih.biYPelsPerMeter=%d\n", 	wma->outbih->biYPelsPerMeter);
-    TRACE("bih.biClrUsed=%d\n", 	wma->outbih->biClrUsed);
-    TRACE("bih.biClrImportant=%d\n", 	wma->outbih->biClrImportant);
+    TRACE("bih.biCompression=%lx\n", 	wma->outbih->biCompression);
+    TRACE("bih.biSizeImage=%ld\n", 	wma->outbih->biSizeImage);
+    TRACE("bih.biXPelsPerMeter=%ld\n", 	wma->outbih->biXPelsPerMeter);
+    TRACE("bih.biYPelsPerMeter=%ld\n", 	wma->outbih->biYPelsPerMeter);
+    TRACE("bih.biClrUsed=%ld\n", 	wma->outbih->biClrUsed);
+    TRACE("bih.biClrImportant=%ld\n", 	wma->outbih->biClrImportant);
 
     wma->outdata = HeapAlloc(GetProcessHeap(), 0, wma->outbih->biSizeImage);
     if (!wma->outdata) {
@@ -512,7 +512,7 @@ static void CALLBACK MCIAVI_waveCallback(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwIn
 	break;
     case WOM_DONE:
 	InterlockedIncrement(&wma->dwEventCount);
-	TRACE("Returning waveHdr=%lx\n", dwParam1);
+	TRACE("Returning waveHdr=%Ix\n", dwParam1);
 	SetEvent(wma->hEvent);
 	break;
     default:
@@ -531,7 +531,7 @@ DWORD MCIAVI_OpenAudio(WINE_MCIAVI* wma, unsigned* nHdr, LPWAVEHDR* pWaveHdr)
     dwRet = waveOutOpen((HWAVEOUT *)&wma->hWave, WAVE_MAPPER, wma->lpWaveFormat,
                        (DWORD_PTR)MCIAVI_waveCallback, wma->wDevID, CALLBACK_FUNCTION);
     if (dwRet != 0) {
-	TRACE("Can't open low level audio device %d\n", dwRet);
+	TRACE("Can't open low level audio device %ld\n", dwRet);
 	dwRet = MCIERR_DEVICE_OPEN;
 	wma->hWave = 0;
 	goto cleanUp;
@@ -576,7 +576,7 @@ void MCIAVI_PlayAudioBlocks(WINE_MCIAVI* wma, unsigned nHdr, LPWAVEHDR waveHdr)
 {
     if (!wma->lpAudioIndex) 
         return;
-    TRACE("%d (ec=%u)\n", wma->lpAudioIndex[wma->dwCurrAudioBlock].dwOffset, wma->dwEventCount);
+    TRACE("%ld (ec=%lu)\n", wma->lpAudioIndex[wma->dwCurrAudioBlock].dwOffset, wma->dwEventCount);
 
     /* push as many blocks as possible => audio gets priority */
     while (wma->dwStatus != MCI_MODE_STOP && wma->dwStatus != MCI_MODE_NOT_READY &&
@@ -609,7 +609,7 @@ double MCIAVI_PaintFrame(WINE_MCIAVI* wma, HDC hDC)
     if (!hDC || !wma->inbih)
 	return 0;
 
-    TRACE("Painting frame %u (cached %u)\n", wma->dwCurrVideoFrame, wma->dwCachedFrame);
+    TRACE("Painting frame %lu (cached %lu)\n", wma->dwCurrVideoFrame, wma->dwCachedFrame);
 
     if (wma->dwCurrVideoFrame != wma->dwCachedFrame)
     {

@@ -27,7 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mciavi);
 
 static LRESULT WINAPI MCIAVI_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    TRACE("hwnd=%p msg=%x wparam=%lx lparam=%lx\n", hWnd, uMsg, wParam, lParam);
+    TRACE("hwnd=%p msg=%x wparam=%Ix lparam=%Ix\n", hWnd, uMsg, wParam, lParam);
 
     switch (uMsg) {
     case WM_CREATE:
@@ -137,7 +137,7 @@ BOOL    MCIAVI_CreateWindow(WINE_MCIAVI* wma, DWORD dwFlags, LPMCI_DGV_OPEN_PARM
                               ULongToPtr(wma->wDevID));
     wma->hWndPaint = wma->hWnd;
 
-    TRACE("(%04x, %08X, %p, style %x, parent %p, dimensions %dx%d, hwnd %p)\n", wma->wDevID,
+    TRACE("(%04x, %08lX, %p, style %lx, parent %p, dimensions %ldx%ld, hwnd %p)\n", wma->wDevID,
           dwFlags, lpParms, dwStyle, hParent, rc.right - rc.left, rc.bottom - rc.top, wma->hWnd);
     return wma->hWnd != 0;
 }
@@ -150,7 +150,7 @@ DWORD	MCIAVI_mciPut(UINT wDevID, DWORD dwFlags, LPMCI_DGV_PUT_PARMS lpParms)
     WINE_MCIAVI*	wma = MCIAVI_mciGetOpenDev(wDevID);
     RECT		rc;
 
-    TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lX, %p)\n", wDevID, dwFlags, lpParms);
 
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -206,7 +206,7 @@ DWORD	MCIAVI_mciWhere(UINT wDevID, DWORD dwFlags, LPMCI_DGV_RECT_PARMS lpParms)
     WINE_MCIAVI*	wma = MCIAVI_mciGetOpenDev(wDevID);
     RECT		rc;
 
-    TRACE("(%04x, %08x, %p)\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lx, %p)\n", wDevID, dwFlags, lpParms);
 
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -273,7 +273,7 @@ DWORD	MCIAVI_mciWindow(UINT wDevID, DWORD dwFlags, LPMCI_DGV_WINDOW_PARMSW lpPar
 {
     WINE_MCIAVI*	wma = MCIAVI_mciGetOpenDev(wDevID);
 
-    TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lX, %p)\n", wDevID, dwFlags, lpParms);
 
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
