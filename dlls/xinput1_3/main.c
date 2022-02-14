@@ -81,8 +81,8 @@ struct xinput_controller
         char *feature_report_buf;
 
         BYTE haptics_report;
-        BYTE haptics_rumble_index;
-        BYTE haptics_buzz_index;
+        BYTE haptics_rumble_ordinal;
+        BYTE haptics_buzz_ordinal;
     } hid;
 };
 
@@ -244,21 +244,21 @@ static BOOL controller_check_caps(struct xinput_controller *controller, HANDLE d
         return TRUE;
     }
 
-    controller->hid.haptics_buzz_index = 0;
-    controller->hid.haptics_rumble_index = 0;
+    controller->hid.haptics_buzz_ordinal = 0;
+    controller->hid.haptics_rumble_ordinal = 0;
     for (i = 3; status == HIDP_STATUS_SUCCESS; ++i)
     {
         ULONG waveform = 0;
         status = HidP_GetUsageValue(HidP_Feature, HID_USAGE_PAGE_ORDINAL, waveform_list,
                                     i, &waveform, preparsed, report_buf, report_len);
         if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue returned %#lx\n", status);
-        else if (waveform == HID_USAGE_HAPTICS_WAVEFORM_BUZZ) controller->hid.haptics_buzz_index = i;
-        else if (waveform == HID_USAGE_HAPTICS_WAVEFORM_RUMBLE) controller->hid.haptics_rumble_index = i;
+        else if (waveform == HID_USAGE_HAPTICS_WAVEFORM_BUZZ) controller->hid.haptics_buzz_ordinal = i;
+        else if (waveform == HID_USAGE_HAPTICS_WAVEFORM_RUMBLE) controller->hid.haptics_rumble_ordinal = i;
     }
 
-    if (!controller->hid.haptics_buzz_index) WARN("haptics buzz not supported\n");
-    if (!controller->hid.haptics_rumble_index) WARN("haptics rumble not supported\n");
-    if (!controller->hid.haptics_rumble_index && !controller->hid.haptics_buzz_index) return TRUE;
+    if (!controller->hid.haptics_buzz_ordinal) WARN("haptics buzz not supported\n");
+    if (!controller->hid.haptics_rumble_ordinal) WARN("haptics rumble not supported\n");
+    if (!controller->hid.haptics_rumble_ordinal && !controller->hid.haptics_buzz_ordinal) return TRUE;
 
     caps_count = 1;
     status = HidP_GetSpecificValueCaps(HidP_Output, HID_USAGE_PAGE_HAPTICS, 0, HID_USAGE_HAPTICS_MANUAL_TRIGGER,
@@ -298,7 +298,7 @@ static DWORD HID_set_state(struct xinput_controller *controller, XINPUT_VIBRATIO
                                 state->wLeftMotorSpeed, preparsed, report_buf, report_len);
     if (status != HIDP_STATUS_SUCCESS) WARN("HidP_SetUsageValue INTENSITY returned %#lx\n", status);
     status = HidP_SetUsageValue(HidP_Output, HID_USAGE_PAGE_HAPTICS, 0, HID_USAGE_HAPTICS_MANUAL_TRIGGER,
-                                controller->hid.haptics_rumble_index, preparsed, report_buf, report_len);
+                                controller->hid.haptics_rumble_ordinal, preparsed, report_buf, report_len);
     if (status != HIDP_STATUS_SUCCESS) WARN("HidP_SetUsageValue MANUAL_TRIGGER returned %#lx\n", status);
     if (!HidD_SetOutputReport(controller->device, report_buf, report_len))
     {
@@ -313,7 +313,7 @@ static DWORD HID_set_state(struct xinput_controller *controller, XINPUT_VIBRATIO
                                 state->wRightMotorSpeed, preparsed, report_buf, report_len);
     if (status != HIDP_STATUS_SUCCESS) WARN("HidP_SetUsageValue INTENSITY returned %#lx\n", status);
     status = HidP_SetUsageValue(HidP_Output, HID_USAGE_PAGE_HAPTICS, 0, HID_USAGE_HAPTICS_MANUAL_TRIGGER,
-                                controller->hid.haptics_buzz_index, preparsed, report_buf, report_len);
+                                controller->hid.haptics_buzz_ordinal, preparsed, report_buf, report_len);
     if (status != HIDP_STATUS_SUCCESS) WARN("HidP_SetUsageValue MANUAL_TRIGGER returned %#lx\n", status);
     if (!HidD_SetOutputReport(controller->device, report_buf, report_len))
     {
