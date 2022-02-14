@@ -150,7 +150,7 @@ static ULONG WINAPI sample_AddRef(IMFSample *iface)
     struct sample *sample = impl_from_IMFSample(iface);
     ULONG refcount = InterlockedIncrement(&sample->attributes.ref);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -171,7 +171,7 @@ static ULONG WINAPI sample_Release(IMFSample *iface)
     struct sample *sample = impl_from_IMFSample(iface);
     ULONG refcount = InterlockedDecrement(&sample->attributes.ref);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
         release_sample_object(sample);
@@ -194,14 +194,14 @@ static ULONG WINAPI sample_tracked_Release(IMFSample *iface)
 
         /* Call could fail if queue system is not initialized, it's not critical. */
         if (FAILED(hr = RtwqInvokeCallback(tracked_result)))
-            WARN("Failed to invoke tracking callback, hr %#x.\n", hr);
+            WARN("Failed to invoke tracking callback, hr %#lx.\n", hr);
         IRtwqAsyncResult_Release(tracked_result);
     }
     LeaveCriticalSection(&sample->attributes.cs);
 
     refcount = InterlockedDecrement(&sample->attributes.ref);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
         release_sample_object(sample);
@@ -497,7 +497,7 @@ static HRESULT WINAPI sample_SetSampleFlags(IMFSample *iface, DWORD flags)
 {
     struct sample *sample = impl_from_IMFSample(iface);
 
-    TRACE("%p, %#x.\n", iface, flags);
+    TRACE("%p, %#lx.\n", iface, flags);
 
     EnterCriticalSection(&sample->attributes.cs);
     sample->flags = flags;
@@ -589,7 +589,7 @@ static HRESULT WINAPI sample_GetBufferByIndex(IMFSample *iface, DWORD index, IMF
     struct sample *sample = impl_from_IMFSample(iface);
     HRESULT hr = S_OK;
 
-    TRACE("%p, %u, %p.\n", iface, index, buffer);
+    TRACE("%p, %lu, %p.\n", iface, index, buffer);
 
     EnterCriticalSection(&sample->attributes.cs);
     if (index < sample->buffer_count)
@@ -741,7 +741,7 @@ static HRESULT WINAPI sample_RemoveBufferByIndex(IMFSample *iface, DWORD index)
     struct sample *sample = impl_from_IMFSample(iface);
     HRESULT hr = S_OK;
 
-    TRACE("%p, %u.\n", iface, index);
+    TRACE("%p, %lu.\n", iface, index);
 
     EnterCriticalSection(&sample->attributes.cs);
     if (index < sample->buffer_count)
@@ -1097,7 +1097,7 @@ static ULONG WINAPI sample_allocator_AddRef(IMFVideoSampleAllocatorEx *iface)
     struct sample_allocator *allocator = impl_from_IMFVideoSampleAllocatorEx(iface);
     ULONG refcount = InterlockedIncrement(&allocator->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -1167,7 +1167,7 @@ static ULONG WINAPI sample_allocator_Release(IMFVideoSampleAllocatorEx *iface)
     struct sample_allocator *allocator = impl_from_IMFVideoSampleAllocatorEx(iface);
     ULONG refcount = InterlockedDecrement(&allocator->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -1265,7 +1265,7 @@ static HRESULT sample_allocator_get_surface_service(struct sample_allocator *all
             if (FAILED(hr = IDirect3DDeviceManager9_GetVideoService(allocator->d3d9_device_manager, service->hdevice,
                     &IID_IDirectXVideoProcessorService, (void **)&service->dxva_service)))
             {
-                WARN("Failed to get DXVA processor service, hr %#x.\n", hr);
+                WARN("Failed to get DXVA processor service, hr %#lx.\n", hr);
                 IDirect3DDeviceManager9_CloseDeviceHandle(allocator->d3d9_device_manager, service->hdevice);
             }
         }
@@ -1277,7 +1277,7 @@ static HRESULT sample_allocator_get_surface_service(struct sample_allocator *all
             if (FAILED(hr = IMFDXGIDeviceManager_GetVideoService(allocator->dxgi_device_manager, service->hdevice,
                     &IID_ID3D11Device, (void **)&service->d3d11_device)))
             {
-                WARN("Failed to get D3D11 device, hr %#x.\n", hr);
+                WARN("Failed to get D3D11 device, hr %#lx.\n", hr);
                 IMFDXGIDeviceManager_CloseDeviceHandle(allocator->dxgi_device_manager, service->hdevice);
             }
         }
@@ -1487,7 +1487,7 @@ static HRESULT WINAPI sample_allocator_InitializeSampleAllocator(IMFVideoSampleA
     struct sample_allocator *allocator = impl_from_IMFVideoSampleAllocatorEx(iface);
     HRESULT hr;
 
-    TRACE("%p, %u, %p.\n", iface, sample_count, media_type);
+    TRACE("%p, %lu, %p.\n", iface, sample_count, media_type);
 
     if (!sample_count)
         return E_INVALIDARG;
@@ -1584,7 +1584,7 @@ static HRESULT WINAPI sample_allocator_InitializeSampleAllocatorEx(IMFVideoSampl
     struct sample_allocator *allocator = impl_from_IMFVideoSampleAllocatorEx(iface);
     HRESULT hr;
 
-    TRACE("%p, %u, %u, %p, %p.\n", iface, initial_sample_count, max_sample_count, attributes, media_type);
+    TRACE("%p, %lu, %lu, %p, %p.\n", iface, initial_sample_count, max_sample_count, attributes, media_type);
 
     EnterCriticalSection(&allocator->cs);
 

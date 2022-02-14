@@ -128,7 +128,7 @@ static inline const char *debugstr_propvar(const PROPVARIANT *v)
         case VT_NULL:
             return wine_dbg_sprintf("%p {VT_NULL}", v);
         case VT_UI4:
-            return wine_dbg_sprintf("%p {VT_UI4: %d}", v, v->ulVal);
+            return wine_dbg_sprintf("%p {VT_UI4: %ld}", v, v->ulVal);
         case VT_UI8:
             return wine_dbg_sprintf("%p {VT_UI8: %s}", v, wine_dbgstr_longlong(v->uhVal.QuadPart));
         case VT_I8:
@@ -178,7 +178,7 @@ static inline const char *debugstr_fourcc(DWORD format)
                 return wine_dbg_sprintf("%s", wine_dbgstr_an(formats[i].name, -1));
         }
 
-        return wine_dbg_sprintf("%#x", format);
+        return wine_dbg_sprintf("%#lx", format);
     }
 
     return wine_dbgstr_an((char *)&format, 4);

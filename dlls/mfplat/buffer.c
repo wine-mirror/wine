@@ -146,7 +146,7 @@ static ULONG WINAPI memory_buffer_AddRef(IMFMediaBuffer *iface)
     struct buffer *buffer = impl_from_IMFMediaBuffer(iface);
     ULONG refcount = InterlockedIncrement(&buffer->refcount);
 
-    TRACE("%p, refcount %u.\n", buffer, refcount);
+    TRACE("%p, refcount %lu.\n", buffer, refcount);
 
     return refcount;
 }
@@ -156,7 +156,7 @@ static ULONG WINAPI memory_buffer_Release(IMFMediaBuffer *iface)
     struct buffer *buffer = impl_from_IMFMediaBuffer(iface);
     ULONG refcount = InterlockedDecrement(&buffer->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -221,7 +221,7 @@ static HRESULT WINAPI memory_buffer_SetCurrentLength(IMFMediaBuffer *iface, DWOR
 {
     struct buffer *buffer = impl_from_IMFMediaBuffer(iface);
 
-    TRACE("%p, %u.\n", iface, current_length);
+    TRACE("%p, %lu.\n", iface, current_length);
 
     if (current_length > buffer->max_length)
         return E_INVALIDARG;
@@ -443,7 +443,7 @@ static HRESULT WINAPI d3d9_surface_buffer_SetCurrentLength(IMFMediaBuffer *iface
 {
     struct buffer *buffer = impl_from_IMFMediaBuffer(iface);
 
-    TRACE("%p, %u.\n", iface, current_length);
+    TRACE("%p, %lu.\n", iface, current_length);
 
     buffer->current_length = current_length;
 
@@ -595,14 +595,14 @@ static HRESULT WINAPI memory_2d_buffer_GetContiguousLength(IMF2DBuffer2 *iface, 
 
 static HRESULT WINAPI memory_2d_buffer_ContiguousCopyTo(IMF2DBuffer2 *iface, BYTE *dest_buffer, DWORD dest_length)
 {
-    FIXME("%p, %p, %u.\n", iface, dest_buffer, dest_length);
+    FIXME("%p, %p, %lu.\n", iface, dest_buffer, dest_length);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI memory_2d_buffer_ContiguousCopyFrom(IMF2DBuffer2 *iface, const BYTE *src_buffer, DWORD src_length)
 {
-    FIXME("%p, %p, %u.\n", iface, src_buffer, src_length);
+    FIXME("%p, %p, %lu.\n", iface, src_buffer, src_length);
 
     return E_NOTIMPL;
 }
@@ -889,7 +889,7 @@ static HRESULT dxgi_surface_buffer_create_readback_texture(struct buffer *buffer
     texture_desc.MiscFlags = 0;
     texture_desc.MipLevels = 1;
     if (FAILED(hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &buffer->dxgi_surface.rb_texture)))
-        WARN("Failed to create readback texture, hr %#x.\n", hr);
+        WARN("Failed to create readback texture, hr %#lx.\n", hr);
 
     ID3D11Device_Release(device);
 
@@ -914,7 +914,7 @@ static HRESULT dxgi_surface_buffer_map(struct buffer *buffer)
     if (FAILED(hr = ID3D11DeviceContext_Map(immediate_context, (ID3D11Resource *)buffer->dxgi_surface.rb_texture,
             0, D3D11_MAP_READ_WRITE, 0, &buffer->dxgi_surface.map_desc)))
     {
-        WARN("Failed to map readback texture, hr %#x.\n", hr);
+        WARN("Failed to map readback texture, hr %#lx.\n", hr);
     }
 
     ID3D11DeviceContext_Release(immediate_context);
@@ -1016,7 +1016,7 @@ static HRESULT WINAPI dxgi_surface_buffer_SetCurrentLength(IMFMediaBuffer *iface
 {
     struct buffer *buffer = impl_from_IMFMediaBuffer(iface);
 
-    TRACE("%p, %u.\n", iface, current_length);
+    TRACE("%p, %lu.\n", iface, current_length);
 
     buffer->current_length = current_length;
 
@@ -1438,7 +1438,7 @@ static HRESULT create_dxgi_surface_buffer(IUnknown *surface, unsigned int sub_re
 
     if (FAILED(hr = IUnknown_QueryInterface(surface, &IID_ID3D11Texture2D, (void **)&texture)))
     {
-        WARN("Failed to get texture interface, hr %#x.\n", hr);
+        WARN("Failed to get texture interface, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -1490,7 +1490,7 @@ static HRESULT create_dxgi_surface_buffer(IUnknown *surface, unsigned int sub_re
  */
 HRESULT WINAPI MFCreateMemoryBuffer(DWORD max_length, IMFMediaBuffer **buffer)
 {
-    TRACE("%u, %p.\n", max_length, buffer);
+    TRACE("%lu, %p.\n", max_length, buffer);
 
     return create_1d_buffer(max_length, MF_1_BYTE_ALIGNMENT, buffer);
 }
@@ -1500,7 +1500,7 @@ HRESULT WINAPI MFCreateMemoryBuffer(DWORD max_length, IMFMediaBuffer **buffer)
  */
 HRESULT WINAPI MFCreateAlignedMemoryBuffer(DWORD max_length, DWORD alignment, IMFMediaBuffer **buffer)
 {
-    TRACE("%u, %u, %p.\n", max_length, alignment, buffer);
+    TRACE("%lu, %lu, %p.\n", max_length, alignment, buffer);
 
     return create_1d_buffer(max_length, alignment, buffer);
 }
@@ -1510,7 +1510,7 @@ HRESULT WINAPI MFCreateAlignedMemoryBuffer(DWORD max_length, DWORD alignment, IM
  */
 HRESULT WINAPI MFCreate2DMediaBuffer(DWORD width, DWORD height, DWORD fourcc, BOOL bottom_up, IMFMediaBuffer **buffer)
 {
-    TRACE("%u, %u, %s, %d, %p.\n", width, height, debugstr_fourcc(fourcc), bottom_up, buffer);
+    TRACE("%lu, %lu, %s, %d, %p.\n", width, height, debugstr_fourcc(fourcc), bottom_up, buffer);
 
     return create_2d_buffer(width, height, fourcc, bottom_up, buffer);
 }
@@ -1558,7 +1558,7 @@ HRESULT WINAPI MFCreateMediaBufferFromMediaType(IMFMediaType *media_type, LONGLO
     HRESULT hr;
     GUID major;
 
-    TRACE("%p, %s, %u, %u, %p.\n", media_type, debugstr_time(duration), min_length, alignment, buffer);
+    TRACE("%p, %s, %lu, %lu, %p.\n", media_type, debugstr_time(duration), min_length, alignment, buffer);
 
     if (!media_type)
         return E_INVALIDARG;
