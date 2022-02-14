@@ -100,6 +100,7 @@ MAKE_FUNCPTR(SDL_HapticPause);
 MAKE_FUNCPTR(SDL_HapticQuery);
 MAKE_FUNCPTR(SDL_HapticRumbleInit);
 MAKE_FUNCPTR(SDL_HapticRumblePlay);
+MAKE_FUNCPTR(SDL_HapticRumbleStop);
 MAKE_FUNCPTR(SDL_HapticRumbleSupported);
 MAKE_FUNCPTR(SDL_HapticRunEffect);
 MAKE_FUNCPTR(SDL_HapticSetGain);
@@ -418,10 +419,12 @@ NTSTATUS sdl_device_haptics_start(struct unix_device *iface, UINT duration_ms,
 
     if (!effect.leftright.large_magnitude && !effect.leftright.small_magnitude)
     {
-        if (impl->effect_support & WINE_SDL_JOYSTICK_RUMBLE)
-            pSDL_JoystickRumble(impl->sdl_joystick, 0, 0, 0);
-        else if (impl->sdl_haptic)
+        if (impl->effect_support & SDL_HAPTIC_LEFTRIGHT)
             pSDL_HapticStopAll(impl->sdl_haptic);
+        else if (impl->effect_support & WINE_SDL_HAPTIC_RUMBLE)
+            pSDL_HapticRumbleStop(impl->sdl_haptic);
+        else if (impl->effect_support & WINE_SDL_JOYSTICK_RUMBLE)
+            pSDL_JoystickRumble(impl->sdl_joystick, 0, 0, 0);
 
         return STATUS_SUCCESS;
     }
@@ -998,6 +1001,7 @@ NTSTATUS sdl_bus_init(void *args)
     LOAD_FUNCPTR(SDL_HapticQuery);
     LOAD_FUNCPTR(SDL_HapticRumbleInit);
     LOAD_FUNCPTR(SDL_HapticRumblePlay);
+    LOAD_FUNCPTR(SDL_HapticRumbleStop);
     LOAD_FUNCPTR(SDL_HapticRumbleSupported);
     LOAD_FUNCPTR(SDL_HapticRunEffect);
     LOAD_FUNCPTR(SDL_HapticSetGain);
