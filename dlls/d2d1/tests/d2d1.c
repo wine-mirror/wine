@@ -5134,7 +5134,7 @@ static void test_create_target(BOOL d3d11)
         desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
 
         hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(factory, ctx.surface, &desc, &rt);
-        ok(hr == create_dpi_tests[i].hr, "Test %u: Got unexpect hr %#lx, expected %#lx.\n",
+        ok(hr == create_dpi_tests[i].hr, "Test %u: Got unexpected hr %#lx, expected %#lx.\n",
                 i, hr, create_dpi_tests[i].hr);
 
         if (FAILED(hr))
