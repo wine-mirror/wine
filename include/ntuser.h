@@ -67,6 +67,7 @@ enum
     NtUserGetMonitorInfo,
     NtUserGetSystemMetricsForDpi,
     NtUserMirrorRgn,
+    NtUserMonitorFromRect,
 };
 
 /* color index used to retrieve system 55aa brush */

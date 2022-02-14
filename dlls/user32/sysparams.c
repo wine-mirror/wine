@@ -989,89 +989,12 @@ BOOL WINAPI PhysicalToLogicalPointForPerMonitorDPI( HWND hwnd, POINT *pt )
     return ret;
 }
 
-struct monitor_enum_info
-{
-    RECT     rect;
-    UINT     max_area;
-    UINT     min_distance;
-    HMONITOR primary;
-    HMONITOR nearest;
-    HMONITOR ret;
-};
-
-/* helper callback for MonitorFromRect */
-static BOOL CALLBACK monitor_enum( HMONITOR monitor, HDC hdc, LPRECT rect, LPARAM lp )
-{
-    struct monitor_enum_info *info = (struct monitor_enum_info *)lp;
-    RECT intersect;
-
-    if (IntersectRect( &intersect, rect, &info->rect ))
-    {
-        /* check for larger intersecting area */
-        UINT area = (intersect.right - intersect.left) * (intersect.bottom - intersect.top);
-        if (area > info->max_area)
-        {
-            info->max_area = area;
-            info->ret = monitor;
-        }
-    }
-    else if (!info->max_area)  /* if not intersecting, check for min distance */
-    {
-        UINT distance;
-        UINT x, y;
-
-        if (info->rect.right <= rect->left) x = rect->left - info->rect.right;
-        else if (rect->right <= info->rect.left) x = info->rect.left - rect->right;
-        else x = 0;
-        if (info->rect.bottom <= rect->top) y = rect->top - info->rect.bottom;
-        else if (rect->bottom <= info->rect.top) y = info->rect.top - rect->bottom;
-        else y = 0;
-        distance = x * x + y * y;
-        if (distance < info->min_distance)
-        {
-            info->min_distance = distance;
-            info->nearest = monitor;
-        }
-    }
-    if (!info->primary)
-    {
-        MONITORINFO mon_info;
-        mon_info.cbSize = sizeof(mon_info);
-        GetMonitorInfoW( monitor, &mon_info );
-        if (mon_info.dwFlags & MONITORINFOF_PRIMARY) info->primary = monitor;
-    }
-    return TRUE;
-}
-
 /***********************************************************************
  *		MonitorFromRect (USER32.@)
  */
 HMONITOR WINAPI MonitorFromRect( const RECT *rect, DWORD flags )
 {
-    struct monitor_enum_info info;
-
-    info.rect         = *rect;
-    info.max_area     = 0;
-    info.min_distance = ~0u;
-    info.primary      = 0;
-    info.nearest      = 0;
-    info.ret          = 0;
-
-    if (IsRectEmpty(&info.rect))
-    {
-        info.rect.right = info.rect.left + 1;
-        info.rect.bottom = info.rect.top + 1;
-    }
-
-    if (!NtUserEnumDisplayMonitors( 0, NULL, monitor_enum, (LPARAM)&info )) return 0;
-    if (!info.ret)
-    {
-        if (flags & MONITOR_DEFAULTTOPRIMARY) info.ret = info.primary;
-        else if (flags & MONITOR_DEFAULTTONEAREST) info.ret = info.nearest;
-    }
-
-    TRACE( "%s flags %x returning %p\n", wine_dbgstr_rect(rect), flags, info.ret );
-    return info.ret;
+    return UlongToHandle( NtUserCallTwoParam( (LONG_PTR)rect, flags, NtUserMonitorFromRect ));
 }
 
 /***********************************************************************

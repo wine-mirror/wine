@@ -1936,6 +1936,72 @@ static BOOL get_monitor_info( HMONITOR handle, MONITORINFO *info )
     return FALSE;
 }
 
+static HMONITOR monitor_from_rect( const RECT *rect, DWORD flags, UINT dpi )
+{
+    HMONITOR primary = 0, nearest = 0, ret = 0;
+    UINT max_area = 0, min_distance = ~0u;
+    struct monitor *monitor;
+    RECT r;
+
+    r = map_dpi_rect( *rect, dpi, system_dpi );
+    if (is_rect_empty( &r ))
+    {
+        r.right = r.left + 1;
+        r.bottom = r.top + 1;
+    }
+
+    if (!lock_display_devices()) return 0;
+
+    LIST_FOR_EACH_ENTRY(monitor, &monitors, struct monitor, entry)
+    {
+        RECT intersect;
+        RECT monitor_rect = map_dpi_rect( monitor->rc_monitor, get_monitor_dpi( monitor->handle ),
+                                          system_dpi );
+
+        if (intersect_rect( &intersect, &monitor_rect, &r ))
+        {
+            /* check for larger intersecting area */
+            UINT area = (intersect.right - intersect.left) * (intersect.bottom - intersect.top);
+            if (area > max_area)
+            {
+                max_area = area;
+                ret = monitor->handle;
+            }
+        }
+        else if (!max_area)  /* if not intersecting, check for min distance */
+        {
+            UINT distance;
+            UINT x, y;
+
+            if (r.right <= monitor_rect.left) x = monitor_rect.left - r.right;
+            else if (monitor_rect.right <= r.left) x = r.left - monitor_rect.right;
+            else x = 0;
+            if (r.bottom <= monitor_rect.top) y = monitor_rect.top - r.bottom;
+            else if (monitor_rect.bottom <= r.top) y = r.top - monitor_rect.bottom;
+            else y = 0;
+            distance = x * x + y * y;
+            if (distance < min_distance)
+            {
+                min_distance = distance;
+                nearest = monitor->handle;
+            }
+        }
+
+        if (monitor->flags & MONITORINFOF_PRIMARY) primary = monitor->handle;
+    }
+
+    unlock_display_devices();
+
+    if (!ret)
+    {
+        if (flags & MONITOR_DEFAULTTOPRIMARY) ret = primary;
+        else if (flags & MONITOR_DEFAULTTONEAREST) ret = nearest;
+    }
+
+    TRACE( "%s flags %x returning %p\n", wine_dbgstr_rect(rect), flags, ret );
+    return ret;
+}
+
 /***********************************************************************
  *	     NtUserGetSystemDpiForProcess    (win32u.@)
  */
@@ -4427,6 +4493,8 @@ ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code 
         return get_system_metrics_for_dpi( arg1, arg2 );
     case NtUserMirrorRgn:
         return mirror_window_region( UlongToHandle(arg1), UlongToHandle(arg2) );
+    case NtUserMonitorFromRect:
+        return HandleToUlong( monitor_from_rect( (const RECT *)arg1, arg2, get_thread_dpi() ));
     default:
         FIXME( "invalid code %u\n", code );
         return 0;
