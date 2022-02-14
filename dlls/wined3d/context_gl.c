@@ -3057,12 +3057,13 @@ void wined3d_context_gl_flush_bo_address(struct wined3d_context_gl *context_gl,
 }
 
 void wined3d_context_gl_copy_bo_address(struct wined3d_context_gl *context_gl,
-        const struct wined3d_bo_address *dst, const struct wined3d_bo_address *src, size_t size)
+        const struct wined3d_bo_address *dst, const struct wined3d_bo_address *src,
+        unsigned int range_count, const struct wined3d_range *ranges)
 {
     const struct wined3d_gl_info *gl_info;
     struct wined3d_bo_gl *src_bo, *dst_bo;
-    struct wined3d_range range;
     BYTE *dst_ptr, *src_ptr;
+    unsigned int i;
 
     gl_info = context_gl->gl_info;
     src_bo = src->buffer_object ? wined3d_bo_gl(src->buffer_object) : NULL;
@@ -3074,9 +3075,11 @@ void wined3d_context_gl_copy_bo_address(struct wined3d_context_gl *context_gl,
         {
             GL_EXTCALL(glBindBuffer(GL_COPY_READ_BUFFER, src_bo->id));
             GL_EXTCALL(glBindBuffer(GL_COPY_WRITE_BUFFER, dst_bo->id));
-            GL_EXTCALL(glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER,
-                    src_bo->b.buffer_offset + (GLintptr)src->addr,
-                    dst_bo->b.buffer_offset + (GLintptr)dst->addr, size));
+
+            for (i = 0; i < range_count; ++i)
+                GL_EXTCALL(glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER,
+                        src_bo->b.buffer_offset + (GLintptr)src->addr + ranges[i].offset,
+                        dst_bo->b.buffer_offset + (GLintptr)dst->addr + ranges[i].offset, ranges[i].size));
             checkGLcall("direct buffer copy");
 
             wined3d_context_gl_reference_bo(context_gl, src_bo);
@@ -3084,21 +3087,25 @@ void wined3d_context_gl_copy_bo_address(struct wined3d_context_gl *context_gl,
         }
         else
         {
-            src_ptr = wined3d_context_gl_map_bo_address(context_gl, src, size, WINED3D_MAP_READ);
-            dst_ptr = wined3d_context_gl_map_bo_address(context_gl, dst, size, WINED3D_MAP_WRITE);
+            src_ptr = wined3d_context_gl_map_bo_address(context_gl, src,
+                    src_bo->size - (uintptr_t)src->addr, WINED3D_MAP_READ);
+            dst_ptr = wined3d_context_gl_map_bo_address(context_gl, dst,
+                    dst_bo->size - (uintptr_t)dst->addr, WINED3D_MAP_WRITE);
 
-            memcpy(dst_ptr, src_ptr, size);
+            for (i = 0; i < range_count; ++i)
+                memcpy(dst_ptr + ranges[i].offset, src_ptr + ranges[i].offset, ranges[i].size);
 
-            range.offset = 0;
-            range.size = size;
-            wined3d_context_gl_unmap_bo_address(context_gl, dst, 1, &range);
+            wined3d_context_gl_unmap_bo_address(context_gl, dst, range_count, ranges);
             wined3d_context_gl_unmap_bo_address(context_gl, src, 0, NULL);
         }
     }
     else if (!dst_bo && src_bo)
     {
         wined3d_context_gl_bind_bo(context_gl, src_bo->binding, src_bo->id);
-        GL_EXTCALL(glGetBufferSubData(src_bo->binding, src_bo->b.buffer_offset + (GLintptr)src->addr, size, dst->addr));
+        for (i = 0; i < range_count; ++i)
+            GL_EXTCALL(glGetBufferSubData(src_bo->binding,
+                    src_bo->b.buffer_offset + (GLintptr)src->addr + ranges[i].offset,
+                    ranges[i].size, dst->addr + ranges[i].offset));
         checkGLcall("buffer download");
 
         wined3d_context_gl_reference_bo(context_gl, src_bo);
@@ -3106,14 +3113,18 @@ void wined3d_context_gl_copy_bo_address(struct wined3d_context_gl *context_gl,
     else if (dst_bo && !src_bo)
     {
         wined3d_context_gl_bind_bo(context_gl, dst_bo->binding, dst_bo->id);
-        GL_EXTCALL(glBufferSubData(dst_bo->binding, dst_bo->b.buffer_offset + (GLintptr)dst->addr, size, src->addr));
+        for (i = 0; i < range_count; ++i)
+            GL_EXTCALL(glBufferSubData(dst_bo->binding,
+                    dst_bo->b.buffer_offset + (GLintptr)dst->addr + ranges[i].offset,
+                    ranges[i].size, src->addr + ranges[i].offset));
         checkGLcall("buffer upload");
 
         wined3d_context_gl_reference_bo(context_gl, dst_bo);
     }
     else
     {
-        memcpy(dst->addr, src->addr, size);
+        for (i = 0; i < range_count; ++i)
+            memcpy(dst->addr + ranges[i].offset, src->addr + ranges[i].offset, ranges[i].size);
     }
 }
 

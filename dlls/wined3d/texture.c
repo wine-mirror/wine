@@ -798,14 +798,16 @@ BOOL wined3d_texture_load_location(struct wined3d_texture *texture,
 
     if ((location & wined3d_texture_sysmem_locations) && (current & wined3d_texture_sysmem_locations))
     {
-        unsigned int size = texture->sub_resources[sub_resource_idx].size;
         struct wined3d_bo_address source, destination;
+        struct wined3d_range range;
 
         if (!wined3d_texture_prepare_location(texture, sub_resource_idx, context, location))
             return FALSE;
         wined3d_texture_get_memory(texture, sub_resource_idx, &source, current);
         wined3d_texture_get_memory(texture, sub_resource_idx, &destination, location);
-        wined3d_context_copy_bo_address(context, &destination, &source, size);
+        range.offset = 0;
+        range.size = texture->sub_resources[sub_resource_idx].size;
+        wined3d_context_copy_bo_address(context, &destination, &source, 1, &range);
         ret = TRUE;
     }
     else

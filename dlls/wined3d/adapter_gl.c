@@ -4597,9 +4597,10 @@ static void adapter_gl_unmap_bo_address(struct wined3d_context *context,
 }
 
 static void adapter_gl_copy_bo_address(struct wined3d_context *context,
-        const struct wined3d_bo_address *dst, const struct wined3d_bo_address *src, size_t size)
+        const struct wined3d_bo_address *dst, const struct wined3d_bo_address *src,
+        unsigned int range_count, const struct wined3d_range *ranges)
 {
-    wined3d_context_gl_copy_bo_address(wined3d_context_gl(context), dst, src, size);
+    wined3d_context_gl_copy_bo_address(wined3d_context_gl(context), dst, src, range_count, ranges);
 }
 
 static void adapter_gl_flush_bo_address(struct wined3d_context *context,

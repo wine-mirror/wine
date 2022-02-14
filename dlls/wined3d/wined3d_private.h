@@ -2380,7 +2380,8 @@ void wined3d_context_gl_bind_texture(struct wined3d_context_gl *context_gl,
         GLenum target, GLuint name) DECLSPEC_HIDDEN;
 void wined3d_context_gl_check_fbo_status(const struct wined3d_context_gl *context_gl, GLenum target) DECLSPEC_HIDDEN;
 void wined3d_context_gl_copy_bo_address(struct wined3d_context_gl *context_gl,
-        const struct wined3d_bo_address *dst, const struct wined3d_bo_address *src, size_t size) DECLSPEC_HIDDEN;
+        const struct wined3d_bo_address *dst, const struct wined3d_bo_address *src,
+        unsigned int range_count, const struct wined3d_range *ranges) DECLSPEC_HIDDEN;
 bool wined3d_context_gl_create_bo(struct wined3d_context_gl *context_gl, GLsizeiptr size, GLenum binding,
         GLenum usage, bool coherent, GLbitfield flags, struct wined3d_bo_gl *bo) DECLSPEC_HIDDEN;
 void wined3d_context_gl_destroy(struct wined3d_context_gl *context_gl) DECLSPEC_HIDDEN;
@@ -3412,7 +3413,8 @@ struct wined3d_adapter_ops
     void (*adapter_unmap_bo_address)(struct wined3d_context *context, const struct wined3d_bo_address *data,
             unsigned int range_count, const struct wined3d_range *ranges);
     void (*adapter_copy_bo_address)(struct wined3d_context *context,
-            const struct wined3d_bo_address *dst, const struct wined3d_bo_address *src, size_t size);
+            const struct wined3d_bo_address *dst, const struct wined3d_bo_address *src,
+            unsigned int range_count, const struct wined3d_range *ranges);
     void (*adapter_flush_bo_address)(struct wined3d_context *context,
             const struct wined3d_const_bo_address *data, size_t size);
     bool (*adapter_alloc_bo)(struct wined3d_device *device, struct wined3d_resource *resource,
@@ -3555,7 +3557,8 @@ struct wined3d_adapter *wined3d_adapter_vk_create(unsigned int ordinal,
 unsigned int wined3d_adapter_vk_get_memory_type_index(const struct wined3d_adapter_vk *adapter_vk,
         uint32_t memory_type_mask, VkMemoryPropertyFlags flags) DECLSPEC_HIDDEN;
 void adapter_vk_copy_bo_address(struct wined3d_context *context, const struct wined3d_bo_address *dst,
-        const struct wined3d_bo_address *src, size_t size) DECLSPEC_HIDDEN;
+        const struct wined3d_bo_address *src,
+        unsigned int range_count, const struct wined3d_range *ranges) DECLSPEC_HIDDEN;
 
 struct wined3d_caps_gl_ctx
 {
@@ -6400,9 +6403,10 @@ static inline void wined3d_context_unmap_bo_address(struct wined3d_context *cont
 }
 
 static inline void wined3d_context_copy_bo_address(struct wined3d_context *context,
-        const struct wined3d_bo_address *dst, const struct wined3d_bo_address *src, size_t size)
+        const struct wined3d_bo_address *dst, const struct wined3d_bo_address *src,
+        unsigned int range_count, const struct wined3d_range *ranges)
 {
-    context->device->adapter->adapter_ops->adapter_copy_bo_address(context, dst, src, size);
+    context->device->adapter->adapter_ops->adapter_copy_bo_address(context, dst, src, range_count, ranges);
 }
 
 static inline void wined3d_context_flush_bo_address(struct wined3d_context *context,

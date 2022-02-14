@@ -1128,12 +1128,15 @@ void wined3d_buffer_copy_bo_address(struct wined3d_buffer *dst_buffer, struct wi
         unsigned int dst_offset, const struct wined3d_const_bo_address *src_addr, unsigned int size)
 {
     struct wined3d_bo_address dst_addr;
+    struct wined3d_range range;
     DWORD dst_location;
 
     dst_location = wined3d_buffer_get_memory(dst_buffer, context, &dst_addr);
     dst_addr.addr += dst_offset;
 
-    wined3d_context_copy_bo_address(context, &dst_addr, (const struct wined3d_bo_address *)src_addr, size);
+    range.offset = 0;
+    range.size = size;
+    wined3d_context_copy_bo_address(context, &dst_addr, (const struct wined3d_bo_address *)src_addr, 1, &range);
     wined3d_buffer_invalidate_range(dst_buffer, ~dst_location, dst_offset, size);
 }
 
@@ -1426,16 +1429,11 @@ static void wined3d_buffer_gl_upload_ranges(struct wined3d_buffer *buffer, struc
             buffer, context, data, data_offset, range_count, ranges);
 
     dst.buffer_object = buffer->buffer_object;
+    dst.addr = 0;
     src.buffer_object = NULL;
+    src.addr = (uint8_t *)data - data_offset;
 
-    while (range_count--)
-    {
-        const struct wined3d_range *range = &ranges[range_count];
-
-        src.addr = (uint8_t *)data + range->offset - data_offset;
-        dst.addr = (void *)(uintptr_t)range->offset;
-        wined3d_context_copy_bo_address(context, &dst, &src, range->size);
-    }
+    wined3d_context_copy_bo_address(context, &dst, &src, range_count, ranges);
 }
 
 /* Context activation is done by the caller. */
@@ -1644,15 +1642,8 @@ static void wined3d_buffer_vk_upload_ranges(struct wined3d_buffer *buffer, struc
             && dst_bo->command_buffer_id > context_vk->completed_command_buffer_id))
     {
         src.buffer_object = 0;
-        while (range_count--)
-        {
-            range = &ranges[range_count];
-
-            src.addr = (uint8_t *)data + range->offset - data_offset;
-            dst.addr = (void *)(uintptr_t)range->offset;
-            wined3d_context_copy_bo_address(context, &dst, &src, range->size);
-        }
-
+        src.addr = (uint8_t *)data - data_offset;
+        wined3d_context_copy_bo_address(context, &dst, &src, range_count, ranges);
         return;
     }
 

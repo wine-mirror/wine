@@ -2804,15 +2804,20 @@ static void adapter_no3d_unmap_bo_address(struct wined3d_context *context,
 }
 
 static void adapter_no3d_copy_bo_address(struct wined3d_context *context,
-        const struct wined3d_bo_address *dst, const struct wined3d_bo_address *src, size_t size)
+        const struct wined3d_bo_address *dst, const struct wined3d_bo_address *src,
+        unsigned int range_count, const struct wined3d_range *ranges)
 {
+    unsigned int i;
+
     if (dst->buffer_object)
         ERR("Unsupported dst buffer object %p.\n", dst->buffer_object);
     if (src->buffer_object)
         ERR("Unsupported src buffer object %p.\n", src->buffer_object);
     if (dst->buffer_object || src->buffer_object)
         return;
-    memcpy(dst->addr, src->addr, size);
+
+    for (i = 0; i < range_count; ++i)
+        memcpy(dst->addr + ranges[i].offset, src->addr + ranges[i].offset, ranges[i].size);
 }
 
 static void adapter_no3d_flush_bo_address(struct wined3d_context *context,

@@ -1095,7 +1095,8 @@ static void adapter_vk_unmap_bo_address(struct wined3d_context *context,
 }
 
 void adapter_vk_copy_bo_address(struct wined3d_context *context,
-        const struct wined3d_bo_address *dst, const struct wined3d_bo_address *src, size_t size)
+        const struct wined3d_bo_address *dst, const struct wined3d_bo_address *src,
+        unsigned int range_count, const struct wined3d_range *ranges)
 {
     struct wined3d_context_vk *context_vk = wined3d_context_vk(context);
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
@@ -1103,16 +1104,18 @@ void adapter_vk_copy_bo_address(struct wined3d_context *context,
     VkAccessFlags src_access_mask, dst_access_mask;
     VkBufferMemoryBarrier vk_barrier[2];
     DWORD map_flags = WINED3D_MAP_WRITE;
+    const struct wined3d_range *range;
     struct wined3d_bo_address staging;
     VkCommandBuffer vk_command_buffer;
-    struct wined3d_range range;
-    void *dst_ptr, *src_ptr;
+    uint8_t *dst_ptr, *src_ptr;
     VkBufferCopy region;
+    size_t size = 0;
+    unsigned int i;
 
     src_bo = src->buffer_object ? wined3d_bo_vk(src->buffer_object) : NULL;
     dst_bo = dst->buffer_object ? wined3d_bo_vk(dst->buffer_object) : NULL;
 
-    if (dst_bo && !dst->addr && size == dst_bo->size)
+    if (dst_bo && !dst->addr && !ranges->offset && ranges->size == dst_bo->size)
         map_flags |= WINED3D_MAP_DISCARD;
 
     if (src_bo && dst_bo)
@@ -1128,43 +1131,52 @@ void adapter_vk_copy_bo_address(struct wined3d_context *context,
         src_access_mask = vk_access_mask_from_buffer_usage(src_bo->usage);
         dst_access_mask = vk_access_mask_from_buffer_usage(dst_bo->usage);
 
-        region.srcOffset = src_bo->b.buffer_offset + (uintptr_t)src->addr;
-        region.dstOffset = dst_bo->b.buffer_offset + (uintptr_t)dst->addr;
-        region.size = size;
-
         vk_barrier[0].sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
         vk_barrier[0].pNext = NULL;
-        vk_barrier[0].srcAccessMask = src_access_mask;
-        vk_barrier[0].dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
         vk_barrier[0].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         vk_barrier[0].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         vk_barrier[0].buffer = src_bo->vk_buffer;
-        vk_barrier[0].offset = region.srcOffset;
-        vk_barrier[0].size = region.size;
 
         vk_barrier[1].sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
         vk_barrier[1].pNext = NULL;
-        vk_barrier[1].srcAccessMask = dst_access_mask;
-        vk_barrier[1].dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
         vk_barrier[1].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         vk_barrier[1].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         vk_barrier[1].buffer = dst_bo->vk_buffer;
-        vk_barrier[1].offset = region.dstOffset;
-        vk_barrier[1].size = region.size;
 
-        VK_CALL(vkCmdPipelineBarrier(vk_command_buffer, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, NULL, 2, vk_barrier, 0, NULL));
+        for (i = 0; i < range_count; ++i)
+        {
+            range = &ranges[i];
 
-        VK_CALL(vkCmdCopyBuffer(vk_command_buffer, src_bo->vk_buffer, dst_bo->vk_buffer, 1, &region));
+            region.srcOffset = src_bo->b.buffer_offset + (uintptr_t)src->addr + range->offset;
+            region.dstOffset = dst_bo->b.buffer_offset + (uintptr_t)dst->addr + range->offset;
+            region.size = range->size;
 
-        vk_barrier[0].srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-        vk_barrier[0].dstAccessMask = src_access_mask;
+            vk_barrier[0].offset = region.srcOffset;
+            vk_barrier[0].size = region.size;
 
-        vk_barrier[1].srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-        vk_barrier[1].dstAccessMask = dst_access_mask;
+            vk_barrier[1].offset = region.dstOffset;
+            vk_barrier[1].size = region.size;
 
-        VK_CALL(vkCmdPipelineBarrier(vk_command_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
-                VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, NULL, 2, vk_barrier, 0, NULL));
+            vk_barrier[0].srcAccessMask = src_access_mask;
+            vk_barrier[0].dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+
+            vk_barrier[1].srcAccessMask = dst_access_mask;
+            vk_barrier[1].dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+            VK_CALL(vkCmdPipelineBarrier(vk_command_buffer, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                    VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, NULL, 2, vk_barrier, 0, NULL));
+
+            VK_CALL(vkCmdCopyBuffer(vk_command_buffer, src_bo->vk_buffer, dst_bo->vk_buffer, 1, &region));
+
+            vk_barrier[0].srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+            vk_barrier[0].dstAccessMask = src_access_mask;
+
+            vk_barrier[1].srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            vk_barrier[1].dstAccessMask = dst_access_mask;
+
+            VK_CALL(vkCmdPipelineBarrier(vk_command_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                    VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, NULL, 2, vk_barrier, 0, NULL));
+        }
 
         wined3d_context_vk_reference_bo(context_vk, src_bo);
         wined3d_context_vk_reference_bo(context_vk, dst_bo);
@@ -1174,7 +1186,7 @@ void adapter_vk_copy_bo_address(struct wined3d_context *context,
 
     if (src_bo && !(src_bo->memory_type & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT))
     {
-        if (!(wined3d_context_vk_create_bo(context_vk, size, VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+        if (!(wined3d_context_vk_create_bo(context_vk, src_bo->size, VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &staging_bo)))
         {
             ERR("Failed to create staging bo.\n");
@@ -1183,8 +1195,8 @@ void adapter_vk_copy_bo_address(struct wined3d_context *context,
 
         staging.buffer_object = &staging_bo.b;
         staging.addr = NULL;
-        adapter_vk_copy_bo_address(context, &staging, src, size);
-        adapter_vk_copy_bo_address(context, dst, &staging, size);
+        adapter_vk_copy_bo_address(context, &staging, src, range_count, ranges);
+        adapter_vk_copy_bo_address(context, dst, &staging, range_count, ranges);
 
         wined3d_context_vk_destroy_bo(context_vk, &staging_bo);
 
@@ -1194,7 +1206,7 @@ void adapter_vk_copy_bo_address(struct wined3d_context *context,
     if (dst_bo && (!(dst_bo->memory_type & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) || (!(map_flags & WINED3D_MAP_DISCARD)
             && dst_bo->command_buffer_id > context_vk->completed_command_buffer_id)))
     {
-        if (!(wined3d_context_vk_create_bo(context_vk, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        if (!(wined3d_context_vk_create_bo(context_vk, dst_bo->size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &staging_bo)))
         {
             ERR("Failed to create staging bo.\n");
@@ -1203,22 +1215,24 @@ void adapter_vk_copy_bo_address(struct wined3d_context *context,
 
         staging.buffer_object = &staging_bo.b;
         staging.addr = NULL;
-        adapter_vk_copy_bo_address(context, &staging, src, size);
-        adapter_vk_copy_bo_address(context, dst, &staging, size);
+        adapter_vk_copy_bo_address(context, &staging, src, range_count, ranges);
+        adapter_vk_copy_bo_address(context, dst, &staging, range_count, ranges);
 
         wined3d_context_vk_destroy_bo(context_vk, &staging_bo);
 
         return;
     }
 
+    for (i = 0; i < range_count; ++i)
+        size = max(size, ranges[i].offset + ranges[i].size);
+
     src_ptr = adapter_vk_map_bo_address(context, src, size, WINED3D_MAP_READ);
     dst_ptr = adapter_vk_map_bo_address(context, dst, size, map_flags);
 
-    memcpy(dst_ptr, src_ptr, size);
+    for (i = 0; i < range_count; ++i)
+        memcpy(dst_ptr + ranges[i].offset, src_ptr + ranges[i].offset, ranges[i].size);
 
-    range.offset = 0;
-    range.size = size;
-    adapter_vk_unmap_bo_address(context, dst, 1, &range);
+    adapter_vk_unmap_bo_address(context, dst, range_count, ranges);
     adapter_vk_unmap_bo_address(context, src, 0, NULL);
 }
 
