@@ -246,7 +246,7 @@ static void test_GetDeviceInfo(IDirectInputA *pDI)
     hr = IDirectInputDevice_GetDeviceInfo(pMouse, (DIDEVICEINSTANCEA *)&inst3A);
     ok(SUCCEEDED(hr), "got %#lx\n", hr);
 
-    ok(instA.dwSize != inst3A.dwSize, "got %lu, %lu \n", instA.dwSize, inst3A.dwSize);
+    ok(instA.dwSize != inst3A.dwSize, "got %lu, %lu\n", instA.dwSize, inst3A.dwSize);
     ok(IsEqualGUID(&instA.guidInstance, &inst3A.guidInstance), "got %s, %s\n",
             wine_dbgstr_guid(&instA.guidInstance), wine_dbgstr_guid(&inst3A.guidInstance) );
     ok(IsEqualGUID(&instA.guidProduct, &inst3A.guidProduct), "got %s, %s\n",
