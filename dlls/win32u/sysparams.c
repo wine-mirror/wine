@@ -1342,7 +1342,7 @@ void release_display_dc( HDC hdc )
 /**********************************************************************
  *           get_monitor_dpi
  */
-static UINT get_monitor_dpi( HMONITOR monitor )
+UINT get_monitor_dpi( HMONITOR monitor )
 {
     /* FIXME: use the monitor DPI instead */
     return system_dpi;
@@ -1379,7 +1379,7 @@ static DPI_AWARENESS get_thread_dpi_awareness(void)
 /**********************************************************************
  *              get_thread_dpi
  */
-static UINT get_thread_dpi(void)
+UINT get_thread_dpi(void)
 {
     switch (get_thread_dpi_awareness())
     {
@@ -1936,7 +1936,7 @@ static BOOL get_monitor_info( HMONITOR handle, MONITORINFO *info )
     return FALSE;
 }
 
-static HMONITOR monitor_from_rect( const RECT *rect, DWORD flags, UINT dpi )
+HMONITOR monitor_from_rect( const RECT *rect, DWORD flags, UINT dpi )
 {
     HMONITOR primary = 0, nearest = 0, ret = 0;
     UINT max_area = 0, min_distance = ~0u;

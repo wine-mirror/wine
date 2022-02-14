@@ -720,6 +720,12 @@ LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devm
     return unix_funcs->pNtUserChangeDisplaySettings( devname, devmode, hwnd, flags, lparam );
 }
 
+BOOL WINAPI NtUserClipCursor( const RECT *rect )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserClipCursor( rect );
+}
+
 INT WINAPI NtUserCountClipboardFormats(void)
 {
     if (!unix_funcs) return 0;

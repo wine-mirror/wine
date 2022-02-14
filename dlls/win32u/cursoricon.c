@@ -79,3 +79,51 @@ HCURSOR WINAPI NtUserGetCursor(void)
     SERVER_END_REQ;
     return ret;
 }
+
+/***********************************************************************
+ *	     NtUserClipCursor (win32u.@)
+ */
+BOOL WINAPI NtUserClipCursor( const RECT *rect )
+{
+    UINT dpi;
+    BOOL ret;
+    RECT new_rect;
+
+    TRACE( "Clipping to %s\n", wine_dbgstr_rect(rect) );
+
+    if (rect)
+    {
+        if (rect->left > rect->right || rect->top > rect->bottom) return FALSE;
+        if ((dpi = get_thread_dpi()))
+        {
+            HMONITOR monitor = monitor_from_rect( rect, MONITOR_DEFAULTTOPRIMARY, dpi );
+            new_rect = map_dpi_rect( *rect, dpi, get_monitor_dpi( monitor ));
+            rect = &new_rect;
+        }
+    }
+
+    SERVER_START_REQ( set_cursor )
+    {
+        req->clip_msg = WM_WINE_CLIPCURSOR;
+        if (rect)
+        {
+            req->flags       = SET_CURSOR_CLIP;
+            req->clip.left   = rect->left;
+            req->clip.top    = rect->top;
+            req->clip.right  = rect->right;
+            req->clip.bottom = rect->bottom;
+        }
+        else req->flags = SET_CURSOR_NOCLIP;
+
+        if ((ret = !wine_server_call( req )))
+        {
+            new_rect.left   = reply->new_clip.left;
+            new_rect.top    = reply->new_clip.top;
+            new_rect.right  = reply->new_clip.right;
+            new_rect.bottom = reply->new_clip.bottom;
+        }
+    }
+    SERVER_END_REQ;
+    if (ret) user_driver->pClipCursor( &new_rect );
+    return ret;
+}

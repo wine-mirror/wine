@@ -72,7 +72,7 @@
 @ stub ClientThreadConnect
 @ stub ClientThreadSetup
 @ stdcall ClientToScreen(long ptr)
-@ stdcall ClipCursor(ptr)
+@ stdcall -import ClipCursor(ptr) NtUserClipCursor
 @ stdcall CloseClipboard()
 @ stdcall CloseDesktop(long) NtUserCloseDesktop
 @ stdcall CloseTouchInputHandle(long)

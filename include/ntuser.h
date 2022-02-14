@@ -131,6 +131,7 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code );
 ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code );
 LONG    WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devmode, HWND hwnd,
                                             DWORD flags, void *lparam );
+BOOL    WINAPI NtUserClipCursor( const RECT *rect );
 BOOL    WINAPI NtUserCloseDesktop( HDESK handle );
 BOOL    WINAPI NtUserCloseWindowStation( HWINSTA handle );
 INT     WINAPI NtUserCountClipboardFormats(void);

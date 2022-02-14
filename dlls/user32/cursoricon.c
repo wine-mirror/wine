@@ -1943,55 +1943,6 @@ HCURSOR WINAPI DECLSPEC_HOTPATCH SetCursor( HCURSOR hCursor /* [in] Handle of cu
 
 
 /***********************************************************************
- *		ClipCursor (USER32.@)
- */
-BOOL WINAPI DECLSPEC_HOTPATCH ClipCursor( const RECT *rect )
-{
-    UINT dpi;
-    BOOL ret;
-    RECT new_rect;
-
-    TRACE( "Clipping to %s\n", wine_dbgstr_rect(rect) );
-
-    if (rect)
-    {
-        if (rect->left > rect->right || rect->top > rect->bottom) return FALSE;
-        if ((dpi = get_thread_dpi()))
-        {
-            new_rect = map_dpi_rect( *rect, dpi,
-                                     get_monitor_dpi( MonitorFromRect( rect, MONITOR_DEFAULTTOPRIMARY )));
-            rect = &new_rect;
-        }
-    }
-
-    SERVER_START_REQ( set_cursor )
-    {
-        req->clip_msg = WM_WINE_CLIPCURSOR;
-        if (rect)
-        {
-            req->flags       = SET_CURSOR_CLIP;
-            req->clip.left   = rect->left;
-            req->clip.top    = rect->top;
-            req->clip.right  = rect->right;
-            req->clip.bottom = rect->bottom;
-        }
-        else req->flags = SET_CURSOR_NOCLIP;
-
-        if ((ret = !wine_server_call( req )))
-        {
-            new_rect.left   = reply->new_clip.left;
-            new_rect.top    = reply->new_clip.top;
-            new_rect.right  = reply->new_clip.right;
-            new_rect.bottom = reply->new_clip.bottom;
-        }
-    }
-    SERVER_END_REQ;
-    if (ret) USER_Driver->pClipCursor( &new_rect );
-    return ret;
-}
-
-
-/***********************************************************************
  *		GetClipCursor (USER32.@)
  */
 BOOL WINAPI DECLSPEC_HOTPATCH GetClipCursor( RECT *rect )

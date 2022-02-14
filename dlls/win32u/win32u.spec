@@ -792,7 +792,7 @@
 @ stub NtUserCheckWindowThreadDesktop
 @ stub NtUserChildWindowFromPointEx
 @ stub NtUserClearForeground
-@ stub NtUserClipCursor
+@ stdcall NtUserClipCursor(ptr)
 @ stub NtUserCloseClipboard
 @ stdcall -syscall NtUserCloseDesktop(long)
 @ stdcall -syscall NtUserCloseWindowStation(long)

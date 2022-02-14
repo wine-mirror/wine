@@ -196,6 +196,7 @@ struct unix_funcs
     ULONG_PTR (WINAPI *pNtUserCallTwoParam)( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code );
     LONG     (WINAPI *pNtUserChangeDisplaySettings)( UNICODE_STRING *devname, DEVMODEW *devmode, HWND hwnd,
                                                      DWORD flags, void *lparam );
+    BOOL     (WINAPI *pNtUserClipCursor)( const RECT *rect );
     INT      (WINAPI *pNtUserCountClipboardFormats)(void);
     NTSTATUS (WINAPI *pNtUserEnumDisplayDevices)( UNICODE_STRING *device, DWORD index,
                                                   DISPLAY_DEVICEW *info, DWORD flags );
@@ -241,9 +242,13 @@ struct unix_funcs
 };
 
 extern RECT get_display_rect( const WCHAR *display ) DECLSPEC_HIDDEN;
+extern UINT get_monitor_dpi( HMONITOR monitor ) DECLSPEC_HIDDEN;
 extern UINT get_system_dpi(void) DECLSPEC_HIDDEN;
 extern int get_system_metrics( int index ) DECLSPEC_HIDDEN;
+extern UINT get_thread_dpi(void) DECLSPEC_HIDDEN;
 extern RECT get_virtual_screen_rect( UINT dpi ) DECLSPEC_HIDDEN;
+extern RECT map_dpi_rect( RECT rect, UINT dpi_from, UINT dpi_to ) DECLSPEC_HIDDEN;
+extern HMONITOR monitor_from_rect( const RECT *rect, DWORD flags, UINT dpi ) DECLSPEC_HIDDEN;
 
 extern void wrappers_init( unixlib_handle_t handle ) DECLSPEC_HIDDEN;
 extern NTSTATUS gdi_init(void) DECLSPEC_HIDDEN;
