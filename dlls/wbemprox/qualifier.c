@@ -159,7 +159,7 @@ static HRESULT get_qualifier_value( enum wbm_namespace ns, const WCHAR *class, c
         hr = IWbemClassObject_Get( obj, L"BoolValue", 0, val, NULL, NULL );
         break;
     default:
-        ERR("unhandled type %u\n", V_UI4( &var ));
+        ERR( "unhandled type %lu\n", V_UI4( &var ) );
         break;
     }
 
@@ -177,10 +177,10 @@ static HRESULT WINAPI qualifier_set_Get(
 {
     struct qualifier_set *set = impl_from_IWbemQualifierSet( iface );
 
-    TRACE("%p, %s, %08x, %p, %p\n", iface, debugstr_w(wszName), lFlags, pVal, plFlavor);
+    TRACE( "%p, %s, %#lx, %p, %p\n", iface, debugstr_w(wszName), lFlags, pVal, plFlavor );
     if (lFlags)
     {
-        FIXME("flags %08x not supported\n", lFlags);
+        FIXME( "flags %#lx not supported\n", lFlags );
         return E_NOTIMPL;
     }
     return get_qualifier_value( set->ns, set->class, set->member, wszName, pVal, plFlavor );
@@ -192,7 +192,7 @@ static HRESULT WINAPI qualifier_set_Put(
     VARIANT *pVal,
     LONG lFlavor )
 {
-    FIXME("%p, %s, %p, %d\n", iface, debugstr_w(wszName), pVal, lFlavor);
+    FIXME( "%p, %s, %p, %ld\n", iface, debugstr_w(wszName), pVal, lFlavor );
     return E_NOTIMPL;
 }
 
@@ -214,10 +214,10 @@ static HRESULT WINAPI qualifier_set_GetNames(
     IWbemClassObject *obj;
     HRESULT hr;
 
-    TRACE("%p, %08x, %p\n", iface, lFlags, pNames);
+    TRACE( "%p, %#lx, %p\n", iface, lFlags, pNames );
     if (lFlags)
     {
-        FIXME("flags %08x not supported\n", lFlags);
+        FIXME( "flags %#lx not supported\n", lFlags );
         return E_NOTIMPL;
     }
 
@@ -237,7 +237,7 @@ static HRESULT WINAPI qualifier_set_BeginEnumeration(
     IWbemQualifierSet *iface,
     LONG lFlags )
 {
-    FIXME("%p, %08x\n", iface, lFlags);
+    FIXME( "%p, %#lx\n", iface, lFlags );
     return E_NOTIMPL;
 }
 
@@ -248,7 +248,7 @@ static HRESULT WINAPI qualifier_set_Next(
     VARIANT *pVal,
     LONG *plFlavor )
 {
-    FIXME("%p, %08x, %p, %p, %p\n", iface, lFlags, pstrName, pVal, plFlavor);
+    FIXME( "%p, %#lx, %p, %p, %p\n", iface, lFlags, pstrName, pVal, plFlavor );
     return E_NOTIMPL;
 }
 

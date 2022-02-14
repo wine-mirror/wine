@@ -3128,7 +3128,8 @@ static enum fill_status fill_printer( struct table *table, const struct expr *co
     struct record_printer *rec;
     enum fill_status status = FILL_STATUS_UNFILTERED;
     PRINTER_INFO_2W *info;
-    DWORD i, offset = 0, count = 0, size = 0, num_rows = 0;
+    DWORD i, offset = 0, count = 0, size = 0;
+    UINT num_rows = 0;
     WCHAR id[20];
 
     EnumPrintersW( PRINTER_ENUM_LOCAL, NULL, 2, NULL, 0, &size, &count );
@@ -3656,7 +3657,7 @@ static const WCHAR *get_service_type( DWORD type )
     else if (type & SERVICE_FILE_SYSTEM_DRIVER)  return L"File System Driver";
     else if (type & SERVICE_WIN32_OWN_PROCESS)   return L"Own Process";
     else if (type & SERVICE_WIN32_SHARE_PROCESS) return L"Share Process";
-    else ERR("unhandled type 0x%08x\n", type);
+    else ERR( "unhandled type %#lx\n", type );
     return NULL;
 }
 static const WCHAR *get_service_state( DWORD state )
@@ -3668,7 +3669,7 @@ static const WCHAR *get_service_state( DWORD state )
     case SERVICE_STOP_PENDING:  return L"Stop Pending";
     case SERVICE_RUNNING:       return L"Running";
     default:
-        ERR("unknown state %u\n", state);
+        ERR( "unknown state %lu\n", state );
         return L"Unknown";
     }
 }
@@ -3682,7 +3683,7 @@ static const WCHAR *get_service_startmode( DWORD mode )
     case SERVICE_DEMAND_START: return L"Manual";
     case SERVICE_DISABLED:     return L"Disabled";
     default:
-        ERR("unknown mode 0x%x\n", mode);
+        ERR( "unknown mode %#lx\n", mode );
         return L"Unknown";
     }
 }

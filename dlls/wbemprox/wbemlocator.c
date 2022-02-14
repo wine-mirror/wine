@@ -165,8 +165,8 @@ static HRESULT WINAPI wbem_locator_ConnectServer(
     HRESULT hr;
     WCHAR *server, *namespace;
 
-    TRACE("%p, %s, %s, %s, %s, 0x%08x, %s, %p, %p)\n", iface, debugstr_w(NetworkResource), debugstr_w(User),
-          debugstr_w(Password), debugstr_w(Locale), SecurityFlags, debugstr_w(Authority), context, ppNamespace);
+    TRACE( "%p, %s, %s, %s, %s, %#lx, %s, %p, %p)\n", iface, debugstr_w(NetworkResource), debugstr_w(User),
+           debugstr_w(Password), debugstr_w(Locale), SecurityFlags, debugstr_w(Authority), context, ppNamespace );
 
     hr = parse_resource( NetworkResource, &server, &namespace );
     if (hr != S_OK) return hr;

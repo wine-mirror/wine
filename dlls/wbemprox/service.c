@@ -45,7 +45,7 @@ static UINT map_error( DWORD error )
     case ERROR_SERVICE_REQUEST_TIMEOUT:    return 7;
     case ERROR_SERVICE_ALREADY_RUNNING:    return 10;
     default:
-        WARN("unknown error %u\n", error);
+        WARN( "unknown error %lu\n", error );
         break;
     }
     return 8;

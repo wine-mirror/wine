@@ -300,7 +300,7 @@ static const WCHAR *format_int( WCHAR *buf, UINT len, CIMTYPE type, LONGLONG val
         return buf;
 
     default:
-        ERR( "unhandled type %u\n", type );
+        ERR( "unhandled type %lu\n", type );
         return NULL;
     }
 }
@@ -1047,7 +1047,7 @@ VARTYPE to_vartype( CIMTYPE type )
     case CIM_REAL32:    return VT_R4;
 
     default:
-        ERR("unhandled type %u\n", type);
+        ERR( "unhandled type %lu\n", type );
         break;
     }
     return 0;

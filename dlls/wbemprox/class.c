@@ -119,7 +119,7 @@ static HRESULT WINAPI enum_class_object_Next(
     HRESULT hr;
     ULONG i, j;
 
-    TRACE("%p, %d, %u, %p, %p\n", iface, lTimeout, uCount, apObjects, puReturned);
+    TRACE( "%p, %ld, %lu, %p, %p\n", iface, lTimeout, uCount, apObjects, puReturned );
 
     if (!apObjects || !puReturned) return WBEM_E_INVALID_PARAMETER;
     if (lTimeout != WBEM_INFINITE && !once++) FIXME("timeout not supported\n");
@@ -148,7 +148,7 @@ static HRESULT WINAPI enum_class_object_NextAsync(
     ULONG uCount,
     IWbemObjectSink *pSink )
 {
-    FIXME("%p, %u, %p\n", iface, uCount, pSink);
+    FIXME( "%p, %lu, %p\n", iface, uCount, pSink );
     return E_NOTIMPL;
 }
 
@@ -172,7 +172,7 @@ static HRESULT WINAPI enum_class_object_Skip(
     struct view *view = ec->query->view;
     static int once = 0;
 
-    TRACE("%p, %d, %u\n", iface, lTimeout, nCount);
+    TRACE( "%p, %ld, %lu\n", iface, lTimeout, nCount );
 
     if (lTimeout != WBEM_INFINITE && !once++) FIXME("timeout not supported\n");
 
@@ -396,7 +396,7 @@ static HRESULT WINAPI class_object_Get(
     struct class_object *co = impl_from_IWbemClassObject( iface );
     struct enum_class_object *ec = impl_from_IEnumWbemClassObject( co->iter );
 
-    TRACE("%p, %s, %08x, %p, %p, %p\n", iface, debugstr_w(wszName), lFlags, pVal, pType, plFlavor);
+    TRACE( "%p, %s, %#lx, %p, %p, %p\n", iface, debugstr_w(wszName), lFlags, pVal, pType, plFlavor );
 
     if (co->record)
     {
@@ -437,7 +437,7 @@ static HRESULT record_set_value( struct record *record, UINT index, VARIANT *var
         record->fields[index].u.ival = val;
         return S_OK;
     default:
-        FIXME("unhandled type %u\n", type);
+        FIXME( "unhandled type %lu\n", type );
         break;
     }
     return WBEM_E_INVALID_PARAMETER;
@@ -453,7 +453,7 @@ static HRESULT WINAPI class_object_Put(
     struct class_object *co = impl_from_IWbemClassObject( iface );
     struct enum_class_object *ec = impl_from_IEnumWbemClassObject( co->iter );
 
-    TRACE("%p, %s, %08x, %p, %u\n", iface, debugstr_w(wszName), lFlags, pVal, Type);
+    TRACE( "%p, %s, %#lx, %p, %lu\n", iface, debugstr_w(wszName), lFlags, pVal, Type );
 
     if (co->record)
     {
@@ -487,7 +487,7 @@ static HRESULT WINAPI class_object_GetNames(
     struct class_object *co = impl_from_IWbemClassObject( iface );
     struct enum_class_object *ec = impl_from_IEnumWbemClassObject( co->iter );
 
-    TRACE("%p, %s, %08x, %s, %p\n", iface, debugstr_w(wszQualifierName), lFlags,
+    TRACE( "%p, %s, %#lx, %s, %p\n", iface, debugstr_w(wszQualifierName), lFlags,
           debugstr_variant(pQualifierVal), pNames);
 
     if (!pNames)
@@ -501,7 +501,7 @@ static HRESULT WINAPI class_object_GetNames(
         lFlags != WBEM_FLAG_NONSYSTEM_ONLY &&
         lFlags != WBEM_FLAG_SYSTEM_ONLY))
     {
-        FIXME("flags %08x not supported\n", lFlags);
+        FIXME( "flags %#lx not supported\n", lFlags );
         return E_NOTIMPL;
     }
 
@@ -517,9 +517,9 @@ static HRESULT WINAPI class_object_BeginEnumeration(
 {
     struct class_object *co = impl_from_IWbemClassObject( iface );
 
-    TRACE("%p, %08x\n", iface, lEnumFlags);
+    TRACE( "%p, %#lx\n", iface, lEnumFlags );
 
-    if (lEnumFlags) FIXME("flags 0x%08x not supported\n", lEnumFlags);
+    if (lEnumFlags) FIXME( "flags %#lx not supported\n", lEnumFlags );
 
     co->index_property = 0;
     return S_OK;
@@ -541,7 +541,7 @@ static HRESULT WINAPI class_object_Next(
     HRESULT hr;
     UINT i;
 
-    TRACE("%p, %08x, %p, %p, %p, %p\n", iface, lFlags, strName, pVal, pType, plFlavor);
+    TRACE( "%p, %#lx, %p, %p, %p, %p\n", iface, lFlags, strName, pVal, pType, plFlavor );
 
     for (i = obj->index_property; i < table->num_cols; i++)
     {
@@ -661,9 +661,9 @@ static HRESULT WINAPI class_object_GetObjectText(
     struct view *view = ec->query->view;
     BSTR text;
 
-    TRACE("%p, %08x, %p\n", iface, lFlags, pstrObjectText);
+    TRACE( "%p, %#lx, %p\n", iface, lFlags, pstrObjectText );
 
-    if (lFlags) FIXME("flags %08x not implemented\n", lFlags);
+    if (lFlags) FIXME( "flags %#lx not implemented\n", lFlags );
 
     if (!(text = get_object_text( view, co->index ))) return E_OUTOFMEMORY;
     *pstrObjectText = text;
@@ -675,7 +675,7 @@ static HRESULT WINAPI class_object_SpawnDerivedClass(
     LONG lFlags,
     IWbemClassObject **ppNewClass )
 {
-    FIXME("%p, %08x, %p\n", iface, lFlags, ppNewClass);
+    FIXME( "%p, %#lx, %p\n", iface, lFlags, ppNewClass );
     return E_NOTIMPL;
 }
 
@@ -691,7 +691,7 @@ static HRESULT WINAPI class_object_SpawnInstance(
     struct record *record;
     HRESULT hr;
 
-    TRACE("%p, %08x, %p\n", iface, lFlags, ppNewInstance);
+    TRACE( "%p, %#lx, %p\n", iface, lFlags, ppNewInstance );
 
     if (!(record = create_record( table ))) return E_OUTOFMEMORY;
     if (FAILED(hr = IEnumWbemClassObject_Clone( co->iter, &iter )))
@@ -709,7 +709,7 @@ static HRESULT WINAPI class_object_CompareTo(
     LONG lFlags,
     IWbemClassObject *pCompareTo )
 {
-    FIXME("%p, %08x, %p\n", iface, lFlags, pCompareTo);
+    FIXME( "%p, %#lx, %p\n", iface, lFlags, pCompareTo );
     return E_NOTIMPL;
 }
 
@@ -755,7 +755,7 @@ static void set_default_value( CIMTYPE type, UINT val, BYTE *ptr )
         *(UINT32 *)ptr = val;
         break;
     default:
-        FIXME("unhandled type %u\n", type);
+        FIXME( "unhandled type %lu\n", type );
         break;
     }
 }
@@ -892,7 +892,7 @@ static HRESULT WINAPI class_object_GetMethod(
     unsigned int i;
     HRESULT hr;
 
-    TRACE("%p, %s, %08x, %p, %p\n", iface, debugstr_w(wszName), lFlags, ppInSignature, ppOutSignature);
+    TRACE( "%p, %s, %#lx, %p, %p\n", iface, debugstr_w(wszName), lFlags, ppInSignature, ppOutSignature );
 
     if (ppInSignature) *ppInSignature = NULL;
     if (ppOutSignature) *ppOutSignature = NULL;
@@ -931,7 +931,7 @@ static HRESULT WINAPI class_object_PutMethod(
     IWbemClassObject *pInSignature,
     IWbemClassObject *pOutSignature )
 {
-    FIXME("%p, %s, %08x, %p, %p\n", iface, debugstr_w(wszName), lFlags, pInSignature, pOutSignature);
+    FIXME( "%p, %s, %#lx, %p, %p\n", iface, debugstr_w(wszName), lFlags, pInSignature, pOutSignature );
     return E_NOTIMPL;
 }
 
@@ -949,9 +949,9 @@ static HRESULT WINAPI class_object_BeginMethodEnumeration(
 {
     struct class_object *co = impl_from_IWbemClassObject( iface );
 
-    TRACE("%p, %08x\n", iface, lEnumFlags);
+    TRACE( "%p, %#lx\n", iface, lEnumFlags );
 
-    if (lEnumFlags) FIXME("flags 0x%08x not supported\n", lEnumFlags);
+    if (lEnumFlags) FIXME( "flags %#lx not supported\n", lEnumFlags );
 
     co->index_method = 0;
     return S_OK;
@@ -968,7 +968,7 @@ static HRESULT WINAPI class_object_NextMethod(
     BSTR method;
     HRESULT hr;
 
-    TRACE("%p, %08x, %p, %p, %p\n", iface, lFlags, pstrName, ppInSignature, ppOutSignature);
+    TRACE( "%p, %#lx, %p, %p, %p\n", iface, lFlags, pstrName, ppInSignature, ppOutSignature );
 
     if (!(method = get_method_name( co->ns, co->name, co->index_method ))) return WBEM_S_NO_MORE_DATA;
 

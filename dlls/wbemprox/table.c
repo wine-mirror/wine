@@ -70,7 +70,7 @@ UINT get_type_size( CIMTYPE type )
     case CIM_REAL32:
         return sizeof(FLOAT);
     default:
-        ERR("unhandled type %u\n", type);
+        ERR( "unhandled type %lu\n", type );
         break;
     }
     return sizeof(LONGLONG);
@@ -250,7 +250,7 @@ HRESULT set_value( const struct table *table, UINT row, UINT column, LONGLONG va
         *(UINT64 *)ptr = val;
         break;
     default:
-        FIXME("unhandled column type %u\n", type);
+        FIXME( "unhandled column type %lu\n", type );
         return WBEM_E_FAILED;
     }
     return S_OK;

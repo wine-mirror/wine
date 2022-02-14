@@ -564,12 +564,12 @@ HRESULT reg_set_stringvalue( IWbemClassObject *obj, IWbemContext *context, IWbem
 }
 
 static void set_dwordvalue( HKEY root, const WCHAR *subkey, const WCHAR *name, DWORD value, IWbemContext *context,
-        VARIANT *retval )
+                            VARIANT *retval )
 {
     HKEY hkey;
     LONG res;
 
-    TRACE("%p, %s, %s, %#x\n", root, debugstr_w(subkey), debugstr_w(name), value);
+    TRACE( "%p, %s, %s, %#lx\n", root, debugstr_w(subkey), debugstr_w(name), value );
 
     if ((res = RegOpenKeyExW( root, subkey, 0, KEY_SET_VALUE | reg_get_access_mask( context ), &hkey )))
     {

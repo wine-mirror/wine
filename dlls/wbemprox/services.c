@@ -122,8 +122,8 @@ static HRESULT WINAPI client_security_SetBlanket(
     const OLECHAR *princname = (pServerPrincName == COLE_DEFAULT_PRINCIPAL) ?
                                L"<COLE_DEFAULT_PRINCIPAL>" : pServerPrincName;
 
-    FIXME("%p, %p, %u, %u, %s, %u, %u, %p, 0x%08x\n", iface, pProxy, AuthnSvc, AuthzSvc,
-          debugstr_w(princname), AuthnLevel, ImpLevel, pAuthInfo, Capabilities);
+    FIXME( "%p, %p, %lu, %lu, %s, %lu, %lu, %p, %#lx\n", iface, pProxy, AuthnSvc, AuthzSvc,
+           debugstr_w(princname), AuthnLevel, ImpLevel, pAuthInfo, Capabilities );
     return WBEM_NO_ERROR;
 }
 
@@ -290,8 +290,8 @@ static HRESULT WINAPI wbem_services_OpenNamespace(
 {
     struct wbem_services *ws = impl_from_IWbemServices( iface );
 
-    TRACE("%p, %s, 0x%08x, %p, %p, %p\n", iface, debugstr_w(strNamespace), lFlags,
-          pCtx, ppWorkingNamespace, ppResult);
+    TRACE( "%p, %s, %#lx, %p, %p, %p\n", iface, debugstr_w(strNamespace), lFlags,
+           pCtx, ppWorkingNamespace, ppResult );
 
     if (ws->ns != WBEMPROX_NAMESPACE_LAST || !strNamespace)
         return WBEM_E_INVALID_NAMESPACE;
@@ -502,10 +502,10 @@ static HRESULT WINAPI wbem_services_GetObject(
 {
     struct wbem_services *services = impl_from_IWbemServices( iface );
 
-    TRACE("%p, %s, 0x%08x, %p, %p, %p\n", iface, debugstr_w(strObjectPath), lFlags,
-          pCtx, ppObject, ppCallResult);
+    TRACE( "%p, %s, %#lx, %p, %p, %p\n", iface, debugstr_w(strObjectPath), lFlags,
+           pCtx, ppObject, ppCallResult );
 
-    if (lFlags) FIXME("unsupported flags 0x%08x\n", lFlags);
+    if (lFlags) FIXME( "unsupported flags %#lx\n", lFlags );
 
     if (!strObjectPath || !strObjectPath[0])
         return create_class_object( services->ns, NULL, NULL, 0, NULL, ppObject );
@@ -645,9 +645,9 @@ static HRESULT WINAPI wbem_services_CreateInstanceEnum(
     struct path *path;
     HRESULT hr;
 
-    TRACE("%p, %s, 0%08x, %p, %p\n", iface, debugstr_w(strClass), lFlags, pCtx, ppEnum);
+    TRACE( "%p, %s, %#lx, %p, %p\n", iface, debugstr_w(strClass), lFlags, pCtx, ppEnum );
 
-    if (lFlags) FIXME("unsupported flags 0x%08x\n", lFlags);
+    if (lFlags) FIXME( "unsupported flags %#lx\n", lFlags );
 
     hr = parse_path( strClass, &path );
     if (hr != S_OK) return hr;
@@ -678,8 +678,8 @@ static HRESULT WINAPI wbem_services_ExecQuery(
 {
     struct wbem_services *services = impl_from_IWbemServices( iface );
 
-    TRACE("%p, %s, %s, 0x%08x, %p, %p\n", iface, debugstr_w(strQueryLanguage),
-          debugstr_w(strQuery), lFlags, pCtx, ppEnum);
+    TRACE( "%p, %s, %s, %#lx, %p, %p\n", iface, debugstr_w(strQueryLanguage),
+           debugstr_w(strQuery), lFlags, pCtx, ppEnum );
 
     if (!strQueryLanguage || !strQuery || !strQuery[0]) return WBEM_E_INVALID_PARAMETER;
     if (wcsicmp( strQueryLanguage, L"WQL" )) return WBEM_E_INVALID_QUERY_TYPE;
@@ -724,8 +724,8 @@ static HRESULT WINAPI wbem_services_ExecQueryAsync(
     struct async_header *async;
     struct async_query *query;
 
-    TRACE("%p, %s, %s, 0x%08x, %p, %p\n", iface, debugstr_w(strQueryLanguage), debugstr_w(strQuery),
-          lFlags, pCtx, pResponseHandler);
+    TRACE( "%p, %s, %s, %#lx, %p, %p\n", iface, debugstr_w(strQueryLanguage), debugstr_w(strQuery),
+           lFlags, pCtx, pResponseHandler );
 
     if (!pResponseHandler) return WBEM_E_INVALID_PARAMETER;
 
@@ -794,8 +794,8 @@ static HRESULT WINAPI wbem_services_ExecNotificationQueryAsync(
     struct async_header *async;
     struct async_query *query;
 
-    TRACE("%p, %s, %s, 0x%08x, %p, %p\n", iface, debugstr_w(strQueryLanguage), debugstr_w(strQuery),
-          lFlags, pCtx, pResponseHandler);
+    TRACE( "%p, %s, %s, %#lx, %p, %p\n", iface, debugstr_w(strQueryLanguage), debugstr_w(strQuery),
+           lFlags, pCtx, pResponseHandler );
 
     if (!pResponseHandler) return WBEM_E_INVALID_PARAMETER;
 
@@ -857,10 +857,10 @@ static HRESULT WINAPI wbem_services_ExecMethod(
     struct table *table;
     HRESULT hr;
 
-    TRACE("%p, %s, %s, %08x, %p, %p, %p, %p\n", iface, debugstr_w(strObjectPath),
-          debugstr_w(strMethodName), lFlags, context, pInParams, ppOutParams, ppCallResult);
+    TRACE( "%p, %s, %s, %#lx, %p, %p, %p, %p\n", iface, debugstr_w(strObjectPath),
+           debugstr_w(strMethodName), lFlags, context, pInParams, ppOutParams, ppCallResult );
 
-    if (lFlags) FIXME("flags %08x not supported\n", lFlags);
+    if (lFlags) FIXME( "flags %#lx not supported\n", lFlags );
 
     if ((hr = parse_path( strObjectPath, &path )) != S_OK) return hr;
     if (!(str = query_from_path( path )))
@@ -1084,7 +1084,7 @@ static HRESULT WINAPI wbem_context_GetNames(
     LONG flags,
     SAFEARRAY **names )
 {
-    FIXME("%p, %#x, %p\n", iface, flags, names);
+    FIXME( "%p, %#lx, %p\n", iface, flags, names );
 
     return E_NOTIMPL;
 }
@@ -1093,7 +1093,7 @@ static HRESULT WINAPI wbem_context_BeginEnumeration(
     IWbemContext *iface,
     LONG flags )
 {
-    FIXME("%p, %#x\n", iface, flags);
+    FIXME( "%p, %#lx\n", iface, flags );
 
     return E_NOTIMPL;
 }
@@ -1104,7 +1104,7 @@ static HRESULT WINAPI wbem_context_Next(
     BSTR *name,
     VARIANT *value )
 {
-    FIXME("%p, %#x, %p, %p\n", iface, flags, name, value);
+    FIXME( "%p, %#lx, %p, %p\n", iface, flags, name, value );
 
     return E_NOTIMPL;
 }
@@ -1139,7 +1139,7 @@ static HRESULT WINAPI wbem_context_SetValue(
     struct wbem_context_value *value;
     HRESULT hr;
 
-    TRACE("%p, %s, %#x, %s\n", iface, debugstr_w(name), flags, debugstr_variant(var));
+    TRACE( "%p, %s, %#lx, %s\n", iface, debugstr_w(name), flags, debugstr_variant(var) );
 
     if (!name || !var)
         return WBEM_E_INVALID_PARAMETER;
@@ -1179,7 +1179,7 @@ static HRESULT WINAPI wbem_context_GetValue(
     struct wbem_context *context = impl_from_IWbemContext( iface );
     struct wbem_context_value *value;
 
-    TRACE("%p, %s, %#x, %p\n", iface, debugstr_w(name), flags, var);
+    TRACE( "%p, %s, %#lx, %p\n", iface, debugstr_w(name), flags, var );
 
     if (!name || !var)
         return WBEM_E_INVALID_PARAMETER;
@@ -1196,7 +1196,7 @@ static HRESULT WINAPI wbem_context_DeleteValue(
     LPCWSTR name,
     LONG flags )
 {
-    FIXME("%p, %s, %#x\n", iface, debugstr_w(name), flags);
+    FIXME( "%p, %s, %#lx\n", iface, debugstr_w(name), flags );
 
     return E_NOTIMPL;
 }

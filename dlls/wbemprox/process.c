@@ -135,19 +135,19 @@ HRESULT process_create( IWbemClassObject *obj, IWbemContext *context, IWbemClass
 
     if (FAILED(hr = IWbemClassObject_Get( in, L"CommandLine", 0, &command_line, &type, NULL ))
             || V_VT( &command_line ) != VT_BSTR)
-        WARN( "Invalid CommandLine, hr %#x, type %u.\n", hr, V_VT( &command_line ));
+        WARN( "invalid CommandLine, hr %#lx, type %u\n", hr, V_VT( &command_line ));
     else
         TRACE( "CommandLine %s.\n", debugstr_w( V_BSTR( &command_line )));
 
     if (FAILED(hr = IWbemClassObject_Get( in, L"CurrentDirectory", 0, &current_directory, &type, NULL ))
             || V_VT( &current_directory ) != VT_BSTR)
-        WARN("Invalid CurrentDirectory, hr %#x, type %u.\n", hr, V_VT( &current_directory ));
+        WARN("invalid CurrentDirectory, hr %#lx, type %u\n", hr, V_VT( &current_directory ));
     else
         TRACE( "CurrentDirectory %s.\n", debugstr_w( V_BSTR( &current_directory )));
 
     if (SUCCEEDED(IWbemClassObject_Get( in, L"ProcessStartupInformation", 0, &startup_info, &type, NULL ))
             && V_VT( &startup_info ) == VT_UNKNOWN && V_UNKNOWN( &startup_info ))
-        FIXME( "ProcessStartupInformation is not implemented, vt_type %u, type %u, val %p.\n",
+        FIXME( "ProcessStartupInformation is not implemented, vt_type %u, type %lu, val %p\n",
                 V_VT( &startup_info ), type, V_UNKNOWN( &startup_info ));
 
     if (out && (hr = IWbemClassObject_SpawnInstance( sig, 0, &out_params )))
@@ -164,7 +164,7 @@ HRESULT process_create( IWbemClassObject *obj, IWbemContext *context, IWbemClass
         bret = CreateProcessW( NULL, V_BSTR( &command_line ), NULL, NULL, FALSE, 0L,
                 V_VT( &current_directory ) == VT_BSTR ? V_BSTR( &current_directory ) : NULL,
                 NULL, &si, &pi );
-        TRACE( "CreateProcessW ret %#x, GetLastError() %u.\n", bret, GetLastError() );
+        TRACE( "CreateProcessW ret %d, GetLastError() %lu\n", bret, GetLastError() );
         if (bret)
         {
             CloseHandle( pi.hThread );
@@ -217,6 +217,6 @@ done:
     VariantClear( &command_line );
     VariantClear( &current_directory );
     VariantClear( &startup_info );
-    TRACE( "ret %#x.\n", ret );
+    TRACE( "ret %#lx\n", ret );
     return ret;
 }
