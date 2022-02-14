@@ -416,12 +416,15 @@ NTSTATUS sdl_device_haptics_start(struct unix_device *iface, UINT duration_ms,
     effect.leftright.large_magnitude = rumble_intensity;
     effect.leftright.small_magnitude = buzz_intensity;
 
-    if (impl->effect_support & WINE_SDL_JOYSTICK_RUMBLE)
-        pSDL_JoystickRumble(impl->sdl_joystick, 0, 0, 0);
-    else if (impl->sdl_haptic)
-        pSDL_HapticStopAll(impl->sdl_haptic);
     if (!effect.leftright.large_magnitude && !effect.leftright.small_magnitude)
+    {
+        if (impl->effect_support & WINE_SDL_JOYSTICK_RUMBLE)
+            pSDL_JoystickRumble(impl->sdl_joystick, 0, 0, 0);
+        else if (impl->sdl_haptic)
+            pSDL_HapticStopAll(impl->sdl_haptic);
+
         return STATUS_SUCCESS;
+    }
 
     if (impl->effect_support & SDL_HAPTIC_LEFTRIGHT)
     {
