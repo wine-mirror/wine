@@ -57,6 +57,7 @@ enum
     NtUserGetSysColorBrush,
     NtUserGetSysColorPen,
     NtUserGetSystemMetrics,
+    NtUserMessageBeep,
     NtUserRealizePalette,
     /* temporary exports */
     NtUserGetDeskPattern,

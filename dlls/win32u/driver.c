@@ -958,6 +958,11 @@ static BOOL CDECL loaderdrv_ActivateKeyboardLayout( HKL layout, UINT flags )
     return load_driver()->pActivateKeyboardLayout( layout, flags );
 }
 
+static void CDECL loaderdrv_Beep(void)
+{
+    load_driver()->pBeep();
+}
+
 static INT CDECL loaderdrv_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
 {
     return load_driver()->pGetKeyNameText( lparam, buffer, size );
@@ -1033,22 +1038,30 @@ static const struct vulkan_funcs * CDECL loaderdrv_wine_get_vulkan_driver( UINT 
 
 static const struct user_driver_funcs lazy_load_driver =
 {
+    /* keyboard functions */
     .pActivateKeyboardLayout = loaderdrv_ActivateKeyboardLayout,
+    .pBeep = loaderdrv_Beep,
     .pGetKeyNameText = loaderdrv_GetKeyNameText,
     .pGetKeyboardLayoutList = loaderdrv_GetKeyboardLayoutList,
     .pMapVirtualKeyEx = loaderdrv_MapVirtualKeyEx,
     .pToUnicodeEx = loaderdrv_ToUnicodeEx,
     .pUnregisterHotKey = loaderdrv_UnregisterHotKey,
     .pVkKeyScanEx = loaderdrv_VkKeyScanEx,
-    .pChangeDisplaySettingsEx = loaderdrv_ChangeDisplaySettingsEx,
-    .pEnumDisplaySettingsEx = loaderdrv_EnumDisplaySettingsEx,
-    .pUpdateDisplayDevices = loaderdrv_UpdateDisplayDevices,
+    /* cursor/icon functions */
     .pSetCursor = loaderdrv_SetCursor,
     .pSetCursorPos = loaderdrv_SetCursorPos,
     .pClipCursor = loaderdrv_ClipCursor,
+    /* clipboard functions */
     .pUpdateClipboard = loaderdrv_UpdateClipboard,
+    /* display modes */
+    .pChangeDisplaySettingsEx = loaderdrv_ChangeDisplaySettingsEx,
+    .pEnumDisplaySettingsEx = loaderdrv_EnumDisplaySettingsEx,
+    .pUpdateDisplayDevices = loaderdrv_UpdateDisplayDevices,
+    /* windowing functions */
     .pScrollDC = nulldrv_ScrollDC,
+    /* system parameters */
     .pSystemParametersInfo = nulldrv_SystemParametersInfo,
+    /* vulkan support */
     .pwine_get_vulkan_driver = loaderdrv_wine_get_vulkan_driver,
 };
 

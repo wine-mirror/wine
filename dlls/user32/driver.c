@@ -119,10 +119,6 @@ void USER_unload_driver(void)
  * These are fallbacks for entry points that are not implemented in the real driver.
  */
 
-static void CDECL nulldrv_Beep(void)
-{
-}
-
 static BOOL CDECL nulldrv_RegisterHotKey( HWND hwnd, UINT modifiers, UINT vk )
 {
     return TRUE;
@@ -287,11 +283,6 @@ static void CDECL nulldrv_ThreadDetach( void )
  * Each entry point simply loads the real driver and chains to it.
  */
 
-static void CDECL loaderdrv_Beep(void)
-{
-    load_driver()->pBeep();
-}
-
 static BOOL CDECL loaderdrv_RegisterHotKey( HWND hwnd, UINT modifiers, UINT vk )
 {
     return load_driver()->pRegisterHotKey( hwnd, modifiers, vk );
@@ -369,7 +360,7 @@ static struct user_driver_funcs lazy_load_driver =
     { NULL },
     /* keyboard functions */
     NULL,
-    loaderdrv_Beep,
+    NULL,
     NULL,
     NULL,
     NULL,
@@ -436,7 +427,6 @@ void CDECL __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT v
 #define SET_USER_FUNC(name) \
     do { if (!driver->p##name) driver->p##name = nulldrv_##name; } while(0)
 
-    SET_USER_FUNC(Beep);
     SET_USER_FUNC(RegisterHotKey);
     SET_USER_FUNC(UnregisterHotKey);
     SET_USER_FUNC(DestroyCursorIcon);

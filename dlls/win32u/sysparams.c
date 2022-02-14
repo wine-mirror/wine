@@ -4475,6 +4475,14 @@ ULONG WINAPI NtUserGetProcessDpiAwarenessContext( HANDLE process )
     return dpi_awareness;
 }
 
+static BOOL message_beep( UINT i )
+{
+    BOOL active = TRUE;
+    NtUserSystemParametersInfo( SPI_GETBEEP, 0, &active, FALSE );
+    if (active) user_driver->pBeep();
+    return TRUE;
+}
+
 /***********************************************************************
  *	     NtUserCallOneParam    (win32u.@)
  */
@@ -4496,6 +4504,8 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
         return get_system_metrics( arg );
     case NtUserGetDeskPattern:
         return get_entry( &entry_DESKPATTERN, 256, (WCHAR *)arg );
+    case NtUserMessageBeep:
+        return message_beep( arg );
     default:
         FIXME( "invalid code %u\n", code );
         return 0;
