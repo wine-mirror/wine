@@ -316,7 +316,7 @@ static HRESULT media_event_get_object(IMFMediaEvent *event, REFIID riid, void **
     PropVariantInit(&value);
     if (FAILED(hr = IMFMediaEvent_GetValue(event, &value)))
     {
-        WARN("Failed to get event value, hr %#x.\n", hr);
+        WARN("Failed to get event value, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -403,7 +403,7 @@ static void source_reader_response_ready(struct source_reader *reader, struct st
         {
             command->u.sample.stream_index = stream->index;
             if (FAILED(hr = MFPutWorkItem(reader->queue, &reader->async_commands_callback, &command->IUnknown_iface)))
-                WARN("Failed to submit async result, hr %#x.\n", hr);
+                WARN("Failed to submit async result, hr %#lx.\n", hr);
             IUnknown_Release(&command->IUnknown_iface);
         }
     }
@@ -440,7 +440,7 @@ static void source_reader_copy_sample_buffer(IMFSample *src, IMFSample *dst)
         if (SUCCEEDED(IMFSample_GetBufferByIndex(dst, 0, &buffer)))
         {
             if (FAILED(hr = IMFSample_CopyToBuffer(src, buffer)))
-                WARN("Failed to copy a buffer, hr %#x.\n", hr);
+                WARN("Failed to copy a buffer, hr %#lx.\n", hr);
             IMFMediaBuffer_Release(buffer);
         }
     }
@@ -497,7 +497,7 @@ static HRESULT source_reader_request_sample(struct source_reader *reader, struct
     if (stream->stream && !(stream->flags & STREAM_FLAG_SAMPLE_REQUESTED))
     {
         if (FAILED(hr = IMFMediaStream_RequestSample(stream->stream, NULL)))
-            WARN("Sample request failed, hr %#x.\n", hr);
+            WARN("Sample request failed, hr %#lx.\n", hr);
         else
         {
             stream->flags |= STREAM_FLAG_SAMPLE_REQUESTED;
@@ -516,7 +516,7 @@ static HRESULT source_reader_new_stream_handler(struct source_reader *reader, IM
 
     if (FAILED(hr = media_event_get_object(event, &IID_IMFMediaStream, (void **)&stream)))
     {
-        WARN("Failed to get stream object, hr %#x.\n", hr);
+        WARN("Failed to get stream object, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -524,7 +524,7 @@ static HRESULT source_reader_new_stream_handler(struct source_reader *reader, IM
 
     if (FAILED(hr = media_stream_get_id(stream, &id)))
     {
-        WARN("Unidentified stream %p, hr %#x.\n", stream, hr);
+        WARN("Unidentified stream %p, hr %#lx.\n", stream, hr);
         IMFMediaStream_Release(stream);
         return hr;
     }
@@ -542,7 +542,7 @@ static HRESULT source_reader_new_stream_handler(struct source_reader *reader, IM
                 if (FAILED(hr = IMFMediaStream_BeginGetEvent(stream, &reader->stream_events_callback,
                         (IUnknown *)stream)))
                 {
-                    WARN("Failed to subscribe to stream events, hr %#x.\n", hr);
+                    WARN("Failed to subscribe to stream events, hr %#lx.\n", hr);
                 }
 
                 if (reader->streams[i].requests)
@@ -554,7 +554,7 @@ static HRESULT source_reader_new_stream_handler(struct source_reader *reader, IM
     }
 
     if (i == reader->stream_count)
-        WARN("Stream with id %#x was not present in presentation descriptor.\n", id);
+        WARN("Stream with id %#lx was not present in presentation descriptor.\n", id);
 
     LeaveCriticalSection(&reader->cs);
 
@@ -581,7 +581,7 @@ static HRESULT source_reader_source_state_handler(struct source_reader *reader, 
             reader->flags &= ~SOURCE_READER_SEEKING;
             break;
         default:
-            WARN("Unhandled event %d.\n", event_type);
+            WARN("Unhandled event %ld.\n", event_type);
     }
 
     LeaveCriticalSection(&reader->cs);
@@ -610,7 +610,7 @@ static HRESULT WINAPI source_reader_source_events_callback_Invoke(IMFAsyncCallba
 
     IMFMediaEvent_GetType(event, &event_type);
 
-    TRACE("Got event %u.\n", event_type);
+    TRACE("Got event %lu.\n", event_type);
 
     switch (event_type)
     {
@@ -640,7 +640,7 @@ static HRESULT WINAPI source_reader_source_events_callback_Invoke(IMFAsyncCallba
     }
 
     if (FAILED(hr))
-        WARN("Failed while handling %d event, hr %#x.\n", event_type, hr);
+        WARN("Failed while handling %ld event, hr %#lx.\n", event_type, hr);
 
     IMFMediaEvent_Release(event);
 
@@ -683,7 +683,7 @@ static HRESULT source_reader_pull_stream_samples(struct source_reader *reader, s
 
     if (FAILED(hr = IMFTransform_GetOutputStreamInfo(stream->decoder.transform, 0, &stream_info)))
     {
-        WARN("Failed to get output stream info, hr %#x.\n", hr);
+        WARN("Failed to get output stream info, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -751,7 +751,7 @@ static HRESULT source_reader_process_sample(struct source_reader *reader, struct
     {
         if (FAILED(hr = IMFTransform_ProcessInput(stream->decoder.transform, 0, sample, 0)))
         {
-            WARN("Transform failed to process input, hr %#x.\n", hr);
+            WARN("Transform failed to process input, hr %#lx.\n", hr);
             return hr;
         }
 
@@ -759,7 +759,7 @@ static HRESULT source_reader_process_sample(struct source_reader *reader, struct
             return S_OK;
     }
     else
-        WARN("Transform failed to process output, hr %#x.\n", hr);
+        WARN("Transform failed to process output, hr %#lx.\n", hr);
 
     return hr;
 }
@@ -776,13 +776,13 @@ static HRESULT source_reader_media_sample_handler(struct source_reader *reader, 
 
     if (FAILED(hr = media_event_get_object(event, &IID_IMFSample, (void **)&sample)))
     {
-        WARN("Failed to get sample object, hr %#x.\n", hr);
+        WARN("Failed to get sample object, hr %#lx.\n", hr);
         return hr;
     }
 
     if (FAILED(hr = media_stream_get_id(stream, &id)))
     {
-        WARN("Unidentified stream %p, hr %#x.\n", stream, hr);
+        WARN("Unidentified stream %p, hr %#lx.\n", stream, hr);
         IMFSample_Release(sample);
         return hr;
     }
@@ -805,7 +805,7 @@ static HRESULT source_reader_media_sample_handler(struct source_reader *reader, 
     }
 
     if (i == reader->stream_count)
-        WARN("Stream with id %#x was not present in presentation descriptor.\n", id);
+        WARN("Stream with id %#lx was not present in presentation descriptor.\n", id);
 
     LeaveCriticalSection(&reader->cs);
 
@@ -828,7 +828,7 @@ static HRESULT source_reader_media_stream_state_handler(struct source_reader *re
 
     if (FAILED(hr = media_stream_get_id(stream, &id)))
     {
-        WARN("Unidentified stream %p, hr %#x.\n", stream, hr);
+        WARN("Unidentified stream %p, hr %#lx.\n", stream, hr);
         return hr;
     }
 
@@ -850,7 +850,7 @@ static HRESULT source_reader_media_stream_state_handler(struct source_reader *re
                             MFT_MESSAGE_COMMAND_DRAIN, 0)))
                     {
                         if ((hr = source_reader_pull_stream_samples(reader, stream)) != MF_E_TRANSFORM_NEED_MORE_INPUT)
-                            WARN("Failed to pull pending samples, hr %#x.\n", hr);
+                            WARN("Failed to pull pending samples, hr %#lx.\n", hr);
                     }
 
                     while (stream->requests)
@@ -906,7 +906,7 @@ static HRESULT WINAPI source_reader_stream_events_callback_Invoke(IMFAsyncCallba
 
     IMFMediaEvent_GetType(event, &event_type);
 
-    TRACE("Got event %u.\n", event_type);
+    TRACE("Got event %lu.\n", event_type);
 
     switch (event_type)
     {
@@ -925,7 +925,7 @@ static HRESULT WINAPI source_reader_stream_events_callback_Invoke(IMFAsyncCallba
     }
 
     if (FAILED(hr))
-        WARN("Failed while handling %d event, hr %#x.\n", event_type, hr);
+        WARN("Failed while handling %ld event, hr %#lx.\n", event_type, hr);
 
     IMFMediaEvent_Release(event);
 
@@ -1387,7 +1387,7 @@ static ULONG WINAPI src_reader_AddRef(IMFSourceReader *iface)
     struct source_reader *reader = impl_from_IMFSourceReader(iface);
     ULONG refcount = InterlockedIncrement(&reader->public_refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -1413,7 +1413,7 @@ static ULONG WINAPI src_reader_Release(IMFSourceReader *iface)
     struct source_reader *reader = impl_from_IMFSourceReader(iface);
     ULONG refcount = InterlockedDecrement(&reader->public_refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -1440,7 +1440,7 @@ static HRESULT WINAPI src_reader_GetStreamSelection(IMFSourceReader *iface, DWOR
 {
     struct source_reader *reader = impl_from_IMFSourceReader(iface);
 
-    TRACE("%p, %#x, %p.\n", iface, index, selected);
+    TRACE("%p, %#lx, %p.\n", iface, index, selected);
 
     switch (index)
     {
@@ -1464,7 +1464,7 @@ static HRESULT WINAPI src_reader_SetStreamSelection(IMFSourceReader *iface, DWOR
     BOOL selection_changed = FALSE, selected;
     unsigned int i;
 
-    TRACE("%p, %#x, %d.\n", iface, index, selection);
+    TRACE("%p, %#lx, %d.\n", iface, index, selection);
 
     selection = !!selection;
 
@@ -1567,7 +1567,7 @@ static HRESULT WINAPI src_reader_GetNativeMediaType(IMFSourceReader *iface, DWOR
 {
     struct source_reader *reader = impl_from_IMFSourceReader(iface);
 
-    TRACE("%p, %#x, %#x, %p.\n", iface, index, type_index, type);
+    TRACE("%p, %#lx, %#lx, %p.\n", iface, index, type_index, type);
 
     return source_reader_get_native_media_type(reader, index, type_index, type);
 }
@@ -1577,7 +1577,7 @@ static HRESULT WINAPI src_reader_GetCurrentMediaType(IMFSourceReader *iface, DWO
     struct source_reader *reader = impl_from_IMFSourceReader(iface);
     HRESULT hr;
 
-    TRACE("%p, %#x, %p.\n", iface, index, type);
+    TRACE("%p, %#lx, %p.\n", iface, index, type);
 
     switch (index)
     {
@@ -1680,7 +1680,7 @@ static HRESULT source_reader_setup_sample_allocator(struct source_reader *reader
     {
         if (FAILED(hr = MFCreateVideoSampleAllocatorEx(&IID_IMFVideoSampleAllocatorEx, (void **)&stream->allocator)))
         {
-            WARN("Failed to create sample allocator, hr %#x.\n", hr);
+            WARN("Failed to create sample allocator, hr %#lx.\n", hr);
             return hr;
         }
     }
@@ -1688,17 +1688,17 @@ static HRESULT source_reader_setup_sample_allocator(struct source_reader *reader
     IMFVideoSampleAllocatorEx_UninitializeSampleAllocator(stream->allocator);
     if (FAILED(hr = IMFVideoSampleAllocatorEx_SetDirectXManager(stream->allocator, reader->device_manager)))
     {
-        WARN("Failed to set device manager, hr %#x.\n", hr);
+        WARN("Failed to set device manager, hr %#lx.\n", hr);
         return hr;
     }
 
     if (FAILED(hr = IMFVideoSampleAllocatorEx_InitializeSampleAllocatorEx(stream->allocator, 2, 8, NULL, stream->current)))
-        WARN("Failed to initialize sample allocator, hr %#x.\n", hr);
+        WARN("Failed to initialize sample allocator, hr %#lx.\n", hr);
 
     if (SUCCEEDED(IMFVideoSampleAllocatorEx_QueryInterface(stream->allocator, &IID_IMFVideoSampleAllocatorCallback, (void **)&callback)))
     {
         if (FAILED(hr = IMFVideoSampleAllocatorCallback_SetCallback(callback, &stream->notify_cb)))
-            WARN("Failed to set allocator callback, hr %#x.\n", hr);
+            WARN("Failed to set allocator callback, hr %#lx.\n", hr);
         IMFVideoSampleAllocatorCallback_Release(callback);
     }
 
@@ -1719,13 +1719,13 @@ static HRESULT source_reader_configure_decoder(struct source_reader *reader, DWO
 
     if (FAILED(hr = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void **)&transform)))
     {
-        WARN("Failed to create transform object, hr %#x.\n", hr);
+        WARN("Failed to create transform object, hr %#lx.\n", hr);
         return hr;
     }
 
     if (FAILED(hr = IMFTransform_SetInputType(transform, 0, input_type, 0)))
     {
-        WARN("Failed to set decoder input type, hr %#x.\n", hr);
+        WARN("Failed to set decoder input type, hr %#lx.\n", hr);
         IMFTransform_Release(transform);
         return hr;
     }
@@ -1748,7 +1748,7 @@ static HRESULT source_reader_configure_decoder(struct source_reader *reader, DWO
                     }
 
                     if (FAILED(hr = IMFMediaType_CopyAllItems(type, (IMFAttributes *)reader->streams[index].current)))
-                        WARN("Failed to copy attributes, hr %#x.\n", hr);
+                        WARN("Failed to copy attributes, hr %#lx.\n", hr);
                     if (SUCCEEDED(IMFMediaType_GetMajorType(type, &major)) && IsEqualGUID(&major, &MFMediaType_Audio))
                         IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_BLOCK_ALIGNMENT, &block_alignment);
                     IMFMediaType_Release(type);
@@ -1838,7 +1838,7 @@ static HRESULT WINAPI src_reader_SetCurrentMediaType(IMFSourceReader *iface, DWO
     struct source_reader *reader = impl_from_IMFSourceReader(iface);
     HRESULT hr;
 
-    TRACE("%p, %#x, %p, %p.\n", iface, index, reserved, type);
+    TRACE("%p, %#lx, %p, %p.\n", iface, index, reserved, type);
 
     switch (index)
     {
@@ -1964,7 +1964,7 @@ static HRESULT source_reader_read_sample(struct source_reader *reader, DWORD ind
                 {
                     stream->requests++;
                     if (FAILED(hr = source_reader_request_sample(reader, stream)))
-                        WARN("Failed to request a sample, hr %#x.\n", hr);
+                        WARN("Failed to request a sample, hr %#lx.\n", hr);
                     if (stream->stream && !(stream->flags & STREAM_FLAG_SAMPLE_REQUESTED))
                     {
                         *stream_flags = MF_SOURCE_READERF_ERROR;
@@ -1986,7 +1986,7 @@ static HRESULT source_reader_read_sample(struct source_reader *reader, DWORD ind
         }
     }
 
-    TRACE("Stream %u, got sample %p, flags %#x.\n", *actual_index, *sample, *stream_flags);
+    TRACE("Stream %lu, got sample %p, flags %#lx.\n", *actual_index, *sample, *stream_flags);
 
     return hr;
 }
@@ -2023,7 +2023,7 @@ static HRESULT WINAPI src_reader_ReadSample(IMFSourceReader *iface, DWORD index,
     struct source_reader *reader = impl_from_IMFSourceReader(iface);
     HRESULT hr;
 
-    TRACE("%p, %#x, %#x, %p, %p, %p, %p\n", iface, index, flags, actual_index, stream_flags, timestamp, sample);
+    TRACE("%p, %#lx, %#lx, %p, %p, %p, %p\n", iface, index, flags, actual_index, stream_flags, timestamp, sample);
 
     EnterCriticalSection(&reader->cs);
 
@@ -2084,7 +2084,7 @@ static HRESULT WINAPI src_reader_Flush(IMFSourceReader *iface, DWORD index)
     struct source_reader *reader = impl_from_IMFSourceReader(iface);
     HRESULT hr;
 
-    TRACE("%p, %#x.\n", iface, index);
+    TRACE("%p, %#lx.\n", iface, index);
 
     EnterCriticalSection(&reader->cs);
 
@@ -2105,7 +2105,7 @@ static HRESULT WINAPI src_reader_GetServiceForStream(IMFSourceReader *iface, DWO
     IUnknown *obj = NULL;
     HRESULT hr = S_OK;
 
-    TRACE("%p, %#x, %s, %s, %p\n", iface, index, debugstr_guid(service), debugstr_guid(riid), object);
+    TRACE("%p, %#lx, %s, %s, %p\n", iface, index, debugstr_guid(service), debugstr_guid(riid), object);
 
     EnterCriticalSection(&reader->cs);
 
@@ -2168,7 +2168,7 @@ static HRESULT WINAPI src_reader_GetPresentationAttribute(IMFSourceReader *iface
     BOOL selected;
     HRESULT hr;
 
-    TRACE("%p, %#x, %s, %p.\n", iface, index, debugstr_guid(guid), value);
+    TRACE("%p, %#lx, %s, %p.\n", iface, index, debugstr_guid(guid), value);
 
     switch (index)
     {
@@ -2250,7 +2250,7 @@ static DWORD reader_get_first_stream_index(IMFPresentationDescriptor *descriptor
                 IMFMediaTypeHandler_Release(handler);
                 if (FAILED(hr))
                 {
-                    WARN("Failed to get stream major type, hr %#x.\n", hr);
+                    WARN("Failed to get stream major type, hr %#lx.\n", hr);
                     continue;
                 }
 
@@ -2367,7 +2367,7 @@ static HRESULT create_source_reader_from_source(IMFMediaSource *source, IMFAttri
             break;
 
         if (FAILED(hr = IMFStreamDescriptor_GetStreamIdentifier(sd, &object->streams[i].id)))
-            WARN("Failed to get stream identifier, hr %#x.\n", hr);
+            WARN("Failed to get stream identifier, hr %#lx.\n", hr);
 
         hr = IMFStreamDescriptor_GetMediaTypeHandler(sd, &handler);
         IMFStreamDescriptor_Release(sd);
@@ -2442,7 +2442,7 @@ static HRESULT create_source_reader_from_source(IMFMediaSource *source, IMFAttri
     }
 
     if (FAILED(hr = MFLockSharedWorkQueue(L"", 0, NULL, &object->queue)))
-        WARN("Failed to acquired shared queue, hr %#x.\n", hr);
+        WARN("Failed to acquired shared queue, hr %#lx.\n", hr);
 
     if (SUCCEEDED(hr))
         hr = IMFSourceReader_QueryInterface(&object->IMFSourceReader_iface, riid, out);
