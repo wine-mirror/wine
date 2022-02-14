@@ -7413,18 +7413,109 @@ static void test_effect_null_shader(void)
 
 static void test_effect_clone(void)
 {
+    D3DXHANDLE parameter, parameter2, technique, technique2, block, annotation;
     IDirect3DDevice9 *device, *device2, *device3;
+    IDirect3DBaseTexture9 *texture, *texture2;
+    ID3DXEffectStateManager *ret_manager;
+    struct test_manager *state_manager;
+    IDirect3DVertexShader9 *vs, *vs2;
     ID3DXEffect *effect, *cloned;
+    unsigned int passes_count;
     HWND window, window2;
+    const char *string;
     ULONG refcount;
     HRESULT hr;
+    float f;
+
+    static const DWORD effect_code[] =
+    {
+#if 0
+        Texture2D tex;
+        float f <float a = 1.0;>;
+        string s;
+        float skipped : register(c4);
+
+        float4 vs0_main(float4 pos : POSITION) : POSITION
+        {
+            return pos;
+        }
+
+        vertexshader vs = compile vs_2_0 vs0_main();
+
+        technique tech0 <float a = 1.0;>
+        {
+            pass p
+            {
+                VertexShader = vs;
+            }
+        }
+
+        float4 vs1_main(float4 pos : POSITION) : POSITION
+        {
+            return skipped;
+        }
+
+        technique tech1
+        {
+            pass p
+            {
+                VertexShader = compile vs_2_0 vs1_main();
+            }
+        }
+#endif
+        0xfeff0901, 0x00000160, 0x00000000, 0x00000007, 0x00000004, 0x0000001c, 0x00000000, 0x00000000,
+        0x00000001, 0x00000004, 0x00786574, 0x00000003, 0x00000000, 0x0000006c, 0x00000000, 0x00000000,
+        0x00000001, 0x00000001, 0x00000000, 0x3f800000, 0x00000003, 0x00000000, 0x00000064, 0x00000000,
+        0x00000000, 0x00000001, 0x00000001, 0x00000002, 0x00000061, 0x00000002, 0x00000066, 0x00000004,
+        0x00000004, 0x0000008c, 0x00000000, 0x00000000, 0x00000002, 0x00000002, 0x00000073, 0x00000003,
+        0x00000000, 0x000000b4, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000000, 0x00000008,
+        0x70696b73, 0x00646570, 0x00000010, 0x00000004, 0x000000d8, 0x00000000, 0x00000000, 0x00000003,
+        0x00000003, 0x00007376, 0x3f800000, 0x00000003, 0x00000000, 0x00000100, 0x00000000, 0x00000000,
+        0x00000001, 0x00000001, 0x00000002, 0x00000061, 0x00000004, 0x00000010, 0x00000004, 0x00000000,
+        0x00000000, 0x00000000, 0x00000002, 0x00000070, 0x00000006, 0x68636574, 0x00000030, 0x00000005,
+        0x00000010, 0x00000004, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0x00000070, 0x00000006,
+        0x68636574, 0x00000031, 0x00000005, 0x00000002, 0x00000005, 0x00000006, 0x00000004, 0x00000018,
+        0x00000000, 0x00000000, 0x00000024, 0x00000040, 0x00000000, 0x00000001, 0x00000048, 0x00000044,
+        0x00000074, 0x00000088, 0x00000000, 0x00000000, 0x00000094, 0x000000b0, 0x00000000, 0x00000000,
+        0x000000c0, 0x000000d4, 0x00000000, 0x00000000, 0x00000128, 0x00000001, 0x00000001, 0x000000e4,
+        0x000000e0, 0x00000120, 0x00000000, 0x00000001, 0x00000092, 0x00000000, 0x0000010c, 0x00000108,
+        0x00000154, 0x00000000, 0x00000001, 0x0000014c, 0x00000000, 0x00000001, 0x00000092, 0x00000000,
+        0x00000138, 0x00000134, 0x00000003, 0x00000002, 0x00000003, 0x00000074, 0xfffe0200, 0x0014fffe,
+        0x42415443, 0x0000001c, 0x00000023, 0xfffe0200, 0x00000000, 0x00000000, 0x00000400, 0x0000001c,
+        0x325f7376, 0x4d00305f, 0x6f726369, 0x74666f73, 0x29522820, 0x534c4820, 0x6853204c, 0x72656461,
+        0x6d6f4320, 0x656c6970, 0x30312072, 0xab00312e, 0x0200001f, 0x80000000, 0x900f0000, 0x02000001,
+        0xc00f0000, 0x90e40000, 0x0000ffff, 0x00000002, 0x00000000, 0x00000001, 0x00000000, 0x00000001,
+        0x00000000, 0xffffffff, 0x00000000, 0x00000000, 0x000000a4, 0xfffe0200, 0x0023fffe, 0x42415443,
+        0x0000001c, 0x0000005f, 0xfffe0200, 0x00000001, 0x0000001c, 0x20000400, 0x00000058, 0x00000030,
+        0x00040002, 0x00120001, 0x00000038, 0x00000048, 0x70696b73, 0x00646570, 0x00030000, 0x00010001,
+        0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x325f7376, 0x4d00305f,
+        0x6f726369, 0x74666f73, 0x29522820, 0x534c4820, 0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970,
+        0x30312072, 0xab00312e, 0x02000001, 0xc00f0000, 0xa0000004, 0x0000ffff, 0x00000000, 0x00000000,
+        0xffffffff, 0x00000000, 0x00000001, 0x00000003, 0x00007376,
+    };
 
     if (!(device = create_device(&window)))
         return;
 
+    state_manager = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*state_manager));
+    test_effect_state_manager_init(state_manager, device);
+
+    hr = IDirect3DDevice9_CreateTexture(device, 16, 16, 1, 0, D3DFMT_X8R8G8B8,
+            D3DPOOL_DEFAULT, (IDirect3DTexture9 **)&texture, NULL);
+    ok(hr == D3D_OK, "Failed to create texture, hr %#x.\n", hr);
+
     /* D3DXFX_NOT_CLONEABLE */
-    hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
+    hr = D3DXCreateEffect(device, effect_code, sizeof(effect_code),
             NULL, NULL, D3DXFX_NOT_CLONEABLE, NULL, &effect, NULL);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    technique = effect->lpVtbl->GetTechniqueByName(effect, "tech0");
+    ok(!!technique, "Expected a technique.\n");
+
+    technique2 = effect->lpVtbl->GetCurrentTechnique(effect);
+    ok(technique2 == technique, "Got unexpected technique %p.\n", technique2);
+
+    hr = effect->lpVtbl->SetTechnique(effect, "tech1");
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
     hr = effect->lpVtbl->CloneEffect(effect, NULL, NULL);
@@ -7445,8 +7536,40 @@ static void test_effect_clone(void)
 
     effect->lpVtbl->Release(effect);
 
-    hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
-            NULL, NULL, 0, NULL, &effect, NULL);
+    hr = D3DXCreateEffectEx(device, effect_code, sizeof(effect_code),
+            NULL, NULL, "skipped", 0, NULL, &effect, NULL);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->SetStateManager(effect, &state_manager->ID3DXEffectStateManager_iface);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->SetTexture(effect, "tex", texture);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->SetFloat(effect, "f", 123.0f);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->SetString(effect, "s", "tiny silver hammers");
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->SetFloat(effect, "f@a", 4.0f);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    annotation = effect->lpVtbl->GetAnnotationByName(effect, "tech0", "a");
+    ok(!!annotation, "Failed to get annotation.\n");
+    hr = effect->lpVtbl->SetFloat(effect, annotation, 4.0f);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    parameter = effect->lpVtbl->GetParameterByName(effect, NULL, "tex");
+    ok(!!parameter, "Failed to get parameter.\n");
+
+    hr = effect->lpVtbl->GetVertexShader(effect, "vs", &vs);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    ok(!effect->lpVtbl->IsParameterUsed(effect, "skipped", "tech1"),
+            "Unexpected IsParameterUsed result.\n");
+
+    hr = effect->lpVtbl->Begin(effect, &passes_count, 0);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
     hr = effect->lpVtbl->CloneEffect(effect, NULL, NULL);
@@ -7461,20 +7584,69 @@ static void test_effect_clone(void)
     ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
 
     hr = effect->lpVtbl->CloneEffect(effect, device, &cloned);
-todo_wine
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
-if (hr == D3D_OK)
-{
+    todo_wine ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    if (hr != D3D_OK)
+        goto out;
     ok(cloned != effect, "Expected new effect instance.\n");
+
+    hr = cloned->lpVtbl->GetStateManager(cloned, &ret_manager);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(!ret_manager, "Unexpected state manager %p.\n", ret_manager);
+
+    hr = cloned->lpVtbl->GetTexture(cloned, "tex", &texture2);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(texture2 == texture, "Expected the same texture.\n");
+    IDirect3DBaseTexture9_Release(texture2);
+
+    hr = cloned->lpVtbl->GetVertexShader(cloned, "vs", &vs2);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(vs2 == vs, "Expected the same vertex shader.\n");
+    IDirect3DVertexShader9_Release(vs2);
+
+    ok(!effect->lpVtbl->IsParameterUsed(effect, "skipped", "tech1"),
+            "Unexpected IsParameterUsed result.\n");
+
+    f = 0.0f;
+    hr = cloned->lpVtbl->GetFloat(cloned, "f", &f);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(f == 123.0f, "Got float %.8e.\n", f);
+
+    hr = cloned->lpVtbl->GetString(cloned, "s", &string);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(!strcmp(string, "tiny silver hammers"), "Got string %s.\n", debugstr_a(string));
+
+    f = 0.0f;
+    hr = cloned->lpVtbl->GetFloat(cloned, "f@a", &f);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(f == 4.0f, "Got float %.8e.\n", f);
+
+    annotation = cloned->lpVtbl->GetAnnotationByName(cloned, "tech0", "a");
+    ok(!!annotation, "Failed to get annotation.\n");
+    f = 0.0f;
+    hr = cloned->lpVtbl->GetFloat(cloned, annotation, &f);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(f == 4.0f, "Got float %.8e.\n", f);
+
+    parameter2 = cloned->lpVtbl->GetParameterByName(cloned, NULL, "tex");
+    ok(!!parameter2, "Failed to get parameter.\n");
+    ok(parameter2 != parameter, "Parameters should not match.\n");
+
+    hr = cloned->lpVtbl->BeginPass(cloned, 0);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+
+    technique = cloned->lpVtbl->GetTechniqueByName(cloned, "tech0");
+    ok(!!technique, "Expected a technique.\n");
+
+    technique2 = cloned->lpVtbl->GetCurrentTechnique(cloned);
+    ok(technique2 == technique, "Got unexpected technique %p.\n", technique2);
+
     cloned->lpVtbl->Release(cloned);
-}
+
     /* Try with different device. */
     device2 = create_device(&window2);
+
     hr = effect->lpVtbl->CloneEffect(effect, device2, &cloned);
-todo_wine
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-if (hr == D3D_OK)
-{
     ok(cloned != effect, "Expected new effect instance.\n");
 
     hr = cloned->lpVtbl->GetDevice(cloned, &device3);
@@ -7482,11 +7654,88 @@ if (hr == D3D_OK)
     ok(device3 == device2, "Unexpected device instance.\n");
     IDirect3DDevice9_Release(device3);
 
+    hr = cloned->lpVtbl->GetTexture(cloned, "tex", &texture2);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(!texture2, "Expected a NULL texture.\n");
+
+    hr = cloned->lpVtbl->GetVertexShader(cloned, "vs", &vs2);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(vs2 != vs, "Expected a different vertex shader.\n");
+    IDirect3DVertexShader9_Release(vs2);
+
+    f = 0.0f;
+    hr = cloned->lpVtbl->GetFloat(cloned, "f", &f);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(f == 123.0f, "Got float %.8e.\n", f);
+
+    hr = cloned->lpVtbl->GetString(cloned, "s", &string);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(!strcmp(string, "tiny silver hammers"), "Got string %s.\n", debugstr_a(string));
+
+    f = 0.0f;
+    hr = cloned->lpVtbl->GetFloat(cloned, "f@a", &f);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(f == 4.0f, "Got float %.8e.\n", f);
+
+    annotation = cloned->lpVtbl->GetAnnotationByName(cloned, "tech0", "a");
+    ok(!!annotation, "Failed to get annotation.\n");
+    f = 0.0f;
+    hr = cloned->lpVtbl->GetFloat(cloned, annotation, &f);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(f == 4.0f, "Got float %.8e.\n", f);
+
+    parameter2 = cloned->lpVtbl->GetParameterByName(cloned, NULL, "tex");
+    ok(!!parameter2, "Failed to get parameter.\n");
+    ok(parameter2 != parameter, "Parameters should not match.\n");
+
+    hr = cloned->lpVtbl->BeginPass(cloned, 0);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+
+    technique = cloned->lpVtbl->GetTechniqueByName(cloned, "tech0");
+    ok(!!technique, "Expected a technique.\n");
+
+    technique2 = cloned->lpVtbl->GetCurrentTechnique(cloned);
+    ok(technique2 == technique, "Got unexpected technique %p.\n", technique2);
+
     cloned->lpVtbl->Release(cloned);
-}
+
+    hr = effect->lpVtbl->BeginPass(effect, 0);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->EndPass(effect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->End(effect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    /* Test parameter blocks (we can't do this above since we can't record a
+     * parameter block while started). */
+
+    hr = effect->lpVtbl->BeginParameterBlock(effect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->SetFloat(effect, "f", 456.0f);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->CloneEffect(effect, device, &cloned);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    block = cloned->lpVtbl->EndParameterBlock(cloned);
+    ok(!block, "Expected no active parameter block.\n");
+
+    cloned->lpVtbl->Release(cloned);
+
+    block = effect->lpVtbl->EndParameterBlock(effect);
+    ok(!!block, "Expected an active parameter block.\n");
+
+    IDirect3DVertexShader9_Release(vs);
     IDirect3DDevice9_Release(device2);
     DestroyWindow(window2);
+out:
     effect->lpVtbl->Release(effect);
+    refcount = state_manager->ID3DXEffectStateManager_iface.lpVtbl->Release(
+            &state_manager->ID3DXEffectStateManager_iface);
+    ok(!refcount, "State manager was not properly freed, refcount %u.\n", refcount);
+    IDirect3DBaseTexture9_Release(texture);
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
     DestroyWindow(window);
