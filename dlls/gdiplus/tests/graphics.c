@@ -1313,21 +1313,20 @@ static void test_GdipDrawImagePointsRect(void)
     GpGraphics *graphics = NULL;
     GpPointF ptf[4];
     GpBitmap *bm = NULL;
-    BYTE rbmi[sizeof(BITMAPINFOHEADER)];
     BYTE buff[400];
-    BITMAPINFO *bmi = (BITMAPINFO*)rbmi;
+    BITMAPINFOHEADER bmihdr;
     HDC hdc = GetDC( hwnd );
     if (!hdc)
         return;
 
-    memset(rbmi, 0, sizeof(rbmi));
-    bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    bmi->bmiHeader.biWidth = 10;
-    bmi->bmiHeader.biHeight = 10;
-    bmi->bmiHeader.biPlanes = 1;
-    bmi->bmiHeader.biBitCount = 32;
-    bmi->bmiHeader.biCompression = BI_RGB;
-    status = GdipCreateBitmapFromGdiDib(bmi, buff, &bm);
+    memset(&bmihdr, 0, sizeof(bmihdr));
+    bmihdr.biSize = sizeof(BITMAPINFOHEADER);
+    bmihdr.biWidth = 10;
+    bmihdr.biHeight = 10;
+    bmihdr.biPlanes = 1;
+    bmihdr.biBitCount = 32;
+    bmihdr.biCompression = BI_RGB;
+    status = GdipCreateBitmapFromGdiDib((BITMAPINFO*)&bmihdr, buff, &bm);
     expect(Ok, status);
     ok(NULL != bm, "Expected bitmap to be initialized\n");
     status = GdipCreateFromHDC(hdc, &graphics);
