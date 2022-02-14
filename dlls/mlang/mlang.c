@@ -955,7 +955,7 @@ HRESULT WINAPI ConvertINetMultiByteToUnicode(
 {
     INT src_len = -1;
 
-    TRACE("%p %d %s %p %p %p\n", pdwMode, dwEncoding,
+    TRACE("%p %ld %s %p %p %p\n", pdwMode, dwEncoding,
           debugstr_a(pSrcStr), pcSrcSize, pDstStr, pcDstSize);
 
     if (!pcDstSize)
@@ -1022,7 +1022,7 @@ HRESULT WINAPI ConvertINetUnicodeToMultiByte(
     INT destsz, size;
     INT src_len = -1;
 
-    TRACE("%p %d %s %p %p %p\n", pdwMode, dwEncoding,
+    TRACE("%p %ld %s %p %p %p\n", pdwMode, dwEncoding,
           debugstr_w(pSrcStr), pcSrcSize, pDstStr, pcDstSize);
 
     if (!pcDstSize)
@@ -1106,7 +1106,7 @@ HRESULT WINAPI ConvertINetString(
     LPINT pcDstSize
 )
 {
-    TRACE("%p %d %d %s %p %p %p\n", pdwMode, dwSrcEncoding, dwDstEncoding,
+    TRACE("%p %ld %ld %s %p %p %p\n", pdwMode, dwSrcEncoding, dwDstEncoding,
           debugstr_a(pSrcStr), pcSrcSize, pDstStr, pcDstSize);
 
     if (dwSrcEncoding == CP_UNICODE)
@@ -1131,7 +1131,7 @@ HRESULT WINAPI ConvertINetString(
         LPWSTR pDstStrW;
         HRESULT hr;
 
-        TRACE("convert %s from %d to %d\n", debugstr_a(pSrcStr), dwSrcEncoding, dwDstEncoding);
+        TRACE("convert %s from %ld to %ld\n", debugstr_a(pSrcStr), dwSrcEncoding, dwDstEncoding);
 
         hr = ConvertINetMultiByteToUnicode(pdwMode, dwSrcEncoding, pSrcStr, pcSrcSize, NULL, &cDstSizeW);
         if (hr != S_OK)
@@ -1178,7 +1178,7 @@ HRESULT WINAPI IsConvertINetStringAvailable(
 {
     UINT src_family, dst_family;
 
-    TRACE("%d %d\n", dwSrcEncoding, dwDstEncoding);
+    TRACE("%ld %ld\n", dwSrcEncoding, dwDstEncoding);
 
     if (GetFamilyCodePage(dwSrcEncoding, &src_family) != S_OK ||
         GetFamilyCodePage(dwDstEncoding, &dst_family) != S_OK)
@@ -1251,7 +1251,7 @@ HRESULT WINAPI LcidToRfc1766A(
     LPSTR pszRfc1766,
     INT nChar)
 {
-    TRACE("%04x %p %u\n", lcid, pszRfc1766, nChar);
+    TRACE("%04lx %p %u\n", lcid, pszRfc1766, nChar);
     if (!pszRfc1766)
         return E_INVALIDARG;
 
@@ -1263,7 +1263,7 @@ HRESULT WINAPI LcidToRfc1766W(
     LPWSTR pszRfc1766,
     INT nChar)
 {
-    TRACE("%04x %p %u\n", lcid, pszRfc1766, nChar);
+    TRACE("%04lx %p %u\n", lcid, pszRfc1766, nChar);
     if (!pszRfc1766)
         return E_INVALIDARG;
 
@@ -1517,7 +1517,7 @@ static HRESULT WINAPI MLANGCF_CreateInstance(IClassFactory *iface, IUnknown *pOu
         hres = IUnknown_QueryInterface(punk, riid, ppobj);
         IUnknown_Release(punk);
     }
-    TRACE("returning (%p) -> %x\n", *ppobj, hres);
+    TRACE("returning (%p) -> %lx\n", *ppobj, hres);
     return hres;
 }
 
@@ -1625,7 +1625,7 @@ static HRESULT WINAPI fnIEnumCodePage_QueryInterface(
 	|| IsEqualGUID(riid, &IID_IEnumCodePage))
     {
 	IEnumCodePage_AddRef(iface);
-        TRACE("Returning IID_IEnumCodePage %p ref = %d\n", This, This->ref);
+        TRACE("Returning IID_IEnumCodePage %p ref = %ld\n", This, This->ref);
 	*ppvObject = &This->IEnumCodePage_iface;
         return S_OK;
     }
@@ -1647,7 +1647,7 @@ static ULONG WINAPI fnIEnumCodePage_Release(
     EnumCodePage_impl *This = impl_from_IEnumCodePage( iface );
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("%p ref = %d\n", This, ref);
+    TRACE("%p ref = %ld\n", This, ref);
     if (ref == 0)
     {
         TRACE("Destroying %p\n", This);
@@ -1676,7 +1676,7 @@ static  HRESULT WINAPI fnIEnumCodePage_Next(
     ULONG i;
     EnumCodePage_impl *This = impl_from_IEnumCodePage( iface );
 
-    TRACE("%p %u %p %p\n", This, celt, rgelt, pceltFetched);
+    TRACE("%p %lu %p %p\n", This, celt, rgelt, pceltFetched);
 
     if (!pceltFetched) return S_FALSE;
     *pceltFetched = 0;
@@ -1694,7 +1694,7 @@ static  HRESULT WINAPI fnIEnumCodePage_Next(
 
     for (i = 0; i < celt; i++)
     {
-        TRACE("#%u: %08x %u %u %s %s %s %s %s %s %d\n",
+        TRACE("#%lu: %08lx %u %u %s %s %s %s %s %s %d\n",
               i, rgelt[i].dwFlags, rgelt[i].uiCodePage,
               rgelt[i].uiFamilyCodePage,
               wine_dbgstr_w(rgelt[i].wszDescription),
@@ -1725,7 +1725,7 @@ static  HRESULT WINAPI fnIEnumCodePage_Skip(
 {
     EnumCodePage_impl *This = impl_from_IEnumCodePage( iface );
 
-    TRACE("%p %u\n", This, celt);
+    TRACE("%p %lu\n", This, celt);
 
     if (celt >= This->total) return S_FALSE;
 
@@ -1751,7 +1751,7 @@ static HRESULT EnumCodePage_create( MLang_impl* mlang, DWORD grfFlags,
     MIMECPINFO *cpinfo;
     UINT i, n;
 
-    TRACE("%p, %08x, %04x, %p\n", mlang, grfFlags, LangId, ppEnumCodePage);
+    TRACE("%p, %08lx, %04x, %p\n", mlang, grfFlags, LangId, ppEnumCodePage);
 
     if (!grfFlags) /* enumerate internal data base of encodings */
         grfFlags = MIMECONTF_MIME_LATEST;
@@ -1783,7 +1783,7 @@ static HRESULT EnumCodePage_create( MLang_impl* mlang, DWORD grfFlags,
         }
     }
 
-    TRACE("enumerated %d codepages with flags %08x\n", ecp->total, grfFlags);
+    TRACE("enumerated %ld codepages with flags %08lx\n", ecp->total, grfFlags);
 
     *ppEnumCodePage = &ecp->IEnumCodePage_iface;
 
@@ -1818,7 +1818,7 @@ static HRESULT WINAPI fnIEnumScript_QueryInterface(
         || IsEqualGUID(riid, &IID_IEnumScript))
     {
         IEnumScript_AddRef(iface);
-        TRACE("Returning IID_IEnumScript %p ref = %d\n", This, This->ref);
+        TRACE("Returning IID_IEnumScript %p ref = %ld\n", This, This->ref);
         *ppvObject = &This->IEnumScript_iface;
         return S_OK;
     }
@@ -1840,7 +1840,7 @@ static ULONG WINAPI fnIEnumScript_Release(
     EnumScript_impl *This = impl_from_IEnumScript( iface );
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("%p ref = %d\n", This, ref);
+    TRACE("%p ref = %ld\n", This, ref);
     if (ref == 0)
     {
         TRACE("Destroying %p\n", This);
@@ -1868,7 +1868,7 @@ static  HRESULT WINAPI fnIEnumScript_Next(
 {
     EnumScript_impl *This = impl_from_IEnumScript( iface );
 
-    TRACE("%p %u %p %p\n", This, celt, rgelt, pceltFetched);
+    TRACE("%p %lu %p %p\n", This, celt, rgelt, pceltFetched);
 
     if (!pceltFetched || !rgelt) return E_FAIL;
 
@@ -1903,7 +1903,7 @@ static  HRESULT WINAPI fnIEnumScript_Skip(
 {
     EnumScript_impl *This = impl_from_IEnumScript( iface );
 
-    TRACE("%p %u\n", This, celt);
+    TRACE("%p %lu\n", This, celt);
 
     if (celt >= This->total) return S_FALSE;
 
@@ -1928,7 +1928,7 @@ static HRESULT EnumScript_create( MLang_impl* mlang, DWORD dwFlags,
     EnumScript_impl *es;
     UINT i;
 
-    TRACE("%p, %08x, %04x, %p\n", mlang, dwFlags, LangId, ppEnumScript);
+    TRACE("%p, %08lx, %04x, %p\n", mlang, dwFlags, LangId, ppEnumScript);
 
     if (!dwFlags) /* enumerate all available scripts */
         dwFlags = SCRIPTCONTF_SCRIPT_USER | SCRIPTCONTF_SCRIPT_HIDE | SCRIPTCONTF_SCRIPT_SYSTEM;
@@ -1953,7 +1953,7 @@ static HRESULT EnumScript_create( MLang_impl* mlang, DWORD dwFlags,
             es->script_info[i].wszProportionalFont, MAX_MIMEFACE_NAME);
     }
 
-    TRACE("enumerated %d scripts with flags %08x\n", es->total, dwFlags);
+    TRACE("enumerated %ld scripts with flags %08lx\n", es->total, dwFlags);
 
     *ppEnumScript = &es->IEnumScript_iface;
 
@@ -2049,7 +2049,7 @@ static HRESULT WINAPI fnIMLangFontLink_MapFont(
         HFONT hSrcFont,
         HFONT* phDestFont)
 {
-    TRACE("(%p)->%p %08x %p %p\n",iface, hDC, dwCodePages, hSrcFont, phDestFont);
+    TRACE("(%p)->%p %08lx %p %p\n",iface, hDC, dwCodePages, hSrcFont, phDestFont);
 
     return map_font(hDC, dwCodePages, hSrcFont, phDestFont);
 }
@@ -2165,7 +2165,7 @@ static HRESULT WINAPI fnIMultiLanguage_EnumCodePages(
 {
     MLang_impl *This = impl_from_IMultiLanguage( iface );
 
-    TRACE("%p %08x %p\n", This, grfFlags, ppEnumCodePage);
+    TRACE("%p %08lx %p\n", This, grfFlags, ppEnumCodePage);
 
     return EnumCodePage_create( This, grfFlags, 0, ppEnumCodePage );
 }
@@ -2284,7 +2284,7 @@ static HRESULT WINAPI fnIEnumRfc1766_QueryInterface(
         || IsEqualGUID(riid, &IID_IEnumRfc1766))
     {
         IEnumRfc1766_AddRef(iface);
-        TRACE("Returning IID_IEnumRfc1766 %p ref = %d\n", This, This->ref);
+        TRACE("Returning IID_IEnumRfc1766 %p ref = %ld\n", This, This->ref);
         *ppvObject = &This->IEnumRfc1766_iface;
         return S_OK;
     }
@@ -2306,7 +2306,7 @@ static ULONG WINAPI fnIEnumRfc1766_Release(
     EnumRfc1766_impl *This = impl_from_IEnumRfc1766( iface );
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("%p ref = %d\n", This, ref);
+    TRACE("%p ref = %ld\n", This, ref);
     if (ref == 0)
     {
         TRACE("Destroying %p\n", This);
@@ -2335,7 +2335,7 @@ static  HRESULT WINAPI fnIEnumRfc1766_Next(
     ULONG i;
     EnumRfc1766_impl *This = impl_from_IEnumRfc1766( iface );
 
-    TRACE("%p %u %p %p\n", This, celt, rgelt, pceltFetched);
+    TRACE("%p %lu %p %p\n", This, celt, rgelt, pceltFetched);
 
     if (!pceltFetched) return S_FALSE;
     *pceltFetched = 0;
@@ -2353,7 +2353,7 @@ static  HRESULT WINAPI fnIEnumRfc1766_Next(
 
     for (i = 0; i < celt; i++)
     {
-        TRACE("#%u: %08x %s %s\n",
+        TRACE("#%lu: %08lx %s %s\n",
               i, rgelt[i].lcid,
               wine_dbgstr_w(rgelt[i].wszRfc1766),
               wine_dbgstr_w(rgelt[i].wszLocaleName));
@@ -2378,7 +2378,7 @@ static  HRESULT WINAPI fnIEnumRfc1766_Skip(
 {
     EnumRfc1766_impl *This = impl_from_IEnumRfc1766( iface );
 
-    TRACE("%p %u\n", This, celt);
+    TRACE("%p %lu\n", This, celt);
 
     if (celt >= This->total) return S_FALSE;
 
@@ -2462,7 +2462,7 @@ static HRESULT EnumRfc1766_create(LANGID LangId, IEnumRfc1766 **ppEnum)
     EnumSystemLocalesW(enum_locales_proc, 0/*LOCALE_SUPPORTED*/);
     TlsSetValue(MLANG_tls_index, NULL);
 
-    TRACE("enumerated %d rfc1766 structures\n", data.total);
+    TRACE("enumerated %ld rfc1766 structures\n", data.total);
 
     if (!data.total)
     {
@@ -2498,7 +2498,7 @@ static HRESULT WINAPI fnIMultiLanguage_GetRfc1766Info(
 {
     LCTYPE type = LOCALE_SLANGUAGE;
 
-    TRACE("(%p, 0x%04x, %p)\n", iface, Locale, pRfc1766Info);
+    TRACE("(%p, 0x%04lx, %p)\n", iface, Locale, pRfc1766Info);
 
     if (!pRfc1766Info)
         return E_INVALIDARG;
@@ -2513,7 +2513,7 @@ static HRESULT WINAPI fnIMultiLanguage_GetRfc1766Info(
     else
     {
         if (!SUBLANGID(Locale)) {
-            TRACE("SUBLANGID missing in 0x%04x\n", Locale);
+            TRACE("SUBLANGID missing in 0x%04lx\n", Locale);
             return E_FAIL;
         }
     }
@@ -2625,7 +2625,7 @@ static ULONG WINAPI fnIMultiLanguage3_Release( IMultiLanguage3* iface )
     MLang_impl *This = impl_from_IMultiLanguage3( iface );
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("(%p)->(%ld)\n", This, ref);
     if (ref == 0)
     {
         HeapFree(GetProcessHeap(), 0, This);
@@ -2676,7 +2676,7 @@ static void fill_cp_info(const struct mlang_data *ml_data, UINT index, MIMECPINF
     MultiByteToWideChar(CP_ACP, 0, ml_data->proportional_font, -1,
         mime_cp_info->wszProportionalFont, ARRAY_SIZE(mime_cp_info->wszProportionalFont));
 
-    TRACE("%08x %u %u %s %s %s %s %s %s %d\n",
+    TRACE("%08lx %u %u %s %s %s %s %s %s %d\n",
           mime_cp_info->dwFlags, mime_cp_info->uiCodePage,
           mime_cp_info->uiFamilyCodePage,
           wine_dbgstr_w(mime_cp_info->wszDescription),
@@ -2730,7 +2730,7 @@ static HRESULT WINAPI fnIMultiLanguage3_EnumCodePages(
 {
     MLang_impl *This = impl_from_IMultiLanguage3( iface );
 
-    TRACE("%p %08x %04x %p\n", This, grfFlags, LangId, ppEnumCodePage);
+    TRACE("%p %08lx %04x %p\n", This, grfFlags, LangId, ppEnumCodePage);
 
     return EnumCodePage_create( This, grfFlags, LangId, ppEnumCodePage );
 }
@@ -2858,7 +2858,7 @@ static HRESULT WINAPI fnIMultiLanguage3_GetRfc1766FromLcid(
 {
     WCHAR buf[MAX_RFC1766_NAME];
 
-    TRACE("%p %04x %p\n", iface, lcid, pbstrRfc1766);
+    TRACE("%p %04lx %p\n", iface, lcid, pbstrRfc1766);
     if (!pbstrRfc1766)
         return E_INVALIDARG;
 
@@ -2914,7 +2914,7 @@ static HRESULT WINAPI fnIMultiLanguage3_GetRfc1766Info(
     static LANGID last_lang = -1;
     LCTYPE type = LOCALE_SLANGUAGE;
 
-    TRACE("(%p, 0x%04x, 0x%04x, %p)\n", iface, Locale, LangId, pRfc1766Info);
+    TRACE("(%p, 0x%04lx, 0x%04x, %p)\n", iface, Locale, LangId, pRfc1766Info);
 
     if (!pRfc1766Info)
         return E_INVALIDARG;
@@ -2929,7 +2929,7 @@ static HRESULT WINAPI fnIMultiLanguage3_GetRfc1766Info(
     else
     {
         if (!SUBLANGID(Locale)) {
-            TRACE("SUBLANGID missing in 0x%04x\n", Locale);
+            TRACE("SUBLANGID missing in 0x%04lx\n", Locale);
             return E_FAIL;
         }
     }
@@ -2961,7 +2961,7 @@ static HRESULT WINAPI fnIMultiLanguage3_CreateConvertCharset(
 {
     HRESULT hr;
 
-    TRACE("(%u %u 0x%08x %p)\n", src_cp, dst_cp, prop, convert_charset);
+    TRACE("(%u %u 0x%08lx %p)\n", src_cp, dst_cp, prop, convert_charset);
 
     hr = MLangConvertCharset_create(NULL, (void**)convert_charset);
     if (FAILED(hr)) return hr;
@@ -2984,7 +2984,7 @@ static HRESULT WINAPI fnIMultiLanguage3_ConvertStringInIStream(
     STATSTG stat;
     HRESULT hr;
 
-    TRACE("%p %0x8 %s %u %u %p %p\n",
+    TRACE("%p %0lx8 %s %lu %lu %p %p\n",
           pdwMode, dwFlag, debugstr_w(lpFallBack), dwSrcEncoding, dwDstEncoding, pstmIn, pstmOut);
 
     FIXME("dwFlag and lpFallBack not handled\n");
@@ -3029,7 +3029,7 @@ static HRESULT WINAPI fnIMultiLanguage3_ConvertStringToUnicodeEx(
     WCHAR* lpFallBack)
 {
     if (dwFlag || lpFallBack)
-        FIXME("Ignoring dwFlag (0x%x/%d) and lpFallBack (%p)\n",
+        FIXME("Ignoring dwFlag (0x%lx/%ld) and lpFallBack (%p)\n",
                 dwFlag, dwFlag, lpFallBack);
 
     return ConvertINetMultiByteToUnicode(pdwMode, dwEncoding,
@@ -3113,7 +3113,7 @@ static HRESULT WINAPI fnIMultiLanguage3_GetCodePageDescription(
     /* Find first instance */
     unsigned int i,n;
 
-    TRACE ("%u, %04x, %p, %d\n", uiCodePage, lcid, lpWideCharStr, cchWideChar);
+    TRACE ("%u, %04lx, %p, %d\n", uiCodePage, lcid, lpWideCharStr, cchWideChar);
     for (i = 0; i < ARRAY_SIZE(mlang_data); i++)
     {
         for (n = 0; n < mlang_data[i].number_of_cp; n++)
@@ -3171,7 +3171,7 @@ static HRESULT WINAPI fnIMultiLanguage3_EnumScripts(
 {
     MLang_impl *This = impl_from_IMultiLanguage3( iface );
 
-    TRACE("%p %08x %04x %p\n", This, dwFlags, LangId, ppEnumScript);
+    TRACE("%p %08lx %04x %p\n", This, dwFlags, LangId, ppEnumScript);
 
     return EnumScript_create( This, dwFlags, LangId, ppEnumScript );
 }
@@ -3185,7 +3185,7 @@ static HRESULT WINAPI fnIMultiLanguage3_ValidateCodePageEx(
     unsigned int i;
     MLang_impl *This = impl_from_IMultiLanguage3( iface );
 
-    TRACE("%p %u %p %08x\n", This, uiCodePage, hwnd, dwfIODControl);
+    TRACE("%p %u %p %08lx\n", This, uiCodePage, hwnd, dwfIODControl);
 
     /* quick check for kernel32 supported code pages */
     if (IsValidCodePage(uiCodePage))
@@ -3221,7 +3221,7 @@ static HRESULT WINAPI fnIMultiLanguage3_DetectOutboundCodePage(
 {
     MLang_impl *This = impl_from_IMultiLanguage3( iface );
 
-    FIXME("(%p)->(%08x %s %p %u %p %p(%u) %s)\n", This, dwFlags, debugstr_w(lpWideCharStr),
+    FIXME("(%p)->(%08lx %s %p %u %p %p(%u) %s)\n", This, dwFlags, debugstr_w(lpWideCharStr),
           puiPreferredCodePages, nPreferredCodePages, puiDetectedCodePages,
           pnDetectedCodePages, pnDetectedCodePages ? *pnDetectedCodePages : 0,
           debugstr_w(lpSpecialChar));
@@ -3246,7 +3246,7 @@ static HRESULT WINAPI fnIMultiLanguage3_DetectOutboundCodePageInIStream(
 {
     MLang_impl *This = impl_from_IMultiLanguage3( iface );
 
-    FIXME("(%p)->(%08x %p %p %u %p %p(%u) %s)\n", This, dwFlags, pStrIn,
+    FIXME("(%p)->(%08lx %p %p %u %p %p(%u) %s)\n", This, dwFlags, pStrIn,
           puiPreferredCodePages, nPreferredCodePages, puiDetectedCodePages,
           pnDetectedCodePages, pnDetectedCodePages ? *pnDetectedCodePages : 0,
           debugstr_w(lpSpecialChar));
@@ -3362,7 +3362,7 @@ static HRESULT WINAPI fnIMLangFontLink2_GetStrCodePages( IMLangFontLink2* iface,
     LONG i;
     DWORD cps = 0;
 
-    TRACE("(%p)->(%s:%d %x %p %p)\n", This, debugstr_wn(src, src_len), src_len, priority_cp,
+    TRACE("(%p)->(%s:%ld %lx %p %p)\n", This, debugstr_wn(src, src_len), src_len, priority_cp,
         codepages, ret_len);
 
     if (codepages) *codepages = 0;
@@ -3405,7 +3405,7 @@ static HRESULT WINAPI fnIMLangFontLink2_CodePageToCodePages(IMLangFontLink2* ifa
     if (rc)
     {
         *codepages = cs.fs.fsCsb[0];
-        TRACE("resulting codepages 0x%x\n", *codepages);
+        TRACE("resulting codepages 0x%lx\n", *codepages);
         return S_OK;
     }
 
@@ -3423,7 +3423,7 @@ static HRESULT WINAPI fnIMLangFontLink2_CodePagesToCodePage(IMLangFontLink2* ifa
     BOOL rc;
     UINT i;
 
-    TRACE("(%p)->(0x%x %u %p)\n", This, codepages, def_codepage, codepage);
+    TRACE("(%p)->(0x%lx %u %p)\n", This, codepages, def_codepage, codepage);
 
     *codepage = 0;
 
@@ -3472,7 +3472,7 @@ static HRESULT WINAPI fnIMLangFontLink2_GetFontCodePages(IMLangFontLink2 *iface,
     SelectObject(hdc, old_font);
 
     *codepages = fontsig.fsCsb[0];
-    TRACE("ret 0x%x\n", fontsig.fsCsb[0]);
+    TRACE("ret 0x%lx\n", fontsig.fsCsb[0]);
 
     return S_OK;
 }
@@ -3497,7 +3497,7 @@ static HRESULT WINAPI fnIMLangFontLink2_MapFont(IMLangFontLink2* This,
 {
     HFONT old_font;
 
-    TRACE("(%p)->%p %08x %04x %p\n",This, hDC, dwCodePages, chSrc, pFont);
+    TRACE("(%p)->%p %08lx %04x %p\n",This, hDC, dwCodePages, chSrc, pFont);
 
     if (!hDC) return E_FAIL;
 
@@ -3549,7 +3549,7 @@ static HRESULT WINAPI fnIMLangFontLink2_GetScriptFontInfo(IMLangFontLink2* This,
 {
     UINT i, j;
 
-    TRACE("(%p)->%u %x %p %p\n", This, sid, dwFlags, puiFonts, pScriptFont);
+    TRACE("(%p)->%u %lx %p %p\n", This, sid, dwFlags, puiFonts, pScriptFont);
 
     if (!dwFlags) dwFlags = SCRIPTCONTF_PROPORTIONAL_FONT;
 
@@ -3658,7 +3658,7 @@ static HRESULT WINAPI fnIMLangLineBreakConsole_BreakLineML(
     LONG* plLineLen,
     LONG* plSkipLen)
 {
-    FIXME("(%p)->%p %i %i %i %i %p %p\n", iface, pSrcMLStr, lSrcPos, lSrcLen, cMinColumns, cMaxColumns, plLineLen, plSkipLen);
+    FIXME("(%p)->%p %li %li %li %li %p %p\n", iface, pSrcMLStr, lSrcPos, lSrcLen, cMinColumns, cMaxColumns, plLineLen, plSkipLen);
     return E_NOTIMPL;
 }
 
@@ -3671,7 +3671,7 @@ static HRESULT WINAPI fnIMLangLineBreakConsole_BreakLineW(
     LONG* pcchLine,
     LONG* pcchSkip )
 {
-    FIXME("(%p)->%i %s %i %i %p %p\n", iface, locale, debugstr_wn(pszSrc,cchSrc), cchSrc, cMaxColumns, pcchLine, pcchSkip);
+    FIXME("(%p)->%li %s %li %li %p %p\n", iface, locale, debugstr_wn(pszSrc,cchSrc), cchSrc, cMaxColumns, pcchLine, pcchSkip);
 
     *pcchLine = cchSrc;
     *pcchSkip = 0;
@@ -3690,7 +3690,7 @@ static HRESULT WINAPI fnIMLangLineBreakConsole_BreakLineA(
 {
     LONG i, line = cchSrc, skip = 0;
 
-    FIXME("(%p)->%i %i %s %i %i %p %p\n", iface, locale, uCodePage, debugstr_an(pszSrc,cchSrc), cchSrc, cMaxColumns, pcchLine, pcchSkip);
+    FIXME("(%p)->%li %i %s %li %li %p %p\n", iface, locale, uCodePage, debugstr_an(pszSrc,cchSrc), cchSrc, cMaxColumns, pcchLine, pcchSkip);
 
     if (uCodePage == CP_USASCII && cchSrc > cMaxColumns)
     {
@@ -3757,7 +3757,7 @@ static ULONG WINAPI MLangConvertCharset_AddRef(IMLangConvertCharset *iface)
 {
     struct convert_charset *This = impl_from_IMLangConvertCharset(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(%u)\n", This, ref);
+    TRACE("(%p)->(%lu)\n", This, ref);
     return ref;
 }
 
@@ -3766,7 +3766,7 @@ static ULONG WINAPI MLangConvertCharset_Release(IMLangConvertCharset *iface)
     struct convert_charset *This = impl_from_IMLangConvertCharset(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(%u)\n", This, ref);
+    TRACE("(%p)->(%lu)\n", This, ref);
     if (!ref)
     {
         HeapFree(GetProcessHeap(), 0, This);
@@ -3781,11 +3781,11 @@ static HRESULT WINAPI MLangConvertCharset_Initialize(IMLangConvertCharset *iface
 {
     struct convert_charset *This = impl_from_IMLangConvertCharset(iface);
 
-    TRACE("(%p)->(%u %u 0x%08x)\n", This, src_cp, dst_cp, prop);
+    TRACE("(%p)->(%u %u 0x%08lx)\n", This, src_cp, dst_cp, prop);
 
     prop &= ~MLCONVCHARF_USEDEFCHAR;
     if (prop)
-        FIXME("property 0x%08x not supported\n", prop);
+        FIXME("property 0x%08lx not supported\n", prop);
 
     This->src_cp = src_cp;
     This->dst_cp = dst_cp;
