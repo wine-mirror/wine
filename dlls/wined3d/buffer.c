@@ -37,6 +37,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 #define VB_MAXFULLCONVERSIONS 5       /* Number of full conversions before we stop converting */
 #define VB_RESETFULLCONVS     20      /* Reset full conversion counts after that number of draws */
 
+struct wined3d_buffer_ops
+{
+    BOOL (*buffer_prepare_location)(struct wined3d_buffer *buffer,
+            struct wined3d_context *context, unsigned int location);
+    void (*buffer_unload_location)(struct wined3d_buffer *buffer,
+            struct wined3d_context *context, unsigned int location);
+    void (*buffer_upload_ranges)(struct wined3d_buffer *buffer, struct wined3d_context *context, const void *data,
+            unsigned int data_offset, unsigned int range_count, const struct wined3d_range *ranges);
+    void (*buffer_download_ranges)(struct wined3d_buffer *buffer, struct wined3d_context *context, void *data,
+            unsigned int data_offset, unsigned int range_count, const struct wined3d_range *ranges);
+};
+
 static void wined3d_buffer_evict_sysmem(struct wined3d_buffer *buffer)
 {
     if (buffer->flags & WINED3D_BUFFER_PIN_SYSMEM)
