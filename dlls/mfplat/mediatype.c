@@ -2755,10 +2755,10 @@ HRESULT WINAPI MFGetPlaneSize(DWORD fourcc, DWORD width, DWORD height, DWORD *si
     memcpy(&subtype, &MFVideoFormat_Base, sizeof(subtype));
     subtype.Data1 = fourcc;
 
-    if (!(format = mf_get_video_format(&subtype)))
-        return MF_E_INVALIDMEDIATYPE;
-
-    stride = mf_get_stride_for_format(format, width);
+    if ((format = mf_get_video_format(&subtype)))
+        stride = mf_get_stride_for_format(format, width);
+    else
+        stride = 0;
 
     switch (fourcc)
     {

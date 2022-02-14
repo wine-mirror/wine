@@ -4254,6 +4254,11 @@ static void test_MFGetPlaneSize(void)
         return;
     }
 
+    size = 1;
+    hr = pMFGetPlaneSize(0xdeadbeef, 64, 64, &size);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(size == 0, "Unexpected size %u.\n", size);
+
     for (i = 0; i < ARRAY_SIZE(image_size_tests); ++i)
     {
         const struct image_size_test *ptr = &image_size_tests[i];
