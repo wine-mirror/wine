@@ -101,7 +101,7 @@ static DWORD MCIQTZ_drvClose(DWORD dwDevID)
 {
     WINE_MCIQTZ* wma;
 
-    TRACE("(%04x)\n", dwDevID);
+    TRACE("(%04lx)\n", dwDevID);
 
     wma = MCIQTZ_mciGetOpenDev(dwDevID);
 
@@ -126,7 +126,7 @@ static DWORD MCIQTZ_drvConfigure(DWORD dwDevID)
 {
     WINE_MCIQTZ* wma;
 
-    TRACE("(%04x)\n", dwDevID);
+    TRACE("(%04lx)\n", dwDevID);
 
     wma = MCIQTZ_mciGetOpenDev(dwDevID);
     if (!wma)
@@ -164,7 +164,7 @@ static DWORD MCIQTZ_mciOpen(UINT wDevID, DWORD dwFlags,
     DWORD style = 0;
     RECT rc = { 0, 0, 0, 0 };
 
-    TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpOpenParms);
+    TRACE("(%04x, %08lX, %p)\n", wDevID, dwFlags, lpOpenParms);
 
     if(!lpOpenParms)
         return MCIERR_NULL_PARAMETER_BLOCK;
@@ -180,48 +180,48 @@ static DWORD MCIQTZ_mciOpen(UINT wDevID, DWORD dwFlags,
 
     hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IGraphBuilder, (LPVOID*)&wma->pgraph);
     if (FAILED(hr)) {
-        TRACE("Cannot create filtergraph (hr = %x)\n", hr);
+        TRACE("Cannot create filtergraph (hr = %lx)\n", hr);
         goto err;
     }
 
     hr = IGraphBuilder_QueryInterface(wma->pgraph, &IID_IMediaControl, (LPVOID*)&wma->pmctrl);
     if (FAILED(hr)) {
-        TRACE("Cannot get IMediaControl interface (hr = %x)\n", hr);
+        TRACE("Cannot get IMediaControl interface (hr = %lx)\n", hr);
         goto err;
     }
 
     hr = IGraphBuilder_QueryInterface(wma->pgraph, &IID_IMediaSeeking, (void**)&wma->seek);
     if (FAILED(hr)) {
-        TRACE("Cannot get IMediaSeeking interface (hr = %x)\n", hr);
+        TRACE("Cannot get IMediaSeeking interface (hr = %lx)\n", hr);
         goto err;
     }
 
     hr = IGraphBuilder_QueryInterface(wma->pgraph, &IID_IMediaEvent, (void**)&wma->mevent);
     if (FAILED(hr)) {
-        TRACE("Cannot get IMediaEvent interface (hr = %x)\n", hr);
+        TRACE("Cannot get IMediaEvent interface (hr = %lx)\n", hr);
         goto err;
     }
 
     hr = IGraphBuilder_QueryInterface(wma->pgraph, &IID_IVideoWindow, (void**)&wma->vidwin);
     if (FAILED(hr)) {
-        TRACE("Cannot get IVideoWindow interface (hr = %x)\n", hr);
+        TRACE("Cannot get IVideoWindow interface (hr = %lx)\n", hr);
         goto err;
     }
 
     hr = IGraphBuilder_QueryInterface(wma->pgraph, &IID_IBasicVideo, (void**)&wma->vidbasic);
     if (FAILED(hr)) {
-        TRACE("Cannot get IBasicVideo interface (hr = %x)\n", hr);
+        TRACE("Cannot get IBasicVideo interface (hr = %lx)\n", hr);
         goto err;
     }
 
     hr = IGraphBuilder_QueryInterface(wma->pgraph, &IID_IBasicAudio, (void**)&wma->audio);
     if (FAILED(hr)) {
-        TRACE("Cannot get IBasicAudio interface (hr = %x)\n", hr);
+        TRACE("Cannot get IBasicAudio interface (hr = %lx)\n", hr);
         goto err;
     }
 
     if (!(dwFlags & MCI_OPEN_ELEMENT) || (dwFlags & MCI_OPEN_ELEMENT_ID)) {
-        TRACE("Wrong dwFlags %x\n", dwFlags);
+        TRACE("Wrong dwFlags %lx\n", dwFlags);
         goto err;
     }
 
@@ -234,7 +234,7 @@ static DWORD MCIQTZ_mciOpen(UINT wDevID, DWORD dwFlags,
 
     hr = IGraphBuilder_RenderFile(wma->pgraph, lpOpenParms->lpstrElementName, NULL);
     if (FAILED(hr)) {
-        TRACE("Cannot render file (hr = %x)\n", hr);
+        TRACE("Cannot render file (hr = %lx)\n", hr);
         goto err;
     }
 
@@ -298,7 +298,7 @@ static DWORD MCIQTZ_mciClose(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
 {
     WINE_MCIQTZ* wma;
 
-    TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lX, %p)\n", wDevID, dwFlags, lpParms);
 
     wma = MCIQTZ_mciGetOpenDev(wDevID);
     if (!wma)
@@ -353,7 +353,7 @@ static DWORD CALLBACK MCIQTZ_notifyThread(LPVOID parm)
             do {
                 hr = IMediaEvent_GetEvent(wma->mevent, &event_code, &p1, &p2, 0);
                 if (SUCCEEDED(hr)) {
-                    TRACE("got event_code = 0x%02x\n", event_code);
+                    TRACE("got event_code = 0x%02lx\n", event_code);
                     IMediaEvent_FreeEventParams(wma->mevent, event_code, p1, p2);
                 }
             } while (hr == S_OK && event_code != EC_COMPLETE);
@@ -384,7 +384,7 @@ static DWORD CALLBACK MCIQTZ_notifyThread(LPVOID parm)
 
     hr = IMediaControl_Stop(wma->pmctrl);
     if (FAILED(hr)) {
-        TRACE("Cannot stop filtergraph (hr = %x)\n", hr);
+        TRACE("Cannot stop filtergraph (hr = %lx)\n", hr);
         ret = MCIERR_INTERNAL;
     }
 
@@ -401,7 +401,7 @@ static DWORD MCIQTZ_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
     GUID format;
     DWORD start_flags;
 
-    TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lX, %p)\n", wDevID, dwFlags, lpParms);
 
     if(!lpParms)
         return MCIERR_NULL_PARAMETER_BLOCK;
@@ -443,7 +443,7 @@ static DWORD MCIQTZ_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 
     hr = IMediaControl_Run(wma->pmctrl);
     if (FAILED(hr)) {
-        TRACE("Cannot run filtergraph (hr = %x)\n", hr);
+        TRACE("Cannot run filtergraph (hr = %lx)\n", hr);
         return MCIERR_INTERNAL;
     }
 
@@ -466,7 +466,7 @@ static DWORD MCIQTZ_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms
     HRESULT hr;
     LONGLONG newpos;
 
-    TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lX, %p)\n", wDevID, dwFlags, lpParms);
 
     if(!lpParms)
         return MCIERR_NULL_PARAMETER_BLOCK;
@@ -492,7 +492,7 @@ static DWORD MCIQTZ_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms
 
     hr = IMediaSeeking_SetPositions(wma->seek, &newpos, AM_SEEKING_AbsolutePositioning, NULL, AM_SEEKING_NoPositioning);
     if (FAILED(hr)) {
-        FIXME("Cannot set position (hr = %x)\n", hr);
+        FIXME("Cannot set position (hr = %lx)\n", hr);
         return MCIERR_INTERNAL;
     }
 
@@ -509,7 +509,7 @@ static DWORD MCIQTZ_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
 {
     WINE_MCIQTZ* wma;
 
-    TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lX, %p)\n", wDevID, dwFlags, lpParms);
 
     wma = MCIQTZ_mciGetOpenDev(wDevID);
     if (!wma)
@@ -539,7 +539,7 @@ static DWORD MCIQTZ_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
     WINE_MCIQTZ* wma;
     HRESULT hr;
 
-    TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lX, %p)\n", wDevID, dwFlags, lpParms);
 
     wma = MCIQTZ_mciGetOpenDev(wDevID);
     if (!wma)
@@ -547,7 +547,7 @@ static DWORD MCIQTZ_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
 
     hr = IMediaControl_Pause(wma->pmctrl);
     if (FAILED(hr)) {
-        TRACE("Cannot pause filtergraph (hr = %x)\n", hr);
+        TRACE("Cannot pause filtergraph (hr = %lx)\n", hr);
         return MCIERR_INTERNAL;
     }
 
@@ -562,7 +562,7 @@ static DWORD MCIQTZ_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lp
     WINE_MCIQTZ* wma;
     HRESULT hr;
 
-    TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lX, %p)\n", wDevID, dwFlags, lpParms);
 
     wma = MCIQTZ_mciGetOpenDev(wDevID);
     if (!wma)
@@ -570,7 +570,7 @@ static DWORD MCIQTZ_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lp
 
     hr = IMediaControl_Run(wma->pmctrl);
     if (FAILED(hr)) {
-        TRACE("Cannot run filtergraph (hr = %x)\n", hr);
+        TRACE("Cannot run filtergraph (hr = %lx)\n", hr);
         return MCIERR_INTERNAL;
     }
 
@@ -584,7 +584,7 @@ static DWORD MCIQTZ_mciGetDevCaps(UINT wDevID, DWORD dwFlags, LPMCI_GETDEVCAPS_P
 {
     WINE_MCIQTZ* wma;
 
-    TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lX, %p)\n", wDevID, dwFlags, lpParms);
 
     if(!lpParms)
         return MCIERR_NULL_PARAMETER_BLOCK;
@@ -599,74 +599,74 @@ static DWORD MCIQTZ_mciGetDevCaps(UINT wDevID, DWORD dwFlags, LPMCI_GETDEVCAPS_P
     switch (lpParms->dwItem) {
         case MCI_GETDEVCAPS_CAN_RECORD:
             lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
-            TRACE("MCI_GETDEVCAPS_CAN_RECORD = %08x\n", lpParms->dwReturn);
+            TRACE("MCI_GETDEVCAPS_CAN_RECORD = %08lx\n", lpParms->dwReturn);
             break;
         case MCI_GETDEVCAPS_HAS_AUDIO:
             lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
-            TRACE("MCI_GETDEVCAPS_HAS_AUDIO = %08x\n", lpParms->dwReturn);
+            TRACE("MCI_GETDEVCAPS_HAS_AUDIO = %08lx\n", lpParms->dwReturn);
             break;
         case MCI_GETDEVCAPS_HAS_VIDEO:
             lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
-            TRACE("MCI_GETDEVCAPS_HAS_VIDEO = %08x\n", lpParms->dwReturn);
+            TRACE("MCI_GETDEVCAPS_HAS_VIDEO = %08lx\n", lpParms->dwReturn);
             break;
         case MCI_GETDEVCAPS_DEVICE_TYPE:
             lpParms->dwReturn = MAKEMCIRESOURCE(MCI_DEVTYPE_DIGITAL_VIDEO, MCI_DEVTYPE_DIGITAL_VIDEO);
-            TRACE("MCI_GETDEVCAPS_DEVICE_TYPE = %08x\n", lpParms->dwReturn);
+            TRACE("MCI_GETDEVCAPS_DEVICE_TYPE = %08lx\n", lpParms->dwReturn);
             break;
         case MCI_GETDEVCAPS_USES_FILES:
             lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
-            TRACE("MCI_GETDEVCAPS_USES_FILES = %08x\n", lpParms->dwReturn);
+            TRACE("MCI_GETDEVCAPS_USES_FILES = %08lx\n", lpParms->dwReturn);
             break;
         case MCI_GETDEVCAPS_COMPOUND_DEVICE:
             lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
-            TRACE("MCI_GETDEVCAPS_COMPOUND_DEVICE = %08x\n", lpParms->dwReturn);
+            TRACE("MCI_GETDEVCAPS_COMPOUND_DEVICE = %08lx\n", lpParms->dwReturn);
             break;
         case MCI_GETDEVCAPS_CAN_EJECT:
             lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
-            TRACE("MCI_GETDEVCAPS_EJECT = %08x\n", lpParms->dwReturn);
+            TRACE("MCI_GETDEVCAPS_EJECT = %08lx\n", lpParms->dwReturn);
             break;
         case MCI_GETDEVCAPS_CAN_PLAY:
             lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
-            TRACE("MCI_GETDEVCAPS_CAN_PLAY = %08x\n", lpParms->dwReturn);
+            TRACE("MCI_GETDEVCAPS_CAN_PLAY = %08lx\n", lpParms->dwReturn);
             break;
         case MCI_GETDEVCAPS_CAN_SAVE:
             lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
-            TRACE("MCI_GETDEVCAPS_CAN_SAVE = %08x\n", lpParms->dwReturn);
+            TRACE("MCI_GETDEVCAPS_CAN_SAVE = %08lx\n", lpParms->dwReturn);
             break;
         case MCI_DGV_GETDEVCAPS_CAN_REVERSE:
             lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
-            TRACE("MCI_DGV_GETDEVCAPS_CAN_REVERSE = %08x\n", lpParms->dwReturn);
+            TRACE("MCI_DGV_GETDEVCAPS_CAN_REVERSE = %08lx\n", lpParms->dwReturn);
             break;
         case MCI_DGV_GETDEVCAPS_CAN_STRETCH:
             lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE); /* FIXME */
-            TRACE("MCI_DGV_GETDEVCAPS_CAN_STRETCH = %08x\n", lpParms->dwReturn);
+            TRACE("MCI_DGV_GETDEVCAPS_CAN_STRETCH = %08lx\n", lpParms->dwReturn);
             break;
         case MCI_DGV_GETDEVCAPS_CAN_LOCK:
             lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
-            TRACE("MCI_DGV_GETDEVCAPS_CAN_LOCK = %08x\n", lpParms->dwReturn);
+            TRACE("MCI_DGV_GETDEVCAPS_CAN_LOCK = %08lx\n", lpParms->dwReturn);
             break;
         case MCI_DGV_GETDEVCAPS_CAN_FREEZE:
             lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
-            TRACE("MCI_DGV_GETDEVCAPS_CAN_FREEZE = %08x\n", lpParms->dwReturn);
+            TRACE("MCI_DGV_GETDEVCAPS_CAN_FREEZE = %08lx\n", lpParms->dwReturn);
             break;
         case MCI_DGV_GETDEVCAPS_CAN_STR_IN:
             lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
-            TRACE("MCI_DGV_GETDEVCAPS_CAN_STRETCH_INPUT = %08x\n", lpParms->dwReturn);
+            TRACE("MCI_DGV_GETDEVCAPS_CAN_STRETCH_INPUT = %08lx\n", lpParms->dwReturn);
             break;
         case MCI_DGV_GETDEVCAPS_HAS_STILL:
             lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
-            TRACE("MCI_DGV_GETDEVCAPS_HAS_STILL = %08x\n", lpParms->dwReturn);
+            TRACE("MCI_DGV_GETDEVCAPS_HAS_STILL = %08lx\n", lpParms->dwReturn);
             break;
         case MCI_DGV_GETDEVCAPS_CAN_TEST:
             lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE); /* FIXME */
-            TRACE("MCI_DGV_GETDEVCAPS_CAN_TEST = %08x\n", lpParms->dwReturn);
+            TRACE("MCI_DGV_GETDEVCAPS_CAN_TEST = %08lx\n", lpParms->dwReturn);
             break;
         case MCI_DGV_GETDEVCAPS_MAX_WINDOWS:
             lpParms->dwReturn = 1;
-            TRACE("MCI_DGV_GETDEVCAPS_MAX_WINDOWS = %u\n", lpParms->dwReturn);
+            TRACE("MCI_DGV_GETDEVCAPS_MAX_WINDOWS = %lu\n", lpParms->dwReturn);
             return 0;
         default:
-            WARN("Unknown capability %08x\n", lpParms->dwItem);
+            WARN("Unknown capability %08lx\n", lpParms->dwItem);
             /* Fall through */
         case MCI_DGV_GETDEVCAPS_MAXIMUM_RATE: /* unknown to w2k */
         case MCI_DGV_GETDEVCAPS_MINIMUM_RATE: /* unknown to w2k */
@@ -683,7 +683,7 @@ static DWORD MCIQTZ_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpPar
 {
     WINE_MCIQTZ* wma;
 
-    TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lX, %p)\n", wDevID, dwFlags, lpParms);
 
     if(!lpParms)
         return MCIERR_NULL_PARAMETER_BLOCK;
@@ -703,7 +703,7 @@ static DWORD MCIQTZ_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpPar
                 wma->time_format = MCI_FORMAT_FRAMES;
                 break;
             default:
-                WARN("Bad time format %u\n", lpParms->dwTimeFormat);
+                WARN("Bad time format %lu\n", lpParms->dwTimeFormat);
                 return MCIERR_BAD_TIME_FORMAT;
         }
     }
@@ -726,7 +726,7 @@ static DWORD MCIQTZ_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpPar
         FIXME("MCI_SET_AUDIO_RIGHT not implemented yet\n");
 
     if (dwFlags & ~0x7f03 /* All MCI_SET flags mask */)
-        ERR("Unknown flags %08x\n", dwFlags & ~0x7f03);
+        ERR("Unknown flags %08lx\n", dwFlags & ~0x7f03);
 
     return 0;
 }
@@ -740,7 +740,7 @@ static DWORD MCIQTZ_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMS
     HRESULT hr;
     DWORD ret = MCI_INTEGER_RETURNED;
 
-    TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lX, %p)\n", wDevID, dwFlags, lpParms);
 
     if(!lpParms)
         return MCIERR_NULL_PARAMETER_BLOCK;
@@ -761,17 +761,17 @@ static DWORD MCIQTZ_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMS
             switch (wma->time_format) {
                 case MCI_FORMAT_MILLISECONDS: format = TIME_FORMAT_MEDIA_TIME; break;
                 case MCI_FORMAT_FRAMES: format = TIME_FORMAT_FRAME; break;
-                default: ERR("Unhandled format %x\n", wma->time_format); break;
+                default: ERR("Unhandled format %lx\n", wma->time_format); break;
             }
             hr = IMediaSeeking_SetTimeFormat(wma->seek, &format);
             if (FAILED(hr)) {
-                FIXME("Cannot set time format (hr = %x)\n", hr);
+                FIXME("Cannot set time format (hr = %lx)\n", hr);
                 lpParms->dwReturn = 0;
                 break;
             }
             hr = IMediaSeeking_GetDuration(wma->seek, &duration);
             if (FAILED(hr) || duration < 0) {
-                FIXME("Cannot read duration (hr = %x)\n", hr);
+                FIXME("Cannot read duration (hr = %lx)\n", hr);
                 lpParms->dwReturn = 0;
             } else if (wma->time_format != MCI_FORMAT_MILLISECONDS)
                 lpParms->dwReturn = duration;
@@ -784,7 +784,7 @@ static DWORD MCIQTZ_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMS
 
             hr = IMediaSeeking_GetCurrentPosition(wma->seek, &curpos);
             if (FAILED(hr)) {
-                FIXME("Cannot get position (hr = %x)\n", hr);
+                FIXME("Cannot get position (hr = %lx)\n", hr);
                 return MCIERR_INTERNAL;
             }
             lpParms->dwReturn = curpos / 10000;
@@ -822,7 +822,7 @@ static DWORD MCIQTZ_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMS
             FIXME("MCI_STATUS_CURRENT_TRACK not implemented yet\n");
             return MCIERR_UNRECOGNIZED_COMMAND;
         default:
-            FIXME("Unknown command %08X\n", lpParms->dwItem);
+            FIXME("Unknown command %08lX\n", lpParms->dwItem);
             return MCIERR_UNRECOGNIZED_COMMAND;
     }
 
@@ -843,7 +843,7 @@ static DWORD MCIQTZ_mciWhere(UINT wDevID, DWORD dwFlags, LPMCI_DGV_RECT_PARMS lp
     RECT rc;
     DWORD ret = MCIERR_UNRECOGNIZED_COMMAND;
 
-    TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lX, %p)\n", wDevID, dwFlags, lpParms);
 
     if(!lpParms)
         return MCIERR_NULL_PARAMETER_BLOCK;
@@ -908,7 +908,7 @@ static DWORD MCIQTZ_mciWindow(UINT wDevID, DWORD dwFlags, LPMCI_DGV_WINDOW_PARMS
 {
     WINE_MCIQTZ *wma = MCIQTZ_mciGetOpenDev(wDevID);
 
-    TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lX, %p)\n", wDevID, dwFlags, lpParms);
 
     if(!lpParms)
         return MCIERR_NULL_PARAMETER_BLOCK;
@@ -955,7 +955,7 @@ static DWORD MCIQTZ_mciPut(UINT wDevID, DWORD dwFlags, MCI_GENERIC_PARMS *lpParm
     MCI_DGV_RECT_PARMS *rectparms;
     HRESULT hr;
 
-    TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lX, %p)\n", wDevID, dwFlags, lpParms);
 
     if(!lpParms)
         return MCIERR_NULL_PARAMETER_BLOCK;
@@ -980,7 +980,7 @@ static DWORD MCIQTZ_mciPut(UINT wDevID, DWORD dwFlags, MCI_GENERIC_PARMS *lpParm
                 rectparms->rc.right - rectparms->rc.left,
                 rectparms->rc.bottom - rectparms->rc.top);
         if(FAILED(hr))
-            WARN("IVideoWindow_SetWindowPosition failed: 0x%x\n", hr);
+            WARN("IVideoWindow_SetWindowPosition failed: 0x%lx\n", hr);
 
         dwFlags &= ~MCI_DGV_PUT_DESTINATION;
     }
@@ -991,7 +991,7 @@ static DWORD MCIQTZ_mciPut(UINT wDevID, DWORD dwFlags, MCI_GENERIC_PARMS *lpParm
     }
 
     if (dwFlags)
-        FIXME("No support for some flags: 0x%x\n", dwFlags);
+        FIXME("No support for some flags: 0x%lx\n", dwFlags);
 
     return 0;
 }
@@ -1004,7 +1004,7 @@ static DWORD MCIQTZ_mciUpdate(UINT wDevID, DWORD dwFlags, LPMCI_DGV_UPDATE_PARMS
     WINE_MCIQTZ *wma;
     DWORD res = 0;
 
-    TRACE("%04x, %08x, %p\n", wDevID, dwFlags, lpParms);
+    TRACE("%04x, %08lx, %p\n", wDevID, dwFlags, lpParms);
 
     if(!lpParms)
         return MCIERR_NULL_PARAMETER_BLOCK;
@@ -1035,7 +1035,7 @@ static DWORD MCIQTZ_mciUpdate(UINT wDevID, DWORD dwFlags, LPMCI_DGV_UPDATE_PARMS
         IMediaControl_Pause(wma->pmctrl);
         IMediaControl_GetState(wma->pmctrl, -1, &state);
         if (FAILED(hr = IBasicVideo_GetCurrentImage(wma->vidbasic, &size, NULL))) {
-            WARN("Could not get image size (hr = %x)\n", hr);
+            WARN("Could not get image size (hr = %lx)\n", hr);
             goto out;
         }
         data = HeapAlloc(GetProcessHeap(), 0, size);
@@ -1056,7 +1056,7 @@ out:
             IVideoWindow_put_Visible(wma->vidwin, visible);
     }
     else if (dwFlags)
-        FIXME("Unhandled flags %x\n", dwFlags);
+        FIXME("Unhandled flags %lx\n", dwFlags);
     return res;
 }
 
@@ -1068,7 +1068,7 @@ static DWORD MCIQTZ_mciSetAudio(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SETAUDIO_P
     WINE_MCIQTZ *wma;
     DWORD ret = 0;
 
-    TRACE("(%04x, %08x, %p)\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lx, %p)\n", wDevID, dwFlags, lpParms);
 
     if(!lpParms)
         return MCIERR_NULL_PARAMETER_BLOCK;
@@ -1078,7 +1078,7 @@ static DWORD MCIQTZ_mciSetAudio(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SETAUDIO_P
         return MCIERR_INVALID_DEVICE_ID;
 
     if (!(dwFlags & MCI_DGV_SETAUDIO_ITEM)) {
-        FIXME("Unknown flags (%08x)\n", dwFlags);
+        FIXME("Unknown flags (%08lx)\n", dwFlags);
         return 0;
     }
 
@@ -1101,13 +1101,13 @@ static DWORD MCIQTZ_mciSetAudio(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SETAUDIO_P
                 TRACE("Setting volume to %ld\n", vol);
                 hr = IBasicAudio_put_Volume(wma->audio, vol);
                 if (FAILED(hr)) {
-                    WARN("Cannot set volume (hr = %x)\n", hr);
+                    WARN("Cannot set volume (hr = %lx)\n", hr);
                     ret = MCIERR_INTERNAL;
                 }
             }
             break;
         default:
-            FIXME("Unknown item %08x\n", lpParms->dwItem);
+            FIXME("Unknown item %08lx\n", lpParms->dwItem);
             break;
         }
     }
@@ -1125,7 +1125,7 @@ static DWORD MCIQTZ_mciSetAudio(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SETAUDIO_P
 LRESULT CALLBACK MCIQTZ_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
                                    LPARAM dwParam1, LPARAM dwParam2)
 {
-    TRACE("(%08lX, %p, %08X, %08lX, %08lX)\n",
+    TRACE("(%08IX, %p, %08X, %08IX, %08IX)\n",
           dwDevID, hDriv, wMsg, dwParam1, dwParam2);
 
     switch (wMsg) {
