@@ -4107,6 +4107,8 @@ static GpStatus decode_image_tiff(IStream* stream, GpImage **image)
     return decode_image_wic(stream, &GUID_ContainerFormatTiff, NULL, image);
 }
 
+C_ASSERT(offsetof(WmfPlaceableFileHeader, Key) == 0);
+
 static GpStatus load_wmf(IStream *stream, GpMetafile **metafile)
 {
     WmfPlaceableFileHeader pfh;
@@ -4123,7 +4125,8 @@ static GpStatus load_wmf(IStream *stream, GpMetafile **metafile)
     if (hr != S_OK || size != sizeof(mh))
         return GenericError;
 
-    if (((WmfPlaceableFileHeader *)&mh)->Key == WMF_PLACEABLE_KEY)
+    /* detect whether stream starts with a WmfPlaceablefileheader */
+    if (*(UINT32 *)&mh == WMF_PLACEABLE_KEY)
     {
         seek.QuadPart = 0;
         hr = IStream_Seek(stream, seek, STREAM_SEEK_SET, NULL);
