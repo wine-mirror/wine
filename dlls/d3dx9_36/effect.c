@@ -6396,16 +6396,10 @@ static const char **parse_skip_constants_string(char *skip_constants_string, uns
     return new_alloc;
 }
 
-static HRESULT d3dx9_effect_init(struct d3dx_effect *effect, struct IDirect3DDevice9 *device,
-        const char *data, SIZE_T data_size, const D3D_SHADER_MACRO *defines, ID3DInclude *include,
-        UINT flags, ID3DBlob **errors, struct ID3DXEffectPool *pool, const char *skip_constants_string)
+static HRESULT d3dx9_effect_init_from_dxbc(struct d3dx_effect *effect,
+        struct IDirect3DDevice9 *device, const char *data, SIZE_T data_size,
+        unsigned int flags, struct ID3DXEffectPool *pool, const char *skip_constants_string)
 {
-#if D3DX_SDK_VERSION <= 36
-    UINT compile_flags = D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY;
-#else
-    UINT compile_flags = 0;
-#endif
-    ID3DBlob *bytecode = NULL, *temp_errors = NULL;
     unsigned int skip_constants_count = 0;
     char *skip_constants_buffer = NULL;
     const char **skip_constants = NULL;
@@ -6413,11 +6407,6 @@ static HRESULT d3dx9_effect_init(struct d3dx_effect *effect, struct IDirect3DDev
     DWORD tag, offset;
     unsigned int i, j;
     HRESULT hr;
-
-    TRACE("effect %p, device %p, data %p, data_size %lu, defines %p, include %p, flags %#x, errors %p, "
-            "pool %p, skip_constants %s.\n",
-            effect, device, data, data_size, defines, include, flags, errors, pool,
-            debugstr_a(skip_constants_string));
 
     effect->ID3DXEffect_iface.lpVtbl = &ID3DXEffect_Vtbl;
     effect->ref = 1;
@@ -6428,55 +6417,6 @@ static HRESULT d3dx9_effect_init(struct d3dx_effect *effect, struct IDirect3DDev
 
     read_dword(&ptr, &tag);
     TRACE("Tag: %x\n", tag);
-
-    if (tag != d3dx9_effect_version(9, 1))
-    {
-        TRACE("HLSL ASCII effect, trying to compile it.\n");
-        compile_flags |= flags & ~(D3DXFX_NOT_CLONEABLE | D3DXFX_LARGEADDRESSAWARE);
-        hr = D3DCompile(data, data_size, NULL, defines, include,
-                NULL, "fx_2_0", compile_flags, 0, &bytecode, &temp_errors);
-        if (FAILED(hr))
-        {
-            WARN("Failed to compile ASCII effect.\n");
-            if (bytecode)
-                ID3D10Blob_Release(bytecode);
-            if (temp_errors)
-            {
-                const char *error_string = ID3D10Blob_GetBufferPointer(temp_errors);
-                const char *string_ptr;
-
-                while (*error_string)
-                {
-                    string_ptr = error_string;
-                    while (*string_ptr && *string_ptr != '\n' && *string_ptr != '\r'
-                           && string_ptr - error_string < 80)
-                        ++string_ptr;
-                    TRACE("%s\n", debugstr_an(error_string, string_ptr - error_string));
-                    error_string = string_ptr;
-                    while (*error_string == '\n' || *error_string == '\r')
-                        ++error_string;
-                }
-            }
-            if (errors)
-                *errors = temp_errors;
-            else if (temp_errors)
-                ID3D10Blob_Release(temp_errors);
-            return hr;
-        }
-        if (!bytecode)
-        {
-            FIXME("No output from effect compilation.\n");
-            return D3DERR_INVALIDCALL;
-        }
-        if (errors)
-            *errors = temp_errors;
-        else if (temp_errors)
-            ID3D10Blob_Release(temp_errors);
-
-        ptr = ID3D10Blob_GetBufferPointer(bytecode);
-        read_dword(&ptr, &tag);
-        TRACE("Tag: %x\n", tag);
-    }
 
     if (pool)
     {
@@ -6493,8 +6433,6 @@ static HRESULT d3dx9_effect_init(struct d3dx_effect *effect, struct IDirect3DDev
                 sizeof(*skip_constants_buffer) * (strlen(skip_constants_string) + 1));
         if (!skip_constants_buffer)
         {
-            if (bytecode)
-                ID3D10Blob_Release(bytecode);
             hr = E_OUTOFMEMORY;
             goto fail;
         }
@@ -6503,8 +6441,6 @@ static HRESULT d3dx9_effect_init(struct d3dx_effect *effect, struct IDirect3DDev
         if (!(skip_constants = parse_skip_constants_string(skip_constants_buffer, &skip_constants_count)))
         {
             HeapFree(GetProcessHeap(), 0, skip_constants_buffer);
-            if (bytecode)
-                ID3D10Blob_Release(bytecode);
             hr = E_OUTOFMEMORY;
             goto fail;
         }
@@ -6513,8 +6449,6 @@ static HRESULT d3dx9_effect_init(struct d3dx_effect *effect, struct IDirect3DDev
     TRACE("Offset: %x\n", offset);
 
     hr = d3dx_parse_effect(effect, ptr, data_size, offset, skip_constants, skip_constants_count);
-    if (bytecode)
-        ID3D10Blob_Release(bytecode);
     if (hr != D3D_OK)
     {
         FIXME("Failed to parse effect.\n");
@@ -6586,6 +6520,78 @@ fail:
     IDirect3DDevice9_Release(effect->device);
     if (pool)
         pool->lpVtbl->Release(pool);
+    return hr;
+}
+
+static HRESULT d3dx9_effect_init(struct d3dx_effect *effect, struct IDirect3DDevice9 *device,
+        const char *data, SIZE_T data_size, const D3D_SHADER_MACRO *defines, ID3DInclude *include,
+        UINT flags, ID3DBlob **errors, struct ID3DXEffectPool *pool, const char *skip_constants_string)
+{
+#if D3DX_SDK_VERSION <= 36
+    UINT compile_flags = D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY;
+#else
+    UINT compile_flags = 0;
+#endif
+    ID3DBlob *bytecode = NULL, *temp_errors = NULL;
+    const char *ptr = data;
+    HRESULT hr;
+    DWORD tag;
+
+    TRACE("effect %p, device %p, data %p, data_size %lu, defines %p, include %p, flags %#x, errors %p, "
+            "pool %p, skip_constants %s.\n",
+            effect, device, data, data_size, defines, include, flags, errors, pool,
+            debugstr_a(skip_constants_string));
+
+    read_dword(&ptr, &tag);
+
+    if (tag == d3dx9_effect_version(9, 1))
+        return d3dx9_effect_init_from_dxbc(effect, device, data, data_size, flags, pool, skip_constants_string);
+
+    TRACE("HLSL ASCII effect, trying to compile it.\n");
+    compile_flags |= flags & ~(D3DXFX_NOT_CLONEABLE | D3DXFX_LARGEADDRESSAWARE);
+    hr = D3DCompile(data, data_size, NULL, defines, include,
+            NULL, "fx_2_0", compile_flags, 0, &bytecode, &temp_errors);
+    if (FAILED(hr))
+    {
+        WARN("Failed to compile ASCII effect.\n");
+        if (bytecode)
+            ID3D10Blob_Release(bytecode);
+        if (temp_errors)
+        {
+            const char *error_string = ID3D10Blob_GetBufferPointer(temp_errors);
+            const char *string_ptr;
+
+            while (*error_string)
+            {
+                string_ptr = error_string;
+                while (*string_ptr && *string_ptr != '\n' && *string_ptr != '\r'
+                       && string_ptr - error_string < 80)
+                    ++string_ptr;
+                TRACE("%s\n", debugstr_an(error_string, string_ptr - error_string));
+                error_string = string_ptr;
+                while (*error_string == '\n' || *error_string == '\r')
+                    ++error_string;
+            }
+        }
+        if (errors)
+            *errors = temp_errors;
+        else if (temp_errors)
+            ID3D10Blob_Release(temp_errors);
+        return hr;
+    }
+    if (!bytecode)
+    {
+        FIXME("No output from effect compilation.\n");
+        return D3DERR_INVALIDCALL;
+    }
+    if (errors)
+        *errors = temp_errors;
+    else if (temp_errors)
+        ID3D10Blob_Release(temp_errors);
+
+    hr = d3dx9_effect_init_from_dxbc(effect, device, ID3D10Blob_GetBufferPointer(bytecode),
+            ID3D10Blob_GetBufferSize(bytecode), flags, pool, skip_constants_string);
+    ID3D10Blob_Release(bytecode);
     return hr;
 }
 
