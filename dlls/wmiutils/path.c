@@ -145,7 +145,7 @@ static HRESULT WINAPI keylist_SetKey(
     ULONG uCimType,
     LPVOID pKeyVal )
 {
-    FIXME("%p, %s, 0x%x, %u, %p\n", iface, debugstr_w(wszName), uFlags, uCimType, pKeyVal);
+    FIXME("%p, %s, %#lx, %lu, %p\n", iface, debugstr_w(wszName), uFlags, uCimType, pKeyVal);
     return E_NOTIMPL;
 }
 
@@ -156,7 +156,7 @@ static HRESULT WINAPI keylist_SetKey2(
     ULONG uCimType,
     VARIANT *pKeyVal )
 {
-    FIXME("%p, %s, 0x%x, %u, %p\n", iface, debugstr_w(wszName), uFlags, uCimType, pKeyVal);
+    FIXME("%p, %s, %#lx, %lu, %p\n", iface, debugstr_w(wszName), uFlags, uCimType, pKeyVal);
     return E_NOTIMPL;
 }
 
@@ -170,7 +170,7 @@ static HRESULT WINAPI keylist_GetKey(
     LPVOID pKeyVal,
     ULONG *puApparentCimType )
 {
-    FIXME("%p, %u, 0x%x, %p, %p, %p, %p, %p\n", iface, uKeyIx, uFlags, puNameBufSize,
+    FIXME("%p, %lu, %#lx, %p, %p, %p, %p, %p\n", iface, uKeyIx, uFlags, puNameBufSize,
           pszKeyName, puKeyValBufSize, pKeyVal, puApparentCimType);
     return E_NOTIMPL;
 }
@@ -184,7 +184,7 @@ static HRESULT WINAPI keylist_GetKey2(
     VARIANT *pKeyValue,
     ULONG *puApparentCimType )
 {
-    FIXME("%p, %u, 0x%x, %p, %p, %p, %p\n", iface, uKeyIx, uFlags, puNameBufSize,
+    FIXME("%p, %lu, %#lx, %p, %p, %p, %p\n", iface, uKeyIx, uFlags, puNameBufSize,
           pszKeyName, pKeyValue, puApparentCimType);
     return E_NOTIMPL;
 }
@@ -194,7 +194,7 @@ static HRESULT WINAPI keylist_RemoveKey(
     LPCWSTR wszName,
     ULONG uFlags )
 {
-    FIXME("%p, %s, 0x%x\n", iface, debugstr_w(wszName), uFlags);
+    FIXME("%p, %s, %#lx\n", iface, debugstr_w(wszName), uFlags);
     return E_NOTIMPL;
 }
 
@@ -217,7 +217,7 @@ static HRESULT WINAPI keylist_RemoveAllKeys(
     struct keylist *keylist = impl_from_IWbemPathKeyList( iface );
     struct path *parent = impl_from_IWbemPath( keylist->parent );
 
-    TRACE("%p, 0x%x\n", iface, uFlags);
+    TRACE("%p, %#lx\n", iface, uFlags);
 
     if (uFlags) return WBEM_E_INVALID_PARAMETER;
 
@@ -244,7 +244,7 @@ static HRESULT WINAPI keylist_GetInfo(
     ULONG uRequestedInfo,
     ULONGLONG *puResponse )
 {
-    FIXME("%p, %u, %p\n", iface, uRequestedInfo, puResponse);
+    FIXME("%p, %lu, %p\n", iface, uRequestedInfo, puResponse);
     return E_NOTIMPL;
 }
 
@@ -254,7 +254,7 @@ static HRESULT WINAPI keylist_GetText(
     ULONG *puBuffLength,
     LPWSTR pszText )
 {
-    FIXME("%p, 0x%x, %p, %p\n", iface, lFlags, puBuffLength, pszText);
+    FIXME("%p, %#lx, %p, %p\n", iface, lFlags, puBuffLength, pszText);
     return E_NOTIMPL;
 }
 
@@ -517,7 +517,7 @@ static HRESULT WINAPI path_SetText(
     HRESULT hr = S_OK;
     int len;
 
-    TRACE("%p, %u, %s\n", iface, uMode, debugstr_w(pszPath));
+    TRACE("%p, %lu, %s\n", iface, uMode, debugstr_w(pszPath));
 
     if (!uMode || !pszPath) return WBEM_E_INVALID_PARAMETER;
 
@@ -761,7 +761,7 @@ static WCHAR *build_path( struct path *path, LONG flags, int *len )
         return strdupW( path->text );
 
     default:
-        ERR("unhandled flags 0x%x\n", flags);
+        ERR( "unhandled flags %#lx\n", flags );
         return NULL;
     }
 }
@@ -777,7 +777,7 @@ static HRESULT WINAPI path_GetText(
     WCHAR *str;
     int len;
 
-    TRACE("%p, 0x%x, %p, %p\n", iface, lFlags, puBufferLength, pszText);
+    TRACE("%p, %#lx, %p, %p\n", iface, lFlags, puBufferLength, pszText);
 
     if (!puBufferLength) return WBEM_E_INVALID_PARAMETER;
 
@@ -813,7 +813,7 @@ static HRESULT WINAPI path_GetInfo(
 {
     struct path *path = impl_from_IWbemPath( iface );
 
-    TRACE("%p, %u, %p\n", iface, info, response);
+    TRACE("%p, %lu, %p\n", iface, info, response);
 
     if (info || !response) return WBEM_E_INVALID_PARAMETER;
 
@@ -934,7 +934,7 @@ static HRESULT WINAPI path_SetNamespaceAt(
     WCHAR **tmp, *new;
     DWORD size;
 
-    TRACE("%p, %u, %s\n", iface, idx, debugstr_w(name));
+    TRACE( "%p, %lu, %s\n", iface, idx, debugstr_w(name) );
 
     EnterCriticalSection( &path->cs );
 
@@ -990,7 +990,7 @@ static HRESULT WINAPI path_GetNamespaceAt(
 {
     struct path *path = impl_from_IWbemPath( iface );
 
-    TRACE("%p, %u, %p, %p\n", iface, idx, len, name);
+    TRACE( "%p, %lu, %p, %p\n", iface, idx, len, name );
 
     EnterCriticalSection( &path->cs );
 
@@ -1012,7 +1012,7 @@ static HRESULT WINAPI path_RemoveNamespaceAt(
 {
     struct path *path = impl_from_IWbemPath( iface );
 
-    TRACE("%p, %u\n", iface, idx);
+    TRACE( "%p, %lu\n", iface, idx );
 
     EnterCriticalSection( &path->cs );
 
@@ -1068,7 +1068,7 @@ static HRESULT WINAPI path_SetScope(
     ULONG uIndex,
     LPWSTR pszClass)
 {
-    FIXME("%p, %u, %s\n", iface, uIndex, debugstr_w(pszClass));
+    FIXME("%p, %lu, %s\n", iface, uIndex, debugstr_w(pszClass));
     return E_NOTIMPL;
 }
 
@@ -1077,7 +1077,7 @@ static HRESULT WINAPI path_SetScopeFromText(
     ULONG uIndex,
     LPWSTR pszText)
 {
-    FIXME("%p, %u, %s\n", iface, uIndex, debugstr_w(pszText));
+    FIXME("%p, %lu, %s\n", iface, uIndex, debugstr_w(pszText));
     return E_NOTIMPL;
 }
 
@@ -1088,7 +1088,7 @@ static HRESULT WINAPI path_GetScope(
     LPWSTR pszClass,
     IWbemPathKeyList **pKeyList)
 {
-    FIXME("%p, %u, %p, %p, %p\n", iface, uIndex, puClassNameBufSize, pszClass, pKeyList);
+    FIXME("%p, %lu, %p, %p, %p\n", iface, uIndex, puClassNameBufSize, pszClass, pKeyList);
     return E_NOTIMPL;
 }
 
@@ -1098,7 +1098,7 @@ static HRESULT WINAPI path_GetScopeAsText(
     ULONG *puTextBufSize,
     LPWSTR pszText)
 {
-    FIXME("%p, %u, %p, %p\n", iface, uIndex, puTextBufSize, pszText);
+    FIXME("%p, %lu, %p, %p\n", iface, uIndex, puTextBufSize, pszText);
     return E_NOTIMPL;
 }
 
@@ -1106,7 +1106,7 @@ static HRESULT WINAPI path_RemoveScope(
     IWbemPath *iface,
     ULONG uIndex)
 {
-    FIXME("%p, %u\n", iface, uIndex);
+    FIXME("%p, %lu\n", iface, uIndex);
     return E_NOTIMPL;
 }
 
@@ -1192,7 +1192,7 @@ static HRESULT WINAPI path_CreateClassPart(
     LONG lFlags,
     LPCWSTR Name)
 {
-    FIXME("%p, 0x%x, %s\n", iface, lFlags, debugstr_w(Name));
+    FIXME("%p, %#lx, %s\n", iface, lFlags, debugstr_w(Name));
     return E_NOTIMPL;
 }
 
@@ -1200,7 +1200,7 @@ static HRESULT WINAPI path_DeleteClassPart(
     IWbemPath *iface,
     LONG lFlags)
 {
-    FIXME("%p, 0x%x\n", iface, lFlags);
+    FIXME("%p, %#lx\n", iface, lFlags);
     return E_NOTIMPL;
 }
 
@@ -1219,7 +1219,7 @@ static BOOL WINAPI path_IsRelativeOrChild(
     LPWSTR wszNamespace,
     LONG lFlags)
 {
-    FIXME("%p, %s, %s, 0x%x\n", iface, debugstr_w(wszMachine), debugstr_w(wszNamespace), lFlags);
+    FIXME("%p, %s, %s, %#lx\n", iface, debugstr_w(wszMachine), debugstr_w(wszNamespace), lFlags);
     return FALSE;
 }
 

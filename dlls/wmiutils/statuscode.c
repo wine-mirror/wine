@@ -94,7 +94,7 @@ static HRESULT WINAPI status_code_GetErrorCodeText(
 {
     WCHAR msg[32];
 
-    FIXME("%p, 0x%08x, 0x%04x, 0x%08x, %p\n", iface, res, lcid, flags, text);
+    FIXME("%p, %#lx, %#lx, %#lx, %p\n", iface, res, lcid, flags, text);
 
     swprintf(msg, ARRAY_SIZE(msg), L"Error code: 0x%08x", res);
     *text = SysAllocString(msg);
@@ -110,7 +110,7 @@ static HRESULT WINAPI status_code_GetFacilityCodeText(
 {
     WCHAR msg[32];
 
-    FIXME("%p, 0x%08x, 0x%04x, 0x%08x, %p\n", iface, res, lcid, flags, text);
+    FIXME("%p, %#lx, %#lx, %#lx, %p\n", iface, res, lcid, flags, text);
 
     swprintf(msg, ARRAY_SIZE(msg), L"Facility code: 0x%08x", res);
     *text = SysAllocString(msg);
