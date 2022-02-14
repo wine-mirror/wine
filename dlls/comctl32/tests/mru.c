@@ -340,15 +340,11 @@ static void test_MRUListA(void)
            iRet, GetLastError());
 
         /* Add (NULL string) */
-        if (0)
-        {
-	/* Some native versions crash when passed NULL or fail to SetLastError()  */
         SetLastError(0);
         iRet = pAddMRUStringA(hMRU, NULL);
-        ok(iRet == 0 && GetLastError() == ERROR_INVALID_PARAMETER,
-           "AddMRUStringA(NULL str) expected 0,ERROR_INVALID_PARAMETER got %d,%d\n",
+        todo_wine ok(iRet == 0 && !GetLastError(),
+           "AddMRUStringA(NULL str) expected 0,0 got %d,%d\n",
            iRet, GetLastError());
-        }
 
         /* Add 3 strings. Check the registry is correct after each add */
         SetLastError(0);
@@ -450,7 +446,7 @@ static void test_MRUListA(void)
         pFreeMRUList(hMRU);
     }
 
-    /* FreeMRUList(NULL) crashes on Win98 OSR0 */
+    pFreeMRUList(NULL); /* should not crash */
 }
 
 typedef struct {
@@ -504,13 +500,9 @@ static void test_EnumMRUList(void)
         return;
     }
 
-    /* NULL handle */
-    if (0)
-    {
-        /* crashes on NT4, passed on Win2k, XP, 2k3, Vista, 2k8 */
-        pEnumMRUListA(NULL, 0, NULL, 0);
-        pEnumMRUListW(NULL, 0, NULL, 0);
-    }
+    /* NULL handle - should not crash */
+    pEnumMRUListA(NULL, 0, NULL, 0);
+    pEnumMRUListW(NULL, 0, NULL, 0);
 }
 
 static void test_FindMRUData(void)
