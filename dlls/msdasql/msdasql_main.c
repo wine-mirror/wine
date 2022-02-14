@@ -547,7 +547,7 @@ static HRESULT WINAPI dbinit_Initialize(IDBInitialize *iface)
     }
 
     ret = SQLConnectW( provider->hdbc, (SQLWCHAR *)V_BSTR(&provider->properties[i].value),
-        SQL_NTS, (SQLWCHAR *)NULL, SQL_NTS, (SQLWCHAR *)NULL, SQL_NTS );
+        SQL_NTS, NULL, SQL_NTS, NULL, SQL_NTS );
     TRACE("SQLConnectW ret %d\n", ret);
     if (ret != SQL_SUCCESS)
     {
