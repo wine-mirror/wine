@@ -4117,103 +4117,101 @@ static void test_stream_descriptor(void)
     IMFStreamDescriptor_Release(stream_desc);
 }
 
+static const struct image_size_test
+{
+    const GUID *subtype;
+    UINT32 width;
+    UINT32 height;
+    UINT32 size;
+    UINT32 plane_size; /* Matches image size when 0. */
+}
+image_size_tests[] =
+{
+    { &MFVideoFormat_RGB8, 3, 5, 20 },
+    { &MFVideoFormat_RGB8, 1, 1, 4 },
+    { &MFVideoFormat_RGB555, 3, 5, 40 },
+    { &MFVideoFormat_RGB555, 1, 1, 4 },
+    { &MFVideoFormat_RGB565, 3, 5, 40 },
+    { &MFVideoFormat_RGB565, 1, 1, 4 },
+    { &MFVideoFormat_RGB24, 3, 5, 60 },
+    { &MFVideoFormat_RGB24, 1, 1, 4 },
+    { &MFVideoFormat_RGB32, 3, 5, 60 },
+    { &MFVideoFormat_RGB32, 1, 1, 4 },
+    { &MFVideoFormat_ARGB32, 3, 5, 60 },
+    { &MFVideoFormat_ARGB32, 1, 1, 4 },
+    { &MFVideoFormat_A2R10G10B10, 3, 5, 60 },
+    { &MFVideoFormat_A2R10G10B10, 1, 1, 4 },
+    { &MFVideoFormat_A16B16G16R16F, 3, 5, 120 },
+    { &MFVideoFormat_A16B16G16R16F, 1, 1, 8 },
+
+    /* YUV */
+    { &MFVideoFormat_NV12, 1, 3, 9, 4 },
+    { &MFVideoFormat_NV12, 1, 2, 6, 3 },
+    { &MFVideoFormat_NV12, 2, 2, 6, 6 },
+    { &MFVideoFormat_NV12, 3, 2, 12, 9 },
+    { &MFVideoFormat_NV12, 4, 2, 12 },
+    { &MFVideoFormat_NV12, 320, 240, 115200 },
+    { &MFVideoFormat_AYUV, 1, 1, 4 },
+    { &MFVideoFormat_AYUV, 2, 1, 8 },
+    { &MFVideoFormat_AYUV, 1, 2, 8 },
+    { &MFVideoFormat_AYUV, 4, 3, 48 },
+    { &MFVideoFormat_AYUV, 320, 240, 307200 },
+    { &MFVideoFormat_IMC1, 1, 1, 4 },
+    { &MFVideoFormat_IMC1, 2, 1, 4 },
+    { &MFVideoFormat_IMC1, 1, 2, 8 },
+    { &MFVideoFormat_IMC1, 4, 3, 24 },
+    { &MFVideoFormat_IMC1, 320, 240, 153600 },
+    { &MFVideoFormat_IMC3, 1, 1, 4 },
+    { &MFVideoFormat_IMC3, 2, 1, 4 },
+    { &MFVideoFormat_IMC3, 1, 2, 8 },
+    { &MFVideoFormat_IMC3, 4, 3, 24 },
+    { &MFVideoFormat_IMC3, 320, 240, 153600 },
+    { &MFVideoFormat_IMC2, 1, 3, 9, 4 },
+    { &MFVideoFormat_IMC2, 1, 2, 6, 3 },
+    { &MFVideoFormat_IMC2, 2, 2, 6, 6 },
+    { &MFVideoFormat_IMC2, 3, 2, 12, 9 },
+    { &MFVideoFormat_IMC2, 4, 2, 12 },
+    { &MFVideoFormat_IMC2, 320, 240, 115200 },
+    { &MFVideoFormat_IMC4, 1, 3, 9, 4 },
+    { &MFVideoFormat_IMC4, 1, 2, 6, 3 },
+    { &MFVideoFormat_IMC4, 2, 2, 6, 6 },
+    { &MFVideoFormat_IMC4, 3, 2, 12, 9 },
+    { &MFVideoFormat_IMC4, 4, 2, 12 },
+    { &MFVideoFormat_IMC4, 320, 240, 115200 },
+    { &MFVideoFormat_YV12, 1, 1, 3, 1 },
+    { &MFVideoFormat_YV12, 2, 1, 3 },
+    { &MFVideoFormat_YV12, 1, 2, 6, 3 },
+    { &MFVideoFormat_YV12, 4, 3, 18 },
+    { &MFVideoFormat_YV12, 320, 240, 115200 },
+
+    { &MFVideoFormat_I420, 1, 1, 3, 1 },
+    { &MFVideoFormat_I420, 2, 1, 3 },
+    { &MFVideoFormat_I420, 1, 2, 6, 3 },
+    { &MFVideoFormat_I420, 4, 3, 18 },
+    { &MFVideoFormat_I420, 320, 240, 115200 },
+
+    { &MFVideoFormat_IYUV, 1, 1, 3, 1 },
+    { &MFVideoFormat_IYUV, 2, 1, 3 },
+    { &MFVideoFormat_IYUV, 1, 2, 6, 3 },
+    { &MFVideoFormat_IYUV, 4, 3, 18 },
+    { &MFVideoFormat_IYUV, 320, 240, 115200 },
+
+    { &MFVideoFormat_YUY2, 2, 1, 4 },
+    { &MFVideoFormat_YUY2, 4, 3, 24 },
+    { &MFVideoFormat_YUY2, 128, 128, 32768 },
+    { &MFVideoFormat_YUY2, 320, 240, 153600 },
+
+    { &MFVideoFormat_UYVY, 2, 1, 4 },
+    { &MFVideoFormat_UYVY, 4, 3, 24 },
+    { &MFVideoFormat_UYVY, 128, 128, 32768 },
+    { &MFVideoFormat_UYVY, 320, 240, 153600 },
+};
+
 static void test_MFCalculateImageSize(void)
 {
-    static const struct image_size_test
-    {
-        const GUID *subtype;
-        UINT32 width;
-        UINT32 height;
-        UINT32 size;
-        UINT32 plane_size; /* Matches image size when 0. */
-    }
-    image_size_tests[] =
-    {
-        { &MFVideoFormat_RGB8, 3, 5, 20 },
-        { &MFVideoFormat_RGB8, 1, 1, 4 },
-        { &MFVideoFormat_RGB555, 3, 5, 40 },
-        { &MFVideoFormat_RGB555, 1, 1, 4 },
-        { &MFVideoFormat_RGB565, 3, 5, 40 },
-        { &MFVideoFormat_RGB565, 1, 1, 4 },
-        { &MFVideoFormat_RGB24, 3, 5, 60 },
-        { &MFVideoFormat_RGB24, 1, 1, 4 },
-        { &MFVideoFormat_RGB32, 3, 5, 60 },
-        { &MFVideoFormat_RGB32, 1, 1, 4 },
-        { &MFVideoFormat_ARGB32, 3, 5, 60 },
-        { &MFVideoFormat_ARGB32, 1, 1, 4 },
-        { &MFVideoFormat_A2R10G10B10, 3, 5, 60 },
-        { &MFVideoFormat_A2R10G10B10, 1, 1, 4 },
-        { &MFVideoFormat_A16B16G16R16F, 3, 5, 120 },
-        { &MFVideoFormat_A16B16G16R16F, 1, 1, 8 },
-
-        /* YUV */
-        { &MFVideoFormat_NV12, 1, 3, 9, 4 },
-        { &MFVideoFormat_NV12, 1, 2, 6, 3 },
-        { &MFVideoFormat_NV12, 2, 2, 6, 6 },
-        { &MFVideoFormat_NV12, 3, 2, 12, 9 },
-        { &MFVideoFormat_NV12, 4, 2, 12 },
-        { &MFVideoFormat_NV12, 320, 240, 115200 },
-        { &MFVideoFormat_AYUV, 1, 1, 4 },
-        { &MFVideoFormat_AYUV, 2, 1, 8 },
-        { &MFVideoFormat_AYUV, 1, 2, 8 },
-        { &MFVideoFormat_AYUV, 4, 3, 48 },
-        { &MFVideoFormat_AYUV, 320, 240, 307200 },
-        { &MFVideoFormat_IMC1, 1, 1, 4 },
-        { &MFVideoFormat_IMC1, 2, 1, 4 },
-        { &MFVideoFormat_IMC1, 1, 2, 8 },
-        { &MFVideoFormat_IMC1, 4, 3, 24 },
-        { &MFVideoFormat_IMC1, 320, 240, 153600 },
-        { &MFVideoFormat_IMC3, 1, 1, 4 },
-        { &MFVideoFormat_IMC3, 2, 1, 4 },
-        { &MFVideoFormat_IMC3, 1, 2, 8 },
-        { &MFVideoFormat_IMC3, 4, 3, 24 },
-        { &MFVideoFormat_IMC3, 320, 240, 153600 },
-        { &MFVideoFormat_IMC2, 1, 3, 9, 4 },
-        { &MFVideoFormat_IMC2, 1, 2, 6, 3 },
-        { &MFVideoFormat_IMC2, 2, 2, 6, 6 },
-        { &MFVideoFormat_IMC2, 3, 2, 12, 9 },
-        { &MFVideoFormat_IMC2, 4, 2, 12 },
-        { &MFVideoFormat_IMC2, 320, 240, 115200 },
-        { &MFVideoFormat_IMC4, 1, 3, 9, 4 },
-        { &MFVideoFormat_IMC4, 1, 2, 6, 3 },
-        { &MFVideoFormat_IMC4, 2, 2, 6, 6 },
-        { &MFVideoFormat_IMC4, 3, 2, 12, 9 },
-        { &MFVideoFormat_IMC4, 4, 2, 12 },
-        { &MFVideoFormat_IMC4, 320, 240, 115200 },
-        { &MFVideoFormat_YV12, 1, 1, 3, 1 },
-        { &MFVideoFormat_YV12, 2, 1, 3 },
-        { &MFVideoFormat_YV12, 1, 2, 6, 3 },
-        { &MFVideoFormat_YV12, 4, 3, 18 },
-        { &MFVideoFormat_YV12, 320, 240, 115200 },
-
-        { &MFVideoFormat_I420, 1, 1, 3, 1 },
-        { &MFVideoFormat_I420, 2, 1, 3 },
-        { &MFVideoFormat_I420, 1, 2, 6, 3 },
-        { &MFVideoFormat_I420, 4, 3, 18 },
-        { &MFVideoFormat_I420, 320, 240, 115200 },
-
-        { &MFVideoFormat_IYUV, 1, 1, 3, 1 },
-        { &MFVideoFormat_IYUV, 2, 1, 3 },
-        { &MFVideoFormat_IYUV, 1, 2, 6, 3 },
-        { &MFVideoFormat_IYUV, 4, 3, 18 },
-        { &MFVideoFormat_IYUV, 320, 240, 115200 },
-
-        { &MFVideoFormat_YUY2, 2, 1, 4 },
-        { &MFVideoFormat_YUY2, 4, 3, 24 },
-        { &MFVideoFormat_YUY2, 128, 128, 32768 },
-        { &MFVideoFormat_YUY2, 320, 240, 153600 },
-
-        { &MFVideoFormat_UYVY, 2, 1, 4 },
-        { &MFVideoFormat_UYVY, 4, 3, 24 },
-        { &MFVideoFormat_UYVY, 128, 128, 32768 },
-        { &MFVideoFormat_UYVY, 320, 240, 153600 },
-    };
     unsigned int i;
     UINT32 size;
     HRESULT hr;
-
-    if (!pMFGetPlaneSize)
-        win_skip("MFGetPlaneSize() is not available.\n");
 
     size = 1;
     hr = MFCalculateImageSize(&IID_IUnknown, 1, 1, &size);
@@ -4241,6 +4239,29 @@ static void test_MFCalculateImageSize(void)
             ok(hr == S_OK, "%u: failed to get plane size, hr %#x.\n", i, hr);
             ok(size == plane_size, "%u: unexpected plane size %u, expected %u.\n", i, size, plane_size);
         }
+    }
+}
+
+static void test_MFGetPlaneSize(void)
+{
+    unsigned int i;
+    UINT32 size;
+    HRESULT hr;
+
+    if (!pMFGetPlaneSize)
+    {
+        win_skip("MFGetPlaneSize() is not available.\n");
+        return;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(image_size_tests); ++i)
+    {
+        const struct image_size_test *ptr = &image_size_tests[i];
+        unsigned int plane_size = ptr->plane_size ? ptr->plane_size : ptr->size;
+
+        hr = pMFGetPlaneSize(ptr->subtype->Data1, ptr->width, ptr->height, &size);
+        ok(hr == S_OK, "%u: failed to get plane size, hr %#x.\n", i, hr);
+        ok(size == plane_size, "%u: unexpected plane size %u, expected %u.\n", i, size, plane_size);
     }
 }
 
@@ -7940,6 +7961,7 @@ START_TEST(mfplat)
     test_MFInvokeCallback();
     test_stream_descriptor();
     test_MFCalculateImageSize();
+    test_MFGetPlaneSize();
     test_MFCompareFullToPartialMediaType();
     test_attributes_serialization();
     test_wrapped_media_type();
