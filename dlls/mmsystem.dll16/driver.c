@@ -97,7 +97,7 @@ static inline LRESULT DRIVER_SendMessage(LPWINE_DRIVER lpDrv, UINT16 msg,
     WORD args[8];
     DWORD ret;
 
-    TRACE("Before CallDriverProc proc=%p driverID=%08x wMsg=%04x p1=%08lx p2=%08lx\n",
+    TRACE("Before CallDriverProc proc=%p driverID=%08lx wMsg=%04x p1=%08lx p2=%08lx\n",
 	  lpDrv->lpDrvProc, lpDrv->dwDriverID, msg, lParam1, lParam2);
 
     args[7] = HIWORD(lpDrv->dwDriverID);
@@ -321,7 +321,7 @@ HMODULE16 WINAPI DrvGetModuleHandle16(HDRVR16 hDrvr)
 LRESULT WINAPI DrvDefDriverProc16(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg,
                                   LPARAM lParam1, LPARAM lParam2)
 {
-    TRACE("devID=0x%08x hDrv=0x%04x wMsg=%04x lP1=0x%08lx lP2=0x%08lx\n",
+    TRACE("devID=0x%08lx hDrv=0x%04x wMsg=%04x lP1=0x%08lx lP2=0x%08lx\n",
 	  dwDevID, hDriv, wMsg, lParam1, lParam2);
 
     switch(wMsg) {

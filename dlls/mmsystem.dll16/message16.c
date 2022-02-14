@@ -127,7 +127,7 @@ static  void            	MMSYSTDRV_MidiIn_MapCB(DWORD uMsg, DWORD_PTR* dwUser, D
 	}
 	break;
     default:
-	ERR("Unknown msg %u\n", uMsg);
+	ERR("Unknown msg %lu\n", uMsg);
     }
 }
 
@@ -206,7 +206,7 @@ static MMSYSTEM_MapType	MMSYSTDRV_MidiOut_Map16To32W  (DWORD wMsg, DWORD_PTR* lp
 	    *lpParam2 = offsetof(MIDIHDR,dwOffset);
 	    /* dwBufferLength can be reduced between prepare & write */
 	    if (wMsg == MODM_LONGDATA && mh32->dwBufferLength < mh16->dwBufferLength) {
-		ERR("Size of buffer has been increased from %d to %d, keeping initial value\n",
+		ERR("Size of buffer has been increased from %ld to %ld, keeping initial value\n",
 		    mh32->dwBufferLength, mh16->dwBufferLength);
 	    } else
                 mh32->dwBufferLength = mh16->dwBufferLength;
@@ -217,7 +217,7 @@ static MMSYSTEM_MapType	MMSYSTDRV_MidiOut_Map16To32W  (DWORD wMsg, DWORD_PTR* lp
     case MODM_CACHEPATCHES:
     case MODM_CACHEDRUMPATCHES:
     default:
-	FIXME("NIY: no conversion yet for %u [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
+	FIXME("NIY: no conversion yet for %lu [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
 	break;
     }
     return ret;
@@ -284,7 +284,7 @@ static  MMSYSTEM_MapType	MMSYSTDRV_MidiOut_UnMap16To32W(DWORD wMsg, DWORD_PTR* l
     case MODM_CACHEPATCHES:
     case MODM_CACHEDRUMPATCHES:
     default:
-	FIXME("NIY: no conversion yet for %u [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
+	FIXME("NIY: no conversion yet for %lu [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
 	break;
     }
     return ret;
@@ -316,7 +316,7 @@ static  void MMSYSTDRV_MidiOut_MapCB(DWORD uMsg, DWORD_PTR* dwUser, DWORD_PTR* d
 	}
 	break;
     default:
-	ERR("Unknown msg %u\n", uMsg);
+	ERR("Unknown msg %lu\n", uMsg);
     }
 }
 
@@ -414,7 +414,7 @@ static  MMSYSTEM_MapType	MMSYSTDRV_WaveIn_Map16To32W  (DWORD wMsg, DWORD_PTR* lp
 	    *lpParam2 = sizeof(WAVEHDR);
 	    /* dwBufferLength can be reduced between prepare & write */
 	    if (wMsg == WIDM_ADDBUFFER && wh32->dwBufferLength < wh16->dwBufferLength) {
-		ERR("Size of buffer has been increased from %d to %d, keeping initial value\n",
+		ERR("Size of buffer has been increased from %ld to %ld, keeping initial value\n",
 		    wh32->dwBufferLength, wh16->dwBufferLength);
 	    } else
                 wh32->dwBufferLength = wh16->dwBufferLength;
@@ -427,7 +427,7 @@ static  MMSYSTEM_MapType	MMSYSTDRV_WaveIn_Map16To32W  (DWORD wMsg, DWORD_PTR* lp
 	ret = MMSYSTEM_MAP_OK;
 	break;
     default:
-	FIXME("NIY: no conversion yet for %u [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
+	FIXME("NIY: no conversion yet for %lu [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
 	break;
     }
     return ret;
@@ -497,7 +497,7 @@ static  MMSYSTEM_MapType	MMSYSTDRV_WaveIn_UnMap16To32W(DWORD wMsg, DWORD_PTR* lp
 	}
 	break;
     default:
-	FIXME("NIY: no conversion yet for %u [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
+	FIXME("NIY: no conversion yet for %lu [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
 	break;
     }
     return ret;
@@ -526,7 +526,7 @@ static  void    MMSYSTDRV_WaveIn_MapCB(DWORD uMsg, DWORD_PTR* dwUser, DWORD_PTR*
 	}
 	break;
     default:
-	ERR("Unknown msg %u\n", uMsg);
+	ERR("Unknown msg %lu\n", uMsg);
     }
 }
 
@@ -634,7 +634,7 @@ static  MMSYSTEM_MapType	MMSYSTDRV_WaveOut_Map16To32W  (DWORD wMsg, DWORD_PTR* l
 	    *lpParam2 = sizeof(WAVEHDR);
 	    /* dwBufferLength can be reduced between prepare & write */
 	    if (wMsg == WODM_WRITE && wh32->dwBufferLength < wh16->dwBufferLength) {
-		ERR("Size of buffer has been increased from %d to %d, keeping initial value\n",
+		ERR("Size of buffer has been increased from %ld to %ld, keeping initial value\n",
 		    wh32->dwBufferLength, wh16->dwBufferLength);
 	    } else
                 wh32->dwBufferLength = wh16->dwBufferLength;
@@ -646,7 +646,7 @@ static  MMSYSTEM_MapType	MMSYSTDRV_WaveOut_Map16To32W  (DWORD wMsg, DWORD_PTR* l
 	ret = MMSYSTEM_MAP_OK;
 	break;
     default:
-	FIXME("NIY: no conversion yet for %u [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
+	FIXME("NIY: no conversion yet for %lu [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
 	break;
     }
     return ret;
@@ -726,7 +726,7 @@ static  MMSYSTEM_MapType	MMSYSTDRV_WaveOut_UnMap16To32W(DWORD wMsg, DWORD_PTR* l
 	}
 	break;
     default:
-	FIXME("NIY: no conversion yet for %u [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
+	FIXME("NIY: no conversion yet for %lu [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
 	break;
     }
     return ret;
@@ -754,7 +754,7 @@ static  void	MMSYSTDRV_WaveOut_MapCB(DWORD uMsg, DWORD_PTR* dwUser, DWORD_PTR* d
 	}
 	break;
     default:
-	ERR("Unknown msg %u\n", uMsg);
+	ERR("Unknown msg %lu\n", uMsg);
     }
 }
 
@@ -819,16 +819,16 @@ static LRESULT CALLBACK MMSYSTDRV_Callback3216(struct mmsystdrv_thunk* thunk, HD
         TRACE("Null !\n");
         break;
     case CALLBACK_WINDOW:
-        TRACE("Window(%04X) handle=%p!\n", thunk->callback, hDev);
+        TRACE("Window(%04lX) handle=%p!\n", thunk->callback, hDev);
         PostMessageA((HWND)thunk->callback, wMsg, (WPARAM)hDev, dwParam1);
         break;
     case CALLBACK_TASK: /* aka CALLBACK_THREAD */
-        TRACE("Task(%04x) !\n", thunk->callback);
+        TRACE("Task(%04lx) !\n", thunk->callback);
         PostThreadMessageA(thunk->callback, wMsg, (WPARAM)hDev, dwParam1);
         break;
     case CALLBACK_FUNCTION:
         /* 16 bit func, call it */
-        TRACE("Function (16 bit) %x!\n", thunk->callback);
+        TRACE("Function (16 bit) %lx!\n", thunk->callback);
 
         args[7] = HDRVR_16(hDev);
         args[6] = wMsg;
@@ -840,11 +840,11 @@ static LRESULT CALLBACK MMSYSTDRV_Callback3216(struct mmsystdrv_thunk* thunk, HD
         args[0] = LOWORD(dwParam2);
         return WOWCallback16Ex(thunk->callback, WCB16_PASCAL, sizeof(args), args, NULL);
     case CALLBACK_EVENT:
-        TRACE("Event(%08x) !\n", thunk->callback);
+        TRACE("Event(%08lx) !\n", thunk->callback);
         SetEvent((HANDLE)thunk->callback);
         break;
     default:
-        WARN("Unknown callback type %x\n", thunk->flags);
+        WARN("Unknown callback type %lx\n", thunk->flags);
         return FALSE;
     }
     TRACE("Done\n");

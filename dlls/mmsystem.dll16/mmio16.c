@@ -88,7 +88,7 @@ static LRESULT	MMIO_Map32To16(DWORD wMsg, LPARAM* lp1, LPARAM* lp2)
         break;
     default:
         if (wMsg < MMIOM_USER)
-            TRACE("Not a mappable message (%d)\n", wMsg);
+            TRACE("Not a mappable message (%ld)\n", wMsg);
     }
     return MMSYSERR_NOERROR;
 }
@@ -116,7 +116,7 @@ static LRESULT	MMIO_UnMap32To16(DWORD wMsg, LPARAM lParam1, LPARAM lParam2,
 	break;
     default:
         if (wMsg < MMIOM_USER)
-            TRACE("Not a mappable message (%d)\n", wMsg);
+            TRACE("Not a mappable message (%ld)\n", wMsg);
     }
     return MMSYSERR_NOERROR;
 }
@@ -552,7 +552,7 @@ LPMMIOPROC16 WINAPI mmioInstallIOProc16(FOURCC fccIOProc, LPMMIOPROC16 pIOProc,
         }
         break;
     default:
-        FIXME("Unsupported flags %08x\n", dwFlags);
+        FIXME("Unsupported flags %08lx\n", dwFlags);
         pIOProc = NULL;
     }
     LeaveCriticalSection(&mmio_cs);

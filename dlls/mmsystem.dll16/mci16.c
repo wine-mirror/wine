@@ -610,7 +610,7 @@ BOOL16 WINAPI mciSetYieldProc16(UINT16 uDeviceID, YIELDPROC16 fpYieldProc, DWORD
     struct mci_thunk*   thunk;
     BOOL                ret;
 
-    TRACE("(%u, %p, %08x)\n", uDeviceID, fpYieldProc, dwYieldData);
+    TRACE("(%u, %p, %08lx)\n", uDeviceID, fpYieldProc, dwYieldData);
 
     if (!(thunk = MCI_AddThunk(uDeviceID, fpYieldProc)))
         return FALSE;
@@ -680,7 +680,7 @@ DWORD WINAPI mciSendCommand16(UINT16 wDevID, UINT16 wMsg, DWORD dwParam1, DWORD 
     BOOL                to32;
     DWORD_PTR           dwParam2 = p2;
 
-    TRACE("(%04X, %s, %08X, %08lX)\n", wDevID, MCI_MessageToString(wMsg), dwParam1, dwParam2);
+    TRACE("(%04X, %s, %08lX, %08lX)\n", wDevID, MCI_MessageToString(wMsg), dwParam1, dwParam2);
 
     switch (wMsg) {
     case MCI_CLOSE:
