@@ -87,7 +87,7 @@ static ULONG WINAPI Unknown_AddRef(IUnknown *iface)
     struct mp3_decoder *This = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) AddRef from %d\n", This, refcount - 1);
+    TRACE("(%p) AddRef from %ld\n", This, refcount - 1);
 
     return refcount;
 }
@@ -97,7 +97,7 @@ static ULONG WINAPI Unknown_Release(IUnknown *iface)
     struct mp3_decoder *This = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) Release from %d\n", This, refcount + 1);
+    TRACE("(%p) Release from %ld\n", This, refcount + 1);
 
     if (!refcount)
     {
@@ -152,7 +152,7 @@ static HRESULT WINAPI MediaObject_GetStreamCount(IMediaObject *iface, DWORD *inp
 
 static HRESULT WINAPI MediaObject_GetInputStreamInfo(IMediaObject *iface, DWORD index, DWORD *flags)
 {
-    TRACE("iface %p, index %u, flags %p.\n", iface, index, flags);
+    TRACE("iface %p, index %lu, flags %p.\n", iface, index, flags);
 
     *flags = 0;
 
@@ -161,7 +161,7 @@ static HRESULT WINAPI MediaObject_GetInputStreamInfo(IMediaObject *iface, DWORD 
 
 static HRESULT WINAPI MediaObject_GetOutputStreamInfo(IMediaObject *iface, DWORD index, DWORD *flags)
 {
-    TRACE("iface %p, index %u, flags %p.\n", iface, index, flags);
+    TRACE("iface %p, index %lu, flags %p.\n", iface, index, flags);
 
     *flags = 0;
 
@@ -170,7 +170,7 @@ static HRESULT WINAPI MediaObject_GetOutputStreamInfo(IMediaObject *iface, DWORD
 
 static HRESULT WINAPI MediaObject_GetInputType(IMediaObject *iface, DWORD index, DWORD type_index, DMO_MEDIA_TYPE *type)
 {
-    TRACE("iface %p, index %u, type_index %u, type %p.\n", iface, index, type_index, type);
+    TRACE("iface %p, index %lu, type_index %lu, type %p.\n", iface, index, type_index, type);
 
     if (type_index)
         return DMO_E_NO_MORE_ITEMS;
@@ -191,7 +191,7 @@ static HRESULT WINAPI MediaObject_GetOutputType(IMediaObject *iface, DWORD index
     const WAVEFORMATEX *input_format;
     WAVEFORMATEX *format;
 
-    TRACE("iface %p, index %u, type_index %u, type %p.\n", iface, index, type_index, type);
+    TRACE("iface %p, index %lu, type_index %lu, type %p.\n", iface, index, type_index, type);
 
     if (!dmo->intype_set)
         return DMO_E_TYPE_NOT_SET;
@@ -224,7 +224,7 @@ static HRESULT WINAPI MediaObject_SetInputType(IMediaObject *iface, DWORD index,
 {
     struct mp3_decoder *dmo = impl_from_IMediaObject(iface);
 
-    TRACE("iface %p, index %u, type %p, flags %#x.\n", iface, index, type, flags);
+    TRACE("iface %p, index %lu, type %p, flags %#lx.\n", iface, index, type, flags);
 
     if (flags & DMO_SET_TYPEF_CLEAR)
     {
@@ -257,7 +257,7 @@ static HRESULT WINAPI MediaObject_SetOutputType(IMediaObject *iface, DWORD index
     long enc;
     int err;
 
-    TRACE("(%p)->(%d, %p, %#x)\n", iface, index, type, flags);
+    TRACE("(%p)->(%ld, %p, %#lx)\n", iface, index, type, flags);
 
     if (flags & DMO_SET_TYPEF_CLEAR)
     {
@@ -286,7 +286,7 @@ static HRESULT WINAPI MediaObject_SetOutputType(IMediaObject *iface, DWORD index
         err = mpg123_format(This->mh, format->nSamplesPerSec, format->nChannels, enc);
         if (err != MPG123_OK)
         {
-            ERR("Failed to set format: %u channels, %u samples/sec, %u bits/sample.\n",
+            ERR("Failed to set format: %u channels, %lu samples/sec, %u bits/sample.\n",
                 format->nChannels, format->nSamplesPerSec, format->wBitsPerSample);
             return DMO_E_TYPE_NOT_ACCEPTED;
         }
@@ -299,14 +299,14 @@ static HRESULT WINAPI MediaObject_SetOutputType(IMediaObject *iface, DWORD index
 
 static HRESULT WINAPI MediaObject_GetInputCurrentType(IMediaObject *iface, DWORD index, DMO_MEDIA_TYPE *type)
 {
-    FIXME("(%p)->(%d, %p) stub!\n", iface, index, type);
+    FIXME("(%p)->(%ld, %p) stub!\n", iface, index, type);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI MediaObject_GetOutputCurrentType(IMediaObject *iface, DWORD index, DMO_MEDIA_TYPE *type)
 {
-    FIXME("(%p)->(%d, %p) stub!\n", iface, index, type);
+    FIXME("(%p)->(%ld, %p) stub!\n", iface, index, type);
 
     return E_NOTIMPL;
 }
@@ -316,7 +316,7 @@ static HRESULT WINAPI MediaObject_GetInputSizeInfo(IMediaObject *iface,
 {
     struct mp3_decoder *dmo = impl_from_IMediaObject(iface);
 
-    TRACE("iface %p, index %u, size %p, lookahead %p, alignment %p.\n", iface, index, size, lookahead, alignment);
+    TRACE("iface %p, index %lu, size %p, lookahead %p, alignment %p.\n", iface, index, size, lookahead, alignment);
 
     if (!dmo->intype_set || !dmo->outtype_set)
         return DMO_E_TYPE_NOT_SET;
@@ -330,7 +330,7 @@ static HRESULT WINAPI MediaObject_GetOutputSizeInfo(IMediaObject *iface, DWORD i
 {
     struct mp3_decoder *dmo = impl_from_IMediaObject(iface);
 
-    TRACE("iface %p, index %u, size %p, alignment %p.\n", iface, index, size, alignment);
+    TRACE("iface %p, index %lu, size %p, alignment %p.\n", iface, index, size, alignment);
 
     if (!dmo->intype_set || !dmo->outtype_set)
         return DMO_E_TYPE_NOT_SET;
@@ -342,14 +342,14 @@ static HRESULT WINAPI MediaObject_GetOutputSizeInfo(IMediaObject *iface, DWORD i
 
 static HRESULT WINAPI MediaObject_GetInputMaxLatency(IMediaObject *iface, DWORD index, REFERENCE_TIME *latency)
 {
-    FIXME("(%p)->(%d, %p) stub!\n", iface, index, latency);
+    FIXME("(%p)->(%ld, %p) stub!\n", iface, index, latency);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI MediaObject_SetInputMaxLatency(IMediaObject *iface, DWORD index, REFERENCE_TIME latency)
 {
-    FIXME("(%p)->(%d, %s) stub!\n", iface, index, wine_dbgstr_longlong(latency));
+    FIXME("(%p)->(%ld, %s) stub!\n", iface, index, wine_dbgstr_longlong(latency));
 
     return E_NOTIMPL;
 }
@@ -395,7 +395,7 @@ static HRESULT WINAPI MediaObject_FreeStreamingResources(IMediaObject *iface)
 
 static HRESULT WINAPI MediaObject_GetInputStatus(IMediaObject *iface, DWORD index, DWORD *flags)
 {
-    FIXME("(%p)->(%d, %p) stub!\n", iface, index, flags);
+    FIXME("(%p)->(%ld, %p) stub!\n", iface, index, flags);
 
     return E_NOTIMPL;
 }
@@ -409,7 +409,7 @@ static HRESULT WINAPI MediaObject_ProcessInput(IMediaObject *iface, DWORD index,
     DWORD len;
     int err;
 
-    TRACE("(%p)->(%d, %p, %#x, %s, %s)\n", iface, index, buffer, flags,
+    TRACE("(%p)->(%ld, %p, %#lx, %s, %s)\n", iface, index, buffer, flags,
           wine_dbgstr_longlong(timestamp), wine_dbgstr_longlong(timelength));
 
     if (This->buffer)
@@ -458,7 +458,7 @@ static HRESULT WINAPI MediaObject_ProcessOutput(IMediaObject *iface, DWORD flags
     BYTE *data;
     int err;
 
-    TRACE("(%p)->(%#x, %d, %p, %p)\n", iface, flags, count, buffers, status);
+    TRACE("(%p)->(%#lx, %ld, %p, %p)\n", iface, flags, count, buffers, status);
 
     if (count > 1)
         FIXME("Multiple buffers not handled.\n");
@@ -513,7 +513,7 @@ static HRESULT WINAPI MediaObject_ProcessOutput(IMediaObject *iface, DWORD flags
         else if (err != MPG123_OK)
             ERR("mpg123_read() returned %d\n", err);
         if (written < framesize)
-            ERR("short write: %Id/%u\n", written, framesize);
+            ERR("short write: %Id/%lu\n", written, framesize);
 
         got_data = 1;
 
@@ -537,7 +537,7 @@ static HRESULT WINAPI MediaObject_ProcessOutput(IMediaObject *iface, DWORD flags
 
 static HRESULT WINAPI MediaObject_Lock(IMediaObject *iface, LONG lock)
 {
-    FIXME("(%p)->(%d) stub!\n", iface, lock);
+    FIXME("(%p)->(%ld) stub!\n", iface, lock);
 
     return E_NOTIMPL;
 }
