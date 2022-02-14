@@ -344,7 +344,7 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
     This->parent = dev;
 
     hr = CoCreateFreeThreadedMarshaler((IUnknown*)&This->IAudioClient3_iface, &This->marshal);
-    if (hr) {
+    if (FAILED(hr)) {
         HeapFree(GetProcessHeap(), 0, This);
         return hr;
     }
