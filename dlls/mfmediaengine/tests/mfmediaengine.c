@@ -45,7 +45,7 @@ static void _expect_ref(IUnknown *obj, ULONG ref, int line)
     ULONG rc;
     IUnknown_AddRef(obj);
     rc = IUnknown_Release(obj);
-    ok_(__FILE__,line)(rc == ref, "Unexpected refcount %d, expected %d.\n", rc, ref);
+    ok_(__FILE__,line)(rc == ref, "Unexpected refcount %ld, expected %ld.\n", rc, ref);
 }
 
 #define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
@@ -58,7 +58,7 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
     expected_hr = supported ? S_OK : E_NOINTERFACE;
 
     hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
-    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#lx, expected %#lx.\n", hr, expected_hr);
     if (SUCCEEDED(hr))
         IUnknown_Release(unk);
 }
@@ -148,18 +148,18 @@ static IMFMediaEngine *create_media_engine(IMFMediaEngineNotify *callback)
     HRESULT hr;
 
     hr = pMFCreateDXGIDeviceManager(&token, &manager);
-    ok(hr == S_OK, "Failed to create dxgi device manager, hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = MFCreateAttributes(&attributes, 3);
-    ok(hr == S_OK, "Failed to create attributes, hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFAttributes_SetUnknown(attributes, &MF_MEDIA_ENGINE_CALLBACK, (IUnknown *)callback);
-    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFAttributes_SetUINT32(attributes, &MF_MEDIA_ENGINE_VIDEO_OUTPUT_FORMAT, DXGI_FORMAT_UNKNOWN);
-    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaEngineClassFactory_CreateInstance(factory, 0, attributes, &media_engine);
-    ok(hr == S_OK, "Failed to create media engine, hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     IMFAttributes_Release(attributes);
     IMFDXGIDeviceManager_Release(manager);
@@ -193,7 +193,7 @@ static void test_factory(void)
 
     hr = CoCreateInstance(&CLSID_MFMediaEngineClassFactory, NULL, CLSCTX_INPROC_SERVER, &IID_IMFMediaEngineClassFactory,
             (void **)&factory);
-    ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG) /* pre-win8 */, "Failed to create class factory, hr %#x.\n", hr);
+    ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG) /* pre-win8 */, "Failed to create class factory, hr %#lx.\n", hr);
     if (FAILED(hr))
     {
         win_skip("Media Engine is not supported.\n");
@@ -205,32 +205,29 @@ static void test_factory(void)
     /* Aggregation is not supported. */
     hr = CoCreateInstance(&CLSID_MFMediaEngineClassFactory, (IUnknown *)factory, CLSCTX_INPROC_SERVER,
             &IID_IMFMediaEngineClassFactory, (void **)&factory2);
-    ok(hr == CLASS_E_NOAGGREGATION, "Unexpected hr %#x.\n", hr);
+    ok(hr == CLASS_E_NOAGGREGATION, "Unexpected hr %#lx.\n", hr);
 
     hr = pMFCreateDXGIDeviceManager(&token, &manager);
-    ok(hr == S_OK, "MFCreateDXGIDeviceManager failed: %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = MFCreateAttributes(&attributes, 3);
-    ok(hr == S_OK, "MFCreateAttributes failed: %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    hr = IMFMediaEngineClassFactory_CreateInstance(factory, MF_MEDIA_ENGINE_WAITFORSTABLE_STATE,
-                                                   attributes, &media_engine);
-    ok(hr == MF_E_ATTRIBUTENOTFOUND, "IMFMediaEngineClassFactory_CreateInstance got %#x.\n", hr);
+    hr = IMFMediaEngineClassFactory_CreateInstance(factory, MF_MEDIA_ENGINE_WAITFORSTABLE_STATE, attributes, &media_engine);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFAttributes_SetUnknown(attributes, &MF_MEDIA_ENGINE_OPM_HWND, NULL);
-    ok(hr == S_OK, "IMFAttributes_SetUnknown failed: %#x.\n", hr);
-    hr = IMFMediaEngineClassFactory_CreateInstance(factory, MF_MEDIA_ENGINE_WAITFORSTABLE_STATE,
-                                                   attributes, &media_engine);
-    ok(hr == MF_E_ATTRIBUTENOTFOUND, "IMFMediaEngineClassFactory_CreateInstance got %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaEngineClassFactory_CreateInstance(factory, MF_MEDIA_ENGINE_WAITFORSTABLE_STATE, attributes, &media_engine);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
 
     IMFAttributes_DeleteAllItems(attributes);
     hr = IMFAttributes_SetUnknown(attributes, &MF_MEDIA_ENGINE_CALLBACK, (IUnknown *)&notify->IMFMediaEngineNotify_iface);
-    ok(hr == S_OK, "IMFAttributes_SetUnknown failed: %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFAttributes_SetUINT32(attributes, &MF_MEDIA_ENGINE_VIDEO_OUTPUT_FORMAT, DXGI_FORMAT_UNKNOWN);
-    ok(hr == S_OK, "IMFAttributes_SetUINT32 failed: %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     EXPECT_REF(factory, 1);
-    hr = IMFMediaEngineClassFactory_CreateInstance(factory, MF_MEDIA_ENGINE_WAITFORSTABLE_STATE,
-                                                   attributes, &media_engine);
-    ok(hr == S_OK, "IMFMediaEngineClassFactory_CreateInstance failed: %#x.\n", hr);
+    hr = IMFMediaEngineClassFactory_CreateInstance(factory, MF_MEDIA_ENGINE_WAITFORSTABLE_STATE, attributes, &media_engine);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     EXPECT_REF(factory, 1);
 
     IMFMediaEngine_Release(media_engine);
@@ -253,36 +250,36 @@ static void test_CreateInstance(void)
     notify = create_callback();
 
     hr = pMFCreateDXGIDeviceManager(&token, &manager);
-    ok(hr == S_OK, "Failed to create dxgi device manager, hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = MFCreateAttributes(&attributes, 3);
-    ok(hr == S_OK, "Failed to create attributes, hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaEngineClassFactory_CreateInstance(factory, MF_MEDIA_ENGINE_WAITFORSTABLE_STATE,
             attributes, &media_engine);
-    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFAttributes_SetUnknown(attributes, &MF_MEDIA_ENGINE_OPM_HWND, NULL);
-    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaEngineClassFactory_CreateInstance(factory, MF_MEDIA_ENGINE_WAITFORSTABLE_STATE,
             attributes, &media_engine);
-    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
 
     IMFAttributes_DeleteAllItems(attributes);
 
     hr = IMFAttributes_SetUnknown(attributes, &MF_MEDIA_ENGINE_CALLBACK, (IUnknown *)&notify->IMFMediaEngineNotify_iface);
-    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFAttributes_SetUINT32(attributes, &MF_MEDIA_ENGINE_VIDEO_OUTPUT_FORMAT, DXGI_FORMAT_UNKNOWN);
-    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaEngineClassFactory_CreateInstance(factory, MF_MEDIA_ENGINE_WAITFORSTABLE_STATE, attributes, &media_engine);
-    ok(hr == S_OK, "Failed to create media engine, hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     check_interface(media_engine, &IID_IMFMediaEngine, TRUE);
 
     hr = IMFMediaEngine_QueryInterface(media_engine, &IID_IMFGetService, (void **)&unk);
-    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* supported since win10 */, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* supported since win10 */, "Unexpected hr %#lx.\n", hr);
     if (SUCCEEDED(hr))
         IUnknown_Release(unk);
 
@@ -310,16 +307,16 @@ static void test_Shutdown(void)
     media_engine = create_media_engine(&notify->IMFMediaEngineNotify_iface);
 
     hr = IMFMediaEngine_Shutdown(media_engine);
-    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
 
     hr = IMFMediaEngine_Shutdown(media_engine);
-    ok(hr == MF_E_SHUTDOWN || broken(hr == S_OK) /* before win10 */, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN || broken(hr == S_OK) /* before win10 */, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaEngine_SetSource(media_engine, NULL);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaEngine_GetCurrentSource(media_engine, &str);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     state = IMFMediaEngine_GetNetworkState(media_engine);
     ok(!state, "Unexpected state %d.\n", state);
@@ -329,26 +326,26 @@ static void test_Shutdown(void)
     ok(!state, "Unexpected state %d.\n", state);
 
     hr = IMFMediaEngine_SetPreload(media_engine, MF_MEDIA_ENGINE_PRELOAD_AUTOMATIC);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     state = IMFMediaEngine_GetPreload(media_engine);
     ok(state == MF_MEDIA_ENGINE_PRELOAD_AUTOMATIC, "Unexpected state %d.\n", state);
 
     hr = IMFMediaEngine_SetPreload(media_engine, 100);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     state = IMFMediaEngine_GetPreload(media_engine);
     ok(state == 100, "Unexpected state %d.\n", state);
 
     hr = IMFMediaEngine_GetBuffered(media_engine, &time_range);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaEngine_Load(media_engine);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     str = SysAllocString(L"video/mp4");
     hr = IMFMediaEngine_CanPlayType(media_engine, str, &state);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
     SysFreeString(str);
 
     state = IMFMediaEngine_GetReadyState(media_engine);
@@ -361,7 +358,7 @@ static void test_Shutdown(void)
     ok(val == 0.0, "Unexpected time %f.\n", val);
 
     hr = IMFMediaEngine_SetCurrentTime(media_engine, 1.0);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     val = IMFMediaEngine_GetStartTime(media_engine);
     ok(val == 0.0, "Unexpected time %f.\n", val);
@@ -373,16 +370,16 @@ static void test_Shutdown(void)
     ok(val == 1.0, "Unexpected rate %f.\n", val);
 
     hr = IMFMediaEngine_SetDefaultPlaybackRate(media_engine, 2.0);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     val = IMFMediaEngine_GetPlaybackRate(media_engine);
     ok(val == 1.0, "Unexpected rate %f.\n", val);
 
     hr = IMFMediaEngine_GetPlayed(media_engine, &time_range);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaEngine_GetSeekable(media_engine, &time_range);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     state = IMFMediaEngine_IsEnded(media_engine);
     ok(!state, "Unexpected state %d.\n", state);
@@ -392,7 +389,7 @@ static void test_Shutdown(void)
     ok(!state, "Unexpected state.\n");
 
     hr = IMFMediaEngine_SetAutoPlay(media_engine, TRUE);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     state = IMFMediaEngine_GetAutoPlay(media_engine);
     ok(!!state, "Unexpected state.\n");
@@ -402,28 +399,28 @@ static void test_Shutdown(void)
     ok(!state, "Unexpected state.\n");
 
     hr = IMFMediaEngine_SetLoop(media_engine, TRUE);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     state = IMFMediaEngine_GetLoop(media_engine);
     ok(!!state, "Unexpected state.\n");
 
     hr = IMFMediaEngine_Play(media_engine);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaEngine_Pause(media_engine);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     state = IMFMediaEngine_GetMuted(media_engine);
     ok(!state, "Unexpected state.\n");
 
     hr = IMFMediaEngine_SetMuted(media_engine, TRUE);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     val = IMFMediaEngine_GetVolume(media_engine);
     ok(val == 1.0, "Unexpected value %f.\n", val);
 
     hr = IMFMediaEngine_SetVolume(media_engine, 2.0);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     state = IMFMediaEngine_HasVideo(media_engine);
     ok(!state, "Unexpected state.\n");
@@ -432,27 +429,27 @@ static void test_Shutdown(void)
     ok(!state, "Unexpected state.\n");
 
     hr = IMFMediaEngine_GetNativeVideoSize(media_engine, &cx, &cy);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaEngine_GetVideoAspectRatio(media_engine, &cx, &cy);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     if (SUCCEEDED(IMFMediaEngine_QueryInterface(media_engine, &IID_IMFMediaEngineEx, (void **)&media_engine_ex)))
     {
         hr = IMFMediaEngineEx_SetSourceFromByteStream(media_engine_ex, NULL, NULL);
-        ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+        ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
         hr = IMFMediaEngineEx_GetAudioStreamCategory(media_engine_ex, &value);
-        ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+        ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
         hr = IMFMediaEngineEx_GetAudioEndpointRole(media_engine_ex, &value);
-        ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+        ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
         hr = IMFMediaEngineEx_SetAudioStreamCategory(media_engine_ex, AudioCategory_ForegroundOnlyMedia);
-        ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+        ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
         hr = IMFMediaEngineEx_SetAudioEndpointRole(media_engine_ex, eConsole);
-        ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+        ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
         IMFMediaEngineEx_Release(media_engine_ex);
     }
@@ -476,13 +473,13 @@ static void test_Play(void)
     media_engine = create_media_engine(&notify->IMFMediaEngineNotify_iface);
 
     hr = IMFMediaEngine_GetBuffered(media_engine, &range);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaEngine_GetBuffered(media_engine, &range1);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(range != range1, "Unexpected pointer.\n");
 
     count = IMFMediaTimeRange_GetLength(range);
-    ok(!count, "Unexpected count %u.\n", count);
+    ok(!count, "Unexpected count %lu.\n", count);
 
     IMFMediaTimeRange_Release(range);
     IMFMediaTimeRange_Release(range1);
@@ -491,30 +488,30 @@ static void test_Play(void)
     ok(ret, "Unexpected state %d.\n", ret);
 
     hr = IMFMediaEngine_OnVideoStreamTick(media_engine, NULL);
-    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     pts = 0;
     hr = IMFMediaEngine_OnVideoStreamTick(media_engine, &pts);
-    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
     ok(pts == MINLONGLONG, "Unexpected timestamp.\n");
 
     hr = IMFMediaEngine_Play(media_engine);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     ret = IMFMediaEngine_IsPaused(media_engine);
     ok(!ret, "Unexpected state %d.\n", ret);
 
     hr = IMFMediaEngine_Play(media_engine);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaEngine_Shutdown(media_engine);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaEngine_OnVideoStreamTick(media_engine, NULL);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaEngine_OnVideoStreamTick(media_engine, &pts);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     ret = IMFMediaEngine_IsPaused(media_engine);
     ok(!ret, "Unexpected state %d.\n", ret);
@@ -525,13 +522,13 @@ static void test_Play(void)
     media_engine = create_media_engine(&notify->IMFMediaEngineNotify_iface);
 
     hr = IMFMediaEngine_Play(media_engine);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     ret = IMFMediaEngine_IsPaused(media_engine);
     ok(!ret, "Unexpected state %d.\n", ret);
 
     hr = IMFMediaEngine_Pause(media_engine);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     ret = IMFMediaEngine_IsPaused(media_engine);
     ok(!!ret, "Unexpected state %d.\n", ret);
@@ -558,13 +555,13 @@ static void test_playback_rate(void)
     ok(rate == 1.0, "Unexpected default rate.\n");
 
     hr = IMFMediaEngine_SetPlaybackRate(media_engine, 0.0);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     rate = IMFMediaEngine_GetPlaybackRate(media_engine);
     ok(rate == 0.0, "Unexpected default rate.\n");
 
     hr = IMFMediaEngine_SetDefaultPlaybackRate(media_engine, 0.0);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     IMFMediaEngine_Release(media_engine);
     IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
@@ -585,13 +582,13 @@ static void test_mute(void)
     ok(!ret, "Unexpected state.\n");
 
     hr = IMFMediaEngine_SetMuted(media_engine, TRUE);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     ret = IMFMediaEngine_GetMuted(media_engine);
     ok(ret, "Unexpected state.\n");
 
     hr = IMFMediaEngine_Shutdown(media_engine);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     ret = IMFMediaEngine_GetMuted(media_engine);
     ok(ret, "Unexpected state.\n");
@@ -614,73 +611,73 @@ static void test_error(void)
 
     eo = (void *)0xdeadbeef;
     hr = IMFMediaEngine_GetError(media_engine, &eo);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!eo, "Unexpected instance.\n");
 
     hr = IMFMediaEngine_SetErrorCode(media_engine, MF_MEDIA_ENGINE_ERR_ENCRYPTED + 1);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaEngine_SetErrorCode(media_engine, MF_MEDIA_ENGINE_ERR_ABORTED);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     eo = NULL;
     hr = IMFMediaEngine_GetError(media_engine, &eo);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!!eo, "Unexpected instance.\n");
 
     eo2 = NULL;
     hr = IMFMediaEngine_GetError(media_engine, &eo2);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(eo2 != eo, "Unexpected instance.\n");
 
     IMFMediaError_Release(eo2);
     IMFMediaError_Release(eo);
 
     hr = IMFMediaEngine_SetErrorCode(media_engine, MF_MEDIA_ENGINE_ERR_NOERROR);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     eo = (void *)0xdeadbeef;
     hr = IMFMediaEngine_GetError(media_engine, &eo);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!eo, "Unexpected instance.\n");
 
     hr = IMFMediaEngine_Shutdown(media_engine);
-    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     eo = (void *)0xdeadbeef;
     hr = IMFMediaEngine_GetError(media_engine, &eo);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
     ok(!eo, "Unexpected instance.\n");
 
     hr = IMFMediaEngine_SetErrorCode(media_engine, MF_MEDIA_ENGINE_ERR_NOERROR);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     IMFMediaEngine_Release(media_engine);
 
     /* Error object. */
     hr = IMFMediaEngineClassFactory_CreateError(factory, &eo);
-    ok(hr == S_OK, "Failed to create error object, hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     code = IMFMediaError_GetErrorCode(eo);
     ok(code == MF_MEDIA_ENGINE_ERR_NOERROR, "Unexpected code %u.\n", code);
 
     hr = IMFMediaError_GetExtendedErrorCode(eo);
-    ok(hr == S_OK, "Unexpected code %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected code %#lx.\n", hr);
 
     hr = IMFMediaError_SetErrorCode(eo, MF_MEDIA_ENGINE_ERR_ENCRYPTED + 1);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaError_SetErrorCode(eo, MF_MEDIA_ENGINE_ERR_ABORTED);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     code = IMFMediaError_GetErrorCode(eo);
     ok(code == MF_MEDIA_ENGINE_ERR_ABORTED, "Unexpected code %u.\n", code);
 
     hr = IMFMediaError_SetExtendedErrorCode(eo, E_FAIL);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaError_GetExtendedErrorCode(eo);
-    ok(hr == E_FAIL, "Unexpected code %#x.\n", hr);
+    ok(hr == E_FAIL, "Unexpected code %#lx.\n", hr);
 
     IMFMediaError_Release(eo);
     IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
@@ -695,11 +692,11 @@ static void test_time_range(void)
     BOOL ret;
 
     hr = IMFMediaEngineClassFactory_CreateTimeRange(factory, &range);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     /* Empty ranges. */
     hr = IMFMediaTimeRange_Clear(range);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     ret = IMFMediaTimeRange_ContainsTime(range, 10.0);
     ok(!ret, "Unexpected return value %d.\n", ret);
@@ -708,155 +705,155 @@ static void test_time_range(void)
     ok(!count, "Unexpected range count.\n");
 
     hr = IMFMediaTimeRange_GetStart(range, 0, &start);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaTimeRange_GetEnd(range, 0, &end);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     /* Add a range. */
     hr = IMFMediaTimeRange_AddRange(range, 10.0, 1.0);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     count = IMFMediaTimeRange_GetLength(range);
     ok(count == 1, "Unexpected range count.\n");
 
     hr = IMFMediaTimeRange_GetStart(range, 0, &start);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(start == 10.0, "Unexpected start %.e.\n", start);
 
     hr = IMFMediaTimeRange_GetEnd(range, 0, &end);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(end == 1.0, "Unexpected end %.e.\n", end);
 
     hr = IMFMediaTimeRange_AddRange(range, 2.0, 3.0);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     count = IMFMediaTimeRange_GetLength(range);
     ok(count == 1, "Unexpected range count.\n");
 
     hr = IMFMediaTimeRange_GetStart(range, 0, &start);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(start == 2.0, "Unexpected start %.8e.\n", start);
 
     hr = IMFMediaTimeRange_GetEnd(range, 0, &end);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(end == 3.0, "Unexpected end %.8e.\n", end);
 
     hr = IMFMediaTimeRange_AddRange(range, 10.0, 9.0);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     count = IMFMediaTimeRange_GetLength(range);
     ok(count == 2, "Unexpected range count.\n");
 
     hr = IMFMediaTimeRange_GetStart(range, 0, &start);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(start == 2.0, "Unexpected start %.8e.\n", start);
 
     hr = IMFMediaTimeRange_GetEnd(range, 0, &end);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(end == 3.0, "Unexpected end %.8e.\n", end);
 
     start = 0.0;
     hr = IMFMediaTimeRange_GetStart(range, 1, &start);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(start == 10.0, "Unexpected start %.8e.\n", start);
 
     hr = IMFMediaTimeRange_GetEnd(range, 1, &end);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(end == 9.0, "Unexpected end %.8e.\n", end);
 
     hr = IMFMediaTimeRange_AddRange(range, 2.0, 9.1);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     count = IMFMediaTimeRange_GetLength(range);
     ok(count == 2, "Unexpected range count.\n");
 
     hr = IMFMediaTimeRange_GetStart(range, 0, &start);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(start == 2.0, "Unexpected start %.8e.\n", start);
 
     hr = IMFMediaTimeRange_GetEnd(range, 0, &end);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(end == 9.1, "Unexpected end %.8e.\n", end);
 
     hr = IMFMediaTimeRange_GetStart(range, 1, &start);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(start == 10.0, "Unexpected start %.8e.\n", start);
 
     hr = IMFMediaTimeRange_GetEnd(range, 1, &end);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(end == 9.0, "Unexpected end %.8e.\n", end);
 
     hr = IMFMediaTimeRange_AddRange(range, 8.5, 2.5);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     count = IMFMediaTimeRange_GetLength(range);
     ok(count == 2, "Unexpected range count.\n");
 
     hr = IMFMediaTimeRange_GetStart(range, 0, &start);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(start == 2.0, "Unexpected start %.8e.\n", start);
 
     hr = IMFMediaTimeRange_GetEnd(range, 0, &end);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(end == 9.1, "Unexpected end %.8e.\n", end);
 
     hr = IMFMediaTimeRange_AddRange(range, 20.0, 20.0);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     count = IMFMediaTimeRange_GetLength(range);
     ok(count == 3, "Unexpected range count.\n");
 
     hr = IMFMediaTimeRange_Clear(range);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     count = IMFMediaTimeRange_GetLength(range);
     ok(!count, "Unexpected range count.\n");
 
     /* Intersect */
     hr = IMFMediaTimeRange_AddRange(range, 5.0, 10.0);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaTimeRange_AddRange(range, 6.0, 12.0);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaTimeRange_GetStart(range, 0, &start);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(start == 5.0, "Unexpected start %.8e.\n", start);
 
     hr = IMFMediaTimeRange_GetEnd(range, 0, &end);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(end == 12.0, "Unexpected end %.8e.\n", end);
 
     count = IMFMediaTimeRange_GetLength(range);
     ok(count == 1, "Unexpected range count.\n");
 
     hr = IMFMediaTimeRange_AddRange(range, 4.0, 6.0);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     count = IMFMediaTimeRange_GetLength(range);
     ok(count == 1, "Unexpected range count.\n");
 
     hr = IMFMediaTimeRange_GetStart(range, 0, &start);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(start == 4.0, "Unexpected start %.8e.\n", start);
 
     hr = IMFMediaTimeRange_GetEnd(range, 0, &end);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(end == 12.0, "Unexpected end %.8e.\n", end);
 
     hr = IMFMediaTimeRange_AddRange(range, 5.0, 3.0);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     count = IMFMediaTimeRange_GetLength(range);
     ok(count == 1, "Unexpected range count.\n");
 
     hr = IMFMediaTimeRange_GetStart(range, 0, &start);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(start == 4.0, "Unexpected start %.8e.\n", start);
 
     hr = IMFMediaTimeRange_GetEnd(range, 0, &end);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(end == 12.0, "Unexpected end %.8e.\n", end);
 
     IMFMediaTimeRange_Release(range);
@@ -879,7 +876,7 @@ static void test_SetSourceFromByteStream(void)
     }
 
     hr = IMFMediaEngineEx_SetSourceFromByteStream(media_engine, NULL, NULL);
-    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     IMFMediaEngineEx_Release(media_engine);
     IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
@@ -902,11 +899,11 @@ static void test_audio_configuration(void)
     }
 
     hr = IMFMediaEngineEx_GetAudioStreamCategory(media_engine, &value);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(value == AudioCategory_Other, "Unexpected value %u.\n", value);
 
     hr = IMFMediaEngineEx_GetAudioEndpointRole(media_engine, &value);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(value == eMultimedia, "Unexpected value %u.\n", value);
 
     IMFMediaEngineEx_Release(media_engine);
@@ -931,7 +928,7 @@ START_TEST(mfmediaengine)
     init_functions();
 
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
-    ok(hr == S_OK, "MFStartup failed: %#x.\n", hr);
+    ok(hr == S_OK, "MFStartup failed: %#lx.\n", hr);
 
     test_factory();
     test_CreateInstance();
