@@ -758,6 +758,12 @@ BOOL WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD mode,
     return unix_funcs->pNtUserEnumDisplaySettings( device, mode, dev_mode, flags );
 }
 
+SHORT WINAPI NtUserGetAsyncKeyState( INT key )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserGetAsyncKeyState( key );
+}
+
 LONG WINAPI NtUserGetDisplayConfigBufferSizes( UINT32 flags, UINT32 *num_path_info,
                                                UINT32 *num_mode_info )
 {

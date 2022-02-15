@@ -255,7 +255,7 @@
 @ stdcall GetAncestor(long long)
 @ stdcall GetAppCompatFlags(long)
 @ stdcall GetAppCompatFlags2(long)
-@ stdcall GetAsyncKeyState(long)
+@ stdcall -import GetAsyncKeyState(long) NtUserGetAsyncKeyState
 @ stdcall GetAutoRotationState(ptr)
 @ stdcall GetAwarenessFromDpiAwarenessContext(long)
 @ stdcall GetCapture()

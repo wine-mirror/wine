@@ -1159,6 +1159,7 @@ static struct unix_funcs unix_funcs =
     NtUserEnumDisplayDevices,
     NtUserEnumDisplayMonitors,
     NtUserEnumDisplaySettings,
+    NtUserGetAsyncKeyState,
     NtUserGetDisplayConfigBufferSizes,
     NtUserGetKeyNameText,
     NtUserGetKeyboardLayoutList,

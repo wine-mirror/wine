@@ -53,6 +53,8 @@ struct enum_display_monitor_params
 enum
 {
     NtUserGetInputState,
+    /* temporary exports */
+    NtUserThreadDetach,
 };
 
 /* NtUserCallOneParam codes, not compatible with Windows */
@@ -69,6 +71,7 @@ enum
     /* temporary exports */
     NtUserFlushWindowSurfaces,
     NtUserGetDeskPattern,
+    NtUserIncrementKeyStateCounter,
 };
 
 /* NtUserCallTwoParam codes, not compatible with Windows */
@@ -128,6 +131,7 @@ NTSTATUS WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
 BOOL    WINAPI NtUserEnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc, LPARAM lp );
 BOOL    WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD mode,
                                           DEVMODEW *dev_mode, DWORD flags );
+SHORT   WINAPI NtUserGetAsyncKeyState( INT key );
 INT     WINAPI NtUserGetClipboardFormatName( UINT format, WCHAR *buffer, INT maxlen );
 HWND    WINAPI NtUserGetClipboardOwner(void);
 DWORD   WINAPI NtUserGetClipboardSequenceNumber(void);

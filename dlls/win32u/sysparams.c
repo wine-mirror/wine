@@ -4484,6 +4484,14 @@ static BOOL message_beep( UINT i )
     return TRUE;
 }
 
+static void thread_detach(void)
+{
+    struct user_thread_info *thread_info = get_user_thread_info();
+
+    free( thread_info->key_state );
+    thread_info->key_state = 0;
+}
+
 /***********************************************************************
  *	     NtUserCallOneParam    (win32u.@)
  */
@@ -4493,6 +4501,10 @@ ULONG_PTR WINAPI NtUserCallNoParam( ULONG code )
     {
     case NtUserGetInputState:
         return get_input_state();
+    /* temporary exports */
+    case NtUserThreadDetach:
+        thread_detach();
+        return 0;
     default:
         FIXME( "invalid code %u\n", code );
         return 0;
@@ -4528,6 +4540,8 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
         return 0;
     case NtUserGetDeskPattern:
         return get_entry( &entry_DESKPATTERN, 256, (WCHAR *)arg );
+    case NtUserIncrementKeyStateCounter:
+        return InterlockedAdd( &global_key_state_counter, arg );
     default:
         FIXME( "invalid code %u\n", code );
         return 0;

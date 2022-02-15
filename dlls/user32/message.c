@@ -3239,7 +3239,7 @@ NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, const RAWINPUT *r
     struct user_key_state_info *key_state_info = get_user_thread_info()->key_state;
     struct send_message_info info;
     int prev_x, prev_y, new_x, new_y;
-    INT counter = global_key_state_counter;
+    INT counter = NtUserCallOneParam( 0, NtUserIncrementKeyStateCounter );
     USAGE hid_usage_page, hid_usage;
     NTSTATUS ret;
     BOOL wait;

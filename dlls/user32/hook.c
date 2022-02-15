@@ -455,7 +455,7 @@ static LRESULT call_hook( struct hook_info *info, INT code, WPARAM wparam, LPARA
     }
 
     if (info->id == WH_KEYBOARD_LL || info->id == WH_MOUSE_LL)
-        InterlockedIncrement( &global_key_state_counter );  /* force refreshing the key state cache */
+        NtUserCallOneParam( 1, NtUserIncrementKeyStateCounter ); /* force refreshing the key state cache */
 
     return ret;
 }

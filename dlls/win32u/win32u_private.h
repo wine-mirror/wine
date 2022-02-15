@@ -204,6 +204,7 @@ struct unix_funcs
     BOOL     (WINAPI *pNtUserEnumDisplayMonitors)( HDC hdc, RECT *rect, MONITORENUMPROC proc, LPARAM lp );
     BOOL     (WINAPI *pNtUserEnumDisplaySettings)( UNICODE_STRING *device, DWORD mode,
                                                    DEVMODEW *dev_mode, DWORD flags );
+    SHORT    (WINAPI *pNtUserGetAsyncKeyState)( INT key );
     LONG     (WINAPI *pNtUserGetDisplayConfigBufferSizes)( UINT32 flags, UINT32 *num_path_info,
                                                            UINT32 *num_mode_info );
     INT      (WINAPI *pNtUserGetKeyNameText)( LONG lparam, WCHAR *buffer, INT size );
@@ -248,6 +249,7 @@ struct unix_funcs
 extern BOOL get_clip_cursor( RECT *rect ) DECLSPEC_HIDDEN;
 
 /* input.c */
+extern LONG global_key_state_counter DECLSPEC_HIDDEN;
 extern BOOL get_cursor_pos( POINT *pt ) DECLSPEC_HIDDEN;
 extern DWORD get_input_state(void) DECLSPEC_HIDDEN;
 

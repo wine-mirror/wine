@@ -891,7 +891,7 @@
 @ stub NtUserGetAltTabInfo
 @ stub NtUserGetAncestor
 @ stub NtUserGetAppImeLevel
-@ stub NtUserGetAsyncKeyState
+@ stdcall NtUserGetAsyncKeyState(long)
 @ stub NtUserGetAtomName
 @ stub NtUserGetAutoRotationState
 @ stub NtUserGetCIMSSM

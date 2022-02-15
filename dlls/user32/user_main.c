@@ -256,10 +256,10 @@ static void thread_detach(void)
     WDML_NotifyThreadDetach();
     USER_Driver->pThreadDetach();
 
+    NtUserCallNoParam( NtUserThreadDetach );
     destroy_thread_windows();
     CloseHandle( thread_info->server_queue );
     HeapFree( GetProcessHeap(), 0, thread_info->wmchar_data );
-    HeapFree( GetProcessHeap(), 0, thread_info->key_state );
     HeapFree( GetProcessHeap(), 0, thread_info->rawinput );
 
     exiting_thread_id = 0;
