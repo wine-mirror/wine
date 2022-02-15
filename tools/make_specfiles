@@ -123,7 +123,6 @@ my @dll_groups =
   "api-ms-win-eventlog-legacy-l1-1-0",
   "api-ms-win-perf-legacy-l1-1-0",
   "api-ms-win-security-base-private-l1-1-1",
-  "api-ms-win-security-cryptoapi-l1-1-0",
   "api-ms-win-security-lsalookup-ansi-l2-1-0",
   "api-ms-win-security-provider-l1-1-0",
   "api-ms-win-security-systemfunctions-l1-1-0",
@@ -149,6 +148,10 @@ my @dll_groups =
   "api-ms-win-service-private-l1-1-1",
   "api-ms-win-service-winsvc-l1-1-0",
   "api-ms-win-service-winsvc-l1-2-0",
+ ],
+ [
+  "cryptsp",
+  "api-ms-win-security-cryptoapi-l1-1-0",
  ],
  [
   "authz",
