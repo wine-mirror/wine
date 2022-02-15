@@ -109,20 +109,20 @@ static void test_WsDecodeUrl(void)
     UINT i;
 
     hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsDecodeUrl( NULL, 0, heap, (WS_URL **)&url, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     str.chars  = NULL;
     str.length = 0;
     hr = WsDecodeUrl( &str, 0, heap, (WS_URL **)&url, NULL );
-    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+    ok( hr == WS_E_INVALID_FORMAT, "got %#lx\n", hr );
 
     str.chars  = (WCHAR *)url1;
     str.length = lstrlenW( url1 );
     hr = WsDecodeUrl( &str, 0, NULL, (WS_URL **)&url, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     for (i = 0; i < ARRAY_SIZE( tests ); i++)
     {
@@ -132,7 +132,7 @@ static void test_WsDecodeUrl(void)
         hr = WsDecodeUrl( &str, 0, heap, (WS_URL **)&url, NULL );
         ok( hr == tests[i].hr ||
             broken(hr == WS_E_INVALID_FORMAT && str.length >= 8 && !memcmp(L"net.pipe", str.chars, 8)),
-            "%u: got %08x\n", i, hr );
+            "%u: got %#lx\n", i, hr );
         if (hr != S_OK) continue;
 
         ok( url->url.scheme == tests[i].scheme, "%u: got %u\n", i, url->url.scheme );
@@ -140,43 +140,43 @@ static void test_WsDecodeUrl(void)
 
         if (tests[i].host)
         {
-            ok( url->host.length == tests[i].host_len, "%u: got %u\n", i, url->host.length );
+            ok( url->host.length == tests[i].host_len, "%u: got %lu\n", i, url->host.length );
             ok( !memcmp( url->host.chars, tests[i].host, url->host.length * sizeof(WCHAR) ),
                 "%u: got %s\n", i, wine_dbgstr_wn(url->host.chars, url->host.length) );
         }
-        else ok( !url->host.length, "%u: got %u\n", i, url->host.length );
+        else ok( !url->host.length, "%u: got %lu\n", i, url->host.length );
 
         if (tests[i].port_str)
         {
-            ok( url->portAsString.length == tests[i].port_len, "%u: got %u\n", i, url->portAsString.length );
+            ok( url->portAsString.length == tests[i].port_len, "%u: got %lu\n", i, url->portAsString.length );
             ok( !memcmp( url->portAsString.chars, tests[i].port_str, url->portAsString.length * sizeof(WCHAR) ),
                 "%u: got %s\n", i, wine_dbgstr_wn(url->portAsString.chars, url->portAsString.length) );
         }
-        else ok( !url->portAsString.length, "%u: got %u\n", i, url->portAsString.length );
+        else ok( !url->portAsString.length, "%u: got %lu\n", i, url->portAsString.length );
 
         if (tests[i].path)
         {
-            ok( url->path.length == tests[i].path_len, "%u: got %u\n", i, url->path.length );
+            ok( url->path.length == tests[i].path_len, "%u: got %lu\n", i, url->path.length );
             ok( !memcmp( url->path.chars, tests[i].path, url->path.length * sizeof(WCHAR) ),
                 "%u: got %s\n", i, wine_dbgstr_wn(url->path.chars, url->path.length) );
         }
-        else ok( !url->path.length, "%u: got %u\n", i, url->path.length );
+        else ok( !url->path.length, "%u: got %lu\n", i, url->path.length );
 
         if (tests[i].query)
         {
-            ok( url->query.length == tests[i].query_len, "%u: got %u\n", i, url->query.length );
+            ok( url->query.length == tests[i].query_len, "%u: got %lu\n", i, url->query.length );
             ok( !memcmp( url->query.chars, tests[i].query, url->query.length * sizeof(WCHAR) ),
                 "%u: got %s\n", i, wine_dbgstr_wn(url->query.chars, url->query.length) );
         }
-        else ok( !url->query.length, "%u: got %u\n", i, url->query.length );
+        else ok( !url->query.length, "%u: got %lu\n", i, url->query.length );
 
         if (tests[i].fragment)
         {
-            ok( url->fragment.length == tests[i].fragment_len, "%u: got %u\n", i, url->fragment.length );
+            ok( url->fragment.length == tests[i].fragment_len, "%u: got %lu\n", i, url->fragment.length );
             ok( !memcmp( url->fragment.chars, tests[i].fragment, url->fragment.length * sizeof(WCHAR) ),
                 "%u: got %s\n", i, wine_dbgstr_wn(url->fragment.chars, url->fragment.length) );
         }
-        else ok( !url->fragment.length, "%u: got %u\n", i, url->fragment.length );
+        else ok( !url->fragment.length, "%u: got %lu\n", i, url->fragment.length );
     }
 
     WsFreeHeap( heap );
@@ -240,16 +240,16 @@ static void test_WsEncodeUrl(void)
     UINT i;
 
     hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsEncodeUrl( NULL, 0, heap, &str, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsEncodeUrl( (const WS_URL *)&url, 0, NULL, &str, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsEncodeUrl( (const WS_URL *)&url, 0, heap, NULL, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     for (i = 0; i < ARRAY_SIZE( tests ); i++)
     {
@@ -269,10 +269,10 @@ static void test_WsEncodeUrl(void)
 
         memset( &str, 0, sizeof(str) );
         hr = WsEncodeUrl( (const WS_URL *)&url, 0, heap, &str, NULL );
-        ok( hr == tests[i].hr, "%u: got %08x\n", i, hr );
+        ok( hr == tests[i].hr, "%u: got %#lx\n", i, hr );
         if (hr != S_OK) continue;
 
-        ok( str.length == tests[i].len, "%u: got %u\n", i, str.length );
+        ok( str.length == tests[i].len, "%u: got %lu\n", i, str.length );
         ok( !memcmp( str.chars, tests[i].chars, tests[i].len * sizeof(WCHAR) ),
             "%u: wrong url %s\n", i, wine_dbgstr_wn(str.chars, str.length) );
     }

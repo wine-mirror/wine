@@ -31,16 +31,16 @@ static void test_WsCreateMessage(void)
     WS_MESSAGE_PROPERTY prop;
 
     hr = WsCreateMessage( 0, 0, NULL, 0, NULL, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsCreateMessage( 0, 0, NULL, 0, &msg, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, 0, NULL, 0, &msg, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsCreateMessage( 0, WS_ADDRESSING_VERSION_0_9, NULL, 0, &msg, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     env_version = WS_ENVELOPE_VERSION_SOAP_1_1;
     prop.id = WS_MESSAGE_PROPERTY_ENVELOPE_VERSION;
@@ -48,42 +48,42 @@ static void test_WsCreateMessage(void)
     prop.valueSize = sizeof(env_version);
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_0_9, &prop,
                           1, &msg, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_0_9, NULL,
                           0, &msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     state = 0xdeadbeef;
     hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_STATE, &state, sizeof(state), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( state == WS_MESSAGE_STATE_EMPTY, "got %u\n", state );
 
     env_version = 0xdeadbeef;
     hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_ENVELOPE_VERSION, &env_version,
                                sizeof(env_version), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( env_version == WS_ENVELOPE_VERSION_SOAP_1_1, "got %u\n", env_version );
 
     addr_version = 0xdeadbeef;
     hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_ADDRESSING_VERSION, &addr_version,
                                sizeof(addr_version), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( addr_version == WS_ADDRESSING_VERSION_0_9, "got %u\n", addr_version );
 
     state = WS_MESSAGE_STATE_EMPTY;
     hr = WsSetMessageProperty( msg, WS_MESSAGE_PROPERTY_STATE, &state, sizeof(state), NULL );
-    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+    ok( hr == WS_E_INVALID_OPERATION, "got %#lx\n", hr );
 
     env_version = WS_ENVELOPE_VERSION_SOAP_1_1;
     hr = WsSetMessageProperty( msg, WS_MESSAGE_PROPERTY_ENVELOPE_VERSION, &env_version,
                                sizeof(env_version), NULL );
-    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+    ok( hr == WS_E_INVALID_OPERATION, "got %#lx\n", hr );
 
     addr_version = WS_ADDRESSING_VERSION_0_9;
     hr = WsSetMessageProperty( msg, WS_MESSAGE_PROPERTY_ADDRESSING_VERSION, &addr_version,
                                sizeof(addr_version), NULL );
-    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+    ok( hr == WS_E_INVALID_OPERATION, "got %#lx\n", hr );
     WsFreeMessage( msg );
 }
 
@@ -99,39 +99,39 @@ static void test_WsCreateMessageForChannel(void)
     BOOL addressed;
 
     hr = WsCreateMessageForChannel( NULL, NULL, 0, NULL, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsCreateMessageForChannel( NULL, NULL, 0, &msg, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     /* HTTP */
     hr = WsCreateChannel( WS_CHANNEL_TYPE_REQUEST, WS_HTTP_CHANNEL_BINDING, NULL, 0, NULL,
                           &channel, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsCreateMessageForChannel( channel, NULL, 0, &msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     state = 0xdeadbeef;
     hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_STATE, &state, sizeof(state), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( state == WS_MESSAGE_STATE_EMPTY, "got %u\n", state );
 
     env_version = 0xdeadbeef;
     hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_ENVELOPE_VERSION, &env_version,
                                sizeof(env_version), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( env_version == WS_ENVELOPE_VERSION_SOAP_1_2, "got %u\n", env_version );
 
     addr_version = 0xdeadbeef;
     hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_ADDRESSING_VERSION, &addr_version,
                                sizeof(addr_version), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( addr_version == WS_ADDRESSING_VERSION_1_0, "got %u\n", addr_version );
 
     hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_IS_ADDRESSED, &addressed, sizeof(addressed),
                                NULL );
-    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+    ok( hr == WS_E_INVALID_OPERATION, "got %#lx\n", hr );
 
     WsFreeChannel( channel );
     WsFreeMessage( msg );
@@ -142,15 +142,15 @@ static void test_WsCreateMessageForChannel(void)
     prop.valueSize = sizeof(env_version);
     hr = WsCreateChannel( WS_CHANNEL_TYPE_REQUEST, WS_HTTP_CHANNEL_BINDING, &prop, 1, NULL,
                           &channel, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsCreateMessageForChannel( channel, NULL, 0, &msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     env_version = 0xdeadbeef;
     hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_ENVELOPE_VERSION, &env_version,
                                sizeof(env_version), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( env_version == WS_ENVELOPE_VERSION_SOAP_1_1, "got %u\n", env_version );
 
     WsFreeChannel( channel );
@@ -159,26 +159,26 @@ static void test_WsCreateMessageForChannel(void)
     /* TCP */
     hr = WsCreateChannel( WS_CHANNEL_TYPE_DUPLEX_SESSION, WS_TCP_CHANNEL_BINDING, NULL, 0, NULL,
                           &channel, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsCreateMessageForChannel( channel, NULL, 0, &msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     state = 0xdeadbeef;
     hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_STATE, &state, sizeof(state), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( state == WS_MESSAGE_STATE_EMPTY, "got %u\n", state );
 
     env_version = 0xdeadbeef;
     hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_ENVELOPE_VERSION, &env_version,
                                sizeof(env_version), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( env_version == WS_ENVELOPE_VERSION_SOAP_1_2, "got %u\n", env_version );
 
     addr_version = 0xdeadbeef;
     hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_ADDRESSING_VERSION, &addr_version,
                                sizeof(addr_version), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( addr_version == WS_ADDRESSING_VERSION_1_0, "got %u\n", addr_version );
 
     WsFreeChannel( channel );
@@ -187,21 +187,21 @@ static void test_WsCreateMessageForChannel(void)
     /* UDP */
     hr = WsCreateChannel( WS_CHANNEL_TYPE_DUPLEX, WS_UDP_CHANNEL_BINDING, NULL, 0, NULL,
                           &channel, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsCreateMessageForChannel( channel, NULL, 0, &msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     env_version = 0xdeadbeef;
     hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_ENVELOPE_VERSION, &env_version,
                                sizeof(env_version), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( env_version == WS_ENVELOPE_VERSION_SOAP_1_2, "got %u\n", env_version );
 
     addr_version = 0xdeadbeef;
     hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_ADDRESSING_VERSION, &addr_version,
                                sizeof(addr_version), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( addr_version == WS_ADDRESSING_VERSION_1_0, "got %u\n", addr_version );
 
     WsFreeChannel( channel );
@@ -218,45 +218,45 @@ static void test_WsInitializeMessage(void)
     BOOL addressed;
 
     hr = WsInitializeMessage( NULL, WS_REQUEST_MESSAGE, NULL, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_0_9, NULL,
                           0, &msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsInitializeMessage( msg, 0xdeadbeef, NULL, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
-    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+    ok( hr == WS_E_INVALID_OPERATION, "got %#lx\n", hr );
 
     state = 0xdeadbeef;
     hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_STATE, &state, sizeof(state), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( state == WS_MESSAGE_STATE_INITIALIZED, "got %u\n", state );
 
     addressed = -1;
     hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_IS_ADDRESSED, &addressed, sizeof(addressed),
                                NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( !addressed, "unexpected value %d\n", addressed );
 
     state = WS_MESSAGE_STATE_EMPTY;
     hr = WsSetMessageProperty( msg, WS_MESSAGE_PROPERTY_STATE, &state, sizeof(state), NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     env_version = WS_ENVELOPE_VERSION_SOAP_1_1;
     hr = WsSetMessageProperty( msg, WS_MESSAGE_PROPERTY_ENVELOPE_VERSION, &env_version,
                                sizeof(env_version), NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     addr_version = WS_ADDRESSING_VERSION_0_9;
     hr = WsSetMessageProperty( msg, WS_MESSAGE_PROPERTY_ADDRESSING_VERSION, &addr_version,
                                sizeof(addr_version), NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
     WsFreeMessage( msg );
 }
 
@@ -268,55 +268,55 @@ static void test_WsAddressMessage(void)
     BOOL addressed;
 
     hr = WsAddressMessage( NULL, NULL, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_0_9, NULL,
                           0, &msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_IS_ADDRESSED, &addressed, sizeof(addressed),
                                NULL );
-    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+    ok( hr == WS_E_INVALID_OPERATION, "got %#lx\n", hr );
 
     hr = WsAddressMessage( msg, NULL, NULL );
-    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+    ok( hr == WS_E_INVALID_OPERATION, "got %#lx\n", hr );
 
     hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     addressed = -1;
     hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_IS_ADDRESSED, &addressed, sizeof(addressed),
                                NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( !addressed, "unexpected value %d\n", addressed );
 
     hr = WsAddressMessage( msg, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     addressed = -1;
     hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_IS_ADDRESSED, &addressed, sizeof(addressed),
                                NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( addressed == TRUE, "unexpected value %d\n", addressed );
     WsFreeMessage( msg );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_0_9, NULL,
                           0, &msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     memset( &endpoint, 0, sizeof(endpoint) );
     endpoint.url.chars  = (WCHAR *)L"http://localhost/";
     endpoint.url.length = ARRAY_SIZE( L"http://localhost/" ) - 1;
     hr = WsAddressMessage( msg, &endpoint, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     addressed = -1;
     hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_IS_ADDRESSED, &addressed, sizeof(addressed),
                                NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( addressed == TRUE, "unexpected value %d\n", addressed );
     WsFreeMessage( msg );
 }
@@ -337,8 +337,8 @@ static void check_output( WS_XML_WRITER *writer, const char *expected, int len, 
     if (len == -1) len = strlen( expected );
     memset( &bytes, 0, sizeof(bytes) );
     hr = WsGetWriterProperty( writer, WS_XML_WRITER_PROPERTY_BYTES, &bytes, sizeof(bytes), NULL );
-    ok( hr == S_OK, "%u: got %08x\n", line, hr );
-    ok( bytes.length == len, "%u: got %u expected %u\n", line, bytes.length, len );
+    ok( hr == S_OK, "%u: got %#lx\n", line, hr );
+    ok( bytes.length == len, "%u: got %lu expected %d\n", line, bytes.length, len );
     if (bytes.length != len) return;
     if (skip_start)
     {
@@ -360,16 +360,16 @@ static void check_output_header( WS_MESSAGE *msg, const char *expected, int len,
     HRESULT hr;
 
     hr = WsCreateWriter( NULL, 0, &writer, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = set_output( writer );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_HEADER_BUFFER, &buf, sizeof(buf), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsWriteXmlBuffer( writer, buf, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     check_output( writer, expected, len, skip_start, skip_len, line );
     WsFreeWriter( writer );
@@ -414,111 +414,111 @@ static void test_WsWriteEnvelopeStart(void)
     WS_MESSAGE_STATE state;
 
     hr = WsWriteEnvelopeStart( NULL, NULL, NULL, NULL, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsCreateWriter( NULL, 0, &writer, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsWriteEnvelopeStart( NULL, writer, NULL, NULL, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_0_9, NULL, 0, &msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsWriteEnvelopeStart( msg, writer, NULL, NULL, NULL );
-    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+    ok( hr == WS_E_INVALID_OPERATION, "got %#lx\n", hr );
 
     hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     hr = set_output( writer );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     hr = WsWriteEnvelopeStart( msg, writer, NULL, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     check_output( writer, expected, -1, strstr(expected, "urn:uuid:") - expected, 46, __LINE__ );
     check_output_header( msg, expected2, -1, strstr(expected2, "urn:uuid:") - expected2, 46, __LINE__ );
 
     state = 0xdeadbeef;
     hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_STATE, &state, sizeof(state), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( state == WS_MESSAGE_STATE_WRITING, "got %u\n", state );
     WsFreeMessage( msg );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_TRANSPORT, NULL, 0, &msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     hr = set_output( writer );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     hr = WsWriteEnvelopeStart( msg, writer, NULL, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     check_output_header( msg, expected3, -1, 0, 0, __LINE__ );
     WsFreeMessage( msg );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_NONE, WS_ADDRESSING_VERSION_TRANSPORT, NULL, 0, &msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     hr = set_output( writer );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     hr = WsWriteEnvelopeStart( msg, writer, NULL, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     check_output_header( msg, expected4, -1, 0, 0, __LINE__ );
     WsFreeMessage( msg );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_2, WS_ADDRESSING_VERSION_1_0, NULL, 0, &msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     hr = set_output( writer );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     hr = WsWriteEnvelopeStart( msg, writer, NULL, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     check_output_header( msg, expected5, -1, strstr(expected5, "urn:uuid:") - expected5, 46, __LINE__ );
     WsFreeMessage( msg );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_2, WS_ADDRESSING_VERSION_TRANSPORT, NULL, 0, &msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     hr = set_output( writer );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     hr = WsWriteEnvelopeStart( msg, writer, NULL, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     check_output_header( msg, expected6, -1, 0, 0, __LINE__ );
     WsFreeMessage( msg );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_1_0, NULL, 0, &msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     hr = set_output( writer );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     hr = WsWriteEnvelopeStart( msg, writer, NULL, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     check_output_header( msg, expected7, -1, strstr(expected7, "urn:uuid:") - expected7, 46, __LINE__ );
     WsFreeMessage( msg );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_1_0, NULL, 0, &msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     hr = WsInitializeMessage( msg, WS_BLANK_MESSAGE, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     hr = set_output( writer );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     hr = WsWriteEnvelopeStart( msg, writer, NULL, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     check_output_header( msg, expected8, -1, 0, 0, __LINE__ );
     WsFreeMessage( msg );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_2, WS_ADDRESSING_VERSION_1_0, NULL, 0, &msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     WsFreeMessage( msg );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_NONE, WS_ADDRESSING_VERSION_0_9, NULL, 0, &msg, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_NONE, WS_ADDRESSING_VERSION_1_0, NULL, 0, &msg, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
     WsFreeWriter( writer );
 }
 
@@ -535,38 +535,38 @@ static void test_WsWriteEnvelopeEnd(void)
     WS_MESSAGE_STATE state;
 
     hr = WsWriteEnvelopeEnd( NULL, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_2, WS_ADDRESSING_VERSION_1_0, NULL, 0, &msg,
                           NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsWriteEnvelopeEnd( msg, NULL );
-    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+    ok( hr == WS_E_INVALID_OPERATION, "got %#lx\n", hr );
 
     hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsWriteEnvelopeEnd( msg, NULL );
-    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+    ok( hr == WS_E_INVALID_OPERATION, "got %#lx\n", hr );
 
     hr = WsCreateWriter( NULL, 0, &writer, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = set_output( writer );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsWriteEnvelopeStart( msg, writer, NULL, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsWriteEnvelopeEnd( msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     check_output( writer, expected, -1, strstr(expected, "urn:uuid:") - expected, 46, __LINE__ );
     check_output_header( msg, expected, -1, strstr(expected, "urn:uuid:") - expected, 46, __LINE__ );
 
     state = 0xdeadbeef;
     hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_STATE, &state, sizeof(state), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( state == WS_MESSAGE_STATE_DONE, "got %u\n", state );
 
     WsFreeMessage( msg );
@@ -601,25 +601,25 @@ static void test_WsWriteBody(void)
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_2, WS_ADDRESSING_VERSION_1_0, NULL, 0, &msg,
                           NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsCreateWriter( NULL, 0, &writer, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = set_output( writer );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsWriteEnvelopeStart( msg, writer, NULL, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsWriteBody( NULL, NULL, 0, NULL, 0, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsWriteBody( msg, NULL, 0, NULL, 0, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     memset( &f, 0, sizeof(f) );
     f.mapping   = WS_ELEMENT_FIELD_MAPPING;
@@ -644,22 +644,22 @@ static void test_WsWriteBody(void)
     ptr = &test;
     test.val = 1;
     hr = WsWriteBody( msg, &desc, WS_WRITE_REQUIRED_POINTER, &ptr, sizeof(ptr), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     check_output( writer, expected, 240, strstr(expected, "urn:uuid:") - expected, 46, __LINE__ );
     check_output_header( msg, expected2, -1, strstr(expected2, "urn:uuid:") - expected2, 46, __LINE__ );
 
     state = 0xdeadbeef;
     hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_STATE, &state, sizeof(state), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( state == WS_MESSAGE_STATE_WRITING, "got %u\n", state );
 
     hr = WsWriteEnvelopeEnd( msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     check_output( writer, expected, -1, strstr(expected, "urn:uuid:") - expected, 46, __LINE__ );
     check_output_header( msg, expected2, -1, strstr(expected2, "urn:uuid:") - expected2, 46, __LINE__ );
 
     hr = WsWriteBody( msg, &desc, WS_WRITE_REQUIRED_POINTER, &ptr, sizeof(ptr), NULL );
-    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+    ok( hr == WS_E_INVALID_OPERATION, "got %#lx\n", hr );
 
     WsFreeMessage( msg );
     WsFreeWriter( writer );
@@ -686,45 +686,45 @@ static void test_WsSetHeader(void)
     const WCHAR *ptr = L"action";
 
     hr = WsSetHeader( NULL, 0, 0, 0, NULL, 0, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_2, WS_ADDRESSING_VERSION_1_0, NULL, 0, &msg,
                           NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsSetHeader( msg, 0, 0, 0, NULL, 0, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsSetHeader( msg, WS_ACTION_HEADER, WS_WSZ_TYPE, WS_WRITE_REQUIRED_POINTER, &ptr,
                       sizeof(ptr), NULL );
-    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+    ok( hr == WS_E_INVALID_OPERATION, "got %#lx\n", hr );
 
     hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsSetHeader( msg, 0, WS_WSZ_TYPE, WS_WRITE_REQUIRED_POINTER, &ptr, sizeof(ptr), NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsSetHeader( msg, WS_ACTION_HEADER, WS_WSZ_TYPE, WS_WRITE_REQUIRED_POINTER, &ptr,
                       sizeof(ptr), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     check_output_header( msg, expected, -1, strstr(expected, "urn:uuid:") - expected, 46, __LINE__ );
 
     hr = WsCreateWriter( NULL, 0, &writer, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = set_output( writer );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsWriteEnvelopeStart( msg, writer, NULL, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     check_output( writer, expected, 250, strstr(expected, "urn:uuid:") - expected, 46, __LINE__ );
     check_output_header( msg, expected, -1, strstr(expected, "urn:uuid:") - expected, 46, __LINE__ );
 
     /* called after WsWriteEnvelopeStart */
     hr = WsSetHeader( msg, WS_ACTION_HEADER, WS_XML_STRING_TYPE, WS_WRITE_REQUIRED_VALUE, &action2,
                       sizeof(action2), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     check_output( writer, expected, 250, strstr(expected, "urn:uuid:") - expected, 46, __LINE__ );
     check_output_header( msg, expected2, -1, strstr(expected2, "urn:uuid:") - expected2, 46, __LINE__ );
 
@@ -750,44 +750,44 @@ static void test_WsRemoveHeader(void)
     WS_MESSAGE *msg;
 
     hr = WsSetHeader( NULL, 0, 0, 0, NULL, 0, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_2, WS_ADDRESSING_VERSION_1_0, NULL, 0, &msg,
                           NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsRemoveHeader( NULL, 0, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsRemoveHeader( msg, 0, NULL );
-    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+    ok( hr == WS_E_INVALID_OPERATION, "got %#lx\n", hr );
 
     hr = WsRemoveHeader( msg, WS_ACTION_HEADER, NULL );
-    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+    ok( hr == WS_E_INVALID_OPERATION, "got %#lx\n", hr );
 
     hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     check_output_header( msg, expected2, -1, strstr(expected2, "urn:uuid:") - expected2, 46, __LINE__ );
 
     hr = WsRemoveHeader( msg, 0, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsRemoveHeader( msg, WS_ACTION_HEADER, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     check_output_header( msg, expected2, -1, strstr(expected2, "urn:uuid:") - expected2, 46, __LINE__ );
 
     hr = WsSetHeader( msg, WS_ACTION_HEADER, WS_XML_STRING_TYPE, WS_WRITE_REQUIRED_VALUE, &action,
                       sizeof(action), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     check_output_header( msg, expected, -1, strstr(expected, "urn:uuid:") - expected, 46, __LINE__ );
 
     hr = WsRemoveHeader( msg, WS_ACTION_HEADER, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     check_output_header( msg, expected2, -1, strstr(expected2, "urn:uuid:") - expected2, 46, __LINE__ );
 
     /* again */
     hr = WsRemoveHeader( msg, WS_ACTION_HEADER, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     check_output_header( msg, expected2, -1, strstr(expected2, "urn:uuid:") - expected2, 46, __LINE__ );
 
     WsFreeMessage( msg );
@@ -800,29 +800,29 @@ static void test_WsAddMappedHeader(void)
     HRESULT hr;
 
     hr = WsAddMappedHeader( NULL, NULL, 0, 0, NULL, 0, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_2, WS_ADDRESSING_VERSION_1_0, NULL, 0, &msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsAddMappedHeader( msg, NULL, 0, 0, NULL, 0, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsAddMappedHeader( msg, &header, 0, 0, NULL, 0, NULL );
-    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+    ok( hr == WS_E_INVALID_OPERATION, "got %#lx\n", hr );
 
     hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsAddMappedHeader( msg, &header, WS_XML_STRING_TYPE, WS_WRITE_REQUIRED_VALUE, NULL, 0, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsAddMappedHeader( msg, &header, WS_XML_STRING_TYPE, WS_WRITE_REQUIRED_VALUE, &value, sizeof(value), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     /* again */
     hr = WsAddMappedHeader( msg, &header, WS_XML_STRING_TYPE, WS_WRITE_REQUIRED_VALUE, &value, sizeof(value), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     WsFreeMessage( msg );
 }
@@ -834,29 +834,29 @@ static void test_WsRemoveMappedHeader(void)
     HRESULT hr;
 
     hr = WsRemoveMappedHeader( NULL, NULL, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_2, WS_ADDRESSING_VERSION_1_0, NULL, 0, &msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsRemoveMappedHeader( msg, NULL, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsRemoveMappedHeader( msg, &header, NULL );
-    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+    ok( hr == WS_E_INVALID_OPERATION, "got %#lx\n", hr );
 
     hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsAddMappedHeader( msg, &header, WS_XML_STRING_TYPE, WS_WRITE_REQUIRED_VALUE, &value, sizeof(value), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsRemoveMappedHeader( msg, &header, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     /* again */
     hr = WsRemoveMappedHeader( msg, &header, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     WsFreeMessage( msg );
 }
@@ -898,13 +898,13 @@ static void test_WsAddCustomHeader(void)
     } test;
 
     hr = WsAddCustomHeader( NULL, NULL, 0, NULL, 0, 0, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_2, WS_ADDRESSING_VERSION_1_0, NULL, 0, &msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsAddCustomHeader( msg, NULL, 0, NULL, 0, 0, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     memset( &f, 0, sizeof(f) );
     f.mapping = WS_TEXT_FIELD_MAPPING;
@@ -922,29 +922,29 @@ static void test_WsAddCustomHeader(void)
     desc.type             = WS_STRUCT_TYPE;
     desc.typeDescription  = &s;
     hr = WsAddCustomHeader( msg, &desc, 0, NULL, 0, 0, NULL );
-    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+    ok( hr == WS_E_INVALID_OPERATION, "got %#lx\n", hr );
 
     hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     check_output_header( msg, expected2, -1, strstr(expected2, "urn:uuid:") - expected2, 46, __LINE__ );
 
     test.value = L"value";
     hr = WsAddCustomHeader( msg, &desc, WS_WRITE_REQUIRED_VALUE, &test, sizeof(test), 0, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     check_output_header( msg, expected, -1, strstr(expected, "urn:uuid:") - expected, 46, __LINE__ );
 
     test.value = L"value2";
     hr = WsAddCustomHeader( msg, &desc, WS_WRITE_REQUIRED_VALUE, &test, sizeof(test), 0, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     check_output_header( msg, expected3, -1, strstr(expected3, "urn:uuid:") - expected3, 46, __LINE__ );
 
     desc.elementLocalName = &header2;
     hr = WsAddCustomHeader( msg, &desc, WS_WRITE_REQUIRED_VALUE, &test, sizeof(test), 0, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     check_output_header( msg, expected4, -1, strstr(expected4, "urn:uuid:") - expected4, 46, __LINE__ );
 
     hr = WsAddCustomHeader( msg, &desc, WS_WRITE_REQUIRED_VALUE, NULL, 0, 0, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     WsFreeMessage( msg );
 }
@@ -975,16 +975,16 @@ static void test_WsRemoveCustomHeader(void)
     WS_ELEMENT_DESCRIPTION desc;
 
     hr = WsRemoveCustomHeader( NULL, NULL, NULL, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_2, WS_ADDRESSING_VERSION_1_0, NULL, 0, &msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsRemoveCustomHeader( msg, &localname, &ns, NULL );
-    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+    ok( hr == WS_E_INVALID_OPERATION, "got %#lx\n", hr );
 
     hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     check_output_header( msg, expected2, -1, strstr(expected2, "urn:uuid:") - expected2, 46, __LINE__ );
 
     desc.elementLocalName = &localname;
@@ -992,26 +992,26 @@ static void test_WsRemoveCustomHeader(void)
     desc.type             = WS_XML_STRING_TYPE;
     desc.typeDescription  = NULL;
     hr = WsAddCustomHeader( msg, &desc, WS_WRITE_REQUIRED_VALUE, &value, sizeof(value), 0, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     check_output_header( msg, expected, -1, strstr(expected, "urn:uuid:") - expected, 46, __LINE__ );
 
     hr = WsAddCustomHeader( msg, &desc, WS_WRITE_REQUIRED_VALUE, &value2, sizeof(value2), 0, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     check_output_header( msg, expected3, -1, strstr(expected3, "urn:uuid:") - expected3, 46, __LINE__ );
 
     hr = WsRemoveCustomHeader( msg, NULL, NULL, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsRemoveCustomHeader( msg, &localname, NULL, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsRemoveCustomHeader( msg, &localname, &ns, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     check_output_header( msg, expected2, -1, strstr(expected2, "urn:uuid:") - expected2, 46, __LINE__ );
 
     /* again */
     hr = WsRemoveCustomHeader( msg, &localname, &ns, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     WsFreeMessage( msg );
 }
@@ -1038,53 +1038,53 @@ static void test_WsReadEnvelopeStart(void)
     HRESULT hr;
 
     hr = WsReadEnvelopeStart( NULL, NULL, NULL, NULL, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_0_9, NULL, 0, &msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsReadEnvelopeStart( msg, NULL, NULL, NULL, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsCreateReader( NULL, 0, &reader, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsReadEnvelopeStart( msg, reader, NULL, NULL, NULL );
-    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+    ok( hr == WS_E_INVALID_OPERATION, "got %#lx\n", hr );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_0_9, NULL, 0, &msg2, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = set_input( reader, xml, strlen(xml) );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsReadEnvelopeStart( msg2, reader, NULL, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     state = 0xdeadbeef;
     hr = WsGetMessageProperty( msg2, WS_MESSAGE_PROPERTY_STATE, &state, sizeof(state), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( state == WS_MESSAGE_STATE_READING, "got %u\n", state );
 
     hr = WsGetReaderNode( reader, &node, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( node->nodeType == WS_XML_NODE_TYPE_END_ELEMENT, "got %u\n", node->nodeType );
 
     hr = WsReadEndElement( reader, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsGetReaderNode( reader, &node, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( node->nodeType == WS_XML_NODE_TYPE_END_ELEMENT, "got %u\n", node->nodeType );
 
     hr = WsReadEndElement( reader, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsGetReaderNode( reader, &node, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( node->nodeType == WS_XML_NODE_TYPE_EOF, "got %u\n", node->nodeType );
 
     WsFreeMessage( msg );
@@ -1102,35 +1102,35 @@ static void test_WsReadEnvelopeEnd(void)
     HRESULT hr;
 
     hr = WsReadEnvelopeEnd( NULL, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_0_9, NULL, 0, &msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsCreateReader( NULL, 0, &reader, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_0_9, NULL, 0, &msg2, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = set_input( reader, xml, strlen(xml) );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsReadEnvelopeEnd( msg2, NULL );
-    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+    ok( hr == WS_E_INVALID_OPERATION, "got %#lx\n", hr );
 
     hr = WsReadEnvelopeStart( msg2, reader, NULL, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsReadEnvelopeEnd( msg2, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     state = 0xdeadbeef;
     hr = WsGetMessageProperty( msg2, WS_MESSAGE_PROPERTY_STATE, &state, sizeof(state), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( state == WS_MESSAGE_STATE_DONE, "got %u\n", state );
 
     WsFreeMessage( msg );
@@ -1159,34 +1159,34 @@ static void test_WsReadBody(void)
     HRESULT hr;
 
     hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsReadBody( NULL, NULL, 0, NULL, NULL, 0, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_0_9, NULL, 0, &msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsCreateReader( NULL, 0, &reader, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_0_9, NULL, 0, &msg2, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsReadBody( msg2, NULL, 0, NULL, NULL, 0, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = set_input( reader, xml, strlen(xml) );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsReadEnvelopeStart( msg2, reader, NULL, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsReadBody( msg2, NULL, WS_READ_REQUIRED_VALUE, heap, &test, sizeof(test), NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     memset( &f, 0, sizeof(f) );
     f.mapping   = WS_ELEMENT_FIELD_MAPPING;
@@ -1210,16 +1210,16 @@ static void test_WsReadBody(void)
 
     memset( &test, 0, sizeof(test) );
     hr = WsReadBody( msg2, &desc, WS_READ_REQUIRED_VALUE, heap, &test, sizeof(test), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( test.val == 1, "got %u\n", test.val );
 
     state = 0xdeadbeef;
     hr = WsGetMessageProperty( msg2, WS_MESSAGE_PROPERTY_STATE, &state, sizeof(state), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( state == WS_MESSAGE_STATE_READING, "got %u\n", state );
 
     hr = WsReadEnvelopeEnd( msg2, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     WsFreeMessage( msg );
     WsFreeMessage( msg2 );
@@ -1236,39 +1236,39 @@ static void test_WsResetMessage(void)
     HRESULT hr;
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_0_9, NULL, 0, &msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     state = 0xdeadbeef;
     hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_STATE, &state, sizeof(state), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( state == WS_MESSAGE_STATE_EMPTY, "got %u\n", state );
 
     hr = WsInitializeMessage( msg,  WS_REQUEST_MESSAGE, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     state = 0xdeadbeef;
     hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_STATE, &state, sizeof(state), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( state == WS_MESSAGE_STATE_INITIALIZED, "got %u\n", state );
 
     hr = WsResetMessage( msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     state = 0xdeadbeef;
     hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_STATE, &state, sizeof(state), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( state == WS_MESSAGE_STATE_EMPTY, "got %u\n", state );
 
     env_version = 0xdeadbeef;
     hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_ENVELOPE_VERSION, &env_version,
                                sizeof(env_version), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( env_version == WS_ENVELOPE_VERSION_SOAP_1_1, "got %u\n", env_version );
 
     addr_version = 0xdeadbeef;
     hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_ADDRESSING_VERSION, &addr_version,
                                sizeof(addr_version), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( addr_version == WS_ADDRESSING_VERSION_0_9, "got %u\n", addr_version );
 
     WsFreeMessage( msg );
@@ -1295,83 +1295,83 @@ static void test_WsGetHeader(void)
     HRESULT hr;
 
     hr = WsGetHeader( NULL, 0, 0, 0, NULL, NULL, 0, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_2, WS_ADDRESSING_VERSION_1_0, NULL, 0, &msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsGetHeader( msg, 0, 0, 0, NULL, NULL, 0, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsInitializeMessage( msg,  WS_REQUEST_MESSAGE, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsGetHeader( msg, 0, 0, 0, NULL, NULL, 0, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsGetHeader( msg, WS_ACTION_HEADER, 0, 0, NULL, NULL, 0, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsGetHeader( msg, WS_ACTION_HEADER, WS_WSZ_TYPE, 0, NULL, NULL, 0, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsGetHeader( msg, WS_ACTION_HEADER, WS_WSZ_TYPE, WS_READ_NILLABLE_POINTER, NULL, NULL, 0, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsGetHeader( msg, WS_ACTION_HEADER, WS_WSZ_TYPE, WS_READ_REQUIRED_POINTER, NULL, NULL, 0, NULL );
-    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+    ok( hr == WS_E_INVALID_FORMAT, "got %#lx\n", hr );
 
     ptr = L"action";
     hr = WsSetHeader( msg, WS_ACTION_HEADER, WS_WSZ_TYPE, WS_WRITE_REQUIRED_POINTER, &ptr, sizeof(ptr), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     check_output_header( msg, expected, -1, strstr(expected, "urn:uuid:") - expected, 46, __LINE__ );
 
     hr = WsGetHeader( msg, WS_ACTION_HEADER, WS_WSZ_TYPE, WS_READ_REQUIRED_POINTER, NULL, NULL, 0, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     ptr = NULL;
     hr = WsGetHeader( msg, WS_ACTION_HEADER, WS_WSZ_TYPE, WS_READ_REQUIRED_POINTER, NULL, &ptr, 0, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     ptr = NULL;
     hr = WsGetHeader( msg, WS_ACTION_HEADER, WS_WSZ_TYPE, WS_READ_REQUIRED_POINTER, NULL, &ptr, sizeof(ptr), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( ptr != NULL, "ptr not set\n" );
     ok( !memcmp( ptr, L"action", sizeof(L"action") ), "wrong data\n" );
     WsFreeMessage( msg );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_NONE, WS_ADDRESSING_VERSION_TRANSPORT, NULL, 0, &msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsInitializeMessage( msg,  WS_REQUEST_MESSAGE, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     ptr = L"action";
     hr = WsSetHeader( msg, WS_ACTION_HEADER, WS_WSZ_TYPE, WS_WRITE_REQUIRED_POINTER, &ptr, sizeof(ptr), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     if (hr == S_OK) check_output_header( msg, expected2, -1, 0, 0, __LINE__ );
 
     ptr = NULL;
     hr = WsGetHeader( msg, WS_ACTION_HEADER, WS_WSZ_TYPE, WS_READ_REQUIRED_POINTER, NULL, &ptr, sizeof(ptr), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( ptr != NULL, "ptr not set\n" );
     ok( !memcmp( ptr, L"action", sizeof(L"action") ), "wrong data\n" );
     WsFreeMessage( msg );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_2, WS_ADDRESSING_VERSION_TRANSPORT, NULL, 0, &msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsInitializeMessage( msg,  WS_REQUEST_MESSAGE, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     ptr = L"action";
     hr = WsSetHeader( msg, WS_ACTION_HEADER, WS_WSZ_TYPE, WS_WRITE_REQUIRED_POINTER, &ptr, sizeof(ptr), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     if (hr == S_OK) check_output_header( msg, expected3, -1, 0, 0, __LINE__ );
 
     ptr = NULL;
     hr = WsGetHeader( msg, WS_ACTION_HEADER, WS_WSZ_TYPE, WS_READ_REQUIRED_POINTER, NULL, &ptr, sizeof(ptr), NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( ptr != NULL, "ptr not set\n" );
     ok( !memcmp( ptr, L"action", sizeof(L"action") ), "wrong data\n" );
     WsFreeMessage( msg );
@@ -1393,16 +1393,16 @@ static void test_WsGetCustomHeader(void)
     } test;
 
     hr = WsGetCustomHeader( NULL, NULL, 0, 0, 0, NULL, NULL, 0, NULL, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_NONE, WS_ADDRESSING_VERSION_TRANSPORT, NULL, 0, &msg, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsGetCustomHeader( msg, NULL, 0, 0, 0, NULL, NULL, 0, NULL, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
 
     memset( &f, 0, sizeof(f) );
     f.mapping = WS_TEXT_FIELD_MAPPING;
@@ -1422,22 +1422,22 @@ static void test_WsGetCustomHeader(void)
 
     test.value = L"value";
     hr = WsAddCustomHeader( msg, &desc, WS_WRITE_REQUIRED_VALUE, &test, sizeof(test), 0, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     check_output_header( msg, expected, -1, 0, 0, __LINE__ );
 
     hr = WsGetCustomHeader( msg, &desc, 0, 0, 0, NULL, NULL, 0, NULL, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsGetCustomHeader( msg, &desc, WS_SINGLETON_HEADER, 1, 0, NULL, NULL, 0, NULL, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     hr = WsGetCustomHeader( msg, &desc, WS_SINGLETON_HEADER, 0, WS_READ_REQUIRED_VALUE, NULL, NULL, 0, NULL, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     memset( &test, 0, sizeof(test) );
     hr = WsGetCustomHeader( msg, &desc, WS_SINGLETON_HEADER, 0, WS_READ_REQUIRED_VALUE, NULL, &test, sizeof(test),
                             NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %#lx\n", hr );
     ok( test.value != NULL, "value not set\n" );
     ok( !memcmp( test.value, L"value", sizeof(L"value") ), "wrong value\n" );
     WsFreeMessage( msg );
