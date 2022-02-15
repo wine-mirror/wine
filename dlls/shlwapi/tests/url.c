@@ -601,10 +601,10 @@ static void test_UrlGetPart(void)
     tests[] =
     {
         {"hi", URL_PART_SCHEME, 0, S_FALSE, ""},
-        {"hi", URL_PART_USERNAME, 0, E_FAIL, .todo_hr = TRUE},
-        {"hi", URL_PART_PASSWORD, 0, E_FAIL, .todo_hr = TRUE},
+        {"hi", URL_PART_USERNAME, 0, E_FAIL},
+        {"hi", URL_PART_PASSWORD, 0, E_FAIL},
         {"hi", URL_PART_HOSTNAME, 0, E_FAIL},
-        {"hi", URL_PART_PORT, 0, E_FAIL, .todo_hr = TRUE},
+        {"hi", URL_PART_PORT, 0, E_FAIL},
         {"hi", URL_PART_QUERY, 0, S_FALSE, ""},
 
         {"http://foo:bar@localhost:21/internal.php?query=x&return=y", URL_PART_SCHEME, 0, S_OK, "http"},

@@ -4329,6 +4329,24 @@ HRESULT WINAPI UrlGetPartW(const WCHAR *url, WCHAR *out, DWORD *out_len, DWORD p
 
     hr = parse_url(url, &pl);
 
+    switch (scheme)
+    {
+        case URL_SCHEME_FILE:
+        case URL_SCHEME_FTP:
+        case URL_SCHEME_GOPHER:
+        case URL_SCHEME_HTTP:
+        case URL_SCHEME_HTTPS:
+        case URL_SCHEME_TELNET:
+        case URL_SCHEME_NEWS:
+        case URL_SCHEME_NNTP:
+        case URL_SCHEME_SNEWS:
+            break;
+
+        default:
+            if (part != URL_PART_SCHEME && part != URL_PART_QUERY)
+                return E_FAIL;
+    }
+
     switch (part)
     {
     case URL_PART_SCHEME:
@@ -4344,22 +4362,6 @@ HRESULT WINAPI UrlGetPartW(const WCHAR *url, WCHAR *out, DWORD *out_len, DWORD p
         break;
 
     case URL_PART_HOSTNAME:
-        switch (scheme)
-        {
-            case URL_SCHEME_FILE:
-            case URL_SCHEME_FTP:
-            case URL_SCHEME_GOPHER:
-            case URL_SCHEME_HTTP:
-            case URL_SCHEME_HTTPS:
-            case URL_SCHEME_TELNET:
-            case URL_SCHEME_NEWS:
-            case URL_SCHEME_NNTP:
-            case URL_SCHEME_SNEWS:
-                break;
-            default:
-                return E_FAIL;
-        }
-
         if (scheme == URL_SCHEME_FILE && (!pl.hostname_len || (pl.hostname_len == 1 && *(pl.hostname + 1) == ':')))
         {
             *out = '\0';
