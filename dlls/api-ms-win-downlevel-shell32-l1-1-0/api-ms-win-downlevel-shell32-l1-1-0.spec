@@ -1,3 +1,3 @@
-@ stdcall CommandLineToArgvW(wstr ptr) shell32.CommandLineToArgvW
-@ stdcall GetCurrentProcessExplicitAppUserModelID(ptr) shell32.GetCurrentProcessExplicitAppUserModelID
-@ stdcall SetCurrentProcessExplicitAppUserModelID(wstr) shell32.SetCurrentProcessExplicitAppUserModelID
+@ stdcall CommandLineToArgvW(wstr ptr) shcore.CommandLineToArgvW
+@ stdcall GetCurrentProcessExplicitAppUserModelID(ptr) shcore.GetCurrentProcessExplicitAppUserModelID
+@ stdcall SetCurrentProcessExplicitAppUserModelID(wstr) shcore.SetCurrentProcessExplicitAppUserModelID

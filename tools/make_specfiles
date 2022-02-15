@@ -375,6 +375,7 @@ my @dll_groups =
  [
   "shcore",
   "api-ms-win-core-featurestaging-l1-1-0",
+  "api-ms-win-downlevel-shell32-l1-1-0",
   "api-ms-win-downlevel-shlwapi-l2-1-0",
   "api-ms-win-shcore-obsolete-l1-1-0",
   "api-ms-win-shcore-scaling-l1-1-0",
@@ -385,7 +386,6 @@ my @dll_groups =
  ],
  [
   "shell32",
-  "api-ms-win-downlevel-shell32-l1-1-0",
   "api-ms-win-shell-shellcom-l1-1-0",
   "api-ms-win-shell-shellfolders-l1-1-0",
   "ext-ms-win-shell-shell32-l1-2-0",
