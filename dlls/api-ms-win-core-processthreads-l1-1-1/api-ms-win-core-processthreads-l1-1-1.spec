@@ -51,7 +51,7 @@
 @ stdcall SetThreadPriority(long long) kernel32.SetThreadPriority
 @ stdcall SetThreadPriorityBoost(long long) kernel32.SetThreadPriorityBoost
 @ stdcall SetThreadStackGuarantee(ptr) kernel32.SetThreadStackGuarantee
-@ stdcall SetThreadToken(ptr ptr) advapi32.SetThreadToken
+@ stdcall SetThreadToken(ptr ptr) kernel32.SetThreadToken
 @ stdcall SuspendThread(long) kernel32.SuspendThread
 @ stdcall SwitchToThread() kernel32.SwitchToThread
 @ stdcall TerminateProcess(long long) kernel32.TerminateProcess

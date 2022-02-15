@@ -1476,7 +1476,7 @@
 @ stdcall -import SetThreadPriorityBoost(long long)
 @ stdcall -import SetThreadSelectedCpuSets(ptr ptr long)
 @ stdcall -import SetThreadStackGuarantee(ptr)
-# @ stub SetThreadToken
+@ stdcall SetThreadToken(ptr ptr) kernelbase.SetThreadToken
 @ stdcall -import SetThreadUILanguage(long)
 @ stdcall -import SetThreadpoolStackInformation(ptr ptr)
 @ stdcall SetThreadpoolThreadMaximum(ptr long) NTDLL.TpSetPoolMaxThreads
