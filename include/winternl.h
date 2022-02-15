@@ -1624,7 +1624,7 @@ typedef enum _SYSTEM_INFORMATION_CLASS {
     SystemContextSwitchInformation = 36,
     SystemRegistryQuotaInformation = 37,
     SystemExtendServiceTableInformation = 38,
-    SystemPrioritySeperation = 39,
+    SystemPrioritySeparation = 39,
     SystemVerifierAddDriverInformation = 40,
     SystemVerifierRemoveDriverInformation = 41,
     SystemProcessorIdleInformation = 42,
