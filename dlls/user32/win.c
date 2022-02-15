@@ -41,16 +41,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(win);
 
 static DWORD process_layout = ~0u;
 
-static struct list window_surfaces = LIST_INIT( window_surfaces );
-
-static CRITICAL_SECTION surfaces_section;
-static CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &surfaces_section,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": surfaces_section") }
-};
-static CRITICAL_SECTION surfaces_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 /**********************************************************************/
 
@@ -730,11 +720,9 @@ void create_offscreen_window_surface( const RECT *visible_rect, struct window_su
  */
 void register_window_surface( struct window_surface *old, struct window_surface *new )
 {
-    if (old == new) return;
-    EnterCriticalSection( &surfaces_section );
-    if (old && old != &dummy_surface) list_remove( &old->entry );
-    if (new && new != &dummy_surface) list_add_tail( &window_surfaces, &new->entry );
-    LeaveCriticalSection( &surfaces_section );
+    if (old == &dummy_surface) old = NULL;
+    if (new == &dummy_surface) new = NULL;
+    NtUserCallTwoParam( (UINT_PTR)old, (UINT_PTR)new, NtUserRegisterWindowSurface );
 }
 
 
@@ -745,20 +733,7 @@ void register_window_surface( struct window_surface *old, struct window_surface 
  */
 void flush_window_surfaces( BOOL idle )
 {
-    static DWORD last_idle;
-    DWORD now;
-    struct window_surface *surface;
-
-    EnterCriticalSection( &surfaces_section );
-    now = GetTickCount();
-    if (idle) last_idle = now;
-    /* if not idle, we only flush if there's evidence that the app never goes idle */
-    else if ((int)(now - last_idle) < 50) goto done;
-
-    LIST_FOR_EACH_ENTRY( surface, &window_surfaces, struct window_surface, entry )
-        surface->funcs->flush( surface );
-done:
-    LeaveCriticalSection( &surfaces_section );
+    NtUserCallOneParam( idle, NtUserFlushWindowSurfaces );
 }
 
 

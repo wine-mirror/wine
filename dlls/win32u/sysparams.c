@@ -4504,10 +4504,14 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
         return HandleToUlong( get_sys_color_pen(arg) );
     case NtUserGetSystemMetrics:
         return get_system_metrics( arg );
-    case NtUserGetDeskPattern:
-        return get_entry( &entry_DESKPATTERN, 256, (WCHAR *)arg );
     case NtUserMessageBeep:
         return message_beep( arg );
+    /* temporary exports */
+    case NtUserFlushWindowSurfaces:
+        flush_window_surfaces( arg );
+        return 0;
+    case NtUserGetDeskPattern:
+        return get_entry( &entry_DESKPATTERN, 256, (WCHAR *)arg );
     default:
         FIXME( "invalid code %u\n", code );
         return 0;
@@ -4529,6 +4533,10 @@ ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code 
         return mirror_window_region( UlongToHandle(arg1), UlongToHandle(arg2) );
     case NtUserMonitorFromRect:
         return HandleToUlong( monitor_from_rect( (const RECT *)arg1, arg2, get_thread_dpi() ));
+    /* temporary exports */
+    case NtUserRegisterWindowSurface:
+        register_window_surface( (struct window_surface *)arg1, (struct window_surface *)arg2 );
+        return 0;
     default:
         FIXME( "invalid code %u\n", code );
         return 0;

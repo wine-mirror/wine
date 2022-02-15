@@ -61,6 +61,7 @@ enum
     NtUserMessageBeep,
     NtUserRealizePalette,
     /* temporary exports */
+    NtUserFlushWindowSurfaces,
     NtUserGetDeskPattern,
 };
 
@@ -71,6 +72,8 @@ enum
     NtUserGetSystemMetricsForDpi,
     NtUserMirrorRgn,
     NtUserMonitorFromRect,
+    /* temporary exports */
+    NtUserRegisterWindowSurface,
 };
 
 /* color index used to retrieve system 55aa brush */
