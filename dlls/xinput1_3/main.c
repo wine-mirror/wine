@@ -321,7 +321,7 @@ static DWORD HID_set_state(struct xinput_controller *controller, XINPUT_VIBRATIO
                                 controller->hid.haptics_rumble_ordinal, preparsed, report_buf, report_len);
     if (status != HIDP_STATUS_SUCCESS) WARN("HidP_SetUsageValue MANUAL_TRIGGER returned %#lx\n", status);
     status = HidP_SetUsageValue(HidP_Output, HID_USAGE_PAGE_HAPTICS, 0, HID_USAGE_HAPTICS_REPEAT_COUNT,
-                                1, preparsed, report_buf, report_len);
+                                0, preparsed, report_buf, report_len);
     if (status != HIDP_STATUS_SUCCESS) WARN("HidP_SetUsageValue REPEAT_COUNT returned %#lx\n", status);
     if (!HidD_SetOutputReport(controller->device, report_buf, report_len))
     {
@@ -337,6 +337,21 @@ static DWORD HID_set_state(struct xinput_controller *controller, XINPUT_VIBRATIO
     if (status != HIDP_STATUS_SUCCESS) WARN("HidP_SetUsageValue INTENSITY returned %#lx\n", status);
     status = HidP_SetUsageValue(HidP_Output, HID_USAGE_PAGE_HAPTICS, 0, HID_USAGE_HAPTICS_MANUAL_TRIGGER,
                                 controller->hid.haptics_buzz_ordinal, preparsed, report_buf, report_len);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_SetUsageValue MANUAL_TRIGGER returned %#lx\n", status);
+    status = HidP_SetUsageValue(HidP_Output, HID_USAGE_PAGE_HAPTICS, 0, HID_USAGE_HAPTICS_REPEAT_COUNT,
+                                0, preparsed, report_buf, report_len);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_SetUsageValue REPEAT_COUNT returned %#lx\n", status);
+    if (!HidD_SetOutputReport(controller->device, report_buf, report_len))
+    {
+        WARN("HidD_SetOutputReport failed with error %lu\n", GetLastError());
+        return GetLastError();
+    }
+
+    /* trigger haptics waveforms */
+    status = HidP_InitializeReportForID(HidP_Output, report_id, preparsed, report_buf, report_len);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_InitializeReportForID returned %#lx\n", status);
+    status = HidP_SetUsageValue(HidP_Output, HID_USAGE_PAGE_HAPTICS, 0, HID_USAGE_HAPTICS_MANUAL_TRIGGER,
+                                controller->hid.haptics_none_ordinal, preparsed, report_buf, report_len);
     if (status != HIDP_STATUS_SUCCESS) WARN("HidP_SetUsageValue MANUAL_TRIGGER returned %#lx\n", status);
     status = HidP_SetUsageValue(HidP_Output, HID_USAGE_PAGE_HAPTICS, 0, HID_USAGE_HAPTICS_REPEAT_COUNT,
                                 1, preparsed, report_buf, report_len);
