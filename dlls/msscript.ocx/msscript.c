@@ -218,7 +218,7 @@ static HRESULT load_typelib(void)
 
     hres = LoadRegTypeLib(&LIBID_MSScriptControl, 1, 0, LOCALE_SYSTEM_DEFAULT, &tl);
     if(FAILED(hres)) {
-        ERR("LoadRegTypeLib failed: %08x\n", hres);
+        ERR("LoadRegTypeLib failed: %08lx\n", hres);
         return hres;
     }
 
@@ -241,7 +241,7 @@ static HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo)
 
         hres = ITypeLib_GetTypeInfoOfGuid(typelib, tid_ids[tid], &ti);
         if(FAILED(hres)) {
-            ERR("GetTypeInfoOfGuid(%s) failed: %08x\n", debugstr_guid(tid_ids[tid]), hres);
+            ERR("GetTypeInfoOfGuid(%s) failed: %08lx\n", debugstr_guid(tid_ids[tid]), hres);
             return hres;
         }
 
@@ -654,7 +654,7 @@ static ULONG WINAPI ActiveScriptSite_AddRef(IActiveScriptSite *iface)
     ScriptHost *This = impl_from_IActiveScriptSite(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -664,7 +664,7 @@ static ULONG WINAPI ActiveScriptSite_Release(IActiveScriptSite *iface)
     ScriptHost *This = impl_from_IActiveScriptSite(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
         clear_named_items(This);
@@ -690,14 +690,14 @@ static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface, LPC
     ScriptHost *This = impl_from_IActiveScriptSite(iface);
     struct named_item *item;
 
-    TRACE("(%p, %s, %#x, %p, %p)\n", This, debugstr_w(name), mask, unk, ti);
+    TRACE("(%p, %s, %#lx, %p, %p)\n", This, debugstr_w(name), mask, unk, ti);
 
     item = host_get_named_item(This, name);
     if (!item)
         return TYPE_E_ELEMENTNOTFOUND;
 
     if (mask != SCRIPTINFO_IUNKNOWN) {
-        FIXME("mask %#x is not supported\n", mask);
+        FIXME("mask %#lx is not supported\n", mask);
         return E_NOTIMPL;
     }
 
@@ -892,7 +892,7 @@ static ULONG WINAPI ScriptProcedure_AddRef(IScriptProcedure *iface)
     ScriptProcedure *This = impl_from_IScriptProcedure(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -902,7 +902,7 @@ static ULONG WINAPI ScriptProcedure_Release(IScriptProcedure *iface)
     ScriptProcedure *This = impl_from_IScriptProcedure(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if (!ref)
     {
@@ -928,7 +928,7 @@ static HRESULT WINAPI ScriptProcedure_GetTypeInfo(IScriptProcedure *iface, UINT 
 {
     ScriptProcedure *This = impl_from_IScriptProcedure(iface);
 
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("(%p)->(%u %lu %p)\n", This, iTInfo, lcid, ppTInfo);
 
     return get_typeinfo(IScriptProcedure_tid, ppTInfo);
 }
@@ -940,7 +940,7 @@ static HRESULT WINAPI ScriptProcedure_GetIDsOfNames(IScriptProcedure *iface, REF
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("(%p)->(%s %p %u %lu %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo(IScriptProcedure_tid, &typeinfo);
     if (SUCCEEDED(hr))
@@ -960,7 +960,7 @@ static HRESULT WINAPI ScriptProcedure_Invoke(IScriptProcedure *iface, DISPID dis
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("(%p)->(%ld %s %ld %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo(IScriptProcedure_tid, &typeinfo);
@@ -1100,7 +1100,7 @@ static ULONG WINAPI procedure_enum_AddRef(IEnumVARIANT *iface)
     struct procedure_enum *This = procedure_enum_from_IEnumVARIANT(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -1110,7 +1110,7 @@ static ULONG WINAPI procedure_enum_Release(IEnumVARIANT *iface)
     struct procedure_enum *This = procedure_enum_from_IEnumVARIANT(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if (!ref)
     {
@@ -1129,7 +1129,7 @@ static HRESULT WINAPI procedure_enum_Next(IEnumVARIANT *iface, ULONG celt, VARIA
     UINT i, num;
     HRESULT hr;
 
-    TRACE("(%p)->(%u %p %p)\n", This, celt, rgVar, pCeltFetched);
+    TRACE("(%p)->(%lu %p %p)\n", This, celt, rgVar, pCeltFetched);
 
     if (!rgVar) return E_POINTER;
     if (!This->procedures->module->host) return E_FAIL;
@@ -1170,7 +1170,7 @@ static HRESULT WINAPI procedure_enum_Skip(IEnumVARIANT *iface, ULONG celt)
 {
     struct procedure_enum *This = procedure_enum_from_IEnumVARIANT(iface);
 
-    TRACE("(%p)->(%u)\n", This, celt);
+    TRACE("(%p)->(%lu)\n", This, celt);
 
     if (This->count - This->pos < celt)
     {
@@ -1246,7 +1246,7 @@ static ULONG WINAPI ScriptProcedureCollection_AddRef(IScriptProcedureCollection 
     ScriptProcedureCollection *This = impl_from_IScriptProcedureCollection(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -1257,7 +1257,7 @@ static ULONG WINAPI ScriptProcedureCollection_Release(IScriptProcedureCollection
     LONG ref = InterlockedDecrement(&This->ref);
     UINT i;
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if (!ref)
     {
@@ -1287,7 +1287,7 @@ static HRESULT WINAPI ScriptProcedureCollection_GetTypeInfo(IScriptProcedureColl
 {
     ScriptProcedureCollection *This = impl_from_IScriptProcedureCollection(iface);
 
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("(%p)->(%u %lu %p)\n", This, iTInfo, lcid, ppTInfo);
 
     return get_typeinfo(IScriptProcedureCollection_tid, ppTInfo);
 }
@@ -1299,7 +1299,7 @@ static HRESULT WINAPI ScriptProcedureCollection_GetIDsOfNames(IScriptProcedureCo
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("(%p)->(%s %p %u %lu %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo(IScriptProcedureCollection_tid, &typeinfo);
     if (SUCCEEDED(hr))
@@ -1319,7 +1319,7 @@ static HRESULT WINAPI ScriptProcedureCollection_Invoke(IScriptProcedureCollectio
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("(%p)->(%ld %s %ld %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo(IScriptProcedureCollection_tid, &typeinfo);
@@ -1555,7 +1555,7 @@ static ULONG WINAPI ScriptModule_AddRef(IScriptModule *iface)
     ScriptModule *This = impl_from_IScriptModule(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -1565,7 +1565,7 @@ static ULONG WINAPI ScriptModule_Release(IScriptModule *iface)
     ScriptModule *This = impl_from_IScriptModule(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if (!ref)
     {
@@ -1593,7 +1593,7 @@ static HRESULT WINAPI ScriptModule_GetTypeInfo(IScriptModule *iface, UINT iTInfo
 {
     ScriptModule *This = impl_from_IScriptModule(iface);
 
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("(%p)->(%u %lu %p)\n", This, iTInfo, lcid, ppTInfo);
 
     return get_typeinfo(IScriptModule_tid, ppTInfo);
 }
@@ -1605,7 +1605,7 @@ static HRESULT WINAPI ScriptModule_GetIDsOfNames(IScriptModule *iface, REFIID ri
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("(%p)->(%s %p %u %lu %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo(IScriptModule_tid, &typeinfo);
     if (SUCCEEDED(hr))
@@ -1625,7 +1625,7 @@ static HRESULT WINAPI ScriptModule_Invoke(IScriptModule *iface, DISPID dispIdMem
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("(%p)->(%ld %s %ld %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo(IScriptModule_tid, &typeinfo);
@@ -1803,7 +1803,7 @@ static ULONG WINAPI module_enum_AddRef(IEnumVARIANT *iface)
     struct module_enum *This = module_enum_from_IEnumVARIANT(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -1813,7 +1813,7 @@ static ULONG WINAPI module_enum_Release(IEnumVARIANT *iface)
     struct module_enum *This = module_enum_from_IEnumVARIANT(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if (!ref)
     {
@@ -1830,7 +1830,7 @@ static HRESULT WINAPI module_enum_Next(IEnumVARIANT *iface, ULONG celt, VARIANT 
     struct module_enum *This = module_enum_from_IEnumVARIANT(iface);
     unsigned int i, num;
 
-    TRACE("(%p)->(%u %p %p)\n", This, celt, rgVar, pCeltFetched);
+    TRACE("(%p)->(%lu %p %p)\n", This, celt, rgVar, pCeltFetched);
 
     if (!rgVar) return E_POINTER;
     if (This->host != This->control->host) return E_FAIL;
@@ -1851,7 +1851,7 @@ static HRESULT WINAPI module_enum_Skip(IEnumVARIANT *iface, ULONG celt)
 {
     struct module_enum *This = module_enum_from_IEnumVARIANT(iface);
 
-    TRACE("(%p)->(%u)\n", This, celt);
+    TRACE("(%p)->(%lu)\n", This, celt);
 
     if (This->host != This->control->host) return E_FAIL;
 
@@ -2000,7 +2000,7 @@ static HRESULT WINAPI ScriptModuleCollection_GetTypeInfo(IScriptModuleCollection
 {
     ScriptControl *This = impl_from_IScriptModuleCollection(iface);
 
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("(%p)->(%u %lu %p)\n", This, iTInfo, lcid, ppTInfo);
 
     return get_typeinfo(IScriptModuleCollection_tid, ppTInfo);
 }
@@ -2012,7 +2012,7 @@ static HRESULT WINAPI ScriptModuleCollection_GetIDsOfNames(IScriptModuleCollecti
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("(%p)->(%s %p %u %lu %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo(IScriptModuleCollection_tid, &typeinfo);
     if (SUCCEEDED(hr))
@@ -2032,7 +2032,7 @@ static HRESULT WINAPI ScriptModuleCollection_Invoke(IScriptModuleCollection *ifa
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("(%p)->(%ld %s %ld %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo(IScriptModuleCollection_tid, &typeinfo);
@@ -2249,7 +2249,7 @@ static ULONG WINAPI ScriptError_AddRef(IScriptError *iface)
     ScriptError *This = impl_from_IScriptError(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -2259,7 +2259,7 @@ static ULONG WINAPI ScriptError_Release(IScriptError *iface)
     ScriptError *This = impl_from_IScriptError(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if (!ref)
     {
@@ -2285,7 +2285,7 @@ static HRESULT WINAPI ScriptError_GetTypeInfo(IScriptError *iface, UINT iTInfo,
 {
     ScriptError *This = impl_from_IScriptError(iface);
 
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("(%p)->(%u %lu %p)\n", This, iTInfo, lcid, ppTInfo);
 
     return get_typeinfo(IScriptError_tid, ppTInfo);
 }
@@ -2297,7 +2297,7 @@ static HRESULT WINAPI ScriptError_GetIDsOfNames(IScriptError *iface, REFIID riid
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("(%p)->(%s %p %u %lu %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo(IScriptError_tid, &typeinfo);
     if (SUCCEEDED(hr))
@@ -2317,7 +2317,7 @@ static HRESULT WINAPI ScriptError_Invoke(IScriptError *iface, DISPID dispIdMembe
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("(%p)->(%ld %s %ld %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo(IScriptError_tid, &typeinfo);
@@ -2476,7 +2476,7 @@ static HRESULT set_safety_opts(IActiveScript *script, VARIANT_BOOL use_safe_subs
 
     hr = IActiveScript_QueryInterface(script, &IID_IObjectSafety, (void**)&objsafety);
     if (FAILED(hr)) {
-        FIXME("Could not get IObjectSafety, %#x\n", hr);
+        FIXME("Could not get IObjectSafety, %#lx\n", hr);
         return hr;
     }
 
@@ -2484,7 +2484,7 @@ static HRESULT set_safety_opts(IActiveScript *script, VARIANT_BOOL use_safe_subs
                                                  use_safe_subset ? INTERFACESAFE_FOR_UNTRUSTED_DATA : 0);
     IObjectSafety_Release(objsafety);
     if (FAILED(hr)) {
-        FIXME("SetInterfaceSafetyOptions failed, %#x\n", hr);
+        FIXME("SetInterfaceSafetyOptions failed, %#lx\n", hr);
         return hr;
     }
 
@@ -2515,7 +2515,7 @@ static HRESULT init_script_host(ScriptControl *control, const CLSID *clsid, Scri
     hr = CoCreateInstance(&host->clsid, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IActiveScript, (void**)&host->script);
     if (FAILED(hr)) {
-        WARN("Failed to create an instance for %s, %#x\n", debugstr_guid(clsid), hr);
+        WARN("Failed to create an instance for %s, %#lx\n", debugstr_guid(clsid), hr);
         goto failed;
     }
 
@@ -2524,19 +2524,19 @@ static HRESULT init_script_host(ScriptControl *control, const CLSID *clsid, Scri
 
     hr = IActiveScript_SetScriptSite(host->script, &host->IActiveScriptSite_iface);
     if (FAILED(hr)) {
-        WARN("SetScriptSite failed, %#x\n", hr);
+        WARN("SetScriptSite failed, %#lx\n", hr);
         goto failed;
     }
 
     hr = IActiveScript_QueryInterface(host->script, &IID_IActiveScriptParse, (void**)&host->parse);
     if (FAILED(hr)) {
-        WARN("Failed to get IActiveScriptParse, %#x\n", hr);
+        WARN("Failed to get IActiveScriptParse, %#lx\n", hr);
         goto failed;
     }
 
     hr = IActiveScriptParse_InitNew(host->parse);
     if (FAILED(hr)) {
-        WARN("InitNew failed, %#x\n", hr);
+        WARN("InitNew failed, %#lx\n", hr);
         goto failed;
     }
     host->script_state = SCRIPTSTATE_INITIALIZED;
@@ -2610,7 +2610,7 @@ static ULONG WINAPI ScriptControl_AddRef(IScriptControl *iface)
     ScriptControl *This = impl_from_IScriptControl(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -2620,7 +2620,7 @@ static ULONG WINAPI ScriptControl_Release(IScriptControl *iface)
     ScriptControl *This = impl_from_IScriptControl(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
         if (This->site)
@@ -2649,7 +2649,7 @@ static HRESULT WINAPI ScriptControl_GetTypeInfo(IScriptControl *iface, UINT iTIn
         LCID lcid, ITypeInfo **ppTInfo)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("(%p)->(%u %lu %p)\n", This, iTInfo, lcid, ppTInfo);
     return get_typeinfo(IScriptControl_tid, ppTInfo);
 }
 
@@ -2660,7 +2660,7 @@ static HRESULT WINAPI ScriptControl_GetIDsOfNames(IScriptControl *iface, REFIID 
     ITypeInfo *typeinfo;
     HRESULT hres;
 
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("(%p)->(%s %p %u %lu %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hres = get_typeinfo(IScriptControl_tid, &typeinfo);
     if(SUCCEEDED(hres)) {
@@ -2679,7 +2679,7 @@ static HRESULT WINAPI ScriptControl_Invoke(IScriptControl *iface, DISPID dispIdM
     ITypeInfo *typeinfo;
     HRESULT hres;
 
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("(%p)->(%ld %s %ld %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hres = get_typeinfo(IScriptControl_tid, &typeinfo);
@@ -2812,7 +2812,7 @@ static HRESULT WINAPI ScriptControl_put_SitehWnd(IScriptControl *iface, LONG hwn
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
 
-    TRACE("(%p)->(%x)\n", This, hwnd);
+    TRACE("(%p)->(%lx)\n", This, hwnd);
 
     if (hwnd && !IsWindow(LongToHandle(hwnd)))
         return CTL_E_INVALIDPROPERTYVALUE;
@@ -2852,7 +2852,7 @@ static HRESULT WINAPI ScriptControl_put_Timeout(IScriptControl *iface, LONG time
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
 
-    TRACE("(%p)->(%d)\n", This, timeout);
+    TRACE("(%p)->(%ld)\n", This, timeout);
 
     if (timeout < -1)
         return CTL_E_INVALIDPROPERTYVALUE;
@@ -3148,7 +3148,7 @@ static HRESULT WINAPI OleObject_Close(IOleObject *iface, DWORD save)
 {
     ScriptControl *This = impl_from_IOleObject(iface);
 
-    FIXME("(%p)->(%d)\n", This, save);
+    FIXME("(%p)->(%ld)\n", This, save);
 
     return E_NOTIMPL;
 }
@@ -3157,7 +3157,7 @@ static HRESULT WINAPI OleObject_SetMoniker(IOleObject *iface, DWORD which, IMoni
 {
     ScriptControl *This = impl_from_IOleObject(iface);
 
-    FIXME("(%p)->(%d %p)\n", This, which, moniker);
+    FIXME("(%p)->(%ld %p)\n", This, which, moniker);
 
     return E_NOTIMPL;
 }
@@ -3166,7 +3166,7 @@ static HRESULT WINAPI OleObject_GetMoniker(IOleObject *iface, DWORD assign, DWOR
 {
     ScriptControl *This = impl_from_IOleObject(iface);
 
-    FIXME("(%p)->(%d %d %p)\n", This, assign, which, moniker);
+    FIXME("(%p)->(%ld %ld %p)\n", This, assign, which, moniker);
 
     return E_NOTIMPL;
 }
@@ -3176,7 +3176,7 @@ static HRESULT WINAPI OleObject_InitFromData(IOleObject *iface, IDataObject *dat
 {
     ScriptControl *This = impl_from_IOleObject(iface);
 
-    FIXME("(%p)->(%p %d %d)\n", This, dataobj, creation, reserved);
+    FIXME("(%p)->(%p %d %ld)\n", This, dataobj, creation, reserved);
 
     return E_NOTIMPL;
 }
@@ -3185,7 +3185,7 @@ static HRESULT WINAPI OleObject_GetClipboardData(IOleObject *iface, DWORD reserv
 {
     ScriptControl *This = impl_from_IOleObject(iface);
 
-    FIXME("(%p)->(%d %p)\n", This, reserved, dataobj);
+    FIXME("(%p)->(%ld %p)\n", This, reserved, dataobj);
 
     return E_NOTIMPL;
 }
@@ -3195,7 +3195,7 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG verb, LPMSG msg, 
 {
     ScriptControl *This = impl_from_IOleObject(iface);
 
-    FIXME("(%p)->(%d %p %p %d %p %p)\n", This, verb, msg, active_site, index, hwndParent, rect);
+    FIXME("(%p)->(%ld %p %p %ld %p %p)\n", This, verb, msg, active_site, index, hwndParent, rect);
 
     return E_NOTIMPL;
 }
@@ -3240,7 +3240,7 @@ static HRESULT WINAPI OleObject_GetUserType(IOleObject *iface, DWORD form_of_typ
 {
     ScriptControl *This = impl_from_IOleObject(iface);
 
-    FIXME("(%p)->(%d %p)\n", This, form_of_type, usertype);
+    FIXME("(%p)->(%ld %p)\n", This, form_of_type, usertype);
 
     return E_NOTIMPL;
 }
@@ -3249,7 +3249,7 @@ static HRESULT WINAPI OleObject_SetExtent(IOleObject *iface, DWORD aspect, SIZEL
 {
     ScriptControl *This = impl_from_IOleObject(iface);
 
-    FIXME("(%p)->(%d %p)\n", This, aspect, size);
+    FIXME("(%p)->(%ld %p)\n", This, aspect, size);
 
     return E_NOTIMPL;
 }
@@ -3258,7 +3258,7 @@ static HRESULT WINAPI OleObject_GetExtent(IOleObject *iface, DWORD aspect, SIZEL
 {
     ScriptControl *This = impl_from_IOleObject(iface);
 
-    TRACE("(%p)->(%d %p)\n", This, aspect, size);
+    TRACE("(%p)->(%ld %p)\n", This, aspect, size);
 
     if (aspect != DVASPECT_CONTENT)
         return DV_E_DVASPECT;
@@ -3280,7 +3280,7 @@ static HRESULT WINAPI OleObject_Unadvise(IOleObject *iface, DWORD connection)
 {
     ScriptControl *This = impl_from_IOleObject(iface);
 
-    FIXME("(%p)->(%d)\n", This, connection);
+    FIXME("(%p)->(%ld)\n", This, connection);
 
     return E_NOTIMPL;
 }
@@ -3298,7 +3298,7 @@ static HRESULT WINAPI OleObject_GetMiscStatus(IOleObject *iface, DWORD aspect, D
 {
     ScriptControl *This = impl_from_IOleObject(iface);
 
-    TRACE("(%p)->(%d %p)\n", This, aspect, status);
+    TRACE("(%p)->(%ld %p)\n", This, aspect, status);
 
     return OleRegGetMiscStatus(&CLSID_ScriptControl, aspect, status);
 }
@@ -3469,7 +3469,7 @@ static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DIS
 {
     ScriptControl *This = impl_from_IOleControl(iface);
 
-    FIXME("(%p)->(%#x)\n", This, dispid);
+    FIXME("(%p)->(%#lx)\n", This, dispid);
 
     return E_NOTIMPL;
 }
@@ -3571,7 +3571,7 @@ static HRESULT WINAPI ViewObject_Draw(IViewObjectEx *iface, DWORD drawaspect, LO
 {
     ScriptControl *This = impl_from_IViewObjectEx(iface);
 
-    FIXME("(%p)->(%d %d %p %p %p %p %p %p %p %lu)\n", This, drawaspect, index, aspect, device, target_dev,
+    FIXME("(%p)->(%ld %ld %p %p %p %p %p %p %p %Iu)\n", This, drawaspect, index, aspect, device, target_dev,
         hdc_draw, bounds, win_bounds, fn_continue, cont);
 
     return E_NOTIMPL;
@@ -3582,7 +3582,7 @@ static HRESULT WINAPI ViewObject_GetColorSet(IViewObjectEx *iface, DWORD drawasp
 {
     ScriptControl *This = impl_from_IViewObjectEx(iface);
 
-    FIXME("(%p)->(%d %d %p %p %p %p)\n", This, drawaspect, index, aspect, device, hic_target,
+    FIXME("(%p)->(%ld %ld %p %p %p %p)\n", This, drawaspect, index, aspect, device, hic_target,
         colorset);
 
     return E_NOTIMPL;
@@ -3593,7 +3593,7 @@ static HRESULT WINAPI ViewObject_Freeze(IViewObjectEx *iface, DWORD drawaspect, 
 {
     ScriptControl *This = impl_from_IViewObjectEx(iface);
 
-    FIXME("(%p)->(%d %d %p %p)\n", This, drawaspect, index, aspect, freeze);
+    FIXME("(%p)->(%ld %ld %p %p)\n", This, drawaspect, index, aspect, freeze);
 
     return E_NOTIMPL;
 }
@@ -3602,7 +3602,7 @@ static HRESULT WINAPI ViewObject_Unfreeze(IViewObjectEx *iface, DWORD freeze)
 {
     ScriptControl *This = impl_from_IViewObjectEx(iface);
 
-    FIXME("(%p)->(%d)\n", This, freeze);
+    FIXME("(%p)->(%ld)\n", This, freeze);
 
     return E_NOTIMPL;
 }
@@ -3611,7 +3611,7 @@ static HRESULT WINAPI ViewObject_SetAdvise(IViewObjectEx *iface, DWORD aspects, 
 {
     ScriptControl *This = impl_from_IViewObjectEx(iface);
 
-    TRACE("(%p)->(%d %#x %p)\n", This, aspects, flags, sink);
+    TRACE("(%p)->(%ld %#lx %p)\n", This, aspects, flags, sink);
 
     if (aspects != DVASPECT_CONTENT)
         return DV_E_DVASPECT;
@@ -3650,7 +3650,7 @@ static HRESULT WINAPI ViewObject_GetExtent(IViewObjectEx *iface, DWORD draw_aspe
 {
     ScriptControl *This = impl_from_IViewObjectEx(iface);
 
-    FIXME("(%p)->(%d %d %p %p)\n", This, draw_aspect, index, device, size);
+    FIXME("(%p)->(%ld %ld %p %p)\n", This, draw_aspect, index, device, size);
 
     return E_NOTIMPL;
 }
@@ -3659,7 +3659,7 @@ static HRESULT WINAPI ViewObject_GetRect(IViewObjectEx *iface, DWORD aspect, REC
 {
     ScriptControl *This = impl_from_IViewObjectEx(iface);
 
-    FIXME("(%p)->(%d %p)\n", This, aspect, rect);
+    FIXME("(%p)->(%ld %p)\n", This, aspect, rect);
 
     return E_NOTIMPL;
 }
@@ -3679,7 +3679,7 @@ static HRESULT WINAPI ViewObject_QueryHitPoint(IViewObjectEx *iface, DWORD aspec
 {
     ScriptControl *This = impl_from_IViewObjectEx(iface);
 
-    FIXME("(%p)->(%d %s %s %d %p)\n", This, aspect, wine_dbgstr_rect(bounds), wine_dbgstr_point(&pt), close_hint, hit_result);
+    FIXME("(%p)->(%ld %s %s %ld %p)\n", This, aspect, wine_dbgstr_rect(bounds), wine_dbgstr_point(&pt), close_hint, hit_result);
 
     return E_NOTIMPL;
 }
@@ -3689,7 +3689,7 @@ static HRESULT WINAPI ViewObject_QueryHitRect(IViewObjectEx *iface, DWORD aspect
 {
     ScriptControl *This = impl_from_IViewObjectEx(iface);
 
-    FIXME("(%p)->(%d %s %s %d %p)\n", This, aspect, wine_dbgstr_rect(bounds), wine_dbgstr_rect(loc), close_hint, hit_result);
+    FIXME("(%p)->(%ld %s %s %ld %p)\n", This, aspect, wine_dbgstr_rect(bounds), wine_dbgstr_rect(loc), close_hint, hit_result);
 
     return E_NOTIMPL;
 }
@@ -3699,7 +3699,7 @@ static HRESULT WINAPI ViewObject_GetNaturalExtent(IViewObjectEx *iface, DWORD as
 {
     ScriptControl *This = impl_from_IViewObjectEx(iface);
 
-    FIXME("(%p)->(%d %d %p %p %p %p)\n", This, aspect, index, device, target_hdc, extent_info, size);
+    FIXME("(%p)->(%ld %ld %p %p %p %p)\n", This, aspect, index, device, target_hdc, extent_info, size);
 
     return E_NOTIMPL;
 }
@@ -3758,7 +3758,7 @@ static HRESULT WINAPI PointerInactive_OnInactiveMouseMove(IPointerInactive *ifac
 {
     ScriptControl *This = impl_from_IPointerInactive(iface);
 
-    FIXME("(%p)->(%s %d %d %#x)\n", This, wine_dbgstr_rect(bounds), x, y, key_state);
+    FIXME("(%p)->(%s %ld %ld %#lx)\n", This, wine_dbgstr_rect(bounds), x, y, key_state);
 
     return E_NOTIMPL;
 }
@@ -3768,7 +3768,7 @@ static HRESULT WINAPI PointerInactive_OnInactiveSetCursor(IPointerInactive *ifac
 {
     ScriptControl *This = impl_from_IPointerInactive(iface);
 
-    FIXME("(%p)->(%s %d %d %#x %d)\n", This, wine_dbgstr_rect(bounds), x, y, msg, set_always);
+    FIXME("(%p)->(%s %ld %ld %#lx %d)\n", This, wine_dbgstr_rect(bounds), x, y, msg, set_always);
 
     return E_NOTIMPL;
 }
@@ -3913,7 +3913,7 @@ static HRESULT WINAPI ConnectionPoint_Unadvise(IConnectionPoint *iface, DWORD co
 {
     ConnectionPoint *This = impl_from_IConnectionPoint(iface);
 
-    FIXME("(%p)->(%d)\n", This, cookie);
+    FIXME("(%p)->(%ld)\n", This, cookie);
 
     return E_NOTIMPL;
 }
@@ -4008,7 +4008,7 @@ static HRESULT WINAPI ScriptControl_CreateInstance(IClassFactory *iface, IUnknow
  */
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
 {
-    TRACE("(%p %d %p)\n", instance, reason, reserved);
+    TRACE("(%p %ld %p)\n", instance, reason, reserved);
 
     switch(reason) {
     case DLL_PROCESS_ATTACH:

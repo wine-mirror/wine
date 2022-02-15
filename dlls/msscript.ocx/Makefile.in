@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = msscript.ocx
 RC_SRCS   = msscript.rc
 IDL_SRCS  = msscript.idl
