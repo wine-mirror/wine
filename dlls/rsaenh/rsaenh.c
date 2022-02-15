@@ -594,13 +594,14 @@ static BOOL copy_hmac_info(PHMAC_INFO *dst, const HMAC_INFO *src) {
  * Destructor for hash objects
  *
  * PARAMS
- *  pCryptHash [I] Pointer to the hash object to be destroyed. 
+ *  pCryptHash [I] Pointer to the hash object to be destroyed.
  *                 Will be invalid after function returns!
  */
 static void destroy_hash(OBJECTHDR *pObject)
 {
     CRYPTHASH *pCryptHash = (CRYPTHASH*)pObject;
-        
+
+    BCryptDestroyHash(pCryptHash->hash_handle);
     free_hmac_info(pCryptHash->pHMACInfo);
     free_data_blob(&pCryptHash->tpPRFParams.blobLabel);
     free_data_blob(&pCryptHash->tpPRFParams.blobSeed);
@@ -708,6 +709,7 @@ static inline void finalize_hash(CRYPTHASH *pCryptHash) {
                 update_hash_impl(pCryptHash->hash_handle,
                                  abHashValue, pCryptHash->dwHashSize);
                 finalize_hash_impl(pCryptHash->hash_handle, pCryptHash->abHashValue);
+                pCryptHash->hash_handle = NULL;
             } 
             break;
 
@@ -719,6 +721,7 @@ static inline void finalize_hash(CRYPTHASH *pCryptHash) {
 
         default:
             finalize_hash_impl(pCryptHash->hash_handle, pCryptHash->abHashValue);
+            pCryptHash->hash_handle = NULL;
     }
 }
 
@@ -2211,6 +2214,7 @@ BOOL WINAPI RSAENH_CPCreateHash(HCRYPTPROV hProv, ALG_ID Algid, HCRYPTKEY hKey, 
     pCryptHash->hProv = hProv;
     pCryptHash->dwState = RSAENH_HASHSTATE_HASHING;
     pCryptHash->pHMACInfo = NULL;
+    pCryptHash->hash_handle = NULL;
     pCryptHash->dwHashSize = peaAlgidInfo->dwDefaultLen >> 3;
     init_data_blob(&pCryptHash->tpPRFParams.blobLabel);
     init_data_blob(&pCryptHash->tpPRFParams.blobSeed);
