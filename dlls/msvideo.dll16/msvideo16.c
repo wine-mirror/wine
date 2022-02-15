@@ -166,7 +166,7 @@ LRESULT VFWAPIV ICMessage16( HIC16 hic, UINT16 msg, UINT16 cb, VA_LIST16 valist 
 
     lpData = HeapAlloc(GetProcessHeap(), 0, cb);
 
-    TRACE("0x%08x, %u, %u, ...)\n", (DWORD) hic, msg, cb);
+    TRACE("0x%08lx, %u, %u, ...)\n", (DWORD) hic, msg, cb);
 
     for (i = 0; i < cb / sizeof(WORD); i++)
     {
@@ -187,7 +187,7 @@ LRESULT VFWAPI ICGetInfo16(HIC16 hic, ICINFO16 * picinfo, DWORD cb)
 {
     LRESULT ret;
 
-    TRACE("(0x%08x,%p,%d)\n", (DWORD) hic, picinfo, cb);
+    TRACE("(0x%08lx,%p,%ld)\n", (DWORD) hic, picinfo, cb);
     ret = ICSendMessage16(hic, ICM_GETINFO, (DWORD) picinfo, cb);
     TRACE("	-> 0x%08lx\n", ret);
     return ret;
@@ -218,7 +218,7 @@ DWORD VFWAPIV ICCompress16(HIC16 hic, DWORD dwFlags,
     ICCOMPRESS iccmp;
     SEGPTR seg_iccmp;
 
-    TRACE("(0x%08x,%d,%p,%p,%p,%p,...)\n", (DWORD) hic, dwFlags,
+    TRACE("(0x%08lx,%ld,%p,%p,%p,%p,...)\n", (DWORD) hic, dwFlags,
 	  lpbiOutput, lpData, lpbiInput, lpBits);
 
     iccmp.dwFlags = dwFlags;
@@ -252,7 +252,7 @@ DWORD VFWAPIV ICDecompress16(HIC16 hic, DWORD dwFlags,
     SEGPTR segptr;
     DWORD ret;
 
-    TRACE("(0x%08x,%d,%p,%p,%p,%p)\n", (DWORD) hic, dwFlags, lpbiFormat,
+    TRACE("(0x%08lx,%ld,%p,%p,%p,%p)\n", (DWORD) hic, dwFlags, lpbiFormat,
 	  lpData, lpbi, lpBits);
 
     icd.dwFlags = dwFlags;
@@ -291,7 +291,7 @@ DWORD VFWAPIV ICDrawBegin16(HIC16 hic,		/* [in] */
     ICDRAWBEGIN16 icdb;
     SEGPTR seg_icdb;
 
-    TRACE ("(0x%08x,%d,0x%08x,0x%08x,0x%08x,%u,%u,%u,%u,%p,%u,%u,%u,%u,%d,%d)\n",
+    TRACE ("(0x%08lx,%ld,0x%08lx,0x%08lx,0x%08lx,%u,%u,%u,%u,%p,%u,%u,%u,%u,%ld,%ld)\n",
 	   (DWORD) hic, dwFlags, (DWORD) hpal, (DWORD) hwnd, (DWORD) hdc,
 	   xDst, yDst, dxDst, dyDst, lpbi, xSrc, ySrc, dxSrc, dySrc, dwRate,
 	   dwScale);
@@ -330,7 +330,7 @@ DWORD VFWAPIV ICDraw16(HIC16 hic, DWORD dwFlags,
     ICDRAW icd;
     SEGPTR seg_icd;
 
-    TRACE("(0x%08x,0x%08x,%p,%p,%d,%d)\n", (DWORD) hic, dwFlags,
+    TRACE("(0x%08lx,0x%08lx,%p,%p,%ld,%ld)\n", (DWORD) hic, dwFlags,
 	  lpFormat, lpData, cbData, lTime);
     icd.dwFlags = dwFlags;
     icd.lpFormat = lpFormat;
