@@ -510,10 +510,10 @@ static void receive_data(struct connection *conn)
         ioctlsocket(conn->socket, FIONREAD, &available);
         if (available)
         {
-            TRACE("%u more bytes of data available, trying with larger buffer.\n", available);
+            TRACE("%lu more bytes of data available, trying with larger buffer.\n", available);
             if (!(conn->buffer = heap_realloc(conn->buffer, conn->len + available)))
             {
-                ERR("Failed to allocate %u bytes of memory.\n", conn->len + available);
+                ERR("Failed to allocate %lu bytes of memory.\n", conn->len + available);
                 close_connection(conn);
                 return;
             }
@@ -730,7 +730,7 @@ static NTSTATUS http_receive_request(struct request_queue *queue, IRP *irp)
     struct connection *conn;
     NTSTATUS ret;
 
-    TRACE("addr %s, id %s, flags %#x, bits %u.\n", wine_dbgstr_longlong(params->addr),
+    TRACE("addr %s, id %s, flags %#lx, bits %lu.\n", wine_dbgstr_longlong(params->addr),
             wine_dbgstr_longlong(params->id), params->flags, params->bits);
 
     EnterCriticalSection(&http_cs);
@@ -821,13 +821,13 @@ static NTSTATUS http_receive_body(struct request_queue *queue, IRP *irp)
     struct connection *conn;
     NTSTATUS ret;
 
-    TRACE("id %s, bits %u.\n", wine_dbgstr_longlong(params->id), params->bits);
+    TRACE("id %s, bits %lu.\n", wine_dbgstr_longlong(params->id), params->bits);
 
     EnterCriticalSection(&http_cs);
 
     if ((conn = get_connection(params->id)))
     {
-        TRACE("%u bits remaining.\n", conn->content_len);
+        TRACE("%lu bits remaining.\n", conn->content_len);
 
         if (conn->content_len)
         {
@@ -875,7 +875,7 @@ static NTSTATUS WINAPI dispatch_ioctl(DEVICE_OBJECT *device, IRP *irp)
         ret = http_receive_body(queue, irp);
         break;
     default:
-        FIXME("Unhandled ioctl %#x.\n", stack->Parameters.DeviceIoControl.IoControlCode);
+        FIXME("Unhandled ioctl %#lx.\n", stack->Parameters.DeviceIoControl.IoControlCode);
         ret = STATUS_NOT_IMPLEMENTED;
     }
 
@@ -987,12 +987,12 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *path)
     RtlInitUnicodeString(&string, L"\\Device\\Http");
     attr.ObjectName = &string;
     if ((ret = NtCreateDirectoryObject(&directory_obj, 0, &attr)) && ret != STATUS_OBJECT_NAME_COLLISION)
-        ERR("Failed to create \\Device\\Http directory, status %#x.\n", ret);
+        ERR("Failed to create \\Device\\Http directory, status %#lx.\n", ret);
 
     RtlInitUnicodeString(&string, L"\\Device\\Http\\ReqQueue");
     if ((ret = IoCreateDevice(driver, 0, &string, FILE_DEVICE_UNKNOWN, 0, FALSE, &device_obj)))
     {
-        ERR("Failed to create request queue device, status %#x.\n", ret);
+        ERR("Failed to create request queue device, status %#lx.\n", ret);
         NtClose(directory_obj);
         return ret;
     }
