@@ -127,7 +127,7 @@ static HANDLE stop_event;
 static HANDLE done_event;
 static HANDLE update_event;
 
-static BOOL find_opened_device(SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail, int *free_slot)
+static BOOL find_opened_device(const WCHAR *device_path, int *free_slot)
 {
     int i;
 
@@ -135,7 +135,7 @@ static BOOL find_opened_device(SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail, int *f
     for (i = XUSER_MAX_COUNT; i > 0; i--)
     {
         if (!controllers[i - 1].device) *free_slot = i - 1;
-        else if (!wcscmp(detail->DevicePath, controllers[i - 1].device_path)) return TRUE;
+        else if (!wcsicmp(device_path, controllers[i - 1].device_path)) return TRUE;
     }
     return FALSE;
 }
@@ -399,7 +399,7 @@ static void controller_disable(struct xinput_controller *controller)
 }
 
 static BOOL controller_init(struct xinput_controller *controller, PHIDP_PREPARSED_DATA preparsed,
-                            HIDP_CAPS *caps, HANDLE device, WCHAR *device_path)
+                            HIDP_CAPS *caps, HANDLE device, const WCHAR *device_path)
 {
     HANDLE event = NULL;
 
@@ -481,19 +481,60 @@ static BOOL device_is_overriden(HANDLE device)
     return disable;
 }
 
+static BOOL try_add_device(const WCHAR *device_path)
+{
+    SP_DEVICE_INTERFACE_DATA iface = {sizeof(iface)};
+    PHIDP_PREPARSED_DATA preparsed;
+    HIDP_CAPS caps;
+    NTSTATUS status;
+    HANDLE device;
+    int i;
+
+    if (find_opened_device(device_path, &i)) return TRUE; /* already opened */
+    if (i == XUSER_MAX_COUNT) return FALSE; /* no more slots */
+
+    device = CreateFileW(device_path, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                         NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED | FILE_FLAG_NO_BUFFERING, NULL);
+    if (device == INVALID_HANDLE_VALUE) return TRUE;
+
+    preparsed = NULL;
+    if (!HidD_GetPreparsedData(device, &preparsed))
+        WARN("ignoring HID device, HidD_GetPreparsedData failed with error %lu\n", GetLastError());
+    else if ((status = HidP_GetCaps(preparsed, &caps)) != HIDP_STATUS_SUCCESS)
+        WARN("ignoring HID device, HidP_GetCaps returned %#lx\n", status);
+    else if (caps.UsagePage != HID_USAGE_PAGE_GENERIC)
+        WARN("ignoring HID device, unsupported usage page %04x\n", caps.UsagePage);
+    else if (caps.Usage != HID_USAGE_GENERIC_GAMEPAD && caps.Usage != HID_USAGE_GENERIC_JOYSTICK &&
+             caps.Usage != HID_USAGE_GENERIC_MULTI_AXIS_CONTROLLER)
+        WARN("ignoring HID device, unsupported usage %04x:%04x\n", caps.UsagePage, caps.Usage);
+    else if (device_is_overriden(device))
+        WARN("ignoring HID device, overriden for dinput\n");
+    else if (!controller_init(&controllers[i], preparsed, &caps, device, device_path))
+        WARN("ignoring HID device, failed to initialize\n");
+    else
+        return TRUE;
+
+    CloseHandle(device);
+    HidD_FreePreparsedData(preparsed);
+    return TRUE;
+}
+
+static void try_remove_device(const WCHAR *device_path)
+{
+    int i;
+
+    if (find_opened_device(device_path, &i))
+        controller_destroy(&controllers[i], TRUE);
+}
+
 static void update_controller_list(void)
 {
     char buffer[sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W) + MAX_PATH * sizeof(WCHAR)];
     SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail = (SP_DEVICE_INTERFACE_DETAIL_DATA_W *)buffer;
     SP_DEVICE_INTERFACE_DATA iface = {sizeof(iface)};
-    PHIDP_PREPARSED_DATA preparsed;
-    HIDP_CAPS caps;
-    NTSTATUS status;
     HDEVINFO set;
-    HANDLE device;
     DWORD idx;
     GUID guid;
-    int i;
 
     guid = GUID_DEVINTERFACE_WINEXINPUT;
 
@@ -505,34 +546,8 @@ static void update_controller_list(void)
     {
         if (!SetupDiGetDeviceInterfaceDetailW(set, &iface, detail, sizeof(buffer), NULL, NULL))
             continue;
-
-        if (find_opened_device(detail, &i)) continue; /* already opened */
-        if (i == XUSER_MAX_COUNT) break; /* no more slots */
-
-        device = CreateFileW(detail->DevicePath, GENERIC_READ | GENERIC_WRITE,
-                             FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
-                             FILE_FLAG_OVERLAPPED | FILE_FLAG_NO_BUFFERING, NULL);
-        if (device == INVALID_HANDLE_VALUE) continue;
-
-        preparsed = NULL;
-        if (!HidD_GetPreparsedData(device, &preparsed))
-            WARN("ignoring HID device, HidD_GetPreparsedData failed with error %lu\n", GetLastError());
-        else if ((status = HidP_GetCaps(preparsed, &caps)) != HIDP_STATUS_SUCCESS)
-            WARN("ignoring HID device, HidP_GetCaps returned %#lx\n", status);
-        else if (caps.UsagePage != HID_USAGE_PAGE_GENERIC)
-            WARN("ignoring HID device, unsupported usage page %04x\n", caps.UsagePage);
-        else if (caps.Usage != HID_USAGE_GENERIC_GAMEPAD && caps.Usage != HID_USAGE_GENERIC_JOYSTICK &&
-                 caps.Usage != HID_USAGE_GENERIC_MULTI_AXIS_CONTROLLER)
-            WARN("ignoring HID device, unsupported usage %04x:%04x\n", caps.UsagePage, caps.Usage);
-        else if (device_is_overriden(device))
-            WARN("ignoring HID device, overriden for dinput\n");
-        else if (!controller_init(&controllers[i], preparsed, &caps, device, detail->DevicePath))
-            WARN("ignoring HID device, failed to initialize\n");
-        else
-            continue;
-
-        CloseHandle(device);
-        HidD_FreePreparsedData(preparsed);
+        if (!try_add_device(detail->DevicePath))
+            break;
     }
 
     SetupDiDestroyDeviceInfoList(set);
@@ -686,7 +701,13 @@ static void read_controller_state(struct xinput_controller *controller)
 
 static LRESULT CALLBACK xinput_devnotify_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    if (msg == WM_DEVICECHANGE && wparam == DBT_DEVICEARRIVAL) update_controller_list();
+    if (msg == WM_DEVICECHANGE)
+    {
+        DEV_BROADCAST_DEVICEINTERFACE_W *iface = (DEV_BROADCAST_DEVICEINTERFACE_W *)lparam;
+        if (wparam == DBT_DEVICEARRIVAL) try_add_device(iface->dbcc_name);
+        if (wparam == DBT_DEVICEREMOVECOMPLETE) try_remove_device(iface->dbcc_name);
+    }
+
     return DefWindowProcW(hwnd, msg, wparam, lparam);
 }
 
