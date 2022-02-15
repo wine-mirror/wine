@@ -144,16 +144,10 @@ struct hid_haptics_features
     UINT waveform_cutoff_time_ms;
 };
 
-struct hid_haptics_waveform
-{
-    WORD manual_trigger;
-    WORD intensity;
-};
-
 struct hid_haptics
 {
     struct hid_haptics_features features;
-    struct hid_haptics_waveform waveforms[HAPTICS_WAVEFORM_LAST_ORDINAL + 1];
+    UINT16 waveform_intensity[HAPTICS_WAVEFORM_LAST_ORDINAL + 1];
     BYTE features_report;
     BYTE waveform_report;
 };

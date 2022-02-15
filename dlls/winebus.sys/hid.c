@@ -309,6 +309,14 @@ BOOL hid_device_add_axes(struct unix_device *iface, BYTE count, USAGE usage_page
     return TRUE;
 }
 
+#include "pshpack1.h"
+struct hid_haptics_waveform
+{
+    UINT16 intensity;
+    BYTE manual_trigger;
+};
+#include "poppack.h"
+
 BOOL hid_device_add_haptics(struct unix_device *iface)
 {
     struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
@@ -352,17 +360,17 @@ BOOL hid_device_add_haptics(struct unix_device *iface)
             UNIT_EXPONENT(1, 0),
 
             REPORT_ID(1, haptics_waveform_report),
-            USAGE(1, HID_USAGE_HAPTICS_MANUAL_TRIGGER),
-            LOGICAL_MINIMUM(1, 1),
-            LOGICAL_MAXIMUM(1, 4),
-            REPORT_SIZE(1, 16),
-            REPORT_COUNT(1, 1),
-            OUTPUT(1, Data|Var|Abs),
-
             USAGE(1, HID_USAGE_HAPTICS_INTENSITY),
             LOGICAL_MINIMUM(4, 0x00000000),
             LOGICAL_MAXIMUM(4, 0x0000ffff),
             REPORT_SIZE(1, 16),
+            REPORT_COUNT(1, 1),
+            OUTPUT(1, Data|Var|Abs),
+
+            USAGE(1, HID_USAGE_HAPTICS_MANUAL_TRIGGER),
+            LOGICAL_MINIMUM(1, HAPTICS_WAVEFORM_NONE_ORDINAL),
+            LOGICAL_MAXIMUM(1, HAPTICS_WAVEFORM_LAST_ORDINAL),
+            REPORT_SIZE(1, 8),
             REPORT_COUNT(1, 1),
             OUTPUT(1, Data|Var|Abs),
         END_COLLECTION,
@@ -1037,28 +1045,28 @@ static void hid_device_set_output_report(struct unix_device *iface, HID_XFER_PAC
 
     if (packet->reportId == haptics->waveform_report)
     {
-        struct hid_haptics_waveform *waveform = (struct hid_haptics_waveform *)(packet->reportBuffer + 1);
-        struct hid_haptics_waveform *rumble = haptics->waveforms + HAPTICS_WAVEFORM_RUMBLE_ORDINAL;
-        struct hid_haptics_waveform *buzz = haptics->waveforms + HAPTICS_WAVEFORM_BUZZ_ORDINAL;
+        struct hid_haptics_waveform *report = (struct hid_haptics_waveform *)(packet->reportBuffer + 1);
+        UINT16 *rumble_intensity = haptics->waveform_intensity + HAPTICS_WAVEFORM_RUMBLE_ORDINAL;
+        UINT16 *buzz_intensity = haptics->waveform_intensity + HAPTICS_WAVEFORM_BUZZ_ORDINAL;
         ULONG duration_ms;
 
-        io->Information = sizeof(*waveform) + 1;
+        io->Information = sizeof(*report) + 1;
         assert(packet->reportBufferLen == io->Information);
 
-        if (waveform->manual_trigger == 0 || waveform->manual_trigger > HAPTICS_WAVEFORM_LAST_ORDINAL)
+        if (report->manual_trigger == 0 || report->manual_trigger > HAPTICS_WAVEFORM_LAST_ORDINAL)
             io->Status = STATUS_INVALID_PARAMETER;
         else
         {
-            if (waveform->manual_trigger == HAPTICS_WAVEFORM_STOP_ORDINAL)
+            if (report->manual_trigger == HAPTICS_WAVEFORM_STOP_ORDINAL)
             {
-                memset(haptics->waveforms, 0, sizeof(haptics->waveforms));
+                memset(haptics->waveform_intensity, 0, sizeof(haptics->waveform_intensity));
                 io->Status = iface->hid_vtbl->haptics_stop(iface);
             }
             else
             {
-                haptics->waveforms[waveform->manual_trigger] = *waveform;
+                haptics->waveform_intensity[report->manual_trigger] = report->intensity;
                 duration_ms = haptics->features.waveform_cutoff_time_ms;
-                io->Status = iface->hid_vtbl->haptics_start(iface, duration_ms, rumble->intensity, buzz->intensity);
+                io->Status = iface->hid_vtbl->haptics_start(iface, duration_ms, *rumble_intensity, *buzz_intensity);
             }
         }
     }
