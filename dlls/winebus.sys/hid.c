@@ -314,6 +314,7 @@ struct hid_haptics_waveform
 {
     UINT16 intensity;
     BYTE manual_trigger;
+    BYTE repeat_count;
 };
 #include "poppack.h"
 
@@ -370,6 +371,13 @@ BOOL hid_device_add_haptics(struct unix_device *iface)
             USAGE(1, HID_USAGE_HAPTICS_MANUAL_TRIGGER),
             LOGICAL_MINIMUM(1, HAPTICS_WAVEFORM_NONE_ORDINAL),
             LOGICAL_MAXIMUM(1, HAPTICS_WAVEFORM_LAST_ORDINAL),
+            REPORT_SIZE(1, 8),
+            REPORT_COUNT(1, 1),
+            OUTPUT(1, Data|Var|Abs),
+
+            USAGE(1, HID_USAGE_HAPTICS_REPEAT_COUNT),
+            LOGICAL_MINIMUM(1, 0),
+            LOGICAL_MAXIMUM(1, 1),
             REPORT_SIZE(1, 8),
             REPORT_COUNT(1, 1),
             OUTPUT(1, Data|Var|Abs),
@@ -1066,7 +1074,8 @@ static void hid_device_set_output_report(struct unix_device *iface, HID_XFER_PAC
             {
                 haptics->waveform_intensity[report->manual_trigger] = report->intensity;
                 duration_ms = haptics->features.waveform_cutoff_time_ms;
-                io->Status = iface->hid_vtbl->haptics_start(iface, duration_ms, *rumble_intensity, *buzz_intensity);
+                if (!report->repeat_count) io->Status = STATUS_SUCCESS;
+                else io->Status = iface->hid_vtbl->haptics_start(iface, duration_ms, *rumble_intensity, *buzz_intensity);
             }
         }
     }
