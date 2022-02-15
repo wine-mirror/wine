@@ -5281,7 +5281,6 @@ static void test_cloneNode(void )
     V_VT(&v) = VT_BSTR;
     hr = IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionLanguage"), v);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    VariantClear(&v);
 
     /* clone document node */
     hr = IXMLDOMDocument2_cloneNode(doc, VARIANT_TRUE, &node);
@@ -8847,7 +8846,6 @@ static void test_put_nodeTypedValue(void)
     V_BSTR(&value) = _bstr_("1");
     hr = IXMLDOMElement_put_nodeTypedValue(elem, value);
     EXPECT_HR(hr, S_OK);
-    VariantClear(&value);
 
     V_VT(&value) = VT_EMPTY;
     hr = IXMLDOMElement_get_nodeTypedValue(elem, &value);
