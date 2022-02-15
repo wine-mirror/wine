@@ -531,13 +531,13 @@ static HRESULT WINAPI ThreadMgr_ActivateEx(ITfThreadMgrEx *iface, TfClientId *id
 {
     ThreadMgr *This = impl_from_ITfThreadMgrEx(iface);
 
-    TRACE("(%p) %p, %#x\n", This, id, flags);
+    TRACE("(%p) %p, %#lx\n", This, id, flags);
 
     if (!id)
         return E_INVALIDARG;
 
     if (flags)
-        FIXME("Unimplemented flags %#x\n", flags);
+        FIXME("Unimplemented flags %#lx\n", flags);
 
     if (!processId)
     {
@@ -658,7 +658,7 @@ static HRESULT WINAPI ThreadMgrSource_UnadviseSink(ITfSource *iface, DWORD pdwCo
     ThreadMgr *This = impl_from_ITfSource(iface);
     DWORD magic;
 
-    TRACE("(%p) %x\n",This,pdwCookie);
+    TRACE("(%p) %lx\n",This,pdwCookie);
 
     magic = get_Cookie_magic(pdwCookie);
     if (magic != COOKIE_MAGIC_TMSINK && magic != COOKIE_MAGIC_THREADFOCUSSINK
@@ -708,7 +708,7 @@ static HRESULT WINAPI KeystrokeMgr_AdviseKeyEventSink(ITfKeystrokeMgr *iface,
     CLSID textservice;
     ITfKeyEventSink *check = NULL;
 
-    TRACE("(%p) %x %p %i\n",This,tid,pSink,fForeground);
+    TRACE("(%p) %lx %p %i\n",This,tid,pSink,fForeground);
 
     if (!tid || !pSink)
         return E_INVALIDARG;
@@ -747,7 +747,7 @@ static HRESULT WINAPI KeystrokeMgr_UnadviseKeyEventSink(ITfKeystrokeMgr *iface,
     ThreadMgr *This = impl_from_ITfKeystrokeMgr(iface);
     CLSID textservice;
     ITfKeyEventSink *check = NULL;
-    TRACE("(%p) %x\n",This,tid);
+    TRACE("(%p) %lx\n",This,tid);
 
     if (!tid)
         return E_INVALIDARG;
@@ -863,7 +863,7 @@ static HRESULT WINAPI KeystrokeMgr_PreserveKey(ITfKeystrokeMgr *iface,
     struct list *cursor;
     PreservedKey *newkey;
 
-    TRACE("(%p) %x %s (%x,%x) %s\n",This,tid, debugstr_guid(rguid),(prekey)?prekey->uVKey:0,(prekey)?prekey->uModifiers:0,debugstr_wn(pchDesc,cchDesc));
+    TRACE("(%p) %lx %s (%x,%x) %s\n",This,tid, debugstr_guid(rguid),(prekey)?prekey->uVKey:0,(prekey)?prekey->uModifiers:0,debugstr_wn(pchDesc,cchDesc));
 
     if (!tid || ! rguid || !prekey || (cchDesc && !pchDesc))
         return E_INVALIDARG;
@@ -1318,7 +1318,7 @@ static HRESULT WINAPI ThreadMgrSourceSingle_AdviseSingleSink( ITfSourceSingle *i
     TfClientId tid, REFIID riid, IUnknown *punk)
 {
     ThreadMgr *This = impl_from_ITfSourceSingle(iface);
-    FIXME("STUB:(%p) %i %s %p\n",This, tid, debugstr_guid(riid),punk);
+    FIXME("STUB:(%p) %li %s %p\n",This, tid, debugstr_guid(riid),punk);
     return E_NOTIMPL;
 }
 
@@ -1326,7 +1326,7 @@ static HRESULT WINAPI ThreadMgrSourceSingle_UnadviseSingleSink( ITfSourceSingle 
     TfClientId tid, REFIID riid)
 {
     ThreadMgr *This = impl_from_ITfSourceSingle(iface);
-    FIXME("STUB:(%p) %i %s\n",This, tid, debugstr_guid(riid));
+    FIXME("STUB:(%p) %li %s\n",This, tid, debugstr_guid(riid));
     return E_NOTIMPL;
 }
 

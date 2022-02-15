@@ -211,7 +211,7 @@ static HRESULT WINAPI CompartmentMgr_ClearCompartment(ITfCompartmentMgr *iface,
     CompartmentMgr *This = impl_from_ITfCompartmentMgr(iface);
     struct list *cursor;
 
-    TRACE("(%p) %i %s\n",This,tid,debugstr_guid(rguid));
+    TRACE("(%p) %li %s\n",This,tid,debugstr_guid(rguid));
 
     LIST_FOR_EACH(cursor, &This->values)
     {
@@ -487,7 +487,7 @@ static HRESULT WINAPI Compartment_SetValue(ITfCompartment *iface,
     ITfCompartmentEventSink *sink;
     struct list *cursor;
 
-    TRACE("(%p) %i %p\n",This,tid,pvarValue);
+    TRACE("(%p) %li %p\n",This,tid,pvarValue);
 
     if (!pvarValue)
         return E_INVALIDARG;
@@ -585,7 +585,7 @@ static HRESULT WINAPI CompartmentSource_UnadviseSink(ITfSource *iface, DWORD pdw
 {
     Compartment *This = impl_from_ITfSource(iface);
 
-    TRACE("(%p) %x\n",This,pdwCookie);
+    TRACE("(%p) %lx\n",This,pdwCookie);
 
     if (get_Cookie_magic(pdwCookie)!=COOKIE_MAGIC_COMPARTMENTSINK)
         return E_INVALIDARG;

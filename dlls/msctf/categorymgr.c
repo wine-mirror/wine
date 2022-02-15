@@ -352,7 +352,7 @@ static HRESULT WINAPI CategoryMgr_GetGUID ( ITfCategoryMgr *iface,
 {
     CategoryMgr *This = impl_from_ITfCategoryMgr(iface);
 
-    TRACE("(%p) %i\n",This,guidatom);
+    TRACE("(%p) %li\n",This,guidatom);
 
     if (!pguid)
         return E_INVALIDARG;
@@ -370,7 +370,7 @@ static HRESULT WINAPI CategoryMgr_IsEqualTfGuidAtom ( ITfCategoryMgr *iface,
 {
     CategoryMgr *This = impl_from_ITfCategoryMgr(iface);
 
-    TRACE("(%p) %i %s %p\n",This,guidatom,debugstr_guid(rguid),pfEqual);
+    TRACE("(%p) %li %s %p\n",This,guidatom,debugstr_guid(rguid),pfEqual);
 
     if (!pfEqual)
         return E_INVALIDARG;

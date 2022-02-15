@@ -296,7 +296,7 @@ HRESULT advise_sink(struct list *sink_list, REFIID riid, DWORD cookie_magic, IUn
 
     list_add_head(sink_list, &sink->entry);
     *cookie = generate_Cookie(cookie_magic, sink);
-    TRACE("cookie %x\n", *cookie);
+    TRACE("cookie %lx\n", *cookie);
     return S_OK;
 }
 
@@ -551,7 +551,7 @@ HRESULT set_textservice_sink(TfClientId tid, REFCLSID iid, IUnknown* sink)
  */
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD fdwReason, LPVOID fImpLoad)
 {
-    TRACE("%p 0x%x %p\n", hinst, fdwReason, fImpLoad);
+    TRACE("%p 0x%lx %p\n", hinst, fdwReason, fImpLoad);
     switch (fdwReason)
     {
         case DLL_PROCESS_ATTACH:

@@ -153,7 +153,7 @@ static HRESULT WINAPI DocumentMgr_CreateContext(ITfDocumentMgr *iface,
         TfEditCookie *pecTextStore)
 {
     DocumentMgr *This = impl_from_ITfDocumentMgr(iface);
-    TRACE("(%p) 0x%x 0x%x %p %p %p\n",This,tidOwner,dwFlags,punk,ppic,pecTextStore);
+    TRACE("(%p) 0x%lx 0x%lx %p %p %p\n",This,tidOwner,dwFlags,punk,ppic,pecTextStore);
     return Context_Constructor(tidOwner, punk, iface, ppic, pecTextStore);
 }
 
@@ -185,7 +185,7 @@ static HRESULT WINAPI DocumentMgr_Push(ITfDocumentMgr *iface, ITfContext *pic)
 static HRESULT WINAPI DocumentMgr_Pop(ITfDocumentMgr *iface, DWORD dwFlags)
 {
     DocumentMgr *This = impl_from_ITfDocumentMgr(iface);
-    TRACE("(%p) 0x%x\n",This,dwFlags);
+    TRACE("(%p) 0x%lx\n",This,dwFlags);
 
     if (dwFlags == TF_POPF_ALL)
     {
@@ -334,7 +334,7 @@ static HRESULT WINAPI DocumentMgrSource_UnadviseSink(ITfSource *iface, DWORD pdw
 {
     DocumentMgr *This = impl_from_ITfSource(iface);
 
-    TRACE("(%p) %x\n",This,pdwCookie);
+    TRACE("(%p) %lx\n",This,pdwCookie);
 
     if (get_Cookie_magic(pdwCookie)!=COOKIE_MAGIC_DMSINK)
         return E_INVALIDARG;

@@ -193,7 +193,7 @@ static HRESULT WINAPI Range_Collapse(ITfRangeACP *iface, TfEditCookie ec,
 {
     Range *range = impl_from_ITfRangeACP(iface);
 
-    TRACE("%p, %i, %i.\n", iface, ec, aPos);
+    TRACE("%p, %li, %i.\n", iface, ec, aPos);
 
     switch (aPos)
     {
@@ -289,7 +289,7 @@ static HRESULT WINAPI Range_GetExtent(ITfRangeACP *iface, LONG *anchor, LONG *co
 
 static HRESULT WINAPI Range_SetExtent(ITfRangeACP *iface, LONG anchor, LONG count)
 {
-    FIXME("%p, %d, %d.\n", iface, anchor, count);
+    FIXME("%p, %ld, %ld.\n", iface, anchor, count);
 
     return E_NOTIMPL;
 }
