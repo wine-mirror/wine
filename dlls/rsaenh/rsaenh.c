@@ -58,7 +58,7 @@ typedef struct tagCRYPTHASH
     HCRYPTPROV   hProv;
     DWORD        dwHashSize;
     DWORD        dwState;
-    HASH_CONTEXT context;
+    BCRYPT_HASH_HANDLE hash_handle;
     BYTE         abHashValue[RSAENH_MAX_HASH_SIZE];
     PHMAC_INFO   pHMACInfo;
     RSAENH_TLS1PRF_PARAMS tpPRFParams;
@@ -627,8 +627,8 @@ static inline BOOL init_hash(CRYPTHASH *pCryptHash) {
                 pAlgInfo = get_algid_info(pCryptHash->hProv, pCryptHash->pHMACInfo->HashAlgid);
                 if (!pAlgInfo) return FALSE;
                 pCryptHash->dwHashSize = pAlgInfo->dwDefaultLen >> 3;
-                init_hash_impl(pCryptHash->pHMACInfo->HashAlgid, &pCryptHash->context);
-                update_hash_impl(&pCryptHash->context,
+                init_hash_impl(pCryptHash->pHMACInfo->HashAlgid, &pCryptHash->hash_handle);
+                update_hash_impl(pCryptHash->hash_handle,
                                  pCryptHash->pHMACInfo->pbInnerString, 
                                  pCryptHash->pHMACInfo->cbInnerString);
             }
@@ -642,7 +642,7 @@ static inline BOOL init_hash(CRYPTHASH *pCryptHash) {
             return TRUE;
 
         default:
-            return init_hash_impl(pCryptHash->aiAlgid, &pCryptHash->context);
+            return init_hash_impl(pCryptHash->aiAlgid, &pCryptHash->hash_handle);
     }
 }
 
@@ -664,7 +664,7 @@ static inline void update_hash(CRYPTHASH *pCryptHash, const BYTE *pbData, DWORD 
     {
         case CALG_HMAC:
             if (pCryptHash->pHMACInfo) 
-                update_hash_impl(&pCryptHash->context,  pbData, dwDataLen);
+                update_hash_impl(pCryptHash->hash_handle, pbData, dwDataLen);
             break;
 
         case CALG_MAC:
@@ -677,7 +677,7 @@ static inline void update_hash(CRYPTHASH *pCryptHash, const BYTE *pbData, DWORD 
             break;
 
         default:
-            update_hash_impl(&pCryptHash->context, pbData, dwDataLen);
+            update_hash_impl(pCryptHash->hash_handle, pbData, dwDataLen);
     }
 }
 
@@ -699,15 +699,15 @@ static inline void finalize_hash(CRYPTHASH *pCryptHash) {
             if (pCryptHash->pHMACInfo) {
                 BYTE abHashValue[RSAENH_MAX_HASH_SIZE];
 
-                finalize_hash_impl(&pCryptHash->context, pCryptHash->abHashValue);
+                finalize_hash_impl(pCryptHash->hash_handle, pCryptHash->abHashValue);
                 memcpy(abHashValue, pCryptHash->abHashValue, pCryptHash->dwHashSize);
-                init_hash_impl(pCryptHash->pHMACInfo->HashAlgid, &pCryptHash->context);
-                update_hash_impl(&pCryptHash->context,
+                init_hash_impl(pCryptHash->pHMACInfo->HashAlgid, &pCryptHash->hash_handle);
+                update_hash_impl(pCryptHash->hash_handle,
                                  pCryptHash->pHMACInfo->pbOuterString, 
                                  pCryptHash->pHMACInfo->cbOuterString);
-                update_hash_impl(&pCryptHash->context,
+                update_hash_impl(pCryptHash->hash_handle,
                                  abHashValue, pCryptHash->dwHashSize);
-                finalize_hash_impl(&pCryptHash->context, pCryptHash->abHashValue);
+                finalize_hash_impl(pCryptHash->hash_handle, pCryptHash->abHashValue);
             } 
             break;
 
@@ -718,7 +718,7 @@ static inline void finalize_hash(CRYPTHASH *pCryptHash) {
             break;
 
         default:
-            finalize_hash_impl(&pCryptHash->context, pCryptHash->abHashValue);
+            finalize_hash_impl(pCryptHash->hash_handle, pCryptHash->abHashValue);
     }
 }
 
@@ -2371,7 +2371,7 @@ BOOL WINAPI RSAENH_CPDuplicateHash(HCRYPTPROV hUID, HCRYPTHASH hHash, DWORD *pdw
     if (*phHash != (HCRYPTHASH)INVALID_HANDLE_VALUE)
     {
         *pDestHash = *pSrcHash;
-        duplicate_hash_impl(&pSrcHash->context, &pDestHash->context);
+        duplicate_hash_impl(pSrcHash->hash_handle, &pDestHash->hash_handle);
         copy_hmac_info(&pDestHash->pHMACInfo, pSrcHash->pHMACInfo);
         copy_data_blob(&pDestHash->tpPRFParams.blobLabel, &pSrcHash->tpPRFParams.blobLabel);
         copy_data_blob(&pDestHash->tpPRFParams.blobSeed, &pSrcHash->tpPRFParams.blobSeed);

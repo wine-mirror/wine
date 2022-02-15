@@ -29,10 +29,6 @@
 
 #define RSAENH_MAX_HASH_SIZE        104
 
-typedef union tagHASH_CONTEXT {
-    BCRYPT_HASH_HANDLE bcrypt_hash;
-} HASH_CONTEXT;
-
 typedef union tagKEY_CONTEXT {
     rc2_key rc2;
     des_key des;
@@ -42,12 +38,12 @@ typedef union tagKEY_CONTEXT {
     rsa_key rsa;
 } KEY_CONTEXT;
 
-BOOL init_hash_impl(ALG_ID aiAlgid, HASH_CONTEXT *pHashContext) DECLSPEC_HIDDEN;
-BOOL update_hash_impl(HASH_CONTEXT *pHashContext, const BYTE *pbData,
+BOOL init_hash_impl(ALG_ID aiAlgid, BCRYPT_HASH_HANDLE *hash_handle) DECLSPEC_HIDDEN;
+BOOL update_hash_impl(BCRYPT_HASH_HANDLE hash_handle, const BYTE *pbData,
                       DWORD dwDataLen) DECLSPEC_HIDDEN;
-BOOL finalize_hash_impl(HASH_CONTEXT *pHashContext, BYTE *pbHashValue) DECLSPEC_HIDDEN;
-BOOL duplicate_hash_impl(const HASH_CONTEXT *pSrcHashContext,
-                         HASH_CONTEXT *pDestHashContext) DECLSPEC_HIDDEN;
+BOOL finalize_hash_impl(BCRYPT_HASH_HANDLE hash_handle, BYTE *pbHashValue) DECLSPEC_HIDDEN;
+BOOL duplicate_hash_impl(BCRYPT_HASH_HANDLE src_hash_handle,
+                         BCRYPT_HASH_HANDLE *dest_hash_handle) DECLSPEC_HIDDEN;
 
 BOOL new_key_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen) DECLSPEC_HIDDEN;
 BOOL free_key_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext) DECLSPEC_HIDDEN;
