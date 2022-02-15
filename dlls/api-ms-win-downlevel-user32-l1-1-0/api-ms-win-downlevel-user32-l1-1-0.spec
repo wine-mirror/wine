@@ -1,22 +1,22 @@
-@ stdcall CharLowerA(str) user32.CharLowerA
-@ stdcall CharLowerBuffA(str long) user32.CharLowerBuffA
-@ stdcall CharLowerBuffW(wstr long) user32.CharLowerBuffW
-@ stdcall CharLowerW(wstr) user32.CharLowerW
-@ stdcall CharNextA(str) user32.CharNextA
-@ stdcall CharNextExA(long str long) user32.CharNextExA
-@ stdcall CharNextW(wstr) user32.CharNextW
-@ stdcall CharPrevA(str str) user32.CharPrevA
-@ stdcall CharPrevExA(long str str long) user32.CharPrevExA
-@ stdcall CharPrevW(wstr wstr) user32.CharPrevW
-@ stdcall CharUpperA(str) user32.CharUpperA
-@ stdcall CharUpperBuffA(str long) user32.CharUpperBuffA
-@ stdcall CharUpperBuffW(wstr long) user32.CharUpperBuffW
-@ stdcall CharUpperW(wstr) user32.CharUpperW
-@ stdcall IsCharAlphaA(long) user32.IsCharAlphaA
-@ stdcall IsCharAlphaNumericA(long) user32.IsCharAlphaNumericA
-@ stdcall IsCharAlphaNumericW(long) user32.IsCharAlphaNumericW
-@ stdcall IsCharAlphaW(long) user32.IsCharAlphaW
-@ stdcall IsCharLowerA(long) user32.IsCharLowerA
-@ stdcall IsCharLowerW(long) user32.IsCharLowerW
-@ stdcall IsCharUpperA(long) user32.IsCharUpperA
-@ stdcall IsCharUpperW(long) user32.IsCharUpperW
+@ stdcall CharLowerA(str) kernelbase.CharLowerA
+@ stdcall CharLowerBuffA(str long) kernelbase.CharLowerBuffA
+@ stdcall CharLowerBuffW(wstr long) kernelbase.CharLowerBuffW
+@ stdcall CharLowerW(wstr) kernelbase.CharLowerW
+@ stdcall CharNextA(str) kernelbase.CharNextA
+@ stdcall CharNextExA(long str long) kernelbase.CharNextExA
+@ stdcall CharNextW(wstr) kernelbase.CharNextW
+@ stdcall CharPrevA(str str) kernelbase.CharPrevA
+@ stdcall CharPrevExA(long str str long) kernelbase.CharPrevExA
+@ stdcall CharPrevW(wstr wstr) kernelbase.CharPrevW
+@ stdcall CharUpperA(str) kernelbase.CharUpperA
+@ stdcall CharUpperBuffA(str long) kernelbase.CharUpperBuffA
+@ stdcall CharUpperBuffW(wstr long) kernelbase.CharUpperBuffW
+@ stdcall CharUpperW(wstr) kernelbase.CharUpperW
+@ stdcall IsCharAlphaA(long) kernelbase.IsCharAlphaA
+@ stdcall IsCharAlphaNumericA(long) kernelbase.IsCharAlphaNumericA
+@ stdcall IsCharAlphaNumericW(long) kernelbase.IsCharAlphaNumericW
+@ stdcall IsCharAlphaW(long) kernelbase.IsCharAlphaW
+@ stdcall IsCharLowerA(long) kernelbase.IsCharLowerA
+@ stdcall IsCharLowerW(long) kernelbase.IsCharLowerW
+@ stdcall IsCharUpperA(long) kernelbase.IsCharUpperA
+@ stdcall IsCharUpperW(long) kernelbase.IsCharUpperW
