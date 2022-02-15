@@ -4246,8 +4246,11 @@ static LONG parse_url(const WCHAR *url, struct parsed_url *pl)
     if (*work == '/')
     {
         /* see if query string */
-        pl->query = wcschr(work, '?');
-        if (pl->query) pl->query_len = lstrlenW(pl->query);
+        if ((pl->query = wcschr( work, '?' )))
+        {
+            ++pl->query;
+            pl->query_len = lstrlenW(pl->query);
+        }
     }
   SuccessExit:
     TRACE("parse successful: scheme=%p(%ld), user=%p(%ld), pass=%p(%ld), host=%p(%ld), port=%p(%ld), query=%p(%ld)\n",
