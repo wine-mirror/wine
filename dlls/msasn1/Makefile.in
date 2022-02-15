@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = msasn1.dll
 IMPORTLIB = msasn1
 

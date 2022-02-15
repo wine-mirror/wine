@@ -36,7 +36,7 @@ ASN1module_t WINAPI ASN1_CreateModule(ASN1uint32_t ver, ASN1encodingrule_e rule,
 {
     ASN1module_t module = NULL;
 
-    TRACE("(%08x %08x %08x %u %p %p %p %p %u)\n", ver, rule, flags, pdu, encoder, decoder, freemem, size, magic);
+    TRACE("(%08lx %08x %08lx %lu %p %p %p %p %lu)\n", ver, rule, flags, pdu, encoder, decoder, freemem, size, magic);
 
     if (!encoder || !decoder || !freemem || !size)
         return module;
@@ -83,7 +83,7 @@ ASN1error_e WINAPI ASN1_CreateEncoder(ASN1module_t module, ASN1encoding_t *encod
 {
     ASN1encoding_t enc;
 
-    TRACE("(%p %p %p %u %p)\n", module, encoder, buf, bufsize, parent);
+    TRACE("(%p %p %p %lu %p)\n", module, encoder, buf, bufsize, parent);
 
     if (!module || !encoder)
         return ASN1_ERR_BADARGS;
@@ -133,7 +133,7 @@ ASN1error_e WINAPI ASN1_CreateDecoder(ASN1module_t module, ASN1decoding_t *decod
 {
     ASN1decoding_t dec;
 
-    TRACE("(%p %p %p %u %p)\n", module, decoder, buf, bufsize, parent);
+    TRACE("(%p %p %p %lu %p)\n", module, decoder, buf, bufsize, parent);
 
     if (!module || !decoder)
         return ASN1_ERR_BADARGS;
@@ -179,7 +179,7 @@ void WINAPI ASN1_CloseDecoder(ASN1decoding_t decoder)
 ASN1error_e WINAPI ASN1_Decode(ASN1decoding_t decoder, void **outdata, ASN1uint32_t pdunum,
                                ASN1uint32_t flags, ASN1octet_t *buf, ASN1uint32_t bufsize)
 {
-    FIXME("(%p %p %u %08x %p %u): Stub!\n", decoder, outdata, pdunum, flags, buf, bufsize);
+    FIXME("(%p %p %lu %08lx %p %lu): Stub!\n", decoder, outdata, pdunum, flags, buf, bufsize);
 
     if (!decoder)
         return ASN1_ERR_BADARGS;
