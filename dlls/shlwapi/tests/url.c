@@ -655,7 +655,7 @@ static void test_UrlGetPart(void)
         {"http://user:pass:q@host", URL_PART_USERNAME, 0, S_OK, "user", .todo_hr = TRUE},
         {"http://user:pass:q@host", URL_PART_PASSWORD, 0, S_OK, "pass:q", .todo_hr = TRUE},
         {"http://user@host@q", URL_PART_USERNAME, 0, S_OK, "user"},
-        {"http://user@host@q", URL_PART_HOSTNAME, 0, S_OK, "host@q", .todo_result = TRUE},
+        {"http://user@host@q", URL_PART_HOSTNAME, 0, S_OK, "host@q"},
 
         {"http:localhost/index.html", URL_PART_HOSTNAME, 0, E_FAIL, .todo_hr = TRUE},
         {"http:/localhost/index.html", URL_PART_HOSTNAME, 0, E_FAIL, .todo_hr = TRUE},

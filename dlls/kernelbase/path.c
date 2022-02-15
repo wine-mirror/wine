@@ -77,7 +77,6 @@ struct parsed_url
 enum url_scan_type
 {
     SCHEME,
-    HOST,
     PORT,
     USERPASS,
 };
@@ -4221,20 +4220,21 @@ static const WCHAR * scan_url(const WCHAR *start, DWORD *size, enum url_scan_typ
         }
         break;
 
-    case HOST:
-        while (isalnum(*start) || *start == '-' || *start == '.' || *start == ' ' || *start == '*')
-        {
-            start++;
-            (*size)++;
-        }
-        break;
-
     default:
         FIXME("unknown type %d\n", type);
         return L"";
     }
 
     return start;
+}
+
+static const WCHAR *parse_url_element( const WCHAR *url, const WCHAR *separators )
+{
+    const WCHAR *p;
+
+    if ((p = wcspbrk( url, separators )))
+        return p;
+    return url + wcslen( url );
 }
 
 static LONG parse_url(const WCHAR *url, struct parsed_url *pl)
@@ -4280,10 +4280,10 @@ static LONG parse_url(const WCHAR *url, struct parsed_url *pl)
     }
     else goto ErrorExit;
 
-    /* now start parsing hostname or hostnumber */
-    work++;
-    pl->hostname = work;
-    work = scan_url(pl->hostname, &pl->hostname_len, HOST);
+    pl->hostname = work + 1;
+    work = parse_url_element( pl->hostname, L":/\\?#" );
+    pl->hostname_len = work - pl->hostname;
+
     if (*work == ':')
     {
         /* parse port */
