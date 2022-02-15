@@ -77,7 +77,6 @@ struct parsed_url
 enum url_scan_type
 {
     SCHEME,
-    USERPASS,
 };
 
 static WCHAR *heap_strdupAtoW(const char *str)
@@ -4175,42 +4174,6 @@ static const WCHAR * scan_url(const WCHAR *start, DWORD *size, enum url_scan_typ
             *size = 0;
         break;
 
-    case USERPASS:
-        for (;;)
-        {
-            if (isalnum(*start) ||
-                    /* user/password only characters */
-                    (*start == ';') ||
-                    (*start == '?') ||
-                    (*start == '&') ||
-                    (*start == '=') ||
-                    /* *extra* characters */
-                    (*start == '!') ||
-                    (*start == '*') ||
-                    (*start == '\'') ||
-                    (*start == '(') ||
-                    (*start == ')') ||
-                    (*start == ',') ||
-                    /* *safe* characters */
-                    (*start == '$') ||
-                    (*start == '_') ||
-                    (*start == '+') ||
-                    (*start == '-') ||
-                    (*start == '.') ||
-                    (*start == ' '))
-            {
-                start++;
-                (*size)++;
-            }
-            else if (*start == '%' && isxdigit(start[1]) && isxdigit(start[2]))
-            {
-                start += 3;
-                *size += 3;
-            }
-            else break;
-        }
-        break;
-
     default:
         FIXME("unknown type %d\n", type);
         return L"";
@@ -4240,13 +4203,13 @@ static LONG parse_url(const WCHAR *url, struct parsed_url *pl)
     if ((*work != '/') || (*(work+1) != '/')) goto SuccessExit;
 
     pl->username = work + 2;
-    work = scan_url(pl->username, &pl->username_len, USERPASS);
-    if (*work == ':' )
+    work = parse_url_element( pl->username, L":@/\\?#" );
+    pl->username_len = work - pl->username;
+    if (*work == ':')
     {
-        /* parse password */
-        work++;
-        pl->password = work;
-        work = scan_url(pl->password, &pl->password_len, USERPASS);
+        pl->password = work + 1;
+        work = parse_url_element( pl->password, L"@/\\?#" );
+        pl->password_len = work - pl->password;
         if (*work != '@')
         {
             /* what we just parsed must be the hostname and port
@@ -4262,14 +4225,13 @@ static LONG parse_url(const WCHAR *url, struct parsed_url *pl)
         pl->password_len = 0;
         pl->password = 0;
     }
-    else if (!*work || *work == '/' || *work == '.')
+    else
     {
         /* what was parsed was hostname, so reset pointers and let it parse */
         pl->username_len = pl->password_len = 0;
         work = pl->username - 1;
         pl->username = pl->password = 0;
     }
-    else goto ErrorExit;
 
     pl->hostname = work + 1;
     work = parse_url_element( pl->hostname, L":/\\?#" );

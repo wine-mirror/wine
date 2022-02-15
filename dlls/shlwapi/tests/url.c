@@ -652,32 +652,32 @@ static void test_UrlGetPart(void)
 
         {"http://host:port:q", URL_PART_HOSTNAME, 0, S_OK, "host"},
         {"http://host:port:q", URL_PART_PORT, 0, S_OK, "port:q"},
-        {"http://user:pass:q@host", URL_PART_USERNAME, 0, S_OK, "user", .todo_hr = TRUE},
-        {"http://user:pass:q@host", URL_PART_PASSWORD, 0, S_OK, "pass:q", .todo_hr = TRUE},
+        {"http://user:pass:q@host", URL_PART_USERNAME, 0, S_OK, "user"},
+        {"http://user:pass:q@host", URL_PART_PASSWORD, 0, S_OK, "pass:q"},
         {"http://user@host@q", URL_PART_USERNAME, 0, S_OK, "user"},
         {"http://user@host@q", URL_PART_HOSTNAME, 0, S_OK, "host@q"},
 
         {"http:localhost/index.html", URL_PART_HOSTNAME, 0, E_FAIL, .todo_hr = TRUE},
         {"http:/localhost/index.html", URL_PART_HOSTNAME, 0, E_FAIL, .todo_hr = TRUE},
 
-        {"http://localhost\\index.html", URL_PART_HOSTNAME, 0, S_OK, "localhost", .todo_hr = TRUE},
+        {"http://localhost\\index.html", URL_PART_HOSTNAME, 0, S_OK, "localhost"},
         {"http:/\\localhost/index.html", URL_PART_HOSTNAME, 0, S_OK, "localhost", .todo_hr = TRUE},
         {"http:\\/localhost/index.html", URL_PART_HOSTNAME, 0, S_OK, "localhost", .todo_hr = TRUE},
 
-        {"ftp://localhost\\index.html", URL_PART_HOSTNAME, 0, S_OK, "localhost", .todo_hr = TRUE},
+        {"ftp://localhost\\index.html", URL_PART_HOSTNAME, 0, S_OK, "localhost"},
         {"ftp:/\\localhost/index.html", URL_PART_HOSTNAME, 0, S_OK, "localhost", .todo_hr = TRUE},
         {"ftp:\\/localhost/index.html", URL_PART_HOSTNAME, 0, S_OK, "localhost", .todo_hr = TRUE},
 
-        {"http://host?a:b@c:d", URL_PART_HOSTNAME, 0, S_OK, "host", .todo_result = TRUE},
+        {"http://host?a:b@c:d", URL_PART_HOSTNAME, 0, S_OK, "host"},
         {"http://host?a:b@c:d", URL_PART_QUERY, 0, S_OK, "a:b@c:d", .todo_hr = TRUE},
-        {"http://host#a:b@c:d", URL_PART_HOSTNAME, 0, S_OK, "host", .todo_hr = TRUE},
+        {"http://host#a:b@c:d", URL_PART_HOSTNAME, 0, S_OK, "host"},
         {"http://host#a:b@c:d", URL_PART_QUERY, 0, S_FALSE, ""},
 
         /* All characters, other than those with special meaning, are allowed. */
         {"http://foo:bar@google.*.com:21/internal.php?query=x&return=y", URL_PART_HOSTNAME, 0, S_OK, "google.*.com"},
-        {"http:// !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff:pass@host", URL_PART_USERNAME, 0, S_OK, " !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff", .todo_hr = TRUE},
-        {"http://user: !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff@host", URL_PART_PASSWORD, 0, S_OK, " !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff", .todo_hr = TRUE},
-        {"http:// !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff", URL_PART_HOSTNAME, 0, S_OK, " !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff", .todo_hr = TRUE},
+        {"http:// !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff:pass@host", URL_PART_USERNAME, 0, S_OK, " !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff"},
+        {"http://user: !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff@host", URL_PART_PASSWORD, 0, S_OK, " !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff"},
+        {"http:// !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff", URL_PART_HOSTNAME, 0, S_OK, " !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff"},
         {"http://host: !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff", URL_PART_PORT, 0, S_OK, " !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff"},
 
         {"http:///index.html", URL_PART_HOSTNAME, 0, S_FALSE, ""},
@@ -837,7 +837,7 @@ static void test_UrlGetPart(void)
         size = 1;
         wcscpy(bufferW, L"x");
         hr = UrlGetPartW(urlW, bufferW, &size, part, flags);
-        todo_wine_if ((tests[i].todo_hr || tests[i].hr == S_FALSE) && !(strchr(url, '"') && part == URL_PART_USERNAME))
+        todo_wine_if (tests[i].todo_hr || tests[i].hr == S_FALSE)
         {
             if (tests[i].hr == S_OK)
                 ok(hr == E_POINTER, "Got hr %#x.\n", hr);
@@ -880,11 +880,8 @@ static void test_UrlGetPart(void)
         }
         else
         {
-            todo_wine_if (strchr(url, '"') && part == URL_PART_USERNAME)
-            {
-                ok(size == ARRAY_SIZE(bufferW), "Got size %u.\n", size);
-                ok(!wcscmp(bufferW, L"x"), "Got result %s.\n", debugstr_w(bufferW));
-            }
+            ok(size == ARRAY_SIZE(bufferW), "Got size %u.\n", size);
+            ok(!wcscmp(bufferW, L"x"), "Got result %s.\n", debugstr_w(bufferW));
         }
 
         winetest_pop_context();
