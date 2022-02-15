@@ -100,7 +100,7 @@ static HRESULT WINAPI stream_GetTypeInfoCount( _Stream *iface, UINT *count )
 static HRESULT WINAPI stream_GetTypeInfo( _Stream *iface, UINT index, LCID lcid, ITypeInfo **info )
 {
     struct stream *stream = impl_from_Stream( iface );
-    TRACE( "%p, %u, %u, %p\n", stream, index, lcid, info );
+    TRACE( "%p, %u, %lu, %p\n", stream, index, lcid, info );
     return get_typeinfo(Stream_tid, info);
 }
 
@@ -111,7 +111,7 @@ static HRESULT WINAPI stream_GetIDsOfNames( _Stream *iface, REFIID riid, LPOLEST
     HRESULT hr;
     ITypeInfo *typeinfo;
 
-    TRACE( "%p, %s, %p, %u, %u, %p\n", stream, debugstr_guid(riid), names, count, lcid, dispid );
+    TRACE( "%p, %s, %p, %u, %lu, %p\n", stream, debugstr_guid(riid), names, count, lcid, dispid );
 
     hr = get_typeinfo(Stream_tid, &typeinfo);
     if(SUCCEEDED(hr))
@@ -130,7 +130,7 @@ static HRESULT WINAPI stream_Invoke( _Stream *iface, DISPID member, REFIID riid,
     HRESULT hr;
     ITypeInfo *typeinfo;
 
-    TRACE( "%p, %d, %s, %d, %d, %p, %p, %p, %p\n", stream, member, debugstr_guid(riid), lcid, flags, params,
+    TRACE( "%p, %ld, %s, %ld, %d, %p, %p, %p, %p\n", stream, member, debugstr_guid(riid), lcid, flags, params,
            result, excep_info, arg_err );
 
     hr = get_typeinfo(Stream_tid, &typeinfo);
@@ -196,7 +196,7 @@ static HRESULT WINAPI stream_put_Position( _Stream *iface, ADO_LONGPTR pos )
     struct stream *stream = impl_from_Stream( iface );
     HRESULT hr;
 
-    TRACE( "%p, %ld\n", stream, pos );
+    TRACE( "%p, %Id\n", stream, pos );
 
     if (stream->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
     if (pos < 0) return MAKE_ADO_HRESULT( adErrInvalidArgument );
@@ -326,7 +326,7 @@ static HRESULT WINAPI stream_Read( _Stream *iface, LONG size, VARIANT *val )
     struct stream *stream = impl_from_Stream( iface );
     HRESULT hr;
 
-    TRACE( "%p, %d, %p\n", stream, size, val );
+    TRACE( "%p, %ld, %p\n", stream, size, val );
 
     if (stream->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
     if (stream->type != adTypeBinary) return MAKE_ADO_HRESULT( adErrIllegalOperation );
@@ -408,7 +408,7 @@ static HRESULT WINAPI stream_SetEOS( _Stream *iface )
 
 static HRESULT WINAPI stream_CopyTo( _Stream *iface, _Stream *dst, ADO_LONGPTR size )
 {
-    FIXME( "%p, %p, %ld\n", iface, dst, size );
+    FIXME( "%p, %p, %Id\n", iface, dst, size );
     return E_NOTIMPL;
 }
 
@@ -435,7 +435,7 @@ static HRESULT WINAPI stream_ReadText( _Stream *iface, LONG len, BSTR *ret )
     struct stream *stream = impl_from_Stream( iface );
     BSTR str;
 
-    TRACE( "%p, %d, %p\n", stream, len, ret );
+    TRACE( "%p, %ld, %p\n", stream, len, ret );
     if (len == adReadLine)
     {
         FIXME( "adReadLine not supported\n" );

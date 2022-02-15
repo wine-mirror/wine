@@ -89,7 +89,7 @@ static ULONG WINAPI field_AddRef( Field *iface )
 {
     struct field *field = impl_from_Field( iface );
     LONG refs = InterlockedIncrement( &field->refs );
-    TRACE( "%p new refcount %d\n", field, refs );
+    TRACE( "%p new refcount %ld\n", field, refs );
     return refs;
 }
 
@@ -97,7 +97,7 @@ static ULONG WINAPI field_Release( Field *iface )
 {
     struct field *field = impl_from_Field( iface );
     LONG refs = InterlockedDecrement( &field->refs );
-    TRACE( "%p new refcount %d\n", field, refs );
+    TRACE( "%p new refcount %ld\n", field, refs );
     if (!refs)
     {
         TRACE( "destroying %p\n", field );
@@ -141,7 +141,7 @@ static HRESULT WINAPI field_GetTypeInfoCount( Field *iface, UINT *count )
 static HRESULT WINAPI field_GetTypeInfo( Field *iface, UINT index, LCID lcid, ITypeInfo **info )
 {
     struct field *field = impl_from_Field( iface );
-    TRACE( "%p, %u, %u, %p\n", field, index, lcid, info );
+    TRACE( "%p, %u, %lu, %p\n", field, index, lcid, info );
     return get_typeinfo(Field_tid, info);
 }
 
@@ -152,7 +152,7 @@ static HRESULT WINAPI field_GetIDsOfNames( Field *iface, REFIID riid, LPOLESTR *
     HRESULT hr;
     ITypeInfo *typeinfo;
 
-    TRACE( "%p, %s, %p, %u, %u, %p\n", field, debugstr_guid(riid), names, count, lcid, dispid );
+    TRACE( "%p, %s, %p, %u, %lu, %p\n", field, debugstr_guid(riid), names, count, lcid, dispid );
 
     hr = get_typeinfo(Field_tid, &typeinfo);
     if(SUCCEEDED(hr))
@@ -171,7 +171,7 @@ static HRESULT WINAPI field_Invoke( Field *iface, DISPID member, REFIID riid, LC
     HRESULT hr;
     ITypeInfo *typeinfo;
 
-    TRACE( "%p, %d, %s, %d, %d, %p, %p, %p, %p\n", field, member, debugstr_guid(riid), lcid, flags, params,
+    TRACE( "%p, %ld, %s, %ld, %d, %p, %p, %p, %p\n", field, member, debugstr_guid(riid), lcid, flags, params,
            result, excep_info, arg_err );
 
     hr = get_typeinfo(Field_tid, &typeinfo);
@@ -310,7 +310,7 @@ static HRESULT WINAPI field_AppendChunk( Field *iface, VARIANT data )
 
 static HRESULT WINAPI field_GetChunk( Field *iface, LONG length, VARIANT *var )
 {
-    FIXME( "%p, %d, %p\n", iface, length, var );
+    FIXME( "%p, %ld, %p\n", iface, length, var );
     return E_NOTIMPL;
 }
 
@@ -364,7 +364,7 @@ static HRESULT WINAPI field_put_DefinedSize( Field *iface, ADO_LONGPTR size )
 {
     struct field *field = impl_from_Field( iface );
 
-    TRACE( "%p, %ld\n", field, size );
+    TRACE( "%p, %Id\n", field, size );
 
     field->defined_size = size;
     return S_OK;
@@ -374,7 +374,7 @@ static HRESULT WINAPI field_put_Attributes( Field *iface, LONG attrs )
 {
     struct field *field = impl_from_Field( iface );
 
-    TRACE( "%p, %d\n", field, attrs );
+    TRACE( "%p, %ld\n", field, attrs );
 
     field->attrs = attrs;
     return S_OK;
@@ -498,7 +498,7 @@ static HRESULT WINAPI field_props_GetTypeInfoCount(Properties *iface, UINT *coun
 static HRESULT WINAPI field_props_GetTypeInfo(Properties *iface, UINT index, LCID lcid, ITypeInfo **info)
 {
     struct field *field = impl_from_Properties( iface );
-    TRACE( "%p, %u, %u, %p\n", field, index, lcid, info );
+    TRACE( "%p, %u, %lu, %p\n", field, index, lcid, info );
     return get_typeinfo(Properties_tid, info);
 }
 
@@ -509,7 +509,7 @@ static HRESULT WINAPI field_props_GetIDsOfNames(Properties *iface, REFIID riid, 
     HRESULT hr;
     ITypeInfo *typeinfo;
 
-    TRACE( "%p, %s, %p, %u, %u, %p\n", field, debugstr_guid(riid), names, count, lcid, dispid );
+    TRACE( "%p, %s, %p, %u, %lu, %p\n", field, debugstr_guid(riid), names, count, lcid, dispid );
 
     hr = get_typeinfo(Properties_tid, &typeinfo);
     if(SUCCEEDED(hr))
@@ -528,7 +528,7 @@ static HRESULT WINAPI field_props_Invoke(Properties *iface, DISPID member, REFII
     HRESULT hr;
     ITypeInfo *typeinfo;
 
-    TRACE( "%p, %d, %s, %d, %d, %p, %p, %p, %p\n", field, member, debugstr_guid(riid), lcid, flags, params,
+    TRACE( "%p, %ld, %s, %ld, %d, %p, %p, %p, %p\n", field, member, debugstr_guid(riid), lcid, flags, params,
            result, excep_info, arg_err );
 
     hr = get_typeinfo(Properties_tid, &typeinfo);
@@ -617,7 +617,7 @@ static ULONG WINAPI fields_AddRef( Fields *iface )
 {
     struct fields *fields = impl_from_Fields( iface );
     LONG refs = InterlockedIncrement( &fields->refs );
-    TRACE( "%p new refcount %d\n", fields, refs );
+    TRACE( "%p new refcount %ld\n", fields, refs );
     return refs;
 }
 
@@ -625,7 +625,7 @@ static ULONG WINAPI fields_Release( Fields *iface )
 {
     struct fields *fields = impl_from_Fields( iface );
     LONG refs = InterlockedDecrement( &fields->refs );
-    TRACE( "%p new refcount %d\n", fields, refs );
+    TRACE( "%p new refcount %ld\n", fields, refs );
     if (!refs)
     {
         if (fields->recordset) _Recordset_Release( &fields->recordset->Recordset_iface );
@@ -670,7 +670,7 @@ static HRESULT WINAPI fields_GetTypeInfoCount( Fields *iface, UINT *count )
 static HRESULT WINAPI fields_GetTypeInfo( Fields *iface, UINT index, LCID lcid, ITypeInfo **info )
 {
     struct fields *fields = impl_from_Fields( iface );
-    TRACE( "%p, %u, %u, %p\n", fields, index, lcid, info );
+    TRACE( "%p, %u, %lu, %p\n", fields, index, lcid, info );
     return get_typeinfo(Fields_tid, info);
 }
 
@@ -681,7 +681,7 @@ static HRESULT WINAPI fields_GetIDsOfNames( Fields *iface, REFIID riid, LPOLESTR
     HRESULT hr;
     ITypeInfo *typeinfo;
 
-    TRACE( "%p, %s, %p, %u, %u, %p\n", fields, debugstr_guid(riid), names, count, lcid, dispid );
+    TRACE( "%p, %s, %p, %u, %lu, %p\n", fields, debugstr_guid(riid), names, count, lcid, dispid );
 
     hr = get_typeinfo(Fields_tid, &typeinfo);
     if(SUCCEEDED(hr))
@@ -700,7 +700,7 @@ static HRESULT WINAPI fields_Invoke( Fields *iface, DISPID member, REFIID riid, 
     HRESULT hr;
     ITypeInfo *typeinfo;
 
-    TRACE( "%p, %d, %s, %d, %d, %p, %p, %p, %p\n", fields, member, debugstr_guid(riid), lcid, flags, params,
+    TRACE( "%p, %ld, %s, %ld, %d, %p, %p, %p, %p\n", fields, member, debugstr_guid(riid), lcid, flags, params,
            result, excep_info, arg_err );
 
     hr = get_typeinfo(Fields_tid, &typeinfo);
@@ -833,7 +833,7 @@ static HRESULT WINAPI fields__Append( Fields *iface, BSTR name, DataTypeEnum typ
 {
     struct fields *fields = impl_from_Fields( iface );
 
-    TRACE( "%p, %s, %u, %ld, %d\n", fields, debugstr_w(name), type, size, attr );
+    TRACE( "%p, %s, %u, %Id, %d\n", fields, debugstr_w(name), type, size, attr );
 
     return append_field( fields, name, type, size, attr, NULL );
 }
@@ -849,7 +849,7 @@ static HRESULT WINAPI fields_Append( Fields *iface, BSTR name, DataTypeEnum type
 {
     struct fields *fields = impl_from_Fields( iface );
 
-    TRACE( "%p, %s, %u, %ld, %d, %s\n", fields, debugstr_w(name), type, size, attr, debugstr_variant(&value) );
+    TRACE( "%p, %s, %u, %Id, %d, %s\n", fields, debugstr_w(name), type, size, attr, debugstr_variant(&value) );
 
     return append_field( fields, name, type, size, attr, &value );
 }
@@ -949,8 +949,8 @@ static void map_rowset_fields(struct recordset *recordset, struct fields *fields
     {
         for (i=0; i < columns; i++)
         {
-            TRACE("Adding Column %lu, pwszName: %s, pTypeInfo %p, iOrdinal %lu, dwFlags 0x%08x, "
-                  "ulColumnSize %lu, wType %d, bPrecision %d, bScale %d\n",
+            TRACE("Adding Column %Iu, pwszName: %s, pTypeInfo %p, iOrdinal %Iu, dwFlags 0x%08lx, "
+                  "ulColumnSize %Iu, wType %d, bPrecision %d, bScale %d\n",
                   i, debugstr_w(colinfo[i].pwszName), colinfo[i].pTypeInfo, colinfo[i].iOrdinal,
                   colinfo[i].dwFlags, colinfo[i].ulColumnSize, colinfo[i].wType,
                   colinfo[i].bPrecision, colinfo[i].bScale);
@@ -959,7 +959,7 @@ static void map_rowset_fields(struct recordset *recordset, struct fields *fields
                      colinfo[i].dwFlags, NULL);
             if (FAILED(hr))
             {
-                ERR("Failed to add Field name - 0x%08x\n", hr);
+                ERR("Failed to add Field name - 0x%08lx\n", hr);
                 return;
             }
         }
@@ -1004,7 +1004,7 @@ static ULONG WINAPI recordset_AddRef( _Recordset *iface )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
     LONG refs = InterlockedIncrement( &recordset->refs );
-    TRACE( "%p new refcount %d\n", recordset, refs );
+    TRACE( "%p new refcount %ld\n", recordset, refs );
     return refs;
 }
 
@@ -1041,7 +1041,7 @@ static ULONG WINAPI recordset_Release( _Recordset *iface )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
     LONG refs = InterlockedDecrement( &recordset->refs );
-    TRACE( "%p new refcount %d\n", recordset, refs );
+    TRACE( "%p new refcount %ld\n", recordset, refs );
     if (!refs)
     {
         TRACE( "destroying %p\n", recordset );
@@ -1098,7 +1098,7 @@ static HRESULT WINAPI recordset_GetTypeInfoCount( _Recordset *iface, UINT *count
 static HRESULT WINAPI recordset_GetTypeInfo( _Recordset *iface, UINT index, LCID lcid, ITypeInfo **info )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
-    TRACE( "%p, %u, %u, %p\n", recordset, index, lcid, info );
+    TRACE( "%p, %u, %lu, %p\n", recordset, index, lcid, info );
     return get_typeinfo(Recordset_tid, info);
 }
 
@@ -1109,7 +1109,7 @@ static HRESULT WINAPI recordset_GetIDsOfNames( _Recordset *iface, REFIID riid, L
     HRESULT hr;
     ITypeInfo *typeinfo;
 
-    TRACE( "%p, %s, %p, %u, %u, %p\n", recordset, debugstr_guid(riid), names, count, lcid, dispid );
+    TRACE( "%p, %s, %p, %u, %lu, %p\n", recordset, debugstr_guid(riid), names, count, lcid, dispid );
 
     hr = get_typeinfo(Recordset_tid, &typeinfo);
     if(SUCCEEDED(hr))
@@ -1128,7 +1128,7 @@ static HRESULT WINAPI recordset_Invoke( _Recordset *iface, DISPID member, REFIID
     HRESULT hr;
     ITypeInfo *typeinfo;
 
-    TRACE( "%p, %d, %s, %d, %d, %p, %p, %p, %p\n", recordset, member, debugstr_guid(riid), lcid, flags, params,
+    TRACE( "%p, %ld, %s, %ld, %d, %p, %p, %p, %p\n", recordset, member, debugstr_guid(riid), lcid, flags, params,
            result, excep_info, arg_err );
 
     hr = get_typeinfo(Recordset_tid, &typeinfo);
@@ -1156,7 +1156,7 @@ static HRESULT WINAPI recordset_get_AbsolutePosition( _Recordset *iface, Positio
 
 static HRESULT WINAPI recordset_put_AbsolutePosition( _Recordset *iface, PositionEnum_Param pos )
 {
-    FIXME( "%p, %ld\n", iface, pos );
+    FIXME( "%p, %Id\n", iface, pos );
     return E_NOTIMPL;
 }
 
@@ -1222,7 +1222,7 @@ static HRESULT WINAPI recordset_get_CacheSize( _Recordset *iface, LONG *size )
 
 static HRESULT WINAPI recordset_put_CacheSize( _Recordset *iface, LONG size )
 {
-    FIXME( "%p, %d\n", iface, size );
+    FIXME( "%p, %ld\n", iface, size );
     return E_NOTIMPL;
 }
 
@@ -1298,7 +1298,7 @@ static HRESULT WINAPI recordset_get_MaxRecords( _Recordset *iface, ADO_LONGPTR *
 
 static HRESULT WINAPI recordset_put_MaxRecords( _Recordset *iface, ADO_LONGPTR max_records )
 {
-    FIXME( "%p, %ld\n", iface, max_records );
+    FIXME( "%p, %Id\n", iface, max_records );
     return E_NOTIMPL;
 }
 
@@ -1388,13 +1388,13 @@ static HRESULT WINAPI recordset_Delete( _Recordset *iface, AffectEnum affect_rec
 
 static HRESULT WINAPI recordset_GetRows( _Recordset *iface, LONG rows, VARIANT start, VARIANT fields, VARIANT *var )
 {
-    FIXME( "%p, %d, %s, %s, %p\n", iface, rows, debugstr_variant(&start), debugstr_variant(&fields), var );
+    FIXME( "%p, %ld, %s, %s, %p\n", iface, rows, debugstr_variant(&start), debugstr_variant(&fields), var );
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI recordset_Move( _Recordset *iface, ADO_LONGPTR num_records, VARIANT start )
 {
-    FIXME( "%p, %ld, %s\n", iface, num_records, debugstr_variant(&start) );
+    FIXME( "%p, %Id, %s\n", iface, num_records, debugstr_variant(&start) );
     return E_NOTIMPL;
 }
 
@@ -1491,7 +1491,7 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
     IUnknown *rowset;
     HRESULT hr;
 
-    FIXME( "%p, %s, %s, %d, %d, %d Semi-stub\n", recordset, debugstr_variant(&source), debugstr_variant(&active_connection),
+    FIXME( "%p, %s, %s, %d, %d, %ld Semi-stub\n", recordset, debugstr_variant(&source), debugstr_variant(&active_connection),
            cursor_type, lock_type, options );
 
     if (recordset->state == adStateOpen) return MAKE_ADO_HRESULT( adErrObjectOpen );
@@ -1545,7 +1545,7 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
 
 static HRESULT WINAPI recordset_Requery( _Recordset *iface, LONG options )
 {
-    FIXME( "%p, %d\n", iface, options );
+    FIXME( "%p, %ld\n", iface, options );
     return E_NOTIMPL;
 }
 
@@ -1569,7 +1569,7 @@ static HRESULT WINAPI recordset_get_AbsolutePage( _Recordset *iface, PositionEnu
 
 static HRESULT WINAPI recordset_put_AbsolutePage( _Recordset *iface, PositionEnum_Param pos )
 {
-    FIXME( "%p, %ld\n", iface, pos );
+    FIXME( "%p, %Id\n", iface, pos );
     return E_NOTIMPL;
 }
 
@@ -1605,7 +1605,7 @@ static HRESULT WINAPI recordset_get_PageSize( _Recordset *iface, LONG *size )
 
 static HRESULT WINAPI recordset_put_PageSize( _Recordset *iface, LONG size )
 {
-    FIXME( "%p, %d\n", iface, size );
+    FIXME( "%p, %ld\n", iface, size );
     return E_NOTIMPL;
 }
 
@@ -1718,7 +1718,7 @@ static HRESULT WINAPI recordset_put_MarshalOptions( _Recordset *iface, MarshalOp
 static HRESULT WINAPI recordset_Find( _Recordset *iface, BSTR criteria, LONG skip_records,
                                       SearchDirectionEnum search_direction, VARIANT start )
 {
-    FIXME( "%p, %s, %d, %d, %s\n", iface, debugstr_w(criteria), skip_records, search_direction,
+    FIXME( "%p, %s, %ld, %d, %s\n", iface, debugstr_w(criteria), skip_records, search_direction,
            debugstr_variant(&start) );
     return E_NOTIMPL;
 }
@@ -1769,7 +1769,7 @@ static HRESULT WINAPI recordset_GetString( _Recordset *iface, StringFormatEnum s
                                            BSTR column_delimiter, BSTR row_delimiter, BSTR null_expr,
                                            BSTR *ret_string )
 {
-    FIXME( "%p, %u, %d, %s, %s, %s, %p\n", iface, string_format, num_rows, debugstr_w(column_delimiter),
+    FIXME( "%p, %u, %ld, %s, %s, %s, %p\n", iface, string_format, num_rows, debugstr_w(column_delimiter),
            debugstr_w(row_delimiter), debugstr_w(null_expr), ret_string );
     return E_NOTIMPL;
 }
@@ -1986,7 +1986,7 @@ static HRESULT WINAPI rsconstruction_GetTypeInfo(ADORecordsetConstruction *iface
     LCID lcid, ITypeInfo **ppTInfo)
 {
     struct recordset *recordset = impl_from_ADORecordsetConstruction( iface );
-    TRACE( "%p %u %u %p\n", recordset, iTInfo, lcid, ppTInfo );
+    TRACE( "%p %u %lu %p\n", recordset, iTInfo, lcid, ppTInfo );
     return get_typeinfo(ADORecordsetConstruction_tid, ppTInfo);
 }
 
@@ -1997,7 +1997,7 @@ static HRESULT WINAPI rsconstruction_GetIDsOfNames(ADORecordsetConstruction *ifa
     HRESULT hr;
     ITypeInfo *typeinfo;
 
-    TRACE( "%p %s %p %u %u %p\n", recordset, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId );
+    TRACE( "%p %s %p %u %lu %p\n", recordset, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId );
 
     hr = get_typeinfo(ADORecordsetConstruction_tid, &typeinfo);
     if(SUCCEEDED(hr))
@@ -2017,7 +2017,7 @@ static HRESULT WINAPI rsconstruction_Invoke(ADORecordsetConstruction *iface, DIS
     HRESULT hr;
     ITypeInfo *typeinfo;
 
-    TRACE( "%p %d %s %d %d %p %p %p %p\n", recordset, dispIdMember, debugstr_guid(riid),
+    TRACE( "%p %ld %s %ld %d %p %p %p %p\n", recordset, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr );
 
     hr = get_typeinfo(ADORecordsetConstruction_tid, &typeinfo);
@@ -2071,7 +2071,7 @@ static HRESULT WINAPI rsconstruction_get_Chapter(ADORecordsetConstruction *iface
 static HRESULT WINAPI rsconstruction_put_Chapter(ADORecordsetConstruction *iface, ADO_LONGPTR chapter)
 {
     struct recordset *recordset = impl_from_ADORecordsetConstruction( iface );
-    FIXME( "%p, %ld\n", recordset, chapter );
+    FIXME( "%p, %Id\n", recordset, chapter );
     return E_NOTIMPL;
 }
 

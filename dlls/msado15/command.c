@@ -100,7 +100,7 @@ static HRESULT WINAPI command_GetTypeInfoCount( _Command *iface, UINT *count )
 static HRESULT WINAPI command_GetTypeInfo( _Command *iface, UINT index, LCID lcid, ITypeInfo **info )
 {
     struct command *command = impl_from_Command( iface );
-    TRACE( "%p, %u, %u, %p\n", command, index, lcid, info );
+    TRACE( "%p, %u, %lu, %p\n", command, index, lcid, info );
     return get_typeinfo(Command_tid, info);
 }
 
@@ -111,7 +111,7 @@ static HRESULT WINAPI command_GetIDsOfNames( _Command *iface, REFIID riid, LPOLE
     HRESULT hr;
     ITypeInfo *typeinfo;
 
-    TRACE( "%p, %s, %p, %u, %u, %p\n", command, debugstr_guid(riid), names, count, lcid, dispid );
+    TRACE( "%p, %s, %p, %u, %lu, %p\n", command, debugstr_guid(riid), names, count, lcid, dispid );
 
     hr = get_typeinfo(Command_tid, &typeinfo);
     if(SUCCEEDED(hr))
@@ -130,7 +130,7 @@ static HRESULT WINAPI command_Invoke( _Command *iface, DISPID member, REFIID rii
     HRESULT hr;
     ITypeInfo *typeinfo;
 
-    TRACE( "%p, %d, %s, %d, %d, %p, %p, %p, %p\n", command, member, debugstr_guid(riid), lcid, flags, params,
+    TRACE( "%p, %ld, %s, %ld, %d, %p, %p, %p, %p\n", command, member, debugstr_guid(riid), lcid, flags, params,
            result, excep_info, arg_err );
 
     hr = get_typeinfo(Command_tid, &typeinfo);
@@ -210,7 +210,7 @@ static HRESULT WINAPI command_get_CommandTimeout( _Command *iface, LONG *timeout
 
 static HRESULT WINAPI command_put_CommandTimeout( _Command *iface, LONG timeout )
 {
-    FIXME( "%p, %d\n", iface, timeout );
+    FIXME( "%p, %ld\n", iface, timeout );
     return E_NOTIMPL;
 }
 
@@ -229,7 +229,7 @@ static HRESULT WINAPI command_put_Prepared( _Command *iface, VARIANT_BOOL prepar
 static HRESULT WINAPI command_Execute( _Command *iface, VARIANT *affected, VARIANT *parameters,
                                        LONG options, _Recordset **recordset )
 {
-    FIXME( "%p, %p, %p, %d, %p\n", iface, affected, parameters, options, recordset );
+    FIXME( "%p, %p, %p, %ld, %p\n", iface, affected, parameters, options, recordset );
     return E_NOTIMPL;
 }
 
@@ -237,7 +237,7 @@ static HRESULT WINAPI command_CreateParameter( _Command *iface, BSTR name, DataT
                                                ParameterDirectionEnum direction, ADO_LONGPTR size, VARIANT value,
                                                _Parameter **parameter )
 {
-    FIXME( "%p, %s, %d, %d, %ld, %p\n", iface, debugstr_w(name), type, direction, size, parameter );
+    FIXME( "%p, %s, %d, %d, %Id, %p\n", iface, debugstr_w(name), type, direction, size, parameter );
     return E_NOTIMPL;
 }
 

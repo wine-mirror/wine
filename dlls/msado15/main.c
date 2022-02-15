@@ -161,7 +161,7 @@ static HRESULT load_typelib(void)
 
     hres = LoadRegTypeLib(&LIBID_ADODB, 1, 0, LOCALE_SYSTEM_DEFAULT, &tl);
     if(FAILED(hres)) {
-        ERR("LoadRegTypeLib failed: %08x\n", hres);
+        ERR("LoadRegTypeLib failed: %08lx\n", hres);
         return hres;
     }
 
@@ -182,7 +182,7 @@ HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo)
 
         hres = ITypeLib_GetTypeInfoOfGuid(typelib, tid_ids[tid], &ti);
         if(FAILED(hres)) {
-            ERR("GetTypeInfoOfGuid(%s) failed: %08x\n", debugstr_guid(tid_ids[tid]), hres);
+            ERR("GetTypeInfoOfGuid(%s) failed: %08lx\n", debugstr_guid(tid_ids[tid]), hres);
             return hres;
         }
 
