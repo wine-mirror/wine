@@ -81,6 +81,8 @@ struct xinput_controller
         char *feature_report_buf;
 
         BYTE haptics_report;
+        BYTE haptics_none_ordinal;
+        BYTE haptics_stop_ordinal;
         BYTE haptics_rumble_ordinal;
         BYTE haptics_buzz_ordinal;
     } hid;
@@ -244,6 +246,8 @@ static BOOL controller_check_caps(struct xinput_controller *controller, HANDLE d
         return TRUE;
     }
 
+    controller->hid.haptics_none_ordinal = 1; /* implicit None waveform ordinal, from the HID spec */
+    controller->hid.haptics_stop_ordinal = 2; /* implicit Stop waveform ordinal, from the HID spec */
     controller->hid.haptics_buzz_ordinal = 0;
     controller->hid.haptics_rumble_ordinal = 0;
     for (i = 3; status == HIDP_STATUS_SUCCESS; ++i)
@@ -290,6 +294,22 @@ static DWORD HID_set_state(struct xinput_controller *controller, XINPUT_VIBRATIO
     controller->vibration.wRightMotorSpeed = state->wRightMotorSpeed;
 
     if (!controller->enabled) return ERROR_SUCCESS;
+
+    if (!state->wLeftMotorSpeed && !state->wRightMotorSpeed)
+    {
+        status = HidP_InitializeReportForID(HidP_Output, report_id, preparsed, report_buf, report_len);
+        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_InitializeReportForID returned %#lx\n", status);
+        status = HidP_SetUsageValue(HidP_Output, HID_USAGE_PAGE_HAPTICS, 0, HID_USAGE_HAPTICS_MANUAL_TRIGGER,
+                                    controller->hid.haptics_stop_ordinal, preparsed, report_buf, report_len);
+        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_SetUsageValue MANUAL_TRIGGER returned %#lx\n", status);
+        if (!HidD_SetOutputReport(controller->device, report_buf, report_len))
+        {
+            WARN("HidD_SetOutputReport failed with error %lu\n", GetLastError());
+            return GetLastError();
+        }
+
+        return 0;
+    }
 
     /* send haptics rumble report (left motor) */
     status = HidP_InitializeReportForID(HidP_Output, report_id, preparsed, report_buf, report_len);
