@@ -2538,13 +2538,11 @@ static void test_thread_description(void)
     thread = OpenThread(THREAD_SET_LIMITED_INFORMATION, FALSE, GetCurrentThreadId());
 
     hr = pSetThreadDescription(thread, desc);
-    todo_wine
     ok(hr == HRESULT_FROM_NT(STATUS_SUCCESS), "Failed to set thread description, hr %#lx.\n", hr);
 
     ptr = NULL;
     hr = pGetThreadDescription(GetCurrentThread(), &ptr);
     ok(hr == HRESULT_FROM_NT(STATUS_SUCCESS), "Failed to get thread description, hr %#lx.\n", hr);
-    todo_wine
     ok(!lstrcmpW(ptr, desc), "Unexpected description %s.\n", wine_dbgstr_w(ptr));
     LocalFree(ptr);
 
