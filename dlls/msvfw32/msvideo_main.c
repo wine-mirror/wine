@@ -66,7 +66,7 @@ static inline const char *wine_dbgstr_fcc( DWORD fcc )
     if (isalnum(fcc_str[0]) && isalnum(fcc_str[1]) && isalnum(fcc_str[2])
     && (isalnum(fcc_str[3]) || isspace(fcc_str[3])))
         return wine_dbg_sprintf("%s", fcc_str);
-    return wine_dbg_sprintf("0x%08x", fcc);
+    return wine_dbg_sprintf("0x%08lx", fcc);
 }
 
 static const char *wine_dbgstr_icerr( int ret )
@@ -117,7 +117,7 @@ HMODULE MSVFW32_hModule;
 
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
-    TRACE("%p,%x,%p\n", hinst, reason, reserved);
+    TRACE("%p,%lx,%p\n", hinst, reason, reserved);
 
     switch(reason)
     {
@@ -138,7 +138,7 @@ static LRESULT MSVIDEO_SendMessage(WINE_HIC* whic, UINT msg, DWORD_PTR lParam1, 
 {
     LRESULT     ret;
 
-#define XX(x) case x: TRACE("(%p,"#x",0x%08lx,0x%08lx)\n",whic,lParam1,lParam2); break
+#define XX(x) case x: TRACE("(%p,"#x",0x%08Ix,0x%08Ix)\n",whic,lParam1,lParam2); break
 
     switch (msg) {
         /* DRV_* */
@@ -199,7 +199,7 @@ static LRESULT MSVIDEO_SendMessage(WINE_HIC* whic, UINT msg, DWORD_PTR lParam1, 
         XX(ICM_DECOMPRESSEX_END);
         XX(ICM_SET_STATUS_PROC);
     default:
-        FIXME("(%p,0x%08x,0x%08lx,0x%08lx) unknown message\n",whic,msg,lParam1,lParam2);
+        FIXME("(%p,0x%08x,0x%08Ix,0x%08Ix) unknown message\n",whic,msg,lParam1,lParam2);
     }
 
 #undef XX
@@ -350,7 +350,7 @@ BOOL VFWAPI ICInstall(DWORD type, DWORD handler, LPARAM lparam, char *desc, UINT
 {
     struct reg_driver *driver;
 
-    TRACE("type %s, handler %s, lparam %#lx, desc %s, flags %#x.\n",
+    TRACE("type %s, handler %s, lparam %#Ix, desc %s, flags %#x.\n",
             wine_dbgstr_fcc(type), wine_dbgstr_fcc(handler), lparam, debugstr_a(desc), flags);
 
     LIST_FOR_EACH_ENTRY(driver, &reg_driver_list, struct reg_driver, entry)
@@ -596,7 +596,7 @@ LRESULT VFWAPI ICGetInfo(HIC hic, ICINFO *picinfo, DWORD cb)
     LRESULT	ret;
     WINE_HIC*   whic = MSVIDEO_GetHicPtr(hic);
 
-    TRACE("(%p,%p,%d)\n", hic, picinfo, cb);
+    TRACE("(%p,%p,%ld)\n", hic, picinfo, cb);
 
     if (!whic) return ICERR_BADHANDLE;
     if (!picinfo) return MMSYSERR_INVALPARAM;
@@ -802,7 +802,7 @@ ICCompress(
 {
 	ICCOMPRESS	iccmp;
 
-	TRACE("(%p,%d,%p,%p,%p,%p,...)\n",hic,dwFlags,lpbiOutput,lpData,lpbiInput,lpBits);
+	TRACE("(%p,%ld,%p,%p,%p,%p,...)\n",hic,dwFlags,lpbiOutput,lpData,lpbiInput,lpBits);
 
 	iccmp.dwFlags		= dwFlags;
 
@@ -830,7 +830,7 @@ DWORD VFWAPIV  ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,
 	ICDECOMPRESS	icd;
 	DWORD ret;
 
-	TRACE("(%p,%d,%p,%p,%p,%p)\n",hic,dwFlags,lpbiFormat,lpData,lpbi,lpBits);
+	TRACE("(%p,%ld,%p,%p,%p,%p)\n",hic,dwFlags,lpbiFormat,lpData,lpbi,lpBits);
 
 	icd.dwFlags	= dwFlags;
 	icd.lpbiInput	= lpbiFormat;
@@ -886,7 +886,7 @@ static BOOL enum_compressors(HWND list, COMPVARS *pcv, BOOL enum_all)
             {
                 if (ICCompressQuery(hic, pcv->lpbiIn, NULL) != ICERR_OK)
                 {
-                    TRACE("fccHandler %s doesn't support input DIB format %d\n",
+                    TRACE("fccHandler %s doesn't support input DIB format %ld\n",
                           wine_dbgstr_fcc(icinfo.fccHandler), pcv->lpbiIn->bmiHeader.biCompression);
                     ICClose(hic);
                     continue;
@@ -1200,7 +1200,7 @@ DWORD VFWAPIV ICDrawBegin(
 
 	ICDRAWBEGIN	icdb;
 
-	TRACE("(%p,%d,%p,%p,%p,%u,%u,%u,%u,%p,%u,%u,%u,%u,%d,%d)\n",
+	TRACE("(%p,%ld,%p,%p,%p,%u,%u,%u,%u,%p,%u,%u,%u,%u,%ld,%ld)\n",
 		  hic, dwFlags, hpal, hwnd, hdc, xDst, yDst, dxDst, dyDst,
 		  lpbi, xSrc, ySrc, dxSrc, dySrc, dwRate, dwScale);
 
@@ -1228,7 +1228,7 @@ DWORD VFWAPIV ICDrawBegin(
 DWORD VFWAPIV ICDraw(HIC hic, DWORD dwFlags, LPVOID lpFormat, LPVOID lpData, DWORD cbData, LONG lTime) {
 	ICDRAW	icd;
 
-	TRACE("(%p,%d,%p,%p,%d,%d)\n",hic,dwFlags,lpFormat,lpData,cbData,lTime);
+	TRACE("(%p,%ld,%p,%p,%ld,%ld)\n",hic,dwFlags,lpFormat,lpData,cbData,lTime);
 
 	icd.dwFlags = dwFlags;
 	icd.lpFormat = lpFormat;
@@ -1287,7 +1287,7 @@ HANDLE VFWAPI ICImageCompress(
 	LPBITMAPINFO lpbiOut, LONG lQuality,
 	LONG* plSize)
 {
-	FIXME("(%p,%08x,%p,%p,%p,%d,%p)\n",
+	FIXME("(%p,%08x,%p,%p,%p,%ld,%p)\n",
 		hic, uiFlags, lpbiIn, lpBits, lpbiOut, lQuality, plSize);
 
 	return NULL;
@@ -1389,7 +1389,7 @@ HANDLE VFWAPI ICImageDecompress(
 		goto err;
 	bInDecompress = TRUE;
 
-	TRACE( "cbHdr %d, biSizeImage %d\n", cbHdr, biSizeImage );
+	TRACE( "cbHdr %ld, biSizeImage %ld\n", cbHdr, biSizeImage );
 
 	hMem = GlobalAlloc( GMEM_MOVEABLE|GMEM_ZEROINIT, cbHdr + biSizeImage );
 	if ( hMem == NULL )
@@ -1434,7 +1434,7 @@ LPVOID VFWAPI ICSeqCompressFrame(PCOMPVARS pc, UINT uiFlags, LPVOID lpBits, BOOL
 
     if (pc->cbState != sizeof(ICCOMPRESS))
     {
-       ERR("Invalid cbState %i\n", pc->cbState);
+       ERR("Invalid cbState %li\n", pc->cbState);
        return NULL;
     }
 
@@ -1475,7 +1475,7 @@ LPVOID VFWAPI ICSeqCompressFrame(PCOMPVARS pc, UINT uiFlags, LPVOID lpBits, BOOL
         pc->lpBitsPrev = oldout;
         pc->lpBitsOut = oldprev;
 
-        TRACE("returning: %p, compressed frame size %u\n", icComp->lpOutput, *plSize);
+        TRACE("returning: %p, compressed frame size %lu\n", icComp->lpOutput, *plSize);
         return icComp->lpOutput;
     }
     return NULL;
@@ -1579,12 +1579,12 @@ BOOL VFWAPI ICSeqCompressFrameStart(PCOMPVARS pc, LPBITMAPINFO lpbiIn)
         }
     }
 
-    TRACE("Input: %ux%u, fcc %s, bpp %u, size %u\n",
+    TRACE("Input: %lux%lu, fcc %s, bpp %u, size %lu\n",
           pc->lpbiIn->bmiHeader.biWidth, pc->lpbiIn->bmiHeader.biHeight,
           wine_dbgstr_fcc(pc->lpbiIn->bmiHeader.biCompression),
           pc->lpbiIn->bmiHeader.biBitCount,
           pc->lpbiIn->bmiHeader.biSizeImage);
-    TRACE("Output: %ux%u, fcc %s, bpp %u, size %u\n",
+    TRACE("Output: %lux%lu, fcc %s, bpp %u, size %lu\n",
           pc->lpbiOut->bmiHeader.biWidth, pc->lpbiOut->bmiHeader.biHeight,
           wine_dbgstr_fcc(pc->lpbiOut->bmiHeader.biCompression),
           pc->lpbiOut->bmiHeader.biBitCount,
@@ -1599,13 +1599,13 @@ BOOL VFWAPI ICSeqCompressFrameStart(PCOMPVARS pc, LPBITMAPINFO lpbiIn)
         goto error;
 
     TRACE("Compvars:\n"
-          "\tsize: %i\n"
-          "\tflags: 0x%x\n"
+          "\tsize: %lu\n"
+          "\tflags: 0x%lx\n"
           "\thic: %p\n"
           "\ttype: %s\n"
           "\thandler: %s\n"
           "\tin/out: %p/%p\n"
-          "\tkey/data/quality: %i/%i/%i\n",
+          "\tkey/data/quality: %li/%li/%li\n",
     pc->cbSize, pc->dwFlags, pc->hic, wine_dbgstr_fcc(pc->fccType),
     wine_dbgstr_fcc(pc->fccHandler), pc->lpbiIn, pc->lpbiOut, pc->lKey,
     pc->lDataRate, pc->lQ);

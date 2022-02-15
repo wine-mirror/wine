@@ -102,7 +102,7 @@ BOOL VFWAPIV MCIWndRegisterClass(void)
 HWND VFWAPIV MCIWndCreateW(HWND hwndParent, HINSTANCE hInstance,
                            DWORD dwStyle, LPCWSTR szFile)
 {
-    TRACE("%p %p %x %s\n", hwndParent, hInstance, dwStyle, debugstr_w(szFile));
+    TRACE("%p %p %lx %s\n", hwndParent, hInstance, dwStyle, debugstr_w(szFile));
 
     MCIWndRegisterClass();
 
@@ -446,7 +446,7 @@ static LRESULT WINAPI MCIWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lPa
 {
     MCIWndInfo *mwi;
 
-    TRACE("%p %04x %08lx %08lx\n", hWnd, wMsg, wParam, lParam);
+    TRACE("%p %04x %08Ix %08Ix\n", hWnd, wMsg, wParam, lParam);
 
     mwi = (MCIWndInfo*)GetWindowLongPtrW(hWnd, 0);
     if (!mwi && wMsg != WM_CREATE)
@@ -751,7 +751,7 @@ end_of_mci_open:
                 MCIWND_notify_error(mwi);
                 return 0;
             }
-            TRACE("MCIWNDM_GETLENGTH: %ld\n", mci_status.dwReturn);
+            TRACE("MCIWNDM_GETLENGTH: %Id\n", mci_status.dwReturn);
             return mci_status.dwReturn;
         }
 
@@ -768,7 +768,7 @@ end_of_mci_open:
                 MCIWND_notify_error(mwi);
                 return 0;
             }
-            TRACE("MCIWNDM_GETSTART: %ld\n", mci_status.dwReturn);
+            TRACE("MCIWNDM_GETSTART: %Id\n", mci_status.dwReturn);
             return mci_status.dwReturn;
         }
 
@@ -778,7 +778,7 @@ end_of_mci_open:
 
             start = SendMessageW(hWnd, MCIWNDM_GETSTART, 0, 0);
             length = SendMessageW(hWnd, MCIWNDM_GETLENGTH, 0, 0);
-            TRACE("MCIWNDM_GETEND: %ld\n", start + length);
+            TRACE("MCIWNDM_GETEND: %Id\n", start + length);
             return (start + length);
         }
 
@@ -871,7 +871,7 @@ end_of_mci_open:
         {
             MCI_PLAY_PARMS mci_play;
 
-            TRACE("MCIWNDM_PLAYFROM %08lx\n", lParam);
+            TRACE("MCIWNDM_PLAYFROM %08Ix\n", lParam);
 
             mci_play.dwCallback = (DWORD_PTR)hWnd;
             mci_play.dwFrom = lParam;
@@ -893,7 +893,7 @@ end_of_mci_open:
         {
             MCI_PLAY_PARMS mci_play;
 
-            TRACE("MCIWNDM_PLAYTO %08lx\n", lParam);
+            TRACE("MCIWNDM_PLAYTO %08Ix\n", lParam);
 
             mci_play.dwCallback = (DWORD_PTR)hWnd;
             mci_play.dwTo = lParam;
@@ -916,7 +916,7 @@ end_of_mci_open:
             MCI_PLAY_PARMS mci_play;
             DWORD flags = MCI_NOTIFY;
 
-            TRACE("MCIWNDM_PLAYREVERSE %08lx\n", lParam);
+            TRACE("MCIWNDM_PLAYREVERSE %08Ix\n", lParam);
 
             mci_play.dwCallback = (DWORD_PTR)hWnd;
             mci_play.dwFrom = lParam;
@@ -1054,7 +1054,7 @@ end_of_mci_open:
         return mwi->inactive_timer;
 
     case MCIWNDM_CHANGESTYLES:
-        TRACE("MCIWNDM_CHANGESTYLES mask %08lx, set %08lx\n", wParam, lParam);
+        TRACE("MCIWNDM_CHANGESTYLES mask %08Ix, set %08Ix\n", wParam, lParam);
         /* FIXME: update the visual window state as well:
          * add/remove trackbar, autosize, etc.
          */
@@ -1063,7 +1063,7 @@ end_of_mci_open:
         return 0;
 
     case MCIWNDM_GETSTYLES:
-        TRACE("MCIWNDM_GETSTYLES: %08x\n", mwi->dwStyle & 0xffff);
+        TRACE("MCIWNDM_GETSTYLES: %08lx\n", mwi->dwStyle & 0xffff);
         return mwi->dwStyle & 0xffff;
 
     case MCIWNDM_GETDEVICEA:
@@ -1124,7 +1124,7 @@ end_of_mci_open:
         {
             MCI_STATUS_PARMS mci_status;
 
-            TRACE("MCIWNDM_GETTIMEFORMAT %08lx %08lx\n", wParam, lParam);
+            TRACE("MCIWNDM_GETTIMEFORMAT %08Ix %08Ix\n", wParam, lParam);
 
             /* get format string if requested */
             if (wParam && lParam)
@@ -1241,7 +1241,7 @@ end_of_mci_open:
         return 0;
 
     case MCIWNDM_SETZOOM:
-        TRACE("MCIWNDM_SETZOOM %ld\n", lParam);
+        TRACE("MCIWNDM_SETZOOM %Id\n", lParam);
         mwi->zoom = lParam;
 
         if (mwi->mci && !(mwi->dwStyle & MCIWNDF_NOAUTOSIZEWINDOW))
