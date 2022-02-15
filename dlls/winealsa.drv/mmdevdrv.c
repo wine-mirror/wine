@@ -166,7 +166,7 @@ static const char defname[] = "default";
 
 static const WCHAR drv_keyW[] = {'S','o','f','t','w','a','r','e','\\',
     'W','i','n','e','\\','D','r','i','v','e','r','s','\\',
-    'w','i','n','e','a','l','s','a','.','d','r','v',0};
+    'w','i','n','e','a','l','s','a','.','d','r','v'};
 static const WCHAR drv_key_devicesW[] = {'S','o','f','t','w','a','r','e','\\',
     'W','i','n','e','\\','D','r','i','v','e','r','s','\\',
     'w','i','n','e','a','l','s','a','.','d','r','v','\\','d','e','v','i','c','e','s',0};
@@ -351,6 +351,73 @@ static void get_device_guid(EDataFlow flow, const char *device, GUID *guid)
         RegCloseKey(key);
 }
 
+static inline void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
+{
+    while (len--) *dst++ = (unsigned char)*src++;
+}
+
+static HKEY reg_open_key( HKEY root, const WCHAR *name, ULONG name_len )
+{
+    UNICODE_STRING nameW = { name_len, name_len, (WCHAR *)name };
+    OBJECT_ATTRIBUTES attr;
+    HANDLE ret;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = root;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    if (NtOpenKeyEx( &ret, MAXIMUM_ALLOWED, &attr, 0 )) return 0;
+    return ret;
+}
+
+static HKEY open_hkcu(void)
+{
+    char buffer[256];
+    WCHAR bufferW[256];
+    DWORD_PTR sid_data[(sizeof(TOKEN_USER) + SECURITY_MAX_SID_SIZE) / sizeof(DWORD_PTR)];
+    DWORD i, len = sizeof(sid_data);
+    SID *sid;
+
+    if (NtQueryInformationToken( GetCurrentThreadEffectiveToken(), TokenUser, sid_data, len, &len ))
+        return 0;
+
+    sid = ((TOKEN_USER *)sid_data)->User.Sid;
+    len = sprintf( buffer, "\\Registry\\User\\S-%u-%u", sid->Revision,
+                 MAKELONG( MAKEWORD( sid->IdentifierAuthority.Value[5], sid->IdentifierAuthority.Value[4] ),
+                           MAKEWORD( sid->IdentifierAuthority.Value[3], sid->IdentifierAuthority.Value[2] )));
+    for (i = 0; i < sid->SubAuthorityCount; i++)
+        len += sprintf( buffer + len, "-%u", sid->SubAuthority[i] );
+    ascii_to_unicode( bufferW, buffer, len + 1 );
+
+    return reg_open_key( NULL, bufferW, len * sizeof(WCHAR) );
+}
+
+static HKEY reg_open_hkcu_key( const WCHAR *name, ULONG name_len )
+{
+    HKEY hkcu = open_hkcu(), key;
+
+    key = reg_open_key( hkcu, name, name_len );
+    NtClose( hkcu );
+
+    return key;
+}
+
+ULONG reg_query_value( HKEY hkey, const WCHAR *name,
+                       KEY_VALUE_PARTIAL_INFORMATION *info, ULONG size )
+{
+    unsigned int name_size = name ? lstrlenW( name ) * sizeof(WCHAR) : 0;
+    UNICODE_STRING nameW = { name_size, name_size, (WCHAR *)name };
+
+    if (NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation,
+                         info, size, &size ))
+        return 0;
+
+    return size - FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data);
+}
+
 static snd_pcm_stream_t alsa_get_direction(EDataFlow flow)
 {
     return (flow == eRender) ? SND_PCM_STREAM_PLAYBACK : SND_PCM_STREAM_CAPTURE;
@@ -496,27 +563,28 @@ static void get_reg_devices(EDataFlow flow, WCHAR ***ids, GUID **guids, UINT *nu
 {
     static const WCHAR ALSAOutputDevices[] = {'A','L','S','A','O','u','t','p','u','t','D','e','v','i','c','e','s',0};
     static const WCHAR ALSAInputDevices[] = {'A','L','S','A','I','n','p','u','t','D','e','v','i','c','e','s',0};
+    char buffer[4096];
+    KEY_VALUE_PARTIAL_INFORMATION *key_info = (void *)buffer;
     HKEY key;
-    WCHAR reg_devices[256];
-    DWORD size = sizeof(reg_devices), type;
+    DWORD size;
     const WCHAR *value_name = (flow == eRender) ? ALSAOutputDevices : ALSAInputDevices;
 
     /* @@ Wine registry key: HKCU\Software\Wine\Drivers\winealsa.drv */
-    if(RegOpenKeyW(HKEY_CURRENT_USER, drv_keyW, &key) == ERROR_SUCCESS){
-        if(RegQueryValueExW(key, value_name, 0, &type,
-                    (BYTE*)reg_devices, &size) == ERROR_SUCCESS){
-            WCHAR *p = reg_devices;
+    if((key = reg_open_hkcu_key(drv_keyW, sizeof(drv_keyW)))){
+        if((size = reg_query_value(key, value_name, key_info, sizeof(buffer)))){
+            WCHAR *p = (WCHAR *)key_info->Data;
 
-            if(type != REG_MULTI_SZ){
+            if(key_info->Type != REG_MULTI_SZ){
                 ERR("Registry ALSA device list value type must be REG_MULTI_SZ\n");
-                RegCloseKey(key);
+                NtClose(key);
                 return;
             }
 
             while(*p){
-                char devname[64];
+                int len = lstrlenW(p);
+                char *devname = malloc(len * 3 + 1);
 
-                WideCharToMultiByte(CP_UNIXCP, 0, p, -1, devname, sizeof(devname), NULL, NULL);
+                WideCharToMultiByte(CP_UNIXCP, 0, p, -1, devname, len * 3 + 1, NULL, NULL);
 
                 if(alsa_try_open(devname, flow)){
                     if(*num){
@@ -530,12 +598,12 @@ static void get_reg_devices(EDataFlow flow, WCHAR ***ids, GUID **guids, UINT *nu
                     get_device_guid(flow, devname, &(*guids)[*num]);
                     ++*num;
                 }
-
-                p += lstrlenW(p) + 1;
+                free(devname);
+                p += len + 1;
             }
         }
 
-        RegCloseKey(key);
+        NtClose(key);
     }
 }
 
