@@ -1109,6 +1109,8 @@ static ULONG WINAPI media_source_rate_control_Release(IMFRateControl *iface)
 
 static HRESULT WINAPI media_source_rate_control_SetRate(IMFRateControl *iface, BOOL thin, float rate)
 {
+    struct media_source *source = impl_from_IMFRateControl(iface);
+
     FIXME("%p, %d, %f.\n", iface, thin, rate);
 
     if (rate < 0.0f)
@@ -1120,7 +1122,7 @@ static HRESULT WINAPI media_source_rate_control_SetRate(IMFRateControl *iface, B
     if (rate != 1.0f)
         return MF_E_UNSUPPORTED_RATE;
 
-    return S_OK;
+    return IMFMediaEventQueue_QueueEventParamVar(source->event_queue, MESourceRateChanged, &GUID_NULL, S_OK, NULL);
 }
 
 static HRESULT WINAPI media_source_rate_control_GetRate(IMFRateControl *iface, BOOL *thin, float *rate)
