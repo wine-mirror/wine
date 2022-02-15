@@ -22,6 +22,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(msctfmonitor);
 
 HRESULT WINAPI InitLocalMsCtfMonitor(DWORD flags)
 {
-    FIXME("%d stub!\n", flags);
+    FIXME("%ld stub!\n", flags);
     return E_FAIL;
 }
