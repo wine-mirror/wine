@@ -141,7 +141,7 @@ static void CALLBACK queue_runner( TP_CALLBACK_INSTANCE *instance, void *ctx )
             return;
 
         default:
-            ERR( "wait failed %u\n", err );
+            ERR( "wait failed %lu\n", err );
             return;
         }
     }
@@ -497,8 +497,8 @@ static HRESULT create_channel( WS_CHANNEL_TYPE type, WS_CHANNEL_BINDING binding,
     {
         const WS_CHANNEL_PROPERTY *prop = &properties[i];
 
-        TRACE( "property id %u value %p size %u\n", prop->id, prop->value, prop->valueSize );
-        if (prop->valueSize == sizeof(ULONG) && prop->value) TRACE( " value %08x\n", *(ULONG *)prop->value );
+        TRACE( "property id %u value %p size %lu\n", prop->id, prop->value, prop->valueSize );
+        if (prop->valueSize == sizeof(ULONG) && prop->value) TRACE( " value %#lx\n", *(ULONG *)prop->value );
 
         switch (prop->id)
         {
@@ -559,7 +559,7 @@ HRESULT WINAPI WsCreateChannel( WS_CHANNEL_TYPE type, WS_CHANNEL_BINDING binding
     struct channel *channel;
     HRESULT hr;
 
-    TRACE( "%u %u %p %u %p %p %p\n", type, binding, properties, count, desc, handle, error );
+    TRACE( "%u %u %p %lu %p %p %p\n", type, binding, properties, count, desc, handle, error );
     if (error) FIXME( "ignoring error parameter\n" );
     if (desc) FIXME( "ignoring security description\n" );
 
@@ -596,7 +596,7 @@ HRESULT WINAPI WsCreateChannelForListener( WS_LISTENER *listener_handle, const W
     WS_CHANNEL_BINDING binding;
     HRESULT hr;
 
-    TRACE( "%p %p %u %p %p\n", listener_handle, properties, count, handle, error );
+    TRACE( "%p %p %lu %p %p\n", listener_handle, properties, count, handle, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
     if (!listener_handle || !handle) return E_INVALIDARG;
@@ -669,7 +669,7 @@ HRESULT WINAPI WsResetChannel( WS_CHANNEL *handle, WS_ERROR *error )
     }
 
     LeaveCriticalSection( &channel->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -682,7 +682,7 @@ HRESULT WINAPI WsGetChannelProperty( WS_CHANNEL *handle, WS_CHANNEL_PROPERTY_ID 
     struct channel *channel = (struct channel *)handle;
     HRESULT hr = S_OK;
 
-    TRACE( "%p %u %p %u %p\n", handle, id, buf, size, error );
+    TRACE( "%p %u %p %lu %p\n", handle, id, buf, size, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
     if (!channel) return E_INVALIDARG;
@@ -717,7 +717,7 @@ HRESULT WINAPI WsGetChannelProperty( WS_CHANNEL *handle, WS_CHANNEL_PROPERTY_ID 
     }
 
     LeaveCriticalSection( &channel->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -730,7 +730,7 @@ HRESULT WINAPI WsSetChannelProperty( WS_CHANNEL *handle, WS_CHANNEL_PROPERTY_ID 
     struct channel *channel = (struct channel *)handle;
     HRESULT hr;
 
-    TRACE( "%p %u %p %u\n", handle, id, value, size );
+    TRACE( "%p %u %p %lu %p\n", handle, id, value, size, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
     if (!channel) return E_INVALIDARG;
@@ -746,7 +746,7 @@ HRESULT WINAPI WsSetChannelProperty( WS_CHANNEL *handle, WS_CHANNEL_PROPERTY_ID 
     hr = prop_set( channel->prop, channel->prop_count, id, value, size );
 
     LeaveCriticalSection( &channel->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -838,7 +838,7 @@ static void shutdown_session_proc( struct task *task )
 
     hr = shutdown_session( s->channel );
 
-    TRACE( "calling %p(%08x)\n", s->ctx.callback, hr );
+    TRACE( "calling %p(%#lx)\n", s->ctx.callback, hr );
     s->ctx.callback( hr, WS_LONG_CALLBACK, s->ctx.callbackState );
     TRACE( "%p returned\n", s->ctx.callback );
 }
@@ -888,7 +888,7 @@ HRESULT WINAPI WsShutdownSessionChannel( WS_CHANNEL *handle, const WS_ASYNC_CONT
     }
 
     LeaveCriticalSection( &channel->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -959,7 +959,7 @@ HRESULT WINAPI WsCloseChannel( WS_CHANNEL *handle, const WS_ASYNC_CONTEXT *ctx, 
     }
 
     LeaveCriticalSection( &channel->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -1196,7 +1196,7 @@ static void open_channel_proc( struct task *task )
 
     hr = open_channel( o->channel, o->endpoint );
 
-    TRACE( "calling %p(%08x)\n", o->ctx.callback, hr );
+    TRACE( "calling %p(%#lx)\n", o->ctx.callback, hr );
     o->ctx.callback( hr, WS_LONG_CALLBACK, o->ctx.callbackState );
     TRACE( "%p returned\n", o->ctx.callback );
 }
@@ -1252,7 +1252,7 @@ HRESULT WINAPI WsOpenChannel( WS_CHANNEL *handle, const WS_ENDPOINT_ADDRESS *end
     }
 
     LeaveCriticalSection( &channel->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -1362,7 +1362,7 @@ static enum session_mode map_channel_type( struct channel *channel )
     {
     case WS_CHANNEL_TYPE_DUPLEX_SESSION: return SESSION_MODE_DUPLEX;
     default:
-        FIXME( "unhandled channel type %08x\n", channel->type );
+        FIXME( "unhandled channel type %#x\n", channel->type );
         return SESSION_MODE_INVALID;
     }
 }
@@ -1712,7 +1712,7 @@ static void send_message_proc( struct task *task )
 
     hr = send_message( s->channel, s->msg, s->desc, s->option, s->body, s->size );
 
-    TRACE( "calling %p(%08x)\n", s->ctx.callback, hr );
+    TRACE( "calling %p(%#lx)\n", s->ctx.callback, hr );
     s->ctx.callback( hr, WS_LONG_CALLBACK, s->ctx.callbackState );
     TRACE( "%p returned\n", s->ctx.callback );
 }
@@ -1746,7 +1746,7 @@ HRESULT WINAPI WsSendMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_MESS
     struct async async;
     HRESULT hr;
 
-    TRACE( "%p %p %p %08x %p %u %p %p\n", handle, msg, desc, option, body, size, ctx, error );
+    TRACE( "%p %p %p %u %p %lu %p %p\n", handle, msg, desc, option, body, size, ctx, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
     if (!channel || !msg || !desc) return E_INVALIDARG;
@@ -1775,7 +1775,7 @@ HRESULT WINAPI WsSendMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_MESS
     }
 
     LeaveCriticalSection( &channel->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -1792,7 +1792,7 @@ HRESULT WINAPI WsSendReplyMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS
     GUID id;
     HRESULT hr;
 
-    TRACE( "%p %p %p %08x %p %u %p %p %p\n", handle, msg, desc, option, body, size, request, ctx, error );
+    TRACE( "%p %p %p %u %p %lu %p %p %p\n", handle, msg, desc, option, body, size, request, ctx, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
     if (!channel || !msg || !desc || !request) return E_INVALIDARG;
@@ -1824,7 +1824,7 @@ HRESULT WINAPI WsSendReplyMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS
 
 done:
     LeaveCriticalSection( &channel->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -2362,7 +2362,7 @@ static void receive_message_proc( struct task *task )
     hr = receive_message( r->channel, r->msg, r->desc, r->count, r->option, r->read_option, r->heap, r->value,
                           r->size, r->index );
 
-    TRACE( "calling %p(%08x)\n", r->ctx.callback, hr );
+    TRACE( "calling %p(%#lx)\n", r->ctx.callback, hr );
     r->ctx.callback( hr, WS_LONG_CALLBACK, r->ctx.callbackState );
     TRACE( "%p returned\n", r->ctx.callback );
 }
@@ -2402,7 +2402,7 @@ HRESULT WINAPI WsReceiveMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_M
     struct async async;
     HRESULT hr;
 
-    TRACE( "%p %p %p %u %08x %08x %p %p %u %p %p %p\n", handle, msg, desc, count, option, read_option, heap,
+    TRACE( "%p %p %p %lu %u %u %p %p %lu %p %p %p\n", handle, msg, desc, count, option, read_option, heap,
            value, size, index, ctx, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
@@ -2426,7 +2426,7 @@ HRESULT WINAPI WsReceiveMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_M
     }
 
     LeaveCriticalSection( &channel->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -2471,7 +2471,7 @@ static void request_reply_proc( struct task *task )
     hr = request_reply( r->channel, r->request, r->request_desc, r->write_option, r->request_body, r->request_size,
                         r->reply, r->reply_desc, r->read_option, r->heap, r->value, r->size );
 
-    TRACE( "calling %p(%08x)\n", r->ctx.callback, hr );
+    TRACE( "calling %p(%#lx)\n", r->ctx.callback, hr );
     r->ctx.callback( hr, WS_LONG_CALLBACK, r->ctx.callbackState );
     TRACE( "%p returned\n", r->ctx.callback );
 }
@@ -2515,7 +2515,7 @@ HRESULT WINAPI WsRequestReply( WS_CHANNEL *handle, WS_MESSAGE *request, const WS
     struct async async;
     HRESULT hr;
 
-    TRACE( "%p %p %p %08x %p %u %p %p %08x %p %p %u %p %p\n", handle, request, request_desc, write_option,
+    TRACE( "%p %p %p %u %p %lu %p %p %u %p %p %lu %p %p\n", handle, request, request_desc, write_option,
            request_body, request_size, reply, reply_desc, read_option, heap, value, size, ctx, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
@@ -2546,7 +2546,7 @@ HRESULT WINAPI WsRequestReply( WS_CHANNEL *handle, WS_MESSAGE *request, const WS
     }
 
     LeaveCriticalSection( &channel->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -2573,7 +2573,7 @@ static void read_message_start_proc( struct task *task )
 
     hr = read_message_start( r->channel, r->msg );
 
-    TRACE( "calling %p(%08x)\n", r->ctx.callback, hr );
+    TRACE( "calling %p(%#lx)\n", r->ctx.callback, hr );
     r->ctx.callback( hr, WS_LONG_CALLBACK, r->ctx.callbackState );
     TRACE( "%p returned\n", r->ctx.callback );
 }
@@ -2627,7 +2627,7 @@ HRESULT WINAPI WsReadMessageStart( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS
     }
 
     LeaveCriticalSection( &channel->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -2650,7 +2650,7 @@ static void read_message_end_proc( struct task *task )
 
     hr = read_message_end( r->msg );
 
-    TRACE( "calling %p(%08x)\n", r->ctx.callback, hr );
+    TRACE( "calling %p(%#lx)\n", r->ctx.callback, hr );
     r->ctx.callback( hr, WS_LONG_CALLBACK, r->ctx.callbackState );
     TRACE( "%p returned\n", r->ctx.callback );
 }
@@ -2698,7 +2698,7 @@ HRESULT WINAPI WsReadMessageEnd( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_A
     }
 
     LeaveCriticalSection( &channel->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -2725,7 +2725,7 @@ static void write_message_start_proc( struct task *task )
 
     hr = write_message_start( w->channel, w->msg );
 
-    TRACE( "calling %p(%08x)\n", w->ctx.callback, hr );
+    TRACE( "calling %p(%#lx)\n", w->ctx.callback, hr );
     w->ctx.callback( hr, WS_LONG_CALLBACK, w->ctx.callbackState );
     TRACE( "%p returned\n", w->ctx.callback );
 }
@@ -2779,7 +2779,7 @@ HRESULT WINAPI WsWriteMessageStart( WS_CHANNEL *handle, WS_MESSAGE *msg, const W
     }
 
     LeaveCriticalSection( &channel->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -2805,7 +2805,7 @@ static void write_message_end_proc( struct task *task )
 
     hr = write_message_end( w->channel, w->msg );
 
-    TRACE( "calling %p(%08x)\n", w->ctx.callback, hr );
+    TRACE( "calling %p(%#lx)\n", w->ctx.callback, hr );
     w->ctx.callback( hr, WS_LONG_CALLBACK, w->ctx.callbackState );
     TRACE( "%p returned\n", w->ctx.callback );
 }
@@ -2859,7 +2859,7 @@ HRESULT WINAPI WsWriteMessageEnd( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_
     }
 
     LeaveCriticalSection( &channel->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 

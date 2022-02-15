@@ -176,14 +176,14 @@ HRESULT WINAPI WsDecodeUrl( const WS_STRING *str, ULONG flags, WS_HEAP *heap, WS
     WS_HTTP_URL *url = NULL;
     ULONG len, len_decoded, port = 0;
 
-    TRACE( "%s %08x %p %p %p\n", str ? debugstr_wn(str->chars, str->length) : "null", flags, heap, ret, error );
+    TRACE( "%s %#lx %p %p %p\n", str ? debugstr_wn(str->chars, str->length) : "null", flags, heap, ret, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
     if (!str || !heap) return E_INVALIDARG;
     if (!str->length) return WS_E_INVALID_FORMAT;
     if (flags)
     {
-        FIXME( "unimplemented flags %08x\n", flags );
+        FIXME( "unimplemented flags %#lx\n", flags );
         return E_NOTIMPL;
     }
     if (!(decoded = url_decode( str->chars, str->length, heap, &len_decoded )) ||
@@ -269,7 +269,7 @@ done:
         if (decoded != str->chars) ws_free( heap, decoded, len_decoded );
         ws_free( heap, url, sizeof(*url) );
     }
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -433,13 +433,13 @@ HRESULT WINAPI WsEncodeUrl( const WS_URL *base, ULONG flags, WS_HEAP *heap, WS_S
     ULONG port = 0;
     HRESULT hr = WS_E_INVALID_FORMAT;
 
-    TRACE( "%p %08x %p %p %p\n", base, flags, heap, ret, error );
+    TRACE( "%p %#lx %p %p %p\n", base, flags, heap, ret, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
     if (!url || !heap || !ret) return E_INVALIDARG;
     if (flags)
     {
-        FIXME( "unimplemented flags %08x\n", flags );
+        FIXME( "unimplemented flags %#lx\n", flags );
         return E_NOTIMPL;
     }
     if (!(scheme = scheme_str( url->url.scheme, &len_scheme ))) goto done;
@@ -534,6 +534,6 @@ HRESULT WINAPI WsEncodeUrl( const WS_URL *base, ULONG flags, WS_HEAP *heap, WS_S
 
 done:
     if (hr != S_OK) ws_free( heap, str, ret_size );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }

@@ -216,7 +216,7 @@ HRESULT WINAPI WsCreateMessage( WS_ENVELOPE_VERSION env_version, WS_ADDRESSING_V
 {
     HRESULT hr;
 
-    TRACE( "%u %u %p %u %p %p\n", env_version, addr_version, properties, count, handle, error );
+    TRACE( "%u %u %p %lu %p %p\n", env_version, addr_version, properties, count, handle, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
     if (!handle || !env_version || !addr_version ||
@@ -240,7 +240,7 @@ HRESULT WINAPI WsCreateMessageForChannel( WS_CHANNEL *channel_handle, const WS_M
     WS_ADDRESSING_VERSION version_addr;
     HRESULT hr;
 
-    TRACE( "%p %p %u %p %p\n", channel_handle, properties, count, handle, error );
+    TRACE( "%p %p %lu %p %p\n", channel_handle, properties, count, handle, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
     if (!channel_handle || !handle) return E_INVALIDARG;
@@ -307,7 +307,7 @@ HRESULT WINAPI WsResetMessage( WS_MESSAGE *handle, WS_ERROR *error )
     reset_msg( msg );
 
     LeaveCriticalSection( &msg->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -320,7 +320,7 @@ HRESULT WINAPI WsGetMessageProperty( WS_MESSAGE *handle, WS_MESSAGE_PROPERTY_ID 
     struct msg *msg = (struct msg *)handle;
     HRESULT hr = S_OK;
 
-    TRACE( "%p %u %p %u %p\n", handle, id, buf, size, error );
+    TRACE( "%p %u %p %lu %p\n", handle, id, buf, size, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
     if (!msg) return E_INVALIDARG;
@@ -380,7 +380,7 @@ HRESULT WINAPI WsGetMessageProperty( WS_MESSAGE *handle, WS_MESSAGE_PROPERTY_ID 
     }
 
     LeaveCriticalSection( &msg->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -393,7 +393,7 @@ HRESULT WINAPI WsSetMessageProperty( WS_MESSAGE *handle, WS_MESSAGE_PROPERTY_ID 
     struct msg *msg = (struct msg *)handle;
     HRESULT hr;
 
-    TRACE( "%p %u %p %u\n", handle, id, value, size );
+    TRACE( "%p %u %p %lu %p\n", handle, id, value, size, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
     if (!msg) return E_INVALIDARG;
@@ -421,7 +421,7 @@ HRESULT WINAPI WsSetMessageProperty( WS_MESSAGE *handle, WS_MESSAGE_PROPERTY_ID 
     }
 
     LeaveCriticalSection( &msg->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -464,7 +464,7 @@ HRESULT WINAPI WsAddressMessage( WS_MESSAGE *handle, const WS_ENDPOINT_ADDRESS *
     if (hr == S_OK) msg->is_addressed = TRUE;
 
     LeaveCriticalSection( &msg->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -760,7 +760,7 @@ HRESULT WINAPI WsWriteEnvelopeStart( WS_MESSAGE *handle, WS_XML_WRITER *writer,
     }
 
     LeaveCriticalSection( &msg->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -790,7 +790,7 @@ HRESULT WINAPI WsWriteEnvelopeEnd( WS_MESSAGE *handle, WS_ERROR *error )
         msg->state = WS_MESSAGE_STATE_DONE;
 
     LeaveCriticalSection( &msg->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -803,7 +803,7 @@ HRESULT WINAPI WsWriteBody( WS_MESSAGE *handle, const WS_ELEMENT_DESCRIPTION *de
     struct msg *msg = (struct msg *)handle;
     HRESULT hr;
 
-    TRACE( "%p %p %08x %p %u %p\n", handle, desc, option, value, size, error );
+    TRACE( "%p %p %u %p %lu %p\n", handle, desc, option, value, size, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
     if (!msg || !desc) return E_INVALIDARG;
@@ -833,7 +833,7 @@ HRESULT WINAPI WsWriteBody( WS_MESSAGE *handle, const WS_ELEMENT_DESCRIPTION *de
 
 done:
     LeaveCriticalSection( &msg->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -845,7 +845,7 @@ HRESULT WINAPI WsFlushBody( WS_MESSAGE *handle, ULONG size, const WS_ASYNC_CONTE
     struct msg *msg = (struct msg *)handle;
     HRESULT hr;
 
-    TRACE( "%p %u %p %p\n", handle, size, ctx, error );
+    TRACE( "%p %lu %p %p\n", handle, size, ctx, error );
 
     if (!msg) return E_INVALIDARG;
 
@@ -860,7 +860,7 @@ HRESULT WINAPI WsFlushBody( WS_MESSAGE *handle, ULONG size, const WS_ASYNC_CONTE
     hr = WsFlushWriter( msg->writer_body, size, ctx, error );
 
     LeaveCriticalSection( &msg->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -967,7 +967,7 @@ HRESULT WINAPI WsReadEnvelopeStart( WS_MESSAGE *handle, WS_XML_READER *reader, W
     }
 
     LeaveCriticalSection( &msg->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -997,7 +997,7 @@ HRESULT WINAPI WsReadEnvelopeEnd( WS_MESSAGE *handle, WS_ERROR *error )
         msg->state = WS_MESSAGE_STATE_DONE;
 
     LeaveCriticalSection( &msg->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -1010,7 +1010,7 @@ HRESULT WINAPI WsReadBody( WS_MESSAGE *handle, const WS_ELEMENT_DESCRIPTION *des
     struct msg *msg = (struct msg *)handle;
     HRESULT hr;
 
-    TRACE( "%p %p %08x %p %p %u %p\n", handle, desc, option, heap, value, size, error );
+    TRACE( "%p %p %u %p %p %lu %p\n", handle, desc, option, heap, value, size, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
     if (!msg || !desc) return E_INVALIDARG;
@@ -1027,7 +1027,7 @@ HRESULT WINAPI WsReadBody( WS_MESSAGE *handle, const WS_ELEMENT_DESCRIPTION *des
     else hr = WsReadElement( msg->reader_body, desc, option, heap, value, size, NULL );
 
     LeaveCriticalSection( &msg->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -1039,7 +1039,7 @@ HRESULT WINAPI WsFillBody( WS_MESSAGE *handle, ULONG size, const WS_ASYNC_CONTEX
     struct msg *msg = (struct msg *)handle;
     HRESULT hr;
 
-    TRACE( "%p %u %p %p\n", handle, size, ctx, error );
+    TRACE( "%p %lu %p %p\n", handle, size, ctx, error );
 
     if (!msg) return E_INVALIDARG;
 
@@ -1054,7 +1054,7 @@ HRESULT WINAPI WsFillBody( WS_MESSAGE *handle, ULONG size, const WS_ASYNC_CONTEX
     hr = WsFillReader( msg->reader_body, size, ctx, error );
 
     LeaveCriticalSection( &msg->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -1093,7 +1093,7 @@ HRESULT WINAPI WsInitializeMessage( WS_MESSAGE *handle, WS_MESSAGE_INITIALIZATIO
     }
 
     LeaveCriticalSection( &msg->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -1194,7 +1194,7 @@ HRESULT WINAPI WsSetHeader( WS_MESSAGE *handle, WS_HEADER_TYPE type, WS_TYPE val
     HRESULT hr;
     ULONG i;
 
-    TRACE( "%p %u %u %08x %p %u %p\n", handle, type, value_type, option, value, size, error );
+    TRACE( "%p %u %u %u %p %lu %p\n", handle, type, value_type, option, value, size, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
     if (!msg || type < WS_ACTION_HEADER || type > WS_FAULT_TO_HEADER) return E_INVALIDARG;
@@ -1239,7 +1239,7 @@ HRESULT WINAPI WsSetHeader( WS_MESSAGE *handle, WS_HEADER_TYPE type, WS_TYPE val
 
 done:
     LeaveCriticalSection( &msg->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -1288,7 +1288,7 @@ HRESULT WINAPI WsGetHeader( WS_MESSAGE *handle, WS_HEADER_TYPE type, WS_TYPE val
     struct msg *msg = (struct msg *)handle;
     HRESULT hr;
 
-    TRACE( "%p %u %u %08x %p %p %u %p\n", handle, type, value_type, option, heap, value, size, error );
+    TRACE( "%p %u %u %u %p %p %lu %p\n", handle, type, value_type, option, heap, value, size, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
     if (!msg || type < WS_ACTION_HEADER || type > WS_FAULT_TO_HEADER || option < WS_READ_REQUIRED_VALUE ||
@@ -1306,7 +1306,7 @@ HRESULT WINAPI WsGetHeader( WS_MESSAGE *handle, WS_HEADER_TYPE type, WS_TYPE val
     else hr = get_standard_header( msg, type, value_type, option, heap, value, size );
 
     LeaveCriticalSection( &msg->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -1357,7 +1357,7 @@ HRESULT WINAPI WsRemoveHeader( WS_MESSAGE *handle, WS_HEADER_TYPE type, WS_ERROR
     }
 
     LeaveCriticalSection( &msg->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -1490,7 +1490,7 @@ HRESULT WINAPI WsAddMappedHeader( WS_MESSAGE *handle, const WS_XML_STRING *name,
     struct msg *msg = (struct msg *)handle;
     HRESULT hr;
 
-    TRACE( "%p %s %u %08x %p %u %p\n", handle, debugstr_xmlstr(name), type, option, value, size, error );
+    TRACE( "%p %s %u %u %p %lu %p\n", handle, debugstr_xmlstr(name), type, option, value, size, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
     if (!msg || !name) return E_INVALIDARG;
@@ -1507,7 +1507,7 @@ HRESULT WINAPI WsAddMappedHeader( WS_MESSAGE *handle, const WS_XML_STRING *name,
     else hr = add_mapped_header( msg, name, type, option, value, size );
 
     LeaveCriticalSection( &msg->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -1548,7 +1548,7 @@ HRESULT WINAPI WsRemoveMappedHeader( WS_MESSAGE *handle, const WS_XML_STRING *na
     }
 
     LeaveCriticalSection( &msg->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -1636,7 +1636,7 @@ HRESULT WINAPI WsGetMappedHeader( WS_MESSAGE *handle, const WS_XML_STRING *name,
     struct msg *msg = (struct msg *)handle;
     HRESULT hr;
 
-    TRACE( "%p %s %u %u %u %u %p %p %u %p\n", handle, debugstr_xmlstr(name), option, index, type, read_option,
+    TRACE( "%p %s %u %lu %u %u %p %p %lu %p\n", handle, debugstr_xmlstr(name), option, index, type, read_option,
            heap, value, size, error );
     if (error) FIXME( "ignoring error parameter\n" );
     if (option != WS_SINGLETON_HEADER)
@@ -1659,7 +1659,7 @@ HRESULT WINAPI WsGetMappedHeader( WS_MESSAGE *handle, const WS_XML_STRING *name,
     else hr = get_mapped_header( msg, name, type, read_option, heap, value, size );
 
     LeaveCriticalSection( &msg->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -1707,7 +1707,7 @@ HRESULT WINAPI WsAddCustomHeader( WS_MESSAGE *handle, const WS_ELEMENT_DESCRIPTI
     struct header *header;
     HRESULT hr;
 
-    TRACE( "%p %p %08x %p %u %08x %p\n", handle, desc, option, value, size, attrs, error );
+    TRACE( "%p %p %u %p %lu %#lx %p\n", handle, desc, option, value, size, attrs, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
     if (!msg || !desc) return E_INVALIDARG;
@@ -1734,7 +1734,7 @@ HRESULT WINAPI WsAddCustomHeader( WS_MESSAGE *handle, const WS_ELEMENT_DESCRIPTI
 
 done:
     LeaveCriticalSection( &msg->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -1761,7 +1761,7 @@ HRESULT WINAPI WsGetCustomHeader( WS_MESSAGE *handle, const WS_ELEMENT_DESCRIPTI
     struct msg *msg = (struct msg *)handle;
     HRESULT hr;
 
-    TRACE( "%p %p %08x %u %08x %p %p %u %p %p\n", handle, desc, repeat_option, index, option, heap, value,
+    TRACE( "%p %p %u %lu %u %p %p %lu %p %p\n", handle, desc, repeat_option, index, option, heap, value,
            size, attrs, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
@@ -1791,7 +1791,7 @@ HRESULT WINAPI WsGetCustomHeader( WS_MESSAGE *handle, const WS_ELEMENT_DESCRIPTI
     else hr = get_custom_header( msg, desc, option, heap, value, size );
 
     LeaveCriticalSection( &msg->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -1837,7 +1837,7 @@ HRESULT WINAPI WsRemoveCustomHeader( WS_MESSAGE *handle, const WS_XML_STRING *na
     }
 
     LeaveCriticalSection( &msg->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -1993,7 +1993,7 @@ HRESULT message_insert_http_headers( WS_MESSAGE *handle, HINTERNET req )
 done:
     free( header );
     LeaveCriticalSection( &msg->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -2051,7 +2051,7 @@ HRESULT message_map_http_response_headers( WS_MESSAGE *handle, HINTERNET req, co
     hr = map_http_response_headers( msg, req, mapping );
 
     LeaveCriticalSection( &msg->cs );
-    TRACE( "returning %08x\n", hr );
+    TRACE( "returning %#lx\n", hr );
     return hr;
 }
 
@@ -2108,7 +2108,7 @@ void message_do_send_callback( WS_MESSAGE *handle )
         HRESULT hr;
         TRACE( "executing callback %p\n", msg->ctx_send.callback );
         hr = msg->ctx_send.callback( handle, msg->heap, msg->ctx_send.state, NULL );
-        TRACE( "callback %p returned %08x\n", msg->ctx_send.callback, hr );
+        TRACE( "callback %p returned %#lx\n", msg->ctx_send.callback, hr );
     }
 
     LeaveCriticalSection( &msg->cs );
@@ -2131,7 +2131,7 @@ void message_do_receive_callback( WS_MESSAGE *handle )
         HRESULT hr;
         TRACE( "executing callback %p\n", msg->ctx_receive.callback );
         hr = msg->ctx_receive.callback( handle, msg->heap, msg->ctx_receive.state, NULL );
-        TRACE( "callback %p returned %08x\n", msg->ctx_receive.callback, hr );
+        TRACE( "callback %p returned %#lx\n", msg->ctx_receive.callback, hr );
     }
 
     LeaveCriticalSection( &msg->cs );
