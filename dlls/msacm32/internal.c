@@ -74,12 +74,12 @@ PWINE_ACMDRIVERID MSACM_RegisterDriverFromRegistry(LPCWSTR pszRegEntry)
     if (0 == wcsnicmp(pszRegEntry, msacmW, ARRAY_SIZE(msacmW))) {
         lRet = RegOpenKeyExW(HKEY_LOCAL_MACHINE, drvkey, 0, KEY_QUERY_VALUE, &hKey);
         if (lRet != ERROR_SUCCESS) {
-            WARN("unable to open registry key - 0x%08x\n", lRet);
+            WARN("unable to open registry key - 0x%08lx\n", lRet);
         } else {
             bufLen = sizeof(buf);
             lRet = RegQueryValueExW(hKey, pszRegEntry, NULL, NULL, (LPBYTE)buf, &bufLen);
             if (lRet != ERROR_SUCCESS) {
-                WARN("unable to query requested subkey %s - 0x%08x\n", debugstr_w(pszRegEntry), lRet);
+                WARN("unable to query requested subkey %s - 0x%08lx\n", debugstr_w(pszRegEntry), lRet);
             } else {
                 MSACM_RegisterDriver(pszRegEntry, buf, 0);
             }
@@ -403,7 +403,7 @@ PWINE_ACMNOTIFYWND MSACM_RegisterNotificationWindow(HWND hNotifyWnd, DWORD dwNot
 {
     PWINE_ACMNOTIFYWND	panwnd;
 
-    TRACE("(%p,0x%08x)\n", hNotifyWnd, dwNotifyMsg);
+    TRACE("(%p,0x%08lx)\n", hNotifyWnd, dwNotifyMsg);
 
     panwnd = HeapAlloc(MSACM_hHeap, 0, sizeof(WINE_ACMNOTIFYWND));
     panwnd->obj.dwType = WINE_ACMOBJ_NOTIFYWND;
@@ -654,13 +654,13 @@ void MSACM_WriteCurrentPriorities(void)
     /* Delete ACM priority key and create it anew */
     lError = RegDeleteKeyW(HKEY_CURRENT_USER, basePriorityKey);
     if (lError != ERROR_SUCCESS && lError != ERROR_FILE_NOT_FOUND) {
-        ERR("unable to remove current key %s (0x%08x) - priority changes won't persist past application end.\n",
+        ERR("unable to remove current key %s (0x%08lx) - priority changes won't persist past application end.\n",
             debugstr_w(basePriorityKey), lError);
         return;
     }
     lError = RegCreateKeyW(HKEY_CURRENT_USER, basePriorityKey, &hPriorityKey);
     if (lError != ERROR_SUCCESS) {
-        ERR("unable to create key %s (0x%08x) - priority changes won't persist past application end.\n",
+        ERR("unable to create key %s (0x%08lx) - priority changes won't persist past application end.\n",
             debugstr_w(basePriorityKey), lError);
         return;
     }
@@ -680,7 +680,7 @@ void MSACM_WriteCurrentPriorities(void)
         
         lError = RegSetValueExW(hPriorityKey, szSubKey, 0, REG_SZ, (BYTE *)szBuffer, (lstrlenW(szBuffer) + 1) * sizeof(WCHAR));
         if (lError != ERROR_SUCCESS) {
-            ERR("unable to write value for %s under key %s (0x%08x)\n",
+            ERR("unable to write value for %s under key %s (0x%08lx)\n",
                 debugstr_w(padid->pszDriverAlias), debugstr_w(basePriorityKey), lError);
         }
     }
@@ -694,7 +694,7 @@ void MSACM_WriteCurrentPriorities(void)
 
     lError = RegSetValueExW(hPriorityKey, szSubKey, 0, REG_SZ, (BYTE *)szBuffer, (lstrlenW(szBuffer) + 1) * sizeof(WCHAR));
     if (lError != ERROR_SUCCESS) {
-        ERR("unable to write value for Internal PCM Converter under key %s (0x%08x)\n",
+        ERR("unable to write value for Internal PCM Converter under key %s (0x%08lx)\n",
             debugstr_w(basePriorityKey), lError);
     }
     RegCloseKey(hPriorityKey);

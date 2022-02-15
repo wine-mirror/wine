@@ -91,7 +91,7 @@ MMRESULT WINAPI acmFilterDetailsW(HACMDRIVER had, PACMFILTERDETAILSW pafd,
     MMRESULT			mmr;
     ACMFILTERTAGDETAILSA	aftd;
 
-    TRACE("(%p, %p, %d)\n", had, pafd, fdwDetails);
+    TRACE("(%p, %p, %ld)\n", had, pafd, fdwDetails);
 
     memset(&aftd, 0, sizeof(aftd));
     aftd.cbStruct = sizeof(aftd);
@@ -127,7 +127,7 @@ MMRESULT WINAPI acmFilterDetailsW(HACMDRIVER had, PACMFILTERDETAILSW pafd,
 	mmr = MSACM_Message(had, ACMDM_FILTER_DETAILS, (LPARAM)pafd, fdwDetails);
 	break;
     default:
-	WARN("Unknown fdwDetails %08x\n", fdwDetails);
+	WARN("Unknown fdwDetails %08lx\n", fdwDetails);
 	mmr = MMSYSERR_INVALFLAG;
 	break;
     }
@@ -228,7 +228,7 @@ MMRESULT WINAPI acmFilterEnumW(HACMDRIVER had, PACMFILTERDETAILSW pafd,
     PWINE_ACMDRIVERID		padid;
     BOOL			ret;
 
-    TRACE("(%p, %p, %p, %ld, %d)\n",
+    TRACE("(%p, %p, %p, %Id, %ld)\n",
 	  had, pafd, fnCallback, dwInstance, fdwEnum);
 
     if (pafd->cbStruct < sizeof(*pafd)) return MMSYSERR_INVALPARAM;
@@ -294,7 +294,7 @@ MMRESULT WINAPI acmFilterTagDetailsW(HACMDRIVER had, PACMFILTERTAGDETAILSW paftd
     PWINE_ACMDRIVERID	padid;
     MMRESULT		mmr;
 
-    TRACE("(%p, %p, %d)\n", had, paftd, fdwDetails);
+    TRACE("(%p, %p, %ld)\n", had, paftd, fdwDetails);
 
     if (fdwDetails & ~(ACM_FILTERTAGDETAILSF_FILTERTAG|ACM_FILTERTAGDETAILSF_INDEX|
 		       ACM_FILTERTAGDETAILSF_LARGESTSIZE))
@@ -355,7 +355,7 @@ MMRESULT WINAPI acmFilterTagDetailsW(HACMDRIVER had, PACMFILTERTAGDETAILSW paftd
 	break;
 
     default:
-	WARN("Unsupported fdwDetails=%08x\n", fdwDetails);
+	WARN("Unsupported fdwDetails=%08lx\n", fdwDetails);
 	mmr = MMSYSERR_ERROR;
     }
 
@@ -427,7 +427,7 @@ MMRESULT WINAPI acmFilterTagEnumW(HACMDRIVER had, PACMFILTERTAGDETAILSW paftd,
     PWINE_ACMDRIVERID		padid;
     unsigned int			i;
 
-    TRACE("(%p, %p, %p, %ld, %d)\n",
+    TRACE("(%p, %p, %p, %Id, %ld)\n",
 	  had, paftd, fnCallback, dwInstance, fdwEnum);
 
     if (paftd->cbStruct < sizeof(*paftd)) return MMSYSERR_INVALPARAM;

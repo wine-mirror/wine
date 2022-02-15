@@ -49,7 +49,7 @@ MMRESULT WINAPI acmDriverAddA(PHACMDRIVERID phadid, HINSTANCE hinstModule,
     WCHAR * driverW = NULL;
     LPARAM lParamW = lParam;
 
-    TRACE("(%p, %p, %08lx, %08x, %08x)\n",
+    TRACE("(%p, %p, %08Ix, %08lx, %08lx)\n",
           phadid, hinstModule, lParam, dwPriority, fdwAdd);
 
     if (!phadid) {
@@ -98,7 +98,7 @@ MMRESULT WINAPI acmDriverAddW(PHACMDRIVERID phadid, HINSTANCE hinstModule,
 {
     PWINE_ACMLOCALDRIVER pLocalDrv = NULL;
 
-    TRACE("(%p, %p, %08lx, %08x, %08x)\n",
+    TRACE("(%p, %p, %08Ix, %08lx, %08lx)\n",
           phadid, hinstModule, lParam, dwPriority, fdwAdd);
 
     if (!phadid) {
@@ -165,7 +165,7 @@ MMRESULT WINAPI acmDriverAddW(PHACMDRIVERID phadid, HINSTANCE hinstModule,
         }
         break;
     default:
-        ERR("invalid flag value 0x%08x for fdwAdd\n", fdwAdd);
+        ERR("invalid flag value 0x%08lx for fdwAdd\n", fdwAdd);
         return MMSYSERR_INVALFLAG;
     }
 
@@ -182,7 +182,7 @@ MMRESULT WINAPI acmDriverClose(HACMDRIVER had, DWORD fdwClose)
     PWINE_ACMDRIVERID	padid;
     PWINE_ACMDRIVER*	tpad;
 
-    TRACE("(%p, %08x)\n", had, fdwClose);
+    TRACE("(%p, %08lx)\n", had, fdwClose);
 
     if (fdwClose) {
         WARN("invalid flag\n");
@@ -225,7 +225,7 @@ MMRESULT WINAPI acmDriverDetailsA(HACMDRIVERID hadid, PACMDRIVERDETAILSA padd, D
     MMRESULT mmr;
     ACMDRIVERDETAILSW	addw;
 
-    TRACE("(%p, %p, %08x)\n", hadid, padd, fdwDetails);
+    TRACE("(%p, %p, %08lx)\n", hadid, padd, fdwDetails);
 
     if (!padd) {
         WARN("invalid parameter\n");
@@ -276,7 +276,7 @@ MMRESULT WINAPI acmDriverDetailsW(HACMDRIVERID hadid, PACMDRIVERDETAILSW padd, D
     HACMDRIVER acmDrvr;
     MMRESULT mmr;
 
-    TRACE("(%p, %p, %08x)\n", hadid, padd, fdwDetails);
+    TRACE("(%p, %p, %08lx)\n", hadid, padd, fdwDetails);
 
     if (!padd) {
         WARN("invalid parameter\n");
@@ -318,7 +318,7 @@ MMRESULT WINAPI acmDriverEnum(ACMDRIVERENUMCB fnCallback, DWORD_PTR dwInstance,
     PWINE_ACMDRIVERID	padid;
     DWORD		fdwSupport;
 
-    TRACE("(%p, %08lx, %08x)\n", fnCallback, dwInstance, fdwEnum);
+    TRACE("(%p, %08Ix, %08lx)\n", fnCallback, dwInstance, fdwEnum);
 
     if (!fnCallback) {
         WARN("invalid parameter\n");
@@ -353,7 +353,7 @@ MMRESULT WINAPI acmDriverID(HACMOBJ hao, PHACMDRIVERID phadid, DWORD fdwDriverID
 {
     PWINE_ACMOBJ pao;
 
-    TRACE("(%p, %p, %08x)\n", hao, phadid, fdwDriverID);
+    TRACE("(%p, %p, %08lx)\n", hao, phadid, fdwDriverID);
 
     if (fdwDriverID) {
         WARN("invalid flag\n");
@@ -391,7 +391,7 @@ MMRESULT WINAPI acmDriverID(HACMOBJ hao, PHACMDRIVERID phadid, DWORD fdwDriverID
  */
 LRESULT WINAPI acmDriverMessage(HACMDRIVER had, UINT uMsg, LPARAM lParam1, LPARAM lParam2)
 {
-    TRACE("(%p, %04x, %08lx, %08lx\n", had, uMsg, lParam1, lParam2);
+    TRACE("(%p, %04x, %08Ix, %08Ix\n", had, uMsg, lParam1, lParam2);
 
     if ((uMsg >= ACMDM_USER && uMsg < ACMDM_RESERVED_LOW) ||
 	uMsg == ACMDM_DRIVER_ABOUT ||
@@ -492,7 +492,7 @@ MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpe
     PWINE_ACMDRIVER	pad = NULL;
     MMRESULT		ret;
 
-    TRACE("(%p, %p, %08u)\n", phad, hadid, fdwOpen);
+    TRACE("(%p, %p, %08lu)\n", phad, hadid, fdwOpen);
 
     if (!phad) {
         WARN("invalid parameter\n");
@@ -605,7 +605,7 @@ MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpe
 MMRESULT WINAPI acmDriverPriority(HACMDRIVERID hadid, DWORD dwPriority, DWORD fdwPriority)
 {
 
-    TRACE("(%p, %08x, %08x)\n", hadid, dwPriority, fdwPriority);
+    TRACE("(%p, %08lx, %08lx)\n", hadid, dwPriority, fdwPriority);
 
     /* Check for unknown flags */
     if (fdwPriority &
@@ -679,7 +679,7 @@ MMRESULT WINAPI acmDriverPriority(HACMDRIVERID hadid, DWORD dwPriority, DWORD fd
                     return MMSYSERR_NOTSUPPORTED;
                 }
                 if (dwPriority != 1 && dwPriority != (DWORD)-1) {
-                    FIXME("unexpected priority %d, using sign only\n", dwPriority);
+                    FIXME("unexpected priority %ld, using sign only\n", dwPriority);
                     if ((signed)dwPriority < 0) dwPriority = (DWORD)-1;
                     if (dwPriority > 0) dwPriority = 1;
                 }
@@ -746,7 +746,7 @@ MMRESULT WINAPI acmDriverRemove(HACMDRIVERID hadid, DWORD fdwRemove)
     PWINE_ACMDRIVERID padid;
     PWINE_ACMNOTIFYWND panwnd;
 
-    TRACE("(%p, %08x)\n", hadid, fdwRemove);
+    TRACE("(%p, %08lx)\n", hadid, fdwRemove);
 
     padid = MSACM_GetDriverID(hadid);
     panwnd = MSACM_GetNotifyWnd(hadid);

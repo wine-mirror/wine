@@ -65,7 +65,7 @@ static	DWORD	PCM_drvOpen(LPCSTR str, PACMDRVOPENDESCW adod)
  */
 static	DWORD	PCM_drvClose(DWORD dwDevID)
 {
-    TRACE("(%d)\n", dwDevID);
+    TRACE("(%ld)\n", dwDevID);
 
     return 1;
 }
@@ -1001,7 +1001,7 @@ static	LRESULT PCM_DriverDetails(PACMDRIVERDETAILSW add)
  */
 static	LRESULT	PCM_FormatTagDetails(PACMFORMATTAGDETAILSW aftd, DWORD dwQuery)
 {
-    TRACE("(%p, %08x)\n", aftd, dwQuery);
+    TRACE("(%p, %08lx)\n", aftd, dwQuery);
 
     switch (dwQuery) {
     case ACM_FORMATTAGDETAILSF_INDEX:
@@ -1024,7 +1024,7 @@ static	LRESULT	PCM_FormatTagDetails(PACMFORMATTAGDETAILSW aftd, DWORD dwQuery)
         }
 	break;
     default:
-	WARN("Unsupported query %08x\n", dwQuery);
+	WARN("Unsupported query %08lx\n", dwQuery);
 	return MMSYSERR_NOTSUPPORTED;
     }
 
@@ -1044,7 +1044,7 @@ static	LRESULT	PCM_FormatTagDetails(PACMFORMATTAGDETAILSW aftd, DWORD dwQuery)
  */
 static	LRESULT	PCM_FormatDetails(PACMFORMATDETAILSW afd, DWORD dwQuery)
 {
-    TRACE("(%p, %08x)\n", afd, dwQuery);
+    TRACE("(%p, %08lx)\n", afd, dwQuery);
 
     switch (dwQuery) {
     case ACM_FORMATDETAILSF_FORMAT:
@@ -1068,7 +1068,7 @@ static	LRESULT	PCM_FormatDetails(PACMFORMATDETAILSW afd, DWORD dwQuery)
 	    afd->pwfx->nSamplesPerSec * afd->pwfx->nBlockAlign;
 	break;
     default:
-	WARN("Unsupported query %08x\n", dwQuery);
+	WARN("Unsupported query %08lx\n", dwQuery);
 	return MMSYSERR_NOTSUPPORTED;
     }
 
@@ -1260,7 +1260,7 @@ static	LRESULT PCM_StreamSize(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMSIZE adss
 				       adsi->pwfxSrc->nAvgBytesPerSec) & dstMask;
 	break;
     default:
-	WARN("Unsupported query %08x\n", adss->fdwSize);
+	WARN("Unsupported query %08lx\n", adss->fdwSize);
 	return MMSYSERR_NOTSUPPORTED;
     }
     return MMSYSERR_NOERROR;
@@ -1278,12 +1278,12 @@ static LRESULT PCM_StreamConvert(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMHEADER
 
     TRACE("(%p, %p)\n", adsi, adsh);
 
-    TRACE("nsrc=%d,adsh->cbSrcLength=%d\n", nsrc, adsh->cbSrcLength);
-    TRACE("ndst=%d,adsh->cbDstLength=%d\n", ndst, adsh->cbDstLength);
-    TRACE("src [wFormatTag=%u, nChannels=%u, nSamplesPerSec=%u, nAvgBytesPerSec=%u, nBlockAlign=%u, wBitsPerSample=%u, cbSize=%u]\n",
+    TRACE("nsrc=%ld,adsh->cbSrcLength=%ld\n", nsrc, adsh->cbSrcLength);
+    TRACE("ndst=%ld,adsh->cbDstLength=%ld\n", ndst, adsh->cbDstLength);
+    TRACE("src [wFormatTag=%u, nChannels=%u, nSamplesPerSec=%lu, nAvgBytesPerSec=%lu, nBlockAlign=%u, wBitsPerSample=%u, cbSize=%u]\n",
           adsi->pwfxSrc->wFormatTag, adsi->pwfxSrc->nChannels, adsi->pwfxSrc->nSamplesPerSec, adsi->pwfxSrc->nAvgBytesPerSec,
           adsi->pwfxSrc->nBlockAlign, adsi->pwfxSrc->wBitsPerSample, adsi->pwfxSrc->cbSize);
-    TRACE("dst [wFormatTag=%u, nChannels=%u, nSamplesPerSec=%u, nAvgBytesPerSec=%u, nBlockAlign=%u, wBitsPerSample=%u, cbSize=%u]\n",
+    TRACE("dst [wFormatTag=%u, nChannels=%u, nSamplesPerSec=%lu, nAvgBytesPerSec=%lu, nBlockAlign=%u, wBitsPerSample=%u, cbSize=%u]\n",
           adsi->pwfxDst->wFormatTag, adsi->pwfxDst->nChannels, adsi->pwfxDst->nSamplesPerSec, adsi->pwfxDst->nAvgBytesPerSec,
           adsi->pwfxDst->nBlockAlign, adsi->pwfxDst->wBitsPerSample, adsi->pwfxDst->cbSize);
 
@@ -1291,7 +1291,7 @@ static LRESULT PCM_StreamConvert(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMHEADER
 	~(ACM_STREAMCONVERTF_BLOCKALIGN|
 	  ACM_STREAMCONVERTF_END|
 	  ACM_STREAMCONVERTF_START)) {
-	FIXME("Unsupported fdwConvert (%08x), ignoring it\n", adsh->fdwConvert);
+	FIXME("Unsupported fdwConvert (%08lx), ignoring it\n", adsh->fdwConvert);
     }
     /* ACM_STREAMCONVERTF_BLOCKALIGN
      *	currently all conversions are block aligned, so do nothing for this flag
@@ -1325,7 +1325,7 @@ static LRESULT PCM_StreamConvert(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMHEADER
 LRESULT CALLBACK PCM_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
 				       LPARAM dwParam1, LPARAM dwParam2)
 {
-    TRACE("(%08lx %p %u %08lx %08lx);\n",
+    TRACE("(%08Ix %p %u %08Ix %08Ix);\n",
           dwDevID, hDriv, wMsg, dwParam1, dwParam2);
 
     switch (wMsg) {
