@@ -1401,7 +1401,6 @@ static void test_media_session_rate_control(void)
     ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#x.\n", hr);
 
     hr = IMFRateControl_SetRate(rate_control, FALSE, 1.5f);
-    todo_wine
     ok(hr == S_OK, "Failed to set rate, hr %#x.\n", hr);
 
     hr = IMFClock_GetProperties(clock, &clock_props);
@@ -1414,7 +1413,6 @@ static void test_media_session_rate_control(void)
     ok(hr == S_OK, "Failed to set time source, hr %#x.\n", hr);
 
     hr = IMFRateControl_SetRate(rate_control, FALSE, 1.5f);
-    todo_wine
     ok(hr == S_OK, "Failed to set rate, hr %#x.\n", hr);
 
     rate = 0.0f;

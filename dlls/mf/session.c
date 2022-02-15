@@ -46,6 +46,7 @@ enum session_command
     SESSION_CMD_START,
     SESSION_CMD_PAUSE,
     SESSION_CMD_STOP,
+    SESSION_CMD_SET_RATE,
     /* Internally used commands. */
     SESSION_CMD_END,
     SESSION_CMD_QM_NOTIFY_TOPOLOGY,
@@ -69,6 +70,11 @@ struct session_op
             GUID time_format;
             PROPVARIANT start_position;
         } start;
+        struct
+        {
+            BOOL thin;
+            float rate;
+        } set_rate;
         struct
         {
             IMFTopology *topology;
@@ -214,6 +220,7 @@ enum presentation_flags
     SESSION_FLAG_FINALIZE_SINKS = 0x4,
     SESSION_FLAG_NEEDS_PREROLL = 0x8,
     SESSION_FLAG_END_OF_PRESENTATION = 0x10,
+    SESSION_FLAG_PENDING_RATE_CHANGE = 0x20,
 };
 
 struct media_session
@@ -246,6 +253,9 @@ struct media_session
         /* Latest Start() arguments. */
         GUID time_format;
         PROPVARIANT start_position;
+        /* Latest SetRate() arguments. */
+        BOOL thin;
+        float rate;
     } presentation;
     struct list topologies;
     struct list commands;
@@ -813,6 +823,26 @@ static void session_command_complete_with_event(struct media_session *session, M
     session_command_complete(session);
 }
 
+static void session_subscribe_sources(struct media_session *session)
+{
+    struct media_source *source;
+    HRESULT hr;
+
+    if (session->presentation.flags & SESSION_FLAG_SOURCES_SUBSCRIBED)
+        return;
+
+    LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
+    {
+        if (FAILED(hr = IMFMediaSource_BeginGetEvent(source->source, &session->events_callback,
+                source->object)))
+        {
+            WARN("Failed to subscribe to source events, hr %#lx.\n", hr);
+        }
+    }
+
+    session->presentation.flags |= SESSION_FLAG_SOURCES_SUBSCRIBED;
+}
+
 static void session_start(struct media_session *session, const GUID *time_format, const PROPVARIANT *start_position)
 {
     struct media_source *source;
@@ -836,22 +866,14 @@ static void session_start(struct media_session *session, const GUID *time_format
             session->presentation.start_position.vt = VT_EMPTY;
             PropVariantCopy(&session->presentation.start_position, start_position);
 
+            session_subscribe_sources(session);
+
             LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
             {
-                if (!(session->presentation.flags & SESSION_FLAG_SOURCES_SUBSCRIBED))
-                {
-                    if (FAILED(hr = IMFMediaSource_BeginGetEvent(source->source, &session->events_callback,
-                            source->object)))
-                    {
-                        WARN("Failed to subscribe to source events, hr %#lx.\n", hr);
-                    }
-                }
-
                 if (FAILED(hr = IMFMediaSource_Start(source->source, source->pd, &GUID_NULL, start_position)))
                     WARN("Failed to start media source %p, hr %#lx.\n", source->source, hr);
             }
 
-            session->presentation.flags |= SESSION_FLAG_SOURCES_SUBSCRIBED;
             session->state = SESSION_STATE_STARTING_SOURCES;
             break;
         case SESSION_STATE_STARTED:
@@ -1070,6 +1092,227 @@ static void session_clear_topologies(struct media_session *session)
     else
         session_clear_queued_topologies(session);
     session_command_complete_with_event(session, MESessionTopologiesCleared, hr, NULL);
+}
+
+static HRESULT session_is_presentation_rate_supported(struct media_session *session, BOOL thin, float rate,
+        float *nearest_rate)
+{
+    IMFRateSupport *rate_support;
+    struct media_source *source;
+    struct media_sink *sink;
+    float value = 0.0f, tmp;
+    HRESULT hr = S_OK;
+    DWORD flags;
+
+    if (!nearest_rate) nearest_rate = &tmp;
+
+    if (rate == 0.0f)
+    {
+        *nearest_rate = 1.0f;
+        return S_OK;
+    }
+
+    if (session->presentation.topo_status != MF_TOPOSTATUS_INVALID)
+    {
+        LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
+        {
+            if (FAILED(hr = MFGetService(source->object, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport,
+                    (void **)&rate_support)))
+            {
+                value = 1.0f;
+                break;
+            }
+
+            value = rate;
+            if (FAILED(hr = IMFRateSupport_IsRateSupported(rate_support, thin, rate, &value)))
+                WARN("Source does not support rate %f, hr %#lx.\n", rate, hr);
+            IMFRateSupport_Release(rate_support);
+
+            /* Only "first" source is considered. */
+            break;
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            /* For sinks only check if rate is supported, ignoring nearest values. */
+            LIST_FOR_EACH_ENTRY(sink, &session->presentation.sinks, struct media_sink, entry)
+            {
+                flags = 0;
+                if (FAILED(hr = IMFMediaSink_GetCharacteristics(sink->sink, &flags)))
+                    break;
+
+                if (flags & MEDIASINK_RATELESS)
+                    continue;
+
+                if (FAILED(MFGetService(sink->object, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport,
+                        (void **)&rate_support)))
+                    continue;
+
+                hr = IMFRateSupport_IsRateSupported(rate_support, thin, rate, NULL);
+                IMFRateSupport_Release(rate_support);
+                if (FAILED(hr))
+                {
+                    WARN("Sink %p does not support rate %f, hr %#lx.\n", sink->sink, rate, hr);
+                    break;
+                }
+            }
+        }
+    }
+
+    *nearest_rate = value;
+
+    return hr;
+}
+
+static void session_set_consumed_clock(IUnknown *object, IMFPresentationClock *clock)
+{
+    IMFClockConsumer *consumer;
+
+    if (SUCCEEDED(IUnknown_QueryInterface(object, &IID_IMFClockConsumer, (void **)&consumer)))
+    {
+        IMFClockConsumer_SetPresentationClock(consumer, clock);
+        IMFClockConsumer_Release(consumer);
+    }
+}
+
+static void session_set_presentation_clock(struct media_session *session)
+{
+    IMFPresentationTimeSource *time_source = NULL;
+    struct media_source *source;
+    struct media_sink *sink;
+    struct topo_node *node;
+    HRESULT hr;
+
+    LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
+    {
+        if (node->type == MF_TOPOLOGY_TRANSFORM_NODE)
+            IMFTransform_ProcessMessage(node->object.transform, MFT_MESSAGE_NOTIFY_START_OF_STREAM, 0);
+    }
+
+    if (!(session->presentation.flags & SESSION_FLAG_PRESENTATION_CLOCK_SET))
+    {
+        /* Attempt to get time source from the sinks. */
+        LIST_FOR_EACH_ENTRY(sink, &session->presentation.sinks, struct media_sink, entry)
+        {
+            if (SUCCEEDED(IMFMediaSink_QueryInterface(sink->sink, &IID_IMFPresentationTimeSource,
+                    (void **)&time_source)))
+                 break;
+        }
+
+        if (time_source)
+        {
+            hr = IMFPresentationClock_SetTimeSource(session->clock, time_source);
+            IMFPresentationTimeSource_Release(time_source);
+        }
+        else
+            hr = IMFPresentationClock_SetTimeSource(session->clock, session->system_time_source);
+
+        if (FAILED(hr))
+            WARN("Failed to set time source, hr %#lx.\n", hr);
+
+        LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
+        {
+            if (node->type != MF_TOPOLOGY_OUTPUT_NODE)
+                continue;
+
+            if (FAILED(hr = IMFStreamSink_BeginGetEvent(node->object.sink_stream, &session->events_callback,
+                    node->object.object)))
+            {
+                WARN("Failed to subscribe to stream sink events, hr %#lx.\n", hr);
+            }
+        }
+
+        /* Set clock for all topology nodes. */
+        LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
+        {
+            session_set_consumed_clock(source->object, session->clock);
+        }
+
+        LIST_FOR_EACH_ENTRY(sink, &session->presentation.sinks, struct media_sink, entry)
+        {
+            if (sink->event_generator && FAILED(hr = IMFMediaEventGenerator_BeginGetEvent(sink->event_generator,
+                    &session->events_callback, (IUnknown *)sink->event_generator)))
+            {
+                WARN("Failed to subscribe to sink events, hr %#lx.\n", hr);
+            }
+
+            if (FAILED(hr = IMFMediaSink_SetPresentationClock(sink->sink, session->clock)))
+                WARN("Failed to set presentation clock for the sink, hr %#lx.\n", hr);
+        }
+
+        LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
+        {
+            if (node->type != MF_TOPOLOGY_TRANSFORM_NODE)
+                continue;
+
+            session_set_consumed_clock(node->object.object, session->clock);
+        }
+
+        session->presentation.flags |= SESSION_FLAG_PRESENTATION_CLOCK_SET;
+    }
+}
+
+static void session_set_rate(struct media_session *session, BOOL thin, float rate)
+{
+    IMFRateControl *rate_control;
+    struct media_source *source;
+    float clock_rate = 0.0f;
+    PROPVARIANT param;
+    HRESULT hr;
+
+    hr = session_is_presentation_rate_supported(session, thin, rate, NULL);
+
+    if (SUCCEEDED(hr))
+        hr = IMFRateControl_GetRate(session->clock_rate_control, NULL, &clock_rate);
+
+    if (SUCCEEDED(hr) && (rate != clock_rate))
+    {
+        session_subscribe_sources(session);
+
+        LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
+        {
+            if (SUCCEEDED(hr = MFGetService(source->object, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateControl,
+                    (void **)&rate_control)))
+            {
+                hr = IMFRateControl_SetRate(rate_control, thin, rate);
+                IMFRateControl_Release(rate_control);
+                if (SUCCEEDED(hr))
+                {
+                    session->presentation.flags |= SESSION_FLAG_PENDING_RATE_CHANGE;
+                    session->presentation.rate = rate;
+                    return;
+                }
+            }
+
+            break;
+        }
+    }
+
+    param.vt = VT_R4;
+    param.fltVal = rate;
+    session_command_complete_with_event(session, MESessionRateChanged, hr, SUCCEEDED(hr) ? &param : NULL);
+}
+
+static void session_complete_rate_change(struct media_session *session)
+{
+    PROPVARIANT param;
+    HRESULT hr;
+
+    if (!(session->presentation.flags & SESSION_FLAG_PENDING_RATE_CHANGE))
+        return;
+
+    session->presentation.flags &= ~SESSION_FLAG_PENDING_RATE_CHANGE;
+    session_set_presentation_clock(session);
+
+    hr = IMFRateControl_SetRate(session->clock_rate_control, session->presentation.thin,
+            session->presentation.rate);
+
+    param.vt = VT_R4;
+    param.fltVal = session->presentation.rate;
+
+    IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionRateChanged, &GUID_NULL, hr,
+            SUCCEEDED(hr) ? &param : NULL);
+    session_command_complete(session);
 }
 
 static struct media_source *session_get_media_source(struct media_session *session, IMFMediaSource *source)
@@ -2173,6 +2416,9 @@ static HRESULT WINAPI session_commands_callback_Invoke(IMFAsyncCallback *iface, 
                 }
             }
             break;
+        case SESSION_CMD_SET_RATE:
+            session_set_rate(session, op->set_rate.thin, op->set_rate.rate);
+            break;
         default:
             ;
     }
@@ -2313,94 +2559,6 @@ static enum object_state session_get_object_state_for_event(MediaEventType event
             return OBJ_STATE_PREROLLED;
         default:
             return OBJ_STATE_INVALID;
-    }
-}
-
-static void session_set_consumed_clock(IUnknown *object, IMFPresentationClock *clock)
-{
-    IMFClockConsumer *consumer;
-
-    if (SUCCEEDED(IUnknown_QueryInterface(object, &IID_IMFClockConsumer, (void **)&consumer)))
-    {
-        IMFClockConsumer_SetPresentationClock(consumer, clock);
-        IMFClockConsumer_Release(consumer);
-    }
-}
-
-static void session_set_presentation_clock(struct media_session *session)
-{
-    IMFPresentationTimeSource *time_source = NULL;
-    struct media_source *source;
-    struct media_sink *sink;
-    struct topo_node *node;
-    HRESULT hr;
-
-    LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
-    {
-        if (node->type == MF_TOPOLOGY_TRANSFORM_NODE)
-            IMFTransform_ProcessMessage(node->object.transform, MFT_MESSAGE_NOTIFY_START_OF_STREAM, 0);
-    }
-
-    if (!(session->presentation.flags & SESSION_FLAG_PRESENTATION_CLOCK_SET))
-    {
-        /* Attempt to get time source from the sinks. */
-        LIST_FOR_EACH_ENTRY(sink, &session->presentation.sinks, struct media_sink, entry)
-        {
-            if (SUCCEEDED(IMFMediaSink_QueryInterface(sink->sink, &IID_IMFPresentationTimeSource,
-                    (void **)&time_source)))
-                 break;
-        }
-
-        if (time_source)
-        {
-            hr = IMFPresentationClock_SetTimeSource(session->clock, time_source);
-            IMFPresentationTimeSource_Release(time_source);
-        }
-        else
-            hr = IMFPresentationClock_SetTimeSource(session->clock, session->system_time_source);
-
-        if (FAILED(hr))
-            WARN("Failed to set time source, hr %#lx.\n", hr);
-
-        LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
-        {
-            if (node->type != MF_TOPOLOGY_OUTPUT_NODE)
-                continue;
-
-            if (FAILED(hr = IMFStreamSink_BeginGetEvent(node->object.sink_stream, &session->events_callback,
-                    node->object.object)))
-            {
-                WARN("Failed to subscribe to stream sink events, hr %#lx.\n", hr);
-            }
-        }
-
-        /* Set clock for all topology nodes. */
-        LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
-        {
-            session_set_consumed_clock(source->object, session->clock);
-        }
-
-        LIST_FOR_EACH_ENTRY(sink, &session->presentation.sinks, struct media_sink, entry)
-        {
-            if (sink->event_generator && FAILED(hr = IMFMediaEventGenerator_BeginGetEvent(sink->event_generator,
-                    &session->events_callback, (IUnknown *)sink->event_generator)))
-            {
-                WARN("Failed to subscribe to sink events, hr %#lx.\n", hr);
-            }
-
-            if (FAILED(hr = IMFMediaSink_SetPresentationClock(sink->sink, session->clock)))
-                WARN("Failed to set presentation clock for the sink, hr %#lx.\n", hr);
-        }
-
-        LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
-        {
-            if (node->type != MF_TOPOLOGY_TRANSFORM_NODE)
-                continue;
-
-            session_set_consumed_clock(node->object.object, session->clock);
-        }
-
-        session->presentation.flags |= SESSION_FLAG_PRESENTATION_CLOCK_SET;
     }
 }
 
@@ -3193,6 +3351,14 @@ static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IM
 
             break;
 
+        case MESourceRateChanged:
+
+            EnterCriticalSection(&session->cs);
+            session_complete_rate_change(session);
+            LeaveCriticalSection(&session->cs);
+
+            break;
+
         case MEBufferingStarted:
         case MEBufferingStopped:
 
@@ -3539,80 +3705,6 @@ static HRESULT session_get_presentation_rate(struct media_session *session, MFRA
     return hr;
 }
 
-static HRESULT session_is_presentation_rate_supported(struct media_session *session, BOOL thin, float rate,
-        float *nearest_rate)
-{
-    IMFRateSupport *rate_support;
-    struct media_source *source;
-    struct media_sink *sink;
-    float value = 0.0f, tmp;
-    HRESULT hr = S_OK;
-    DWORD flags;
-
-    if (!nearest_rate) nearest_rate = &tmp;
-
-    if (rate == 0.0f)
-    {
-        *nearest_rate = 1.0f;
-        return S_OK;
-    }
-
-    EnterCriticalSection(&session->cs);
-
-    if (session->presentation.topo_status != MF_TOPOSTATUS_INVALID)
-    {
-        LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
-        {
-            if (FAILED(hr = MFGetService(source->object, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport,
-                    (void **)&rate_support)))
-            {
-                value = 1.0f;
-                break;
-            }
-
-            value = rate;
-            if (FAILED(hr = IMFRateSupport_IsRateSupported(rate_support, thin, rate, &value)))
-                WARN("Source does not support rate %f, hr %#lx.\n", rate, hr);
-            IMFRateSupport_Release(rate_support);
-
-            /* Only "first" source is considered. */
-            break;
-        }
-
-        if (SUCCEEDED(hr))
-        {
-            /* For sinks only check if rate is supported, ignoring nearest values. */
-            LIST_FOR_EACH_ENTRY(sink, &session->presentation.sinks, struct media_sink, entry)
-            {
-                flags = 0;
-                if (FAILED(hr = IMFMediaSink_GetCharacteristics(sink->sink, &flags)))
-                    break;
-
-                if (flags & MEDIASINK_RATELESS)
-                    continue;
-
-                if (FAILED(MFGetService(sink->object, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport,
-                        (void **)&rate_support)))
-                    continue;
-
-                hr = IMFRateSupport_IsRateSupported(rate_support, thin, rate, NULL);
-                IMFRateSupport_Release(rate_support);
-                if (FAILED(hr))
-                {
-                    WARN("Sink %p does not support rate %f, hr %#lx.\n", sink->sink, rate, hr);
-                    break;
-                }
-            }
-        }
-    }
-
-    LeaveCriticalSection(&session->cs);
-
-    *nearest_rate = value;
-
-    return hr;
-}
-
 static HRESULT WINAPI session_rate_support_GetSlowestRate(IMFRateSupport *iface, MFRATE_DIRECTION direction,
         BOOL thin, float *rate)
 {
@@ -3637,10 +3729,15 @@ static HRESULT WINAPI session_rate_support_IsRateSupported(IMFRateSupport *iface
         float *nearest_supported_rate)
 {
     struct media_session *session = impl_session_from_IMFRateSupport(iface);
+    HRESULT hr;
 
     TRACE("%p, %d, %f, %p.\n", iface, thin, rate, nearest_supported_rate);
 
-    return session_is_presentation_rate_supported(session, thin, rate, nearest_supported_rate);
+    EnterCriticalSection(&session->cs);
+    hr = session_is_presentation_rate_supported(session, thin, rate, nearest_supported_rate);
+    LeaveCriticalSection(&session->cs);
+
+    return hr;
 }
 
 static const IMFRateSupportVtbl session_rate_support_vtbl =
@@ -3673,9 +3770,20 @@ static ULONG WINAPI session_rate_control_Release(IMFRateControl *iface)
 
 static HRESULT WINAPI session_rate_control_SetRate(IMFRateControl *iface, BOOL thin, float rate)
 {
-    FIXME("%p, %d, %f.\n", iface, thin, rate);
+    struct media_session *session = impl_session_from_IMFRateControl(iface);
+    struct session_op *op;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %d, %f.\n", iface, thin, rate);
+
+    if (FAILED(hr = create_session_op(SESSION_CMD_SET_RATE, &op)))
+        return hr;
+
+    op->set_rate.thin = thin;
+    op->set_rate.rate = rate;
+    hr = session_submit_command(session, op);
+    IUnknown_Release(&op->IUnknown_iface);
+    return hr;
 }
 
 static HRESULT WINAPI session_rate_control_GetRate(IMFRateControl *iface, BOOL *thin, float *rate)
