@@ -101,7 +101,6 @@ my @dll_groups =
   "xinput9_1_0",
  ],
  [
-  "setupapi",
   "cfgmgr32",
   "api-ms-win-devices-config-l1-1-0",
   "api-ms-win-devices-config-l1-1-1",
