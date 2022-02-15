@@ -90,7 +90,7 @@ static BOOL GSM_FormatValidate(const WAVEFORMATEX *wfx)
         }
         if (wfx->nAvgBytesPerSec != wfx->nBlockAlign * wfx->nSamplesPerSec)
         {
-            WARN("PCM nAvgBytesPerSec %u/%u\n",
+            WARN("PCM nAvgBytesPerSec %lu/%lu\n",
                  wfx->nAvgBytesPerSec,
                  wfx->nBlockAlign * wfx->nSamplesPerSec);
             return FALSE;
@@ -120,7 +120,7 @@ static BOOL GSM_FormatValidate(const WAVEFORMATEX *wfx)
         }
         if (wfx->nAvgBytesPerSec != wfx->nSamplesPerSec * 65 / 320)
         {
-            WARN("GSM nAvgBytesPerSec %d / %d\n",
+            WARN("GSM nAvgBytesPerSec %ld / %ld\n",
                  wfx->nAvgBytesPerSec, wfx->nSamplesPerSec * 65 / 320);
             return FALSE;
         }
@@ -163,7 +163,7 @@ static	LRESULT	GSM_FormatTagDetails(PACMFORMATTAGDETAILSW aftd, DWORD dwQuery)
 	}
 	break;
     default:
-	WARN("Unsupported query %08x\n", dwQuery);
+	WARN("Unsupported query %08lx\n", dwQuery);
 	return MMSYSERR_NOTSUPPORTED;
     }
 
@@ -220,12 +220,12 @@ static	LRESULT	GSM_FormatDetails(PACMFORMATDETAILSW afd, DWORD dwQuery)
             ((GSM610WAVEFORMAT*)afd->pwfx)->wSamplesPerBlock = 320;
 	    break;
 	default:
-            WARN("Unsupported tag %08x\n", afd->dwFormatTag);
+            WARN("Unsupported tag %08lx\n", afd->dwFormatTag);
 	    return MMSYSERR_INVALPARAM;
 	}
 	break;
     default:
-	WARN("Unsupported query %08x\n", dwQuery);
+	WARN("Unsupported query %08lx\n", dwQuery);
 	return MMSYSERR_NOTSUPPORTED;
     }
     afd->fdwSupport = ACMDRIVERDETAILS_SUPPORTF_CODEC;
@@ -375,7 +375,7 @@ static	LRESULT GSM_StreamSize(const ACMDRVSTREAMINSTANCE *adsi, PACMDRVSTREAMSIZ
 	}
 	return MMSYSERR_NOERROR;
     default:
-	WARN("Unsupported query %08x\n", adss->fdwSize);
+	WARN("Unsupported query %08lx\n", adss->fdwSize);
 	return MMSYSERR_NOTSUPPORTED;
     }
 }
@@ -398,7 +398,7 @@ static LRESULT GSM_StreamConvert(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMHEADER
 	  ACM_STREAMCONVERTF_END|
 	  ACM_STREAMCONVERTF_START))
     {
-	FIXME("Unsupported fdwConvert (%08x), ignoring it\n", adsh->fdwConvert);
+	FIXME("Unsupported fdwConvert (%08lx), ignoring it\n", adsh->fdwConvert);
     }
 
     /* Reset the index to 0, just to be sure */
@@ -493,7 +493,7 @@ static LRESULT GSM_StreamConvert(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMHEADER
 
     adsh->cbSrcLengthUsed = nsrc;
     adsh->cbDstLengthUsed = ndst;
-    TRACE("%d(%d) -> %d(%d)\n", nsrc, adsh->cbSrcLength, ndst, adsh->cbDstLength);
+    TRACE("%ld(%ld) -> %ld(%ld)\n", nsrc, adsh->cbSrcLength, ndst, adsh->cbDstLength);
     return MMSYSERR_NOERROR;
 }
 
@@ -503,7 +503,7 @@ static LRESULT GSM_StreamConvert(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMHEADER
 LRESULT CALLBACK GSM_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
 					 LPARAM dwParam1, LPARAM dwParam2)
 {
-    TRACE("(%08lx %p %04x %08lx %08lx);\n",
+    TRACE("(%08Ix %p %04x %08Ix %08Ix);\n",
           dwDevID, hDriv, wMsg, dwParam1, dwParam2);
 
     switch (wMsg)
