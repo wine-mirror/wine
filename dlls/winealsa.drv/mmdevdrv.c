@@ -266,6 +266,19 @@ int WINAPI AUDDRV_GetPriority(void)
     return Priority_Neutral;
 }
 
+static WCHAR *strdupAtoW(const char *str)
+{
+    unsigned int len;
+    WCHAR *ret;
+
+    if(!str) return NULL;
+
+    len = MultiByteToWideChar(CP_UNIXCP, 0, str, -1, NULL, 0);
+    ret = malloc(len * sizeof(WCHAR));
+    if(ret) MultiByteToWideChar(CP_UNIXCP, 0, str, -1, ret, len);
+    return ret;
+}
+
 static void set_device_guid(EDataFlow flow, HKEY drv_key, const WCHAR *key_name,
         GUID *guid)
 {
@@ -553,6 +566,36 @@ static BOOL need_card_number(int card, const char *string)
     return FALSE;
 }
 
+static WCHAR *alsa_get_card_name(int card)
+{
+    char *cardname;
+    WCHAR *ret;
+    int err;
+
+    if((err = snd_card_get_name(card, &cardname)) < 0){
+        /* FIXME: Should be localized */
+        WARN("Unable to get card name for ALSA device %d: %d (%s)\n", card, err, snd_strerror(err));
+        cardname = strdup("Unknown soundcard");
+    }
+
+    if(need_card_number(card, cardname)){
+        char *cardnameN;
+        /*
+         * For identical card names, second and subsequent instances get
+         * card number prefix to distinguish them (like Windows).
+         */
+        if(asprintf(&cardnameN, "%u-%s", card, cardname) > 0){
+            free(cardname);
+            cardname = cardnameN;
+        }
+    }
+
+    ret = strdupAtoW(cardname);
+    free(cardname);
+
+    return ret;
+}
+
 static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR ***ids, GUID **guids,
         UINT *num)
 {
@@ -571,13 +614,10 @@ static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR ***ids, GUID **guids,
 
     get_reg_devices(flow, ids, guids, num);
 
-    for(err = snd_card_next(&card); card != -1 && err >= 0;
-            err = snd_card_next(&card)){
+    for(err = snd_card_next(&card); card != -1 && err >= 0; err = snd_card_next(&card)){
         char cardpath[64];
-        char *cardname;
-        WCHAR *cardnameW;
+        WCHAR *cardname;
         snd_ctl_t *ctl;
-        DWORD len;
 
         sprintf(cardpath, "hw:%u", card);
 
@@ -587,39 +627,9 @@ static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR ***ids, GUID **guids,
             continue;
         }
 
-        if(snd_card_get_name(card, &cardname) < 0) {
-            /* FIXME: Should be localized */
-            static const WCHAR nameW[] = {'U','n','k','n','o','w','n',' ','s','o','u','n','d','c','a','r','d',0};
-            WARN("Unable to get card name for ALSA device %s: %d (%s)\n",
-                    cardpath, err, snd_strerror(err));
-            alsa_get_card_devices(flow, ids, guids, num, ctl, card, nameW);
-        }else{
-            if(need_card_number(card, cardname)){
-                char *cardnameN;
-                /*
-                 * For identical card names, second and subsequent instances get
-                 * card number prefix to distinguish them (like Windows).
-                 */
-                if(asprintf(&cardnameN, "%u-%s", card, cardname) > 0){
-                    free(cardname);
-                    cardname = cardnameN;
-                }
-            }
-            len = MultiByteToWideChar(CP_UNIXCP, 0, cardname, -1, NULL, 0);
-            cardnameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-
-            if(!cardnameW){
-                free(cardname);
-                snd_ctl_close(ctl);
-                return E_OUTOFMEMORY;
-            }
-            MultiByteToWideChar(CP_UNIXCP, 0, cardname, -1, cardnameW, len);
-
-            alsa_get_card_devices(flow, ids, guids, num, ctl, card, cardnameW);
-
-            HeapFree(GetProcessHeap(), 0, cardnameW);
-            free(cardname);
-        }
+        cardname = alsa_get_card_name(card);
+        alsa_get_card_devices(flow, ids, guids, num, ctl, card, cardname);
+        free(cardname);
 
         snd_ctl_close(ctl);
     }
