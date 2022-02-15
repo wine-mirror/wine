@@ -489,7 +489,7 @@ static HRESULT WINAPI CLRRuntimeInfo_GetVersionString(ICLRRuntimeInfo* iface,
 
     TRACE("%p %p %p\n", iface, pwzBuffer, pcchBuffer);
 
-    size = snprintf(version, sizeof(version), "v%u.%u.%u", This->major, This->minor, This->build);
+    size = snprintf(version, sizeof(version), "v%lu.%lu.%lu", This->major, This->minor, This->build);
 
     assert(size <= sizeof(version));
 
@@ -578,7 +578,7 @@ static HRESULT WINAPI CLRRuntimeInfo_IsLoaded(ICLRRuntimeInfo* iface,
 static HRESULT WINAPI CLRRuntimeInfo_LoadErrorString(ICLRRuntimeInfo* iface,
     UINT iResourceID, LPWSTR pwzBuffer, DWORD *pcchBuffer, LONG iLocaleid)
 {
-    FIXME("%p %u %p %p %x\n", iface, iResourceID, pwzBuffer, pcchBuffer, iLocaleid);
+    FIXME("%p %u %p %p %lx\n", iface, iResourceID, pwzBuffer, pcchBuffer, iLocaleid);
 
     return E_NOTIMPL;
 }
@@ -635,7 +635,7 @@ static HRESULT WINAPI CLRRuntimeInfo_IsLoadable(ICLRRuntimeInfo* iface,
 static HRESULT WINAPI CLRRuntimeInfo_SetDefaultStartupFlags(ICLRRuntimeInfo* iface,
     DWORD dwStartupFlags, LPCWSTR pwzHostConfigFile)
 {
-    FIXME("%p %x %s\n", iface, dwStartupFlags, debugstr_w(pwzHostConfigFile));
+    FIXME("%p %lx %s\n", iface, dwStartupFlags, debugstr_w(pwzHostConfigFile));
 
     return E_NOTIMPL;
 }
@@ -901,7 +901,7 @@ static ULONG WINAPI InstalledRuntimeEnum_AddRef(IEnumUnknown* iface)
     struct InstalledRuntimeEnum *This = impl_from_IEnumUnknown(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     return ref;
 }
@@ -911,7 +911,7 @@ static ULONG WINAPI InstalledRuntimeEnum_Release(IEnumUnknown* iface)
     struct InstalledRuntimeEnum *This = impl_from_IEnumUnknown(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     if (ref == 0)
     {
@@ -929,7 +929,7 @@ static HRESULT WINAPI InstalledRuntimeEnum_Next(IEnumUnknown *iface, ULONG celt,
     HRESULT hr=S_OK;
     IUnknown *item;
 
-    TRACE("(%p,%u,%p,%p)\n", iface, celt, rgelt, pceltFetched);
+    TRACE("(%p,%lu,%p,%p)\n", iface, celt, rgelt, pceltFetched);
 
     while (num_fetched < celt)
     {
@@ -957,7 +957,7 @@ static HRESULT WINAPI InstalledRuntimeEnum_Skip(IEnumUnknown *iface, ULONG celt)
     ULONG num_fetched = 0;
     HRESULT hr=S_OK;
 
-    TRACE("(%p,%u)\n", iface, celt);
+    TRACE("(%p,%lu)\n", iface, celt);
 
     while (num_fetched < celt)
     {
@@ -1338,7 +1338,7 @@ static HRESULT WINAPI metahostpolicy_GetRequestedRuntime(ICLRMetaHostPolicy *ifa
         ICLRRuntimeInfo_Release(result);
     }
 
-    TRACE("<- 0x%08x\n", hr);
+    TRACE("<- 0x%08lx\n", hr);
 
     return hr;
 }
@@ -1820,10 +1820,10 @@ HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
     parsed_config_file parsed_config;
 
     if (startup_flags & ~supported_startup_flags)
-        FIXME("unsupported startup flags %x\n", startup_flags & ~supported_startup_flags);
+        FIXME("unsupported startup flags %lx\n", startup_flags & ~supported_startup_flags);
 
     if (runtimeinfo_flags & ~supported_runtime_flags)
-        FIXME("unsupported runtimeinfo flags %x\n", runtimeinfo_flags & ~supported_runtime_flags);
+        FIXME("unsupported runtimeinfo flags %lx\n", runtimeinfo_flags & ~supported_runtime_flags);
 
     if (exefile && !exefile[0])
         exefile = NULL;
@@ -1859,7 +1859,7 @@ HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
         }
         else
         {
-            WARN("failed to parse config file %s, hr=%x\n", debugstr_w(config_file), hr);
+            WARN("failed to parse config file %s, hr=%lx\n", debugstr_w(config_file), hr);
         }
 
         free_parsed_config_file(&parsed_config);

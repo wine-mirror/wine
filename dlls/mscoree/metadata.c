@@ -78,7 +78,7 @@ static ULONG WINAPI MetaDataDispenser_AddRef(IMetaDataDispenserEx* iface)
     MetaDataDispenser *This = impl_from_IMetaDataDispenserEx(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("%p ref=%u\n", This, ref);
+    TRACE("%p ref=%lu\n", This, ref);
 
     return ref;
 }
@@ -88,7 +88,7 @@ static ULONG WINAPI MetaDataDispenser_Release(IMetaDataDispenserEx* iface)
     MetaDataDispenser *This = impl_from_IMetaDataDispenserEx(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("%p ref=%u\n", This, ref);
+    TRACE("%p ref=%lu\n", This, ref);
 
     if (ref == 0)
     {
@@ -101,7 +101,7 @@ static ULONG WINAPI MetaDataDispenser_Release(IMetaDataDispenserEx* iface)
 static HRESULT WINAPI MetaDataDispenser_DefineScope(IMetaDataDispenserEx* iface,
     REFCLSID rclsid, DWORD dwCreateFlags, REFIID riid, IUnknown **ppIUnk)
 {
-    FIXME("%p %s %x %s %p\n", iface, debugstr_guid(rclsid), dwCreateFlags,
+    FIXME("%p %s %lx %s %p\n", iface, debugstr_guid(rclsid), dwCreateFlags,
         debugstr_guid(riid), ppIUnk);
     return E_NOTIMPL;
 }
@@ -109,7 +109,7 @@ static HRESULT WINAPI MetaDataDispenser_DefineScope(IMetaDataDispenserEx* iface,
 static HRESULT WINAPI MetaDataDispenser_OpenScope(IMetaDataDispenserEx* iface,
     LPCWSTR szScope, DWORD dwOpenFlags, REFIID riid, IUnknown **ppIUnk)
 {
-    FIXME("%p %s %x %s %p\n", iface, debugstr_w(szScope), dwOpenFlags,
+    FIXME("%p %s %lx %s %p\n", iface, debugstr_w(szScope), dwOpenFlags,
         debugstr_guid(riid), ppIUnk);
     return E_NOTIMPL;
 }
@@ -117,7 +117,7 @@ static HRESULT WINAPI MetaDataDispenser_OpenScope(IMetaDataDispenserEx* iface,
 static HRESULT WINAPI MetaDataDispenser_OpenScopeOnMemory(IMetaDataDispenserEx* iface,
     const void *pData, ULONG cbData, DWORD dwOpenFlags, REFIID riid, IUnknown **ppIUnk)
 {
-    FIXME("%p %p %u %x %s %p\n", iface, pData, cbData, dwOpenFlags,
+    FIXME("%p %p %lu %lx %s %p\n", iface, pData, cbData, dwOpenFlags,
         debugstr_guid(riid), ppIUnk);
     return E_NOTIMPL;
 }
@@ -139,14 +139,14 @@ static HRESULT WINAPI MetaDataDispenser_GetOption(IMetaDataDispenserEx* iface,
 static HRESULT WINAPI MetaDataDispenser_OpenScopeOnITypeInfo(IMetaDataDispenserEx* iface,
     ITypeInfo *pITI, DWORD dwOpenFlags, REFIID riid, IUnknown **ppIUnk)
 {
-    FIXME("%p %p %u %s %p\n", iface, pITI, dwOpenFlags, debugstr_guid(riid), ppIUnk);
+    FIXME("%p %p %lu %s %p\n", iface, pITI, dwOpenFlags, debugstr_guid(riid), ppIUnk);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI MetaDataDispenser_GetCORSystemDirectory(IMetaDataDispenserEx* iface,
     LPWSTR szBuffer, DWORD cchBuffer, DWORD *pchBuffer)
 {
-    FIXME("%p %p %u %p\n", iface, szBuffer, cchBuffer, pchBuffer);
+    FIXME("%p %p %lu %p\n", iface, szBuffer, cchBuffer, pchBuffer);
     return E_NOTIMPL;
 }
 
@@ -154,7 +154,7 @@ static HRESULT WINAPI MetaDataDispenser_FindAssembly(IMetaDataDispenserEx* iface
     LPCWSTR szAppBase, LPCWSTR szPrivateBin, LPCWSTR szGlobalBin, LPCWSTR szAssemblyName,
     LPWSTR szName, ULONG cchName, ULONG *pcName)
 {
-    FIXME("%p %s %s %s %s %p %u %p\n", iface, debugstr_w(szAppBase),
+    FIXME("%p %s %s %s %s %p %lu %p\n", iface, debugstr_w(szAppBase),
         debugstr_w(szPrivateBin), debugstr_w(szGlobalBin),
         debugstr_w(szAssemblyName), szName, cchName, pcName);
     return E_NOTIMPL;
@@ -164,7 +164,7 @@ static HRESULT WINAPI MetaDataDispenser_FindAssemblyModule(IMetaDataDispenserEx*
     LPCWSTR szAppBase, LPCWSTR szPrivateBin, LPCWSTR szGlobalBin, LPCWSTR szAssemblyName,
     LPCWSTR szModuleName, LPWSTR szName, ULONG cchName, ULONG *pcName)
 {
-    FIXME("%p %s %s %s %s %s %p %u %p\n", iface, debugstr_w(szAppBase),
+    FIXME("%p %s %s %s %s %s %p %lu %p\n", iface, debugstr_w(szAppBase),
         debugstr_w(szPrivateBin), debugstr_w(szGlobalBin), debugstr_w(szAssemblyName),
         debugstr_w(szModuleName), szName, cchName, pcName);
     return E_NOTIMPL;

@@ -96,7 +96,7 @@ static ULONG WINAPI ConfigStream_AddRef(IStream *iface)
     ConfigStream *This = impl_from_IStream(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%u\n", This, ref);
+    TRACE("(%p) ref=%lu\n", This, ref);
 
     return ref;
 }
@@ -106,7 +106,7 @@ static ULONG WINAPI ConfigStream_Release(IStream *iface)
     ConfigStream *This = impl_from_IStream(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%u\n",This, ref);
+    TRACE("(%p) ref=%lu\n",This, ref);
 
     if (!ref)
     {
@@ -122,11 +122,11 @@ static HRESULT WINAPI ConfigStream_Read(IStream *iface, void *buf, ULONG size, U
     ConfigStream *This = impl_from_IStream(iface);
     DWORD read = 0;
 
-    TRACE("(%p)->(%p %u %p)\n", This, buf, size, ret_read);
+    TRACE("(%p)->(%p %lu %p)\n", This, buf, size, ret_read);
 
     if (!ReadFile(This->file, buf, size, &read, NULL))
     {
-        WARN("error %d reading file\n", GetLastError());
+        WARN("error %ld reading file\n", GetLastError());
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
@@ -137,7 +137,7 @@ static HRESULT WINAPI ConfigStream_Read(IStream *iface, void *buf, ULONG size, U
 static HRESULT WINAPI ConfigStream_Write(IStream *iface, const void *buf, ULONG size, ULONG *written)
 {
     ConfigStream *This = impl_from_IStream(iface);
-    TRACE("(%p)->(%p %u %p)\n", This, buf, size, written);
+    TRACE("(%p)->(%p %lu %p)\n", This, buf, size, written);
     return E_FAIL;
 }
 
@@ -145,14 +145,14 @@ static HRESULT WINAPI ConfigStream_Seek(IStream *iface, LARGE_INTEGER dlibMove,
                                         DWORD dwOrigin, ULARGE_INTEGER *pNewPos)
 {
     ConfigStream *This = impl_from_IStream(iface);
-    TRACE("(%p)->(%d %d %p)\n", This, dlibMove.u.LowPart, dwOrigin, pNewPos);
+    TRACE("(%p)->(%ld %ld %p)\n", This, dlibMove.u.LowPart, dwOrigin, pNewPos);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ConfigStream_SetSize(IStream *iface, ULARGE_INTEGER libNewSize)
 {
     ConfigStream *This = impl_from_IStream(iface);
-    TRACE("(%p)->(%d)\n", This, libNewSize.u.LowPart);
+    TRACE("(%p)->(%ld)\n", This, libNewSize.u.LowPart);
     return E_NOTIMPL;
 }
 
@@ -160,14 +160,14 @@ static HRESULT WINAPI ConfigStream_CopyTo(IStream *iface, IStream *stream, ULARG
                                           ULARGE_INTEGER *read, ULARGE_INTEGER *written)
 {
     ConfigStream *This = impl_from_IStream(iface);
-    FIXME("(%p)->(%p %d %p %p)\n", This, stream, size.u.LowPart, read, written);
+    FIXME("(%p)->(%p %ld %p %p)\n", This, stream, size.u.LowPart, read, written);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ConfigStream_Commit(IStream *iface, DWORD flags)
 {
     ConfigStream *This = impl_from_IStream(iface);
-    FIXME("(%p,%d)\n", This, flags);
+    FIXME("(%p,%ld)\n", This, flags);
     return E_NOTIMPL;
 }
 
@@ -182,14 +182,14 @@ static HRESULT WINAPI ConfigStream_LockUnlockRegion(IStream *iface, ULARGE_INTEG
                                                     ULARGE_INTEGER cb, DWORD dwLockType)
 {
     ConfigStream *This = impl_from_IStream(iface);
-    TRACE("(%p,%d,%d,%d)\n", This, libOffset.u.LowPart, cb.u.LowPart, dwLockType);
+    TRACE("(%p,%ld,%ld,%ld)\n", This, libOffset.u.LowPart, cb.u.LowPart, dwLockType);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ConfigStream_Stat(IStream *iface, STATSTG *lpStat, DWORD grfStatFlag)
 {
     ConfigStream *This = impl_from_IStream(iface);
-    FIXME("(%p,%p,%d)\n", This, lpStat, grfStatFlag);
+    FIXME("(%p,%p,%ld)\n", This, lpStat, grfStatFlag);
     return E_NOTIMPL;
 }
 
@@ -586,21 +586,21 @@ static ULONG WINAPI ConfigFileHandler_Error_Release(ISAXErrorHandler *iface)
 static HRESULT WINAPI ConfigFileHandler_error(ISAXErrorHandler *iface,
     ISAXLocator * pLocator, const WCHAR * pErrorMessage, HRESULT hrErrorCode)
 {
-    WARN("%s,%x\n", debugstr_w(pErrorMessage), hrErrorCode);
+    WARN("%s,%lx\n", debugstr_w(pErrorMessage), hrErrorCode);
     return S_OK;
 }
 
 static HRESULT WINAPI ConfigFileHandler_fatalError(ISAXErrorHandler *iface,
     ISAXLocator * pLocator, const WCHAR * pErrorMessage, HRESULT hrErrorCode)
 {
-    WARN("%s,%x\n", debugstr_w(pErrorMessage), hrErrorCode);
+    WARN("%s,%lx\n", debugstr_w(pErrorMessage), hrErrorCode);
     return S_OK;
 }
 
 static HRESULT WINAPI ConfigFileHandler_ignorableWarning(ISAXErrorHandler *iface,
     ISAXLocator * pLocator, const WCHAR * pErrorMessage, HRESULT hrErrorCode)
 {
-    WARN("%s,%x\n", debugstr_w(pErrorMessage), hrErrorCode);
+    WARN("%s,%lx\n", debugstr_w(pErrorMessage), hrErrorCode);
     return S_OK;
 }
 

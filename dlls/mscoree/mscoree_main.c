@@ -133,7 +133,7 @@ static ULONG WINAPI mscorecf_AddRef(IClassFactory *iface )
     mscorecf *This = impl_from_IClassFactory(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("%p ref=%u\n", This, ref);
+    TRACE("%p ref=%lu\n", This, ref);
 
     return ref;
 }
@@ -143,7 +143,7 @@ static ULONG WINAPI mscorecf_Release(IClassFactory *iface )
     mscorecf *This = impl_from_IClassFactory(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("%p ref=%u\n", This, ref);
+    TRACE("%p ref=%lu\n", This, ref);
 
     if (ref == 0)
     {
@@ -176,7 +176,7 @@ static HRESULT WINAPI mscorecf_CreateInstance(IClassFactory *iface,LPUNKNOWN pOu
     }
     else
     {
-        WARN("Cannot create an instance object. 0x%08x\n", hr);
+        WARN("Cannot create an instance object. 0x%08lx\n", hr);
     }
     return hr;
 }
@@ -204,7 +204,7 @@ HRESULT WINAPI CorBindToRuntimeHost(LPCWSTR pwszVersion, LPCWSTR pwszBuildFlavor
     HRESULT ret;
     ICLRRuntimeInfo *info;
 
-    TRACE("(%s, %s, %s, %p, %d, %s, %s, %p)\n", debugstr_w(pwszVersion),
+    TRACE("(%s, %s, %s, %p, %ld, %s, %s, %p)\n", debugstr_w(pwszVersion),
           debugstr_w(pwszBuildFlavor), debugstr_w(pwszHostConfigFile), pReserved,
           startupFlags, debugstr_guid(rclsid), debugstr_guid(riid), ppv);
 
@@ -264,7 +264,7 @@ void CDECL mono_print_handler_fn(const char *string, INT is_stdout)
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    TRACE("(%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
+    TRACE("(%p, %ld, %p)\n", hinstDLL, fdwReason, lpvReserved);
 
     switch (fdwReason)
     {
@@ -297,7 +297,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 __int32 WINAPI _CorExeMain2(PBYTE ptrMemory, DWORD cntMemory, LPWSTR imageName, LPWSTR loaderName, LPWSTR cmdLine)
 {
-    TRACE("(%p, %u, %s, %s, %s)\n", ptrMemory, cntMemory, debugstr_w(imageName), debugstr_w(loaderName), debugstr_w(cmdLine));
+    TRACE("(%p, %lu, %s, %s, %s)\n", ptrMemory, cntMemory, debugstr_w(imageName), debugstr_w(loaderName), debugstr_w(cmdLine));
     FIXME("Directly running .NET applications not supported.\n");
     return -1;
 }
@@ -324,7 +324,7 @@ HRESULT WINAPI GetCORSystemDirectory(LPWSTR pbuffer, DWORD cchBuffer, DWORD *dwL
     ICLRRuntimeInfo *info;
     HRESULT ret;
 
-    TRACE("(%p, %d, %p)!\n", pbuffer, cchBuffer, dwLength);
+    TRACE("(%p, %ld, %p)!\n", pbuffer, cchBuffer, dwLength);
 
     if (!dwLength || !pbuffer)
         return E_POINTER;
@@ -347,7 +347,7 @@ HRESULT WINAPI GetCORVersion(LPWSTR pbuffer, DWORD cchBuffer, DWORD *dwLength)
     ICLRRuntimeInfo *info;
     HRESULT ret;
 
-    TRACE("(%p, %d, %p)!\n", pbuffer, cchBuffer, dwLength);
+    TRACE("(%p, %ld, %p)!\n", pbuffer, cchBuffer, dwLength);
 
     if (!dwLength || !pbuffer)
         return E_POINTER;
@@ -390,7 +390,7 @@ HRESULT WINAPI GetRequestedRuntimeInfo(LPCWSTR pExe, LPCWSTR pwszVersion, LPCWST
     ICLRRuntimeInfo *info;
     DWORD length_dummy;
 
-    TRACE("(%s, %s, %s, 0x%08x, 0x%08x, %p, 0x%08x, %p, %p, 0x%08x, %p)\n", debugstr_w(pExe),
+    TRACE("(%s, %s, %s, 0x%08lx, 0x%08lx, %p, 0x%08lx, %p, %p, 0x%08lx, %p)\n", debugstr_w(pExe),
           debugstr_w(pwszVersion), debugstr_w(pConfigurationFile), startupFlags, runtimeInfoFlags, pDirectory,
           dwDirectory, dwDirectoryLength, pVersion, cchBuffer, dwlength);
 
@@ -422,7 +422,7 @@ HRESULT WINAPI GetRequestedRuntimeInfo(LPCWSTR pExe, LPCWSTR pwszVersion, LPCWST
 
 HRESULT WINAPI GetRequestedRuntimeVersion(LPWSTR pExe, LPWSTR pVersion, DWORD cchBuffer, DWORD *dwlength)
 {
-    TRACE("(%s, %p, %d, %p)\n", debugstr_w(pExe), pVersion, cchBuffer, dwlength);
+    TRACE("(%s, %p, %ld, %p)\n", debugstr_w(pExe), pVersion, cchBuffer, dwlength);
 
     if(!dwlength)
         return E_POINTER;
@@ -438,7 +438,7 @@ HRESULT WINAPI GetRealProcAddress(LPCSTR procname, void **ppv)
 
 HRESULT WINAPI GetFileVersion(LPCWSTR szFilename, LPWSTR szBuffer, DWORD cchBuffer, DWORD *dwLength)
 {
-    TRACE("(%s, %p, %d, %p)\n", debugstr_w(szFilename), szBuffer, cchBuffer, dwLength);
+    TRACE("(%s, %p, %ld, %p)\n", debugstr_w(szFilename), szBuffer, cchBuffer, dwLength);
 
     if (!szFilename || !dwLength)
         return E_POINTER;
@@ -495,7 +495,7 @@ HRESULT WINAPI LockClrVersion(FLockClrVersionCallback hostCallback, FLockClrVers
 
 HRESULT WINAPI CoInitializeCor(DWORD fFlags)
 {
-    FIXME("(0x%08x): stub\n", fFlags);
+    FIXME("(0x%08lx): stub\n", fFlags);
     return S_OK;
 }
 
@@ -507,7 +507,7 @@ HRESULT WINAPI GetAssemblyMDImport(LPCWSTR szFileName, REFIID riid, IUnknown **p
 
 HRESULT WINAPI GetVersionFromProcess(HANDLE hProcess, LPWSTR pVersion, DWORD cchBuffer, DWORD *dwLength)
 {
-    FIXME("(%p, %p, %d, %p): stub\n", hProcess, pVersion, cchBuffer, dwLength);
+    FIXME("(%p, %p, %ld, %p): stub\n", hProcess, pVersion, cchBuffer, dwLength);
     return E_NOTIMPL;
 }
 
@@ -518,7 +518,7 @@ HRESULT WINAPI LoadStringRCEx(LCID culture, UINT resId, LPWSTR pBuffer, int iBuf
         return E_INVALIDARG;
     pBuffer[0] = 0;
     if (resId) {
-        FIXME("(%d, %x, %p, %d, %d, %p): semi-stub\n", culture, resId, pBuffer, iBufLen, bQuiet, pBufLen);
+        FIXME("(%ld, %x, %p, %d, %d, %p): semi-stub\n", culture, resId, pBuffer, iBufLen, bQuiet, pBufLen);
         res = E_NOTIMPL;
     }
     else
@@ -539,7 +539,7 @@ HRESULT WINAPI CorBindToRuntimeEx(LPWSTR szVersion, LPWSTR szBuildFlavor, DWORD 
     HRESULT ret;
     ICLRRuntimeInfo *info;
 
-    TRACE("%s %s %d %s %s %p\n", debugstr_w(szVersion), debugstr_w(szBuildFlavor), nflags, debugstr_guid( rslsid ),
+    TRACE("%s %s %ld %s %s %p\n", debugstr_w(szVersion), debugstr_w(szBuildFlavor), nflags, debugstr_guid( rslsid ),
           debugstr_guid( riid ), ppv);
 
     *ppv = NULL;
@@ -614,7 +614,7 @@ STDAPI ClrCreateManagedInstance(LPCWSTR pTypeName, REFIID riid, void **ppObject)
 
 BOOLEAN WINAPI StrongNameSignatureVerification(LPCWSTR filename, DWORD inFlags, DWORD *pOutFlags)
 {
-    FIXME("(%s, 0x%X, %p): stub\n", debugstr_w(filename), inFlags, pOutFlags);
+    FIXME("(%s, 0x%lX, %p): stub\n", debugstr_w(filename), inFlags, pOutFlags);
     return FALSE;
 }
 

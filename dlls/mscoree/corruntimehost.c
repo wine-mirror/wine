@@ -296,7 +296,7 @@ static HRESULT RuntimeHost_Invoke(RuntimeHost *This, MonoDomain *domain,
     hr = RuntimeHost_DoInvoke(This, domain, methodname, method, obj, args, result);
     if (FAILED(hr))
     {
-        ERR("Method %s.%s:%s raised an exception, hr=%x\n", namespace, typename, methodname, hr);
+        ERR("Method %s.%s:%s raised an exception, hr=%lx\n", namespace, typename, methodname, hr);
     }
 
     domain_restore(prev_domain);
@@ -340,7 +340,7 @@ static HRESULT RuntimeHost_VirtualInvoke(RuntimeHost *This, MonoDomain *domain,
     hr = RuntimeHost_DoInvoke(This, domain, methodname, method, obj, args, result);
     if (FAILED(hr))
     {
-        ERR("Method %s.%s:%s raised an exception, hr=%x\n", namespace, typename, methodname, hr);
+        ERR("Method %s.%s:%s raised an exception, hr=%lx\n", namespace, typename, methodname, hr);
     }
 
     domain_restore(prev_domain);
@@ -482,7 +482,7 @@ void RuntimeHost_ExitProcess(RuntimeHost *This, INT exitcode)
     hr = RuntimeHost_GetDefaultDomain(This, NULL, &domain);
     if (FAILED(hr))
     {
-        ERR("Cannot get domain, hr=%x\n", hr);
+        ERR("Cannot get domain, hr=%lx\n", hr);
         return;
     }
 
@@ -842,14 +842,14 @@ static HRESULT WINAPI CLRRuntimeHost_GetCLRControl(ICLRRuntimeHost* iface,
 static HRESULT WINAPI CLRRuntimeHost_UnloadAppDomain(ICLRRuntimeHost* iface,
     DWORD dwAppDomainId, BOOL fWaitUntilDone)
 {
-    FIXME("(%p,%u,%i)\n", iface, dwAppDomainId, fWaitUntilDone);
+    FIXME("(%p,%lu,%i)\n", iface, dwAppDomainId, fWaitUntilDone);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI CLRRuntimeHost_ExecuteInAppDomain(ICLRRuntimeHost* iface,
     DWORD dwAppDomainId, FExecuteInAppDomainCallback pCallback, void *cookie)
 {
-    FIXME("(%p,%u,%p,%p)\n", iface, dwAppDomainId, pCallback, cookie);
+    FIXME("(%p,%lu,%p,%p)\n", iface, dwAppDomainId, pCallback, cookie);
     return E_NOTIMPL;
 }
 
@@ -864,7 +864,7 @@ static HRESULT WINAPI CLRRuntimeHost_ExecuteApplication(ICLRRuntimeHost* iface,
     LPCWSTR pwzAppFullName, DWORD dwManifestPaths, LPCWSTR *ppwzManifestPaths,
     DWORD dwActivationData, LPCWSTR *ppwzActivationData, int *pReturnValue)
 {
-    FIXME("(%p,%s,%u,%u)\n", iface, debugstr_w(pwzAppFullName), dwManifestPaths, dwActivationData);
+    FIXME("(%p,%s,%lu,%lu)\n", iface, debugstr_w(pwzAppFullName), dwManifestPaths, dwActivationData);
     return E_NOTIMPL;
 }
 
@@ -1248,7 +1248,7 @@ DWORD WINAPI GetTokenForVTableEntry(HINSTANCE hinst, BYTE **ppVTEntry)
     }
     LeaveCriticalSection(&fixup_list_cs);
 
-    TRACE("<-- %x\n", result);
+    TRACE("<-- %lx\n", result);
     return result;
 }
 
@@ -1329,7 +1329,7 @@ static void CDECL ReallyFixupVTable(struct dll_fixup *fixup)
 
     if (!fixup->done)
     {
-        ERR("unable to fixup vtable, hr=%x, status=%d\n", hr, status);
+        ERR("unable to fixup vtable, hr=%lx, status=%d\n", hr, status);
         /* If we returned now, we'd get an infinite loop. */
         assert(0);
     }
@@ -1414,7 +1414,7 @@ static void FixupVTable(HMODULE hmodule)
         assembly_release(assembly);
     }
     else
-        ERR("failed to read CLR headers, hr=%x\n", hr);
+        ERR("failed to read CLR headers, hr=%lx\n", hr);
 }
 
 __int32 WINAPI _CorExeMain(void)
@@ -1535,7 +1535,7 @@ BOOL WINAPI _CorDllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     ASSEMBLY *assembly=NULL;
     HRESULT hr;
 
-    TRACE("(%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
+    TRACE("(%p, %ld, %p)\n", hinstDLL, fdwReason, lpvReserved);
 
     hr = assembly_from_hmodule(&assembly, hinstDLL);
     if (SUCCEEDED(hr))
@@ -1555,7 +1555,7 @@ BOOL WINAPI _CorDllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             return NativeEntryPoint(hinstDLL, fdwReason, lpvReserved);
     }
     else
-        ERR("failed to read CLR headers, hr=%x\n", hr);
+        ERR("failed to read CLR headers, hr=%lx\n", hr);
 
     return TRUE;
 }
@@ -1663,7 +1663,7 @@ static BOOL try_create_registration_free_com(REFIID clsid, WCHAR *classname, UIN
     {
         DWORD error = GetLastError();
         if (error != ERROR_SXS_KEY_NOT_FOUND)
-            ERR("Failed to find guid: %d\n", error);
+            ERR("Failed to find guid: %ld\n", error);
         goto end;
     }
 
@@ -1672,7 +1672,7 @@ static BOOL try_create_registration_free_com(REFIID clsid, WCHAR *classname, UIN
     if (!QueryActCtxW(0, guid_info.hActCtx, &guid_info.ulAssemblyRosterIndex,
             AssemblyDetailedInformationInActivationContext, assembly_info, bytes_assembly_info, &bytes_assembly_info))
     {
-        ERR("QueryActCtxW failed: %d!\n", GetLastError());
+        ERR("QueryActCtxW failed: %ld!\n", GetLastError());
         goto end;
     }
 
