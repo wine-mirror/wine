@@ -176,6 +176,7 @@ INT     WINAPI NtUserGetPriorityClipboardFormat( UINT *list, INT count );
 HWINSTA WINAPI NtUserGetProcessWindowStation(void);
 HANDLE  WINAPI NtUserGetProp( HWND hwnd, const WCHAR *str );
 ULONG   WINAPI NtUserGetProcessDpiAwarenessContext( HANDLE process );
+DWORD   WINAPI NtUserGetQueueStatus( UINT flags );
 ULONG   WINAPI NtUserGetSystemDpiForProcess( HANDLE process );
 HDESK   WINAPI NtUserGetThreadDesktop( DWORD thread );
 BOOL    WINAPI NtUserGetUpdatedClipboardFormats( UINT *formats, UINT size, UINT *out_size );

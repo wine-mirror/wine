@@ -208,6 +208,7 @@ struct unix_funcs
     INT      (WINAPI *pNtUserGetKeyNameText)( LONG lparam, WCHAR *buffer, INT size );
     UINT     (WINAPI *pNtUserGetKeyboardLayoutList)( INT size, HKL *layouts );
     INT      (WINAPI *pNtUserGetPriorityClipboardFormat)( UINT *list, INT count );
+    DWORD    (WINAPI *pNtUserGetQueueStatus)( UINT flags );
     BOOL     (WINAPI *pNtUserGetUpdatedClipboardFormats)( UINT *formats, UINT size, UINT *out_size );
     BOOL     (WINAPI *pNtUserIsClipboardFormatAvailable)( UINT format );
     UINT     (WINAPI *pNtUserMapVirtualKeyEx)( UINT code, UINT type, HKL layout );

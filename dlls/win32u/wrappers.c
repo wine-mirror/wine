@@ -777,6 +777,12 @@ INT WINAPI NtUserGetPriorityClipboardFormat( UINT *list, INT count )
     return unix_funcs->pNtUserGetPriorityClipboardFormat( list, count );
 }
 
+DWORD WINAPI NtUserGetQueueStatus( UINT flags )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserGetQueueStatus( flags );
+}
+
 BOOL WINAPI NtUserGetUpdatedClipboardFormats( UINT *formats, UINT size, UINT *out_size )
 {
     if (!unix_funcs) return FALSE;

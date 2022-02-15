@@ -128,6 +128,37 @@ BOOL get_cursor_pos( POINT *pt )
     return ret;
 }
 
+static void check_for_events( UINT flags )
+{
+    if (user_driver->pMsgWaitForMultipleObjectsEx( 0, NULL, 0, flags, 0 ) == WAIT_TIMEOUT)
+        flush_window_surfaces( TRUE );
+}
+
+/***********************************************************************
+ *           NtUserGetQueueStatus (win32u.@)
+ */
+DWORD WINAPI NtUserGetQueueStatus( UINT flags )
+{
+    DWORD ret;
+
+    if (flags & ~(QS_ALLINPUT | QS_ALLPOSTMESSAGE | QS_SMRESULT))
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return 0;
+    }
+
+    check_for_events( flags );
+
+    SERVER_START_REQ( get_queue_status )
+    {
+        req->clear_bits = flags;
+        wine_server_call( req );
+        ret = MAKELONG( reply->changed_bits & flags, reply->wake_bits & flags );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
 /***********************************************************************
  *           get_locale_kbd_layout
  */

@@ -1064,6 +1064,7 @@ static const struct user_driver_funcs lazy_load_driver =
     .pEnumDisplaySettingsEx = loaderdrv_EnumDisplaySettingsEx,
     .pUpdateDisplayDevices = loaderdrv_UpdateDisplayDevices,
     /* windowing functions */
+    .pMsgWaitForMultipleObjectsEx = nulldrv_MsgWaitForMultipleObjectsEx,
     .pScrollDC = nulldrv_ScrollDC,
     /* system parameters */
     .pSystemParametersInfo = nulldrv_SystemParametersInfo,
