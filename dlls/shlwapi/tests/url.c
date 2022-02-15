@@ -630,7 +630,7 @@ static void test_UrlGetPart(void)
         {"http://localhost:port/", URL_PART_USERNAME, 0, E_INVALIDARG, .todo_hr = TRUE},
         {"http://localhost:port/", URL_PART_PASSWORD, 0, E_INVALIDARG, .todo_hr = TRUE},
         {"http://localhost:port/", URL_PART_HOSTNAME, 0, S_OK, "localhost"},
-        {"http://localhost:port/", URL_PART_PORT, 0, S_OK, "port", .todo_hr = TRUE},
+        {"http://localhost:port/", URL_PART_PORT, 0, S_OK, "port"},
         {"http://:", URL_PART_HOSTNAME, 0, S_FALSE, ""},
         {"http://:", URL_PART_PORT, 0, S_FALSE, ""},
 
@@ -651,7 +651,7 @@ static void test_UrlGetPart(void)
         {"http://:@", URL_PART_HOSTNAME, 0, S_FALSE, ""},
 
         {"http://host:port:q", URL_PART_HOSTNAME, 0, S_OK, "host"},
-        {"http://host:port:q", URL_PART_PORT, 0, S_OK, "port:q", .todo_hr = TRUE},
+        {"http://host:port:q", URL_PART_PORT, 0, S_OK, "port:q"},
         {"http://user:pass:q@host", URL_PART_USERNAME, 0, S_OK, "user", .todo_hr = TRUE},
         {"http://user:pass:q@host", URL_PART_PASSWORD, 0, S_OK, "pass:q", .todo_hr = TRUE},
         {"http://user@host@q", URL_PART_USERNAME, 0, S_OK, "user"},
@@ -678,7 +678,7 @@ static void test_UrlGetPart(void)
         {"http:// !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff:pass@host", URL_PART_USERNAME, 0, S_OK, " !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff", .todo_hr = TRUE},
         {"http://user: !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff@host", URL_PART_PASSWORD, 0, S_OK, " !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff", .todo_hr = TRUE},
         {"http:// !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff", URL_PART_HOSTNAME, 0, S_OK, " !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff", .todo_hr = TRUE},
-        {"http://host: !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff", URL_PART_PORT, 0, S_OK, " !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff", .todo_hr = TRUE},
+        {"http://host: !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff", URL_PART_PORT, 0, S_OK, " !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff"},
 
         {"http:///index.html", URL_PART_HOSTNAME, 0, S_FALSE, ""},
         {"http:///index.html", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "http:", .todo_hr = TRUE},

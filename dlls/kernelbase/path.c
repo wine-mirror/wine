@@ -77,7 +77,6 @@ struct parsed_url
 enum url_scan_type
 {
     SCHEME,
-    PORT,
     USERPASS,
 };
 
@@ -4212,14 +4211,6 @@ static const WCHAR * scan_url(const WCHAR *start, DWORD *size, enum url_scan_typ
         }
         break;
 
-    case PORT:
-        while (*start >= '0' && *start <= '9')
-        {
-            start++;
-            (*size)++;
-        }
-        break;
-
     default:
         FIXME("unknown type %d\n", type);
         return L"";
@@ -4286,10 +4277,9 @@ static LONG parse_url(const WCHAR *url, struct parsed_url *pl)
 
     if (*work == ':')
     {
-        /* parse port */
-        work++;
-        pl->port = work;
-        work = scan_url(pl->port, &pl->port_len, PORT);
+        pl->port = work + 1;
+        work = parse_url_element( pl->port, L"/\\?#" );
+        pl->port_len = work - pl->port;
     }
     if (*work == '/')
     {
