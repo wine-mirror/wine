@@ -395,7 +395,7 @@ static BOOL query_supported_server_ctrls( LDAP *ld )
             struct ldap_get_values_len_params get_params = { CTX(ld), entry, attrs[0], &ctrls };
             LDAP_CALL( ldap_get_values_len, &get_params );
             count = LDAP_CALL( ldap_count_values_len, ctrls );
-            for (i = 0; i < count; i++) TRACE("%u: %s\n", i, debugstr_an( ctrls[i]->bv_val, ctrls[i]->bv_len ));
+            for (i = 0; i < count; i++) TRACE( "%lu: %s\n", i, debugstr_an( ctrls[i]->bv_val, ctrls[i]->bv_len ) );
             *(struct bervalU ***)&SERVER_CTRLS(ld) = ctrls;
         }
     }

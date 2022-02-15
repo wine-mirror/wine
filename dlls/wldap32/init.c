@@ -118,10 +118,10 @@ static char *join_hostnames( const char *scheme, char **hostnames, ULONG portnum
 {
     char *res, *p, *q, **v;
     unsigned int i = 0, size = 0;
-    static const char sep[] = " ", fmt[] = ":%d";
+    static const char sep[] = " ";
     char port[7];
 
-    sprintf( port, fmt, portnumber );
+    sprintf( port, ":%lu", portnumber );
 
     for (v = hostnames; *v; v++)
     {
@@ -220,7 +220,7 @@ LDAP * CDECL cldap_openA( char *hostname, ULONG portnumber )
     LDAP *ld;
     WCHAR *hostnameW = NULL;
 
-    TRACE( "(%s, %d)\n", debugstr_a(hostname), portnumber );
+    TRACE( "(%s, %lu)\n", debugstr_a(hostname), portnumber );
 
     if (hostname && !(hostnameW = strAtoW( hostname ))) return NULL;
 
@@ -256,7 +256,7 @@ LDAP * CDECL cldap_openW( WCHAR *hostname, ULONG portnumber )
     LDAP *ld = NULL;
     char *hostnameU, *url = NULL;
 
-    TRACE( "(%s, %d)\n", debugstr_w(hostname), portnumber );
+    TRACE( "(%s, %lu)\n", debugstr_w(hostname), portnumber );
 
     if (!(hostnameU = strWtoU( hostname ? hostname : L"localhost" ))) return NULL;
     if (!(url = urlify_hostnames( "cldap://", hostnameU, portnumber ))) goto exit;
@@ -305,7 +305,7 @@ LDAP *  CDECL ldap_initA( const PCHAR hostname, ULONG portnumber )
     LDAP *ld;
     WCHAR *hostnameW = NULL;
 
-    TRACE( "(%s, %d)\n", debugstr_a(hostname), portnumber );
+    TRACE( "(%s, %lu)\n", debugstr_a(hostname), portnumber );
 
     if (hostname && !(hostnameW = strAtoW( hostname ))) return NULL;
 
@@ -342,7 +342,7 @@ LDAP * CDECL ldap_initW( const PWCHAR hostname, ULONG portnumber )
     LDAP *ld = NULL;
     char *hostnameU, *url = NULL;
 
-    TRACE( "(%s, %d)\n", debugstr_w(hostname), portnumber );
+    TRACE( "(%s, %lu)\n", debugstr_w(hostname), portnumber );
 
     if (!(hostnameU = strWtoU( hostname ? hostname : L"localhost" ))) return NULL;
     if (!(url = urlify_hostnames( "ldap://", hostnameU, portnumber ))) goto exit;
@@ -365,7 +365,7 @@ LDAP * CDECL ldap_openA( char *hostname, ULONG portnumber )
     LDAP *ld;
     WCHAR *hostnameW = NULL;
 
-    TRACE( "(%s, %d)\n", debugstr_a(hostname), portnumber );
+    TRACE( "(%s, %lu)\n", debugstr_a(hostname), portnumber );
 
     if (hostname && !(hostnameW = strAtoW( hostname ))) return NULL;
 
@@ -401,7 +401,7 @@ LDAP * CDECL ldap_openW( WCHAR *hostname, ULONG portnumber )
     LDAP *ld = NULL;
     char *hostnameU, *url = NULL;
 
-    TRACE( "(%s, %d)\n", debugstr_w(hostname), portnumber );
+    TRACE( "(%s, %lu)\n", debugstr_w(hostname), portnumber );
 
     if (!(hostnameU = strWtoU( hostname ? hostname : L"localhost" ))) return NULL;
     if (!(url = urlify_hostnames( "ldap://", hostnameU, portnumber ))) goto exit;
@@ -424,7 +424,7 @@ LDAP * CDECL ldap_sslinitA( char *hostname, ULONG portnumber, int secure )
     LDAP *ld;
     WCHAR *hostnameW = NULL;
 
-    TRACE( "(%s, %d, 0x%08x)\n", debugstr_a(hostname), portnumber, secure );
+    TRACE( "(%s, %lu, %d)\n", debugstr_a(hostname), portnumber, secure );
 
     if (hostname && !(hostnameW = strAtoW( hostname ))) return NULL;
 
@@ -462,7 +462,7 @@ LDAP * CDECL ldap_sslinitW( WCHAR *hostname, ULONG portnumber, int secure )
     LDAP *ld = NULL;
     char *hostnameU, *url = NULL;
 
-    TRACE( "(%s, %d, 0x%08x)\n", debugstr_w(hostname), portnumber, secure );
+    TRACE( "(%s, %lu, %d)\n", debugstr_w(hostname), portnumber, secure );
 
     if (!(hostnameU = strWtoU( hostname ? hostname : L"localhost" ))) return NULL;
 

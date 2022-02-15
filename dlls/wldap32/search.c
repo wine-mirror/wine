@@ -40,7 +40,7 @@ ULONG CDECL ldap_searchA( LDAP *ld, char *base, ULONG scope, char *filter, char 
     ULONG ret = LDAP_NO_MEMORY;
     WCHAR *baseW = NULL, *filterW = NULL, **attrsW = NULL;
 
-    TRACE( "(%p, %s, 0x%08x, %s, %p, 0x%08x)\n", ld, debugstr_a(base), scope, debugstr_a(filter), attrs, attrsonly );
+    TRACE( "(%p, %s, %#lx, %s, %p, %#lx)\n", ld, debugstr_a(base), scope, debugstr_a(filter), attrs, attrsonly );
 
     if (!ld) return ~0u;
 
@@ -83,7 +83,7 @@ exit:
 ULONG CDECL ldap_searchW( LDAP *ld, WCHAR *base, ULONG scope, WCHAR *filter, WCHAR **attrs, ULONG attrsonly )
 {
     ULONG ret, msg;
-    TRACE( "(%p, %s, 0x%08x, %s, %p, 0x%08x)\n", ld, debugstr_w(base), scope, debugstr_w(filter), attrs, attrsonly );
+    TRACE( "(%p, %s, %#lx, %s, %p, %#lx)\n", ld, debugstr_w(base), scope, debugstr_w(filter), attrs, attrsonly );
 
     ret = ldap_search_extW( ld, base, scope, filter, attrs, attrsonly, NULL, NULL, 0, 0, &msg );
     if (ret == LDAP_SUCCESS) return msg;
@@ -102,7 +102,7 @@ ULONG CDECL ldap_search_extA( LDAP *ld, char *base, ULONG scope, char *filter, c
     WCHAR *baseW = NULL, *filterW = NULL, **attrsW = NULL;
     LDAPControlW **serverctrlsW = NULL, **clientctrlsW = NULL;
 
-    TRACE( "(%p, %s, 0x%08x, %s, %p, 0x%08x, %p, %p, 0x%08x, 0x%08x, %p)\n", ld, debugstr_a(base), scope,
+    TRACE( "(%p, %s, %#lx, %s, %p, %#lx, %p, %p, %#lx, %#lx, %p)\n", ld, debugstr_a(base), scope,
            debugstr_a(filter), attrs, attrsonly, serverctrls, clientctrls, timelimit, sizelimit, message );
 
     if (!ld) return LDAP_PARAM_ERROR;
@@ -162,7 +162,7 @@ ULONG CDECL ldap_search_extW( LDAP *ld, WCHAR *base, ULONG scope, WCHAR *filter,
     LDAPControlU **serverctrlsU = NULL, **clientctrlsU = NULL;
     struct timevalU timevalU;
 
-    TRACE( "(%p, %s, 0x%08x, %s, %p, 0x%08x, %p, %p, 0x%08x, 0x%08x, %p)\n", ld, debugstr_w(base), scope,
+    TRACE( "(%p, %s, %#lx, %s, %p, %#lx, %p, %p, %#lx, %#lx, %p)\n", ld, debugstr_w(base), scope,
            debugstr_w(filter), attrs, attrsonly, serverctrls, clientctrls, timelimit, sizelimit, message );
 
     if (!ld) return ~0u;
@@ -203,7 +203,7 @@ ULONG CDECL ldap_search_ext_sA( LDAP *ld, char *base, ULONG scope, char *filter,
     WCHAR *baseW = NULL, *filterW = NULL, **attrsW = NULL;
     LDAPControlW **serverctrlsW = NULL, **clientctrlsW = NULL;
 
-    TRACE( "(%p, %s, 0x%08x, %s, %p, 0x%08x, %p, %p, %p, 0x%08x, %p)\n", ld, debugstr_a(base), scope,
+    TRACE( "(%p, %s, %#lx, %s, %p, %#lx, %p, %p, %p, %#lx, %p)\n", ld, debugstr_a(base), scope,
            debugstr_a(filter), attrs, attrsonly, serverctrls, clientctrls, timeout, sizelimit, res );
 
     if (!ld || !res) return LDAP_PARAM_ERROR;
@@ -262,7 +262,7 @@ ULONG CDECL ldap_search_ext_sW( LDAP *ld, WCHAR *base, ULONG scope, WCHAR *filte
     struct timevalU timevalU;
     void *msgU = NULL;
 
-    TRACE( "(%p, %s, 0x%08x, %s, %p, 0x%08x, %p, %p, %p, 0x%08x, %p)\n", ld, debugstr_w(base), scope,
+    TRACE( "(%p, %s, %#lx, %s, %p, %#lx, %p, %p, %p, %#lx, %p)\n", ld, debugstr_w(base), scope,
            debugstr_w(filter), attrs, attrsonly, serverctrls, clientctrls, timeout, sizelimit, res );
 
     if (!ld || !res) return LDAP_PARAM_ERROR;
@@ -320,7 +320,7 @@ ULONG CDECL ldap_search_sA( LDAP *ld, char *base, ULONG scope, char *filter, cha
     ULONG ret = LDAP_NO_MEMORY;
     WCHAR *baseW = NULL, *filterW = NULL, **attrsW = NULL;
 
-    TRACE( "(%p, %s, 0x%08x, %s, %p, 0x%08x, %p)\n", ld, debugstr_a(base), scope, debugstr_a(filter), attrs,
+    TRACE( "(%p, %s, %#lx, %s, %p, %#lx, %p)\n", ld, debugstr_a(base), scope, debugstr_a(filter), attrs,
            attrsonly, res );
 
     if (!ld || !res) return LDAP_PARAM_ERROR;
@@ -363,7 +363,7 @@ exit:
 ULONG CDECL ldap_search_sW( LDAP *ld, WCHAR *base, ULONG scope, WCHAR *filter, WCHAR **attrs, ULONG attrsonly,
     LDAPMessage **res )
 {
-    TRACE( "(%p, %s, 0x%08x, %s, %p, 0x%08x, %p)\n", ld, debugstr_w(base), scope, debugstr_w(filter), attrs,
+    TRACE( "(%p, %s, %#lx, %s, %p, %#lx, %p)\n", ld, debugstr_w(base), scope, debugstr_w(filter), attrs,
            attrsonly, res );
     return ldap_search_ext_sW( ld, base, scope, filter, attrs, attrsonly, NULL, NULL, NULL, 0, res );
 }
@@ -379,7 +379,7 @@ ULONG CDECL ldap_search_stA( LDAP *ld, const PCHAR base, ULONG scope, const PCHA
     ULONG ret = LDAP_NO_MEMORY;
     WCHAR *baseW = NULL, *filterW = NULL, **attrsW = NULL;
 
-    TRACE( "(%p, %s, 0x%08x, %s, %p, 0x%08x, %p, %p)\n", ld, debugstr_a(base), scope, debugstr_a(filter), attrs,
+    TRACE( "(%p, %s, %#lx, %s, %p, %#lx, %p, %p)\n", ld, debugstr_a(base), scope, debugstr_a(filter), attrs,
            attrsonly, timeout, res );
 
     if (!ld || !res) return LDAP_PARAM_ERROR;
@@ -423,7 +423,7 @@ exit:
 ULONG CDECL ldap_search_stW( LDAP *ld, const PWCHAR base, ULONG scope, const PWCHAR filter, WCHAR **attrs,
     ULONG attrsonly, struct l_timeval *timeout, LDAPMessage **res )
 {
-    TRACE( "(%p, %s, 0x%08x, %s, %p, 0x%08x, %p, %p)\n", ld, debugstr_w(base), scope, debugstr_w(filter), attrs,
+    TRACE( "(%p, %s, %#lx, %s, %p, %#lx, %p, %p)\n", ld, debugstr_w(base), scope, debugstr_w(filter), attrs,
            attrsonly, timeout, res );
     return ldap_search_ext_sW( ld, base, scope, filter, attrs, attrsonly, NULL, NULL, timeout, 0, res );
 }

@@ -45,7 +45,7 @@ ULONG CDECL ldap_create_page_controlA( LDAP *ld, ULONG pagesize, struct berval *
     ULONG ret;
     LDAPControlW *controlW = NULL;
 
-    TRACE( "(%p, 0x%08x, %p, 0x%02x, %p)\n", ld, pagesize, cookie, critical, control );
+    TRACE( "(%p, %#lx, %p, 0x%02x, %p)\n", ld, pagesize, cookie, critical, control );
 
     if (!ld || !control || pagesize > INT_MAX) return LDAP_PARAM_ERROR;
 
@@ -129,7 +129,7 @@ static ULONG create_page_control( ULONG pagesize, struct berval *cookie, UCHAR c
 ULONG CDECL ldap_create_page_controlW( LDAP *ld, ULONG pagesize, struct berval *cookie, UCHAR critical,
     LDAPControlW **control )
 {
-    TRACE( "(%p, 0x%08x, %p, 0x%02x, %p)\n", ld, pagesize, cookie, critical, control );
+    TRACE( "(%p, %#lx, %p, 0x%02x, %p)\n", ld, pagesize, cookie, critical, control );
 
     if (!ld || !control || pagesize > INT_MAX) return LDAP_PARAM_ERROR;
     return create_page_control( pagesize, cookie, critical, control );
@@ -137,7 +137,7 @@ ULONG CDECL ldap_create_page_controlW( LDAP *ld, ULONG pagesize, struct berval *
 
 ULONG CDECL ldap_get_next_page( LDAP *ld, LDAPSearch *search, ULONG pagesize, ULONG *message )
 {
-    FIXME( "(%p, %p, 0x%08x, %p)\n", ld, search, pagesize, message );
+    FIXME( "(%p, %p, %#lx, %p)\n", ld, search, pagesize, message );
 
     if (!ld) return ~0u;
     return LDAP_NOT_SUPPORTED;
@@ -148,7 +148,7 @@ ULONG CDECL ldap_get_next_page_s( LDAP *ld, LDAPSearch *search, struct l_timeval
 {
     ULONG ret;
 
-    TRACE( "(%p, %p, %p, %u, %p, %p)\n", ld, search, timeout, pagesize, count, results );
+    TRACE( "(%p, %p, %p, %lu, %p, %p)\n", ld, search, timeout, pagesize, count, results );
 
     if (!ld || !search || !count || !results) return ~0u;
 
@@ -203,7 +203,8 @@ ULONG CDECL ldap_get_paged_count( LDAP *ld, LDAPSearch *search, ULONG *count, LD
 
     ret = ldap_parse_page_controlW( ld, server_ctrls, count, &search->cookie );
     if (ret == LDAP_SUCCESS)
-        TRACE("new search->cookie: %s, count %u\n", debugstr_an(search->cookie->bv_val, search->cookie->bv_len), *count);
+        TRACE( "new search->cookie: %s, count %lu\n",
+               debugstr_an(search->cookie->bv_val, search->cookie->bv_len), *count );
 
     ldap_controls_freeW( server_ctrls );
     return ret;
@@ -292,7 +293,7 @@ LDAPSearch * CDECL ldap_search_init_pageA( LDAP *ld, char *dn, ULONG scope, char
     ULONG attrsonly, LDAPControlA **serverctrls, LDAPControlA **clientctrls, ULONG timelimit, ULONG sizelimit,
     LDAPSortKeyA **sortkeys )
 {
-    FIXME( "(%p, %s, 0x%08x, %s, %p, 0x%08x, %p, %p, 0x%08x, 0x%08x, %p)\n", ld, debugstr_a(dn), scope,
+    FIXME( "(%p, %s, %#lx, %s, %p, %#lx, %p, %p, %#lx, %#lx, %p)\n", ld, debugstr_a(dn), scope,
            debugstr_a(filter), attrs, attrsonly, serverctrls, clientctrls, timelimit, sizelimit, sortkeys );
     return NULL;
 }
@@ -304,7 +305,7 @@ LDAPSearch * CDECL ldap_search_init_pageW( LDAP *ld, WCHAR *dn, ULONG scope, WCH
     LDAPSearch *search;
     DWORD i, len;
 
-    TRACE( "(%p, %s, 0x%08x, %s, %p, 0x%08x, %p, %p, 0x%08x, 0x%08x, %p)\n", ld, debugstr_w(dn), scope,
+    TRACE( "(%p, %s, %#lx, %s, %p, %#lx, %p, %p, %#lx, %#lx, %p)\n", ld, debugstr_w(dn), scope,
            debugstr_w(filter), attrs, attrsonly, serverctrls, clientctrls, timelimit, sizelimit, sortkeys );
 
     if (!(search = calloc( 1, sizeof(*search) )))

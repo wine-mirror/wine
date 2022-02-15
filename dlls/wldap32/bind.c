@@ -41,7 +41,7 @@ ULONG CDECL ldap_bindA( LDAP *ld, char *dn, char *cred, ULONG method )
     ULONG ret = LDAP_NO_MEMORY;
     WCHAR *dnW = NULL, *credW = NULL;
 
-    TRACE( "(%p, %s, %p, 0x%08x)\n", ld, debugstr_a(dn), cred, method );
+    TRACE( "(%p, %s, %p, %#lx)\n", ld, debugstr_a(dn), cred, method );
 
     if (!ld) return ~0u;
 
@@ -81,7 +81,7 @@ ULONG CDECL ldap_bindW( LDAP *ld, WCHAR *dn, WCHAR *cred, ULONG method )
     struct bervalU pwd = { 0, NULL };
     int msg;
 
-    TRACE( "(%p, %s, %p, 0x%08x)\n", ld, debugstr_w(dn), cred, method );
+    TRACE( "(%p, %s, %p, %#lx)\n", ld, debugstr_w(dn), cred, method );
 
     if (!ld) return ~0u;
     if (method != LDAP_AUTH_SIMPLE) return LDAP_PARAM_ERROR;
@@ -119,7 +119,7 @@ ULONG CDECL ldap_bind_sA( LDAP *ld, char *dn, char *cred, ULONG method )
     ULONG ret = LDAP_NO_MEMORY;
     WCHAR *dnW = NULL, *credW = NULL;
 
-    TRACE( "(%p, %s, %p, 0x%08x)\n", ld, debugstr_a(dn), cred, method );
+    TRACE( "(%p, %s, %p, %#lx)\n", ld, debugstr_a(dn), cred, method );
 
     if (!ld) return LDAP_PARAM_ERROR;
 
@@ -162,7 +162,7 @@ ULONG CDECL ldap_bind_sW( LDAP *ld, WCHAR *dn, WCHAR *cred, ULONG method )
     char *dnU = NULL, *credU = NULL;
     struct bervalU pwd = { 0, NULL };
 
-    TRACE( "(%p, %s, %p, 0x%08x)\n", ld, debugstr_w(dn), cred, method );
+    TRACE( "(%p, %s, %p, %#lx)\n", ld, debugstr_w(dn), cred, method );
 
     if (!ld) return LDAP_PARAM_ERROR;
 
@@ -224,7 +224,7 @@ ULONG CDECL ldap_bind_sW( LDAP *ld, WCHAR *dn, WCHAR *cred, ULONG method )
     }
     else
     {
-        FIXME( "method %#x not supported\n", method );
+        FIXME( "method %#lx not supported\n", method );
         return LDAP_PARAM_ERROR;
     }
 

@@ -45,7 +45,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
  */
 ULONG CDECL ldap_abandon( LDAP *ld, ULONG msgid )
 {
-    TRACE( "(%p, 0x%08x)\n", ld, msgid );
+    TRACE( "(%p, %#lx)\n", ld, msgid );
 
     if (!ld) return ~0u;
     else
@@ -223,7 +223,7 @@ ULONG CDECL ldap_escape_filter_elementA( char *src, ULONG srclen, char *dst, ULO
 {
     ULONG len = get_escape_size( src, srclen );
 
-    TRACE( "(%p, 0x%08x, %p, 0x%08x)\n", src, srclen, dst, dstlen );
+    TRACE( "(%p, %#lx, %p, %#lx)\n", src, srclen, dst, dstlen );
 
     if (!dst) return len;
     if (!src || dstlen < len) return LDAP_PARAM_ERROR;
@@ -251,7 +251,7 @@ ULONG CDECL ldap_escape_filter_elementW( char *src, ULONG srclen, WCHAR *dst, UL
 {
     ULONG len = get_escape_size( src, srclen );
 
-    TRACE( "(%p, 0x%08x, %p, 0x%08x)\n", src, srclen, dst, dstlen );
+    TRACE( "(%p, %#lx, %p, %#lx)\n", src, srclen, dst, dstlen );
 
     if (!dst) return len;
 
@@ -629,7 +629,7 @@ ULONG CDECL ldap_result( LDAP *ld, ULONG msgid, ULONG all, struct l_timeval *tim
     void *msgU = NULL;
     ULONG ret = ~0u;
 
-    TRACE( "(%p, 0x%08x, 0x%08x, %p, %p)\n", ld, msgid, all, timeout, res );
+    TRACE( "(%p, %#lx, %#lx, %p, %p)\n", ld, msgid, all, timeout, res );
 
     if (ld && res && msgid != ~0u)
     {

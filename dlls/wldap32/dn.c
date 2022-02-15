@@ -96,7 +96,7 @@ char ** CDECL ldap_explode_dnA( char *dn, ULONG notypes )
     char **ret;
     WCHAR *dnW, **retW;
 
-    TRACE( "(%s, 0x%08x)\n", debugstr_a(dn), notypes );
+    TRACE( "(%s, %#lx)\n", debugstr_a(dn), notypes );
 
     if (!(dnW = strAtoW( dn ))) return NULL;
 
@@ -130,7 +130,7 @@ WCHAR ** CDECL ldap_explode_dnW( WCHAR *dn, ULONG notypes )
     WCHAR **ret = NULL;
     char *dnU, **retU;
 
-    TRACE( "(%s, 0x%08x)\n", debugstr_w(dn), notypes );
+    TRACE( "(%s, %#lx)\n", debugstr_w(dn), notypes );
 
     if ((dnU = strWtoU( dn )))
     {

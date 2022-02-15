@@ -41,7 +41,7 @@ static void test_ber_printf(void)
 
     ret = ber_flatten( ber, &bv );
     ok( !ret, "got %d\n", ret );
-    todo_wine ok( bv->bv_len == 12, "got %d\n", bv->bv_len );
+    todo_wine ok( bv->bv_len == 12, "got %ld\n", bv->bv_len );
     if (bv->bv_len == 12) ok( !memcmp( bv->bv_val, "0\x84\x00\x00\x00\x06\x02\x04\xff\xff\xff\xff", 12 ), "got %s\n",
                               wine_dbgstr_an(bv->bv_val, 12) );
     ber_bvfree( bv );
