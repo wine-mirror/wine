@@ -25,7 +25,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "ntuser.h"
+#include "../win32u/ntuser_private.h"
 #include "winreg.h"
 #include "winternl.h"
 #include "hidusage.h"
@@ -108,13 +108,6 @@ extern void (WINAPI *imm_unregister_window)(HWND) DECLSPEC_HIDDEN;
 #define WM_IME_INTERNAL 0x287
 #define IME_INTERNAL_ACTIVATE 0x17
 #define IME_INTERNAL_DEACTIVATE 0x18
-
-struct user_key_state_info
-{
-    UINT                          time;                   /* Time of last key state refresh */
-    INT                           counter;                /* Counter to invalidate the key state */
-    BYTE                          state[256];             /* State for each key */
-};
 
 struct hook_extra_info
 {

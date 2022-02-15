@@ -28,6 +28,7 @@
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "ntgdi_private.h"
+#include "ntuser_private.h"
 #include "devpropdef.h"
 #include "wine/wingdi16.h"
 #include "wine/server.h"

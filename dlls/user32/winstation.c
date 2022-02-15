@@ -310,25 +310,6 @@ HDESK WINAPI OpenDesktopW( LPCWSTR name, DWORD flags, BOOL inherit, ACCESS_MASK 
 
 
 /******************************************************************************
- *              SetThreadDesktop   (USER32.@)
- */
-BOOL WINAPI SetThreadDesktop( HDESK handle )
-{
-    BOOL ret = NtUserSetThreadDesktop( handle );
-
-    if (ret)  /* reset the desktop windows */
-    {
-        struct user_thread_info *thread_info = get_user_thread_info();
-        struct user_key_state_info *key_state_info = thread_info->key_state;
-        thread_info->top_window = 0;
-        thread_info->msg_window = 0;
-        if (key_state_info) key_state_info->time = 0;
-    }
-    return ret;
-}
-
-
-/******************************************************************************
  *              EnumDesktopsA   (USER32.@)
  */
 BOOL WINAPI EnumDesktopsA( HWINSTA winsta, DESKTOPENUMPROCA func, LPARAM lparam )

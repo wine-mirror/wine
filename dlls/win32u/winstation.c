@@ -30,6 +30,7 @@
 #include "ntuser.h"
 #include "ddk/wdm.h"
 #include "ntgdi_private.h"
+#include "ntuser_private.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 
@@ -233,7 +234,14 @@ BOOL WINAPI NtUserSetThreadDesktop( HDESK handle )
     }
     SERVER_END_REQ;
 
-    /* FIXME: reset uset thread info */
+    if (ret)  /* reset the desktop windows */
+    {
+        struct user_thread_info *thread_info = get_user_thread_info();
+        struct user_key_state_info *key_state_info = thread_info->key_state;
+        thread_info->top_window = 0;
+        thread_info->msg_window = 0;
+        if (key_state_info) key_state_info->time = 0;
+    }
     return ret;
 }
 

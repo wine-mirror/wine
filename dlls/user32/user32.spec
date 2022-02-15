@@ -709,7 +709,7 @@
 @ stdcall SetSystemMenu(long long)
 @ stdcall SetSystemTimer(long long long ptr)
 @ stdcall SetTaskmanWindow (long)
-@ stdcall SetThreadDesktop(long)
+@ stdcall SetThreadDesktop(long) NtUserSetThreadDesktop
 @ stdcall SetThreadDpiAwarenessContext(ptr)
 @ stdcall SetTimer(long long long ptr)
 @ stdcall SetUserObjectInformationA(long long ptr long)
