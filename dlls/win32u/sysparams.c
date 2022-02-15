@@ -4488,6 +4488,8 @@ static void thread_detach(void)
 {
     struct user_thread_info *thread_info = get_user_thread_info();
 
+    user_driver->pThreadDetach();
+
     free( thread_info->key_state );
     thread_info->key_state = 0;
 }

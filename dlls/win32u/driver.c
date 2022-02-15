@@ -1070,6 +1070,8 @@ static const struct user_driver_funcs lazy_load_driver =
     .pSystemParametersInfo = nulldrv_SystemParametersInfo,
     /* vulkan support */
     .pwine_get_vulkan_driver = loaderdrv_wine_get_vulkan_driver,
+    /* thread management */
+    .pThreadDetach = nulldrv_ThreadDetach,
 };
 
 const struct user_driver_funcs *user_driver = &lazy_load_driver;

@@ -254,7 +254,6 @@ static void thread_detach(void)
     exiting_thread_id = GetCurrentThreadId();
 
     WDML_NotifyThreadDetach();
-    USER_Driver->pThreadDetach();
 
     NtUserCallNoParam( NtUserThreadDetach );
     destroy_thread_windows();
