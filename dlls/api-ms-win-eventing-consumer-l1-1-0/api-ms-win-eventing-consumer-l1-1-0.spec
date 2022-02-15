@@ -1,3 +1,3 @@
-@ stdcall CloseTrace(int64) advapi32.CloseTrace
-@ stdcall -ret64 OpenTraceW(ptr) advapi32.OpenTraceW
-@ stdcall ProcessTrace(ptr long ptr ptr) advapi32.ProcessTrace
+@ stdcall CloseTrace(int64) sechost.CloseTrace
+@ stdcall -ret64 OpenTraceW(ptr) sechost.OpenTraceW
+@ stdcall ProcessTrace(ptr long ptr ptr) sechost.ProcessTrace

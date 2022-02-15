@@ -1,22 +1,22 @@
-@ stdcall LsaAddAccountRights(ptr ptr ptr long) advapi32.LsaAddAccountRights
-@ stdcall LsaClose(ptr) advapi32.LsaClose
+@ stdcall LsaAddAccountRights(ptr ptr ptr long) sechost.LsaAddAccountRights
+@ stdcall LsaClose(ptr) sechost.LsaClose
 @ stub LsaCreateSecret
-@ stdcall LsaEnumerateAccountRights(ptr ptr ptr ptr) advapi32.LsaEnumerateAccountRights
-@ stdcall LsaEnumerateAccountsWithUserRight(ptr ptr ptr ptr) advapi32.LsaEnumerateAccountsWithUserRight
-@ stdcall LsaFreeMemory(ptr) advapi32.LsaFreeMemory
+@ stdcall LsaEnumerateAccountRights(ptr ptr ptr ptr) sechost.LsaEnumerateAccountRights
+@ stdcall LsaEnumerateAccountsWithUserRight(ptr ptr ptr ptr) sechost.LsaEnumerateAccountsWithUserRight
+@ stdcall LsaFreeMemory(ptr) sechost.LsaFreeMemory
 @ stub LsaICLookupNames
 @ stub LsaICLookupNamesWithCreds
 @ stub LsaICLookupSids
 @ stub LsaICLookupSidsWithCreds
-@ stdcall LsaLookupNames2(ptr long long ptr ptr ptr) advapi32.LsaLookupNames2
-@ stdcall LsaLookupSids(ptr long ptr ptr ptr) advapi32.LsaLookupSids
+@ stdcall LsaLookupNames2(ptr long long ptr ptr ptr) sechost.LsaLookupNames2
+@ stdcall LsaLookupSids(ptr long ptr ptr ptr) sechost.LsaLookupSids
 @ stub LsaLookupSids2
-@ stdcall LsaOpenPolicy(long ptr long long) advapi32.LsaOpenPolicy
+@ stdcall LsaOpenPolicy(long ptr long long) sechost.LsaOpenPolicy
 @ stub LsaOpenSecret
-@ stdcall LsaQueryInformationPolicy(ptr long ptr) advapi32.LsaQueryInformationPolicy
+@ stdcall LsaQueryInformationPolicy(ptr long ptr) sechost.LsaQueryInformationPolicy
 @ stub LsaQuerySecret
-@ stdcall LsaRemoveAccountRights(ptr ptr long ptr long) advapi32.LsaRemoveAccountRights
-@ stdcall LsaRetrievePrivateData(ptr ptr ptr) advapi32.LsaRetrievePrivateData
-@ stdcall LsaSetInformationPolicy(long long ptr) advapi32.LsaSetInformationPolicy
-@ stdcall LsaSetSecret(ptr ptr ptr) advapi32.LsaSetSecret
-@ stdcall LsaStorePrivateData(ptr ptr ptr) advapi32.LsaStorePrivateData
+@ stdcall LsaRemoveAccountRights(ptr ptr long ptr long) sechost.LsaRemoveAccountRights
+@ stdcall LsaRetrievePrivateData(ptr ptr ptr) sechost.LsaRetrievePrivateData
+@ stdcall LsaSetInformationPolicy(long long ptr) sechost.LsaSetInformationPolicy
+@ stdcall LsaSetSecret(ptr ptr ptr) sechost.LsaSetSecret
+@ stdcall LsaStorePrivateData(ptr ptr ptr) sechost.LsaStorePrivateData

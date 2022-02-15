@@ -1,4 +1,4 @@
-@ stdcall ConvertSecurityDescriptorToStringSecurityDescriptorW(ptr long long ptr ptr) advapi32.ConvertSecurityDescriptorToStringSecurityDescriptorW
-@ stdcall ConvertSidToStringSidW(ptr ptr) advapi32.ConvertSidToStringSidW
-@ stdcall ConvertStringSecurityDescriptorToSecurityDescriptorW(wstr long ptr ptr) advapi32.ConvertStringSecurityDescriptorToSecurityDescriptorW
-@ stdcall ConvertStringSidToSidW(wstr ptr) advapi32.ConvertStringSidToSidW
+@ stdcall ConvertSecurityDescriptorToStringSecurityDescriptorW(ptr long long ptr ptr) sechost.ConvertSecurityDescriptorToStringSecurityDescriptorW
+@ stdcall ConvertSidToStringSidW(ptr ptr) sechost.ConvertSidToStringSidW
+@ stdcall ConvertStringSecurityDescriptorToSecurityDescriptorW(wstr long ptr ptr) sechost.ConvertStringSecurityDescriptorToSecurityDescriptorW
+@ stdcall ConvertStringSidToSidW(wstr ptr) sechost.ConvertStringSidToSidW
