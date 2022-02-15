@@ -1,1 +1,1 @@
-@ stdcall RegisterWaitForSingleObjectEx(long ptr ptr long long) kernel32.RegisterWaitForSingleObjectEx
+@ stdcall RegisterWaitForSingleObjectEx(long ptr ptr long long) kernelbase.RegisterWaitForSingleObjectEx

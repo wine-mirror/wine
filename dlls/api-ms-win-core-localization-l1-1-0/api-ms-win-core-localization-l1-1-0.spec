@@ -1,47 +1,47 @@
-@ stdcall ConvertDefaultLocale(long) kernel32.ConvertDefaultLocale
-@ stdcall FindNLSString(long long wstr long wstr long ptr) kernel32.FindNLSString
-@ stdcall FindNLSStringEx(wstr long wstr long wstr long ptr ptr ptr long) kernel32.FindNLSStringEx
-@ stdcall GetACP() kernel32.GetACP
+@ stdcall ConvertDefaultLocale(long) kernelbase.ConvertDefaultLocale
+@ stdcall FindNLSString(long long wstr long wstr long ptr) kernelbase.FindNLSString
+@ stdcall FindNLSStringEx(wstr long wstr long wstr long ptr ptr ptr long) kernelbase.FindNLSStringEx
+@ stdcall GetACP() kernelbase.GetACP
 @ stub GetCPFileNameFromRegistry
-@ stdcall GetCPInfo(long ptr) kernel32.GetCPInfo
-@ stdcall GetCPInfoExW(long long ptr) kernel32.GetCPInfoExW
-@ stdcall GetCalendarInfoEx(wstr long ptr long ptr long ptr) kernel32.GetCalendarInfoEx
-@ stdcall GetCalendarInfoW(long long long ptr long ptr) kernel32.GetCalendarInfoW
-@ stdcall GetFileMUIInfo(long wstr ptr ptr) kernel32.GetFileMUIInfo
-@ stdcall GetFileMUIPath(long wstr wstr ptr ptr ptr ptr) kernel32.GetFileMUIPath
-@ stdcall GetLocaleInfoEx(wstr long ptr long) kernel32.GetLocaleInfoEx
-@ stdcall GetLocaleInfoW(long long ptr long) kernel32.GetLocaleInfoW
-@ stdcall GetNLSVersion(long long ptr) kernel32.GetNLSVersion
-@ stdcall GetNLSVersionEx(long wstr ptr) kernel32.GetNLSVersionEx
-@ stdcall GetOEMCP() kernel32.GetOEMCP
-@ stdcall GetProcessPreferredUILanguages(long ptr ptr ptr) kernel32.GetProcessPreferredUILanguages
-@ stdcall GetSystemDefaultLCID() kernel32.GetSystemDefaultLCID
-@ stdcall GetSystemDefaultLangID() kernel32.GetSystemDefaultLangID
-@ stdcall GetSystemPreferredUILanguages(long ptr ptr ptr) kernel32.GetSystemPreferredUILanguages
-@ stdcall GetThreadLocale() kernel32.GetThreadLocale
-@ stdcall GetThreadPreferredUILanguages(long ptr ptr ptr) kernel32.GetThreadPreferredUILanguages
-@ stdcall GetThreadUILanguage() kernel32.GetThreadUILanguage
+@ stdcall GetCPInfo(long ptr) kernelbase.GetCPInfo
+@ stdcall GetCPInfoExW(long long ptr) kernelbase.GetCPInfoExW
+@ stdcall GetCalendarInfoEx(wstr long ptr long ptr long ptr) kernelbase.GetCalendarInfoEx
+@ stdcall GetCalendarInfoW(long long long ptr long ptr) kernelbase.GetCalendarInfoW
+@ stdcall GetFileMUIInfo(long wstr ptr ptr) kernelbase.GetFileMUIInfo
+@ stdcall GetFileMUIPath(long wstr wstr ptr ptr ptr ptr) kernelbase.GetFileMUIPath
+@ stdcall GetLocaleInfoEx(wstr long ptr long) kernelbase.GetLocaleInfoEx
+@ stdcall GetLocaleInfoW(long long ptr long) kernelbase.GetLocaleInfoW
+@ stdcall GetNLSVersion(long long ptr) kernelbase.GetNLSVersion
+@ stdcall GetNLSVersionEx(long wstr ptr) kernelbase.GetNLSVersionEx
+@ stdcall GetOEMCP() kernelbase.GetOEMCP
+@ stdcall GetProcessPreferredUILanguages(long ptr ptr ptr) kernelbase.GetProcessPreferredUILanguages
+@ stdcall GetSystemDefaultLCID() kernelbase.GetSystemDefaultLCID
+@ stdcall GetSystemDefaultLangID() kernelbase.GetSystemDefaultLangID
+@ stdcall GetSystemPreferredUILanguages(long ptr ptr ptr) kernelbase.GetSystemPreferredUILanguages
+@ stdcall GetThreadLocale() kernelbase.GetThreadLocale
+@ stdcall GetThreadPreferredUILanguages(long ptr ptr ptr) kernelbase.GetThreadPreferredUILanguages
+@ stdcall GetThreadUILanguage() kernelbase.GetThreadUILanguage
 @ stub GetUILanguageInfo
-@ stdcall GetUserDefaultLCID() kernel32.GetUserDefaultLCID
-@ stdcall GetUserDefaultLangID() kernel32.GetUserDefaultLangID
-@ stdcall GetUserPreferredUILanguages(long ptr ptr ptr) kernel32.GetUserPreferredUILanguages
+@ stdcall GetUserDefaultLCID() kernelbase.GetUserDefaultLCID
+@ stdcall GetUserDefaultLangID() kernelbase.GetUserDefaultLangID
+@ stdcall GetUserPreferredUILanguages(long ptr ptr ptr) kernelbase.GetUserPreferredUILanguages
 @ stub IsNLSDefinedString
-@ stdcall IsValidCodePage(long) kernel32.IsValidCodePage
-@ stdcall IsValidLanguageGroup(long long) kernel32.IsValidLanguageGroup
-@ stdcall IsValidLocale(long long) kernel32.IsValidLocale
-@ stdcall IsValidLocaleName(wstr) kernel32.IsValidLocaleName
-@ stdcall LCMapStringEx(wstr long wstr long ptr long ptr ptr long) kernel32.LCMapStringEx
-@ stdcall LCMapStringW(long long wstr long ptr long) kernel32.LCMapStringW
-@ stdcall LocaleNameToLCID(wstr long) kernel32.LocaleNameToLCID
+@ stdcall IsValidCodePage(long) kernelbase.IsValidCodePage
+@ stdcall IsValidLanguageGroup(long long) kernelbase.IsValidLanguageGroup
+@ stdcall IsValidLocale(long long) kernelbase.IsValidLocale
+@ stdcall IsValidLocaleName(wstr) kernelbase.IsValidLocaleName
+@ stdcall LCMapStringEx(wstr long wstr long ptr long ptr ptr long) kernelbase.LCMapStringEx
+@ stdcall LCMapStringW(long long wstr long ptr long) kernelbase.LCMapStringW
+@ stdcall LocaleNameToLCID(wstr long) kernelbase.LocaleNameToLCID
 @ stub NlsCheckPolicy
 @ stub NlsEventDataDescCreate
 @ stub NlsGetCacheUpdateCount
 @ stub NlsUpdateLocale
 @ stub NlsUpdateSystemLocale
 @ stub NlsWriteEtwEvent
-@ stdcall ResolveLocaleName(wstr ptr long) kernel32.ResolveLocaleName
-@ stdcall SetCalendarInfoW(long long long wstr) kernel32.SetCalendarInfoW
-@ stdcall SetLocaleInfoW(long long wstr) kernel32.SetLocaleInfoW
-@ stdcall SetThreadLocale(long) kernel32.SetThreadLocale
-@ stdcall VerLanguageNameA(long str long) kernel32.VerLanguageNameA
-@ stdcall VerLanguageNameW(long wstr long) kernel32.VerLanguageNameW
+@ stdcall ResolveLocaleName(wstr ptr long) kernelbase.ResolveLocaleName
+@ stdcall SetCalendarInfoW(long long long wstr) kernelbase.SetCalendarInfoW
+@ stdcall SetLocaleInfoW(long long wstr) kernelbase.SetLocaleInfoW
+@ stdcall SetThreadLocale(long) kernelbase.SetThreadLocale
+@ stdcall VerLanguageNameA(long str long) kernelbase.VerLanguageNameA
+@ stdcall VerLanguageNameW(long wstr long) kernelbase.VerLanguageNameW

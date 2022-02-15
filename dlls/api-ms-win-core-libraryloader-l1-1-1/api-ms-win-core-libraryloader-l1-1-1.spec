@@ -1,30 +1,30 @@
-@ stdcall AddDllDirectory(wstr) kernel32.AddDllDirectory
-@ stdcall DisableThreadLibraryCalls(long) kernel32.DisableThreadLibraryCalls
-@ stdcall EnumResourceLanguagesExA(long str str ptr long long long) kernel32.EnumResourceLanguagesExA
-@ stdcall EnumResourceLanguagesExW(long wstr wstr ptr long long long) kernel32.EnumResourceLanguagesExW
-@ stdcall EnumResourceNamesExA(long str ptr long long long) kernel32.EnumResourceNamesExA
-@ stdcall EnumResourceNamesExW(long wstr ptr long long long) kernel32.EnumResourceNamesExW
-@ stdcall EnumResourceTypesExA(long ptr long long long) kernel32.EnumResourceTypesExA
-@ stdcall EnumResourceTypesExW(long ptr long long long) kernel32.EnumResourceTypesExW
-@ stdcall FindResourceExW(long wstr wstr long) kernel32.FindResourceExW
-@ stdcall FindStringOrdinal(long wstr long wstr long long) kernel32.FindStringOrdinal
-@ stdcall FreeLibrary(long) kernel32.FreeLibrary
-@ stdcall FreeLibraryAndExitThread(long long) kernel32.FreeLibraryAndExitThread
-@ stdcall FreeResource(long) kernel32.FreeResource
-@ stdcall GetModuleFileNameA(long ptr long) kernel32.GetModuleFileNameA
-@ stdcall GetModuleFileNameW(long ptr long) kernel32.GetModuleFileNameW
-@ stdcall GetModuleHandleA(str) kernel32.GetModuleHandleA
-@ stdcall GetModuleHandleExA(long ptr ptr) kernel32.GetModuleHandleExA
-@ stdcall GetModuleHandleExW(long ptr ptr) kernel32.GetModuleHandleExW
-@ stdcall GetModuleHandleW(wstr) kernel32.GetModuleHandleW
-@ stdcall GetProcAddress(long str) kernel32.GetProcAddress
-@ stdcall LoadLibraryExA( str long long) kernel32.LoadLibraryExA
-@ stdcall LoadLibraryExW(wstr long long) kernel32.LoadLibraryExW
-@ stdcall LoadResource(long long) kernel32.LoadResource
-@ stdcall LoadStringA(long long ptr long) user32.LoadStringA
-@ stdcall LoadStringW(long long ptr long) user32.LoadStringW
-@ stdcall LockResource(long) kernel32.LockResource
+@ stdcall AddDllDirectory(wstr) kernelbase.AddDllDirectory
+@ stdcall DisableThreadLibraryCalls(long) kernelbase.DisableThreadLibraryCalls
+@ stdcall EnumResourceLanguagesExA(long str str ptr long long long) kernelbase.EnumResourceLanguagesExA
+@ stdcall EnumResourceLanguagesExW(long wstr wstr ptr long long long) kernelbase.EnumResourceLanguagesExW
+@ stdcall EnumResourceNamesExA(long str ptr long long long) kernelbase.EnumResourceNamesExA
+@ stdcall EnumResourceNamesExW(long wstr ptr long long long) kernelbase.EnumResourceNamesExW
+@ stdcall EnumResourceTypesExA(long ptr long long long) kernelbase.EnumResourceTypesExA
+@ stdcall EnumResourceTypesExW(long ptr long long long) kernelbase.EnumResourceTypesExW
+@ stdcall FindResourceExW(long wstr wstr long) kernelbase.FindResourceExW
+@ stdcall FindStringOrdinal(long wstr long wstr long long) kernelbase.FindStringOrdinal
+@ stdcall FreeLibrary(long) kernelbase.FreeLibrary
+@ stdcall FreeLibraryAndExitThread(long long) kernelbase.FreeLibraryAndExitThread
+@ stdcall FreeResource(long) kernelbase.FreeResource
+@ stdcall GetModuleFileNameA(long ptr long) kernelbase.GetModuleFileNameA
+@ stdcall GetModuleFileNameW(long ptr long) kernelbase.GetModuleFileNameW
+@ stdcall GetModuleHandleA(str) kernelbase.GetModuleHandleA
+@ stdcall GetModuleHandleExA(long ptr ptr) kernelbase.GetModuleHandleExA
+@ stdcall GetModuleHandleExW(long ptr ptr) kernelbase.GetModuleHandleExW
+@ stdcall GetModuleHandleW(wstr) kernelbase.GetModuleHandleW
+@ stdcall GetProcAddress(long str) kernelbase.GetProcAddress
+@ stdcall LoadLibraryExA( str long long) kernelbase.LoadLibraryExA
+@ stdcall LoadLibraryExW(wstr long long) kernelbase.LoadLibraryExW
+@ stdcall LoadResource(long long) kernelbase.LoadResource
+@ stdcall LoadStringA(long long ptr long) kernelbase.LoadStringA
+@ stdcall LoadStringW(long long ptr long) kernelbase.LoadStringW
+@ stdcall LockResource(long) kernelbase.LockResource
 @ stub QueryOptionalDelayLoadedAPI
-@ stdcall RemoveDllDirectory(ptr) kernel32.RemoveDllDirectory
-@ stdcall SetDefaultDllDirectories(long) kernel32.SetDefaultDllDirectories
-@ stdcall SizeofResource(long long) kernel32.SizeofResource
+@ stdcall RemoveDllDirectory(ptr) kernelbase.RemoveDllDirectory
+@ stdcall SetDefaultDllDirectories(long) kernelbase.SetDefaultDllDirectories
+@ stdcall SizeofResource(long long) kernelbase.SizeofResource

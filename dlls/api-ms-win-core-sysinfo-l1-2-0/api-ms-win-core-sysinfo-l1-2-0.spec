@@ -1,31 +1,31 @@
-@ stdcall EnumSystemFirmwareTables(long ptr long) kernel32.EnumSystemFirmwareTables
-@ stdcall GetComputerNameExA(long ptr ptr) kernel32.GetComputerNameExA
-@ stdcall GetComputerNameExW(long ptr ptr) kernel32.GetComputerNameExW
-@ stdcall GetLocalTime(ptr) kernel32.GetLocalTime
-@ stdcall GetLogicalProcessorInformation(ptr ptr) kernel32.GetLogicalProcessorInformation
-@ stdcall GetLogicalProcessorInformationEx(long ptr ptr) kernel32.GetLogicalProcessorInformationEx
-@ stdcall GetNativeSystemInfo(ptr) kernel32.GetNativeSystemInfo
+@ stdcall EnumSystemFirmwareTables(long ptr long) kernelbase.EnumSystemFirmwareTables
+@ stdcall GetComputerNameExA(long ptr ptr) kernelbase.GetComputerNameExA
+@ stdcall GetComputerNameExW(long ptr ptr) kernelbase.GetComputerNameExW
+@ stdcall GetLocalTime(ptr) kernelbase.GetLocalTime
+@ stdcall GetLogicalProcessorInformation(ptr ptr) kernelbase.GetLogicalProcessorInformation
+@ stdcall GetLogicalProcessorInformationEx(long ptr ptr) kernelbase.GetLogicalProcessorInformationEx
+@ stdcall GetNativeSystemInfo(ptr) kernelbase.GetNativeSystemInfo
 @ stub GetOsSafeBootMode
-@ stdcall GetProductInfo(long long long long ptr) kernel32.GetProductInfo
-@ stdcall GetSystemDirectoryA(ptr long) kernel32.GetSystemDirectoryA
-@ stdcall GetSystemDirectoryW(ptr long) kernel32.GetSystemDirectoryW
-@ stdcall GetSystemFirmwareTable(long long ptr long) kernel32.GetSystemFirmwareTable
-@ stdcall GetSystemInfo(ptr) kernel32.GetSystemInfo
-@ stdcall GetSystemTime(ptr) kernel32.GetSystemTime
-@ stdcall GetSystemTimeAdjustment(ptr ptr ptr) kernel32.GetSystemTimeAdjustment
-@ stdcall GetSystemTimeAsFileTime(ptr) kernel32.GetSystemTimeAsFileTime
-@ stdcall GetSystemTimePreciseAsFileTime(ptr) kernel32.GetSystemTimePreciseAsFileTime
-@ stdcall GetSystemWindowsDirectoryA(ptr long) kernel32.GetSystemWindowsDirectoryA
-@ stdcall GetSystemWindowsDirectoryW(ptr long) kernel32.GetSystemWindowsDirectoryW
-@ stdcall GetTickCount() kernel32.GetTickCount
-@ stdcall -ret64 GetTickCount64() kernel32.GetTickCount64
-@ stdcall GetVersion() kernel32.GetVersion
-@ stdcall GetVersionExA(ptr) kernel32.GetVersionExA
-@ stdcall GetVersionExW(ptr) kernel32.GetVersionExW
-@ stdcall GetWindowsDirectoryA(ptr long) kernel32.GetWindowsDirectoryA
-@ stdcall GetWindowsDirectoryW(ptr long) kernel32.GetWindowsDirectoryW
-@ stdcall GlobalMemoryStatusEx(ptr) kernel32.GlobalMemoryStatusEx
-@ stdcall SetComputerNameExW(long wstr) kernel32.SetComputerNameExW
-@ stdcall SetLocalTime(ptr) kernel32.SetLocalTime
-@ stdcall SetSystemTime(ptr) kernel32.SetSystemTime
-@ stdcall -ret64 VerSetConditionMask(long long long long) kernel32.VerSetConditionMask
+@ stdcall GetProductInfo(long long long long ptr) kernelbase.GetProductInfo
+@ stdcall GetSystemDirectoryA(ptr long) kernelbase.GetSystemDirectoryA
+@ stdcall GetSystemDirectoryW(ptr long) kernelbase.GetSystemDirectoryW
+@ stdcall GetSystemFirmwareTable(long long ptr long) kernelbase.GetSystemFirmwareTable
+@ stdcall GetSystemInfo(ptr) kernelbase.GetSystemInfo
+@ stdcall GetSystemTime(ptr) kernelbase.GetSystemTime
+@ stdcall GetSystemTimeAdjustment(ptr ptr ptr) kernelbase.GetSystemTimeAdjustment
+@ stdcall GetSystemTimeAsFileTime(ptr) kernelbase.GetSystemTimeAsFileTime
+@ stdcall GetSystemTimePreciseAsFileTime(ptr) kernelbase.GetSystemTimePreciseAsFileTime
+@ stdcall GetSystemWindowsDirectoryA(ptr long) kernelbase.GetSystemWindowsDirectoryA
+@ stdcall GetSystemWindowsDirectoryW(ptr long) kernelbase.GetSystemWindowsDirectoryW
+@ stdcall GetTickCount() kernelbase.GetTickCount
+@ stdcall -ret64 GetTickCount64() kernelbase.GetTickCount64
+@ stdcall GetVersion() kernelbase.GetVersion
+@ stdcall GetVersionExA(ptr) kernelbase.GetVersionExA
+@ stdcall GetVersionExW(ptr) kernelbase.GetVersionExW
+@ stdcall GetWindowsDirectoryA(ptr long) kernelbase.GetWindowsDirectoryA
+@ stdcall GetWindowsDirectoryW(ptr long) kernelbase.GetWindowsDirectoryW
+@ stdcall GlobalMemoryStatusEx(ptr) kernelbase.GlobalMemoryStatusEx
+@ stdcall SetComputerNameExW(long wstr) kernelbase.SetComputerNameExW
+@ stdcall SetLocalTime(ptr) kernelbase.SetLocalTime
+@ stdcall SetSystemTime(ptr) kernelbase.SetSystemTime
+@ stdcall -ret64 VerSetConditionMask(long long long long) kernelbase.VerSetConditionMask

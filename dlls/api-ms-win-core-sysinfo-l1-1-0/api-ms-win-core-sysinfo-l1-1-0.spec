@@ -1,28 +1,28 @@
-@ stdcall GetComputerNameExA(long ptr ptr) kernel32.GetComputerNameExA
-@ stdcall GetComputerNameExW(long ptr ptr) kernel32.GetComputerNameExW
-@ stdcall GetDynamicTimeZoneInformation(ptr) kernel32.GetDynamicTimeZoneInformation
-@ stdcall GetLocalTime(ptr) kernel32.GetLocalTime
-@ stdcall GetLogicalProcessorInformation(ptr ptr) kernel32.GetLogicalProcessorInformation
-@ stdcall GetLogicalProcessorInformationEx(long ptr ptr) kernel32.GetLogicalProcessorInformationEx
-@ stdcall GetSystemDirectoryA(ptr long) kernel32.GetSystemDirectoryA
-@ stdcall GetSystemDirectoryW(ptr long) kernel32.GetSystemDirectoryW
-@ stdcall GetSystemInfo(ptr) kernel32.GetSystemInfo
-@ stdcall GetSystemTime(ptr) kernel32.GetSystemTime
-@ stdcall GetSystemTimeAdjustment(ptr ptr ptr) kernel32.GetSystemTimeAdjustment
-@ stdcall GetSystemTimeAsFileTime(ptr) kernel32.GetSystemTimeAsFileTime
-@ stdcall GetSystemWindowsDirectoryA(ptr long) kernel32.GetSystemWindowsDirectoryA
-@ stdcall GetSystemWindowsDirectoryW(ptr long) kernel32.GetSystemWindowsDirectoryW
-@ stdcall -ret64 GetTickCount64() kernel32.GetTickCount64
-@ stdcall GetTickCount() kernel32.GetTickCount
-@ stdcall GetTimeZoneInformation(ptr) kernel32.GetTimeZoneInformation
-@ stdcall GetTimeZoneInformationForYear(long ptr ptr) kernel32.GetTimeZoneInformationForYear
-@ stdcall GetVersion() kernel32.GetVersion
-@ stdcall GetVersionExA(ptr) kernel32.GetVersionExA
-@ stdcall GetVersionExW(ptr) kernel32.GetVersionExW
-@ stdcall GetWindowsDirectoryA(ptr long) kernel32.GetWindowsDirectoryA
-@ stdcall GetWindowsDirectoryW(ptr long) kernel32.GetWindowsDirectoryW
-@ stdcall GlobalMemoryStatusEx(ptr) kernel32.GlobalMemoryStatusEx
-@ stdcall SetLocalTime(ptr) kernel32.SetLocalTime
-@ stdcall SystemTimeToFileTime(ptr ptr) kernel32.SystemTimeToFileTime
-@ stdcall SystemTimeToTzSpecificLocalTime(ptr ptr ptr) kernel32.SystemTimeToTzSpecificLocalTime
-@ stdcall TzSpecificLocalTimeToSystemTime(ptr ptr ptr) kernel32.TzSpecificLocalTimeToSystemTime
+@ stdcall GetComputerNameExA(long ptr ptr) kernelbase.GetComputerNameExA
+@ stdcall GetComputerNameExW(long ptr ptr) kernelbase.GetComputerNameExW
+@ stdcall GetDynamicTimeZoneInformation(ptr) kernelbase.GetDynamicTimeZoneInformation
+@ stdcall GetLocalTime(ptr) kernelbase.GetLocalTime
+@ stdcall GetLogicalProcessorInformation(ptr ptr) kernelbase.GetLogicalProcessorInformation
+@ stdcall GetLogicalProcessorInformationEx(long ptr ptr) kernelbase.GetLogicalProcessorInformationEx
+@ stdcall GetSystemDirectoryA(ptr long) kernelbase.GetSystemDirectoryA
+@ stdcall GetSystemDirectoryW(ptr long) kernelbase.GetSystemDirectoryW
+@ stdcall GetSystemInfo(ptr) kernelbase.GetSystemInfo
+@ stdcall GetSystemTime(ptr) kernelbase.GetSystemTime
+@ stdcall GetSystemTimeAdjustment(ptr ptr ptr) kernelbase.GetSystemTimeAdjustment
+@ stdcall GetSystemTimeAsFileTime(ptr) kernelbase.GetSystemTimeAsFileTime
+@ stdcall GetSystemWindowsDirectoryA(ptr long) kernelbase.GetSystemWindowsDirectoryA
+@ stdcall GetSystemWindowsDirectoryW(ptr long) kernelbase.GetSystemWindowsDirectoryW
+@ stdcall -ret64 GetTickCount64() kernelbase.GetTickCount64
+@ stdcall GetTickCount() kernelbase.GetTickCount
+@ stdcall GetTimeZoneInformation(ptr) kernelbase.GetTimeZoneInformation
+@ stdcall GetTimeZoneInformationForYear(long ptr ptr) kernelbase.GetTimeZoneInformationForYear
+@ stdcall GetVersion() kernelbase.GetVersion
+@ stdcall GetVersionExA(ptr) kernelbase.GetVersionExA
+@ stdcall GetVersionExW(ptr) kernelbase.GetVersionExW
+@ stdcall GetWindowsDirectoryA(ptr long) kernelbase.GetWindowsDirectoryA
+@ stdcall GetWindowsDirectoryW(ptr long) kernelbase.GetWindowsDirectoryW
+@ stdcall GlobalMemoryStatusEx(ptr) kernelbase.GlobalMemoryStatusEx
+@ stdcall SetLocalTime(ptr) kernelbase.SetLocalTime
+@ stdcall SystemTimeToFileTime(ptr ptr) kernelbase.SystemTimeToFileTime
+@ stdcall SystemTimeToTzSpecificLocalTime(ptr ptr ptr) kernelbase.SystemTimeToTzSpecificLocalTime
+@ stdcall TzSpecificLocalTimeToSystemTime(ptr ptr ptr) kernelbase.TzSpecificLocalTimeToSystemTime

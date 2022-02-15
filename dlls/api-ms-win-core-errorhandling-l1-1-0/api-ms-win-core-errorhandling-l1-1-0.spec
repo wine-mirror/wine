@@ -1,7 +1,7 @@
-@ stdcall GetErrorMode() kernel32.GetErrorMode
-@ stdcall GetLastError() kernel32.GetLastError
-@ stdcall RaiseException(long long long ptr) kernel32.RaiseException
-@ stdcall SetErrorMode(long) kernel32.SetErrorMode
-@ stdcall SetLastError(long) kernel32.SetLastError
-@ stdcall SetUnhandledExceptionFilter(ptr) kernel32.SetUnhandledExceptionFilter
-@ stdcall UnhandledExceptionFilter(ptr) kernel32.UnhandledExceptionFilter
+@ stdcall GetErrorMode() kernelbase.GetErrorMode
+@ stdcall GetLastError() kernelbase.GetLastError
+@ stdcall RaiseException(long long long ptr) kernelbase.RaiseException
+@ stdcall SetErrorMode(long) kernelbase.SetErrorMode
+@ stdcall SetLastError(long) kernelbase.SetLastError
+@ stdcall SetUnhandledExceptionFilter(ptr) kernelbase.SetUnhandledExceptionFilter
+@ stdcall UnhandledExceptionFilter(ptr) kernelbase.UnhandledExceptionFilter

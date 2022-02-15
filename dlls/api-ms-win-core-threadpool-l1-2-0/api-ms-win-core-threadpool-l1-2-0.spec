@@ -1,37 +1,37 @@
-@ stdcall CallbackMayRunLong(ptr) kernel32.CallbackMayRunLong
-@ stdcall CancelThreadpoolIo(ptr) kernel32.CancelThreadpoolIo
-@ stdcall CloseThreadpool(ptr) kernel32.CloseThreadpool
-@ stdcall CloseThreadpoolCleanupGroup(ptr) kernel32.CloseThreadpoolCleanupGroup
-@ stdcall CloseThreadpoolCleanupGroupMembers(ptr long ptr) kernel32.CloseThreadpoolCleanupGroupMembers
-@ stdcall CloseThreadpoolIo(ptr) kernel32.CloseThreadpoolIo
-@ stdcall CloseThreadpoolTimer(ptr) kernel32.CloseThreadpoolTimer
-@ stdcall CloseThreadpoolWait(ptr) kernel32.CloseThreadpoolWait
-@ stdcall CloseThreadpoolWork(ptr) kernel32.CloseThreadpoolWork
-@ stdcall CreateThreadpool(ptr) kernel32.CreateThreadpool
-@ stdcall CreateThreadpoolCleanupGroup() kernel32.CreateThreadpoolCleanupGroup
-@ stdcall CreateThreadpoolIo(ptr ptr ptr ptr) kernel32.CreateThreadpoolIo
-@ stdcall CreateThreadpoolTimer(ptr ptr ptr) kernel32.CreateThreadpoolTimer
-@ stdcall CreateThreadpoolWait(ptr ptr ptr) kernel32.CreateThreadpoolWait
-@ stdcall CreateThreadpoolWork(ptr ptr ptr) kernel32.CreateThreadpoolWork
-@ stdcall DisassociateCurrentThreadFromCallback(ptr) kernel32.DisassociateCurrentThreadFromCallback
-@ stdcall FreeLibraryWhenCallbackReturns(ptr ptr) kernel32.FreeLibraryWhenCallbackReturns
-@ stdcall IsThreadpoolTimerSet(ptr) kernel32.IsThreadpoolTimerSet
-@ stdcall LeaveCriticalSectionWhenCallbackReturns(ptr ptr) kernel32.LeaveCriticalSectionWhenCallbackReturns
-@ stdcall QueryThreadpoolStackInformation(ptr ptr) kernel32.QueryThreadpoolStackInformation
-@ stdcall ReleaseMutexWhenCallbackReturns(ptr long) kernel32.ReleaseMutexWhenCallbackReturns
-@ stdcall ReleaseSemaphoreWhenCallbackReturns(ptr long long) kernel32.ReleaseSemaphoreWhenCallbackReturns
-@ stdcall SetEventWhenCallbackReturns(ptr long) kernel32.SetEventWhenCallbackReturns
-@ stdcall SetThreadpoolStackInformation(ptr ptr) kernel32.SetThreadpoolStackInformation
-@ stdcall SetThreadpoolThreadMaximum(ptr long) kernel32.SetThreadpoolThreadMaximum
-@ stdcall SetThreadpoolThreadMinimum(ptr long) kernel32.SetThreadpoolThreadMinimum
-@ stdcall SetThreadpoolTimer(ptr ptr long long) kernel32.SetThreadpoolTimer
+@ stdcall CallbackMayRunLong(ptr) kernelbase.CallbackMayRunLong
+@ stdcall CancelThreadpoolIo(ptr) kernelbase.CancelThreadpoolIo
+@ stdcall CloseThreadpool(ptr) kernelbase.CloseThreadpool
+@ stdcall CloseThreadpoolCleanupGroup(ptr) kernelbase.CloseThreadpoolCleanupGroup
+@ stdcall CloseThreadpoolCleanupGroupMembers(ptr long ptr) kernelbase.CloseThreadpoolCleanupGroupMembers
+@ stdcall CloseThreadpoolIo(ptr) kernelbase.CloseThreadpoolIo
+@ stdcall CloseThreadpoolTimer(ptr) kernelbase.CloseThreadpoolTimer
+@ stdcall CloseThreadpoolWait(ptr) kernelbase.CloseThreadpoolWait
+@ stdcall CloseThreadpoolWork(ptr) kernelbase.CloseThreadpoolWork
+@ stdcall CreateThreadpool(ptr) kernelbase.CreateThreadpool
+@ stdcall CreateThreadpoolCleanupGroup() kernelbase.CreateThreadpoolCleanupGroup
+@ stdcall CreateThreadpoolIo(ptr ptr ptr ptr) kernelbase.CreateThreadpoolIo
+@ stdcall CreateThreadpoolTimer(ptr ptr ptr) kernelbase.CreateThreadpoolTimer
+@ stdcall CreateThreadpoolWait(ptr ptr ptr) kernelbase.CreateThreadpoolWait
+@ stdcall CreateThreadpoolWork(ptr ptr ptr) kernelbase.CreateThreadpoolWork
+@ stdcall DisassociateCurrentThreadFromCallback(ptr) kernelbase.DisassociateCurrentThreadFromCallback
+@ stdcall FreeLibraryWhenCallbackReturns(ptr ptr) kernelbase.FreeLibraryWhenCallbackReturns
+@ stdcall IsThreadpoolTimerSet(ptr) kernelbase.IsThreadpoolTimerSet
+@ stdcall LeaveCriticalSectionWhenCallbackReturns(ptr ptr) kernelbase.LeaveCriticalSectionWhenCallbackReturns
+@ stdcall QueryThreadpoolStackInformation(ptr ptr) kernelbase.QueryThreadpoolStackInformation
+@ stdcall ReleaseMutexWhenCallbackReturns(ptr long) kernelbase.ReleaseMutexWhenCallbackReturns
+@ stdcall ReleaseSemaphoreWhenCallbackReturns(ptr long long) kernelbase.ReleaseSemaphoreWhenCallbackReturns
+@ stdcall SetEventWhenCallbackReturns(ptr long) kernelbase.SetEventWhenCallbackReturns
+@ stdcall SetThreadpoolStackInformation(ptr ptr) kernelbase.SetThreadpoolStackInformation
+@ stdcall SetThreadpoolThreadMaximum(ptr long) kernelbase.SetThreadpoolThreadMaximum
+@ stdcall SetThreadpoolThreadMinimum(ptr long) kernelbase.SetThreadpoolThreadMinimum
+@ stdcall SetThreadpoolTimer(ptr ptr long long) kernelbase.SetThreadpoolTimer
 @ stub SetThreadpoolTimerEx
-@ stdcall SetThreadpoolWait(ptr long ptr) kernel32.SetThreadpoolWait
+@ stdcall SetThreadpoolWait(ptr long ptr) kernelbase.SetThreadpoolWait
 @ stub SetThreadpoolWaitEx
-@ stdcall StartThreadpoolIo(ptr) kernel32.StartThreadpoolIo
-@ stdcall SubmitThreadpoolWork(ptr) kernel32.SubmitThreadpoolWork
-@ stdcall TrySubmitThreadpoolCallback(ptr ptr ptr) kernel32.TrySubmitThreadpoolCallback
-@ stdcall WaitForThreadpoolIoCallbacks(ptr) kernel32.WaitForThreadpoolIoCallbacks
-@ stdcall WaitForThreadpoolTimerCallbacks(ptr long) kernel32.WaitForThreadpoolTimerCallbacks
-@ stdcall WaitForThreadpoolWaitCallbacks(ptr long) kernel32.WaitForThreadpoolWaitCallbacks
-@ stdcall WaitForThreadpoolWorkCallbacks(ptr long) kernel32.WaitForThreadpoolWorkCallbacks
+@ stdcall StartThreadpoolIo(ptr) kernelbase.StartThreadpoolIo
+@ stdcall SubmitThreadpoolWork(ptr) kernelbase.SubmitThreadpoolWork
+@ stdcall TrySubmitThreadpoolCallback(ptr ptr ptr) kernelbase.TrySubmitThreadpoolCallback
+@ stdcall WaitForThreadpoolIoCallbacks(ptr) kernelbase.WaitForThreadpoolIoCallbacks
+@ stdcall WaitForThreadpoolTimerCallbacks(ptr long) kernelbase.WaitForThreadpoolTimerCallbacks
+@ stdcall WaitForThreadpoolWaitCallbacks(ptr long) kernelbase.WaitForThreadpoolWaitCallbacks
+@ stdcall WaitForThreadpoolWorkCallbacks(ptr long) kernelbase.WaitForThreadpoolWorkCallbacks

@@ -1,7 +1,7 @@
-@ stdcall GlobalAlloc(long long) kernel32.GlobalAlloc
-@ stdcall GlobalFree(long) kernel32.GlobalFree
-@ stdcall LocalAlloc(long long) kernel32.LocalAlloc
-@ stdcall LocalFree(long) kernel32.LocalFree
-@ stdcall LocalLock(long) kernel32.LocalLock
-@ stdcall LocalReAlloc(long long long) kernel32.LocalReAlloc
-@ stdcall LocalUnlock(long) kernel32.LocalUnlock
+@ stdcall GlobalAlloc(long long) kernelbase.GlobalAlloc
+@ stdcall GlobalFree(long) kernelbase.GlobalFree
+@ stdcall LocalAlloc(long long) kernelbase.LocalAlloc
+@ stdcall LocalFree(long) kernelbase.LocalFree
+@ stdcall LocalLock(long) kernelbase.LocalLock
+@ stdcall LocalReAlloc(long long long) kernelbase.LocalReAlloc
+@ stdcall LocalUnlock(long) kernelbase.LocalUnlock

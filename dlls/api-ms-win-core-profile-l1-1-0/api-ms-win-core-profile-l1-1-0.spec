@@ -1,2 +1,2 @@
-@ stdcall QueryPerformanceCounter(ptr) kernel32.QueryPerformanceCounter
-@ stdcall QueryPerformanceFrequency(ptr) kernel32.QueryPerformanceFrequency
+@ stdcall QueryPerformanceCounter(ptr) kernelbase.QueryPerformanceCounter
+@ stdcall QueryPerformanceFrequency(ptr) kernelbase.QueryPerformanceFrequency

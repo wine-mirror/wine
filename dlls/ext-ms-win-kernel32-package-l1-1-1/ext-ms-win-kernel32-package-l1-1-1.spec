@@ -7,8 +7,8 @@
 @ stub AppXLookupMoniker
 @ stub ClosePackageInfo
 @ stub FormatApplicationUserModelId
-@ stdcall GetPackageFamilyName(long ptr ptr) kernel32.GetPackageFamilyName
-@ stdcall GetPackageFullName(long ptr ptr) kernel32.GetPackageFullName
+@ stdcall GetPackageFamilyName(long ptr ptr) kernelbase.GetPackageFamilyName
+@ stdcall GetPackageFullName(long ptr ptr) kernelbase.GetPackageFullName
 @ stub GetPackageId
 @ stub GetPackageInfo
 @ stub GetPackagePath
@@ -18,4 +18,4 @@
 @ stub PackageFamilyNameFromFullName
 @ stub PackageFamilyNameFromId
 @ stub PackageFullNameFromId
-@ stdcall PackageIdFromFullName(wstr long ptr ptr) kernel32.PackageIdFromFullName
+@ stdcall PackageIdFromFullName(wstr long ptr ptr) kernelbase.PackageIdFromFullName

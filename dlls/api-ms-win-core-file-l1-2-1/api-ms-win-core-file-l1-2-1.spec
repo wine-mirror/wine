@@ -1,82 +1,82 @@
-@ stdcall CompareFileTime(ptr ptr) kernel32.CompareFileTime
-@ stdcall CreateDirectoryA(str ptr) kernel32.CreateDirectoryA
-@ stdcall CreateDirectoryW(wstr ptr) kernel32.CreateDirectoryW
-@ stdcall CreateFile2(wstr long long long ptr) kernel32.CreateFile2
-@ stdcall CreateFileA(str long long ptr long long long) kernel32.CreateFileA
-@ stdcall CreateFileW(wstr long long ptr long long long) kernel32.CreateFileW
-@ stdcall DefineDosDeviceW(long wstr wstr) kernel32.DefineDosDeviceW
-@ stdcall DeleteFileA(str) kernel32.DeleteFileA
-@ stdcall DeleteFileW(wstr) kernel32.DeleteFileW
-@ stdcall DeleteVolumeMountPointW(wstr) kernel32.DeleteVolumeMountPointW
-@ stdcall FileTimeToLocalFileTime(ptr ptr) kernel32.FileTimeToLocalFileTime
-@ stdcall FindClose(long) kernel32.FindClose
-@ stdcall FindCloseChangeNotification(long) kernel32.FindCloseChangeNotification
-@ stdcall FindFirstChangeNotificationA(str long long) kernel32.FindFirstChangeNotificationA
-@ stdcall FindFirstChangeNotificationW(wstr long long) kernel32.FindFirstChangeNotificationW
-@ stdcall FindFirstFileA(str ptr) kernel32.FindFirstFileA
-@ stdcall FindFirstFileExA(str long ptr long ptr long) kernel32.FindFirstFileExA
-@ stdcall FindFirstFileExW(wstr long ptr long ptr long) kernel32.FindFirstFileExW
-@ stdcall FindFirstFileW(wstr ptr) kernel32.FindFirstFileW
-@ stdcall FindFirstVolumeW(ptr long) kernel32.FindFirstVolumeW
-@ stdcall FindNextChangeNotification(long) kernel32.FindNextChangeNotification
-@ stdcall FindNextFileA(long ptr) kernel32.FindNextFileA
-@ stdcall FindNextFileW(long ptr) kernel32.FindNextFileW
-@ stdcall FindNextVolumeW(long ptr long) kernel32.FindNextVolumeW
-@ stdcall FindVolumeClose(ptr) kernel32.FindVolumeClose
-@ stdcall FlushFileBuffers(long) kernel32.FlushFileBuffers
-@ stdcall GetCompressedFileSizeA(str ptr) kernel32.GetCompressedFileSizeA
-@ stdcall GetCompressedFileSizeW(wstr ptr) kernel32.GetCompressedFileSizeW
-@ stdcall GetDiskFreeSpaceA(str ptr ptr ptr ptr) kernel32.GetDiskFreeSpaceA
-@ stdcall GetDiskFreeSpaceExA(str ptr ptr ptr) kernel32.GetDiskFreeSpaceExA
-@ stdcall GetDiskFreeSpaceExW(wstr ptr ptr ptr) kernel32.GetDiskFreeSpaceExW
-@ stdcall GetDiskFreeSpaceW(wstr ptr ptr ptr ptr) kernel32.GetDiskFreeSpaceW
-@ stdcall GetDriveTypeA(str) kernel32.GetDriveTypeA
-@ stdcall GetDriveTypeW(wstr) kernel32.GetDriveTypeW
-@ stdcall GetFileAttributesA(str) kernel32.GetFileAttributesA
-@ stdcall GetFileAttributesExA(str long ptr) kernel32.GetFileAttributesExA
-@ stdcall GetFileAttributesExW(wstr long ptr) kernel32.GetFileAttributesExW
-@ stdcall GetFileAttributesW(wstr) kernel32.GetFileAttributesW
-@ stdcall GetFileInformationByHandle(long ptr) kernel32.GetFileInformationByHandle
-@ stdcall GetFileSize(long ptr) kernel32.GetFileSize
-@ stdcall GetFileSizeEx(long ptr) kernel32.GetFileSizeEx
-@ stdcall GetFileTime(long ptr ptr ptr) kernel32.GetFileTime
-@ stdcall GetFileType(long) kernel32.GetFileType
-@ stdcall GetFinalPathNameByHandleA(long ptr long long) kernel32.GetFinalPathNameByHandleA
-@ stdcall GetFinalPathNameByHandleW(long ptr long long) kernel32.GetFinalPathNameByHandleW
-@ stdcall GetFullPathNameA(str long ptr ptr) kernel32.GetFullPathNameA
-@ stdcall GetFullPathNameW(wstr long ptr ptr) kernel32.GetFullPathNameW
-@ stdcall GetLogicalDriveStringsW(long ptr) kernel32.GetLogicalDriveStringsW
-@ stdcall GetLogicalDrives() kernel32.GetLogicalDrives
-@ stdcall GetLongPathNameA(str ptr long) kernel32.GetLongPathNameA
-@ stdcall GetLongPathNameW(wstr ptr long) kernel32.GetLongPathNameW
-@ stdcall GetShortPathNameW(wstr ptr long) kernel32.GetShortPathNameW
-@ stdcall GetTempFileNameW(wstr wstr long ptr) kernel32.GetTempFileNameW
-@ stdcall GetTempPathW(long ptr) kernel32.GetTempPathW
-@ stdcall GetVolumeInformationByHandleW(ptr ptr long ptr ptr ptr ptr long) kernel32.GetVolumeInformationByHandleW
-@ stdcall GetVolumeInformationW(wstr ptr long ptr ptr ptr ptr long) kernel32.GetVolumeInformationW
-@ stdcall GetVolumeNameForVolumeMountPointW(wstr ptr long) kernel32.GetVolumeNameForVolumeMountPointW
-@ stdcall GetVolumePathNameW(wstr ptr long) kernel32.GetVolumePathNameW
-@ stdcall GetVolumePathNamesForVolumeNameW(wstr ptr long ptr) kernel32.GetVolumePathNamesForVolumeNameW
-@ stdcall LocalFileTimeToFileTime(ptr ptr) kernel32.LocalFileTimeToFileTime
-@ stdcall LockFile(long long long long long) kernel32.LockFile
-@ stdcall LockFileEx(long long long long long ptr) kernel32.LockFileEx
-@ stdcall QueryDosDeviceW(wstr ptr long) kernel32.QueryDosDeviceW
-@ stdcall ReadFile(long ptr long ptr ptr) kernel32.ReadFile
-@ stdcall ReadFileEx(long ptr long ptr ptr) kernel32.ReadFileEx
-@ stdcall ReadFileScatter(long ptr long ptr ptr) kernel32.ReadFileScatter
-@ stdcall RemoveDirectoryA(str) kernel32.RemoveDirectoryA
-@ stdcall RemoveDirectoryW(wstr) kernel32.RemoveDirectoryW
-@ stdcall SetEndOfFile(long) kernel32.SetEndOfFile
-@ stdcall SetFileAttributesA(str long) kernel32.SetFileAttributesA
-@ stdcall SetFileAttributesW(wstr long) kernel32.SetFileAttributesW
-@ stdcall SetFileInformationByHandle(long long ptr long) kernel32.SetFileInformationByHandle
+@ stdcall CompareFileTime(ptr ptr) kernelbase.CompareFileTime
+@ stdcall CreateDirectoryA(str ptr) kernelbase.CreateDirectoryA
+@ stdcall CreateDirectoryW(wstr ptr) kernelbase.CreateDirectoryW
+@ stdcall CreateFile2(wstr long long long ptr) kernelbase.CreateFile2
+@ stdcall CreateFileA(str long long ptr long long long) kernelbase.CreateFileA
+@ stdcall CreateFileW(wstr long long ptr long long long) kernelbase.CreateFileW
+@ stdcall DefineDosDeviceW(long wstr wstr) kernelbase.DefineDosDeviceW
+@ stdcall DeleteFileA(str) kernelbase.DeleteFileA
+@ stdcall DeleteFileW(wstr) kernelbase.DeleteFileW
+@ stdcall DeleteVolumeMountPointW(wstr) kernelbase.DeleteVolumeMountPointW
+@ stdcall FileTimeToLocalFileTime(ptr ptr) kernelbase.FileTimeToLocalFileTime
+@ stdcall FindClose(long) kernelbase.FindClose
+@ stdcall FindCloseChangeNotification(long) kernelbase.FindCloseChangeNotification
+@ stdcall FindFirstChangeNotificationA(str long long) kernelbase.FindFirstChangeNotificationA
+@ stdcall FindFirstChangeNotificationW(wstr long long) kernelbase.FindFirstChangeNotificationW
+@ stdcall FindFirstFileA(str ptr) kernelbase.FindFirstFileA
+@ stdcall FindFirstFileExA(str long ptr long ptr long) kernelbase.FindFirstFileExA
+@ stdcall FindFirstFileExW(wstr long ptr long ptr long) kernelbase.FindFirstFileExW
+@ stdcall FindFirstFileW(wstr ptr) kernelbase.FindFirstFileW
+@ stdcall FindFirstVolumeW(ptr long) kernelbase.FindFirstVolumeW
+@ stdcall FindNextChangeNotification(long) kernelbase.FindNextChangeNotification
+@ stdcall FindNextFileA(long ptr) kernelbase.FindNextFileA
+@ stdcall FindNextFileW(long ptr) kernelbase.FindNextFileW
+@ stdcall FindNextVolumeW(long ptr long) kernelbase.FindNextVolumeW
+@ stdcall FindVolumeClose(ptr) kernelbase.FindVolumeClose
+@ stdcall FlushFileBuffers(long) kernelbase.FlushFileBuffers
+@ stdcall GetCompressedFileSizeA(str ptr) kernelbase.GetCompressedFileSizeA
+@ stdcall GetCompressedFileSizeW(wstr ptr) kernelbase.GetCompressedFileSizeW
+@ stdcall GetDiskFreeSpaceA(str ptr ptr ptr ptr) kernelbase.GetDiskFreeSpaceA
+@ stdcall GetDiskFreeSpaceExA(str ptr ptr ptr) kernelbase.GetDiskFreeSpaceExA
+@ stdcall GetDiskFreeSpaceExW(wstr ptr ptr ptr) kernelbase.GetDiskFreeSpaceExW
+@ stdcall GetDiskFreeSpaceW(wstr ptr ptr ptr ptr) kernelbase.GetDiskFreeSpaceW
+@ stdcall GetDriveTypeA(str) kernelbase.GetDriveTypeA
+@ stdcall GetDriveTypeW(wstr) kernelbase.GetDriveTypeW
+@ stdcall GetFileAttributesA(str) kernelbase.GetFileAttributesA
+@ stdcall GetFileAttributesExA(str long ptr) kernelbase.GetFileAttributesExA
+@ stdcall GetFileAttributesExW(wstr long ptr) kernelbase.GetFileAttributesExW
+@ stdcall GetFileAttributesW(wstr) kernelbase.GetFileAttributesW
+@ stdcall GetFileInformationByHandle(long ptr) kernelbase.GetFileInformationByHandle
+@ stdcall GetFileSize(long ptr) kernelbase.GetFileSize
+@ stdcall GetFileSizeEx(long ptr) kernelbase.GetFileSizeEx
+@ stdcall GetFileTime(long ptr ptr ptr) kernelbase.GetFileTime
+@ stdcall GetFileType(long) kernelbase.GetFileType
+@ stdcall GetFinalPathNameByHandleA(long ptr long long) kernelbase.GetFinalPathNameByHandleA
+@ stdcall GetFinalPathNameByHandleW(long ptr long long) kernelbase.GetFinalPathNameByHandleW
+@ stdcall GetFullPathNameA(str long ptr ptr) kernelbase.GetFullPathNameA
+@ stdcall GetFullPathNameW(wstr long ptr ptr) kernelbase.GetFullPathNameW
+@ stdcall GetLogicalDriveStringsW(long ptr) kernelbase.GetLogicalDriveStringsW
+@ stdcall GetLogicalDrives() kernelbase.GetLogicalDrives
+@ stdcall GetLongPathNameA(str ptr long) kernelbase.GetLongPathNameA
+@ stdcall GetLongPathNameW(wstr ptr long) kernelbase.GetLongPathNameW
+@ stdcall GetShortPathNameW(wstr ptr long) kernelbase.GetShortPathNameW
+@ stdcall GetTempFileNameW(wstr wstr long ptr) kernelbase.GetTempFileNameW
+@ stdcall GetTempPathW(long ptr) kernelbase.GetTempPathW
+@ stdcall GetVolumeInformationByHandleW(ptr ptr long ptr ptr ptr ptr long) kernelbase.GetVolumeInformationByHandleW
+@ stdcall GetVolumeInformationW(wstr ptr long ptr ptr ptr ptr long) kernelbase.GetVolumeInformationW
+@ stdcall GetVolumeNameForVolumeMountPointW(wstr ptr long) kernelbase.GetVolumeNameForVolumeMountPointW
+@ stdcall GetVolumePathNameW(wstr ptr long) kernelbase.GetVolumePathNameW
+@ stdcall GetVolumePathNamesForVolumeNameW(wstr ptr long ptr) kernelbase.GetVolumePathNamesForVolumeNameW
+@ stdcall LocalFileTimeToFileTime(ptr ptr) kernelbase.LocalFileTimeToFileTime
+@ stdcall LockFile(long long long long long) kernelbase.LockFile
+@ stdcall LockFileEx(long long long long long ptr) kernelbase.LockFileEx
+@ stdcall QueryDosDeviceW(wstr ptr long) kernelbase.QueryDosDeviceW
+@ stdcall ReadFile(long ptr long ptr ptr) kernelbase.ReadFile
+@ stdcall ReadFileEx(long ptr long ptr ptr) kernelbase.ReadFileEx
+@ stdcall ReadFileScatter(long ptr long ptr ptr) kernelbase.ReadFileScatter
+@ stdcall RemoveDirectoryA(str) kernelbase.RemoveDirectoryA
+@ stdcall RemoveDirectoryW(wstr) kernelbase.RemoveDirectoryW
+@ stdcall SetEndOfFile(long) kernelbase.SetEndOfFile
+@ stdcall SetFileAttributesA(str long) kernelbase.SetFileAttributesA
+@ stdcall SetFileAttributesW(wstr long) kernelbase.SetFileAttributesW
+@ stdcall SetFileInformationByHandle(long long ptr long) kernelbase.SetFileInformationByHandle
 @ stub SetFileIoOverlappedRange
-@ stdcall SetFilePointer(long long ptr long) kernel32.SetFilePointer
-@ stdcall SetFilePointerEx(long int64 ptr long) kernel32.SetFilePointerEx
-@ stdcall SetFileTime(long ptr ptr ptr) kernel32.SetFileTime
-@ stdcall SetFileValidData(ptr int64) kernel32.SetFileValidData
-@ stdcall UnlockFile(long long long long long) kernel32.UnlockFile
-@ stdcall UnlockFileEx(long long long long ptr) kernel32.UnlockFileEx
-@ stdcall WriteFile(long ptr long ptr ptr) kernel32.WriteFile
-@ stdcall WriteFileEx(long ptr long ptr ptr) kernel32.WriteFileEx
-@ stdcall WriteFileGather(long ptr long ptr ptr) kernel32.WriteFileGather
+@ stdcall SetFilePointer(long long ptr long) kernelbase.SetFilePointer
+@ stdcall SetFilePointerEx(long int64 ptr long) kernelbase.SetFilePointerEx
+@ stdcall SetFileTime(long ptr ptr ptr) kernelbase.SetFileTime
+@ stdcall SetFileValidData(ptr int64) kernelbase.SetFileValidData
+@ stdcall UnlockFile(long long long long long) kernelbase.UnlockFile
+@ stdcall UnlockFileEx(long long long long ptr) kernelbase.UnlockFileEx
+@ stdcall WriteFile(long ptr long ptr ptr) kernelbase.WriteFile
+@ stdcall WriteFileEx(long ptr long ptr ptr) kernelbase.WriteFileEx
+@ stdcall WriteFileGather(long ptr long ptr ptr) kernelbase.WriteFileGather

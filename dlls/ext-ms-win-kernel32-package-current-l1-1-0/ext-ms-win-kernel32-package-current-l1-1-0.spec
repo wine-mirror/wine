@@ -1,2 +1,2 @@
-@ stdcall GetCurrentPackageId(ptr ptr) kernel32.GetCurrentPackageId
+@ stdcall GetCurrentPackageId(ptr ptr) kernelbase.GetCurrentPackageId
 @ stub GetCurrentPackageInfo

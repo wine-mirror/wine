@@ -1,31 +1,31 @@
 @ stub CreateFileMappingFromApp
-@ stdcall CreateFileMappingW(long ptr long long long wstr) kernel32.CreateFileMappingW
+@ stdcall CreateFileMappingW(long ptr long long long wstr) kernelbase.CreateFileMappingW
 @ stub DiscardVirtualMemory
-@ stdcall FlushViewOfFile(ptr long) kernel32.FlushViewOfFile
-@ stdcall GetLargePageMinimum() kernel32.GetLargePageMinimum
-@ stdcall GetProcessWorkingSetSizeEx(long ptr ptr ptr) kernel32.GetProcessWorkingSetSizeEx
-@ stdcall GetWriteWatch(long ptr long ptr ptr ptr) kernel32.GetWriteWatch
-@ stdcall MapViewOfFile(long long long long long) kernel32.MapViewOfFile
-@ stdcall MapViewOfFileEx(long long long long long ptr) kernel32.MapViewOfFileEx
+@ stdcall FlushViewOfFile(ptr long) kernelbase.FlushViewOfFile
+@ stdcall GetLargePageMinimum() kernelbase.GetLargePageMinimum
+@ stdcall GetProcessWorkingSetSizeEx(long ptr ptr ptr) kernelbase.GetProcessWorkingSetSizeEx
+@ stdcall GetWriteWatch(long ptr long ptr ptr ptr) kernelbase.GetWriteWatch
+@ stdcall MapViewOfFile(long long long long long) kernelbase.MapViewOfFile
+@ stdcall MapViewOfFileEx(long long long long long ptr) kernelbase.MapViewOfFileEx
 @ stub MapViewOfFileFromApp
 @ stub OfferVirtualMemory
 @ stub OpenFileMappingFromApp
-@ stdcall OpenFileMappingW(long long wstr) kernel32.OpenFileMappingW
-@ stdcall ReadProcessMemory(long ptr ptr long ptr) kernel32.ReadProcessMemory
+@ stdcall OpenFileMappingW(long long wstr) kernelbase.OpenFileMappingW
+@ stdcall ReadProcessMemory(long ptr ptr long ptr) kernelbase.ReadProcessMemory
 @ stub ReclaimVirtualMemory
-@ stdcall ResetWriteWatch(ptr long) kernel32.ResetWriteWatch
+@ stdcall ResetWriteWatch(ptr long) kernelbase.ResetWriteWatch
 @ stub SetProcessValidCallTargets
-@ stdcall SetProcessWorkingSetSizeEx(long long long long) kernel32.SetProcessWorkingSetSizeEx
-@ stdcall UnmapViewOfFile(ptr) kernel32.UnmapViewOfFile
+@ stdcall SetProcessWorkingSetSizeEx(long long long long) kernelbase.SetProcessWorkingSetSizeEx
+@ stdcall UnmapViewOfFile(ptr) kernelbase.UnmapViewOfFile
 @ stub UnmapViewOfFileEx
-@ stdcall VirtualAlloc(ptr long long long) kernel32.VirtualAlloc
-@ stub VirtualAllocFromApp
-@ stdcall VirtualFree(ptr long long) kernel32.VirtualFree
-@ stdcall VirtualFreeEx(long ptr long long) kernel32.VirtualFreeEx
-@ stdcall VirtualLock(ptr long) kernel32.VirtualLock
-@ stdcall VirtualProtect(ptr long long ptr) kernel32.VirtualProtect
+@ stdcall VirtualAlloc(ptr long long long) kernelbase.VirtualAlloc
+@ stdcall VirtualAllocFromApp(ptr long long long) kernelbase.VirtualAllocFromApp
+@ stdcall VirtualFree(ptr long long) kernelbase.VirtualFree
+@ stdcall VirtualFreeEx(long ptr long long) kernelbase.VirtualFreeEx
+@ stdcall VirtualLock(ptr long) kernelbase.VirtualLock
+@ stdcall VirtualProtect(ptr long long ptr) kernelbase.VirtualProtect
 @ stub VirtualProtectFromApp
-@ stdcall VirtualQuery(ptr ptr long) kernel32.VirtualQuery
-@ stdcall VirtualQueryEx(long ptr ptr long) kernel32.VirtualQueryEx
-@ stdcall VirtualUnlock(ptr long) kernel32.VirtualUnlock
-@ stdcall WriteProcessMemory(long ptr ptr long ptr) kernel32.WriteProcessMemory
+@ stdcall VirtualQuery(ptr ptr long) kernelbase.VirtualQuery
+@ stdcall VirtualQueryEx(long ptr ptr long) kernelbase.VirtualQueryEx
+@ stdcall VirtualUnlock(ptr long) kernelbase.VirtualUnlock
+@ stdcall WriteProcessMemory(long ptr ptr long ptr) kernelbase.WriteProcessMemory

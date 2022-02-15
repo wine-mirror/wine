@@ -1,4 +1,4 @@
-@ stdcall FlsAlloc(ptr) kernel32.FlsAlloc
-@ stdcall FlsFree(long) kernel32.FlsFree
-@ stdcall FlsGetValue(long) kernel32.FlsGetValue
-@ stdcall FlsSetValue(long ptr) kernel32.FlsSetValue
+@ stdcall FlsAlloc(ptr) kernelbase.FlsAlloc
+@ stdcall FlsFree(long) kernelbase.FlsFree
+@ stdcall FlsGetValue(long) kernelbase.FlsGetValue
+@ stdcall FlsSetValue(long ptr) kernelbase.FlsSetValue

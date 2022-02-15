@@ -1,5 +1,5 @@
 @ stub GetStringScripts
-@ stdcall IdnToNameprepUnicode(long wstr long ptr long) kernel32.IdnToNameprepUnicode
-@ stdcall IsNormalizedString(long wstr long) kernel32.IsNormalizedString
-@ stdcall NormalizeString(long wstr long ptr long) kernel32.NormalizeString
+@ stdcall IdnToNameprepUnicode(long wstr long ptr long) kernelbase.IdnToNameprepUnicode
+@ stdcall IsNormalizedString(long wstr long) kernelbase.IsNormalizedString
+@ stdcall NormalizeString(long wstr long ptr long) kernelbase.NormalizeString
 @ stub VerifyScripts

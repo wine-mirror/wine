@@ -3,14 +3,14 @@
 @ stub FormatApplicationUserModelId
 @ stub GetApplicationUserModelId
 @ stub GetCurrentApplicationUserModelId
-@ stdcall GetCurrentPackageFamilyName(ptr ptr) kernel32.GetCurrentPackageFamilyName
-@ stdcall GetCurrentPackageFullName(ptr ptr) kernel32.GetCurrentPackageFullName
-@ stdcall GetCurrentPackageId(ptr ptr) kernel32.GetCurrentPackageId
+@ stdcall GetCurrentPackageFamilyName(ptr ptr) kernelbase.GetCurrentPackageFamilyName
+@ stdcall GetCurrentPackageFullName(ptr ptr) kernelbase.GetCurrentPackageFullName
+@ stdcall GetCurrentPackageId(ptr ptr) kernelbase.GetCurrentPackageId
 @ stub GetCurrentPackageInfo
-@ stdcall GetCurrentPackagePath(ptr ptr) kernel32.GetCurrentPackagePath
+@ stdcall GetCurrentPackagePath(ptr ptr) kernelbase.GetCurrentPackagePath
 @ stub GetPackageApplicationIds
-@ stdcall GetPackageFamilyName(long ptr ptr) kernel32.GetPackageFamilyName
-@ stdcall GetPackageFullName(long ptr ptr) kernel32.GetPackageFullName
+@ stdcall GetPackageFamilyName(long ptr ptr) kernelbase.GetPackageFamilyName
+@ stdcall GetPackageFullName(long ptr ptr) kernelbase.GetPackageFullName
 @ stub GetPackageId
 @ stub GetPackageInfo
 @ stub GetPackagePath
@@ -22,6 +22,6 @@
 @ stub PackageFamilyNameFromFullName
 @ stub PackageFamilyNameFromId
 @ stub PackageFullNameFromId
-@ stdcall PackageIdFromFullName(wstr long ptr ptr) kernel32.PackageIdFromFullName
+@ stdcall PackageIdFromFullName(wstr long ptr ptr) kernelbase.PackageIdFromFullName
 @ stub PackageNameAndPublisherIdFromFamilyName
 @ stub ParseApplicationUserModelId

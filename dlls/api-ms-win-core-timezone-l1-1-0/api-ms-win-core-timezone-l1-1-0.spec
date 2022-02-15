@@ -1,13 +1,13 @@
 @ stdcall EnumDynamicTimeZoneInformation(long ptr) kernelbase.EnumDynamicTimeZoneInformation
-@ stdcall FileTimeToSystemTime(ptr ptr) kernel32.FileTimeToSystemTime
-@ stdcall GetDynamicTimeZoneInformation(ptr) kernel32.GetDynamicTimeZoneInformation
-@ stdcall GetDynamicTimeZoneInformationEffectiveYears(ptr ptr ptr) kernel32.GetDynamicTimeZoneInformationEffectiveYears
-@ stdcall GetTimeZoneInformation(ptr) kernel32.GetTimeZoneInformation
-@ stdcall GetTimeZoneInformationForYear(long ptr ptr) kernel32.GetTimeZoneInformationForYear
+@ stdcall FileTimeToSystemTime(ptr ptr) kernelbase.FileTimeToSystemTime
+@ stdcall GetDynamicTimeZoneInformation(ptr) kernelbase.GetDynamicTimeZoneInformation
+@ stdcall GetDynamicTimeZoneInformationEffectiveYears(ptr ptr ptr) kernelbase.GetDynamicTimeZoneInformationEffectiveYears
+@ stdcall GetTimeZoneInformation(ptr) kernelbase.GetTimeZoneInformation
+@ stdcall GetTimeZoneInformationForYear(long ptr ptr) kernelbase.GetTimeZoneInformationForYear
 @ stub SetDynamicTimeZoneInformation
-@ stdcall SetTimeZoneInformation(ptr) kernel32.SetTimeZoneInformation
-@ stdcall SystemTimeToFileTime(ptr ptr) kernel32.SystemTimeToFileTime
-@ stdcall SystemTimeToTzSpecificLocalTime(ptr ptr ptr) kernel32.SystemTimeToTzSpecificLocalTime
+@ stdcall SetTimeZoneInformation(ptr) kernelbase.SetTimeZoneInformation
+@ stdcall SystemTimeToFileTime(ptr ptr) kernelbase.SystemTimeToFileTime
+@ stdcall SystemTimeToTzSpecificLocalTime(ptr ptr ptr) kernelbase.SystemTimeToTzSpecificLocalTime
 @ stub SystemTimeToTzSpecificLocalTimeEx
-@ stdcall TzSpecificLocalTimeToSystemTime(ptr ptr ptr) kernel32.TzSpecificLocalTimeToSystemTime
+@ stdcall TzSpecificLocalTimeToSystemTime(ptr ptr ptr) kernelbase.TzSpecificLocalTimeToSystemTime
 @ stub TzSpecificLocalTimeToSystemTimeEx

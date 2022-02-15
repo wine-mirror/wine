@@ -1,1 +1,1 @@
-@ stdcall DelayLoadFailureHook(str str) kernel32.DelayLoadFailureHook
+@ stdcall DelayLoadFailureHook(str str) kernelbase.DelayLoadFailureHook

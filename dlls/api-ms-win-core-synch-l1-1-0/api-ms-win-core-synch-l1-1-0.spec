@@ -1,42 +1,42 @@
-@ stdcall AcquireSRWLockExclusive(ptr) kernel32.AcquireSRWLockExclusive
-@ stdcall AcquireSRWLockShared(ptr) kernel32.AcquireSRWLockShared
-@ stdcall CancelWaitableTimer(long) kernel32.CancelWaitableTimer
-@ stdcall CreateEventA(ptr long long str) kernel32.CreateEventA
-@ stdcall CreateEventExA(ptr str long long) kernel32.CreateEventExA
-@ stdcall CreateEventExW(ptr wstr long long) kernel32.CreateEventExW
-@ stdcall CreateEventW(ptr long long wstr) kernel32.CreateEventW
-@ stdcall CreateMutexA(ptr long str) kernel32.CreateMutexA
-@ stdcall CreateMutexExA(ptr str long long) kernel32.CreateMutexExA
-@ stdcall CreateMutexExW(ptr wstr long long) kernel32.CreateMutexExW
-@ stdcall CreateMutexW(ptr long wstr) kernel32.CreateMutexW
-@ stdcall CreateSemaphoreExW(ptr long long wstr long long) kernel32.CreateSemaphoreExW
-@ stdcall CreateWaitableTimerExW(ptr wstr long long) kernel32.CreateWaitableTimerExW
-@ stdcall DeleteCriticalSection(ptr) kernel32.DeleteCriticalSection
-@ stdcall EnterCriticalSection(ptr) kernel32.EnterCriticalSection
-@ stdcall InitializeCriticalSection(ptr) kernel32.InitializeCriticalSection
-@ stdcall InitializeCriticalSectionAndSpinCount(ptr long) kernel32.InitializeCriticalSectionAndSpinCount
-@ stdcall InitializeCriticalSectionEx(ptr long long) kernel32.InitializeCriticalSectionEx
-@ stdcall InitializeSRWLock(ptr) kernel32.InitializeSRWLock
-@ stdcall LeaveCriticalSection(ptr) kernel32.LeaveCriticalSection
-@ stdcall OpenEventA(long long str) kernel32.OpenEventA
-@ stdcall OpenEventW(long long wstr) kernel32.OpenEventW
-@ stdcall OpenMutexW(long long wstr) kernel32.OpenMutexW
-@ stdcall OpenProcess(long long long) kernel32.OpenProcess
-@ stdcall OpenSemaphoreW(long long wstr) kernel32.OpenSemaphoreW
-@ stdcall OpenWaitableTimerW(long long wstr) kernel32.OpenWaitableTimerW
-@ stdcall ReleaseMutex(long) kernel32.ReleaseMutex
-@ stdcall ReleaseSRWLockExclusive(ptr) kernel32.ReleaseSRWLockExclusive
-@ stdcall ReleaseSRWLockShared(ptr) kernel32.ReleaseSRWLockShared
-@ stdcall ReleaseSemaphore(long long ptr) kernel32.ReleaseSemaphore
-@ stdcall ResetEvent(long) kernel32.ResetEvent
-@ stdcall SetCriticalSectionSpinCount(ptr long) kernel32.SetCriticalSectionSpinCount
-@ stdcall SetEvent(long) kernel32.SetEvent
-@ stdcall SetWaitableTimer(long ptr long ptr ptr long) kernel32.SetWaitableTimer
-@ stdcall SetWaitableTimerEx(long ptr long ptr ptr ptr long) kernel32.SetWaitableTimerEx
-@ stdcall SleepEx(long long) kernel32.SleepEx
-@ stdcall TryAcquireSRWLockExclusive(ptr) kernel32.TryAcquireSRWLockExclusive
-@ stdcall TryAcquireSRWLockShared(ptr) kernel32.TryAcquireSRWLockShared
-@ stdcall TryEnterCriticalSection(ptr) kernel32.TryEnterCriticalSection
-@ stdcall WaitForMultipleObjectsEx(long ptr long long long) kernel32.WaitForMultipleObjectsEx
-@ stdcall WaitForSingleObject(long long) kernel32.WaitForSingleObject
-@ stdcall WaitForSingleObjectEx(long long long) kernel32.WaitForSingleObjectEx
+@ stdcall AcquireSRWLockExclusive(ptr) kernelbase.AcquireSRWLockExclusive
+@ stdcall AcquireSRWLockShared(ptr) kernelbase.AcquireSRWLockShared
+@ stdcall CancelWaitableTimer(long) kernelbase.CancelWaitableTimer
+@ stdcall CreateEventA(ptr long long str) kernelbase.CreateEventA
+@ stdcall CreateEventExA(ptr str long long) kernelbase.CreateEventExA
+@ stdcall CreateEventExW(ptr wstr long long) kernelbase.CreateEventExW
+@ stdcall CreateEventW(ptr long long wstr) kernelbase.CreateEventW
+@ stdcall CreateMutexA(ptr long str) kernelbase.CreateMutexA
+@ stdcall CreateMutexExA(ptr str long long) kernelbase.CreateMutexExA
+@ stdcall CreateMutexExW(ptr wstr long long) kernelbase.CreateMutexExW
+@ stdcall CreateMutexW(ptr long wstr) kernelbase.CreateMutexW
+@ stdcall CreateSemaphoreExW(ptr long long wstr long long) kernelbase.CreateSemaphoreExW
+@ stdcall CreateWaitableTimerExW(ptr wstr long long) kernelbase.CreateWaitableTimerExW
+@ stdcall DeleteCriticalSection(ptr) kernelbase.DeleteCriticalSection
+@ stdcall EnterCriticalSection(ptr) kernelbase.EnterCriticalSection
+@ stdcall InitializeCriticalSection(ptr) kernelbase.InitializeCriticalSection
+@ stdcall InitializeCriticalSectionAndSpinCount(ptr long) kernelbase.InitializeCriticalSectionAndSpinCount
+@ stdcall InitializeCriticalSectionEx(ptr long long) kernelbase.InitializeCriticalSectionEx
+@ stdcall InitializeSRWLock(ptr) kernelbase.InitializeSRWLock
+@ stdcall LeaveCriticalSection(ptr) kernelbase.LeaveCriticalSection
+@ stdcall OpenEventA(long long str) kernelbase.OpenEventA
+@ stdcall OpenEventW(long long wstr) kernelbase.OpenEventW
+@ stdcall OpenMutexW(long long wstr) kernelbase.OpenMutexW
+@ stdcall OpenProcess(long long long) kernelbase.OpenProcess
+@ stdcall OpenSemaphoreW(long long wstr) kernelbase.OpenSemaphoreW
+@ stdcall OpenWaitableTimerW(long long wstr) kernelbase.OpenWaitableTimerW
+@ stdcall ReleaseMutex(long) kernelbase.ReleaseMutex
+@ stdcall ReleaseSRWLockExclusive(ptr) kernelbase.ReleaseSRWLockExclusive
+@ stdcall ReleaseSRWLockShared(ptr) kernelbase.ReleaseSRWLockShared
+@ stdcall ReleaseSemaphore(long long ptr) kernelbase.ReleaseSemaphore
+@ stdcall ResetEvent(long) kernelbase.ResetEvent
+@ stdcall SetCriticalSectionSpinCount(ptr long) kernelbase.SetCriticalSectionSpinCount
+@ stdcall SetEvent(long) kernelbase.SetEvent
+@ stdcall SetWaitableTimer(long ptr long ptr ptr long) kernelbase.SetWaitableTimer
+@ stdcall SetWaitableTimerEx(long ptr long ptr ptr ptr long) kernelbase.SetWaitableTimerEx
+@ stdcall SleepEx(long long) kernelbase.SleepEx
+@ stdcall TryAcquireSRWLockExclusive(ptr) kernelbase.TryAcquireSRWLockExclusive
+@ stdcall TryAcquireSRWLockShared(ptr) kernelbase.TryAcquireSRWLockShared
+@ stdcall TryEnterCriticalSection(ptr) kernelbase.TryEnterCriticalSection
+@ stdcall WaitForMultipleObjectsEx(long ptr long long long) kernelbase.WaitForMultipleObjectsEx
+@ stdcall WaitForSingleObject(long long) kernelbase.WaitForSingleObject
+@ stdcall WaitForSingleObjectEx(long long long) kernelbase.WaitForSingleObjectEx

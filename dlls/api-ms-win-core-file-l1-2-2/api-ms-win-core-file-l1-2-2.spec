@@ -1,10 +1,10 @@
-@ stdcall AreFileApisANSI() kernel32.AreFileApisANSI
+@ stdcall AreFileApisANSI() kernelbase.AreFileApisANSI
 @ stub FindFirstFileNameW
-@ stdcall FindFirstStreamW(wstr long ptr long) kernel32.FindFirstStreamW
+@ stdcall FindFirstStreamW(wstr long ptr long) kernelbase.FindFirstStreamW
 @ stub FindNextFileNameW
-@ stdcall FindNextStreamW(long ptr) kernel32.FindNextStreamW
-@ stdcall GetTempFileNameA(str str long ptr) kernel32.GetTempFileNameA
-@ stdcall GetTempPathA(long ptr) kernel32.GetTempPathA
-@ stdcall GetVolumeInformationA(str ptr long ptr ptr ptr ptr long) kernel32.GetVolumeInformationA
-@ stdcall SetFileApisToANSI() kernel32.SetFileApisToANSI
-@ stdcall SetFileApisToOEM() kernel32.SetFileApisToOEM
+@ stdcall FindNextStreamW(long ptr) kernelbase.FindNextStreamW
+@ stdcall GetTempFileNameA(str str long ptr) kernelbase.GetTempFileNameA
+@ stdcall GetTempPathA(long ptr) kernelbase.GetTempPathA
+@ stdcall GetVolumeInformationA(str ptr long ptr ptr ptr ptr long) kernelbase.GetVolumeInformationA
+@ stdcall SetFileApisToANSI() kernelbase.SetFileApisToANSI
+@ stdcall SetFileApisToOEM() kernelbase.SetFileApisToOEM

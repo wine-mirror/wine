@@ -1,1 +1,1 @@
-@ stdcall MulDiv(long long long) kernel32.MulDiv
+@ stdcall MulDiv(long long long) kernelbase.MulDiv

@@ -1,4 +1,4 @@
-@ stdcall GetProcessGroupAffinity(long ptr ptr) kernel32.GetProcessGroupAffinity
-@ stdcall GetThreadGroupAffinity(long ptr) kernel32.GetThreadGroupAffinity
+@ stdcall GetProcessGroupAffinity(long ptr ptr) kernelbase.GetProcessGroupAffinity
+@ stdcall GetThreadGroupAffinity(long ptr) kernelbase.GetThreadGroupAffinity
 @ stdcall SetProcessGroupAffinity(long ptr ptr) kernelbase.SetProcessGroupAffinity
-@ stdcall SetThreadGroupAffinity(long ptr ptr) kernel32.SetThreadGroupAffinity
+@ stdcall SetThreadGroupAffinity(long ptr ptr) kernelbase.SetThreadGroupAffinity

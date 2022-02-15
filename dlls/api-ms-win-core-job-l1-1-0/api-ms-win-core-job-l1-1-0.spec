@@ -1,1 +1,1 @@
-@ stdcall IsProcessInJob(long long ptr) kernel32.IsProcessInJob
+@ stdcall IsProcessInJob(long long ptr) kernelbase.IsProcessInJob

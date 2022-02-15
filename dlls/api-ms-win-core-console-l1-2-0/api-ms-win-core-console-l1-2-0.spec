@@ -1,17 +1,17 @@
-@ stdcall AllocConsole() kernel32.AllocConsole
-@ stdcall AttachConsole(long) kernel32.AttachConsole
-@ stdcall FreeConsole() kernel32.FreeConsole
-@ stdcall GetConsoleCP() kernel32.GetConsoleCP
-@ stdcall GetConsoleMode(long ptr) kernel32.GetConsoleMode
-@ stdcall GetConsoleOutputCP() kernel32.GetConsoleOutputCP
-@ stdcall GetNumberOfConsoleInputEvents(long ptr) kernel32.GetNumberOfConsoleInputEvents
-@ stdcall PeekConsoleInputA(ptr ptr long ptr) kernel32.PeekConsoleInputA
-@ stdcall PeekConsoleInputW(ptr ptr long ptr) kernel32.PeekConsoleInputW
-@ stdcall ReadConsoleA(long ptr long ptr ptr) kernel32.ReadConsoleA
-@ stdcall ReadConsoleInputA(long ptr long ptr) kernel32.ReadConsoleInputA
-@ stdcall ReadConsoleInputW(long ptr long ptr) kernel32.ReadConsoleInputW
-@ stdcall ReadConsoleW(long ptr long ptr ptr) kernel32.ReadConsoleW
-@ stdcall SetConsoleCtrlHandler(ptr long) kernel32.SetConsoleCtrlHandler
-@ stdcall SetConsoleMode(long long) kernel32.SetConsoleMode
-@ stdcall WriteConsoleA(long ptr long ptr ptr) kernel32.WriteConsoleA
-@ stdcall WriteConsoleW(long ptr long ptr ptr) kernel32.WriteConsoleW
+@ stdcall AllocConsole() kernelbase.AllocConsole
+@ stdcall AttachConsole(long) kernelbase.AttachConsole
+@ stdcall FreeConsole() kernelbase.FreeConsole
+@ stdcall GetConsoleCP() kernelbase.GetConsoleCP
+@ stdcall GetConsoleMode(long ptr) kernelbase.GetConsoleMode
+@ stdcall GetConsoleOutputCP() kernelbase.GetConsoleOutputCP
+@ stdcall GetNumberOfConsoleInputEvents(long ptr) kernelbase.GetNumberOfConsoleInputEvents
+@ stdcall PeekConsoleInputA(ptr ptr long ptr) kernelbase.PeekConsoleInputA
+@ stdcall PeekConsoleInputW(ptr ptr long ptr) kernelbase.PeekConsoleInputW
+@ stdcall ReadConsoleA(long ptr long ptr ptr) kernelbase.ReadConsoleA
+@ stdcall ReadConsoleInputA(long ptr long ptr) kernelbase.ReadConsoleInputA
+@ stdcall ReadConsoleInputW(long ptr long ptr) kernelbase.ReadConsoleInputW
+@ stdcall ReadConsoleW(long ptr long ptr ptr) kernelbase.ReadConsoleW
+@ stdcall SetConsoleCtrlHandler(ptr long) kernelbase.SetConsoleCtrlHandler
+@ stdcall SetConsoleMode(long long) kernelbase.SetConsoleMode
+@ stdcall WriteConsoleA(long ptr long ptr ptr) kernelbase.WriteConsoleA
+@ stdcall WriteConsoleW(long ptr long ptr ptr) kernelbase.WriteConsoleW

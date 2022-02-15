@@ -1,22 +1,22 @@
-@ stdcall ExpandEnvironmentStringsA(str ptr long) kernel32.ExpandEnvironmentStringsA
-@ stdcall ExpandEnvironmentStringsW(wstr ptr long) kernel32.ExpandEnvironmentStringsW
-@ stdcall FreeEnvironmentStringsA(ptr) kernel32.FreeEnvironmentStringsA
-@ stdcall FreeEnvironmentStringsW(ptr) kernel32.FreeEnvironmentStringsW
-@ stdcall GetCommandLineA() kernel32.GetCommandLineA
-@ stdcall GetCommandLineW() kernel32.GetCommandLineW
-@ stdcall GetCurrentDirectoryA(long ptr) kernel32.GetCurrentDirectoryA
-@ stdcall GetCurrentDirectoryW(long ptr) kernel32.GetCurrentDirectoryW
-@ stdcall GetEnvironmentStrings() kernel32.GetEnvironmentStrings
-@ stdcall GetEnvironmentStringsA() kernel32.GetEnvironmentStringsA
-@ stdcall GetEnvironmentStringsW() kernel32.GetEnvironmentStringsW
-@ stdcall GetEnvironmentVariableA(str ptr long) kernel32.GetEnvironmentVariableA
-@ stdcall GetEnvironmentVariableW(wstr ptr long) kernel32.GetEnvironmentVariableW
-@ stdcall GetStdHandle(long) kernel32.GetStdHandle
-@ stdcall SearchPathW(wstr wstr wstr long ptr ptr) kernel32.SearchPathW
-@ stdcall SetCurrentDirectoryA(str) kernel32.SetCurrentDirectoryA
-@ stdcall SetCurrentDirectoryW(wstr) kernel32.SetCurrentDirectoryW
-@ stdcall SetEnvironmentStringsW(wstr) kernel32.SetEnvironmentStringsW
-@ stdcall SetEnvironmentVariableA(str str) kernel32.SetEnvironmentVariableA
-@ stdcall SetEnvironmentVariableW(wstr wstr) kernel32.SetEnvironmentVariableW
-@ stdcall SetStdHandle(long long) kernel32.SetStdHandle
-@ stdcall SetStdHandleEx(long long ptr) kernel32.SetStdHandleEx
+@ stdcall ExpandEnvironmentStringsA(str ptr long) kernelbase.ExpandEnvironmentStringsA
+@ stdcall ExpandEnvironmentStringsW(wstr ptr long) kernelbase.ExpandEnvironmentStringsW
+@ stdcall FreeEnvironmentStringsA(ptr) kernelbase.FreeEnvironmentStringsA
+@ stdcall FreeEnvironmentStringsW(ptr) kernelbase.FreeEnvironmentStringsW
+@ stdcall GetCommandLineA() kernelbase.GetCommandLineA
+@ stdcall GetCommandLineW() kernelbase.GetCommandLineW
+@ stdcall GetCurrentDirectoryA(long ptr) kernelbase.GetCurrentDirectoryA
+@ stdcall GetCurrentDirectoryW(long ptr) kernelbase.GetCurrentDirectoryW
+@ stdcall GetEnvironmentStrings() kernelbase.GetEnvironmentStrings
+@ stdcall GetEnvironmentStringsA() kernelbase.GetEnvironmentStringsA
+@ stdcall GetEnvironmentStringsW() kernelbase.GetEnvironmentStringsW
+@ stdcall GetEnvironmentVariableA(str ptr long) kernelbase.GetEnvironmentVariableA
+@ stdcall GetEnvironmentVariableW(wstr ptr long) kernelbase.GetEnvironmentVariableW
+@ stdcall GetStdHandle(long) kernelbase.GetStdHandle
+@ stdcall SearchPathW(wstr wstr wstr long ptr ptr) kernelbase.SearchPathW
+@ stdcall SetCurrentDirectoryA(str) kernelbase.SetCurrentDirectoryA
+@ stdcall SetCurrentDirectoryW(wstr) kernelbase.SetCurrentDirectoryW
+@ stdcall SetEnvironmentStringsW(wstr) kernelbase.SetEnvironmentStringsW
+@ stdcall SetEnvironmentVariableA(str str) kernelbase.SetEnvironmentVariableA
+@ stdcall SetEnvironmentVariableW(wstr wstr) kernelbase.SetEnvironmentVariableW
+@ stdcall SetStdHandle(long long) kernelbase.SetStdHandle
+@ stdcall SetStdHandleEx(long long ptr) kernelbase.SetStdHandleEx
