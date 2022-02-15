@@ -278,7 +278,7 @@ static int read_header(struct patch_file_header *ph, const BYTE *buf, size_t siz
     ph->flags = read_raw_uint32(ph);
     if ((ph->flags & PATCH_OPTION_SUPPORTED_FLAGS) != ph->flags)
     {
-        FIXME("unsupported option flag(s): 0x%08x\n", ph->flags & ~PATCH_OPTION_SUPPORTED_FLAGS);
+        FIXME("unsupported option flag(s): 0x%08lx\n", ph->flags & ~PATCH_OPTION_SUPPORTED_FLAGS);
         ph->err = ERROR_PATCH_PACKAGE_UNSUPPORTED;
         return -1;
     }
