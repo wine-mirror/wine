@@ -171,10 +171,10 @@ static void test_create_player(void)
 static void test_shutdown(void)
 {
     SIZE size, min_size, max_size;
+    float slowest, fastest, rate;
     MFP_MEDIAPLAYER_STATE state;
     MFVideoNormalizedRect rect;
     IMFPMediaPlayer *player;
-    float slowest, fastest;
     IMFPMediaItem *item;
     PROPVARIANT propvar;
     COLORREF color;
@@ -261,6 +261,15 @@ static void test_shutdown(void)
     ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_GetPosition(player, &MFP_POSITIONTYPE_100NS, &propvar);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaPlayer_SetRate(player, 2.0f);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaPlayer_GetRate(player, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaPlayer_GetRate(player, &rate);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaPlayer_Shutdown(player);
@@ -548,6 +557,31 @@ static void test_duration(void)
     IMFPMediaPlayer_Release(player);
 }
 
+static void test_playback_rate(void)
+{
+    IMFPMediaPlayer *player;
+    float rate;
+    HRESULT hr;
+
+    hr = MFPCreateMediaPlayer(NULL, FALSE, 0, NULL, NULL, &player);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaPlayer_SetRate(player, 0.0f);
+    ok(hr == MF_E_OUT_OF_RANGE, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaPlayer_SetRate(player, 2.0f);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaPlayer_GetRate(player, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPMediaPlayer_GetRate(player, &rate);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(rate == 1.0f, "Unexpected rate %f.\n", rate);
+
+    IMFPMediaPlayer_Release(player);
+}
+
 START_TEST(mfplay)
 {
     test_create_player();
@@ -555,4 +589,5 @@ START_TEST(mfplay)
     test_media_item();
     test_video_control();
     test_duration();
+    test_playback_rate();
 }

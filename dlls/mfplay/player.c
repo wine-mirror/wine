@@ -1094,16 +1094,44 @@ static HRESULT WINAPI media_player_GetDuration(IMFPMediaPlayer *iface, REFGUID p
 
 static HRESULT WINAPI media_player_SetRate(IMFPMediaPlayer *iface, float rate)
 {
-    FIXME("%p, %f.\n", iface, rate);
+    struct media_player *player = impl_from_IMFPMediaPlayer(iface);
+    IMFRateControl *rate_control;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %f.\n", iface, rate);
+
+    if (rate == 0.0f)
+        return MF_E_OUT_OF_RANGE;
+
+    if (SUCCEEDED(hr = MFGetService((IUnknown *)player->session, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateControl,
+            (void **)&rate_control)))
+    {
+        hr = IMFRateControl_SetRate(rate_control, FALSE, rate);
+        IMFRateControl_Release(rate_control);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI media_player_GetRate(IMFPMediaPlayer *iface, float *rate)
 {
-    FIXME("%p, %p.\n", iface, rate);
+    struct media_player *player = impl_from_IMFPMediaPlayer(iface);
+    IMFRateControl *rate_control;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, rate);
+
+    if (!rate)
+        return E_POINTER;
+
+    if (SUCCEEDED(hr = MFGetService((IUnknown *)player->session, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateControl,
+            (void **)&rate_control)))
+    {
+        hr = IMFRateControl_GetRate(rate_control, NULL, rate);
+        IMFRateControl_Release(rate_control);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI media_player_GetSupportedRates(IMFPMediaPlayer *iface, BOOL forward,
@@ -2080,6 +2108,17 @@ static void media_player_playback_ended(struct media_player *player, HRESULT eve
     LeaveCriticalSection(&player->cs);
 }
 
+static void media_player_rate_changed(struct media_player *player, HRESULT event_status,
+        float rate, struct media_event **event)
+{
+    EnterCriticalSection(&player->cs);
+
+    if (SUCCEEDED(media_event_create(player, MFP_EVENT_TYPE_RATE_SET, event_status, player->item, event)))
+        (*event)->u.rate_set.flRate = rate;
+
+    LeaveCriticalSection(&player->cs);
+}
+
 static HRESULT WINAPI media_player_session_events_callback_Invoke(IMFAsyncCallback *iface,
         IMFAsyncResult *result)
 {
@@ -2092,6 +2131,7 @@ static HRESULT WINAPI media_player_session_events_callback_Invoke(IMFAsyncCallba
     IMFTopology *topology;
     unsigned int status;
     PROPVARIANT value;
+    float rate;
 
     if (FAILED(hr = IMFMediaSession_EndGetEvent(player->session, result, &session_event)))
         return S_OK;
@@ -2143,6 +2183,20 @@ static HRESULT WINAPI media_player_session_events_callback_Invoke(IMFAsyncCallba
             {
                 media_player_playback_ended(player, event_status, &event);
             }
+
+            break;
+
+        case MESessionRateChanged:
+
+            rate = 0.0f;
+            if (SUCCEEDED(IMFMediaEvent_GetValue(session_event, &value)))
+            {
+                if (value.vt == VT_R4)
+                    rate = value.fltVal;
+                PropVariantClear(&value);
+            }
+
+            media_player_rate_changed(player, event_status, rate, &event);
 
             break;
 
