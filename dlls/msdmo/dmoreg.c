@@ -204,7 +204,7 @@ lend:
         RegCloseKey(hrkey);
 
     hres = HRESULT_FROM_WIN32(ret);
-    TRACE(" hresult=0x%08x\n", hres);
+    TRACE(" hresult=0x%08lx\n", hres);
     return hres;
 }
 
@@ -398,7 +398,7 @@ static ULONG WINAPI IEnumDMO_fnAddRef(IEnumDMO * iface)
 {
     IEnumDMOImpl *This = impl_from_IEnumDMO(iface);
     ULONG refCount = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(%d)\n", This, refCount);
+    TRACE("(%p)->(%ld)\n", This, refCount);
     return refCount;
 }
 
@@ -431,7 +431,7 @@ static ULONG WINAPI IEnumDMO_fnRelease(IEnumDMO * iface)
     IEnumDMOImpl *This = impl_from_IEnumDMO(iface);
     ULONG refCount = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(%d)\n", This, refCount);
+    TRACE("(%p)->(%ld)\n", This, refCount);
 
     if (!refCount)
     {
@@ -483,7 +483,7 @@ static HRESULT WINAPI IEnumDMO_fnNext(
 
     IEnumDMOImpl *This = impl_from_IEnumDMO(iface);
 
-    TRACE("(%p)->(%d %p %p %p)\n", This, cItemsToFetch, pCLSID, Names, pcItemsFetched);
+    TRACE("(%p)->(%ld %p %p %p)\n", This, cItemsToFetch, pCLSID, Names, pcItemsFetched);
 
     if (!pCLSID)
         return E_POINTER;
@@ -550,7 +550,7 @@ static HRESULT WINAPI IEnumDMO_fnNext(
             }
 
             for (i = 0; i < size / sizeof(DMO_PARTIAL_MEDIATYPE); ++i)
-                TRACE("intype %d: type %s, subtype %s\n", i, debugstr_guid(&types[i].type),
+                TRACE("intype %ld: type %s, subtype %s\n", i, debugstr_guid(&types[i].type),
                     debugstr_guid(&types[i].subtype));
 
             if (!any_types_match(types, size / sizeof(DMO_PARTIAL_MEDIATYPE), This->pInTypes, This->cInTypes))
@@ -586,7 +586,7 @@ static HRESULT WINAPI IEnumDMO_fnNext(
             }
 
             for (i = 0; i < size / sizeof(DMO_PARTIAL_MEDIATYPE); ++i)
-                TRACE("outtype %d: type %s, subtype %s\n", i, debugstr_guid(&types[i].type),
+                TRACE("outtype %ld: type %s, subtype %s\n", i, debugstr_guid(&types[i].type),
                     debugstr_guid(&types[i].subtype));
 
             if (!any_types_match(types, size / sizeof(DMO_PARTIAL_MEDIATYPE), This->pOutTypes, This->cOutTypes))
@@ -633,7 +633,7 @@ static HRESULT WINAPI IEnumDMO_fnSkip(IEnumDMO * iface, DWORD cItemsToSkip)
 {
     IEnumDMOImpl *This = impl_from_IEnumDMO(iface);
 
-    TRACE("(%p)->(%d)\n", This, cItemsToSkip);
+    TRACE("(%p)->(%ld)\n", This, cItemsToSkip);
     This->index += cItemsToSkip;
 
     return S_OK;
@@ -680,7 +680,7 @@ HRESULT WINAPI DMOEnum(
     const DMO_PARTIAL_MEDIATYPE *pOutTypes,
     IEnumDMO **ppEnum)
 {
-    TRACE("%s 0x%08x %d %p %d %p %p\n", debugstr_guid(category), flags, cInTypes, pInTypes,
+    TRACE("%s 0x%08lx %ld %p %ld %p %p\n", debugstr_guid(category), flags, cInTypes, pInTypes,
         cOutTypes, pOutTypes, ppEnum);
 
     if (TRACE_ON(msdmo))
@@ -689,13 +689,13 @@ HRESULT WINAPI DMOEnum(
         if (cInTypes)
         {
             for (i = 0; i < cInTypes; i++)
-                TRACE("intype %d - type %s, subtype %s\n", i, debugstr_guid(&pInTypes[i].type),
+                TRACE("intype %ld - type %s, subtype %s\n", i, debugstr_guid(&pInTypes[i].type),
                     debugstr_guid(&pInTypes[i].subtype));
         }
 
         if (cOutTypes) {
             for (i = 0; i < cOutTypes; i++)
-                TRACE("outtype %d - type %s, subtype %s\n", i, debugstr_guid(&pOutTypes[i].type),
+                TRACE("outtype %ld - type %s, subtype %s\n", i, debugstr_guid(&pOutTypes[i].type),
                     debugstr_guid(&pOutTypes[i].subtype));
         }
     }
@@ -727,7 +727,7 @@ HRESULT WINAPI DMOGetTypes(REFCLSID clsid, ULONG input_count, ULONG *ret_input_c
     LSTATUS ret;
     DWORD size;
 
-    TRACE("clsid %s, input_count %u, ret_input_count %p, input %p, output_count %u, ret_output_count %p, output %p.\n",
+    TRACE("clsid %s, input_count %lu, ret_input_count %p, input %p, output_count %lu, ret_output_count %p, output %p.\n",
             debugstr_guid(clsid), input_count, ret_input_count, input, output_count, ret_output_count, output);
 
     if (RegOpenKeyExW(HKEY_CLASSES_ROOT, L"DirectShow\\MediaObjects", 0, KEY_READ, &root))
