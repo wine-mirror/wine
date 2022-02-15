@@ -83,7 +83,7 @@ BOOL WINAPI MsiSIPGetSignedDataMsg(SIP_SUBJECTINFO *pSubjectInfo,
     BYTE hdr[2], len[sizeof(DWORD)];
     DWORD count, lenBytes, dataBytes;
 
-    TRACE("(%p %p %d %p %p)\n", pSubjectInfo, pdwEncodingType, dwIndex,
+    TRACE("(%p %p %ld %p %p)\n", pSubjectInfo, pdwEncodingType, dwIndex,
           pcbSignedDataMsg, pbSignedDataMsg);
 
     r = StgOpenStorage(pSubjectInfo->pwsFileName, NULL,
@@ -127,7 +127,7 @@ BOOL WINAPI MsiSIPGetSignedDataMsg(SIP_SUBJECTINFO *pSubjectInfo,
         lenBytes = hdr[1] & 0x7f;
         if (lenBytes > sizeof(DWORD))
         {
-            WARN("asn.1 length too long (%d)\n", lenBytes);
+            WARN("asn.1 length too long (%ld)\n", lenBytes);
             goto freestream;
         }
         r = IStream_Read(stm, len, lenBytes, &count);
