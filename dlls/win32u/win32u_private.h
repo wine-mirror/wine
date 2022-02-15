@@ -192,6 +192,7 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiUpdateColors)( HDC hdc );
     BOOL     (WINAPI *pNtGdiWidenPath)( HDC hdc );
     HKL      (WINAPI *pNtUserActivateKeyboardLayout)( HKL layout, UINT flags );
+    ULONG_PTR (WINAPI *pNtUserCallNoParam)( ULONG code );
     ULONG_PTR (WINAPI *pNtUserCallOneParam)( ULONG_PTR arg, ULONG code );
     ULONG_PTR (WINAPI *pNtUserCallTwoParam)( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code );
     LONG     (WINAPI *pNtUserChangeDisplaySettings)( UNICODE_STRING *devname, DEVMODEW *devmode, HWND hwnd,
@@ -248,6 +249,7 @@ extern BOOL get_clip_cursor( RECT *rect ) DECLSPEC_HIDDEN;
 
 /* input.c */
 extern BOOL get_cursor_pos( POINT *pt ) DECLSPEC_HIDDEN;
+extern DWORD get_input_state(void) DECLSPEC_HIDDEN;
 
 /* sysparams.c */
 extern RECT get_display_rect( const WCHAR *display ) DECLSPEC_HIDDEN;

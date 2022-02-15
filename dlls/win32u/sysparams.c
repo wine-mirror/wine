@@ -4486,6 +4486,21 @@ static BOOL message_beep( UINT i )
 /***********************************************************************
  *	     NtUserCallOneParam    (win32u.@)
  */
+ULONG_PTR WINAPI NtUserCallNoParam( ULONG code )
+{
+    switch(code)
+    {
+    case NtUserGetInputState:
+        return get_input_state();
+    default:
+        FIXME( "invalid code %u\n", code );
+        return 0;
+    }
+}
+
+/***********************************************************************
+ *	     NtUserCallOneParam    (win32u.@)
+ */
 ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
 {
     switch(code)

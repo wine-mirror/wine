@@ -160,6 +160,25 @@ DWORD WINAPI NtUserGetQueueStatus( UINT flags )
 }
 
 /***********************************************************************
+ *           get_input_state
+ */
+DWORD get_input_state(void)
+{
+    DWORD ret;
+
+    check_for_events( QS_INPUT );
+
+    SERVER_START_REQ( get_queue_status )
+    {
+        req->clear_bits = 0;
+        wine_server_call( req );
+        ret = reply->wake_bits & (QS_KEY | QS_MOUSEBUTTON);
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+/***********************************************************************
  *           get_locale_kbd_layout
  */
 static HKL get_locale_kbd_layout(void)

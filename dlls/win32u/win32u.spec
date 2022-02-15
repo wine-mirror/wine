@@ -778,7 +778,7 @@
 @ stub NtUserCallHwndSafe
 @ stub NtUserCallMsgFilter
 @ stub NtUserCallNextHookEx
-@ stub NtUserCallNoParam
+@ stdcall NtUserCallNoParam(long)
 @ stdcall NtUserCallOneParam(long long)
 @ stdcall NtUserCallTwoParam(long long long)
 @ stub NtUserCanBrokerForceForeground

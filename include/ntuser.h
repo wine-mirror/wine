@@ -49,6 +49,12 @@ struct enum_display_monitor_params
 #define NTUSER_DPI_PER_MONITOR_AWARE_V2   0x00000022
 #define NTUSER_DPI_PER_UNAWARE_GDISCALED  0x40006010
 
+/* NtUserCallNoParam codes, not compatible with Windows */
+enum
+{
+    NtUserGetInputState,
+};
+
 /* NtUserCallOneParam codes, not compatible with Windows */
 enum
 {
@@ -133,6 +139,7 @@ BOOL    WINAPI NtUserAddClipboardFormatListener( HWND hwnd );
 BOOL    WINAPI NtUserAttachThreadInput( DWORD from, DWORD to, BOOL attach );
 NTSTATUS WINAPI NtUserBuildHwndList( HDESK desktop, ULONG unk2, ULONG unk3, ULONG unk4,
                                      ULONG thread_id, ULONG count, HWND *buffer, ULONG *size );
+ULONG_PTR WINAPI NtUserCallNoParam( ULONG code );
 ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code );
 ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code );
 LONG    WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devmode, HWND hwnd,
