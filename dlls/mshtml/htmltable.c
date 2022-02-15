@@ -101,14 +101,14 @@ static HRESULT WINAPI HTMLTableCell_put_rowSpan(IHTMLTableCell *iface, LONG v)
     HTMLTableCell *This = impl_from_IHTMLTableCell(iface);
     nsresult nsres;
 
-    TRACE("(%p)->(%d)\n", This, v);
+    TRACE("(%p)->(%ld)\n", This, v);
 
     if(v <= 0)
         return E_INVALIDARG;
 
     nsres = nsIDOMHTMLTableCellElement_SetRowSpan(This->nscell, v);
     if(NS_FAILED(nsres)) {
-        ERR("SetRowSpan failed: %08x\n", nsres);
+        ERR("SetRowSpan failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
@@ -124,7 +124,7 @@ static HRESULT WINAPI HTMLTableCell_get_rowSpan(IHTMLTableCell *iface, LONG *p)
 
     nsres = nsIDOMHTMLTableCellElement_GetRowSpan(This->nscell, p);
     if(NS_FAILED(nsres)) {
-        ERR("GetRowSpan failed: %08x\n", nsres);
+        ERR("GetRowSpan failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
@@ -136,14 +136,14 @@ static HRESULT WINAPI HTMLTableCell_put_colSpan(IHTMLTableCell *iface, LONG v)
     HTMLTableCell *This = impl_from_IHTMLTableCell(iface);
     nsresult nsres;
 
-    TRACE("(%p)->(%d)\n", This, v);
+    TRACE("(%p)->(%ld)\n", This, v);
 
     if(v <= 0)
         return E_INVALIDARG;
 
     nsres = nsIDOMHTMLTableCellElement_SetColSpan(This->nscell, v);
     if(NS_FAILED(nsres)) {
-        ERR("SetColSpan failed: %08x\n", nsres);
+        ERR("SetColSpan failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
@@ -159,7 +159,7 @@ static HRESULT WINAPI HTMLTableCell_get_colSpan(IHTMLTableCell *iface, LONG *p)
 
     nsres = nsIDOMHTMLTableCellElement_GetColSpan(This->nscell, p);
     if(NS_FAILED(nsres)) {
-        ERR("GetColSpan failed: %08x\n", nsres);
+        ERR("GetColSpan failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
@@ -178,7 +178,7 @@ static HRESULT WINAPI HTMLTableCell_put_align(IHTMLTableCell *iface, BSTR v)
     nsres = nsIDOMHTMLTableCellElement_SetAlign(This->nscell, &str);
     nsAString_Finish(&str);
     if (NS_FAILED(nsres)) {
-        ERR("Set Align failed: %08x\n", nsres);
+        ERR("Set Align failed: %08lx\n", nsres);
         return E_FAIL;
     }
     return S_OK;
@@ -226,7 +226,7 @@ static HRESULT WINAPI HTMLTableCell_put_bgColor(IHTMLTableCell *iface, VARIANT v
     nsres = nsIDOMHTMLTableCellElement_SetBgColor(This->nscell, &strColor);
     nsAString_Finish(&strColor);
     if(NS_FAILED(nsres)) {
-        ERR("SetBgColor(%s) failed: %08x\n", debugstr_variant(&v), nsres);
+        ERR("SetBgColor(%s) failed: %08lx\n", debugstr_variant(&v), nsres);
         return E_FAIL;
     }
 
@@ -251,7 +251,7 @@ static HRESULT WINAPI HTMLTableCell_get_bgColor(IHTMLTableCell *iface, VARIANT *
         V_VT(p) = VT_BSTR;
         hres = nscolor_to_str(color, &V_BSTR(p));
     }else {
-        ERR("GetBgColor failed: %08x\n", nsres);
+        ERR("GetBgColor failed: %08lx\n", nsres);
         hres = E_FAIL;
     }
     nsAString_Finish(&strColor);
@@ -398,7 +398,7 @@ static HRESULT WINAPI HTMLTableCell_get_cellIndex(IHTMLTableCell *iface, LONG *p
     TRACE("(%p)->(%p)\n", This, p);
     nsres = nsIDOMHTMLTableCellElement_GetCellIndex(This->nscell, p);
     if (NS_FAILED(nsres)) {
-        ERR("Get CellIndex failed: %08x\n", nsres);
+        ERR("Get CellIndex failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
@@ -723,7 +723,7 @@ static HRESULT WINAPI HTMLTableRow_get_bgColor(IHTMLTableRow *iface, VARIANT *p)
        V_VT(p) = VT_BSTR;
        hres = nscolor_to_str(color, &V_BSTR(p));
     }else {
-       ERR("SetBgColor failed: %08x\n", nsres);
+       ERR("SetBgColor failed: %08lx\n", nsres);
        hres = E_FAIL;
     }
 
@@ -781,7 +781,7 @@ static HRESULT WINAPI HTMLTableRow_get_rowIndex(IHTMLTableRow *iface, LONG *p)
     TRACE("(%p)->(%p)\n", This, p);
     nsres = nsIDOMHTMLTableRowElement_GetRowIndex(This->nsrow, p);
     if(NS_FAILED(nsres)) {
-        ERR("Get rowIndex failed: %08x\n", nsres);
+        ERR("Get rowIndex failed: %08lx\n", nsres);
         return E_FAIL;
     }
     return S_OK;
@@ -795,7 +795,7 @@ static HRESULT WINAPI HTMLTableRow_get_sectionRowIndex(IHTMLTableRow *iface, LON
     TRACE("(%p)->(%p)\n", This, p);
     nsres = nsIDOMHTMLTableRowElement_GetSectionRowIndex(This->nsrow, p);
     if(NS_FAILED(nsres)) {
-        ERR("Get selectionRowIndex failed: %08x\n", nsres);
+        ERR("Get selectionRowIndex failed: %08lx\n", nsres);
         return E_FAIL;
     }
     return S_OK;
@@ -811,7 +811,7 @@ static HRESULT WINAPI HTMLTableRow_get_cells(IHTMLTableRow *iface, IHTMLElementC
 
     nsres = nsIDOMHTMLTableRowElement_GetCells(This->nsrow, &nscol);
     if(NS_FAILED(nsres)) {
-        ERR("GetCells failed: %08x\n", nsres);
+        ERR("GetCells failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
@@ -829,17 +829,17 @@ static HRESULT WINAPI HTMLTableRow_insertCell(IHTMLTableRow *iface, LONG index, 
     nsresult nsres;
     HRESULT hres;
 
-    TRACE("(%p)->(%d %p)\n", This, index, row);
+    TRACE("(%p)->(%ld %p)\n", This, index, row);
     nsres = nsIDOMHTMLTableRowElement_InsertCell(This->nsrow, index, &nselem);
     if(NS_FAILED(nsres)) {
-        ERR("Insert Cell at %d failed: %08x\n", index, nsres);
+        ERR("Insert Cell at %ld failed: %08lx\n", index, nsres);
         return E_FAIL;
     }
 
     hres = HTMLTableCell_Create(This->element.node.doc, (nsIDOMElement*)nselem, &elem);
     nsIDOMHTMLElement_Release(nselem);
     if (FAILED(hres)) {
-        ERR("Create TableCell failed: %08x\n", hres);
+        ERR("Create TableCell failed: %08lx\n", hres);
         return hres;
     }
 
@@ -852,10 +852,10 @@ static HRESULT WINAPI HTMLTableRow_deleteCell(IHTMLTableRow *iface, LONG index)
     HTMLTableRow *This = impl_from_IHTMLTableRow(iface);
     nsresult nsres;
 
-    TRACE("(%p)->(%d)\n", This, index);
+    TRACE("(%p)->(%ld)\n", This, index);
     nsres = nsIDOMHTMLTableRowElement_DeleteCell(This->nsrow, index);
     if(NS_FAILED(nsres)) {
-        ERR("Delete Cell failed: %08x\n", nsres);
+        ERR("Delete Cell failed: %08lx\n", nsres);
         return E_FAIL;
     }
     return S_OK;
@@ -1106,7 +1106,7 @@ static HRESULT WINAPI HTMLTable_Invoke(IHTMLTable *iface, DISPID dispIdMember,
 static HRESULT WINAPI HTMLTable_put_cols(IHTMLTable *iface, LONG v)
 {
     HTMLTable *This = impl_from_IHTMLTable(iface);
-    FIXME("(%p)->(%d)\n", This, v);
+    FIXME("(%p)->(%ld)\n", This, v);
     return E_NOTIMPL;
 }
 
@@ -1144,7 +1144,7 @@ static HRESULT WINAPI HTMLTable_put_frame(IHTMLTable *iface, BSTR v)
     nsAString_Finish(&str);
 
     if (NS_FAILED(nsres)) {
-        ERR("SetFrame(%s) failed: %08x\n", debugstr_w(v), nsres);
+        ERR("SetFrame(%s) failed: %08lx\n", debugstr_w(v), nsres);
         return E_FAIL;
     }
     return S_OK;
@@ -1204,7 +1204,7 @@ static HRESULT WINAPI HTMLTable_put_cellSpacing(IHTMLTable *iface, VARIANT v)
     nsres = nsIDOMHTMLTableElement_SetCellSpacing(This->nstable, &nsstr);
     nsAString_Finish(&nsstr);
     if(NS_FAILED(nsres)) {
-        ERR("SetCellSpacing failed: %08x\n", nsres);
+        ERR("SetCellSpacing failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
@@ -1241,7 +1241,7 @@ static HRESULT WINAPI HTMLTable_put_cellPadding(IHTMLTable *iface, VARIANT v)
     nsres = nsIDOMHTMLTableElement_SetCellPadding(This->nstable, &val);
     nsAString_Finish(&val);
     if(NS_FAILED(nsres)) {
-        ERR("Set Width(%s) failed, err = %08x\n", debugstr_variant(&v), nsres);
+        ERR("Set Width(%s) failed, err = %08lx\n", debugstr_variant(&v), nsres);
         return E_FAIL;
     }
 
@@ -1314,7 +1314,7 @@ static HRESULT WINAPI HTMLTable_get_bgColor(IHTMLTable *iface, VARIANT *p)
        V_VT(p) = VT_BSTR;
        hres = nscolor_to_str(color, &V_BSTR(p));
     }else {
-       ERR("SetBgColor failed: %08x\n", nsres);
+       ERR("SetBgColor failed: %08lx\n", nsres);
        hres = E_FAIL;
     }
 
@@ -1414,7 +1414,7 @@ static HRESULT WINAPI HTMLTable_get_rows(IHTMLTable *iface, IHTMLElementCollecti
 
     nsres = nsIDOMHTMLTableElement_GetRows(This->nstable, &nscol);
     if(NS_FAILED(nsres)) {
-        ERR("GetRows failed: %08x\n", nsres);
+        ERR("GetRows failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
@@ -1435,7 +1435,7 @@ static HRESULT WINAPI HTMLTable_put_width(IHTMLTable *iface, VARIANT v)
     hres = var2str(&v, &val);
 
     if (FAILED(hres)){
-        ERR("Set Width(%s) failed when initializing a nsAString, err = %08x\n",
+        ERR("Set Width(%s) failed when initializing a nsAString, err = %08lx\n",
             debugstr_variant(&v), hres);
         return hres;
     }
@@ -1444,7 +1444,7 @@ static HRESULT WINAPI HTMLTable_put_width(IHTMLTable *iface, VARIANT v)
     nsAString_Finish(&val);
 
     if (NS_FAILED(nsres)){
-        ERR("Set Width(%s) failed, err = %08x\n", debugstr_variant(&v), nsres);
+        ERR("Set Width(%s) failed, err = %08lx\n", debugstr_variant(&v), nsres);
         return E_FAIL;
     }
     return S_OK;
@@ -1480,7 +1480,7 @@ static HRESULT WINAPI HTMLTable_get_height(IHTMLTable *iface, VARIANT *p)
 static HRESULT WINAPI HTMLTable_put_dataPageSize(IHTMLTable *iface, LONG v)
 {
     HTMLTable *This = impl_from_IHTMLTable(iface);
-    FIXME("(%p)->(%d)\n", This, v);
+    FIXME("(%p)->(%ld)\n", This, v);
     return E_NOTIMPL;
 }
 
@@ -1529,7 +1529,7 @@ static HRESULT WINAPI HTMLTable_get_tBodies(IHTMLTable *iface, IHTMLElementColle
 
     nsres = nsIDOMHTMLTableElement_GetTBodies(This->nstable, &nscol);
     if(NS_FAILED(nsres)) {
-        ERR("GetTBodies failed: %08x\n", nsres);
+        ERR("GetTBodies failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
@@ -1596,17 +1596,17 @@ static HRESULT WINAPI HTMLTable_insertRow(IHTMLTable *iface, LONG index, IDispat
     nsresult nsres;
     HRESULT hres;
 
-    TRACE("(%p)->(%d %p)\n", This, index, row);
+    TRACE("(%p)->(%ld %p)\n", This, index, row);
     nsres = nsIDOMHTMLTableElement_InsertRow(This->nstable, index, &nselem);
     if(NS_FAILED(nsres)) {
-        ERR("Insert Row at %d failed: %08x\n", index, nsres);
+        ERR("Insert Row at %ld failed: %08lx\n", index, nsres);
         return E_FAIL;
     }
 
     hres = HTMLTableRow_Create(This->element.node.doc, (nsIDOMElement*)nselem, &elem);
     nsIDOMHTMLElement_Release(nselem);
     if (FAILED(hres)) {
-        ERR("Create TableRow failed: %08x\n", hres);
+        ERR("Create TableRow failed: %08lx\n", hres);
         return hres;
     }
 
@@ -1619,10 +1619,10 @@ static HRESULT WINAPI HTMLTable_deleteRow(IHTMLTable *iface, LONG index)
     HTMLTable *This = impl_from_IHTMLTable(iface);
     nsresult nsres;
 
-    TRACE("(%p)->(%d)\n", This, index);
+    TRACE("(%p)->(%ld)\n", This, index);
     nsres = nsIDOMHTMLTableElement_DeleteRow(This->nstable, index);
     if(NS_FAILED(nsres)) {
-        ERR("Delete Row failed: %08x\n", nsres);
+        ERR("Delete Row failed: %08lx\n", nsres);
         return E_FAIL;
     }
     return S_OK;
@@ -1787,7 +1787,7 @@ static HRESULT WINAPI HTMLTable2_cells(IHTMLTable2 *iface, IHTMLElementCollectio
 static HRESULT WINAPI HTMLTable2_moveRow(IHTMLTable2 *iface, LONG indexFrom, LONG indexTo, IDispatch **row)
 {
     HTMLTable *This = impl_from_IHTMLTable2(iface);
-    FIXME("(%p)->(%d %d %p)\n", This, indexFrom, indexTo, row);
+    FIXME("(%p)->(%ld %ld %p)\n", This, indexFrom, indexTo, row);
     return E_NOTIMPL;
 }
 
@@ -1875,7 +1875,7 @@ static HRESULT WINAPI HTMLTable3_put_summary(IHTMLTable3 *iface, BSTR v)
 
     nsAString_Finish(&str);
     if (NS_FAILED(nsres)) {
-        ERR("Set summary(%s) failed: %08x\n", debugstr_w(v), nsres);
+        ERR("Set summary(%s) failed: %08lx\n", debugstr_w(v), nsres);
         return E_FAIL;
     }
     return S_OK;

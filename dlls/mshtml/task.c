@@ -250,7 +250,7 @@ static void call_timer_disp(IDispatch *disp, enum timer_type timer_type)
     if(hres == S_OK)
         TRACE("%p %s <<<\n", disp, debugstr_timer_type(timer_type));
     else
-        WARN("%p %s <<< %08x\n", disp, debugstr_timer_type(timer_type), hres);
+        WARN("%p %s <<< %08lx\n", disp, debugstr_timer_type(timer_type), hres);
 
     VariantClear(&res);
 }
@@ -328,7 +328,7 @@ static LRESULT WINAPI hidden_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     }
 
     if(msg > WM_USER)
-        FIXME("(%p %d %lx %lx)\n", hwnd, msg, wParam, lParam);
+        FIXME("(%p %d %Ix %Ix)\n", hwnd, msg, wParam, lParam);
 
     return DefWindowProcW(hwnd, msg, wParam, lParam);
 }

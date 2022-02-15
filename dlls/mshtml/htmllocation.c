@@ -64,7 +64,7 @@ static HRESULT get_url_components(HTMLLocation *This, URL_COMPONENTSW *url)
         return hres;
 
     if(!InternetCrackUrlW(doc_url, 0, 0, url)) {
-        FIXME("InternetCrackUrlW failed: 0x%08x\n", GetLastError());
+        FIXME("InternetCrackUrlW failed: 0x%08lx\n", GetLastError());
         SetLastError(0);
         return E_FAIL;
     }
@@ -108,7 +108,7 @@ static ULONG WINAPI HTMLLocation_AddRef(IHTMLLocation *iface)
     HTMLLocation *This = impl_from_IHTMLLocation(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -118,7 +118,7 @@ static ULONG WINAPI HTMLLocation_Release(IHTMLLocation *iface)
     HTMLLocation *This = impl_from_IHTMLLocation(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
         if(This->window)
@@ -240,7 +240,7 @@ static HRESULT WINAPI HTMLLocation_get_href(IHTMLLocation *iface, BSTR *p)
     }
 
     if(GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
-        FIXME("InternetCreateUrl failed with error: %08x\n", GetLastError());
+        FIXME("InternetCreateUrl failed with error: %08lx\n", GetLastError());
         SetLastError(0);
         ret = E_FAIL;
         goto cleanup;
@@ -254,7 +254,7 @@ static HRESULT WINAPI HTMLLocation_get_href(IHTMLLocation *iface, BSTR *p)
     }
 
     if(!InternetCreateUrlW(&url, ICU_ESCAPE, buf, &len)) {
-        FIXME("InternetCreateUrl failed with error: %08x\n", GetLastError());
+        FIXME("InternetCreateUrl failed with error: %08lx\n", GetLastError());
         SetLastError(0);
         ret = E_FAIL;
         goto cleanup;

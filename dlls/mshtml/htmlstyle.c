@@ -789,7 +789,7 @@ static HRESULT set_nsstyle_property(nsIDOMCSSStyleDeclaration *nsstyle, styleid_
     nsAString_Finish(&str_name);
     nsAString_Finish(&str_empty);
     if(NS_FAILED(nsres))
-        WARN("SetProperty failed: %08x\n", nsres);
+        WARN("SetProperty failed: %08lx\n", nsres);
     return map_nsresult(nsres);
 }
 
@@ -866,7 +866,7 @@ static HRESULT get_nsstyle_attr_nsval(nsIDOMCSSStyleDeclaration *nsstyle, stylei
     nsres = nsIDOMCSSStyleDeclaration_GetPropertyValue(nsstyle, &str_name, value);
     nsAString_Finish(&str_name);
     if(NS_FAILED(nsres))
-        WARN("GetPropertyValue failed: %08x\n", nsres);
+        WARN("GetPropertyValue failed: %08lx\n", nsres);
     return map_nsresult(nsres);
 }
 
@@ -2540,7 +2540,7 @@ static HRESULT WINAPI HTMLStyle_put_pixelTop(IHTMLStyle *iface, LONG v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
 
-    TRACE("(%p)->(%d)\n", This, v);
+    TRACE("(%p)->(%ld)\n", This, v);
 
     return set_style_pxattr(This, STYLEID_TOP, v);
 }
@@ -2558,7 +2558,7 @@ static HRESULT WINAPI HTMLStyle_put_pixelLeft(IHTMLStyle *iface, LONG v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
 
-    TRACE("(%p)->(%d)\n", This, v);
+    TRACE("(%p)->(%ld)\n", This, v);
 
     return set_style_pxattr(This, STYLEID_LEFT, v);
 }
@@ -2594,7 +2594,7 @@ static HRESULT WINAPI HTMLStyle_put_pixelHeight(IHTMLStyle *iface, LONG v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
 
-    TRACE("(%p)->(%d)\n", This, v);
+    TRACE("(%p)->(%ld)\n", This, v);
 
     return set_style_pxattr(This, STYLEID_HEIGHT, v);
 }
@@ -2747,7 +2747,7 @@ static void set_opacity(HTMLStyle *This, const WCHAR *val)
 
     nsres = nsIDOMCSSStyleDeclaration_SetProperty(This->css_style.nsstyle, &name_str, &val_str, &empty_str);
     if(NS_FAILED(nsres))
-        ERR("SetProperty failed: %08x\n", nsres);
+        ERR("SetProperty failed: %08lx\n", nsres);
 
     nsAString_Finish(&name_str);
     nsAString_Finish(&val_str);
@@ -2893,7 +2893,7 @@ static HRESULT WINAPI HTMLStyle_setAttribute(IHTMLStyle *iface, BSTR strAttribut
     HRESULT hres;
     DISPID dispid;
 
-    TRACE("(%p)->(%s %s %08x)\n", This, debugstr_w(strAttributeName),
+    TRACE("(%p)->(%s %s %08lx)\n", This, debugstr_w(strAttributeName),
           debugstr_variant(&AttributeValue), lFlags);
 
     if(!strAttributeName)
@@ -2923,7 +2923,7 @@ static HRESULT WINAPI HTMLStyle_setAttribute(IHTMLStyle *iface, BSTR strAttribut
         FIXME("Custom attributes not supported.\n");
     }
 
-    TRACE("ret: %08x\n", hres);
+    TRACE("ret: %08lx\n", hres);
 
     return hres;
 }
@@ -2935,7 +2935,7 @@ static HRESULT WINAPI HTMLStyle_getAttribute(IHTMLStyle *iface, BSTR strAttribut
     HRESULT hres;
     DISPID dispid;
 
-    TRACE("(%p)->(%s v%p %08x)\n", This, debugstr_w(strAttributeName),
+    TRACE("(%p)->(%s v%p %08lx)\n", This, debugstr_w(strAttributeName),
           AttributeValue, lFlags);
 
     if(!AttributeValue || !strAttributeName)
@@ -2970,7 +2970,7 @@ static HRESULT WINAPI HTMLStyle_removeAttribute(IHTMLStyle *iface, BSTR strAttri
     nsresult nsres;
     HRESULT hres;
 
-    TRACE("(%p)->(%s %08x %p)\n", This, debugstr_w(strAttributeName), lFlags, pfSuccess);
+    TRACE("(%p)->(%s %08lx %p)\n", This, debugstr_w(strAttributeName), lFlags, pfSuccess);
 
     style_entry = lookup_style_tbl(&This->css_style, strAttributeName);
     if(!style_entry) {
@@ -3015,7 +3015,7 @@ static HRESULT WINAPI HTMLStyle_removeAttribute(IHTMLStyle *iface, BSTR strAttri
         nsAString_GetData(&ret_str, &ret);
         *pfSuccess = variant_bool(*ret);
     }else {
-        WARN("RemoveProperty failed: %08x\n", nsres);
+        WARN("RemoveProperty failed: %08lx\n", nsres);
     }
     nsAString_Finish(&name_str);
     nsAString_Finish(&ret_str);
@@ -3437,7 +3437,7 @@ static HRESULT WINAPI HTMLStyle2_get_right(IHTMLStyle2 *iface, VARIANT *p)
 static HRESULT WINAPI HTMLStyle2_put_pixelBottom(IHTMLStyle2 *iface, LONG v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle2(iface);
-    FIXME("(%p)->(%d)\n", This, v);
+    FIXME("(%p)->(%ld)\n", This, v);
     return E_NOTIMPL;
 }
 
@@ -3451,7 +3451,7 @@ static HRESULT WINAPI HTMLStyle2_get_pixelBottom(IHTMLStyle2 *iface, LONG *p)
 static HRESULT WINAPI HTMLStyle2_put_pixelRight(IHTMLStyle2 *iface, LONG v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle2(iface);
-    FIXME("(%p)->(%d)\n", This, v);
+    FIXME("(%p)->(%ld)\n", This, v);
     return E_NOTIMPL;
 }
 
@@ -4755,7 +4755,7 @@ static ULONG WINAPI HTMLCSSStyleDeclaration_AddRef(IHTMLCSSStyleDeclaration *ifa
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -4765,7 +4765,7 @@ static ULONG WINAPI HTMLCSSStyleDeclaration_Release(IHTMLCSSStyleDeclaration *if
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
         if(This->nsstyle)
@@ -4789,7 +4789,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_GetTypeInfo(IHTMLCSSStyleDeclarati
         UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("(%p)->(%u %lu %p)\n", This, iTInfo, lcid, ppTInfo);
     return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
 }
 
@@ -4797,7 +4797,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_GetIDsOfNames(IHTMLCSSStyleDeclara
         REFIID riid, LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
-    TRACE("(%p)->(%p %p %u %u %p)\n", This, riid, rgszNames, cNames, lcid, rgDispId);
+    TRACE("(%p)->(%p %p %u %lu %p)\n", This, riid, rgszNames, cNames, lcid, rgDispId);
     return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames,
                                      cNames, lcid, rgDispId);
 }
@@ -4807,7 +4807,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_Invoke(IHTMLCSSStyleDeclaration *i
         VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
-    TRACE("(%p)->(%d %p %u %u %p %p %p %p)\n", This, dispIdMember, riid, lcid, wFlags,
+    TRACE("(%p)->(%ld %p %lu %u %p %p %p %p)\n", This, dispIdMember, riid, lcid, wFlags,
           pDispParams, pVarResult, pExcepInfo, puArgErr);
     return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
                               wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
@@ -4900,14 +4900,14 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_setProperty(IHTMLCSSStyleDeclarati
     nsAString_Finish(&value_str);
     nsAString_Finish(&priority_str);
     if(NS_FAILED(nsres))
-        WARN("SetProperty failed: %08x\n", nsres);
+        WARN("SetProperty failed: %08lx\n", nsres);
     return map_nsresult(nsres);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_item(IHTMLCSSStyleDeclaration *iface, LONG index, BSTR *pbstrPropertyName)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
-    FIXME("(%p)->(%d %p)\n", This, index, pbstrPropertyName);
+    FIXME("(%p)->(%ld %p)\n", This, index, pbstrPropertyName);
     return E_NOTIMPL;
 }
 
@@ -6059,7 +6059,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_put_cssText(IHTMLCSSStyleDeclarati
     nsres = nsIDOMCSSStyleDeclaration_SetCssText(This->nsstyle, &text_str);
     nsAString_Finish(&text_str);
     if(NS_FAILED(nsres)) {
-        FIXME("SetCssStyle failed: %08x\n", nsres);
+        FIXME("SetCssStyle failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
@@ -8101,7 +8101,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration2_GetTypeInfo(IHTMLCSSStyleDeclarat
         UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("(%p)->(%u %lu %p)\n", This, iTInfo, lcid, ppTInfo);
     return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
 }
 
@@ -8109,7 +8109,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration2_GetIDsOfNames(IHTMLCSSStyleDeclar
         REFIID riid, LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    TRACE("(%p)->(%p %p %u %u %p)\n", This, riid, rgszNames, cNames, lcid, rgDispId);
+    TRACE("(%p)->(%p %p %u %lu %p)\n", This, riid, rgszNames, cNames, lcid, rgDispId);
     return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames,
                                      cNames, lcid, rgDispId);
 }
@@ -8119,7 +8119,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration2_Invoke(IHTMLCSSStyleDeclaration2 
         VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    TRACE("(%p)->(%d %p %u %u %p %p %p %p)\n", This, dispIdMember, riid, lcid, wFlags,
+    TRACE("(%p)->(%ld %p %lu %u %p %p %p %p)\n", This, dispIdMember, riid, lcid, wFlags,
           pDispParams, pVarResult, pExcepInfo, puArgErr);
     return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
                               wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
@@ -10032,7 +10032,7 @@ static HRESULT get_style_from_elem(HTMLElement *elem, nsIDOMCSSStyleDeclaration 
         nsres = nsIDOMElementCSSInlineStyle_GetStyle(nselemstyle, ret);
         nsIDOMElementCSSInlineStyle_Release(nselemstyle);
         if(NS_FAILED(nsres)) {
-            ERR("GetStyle failed: %08x\n", nsres);
+            ERR("GetStyle failed: %08lx\n", nsres);
             return E_FAIL;
         }
         return S_OK;
@@ -10043,7 +10043,7 @@ static HRESULT get_style_from_elem(HTMLElement *elem, nsIDOMCSSStyleDeclaration 
         nsres = nsIDOMSVGElement_GetStyle(svg_element, ret);
         nsIDOMSVGElement_Release(svg_element);
         if(NS_FAILED(nsres)) {
-            ERR("GetStyle failed: %08x\n", nsres);
+            ERR("GetStyle failed: %08lx\n", nsres);
             return E_FAIL;
         }
         return S_OK;

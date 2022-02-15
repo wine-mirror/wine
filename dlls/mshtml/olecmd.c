@@ -52,13 +52,13 @@ void do_ns_command(HTMLDocumentNode *doc, const char *cmd, nsICommandParams *nsp
 
     nsres = get_nsinterface((nsISupports*)doc->browser->webbrowser, &IID_nsICommandManager, (void**)&cmdmgr);
     if(NS_FAILED(nsres)) {
-        ERR("Could not get nsICommandManager: %08x\n", nsres);
+        ERR("Could not get nsICommandManager: %08lx\n", nsres);
         return;
     }
 
     nsres = nsICommandManager_DoCommand(cmdmgr, cmd, nsparam, doc->window->base.outer_window->window_proxy);
     if(NS_FAILED(nsres))
-        ERR("DoCommand(%s) failed: %08x\n", debugstr_a(cmd), nsres);
+        ERR("DoCommand(%s) failed: %08lx\n", debugstr_a(cmd), nsres);
 
     nsICommandManager_Release(cmdmgr);
 }
@@ -96,31 +96,31 @@ static inline HTMLDocument *impl_from_IOleCommandTarget(IOleCommandTarget *iface
 
 static HRESULT exec_open(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%d %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
+    FIXME("(%p)->(%ld %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
     return E_NOTIMPL;
 }
 
 static HRESULT exec_new(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%d %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
+    FIXME("(%p)->(%ld %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
     return E_NOTIMPL;
 }
 
 static HRESULT exec_save(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%d %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
+    FIXME("(%p)->(%ld %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
     return E_NOTIMPL;
 }
 
 static HRESULT exec_save_as(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%d %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
+    FIXME("(%p)->(%ld %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
     return E_NOTIMPL;
 }
 
 static HRESULT exec_save_copy_as(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%d %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
+    FIXME("(%p)->(%ld %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
     return E_NOTIMPL;
 }
 
@@ -240,7 +240,7 @@ static HRESULT exec_print(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pva
     nsIPrintSettings *settings;
     nsresult nsres;
 
-    TRACE("(%p)->(%d %s %p)\n", doc, nCmdexecopt, debugstr_variant(pvaIn), pvaOut);
+    TRACE("(%p)->(%ld %s %p)\n", doc, nCmdexecopt, debugstr_variant(pvaIn), pvaOut);
 
     if(pvaOut)
         FIXME("unsupported pvaOut\n");
@@ -248,13 +248,13 @@ static HRESULT exec_print(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pva
     nsres = get_nsinterface((nsISupports*)doc->browser->webbrowser, &IID_nsIWebBrowserPrint,
             (void**)&nsprint);
     if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIWebBrowserPrint: %08x\n", nsres);
+        ERR("Could not get nsIWebBrowserPrint: %08lx\n", nsres);
         return S_OK;
     }
 
     nsres = nsIWebBrowserPrint_GetGlobalPrintSettings(nsprint, &settings);
     if(NS_FAILED(nsres))
-        ERR("GetCurrentPrintSettings failed: %08x\n", nsres);
+        ERR("GetCurrentPrintSettings failed: %08lx\n", nsres);
 
     set_default_templates(settings);
 
@@ -297,7 +297,7 @@ static HRESULT exec_print(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pva
             }
 
             if(opts_cnt >= 3)
-                FIXME("Unsupported opts_cnt %d\n", opts_cnt);
+                FIXME("Unsupported opts_cnt %ld\n", opts_cnt);
 
             SafeArrayUnaccessData(V_ARRAY(pvaIn));
             break;
@@ -309,7 +309,7 @@ static HRESULT exec_print(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pva
 
     nsres = nsIWebBrowserPrint_Print(nsprint, settings, NULL);
     if(NS_FAILED(nsres))
-        ERR("Print failed: %08x\n", nsres);
+        ERR("Print failed: %08lx\n", nsres);
 
     nsIWebBrowserPrint_Release(nsprint);
 
@@ -318,37 +318,37 @@ static HRESULT exec_print(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pva
 
 static HRESULT exec_print_preview(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%d %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
+    FIXME("(%p)->(%ld %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
     return E_NOTIMPL;
 }
 
 static HRESULT exec_page_setup(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%d %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
+    FIXME("(%p)->(%ld %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
     return E_NOTIMPL;
 }
 
 static HRESULT exec_spell(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%d %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
+    FIXME("(%p)->(%ld %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
     return E_NOTIMPL;
 }
 
 static HRESULT exec_properties(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%d %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
+    FIXME("(%p)->(%ld %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
     return E_NOTIMPL;
 }
 
 static HRESULT exec_cut(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%d %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
+    FIXME("(%p)->(%ld %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
     return E_NOTIMPL;
 }
 
 static HRESULT exec_copy(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    TRACE("(%p)->(%d %s %p)\n", doc, nCmdexecopt, debugstr_variant(pvaIn), pvaOut);
+    TRACE("(%p)->(%ld %s %p)\n", doc, nCmdexecopt, debugstr_variant(pvaIn), pvaOut);
 
     do_ns_command(doc, NSCMD_COPY, NULL);
     return S_OK;
@@ -356,25 +356,25 @@ static HRESULT exec_copy(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaI
 
 static HRESULT exec_paste(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%d %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
+    FIXME("(%p)->(%ld %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
     return E_NOTIMPL;
 }
 
 static HRESULT exec_paste_special(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%d %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
+    FIXME("(%p)->(%ld %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
     return E_NOTIMPL;
 }
 
 static HRESULT exec_undo(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%d %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
+    FIXME("(%p)->(%ld %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
     return E_NOTIMPL;
 }
 
 static HRESULT exec_rendo(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%d %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
+    FIXME("(%p)->(%ld %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
     return E_NOTIMPL;
 }
 
@@ -395,19 +395,19 @@ static HRESULT exec_select_all(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT
 
 static HRESULT exec_clear_selection(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%d %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
+    FIXME("(%p)->(%ld %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
     return E_NOTIMPL;
 }
 
 static HRESULT exec_zoom(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%d %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
+    FIXME("(%p)->(%ld %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
     return E_NOTIMPL;
 }
 
 static HRESULT exec_get_zoom_range(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%d %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
+    FIXME("(%p)->(%ld %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
     return E_NOTIMPL;
 }
 
@@ -450,7 +450,7 @@ static HRESULT exec_refresh(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *p
     refresh_task_t *task;
     HRESULT hres;
 
-    TRACE("(%p)->(%d %s %p)\n", doc, nCmdexecopt, debugstr_variant(pvaIn), pvaOut);
+    TRACE("(%p)->(%ld %s %p)\n", doc, nCmdexecopt, debugstr_variant(pvaIn), pvaOut);
 
     if(doc != doc->browser->doc->basedoc.doc_node) {
         FIXME("Unsupported on frame documents\n");
@@ -485,37 +485,37 @@ static HRESULT exec_refresh(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *p
 
 static HRESULT exec_stop(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%d %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
+    FIXME("(%p)->(%ld %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
     return E_NOTIMPL;
 }
 
 static HRESULT exec_stop_download(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%d %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
+    FIXME("(%p)->(%ld %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
     return E_NOTIMPL;
 }
 
 static HRESULT exec_find(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%d %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
+    FIXME("(%p)->(%ld %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
     return E_NOTIMPL;
 }
 
 static HRESULT exec_delete(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%d %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
+    FIXME("(%p)->(%ld %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
     return E_NOTIMPL;
 }
 
 static HRESULT exec_enable_interaction(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%d %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
+    FIXME("(%p)->(%ld %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
     return E_NOTIMPL;
 }
 
 static HRESULT exec_on_unload(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    TRACE("(%p)->(%d %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
+    TRACE("(%p)->(%ld %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
 
     /* Tests show that we have nothing more to do here */
 
@@ -529,37 +529,37 @@ static HRESULT exec_on_unload(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT 
 
 static HRESULT exec_show_page_setup(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%d %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
+    FIXME("(%p)->(%ld %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
     return E_NOTIMPL;
 }
 
 static HRESULT exec_show_print(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%d %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
+    FIXME("(%p)->(%ld %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
     return E_NOTIMPL;
 }
 
 static HRESULT exec_close(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%d %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
+    FIXME("(%p)->(%ld %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
     return E_NOTIMPL;
 }
 
 static HRESULT exec_set_print_template(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%d %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
+    FIXME("(%p)->(%ld %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
     return E_NOTIMPL;
 }
 
 static HRESULT exec_get_print_template(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%d %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
+    FIXME("(%p)->(%ld %p %p)\n", doc, nCmdexecopt, pvaIn, pvaOut);
     return E_NOTIMPL;
 }
 
 static HRESULT exec_optical_zoom(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    TRACE("(%p)->(%d %s %p)\n", doc, nCmdexecopt, debugstr_variant(pvaIn), pvaOut);
+    TRACE("(%p)->(%ld %s %p)\n", doc, nCmdexecopt, debugstr_variant(pvaIn), pvaOut);
 
     if(pvaIn && V_VT(pvaIn) != VT_I4) {
         FIXME("Unsupported argument %s\n", debugstr_variant(pvaIn));
@@ -584,7 +584,7 @@ static HRESULT query_mshtml_copy(HTMLDocumentNode *doc, OLECMD *cmd)
 
 static HRESULT exec_mshtml_copy(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    TRACE("(%p)->(%08x %p %p)\n", doc, cmdexecopt, in, out);
+    TRACE("(%p)->(%08lx %p %p)\n", doc, cmdexecopt, in, out);
 
     if(doc->browser->usermode == EDITMODE)
         return editor_exec_copy(doc, cmdexecopt, in, out);
@@ -605,7 +605,7 @@ static HRESULT exec_mshtml_cut(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT 
     nsIClipboardCommands *clipboard_commands;
     nsresult nsres;
 
-    TRACE("(%p)->(%08x %p %p)\n", doc, cmdexecopt, in, out);
+    TRACE("(%p)->(%08lx %p %p)\n", doc, cmdexecopt, in, out);
 
     if(doc->browser->usermode == EDITMODE)
         return editor_exec_cut(doc, cmdexecopt, in, out);
@@ -617,7 +617,7 @@ static HRESULT exec_mshtml_cut(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT 
     nsres = nsIClipboardCommands_CutSelection(clipboard_commands);
     nsIClipboardCommands_Release(clipboard_commands);
     if(NS_FAILED(nsres)) {
-        ERR("Paste failed: %08x\n", nsres);
+        ERR("Paste failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
@@ -636,7 +636,7 @@ static HRESULT exec_mshtml_paste(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIAN
     nsIClipboardCommands *clipboard_commands;
     nsresult nsres;
 
-    TRACE("(%p)->(%08x %p %p)\n", doc, cmdexecopt, in, out);
+    TRACE("(%p)->(%08lx %p %p)\n", doc, cmdexecopt, in, out);
 
     if(doc->browser->usermode == EDITMODE)
         return editor_exec_paste(doc, cmdexecopt, in, out);
@@ -648,7 +648,7 @@ static HRESULT exec_mshtml_paste(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIAN
     nsres = nsIClipboardCommands_Paste(clipboard_commands);
     nsIClipboardCommands_Release(clipboard_commands);
     if(NS_FAILED(nsres)) {
-        ERR("Paste failed: %08x\n", nsres);
+        ERR("Paste failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
@@ -665,7 +665,7 @@ static HRESULT query_selall_status(HTMLDocumentNode *doc, OLECMD *cmd)
 
 static HRESULT exec_browsemode(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    WARN("(%p)->(%08x %p %p)\n", doc, cmdexecopt, in, out);
+    WARN("(%p)->(%08lx %p %p)\n", doc, cmdexecopt, in, out);
 
     if(in || out)
         FIXME("unsupported args\n");
@@ -677,7 +677,7 @@ static HRESULT exec_browsemode(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT 
 
 static HRESULT exec_editmode(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    TRACE("(%p)->(%08x %p %p)\n", doc, cmdexecopt, in, out);
+    TRACE("(%p)->(%08lx %p %p)\n", doc, cmdexecopt, in, out);
 
     if(in || out)
         FIXME("unsupported args\n");
@@ -687,20 +687,20 @@ static HRESULT exec_editmode(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *i
 
 static HRESULT exec_htmleditmode(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    FIXME("(%p)->(%08x %p %p)\n", doc, cmdexecopt, in, out);
+    FIXME("(%p)->(%08lx %p %p)\n", doc, cmdexecopt, in, out);
     return S_OK;
 }
 
 static HRESULT exec_baselinefont3(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    FIXME("(%p)->(%08x %p %p)\n", doc, cmdexecopt, in, out);
+    FIXME("(%p)->(%08lx %p %p)\n", doc, cmdexecopt, in, out);
     return S_OK;
 }
 
 static HRESULT exec_respectvisibility_indesign(HTMLDocumentNode *doc, DWORD cmdexecopt,
         VARIANT *in, VARIANT *out)
 {
-    TRACE("(%p)->(%x %s %p)\n", doc, cmdexecopt, debugstr_variant(in), out);
+    TRACE("(%p)->(%lx %s %p)\n", doc, cmdexecopt, debugstr_variant(in), out);
 
     /* This is turned on by default in Gecko. */
     if(!in || V_VT(in) != VT_BOOL || !V_BOOL(in))
@@ -832,7 +832,7 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
     HTMLDocument *This = impl_from_IOleCommandTarget(iface);
     HRESULT hres;
 
-    TRACE("(%p)->(%s %d %p %p)\n", This, debugstr_guid(pguidCmdGroup), cCmds, prgCmds, pCmdText);
+    TRACE("(%p)->(%s %ld %p %p)\n", This, debugstr_guid(pguidCmdGroup), cCmds, prgCmds, pCmdText);
 
     if(pCmdText)
         FIXME("Unsupported pCmdText\n");
@@ -846,7 +846,7 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
 
         for(i=0; i<cCmds; i++) {
             if(prgCmds[i].cmdID < OLECMDID_OPEN || prgCmds[i].cmdID >= ARRAY_SIZE(exec_table)) {
-                WARN("Unsupported cmdID = %d\n", prgCmds[i].cmdID);
+                WARN("Unsupported cmdID = %ld\n", prgCmds[i].cmdID);
                 prgCmds[i].cmdf = 0;
             }else {
                 if(prgCmds[i].cmdID == OLECMDID_OPEN || prgCmds[i].cmdID == OLECMDID_NEW) {
@@ -870,7 +870,7 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
                     }
                 }else {
                     prgCmds[i].cmdf = exec_table[prgCmds[i].cmdID].cmdf;
-                    TRACE("cmdID = %d  returning %x\n", prgCmds[i].cmdID, prgCmds[i].cmdf);
+                    TRACE("cmdID = %ld  returning %lx\n", prgCmds[i].cmdID, prgCmds[i].cmdf);
                 }
             }
         }
@@ -886,7 +886,7 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
             if(hres == OLECMDERR_E_NOTSUPPORTED)
                 hres = query_from_table(This->doc_node, editmode_cmds, prgCmds+i);
             if(hres == OLECMDERR_E_NOTSUPPORTED)
-                FIXME("CGID_MSHTML: unsupported cmdID %d\n", prgCmds[i].cmdID);
+                FIXME("CGID_MSHTML: unsupported cmdID %ld\n", prgCmds[i].cmdID);
         }
 
         return (prgCmds[cCmds-1].cmdf & OLECMDF_SUPPORTED) ? S_OK : OLECMDERR_E_NOTSUPPORTED;
@@ -915,24 +915,24 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
 {
     HTMLDocument *This = impl_from_IOleCommandTarget(iface);
 
-    TRACE("(%p)->(%s %d %d %s %p)\n", This, debugstr_guid(pguidCmdGroup), nCmdID, nCmdexecopt, wine_dbgstr_variant(pvaIn), pvaOut);
+    TRACE("(%p)->(%s %ld %ld %s %p)\n", This, debugstr_guid(pguidCmdGroup), nCmdID, nCmdexecopt, wine_dbgstr_variant(pvaIn), pvaOut);
 
     if(!This->doc_node->browser)
         return E_UNEXPECTED;
 
     if(!pguidCmdGroup) {
         if(nCmdID < OLECMDID_OPEN || nCmdID >= ARRAY_SIZE(exec_table) || !exec_table[nCmdID].func) {
-            WARN("Unsupported cmdID = %d\n", nCmdID);
+            WARN("Unsupported cmdID = %ld\n", nCmdID);
             return OLECMDERR_E_NOTSUPPORTED;
         }
 
         return exec_table[nCmdID].func(This->doc_node, nCmdexecopt, pvaIn, pvaOut);
     }else if(IsEqualGUID(&CGID_Explorer, pguidCmdGroup)) {
-        FIXME("unsupported nCmdID %d of CGID_Explorer group\n", nCmdID);
+        FIXME("unsupported nCmdID %ld of CGID_Explorer group\n", nCmdID);
         TRACE("%p %p\n", pvaIn, pvaOut);
         return OLECMDERR_E_NOTSUPPORTED;
     }else if(IsEqualGUID(&CGID_ShellDocView, pguidCmdGroup)) {
-        FIXME("unsupported nCmdID %d of CGID_ShellDocView group\n", nCmdID);
+        FIXME("unsupported nCmdID %ld of CGID_ShellDocView group\n", nCmdID);
         return OLECMDERR_E_NOTSUPPORTED;
     }else if(IsEqualGUID(&CGID_MSHTML, pguidCmdGroup)) {
         HRESULT hres = exec_from_table(This->doc_node, base_cmds, nCmdID, nCmdexecopt, pvaIn, pvaOut);
@@ -940,7 +940,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             hres = exec_from_table(This->doc_node, editmode_cmds, nCmdID,
                                    nCmdexecopt, pvaIn, pvaOut);
         if(hres == OLECMDERR_E_NOTSUPPORTED)
-            FIXME("unsupported nCmdID %d of CGID_MSHTML group\n", nCmdID);
+            FIXME("unsupported nCmdID %ld of CGID_MSHTML group\n", nCmdID);
 
         return hres;
     }

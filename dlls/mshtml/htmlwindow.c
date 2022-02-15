@@ -212,7 +212,7 @@ static ULONG WINAPI HTMLWindow2_AddRef(IHTMLWindow2 *iface)
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -314,7 +314,7 @@ static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
         if (This->console)
@@ -373,7 +373,7 @@ static HRESULT get_frame_by_index(HTMLOuterWindow *This, UINT32 index, HTMLOuter
 
     nsres = nsIDOMWindow_GetFrames(This->nswindow, &nsframes);
     if(NS_FAILED(nsres)) {
-        FIXME("nsIDOMWindow_GetFrames failed: 0x%08x\n", nsres);
+        FIXME("nsIDOMWindow_GetFrames failed: 0x%08lx\n", nsres);
         return E_FAIL;
     }
 
@@ -388,7 +388,7 @@ static HRESULT get_frame_by_index(HTMLOuterWindow *This, UINT32 index, HTMLOuter
     nsres = nsIDOMWindowCollection_Item(nsframes, index, &mozwindow);
     nsIDOMWindowCollection_Release(nsframes);
     if(NS_FAILED(nsres)) {
-        FIXME("nsIDOMWindowCollection_Item failed: 0x%08x\n", nsres);
+        FIXME("nsIDOMWindowCollection_Item failed: 0x%08lx\n", nsres);
         return E_FAIL;
     }
 
@@ -410,7 +410,7 @@ HRESULT get_frame_by_name(HTMLOuterWindow *This, const WCHAR *name, BOOL deep, H
 
     nsres = nsIDOMWindow_GetFrames(This->nswindow, &nsframes);
     if(NS_FAILED(nsres)) {
-        FIXME("nsIDOMWindow_GetFrames failed: 0x%08x\n", nsres);
+        FIXME("nsIDOMWindow_GetFrames failed: 0x%08lx\n", nsres);
         return E_FAIL;
     }
 
@@ -441,7 +441,7 @@ HRESULT get_frame_by_name(HTMLOuterWindow *This, const WCHAR *name, BOOL deep, H
 
         nsres = nsIDOMWindowCollection_Item(nsframes, i, &mozwindow);
         if(NS_FAILED(nsres)) {
-            FIXME("nsIDOMWindowCollection_Item failed: 0x%08x\n", nsres);
+            FIXME("nsIDOMWindowCollection_Item failed: 0x%08lx\n", nsres);
             hres = E_FAIL;
             break;
         }
@@ -457,7 +457,7 @@ HRESULT get_frame_by_name(HTMLOuterWindow *This, const WCHAR *name, BOOL deep, H
 
         hres = IHTMLElement_get_id(&window_iter->frame_element->element.IHTMLElement_iface, &id);
         if(FAILED(hres)) {
-            FIXME("IHTMLElement_get_id failed: 0x%08x\n", hres);
+            FIXME("IHTMLElement_get_id failed: 0x%08lx\n", hres);
             break;
         }
 
@@ -534,14 +534,14 @@ static HRESULT WINAPI HTMLWindow2_get_length(IHTMLWindow2 *iface, LONG *p)
 
     nsres = nsIDOMWindow_GetFrames(This->outer_window->nswindow, &nscollection);
     if(NS_FAILED(nsres)) {
-        ERR("GetFrames failed: %08x\n", nsres);
+        ERR("GetFrames failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
     nsres = nsIDOMWindowCollection_GetLength(nscollection, &length);
     nsIDOMWindowCollection_Release(nscollection);
     if(NS_FAILED(nsres)) {
-        ERR("GetLength failed: %08x\n", nsres);
+        ERR("GetLength failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
@@ -604,7 +604,7 @@ static HRESULT WINAPI HTMLWindow2_setTimeout(IHTMLWindow2 *iface, BSTR expressio
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
     VARIANT expr_var;
 
-    TRACE("(%p)->(%s %d %p %p)\n", This, debugstr_w(expression), msec, language, timerID);
+    TRACE("(%p)->(%s %ld %p %p)\n", This, debugstr_w(expression), msec, language, timerID);
 
     V_VT(&expr_var) = VT_BSTR;
     V_BSTR(&expr_var) = expression;
@@ -616,7 +616,7 @@ static HRESULT WINAPI HTMLWindow2_clearTimeout(IHTMLWindow2 *iface, LONG timerID
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
 
-    TRACE("(%p)->(%d)\n", This, timerID);
+    TRACE("(%p)->(%ld)\n", This, timerID);
 
     return clear_task_timer(This->inner_window, timerID);
 }
@@ -635,7 +635,7 @@ static HRESULT WINAPI HTMLWindow2_alert(IHTMLWindow2 *iface, BSTR message)
         return E_UNEXPECTED;
 
     if(!LoadStringW(get_shdoclc(), IDS_MESSAGE_BOX_TITLE, title, ARRAY_SIZE(title))) {
-        WARN("Could not load message box title: %d\n", GetLastError());
+        WARN("Could not load message box title: %ld\n", GetLastError());
         return S_OK;
     }
 
@@ -668,7 +668,7 @@ static HRESULT WINAPI HTMLWindow2_confirm(IHTMLWindow2 *iface, BSTR message,
         return E_UNEXPECTED;
 
     if(!LoadStringW(get_shdoclc(), IDS_MESSAGE_BOX_TITLE, wszTitle, ARRAY_SIZE(wszTitle))) {
-        WARN("Could not load message box title: %d\n", GetLastError());
+        WARN("Could not load message box title: %ld\n", GetLastError());
         *confirmed = VARIANT_TRUE;
         return S_OK;
     }
@@ -699,7 +699,7 @@ static INT_PTR CALLBACK prompt_dlgproc(HWND hwnd, UINT msg,
             WCHAR wszTitle[100];
 
             if(!LoadStringW(get_shdoclc(), IDS_MESSAGE_BOX_TITLE, wszTitle, ARRAY_SIZE(wszTitle))) {
-                WARN("Could not load message box title: %d\n", GetLastError());
+                WARN("Could not load message box title: %ld\n", GetLastError());
                 EndDialog(hwnd, wparam);
                 return FALSE;
             }
@@ -952,7 +952,7 @@ static HRESULT WINAPI HTMLWindow2_put_name(IHTMLWindow2 *iface, BSTR v)
     nsres = nsIDOMWindow_SetName(This->outer_window->nswindow, &name_str);
     nsAString_Finish(&name_str);
     if(NS_FAILED(nsres))
-        ERR("SetName failed: %08x\n", nsres);
+        ERR("SetName failed: %08lx\n", nsres);
 
     return S_OK;
 }
@@ -1383,11 +1383,11 @@ static HRESULT WINAPI HTMLWindow2_scroll(IHTMLWindow2 *iface, LONG x, LONG y)
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
     nsresult nsres;
 
-    TRACE("(%p)->(%d %d)\n", This, x, y);
+    TRACE("(%p)->(%ld %ld)\n", This, x, y);
 
     nsres = nsIDOMWindow_Scroll(This->outer_window->nswindow, x, y);
     if(NS_FAILED(nsres)) {
-        ERR("ScrollBy failed: %08x\n", nsres);
+        ERR("ScrollBy failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
@@ -1409,7 +1409,7 @@ static HRESULT WINAPI HTMLWindow2_setInterval(IHTMLWindow2 *iface, BSTR expressi
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
     VARIANT expr;
 
-    TRACE("(%p)->(%s %d %p %p)\n", This, debugstr_w(expression), msec, language, timerID);
+    TRACE("(%p)->(%s %ld %p %p)\n", This, debugstr_w(expression), msec, language, timerID);
 
     V_VT(&expr) = VT_BSTR;
     V_BSTR(&expr) = expression;
@@ -1420,7 +1420,7 @@ static HRESULT WINAPI HTMLWindow2_clearInterval(IHTMLWindow2 *iface, LONG timerI
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
 
-    TRACE("(%p)->(%d)\n", This, timerID);
+    TRACE("(%p)->(%ld)\n", This, timerID);
 
     return clear_task_timer(This->inner_window, timerID);
 }
@@ -1467,11 +1467,11 @@ static HRESULT WINAPI HTMLWindow2_scrollBy(IHTMLWindow2 *iface, LONG x, LONG y)
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
     nsresult nsres;
 
-    TRACE("(%p)->(%d %d)\n", This, x, y);
+    TRACE("(%p)->(%ld %ld)\n", This, x, y);
 
     nsres = nsIDOMWindow_ScrollBy(This->outer_window->nswindow, x, y);
     if(NS_FAILED(nsres))
-        ERR("ScrollBy failed: %08x\n", nsres);
+        ERR("ScrollBy failed: %08lx\n", nsres);
 
     return S_OK;
 }
@@ -1481,11 +1481,11 @@ static HRESULT WINAPI HTMLWindow2_scrollTo(IHTMLWindow2 *iface, LONG x, LONG y)
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
     nsresult nsres;
 
-    TRACE("(%p)->(%d %d)\n", This, x, y);
+    TRACE("(%p)->(%ld %ld)\n", This, x, y);
 
     nsres = nsIDOMWindow_ScrollTo(This->outer_window->nswindow, x, y);
     if(NS_FAILED(nsres))
-        ERR("ScrollTo failed: %08x\n", nsres);
+        ERR("ScrollTo failed: %08lx\n", nsres);
 
     return S_OK;
 }
@@ -1493,28 +1493,28 @@ static HRESULT WINAPI HTMLWindow2_scrollTo(IHTMLWindow2 *iface, LONG x, LONG y)
 static HRESULT WINAPI HTMLWindow2_moveTo(IHTMLWindow2 *iface, LONG x, LONG y)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
-    FIXME("(%p)->(%d %d)\n", This, x, y);
+    FIXME("(%p)->(%ld %ld)\n", This, x, y);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLWindow2_moveBy(IHTMLWindow2 *iface, LONG x, LONG y)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
-    FIXME("(%p)->(%d %d)\n", This, x, y);
+    FIXME("(%p)->(%ld %ld)\n", This, x, y);
     return S_FALSE;
 }
 
 static HRESULT WINAPI HTMLWindow2_resizeTo(IHTMLWindow2 *iface, LONG x, LONG y)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
-    FIXME("(%p)->(%d %d)\n", This, x, y);
+    FIXME("(%p)->(%ld %ld)\n", This, x, y);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLWindow2_resizeBy(IHTMLWindow2 *iface, LONG x, LONG y)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
-    FIXME("(%p)->(%d %d)\n", This, x, y);
+    FIXME("(%p)->(%ld %ld)\n", This, x, y);
     return S_FALSE;
 }
 
@@ -1685,7 +1685,7 @@ static HRESULT WINAPI HTMLWindow3_get_screenLeft(IHTMLWindow3 *iface, LONG *p)
 
     nsres = nsIDOMWindow_GetScreenX(This->outer_window->nswindow, p);
     if(NS_FAILED(nsres)) {
-        ERR("GetScreenX failed: %08x\n", nsres);
+        ERR("GetScreenX failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
@@ -1701,7 +1701,7 @@ static HRESULT WINAPI HTMLWindow3_get_screenTop(IHTMLWindow3 *iface, LONG *p)
 
     nsres = nsIDOMWindow_GetScreenY(This->outer_window->nswindow, p);
     if(NS_FAILED(nsres)) {
-        ERR("GetScreenY failed: %08x\n", nsres);
+        ERR("GetScreenY failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
@@ -1773,7 +1773,7 @@ static HRESULT WINAPI HTMLWindow3_setTimeout(IHTMLWindow3 *iface, VARIANT *expre
 {
     HTMLWindow *This = impl_from_IHTMLWindow3(iface);
 
-    TRACE("(%p)->(%s %d %s %p)\n", This, debugstr_variant(expression), msec, debugstr_variant(language), timerID);
+    TRACE("(%p)->(%s %ld %s %p)\n", This, debugstr_variant(expression), msec, debugstr_variant(language), timerID);
 
     return window_set_timer(This->inner_window, expression, msec, language, TIMER_TIMEOUT, timerID);
 }
@@ -1783,7 +1783,7 @@ static HRESULT WINAPI HTMLWindow3_setInterval(IHTMLWindow3 *iface, VARIANT *expr
 {
     HTMLWindow *This = impl_from_IHTMLWindow3(iface);
 
-    TRACE("(%p)->(%p %d %p %p)\n", This, expression, msec, language, timerID);
+    TRACE("(%p)->(%p %ld %p %p)\n", This, expression, msec, language, timerID);
 
     return window_set_timer(This->inner_window, expression, msec, language, TIMER_INTERVAL, timerID);
 }
@@ -2365,7 +2365,7 @@ static HRESULT WINAPI HTMLWindow7_getComputedStyle(IHTMLWindow7 *iface, IHTMLDOM
     IHTMLElement_Release(elem);
     nsAString_Finish(&pseudo_elt_str);
     if(NS_FAILED(nsres)) {
-        FIXME("GetComputedStyle failed: %08x\n", nsres);
+        FIXME("GetComputedStyle failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
@@ -2435,7 +2435,7 @@ static HRESULT WINAPI HTMLWindow7_get_innerWidth(IHTMLWindow7 *iface, LONG *p)
 
     nsres = nsIDOMWindow_GetInnerWidth(This->outer_window->nswindow, &ret);
     if(NS_FAILED(nsres)) {
-        ERR("GetInnerWidth failed: %08x\n", nsres);
+        ERR("GetInnerWidth failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
@@ -2453,7 +2453,7 @@ static HRESULT WINAPI HTMLWindow7_get_innerHeight(IHTMLWindow7 *iface, LONG *p)
 
     nsres = nsIDOMWindow_GetInnerHeight(This->outer_window->nswindow, &ret);
     if(NS_FAILED(nsres)) {
-        ERR("GetInnerWidth failed: %08x\n", nsres);
+        ERR("GetInnerWidth failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
@@ -2471,7 +2471,7 @@ static HRESULT WINAPI HTMLWindow7_get_pageXOffset(IHTMLWindow7 *iface, LONG *p)
 
     nsres = nsIDOMWindow_GetPageXOffset(This->outer_window->nswindow, &ret);
     if(NS_FAILED(nsres)) {
-        ERR("GetPageXOffset failed: %08x\n", nsres);
+        ERR("GetPageXOffset failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
@@ -2489,7 +2489,7 @@ static HRESULT WINAPI HTMLWindow7_get_pageYOffset(IHTMLWindow7 *iface, LONG *p)
 
     nsres = nsIDOMWindow_GetPageYOffset(This->outer_window->nswindow, &ret);
     if(NS_FAILED(nsres)) {
-        ERR("GetPageYOffset failed: %08x\n", nsres);
+        ERR("GetPageYOffset failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
@@ -2774,7 +2774,7 @@ static HRESULT WINAPI HTMLPrivateWindow_SuperNavigate(IHTMLPrivateWindow *iface,
     IUri *uri;
     HRESULT hres;
 
-    TRACE("(%p)->(%s %s %s %s %s %s %x)\n", This, debugstr_w(url), debugstr_w(arg2), debugstr_w(arg3), debugstr_w(arg4),
+    TRACE("(%p)->(%s %s %s %s %s %s %lx)\n", This, debugstr_w(url), debugstr_w(arg2), debugstr_w(arg3), debugstr_w(arg4),
           debugstr_variant(post_data_var), debugstr_variant(headers_var), flags);
 
     if(!window || !window->browser)
@@ -2895,7 +2895,7 @@ static HRESULT WINAPI TravelLogClient_FindWindowByIndex(ITravelLogClient *iface,
 {
     HTMLWindow *This = impl_from_ITravelLogClient(iface);
 
-    FIXME("(%p)->(%d %p) semi-stub\n", This, dwID, ppunk);
+    FIXME("(%p)->(%ld %p) semi-stub\n", This, dwID, ppunk);
 
     *ppunk = NULL;
     return E_FAIL;
@@ -2911,7 +2911,7 @@ static HRESULT WINAPI TravelLogClient_GetWindowData(ITravelLogClient *iface, ISt
 static HRESULT WINAPI TravelLogClient_LoadHistoryPosition(ITravelLogClient *iface, LPWSTR pszUrlLocation, DWORD dwPosition)
 {
     HTMLWindow *This = impl_from_ITravelLogClient(iface);
-    FIXME("(%p)->(%s %d)\n", This, debugstr_w(pszUrlLocation), dwPosition);
+    FIXME("(%p)->(%s %ld)\n", This, debugstr_w(pszUrlLocation), dwPosition);
     return E_NOTIMPL;
 }
 
@@ -3009,7 +3009,7 @@ static HRESULT WINAPI ProvideClassInfo_GetClassInfo(IProvideMultipleClassInfo *i
 static HRESULT WINAPI ProvideClassInfo2_GetGUID(IProvideMultipleClassInfo *iface, DWORD dwGuidKind, GUID *pGUID)
 {
     HTMLWindow *This = impl_from_IProvideMultipleClassInfo(iface);
-    FIXME("(%p)->(%u %p)\n", This, dwGuidKind, pGUID);
+    FIXME("(%p)->(%lu %p)\n", This, dwGuidKind, pGUID);
     return E_NOTIMPL;
 }
 
@@ -3025,7 +3025,7 @@ static HRESULT WINAPI ProvideMultipleClassInfo_GetInfoOfIndex(IProvideMultipleCl
         DWORD dwFlags, ITypeInfo **pptiCoClass, DWORD *pdwTIFlags, ULONG *pcdispidReserved, IID *piidPrimary, IID *piidSource)
 {
     HTMLWindow *This = impl_from_IProvideMultipleClassInfo(iface);
-    FIXME("(%p)->(%u %x %p %p %p %p %p)\n", This, iti, dwFlags, pptiCoClass, pdwTIFlags, pcdispidReserved, piidPrimary, piidSource);
+    FIXME("(%p)->(%lu %lx %p %p %p %p %p)\n", This, iti, dwFlags, pptiCoClass, pdwTIFlags, pcdispidReserved, piidPrimary, piidSource);
     return E_NOTIMPL;
 }
 
@@ -3274,7 +3274,7 @@ static HRESULT WINAPI WindowDispEx_GetTypeInfo(IDispatchEx *iface, UINT iTInfo,
 {
     HTMLWindow *This = impl_from_IDispatchEx(iface);
 
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("(%p)->(%u %lu %p)\n", This, iTInfo, lcid, ppTInfo);
 
     return IDispatchEx_GetTypeInfo(&This->inner_window->event_target.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
 }
@@ -3287,7 +3287,7 @@ static HRESULT WINAPI WindowDispEx_GetIDsOfNames(IDispatchEx *iface, REFIID riid
     UINT i;
     HRESULT hres;
 
-    WARN("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    WARN("(%p)->(%s %p %u %lu %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     for(i=0; i < cNames; i++) {
         /* We shouldn't use script's IDispatchEx here, so we shouldn't use GetDispID */
@@ -3305,7 +3305,7 @@ static HRESULT WINAPI WindowDispEx_Invoke(IDispatchEx *iface, DISPID dispIdMembe
 {
     HTMLWindow *This = impl_from_IDispatchEx(iface);
 
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("(%p)->(%ld %s %ld %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     /* FIXME: Use script dispatch */
@@ -3383,7 +3383,7 @@ static HRESULT WINAPI WindowDispEx_GetDispID(IDispatchEx *iface, BSTR bstrName, 
     HTMLInnerWindow *window = This->inner_window;
     HRESULT hres;
 
-    TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(bstrName), grfdex, pid);
+    TRACE("(%p)->(%s %lx %p)\n", This, debugstr_w(bstrName), grfdex, pid);
 
     hres = search_window_props(window, bstrName, grfdex, pid);
     if(hres != DISP_E_UNKNOWNNAME)
@@ -3438,7 +3438,7 @@ static HRESULT WINAPI WindowDispEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID 
     HTMLWindow *This = impl_from_IDispatchEx(iface);
     HTMLInnerWindow *window = This->inner_window;
 
-    TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
+    TRACE("(%p)->(%lx %lx %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
 
     switch(id) {
     case DISPID_IHTMLWINDOW2_LOCATION: {
@@ -3488,7 +3488,7 @@ static HRESULT WINAPI WindowDispEx_DeleteMemberByName(IDispatchEx *iface, BSTR b
 {
     HTMLWindow *This = impl_from_IDispatchEx(iface);
 
-    TRACE("(%p)->(%s %x)\n", This, debugstr_w(bstrName), grfdex);
+    TRACE("(%p)->(%s %lx)\n", This, debugstr_w(bstrName), grfdex);
 
     return IDispatchEx_DeleteMemberByName(&This->inner_window->event_target.dispex.IDispatchEx_iface, bstrName, grfdex);
 }
@@ -3497,7 +3497,7 @@ static HRESULT WINAPI WindowDispEx_DeleteMemberByDispID(IDispatchEx *iface, DISP
 {
     HTMLWindow *This = impl_from_IDispatchEx(iface);
 
-    TRACE("(%p)->(%x)\n", This, id);
+    TRACE("(%p)->(%lx)\n", This, id);
 
     return IDispatchEx_DeleteMemberByDispID(&This->inner_window->event_target.dispex.IDispatchEx_iface, id);
 }
@@ -3506,7 +3506,7 @@ static HRESULT WINAPI WindowDispEx_GetMemberProperties(IDispatchEx *iface, DISPI
 {
     HTMLWindow *This = impl_from_IDispatchEx(iface);
 
-    TRACE("(%p)->(%x %x %p)\n", This, id, grfdexFetch, pgrfdex);
+    TRACE("(%p)->(%lx %lx %p)\n", This, id, grfdexFetch, pgrfdex);
 
     return IDispatchEx_GetMemberProperties(&This->inner_window->event_target.dispex.IDispatchEx_iface, id, grfdexFetch,
             pgrfdex);
@@ -3516,7 +3516,7 @@ static HRESULT WINAPI WindowDispEx_GetMemberName(IDispatchEx *iface, DISPID id, 
 {
     HTMLWindow *This = impl_from_IDispatchEx(iface);
 
-    TRACE("(%p)->(%x %p)\n", This, id, pbstrName);
+    TRACE("(%p)->(%lx %p)\n", This, id, pbstrName);
 
     return IDispatchEx_GetMemberName(&This->inner_window->event_target.dispex.IDispatchEx_iface, id, pbstrName);
 }
@@ -3525,7 +3525,7 @@ static HRESULT WINAPI WindowDispEx_GetNextDispID(IDispatchEx *iface, DWORD grfde
 {
     HTMLWindow *This = impl_from_IDispatchEx(iface);
 
-    TRACE("(%p)->(%x %x %p)\n", This, grfdex, id, pid);
+    TRACE("(%p)->(%lx %lx %p)\n", This, grfdex, id, pid);
 
     return IDispatchEx_GetNextDispID(&This->inner_window->event_target.dispex.IDispatchEx_iface, grfdex, id, pid);
 }
@@ -3641,7 +3641,7 @@ static HRESULT HTMLWindow_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD 
             if(hres == S_OK)
                 TRACE("%s <<<\n", debugstr_w(prop->name));
             else
-                WARN("%s <<< %08x\n", debugstr_w(prop->name), hres);
+                WARN("%s <<< %08lx\n", debugstr_w(prop->name), hres);
             IDispatchEx_Release(iface);
         }else {
             FIXME("No IDispatchEx\n");
@@ -3929,14 +3929,14 @@ HRESULT update_window_doc(HTMLInnerWindow *window)
 
     nsres = nsIDOMWindow_GetDocument(outer_window->nswindow, &nsdoc);
     if(NS_FAILED(nsres) || !nsdoc) {
-        ERR("GetDocument failed: %08x\n", nsres);
+        ERR("GetDocument failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
     nsres = nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMHTMLDocument, (void**)&nshtmldoc);
     nsIDOMDocument_Release(nsdoc);
     if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMHTMLDocument iface: %08x\n", nsres);
+        ERR("Could not get nsIDOMHTMLDocument iface: %08lx\n", nsres);
         return E_FAIL;
     }
 

@@ -68,7 +68,7 @@ static ULONG WINAPI OleUndoManager_AddRef(IOleUndoManager *iface)
     UndoManager *This = impl_from_IOleUndoManager(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -78,7 +78,7 @@ static ULONG WINAPI OleUndoManager_Release(IOleUndoManager *iface)
     UndoManager *This = impl_from_IOleUndoManager(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref)
         heap_free(This);
@@ -238,7 +238,7 @@ static ULONG WINAPI editsvcs_AddRef(IHTMLEditServices *iface)
     editsvcs *This = impl_from_IHTMLEditServices(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
     return ref;
 }
 
@@ -247,7 +247,7 @@ static ULONG WINAPI editsvcs_Release(IHTMLEditServices *iface)
     editsvcs *This = impl_from_IHTMLEditServices(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref)
         heap_free(This);

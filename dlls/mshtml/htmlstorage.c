@@ -69,7 +69,7 @@ static ULONG WINAPI HTMLStorage_AddRef(IHTMLStorage *iface)
     HTMLStorage *This = impl_from_IHTMLStorage(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -79,7 +79,7 @@ static ULONG WINAPI HTMLStorage_Release(IHTMLStorage *iface)
     HTMLStorage *This = impl_from_IHTMLStorage(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
         release_dispex(&This->dispex);
@@ -138,7 +138,7 @@ static HRESULT WINAPI HTMLStorage_get_remainingSpace(IHTMLStorage *iface, LONG *
 static HRESULT WINAPI HTMLStorage_key(IHTMLStorage *iface, LONG lIndex, BSTR *p)
 {
     HTMLStorage *This = impl_from_IHTMLStorage(iface);
-    FIXME("(%p)->(%d %p)\n", This, lIndex, p);
+    FIXME("(%p)->(%ld %p)\n", This, lIndex, p);
     return E_NOTIMPL;
 }
 

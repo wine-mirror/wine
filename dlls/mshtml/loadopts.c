@@ -82,7 +82,7 @@ static ULONG WINAPI HtmlLoadOptions_AddRef(IHtmlLoadOptions *iface)
     HTMLLoadOptions *This = impl_from_IHtmlLoadOptions(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -92,7 +92,7 @@ static ULONG WINAPI HtmlLoadOptions_Release(IHtmlLoadOptions *iface)
     HTMLLoadOptions *This = impl_from_IHtmlLoadOptions(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
         load_opt *iter = This->opts, *last;
@@ -117,7 +117,7 @@ static HRESULT WINAPI HtmlLoadOptions_QueryOption(IHtmlLoadOptions *iface, DWORD
     HTMLLoadOptions *This = impl_from_IHtmlLoadOptions(iface);
     load_opt *iter;
 
-    TRACE("(%p)->(%d %p %p)\n", This, dwOption, pBuffer, pcbBuf);
+    TRACE("(%p)->(%ld %p %p)\n", This, dwOption, pBuffer, pcbBuf);
 
     for(iter = This->opts; iter; iter = iter->next) {
         if(iter->option == dwOption)
@@ -146,7 +146,7 @@ static HRESULT WINAPI HtmlLoadOptions_SetOption(IHtmlLoadOptions *iface, DWORD d
     HTMLLoadOptions *This = impl_from_IHtmlLoadOptions(iface);
     load_opt *iter = NULL;
 
-    TRACE("(%p)->(%d %p %d)\n", This, dwOption, pBuffer, cbBuf);
+    TRACE("(%p)->(%ld %p %ld)\n", This, dwOption, pBuffer, cbBuf);
 
     for(iter = This->opts; iter; iter = iter->next) {
         if(iter->option == dwOption)

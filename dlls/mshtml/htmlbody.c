@@ -166,7 +166,7 @@ static HRESULT return_nscolor(nsresult nsres, nsAString *nsstr, VARIANT *p)
     const PRUnichar *color;
 
     if(NS_FAILED(nsres)) {
-        ERR("failed: %08x\n", nsres);
+        ERR("failed: %08lx\n", nsres);
         nsAString_Finish(nsstr);
         return E_FAIL;
     }
@@ -378,7 +378,7 @@ static HRESULT WINAPI HTMLBodyElement_put_bgColor(IHTMLBodyElement *iface, VARIA
     nsres = nsIDOMHTMLBodyElement_SetBgColor(This->nsbody, &strColor);
     nsAString_Finish(&strColor);
     if(NS_FAILED(nsres))
-        ERR("SetBgColor failed: %08x\n", nsres);
+        ERR("SetBgColor failed: %08lx\n", nsres);
 
     return S_OK;
 }
@@ -410,7 +410,7 @@ static HRESULT WINAPI HTMLBodyElement_put_text(IHTMLBodyElement *iface, VARIANT 
     nsres = nsIDOMHTMLBodyElement_SetText(This->nsbody, &text);
     nsAString_Finish(&text);
     if(NS_FAILED(nsres)) {
-        ERR("SetText failed: %08x\n", nsres);
+        ERR("SetText failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
@@ -435,7 +435,7 @@ static HRESULT WINAPI HTMLBodyElement_get_text(IHTMLBodyElement *iface, VARIANT 
         V_VT(p) = VT_BSTR;
         hres = nscolor_to_str(color, &V_BSTR(p));
     }else {
-        ERR("GetText failed: %08x\n", nsres);
+        ERR("GetText failed: %08lx\n", nsres);
         hres = E_FAIL;
     }
 
@@ -458,7 +458,7 @@ static HRESULT WINAPI HTMLBodyElement_put_link(IHTMLBodyElement *iface, VARIANT 
     nsres = nsIDOMHTMLBodyElement_SetLink(This->nsbody, &link_str);
     nsAString_Finish(&link_str);
     if(NS_FAILED(nsres))
-        ERR("SetLink failed: %08x\n", nsres);
+        ERR("SetLink failed: %08lx\n", nsres);
 
     return S_OK;
 }
@@ -490,7 +490,7 @@ static HRESULT WINAPI HTMLBodyElement_put_vLink(IHTMLBodyElement *iface, VARIANT
     nsres = nsIDOMHTMLBodyElement_SetVLink(This->nsbody, &vlink_str);
     nsAString_Finish(&vlink_str);
     if(NS_FAILED(nsres))
-        ERR("SetLink failed: %08x\n", nsres);
+        ERR("SetLink failed: %08lx\n", nsres);
 
     return S_OK;
 }
@@ -522,7 +522,7 @@ static HRESULT WINAPI HTMLBodyElement_put_aLink(IHTMLBodyElement *iface, VARIANT
     nsres = nsIDOMHTMLBodyElement_SetALink(This->nsbody, &alink_str);
     nsAString_Finish(&alink_str);
     if(NS_FAILED(nsres))
-        ERR("SetALink failed: %08x\n", nsres);
+        ERR("SetALink failed: %08lx\n", nsres);
 
     return S_OK;
 }
@@ -678,9 +678,9 @@ static HRESULT WINAPI HTMLBodyElement_createTextRange(IHTMLBodyElement *iface, I
     if(NS_SUCCEEDED(nsres)) {
         nsres = nsIDOMRange_SelectNodeContents(nsrange, This->element.node.nsnode);
         if(NS_FAILED(nsres))
-            ERR("SelectNodeContents failed: %08x\n", nsres);
+            ERR("SelectNodeContents failed: %08lx\n", nsres);
     }else {
-        ERR("CreateRange failed: %08x\n", nsres);
+        ERR("CreateRange failed: %08lx\n", nsres);
     }
 
     hres = HTMLTxtRange_Create(This->element.node.doc->basedoc.doc_node, nsrange, range);
@@ -820,7 +820,7 @@ static HRESULT WINAPI HTMLTextContainer_put_scrollTop(IHTMLTextContainer *iface,
 {
     HTMLBodyElement *This = impl_from_IHTMLTextContainer(iface);
 
-    TRACE("(%p)->(%d)\n", This, v);
+    TRACE("(%p)->(%ld)\n", This, v);
 
     return IHTMLElement2_put_scrollTop(&This->element.IHTMLElement2_iface, v);
 }
@@ -838,7 +838,7 @@ static HRESULT WINAPI HTMLTextContainer_put_scrollLeft(IHTMLTextContainer *iface
 {
     HTMLBodyElement *This = impl_from_IHTMLTextContainer(iface);
 
-    TRACE("(%p)->(%d)\n", This, v);
+    TRACE("(%p)->(%ld)\n", This, v);
 
     return IHTMLElement2_put_scrollLeft(&This->element.IHTMLElement2_iface, v);
 }

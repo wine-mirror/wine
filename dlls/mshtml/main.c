@@ -102,7 +102,7 @@ UINT cp_from_charset_string(BSTR charset)
 
     hres = IMultiLanguage2_GetCharsetInfo(mlang, charset, &info);
     if(FAILED(hres)) {
-        FIXME("GetCharsetInfo failed: %08x\n", hres);
+        FIXME("GetCharsetInfo failed: %08lx\n", hres);
         return CP_UTF8;
     }
 
@@ -119,7 +119,7 @@ BSTR charset_string_from_cp(UINT cp)
 
     hres = IMultiLanguage2_GetCodePageInfo(mlang, cp, GetUserDefaultUILanguage(), &info);
     if(FAILED(hres)) {
-        ERR("GetCodePageInfo failed: %08x\n", hres);
+        ERR("GetCodePageInfo failed: %08lx\n", hres);
         return SysAllocString(NULL);
     }
 
@@ -182,7 +182,7 @@ static BOOL WINAPI load_compat_settings(INIT_ONCE *once, void *param, void **con
             break;
         index++;
         if(res != ERROR_SUCCESS) {
-            WARN("RegEnumKey failed: %u\n", GetLastError());
+            WARN("RegEnumKey failed: %lu\n", GetLastError());
             continue;
         }
 
@@ -397,7 +397,7 @@ static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
 {
     ClassFactory *This = impl_from_IClassFactory(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p) ref = %u\n", This, ref);
+    TRACE("(%p) ref = %lu\n", This, ref);
     return ref;
 }
 
@@ -406,7 +406,7 @@ static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
     ClassFactory *This = impl_from_IClassFactory(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref = %u\n", This, ref);
+    TRACE("(%p) ref = %lu\n", This, ref);
 
     if(!ref) {
         heap_free(This);
@@ -647,7 +647,7 @@ static HRESULT register_server(BOOL do_register)
         heap_free(pse[i].pszValue);
 
     if(FAILED(hres))
-        ERR("RegInstall failed: %08x\n", hres);
+        ERR("RegInstall failed: %08lx\n", hres);
 
     return hres;
 }

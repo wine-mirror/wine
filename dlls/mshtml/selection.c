@@ -81,7 +81,7 @@ static ULONG WINAPI HTMLSelectionObject_AddRef(IHTMLSelectionObject *iface)
     HTMLSelectionObject *This = impl_from_IHTMLSelectionObject(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -91,7 +91,7 @@ static ULONG WINAPI HTMLSelectionObject_Release(IHTMLSelectionObject *iface)
     HTMLSelectionObject *This = impl_from_IHTMLSelectionObject(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
         if(This->nsselection)
@@ -167,21 +167,21 @@ static HRESULT WINAPI HTMLSelectionObject_createRange(IHTMLSelectionObject *ifac
 
             nsres = nsIDOMHTMLDocument_GetBody(This->doc->nsdoc, &nsbody);
             if(NS_FAILED(nsres) || !nsbody) {
-                ERR("Could not get body: %08x\n", nsres);
+                ERR("Could not get body: %08lx\n", nsres);
                 return E_FAIL;
             }
 
             nsres = nsISelection_Collapse(This->nsselection, (nsIDOMNode*)nsbody, 0);
             nsIDOMHTMLElement_Release(nsbody);
             if(NS_FAILED(nsres))
-                ERR("Collapse failed: %08x\n", nsres);
+                ERR("Collapse failed: %08lx\n", nsres);
         }else if(nsrange_cnt > 1) {
-            FIXME("range_cnt = %d\n", nsrange_cnt);
+            FIXME("range_cnt = %ld\n", nsrange_cnt);
         }
 
         nsres = nsISelection_GetRangeAt(This->nsselection, 0, &nsrange);
         if(NS_FAILED(nsres))
-            ERR("GetRangeAt failed: %08x\n", nsres);
+            ERR("GetRangeAt failed: %08lx\n", nsres);
     }
 
     hres = HTMLTxtRange_Create(This->doc, nsrange, &range_obj);

@@ -170,7 +170,7 @@ static HRESULT WINAPI HTMLLinkElement_put_rev(IHTMLLinkElement *iface, BSTR v)
     nsres = nsIDOMHTMLLinkElement_SetRev(This->nslink, &nsstr);
     nsAString_Finish(&nsstr);
     if(NS_FAILED(nsres)) {
-        ERR("SetRev failed: %08x\n", nsres);
+        ERR("SetRev failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
@@ -319,7 +319,7 @@ static HRESULT WINAPI HTMLLinkElement_put_media(IHTMLLinkElement *iface, BSTR v)
     nsAString_Finish(&str);
 
     if(NS_FAILED(nsres)) {
-        ERR("Set Media(%s) failed: %08x\n", debugstr_w(v), nsres);
+        ERR("Set Media(%s) failed: %08lx\n", debugstr_w(v), nsres);
         return E_FAIL;
     }
     return S_OK;

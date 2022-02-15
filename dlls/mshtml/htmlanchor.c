@@ -183,7 +183,7 @@ static IUri *get_anchor_uri(HTMLAnchorElement *anchor)
         nsAString_GetData(&href_str, &href);
         create_uri(href, 0, &uri);
     }else {
-        ERR("GetHref failed: %08x\n", nsres);
+        ERR("GetHref failed: %08lx\n", nsres);
     }
 
     nsAString_Finish(&href_str);
@@ -283,7 +283,7 @@ static HRESULT WINAPI HTMLAnchorElement_get_href(IHTMLAnchorElement *iface, BSTR
         nsAString_GetData(&href_str, &href);
         hres = nsuri_to_url(href, TRUE, p);
     }else {
-        ERR("GetHref failed: %08x\n", nsres);
+        ERR("GetHref failed: %08lx\n", nsres);
         hres = E_FAIL;
     }
 
@@ -823,14 +823,14 @@ static HRESULT HTMLAnchorElement_handle_event(HTMLDOMNode *iface, DWORD eid, nsI
         nsAString_Init(&href_str, NULL);
         nsres = nsIDOMHTMLAnchorElement_GetHref(This->nsanchor, &href_str);
         if (NS_FAILED(nsres)) {
-            ERR("Could not get anchor href: %08x\n", nsres);
+            ERR("Could not get anchor href: %08lx\n", nsres);
             goto fallback;
         }
 
         nsAString_Init(&target_str, NULL);
         nsres = nsIDOMHTMLAnchorElement_GetTarget(This->nsanchor, &target_str);
         if (NS_FAILED(nsres)) {
-            ERR("Could not get anchor target: %08x\n", nsres);
+            ERR("Could not get anchor target: %08lx\n", nsres);
             goto fallback;
         }
 

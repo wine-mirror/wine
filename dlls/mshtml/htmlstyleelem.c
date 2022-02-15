@@ -113,7 +113,7 @@ static HRESULT WINAPI HTMLStyleElement_put_type(IHTMLStyleElement *iface, BSTR v
     nsres = nsIDOMHTMLStyleElement_SetType(This->nsstyle, &type_str);
     nsAString_Finish(&type_str);
     if(NS_FAILED(nsres)) {
-        ERR("SetType failed: %08x\n", nsres);
+        ERR("SetType failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
@@ -239,7 +239,7 @@ static HRESULT WINAPI HTMLStyleElement_put_media(IHTMLStyleElement *iface, BSTR 
     nsres = nsIDOMHTMLStyleElement_SetMedia(This->nsstyle, &media_str);
     nsAString_Finish(&media_str);
     if(NS_FAILED(nsres)) {
-        ERR("SetMedia failed: %08x\n", nsres);
+        ERR("SetMedia failed: %08lx\n", nsres);
         return E_FAIL;
     }
 

@@ -160,7 +160,7 @@ static HRESULT WINAPI HTMLAreaElement_get_href(IHTMLAreaElement *iface, BSTR *p)
         nsAString_GetData(&href_str, &href);
         hres = nsuri_to_url(href, TRUE, p);
     }else {
-        ERR("GetHref failed: %08x\n", nsres);
+        ERR("GetHref failed: %08lx\n", nsres);
         hres = E_FAIL;
     }
 
@@ -440,14 +440,14 @@ static HRESULT HTMLAreaElement_handle_event(HTMLDOMNode *iface, DWORD eid, nsIDO
         nsAString_Init(&href_str, NULL);
         nsres = nsIDOMHTMLAreaElement_GetHref(This->nsarea, &href_str);
         if (NS_FAILED(nsres)) {
-            ERR("Could not get area href: %08x\n", nsres);
+            ERR("Could not get area href: %08lx\n", nsres);
             goto fallback;
         }
 
         nsAString_Init(&target_str, NULL);
         nsres = nsIDOMHTMLAreaElement_GetTarget(This->nsarea, &target_str);
         if (NS_FAILED(nsres)) {
-            ERR("Could not get area target: %08x\n", nsres);
+            ERR("Could not get area target: %08lx\n", nsres);
             goto fallback;
         }
 

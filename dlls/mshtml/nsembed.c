@@ -102,7 +102,7 @@ nsresult create_nsfile(const PRUnichar *path, nsIFile **ret)
     nsAString_Finish(&str);
 
     if(NS_FAILED(nsres))
-        WARN("NS_NewLocalFile failed: %08x\n", nsres);
+        WARN("NS_NewLocalFile failed: %08lx\n", nsres);
     return nsres;
 }
 
@@ -142,7 +142,7 @@ static nsrefcnt NSAPI nsSingletonEnumerator_AddRef(nsISimpleEnumerator *iface)
     nsSingletonEnumerator *This = impl_from_nsISimpleEnumerator(iface);
     nsrefcnt ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -152,7 +152,7 @@ static nsrefcnt NSAPI nsSingletonEnumerator_Release(nsISimpleEnumerator *iface)
     nsSingletonEnumerator *This = impl_from_nsISimpleEnumerator(iface);
     nsrefcnt ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
         if(This->value)
@@ -253,7 +253,7 @@ static nsresult create_profile_directory(void)
 
     hres = SHGetFolderPathW(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, path);
     if(FAILED(hres)) {
-        ERR("SHGetFolderPath failed: %08x\n", hres);
+        ERR("SHGetFolderPath failed: %08lx\n", hres);
         return NS_ERROR_FAILURE;
     }
 
@@ -264,14 +264,14 @@ static nsresult create_profile_directory(void)
 
     nsres = nsIFile_Exists(profile_directory, &exists);
     if(NS_FAILED(nsres)) {
-        ERR("Exists failed: %08x\n", nsres);
+        ERR("Exists failed: %08lx\n", nsres);
         return nsres;
     }
 
     if(!exists) {
         nsres = nsIFile_Create(profile_directory, 1, 0700);
         if(NS_FAILED(nsres))
-            ERR("Create failed: %08x\n", nsres);
+            ERR("Create failed: %08lx\n", nsres);
     }
 
     return nsres;
@@ -369,7 +369,7 @@ static LRESULT WINAPI nsembed_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
         nsres = nsIBaseWindow_SetSize(This->window,
                 LOWORD(lParam), HIWORD(lParam), TRUE);
         if(NS_FAILED(nsres))
-            WARN("SetSize failed: %08x\n", nsres);
+            WARN("SetSize failed: %08lx\n", nsres);
         break;
 
     case WM_PARENTNOTIFY:
@@ -533,7 +533,7 @@ static void set_preferences(void)
     nsres = nsIServiceManager_GetServiceByContractID(pServMgr, NS_PREFERENCES_CONTRACTID,
             &IID_nsIPrefBranch, (void**)&pref);
     if(NS_FAILED(nsres)) {
-        ERR("Could not get preference service: %08x\n", nsres);
+        ERR("Could not get preference service: %08lx\n", nsres);
         return;
     }
 
@@ -560,7 +560,7 @@ static BOOL init_xpcom(const PRUnichar *gre_path)
 
     nsres = NS_InitXPCOM2(&pServMgr, gre_dir, (nsIDirectoryServiceProvider*)&nsDirectoryServiceProvider2);
     if(NS_FAILED(nsres)) {
-        ERR("NS_InitXPCOM2 failed: %08x\n", nsres);
+        ERR("NS_InitXPCOM2 failed: %08lx\n", nsres);
         FreeLibrary(xul_handle);
         return FALSE;
     }
@@ -574,7 +574,7 @@ static BOOL init_xpcom(const PRUnichar *gre_path)
 
     nsres = nsIServiceManager_QueryInterface(pServMgr, &IID_nsIComponentManager, (void**)&pCompMgr);
     if(NS_FAILED(nsres))
-        ERR("Could not get nsIComponentManager: %08x\n", nsres);
+        ERR("Could not get nsIComponentManager: %08lx\n", nsres);
 
     init_nsio(pCompMgr);
     init_mutation(pCompMgr);
@@ -583,14 +583,14 @@ static BOOL init_xpcom(const PRUnichar *gre_path)
     nsres = nsIServiceManager_GetServiceByContractID(pServMgr, NS_CATEGORYMANAGER_CONTRACTID,
             &IID_nsICategoryManager, (void**)&cat_mgr);
     if(NS_FAILED(nsres))
-        ERR("Could not get category manager service: %08x\n", nsres);
+        ERR("Could not get category manager service: %08lx\n", nsres);
 
     nsres = NS_GetComponentRegistrar(&registrar);
     if(NS_SUCCEEDED(nsres)) {
         register_nsservice(registrar, pServMgr);
         nsIComponentRegistrar_Release(registrar);
     }else {
-        ERR("NS_GetComponentRegistrar failed: %08x\n", nsres);
+        ERR("NS_GetComponentRegistrar failed: %08lx\n", nsres);
     }
 
     init_node_cc();
@@ -611,7 +611,7 @@ static BOOL load_xul(WCHAR *gecko_path)
     xul_handle = LoadLibraryExW(gecko_path, 0, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
     gecko_path[len] = 0;
     if(!xul_handle) {
-        WARN("Could not load XUL: %d\n", GetLastError());
+        WARN("Could not load XUL: %ld\n", GetLastError());
         return FALSE;
     }
 
@@ -920,7 +920,7 @@ HRESULT return_nsstr(nsresult nsres, nsAString *nsstr, BSTR *p)
     HRESULT hres = S_OK;
 
     if(NS_FAILED(nsres)) {
-        WARN("failed: %08x\n", nsres);
+        WARN("failed: %08lx\n", nsres);
         nsAString_Finish(nsstr);
         return map_nsresult(nsres);
     }
@@ -944,7 +944,7 @@ HRESULT return_nsstr_variant(nsresult nsres, nsAString *nsstr, unsigned flags, V
     HRESULT hres = S_OK;
 
     if(NS_FAILED(nsres)) {
-        ERR("failed: %08x\n", nsres);
+        ERR("failed: %08lx\n", nsres);
         nsAString_Finish(nsstr);
         return map_nsresult(nsres);
     }
@@ -1107,14 +1107,14 @@ static HRESULT nsnode_to_nsstring_rec(nsIContentSerializer *serializer, nsIDOMNo
 
     nsres = nsIDOMNode_GetNodeType(nsnode, &type);
     if(NS_FAILED(nsres)) {
-        ERR("GetType failed: %08x\n", nsres);
+        ERR("GetType failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
     if(type != DOCUMENT_NODE) {
         nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIContent, (void**)&nscontent);
         if(NS_FAILED(nsres)) {
-            ERR("Could not get nsIContent interface: %08x\n", nsres);
+            ERR("Could not get nsIContent interface: %08lx\n", nsres);
             return E_FAIL;
         }
     }
@@ -1158,7 +1158,7 @@ static HRESULT nsnode_to_nsstring_rec(nsIContentSerializer *serializer, nsIDOMNo
                 nsnode_to_nsstring_rec(serializer, child_node, str);
                 nsIDOMNode_Release(child_node);
             }else {
-                ERR("Item failed: %08x\n", nsres);
+                ERR("Item failed: %08lx\n", nsres);
             }
         }
 
@@ -1183,19 +1183,19 @@ HRESULT nsnode_to_nsstring(nsIDOMNode *nsnode, nsAString *str)
             NS_HTMLSERIALIZER_CONTRACTID, NULL, &IID_nsIContentSerializer,
             (void**)&serializer);
     if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIContentSerializer: %08x\n", nsres);
+        ERR("Could not get nsIContentSerializer: %08lx\n", nsres);
         return E_FAIL;
     }
 
     nsres = nsIContentSerializer_Init(serializer, 0, 100, NULL, FALSE, FALSE /* FIXME */);
     if(NS_FAILED(nsres))
-        ERR("Init failed: %08x\n", nsres);
+        ERR("Init failed: %08lx\n", nsres);
 
     hres = nsnode_to_nsstring_rec(serializer, nsnode, str);
     if(SUCCEEDED(hres)) {
         nsres = nsIContentSerializer_Flush(serializer, str);
         if(NS_FAILED(nsres))
-            ERR("Flush failed: %08x\n", nsres);
+            ERR("Flush failed: %08lx\n", nsres);
     }
 
     nsIContentSerializer_Release(serializer);
@@ -1221,7 +1221,7 @@ void setup_editor_controller(GeckoBrowser *This)
     nsres = get_nsinterface((nsISupports*)This->webbrowser, &IID_nsIEditingSession,
             (void**)&editing_session);
     if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIEditingSession: %08x\n", nsres);
+        ERR("Could not get nsIEditingSession: %08lx\n", nsres);
         return;
     }
 
@@ -1229,7 +1229,7 @@ void setup_editor_controller(GeckoBrowser *This)
             This->doc->basedoc.window->window_proxy, &This->editor);
     nsIEditingSession_Release(editing_session);
     if(NS_FAILED(nsres)) {
-        ERR("Could not get editor: %08x\n", nsres);
+        ERR("Could not get editor: %08lx\n", nsres);
         return;
     }
 
@@ -1238,14 +1238,14 @@ void setup_editor_controller(GeckoBrowser *This)
     if(NS_SUCCEEDED(nsres)) {
         nsres = nsIControllerContext_SetCommandContext(ctrlctx, (nsISupports *)This->editor);
         if(NS_FAILED(nsres))
-            ERR("SetCommandContext failed: %08x\n", nsres);
+            ERR("SetCommandContext failed: %08lx\n", nsres);
         nsres = nsIControllerContext_QueryInterface(ctrlctx, &IID_nsIController,
                 (void**)&This->editor_controller);
         nsIControllerContext_Release(ctrlctx);
         if(NS_FAILED(nsres))
-            ERR("Could not get nsIController interface: %08x\n", nsres);
+            ERR("Could not get nsIController interface: %08lx\n", nsres);
     }else {
-        ERR("Could not create edit controller: %08x\n", nsres);
+        ERR("Could not create edit controller: %08lx\n", nsres);
     }
 }
 
@@ -1320,7 +1320,7 @@ void set_viewer_zoom(GeckoBrowser *browser, float factor)
 
     nsres = nsIContentViewer_SetFullZoom(content_viewer, factor);
     if(NS_FAILED(nsres))
-        ERR("SetFullZoom failed: %08x\n", nsres);
+        ERR("SetFullZoom failed: %08lx\n", nsres);
 
     nsIContentViewer_Release(content_viewer);
 }
@@ -1341,7 +1341,7 @@ float get_viewer_zoom(GeckoBrowser *browser)
 
     nsres = nsIContentViewer_GetFullZoom(content_viewer, &factor);
     if(NS_FAILED(nsres))
-        ERR("GetFullZoom failed: %08x\n", nsres);
+        ERR("GetFullZoom failed: %08lx\n", nsres);
     TRACE("Got %f\n", factor);
 
     nsIContentViewer_Release(content_viewer);
@@ -1387,7 +1387,7 @@ static nsrefcnt NSAPI nsWeakReference_AddRef(nsIWeakReference *iface)
     nsWeakReference *This = impl_from_nsIWeakReference(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -1397,7 +1397,7 @@ static nsrefcnt NSAPI nsWeakReference_Release(nsIWeakReference *iface)
     nsWeakReference *This = impl_from_nsIWeakReference(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
         assert(!This->browser);
@@ -1480,7 +1480,7 @@ static nsrefcnt NSAPI nsWebBrowserChrome_AddRef(nsIWebBrowserChrome *iface)
     GeckoBrowser *This = impl_from_nsIWebBrowserChrome(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -1490,7 +1490,7 @@ static nsrefcnt NSAPI nsWebBrowserChrome_Release(nsIWebBrowserChrome *iface)
     GeckoBrowser *This = impl_from_nsIWebBrowserChrome(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
         if(This->doc)
@@ -1569,7 +1569,7 @@ static nsresult NSAPI nsWebBrowserChrome_SizeBrowserTo(nsIWebBrowserChrome *ifac
         LONG aCX, LONG aCY)
 {
     GeckoBrowser *This = impl_from_nsIWebBrowserChrome(iface);
-    WARN("(%p)->(%d %d)\n", This, aCX, aCY);
+    WARN("(%p)->(%ld %ld)\n", This, aCX, aCY);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -1591,7 +1591,7 @@ static nsresult NSAPI nsWebBrowserChrome_ExitModalEventLoop(nsIWebBrowserChrome 
         nsresult aStatus)
 {
     GeckoBrowser *This = impl_from_nsIWebBrowserChrome(iface);
-    WARN("(%p)->(%08x)\n", This, aStatus);
+    WARN("(%p)->(%08lx)\n", This, aStatus);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -1915,7 +1915,7 @@ static nsresult NSAPI nsEmbeddingSiteWindow_SetDimensions(nsIEmbeddingSiteWindow
         UINT32 flags, LONG x, LONG y, LONG cx, LONG cy)
 {
     GeckoBrowser *This = impl_from_nsIEmbeddingSiteWindow(iface);
-    WARN("(%p)->(%08x %d %d %d %d)\n", This, flags, x, y, cx, cy);
+    WARN("(%p)->(%08x %ld %ld %ld %ld)\n", This, flags, x, y, cx, cy);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -2175,20 +2175,20 @@ static HRESULT init_browser(GeckoBrowser *browser)
     nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr, NS_WEBBROWSER_CONTRACTID,
             NULL, &IID_nsIWebBrowser, (void**)&browser->webbrowser);
     if(NS_FAILED(nsres)) {
-        ERR("Creating WebBrowser failed: %08x\n", nsres);
+        ERR("Creating WebBrowser failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
     nsres = nsIWebBrowser_SetContainerWindow(browser->webbrowser, &browser->nsIWebBrowserChrome_iface);
     if(NS_FAILED(nsres)) {
-        ERR("SetContainerWindow failed: %08x\n", nsres);
+        ERR("SetContainerWindow failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
     nsres = nsIWebBrowser_QueryInterface(browser->webbrowser, &IID_nsIBaseWindow,
             (void**)&browser->window);
     if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIBaseWindow interface: %08x\n", nsres);
+        ERR("Could not get nsIBaseWindow interface: %08lx\n", nsres);
         return E_FAIL;
     }
 
@@ -2198,7 +2198,7 @@ static HRESULT init_browser(GeckoBrowser *browser)
         nsres = nsIWebBrowserSetup_SetProperty(wbsetup, SETUP_IS_CHROME_WRAPPER, FALSE);
         nsIWebBrowserSetup_Release(wbsetup);
         if(NS_FAILED(nsres)) {
-            ERR("SetProperty(SETUP_IS_CHROME_WRAPPER) failed: %08x\n", nsres);
+            ERR("SetProperty(SETUP_IS_CHROME_WRAPPER) failed: %08lx\n", nsres);
             return E_FAIL;
         }
     }else {
@@ -2209,14 +2209,14 @@ static HRESULT init_browser(GeckoBrowser *browser)
     nsres = nsIWebBrowser_QueryInterface(browser->webbrowser, &IID_nsIWebNavigation,
             (void**)&browser->navigation);
     if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIWebNavigation interface: %08x\n", nsres);
+        ERR("Could not get nsIWebNavigation interface: %08lx\n", nsres);
         return E_FAIL;
     }
 
     nsres = nsIWebBrowser_QueryInterface(browser->webbrowser, &IID_nsIWebBrowserFocus,
             (void**)&browser->focus);
     if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIWebBrowserFocus interface: %08x\n", nsres);
+        ERR("Could not get nsIWebBrowserFocus interface: %08lx\n", nsres);
         return E_FAIL;
     }
 
@@ -2238,42 +2238,42 @@ static HRESULT init_browser(GeckoBrowser *browser)
     if(NS_SUCCEEDED(nsres)) {
         nsres = nsIBaseWindow_Create(browser->window);
         if(NS_FAILED(nsres)) {
-            WARN("Creating window failed: %08x\n", nsres);
+            WARN("Creating window failed: %08lx\n", nsres);
             return E_FAIL;
         }
 
         nsIBaseWindow_SetVisibility(browser->window, FALSE);
         nsIBaseWindow_SetEnabled(browser->window, FALSE);
     }else {
-        ERR("InitWindow failed: %08x\n", nsres);
+        ERR("InitWindow failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
     nsres = nsIWebBrowser_SetParentURIContentListener(browser->webbrowser,
             &browser->nsIURIContentListener_iface);
     if(NS_FAILED(nsres))
-        ERR("SetParentURIContentListener failed: %08x\n", nsres);
+        ERR("SetParentURIContentListener failed: %08lx\n", nsres);
 
     nsres = nsIWebBrowser_QueryInterface(browser->webbrowser, &IID_nsIScrollable, (void**)&scrollable);
     if(NS_SUCCEEDED(nsres)) {
         nsres = nsIScrollable_SetDefaultScrollbarPreferences(scrollable,
                 ScrollOrientation_Y, Scrollbar_Always);
         if(NS_FAILED(nsres))
-            ERR("Could not set default Y scrollbar prefs: %08x\n", nsres);
+            ERR("Could not set default Y scrollbar prefs: %08lx\n", nsres);
 
         nsres = nsIScrollable_SetDefaultScrollbarPreferences(scrollable,
                 ScrollOrientation_X, Scrollbar_Auto);
         if(NS_FAILED(nsres))
-            ERR("Could not set default X scrollbar prefs: %08x\n", nsres);
+            ERR("Could not set default X scrollbar prefs: %08lx\n", nsres);
 
         nsIScrollable_Release(scrollable);
     }else {
-        ERR("Could not get nsIScrollable: %08x\n", nsres);
+        ERR("Could not get nsIScrollable: %08lx\n", nsres);
     }
 
     nsres = nsIWebBrowser_GetContentDOMWindow(browser->webbrowser, &mozwindow);
     if(NS_FAILED(nsres)) {
-        ERR("GetContentDOMWindow failed: %08x\n", nsres);
+        ERR("GetContentDOMWindow failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
@@ -2417,7 +2417,7 @@ nsIXMLHttpRequest *create_nsxhr(nsIDOMWindow *nswindow)
 
     nsres = nsIDOMWindow_GetInnerWindow(nswindow, &inner_window);
     if(NS_FAILED(nsres)) {
-        ERR("Could not get inner window: %08x\n", nsres);
+        ERR("Could not get inner window: %08lx\n", nsres);
         return NULL;
     }
 
@@ -2442,7 +2442,7 @@ nsIXMLHttpRequest *create_nsxhr(nsIDOMWindow *nswindow)
     nsISupports_Release(nspri);
     nsIGlobalObject_Release(nsglo);
     if(NS_FAILED(nsres)) {
-        ERR("nsIXMLHttpRequest_Init failed: %08x\n", nsres);
+        ERR("nsIXMLHttpRequest_Init failed: %08lx\n", nsres);
         return NULL;
     }
 

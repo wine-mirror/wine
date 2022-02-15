@@ -134,7 +134,7 @@ static HRESULT load_typelib(void)
 
     hres = LoadRegTypeLib(&LIBID_MSHTML, 4, 0, LOCALE_SYSTEM_DEFAULT, &tl);
     if(FAILED(hres)) {
-        ERR("LoadRegTypeLib failed: %08x\n", hres);
+        ERR("LoadRegTypeLib failed: %08lx\n", hres);
         return hres;
     }
 
@@ -144,14 +144,14 @@ static HRESULT load_typelib(void)
     len = GetModuleFileNameW(hInst, module_path, MAX_PATH + 1);
     if (!len || len == MAX_PATH + 1)
     {
-        ERR("Could not get module file name, len %u.\n", len);
+        ERR("Could not get module file name, len %lu.\n", len);
         return E_FAIL;
     }
     lstrcatW(module_path, L"\\1");
 
     hres = LoadTypeLibEx(module_path, REGKIND_NONE, &tl);
     if(FAILED(hres)) {
-        ERR("LoadTypeLibEx failed for private typelib: %08x\n", hres);
+        ERR("LoadTypeLibEx failed for private typelib: %08lx\n", hres);
         return hres;
     }
 
@@ -175,7 +175,7 @@ static HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo)
 
         hres = ITypeLib_GetTypeInfoOfGuid(tid > LAST_public_tid ? typelib_private : typelib, tid_ids[tid], &ti);
         if(FAILED(hres)) {
-            ERR("GetTypeInfoOfGuid(%s) failed: %08x\n", debugstr_mshtml_guid(tid_ids[tid]), hres);
+            ERR("GetTypeInfoOfGuid(%s) failed: %08lx\n", debugstr_mshtml_guid(tid_ids[tid]), hres);
             return hres;
         }
 
@@ -236,7 +236,7 @@ HRESULT get_class_typeinfo(const CLSID *clsid, ITypeInfo **typeinfo)
     if (FAILED(hres))
         hres = ITypeLib_GetTypeInfoOfGuid(typelib_private, clsid, typeinfo);
     if(FAILED(hres))
-        ERR("GetTypeInfoOfGuid failed: %08x\n", hres);
+        ERR("GetTypeInfoOfGuid failed: %08lx\n", hres);
     return hres;
 }
 
@@ -278,7 +278,7 @@ static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, 
 
     hres = ITypeInfo_GetDocumentation(dti, desc->memid, &name, NULL, NULL, NULL);
     if(FAILED(hres)) {
-        WARN("GetDocumentation failed: %08x\n", hres);
+        WARN("GetDocumentation failed: %08lx\n", hres);
         return;
     }
 
@@ -355,7 +355,7 @@ static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, 
 
                 hres = ITypeInfo_GetRefTypeInfo(dti, tdesc->u.lptdesc->u.hreftype, &ref_type_info);
                 if(FAILED(hres)) {
-                    ERR("Could not get referenced type info: %08x\n", hres);
+                    ERR("Could not get referenced type info: %08lx\n", hres);
                     return;
                 }
 
@@ -365,7 +365,7 @@ static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, 
                     info->arg_info[i].iid = attr->guid;
                     ITypeInfo_ReleaseTypeAttr(ref_type_info, attr);
                 }else {
-                    ERR("GetTypeAttr failed: %08x\n", hres);
+                    ERR("GetTypeAttr failed: %08lx\n", hres);
                 }
                 ITypeInfo_Release(ref_type_info);
                 if(FAILED(hres))
@@ -380,7 +380,7 @@ static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, 
                 hres = VariantCopy(&info->arg_info[i].default_value,
                                    &desc->lprgelemdescParam[i].u.paramdesc.pparamdescex->varDefaultValue);
                 if(FAILED(hres)) {
-                    ERR("Could not copy default value: %08x\n", hres);
+                    ERR("Could not copy default value: %08lx\n", hres);
                     return;
                 }
                 TRACE("%s param %d: default value %s\n", debugstr_w(info->name),
@@ -455,7 +455,7 @@ void dispex_info_add_interface(dispex_data_t *info, tid_t tid, const dispex_hook
 
     hres = process_interface(info, tid, NULL, hooks);
     if(FAILED(hres))
-        ERR("process_interface failed: %08x\n", hres);
+        ERR("process_interface failed: %08lx\n", hres);
 }
 
 static int __cdecl dispid_cmp(const void *p1, const void *p2)
@@ -479,7 +479,7 @@ static dispex_data_t *preprocess_dispex_data(dispex_static_data_t *desc, compat_
     if(desc->disp_tid) {
         hres = get_typeinfo(desc->disp_tid, &dti);
         if(FAILED(hres)) {
-            ERR("Could not get disp type info: %08x\n", hres);
+            ERR("Could not get disp type info: %08lx\n", hres);
             return NULL;
         }
     }
@@ -751,13 +751,13 @@ static HRESULT typeinfo_invoke(DispatchEx *This, func_info_t *func, WORD flags, 
 
     hres = get_typeinfo(func->tid, &ti);
     if(FAILED(hres)) {
-        ERR("Could not get type info: %08x\n", hres);
+        ERR("Could not get type info: %08lx\n", hres);
         return hres;
     }
 
     hres = IUnknown_QueryInterface(This->outer, tid_ids[func->tid], (void**)&unk);
     if(FAILED(hres)) {
-        ERR("Could not get iface %s: %08x\n", debugstr_mshtml_guid(tid_ids[func->tid]), hres);
+        ERR("Could not get iface %s: %08lx\n", debugstr_mshtml_guid(tid_ids[func->tid]), hres);
         return E_FAIL;
     }
 
@@ -796,7 +796,7 @@ static ULONG WINAPI Function_AddRef(IUnknown *iface)
     func_disp_t *This = impl_from_IUnknown(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -806,7 +806,7 @@ static ULONG WINAPI Function_Release(IUnknown *iface)
     func_disp_t *This = impl_from_IUnknown(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
         assert(!This->obj);
@@ -951,7 +951,7 @@ static HRESULT invoke_disp_value(DispatchEx *This, IDispatch *func_disp, LCID lc
     if(SUCCEEDED(hres))
         TRACE("<<< %s\n", debugstr_variant(res));
     else
-        WARN("<<< %08x\n", hres);
+        WARN("<<< %08lx\n", hres);
 
     heap_free(new_dp.rgvarg);
     return hres;
@@ -1008,7 +1008,7 @@ static HRESULT get_builtin_func(dispex_data_t *data, DISPID id, func_info_t **re
             max = n-1;
     }
 
-    WARN("invalid id %x\n", id);
+    WARN("invalid id %lx\n", id);
     return DISP_E_UNKNOWNNAME;
 }
 
@@ -1221,7 +1221,7 @@ static HRESULT invoke_builtin_function(DispatchEx *This, func_info_t *func, DISP
             }
             hres = IDispatch_QueryInterface(V_DISPATCH(arg_ptrs[i]), &func->arg_info[i].iid, (void**)&iface);
             if(FAILED(hres)) {
-                WARN("Could not get %s iface: %08x\n", debugstr_guid(&func->arg_info[i].iid), hres);
+                WARN("Could not get %s iface: %08lx\n", debugstr_guid(&func->arg_info[i].iid), hres);
                 break;
             }
             if(own_value)
@@ -1600,7 +1600,7 @@ static HRESULT WINAPI DispatchEx_GetTypeInfo(IDispatchEx *iface, UINT iTInfo,
     DispatchEx *This = impl_from_IDispatchEx(iface);
     HRESULT hres;
 
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("(%p)->(%u %lu %p)\n", This, iTInfo, lcid, ppTInfo);
 
     hres = get_typeinfo(This->info->desc->disp_tid, ppTInfo);
     if(FAILED(hres))
@@ -1618,7 +1618,7 @@ static HRESULT WINAPI DispatchEx_GetIDsOfNames(IDispatchEx *iface, REFIID riid,
     UINT i;
     HRESULT hres;
 
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+    TRACE("(%p)->(%s %p %u %lu %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
           lcid, rgDispId);
 
     for(i=0; i < cNames; i++) {
@@ -1636,7 +1636,7 @@ static HRESULT WINAPI DispatchEx_Invoke(IDispatchEx *iface, DISPID dispIdMember,
 {
     DispatchEx *This = impl_from_IDispatchEx(iface);
 
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("(%p)->(%ld %s %ld %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     return IDispatchEx_InvokeEx(&This->IDispatchEx_iface, dispIdMember, lcid, wFlags, pDispParams,
@@ -1649,10 +1649,10 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
     dynamic_prop_t *dprop;
     HRESULT hres;
 
-    TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(bstrName), grfdex, pid);
+    TRACE("(%p)->(%s %lx %p)\n", This, debugstr_w(bstrName), grfdex, pid);
 
     if(grfdex & ~(fdexNameCaseSensitive|fdexNameCaseInsensitive|fdexNameEnsure|fdexNameImplicit|FDEX_VERSION_MASK))
-        FIXME("Unsupported grfdex %x\n", grfdex);
+        FIXME("Unsupported grfdex %lx\n", grfdex);
 
     if(!ensure_real_info(This))
         return E_OUTOFMEMORY;
@@ -1675,7 +1675,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     DispatchEx *This = impl_from_IDispatchEx(iface);
     HRESULT hres;
 
-    TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
+    TRACE("(%p)->(%lx %lx %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
 
     if(!ensure_real_info(This))
         return E_OUTOFMEMORY;
@@ -1761,7 +1761,7 @@ static HRESULT WINAPI DispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR nam
     DISPID id;
     HRESULT hres;
 
-    TRACE("(%p)->(%s %x)\n", This, debugstr_w(name), grfdex);
+    TRACE("(%p)->(%s %lx)\n", This, debugstr_w(name), grfdex);
 
     if(dispex_compat_mode(This) < COMPAT_MODE_IE8) {
         /* Not implemented by IE */
@@ -1781,7 +1781,7 @@ static HRESULT WINAPI DispatchEx_DeleteMemberByDispID(IDispatchEx *iface, DISPID
 {
     DispatchEx *This = impl_from_IDispatchEx(iface);
 
-    TRACE("(%p)->(%x)\n", This, id);
+    TRACE("(%p)->(%lx)\n", This, id);
 
     if(dispex_compat_mode(This) < COMPAT_MODE_IE8) {
         /* Not implemented by IE */
@@ -1807,7 +1807,7 @@ static HRESULT WINAPI DispatchEx_DeleteMemberByDispID(IDispatchEx *iface, DISPID
 static HRESULT WINAPI DispatchEx_GetMemberProperties(IDispatchEx *iface, DISPID id, DWORD grfdexFetch, DWORD *pgrfdex)
 {
     DispatchEx *This = impl_from_IDispatchEx(iface);
-    FIXME("(%p)->(%x %x %p)\n", This, id, grfdexFetch, pgrfdex);
+    FIXME("(%p)->(%lx %lx %p)\n", This, id, grfdexFetch, pgrfdex);
     return E_NOTIMPL;
 }
 
@@ -1817,7 +1817,7 @@ static HRESULT WINAPI DispatchEx_GetMemberName(IDispatchEx *iface, DISPID id, BS
     func_info_t *func;
     HRESULT hres;
 
-    TRACE("(%p)->(%x %p)\n", This, id, pbstrName);
+    TRACE("(%p)->(%lx %p)\n", This, id, pbstrName);
 
     if(!ensure_real_info(This))
         return E_OUTOFMEMORY;
@@ -1865,7 +1865,7 @@ static HRESULT WINAPI DispatchEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex,
     func_info_t *func;
     HRESULT hres;
 
-    TRACE("(%p)->(%x %x %p)\n", This, grfdex, id, pid);
+    TRACE("(%p)->(%lx %lx %p)\n", This, grfdex, id, pid);
 
     if(!ensure_real_info(This))
         return E_OUTOFMEMORY;

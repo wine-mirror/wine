@@ -67,7 +67,7 @@ static ULONG WINAPI HTMLDOMAttribute_AddRef(IHTMLDOMAttribute *iface)
     HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -77,7 +77,7 @@ static ULONG WINAPI HTMLDOMAttribute_Release(IHTMLDOMAttribute *iface)
     HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
         assert(!This->elem);

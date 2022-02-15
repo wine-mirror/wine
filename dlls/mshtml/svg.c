@@ -487,14 +487,14 @@ static HRESULT WINAPI SVGSVGElement_get_currentTranslate(ISVGSVGElement *iface, 
 static HRESULT WINAPI SVGSVGElement_suspendRedraw(ISVGSVGElement *iface, ULONG max_wait, ULONG *p)
 {
     SVGSVGElement *This = impl_from_ISVGSVGElement(iface);
-    FIXME("(%p)->(%u %p)\n", This, max_wait, p);
+    FIXME("(%p)->(%lu %p)\n", This, max_wait, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI SVGSVGElement_unsuspendRedraw(ISVGSVGElement *iface, ULONG id)
 {
     SVGSVGElement *This = impl_from_ISVGSVGElement(iface);
-    FIXME("(%p)->(%u)\n", This, id);
+    FIXME("(%p)->(%lu)\n", This, id);
     return E_NOTIMPL;
 }
 
@@ -1038,7 +1038,7 @@ static HRESULT WINAPI SVGTextContentElement_getSubStringLength(ISVGTextContentEl
                                                                LONG charnum, LONG nchars, float *p)
 {
     SVGTextContentElement *This = impl_from_ISVGTextContentElement(iface);
-    FIXME("(%p)->(%d %d %p)\n", This, charnum, nchars, p);
+    FIXME("(%p)->(%ld %ld %p)\n", This, charnum, nchars, p);
     return E_NOTIMPL;
 }
 
@@ -1046,7 +1046,7 @@ static HRESULT WINAPI SVGTextContentElement_getStartPositionOfChar(ISVGTextConte
                                                                    LONG charnum, ISVGPoint **p)
 {
     SVGTextContentElement *This = impl_from_ISVGTextContentElement(iface);
-    FIXME("(%p)->(%d %p)\n", This, charnum, p);
+    FIXME("(%p)->(%ld %p)\n", This, charnum, p);
     return E_NOTIMPL;
 }
 
@@ -1054,7 +1054,7 @@ static HRESULT WINAPI SVGTextContentElement_getEndPositionOfChar(ISVGTextContent
                                                                  LONG charnum, ISVGPoint **p)
 {
     SVGTextContentElement *This = impl_from_ISVGTextContentElement(iface);
-    FIXME("(%p)->(%d %p)\n", This, charnum, p);
+    FIXME("(%p)->(%ld %p)\n", This, charnum, p);
     return E_NOTIMPL;
 }
 
@@ -1062,7 +1062,7 @@ static HRESULT WINAPI SVGTextContentElement_getExtentOfChar(ISVGTextContentEleme
                                                             LONG charnum, ISVGRect **p)
 {
     SVGTextContentElement *This = impl_from_ISVGTextContentElement(iface);
-    FIXME("(%p)->(%d %p)\n", This, charnum, p);
+    FIXME("(%p)->(%ld %p)\n", This, charnum, p);
     return E_NOTIMPL;
 }
 
@@ -1070,7 +1070,7 @@ static HRESULT WINAPI SVGTextContentElement_getRotationOfChar(ISVGTextContentEle
                                                               LONG charnum, float *p)
 {
     SVGTextContentElement *This = impl_from_ISVGTextContentElement(iface);
-    FIXME("(%p)->(%d %p)\n", This, charnum, p);
+    FIXME("(%p)->(%ld %p)\n", This, charnum, p);
     return E_NOTIMPL;
 }
 
@@ -1086,7 +1086,7 @@ static HRESULT WINAPI SVGTextContentElement_selectSubString(ISVGTextContentEleme
                                                             LONG charnum, LONG nchars)
 {
     SVGTextContentElement *This = impl_from_ISVGTextContentElement(iface);
-    FIXME("(%p)->(%d %d)\n", This, charnum, nchars);
+    FIXME("(%p)->(%ld %ld)\n", This, charnum, nchars);
     return E_NOTIMPL;
 }
 

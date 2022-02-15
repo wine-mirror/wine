@@ -63,7 +63,7 @@ static ULONG WINAPI wrapper_AddRef(IUnknown *iface)
     iface_wrapper_t *This = impl_from_IUnknown(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -73,7 +73,7 @@ static ULONG WINAPI wrapper_Release(IUnknown *iface)
     iface_wrapper_t *This = impl_from_IUnknown(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
         IUnknown_Release(This->iface);

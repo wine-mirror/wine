@@ -388,11 +388,11 @@ void register_nsservice(nsIComponentRegistrar *registrar, nsIServiceManager *ser
     nsres = nsIComponentRegistrar_RegisterFactory(registrar, &NS_PROMPTSERVICE_CID,
             "Prompt Service", NS_PROMPTSERVICE_CONTRACTID, &nsPromptServiceFactory.nsIFactory_iface);
     if(NS_FAILED(nsres))
-        ERR("RegisterFactory failed: %08x\n", nsres);
+        ERR("RegisterFactory failed: %08lx\n", nsres);
 
     nsres = nsIComponentRegistrar_RegisterFactory(registrar, &NS_TOOLTIPTEXTPROVIDER_CID,
             NS_TOOLTIPTEXTPROVIDER_CLASSNAME, NS_TOOLTIPTEXTPROVIDER_CONTRACTID,
             &nsTooltipTextFactory.nsIFactory_iface);
     if(NS_FAILED(nsres))
-        ERR("RegisterFactory failed: %08x\n", nsres);
+        ERR("RegisterFactory failed: %08lx\n", nsres);
 }
