@@ -1,80 +1,80 @@
-@ stdcall CLSIDFromProgID(wstr ptr) ole32.CLSIDFromProgID
-@ stdcall CLSIDFromString(wstr ptr) ole32.CLSIDFromString
-@ stdcall CoAddRefServerProcess() ole32.CoAddRefServerProcess
+@ stdcall CLSIDFromProgID(wstr ptr) combase.CLSIDFromProgID
+@ stdcall CLSIDFromString(wstr ptr) combase.CLSIDFromString
+@ stdcall CoAddRefServerProcess() combase.CoAddRefServerProcess
 @ stub CoAllowUnmarshalerCLSID
 @ stub CoCancelCall
-@ stdcall CoCopyProxy(ptr ptr) ole32.CoCopyProxy
-@ stdcall CoCreateFreeThreadedMarshaler(ptr ptr) ole32.CoCreateFreeThreadedMarshaler
-@ stdcall CoCreateGuid(ptr) ole32.CoCreateGuid
-@ stdcall CoCreateInstance(ptr ptr long ptr ptr) ole32.CoCreateInstance
-@ stdcall CoCreateInstanceEx(ptr ptr long ptr long ptr) ole32.CoCreateInstanceEx
-@ stdcall CoCreateInstanceFromApp(ptr ptr long ptr long ptr) ole32.CoCreateInstanceFromApp
-@ stub CoDecodeProxy
-@ stdcall CoDecrementMTAUsage(ptr) ole32.CoDecrementMTAUsage
-@ stdcall CoDisableCallCancellation(ptr) ole32.CoDisableCallCancellation
+@ stdcall CoCopyProxy(ptr ptr) combase.CoCopyProxy
+@ stdcall CoCreateFreeThreadedMarshaler(ptr ptr) combase.CoCreateFreeThreadedMarshaler
+@ stdcall CoCreateGuid(ptr) combase.CoCreateGuid
+@ stdcall CoCreateInstance(ptr ptr long ptr ptr) combase.CoCreateInstance
+@ stdcall CoCreateInstanceEx(ptr ptr long ptr long ptr) combase.CoCreateInstanceEx
+@ stdcall CoCreateInstanceFromApp(ptr ptr long ptr long ptr) combase.CoCreateInstanceFromApp
+@ stdcall CoDecodeProxy(long int64 ptr) combase.CoDecodeProxy
+@ stdcall CoDecrementMTAUsage(ptr) combase.CoDecrementMTAUsage
+@ stdcall CoDisableCallCancellation(ptr) combase.CoDisableCallCancellation
 @ stub CoDisconnectContext
-@ stdcall CoDisconnectObject(ptr long) ole32.CoDisconnectObject
-@ stdcall CoEnableCallCancellation(ptr) ole32.CoEnableCallCancellation
-@ stdcall CoFreeUnusedLibraries() ole32.CoFreeUnusedLibraries
-@ stdcall CoFreeUnusedLibrariesEx(long long) ole32.CoFreeUnusedLibrariesEx
-@ stdcall CoGetApartmentType(ptr ptr) ole32.CoGetApartmentType
-@ stdcall CoGetCallContext(ptr ptr) ole32.CoGetCallContext
-@ stdcall CoGetCallerTID(ptr) ole32.CoGetCallerTID
+@ stdcall CoDisconnectObject(ptr long) combase.CoDisconnectObject
+@ stdcall CoEnableCallCancellation(ptr) combase.CoEnableCallCancellation
+@ stdcall CoFreeUnusedLibraries() combase.CoFreeUnusedLibraries
+@ stdcall CoFreeUnusedLibrariesEx(long long) combase.CoFreeUnusedLibrariesEx
+@ stdcall CoGetApartmentType(ptr ptr) combase.CoGetApartmentType
+@ stdcall CoGetCallContext(ptr ptr) combase.CoGetCallContext
+@ stdcall CoGetCallerTID(ptr) combase.CoGetCallerTID
 @ stub CoGetCancelObject
-@ stdcall CoGetClassObject(ptr long ptr ptr ptr) ole32.CoGetClassObject
-@ stdcall CoGetContextToken(ptr) ole32.CoGetContextToken
-@ stdcall CoGetCurrentLogicalThreadId(ptr) ole32.CoGetCurrentLogicalThreadId
-@ stdcall CoGetCurrentProcess() ole32.CoGetCurrentProcess
-@ stdcall CoGetDefaultContext(long ptr ptr) ole32.CoGetDefaultContext
-@ stdcall CoGetInterfaceAndReleaseStream(ptr ptr ptr) ole32.CoGetInterfaceAndReleaseStream
-@ stdcall CoGetMalloc(long ptr) ole32.CoGetMalloc
-@ stdcall CoGetMarshalSizeMax(ptr ptr ptr long ptr long) ole32.CoGetMarshalSizeMax
-@ stdcall CoGetObjectContext(ptr ptr) ole32.CoGetObjectContext
-@ stdcall CoGetPSClsid(ptr ptr) ole32.CoGetPSClsid
-@ stdcall CoGetStandardMarshal(ptr ptr long ptr long ptr) ole32.CoGetStandardMarshal
+@ stdcall CoGetClassObject(ptr long ptr ptr ptr) combase.CoGetClassObject
+@ stdcall CoGetContextToken(ptr) combase.CoGetContextToken
+@ stdcall CoGetCurrentLogicalThreadId(ptr) combase.CoGetCurrentLogicalThreadId
+@ stdcall CoGetCurrentProcess() combase.CoGetCurrentProcess
+@ stdcall CoGetDefaultContext(long ptr ptr) combase.CoGetDefaultContext
+@ stdcall CoGetInterfaceAndReleaseStream(ptr ptr ptr) combase.CoGetInterfaceAndReleaseStream
+@ stdcall CoGetMalloc(long ptr) combase.CoGetMalloc
+@ stdcall CoGetMarshalSizeMax(ptr ptr ptr long ptr long) combase.CoGetMarshalSizeMax
+@ stdcall CoGetObjectContext(ptr ptr) combase.CoGetObjectContext
+@ stdcall CoGetPSClsid(ptr ptr) combase.CoGetPSClsid
+@ stdcall CoGetStandardMarshal(ptr ptr long ptr long ptr) combase.CoGetStandardMarshal
 @ stub CoGetStdMarshalEx
-@ stdcall CoGetTreatAsClass(ptr ptr) ole32.CoGetTreatAsClass
-@ stdcall CoImpersonateClient() ole32.CoImpersonateClient
-@ stdcall CoIncrementMTAUsage(ptr) ole32.CoIncrementMTAUsage
-@ stdcall CoInitializeEx(ptr long) ole32.CoInitializeEx
-@ stdcall CoInitializeSecurity(ptr long ptr ptr long long ptr long ptr) ole32.CoInitializeSecurity
+@ stdcall CoGetTreatAsClass(ptr ptr) combase.CoGetTreatAsClass
+@ stdcall CoImpersonateClient() combase.CoImpersonateClient
+@ stdcall CoIncrementMTAUsage(ptr) combase.CoIncrementMTAUsage
+@ stdcall CoInitializeEx(ptr long) combase.CoInitializeEx
+@ stdcall CoInitializeSecurity(ptr long ptr ptr long long ptr long ptr) combase.CoInitializeSecurity
 @ stub CoInvalidateRemoteMachineBindings
-@ stdcall CoIsHandlerConnected(ptr) ole32.CoIsHandlerConnected
-@ stdcall CoLockObjectExternal(ptr long long) ole32.CoLockObjectExternal
-@ stdcall CoMarshalHresult(ptr long) ole32.CoMarshalHresult
-@ stdcall CoMarshalInterThreadInterfaceInStream(ptr ptr ptr) ole32.CoMarshalInterThreadInterfaceInStream
-@ stdcall CoMarshalInterface(ptr ptr ptr long ptr long) ole32.CoMarshalInterface
+@ stdcall CoIsHandlerConnected(ptr) combase.CoIsHandlerConnected
+@ stdcall CoLockObjectExternal(ptr long long) combase.CoLockObjectExternal
+@ stdcall CoMarshalHresult(ptr long) combase.CoMarshalHresult
+@ stdcall CoMarshalInterThreadInterfaceInStream(ptr ptr ptr) combase.CoMarshalInterThreadInterfaceInStream
+@ stdcall CoMarshalInterface(ptr ptr ptr long ptr long) combase.CoMarshalInterface
 @ stub CoQueryAuthenticationServices
-@ stdcall CoQueryClientBlanket(ptr ptr ptr ptr ptr ptr ptr) ole32.CoQueryClientBlanket
-@ stdcall CoQueryProxyBlanket(ptr ptr ptr ptr ptr ptr ptr ptr) ole32.CoQueryProxyBlanket
-@ stdcall CoRegisterClassObject(ptr ptr long long ptr) ole32.CoRegisterClassObject
-@ stdcall CoRegisterPSClsid(ptr ptr) ole32.CoRegisterPSClsid
-@ stdcall CoRegisterSurrogate(ptr) ole32.CoRegisterSurrogate
-@ stdcall CoReleaseMarshalData(ptr) ole32.CoReleaseMarshalData
-@ stdcall CoReleaseServerProcess() ole32.CoReleaseServerProcess
-@ stdcall CoResumeClassObjects() ole32.CoResumeClassObjects
-@ stdcall CoRevertToSelf() ole32.CoRevertToSelf
-@ stdcall CoRevokeClassObject(long) ole32.CoRevokeClassObject
+@ stdcall CoQueryClientBlanket(ptr ptr ptr ptr ptr ptr ptr) combase.CoQueryClientBlanket
+@ stdcall CoQueryProxyBlanket(ptr ptr ptr ptr ptr ptr ptr ptr) combase.CoQueryProxyBlanket
+@ stdcall CoRegisterClassObject(ptr ptr long long ptr) combase.CoRegisterClassObject
+@ stdcall CoRegisterPSClsid(ptr ptr) combase.CoRegisterPSClsid
+@ stdcall CoRegisterSurrogate(ptr) combase.CoRegisterSurrogate
+@ stdcall CoReleaseMarshalData(ptr) combase.CoReleaseMarshalData
+@ stdcall CoReleaseServerProcess() combase.CoReleaseServerProcess
+@ stdcall CoResumeClassObjects() combase.CoResumeClassObjects
+@ stdcall CoRevertToSelf() combase.CoRevertToSelf
+@ stdcall CoRevokeClassObject(long) combase.CoRevokeClassObject
 @ stub CoSetCancelObject
-@ stdcall CoSetProxyBlanket(ptr long long ptr long long ptr long) ole32.CoSetProxyBlanket
-@ stdcall CoSuspendClassObjects() ole32.CoSuspendClassObjects
-@ stdcall CoSwitchCallContext(ptr ptr) ole32.CoSwitchCallContext
-@ stdcall CoTaskMemAlloc(long) ole32.CoTaskMemAlloc
-@ stdcall CoTaskMemFree(ptr) ole32.CoTaskMemFree
-@ stdcall CoTaskMemRealloc(ptr long) ole32.CoTaskMemRealloc
+@ stdcall CoSetProxyBlanket(ptr long long ptr long long ptr long) combase.CoSetProxyBlanket
+@ stdcall CoSuspendClassObjects() combase.CoSuspendClassObjects
+@ stdcall CoSwitchCallContext(ptr ptr) combase.CoSwitchCallContext
+@ stdcall CoTaskMemAlloc(long) combase.CoTaskMemAlloc
+@ stdcall CoTaskMemFree(ptr) combase.CoTaskMemFree
+@ stdcall CoTaskMemRealloc(ptr long) combase.CoTaskMemRealloc
 @ stub CoTestCancel
-@ stdcall CoUninitialize() ole32.CoUninitialize
-@ stdcall CoUnmarshalHresult(ptr ptr) ole32.CoUnmarshalHresult
-@ stdcall CoUnmarshalInterface(ptr ptr ptr) ole32.CoUnmarshalInterface
-@ stdcall CoWaitForMultipleHandles(long long long ptr ptr) ole32.CoWaitForMultipleHandles
+@ stdcall CoUninitialize() combase.CoUninitialize
+@ stdcall CoUnmarshalHresult(ptr ptr) combase.CoUnmarshalHresult
+@ stdcall CoUnmarshalInterface(ptr ptr ptr) combase.CoUnmarshalInterface
+@ stdcall CoWaitForMultipleHandles(long long long ptr ptr) combase.CoWaitForMultipleHandles
 @ stub CoWaitForMultipleObjects
-@ stdcall CreateStreamOnHGlobal(ptr long ptr) ole32.CreateStreamOnHGlobal
-@ stdcall FreePropVariantArray(long ptr) ole32.FreePropVariantArray
-@ stdcall GetHGlobalFromStream(ptr ptr) ole32.GetHGlobalFromStream
-@ stdcall IIDFromString(wstr ptr) ole32.IIDFromString
-@ stdcall ProgIDFromCLSID(ptr ptr) ole32.ProgIDFromCLSID
-@ stdcall PropVariantClear(ptr) ole32.PropVariantClear
-@ stdcall PropVariantCopy(ptr ptr) ole32.PropVariantCopy
-@ stdcall StringFromCLSID(ptr ptr) ole32.StringFromCLSID
-@ stdcall StringFromGUID2(ptr ptr long) ole32.StringFromGUID2
-@ stdcall StringFromIID(ptr ptr) ole32.StringFromIID
+@ stdcall CreateStreamOnHGlobal(ptr long ptr) combase.CreateStreamOnHGlobal
+@ stdcall FreePropVariantArray(long ptr) combase.FreePropVariantArray
+@ stdcall GetHGlobalFromStream(ptr ptr) combase.GetHGlobalFromStream
+@ stdcall IIDFromString(wstr ptr) combase.IIDFromString
+@ stdcall ProgIDFromCLSID(ptr ptr) combase.ProgIDFromCLSID
+@ stdcall PropVariantClear(ptr) combase.PropVariantClear
+@ stdcall PropVariantCopy(ptr ptr) combase.PropVariantCopy
+@ stdcall StringFromCLSID(ptr ptr) combase.StringFromCLSID
+@ stdcall StringFromGUID2(ptr ptr long) combase.StringFromGUID2
+@ stdcall StringFromIID(ptr ptr) combase.StringFromIID
