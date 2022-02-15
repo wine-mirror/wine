@@ -373,15 +373,6 @@ NTSTATUS WINAPI RtlpUnWaitCriticalSection( RTL_CRITICAL_SECTION *crit )
 }
 
 
-static inline void small_pause(void)
-{
-#ifdef __i386__
-    __asm__ __volatile__( "rep;nop" : : : "memory" );
-#else
-    __asm__ __volatile__( "" : : : "memory" );
-#endif
-}
-
 /******************************************************************************
  *      RtlEnterCriticalSection   (NTDLL.@)
  */
@@ -399,7 +390,7 @@ NTSTATUS WINAPI RtlEnterCriticalSection( RTL_CRITICAL_SECTION *crit )
             {
                 if (InterlockedCompareExchange( &crit->LockCount, 0, -1 ) == -1) goto done;
             }
-            small_pause();
+            YieldProcessor();
         }
     }
 
