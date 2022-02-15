@@ -1,6 +1,7 @@
 /*
  * Copyright 2010 Maarten Lankhorst for CodeWeavers
  * Copyright 2011 Andrew Eikum for CodeWeavers
+ * Copyright 2022 Huw Davies
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -32,6 +33,7 @@
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "wine/list.h"
+#include "wine/unixlib.h"
 
 #include "propsys.h"
 #include "initguid.h"
@@ -49,7 +51,11 @@
 
 #include <alsa/asoundlib.h>
 
+#include "unixlib.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(alsa);
+
+unixlib_handle_t alsa_handle = 0;
 
 #define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
 
@@ -161,12 +167,6 @@ static CRITICAL_SECTION_DEBUG g_sessions_lock_debug =
 static CRITICAL_SECTION g_sessions_lock = { &g_sessions_lock_debug, -1, 0, 0, 0, 0 };
 static struct list g_sessions = LIST_INIT(g_sessions);
 
-static const WCHAR defaultW[] = {'d','e','f','a','u','l','t',0};
-static const char defname[] = "default";
-
-static const WCHAR drv_keyW[] = {'S','o','f','t','w','a','r','e','\\',
-    'W','i','n','e','\\','D','r','i','v','e','r','s','\\',
-    'w','i','n','e','a','l','s','a','.','d','r','v'};
 static const WCHAR drv_key_devicesW[] = {'S','o','f','t','w','a','r','e','\\',
     'W','i','n','e','\\','D','r','i','v','e','r','s','\\',
     'w','i','n','e','a','l','s','a','.','d','r','v','\\','d','e','v','i','c','e','s',0};
@@ -240,6 +240,9 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
+        if(NtQueryVirtualMemory(GetCurrentProcess(), dll, MemoryWineUnixFuncs,
+                                &alsa_handle, sizeof(alsa_handle), NULL))
+            return FALSE;
         g_timer_q = CreateTimerQueue();
         if(!g_timer_q)
             return FALSE;
@@ -264,19 +267,6 @@ enum DriverPriority {
 int WINAPI AUDDRV_GetPriority(void)
 {
     return Priority_Neutral;
-}
-
-static WCHAR *strdupAtoW(const char *str)
-{
-    unsigned int len;
-    WCHAR *ret;
-
-    if(!str) return NULL;
-
-    len = MultiByteToWideChar(CP_UNIXCP, 0, str, -1, NULL, 0);
-    ret = malloc(len * sizeof(WCHAR));
-    if(ret) MultiByteToWideChar(CP_UNIXCP, 0, str, -1, ret, len);
-    return ret;
 }
 
 static void set_device_guid(EDataFlow flow, HKEY drv_key, const WCHAR *key_name,
@@ -351,399 +341,67 @@ static void get_device_guid(EDataFlow flow, const char *device, GUID *guid)
         RegCloseKey(key);
 }
 
-static inline void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
-{
-    while (len--) *dst++ = (unsigned char)*src++;
-}
-
-static HKEY reg_open_key( HKEY root, const WCHAR *name, ULONG name_len )
-{
-    UNICODE_STRING nameW = { name_len, name_len, (WCHAR *)name };
-    OBJECT_ATTRIBUTES attr;
-    HANDLE ret;
-
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = root;
-    attr.ObjectName = &nameW;
-    attr.Attributes = 0;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
-    if (NtOpenKeyEx( &ret, MAXIMUM_ALLOWED, &attr, 0 )) return 0;
-    return ret;
-}
-
-static HKEY open_hkcu(void)
-{
-    char buffer[256];
-    WCHAR bufferW[256];
-    DWORD_PTR sid_data[(sizeof(TOKEN_USER) + SECURITY_MAX_SID_SIZE) / sizeof(DWORD_PTR)];
-    DWORD i, len = sizeof(sid_data);
-    SID *sid;
-
-    if (NtQueryInformationToken( GetCurrentThreadEffectiveToken(), TokenUser, sid_data, len, &len ))
-        return 0;
-
-    sid = ((TOKEN_USER *)sid_data)->User.Sid;
-    len = sprintf( buffer, "\\Registry\\User\\S-%u-%u", sid->Revision,
-                 MAKELONG( MAKEWORD( sid->IdentifierAuthority.Value[5], sid->IdentifierAuthority.Value[4] ),
-                           MAKEWORD( sid->IdentifierAuthority.Value[3], sid->IdentifierAuthority.Value[2] )));
-    for (i = 0; i < sid->SubAuthorityCount; i++)
-        len += sprintf( buffer + len, "-%u", sid->SubAuthority[i] );
-    ascii_to_unicode( bufferW, buffer, len + 1 );
-
-    return reg_open_key( NULL, bufferW, len * sizeof(WCHAR) );
-}
-
-static HKEY reg_open_hkcu_key( const WCHAR *name, ULONG name_len )
-{
-    HKEY hkcu = open_hkcu(), key;
-
-    key = reg_open_key( hkcu, name, name_len );
-    NtClose( hkcu );
-
-    return key;
-}
-
-ULONG reg_query_value( HKEY hkey, const WCHAR *name,
-                       KEY_VALUE_PARTIAL_INFORMATION *info, ULONG size )
-{
-    unsigned int name_size = name ? lstrlenW( name ) * sizeof(WCHAR) : 0;
-    UNICODE_STRING nameW = { name_size, name_size, (WCHAR *)name };
-
-    if (NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation,
-                         info, size, &size ))
-        return 0;
-
-    return size - FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data);
-}
-
 static snd_pcm_stream_t alsa_get_direction(EDataFlow flow)
 {
     return (flow == eRender) ? SND_PCM_STREAM_PLAYBACK : SND_PCM_STREAM_CAPTURE;
 }
 
-static BOOL alsa_try_open(const char *devnode, EDataFlow flow)
-{
-    snd_pcm_t *handle;
-    int err;
-
-    TRACE("devnode: %s, flow: %d\n", devnode, flow);
-
-    if((err = snd_pcm_open(&handle, devnode, alsa_get_direction(flow), SND_PCM_NONBLOCK)) < 0){
-        WARN("The device \"%s\" failed to open: %d (%s).\n", devnode, err, snd_strerror(err));
-        return FALSE;
-    }
-
-    snd_pcm_close(handle);
-    return TRUE;
-}
-
-static WCHAR *construct_device_id(EDataFlow flow, const WCHAR *chunk1, const WCHAR *chunk2)
-{
-    WCHAR *ret;
-    const WCHAR *prefix;
-    size_t len_wchars = 0, chunk1_len = 0, chunk2_len = 0, copied = 0, prefix_len;
-
-    static const WCHAR dashW[] = {' ','-',' ',0};
-    static const size_t dashW_len = ARRAY_SIZE(dashW) - 1;
-    static const WCHAR outW[] = {'O','u','t',':',' ',0};
-    static const WCHAR inW[] = {'I','n',':',' ',0};
-
-    if(flow == eRender){
-        prefix = outW;
-        prefix_len = ARRAY_SIZE(outW) - 1;
-        len_wchars += prefix_len;
-    }else{
-        prefix = inW;
-        prefix_len = ARRAY_SIZE(inW) - 1;
-        len_wchars += prefix_len;
-    }
-    if(chunk1){
-        chunk1_len = strlenW(chunk1);
-        len_wchars += chunk1_len;
-    }
-    if(chunk1 && chunk2)
-        len_wchars += dashW_len;
-    if(chunk2){
-        chunk2_len = strlenW(chunk2);
-        len_wchars += chunk2_len;
-    }
-    len_wchars += 1; /* NULL byte */
-
-    ret = HeapAlloc(GetProcessHeap(), 0, len_wchars * sizeof(WCHAR));
-
-    memcpy(ret, prefix, prefix_len * sizeof(WCHAR));
-    copied += prefix_len;
-    if(chunk1){
-        memcpy(ret + copied, chunk1, chunk1_len * sizeof(WCHAR));
-        copied += chunk1_len;
-    }
-    if(chunk1 && chunk2){
-        memcpy(ret + copied, dashW, dashW_len * sizeof(WCHAR));
-        copied += dashW_len;
-    }
-    if(chunk2){
-        memcpy(ret + copied, chunk2, chunk2_len * sizeof(WCHAR));
-        copied += chunk2_len;
-    }
-    ret[copied] = 0;
-
-    TRACE("Enumerated device: %s\n", wine_dbgstr_w(ret));
-
-    return ret;
-}
-
-static HRESULT alsa_get_card_devices(EDataFlow flow, WCHAR ***ids, GUID **guids, UINT *num,
-                                     snd_ctl_t *ctl, int card, const WCHAR *cardname)
-{
-    int err, device;
-    snd_pcm_info_t *info;
-
-    info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, snd_pcm_info_sizeof());
-    if(!info)
-        return E_OUTOFMEMORY;
-
-    snd_pcm_info_set_subdevice(info, 0);
-    snd_pcm_info_set_stream(info, alsa_get_direction(flow));
-
-    device = -1;
-    for(err = snd_ctl_pcm_next_device(ctl, &device); device != -1 && err >= 0;
-            err = snd_ctl_pcm_next_device(ctl, &device)){
-        char devnode[32];
-        WCHAR *devname;
-
-        snd_pcm_info_set_device(info, device);
-
-        if((err = snd_ctl_pcm_info(ctl, info)) < 0){
-            if(err == -ENOENT)
-                /* This device doesn't have the right stream direction */
-                continue;
-
-            WARN("Failed to get info for card %d, device %d: %d (%s)\n",
-                    card, device, err, snd_strerror(err));
-            continue;
-        }
-
-        sprintf(devnode, "plughw:%d,%d", card, device);
-        if(!alsa_try_open(devnode, flow))
-            continue;
-
-        if(*num){
-            *ids = HeapReAlloc(GetProcessHeap(), 0, *ids, sizeof(WCHAR *) * (*num + 1));
-            *guids = HeapReAlloc(GetProcessHeap(), 0, *guids, sizeof(GUID) * (*num + 1));
-        }else{
-            *ids = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR *));
-            *guids = HeapAlloc(GetProcessHeap(), 0, sizeof(GUID));
-        }
-
-        devname = strdupAtoW(snd_pcm_info_get_name(info));
-        if(!devname){
-            WARN("Unable to get device name for card %d, device %d\n", card, device);
-            continue;
-        }
-
-        (*ids)[*num] = construct_device_id(flow, cardname, devname);
-        get_device_guid(flow, devnode, &(*guids)[*num]);
-        free(devname);
-
-        ++(*num);
-    }
-
-    HeapFree(GetProcessHeap(), 0, info);
-
-    if(err != 0)
-        WARN("Got a failure during device enumeration on card %d: %d (%s)\n",
-                card, err, snd_strerror(err));
-
-    return S_OK;
-}
-
-static void get_reg_devices(EDataFlow flow, WCHAR ***ids, GUID **guids, UINT *num)
-{
-    static const WCHAR ALSAOutputDevices[] = {'A','L','S','A','O','u','t','p','u','t','D','e','v','i','c','e','s',0};
-    static const WCHAR ALSAInputDevices[] = {'A','L','S','A','I','n','p','u','t','D','e','v','i','c','e','s',0};
-    char buffer[4096];
-    KEY_VALUE_PARTIAL_INFORMATION *key_info = (void *)buffer;
-    HKEY key;
-    DWORD size;
-    const WCHAR *value_name = (flow == eRender) ? ALSAOutputDevices : ALSAInputDevices;
-
-    /* @@ Wine registry key: HKCU\Software\Wine\Drivers\winealsa.drv */
-    if((key = reg_open_hkcu_key(drv_keyW, sizeof(drv_keyW)))){
-        if((size = reg_query_value(key, value_name, key_info, sizeof(buffer)))){
-            WCHAR *p = (WCHAR *)key_info->Data;
-
-            if(key_info->Type != REG_MULTI_SZ){
-                ERR("Registry ALSA device list value type must be REG_MULTI_SZ\n");
-                NtClose(key);
-                return;
-            }
-
-            while(*p){
-                int len = lstrlenW(p);
-                char *devname = malloc(len * 3 + 1);
-
-                WideCharToMultiByte(CP_UNIXCP, 0, p, -1, devname, len * 3 + 1, NULL, NULL);
-
-                if(alsa_try_open(devname, flow)){
-                    if(*num){
-                        *ids = HeapReAlloc(GetProcessHeap(), 0, *ids, sizeof(WCHAR *) * (*num + 1));
-                        *guids = HeapReAlloc(GetProcessHeap(), 0, *guids, sizeof(GUID) * (*num + 1));
-                    }else{
-                        *ids = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR *));
-                        *guids = HeapAlloc(GetProcessHeap(), 0, sizeof(GUID));
-                    }
-                    (*ids)[*num] = construct_device_id(flow, p, NULL);
-                    get_device_guid(flow, devname, &(*guids)[*num]);
-                    ++*num;
-                }
-                free(devname);
-                p += len + 1;
-            }
-        }
-
-        NtClose(key);
-    }
-}
-
-struct card_type {
-    struct list entry;
-    int first_card_number;
-    char string[1];
-};
-
-static struct list card_types = LIST_INIT(card_types);
-
-static BOOL need_card_number(int card, const char *string)
-{
-    struct card_type *cptr;
-
-    LIST_FOR_EACH_ENTRY(cptr, &card_types, struct card_type, entry)
-    {
-        if(!strcmp(string, cptr->string))
-            return card != cptr->first_card_number;
-    }
-
-    /* this is the first instance of string */
-    cptr = HeapAlloc(GetProcessHeap(), 0, sizeof(struct card_type) + strlen(string));
-    if(!cptr)
-        /* Default to displaying card number if we can't track cards */
-        return TRUE;
-
-    cptr->first_card_number = card;
-    strcpy(cptr->string, string);
-    list_add_head(&card_types, &cptr->entry);
-    return FALSE;
-}
-
-static WCHAR *alsa_get_card_name(int card)
-{
-    char *cardname;
-    WCHAR *ret;
-    int err;
-
-    if((err = snd_card_get_name(card, &cardname)) < 0){
-        /* FIXME: Should be localized */
-        WARN("Unable to get card name for ALSA device %d: %d (%s)\n", card, err, snd_strerror(err));
-        cardname = strdup("Unknown soundcard");
-    }
-
-    if(need_card_number(card, cardname)){
-        char *cardnameN;
-        /*
-         * For identical card names, second and subsequent instances get
-         * card number prefix to distinguish them (like Windows).
-         */
-        if(asprintf(&cardnameN, "%u-%s", card, cardname) > 0){
-            free(cardname);
-            cardname = cardnameN;
-        }
-    }
-
-    ret = strdupAtoW(cardname);
-    free(cardname);
-
-    return ret;
-}
-
-static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR ***ids, GUID **guids,
-        UINT *num)
-{
-    int err, card;
-
-    card = -1;
-    *num = 0;
-
-    if(alsa_try_open(defname, flow)){
-        *ids = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR *));
-        (*ids)[0] = construct_device_id(flow, defaultW, NULL);
-        *guids = HeapAlloc(GetProcessHeap(), 0, sizeof(GUID));
-        get_device_guid(flow, defname, &(*guids)[0]);
-        ++*num;
-    }
-
-    get_reg_devices(flow, ids, guids, num);
-
-    for(err = snd_card_next(&card); card != -1 && err >= 0; err = snd_card_next(&card)){
-        char cardpath[64];
-        WCHAR *cardname;
-        snd_ctl_t *ctl;
-
-        sprintf(cardpath, "hw:%u", card);
-
-        if((err = snd_ctl_open(&ctl, cardpath, 0)) < 0){
-            WARN("Unable to open ctl for ALSA device %s: %d (%s)\n", cardpath,
-                    err, snd_strerror(err));
-            continue;
-        }
-
-        cardname = alsa_get_card_name(card);
-        alsa_get_card_devices(flow, ids, guids, num, ctl, card, cardname);
-        free(cardname);
-
-        snd_ctl_close(ctl);
-    }
-
-    if(err != 0)
-        WARN("Got a failure during card enumeration: %d (%s)\n",
-                err, snd_strerror(err));
-
-    return S_OK;
-}
-
-HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, GUID **guids,
+HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids_out, GUID **guids_out,
         UINT *num, UINT *def_index)
 {
-    HRESULT hr;
+    struct get_endpoint_ids_params params;
+    unsigned int i;
+    GUID *guids = NULL;
+    WCHAR **ids = NULL;
 
     TRACE("%d %p %p %p %p\n", flow, ids, guids, num, def_index);
 
-    *ids = NULL;
-    *guids = NULL;
+    params.flow = flow;
+    params.size = 1000;
+    params.endpoints = NULL;
+    do{
+        HeapFree(GetProcessHeap(), 0, params.endpoints);
+        params.endpoints = HeapAlloc(GetProcessHeap(), 0, params.size);
+        ALSA_CALL(get_endpoint_ids, &params);
+    }while(params.result == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER));
 
-    hr = alsa_enum_devices(flow, ids, guids, num);
-    if(FAILED(hr)){
-        UINT i;
-        for(i = 0; i < *num; ++i)
-            HeapFree(GetProcessHeap(), 0, (*ids)[i]);
-        HeapFree(GetProcessHeap(), 0, *ids);
-        HeapFree(GetProcessHeap(), 0, *guids);
-        return E_OUTOFMEMORY;
+    if(FAILED(params.result)) goto end;
+
+    ids = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, params.num * sizeof(*ids));
+    guids = HeapAlloc(GetProcessHeap(), 0, params.num * sizeof(*guids));
+    if(!ids || !guids){
+        params.result = E_OUTOFMEMORY;
+        goto end;
     }
 
-    TRACE("Enumerated %u devices\n", *num);
+    for(i = 0; i < params.num; i++){
+        unsigned int size = (strlenW(params.endpoints[i].name) + 1) * sizeof(WCHAR);
+        ids[i] = HeapAlloc(GetProcessHeap(), 0, size);
+        if(!ids[i]){
+            params.result = E_OUTOFMEMORY;
+            goto end;
+        }
+        memcpy(ids[i], params.endpoints[i].name, size);
+        get_device_guid(flow, params.endpoints[i].device, guids + i);
+    }
+    *def_index = params.default_idx;
 
-    if(*num == 0){
-        HeapFree(GetProcessHeap(), 0, *ids);
-        *ids = NULL;
-        HeapFree(GetProcessHeap(), 0, *guids);
-        *guids = NULL;
+end:
+    HeapFree(GetProcessHeap(), 0, params.endpoints);
+    if(FAILED(params.result)){
+        HeapFree(GetProcessHeap(), 0, guids);
+        if(ids){
+            for(i = 0; i < params.num; i++)
+                HeapFree(GetProcessHeap(), 0, ids[i]);
+            HeapFree(GetProcessHeap(), 0, ids);
+        }
+    }else{
+        *ids_out = ids;
+        *guids_out = guids;
+        *num = params.num;
     }
 
-    *def_index = 0;
-
-    return S_OK;
+    return params.result;
 }
 
 static BOOL get_alsa_name_by_guid(GUID *guid, char *name, DWORD name_size, EDataFlow *flow)
