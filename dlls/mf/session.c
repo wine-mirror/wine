@@ -77,7 +77,7 @@ struct session_op
         {
             TOPOID node_id;
         } sa_ready;
-    } u;
+    };
     struct list entry;
 };
 
@@ -397,15 +397,15 @@ static ULONG WINAPI session_op_Release(IUnknown *iface)
         switch (op->command)
         {
             case SESSION_CMD_SET_TOPOLOGY:
-                if (op->u.set_topology.topology)
-                    IMFTopology_Release(op->u.set_topology.topology);
+                if (op->set_topology.topology)
+                    IMFTopology_Release(op->set_topology.topology);
                 break;
             case SESSION_CMD_START:
-                PropVariantClear(&op->u.start.start_position);
+                PropVariantClear(&op->start.start_position);
                 break;
             case SESSION_CMD_QM_NOTIFY_TOPOLOGY:
-                if (op->u.notify_topology.topology)
-                    IMFTopology_Release(op->u.notify_topology.topology);
+                if (op->notify_topology.topology)
+                    IMFTopology_Release(op->notify_topology.topology);
                 break;
             default:
                 ;
@@ -1295,7 +1295,7 @@ static HRESULT WINAPI node_sample_allocator_cb_NotifyRelease(IMFVideoSampleAlloc
 
     if (SUCCEEDED(create_session_op(SESSION_CMD_SA_READY, &op)))
     {
-        op->u.sa_ready.node_id = topo_node->node_id;
+        op->sa_ready.node_id = topo_node->node_id;
         MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &topo_node->session->commands_callback, &op->IUnknown_iface);
         IUnknown_Release(&op->IUnknown_iface);
     }
@@ -1460,8 +1460,8 @@ static HRESULT session_set_current_topology(struct media_session *session, IMFTo
     {
         if (SUCCEEDED(create_session_op(SESSION_CMD_QM_NOTIFY_TOPOLOGY, &op)))
         {
-            op->u.notify_topology.topology = topology;
-            IMFTopology_AddRef(op->u.notify_topology.topology);
+            op->notify_topology.topology = topology;
+            IMFTopology_AddRef(op->notify_topology.topology);
             session_submit_command(session, op);
             IUnknown_Release(&op->IUnknown_iface);
         }
@@ -1740,10 +1740,10 @@ static HRESULT WINAPI mfsession_SetTopology(IMFMediaSession *iface, DWORD flags,
     if (FAILED(hr = create_session_op(SESSION_CMD_SET_TOPOLOGY, &op)))
         return hr;
 
-    op->u.set_topology.flags = flags;
-    op->u.set_topology.topology = topology;
-    if (op->u.set_topology.topology)
-        IMFTopology_AddRef(op->u.set_topology.topology);
+    op->set_topology.flags = flags;
+    op->set_topology.topology = topology;
+    if (op->set_topology.topology)
+        IMFTopology_AddRef(op->set_topology.topology);
 
     hr = session_submit_command(session, op);
     IUnknown_Release(&op->IUnknown_iface);
@@ -1774,8 +1774,8 @@ static HRESULT WINAPI mfsession_Start(IMFMediaSession *iface, const GUID *format
     if (FAILED(hr = create_session_op(SESSION_CMD_START, &op)))
         return hr;
 
-    op->u.start.time_format = format ? *format : GUID_NULL;
-    hr = PropVariantCopy(&op->u.start.start_position, start_position);
+    op->start.time_format = format ? *format : GUID_NULL;
+    hr = PropVariantCopy(&op->start.start_position, start_position);
 
     if (SUCCEEDED(hr))
         hr = session_submit_command(session, op);
@@ -2142,11 +2142,11 @@ static HRESULT WINAPI session_commands_callback_Invoke(IMFAsyncCallback *iface, 
             session_clear_topologies(session);
             break;
         case SESSION_CMD_SET_TOPOLOGY:
-            session_set_topology(session, op->u.set_topology.flags, op->u.set_topology.topology);
+            session_set_topology(session, op->set_topology.flags, op->set_topology.topology);
             session_command_complete(session);
             break;
         case SESSION_CMD_START:
-            session_start(session, &op->u.start.time_format, &op->u.start.start_position);
+            session_start(session, &op->start.time_format, &op->start.start_position);
             break;
         case SESSION_CMD_PAUSE:
             session_pause(session);
@@ -2158,11 +2158,11 @@ static HRESULT WINAPI session_commands_callback_Invoke(IMFAsyncCallback *iface, 
             session_close(session);
             break;
         case SESSION_CMD_QM_NOTIFY_TOPOLOGY:
-            IMFQualityManager_NotifyTopology(session->quality_manager, op->u.notify_topology.topology);
+            IMFQualityManager_NotifyTopology(session->quality_manager, op->notify_topology.topology);
             session_command_complete(session);
             break;
         case SESSION_CMD_SA_READY:
-            topo_node = session_get_node_by_id(session, op->u.sa_ready.node_id);
+            topo_node = session_get_node_by_id(session, op->sa_ready.node_id);
 
             if (topo_node->u.sink.requests)
             {
