@@ -50,7 +50,6 @@
 #include <alsa/asoundlib.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(alsa);
-WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
 
@@ -666,89 +665,6 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, GUID **guids,
     return S_OK;
 }
 
-/* Using the pulse PCM device from alsa-plugins 1.0.24 triggers a bug
- * which causes audio to cease playing after a few minutes of playback.
- * Setting handle_underrun=1 on pulse-backed ALSA devices seems to work
- * around this issue. */
-static snd_config_t *make_handle_underrun_config(const char *name)
-{
-    snd_config_t *lconf, *dev_node, *hu_node, *type_node;
-    char dev_node_name[260];
-    const char *type_str;
-    int err;
-
-    snd_config_update();
-
-    if((err = snd_config_copy(&lconf, snd_config)) < 0){
-        WARN("snd_config_copy failed: %d (%s)\n", err, snd_strerror(err));
-        return NULL;
-    }
-
-    sprintf(dev_node_name, "pcm.%s", name);
-    err = snd_config_search(lconf, dev_node_name, &dev_node);
-    if(err == -ENOENT){
-        snd_config_delete(lconf);
-        return NULL;
-    }
-    if(err < 0){
-        snd_config_delete(lconf);
-        WARN("snd_config_search failed: %d (%s)\n", err, snd_strerror(err));
-        return NULL;
-    }
-
-    /* ALSA is extremely fragile. If it runs into a config setting it doesn't
-     * recognize, it tends to fail or assert. So we only want to inject
-     * handle_underrun=1 on devices that we know will recognize it. */
-    err = snd_config_search(dev_node, "type", &type_node);
-    if(err == -ENOENT){
-        snd_config_delete(lconf);
-        return NULL;
-    }
-    if(err < 0){
-        snd_config_delete(lconf);
-        WARN("snd_config_search failed: %d (%s)\n", err, snd_strerror(err));
-        return NULL;
-    }
-
-    if((err = snd_config_get_string(type_node, &type_str)) < 0){
-        snd_config_delete(lconf);
-        return NULL;
-    }
-
-    if(strcmp(type_str, "pulse") != 0){
-        snd_config_delete(lconf);
-        return NULL;
-    }
-
-    err = snd_config_search(dev_node, "handle_underrun", &hu_node);
-    if(err >= 0){
-        /* user already has an explicit handle_underrun setting, so don't
-         * use a local config */
-        snd_config_delete(lconf);
-        return NULL;
-    }
-    if(err != -ENOENT){
-        snd_config_delete(lconf);
-        WARN("snd_config_search failed: %d (%s)\n", err, snd_strerror(err));
-        return NULL;
-    }
-
-    if((err = snd_config_imake_integer(&hu_node, "handle_underrun", 1)) < 0){
-        snd_config_delete(lconf);
-        WARN("snd_config_imake_integer failed: %d (%s)\n", err,
-                snd_strerror(err));
-        return NULL;
-    }
-
-    if((err = snd_config_add(dev_node, hu_node)) < 0){
-        snd_config_delete(lconf);
-        WARN("snd_config_add failed: %d (%s)\n", err, snd_strerror(err));
-        return NULL;
-    }
-
-    return lconf;
-}
-
 static BOOL get_alsa_name_by_guid(GUID *guid, char *name, DWORD name_size, EDataFlow *flow)
 {
     HKEY devices_key;
@@ -815,8 +731,6 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
     ACImpl *This;
     int err;
     snd_pcm_stream_t stream;
-    snd_config_t *lconf;
-    static BOOL handle_underrun = TRUE;
     char alsa_name[256];
     EDataFlow dataflow;
     HRESULT hr;
@@ -853,21 +767,7 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
     }
 
     This->dataflow = dataflow;
-    if(handle_underrun && ((lconf = make_handle_underrun_config(alsa_name)))){
-        err = snd_pcm_open_lconf(&This->pcm_handle, alsa_name, stream, SND_PCM_NONBLOCK, lconf);
-        TRACE("Opening PCM device \"%s\" with handle_underrun: %d\n", alsa_name, err);
-        snd_config_delete(lconf);
-        /* Pulse <= 2010 returns EINVAL, it does not know handle_underrun. */
-        if(err == -EINVAL){
-            ERR_(winediag)("PulseAudio \"%s\" %d without handle_underrun. Audio may hang."
-                           " Please upgrade to alsa_plugins >= 1.0.24\n", alsa_name, err);
-            handle_underrun = FALSE;
-        }
-    }else
-        err = -EINVAL;
-    if(err == -EINVAL){
-        err = snd_pcm_open(&This->pcm_handle, alsa_name, stream, SND_PCM_NONBLOCK);
-    }
+    err = snd_pcm_open(&This->pcm_handle, alsa_name, stream, SND_PCM_NONBLOCK);
     if(err < 0){
         HeapFree(GetProcessHeap(), 0, This);
         WARN("Unable to open PCM \"%s\": %d (%s)\n", alsa_name, err, snd_strerror(err));
