@@ -660,7 +660,7 @@ static HRESULT WINAPI ActiveIMMApp_Deactivate(IActiveIMMApp* This)
 static HRESULT WINAPI ActiveIMMApp_OnDefWindowProc(IActiveIMMApp* This,
         HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, LRESULT *plResult)
 {
-    FIXME("Stub (%p %x %lx %lx)\n",hWnd,Msg,wParam,lParam);
+    FIXME("Stub (%p %x %Ix %Ix)\n",hWnd,Msg,wParam,lParam);
     return E_FAIL;
 }
 
@@ -871,7 +871,7 @@ static HRESULT WINAPI ActiveIMMMessagePumpOwner_Resume(IActiveIMMMessagePumpOwne
         DWORD cookie)
 {
     ActiveIMMApp *This = impl_from_IActiveIMMMessagePumpOwner(iface);
-    FIXME("(%p)->(%u): stub\n", This, cookie);
+    FIXME("(%p)->(%lu): stub\n", This, cookie);
     return E_NOTIMPL;
 }
 
