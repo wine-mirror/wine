@@ -107,6 +107,7 @@ struct hid_device_vtbl
     void (*stop)(struct unix_device *iface);
     NTSTATUS (*haptics_start)(struct unix_device *iface, UINT duration_ms,
                               USHORT rumble_intensity, USHORT buzz_intensity);
+    NTSTATUS (*haptics_stop)(struct unix_device *iface);
     NTSTATUS (*physical_device_control)(struct unix_device *iface, USAGE control);
     NTSTATUS (*physical_device_set_gain)(struct unix_device *iface, BYTE percent);
     NTSTATUS (*physical_effect_control)(struct unix_device *iface, BYTE index, USAGE control, BYTE iterations);

@@ -417,18 +417,6 @@ NTSTATUS sdl_device_haptics_start(struct unix_device *iface, UINT duration_ms,
     effect.leftright.large_magnitude = rumble_intensity;
     effect.leftright.small_magnitude = buzz_intensity;
 
-    if (!effect.leftright.large_magnitude && !effect.leftright.small_magnitude)
-    {
-        if (impl->effect_support & SDL_HAPTIC_LEFTRIGHT)
-            pSDL_HapticStopAll(impl->sdl_haptic);
-        else if (impl->effect_support & WINE_SDL_HAPTIC_RUMBLE)
-            pSDL_HapticRumbleStop(impl->sdl_haptic);
-        else if (impl->effect_support & WINE_SDL_JOYSTICK_RUMBLE)
-            pSDL_JoystickRumble(impl->sdl_joystick, 0, 0, 0);
-
-        return STATUS_SUCCESS;
-    }
-
     if (impl->effect_support & SDL_HAPTIC_LEFTRIGHT)
     {
         if (impl->haptic_effect_id >= 0)
@@ -447,6 +435,22 @@ NTSTATUS sdl_device_haptics_start(struct unix_device *iface, UINT duration_ms,
         pSDL_JoystickRumble(impl->sdl_joystick, effect.leftright.large_magnitude,
                             effect.leftright.small_magnitude, duration_ms);
     }
+
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS sdl_device_haptics_stop(struct unix_device *iface)
+{
+    struct sdl_device *impl = impl_from_unix_device(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    if (impl->effect_support & SDL_HAPTIC_LEFTRIGHT)
+        pSDL_HapticStopAll(impl->sdl_haptic);
+    else if (impl->effect_support & WINE_SDL_HAPTIC_RUMBLE)
+        pSDL_HapticRumbleStop(impl->sdl_haptic);
+    else if (impl->effect_support & WINE_SDL_JOYSTICK_RUMBLE)
+        pSDL_JoystickRumble(impl->sdl_joystick, 0, 0, 0);
 
     return STATUS_SUCCESS;
 }
@@ -695,6 +699,7 @@ static const struct hid_device_vtbl sdl_device_vtbl =
     sdl_device_start,
     sdl_device_stop,
     sdl_device_haptics_start,
+    sdl_device_haptics_stop,
     sdl_device_physical_device_control,
     sdl_device_physical_device_set_gain,
     sdl_device_physical_effect_control,

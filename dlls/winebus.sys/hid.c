@@ -1050,12 +1050,16 @@ static void hid_device_set_output_report(struct unix_device *iface, HID_XFER_PAC
         else
         {
             if (waveform->manual_trigger == HAPTICS_WAVEFORM_STOP_ORDINAL)
+            {
                 memset(haptics->waveforms, 0, sizeof(haptics->waveforms));
+                io->Status = iface->hid_vtbl->haptics_stop(iface);
+            }
             else
+            {
                 haptics->waveforms[waveform->manual_trigger] = *waveform;
-
-            duration_ms = haptics->features.waveform_cutoff_time_ms;
-            io->Status = iface->hid_vtbl->haptics_start(iface, duration_ms, rumble->intensity, buzz->intensity);
+                duration_ms = haptics->features.waveform_cutoff_time_ms;
+                io->Status = iface->hid_vtbl->haptics_start(iface, duration_ms, rumble->intensity, buzz->intensity);
+            }
         }
     }
     else if (packet->reportId == physical->device_control_report)

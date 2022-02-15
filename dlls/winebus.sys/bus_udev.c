@@ -906,6 +906,29 @@ static NTSTATUS lnxev_device_haptics_start(struct unix_device *iface, UINT durat
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS lnxev_device_haptics_stop(struct unix_device *iface)
+{
+    struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);
+    struct ff_effect effect =
+    {
+        .id = impl->haptic_effect_id,
+        .type = FF_RUMBLE,
+    };
+    struct input_event event;
+
+    TRACE("iface %p.\n", iface);
+
+    if (effect.id == -1) return STATUS_SUCCESS;
+
+    event.type = EV_FF;
+    event.code = effect.id;
+    event.value = 0;
+    if (write(impl->base.device_fd, &event, sizeof(event)) == -1)
+        WARN("couldn't stop haptics rumble effect: %d %s\n", errno, strerror(errno));
+
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS lnxev_device_physical_effect_run(struct lnxev_device *impl, BYTE index,
                                                  int iterations)
 {
@@ -1185,6 +1208,7 @@ static const struct hid_device_vtbl lnxev_device_vtbl =
     lnxev_device_start,
     lnxev_device_stop,
     lnxev_device_haptics_start,
+    lnxev_device_haptics_stop,
     lnxev_device_physical_device_control,
     lnxev_device_physical_device_set_gain,
     lnxev_device_physical_effect_control,

@@ -107,6 +107,11 @@ static NTSTATUS mouse_haptics_start(struct unix_device *iface, UINT duration,
     return STATUS_NOT_SUPPORTED;
 }
 
+static NTSTATUS mouse_haptics_stop(struct unix_device *iface)
+{
+    return STATUS_NOT_SUPPORTED;
+}
+
 static NTSTATUS mouse_physical_device_control(struct unix_device *iface, USAGE control)
 {
     return STATUS_NOT_SUPPORTED;
@@ -135,6 +140,7 @@ static const struct hid_device_vtbl mouse_vtbl =
     mouse_start,
     mouse_stop,
     mouse_haptics_start,
+    mouse_haptics_stop,
     mouse_physical_device_control,
     mouse_physical_device_set_gain,
     mouse_physical_effect_control,
@@ -190,6 +196,11 @@ static NTSTATUS keyboard_haptics_start(struct unix_device *iface, UINT duration,
     return STATUS_NOT_SUPPORTED;
 }
 
+static NTSTATUS keyboard_haptics_stop(struct unix_device *iface)
+{
+    return STATUS_NOT_SUPPORTED;
+}
+
 static NTSTATUS keyboard_physical_device_control(struct unix_device *iface, USAGE control)
 {
     return STATUS_NOT_SUPPORTED;
@@ -218,6 +229,7 @@ static const struct hid_device_vtbl keyboard_vtbl =
     keyboard_start,
     keyboard_stop,
     keyboard_haptics_start,
+    keyboard_haptics_stop,
     keyboard_physical_device_control,
     keyboard_physical_device_set_gain,
     keyboard_physical_effect_control,
