@@ -1,3 +1,4 @@
+IMPORTLIB = ncrypt
 MODULE    = ncrypt.dll
 
 EXTRADLLFLAGS = -Wb,--prefer-native
