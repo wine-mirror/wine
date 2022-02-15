@@ -1,43 +1,43 @@
-@ stdcall RegCloseKey(long) advapi32.RegCloseKey
-@ stdcall RegCopyTreeW(long wstr long) advapi32.RegCopyTreeW
-@ stdcall RegCreateKeyExA(long str long ptr long long ptr ptr ptr) advapi32.RegCreateKeyExA
-@ stdcall RegCreateKeyExW(long wstr long ptr long long ptr ptr ptr) advapi32.RegCreateKeyExW
-@ stdcall RegDeleteKeyExA(long str long long) advapi32.RegDeleteKeyExA
-@ stdcall RegDeleteKeyExW(long wstr long long) advapi32.RegDeleteKeyExW
-@ stdcall RegDeleteTreeA(long str) advapi32.RegDeleteTreeA
-@ stdcall RegDeleteTreeW(long wstr) advapi32.RegDeleteTreeW
-@ stdcall RegDeleteValueA(long str) advapi32.RegDeleteValueA
-@ stdcall RegDeleteValueW(long wstr) advapi32.RegDeleteValueW
+@ stdcall RegCloseKey(long) kernelbase.RegCloseKey
+@ stdcall RegCopyTreeW(long wstr long) kernelbase.RegCopyTreeW
+@ stdcall RegCreateKeyExA(long str long ptr long long ptr ptr ptr) kernelbase.RegCreateKeyExA
+@ stdcall RegCreateKeyExW(long wstr long ptr long long ptr ptr ptr) kernelbase.RegCreateKeyExW
+@ stdcall RegDeleteKeyExA(long str long long) kernelbase.RegDeleteKeyExA
+@ stdcall RegDeleteKeyExW(long wstr long long) kernelbase.RegDeleteKeyExW
+@ stdcall RegDeleteTreeA(long str) kernelbase.RegDeleteTreeA
+@ stdcall RegDeleteTreeW(long wstr) kernelbase.RegDeleteTreeW
+@ stdcall RegDeleteValueA(long str) kernelbase.RegDeleteValueA
+@ stdcall RegDeleteValueW(long wstr) kernelbase.RegDeleteValueW
 @ stub RegDisablePredefinedCacheEx
-@ stdcall RegEnumKeyExA(long long ptr ptr ptr ptr ptr ptr) advapi32.RegEnumKeyExA
-@ stdcall RegEnumKeyExW(long long ptr ptr ptr ptr ptr ptr) advapi32.RegEnumKeyExW
-@ stdcall RegEnumValueA(long long ptr ptr ptr ptr ptr ptr) advapi32.RegEnumValueA
-@ stdcall RegEnumValueW(long long ptr ptr ptr ptr ptr ptr) advapi32.RegEnumValueW
-@ stdcall RegFlushKey(long) advapi32.RegFlushKey
-@ stdcall RegGetKeySecurity(long long ptr ptr) advapi32.RegGetKeySecurity
-@ stdcall RegGetValueA(long str str long ptr ptr ptr) advapi32.RegGetValueA
-@ stdcall RegGetValueW(long wstr wstr long ptr ptr ptr) advapi32.RegGetValueW
-@ stdcall RegLoadAppKeyA(str ptr long long long) advapi32.RegLoadAppKeyA
-@ stdcall RegLoadAppKeyW(wstr ptr long long long) advapi32.RegLoadAppKeyW
-@ stdcall RegLoadKeyA(long str str) advapi32.RegLoadKeyA
-@ stdcall RegLoadKeyW(long wstr wstr) advapi32.RegLoadKeyW
-@ stdcall RegLoadMUIStringA(long str str long ptr long str) advapi32.RegLoadMUIStringA
-@ stdcall RegLoadMUIStringW(long wstr wstr long ptr long wstr) advapi32.RegLoadMUIStringW
-@ stdcall RegNotifyChangeKeyValue(long long long long long) advapi32.RegNotifyChangeKeyValue
-@ stdcall RegOpenCurrentUser(long ptr) advapi32.RegOpenCurrentUser
-@ stdcall RegOpenKeyExA(long str long long ptr) advapi32.RegOpenKeyExA
-@ stdcall RegOpenKeyExW(long wstr long long ptr) advapi32.RegOpenKeyExW
-@ stdcall RegOpenUserClassesRoot(ptr long long ptr) advapi32.RegOpenUserClassesRoot
-@ stdcall RegQueryInfoKeyA(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr) advapi32.RegQueryInfoKeyA
-@ stdcall RegQueryInfoKeyW(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr) advapi32.RegQueryInfoKeyW
-@ stdcall RegQueryValueExA(long str ptr ptr ptr ptr) advapi32.RegQueryValueExA
-@ stdcall RegQueryValueExW(long wstr ptr ptr ptr ptr) advapi32.RegQueryValueExW
-@ stdcall RegRestoreKeyA(long str long) advapi32.RegRestoreKeyA
-@ stdcall RegRestoreKeyW(long wstr long) advapi32.RegRestoreKeyW
-@ stdcall RegSaveKeyExA(long str ptr long) advapi32.RegSaveKeyExA
-@ stdcall RegSaveKeyExW(long wstr ptr long) advapi32.RegSaveKeyExW
-@ stdcall RegSetKeySecurity(long long ptr) advapi32.RegSetKeySecurity
-@ stdcall RegSetValueExA(long str long long ptr long) advapi32.RegSetValueExA
-@ stdcall RegSetValueExW(long wstr long long ptr long) advapi32.RegSetValueExW
-@ stdcall RegUnLoadKeyA(long str) advapi32.RegUnLoadKeyA
-@ stdcall RegUnLoadKeyW(long wstr) advapi32.RegUnLoadKeyW
+@ stdcall RegEnumKeyExA(long long ptr ptr ptr ptr ptr ptr) kernelbase.RegEnumKeyExA
+@ stdcall RegEnumKeyExW(long long ptr ptr ptr ptr ptr ptr) kernelbase.RegEnumKeyExW
+@ stdcall RegEnumValueA(long long ptr ptr ptr ptr ptr ptr) kernelbase.RegEnumValueA
+@ stdcall RegEnumValueW(long long ptr ptr ptr ptr ptr ptr) kernelbase.RegEnumValueW
+@ stdcall RegFlushKey(long) kernelbase.RegFlushKey
+@ stdcall RegGetKeySecurity(long long ptr ptr) kernelbase.RegGetKeySecurity
+@ stdcall RegGetValueA(long str str long ptr ptr ptr) kernelbase.RegGetValueA
+@ stdcall RegGetValueW(long wstr wstr long ptr ptr ptr) kernelbase.RegGetValueW
+@ stdcall RegLoadAppKeyA(str ptr long long long) kernelbase.RegLoadAppKeyA
+@ stdcall RegLoadAppKeyW(wstr ptr long long long) kernelbase.RegLoadAppKeyW
+@ stdcall RegLoadKeyA(long str str) kernelbase.RegLoadKeyA
+@ stdcall RegLoadKeyW(long wstr wstr) kernelbase.RegLoadKeyW
+@ stdcall RegLoadMUIStringA(long str str long ptr long str) kernelbase.RegLoadMUIStringA
+@ stdcall RegLoadMUIStringW(long wstr wstr long ptr long wstr) kernelbase.RegLoadMUIStringW
+@ stdcall RegNotifyChangeKeyValue(long long long long long) kernelbase.RegNotifyChangeKeyValue
+@ stdcall RegOpenCurrentUser(long ptr) kernelbase.RegOpenCurrentUser
+@ stdcall RegOpenKeyExA(long str long long ptr) kernelbase.RegOpenKeyExA
+@ stdcall RegOpenKeyExW(long wstr long long ptr) kernelbase.RegOpenKeyExW
+@ stdcall RegOpenUserClassesRoot(ptr long long ptr) kernelbase.RegOpenUserClassesRoot
+@ stdcall RegQueryInfoKeyA(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr) kernelbase.RegQueryInfoKeyA
+@ stdcall RegQueryInfoKeyW(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr) kernelbase.RegQueryInfoKeyW
+@ stdcall RegQueryValueExA(long str ptr ptr ptr ptr) kernelbase.RegQueryValueExA
+@ stdcall RegQueryValueExW(long wstr ptr ptr ptr ptr) kernelbase.RegQueryValueExW
+@ stdcall RegRestoreKeyA(long str long) kernelbase.RegRestoreKeyA
+@ stdcall RegRestoreKeyW(long wstr long) kernelbase.RegRestoreKeyW
+@ stdcall RegSaveKeyExA(long str ptr long) kernelbase.RegSaveKeyExA
+@ stdcall RegSaveKeyExW(long wstr ptr long) kernelbase.RegSaveKeyExW
+@ stdcall RegSetKeySecurity(long long ptr) kernelbase.RegSetKeySecurity
+@ stdcall RegSetValueExA(long str long long ptr long) kernelbase.RegSetValueExA
+@ stdcall RegSetValueExW(long wstr long long ptr long) kernelbase.RegSetValueExW
+@ stdcall RegUnLoadKeyA(long str) kernelbase.RegUnLoadKeyA
+@ stdcall RegUnLoadKeyW(long wstr) kernelbase.RegUnLoadKeyW

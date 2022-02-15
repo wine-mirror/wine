@@ -1,145 +1,145 @@
-@ stdcall AccessCheck(ptr long long ptr ptr ptr ptr ptr) advapi32.AccessCheck
-@ stdcall AccessCheckAndAuditAlarmW(wstr ptr wstr wstr ptr long ptr long ptr ptr ptr) advapi32.AccessCheckAndAuditAlarmW
-@ stdcall AccessCheckByType(ptr ptr long long ptr long ptr ptr ptr ptr ptr) advapi32.AccessCheckByType
+@ stdcall AccessCheck(ptr long long ptr ptr ptr ptr ptr) kernelbase.AccessCheck
+@ stdcall AccessCheckAndAuditAlarmW(wstr ptr wstr wstr ptr long ptr long ptr ptr ptr) kernelbase.AccessCheckAndAuditAlarmW
+@ stdcall AccessCheckByType(ptr ptr long long ptr long ptr ptr ptr ptr ptr) kernelbase.AccessCheckByType
 @ stub AccessCheckByTypeAndAuditAlarmW
 @ stub AccessCheckByTypeResultList
 @ stub AccessCheckByTypeResultListAndAuditAlarmByHandleW
 @ stub AccessCheckByTypeResultListAndAuditAlarmW
-@ stdcall AddAccessAllowedAce(ptr long long ptr) advapi32.AddAccessAllowedAce
-@ stdcall AddAccessAllowedAceEx(ptr long long long ptr) advapi32.AddAccessAllowedAceEx
-@ stdcall AddAccessAllowedObjectAce(ptr long long long ptr ptr ptr) advapi32.AddAccessAllowedObjectAce
-@ stdcall AddAccessDeniedAce(ptr long long ptr) advapi32.AddAccessDeniedAce
-@ stdcall AddAccessDeniedAceEx(ptr long long long ptr) advapi32.AddAccessDeniedAceEx
-@ stdcall AddAccessDeniedObjectAce(ptr long long long ptr ptr ptr) advapi32.AddAccessDeniedObjectAce
-@ stdcall AddAce(ptr long long ptr long) advapi32.AddAce
-@ stdcall AddAuditAccessAce(ptr long long ptr long long) advapi32.AddAuditAccessAce
-@ stdcall AddAuditAccessAceEx(ptr long long long ptr long long) advapi32.AddAuditAccessAceEx
-@ stdcall AddAuditAccessObjectAce(ptr long long long ptr ptr ptr long long) advapi32.AddAuditAccessObjectAce
-@ stdcall AddMandatoryAce(ptr long long long ptr) advapi32.AddMandatoryAce
-@ stdcall AdjustTokenGroups(long long ptr long ptr ptr) advapi32.AdjustTokenGroups
-@ stdcall AdjustTokenPrivileges(long long ptr long ptr ptr) advapi32.AdjustTokenPrivileges
-@ stdcall AllocateAndInitializeSid(ptr long long long long long long long long long ptr) advapi32.AllocateAndInitializeSid
-@ stdcall AllocateLocallyUniqueId(ptr) advapi32.AllocateLocallyUniqueId
-@ stdcall AreAllAccessesGranted(long long) advapi32.AreAllAccessesGranted
-@ stdcall AreAnyAccessesGranted(long long) advapi32.AreAnyAccessesGranted
-@ stdcall CheckTokenMembership(long ptr ptr) advapi32.CheckTokenMembership
-@ stdcall ConvertToAutoInheritPrivateObjectSecurity(ptr ptr ptr ptr long ptr) advapi32.ConvertToAutoInheritPrivateObjectSecurity
-@ stdcall CopySid(long ptr ptr) advapi32.CopySid
-@ stdcall CreatePrivateObjectSecurity(ptr ptr ptr long long ptr) advapi32.CreatePrivateObjectSecurity
-@ stdcall CreatePrivateObjectSecurityEx(ptr ptr ptr ptr long long long ptr) advapi32.CreatePrivateObjectSecurityEx
-@ stdcall CreatePrivateObjectSecurityWithMultipleInheritance(ptr ptr ptr ptr long long long long ptr) advapi32.CreatePrivateObjectSecurityWithMultipleInheritance
-@ stdcall CreateProcessAsUserW(long wstr wstr ptr ptr long long ptr wstr ptr ptr) advapi32.CreateProcessAsUserW
-@ stdcall CreateRestrictedToken(long long long ptr long ptr long ptr ptr) advapi32.CreateRestrictedToken
-@ stdcall CreateWellKnownSid(long ptr ptr ptr) advapi32.CreateWellKnownSid
-@ stdcall DeleteAce(ptr long) advapi32.DeleteAce
-@ stdcall DestroyPrivateObjectSecurity(ptr) advapi32.DestroyPrivateObjectSecurity
-@ stdcall DuplicateToken(long long ptr) advapi32.DuplicateToken
-@ stdcall DuplicateTokenEx(long long ptr long long ptr) advapi32.DuplicateTokenEx
-@ stdcall EqualDomainSid(ptr ptr ptr) advapi32.EqualDomainSid
-@ stdcall EqualPrefixSid(ptr ptr) advapi32.EqualPrefixSid
-@ stdcall EqualSid(ptr ptr) advapi32.EqualSid
-@ stdcall EventActivityIdControl(long ptr) advapi32.EventActivityIdControl
-@ stdcall EventEnabled(int64 ptr) advapi32.EventEnabled
-@ stdcall EventProviderEnabled(int64 long int64) advapi32.EventProviderEnabled
-@ stdcall EventRegister(ptr ptr ptr ptr) advapi32.EventRegister
-@ stdcall EventUnregister(int64) advapi32.EventUnregister
-@ stdcall EventWrite(int64 ptr long ptr) advapi32.EventWrite
-@ stdcall EventWriteString(int64 long int64 ptr) advapi32.EventWriteString
-@ stdcall EventWriteTransfer(int64 ptr ptr ptr long ptr) advapi32.EventWriteTransfer
-@ stdcall FindFirstFreeAce(ptr ptr) advapi32.FindFirstFreeAce
-@ stdcall FreeSid(ptr) advapi32.FreeSid
-@ stdcall GetAce(ptr long ptr) advapi32.GetAce
-@ stdcall GetAclInformation(ptr ptr long long) advapi32.GetAclInformation
-@ stdcall GetFileSecurityW(wstr long ptr long ptr) advapi32.GetFileSecurityW
-@ stdcall GetKernelObjectSecurity(long long ptr long ptr) advapi32.GetKernelObjectSecurity
-@ stdcall GetLengthSid(ptr) advapi32.GetLengthSid
-@ stdcall GetPrivateObjectSecurity(ptr long ptr long ptr) advapi32.GetPrivateObjectSecurity
-@ stdcall GetSecurityDescriptorControl(ptr ptr ptr) advapi32.GetSecurityDescriptorControl
-@ stdcall GetSecurityDescriptorDacl(ptr ptr ptr ptr) advapi32.GetSecurityDescriptorDacl
-@ stdcall GetSecurityDescriptorGroup(ptr ptr ptr) advapi32.GetSecurityDescriptorGroup
-@ stdcall GetSecurityDescriptorLength(ptr) advapi32.GetSecurityDescriptorLength
-@ stdcall GetSecurityDescriptorOwner(ptr ptr ptr) advapi32.GetSecurityDescriptorOwner
+@ stdcall AddAccessAllowedAce(ptr long long ptr) kernelbase.AddAccessAllowedAce
+@ stdcall AddAccessAllowedAceEx(ptr long long long ptr) kernelbase.AddAccessAllowedAceEx
+@ stdcall AddAccessAllowedObjectAce(ptr long long long ptr ptr ptr) kernelbase.AddAccessAllowedObjectAce
+@ stdcall AddAccessDeniedAce(ptr long long ptr) kernelbase.AddAccessDeniedAce
+@ stdcall AddAccessDeniedAceEx(ptr long long long ptr) kernelbase.AddAccessDeniedAceEx
+@ stdcall AddAccessDeniedObjectAce(ptr long long long ptr ptr ptr) kernelbase.AddAccessDeniedObjectAce
+@ stdcall AddAce(ptr long long ptr long) kernelbase.AddAce
+@ stdcall AddAuditAccessAce(ptr long long ptr long long) kernelbase.AddAuditAccessAce
+@ stdcall AddAuditAccessAceEx(ptr long long long ptr long long) kernelbase.AddAuditAccessAceEx
+@ stdcall AddAuditAccessObjectAce(ptr long long long ptr ptr ptr long long) kernelbase.AddAuditAccessObjectAce
+@ stdcall AddMandatoryAce(ptr long long long ptr) kernelbase.AddMandatoryAce
+@ stdcall AdjustTokenGroups(long long ptr long ptr ptr) kernelbase.AdjustTokenGroups
+@ stdcall AdjustTokenPrivileges(long long ptr long ptr ptr) kernelbase.AdjustTokenPrivileges
+@ stdcall AllocateAndInitializeSid(ptr long long long long long long long long long ptr) kernelbase.AllocateAndInitializeSid
+@ stdcall AllocateLocallyUniqueId(ptr) kernelbase.AllocateLocallyUniqueId
+@ stdcall AreAllAccessesGranted(long long) kernelbase.AreAllAccessesGranted
+@ stdcall AreAnyAccessesGranted(long long) kernelbase.AreAnyAccessesGranted
+@ stdcall CheckTokenMembership(long ptr ptr) kernelbase.CheckTokenMembership
+@ stdcall ConvertToAutoInheritPrivateObjectSecurity(ptr ptr ptr ptr long ptr) kernelbase.ConvertToAutoInheritPrivateObjectSecurity
+@ stdcall CopySid(long ptr ptr) kernelbase.CopySid
+@ stdcall CreatePrivateObjectSecurity(ptr ptr ptr long long ptr) kernelbase.CreatePrivateObjectSecurity
+@ stdcall CreatePrivateObjectSecurityEx(ptr ptr ptr ptr long long long ptr) kernelbase.CreatePrivateObjectSecurityEx
+@ stdcall CreatePrivateObjectSecurityWithMultipleInheritance(ptr ptr ptr ptr long long long long ptr) kernelbase.CreatePrivateObjectSecurityWithMultipleInheritance
+@ stdcall CreateProcessAsUserW(long wstr wstr ptr ptr long long ptr wstr ptr ptr) kernelbase.CreateProcessAsUserW
+@ stdcall CreateRestrictedToken(long long long ptr long ptr long ptr ptr) kernelbase.CreateRestrictedToken
+@ stdcall CreateWellKnownSid(long ptr ptr ptr) kernelbase.CreateWellKnownSid
+@ stdcall DeleteAce(ptr long) kernelbase.DeleteAce
+@ stdcall DestroyPrivateObjectSecurity(ptr) kernelbase.DestroyPrivateObjectSecurity
+@ stdcall DuplicateToken(long long ptr) kernelbase.DuplicateToken
+@ stdcall DuplicateTokenEx(long long ptr long long ptr) kernelbase.DuplicateTokenEx
+@ stdcall EqualDomainSid(ptr ptr ptr) kernelbase.EqualDomainSid
+@ stdcall EqualPrefixSid(ptr ptr) kernelbase.EqualPrefixSid
+@ stdcall EqualSid(ptr ptr) kernelbase.EqualSid
+@ stdcall EventActivityIdControl(long ptr) kernelbase.EventActivityIdControl
+@ stdcall EventEnabled(int64 ptr) kernelbase.EventEnabled
+@ stdcall EventProviderEnabled(int64 long int64) kernelbase.EventProviderEnabled
+@ stdcall EventRegister(ptr ptr ptr ptr) kernelbase.EventRegister
+@ stdcall EventUnregister(int64) kernelbase.EventUnregister
+@ stdcall EventWrite(int64 ptr long ptr) kernelbase.EventWrite
+@ stdcall EventWriteString(int64 long int64 ptr) kernelbase.EventWriteString
+@ stdcall EventWriteTransfer(int64 ptr ptr ptr long ptr) kernelbase.EventWriteTransfer
+@ stdcall FindFirstFreeAce(ptr ptr) kernelbase.FindFirstFreeAce
+@ stdcall FreeSid(ptr) kernelbase.FreeSid
+@ stdcall GetAce(ptr long ptr) kernelbase.GetAce
+@ stdcall GetAclInformation(ptr ptr long long) kernelbase.GetAclInformation
+@ stdcall GetFileSecurityW(wstr long ptr long ptr) kernelbase.GetFileSecurityW
+@ stdcall GetKernelObjectSecurity(long long ptr long ptr) kernelbase.GetKernelObjectSecurity
+@ stdcall GetLengthSid(ptr) kernelbase.GetLengthSid
+@ stdcall GetPrivateObjectSecurity(ptr long ptr long ptr) kernelbase.GetPrivateObjectSecurity
+@ stdcall GetSecurityDescriptorControl(ptr ptr ptr) kernelbase.GetSecurityDescriptorControl
+@ stdcall GetSecurityDescriptorDacl(ptr ptr ptr ptr) kernelbase.GetSecurityDescriptorDacl
+@ stdcall GetSecurityDescriptorGroup(ptr ptr ptr) kernelbase.GetSecurityDescriptorGroup
+@ stdcall GetSecurityDescriptorLength(ptr) kernelbase.GetSecurityDescriptorLength
+@ stdcall GetSecurityDescriptorOwner(ptr ptr ptr) kernelbase.GetSecurityDescriptorOwner
 @ stub GetSecurityDescriptorRMControl
-@ stdcall GetSecurityDescriptorSacl(ptr ptr ptr ptr) advapi32.GetSecurityDescriptorSacl
-@ stdcall GetSidIdentifierAuthority(ptr) advapi32.GetSidIdentifierAuthority
-@ stdcall GetSidLengthRequired(long) advapi32.GetSidLengthRequired
-@ stdcall GetSidSubAuthority(ptr long) advapi32.GetSidSubAuthority
-@ stdcall GetSidSubAuthorityCount(ptr) advapi32.GetSidSubAuthorityCount
-@ stdcall GetTokenInformation(long long ptr long ptr) advapi32.GetTokenInformation
-@ stdcall GetTraceEnableFlags(int64) advapi32.GetTraceEnableFlags
-@ stdcall GetTraceEnableLevel(int64) advapi32.GetTraceEnableLevel
-@ stdcall -ret64 GetTraceLoggerHandle(ptr) advapi32.GetTraceLoggerHandle
-@ stdcall InitializeAcl(ptr long long) advapi32.InitializeAcl
-@ stdcall InitializeSecurityDescriptor(ptr long) advapi32.InitializeSecurityDescriptor
-@ stdcall InitializeSid(ptr ptr long) advapi32.InitializeSid
-@ stdcall IsTokenRestricted(long) advapi32.IsTokenRestricted
-@ stdcall IsValidAcl(ptr) advapi32.IsValidAcl
-@ stdcall IsValidSecurityDescriptor(ptr) advapi32.IsValidSecurityDescriptor
-@ stdcall IsValidSid(ptr) advapi32.IsValidSid
-@ stdcall MakeAbsoluteSD(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr) advapi32.MakeAbsoluteSD
-@ stdcall MakeSelfRelativeSD(ptr ptr ptr) advapi32.MakeSelfRelativeSD
-@ stdcall OpenProcessToken(long long ptr) advapi32.OpenProcessToken
-@ stdcall OpenThreadToken(long long long ptr) advapi32.OpenThreadToken
-@ stdcall PrivilegeCheck(ptr ptr ptr) advapi32.PrivilegeCheck
-@ stdcall PrivilegedServiceAuditAlarmW(wstr wstr long ptr long) advapi32.PrivilegedServiceAuditAlarmW
+@ stdcall GetSecurityDescriptorSacl(ptr ptr ptr ptr) kernelbase.GetSecurityDescriptorSacl
+@ stdcall GetSidIdentifierAuthority(ptr) kernelbase.GetSidIdentifierAuthority
+@ stdcall GetSidLengthRequired(long) kernelbase.GetSidLengthRequired
+@ stdcall GetSidSubAuthority(ptr long) kernelbase.GetSidSubAuthority
+@ stdcall GetSidSubAuthorityCount(ptr) kernelbase.GetSidSubAuthorityCount
+@ stdcall GetTokenInformation(long long ptr long ptr) kernelbase.GetTokenInformation
+@ stdcall GetTraceEnableFlags(int64) kernelbase.GetTraceEnableFlags
+@ stdcall GetTraceEnableLevel(int64) kernelbase.GetTraceEnableLevel
+@ stdcall -ret64 GetTraceLoggerHandle(ptr) kernelbase.GetTraceLoggerHandle
+@ stdcall InitializeAcl(ptr long long) kernelbase.InitializeAcl
+@ stdcall InitializeSecurityDescriptor(ptr long) kernelbase.InitializeSecurityDescriptor
+@ stdcall InitializeSid(ptr ptr long) kernelbase.InitializeSid
+@ stdcall IsTokenRestricted(long) kernelbase.IsTokenRestricted
+@ stdcall IsValidAcl(ptr) kernelbase.IsValidAcl
+@ stdcall IsValidSecurityDescriptor(ptr) kernelbase.IsValidSecurityDescriptor
+@ stdcall IsValidSid(ptr) kernelbase.IsValidSid
+@ stdcall MakeAbsoluteSD(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr) kernelbase.MakeAbsoluteSD
+@ stdcall MakeSelfRelativeSD(ptr ptr ptr) kernelbase.MakeSelfRelativeSD
+@ stdcall OpenProcessToken(long long ptr) kernelbase.OpenProcessToken
+@ stdcall OpenThreadToken(long long long ptr) kernelbase.OpenThreadToken
+@ stdcall PrivilegeCheck(ptr ptr ptr) kernelbase.PrivilegeCheck
+@ stdcall PrivilegedServiceAuditAlarmW(wstr wstr long ptr long) kernelbase.PrivilegedServiceAuditAlarmW
 @ stub QuerySecurityAccessMask
-@ stdcall RegCloseKey(long) advapi32.RegCloseKey
-@ stdcall RegCopyTreeW(long wstr long) advapi32.RegCopyTreeW
-@ stdcall RegCreateKeyExA(long str long ptr long long ptr ptr ptr) advapi32.RegCreateKeyExA
-@ stdcall RegCreateKeyExW(long wstr long ptr long long ptr ptr ptr) advapi32.RegCreateKeyExW
-@ stdcall RegDeleteKeyExA(long str long long) advapi32.RegDeleteKeyExA
-@ stdcall RegDeleteKeyExW(long wstr long long) advapi32.RegDeleteKeyExW
-@ stdcall RegDeleteTreeA(long str) advapi32.RegDeleteTreeA
-@ stdcall RegDeleteTreeW(long wstr) advapi32.RegDeleteTreeW
-@ stdcall RegDeleteValueA(long str) advapi32.RegDeleteValueA
-@ stdcall RegDeleteValueW(long wstr) advapi32.RegDeleteValueW
+@ stdcall RegCloseKey(long) kernelbase.RegCloseKey
+@ stdcall RegCopyTreeW(long wstr long) kernelbase.RegCopyTreeW
+@ stdcall RegCreateKeyExA(long str long ptr long long ptr ptr ptr) kernelbase.RegCreateKeyExA
+@ stdcall RegCreateKeyExW(long wstr long ptr long long ptr ptr ptr) kernelbase.RegCreateKeyExW
+@ stdcall RegDeleteKeyExA(long str long long) kernelbase.RegDeleteKeyExA
+@ stdcall RegDeleteKeyExW(long wstr long long) kernelbase.RegDeleteKeyExW
+@ stdcall RegDeleteTreeA(long str) kernelbase.RegDeleteTreeA
+@ stdcall RegDeleteTreeW(long wstr) kernelbase.RegDeleteTreeW
+@ stdcall RegDeleteValueA(long str) kernelbase.RegDeleteValueA
+@ stdcall RegDeleteValueW(long wstr) kernelbase.RegDeleteValueW
 @ stub RegDisablePredefinedCacheEx
-@ stdcall RegEnumKeyExA(long long ptr ptr ptr ptr ptr ptr) advapi32.RegEnumKeyExA
-@ stdcall RegEnumKeyExW(long long ptr ptr ptr ptr ptr ptr) advapi32.RegEnumKeyExW
-@ stdcall RegEnumValueA(long long ptr ptr ptr ptr ptr ptr) advapi32.RegEnumValueA
-@ stdcall RegEnumValueW(long long ptr ptr ptr ptr ptr ptr) advapi32.RegEnumValueW
-@ stdcall RegFlushKey(long) advapi32.RegFlushKey
-@ stdcall RegGetKeySecurity(long long ptr ptr) advapi32.RegGetKeySecurity
-@ stdcall RegGetValueA(long str str long ptr ptr ptr) advapi32.RegGetValueA
-@ stdcall RegGetValueW(long wstr wstr long ptr ptr ptr) advapi32.RegGetValueW
-@ stdcall RegLoadAppKeyA(str ptr long long long) advapi32.RegLoadAppKeyA
-@ stdcall RegLoadAppKeyW(wstr ptr long long long) advapi32.RegLoadAppKeyW
-@ stdcall RegLoadKeyA(long str str) advapi32.RegLoadKeyA
-@ stdcall RegLoadKeyW(long wstr wstr) advapi32.RegLoadKeyW
-@ stdcall RegLoadMUIStringA(long str str long ptr long str) advapi32.RegLoadMUIStringA
-@ stdcall RegLoadMUIStringW(long wstr wstr long ptr long wstr) advapi32.RegLoadMUIStringW
-@ stdcall RegNotifyChangeKeyValue(long long long long long) advapi32.RegNotifyChangeKeyValue
-@ stdcall RegOpenCurrentUser(long ptr) advapi32.RegOpenCurrentUser
-@ stdcall RegOpenKeyExA(long str long long ptr) advapi32.RegOpenKeyExA
-@ stdcall RegOpenKeyExW(long wstr long long ptr) advapi32.RegOpenKeyExW
-@ stdcall RegOpenUserClassesRoot(ptr long long ptr) advapi32.RegOpenUserClassesRoot
-@ stdcall RegQueryInfoKeyA(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr) advapi32.RegQueryInfoKeyA
-@ stdcall RegQueryInfoKeyW(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr) advapi32.RegQueryInfoKeyW
-@ stdcall RegQueryValueExA(long str ptr ptr ptr ptr) advapi32.RegQueryValueExA
-@ stdcall RegQueryValueExW(long wstr ptr ptr ptr ptr) advapi32.RegQueryValueExW
-@ stdcall RegRestoreKeyA(long str long) advapi32.RegRestoreKeyA
-@ stdcall RegRestoreKeyW(long wstr long) advapi32.RegRestoreKeyW
-@ stdcall RegSaveKeyExA(long str ptr long) advapi32.RegSaveKeyExA
-@ stdcall RegSaveKeyExW(long wstr ptr long) advapi32.RegSaveKeyExW
-@ stdcall RegSetKeySecurity(long long ptr) advapi32.RegSetKeySecurity
-@ stdcall RegSetValueExA(long str long long ptr long) advapi32.RegSetValueExA
-@ stdcall RegSetValueExW(long wstr long long ptr long) advapi32.RegSetValueExW
-@ stdcall RegUnLoadKeyA(long str) advapi32.RegUnLoadKeyA
-@ stdcall RegUnLoadKeyW(long wstr) advapi32.RegUnLoadKeyW
-@ stdcall RegisterTraceGuidsW(ptr ptr ptr long ptr wstr wstr ptr) advapi32.RegisterTraceGuidsW
-@ stdcall RevertToSelf() advapi32.RevertToSelf
-@ stdcall SetAclInformation(ptr ptr long long) advapi32.SetAclInformation
-@ stdcall SetFileSecurityW(wstr long ptr) advapi32.SetFileSecurityW
-@ stdcall SetKernelObjectSecurity(long long ptr) advapi32.SetKernelObjectSecurity
+@ stdcall RegEnumKeyExA(long long ptr ptr ptr ptr ptr ptr) kernelbase.RegEnumKeyExA
+@ stdcall RegEnumKeyExW(long long ptr ptr ptr ptr ptr ptr) kernelbase.RegEnumKeyExW
+@ stdcall RegEnumValueA(long long ptr ptr ptr ptr ptr ptr) kernelbase.RegEnumValueA
+@ stdcall RegEnumValueW(long long ptr ptr ptr ptr ptr ptr) kernelbase.RegEnumValueW
+@ stdcall RegFlushKey(long) kernelbase.RegFlushKey
+@ stdcall RegGetKeySecurity(long long ptr ptr) kernelbase.RegGetKeySecurity
+@ stdcall RegGetValueA(long str str long ptr ptr ptr) kernelbase.RegGetValueA
+@ stdcall RegGetValueW(long wstr wstr long ptr ptr ptr) kernelbase.RegGetValueW
+@ stdcall RegLoadAppKeyA(str ptr long long long) kernelbase.RegLoadAppKeyA
+@ stdcall RegLoadAppKeyW(wstr ptr long long long) kernelbase.RegLoadAppKeyW
+@ stdcall RegLoadKeyA(long str str) kernelbase.RegLoadKeyA
+@ stdcall RegLoadKeyW(long wstr wstr) kernelbase.RegLoadKeyW
+@ stdcall RegLoadMUIStringA(long str str long ptr long str) kernelbase.RegLoadMUIStringA
+@ stdcall RegLoadMUIStringW(long wstr wstr long ptr long wstr) kernelbase.RegLoadMUIStringW
+@ stdcall RegNotifyChangeKeyValue(long long long long long) kernelbase.RegNotifyChangeKeyValue
+@ stdcall RegOpenCurrentUser(long ptr) kernelbase.RegOpenCurrentUser
+@ stdcall RegOpenKeyExA(long str long long ptr) kernelbase.RegOpenKeyExA
+@ stdcall RegOpenKeyExW(long wstr long long ptr) kernelbase.RegOpenKeyExW
+@ stdcall RegOpenUserClassesRoot(ptr long long ptr) kernelbase.RegOpenUserClassesRoot
+@ stdcall RegQueryInfoKeyA(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr) kernelbase.RegQueryInfoKeyA
+@ stdcall RegQueryInfoKeyW(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr) kernelbase.RegQueryInfoKeyW
+@ stdcall RegQueryValueExA(long str ptr ptr ptr ptr) kernelbase.RegQueryValueExA
+@ stdcall RegQueryValueExW(long wstr ptr ptr ptr ptr) kernelbase.RegQueryValueExW
+@ stdcall RegRestoreKeyA(long str long) kernelbase.RegRestoreKeyA
+@ stdcall RegRestoreKeyW(long wstr long) kernelbase.RegRestoreKeyW
+@ stdcall RegSaveKeyExA(long str ptr long) kernelbase.RegSaveKeyExA
+@ stdcall RegSaveKeyExW(long wstr ptr long) kernelbase.RegSaveKeyExW
+@ stdcall RegSetKeySecurity(long long ptr) kernelbase.RegSetKeySecurity
+@ stdcall RegSetValueExA(long str long long ptr long) kernelbase.RegSetValueExA
+@ stdcall RegSetValueExW(long wstr long long ptr long) kernelbase.RegSetValueExW
+@ stdcall RegUnLoadKeyA(long str) kernelbase.RegUnLoadKeyA
+@ stdcall RegUnLoadKeyW(long wstr) kernelbase.RegUnLoadKeyW
+@ stdcall RegisterTraceGuidsW(ptr ptr ptr long ptr wstr wstr ptr) kernelbase.RegisterTraceGuidsW
+@ stdcall RevertToSelf() kernelbase.RevertToSelf
+@ stdcall SetAclInformation(ptr ptr long long) kernelbase.SetAclInformation
+@ stdcall SetFileSecurityW(wstr long ptr) kernelbase.SetFileSecurityW
+@ stdcall SetKernelObjectSecurity(long long ptr) kernelbase.SetKernelObjectSecurity
 @ stub SetSecurityAccessMask
-@ stdcall SetSecurityDescriptorControl(ptr long long) advapi32.SetSecurityDescriptorControl
-@ stdcall SetSecurityDescriptorDacl(ptr long ptr long) advapi32.SetSecurityDescriptorDacl
-@ stdcall SetSecurityDescriptorGroup(ptr ptr long) advapi32.SetSecurityDescriptorGroup
-@ stdcall SetSecurityDescriptorOwner(ptr ptr long) advapi32.SetSecurityDescriptorOwner
+@ stdcall SetSecurityDescriptorControl(ptr long long) kernelbase.SetSecurityDescriptorControl
+@ stdcall SetSecurityDescriptorDacl(ptr long ptr long) kernelbase.SetSecurityDescriptorDacl
+@ stdcall SetSecurityDescriptorGroup(ptr ptr long) kernelbase.SetSecurityDescriptorGroup
+@ stdcall SetSecurityDescriptorOwner(ptr ptr long) kernelbase.SetSecurityDescriptorOwner
 @ stub SetSecurityDescriptorRMControl
-@ stdcall SetSecurityDescriptorSacl(ptr long ptr long) advapi32.SetSecurityDescriptorSacl
-@ stdcall SetTokenInformation(long long ptr long) advapi32.SetTokenInformation
-@ stdcall TraceEvent(int64 ptr) advapi32.TraceEvent
-@ varargs TraceMessage(int64 long ptr long) advapi32.TraceMessage
-@ stdcall TraceMessageVa(int64 long ptr long ptr) advapi32.TraceMessageVa
-@ stdcall UnregisterTraceGuids(int64) advapi32.UnregisterTraceGuids
+@ stdcall SetSecurityDescriptorSacl(ptr long ptr long) kernelbase.SetSecurityDescriptorSacl
+@ stdcall SetTokenInformation(long long ptr long) kernelbase.SetTokenInformation
+@ stdcall TraceEvent(int64 ptr) kernelbase.TraceEvent
+@ varargs TraceMessage(int64 long ptr long) kernelbase.TraceMessage
+@ stdcall TraceMessageVa(int64 long ptr long ptr) kernelbase.TraceMessageVa
+@ stdcall UnregisterTraceGuids(int64) kernelbase.UnregisterTraceGuids
