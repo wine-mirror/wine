@@ -659,7 +659,7 @@ static HRESULT WINAPI MSTASK_ITask_EditWorkItem(
         HWND hParent,
         DWORD dwReserved)
 {
-    FIXME("(%p, %p, %d): stub\n", iface, hParent, dwReserved);
+    FIXME("(%p, %p, %ld): stub\n", iface, hParent, dwReserved);
     return E_NOTIMPL;
 }
 
@@ -901,7 +901,7 @@ static HRESULT WINAPI MSTASK_ITask_SetFlags(ITask *iface, DWORD flags)
 {
     TaskImpl *This = impl_from_ITask(iface);
 
-    TRACE("(%p, 0x%08x)\n", iface, flags);
+    TRACE("(%p, 0x%08lx)\n", iface, flags);
     This->flags &= 0xffff8000;
     This->flags |= flags & 0x7fff;
     This->is_dirty = TRUE;
@@ -1127,7 +1127,7 @@ static HRESULT WINAPI MSTASK_ITask_SetPriority(
         ITask* iface,
         DWORD dwPriority)
 {
-    FIXME("(%p, 0x%08x): stub\n", iface, dwPriority);
+    FIXME("(%p, 0x%08lx): stub\n", iface, dwPriority);
     return E_NOTIMPL;
 }
 
@@ -1145,7 +1145,7 @@ static HRESULT WINAPI MSTASK_ITask_SetTaskFlags(
         ITask* iface,
         DWORD dwFlags)
 {
-    FIXME("(%p, 0x%08x): stub\n", iface, dwFlags);
+    FIXME("(%p, 0x%08lx): stub\n", iface, dwFlags);
     return E_NOTIMPL;
 }
 
@@ -1162,7 +1162,7 @@ static HRESULT WINAPI MSTASK_ITask_SetMaxRunTime(
 {
     TaskImpl *This = impl_from_ITask(iface);
 
-    TRACE("(%p, %d)\n", iface, dwMaxRunTime);
+    TRACE("(%p, %ld)\n", iface, dwMaxRunTime);
 
     This->maxRunTime = dwMaxRunTime;
     This->is_dirty = TRUE;
@@ -1229,7 +1229,7 @@ static DWORD load_unicode_strings(ITask *task, BYTE *data, DWORD limit)
     {
         if (limit < sizeof(USHORT))
         {
-            TRACE("invalid string %u offset\n", i);
+            TRACE("invalid string %lu offset\n", i);
             break;
         }
 
@@ -1239,11 +1239,11 @@ static DWORD load_unicode_strings(ITask *task, BYTE *data, DWORD limit)
         limit -= sizeof(USHORT);
         if (limit < len * sizeof(WCHAR))
         {
-            TRACE("invalid string %u size\n", i);
+            TRACE("invalid string %lu size\n", i);
             break;
         }
 
-        TRACE("string %u: %s\n", i, wine_dbgstr_wn((const WCHAR *)data, len));
+        TRACE("string %lu: %s\n", i, wine_dbgstr_wn((const WCHAR *)data, len));
 
         switch (i)
         {
@@ -1315,7 +1315,7 @@ static HRESULT load_job_data(TaskImpl *This, BYTE *data, DWORD size)
     This->maxRunTime = fixed->maximum_runtime;
     TRACE("exit_code %#x\n", fixed->exit_code);
     This->exit_code = fixed->exit_code;
-    TRACE("status %08x\n", fixed->status);
+    TRACE("status %08lx\n", fixed->status);
     This->status = fixed->status;
     TRACE("flags %08x\n", fixed->flags);
     This->flags = fixed->flags;
@@ -1342,7 +1342,7 @@ static HRESULT load_job_data(TaskImpl *This, BYTE *data, DWORD size)
         TRACE("invalid name_size_offset\n");
         return SCHED_E_INVALID_TASK;
     }
-    TRACE("unicode strings end at %#x\n", fixed->name_size_offset + unicode_strings_size);
+    TRACE("unicode strings end at %#lx\n", fixed->name_size_offset + unicode_strings_size);
 
     if (size < fixed->trigger_offset + sizeof(USHORT))
     {
@@ -1352,7 +1352,7 @@ static HRESULT load_job_data(TaskImpl *This, BYTE *data, DWORD size)
     trigger_count = *(const USHORT *)(data + fixed->trigger_offset);
     TRACE("trigger_count %u\n", trigger_count);
     triggers_size = size - fixed->trigger_offset - sizeof(USHORT);
-    TRACE("triggers_size %u\n", triggers_size);
+    TRACE("triggers_size %lu\n", triggers_size);
     task_trigger = (TASK_TRIGGER *)(data + fixed->trigger_offset + sizeof(USHORT));
 
     data += fixed->name_size_offset + unicode_strings_size;
@@ -1371,7 +1371,7 @@ static HRESULT load_job_data(TaskImpl *This, BYTE *data, DWORD size)
         TRACE("no space for user data\n");
         return SCHED_E_INVALID_TASK;
     }
-    TRACE("User Data size %#x\n", data_size);
+    TRACE("User Data size %#lx\n", data_size);
     ITask_SetWorkItemData(task, data_size, data + sizeof(USHORT));
 
     size -= sizeof(USHORT) + data_size;
@@ -1390,13 +1390,13 @@ static HRESULT load_job_data(TaskImpl *This, BYTE *data, DWORD size)
         TRACE("no space for reserved data\n");
         return SCHED_E_INVALID_TASK;
     }
-    TRACE("Reserved Data size %#x\n", data_size);
+    TRACE("Reserved Data size %#lx\n", data_size);
 
     size -= sizeof(USHORT) + data_size;
     data += sizeof(USHORT) + data_size;
 
     /* Trigger Data */
-    TRACE("trigger_offset %04x, triggers end at %04x\n", fixed->trigger_offset,
+    TRACE("trigger_offset %04x, triggers end at %04lx\n", fixed->trigger_offset,
           (DWORD)(fixed->trigger_offset + sizeof(USHORT) + trigger_count * sizeof(TASK_TRIGGER)));
 
     task_trigger = (TASK_TRIGGER *)(data + sizeof(USHORT));
@@ -1449,7 +1449,7 @@ static HRESULT WINAPI MSTASK_IPersistFile_Load(IPersistFile *iface, LPCOLESTR fi
     DWORD access, sharing, size, try;
     void *data;
 
-    TRACE("(%p, %s, 0x%08x)\n", iface, debugstr_w(file_name), mode);
+    TRACE("(%p, %s, 0x%08lx)\n", iface, debugstr_w(file_name), mode);
 
     switch (mode & 0x000f)
     {
@@ -1488,7 +1488,7 @@ static HRESULT WINAPI MSTASK_IPersistFile_Load(IPersistFile *iface, LPCOLESTR fi
 
         if (GetLastError() != ERROR_SHARING_VIOLATION || try++ >= 3)
         {
-            TRACE("Failed to open %s, error %u\n", debugstr_w(file_name), GetLastError());
+            TRACE("Failed to open %s, error %lu\n", debugstr_w(file_name), GetLastError());
             return HRESULT_FROM_WIN32(GetLastError());
         }
         Sleep(100);
@@ -1499,7 +1499,7 @@ static HRESULT WINAPI MSTASK_IPersistFile_Load(IPersistFile *iface, LPCOLESTR fi
     mapping = CreateFileMappingW(file, NULL, PAGE_READONLY, 0, 0, 0);
     if (!mapping)
     {
-        TRACE("Failed to create file mapping %s, error %u\n", debugstr_w(file_name), GetLastError());
+        TRACE("Failed to create file mapping %s, error %lu\n", debugstr_w(file_name), GetLastError());
         CloseHandle(file);
         return HRESULT_FROM_WIN32(GetLastError());
     }
