@@ -273,7 +273,7 @@ HRESULT CDECL HGLOBALLockBytesImpl16_ReadAt(
   ULONG bytesReadBuffer = 0;
   ULONG bytesToReadFromBuffer;
 
-  TRACE("(%p,%d,%p,%d,%p)\n",This,ulOffset.u.LowPart,pv,cb,pcbRead);
+  TRACE("(%p,%ld,%p,%ld,%p)\n",This,ulOffset.u.LowPart,pv,cb,pcbRead);
   /*
    * If the caller is not interested in the number of bytes read,
    * we use another buffer to avoid "if" statements in the code.
@@ -339,7 +339,7 @@ HRESULT CDECL HGLOBALLockBytesImpl16_SetSize(
   HGLOBALLockBytesImpl16* const This = impl_from_ILockBytes16(iface);
   HGLOBAL16 supportHandle;
 
-  TRACE("(%p,%d)\n",This,libNewSize.u.LowPart);
+  TRACE("(%p,%ld)\n",This,libNewSize.u.LowPart);
   /*
    * As documented.
    */
@@ -384,7 +384,7 @@ HRESULT CDECL HGLOBALLockBytesImpl16_WriteAt(
   ULARGE_INTEGER newSize;
   ULONG          bytesWritten = 0;
 
-  TRACE("(%p,%d,%p,%d,%p)\n",This,ulOffset.u.LowPart,pv,cb,pcbWritten);
+  TRACE("(%p,%ld,%p,%ld,%p)\n",This,ulOffset.u.LowPart,pv,cb,pcbWritten);
   /*
    * If the caller is not interested in the number of bytes written,
    * we use another buffer to avoid "if" statements in the code.

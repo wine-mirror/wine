@@ -95,7 +95,7 @@ HRESULT WINAPI DllGetClassObject16(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
  */
 HRESULT WINAPI GetRunningObjectTable16(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot)
 {
-    FIXME("(%d,%p),stub!\n",reserved,pprot);
+    FIXME("(%ld,%p),stub!\n",reserved,pprot);
     return E_NOTIMPL;
 }
 
@@ -232,7 +232,7 @@ HRESULT WINAPI OleLoad16(
     SEGPTR		pClientSite,
     LPVOID*		ppvObj)
 {
-  FIXME("(%x,%s,%x,%p), stub!\n", pStg, debugstr_guid(riid), pClientSite, ppvObj);
+  FIXME("(%lx,%s,%lx,%p), stub!\n", pStg, debugstr_guid(riid), pClientSite, ppvObj);
   return E_NOTIMPL;
 }
 
@@ -305,7 +305,7 @@ HRESULT WINAPI ReadClassStg16(SEGPTR pstg, CLSID *pclsid)
 	HRESULT	hres;
 	DWORD args[3];
 
-	TRACE("(%x, %p)\n", pstg, pclsid);
+	TRACE("(%lx, %p)\n", pstg, pclsid);
 
 	if (!pclsid)
 	    return E_INVALIDARG16;
@@ -330,7 +330,7 @@ HRESULT WINAPI ReadClassStg16(SEGPTR pstg, CLSID *pclsid)
 	    (LPDWORD)&hres
 	)) {
 	    WOWGlobalUnlockFree16(args[1]);
-            ERR("CallTo16 IStorage16::Stat() failed, hres %x\n",hres);
+            ERR("CallTo16 IStorage16::Stat() failed, hres %lx\n",hres);
 	    return hres;
 	}
 	memcpy(&statstg, MapSL(args[1]), sizeof(STATSTG16));
@@ -352,7 +352,7 @@ HRESULT WINAPI ReadClassStm16(SEGPTR stream, CLSID *clsid)
     HRESULT hres;
     DWORD args[4];
 
-    TRACE("(0x%x, %p)\n", stream, clsid);
+    TRACE("(0x%lx, %p)\n", stream, clsid);
 
     if (!clsid)
         return E_INVALIDARG16;
@@ -386,7 +386,7 @@ HRESULT WINAPI ReadClassStm16(SEGPTR stream, CLSID *clsid)
     }
     else
     {
-        ERR("CallTo16 IStream16::Read() failed, hres %x\n", hres);
+        ERR("CallTo16 IStream16::Read() failed, hres %lx\n", hres);
         hres = E_FAIL;
     }
     WOWGlobalUnlockFree16(args[1]);
