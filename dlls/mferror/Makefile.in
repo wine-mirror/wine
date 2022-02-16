@@ -1,4 +1,5 @@
 MODULE    = mferror.dll
 
-MC_SRCS = \
-	mferror.mc
+EXTRADLLFLAGS = -Wb,--data-only
+
+MC_SRCS = mferror.mc
