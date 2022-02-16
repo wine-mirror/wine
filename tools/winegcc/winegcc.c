@@ -171,6 +171,7 @@ struct options
     int nostartfiles;
     int nodefaultlibs;
     int noshortwchar;
+    int data_only;
     int unix_lib;
     int gui_app;
     int unicode_app;
@@ -1091,6 +1092,28 @@ static const char *build_spec_obj( struct options *opts, const char *spec_file, 
     return spec_o_name;
 }
 
+/* run winebuild to generate a data-only library */
+static void build_data_lib( struct options *opts, const char *spec_file, const char *output_file, struct strarray files )
+{
+    unsigned int i;
+    struct strarray spec_args = get_winebuild_args( opts );
+
+    strarray_add(&spec_args, opts->shared ? "--dll" : "--exe");
+    strarray_add(&spec_args, "-o");
+    strarray_add(&spec_args, output_file);
+    if (spec_file)
+    {
+        strarray_add(&spec_args, "-E");
+        strarray_add(&spec_args, spec_file);
+    }
+
+    /* add resource files */
+    for (i = 0; i < files.count; i++)
+	if (files.str[i][1] == 'r') strarray_add(&spec_args, files.str[i]);
+
+    spawn(opts->prefix, spec_args, 0);
+}
+
 static void build(struct options* opts)
 {
     struct strarray lib_dirs = empty_strarray;
@@ -1246,6 +1269,11 @@ static void build(struct options* opts)
     else entry_point = opts->entry_point;
 
     /* run winebuild to generate the .spec.o file */
+    if (opts->data_only)
+    {
+        build_data_lib( opts, spec_file, output_file, files );
+        return;
+    }
     if (spec_file || !opts->unix_lib)
         spec_o_name = build_spec_obj( opts, spec_file, output_file, files, lib_dirs, entry_point );
 
@@ -1891,6 +1919,7 @@ int main(int argc, char **argv)
                         struct strarray Wb = strarray_fromstring(opts.args.str[i] + 4, ",");
                         for (j = 0; j < Wb.count; j++)
                         {
+                            if (!strcmp(Wb.str[j], "--data-only")) opts.data_only = 1;
                             if (!strcmp(Wb.str[j], "--fake-module")) opts.fake_module = 1;
                             else strarray_add( &opts.winebuild_args, Wb.str[j] );
                         }
