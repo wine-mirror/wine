@@ -96,7 +96,7 @@ static HRESULT WINAPI errorrecords_QueryInterface(IErrorInfo* iface, REFIID riid
 static ULONG WINAPI errorrecords_AddRef(IErrorInfo* iface)
 {
     errorrecords *This = impl_from_IErrorInfo(iface);
-    TRACE("(%p)->%u\n",This,This->ref);
+    TRACE("(%p)->%lu\n",This,This->ref);
     return InterlockedIncrement(&This->ref);
 }
 
@@ -105,7 +105,7 @@ static ULONG WINAPI errorrecords_Release(IErrorInfo* iface)
     errorrecords *This = impl_from_IErrorInfo(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->%u\n",This,ref+1);
+    TRACE("(%p)->%lu\n",This,ref+1);
 
     if (!ref)
     {
@@ -268,7 +268,7 @@ static HRESULT WINAPI errorrec_AddErrorRecord(IErrorRecords *iface, ERRORINFO *p
     struct ErrorEntry *entry;
     HRESULT hr;
 
-    TRACE("(%p)->(%p %d %p %p %d)\n", This, pErrorInfo, dwLookupID, pdispparams, punkCustomError, dwDynamicErrorID);
+    TRACE("(%p)->(%p %ld %p %p %ld)\n", This, pErrorInfo, dwLookupID, pdispparams, punkCustomError, dwDynamicErrorID);
 
     if(!pErrorInfo)
         return E_INVALIDARG;
@@ -313,7 +313,7 @@ static HRESULT WINAPI errorrec_GetBasicErrorInfo(IErrorRecords *iface, ULONG ind
 {
     errorrecords *This = impl_from_IErrorRecords(iface);
 
-    TRACE("(%p)->(%u %p)\n", This, index, info);
+    TRACE("(%p)->(%lu %p)\n", This, index, info);
 
     if (!info)
         return E_INVALIDARG;
@@ -331,7 +331,7 @@ static HRESULT WINAPI errorrec_GetCustomErrorObject(IErrorRecords *iface, ULONG 
 {
     errorrecords *This = impl_from_IErrorRecords(iface);
 
-    TRACE("(%p)->(%u %s %p)\n", This, index, debugstr_guid(riid), object);
+    TRACE("(%p)->(%lu %s %p)\n", This, index, debugstr_guid(riid), object);
 
     if (!object)
         return E_INVALIDARG;
@@ -353,7 +353,7 @@ static HRESULT WINAPI errorrec_GetErrorInfo(IErrorRecords *iface, ULONG index,
 {
     errorrecords *This = impl_from_IErrorRecords(iface);
 
-    FIXME("(%p)->(%u %d, %p)\n", This, index, lcid, ppErrorInfo);
+    FIXME("(%p)->(%lu %ld, %p)\n", This, index, lcid, ppErrorInfo);
 
     if (!ppErrorInfo)
         return E_INVALIDARG;
@@ -368,7 +368,7 @@ static HRESULT WINAPI errorrec_GetErrorParameters(IErrorRecords *iface, ULONG in
 {
     errorrecords *This = impl_from_IErrorRecords(iface);
 
-    TRACE("(%p)->(%u %p)\n", This, index, pdispparams);
+    TRACE("(%p)->(%lu %p)\n", This, index, pdispparams);
 
     if (!pdispparams)
         return E_INVALIDARG;
@@ -391,7 +391,7 @@ static HRESULT WINAPI errorrec_GetRecordCount(IErrorRecords *iface, ULONG *count
 
     *count = This->count;
 
-    TRACE("<--(%u)\n", *count);
+    TRACE("<--(%lu)\n", *count);
 
     return S_OK;
 }

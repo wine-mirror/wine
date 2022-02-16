@@ -111,7 +111,7 @@ static HRESULT WINAPI dbprops_GetProperties(IDBProperties *iface, ULONG cPropert
 {
     dbinit *This = impl_from_IDBProperties(iface);
 
-    FIXME("(%p)->(%d %p %p %p)\n", This, cPropertyIDSets, rgPropertyIDSets, pcPropertySets, prgPropertySets);
+    FIXME("(%p)->(%ld %p %p %p)\n", This, cPropertyIDSets, rgPropertyIDSets, pcPropertySets, prgPropertySets);
 
     return E_NOTIMPL;
 }
@@ -122,7 +122,7 @@ static HRESULT WINAPI dbprops_GetPropertyInfo(IDBProperties *iface, ULONG cPrope
 {
     dbinit *This = impl_from_IDBProperties(iface);
 
-    FIXME("(%p)->(%d %p %p %p %p)\n", This, cPropertyIDSets, rgPropertyIDSets, pcPropertyInfoSets,
+    FIXME("(%p)->(%ld %p %p %p %p)\n", This, cPropertyIDSets, rgPropertyIDSets, pcPropertyInfoSets,
                 prgPropertyInfoSets, ppDescBuffer);
 
     return E_NOTIMPL;
@@ -133,7 +133,7 @@ static HRESULT WINAPI dbprops_SetProperties(IDBProperties *iface, ULONG cPropert
 {
     dbinit *This = impl_from_IDBProperties(iface);
 
-    FIXME("(%p)->(%d %p)\n", This, cPropertySets, rgPropertySets);
+    FIXME("(%p)->(%ld %p)\n", This, cPropertySets, rgPropertySets);
 
     return E_NOTIMPL;
 }
@@ -343,7 +343,7 @@ static HRESULT convert_dbproperty_mode(const WCHAR *src, VARIANT *dest)
     {
         V_VT(dest) = VT_I4;
         V_I4(dest) = prop->value;
-        TRACE("%s = %#x\n", debugstr_w(src), prop->value);
+        TRACE("%s = %#lx\n", debugstr_w(src), prop->value);
         return S_OK;
     }
 
@@ -698,7 +698,7 @@ HRESULT get_data_source(IUnknown *outer, DWORD clsctx, LPWSTR initstring, REFIID
         IDBProperties_Release(dbprops);
         if (FAILED(hr))
         {
-            WARN("GetProperties failed for datasource, 0x%08x\n", hr);
+            WARN("GetProperties failed for datasource, 0x%08lx\n", hr);
             return hr;
         }
 
@@ -754,7 +754,7 @@ HRESULT get_data_source(IUnknown *outer, DWORD clsctx, LPWSTR initstring, REFIID
         free_dbpropset(1, propset);
         if (FAILED(hr))
         {
-            ERR("SetProperties failed, 0x%08x\n", hr);
+            ERR("SetProperties failed, 0x%08lx\n", hr);
             datasource_release(datasource_created, datasource);
             return hr;
         }
@@ -768,7 +768,7 @@ static HRESULT WINAPI datainit_GetDataSource(IDataInitialize *iface, IUnknown *o
 {
     datainit *This = impl_from_IDataInitialize(iface);
 
-    TRACE("(%p)->(%p 0x%x %s %s %p)\n", This, outer, clsctx, debugstr_w(initstring), debugstr_guid(riid), datasource);
+    TRACE("(%p)->(%p 0x%lx %s %s %p)\n", This, outer, clsctx, debugstr_w(initstring), debugstr_guid(riid), datasource);
 
     return get_data_source(outer, clsctx, initstring, riid, datasource);
 }
@@ -889,7 +889,7 @@ static HRESULT WINAPI datainit_GetInitializationString(IDataInitialize *iface, I
     hr = IDBProperties_GetProperties(props, 1, &propidset, &count, &propset);
     if (FAILED(hr))
     {
-        WARN("failed to get data source properties, 0x%08x\n", hr);
+        WARN("failed to get data source properties, 0x%08lx\n", hr);
         CoTaskMemFree(progid);
         return hr;
     }
@@ -956,7 +956,7 @@ static HRESULT WINAPI datainit_CreateDBInstance(IDataInitialize *iface, REFCLSID
 {
     datainit *This = impl_from_IDataInitialize(iface);
 
-    TRACE("(%p)->(%s %p 0x%08x %s %s %p)\n", This, debugstr_guid(provider), outer, clsctx, debugstr_w(reserved),
+    TRACE("(%p)->(%s %p 0x%08lx %s %s %p)\n", This, debugstr_guid(provider), outer, clsctx, debugstr_w(reserved),
         debugstr_guid(riid), datasource);
 
     return CoCreateInstance(provider, outer, clsctx, riid, (void**)datasource);
@@ -967,7 +967,7 @@ static HRESULT WINAPI datainit_CreateDBInstanceEx(IDataInitialize *iface, REFCLS
 {
     datainit *This = impl_from_IDataInitialize(iface);
 
-    FIXME("(%p)->(%s %p %#x %s %p %u %p)\n", This, debugstr_guid(provider), outer, clsctx,
+    FIXME("(%p)->(%s %p %#lx %s %p %lu %p)\n", This, debugstr_guid(provider), outer, clsctx,
         debugstr_w(reserved), server_info, cmq, results);
 
     return E_NOTIMPL;
@@ -988,7 +988,7 @@ static HRESULT WINAPI datainit_WriteStringToStorage(IDataInitialize *iface, LPWS
 {
     datainit *This = impl_from_IDataInitialize(iface);
 
-    FIXME("(%p)->(%s %s %d)\n", This, debugstr_w(pwszFileName), debugstr_w(pwszInitializationString), dwCreationDisposition);
+    FIXME("(%p)->(%s %s %ld)\n", This, debugstr_w(pwszFileName), debugstr_w(pwszInitializationString), dwCreationDisposition);
 
     return E_NOTIMPL;
 }

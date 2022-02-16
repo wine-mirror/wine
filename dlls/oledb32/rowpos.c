@@ -136,7 +136,7 @@ static ULONG WINAPI rowpos_AddRef(IRowPosition* iface)
 {
     rowpos *This = impl_from_IRowPosition(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("(%p)->(%ld)\n", This, ref);
     return ref;
 }
 
@@ -145,7 +145,7 @@ static ULONG WINAPI rowpos_Release(IRowPosition* iface)
     rowpos *This = impl_from_IRowPosition(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("(%p)->(%ld)\n", This, ref);
 
     if (ref == 0)
     {
@@ -230,7 +230,7 @@ static HRESULT WINAPI rowpos_SetRowPosition(IRowPosition *iface, HCHAPTER chapte
     DBREASON reason;
     HRESULT hr;
 
-    TRACE("(%p)->(%lx %lx %d)\n", This, chapter, row, flags);
+    TRACE("(%p)->(%Ix %Ix %ld)\n", This, chapter, row, flags);
 
     if (!This->cleared) return E_UNEXPECTED;
 
@@ -425,7 +425,7 @@ static HRESULT WINAPI rowpos_cp_Unadvise(IConnectionPoint *iface, DWORD cookie)
 {
     rowpos_cp *This = impl_from_IConnectionPoint(iface);
 
-    TRACE("(%p)->(%d)\n", This, cookie);
+    TRACE("(%p)->(%ld)\n", This, cookie);
 
     if (!cookie || cookie > This->sinks_size || !This->sinks[cookie-1])
         return CONNECT_E_NOCONNECTION;

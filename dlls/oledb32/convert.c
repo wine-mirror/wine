@@ -170,7 +170,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
     VARIANT tmp;
     HRESULT hr;
 
-    TRACE("(%p)->(%d, %d, %ld, %p, %p, %p, %ld, %d, %p, %d, %d, %x)\n", This,
+    TRACE("(%p)->(%d, %d, %Id, %p, %p, %p, %Id, %ld, %p, %d, %d, %lx)\n", This,
           src_type, dst_type, src_len, dst_len, src, dst, dst_max_len,
           src_status, dst_status, precision, scale, flags);
 
@@ -1113,7 +1113,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
                 hr = SafeArrayAccessData(V_ARRAY((VARIANT*)src), (VOID**)&data);
                 if(FAILED(hr))
                 {
-                    ERR("SafeArrayAccessData Failed = 0x%08x\n", hr);
+                    ERR("SafeArrayAccessData Failed = 0x%08lx\n", hr);
                     return hr;
                 }
 
@@ -1613,7 +1613,7 @@ static HRESULT WINAPI dcinfo_GetInfo(IDCInfo *iface, ULONG num, DCINFOTYPE types
     ULONG i;
     DCINFO *infos;
 
-    TRACE("(%p)->(%d, %p, %p)\n", This, num, types, info_ptr);
+    TRACE("(%p)->(%ld, %p, %p)\n", This, num, types, info_ptr);
 
     *info_ptr = infos = CoTaskMemAlloc(num * sizeof(*infos));
     if(!infos) return E_OUTOFMEMORY;
@@ -1641,7 +1641,7 @@ static HRESULT WINAPI dcinfo_SetInfo(IDCInfo* iface, ULONG num, DCINFO info[])
     ULONG i;
     HRESULT hr = S_OK;
 
-    TRACE("(%p)->(%d, %p)\n", This, num, info);
+    TRACE("(%p)->(%ld, %p)\n", This, num, info);
 
     for(i = 0; i < num; i++)
     {
@@ -1658,7 +1658,7 @@ static HRESULT WINAPI dcinfo_SetInfo(IDCInfo* iface, ULONG num, DCINFO info[])
             break;
 
         default:
-            FIXME("Unhandled info type %d (vt %x)\n", info[i].eInfoType, V_VT(&info[i].vData));
+            FIXME("Unhandled info type %ld (vt %x)\n", info[i].eInfoType, V_VT(&info[i].vData));
         }
     }
     return hr;
