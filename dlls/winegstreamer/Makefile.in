@@ -12,6 +12,7 @@ C_SRCS = \
 	media_source.c \
 	mfplat.c \
 	quartz_parser.c \
+	wg_format.c \
 	wg_parser.c \
 	wm_asyncreader.c \
 	wm_reader.c \
