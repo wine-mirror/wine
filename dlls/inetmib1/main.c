@@ -778,7 +778,7 @@ static int __cdecl DWORD_cmp(DWORD a, DWORD b)
 static int __cdecl compareIpAddrRow(const void *a, const void *b)
 {
     const MIB_IPADDRROW *rowA = a, *rowB = b;
-    return DWORD_cmp(rowA->dwAddr, rowB->dwAddr);
+    return DWORD_cmp(ntohl(rowA->dwAddr), ntohl(rowB->dwAddr));
 }
 
 static BOOL mib2IpAddrQuery(BYTE bPduType, SnmpVarBind *pVarBind,
@@ -870,7 +870,7 @@ static void oidToIpForwardRow(AsnObjectIdentifier *oid, void *dst)
 static int __cdecl compareIpForwardRow(const void *a, const void *b)
 {
     const MIB_IPFORWARDROW *rowA = a, *rowB = b;
-    return DWORD_cmp(rowA->dwForwardDest, rowB->dwForwardDest);
+    return DWORD_cmp(ntohl(rowA->dwForwardDest), ntohl(rowB->dwForwardDest));
 }
 
 static BOOL mib2IpRouteQuery(BYTE bPduType, SnmpVarBind *pVarBind,
