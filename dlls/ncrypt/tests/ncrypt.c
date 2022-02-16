@@ -148,7 +148,6 @@ static void test_ncrypt_free_object(void)
 
     ret = NCryptImportKey(prov, 0, BCRYPT_RSAPUBLIC_BLOB, NULL, &key, rsa_key_blob, sizeof(rsa_key_blob), 0);
     ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
-    todo_wine {
     ret = NCryptFreeObject(key);
     ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
 
@@ -160,7 +159,6 @@ static void test_ncrypt_free_object(void)
     ret = NCryptFreeObject((NCRYPT_KEY_HANDLE)buf);
     ok(ret == NTE_INVALID_HANDLE, "got %#lx\n", ret);
     free(buf);
-    }
 }
 
 START_TEST(ncrypt)

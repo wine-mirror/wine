@@ -86,10 +86,55 @@ SECURITY_STATUS WINAPI NCryptFreeBuffer(PVOID buf)
     return NTE_NOT_SUPPORTED;
 }
 
-SECURITY_STATUS WINAPI NCryptFreeObject(NCRYPT_HANDLE object)
+static SECURITY_STATUS free_key_object(struct key *key)
 {
-    FIXME("(0x%lx): stub\n", object);
-    return NTE_NOT_SUPPORTED;
+    switch (key->alg)
+    {
+    case RSA:
+    {
+        free(key->rsa.modulus);
+        free(key->rsa.public_exp);
+        free(key->rsa.prime1);
+        free(key->rsa.prime2);
+        break;
+    }
+    default:
+        WARN("invalid key %p\n", key);
+        return NTE_INVALID_HANDLE;
+    }
+    return ERROR_SUCCESS;
+}
+
+SECURITY_STATUS WINAPI NCryptFreeObject(NCRYPT_HANDLE handle)
+{
+    struct object *object = (struct object *)handle;
+    SECURITY_STATUS ret = ERROR_SUCCESS;
+
+    TRACE("(%#Ix)\n", handle);
+
+    if (!object)
+    {
+        WARN("invalid handle %#Ix\n", handle);
+        return NTE_INVALID_HANDLE;
+    }
+
+    switch (object->type)
+    {
+    case KEY:
+    {
+        if ((ret = free_key_object(&object->key))) return ret;
+        break;
+    }
+    case STORAGE_PROVIDER:
+        break;
+
+    default:
+        WARN("invalid handle %#Ix\n", handle);
+        return NTE_INVALID_HANDLE;
+    }
+
+    free(object);
+    return ret;
 }
 
 SECURITY_STATUS WINAPI NCryptGetProperty(NCRYPT_HANDLE object, const WCHAR *property, PBYTE output,
