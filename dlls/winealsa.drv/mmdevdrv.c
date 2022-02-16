@@ -119,6 +119,7 @@ struct ACImpl {
     AUDCLNT_SHAREMODE share;
     HANDLE event;
     float *vols;
+    UINT32 channel_count;
 
     BOOL need_remapping;
     int alsa_channels;
@@ -145,6 +146,9 @@ struct ACImpl {
     AudioSessionWrapper *session_wrapper;
 
     struct list entry;
+
+    /* Keep at end */
+    char alsa_name[1];
 };
 
 typedef struct _SessionMgr {
@@ -472,6 +476,7 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
     char alsa_name[256];
     EDataFlow dataflow;
     HRESULT hr;
+    int len;
 
     TRACE("%s %p %p\n", debugstr_guid(guid), dev, out);
 
@@ -481,7 +486,8 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
     if(dataflow != eRender && dataflow != eCapture)
         return E_UNEXPECTED;
 
-    This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ACImpl));
+    len = strlen(alsa_name);
+    This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, offsetof(ACImpl, alsa_name[len + 1]));
     if(!This)
         return E_OUTOFMEMORY;
 
@@ -499,6 +505,8 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
     }
 
     This->dataflow = dataflow;
+    memcpy(This->alsa_name, alsa_name, len + 1);
+
     err = snd_pcm_open(&This->pcm_handle, alsa_name, alsa_get_direction(dataflow), SND_PCM_NONBLOCK);
     if(err < 0){
         HeapFree(GetProcessHeap(), 0, This);
@@ -1159,19 +1167,20 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     }
     silence_buffer(This, This->silence_buf, This->alsa_period_frames);
 
-    This->vols = HeapAlloc(GetProcessHeap(), 0, fmt->nChannels * sizeof(float));
+    This->channel_count = fmt->nChannels;
+    This->vols = HeapAlloc(GetProcessHeap(), 0, This->channel_count * sizeof(float));
     if(!This->vols){
         hr = E_OUTOFMEMORY;
         goto exit;
     }
 
-    for(i = 0; i < fmt->nChannels; ++i)
+    for(i = 0; i < This->channel_count; ++i)
         This->vols[i] = 1.f;
 
     This->share = mode;
     This->flags = flags;
 
-    hr = get_audio_session(sessionguid, This->parent, fmt->nChannels,
+    hr = get_audio_session(sessionguid, This->parent, This->channel_count,
             &This->session);
     if(FAILED(hr))
         goto exit;
@@ -3385,7 +3394,7 @@ static HRESULT WINAPI AudioStreamVolume_GetChannelCount(
     if(!out)
         return E_POINTER;
 
-    *out = This->fmt->nChannels;
+    *out = This->channel_count;
 
     return S_OK;
 }
@@ -3400,7 +3409,7 @@ static HRESULT WINAPI AudioStreamVolume_SetChannelVolume(
     if(level < 0.f || level > 1.f)
         return E_INVALIDARG;
 
-    if(index >= This->fmt->nChannels)
+    if(index >= This->channel_count)
         return E_INVALIDARG;
 
     TRACE("ALSA does not support volume control\n");
@@ -3424,7 +3433,7 @@ static HRESULT WINAPI AudioStreamVolume_GetChannelVolume(
     if(!level)
         return E_POINTER;
 
-    if(index >= This->fmt->nChannels)
+    if(index >= This->channel_count)
         return E_INVALIDARG;
 
     *level = This->vols[index];
@@ -3443,7 +3452,7 @@ static HRESULT WINAPI AudioStreamVolume_SetAllVolumes(
     if(!levels)
         return E_POINTER;
 
-    if(count != This->fmt->nChannels)
+    if(count != This->channel_count)
         return E_INVALIDARG;
 
     TRACE("ALSA does not support volume control\n");
@@ -3469,7 +3478,7 @@ static HRESULT WINAPI AudioStreamVolume_GetAllVolumes(
     if(!levels)
         return E_POINTER;
 
-    if(count != This->fmt->nChannels)
+    if(count != This->channel_count)
         return E_INVALIDARG;
 
     EnterCriticalSection(&This->lock);
