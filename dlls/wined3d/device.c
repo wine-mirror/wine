@@ -961,10 +961,14 @@ static void device_init_swapchain_state(struct wined3d_device *device, struct wi
 static struct wined3d_allocator_chunk *wined3d_allocator_gl_create_chunk(struct wined3d_allocator *allocator,
         struct wined3d_context *context, unsigned int memory_type, size_t chunk_size)
 {
-    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
     struct wined3d_allocator_chunk_gl *chunk_gl;
+    struct wined3d_context_gl *context_gl;
 
     TRACE("allocator %p, context %p, memory_type %u, chunk_size %zu.\n", allocator, context, memory_type, chunk_size);
+
+    if (!context)
+        return NULL;
+    context_gl = wined3d_context_gl(context);
 
     if (!(chunk_gl = heap_alloc(sizeof(*chunk_gl))))
         return NULL;
@@ -1063,12 +1067,13 @@ static struct wined3d_allocator_block *wined3d_device_gl_allocate_memory(struct 
 
     if (size > WINED3D_ALLOCATOR_CHUNK_SIZE / 2)
     {
-        *id = wined3d_context_gl_allocate_vram_chunk_buffer(context_gl, memory_type, size);
+        if (context_gl)
+            *id = wined3d_context_gl_allocate_vram_chunk_buffer(context_gl, memory_type, size);
         wined3d_device_gl_allocator_unlock(device_gl);
         return NULL;
     }
 
-    if (!(block = wined3d_allocator_allocate(allocator, &context_gl->c, memory_type, size)))
+    if (!(block = wined3d_allocator_allocate(allocator, context_gl ? &context_gl->c : NULL, memory_type, size)))
     {
         wined3d_device_gl_allocator_unlock(device_gl);
         *id = 0;
@@ -1119,7 +1124,7 @@ bool wined3d_device_gl_create_bo(struct wined3d_device_gl *device_gl, struct win
             if ((memory = wined3d_device_gl_allocate_memory(device_gl, context_gl, memory_type_idx, size, &id)))
                 buffer_offset = memory->offset;
         }
-        else
+        else if (context_gl)
         {
             WARN_(d3d_perf)("Not allocating chunk memory for binding type %#x.\n", binding);
             id = wined3d_context_gl_allocate_vram_chunk_buffer(context_gl, memory_type_idx, size);
@@ -1133,6 +1138,9 @@ bool wined3d_device_gl_create_bo(struct wined3d_device_gl *device_gl, struct win
     }
     else
     {
+        if (!context_gl)
+            return false;
+
         GL_EXTCALL(glGenBuffers(1, &id));
         if (!id)
         {
