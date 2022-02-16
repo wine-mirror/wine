@@ -4334,6 +4334,8 @@ HRESULT WINAPI UrlGetPartW(const WCHAR *url, WCHAR *out, DWORD *out_len, DWORD p
         break;
 
     case URL_PART_PASSWORD:
+        if (!pl.password)
+            return E_INVALIDARG;
         if (!pl.password_len)
         {
             *out = '\0';

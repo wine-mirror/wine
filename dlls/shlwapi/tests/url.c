@@ -622,24 +622,24 @@ static void test_UrlGetPart(void)
         {"http://foo:bar@localhost:21/internal.php?query=x&return=y", URL_PART_QUERY, URL_PARTFLAG_KEEPSCHEME, S_OK, "query=x&return=y"},
 
         {"http://localhost/", URL_PART_USERNAME, 0, E_INVALIDARG},
-        {"http://localhost/", URL_PART_PASSWORD, 0, E_INVALIDARG, .todo_hr = TRUE},
+        {"http://localhost/", URL_PART_PASSWORD, 0, E_INVALIDARG},
         {"http://localhost/", URL_PART_HOSTNAME, 0, S_OK, "localhost"},
         {"http://localhost/", URL_PART_PORT, 0, E_INVALIDARG, .todo_hr = TRUE},
         {"http://localhost/", URL_PART_QUERY, 0, S_FALSE, ""},
 
         {"http://localhost:port/", URL_PART_USERNAME, 0, E_INVALIDARG},
-        {"http://localhost:port/", URL_PART_PASSWORD, 0, E_INVALIDARG, .todo_hr = TRUE},
+        {"http://localhost:port/", URL_PART_PASSWORD, 0, E_INVALIDARG},
         {"http://localhost:port/", URL_PART_HOSTNAME, 0, S_OK, "localhost"},
         {"http://localhost:port/", URL_PART_PORT, 0, S_OK, "port"},
         {"http://:", URL_PART_HOSTNAME, 0, S_FALSE, ""},
         {"http://:", URL_PART_PORT, 0, S_FALSE, ""},
 
         {"http://user@localhost", URL_PART_USERNAME, 0, S_OK, "user"},
-        {"http://user@localhost", URL_PART_PASSWORD, 0, E_INVALIDARG, .todo_hr = TRUE},
+        {"http://user@localhost", URL_PART_PASSWORD, 0, E_INVALIDARG},
         {"http://user@localhost", URL_PART_HOSTNAME, 0, S_OK, "localhost"},
         {"http://user@localhost", URL_PART_PORT, 0, E_INVALIDARG, .todo_hr = TRUE},
         {"http://@", URL_PART_USERNAME, 0, S_FALSE, ""},
-        {"http://@", URL_PART_PASSWORD, 0, E_INVALIDARG, .todo_hr = TRUE},
+        {"http://@", URL_PART_PASSWORD, 0, E_INVALIDARG},
         {"http://@", URL_PART_HOSTNAME, 0, S_FALSE, ""},
 
         {"http://user:pass@localhost", URL_PART_USERNAME, 0, S_OK, "user"},
