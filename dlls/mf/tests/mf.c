@@ -4258,6 +4258,10 @@ if (SUCCEEDED(hr))
 
 static void test_evr(void)
 {
+    static const float supported_rates[] =
+    {
+        0.0f, 1.0f, -20.0f, 20.0f, 1000.0f, -1000.0f,
+    };
     IMFVideoSampleAllocatorCallback *allocator_callback;
     IMFStreamSink *stream_sink, *stream_sink2;
     IMFVideoDisplayControl *display_control;
@@ -4275,8 +4279,9 @@ static void test_evr(void)
     IMFRateSupport *rs;
     LONG sample_count;
     IMFSample *sample;
-    IUnknown *unk;
+    unsigned int i;
     UINT64 window3;
+    IUnknown *unk;
     float rate;
     HRESULT hr;
     GUID guid;
@@ -4607,6 +4612,88 @@ todo_wine {
     hr = IMFRateSupport_GetFastestRate(rs, MFRATE_REVERSE, TRUE, &rate);
     ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
 
+    for (i = 0; i < ARRAY_SIZE(supported_rates); ++i)
+    {
+        rate = supported_rates[i] + 1.0f;
+        hr = IMFRateSupport_IsRateSupported(rs, TRUE, supported_rates[i], &rate);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(rate == supported_rates[i], "Unexpected rate %f.\n", rate);
+
+        rate = supported_rates[i] + 1.0f;
+        hr = IMFRateSupport_IsRateSupported(rs, FALSE, supported_rates[i], &rate);
+        ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+        ok(rate == supported_rates[i], "Unexpected rate %f.\n", rate);
+
+        hr = IMFRateSupport_IsRateSupported(rs, TRUE, supported_rates[i], NULL);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFRateSupport_IsRateSupported(rs, FALSE, supported_rates[i], NULL);
+        ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+    }
+
+    /* Configuring stream type make rate support work. */
+    hr = IMFMediaSink_GetStreamSinkById(sink, 0, &stream_sink);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFStreamSink_GetMediaTypeHandler(stream_sink, &type_handler);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFVideoFormat_RGB32);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_SIZE, (UINT64)64 << 32 | 64);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFMediaTypeHandler_SetCurrentMediaType(type_handler, media_type);
+    ok(hr == S_OK, "Failed to set current type, hr %#x.\n", hr);
+
+    rate = 1.0f;
+    hr = IMFRateSupport_GetSlowestRate(rs, MFRATE_FORWARD, TRUE, &rate);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(rate == 0.0f, "Unexpected rate %f.\n", rate);
+
+    rate = 1.0f;
+    hr = IMFRateSupport_GetSlowestRate(rs, MFRATE_REVERSE, TRUE, &rate);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(rate == 0.0f, "Unexpected rate %f.\n", rate);
+
+    rate = 0.0f;
+    hr = IMFRateSupport_GetFastestRate(rs, MFRATE_FORWARD, TRUE, &rate);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(rate == FLT_MAX, "Unexpected rate %f.\n", rate);
+}
+    rate = 0.0f;
+    hr = IMFRateSupport_GetFastestRate(rs, MFRATE_REVERSE, TRUE, &rate);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(rate == -FLT_MAX, "Unexpected rate %f.\n", rate);
+}
+    for (i = 0; i < ARRAY_SIZE(supported_rates); ++i)
+    {
+        rate = supported_rates[i] + 1.0f;
+        hr = IMFRateSupport_IsRateSupported(rs, TRUE, supported_rates[i], &rate);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(rate == supported_rates[i], "Unexpected rate %f.\n", rate);
+
+        rate = supported_rates[i] + 1.0f;
+        hr = IMFRateSupport_IsRateSupported(rs, FALSE, supported_rates[i], &rate);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(rate == supported_rates[i], "Unexpected rate %f.\n", rate);
+
+        hr = IMFRateSupport_IsRateSupported(rs, TRUE, supported_rates[i], NULL);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFRateSupport_IsRateSupported(rs, FALSE, supported_rates[i], NULL);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    }
+
+    IMFMediaTypeHandler_Release(type_handler);
+    IMFMediaType_Release(media_type);
+    IMFStreamSink_Release(stream_sink);
+
     hr = IMFMediaSink_Shutdown(sink);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
@@ -4620,6 +4707,9 @@ todo_wine {
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     hr = IMFRateSupport_GetFastestRate(rs, MFRATE_FORWARD, FALSE, &rate);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFRateSupport_IsRateSupported(rs, TRUE, 1.0f, &rate);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     IMFPresentationClock_Release(clock);
