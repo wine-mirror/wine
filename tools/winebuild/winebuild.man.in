@@ -89,6 +89,11 @@ like \fBas\fR, \fBnm\fR and \fBld\fR.
 Specify the C compiler to use to compile assembly files; the default
 is to instead use the assembler specified with \fB--as-cmd\fR.
 .TP
+.B \--data-only
+Build a module that contains only data and resources, and no
+executable code.  With this option, \fBwinebuild\fR directly outputs a
+PE file, instead of an assembly or object file.
+.TP
 .BI \-d,\ --delay-lib= name
 Set the delayed import mode for the specified library, which must be
 one of the libraries imported with the \fB-l\fR option. Delayed mode

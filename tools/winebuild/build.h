@@ -283,6 +283,7 @@ extern void output_resources( DLLSPEC *spec );
 extern void output_bin_resources( DLLSPEC *spec, unsigned int start_rva );
 extern void output_spec32_file( DLLSPEC *spec );
 extern void output_fake_module( DLLSPEC *spec );
+extern void output_data_module( DLLSPEC *spec );
 extern void output_def_file( DLLSPEC *spec, int import_only );
 extern void load_res16_file( const char *name, DLLSPEC *spec );
 extern void output_res16_data( DLLSPEC *spec );
@@ -329,6 +330,7 @@ extern int use_msvcrt;
 extern int unix_lib;
 extern int safe_seh;
 extern int prefer_native;
+extern int data_only;
 
 extern char *input_file_name;
 extern char *spec_file_name;

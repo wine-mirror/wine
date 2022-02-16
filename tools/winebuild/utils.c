@@ -644,7 +644,7 @@ DLLSPEC *alloc_dll_spec(void)
     spec->type               = SPEC_WIN32;
     spec->base               = MAX_ORDINALS;
     spec->characteristics    = IMAGE_FILE_EXECUTABLE_IMAGE;
-    spec->subsystem          = 0;
+    spec->subsystem          = IMAGE_SUBSYSTEM_WINDOWS_CUI;
     spec->subsystem_major    = 4;
     spec->subsystem_minor    = 0;
     spec->syscall_table      = 0;

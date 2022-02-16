@@ -46,6 +46,7 @@ int use_msvcrt = 0;
 int unix_lib = 0;
 int safe_seh = 0;
 int prefer_native = 0;
+int data_only = 0;
 
 struct target target = { 0 };
 
@@ -198,6 +199,7 @@ static const char usage_str[] =
 "   -b, --target=TARGET       Specify target CPU and platform for cross-compiling\n"
 "   -B PREFIX                 Look for build tools in the PREFIX directory\n"
 "       --cc-cmd=CC           C compiler to use for assembling (default: fall back to --as-cmd)\n"
+"       --data-only           Generate a data-only dll (i.e. without any executable code)\n"
 "   -d, --delay-lib=LIB       Import the specified library in delayed mode\n"
 "   -D SYM                    Ignored for C flags compatibility\n"
 "   -e, --entry=FUNC          Set the DLL entry point function (default: DllMain)\n"
@@ -251,6 +253,7 @@ enum long_options_values
     LONG_OPT_BUILTIN,
     LONG_OPT_ASCMD,
     LONG_OPT_CCCMD,
+    LONG_OPT_DATA_ONLY,
     LONG_OPT_EXTERNAL_SYMS,
     LONG_OPT_FAKE_MODULE,
     LONG_OPT_FIXUP_CTORS,
@@ -284,6 +287,7 @@ static const struct long_option long_options[] =
     /* other long options */
     { "as-cmd",              1, LONG_OPT_ASCMD },
     { "cc-cmd",              1, LONG_OPT_CCCMD },
+    { "data-only",           0, LONG_OPT_DATA_ONLY },
     { "external-symbols",    0, LONG_OPT_EXTERNAL_SYMS },
     { "fake-module",         0, LONG_OPT_FAKE_MODULE },
     { "large-address-aware", 0, LONG_OPT_LARGE_ADDRESS_AWARE },
@@ -483,6 +487,9 @@ static void option_callback( int optc, char *optarg )
     case LONG_OPT_CCCMD:
         cc_command = strarray_fromstring( optarg, " " );
         break;
+    case LONG_OPT_DATA_ONLY:
+        data_only = 1;
+        break;
     case LONG_OPT_FAKE_MODULE:
         fake_module = 1;
         break;
@@ -635,6 +642,11 @@ int main(int argc, char **argv)
         if (fake_module)
         {
             output_fake_module( spec );
+            break;
+        }
+        if (data_only)
+        {
+            output_data_module( spec );
             break;
         }
         if (!is_pe())

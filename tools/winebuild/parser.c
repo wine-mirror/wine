@@ -628,6 +628,12 @@ static int parse_spec_ordinal( int ordinal, DLLSPEC *spec )
         return 1;
     }
 
+    if (data_only && !(odp->flags & FLAG_FORWARD))
+    {
+        error( "Only forwarded entry points are allowed in data-only mode\n" );
+        goto error;
+    }
+
     if (ordinal != -1)
     {
         if (!ordinal)
