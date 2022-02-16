@@ -78,7 +78,7 @@ static void dump_ps_flags(DWORD flags)
             strcat(flagstr, "|");
         }
     }
-    TRACE("flags %08x %s\n", flags, flagstr);
+    TRACE("flags %08lx %s\n", flags, flagstr);
 }
 
 static void dump_pastespecial(const OLEUIPASTESPECIALW *ps)
@@ -87,7 +87,7 @@ static void dump_pastespecial(const OLEUIPASTESPECIALW *ps)
     UINT j;
 
     dump_ps_flags(ps->dwFlags);
-    TRACE("hwnd %p caption %s hook %p custdata %lx\n",
+    TRACE("hwnd %p caption %s hook %p custdata %Ix\n",
           ps->hWndOwner, debugstr_w(ps->lpszCaption), ps->lpfnHook, ps->lCustData);
     if(IS_INTRESOURCE(ps->lpszTemplate))
         TRACE("hinst %p template %04x hresource %p\n", ps->hInstance, (WORD)(ULONG_PTR)ps->lpszTemplate, ps->hResource);
@@ -96,16 +96,16 @@ static void dump_pastespecial(const OLEUIPASTESPECIALW *ps)
     TRACE("dataobj %p arrpasteent %p cpasteent %d arrlinktype %p clinktype %d\n",
           ps->lpSrcDataObj, ps->arrPasteEntries, ps->cPasteEntries,
           ps->arrLinkTypes, ps->cLinkTypes);
-    TRACE("cclsidex %d lpclsidex %p nselect %d flink %d hmetapict %p size(%d,%d)\n",
+    TRACE("cclsidex %d lpclsidex %p nselect %d flink %d hmetapict %p size(%ld,%ld)\n",
           ps->cClsidExclude, ps->lpClsidExclude, ps->nSelectedIndex, ps->fLink,
           ps->hMetaPict, ps->sizel.cx, ps->sizel.cy);
     for(i = 0; i < ps->cPasteEntries; i++)
     {
-        TRACE("arrPasteEntries[%d]: cFormat %08x pTargetDevice %p dwAspect %d lindex %d tymed %d\n",
+        TRACE("arrPasteEntries[%d]: cFormat %08x pTargetDevice %p dwAspect %ld lindex %ld tymed %ld\n",
               i, ps->arrPasteEntries[i].fmtetc.cfFormat, ps->arrPasteEntries[i].fmtetc.ptd,
               ps->arrPasteEntries[i].fmtetc.dwAspect, ps->arrPasteEntries[i].fmtetc.lindex,
               ps->arrPasteEntries[i].fmtetc.tymed);
-        TRACE("\tformat name %s result text %s flags %04x\n", debugstr_w(ps->arrPasteEntries[i].lpstrFormatName),
+        TRACE("\tformat name %s result text %s flags %04lx\n", debugstr_w(ps->arrPasteEntries[i].lpstrFormatName),
               debugstr_w(ps->arrPasteEntries[i].lpstrResultText), ps->arrPasteEntries[i].dwFlags);
     }
     for(i = 0; i < ps->cLinkTypes; i++)
@@ -228,7 +228,7 @@ static DWORD init_pastelist(HWND hdlg, OLEUIPASTESPECIALW *ps)
 
     /* The native version grabs only the first 20 fmts and we do the same */
     hr = IEnumFORMATETC_Next(penum, ARRAY_SIZE(fmts), fmts, &fetched);
-    TRACE("got %d formats hr %08x\n", fetched, hr);
+    TRACE("got %ld formats hr %08lx\n", fetched, hr);
 
     if(SUCCEEDED(hr))
     {
@@ -271,7 +271,7 @@ static DWORD init_linklist(HWND hdlg, OLEUIPASTESPECIALW *ps)
         if(hr == S_OK)
             supported_mask |= 1 << link;
     }
-    TRACE("supported_mask %02x\n", supported_mask);
+    TRACE("supported_mask %02lx\n", supported_mask);
     for(req_fmt = 0; req_fmt < ps->cPasteEntries; req_fmt++)
     {
         DWORD linktypes;
@@ -515,7 +515,7 @@ static INT_PTR CALLBACK ps_dlg_proc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)
     static const WCHAR prop_name[] = {'W','i','n','e','_','S','t','r','u','c','t','u','r','e',0};
     ps_struct_t *ps_struct;
 
-    TRACE("(%p, %04x, %08lx, %08lx)\n", hdlg, msg, wp, lp);
+    TRACE("(%p, %04x, %08Ix, %08Ix)\n", hdlg, msg, wp, lp);
 
     ps_struct = GetPropW(hdlg, prop_name);
 
