@@ -507,19 +507,6 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
     This->dataflow = dataflow;
     memcpy(This->alsa_name, alsa_name, len + 1);
 
-    This->stream = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*This->stream));
-    if(!This->stream){
-        HeapFree(GetProcessHeap(), 0, This);
-        return E_OUTOFMEMORY;
-    }
-
-    hr = alsa_open_device(alsa_name, dataflow, &This->stream->pcm_handle, &This->stream->hw_params);
-    if(FAILED(hr)){
-        HeapFree(GetProcessHeap(), 0, This->stream);
-        HeapFree(GetProcessHeap(), 0, This);
-        return hr;
-    }
-
     InitializeCriticalSection(&This->lock);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ACImpl.lock");
 
@@ -591,21 +578,23 @@ static ULONG WINAPI AudioClient_Release(IAudioClient3 *iface)
         IUnknown_Release(This->pUnkFTMarshal);
         This->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->lock);
-        snd_pcm_drop(stream->pcm_handle);
-        snd_pcm_close(stream->pcm_handle);
         if(This->initted){
             EnterCriticalSection(&g_sessions_lock);
             list_remove(&This->entry);
             LeaveCriticalSection(&g_sessions_lock);
         }
         HeapFree(GetProcessHeap(), 0, This->vols);
-        HeapFree(GetProcessHeap(), 0, stream->local_buffer);
-        HeapFree(GetProcessHeap(), 0, stream->remapping_buf);
-        HeapFree(GetProcessHeap(), 0, stream->silence_buf);
-        HeapFree(GetProcessHeap(), 0, stream->tmp_buffer);
-        HeapFree(GetProcessHeap(), 0, stream->hw_params);
-        CoTaskMemFree(stream->fmt);
-        HeapFree(GetProcessHeap(), 0, stream);
+        if (stream){
+            snd_pcm_drop(stream->pcm_handle);
+            snd_pcm_close(stream->pcm_handle);
+            HeapFree(GetProcessHeap(), 0, stream->local_buffer);
+            HeapFree(GetProcessHeap(), 0, stream->remapping_buf);
+            HeapFree(GetProcessHeap(), 0, stream->silence_buf);
+            HeapFree(GetProcessHeap(), 0, stream->tmp_buffer);
+            HeapFree(GetProcessHeap(), 0, stream->hw_params);
+            CoTaskMemFree(stream->fmt);
+            HeapFree(GetProcessHeap(), 0, stream);
+        }
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -919,7 +908,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         const GUID *sessionguid)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
-    struct alsa_stream *stream = This->stream;
+    struct alsa_stream *stream;
     snd_pcm_sw_params_t *sw_params = NULL;
     snd_pcm_format_t format;
     unsigned int rate, alsa_period_us;
@@ -987,6 +976,20 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     }
 
     dump_fmt(fmt);
+
+    stream = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*This->stream));
+    if(!stream){
+        LeaveCriticalSection(&This->lock);
+        LeaveCriticalSection(&g_sessions_lock);
+        return E_OUTOFMEMORY;
+    }
+
+    hr = alsa_open_device(This->alsa_name, This->dataflow, &stream->pcm_handle, &stream->hw_params);
+    if(FAILED(hr)){
+        LeaveCriticalSection(&This->lock);
+        LeaveCriticalSection(&g_sessions_lock);
+        return hr;
+    }
 
     stream->need_remapping = map_channels(This, fmt, &stream->alsa_channels, stream->alsa_channel_map) == S_OK;
 
@@ -1180,8 +1183,6 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
 
     list_add_tail(&This->session->clients, &This->entry);
 
-    This->initted = TRUE;
-
     TRACE("ALSA period: %lu frames\n", stream->alsa_period_frames);
     TRACE("ALSA buffer: %lu frames\n", stream->alsa_bufsize_frames);
     TRACE("MMDevice period: %u frames\n", stream->mmdev_period_frames);
@@ -1190,12 +1191,17 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
 exit:
     HeapFree(GetProcessHeap(), 0, sw_params);
     if(FAILED(hr)){
+        snd_pcm_close(stream->pcm_handle);
         HeapFree(GetProcessHeap(), 0, stream->local_buffer);
         stream->local_buffer = NULL;
         CoTaskMemFree(stream->fmt);
         stream->fmt = NULL;
+        HeapFree(GetProcessHeap(), 0, stream);
         HeapFree(GetProcessHeap(), 0, This->vols);
         This->vols = NULL;
+    }else{
+        This->stream = stream;
+        This->initted = TRUE;
     }
 
     LeaveCriticalSection(&This->lock);
