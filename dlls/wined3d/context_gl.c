@@ -2629,6 +2629,14 @@ static void wined3d_context_gl_poll_fences(struct wined3d_context_gl *context_gl
     }
 }
 
+static void wined3d_device_gl_free_memory(struct wined3d_device_gl *device_gl, struct wined3d_allocator_block *block)
+{
+    assert(block->chunk->allocator == &device_gl->allocator);
+    wined3d_device_gl_allocator_lock(device_gl);
+    wined3d_allocator_block_free(block);
+    wined3d_device_gl_allocator_unlock(device_gl);
+}
+
 static void wined3d_context_gl_cleanup_resources(struct wined3d_context_gl *context_gl)
 {
     struct wined3d_device_gl *device_gl = wined3d_device_gl(context_gl->c.device);
@@ -2651,7 +2659,7 @@ static void wined3d_context_gl_cleanup_resources(struct wined3d_context_gl *cont
             continue;
         }
 
-        wined3d_allocator_block_free(r->block);
+        wined3d_device_gl_free_memory(device_gl, r->block);
         if (i != --count)
             *r = blocks[count];
         else
@@ -2718,7 +2726,7 @@ static void wined3d_context_gl_destroy_allocator_block(struct wined3d_context_gl
 
     if (device_gl->completed_fence_id > fence_id)
     {
-        wined3d_allocator_block_free(block);
+        wined3d_device_gl_free_memory(device_gl, block);
         TRACE("Freed block %p.\n", block);
         return;
     }

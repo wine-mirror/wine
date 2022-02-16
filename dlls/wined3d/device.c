@@ -1059,20 +1059,25 @@ static struct wined3d_allocator_block *wined3d_device_gl_allocate_memory(struct 
     struct wined3d_allocator *allocator = &device_gl->allocator;
     struct wined3d_allocator_block *block;
 
+    wined3d_device_gl_allocator_lock(device_gl);
+
     if (size > WINED3D_ALLOCATOR_CHUNK_SIZE / 2)
     {
         *id = wined3d_context_gl_allocate_vram_chunk_buffer(context_gl, memory_type, size);
+        wined3d_device_gl_allocator_unlock(device_gl);
         return NULL;
     }
 
     if (!(block = wined3d_allocator_allocate(allocator, &context_gl->c, memory_type, size)))
     {
+        wined3d_device_gl_allocator_unlock(device_gl);
         *id = 0;
         return NULL;
     }
 
     *id = wined3d_allocator_chunk_gl(block->chunk)->gl_buffer;
 
+    wined3d_device_gl_allocator_unlock(device_gl);
     return block;
 }
 

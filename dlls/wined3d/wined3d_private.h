@@ -4194,6 +4194,7 @@ struct wined3d_device_gl
     /* Textures for when no other textures are bound. */
     struct wined3d_dummy_textures dummy_textures;
 
+    CRITICAL_SECTION allocator_cs;
     struct wined3d_allocator allocator;
     uint64_t completed_fence_id;
     uint64_t current_fence_id;
@@ -4210,6 +4211,16 @@ struct wined3d_device_gl
 static inline struct wined3d_device_gl *wined3d_device_gl(struct wined3d_device *device)
 {
     return CONTAINING_RECORD(device, struct wined3d_device_gl, d);
+}
+
+static inline void wined3d_device_gl_allocator_lock(struct wined3d_device_gl *device_gl)
+{
+    EnterCriticalSection(&device_gl->allocator_cs);
+}
+
+static inline void wined3d_device_gl_allocator_unlock(struct wined3d_device_gl *device_gl)
+{
+    LeaveCriticalSection(&device_gl->allocator_cs);
 }
 
 bool wined3d_device_gl_create_bo(struct wined3d_device_gl *device_gl,

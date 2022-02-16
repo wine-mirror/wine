@@ -4274,6 +4274,8 @@ static HRESULT adapter_gl_create_device(struct wined3d *wined3d, const struct wi
         return hr;
     }
 
+    wined3d_lock_init(&device_gl->allocator_cs, "wined3d_device_gl.allocator_cs");
+
     *device = &device_gl->d;
     return WINED3D_OK;
 }
@@ -4283,6 +4285,8 @@ static void adapter_gl_destroy_device(struct wined3d_device *device)
     struct wined3d_device_gl *device_gl = wined3d_device_gl(device);
 
     wined3d_device_cleanup(&device_gl->d);
+    wined3d_lock_cleanup(&device_gl->allocator_cs);
+
     heap_free(device_gl->retired_blocks);
     heap_free(device_gl);
 }
