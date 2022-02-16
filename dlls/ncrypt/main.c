@@ -19,10 +19,12 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "windef.h"
 #include "winbase.h"
 #include "ncrypt.h"
+#include "ncrypt_internal.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ncrypt);
@@ -99,6 +101,14 @@ SECURITY_STATUS WINAPI NCryptGetProperty(NCRYPT_HANDLE object, const WCHAR *prop
     return NTE_NOT_SUPPORTED;
 }
 
+static struct object *allocate_object(enum object_type type)
+{
+    struct object *ret;
+    if (!(ret = calloc(1, sizeof(*ret)))) return NULL;
+    ret->type = type;
+    return ret;
+}
+
 SECURITY_STATUS WINAPI NCryptImportKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_HANDLE decrypt_key,
                                        const WCHAR *type, NCryptBufferDesc *params, NCRYPT_KEY_HANDLE *key,
                                        PBYTE data, DWORD datasize, DWORD flags)
@@ -131,8 +141,17 @@ SECURITY_STATUS WINAPI NCryptOpenKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_HAN
 
 SECURITY_STATUS WINAPI NCryptOpenStorageProvider(NCRYPT_PROV_HANDLE *provider, const WCHAR *name, DWORD flags)
 {
+    struct object *object;
+
     FIXME("(%p, %s, %u): stub\n", provider, wine_dbgstr_w(name), flags);
-    return NTE_NOT_SUPPORTED;
+
+    if (!(object = allocate_object(STORAGE_PROVIDER)))
+    {
+        ERR("Error allocating memory.\n");
+        return NTE_NO_MEMORY;
+    }
+    *provider = (NCRYPT_PROV_HANDLE)object;
+    return ERROR_SUCCESS;
 }
 
 SECURITY_STATUS WINAPI NCryptSetProperty(NCRYPT_HANDLE object, const WCHAR *property,
