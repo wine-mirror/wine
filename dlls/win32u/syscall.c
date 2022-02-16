@@ -141,6 +141,7 @@ static void * const syscalls[] =
     NtUserSetProp,
     NtUserSetThreadDesktop,
     NtUserSetWinEventHook,
+    NtUserSetWindowsHookEx,
     NtUserUnhookWinEvent,
 };
 

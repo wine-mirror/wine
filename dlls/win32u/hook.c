@@ -32,6 +32,26 @@ WINE_DEFAULT_DEBUG_CHANNEL(hook);
 
 #define WH_WINEVENT (WH_MAXHOOK+1)
 
+static const char * const hook_names[WH_WINEVENT - WH_MINHOOK + 1] =
+{
+    "WH_MSGFILTER",
+    "WH_JOURNALRECORD",
+    "WH_JOURNALPLAYBACK",
+    "WH_KEYBOARD",
+    "WH_GETMESSAGE",
+    "WH_CALLWNDPROC",
+    "WH_CBT",
+    "WH_SYSMSGFILTER",
+    "WH_MOUSE",
+    "WH_HARDWARE",
+    "WH_DEBUG",
+    "WH_SHELL",
+    "WH_FOREGROUNDIDLE",
+    "WH_CALLWNDPROCRET",
+    "WH_KEYBOARD_LL",
+    "WH_MOUSE_LL",
+    "WH_WINEVENT"
+};
 
 static BOOL is_hooked( INT id )
 {
@@ -39,6 +59,71 @@ static BOOL is_hooked( INT id )
 
     if (!thread_info->active_hooks) return TRUE;
     return (thread_info->active_hooks & (1 << (id - WH_MINHOOK))) != 0;
+}
+
+/***********************************************************************
+ *           NtUserSetWindowsHookEx   (win32u.@)
+ */
+HHOOK WINAPI NtUserSetWindowsHookEx( HINSTANCE inst, UNICODE_STRING *module, DWORD tid, INT id,
+                                     HOOKPROC proc, BOOL ansi )
+{
+    HHOOK handle = 0;
+
+    if (!proc)
+    {
+        SetLastError( ERROR_INVALID_FILTER_PROC );
+        return 0;
+    }
+
+    if (tid)  /* thread-local hook */
+    {
+        if (id == WH_JOURNALRECORD ||
+            id == WH_JOURNALPLAYBACK ||
+            id == WH_KEYBOARD_LL ||
+            id == WH_MOUSE_LL ||
+            id == WH_SYSMSGFILTER)
+        {
+            /* these can only be global */
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+    }
+    else  /* system-global hook */
+    {
+        if (id == WH_KEYBOARD_LL || id == WH_MOUSE_LL) inst = 0;
+        else if (!inst)
+        {
+            SetLastError( ERROR_HOOK_NEEDS_HMOD );
+            return 0;
+        }
+    }
+
+    SERVER_START_REQ( set_hook )
+    {
+        req->id        = id;
+        req->pid       = 0;
+        req->tid       = tid;
+        req->event_min = EVENT_MIN;
+        req->event_max = EVENT_MAX;
+        req->flags     = WINEVENT_INCONTEXT;
+        req->unicode   = !ansi;
+        if (inst) /* make proc relative to the module base */
+        {
+            req->proc = wine_server_client_ptr( (void *)((char *)proc - (char *)inst) );
+            wine_server_add_data( req, module->Buffer, module->Length );
+        }
+        else req->proc = wine_server_client_ptr( proc );
+
+        if (!wine_server_call_err( req ))
+        {
+            handle = wine_server_ptr_handle( reply->handle );
+            get_user_thread_info()->active_hooks = reply->active_hooks;
+        }
+    }
+    SERVER_END_REQ;
+
+    TRACE( "%s %p %x -> %p\n", hook_names[id - WH_MINHOOK], proc, tid, handle );
+    return handle;
 }
 
 /***********************************************************************

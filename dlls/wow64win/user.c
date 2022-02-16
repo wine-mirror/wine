@@ -392,3 +392,19 @@ NTSTATUS WINAPI wow64_NtUserUnhookWinEvent( UINT *args )
 
     return NtUserUnhookWinEvent( handle );
 }
+
+NTSTATUS WINAPI wow64_NtUserSetWindowsHookEx( UINT *args )
+{
+    HINSTANCE inst = get_handle( &args );
+    UNICODE_STRING32 *module32 = get_ptr( &args );
+    DWORD tid = get_ulong( &args );
+    INT id = get_ulong( &args );
+    HOOKPROC proc = get_ptr( &args );
+    BOOL ansi = get_ulong( &args );
+    UNICODE_STRING module;
+    HHOOK ret;
+
+    ret = NtUserSetWindowsHookEx( inst, unicode_str_32to64( &module, module32 ),
+                                  tid, id, proc, ansi );
+    return HandleToUlong( ret );
+}

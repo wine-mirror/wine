@@ -1256,7 +1256,7 @@
 @ stub NtUserSetWindowStationUser
 @ stub NtUserSetWindowWord
 @ stub NtUserSetWindowsHookAW
-@ stub NtUserSetWindowsHookEx
+@ stdcall -syscall NtUserSetWindowsHookEx(ptr ptr long long ptr long)
 @ stub NtUserShowCaret
 @ stdcall NtUserShowCursor(long)
 @ stub NtUserShowScrollBar

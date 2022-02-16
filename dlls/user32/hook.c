@@ -140,73 +140,28 @@ static UINT get_ll_hook_timeout(void)
  *
  * Implementation of SetWindowsHookExA and SetWindowsHookExW.
  */
-static HHOOK set_windows_hook( INT id, HOOKPROC proc, HINSTANCE inst, DWORD tid, BOOL unicode )
+static HHOOK set_windows_hook( INT id, HOOKPROC proc, HINSTANCE inst, DWORD tid, BOOL ansi )
 {
-    HHOOK handle = 0;
     WCHAR module[MAX_PATH];
-    DWORD len;
+    UNICODE_STRING str;
 
-    if (!proc)
+    if (!inst)
     {
-        SetLastError( ERROR_INVALID_FILTER_PROC );
-        return 0;
+        RtlInitUnicodeString( &str, NULL );
     }
-
-    if (tid)  /* thread-local hook */
+    else
     {
-        if (id == WH_JOURNALRECORD ||
-            id == WH_JOURNALPLAYBACK ||
-            id == WH_KEYBOARD_LL ||
-            id == WH_MOUSE_LL ||
-            id == WH_SYSMSGFILTER)
+        size_t len = GetModuleFileNameW( inst, module, ARRAYSIZE(module) );
+        if (!len || len >= ARRAYSIZE(module))
         {
-            /* these can only be global */
             SetLastError( ERROR_INVALID_PARAMETER );
             return 0;
         }
-    }
-    else  /* system-global hook */
-    {
-        if (id == WH_KEYBOARD_LL || id == WH_MOUSE_LL) inst = 0;
-        else if (!inst)
-        {
-            SetLastError( ERROR_HOOK_NEEDS_HMOD );
-            return 0;
-        }
+        str.Buffer = module;
+        str.MaximumLength = str.Length = len * sizeof(WCHAR);
     }
 
-    if (inst && (!(len = GetModuleFileNameW( inst, module, MAX_PATH )) || len >= MAX_PATH))
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
-    }
-
-    SERVER_START_REQ( set_hook )
-    {
-        req->id        = id;
-        req->pid       = 0;
-        req->tid       = tid;
-        req->event_min = EVENT_MIN;
-        req->event_max = EVENT_MAX;
-        req->flags     = WINEVENT_INCONTEXT;
-        req->unicode   = unicode;
-        if (inst) /* make proc relative to the module base */
-        {
-            req->proc = wine_server_client_ptr( (void *)((char *)proc - (char *)inst) );
-            wine_server_add_data( req, module, lstrlenW(module) * sizeof(WCHAR) );
-        }
-        else req->proc = wine_server_client_ptr( proc );
-
-        if (!wine_server_call_err( req ))
-        {
-            handle = wine_server_ptr_handle( reply->handle );
-            get_user_thread_info()->active_hooks = reply->active_hooks;
-        }
-    }
-    SERVER_END_REQ;
-
-    TRACE( "%s %p %x -> %p\n", hook_names[id-WH_MINHOOK], proc, tid, handle );
-    return handle;
+    return NtUserSetWindowsHookEx( inst, &str, tid, id, proc, ansi );
 }
 
 #ifdef __i386__
@@ -548,7 +503,7 @@ HHOOK WINAPI SetWindowsHookW( INT id, HOOKPROC proc )
  */
 HHOOK WINAPI SetWindowsHookExA( INT id, HOOKPROC proc, HINSTANCE inst, DWORD tid )
 {
-    return set_windows_hook( id, proc, inst, tid, FALSE );
+    return set_windows_hook( id, proc, inst, tid, TRUE );
 }
 
 /***********************************************************************
@@ -556,7 +511,7 @@ HHOOK WINAPI SetWindowsHookExA( INT id, HOOKPROC proc, HINSTANCE inst, DWORD tid
  */
 HHOOK WINAPI SetWindowsHookExW( INT id, HOOKPROC proc, HINSTANCE inst, DWORD tid )
 {
-    return set_windows_hook( id, proc, inst, tid, TRUE );
+    return set_windows_hook( id, proc, inst, tid, FALSE );
 }
 
 
