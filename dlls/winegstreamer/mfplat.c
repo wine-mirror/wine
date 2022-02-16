@@ -635,6 +635,10 @@ IMFMediaType *mf_media_type_from_wg_format(const struct wg_format *format)
         case WG_MAJOR_TYPE_UNKNOWN:
             return NULL;
 
+        case WG_MAJOR_TYPE_WMA:
+            FIXME("WMA format not implemented!\n");
+            return NULL;
+
         case WG_MAJOR_TYPE_AUDIO:
             return mf_media_type_from_wg_format_audio(format);
 
@@ -646,17 +650,11 @@ IMFMediaType *mf_media_type_from_wg_format(const struct wg_format *format)
     return NULL;
 }
 
-static void mf_media_type_to_wg_format_audio(IMFMediaType *type, struct wg_format *format)
+static void mf_media_type_to_wg_format_audio(IMFMediaType *type, const GUID *subtype, struct wg_format *format)
 {
     UINT32 rate, channels, channel_mask, depth;
     unsigned int i;
-    GUID subtype;
 
-    if (FAILED(IMFMediaType_GetGUID(type, &MF_MT_SUBTYPE, &subtype)))
-    {
-        FIXME("Subtype is not set.\n");
-        return;
-    }
     if (FAILED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, &rate)))
     {
         FIXME("Sample rate is not set.\n");
@@ -692,26 +690,20 @@ static void mf_media_type_to_wg_format_audio(IMFMediaType *type, struct wg_forma
 
     for (i = 0; i < ARRAY_SIZE(audio_formats); ++i)
     {
-        if (IsEqualGUID(&subtype, audio_formats[i].subtype) && depth == audio_formats[i].depth)
+        if (IsEqualGUID(subtype, audio_formats[i].subtype) && depth == audio_formats[i].depth)
         {
             format->u.audio.format = audio_formats[i].format;
             return;
         }
     }
-    FIXME("Unrecognized audio subtype %s, depth %u.\n", debugstr_guid(&subtype), depth);
+    FIXME("Unrecognized audio subtype %s, depth %u.\n", debugstr_guid(subtype), depth);
 }
 
-static void mf_media_type_to_wg_format_video(IMFMediaType *type, struct wg_format *format)
+static void mf_media_type_to_wg_format_video(IMFMediaType *type, const GUID *subtype, struct wg_format *format)
 {
     UINT64 frame_rate, frame_size;
     unsigned int i;
-    GUID subtype;
 
-    if (FAILED(IMFMediaType_GetGUID(type, &MF_MT_SUBTYPE, &subtype)))
-    {
-        FIXME("Subtype is not set.\n");
-        return;
-    }
     if (FAILED(IMFMediaType_GetUINT64(type, &MF_MT_FRAME_SIZE, &frame_size)))
     {
         FIXME("Frame size is not set.\n");
@@ -732,18 +724,80 @@ static void mf_media_type_to_wg_format_video(IMFMediaType *type, struct wg_forma
 
     for (i = 0; i < ARRAY_SIZE(video_formats); ++i)
     {
-        if (IsEqualGUID(&subtype, video_formats[i].subtype))
+        if (IsEqualGUID(subtype, video_formats[i].subtype))
         {
             format->u.video.format = video_formats[i].format;
             return;
         }
     }
-    FIXME("Unrecognized video subtype %s.\n", debugstr_guid(&subtype));
+    FIXME("Unrecognized video subtype %s.\n", debugstr_guid(subtype));
+}
+
+static void mf_media_type_to_wg_format_wma(IMFMediaType *type, const GUID *subtype, struct wg_format *format)
+{
+    UINT32 rate, depth, channels, block_align, bytes_per_second, codec_data_len;
+    BYTE codec_data[64];
+    UINT32 version;
+
+    if (FAILED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, &rate)))
+    {
+        FIXME("Sample rate is not set.\n");
+        return;
+    }
+    if (FAILED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_NUM_CHANNELS, &channels)))
+    {
+        FIXME("Channel count is not set.\n");
+        return;
+    }
+    if (FAILED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_BLOCK_ALIGNMENT, &block_align)))
+    {
+        FIXME("Block alignment is not set.\n");
+        return;
+    }
+    if (FAILED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_BITS_PER_SAMPLE, &depth)))
+    {
+        FIXME("Depth is not set.\n");
+        return;
+    }
+    if (FAILED(IMFMediaType_GetBlob(type, &MF_MT_USER_DATA, codec_data, sizeof(codec_data), &codec_data_len)))
+    {
+        FIXME("Codec data is not set.\n");
+        return;
+    }
+    if (FAILED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, &bytes_per_second)))
+    {
+        FIXME("Bitrate is not set.\n");
+        bytes_per_second = 0;
+    }
+
+    if (IsEqualGUID(subtype, &MEDIASUBTYPE_MSAUDIO1))
+        version = 1;
+    else if (IsEqualGUID(subtype, &MFAudioFormat_WMAudioV8))
+        version = 2;
+    else if (IsEqualGUID(subtype, &MFAudioFormat_WMAudioV9))
+        version = 3;
+    else if (IsEqualGUID(subtype, &MFAudioFormat_WMAudio_Lossless))
+        version = 4;
+    else
+    {
+        assert(0);
+        return;
+    }
+
+    format->major_type = WG_MAJOR_TYPE_WMA;
+    format->u.wma.version = version;
+    format->u.wma.bitrate = bytes_per_second * 8;
+    format->u.wma.rate = rate;
+    format->u.wma.depth = depth;
+    format->u.wma.channels = channels;
+    format->u.wma.block_align = block_align;
+    format->u.wma.codec_data_len = codec_data_len;
+    memcpy(format->u.wma.codec_data, codec_data, codec_data_len);
 }
 
 void mf_media_type_to_wg_format(IMFMediaType *type, struct wg_format *format)
 {
-    GUID major_type;
+    GUID major_type, subtype;
 
     memset(format, 0, sizeof(*format));
 
@@ -752,11 +806,24 @@ void mf_media_type_to_wg_format(IMFMediaType *type, struct wg_format *format)
         FIXME("Major type is not set.\n");
         return;
     }
+    if (FAILED(IMFMediaType_GetGUID(type, &MF_MT_SUBTYPE, &subtype)))
+    {
+        FIXME("Subtype is not set.\n");
+        return;
+    }
 
     if (IsEqualGUID(&major_type, &MFMediaType_Audio))
-        mf_media_type_to_wg_format_audio(type, format);
+    {
+        if (IsEqualGUID(&subtype, &MEDIASUBTYPE_MSAUDIO1) ||
+                IsEqualGUID(&subtype, &MFAudioFormat_WMAudioV8) ||
+                IsEqualGUID(&subtype, &MFAudioFormat_WMAudioV9) ||
+                IsEqualGUID(&subtype, &MFAudioFormat_WMAudio_Lossless))
+            mf_media_type_to_wg_format_wma(type, &subtype, format);
+        else
+            mf_media_type_to_wg_format_audio(type, &subtype, format);
+    }
     else if (IsEqualGUID(&major_type, &MFMediaType_Video))
-        mf_media_type_to_wg_format_video(type, format);
+        mf_media_type_to_wg_format_video(type, &subtype, format);
     else
         FIXME("Unrecognized major type %s.\n", debugstr_guid(&major_type));
 }

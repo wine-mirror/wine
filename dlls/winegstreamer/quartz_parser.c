@@ -319,6 +319,10 @@ unsigned int wg_format_get_max_size(const struct wg_format *format)
             break;
         }
 
+        case WG_MAJOR_TYPE_WMA:
+            FIXME("WMA format not implemented!\n");
+            return 0;
+
         case WG_MAJOR_TYPE_UNKNOWN:
             FIXME("Cannot guess maximum sample size for unknown format.\n");
             return 0;
@@ -411,6 +415,10 @@ bool amt_from_wg_format(AM_MEDIA_TYPE *mt, const struct wg_format *format, bool 
     switch (format->major_type)
     {
     case WG_MAJOR_TYPE_UNKNOWN:
+        return false;
+
+    case WG_MAJOR_TYPE_WMA:
+        FIXME("WMA format not implemented!\n");
         return false;
 
     case WG_MAJOR_TYPE_AUDIO:

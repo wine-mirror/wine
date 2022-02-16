@@ -37,6 +37,7 @@ struct wg_format
         WG_MAJOR_TYPE_UNKNOWN,
         WG_MAJOR_TYPE_VIDEO,
         WG_MAJOR_TYPE_AUDIO,
+        WG_MAJOR_TYPE_WMA,
     } major_type;
 
     union
@@ -88,6 +89,17 @@ struct wg_format
             uint32_t channel_mask; /* In WinMM format. */
             uint32_t rate;
         } audio;
+        struct
+        {
+            uint32_t version;
+            uint32_t bitrate;
+            uint32_t rate;
+            uint32_t depth;
+            uint32_t channels;
+            uint32_t block_align;
+            uint32_t codec_data_len;
+            unsigned char codec_data[64];
+        } wma;
     } u;
 };
 

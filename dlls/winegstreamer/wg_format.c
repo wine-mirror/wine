@@ -400,6 +400,9 @@ GstCaps *wg_format_to_caps(const struct wg_format *format)
     {
         case WG_MAJOR_TYPE_UNKNOWN:
             return NULL;
+        case WG_MAJOR_TYPE_WMA:
+            GST_FIXME("WMA format not implemented!\n");
+            return NULL;
         case WG_MAJOR_TYPE_AUDIO:
             return wg_format_to_caps_audio(format);
         case WG_MAJOR_TYPE_VIDEO:
@@ -417,6 +420,10 @@ bool wg_format_compare(const struct wg_format *a, const struct wg_format *b)
     switch (a->major_type)
     {
         case WG_MAJOR_TYPE_UNKNOWN:
+            return false;
+
+        case WG_MAJOR_TYPE_WMA:
+            GST_FIXME("WMA format not implemented!\n");
             return false;
 
         case WG_MAJOR_TYPE_AUDIO:
