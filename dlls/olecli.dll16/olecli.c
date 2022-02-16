@@ -89,7 +89,7 @@ static LONG OLE_current_handle;
  */
 OLESTATUS WINAPI OleSavedClientDoc16(LHCLIENTDOC hDoc)
 {
-    FIXME("(%d: stub\n", hDoc);
+    FIXME("(%ld: stub\n", hDoc);
     return OLE_OK;
 }
 
@@ -109,7 +109,7 @@ OLESTATUS WINAPI OleRegisterClientDoc16(LPCSTR classname, LPCSTR docname,
  */
 OLESTATUS WINAPI OleRenameClientDoc16(LHCLIENTDOC hDoc, LPCSTR newName)
 {
-    FIXME("(%d,%s,...): stub\n",hDoc, newName);
+    FIXME("(%ld,%s,...): stub\n",hDoc, newName);
     return OLE_OK;
 }
 
@@ -118,7 +118,7 @@ OLESTATUS WINAPI OleRenameClientDoc16(LHCLIENTDOC hDoc, LPCSTR newName)
  */
 OLESTATUS WINAPI OleRevokeClientDoc16(LHCLIENTDOC hServerDoc)
 {
-    FIXME("(%d): stub\n",hServerDoc);
+    FIXME("(%ld): stub\n",hServerDoc);
     return OLE_OK;
 }
 
@@ -127,7 +127,7 @@ OLESTATUS WINAPI OleRevokeClientDoc16(LHCLIENTDOC hServerDoc)
  */
 OLESTATUS WINAPI OleRevertClientDoc16(LHCLIENTDOC hServerDoc)
 {
-    FIXME("(%d): stub\n", hServerDoc);
+    FIXME("(%ld): stub\n", hServerDoc);
     return OLE_OK;
 }
 
@@ -136,7 +136,7 @@ OLESTATUS WINAPI OleRevertClientDoc16(LHCLIENTDOC hServerDoc)
  */
 OLESTATUS WINAPI OleEnumObjects16(LHCLIENTDOC hServerDoc, SEGPTR data)
 {
-    FIXME("(%d, %04x:%04x): stub\n", hServerDoc, HIWORD(data),
+    FIXME("(%ld, %04x:%04x): stub\n", hServerDoc, HIWORD(data),
 	LOWORD(data));
     return OLE_OK;
 }
@@ -148,7 +148,7 @@ OLESTATUS WINAPI OleCreateLinkFromClip16( LPCSTR name, SEGPTR olecli, LHCLIENTDO
                                           LPCSTR xname, SEGPTR lpoleob, UINT16 render,
                                           UINT16 clipformat )
 {
-	FIXME("(%s, %04x:%04x, %d, %s, %04x:%04x, %d, %d): stub!\n",
+	FIXME("(%s, %04x:%04x, %ld, %s, %04x:%04x, %d, %d): stub!\n",
               name, HIWORD(olecli), LOWORD(olecli), hclientdoc, xname, HIWORD(lpoleob),
               LOWORD(lpoleob), render, clipformat);
 	return OLE_OK;
@@ -195,7 +195,7 @@ OLESTATUS WINAPI OleCreateFromClip16( LPCSTR name, SEGPTR olecli, LHCLIENTDOC hc
                                       LPCSTR xname, SEGPTR lpoleob,
                                       UINT16 render, UINT16 clipformat )
 {
-	FIXME("(%s, %04x:%04x, %d, %s, %04x:%04x, %d, %d): stub!\n",
+	FIXME("(%s, %04x:%04x, %ld, %s, %04x:%04x, %d, %d): stub!\n",
               name, HIWORD(olecli), LOWORD(olecli), hclientdoc, xname, HIWORD(lpoleob),
               LOWORD(lpoleob), render, clipformat);
 	return OLE_OK;
