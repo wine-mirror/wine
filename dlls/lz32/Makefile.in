@@ -1,4 +1,6 @@
 MODULE    = lz32.dll
 IMPORTLIB = lz32
 
+EXTRADLLFLAGS = -Wb,--data-only
+
 RC_SRCS  = version.rc
