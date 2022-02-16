@@ -129,6 +129,7 @@
     SYSCALL_ENTRY( NtUserSetThreadDesktop ) \
     SYSCALL_ENTRY( NtUserSetWinEventHook ) \
     SYSCALL_ENTRY( NtUserSetWindowsHookEx ) \
-    SYSCALL_ENTRY( NtUserUnhookWinEvent )
+    SYSCALL_ENTRY( NtUserUnhookWinEvent ) \
+    SYSCALL_ENTRY( NtUserUnhookWindowsHookEx )
 
 #endif /* __WOW64WIN_SYSCALL_H */

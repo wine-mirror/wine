@@ -538,27 +538,6 @@ BOOL WINAPI UnhookWindowsHook( INT id, HOOKPROC proc )
 }
 
 
-
-/***********************************************************************
- *		UnhookWindowsHookEx (USER32.@)
- */
-BOOL WINAPI UnhookWindowsHookEx( HHOOK hhook )
-{
-    BOOL ret;
-
-    SERVER_START_REQ( remove_hook )
-    {
-        req->handle = wine_server_user_handle( hhook );
-        req->id     = 0;
-        ret = !wine_server_call_err( req );
-        if (ret) get_user_thread_info()->active_hooks = reply->active_hooks;
-    }
-    SERVER_END_REQ;
-    if (!ret && GetLastError() == ERROR_INVALID_HANDLE) SetLastError( ERROR_INVALID_HOOK_HANDLE );
-    return ret;
-}
-
-
 /***********************************************************************
  *		CallNextHookEx (USER32.@)
  */

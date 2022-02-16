@@ -204,6 +204,7 @@ BOOL    WINAPI NtUserSystemParametersInfoForDpi( UINT action, UINT val, PVOID pt
 INT     WINAPI NtUserToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
                                   WCHAR *str, int size, UINT flags, HKL layout );
 BOOL    WINAPI NtUserUnhookWinEvent( HWINEVENTHOOK hEventHook );
+BOOL    WINAPI NtUserUnhookWindowsHookEx( HHOOK handle );
 BOOL    WINAPI NtUserUnregisterHotKey( HWND hwnd, INT id );
 WORD    WINAPI NtUserVkKeyScanEx( WCHAR chr, HKL layout );
 

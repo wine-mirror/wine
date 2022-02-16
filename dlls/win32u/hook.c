@@ -127,6 +127,25 @@ HHOOK WINAPI NtUserSetWindowsHookEx( HINSTANCE inst, UNICODE_STRING *module, DWO
 }
 
 /***********************************************************************
+ *	     NtUserUnhookWindowsHookEx   (win32u.@)
+ */
+BOOL WINAPI NtUserUnhookWindowsHookEx( HHOOK handle )
+{
+    NTSTATUS status;
+
+    SERVER_START_REQ( remove_hook )
+    {
+        req->handle = wine_server_user_handle( handle );
+        req->id     = 0;
+        status = wine_server_call_err( req );
+        if (!status) get_user_thread_info()->active_hooks = reply->active_hooks;
+    }
+    SERVER_END_REQ;
+    if (status == STATUS_INVALID_HANDLE) SetLastError( ERROR_INVALID_HOOK_HANDLE );
+    return !status;
+}
+
+/***********************************************************************
  *           NtUserSetWinEventHook   (win32u.@)
  */
 HWINEVENTHOOK WINAPI NtUserSetWinEventHook( DWORD event_min, DWORD event_max, HMODULE inst,

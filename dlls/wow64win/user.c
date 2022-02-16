@@ -408,3 +408,10 @@ NTSTATUS WINAPI wow64_NtUserSetWindowsHookEx( UINT *args )
                                   tid, id, proc, ansi );
     return HandleToUlong( ret );
 }
+
+NTSTATUS WINAPI wow64_NtUserUnhookWindowsHookEx( UINT *args )
+{
+    HHOOK handle = get_handle( &args );
+
+    return NtUserUnhookWindowsHookEx( handle );
+}
