@@ -1,5 +1,4 @@
 MODULE    = sfc.dll
 IMPORTLIB = sfc
-IMPORTS   = sfc_os
 
-EXTRADLLFLAGS = -Wb,--prefer-native
+EXTRADLLFLAGS = -Wb,--data-only -Wb,--prefer-native
