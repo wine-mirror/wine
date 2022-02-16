@@ -148,7 +148,7 @@ OLESTATUS WINAPI OleRegisterServer16( LPCSTR name, LPOLESERVER serverStruct,
  */
 OLESTATUS WINAPI OleRevokeServer16(LHSERVER hServer)
 {
-    FIXME("%d - stub\n",hServer);
+    FIXME("%ld - stub\n",hServer);
     return OLE_OK;
 }
 
@@ -157,7 +157,7 @@ OLESTATUS WINAPI OleRevokeServer16(LHSERVER hServer)
  */
 OLESTATUS WINAPI OleBlockServer16(LHSERVER hServer)
 {
-    FIXME("(%d): stub\n",hServer);
+    FIXME("(%ld): stub\n",hServer);
     return OLE_OK;
 }
 
@@ -166,7 +166,7 @@ OLESTATUS WINAPI OleBlockServer16(LHSERVER hServer)
  */
 OLESTATUS WINAPI OleUnblockServer16(LHSERVER hServer, BOOL16 *block)
 {
-    FIXME("(%d): stub\n",hServer);
+    FIXME("(%ld): stub\n",hServer);
     /* no more blocked messages :) */
     *block=FALSE;
     return OLE_OK;
@@ -179,7 +179,7 @@ OLESTATUS WINAPI OleRegisterServerDoc16( LHSERVER hServer, LPCSTR docname,
                                          LPOLESERVERDOC document,
                                          LHSERVERDOC *hRet)
 {
-    FIXME("(%d,%s): stub\n",hServer, docname);
+    FIXME("(%ld,%s): stub\n",hServer, docname);
     *hRet=++OLE_current_handle;
     return OLE_OK;
 }
@@ -189,7 +189,7 @@ OLESTATUS WINAPI OleRegisterServerDoc16( LHSERVER hServer, LPCSTR docname,
  */
 OLESTATUS WINAPI OleRevokeServerDoc16(LHSERVERDOC hServerDoc)
 {
-    FIXME("%d  - stub\n",hServerDoc);
+    FIXME("%ld  - stub\n",hServerDoc);
     return OLE_OK;
 }
 
@@ -199,7 +199,7 @@ OLESTATUS WINAPI OleRevokeServerDoc16(LHSERVERDOC hServerDoc)
  */
 OLESTATUS WINAPI OleRenameServerDoc16(LHSERVERDOC hDoc, LPCSTR newName)
 {
-    FIXME("(%d,%s): stub.\n", hDoc, newName);
+    FIXME("(%ld,%s): stub.\n", hDoc, newName);
     return OLE_OK;
 }
 
@@ -209,7 +209,7 @@ OLESTATUS WINAPI OleRenameServerDoc16(LHSERVERDOC hDoc, LPCSTR newName)
  */
 OLESTATUS WINAPI OleRevertServerDoc16(LHSERVERDOC hDoc)
 {
-    FIXME("(%d): stub.\n", hDoc);
+    FIXME("(%ld): stub.\n", hDoc);
     return OLE_OK;
 }
 
@@ -219,6 +219,6 @@ OLESTATUS WINAPI OleRevertServerDoc16(LHSERVERDOC hDoc)
  */
 OLESTATUS WINAPI OleSavedServerDoc16(LHSERVERDOC hDoc)
 {
-    FIXME("(%d): stub.\n", hDoc);
+    FIXME("(%ld): stub.\n", hDoc);
     return OLE_OK;
 }
