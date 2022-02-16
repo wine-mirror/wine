@@ -453,6 +453,27 @@ static NTSTATUS get_endpoint_ids(void *args)
     return STATUS_SUCCESS;
 }
 
+static WAVEFORMATEXTENSIBLE *clone_format(const WAVEFORMATEX *fmt)
+{
+    WAVEFORMATEXTENSIBLE *ret;
+    size_t size;
+
+    if(fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+        size = sizeof(WAVEFORMATEXTENSIBLE);
+    else
+        size = sizeof(WAVEFORMATEX);
+
+    ret = malloc(size);
+    if(!ret)
+        return NULL;
+
+    memcpy(ret, fmt, size);
+
+    ret->Format.cbSize = size - sizeof(WAVEFORMATEX);
+
+    return ret;
+}
+
 static HRESULT alsa_open_device(const char *alsa_name, EDataFlow flow, snd_pcm_t **pcm_handle,
                                 snd_pcm_hw_params_t **hw_params)
 {
@@ -486,6 +507,78 @@ static HRESULT alsa_open_device(const char *alsa_name, EDataFlow flow, snd_pcm_t
     return S_OK;
 }
 
+static snd_pcm_format_t alsa_format(const WAVEFORMATEX *fmt)
+{
+    snd_pcm_format_t format = SND_PCM_FORMAT_UNKNOWN;
+    const WAVEFORMATEXTENSIBLE *fmtex = (const WAVEFORMATEXTENSIBLE *)fmt;
+
+    if(fmt->wFormatTag == WAVE_FORMAT_PCM ||
+      (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+       IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))){
+        if(fmt->wBitsPerSample == 8)
+            format = SND_PCM_FORMAT_U8;
+        else if(fmt->wBitsPerSample == 16)
+            format = SND_PCM_FORMAT_S16_LE;
+        else if(fmt->wBitsPerSample == 24)
+            format = SND_PCM_FORMAT_S24_3LE;
+        else if(fmt->wBitsPerSample == 32)
+            format = SND_PCM_FORMAT_S32_LE;
+        else
+            WARN("Unsupported bit depth: %u\n", fmt->wBitsPerSample);
+        if(fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+           fmt->wBitsPerSample != fmtex->Samples.wValidBitsPerSample){
+            if(fmtex->Samples.wValidBitsPerSample == 20 && fmt->wBitsPerSample == 24)
+                format = SND_PCM_FORMAT_S20_3LE;
+            else
+                WARN("Unsupported ValidBits: %u\n", fmtex->Samples.wValidBitsPerSample);
+        }
+    }else if(fmt->wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
+            (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+             IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT))){
+        if(fmt->wBitsPerSample == 32)
+            format = SND_PCM_FORMAT_FLOAT_LE;
+        else if(fmt->wBitsPerSample == 64)
+            format = SND_PCM_FORMAT_FLOAT64_LE;
+        else
+            WARN("Unsupported float size: %u\n", fmt->wBitsPerSample);
+    }else
+        WARN("Unknown wave format: %04x\n", fmt->wFormatTag);
+    return format;
+}
+
+static int alsa_channel_index(DWORD flag)
+{
+    switch(flag){
+    case SPEAKER_FRONT_LEFT:
+        return 0;
+    case SPEAKER_FRONT_RIGHT:
+        return 1;
+    case SPEAKER_BACK_LEFT:
+        return 2;
+    case SPEAKER_BACK_RIGHT:
+        return 3;
+    case SPEAKER_FRONT_CENTER:
+        return 4;
+    case SPEAKER_LOW_FREQUENCY:
+        return 5;
+    case SPEAKER_SIDE_LEFT:
+        return 6;
+    case SPEAKER_SIDE_RIGHT:
+        return 7;
+    }
+    return -1;
+}
+
+static BOOL need_remapping(const WAVEFORMATEX *fmt, int *map)
+{
+    unsigned int i;
+    for(i = 0; i < fmt->nChannels; ++i){
+        if(map[i] != i)
+            return TRUE;
+    }
+    return FALSE;
+}
+
 static DWORD get_channel_mask(unsigned int channels)
 {
     switch(channels){
@@ -510,6 +603,203 @@ static DWORD get_channel_mask(unsigned int channels)
     }
     FIXME("Unknown speaker configuration: %u\n", channels);
     return 0;
+}
+
+static HRESULT map_channels(EDataFlow flow, const WAVEFORMATEX *fmt, int *alsa_channels, int *map)
+{
+    BOOL need_remap;
+
+    if(flow != eCapture && (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE || fmt->nChannels > 2) ){
+        WAVEFORMATEXTENSIBLE *fmtex = (void*)fmt;
+        DWORD mask, flag = SPEAKER_FRONT_LEFT;
+        UINT i = 0;
+
+        if(fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+                fmtex->dwChannelMask != 0)
+            mask = fmtex->dwChannelMask;
+        else
+            mask = get_channel_mask(fmt->nChannels);
+
+        *alsa_channels = 0;
+
+        while(i < fmt->nChannels && !(flag & SPEAKER_RESERVED)){
+            if(mask & flag){
+                map[i] = alsa_channel_index(flag);
+                TRACE("Mapping mmdevapi channel %u (0x%x) to ALSA channel %d\n",
+                        i, flag, map[i]);
+                if(map[i] >= *alsa_channels)
+                    *alsa_channels = map[i] + 1;
+                ++i;
+            }
+            flag <<= 1;
+        }
+
+        while(i < fmt->nChannels){
+            map[i] = *alsa_channels;
+            TRACE("Mapping mmdevapi channel %u to ALSA channel %d\n",
+                    i, map[i]);
+            ++*alsa_channels;
+            ++i;
+        }
+
+        for(i = 0; i < fmt->nChannels; ++i){
+            if(map[i] == -1){
+                map[i] = *alsa_channels;
+                ++*alsa_channels;
+                TRACE("Remapping mmdevapi channel %u to ALSA channel %d\n",
+                        i, map[i]);
+            }
+        }
+
+        need_remap = need_remapping(fmt, map);
+    }else{
+        *alsa_channels = fmt->nChannels;
+
+        need_remap = FALSE;
+    }
+
+    TRACE("need_remapping: %u, alsa_channels: %d\n", need_remap, *alsa_channels);
+
+    return need_remap ? S_OK : S_FALSE;
+}
+
+static NTSTATUS is_format_supported(void *args)
+{
+    struct is_format_supported_params *params = args;
+    const WAVEFORMATEXTENSIBLE *fmtex = (const WAVEFORMATEXTENSIBLE *)params->fmt_in;
+    snd_pcm_t *pcm_handle;
+    snd_pcm_hw_params_t *hw_params;
+    snd_pcm_format_mask_t *formats = NULL;
+    snd_pcm_format_t format;
+    WAVEFORMATEXTENSIBLE *closest = NULL;
+    unsigned int max = 0, min = 0;
+    int err;
+    int alsa_channels, alsa_channel_map[32];
+
+    params->result = S_OK;
+
+    if(!params->fmt_in || (params->share == AUDCLNT_SHAREMODE_SHARED && !params->fmt_out))
+        params->result = E_POINTER;
+    else if(params->share != AUDCLNT_SHAREMODE_SHARED && params->share != AUDCLNT_SHAREMODE_EXCLUSIVE)
+        params->result = E_INVALIDARG;
+    else if(params->fmt_in->wFormatTag == WAVE_FORMAT_EXTENSIBLE){
+        if(params->fmt_in->cbSize < sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX))
+            params->result = E_INVALIDARG;
+        else if(params->fmt_in->nAvgBytesPerSec == 0 || params->fmt_in->nBlockAlign == 0 ||
+                (fmtex->Samples.wValidBitsPerSample > params->fmt_in->wBitsPerSample))
+            params->result = E_INVALIDARG;
+    }
+    if(FAILED(params->result))
+        return STATUS_SUCCESS;
+
+    if(params->fmt_in->nChannels == 0){
+        params->result = AUDCLNT_E_UNSUPPORTED_FORMAT;
+        return STATUS_SUCCESS;
+    }
+
+    params->result = alsa_open_device(params->alsa_name, params->flow, &pcm_handle, &hw_params);
+    if(FAILED(params->result))
+        return STATUS_SUCCESS;
+
+    if((err = snd_pcm_hw_params_any(pcm_handle, hw_params)) < 0){
+        params->result = AUDCLNT_E_DEVICE_INVALIDATED;
+        goto exit;
+    }
+
+    formats = calloc(1, snd_pcm_format_mask_sizeof());
+    if(!formats){
+        params->result = E_OUTOFMEMORY;
+        goto exit;
+    }
+
+    snd_pcm_hw_params_get_format_mask(hw_params, formats);
+    format = alsa_format(params->fmt_in);
+    if (format == SND_PCM_FORMAT_UNKNOWN ||
+        !snd_pcm_format_mask_test(formats, format)){
+        params->result = AUDCLNT_E_UNSUPPORTED_FORMAT;
+        goto exit;
+    }
+
+    closest = clone_format(params->fmt_in);
+    if(!closest){
+        params->result = E_OUTOFMEMORY;
+        goto exit;
+    }
+
+    if((err = snd_pcm_hw_params_get_rate_min(hw_params, &min, NULL)) < 0){
+        params->result = AUDCLNT_E_DEVICE_INVALIDATED;
+        WARN("Unable to get min rate: %d (%s)\n", err, snd_strerror(err));
+        goto exit;
+    }
+
+    if((err = snd_pcm_hw_params_get_rate_max(hw_params, &max, NULL)) < 0){
+        params->result = AUDCLNT_E_DEVICE_INVALIDATED;
+        WARN("Unable to get max rate: %d (%s)\n", err, snd_strerror(err));
+        goto exit;
+    }
+
+    if(params->fmt_in->nSamplesPerSec < min || params->fmt_in->nSamplesPerSec > max){
+        params->result = AUDCLNT_E_UNSUPPORTED_FORMAT;
+        goto exit;
+    }
+
+    if((err = snd_pcm_hw_params_get_channels_min(hw_params, &min)) < 0){
+        params->result = AUDCLNT_E_DEVICE_INVALIDATED;
+        WARN("Unable to get min channels: %d (%s)\n", err, snd_strerror(err));
+        goto exit;
+    }
+
+    if((err = snd_pcm_hw_params_get_channels_max(hw_params, &max)) < 0){
+        params->result = AUDCLNT_E_DEVICE_INVALIDATED;
+        WARN("Unable to get max channels: %d (%s)\n", err, snd_strerror(err));
+        goto exit;
+    }
+    if(params->fmt_in->nChannels > max){
+        params->result = S_FALSE;
+        closest->Format.nChannels = max;
+    }else if(params->fmt_in->nChannels < min){
+        params->result = S_FALSE;
+        closest->Format.nChannels = min;
+    }
+
+    map_channels(params->flow, params->fmt_in, &alsa_channels, alsa_channel_map);
+
+    if(alsa_channels > max){
+        params->result = S_FALSE;
+        closest->Format.nChannels = max;
+    }
+
+    if(closest->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+        closest->dwChannelMask = get_channel_mask(closest->Format.nChannels);
+
+    if(params->fmt_in->nBlockAlign != params->fmt_in->nChannels * params->fmt_in->wBitsPerSample / 8 ||
+       params->fmt_in->nAvgBytesPerSec != params->fmt_in->nBlockAlign * params->fmt_in->nSamplesPerSec ||
+       (params->fmt_in->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+        fmtex->Samples.wValidBitsPerSample < params->fmt_in->wBitsPerSample))
+        params->result = S_FALSE;
+
+    if(params->share == AUDCLNT_SHAREMODE_EXCLUSIVE && params->fmt_in->wFormatTag == WAVE_FORMAT_EXTENSIBLE){
+        if(fmtex->dwChannelMask == 0 || fmtex->dwChannelMask & SPEAKER_RESERVED)
+            params->result = S_FALSE;
+    }
+
+exit:
+    if(params->result == S_FALSE && !params->fmt_out)
+        params->result = AUDCLNT_E_UNSUPPORTED_FORMAT;
+
+    if(params->result == S_FALSE && params->fmt_out) {
+        closest->Format.nBlockAlign = closest->Format.nChannels * closest->Format.wBitsPerSample / 8;
+        closest->Format.nAvgBytesPerSec = closest->Format.nBlockAlign * closest->Format.nSamplesPerSec;
+        if(closest->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+            closest->Samples.wValidBitsPerSample = closest->Format.wBitsPerSample;
+        memcpy(params->fmt_out, closest, closest->Format.cbSize);
+    }
+    free(closest);
+    free(formats);
+    free(hw_params);
+    snd_pcm_close(pcm_handle);
+
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS get_mix_format(void *args)
@@ -632,5 +922,6 @@ exit:
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     get_endpoint_ids,
+    is_format_supported,
     get_mix_format,
 };

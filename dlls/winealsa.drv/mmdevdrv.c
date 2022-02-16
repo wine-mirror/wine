@@ -1296,150 +1296,30 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient3 *iface,
         WAVEFORMATEX **out)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
-    snd_pcm_format_mask_t *formats = NULL;
-    snd_pcm_format_t format;
-    HRESULT hr = S_OK;
-    WAVEFORMATEX *closest = NULL;
-    unsigned int max = 0, min = 0;
-    int err;
-    int alsa_channels, alsa_channel_map[32];
+    struct is_format_supported_params params;
 
     TRACE("(%p)->(%x, %p, %p)\n", This, mode, fmt, out);
+    if(fmt) dump_fmt(fmt);
 
-    if(!fmt || (mode == AUDCLNT_SHAREMODE_SHARED && !out))
-        return E_POINTER;
-
-    if(mode != AUDCLNT_SHAREMODE_SHARED && mode != AUDCLNT_SHAREMODE_EXCLUSIVE)
-        return E_INVALIDARG;
-
-    if(fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-            fmt->cbSize < sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX))
-        return E_INVALIDARG;
-
-    dump_fmt(fmt);
+    params.alsa_name = This->alsa_name;
+    params.flow = This->dataflow;
+    params.share = mode;
+    params.fmt_in = fmt;
+    params.fmt_out = NULL;
 
     if(out){
         *out = NULL;
-        if(mode != AUDCLNT_SHAREMODE_SHARED)
-            out = NULL;
+        if(mode == AUDCLNT_SHAREMODE_SHARED)
+            params.fmt_out = CoTaskMemAlloc(sizeof(*params.fmt_out));
     }
+    ALSA_CALL(is_format_supported, &params);
 
-    if(fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-            (fmt->nAvgBytesPerSec == 0 ||
-             fmt->nBlockAlign == 0 ||
-             ((WAVEFORMATEXTENSIBLE*)fmt)->Samples.wValidBitsPerSample > fmt->wBitsPerSample))
-        return E_INVALIDARG;
+    if(params.result == S_FALSE)
+        *out = &params.fmt_out->Format;
+    else
+        CoTaskMemFree(params.fmt_out);
 
-    if(fmt->nChannels == 0)
-        return AUDCLNT_E_UNSUPPORTED_FORMAT;
-
-    EnterCriticalSection(&This->lock);
-
-    if((err = snd_pcm_hw_params_any(This->stream->pcm_handle, This->stream->hw_params)) < 0){
-        hr = AUDCLNT_E_DEVICE_INVALIDATED;
-        goto exit;
-    }
-
-    formats = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            snd_pcm_format_mask_sizeof());
-    if(!formats){
-        hr = E_OUTOFMEMORY;
-        goto exit;
-    }
-
-    snd_pcm_hw_params_get_format_mask(This->stream->hw_params, formats);
-    format = alsa_format(fmt);
-    if (format == SND_PCM_FORMAT_UNKNOWN ||
-        !snd_pcm_format_mask_test(formats, format)){
-        hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
-        goto exit;
-    }
-
-    closest = clone_format(fmt);
-    if(!closest){
-        hr = E_OUTOFMEMORY;
-        goto exit;
-    }
-
-    if((err = snd_pcm_hw_params_get_rate_min(This->stream->hw_params, &min, NULL)) < 0){
-        hr = AUDCLNT_E_DEVICE_INVALIDATED;
-        WARN("Unable to get min rate: %d (%s)\n", err, snd_strerror(err));
-        goto exit;
-    }
-
-    if((err = snd_pcm_hw_params_get_rate_max(This->stream->hw_params, &max, NULL)) < 0){
-        hr = AUDCLNT_E_DEVICE_INVALIDATED;
-        WARN("Unable to get max rate: %d (%s)\n", err, snd_strerror(err));
-        goto exit;
-    }
-
-    if(fmt->nSamplesPerSec < min || fmt->nSamplesPerSec > max){
-        hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
-        goto exit;
-    }
-
-    if((err = snd_pcm_hw_params_get_channels_min(This->stream->hw_params, &min)) < 0){
-        hr = AUDCLNT_E_DEVICE_INVALIDATED;
-        WARN("Unable to get min channels: %d (%s)\n", err, snd_strerror(err));
-        goto exit;
-    }
-
-    if((err = snd_pcm_hw_params_get_channels_max(This->stream->hw_params, &max)) < 0){
-        hr = AUDCLNT_E_DEVICE_INVALIDATED;
-        WARN("Unable to get max channels: %d (%s)\n", err, snd_strerror(err));
-        goto exit;
-    }
-    if(fmt->nChannels > max){
-        hr = S_FALSE;
-        closest->nChannels = max;
-    }else if(fmt->nChannels < min){
-        hr = S_FALSE;
-        closest->nChannels = min;
-    }
-
-    map_channels(This, fmt, &alsa_channels, alsa_channel_map);
-
-    if(alsa_channels > max){
-        hr = S_FALSE;
-        closest->nChannels = max;
-    }
-
-    if(closest->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
-        ((WAVEFORMATEXTENSIBLE*)closest)->dwChannelMask = get_channel_mask(closest->nChannels);
-
-    if(fmt->nBlockAlign != fmt->nChannels * fmt->wBitsPerSample / 8 ||
-            fmt->nAvgBytesPerSec != fmt->nBlockAlign * fmt->nSamplesPerSec ||
-            (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-             ((WAVEFORMATEXTENSIBLE*)fmt)->Samples.wValidBitsPerSample < fmt->wBitsPerSample))
-        hr = S_FALSE;
-
-    if(mode == AUDCLNT_SHAREMODE_EXCLUSIVE &&
-            fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE){
-        if(((WAVEFORMATEXTENSIBLE*)fmt)->dwChannelMask == 0 ||
-                ((WAVEFORMATEXTENSIBLE*)fmt)->dwChannelMask & SPEAKER_RESERVED)
-            hr = S_FALSE;
-    }
-
-exit:
-    LeaveCriticalSection(&This->lock);
-    HeapFree(GetProcessHeap(), 0, formats);
-
-    if(hr == S_FALSE && !out)
-        hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
-
-    if(hr == S_FALSE && out) {
-        closest->nBlockAlign =
-            closest->nChannels * closest->wBitsPerSample / 8;
-        closest->nAvgBytesPerSec =
-            closest->nBlockAlign * closest->nSamplesPerSec;
-        if(closest->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
-            ((WAVEFORMATEXTENSIBLE*)closest)->Samples.wValidBitsPerSample = closest->wBitsPerSample;
-        *out = closest;
-    } else
-        CoTaskMemFree(closest);
-
-    TRACE("returning: %08x\n", hr);
-    return hr;
+    return params.result;
 }
 
 static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient3 *iface,
