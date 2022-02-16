@@ -1284,7 +1284,7 @@
 @ stub NtUserTranslateAccelerator
 @ stub NtUserTranslateMessage
 @ stub NtUserUndelegateInput
-@ stub NtUserUnhookWinEvent
+@ stdcall -syscall NtUserUnhookWinEvent(long)
 @ stub NtUserUnhookWindowsHookEx
 @ stub NtUserUnloadKeyboardLayout
 @ stub NtUserUnlockWindowStation

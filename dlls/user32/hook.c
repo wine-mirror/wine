@@ -766,34 +766,6 @@ HWINEVENTHOOK WINAPI SetWinEventHook(DWORD event_min, DWORD event_max,
     return handle;
 }
 
-
-/***********************************************************************
- *           UnhookWinEvent                             [USER32.@]
- *
- * Remove an event hook for a set of events.
- *
- * PARAMS
- *  hEventHook [I] Event hook to remove
- *
- * RETURNS
- *  Success: TRUE. The event hook has been removed.
- *  Failure: FALSE, if hEventHook is invalid.
- */
-BOOL WINAPI UnhookWinEvent(HWINEVENTHOOK hEventHook)
-{
-    BOOL ret;
-
-    SERVER_START_REQ( remove_hook )
-    {
-        req->handle = wine_server_user_handle( hEventHook );
-        req->id     = WH_WINEVENT;
-        ret = !wine_server_call_err( req );
-        if (ret) get_user_thread_info()->active_hooks = reply->active_hooks;
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
 static inline BOOL find_first_hook(DWORD id, DWORD event, HWND hwnd, LONG object_id,
                                    LONG child_id, struct hook_info *info)
 {

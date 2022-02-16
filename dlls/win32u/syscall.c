@@ -139,6 +139,7 @@ static void * const syscalls[] =
     NtUserSetProcessWindowStation,
     NtUserSetProp,
     NtUserSetThreadDesktop,
+    NtUserUnhookWinEvent,
 };
 
 static BYTE arguments[ARRAY_SIZE(syscalls)];

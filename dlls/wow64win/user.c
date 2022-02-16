@@ -355,3 +355,10 @@ NTSTATUS WINAPI wow64_NtUserGetDoubleClickTime( UINT *args )
 {
     return NtUserGetDoubleClickTime();
 }
+
+NTSTATUS WINAPI wow64_NtUserUnhookWinEvent( UINT *args )
+{
+    HWINEVENTHOOK handle = get_handle( &args );
+
+    return NtUserUnhookWinEvent( handle );
+}

@@ -770,7 +770,7 @@
 @ stdcall TranslateMDISysAccel(long ptr)
 @ stdcall TranslateMessage(ptr)
 # @ stub TranslateMessageEx
-@ stdcall UnhookWinEvent(long)
+@ stdcall UnhookWinEvent(long) NtUserUnhookWinEvent
 @ stdcall UnhookWindowsHook(long ptr)
 @ stdcall UnhookWindowsHookEx(long)
 @ stdcall UnionRect(ptr ptr ptr)
