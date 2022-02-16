@@ -400,8 +400,8 @@ static void sdl_device_stop(struct unix_device *iface)
     pthread_mutex_unlock(&sdl_cs);
 }
 
-NTSTATUS sdl_device_haptics_start(struct unix_device *iface, UINT duration_ms,
-                                  USHORT rumble_intensity, USHORT buzz_intensity)
+static NTSTATUS sdl_device_haptics_start(struct unix_device *iface, UINT duration_ms,
+                                         USHORT rumble_intensity, USHORT buzz_intensity)
 {
     struct sdl_device *impl = impl_from_unix_device(iface);
     SDL_HapticEffect effect;
@@ -439,7 +439,7 @@ NTSTATUS sdl_device_haptics_start(struct unix_device *iface, UINT duration_ms,
     return STATUS_SUCCESS;
 }
 
-NTSTATUS sdl_device_haptics_stop(struct unix_device *iface)
+static NTSTATUS sdl_device_haptics_stop(struct unix_device *iface)
 {
     struct sdl_device *impl = impl_from_unix_device(iface);
 
