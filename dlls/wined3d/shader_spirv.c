@@ -1176,6 +1176,8 @@ static void spirv_vertex_pipe_vk_vp_enable(const struct wined3d_context *context
 static void spirv_vertex_pipe_vk_vp_get_caps(const struct wined3d_adapter *adapter, struct wined3d_vertex_caps *caps)
 {
     memset(caps, 0, sizeof(*caps));
+    caps->xyzrhw = TRUE;
+    caps->ffp_generic_attributes = TRUE;
 }
 
 static uint32_t spirv_vertex_pipe_vk_vp_get_emul_mask(const struct wined3d_gl_info *gl_info)
