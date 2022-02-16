@@ -1237,7 +1237,7 @@
 @ stub NtUserSetThreadLayoutHandles
 @ stub NtUserSetThreadState
 @ stub NtUserSetTimer
-@ stub NtUserSetWinEventHook
+@ stdcall -syscall NtUserSetWinEventHook(long long long ptr ptr long long long)
 @ stub NtUserSetWindowArrangement
 @ stub NtUserSetWindowBand
 @ stub NtUserSetWindowCompositionAttribute

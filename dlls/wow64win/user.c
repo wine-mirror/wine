@@ -356,6 +356,25 @@ NTSTATUS WINAPI wow64_NtUserGetDoubleClickTime( UINT *args )
     return NtUserGetDoubleClickTime();
 }
 
+NTSTATUS WINAPI wow64_NtUserSetWinEventHook( UINT *args )
+{
+    DWORD event_min = get_ulong( &args );
+    DWORD event_max = get_ulong( &args );
+    HMODULE inst = get_handle( &args );
+    UNICODE_STRING32 *module32 = get_ptr( &args );
+    WINEVENTPROC proc = get_ptr(&args );
+    DWORD pid = get_ulong( &args );
+    DWORD tid = get_ulong( &args );
+    DWORD flags = get_ulong( &args );
+    UNICODE_STRING module;
+    HWINEVENTHOOK ret;
+
+    ret = NtUserSetWinEventHook( event_min, event_max, inst,
+                                 unicode_str_32to64( &module, module32 ),
+                                 proc, pid, tid, flags );
+    return HandleToUlong( ret );
+}
+
 NTSTATUS WINAPI wow64_NtUserUnhookWinEvent( UINT *args )
 {
     HWINEVENTHOOK handle = get_handle( &args );

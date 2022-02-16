@@ -139,6 +139,7 @@ static void * const syscalls[] =
     NtUserSetProcessWindowStation,
     NtUserSetProp,
     NtUserSetThreadDesktop,
+    NtUserSetWinEventHook,
     NtUserUnhookWinEvent,
 };
 

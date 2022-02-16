@@ -709,61 +709,21 @@ HWINEVENTHOOK WINAPI SetWinEventHook(DWORD event_min, DWORD event_max,
                                      HMODULE inst, WINEVENTPROC proc,
                                      DWORD pid, DWORD tid, DWORD flags)
 {
-    HWINEVENTHOOK handle = 0;
     WCHAR module[MAX_PATH];
-    DWORD len;
+    UNICODE_STRING str;
+    DWORD len = 0;
 
     TRACE("%d,%d,%p,%p,%08x,%04x,%08x\n", event_min, event_max, inst,
           proc, pid, tid, flags);
 
-    if (inst)
+    if (inst && (!(len = GetModuleFileNameW( inst, module, MAX_PATH )) || len >= MAX_PATH))
     {
-        if (!(len = GetModuleFileNameW(inst, module, MAX_PATH)) || len >= MAX_PATH)
-            inst = 0;
-    }
-
-    if ((flags & WINEVENT_INCONTEXT) && !inst)
-    {
-        SetLastError(ERROR_HOOK_NEEDS_HMOD);
-        return 0;
-    }
-
-    if (event_min > event_max)
-    {
-        SetLastError(ERROR_INVALID_HOOK_FILTER);
-        return 0;
-    }
-
-    /* FIXME: what if the tid or pid belongs to another process? */
-    if (tid)  /* thread-local hook */
         inst = 0;
-
-    SERVER_START_REQ( set_hook )
-    {
-        req->id        = WH_WINEVENT;
-        req->pid       = pid;
-        req->tid       = tid;
-        req->event_min = event_min;
-        req->event_max = event_max;
-        req->flags     = flags;
-        req->unicode   = 1;
-        if (inst) /* make proc relative to the module base */
-        {
-            req->proc = wine_server_client_ptr( (void *)((char *)proc - (char *)inst) );
-            wine_server_add_data( req, module, lstrlenW(module) * sizeof(WCHAR) );
-        }
-        else req->proc = wine_server_client_ptr( proc );
-
-        if (!wine_server_call_err( req ))
-        {
-            handle = wine_server_ptr_handle( reply->handle );
-            get_user_thread_info()->active_hooks = reply->active_hooks;
-        }
+        len = 0;
     }
-    SERVER_END_REQ;
-
-    TRACE("-> %p\n", handle);
-    return handle;
+    str.Buffer = module;
+    str.Length = str.MaximumLength = len * sizeof(WCHAR);
+    return NtUserSetWinEventHook( event_min, event_max, inst, &str, proc, pid, tid, flags );
 }
 
 static inline BOOL find_first_hook(DWORD id, DWORD event, HWND hwnd, LONG object_id,
