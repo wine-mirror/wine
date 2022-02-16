@@ -1671,10 +1671,11 @@ static void wined3d_unordered_access_view_gl_cs_init(void *object)
 
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
+        struct wined3d_device_gl *device_gl = wined3d_device_gl(resource->device);
         struct wined3d_buffer *buffer = buffer_from_resource(resource);
         struct wined3d_context_gl *context_gl;
 
-        context_gl = wined3d_context_gl(context_acquire(resource->device, NULL, 0));
+        context_gl = wined3d_context_gl(context_acquire(&device_gl->d, NULL, 0));
         create_buffer_view(&view_gl->gl_view, &context_gl->c, desc, buffer, view_gl->v.format);
         view_gl->bo_user.valid = true;
         list_add_head(&buffer->buffer_object->users, &view_gl->bo_user.entry);
@@ -1683,7 +1684,7 @@ static void wined3d_unordered_access_view_gl_cs_init(void *object)
             struct wined3d_bo_gl *bo = &view_gl->counter_bo;
 
             view_gl->v.counter_bo = &bo->b;
-            wined3d_context_gl_create_bo(context_gl, sizeof(uint32_t), GL_ATOMIC_COUNTER_BUFFER,
+            wined3d_device_gl_create_bo(device_gl, context_gl, sizeof(uint32_t), GL_ATOMIC_COUNTER_BUFFER,
                     GL_STATIC_DRAW, true, GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_CLIENT_STORAGE_BIT, bo);
             wined3d_unordered_access_view_set_counter(&view_gl->v, 0);
         }

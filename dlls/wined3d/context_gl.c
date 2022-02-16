@@ -2766,30 +2766,6 @@ GLuint wined3d_context_gl_allocate_vram_chunk_buffer(struct wined3d_context_gl *
     return id;
 }
 
-static struct wined3d_allocator_block *wined3d_context_gl_allocate_memory(struct wined3d_context_gl *context_gl,
-        unsigned int memory_type, GLsizeiptr size, GLuint *id)
-{
-    struct wined3d_device_gl *device_gl = wined3d_device_gl(context_gl->c.device);
-    struct wined3d_allocator *allocator = &device_gl->allocator;
-    struct wined3d_allocator_block *block;
-
-    if (size > WINED3D_ALLOCATOR_CHUNK_SIZE / 2)
-    {
-        *id = wined3d_context_gl_allocate_vram_chunk_buffer(context_gl, memory_type, size);
-        return NULL;
-    }
-
-    if (!(block = wined3d_allocator_allocate(allocator, &context_gl->c, memory_type, size)))
-    {
-        *id = 0;
-        return NULL;
-    }
-
-    *id = wined3d_allocator_chunk_gl(block->chunk)->gl_buffer;
-
-    return block;
-}
-
 static void *wined3d_allocator_chunk_gl_map(struct wined3d_allocator_chunk_gl *chunk_gl,
         struct wined3d_context_gl *context_gl)
 {
@@ -2852,7 +2828,7 @@ static void *wined3d_bo_gl_map(struct wined3d_bo_gl *bo, struct wined3d_context_
 
     if ((flags & WINED3D_MAP_DISCARD) && bo->command_fence_id > device_gl->completed_fence_id)
     {
-        if (wined3d_context_gl_create_bo(context_gl, bo->size,
+        if (wined3d_device_gl_create_bo(device_gl, context_gl, bo->size,
                 bo->binding, bo->usage, bo->b.coherent, bo->flags, &tmp))
         {
             list_move_head(&tmp.b.users, &bo->b.users);
@@ -3155,96 +3131,6 @@ void wined3d_context_gl_destroy_bo(struct wined3d_context_gl *context_gl, struct
     GL_EXTCALL(glDeleteBuffers(1, &bo->id));
     checkGLcall("buffer object destruction");
     bo->id = 0;
-}
-
-static bool use_buffer_chunk_suballocation(const struct wined3d_gl_info *gl_info, GLenum binding)
-{
-    switch (binding)
-    {
-        case GL_ARRAY_BUFFER:
-        case GL_ATOMIC_COUNTER_BUFFER:
-        case GL_DRAW_INDIRECT_BUFFER:
-        case GL_PIXEL_UNPACK_BUFFER:
-        case GL_UNIFORM_BUFFER:
-            return true;
-
-        case GL_TEXTURE_BUFFER:
-            return gl_info->supported[ARB_TEXTURE_BUFFER_RANGE];
-
-        default:
-            return false;
-    }
-}
-
-bool wined3d_context_gl_create_bo(struct wined3d_context_gl *context_gl, GLsizeiptr size,
-        GLenum binding, GLenum usage, bool coherent, GLbitfield flags, struct wined3d_bo_gl *bo)
-{
-    unsigned int memory_type_idx = wined3d_device_gl_find_memory_type(flags);
-    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    struct wined3d_allocator_block *memory = NULL;
-    GLsizeiptr buffer_offset = 0;
-    GLuint id = 0;
-
-    TRACE("context_gl %p, size %lu, binding %#x, usage %#x, coherent %#x, flags %#x, bo %p.\n",
-            context_gl, size, binding, usage, coherent, flags, bo);
-
-    if (gl_info->supported[ARB_BUFFER_STORAGE])
-    {
-        if (use_buffer_chunk_suballocation(gl_info, binding))
-        {
-            if ((memory = wined3d_context_gl_allocate_memory(context_gl, memory_type_idx, size, &id)))
-                buffer_offset = memory->offset;
-        }
-        else
-        {
-            WARN_(d3d_perf)("Not allocating chunk memory for binding type %#x.\n", binding);
-            id = wined3d_context_gl_allocate_vram_chunk_buffer(context_gl, memory_type_idx, size);
-        }
-
-        if (!id)
-        {
-            WARN("Failed to allocate buffer.\n");
-            return false;
-        }
-    }
-    else
-    {
-        GL_EXTCALL(glGenBuffers(1, &id));
-        if (!id)
-        {
-            checkGLcall("buffer object creation");
-            return false;
-        }
-        wined3d_context_gl_bind_bo(context_gl, binding, id);
-
-        if (!coherent && gl_info->supported[APPLE_FLUSH_BUFFER_RANGE])
-        {
-            GL_EXTCALL(glBufferParameteriAPPLE(binding, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE));
-            GL_EXTCALL(glBufferParameteriAPPLE(binding, GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL_FALSE));
-        }
-
-        GL_EXTCALL(glBufferData(binding, size, NULL, usage));
-
-        wined3d_context_gl_bind_bo(context_gl, binding, 0);
-        checkGLcall("buffer object creation");
-    }
-
-    TRACE("Created buffer object %u.\n", id);
-    bo->id = id;
-    bo->memory = memory;
-    bo->size = size;
-    bo->binding = binding;
-    bo->usage = usage;
-    bo->flags = flags;
-    bo->b.coherent = coherent;
-    list_init(&bo->b.users);
-    bo->command_fence_id = 0;
-    bo->b.buffer_offset = buffer_offset;
-    bo->b.memory_offset = bo->b.buffer_offset;
-    bo->b.map_ptr = NULL;
-    bo->b.client_map_count = 0;
-
-    return true;
 }
 
 static void wined3d_context_gl_set_render_offscreen(struct wined3d_context_gl *context_gl, BOOL offscreen)

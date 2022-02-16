@@ -29,6 +29,7 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 struct wined3d_matrix_3x3
@@ -1033,7 +1034,7 @@ gl_memory_types[] =
     {GL_CLIENT_STORAGE_BIT | GL_MAP_READ_BIT | GL_MAP_WRITE_BIT},
 };
 
-unsigned int wined3d_device_gl_find_memory_type(GLbitfield flags)
+static unsigned int wined3d_device_gl_find_memory_type(GLbitfield flags)
 {
     unsigned int i;
 
@@ -1050,6 +1051,119 @@ unsigned int wined3d_device_gl_find_memory_type(GLbitfield flags)
 GLbitfield wined3d_device_gl_get_memory_type_flags(unsigned int memory_type_idx)
 {
     return gl_memory_types[memory_type_idx].flags;
+}
+
+static struct wined3d_allocator_block *wined3d_device_gl_allocate_memory(struct wined3d_device_gl *device_gl,
+        struct wined3d_context_gl *context_gl, unsigned int memory_type, GLsizeiptr size, GLuint *id)
+{
+    struct wined3d_allocator *allocator = &device_gl->allocator;
+    struct wined3d_allocator_block *block;
+
+    if (size > WINED3D_ALLOCATOR_CHUNK_SIZE / 2)
+    {
+        *id = wined3d_context_gl_allocate_vram_chunk_buffer(context_gl, memory_type, size);
+        return NULL;
+    }
+
+    if (!(block = wined3d_allocator_allocate(allocator, &context_gl->c, memory_type, size)))
+    {
+        *id = 0;
+        return NULL;
+    }
+
+    *id = wined3d_allocator_chunk_gl(block->chunk)->gl_buffer;
+
+    return block;
+}
+
+static bool use_buffer_chunk_suballocation(const struct wined3d_gl_info *gl_info, GLenum binding)
+{
+    switch (binding)
+    {
+        case GL_ARRAY_BUFFER:
+        case GL_ATOMIC_COUNTER_BUFFER:
+        case GL_DRAW_INDIRECT_BUFFER:
+        case GL_PIXEL_UNPACK_BUFFER:
+        case GL_UNIFORM_BUFFER:
+            return true;
+
+        case GL_TEXTURE_BUFFER:
+            return gl_info->supported[ARB_TEXTURE_BUFFER_RANGE];
+
+        default:
+            return false;
+    }
+}
+
+bool wined3d_device_gl_create_bo(struct wined3d_device_gl *device_gl, struct wined3d_context_gl *context_gl,
+        GLsizeiptr size, GLenum binding, GLenum usage, bool coherent, GLbitfield flags, struct wined3d_bo_gl *bo)
+{
+    unsigned int memory_type_idx = wined3d_device_gl_find_memory_type(flags);
+    const struct wined3d_gl_info *gl_info = &device_gl->d.adapter->gl_info;
+    struct wined3d_allocator_block *memory = NULL;
+    GLsizeiptr buffer_offset = 0;
+    GLuint id = 0;
+
+    TRACE("device_gl %p, context_gl %p, size %lu, binding %#x, usage %#x, coherent %#x, flags %#x, bo %p.\n",
+            device_gl, context_gl, size, binding, usage, coherent, flags, bo);
+
+    if (gl_info->supported[ARB_BUFFER_STORAGE])
+    {
+        if (use_buffer_chunk_suballocation(gl_info, binding))
+        {
+            if ((memory = wined3d_device_gl_allocate_memory(device_gl, context_gl, memory_type_idx, size, &id)))
+                buffer_offset = memory->offset;
+        }
+        else
+        {
+            WARN_(d3d_perf)("Not allocating chunk memory for binding type %#x.\n", binding);
+            id = wined3d_context_gl_allocate_vram_chunk_buffer(context_gl, memory_type_idx, size);
+        }
+
+        if (!id)
+        {
+            WARN("Failed to allocate buffer.\n");
+            return false;
+        }
+    }
+    else
+    {
+        GL_EXTCALL(glGenBuffers(1, &id));
+        if (!id)
+        {
+            checkGLcall("buffer object creation");
+            return false;
+        }
+        wined3d_context_gl_bind_bo(context_gl, binding, id);
+
+        if (!coherent && gl_info->supported[APPLE_FLUSH_BUFFER_RANGE])
+        {
+            GL_EXTCALL(glBufferParameteriAPPLE(binding, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE));
+            GL_EXTCALL(glBufferParameteriAPPLE(binding, GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL_FALSE));
+        }
+
+        GL_EXTCALL(glBufferData(binding, size, NULL, usage));
+
+        wined3d_context_gl_bind_bo(context_gl, binding, 0);
+        checkGLcall("buffer object creation");
+    }
+
+    TRACE("Created buffer object %u.\n", id);
+    bo->id = id;
+    bo->memory = memory;
+    bo->size = size;
+    bo->binding = binding;
+    bo->usage = usage;
+    bo->flags = flags;
+    bo->b.coherent = coherent;
+    list_init(&bo->b.users);
+    bo->command_fence_id = 0;
+    bo->b.buffer_offset = buffer_offset;
+    bo->b.memory_offset = bo->b.buffer_offset;
+    bo->b.map_ptr = NULL;
+    bo->b.client_map_count = 0;
+
+    return true;
 }
 
 void wined3d_device_gl_delete_opengl_contexts_cs(void *object)
