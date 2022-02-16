@@ -133,7 +133,7 @@ static NTSTATUS sock_error_to_ntstatus(DWORD err)
         case WSAECONNABORTED:      return STATUS_CONNECTION_ABORTED;
         case WSAHOST_NOT_FOUND:    return STATUS_NOT_FOUND;
         default:
-            FIXME("Unmapped error %u.\n", err);
+            FIXME("Unmapped error %lu.\n", err);
             return STATUS_UNSUCCESSFUL;
     }
 }
@@ -218,7 +218,7 @@ static struct wsk_pending_io *find_pending_io(struct wsk_socket_internal *socket
 
 static void dispatch_pending_io(struct wsk_pending_io *io, NTSTATUS status, ULONG_PTR information)
 {
-    TRACE("io %p, status %#x, information %#lx.\n", io, status, information);
+    TRACE("io %p, status %#lx, information %#Ix.\n", io, status, information);
 
     io->irp->IoStatus.Information = information;
     dispatch_irp(io->irp, status);
@@ -229,8 +229,8 @@ static NTSTATUS WINAPI wsk_control_socket(WSK_SOCKET *socket, WSK_CONTROL_SOCKET
         ULONG control_code, ULONG level, SIZE_T input_size, void *input_buffer, SIZE_T output_size,
         void *output_buffer, SIZE_T *output_size_returned, IRP *irp)
 {
-    FIXME("socket %p, request_type %u, control_code %#x, level %u, input_size %lu, input_buffer %p, "
-            "output_size %lu, output_buffer %p, output_size_returned %p, irp %p stub.\n",
+    FIXME("socket %p, request_type %u, control_code %#lx, level %lu, input_size %Iu, input_buffer %p, "
+            "output_size %Iu, output_buffer %p, output_size_returned %p, irp %p stub.\n",
             socket, request_type, control_code, level, input_size, input_buffer, output_size,
             output_buffer, output_size_returned, irp);
 
@@ -286,7 +286,7 @@ static NTSTATUS WINAPI wsk_bind(WSK_SOCKET *socket, SOCKADDR *local_address, ULO
     struct wsk_socket_internal *s = wsk_socket_internal_from_wsk_socket(socket);
     NTSTATUS status;
 
-    TRACE("socket %p, local_address %p, flags %#x, irp %p.\n",
+    TRACE("socket %p, local_address %p, flags %#lx, irp %p.\n",
             socket, local_address, flags, irp);
 
     if (!irp)
@@ -302,7 +302,7 @@ static NTSTATUS WINAPI wsk_bind(WSK_SOCKET *socket, SOCKADDR *local_address, ULO
     if (status == STATUS_SUCCESS)
         s->bound = TRUE;
 
-    TRACE("status %#x.\n", status);
+    TRACE("status %#lx.\n", status);
     irp->IoStatus.Information = 0;
     dispatch_irp(irp, status);
     return STATUS_PENDING;
@@ -357,7 +357,7 @@ static void WINAPI accept_callback(TP_CALLBACK_INSTANCE *instance, void *socket_
     struct wsk_pending_io *io;
     DWORD size;
 
-    TRACE("instance %p, socket %p, wait %p, wait_result %#x.\n", instance, socket, wait, wait_result);
+    TRACE("instance %p, socket %p, wait %p, wait_result %#lx.\n", instance, socket, wait, wait_result);
 
     lock_socket(socket);
     context = &socket->callback_context.listen_socket_callback_context;
@@ -412,7 +412,7 @@ static NTSTATUS WINAPI wsk_accept(WSK_SOCKET *listen_socket, ULONG flags, void *
     DWORD size;
     int error;
 
-    TRACE("listen_socket %p, flags %#x, accept_socket_context %p, accept_socket_dispatch %p, "
+    TRACE("listen_socket %p, flags %#lx, accept_socket_context %p, accept_socket_dispatch %p, "
             "local_address %p, remote_address %p, irp %p.\n",
             listen_socket, flags, accept_socket_context, accept_socket_dispatch, local_address,
             remote_address, irp);
@@ -505,7 +505,7 @@ static void WINAPI connect_callback(TP_CALLBACK_INSTANCE *instance, void *socket
     struct wsk_pending_io *io;
     DWORD size;
 
-    TRACE("instance %p, socket %p, wait %p, wait_result %#x.\n", instance, socket, wait, wait_result);
+    TRACE("instance %p, socket %p, wait %p, wait_result %#lx.\n", instance, socket, wait, wait_result);
 
     lock_socket(socket);
     io = find_pending_io(socket, wait);
@@ -537,7 +537,7 @@ static NTSTATUS WINAPI wsk_connect(WSK_SOCKET *socket, SOCKADDR *remote_address,
     struct wsk_pending_io *io;
     int error;
 
-    TRACE("socket %p, remote_address %p, flags %#x, irp %p.\n",
+    TRACE("socket %p, remote_address %p, flags %#lx, irp %p.\n",
             socket, remote_address, flags, irp);
 
     if (!irp)
@@ -592,7 +592,7 @@ static void WINAPI send_receive_callback(TP_CALLBACK_INSTANCE *instance, void *s
     struct wsk_pending_io *io;
     DWORD length, flags;
 
-    TRACE("instance %p, socket %p, wait %p, wait_result %#x.\n", instance, socket, wait, wait_result);
+    TRACE("instance %p, socket %p, wait %p, wait_result %#lx.\n", instance, socket, wait, wait_result);
 
     lock_socket(socket);
     io = find_pending_io(socket, wait);
@@ -614,7 +614,7 @@ static NTSTATUS do_send_receive(WSK_SOCKET *socket, WSK_BUF *wsk_buf, ULONG flag
     DWORD length;
     int error;
 
-    TRACE("socket %p, buffer %p, flags %#x, irp %p, is_send %#x.\n",
+    TRACE("socket %p, buffer %p, flags %#lx, irp %p, is_send %#x.\n",
             socket, wsk_buf, flags, irp, is_send);
 
     if (!irp)
@@ -632,7 +632,7 @@ static NTSTATUS do_send_receive(WSK_SOCKET *socket, WSK_BUF *wsk_buf, ULONG flag
     }
 
     if (flags)
-        FIXME("flags %#x not implemented.\n", flags);
+        FIXME("flags %#lx not implemented.\n", flags);
 
     lock_socket(s);
     if (!(io = allocate_pending_io(s, send_receive_callback, irp)))
@@ -669,21 +669,21 @@ static NTSTATUS do_send_receive(WSK_SOCKET *socket, WSK_BUF *wsk_buf, ULONG flag
 
 static NTSTATUS WINAPI wsk_send(WSK_SOCKET *socket, WSK_BUF *buffer, ULONG flags, IRP *irp)
 {
-    TRACE("socket %p, buffer %p, flags %#x, irp %p.\n", socket, buffer, flags, irp);
+    TRACE("socket %p, buffer %p, flags %#lx, irp %p.\n", socket, buffer, flags, irp);
 
     return do_send_receive(socket, buffer, flags, irp, TRUE);
 }
 
 static NTSTATUS WINAPI wsk_receive(WSK_SOCKET *socket, WSK_BUF *buffer, ULONG flags, IRP *irp)
 {
-    TRACE("socket %p, buffer %p, flags %#x, irp %p.\n", socket, buffer, flags, irp);
+    TRACE("socket %p, buffer %p, flags %#lx, irp %p.\n", socket, buffer, flags, irp);
 
     return do_send_receive(socket, buffer, flags, irp, FALSE);
 }
 
 static NTSTATUS WINAPI wsk_disconnect(WSK_SOCKET *socket, WSK_BUF *buffer, ULONG flags, IRP *irp)
 {
-    FIXME("socket %p, buffer %p, flags %#x, irp %p stub.\n", socket, buffer, flags, irp);
+    FIXME("socket %p, buffer %p, flags %#lx, irp %p stub.\n", socket, buffer, flags, irp);
 
     return STATUS_NOT_IMPLEMENTED;
 }
@@ -698,7 +698,7 @@ static NTSTATUS WINAPI wsk_release(WSK_SOCKET *socket, WSK_DATA_INDICATION *data
 static NTSTATUS WINAPI wsk_connext_ex(WSK_SOCKET *socket, SOCKADDR *remote_address, WSK_BUF *buffer,
         ULONG flags, IRP *irp)
 {
-    FIXME("socket %p, remote_address %p, buffer %p, flags %#x, irp %p stub.\n",
+    FIXME("socket %p, remote_address %p, buffer %p, flags %#lx, irp %p stub.\n",
             socket, remote_address, buffer, flags, irp);
 
     return STATUS_NOT_IMPLEMENTED;
@@ -745,7 +745,7 @@ static NTSTATUS WINAPI wsk_socket(WSK_CLIENT *client, ADDRESS_FAMILY address_fam
     NTSTATUS status;
     SOCKET s;
 
-    TRACE("client %p, address_family %#x, socket_type %#x, protocol %#x, flags %#x, socket_context %p, dispatch %p, "
+    TRACE("client %p, address_family %#x, socket_type %#x, protocol %#lx, flags %#lx, socket_context %p, dispatch %p, "
             "owning_process %p, owning_thread %p, security_descriptor %p, irp %p.\n",
             client, address_family, socket_type, protocol, flags, socket_context, dispatch, owning_process,
             owning_thread, security_descriptor, irp);
@@ -790,7 +790,7 @@ static NTSTATUS WINAPI wsk_socket(WSK_CLIENT *client, ADDRESS_FAMILY address_fam
             break;
 
         default:
-            FIXME("Flags %#x not implemented.\n", flags);
+            FIXME("Flags %#lx not implemented.\n", flags);
             closesocket(s);
             heap_free(socket);
             status = STATUS_NOT_IMPLEMENTED;
@@ -812,8 +812,8 @@ static NTSTATUS WINAPI wsk_socket_connect(WSK_CLIENT *client, USHORT socket_type
         const WSK_CLIENT_CONNECTION_DISPATCH *dispatch, PEPROCESS owning_process, PETHREAD owning_thread,
         SECURITY_DESCRIPTOR *security_descriptor, IRP *irp)
 {
-    FIXME("client %p, socket_type %#x, protocol %#x, local_address %p, remote_address %p, "
-            "flags %#x, socket_context %p, dispatch %p, owning_process %p, owning_thread %p, "
+    FIXME("client %p, socket_type %#x, protocol %#lx, local_address %p, remote_address %p, "
+            "flags %#lx, socket_context %p, dispatch %p, owning_process %p, owning_thread %p, "
             "security_descriptor %p, irp %p stub.\n",
             client, socket_type, protocol, local_address, remote_address, flags, socket_context,
             dispatch, owning_process, owning_thread, security_descriptor, irp);
@@ -826,7 +826,7 @@ static NTSTATUS WINAPI wsk_control_client(WSK_CLIENT *client, ULONG control_code
         IRP *irp
 )
 {
-    FIXME("client %p, control_code %#x, input_size %lu, input_buffer %p, output_size %lu, "
+    FIXME("client %p, control_code %#lx, input_size %Iu, input_buffer %p, output_size %Iu, "
             "output_buffer %p, output_size_returned %p, irp %p, stub.\n",
             client, control_code, input_size, input_buffer, output_size, output_buffer,
             output_size_returned, irp);
@@ -868,7 +868,7 @@ static NTSTATUS WINAPI wsk_get_address_info(WSK_CLIENT *client, UNICODE_STRING *
     struct wsk_get_address_info_context *context;
     NTSTATUS status;
 
-    TRACE("client %p, node_name %p, service_name %p, name_space %#x, provider %p, hints %p, "
+    TRACE("client %p, node_name %p, service_name %p, name_space %#lx, provider %p, hints %p, "
             "result %p, owning_process %p, owning_thread %p, irp %p.\n",
             client, node_name, service_name, name_space, provider, hints, result,
             owning_process, owning_thread, irp);
@@ -915,8 +915,8 @@ static NTSTATUS WINAPI wsk_get_name_info(WSK_CLIENT *client, SOCKADDR *sock_addr
         UNICODE_STRING *node_name, UNICODE_STRING *service_name, ULONG flags, PEPROCESS owning_process,
         PETHREAD owning_thread, IRP *irp)
 {
-    FIXME("client %p, sock_addr %p, sock_addr_length %u, node_name %p, service_name %p, "
-            "flags %#x, owning_process %p, owning_thread %p, irp %p stub.\n",
+    FIXME("client %p, sock_addr %p, sock_addr_length %lu, node_name %p, service_name %p, "
+            "flags %#lx, owning_process %p, owning_thread %p, irp %p stub.\n",
             client, sock_addr, sock_addr_length, node_name, service_name, flags,
             owning_process, owning_thread, irp);
 
@@ -939,7 +939,7 @@ NTSTATUS WINAPI WskCaptureProviderNPI(WSK_REGISTRATION *wsk_registration, ULONG 
 {
     WSK_CLIENT *client = wsk_registration->ReservedRegistrationContext;
 
-    TRACE("wsk_registration %p, wait_timeout %u, wsk_provider_npi %p.\n",
+    TRACE("wsk_registration %p, wait_timeout %lu, wsk_provider_npi %p.\n",
             wsk_registration, wait_timeout, wsk_provider_npi);
 
     wsk_provider_npi->Client = client;
