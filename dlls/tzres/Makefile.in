@@ -1,2 +1,5 @@
 MODULE = tzres.dll
+
+EXTRADLLFLAGS = -Wb,--data-only
+
 RC_SRCS = tzres.rc
