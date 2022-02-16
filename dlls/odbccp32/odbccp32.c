@@ -108,7 +108,7 @@ static inline WCHAR *heap_strdupAtoW(const char *str)
 BOOL WINAPI ODBCCPlApplet( LONG i, LONG j, LONG * p1, LONG * p2)
 {
     clear_errors();
-    FIXME( "( %d %d %p %p) : stub!\n", i, j, p1, p2);
+    FIXME( "( %ld %ld %p %p) : stub!\n", i, j, p1, p2);
     return FALSE;
 }
 
@@ -977,7 +977,7 @@ static void write_registry_values(const WCHAR *regkey, const WCHAR *driver, cons
             /* Store Usage */
             size = sizeof(usagecount);
             RegGetValueA(hkeydriver, NULL, "UsageCount", RRF_RT_DWORD, &type, &usagecount, &size);
-            TRACE("Usage count %d\n", usagecount);
+            TRACE("Usage count %ld\n", usagecount);
 
             for (; *p; p += lstrlenW(p) + 1)
             {
@@ -1399,14 +1399,14 @@ BOOL WINAPI SQLManageDataSources(HWND hwnd)
 
 SQLRETURN WINAPI SQLPostInstallerErrorW(DWORD fErrorCode, LPCWSTR szErrorMsg)
 {
-    FIXME("%u %s\n", fErrorCode, debugstr_w(szErrorMsg));
+    FIXME("%lu %s\n", fErrorCode, debugstr_w(szErrorMsg));
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
 
 SQLRETURN WINAPI SQLPostInstallerError(DWORD fErrorCode, LPCSTR szErrorMsg)
 {
-    FIXME("%u %s\n", fErrorCode, debugstr_a(szErrorMsg));
+    FIXME("%lu %s\n", fErrorCode, debugstr_a(szErrorMsg));
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -1460,7 +1460,7 @@ BOOL WINAPI SQLRemoveDriverW(LPCWSTR drivername, BOOL remove_dsn, LPDWORD usage_
 
             size = sizeof(usagecount);
             RegGetValueA(hkeydriver, NULL, "UsageCount", RRF_RT_DWORD, &type, &usagecount, &size);
-            TRACE("Usage count %d\n", usagecount);
+            TRACE("Usage count %ld\n", usagecount);
             count = usagecount - 1;
             if (count)
             {
@@ -1584,7 +1584,7 @@ BOOL WINAPI SQLRemoveTranslatorW(const WCHAR *translator, DWORD *usage_count)
 
             size = sizeof(usagecount);
             RegGetValueA(hkeydriver, NULL, "UsageCount", RRF_RT_DWORD, &type, &usagecount, &size);
-            TRACE("Usage count %d\n", usagecount);
+            TRACE("Usage count %ld\n", usagecount);
             count = usagecount - 1;
             if (count)
             {
