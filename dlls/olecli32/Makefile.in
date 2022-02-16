@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = olecli32.dll
 IMPORTLIB = olecli32
 IMPORTS   = ole32 gdi32
