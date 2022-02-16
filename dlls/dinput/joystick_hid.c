@@ -1577,11 +1577,9 @@ static HRESULT hid_joystick_device_open( int index, DIDEVICEINSTANCEW *filter, W
         if (device_instance_is_disabled( &instance, &override ))
             goto next;
 
-        if (override)
+        if (override && SetupDiGetDeviceInstanceIdW( set, &devinfo, device_id, MAX_PATH, NULL ) &&
+            (tmp = wcsstr( device_id, L"&IG_" )))
         {
-            if (!SetupDiGetDeviceInstanceIdW( set, &devinfo, device_id, MAX_PATH, NULL ) ||
-                !(tmp = wcsstr( device_id, L"&IG_" )))
-                goto next;
             memcpy( tmp, L"&XI_", sizeof(L"&XI_") - sizeof(WCHAR) );
             if (!SetupDiOpenDeviceInfoW( xi_set, device_id, NULL, 0, &devinfo ))
                 goto next;
