@@ -77,8 +77,6 @@ typedef struct _AudioSession {
     float *channel_vols;
     BOOL mute;
 
-    CRITICAL_SECTION lock;
-
     struct list entry;
 } AudioSession;
 
@@ -747,9 +745,6 @@ static AudioSession *create_session(const GUID *guid, IMMDevice *device,
     list_init(&ret->clients);
 
     list_add_head(&g_sessions, &ret->entry);
-
-    InitializeCriticalSection(&ret->lock);
-    ret->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": AudioSession.lock");
 
     session_init_vols(ret, num_channels);
 
@@ -3283,11 +3278,11 @@ static HRESULT WINAPI SimpleAudioVolume_SetMasterVolume(
 
     TRACE("ALSA does not support volume control\n");
 
-    EnterCriticalSection(&session->lock);
+    EnterCriticalSection(&g_sessions_lock);
 
     session->master_vol = level;
 
-    LeaveCriticalSection(&session->lock);
+    LeaveCriticalSection(&g_sessions_lock);
 
     return S_OK;
 }
@@ -3573,11 +3568,11 @@ static HRESULT WINAPI ChannelAudioVolume_SetChannelVolume(
 
     TRACE("ALSA does not support volume control\n");
 
-    EnterCriticalSection(&session->lock);
+    EnterCriticalSection(&g_sessions_lock);
 
     session->channel_vols[index] = level;
 
-    LeaveCriticalSection(&session->lock);
+    LeaveCriticalSection(&g_sessions_lock);
 
     return S_OK;
 }
@@ -3623,12 +3618,12 @@ static HRESULT WINAPI ChannelAudioVolume_SetAllVolumes(
 
     TRACE("ALSA does not support volume control\n");
 
-    EnterCriticalSection(&session->lock);
+    EnterCriticalSection(&g_sessions_lock);
 
     for(i = 0; i < count; ++i)
         session->channel_vols[i] = levels[i];
 
-    LeaveCriticalSection(&session->lock);
+    LeaveCriticalSection(&g_sessions_lock);
 
     return S_OK;
 }
