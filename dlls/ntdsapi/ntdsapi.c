@@ -218,7 +218,7 @@ DWORD WINAPI DsClientMakeSpnForTargetServerW(LPCWSTR class, LPCWSTR name, DWORD 
 DWORD WINAPI DsCrackNamesA(HANDLE handle, DS_NAME_FLAGS flags, DS_NAME_FORMAT offered, DS_NAME_FORMAT desired,
                    DWORD num, const CHAR **names, PDS_NAME_RESULTA *result)
 {
-    FIXME("(%p %u %u %u %u %p %p stub\n", handle, flags, offered, desired, num, names, result);
+    FIXME("(%p %u %u %u %lu %p %p stub\n", handle, flags, offered, desired, num, names, result);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
@@ -228,6 +228,6 @@ DWORD WINAPI DsCrackNamesA(HANDLE handle, DS_NAME_FLAGS flags, DS_NAME_FORMAT of
 DWORD WINAPI DsCrackNamesW(HANDLE handle, DS_NAME_FLAGS flags, DS_NAME_FORMAT offered, DS_NAME_FORMAT desired,
                    DWORD num, const WCHAR **names, PDS_NAME_RESULTW *result)
 {
-    FIXME("(%p %u %u %u %u %p %p stub\n", handle, flags, offered, desired, num, names, result);
+    FIXME("(%p %u %u %u %lu %p %p stub\n", handle, flags, offered, desired, num, names, result);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
