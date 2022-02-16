@@ -1593,9 +1593,15 @@ DWORD WINAPI GetIfEntry( MIB_IFROW *row )
     return err;
 }
 
+static int DWORD_cmp( DWORD a, DWORD b )
+{
+    return a < b ? -1 : a > b ? 1 : 0; /* a subtraction would overflow */
+}
+
 static int ifrow_cmp( const void *a, const void *b )
 {
-    return ((const MIB_IFROW*)a)->dwIndex - ((const MIB_IFROW*)b)->dwIndex;
+    const MIB_IFROW *rowA = a, *rowB = b;
+    return DWORD_cmp(rowA->dwIndex, rowB->dwIndex);
 }
 
 /******************************************************************
@@ -1921,7 +1927,8 @@ done:
 
 static int ipaddrrow_cmp( const void *a, const void *b )
 {
-    return ((const MIB_IPADDRROW*)a)->dwAddr - ((const MIB_IPADDRROW*)b)->dwAddr;
+    const MIB_IPADDRROW *rowA = a, *rowB = b;
+    return DWORD_cmp(rowA->dwAddr, rowB->dwAddr);
 }
 
 /******************************************************************
@@ -2026,14 +2033,11 @@ DWORD WINAPI AllocateAndGetIpAddrTableFromStack( MIB_IPADDRTABLE **table, BOOL s
 
 static int ipforward_row_cmp( const void *a, const void *b )
 {
-    const MIB_IPFORWARDROW *rowA = a;
-    const MIB_IPFORWARDROW *rowB = b;
-    int ret;
-
-    if ((ret = rowA->dwForwardDest - rowB->dwForwardDest) != 0) return ret;
-    if ((ret = rowA->dwForwardProto - rowB->dwForwardProto) != 0) return ret;
-    if ((ret = rowA->dwForwardPolicy - rowB->dwForwardPolicy) != 0) return ret;
-    return rowA->dwForwardNextHop - rowB->dwForwardNextHop;
+    const MIB_IPFORWARDROW *rowA = a, *rowB = b;
+    return DWORD_cmp(rowA->dwForwardDest, rowB->dwForwardDest) ||
+           DWORD_cmp(rowA->dwForwardProto, rowB->dwForwardProto) ||
+           DWORD_cmp(rowA->dwForwardPolicy, rowB->dwForwardPolicy) ||
+           DWORD_cmp(rowA->dwForwardNextHop, rowB->dwForwardNextHop);
 }
 
 /******************************************************************
@@ -2277,10 +2281,8 @@ err:
 
 static int ipnetrow_cmp( const void *a, const void *b )
 {
-    const MIB_IPNETROW *row_a = a;
-    const MIB_IPNETROW *row_b = b;
-
-    return RtlUlongByteSwap( row_a->dwAddr ) - RtlUlongByteSwap( row_b->dwAddr );
+    const MIB_IPNETROW *rowA = a, *rowB = b;
+    return DWORD_cmp(RtlUlongByteSwap( rowA->dwAddr ), RtlUlongByteSwap( rowB->dwAddr ));
 }
 
 /******************************************************************
@@ -3043,13 +3045,12 @@ static void tcp_row_fill( void *table, DWORD num, ULONG family, ULONG table_clas
 
 static int tcp_row_cmp( const void *a, const void *b )
 {
-    const MIB_TCPROW *rowA = a;
-    const MIB_TCPROW *rowB = b;
+    const MIB_TCPROW *rowA = a, *rowB = b;
     int ret;
 
-    if ((ret = RtlUlongByteSwap( rowA->dwLocalAddr ) - RtlUlongByteSwap( rowB->dwLocalAddr )) != 0) return ret;
+    if ((ret = DWORD_cmp(RtlUshortByteSwap( rowA->dwLocalAddr ), RtlUshortByteSwap( rowB->dwLocalAddr ))) != 0) return ret;
     if ((ret = RtlUshortByteSwap( rowA->dwLocalPort ) - RtlUshortByteSwap( rowB->dwLocalPort )) != 0) return ret;
-    if ((ret = RtlUlongByteSwap( rowA->dwRemoteAddr ) - RtlUlongByteSwap( rowB->dwRemoteAddr )) != 0) return ret;
+    if ((ret = DWORD_cmp(RtlUshortByteSwap( rowA->dwRemoteAddr ), RtlUshortByteSwap( rowB->dwRemoteAddr ))) != 0) return ret;
     return RtlUshortByteSwap( rowA->dwRemotePort ) - RtlUshortByteSwap( rowB->dwRemotePort );
 }
 
@@ -3432,12 +3433,10 @@ static void udp_row_fill( void *table, DWORD num, ULONG family, ULONG table_clas
 
 static int udp_row_cmp( const void *a, const void *b )
 {
-    const MIB_UDPROW *rowA = a;
-    const MIB_UDPROW *rowB = b;
-    int ret;
+    const MIB_UDPROW *rowA = a, *rowB = b;
 
-    if ((ret = RtlUlongByteSwap( rowA->dwLocalAddr ) - RtlUlongByteSwap( rowB->dwLocalAddr )) != 0) return ret;
-    return RtlUshortByteSwap( rowA->dwLocalPort ) - RtlUshortByteSwap( rowB->dwLocalPort );
+    return DWORD_cmp(RtlUlongByteSwap( rowA->dwLocalAddr), RtlUlongByteSwap( rowB->dwLocalAddr )) ||
+           RtlUshortByteSwap( rowA->dwLocalPort ) - RtlUshortByteSwap( rowB->dwLocalPort );
 }
 
 static int udp6_row_cmp( const void *a, const void *b )
