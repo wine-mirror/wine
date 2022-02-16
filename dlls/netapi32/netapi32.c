@@ -92,7 +92,7 @@ static BOOL NETAPI_IsLocalComputer( LMCSTR name )
 
 BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    TRACE("%p,%x,%p\n", hinstDLL, fdwReason, lpvReserved);
+    TRACE("%p,%lx,%p\n", hinstDLL, fdwReason, lpvReserved);
 
     switch (fdwReason) {
         case DLL_PROCESS_ATTACH:
@@ -126,7 +126,7 @@ NET_API_STATUS  WINAPI NetServerEnum(
   LPDWORD resume_handle
 )
 {
-    FIXME("Stub (%s %d %p %d %p %p %d %s %p)\n", debugstr_w(servername),
+    FIXME("Stub (%s %ld %p %ld %p %p %ld %s %p)\n", debugstr_w(servername),
      level, bufptr, prefmaxlen, entriesread, totalentries, servertype,
      debugstr_w(domain), resume_handle);
 
@@ -147,7 +147,7 @@ NET_API_STATUS WINAPI NetServerEnumEx(
     LMCSTR domain,
     LMCSTR FirstNameToReturn)
 {
-    FIXME("Stub (%s %d %p %d %p %p %d %s %s)\n",
+    FIXME("Stub (%s %ld %p %ld %p %p %ld %s %s)\n",
            debugstr_w(ServerName), Level, Bufptr, PrefMaxlen, EntriesRead, totalentries,
            servertype, debugstr_w(domain), debugstr_w(FirstNameToReturn));
 
@@ -166,7 +166,7 @@ NET_API_STATUS WINAPI NetServerDiskEnum(
     LPDWORD totalentries,
     LPDWORD Resume_Handle)
 {
-    FIXME("Stub (%s %d %p %d %p %p %p)\n", debugstr_w(ServerName),
+    FIXME("Stub (%s %ld %p %ld %p %p %p)\n", debugstr_w(ServerName),
      Level, Bufptr, PrefMaxlen, EntriesRead, totalentries, Resume_Handle);
 
     return ERROR_NO_BROWSER_SERVERS_FOUND;
@@ -180,7 +180,7 @@ NET_API_STATUS WINAPI NetServerGetInfo(LMSTR servername, DWORD level, LPBYTE* bu
     NET_API_STATUS ret;
     BOOL local = NETAPI_IsLocalComputer( servername );
 
-    TRACE("%s %d %p\n", debugstr_w( servername ), level, bufptr );
+    TRACE("%s %ld %p\n", debugstr_w( servername ), level, bufptr );
 
     if (!local)
     {
@@ -242,7 +242,7 @@ NET_API_STATUS WINAPI NetServerGetInfo(LMSTR servername, DWORD level, LPBYTE* bu
         }
 
         default:
-            FIXME("level %d unimplemented\n", level);
+            FIXME("level %ld unimplemented\n", level);
             ret = ERROR_INVALID_LEVEL;
     }
     return ret;
@@ -264,7 +264,7 @@ NET_API_STATUS WINAPI NetStatisticsGet(LMSTR server, LMSTR service,
     } *stat;
     void *dataptr;
 
-    TRACE("(server %s, service %s, level %d, options %d, buffer %p): stub\n",
+    TRACE("(server %s, service %s, level %ld, options %ld, buffer %p): stub\n",
           debugstr_w(server), debugstr_w(service), level, options, bufptr);
 
     res = NetApiBufferAllocate(sizeof(*stat), &dataptr);
@@ -300,7 +300,7 @@ NET_API_STATUS WINAPI NetStatisticsGet(LMSTR server, LMSTR service,
 NET_API_STATUS WINAPI NetUseEnum(LMSTR server, DWORD level, LPBYTE* bufptr, DWORD prefmaxsize,
                           LPDWORD entriesread, LPDWORD totalentries, LPDWORD resumehandle)
 {
-    FIXME("stub (%p, %d, %p, %d, %p, %p, %p)\n", server, level, bufptr, prefmaxsize,
+    FIXME("stub (%p, %ld, %p, %ld, %p, %p, %p)\n", server, level, bufptr, prefmaxsize,
            entriesread, totalentries, resumehandle);
     return ERROR_NOT_SUPPORTED;
 }
@@ -313,7 +313,7 @@ NET_API_STATUS WINAPI NetScheduleJobAdd(LPCWSTR server, LPBYTE bufptr, LPDWORD j
 
 NET_API_STATUS WINAPI NetScheduleJobDel(LPCWSTR server, DWORD minjobid, DWORD maxjobid)
 {
-    TRACE("(%s, %u, %u)\n", debugstr_w(server), minjobid, maxjobid);
+    TRACE("(%s, %lu, %lu)\n", debugstr_w(server), minjobid, maxjobid);
     return NetrJobDel(server, minjobid, maxjobid);
 }
 
@@ -323,7 +323,7 @@ NET_API_STATUS WINAPI NetScheduleJobEnum(LPCWSTR server, LPBYTE* bufptr, DWORD p
     AT_ENUM_CONTAINER container;
     NET_API_STATUS ret;
 
-    TRACE("(%s, %p, %u, %p, %p, %p)\n", debugstr_w(server), bufptr, prefmaxsize, entriesread, totalentries, resumehandle);
+    TRACE("(%s, %p, %lu, %p, %p, %p)\n", debugstr_w(server), bufptr, prefmaxsize, entriesread, totalentries, resumehandle);
 
     container.EntriesRead = 0;
     container.Buffer = NULL;
@@ -338,13 +338,13 @@ NET_API_STATUS WINAPI NetScheduleJobEnum(LPCWSTR server, LPBYTE* bufptr, DWORD p
 
 NET_API_STATUS WINAPI NetScheduleJobGetInfo(LPCWSTR server, DWORD jobid, LPBYTE *bufptr)
 {
-    TRACE("(%s, %u, %p)\n", debugstr_w(server), jobid, bufptr);
+    TRACE("(%s, %lu, %p)\n", debugstr_w(server), jobid, bufptr);
     return NetrJobGetInfo(server, jobid, (LPAT_INFO *)bufptr);
 }
 
 NET_API_STATUS WINAPI NetUseGetInfo(LMSTR server, LMSTR name, DWORD level, LPBYTE *bufptr)
 {
-    FIXME("stub (%p, %p, %d, %p)\n", server, name, level, bufptr);
+    FIXME("stub (%p, %p, %ld, %p)\n", server, name, level, bufptr);
     return ERROR_NOT_SUPPORTED;
 
 }
@@ -354,7 +354,7 @@ NET_API_STATUS WINAPI NetUseGetInfo(LMSTR server, LMSTR name, DWORD level, LPBYT
  */
 NET_API_STATUS WINAPI NetApiBufferAllocate(DWORD ByteCount, LPVOID* Buffer)
 {
-    TRACE("(%d, %p)\n", ByteCount, Buffer);
+    TRACE("(%ld, %p)\n", ByteCount, Buffer);
 
     if (Buffer == NULL) return ERROR_INVALID_PARAMETER;
     *Buffer = HeapAlloc(GetProcessHeap(), 0, ByteCount);
@@ -380,7 +380,7 @@ NET_API_STATUS WINAPI NetApiBufferFree(LPVOID Buffer)
 NET_API_STATUS WINAPI NetApiBufferReallocate(LPVOID OldBuffer, DWORD NewByteCount,
                                              LPVOID* NewBuffer)
 {
-    TRACE("(%p, %d, %p)\n", OldBuffer, NewByteCount, NewBuffer);
+    TRACE("(%p, %ld, %p)\n", OldBuffer, NewByteCount, NewBuffer);
     if (NewByteCount)
     {
         if (OldBuffer)
@@ -408,7 +408,7 @@ NET_API_STATUS WINAPI NetApiBufferSize(LPVOID Buffer, LPDWORD ByteCount)
     if (Buffer == NULL)
         return ERROR_INVALID_PARAMETER;
     dw = HeapSize(GetProcessHeap(), 0, Buffer);
-    TRACE("size: %d\n", dw);
+    TRACE("size: %ld\n", dw);
     if (dw != 0xFFFFFFFF)
         *ByteCount = dw;
     else
@@ -447,7 +447,7 @@ NET_API_STATUS WINAPI NetSessionEnum(LMSTR servername, LMSTR UncClientName,
     LMSTR username, DWORD level, LPBYTE* bufptr, DWORD prefmaxlen, LPDWORD entriesread,
     LPDWORD totalentries, LPDWORD resume_handle)
 {
-    FIXME("Stub (%s %s %s %d %p %d %p %p %p)\n", debugstr_w(servername),
+    FIXME("Stub (%s %s %s %ld %p %ld %p %p %p)\n", debugstr_w(servername),
         debugstr_w(UncClientName), debugstr_w(username),
         level, bufptr, prefmaxlen, entriesread, totalentries, resume_handle);
 
@@ -474,7 +474,7 @@ NET_API_STATUS WINAPI NetSessionEnum(LMSTR servername, LMSTR UncClientName,
 NET_API_STATUS WINAPI NetShareEnum( LMSTR servername, DWORD level, LPBYTE* bufptr,
     DWORD prefmaxlen, LPDWORD entriesread, LPDWORD totalentries, LPDWORD resume_handle)
 {
-    FIXME("Stub (%s %d %p %d %p %p %p)\n", debugstr_w(servername), level, bufptr,
+    FIXME("Stub (%s %ld %p %ld %p %p %p)\n", debugstr_w(servername), level, bufptr,
         prefmaxlen, entriesread, totalentries, resume_handle);
 
     return ERROR_NOT_SUPPORTED;
@@ -487,7 +487,7 @@ NET_API_STATUS WINAPI NetShareDel(LMSTR servername, LMSTR netname, DWORD reserve
 {
     BOOL local = NETAPI_IsLocalComputer( servername );
 
-    TRACE("%s %s %d\n", debugstr_w(servername), debugstr_w(netname), reserved);
+    TRACE("%s %s %ld\n", debugstr_w(servername), debugstr_w(netname), reserved);
 
     if (!local)
     {
@@ -499,7 +499,7 @@ NET_API_STATUS WINAPI NetShareDel(LMSTR servername, LMSTR netname, DWORD reserve
         FIXME( "remote computers not supported\n" );
     }
 
-    FIXME("%s %s %d\n", debugstr_w(servername), debugstr_w(netname), reserved);
+    FIXME("%s %s %ld\n", debugstr_w(servername), debugstr_w(netname), reserved);
     return NERR_Success;
 }
 
@@ -509,7 +509,7 @@ NET_API_STATUS WINAPI NetShareDel(LMSTR servername, LMSTR netname, DWORD reserve
 NET_API_STATUS WINAPI NetShareGetInfo(LMSTR servername, LMSTR netname,
     DWORD level, LPBYTE *bufptr)
 {
-    FIXME("Stub (%s %s %d %p)\n", debugstr_w(servername),
+    FIXME("Stub (%s %s %ld %p)\n", debugstr_w(servername),
         debugstr_w(netname),level, bufptr);
     return NERR_NetNameNotFound;
 }
@@ -522,7 +522,7 @@ NET_API_STATUS WINAPI NetShareAdd(LMSTR servername,
 {
     BOOL local = NETAPI_IsLocalComputer( servername );
 
-    TRACE("%s %d %p %p\n", debugstr_w(servername), level, buf, parm_err);
+    TRACE("%s %ld %p %p\n", debugstr_w(servername), level, buf, parm_err);
 
     if (!local)
     {
@@ -534,7 +534,7 @@ NET_API_STATUS WINAPI NetShareAdd(LMSTR servername,
         FIXME( "remote computers not supported\n" );
     }
 
-    FIXME("%s %d %p %p\n", debugstr_w(servername), level, buf, parm_err);
+    FIXME("%s %ld %p %p\n", debugstr_w(servername), level, buf, parm_err);
     return ERROR_NOT_SUPPORTED;
 }
 
@@ -546,7 +546,7 @@ NET_API_STATUS WINAPI NetFileEnum(
     DWORD Level, LPBYTE* BufPtr, DWORD PrefMaxLen,
     LPDWORD EntriesRead, LPDWORD TotalEntries, PDWORD_PTR ResumeHandle)
 {
-    FIXME("(%s, %s, %s, %u): stub\n", debugstr_w(ServerName), debugstr_w(BasePath),
+    FIXME("(%s, %s, %s, %lu): stub\n", debugstr_w(ServerName), debugstr_w(BasePath),
         debugstr_w(UserName), Level);
     return ERROR_NOT_SUPPORTED;
 }
@@ -732,7 +732,7 @@ NetWkstaTransportEnum(LMSTR ServerName, DWORD level, PBYTE* pbuf,
 {
     NET_API_STATUS ret;
 
-    TRACE(":%s, 0x%08x, %p, 0x%08x, %p, %p, %p\n", debugstr_w(ServerName),
+    TRACE(":%s, 0x%08lx, %p, 0x%08lx, %p, %p, %p\n", debugstr_w(ServerName),
      level, pbuf, prefmaxlen, read_entries, total_entries,hresume);
     if (!NETAPI_IsLocalComputer(ServerName))
     {
@@ -773,7 +773,7 @@ NetWkstaTransportEnum(LMSTR ServerName, DWORD level, PBYTE* pbuf,
                 break;
             }
             default:
-                TRACE("Invalid level %d is specified\n", level);
+                TRACE("Invalid level %ld is specified\n", level);
                 ret = ERROR_INVALID_LEVEL;
         }
     }
@@ -788,7 +788,7 @@ NET_API_STATUS WINAPI NetWkstaUserGetInfo(LMSTR reserved, DWORD level,
 {
     NET_API_STATUS nastatus;
 
-    TRACE("(%s, %d, %p)\n", debugstr_w(reserved), level, bufptr);
+    TRACE("(%s, %ld, %p)\n", debugstr_w(reserved), level, bufptr);
     switch (level)
     {
     case 0:
@@ -856,7 +856,7 @@ NET_API_STATUS WINAPI NetWkstaUserGetInfo(LMSTR reserved, DWORD level,
                                  &PolicyHandle);
         if (NtStatus != STATUS_SUCCESS)
         {
-            TRACE("LsaOpenPolicyFailed with NT status %x\n",
+            TRACE("LsaOpenPolicyFailed with NT status %lx\n",
                 LsaNtStatusToWinError(NtStatus));
             NetApiBufferFree(ui0);
             return ERROR_NOT_ENOUGH_MEMORY;
@@ -920,7 +920,7 @@ NET_API_STATUS WINAPI NetWkstaUserGetInfo(LMSTR reserved, DWORD level,
         break;
     }
     default:
-        TRACE("Invalid level %d is specified\n", level);
+        TRACE("Invalid level %ld is specified\n", level);
         return ERROR_INVALID_LEVEL;
     }
     return NERR_Success;
@@ -934,7 +934,7 @@ NetWkstaUserEnum(LMSTR servername, DWORD level, LPBYTE* bufptr,
                  DWORD prefmaxlen, LPDWORD entriesread,
                  LPDWORD totalentries, LPDWORD resumehandle)
 {
-    FIXME("(%s, %d, %p, %d, %p, %p, %p): stub!\n", debugstr_w(servername),
+    FIXME("(%s, %ld, %p, %ld, %p, %p, %p): stub!\n", debugstr_w(servername),
           level, bufptr, prefmaxlen, entriesread, totalentries, resumehandle);
     return ERROR_INVALID_PARAMETER;
 }
@@ -982,7 +982,7 @@ NET_API_STATUS WINAPI NetWkstaGetInfo( LMSTR servername, DWORD level,
     NET_API_STATUS ret;
     BOOL local = NETAPI_IsLocalComputer( servername );
 
-    TRACE("%s %d %p\n", debugstr_w( servername ), level, bufptr );
+    TRACE("%s %ld %p\n", debugstr_w( servername ), level, bufptr );
 
     if (!local)
     {
@@ -1067,7 +1067,7 @@ NET_API_STATUS WINAPI NetWkstaGetInfo( LMSTR servername, DWORD level,
         }
 
         default:
-            FIXME("level %d unimplemented\n", level);
+            FIXME("level %ld unimplemented\n", level);
             ret = ERROR_INVALID_LEVEL;
     }
     return ret;
@@ -1107,7 +1107,7 @@ NET_API_STATUS NET_API_FUNCTION NetUserGetGroups(
         LPDWORD entriesread,
         LPDWORD totalentries)
 {
-    FIXME("%s %s %d %p %d %p %p stub\n", debugstr_w(servername),
+    FIXME("%s %s %ld %p %ld %p %p stub\n", debugstr_w(servername),
           debugstr_w(username), level, bufptr, prefixmaxlen, entriesread,
           totalentries);
 
@@ -1213,7 +1213,7 @@ NET_API_STATUS WINAPI NetUserAdd(LPCWSTR servername,
     NET_API_STATUS status;
     struct sam_user * su = NULL;
 
-    FIXME("(%s, %d, %p, %p) stub!\n", debugstr_w(servername), level, bufptr, parm_err);
+    FIXME("(%s, %ld, %p, %p) stub!\n", debugstr_w(servername), level, bufptr, parm_err);
 
     if((status = NETAPI_ValidateServername(servername)) != NERR_Success)
         return status;
@@ -1268,7 +1268,7 @@ NET_API_STATUS WINAPI NetUserAdd(LPCWSTR servername,
         return NERR_Success;
     }
     default:
-        TRACE("Invalid level %d specified.\n", level);
+        TRACE("Invalid level %ld specified.\n", level);
         status = ERROR_INVALID_LEVEL;
         break;
     }
@@ -1312,7 +1312,7 @@ NetUserGetInfo(LPCWSTR servername, LPCWSTR username, DWORD level,
                LPBYTE* bufptr)
 {
     NET_API_STATUS status;
-    TRACE("(%s, %s, %d, %p)\n", debugstr_w(servername), debugstr_w(username),
+    TRACE("(%s, %s, %ld, %p)\n", debugstr_w(servername), debugstr_w(username),
           level, bufptr);
     status = NETAPI_ValidateServername(servername);
     if (status != NERR_Success)
@@ -1466,11 +1466,11 @@ NetUserGetInfo(LPCWSTR servername, LPCWSTR username, DWORD level,
     case 1052:
     case 1053:
     {
-        FIXME("Level %d is not implemented\n", level);
+        FIXME("Level %ld is not implemented\n", level);
         return NERR_InternalError;
     }
     default:
-        TRACE("Invalid level %d is specified\n", level);
+        TRACE("Invalid level %ld is specified\n", level);
         return ERROR_INVALID_LEVEL;
     }
     return NERR_Success;
@@ -1490,7 +1490,7 @@ NetUserGetLocalGroups(LPCWSTR servername, LPCWSTR username, DWORD level,
     LOCALGROUP_USERS_INFO_0* info;
     DWORD size;
 
-    FIXME("(%s, %s, %d, %08x, %p %d, %p, %p) stub!\n",
+    FIXME("(%s, %s, %ld, %08lx, %p %ld, %p, %p) stub!\n",
           debugstr_w(servername), debugstr_w(username), level, flags, bufptr,
           prefmaxlen, entriesread, totalentries);
 
@@ -1548,7 +1548,7 @@ NetUserEnum(LPCWSTR servername, DWORD level, DWORD filter, LPBYTE* bufptr,
     WCHAR user[UNLEN + 1];
     DWORD size, len = ARRAY_SIZE(user);
 
-    TRACE("(%s, %u, 0x%x, %p, %u, %p, %p, %p)\n", debugstr_w(servername), level,
+    TRACE("(%s, %lu, 0x%lx, %p, %lu, %p, %p, %p)\n", debugstr_w(servername), level,
           filter, bufptr, prefmaxlen, entriesread, totalentries, resume_handle);
 
     status = NETAPI_ValidateServername(servername);
@@ -1634,7 +1634,7 @@ NetUserEnum(LPCWSTR servername, DWORD level, DWORD filter, LPBYTE* bufptr,
         break;
     }
     default:
-        FIXME("level %u not supported\n", level);
+        FIXME("level %lu not supported\n", level);
         return ERROR_INVALID_LEVEL;
     }
     return NERR_Success;
@@ -1760,7 +1760,7 @@ NetQueryDisplayInformation(
     DWORD PreferredMaximumLength, LPDWORD ReturnedEntryCount,
     PVOID *SortedBuffer)
 {
-    TRACE("(%s, %d, %d, %d, %d, %p, %p)\n", debugstr_w(ServerName),
+    TRACE("(%s, %ld, %ld, %ld, %ld, %p, %p)\n", debugstr_w(ServerName),
           Level, Index, EntriesRequested, PreferredMaximumLength,
           ReturnedEntryCount, SortedBuffer);
 
@@ -1792,7 +1792,7 @@ NetQueryDisplayInformation(
          */
         int records = 3;
 
-        FIXME("Level %d partially implemented\n", Level);
+        FIXME("Level %ld partially implemented\n", Level);
         *ReturnedEntryCount = records;
         comment_sz = 1;
         full_name_sz = 1;
@@ -1852,12 +1852,12 @@ NetQueryDisplayInformation(
     case 2:
     case 3:
     {
-        FIXME("Level %d is not implemented\n", Level);
+        FIXME("Level %ld is not implemented\n", Level);
         break;
     }
 
     default:
-        TRACE("Invalid level %d is specified\n", Level);
+        TRACE("Invalid level %ld is specified\n", Level);
         return ERROR_INVALID_LEVEL;
     }
     return NERR_Success;
@@ -1910,7 +1910,7 @@ NET_API_STATUS WINAPI
 NetGroupEnum(LPCWSTR servername, DWORD level, LPBYTE *bufptr, DWORD prefmaxlen,
              LPDWORD entriesread, LPDWORD totalentries, LPDWORD resume_handle)
 {
-    FIXME("(%s, %d, %p, %d, %p, %p, %p) stub!\n", debugstr_w(servername),
+    FIXME("(%s, %ld, %p, %ld, %p, %p, %p) stub!\n", debugstr_w(servername),
           level, bufptr, prefmaxlen, entriesread, totalentries, resume_handle);
     return ERROR_ACCESS_DENIED;
 }
@@ -1921,7 +1921,7 @@ NetGroupEnum(LPCWSTR servername, DWORD level, LPBYTE *bufptr, DWORD prefmaxlen,
  */
 NET_API_STATUS WINAPI NetGroupGetInfo(LPCWSTR servername, LPCWSTR groupname, DWORD level, LPBYTE *bufptr)
 {
-    FIXME("(%s, %s, %d, %p) stub!\n", debugstr_w(servername), debugstr_w(groupname), level, bufptr);
+    FIXME("(%s, %s, %ld, %p) stub!\n", debugstr_w(servername), debugstr_w(groupname), level, bufptr);
     return ERROR_ACCESS_DENIED;
 }
 
@@ -1954,7 +1954,7 @@ NET_API_STATUS WINAPI NetGroupGetInfo(LPCWSTR servername, LPCWSTR groupname, DWO
 NET_API_STATUS WINAPI NetUserModalsGet(
     LPCWSTR szServer, DWORD level, LPBYTE *pbuffer)
 {
-    TRACE("(%s %d %p)\n", debugstr_w(szServer), level, pbuffer);
+    TRACE("(%s %ld %p)\n", debugstr_w(szServer), level, pbuffer);
 
     switch (level)
     {
@@ -1987,7 +1987,7 @@ NET_API_STATUS WINAPI NetUserModalsGet(
                                      &policyHandle);
             if (ntStatus != STATUS_SUCCESS)
             {
-                WARN("LsaOpenPolicy failed with NT status %x\n",
+                WARN("LsaOpenPolicy failed with NT status %lx\n",
                      LsaNtStatusToWinError(ntStatus));
                 return ntStatus;
             }
@@ -1997,7 +1997,7 @@ NET_API_STATUS WINAPI NetUserModalsGet(
                                                  (PVOID *)&domainInfo);
             if (ntStatus != STATUS_SUCCESS)
             {
-                WARN("LsaQueryInformationPolicy failed with NT status %x\n",
+                WARN("LsaQueryInformationPolicy failed with NT status %lx\n",
                      LsaNtStatusToWinError(ntStatus));
                 LsaClose(policyHandle);
                 return ntStatus;
@@ -2040,7 +2040,7 @@ NET_API_STATUS WINAPI NetUserModalsGet(
             *pbuffer = NULL;
             return NERR_InternalError;
         default:
-            TRACE("Invalid level %d is specified\n", level);
+            TRACE("Invalid level %ld is specified\n", level);
             *pbuffer = NULL;
             return ERROR_INVALID_LEVEL;
     }
@@ -2093,13 +2093,13 @@ NET_API_STATUS WINAPI NetUserChangePassword(LPCWSTR domainname, LPCWSTR username
 
 NET_API_STATUS WINAPI NetUseAdd(LMSTR servername, DWORD level, LPBYTE bufptr, LPDWORD parm_err)
 {
-    FIXME("%s %d %p %p stub\n", debugstr_w(servername), level, bufptr, parm_err);
+    FIXME("%s %ld %p %p stub\n", debugstr_w(servername), level, bufptr, parm_err);
     return NERR_Success;
 }
 
 NET_API_STATUS WINAPI NetUseDel(LMSTR servername, LMSTR usename, DWORD forcecond)
 {
-    FIXME("%s %s %d stub\n", debugstr_w(servername), debugstr_w(usename), forcecond);
+    FIXME("%s %s %ld stub\n", debugstr_w(servername), debugstr_w(usename), forcecond);
     return NERR_Success;
 }
 
@@ -2135,7 +2135,7 @@ static DWORD get_dc_info(const WCHAR *domain, WCHAR *dc, WCHAR *ip)
     wcscat( name, domain );
 
     ret = DnsQuery_W(name, DNS_TYPE_SRV, DNS_QUERY_STANDARD, NULL, &rec, NULL);
-    TRACE("DnsQuery_W(%s) => %d\n", wine_dbgstr_w(domain), ret);
+    TRACE("DnsQuery_W(%s) => %ld\n", wine_dbgstr_w(domain), ret);
     if (ret == ERROR_SUCCESS)
     {
         TRACE("target %s, port %d\n", wine_dbgstr_w(rec->Data.Srv.pNameTarget), rec->Data.Srv.wPort);
@@ -2145,7 +2145,7 @@ static DWORD get_dc_info(const WCHAR *domain, WCHAR *dc, WCHAR *ip)
 
         /* IPv4 */
         ret = DnsQuery_W(dc, DNS_TYPE_A, DNS_QUERY_STANDARD, NULL, &rec, NULL);
-        TRACE("DnsQuery_W(%s) => %d\n", wine_dbgstr_w(dc), ret);
+        TRACE("DnsQuery_W(%s) => %ld\n", wine_dbgstr_w(dc), ret);
         if (ret == ERROR_SUCCESS)
         {
             SOCKADDR_IN addr;
@@ -2156,7 +2156,7 @@ static DWORD get_dc_info(const WCHAR *domain, WCHAR *dc, WCHAR *ip)
             size = IP6_ADDRESS_STRING_LENGTH;
             ret = WSAAddressToStringW((SOCKADDR *)&addr, sizeof(addr), NULL, ip, &size);
             if (!ret)
-                TRACE("WSAAddressToStringW => %d, %s\n", ret, wine_dbgstr_w(ip));
+                TRACE("WSAAddressToStringW => %ld, %s\n", ret, wine_dbgstr_w(ip));
 
             DnsRecordListFree(rec, DnsFreeRecordList);
 
@@ -2165,7 +2165,7 @@ static DWORD get_dc_info(const WCHAR *domain, WCHAR *dc, WCHAR *ip)
 
         /* IPv6 */
         ret = DnsQuery_W(dc, DNS_TYPE_AAAA, DNS_QUERY_STANDARD, NULL, &rec, NULL);
-        TRACE("DnsQuery_W(%s) => %d\n", wine_dbgstr_w(dc), ret);
+        TRACE("DnsQuery_W(%s) => %ld\n", wine_dbgstr_w(dc), ret);
         if (ret == ERROR_SUCCESS)
         {
             SOCKADDR_IN6 addr;
@@ -2177,7 +2177,7 @@ static DWORD get_dc_info(const WCHAR *domain, WCHAR *dc, WCHAR *ip)
             size = IP6_ADDRESS_STRING_LENGTH;
             ret = WSAAddressToStringW((SOCKADDR *)&addr, sizeof(addr), NULL, ip, &size);
             if (!ret)
-                TRACE("WSAAddressToStringW => %d, %s\n", ret, wine_dbgstr_w(ip));
+                TRACE("WSAAddressToStringW => %ld, %s\n", ret, wine_dbgstr_w(ip));
 
             DnsRecordListFree(rec, DnsFreeRecordList);
         }
@@ -2197,7 +2197,7 @@ DWORD WINAPI DsGetDcNameW(LPCWSTR computer, LPCWSTR domain, GUID *domain_guid,
     WCHAR dc[NS_MAXDNAME], ip[IP6_ADDRESS_STRING_LENGTH];
     DWORD size;
 
-    FIXME("(%s, %s, %s, %s, %08x, %p): semi-stub\n", debugstr_w(computer),
+    FIXME("(%s, %s, %s, %s, %08lx, %p): semi-stub\n", debugstr_w(computer),
         debugstr_w(domain), debugstr_guid(domain_guid), debugstr_w(site), flags, dc_info);
 
     if (!dc_info) return ERROR_INVALID_PARAMETER;
@@ -2264,7 +2264,7 @@ DWORD WINAPI DsGetDcNameA(LPCSTR ComputerName, LPCSTR AvoidDCName,
  GUID* DomainGuid, LPCSTR SiteName, ULONG Flags,
  PDOMAIN_CONTROLLER_INFOA *DomainControllerInfo)
 {
-    FIXME("(%s, %s, %s, %s, %08x, %p): stub\n", debugstr_a(ComputerName),
+    FIXME("(%s, %s, %s, %s, %08lx, %p): stub\n", debugstr_a(ComputerName),
      debugstr_a(AvoidDCName), debugstr_guid(DomainGuid),
      debugstr_a(SiteName), Flags, DomainControllerInfo);
     return ERROR_CALL_NOT_IMPLEMENTED;
@@ -2341,7 +2341,7 @@ DWORD WINAPI DsRoleGetPrimaryDomainInformation(
              POLICY_VIEW_LOCAL_INFORMATION, &PolicyHandle);
             if (NtStatus != STATUS_SUCCESS)
             {
-                TRACE("LsaOpenPolicyFailed with NT status %x\n",
+                TRACE("LsaOpenPolicyFailed with NT status %lx\n",
                     LsaNtStatusToWinError(NtStatus));
                 return ERROR_OUTOFMEMORY;
             }
@@ -2382,7 +2382,7 @@ NET_API_STATUS WINAPI NetLocalGroupAdd(
     LPBYTE buf,
     LPDWORD parm_err)
 {
-    FIXME("(%s %d %p %p) stub!\n", debugstr_w(servername), level, buf,
+    FIXME("(%s %ld %p %p) stub!\n", debugstr_w(servername), level, buf,
           parm_err);
     return NERR_Success;
 }
@@ -2410,7 +2410,7 @@ NET_API_STATUS WINAPI NetLocalGroupAddMembers(
     LPBYTE buf,
     DWORD totalentries)
 {
-    FIXME("(%s %s %d %p %d) stub!\n", debugstr_w(servername),
+    FIXME("(%s %s %ld %p %ld) stub!\n", debugstr_w(servername),
           debugstr_w(groupname), level, buf, totalentries);
     return NERR_Success;
 }
@@ -2449,7 +2449,7 @@ NET_API_STATUS WINAPI NetLocalGroupDelMembers(
     LPBYTE buf,
     DWORD totalentries)
 {
-    FIXME("(%s %s %d %p %d) stub!\n", debugstr_w(servername),
+    FIXME("(%s %s %ld %p %ld) stub!\n", debugstr_w(servername),
           debugstr_w(groupname), level, buf, totalentries);
     return NERR_Success;
 }
@@ -2466,7 +2466,7 @@ NET_API_STATUS WINAPI NetLocalGroupEnum(
     LPDWORD totalentries,
     PDWORD_PTR resumehandle)
 {
-    FIXME("(%s %d %p %d %p %p %p) stub!\n", debugstr_w(servername),
+    FIXME("(%s %ld %p %ld %p %p %p) stub!\n", debugstr_w(servername),
           level, bufptr, prefmaxlen, entriesread, totalentries, resumehandle);
     *entriesread = 0;
     *totalentries = 0;
@@ -2486,7 +2486,7 @@ NET_API_STATUS WINAPI NetLocalGroupGetInfo(
     LOCALGROUP_INFO_1* info;
     DWORD size;
 
-    FIXME("(%s %s %d %p) semi-stub!\n", debugstr_w(servername),
+    FIXME("(%s %s %ld %p) semi-stub!\n", debugstr_w(servername),
           debugstr_w(groupname), level, bufptr);
 
     size = sizeof(*info) + sizeof(WCHAR) * (lstrlenW(groupname)+1) + sizeof(commentW);
@@ -2516,7 +2516,7 @@ NET_API_STATUS WINAPI NetLocalGroupGetMembers(
     LPDWORD totalentries,
     PDWORD_PTR resumehandle)
 {
-    FIXME("(%s %s %d %p %d, %p %p %p) stub!\n", debugstr_w(servername),
+    FIXME("(%s %s %ld %p %ld, %p %p %p) stub!\n", debugstr_w(servername),
           debugstr_w(localgroupname), level, bufptr, prefmaxlen, entriesread,
           totalentries, resumehandle);
 
@@ -2567,7 +2567,7 @@ NET_API_STATUS WINAPI NetLocalGroupSetInfo(
     LPBYTE buf,
     LPDWORD parm_err)
 {
-    FIXME("(%s %s %d %p %p) stub!\n", debugstr_w(servername),
+    FIXME("(%s %s %ld %p %p) stub!\n", debugstr_w(servername),
           debugstr_w(groupname), level, buf, parm_err);
     return NERR_Success;
 }
@@ -2582,7 +2582,7 @@ NET_API_STATUS WINAPI NetLocalGroupSetMembers(
     LPBYTE buf,
     DWORD totalentries)
 {
-    FIXME("(%s %s %d %p %d) stub!\n", debugstr_w(servername),
+    FIXME("(%s %s %ld %p %ld) stub!\n", debugstr_w(servername),
             debugstr_w(groupname), level, buf, totalentries);
     return NERR_Success;
 }
@@ -2764,7 +2764,7 @@ DWORD WINAPI DavGetUNCFromHTTPPath(const WCHAR *http_path, WCHAR *buf, DWORD *bu
  */
 DWORD WINAPI DsEnumerateDomainTrustsA(LPSTR server, ULONG flags, PDS_DOMAIN_TRUSTSA* domains, PULONG count)
 {
-    FIXME("(%s, 0x%04x, %p, %p): stub\n", debugstr_a(server), flags, domains, count);
+    FIXME("(%s, 0x%04lx, %p, %p): stub\n", debugstr_a(server), flags, domains, count);
     return ERROR_NO_LOGON_SERVERS;
 }
 
@@ -2773,7 +2773,7 @@ DWORD WINAPI DsEnumerateDomainTrustsA(LPSTR server, ULONG flags, PDS_DOMAIN_TRUS
  */
 DWORD WINAPI DsEnumerateDomainTrustsW(LPWSTR server, ULONG flags, PDS_DOMAIN_TRUSTSW* domains, PULONG count)
 {
-    FIXME("(%s, 0x%04x, %p, %p): stub\n", debugstr_w(server), flags, domains, count);
+    FIXME("(%s, 0x%04lx, %p, %p): stub\n", debugstr_w(server), flags, domains, count);
     return ERROR_NO_LOGON_SERVERS;
 }
 

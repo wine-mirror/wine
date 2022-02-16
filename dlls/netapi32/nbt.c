@@ -1098,7 +1098,7 @@ static UCHAR NetBTSend(void *adapt, void *sess, PNCB ncb)
     }
     else if (bytesSent < NBSS_HDRSIZE + ncb->ncb_length)
     {
-        FIXME("Only sent %d bytes (of %d), hanging up session\n", bytesSent,
+        FIXME("Only sent %ld bytes (of %d), hanging up session\n", bytesSent,
          NBSS_HDRSIZE + ncb->ncb_length);
         NetBIOSHangupSession(ncb);
         ret = NRC_SABORT;

@@ -132,7 +132,7 @@ BOOL NetBIOSRegisterTransport(ULONG id, NetBIOSTransport *transport)
 {
     BOOL ret;
 
-    TRACE(": transport 0x%08x, p %p\n", id, transport);
+    TRACE(": transport 0x%08lx, p %p\n", id, transport);
     if (!transport)
         ret = FALSE;
     else if (gNumTransports >= ARRAY_SIZE(gTransports))
@@ -149,7 +149,7 @@ BOOL NetBIOSRegisterTransport(ULONG id, NetBIOSTransport *transport)
         {
             if (gTransports[i].id == id)
             {
-                WARN("Replacing NetBIOS transport ID %d\n", id);
+                WARN("Replacing NetBIOS transport ID %ld\n", id);
                 memcpy(&gTransports[i].transport, transport,
                  sizeof(NetBIOSTransport));
                 ret = TRUE;
@@ -177,7 +177,7 @@ BOOL NetBIOSRegisterAdapter(ULONG transport, DWORD ifIndex, void *data)
     BOOL ret;
     UCHAR i;
 
-    TRACE(": transport 0x%08x, ifIndex 0x%08x, data %p\n", transport, ifIndex,
+    TRACE(": transport 0x%08lx, ifIndex 0x%08lx, data %p\n", transport, ifIndex,
      data);
     for (i = 0; i < gNumTransports && gTransports[i].id != transport; i++)
         ;
@@ -185,7 +185,7 @@ BOOL NetBIOSRegisterAdapter(ULONG transport, DWORD ifIndex, void *data)
     {
         NetBIOSTransport *transportPtr = &gTransports[i].transport;
 
-        TRACE(": found transport %p for id 0x%08x\n", transportPtr, transport);
+        TRACE(": found transport %p for id 0x%08lx\n", transportPtr, transport);
 
         EnterCriticalSection(&gNBTable.cs);
         ret = FALSE;
@@ -296,7 +296,7 @@ UCHAR NetBIOSNumAdapters(void)
 void NetBIOSEnumAdapters(ULONG transport, NetBIOSEnumAdaptersCallback cb,
  void *closure)
 {
-    TRACE("transport 0x%08x, callback %p, closure %p\n", transport, cb,
+    TRACE("transport 0x%08lx, callback %p, closure %p\n", transport, cb,
      closure);
     if (cb)
     {
