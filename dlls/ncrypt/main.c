@@ -33,7 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ncrypt);
 SECURITY_STATUS WINAPI NCryptCreatePersistedKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_HANDLE *key,
                                                 const WCHAR *algid, const WCHAR *name, DWORD keyspec, DWORD flags)
 {
-    FIXME("(0x%lx, %p, %s, %s, 0x%08x, 0x%08x): stub\n", provider, key, wine_dbgstr_w(algid),
+    FIXME("(%#Ix, %p, %s, %s, %#lx, %#lx): stub\n", provider, key, wine_dbgstr_w(algid),
           wine_dbgstr_w(name), keyspec, flags);
     return NTE_NOT_SUPPORTED;
 }
@@ -41,21 +41,21 @@ SECURITY_STATUS WINAPI NCryptCreatePersistedKey(NCRYPT_PROV_HANDLE provider, NCR
 SECURITY_STATUS WINAPI NCryptDecrypt(NCRYPT_KEY_HANDLE key, BYTE *input, DWORD insize, void *padding,
                                      BYTE *output, DWORD outsize, DWORD *result, DWORD flags)
 {
-    FIXME("(0x%lx, %p, %u, %p, %p, %u, %p, 0x%08x): stub\n", key, input, insize, padding,
+    FIXME("(%#Ix, %p, %lu, %p, %p, %lu, %p, %#lx): stub\n", key, input, insize, padding,
           output, outsize, result, flags);
     return NTE_NOT_SUPPORTED;
 }
 
 SECURITY_STATUS WINAPI NCryptDeleteKey(NCRYPT_KEY_HANDLE key, DWORD flags)
 {
-    FIXME("(0x%lx, 0x%08x): stub\n", key, flags);
+    FIXME("(%#Ix, %#lx): stub\n", key, flags);
     return NTE_NOT_SUPPORTED;
 }
 
 SECURITY_STATUS WINAPI NCryptEncrypt(NCRYPT_KEY_HANDLE key, BYTE *input, DWORD insize, void *padding,
                                      BYTE *output, DWORD outsize, DWORD *result, DWORD flags)
 {
-    FIXME("(0x%lx, %p, %u, %p, %p, %u, %p, 0x%08x): stub\n", key, input, insize, padding,
+    FIXME("(%#Ix, %p, %lu, %p, %p, %lu, %p, %#lx): stub\n", key, input, insize, padding,
           output, outsize, result, flags);
     return NTE_NOT_SUPPORTED;
 }
@@ -63,20 +63,20 @@ SECURITY_STATUS WINAPI NCryptEncrypt(NCRYPT_KEY_HANDLE key, BYTE *input, DWORD i
 SECURITY_STATUS WINAPI NCryptEnumAlgorithms(NCRYPT_PROV_HANDLE provider, DWORD alg_ops,
                                             DWORD *alg_count, NCryptAlgorithmName **alg_list, DWORD flags)
 {
-    FIXME("(0x%lx, 0x%08x, %p, %p, 0x%08x): stub\n", provider, alg_ops, alg_count, alg_list, flags);
+    FIXME("(%#Ix, %#lx, %p, %p, %#lx): stub\n", provider, alg_ops, alg_count, alg_list, flags);
     return NTE_NOT_SUPPORTED;
 }
 
 SECURITY_STATUS WINAPI NCryptEnumKeys(NCRYPT_PROV_HANDLE provider, const WCHAR *scope,
                                       NCryptKeyName **key_name, PVOID *enum_state, DWORD flags)
 {
-    FIXME("(0x%lx, %p, %p, %p, 0x%08x): stub\n", provider, scope, key_name, enum_state, flags);
+    FIXME("(%#Ix, %p, %p, %p, %#lx): stub\n", provider, scope, key_name, enum_state, flags);
     return NTE_NOT_SUPPORTED;
 }
 
 SECURITY_STATUS WINAPI NCryptFinalizeKey(NCRYPT_KEY_HANDLE key, DWORD flags)
 {
-    FIXME("(0x%lx, 0x%08x): stub\n", key, flags);
+    FIXME("(%#Ix, %#lx): stub\n", key, flags);
     return NTE_NOT_SUPPORTED;
 }
 
@@ -161,8 +161,8 @@ SECURITY_STATUS WINAPI NCryptGetProperty(NCRYPT_HANDLE handle, const WCHAR *name
     struct object *object = (struct object *)handle;
     const struct object_property *property;
 
-    TRACE("(%#Ix, %s, %p, %u, %p, 0x%08x)\n", handle, wine_dbgstr_w(name), output, outsize, result, flags);
-    if (flags) FIXME("flags 0x%08x not supported\n", flags);
+    TRACE("(%#Ix, %s, %p, %lu, %p, %#lx)\n", handle, wine_dbgstr_w(name), output, outsize, result, flags);
+    if (flags) FIXME("flags %#lx not supported\n", flags);
 
     if (!(property = get_object_property(object, name))) return NTE_INVALID_PARAMETER;
     if (!output)
@@ -190,7 +190,7 @@ SECURITY_STATUS WINAPI NCryptImportKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_H
 {
     BCRYPT_KEY_BLOB *header = (BCRYPT_KEY_BLOB *)data;
 
-    TRACE("(0x%lx, 0x%lx, %s, %p, %p, %p, %u, 0x%08x): stub\n", provider, decrypt_key, wine_dbgstr_w(type),
+    TRACE("(%#Ix, %#Ix, %s, %p, %p, %p, %lu, %#lx): stub\n", provider, decrypt_key, wine_dbgstr_w(type),
           params, handle, data, datasize, flags);
 
     if (decrypt_key)
@@ -209,7 +209,7 @@ SECURITY_STATUS WINAPI NCryptImportKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_H
     }
     else if (flags)
     {
-        ERR("Invalid flags 0x%x\n", flags);
+        ERR("Invalid flags %#lx\n", flags);
         return NTE_BAD_FLAGS;
     }
 
@@ -269,7 +269,7 @@ SECURITY_STATUS WINAPI NCryptImportKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_H
         break;
     }
     default:
-        FIXME("unhandled key magic %x\n", header->Magic);
+        FIXME("Unhandled key magic %#lx.\n", header->Magic);
         return NTE_INVALID_PARAMETER;
     }
 
@@ -278,20 +278,20 @@ SECURITY_STATUS WINAPI NCryptImportKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_H
 
 SECURITY_STATUS WINAPI NCryptIsAlgSupported(NCRYPT_PROV_HANDLE provider, const WCHAR *algid, DWORD flags)
 {
-    FIXME("(0x%lx, %s, 0x%08x): stub\n", provider, wine_dbgstr_w(algid), flags);
+    FIXME("(%#Ix, %s, %#lx): stub\n", provider, wine_dbgstr_w(algid), flags);
     return NTE_NOT_SUPPORTED;
 }
 
 BOOL WINAPI NCryptIsKeyHandle(NCRYPT_KEY_HANDLE hKey)
 {
-    FIXME("(0x%lx): stub\n", hKey);
+    FIXME("(%#Ix): stub\n", hKey);
     return FALSE;
 }
 
 SECURITY_STATUS WINAPI NCryptOpenKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_HANDLE *key,
                                      const WCHAR *name, DWORD keyspec, DWORD flags)
 {
-    FIXME("(0x%lx, %p, %s, 0x%08x, 0x%08x): stub\n", provider, key, wine_dbgstr_w(name), keyspec, flags);
+    FIXME("(%#Ix, %p, %s, %#lx, %#lx): stub\n", provider, key, wine_dbgstr_w(name), keyspec, flags);
     return NTE_NOT_SUPPORTED;
 }
 
@@ -299,7 +299,7 @@ SECURITY_STATUS WINAPI NCryptOpenStorageProvider(NCRYPT_PROV_HANDLE *provider, c
 {
     struct object *object;
 
-    FIXME("(%p, %s, %u): stub\n", provider, wine_dbgstr_w(name), flags);
+    FIXME("(%p, %s, %#lx): stub\n", provider, wine_dbgstr_w(name), flags);
 
     if (!(object = allocate_object(STORAGE_PROVIDER)))
     {
@@ -361,8 +361,8 @@ SECURITY_STATUS WINAPI NCryptSetProperty(NCRYPT_HANDLE handle, const WCHAR *name
 {
     struct object *object = (struct object *)handle;
 
-    TRACE("(%#Ix, %s, %p, %u, 0x%08x)\n", handle, wine_dbgstr_w(name), input, insize, flags);
-    if (flags) FIXME("flags 0x%08x not supported\n", flags);
+    TRACE("(%#Ix, %s, %p, %lu, %#lx)\n", handle, wine_dbgstr_w(name), input, insize, flags);
+    if (flags) FIXME("flags %#lx not supported\n", flags);
 
     return set_object_property(object, name, input, insize);
 }
