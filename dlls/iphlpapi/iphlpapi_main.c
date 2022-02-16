@@ -1928,7 +1928,7 @@ done:
 static int ipaddrrow_cmp( const void *a, const void *b )
 {
     const MIB_IPADDRROW *rowA = a, *rowB = b;
-    return DWORD_cmp(rowA->dwAddr, rowB->dwAddr);
+    return DWORD_cmp(RtlUlongByteSwap( rowA->dwAddr ), RtlUlongByteSwap( rowB->dwAddr ));
 }
 
 /******************************************************************
@@ -2034,10 +2034,10 @@ DWORD WINAPI AllocateAndGetIpAddrTableFromStack( MIB_IPADDRTABLE **table, BOOL s
 static int ipforward_row_cmp( const void *a, const void *b )
 {
     const MIB_IPFORWARDROW *rowA = a, *rowB = b;
-    return DWORD_cmp(rowA->dwForwardDest, rowB->dwForwardDest) ||
+    return DWORD_cmp(RtlUlongByteSwap( rowA->dwForwardDest ), RtlUlongByteSwap( rowB->dwForwardDest )) ||
            DWORD_cmp(rowA->dwForwardProto, rowB->dwForwardProto) ||
            DWORD_cmp(rowA->dwForwardPolicy, rowB->dwForwardPolicy) ||
-           DWORD_cmp(rowA->dwForwardNextHop, rowB->dwForwardNextHop);
+           DWORD_cmp(RtlUlongByteSwap( rowA->dwForwardNextHop ), RtlUlongByteSwap( rowB->dwForwardNextHop ));
 }
 
 /******************************************************************
