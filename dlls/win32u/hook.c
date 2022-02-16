@@ -53,6 +53,12 @@ static const char * const hook_names[WH_WINEVENT - WH_MINHOOK + 1] =
     "WH_WINEVENT"
 };
 
+static const char *debugstr_hook_id( unsigned int id )
+{
+    if (id - WH_MINHOOK >= ARRAYSIZE(hook_names)) return wine_dbg_sprintf( "%u", id );
+    return hook_names[id - WH_MINHOOK];
+}
+
 static BOOL is_hooked( INT id )
 {
     struct user_thread_info *thread_info = get_user_thread_info();
@@ -122,7 +128,7 @@ HHOOK WINAPI NtUserSetWindowsHookEx( HINSTANCE inst, UNICODE_STRING *module, DWO
     }
     SERVER_END_REQ;
 
-    TRACE( "%s %p %x -> %p\n", hook_names[id - WH_MINHOOK], proc, tid, handle );
+    TRACE( "%s %p %x -> %p\n", debugstr_hook_id(id), proc, tid, handle );
     return handle;
 }
 
@@ -137,6 +143,26 @@ BOOL WINAPI NtUserUnhookWindowsHookEx( HHOOK handle )
     {
         req->handle = wine_server_user_handle( handle );
         req->id     = 0;
+        status = wine_server_call_err( req );
+        if (!status) get_user_thread_info()->active_hooks = reply->active_hooks;
+    }
+    SERVER_END_REQ;
+    if (status == STATUS_INVALID_HANDLE) SetLastError( ERROR_INVALID_HOOK_HANDLE );
+    return !status;
+}
+
+/* see UnhookWindowsHook */
+BOOL unhook_windows_hook( INT id, HOOKPROC proc )
+{
+    NTSTATUS status;
+
+    TRACE( "%s %p\n", debugstr_hook_id(id), proc );
+
+    SERVER_START_REQ( remove_hook )
+    {
+        req->handle = 0;
+        req->id   = id;
+        req->proc = wine_server_client_ptr( proc );
         status = wine_server_call_err( req );
         if (!status) get_user_thread_info()->active_hooks = reply->active_hooks;
     }

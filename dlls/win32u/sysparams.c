@@ -4565,6 +4565,8 @@ ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code 
         return mirror_window_region( UlongToHandle(arg1), UlongToHandle(arg2) );
     case NtUserMonitorFromRect:
         return HandleToUlong( monitor_from_rect( (const RECT *)arg1, arg2, get_thread_dpi() ));
+    case NtUserUnhookWindowsHook:
+        return unhook_windows_hook( arg1, (HOOKPROC)arg2 );
     /* temporary exports */
     case NtUserRegisterWindowSurface:
         register_window_surface( (struct window_surface *)arg1, (struct window_surface *)arg2 );

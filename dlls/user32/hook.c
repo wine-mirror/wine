@@ -520,21 +520,7 @@ HHOOK WINAPI SetWindowsHookExW( INT id, HOOKPROC proc, HINSTANCE inst, DWORD tid
  */
 BOOL WINAPI UnhookWindowsHook( INT id, HOOKPROC proc )
 {
-    BOOL ret;
-
-    TRACE( "%s %p\n", hook_names[id-WH_MINHOOK], proc );
-
-    SERVER_START_REQ( remove_hook )
-    {
-        req->handle = 0;
-        req->id   = id;
-        req->proc = wine_server_client_ptr( proc );
-        ret = !wine_server_call_err( req );
-        if (ret) get_user_thread_info()->active_hooks = reply->active_hooks;
-    }
-    SERVER_END_REQ;
-    if (!ret && GetLastError() == ERROR_INVALID_HANDLE) SetLastError( ERROR_INVALID_HOOK_HANDLE );
-    return ret;
+    return NtUserCallTwoParam( id, (UINT_PTR)proc, NtUserUnhookWindowsHook );
 }
 
 

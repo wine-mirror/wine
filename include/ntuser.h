@@ -94,6 +94,7 @@ enum
     NtUserGetSystemMetricsForDpi,
     NtUserMirrorRgn,
     NtUserMonitorFromRect,
+    NtUserUnhookWindowsHook,
     /* temporary exports */
     NtUserRegisterWindowSurface,
 };
