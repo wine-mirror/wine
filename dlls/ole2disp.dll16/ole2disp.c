@@ -253,7 +253,7 @@ HRESULT WINAPI SafeArrayAllocData16(SAFEARRAY16 *sa)
  */
 HRESULT WINAPI SafeArrayDestroyDescriptor16(SEGPTR s)
 {
-    TRACE("0x%08x\n", s);
+    TRACE("0x%08lx\n", s);
 
     if (s)
     {
@@ -479,7 +479,7 @@ HRESULT WINAPI CreateDispTypeInfo16(
 	LCID lcid,
 	ITypeInfo **pptinfo)
 {
-	FIXME("(%p,%d,%p),stub\n",pidata,lcid,pptinfo);
+	FIXME("(%p,%ld,%p),stub\n",pidata,lcid,pptinfo);
 	return E_NOTIMPL;
 }
 
@@ -503,7 +503,7 @@ HRESULT WINAPI CreateStdDispatch16(
 HRESULT WINAPI RegisterActiveObject16(
 	IUnknown *punk, REFCLSID rclsid, DWORD dwFlags, unsigned long *pdwRegister
 ) {
-	FIXME("(%p,%s,0x%08x,%p):stub\n",punk,debugstr_guid(rclsid),dwFlags,pdwRegister);
+	FIXME("(%p,%s,0x%08lx,%p):stub\n",punk,debugstr_guid(rclsid),dwFlags,pdwRegister);
 	return E_NOTIMPL;
 }
 
@@ -512,7 +512,7 @@ HRESULT WINAPI RegisterActiveObject16(
  */
 HRESULT WINAPI VariantChangeTypeEx16(VARIANTARG *dest, const VARIANTARG *src, LCID lcid, USHORT flags, VARTYPE vt)
 {
-        FIXME("stub: %p %p %d %d %d\n", dest, src, lcid, flags, vt);
+        FIXME("stub: %p %p %ld %d %d\n", dest, src, lcid, flags, vt);
         return E_INVALIDARG;
 }
 
@@ -521,7 +521,7 @@ HRESULT WINAPI VariantChangeTypeEx16(VARIANTARG *dest, const VARIANTARG *src, LC
  */
 HRESULT WINAPI SetErrorInfo16(ULONG dwReserved, IErrorInfo *perrinfo)
 {
-        FIXME("stub: (%d, %p)\n", dwReserved, perrinfo);
+        FIXME("stub: (%ld, %p)\n", dwReserved, perrinfo);
         return E_INVALIDARG;
 }
 
