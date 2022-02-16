@@ -442,10 +442,37 @@ static BOOL get_alsa_name_by_guid(GUID *guid, char *name, DWORD name_size, EData
     return FALSE;
 }
 
+static HRESULT alsa_open_device(const char *alsa_name, EDataFlow flow, snd_pcm_t **pcm_handle,
+                                snd_pcm_hw_params_t **hw_params)
+{
+    int err;
+
+    if(flow != eRender && flow != eCapture)
+        return E_UNEXPECTED;
+
+    err = snd_pcm_open(pcm_handle, alsa_name, alsa_get_direction(flow), SND_PCM_NONBLOCK);
+    if(err < 0){
+        WARN("Unable to open PCM \"%s\": %d (%s)\n", alsa_name, err, snd_strerror(err));
+        switch(err){
+        case -EBUSY:
+            return AUDCLNT_E_DEVICE_IN_USE;
+        default:
+            return AUDCLNT_E_ENDPOINT_CREATE_FAILED;
+        }
+    }
+
+    *hw_params = HeapAlloc(GetProcessHeap(), 0, snd_pcm_hw_params_sizeof());
+    if(!*hw_params){
+        snd_pcm_close(*pcm_handle);
+        return E_OUTOFMEMORY;
+    }
+
+    return S_OK;
+}
+
 HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient **out)
 {
     ACImpl *This;
-    int err;
     char alsa_name[256];
     EDataFlow dataflow;
     HRESULT hr;
@@ -486,26 +513,11 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
         return E_OUTOFMEMORY;
     }
 
-    err = snd_pcm_open(&This->stream->pcm_handle, alsa_name, alsa_get_direction(dataflow), SND_PCM_NONBLOCK);
-    if(err < 0){
+    hr = alsa_open_device(alsa_name, dataflow, &This->stream->pcm_handle, &This->stream->hw_params);
+    if(FAILED(hr)){
         HeapFree(GetProcessHeap(), 0, This->stream);
         HeapFree(GetProcessHeap(), 0, This);
-        WARN("Unable to open PCM \"%s\": %d (%s)\n", alsa_name, err, snd_strerror(err));
-        switch(err){
-        case -EBUSY:
-            return AUDCLNT_E_DEVICE_IN_USE;
-        default:
-            return AUDCLNT_E_ENDPOINT_CREATE_FAILED;
-        }
-    }
-
-    This->stream->hw_params = HeapAlloc(GetProcessHeap(), 0,
-            snd_pcm_hw_params_sizeof());
-    if(!This->stream->hw_params){
-        snd_pcm_close(This->stream->pcm_handle);
-        HeapFree(GetProcessHeap(), 0, This->stream);
-        HeapFree(GetProcessHeap(), 0, This);
-        return E_OUTOFMEMORY;
+        return hr;
     }
 
     InitializeCriticalSection(&This->lock);
