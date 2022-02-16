@@ -92,12 +92,10 @@ static void test_key_import_rsa(void)
     NCRYPT_KEY_HANDLE key;
     SECURITY_STATUS ret;
 
-    todo_wine {
     prov = 0;
     ret = NCryptOpenStorageProvider(&prov, NULL, 0);
     ok(ret == ERROR_SUCCESS, "got %#x\n", ret);
     ok(prov, "got null handle\n");
-    }
 
     todo_wine {
     key = 0;
