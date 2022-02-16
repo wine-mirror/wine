@@ -4243,15 +4243,13 @@ static LONG parse_url(const WCHAR *url, struct parsed_url *pl)
         work = parse_url_element( pl->port, L"/\\?#" );
         pl->port_len = work - pl->port;
     }
-    if (*work == '/')
+
+    if ((pl->query = wcschr( work, '?' )))
     {
-        /* see if query string */
-        if ((pl->query = wcschr( work, '?' )))
-        {
-            ++pl->query;
-            pl->query_len = lstrlenW(pl->query);
-        }
+        ++pl->query;
+        pl->query_len = lstrlenW(pl->query);
     }
+
   SuccessExit:
     TRACE("parse successful: scheme=%p(%ld), user=%p(%ld), pass=%p(%ld), host=%p(%ld), port=%p(%ld), query=%p(%ld)\n",
             pl->scheme, pl->scheme_len, pl->username, pl->username_len, pl->password, pl->password_len, pl->hostname,

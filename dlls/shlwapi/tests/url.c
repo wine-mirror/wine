@@ -669,7 +669,7 @@ static void test_UrlGetPart(void)
         {"ftp:\\/localhost/index.html", URL_PART_HOSTNAME, 0, S_OK, "localhost", .todo_hr = TRUE},
 
         {"http://host?a:b@c:d", URL_PART_HOSTNAME, 0, S_OK, "host"},
-        {"http://host?a:b@c:d", URL_PART_QUERY, 0, S_OK, "a:b@c:d", .todo_hr = TRUE},
+        {"http://host?a:b@c:d", URL_PART_QUERY, 0, S_OK, "a:b@c:d"},
         {"http://host#a:b@c:d", URL_PART_HOSTNAME, 0, S_OK, "host"},
         {"http://host#a:b@c:d", URL_PART_QUERY, 0, S_FALSE, ""},
 
