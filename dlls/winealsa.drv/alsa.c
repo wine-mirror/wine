@@ -39,6 +39,7 @@
 #include "wine/list.h"
 #include "wine/unixlib.h"
 
+#include "initguid.h"
 #include "unixlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(alsa);
@@ -452,7 +453,184 @@ static NTSTATUS get_endpoint_ids(void *args)
     return STATUS_SUCCESS;
 }
 
+static HRESULT alsa_open_device(const char *alsa_name, EDataFlow flow, snd_pcm_t **pcm_handle,
+                                snd_pcm_hw_params_t **hw_params)
+{
+    snd_pcm_stream_t pcm_stream;
+    int err;
+
+    if(flow == eRender)
+        pcm_stream = SND_PCM_STREAM_PLAYBACK;
+    else if(flow == eCapture)
+        pcm_stream = SND_PCM_STREAM_CAPTURE;
+    else
+        return E_UNEXPECTED;
+
+    err = snd_pcm_open(pcm_handle, alsa_name, pcm_stream, SND_PCM_NONBLOCK);
+    if(err < 0){
+        WARN("Unable to open PCM \"%s\": %d (%s)\n", alsa_name, err, snd_strerror(err));
+        switch(err){
+        case -EBUSY:
+            return AUDCLNT_E_DEVICE_IN_USE;
+        default:
+            return AUDCLNT_E_ENDPOINT_CREATE_FAILED;
+        }
+    }
+
+    *hw_params = malloc(snd_pcm_hw_params_sizeof());
+    if(!*hw_params){
+        snd_pcm_close(*pcm_handle);
+        return E_OUTOFMEMORY;
+    }
+
+    return S_OK;
+}
+
+static DWORD get_channel_mask(unsigned int channels)
+{
+    switch(channels){
+    case 0:
+        return 0;
+    case 1:
+        return KSAUDIO_SPEAKER_MONO;
+    case 2:
+        return KSAUDIO_SPEAKER_STEREO;
+    case 3:
+        return KSAUDIO_SPEAKER_STEREO | SPEAKER_LOW_FREQUENCY;
+    case 4:
+        return KSAUDIO_SPEAKER_QUAD;    /* not _SURROUND */
+    case 5:
+        return KSAUDIO_SPEAKER_QUAD | SPEAKER_LOW_FREQUENCY;
+    case 6:
+        return KSAUDIO_SPEAKER_5POINT1; /* not 5POINT1_SURROUND */
+    case 7:
+        return KSAUDIO_SPEAKER_5POINT1 | SPEAKER_BACK_CENTER;
+    case 8:
+        return KSAUDIO_SPEAKER_7POINT1_SURROUND; /* Vista deprecates 7POINT1 */
+    }
+    FIXME("Unknown speaker configuration: %u\n", channels);
+    return 0;
+}
+
+static NTSTATUS get_mix_format(void *args)
+{
+    struct get_mix_format_params *params = args;
+    WAVEFORMATEXTENSIBLE *fmt = params->fmt;
+    snd_pcm_t *pcm_handle;
+    snd_pcm_hw_params_t *hw_params;
+    snd_pcm_format_mask_t *formats;
+    unsigned int max_rate, max_channels;
+    int err;
+
+    params->result = alsa_open_device(params->alsa_name, params->flow, &pcm_handle, &hw_params);
+    if(FAILED(params->result))
+        return STATUS_SUCCESS;
+
+    formats = calloc(1, snd_pcm_format_mask_sizeof());
+    if(!formats){
+        free(hw_params);
+        snd_pcm_close(pcm_handle);
+        params->result = E_OUTOFMEMORY;
+        return STATUS_SUCCESS;
+    }
+
+    if((err = snd_pcm_hw_params_any(pcm_handle, hw_params)) < 0){
+        WARN("Unable to get hw_params: %d (%s)\n", err, snd_strerror(err));
+        params->result = AUDCLNT_E_DEVICE_INVALIDATED;
+        goto exit;
+    }
+
+    snd_pcm_hw_params_get_format_mask(hw_params, formats);
+
+    fmt->Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+    if(snd_pcm_format_mask_test(formats, SND_PCM_FORMAT_FLOAT_LE)){
+        fmt->Format.wBitsPerSample = 32;
+        fmt->SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
+    }else if(snd_pcm_format_mask_test(formats, SND_PCM_FORMAT_S16_LE)){
+        fmt->Format.wBitsPerSample = 16;
+        fmt->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+    }else if(snd_pcm_format_mask_test(formats, SND_PCM_FORMAT_U8)){
+        fmt->Format.wBitsPerSample = 8;
+        fmt->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+    }else if(snd_pcm_format_mask_test(formats, SND_PCM_FORMAT_S32_LE)){
+        fmt->Format.wBitsPerSample = 32;
+        fmt->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+    }else if(snd_pcm_format_mask_test(formats, SND_PCM_FORMAT_S24_3LE)){
+        fmt->Format.wBitsPerSample = 24;
+        fmt->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+    }else{
+        ERR("Didn't recognize any available ALSA formats\n");
+        params->result = AUDCLNT_E_DEVICE_INVALIDATED;
+        goto exit;
+    }
+
+    if((err = snd_pcm_hw_params_get_channels_max(hw_params, &max_channels)) < 0){
+        WARN("Unable to get max channels: %d (%s)\n", err, snd_strerror(err));
+        params->result = AUDCLNT_E_DEVICE_INVALIDATED;
+        goto exit;
+    }
+
+    if(max_channels > 6)
+        fmt->Format.nChannels = 2;
+    else
+        fmt->Format.nChannels = max_channels;
+
+    if(fmt->Format.nChannels > 1 && (fmt->Format.nChannels & 0x1)){
+        /* For most hardware on Windows, users must choose a configuration with an even
+         * number of channels (stereo, quad, 5.1, 7.1). Users can then disable
+         * channels, but those channels are still reported to applications from
+         * GetMixFormat! Some applications behave badly if given an odd number of
+         * channels (e.g. 2.1). */
+
+        if(fmt->Format.nChannels < max_channels)
+            fmt->Format.nChannels += 1;
+        else
+            /* We could "fake" more channels and downmix the emulated channels,
+             * but at that point you really ought to tweak your ALSA setup or
+             * just use PulseAudio. */
+            WARN("Some Windows applications behave badly with an odd number of channels (%u)!\n", fmt->Format.nChannels);
+    }
+
+    fmt->dwChannelMask = get_channel_mask(fmt->Format.nChannels);
+
+    if((err = snd_pcm_hw_params_get_rate_max(hw_params, &max_rate, NULL)) < 0){
+        WARN("Unable to get max rate: %d (%s)\n", err, snd_strerror(err));
+        params->result = AUDCLNT_E_DEVICE_INVALIDATED;
+        goto exit;
+    }
+
+    if(max_rate >= 48000)
+        fmt->Format.nSamplesPerSec = 48000;
+    else if(max_rate >= 44100)
+        fmt->Format.nSamplesPerSec = 44100;
+    else if(max_rate >= 22050)
+        fmt->Format.nSamplesPerSec = 22050;
+    else if(max_rate >= 11025)
+        fmt->Format.nSamplesPerSec = 11025;
+    else if(max_rate >= 8000)
+        fmt->Format.nSamplesPerSec = 8000;
+    else{
+        ERR("Unknown max rate: %u\n", max_rate);
+        params->result = AUDCLNT_E_DEVICE_INVALIDATED;
+        goto exit;
+    }
+
+    fmt->Format.nBlockAlign = (fmt->Format.wBitsPerSample * fmt->Format.nChannels) / 8;
+    fmt->Format.nAvgBytesPerSec = fmt->Format.nSamplesPerSec * fmt->Format.nBlockAlign;
+
+    fmt->Samples.wValidBitsPerSample = fmt->Format.wBitsPerSample;
+    fmt->Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
+
+exit:
+    free(formats);
+    free(hw_params);
+    snd_pcm_close(pcm_handle);
+
+    return STATUS_SUCCESS;
+}
+
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     get_endpoint_ids,
+    get_mix_format,
 };

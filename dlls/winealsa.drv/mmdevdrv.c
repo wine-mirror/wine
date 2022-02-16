@@ -1446,11 +1446,7 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient3 *iface,
         WAVEFORMATEX **pwfx)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
-    WAVEFORMATEXTENSIBLE *fmt;
-    snd_pcm_format_mask_t *formats;
-    unsigned int max_rate, max_channels;
-    int err;
-    HRESULT hr = S_OK;
+    struct get_mix_format_params params;
 
     TRACE("(%p)->(%p)\n", This, pwfx);
 
@@ -1458,119 +1454,21 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient3 *iface,
         return E_POINTER;
     *pwfx = NULL;
 
-    fmt = CoTaskMemAlloc(sizeof(WAVEFORMATEXTENSIBLE));
-    if(!fmt)
+    params.alsa_name = This->alsa_name;
+    params.flow = This->dataflow;
+    params.fmt = CoTaskMemAlloc(sizeof(WAVEFORMATEXTENSIBLE));
+    if(!params.fmt)
         return E_OUTOFMEMORY;
 
-    formats = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, snd_pcm_format_mask_sizeof());
-    if(!formats){
-        CoTaskMemFree(fmt);
-        return E_OUTOFMEMORY;
-    }
+    ALSA_CALL(get_mix_format, &params);
 
-    EnterCriticalSection(&This->lock);
+    if(SUCCEEDED(params.result)){
+        *pwfx = &params.fmt->Format;
+        dump_fmt(*pwfx);
+    } else
+        CoTaskMemFree(params.fmt);
 
-    if((err = snd_pcm_hw_params_any(This->stream->pcm_handle, This->stream->hw_params)) < 0){
-        WARN("Unable to get hw_params: %d (%s)\n", err, snd_strerror(err));
-        hr = AUDCLNT_E_DEVICE_INVALIDATED;
-        goto exit;
-    }
-
-    snd_pcm_hw_params_get_format_mask(This->stream->hw_params, formats);
-
-    fmt->Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
-    if(snd_pcm_format_mask_test(formats, SND_PCM_FORMAT_FLOAT_LE)){
-        fmt->Format.wBitsPerSample = 32;
-        fmt->SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
-    }else if(snd_pcm_format_mask_test(formats, SND_PCM_FORMAT_S16_LE)){
-        fmt->Format.wBitsPerSample = 16;
-        fmt->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
-    }else if(snd_pcm_format_mask_test(formats, SND_PCM_FORMAT_U8)){
-        fmt->Format.wBitsPerSample = 8;
-        fmt->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
-    }else if(snd_pcm_format_mask_test(formats, SND_PCM_FORMAT_S32_LE)){
-        fmt->Format.wBitsPerSample = 32;
-        fmt->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
-    }else if(snd_pcm_format_mask_test(formats, SND_PCM_FORMAT_S24_3LE)){
-        fmt->Format.wBitsPerSample = 24;
-        fmt->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
-    }else{
-        ERR("Didn't recognize any available ALSA formats\n");
-        hr = AUDCLNT_E_DEVICE_INVALIDATED;
-        goto exit;
-    }
-
-    if((err = snd_pcm_hw_params_get_channels_max(This->stream->hw_params,
-                    &max_channels)) < 0){
-        WARN("Unable to get max channels: %d (%s)\n", err, snd_strerror(err));
-        hr = AUDCLNT_E_DEVICE_INVALIDATED;
-        goto exit;
-    }
-
-    if(max_channels > 6)
-        fmt->Format.nChannels = 2;
-    else
-        fmt->Format.nChannels = max_channels;
-
-    if(fmt->Format.nChannels > 1 && (fmt->Format.nChannels & 0x1)){
-        /* For most hardware on Windows, users must choose a configuration with an even
-         * number of channels (stereo, quad, 5.1, 7.1). Users can then disable
-         * channels, but those channels are still reported to applications from
-         * GetMixFormat! Some applications behave badly if given an odd number of
-         * channels (e.g. 2.1). */
-
-        if(fmt->Format.nChannels < max_channels)
-            fmt->Format.nChannels += 1;
-        else
-            /* We could "fake" more channels and downmix the emulated channels,
-             * but at that point you really ought to tweak your ALSA setup or
-             * just use PulseAudio. */
-            WARN("Some Windows applications behave badly with an odd number of channels (%u)!\n", fmt->Format.nChannels);
-    }
-
-    fmt->dwChannelMask = get_channel_mask(fmt->Format.nChannels);
-
-    if((err = snd_pcm_hw_params_get_rate_max(This->stream->hw_params, &max_rate,
-                    NULL)) < 0){
-        WARN("Unable to get max rate: %d (%s)\n", err, snd_strerror(err));
-        hr = AUDCLNT_E_DEVICE_INVALIDATED;
-        goto exit;
-    }
-
-    if(max_rate >= 48000)
-        fmt->Format.nSamplesPerSec = 48000;
-    else if(max_rate >= 44100)
-        fmt->Format.nSamplesPerSec = 44100;
-    else if(max_rate >= 22050)
-        fmt->Format.nSamplesPerSec = 22050;
-    else if(max_rate >= 11025)
-        fmt->Format.nSamplesPerSec = 11025;
-    else if(max_rate >= 8000)
-        fmt->Format.nSamplesPerSec = 8000;
-    else{
-        ERR("Unknown max rate: %u\n", max_rate);
-        hr = AUDCLNT_E_DEVICE_INVALIDATED;
-        goto exit;
-    }
-
-    fmt->Format.nBlockAlign = (fmt->Format.wBitsPerSample *
-            fmt->Format.nChannels) / 8;
-    fmt->Format.nAvgBytesPerSec = fmt->Format.nSamplesPerSec *
-        fmt->Format.nBlockAlign;
-
-    fmt->Samples.wValidBitsPerSample = fmt->Format.wBitsPerSample;
-    fmt->Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
-
-    dump_fmt((WAVEFORMATEX*)fmt);
-    *pwfx = (WAVEFORMATEX*)fmt;
-
-exit:
-    LeaveCriticalSection(&This->lock);
-    if(FAILED(hr))
-        CoTaskMemFree(fmt);
-    HeapFree(GetProcessHeap(), 0, formats);
-
-    return hr;
+    return params.result;
 }
 
 static HRESULT WINAPI AudioClient_GetDevicePeriod(IAudioClient3 *iface,

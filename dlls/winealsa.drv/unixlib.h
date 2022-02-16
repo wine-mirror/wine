@@ -67,9 +67,18 @@ struct get_endpoint_ids_params
     unsigned int default_idx;
 };
 
+struct get_mix_format_params
+{
+    const char *alsa_name;
+    EDataFlow flow;
+    WAVEFORMATEXTENSIBLE *fmt;
+    HRESULT result;
+};
+
 enum alsa_funcs
 {
     alsa_get_endpoint_ids,
+    alsa_get_mix_format,
 };
 
 extern unixlib_handle_t alsa_handle;
