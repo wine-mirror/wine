@@ -4321,6 +4321,8 @@ HRESULT WINAPI UrlGetPartW(const WCHAR *url, WCHAR *out, DWORD *out_len, DWORD p
         break;
 
     case URL_PART_USERNAME:
+        if (!pl.username)
+            return E_INVALIDARG;
         if (!pl.username_len)
         {
             *out = '\0';

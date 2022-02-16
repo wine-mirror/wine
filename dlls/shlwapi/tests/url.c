@@ -621,13 +621,13 @@ static void test_UrlGetPart(void)
         {"http://foo:bar@localhost:21/internal.php?query=x&return=y", URL_PART_PORT, URL_PARTFLAG_KEEPSCHEME, S_OK, "http:21"},
         {"http://foo:bar@localhost:21/internal.php?query=x&return=y", URL_PART_QUERY, URL_PARTFLAG_KEEPSCHEME, S_OK, "query=x&return=y"},
 
-        {"http://localhost/", URL_PART_USERNAME, 0, E_INVALIDARG, .todo_hr = TRUE},
+        {"http://localhost/", URL_PART_USERNAME, 0, E_INVALIDARG},
         {"http://localhost/", URL_PART_PASSWORD, 0, E_INVALIDARG, .todo_hr = TRUE},
         {"http://localhost/", URL_PART_HOSTNAME, 0, S_OK, "localhost"},
         {"http://localhost/", URL_PART_PORT, 0, E_INVALIDARG, .todo_hr = TRUE},
         {"http://localhost/", URL_PART_QUERY, 0, S_FALSE, ""},
 
-        {"http://localhost:port/", URL_PART_USERNAME, 0, E_INVALIDARG, .todo_hr = TRUE},
+        {"http://localhost:port/", URL_PART_USERNAME, 0, E_INVALIDARG},
         {"http://localhost:port/", URL_PART_PASSWORD, 0, E_INVALIDARG, .todo_hr = TRUE},
         {"http://localhost:port/", URL_PART_HOSTNAME, 0, S_OK, "localhost"},
         {"http://localhost:port/", URL_PART_PORT, 0, S_OK, "port"},
