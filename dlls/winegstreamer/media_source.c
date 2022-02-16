@@ -105,6 +105,7 @@ struct media_source
         SOURCE_RUNNING,
         SOURCE_SHUTDOWN,
     } state;
+    float rate;
 
     HANDLE read_thread;
     bool read_thread_shutdown;
@@ -1110,6 +1111,7 @@ static ULONG WINAPI media_source_rate_control_Release(IMFRateControl *iface)
 static HRESULT WINAPI media_source_rate_control_SetRate(IMFRateControl *iface, BOOL thin, float rate)
 {
     struct media_source *source = impl_from_IMFRateControl(iface);
+    HRESULT hr;
 
     FIXME("%p, %d, %f.\n", iface, thin, rate);
 
@@ -1119,20 +1121,24 @@ static HRESULT WINAPI media_source_rate_control_SetRate(IMFRateControl *iface, B
     if (thin)
         return MF_E_THINNING_UNSUPPORTED;
 
-    if (rate != 1.0f)
-        return MF_E_UNSUPPORTED_RATE;
+    if (FAILED(hr = IMFRateSupport_IsRateSupported(&source->IMFRateSupport_iface, thin, rate, NULL)))
+        return hr;
+
+    source->rate = rate;
 
     return IMFMediaEventQueue_QueueEventParamVar(source->event_queue, MESourceRateChanged, &GUID_NULL, S_OK, NULL);
 }
 
 static HRESULT WINAPI media_source_rate_control_GetRate(IMFRateControl *iface, BOOL *thin, float *rate)
 {
+    struct media_source *source = impl_from_IMFRateControl(iface);
+
     TRACE("%p, %p, %p.\n", iface, thin, rate);
 
     if (thin)
         *thin = FALSE;
 
-    *rate = 1.0f;
+    *rate = source->rate;
 
     return S_OK;
 }
@@ -1427,6 +1433,7 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
     object->ref = 1;
     object->byte_stream = bytestream;
     IMFByteStream_AddRef(bytestream);
+    object->rate = 1.0f;
 
     if (FAILED(hr = MFCreateEventQueue(&object->event_queue)))
         goto fail;
