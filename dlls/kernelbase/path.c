@@ -4191,16 +4191,16 @@ static const WCHAR *parse_url_element( const WCHAR *url, const WCHAR *separators
     return url + wcslen( url );
 }
 
-static LONG parse_url(const WCHAR *url, struct parsed_url *pl)
+static void parse_url( const WCHAR *url, struct parsed_url *pl )
 {
     const WCHAR *work;
 
     memset(pl, 0, sizeof(*pl));
     pl->scheme = url;
     work = scan_url(pl->scheme, &pl->scheme_len, SCHEME);
-    if (!*work || (*work != ':')) goto ErrorExit;
+    if (!*work || (*work != ':')) return;
     work++;
-    if ((*work != '/') || (*(work+1) != '/')) goto SuccessExit;
+    if ((*work != '/') || (*(work+1) != '/')) return;
 
     pl->username = work + 2;
     work = parse_url_element( pl->username, L":@/\\?#" );
@@ -4249,17 +4249,6 @@ static LONG parse_url(const WCHAR *url, struct parsed_url *pl)
         ++pl->query;
         pl->query_len = lstrlenW(pl->query);
     }
-
-  SuccessExit:
-    TRACE("parse successful: scheme=%p(%ld), user=%p(%ld), pass=%p(%ld), host=%p(%ld), port=%p(%ld), query=%p(%ld)\n",
-            pl->scheme, pl->scheme_len, pl->username, pl->username_len, pl->password, pl->password_len, pl->hostname,
-            pl->hostname_len, pl->port, pl->port_len, pl->query, pl->query_len);
-
-    return S_OK;
-
-  ErrorExit:
-    FIXME("failed to parse %s\n", debugstr_w(url));
-    return E_INVALIDARG;
 }
 
 HRESULT WINAPI UrlGetPartW(const WCHAR *url, WCHAR *out, DWORD *out_len, DWORD part, DWORD flags)
@@ -4267,7 +4256,6 @@ HRESULT WINAPI UrlGetPartW(const WCHAR *url, WCHAR *out, DWORD *out_len, DWORD p
     DWORD scheme, size, schsize;
     LPCWSTR addr, schaddr;
     struct parsed_url pl;
-    HRESULT hr;
 
     TRACE("%s, %p, %p(%ld), %#lx, %#lx\n", wine_dbgstr_w(url), out, out_len, *out_len, part, flags);
 
@@ -4280,7 +4268,7 @@ HRESULT WINAPI UrlGetPartW(const WCHAR *url, WCHAR *out, DWORD *out_len, DWORD p
     else
         scheme = get_scheme_code(url, addr - url);
 
-    hr = parse_url(url, &pl);
+    parse_url(url, &pl);
 
     switch (scheme)
     {
@@ -4411,7 +4399,7 @@ HRESULT WINAPI UrlGetPartW(const WCHAR *url, WCHAR *out, DWORD *out_len, DWORD p
     }
     TRACE("len=%ld %s\n", *out_len, wine_dbgstr_w(out));
 
-    return hr;
+    return S_OK;
 }
 
 BOOL WINAPI UrlIsA(const char *url, URLIS Urlis)
