@@ -136,7 +136,35 @@ static void test_key_import_rsa(void)
     NCryptFreeObject(prov);
 }
 
+static void test_ncrypt_free_object(void)
+{
+    NCRYPT_PROV_HANDLE prov;
+    NCRYPT_KEY_HANDLE key;
+    SECURITY_STATUS ret;
+    char *buf;
+
+    ret = NCryptOpenStorageProvider(&prov, NULL, 0);
+    ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
+
+    ret = NCryptImportKey(prov, 0, BCRYPT_RSAPUBLIC_BLOB, NULL, &key, rsa_key_blob, sizeof(rsa_key_blob), 0);
+    ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
+    todo_wine {
+    ret = NCryptFreeObject(key);
+    ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
+
+    key = 0;
+    ret = NCryptFreeObject(key);
+    ok(ret == NTE_INVALID_HANDLE, "got %#lx\n", ret);
+
+    buf = calloc(1, 50);
+    ret = NCryptFreeObject((NCRYPT_KEY_HANDLE)buf);
+    ok(ret == NTE_INVALID_HANDLE, "got %#lx\n", ret);
+    free(buf);
+    }
+}
+
 START_TEST(ncrypt)
 {
     test_key_import_rsa();
+    test_ncrypt_free_object();
 }
