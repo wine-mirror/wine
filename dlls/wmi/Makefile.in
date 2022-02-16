@@ -1,2 +1,4 @@
 MODULE    = wmi.dll
 IMPORTS   = advapi32
+
+EXTRADLLFLAGS = -Wb,--data-only
