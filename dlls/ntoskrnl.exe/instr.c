@@ -353,7 +353,7 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
             {
                 int reg = (instr[2] >> 3) & 7;
                 DWORD *data = get_reg_address( context, instr[2] );
-                TRACE( "mov cr%u,%s at 0x%08x\n", reg, reg_names[instr[2] & 7], context->Eip );
+                TRACE( "mov cr%u,%s at 0x%08lx\n", reg, reg_names[instr[2] & 7], context->Eip );
                 switch (reg)
                 {
                 case 0: *data = CR0_PE|CR0_ET|CR0_NE|CR0_WP|CR0_AM|CR0_PG; break;
@@ -369,7 +369,7 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
             {
                 int reg = (instr[2] >> 3) & 7;
                 DWORD *data = get_reg_address( context, instr[2] );
-                TRACE( "mov dr%u,%s at 0x%08x\n", reg, reg_names[instr[2] & 7], context->Eip );
+                TRACE( "mov dr%u,%s at 0x%08lx\n", reg, reg_names[instr[2] & 7], context->Eip );
                 switch (reg)
                 {
                 case 0: *data = context->Dr0; break;
@@ -387,7 +387,7 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
             {
                 int reg = (instr[2] >> 3) & 7;
                 DWORD *data = get_reg_address( context, instr[2] );
-                TRACE( "mov %s,cr%u at 0x%08x, %s=%08x\n", reg_names[instr[2] & 7],
+                TRACE( "mov %s,cr%u at 0x%08lx, %s=%08lx\n", reg_names[instr[2] & 7],
                        reg, context->Eip, reg_names[instr[2] & 7], *data );
                 switch (reg)
                 {
@@ -404,7 +404,7 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
             {
                 int reg = (instr[2] >> 3) & 7;
                 DWORD *data = get_reg_address( context, instr[2] );
-                TRACE( "mov %s,dr%u at 0x%08x %s=%08x\n", reg_names[instr[2] & 7],
+                TRACE( "mov %s,dr%u at 0x%08lx %s=%08lx\n", reg_names[instr[2] & 7],
                        reg, context->Eip, reg_names[instr[2] & 7], *data );
                 switch (reg)
                 {
@@ -735,7 +735,7 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
             int reg = REGMODRM_REG( instr[2], rex );
             int rm = REGMODRM_RM( instr[2], rex );
             DWORD64 *data = get_int_reg( context, rm );
-            TRACE( "mov cr%u,%s at %lx\n", reg, reg_names[rm], context->Rip );
+            TRACE( "mov cr%u,%s at %Ix\n", reg, reg_names[rm], context->Rip );
             switch (reg)
             {
             case 0: *data = 0x10; break; /* FIXME: set more bits ? */
@@ -753,7 +753,7 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
             int reg = REGMODRM_REG( instr[2], rex );
             int rm = REGMODRM_RM( instr[2], rex );
             DWORD64 *data = get_int_reg( context, rm );
-            TRACE( "mov dr%u,%s at %lx\n", reg, reg_names[rm], context->Rip );
+            TRACE( "mov dr%u,%s at %Ix\n", reg, reg_names[rm], context->Rip );
             switch (reg)
             {
             case 0: *data = context->Dr0; break;
@@ -774,7 +774,7 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
             int reg = REGMODRM_REG( instr[2], rex );
             int rm = REGMODRM_RM( instr[2], rex );
             DWORD64 *data = get_int_reg( context, rm );
-            TRACE( "mov %s,cr%u at %lx, %s=%lx\n", reg_names[rm], reg, context->Rip, reg_names[rm], *data );
+            TRACE( "mov %s,cr%u at %Ix, %s=%Ix\n", reg_names[rm], reg, context->Rip, reg_names[rm], *data );
             switch (reg)
             {
             case 0: break;
@@ -792,7 +792,7 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
             int reg = REGMODRM_REG( instr[2], rex );
             int rm = REGMODRM_RM( instr[2], rex );
             DWORD64 *data = get_int_reg( context, rm );
-            TRACE( "mov %s,dr%u at %lx, %s=%lx\n", reg_names[rm], reg, context->Rip, reg_names[rm], *data );
+            TRACE( "mov %s,dr%u at %Ix, %s=%Ix\n", reg_names[rm], reg, context->Rip, reg_names[rm], *data );
             switch (reg)
             {
             case 0: context->Dr0 = *data; break;
@@ -811,7 +811,7 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
         case 0x32: /* rdmsr */
         {
             ULONG reg = context->Rcx;
-            TRACE("rdmsr CR 0x%08x\n", reg);
+            TRACE("rdmsr CR 0x%08lx\n", reg);
             switch (reg)
             {
             case MSR_LSTAR:
@@ -822,7 +822,7 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
                 break;
             }
             default:
-                FIXME("reg %#x, returning 0.\n", reg);
+                FIXME("reg %#lx, returning 0.\n", reg);
                 context->Rdx = 0;
                 context->Rax = 0;
                 break;
@@ -935,14 +935,14 @@ LONG CALLBACK vectored_handler( EXCEPTION_POINTERS *ptrs )
     {
         if (emulate_instruction( record, context ) == ExceptionContinueExecution)
         {
-            TRACE( "next instruction rip=%lx\n", context->Rip );
-            TRACE( "  rax=%016lx rbx=%016lx rcx=%016lx rdx=%016lx\n",
+            TRACE( "next instruction rip=%Ix\n", context->Rip );
+            TRACE( "  rax=%016Ix rbx=%016Ix rcx=%016Ix rdx=%016Ix\n",
                    context->Rax, context->Rbx, context->Rcx, context->Rdx );
-            TRACE( "  rsi=%016lx rdi=%016lx rbp=%016lx rsp=%016lx\n",
+            TRACE( "  rsi=%016Ix rdi=%016Ix rbp=%016Ix rsp=%016Ix\n",
                    context->Rsi, context->Rdi, context->Rbp, context->Rsp );
-            TRACE( "   r8=%016lx  r9=%016lx r10=%016lx r11=%016lx\n",
+            TRACE( "   r8=%016Ix  r9=%016Ix r10=%016Ix r11=%016Ix\n",
                    context->R8, context->R9, context->R10, context->R11 );
-            TRACE( "  r12=%016lx r13=%016lx r14=%016lx r15=%016lx\n",
+            TRACE( "  r12=%016Ix r13=%016Ix r14=%016Ix r15=%016Ix\n",
                    context->R12, context->R13, context->R14, context->R15 );
 
             return EXCEPTION_CONTINUE_EXECUTION;

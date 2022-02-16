@@ -52,7 +52,7 @@ NTSTATUS WINAPI KeWaitForMultipleObjects(ULONG count, void *pobjs[],
     NTSTATUS ret;
     ULONG i;
 
-    TRACE("count %u, objs %p, wait_type %u, reason %u, mode %d, alertable %u, timeout %p, wait_blocks %p.\n",
+    TRACE("count %lu, objs %p, wait_type %u, reason %u, mode %d, alertable %u, timeout %p, wait_blocks %p.\n",
         count, objs, wait_type, reason, mode, alertable, timeout, wait_blocks);
 
     /* We co-opt DISPATCHER_HEADER.WaitListHead:
@@ -239,7 +239,7 @@ LONG WINAPI KeSetEvent( PRKEVENT event, KPRIORITY increment, BOOLEAN wait )
     HANDLE handle;
     LONG ret = 0;
 
-    TRACE("event %p, increment %d, wait %u.\n", event, increment, wait);
+    TRACE("event %p, increment %ld, wait %u.\n", event, increment, wait);
 
     if (event->Header.WaitListHead.Blink != INVALID_HANDLE_VALUE)
     {
@@ -328,7 +328,7 @@ LONG WINAPI KeReadStateEvent( PRKEVENT event )
  */
 void WINAPI KeInitializeSemaphore( PRKSEMAPHORE semaphore, LONG count, LONG limit )
 {
-    TRACE("semaphore %p, count %d, limit %d.\n", semaphore, count, limit);
+    TRACE("semaphore %p, count %ld, limit %ld.\n", semaphore, count, limit);
 
     semaphore->Header.Type = TYPE_SEMAPHORE;
     semaphore->Header.SignalState = count;
@@ -346,7 +346,7 @@ LONG WINAPI KeReleaseSemaphore( PRKSEMAPHORE semaphore, KPRIORITY increment,
     HANDLE handle;
     LONG ret;
 
-    TRACE("semaphore %p, increment %d, count %d, wait %u.\n",
+    TRACE("semaphore %p, increment %ld, count %ld, wait %u.\n",
         semaphore, increment, count, wait);
 
     EnterCriticalSection( &sync_cs );
@@ -372,7 +372,7 @@ POBJECT_TYPE ExSemaphoreObjectType = &semaphore_type;
  */
 void WINAPI KeInitializeMutex( PRKMUTEX mutex, ULONG level )
 {
-    TRACE("mutex %p, level %u.\n", mutex, level);
+    TRACE("mutex %p, level %lu.\n", mutex, level);
 
     mutex->Header.Type = TYPE_MUTEX;
     mutex->Header.SignalState = 1;
@@ -450,7 +450,7 @@ BOOLEAN WINAPI KeSetTimerEx( KTIMER *timer, LARGE_INTEGER duetime, LONG period, 
 {
     BOOL ret;
 
-    TRACE("timer %p, duetime %s, period %d, dpc %p.\n",
+    TRACE("timer %p, duetime %s, period %ld, dpc %p.\n",
         timer, wine_dbgstr_longlong(duetime.QuadPart), period, dpc);
 
     EnterCriticalSection( &sync_cs );
@@ -1150,7 +1150,7 @@ void WINAPI ExReleaseResourceForThreadLite( ERESOURCE *resource, ERESOURCE_THREA
     OWNER_ENTRY *entry;
     KIRQL irql;
 
-    TRACE("resource %p, thread %#lx.\n", resource, thread);
+    TRACE("resource %p, thread %#Ix.\n", resource, thread);
 
     KeAcquireSpinLock( &resource->SpinLock, &irql );
 
@@ -1166,7 +1166,7 @@ void WINAPI ExReleaseResourceForThreadLite( ERESOURCE *resource, ERESOURCE_THREA
         }
         else
         {
-            ERR("Trying to release %p for thread %#lx, but resource is exclusively owned by %#lx.\n",
+            ERR("Trying to release %p for thread %#Ix, but resource is exclusively owned by %#Ix.\n",
                     resource, thread, resource->OwnerEntry.OwnerThread);
             return;
         }
@@ -1181,7 +1181,7 @@ void WINAPI ExReleaseResourceForThreadLite( ERESOURCE *resource, ERESOURCE_THREA
         }
         else
         {
-            ERR("Trying to release %p for thread %#lx, but resource is not owned by that thread.\n", resource, thread);
+            ERR("Trying to release %p for thread %#Ix, but resource is not owned by that thread.\n", resource, thread);
             return;
         }
     }
@@ -1299,7 +1299,7 @@ ULONG WINAPI ExIsResourceAcquiredSharedLite( ERESOURCE *resource )
 void WINAPI IoInitializeRemoveLockEx( IO_REMOVE_LOCK *lock, ULONG tag,
         ULONG max_minutes, ULONG max_count, ULONG size )
 {
-    TRACE("lock %p, tag %#x, max_minutes %u, max_count %u, size %u.\n",
+    TRACE("lock %p, tag %#lx, max_minutes %lu, max_count %lu, size %lu.\n",
             lock, tag, max_minutes, max_count, size);
 
     KeInitializeEvent( &lock->Common.RemoveEvent, NotificationEvent, FALSE );
@@ -1313,7 +1313,7 @@ void WINAPI IoInitializeRemoveLockEx( IO_REMOVE_LOCK *lock, ULONG tag,
 NTSTATUS WINAPI IoAcquireRemoveLockEx( IO_REMOVE_LOCK *lock, void *tag,
         const char *file, ULONG line, ULONG size )
 {
-    TRACE("lock %p, tag %p, file %s, line %u, size %u.\n", lock, tag, debugstr_a(file), line, size);
+    TRACE("lock %p, tag %p, file %s, line %lu, size %lu.\n", lock, tag, debugstr_a(file), line, size);
 
     if (lock->Common.Removed)
         return STATUS_DELETE_PENDING;
@@ -1329,7 +1329,7 @@ void WINAPI IoReleaseRemoveLockEx( IO_REMOVE_LOCK *lock, void *tag, ULONG size )
 {
     LONG count;
 
-    TRACE("lock %p, tag %p, size %u.\n", lock, tag, size);
+    TRACE("lock %p, tag %p, size %lu.\n", lock, tag, size);
 
     if (!(count = InterlockedDecrement( &lock->Common.IoCount )) && lock->Common.Removed)
         KeSetEvent( &lock->Common.RemoveEvent, IO_NO_INCREMENT, FALSE );
@@ -1344,7 +1344,7 @@ void WINAPI IoReleaseRemoveLockAndWaitEx( IO_REMOVE_LOCK *lock, void *tag, ULONG
 {
     LONG count;
 
-    TRACE("lock %p, tag %p, size %u.\n", lock, tag, size);
+    TRACE("lock %p, tag %p, size %lu.\n", lock, tag, size);
 
     lock->Common.Removed = TRUE;
 

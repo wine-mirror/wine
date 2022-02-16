@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = ntoskrnl.exe
 IMPORTLIB = ntoskrnl
 IMPORTS   = advapi32 hal msvcrt
