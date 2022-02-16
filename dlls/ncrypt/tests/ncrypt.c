@@ -97,7 +97,6 @@ static void test_key_import_rsa(void)
     ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
     ok(prov, "got null handle\n");
 
-    todo_wine {
     key = 0;
     ret = NCryptImportKey(prov, 0, BCRYPT_RSAPUBLIC_BLOB, NULL, &key, rsa_key_blob, sizeof(rsa_key_blob), 0);
     ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
@@ -135,7 +134,6 @@ static void test_key_import_rsa(void)
     ok(ret == NTE_BAD_DATA, "got %#lx\n", ret);
 
     NCryptFreeObject(prov);
-    }
 }
 
 START_TEST(ncrypt)
