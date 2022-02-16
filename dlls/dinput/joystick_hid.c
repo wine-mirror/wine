@@ -985,7 +985,7 @@ static HRESULT hid_joystick_get_effect_info( IDirectInputDevice8W *iface, DIEFFE
         }
     }
 
-    if ((type & DIEFT_PERIODIC) && (collection = set_periodic->collection))
+    if ((DIEFT_GETTYPE(type) == DIEFT_PERIODIC) && (collection = set_periodic->collection))
     {
         if (set_periodic->magnitude_caps) info->dwDynamicParams |= DIEP_TYPESPECIFICPARAMS;
         if (set_periodic->offset_caps) info->dwDynamicParams |= DIEP_TYPESPECIFICPARAMS;
@@ -993,7 +993,10 @@ static HRESULT hid_joystick_get_effect_info( IDirectInputDevice8W *iface, DIEFFE
         if (set_periodic->phase_caps) info->dwDynamicParams |= DIEP_TYPESPECIFICPARAMS;
     }
 
-    if ((type & (DIEFT_PERIODIC | DIEFT_RAMPFORCE | DIEFT_CONSTANTFORCE)) && (collection = set_envelope->collection))
+    if ((DIEFT_GETTYPE(type) == DIEFT_PERIODIC ||
+         DIEFT_GETTYPE(type) == DIEFT_RAMPFORCE ||
+         DIEFT_GETTYPE(type) == DIEFT_CONSTANTFORCE) &&
+        (collection = set_envelope->collection))
     {
         info->dwDynamicParams |= DIEP_ENVELOPE;
         if (set_envelope->attack_level_caps) type |= DIEFT_FFATTACK;
@@ -1004,7 +1007,7 @@ static HRESULT hid_joystick_get_effect_info( IDirectInputDevice8W *iface, DIEFFE
         if (effect_update->trigger_repeat_interval_caps) info->dwDynamicParams |= DIEP_TRIGGERREPEATINTERVAL;
     }
 
-    if ((type & DIEFT_CONDITION) && (collection = set_condition->collection))
+    if (DIEFT_GETTYPE(type) == DIEFT_CONDITION && (collection = set_condition->collection))
     {
         if (set_condition->center_point_offset_caps)
             info->dwDynamicParams |= DIEP_TYPESPECIFICPARAMS;
