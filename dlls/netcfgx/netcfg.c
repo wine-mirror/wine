@@ -75,7 +75,7 @@ static ULONG WINAPI netcfg_AddRef(INetCfg *iface)
     NetConfiguration *This = impl_from_INetCfg(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("%p ref=%u\n", This, ref);
+    TRACE("%p ref=%lu\n", This, ref);
 
     return ref;
 }
@@ -85,7 +85,7 @@ static ULONG WINAPI netcfg_Release(INetCfg *iface)
     NetConfiguration *This = impl_from_INetCfg(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("%p ref=%u\n", This, ref);
+    TRACE("%p ref=%lu\n", This, ref);
 
     if (ref == 0)
     {
@@ -190,7 +190,7 @@ static HRESULT WINAPI netcfglock_AcquireWriteLock(INetCfgLock *iface, DWORD cmsT
                                  LPCWSTR pszwClientDescription, LPWSTR *ppszwClientDescription)
 {
     NetConfiguration *This = impl_from_INetCfgLock(iface);
-    FIXME("%p %d %s %p\n", This, cmsTimeout, debugstr_w(pszwClientDescription), ppszwClientDescription);
+    FIXME("%p %ld %s %p\n", This, cmsTimeout, debugstr_w(pszwClientDescription), ppszwClientDescription);
 
     return S_OK;
 }

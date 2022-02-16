@@ -98,7 +98,7 @@ static HRESULT WINAPI netcfgcf_CreateInstance(IClassFactory *iface,LPUNKNOWN pOu
     }
     else
     {
-        WARN("Cannot create an instance object. 0x%08x\n", hr);
+        WARN("Cannot create an instance object. 0x%08lx\n", hr);
     }
     return hr;
 }
