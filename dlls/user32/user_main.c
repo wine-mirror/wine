@@ -212,6 +212,7 @@ static void dpiaware_init(void)
 static const void *kernel_callback_table[NtUserCallCount] =
 {
     User32CallEnumDisplayMonitor,
+    User32CallWinEventHook,
 };
 
 

@@ -726,160 +726,29 @@ HWINEVENTHOOK WINAPI SetWinEventHook(DWORD event_min, DWORD event_max,
     return NtUserSetWinEventHook( event_min, event_max, inst, &str, proc, pid, tid, flags );
 }
 
-static inline BOOL find_first_hook(DWORD id, DWORD event, HWND hwnd, LONG object_id,
-                                   LONG child_id, struct hook_info *info)
+BOOL WINAPI User32CallWinEventHook( const struct win_hook_proc_params *params, ULONG size )
 {
-    struct user_thread_info *thread_info = get_user_thread_info();
-    BOOL ret;
+    WINEVENTPROC proc = params->proc;
+    HMODULE free_module = 0;
 
-    if (!HOOK_IsHooked( id ))
-    {
-        TRACE( "skipping hook %s mask %x\n", hook_names[id-WH_MINHOOK], thread_info->active_hooks );
-        return FALSE;
-    }
+    USER_CheckNotLock(); /* FIXME: move to NtUserNotifyWinEvent */
 
-    SERVER_START_REQ( start_hook_chain )
-    {
-        req->id = id;
-        req->event = event;
-        req->window = wine_server_user_handle( hwnd );
-        req->object_id = object_id;
-        req->child_id = child_id;
-        wine_server_set_reply( req, info->module, sizeof(info->module)-sizeof(WCHAR) );
-        ret = !wine_server_call( req );
-        if (ret)
-        {
-            info->module[wine_server_reply_size(req) / sizeof(WCHAR)] = 0;
-            info->handle    = wine_server_ptr_handle( reply->handle );
-            info->proc      = wine_server_get_ptr( reply->proc );
-            info->tid       = reply->tid;
-            thread_info->active_hooks = reply->active_hooks;
-        }
-    }
-    SERVER_END_REQ;
-    return ret && (info->tid || info->proc);
+    if (params->module[0] && !(proc = get_hook_proc( proc, params->module, &free_module ))) return FALSE;
+
+    TRACE_(relay)( "\1Call winevent hook proc %p (hhook=%p,event=%x,hwnd=%p,object_id=%x,child_id=%x,tid=%04x,time=%x)\n",
+                   proc, params->handle, params->event, params->hwnd, params->object_id,
+                   params->child_id, GetCurrentThreadId(), GetCurrentTime() );
+
+    proc( params->handle, params->event, params->hwnd, params->object_id, params->child_id,
+          GetCurrentThreadId(), GetCurrentTime() );
+
+    TRACE_(relay)( "\1Ret  winevent hook proc %p (hhook=%p,event=%x,hwnd=%p,object_id=%x,child_id=%x,tid=%04x,time=%x)\n",
+                   proc, params->handle, params->event, params->hwnd, params->object_id,
+                   params->child_id, GetCurrentThreadId(), GetCurrentTime() );
+
+    if (free_module) FreeLibrary( free_module );
+    return TRUE;
 }
-
-static inline BOOL find_next_hook(DWORD event, HWND hwnd, LONG object_id,
-                                  LONG child_id, struct hook_info *info)
-{
-    BOOL ret;
-
-    SERVER_START_REQ( get_hook_info )
-    {
-        req->handle = wine_server_user_handle( info->handle );
-        req->get_next = 1;
-        req->event = event;
-        req->window = wine_server_user_handle( hwnd );
-        req->object_id = object_id;
-        req->child_id = child_id;
-        wine_server_set_reply( req, info->module, sizeof(info->module)-sizeof(WCHAR) );
-        ret = !wine_server_call( req );
-        if (ret)
-        {
-            info->module[wine_server_reply_size(req) / sizeof(WCHAR)] = 0;
-            info->handle    = wine_server_ptr_handle( reply->handle );
-            info->proc      = wine_server_get_ptr( reply->proc );
-            info->tid       = reply->tid;
-        }
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-static inline void find_hook_close(DWORD id)
-{
-    SERVER_START_REQ( finish_hook_chain )
-    {
-        req->id = id;
-        wine_server_call( req );
-    }
-    SERVER_END_REQ;
-}
-
-/***********************************************************************
- *           NotifyWinEvent                             [USER32.@]
- *
- * Inform the OS that an event has occurred.
- *
- * PARAMS
- *  event     [I] Id of the event
- *  hwnd      [I] Window holding the object that created the event
- *  object_id [I] Type of object that created the event
- *  child_id  [I] Child object of nId, or CHILDID_SELF.
- *
- * RETURNS
- *  Nothing.
- */
-void WINAPI NotifyWinEvent(DWORD event, HWND hwnd, LONG object_id, LONG child_id)
-{
-    struct hook_info info;
-
-    TRACE("%04x,%p,%d,%d\n", event, hwnd, object_id, child_id);
-
-    if (!hwnd)
-    {
-        SetLastError(ERROR_INVALID_WINDOW_HANDLE);
-        return;
-    }
-
-    USER_CheckNotLock();
-
-#if 0
-    if (event & 0x80000000)
-    {
-        /* FIXME: on 64-bit platforms we need to invent some other way for
-         * passing parameters, nId and nChildId can't hold full [W|L]PARAM.
-         * struct call_hook *hook = (LRESULT *)hWnd;
-         * wparam = hook->wparam;
-         * lparam = hook->lparam;
-         */
-        LRESULT *ret = (LRESULT *)hwnd;
-        INT id, code, unicode;
-
-        id = (dwEvent & 0x7fff0000) >> 16;
-        code = event & 0x7fff;
-        unicode = event & 0x8000;
-        *ret = HOOK_CallHooks(id, code, object_id, child_id, unicode);
-        return;
-    }
-#endif
-
-    if (!find_first_hook(WH_WINEVENT, event, hwnd, object_id, child_id, &info)) return;
-
-    do
-    {
-        WINEVENTPROC proc = info.proc;
-        if (proc)
-        {
-            HMODULE free_module = 0;
-            TRACE( "calling WH_WINEVENT hook %p event %x hwnd %p %x %x module %s\n",
-                   proc, event, hwnd, object_id, child_id, debugstr_w(info.module) );
-
-            if (!info.module[0] || (proc = get_hook_proc( proc, info.module, &free_module )) != NULL)
-            {
-                TRACE_(relay)( "\1Call winevent hook proc %p (hhook=%p,event=%x,hwnd=%p,object_id=%x,child_id=%x,tid=%04x,time=%x)\n",
-                               proc, info.handle, event, hwnd, object_id,
-                               child_id, GetCurrentThreadId(), GetCurrentTime());
-
-                proc( info.handle, event, hwnd, object_id, child_id,
-                      GetCurrentThreadId(), GetCurrentTime());
-
-                TRACE_(relay)( "\1Ret  winevent hook proc %p (hhook=%p,event=%x,hwnd=%p,object_id=%x,child_id=%x,tid=%04x,time=%x)\n",
-                             proc, info.handle, event, hwnd, object_id,
-                             child_id, GetCurrentThreadId(), GetCurrentTime());
-
-                if (free_module) FreeLibrary(free_module);
-            }
-        }
-        else
-            break;
-    }
-    while (find_next_hook(event, hwnd, object_id, child_id, &info));
-
-    find_hook_close(WH_WINEVENT);
-}
-
 
 /***********************************************************************
  *           IsWinEventHookInstalled                       [USER32.@]

@@ -74,7 +74,7 @@ static HWND set_focus_window( HWND hwnd )
             SendMessageW( ime_default, WM_IME_INTERNAL, IME_INTERNAL_ACTIVATE, (LPARAM)hwnd );
 
         if (previous)
-            NotifyWinEvent( EVENT_OBJECT_FOCUS, hwnd, OBJID_CLIENT, 0 );
+            NtUserNotifyWinEvent( EVENT_OBJECT_FOCUS, hwnd, OBJID_CLIENT, 0 );
 
         SendMessageW( hwnd, WM_SETFOCUS, (WPARAM)previous, 0 );
     }

@@ -545,7 +545,7 @@
 @ stdcall MoveWindow(long long long long long long)
 @ stdcall MsgWaitForMultipleObjects(long ptr long long long)
 @ stdcall MsgWaitForMultipleObjectsEx(long ptr long long long)
-@ stdcall NotifyWinEvent(long long long long)
+@ stdcall NotifyWinEvent(long long long long) NtUserNotifyWinEvent
 @ stdcall OemKeyScan(long)
 @ stdcall OemToCharA(str ptr)
 @ stdcall OemToCharBuffA(ptr ptr long)

@@ -356,6 +356,17 @@ NTSTATUS WINAPI wow64_NtUserGetDoubleClickTime( UINT *args )
     return NtUserGetDoubleClickTime();
 }
 
+NTSTATUS WINAPI wow64_NtUserNotifyWinEvent( UINT *args )
+{
+    DWORD event = get_ulong( &args );
+    HWND hwnd = get_handle( &args );
+    LONG object_id = get_ulong( &args );
+    LONG child_id = get_ulong( &args );
+
+    NtUserNotifyWinEvent( event, hwnd, object_id, child_id );
+    return 0;
+}
+
 NTSTATUS WINAPI wow64_NtUserSetWinEventHook( UINT *args )
 {
     DWORD event_min = get_ulong( &args );

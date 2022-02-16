@@ -27,6 +27,7 @@
 enum
 {
     NtUserCallEnumDisplayMonitor,
+    NtUserCallWinEventHook,
     NtUserCallVulkanDebugReportCallback,
     NtUserCallVulkanDebugUtilsCallback,
     NtUserCallCount
@@ -40,6 +41,18 @@ struct enum_display_monitor_params
     HDC hdc;
     RECT rect;
     LPARAM lparam;
+};
+
+/* NtUserCallWinEventHook params */
+struct win_hook_proc_params
+{
+    DWORD event;
+    HWND hwnd;
+    LONG object_id;
+    LONG child_id;
+    void *handle;
+    WINEVENTPROC proc;
+    WCHAR module[MAX_PATH];
 };
 
 /* process DPI awareness contexts */
@@ -163,6 +176,7 @@ HDESK   WINAPI NtUserGetThreadDesktop( DWORD thread );
 BOOL    WINAPI NtUserGetUpdatedClipboardFormats( UINT *formats, UINT size, UINT *out_size );
 BOOL    WINAPI NtUserIsClipboardFormatAvailable( UINT format );
 UINT    WINAPI NtUserMapVirtualKeyEx( UINT code, UINT type, HKL layout );
+void    WINAPI NtUserNotifyWinEvent( DWORD event, HWND hwnd, LONG object_id, LONG child_id );
 HWINSTA WINAPI NtUserOpenWindowStation( OBJECT_ATTRIBUTES *attr, ACCESS_MASK access );
 BOOL    WINAPI NtUserSetObjectInformation( HANDLE handle, INT index, void *info, DWORD len );
 HDESK   WINAPI NtUserOpenDesktop( OBJECT_ATTRIBUTES *attr, DWORD flags, ACCESS_MASK access );

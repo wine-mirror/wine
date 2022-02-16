@@ -128,6 +128,7 @@ static void * const syscalls[] =
     NtUserGetProp,
     NtUserGetSystemDpiForProcess,
     NtUserGetThreadDesktop,
+    NtUserNotifyWinEvent,
     NtUserOpenDesktop,
     NtUserOpenInputDesktop,
     NtUserOpenWindowStation,

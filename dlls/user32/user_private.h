@@ -194,6 +194,7 @@ extern const WCHAR *CLASS_GetVersionedName(const WCHAR *classname, UINT *basenam
 /* kernel callbacks */
 
 BOOL WINAPI User32CallEnumDisplayMonitor( struct enum_display_monitor_params *params, ULONG size );
+BOOL WINAPI User32CallWinEventHook( const struct win_hook_proc_params *params, ULONG size );
 
 /* message spy definitions */
 

@@ -1089,7 +1089,7 @@
 @ stub NtUserNavigateFocus
 @ stub NtUserNotifyIMEStatus
 @ stub NtUserNotifyProcessCreate
-@ stub NtUserNotifyWinEvent
+@ stdcall -syscall NtUserNotifyWinEvent(long long long long)
 @ stub NtUserOpenClipboard
 @ stdcall -syscall NtUserOpenDesktop(ptr long long)
 @ stdcall -syscall NtUserOpenInputDesktop(long long long)
