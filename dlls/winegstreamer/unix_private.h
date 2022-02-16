@@ -25,8 +25,13 @@
 
 #include <gst/gst.h>
 
+extern bool init_gstreamer(void) DECLSPEC_HIDDEN;
+
 extern void wg_format_from_caps(struct wg_format *format, const GstCaps *caps) DECLSPEC_HIDDEN;
 extern bool wg_format_compare(const struct wg_format *a, const struct wg_format *b) DECLSPEC_HIDDEN;
 extern GstCaps *wg_format_to_caps(const struct wg_format *format) DECLSPEC_HIDDEN;
+
+extern NTSTATUS wg_transform_create(void *args) DECLSPEC_HIDDEN;
+extern NTSTATUS wg_transform_destroy(void *args) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_WINEGSTREAMER_UNIX_PRIVATE_H */

@@ -14,6 +14,7 @@ C_SRCS = \
 	quartz_parser.c \
 	wg_format.c \
 	wg_parser.c \
+	wg_transform.c \
 	wm_asyncreader.c \
 	wm_reader.c \
 	wm_syncreader.c \

@@ -1570,6 +1570,13 @@ static void init_gstreamer_once(void)
             gst_version_string(), GST_VERSION_MAJOR, GST_VERSION_MINOR, GST_VERSION_MICRO);
 }
 
+bool init_gstreamer(void)
+{
+    static pthread_once_t init_once = PTHREAD_ONCE_INIT;
+
+    return !pthread_once(&init_once, init_gstreamer_once);
+}
+
 static NTSTATUS wg_parser_create(void *args)
 {
     static const init_gst_cb init_funcs[] =
@@ -1580,11 +1587,10 @@ static NTSTATUS wg_parser_create(void *args)
         [WG_PARSER_WAVPARSE] = wave_parser_init_gst,
     };
 
-    static pthread_once_t once = PTHREAD_ONCE_INIT;
     struct wg_parser_create_params *params = args;
     struct wg_parser *parser;
 
-    if (pthread_once(&once, init_gstreamer_once))
+    if (!init_gstreamer())
         return E_FAIL;
 
     if (!(parser = calloc(1, sizeof(*parser))))
@@ -1651,4 +1657,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
 
     X(wg_parser_stream_get_duration),
     X(wg_parser_stream_seek),
+
+    X(wg_transform_create),
+    X(wg_transform_destroy),
 };

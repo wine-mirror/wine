@@ -254,6 +254,20 @@ void wg_parser_stream_seek(struct wg_parser_stream *stream, double rate,
     __wine_unix_call(unix_handle, unix_wg_parser_stream_seek, &params);
 }
 
+struct wg_transform *wg_transform_create(void)
+{
+    struct wg_transform_create_params params = {0};
+
+    if (__wine_unix_call(unix_handle, unix_wg_transform_create, &params))
+        return NULL;
+    return params.transform;
+}
+
+void wg_transform_destroy(struct wg_transform *transform)
+{
+    __wine_unix_call(unix_handle, unix_wg_transform_destroy, transform);
+}
+
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
 {
     if (reason == DLL_PROCESS_ATTACH)
