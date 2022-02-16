@@ -39,7 +39,7 @@
 
 #include "unixlib.h"
 
-bool array_reserve(void **elements, size_t *capacity, size_t count, size_t size) DECLSPEC_HIDDEN;
+bool array_reserve(void **elements, size_t *capacity, size_t count, size_t size);
 
 static inline const char *debugstr_time(REFERENCE_TIME time)
 {
@@ -64,60 +64,60 @@ static inline const char *debugstr_time(REFERENCE_TIME time)
 
 #define MEDIATIME_FROM_BYTES(x) ((LONGLONG)(x) * 10000000)
 
-struct wg_parser *wg_parser_create(enum wg_parser_type type, bool unlimited_buffering) DECLSPEC_HIDDEN;
-void wg_parser_destroy(struct wg_parser *parser) DECLSPEC_HIDDEN;
+struct wg_parser *wg_parser_create(enum wg_parser_type type, bool unlimited_buffering);
+void wg_parser_destroy(struct wg_parser *parser);
 
-HRESULT wg_parser_connect(struct wg_parser *parser, uint64_t file_size) DECLSPEC_HIDDEN;
-void wg_parser_disconnect(struct wg_parser *parser) DECLSPEC_HIDDEN;
+HRESULT wg_parser_connect(struct wg_parser *parser, uint64_t file_size);
+void wg_parser_disconnect(struct wg_parser *parser);
 
-void wg_parser_begin_flush(struct wg_parser *parser) DECLSPEC_HIDDEN;
-void wg_parser_end_flush(struct wg_parser *parser) DECLSPEC_HIDDEN;
+void wg_parser_begin_flush(struct wg_parser *parser);
+void wg_parser_end_flush(struct wg_parser *parser);
 
-bool wg_parser_get_next_read_offset(struct wg_parser *parser, uint64_t *offset, uint32_t *size) DECLSPEC_HIDDEN;
-void wg_parser_push_data(struct wg_parser *parser, const void *data, uint32_t size) DECLSPEC_HIDDEN;
+bool wg_parser_get_next_read_offset(struct wg_parser *parser, uint64_t *offset, uint32_t *size);
+void wg_parser_push_data(struct wg_parser *parser, const void *data, uint32_t size);
 
-uint32_t wg_parser_get_stream_count(struct wg_parser *parser) DECLSPEC_HIDDEN;
-struct wg_parser_stream *wg_parser_get_stream(struct wg_parser *parser, uint32_t index) DECLSPEC_HIDDEN;
+uint32_t wg_parser_get_stream_count(struct wg_parser *parser);
+struct wg_parser_stream *wg_parser_get_stream(struct wg_parser *parser, uint32_t index);
 
-void wg_parser_stream_get_preferred_format(struct wg_parser_stream *stream, struct wg_format *format) DECLSPEC_HIDDEN;
-void wg_parser_stream_enable(struct wg_parser_stream *stream, const struct wg_format *format) DECLSPEC_HIDDEN;
-void wg_parser_stream_disable(struct wg_parser_stream *stream) DECLSPEC_HIDDEN;
+void wg_parser_stream_get_preferred_format(struct wg_parser_stream *stream, struct wg_format *format);
+void wg_parser_stream_enable(struct wg_parser_stream *stream, const struct wg_format *format);
+void wg_parser_stream_disable(struct wg_parser_stream *stream);
 
-bool wg_parser_stream_get_event(struct wg_parser_stream *stream, struct wg_parser_event *event) DECLSPEC_HIDDEN;
+bool wg_parser_stream_get_event(struct wg_parser_stream *stream, struct wg_parser_event *event);
 bool wg_parser_stream_copy_buffer(struct wg_parser_stream *stream,
-        void *data, uint32_t offset, uint32_t size) DECLSPEC_HIDDEN;
-void wg_parser_stream_release_buffer(struct wg_parser_stream *stream) DECLSPEC_HIDDEN;
+        void *data, uint32_t offset, uint32_t size);
+void wg_parser_stream_release_buffer(struct wg_parser_stream *stream);
 void wg_parser_stream_notify_qos(struct wg_parser_stream *stream,
-        bool underflow, double proportion, int64_t diff, uint64_t timestamp) DECLSPEC_HIDDEN;
+        bool underflow, double proportion, int64_t diff, uint64_t timestamp);
 
 /* Returns the duration in 100-nanosecond units. */
-uint64_t wg_parser_stream_get_duration(struct wg_parser_stream *stream) DECLSPEC_HIDDEN;
+uint64_t wg_parser_stream_get_duration(struct wg_parser_stream *stream);
 /* start_pos and stop_pos are in 100-nanosecond units. */
 void wg_parser_stream_seek(struct wg_parser_stream *stream, double rate,
-        uint64_t start_pos, uint64_t stop_pos, DWORD start_flags, DWORD stop_flags) DECLSPEC_HIDDEN;
+        uint64_t start_pos, uint64_t stop_pos, DWORD start_flags, DWORD stop_flags);
 
 unsigned int wg_format_get_max_size(const struct wg_format *format);
 
-HRESULT avi_splitter_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
-HRESULT decodebin_parser_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
-HRESULT mpeg_splitter_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
-HRESULT wave_parser_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
-HRESULT wma_decoder_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
+HRESULT avi_splitter_create(IUnknown *outer, IUnknown **out);
+HRESULT decodebin_parser_create(IUnknown *outer, IUnknown **out);
+HRESULT mpeg_splitter_create(IUnknown *outer, IUnknown **out);
+HRESULT wave_parser_create(IUnknown *outer, IUnknown **out);
+HRESULT wma_decoder_create(IUnknown *outer, IUnknown **out);
 
 bool amt_from_wg_format(AM_MEDIA_TYPE *mt, const struct wg_format *format, bool wm);
 bool amt_to_wg_format(const AM_MEDIA_TYPE *mt, struct wg_format *format);
 
-BOOL init_gstreamer(void) DECLSPEC_HIDDEN;
+BOOL init_gstreamer(void);
 
-extern HRESULT mfplat_get_class_object(REFCLSID rclsid, REFIID riid, void **obj) DECLSPEC_HIDDEN;
-extern HRESULT mfplat_DllRegisterServer(void) DECLSPEC_HIDDEN;
+extern HRESULT mfplat_get_class_object(REFCLSID rclsid, REFIID riid, void **obj);
+extern HRESULT mfplat_DllRegisterServer(void);
 
-IMFMediaType *mf_media_type_from_wg_format(const struct wg_format *format) DECLSPEC_HIDDEN;
-void mf_media_type_to_wg_format(IMFMediaType *type, struct wg_format *format) DECLSPEC_HIDDEN;
+IMFMediaType *mf_media_type_from_wg_format(const struct wg_format *format);
+void mf_media_type_to_wg_format(IMFMediaType *type, struct wg_format *format);
 
-HRESULT winegstreamer_stream_handler_create(REFIID riid, void **obj) DECLSPEC_HIDDEN;
+HRESULT winegstreamer_stream_handler_create(REFIID riid, void **obj);
 
-HRESULT audio_converter_create(REFIID riid, void **ret) DECLSPEC_HIDDEN;
+HRESULT audio_converter_create(REFIID riid, void **ret);
 
 struct wm_stream
 {
