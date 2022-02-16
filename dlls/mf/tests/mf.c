@@ -4612,6 +4612,9 @@ todo_wine {
     hr = IMFRateSupport_GetFastestRate(rs, MFRATE_REVERSE, TRUE, &rate);
     ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
 
+    hr = IMFRateSupport_GetFastestRate(rs, MFRATE_REVERSE, TRUE, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
     for (i = 0; i < ARRAY_SIZE(supported_rates); ++i)
     {
         rate = supported_rates[i] + 1.0f;
@@ -4661,16 +4664,20 @@ todo_wine {
 
     rate = 0.0f;
     hr = IMFRateSupport_GetFastestRate(rs, MFRATE_FORWARD, TRUE, &rate);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(rate == FLT_MAX, "Unexpected rate %f.\n", rate);
-}
+
     rate = 0.0f;
     hr = IMFRateSupport_GetFastestRate(rs, MFRATE_REVERSE, TRUE, &rate);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(rate == -FLT_MAX, "Unexpected rate %f.\n", rate);
-}
+
+    hr = IMFRateSupport_GetFastestRate(rs, MFRATE_REVERSE, TRUE, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFRateSupport_GetSlowestRate(rs, MFRATE_REVERSE, TRUE, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
     for (i = 0; i < ARRAY_SIZE(supported_rates); ++i)
     {
         rate = supported_rates[i] + 1.0f;
@@ -4707,6 +4714,12 @@ todo_wine {
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     hr = IMFRateSupport_GetFastestRate(rs, MFRATE_FORWARD, FALSE, &rate);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFRateSupport_GetSlowestRate(rs, MFRATE_FORWARD, FALSE, NULL);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFRateSupport_GetFastestRate(rs, MFRATE_FORWARD, FALSE, NULL);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     hr = IMFRateSupport_IsRateSupported(rs, TRUE, 1.0f, &rate);

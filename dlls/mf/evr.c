@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <float.h>
+
 #define COBJMACROS
 
 #include "mf_private.h"
@@ -2730,25 +2732,46 @@ static HRESULT WINAPI video_renderer_rate_support_GetSlowestRate(IMFRateSupport 
         BOOL thin, float *rate)
 {
     struct video_renderer *renderer = impl_from_IMFRateSupport(iface);
+    HRESULT hr = S_OK;
 
     TRACE("%p, %d, %d, %p.\n", iface, direction, thin, rate);
 
+    EnterCriticalSection(&renderer->cs);
     if (renderer->flags & EVR_SHUT_DOWN)
-        return MF_E_SHUTDOWN;
+        hr = MF_E_SHUTDOWN;
+    else if (!rate)
+        hr = E_POINTER;
+    else
+    {
+        *rate = 0.0f;
+    }
+    LeaveCriticalSection(&renderer->cs);
 
-    *rate = 0.0f;
-
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI video_renderer_rate_support_GetFastestRate(IMFRateSupport *iface, MFRATE_DIRECTION direction,
         BOOL thin, float *rate)
 {
     struct video_renderer *renderer = impl_from_IMFRateSupport(iface);
+    HRESULT hr = S_OK;
 
     TRACE("%p, %d, %d, %p.\n", iface, direction, thin, rate);
 
-    return renderer->flags & EVR_SHUT_DOWN ? MF_E_SHUTDOWN : MF_E_INVALIDREQUEST;
+    EnterCriticalSection(&renderer->cs);
+    if (renderer->flags & EVR_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else if (!rate)
+        hr = E_POINTER;
+    else if (video_renderer_is_main_stream_configured(renderer))
+    {
+        *rate = direction == MFRATE_FORWARD ? FLT_MAX : -FLT_MAX;
+    }
+    else
+        hr = MF_E_INVALIDREQUEST;
+    LeaveCriticalSection(&renderer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI video_renderer_rate_support_IsRateSupported(IMFRateSupport *iface, BOOL thin, float rate,
