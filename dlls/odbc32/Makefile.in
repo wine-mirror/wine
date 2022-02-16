@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = odbc32.dll
 UNIXLIB   = odbc32.so
 IMPORTLIB = odbc32
