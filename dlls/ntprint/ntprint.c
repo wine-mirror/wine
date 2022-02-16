@@ -51,7 +51,7 @@ HANDLE WINAPI PSetupCreateMonitorInfo(DWORD unknown1, WCHAR *server)
     DWORD needed;
     DWORD res;
 
-    TRACE("(%d, %s)\n", unknown1, debugstr_w(server));
+    TRACE("(%ld, %s)\n", unknown1, debugstr_w(server));
 
     mi = HeapAlloc(GetProcessHeap(), 0, sizeof(monitorinfo_t));
     if (!mi) {
@@ -71,7 +71,7 @@ HANDLE WINAPI PSetupCreateMonitorInfo(DWORD unknown1, WCHAR *server)
         return NULL;
     }
 
-    TRACE("=> %p (%u monitors installed)\n", mi, mi->installed);
+    TRACE("=> %p (%lu monitors installed)\n", mi, mi->installed);
     return mi;
 }
 
@@ -118,14 +118,14 @@ BOOL WINAPI PSetupEnumMonitor(HANDLE monitorinfo, DWORD index, LPWSTR buffer, LP
     LPWSTR  nameW;
     DWORD   len;
 
-    TRACE("(%p, %u, %p, %p) => %d\n", mi, index, buffer, psize, psize ? *psize : 0);
+    TRACE("(%p, %lu, %p, %p) => %ld\n", mi, index, buffer, psize, psize ? *psize : 0);
 
     if (index < mi->installed) {
         nameW = mi->mi2[index].pName;
         len = lstrlenW(nameW) + 1;
         if (len <= *psize) {
             memcpy(buffer, nameW, len * sizeof(WCHAR));
-            TRACE("#%u: %s\n", index, debugstr_w(buffer));
+            TRACE("#%lu: %s\n", index, debugstr_w(buffer));
             return TRUE;
         }
         *psize = len;
