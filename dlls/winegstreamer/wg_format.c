@@ -394,6 +394,43 @@ static GstCaps *wg_format_to_caps_video(const struct wg_format *format)
     return caps;
 }
 
+static GstCaps *wg_format_to_caps_wma(const struct wg_format *format)
+{
+    GstBuffer *buffer;
+    GstCaps *caps;
+
+    if (!(caps = gst_caps_new_empty_simple("audio/x-wma")))
+        return NULL;
+    if (format->u.wma.version)
+        gst_caps_set_simple(caps, "wmaversion", G_TYPE_INT, format->u.wma.version, NULL);
+
+    if (format->u.wma.bitrate)
+        gst_caps_set_simple(caps, "bitrate", G_TYPE_INT, format->u.wma.bitrate, NULL);
+    if (format->u.wma.rate)
+        gst_caps_set_simple(caps, "rate", G_TYPE_INT, format->u.wma.rate, NULL);
+    if (format->u.wma.depth)
+        gst_caps_set_simple(caps, "depth", G_TYPE_INT, format->u.wma.depth, NULL);
+    if (format->u.wma.channels)
+        gst_caps_set_simple(caps, "channels", G_TYPE_INT, format->u.wma.channels, NULL);
+    if (format->u.wma.block_align)
+        gst_caps_set_simple(caps, "block_align", G_TYPE_INT, format->u.wma.block_align, NULL);
+
+    if (format->u.wma.codec_data_len)
+    {
+        if (!(buffer = gst_buffer_new_and_alloc(format->u.wma.codec_data_len)))
+        {
+            gst_caps_unref(caps);
+            return NULL;
+        }
+
+        gst_buffer_fill(buffer, 0, format->u.wma.codec_data, format->u.wma.codec_data_len);
+        gst_caps_set_simple(caps, "codec_data", GST_TYPE_BUFFER, buffer, NULL);
+        gst_buffer_unref(buffer);
+    }
+
+    return caps;
+}
+
 GstCaps *wg_format_to_caps(const struct wg_format *format)
 {
     switch (format->major_type)
@@ -401,8 +438,7 @@ GstCaps *wg_format_to_caps(const struct wg_format *format)
         case WG_MAJOR_TYPE_UNKNOWN:
             return NULL;
         case WG_MAJOR_TYPE_WMA:
-            GST_FIXME("WMA format not implemented!\n");
-            return NULL;
+            return wg_format_to_caps_wma(format);
         case WG_MAJOR_TYPE_AUDIO:
             return wg_format_to_caps_audio(format);
         case WG_MAJOR_TYPE_VIDEO:

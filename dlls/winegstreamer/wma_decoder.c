@@ -78,7 +78,7 @@ static HRESULT try_create_wg_transform(struct wma_decoder *decoder)
     if (output_format.major_type == WG_MAJOR_TYPE_UNKNOWN)
         return MF_E_INVALIDMEDIATYPE;
 
-    if (!(decoder->wg_transform = wg_transform_create()))
+    if (!(decoder->wg_transform = wg_transform_create(&input_format, &output_format)))
         return E_FAIL;
 
     return S_OK;

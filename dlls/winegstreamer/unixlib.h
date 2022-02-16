@@ -232,6 +232,8 @@ struct wg_parser_stream_seek_params
 struct wg_transform_create_params
 {
     struct wg_transform *transform;
+    const struct wg_format *input_format;
+    const struct wg_format *output_format;
 };
 
 enum unix_funcs

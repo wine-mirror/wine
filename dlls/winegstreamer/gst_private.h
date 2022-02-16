@@ -96,7 +96,8 @@ uint64_t wg_parser_stream_get_duration(struct wg_parser_stream *stream);
 void wg_parser_stream_seek(struct wg_parser_stream *stream, double rate,
         uint64_t start_pos, uint64_t stop_pos, DWORD start_flags, DWORD stop_flags);
 
-struct wg_transform *wg_transform_create(void);
+struct wg_transform *wg_transform_create(const struct wg_format *input_format,
+        const struct wg_format *output_format);
 void wg_transform_destroy(struct wg_transform *transform);
 
 unsigned int wg_format_get_max_size(const struct wg_format *format);
