@@ -109,6 +109,7 @@ SECURITY_STATUS WINAPI NCryptFreeObject(NCRYPT_HANDLE handle)
 {
     struct object *object = (struct object *)handle;
     SECURITY_STATUS ret = ERROR_SUCCESS;
+    unsigned int i;
 
     TRACE("(%#Ix)\n", handle);
 
@@ -133,15 +134,46 @@ SECURITY_STATUS WINAPI NCryptFreeObject(NCRYPT_HANDLE handle)
         return NTE_INVALID_HANDLE;
     }
 
+    for (i = 0; i < object->num_properties; i++)
+    {
+        free(object->properties[i].key);
+        free(object->properties[i].value);
+    }
+    free(object->properties);
     free(object);
     return ret;
 }
 
-SECURITY_STATUS WINAPI NCryptGetProperty(NCRYPT_HANDLE object, const WCHAR *property, PBYTE output,
+static const struct object_property *get_object_property(struct object *object, const WCHAR *name)
+{
+    unsigned int i;
+    for (i = 0; i < object->num_properties; i++)
+    {
+        const struct object_property *property = &object->properties[i];
+        if (!lstrcmpW(property->key, name)) return property;
+    }
+    return NULL;
+}
+
+SECURITY_STATUS WINAPI NCryptGetProperty(NCRYPT_HANDLE handle, const WCHAR *name, BYTE *output,
                                          DWORD outsize, DWORD *result, DWORD flags)
 {
-    FIXME("(0x%lx, %s, %p, %u, %p, 0x%08x): stub\n", object, wine_dbgstr_w(property), output, outsize, result, flags);
-    return NTE_NOT_SUPPORTED;
+    struct object *object = (struct object *)handle;
+    const struct object_property *property;
+
+    TRACE("(%#Ix, %s, %p, %u, %p, 0x%08x)\n", handle, wine_dbgstr_w(name), output, outsize, result, flags);
+    if (flags) FIXME("flags 0x%08x not supported\n", flags);
+
+    if (!(property = get_object_property(object, name))) return NTE_INVALID_PARAMETER;
+    if (!output)
+    {
+        *result = property->value_size;
+        return ERROR_SUCCESS;
+    }
+    if (outsize < property->value_size) return NTE_BUFFER_TOO_SMALL;
+
+    memcpy(output, property->value, property->value_size);
+    return ERROR_SUCCESS;
 }
 
 static struct object *allocate_object(enum object_type type)
@@ -278,9 +310,59 @@ SECURITY_STATUS WINAPI NCryptOpenStorageProvider(NCRYPT_PROV_HANDLE *provider, c
     return ERROR_SUCCESS;
 }
 
-SECURITY_STATUS WINAPI NCryptSetProperty(NCRYPT_HANDLE object, const WCHAR *property,
-                                         PBYTE input, DWORD insize, DWORD flags)
+static SECURITY_STATUS set_object_property(struct object *object, const WCHAR *name, BYTE *value, DWORD value_size)
 {
-    FIXME("(%lx, %s, %p, %u, 0x%08x): stub\n", object, wine_dbgstr_w(property), input, insize, flags);
-    return NTE_NOT_SUPPORTED;
+    struct object_property *property = &object->properties[object->num_properties];
+
+    FIXME("check duplicates\n");
+    if (!object->num_properties)
+    {
+        if (!(object->properties = malloc(sizeof(*property))))
+        {
+            ERR("Error allocating memory.");
+            return NTE_NO_MEMORY;
+        }
+        object->num_properties++;
+    }
+    else
+    {
+        struct object_property *tmp;
+        if (!(tmp = realloc(object->properties, sizeof(*property) * object->num_properties + 1)))
+        {
+            ERR("Error allocating memory.");
+            return NTE_NO_MEMORY;
+        }
+        object->properties = tmp;
+        object->num_properties++;
+    }
+
+    memset(property, 0, sizeof(*property));
+    if (!(property->key = malloc((lstrlenW(name) + 1) * sizeof(WCHAR))))
+    {
+        ERR("Error allocating memory.");
+        return NTE_NO_MEMORY;
+    }
+
+    lstrcpyW(property->key, name);
+    property->value_size = value_size;
+    if (!(property->value = malloc(value_size)))
+    {
+        ERR("Error allocating memory.");
+        free(property->key);
+        property->key = NULL;
+        return NTE_NO_MEMORY;
+    }
+
+    memcpy(property->value, value, value_size);
+    return ERROR_SUCCESS;
+}
+
+SECURITY_STATUS WINAPI NCryptSetProperty(NCRYPT_HANDLE handle, const WCHAR *name, BYTE *input, DWORD insize, DWORD flags)
+{
+    struct object *object = (struct object *)handle;
+
+    TRACE("(%#Ix, %s, %p, %u, 0x%08x)\n", handle, wine_dbgstr_w(name), input, insize, flags);
+    if (flags) FIXME("flags 0x%08x not supported\n", flags);
+
+    return set_object_property(object, name, input, insize);
 }

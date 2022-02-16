@@ -159,10 +159,42 @@ static void test_ncrypt_free_object(void)
     ret = NCryptFreeObject((NCRYPT_KEY_HANDLE)buf);
     ok(ret == NTE_INVALID_HANDLE, "got %#lx\n", ret);
     free(buf);
+
+    NCryptFreeObject(prov);
+}
+
+static void test_get_property(void)
+{
+    NCRYPT_PROV_HANDLE prov;
+    NCRYPT_KEY_HANDLE key;
+    SECURITY_STATUS ret;
+    WCHAR value[4];
+    DWORD size;
+
+    ret = NCryptOpenStorageProvider(&prov, NULL, 0);
+    ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
+
+    ret = NCryptImportKey(prov, 0, BCRYPT_RSAPUBLIC_BLOB, NULL, &key, rsa_key_blob, sizeof(rsa_key_blob), 0);
+    ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
+
+    todo_wine {
+    ret = NCryptGetProperty(key, L"Algorithm Group", NULL, 0, &size, 0);
+    ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
+    ok(size == 8, "got %lu\n", size);
+
+    size = 0;
+    ret = NCryptGetProperty(key, L"Algorithm Group", (BYTE *)value, sizeof(value), &size, 0);
+    ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
+    ok(size == 8, "got %lu\n", size);
+    ok(!lstrcmpW(value, L"RSA"), "The string doesn't match with 'RSA'\n");
+    }
+
+    NCryptFreeObject(prov);
 }
 
 START_TEST(ncrypt)
 {
     test_key_import_rsa();
     test_ncrypt_free_object();
+    test_get_property();
 }
