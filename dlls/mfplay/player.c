@@ -61,6 +61,11 @@ static inline const char *debugstr_normalized_rect(const MFVideoNormalizedRect *
 
 struct media_player;
 
+enum media_item_flags
+{
+    MEDIA_ITEM_SOURCE_NEEDS_SHUTDOWN = 0x1,
+};
+
 struct media_item
 {
     IMFPMediaItem IMFPMediaItem_iface;
@@ -73,6 +78,7 @@ struct media_item
     IUnknown *object;
     LONGLONG start_position;
     LONGLONG stop_position;
+    unsigned int flags;
 };
 
 struct media_player
@@ -359,7 +365,11 @@ static ULONG WINAPI media_item_Release(IMFPMediaItem *iface)
         if (item->player)
             IMFPMediaPlayer_Release(&item->player->IMFPMediaPlayer_iface);
         if (item->source)
+        {
+            if (item->flags & MEDIA_ITEM_SOURCE_NEEDS_SHUTDOWN)
+                IMFMediaSource_Shutdown(item->source);
             IMFMediaSource_Release(item->source);
+        }
         if (item->pd)
             IMFPresentationDescriptor_Release(item->pd);
         if (item->object)
@@ -1189,6 +1199,7 @@ static HRESULT media_player_create_item_from_url(struct media_player *player,
         IMFPMediaItem_Release(&item->IMFPMediaItem_iface);
         return E_OUTOFMEMORY;
     }
+    item->flags |= MEDIA_ITEM_SOURCE_NEEDS_SHUTDOWN;
 
     if (sync)
     {
@@ -1244,11 +1255,11 @@ static HRESULT WINAPI media_player_CreateMediaItemFromURL(IMFPMediaPlayer *iface
 static HRESULT media_player_create_item_from_object(struct media_player *player,
         IUnknown *object, BOOL sync, DWORD_PTR user_data, IMFPMediaItem **ret)
 {
+    IMFMediaSource *source = NULL;
+    IMFByteStream *stream = NULL;
     struct media_item *item;
     MF_OBJECT_TYPE obj_type;
     HRESULT hr;
-    IMFByteStream *stream = NULL;
-    IMFMediaSource *source = NULL;
 
     *ret = NULL;
 
@@ -1267,6 +1278,9 @@ static HRESULT media_player_create_item_from_object(struct media_player *player,
         IMFPMediaItem_Release(&item->IMFPMediaItem_iface);
         return E_UNEXPECTED;
     }
+
+    if (source)
+        item->flags |= MEDIA_ITEM_SOURCE_NEEDS_SHUTDOWN;
 
     if (sync)
     {
