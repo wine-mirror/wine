@@ -101,42 +101,17 @@ struct ACImpl {
 
     LONG ref;
 
-    snd_pcm_t *pcm_handle;
-    snd_pcm_uframes_t alsa_bufsize_frames, alsa_period_frames, safe_rewind_frames;
-    snd_pcm_hw_params_t *hw_params; /* does not hold state between calls */
-    snd_pcm_format_t alsa_format;
-
-    LARGE_INTEGER last_period_time;
-
     IMMDevice *parent;
     IUnknown *pUnkFTMarshal;
 
     EDataFlow dataflow;
-    WAVEFORMATEX *fmt;
-    DWORD flags;
-    AUDCLNT_SHAREMODE share;
-    HANDLE event;
     float *vols;
     UINT32 channel_count;
+    struct alsa_stream *stream;
 
-    BOOL need_remapping;
-    int alsa_channels;
-    int alsa_channel_map[32];
-
-    BOOL initted, started;
-    REFERENCE_TIME mmdev_period_rt;
-    UINT64 written_frames, last_pos_frames;
-    UINT32 bufsize_frames, held_frames, tmp_buffer_frames, mmdev_period_frames;
-    snd_pcm_uframes_t remapping_buf_frames;
-    UINT32 lcl_offs_frames; /* offs into local_buffer where valid data starts */
-    UINT32 wri_offs_frames; /* where to write fresh data in local_buffer */
-    UINT32 hidden_frames;   /* ALSA reserve to ensure continuous rendering */
-    UINT32 vol_adjusted_frames; /* Frames we've already adjusted the volume of but didn't write yet */
-    UINT32 data_in_alsa_frames;
+    BOOL initted;
 
     HANDLE timer;
-    BYTE *local_buffer, *tmp_buffer, *remapping_buf, *silence_buf;
-    LONG32 getbuf_last; /* <0 when using tmp_buffer */
 
     CRITICAL_SECTION lock;
 
@@ -505,8 +480,15 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
     This->dataflow = dataflow;
     memcpy(This->alsa_name, alsa_name, len + 1);
 
-    err = snd_pcm_open(&This->pcm_handle, alsa_name, alsa_get_direction(dataflow), SND_PCM_NONBLOCK);
+    This->stream = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*This->stream));
+    if(!This->stream){
+        HeapFree(GetProcessHeap(), 0, This);
+        return E_OUTOFMEMORY;
+    }
+
+    err = snd_pcm_open(&This->stream->pcm_handle, alsa_name, alsa_get_direction(dataflow), SND_PCM_NONBLOCK);
     if(err < 0){
+        HeapFree(GetProcessHeap(), 0, This->stream);
         HeapFree(GetProcessHeap(), 0, This);
         WARN("Unable to open PCM \"%s\": %d (%s)\n", alsa_name, err, snd_strerror(err));
         switch(err){
@@ -517,10 +499,11 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
         }
     }
 
-    This->hw_params = HeapAlloc(GetProcessHeap(), 0,
+    This->stream->hw_params = HeapAlloc(GetProcessHeap(), 0,
             snd_pcm_hw_params_sizeof());
-    if(!This->hw_params){
-        snd_pcm_close(This->pcm_handle);
+    if(!This->stream->hw_params){
+        snd_pcm_close(This->stream->pcm_handle);
+        HeapFree(GetProcessHeap(), 0, This->stream);
         HeapFree(GetProcessHeap(), 0, This);
         return E_OUTOFMEMORY;
     }
@@ -574,6 +557,7 @@ static ULONG WINAPI AudioClient_AddRef(IAudioClient3 *iface)
 static ULONG WINAPI AudioClient_Release(IAudioClient3 *iface)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
+    struct alsa_stream *stream = This->stream;
     ULONG ref;
 
     ref = InterlockedDecrement(&This->ref);
@@ -595,20 +579,21 @@ static ULONG WINAPI AudioClient_Release(IAudioClient3 *iface)
         IUnknown_Release(This->pUnkFTMarshal);
         This->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->lock);
-        snd_pcm_drop(This->pcm_handle);
-        snd_pcm_close(This->pcm_handle);
+        snd_pcm_drop(stream->pcm_handle);
+        snd_pcm_close(stream->pcm_handle);
         if(This->initted){
             EnterCriticalSection(&g_sessions_lock);
             list_remove(&This->entry);
             LeaveCriticalSection(&g_sessions_lock);
         }
         HeapFree(GetProcessHeap(), 0, This->vols);
-        HeapFree(GetProcessHeap(), 0, This->local_buffer);
-        HeapFree(GetProcessHeap(), 0, This->remapping_buf);
-        HeapFree(GetProcessHeap(), 0, This->silence_buf);
-        HeapFree(GetProcessHeap(), 0, This->tmp_buffer);
-        HeapFree(GetProcessHeap(), 0, This->hw_params);
-        CoTaskMemFree(This->fmt);
+        HeapFree(GetProcessHeap(), 0, stream->local_buffer);
+        HeapFree(GetProcessHeap(), 0, stream->remapping_buf);
+        HeapFree(GetProcessHeap(), 0, stream->silence_buf);
+        HeapFree(GetProcessHeap(), 0, stream->tmp_buffer);
+        HeapFree(GetProcessHeap(), 0, stream->hw_params);
+        CoTaskMemFree(stream->fmt);
+        HeapFree(GetProcessHeap(), 0, stream);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -904,16 +889,16 @@ static HRESULT map_channels(ACImpl *This, const WAVEFORMATEX *fmt, int *alsa_cha
     return need_remap ? S_OK : S_FALSE;
 }
 
-static void silence_buffer(ACImpl *This, BYTE *buffer, UINT32 frames)
+static void silence_buffer(struct alsa_stream *stream, BYTE *buffer, UINT32 frames)
 {
-    WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE*)This->fmt;
-    if((This->fmt->wFormatTag == WAVE_FORMAT_PCM ||
-            (This->fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+    WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE*)stream->fmt;
+    if((stream->fmt->wFormatTag == WAVE_FORMAT_PCM ||
+            (stream->fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
              IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))) &&
-            This->fmt->wBitsPerSample == 8)
-        memset(buffer, 128, frames * This->fmt->nBlockAlign);
+            stream->fmt->wBitsPerSample == 8)
+        memset(buffer, 128, frames * stream->fmt->nBlockAlign);
     else
-        memset(buffer, 0, frames * This->fmt->nBlockAlign);
+        memset(buffer, 0, frames * stream->fmt->nBlockAlign);
 }
 
 static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
@@ -922,6 +907,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         const GUID *sessionguid)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
+    struct alsa_stream *stream = This->stream;
     snd_pcm_sw_params_t *sw_params = NULL;
     snd_pcm_format_t format;
     unsigned int rate, alsa_period_us;
@@ -990,15 +976,15 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
 
     dump_fmt(fmt);
 
-    This->need_remapping = map_channels(This, fmt, &This->alsa_channels, This->alsa_channel_map) == S_OK;
+    stream->need_remapping = map_channels(This, fmt, &stream->alsa_channels, stream->alsa_channel_map) == S_OK;
 
-    if((err = snd_pcm_hw_params_any(This->pcm_handle, This->hw_params)) < 0){
+    if((err = snd_pcm_hw_params_any(stream->pcm_handle, stream->hw_params)) < 0){
         WARN("Unable to get hw_params: %d (%s)\n", err, snd_strerror(err));
         hr = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
         goto exit;
     }
 
-    if((err = snd_pcm_hw_params_set_access(This->pcm_handle, This->hw_params,
+    if((err = snd_pcm_hw_params_set_access(stream->pcm_handle, stream->hw_params,
                 SND_PCM_ACCESS_RW_INTERLEAVED)) < 0){
         WARN("Unable to set access: %d (%s)\n", err, snd_strerror(err));
         hr = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
@@ -1011,7 +997,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         goto exit;
     }
 
-    if((err = snd_pcm_hw_params_set_format(This->pcm_handle, This->hw_params,
+    if((err = snd_pcm_hw_params_set_format(stream->pcm_handle, stream->hw_params,
                 format)) < 0){
         WARN("Unable to set ALSA format to %u: %d (%s)\n", format, err,
                 snd_strerror(err));
@@ -1019,10 +1005,10 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         goto exit;
     }
 
-    This->alsa_format = format;
+    stream->alsa_format = format;
 
     rate = fmt->nSamplesPerSec;
-    if((err = snd_pcm_hw_params_set_rate_near(This->pcm_handle, This->hw_params,
+    if((err = snd_pcm_hw_params_set_rate_near(stream->pcm_handle, stream->hw_params,
                 &rate, NULL)) < 0){
         WARN("Unable to set rate to %u: %d (%s)\n", rate, err,
                 snd_strerror(err));
@@ -1030,52 +1016,52 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         goto exit;
     }
 
-    if((err = snd_pcm_hw_params_set_channels(This->pcm_handle, This->hw_params,
-                This->alsa_channels)) < 0){
+    if((err = snd_pcm_hw_params_set_channels(stream->pcm_handle, stream->hw_params,
+               stream->alsa_channels)) < 0){
         WARN("Unable to set channels to %u: %d (%s)\n", fmt->nChannels, err,
                 snd_strerror(err));
         hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
         goto exit;
     }
 
-    This->mmdev_period_rt = period;
-    alsa_period_us = This->mmdev_period_rt / 10;
-    if((err = snd_pcm_hw_params_set_period_time_near(This->pcm_handle,
-                This->hw_params, &alsa_period_us, NULL)) < 0)
+    stream->mmdev_period_rt = period;
+    alsa_period_us = stream->mmdev_period_rt / 10;
+    if((err = snd_pcm_hw_params_set_period_time_near(stream->pcm_handle,
+                stream->hw_params, &alsa_period_us, NULL)) < 0)
         WARN("Unable to set period time near %u: %d (%s)\n", alsa_period_us,
                 err, snd_strerror(err));
     /* ALSA updates the output variable alsa_period_us */
 
-    This->mmdev_period_frames = MulDiv(fmt->nSamplesPerSec,
-            This->mmdev_period_rt, 10000000);
+    stream->mmdev_period_frames = MulDiv(fmt->nSamplesPerSec,
+            stream->mmdev_period_rt, 10000000);
 
     /* Buffer 4 ALSA periods if large enough, else 4 mmdevapi periods */
-    This->alsa_bufsize_frames = This->mmdev_period_frames * 4;
+    stream->alsa_bufsize_frames = stream->mmdev_period_frames * 4;
     if(err < 0 || alsa_period_us < period / 10)
-        err = snd_pcm_hw_params_set_buffer_size_near(This->pcm_handle,
-                This->hw_params, &This->alsa_bufsize_frames);
+        err = snd_pcm_hw_params_set_buffer_size_near(stream->pcm_handle,
+                stream->hw_params, &stream->alsa_bufsize_frames);
     else{
         unsigned int periods = 4;
-        err = snd_pcm_hw_params_set_periods_near(This->pcm_handle, This->hw_params, &periods, NULL);
+        err = snd_pcm_hw_params_set_periods_near(stream->pcm_handle, stream->hw_params, &periods, NULL);
     }
     if(err < 0)
         WARN("Unable to set buffer size: %d (%s)\n", err, snd_strerror(err));
 
-    if((err = snd_pcm_hw_params(This->pcm_handle, This->hw_params)) < 0){
+    if((err = snd_pcm_hw_params(stream->pcm_handle, stream->hw_params)) < 0){
         WARN("Unable to set hw params: %d (%s)\n", err, snd_strerror(err));
         hr = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
         goto exit;
     }
 
-    if((err = snd_pcm_hw_params_get_period_size(This->hw_params,
-                    &This->alsa_period_frames, NULL)) < 0){
+    if((err = snd_pcm_hw_params_get_period_size(stream->hw_params,
+                    &stream->alsa_period_frames, NULL)) < 0){
         WARN("Unable to get period size: %d (%s)\n", err, snd_strerror(err));
         hr = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
         goto exit;
     }
 
-    if((err = snd_pcm_hw_params_get_buffer_size(This->hw_params,
-                    &This->alsa_bufsize_frames)) < 0){
+    if((err = snd_pcm_hw_params_get_buffer_size(stream->hw_params,
+                    &stream->alsa_bufsize_frames)) < 0){
         WARN("Unable to get buffer size: %d (%s)\n", err, snd_strerror(err));
         hr = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
         goto exit;
@@ -1087,34 +1073,34 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         goto exit;
     }
 
-    if((err = snd_pcm_sw_params_current(This->pcm_handle, sw_params)) < 0){
+    if((err = snd_pcm_sw_params_current(stream->pcm_handle, sw_params)) < 0){
         WARN("Unable to get sw_params: %d (%s)\n", err, snd_strerror(err));
         hr = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
         goto exit;
     }
 
-    if((err = snd_pcm_sw_params_set_start_threshold(This->pcm_handle,
+    if((err = snd_pcm_sw_params_set_start_threshold(stream->pcm_handle,
                     sw_params, 1)) < 0){
         WARN("Unable set start threshold to 1: %d (%s)\n", err, snd_strerror(err));
         hr = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
         goto exit;
     }
 
-    if((err = snd_pcm_sw_params_set_stop_threshold(This->pcm_handle,
-                    sw_params, This->alsa_bufsize_frames)) < 0){
+    if((err = snd_pcm_sw_params_set_stop_threshold(stream->pcm_handle,
+                    sw_params, stream->alsa_bufsize_frames)) < 0){
         WARN("Unable set stop threshold to %lu: %d (%s)\n",
-                This->alsa_bufsize_frames, err, snd_strerror(err));
+                stream->alsa_bufsize_frames, err, snd_strerror(err));
         hr = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
         goto exit;
     }
 
-    if((err = snd_pcm_sw_params(This->pcm_handle, sw_params)) < 0){
+    if((err = snd_pcm_sw_params(stream->pcm_handle, sw_params)) < 0){
         WARN("Unable to set sw params: %d (%s)\n", err, snd_strerror(err));
         hr = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
         goto exit;
     }
 
-    if((err = snd_pcm_prepare(This->pcm_handle)) < 0){
+    if((err = snd_pcm_prepare(stream->pcm_handle)) < 0){
         WARN("Unable to prepare device: %d (%s)\n", err, snd_strerror(err));
         hr = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
         goto exit;
@@ -1125,42 +1111,42 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
      * or surprising rounding as seen with 22050x8x1 with Pulse:
      * ALSA period 220 vs.  221 frames in mmdevapi and
      *      buffer 883 vs. 2205 frames in mmdevapi! */
-    This->bufsize_frames = MulDiv(duration, fmt->nSamplesPerSec, 10000000);
+    stream->bufsize_frames = MulDiv(duration, fmt->nSamplesPerSec, 10000000);
     if(mode == AUDCLNT_SHAREMODE_EXCLUSIVE)
-        This->bufsize_frames -= This->bufsize_frames % This->mmdev_period_frames;
-    This->hidden_frames = This->alsa_period_frames + This->mmdev_period_frames +
+        stream->bufsize_frames -= stream->bufsize_frames % stream->mmdev_period_frames;
+    stream->hidden_frames = stream->alsa_period_frames + stream->mmdev_period_frames +
         MulDiv(fmt->nSamplesPerSec, EXTRA_SAFE_RT, 10000000);
     /* leave no less than about 1.33ms or 256 bytes of data after a rewind */
-    This->safe_rewind_frames = max(256 / fmt->nBlockAlign, MulDiv(133, fmt->nSamplesPerSec, 100000));
+    stream->safe_rewind_frames = max(256 / fmt->nBlockAlign, MulDiv(133, fmt->nSamplesPerSec, 100000));
 
     /* Check if the ALSA buffer is so small that it will run out before
      * the next MMDevAPI period tick occurs. Allow a little wiggle room
      * with 120% of the period time. */
-    if(This->alsa_bufsize_frames < 1.2 * This->mmdev_period_frames)
+    if(stream->alsa_bufsize_frames < 1.2 * stream->mmdev_period_frames)
         FIXME("ALSA buffer time is too small. Expect underruns. (%lu < %u * 1.2)\n",
-                This->alsa_bufsize_frames, This->mmdev_period_frames);
+                stream->alsa_bufsize_frames, stream->mmdev_period_frames);
 
-    This->fmt = clone_format(fmt);
-    if(!This->fmt){
+    stream->fmt = clone_format(fmt);
+    if(!stream->fmt){
         hr = E_OUTOFMEMORY;
         goto exit;
     }
 
-    This->local_buffer = HeapAlloc(GetProcessHeap(), 0,
-            This->bufsize_frames * fmt->nBlockAlign);
-    if(!This->local_buffer){
+    stream->local_buffer = HeapAlloc(GetProcessHeap(), 0,
+            stream->bufsize_frames * fmt->nBlockAlign);
+    if(!stream->local_buffer){
         hr = E_OUTOFMEMORY;
         goto exit;
     }
-    silence_buffer(This, This->local_buffer, This->bufsize_frames);
+    silence_buffer(stream, stream->local_buffer, stream->bufsize_frames);
 
-    This->silence_buf = HeapAlloc(GetProcessHeap(), 0,
-            This->alsa_period_frames * This->fmt->nBlockAlign);
-    if(!This->silence_buf){
+    stream->silence_buf = HeapAlloc(GetProcessHeap(), 0,
+            stream->alsa_period_frames * stream->fmt->nBlockAlign);
+    if(!stream->silence_buf){
         hr = E_OUTOFMEMORY;
         goto exit;
     }
-    silence_buffer(This, This->silence_buf, This->alsa_period_frames);
+    silence_buffer(stream, stream->silence_buf, stream->alsa_period_frames);
 
     This->channel_count = fmt->nChannels;
     This->vols = HeapAlloc(GetProcessHeap(), 0, This->channel_count * sizeof(float));
@@ -1172,8 +1158,8 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     for(i = 0; i < This->channel_count; ++i)
         This->vols[i] = 1.f;
 
-    This->share = mode;
-    This->flags = flags;
+    stream->share = mode;
+    stream->flags = flags;
 
     hr = get_audio_session(sessionguid, This->parent, This->channel_count,
             &This->session);
@@ -1184,18 +1170,18 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
 
     This->initted = TRUE;
 
-    TRACE("ALSA period: %lu frames\n", This->alsa_period_frames);
-    TRACE("ALSA buffer: %lu frames\n", This->alsa_bufsize_frames);
-    TRACE("MMDevice period: %u frames\n", This->mmdev_period_frames);
-    TRACE("MMDevice buffer: %u frames\n", This->bufsize_frames);
+    TRACE("ALSA period: %lu frames\n", stream->alsa_period_frames);
+    TRACE("ALSA buffer: %lu frames\n", stream->alsa_bufsize_frames);
+    TRACE("MMDevice period: %u frames\n", stream->mmdev_period_frames);
+    TRACE("MMDevice buffer: %u frames\n", stream->bufsize_frames);
 
 exit:
     HeapFree(GetProcessHeap(), 0, sw_params);
     if(FAILED(hr)){
-        HeapFree(GetProcessHeap(), 0, This->local_buffer);
-        This->local_buffer = NULL;
-        CoTaskMemFree(This->fmt);
-        This->fmt = NULL;
+        HeapFree(GetProcessHeap(), 0, stream->local_buffer);
+        stream->local_buffer = NULL;
+        CoTaskMemFree(stream->fmt);
+        stream->fmt = NULL;
         HeapFree(GetProcessHeap(), 0, This->vols);
         This->vols = NULL;
     }
@@ -1210,6 +1196,7 @@ static HRESULT WINAPI AudioClient_GetBufferSize(IAudioClient3 *iface,
         UINT32 *out)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
+    struct alsa_stream *stream = This->stream;
 
     TRACE("(%p)->(%p)\n", This, out);
 
@@ -1223,7 +1210,7 @@ static HRESULT WINAPI AudioClient_GetBufferSize(IAudioClient3 *iface,
         return AUDCLNT_E_NOT_INITIALIZED;
     }
 
-    *out = This->bufsize_frames;
+    *out = stream->bufsize_frames;
 
     LeaveCriticalSection(&This->lock);
 
@@ -1234,6 +1221,7 @@ static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient3 *iface,
         REFERENCE_TIME *latency)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
+    struct alsa_stream *stream = This->stream;
 
     TRACE("(%p)->(%p)\n", This, latency);
 
@@ -1253,10 +1241,10 @@ static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient3 *iface,
      * + EXTRA_SAFE (~4ms) to allow for late callback invocation / fluctuation;
      * + alsa_period such that ALSA always has at least one period to play. */
     if(This->dataflow == eRender)
-        *latency = MulDiv(This->hidden_frames, 10000000, This->fmt->nSamplesPerSec);
+        *latency = MulDiv(stream->hidden_frames, 10000000, stream->fmt->nSamplesPerSec);
     else
-        *latency = MulDiv(This->alsa_period_frames, 10000000, This->fmt->nSamplesPerSec)
-                 + This->mmdev_period_rt;
+        *latency = MulDiv(stream->alsa_period_frames, 10000000, stream->fmt->nSamplesPerSec)
+                 + stream->mmdev_period_rt;
 
     LeaveCriticalSection(&This->lock);
 
@@ -1267,6 +1255,7 @@ static HRESULT WINAPI AudioClient_GetCurrentPadding(IAudioClient3 *iface,
         UINT32 *out)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
+    struct alsa_stream *stream = This->stream;
 
     TRACE("(%p)->(%p)\n", This, out);
 
@@ -1281,7 +1270,7 @@ static HRESULT WINAPI AudioClient_GetCurrentPadding(IAudioClient3 *iface,
     }
 
     /* padding is solely updated at callback time in shared mode */
-    *out = This->held_frames;
+    *out = stream->held_frames;
 
     LeaveCriticalSection(&This->lock);
 
@@ -1334,7 +1323,7 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient3 *iface,
 
     EnterCriticalSection(&This->lock);
 
-    if((err = snd_pcm_hw_params_any(This->pcm_handle, This->hw_params)) < 0){
+    if((err = snd_pcm_hw_params_any(This->stream->pcm_handle, This->stream->hw_params)) < 0){
         hr = AUDCLNT_E_DEVICE_INVALIDATED;
         goto exit;
     }
@@ -1346,7 +1335,7 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient3 *iface,
         goto exit;
     }
 
-    snd_pcm_hw_params_get_format_mask(This->hw_params, formats);
+    snd_pcm_hw_params_get_format_mask(This->stream->hw_params, formats);
     format = alsa_format(fmt);
     if (format == SND_PCM_FORMAT_UNKNOWN ||
         !snd_pcm_format_mask_test(formats, format)){
@@ -1360,13 +1349,13 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient3 *iface,
         goto exit;
     }
 
-    if((err = snd_pcm_hw_params_get_rate_min(This->hw_params, &min, NULL)) < 0){
+    if((err = snd_pcm_hw_params_get_rate_min(This->stream->hw_params, &min, NULL)) < 0){
         hr = AUDCLNT_E_DEVICE_INVALIDATED;
         WARN("Unable to get min rate: %d (%s)\n", err, snd_strerror(err));
         goto exit;
     }
 
-    if((err = snd_pcm_hw_params_get_rate_max(This->hw_params, &max, NULL)) < 0){
+    if((err = snd_pcm_hw_params_get_rate_max(This->stream->hw_params, &max, NULL)) < 0){
         hr = AUDCLNT_E_DEVICE_INVALIDATED;
         WARN("Unable to get max rate: %d (%s)\n", err, snd_strerror(err));
         goto exit;
@@ -1377,13 +1366,13 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient3 *iface,
         goto exit;
     }
 
-    if((err = snd_pcm_hw_params_get_channels_min(This->hw_params, &min)) < 0){
+    if((err = snd_pcm_hw_params_get_channels_min(This->stream->hw_params, &min)) < 0){
         hr = AUDCLNT_E_DEVICE_INVALIDATED;
         WARN("Unable to get min channels: %d (%s)\n", err, snd_strerror(err));
         goto exit;
     }
 
-    if((err = snd_pcm_hw_params_get_channels_max(This->hw_params, &max)) < 0){
+    if((err = snd_pcm_hw_params_get_channels_max(This->stream->hw_params, &max)) < 0){
         hr = AUDCLNT_E_DEVICE_INVALIDATED;
         WARN("Unable to get max channels: %d (%s)\n", err, snd_strerror(err));
         goto exit;
@@ -1469,13 +1458,13 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient3 *iface,
 
     EnterCriticalSection(&This->lock);
 
-    if((err = snd_pcm_hw_params_any(This->pcm_handle, This->hw_params)) < 0){
+    if((err = snd_pcm_hw_params_any(This->stream->pcm_handle, This->stream->hw_params)) < 0){
         WARN("Unable to get hw_params: %d (%s)\n", err, snd_strerror(err));
         hr = AUDCLNT_E_DEVICE_INVALIDATED;
         goto exit;
     }
 
-    snd_pcm_hw_params_get_format_mask(This->hw_params, formats);
+    snd_pcm_hw_params_get_format_mask(This->stream->hw_params, formats);
 
     fmt->Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
     if(snd_pcm_format_mask_test(formats, SND_PCM_FORMAT_FLOAT_LE)){
@@ -1499,7 +1488,7 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient3 *iface,
         goto exit;
     }
 
-    if((err = snd_pcm_hw_params_get_channels_max(This->hw_params,
+    if((err = snd_pcm_hw_params_get_channels_max(This->stream->hw_params,
                     &max_channels)) < 0){
         WARN("Unable to get max channels: %d (%s)\n", err, snd_strerror(err));
         hr = AUDCLNT_E_DEVICE_INVALIDATED;
@@ -1529,7 +1518,7 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient3 *iface,
 
     fmt->dwChannelMask = get_channel_mask(fmt->Format.nChannels);
 
-    if((err = snd_pcm_hw_params_get_rate_max(This->hw_params, &max_rate,
+    if((err = snd_pcm_hw_params_get_rate_max(This->stream->hw_params, &max_rate,
                     NULL)) < 0){
         WARN("Unable to get max rate: %d (%s)\n", err, snd_strerror(err));
         hr = AUDCLNT_E_DEVICE_INVALIDATED;
@@ -1590,97 +1579,98 @@ static HRESULT WINAPI AudioClient_GetDevicePeriod(IAudioClient3 *iface,
     return S_OK;
 }
 
-static BYTE *remap_channels(ACImpl *This, BYTE *buf, snd_pcm_uframes_t frames)
+static BYTE *remap_channels(struct alsa_stream *stream, BYTE *buf, snd_pcm_uframes_t frames)
 {
     snd_pcm_uframes_t i;
     UINT c;
-    UINT bytes_per_sample = This->fmt->wBitsPerSample / 8;
+    UINT bytes_per_sample = stream->fmt->wBitsPerSample / 8;
 
-    if(!This->need_remapping)
+    if(!stream->need_remapping)
         return buf;
 
-    if(!This->remapping_buf){
-        This->remapping_buf = HeapAlloc(GetProcessHeap(), 0,
-                bytes_per_sample * This->alsa_channels * frames);
-        This->remapping_buf_frames = frames;
-    }else if(This->remapping_buf_frames < frames){
-        This->remapping_buf = HeapReAlloc(GetProcessHeap(), 0, This->remapping_buf,
-                bytes_per_sample * This->alsa_channels * frames);
-        This->remapping_buf_frames = frames;
+    if(!stream->remapping_buf){
+        stream->remapping_buf = HeapAlloc(GetProcessHeap(), 0,
+                bytes_per_sample * stream->alsa_channels * frames);
+        stream->remapping_buf_frames = frames;
+    }else if(stream->remapping_buf_frames < frames){
+        stream->remapping_buf = HeapReAlloc(GetProcessHeap(), 0, stream->remapping_buf,
+                bytes_per_sample * stream->alsa_channels * frames);
+        stream->remapping_buf_frames = frames;
     }
 
-    snd_pcm_format_set_silence(This->alsa_format, This->remapping_buf,
-            frames * This->alsa_channels);
+    snd_pcm_format_set_silence(stream->alsa_format, stream->remapping_buf,
+            frames * stream->alsa_channels);
 
-    switch(This->fmt->wBitsPerSample){
+    switch(stream->fmt->wBitsPerSample){
     case 8: {
             UINT8 *tgt_buf, *src_buf;
-            tgt_buf = This->remapping_buf;
+            tgt_buf = stream->remapping_buf;
             src_buf = buf;
             for(i = 0; i < frames; ++i){
-                for(c = 0; c < This->fmt->nChannels; ++c)
-                    tgt_buf[This->alsa_channel_map[c]] = src_buf[c];
-                tgt_buf += This->alsa_channels;
-                src_buf += This->fmt->nChannels;
+                for(c = 0; c < stream->fmt->nChannels; ++c)
+                    tgt_buf[stream->alsa_channel_map[c]] = src_buf[c];
+                tgt_buf += stream->alsa_channels;
+                src_buf += stream->fmt->nChannels;
             }
             break;
         }
     case 16: {
             UINT16 *tgt_buf, *src_buf;
-            tgt_buf = (UINT16*)This->remapping_buf;
+            tgt_buf = (UINT16*)stream->remapping_buf;
             src_buf = (UINT16*)buf;
             for(i = 0; i < frames; ++i){
-                for(c = 0; c < This->fmt->nChannels; ++c)
-                    tgt_buf[This->alsa_channel_map[c]] = src_buf[c];
-                tgt_buf += This->alsa_channels;
-                src_buf += This->fmt->nChannels;
+                for(c = 0; c < stream->fmt->nChannels; ++c)
+                    tgt_buf[stream->alsa_channel_map[c]] = src_buf[c];
+                tgt_buf += stream->alsa_channels;
+                src_buf += stream->fmt->nChannels;
             }
         }
         break;
     case 32: {
             UINT32 *tgt_buf, *src_buf;
-            tgt_buf = (UINT32*)This->remapping_buf;
+            tgt_buf = (UINT32*)stream->remapping_buf;
             src_buf = (UINT32*)buf;
             for(i = 0; i < frames; ++i){
-                for(c = 0; c < This->fmt->nChannels; ++c)
-                    tgt_buf[This->alsa_channel_map[c]] = src_buf[c];
-                tgt_buf += This->alsa_channels;
-                src_buf += This->fmt->nChannels;
+                for(c = 0; c < stream->fmt->nChannels; ++c)
+                    tgt_buf[stream->alsa_channel_map[c]] = src_buf[c];
+                tgt_buf += stream->alsa_channels;
+                src_buf += stream->fmt->nChannels;
             }
         }
         break;
     default: {
             BYTE *tgt_buf, *src_buf;
-            tgt_buf = This->remapping_buf;
+            tgt_buf = stream->remapping_buf;
             src_buf = buf;
             for(i = 0; i < frames; ++i){
-                for(c = 0; c < This->fmt->nChannels; ++c)
-                    memcpy(&tgt_buf[This->alsa_channel_map[c] * bytes_per_sample],
+                for(c = 0; c < stream->fmt->nChannels; ++c)
+                    memcpy(&tgt_buf[stream->alsa_channel_map[c] * bytes_per_sample],
                             &src_buf[c * bytes_per_sample], bytes_per_sample);
-                tgt_buf += This->alsa_channels * bytes_per_sample;
-                src_buf += This->fmt->nChannels * bytes_per_sample;
+                tgt_buf += stream->alsa_channels * bytes_per_sample;
+                src_buf += stream->fmt->nChannels * bytes_per_sample;
             }
         }
         break;
     }
 
-    return This->remapping_buf;
+    return stream->remapping_buf;
 }
 
 static void adjust_buffer_volume(const ACImpl *This, BYTE *buf, snd_pcm_uframes_t frames, BOOL mute)
 {
-    float vol[ARRAY_SIZE(This->alsa_channel_map)];
+    struct alsa_stream *stream = This->stream;
+    float vol[ARRAY_SIZE(stream->alsa_channel_map)];
     BOOL adjust = FALSE;
     UINT32 i, channels;
     BYTE *end;
 
-    if (This->vol_adjusted_frames >= frames)
+    if (stream->vol_adjusted_frames >= frames)
         return;
-    channels = This->fmt->nChannels;
+    channels = stream->fmt->nChannels;
 
     if (mute)
     {
-        int err = snd_pcm_format_set_silence(This->alsa_format, buf, frames * channels);
+        int err = snd_pcm_format_set_silence(stream->alsa_format, buf, frames * channels);
         if (err < 0)
             WARN("Setting buffer to silence failed: %d (%s)\n", err, snd_strerror(err));
         return;
@@ -1698,10 +1688,10 @@ static void adjust_buffer_volume(const ACImpl *This, BYTE *buf, snd_pcm_uframes_
     if (!adjust) return;
 
     /* Skip the frames we've already adjusted before */
-    end = buf + frames * This->fmt->nBlockAlign;
-    buf += This->vol_adjusted_frames * This->fmt->nBlockAlign;
+    end = buf + frames * stream->fmt->nBlockAlign;
+    buf += stream->vol_adjusted_frames * stream->fmt->nBlockAlign;
 
-    switch (This->alsa_format)
+    switch (stream->alsa_format)
     {
 #ifndef WORDS_BIGENDIAN
 #define PROCESS_BUFFER(type) do         \
@@ -1735,7 +1725,7 @@ static void adjust_buffer_volume(const ACImpl *This, BYTE *buf, snd_pcm_uframes_
         BYTE *p;
 
         /* After we adjust the volume, we need to mask out low bits */
-        if (This->alsa_format == SND_PCM_FORMAT_S20_3LE)
+        if (stream->alsa_format == SND_PCM_FORMAT_S20_3LE)
             mask = ~0x0fff;
 
         i = 0;
@@ -1781,7 +1771,7 @@ static void adjust_buffer_volume(const ACImpl *This, BYTE *buf, snd_pcm_uframes_
         break;
     }
     default:
-        TRACE("Unhandled format %i, not adjusting volume.\n", This->alsa_format);
+        TRACE("Unhandled format %i, not adjusting volume.\n", stream->alsa_format);
         break;
     }
 }
@@ -1789,17 +1779,18 @@ static void adjust_buffer_volume(const ACImpl *This, BYTE *buf, snd_pcm_uframes_
 static snd_pcm_sframes_t alsa_write_best_effort(ACImpl *This, BYTE *buf,
         snd_pcm_uframes_t frames, BOOL mute)
 {
+    struct alsa_stream *stream = This->stream;
     snd_pcm_sframes_t written;
 
     adjust_buffer_volume(This, buf, frames, mute);
 
     /* Mark the frames we've already adjusted */
-    if (This->vol_adjusted_frames < frames)
-        This->vol_adjusted_frames = frames;
+    if (stream->vol_adjusted_frames < frames)
+        stream->vol_adjusted_frames = frames;
 
-    buf = remap_channels(This, buf, frames);
+    buf = remap_channels(stream, buf, frames);
 
-    written = snd_pcm_writei(This->pcm_handle, buf, frames);
+    written = snd_pcm_writei(stream->pcm_handle, buf, frames);
     if(written < 0){
         int ret;
 
@@ -1810,17 +1801,17 @@ static snd_pcm_sframes_t alsa_write_best_effort(ACImpl *This, BYTE *buf,
         WARN("writei failed, recovering: %ld (%s)\n", written,
                 snd_strerror(written));
 
-        ret = snd_pcm_recover(This->pcm_handle, written, 0);
+        ret = snd_pcm_recover(stream->pcm_handle, written, 0);
         if(ret < 0){
             WARN("Could not recover: %d (%s)\n", ret, snd_strerror(ret));
             return ret;
         }
 
-        written = snd_pcm_writei(This->pcm_handle, buf, frames);
+        written = snd_pcm_writei(stream->pcm_handle, buf, frames);
     }
 
     if (written > 0)
-        This->vol_adjusted_frames -= written;
+        stream->vol_adjusted_frames -= written;
     return written;
 }
 
@@ -1828,6 +1819,7 @@ static snd_pcm_sframes_t alsa_write_buffer_wrap(ACImpl *This, BYTE *buf,
         snd_pcm_uframes_t buflen, snd_pcm_uframes_t offs,
         snd_pcm_uframes_t to_write)
 {
+    struct alsa_stream *stream = This->stream;
     snd_pcm_sframes_t ret = 0;
 
     while(to_write){
@@ -1839,7 +1831,7 @@ static snd_pcm_sframes_t alsa_write_buffer_wrap(ACImpl *This, BYTE *buf,
         else
             chunk = to_write;
 
-        tmp = alsa_write_best_effort(This, buf + offs * This->fmt->nBlockAlign, chunk, This->session->mute);
+        tmp = alsa_write_best_effort(This, buf + offs * stream->fmt->nBlockAlign, chunk, This->session->mute);
         if(tmp < 0)
             return ret;
         if(!tmp)
@@ -1863,13 +1855,14 @@ static UINT buf_ptr_diff(UINT left, UINT right, UINT bufsize)
 
 static UINT data_not_in_alsa(ACImpl *This)
 {
+    struct alsa_stream *stream = This->stream;
     UINT32 diff;
 
-    diff = buf_ptr_diff(This->lcl_offs_frames, This->wri_offs_frames, This->bufsize_frames);
+    diff = buf_ptr_diff(stream->lcl_offs_frames, stream->wri_offs_frames, stream->bufsize_frames);
     if(diff)
         return diff;
 
-    return This->held_frames - This->data_in_alsa_frames;
+    return stream->held_frames - stream->data_in_alsa_frames;
 }
 /* Here's the buffer setup:
  *
@@ -1891,25 +1884,26 @@ static UINT data_not_in_alsa(ACImpl *This)
  */
 static void alsa_write_data(ACImpl *This)
 {
+    struct alsa_stream *stream = This->stream;
     snd_pcm_sframes_t written;
     snd_pcm_uframes_t avail, max_copy_frames, data_frames_played;
     int err;
 
     /* this call seems to be required to get an accurate snd_pcm_state() */
-    avail = snd_pcm_avail_update(This->pcm_handle);
+    avail = snd_pcm_avail_update(stream->pcm_handle);
 
-    if(snd_pcm_state(This->pcm_handle) == SND_PCM_STATE_XRUN){
+    if(snd_pcm_state(stream->pcm_handle) == SND_PCM_STATE_XRUN){
         TRACE("XRun state, recovering\n");
 
-        avail = This->alsa_bufsize_frames;
+        avail = stream->alsa_bufsize_frames;
 
-        if((err = snd_pcm_recover(This->pcm_handle, -EPIPE, 1)) < 0)
+        if((err = snd_pcm_recover(stream->pcm_handle, -EPIPE, 1)) < 0)
             WARN("snd_pcm_recover failed: %d (%s)\n", err, snd_strerror(err));
 
-        if((err = snd_pcm_reset(This->pcm_handle)) < 0)
+        if((err = snd_pcm_reset(stream->pcm_handle)) < 0)
             WARN("snd_pcm_reset failed: %d (%s)\n", err, snd_strerror(err));
 
-        if((err = snd_pcm_prepare(This->pcm_handle)) < 0)
+        if((err = snd_pcm_prepare(stream->pcm_handle)) < 0)
             WARN("snd_pcm_prepare failed: %d (%s)\n", err, snd_strerror(err));
     }
 
@@ -1917,61 +1911,63 @@ static void alsa_write_data(ACImpl *This)
 
     /* Add a lead-in when starting with too few frames to ensure
      * continuous rendering.  Additional benefit: Force ALSA to start. */
-    if(This->data_in_alsa_frames == 0 && This->held_frames < This->alsa_period_frames)
+    if(stream->data_in_alsa_frames == 0 && stream->held_frames < stream->alsa_period_frames)
     {
-        alsa_write_best_effort(This, This->silence_buf, This->alsa_period_frames - This->held_frames, FALSE);
-        This->vol_adjusted_frames = 0;
+        alsa_write_best_effort(This, stream->silence_buf,
+                               stream->alsa_period_frames - stream->held_frames, FALSE);
+        stream->vol_adjusted_frames = 0;
     }
 
-    if(This->started)
+    if(stream->started)
         max_copy_frames = data_not_in_alsa(This);
     else
         max_copy_frames = 0;
 
-    data_frames_played = min(This->data_in_alsa_frames, avail);
-    This->data_in_alsa_frames -= data_frames_played;
+    data_frames_played = min(stream->data_in_alsa_frames, avail);
+    stream->data_in_alsa_frames -= data_frames_played;
 
-    if(This->held_frames > data_frames_played){
-        if(This->started)
-            This->held_frames -= data_frames_played;
+    if(stream->held_frames > data_frames_played){
+        if(stream->started)
+            stream->held_frames -= data_frames_played;
     }else
-        This->held_frames = 0;
+        stream->held_frames = 0;
 
     while(avail && max_copy_frames){
         snd_pcm_uframes_t to_write;
 
         to_write = min(avail, max_copy_frames);
 
-        written = alsa_write_buffer_wrap(This, This->local_buffer,
-                This->bufsize_frames, This->lcl_offs_frames, to_write);
+        written = alsa_write_buffer_wrap(This, stream->local_buffer,
+                stream->bufsize_frames, stream->lcl_offs_frames, to_write);
         if(written <= 0)
             break;
 
         avail -= written;
-        This->lcl_offs_frames += written;
-        This->lcl_offs_frames %= This->bufsize_frames;
-        This->data_in_alsa_frames += written;
+        stream->lcl_offs_frames += written;
+        stream->lcl_offs_frames %= stream->bufsize_frames;
+        stream->data_in_alsa_frames += written;
         max_copy_frames -= written;
     }
 
-    if(This->event)
-        SetEvent(This->event);
+    if(stream->event)
+        SetEvent(stream->event);
 }
 
 static void alsa_read_data(ACImpl *This)
 {
+    struct alsa_stream *stream = This->stream;
     snd_pcm_sframes_t nread;
-    UINT32 pos = This->wri_offs_frames, limit = This->held_frames;
+    UINT32 pos = stream->wri_offs_frames, limit = stream->held_frames;
 
-    if(!This->started)
+    if(!stream->started)
         goto exit;
 
     /* FIXME: Detect overrun and signal DATA_DISCONTINUITY
      * How to count overrun frames and report them as position increase? */
-    limit = This->bufsize_frames - max(limit, pos);
+    limit = stream->bufsize_frames - max(limit, pos);
 
-    nread = snd_pcm_readi(This->pcm_handle,
-            This->local_buffer + pos * This->fmt->nBlockAlign, limit);
+    nread = snd_pcm_readi(stream->pcm_handle,
+            stream->local_buffer + pos * stream->fmt->nBlockAlign, limit);
     TRACE("read %ld from %u limit %u\n", nread, pos, limit);
     if(nread < 0){
         int ret;
@@ -1981,14 +1977,14 @@ static void alsa_read_data(ACImpl *This)
 
         WARN("read failed, recovering: %ld (%s)\n", nread, snd_strerror(nread));
 
-        ret = snd_pcm_recover(This->pcm_handle, nread, 0);
+        ret = snd_pcm_recover(stream->pcm_handle, nread, 0);
         if(ret < 0){
             WARN("Recover failed: %d (%s)\n", ret, snd_strerror(ret));
             return;
         }
 
-        nread = snd_pcm_readi(This->pcm_handle,
-                This->local_buffer + pos * This->fmt->nBlockAlign, limit);
+        nread = snd_pcm_readi(stream->pcm_handle,
+                stream->local_buffer + pos * stream->fmt->nBlockAlign, limit);
         if(nread < 0){
             WARN("read failed: %ld (%s)\n", nread, snd_strerror(nread));
             return;
@@ -1997,29 +1993,30 @@ static void alsa_read_data(ACImpl *This)
 
     if(This->session->mute){
         int err;
-        if((err = snd_pcm_format_set_silence(This->alsa_format,
-                        This->local_buffer + pos * This->fmt->nBlockAlign,
+        if((err = snd_pcm_format_set_silence(stream->alsa_format,
+                        stream->local_buffer + pos * stream->fmt->nBlockAlign,
                         nread)) < 0)
             WARN("Setting buffer to silence failed: %d (%s)\n", err,
                     snd_strerror(err));
     }
 
-    This->wri_offs_frames += nread;
-    This->wri_offs_frames %= This->bufsize_frames;
-    This->held_frames += nread;
+    stream->wri_offs_frames += nread;
+    stream->wri_offs_frames %= stream->bufsize_frames;
+    stream->held_frames += nread;
 
 exit:
-    if(This->event)
-        SetEvent(This->event);
+    if(stream->event)
+        SetEvent(stream->event);
 }
 
 static void CALLBACK alsa_push_buffer_data(void *user, BOOLEAN timer)
 {
     ACImpl *This = user;
+    struct alsa_stream *stream = This->stream;
 
     EnterCriticalSection(&This->lock);
 
-    QueryPerformanceCounter(&This->last_period_time);
+    QueryPerformanceCounter(&stream->last_period_time);
 
     if(This->dataflow == eRender)
         alsa_write_data(This);
@@ -2029,17 +2026,18 @@ static void CALLBACK alsa_push_buffer_data(void *user, BOOLEAN timer)
     LeaveCriticalSection(&This->lock);
 }
 
-static snd_pcm_uframes_t interp_elapsed_frames(ACImpl *This)
+static snd_pcm_uframes_t interp_elapsed_frames(struct alsa_stream *stream)
 {
     LARGE_INTEGER time_freq, current_time, time_diff;
     QueryPerformanceFrequency(&time_freq);
     QueryPerformanceCounter(&current_time);
-    time_diff.QuadPart = current_time.QuadPart - This->last_period_time.QuadPart;
-    return MulDiv(time_diff.QuadPart, This->fmt->nSamplesPerSec, time_freq.QuadPart);
+    time_diff.QuadPart = current_time.QuadPart - stream->last_period_time.QuadPart;
+    return MulDiv(time_diff.QuadPart, stream->fmt->nSamplesPerSec, time_freq.QuadPart);
 }
 
 static int alsa_rewind_best_effort(ACImpl *This)
 {
+    struct alsa_stream *stream = This->stream;
     snd_pcm_uframes_t len, leave;
 
     /* we can't use snd_pcm_rewindable, some PCM devices crash. so follow
@@ -2047,25 +2045,25 @@ static int alsa_rewind_best_effort(ACImpl *This)
      * buffer, minus 1.33ms for safety. */
 
     /* amount of data to leave in ALSA buffer */
-    leave = interp_elapsed_frames(This) + This->safe_rewind_frames;
+    leave = interp_elapsed_frames(stream) + stream->safe_rewind_frames;
 
-    if(This->held_frames < leave)
-        This->held_frames = 0;
+    if(stream->held_frames < leave)
+        stream->held_frames = 0;
     else
-        This->held_frames -= leave;
+        stream->held_frames -= leave;
 
-    if(This->data_in_alsa_frames < leave)
+    if(stream->data_in_alsa_frames < leave)
         len = 0;
     else
-        len = This->data_in_alsa_frames - leave;
+        len = stream->data_in_alsa_frames - leave;
 
-    TRACE("rewinding %lu frames, now held %u\n", len, This->held_frames);
+    TRACE("rewinding %lu frames, now held %u\n", len, stream->held_frames);
 
     if(len)
         /* snd_pcm_rewind return value is often broken, assume it succeeded */
-        snd_pcm_rewind(This->pcm_handle, len);
+        snd_pcm_rewind(stream->pcm_handle, len);
 
-    This->data_in_alsa_frames = 0;
+    stream->data_in_alsa_frames = 0;
 
     return len;
 }
@@ -2073,6 +2071,7 @@ static int alsa_rewind_best_effort(ACImpl *This)
 static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
+    struct alsa_stream *stream = This->stream;
 
     TRACE("(%p)\n", This);
 
@@ -2083,55 +2082,55 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
         return AUDCLNT_E_NOT_INITIALIZED;
     }
 
-    if((This->flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK) && !This->event){
+    if((stream->flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK) && !stream->event){
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_EVENTHANDLE_NOT_SET;
     }
 
-    if(This->started){
+    if(stream->started){
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_NOT_STOPPED;
     }
 
     if(This->dataflow == eCapture){
         /* dump any data that might be leftover in the ALSA capture buffer */
-        snd_pcm_readi(This->pcm_handle, This->local_buffer,
-                This->bufsize_frames);
+        snd_pcm_readi(stream->pcm_handle, stream->local_buffer,
+                stream->bufsize_frames);
     }else{
         snd_pcm_sframes_t avail, written;
         snd_pcm_uframes_t offs;
 
-        avail = snd_pcm_avail_update(This->pcm_handle);
-        avail = min(avail, This->held_frames);
+        avail = snd_pcm_avail_update(stream->pcm_handle);
+        avail = min(avail, stream->held_frames);
 
-        if(This->wri_offs_frames < This->held_frames)
-            offs = This->bufsize_frames - This->held_frames + This->wri_offs_frames;
+        if(stream->wri_offs_frames < stream->held_frames)
+            offs = stream->bufsize_frames - stream->held_frames + stream->wri_offs_frames;
         else
-            offs = This->wri_offs_frames - This->held_frames;
+            offs = stream->wri_offs_frames - stream->held_frames;
 
         /* fill it with data */
-        written = alsa_write_buffer_wrap(This, This->local_buffer,
-                This->bufsize_frames, offs, avail);
+        written = alsa_write_buffer_wrap(This, stream->local_buffer,
+                stream->bufsize_frames, offs, avail);
 
         if(written > 0){
-            This->lcl_offs_frames = (offs + written) % This->bufsize_frames;
-            This->data_in_alsa_frames = written;
+            stream->lcl_offs_frames = (offs + written) % stream->bufsize_frames;
+            stream->data_in_alsa_frames = written;
         }else{
-            This->lcl_offs_frames = offs;
-            This->data_in_alsa_frames = 0;
+            stream->lcl_offs_frames = offs;
+            stream->data_in_alsa_frames = 0;
         }
     }
 
     if(!This->timer){
         if(!CreateTimerQueueTimer(&This->timer, g_timer_q, alsa_push_buffer_data,
-                This, 0, This->mmdev_period_rt / 10000, WT_EXECUTEINTIMERTHREAD)){
+                This, 0, stream->mmdev_period_rt / 10000, WT_EXECUTEINTIMERTHREAD)){
             LeaveCriticalSection(&This->lock);
             WARN("Unable to create timer: %u\n", GetLastError());
             return E_OUTOFMEMORY;
         }
     }
 
-    This->started = TRUE;
+    stream->started = TRUE;
 
     LeaveCriticalSection(&This->lock);
 
@@ -2141,6 +2140,7 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
 static HRESULT WINAPI AudioClient_Stop(IAudioClient3 *iface)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
+    struct alsa_stream *stream = This->stream;
 
     TRACE("(%p)\n", This);
 
@@ -2151,7 +2151,7 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient3 *iface)
         return AUDCLNT_E_NOT_INITIALIZED;
     }
 
-    if(!This->started){
+    if(!stream->started){
         LeaveCriticalSection(&This->lock);
         return S_FALSE;
     }
@@ -2159,7 +2159,7 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient3 *iface)
     if(This->dataflow == eRender)
         alsa_rewind_best_effort(This);
 
-    This->started = FALSE;
+    stream->started = FALSE;
 
     LeaveCriticalSection(&This->lock);
 
@@ -2169,6 +2169,7 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient3 *iface)
 static HRESULT WINAPI AudioClient_Reset(IAudioClient3 *iface)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
+    struct alsa_stream *stream = This->stream;
 
     TRACE("(%p)\n", This);
 
@@ -2179,34 +2180,34 @@ static HRESULT WINAPI AudioClient_Reset(IAudioClient3 *iface)
         return AUDCLNT_E_NOT_INITIALIZED;
     }
 
-    if(This->started){
+    if(stream->started){
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_NOT_STOPPED;
     }
 
-    if(This->getbuf_last){
+    if(stream->getbuf_last){
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_BUFFER_OPERATION_PENDING;
     }
 
-    if(snd_pcm_drop(This->pcm_handle) < 0)
+    if(snd_pcm_drop(stream->pcm_handle) < 0)
         WARN("snd_pcm_drop failed\n");
 
-    if(snd_pcm_reset(This->pcm_handle) < 0)
+    if(snd_pcm_reset(stream->pcm_handle) < 0)
         WARN("snd_pcm_reset failed\n");
 
-    if(snd_pcm_prepare(This->pcm_handle) < 0)
+    if(snd_pcm_prepare(stream->pcm_handle) < 0)
         WARN("snd_pcm_prepare failed\n");
 
     if(This->dataflow == eRender){
-        This->written_frames = 0;
-        This->last_pos_frames = 0;
+        stream->written_frames = 0;
+        stream->last_pos_frames = 0;
     }else{
-        This->written_frames += This->held_frames;
+        stream->written_frames += stream->held_frames;
     }
-    This->held_frames = 0;
-    This->lcl_offs_frames = 0;
-    This->wri_offs_frames = 0;
+    stream->held_frames = 0;
+    stream->lcl_offs_frames = 0;
+    stream->wri_offs_frames = 0;
 
     LeaveCriticalSection(&This->lock);
 
@@ -2217,6 +2218,7 @@ static HRESULT WINAPI AudioClient_SetEventHandle(IAudioClient3 *iface,
         HANDLE event)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
+    struct alsa_stream *stream = This->stream;
 
     TRACE("(%p)->(%p)\n", This, event);
 
@@ -2230,18 +2232,18 @@ static HRESULT WINAPI AudioClient_SetEventHandle(IAudioClient3 *iface,
         return AUDCLNT_E_NOT_INITIALIZED;
     }
 
-    if(!(This->flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK)){
+    if(!(stream->flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK)){
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_EVENTHANDLE_NOT_EXPECTED;
     }
 
-    if (This->event){
+    if (stream->event){
         LeaveCriticalSection(&This->lock);
         FIXME("called twice\n");
         return HRESULT_FROM_WIN32(ERROR_INVALID_NAME);
     }
 
-    This->event = event;
+    stream->event = event;
 
     LeaveCriticalSection(&This->lock);
 
@@ -2489,6 +2491,7 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
         UINT32 frames, BYTE **data)
 {
     ACImpl *This = impl_from_IAudioRenderClient(iface);
+    struct alsa_stream *stream = This->stream;
     UINT32 write_pos;
 
     TRACE("(%p)->(%u, %p)\n", This, frames, data);
@@ -2499,7 +2502,7 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
 
     EnterCriticalSection(&This->lock);
 
-    if(This->getbuf_last){
+    if(stream->getbuf_last){
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_OUT_OF_ORDER;
     }
@@ -2510,50 +2513,50 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
     }
 
     /* held_frames == GetCurrentPadding_nolock(); */
-    if(This->held_frames + frames > This->bufsize_frames){
+    if(stream->held_frames + frames > stream->bufsize_frames){
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_BUFFER_TOO_LARGE;
     }
 
-    write_pos = This->wri_offs_frames;
-    if(write_pos + frames > This->bufsize_frames){
-        if(This->tmp_buffer_frames < frames){
-            HeapFree(GetProcessHeap(), 0, This->tmp_buffer);
-            This->tmp_buffer = HeapAlloc(GetProcessHeap(), 0,
-                    frames * This->fmt->nBlockAlign);
-            if(!This->tmp_buffer){
+    write_pos = stream->wri_offs_frames;
+    if(write_pos + frames > stream->bufsize_frames){
+        if(stream->tmp_buffer_frames < frames){
+            HeapFree(GetProcessHeap(), 0, stream->tmp_buffer);
+            stream->tmp_buffer = HeapAlloc(GetProcessHeap(), 0,
+                    frames * stream->fmt->nBlockAlign);
+            if(!stream->tmp_buffer){
                 LeaveCriticalSection(&This->lock);
                 return E_OUTOFMEMORY;
             }
-            This->tmp_buffer_frames = frames;
+            stream->tmp_buffer_frames = frames;
         }
-        *data = This->tmp_buffer;
-        This->getbuf_last = -frames;
+        *data = stream->tmp_buffer;
+        stream->getbuf_last = -frames;
     }else{
-        *data = This->local_buffer + write_pos * This->fmt->nBlockAlign;
-        This->getbuf_last = frames;
+        *data = stream->local_buffer + write_pos * stream->fmt->nBlockAlign;
+        stream->getbuf_last = frames;
     }
 
-    silence_buffer(This, *data, frames);
+    silence_buffer(stream, *data, frames);
 
     LeaveCriticalSection(&This->lock);
 
     return S_OK;
 }
 
-static void alsa_wrap_buffer(ACImpl *This, BYTE *buffer, UINT32 written_frames)
+static void alsa_wrap_buffer(struct alsa_stream *stream, BYTE *buffer, UINT32 written_frames)
 {
-    snd_pcm_uframes_t write_offs_frames = This->wri_offs_frames;
-    UINT32 write_offs_bytes = write_offs_frames * This->fmt->nBlockAlign;
-    snd_pcm_uframes_t chunk_frames = This->bufsize_frames - write_offs_frames;
-    UINT32 chunk_bytes = chunk_frames * This->fmt->nBlockAlign;
-    UINT32 written_bytes = written_frames * This->fmt->nBlockAlign;
+    snd_pcm_uframes_t write_offs_frames = stream->wri_offs_frames;
+    UINT32 write_offs_bytes = write_offs_frames * stream->fmt->nBlockAlign;
+    snd_pcm_uframes_t chunk_frames = stream->bufsize_frames - write_offs_frames;
+    UINT32 chunk_bytes = chunk_frames * stream->fmt->nBlockAlign;
+    UINT32 written_bytes = written_frames * stream->fmt->nBlockAlign;
 
     if(written_bytes <= chunk_bytes){
-        memcpy(This->local_buffer + write_offs_bytes, buffer, written_bytes);
+        memcpy(stream->local_buffer + write_offs_bytes, buffer, written_bytes);
     }else{
-        memcpy(This->local_buffer + write_offs_bytes, buffer, chunk_bytes);
-        memcpy(This->local_buffer, buffer + chunk_bytes,
+        memcpy(stream->local_buffer + write_offs_bytes, buffer, chunk_bytes);
+        memcpy(stream->local_buffer, buffer + chunk_bytes,
                 written_bytes - chunk_bytes);
     }
 }
@@ -2562,6 +2565,7 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
         IAudioRenderClient *iface, UINT32 written_frames, DWORD flags)
 {
     ACImpl *This = impl_from_IAudioRenderClient(iface);
+    struct alsa_stream *stream = This->stream;
     BYTE *buffer;
 
     TRACE("(%p)->(%u, %x)\n", This, written_frames, flags);
@@ -2569,37 +2573,37 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
     EnterCriticalSection(&This->lock);
 
     if(!written_frames){
-        This->getbuf_last = 0;
+        stream->getbuf_last = 0;
         LeaveCriticalSection(&This->lock);
         return S_OK;
     }
 
-    if(!This->getbuf_last){
+    if(!stream->getbuf_last){
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_OUT_OF_ORDER;
     }
 
-    if(written_frames > (This->getbuf_last >= 0 ? This->getbuf_last : -This->getbuf_last)){
+    if(written_frames > (stream->getbuf_last >= 0 ? stream->getbuf_last : -stream->getbuf_last)){
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_INVALID_SIZE;
     }
 
-    if(This->getbuf_last >= 0)
-        buffer = This->local_buffer + This->wri_offs_frames * This->fmt->nBlockAlign;
+    if(stream->getbuf_last >= 0)
+        buffer = stream->local_buffer + stream->wri_offs_frames * stream->fmt->nBlockAlign;
     else
-        buffer = This->tmp_buffer;
+        buffer = stream->tmp_buffer;
 
     if(flags & AUDCLNT_BUFFERFLAGS_SILENT)
-        silence_buffer(This, buffer, written_frames);
+        silence_buffer(stream, buffer, written_frames);
 
-    if(This->getbuf_last < 0)
-        alsa_wrap_buffer(This, buffer, written_frames);
+    if(stream->getbuf_last < 0)
+        alsa_wrap_buffer(stream, buffer, written_frames);
 
-    This->wri_offs_frames += written_frames;
-    This->wri_offs_frames %= This->bufsize_frames;
-    This->held_frames += written_frames;
-    This->written_frames += written_frames;
-    This->getbuf_last = 0;
+    stream->wri_offs_frames += written_frames;
+    stream->wri_offs_frames %= stream->bufsize_frames;
+    stream->held_frames += written_frames;
+    stream->written_frames += written_frames;
+    stream->getbuf_last = 0;
 
     LeaveCriticalSection(&This->lock);
 
@@ -2656,6 +2660,7 @@ static HRESULT WINAPI AudioCaptureClient_GetBuffer(IAudioCaptureClient *iface,
         UINT64 *qpcpos)
 {
     ACImpl *This = impl_from_IAudioCaptureClient(iface);
+    struct alsa_stream *stream = This->stream;
 
     TRACE("(%p)->(%p, %p, %p, %p, %p)\n", This, data, frames, flags,
             devpos, qpcpos);
@@ -2670,49 +2675,49 @@ static HRESULT WINAPI AudioCaptureClient_GetBuffer(IAudioCaptureClient *iface,
 
     EnterCriticalSection(&This->lock);
 
-    if(This->getbuf_last){
+    if(stream->getbuf_last){
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_OUT_OF_ORDER;
     }
 
     /* hr = GetNextPacketSize(iface, frames); */
-    if(This->held_frames < This->mmdev_period_frames){
+    if(stream->held_frames < stream->mmdev_period_frames){
         *frames = 0;
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_S_BUFFER_EMPTY;
     }
-    *frames = This->mmdev_period_frames;
+    *frames = stream->mmdev_period_frames;
 
-    if(This->lcl_offs_frames + *frames > This->bufsize_frames){
+    if(stream->lcl_offs_frames + *frames > stream->bufsize_frames){
         UINT32 chunk_bytes, offs_bytes, frames_bytes;
-        if(This->tmp_buffer_frames < *frames){
-            HeapFree(GetProcessHeap(), 0, This->tmp_buffer);
-            This->tmp_buffer = HeapAlloc(GetProcessHeap(), 0,
-                    *frames * This->fmt->nBlockAlign);
-            if(!This->tmp_buffer){
+        if(stream->tmp_buffer_frames < *frames){
+            HeapFree(GetProcessHeap(), 0, stream->tmp_buffer);
+            stream->tmp_buffer = HeapAlloc(GetProcessHeap(), 0,
+                    *frames * stream->fmt->nBlockAlign);
+            if(!stream->tmp_buffer){
                 LeaveCriticalSection(&This->lock);
                 return E_OUTOFMEMORY;
             }
-            This->tmp_buffer_frames = *frames;
+            stream->tmp_buffer_frames = *frames;
         }
 
-        *data = This->tmp_buffer;
-        chunk_bytes = (This->bufsize_frames - This->lcl_offs_frames) *
-            This->fmt->nBlockAlign;
-        offs_bytes = This->lcl_offs_frames * This->fmt->nBlockAlign;
-        frames_bytes = *frames * This->fmt->nBlockAlign;
-        memcpy(This->tmp_buffer, This->local_buffer + offs_bytes, chunk_bytes);
-        memcpy(This->tmp_buffer + chunk_bytes, This->local_buffer,
+        *data = stream->tmp_buffer;
+        chunk_bytes = (stream->bufsize_frames - stream->lcl_offs_frames) *
+            stream->fmt->nBlockAlign;
+        offs_bytes = stream->lcl_offs_frames * stream->fmt->nBlockAlign;
+        frames_bytes = *frames * stream->fmt->nBlockAlign;
+        memcpy(stream->tmp_buffer, stream->local_buffer + offs_bytes, chunk_bytes);
+        memcpy(stream->tmp_buffer + chunk_bytes, stream->local_buffer,
                 frames_bytes - chunk_bytes);
     }else
-        *data = This->local_buffer +
-            This->lcl_offs_frames * This->fmt->nBlockAlign;
+        *data = stream->local_buffer +
+            stream->lcl_offs_frames * stream->fmt->nBlockAlign;
 
-    This->getbuf_last = *frames;
+    stream->getbuf_last = *frames;
     *flags = 0;
 
     if(devpos)
-      *devpos = This->written_frames;
+      *devpos = stream->written_frames;
     if(qpcpos){ /* fixme: qpc of recording time */
         LARGE_INTEGER stamp, freq;
         QueryPerformanceCounter(&stamp);
@@ -2729,32 +2734,33 @@ static HRESULT WINAPI AudioCaptureClient_ReleaseBuffer(
         IAudioCaptureClient *iface, UINT32 done)
 {
     ACImpl *This = impl_from_IAudioCaptureClient(iface);
+    struct alsa_stream *stream = This->stream;
 
     TRACE("(%p)->(%u)\n", This, done);
 
     EnterCriticalSection(&This->lock);
 
     if(!done){
-        This->getbuf_last = 0;
+        stream->getbuf_last = 0;
         LeaveCriticalSection(&This->lock);
         return S_OK;
     }
 
-    if(!This->getbuf_last){
+    if(!stream->getbuf_last){
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_OUT_OF_ORDER;
     }
 
-    if(This->getbuf_last != done){
+    if(stream->getbuf_last != done){
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_INVALID_SIZE;
     }
 
-    This->written_frames += done;
-    This->held_frames -= done;
-    This->lcl_offs_frames += done;
-    This->lcl_offs_frames %= This->bufsize_frames;
-    This->getbuf_last = 0;
+    stream->written_frames += done;
+    stream->held_frames -= done;
+    stream->lcl_offs_frames += done;
+    stream->lcl_offs_frames %= stream->bufsize_frames;
+    stream->getbuf_last = 0;
 
     LeaveCriticalSection(&This->lock);
 
@@ -2765,6 +2771,7 @@ static HRESULT WINAPI AudioCaptureClient_GetNextPacketSize(
         IAudioCaptureClient *iface, UINT32 *frames)
 {
     ACImpl *This = impl_from_IAudioCaptureClient(iface);
+    struct alsa_stream *stream = This->stream;
 
     TRACE("(%p)->(%p)\n", This, frames);
 
@@ -2773,7 +2780,7 @@ static HRESULT WINAPI AudioCaptureClient_GetNextPacketSize(
 
     EnterCriticalSection(&This->lock);
 
-    *frames = This->held_frames < This->mmdev_period_frames ? 0 : This->mmdev_period_frames;
+    *frames = stream->held_frames < stream->mmdev_period_frames ? 0 : stream->mmdev_period_frames;
 
     LeaveCriticalSection(&This->lock);
 
@@ -2829,13 +2836,14 @@ static ULONG WINAPI AudioClock_Release(IAudioClock *iface)
 static HRESULT WINAPI AudioClock_GetFrequency(IAudioClock *iface, UINT64 *freq)
 {
     ACImpl *This = impl_from_IAudioClock(iface);
+    struct alsa_stream *stream = This->stream;
 
     TRACE("(%p)->(%p)\n", This, freq);
 
-    if(This->share == AUDCLNT_SHAREMODE_SHARED)
-        *freq = (UINT64)This->fmt->nSamplesPerSec * This->fmt->nBlockAlign;
+    if(stream->share == AUDCLNT_SHAREMODE_SHARED)
+        *freq = (UINT64)stream->fmt->nSamplesPerSec * stream->fmt->nBlockAlign;
     else
-        *freq = This->fmt->nSamplesPerSec;
+        *freq = stream->fmt->nSamplesPerSec;
 
     return S_OK;
 }
@@ -2844,6 +2852,7 @@ static HRESULT WINAPI AudioClock_GetPosition(IAudioClock *iface, UINT64 *pos,
         UINT64 *qpctime)
 {
     ACImpl *This = impl_from_IAudioClock(iface);
+    struct alsa_stream *stream = This->stream;
     UINT64 position;
     snd_pcm_state_t alsa_state;
 
@@ -2855,38 +2864,38 @@ static HRESULT WINAPI AudioClock_GetPosition(IAudioClock *iface, UINT64 *pos,
     EnterCriticalSection(&This->lock);
 
     /* avail_update required to get accurate snd_pcm_state() */
-    snd_pcm_avail_update(This->pcm_handle);
-    alsa_state = snd_pcm_state(This->pcm_handle);
+    snd_pcm_avail_update(stream->pcm_handle);
+    alsa_state = snd_pcm_state(stream->pcm_handle);
 
     if(This->dataflow == eRender){
-        position = This->written_frames - This->held_frames;
+        position = stream->written_frames - stream->held_frames;
 
-        if(This->started && alsa_state == SND_PCM_STATE_RUNNING && This->held_frames)
+        if(stream->started && alsa_state == SND_PCM_STATE_RUNNING && stream->held_frames)
             /* we should be using snd_pcm_delay here, but it is broken
              * especially during ALSA device underrun. instead, let's just
              * interpolate between periods with the system timer. */
-            position += interp_elapsed_frames(This);
+            position += interp_elapsed_frames(stream);
 
-        position = min(position, This->written_frames - This->held_frames + This->mmdev_period_frames);
+        position = min(position, stream->written_frames - stream->held_frames + stream->mmdev_period_frames);
 
-        position = min(position, This->written_frames);
+        position = min(position, stream->written_frames);
     }else
-        position = This->written_frames + This->held_frames;
+        position = stream->written_frames + stream->held_frames;
 
     /* ensure monotic growth */
-    if(position < This->last_pos_frames)
-        position = This->last_pos_frames;
+    if(position < stream->last_pos_frames)
+        position = stream->last_pos_frames;
     else
-        This->last_pos_frames = position;
+        stream->last_pos_frames = position;
 
     TRACE("frames written: %u, held: %u, state: 0x%x, position: %u\n",
-            (UINT32)(This->written_frames%1000000000), This->held_frames,
+            (UINT32)(stream->written_frames%1000000000), stream->held_frames,
             alsa_state, (UINT32)(position%1000000000));
 
     LeaveCriticalSection(&This->lock);
 
-    if(This->share == AUDCLNT_SHAREMODE_SHARED)
-        *pos = position * This->fmt->nBlockAlign;
+    if(stream->share == AUDCLNT_SHAREMODE_SHARED)
+        *pos = position * stream->fmt->nBlockAlign;
     else
         *pos = position;
 
@@ -3056,7 +3065,7 @@ static HRESULT WINAPI AudioSessionControl_GetState(IAudioSessionControl2 *iface,
 
     LIST_FOR_EACH_ENTRY(client, &This->session->clients, ACImpl, entry){
         EnterCriticalSection(&client->lock);
-        if(client->started){
+        if(client->stream->started){
             *state = AudioSessionStateActive;
             LeaveCriticalSection(&client->lock);
             LeaveCriticalSection(&g_sessions_lock);
