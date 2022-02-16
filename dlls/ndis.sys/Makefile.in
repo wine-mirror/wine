@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = ndis.sys
 IMPORTS   = advapi32 ntoskrnl iphlpapi
 

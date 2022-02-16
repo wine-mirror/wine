@@ -88,7 +88,7 @@ static void query_global_stats(IRP *irp, const MIB_IF_ROW2 *netdev)
 
     }
     default:
-        FIXME( "Unsupported OID %x\n", oid );
+        FIXME( "Unsupported OID %lx\n", oid );
         irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
         break;
     }
@@ -100,7 +100,7 @@ static NTSTATUS WINAPI ndis_ioctl(DEVICE_OBJECT *device, IRP *irp)
     MIB_IF_ROW2 *netdev = device->DeviceExtension;
     NTSTATUS status;
 
-    TRACE( "ioctl %x insize %u outsize %u\n",
+    TRACE( "ioctl %lx insize %lu outsize %lu\n",
            irpsp->Parameters.DeviceIoControl.IoControlCode,
            irpsp->Parameters.DeviceIoControl.InputBufferLength,
            irpsp->Parameters.DeviceIoControl.OutputBufferLength );
@@ -111,7 +111,7 @@ static NTSTATUS WINAPI ndis_ioctl(DEVICE_OBJECT *device, IRP *irp)
         query_global_stats(irp, netdev);
         break;
     default:
-        FIXME( "ioctl %x not supported\n", irpsp->Parameters.DeviceIoControl.IoControlCode );
+        FIXME( "ioctl %lx not supported\n", irpsp->Parameters.DeviceIoControl.IoControlCode );
         irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
         break;
     }
@@ -153,7 +153,7 @@ static int add_device(DRIVER_OBJECT *driver, const WCHAR *guidstrW, MIB_IF_ROW2 
         status = IoCreateSymbolicLink( &link, &name );
     if (status)
     {
-        FIXME( "failed to create device error %x\n", status );
+        FIXME( "failed to create device error %lx\n", status );
         return 0;
     }
 
@@ -200,7 +200,7 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *path)
 
 NDIS_STATUS WINAPI NdisAllocateMemoryWithTag(void **address, UINT length, ULONG tag)
 {
-    FIXME("(%p, %u, %u): stub\n", address, length, tag);
+    FIXME("(%p, %u, %lu): stub\n", address, length, tag);
     return NDIS_STATUS_FAILURE;
 }
 
