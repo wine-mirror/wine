@@ -1,3 +1,5 @@
 MODULE = msimsg.dll
 
+EXTRADLLFLAGS = -Wb,--data-only
+
 RC_SRCS = msimsg.rc
