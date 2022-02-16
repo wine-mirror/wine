@@ -197,6 +197,7 @@ struct makefile
     int             native_unix_lib;
     int             disabled;
     int             use_msvcrt;
+    int             data_only;
     int             is_cross;
     int             is_win16;
     int             is_exe;
@@ -3139,35 +3140,45 @@ static void output_module( struct makefile *make )
     struct strarray all_libs = empty_strarray;
     struct strarray dep_libs = empty_strarray;
     struct strarray imports = make->imports;
-    char *module_name = strmake( "%s%s", make->module, make->is_cross ? "" : dll_ext );
+    const char *module_name = make->module;
     const char *debug_file;
     const char *delay_load = delay_load_flag;
     char *spec_file = NULL;
     unsigned int i;
 
     if (!make->is_exe) spec_file = src_dir_path( make, replace_extension( make->module, ".dll", ".spec" ));
-    if (!strarray_exists( &make->extradllflags, "-nodefaultlibs" ))
-        imports = add_default_imports( make, imports );
 
-    strarray_addall( &all_libs, add_import_libs( make, &dep_libs, make->delayimports, 1, make->is_cross ));
-    strarray_addall( &all_libs, add_import_libs( make, &dep_libs, imports, 0, make->is_cross ));
-
-    if (!make->use_msvcrt)
+    if (!make->data_only)
     {
-        strarray_addall( &all_libs, get_expanded_make_var_array( make, "EXTRALIBS" ));
-        strarray_addall( &all_libs, libs );
-    }
+        if (*dll_ext && !make->is_cross && !make->data_only)
+            module_name = strmake( "%s%s", make->module, dll_ext );
 
-    if (!make->is_cross && *dll_ext) delay_load = "-Wl,-delayload,";
-    if (delay_load)
-    {
-        for (i = 0; i < make->delayimports.count; i++)
-            strarray_add( &all_libs, strmake( "%s%s%s", delay_load, make->delayimports.str[i],
-                                              strchr( make->delayimports.str[i], '.' ) ? "" : ".dll" ));
+        if (!strarray_exists( &make->extradllflags, "-nodefaultlibs" ))
+            imports = add_default_imports( make, imports );
+
+        strarray_addall( &all_libs, add_import_libs( make, &dep_libs, make->delayimports, 1, make->is_cross ));
+        strarray_addall( &all_libs, add_import_libs( make, &dep_libs, imports, 0, make->is_cross ));
+
+        if (!make->use_msvcrt)
+        {
+            strarray_addall( &all_libs, get_expanded_make_var_array( make, "EXTRALIBS" ));
+            strarray_addall( &all_libs, libs );
+        }
+
+        if (!make->is_cross && *dll_ext) delay_load = "-Wl,-delayload,";
+        if (delay_load)
+        {
+            for (i = 0; i < make->delayimports.count; i++)
+                strarray_add( &all_libs, strmake( "%s%s%s", delay_load, make->delayimports.str[i],
+                                                  strchr( make->delayimports.str[i], '.' ) ? "" : ".dll" ));
+        }
     }
     strarray_add( &make->all_targets, module_name );
 
-    if (make->is_cross)
+    if (make->data_only)
+        add_install_rule( make, make->module, module_name,
+                          strmake( "d%s/%s", *dll_ext ? pe_dir : "$(dlldir)", module_name ));
+    else if (make->is_cross)
         add_install_rule( make, make->module, module_name, strmake( "c%s/%s", pe_dir, module_name ));
     else if (*dll_ext)
         add_install_rule( make, make->module, module_name, strmake( "p%s/%s", so_dir, module_name ));
@@ -3524,7 +3535,7 @@ static void output_programs( struct makefile *make )
         output_filenames_obj_dir( make, objs );
         output_filenames( deps );
         output( "\n" );
-        output( "\t%s$(CC) -o $@", cmd_prefix( "CC" ));
+        output( "\t%s$(CC) -o $@", cmd_prefix( "CCLD" ));
         output_filenames_obj_dir( make, objs );
         output_filenames( all_libs );
         output_filename( "$(LDFLAGS)" );
@@ -3713,7 +3724,7 @@ static void output_sources( struct makefile *make )
     else if (make->module)
     {
         output_module( make );
-        if (*dll_ext && !make->is_cross) output_fake_module( make );
+        if (*dll_ext && !make->is_cross && !make->data_only) output_fake_module( make );
         if (make->unixlib) output_unix_lib( make );
         if (make->importlib) output_import_lib( make );
     }
@@ -4141,6 +4152,7 @@ static void load_sources( struct makefile *make )
 
     make->disabled   = make->obj_dir && strarray_exists( &disabled_dirs, make->obj_dir );
     make->is_win16   = strarray_exists( &make->extradllflags, "-m16" );
+    make->data_only  = strarray_exists( &make->extradllflags, "-Wb,--data-only" );
     make->use_msvcrt = (make->module || make->testdll || make->is_win16) &&
                        !strarray_exists( &make->extradllflags, "-mcygwin" );
     make->is_exe     = strarray_exists( &make->extradllflags, "-mconsole" ) ||
