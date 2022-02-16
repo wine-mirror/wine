@@ -1058,6 +1058,18 @@ SECURITY_STATUS WINAPI AddSecurityPackageW(LPWSTR name, SECURITY_PACKAGE_OPTIONS
     return E_NOTIMPL;
 }
 
+SECURITY_STATUS WINAPI DeleteSecurityPackageA(LPSTR name)
+{
+    FIXME("(%s)\n", debugstr_a(name));
+    return E_NOTIMPL;
+}
+
+SECURITY_STATUS WINAPI DeleteSecurityPackageW(LPWSTR name)
+{
+    FIXME("(%s)\n", debugstr_w(name));
+    return E_NOTIMPL;
+}
+
 /***********************************************************************
  *		GetUserNameExA (SECUR32.@)
  */

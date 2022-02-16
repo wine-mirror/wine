@@ -1,14 +1,14 @@
 @ stdcall AcceptSecurityContext(ptr ptr ptr long long ptr ptr ptr ptr) secur32.AcceptSecurityContext
 @ stdcall AcquireCredentialsHandleA(str str long ptr ptr ptr ptr ptr ptr) secur32.AcquireCredentialsHandleA
 @ stdcall AcquireCredentialsHandleW(wstr wstr long ptr ptr ptr ptr ptr ptr) secur32.AcquireCredentialsHandleW
-@ stub AddSecurityPackageA # secur32.AddSecurityPackageA
-@ stub AddSecurityPackageW # secur32.AddSecurityPackageW
+@ stdcall AddSecurityPackageA(str ptr) secur32.AddSecurityPackageA
+@ stdcall AddSecurityPackageW(wstr ptr) secur32.AddSecurityPackageW
 @ stdcall ApplyControlToken(ptr ptr) secur32.ApplyControlToken
 @ stdcall CompleteAuthToken(ptr ptr) secur32.CompleteAuthToken
 @ stdcall DecryptMessage(ptr ptr long ptr) secur32.DecryptMessage
 @ stdcall DeleteSecurityContext(ptr) secur32.DeleteSecurityContext
-@ stub DeleteSecurityPackageA # secur32.DeleteSecurityPackageA
-@ stub DeleteSecurityPackageW # secur32.DeleteSecurityPackageW
+@ stdcall DeleteSecurityPackageA(str) secur32.DeleteSecurityPackageA
+@ stdcall DeleteSecurityPackageW(wstr) secur32.DeleteSecurityPackageW
 @ stdcall EncryptMessage(ptr long ptr long) secur32.EncryptMessage
 @ stdcall EnumerateSecurityPackagesA(ptr ptr) secur32.EnumerateSecurityPackagesA
 @ stdcall EnumerateSecurityPackagesW(ptr ptr) secur32.EnumerateSecurityPackagesW
@@ -31,6 +31,6 @@
 @ stdcall QuerySecurityPackageInfoA(str ptr) secur32.QuerySecurityPackageInfoA
 @ stdcall QuerySecurityPackageInfoW(wstr ptr) secur32.QuerySecurityPackageInfoW
 @ stdcall RevertSecurityContext(ptr) secur32.RevertSecurityContext
-@ stdcall SealMessage(ptr long ptr long) secur32.EncryptMessage
-@ stdcall UnsealMessage(ptr ptr long ptr) secur32.DecryptMessage
+@ stdcall SealMessage(ptr long ptr long) secur32.SealMessage
+@ stdcall UnsealMessage(ptr ptr long ptr) secur32.UnsealMessage
 @ stdcall VerifySignature(ptr ptr long ptr) secur32.VerifySignature

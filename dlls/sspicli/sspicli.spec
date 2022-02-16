@@ -13,8 +13,8 @@
 @ stub CredUnmarshalTargetInfo
 @ stdcall DecryptMessage(ptr ptr long ptr) secur32.DecryptMessage
 @ stdcall DeleteSecurityContext(ptr) secur32.DeleteSecurityContext
-@ stub DeleteSecurityPackageA
-@ stub DeleteSecurityPackageW
+@ stdcall DeleteSecurityPackageA(str) secur32.DeleteSecurityPackageA
+@ stdcall DeleteSecurityPackageW(wstr) secur32.DeleteSecurityPackageW
 @ stdcall EncryptMessage(ptr long ptr long) secur32.EncryptMessage
 @ stdcall EnumerateSecurityPackagesA(ptr ptr) secur32.EnumerateSecurityPackagesA
 @ stdcall EnumerateSecurityPackagesW(ptr ptr) secur32.EnumerateSecurityPackagesW

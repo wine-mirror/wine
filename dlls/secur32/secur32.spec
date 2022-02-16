@@ -12,8 +12,8 @@
 @ stdcall CompleteAuthToken(ptr ptr)
 @ stdcall DecryptMessage(ptr ptr long ptr)
 @ stdcall DeleteSecurityContext(ptr)
-@ stub DeleteSecurityPackageA
-@ stub DeleteSecurityPackageW
+@ stdcall DeleteSecurityPackageA(str)
+@ stdcall DeleteSecurityPackageW(wstr)
 @ stdcall EncryptMessage(ptr long ptr long)
 @ stdcall EnumerateSecurityPackagesA(ptr ptr)
 @ stdcall EnumerateSecurityPackagesW(ptr ptr)
