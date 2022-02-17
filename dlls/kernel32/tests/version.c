@@ -715,7 +715,7 @@ static void test_GetSystemFirmwareTable(void)
         return;
     }
 
-    sfti = HeapAlloc(GetProcessHeap(), 0, min_sfti_len);
+    sfti = HeapAlloc(GetProcessHeap(), 0, sizeof(*sfti));
     ok(!!sfti, "Failed to allocate memory\n");
     sfti->ProviderSignature = RSMB;
     sfti->Action = SystemFirmwareTable_Get;
