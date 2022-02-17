@@ -95,7 +95,7 @@ BOOL is_valid_handle(struct handle_table *lpTable, HCRYPTKEY handle, DWORD dwTyp
     unsigned int index = HANDLE2INDEX(handle);
     BOOL ret = FALSE;
 
-    TRACE("(lpTable=%p, handle=%ld)\n", lpTable, handle);
+    TRACE("(lpTable=%p, handle=%Id)\n", lpTable, handle);
     
     EnterCriticalSection(&lpTable->mutex);
         
@@ -230,7 +230,7 @@ BOOL release_handle(struct handle_table *lpTable, HCRYPTKEY handle, DWORD dwType
     OBJECTHDR *pObject;
     BOOL ret = FALSE;
 
-    TRACE("(lpTable=%p, handle=%ld)\n", lpTable, handle);
+    TRACE("(lpTable=%p, handle=%Id)\n", lpTable, handle);
     
     EnterCriticalSection(&lpTable->mutex);
     
@@ -240,7 +240,7 @@ BOOL release_handle(struct handle_table *lpTable, HCRYPTKEY handle, DWORD dwType
     pObject = lpTable->paEntries[index].pObject;
     if (InterlockedDecrement(&pObject->refcount) == 0)
     {
-        TRACE("destroying handle %ld\n", handle);
+        TRACE("destroying handle %Id\n", handle);
         if (pObject->destructor)
             pObject->destructor(pObject);
     }
@@ -273,7 +273,7 @@ BOOL lookup_handle(struct handle_table *lpTable, HCRYPTKEY handle, DWORD dwType,
 {
     BOOL ret = FALSE;
 
-    TRACE("(lpTable=%p, handle=%ld, lplpObject=%p)\n", lpTable, handle, lplpObject);
+    TRACE("(lpTable=%p, handle=%Id, lplpObject=%p)\n", lpTable, handle, lplpObject);
     
     EnterCriticalSection(&lpTable->mutex);
     if (!is_valid_handle(lpTable, handle, dwType)) 
@@ -309,7 +309,7 @@ BOOL copy_handle(struct handle_table *lpTable, HCRYPTKEY handle, DWORD dwType, H
     OBJECTHDR *pObject;
     BOOL ret;
 
-    TRACE("(lpTable=%p, handle=%ld, copy=%p)\n", lpTable, handle, copy);
+    TRACE("(lpTable=%p, handle=%Id, copy=%p)\n", lpTable, handle, copy);
 
     EnterCriticalSection(&lpTable->mutex);
     if (!lookup_handle(lpTable, handle, dwType, &pObject)) 
