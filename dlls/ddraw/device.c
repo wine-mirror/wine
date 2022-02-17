@@ -4293,6 +4293,8 @@ static HRESULT d3d_device7_DrawPrimitiveVB(IDirect3DDevice7 *iface, D3DPRIMITIVE
         return D3D_OK;
     }
 
+    vb_impl->discarded = false;
+
     stride = get_flexible_vertex_size(vb_impl->fvf);
 
     if (vb_impl->Caps & D3DVBCAPS_SYSTEMMEMORY)
@@ -4411,6 +4413,8 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
         WARN("0 vertex or index count.\n");
         return D3D_OK;
     }
+
+    vb_impl->discarded = false;
 
     if (vb_impl->Caps & D3DVBCAPS_SYSTEMMEMORY)
     {

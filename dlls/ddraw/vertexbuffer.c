@@ -159,10 +159,14 @@ static HRESULT WINAPI d3d_vertex_buffer7_Lock(IDirect3DVertexBuffer7 *iface,
     if (buffer->version != 7)
         flags &= ~(DDLOCK_NOOVERWRITE | DDLOCK_DISCARDCONTENTS);
 
+    if (buffer->discarded)
+        flags &= ~DDLOCK_DISCARDCONTENTS;
+
     if (!(flags & DDLOCK_WAIT))
         flags |= DDLOCK_DONOTWAIT;
     if (flags & DDLOCK_DISCARDCONTENTS)
     {
+        buffer->discarded = true;
         if (!buffer->dynamic)
         {
             struct wined3d_buffer *new_buffer;
