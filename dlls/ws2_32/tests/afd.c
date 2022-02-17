@@ -1460,7 +1460,7 @@ static void test_recv(void)
     memset(buffer, 0xcc, sizeof(buffer));
     ret = NtDeviceIoControlFile((HANDLE)client, event, NULL, NULL, &io,
             IOCTL_AFD_RECV, &params, sizeof(params), NULL, 0);
-    todo_wine ok(ret == STATUS_PIPE_DISCONNECTED, "got %#x\n", ret);
+    ok(ret == STATUS_PIPE_DISCONNECTED, "got %#x\n", ret);
     ok(!io.Status, "got status %#x\n", io.Status);
     ok(!io.Information, "got information %#Ix\n", io.Information);
 
