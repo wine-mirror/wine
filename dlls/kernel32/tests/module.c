@@ -692,21 +692,95 @@ static void test_LoadLibraryEx_search_flags(void)
     }
     else
     {
+        LoadLibraryA( "ole32.dll" ); /* FIXME: make sure the dependencies are loaded */
         mod = LoadLibraryA( apiset_dll );
         if (mod)
         {
+            HMODULE shcore;
+            char buffer[MAX_PATH];
+
             FreeLibrary(mod);
             mod = LoadLibraryExA( apiset_dll, NULL, LOAD_LIBRARY_SEARCH_APPLICATION_DIR );
             ok( !!mod, "Got NULL module, error %u.\n", GetLastError() );
             ok( !!GetModuleHandleA( apiset_dll ), "Got NULL handle.\n" );
+            shcore = GetModuleHandleA( "shcore.dll" );
+            todo_wine
+            ok( mod == shcore, "wrong module %p/%p\n", mod, shcore );
             ret = FreeLibrary( mod );
             ok( ret, "FreeLibrary failed, error %u.\n", GetLastError() );
+            shcore = GetModuleHandleA( "shcore.dll" );
+            ok( !shcore, "shcore not unloaded\n" );
+
+            /* api set without .dll */
+            strcpy( buffer, apiset_dll );
+            buffer[strlen(buffer) - 4] = 0;
+            mod = LoadLibraryExA( buffer, NULL, LOAD_LIBRARY_SEARCH_APPLICATION_DIR );
+            ok( !!mod, "Got NULL module, error %u.\n", GetLastError() );
+            ok( !!GetModuleHandleA( apiset_dll ), "Got NULL handle.\n" );
+            shcore = GetModuleHandleA( "shcore.dll" );
+            todo_wine
+            ok( mod == shcore, "wrong module %p/%p\n", mod, shcore );
+            ret = FreeLibrary( mod );
+            ok( ret, "FreeLibrary failed, error %u.\n", GetLastError() );
+            shcore = GetModuleHandleA( "shcore.dll" );
+            ok( !shcore, "shcore not unloaded\n" );
+
+            /* api set with different version */
+            strcpy( buffer, apiset_dll );
+            buffer[strlen(buffer) - 5] = '9';
+            mod = LoadLibraryExA( buffer, NULL, LOAD_LIBRARY_SEARCH_APPLICATION_DIR );
+            todo_wine
+            ok( !!mod || broken(!mod) /* win8 */, "Got NULL module, error %u.\n", GetLastError() );
+            if (mod)
+            {
+                ok( !!GetModuleHandleA( apiset_dll ), "Got NULL handle.\n" );
+                shcore = GetModuleHandleA( "shcore.dll" );
+                ok( mod == shcore, "wrong module %p/%p\n", mod, shcore );
+                ret = FreeLibrary( mod );
+                ok( ret, "FreeLibrary failed, error %u.\n", GetLastError() );
+            }
+            shcore = GetModuleHandleA( "shcore.dll" );
+            ok( !shcore, "shcore not unloaded\n" );
+
+            /* api set with full path */
+            GetWindowsDirectoryA( buffer, MAX_PATH );
+            strcat( buffer, "\\" );
+            strcat( buffer, apiset_dll );
+            SetLastError( 0xdeadbeef );
+            mod = LoadLibraryExA( buffer, NULL, LOAD_LIBRARY_SEARCH_APPLICATION_DIR );
+            ok( !mod, "Loaded %s\n", debugstr_a(buffer) );
+            ok( GetLastError() == ERROR_MOD_NOT_FOUND, "wrong error %u\n", GetLastError() );
+            SetLastError( 0xdeadbeef );
+            mod = LoadLibraryA( buffer );
+            ok( !mod, "Loaded %s\n", debugstr_a(buffer) );
+            ok( GetLastError() == ERROR_MOD_NOT_FOUND, "wrong error %u\n", GetLastError() );
         }
         else
         {
             win_skip( "%s not found, skipping test.\n", apiset_dll );
         }
-    }
+
+        /* try a library with dependencies */
+        mod = GetModuleHandleA( "rasapi32.dll" );
+        ok( !mod, "rasapi32 already loaded\n" );
+        mod = LoadLibraryA( "rasapi32.dll" );
+        ok( !!mod, "rasapi32 not found %u\n", GetLastError() );
+        FreeLibrary( mod );
+        SetLastError( 0xdeadbeef );
+        mod = LoadLibraryExA( "rasapi32.dll", NULL, LOAD_LIBRARY_SEARCH_APPLICATION_DIR );
+        ok( !mod, "rasapi32 loaded\n" );
+        ok( GetLastError() == ERROR_MOD_NOT_FOUND, "wrong error %u\n", GetLastError() );
+        SetLastError( 0xdeadbeef );
+        mod = LoadLibraryExA( "ext-ms-win-ras-rasapi32-l1-1-0.dll", NULL, LOAD_LIBRARY_SEARCH_APPLICATION_DIR );
+        ok( !mod, "rasapi32 loaded\n" );
+        ok( GetLastError() == ERROR_MOD_NOT_FOUND, "wrong error %u\n", GetLastError() );
+        if (mod) FreeLibrary( mod );
+        mod = LoadLibraryA( "ext-ms-win-ras-rasapi32-l1-1-0.dll" );
+        ok( !!mod || broken(!mod) /* win7 */, "rasapi32 not found %u\n", GetLastError() );
+        if (mod) FreeLibrary( mod );
+        mod = GetModuleHandleA( "rasapi32.dll" );
+        ok( !mod, "rasapi32 still loaded\n" );
+     }
 done:
     for (i = 1; i <= 6; i++)
     {
