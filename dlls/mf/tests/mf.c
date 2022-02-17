@@ -6408,6 +6408,110 @@ static void test_h264_decoder(void)
             ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_YUY2),
         },
     };
+    static const media_type_desc default_outputs[] =
+    {
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
+            ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+            ATTR_RATIO(MF_MT_FRAME_RATE, 30000, 1001),
+            ATTR_UINT32(MF_MT_DEFAULT_STRIDE, 1920),
+            ATTR_UINT32(MF_MT_INTERLACE_MODE, 7),
+            ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
+            ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_YV12),
+            ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+            ATTR_RATIO(MF_MT_FRAME_RATE, 30000, 1001),
+            ATTR_UINT32(MF_MT_DEFAULT_STRIDE, 1920),
+            ATTR_UINT32(MF_MT_INTERLACE_MODE, 7),
+            ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
+            ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_IYUV),
+            ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+            ATTR_RATIO(MF_MT_FRAME_RATE, 30000, 1001),
+            ATTR_UINT32(MF_MT_DEFAULT_STRIDE, 1920),
+            ATTR_UINT32(MF_MT_INTERLACE_MODE, 7),
+            ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
+            ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_I420),
+            ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+            ATTR_RATIO(MF_MT_FRAME_RATE, 30000, 1001),
+            ATTR_UINT32(MF_MT_DEFAULT_STRIDE, 1920),
+            ATTR_UINT32(MF_MT_INTERLACE_MODE, 7),
+            ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
+            ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_YUY2),
+            ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+            ATTR_RATIO(MF_MT_FRAME_RATE, 30000, 1001),
+            ATTR_UINT32(MF_MT_DEFAULT_STRIDE, 3840),
+            ATTR_UINT32(MF_MT_INTERLACE_MODE, 7),
+            ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
+            ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        },
+    };
+    static const media_type_desc default_outputs_extra[] =
+    {
+        {
+            ATTR_RATIO(MF_MT_FRAME_SIZE, 1920, 1080),
+            ATTR_UINT32(MF_MT_SAMPLE_SIZE, 3110400),
+            ATTR_UINT32(MF_MT_VIDEO_ROTATION, 0),
+        },
+        {
+            ATTR_RATIO(MF_MT_FRAME_SIZE, 1920, 1080),
+            ATTR_UINT32(MF_MT_SAMPLE_SIZE, 3110400),
+            ATTR_UINT32(MF_MT_VIDEO_ROTATION, 0),
+        },
+        {
+            ATTR_RATIO(MF_MT_FRAME_SIZE, 1920, 1080),
+            ATTR_UINT32(MF_MT_SAMPLE_SIZE, 3110400),
+            ATTR_UINT32(MF_MT_VIDEO_ROTATION, 0),
+        },
+        {
+            ATTR_RATIO(MF_MT_FRAME_SIZE, 1920, 1080),
+            ATTR_UINT32(MF_MT_SAMPLE_SIZE, 3110400),
+            ATTR_UINT32(MF_MT_VIDEO_ROTATION, 0),
+        },
+        {
+            ATTR_RATIO(MF_MT_FRAME_SIZE, 1920, 1080),
+            ATTR_UINT32(MF_MT_SAMPLE_SIZE, 4147200),
+            ATTR_UINT32(MF_MT_VIDEO_ROTATION, 0),
+        },
+    };
+    static const media_type_desc default_outputs_win7[] =
+    {
+        {
+            ATTR_RATIO(MF_MT_FRAME_SIZE, 1920, 1088),
+            ATTR_UINT32(MF_MT_SAMPLE_SIZE, 3133440),
+        },
+        {
+            ATTR_RATIO(MF_MT_FRAME_SIZE, 1920, 1088),
+            ATTR_UINT32(MF_MT_SAMPLE_SIZE, 3133440),
+        },
+        {
+            ATTR_RATIO(MF_MT_FRAME_SIZE, 1920, 1088),
+            ATTR_UINT32(MF_MT_SAMPLE_SIZE, 3133440),
+        },
+        {
+            ATTR_RATIO(MF_MT_FRAME_SIZE, 1920, 1088),
+            ATTR_UINT32(MF_MT_SAMPLE_SIZE, 3133440),
+        },
+        {
+            ATTR_RATIO(MF_MT_FRAME_SIZE, 1920, 1088),
+            ATTR_UINT32(MF_MT_SAMPLE_SIZE, 4177920),
+        },
+    };
     static const struct attribute_desc input_type_desc[] =
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
@@ -6430,6 +6534,12 @@ static void test_h264_decoder(void)
             transform_inputs, ARRAY_SIZE(transform_inputs), transform_outputs, ARRAY_SIZE(transform_outputs),
             &transform, &class_id))
         goto failed;
+
+    /* no output type is available before an input type is set */
+
+    hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type);
+    todo_wine
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetOutputAvailableType returned %#x\n", hr);
 
     /* check available input types */
 
@@ -6466,6 +6576,27 @@ static void test_h264_decoder(void)
     ret = IMFMediaType_Release(media_type);
     todo_wine
     ok(ret == 1, "Release returned %u\n", ret);
+
+    /* output types can now be enumerated (though they are actually the same for all input types) */
+
+    i = -1;
+    while (SUCCEEDED(hr = IMFTransform_GetOutputAvailableType(transform, 0, ++i, &media_type)))
+    {
+        winetest_push_context("out %u", i);
+        ok(hr == S_OK, "GetOutputAvailableType returned %#x\n", hr);
+        check_media_type(media_type, default_outputs[i], -1);
+        if (FAILED(hr = IMFMediaType_GetItem(media_type, &MF_MT_VIDEO_ROTATION, NULL)))
+            check_media_type(media_type, default_outputs_win7[i], -1);
+        else
+            check_media_type(media_type, default_outputs_extra[i], -1);
+        ret = IMFMediaType_Release(media_type);
+        ok(ret == 0, "Release returned %u\n", ret);
+        winetest_pop_context();
+    }
+    todo_wine
+    ok(hr == MF_E_NO_MORE_TYPES, "GetOutputAvailableType returned %#x\n", hr);
+    todo_wine
+    ok(i == 5, "%u output media types\n", i);
 
     ret = IMFTransform_Release(transform);
     ok(ret == 0, "Release returned %u\n", ret);
