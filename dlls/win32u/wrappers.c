@@ -947,79 +947,8 @@ void CDECL __wine_set_display_driver( struct user_driver_funcs *funcs, UINT vers
     return unix_funcs->set_display_driver( funcs, version );
 }
 
-static void *get_user_proc( const char *name, BOOL force_load )
-{
-    ANSI_STRING name_str;
-    FARPROC proc = NULL;
-    static HMODULE user32;
-
-    if (!user32)
-    {
-        UNICODE_STRING str;
-        NTSTATUS status;
-        RtlInitUnicodeString( &str, L"user32.dll" );
-        status = force_load
-            ? LdrLoadDll( NULL, 0, &str, &user32 )
-            : LdrGetDllHandle( NULL, 0, &str, &user32 );
-        if (status < 0) return NULL;
-    }
-    RtlInitAnsiString( &name_str, name );
-    LdrGetProcedureAddress( user32, &name_str, 0, (void**)&proc );
-    return proc;
-}
-
-static HWND WINAPI call_GetDesktopWindow(void)
-{
-    static HWND (WINAPI *pGetDesktopWindow)(void);
-    if (!pGetDesktopWindow)
-        pGetDesktopWindow = get_user_proc( "GetDesktopWindow", TRUE );
-    return pGetDesktopWindow ? pGetDesktopWindow() : NULL;
-}
-
-static BOOL WINAPI call_GetWindowRect( HWND hwnd, LPRECT rect )
-{
-    static BOOL (WINAPI *pGetWindowRect)( HWND hwnd, LPRECT rect );
-    if (!pGetWindowRect)
-        pGetWindowRect = get_user_proc( "GetWindowRect", FALSE );
-    return pGetWindowRect && pGetWindowRect( hwnd, rect );
-}
-
-static BOOL WINAPI call_RedrawWindow( HWND hwnd, const RECT *rect, HRGN rgn, UINT flags )
-{
-    static BOOL (WINAPI *pRedrawWindow)( HWND, const RECT*, HRGN, UINT );
-    if (!pRedrawWindow)
-        pRedrawWindow = get_user_proc( "RedrawWindow", FALSE );
-    return pRedrawWindow && pRedrawWindow( hwnd, rect, rgn, flags );
-}
-
-static LRESULT WINAPI call_SendMessageTimeoutW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
-                                                UINT flags, UINT timeout, PDWORD_PTR res_ptr )
-{
-    static LRESULT (WINAPI *pSendMessageTimeoutW)( HWND, UINT, WPARAM, LPARAM, UINT, UINT, PDWORD_PTR );
-    if (!pSendMessageTimeoutW) pSendMessageTimeoutW = get_user_proc( "SendMessageTimeoutW", FALSE );
-    if (!pSendMessageTimeoutW) return 0;
-    return pSendMessageTimeoutW( hwnd, msg, wparam, lparam, flags, timeout, res_ptr );
-}
-
-static HWND WINAPI call_WindowFromDC( HDC hdc )
-{
-    static HWND (WINAPI *pWindowFromDC)( HDC );
-    if (!pWindowFromDC)
-        pWindowFromDC = get_user_proc( "WindowFromDC", FALSE );
-    return pWindowFromDC ? pWindowFromDC( hdc ) : NULL;
-}
-
-static const struct user_callbacks user_funcs =
-{
-    call_GetDesktopWindow,
-    call_GetWindowRect,
-    call_RedrawWindow,
-    call_SendMessageTimeoutW,
-    call_WindowFromDC,
-};
-
 extern void wrappers_init( unixlib_handle_t handle )
 {
-    const void *args = &user_funcs;
+    const void *args;
     if (!__wine_unix_call( handle, 1, &args )) unix_funcs = args;
 }

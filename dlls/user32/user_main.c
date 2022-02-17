@@ -208,6 +208,14 @@ static void dpiaware_init(void)
     }
 }
 
+static const struct user_callbacks user_funcs =
+{
+    GetDesktopWindow,
+    GetWindowRect,
+    RedrawWindow,
+    SendMessageTimeoutW,
+    WindowFromDC,
+};
 
 static const void *kernel_callback_table[NtUserCallCount] =
 {
@@ -222,6 +230,9 @@ static const void *kernel_callback_table[NtUserCallCount] =
 static BOOL process_attach(void)
 {
     NtCurrentTeb()->Peb->KernelCallbackTable = kernel_callback_table;
+
+    /* FIXME: should not be needed */
+    NtUserCallOneParam( (UINT_PTR)&user_funcs, NtUserSetCallbacks );
 
     dpiaware_init();
     register_desktop_class();

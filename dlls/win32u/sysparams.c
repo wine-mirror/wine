@@ -4544,6 +4544,8 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
         return get_entry( &entry_DESKPATTERN, 256, (WCHAR *)arg );
     case NtUserIncrementKeyStateCounter:
         return InterlockedAdd( &global_key_state_counter, arg );
+    case NtUserSetCallbacks:
+        return (UINT_PTR)InterlockedExchangePointer( (void **)&user_callbacks, (void *)arg );
     default:
         FIXME( "invalid code %u\n", code );
         return 0;

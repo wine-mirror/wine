@@ -85,6 +85,7 @@ enum
     NtUserFlushWindowSurfaces,
     NtUserGetDeskPattern,
     NtUserIncrementKeyStateCounter,
+    NtUserSetCallbacks,
 };
 
 /* NtUserCallTwoParam codes, not compatible with Windows */

@@ -27,17 +27,8 @@
 #pragma makedep unix
 #endif
 
-#include <stdarg.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "windef.h"
-#include "winbase.h"
-#include "winerror.h"
-#include "wingdi.h"
-#include "winuser.h"
-
 #include "ntgdi_private.h"
+#include "ntuser_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(palette);

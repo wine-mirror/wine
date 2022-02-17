@@ -24,6 +24,15 @@
 
 #include "ntuser.h"
 
+struct user_callbacks
+{
+    HWND (WINAPI *pGetDesktopWindow)(void);
+    BOOL (WINAPI *pGetWindowRect)( HWND hwnd, LPRECT rect );
+    BOOL (WINAPI *pRedrawWindow)( HWND, const RECT*, HRGN, UINT );
+    LRESULT (WINAPI *pSendMessageTimeoutW)( HWND, UINT, WPARAM, LPARAM, UINT, UINT, PDWORD_PTR );
+    HWND (WINAPI *pWindowFromDC)( HDC );
+};
+
 /* this is the structure stored in TEB->Win32ClientInfo */
 /* no attempt is made to keep the layout compatible with the Windows one */
 struct user_thread_info

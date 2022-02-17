@@ -30,15 +30,6 @@
 #include "wine/unixlib.h"
 #include "wine/debug.h"
 
-struct user_callbacks
-{
-    HWND (WINAPI *pGetDesktopWindow)(void);
-    BOOL (WINAPI *pGetWindowRect)( HWND hwnd, LPRECT rect );
-    BOOL (WINAPI *pRedrawWindow)( HWND, const RECT*, HRGN, UINT );
-    LRESULT (WINAPI *pSendMessageTimeoutW)( HWND, UINT, WPARAM, LPARAM, UINT, UINT, PDWORD_PTR );
-    HWND (WINAPI *pWindowFromDC)( HDC );
-};
-
 extern const struct user_callbacks *user_callbacks DECLSPEC_HIDDEN;
 
 struct unix_funcs

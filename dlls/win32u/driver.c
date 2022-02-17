@@ -24,21 +24,13 @@
 #endif
 
 #include <assert.h>
-#include <stdarg.h>
-#include <string.h>
-#include <stdio.h>
 #include <pthread.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winreg.h"
-#include "wine/winbase16.h"
-#include "winuser.h"
-
 #include "ntgdi_private.h"
+#include "ntuser_private.h"
+#include "wine/winbase16.h"
 #include "wine/list.h"
 #include "wine/debug.h"
 

@@ -99,13 +99,8 @@ SOFTWARE.
 #endif
 
 #include <assert.h>
-#include <stdarg.h>
-#include <stdlib.h>
-#include <string.h>
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
 #include "ntgdi_private.h"
+#include "ntuser_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(region);
