@@ -105,12 +105,15 @@ struct attribute_desc
     const GUID *key;
     const char *name;
     PROPVARIANT value;
+    BOOL ratio;
 };
 typedef struct attribute_desc media_type_desc[32];
 
 #define ATTR_GUID(k, g)      {.key = &k, .name = #k, {.vt = VT_CLSID, .puuid = (GUID *)&g}}
 #define ATTR_UINT32(k, v)    {.key = &k, .name = #k, {.vt = VT_UI4, .ulVal = v}}
 #define ATTR_BLOB(k, p, n)   {.key = &k, .name = #k, {.vt = VT_VECTOR | VT_UI1, .caub = {.pElems = (void *)p, .cElems = n}}}
+#define ATTR_RATIO(k, n, d)  {.key = &k, .name = #k, {.vt = VT_UI8, .uhVal = {.HighPart = n, .LowPart = d}}, .ratio = TRUE}
+#define ATTR_UINT64(k, v)    {.key = &k, .name = #k, {.vt = VT_UI8, .uhVal = {.QuadPart = v}}}
 
 #define check_media_type(a, b, c) check_attributes_(__LINE__, (IMFAttributes *)a, b, c)
 #define check_attributes(a, b, c) check_attributes_(__LINE__, a, b, c)
@@ -132,6 +135,12 @@ static void check_attributes_(int line, IMFAttributes *attributes, const struct 
         default: sprintf(buffer, "??"); break;
         case VT_CLSID: sprintf(buffer, "%s", debugstr_guid(value.puuid)); break;
         case VT_UI4: sprintf(buffer, "%u", value.ulVal); break;
+        case VT_UI8:
+            if (desc[i].ratio)
+                sprintf(buffer, "%u:%u", value.uhVal.HighPart, value.uhVal.LowPart);
+            else
+                sprintf(buffer, "%I64u", value.uhVal.QuadPart);
+            break;
         case VT_VECTOR | VT_UI1:
             buf += sprintf(buf, "size %u, data {", value.caub.cElems);
             for (j = 0; j < 16 && j < value.caub.cElems; ++j)
@@ -6402,10 +6411,11 @@ static void test_h264_decoder(void)
 
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Video, MFVideoFormat_H264};
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Video, MFVideoFormat_NV12};
+    IMFMediaType *media_type;
     IMFTransform *transform;
     GUID class_id;
+    ULONG i, ret;
     HRESULT hr;
-    ULONG ret;
 
     hr = CoInitialize(NULL);
     ok(hr == S_OK, "Failed to initialize, hr %#x.\n", hr);
@@ -6414,6 +6424,23 @@ static void test_h264_decoder(void)
             transform_inputs, ARRAY_SIZE(transform_inputs), transform_outputs, ARRAY_SIZE(transform_outputs),
             &transform, &class_id))
         goto failed;
+
+    /* check available input types */
+
+    i = -1;
+    while (SUCCEEDED(hr = IMFTransform_GetInputAvailableType(transform, 0, ++i, &media_type)))
+    {
+        winetest_push_context("in %u", i);
+        ok(hr == S_OK, "GetInputAvailableType returned %#x\n", hr);
+        check_media_type(media_type, transform_inputs[i], -1);
+        ret = IMFMediaType_Release(media_type);
+        ok(ret == 0, "Release returned %u\n", ret);
+        winetest_pop_context();
+    }
+    todo_wine
+    ok(hr == MF_E_NO_MORE_TYPES, "GetInputAvailableType returned %#x\n", hr);
+    todo_wine
+    ok(i == 2 || broken(i == 1) /* Win7 */, "%u input media types\n", i);
 
     ret = IMFTransform_Release(transform);
     ok(ret == 0, "Release returned %u\n", ret);
