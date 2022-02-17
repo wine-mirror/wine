@@ -143,7 +143,7 @@ RPC_STATUS WINAPI RpcAsyncCompleteCall(PRPC_ASYNC_STATE pAsync, void *Reply)
  */
 RPC_STATUS WINAPI RpcAsyncAbortCall(PRPC_ASYNC_STATE pAsync, ULONG ExceptionCode)
 {
-    FIXME("(%p, %d/0x%x): stub\n", pAsync, ExceptionCode, ExceptionCode);
+    FIXME("(%p, %ld/0x%lx): stub\n", pAsync, ExceptionCode, ExceptionCode);
     return RPC_S_INVALID_ASYNC_HANDLE;
 }
 

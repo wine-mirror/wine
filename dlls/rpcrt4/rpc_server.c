@@ -190,7 +190,7 @@ static RpcPktHdr *handle_bind_error(RpcConnection *conn, RPC_STATUS error)
         reject_reason = REJECT_INVALID_CHECKSUM;
         break;
     default:
-        FIXME("unexpected status value %d\n", error);
+        FIXME("unexpected status value %ld\n", error);
         /* fall through */
     case RPC_S_INVALID_BOUND:
         reject_reason = REJECT_REASON_NOT_SPECIFIED;
@@ -435,7 +435,7 @@ static RPC_STATUS process_request_packet(RpcConnection *conn, RpcPktRequestHdr *
   __TRY {
     if (func) func(msg);
   } __EXCEPT_ALL {
-    WARN("exception caught with code 0x%08x = %d\n", GetExceptionCode(), GetExceptionCode());
+    WARN("exception caught with code 0x%08lx = %ld\n", GetExceptionCode(), GetExceptionCode());
     exception = TRUE;
     if (GetExceptionCode() == STATUS_ACCESS_VIOLATION)
       status = ERROR_NOACCESS;
@@ -558,7 +558,7 @@ static DWORD CALLBACK RPCRT4_io_thread(LPVOID the_arg)
 
     status = RPCRT4_ReceiveWithAuth(conn, &hdr, msg, &auth_data, &auth_length);
     if (status != RPC_S_OK) {
-      WARN("receive failed with error %x\n", status);
+      WARN("receive failed with error %lx\n", status);
       HeapFree(GetProcessHeap(), 0, msg);
       break;
     }
@@ -588,7 +588,7 @@ static DWORD CALLBACK RPCRT4_io_thread(LPVOID the_arg)
       packet->auth_data = auth_data;
       packet->auth_length = auth_length;
       if (!QueueUserWorkItem(RPCRT4_worker_thread, packet, WT_EXECUTELONGFUNCTION)) {
-        ERR("couldn't queue work item for worker thread, error was %d\n", GetLastError());
+        ERR("couldn't queue work item for worker thread, error was %ld\n", GetLastError());
         HeapFree(GetProcessHeap(), 0, packet);
         status = RPC_S_OUT_OF_RESOURCES;
       } else {
@@ -613,7 +613,7 @@ static DWORD CALLBACK RPCRT4_io_thread(LPVOID the_arg)
     HeapFree(GetProcessHeap(), 0, auth_data);
 
     if (status != RPC_S_OK) {
-      WARN("processing packet failed with error %u\n", status);
+      WARN("processing packet failed with error %lu\n", status);
       break;
     }
   }
@@ -627,7 +627,7 @@ void RPCRT4_new_client(RpcConnection* conn)
   HANDLE thread = CreateThread(NULL, 0, RPCRT4_io_thread, conn, 0, NULL);
   if (!thread) {
     DWORD err = GetLastError();
-    ERR("failed to create thread, error=%08x\n", err);
+    ERR("failed to create thread, error=%08lx\n", err);
     RPCRT4_ReleaseConnection(conn);
   }
   /* we could set conn->thread, but then we'd have to make the io_thread wait
@@ -1020,7 +1020,7 @@ RPC_STATUS WINAPI RpcServerUseProtseqEpExA( RPC_CSTR Protseq, UINT MaxCalls, RPC
   RpcServerProtseq* ps;
   RPC_STATUS status;
 
-  TRACE("(%s,%u,%s,%p,{%u,%u,%u})\n", debugstr_a((const char *)Protseq),
+  TRACE("(%s,%u,%s,%p,{%u,%lu,%lu})\n", debugstr_a((const char *)Protseq),
        MaxCalls, debugstr_a((const char *)Endpoint), SecurityDescriptor,
        lpPolicy->Length, lpPolicy->EndpointFlags, lpPolicy->NICFlags );
 
@@ -1042,7 +1042,7 @@ RPC_STATUS WINAPI RpcServerUseProtseqEpExW( RPC_WSTR Protseq, UINT MaxCalls, RPC
   LPSTR ProtseqA;
   LPSTR EndpointA;
 
-  TRACE("(%s,%u,%s,%p,{%u,%u,%u})\n", debugstr_w( Protseq ), MaxCalls,
+  TRACE("(%s,%u,%s,%p,{%u,%lu,%lu})\n", debugstr_w( Protseq ), MaxCalls,
        debugstr_w( Endpoint ), SecurityDescriptor,
        lpPolicy->Length, lpPolicy->EndpointFlags, lpPolicy->NICFlags );
 
@@ -1170,7 +1170,7 @@ RPC_STATUS WINAPI RpcServerRegisterIf3( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid,
     for (i=0; i<If->DispatchTable->DispatchTableCount; i++) {
       TRACE("   entry %d: %p\n", i, If->DispatchTable->DispatchTable[i]);
     }
-    TRACE("  reserved: %ld\n", If->DispatchTable->Reserved);
+    TRACE("  reserved: %Id\n", If->DispatchTable->Reserved);
   }
   TRACE(" protseq endpoint count: %d\n", If->RpcProtseqEndpointCount);
   TRACE(" default manager epv: %p\n", If->DefaultManagerEpv);
@@ -1345,7 +1345,7 @@ static RPC_STATUS find_security_package(ULONG auth_type, SecPkgInfoW **packages_
     sec_status = EnumerateSecurityPackagesW(&package_count, &packages);
     if (sec_status != SEC_E_OK)
     {
-        ERR("EnumerateSecurityPackagesW failed with error 0x%08x\n", sec_status);
+        ERR("EnumerateSecurityPackagesW failed with error 0x%08lx\n", sec_status);
         return RPC_S_SEC_PKG_ERROR;
     }
 
@@ -1355,12 +1355,12 @@ static RPC_STATUS find_security_package(ULONG auth_type, SecPkgInfoW **packages_
 
     if (i == package_count)
     {
-        WARN("unsupported AuthnSvc %u\n", auth_type);
+        WARN("unsupported AuthnSvc %lu\n", auth_type);
         FreeContextBuffer(packages);
         return RPC_S_UNKNOWN_AUTHN_SERVICE;
     }
 
-    TRACE("found package %s for service %u\n", debugstr_w(packages[i].Name), auth_type);
+    TRACE("found package %s for service %lu\n", debugstr_w(packages[i].Name), auth_type);
     *packages_buf = packages;
     *ret = packages + i;
     return RPC_S_OK;
@@ -1421,7 +1421,7 @@ RPC_STATUS WINAPI RpcServerRegisterAuthInfoA( RPC_CSTR ServerPrincName, ULONG Au
     WCHAR *principal_name = NULL;
     RPC_STATUS status;
 
-    TRACE("(%s,%u,%p,%p)\n", ServerPrincName, AuthnSvc, GetKeyFn, Arg);
+    TRACE("(%s,%lu,%p,%p)\n", ServerPrincName, AuthnSvc, GetKeyFn, Arg);
 
     if(ServerPrincName && !(principal_name = RPCRT4_strdupAtoW((const char*)ServerPrincName)))
         return RPC_S_OUT_OF_RESOURCES;
@@ -1444,7 +1444,7 @@ RPC_STATUS WINAPI RpcServerRegisterAuthInfoW( RPC_WSTR ServerPrincName, ULONG Au
     ULONG max_token;
     RPC_STATUS status;
 
-    TRACE("(%s,%u,%p,%p)\n", debugstr_w(ServerPrincName), AuthnSvc, GetKeyFn, Arg);
+    TRACE("(%s,%lu,%p,%p)\n", debugstr_w(ServerPrincName), AuthnSvc, GetKeyFn, Arg);
 
     status = find_security_package(AuthnSvc, &packages, &package);
     if (status != RPC_S_OK)
@@ -1487,7 +1487,7 @@ RPC_STATUS RPC_ENTRY RpcServerInqDefaultPrincNameA(ULONG AuthnSvc, RPC_CSTR *Pri
     RPC_STATUS ret;
     RPC_WSTR principalW;
 
-    TRACE("%u, %p\n", AuthnSvc, PrincName);
+    TRACE("%lu, %p\n", AuthnSvc, PrincName);
 
     if ((ret = RpcServerInqDefaultPrincNameW( AuthnSvc, &principalW )) == RPC_S_OK)
     {
@@ -1504,7 +1504,7 @@ RPC_STATUS RPC_ENTRY RpcServerInqDefaultPrincNameW(ULONG AuthnSvc, RPC_WSTR *Pri
 {
     ULONG len = 0;
 
-    FIXME("%u, %p\n", AuthnSvc, PrincName);
+    FIXME("%lu, %p\n", AuthnSvc, PrincName);
 
     if (AuthnSvc != RPC_C_AUTHN_WINNT) return RPC_S_UNKNOWN_AUTHN_SERVICE;
 
@@ -1576,7 +1576,7 @@ RPC_STATUS WINAPI RpcMgmtWaitServerListen( void )
       if (!wait_thread)
           break;
 
-      TRACE("waiting for thread %u\n", GetThreadId(wait_thread));
+      TRACE("waiting for thread %lu\n", GetThreadId(wait_thread));
       LeaveCriticalSection(&listen_cs);
       WaitForSingleObject(wait_thread, INFINITE);
       EnterCriticalSection(&listen_cs);
@@ -1639,7 +1639,7 @@ RPC_STATUS WINAPI I_RpcServerStopListening( void )
  */
 UINT WINAPI I_RpcWindowProc( void *hWnd, UINT Message, UINT wParam, ULONG lParam )
 {
-  FIXME( "(%p,%08x,%08x,%08x): stub\n", hWnd, Message, wParam, lParam );
+  FIXME( "(%p,%08x,%08x,%08lx): stub\n", hWnd, Message, wParam, lParam );
 
   return 0;
 }
@@ -1693,7 +1693,7 @@ RPC_STATUS WINAPI RpcMgmtStatsVectorFree(RPC_STATS_VECTOR **StatsVector)
 RPC_STATUS WINAPI RpcMgmtEpEltInqBegin(RPC_BINDING_HANDLE Binding, ULONG InquiryType,
     RPC_IF_ID *IfId, ULONG VersOption, UUID *ObjectUuid, RPC_EP_INQ_HANDLE* InquiryContext)
 {
-  FIXME("(%p,%u,%p,%u,%p,%p): stub\n",
+  FIXME("(%p,%lu,%p,%lu,%p,%p): stub\n",
         Binding, InquiryType, IfId, VersOption, ObjectUuid, InquiryContext);
   return RPC_S_INVALID_BINDING;
 }
@@ -1733,7 +1733,7 @@ RPC_STATUS WINAPI RpcMgmtSetAuthorizationFn(RPC_MGMT_AUTHORIZATION_FN fn)
  */
 RPC_STATUS WINAPI RpcMgmtSetServerStackSize(ULONG ThreadStackSize)
 {
-  FIXME("(0x%x): stub\n", ThreadStackSize);
+  FIXME("(0x%lx): stub\n", ThreadStackSize);
   return RPC_S_OK;
 }
 

@@ -1390,7 +1390,7 @@ BOOL RpcQualityOfService_IsEqual(const RpcQualityOfService *qos1, const RpcQuali
     if (!qos1 || !qos2)
         return FALSE;
 
-    TRACE("qos1 = { %d %d %d %d }, qos2 = { %d %d %d %d }\n",
+    TRACE("qos1 = { %ld %ld %ld %ld }, qos2 = { %ld %ld %ld %ld }\n",
         qos1->qos->Capabilities, qos1->qos->IdentityTracking,
         qos1->qos->ImpersonationType, qos1->qos->AdditionalSecurityInfoType,
         qos2->qos->Capabilities, qos2->qos->IdentityTracking,
@@ -1481,7 +1481,7 @@ RpcBindingInqAuthInfoExA( RPC_BINDING_HANDLE Binding, RPC_CSTR *ServerPrincName,
     RPC_STATUS status;
     RPC_WSTR principal;
 
-    TRACE("%p %p %p %p %p %p %u %p\n", Binding, ServerPrincName, AuthnLevel,
+    TRACE("%p %p %p %p %p %p %lu %p\n", Binding, ServerPrincName, AuthnLevel,
           AuthnSvc, AuthIdentity, AuthzSvc, RpcQosVersion, SecurityQOS);
 
     status = RpcBindingInqAuthInfoExW(Binding, ServerPrincName ? &principal : NULL, AuthnLevel,
@@ -1506,7 +1506,7 @@ RpcBindingInqAuthInfoExW( RPC_BINDING_HANDLE Binding, RPC_WSTR *ServerPrincName,
 {
     RpcBinding *bind = Binding;
 
-    TRACE("%p %p %p %p %p %p %u %p\n", Binding, ServerPrincName, AuthnLevel,
+    TRACE("%p %p %p %p %p %p %lu %p\n", Binding, ServerPrincName, AuthnLevel,
           AuthnSvc, AuthIdentity, AuthzSvc, RpcQosVersion, SecurityQOS);
 
     if (!bind->AuthInfo) return RPC_S_BINDING_HAS_NO_AUTH;
@@ -1595,7 +1595,7 @@ RpcBindingInqAuthClientExA( RPC_BINDING_HANDLE ClientBinding, RPC_AUTHZ_HANDLE *
     RPC_STATUS status;
     RPC_WSTR principal;
 
-    TRACE("%p %p %p %p %p %p 0x%x\n", ClientBinding, Privs, ServerPrincName, AuthnLevel,
+    TRACE("%p %p %p %p %p %p 0x%lx\n", ClientBinding, Privs, ServerPrincName, AuthnLevel,
           AuthnSvc, AuthzSvc, Flags);
 
     status = RpcBindingInqAuthClientExW(ClientBinding, Privs, ServerPrincName ? &principal : NULL,
@@ -1620,7 +1620,7 @@ RpcBindingInqAuthClientExW( RPC_BINDING_HANDLE ClientBinding, RPC_AUTHZ_HANDLE *
 {
     RpcBinding *bind;
 
-    TRACE("%p %p %p %p %p %p 0x%x\n", ClientBinding, Privs, ServerPrincName, AuthnLevel,
+    TRACE("%p %p %p %p %p %p 0x%lx\n", ClientBinding, Privs, ServerPrincName, AuthnLevel,
           AuthnSvc, AuthzSvc, Flags);
 
     if (!ClientBinding) ClientBinding = I_RpcGetCurrentCallHandle();
@@ -1676,21 +1676,21 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, RPC_CSTR ServerPrincName,
   PSecPkgInfoA packages;
   ULONG cbMaxToken;
 
-  TRACE("%p %s %u %u %p %u %p\n", Binding, debugstr_a((const char*)ServerPrincName),
+  TRACE("%p %s %lu %lu %p %lu %p\n", Binding, debugstr_a((const char*)ServerPrincName),
         AuthnLevel, AuthnSvc, AuthIdentity, AuthzSvr, SecurityQos);
 
   if (SecurityQos)
   {
       RPC_STATUS status;
 
-      TRACE("SecurityQos { Version=%d, Capabilities=0x%x, IdentityTracking=%d, ImpersonationLevel=%d",
+      TRACE("SecurityQos { Version=%ld, Capabilities=0x%lx, IdentityTracking=%ld, ImpersonationLevel=%ld",
             SecurityQos->Version, SecurityQos->Capabilities, SecurityQos->IdentityTracking, SecurityQos->ImpersonationType);
       if (SecurityQos->Version >= 2)
       {
           const RPC_SECURITY_QOS_V2_A *SecurityQos2 = (const RPC_SECURITY_QOS_V2_A *)SecurityQos;
-          TRACE(", AdditionalSecurityInfoType=%d", SecurityQos2->AdditionalSecurityInfoType);
+          TRACE(", AdditionalSecurityInfoType=%ld", SecurityQos2->AdditionalSecurityInfoType);
           if (SecurityQos2->AdditionalSecurityInfoType == RPC_C_AUTHN_INFO_TYPE_HTTP)
-              TRACE(", { %p, 0x%x, %d, %d, %p(%u), %s }",
+              TRACE(", { %p, 0x%lx, %ld, %ld, %p(%lu), %s }",
                     SecurityQos2->u.HttpCredentials->TransportCredentials,
                     SecurityQos2->u.HttpCredentials->Flags,
                     SecurityQos2->u.HttpCredentials->AuthenticationTarget,
@@ -1726,21 +1726,21 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, RPC_CSTR ServerPrincName,
 
   if (AuthnLevel > RPC_C_AUTHN_LEVEL_PKT_PRIVACY)
   {
-    FIXME("unknown AuthnLevel %u\n", AuthnLevel);
+    FIXME("unknown AuthnLevel %lu\n", AuthnLevel);
     return RPC_S_UNKNOWN_AUTHN_LEVEL;
   }
 
   /* RPC_C_AUTHN_WINNT ignores the AuthzSvr parameter */
   if (AuthzSvr && AuthnSvc != RPC_C_AUTHN_WINNT)
   {
-    FIXME("unsupported AuthzSvr %u\n", AuthzSvr);
+    FIXME("unsupported AuthzSvr %lu\n", AuthzSvr);
     return RPC_S_UNKNOWN_AUTHZ_SERVICE;
   }
 
   r = EnumerateSecurityPackagesA(&package_count, &packages);
   if (r != SEC_E_OK)
   {
-    ERR("EnumerateSecurityPackagesA failed with error 0x%08x\n", r);
+    ERR("EnumerateSecurityPackagesA failed with error 0x%08lx\n", r);
     return RPC_S_SEC_PKG_ERROR;
   }
 
@@ -1750,12 +1750,12 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, RPC_CSTR ServerPrincName,
 
   if (i == package_count)
   {
-    FIXME("unsupported AuthnSvc %u\n", AuthnSvc);
+    FIXME("unsupported AuthnSvc %lu\n", AuthnSvc);
     FreeContextBuffer(packages);
     return RPC_S_UNKNOWN_AUTHN_SERVICE;
   }
 
-  TRACE("found package %s for service %u\n", packages[i].Name, AuthnSvc);
+  TRACE("found package %s for service %lu\n", packages[i].Name, AuthnSvc);
   r = AcquireCredentialsHandleA(NULL, packages[i].Name, SECPKG_CRED_OUTBOUND, NULL,
                                 AuthIdentity, NULL, NULL, &cred, &exp);
   cbMaxToken = packages[i].cbMaxToken;
@@ -1785,7 +1785,7 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, RPC_CSTR ServerPrincName,
   }
   else
   {
-    ERR("AcquireCredentialsHandleA failed with error 0x%08x\n", r);
+    ERR("AcquireCredentialsHandleA failed with error 0x%08lx\n", r);
     return RPC_S_SEC_PKG_ERROR;
   }
 }
@@ -1807,21 +1807,21 @@ RpcBindingSetAuthInfoExW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, 
   PSecPkgInfoW packages;
   ULONG cbMaxToken;
 
-  TRACE("%p %s %u %u %p %u %p\n", Binding, debugstr_w(ServerPrincName),
+  TRACE("%p %s %lu %lu %p %lu %p\n", Binding, debugstr_w(ServerPrincName),
         AuthnLevel, AuthnSvc, AuthIdentity, AuthzSvr, SecurityQos);
 
   if (SecurityQos)
   {
       RPC_STATUS status;
 
-      TRACE("SecurityQos { Version=%d, Capabilities=0x%x, IdentityTracking=%d, ImpersonationLevel=%d",
+      TRACE("SecurityQos { Version=%ld, Capabilities=0x%lx, IdentityTracking=%ld, ImpersonationLevel=%ld",
             SecurityQos->Version, SecurityQos->Capabilities, SecurityQos->IdentityTracking, SecurityQos->ImpersonationType);
       if (SecurityQos->Version >= 2)
       {
           const RPC_SECURITY_QOS_V2_W *SecurityQos2 = (const RPC_SECURITY_QOS_V2_W *)SecurityQos;
-          TRACE(", AdditionalSecurityInfoType=%d", SecurityQos2->AdditionalSecurityInfoType);
+          TRACE(", AdditionalSecurityInfoType=%ld", SecurityQos2->AdditionalSecurityInfoType);
           if (SecurityQos2->AdditionalSecurityInfoType == RPC_C_AUTHN_INFO_TYPE_HTTP)
-              TRACE(", { %p, 0x%x, %d, %d, %p(%u), %s }",
+              TRACE(", { %p, 0x%lx, %ld, %ld, %p(%lu), %s }",
                     SecurityQos2->u.HttpCredentials->TransportCredentials,
                     SecurityQos2->u.HttpCredentials->Flags,
                     SecurityQos2->u.HttpCredentials->AuthenticationTarget,
@@ -1857,21 +1857,21 @@ RpcBindingSetAuthInfoExW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, 
 
   if (AuthnLevel > RPC_C_AUTHN_LEVEL_PKT_PRIVACY)
   {
-    FIXME("unknown AuthnLevel %u\n", AuthnLevel);
+    FIXME("unknown AuthnLevel %lu\n", AuthnLevel);
     return RPC_S_UNKNOWN_AUTHN_LEVEL;
   }
 
   /* RPC_C_AUTHN_WINNT ignores the AuthzSvr parameter */
   if (AuthzSvr && AuthnSvc != RPC_C_AUTHN_WINNT)
   {
-    FIXME("unsupported AuthzSvr %u\n", AuthzSvr);
+    FIXME("unsupported AuthzSvr %lu\n", AuthzSvr);
     return RPC_S_UNKNOWN_AUTHZ_SERVICE;
   }
 
   r = EnumerateSecurityPackagesW(&package_count, &packages);
   if (r != SEC_E_OK)
   {
-    ERR("EnumerateSecurityPackagesW failed with error 0x%08x\n", r);
+    ERR("EnumerateSecurityPackagesW failed with error 0x%08lx\n", r);
     return RPC_S_SEC_PKG_ERROR;
   }
 
@@ -1881,12 +1881,12 @@ RpcBindingSetAuthInfoExW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, 
 
   if (i == package_count)
   {
-    FIXME("unsupported AuthnSvc %u\n", AuthnSvc);
+    FIXME("unsupported AuthnSvc %lu\n", AuthnSvc);
     FreeContextBuffer(packages);
     return RPC_S_UNKNOWN_AUTHN_SERVICE;
   }
 
-  TRACE("found package %s for service %u\n", debugstr_w(packages[i].Name), AuthnSvc);
+  TRACE("found package %s for service %lu\n", debugstr_w(packages[i].Name), AuthnSvc);
   r = AcquireCredentialsHandleW(NULL, packages[i].Name, SECPKG_CRED_OUTBOUND, NULL,
                                 AuthIdentity, NULL, NULL, &cred, &exp);
   cbMaxToken = packages[i].cbMaxToken;
@@ -1916,7 +1916,7 @@ RpcBindingSetAuthInfoExW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, 
   }
   else
   {
-    ERR("AcquireCredentialsHandleW failed with error 0x%08x\n", r);
+    ERR("AcquireCredentialsHandleW failed with error 0x%08lx\n", r);
     return RPC_S_SEC_PKG_ERROR;
   }
 }
@@ -1928,7 +1928,7 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 RpcBindingSetAuthInfoA( RPC_BINDING_HANDLE Binding, RPC_CSTR ServerPrincName, ULONG AuthnLevel,
                         ULONG AuthnSvc, RPC_AUTH_IDENTITY_HANDLE AuthIdentity, ULONG AuthzSvr )
 {
-    TRACE("%p %s %u %u %p %u\n", Binding, debugstr_a((const char*)ServerPrincName),
+    TRACE("%p %s %lu %lu %p %lu\n", Binding, debugstr_a((const char*)ServerPrincName),
           AuthnLevel, AuthnSvc, AuthIdentity, AuthzSvr);
     return RpcBindingSetAuthInfoExA(Binding, ServerPrincName, AuthnLevel, AuthnSvc, AuthIdentity, AuthzSvr, NULL);
 }
@@ -1940,7 +1940,7 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 RpcBindingSetAuthInfoW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, ULONG AuthnLevel,
                         ULONG AuthnSvc, RPC_AUTH_IDENTITY_HANDLE AuthIdentity, ULONG AuthzSvr )
 {
-    TRACE("%p %s %u %u %p %u\n", Binding, debugstr_w(ServerPrincName),
+    TRACE("%p %s %lu %lu %p %lu\n", Binding, debugstr_w(ServerPrincName),
           AuthnLevel, AuthnSvc, AuthIdentity, AuthzSvr);
     return RpcBindingSetAuthInfoExW(Binding, ServerPrincName, AuthnLevel, AuthnSvc, AuthIdentity, AuthzSvr, NULL);
 }
@@ -1950,7 +1950,7 @@ RpcBindingSetAuthInfoW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, UL
  */
 RPC_STATUS WINAPI RpcBindingSetOption(RPC_BINDING_HANDLE BindingHandle, ULONG Option, ULONG_PTR OptionValue)
 {
-    TRACE("(%p, %d, %ld)\n", BindingHandle, Option, OptionValue);
+    TRACE("(%p, %ld, %Id)\n", BindingHandle, Option, OptionValue);
 
     switch (Option)
     {
@@ -1969,7 +1969,7 @@ RPC_STATUS WINAPI RpcBindingSetOption(RPC_BINDING_HANDLE BindingHandle, ULONG Op
         break;
     }
     default:
-        FIXME("option %u not supported\n", Option);
+        FIXME("option %lu not supported\n", Option);
         break;
     }
     return RPC_S_OK;

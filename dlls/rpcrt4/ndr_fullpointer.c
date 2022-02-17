@@ -35,7 +35,7 @@ PFULL_PTR_XLAT_TABLES WINAPI NdrFullPointerXlatInit(ULONG NumberOfPointers,
     ULONG NumberOfBuckets;
     PFULL_PTR_XLAT_TABLES pXlatTables = HeapAlloc(GetProcessHeap(), 0, sizeof(*pXlatTables));
 
-    TRACE("(%d, %d)\n", NumberOfPointers, XlatSide);
+    TRACE("(%ld, %d)\n", NumberOfPointers, XlatSide);
 
     if (!NumberOfPointers) NumberOfPointers = 512;
     NumberOfBuckets = ((NumberOfPointers + 3) & ~3) - 1;
@@ -48,7 +48,7 @@ PFULL_PTR_XLAT_TABLES WINAPI NdrFullPointerXlatInit(ULONG NumberOfPointers,
             sizeof(unsigned char) * NumberOfPointers);
     pXlatTables->RefIdToPointer.NumberOfEntries = NumberOfPointers;
 
-    TRACE("NumberOfBuckets = %d\n", NumberOfBuckets);
+    TRACE("NumberOfBuckets = %ld\n", NumberOfBuckets);
     pXlatTables->PointerToRefId.XlatTable =
         HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
             sizeof(PFULL_PTR_TO_REFID_ELEMENT) * NumberOfBuckets);
@@ -159,7 +159,7 @@ int WINAPI NdrFullPointerQueryRefId(PFULL_PTR_XLAT_TABLES pXlatTables,
                                     ULONG RefId, unsigned char QueryType,
                                     void **ppPointer)
 {
-    TRACE("(%p, 0x%x, %d, %p)\n", pXlatTables, RefId, QueryType, ppPointer);
+    TRACE("(%p, 0x%lx, %d, %p)\n", pXlatTables, RefId, QueryType, ppPointer);
 
     if (!RefId)
         return 1;
@@ -192,7 +192,7 @@ void WINAPI NdrFullPointerInsertRefId(PFULL_PTR_XLAT_TABLES pXlatTables,
     unsigned int i;
     PFULL_PTR_TO_REFID_ELEMENT XlatTableEntry;
 
-    TRACE("(%p, 0x%x, %p)\n", pXlatTables, RefId, pPointer);
+    TRACE("(%p, 0x%lx, %p)\n", pXlatTables, RefId, pPointer);
 
     /* simple hashing algorithm, don't know whether it matches native */
     for (i = 0; i < sizeof(pPointer); i++)

@@ -164,7 +164,7 @@ unsigned char *WINAPI NdrGetBuffer(PMIDL_STUB_MESSAGE stubmsg, ULONG buflen, RPC
 {
   RPC_STATUS status;
 
-  TRACE("(stubmsg == ^%p, buflen == %u, handle == %p)\n", stubmsg, buflen, handle);
+  TRACE("(stubmsg == ^%p, buflen == %lu, handle == %p)\n", stubmsg, buflen, handle);
   
   stubmsg->RpcMsg->Handle = handle;
   stubmsg->RpcMsg->BufferLength = buflen;
@@ -233,7 +233,7 @@ RPC_STATUS RPC_ENTRY NdrMapCommAndFaultStatus( PMIDL_STUB_MESSAGE pStubMsg,
                                                ULONG *pFaultStatus,
                                                RPC_STATUS Status )
 {
-    TRACE("(%p, %p, %p, %d)\n", pStubMsg, pCommStatus, pFaultStatus, Status);
+    TRACE("(%p, %p, %p, %ld)\n", pStubMsg, pCommStatus, pFaultStatus, Status);
 
     switch (Status)
     {

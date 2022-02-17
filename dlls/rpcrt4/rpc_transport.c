@@ -101,7 +101,7 @@ static RPC_STATUS rpcrt4_conn_create_pipe(RpcConnection *conn)
                                         RPC_MAX_PACKET_SIZE, RPC_MAX_PACKET_SIZE, 5000, NULL);
     if (connection->pipe == INVALID_HANDLE_VALUE)
     {
-        WARN("CreateNamedPipe failed with error %d\n", GetLastError());
+        WARN("CreateNamedPipe failed with error %ld\n", GetLastError());
         if (GetLastError() == ERROR_FILE_EXISTS)
             return RPC_S_DUPLICATE_ENDPOINT;
         else
@@ -154,12 +154,12 @@ static RPC_STATUS rpcrt4_conn_open_pipe(RpcConnection *Connection, LPCSTR pname,
         TRACE("retrying busy server\n");
         continue;
       }
-      TRACE("connection failed, error=%x\n", err);
+      TRACE("connection failed, error=%lx\n", err);
       return RPC_S_SERVER_TOO_BUSY;
     }
     if (!wait || !WaitNamedPipeA(pname, NMPWAIT_WAIT_FOREVER)) {
       err = GetLastError();
-      WARN("connection failed, error=%x\n", err);
+      WARN("connection failed, error=%lx\n", err);
       return RPC_S_SERVER_UNAVAILABLE;
     }
   }
@@ -214,7 +214,7 @@ static RPC_STATUS rpcrt4_protseq_ncalrpc_open_endpoint(RpcServerProtseq* protseq
     DWORD process_id = GetCurrentProcessId();
     ULONG id = InterlockedIncrement(&lrpc_nameless_id);
     snprintf(generated_endpoint, sizeof(generated_endpoint),
-             "LRPC%08x.%08x", process_id, id);
+             "LRPC%08lx.%08lx", process_id, id);
     endpoint = generated_endpoint;
   }
 
@@ -274,7 +274,7 @@ static RPC_STATUS rpcrt4_protseq_ncacn_np_open_endpoint(RpcServerProtseq *protse
     DWORD process_id = GetCurrentProcessId();
     ULONG id = InterlockedExchangeAdd(&np_nameless_id, 1 );
     snprintf(generated_endpoint, sizeof(generated_endpoint),
-             "\\\\pipe\\\\%08x.%03x", process_id, id);
+             "\\\\pipe\\\\%08lx.%03lx", process_id, id);
     endpoint = generated_endpoint;
   }
 
@@ -317,7 +317,7 @@ static RPC_STATUS rpcrt4_ncacn_np_handoff(RpcConnection *old_conn, RpcConnection
   new_conn->NetworkAddr = HeapAlloc(GetProcessHeap(), 0, len);
   if (!GetComputerNameA(new_conn->NetworkAddr, &len))
   {
-    ERR("Failed to retrieve the computer name, error %u\n", GetLastError());
+    ERR("Failed to retrieve the computer name, error %lu\n", GetLastError());
     return RPC_S_OUT_OF_RESOURCES;
   }
 
@@ -365,7 +365,7 @@ static RPC_STATUS rpcrt4_ncalrpc_handoff(RpcConnection *old_conn, RpcConnection 
   new_conn->NetworkAddr = HeapAlloc(GetProcessHeap(), 0, len);
   if (!GetComputerNameA(new_conn->NetworkAddr, &len))
   {
-    ERR("Failed to retrieve the computer name, error %u\n", GetLastError());
+    ERR("Failed to retrieve the computer name, error %lu\n", GetLastError());
     return RPC_S_OUT_OF_RESOURCES;
   }
 
@@ -595,7 +595,7 @@ static RPC_STATUS rpcrt4_conn_np_impersonate_client(RpcConnection *conn)
     if (!ret)
     {
         DWORD error = GetLastError();
-        WARN("ImpersonateNamedPipeClient failed with error %u\n", error);
+        WARN("ImpersonateNamedPipeClient failed with error %lu\n", error);
         switch (error)
         {
         case ERROR_CANNOT_IMPERSONATE:
@@ -617,7 +617,7 @@ static RPC_STATUS rpcrt4_conn_np_revert_to_self(RpcConnection *conn)
     ret = RevertToSelf();
     if (!ret)
     {
-        WARN("RevertToSelf failed with error %u\n", GetLastError());
+        WARN("RevertToSelf failed with error %lu\n", GetLastError());
         return RPC_S_NO_CONTEXT_AVAILABLE;
     }
     return RPC_S_OK;
@@ -677,7 +677,7 @@ static void *rpcrt4_protseq_np_get_wait_array(RpcServerProtseq *protseq, void *p
             case STATUS_PENDING:
                 break;
             default:
-                ERR("pipe listen error %x\n", status);
+                ERR("pipe listen error %lx\n", status);
                 continue;
             }
 
@@ -738,7 +738,7 @@ static int rpcrt4_protseq_np_wait_for_new_connection(RpcServerProtseq *protseq, 
         return 0;
     else if (res == WAIT_FAILED)
     {
-        ERR("wait failed with error %d\n", GetLastError());
+        ERR("wait failed with error %ld\n", GetLastError());
         return -1;
     }
     else
@@ -755,7 +755,7 @@ static int rpcrt4_protseq_np_wait_for_new_connection(RpcServerProtseq *protseq, 
                 if (conn->io_status.Status == STATUS_SUCCESS || conn->io_status.Status == STATUS_PIPE_CONNECTED)
                     cconn = rpcrt4_spawn_connection(&conn->common);
                 else
-                    ERR("listen failed %x\n", conn->io_status.Status);
+                    ERR("listen failed %lx\n", conn->io_status.Status);
                 break;
             }
         }
@@ -867,7 +867,7 @@ static RPC_STATUS rpcrt4_ncalrpc_inquire_auth_client(
     RpcConnection *conn, RPC_AUTHZ_HANDLE *privs, RPC_WSTR *server_princ_name,
     ULONG *authn_level, ULONG *authn_svc, ULONG *authz_svc, ULONG flags)
 {
-    TRACE("(%p, %p, %p, %p, %p, %p, 0x%x)\n", conn, privs,
+    TRACE("(%p, %p, %p, %p, %p, %p, 0x%lx)\n", conn, privs,
           server_princ_name, authn_level, authn_svc, authz_svc, flags);
 
     if (privs)
@@ -888,7 +888,7 @@ static RPC_STATUS rpcrt4_ncalrpc_inquire_auth_client(
         *authz_svc = RPC_C_AUTHZ_NONE;
     }
     if (flags)
-        FIXME("flags 0x%x not implemented\n", flags);
+        FIXME("flags 0x%lx not implemented\n", flags);
 
     return RPC_S_OK;
 }
@@ -1082,7 +1082,7 @@ static BOOL rpcrt4_sock_wait_for_recv(RpcConnection_tcp *tcpc)
   case WAIT_OBJECT_0 + 1:
     return FALSE;
   default:
-    ERR("WaitForMultipleObjects() failed with error %d\n", GetLastError());
+    ERR("WaitForMultipleObjects() failed with error %ld\n", GetLastError());
     return FALSE;
   }
 }
@@ -1101,7 +1101,7 @@ static BOOL rpcrt4_sock_wait_for_send(RpcConnection_tcp *tcpc)
   case WAIT_OBJECT_0:
     return TRUE;
   default:
-    ERR("WaitForMultipleObjects() failed with error %d\n", GetLastError());
+    ERR("WaitForMultipleObjects() failed with error %ld\n", GetLastError());
     return FALSE;
   }
 }
@@ -1597,7 +1597,7 @@ static int rpcrt4_protseq_sock_wait_for_new_connection(RpcServerProtseq *protseq
         return 0;
     if (res == WAIT_FAILED)
     {
-        ERR("wait failed with error %d\n", GetLastError());
+        ERR("wait failed with error %ld\n", GetLastError());
         return -1;
     }
 
@@ -1689,7 +1689,7 @@ static RPC_STATUS wait_async_request(RpcHttpAsyncData *async_data, BOOL call_ret
 
     if(GetLastError() != ERROR_IO_PENDING) {
         RpcHttpAsyncData_Release(async_data);
-        ERR("Request failed with error %d\n", GetLastError());
+        ERR("Request failed with error %ld\n", GetLastError());
         return RPC_S_SERVER_UNAVAILABLE;
     }
 
@@ -1863,7 +1863,7 @@ static RPC_STATUS rpcrt4_http_check_response(HINTERNET hor)
         ret = HttpQueryInfoW(hor, HTTP_QUERY_STATUS_TEXT, status_text, &size, &index);
     }
 
-    ERR("server returned: %d %s\n", status_code, ret ? debugstr_w(status_text) : "<status text unavailable>");
+    ERR("server returned: %ld %s\n", status_code, ret ? debugstr_w(status_text) : "<status text unavailable>");
     if(status_text != buf) HeapFree(GetProcessHeap(), 0, status_text);
 
     if (status_code == HTTP_STATUS_DENIED)
@@ -1952,7 +1952,7 @@ static RPC_STATUS rpcrt4_http_internet_connect(RpcConnection_http *httpc)
         HeapFree(GetProcessHeap(), 0, user);
         HeapFree(GetProcessHeap(), 0, proxy);
         HeapFree(GetProcessHeap(), 0, servername);
-        ERR("InternetOpenW failed with error %d\n", GetLastError());
+        ERR("InternetOpenW failed with error %ld\n", GetLastError());
         return RPC_S_SERVER_UNAVAILABLE;
     }
     InternetSetStatusCallbackW(httpc->app_info, rpcrt4_http_internet_callback);
@@ -1986,7 +1986,7 @@ static RPC_STATUS rpcrt4_http_internet_connect(RpcConnection_http *httpc)
 
     if (!httpc->session)
     {
-        ERR("InternetConnectW failed with error %d\n", GetLastError());
+        ERR("InternetConnectW failed with error %ld\n", GetLastError());
         HeapFree(GetProcessHeap(), 0, servername);
         return RPC_S_SERVER_UNAVAILABLE;
     }
@@ -2029,7 +2029,7 @@ static int rpcrt4_http_async_read(HINTERNET req, RpcHttpAsyncData *async_data, H
     HeapFree(GetProcessHeap(), 0, async_data->inet_buffers.lpvBuffer);
     async_data->inet_buffers.lpvBuffer = NULL;
 
-    TRACE("%p %p %u -> %u\n", req, buffer, count, status);
+    TRACE("%p %p %u -> %lu\n", req, buffer, count, status);
     return status == RPC_S_OK ? count : -1;
 }
 
@@ -2100,7 +2100,7 @@ static RPC_STATUS rpcrt4_http_prepare_in_pipe(HINTERNET in_request, RpcHttpAsync
     RPCRT4_FreeHeader(hdr);
     if (!ret)
     {
-        ERR("InternetWriteFile failed with error %d\n", GetLastError());
+        ERR("InternetWriteFile failed with error %ld\n", GetLastError());
         return RPC_S_SERVER_UNAVAILABLE;
     }
 
@@ -2201,7 +2201,7 @@ static RPC_STATUS rpcrt4_http_prepare_out_pipe(HINTERNET out_request, RpcHttpAsy
                                             &field1);
     HeapFree(GetProcessHeap(), 0, data_from_server);
     if (status != RPC_S_OK) return status;
-    TRACE("received (%d) from first prepare header\n", field1);
+    TRACE("received (%ld) from first prepare header\n", field1);
 
     for (;;)
     {
@@ -2224,7 +2224,7 @@ static RPC_STATUS rpcrt4_http_prepare_out_pipe(HINTERNET out_request, RpcHttpAsy
                                             &field3);
     HeapFree(GetProcessHeap(), 0, data_from_server);
     if (status != RPC_S_OK) return status;
-    TRACE("received (0x%08x 0x%08x %d) from second prepare header\n", field1, *flow_control_increment, field3);
+    TRACE("received (0x%08lx 0x%08lx %ld) from second prepare header\n", field1, *flow_control_increment, field3);
 
     return RPC_S_OK;
 }
@@ -2536,7 +2536,7 @@ static RPC_STATUS do_authorization(HINTERNET request, SEC_WCHAR *servername,
         }
         else
         {
-            ERR("InitializeSecurityContextW failed with error 0x%08x\n", ret);
+            ERR("InitializeSecurityContextW failed with error 0x%08lx\n", ret);
             HeapFree(GetProcessHeap(), 0, out.pvBuffer);
             break;
         }
@@ -2544,7 +2544,7 @@ static RPC_STATUS do_authorization(HINTERNET request, SEC_WCHAR *servername,
         break;
     }
     default:
-        FIXME("scheme %u not supported\n", creds->AuthnSchemes[0]);
+        FIXME("scheme %lu not supported\n", creds->AuthnSchemes[0]);
         break;
     }
 
@@ -2584,7 +2584,7 @@ static RPC_STATUS insert_authorization_header(HINTERNET request, ULONG scheme, c
         scheme_len = ARRAY_SIZE(ntlmW);
         break;
     default:
-        ERR("unknown scheme %u\n", scheme);
+        ERR("unknown scheme %lu\n", scheme);
         return RPC_S_SERVER_UNAVAILABLE;
     }
     if ((header = HeapAlloc(GetProcessHeap(), 0, (auth_len + scheme_len + len + 2) * sizeof(WCHAR))))
@@ -2780,7 +2780,7 @@ static RPC_STATUS rpcrt4_ncacn_http_open(RpcConnection* Connection)
                                          flags, (DWORD_PTR)httpc->async_data);
     if (!httpc->in_request)
     {
-        ERR("HttpOpenRequestW failed with error %d\n", GetLastError());
+        ERR("HttpOpenRequestW failed with error %ld\n", GetLastError());
         HeapFree(GetProcessHeap(), 0, url);
         return RPC_S_SERVER_UNAVAILABLE;
     }
@@ -2807,7 +2807,7 @@ static RPC_STATUS rpcrt4_ncacn_http_open(RpcConnection* Connection)
     HeapFree(GetProcessHeap(), 0, url);
     if (!httpc->out_request)
     {
-        ERR("HttpOpenRequestW failed with error %d\n", GetLastError());
+        ERR("HttpOpenRequestW failed with error %ld\n", GetLastError());
         return RPC_S_SERVER_UNAVAILABLE;
     }
 
@@ -2881,7 +2881,7 @@ again:
   /* read packet common header */
   dwRead = rpcrt4_ncacn_http_read(Connection, &common_hdr, sizeof(common_hdr));
   if (dwRead != sizeof(common_hdr)) {
-    WARN("Short read of header, %d bytes\n", dwRead);
+    WARN("Short read of header, %ld bytes\n", dwRead);
     status = RPC_S_PROTOCOL_ERROR;
     goto fail;
   }
@@ -2914,7 +2914,7 @@ again:
   /* read the rest of packet header */
   dwRead = rpcrt4_ncacn_http_read(Connection, &(*Header)->common + 1, hdr_length - sizeof(common_hdr));
   if (dwRead != hdr_length - sizeof(common_hdr)) {
-    WARN("bad header length, %d bytes, hdr_length %d\n", dwRead, hdr_length);
+    WARN("bad header length, %ld bytes, hdr_length %ld\n", dwRead, hdr_length);
     status = RPC_S_PROTOCOL_ERROR;
     goto fail;
   }
@@ -2931,7 +2931,7 @@ again:
     dwRead = rpcrt4_ncacn_http_read(Connection, *Payload, common_hdr.frag_len - hdr_length);
     if (dwRead != common_hdr.frag_len - hdr_length)
     {
-      WARN("bad data length, %d/%d\n", dwRead, common_hdr.frag_len - hdr_length);
+      WARN("bad data length, %ld/%ld\n", dwRead, common_hdr.frag_len - hdr_length);
       status = RPC_S_PROTOCOL_ERROR;
       goto fail;
     }
@@ -2969,7 +2969,7 @@ again:
                                                  &pipe_uuid);
       if (status != RPC_S_OK)
         goto fail;
-      TRACE("received http flow control header (0x%x, 0x%x, %s)\n",
+      TRACE("received http flow control header (0x%lx, 0x%lx, %s)\n",
             bytes_transmitted, flow_control_increment, debugstr_guid(&pipe_uuid));
       /* FIXME: do something with parsed data */
     }
@@ -2991,7 +2991,7 @@ again:
 
   httpc->bytes_received += common_hdr.frag_len;
 
-  TRACE("httpc->bytes_received = 0x%x\n", httpc->bytes_received);
+  TRACE("httpc->bytes_received = 0x%lx\n", httpc->bytes_received);
 
   if (httpc->bytes_received > httpc->flow_control_mark)
   {
@@ -3003,7 +3003,7 @@ again:
     {
       DWORD bytes_written;
       BOOL ret2;
-      TRACE("sending flow control packet at 0x%x\n", httpc->bytes_received);
+      TRACE("sending flow control packet at 0x%lx\n", httpc->bytes_received);
       ret2 = InternetWriteFile(httpc->in_request, hdr, hdr->common.frag_len, &bytes_written);
       RPCRT4_FreeHeader(hdr);
       if (ret2)
@@ -3358,7 +3358,7 @@ void rpcrt4_conn_release_and_wait(RpcConnection *connection)
 RpcConnection *RPCRT4_GrabConnection(RpcConnection *connection)
 {
     LONG ref = InterlockedIncrement(&connection->ref);
-    TRACE("%p ref=%u\n", connection, ref);
+    TRACE("%p ref=%lu\n", connection, ref);
     return connection;
 }
 
@@ -3383,7 +3383,7 @@ void RPCRT4_ReleaseConnection(RpcConnection *connection)
         ref = InterlockedDecrement(&connection->ref);
     }
 
-    TRACE("%p ref=%u\n", connection, ref);
+    TRACE("%p ref=%lu\n", connection, ref);
 
     if (!ref)
     {
