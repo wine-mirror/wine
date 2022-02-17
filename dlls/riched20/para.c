@@ -806,10 +806,10 @@ void ME_DumpParaStyleToBuf(const PARAFORMAT2 *pFmt, char buf[2048])
   DUMP_EFFECT(PFM_RTLPARA,         "RTL para:");
   DUMP_EFFECT(PFM_SIDEBYSIDE,      "Side by side:");
   DUMP_EFFECT(PFM_TABLE,           "Table:");
-  DUMP(PFM_OFFSETINDENT,   "Offset indent:",     "%d", dxStartIndent);
-  DUMP(PFM_STARTINDENT,    "Start indent:",      "%d", dxStartIndent);
-  DUMP(PFM_RIGHTINDENT,    "Right indent:",      "%d", dxRightIndent);
-  DUMP(PFM_OFFSET,         "Offset:",            "%d", dxOffset);
+  DUMP(PFM_OFFSETINDENT,   "Offset indent:",     "%ld", dxStartIndent);
+  DUMP(PFM_STARTINDENT,    "Start indent:",      "%ld", dxStartIndent);
+  DUMP(PFM_RIGHTINDENT,    "Right indent:",      "%ld", dxRightIndent);
+  DUMP(PFM_OFFSET,         "Offset:",            "%ld", dxOffset);
   if (pFmt->dwMask & PFM_ALIGNMENT) {
     switch (pFmt->wAlignment) {
     case PFA_LEFT   : p += sprintf(p, "Alignment:            left\n"); break;
@@ -824,12 +824,12 @@ void ME_DumpParaStyleToBuf(const PARAFORMAT2 *pFmt, char buf[2048])
   if (pFmt->dwMask & PFM_TABSTOPS) {
     int i;
     p += sprintf(p, "\t");
-    for (i = 0; i < pFmt->cTabCount; i++) p += sprintf(p, "%x ", pFmt->rgxTabs[i]);
+    for (i = 0; i < pFmt->cTabCount; i++) p += sprintf(p, "%lx ", pFmt->rgxTabs[i]);
     p += sprintf(p, "\n");
   }
-  DUMP(PFM_SPACEBEFORE,    "Space Before:",      "%d", dySpaceBefore);
-  DUMP(PFM_SPACEAFTER,     "Space After:",       "%d", dySpaceAfter);
-  DUMP(PFM_LINESPACING,    "Line spacing:",      "%d", dyLineSpacing);
+  DUMP(PFM_SPACEBEFORE,    "Space Before:",      "%ld", dySpaceBefore);
+  DUMP(PFM_SPACEAFTER,     "Space After:",       "%ld", dySpaceAfter);
+  DUMP(PFM_LINESPACING,    "Line spacing:",      "%ld", dyLineSpacing);
   DUMP(PFM_STYLE,          "Text style:",        "%d", sStyle);
   DUMP(PFM_LINESPACING,    "Line spacing rule:", "%u", bLineSpacingRule);
   /* bOutlineLevel should be 0 */

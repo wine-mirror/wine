@@ -136,7 +136,7 @@ static ME_Run *split_run_extents( ME_WrapContext *wc, ME_Run *run, int nVChar )
   assert( run->nCharOfs != -1 );
   ME_CheckCharOffsets(editor);
 
-  TRACE("Before split: %s(%d, %d)\n", debugstr_run( run ),
+  TRACE("Before split: %s(%ld, %ld)\n", debugstr_run( run ),
         run->pt.x, run->pt.y);
 
   run_split( editor, &cursor );
@@ -153,7 +153,7 @@ static ME_Run *split_run_extents( ME_WrapContext *wc, ME_Run *run, int nVChar )
 
   ME_CheckCharOffsets(editor);
 
-  TRACE("After split: %s(%d, %d), %s(%d, %d)\n",
+  TRACE("After split: %s(%ld, %ld), %s(%ld, %ld)\n",
         debugstr_run( run ), run->pt.x, run->pt.y,
         debugstr_run( run2 ), run2->pt.x, run2->pt.y);
 
@@ -274,7 +274,7 @@ static void layout_row( ME_Run *start, ME_Run *last )
     for (i = 0, run = start; i < num_runs; run = run_next( run ))
     {
         run->pt.x = pos[ log_to_vis[ i ] ];
-        TRACE( "%d: x = %d\n", i, run->pt.x );
+        TRACE( "%d: x = %ld\n", i, run->pt.x );
         i++;
     }
 

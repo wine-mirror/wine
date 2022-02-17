@@ -264,12 +264,12 @@ void ME_DumpStyleToBuf(CHARFORMAT2W *pFmt, char buf[2048])
     p += sprintf(p, "N/A");
 
   if (pFmt->dwMask & CFM_SIZE)
-    p += sprintf(p, "\nFont size:            %d\n", pFmt->yHeight);
+    p += sprintf(p, "\nFont size:            %ld\n", pFmt->yHeight);
   else
     p += sprintf(p, "\nFont size:            N/A\n");
 
   if (pFmt->dwMask & CFM_OFFSET)
-    p += sprintf(p, "Char offset:          %d\n", pFmt->yOffset);
+    p += sprintf(p, "Char offset:          %ld\n", pFmt->yOffset);
   else
     p += sprintf(p, "Char offset:          N/A\n");
 

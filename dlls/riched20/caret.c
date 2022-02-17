@@ -1387,7 +1387,7 @@ void ME_SendSelChange(ME_TextEditor *editor)
 
     if (editor->nEventMask & ENM_SELCHANGE)
     {
-      TRACE("cpMin=%d cpMax=%d seltyp=%d (%s %s)\n",
+      TRACE("cpMin=%ld cpMax=%ld seltyp=%d (%s %s)\n",
             sc.chrg.cpMin, sc.chrg.cpMax, sc.seltyp,
             (sc.seltyp & SEL_TEXT) ? "SEL_TEXT" : "",
             (sc.seltyp & SEL_MULTICHAR) ? "SEL_MULTICHAR" : "");

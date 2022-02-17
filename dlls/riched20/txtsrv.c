@@ -65,7 +65,7 @@ static ULONG WINAPI ITextServicesImpl_AddRef(IUnknown *iface)
     struct text_services *services = impl_from_IUnknown( iface );
     LONG ref = InterlockedIncrement( &services->ref );
 
-    TRACE( "(%p) ref = %d\n", services, ref );
+    TRACE( "(%p) ref = %ld\n", services, ref );
 
     return ref;
 }
@@ -75,7 +75,7 @@ static ULONG WINAPI ITextServicesImpl_Release(IUnknown *iface)
     struct text_services *services = impl_from_IUnknown( iface );
     LONG ref = InterlockedDecrement( &services->ref );
 
-    TRACE( "(%p) ref = %d\n", services, ref );
+    TRACE( "(%p) ref = %ld\n", services, ref );
 
     if (!ref)
     {
@@ -161,7 +161,7 @@ DECLSPEC_HIDDEN HRESULT __thiscall fnTextSrv_TxDraw( ITextServices *iface, DWORD
     HDC dc = draw;
     BOOL rewrap = FALSE;
 
-    TRACE( "%p: aspect %d, %d, %p, %p, draw %p, target %p, bounds %s, mf_bounds %s, update %s, %p, %d, view %d\n",
+    TRACE( "%p: aspect %ld, %ld, %p, %p, draw %p, target %p, bounds %s, mf_bounds %s, update %s, %p, %ld, view %ld\n",
            services, aspect, index, aspect_info, td, draw, target, wine_dbgstr_rect( (RECT *)bounds ),
            wine_dbgstr_rect( (RECT *)mf_bounds ), wine_dbgstr_rect( update ), continue_fn, continue_param, view_id );
 
@@ -226,7 +226,7 @@ DECLSPEC_HIDDEN HRESULT __thiscall fnTextSrv_OnTxSetCursor( ITextServices *iface
 {
     struct text_services *services = impl_from_ITextServices( iface );
 
-    TRACE( "%p: %d, %d, %p, %p, draw %p target %p client %s pos (%d, %d)\n", services, aspect, index, aspect_info, td, draw,
+    TRACE( "%p: %ld, %ld, %p, %p, draw %p target %p client %s pos (%d, %d)\n", services, aspect, index, aspect_info, td, draw,
            target, wine_dbgstr_rect( client ), x, y );
 
     if (aspect != DVASPECT_CONTENT || index || aspect_info || td || draw || target || client)
@@ -367,7 +367,7 @@ DECLSPEC_HIDDEN HRESULT __thiscall fnTextSrv_TxGetNaturalSize( ITextServices *if
     BOOL rewrap = FALSE;
     HRESULT hr;
 
-    TRACE( "%p: aspect %d, draw %p, target %p, td %p, mode %08x, extent %s, *width %d, *height %d\n", services,
+    TRACE( "%p: aspect %ld, draw %p, target %p, td %p, mode %08lx, extent %s, *width %ld, *height %ld\n", services,
            aspect, draw, target, td, mode, wine_dbgstr_point( (POINT *)extent ), *width, *height );
 
     if (aspect != DVASPECT_CONTENT || target || td || mode != TXTNS_FITTOCONTENT )
@@ -413,7 +413,7 @@ DECLSPEC_HIDDEN HRESULT __thiscall fnTextSrv_OnTxPropertyBitsChange( ITextServic
     HRESULT hr;
     BOOL repaint = FALSE;
 
-    TRACE( "%p, mask %08x, bits %08x\n", services, mask, bits );
+    TRACE( "%p, mask %08lx, bits %08lx\n", services, mask, bits );
 
     services->editor->props = (services->editor->props & ~mask) | (bits & mask);
     if (mask & (TXTBIT_WORDWRAP | TXTBIT_MULTILINE))

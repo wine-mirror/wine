@@ -199,7 +199,7 @@ void ME_CheckCharOffsets(ME_TextEditor *editor)
         ofs = 0;
         break;
       case diRun:
-        TRACE_(richedit_check)("run, real ofs = %d (+ofsp = %d), counted = %d, len = %d, txt = %s, flags=%08x, fx&mask = %08x\n",
+        TRACE_(richedit_check)("run, real ofs = %d (+ofsp = %d), counted = %d, len = %d, txt = %s, flags=%08x, fx&mask = %08lx\n",
           p->member.run.nCharOfs, p->member.run.nCharOfs+ofsp, ofsp+ofs,
           p->member.run.len, debugstr_run( &p->member.run ),
           p->member.run.nFlags,

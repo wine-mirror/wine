@@ -1084,7 +1084,7 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
     HRESULT hr = S_OK;
     LRESULT res = 0;
 
-    TRACE( "enter hwnd %p msg %04x (%s) %lx %lx, unicode %d\n",
+    TRACE( "enter hwnd %p msg %04x (%s) %Ix %Ix, unicode %d\n",
            hwnd, msg, get_msg_name(msg), wparam, lparam, unicode );
 
     host = (struct host *)GetWindowLongPtrW( hwnd, 0 );
@@ -1094,7 +1094,7 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         {
             CREATESTRUCTW *pcs = (CREATESTRUCTW *)lparam;
 
-            TRACE( "WM_NCCREATE: hwnd %p style 0x%08x\n", hwnd, pcs->style );
+            TRACE( "WM_NCCREATE: hwnd %p style 0x%08lx\n", hwnd, pcs->style );
             return create_windowed_editor( hwnd, pcs, FALSE );
         }
         else return DefWindowProcW( hwnd, msg, wparam, lparam );
@@ -1108,7 +1108,7 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         res = send_msg_filter( host, msg, &wparam, &lparam );
         if (!--host->notify_level && host->defer_release)
         {
-            TRACE( "exit (filtered deferred release) hwnd %p msg %04x (%s) %lx %lx -> 0\n",
+            TRACE( "exit (filtered deferred release) hwnd %p msg %04x (%s) %Ix %Ix -> 0\n",
                    hwnd, msg, get_msg_name(msg), wparam, lparam );
             ITextHost2_Release( &host->ITextHost_iface );
             return 0;
@@ -1116,7 +1116,7 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
 
         if (res)
         {
-            TRACE( "exit (filtered %lu) hwnd %p msg %04x (%s) %lx %lx -> 0\n",
+            TRACE( "exit (filtered %Iu) hwnd %p msg %04x (%s) %Ix %Ix -> 0\n",
                    res, hwnd, msg, get_msg_name(msg), wparam, lparam );
             return 0;
         }
@@ -1497,7 +1497,7 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
     if (hr == S_FALSE)
         res = DefWindowProcW( hwnd, msg, wparam, lparam );
 
-    TRACE( "exit hwnd %p msg %04x (%s) %lx %lx, unicode %d -> %lu\n",
+    TRACE( "exit hwnd %p msg %04x (%s) %Ix %Ix, unicode %d -> %Iu\n",
            hwnd, msg, get_msg_name(msg), wparam, lparam, unicode, res );
 
     return res;
@@ -1536,7 +1536,7 @@ LRESULT WINAPI RichEdit10ANSIWndProc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM
     {
         CREATESTRUCTW *pcs = (CREATESTRUCTW *)lparam;
 
-        TRACE( "WM_NCCREATE: hwnd %p style 0x%08x\n", hwnd, pcs->style );
+        TRACE( "WM_NCCREATE: hwnd %p style 0x%08lx\n", hwnd, pcs->style );
         return create_windowed_editor( hwnd, pcs, TRUE );
     }
     return RichEditANSIWndProc( hwnd, msg, wparam, lparam );
@@ -1545,7 +1545,7 @@ LRESULT WINAPI RichEdit10ANSIWndProc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM
 static LRESULT WINAPI REComboWndProc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     /* FIXME: Not implemented */
-    TRACE( "hwnd %p msg %04x (%s) %08lx %08lx\n",
+    TRACE( "hwnd %p msg %04x (%s) %08Ix %08Ix\n",
            hwnd, msg, get_msg_name( msg ), wparam, lparam );
     return DefWindowProcW( hwnd, msg, wparam, lparam );
 }
@@ -1553,7 +1553,7 @@ static LRESULT WINAPI REComboWndProc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM
 static LRESULT WINAPI REListWndProc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     /* FIXME: Not implemented */
-    TRACE( "hwnd %p msg %04x (%s) %08lx %08lx\n",
+    TRACE( "hwnd %p msg %04x (%s) %08Ix %08Ix\n",
            hwnd, msg, get_msg_name( msg ), wparam, lparam );
     return DefWindowProcW( hwnd, msg, wparam, lparam );
 }

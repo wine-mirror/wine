@@ -293,7 +293,7 @@ static LRESULT ME_StreamInText(ME_TextEditor *editor, DWORD dwFormat, ME_InStrea
 
   static const char bom_utf8[] = {0xEF, 0xBB, 0xBF};
 
-  TRACE("%08x %p\n", dwFormat, stream);
+  TRACE("%08lx %p\n", dwFormat, stream);
 
   do {
     LONG nWideChars = 0;
@@ -1575,7 +1575,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
   ME_Cursor *selStart, *selEnd;
   LRESULT num_read = 0; /* bytes read for SF_TEXT, non-control chars inserted for SF_RTF */
 
-  TRACE("stream==%p editor==%p format==0x%X\n", stream, editor, format);
+  TRACE("stream==%p editor==%p format==0x%lX\n", stream, editor, format);
   editor->nEventMask = 0;
 
   ME_GetSelectionOfs(editor, &from, &to);
@@ -1841,11 +1841,11 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
   ME_Cursor cursor;
   WCHAR wLastChar = ' ';
 
-  TRACE("flags==0x%08x, chrg->cpMin==%d, chrg->cpMax==%d text==%s\n",
+  TRACE("flags==0x%08lx, chrg->cpMin==%ld, chrg->cpMax==%ld text==%s\n",
         flags, chrg->cpMin, chrg->cpMax, debugstr_w(text));
 
   if (flags & ~(FR_DOWN | FR_MATCHCASE | FR_WHOLEWORD))
-    FIXME("Flags 0x%08x not implemented\n",
+    FIXME("Flags 0x%08lx not implemented\n",
         flags & ~(FR_DOWN | FR_MATCHCASE | FR_WHOLEWORD));
 
   nMin = chrg->cpMin;
@@ -2084,7 +2084,7 @@ static int ME_GetTextEx(ME_TextEditor *editor, GETTEXTEX *ex, LPARAM pText)
     if (!ex->cb || !pText) return 0;
 
     if (ex->flags & ~(GT_SELECTION | GT_USECRLF))
-      FIXME("GETTEXTEX flags 0x%08x not supported\n", ex->flags & ~(GT_SELECTION | GT_USECRLF));
+      FIXME("GETTEXTEX flags 0x%08lx not supported\n", ex->flags & ~(GT_SELECTION | GT_USECRLF));
 
     if (ex->flags & GT_SELECTION)
     {
@@ -2284,7 +2284,7 @@ static BOOL paste_special(ME_TextEditor *editor, UINT cf, REPASTESPECIAL *ps, BO
     init_paste_formats();
 
     if (ps && ps->dwAspect != DVASPECT_CONTENT)
-        FIXME("Ignoring aspect %x\n", ps->dwAspect);
+        FIXME("Ignoring aspect %lx\n", ps->dwAspect);
 
     hr = OleGetClipboard( &data );
     if (hr != S_OK) return FALSE;
@@ -3294,7 +3294,7 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
   {
     CHARRANGE *pRange = (CHARRANGE *)lParam;
     ME_GetSelectionOfs(editor, &pRange->cpMin, &pRange->cpMax);
-    TRACE("EM_EXGETSEL = (%d,%d)\n", pRange->cpMin, pRange->cpMax);
+    TRACE("EM_EXGETSEL = (%ld,%ld)\n", pRange->cpMin, pRange->cpMax);
     return 0;
   }
   case EM_SETUNDOLIMIT:
@@ -3407,7 +3407,7 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
     bUnicode = !bRtf && pStruct->codepage == CP_UNICODE;
     bUTF8 = (lParam && (!strncmp((char *)lParam, utf8_bom, 3)));
 
-    TRACE("EM_SETTEXTEX - %s, flags %d, cp %d\n",
+    TRACE("EM_SETTEXTEX - %s, flags %ld, cp %d\n",
           bUnicode ? debugstr_w((LPCWSTR)lParam) : debugstr_a((LPCSTR)lParam),
           pStruct->flags, pStruct->codepage);
 
@@ -3606,7 +3606,7 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
     ME_InternalDeleteText(editor, &cursor, ME_GetTextLength(editor), FALSE);
     if (lParam)
     {
-      TRACE("WM_SETTEXT lParam==%lx\n",lParam);
+      TRACE("WM_SETTEXT lParam==%Ix\n",lParam);
       if (!strncmp((char *)lParam, "{\\rtf", 5) ||
           !strncmp((char *)lParam, "{\\urtf", 6))
       {
@@ -3689,7 +3689,7 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
     int nEnd = rng->chrg.cpMax;
     int textlength = ME_GetTextLength(editor);
 
-    TRACE( "EM_GETTEXTRANGE min = %d max = %d textlength = %d\n", rng->chrg.cpMin, rng->chrg.cpMax, textlength );
+    TRACE( "EM_GETTEXTRANGE min = %ld max = %ld textlength = %d\n", rng->chrg.cpMin, rng->chrg.cpMax, textlength );
     if (nStart < 0) return 0;
     if ((nStart == 0 && nEnd == -1) || nEnd > textlength)
       nEnd = textlength;
@@ -3803,7 +3803,7 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
     start_ofs = ME_GetCursorOfs( &cursor );
     row_end_cursor( row, &cursor, FALSE );
     end_ofs = ME_GetCursorOfs( &cursor );
-    TRACE( "EM_LINELENGTH(%ld)==%d\n", wParam, end_ofs - start_ofs );
+    TRACE( "EM_LINELENGTH(%Id)==%d\n", wParam, end_ofs - start_ofs );
     return end_ofs - start_ofs;
   }
   case EM_EXLIMITTEXT:
