@@ -74,11 +74,6 @@ struct parsed_url
     DWORD query_len;       /* [out] size of Query (until eos)           */
 };
 
-enum url_scan_type
-{
-    SCHEME,
-};
-
 static WCHAR *heap_strdupAtoW(const char *str)
 {
     WCHAR *ret = NULL;
@@ -4158,28 +4153,11 @@ HRESULT WINAPI UrlGetPartA(const char *url, char *out, DWORD *out_len, DWORD par
     return hr;
 }
 
-static const WCHAR * scan_url(const WCHAR *start, DWORD *size, enum url_scan_type type)
+static const WCHAR *parse_scheme( const WCHAR *p )
 {
-    *size = 0;
-
-    switch (type)
-    {
-    case SCHEME:
-        while ((isalnum( *start ) && !isupper( *start )) || *start == '+' || *start == '-' || *start == '.')
-        {
-            start++;
-            (*size)++;
-        }
-        if (*start != ':')
-            *size = 0;
-        break;
-
-    default:
-        FIXME("unknown type %d\n", type);
-        return L"";
-    }
-
-    return start;
+    while ((*p >= 'a' && *p <= 'z') || (*p >= '0' && *p <= '9') || *p == '+' || *p == '-' || *p == '.')
+        ++p;
+    return p;
 }
 
 static const WCHAR *parse_url_element( const WCHAR *url, const WCHAR *separators )
@@ -4202,8 +4180,9 @@ static void parse_url( const WCHAR *url, struct parsed_url *pl )
 
     memset(pl, 0, sizeof(*pl));
     pl->scheme = url;
-    work = scan_url(pl->scheme, &pl->scheme_len, SCHEME);
-    if (!*work || (*work != ':')) return;
+    work = parse_scheme( pl->scheme );
+    if (*work != ':') return;
+    pl->scheme_len = work - pl->scheme;
     work++;
     if (!is_slash( work[0] ) || !is_slash( work[1] ))
         return;
