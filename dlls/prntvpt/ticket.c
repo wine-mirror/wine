@@ -574,7 +574,7 @@ static void set_SelectionNamespaces(IXMLDOMDocument2 *doc)
                 {
                     if (!wcscmp(str, L"xmlns") || !wcsncmp(str, L"xmlns:", 6))
                     {
-                        TRACE("ns[%d]: %s=%s\n", i, wine_dbgstr_w(str), wine_dbgstr_w(V_BSTR(&var)));
+                        TRACE("ns[%ld]: %s=%s\n", i, wine_dbgstr_w(str), wine_dbgstr_w(V_BSTR(&var)));
                         IStream_Write(stream, str, wcslen(str) * sizeof(WCHAR), NULL);
                         IStream_Write(stream, L"=\"", 2 * sizeof(WCHAR), NULL);
                         IStream_Write(stream, V_BSTR(&var), wcslen(V_BSTR(&var)) * sizeof(WCHAR), NULL);
@@ -1174,7 +1174,7 @@ while (0)
     CHECK_FIELD(DM_DITHERTYPE);
     CHECK_FIELD(DM_PANNINGWIDTH);
     CHECK_FIELD(DM_PANNINGHEIGHT);
-    if (fields) TRACE(" %#x", fields);
+    if (fields) TRACE(" %#lx", fields);
     TRACE("\n");
 #undef CHECK_FIELD
 }
@@ -1192,7 +1192,7 @@ static void dump_devmode(const DEVMODEW *dm)
     TRACE("dmDriverVersion: 0x%04x\n", dm->dmDriverVersion);
     TRACE("dmSize: 0x%04x\n", dm->dmSize);
     TRACE("dmDriverExtra: 0x%04x\n", dm->dmDriverExtra);
-    TRACE("dmFields: 0x%04x\n", dm->dmFields);
+    TRACE("dmFields: 0x%04lx\n", dm->dmFields);
     dump_fields(dm->dmFields);
     TRACE("dmOrientation: %d\n", dm->u1.s1.dmOrientation);
     TRACE("dmPaperSize: %d\n", dm->u1.s1.dmPaperSize);
@@ -1209,9 +1209,9 @@ static void dump_devmode(const DEVMODEW *dm)
     TRACE("dmCollate: %d\n", dm->dmCollate);
     TRACE("dmFormName: %s\n", debugstr_w(dm->dmFormName));
     TRACE("dmLogPixels %u\n", dm->dmLogPixels);
-    TRACE("dmBitsPerPel %u\n", dm->dmBitsPerPel);
-    TRACE("dmPelsWidth %u\n", dm->dmPelsWidth);
-    TRACE("dmPelsHeight %u\n", dm->dmPelsHeight);
+    TRACE("dmBitsPerPel %lu\n", dm->dmBitsPerPel);
+    TRACE("dmPelsWidth %lu\n", dm->dmPelsWidth);
+    TRACE("dmPelsHeight %lu\n", dm->dmPelsHeight);
 }
 
 HRESULT WINAPI PTConvertDevModeToPrintTicket(HPTPROVIDER provider, ULONG size, PDEVMODEW dm,
@@ -1221,7 +1221,7 @@ HRESULT WINAPI PTConvertDevModeToPrintTicket(HPTPROVIDER provider, ULONG size, P
     struct ticket ticket;
     HRESULT hr;
 
-    TRACE("%p,%u,%p,%d,%p\n", provider, size, dm, scope, stream);
+    TRACE("%p,%lu,%p,%d,%p\n", provider, size, dm, scope, stream);
 
     if (!is_valid_provider(provider) || !dm || !stream)
         return E_INVALIDARG;

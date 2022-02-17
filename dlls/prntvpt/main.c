@@ -76,7 +76,7 @@ HRESULT WINAPI PTOpenProvider(PCWSTR printer, DWORD version, HPTPROVIDER *provid
 {
     DWORD used_version;
 
-    TRACE("%s, %d, %p\n", debugstr_w(printer), version, provider);
+    TRACE("%s, %ld, %p\n", debugstr_w(printer), version, provider);
 
     if (version != 1) return E_INVALIDARG;
 
@@ -87,7 +87,7 @@ HRESULT WINAPI PTOpenProviderEx(const WCHAR *printer, DWORD max_version, DWORD p
 {
     struct prn_provider *prov;
 
-    TRACE("%s, %d, %d, %p, %p\n", debugstr_w(printer), max_version, pref_version, provider, used_version);
+    TRACE("%s, %ld, %ld, %p, %p\n", debugstr_w(printer), max_version, pref_version, provider, used_version);
 
     if (!max_version || !provider || !used_version)
         return E_INVALIDARG;

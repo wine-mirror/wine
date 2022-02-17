@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = prntvpt.dll
 IMPORTLIB = prntvpt
 IMPORTS   = winspool ole32 oleaut32
