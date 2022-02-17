@@ -2613,7 +2613,6 @@ static void test_DoOpenPipeStream(void)
     ok(ret, "Failed to create pipes.\n");
 
     hr = pDoOpenPipeStream(piperead, ForReading, &stream_read);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (SUCCEEDED(hr))
     {
@@ -2624,9 +2623,13 @@ static void test_DoOpenPipeStream(void)
         ok(written == sizeof(testdata), "Write to anonymous pipe wrote %ld bytes.\n", written);
 
         hr = ITextStream_Read(stream_read, 4, &str);
+        todo_wine
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ok(!wcscmp(str, L"test"), "Unexpected data read %s.\n", wine_dbgstr_w(str));
-        SysFreeString(str);
+        if (SUCCEEDED(hr))
+        {
+            ok(!wcscmp(str, L"test"), "Unexpected data read %s.\n", wine_dbgstr_w(str));
+            SysFreeString(str);
+        }
 
         ITextStream_Release(stream_read);
     }
@@ -2635,7 +2638,6 @@ static void test_DoOpenPipeStream(void)
     ok(ret, "Unexpected return value.\n");
     /* Stream takes ownership. */
     ret = CloseHandle(piperead);
-    todo_wine
     ok(!ret, "Unexpected return value.\n");
 
     /* Streams on both ends. */
@@ -2644,32 +2646,37 @@ static void test_DoOpenPipeStream(void)
 
     stream_read = NULL;
     hr = pDoOpenPipeStream(piperead, ForReading, &stream_read);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     stream_write = NULL;
     hr = pDoOpenPipeStream(pipewrite, ForWriting, &stream_write);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     if (SUCCEEDED(hr))
     {
         str = SysAllocString(L"data");
         hr = ITextStream_Write(stream_write, str);
+        todo_wine
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
         hr = ITextStream_Write(stream_read, str);
+        todo_wine
         ok(hr == CTL_E_BADFILEMODE, "Unexpected hr %#lx.\n", hr);
 
         SysFreeString(str);
 
         hr = ITextStream_Read(stream_write, 1, &str);
+        todo_wine
         ok(hr == CTL_E_BADFILEMODE, "Unexpected hr %#lx.\n", hr);
 
         hr = ITextStream_Read(stream_read, 4, &str);
+        todo_wine
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ok(!wcscmp(str, L"data"), "Unexpected data.\n");
-        SysFreeString(str);
+        if (SUCCEEDED(hr))
+        {
+            ok(!wcscmp(str, L"data"), "Unexpected data.\n");
+            SysFreeString(str);
+        }
     }
 
     if (stream_read)

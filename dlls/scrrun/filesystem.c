@@ -706,20 +706,21 @@ static HRESULT WINAPI textstream_SkipLine(ITextStream *iface)
 
 static HRESULT WINAPI textstream_Close(ITextStream *iface)
 {
-    struct textstream *This = impl_from_ITextStream(iface);
+    struct textstream *stream = impl_from_ITextStream(iface);
     HRESULT hr = S_OK;
 
-    TRACE("(%p)\n", This);
+    TRACE("%p.\n", iface);
 
-    if(!CloseHandle(This->file))
+    if (!CloseHandle(stream->file))
         hr = S_FALSE;
 
-    This->file = NULL;
+    stream->file = NULL;
 
     return hr;
 }
 
-static const ITextStreamVtbl textstreamvtbl = {
+static const ITextStreamVtbl textstreamvtbl =
+{
     textstream_QueryInterface,
     textstream_AddRef,
     textstream_Release,
@@ -739,6 +740,114 @@ static const ITextStreamVtbl textstreamvtbl = {
     textstream_WriteBlankLines,
     textstream_Skip,
     textstream_SkipLine,
+    textstream_Close
+};
+
+static HRESULT WINAPI pipestream_get_Line(ITextStream *iface, LONG *line)
+{
+    FIXME("%p, %p.\n", iface, line);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI pipestream_get_Column(ITextStream *iface, LONG *column)
+{
+    FIXME("%p, %p.\n", iface, column);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI pipestream_get_AtEndOfStream(ITextStream *iface, VARIANT_BOOL *eos)
+{
+    FIXME("%p, %p.\n", iface, eos);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI pipestream_get_AtEndOfLine(ITextStream *iface, VARIANT_BOOL *eol)
+{
+    FIXME("%p, %p.\n", iface, eol);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI pipestream_Read(ITextStream *iface, LONG len, BSTR *text)
+{
+    FIXME("%p, %ld, %p.\n", iface, len, text);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI pipestream_ReadLine(ITextStream *iface, BSTR *text)
+{
+    FIXME("%p, %p.\n", iface, text);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI pipestream_ReadAll(ITextStream *iface, BSTR *text)
+{
+    FIXME("%p, %p.\n", iface, text);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI pipestream_Write(ITextStream *iface, BSTR text)
+{
+    FIXME("%p, %s.\n", iface, debugstr_w(text));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI pipestream_WriteLine(ITextStream *iface, BSTR text)
+{
+    FIXME("%p, %s.\n", iface, debugstr_w(text));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI pipestream_WriteBlankLines(ITextStream *iface, LONG lines)
+{
+    FIXME("%p, %ld.\n", iface, lines);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI pipestream_Skip(ITextStream *iface, LONG count)
+{
+    FIXME("%p, %ld.\n", iface, count);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI pipestream_SkipLine(ITextStream *iface)
+{
+    FIXME("%p.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static const ITextStreamVtbl pipestreamvtbl =
+{
+    textstream_QueryInterface,
+    textstream_AddRef,
+    textstream_Release,
+    textstream_GetTypeInfoCount,
+    textstream_GetTypeInfo,
+    textstream_GetIDsOfNames,
+    textstream_Invoke,
+    pipestream_get_Line,
+    pipestream_get_Column,
+    pipestream_get_AtEndOfStream,
+    pipestream_get_AtEndOfLine,
+    pipestream_Read,
+    pipestream_ReadLine,
+    pipestream_ReadAll,
+    pipestream_Write,
+    pipestream_WriteLine,
+    pipestream_WriteBlankLines,
+    pipestream_Skip,
+    pipestream_SkipLine,
     textstream_Close
 };
 
@@ -839,11 +948,24 @@ static HRESULT create_textstream(const WCHAR *filename, DWORD disposition, IOMod
     return S_OK;
 }
 
-HRESULT WINAPI DoOpenPipeStream(HANDLE pipe, IOMode mode, ITextStream **stream)
+HRESULT WINAPI DoOpenPipeStream(HANDLE pipe, IOMode mode, ITextStream **ret)
 {
-    FIXME("%p, %d, %p.\n", pipe, mode, stream);
+    struct textstream *stream;
 
-    return E_NOTIMPL;
+    TRACE("%p, %d, %p.\n", pipe, mode, ret);
+
+    if (!(stream = calloc(1, sizeof(*stream))))
+        return E_OUTOFMEMORY;
+
+    stream->ITextStream_iface.lpVtbl = &pipestreamvtbl;
+    stream->ref = 1;
+    stream->mode = mode;
+    stream->file = pipe;
+
+    init_classinfo(&CLSID_TextStream, (IUnknown *)&stream->ITextStream_iface, &stream->classinfo);
+    *ret = &stream->ITextStream_iface;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI drive_QueryInterface(IDrive *iface, REFIID riid, void **obj)
