@@ -28,6 +28,7 @@ struct user_callbacks
 {
     HWND (WINAPI *pGetDesktopWindow)(void);
     BOOL (WINAPI *pGetWindowRect)( HWND hwnd, LPRECT rect );
+    BOOL (WINAPI *pIsChild)( HWND, HWND );
     BOOL (WINAPI *pRedrawWindow)( HWND, const RECT*, HRGN, UINT );
     LRESULT (WINAPI *pSendMessageTimeoutW)( HWND, UINT, WPARAM, LPARAM, UINT, UINT, PDWORD_PTR );
     HWND (WINAPI *pWindowFromDC)( HDC );

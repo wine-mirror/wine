@@ -508,12 +508,22 @@ static BOOL PALETTE_DeleteObject( HGDIOBJ handle )
  */
 HPALETTE WINAPI NtUserSelectPalette( HDC hdc, HPALETTE hpal, WORD bkg )
 {
+    BOOL is_primary = FALSE;
     HPALETTE ret = 0;
     DC *dc;
 
     TRACE("%p %p\n", hdc, hpal );
 
-    /* FIXME: move primary palette handling from user32 */
+    if (!bkg && hpal != get_stock_object( DEFAULT_PALETTE ))
+    {
+        HWND hwnd = user_callbacks->pWindowFromDC( hdc );
+        if (hwnd)
+        {
+            /* set primary palette if it's related to current active */
+            HWND foreground = NtUserGetForegroundWindow();
+            is_primary = foreground == hwnd || user_callbacks->pIsChild( foreground, hwnd );
+        }
+    }
 
     if (get_gdi_object_type(hpal) != NTGDI_OBJ_PAL)
     {
@@ -524,7 +534,7 @@ HPALETTE WINAPI NtUserSelectPalette( HDC hdc, HPALETTE hpal, WORD bkg )
     {
         ret = dc->hPalette;
         dc->hPalette = hpal;
-        if (!bkg) hPrimaryPalette = hpal;
+        if (is_primary) hPrimaryPalette = hpal;
         release_dc_ptr( dc );
     }
     return ret;
@@ -536,6 +546,7 @@ HPALETTE WINAPI NtUserSelectPalette( HDC hdc, HPALETTE hpal, WORD bkg )
  */
 UINT realize_palette( HDC hdc )
 {
+    BOOL is_primary = FALSE;
     UINT realized = 0;
     DC* dc = get_dc_ptr( hdc );
 
@@ -559,12 +570,23 @@ UINT realize_palette( HDC hdc )
                                                         (dc->hPalette == hPrimaryPalette) );
             palPtr->unrealize = physdev->funcs->pUnrealizePalette;
             GDI_ReleaseObj( dc->hPalette );
+            is_primary = dc->hPalette == hPrimaryPalette;
         }
     }
     else TRACE("  skipping (hLastRealizedPalette = %p)\n", hLastRealizedPalette);
 
     release_dc_ptr( dc );
     TRACE("   realized %i colors.\n", realized );
+
+    /* do not send anything if no colors were changed */
+    if (realized && is_primary)
+    {
+        /* send palette change notification */
+        HWND hwnd = user_callbacks->pWindowFromDC( hdc );
+        if (hwnd) user_callbacks->pSendMessageTimeoutW( HWND_BROADCAST, WM_PALETTECHANGED,
+                                                        HandleToUlong(hwnd), 0, SMTO_ABORTIFHUNG,
+                                                        2000, NULL );
+    }
     return realized;
 }
 

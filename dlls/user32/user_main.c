@@ -44,10 +44,6 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION user_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-static HPALETTE (WINAPI *pfnGDISelectPalette)( HDC hdc, HPALETTE hpal, WORD bkgnd );
-static UINT (WINAPI *pfnGDIRealizePalette)( HDC hdc );
-static HPALETTE hPrimaryPalette;
-
 static DWORD exiting_thread_id;
 
 extern void WDML_NotifyThreadDetach(void);
@@ -86,69 +82,11 @@ void USER_CheckNotLock(void)
 
 
 /***********************************************************************
- *		UserSelectPalette (Not a Windows API)
+ *             UserRealizePalette (USER32.@)
  */
-static HPALETTE WINAPI UserSelectPalette( HDC hDC, HPALETTE hPal, BOOL bForceBackground )
+UINT WINAPI UserRealizePalette( HDC hdc )
 {
-    WORD wBkgPalette = 1;
-
-    if (!bForceBackground && (hPal != GetStockObject(DEFAULT_PALETTE)))
-    {
-        HWND hwnd = WindowFromDC( hDC );
-        if (hwnd)
-        {
-            HWND hForeground = NtUserGetForegroundWindow();
-            /* set primary palette if it's related to current active */
-            if (hForeground == hwnd || IsChild(hForeground,hwnd))
-            {
-                wBkgPalette = 0;
-                hPrimaryPalette = hPal;
-            }
-        }
-    }
-    return pfnGDISelectPalette( hDC, hPal, wBkgPalette);
-}
-
-
-/***********************************************************************
- *		UserRealizePalette (USER32.@)
- */
-UINT WINAPI UserRealizePalette( HDC hDC )
-{
-    UINT realized = pfnGDIRealizePalette( hDC );
-
-    /* do not send anything if no colors were changed */
-    if (realized && GetCurrentObject( hDC, OBJ_PAL ) == hPrimaryPalette)
-    {
-        /* send palette change notification */
-        HWND hWnd = WindowFromDC( hDC );
-        if (hWnd) SendMessageTimeoutW( HWND_BROADCAST, WM_PALETTECHANGED, (WPARAM)hWnd, 0,
-                                       SMTO_ABORTIFHUNG, 2000, NULL );
-    }
-    return realized;
-}
-
-
-/***********************************************************************
- *           palette_init
- *
- * Patch the function pointers in GDI for SelectPalette and RealizePalette
- */
-static void palette_init(void)
-{
-    void **ptr;
-    HMODULE module = GetModuleHandleA( "gdi32" );
-    if (!module)
-    {
-        ERR( "cannot get GDI32 handle\n" );
-        return;
-    }
-    if ((ptr = (void**)GetProcAddress( module, "pfnSelectPalette" )))
-        pfnGDISelectPalette = InterlockedExchangePointer( ptr, UserSelectPalette );
-    else ERR( "cannot find pfnSelectPalette in GDI32\n" );
-    if ((ptr = (void**)GetProcAddress( module, "pfnRealizePalette" )))
-        pfnGDIRealizePalette = InterlockedExchangePointer( ptr, UserRealizePalette );
-    else ERR( "cannot find pfnRealizePalette in GDI32\n" );
+    return NtUserCallOneParam( HandleToUlong(hdc), NtUserRealizePalette );
 }
 
 
@@ -212,6 +150,7 @@ static const struct user_callbacks user_funcs =
 {
     GetDesktopWindow,
     GetWindowRect,
+    IsChild,
     RedrawWindow,
     SendMessageTimeoutW,
     WindowFromDC,
@@ -239,9 +178,6 @@ static BOOL process_attach(void)
 
     /* Initialize system colors and metrics */
     SYSPARAMS_Init();
-
-    /* Setup palette function pointers */
-    palette_init();
 
     return TRUE;
 }
