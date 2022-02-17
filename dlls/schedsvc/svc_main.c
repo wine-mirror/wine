@@ -81,7 +81,7 @@ static DWORD WINAPI tasks_monitor_thread(void *arg)
                          NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED, NULL);
     if (htasks == INVALID_HANDLE_VALUE)
     {
-        ERR("Couldn't start monitoring %s for tasks, error %u\n", debugstr_w(path), GetLastError());
+        ERR("Couldn't start monitoring %s for tasks, error %lu\n", debugstr_w(path), GetLastError());
         return -1;
     }
 
@@ -146,11 +146,11 @@ static DWORD WINAPI tasks_monitor_thread(void *arg)
             {
                 if (msg == JOB_OBJECT_MSG_EXIT_PROCESS)
                 {
-                    TRACE("got message: process %#lx has terminated\n", pid);
+                    TRACE("got message: process %#Ix has terminated\n", pid);
                     update_process_status(pid);
                 }
                 else
-                    FIXME("got message %#x from the job\n", msg);
+                    FIXME("got message %#lx from the job\n", msg);
             }
             continue;
         }
@@ -191,7 +191,7 @@ static DWORD WINAPI tasks_monitor_thread(void *arg)
             break;
 
         default:
-            FIXME("%s: action %#x not handled\n", debugstr_w(info.data.FileName), info.data.Action);
+            FIXME("%s: action %#lx not handled\n", debugstr_w(info.data.FileName), info.data.Action);
             break;
         }
 
@@ -235,7 +235,7 @@ void schedsvc_auto_start(void)
     scm = OpenSCManagerW(NULL, NULL, 0);
     if (!scm)
     {
-        WARN("failed to open SCM (%u)\n", GetLastError());
+        WARN("failed to open SCM (%lu)\n", GetLastError());
         return;
     }
 
@@ -261,12 +261,12 @@ void schedsvc_auto_start(void)
             }
         }
         else
-            WARN("failed to query service config (%u)\n", GetLastError());
+            WARN("failed to query service config (%lu)\n", GetLastError());
 
         CloseServiceHandle(service);
     }
     else
-        WARN("failed to open service (%u)\n", GetLastError());
+        WARN("failed to open service (%lu)\n", GetLastError());
 
     CloseServiceHandle(scm);
 }
@@ -289,7 +289,7 @@ static void schedsvc_update_status(DWORD state)
 
 static void WINAPI schedsvc_handler(DWORD control)
 {
-    TRACE("%#x\n", control);
+    TRACE("%#lx\n", control);
 
     switch (control)
     {
@@ -318,14 +318,14 @@ static RPC_STATUS RPC_init(void)
     status = RpcServerRegisterIf(ITaskSchedulerService_v1_0_s_ifspec, NULL, NULL);
     if (status != RPC_S_OK)
     {
-        ERR("RpcServerRegisterIf error %#x\n", status);
+        ERR("RpcServerRegisterIf error %#lx\n", status);
         return status;
     }
 
     status = RpcServerRegisterIf(atsvc_v1_0_s_ifspec, NULL, NULL);
     if (status != RPC_S_OK)
     {
-        ERR("RpcServerRegisterIf error %#x\n", status);
+        ERR("RpcServerRegisterIf error %#lx\n", status);
         RpcServerUnregisterIf(ITaskSchedulerService_v1_0_s_ifspec, NULL, FALSE);
         return status;
     }
@@ -333,42 +333,42 @@ static RPC_STATUS RPC_init(void)
     status = RpcServerUseProtseqEpW(ncacn_npW, RPC_C_PROTSEQ_MAX_REQS_DEFAULT, endpoint_npW, NULL);
     if (status != RPC_S_OK)
     {
-        ERR("RpcServerUseProtseqEp error %#x\n", status);
+        ERR("RpcServerUseProtseqEp error %#lx\n", status);
         return status;
     }
 
     status = RpcServerUseProtseqEpW(ncalrpcW, RPC_C_PROTSEQ_MAX_REQS_DEFAULT, endpoint_lrpcW, NULL);
     if (status != RPC_S_OK)
     {
-        ERR("RpcServerUseProtseqEp error %#x\n", status);
+        ERR("RpcServerUseProtseqEp error %#lx\n", status);
         return status;
     }
 
     status = RpcServerInqBindings(&sched_bindings);
     if (status != RPC_S_OK)
     {
-        ERR("RpcServerInqBindings error %#x\n", status);
+        ERR("RpcServerInqBindings error %#lx\n", status);
         return status;
     }
 
     status = RpcEpRegisterW(ITaskSchedulerService_v1_0_s_ifspec, sched_bindings, NULL, NULL);
     if (status != RPC_S_OK)
     {
-        ERR("RpcEpRegister error %#x\n", status);
+        ERR("RpcEpRegister error %#lx\n", status);
         return status;
     }
 
     status = RpcEpRegisterW(atsvc_v1_0_s_ifspec, sched_bindings, NULL, NULL);
     if (status != RPC_S_OK)
     {
-        ERR("RpcEpRegister error %#x\n", status);
+        ERR("RpcEpRegister error %#lx\n", status);
         return status;
     }
 
     status = RpcServerListen(1, RPC_C_LISTEN_MAX_CALLS_DEFAULT, TRUE);
     if (status != RPC_S_OK)
     {
-        ERR("RpcServerListen error %#x\n", status);
+        ERR("RpcServerListen error %#lx\n", status);
         return status;
     }
     return RPC_S_OK;
@@ -394,7 +394,7 @@ void WINAPI ServiceMain(DWORD argc, LPWSTR *argv)
     schedsvc_handle = RegisterServiceCtrlHandlerW(scheduleW, schedsvc_handler);
     if (!schedsvc_handle)
     {
-        ERR("RegisterServiceCtrlHandler error %d\n", GetLastError());
+        ERR("RegisterServiceCtrlHandler error %ld\n", GetLastError());
         return;
     }
 

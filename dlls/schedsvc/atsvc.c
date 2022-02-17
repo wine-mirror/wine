@@ -335,7 +335,7 @@ static DWORD load_unicode_strings(const char *data, DWORD limit, struct job_t *j
     {
         if (limit < sizeof(USHORT))
         {
-            TRACE("invalid string %u offset\n", i);
+            TRACE("invalid string %lu offset\n", i);
             break;
         }
 
@@ -345,11 +345,11 @@ static DWORD load_unicode_strings(const char *data, DWORD limit, struct job_t *j
         limit -= sizeof(USHORT);
         if (limit < len * sizeof(WCHAR))
         {
-            TRACE("invalid string %u size\n", i);
+            TRACE("invalid string %lu size\n", i);
             break;
         }
 
-        TRACE("string %u: %s\n", i, wine_dbgstr_wn((const WCHAR *)data, len));
+        TRACE("string %lu: %s\n", i, wine_dbgstr_wn((const WCHAR *)data, len));
 
         switch (i)
         {
@@ -439,7 +439,7 @@ static BOOL load_job_data(const char *data, DWORD size, struct job_t *info)
         TRACE("invalid name_size_offset\n");
         return FALSE;
     }
-    TRACE("unicode strings end at %#x\n", fixed->name_size_offset + unicode_strings_size);
+    TRACE("unicode strings end at %#lx\n", fixed->name_size_offset + unicode_strings_size);
 
     if (size < fixed->trigger_offset + sizeof(USHORT))
     {
@@ -449,7 +449,7 @@ static BOOL load_job_data(const char *data, DWORD size, struct job_t *info)
     info->trigger_count = *(const USHORT *)(data + fixed->trigger_offset);
     TRACE("trigger_count %u\n", info->trigger_count);
     triggers_size = size - fixed->trigger_offset - sizeof(USHORT);
-    TRACE("triggers_size %u\n", triggers_size);
+    TRACE("triggers_size %lu\n", triggers_size);
 
     data += fixed->name_size_offset + unicode_strings_size;
     size -= fixed->name_size_offset + unicode_strings_size;
@@ -467,7 +467,7 @@ static BOOL load_job_data(const char *data, DWORD size, struct job_t *info)
         TRACE("no space for user data\n");
         return FALSE;
     }
-    TRACE("User Data size %#x\n", data_size);
+    TRACE("User Data size %#lx\n", data_size);
 
     size -= sizeof(USHORT) + data_size;
     data += sizeof(USHORT) + data_size;
@@ -485,13 +485,13 @@ static BOOL load_job_data(const char *data, DWORD size, struct job_t *info)
         TRACE("no space for reserved data\n");
         return FALSE;
     }
-    TRACE("Reserved Data size %#x\n", data_size);
+    TRACE("Reserved Data size %#lx\n", data_size);
 
     size -= sizeof(USHORT) + data_size;
     data += sizeof(USHORT) + data_size;
 
     /* Trigger Data */
-    TRACE("trigger_offset %04x, triggers end at %04x\n", fixed->trigger_offset,
+    TRACE("trigger_offset %04x, triggers end at %04lx\n", fixed->trigger_offset,
           (DWORD)(fixed->trigger_offset + sizeof(USHORT) + info->trigger_count * sizeof(TASK_TRIGGER)));
 
     info->trigger_count = *(const USHORT *)data;
@@ -525,9 +525,9 @@ static BOOL load_job_data(const char *data, DWORD size, struct job_t *info)
         TRACE("wEndDay = %u\n", trigger[i].wEndDay);
         TRACE("wStartHour = %u\n", trigger[i].wStartHour);
         TRACE("wStartMinute = %u\n", trigger[i].wStartMinute);
-        TRACE("MinutesDuration = %u\n", trigger[i].MinutesDuration);
-        TRACE("MinutesInterval = %u\n", trigger[i].MinutesInterval);
-        TRACE("rgFlags = %u\n", trigger[i].rgFlags);
+        TRACE("MinutesDuration = %lu\n", trigger[i].MinutesDuration);
+        TRACE("MinutesInterval = %lu\n", trigger[i].MinutesInterval);
+        TRACE("rgFlags = %lu\n", trigger[i].rgFlags);
         TRACE("TriggerType = %u\n", trigger[i].TriggerType);
         TRACE("Reserved2 = %u\n", trigger[i].Reserved2);
         TRACE("wRandomMinutesInterval = %u\n", trigger[i].wRandomMinutesInterval);
@@ -563,7 +563,7 @@ static BOOL load_job(const WCHAR *name, struct job_t *info)
         file = CreateFileW(name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
         if (file == INVALID_HANDLE_VALUE)
         {
-            TRACE("Failed to open %s, error %u\n", debugstr_w(name), GetLastError());
+            TRACE("Failed to open %s, error %lu\n", debugstr_w(name), GetLastError());
             if (GetLastError() != ERROR_SHARING_VIOLATION || try++ >= 3) break;
             Sleep(100);
             continue;
@@ -574,7 +574,7 @@ static BOOL load_job(const WCHAR *name, struct job_t *info)
         mapping = CreateFileMappingW(file, NULL, PAGE_READONLY, 0, 0, 0);
         if (!mapping)
         {
-            TRACE("Failed to create file mapping %s, error %u\n", debugstr_w(name), GetLastError());
+            TRACE("Failed to create file mapping %s, error %lu\n", debugstr_w(name), GetLastError());
             CloseHandle(file);
             break;
         }
@@ -880,7 +880,7 @@ static void update_job_status(struct job_t *job)
 
         if (GetLastError() != ERROR_SHARING_VIOLATION || try++ >= 3)
         {
-            TRACE("Failed to update %s, error %u\n", debugstr_w(job->name), GetLastError());
+            TRACE("Failed to update %s, error %lu\n", debugstr_w(job->name), GetLastError());
             return;
         }
         Sleep(100);
@@ -1131,7 +1131,7 @@ DWORD __cdecl NetrJobAdd(ATSVC_HANDLE server_name, AT_INFO *info, DWORD *jobid)
         if (GetLastError() != ERROR_FILE_EXISTS)
         {
 
-            TRACE("create_job error %u\n", GetLastError());
+            TRACE("create_job error %lu\n", GetLastError());
             return GetLastError();
         }
 
@@ -1145,7 +1145,7 @@ DWORD __cdecl NetrJobDel(ATSVC_HANDLE server_name, DWORD min_jobid, DWORD max_jo
 {
     DWORD jobid, ret = APE_AT_ID_NOT_FOUND;
 
-    TRACE("%s,%u,%u\n", debugstr_w(server_name), min_jobid, max_jobid);
+    TRACE("%s,%lu,%lu\n", debugstr_w(server_name), min_jobid, max_jobid);
 
     EnterCriticalSection(&at_job_list_section);
 
@@ -1155,7 +1155,7 @@ DWORD __cdecl NetrJobDel(ATSVC_HANDLE server_name, DWORD min_jobid, DWORD max_jo
 
         if (!job)
         {
-            TRACE("job %u not found\n", jobid);
+            TRACE("job %lu not found\n", jobid);
             ret = APE_AT_ID_NOT_FOUND;
             break;
         }
@@ -1190,7 +1190,7 @@ DWORD __cdecl NetrJobEnum(ATSVC_HANDLE server_name, AT_ENUM_CONTAINER *container
     DWORD allocated;
     struct job_t *job;
 
-    TRACE("%s,%p,%u,%p,%p\n", debugstr_w(server_name), container, max_length, total, resume);
+    TRACE("%s,%p,%lu,%p,%p\n", debugstr_w(server_name), container, max_length, total, resume);
 
     *total = 0;
     *resume = 0;
@@ -1242,7 +1242,7 @@ DWORD __cdecl NetrJobGetInfo(ATSVC_HANDLE server_name, DWORD jobid, AT_INFO **in
     struct job_t *job;
     DWORD ret = APE_AT_ID_NOT_FOUND;
 
-    TRACE("%s,%u,%p\n", debugstr_w(server_name), jobid, info);
+    TRACE("%s,%lu,%p\n", debugstr_w(server_name), jobid, info);
 
     EnterCriticalSection(&at_job_list_section);
 
