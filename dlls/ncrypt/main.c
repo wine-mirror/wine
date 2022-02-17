@@ -184,6 +184,53 @@ static struct object *allocate_object(enum object_type type)
     return ret;
 }
 
+static SECURITY_STATUS set_object_property(struct object *object, const WCHAR *name, BYTE *value, DWORD value_size)
+{
+    struct object_property *property;
+
+    FIXME("check duplicates\n");
+    if (!object->num_properties)
+    {
+        if (!(object->properties = malloc(sizeof(*property))))
+        {
+            ERR("Error allocating memory.");
+            return NTE_NO_MEMORY;
+        }
+        property = &object->properties[object->num_properties++];
+    }
+    else
+    {
+        struct object_property *tmp;
+        if (!(tmp = realloc(object->properties, sizeof(*property) * (object->num_properties + 1))))
+        {
+            ERR("Error allocating memory.");
+            return NTE_NO_MEMORY;
+        }
+        object->properties = tmp;
+        property = &object->properties[object->num_properties++];
+    }
+
+    memset(property, 0, sizeof(*property));
+    if (!(property->key = malloc((lstrlenW(name) + 1) * sizeof(WCHAR))))
+    {
+        ERR("Error allocating memory.");
+        return NTE_NO_MEMORY;
+    }
+
+    lstrcpyW(property->key, name);
+    property->value_size = value_size;
+    if (!(property->value = malloc(value_size)))
+    {
+        ERR("Error allocating memory.");
+        free(property->key);
+        property->key = NULL;
+        return NTE_NO_MEMORY;
+    }
+
+    memcpy(property->value, value, value_size);
+    return ERROR_SUCCESS;
+}
+
 SECURITY_STATUS WINAPI NCryptImportKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_HANDLE decrypt_key,
                                        const WCHAR *type, NCryptBufferDesc *params, NCRYPT_KEY_HANDLE *handle,
                                        BYTE *data, DWORD datasize, DWORD flags)
@@ -244,6 +291,7 @@ SECURITY_STATUS WINAPI NCryptImportKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_H
 
         key = &object->key;
         key->alg = RSA;
+        key->rsa.bit_length = rsaheader->BitLength;
         key->rsa.public_exp_size = rsaheader->cbPublicExp;
         key->rsa.modulus_size = rsaheader->cbModulus;
         if (!(key->rsa.public_exp = malloc(rsaheader->cbPublicExp)))
@@ -261,10 +309,13 @@ SECURITY_STATUS WINAPI NCryptImportKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_H
         }
 
         public_exp = &data[sizeof(*rsaheader)]; /* The public exp is after the header. */
-        modulus = &public_exp[rsaheader->cbPublicExp];  /* The modulus is after the public exp. */
+        modulus = &public_exp[rsaheader->cbPublicExp]; /* The modulus is after the public exponent. */
         memcpy(key->rsa.public_exp, public_exp, rsaheader->cbPublicExp);
         memcpy(key->rsa.modulus, modulus, rsaheader->cbModulus);
 
+        set_object_property(object, NCRYPT_ALGORITHM_GROUP_PROPERTY, (BYTE *)L"RSA", sizeof(L"RSA"));
+        set_object_property(object, NCRYPT_LENGTH_PROPERTY, (BYTE *)&key->rsa.bit_length, sizeof(key->rsa.bit_length));
+        set_object_property(object, NCRYPT_PROVIDER_HANDLE_PROPERTY, (BYTE *)&provider, sizeof(provider));
         *handle = (NCRYPT_KEY_HANDLE)object;
         break;
     }
@@ -307,53 +358,6 @@ SECURITY_STATUS WINAPI NCryptOpenStorageProvider(NCRYPT_PROV_HANDLE *provider, c
         return NTE_NO_MEMORY;
     }
     *provider = (NCRYPT_PROV_HANDLE)object;
-    return ERROR_SUCCESS;
-}
-
-static SECURITY_STATUS set_object_property(struct object *object, const WCHAR *name, BYTE *value, DWORD value_size)
-{
-    struct object_property *property;
-
-    FIXME("check duplicates\n");
-    if (!object->num_properties)
-    {
-        if (!(object->properties = malloc(sizeof(*property))))
-        {
-            ERR("Error allocating memory.");
-            return NTE_NO_MEMORY;
-        }
-        property = &object->properties[object->num_properties++];
-    }
-    else
-    {
-        struct object_property *tmp;
-        if (!(tmp = realloc(object->properties, sizeof(*property) * (object->num_properties + 1))))
-        {
-            ERR("Error allocating memory.");
-            return NTE_NO_MEMORY;
-        }
-        object->properties = tmp;
-        property = &object->properties[object->num_properties++];
-    }
-
-    memset(property, 0, sizeof(*property));
-    if (!(property->key = malloc((lstrlenW(name) + 1) * sizeof(WCHAR))))
-    {
-        ERR("Error allocating memory.");
-        return NTE_NO_MEMORY;
-    }
-
-    lstrcpyW(property->key, name);
-    property->value_size = value_size;
-    if (!(property->value = malloc(value_size)))
-    {
-        ERR("Error allocating memory.");
-        free(property->key);
-        property->key = NULL;
-        return NTE_NO_MEMORY;
-    }
-
-    memcpy(property->value, value, value_size);
     return ERROR_SUCCESS;
 }
 

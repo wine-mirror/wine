@@ -169,7 +169,7 @@ static void test_get_property(void)
     NCRYPT_KEY_HANDLE key;
     SECURITY_STATUS ret;
     WCHAR value[4];
-    DWORD size;
+    DWORD keylength, size;
 
     ret = NCryptOpenStorageProvider(&prov, NULL, 0);
     ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
@@ -177,17 +177,29 @@ static void test_get_property(void)
     ret = NCryptImportKey(prov, 0, BCRYPT_RSAPUBLIC_BLOB, NULL, &key, rsa_key_blob, sizeof(rsa_key_blob), 0);
     ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
 
-    todo_wine {
-    ret = NCryptGetProperty(key, L"Algorithm Group", NULL, 0, &size, 0);
+    size = 0;
+    ret = NCryptGetProperty(key, NCRYPT_ALGORITHM_GROUP_PROPERTY, NULL, 0, &size, 0);
     ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
     ok(size == 8, "got %lu\n", size);
 
     size = 0;
-    ret = NCryptGetProperty(key, L"Algorithm Group", (BYTE *)value, sizeof(value), &size, 0);
+    value[0] = 0;
+    ret = NCryptGetProperty(key, NCRYPT_ALGORITHM_GROUP_PROPERTY, (BYTE *)value, sizeof(value), &size, 0);
     ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
+    todo_wine {
     ok(size == 8, "got %lu\n", size);
-    ok(!lstrcmpW(value, L"RSA"), "The string doesn't match with 'RSA'\n");
     }
+    ok(!lstrcmpW(value, L"RSA"), "The string doesn't match with 'RSA'\n");
+
+    size = 0;
+    ret = NCryptGetProperty(key, NCRYPT_LENGTH_PROPERTY, NULL, 0, &size, 0);
+    ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
+    ok(size == sizeof(DWORD), "got %lu\n", size);
+
+    keylength = 0;
+    ret = NCryptGetProperty(key, NCRYPT_LENGTH_PROPERTY, (BYTE *)&keylength, size, &size, 0);
+    ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
+    ok(keylength == 1024, "got %lu\n", keylength);
 
     NCryptFreeObject(prov);
 }

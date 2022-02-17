@@ -71,6 +71,40 @@ typedef ULONG_PTR NCRYPT_SECRET_HANDLE;
 
 #define NCRYPT_SILENT_FLAG 0x00000040
 
+#define NCRYPT_NAME_PROPERTY                    L"Name"
+#define NCRYPT_UNIQUE_NAME_PROPERTY             L"Unique Name"
+#define NCRYPT_ALGORITHM_PROPERTY               L"Algorithm Name"
+#define NCRYPT_LENGTH_PROPERTY                  L"Length"
+#define NCRYPT_LENGTHS_PROPERTY                 L"Lengths"
+#define NCRYPT_BLOCK_LENGTH_PROPERTY            L"Block Length"
+#define NCRYPT_UI_POLICY_PROPERTY               L"UI Policy"
+#define NCRYPT_EXPORT_POLICY_PROPERTY           L"Export Policy"
+#define NCRYPT_WINDOW_HANDLE_PROPERTY           L"HWND Handle"
+#define NCRYPT_USE_CONTEXT_PROPERTY             L"Use Context"
+#define NCRYPT_IMPL_TYPE_PROPERTY               L"Impl Type"
+#define NCRYPT_KEY_USAGE_PROPERTY               L"Key Usage"
+#define NCRYPT_KEY_TYPE_PROPERTY                L"Key Type"
+#define NCRYPT_VERSION_PROPERTY                 L"Version"
+#define NCRYPT_SECURITY_DESCR_SUPPORT_PROPERTY  L"Security Descr Support"
+#define NCRYPT_SECURITY_DESCR_PROPERTY          L"Security Descr"
+#define NCRYPT_USE_COUNT_ENABLED_PROPERTY       L"Enabled Use Count"
+#define NCRYPT_USE_COUNT_PROPERTY               L"Use Count"
+#define NCRYPT_LAST_MODIFIED_PROPERTY           L"Modified"
+#define NCRYPT_MAX_NAME_LENGTH_PROPERTY         L"Max Name Length"
+#define NCRYPT_ALGORITHM_GROUP_PROPERTY         L"Algorithm Group"
+#define NCRYPT_PROVIDER_HANDLE_PROPERTY         L"Provider Handle"
+#define NCRYPT_PIN_PROPERTY                     L"SmartCardPin"
+#define NCRYPT_READER_PROPERTY                  L"SmartCardReader"
+#define NCRYPT_SMARTCARD_GUID_PROPERTY          L"SmartCardGuid"
+#define NCRYPT_CERTIFICATE_PROPERTY             L"SmartCardKeyCertificate"
+#define NCRYPT_PIN_PROMPT_PROPERTY              L"SmartCardPinPrompt"
+#define NCRYPT_USER_CERTSTORE_PROPERTY          L"SmartCardUserCertStore"
+#define NCRYPT_ROOT_CERTSTORE_PROPERTY          L"SmartcardRootCertStore"
+#define NCRYPT_SECURE_PIN_PROPERTY              L"SmartCardSecurePin"
+#define NCRYPT_ASSOCIATED_ECDH_KEY              L"SmartCardAssociatedECDHKey"
+#define NCRYPT_SCARD_PIN_ID                     L"SmartCardPinId"
+#define NCRYPT_SCARD_PIN_INFO                   L"SmartCardPinInfo"
+
 SECURITY_STATUS WINAPI NCryptCreatePersistedKey(NCRYPT_PROV_HANDLE, NCRYPT_KEY_HANDLE *, const WCHAR *, const WCHAR *, DWORD, DWORD);
 SECURITY_STATUS WINAPI NCryptDecrypt(NCRYPT_KEY_HANDLE, BYTE *, DWORD, void *, BYTE *, DWORD, DWORD *, DWORD);
 SECURITY_STATUS WINAPI NCryptEncrypt(NCRYPT_KEY_HANDLE, BYTE *, DWORD, void *, BYTE *, DWORD, DWORD *, DWORD);

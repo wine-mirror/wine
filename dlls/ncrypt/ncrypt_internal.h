@@ -26,6 +26,7 @@ enum key_algorithm
 
 struct rsa_key
 {
+    DWORD bit_length;
     DWORD public_exp_size;
     BYTE *public_exp;
     DWORD modulus_size;
