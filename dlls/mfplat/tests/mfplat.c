@@ -3641,6 +3641,31 @@ static void test_system_time_source(void)
     hr = IMFClockStateSink_OnClockStart(statesink, 0, 0);
     ok(hr == S_OK, "Failed to start source, hr %#x.\n", hr);
 
+    hr = IMFClockStateSink_OnClockSetRate(statesink, 5, 2.0f);
+    ok(hr == S_OK, "Failed to set rate, hr %#x.\n", hr);
+
+    hr = IMFClockStateSink_OnClockPause(statesink, 6);
+    ok(hr == S_OK, "Failed to pause source, hr %#x.\n", hr);
+
+    hr = IMFPresentationTimeSource_GetCorrelatedTime(time_source, 0, &time, &systime);
+    ok(hr == S_OK, "Failed to get time %#x.\n", hr);
+    ok(time == 12 && !!systime, "Unexpected time stamp %s, %s.\n", wine_dbgstr_longlong(time),
+            wine_dbgstr_longlong(systime));
+
+    hr = IMFClockStateSink_OnClockRestart(statesink, 7);
+    ok(hr == S_OK, "Failed to restart source, hr %#x.\n", hr);
+
+    hr = IMFClockStateSink_OnClockPause(statesink, 8);
+    ok(hr == S_OK, "Failed to pause source, hr %#x.\n", hr);
+
+    hr = IMFPresentationTimeSource_GetCorrelatedTime(time_source, 0, &time, &systime);
+    ok(hr == S_OK, "Failed to get time %#x.\n", hr);
+    ok(time == 14 && !!systime, "Unexpected time stamp %s, %s.\n", wine_dbgstr_longlong(time),
+            wine_dbgstr_longlong(systime));
+
+    hr = IMFClockStateSink_OnClockStart(statesink, 0, 0);
+    ok(hr == S_OK, "Failed to start source, hr %#x.\n", hr);
+
     hr = IMFPresentationTimeSource_GetCorrelatedTime(time_source, 0, &time, &systime);
     ok(hr == S_OK, "Failed to get time %#x.\n", hr);
     ok(time == 2 * systime, "Unexpected time stamp %s, %s.\n", wine_dbgstr_longlong(time),

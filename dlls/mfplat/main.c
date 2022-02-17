@@ -124,17 +124,20 @@ struct system_time_source
     MFCLOCK_STATE state;
     IMFClock *clock;
     LONGLONG start_offset;
+    LONGLONG system_time;
+    LONGLONG clock_time;
     float rate;
     int i_rate;
     CRITICAL_SECTION cs;
 };
 
-static void system_time_source_apply_rate(const struct system_time_source *source, LONGLONG *value)
+static void system_time_source_update_clock_time(struct system_time_source *source, LONGLONG system_time)
 {
-    if (source->i_rate)
-        *value *= source->i_rate;
-    else
-        *value *= source->rate;
+    LONGLONG diff = system_time - source->system_time;
+    if (source->i_rate) diff *= source->i_rate;
+    else if (source->rate != 1.0f) diff *= source->rate;
+    source->clock_time += diff;
+    source->system_time = system_time;
 }
 
 static struct system_time_source *impl_from_IMFPresentationTimeSource(IMFPresentationTimeSource *iface)
@@ -8076,12 +8079,8 @@ static HRESULT WINAPI system_time_source_GetCorrelatedTime(IMFPresentationTimeSo
     if (SUCCEEDED(hr = IMFClock_GetCorrelatedTime(source->clock, 0, clock_time, system_time)))
     {
         if (source->state == MFCLOCK_STATE_RUNNING)
-        {
-            system_time_source_apply_rate(source, clock_time);
-            *clock_time += source->start_offset;
-        }
-        else
-            *clock_time = source->start_offset;
+            system_time_source_update_clock_time(source, *system_time);
+        *clock_time = source->start_offset + source->clock_time;
     }
     LeaveCriticalSection(&source->cs);
 
@@ -8220,25 +8219,19 @@ static HRESULT WINAPI system_time_source_sink_OnClockStart(IMFClockStateSink *if
     state = source->state;
     if (SUCCEEDED(hr = system_time_source_change_state(source, CLOCK_CMD_START)))
     {
-        system_time_source_apply_rate(source, &system_time);
         if (start_offset == PRESENTATION_CURRENT_POSITION)
         {
-            switch (state)
+            if (state != MFCLOCK_STATE_RUNNING)
             {
-                case MFCLOCK_STATE_RUNNING:
-                    break;
-                case MFCLOCK_STATE_PAUSED:
-                    source->start_offset -= system_time;
-                    break;
-                default:
-                    source->start_offset = -system_time;
-                    break;
-                    ;
+                source->start_offset -= system_time;
+                source->system_time = 0;
             }
         }
         else
         {
-            source->start_offset = -system_time + start_offset;
+            source->start_offset = start_offset;
+            source->system_time = system_time;
+            source->clock_time = 0;
         }
     }
     LeaveCriticalSection(&source->cs);
@@ -8255,7 +8248,9 @@ static HRESULT WINAPI system_time_source_sink_OnClockStop(IMFClockStateSink *ifa
 
     EnterCriticalSection(&source->cs);
     if (SUCCEEDED(hr = system_time_source_change_state(source, CLOCK_CMD_STOP)))
-        source->start_offset = 0;
+    {
+        source->start_offset = source->system_time = source->clock_time = 0;
+    }
     LeaveCriticalSection(&source->cs);
 
     return hr;
@@ -8271,8 +8266,7 @@ static HRESULT WINAPI system_time_source_sink_OnClockPause(IMFClockStateSink *if
     EnterCriticalSection(&source->cs);
     if (SUCCEEDED(hr = system_time_source_change_state(source, CLOCK_CMD_PAUSE)))
     {
-        system_time_source_apply_rate(source, &system_time);
-        source->start_offset += system_time;
+        system_time_source_update_clock_time(source, system_time);
     }
     LeaveCriticalSection(&source->cs);
 
@@ -8289,8 +8283,7 @@ static HRESULT WINAPI system_time_source_sink_OnClockRestart(IMFClockStateSink *
     EnterCriticalSection(&source->cs);
     if (SUCCEEDED(hr = system_time_source_change_state(source, CLOCK_CMD_RESTART)))
     {
-        system_time_source_apply_rate(source, &system_time);
-        source->start_offset -= system_time;
+        source->system_time = system_time;
     }
     LeaveCriticalSection(&source->cs);
 
