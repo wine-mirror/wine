@@ -38,7 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(rtutils);
  */
 DWORD WINAPI TraceRegisterExW(LPCWSTR name, DWORD flags)
 {
-    FIXME("(%s, %x): stub\n", debugstr_w(name), flags);
+    FIXME("(%s, %lx): stub\n", debugstr_w(name), flags);
     return INVALID_TRACEID;
 }
 
