@@ -92,7 +92,7 @@ static ULONG WINAPI PropertyStore_AddRef(IPropertyStoreCache *iface)
     PropertyStore *This = impl_from_IPropertyStoreCache(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     return ref;
 }
@@ -113,7 +113,7 @@ static ULONG WINAPI PropertyStore_Release(IPropertyStoreCache *iface)
     PropertyStore *This = impl_from_IPropertyStoreCache(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     if (ref == 0)
     {
@@ -159,7 +159,7 @@ static HRESULT WINAPI PropertyStore_GetAt(IPropertyStoreCache *iface,
     propstore_value *value;
     HRESULT hr;
 
-    TRACE("%p,%d,%p\n", iface, iProp, pkey);
+    TRACE("%p,%ld,%p\n", iface, iProp, pkey);
 
     if (!pkey)
         return E_POINTER;
@@ -478,7 +478,7 @@ HRESULT WINAPI PSCreatePropertyStoreFromObject(IUnknown *obj, DWORD access, REFI
 {
     HRESULT hr;
 
-    TRACE("(%p, %d, %s, %p)\n", obj, access, debugstr_guid(riid), ret);
+    TRACE("(%p, %ld, %s, %p)\n", obj, access, debugstr_guid(riid), ret);
 
     if (!obj || !ret)
         return E_POINTER;

@@ -157,7 +157,7 @@ static HRESULT WINAPI propsys_FormatForDisplay(IPropertySystem *iface,
     REFPROPERTYKEY key, REFPROPVARIANT propvar, PROPDESC_FORMAT_FLAGS flags,
     LPWSTR dest, DWORD destlen)
 {
-    FIXME("%p %p %x %p %d: stub\n", key, propvar, flags, dest, destlen);
+    FIXME("%p %p %x %p %ld: stub\n", key, propvar, flags, dest, destlen);
     return E_NOTIMPL;
 }
 
