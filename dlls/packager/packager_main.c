@@ -80,7 +80,7 @@ static ULONG WINAPI OleObject_AddRef(IOleObject *iface)
     struct Package *This = impl_from_IOleObject(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -90,7 +90,7 @@ static ULONG WINAPI OleObject_Release(IOleObject *iface)
     struct Package *This = impl_from_IOleObject(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref){
         if(This->clientsite)
@@ -139,7 +139,7 @@ static HRESULT WINAPI OleObject_Close(IOleObject *iface, DWORD dwSaveOption)
 {
     struct Package *This = impl_from_IOleObject(iface);
 
-    TRACE("(%p)->(0x%x)\n", This, dwSaveOption);
+    TRACE("(%p)->(0x%lx)\n", This, dwSaveOption);
 
     if(dwSaveOption == OLECLOSE_SAVEIFDIRTY ||
             dwSaveOption == OLECLOSE_PROMPTSAVE)
@@ -151,14 +151,14 @@ static HRESULT WINAPI OleObject_Close(IOleObject *iface, DWORD dwSaveOption)
 static HRESULT WINAPI OleObject_SetMoniker(IOleObject *iface, DWORD dwWhichMoniker, IMoniker *pmk)
 {
     struct Package *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%d, %p)\n", This, dwWhichMoniker, pmk);
+    FIXME("(%p)->(%ld, %p)\n", This, dwWhichMoniker, pmk);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleObject_GetMoniker(IOleObject *iface, DWORD dwAssign, DWORD dwWhichMoniker, IMoniker **ppmk)
 {
     struct Package *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%d, %d, %p)\n", This, dwAssign, dwWhichMoniker, ppmk);
+    FIXME("(%p)->(%ld, %ld, %p)\n", This, dwAssign, dwWhichMoniker, ppmk);
     return E_NOTIMPL;
 }
 
@@ -166,14 +166,14 @@ static HRESULT WINAPI OleObject_InitFromData(IOleObject *iface, IDataObject *pDa
                                         DWORD dwReserved)
 {
     struct Package *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%p, 0x%x, %d)\n", This, pDataObject, fCreation, dwReserved);
+    FIXME("(%p)->(%p, 0x%x, %ld)\n", This, pDataObject, fCreation, dwReserved);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleObject_GetClipboardData(IOleObject *iface, DWORD dwReserved, IDataObject **ppDataObject)
 {
     struct Package *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%d, %p)\n", This, dwReserved, ppDataObject);
+    FIXME("(%p)->(%ld, %p)\n", This, dwReserved, ppDataObject);
     return E_NOTIMPL;
 }
 
@@ -188,7 +188,7 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, LPMSG lpms
 {
     struct Package *This = impl_from_IOleObject(iface);
 
-    TRACE("(%p)->(%d)\n", This, iVerb);
+    TRACE("(%p)->(%ld)\n", This, iVerb);
 
     switch(iVerb){
     case 0:
@@ -229,21 +229,21 @@ static HRESULT WINAPI OleObject_GetUserClassID(IOleObject *iface, CLSID *pClsid)
 static HRESULT WINAPI OleObject_GetUserType(IOleObject *iface, DWORD dwFormOfType, LPOLESTR *pszUserType)
 {
     struct Package *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%d, %p)\n", This, dwFormOfType, pszUserType);
+    FIXME("(%p)->(%ld, %p)\n", This, dwFormOfType, pszUserType);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleObject_SetExtent(IOleObject *iface, DWORD dwDrawAspect, SIZEL *psizel)
 {
     struct Package *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%d, %p)\n", This, dwDrawAspect, psizel);
+    FIXME("(%p)->(%ld, %p)\n", This, dwDrawAspect, psizel);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleObject_GetExtent(IOleObject *iface, DWORD dwDrawAspect, SIZEL *psizel)
 {
     struct Package *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%d, %p)\n", This, dwDrawAspect, psizel);
+    FIXME("(%p)->(%ld, %p)\n", This, dwDrawAspect, psizel);
     return E_NOTIMPL;
 }
 
@@ -257,7 +257,7 @@ static HRESULT WINAPI OleObject_Advise(IOleObject *iface, IAdviseSink *pAdvSink,
 static HRESULT WINAPI OleObject_Unadvise(IOleObject *iface, DWORD dwConnection)
 {
     struct Package *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%d)\n", This, dwConnection);
+    FIXME("(%p)->(%ld)\n", This, dwConnection);
     return E_NOTIMPL;
 }
 
@@ -272,7 +272,7 @@ static HRESULT WINAPI OleObject_GetMiscStatus(IOleObject *iface, DWORD dwAspect,
 {
     struct Package *This = impl_from_IOleObject(iface);
 
-    TRACE("(%p)->(%d, %p)\n", This, dwAspect, pdwStatus);
+    TRACE("(%p)->(%ld, %p)\n", This, dwAspect, pdwStatus);
 
     if(!pdwStatus)
         return E_INVALIDARG;
@@ -370,7 +370,7 @@ static HRESULT discard_string(struct Package *This, IStream *stream)
     do{
         hr = IStream_Read(stream, &chr, 1, &nbytes);
         if(FAILED(hr) || !nbytes){
-            TRACE("Unexpected end of stream or Read failed with %08x\n", hr);
+            TRACE("Unexpected end of stream or Read failed with %08lx\n", hr);
             return (hr == S_OK || hr == S_FALSE) ? E_FAIL : hr;
         }
     }while(chr);
@@ -398,7 +398,7 @@ static HRESULT WINAPI PersistStorage_Load(IPersistStorage* iface,
     hr = IStorage_OpenStream(pStg, L"\1Ole10Native", NULL,
             STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stream);
     if(FAILED(hr)){
-        TRACE("OpenStream gave: %08x\n", hr);
+        TRACE("OpenStream gave: %08lx\n", hr);
         return hr;
     }
 
@@ -485,7 +485,7 @@ static HRESULT WINAPI PersistStorage_Load(IPersistStorage* iface,
             CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
     while(file == INVALID_HANDLE_VALUE){
         if(GetLastError() != ERROR_FILE_EXISTS){
-            WARN("CreateFile failed: %u\n", GetLastError());
+            WARN("CreateFile failed: %lu\n", GetLastError());
             hr = E_FAIL;
             goto exit;
         }
@@ -507,7 +507,7 @@ static HRESULT WINAPI PersistStorage_Load(IPersistStorage* iface,
 
         hr = IStream_Read(stream, data, min(sizeof(data), payload_size), &nbytes);
         if(FAILED(hr) || nbytes == 0){
-            TRACE("Unexpected end of file, or Read failed with %08x\n", hr);
+            TRACE("Unexpected end of file, or Read failed with %08lx\n", hr);
             if(hr == S_OK || hr == S_FALSE)
                 hr = E_FAIL;
             goto exit;
@@ -528,7 +528,7 @@ exit:
     }
     IStream_Release(stream);
 
-    TRACE("Returning: %08x\n", hr);
+    TRACE("Returning: %08lx\n", hr);
     return hr;
 }
 
