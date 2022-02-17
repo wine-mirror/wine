@@ -415,3 +415,8 @@ NTSTATUS WINAPI wow64_NtUserUnhookWindowsHookEx( UINT *args )
 
     return NtUserUnhookWindowsHookEx( handle );
 }
+
+NTSTATUS WINAPI wow64_NtUserGetForegroundWindow( UINT *args )
+{
+    return HandleToUlong( NtUserGetForegroundWindow() );
+}

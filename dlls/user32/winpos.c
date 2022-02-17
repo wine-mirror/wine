@@ -1640,7 +1640,7 @@ void WINPOS_ActivateOtherWindow(HWND hwnd)
     }
 
  done:
-    fg = GetForegroundWindow();
+    fg = NtUserGetForegroundWindow();
     TRACE("win = %p fg = %p\n", hwndTo, fg);
     if (!fg || (hwnd == fg))
     {

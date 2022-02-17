@@ -156,6 +156,7 @@ LONG    WINAPI NtUserGetDisplayConfigBufferSizes( UINT32 flags, UINT32 *num_path
                                                   UINT32 *num_mode_info );
 UINT    WINAPI NtUserGetDoubleClickTime(void);
 BOOL    WINAPI NtUserGetDpiForMonitor( HMONITOR monitor, UINT type, UINT *x, UINT *y );
+HWND    WINAPI NtUserGetForegroundWindow(void);
 INT     WINAPI NtUserGetKeyNameText( LONG lparam, WCHAR *buffer, INT size );
 SHORT   WINAPI NtUserGetKeyState( INT vkey );
 HKL     WINAPI NtUserGetKeyboardLayout( DWORD thread_id );

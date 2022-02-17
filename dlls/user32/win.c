@@ -3843,7 +3843,7 @@ BOOL WINAPI FlashWindowEx( PFLASHWINFO pfinfo )
         hwnd = wndPtr->obj.handle;  /* make it a full handle */
 
         if (pfinfo->dwFlags) wparam = !(wndPtr->flags & WIN_NCACTIVATED);
-        else wparam = (hwnd == GetForegroundWindow());
+        else wparam = (hwnd == NtUserGetForegroundWindow());
 
         WIN_ReleasePtr( wndPtr );
         SendMessageW( hwnd, WM_NCACTIVATE, wparam, 0 );

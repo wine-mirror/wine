@@ -97,7 +97,7 @@ static HPALETTE WINAPI UserSelectPalette( HDC hDC, HPALETTE hPal, BOOL bForceBac
         HWND hwnd = WindowFromDC( hDC );
         if (hwnd)
         {
-            HWND hForeground = GetForegroundWindow();
+            HWND hForeground = NtUserGetForegroundWindow();
             /* set primary palette if it's related to current active */
             if (hForeground == hwnd || IsChild(hForeground,hwnd))
             {

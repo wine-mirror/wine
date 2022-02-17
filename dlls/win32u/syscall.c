@@ -115,6 +115,7 @@ static void * const syscalls[] =
     NtUserGetCursor,
     NtUserGetDoubleClickTime,
     NtUserGetDpiForMonitor,
+    NtUserGetForegroundWindow,
     NtUserGetKeyState,
     NtUserGetKeyboardLayout,
     NtUserGetKeyboardLayoutName,

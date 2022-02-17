@@ -926,7 +926,7 @@
 @ stub NtUserGetDpiForCurrentProcess
 @ stdcall -syscall NtUserGetDpiForMonitor(long long ptr ptr)
 @ stub NtUserGetExtendedPointerDeviceProperty
-@ stub NtUserGetForegroundWindow
+@ stdcall -syscall NtUserGetForegroundWindow()
 @ stub NtUserGetGUIThreadInfo
 @ stub NtUserGetGestureConfig
 @ stub NtUserGetGestureExtArgs
