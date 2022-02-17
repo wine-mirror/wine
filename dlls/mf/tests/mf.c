@@ -6518,6 +6518,20 @@ static void test_h264_decoder(void)
         ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_H264),
         {0},
     };
+    static const struct attribute_desc output_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 1920, 1080),
+        {0},
+    };
+    static const struct attribute_desc output_type_desc_win7[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 1920, 1088),
+        {0},
+    };
 
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Video, MFVideoFormat_H264};
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Video, MFVideoFormat_NV12};
@@ -6540,6 +6554,17 @@ static void test_h264_decoder(void)
     hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type);
     todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetOutputAvailableType returned %#x\n", hr);
+
+    /* setting output media type first doesn't work */
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "MFCreateMediaType returned %#x\n", hr);
+    init_media_type(media_type, default_outputs[0], -1);
+    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+    todo_wine
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "SetOutputType returned %#x.\n", hr);
+    ret = IMFMediaType_Release(media_type);
+    ok(ret == 0, "Release returned %u\n", ret);
 
     /* check available input types */
 
@@ -6597,6 +6622,37 @@ static void test_h264_decoder(void)
     ok(hr == MF_E_NO_MORE_TYPES, "GetOutputAvailableType returned %#x\n", hr);
     todo_wine
     ok(i == 5, "%u output media types\n", i);
+
+    /* check required output media type attributes */
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "MFCreateMediaType returned %#x\n", hr);
+    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+    todo_wine
+    ok(hr == E_INVALIDARG, "SetOutputType returned %#x.\n", hr);
+    init_media_type(media_type, output_type_desc, 1);
+    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+    todo_wine
+    ok(hr == MF_E_INVALIDMEDIATYPE, "SetOutputType returned %#x.\n", hr);
+    init_media_type(media_type, output_type_desc, 2);
+    for (i = 2; i < ARRAY_SIZE(output_type_desc) - 1; ++i)
+    {
+        hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+        todo_wine
+        ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetOutputType returned %#x.\n", hr);
+        init_media_type(media_type, output_type_desc, i + 1);
+    }
+    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+    if (broken(hr == MF_E_INVALIDMEDIATYPE))
+    {
+        init_media_type(media_type, output_type_desc_win7, ARRAY_SIZE(output_type_desc_win7) - 1);
+        hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+    }
+    todo_wine
+    ok(hr == S_OK, "SetOutputType returned %#x.\n", hr);
+    ret = IMFMediaType_Release(media_type);
+    todo_wine
+    ok(ret == 1, "Release returned %u\n", ret);
 
     ret = IMFTransform_Release(transform);
     ok(ret == 0, "Release returned %u\n", ret);
