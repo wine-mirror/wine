@@ -4155,7 +4155,7 @@ HRESULT WINAPI UrlGetPartA(const char *url, char *out, DWORD *out_len, DWORD par
 
 static const WCHAR *parse_scheme( const WCHAR *p )
 {
-    while ((*p >= 'a' && *p <= 'z') || (*p >= '0' && *p <= '9') || *p == '+' || *p == '-' || *p == '.')
+    while (isalnum( *p ) || *p == '+' || *p == '-' || *p == '.')
         ++p;
     return p;
 }
@@ -4384,7 +4384,18 @@ HRESULT WINAPI UrlGetPartW(const WCHAR *url, WCHAR *out, DWORD *out_len, DWORD p
             *out_len = size + 1;
             return E_POINTER;
         }
-        memcpy(out, addr, size*sizeof(WCHAR));
+
+        if (part == URL_PART_SCHEME)
+        {
+            unsigned int i;
+
+            for (i = 0; i < size; ++i)
+                out[i] = tolower( addr[i] );
+        }
+        else
+        {
+            memcpy( out, addr, size * sizeof(WCHAR) );
+        }
         out[size] = 0;
         *out_len = size;
     }

@@ -709,7 +709,7 @@ static void test_UrlGetPart(void)
         {"file://c:\\index.htm", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_FALSE, ""},
         {"file:some text", URL_PART_HOSTNAME, 0, S_FALSE, ""},
         {"index.htm", URL_PART_HOSTNAME, 0, E_FAIL},
-        {"sChEmE-.+:", URL_PART_SCHEME, 0, S_OK, "scheme-.+", .todo_hr = TRUE},
+        {"sChEmE-.+:", URL_PART_SCHEME, 0, S_OK, "scheme-.+"},
         {"scheme_:", URL_PART_SCHEME, 0, S_FALSE, ""},
         {"scheme :", URL_PART_SCHEME, 0, S_FALSE, ""},
         {"sch eme:", URL_PART_SCHEME, 0, S_FALSE, ""},
