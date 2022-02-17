@@ -709,7 +709,7 @@ SECURITY_STATUS WINAPI EnumerateSecurityPackagesW(PULONG pcPackages,
                     *pkgInfo = package->infoW;
                     if (package->infoW.Name)
                     {
-                        TRACE("Name[%d] = %s\n", i - 1, debugstr_w(package->infoW.Name));
+                        TRACE("Name[%ld] = %s\n", i - 1, debugstr_w(package->infoW.Name));
                         pkgInfo->Name = nextString;
                         lstrcpyW(nextString, package->infoW.Name);
                         nextString += lstrlenW(nextString) + 1;
@@ -718,7 +718,7 @@ SECURITY_STATUS WINAPI EnumerateSecurityPackagesW(PULONG pcPackages,
                         pkgInfo->Name = NULL;
                     if (package->infoW.Comment)
                     {
-                        TRACE("Comment[%d] = %s\n", i - 1, debugstr_w(package->infoW.Comment));
+                        TRACE("Comment[%ld] = %s\n", i - 1, debugstr_w(package->infoW.Comment));
                         pkgInfo->Comment = nextString;
                         lstrcpyW(nextString, package->infoW.Comment);
                         nextString += lstrlenW(nextString) + 1;
@@ -732,7 +732,7 @@ SECURITY_STATUS WINAPI EnumerateSecurityPackagesW(PULONG pcPackages,
         }
     }
     LeaveCriticalSection(&cs);
-    TRACE("<-- 0x%08x\n", ret);
+    TRACE("<-- 0x%08lx\n", ret);
     return ret;
 }
 
@@ -909,7 +909,7 @@ BOOLEAN WINAPI GetComputerObjectNameW(
     if (ntStatus != STATUS_SUCCESS)
     {
         SetLastError(LsaNtStatusToWinError(ntStatus));
-        WARN("LsaOpenPolicy failed with NT status %u\n", GetLastError());
+        WARN("LsaOpenPolicy failed with NT status %lu\n", GetLastError());
         return FALSE;
     }
 
@@ -919,7 +919,7 @@ BOOLEAN WINAPI GetComputerObjectNameW(
     if (ntStatus != STATUS_SUCCESS)
     {
         SetLastError(LsaNtStatusToWinError(ntStatus));
-        WARN("LsaQueryInformationPolicy failed with NT status %u\n",
+        WARN("LsaQueryInformationPolicy failed with NT status %lu\n",
              GetLastError());
         LsaClose(policyHandle);
         return FALSE;

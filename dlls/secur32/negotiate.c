@@ -36,7 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 static SECURITY_STATUS SEC_ENTRY nego_QueryCredentialsAttributesA(
     PCredHandle phCredential, ULONG ulAttribute, PVOID pBuffer)
 {
-    FIXME("%p, %u, %p\n", phCredential, ulAttribute, pBuffer);
+    FIXME("%p, %lu, %p\n", phCredential, ulAttribute, pBuffer);
     return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
@@ -46,7 +46,7 @@ static SECURITY_STATUS SEC_ENTRY nego_QueryCredentialsAttributesA(
 static SECURITY_STATUS SEC_ENTRY nego_QueryCredentialsAttributesW(
     PCredHandle phCredential, ULONG ulAttribute, PVOID pBuffer)
 {
-    FIXME("%p, %u, %p\n", phCredential, ulAttribute, pBuffer);
+    FIXME("%p, %lu, %p\n", phCredential, ulAttribute, pBuffer);
     return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
@@ -74,7 +74,7 @@ static SECURITY_STATUS SEC_ENTRY nego_AcquireCredentialsHandleW(
     struct sec_handle *cred;
     SecurePackage *package;
 
-    TRACE("%s, %s, 0x%08x, %p, %p, %p, %p, %p, %p\n",
+    TRACE("%s, %s, 0x%08lx, %p, %p, %p, %p, %p, %p\n",
           debugstr_w(pszPrincipal), debugstr_w(pszPackage), fCredentialUse,
           pLogonID, pAuthData, pGetKeyFn, pGetKeyArgument, phCredential, ptsExpiry);
 
@@ -120,7 +120,7 @@ static SECURITY_STATUS SEC_ENTRY nego_AcquireCredentialsHandleA(
     SEC_WCHAR *user = NULL, *domain = NULL, *passwd = NULL, *package = NULL;
     SEC_WINNT_AUTH_IDENTITY_W *identityW = NULL;
 
-    TRACE("%s, %s, 0x%08x, %p, %p, %p, %p, %p, %p\n",
+    TRACE("%s, %s, 0x%08lx, %p, %p, %p, %p, %p, %p\n",
           debugstr_a(pszPrincipal), debugstr_a(pszPackage), fCredentialUse,
           pLogonID, pAuthData, pGetKeyFn, pGetKeyArgument, phCredential, ptsExpiry);
 
@@ -199,7 +199,7 @@ static SECURITY_STATUS SEC_ENTRY nego_InitializeSecurityContextW(
     SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
     struct sec_handle *handle = NULL, *ctxt, *new_ctxt = NULL, *cred = NULL;
 
-    TRACE("%p, %p, %s, 0x%08x, %u, %u, %p, %u, %p, %p, %p, %p\n",
+    TRACE("%p, %p, %s, 0x%08lx, %lu, %lu, %p, %lu, %p, %p, %p, %p\n",
           phCredential, phContext, debugstr_w(pszTargetName), fContextReq,
           Reserved1, TargetDataRep, pInput, Reserved1, phNewContext, pOutput,
           pfContextAttr, ptsExpiry);
@@ -261,7 +261,7 @@ static SECURITY_STATUS SEC_ENTRY nego_InitializeSecurityContextA(
     SECURITY_STATUS ret;
     SEC_WCHAR *target = NULL;
 
-    TRACE("%p, %p, %s, 0x%08x, %u, %u, %p, %u, %p, %p, %p, %p\n",
+    TRACE("%p, %p, %s, 0x%08lx, %lu, %lu, %p, %lu, %p, %p, %p, %p\n",
           phCredential, phContext, debugstr_a(pszTargetName), fContextReq,
           Reserved1, TargetDataRep, pInput, Reserved1, phNewContext, pOutput,
           pfContextAttr, ptsExpiry);
@@ -290,7 +290,7 @@ static SECURITY_STATUS SEC_ENTRY nego_AcceptSecurityContext(
     SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
     struct sec_handle *handle = NULL, *ctxt, *new_ctxt = NULL, *cred = NULL;
 
-    TRACE("%p, %p, %p, 0x%08x, %u, %p, %p, %p, %p\n", phCredential, phContext,
+    TRACE("%p, %p, %p, 0x%08lx, %lu, %p, %p, %p, %p\n", phCredential, phContext,
           pInput, fContextReq, TargetDataRep, phNewContext, pOutput, pfContextAttr,
           ptsExpiry);
 
@@ -402,7 +402,7 @@ static SECURITY_STATUS SEC_ENTRY nego_QueryContextAttributesW(
     SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
     struct sec_handle *ctxt;
 
-    TRACE("%p, %u, %p\n", phContext, ulAttribute, pBuffer);
+    TRACE("%p, %lu, %p\n", phContext, ulAttribute, pBuffer);
 
     if (!phContext) return SEC_E_INVALID_HANDLE;
 
@@ -427,7 +427,7 @@ static SECURITY_STATUS SEC_ENTRY nego_QueryContextAttributesA(PCtxtHandle phCont
     SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
     struct sec_handle *ctxt;
 
-    TRACE("%p, %u, %p\n", phContext, ulAttribute, pBuffer);
+    TRACE("%p, %lu, %p\n", phContext, ulAttribute, pBuffer);
 
     if (!phContext) return SEC_E_INVALID_HANDLE;
 
@@ -478,7 +478,7 @@ static SECURITY_STATUS SEC_ENTRY nego_MakeSignature(PCtxtHandle phContext,
     SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
     struct sec_handle *ctxt;
 
-    TRACE("%p, 0x%08x, %p, %u\n", phContext, fQOP, pMessage, MessageSeqNo);
+    TRACE("%p, 0x%08lx, %p, %lu\n", phContext, fQOP, pMessage, MessageSeqNo);
 
     if (!phContext) return SEC_E_INVALID_HANDLE;
 
@@ -503,7 +503,7 @@ static SECURITY_STATUS SEC_ENTRY nego_VerifySignature(PCtxtHandle phContext,
     SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
     struct sec_handle *ctxt;
 
-    TRACE("%p, %p, %u, %p\n", phContext, pMessage, MessageSeqNo, pfQOP);
+    TRACE("%p, %p, %lu, %p\n", phContext, pMessage, MessageSeqNo, pfQOP);
 
     if (!phContext) return SEC_E_INVALID_HANDLE;
 
@@ -547,7 +547,7 @@ static SECURITY_STATUS SEC_ENTRY nego_EncryptMessage(PCtxtHandle phContext,
     SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
     struct sec_handle *ctxt;
 
-    TRACE("%p, 0x%08x, %p, %u\n", phContext, fQOP, pMessage, MessageSeqNo);
+    TRACE("%p, 0x%08lx, %p, %lu\n", phContext, fQOP, pMessage, MessageSeqNo);
 
     if (!phContext) return SEC_E_INVALID_HANDLE;
 
@@ -572,7 +572,7 @@ static SECURITY_STATUS SEC_ENTRY nego_DecryptMessage(PCtxtHandle phContext,
     SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
     struct sec_handle *ctxt;
 
-    TRACE("%p, %p, %u, %p\n", phContext, pMessage, MessageSeqNo, pfQOP);
+    TRACE("%p, %p, %lu, %p\n", phContext, pMessage, MessageSeqNo, pfQOP);
 
     if (!phContext) return SEC_E_INVALID_HANDLE;
 
