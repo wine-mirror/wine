@@ -4213,6 +4213,11 @@ static inline struct wined3d_device_gl *wined3d_device_gl(struct wined3d_device 
     return CONTAINING_RECORD(device, struct wined3d_device_gl, d);
 }
 
+static inline struct wined3d_device_gl *wined3d_device_gl_from_allocator(struct wined3d_allocator *allocator)
+{
+    return CONTAINING_RECORD(allocator, struct wined3d_device_gl, allocator);
+}
+
 static inline void wined3d_device_gl_allocator_lock(struct wined3d_device_gl *device_gl)
 {
     EnterCriticalSection(&device_gl->allocator_cs);
@@ -4221,6 +4226,16 @@ static inline void wined3d_device_gl_allocator_lock(struct wined3d_device_gl *de
 static inline void wined3d_device_gl_allocator_unlock(struct wined3d_device_gl *device_gl)
 {
     LeaveCriticalSection(&device_gl->allocator_cs);
+}
+
+static inline void wined3d_allocator_chunk_gl_lock(struct wined3d_allocator_chunk_gl *chunk_gl)
+{
+    wined3d_device_gl_allocator_lock(wined3d_device_gl_from_allocator(chunk_gl->c.allocator));
+}
+
+static inline void wined3d_allocator_chunk_gl_unlock(struct wined3d_allocator_chunk_gl *chunk_gl)
+{
+    wined3d_device_gl_allocator_unlock(wined3d_device_gl_from_allocator(chunk_gl->c.allocator));
 }
 
 bool wined3d_device_gl_create_bo(struct wined3d_device_gl *device_gl,

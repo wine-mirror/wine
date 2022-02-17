@@ -993,14 +993,13 @@ static struct wined3d_allocator_chunk *wined3d_allocator_gl_create_chunk(struct 
 
 static void wined3d_allocator_gl_destroy_chunk(struct wined3d_allocator_chunk *chunk)
 {
+    struct wined3d_device_gl *device_gl = wined3d_device_gl_from_allocator(chunk->allocator);
     struct wined3d_allocator_chunk_gl *chunk_gl = wined3d_allocator_chunk_gl(chunk);
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context_gl *context_gl;
-    struct wined3d_device_gl *device_gl;
 
     TRACE("chunk %p.\n", chunk);
 
-    device_gl = CONTAINING_RECORD(chunk_gl->c.allocator, struct wined3d_device_gl, allocator);
     context_gl = wined3d_context_gl(context_acquire(&device_gl->d, NULL, 0));
     gl_info = context_gl->gl_info;
 

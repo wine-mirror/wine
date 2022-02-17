@@ -2778,8 +2778,11 @@ static void *wined3d_allocator_chunk_gl_map(struct wined3d_allocator_chunk_gl *c
         struct wined3d_context_gl *context_gl)
 {
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
+    void *map_ptr;
 
     TRACE("chunk %p, gl_buffer %u, map_ptr %p.\n", chunk_gl, chunk_gl->gl_buffer, chunk_gl->c.map_ptr);
+
+    wined3d_allocator_chunk_gl_lock(chunk_gl);
 
     if (!chunk_gl->c.map_ptr)
     {
@@ -2795,6 +2798,7 @@ static void *wined3d_allocator_chunk_gl_map(struct wined3d_allocator_chunk_gl *c
                 0, WINED3D_ALLOCATOR_CHUNK_SIZE, flags));
         if (!chunk_gl->c.map_ptr)
         {
+            wined3d_allocator_chunk_gl_unlock(chunk_gl);
             ERR("Failed to map chunk memory.\n");
             return NULL;
         }
@@ -2803,8 +2807,11 @@ static void *wined3d_allocator_chunk_gl_map(struct wined3d_allocator_chunk_gl *c
     }
 
     ++chunk_gl->c.map_count;
+    map_ptr = chunk_gl->c.map_ptr;
 
-    return chunk_gl->c.map_ptr;
+    wined3d_allocator_chunk_gl_unlock(chunk_gl);
+
+    return map_ptr;
 }
 
 static void wined3d_allocator_chunk_gl_unmap(struct wined3d_allocator_chunk_gl *chunk_gl,
@@ -2814,14 +2821,18 @@ static void wined3d_allocator_chunk_gl_unmap(struct wined3d_allocator_chunk_gl *
 
     TRACE("chunk_gl %p, context_gl %p.\n", chunk_gl, context_gl);
 
-    if (--chunk_gl->c.map_count)
-        return;
+    wined3d_allocator_chunk_gl_lock(chunk_gl);
 
-    wined3d_context_gl_bind_bo(context_gl, GL_PIXEL_UNPACK_BUFFER, chunk_gl->gl_buffer);
-    GL_EXTCALL(glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER));
-    chunk_gl->c.map_ptr = NULL;
+    if (!--chunk_gl->c.map_count)
+    {
+        wined3d_context_gl_bind_bo(context_gl, GL_PIXEL_UNPACK_BUFFER, chunk_gl->gl_buffer);
+        GL_EXTCALL(glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER));
+        chunk_gl->c.map_ptr = NULL;
 
-    adapter_adjust_mapped_memory(context_gl->c.device->adapter, -WINED3D_ALLOCATOR_CHUNK_SIZE);
+        adapter_adjust_mapped_memory(context_gl->c.device->adapter, -WINED3D_ALLOCATOR_CHUNK_SIZE);
+    }
+
+    wined3d_allocator_chunk_gl_unlock(chunk_gl);
 }
 
 static void *wined3d_bo_gl_map(struct wined3d_bo_gl *bo, struct wined3d_context_gl *context_gl, uint32_t flags)
