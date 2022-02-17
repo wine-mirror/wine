@@ -470,7 +470,7 @@ static void get_registry_keys(HKEY *defkey, HKEY *appkey)
     }
 }
 
-static BOOL device_is_overriden(HANDLE device)
+static BOOL device_is_overridden(HANDLE device)
 {
     WCHAR name[MAX_PATH], buffer[MAX_PATH];
     DWORD size = sizeof(buffer);
@@ -519,8 +519,8 @@ static BOOL try_add_device(const WCHAR *device_path)
     else if (caps.Usage != HID_USAGE_GENERIC_GAMEPAD && caps.Usage != HID_USAGE_GENERIC_JOYSTICK &&
              caps.Usage != HID_USAGE_GENERIC_MULTI_AXIS_CONTROLLER)
         WARN("ignoring HID device, unsupported usage %04x:%04x\n", caps.UsagePage, caps.Usage);
-    else if (device_is_overriden(device))
-        WARN("ignoring HID device, overriden for dinput\n");
+    else if (device_is_overridden(device))
+        WARN("ignoring HID device, overridden for dinput\n");
     else if (!controller_init(&controllers[i], preparsed, &caps, device, device_path))
         WARN("ignoring HID device, failed to initialize\n");
     else
