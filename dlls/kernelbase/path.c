@@ -4191,6 +4191,11 @@ static const WCHAR *parse_url_element( const WCHAR *url, const WCHAR *separators
     return url + wcslen( url );
 }
 
+static BOOL is_slash( char c )
+{
+    return c == '/' || c == '\\';
+}
+
 static void parse_url( const WCHAR *url, struct parsed_url *pl )
 {
     const WCHAR *work;
@@ -4200,7 +4205,8 @@ static void parse_url( const WCHAR *url, struct parsed_url *pl )
     work = scan_url(pl->scheme, &pl->scheme_len, SCHEME);
     if (!*work || (*work != ':')) return;
     work++;
-    if ((*work != '/') || (*(work+1) != '/')) return;
+    if (!is_slash( work[0] ) || !is_slash( work[1] ))
+        return;
 
     pl->username = work + 2;
     work = parse_url_element( pl->username, L":@/\\?#" );

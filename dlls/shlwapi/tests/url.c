@@ -661,12 +661,12 @@ static void test_UrlGetPart(void)
         {"http:/localhost/index.html", URL_PART_HOSTNAME, 0, E_FAIL, .todo_hr = TRUE},
 
         {"http://localhost\\index.html", URL_PART_HOSTNAME, 0, S_OK, "localhost"},
-        {"http:/\\localhost/index.html", URL_PART_HOSTNAME, 0, S_OK, "localhost", .todo_hr = TRUE},
-        {"http:\\/localhost/index.html", URL_PART_HOSTNAME, 0, S_OK, "localhost", .todo_hr = TRUE},
+        {"http:/\\localhost/index.html", URL_PART_HOSTNAME, 0, S_OK, "localhost"},
+        {"http:\\/localhost/index.html", URL_PART_HOSTNAME, 0, S_OK, "localhost"},
 
         {"ftp://localhost\\index.html", URL_PART_HOSTNAME, 0, S_OK, "localhost"},
-        {"ftp:/\\localhost/index.html", URL_PART_HOSTNAME, 0, S_OK, "localhost", .todo_hr = TRUE},
-        {"ftp:\\/localhost/index.html", URL_PART_HOSTNAME, 0, S_OK, "localhost", .todo_hr = TRUE},
+        {"ftp:/\\localhost/index.html", URL_PART_HOSTNAME, 0, S_OK, "localhost"},
+        {"ftp:\\/localhost/index.html", URL_PART_HOSTNAME, 0, S_OK, "localhost"},
 
         {"http://host?a:b@c:d", URL_PART_HOSTNAME, 0, S_OK, "host"},
         {"http://host?a:b@c:d", URL_PART_QUERY, 0, S_OK, "a:b@c:d"},
