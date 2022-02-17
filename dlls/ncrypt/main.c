@@ -312,7 +312,7 @@ SECURITY_STATUS WINAPI NCryptOpenStorageProvider(NCRYPT_PROV_HANDLE *provider, c
 
 static SECURITY_STATUS set_object_property(struct object *object, const WCHAR *name, BYTE *value, DWORD value_size)
 {
-    struct object_property *property = &object->properties[object->num_properties];
+    struct object_property *property;
 
     FIXME("check duplicates\n");
     if (!object->num_properties)
@@ -322,18 +322,18 @@ static SECURITY_STATUS set_object_property(struct object *object, const WCHAR *n
             ERR("Error allocating memory.");
             return NTE_NO_MEMORY;
         }
-        object->num_properties++;
+        property = &object->properties[object->num_properties++];
     }
     else
     {
         struct object_property *tmp;
-        if (!(tmp = realloc(object->properties, sizeof(*property) * object->num_properties + 1)))
+        if (!(tmp = realloc(object->properties, sizeof(*property) * (object->num_properties + 1))))
         {
             ERR("Error allocating memory.");
             return NTE_NO_MEMORY;
         }
         object->properties = tmp;
-        object->num_properties++;
+        property = &object->properties[object->num_properties++];
     }
 
     memset(property, 0, sizeof(*property));
