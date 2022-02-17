@@ -408,7 +408,7 @@ LPCSTR WINAPI VcpExplain16(LPVIRTNODE lpVn, DWORD dwWhat)
 	    }
 	    break;
 	default:
-            FIXME("%d unimplemented !\n", dwWhat);
+            FIXME("%ld unimplemented !\n", dwWhat);
 	    strcpy(buffer, "Unknown error");
 	    break;
     }
@@ -517,7 +517,7 @@ RETERR16 WINAPI vcpDefCallbackProc16(LPVOID lpvObj, UINT16 uMsg, WPARAM wParam,
 {
     static int count = 0;
     if (count < 10)
-        FIXME("(%p, %04x, %04lx, %08lx, %08lx) - what to do here ?\n",
+        FIXME("(%p, %04x, %04x, %08lx, %08lx) - what to do here ?\n",
 		lpvObj, uMsg, wParam, lParam, lParamRef);
     count++;
     return OK;
@@ -669,7 +669,7 @@ RETERR16 WINAPI vcpUICallbackProc16(LPVOID lpvObj, UINT16 uMsg, WPARAM wParam,
     RETERR16 res = VCPN_OK;
 
     if (count < 5)
-        FIXME("(%p, %04x, %04lx, %08lx, %08lx) - semi-stub\n",
+        FIXME("(%p, %04x, %04x, %08lx, %08lx) - semi-stub\n",
 		lpvObj, uMsg, wParam, lParam, lParamRef);
     count++;
     switch (uMsg)

@@ -86,7 +86,7 @@ DWORD WINAPI SURegQueryValueEx( HKEY hkey, LPSTR lpszValueName,
                                 LPDWORD lpdwReserved, LPDWORD lpdwType,
                                 LPBYTE lpbData, LPDWORD lpcbData )
 {
-    FIXME("(%p,%s,%p,%p,%p,%d), semi-stub.\n",hkey,debugstr_a(lpszValueName),
+    FIXME("(%p,%s,%p,%p,%p,%ld), semi-stub.\n",hkey,debugstr_a(lpszValueName),
           lpdwReserved,lpdwType,lpbData,lpcbData?*lpcbData:0);
     return RegQueryValueExA( hkey, lpszValueName, lpdwReserved, lpdwType,
                                lpbData, lpcbData );
@@ -608,7 +608,7 @@ RETERR16 WINAPI CtlGetLddPath16(LOGDISKID16 ldid, LPSTR szPath)
  */
 RETERR16 WINAPI DiInstallClass16(LPCSTR lpszInfFileName, DWORD dwFlags)
 {
-    FIXME("(%s, %u), stub.\n", lpszInfFileName, dwFlags);
+    FIXME("(%s, %lu), stub.\n", lpszInfFileName, dwFlags);
     return 0;
 }
 

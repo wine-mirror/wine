@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = setupx.dll16
 IMPORTS   = setupapi user32 advapi32
 

@@ -104,7 +104,7 @@ RETERR16 WINAPI DiCreateDeviceInfo16(LPLPDEVICE_INFO16 lplpdi,
                                      LPCSTR lpszClassName, HWND16 hwndParent)
 {
     LPDEVICE_INFO16 lpdi;
-    FIXME("(%p %s %08x %x %s %s %x): stub\n", lplpdi,
+    FIXME("(%p %s %08lx %x %s %s %x): stub\n", lplpdi,
           debugstr_a(lpszDescription), dnDevnode, hkey,
           debugstr_a(lpszRegsubkey), debugstr_a(lpszClassName), hwndParent);
     lpdi = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DEVICE_INFO16));
