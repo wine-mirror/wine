@@ -29,12 +29,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(schannel);
 
 BOOL WINAPI SslEmptyCacheA(LPSTR target, DWORD flags)
 {
-    FIXME("%s %x\n", debugstr_a(target), flags);
+    FIXME("%s %lx\n", debugstr_a(target), flags);
     return TRUE;
 }
 
 BOOL WINAPI SslEmptyCacheW(LPWSTR target, DWORD flags)
 {
-    FIXME("%s %x\n", debugstr_w(target), flags);
+    FIXME("%s %lx\n", debugstr_w(target), flags);
     return TRUE;
 }

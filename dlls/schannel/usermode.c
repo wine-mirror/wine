@@ -72,7 +72,7 @@ static SECPKG_USER_FUNCTION_TABLE secPkgUserTables[2] =
 NTSTATUS WINAPI SpUserModeInitialize(ULONG LsaVersion, PULONG PackageVersion,
   PSECPKG_USER_FUNCTION_TABLE *ppTables, PULONG pcTables)
 {
-    TRACE("(%u, %p, %p, %p)\n", LsaVersion, PackageVersion, ppTables, pcTables);
+    TRACE("(%lu, %p, %p, %p)\n", LsaVersion, PackageVersion, ppTables, pcTables);
 
     if (LsaVersion != SECPKG_INTERFACE_VERSION)
         return STATUS_INVALID_PARAMETER;

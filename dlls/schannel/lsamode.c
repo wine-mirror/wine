@@ -166,7 +166,7 @@ static SECPKG_FUNCTION_TABLE secPkgFunctionTable[2] =
 NTSTATUS WINAPI SpLsaModeInitialize(ULONG LsaVersion, PULONG PackageVersion,
                                     PSECPKG_FUNCTION_TABLE *ppTables, PULONG pcTables)
 {
-    TRACE("(%u, %p, %p, %p)\n", LsaVersion, PackageVersion, ppTables, pcTables);
+    TRACE("(%lu, %p, %p, %p)\n", LsaVersion, PackageVersion, ppTables, pcTables);
 
     *PackageVersion = SECPKG_INTERFACE_VERSION_8;
     *pcTables = 2;
