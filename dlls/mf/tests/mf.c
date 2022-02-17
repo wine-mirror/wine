@@ -3842,6 +3842,108 @@ static void test_quality_manager(void)
     ok(hr == S_OK, "Shutdown failure, hr %#x.\n", hr);
 }
 
+static void check_sar_rate_support(IMFMediaSink *sink)
+{
+    IMFRateSupport *rate_support;
+    IMFMediaTypeHandler *handler;
+    IMFStreamSink *stream_sink;
+    IMFMediaType *media_type;
+    HRESULT hr;
+    float rate;
+
+    hr = IMFMediaSink_QueryInterface(sink, &IID_IMFRateSupport, (void **)&rate_support);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    if (FAILED(hr)) return;
+
+    hr = IMFMediaSink_GetStreamSinkByIndex(sink, 0, &stream_sink);
+    if (hr == MF_E_SHUTDOWN)
+    {
+        hr = IMFRateSupport_GetSlowestRate(rate_support, MFRATE_FORWARD, FALSE, NULL);
+        ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFRateSupport_GetSlowestRate(rate_support, MFRATE_FORWARD, FALSE, &rate);
+        ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFRateSupport_GetFastestRate(rate_support, MFRATE_FORWARD, FALSE, &rate);
+        ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+        IMFRateSupport_Release(rate_support);
+        return;
+    }
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFStreamSink_GetMediaTypeHandler(stream_sink, &handler);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IMFStreamSink_Release(stream_sink);
+
+    hr = IMFRateSupport_GetSlowestRate(rate_support, MFRATE_FORWARD, FALSE, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFRateSupport_GetFastestRate(rate_support, MFRATE_FORWARD, FALSE, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, &media_type);
+    if (SUCCEEDED(hr))
+    {
+        hr = IMFRateSupport_GetSlowestRate(rate_support, MFRATE_FORWARD, FALSE, &rate);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFRateSupport_GetSlowestRate(rate_support, MFRATE_FORWARD, TRUE, &rate);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFRateSupport_GetSlowestRate(rate_support, MFRATE_REVERSE, FALSE, &rate);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFRateSupport_GetSlowestRate(rate_support, MFRATE_REVERSE, TRUE, &rate);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFRateSupport_GetFastestRate(rate_support, MFRATE_FORWARD, FALSE, &rate);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFRateSupport_GetFastestRate(rate_support, MFRATE_FORWARD, TRUE, &rate);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFRateSupport_GetFastestRate(rate_support, MFRATE_REVERSE, FALSE, &rate);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFRateSupport_GetFastestRate(rate_support, MFRATE_REVERSE, TRUE, &rate);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        IMFMediaType_Release(media_type);
+    }
+    else
+    {
+        hr = IMFRateSupport_GetSlowestRate(rate_support, MFRATE_FORWARD, FALSE, &rate);
+        ok(hr == MF_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFRateSupport_GetSlowestRate(rate_support, MFRATE_FORWARD, TRUE, &rate);
+        ok(hr == MF_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFRateSupport_GetSlowestRate(rate_support, MFRATE_REVERSE, FALSE, &rate);
+        ok(hr == MF_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFRateSupport_GetSlowestRate(rate_support, MFRATE_REVERSE, TRUE, &rate);
+        ok(hr == MF_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFRateSupport_GetFastestRate(rate_support, MFRATE_FORWARD, FALSE, &rate);
+        ok(hr == MF_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFRateSupport_GetFastestRate(rate_support, MFRATE_FORWARD, TRUE, &rate);
+        ok(hr == MF_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFRateSupport_GetFastestRate(rate_support, MFRATE_REVERSE, FALSE, &rate);
+        ok(hr == MF_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFRateSupport_GetFastestRate(rate_support, MFRATE_REVERSE, TRUE, &rate);
+        ok(hr == MF_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
+    }
+
+    IMFMediaTypeHandler_Release(handler);
+    IMFRateSupport_Release(rate_support);
+}
+
 static void test_sar(void)
 {
     IMFPresentationClock *present_clock, *present_clock2;
@@ -4073,8 +4175,12 @@ if (SUCCEEDED(hr))
 
     IMFMediaType_Release(mediatype);
 
+    check_sar_rate_support(sink);
+
     hr = IMFMediaTypeHandler_SetCurrentMediaType(handler, mediatype2);
     ok(hr == S_OK, "Failed to set current type, hr %#x.\n", hr);
+
+    check_sar_rate_support(sink);
 
     hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, &mediatype);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -4184,6 +4290,8 @@ if (SUCCEEDED(hr))
     hr = IMFMediaSink_GetPresentationClock(sink, &present_clock2);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
+    check_sar_rate_support(sink);
+
     IMFMediaSink_Release(sink);
 
     /* Activation */
@@ -4252,6 +4360,8 @@ if (SUCCEEDED(hr))
 
     hr = MFCreateAudioRenderer(attributes, &sink);
     ok(hr == MF_E_NO_AUDIO_PLAYBACK_DEVICE, "Failed to create a sink, hr %#x.\n", hr);
+
+    IMFAttributes_Release(attributes);
 
     CoUninitialize();
 }
