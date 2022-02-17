@@ -34,7 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(rstrtmgr);
 DWORD WINAPI RmGetList(DWORD dwSessionHandle, UINT *pnProcInfoNeeded, UINT *pnProcInfo,
                                       RM_PROCESS_INFO *rgAffectedApps[], LPDWORD lpdwRebootReasons)
 {
-    FIXME("%d, %p, %p, %p, %p stub!\n", dwSessionHandle, pnProcInfoNeeded, pnProcInfo, rgAffectedApps, lpdwRebootReasons);
+    FIXME("%ld, %p, %p, %p, %p stub!\n", dwSessionHandle, pnProcInfoNeeded, pnProcInfo, rgAffectedApps, lpdwRebootReasons);
     if (pnProcInfoNeeded)
         *pnProcInfoNeeded = 0;
     if (pnProcInfo)
@@ -51,7 +51,7 @@ DWORD WINAPI RmRegisterResources(DWORD dwSessionHandle, UINT nFiles, LPCWSTR rgs
                                                      UINT nApplications, RM_UNIQUE_PROCESS *rgApplications,
                                                      UINT nServices, LPCWSTR rgsServiceNames[])
 {
-    FIXME("%d, %d, %p, %d, %p, %d, %p stub!\n", dwSessionHandle, nFiles, rgsFilenames,
+    FIXME("%ld, %d, %p, %d, %p, %d, %p stub!\n", dwSessionHandle, nFiles, rgsFilenames,
               nApplications, rgApplications, nServices, rgsServiceNames);
     return ERROR_SUCCESS;
 }
@@ -63,7 +63,7 @@ DWORD WINAPI RmRegisterResources(DWORD dwSessionHandle, UINT nFiles, LPCWSTR rgs
  */
 DWORD WINAPI RmStartSession(DWORD *sessionhandle, DWORD flags, WCHAR sessionkey[])
 {
-    FIXME("%p, %d, %p stub!\n", sessionhandle, flags, sessionkey);
+    FIXME("%p, %ld, %p stub!\n", sessionhandle, flags, sessionkey);
     if (sessionhandle)
         *sessionhandle = 0xdeadbeef;
     return ERROR_SUCCESS;
@@ -74,7 +74,7 @@ DWORD WINAPI RmStartSession(DWORD *sessionhandle, DWORD flags, WCHAR sessionkey[
  */
 DWORD WINAPI RmRestart(DWORD handle, DWORD flags, RM_WRITE_STATUS_CALLBACK status)
 {
-    FIXME("%u, 0x%08x, %p stub!\n", handle, flags, status);
+    FIXME("%lu, 0x%08lx, %p stub!\n", handle, flags, status);
     return ERROR_SUCCESS;
 }
 
@@ -83,7 +83,7 @@ DWORD WINAPI RmRestart(DWORD handle, DWORD flags, RM_WRITE_STATUS_CALLBACK statu
  */
 DWORD WINAPI RmEndSession(DWORD handle)
 {
-    FIXME("%u stub!\n", handle);
+    FIXME("%lu stub!\n", handle);
     return ERROR_SUCCESS;
 }
 
@@ -92,7 +92,7 @@ DWORD WINAPI RmEndSession(DWORD handle)
  */
 DWORD WINAPI RmShutdown(DWORD handle, ULONG flags, RM_WRITE_STATUS_CALLBACK status)
 {
-    FIXME("%u, 0x%08x, %p stub!\n", handle, flags, status);
+    FIXME("%lu, 0x%08lx, %p stub!\n", handle, flags, status);
     return ERROR_SUCCESS;
 }
 
@@ -102,7 +102,7 @@ DWORD WINAPI RmShutdown(DWORD handle, ULONG flags, RM_WRITE_STATUS_CALLBACK stat
 DWORD WINAPI RmAddFilter(DWORD handle, LPCWSTR moduleName, RM_UNIQUE_PROCESS *process,
                          LPCWSTR serviceShortName, RM_FILTER_ACTION filter)
 {
-    FIXME("%u, %s %p %s 0x%08x stub!\n", handle, debugstr_w(moduleName), process,
+    FIXME("%lu, %s %p %s 0x%08x stub!\n", handle, debugstr_w(moduleName), process,
         debugstr_w(serviceShortName), filter);
     return ERROR_SUCCESS;
 }
@@ -113,7 +113,7 @@ DWORD WINAPI RmAddFilter(DWORD handle, LPCWSTR moduleName, RM_UNIQUE_PROCESS *pr
 DWORD WINAPI RmRemoveFilter(DWORD handle, LPCWSTR moduleName, RM_UNIQUE_PROCESS *process,
                             LPCWSTR serviceShortName)
 {
-    FIXME("%u, %s %p %s stub!\n", handle, debugstr_w(moduleName), process,
+    FIXME("%lu, %s %p %s stub!\n", handle, debugstr_w(moduleName), process,
         debugstr_w(serviceShortName));
     return ERROR_SUCCESS;
 }
