@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = rasapi32.dll
 IMPORTLIB = rasapi32
 
