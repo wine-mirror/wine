@@ -220,7 +220,7 @@ void WINAPI PrintUIEntryW(HWND hWnd, HINSTANCE hInst, LPCWSTR pCommand, DWORD nC
     context_t cx;
     BOOL  res = FALSE;
 
-    TRACE("(%p, %p, %s, 0x%x)\n", hWnd, hInst, debugstr_w(pCommand), nCmdShow);
+    TRACE("(%p, %p, %s, 0x%lx)\n", hWnd, hInst, debugstr_w(pCommand), nCmdShow);
 
     memset(&cx, 0, sizeof(context_t));
     cx.hWnd = hWnd;
