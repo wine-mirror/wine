@@ -70,7 +70,7 @@ static ULONG WINAPI resource_manager_AddRef(ISpResourceManager *iface)
     struct resource_manager *This = impl_from_ISpResourceManager(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p): ref=%u.\n", iface, ref);
+    TRACE("(%p): ref=%lu.\n", iface, ref);
 
     return ref;
 }
@@ -80,7 +80,7 @@ static ULONG WINAPI resource_manager_Release(ISpResourceManager *iface)
     struct resource_manager *This = impl_from_ISpResourceManager(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p): ref=%u.\n", iface, ref);
+    TRACE("(%p): ref=%lu.\n", iface, ref);
 
     if (!ref)
     {

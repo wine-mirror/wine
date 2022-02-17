@@ -81,7 +81,7 @@ static ULONG WINAPI file_stream_AddRef(ISpeechFileStream *iface)
     struct file_stream *This = impl_from_ISpeechFileStream(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p): ref=%u.\n", iface, ref);
+    TRACE("(%p): ref=%lu.\n", iface, ref);
 
     return ref;
 }
@@ -91,7 +91,7 @@ static ULONG WINAPI file_stream_Release(ISpeechFileStream *iface)
     struct file_stream *This = impl_from_ISpeechFileStream(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p): ref=%u.\n", iface, ref);
+    TRACE("(%p): ref=%lu.\n", iface, ref);
 
     if (!ref)
     {
@@ -111,7 +111,7 @@ static HRESULT WINAPI file_stream_GetTypeInfoCount(ISpeechFileStream *iface, UIN
 static HRESULT WINAPI file_stream_GetTypeInfo(ISpeechFileStream *iface, UINT info, LCID lcid,
                                               ITypeInfo **type_info)
 {
-    FIXME("(%p, %u, %u, %p): stub.\n", iface, info, lcid, type_info);
+    FIXME("(%p, %u, %lu, %p): stub.\n", iface, info, lcid, type_info);
 
     return E_NOTIMPL;
 }
@@ -119,7 +119,7 @@ static HRESULT WINAPI file_stream_GetTypeInfo(ISpeechFileStream *iface, UINT inf
 static HRESULT WINAPI file_stream_GetIDsOfNames(ISpeechFileStream *iface, REFIID riid, LPOLESTR *names,
                                                 UINT count, LCID lcid, DISPID *dispid)
 {
-    FIXME("(%p, %s, %p, %u, %u, %p): stub.\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
+    FIXME("(%p, %s, %p, %u, %lu, %p): stub.\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
 
     return E_NOTIMPL;
 }
@@ -128,7 +128,7 @@ static HRESULT WINAPI file_stream_Invoke(ISpeechFileStream *iface, DISPID dispid
                                          WORD flags, DISPPARAMS *params, VARIANT *result,
                                          EXCEPINFO *excepinfo, UINT *argerr)
 {
-    FIXME("(%p, %d, %s, %#x, %#x, %p, %p, %p, %p): stub.\n", iface, dispid, debugstr_guid(riid),
+    FIXME("(%p, %ld, %s, %#lx, %#x, %p, %p, %p, %p): stub.\n", iface, dispid, debugstr_guid(riid),
           lcid, flags, params, result, excepinfo, argerr);
 
     return E_NOTIMPL;
@@ -150,7 +150,7 @@ static HRESULT WINAPI file_stream_putref_Format(ISpeechFileStream *iface, ISpeec
 
 static HRESULT WINAPI file_stream_Read(ISpeechFileStream *iface, VARIANT *buffer, LONG written, LONG *read)
 {
-    FIXME("(%p, %p, %d, %p): stub.\n", iface, buffer, written, read);
+    FIXME("(%p, %p, %ld, %p): stub.\n", iface, buffer, written, read);
 
     return E_NOTIMPL;
 }
@@ -232,21 +232,21 @@ static ULONG WINAPI spstream_Release(ISpStream *iface)
 
 static HRESULT WINAPI spstream_Read(ISpStream *iface, void *pv, ULONG cb, ULONG *read)
 {
-    FIXME("(%p, %p, %d, %p): stub.\n", iface, pv, cb, read);
+    FIXME("(%p, %p, %ld, %p): stub.\n", iface, pv, cb, read);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI spstream_Write(ISpStream *iface, const void *pv, ULONG cb, ULONG *written)
 {
-    FIXME("(%p, %p, %d, %p): stub.\n", iface, pv, cb, written);
+    FIXME("(%p, %p, %ld, %p): stub.\n", iface, pv, cb, written);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI spstream_Seek(ISpStream *iface, LARGE_INTEGER mode, DWORD origin, ULARGE_INTEGER *position)
 {
-    FIXME("(%p, %s, %d, %p): stub.\n", iface, wine_dbgstr_longlong(mode.QuadPart), origin, position);
+    FIXME("(%p, %s, %ld, %p): stub.\n", iface, wine_dbgstr_longlong(mode.QuadPart), origin, position);
 
     return E_NOTIMPL;
 }
@@ -269,7 +269,7 @@ static HRESULT WINAPI spstream_CopyTo(ISpStream *iface, IStream *stream, ULARGE_
 
 static HRESULT WINAPI spstream_Commit(ISpStream *iface, DWORD flag)
 {
-    FIXME("(%p, %d): stub.\n", iface, flag);
+    FIXME("(%p, %ld): stub.\n", iface, flag);
 
     return E_NOTIMPL;
 }
@@ -283,7 +283,7 @@ static HRESULT WINAPI spstream_Revert(ISpStream *iface)
 
 static HRESULT WINAPI spstream_LockRegion(ISpStream *iface, ULARGE_INTEGER offset, ULARGE_INTEGER cb, DWORD type)
 {
-    FIXME("(%p, %s, %s, %d): stub.\n", iface, wine_dbgstr_longlong(offset.QuadPart),
+    FIXME("(%p, %s, %s, %ld): stub.\n", iface, wine_dbgstr_longlong(offset.QuadPart),
           wine_dbgstr_longlong(cb.QuadPart), type);
 
     return E_NOTIMPL;
@@ -291,7 +291,7 @@ static HRESULT WINAPI spstream_LockRegion(ISpStream *iface, ULARGE_INTEGER offse
 
 static HRESULT WINAPI spstream_UnlockRegion(ISpStream *iface, ULARGE_INTEGER offset, ULARGE_INTEGER cb, DWORD type)
 {
-    FIXME("(%p, %s, %s, %d): stub.\n", iface, wine_dbgstr_longlong(offset.QuadPart),
+    FIXME("(%p, %s, %s, %ld): stub.\n", iface, wine_dbgstr_longlong(offset.QuadPart),
           wine_dbgstr_longlong(cb.QuadPart), type);
 
     return E_NOTIMPL;
@@ -299,7 +299,7 @@ static HRESULT WINAPI spstream_UnlockRegion(ISpStream *iface, ULARGE_INTEGER off
 
 static HRESULT WINAPI spstream_Stat(ISpStream *iface, STATSTG *statstg, DWORD flag)
 {
-    FIXME("(%p, %p, %d): stub.\n", iface, statstg, flag);
+    FIXME("(%p, %p, %ld): stub.\n", iface, statstg, flag);
 
     return E_NOTIMPL;
 }

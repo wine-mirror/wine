@@ -88,7 +88,7 @@ static ULONG WINAPI speech_voice_AddRef(ISpeechVoice *iface)
     struct speech_voice *This = impl_from_ISpeechVoice(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p): ref=%u.\n", iface, ref);
+    TRACE("(%p): ref=%lu.\n", iface, ref);
 
     return ref;
 }
@@ -98,7 +98,7 @@ static ULONG WINAPI speech_voice_Release(ISpeechVoice *iface)
     struct speech_voice *This = impl_from_ISpeechVoice(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p): ref=%u.\n", iface, ref);
+    TRACE("(%p): ref=%lu.\n", iface, ref);
 
     if (!ref)
     {
@@ -118,7 +118,7 @@ static HRESULT WINAPI speech_voice_GetTypeInfoCount(ISpeechVoice *iface, UINT *i
 static HRESULT WINAPI speech_voice_GetTypeInfo(ISpeechVoice *iface, UINT info, LCID lcid,
                                                ITypeInfo **type_info)
 {
-    FIXME("(%p, %u, %u, %p): stub.\n", iface, info, lcid, type_info);
+    FIXME("(%p, %u, %lu, %p): stub.\n", iface, info, lcid, type_info);
 
     return E_NOTIMPL;
 }
@@ -126,7 +126,7 @@ static HRESULT WINAPI speech_voice_GetTypeInfo(ISpeechVoice *iface, UINT info, L
 static HRESULT WINAPI speech_voice_GetIDsOfNames(ISpeechVoice *iface, REFIID riid, LPOLESTR *names,
                                                  UINT count, LCID lcid, DISPID *dispid)
 {
-    FIXME("(%p, %s, %p, %u, %u, %p): stub.\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
+    FIXME("(%p, %s, %p, %u, %lu, %p): stub.\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
 
     return E_NOTIMPL;
 }
@@ -135,7 +135,7 @@ static HRESULT WINAPI speech_voice_Invoke(ISpeechVoice *iface, DISPID dispid, RE
                                           WORD flags, DISPPARAMS *params, VARIANT *result,
                                           EXCEPINFO *excepinfo, UINT *argerr)
 {
-    FIXME("(%p, %d, %s, %#x, %#x, %p, %p, %p, %p): stub.\n", iface, dispid, debugstr_guid(riid),
+    FIXME("(%p, %ld, %s, %#lx, %#x, %p, %p, %p, %p): stub.\n", iface, dispid, debugstr_guid(riid),
           lcid, flags, params, result, excepinfo, argerr);
 
     return E_NOTIMPL;
@@ -199,7 +199,7 @@ static HRESULT WINAPI speech_voice_get_Rate(ISpeechVoice *iface, LONG *rate)
 
 static HRESULT WINAPI speech_voice_put_Rate(ISpeechVoice *iface, LONG rate)
 {
-    FIXME("(%p, %d): stub.\n", iface, rate);
+    FIXME("(%p, %ld): stub.\n", iface, rate);
 
     return E_NOTIMPL;
 }
@@ -213,7 +213,7 @@ static HRESULT WINAPI speech_voice_get_Volume(ISpeechVoice *iface, LONG *volume)
 
 static HRESULT WINAPI speech_voice_put_Volume(ISpeechVoice *iface, LONG volume)
 {
-    FIXME("(%p, %d): stub.\n", iface, volume);
+    FIXME("(%p, %ld): stub.\n", iface, volume);
 
     return E_NOTIMPL;
 }
@@ -277,7 +277,7 @@ static HRESULT WINAPI speech_voice_get_AlertBoundary(ISpeechVoice *iface, Speech
 
 static HRESULT WINAPI speech_voice_put_SynchronousSpeakTimeout(ISpeechVoice *iface, LONG timeout)
 {
-    FIXME("(%p, %d): stub.\n", iface, timeout);
+    FIXME("(%p, %ld): stub.\n", iface, timeout);
 
     return E_NOTIMPL;
 }
@@ -320,7 +320,7 @@ static HRESULT WINAPI speech_voice_Resume(ISpeechVoice *iface)
 
 static HRESULT WINAPI speech_voice_Skip(ISpeechVoice *iface, const BSTR type, LONG items, LONG *skipped)
 {
-    FIXME("(%p, %s, %d, %p): stub.\n", iface, debugstr_w(type), items, skipped);
+    FIXME("(%p, %s, %ld, %p): stub.\n", iface, debugstr_w(type), items, skipped);
 
     return E_NOTIMPL;
 }
@@ -343,7 +343,7 @@ static HRESULT WINAPI speech_voice_GetAudioOutputs(ISpeechVoice *iface, BSTR req
 
 static HRESULT WINAPI speech_voice_WaitUntilDone(ISpeechVoice *iface, LONG timeout, VARIANT_BOOL *done)
 {
-    FIXME("(%p, %d, %p): stub.\n", iface, timeout, done);
+    FIXME("(%p, %ld, %p): stub.\n", iface, timeout, done);
 
     return E_NOTIMPL;
 }
@@ -366,7 +366,7 @@ static HRESULT WINAPI speech_voice_IsUISupported(ISpeechVoice *iface, const BSTR
 static HRESULT WINAPI speech_voice_DisplayUI(ISpeechVoice *iface, LONG hwnd, BSTR title,
                                              const BSTR typeui, const VARIANT *data)
 {
-    FIXME("(%p, %d, %s, %s, %p): stub.\n", iface, hwnd, debugstr_w(title), debugstr_w(typeui), data);
+    FIXME("(%p, %ld, %s, %s, %p): stub.\n", iface, hwnd, debugstr_w(title), debugstr_w(typeui), data);
 
     return E_NOTIMPL;
 }
@@ -452,7 +452,7 @@ static HRESULT WINAPI spvoice_SetNotifySink(ISpVoice *iface, ISpNotifySink *sink
 static HRESULT WINAPI spvoice_SetNotifyWindowMessage(ISpVoice *iface, HWND hwnd, UINT msg,
                                                      WPARAM wparam, LPARAM lparam)
 {
-    FIXME("(%p, %p, %u, %lx, %lx): stub.\n", iface, hwnd, msg, wparam, lparam);
+    FIXME("(%p, %p, %u, %Ix, %Ix): stub.\n", iface, hwnd, msg, wparam, lparam);
 
     return E_NOTIMPL;
 }
@@ -460,7 +460,7 @@ static HRESULT WINAPI spvoice_SetNotifyWindowMessage(ISpVoice *iface, HWND hwnd,
 static HRESULT WINAPI spvoice_SetNotifyCallbackFunction(ISpVoice *iface, SPNOTIFYCALLBACK *callback,
                                                         WPARAM wparam, LPARAM lparam)
 {
-    FIXME("(%p, %p, %lx, %lx): stub.\n", iface, callback, wparam, lparam);
+    FIXME("(%p, %p, %Ix, %Ix): stub.\n", iface, callback, wparam, lparam);
 
     return E_NOTIMPL;
 }
@@ -468,7 +468,7 @@ static HRESULT WINAPI spvoice_SetNotifyCallbackFunction(ISpVoice *iface, SPNOTIF
 static HRESULT WINAPI spvoice_SetNotifyCallbackInterface(ISpVoice *iface, ISpNotifyCallback *callback,
                                                          WPARAM wparam, LPARAM lparam)
 {
-    FIXME("(%p, %p, %lx, %lx): stub.\n", iface, callback, wparam, lparam);
+    FIXME("(%p, %p, %Ix, %Ix): stub.\n", iface, callback, wparam, lparam);
 
     return E_NOTIMPL;
 }
@@ -482,7 +482,7 @@ static HRESULT WINAPI spvoice_SetNotifyWin32Event(ISpVoice *iface)
 
 static HRESULT WINAPI spvoice_WaitForNotifyEvent(ISpVoice *iface, DWORD milliseconds)
 {
-    FIXME("(%p, %d): stub.\n", iface, milliseconds);
+    FIXME("(%p, %ld): stub.\n", iface, milliseconds);
 
     return E_NOTIMPL;
 }
@@ -503,7 +503,7 @@ static HRESULT WINAPI spvoice_SetInterest(ISpVoice *iface, ULONGLONG event, ULON
 
 static HRESULT WINAPI spvoice_GetEvents(ISpVoice *iface, ULONG count, SPEVENT *array, ULONG *fetched)
 {
-    FIXME("(%p, %u, %p, %p): stub.\n", iface, count, array, fetched);
+    FIXME("(%p, %lu, %p, %p): stub.\n", iface, count, array, fetched);
 
     return E_NOTIMPL;
 }
@@ -566,14 +566,14 @@ static HRESULT WINAPI spvoice_GetVoice(ISpVoice *iface, ISpObjectToken **token)
 
 static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWORD flags, ULONG *number)
 {
-    FIXME("(%p, %p, %#x, %p): stub.\n", iface, contents, flags, number);
+    FIXME("(%p, %p, %#lx, %p): stub.\n", iface, contents, flags, number);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI spvoice_SpeakStream(ISpVoice *iface, IStream *stream, DWORD flags, ULONG *number)
 {
-    FIXME("(%p, %p, %#x, %p): stub.\n", iface, stream, flags, number);
+    FIXME("(%p, %p, %#lx, %p): stub.\n", iface, stream, flags, number);
 
     return E_NOTIMPL;
 }
@@ -587,7 +587,7 @@ static HRESULT WINAPI spvoice_GetStatus(ISpVoice *iface, SPVOICESTATUS *status, 
 
 static HRESULT WINAPI spvoice_Skip(ISpVoice *iface, const WCHAR *type, LONG items, ULONG *skipped)
 {
-    FIXME("(%p, %s, %d, %p): stub.\n", iface, debugstr_w(type), items, skipped);
+    FIXME("(%p, %s, %ld, %p): stub.\n", iface, debugstr_w(type), items, skipped);
 
     return E_NOTIMPL;
 }
@@ -622,7 +622,7 @@ static HRESULT WINAPI spvoice_GetAlertBoundary(ISpVoice *iface, SPEVENTENUM *bou
 
 static HRESULT WINAPI spvoice_SetRate(ISpVoice *iface, LONG adjust)
 {
-    FIXME("(%p, %d): stub.\n", iface, adjust);
+    FIXME("(%p, %ld): stub.\n", iface, adjust);
 
     return E_NOTIMPL;
 }
@@ -650,14 +650,14 @@ static HRESULT WINAPI spvoice_GetVolume(ISpVoice *iface, USHORT *volume)
 
 static HRESULT WINAPI spvoice_WaitUntilDone(ISpVoice *iface, ULONG timeout)
 {
-    FIXME("(%p, %d): stub.\n", iface, timeout);
+    FIXME("(%p, %ld): stub.\n", iface, timeout);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI spvoice_SetSyncSpeakTimeout(ISpVoice *iface, ULONG timeout)
 {
-    FIXME("(%p, %d): stub.\n", iface, timeout);
+    FIXME("(%p, %ld): stub.\n", iface, timeout);
 
     return E_NOTIMPL;
 }
@@ -679,7 +679,7 @@ static HANDLE WINAPI spvoice_SpeakCompleteEvent(ISpVoice *iface)
 static HRESULT WINAPI spvoice_IsUISupported(ISpVoice *iface, const WCHAR *type, void *extra,
                                             ULONG count, BOOL *supported)
 {
-    FIXME("(%p, %p, %p, %d, %p): stub.\n", iface, type, extra, count, supported);
+    FIXME("(%p, %p, %p, %ld, %p): stub.\n", iface, type, extra, count, supported);
 
     return E_NOTIMPL;
 }
@@ -687,7 +687,7 @@ static HRESULT WINAPI spvoice_IsUISupported(ISpVoice *iface, const WCHAR *type, 
 static HRESULT WINAPI spvoice_DisplayUI(ISpVoice *iface, HWND parent, const WCHAR *title,
                                         const WCHAR *type, void *extra, ULONG count)
 {
-    FIXME("(%p, %p, %p, %p, %p, %d): stub.\n", iface, parent, title, type, extra, count);
+    FIXME("(%p, %p, %p, %p, %p, %ld): stub.\n", iface, parent, title, type, extra, count);
 
     return E_NOTIMPL;
 }
