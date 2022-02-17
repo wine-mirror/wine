@@ -176,7 +176,7 @@ TW_UINT16 SANE_ProcessEvent (pTW_IDENTITY pOrigin,
     pTW_EVENT pEvent = (pTW_EVENT) pData;
     MSG *pMsg = pEvent->pEvent;
 
-    TRACE("DG_CONTROL/DAT_EVENT/MSG_PROCESSEVENT  msg 0x%x, wParam 0x%lx\n", pMsg->message, pMsg->wParam);
+    TRACE("DG_CONTROL/DAT_EVENT/MSG_PROCESSEVENT  msg 0x%x, wParam 0x%Ix\n", pMsg->message, pMsg->wParam);
 
     activeDS.twCC = TWCC_SUCCESS;
     pEvent->TWMessage = MSG_NULL;  /* no message to the application */

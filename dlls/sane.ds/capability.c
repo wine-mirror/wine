@@ -198,7 +198,7 @@ static TW_UINT16 SANE_ICAPXferMech (pTW_CAPABILITY pCapability, TW_UINT16 action
             if (twCC == TWCC_SUCCESS)
             {
                activeDS.capXferMech = (TW_UINT16) val;
-               FIXME("Partial Stub:  XFERMECH set to %d, but ignored\n", val);
+               FIXME("Partial Stub:  XFERMECH set to %ld, but ignored\n", val);
             }
             break;
 
@@ -242,7 +242,7 @@ static TW_UINT16 SANE_CAPXferCount (pTW_CAPABILITY pCapability, TW_UINT16 action
         case MSG_SET:
             twCC = msg_set(pCapability, &val);
             if (twCC == TWCC_SUCCESS)
-               FIXME("Partial Stub:  XFERCOUNT set to %d, but ignored\n", val);
+               FIXME("Partial Stub:  XFERCOUNT set to %ld, but ignored\n", val);
             break;
 
         case MSG_GETDEFAULT:
@@ -326,7 +326,7 @@ static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 actio
             twCC = msg_set(pCapability, &val);
             if (twCC == TWCC_SUCCESS)
             {
-                TRACE("Setting pixeltype to %d\n", val);
+                TRACE("Setting pixeltype to %ld\n", val);
                 if (! pixeltype_to_sane_mode(val, mode, sizeof(mode)))
                     return TWCC_BADVALUE;
 
@@ -493,7 +493,7 @@ static TW_UINT16 SANE_ICAPCompression (pTW_CAPABILITY pCapability, TW_UINT16 act
         case MSG_SET:
             twCC = msg_set(pCapability, &val);
             if (twCC == TWCC_SUCCESS)
-               FIXME("Partial Stub:  COMPRESSION set to %d, but ignored\n", val);
+               FIXME("Partial Stub:  COMPRESSION set to %ld, but ignored\n", val);
             break;
 
         case MSG_GETDEFAULT:
@@ -659,7 +659,7 @@ static TW_UINT16 SANE_ICAPPixelFlavor (pTW_CAPABILITY pCapability, TW_UINT16 act
             twCC = msg_set(pCapability, &val);
             if (twCC == TWCC_SUCCESS)
             {
-               FIXME("Stub:  PIXELFLAVOR set to %d, but ignored\n", val);
+               FIXME("Stub:  PIXELFLAVOR set to %ld, but ignored\n", val);
             }
             break;
 
@@ -822,7 +822,7 @@ static TW_UINT16 SANE_ICAPSupportedSizes (pTW_CAPABILITY pCapability, TW_UINT16 
                     if (supported_sizes[i].size == val)
                         return set_width_height(supported_sizes[i].x, supported_sizes[i].y);
 
-            ERR("Unsupported size %d\n", val);
+            ERR("Unsupported size %ld\n", val);
             twCC = TWCC_BADCAP;
             break;
 
