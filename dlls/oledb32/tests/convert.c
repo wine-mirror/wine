@@ -327,7 +327,7 @@ static void test_converttoi1(void)
 {
     HRESULT hr;
     signed char dst;
-    BYTE src[20];
+    BYTE src[sizeof(VARIANT)]; /* assuming that VARIANT is larger than all the types used in src */
     DBSTATUS dst_status;
     DBLENGTH dst_len;
     static const WCHAR ten[] = {'1','0',0};
@@ -638,7 +638,7 @@ static void test_converttoi2(void)
 {
     HRESULT hr;
     signed short dst;
-    BYTE src[20];
+    BYTE src[sizeof(VARIANT)]; /* assuming that VARIANT is larger than all the types used in src */
     DBSTATUS dst_status;
     DBLENGTH dst_len;
     static const WCHAR ten[] = {'1','0',0};
@@ -950,7 +950,7 @@ static void test_converttoi4(void)
 {
     HRESULT hr;
     INT i4;
-    BYTE src[20];
+    BYTE src[sizeof(VARIANT)];  /* assuming that VARIANT is larger than all the types used in src */
     DBSTATUS dst_status;
     DBLENGTH dst_len;
     static const WCHAR ten[] = {'1','0',0};
@@ -1224,7 +1224,7 @@ static void test_converttoi8(void)
 {
     HRESULT hr;
     LARGE_INTEGER dst;
-    BYTE src[20];
+    BYTE src[sizeof(VARIANT)];  /* assuming that VARIANT is larger than all the types used in src */
     DBSTATUS dst_status;
     DBLENGTH dst_len;
     static const WCHAR ten[] = {'1','0',0};
@@ -2774,7 +2774,7 @@ static void test_converttoui4(void)
 {
     HRESULT hr;
     DWORD dst;
-    BYTE src[20];
+    BYTE src[sizeof(VARIANT)];
     DBSTATUS dst_status;
     DBLENGTH dst_len;
 
