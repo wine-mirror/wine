@@ -68,7 +68,7 @@ BOOLEAN WINAPI CanUserWritePwrScheme(VOID)
    r = RegOpenKeyExW(HKEY_LOCAL_MACHINE, szPowerCfgSubKey, 0, KEY_READ | KEY_WRITE, &hKey);
 
    if (r != ERROR_SUCCESS) {
-      TRACE("RegOpenKeyEx failed: %d\n", r);
+      TRACE("RegOpenKeyEx failed: %ld\n", r);
       bSuccess = FALSE;
    }
 
@@ -89,7 +89,7 @@ BOOLEAN WINAPI EnumPwrSchemes(PWRSCHEMESENUMPROC lpfnPwrSchemesEnumProc,
 			LPARAM lParam)
 {
    /* FIXME: See note #1 */
-   FIXME("(%p, %ld) stub!\n", lpfnPwrSchemesEnumProc, lParam);
+   FIXME("(%p, %Id) stub!\n", lpfnPwrSchemesEnumProc, lParam);
    SetLastError(ERROR_FILE_NOT_FOUND);
    return FALSE;
 }
@@ -151,7 +151,7 @@ BOOLEAN WINAPI GetPwrDiskSpindownRange(PUINT RangeMax, PUINT RangeMin)
 
    r = RegOpenKeyExW(HKEY_LOCAL_MACHINE, szPowerCfgSubKey, 0, KEY_READ, &hKey);
    if (r != ERROR_SUCCESS) {
-      TRACE("RegOpenKeyEx failed: %d\n", r);
+      TRACE("RegOpenKeyEx failed: %ld\n", r);
       TRACE("Using defaults: 3600, 3\n");
       *RangeMax = 3600;
       *RangeMin = 3;
@@ -161,7 +161,7 @@ BOOLEAN WINAPI GetPwrDiskSpindownRange(PUINT RangeMax, PUINT RangeMin)
 
    r = RegQueryValueExW(hKey, L"DiskSpindownMax", 0, 0, lpValue, &cbValue);
    if (r != ERROR_SUCCESS) {
-      TRACE("Couldn't open DiskSpinDownMax: %d\n", r);
+      TRACE("Couldn't open DiskSpinDownMax: %ld\n", r);
       TRACE("Using default: 3600\n");
       *RangeMax = 3600;
    } else {
@@ -172,7 +172,7 @@ BOOLEAN WINAPI GetPwrDiskSpindownRange(PUINT RangeMax, PUINT RangeMin)
 
    r = RegQueryValueExW(hKey, L"DiskSpindownMin", 0, 0, lpValue, &cbValue);
    if (r != ERROR_SUCCESS) {
-      TRACE("Couldn't open DiskSpinDownMin: %d\n", r);
+      TRACE("Couldn't open DiskSpinDownMin: %ld\n", r);
       TRACE("Using default: 3\n");
       *RangeMin = 3;
    } else {
@@ -318,21 +318,21 @@ POWER_PLATFORM_ROLE WINAPI PowerDeterminePlatformRole(void)
 
 POWER_PLATFORM_ROLE WINAPI PowerDeterminePlatformRoleEx(ULONG version)
 {
-    FIXME("%u stub.\n", version);
+    FIXME("%lu stub.\n", version);
     return PlatformRoleDesktop;
 }
 
 DWORD WINAPI PowerEnumerate(HKEY key, const GUID *scheme, const GUID *subgroup, POWER_DATA_ACCESSOR flags,
                         ULONG index, UCHAR *buffer, DWORD *buffer_size)
 {
-   FIXME("(%p,%s,%s,%d,%d,%p,%p) stub!\n", key, debugstr_guid(scheme), debugstr_guid(subgroup),
+   FIXME("(%p,%s,%s,%d,%ld,%p,%p) stub!\n", key, debugstr_guid(scheme), debugstr_guid(subgroup),
                 flags, index, buffer, buffer_size);
    return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
 DWORD WINAPI PowerRegisterSuspendResumeNotification(DWORD flags, HANDLE recipient, PHPOWERNOTIFY handle)
 {
-    FIXME("(0x%08x,%p,%p) stub!\n", flags, recipient, handle);
+    FIXME("(0x%08lx,%p,%p) stub!\n", flags, recipient, handle);
     return ERROR_SUCCESS;
 }
 
@@ -362,7 +362,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
          PPRegSemaphore = CreateSemaphoreW(NULL, 1, 1, L"PowerProfileRegistrySemaphore");
          if (PPRegSemaphore == NULL) {
-            ERR("Couldn't create Semaphore: %d\n", GetLastError());
+            ERR("Couldn't create Semaphore: %ld\n", GetLastError());
             return FALSE;
          }
          break;
