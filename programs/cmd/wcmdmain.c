@@ -132,7 +132,7 @@ void WINAPIV WCMD_output (const WCHAR *format, ...) {
                        format, 0, 0, (LPWSTR)&string, 0, &ap);
   va_end(ap);
   if (len == 0 && GetLastError() != ERROR_NO_WORK_DONE)
-    WINE_FIXME("Could not format string: le=%u, fmt=%s\n", GetLastError(), wine_dbgstr_w(format));
+    WINE_FIXME("Could not format string: le=%lu, fmt=%s\n", GetLastError(), wine_dbgstr_w(format));
   else
   {
     WCMD_output_asis_len(string, len, GetStdHandle(STD_OUTPUT_HANDLE));
@@ -157,7 +157,7 @@ void WINAPIV WCMD_output_stderr (const WCHAR *format, ...) {
                        format, 0, 0, (LPWSTR)&string, 0, &ap);
   va_end(ap);
   if (len == 0 && GetLastError() != ERROR_NO_WORK_DONE)
-    WINE_FIXME("Could not format string: le=%u, fmt=%s\n", GetLastError(), wine_dbgstr_w(format));
+    WINE_FIXME("Could not format string: le=%lu, fmt=%s\n", GetLastError(), wine_dbgstr_w(format));
   else
   {
     WCMD_output_asis_len(string, len, GetStdHandle(STD_ERROR_HANDLE));
@@ -181,7 +181,7 @@ WCHAR* WINAPIV WCMD_format_string (const WCHAR *format, ...)
                        format, 0, 0, (LPWSTR)&string, 0, &ap);
   va_end(ap);
   if (len == 0 && GetLastError() != ERROR_NO_WORK_DONE) {
-    WINE_FIXME("Could not format string: le=%u, fmt=%s\n", GetLastError(), wine_dbgstr_w(format));
+    WINE_FIXME("Could not format string: le=%lu, fmt=%s\n", GetLastError(), wine_dbgstr_w(format));
     string = (WCHAR*)LocalAlloc(LMEM_FIXED, 2);
     *string = 0;
   }
@@ -303,7 +303,7 @@ void WCMD_print_error (void) {
   status = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
 			  NULL, error_code, 0, (LPWSTR) &lpMsgBuf, 0, NULL);
   if (!status) {
-    WINE_FIXME ("Cannot display message for error %d, status %d\n",
+    WINE_FIXME ("Cannot display message for error %ld, status %ld\n",
 			error_code, GetLastError());
     return;
   }
@@ -1462,7 +1462,7 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
                           GetCurrentProcess(),
                           &h,
                           0, TRUE, DUPLICATE_SAME_ACCESS) == 0) {
-            WINE_FIXME("Duplicating handle failed with gle %d\n", GetLastError());
+            WINE_FIXME("Duplicating handle failed with gle %ld\n", GetLastError());
           }
           WINE_TRACE("Redirect %d (%p) to %d (%p)\n", handle, GetStdHandle(idx_stdhandles[idx]), idx, h);
 
@@ -1664,7 +1664,7 @@ WCHAR *WCMD_LoadMessage(UINT id) {
     static WCHAR msg[2048];
 
     if (!LoadStringW(GetModuleHandleW(NULL), id, msg, ARRAY_SIZE(msg))) {
-       WINE_FIXME("LoadString failed with %d\n", GetLastError());
+       WINE_FIXME("LoadString failed with %ld\n", GetLastError());
        lstrcpyW(msg, L"Failed!");
     }
     return msg;
@@ -2442,7 +2442,7 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
 
   /* Pre initialize some messages */
   lstrcpyW(anykey, WCMD_LoadMessage(WCMD_ANYKEY));
-  sprintf(osver, "%d.%d.%d", osv.dwMajorVersion, osv.dwMinorVersion, osv.dwBuildNumber);
+  sprintf(osver, "%ld.%ld.%ld", osv.dwMajorVersion, osv.dwMinorVersion, osv.dwBuildNumber);
   cmd = WCMD_format_string(WCMD_LoadMessage(WCMD_VERSION), osver);
   lstrcpyW(version_string, cmd);
   LocalFree(cmd);

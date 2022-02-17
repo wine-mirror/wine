@@ -344,7 +344,7 @@ void WCMD_choice (const WCHAR * args) {
     }
 
     if (opt_timeout)
-        WINE_FIXME("timeout not supported: %c,%d\n", opt_default, opt_timeout);
+        WINE_FIXME("timeout not supported: %c,%ld\n", opt_default, opt_timeout);
 
     if (have_console)
         SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), 0);
@@ -396,7 +396,7 @@ void WCMD_choice (const WCHAR * args) {
                 SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), oldmode);
 
             errorlevel = (ptr - opt_c) + 1;
-            WINE_TRACE("answer: %d\n", errorlevel);
+            WINE_TRACE("answer: %ld\n", errorlevel);
             heap_free(my_command);
             return;
         }
@@ -427,12 +427,12 @@ static BOOL WCMD_AppendEOF(WCHAR *filename)
                     OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
     if (h == INVALID_HANDLE_VALUE) {
-      WINE_ERR("Failed to open %s (%d)\n", wine_dbgstr_w(filename), GetLastError());
+      WINE_ERR("Failed to open %s (%ld)\n", wine_dbgstr_w(filename), GetLastError());
       return FALSE;
     } else {
       SetFilePointer (h, 0, NULL, FILE_END);
       if (!WriteFile(h, &eof, 1, &bytes_written, NULL)) {
-        WINE_ERR("Failed to append EOF to %s (%d)\n", wine_dbgstr_w(filename), GetLastError());
+        WINE_ERR("Failed to append EOF to %s (%ld)\n", wine_dbgstr_w(filename), GetLastError());
         CloseHandle(h);
         return FALSE;
       }
@@ -491,7 +491,7 @@ static BOOL WCMD_ManualCopy(WCHAR *srcname, WCHAR *dstname, BOOL ascii, BOOL app
     in  = CreateFileW(srcname, GENERIC_READ, 0, NULL,
                       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (in == INVALID_HANDLE_VALUE) {
-      WINE_ERR("Failed to open %s (%d)\n", wine_dbgstr_w(srcname), GetLastError());
+      WINE_ERR("Failed to open %s (%ld)\n", wine_dbgstr_w(srcname), GetLastError());
       return FALSE;
     }
 
@@ -499,7 +499,7 @@ static BOOL WCMD_ManualCopy(WCHAR *srcname, WCHAR *dstname, BOOL ascii, BOOL app
     out = CreateFileW(dstname, GENERIC_WRITE, 0, NULL,
                       append?OPEN_EXISTING:CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if (out == INVALID_HANDLE_VALUE) {
-      WINE_ERR("Failed to open %s (%d)\n", wine_dbgstr_w(dstname), GetLastError());
+      WINE_ERR("Failed to open %s (%ld)\n", wine_dbgstr_w(dstname), GetLastError());
       CloseHandle(in);
       return FALSE;
     }
@@ -526,12 +526,12 @@ static BOOL WCMD_ManualCopy(WCHAR *srcname, WCHAR *dstname, BOOL ascii, BOOL app
         if (bytesread) {
           ok = WriteFile(out, buffer, bytesread, &byteswritten, NULL);
           if (!ok || byteswritten != bytesread) {
-            WINE_ERR("Unexpected failure writing to %s, rc=%d\n",
+            WINE_ERR("Unexpected failure writing to %s, rc=%ld\n",
                      wine_dbgstr_w(dstname), GetLastError());
           }
         }
       } else {
-        WINE_ERR("Unexpected failure reading from %s, rc=%d\n",
+        WINE_ERR("Unexpected failure reading from %s, rc=%ld\n",
                  wine_dbgstr_w(srcname), GetLastError());
       }
     } while (ok && bytesread > 0);
@@ -2442,7 +2442,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
     if (useNumbers) {
         WCHAR thisNum[20];
 
-        WINE_TRACE("FOR /L provided range from %d to %d step %d\n",
+        WINE_TRACE("FOR /L provided range from %ld to %ld step %ld\n",
                    numbers[0], numbers[2], numbers[1]);
         for (i=numbers[0];
              (numbers[1]<0)? i>=numbers[2] : i<=numbers[2];
@@ -4775,7 +4775,7 @@ void WCMD_assoc (const WCHAR *args, BOOL assoc) {
 
     /* Open a key to HKEY_CLASSES_ROOT for enumerating */
     if (RegOpenKeyExW(HKEY_CLASSES_ROOT, L"", 0, accessOptions, &key) != ERROR_SUCCESS) {
-      WINE_FIXME("Unexpected failure opening HKCR key: %d\n", GetLastError());
+      WINE_FIXME("Unexpected failure opening HKCR key: %ld\n", GetLastError());
       return;
     }
 

@@ -536,7 +536,7 @@ static void WCMD_dir_trailer(WCHAR drive) {
 
     driveName[0] = drive;
     status = GetDiskFreeSpaceExW(driveName, &avail, &total, &freebytes);
-    WINE_TRACE("Writing trailer for '%s' gave %d(%d)\n", wine_dbgstr_w(driveName),
+    WINE_TRACE("Writing trailer for '%s' gave %ld(%ld)\n", wine_dbgstr_w(driveName),
                status, GetLastError());
 
     if (errorlevel==0 && !bare) {
@@ -727,7 +727,7 @@ void WCMD_directory (WCHAR *args)
                 p++;
               }
               p = p - 1; /* So when step on, move to '/' */
-              WINE_TRACE("Result: showattrs %x, bits %x\n", showattrs, attrsbits);
+              WINE_TRACE("Result: showattrs %lx, bits %lx\n", showattrs, attrsbits);
               break;
     default:
               SetLastError(ERROR_INVALID_PARAMETER);
