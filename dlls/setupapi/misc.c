@@ -811,7 +811,7 @@ DWORD WINAPI CMP_WaitNoPendingInstallEvents( DWORD dwTimeout )
 
     if (!warned)
     {
-        FIXME("%d\n", dwTimeout);
+        FIXME("%ld\n", dwTimeout);
         warned = TRUE;
     }
     return WAIT_OBJECT_0;
@@ -844,7 +844,7 @@ BOOL WINAPI SetupCopyOEMInfA( PCSTR source, PCSTR location,
     LPWSTR destW = NULL, sourceW = NULL, locationW = NULL;
     DWORD size;
 
-    TRACE("%s, %s, %d, %d, %p, %d, %p, %p\n", debugstr_a(source), debugstr_a(location),
+    TRACE("%s, %s, %ld, %ld, %p, %ld, %p, %p\n", debugstr_a(source), debugstr_a(location),
           media_type, style, dest, buffer_size, required_size, component);
 
     if (dest && !(destW = MyMalloc( buffer_size * sizeof(WCHAR) ))) return FALSE;
@@ -972,7 +972,7 @@ BOOL WINAPI SetupCopyOEMInfW( PCWSTR source, PCWSTR location,
     DWORD size;
     HINF hinf;
 
-    TRACE("%s, %s, %d, %d, %p, %d, %p, %p\n", debugstr_w(source), debugstr_w(location),
+    TRACE("%s, %s, %ld, %ld, %p, %ld, %p, %p\n", debugstr_w(source), debugstr_w(location),
           media_type, style, dest, buffer_size, required_size, filepart);
 
     if (!source)
@@ -1113,7 +1113,7 @@ BOOL WINAPI SetupUninstallOEMInfA( PCSTR inf_file, DWORD flags, PVOID reserved )
     BOOL ret;
     WCHAR *inf_fileW = NULL;
 
-    TRACE("%s, 0x%08x, %p\n", debugstr_a(inf_file), flags, reserved);
+    TRACE("%s, 0x%08lx, %p\n", debugstr_a(inf_file), flags, reserved);
 
     if (inf_file && !(inf_fileW = strdupAtoW( inf_file ))) return FALSE;
     ret = SetupUninstallOEMInfW( inf_fileW, flags, reserved );
@@ -1129,7 +1129,7 @@ BOOL WINAPI SetupUninstallOEMInfW( PCWSTR inf_file, DWORD flags, PVOID reserved 
     static const WCHAR infW[] = {'\\','i','n','f','\\',0};
     WCHAR target[MAX_PATH];
 
-    TRACE("%s, 0x%08x, %p\n", debugstr_w(inf_file), flags, reserved);
+    TRACE("%s, 0x%08lx, %p\n", debugstr_w(inf_file), flags, reserved);
 
     if (!inf_file)
     {
@@ -1313,7 +1313,7 @@ BOOL WINAPI SetupGetFileCompressionInfoExA( PCSTR source, PSTR name, DWORD len, 
     DWORD nb_chars = 0;
     LPSTR nameA;
 
-    TRACE("%s, %p, %d, %p, %p, %p, %p\n", debugstr_a(source), name, len, required,
+    TRACE("%s, %p, %ld, %p, %p, %p, %p\n", debugstr_a(source), name, len, required,
           source_size, target_size, type);
 
     if (!source || !(sourceW = MultiByteToUnicode( source, CP_ACP ))) return FALSE;
@@ -1373,7 +1373,7 @@ BOOL WINAPI SetupGetFileCompressionInfoExW( PCWSTR source, PWSTR name, DWORD len
     BOOL ret = FALSE;
     DWORD source_len;
 
-    TRACE("%s, %p, %d, %p, %p, %p, %p\n", debugstr_w(source), name, len, required,
+    TRACE("%s, %p, %ld, %p, %p, %p, %p\n", debugstr_w(source), name, len, required,
           source_size, target_size, type);
 
     if (!source) return FALSE;
@@ -1498,7 +1498,7 @@ static DWORD decompress_file_lz( LPCWSTR source, LPCWSTR target )
     if ((error = LZCopy( src, dst )) >= 0) ret = ERROR_SUCCESS;
     else
     {
-        WARN("failed to decompress file %d\n", error);
+        WARN("failed to decompress file %ld\n", error);
         ret = ERROR_INVALID_DATA;
     }
 
