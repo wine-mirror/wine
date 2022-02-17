@@ -36,7 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(eventlog);
 ULONG WINAPI ControlTraceA( TRACEHANDLE handle, const char *session,
                             EVENT_TRACE_PROPERTIES *properties, ULONG control )
 {
-    FIXME("(%s, %s, %p, %d) stub\n", wine_dbgstr_longlong(handle), debugstr_a(session), properties, control);
+    FIXME("(%s, %s, %p, %ld) stub\n", wine_dbgstr_longlong(handle), debugstr_a(session), properties, control);
     return ERROR_SUCCESS;
 }
 
@@ -46,7 +46,7 @@ ULONG WINAPI ControlTraceA( TRACEHANDLE handle, const char *session,
 ULONG WINAPI ControlTraceW( TRACEHANDLE handle, const WCHAR *session,
                             EVENT_TRACE_PROPERTIES *properties, ULONG control )
 {
-    FIXME("(%s, %s, %p, %d) stub\n", wine_dbgstr_longlong(handle), debugstr_w(session), properties, control);
+    FIXME("(%s, %s, %p, %ld) stub\n", wine_dbgstr_longlong(handle), debugstr_w(session), properties, control);
     return ERROR_SUCCESS;
 }
 
@@ -57,7 +57,7 @@ ULONG WINAPI EnableTraceEx2( TRACEHANDLE handle, const GUID *provider, ULONG con
                              ULONGLONG match_any, ULONGLONG match_all, ULONG timeout,
                              ENABLE_TRACE_PARAMETERS *params )
 {
-    FIXME("(%s, %s, %u, %u, %s, %s, %u, %p): stub\n", wine_dbgstr_longlong(handle),
+    FIXME("(%s, %s, %lu, %u, %s, %s, %lu, %p): stub\n", wine_dbgstr_longlong(handle),
           debugstr_guid(provider), control, level, wine_dbgstr_longlong(match_any),
           wine_dbgstr_longlong(match_all), timeout, params);
 
@@ -69,7 +69,7 @@ ULONG WINAPI EnableTraceEx2( TRACEHANDLE handle, const GUID *provider, ULONG con
  */
 ULONG WINAPI QueryAllTracesA( EVENT_TRACE_PROPERTIES **properties, ULONG count, ULONG *ret_count )
 {
-    FIXME("(%p, %d, %p) stub\n", properties, count, ret_count);
+    FIXME("(%p, %ld, %p) stub\n", properties, count, ret_count);
 
     if (ret_count) *ret_count = 0;
     return ERROR_SUCCESS;
@@ -80,7 +80,7 @@ ULONG WINAPI QueryAllTracesA( EVENT_TRACE_PROPERTIES **properties, ULONG count, 
  */
 ULONG WINAPI QueryAllTracesW( EVENT_TRACE_PROPERTIES **properties, ULONG count, ULONG *ret_count )
 {
-    FIXME("(%p, %d, %p) stub\n", properties, count, ret_count);
+    FIXME("(%p, %ld, %p) stub\n", properties, count, ret_count);
 
     if (ret_count) *ret_count = 0;
     return ERROR_SUCCESS;
@@ -132,7 +132,7 @@ TRACEHANDLE WINAPI OpenTraceW( EVENT_TRACE_LOGFILEW *logfile )
  */
 ULONG WINAPI ProcessTrace( TRACEHANDLE *handles, ULONG count, FILETIME *start_time, FILETIME *end_time )
 {
-    FIXME("%p %u %p %p: stub\n", handles, count, start_time, end_time);
+    FIXME("%p %lu %p %p: stub\n", handles, count, start_time, end_time);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
@@ -150,6 +150,6 @@ ULONG WINAPI CloseTrace( TRACEHANDLE handle )
  */
 ULONG WINAPI TraceSetInformation( TRACEHANDLE handle, TRACE_INFO_CLASS class, void *info, ULONG len )
 {
-    FIXME("%s %d %p %d: stub\n", wine_dbgstr_longlong(handle), class, info, len);
+    FIXME("%s %d %p %ld: stub\n", wine_dbgstr_longlong(handle), class, info, len);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }

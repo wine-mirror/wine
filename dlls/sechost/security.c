@@ -536,7 +536,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH ConvertSecurityDescriptorToStringSecurityDescripto
 
     if (revision != SDDL_REVISION_1)
     {
-        ERR("Unhandled SDDL revision %d\n", revision);
+        ERR("Unhandled SDDL revision %ld\n", revision);
         SetLastError( ERROR_UNKNOWN_REVISION );
         return FALSE;
     }
@@ -573,7 +573,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH ConvertSecurityDescriptorToStringSecurityDescripto
     }
     *wptr = 0;
 
-    TRACE("ret: %s, %d\n", wine_dbgstr_w(wstr), len);
+    TRACE("ret: %s, %ld\n", wine_dbgstr_w(wstr), len);
     *string = wstr;
     if (ret_len) *ret_len = wcslen(*string) + 1;
     return TRUE;
@@ -1219,7 +1219,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH ConvertStringSecurityDescriptorToSecurityDescripto
     DWORD size;
     SECURITY_DESCRIPTOR *psd;
 
-    TRACE("%s, %u, %p, %p\n", debugstr_w(string), revision, sd, ret_size);
+    TRACE("%s, %lu, %p, %p\n", debugstr_w(string), revision, sd, ret_size);
 
     if (GetVersion() & 0x80000000)
     {

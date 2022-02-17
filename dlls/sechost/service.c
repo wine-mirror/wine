@@ -170,7 +170,7 @@ static handle_t rpc_wstr_bind( RPC_WSTR str )
     status = RpcStringBindingComposeW( NULL, transport, str, endpoint, NULL, &binding_str );
     if (status != RPC_S_OK)
     {
-        ERR("RpcStringBindingComposeW failed, error %d\n", status);
+        ERR("RpcStringBindingComposeW failed, error %ld\n", status);
         return NULL;
     }
 
@@ -179,7 +179,7 @@ static handle_t rpc_wstr_bind( RPC_WSTR str )
 
     if (status != RPC_S_OK)
     {
-        ERR("Couldn't connect to services.exe, error %d\n", status);
+        ERR("Couldn't connect to services.exe, error %ld\n", status);
         return NULL;
     }
 
@@ -197,7 +197,7 @@ static handle_t rpc_cstr_bind(RPC_CSTR str)
     status = RpcStringBindingComposeA( NULL, transport, str, endpoint, NULL, &binding_str );
     if (status != RPC_S_OK)
     {
-        ERR("RpcStringBindingComposeA failed, error %d\n", status);
+        ERR("RpcStringBindingComposeA failed, error %ld\n", status);
         return NULL;
     }
 
@@ -206,7 +206,7 @@ static handle_t rpc_cstr_bind(RPC_CSTR str)
 
     if (status != RPC_S_OK)
     {
-        ERR("Couldn't connect to services.exe, error %d\n", status);
+        ERR("Couldn't connect to services.exe, error %ld\n", status);
         return NULL;
     }
 
@@ -273,7 +273,7 @@ SC_HANDLE WINAPI DECLSPEC_HOTPATCH OpenSCManagerW( const WCHAR *machine, const W
     SC_RPC_HANDLE handle = NULL;
     DWORD err;
 
-    TRACE( "%s %s %#x\n", debugstr_w(machine), debugstr_w(database), access );
+    TRACE( "%s %s %#lx\n", debugstr_w(machine), debugstr_w(database), access );
 
     __TRY
     {
@@ -298,7 +298,7 @@ SC_HANDLE WINAPI DECLSPEC_HOTPATCH OpenServiceA( SC_HANDLE manager, const char *
     WCHAR *nameW;
     SC_HANDLE ret;
 
-    TRACE( "%p %s %#x\n", manager, debugstr_a(name), access );
+    TRACE( "%p %s %#lx\n", manager, debugstr_a(name), access );
 
     nameW = heap_strdupAtoW( name );
     ret = OpenServiceW( manager, nameW, access );
@@ -314,7 +314,7 @@ SC_HANDLE WINAPI DECLSPEC_HOTPATCH OpenServiceW( SC_HANDLE manager, const WCHAR 
     SC_RPC_HANDLE handle = NULL;
     DWORD err;
 
-    TRACE( "%p %s %#x\n", manager, debugstr_w(name), access );
+    TRACE( "%p %s %#lx\n", manager, debugstr_w(name), access );
 
     if (!manager)
     {
@@ -473,7 +473,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH ChangeServiceConfig2A( SC_HANDLE service, DWORD le
 {
     BOOL r = FALSE;
 
-    TRACE( "%p %d %p\n", service, level, info );
+    TRACE( "%p %ld %p\n", service, level, info );
 
     if (level == SERVICE_CONFIG_DESCRIPTION)
     {
@@ -557,7 +557,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH ChangeServiceConfigA( SC_HANDLE service, DWORD ser
     WCHAR *pathW, *groupW, *dependenciesW, *usernameW, *passwordW, *display_nameW;
     BOOL r;
 
-    TRACE( "%p %d %d %d %s %s %p %p %s %s %s\n", service, service_type, start_type,
+    TRACE( "%p %ld %ld %ld %s %s %p %p %s %s %s\n", service, service_type, start_type,
            error_control, debugstr_a(path), debugstr_a(group), tag, dependencies,
            debugstr_a(username), debugstr_a(password), debugstr_a(display_name) );
 
@@ -592,7 +592,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH ChangeServiceConfigW( SC_HANDLE service, DWORD ser
     DWORD password_size;
     DWORD err;
 
-    TRACE( "%p %d %d %d %s %s %p %p %s %s %s\n", service, service_type, start_type,
+    TRACE( "%p %ld %ld %ld %s %s %p %p %s %s %s\n", service, service_type, start_type,
            error_control, debugstr_w(path), debugstr_w(group), tag, dependencies,
            debugstr_w(username), debugstr_w(password), debugstr_w(display_name) );
 
@@ -624,7 +624,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH QueryServiceConfigA( SC_HANDLE service, QUERY_SERV
     BOOL ret;
     QUERY_SERVICE_CONFIGW *configW;
 
-    TRACE( "%p %p %d %p\n", service, config, size, ret_size );
+    TRACE( "%p %p %ld %p\n", service, config, size, ret_size );
 
     if (!(buffer = heap_alloc( 2 * size ))) return set_error( ERROR_NOT_ENOUGH_MEMORY );
     configW = (QUERY_SERVICE_CONFIGW *)buffer;
@@ -710,7 +710,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH QueryServiceConfigW( SC_HANDLE service, QUERY_SERV
     DWORD err;
     BYTE *bufpos;
 
-    TRACE( "%p %p %d %p\n", service, ret_config, size, ret_size );
+    TRACE( "%p %p %ld %p\n", service, ret_config, size, ret_size );
 
     memset(&config, 0, sizeof(config));
 
@@ -773,7 +773,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH QueryServiceConfig2A( SC_HANDLE service, DWORD lev
 {
     BYTE *bufferW = NULL;
 
-    TRACE( "%p %u %p %u %p\n", service, level, buffer, size, ret_size );
+    TRACE( "%p %lu %p %lu %p\n", service, level, buffer, size, ret_size );
 
     if (buffer && size)
         bufferW = heap_alloc( size );
@@ -804,7 +804,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH QueryServiceConfig2A( SC_HANDLE service, DWORD lev
                 memcpy(buffer, bufferW, *ret_size);
             break;
         default:
-            FIXME("conversion W->A not implemented for level %d\n", level);
+            FIXME("conversion W->A not implemented for level %ld\n", level);
             heap_free( bufferW );
             return FALSE;
     }
@@ -822,7 +822,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH QueryServiceConfig2W( SC_HANDLE service, DWORD lev
     BYTE *bufptr;
     DWORD err;
 
-    TRACE( "%p %u %p %u %p\n", service, level, buffer, size, ret_size );
+    TRACE( "%p %lu %p %lu %p\n", service, level, buffer, size, ret_size );
 
     if (!buffer && size)
     {
@@ -845,7 +845,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH QueryServiceConfig2W( SC_HANDLE service, DWORD lev
         break;
 
     default:
-        FIXME("Level %d not implemented\n", level);
+        FIXME("Level %ld not implemented\n", level);
         SetLastError(ERROR_INVALID_LEVEL);
         return FALSE;
     }
@@ -1041,7 +1041,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH StartServiceW( SC_HANDLE service, DWORD argc, cons
 {
     DWORD err;
 
-    TRACE( "%p %u %p\n", service, argc, argv );
+    TRACE( "%p %lu %p\n", service, argc, argv );
 
     __TRY
     {
@@ -1063,7 +1063,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH ControlService( SC_HANDLE service, DWORD control, 
 {
     DWORD err;
 
-    TRACE( "%p %d %p\n", service, control, status );
+    TRACE( "%p %ld %p\n", service, control, status );
 
     __TRY
     {
@@ -1106,7 +1106,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH QueryServiceStatusEx( SC_HANDLE service, SC_STATUS
 {
     DWORD err;
 
-    TRACE( "%p %d %p %d %p\n", service, level, buffer, size, ret_size );
+    TRACE( "%p %d %p %ld %p\n", service, level, buffer, size, ret_size );
 
     if (level != SC_STATUS_PROCESS_INFO) return set_error( ERROR_INVALID_LEVEL );
 
@@ -1142,7 +1142,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumServicesStatusExW( SC_HANDLE manager, SC_ENUM_
     const WCHAR *str;
     BYTE *buf;
 
-    TRACE( "%p %u 0x%x 0x%x %p %u %p %p %p %s\n", manager, level, type, state, buffer,
+    TRACE( "%p %u 0x%lx 0x%lx %p %lu %p %p %p %s\n", manager, level, type, state, buffer,
            size, needed, returned, resume_handle, debugstr_w(group) );
 
     if (level != SC_ENUM_PROCESS_INFO) return set_error( ERROR_INVALID_LEVEL );
@@ -1236,7 +1236,7 @@ BOOL WINAPI EnumDependentServicesW( SC_HANDLE hService, DWORD dwServiceState,
                                     LPENUM_SERVICE_STATUSW lpServices, DWORD cbBufSize,
                                     LPDWORD pcbBytesNeeded, LPDWORD lpServicesReturned )
 {
-    FIXME("%p 0x%08x %p 0x%08x %p %p - stub\n", hService, dwServiceState,
+    FIXME("%p 0x%08lx %p 0x%08lx %p %p - stub\n", hService, dwServiceState,
           lpServices, cbBufSize, pcbBytesNeeded, lpServicesReturned);
 
     *lpServicesReturned = 0;
@@ -1253,10 +1253,10 @@ BOOL WINAPI DECLSPEC_HOTPATCH QueryServiceObjectSecurity( SC_HANDLE service, SEC
     NTSTATUS status;
     ACL acl;
 
-    FIXME( "%p %d %p %u %p - semi-stub\n", service, type, ret_descriptor, size, ret_size );
+    FIXME( "%p %ld %p %lu %p - semi-stub\n", service, type, ret_descriptor, size, ret_size );
 
     if (type != DACL_SECURITY_INFORMATION)
-        FIXME("information %d not supported\n", type);
+        FIXME("information %ld not supported\n", type);
 
     InitializeSecurityDescriptor( &descriptor, SECURITY_DESCRIPTOR_REVISION );
 
@@ -1276,7 +1276,7 @@ BOOL WINAPI SetServiceObjectSecurity(SC_HANDLE hService,
        SECURITY_INFORMATION dwSecurityInformation,
        PSECURITY_DESCRIPTOR lpSecurityDescriptor)
 {
-    FIXME("%p %d %p\n", hService, dwSecurityInformation, lpSecurityDescriptor);
+    FIXME("%p %ld %p\n", hService, dwSecurityInformation, lpSecurityDescriptor);
     return TRUE;
 }
 
@@ -1321,7 +1321,7 @@ static DWORD WINAPI notify_thread(void *user)
         HeapFree(GetProcessHeap(), 0, list);
     }
     else
-        WARN("GetNotifyResults server call failed: %u\n", err);
+        WARN("GetNotifyResults server call failed: %lu\n", err);
 
 
     __TRY
@@ -1335,7 +1335,7 @@ static DWORD WINAPI notify_thread(void *user)
     __ENDTRY
 
     if (err != ERROR_SUCCESS)
-        WARN("CloseNotifyHandle server call failed: %u\n", err);
+        WARN("CloseNotifyHandle server call failed: %lu\n", err);
 
     CloseHandle(data->calling_thread);
     HeapFree(GetProcessHeap(), 0, data);
@@ -1354,7 +1354,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH NotifyServiceStatusChangeW( SC_HANDLE service, DW
     GUID g_dummy = {0};
     struct notify_data *data;
 
-    TRACE( "%p 0x%x %p\n", service, mask, notify_buffer );
+    TRACE( "%p 0x%lx %p\n", service, mask, notify_buffer );
 
     if (!(data = heap_alloc_zero( sizeof(*data) )))
         return ERROR_NOT_ENOUGH_MEMORY;
@@ -1364,7 +1364,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH NotifyServiceStatusChangeW( SC_HANDLE service, DW
     if (!DuplicateHandle( GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(),
                           &data->calling_thread, 0, FALSE, DUPLICATE_SAME_ACCESS ))
     {
-        ERR("DuplicateHandle failed: %u\n", GetLastError());
+        ERR("DuplicateHandle failed: %lu\n", GetLastError());
         heap_free( data );
         return ERROR_NOT_ENOUGH_MEMORY;
     }
@@ -1389,7 +1389,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH NotifyServiceStatusChangeW( SC_HANDLE service, DW
 
     if (err != ERROR_SUCCESS)
     {
-        WARN("NotifyServiceStatusChange server call failed: %u\n", err);
+        WARN("NotifyServiceStatusChange server call failed: %lu\n", err);
         LeaveCriticalSection( &service_cs );
         CloseHandle( data->calling_thread );
         CloseHandle( data->ready_evt );
@@ -1490,7 +1490,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetServiceStatus( SERVICE_STATUS_HANDLE service, S
 {
     DWORD err;
 
-    TRACE( "%p %#x %#x %#x %#x %#x %#x %#x\n", service, status->dwServiceType,
+    TRACE( "%p %#lx %#lx %#lx %#lx %#lx %#lx %#lx\n", service, status->dwServiceType,
            status->dwCurrentState, status->dwControlsAccepted, status->dwWin32ExitCode,
            status->dwServiceSpecificExitCode, status->dwCheckPoint, status->dwWaitHint );
 
@@ -1652,7 +1652,7 @@ static DWORD service_handle_control( struct service_data *service, DWORD control
 {
     DWORD ret = ERROR_INVALID_SERVICE_CONTROL;
 
-    TRACE( "%s control %u data %p data_size %u\n", debugstr_w(service->name), control, data, data_size );
+    TRACE( "%s control %lu data %p data_size %lu\n", debugstr_w(service->name), control, data, data_size );
 
     if (control == SERVICE_CONTROL_START)
         ret = service_handle_start( service, data, data_size );
@@ -1679,12 +1679,12 @@ static DWORD WINAPI service_control_dispatcher( void *arg )
         if (!r)
         {
             if (GetLastError() != ERROR_BROKEN_PIPE)
-                ERR( "pipe read failed error %u\n", GetLastError() );
+                ERR( "pipe read failed error %lu\n", GetLastError() );
             break;
         }
         if (count != FIELD_OFFSET(service_start_info,data))
         {
-            ERR( "partial pipe read %u\n", count );
+            ERR( "partial pipe read %lu\n", count );
             break;
         }
         if (count < info.total_size)
@@ -1695,13 +1695,13 @@ static DWORD WINAPI service_control_dispatcher( void *arg )
             if (!r)
             {
                 if (GetLastError() != ERROR_BROKEN_PIPE)
-                    ERR( "pipe read failed error %u\n", GetLastError() );
+                    ERR( "pipe read failed error %lu\n", GetLastError() );
                 heap_free( data );
                 break;
             }
             if (count != data_size)
             {
-                ERR( "partial pipe read %u/%u\n", count, data_size );
+                ERR( "partial pipe read %lu/%lu\n", count, data_size );
                 heap_free( data );
                 break;
             }
@@ -1824,7 +1824,7 @@ static BOOL service_run_main_thread(void)
     disp->manager = OpenSCManagerW( NULL, NULL, SC_MANAGER_CONNECT );
     if (!disp->manager)
     {
-        ERR("failed to open service manager error %u\n", GetLastError());
+        ERR("failed to open service manager error %lu\n", GetLastError());
         heap_free( disp );
         return FALSE;
     }
@@ -1832,7 +1832,7 @@ static BOOL service_run_main_thread(void)
     disp->pipe = service_open_pipe();
     if (disp->pipe == INVALID_HANDLE_VALUE)
     {
-        WARN("failed to create control pipe error %u\n", GetLastError());
+        WARN("failed to create control pipe error %lu\n", GetLastError());
         CloseServiceHandle( disp->manager );
         heap_free( disp );
         SetLastError( ERROR_FAILED_SERVICE_CONTROLLER_CONNECT );
@@ -1848,7 +1848,7 @@ static BOOL service_run_main_thread(void)
     wait_handles[1] = CreateThread( NULL, 0, service_control_dispatcher, disp, 0, NULL );
     wait_handles[2] = service_event;
 
-    TRACE("Starting %d services running as process %d\n",
+    TRACE("Starting %d services running as process %ld\n",
           nb_services, GetCurrentProcessId());
 
     /* wait for all the threads to pack up and exit */
@@ -2003,7 +2003,7 @@ static BOOL notification_filter_matches( DEV_BROADCAST_HDR *filter, DEV_BROADCAS
         return IsEqualGUID( &filter_iface->dbcc_classguid, &event_iface->dbcc_classguid );
     }
 
-    FIXME( "Filter dbch_devicetype %u not implemented\n", filter->dbch_devicetype );
+    FIXME( "Filter dbch_devicetype %lu not implemented\n", filter->dbch_devicetype );
     return TRUE;
 }
 
@@ -2023,14 +2023,14 @@ static DWORD WINAPI device_notify_proc( void *arg )
 
     if ((err = RpcStringBindingComposeW( NULL, protseq, NULL, endpoint, NULL, &binding_str )))
     {
-        ERR("RpcStringBindingCompose() failed, error %#x\n", err);
+        ERR("RpcStringBindingCompose() failed, error %#lx\n", err);
         return err;
     }
     err = RpcBindingFromStringBindingW( binding_str, &plugplay_binding_handle );
     RpcStringFreeW( &binding_str );
     if (err)
     {
-        ERR("RpcBindingFromStringBinding() failed, error %#x\n", err);
+        ERR("RpcBindingFromStringBinding() failed, error %#lx\n", err);
         return err;
     }
 
@@ -2046,7 +2046,7 @@ static DWORD WINAPI device_notify_proc( void *arg )
 
     if (!handle)
     {
-        ERR("failed to open RPC handle, error %u\n", err);
+        ERR("failed to open RPC handle, error %lu\n", err);
         return 1;
     }
 
@@ -2069,7 +2069,7 @@ static DWORD WINAPI device_notify_proc( void *arg )
 
         if (err)
         {
-            ERR("failed to get event, error %u\n", err);
+            ERR("failed to get event, error %lu\n", err);
             break;
         }
 
@@ -2120,7 +2120,7 @@ HDEVNOTIFY WINAPI I_ScRegisterDeviceNotification( struct device_notification_det
 {
     struct device_notify_registration *registration;
 
-    TRACE("callback %p, handle %p, filter %p, flags %#x\n", details->cb, details->handle, filter, flags);
+    TRACE("callback %p, handle %p, filter %p, flags %#lx\n", details->cb, details->handle, filter, flags);
 
     if (!(registration = heap_alloc(sizeof(struct device_notify_registration))))
     {
