@@ -6408,6 +6408,12 @@ static void test_h264_decoder(void)
             ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_YUY2),
         },
     };
+    static const struct attribute_desc input_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_H264),
+        {0},
+    };
 
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Video, MFVideoFormat_H264};
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Video, MFVideoFormat_NV12};
@@ -6441,6 +6447,25 @@ static void test_h264_decoder(void)
     ok(hr == MF_E_NO_MORE_TYPES, "GetInputAvailableType returned %#x\n", hr);
     todo_wine
     ok(i == 2 || broken(i == 1) /* Win7 */, "%u input media types\n", i);
+
+    /* check required input media type attributes */
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "MFCreateMediaType returned %#x\n", hr);
+    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
+    todo_wine
+    ok(hr == E_INVALIDARG, "SetInputType returned %#x.\n", hr);
+    init_media_type(media_type, input_type_desc, 1);
+    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
+    todo_wine
+    ok(hr == MF_E_INVALIDMEDIATYPE, "SetInputType returned %#x.\n", hr);
+    init_media_type(media_type, input_type_desc, 2);
+    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
+    todo_wine
+    ok(hr == S_OK, "SetInputType returned %#x.\n", hr);
+    ret = IMFMediaType_Release(media_type);
+    todo_wine
+    ok(ret == 1, "Release returned %u\n", ret);
 
     ret = IMFTransform_Release(transform);
     ok(ret == 0, "Release returned %u\n", ret);
