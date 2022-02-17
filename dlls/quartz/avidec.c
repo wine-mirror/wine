@@ -342,9 +342,12 @@ static HRESULT avi_decompressor_source_get_media_type(struct strmbase_pin *iface
 
     if (index < ARRAY_SIZE(formats))
     {
-        if (!(format = CoTaskMemAlloc(offsetof(VIDEOINFO, dwBitMasks[3]))))
+        /* In theory we could allocate less than this, but gcc generates
+         * -Warray-bounds warnings if we access the structure through a
+         * VIDEOINFO pointer, even if we only access valid fields. */
+        if (!(format = CoTaskMemAlloc(sizeof(*format))))
             return E_OUTOFMEMORY;
-        memset(format, 0, offsetof(VIDEOINFO, dwBitMasks[3]));
+        memset(format, 0, sizeof(*format));
 
         format->rcSource = sink_format->rcSource;
         format->rcTarget = sink_format->rcTarget;
