@@ -1,7 +1,7 @@
 EXTRADEFS = -D_GDI32_
 MODULE    = gdi32.dll
 IMPORTLIB = gdi32
-IMPORTS   = advapi32 win32u
+IMPORTS   = user32 advapi32 win32u
 DELAYIMPORTS = setupapi
 
 C_SRCS = \

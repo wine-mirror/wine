@@ -415,23 +415,6 @@ HGDIOBJ WINAPI GetCurrentObject( HDC hdc, UINT type )
     return NtGdiGetDCObject( hdc, obj_type );
 }
 
-/******************************************************************************
- *              get_system_dpi
- *
- * Get the system DPI, based on the DPI awareness mode.
- */
-static DWORD get_system_dpi(void)
-{
-    static UINT (WINAPI *pGetDpiForSystem)(void);
-
-    if (!pGetDpiForSystem)
-    {
-        HMODULE user = GetModuleHandleW( L"user32.dll" );
-        if (user) pGetDpiForSystem = (void *)GetProcAddress( user, "GetDpiForSystem" );
-    }
-    return pGetDpiForSystem ? pGetDpiForSystem() : 96;
-}
-
 /***********************************************************************
  *           GetStockObject    (GDI32.@)
  */
@@ -443,16 +426,16 @@ HGDIOBJ WINAPI GetStockObject( INT obj )
     switch (obj)
     {
     case OEM_FIXED_FONT:
-        if (get_system_dpi() != 96) obj = 9;
+        if (GetDpiForSystem() != 96) obj = 9;
         break;
     case SYSTEM_FONT:
-        if (get_system_dpi() != 96) obj = STOCK_LAST + 2;
+        if (GetDpiForSystem() != 96) obj = STOCK_LAST + 2;
         break;
     case SYSTEM_FIXED_FONT:
-        if (get_system_dpi() != 96) obj = STOCK_LAST + 3;
+        if (GetDpiForSystem() != 96) obj = STOCK_LAST + 3;
         break;
     case DEFAULT_GUI_FONT:
-        if (get_system_dpi() != 96) obj = STOCK_LAST + 4;
+        if (GetDpiForSystem() != 96) obj = STOCK_LAST + 4;
         break;
     }
 
