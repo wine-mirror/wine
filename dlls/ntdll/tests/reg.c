@@ -742,7 +742,7 @@ static void test_NtQueryValueKey(void)
     ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08x\n", status);
 
     len = FIELD_OFFSET(KEY_VALUE_BASIC_INFORMATION, Name[0]);
-    basic_info = HeapAlloc(GetProcessHeap(), 0, len);
+    basic_info = HeapAlloc(GetProcessHeap(), 0, sizeof(*basic_info));
     status = pNtQueryValueKey(key, &ValName, KeyValueBasicInformation, basic_info, len, &len);
     ok(status == STATUS_BUFFER_OVERFLOW, "NtQueryValueKey should have returned STATUS_BUFFER_OVERFLOW instead of 0x%08x\n", status);
     ok(basic_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %d\n", basic_info->TitleIndex);
@@ -761,7 +761,7 @@ static void test_NtQueryValueKey(void)
     HeapFree(GetProcessHeap(), 0, basic_info);
 
     len = FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[0]);
-    partial_info = HeapAlloc(GetProcessHeap(), 0, len);
+    partial_info = HeapAlloc(GetProcessHeap(), 0, sizeof(*partial_info));
     status = pNtQueryValueKey(key, &ValName, KeyValuePartialInformation, partial_info, len, &len);
     ok(status == STATUS_BUFFER_OVERFLOW, "NtQueryValueKey should have returned STATUS_BUFFER_OVERFLOW instead of 0x%08x\n", status);
     ok(partial_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %d\n", partial_info->TitleIndex);
@@ -780,7 +780,7 @@ static void test_NtQueryValueKey(void)
     HeapFree(GetProcessHeap(), 0, partial_info);
 
     len = FIELD_OFFSET(KEY_VALUE_FULL_INFORMATION, Name[0]);
-    full_info = HeapAlloc(GetProcessHeap(), 0, len);
+    full_info = HeapAlloc(GetProcessHeap(), 0, sizeof(*full_info));
     status = pNtQueryValueKey(key, &ValName, KeyValueFullInformation, full_info, len, &len);
     ok(status == STATUS_BUFFER_OVERFLOW, "NtQueryValueKey should have returned STATUS_BUFFER_OVERFLOW instead of 0x%08x\n", status);
     ok(full_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %d\n", full_info->TitleIndex);
