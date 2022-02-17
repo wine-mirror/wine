@@ -1461,7 +1461,7 @@ static void test_query_firmware(void)
     NTSTATUS status;
     SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti;
 
-    sfti = HeapAlloc(GetProcessHeap(), 0, min_sfti_len);
+    sfti = HeapAlloc(GetProcessHeap(), 0, sizeof(*sfti));
     ok(!!sfti, "Failed to allocate memory\n");
 
     sfti->ProviderSignature = 0;
