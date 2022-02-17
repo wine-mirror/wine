@@ -60,7 +60,7 @@ static ULONG WINAPI EnumBackgroundCopyJobs_AddRef(IEnumBackgroundCopyJobs *iface
     EnumBackgroundCopyJobsImpl *This = impl_from_IEnumBackgroundCopyJobs(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("(%p)->(%ld)\n", This, ref);
 
     return ref;
 }
@@ -71,7 +71,7 @@ static ULONG WINAPI EnumBackgroundCopyJobs_Release(IEnumBackgroundCopyJobs *ifac
     ULONG ref = InterlockedDecrement(&This->ref);
     ULONG i;
 
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("(%p)->(%ld)\n", This, ref);
 
     if (ref == 0) {
         for(i = 0; i < This->numJobs; i++)
@@ -90,7 +90,7 @@ static HRESULT WINAPI EnumBackgroundCopyJobs_Next(IEnumBackgroundCopyJobs *iface
     ULONG fetched;
     ULONG i;
 
-    TRACE("(%p)->(%d %p %p)\n", This, celt, rgelt, pceltFetched);
+    TRACE("(%p)->(%ld %p %p)\n", This, celt, rgelt, pceltFetched);
 
     fetched = min(celt, This->numJobs - This->indexJobs);
     if (pceltFetched)
@@ -121,7 +121,7 @@ static HRESULT WINAPI EnumBackgroundCopyJobs_Skip(IEnumBackgroundCopyJobs *iface
 {
     EnumBackgroundCopyJobsImpl *This = impl_from_IEnumBackgroundCopyJobs(iface);
 
-    TRACE("(%p)->(%d)\n", This, celt);
+    TRACE("(%p)->(%ld)\n", This, celt);
 
     if (This->numJobs - This->indexJobs < celt)
     {

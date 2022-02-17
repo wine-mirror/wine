@@ -108,14 +108,14 @@ static HRESULT WINAPI BackgroundCopyManager_GetJob(IBackgroundCopyManager *iface
 static HRESULT WINAPI BackgroundCopyManager_EnumJobs(IBackgroundCopyManager *iface,
         DWORD flags, IEnumBackgroundCopyJobs **ppEnum)
 {
-    TRACE("(0x%x %p)\n", flags, ppEnum);
+    TRACE("(0x%lx %p)\n", flags, ppEnum);
     return enum_copy_job_create(&globalMgr, ppEnum);
 }
 
 static HRESULT WINAPI BackgroundCopyManager_GetErrorDescription(IBackgroundCopyManager *iface,
         HRESULT hr, DWORD langid, LPWSTR *error_description)
 {
-    FIXME("(0x%08x 0x%x %p): stub\n", hr, langid, error_description);
+    FIXME("(0x%08lx 0x%lx %p): stub\n", hr, langid, error_description);
     return E_NOTIMPL;
 }
 

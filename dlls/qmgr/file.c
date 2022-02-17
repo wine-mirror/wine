@@ -67,7 +67,7 @@ static ULONG WINAPI BackgroundCopyFile_AddRef(
 {
     BackgroundCopyFileImpl *file = impl_from_IBackgroundCopyFile2(iface);
     ULONG ref = InterlockedIncrement(&file->ref);
-    TRACE("(%p)->(%d)\n", file, ref);
+    TRACE("(%p)->(%ld)\n", file, ref);
     return ref;
 }
 
@@ -77,7 +77,7 @@ static ULONG WINAPI BackgroundCopyFile_Release(
     BackgroundCopyFileImpl *file = impl_from_IBackgroundCopyFile2(iface);
     ULONG ref = InterlockedDecrement(&file->ref);
 
-    TRACE("(%p)->(%d)\n", file, ref);
+    TRACE("(%p)->(%ld)\n", file, ref);
 
     if (ref == 0)
     {
@@ -216,7 +216,7 @@ static HRESULT hresult_from_http_response(DWORD code)
     case 504: return BG_E_HTTP_ERROR_504;
     case 505: return BG_E_HTTP_ERROR_505;
     default:
-        FIXME("unhandled response code %u\n", code);
+        FIXME("unhandled response code %lu\n", code);
         return S_OK;
     }
 }
@@ -227,7 +227,7 @@ static void CALLBACK progress_callback_http(HINTERNET handle, DWORD_PTR context,
     BackgroundCopyFileImpl *file = (BackgroundCopyFileImpl *)context;
     BackgroundCopyJobImpl *job = file->owner;
 
-    TRACE("%p, %p, %x, %p, %u\n", handle, file, status, buf, buflen);
+    TRACE("%p, %p, %lx, %p, %lu\n", handle, file, status, buf, buflen);
 
     switch (status)
     {
@@ -465,7 +465,7 @@ static BOOL transfer_file_local(BackgroundCopyFileImpl *file, const WCHAR *tmpna
 
     if (!(ret = CopyFileExW(ptr, tmpname, progress_callback_local, file, NULL, 0)))
     {
-        WARN("Local file copy failed: error %u\n", GetLastError());
+        WARN("Local file copy failed: error %lu\n", GetLastError());
         transitionJobState(job, BG_JOB_STATE_TRANSFERRING, BG_JOB_STATE_ERROR);
     }
 
@@ -482,7 +482,7 @@ BOOL processFile(BackgroundCopyFileImpl *file, BackgroundCopyJobImpl *job)
 
     if (!GetTempPathW(MAX_PATH, tmpDir))
     {
-        ERR("Couldn't create temp file name: %d\n", GetLastError());
+        ERR("Couldn't create temp file name: %ld\n", GetLastError());
         /* Guessing on what state this should give us */
         transitionJobState(job, BG_JOB_STATE_QUEUED, BG_JOB_STATE_TRANSIENT_ERROR);
         return FALSE;
@@ -490,7 +490,7 @@ BOOL processFile(BackgroundCopyFileImpl *file, BackgroundCopyJobImpl *job)
 
     if (!GetTempFileNameW(tmpDir, L"BIT", 0, tmpName))
     {
-        ERR("Couldn't create temp file: %d\n", GetLastError());
+        ERR("Couldn't create temp file: %ld\n", GetLastError());
         /* Guessing on what state this should give us */
         transitionJobState(job, BG_JOB_STATE_QUEUED, BG_JOB_STATE_TRANSIENT_ERROR);
         return FALSE;
