@@ -681,7 +681,7 @@ static void test_UrlGetPart(void)
         {"http://host: !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff", URL_PART_PORT, 0, S_OK, " !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff"},
 
         {"http:///index.html", URL_PART_HOSTNAME, 0, S_FALSE, ""},
-        {"http:///index.html", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "http:", .todo_hr = TRUE},
+        {"http:///index.html", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "http:"},
         {"file://h o s t/c:/windows/file", URL_PART_HOSTNAME, 0, S_OK, "h o s t"},
         {"file://h o s t/c:/windows/file", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "h o s t"},
         {"file://foo:bar@localhost:21/file?query=x", URL_PART_USERNAME, 0, E_FAIL, .todo_hr = TRUE},
