@@ -165,11 +165,8 @@ SECURITY_STATUS WINAPI NCryptGetProperty(NCRYPT_HANDLE handle, const WCHAR *name
     if (flags) FIXME("flags %#lx not supported\n", flags);
 
     if (!(property = get_object_property(object, name))) return NTE_INVALID_PARAMETER;
-    if (!output)
-    {
-        *result = property->value_size;
-        return ERROR_SUCCESS;
-    }
+    *result = property->value_size;
+    if (!output) return ERROR_SUCCESS;
     if (outsize < property->value_size) return NTE_BUFFER_TOO_SMALL;
 
     memcpy(output, property->value, property->value_size);

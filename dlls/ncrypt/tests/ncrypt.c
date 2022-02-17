@@ -186,9 +186,7 @@ static void test_get_property(void)
     value[0] = 0;
     ret = NCryptGetProperty(key, NCRYPT_ALGORITHM_GROUP_PROPERTY, (BYTE *)value, sizeof(value), &size, 0);
     ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
-    todo_wine {
     ok(size == 8, "got %lu\n", size);
-    }
     ok(!lstrcmpW(value, L"RSA"), "The string doesn't match with 'RSA'\n");
 
     size = 0;
