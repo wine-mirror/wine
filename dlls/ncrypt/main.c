@@ -367,3 +367,11 @@ SECURITY_STATUS WINAPI NCryptSetProperty(NCRYPT_HANDLE handle, const WCHAR *name
 
     return set_object_property(object, name, input, insize);
 }
+
+SECURITY_STATUS WINAPI NCryptVerifySignature(NCRYPT_KEY_HANDLE handle, void *padding, BYTE *hash, DWORD hash_size,
+                                             BYTE *signature, DWORD signature_size, DWORD flags)
+{
+    FIXME("(%#Ix, %p, %p, %lu, %p, %lu, %#lx): stub\n", handle, padding, hash, hash_size, signature,
+          signature_size, flags);
+    return ERROR_SUCCESS;
+}

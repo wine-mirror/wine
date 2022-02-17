@@ -101,7 +101,7 @@
 @ stub NCryptUnprotectKey
 @ stub NCryptUnprotectSecret
 @ stub NCryptVerifyClaim
-@ stub NCryptVerifySignature
+@ stdcall NCryptVerifySignature(ptr ptr ptr long ptr long long)
 @ stub SslChangeNotify
 @ stub SslComputeClientAuthHash
 @ stub SslComputeEapKeyBlock
