@@ -6363,6 +6363,65 @@ failed:
     CoUninitialize();
 }
 
+static void test_h264_decoder(void)
+{
+    static const media_type_desc transform_inputs[] =
+    {
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_H264),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_H264_ES),
+        },
+    };
+    static const media_type_desc transform_outputs[] =
+    {
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_YV12),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_IYUV),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_I420),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_YUY2),
+        },
+    };
+
+    MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Video, MFVideoFormat_H264};
+    MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Video, MFVideoFormat_NV12};
+    IMFTransform *transform;
+    GUID class_id;
+    HRESULT hr;
+    ULONG ret;
+
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "Failed to initialize, hr %#x.\n", hr);
+
+    if (!create_transform(MFT_CATEGORY_VIDEO_DECODER, &input_type, &output_type, L"Microsoft H264 Video Decoder MFT",
+            transform_inputs, ARRAY_SIZE(transform_inputs), transform_outputs, ARRAY_SIZE(transform_outputs),
+            &transform, &class_id))
+        goto failed;
+
+    ret = IMFTransform_Release(transform);
+    ok(ret == 0, "Release returned %u\n", ret);
+
+failed:
+    CoUninitialize();
+}
+
 START_TEST(mf)
 {
     init_functions();
@@ -6398,4 +6457,5 @@ START_TEST(mf)
     test_MFRequireProtectedEnvironment();
     test_wma_encoder();
     test_wma_decoder();
+    test_h264_decoder();
 }
