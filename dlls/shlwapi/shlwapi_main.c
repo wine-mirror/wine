@@ -54,7 +54,7 @@ DECLSPEC_HIDDEN HINSTANCE shlwapi_hInstance = 0;
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
-	TRACE("%p 0x%x %p\n", hinstDLL, fdwReason, fImpLoad);
+	TRACE("%p 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
 	switch (fdwReason)
 	{
 	  case DLL_PROCESS_ATTACH:
@@ -105,7 +105,7 @@ HRESULT WINAPI DllGetVersion (DLLVERSIONINFO *pdvi)
     return S_OK;
  }
 
- WARN("pdvi->cbSize = %d, unhandled\n", pdvi2->info1.cbSize);
+ WARN("pdvi->cbSize = %ld, unhandled\n", pdvi2->info1.cbSize);
  return E_INVALIDARG;
 }
 
@@ -162,7 +162,7 @@ UINT WINAPI WhichPlatform(void)
  */
 HRESULT WINAPI SHGetViewStatePropertyBag(PCIDLIST_ABSOLUTE pidl, PCWSTR bag_name, DWORD flags, REFIID riid, void **ppv)
 {
-    FIXME("%p, %s, %#x, %s, %p stub.\n", pidl, debugstr_w(bag_name), flags, debugstr_guid(riid), ppv);
+    FIXME("%p, %s, %#lx, %s, %p stub.\n", pidl, debugstr_w(bag_name), flags, debugstr_guid(riid), ppv);
 
     return E_NOTIMPL;
 }
@@ -172,7 +172,7 @@ HRESULT WINAPI SHGetViewStatePropertyBag(PCIDLIST_ABSOLUTE pidl, PCWSTR bag_name
  */
 BOOL WINAPI SHIsLowMemoryMachine(DWORD type)
 {
-    FIXME("%d stub\n", type);
+    FIXME("%ld stub\n", type);
 
     return FALSE;
 }

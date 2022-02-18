@@ -148,7 +148,7 @@ HRESULT WINAPI AssocQueryKeyW(ASSOCF cfFlags, ASSOCKEY assockey, LPCWSTR pszAsso
   HRESULT hRet;
   IQueryAssociations* lpAssoc;
 
-  TRACE("(0x%x,%d,%s,%s,%p)\n", cfFlags, assockey, debugstr_w(pszAssoc),
+  TRACE("(0x%lx,%d,%s,%s,%p)\n", cfFlags, assockey, debugstr_w(pszAssoc),
         debugstr_w(pszExtra), phkeyOut);
 
   hRet = AssocCreate( CLSID_QueryAssociations, &IID_IQueryAssociations, (void **)&lpAssoc );
@@ -187,7 +187,7 @@ HRESULT WINAPI AssocQueryKeyA(ASSOCF cfFlags, ASSOCKEY assockey, LPCSTR pszAssoc
   WCHAR szExtraW[MAX_PATH], *lpszExtraW = NULL;
   HRESULT hRet = E_OUTOFMEMORY;
 
-  TRACE("(0x%x,%d,%s,%s,%p)\n", cfFlags, assockey, debugstr_a(pszAssoc),
+  TRACE("(0x%lx,%d,%s,%s,%p)\n", cfFlags, assockey, debugstr_a(pszAssoc),
         debugstr_a(pszExtra), phkeyOut);
 
   if (SHLWAPI_ParamAToW(pszAssoc, szAssocW, MAX_PATH, &lpszAssocW) &&
@@ -216,7 +216,7 @@ HRESULT WINAPI AssocQueryStringW(ASSOCF cfFlags, ASSOCSTR str, LPCWSTR pszAssoc,
   HRESULT hRet;
   IQueryAssociations* lpAssoc;
 
-  TRACE("(0x%x,%d,%s,%s,%p,%p)\n", cfFlags, str, debugstr_w(pszAssoc),
+  TRACE("(0x%lx,%d,%s,%s,%p,%p)\n", cfFlags, str, debugstr_w(pszAssoc),
         debugstr_w(pszExtra), pszOut, pcchOut);
 
   if (!pcchOut)
@@ -260,7 +260,7 @@ HRESULT WINAPI AssocQueryStringA(ASSOCF cfFlags, ASSOCSTR str, LPCSTR pszAssoc,
   WCHAR szExtraW[MAX_PATH], *lpszExtraW = NULL;
   HRESULT hRet = E_OUTOFMEMORY;
 
-  TRACE("(0x%x,0x%d,%s,%s,%p,%p)\n", cfFlags, str, debugstr_a(pszAssoc),
+  TRACE("(0x%lx,0x%d,%s,%s,%p,%p)\n", cfFlags, str, debugstr_a(pszAssoc),
         debugstr_a(pszExtra), pszOut, pcchOut);
 
   if (!pcchOut)
@@ -313,7 +313,7 @@ HRESULT WINAPI AssocQueryStringByKeyW(ASSOCF cfFlags, ASSOCSTR str, HKEY hkAssoc
   HRESULT hRet;
   IQueryAssociations* lpAssoc;
 
-  TRACE("(0x%x,0x%d,%p,%s,%p,%p)\n", cfFlags, str, hkAssoc,
+  TRACE("(0x%lx,0x%d,%p,%s,%p,%p)\n", cfFlags, str, hkAssoc,
         debugstr_w(pszExtra), pszOut, pcchOut);
 
   hRet = AssocCreate( CLSID_QueryAssociations, &IID_IQueryAssociations, (void **)&lpAssoc );
@@ -355,7 +355,7 @@ HRESULT WINAPI AssocQueryStringByKeyA(ASSOCF cfFlags, ASSOCSTR str, HKEY hkAssoc
   WCHAR szReturnW[MAX_PATH], *lpszReturnW = szReturnW;
   HRESULT hRet = E_OUTOFMEMORY;
 
-  TRACE("(0x%x,0x%d,%p,%s,%p,%p)\n", cfFlags, str, hkAssoc,
+  TRACE("(0x%lx,0x%d,%p,%s,%p,%p)\n", cfFlags, str, hkAssoc,
         debugstr_a(pszExtra), pszOut, pcchOut);
 
   if (!pcchOut)

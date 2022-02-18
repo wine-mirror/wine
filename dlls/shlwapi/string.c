@@ -754,7 +754,7 @@ INT WINAPI StrFromTimeIntervalA(LPSTR lpszStr, UINT cchMax, DWORD dwMS,
 {
   INT iRet = 0;
 
-  TRACE("(%p,%d,%d,%d)\n", lpszStr, cchMax, dwMS, iDigits);
+  TRACE("(%p,%d,%ld,%d)\n", lpszStr, cchMax, dwMS, iDigits);
 
   if (lpszStr && cchMax)
   {
@@ -776,7 +776,7 @@ INT WINAPI StrFromTimeIntervalW(LPWSTR lpszStr, UINT cchMax, DWORD dwMS,
 {
   INT iRet = 0;
 
-  TRACE("(%p,%d,%d,%d)\n", lpszStr, cchMax, dwMS, iDigits);
+  TRACE("(%p,%d,%ld,%d)\n", lpszStr, cchMax, dwMS, iDigits);
 
   if (lpszStr && cchMax)
   {
@@ -947,7 +947,7 @@ LPSTR WINAPI StrFormatByteSize64A(LONGLONG llBytes, LPSTR lpszDest, UINT cchMax)
  */
 LPSTR WINAPI StrFormatByteSizeA(DWORD dwBytes, LPSTR lpszDest, UINT cchMax)
 {
-  TRACE("(%d,%p,%d)\n", dwBytes, lpszDest, cchMax);
+  TRACE("(%ld,%p,%d)\n", dwBytes, lpszDest, cchMax);
 
   return StrFormatByteSize64A(dwBytes, lpszDest, cchMax);
 }
@@ -1036,7 +1036,7 @@ DWORD WINAPI SHAnsiToUnicodeCP(DWORD dwCp, LPCSTR lpSrcStr, LPWSTR lpDstStr, int
   DWORD dwRet;
 
   dwRet = MultiByteToWideChar(dwCp, 0, lpSrcStr, -1, lpDstStr, iLen);
-  TRACE("%s->%s,ret=%d\n", debugstr_a(lpSrcStr), debugstr_w(lpDstStr), dwRet);
+  TRACE("%s->%s,ret=%ld\n", debugstr_a(lpSrcStr), debugstr_w(lpDstStr), dwRet);
   return dwRet;
 }
 

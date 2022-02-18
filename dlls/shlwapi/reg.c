@@ -225,7 +225,7 @@ BOOL WINAPI UnregisterMIMETypeForExtensionW(LPCWSTR lpszSubKey)
  */
 BOOL WINAPI GetMIMETypeSubKeyA(LPCSTR lpszType, LPSTR lpszBuffer, DWORD dwLen)
 {
-  TRACE("(%s,%p,%d)\n", debugstr_a(lpszType), lpszBuffer, dwLen);
+  TRACE("(%s,%p,%ld)\n", debugstr_a(lpszType), lpszBuffer, dwLen);
 
   if (dwLen > dwLenMimeDbContent && lpszType && lpszBuffer)
   {
@@ -248,7 +248,7 @@ BOOL WINAPI GetMIMETypeSubKeyA(LPCSTR lpszType, LPSTR lpszBuffer, DWORD dwLen)
  */
 BOOL WINAPI GetMIMETypeSubKeyW(LPCWSTR lpszType, LPWSTR lpszBuffer, DWORD dwLen)
 {
-  TRACE("(%s,%p,%d)\n", debugstr_w(lpszType), lpszBuffer, dwLen);
+  TRACE("(%s,%p,%ld)\n", debugstr_w(lpszType), lpszBuffer, dwLen);
 
   if (dwLen > dwLenMimeDbContent && lpszType && lpszBuffer)
   {

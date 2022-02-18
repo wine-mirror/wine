@@ -85,7 +85,7 @@ BOOL WINAPI SHAddDataBlock(LPDBLIST* lppList, const DATABLOCK_HEADER *lpNewItem)
   {
     /* Tune size to a ULONG boundary, add space for container element */
     ulSize = ((ulSize + 0x3) & 0xFFFFFFFC) + sizeof(DATABLOCK_HEADER);
-    TRACE("Creating container item, new size = %d\n", ulSize);
+    TRACE("Creating container item, new size = %ld\n", ulSize);
   }
 
   if(!*lppList)
@@ -359,7 +359,7 @@ BOOL WINAPI SHRemoveDataBlock(LPDBLIST* lppList, DWORD dwSignature)
   LPDATABLOCK_HEADER lpNext;
   ULONG ulNewSize;
 
-  TRACE("(%p,%d)\n", lppList, dwSignature);
+  TRACE("(%p,%ld)\n", lppList, dwSignature);
 
   if(lppList && (lpList = *lppList))
   {
@@ -423,7 +423,7 @@ BOOL WINAPI SHRemoveDataBlock(LPDBLIST* lppList, DWORD dwSignature)
  */
 DATABLOCK_HEADER* WINAPI SHFindDataBlock(LPDBLIST lpList, DWORD dwSignature)
 {
-  TRACE("(%p,%d)\n", lpList, dwSignature);
+  TRACE("(%p,%ld)\n", lpList, dwSignature);
 
   if(lpList)
   {
