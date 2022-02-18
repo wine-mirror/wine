@@ -119,7 +119,7 @@ BOOL WINAPI SfcIsKeyProtected(HKEY hKey, LPCWSTR lpSubKey, REGSAM samDesired)
 
 DWORD WINAPI SfcConnectToServer(DWORD unknown)
 {
-    FIXME("%x\n", unknown);
+    FIXME("%lx\n", unknown);
     return 0;
 }
 
