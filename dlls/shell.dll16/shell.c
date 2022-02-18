@@ -470,7 +470,7 @@ DWORD WINAPI DoEnvironmentSubst16(LPSTR str,WORD length)
  */
 static LRESULT WINAPI SHELL_HookProc(INT code, WPARAM wParam, LPARAM lParam)
 {
-    TRACE("%i, %lx, %08lx\n", code, wParam, lParam );
+    TRACE("%i, %x, %08lx\n", code, wParam, lParam );
 
     if (SHELL_hWnd)
     {
@@ -675,7 +675,7 @@ void WINAPI RunDLL_CallEntry16( DWORD proc, HWND hwnd, HINSTANCE inst, LPCSTR cm
     WORD args[5];
     SEGPTR cmdline_seg;
 
-    TRACE( "proc %x hwnd %p inst %p cmdline %s cmdshow %d\n",
+    TRACE( "proc %lx hwnd %p inst %p cmdline %s cmdshow %d\n",
            proc, hwnd, inst, debugstr_a(cmdline), cmdshow );
 
     cmdline_seg = MapLS( cmdline );
