@@ -56,7 +56,7 @@ static ULONG WINAPI UIRibbonFrameworkImpl_AddRef(IUIFramework *iface)
     UIRibbonFrameworkImpl *This = impl_from_IUIFramework(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p/%p)->(): new ref %d\n", iface, This, ref);
+    TRACE("(%p/%p)->(): new ref %ld\n", iface, This, ref);
 
     return ref;
 }
@@ -66,7 +66,7 @@ static ULONG WINAPI UIRibbonFrameworkImpl_Release(IUIFramework *iface)
     UIRibbonFrameworkImpl *This = impl_from_IUIFramework(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p/%p)->(): new ref %d\n", iface, This, ref);
+    TRACE("(%p/%p)->(): new ref %ld\n", iface, This, ref);
 
     if (!ref)
         HeapFree(GetProcessHeap(), 0, This);
