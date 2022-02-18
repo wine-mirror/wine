@@ -321,6 +321,15 @@ static snd_pcm_stream_t alsa_get_direction(EDataFlow flow)
     return (flow == eRender) ? SND_PCM_STREAM_PLAYBACK : SND_PCM_STREAM_CAPTURE;
 }
 
+static void set_stream_volumes(ACImpl *This)
+{
+    struct alsa_stream *stream = This->stream;
+    unsigned int i;
+
+    for(i = 0; i < stream->fmt->nChannels; i++)
+        stream->vols[i] = This->vols[i];
+}
+
 HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids_out, GUID **guids_out,
         UINT *num, UINT *def_index)
 {
@@ -591,6 +600,7 @@ static ULONG WINAPI AudioClient_Release(IAudioClient3 *iface)
             HeapFree(GetProcessHeap(), 0, stream->tmp_buffer);
             HeapFree(GetProcessHeap(), 0, stream->hw_params);
             CoTaskMemFree(stream->fmt);
+            HeapFree(GetProcessHeap(), 0, stream->vols);
             HeapFree(GetProcessHeap(), 0, stream);
         }
         HeapFree(GetProcessHeap(), 0, This);
@@ -1171,6 +1181,14 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     for(i = 0; i < This->channel_count; ++i)
         This->vols[i] = 1.f;
 
+    stream->vols = HeapAlloc(GetProcessHeap(), 0, fmt->nChannels * sizeof(float));
+    if(!stream->vols){
+        hr = E_OUTOFMEMORY;
+        goto exit;
+    }
+    for(i = 0; i < fmt->nChannels; ++i)
+        stream->vols[i] = 1.f;
+
     stream->share = mode;
     stream->flags = flags;
 
@@ -1194,11 +1212,13 @@ exit:
         stream->local_buffer = NULL;
         CoTaskMemFree(stream->fmt);
         stream->fmt = NULL;
+        HeapFree(GetProcessHeap(), 0, stream->vols);
         HeapFree(GetProcessHeap(), 0, stream);
         HeapFree(GetProcessHeap(), 0, This->vols);
         This->vols = NULL;
     }else{
         This->stream = stream;
+        set_stream_volumes(This);
     }
 
     LeaveCriticalSection(&This->lock);
@@ -1471,7 +1491,7 @@ static void adjust_buffer_volume(const ACImpl *This, BYTE *buf, snd_pcm_uframes_
 
     /* Adjust the buffer based on the volume for each channel */
     for (i = 0; i < channels; i++)
-        vol[i] = This->vols[i] * This->session->master_vol;
+        vol[i] = stream->vols[i] * This->session->master_vol;
     for (i = 0; i < min(channels, This->session->channel_count); i++)
     {
         vol[i] *= This->session->channel_vols[i];
@@ -3214,6 +3234,7 @@ static HRESULT WINAPI AudioStreamVolume_SetChannelVolume(
     EnterCriticalSection(&This->lock);
 
     This->vols[index] = level;
+    set_stream_volumes(This);
 
     LeaveCriticalSection(&This->lock);
 
@@ -3258,6 +3279,7 @@ static HRESULT WINAPI AudioStreamVolume_SetAllVolumes(
 
     for(i = 0; i < count; ++i)
         This->vols[i] = levels[i];
+    set_stream_volumes(This);
 
     LeaveCriticalSection(&This->lock);
 

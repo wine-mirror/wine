@@ -49,6 +49,7 @@ struct alsa_stream
 
     BYTE *local_buffer, *tmp_buffer, *remapping_buf, *silence_buf;
     LONG32 getbuf_last; /* <0 when using tmp_buffer */
+    float *vols;
 };
 
 struct endpoint
