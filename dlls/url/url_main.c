@@ -56,7 +56,7 @@ DWORD WINAPI AddMIMEFileTypesPS(VOID * unknown1, LPPROPSHEETHEADERA lppsh)
  */
 BOOL WINAPI InetIsOffline(DWORD flags)
 {
-    FIXME("(%08x): stub!\n", flags);
+    FIXME("(%08lx): stub!\n", flags);
 
     return FALSE;
 }
