@@ -80,7 +80,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
 static void test_updates(int style, int flags)
 {
-    RECT r1 = {20, 20, 30, 30}, rcClient;
+    RECT r1 = {5, 5, 30, 30}, rcClient;
     HWND hStatic = build_static(style);
     int exp;
     LONG exstyle;
@@ -124,7 +124,7 @@ static void test_updates(int style, int flags)
     if (style != SS_ETCHEDHORZ && style != SS_ETCHEDVERT)
         exp = 4;
     else
-        exp = 1; /* SS_ETCHED* seems to send WM_CTLCOLORSTATIC only sometimes */
+        exp = 2; /* SS_ETCHEDHORZ/SS_ETCHEDVERT have empty client rect so WM_CTLCOLORSTATIC is sent only when parent window is invalidated */
 
     if (flags & TODO_COUNT)
         todo_wine { expect_eq(g_nReceivedColorStatic, exp, int, "%d"); }
