@@ -1182,6 +1182,7 @@ enable_api_ms_win_shcore_stream_winrt_l1_1_0
 enable_api_ms_win_shcore_thread_l1_1_0
 enable_api_ms_win_shell_shellcom_l1_1_0
 enable_api_ms_win_shell_shellfolders_l1_1_0
+enable_apisetschema
 enable_apphelp
 enable_appwiz_cpl
 enable_atl
@@ -21677,6 +21678,7 @@ wine_fn_config_makefile dlls/api-ms-win-shcore-stream-winrt-l1-1-0 enable_api_ms
 wine_fn_config_makefile dlls/api-ms-win-shcore-thread-l1-1-0 enable_api_ms_win_shcore_thread_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-shell-shellcom-l1-1-0 enable_api_ms_win_shell_shellcom_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-shell-shellfolders-l1-1-0 enable_api_ms_win_shell_shellfolders_l1_1_0
+wine_fn_config_makefile dlls/apisetschema enable_apisetschema
 wine_fn_config_makefile dlls/apphelp enable_apphelp
 wine_fn_config_makefile dlls/apphelp/tests enable_tests
 wine_fn_config_makefile dlls/appwiz.cpl enable_appwiz_cpl
