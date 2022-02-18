@@ -552,7 +552,7 @@ BOOL16 WINAPI NotifyRegister16( HTASK16 htask, FARPROC16 lpfnCallback,
 {
     int	i;
 
-    FIXME("(%x,%x,%x), semi-stub.\n",
+    FIXME("(%x,%lx,%x), semi-stub.\n",
                       htask, (DWORD)lpfnCallback, wFlags );
     if (!htask) htask = GetCurrentTask();
     for (i=0;i<nrofnotifys;i++)
