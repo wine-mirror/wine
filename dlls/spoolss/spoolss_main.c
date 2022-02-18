@@ -43,7 +43,7 @@ static HMODULE hwinspool;
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    TRACE("(%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
+    TRACE("(%p, %ld, %p)\n", hinstDLL, fdwReason, lpvReserved);
 
     switch (fdwReason) {
         case DLL_PROCESS_ATTACH: {
@@ -121,7 +121,7 @@ LPVOID WINAPI DllAllocSplMem(DWORD size)
     LPVOID  res;
 
     res = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-    TRACE("(%d) => %p\n", size, res);
+    TRACE("(%ld) => %p\n", size, res);
     return res;
 }
 

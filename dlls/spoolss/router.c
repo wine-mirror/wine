@@ -238,7 +238,7 @@ static backend_t * backend_load(LPWSTR dllname, LPWSTR name, LPWSTR regroot)
                 used_backends++;
                 backend[id]->index = used_backends;
                 LeaveCriticalSection(&backend_cs);
-                TRACE("--> backend #%d: %p (%s)\n", id, backend[id], debugstr_w(dllname));
+                TRACE("--> backend #%ld: %p (%s)\n", id, backend[id], debugstr_w(dllname));
                 return backend[id];
             }
         }
@@ -250,7 +250,7 @@ static backend_t * backend_load(LPWSTR dllname, LPWSTR name, LPWSTR regroot)
     heap_free(backend[id]);
     backend[id] = NULL;
     LeaveCriticalSection(&backend_cs);
-    WARN("failed to init %s: %u\n", debugstr_w(dllname), GetLastError());
+    WARN("failed to init %s: %lu\n", debugstr_w(dllname), GetLastError());
     return NULL;
 }
 
@@ -307,7 +307,7 @@ static backend_t * backend_first(LPWSTR name)
         }
     }
 
-    FIXME("server %s not supported in %d backends\n", debugstr_w(name), used_backends);
+    FIXME("server %s not supported in %ld backends\n", debugstr_w(name), used_backends);
     LeaveCriticalSection(&backend_cs);
     return NULL;
 }
@@ -335,7 +335,7 @@ BOOL WINAPI AddMonitorW(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
     backend_t * pb;
     DWORD res = ROUTER_UNKNOWN;
 
-    TRACE("(%s, %d, %p)\n", debugstr_w(pName), Level, pMonitors);
+    TRACE("(%s, %ld, %p)\n", debugstr_w(pName), Level, pMonitors);
 
     if (Level != 2) {
         SetLastError(ERROR_INVALID_LEVEL);
@@ -350,7 +350,7 @@ BOOL WINAPI AddMonitorW(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
         SetLastError(ERROR_PROC_NOT_FOUND);
     }
 
-    TRACE("got %u with %u\n", res, GetLastError());
+    TRACE("got %lu with %lu\n", res, GetLastError());
     return (res == ROUTER_SUCCESS);
 }
 
@@ -375,7 +375,7 @@ BOOL WINAPI AddPrinterDriverExW(LPWSTR pName, DWORD level, LPBYTE pDriverInfo, D
     backend_t * pb;
     DWORD res = ROUTER_UNKNOWN;
 
-    TRACE("(%s, %d, %p, 0x%x)\n", debugstr_w(pName), level, pDriverInfo, dwFileCopyFlags);
+    TRACE("(%s, %ld, %p, 0x%lx)\n", debugstr_w(pName), level, pDriverInfo, dwFileCopyFlags);
 
     if (!pDriverInfo) {
         SetLastError(ERROR_INVALID_PARAMETER);
@@ -390,7 +390,7 @@ BOOL WINAPI AddPrinterDriverExW(LPWSTR pName, DWORD level, LPBYTE pDriverInfo, D
         SetLastError(ERROR_PROC_NOT_FOUND);
     }
 
-    TRACE("got %u with %u\n", res, GetLastError());
+    TRACE("got %lu with %lu\n", res, GetLastError());
     return (res == ROUTER_SUCCESS);
 }
 
@@ -424,7 +424,7 @@ BOOL WINAPI DeleteMonitorW(LPWSTR pName, LPWSTR pEnvironment, LPWSTR pMonitorNam
         SetLastError(ERROR_PROC_NOT_FOUND);
     }
 
-    TRACE("got %u with %u\n", res, GetLastError());
+    TRACE("got %lu with %lu\n", res, GetLastError());
     return (res == ROUTER_SUCCESS);
 }
 
@@ -452,7 +452,7 @@ BOOL WINAPI EnumMonitorsW(LPWSTR pName, DWORD Level, LPBYTE pMonitors, DWORD cbB
     backend_t * pb;
     DWORD res = ROUTER_UNKNOWN;
 
-    TRACE("(%s, %d, %p, %d, %p, %p)\n", debugstr_w(pName), Level, pMonitors,
+    TRACE("(%s, %ld, %p, %ld, %p, %p)\n", debugstr_w(pName), Level, pMonitors,
           cbBuf, pcbNeeded, pcReturned);
 
     if (pcbNeeded) *pcbNeeded = 0;
@@ -466,7 +466,7 @@ BOOL WINAPI EnumMonitorsW(LPWSTR pName, DWORD Level, LPBYTE pMonitors, DWORD cbB
         SetLastError(ERROR_PROC_NOT_FOUND);
     }
 
-    TRACE("got %u with %u (%u byte for %u entries)\n\n", res, GetLastError(),
+    TRACE("got %lu with %lu (%lu byte for %lu entries)\n\n", res, GetLastError(),
             pcbNeeded ? *pcbNeeded : 0, pcReturned ? *pcReturned : 0);
 
     return (res == ROUTER_SUCCESS);
@@ -496,7 +496,7 @@ BOOL WINAPI EnumPortsW(LPWSTR pName, DWORD Level, LPBYTE pPorts, DWORD cbBuf,
     backend_t * pb;
     DWORD res = ROUTER_UNKNOWN;
 
-    TRACE("(%s, %d, %p, %d, %p, %p)\n", debugstr_w(pName), Level, pPorts, cbBuf,
+    TRACE("(%s, %ld, %p, %ld, %p, %p)\n", debugstr_w(pName), Level, pPorts, cbBuf,
             pcbNeeded, pcReturned);
 
     if (pcbNeeded) *pcbNeeded = 0;
@@ -510,7 +510,7 @@ BOOL WINAPI EnumPortsW(LPWSTR pName, DWORD Level, LPBYTE pPorts, DWORD cbBuf,
         SetLastError(ERROR_PROC_NOT_FOUND);
     }
 
-    TRACE("got %u with %u (%u byte for %u entries)\n", res, GetLastError(),
+    TRACE("got %lu with %lu (%lu byte for %lu entries)\n", res, GetLastError(),
             pcbNeeded ? *pcbNeeded : 0, pcReturned ? *pcReturned : 0);
 
     return (res == ROUTER_SUCCESS);
@@ -550,7 +550,7 @@ BOOL WINAPI GetPrinterDriverDirectoryW(LPWSTR pName, LPWSTR pEnvironment,
     backend_t * pb;
     DWORD res = ROUTER_UNKNOWN;
 
-    TRACE("(%s, %s, %d, %p, %d, %p)\n", debugstr_w(pName),
+    TRACE("(%s, %s, %ld, %p, %ld, %p)\n", debugstr_w(pName),
           debugstr_w(pEnvironment), Level, pDriverDirectory, cbBuf, pcbNeeded);
 
     if (pcbNeeded) *pcbNeeded = 0;
@@ -564,7 +564,7 @@ BOOL WINAPI GetPrinterDriverDirectoryW(LPWSTR pName, LPWSTR pEnvironment,
         SetLastError(ERROR_PROC_NOT_FOUND);
     }
 
-    TRACE("got %u with %u (%u byte)\n",
+    TRACE("got %lu with %lu (%lu byte)\n",
             res, GetLastError(), pcbNeeded ? *pcbNeeded : 0);
 
     return (res == ROUTER_SUCCESS);
