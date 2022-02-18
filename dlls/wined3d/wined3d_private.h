@@ -4276,6 +4276,8 @@ static inline ULONG wined3d_atomic_decrement_mutex_lock(volatile LONG *refcount)
     return count - 1;
 }
 
+#define CLIENT_BO_DISCARDED ((struct wined3d_bo *)~(UINT_PTR)0)
+
 struct wined3d_client_resource
 {
     /* The resource's persistently mapped address, which we may use to perform

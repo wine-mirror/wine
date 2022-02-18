@@ -67,6 +67,14 @@ struct wined3d_command_list
     struct wined3d_deferred_query_issue *queries;
 };
 
+static void discard_client_address(struct wined3d_resource *resource)
+{
+    struct wined3d_client_resource *client = &resource->client;
+
+    client->addr.buffer_object = CLIENT_BO_DISCARDED;
+    client->addr.addr = NULL;
+}
+
 static void invalidate_client_address(struct wined3d_resource *resource)
 {
     struct wined3d_client_resource *client = &resource->client;
@@ -2430,7 +2438,7 @@ void wined3d_cs_emit_unload_resource(struct wined3d_cs *cs, struct wined3d_resou
 {
     struct wined3d_cs_unload_resource *op;
 
-    invalidate_client_address(resource);
+    discard_client_address(resource);
 
     op = wined3d_device_context_require_space(&cs->c, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
     op->opcode = WINED3D_CS_OP_UNLOAD_RESOURCE;
@@ -3133,6 +3141,9 @@ static bool wined3d_cs_map_upload_bo(struct wined3d_device_context *context, str
             TRACE("Not allocating an upload buffer because system memory is pinned for this resource.\n");
             return NULL;
         }
+
+        if ((flags & WINED3D_MAP_NOOVERWRITE) && client->addr.buffer_object == CLIENT_BO_DISCARDED)
+            flags = (flags & ~WINED3D_MAP_NOOVERWRITE) | WINED3D_MAP_DISCARD;
 
         if (flags & WINED3D_MAP_DISCARD)
         {

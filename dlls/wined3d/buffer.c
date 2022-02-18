@@ -1321,6 +1321,9 @@ static HRESULT wined3d_buffer_init(struct wined3d_buffer *buffer, struct wined3d
     }
     buffer->maps_size = 1;
 
+    if (buffer->locations & WINED3D_LOCATION_DISCARDED)
+        buffer->resource.client.addr.buffer_object = CLIENT_BO_DISCARDED;
+
     if (data)
         wined3d_buffer_init_data(buffer, device, data);
 
