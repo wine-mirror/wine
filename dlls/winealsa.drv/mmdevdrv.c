@@ -1470,9 +1470,8 @@ static BYTE *remap_channels(struct alsa_stream *stream, BYTE *buf, snd_pcm_ufram
     return stream->remapping_buf;
 }
 
-static void adjust_buffer_volume(const ACImpl *This, BYTE *buf, snd_pcm_uframes_t frames)
+static void adjust_buffer_volume(const struct alsa_stream *stream, BYTE *buf, snd_pcm_uframes_t frames)
 {
-    struct alsa_stream *stream = This->stream;
     BOOL adjust = FALSE;
     UINT32 i, channels, mute = 0;
     BYTE *end;
@@ -1587,12 +1586,11 @@ static void adjust_buffer_volume(const ACImpl *This, BYTE *buf, snd_pcm_uframes_
     }
 }
 
-static snd_pcm_sframes_t alsa_write_best_effort(ACImpl *This, BYTE *buf, snd_pcm_uframes_t frames)
+static snd_pcm_sframes_t alsa_write_best_effort(struct alsa_stream *stream, BYTE *buf, snd_pcm_uframes_t frames)
 {
-    struct alsa_stream *stream = This->stream;
     snd_pcm_sframes_t written;
 
-    adjust_buffer_volume(This, buf, frames);
+    adjust_buffer_volume(stream, buf, frames);
 
     /* Mark the frames we've already adjusted */
     if (stream->vol_adjusted_frames < frames)
@@ -1625,11 +1623,10 @@ static snd_pcm_sframes_t alsa_write_best_effort(ACImpl *This, BYTE *buf, snd_pcm
     return written;
 }
 
-static snd_pcm_sframes_t alsa_write_buffer_wrap(ACImpl *This, BYTE *buf,
+static snd_pcm_sframes_t alsa_write_buffer_wrap(struct alsa_stream *stream, BYTE *buf,
         snd_pcm_uframes_t buflen, snd_pcm_uframes_t offs,
         snd_pcm_uframes_t to_write)
 {
-    struct alsa_stream *stream = This->stream;
     snd_pcm_sframes_t ret = 0;
 
     while(to_write){
@@ -1641,7 +1638,7 @@ static snd_pcm_sframes_t alsa_write_buffer_wrap(ACImpl *This, BYTE *buf,
         else
             chunk = to_write;
 
-        tmp = alsa_write_best_effort(This, buf + offs * stream->fmt->nBlockAlign, chunk);
+        tmp = alsa_write_best_effort(stream, buf + offs * stream->fmt->nBlockAlign, chunk);
         if(tmp < 0)
             return ret;
         if(!tmp)
@@ -1663,9 +1660,8 @@ static UINT buf_ptr_diff(UINT left, UINT right, UINT bufsize)
     return bufsize - (left - right);
 }
 
-static UINT data_not_in_alsa(ACImpl *This)
+static UINT data_not_in_alsa(struct alsa_stream *stream)
 {
-    struct alsa_stream *stream = This->stream;
     UINT32 diff;
 
     diff = buf_ptr_diff(stream->lcl_offs_frames, stream->wri_offs_frames, stream->bufsize_frames);
@@ -1692,9 +1688,8 @@ static UINT data_not_in_alsa(ACImpl *This)
  *
  * During Stop, we rewind the ALSA buffer
  */
-static void alsa_write_data(ACImpl *This)
+static void alsa_write_data(struct alsa_stream *stream)
 {
-    struct alsa_stream *stream = This->stream;
     snd_pcm_sframes_t written;
     snd_pcm_uframes_t avail, max_copy_frames, data_frames_played;
     int err;
@@ -1723,13 +1718,13 @@ static void alsa_write_data(ACImpl *This)
      * continuous rendering.  Additional benefit: Force ALSA to start. */
     if(stream->data_in_alsa_frames == 0 && stream->held_frames < stream->alsa_period_frames)
     {
-        alsa_write_best_effort(This, stream->silence_buf,
+        alsa_write_best_effort(stream, stream->silence_buf,
                                stream->alsa_period_frames - stream->held_frames);
         stream->vol_adjusted_frames = 0;
     }
 
     if(stream->started)
-        max_copy_frames = data_not_in_alsa(This);
+        max_copy_frames = data_not_in_alsa(stream);
     else
         max_copy_frames = 0;
 
@@ -1747,7 +1742,7 @@ static void alsa_write_data(ACImpl *This)
 
         to_write = min(avail, max_copy_frames);
 
-        written = alsa_write_buffer_wrap(This, stream->local_buffer,
+        written = alsa_write_buffer_wrap(stream, stream->local_buffer,
                 stream->bufsize_frames, stream->lcl_offs_frames, to_write);
         if(written <= 0)
             break;
@@ -1763,9 +1758,8 @@ static void alsa_write_data(ACImpl *This)
         SetEvent(stream->event);
 }
 
-static void alsa_read_data(ACImpl *This)
+static void alsa_read_data(struct alsa_stream *stream)
 {
-    struct alsa_stream *stream = This->stream;
     snd_pcm_sframes_t nread;
     UINT32 pos = stream->wri_offs_frames, limit = stream->held_frames;
     unsigned int i;
@@ -1833,9 +1827,9 @@ static void CALLBACK alsa_push_buffer_data(void *user, BOOLEAN timer)
     QueryPerformanceCounter(&stream->last_period_time);
 
     if(This->dataflow == eRender)
-        alsa_write_data(This);
+        alsa_write_data(stream);
     else if(This->dataflow == eCapture)
-        alsa_read_data(This);
+        alsa_read_data(stream);
 
     LeaveCriticalSection(&This->lock);
 }
@@ -1923,7 +1917,7 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
             offs = stream->wri_offs_frames - stream->held_frames;
 
         /* fill it with data */
-        written = alsa_write_buffer_wrap(This, stream->local_buffer,
+        written = alsa_write_buffer_wrap(stream, stream->local_buffer,
                 stream->bufsize_frames, offs, avail);
 
         if(written > 0){
