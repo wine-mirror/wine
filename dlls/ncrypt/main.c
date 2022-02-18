@@ -190,7 +190,7 @@ static SECURITY_STATUS set_object_property(struct object *object, const WCHAR *n
     {
         if (!(object->properties = malloc(sizeof(*property))))
         {
-            ERR("Error allocating memory.");
+            ERR("Error allocating memory.\n");
             return NTE_NO_MEMORY;
         }
         property = &object->properties[object->num_properties++];
@@ -200,7 +200,7 @@ static SECURITY_STATUS set_object_property(struct object *object, const WCHAR *n
         struct object_property *tmp;
         if (!(tmp = realloc(object->properties, sizeof(*property) * (object->num_properties + 1))))
         {
-            ERR("Error allocating memory.");
+            ERR("Error allocating memory.\n");
             return NTE_NO_MEMORY;
         }
         object->properties = tmp;
@@ -210,7 +210,7 @@ static SECURITY_STATUS set_object_property(struct object *object, const WCHAR *n
     memset(property, 0, sizeof(*property));
     if (!(property->key = malloc((lstrlenW(name) + 1) * sizeof(WCHAR))))
     {
-        ERR("Error allocating memory.");
+        ERR("Error allocating memory.\n");
         return NTE_NO_MEMORY;
     }
 
@@ -218,7 +218,7 @@ static SECURITY_STATUS set_object_property(struct object *object, const WCHAR *n
     property->value_size = value_size;
     if (!(property->value = malloc(value_size)))
     {
-        ERR("Error allocating memory.");
+        ERR("Error allocating memory.\n");
         free(property->key);
         property->key = NULL;
         return NTE_NO_MEMORY;
