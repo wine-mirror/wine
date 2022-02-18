@@ -163,6 +163,9 @@ struct pid_effect_state
 {
     BYTE id;
     UINT collection;
+    struct hid_value_caps *safety_switch_caps;
+    struct hid_value_caps *actuator_power_caps;
+    struct hid_value_caps *actuator_override_switch_caps;
 };
 
 struct hid_joystick
@@ -1298,9 +1301,12 @@ static HRESULT hid_joystick_read( IDirectInputDevice8W *iface )
                 }
             }
             if (!(device_state & DIGFFS_ACTUATORSON)) device_state |= DIGFFS_ACTUATORSOFF;
-            if (!(device_state & DIGFFS_SAFETYSWITCHON)) device_state |= DIGFFS_SAFETYSWITCHOFF;
-            if (!(device_state & DIGFFS_USERFFSWITCHON)) device_state |= DIGFFS_USERFFSWITCHOFF;
-            if (!(device_state & DIGFFS_POWERON)) device_state |= DIGFFS_POWEROFF;
+            if (!(device_state & DIGFFS_SAFETYSWITCHON) && impl->pid_effect_state.safety_switch_caps)
+                device_state |= DIGFFS_SAFETYSWITCHOFF;
+            if (!(device_state & DIGFFS_USERFFSWITCHON) && impl->pid_effect_state.actuator_override_switch_caps)
+                device_state |= DIGFFS_USERFFSWITCHOFF;
+            if (!(device_state & DIGFFS_POWERON) && impl->pid_effect_state.actuator_power_caps)
+                device_state |= DIGFFS_POWEROFF;
 
             TRACE( "effect %lu state %#x, device state %#x\n", index, effect_state, device_state );
 
@@ -1772,7 +1778,15 @@ static BOOL init_pid_caps( struct hid_joystick *impl, struct hid_value_caps *cap
         return DIENUM_CONTINUE;
 
     if (instance->wCollectionNumber == effect_state->collection)
+    {
         SET_REPORT_ID( effect_state );
+        if (instance->wUsage == PID_USAGE_SAFETY_SWITCH)
+            effect_state->safety_switch_caps = caps;
+        if (instance->wUsage == PID_USAGE_ACTUATOR_POWER)
+            effect_state->actuator_power_caps = caps;
+        if (instance->wUsage == PID_USAGE_ACTUATOR_OVERRIDE_SWITCH)
+            effect_state->actuator_override_switch_caps = caps;
+    }
 
     if (!(instance->dwType & DIDFT_OUTPUT)) return DIENUM_CONTINUE;
 
