@@ -19,51 +19,13 @@
  */
 
 #include "config.h"
-
-#include <stdarg.h>
-
-#include "windef.h"
-#include "winbase.h"
-#include "rpc.h"
-#include "winreg.h"
-#include "cfgmgr32.h"
-#include "initguid.h"
-#include "devguid.h"
-#include "devpkey.h"
-#include "ntddvdeo.h"
-#include "setupapi.h"
-#define WIN32_NO_STATUS
-#include "winternl.h"
-#include "wine/debug.h"
-#include "wine/unicode.h"
 #include "x11drv.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
-/* Wine specific properties */
-DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_MONITOR_RCMONITOR, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5b, 3);
-
-static const WCHAR displayW[] = {'D','I','S','P','L','A','Y',0};
-static const WCHAR video_keyW[] = {
-    'H','A','R','D','W','A','R','E','\\',
-    'D','E','V','I','C','E','M','A','P','\\',
-    'V','I','D','E','O',0};
-
 static struct x11drv_display_device_handler host_handler;
 struct x11drv_display_device_handler desktop_handler;
-
-/* Cached screen information, protected by screen_section */
-static HKEY video_key;
-static RECT primary_monitor_rect;
-static FILETIME last_query_screen_time;
-static CRITICAL_SECTION screen_section;
-static CRITICAL_SECTION_DEBUG screen_critsect_debug =
-{
-    0, 0, &screen_section,
-    {&screen_critsect_debug.ProcessLocksList, &screen_critsect_debug.ProcessLocksList},
-     0, 0, {(DWORD_PTR)(__FILE__ ": screen_section")}
-};
-static CRITICAL_SECTION screen_section = {&screen_critsect_debug, -1, 0, 0, 0, 0};
 
 HANDLE get_display_device_init_mutex(void)
 {
@@ -78,61 +40,6 @@ void release_display_device_init_mutex(HANDLE mutex)
 {
     ReleaseMutex(mutex);
     CloseHandle(mutex);
-}
-
-/* Update screen rectangle cache from SetupAPI if it's outdated, return FALSE on failure and TRUE on success */
-static BOOL update_screen_cache(void)
-{
-    RECT virtual_rect = {0}, primary_rect = {0}, monitor_rect;
-    SP_DEVINFO_DATA device_data = {sizeof(device_data)};
-    HDEVINFO devinfo = INVALID_HANDLE_VALUE;
-    FILETIME filetime = {0};
-    HANDLE mutex = NULL;
-    DWORD i = 0;
-    INT result;
-    DWORD type;
-    BOOL ret = FALSE;
-
-    EnterCriticalSection(&screen_section);
-    if ((!video_key && RegOpenKeyW(HKEY_LOCAL_MACHINE, video_keyW, &video_key))
-        || RegQueryInfoKeyW(video_key, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &filetime))
-    {
-        LeaveCriticalSection(&screen_section);
-        return FALSE;
-    }
-    result = CompareFileTime(&filetime, &last_query_screen_time);
-    LeaveCriticalSection(&screen_section);
-    if (result < 1)
-        return TRUE;
-
-    mutex = get_display_device_init_mutex();
-
-    devinfo = SetupDiGetClassDevsW(&GUID_DEVCLASS_MONITOR, displayW, NULL, DIGCF_PRESENT);
-    if (devinfo == INVALID_HANDLE_VALUE)
-        goto fail;
-
-    while (SetupDiEnumDeviceInfo(devinfo, i++, &device_data))
-    {
-        if (!SetupDiGetDevicePropertyW(devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_RCMONITOR, &type,
-                                       (BYTE *)&monitor_rect, sizeof(monitor_rect), NULL, 0))
-            goto fail;
-
-        UnionRect(&virtual_rect, &virtual_rect, &monitor_rect);
-        if (i == 1)
-            primary_rect = monitor_rect;
-    }
-
-    EnterCriticalSection(&screen_section);
-    primary_monitor_rect = primary_rect;
-    last_query_screen_time = filetime;
-    LeaveCriticalSection(&screen_section);
-    ret = TRUE;
-fail:
-    SetupDiDestroyDeviceInfoList(devinfo);
-    release_display_device_init_mutex(mutex);
-    if (!ret)
-        WARN("Update screen cache failed!\n");
-    return ret;
 }
 
 POINT virtual_screen_to_root(INT x, INT y)
@@ -165,11 +72,7 @@ RECT get_virtual_screen_rect(void)
 RECT get_primary_monitor_rect(void)
 {
     RECT primary;
-
-    update_screen_cache();
-    EnterCriticalSection(&screen_section);
-    primary = primary_monitor_rect;
-    LeaveCriticalSection(&screen_section);
+    NtUserCallOneParam( (UINT_PTR)&primary, NtUserGetPrimaryMonitorRect );
     return primary;
 }
 

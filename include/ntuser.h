@@ -75,6 +75,7 @@ enum
 {
     NtUserGetClipCursor,
     NtUserGetCursorPos,
+    NtUserGetPrimaryMonitorRect,
     NtUserGetSysColor,
     NtUserGetSysColorBrush,
     NtUserGetSysColorPen,

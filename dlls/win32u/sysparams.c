@@ -1474,7 +1474,7 @@ RECT get_display_rect( const WCHAR *display )
     return map_dpi_rect( rect, system_dpi, get_thread_dpi() );
 }
 
-static RECT get_primary_monitor_rect(void)
+static RECT get_primary_monitor_rect( UINT dpi )
 {
     struct monitor *monitor;
     RECT rect = {0};
@@ -1489,7 +1489,7 @@ static RECT get_primary_monitor_rect(void)
     }
 
     unlock_display_devices();
-    return map_dpi_rect( rect, system_dpi, get_thread_dpi() );
+    return map_dpi_rect( rect, system_dpi, dpi );
 }
 
 /**********************************************************************
@@ -4203,10 +4203,10 @@ int get_system_metrics( int index )
     case SM_MOUSEWHEELPRESENT:
         return 1;
     case SM_CXSCREEN:
-        rect = get_primary_monitor_rect();
+        rect = get_primary_monitor_rect( get_thread_dpi() );
         return rect.right - rect.left;
     case SM_CYSCREEN:
-        rect = get_primary_monitor_rect();
+        rect = get_primary_monitor_rect( get_thread_dpi() );
         return rect.bottom - rect.top;
     case SM_XVIRTUALSCREEN:
         rect = get_virtual_screen_rect( get_thread_dpi() );
@@ -4528,6 +4528,9 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
         return get_sys_color( arg );
     case NtUserRealizePalette:
         return realize_palette( UlongToHandle(arg) );
+    case NtUserGetPrimaryMonitorRect:
+        *(RECT *)arg = get_primary_monitor_rect( 0 );
+        return 1;
     case NtUserGetSysColorBrush:
         return HandleToUlong( get_sys_color_brush(arg) );
     case NtUserGetSysColorPen:
