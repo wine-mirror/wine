@@ -37,12 +37,16 @@ static BOOL (WINAPI *pSetDefaultDllDirectories)(DWORD);
 static BOOL (WINAPI *pK32GetModuleInformation)(HANDLE process, HMODULE module,
                                                MODULEINFO *modinfo, DWORD cb);
 
+static NTSTATUS (WINAPI *pApiSetQueryApiSetPresence)(const UNICODE_STRING*,BOOLEAN*);
+static NTSTATUS (WINAPI *pApiSetQueryApiSetPresenceEx)(const UNICODE_STRING*,BOOLEAN*,BOOLEAN*);
 static NTSTATUS (WINAPI *pLdrGetDllDirectory)(UNICODE_STRING*);
 static NTSTATUS (WINAPI *pLdrSetDllDirectory)(UNICODE_STRING*);
 static NTSTATUS (WINAPI *pLdrGetDllHandle)( LPCWSTR load_path, ULONG flags, const UNICODE_STRING *name, HMODULE *base );
 static NTSTATUS (WINAPI *pLdrGetDllHandleEx)( ULONG flags, LPCWSTR load_path, ULONG *dll_characteristics,
                                               const UNICODE_STRING *name, HMODULE *base );
 static NTSTATUS (WINAPI *pLdrGetDllFullName)( HMODULE module, UNICODE_STRING *name );
+
+static BOOL (WINAPI *pIsApiSetImplemented)(LPCSTR);
 
 static BOOL is_unicode_enabled = TRUE;
 
@@ -930,11 +934,15 @@ static void init_pointers(void)
     MAKEFUNC(SetDefaultDllDirectories);
     MAKEFUNC(K32GetModuleInformation);
     mod = GetModuleHandleA( "ntdll.dll" );
+    MAKEFUNC(ApiSetQueryApiSetPresence);
+    MAKEFUNC(ApiSetQueryApiSetPresenceEx);
     MAKEFUNC(LdrGetDllDirectory);
     MAKEFUNC(LdrSetDllDirectory);
     MAKEFUNC(LdrGetDllHandle);
     MAKEFUNC(LdrGetDllHandleEx);
     MAKEFUNC(LdrGetDllFullName);
+    mod = GetModuleHandleA( "kernelbase.dll" );
+    MAKEFUNC(IsApiSetImplemented);
 #undef MAKEFUNC
 
     /* before Windows 7 this was not exported in kernel32 */
@@ -1426,6 +1434,85 @@ static void test_LdrGetDllFullName(void)
             wine_dbgstr_w(expected_path), wine_dbgstr_w(path_buffer) );
 }
 
+static void test_apisets(void)
+{
+    static const struct
+    {
+        const char *name;
+        BOOLEAN present;
+        NTSTATUS status;
+        BOOLEAN present_ex, in_schema, broken;
+    }
+    tests[] =
+    {
+        { "api-ms-win-core-console-l1-1-0", TRUE, STATUS_SUCCESS, TRUE, TRUE },
+        { "api-ms-win-core-console-l1-1-0.dll", TRUE, STATUS_INVALID_PARAMETER },
+        { "api-ms-win-core-console-l1-1-9", TRUE, STATUS_SUCCESS, FALSE, FALSE, TRUE },
+        { "api-ms-win-core-console-l1-1-9.dll", TRUE, STATUS_INVALID_PARAMETER, FALSE, FALSE, TRUE },
+        { "api-ms-win-core-console-l1-1", FALSE, STATUS_SUCCESS },
+        { "api-ms-win-core-console-l1-1-0.fake", TRUE, STATUS_INVALID_PARAMETER, FALSE, FALSE, TRUE },
+        { "api-ms-win-foo-bar-l1-1-0", FALSE, STATUS_SUCCESS },
+        { "api-ms-win-foo-bar-l1-1-0.dll", FALSE, STATUS_INVALID_PARAMETER },
+        { "ext-ms-win-gdi-draw-l1-1-1", TRUE, STATUS_SUCCESS, TRUE, TRUE },
+        { "ext-ms-win-gdi-draw-l1-1-1.dll", TRUE, STATUS_INVALID_PARAMETER },
+        { "api-ms-win-deprecated-apis-advapi-l1-1-0", FALSE, STATUS_SUCCESS, FALSE, TRUE },
+        { "foo", FALSE, STATUS_INVALID_PARAMETER },
+        { "foo.dll", FALSE, STATUS_INVALID_PARAMETER },
+        { "", FALSE, STATUS_INVALID_PARAMETER },
+    };
+    unsigned int i;
+    NTSTATUS status;
+    BOOLEAN present, in_schema;
+    UNICODE_STRING name;
+
+    if (!pApiSetQueryApiSetPresence)
+    {
+        win_skip( "ApiSetQueryApiSetPresence not implemented\n" );
+        return;
+    }
+    todo_wine
+    if (!pApiSetQueryApiSetPresenceEx) win_skip( "ApiSetQueryApiSetPresenceEx not implemented\n" );
+    todo_wine
+    if (!pIsApiSetImplemented) win_skip( "IsApiSetImplemented not implemented\n" );
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        RtlCreateUnicodeStringFromAsciiz( &name, tests[i].name );
+        name.Buffer[name.Length / sizeof(WCHAR)] = 0xcccc;  /* test without null termination */
+        winetest_push_context( "%u:%s", i, tests[i].name );
+        present = 0xff;
+        status = pApiSetQueryApiSetPresence( &name, &present );
+        todo_wine
+        ok( status == STATUS_SUCCESS, "wrong ret %x\n", status );
+        todo_wine_if( !tests[i].present )
+        ok( present == tests[i].present || broken(!present && tests[i].broken) /* win8 */,
+            "wrong present %u\n", present );
+        if (pApiSetQueryApiSetPresenceEx)
+        {
+            present = in_schema = 0xff;
+            status = pApiSetQueryApiSetPresenceEx( &name, &in_schema, &present );
+            ok( status == tests[i].status, "wrong ret %x\n", status );
+            if (!status)
+            {
+                ok( in_schema == tests[i].in_schema, "wrong in_schema %u\n", in_schema );
+                ok( present == tests[i].present_ex, "wrong present %u\n", present );
+            }
+            else
+            {
+                ok( in_schema == 0xff, "wrong in_schema %u\n", in_schema );
+                ok( present == 0xff, "wrong present %u\n", present );
+            }
+        }
+        if (pIsApiSetImplemented)
+        {
+            BOOL ret = pIsApiSetImplemented( tests[i].name );
+            ok( ret == (!tests[i].status && tests[i].present_ex), "wrong result %u\n", ret );
+        }
+        winetest_pop_context();
+        RtlFreeUnicodeString( &name );
+    }
+}
+
 static void test_ddag_node(void)
 {
     static const struct
@@ -1562,5 +1649,6 @@ START_TEST(module)
     test_SetDefaultDllDirectories();
     test_LdrGetDllHandleEx();
     test_LdrGetDllFullName();
+    test_apisets();
     test_ddag_node();
 }
