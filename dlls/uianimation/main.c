@@ -139,7 +139,7 @@ static ULONG WINAPI animation_storyboard_AddRef( IUIAnimationStoryboard *iface )
     struct animation_storyboard *This = impl_from_IUIAnimationStoryboard( iface );
     ULONG ref = InterlockedIncrement( &This->ref );
 
-    TRACE( "(%p) ref = %u\n", This, ref );
+    TRACE( "(%p) ref = %lu\n", This, ref );
     return ref;
 }
 
@@ -148,7 +148,7 @@ static ULONG WINAPI animation_storyboard_Release( IUIAnimationStoryboard *iface 
     struct animation_storyboard *This = impl_from_IUIAnimationStoryboard( iface );
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE( "(%p) ref = %u\n", This, ref );
+    TRACE( "(%p) ref = %lu\n", This, ref );
 
     if (!ref)
         heap_free( This );
@@ -359,7 +359,7 @@ static ULONG WINAPI animation_var_AddRef( IUIAnimationVariable *iface )
     struct animation_var *This = impl_from_IUIAnimationVariable( iface );
     ULONG ref = InterlockedIncrement( &This->ref );
 
-    TRACE( "(%p) ref = %u\n", This, ref );
+    TRACE( "(%p) ref = %lu\n", This, ref );
     return ref;
 }
 
@@ -368,7 +368,7 @@ static ULONG WINAPI animation_var_Release( IUIAnimationVariable *iface )
     struct animation_var *This = impl_from_IUIAnimationVariable( iface );
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE( "(%p) ref = %u\n", This, ref );
+    TRACE( "(%p) ref = %lu\n", This, ref );
 
     if (!ref)
         heap_free( This );
@@ -548,7 +548,7 @@ static ULONG WINAPI manager_AddRef( IUIAnimationManager *iface )
     struct manager *This = impl_from_IUIAnimationManager( iface );
     ULONG ref = InterlockedIncrement( &This->ref );
 
-    TRACE( "(%p) ref = %u\n", This, ref );
+    TRACE( "(%p) ref = %lu\n", This, ref );
     return ref;
 }
 
@@ -557,7 +557,7 @@ static ULONG WINAPI manager_Release( IUIAnimationManager *iface )
     struct manager *This = impl_from_IUIAnimationManager( iface );
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE( "(%p) ref = %u\n", This, ref );
+    TRACE( "(%p) ref = %lu\n", This, ref );
 
     if (!ref)
     {
@@ -781,7 +781,7 @@ static ULONG WINAPI timer_AddRef( IUIAnimationTimer *iface )
     struct timer *This = impl_from_IUIAnimationTimer( iface );
     ULONG ref = InterlockedIncrement( &This->ref );
 
-    TRACE( "(%p) ref = %u\n", This, ref );
+    TRACE( "(%p) ref = %lu\n", This, ref );
     return ref;
 }
 
@@ -790,7 +790,7 @@ static ULONG WINAPI timer_Release( IUIAnimationTimer *iface )
     struct timer *This = impl_from_IUIAnimationTimer( iface );
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE( "(%p) ref = %u\n", This, ref );
+    TRACE( "(%p) ref = %lu\n", This, ref );
 
     if (!ref)
         heap_free( This );
@@ -918,7 +918,7 @@ static ULONG WINAPI tr_factory_AddRef( IUIAnimationTransitionFactory *iface )
     struct tr_factory *This = impl_from_IUIAnimationTransitionFactory( iface );
     ULONG ref = InterlockedIncrement( &This->ref );
 
-    TRACE( "(%p) ref = %u\n", This, ref );
+    TRACE( "(%p) ref = %lu\n", This, ref );
     return ref;
 }
 
@@ -927,7 +927,7 @@ static ULONG WINAPI tr_factory_Release( IUIAnimationTransitionFactory *iface )
     struct tr_factory *This = impl_from_IUIAnimationTransitionFactory( iface );
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE( "(%p) ref = %u\n", This, ref );
+    TRACE( "(%p) ref = %lu\n", This, ref );
 
     if (!ref)
         heap_free( This );
@@ -1005,7 +1005,7 @@ static ULONG WINAPI tr_library_AddRef( IUIAnimationTransitionLibrary *iface )
     struct tr_library *This = impl_from_IUIAnimationTransitionLibrary( iface );
     ULONG ref = InterlockedIncrement( &This->ref );
 
-    TRACE( "(%p) ref = %u\n", This, ref );
+    TRACE( "(%p) ref = %lu\n", This, ref );
     return ref;
 }
 
@@ -1014,7 +1014,7 @@ static ULONG WINAPI tr_library_Release( IUIAnimationTransitionLibrary *iface )
     struct tr_library *This = impl_from_IUIAnimationTransitionLibrary( iface );
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE( "(%p) ref = %u\n", This, ref );
+    TRACE( "(%p) ref = %lu\n", This, ref );
 
     if (!ref)
         heap_free( This );
