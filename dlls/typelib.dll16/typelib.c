@@ -82,14 +82,14 @@ QueryPathOfRegTypeLib16(
 	TRACE("\n");
 
 	if (HIWORD(guid)) {
-            sprintf( typelibkey, "SOFTWARE\\Classes\\Typelib\\{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\\%d.%d\\%x\\win16",
+            sprintf( typelibkey, "SOFTWARE\\Classes\\Typelib\\{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\\%d.%d\\%lx\\win16",
                      guid->Data1, guid->Data2, guid->Data3,
                      guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
                      guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7],
                      wMaj,wMin,lcid);
 	} else {
-		sprintf(xguid,"<guid 0x%08x>",(DWORD)guid);
-		FIXME("(%s,%d,%d,0x%04x,%p),can't handle non-string guids.\n",xguid,wMaj,wMin,lcid,path);
+		sprintf(xguid,"<guid 0x%08lx>",(DWORD)guid);
+		FIXME("(%s,%d,%d,0x%04lx,%p),can't handle non-string guids.\n",xguid,wMaj,wMin,lcid,path);
 		return E_FAIL;
 	}
 	plen = sizeof(pathname);
