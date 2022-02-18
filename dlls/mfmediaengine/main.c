@@ -1169,6 +1169,9 @@ static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMedi
         IMFTopologyNode *sar_node = NULL, *audio_src = NULL;
         IMFTopologyNode *grabber_node = NULL, *video_src = NULL;
 
+        if (engine->flags & MF_MEDIA_ENGINE_REAL_TIME_MODE)
+            IMFTopology_SetUINT32(topology, &MF_LOW_LATENCY, TRUE);
+
         if (sd_audio)
         {
             if (FAILED(hr = media_engine_create_source_node(source, pd, sd_audio, &audio_src)))
@@ -2695,16 +2698,36 @@ static HRESULT WINAPI media_engine_SetAudioEndpointRole(IMFMediaEngineEx *iface,
 
 static HRESULT WINAPI media_engine_GetRealTimeMode(IMFMediaEngineEx *iface, BOOL *enabled)
 {
-    FIXME("%p, %p stub.\n", iface, enabled);
+    struct media_engine *engine = impl_from_IMFMediaEngineEx(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, enabled);
+
+    EnterCriticalSection(&engine->cs);
+    if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else
+        *enabled = !!(engine->flags & MF_MEDIA_ENGINE_REAL_TIME_MODE);
+    LeaveCriticalSection(&engine->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_engine_SetRealTimeMode(IMFMediaEngineEx *iface, BOOL enable)
 {
-    FIXME("%p, %d stub.\n", iface, enable);
+    struct media_engine *engine = impl_from_IMFMediaEngineEx(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %d.\n", iface, enable);
+
+    EnterCriticalSection(&engine->cs);
+    if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else
+        media_engine_set_flag(engine, MF_MEDIA_ENGINE_REAL_TIME_MODE, enable);
+    LeaveCriticalSection(&engine->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_engine_SetCurrentTimeEx(IMFMediaEngineEx *iface, double seektime, MF_MEDIA_ENGINE_SEEK_MODE mode)

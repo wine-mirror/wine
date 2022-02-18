@@ -240,12 +240,14 @@ static void test_factory(void)
 static void test_CreateInstance(void)
 {
     struct media_engine_notify *notify;
+    IMFMediaEngineEx *media_engine_ex;
     IMFDXGIDeviceManager *manager;
     IMFMediaEngine *media_engine;
     IMFAttributes *attributes;
     IUnknown *unk;
     UINT token;
     HRESULT hr;
+    BOOL ret;
 
     notify = create_callback();
 
@@ -273,7 +275,8 @@ static void test_CreateInstance(void)
     hr = IMFAttributes_SetUINT32(attributes, &MF_MEDIA_ENGINE_VIDEO_OUTPUT_FORMAT, DXGI_FORMAT_UNKNOWN);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    hr = IMFMediaEngineClassFactory_CreateInstance(factory, MF_MEDIA_ENGINE_WAITFORSTABLE_STATE, attributes, &media_engine);
+    hr = IMFMediaEngineClassFactory_CreateInstance(factory, MF_MEDIA_ENGINE_REAL_TIME_MODE
+            | MF_MEDIA_ENGINE_WAITFORSTABLE_STATE, attributes, &media_engine);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     check_interface(media_engine, &IID_IMFMediaEngine, TRUE);
@@ -282,6 +285,29 @@ static void test_CreateInstance(void)
     ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* supported since win10 */, "Unexpected hr %#lx.\n", hr);
     if (SUCCEEDED(hr))
         IUnknown_Release(unk);
+
+    if (SUCCEEDED(IMFMediaEngine_QueryInterface(media_engine, &IID_IMFMediaEngineEx, (void **)&media_engine_ex)))
+    {
+        hr = IMFMediaEngineEx_GetRealTimeMode(media_engine_ex, &ret);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(ret, "Unexpected value.\n");
+
+        hr = IMFMediaEngineEx_SetRealTimeMode(media_engine_ex, FALSE);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IMFMediaEngineEx_GetRealTimeMode(media_engine_ex, &ret);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(!ret, "Unexpected value.\n");
+
+        hr = IMFMediaEngineEx_SetRealTimeMode(media_engine_ex, TRUE);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IMFMediaEngineEx_GetRealTimeMode(media_engine_ex, &ret);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(ret, "Unexpected value.\n");
+
+        IMFMediaEngineEx_Release(media_engine_ex);
+    }
 
     IMFMediaEngine_Release(media_engine);
     IMFAttributes_Release(attributes);
@@ -301,6 +327,7 @@ static void test_Shutdown(void)
     double val;
     HRESULT hr;
     BSTR str;
+    BOOL ret;
 
     notify = create_callback();
 
@@ -455,6 +482,15 @@ static void test_Shutdown(void)
         ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
         hr = IMFMediaEngineEx_GetResourceCharacteristics(media_engine_ex, &flags);
+        ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+        hr = IMFMediaEngineEx_GetRealTimeMode(media_engine_ex, NULL);
+        ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+        hr = IMFMediaEngineEx_GetRealTimeMode(media_engine_ex, &ret);
+        ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+        hr = IMFMediaEngineEx_SetRealTimeMode(media_engine_ex, TRUE);
         ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
         IMFMediaEngineEx_Release(media_engine_ex);
