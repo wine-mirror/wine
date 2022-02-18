@@ -539,6 +539,25 @@ This declaration defines an ordinal as an absolute value.
 will be the name available for dynamic linking.
 .I data
 can be a decimal number or a hex number preceded by "0x".
+.SS "Api sets"
+Syntax:
+.br
+.BI apiset\  apiset_dll\  =\  target.dll\ [host.dll:target.dll]
+.PP
+This declaration defines that the \fIapiset_dll\fR (of the form
+api-ms-*) resolves to the \fItarget\fR dll. Optionally other targets
+can be specified to resolve differently for specific host dlls. For
+example:
+.IP
+api-ms-win-core-processenvironment-l1-1-0 = kernelbase.dll
+.br
+api-ms-win-core-processthreads-l1-1-0 = kernel32.dll \\
+.br
+  kernel32.dll:kernelbase.dll
+.PP
+If apisets are defined, a corresponding .apiset section will be
+generated in the PE binary. This requires building the module with the
+--data-only option.
 .SH AUTHORS
 .B winebuild
 has been worked on by many people over the years. The main authors are

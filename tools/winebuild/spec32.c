@@ -916,6 +916,118 @@ static void output_pe_exports( DLLSPEC *spec )
 }
 
 
+/* apiset hash table */
+struct apiset_hash_entry
+{
+    unsigned int hash;
+    unsigned int index;
+};
+
+static int apiset_hash_cmp( const void *h1, const void *h2 )
+{
+    const struct apiset_hash_entry *entry1 = h1;
+    const struct apiset_hash_entry *entry2 = h2;
+
+    if (entry1->hash > entry2->hash) return 1;
+    if (entry1->hash < entry2->hash) return -1;
+    return 0;
+}
+
+static void output_apiset_section( const struct apiset *apiset )
+{
+    struct apiset_hash_entry *hash;
+    struct apiset_entry *e;
+    unsigned int i, j, str_pos, value_pos, hash_pos, size;
+
+    init_output_buffer();
+
+    value_pos = 0x1c /* header */ + apiset->count * 0x18; /* names */
+    str_pos = value_pos;
+    for (i = 0, e = apiset->entries; i < apiset->count; i++, e++)
+        str_pos += 0x14 * max( 1, e->val_count );  /* values */
+
+    hash_pos = str_pos + ((apiset->str_pos * 2 + 3) & ~3);
+    size = hash_pos + apiset->count * 8;  /* hashes */
+
+    /* header */
+
+    put_dword( 6 );      /* Version */
+    put_dword( size );   /* Size */
+    put_dword( 0 );      /* Flags */
+    put_dword( apiset->count );  /* Count */
+    put_dword( 0x1c );   /* EntryOffset */
+    put_dword( hash_pos ); /* HashOffset */
+    put_dword( apiset_hash_factor );   /* HashFactor */
+
+    /* name entries */
+
+    value_pos = 0x1c /* header */ + apiset->count * 0x18; /* names */
+    for (i = 0, e = apiset->entries; i < apiset->count; i++, e++)
+    {
+        put_dword( 1 );  /* Flags */
+        put_dword( str_pos + e->name_off * 2 );  /* NameOffset */
+        put_dword( e->name_len * 2 );  /* NameLength */
+        put_dword( e->hash_len * 2 );  /* HashedLength */
+        put_dword( value_pos );  /* ValueOffset */
+        put_dword( max( 1, e->val_count ));          /* ValueCount */
+        value_pos += 0x14 * max( 1, e->val_count );
+    }
+
+    /* values */
+
+    for (i = 0, e = apiset->entries; i < apiset->count; i++, e++)
+    {
+        if (!e->val_count)
+        {
+            put_dword( 0 );  /* Flags */
+            put_dword( 0 );  /* NameOffset */
+            put_dword( 0 );  /* NameLength */
+            put_dword( 0 );  /* ValueOffset */
+            put_dword( 0 );  /* ValueLength */
+        }
+        else for (j = 0; j < e->val_count; j++)
+        {
+            put_dword( 0 );  /* Flags */
+            if (e->values[j].name_off)
+            {
+                put_dword( str_pos + e->values[j].name_off * 2 );  /* NameOffset */
+                put_dword( e->values[j].name_len * 2 );  /* NameLength */
+            }
+            else
+            {
+                put_dword( 0 );  /* NameOffset */
+                put_dword( 0 );  /* NameLength */
+            }
+            put_dword( str_pos + e->values[j].val_off * 2 );  /* ValueOffset */
+            put_dword( e->values[j].val_len * 2 );  /* ValueLength */
+        }
+    }
+
+    /* strings */
+
+    for (i = 0; i < apiset->str_pos; i++) put_word( apiset->strings[i] );
+    align_output( 4 );
+
+    /* hash table */
+
+    hash = xmalloc( apiset->count * sizeof(*hash) );
+    for (i = 0, e = apiset->entries; i < apiset->count; i++, e++)
+    {
+        hash[i].hash = e->hash;
+        hash[i].index = i;
+    }
+    qsort( hash, apiset->count, sizeof(*hash), apiset_hash_cmp );
+    for (i = 0; i < apiset->count; i++)
+    {
+        put_dword( hash[i].hash );
+        put_dword( hash[i].index );
+    }
+    free( hash );
+
+    flush_output_to_section( ".apiset", -1, 0x40000040 /* CNT_INITIALIZED_DATA|MEM_READ */ );
+}
+
+
 static void output_pe_file( DLLSPEC *spec, const char signature[32] )
 {
     const unsigned int lfanew = 0x40 + 32;
@@ -1136,6 +1248,7 @@ void output_data_module( DLLSPEC *spec )
     pe.section_align = pe.file_align = get_page_size();
 
     output_pe_exports( spec );
+    if (spec->apiset.count) output_apiset_section( &spec->apiset );
     output_pe_file( spec, builtin_signature );
 }
 
