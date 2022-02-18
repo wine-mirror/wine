@@ -321,6 +321,7 @@ static void test_Shutdown(void)
     IMFMediaEngineEx *media_engine_ex;
     IMFMediaTimeRange *time_range;
     IMFMediaEngine *media_engine;
+    PROPVARIANT propvar;
     DWORD flags, cx, cy;
     unsigned int state;
     UINT32 value;
@@ -491,6 +492,9 @@ static void test_Shutdown(void)
         ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
         hr = IMFMediaEngineEx_SetRealTimeMode(media_engine_ex, TRUE);
+        ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+        hr = IMFMediaEngineEx_GetPresentationAttribute(media_engine_ex, &MF_PD_DURATION, &propvar);
         ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
         IMFMediaEngineEx_Release(media_engine_ex);
@@ -905,6 +909,7 @@ static void test_SetSourceFromByteStream(void)
 {
     struct media_engine_notify *notify;
     IMFMediaEngineEx *media_engine;
+    PROPVARIANT propvar;
     DWORD flags;
     HRESULT hr;
 
@@ -925,6 +930,9 @@ static void test_SetSourceFromByteStream(void)
     ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaEngineEx_GetResourceCharacteristics(media_engine, &flags);
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaEngineEx_GetPresentationAttribute(media_engine, &MF_PD_DURATION, &propvar);
     ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
 
     IMFMediaEngineEx_Release(media_engine);

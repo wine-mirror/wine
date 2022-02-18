@@ -143,6 +143,7 @@ struct media_engine
     struct
     {
         IMFMediaSource *source;
+        IMFPresentationDescriptor *pd;
     } presentation;
     struct
     {
@@ -1079,9 +1080,11 @@ static void media_engine_clear_presentation(struct media_engine *engine)
 {
     if (engine->presentation.source)
     {
-         IMFMediaSource_Shutdown(engine->presentation.source);
-         IMFMediaSource_Release(engine->presentation.source);
+        IMFMediaSource_Shutdown(engine->presentation.source);
+        IMFMediaSource_Release(engine->presentation.source);
     }
+    if (engine->presentation.pd)
+        IMFPresentationDescriptor_Release(engine->presentation.pd);
     memset(&engine->presentation, 0, sizeof(engine->presentation));
 }
 
@@ -1151,6 +1154,8 @@ static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMedi
 
     engine->presentation.source = source;
     IMFMediaSource_AddRef(engine->presentation.source);
+    engine->presentation.pd = pd;
+    IMFPresentationDescriptor_AddRef(engine->presentation.pd);
 
     media_engine_set_flag(engine, FLAGS_ENGINE_HAS_VIDEO, !!sd_video);
     media_engine_set_flag(engine, FLAGS_ENGINE_HAS_AUDIO, !!sd_audio);
@@ -2474,9 +2479,19 @@ static HRESULT WINAPI media_engine_GetResourceCharacteristics(IMFMediaEngineEx *
 static HRESULT WINAPI media_engine_GetPresentationAttribute(IMFMediaEngineEx *iface, REFGUID attribute,
         PROPVARIANT *value)
 {
-    FIXME("%p, %s, %p stub.\n", iface, debugstr_guid(attribute), value);
+    struct media_engine *engine = impl_from_IMFMediaEngineEx(iface);
+    HRESULT hr = E_FAIL;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(attribute), value);
+
+    EnterCriticalSection(&engine->cs);
+    if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else if (engine->presentation.pd)
+        hr = IMFPresentationDescriptor_GetItem(engine->presentation.pd, attribute, value);
+    LeaveCriticalSection(&engine->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_engine_GetNumberOfStreams(IMFMediaEngineEx *iface, DWORD *stream_count)
