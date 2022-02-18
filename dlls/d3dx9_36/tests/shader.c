@@ -403,11 +403,15 @@ static void test_find_shader_comment(void)
 
 static void test_get_shader_constant_table_ex(void)
 {
+    D3DXCONSTANT_DESC constant_desc_save;
     ID3DXConstantTable *constant_table;
+    D3DXCONSTANT_DESC constant_desc;
+    D3DXCONSTANTTABLE_DESC desc;
+    D3DXHANDLE constant;
     HRESULT hr;
     void *data;
     DWORD size;
-    D3DXCONSTANTTABLE_DESC desc;
+    UINT nb;
 
     constant_table = (ID3DXConstantTable *)0xdeadbeef;
     hr = D3DXGetShaderConstantTableEx(NULL, 0, &constant_table);
@@ -453,115 +457,104 @@ static void test_get_shader_constant_table_ex(void)
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
     ok(constant_table != NULL, "D3DXGetShaderConstantTableEx() failed, got NULL\n");
 
-    if (constant_table)
-    {
-        size = ID3DXConstantTable_GetBufferSize(constant_table);
-        ok(size == 28, "Got result %x, expected 28\n", size);
+    size = ID3DXConstantTable_GetBufferSize(constant_table);
+    ok(size == 28, "Got result %x, expected 28\n", size);
 
-        data = ID3DXConstantTable_GetBufferPointer(constant_table);
-        ok(!memcmp(data, shader_with_ctab + 6, size), "Retrieved wrong CTAB data\n");
+    data = ID3DXConstantTable_GetBufferPointer(constant_table);
+    ok(!memcmp(data, shader_with_ctab + 6, size), "Retrieved wrong CTAB data\n");
 
-        hr = ID3DXConstantTable_GetDesc(constant_table, NULL);
-        ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    hr = ID3DXConstantTable_GetDesc(constant_table, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
-        hr = ID3DXConstantTable_GetDesc(constant_table, &desc);
-        ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
-        ok(desc.Creator == (const char *)data + 0x10, "Got result %p, expected %p\n",
-                desc.Creator, (const char *)data + 0x10);
-        ok(desc.Version == D3DVS_VERSION(3, 0), "Got result %x, expected %x\n", desc.Version, D3DVS_VERSION(3, 0));
-        ok(desc.Constants == 0, "Got result %x, expected 0\n", desc.Constants);
+    hr = ID3DXConstantTable_GetDesc(constant_table, &desc);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(desc.Creator == (const char *)data + 0x10, "Got result %p, expected %p\n",
+            desc.Creator, (const char *)data + 0x10);
+    ok(desc.Version == D3DVS_VERSION(3, 0), "Got result %x, expected %x\n", desc.Version, D3DVS_VERSION(3, 0));
+    ok(desc.Constants == 0, "Got result %x, expected 0\n", desc.Constants);
 
-        ID3DXConstantTable_Release(constant_table);
-    }
+    ID3DXConstantTable_Release(constant_table);
 
     hr = D3DXGetShaderConstantTableEx(shader_with_ctab_constants, 0, &constant_table);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
     ok(constant_table != NULL, "D3DXGetShaderConstantTableEx() failed, got NULL\n");
 
-    if (constant_table)
-    {
-        D3DXHANDLE constant;
-        D3DXCONSTANT_DESC constant_desc;
-        D3DXCONSTANT_DESC constant_desc_save;
-        UINT nb;
+    /* Test GetDesc */
+    hr = ID3DXConstantTable_GetDesc(constant_table, &desc);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(!strcmp(desc.Creator, "Wine project"), "Got result '%s', expected 'Wine project'\n", desc.Creator);
+    ok(desc.Version == D3DVS_VERSION(3, 0), "Got result %x, expected %x\n", desc.Version, D3DVS_VERSION(3, 0));
+    ok(desc.Constants == 3, "Got result %x, expected 3\n", desc.Constants);
 
-        /* Test GetDesc */
-        hr = ID3DXConstantTable_GetDesc(constant_table, &desc);
-        ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
-        ok(!strcmp(desc.Creator, "Wine project"), "Got result '%s', expected 'Wine project'\n", desc.Creator);
-        ok(desc.Version == D3DVS_VERSION(3, 0), "Got result %x, expected %x\n", desc.Version, D3DVS_VERSION(3, 0));
-        ok(desc.Constants == 3, "Got result %x, expected 3\n", desc.Constants);
-
-        /* Test GetConstant */
-        constant = ID3DXConstantTable_GetConstant(constant_table, NULL, 0);
-        ok(constant != NULL, "No constant found\n");
-        hr = ID3DXConstantTable_GetConstantDesc(constant_table, constant, &constant_desc, &nb);
-        ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
-        ok(!strcmp(constant_desc.Name, "Constant1"), "Got result '%s', expected 'Constant1'\n",
+    /* Test GetConstant */
+    constant = ID3DXConstantTable_GetConstant(constant_table, NULL, 0);
+    ok(constant != NULL, "No constant found\n");
+    hr = ID3DXConstantTable_GetConstantDesc(constant_table, constant, &constant_desc, &nb);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(!strcmp(constant_desc.Name, "Constant1"), "Got result '%s', expected 'Constant1'\n",
             constant_desc.Name);
-        ok(constant_desc.Class == D3DXPC_VECTOR, "Got result %x, expected %u (D3DXPC_VECTOR)\n",
+    ok(constant_desc.Class == D3DXPC_VECTOR, "Got result %x, expected %u (D3DXPC_VECTOR)\n",
             constant_desc.Class, D3DXPC_VECTOR);
-        ok(constant_desc.Type == D3DXPT_FLOAT, "Got result %x, expected %u (D3DXPT_FLOAT)\n",
+    ok(constant_desc.Type == D3DXPT_FLOAT, "Got result %x, expected %u (D3DXPT_FLOAT)\n",
             constant_desc.Type, D3DXPT_FLOAT);
-        ok(constant_desc.Rows == 1, "Got result %x, expected 1\n", constant_desc.Rows);
-        ok(constant_desc.Columns == 4, "Got result %x, expected 4\n", constant_desc.Columns);
+    ok(constant_desc.Rows == 1, "Got result %x, expected 1\n", constant_desc.Rows);
+    ok(constant_desc.Columns == 4, "Got result %x, expected 4\n", constant_desc.Columns);
 
-        constant = ID3DXConstantTable_GetConstant(constant_table, NULL, 1);
-        ok(constant != NULL, "No constant found\n");
-        hr = ID3DXConstantTable_GetConstantDesc(constant_table, constant, &constant_desc, &nb);
-        ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
-        ok(!strcmp(constant_desc.Name, "Constant2"), "Got result '%s', expected 'Constant2'\n",
+    constant = ID3DXConstantTable_GetConstant(constant_table, NULL, 1);
+    ok(constant != NULL, "No constant found\n");
+    hr = ID3DXConstantTable_GetConstantDesc(constant_table, constant, &constant_desc, &nb);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(!strcmp(constant_desc.Name, "Constant2"), "Got result '%s', expected 'Constant2'\n",
             constant_desc.Name);
-        ok(constant_desc.Class == D3DXPC_MATRIX_COLUMNS, "Got result %x, expected %u (D3DXPC_MATRIX_COLUMNS)\n",
+    ok(constant_desc.Class == D3DXPC_MATRIX_COLUMNS, "Got result %x, expected %u (D3DXPC_MATRIX_COLUMNS)\n",
             constant_desc.Class, D3DXPC_MATRIX_COLUMNS);
-        ok(constant_desc.Type == D3DXPT_FLOAT, "Got result %x, expected %u (D3DXPT_FLOAT)\n",
+    ok(constant_desc.Type == D3DXPT_FLOAT, "Got result %x, expected %u (D3DXPT_FLOAT)\n",
             constant_desc.Type, D3DXPT_FLOAT);
-        ok(constant_desc.Rows == 4, "Got result %x, expected 1\n", constant_desc.Rows);
-        ok(constant_desc.Columns == 4, "Got result %x, expected 4\n", constant_desc.Columns);
+    ok(constant_desc.Rows == 4, "Got result %x, expected 1\n", constant_desc.Rows);
+    ok(constant_desc.Columns == 4, "Got result %x, expected 4\n", constant_desc.Columns);
 
-        constant = ID3DXConstantTable_GetConstant(constant_table, NULL, 2);
-        ok(constant != NULL, "No constant found\n");
-        hr = ID3DXConstantTable_GetConstantDesc(constant_table, constant, &constant_desc, &nb);
-        ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
-        ok(!strcmp(constant_desc.Name, "Constant3"), "Got result '%s', expected 'Constant3'\n",
+    constant = ID3DXConstantTable_GetConstant(constant_table, NULL, 2);
+    ok(constant != NULL, "No constant found\n");
+    hr = ID3DXConstantTable_GetConstantDesc(constant_table, constant, &constant_desc, &nb);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(!strcmp(constant_desc.Name, "Constant3"), "Got result '%s', expected 'Constant3'\n",
             constant_desc.Name);
-        ok(constant_desc.Class == D3DXPC_MATRIX_COLUMNS, "Got result %x, expected %u (D3DXPC_MATRIX_COLUMNS)\n",
+    ok(constant_desc.Class == D3DXPC_MATRIX_COLUMNS, "Got result %x, expected %u (D3DXPC_MATRIX_COLUMNS)\n",
             constant_desc.Class, D3DXPC_MATRIX_COLUMNS);
-        ok(constant_desc.Type == D3DXPT_FLOAT, "Got result %x, expected %u (D3DXPT_FLOAT)\n",
+    ok(constant_desc.Type == D3DXPT_FLOAT, "Got result %x, expected %u (D3DXPT_FLOAT)\n",
             constant_desc.Type, D3DXPT_FLOAT);
-        ok(constant_desc.Rows == 4, "Got result %x, expected 1\n", constant_desc.Rows);
-        ok(constant_desc.Columns == 4, "Got result %x, expected 4\n", constant_desc.Columns);
-        constant_desc_save = constant_desc; /* For GetConstantDesc test */
+    ok(constant_desc.Rows == 4, "Got result %x, expected 1\n", constant_desc.Rows);
+    ok(constant_desc.Columns == 4, "Got result %x, expected 4\n", constant_desc.Columns);
+    constant_desc_save = constant_desc; /* For GetConstantDesc test */
 
-        constant = ID3DXConstantTable_GetConstant(constant_table, NULL, 3);
-        ok(constant == NULL, "Got result %p, expected NULL\n", constant);
+    constant = ID3DXConstantTable_GetConstant(constant_table, NULL, 3);
+    ok(constant == NULL, "Got result %p, expected NULL\n", constant);
 
-        /* Test GetConstantByName */
-        constant = ID3DXConstantTable_GetConstantByName(constant_table, NULL, "Constant unknown");
-        ok(constant == NULL, "Got result %p, expected NULL\n", constant);
-        constant = ID3DXConstantTable_GetConstantByName(constant_table, NULL, "Constant3");
-        ok(constant != NULL, "No constant found\n");
-        hr = ID3DXConstantTable_GetConstantDesc(constant_table, constant, &constant_desc, &nb);
-        ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
-        ok(!memcmp(&constant_desc, &constant_desc_save, sizeof(D3DXCONSTANT_DESC)), "Got different constant data\n");
+    /* Test GetConstantByName */
+    constant = ID3DXConstantTable_GetConstantByName(constant_table, NULL, "Constant unknown");
+    ok(constant == NULL, "Got result %p, expected NULL\n", constant);
+    constant = ID3DXConstantTable_GetConstantByName(constant_table, NULL, "Constant3");
+    ok(constant != NULL, "No constant found\n");
+    hr = ID3DXConstantTable_GetConstantDesc(constant_table, constant, &constant_desc, &nb);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(!memcmp(&constant_desc, &constant_desc_save, sizeof(D3DXCONSTANT_DESC)), "Got different constant data\n");
 
-        /* Test GetConstantDesc */
-        constant = ID3DXConstantTable_GetConstant(constant_table, NULL, 0);
-        ok(constant != NULL, "No constant found\n");
-        hr = ID3DXConstantTable_GetConstantDesc(constant_table, NULL, &constant_desc, &nb);
-        ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
-        hr = ID3DXConstantTable_GetConstantDesc(constant_table, constant, NULL, &nb);
-        ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
-        hr = ID3DXConstantTable_GetConstantDesc(constant_table, constant, &constant_desc, NULL);
-        ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
-        hr = ID3DXConstantTable_GetConstantDesc(constant_table, "Constant unknown", &constant_desc, &nb);
-        ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
-        hr = ID3DXConstantTable_GetConstantDesc(constant_table, "Constant3", &constant_desc, &nb);
-        ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
-        ok(!memcmp(&constant_desc, &constant_desc_save, sizeof(D3DXCONSTANT_DESC)), "Got different constant data\n");
+    /* Test GetConstantDesc */
+    constant = ID3DXConstantTable_GetConstant(constant_table, NULL, 0);
+    ok(constant != NULL, "No constant found\n");
+    hr = ID3DXConstantTable_GetConstantDesc(constant_table, NULL, &constant_desc, &nb);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    hr = ID3DXConstantTable_GetConstantDesc(constant_table, constant, NULL, &nb);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    hr = ID3DXConstantTable_GetConstantDesc(constant_table, constant, &constant_desc, NULL);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    hr = ID3DXConstantTable_GetConstantDesc(constant_table, "Constant unknown", &constant_desc, &nb);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    hr = ID3DXConstantTable_GetConstantDesc(constant_table, "Constant3", &constant_desc, &nb);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(!memcmp(&constant_desc, &constant_desc_save, sizeof(D3DXCONSTANT_DESC)), "Got different constant data\n");
 
-        ID3DXConstantTable_Release(constant_table);
-    }
+    ID3DXConstantTable_Release(constant_table);
 
     hr = D3DXGetShaderConstantTableEx(fx_shader_with_ctab, 0, &constant_table);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
