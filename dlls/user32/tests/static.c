@@ -83,9 +83,17 @@ static void test_updates(int style, int flags)
     RECT r1 = {20, 20, 30, 30};
     HWND hStatic = build_static(style);
     int exp;
+    LONG exstyle;
 
     flush_events();
     trace("Testing style 0x%x\n", style);
+
+    exstyle = GetWindowLongW(hStatic, GWL_EXSTYLE);
+    if (style == SS_ETCHEDHORZ || style == SS_ETCHEDVERT || style == SS_SUNKEN)
+        todo_wine_if(style == SS_ETCHEDHORZ || style == SS_ETCHEDVERT) ok(exstyle == WS_EX_STATICEDGE, "expected WS_EX_STATICEDGE, got %d\n", exstyle);
+    else
+        ok(exstyle == 0, "expected 0, got %d\n", exstyle);
+
     g_nReceivedColorStatic = 0;
     /* during each update parent WndProc will test the WM_CTLCOLORSTATIC message */
     InvalidateRect(hMainWnd, NULL, FALSE);
