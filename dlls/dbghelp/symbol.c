@@ -66,10 +66,11 @@ int __cdecl symt_cmp_addr(const void* p1, const void* p2)
 
 /* dbghelp exposes the internal symbols/types with DWORD indexes.
  * - custom symbols are always stored with index starting at BASE_CUSTOM_SYMT
- * - for all the others (non custom) symbols:
- *   + on 32bit machine, index is set to the actual adress of symt
- *   + on 64bit machine, we have a dedicated array to store symt exposed to caller
- *     index is the index in this array of the symbol
+ * - for all the other (non custom) symbols:
+ *   + on 32-bit machines, index is set to the actual address of symt
+ *   + on 64-bit machines, the symt address is stored in a dedicated array
+ *     which is exposed to the caller and index is the index of the symbol in
+ *     this array
  */
 DWORD             symt_ptr2index(struct module* module, const struct symt* sym)
 {
