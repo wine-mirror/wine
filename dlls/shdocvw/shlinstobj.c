@@ -274,14 +274,14 @@ static HRESULT WINAPI InstanceObjectFactory_IClassFactory_CreateInstance(IClassF
     hr = CoCreateInstance(&This->m_clsidInstance, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IPersistPropertyBag, (LPVOID*)&pPersistPropertyBag);
     if (FAILED(hr)) {
-        TRACE("Failed to create instance of %s. hr = %08x\n",
+        TRACE("Failed to create instance of %s. hr = %08lx\n",
               debugstr_guid(&This->m_clsidInstance), hr);
         return hr;
     }
 
     hr = IPersistPropertyBag_Load(pPersistPropertyBag, This->m_pPropertyBag, NULL);
     if (FAILED(hr)) {
-        TRACE("Failed to initialize object from PropertyBag: hr = %08x\n", hr);
+        TRACE("Failed to initialize object from PropertyBag: hr = %08lx\n", hr);
         IPersistPropertyBag_Release(pPersistPropertyBag);
         return hr;
     }
