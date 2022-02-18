@@ -681,11 +681,13 @@ HRESULT WINAPI D3DXPreprocessShaderFromResourceW(HMODULE module, const WCHAR *re
 
 }
 
-struct ID3DXConstantTableImpl {
+struct ID3DXConstantTableImpl
+{
     ID3DXConstantTable ID3DXConstantTable_iface;
     LONG ref;
     char *ctab;
     DWORD size;
+    DWORD flags;
     D3DXCONSTANTTABLE_DESC desc;
     struct ctab_constant *constants;
 };
@@ -859,6 +861,9 @@ static inline struct ctab_constant *get_valid_constant(struct ID3DXConstantTable
         c = is_valid_sub_constant(&table->constants[i], handle);
         if (c) return c;
     }
+
+    if (table->flags & D3DXCONSTTABLE_LARGEADDRESSAWARE)
+        return NULL;
 
     return get_constant_by_name(table, NULL, handle);
 }
@@ -1959,9 +1964,10 @@ HRESULT WINAPI D3DXGetShaderConstantTableEx(const DWORD *byte_code, DWORD flags,
     const D3DXSHADER_CONSTANTINFO *constant_info;
     DWORD i;
 
-    TRACE("byte_code %p, flags %x, constant_table %p\n", byte_code, flags, constant_table);
+    TRACE("byte_code %p, flags %#x, constant_table %p.\n", byte_code, flags, constant_table);
 
-    if (constant_table) *constant_table = NULL;
+    if (constant_table)
+        *constant_table = NULL;
 
     if (!byte_code || !constant_table)
     {
@@ -1975,7 +1981,8 @@ HRESULT WINAPI D3DXGetShaderConstantTableEx(const DWORD *byte_code, DWORD flags,
         return D3D_OK;
     }
 
-    if (flags) FIXME("Flags (%#x) are not handled, yet!\n", flags);
+    if (flags & ~D3DXCONSTTABLE_LARGEADDRESSAWARE)
+        FIXME("Flags %#x not handled.\n", flags);
 
     hr = D3DXFindShaderComment(byte_code, MAKEFOURCC('C','T','A','B'), &data, &size);
     if (hr != D3D_OK)
@@ -2014,6 +2021,7 @@ HRESULT WINAPI D3DXGetShaderConstantTableEx(const DWORD *byte_code, DWORD flags,
     object->size = size;
     memcpy(object->ctab, data, object->size);
 
+    object->flags = flags;
     object->desc.Creator = ctab_header->Creator ? object->ctab + ctab_header->Creator : NULL;
     object->desc.Version = ctab_header->Version;
     object->desc.Constants = ctab_header->Constants;

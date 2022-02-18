@@ -556,6 +556,34 @@ static void test_get_shader_constant_table_ex(void)
 
     ID3DXConstantTable_Release(constant_table);
 
+    hr = D3DXGetShaderConstantTableEx(shader_with_ctab_constants, D3DXCONSTTABLE_LARGEADDRESSAWARE, &constant_table);
+    ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
+    ok(!!constant_table, "Unexpected constant table %p.\n", constant_table);
+
+    hr = ID3DXConstantTable_GetDesc(constant_table, &desc);
+    ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
+    ok(!strcmp(desc.Creator, "Wine project"), "Unexpected Creator %s.\n", debugstr_a(desc.Creator));
+    ok(desc.Version == D3DVS_VERSION(3, 0), "Unexpected Version %#x.\n", desc.Version);
+    ok(desc.Constants == 3, "Unexpected Constants %u.\n", desc.Constants);
+
+    constant = ID3DXConstantTable_GetConstant(constant_table, NULL, 0);
+    ok(!!constant, "No constant found.\n");
+    hr = ID3DXConstantTable_GetConstantDesc(constant_table, constant, &constant_desc, &nb);
+    ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
+    ok(!strcmp(constant_desc.Name, "Constant1"), "Unexpected Name %s.\n", debugstr_a(constant_desc.Name));
+    ok(constant_desc.Class == D3DXPC_VECTOR, "Unexpected Class %u.\n", constant_desc.Class);
+    ok(constant_desc.Type == D3DXPT_FLOAT, "Unexpected Type %u.\n", constant_desc.Type);
+    ok(constant_desc.Rows == 1, "Unexpected Rows %u.\n", constant_desc.Rows);
+    ok(constant_desc.Columns == 4, "Unexpected Columns %u.\n", constant_desc.Columns);
+
+    if (0)
+    {
+        /* Native d3dx crashes with this. */
+        hr = ID3DXConstantTable_GetConstantDesc(constant_table, "Constant3", &constant_desc, &nb);
+    }
+
+    ID3DXConstantTable_Release(constant_table);
+
     hr = D3DXGetShaderConstantTableEx(fx_shader_with_ctab, 0, &constant_table);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
     ok(!constant_table, "D3DXGetShaderConstantTableEx() returned a non-NULL constant table.\n");
