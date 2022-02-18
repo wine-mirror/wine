@@ -28,14 +28,9 @@
 
 #include "wine/test.h"
 
-#define TODO_COUNT 1
-
 #define CTRL_ID 1995
 
 static HWND hMainWnd;
-
-#define expect_eq(expr, value, type, fmt) { type val = expr; ok(val == (value), #expr " expected " fmt " got " fmt "\n", (value), val); }
-
 static int g_nReceivedColorStatic = 0;
 
 /* try to make sure pending X events have been processed before continuing */
@@ -78,7 +73,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     return DefWindowProcA(hwnd, msg, wparam, lparam);
 }
 
-static void test_updates(int style, int flags)
+static void test_updates(int style)
 {
     RECT r1 = {5, 5, 30, 30}, rcClient;
     HWND hStatic = build_static(style);
@@ -126,12 +121,7 @@ static void test_updates(int style, int flags)
     else
         exp = 2; /* SS_ETCHEDHORZ/SS_ETCHEDVERT have empty client rect so WM_CTLCOLORSTATIC is sent only when parent window is invalidated */
 
-    if (flags & TODO_COUNT)
-        todo_wine { expect_eq(g_nReceivedColorStatic, exp, int, "%d"); }
-    else if ((style & SS_TYPEMASK) == SS_ICON || (style & SS_TYPEMASK) == SS_BITMAP)
-        ok( g_nReceivedColorStatic == exp, "expected %u got %u\n", exp, g_nReceivedColorStatic );
-    else
-        expect_eq(g_nReceivedColorStatic, exp, int, "%d");
+    ok( g_nReceivedColorStatic == exp, "expected %u, got %u\n", exp, g_nReceivedColorStatic );
     DestroyWindow(hStatic);
 }
 
@@ -343,23 +333,23 @@ START_TEST(static)
     hMainWnd = CreateWindowA(szClassName, "Test", WS_OVERLAPPEDWINDOW, 0, 0, 500, 500, NULL, NULL, GetModuleHandleA(NULL), NULL);
     ShowWindow(hMainWnd, SW_SHOW);
 
-    test_updates(0, 0);
-    test_updates(SS_ICON, 0);
-    test_updates(SS_BLACKRECT, 0);
-    test_updates(SS_WHITERECT, 0);
-    test_updates(SS_BLACKFRAME, 0);
-    test_updates(SS_WHITEFRAME, 0);
-    test_updates(SS_USERITEM, 0);
-    test_updates(SS_SIMPLE, 0);
-    test_updates(SS_OWNERDRAW, 0);
-    test_updates(SS_BITMAP, 0);
-    test_updates(SS_BITMAP | SS_CENTERIMAGE, 0);
-    test_updates(SS_BLACKRECT, 0);
-    test_updates(SS_WHITERECT, 0);
-    test_updates(SS_ETCHEDHORZ, 0);
-    test_updates(SS_ETCHEDVERT, 0);
-    test_updates(SS_ETCHEDFRAME, 0);
-    test_updates(SS_SUNKEN, 0);
+    test_updates(0);
+    test_updates(SS_ICON);
+    test_updates(SS_BLACKRECT);
+    test_updates(SS_WHITERECT);
+    test_updates(SS_BLACKFRAME);
+    test_updates(SS_WHITEFRAME);
+    test_updates(SS_USERITEM);
+    test_updates(SS_SIMPLE);
+    test_updates(SS_OWNERDRAW);
+    test_updates(SS_BITMAP);
+    test_updates(SS_BITMAP | SS_CENTERIMAGE);
+    test_updates(SS_BLACKRECT);
+    test_updates(SS_WHITERECT);
+    test_updates(SS_ETCHEDHORZ);
+    test_updates(SS_ETCHEDVERT);
+    test_updates(SS_ETCHEDFRAME);
+    test_updates(SS_SUNKEN);
     test_set_text();
     test_set_image();
     test_STM_SETIMAGE();
