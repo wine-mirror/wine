@@ -107,21 +107,21 @@ static HRESULT WINAPI folders_GetTypeInfoCount(ITaskFolderCollection *iface, UIN
 
 static HRESULT WINAPI folders_GetTypeInfo(ITaskFolderCollection *iface, UINT index, LCID lcid, ITypeInfo **info)
 {
-    FIXME("%p,%u,%u,%p: stub\n", iface, index, lcid, info);
+    FIXME("%p,%u,%lu,%p: stub\n", iface, index, lcid, info);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI folders_GetIDsOfNames(ITaskFolderCollection *iface, REFIID riid, LPOLESTR *names,
                                                 UINT count, LCID lcid, DISPID *dispid)
 {
-    FIXME("%p,%s,%p,%u,%u,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
+    FIXME("%p,%s,%p,%u,%lu,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI folders_Invoke(ITaskFolderCollection *iface, DISPID dispid, REFIID riid, LCID lcid, WORD flags,
                                          DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *argerr)
 {
-    FIXME("%p,%d,%s,%04x,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
+    FIXME("%p,%ld,%s,%04lx,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
           params, result, excepinfo, argerr);
     return E_NOTIMPL;
 }
@@ -307,7 +307,7 @@ static HRESULT WINAPI enumvar_Next(IEnumVARIANT *iface, ULONG celt, VARIANT *var
     EnumVARIANT *enumvar = impl_from_IEnumVARIANT(iface);
     LONG i;
 
-    TRACE("%p,%u,%p,%p\n", iface, celt, var, fetched);
+    TRACE("%p,%lu,%p,%p\n", iface, celt, var, fetched);
 
     for (i = 0; i < celt && enumvar->pos < enumvar->folders->count; i++)
     {
@@ -336,7 +336,7 @@ static HRESULT WINAPI enumvar_Skip(IEnumVARIANT *iface, ULONG celt)
 {
     EnumVARIANT *enumvar = impl_from_IEnumVARIANT(iface);
 
-    TRACE("%p,%u\n", iface, celt);
+    TRACE("%p,%lu\n", iface, celt);
 
     enumvar->pos += celt;
 

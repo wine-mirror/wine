@@ -76,7 +76,7 @@ static ULONG WINAPI DailyTrigger_AddRef(IDailyTrigger *iface)
     DailyTrigger *This = impl_from_IDailyTrigger(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -86,7 +86,7 @@ static ULONG WINAPI DailyTrigger_Release(IDailyTrigger *iface)
     DailyTrigger *This = impl_from_IDailyTrigger(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref)
     {
@@ -108,7 +108,7 @@ static HRESULT WINAPI DailyTrigger_GetTypeInfoCount(IDailyTrigger *iface, UINT *
 static HRESULT WINAPI DailyTrigger_GetTypeInfo(IDailyTrigger *iface, UINT index, LCID lcid, ITypeInfo **info)
 {
     DailyTrigger *This = impl_from_IDailyTrigger(iface);
-    FIXME("(%p)->(%u %u %p)\n", This, index, lcid, info);
+    FIXME("(%p)->(%u %lu %p)\n", This, index, lcid, info);
     return E_NOTIMPL;
 }
 
@@ -116,7 +116,7 @@ static HRESULT WINAPI DailyTrigger_GetIDsOfNames(IDailyTrigger *iface, REFIID ri
                                             UINT count, LCID lcid, DISPID *dispid)
 {
     DailyTrigger *This = impl_from_IDailyTrigger(iface);
-    FIXME("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), names, count, lcid, dispid);
+    FIXME("(%p)->(%s %p %u %lu %p)\n", This, debugstr_guid(riid), names, count, lcid, dispid);
     return E_NOTIMPL;
 }
 
@@ -124,7 +124,7 @@ static HRESULT WINAPI DailyTrigger_Invoke(IDailyTrigger *iface, DISPID dispid, R
                                      DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *argerr)
 {
     DailyTrigger *This = impl_from_IDailyTrigger(iface);
-    FIXME("(%p)->(%d %s %x %x %p %p %p %p)\n", This, dispid, debugstr_guid(riid), lcid, flags,
+    FIXME("(%p)->(%ld %s %lx %x %p %p %p %p)\n", This, dispid, debugstr_guid(riid), lcid, flags,
           params, result, excepinfo, argerr);
     return E_NOTIMPL;
 }
@@ -360,7 +360,7 @@ static ULONG WINAPI TriggerCollection_AddRef(ITriggerCollection *iface)
     trigger_collection *This = impl_from_ITriggerCollection(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -370,7 +370,7 @@ static ULONG WINAPI TriggerCollection_Release(ITriggerCollection *iface)
     trigger_collection *This = impl_from_ITriggerCollection(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref)
         heap_free(This);
@@ -388,7 +388,7 @@ static HRESULT WINAPI TriggerCollection_GetTypeInfoCount(ITriggerCollection *ifa
 static HRESULT WINAPI TriggerCollection_GetTypeInfo(ITriggerCollection *iface, UINT index, LCID lcid, ITypeInfo **info)
 {
     trigger_collection *This = impl_from_ITriggerCollection(iface);
-    FIXME("(%p)->(%u %u %p)\n", This, index, lcid, info);
+    FIXME("(%p)->(%u %lu %p)\n", This, index, lcid, info);
     return E_NOTIMPL;
 }
 
@@ -396,7 +396,7 @@ static HRESULT WINAPI TriggerCollection_GetIDsOfNames(ITriggerCollection *iface,
                                                    UINT count, LCID lcid, DISPID *dispid)
 {
     trigger_collection *This = impl_from_ITriggerCollection(iface);
-    FIXME("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), names, count, lcid, dispid);
+    FIXME("(%p)->(%s %p %u %lu %p)\n", This, debugstr_guid(riid), names, count, lcid, dispid);
     return E_NOTIMPL;
 }
 
@@ -404,7 +404,7 @@ static HRESULT WINAPI TriggerCollection_Invoke(ITriggerCollection *iface, DISPID
                                                DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *argerr)
 {
     trigger_collection *This = impl_from_ITriggerCollection(iface);
-    FIXME("(%p)->(%d %s %x %x %p %p %p %p)\n", This, dispid, debugstr_guid(riid), lcid, flags,
+    FIXME("(%p)->(%ld %s %lx %x %p %p %p %p)\n", This, dispid, debugstr_guid(riid), lcid, flags,
           params, result, excepinfo, argerr);
     return E_NOTIMPL;
 }
@@ -419,7 +419,7 @@ static HRESULT WINAPI TriggerCollection_get_Count(ITriggerCollection *iface, LON
 static HRESULT WINAPI TriggerCollection_get_Item(ITriggerCollection *iface, LONG index, ITrigger **trigger)
 {
     trigger_collection *This = impl_from_ITriggerCollection(iface);
-    FIXME("(%p)->(%d %p)\n", This, index, trigger);
+    FIXME("(%p)->(%ld %p)\n", This, index, trigger);
     return E_NOTIMPL;
 }
 
@@ -544,21 +544,21 @@ static HRESULT WINAPI RegistrationInfo_GetTypeInfoCount(IRegistrationInfo *iface
 
 static HRESULT WINAPI RegistrationInfo_GetTypeInfo(IRegistrationInfo *iface, UINT index, LCID lcid, ITypeInfo **info)
 {
-    FIXME("%p,%u,%u,%p: stub\n", iface, index, lcid, info);
+    FIXME("%p,%u,%lu,%p: stub\n", iface, index, lcid, info);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI RegistrationInfo_GetIDsOfNames(IRegistrationInfo *iface, REFIID riid, LPOLESTR *names,
                                                    UINT count, LCID lcid, DISPID *dispid)
 {
-    FIXME("%p,%s,%p,%u,%u,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
+    FIXME("%p,%s,%p,%u,%lu,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI RegistrationInfo_Invoke(IRegistrationInfo *iface, DISPID dispid, REFIID riid, LCID lcid, WORD flags,
                                             DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *argerr)
 {
-    FIXME("%p,%d,%s,%04x,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
+    FIXME("%p,%ld,%s,%04lx,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
           params, result, excepinfo, argerr);
     return E_NOTIMPL;
 }
@@ -900,21 +900,21 @@ static HRESULT WINAPI TaskSettings_GetTypeInfoCount(ITaskSettings *iface, UINT *
 
 static HRESULT WINAPI TaskSettings_GetTypeInfo(ITaskSettings *iface, UINT index, LCID lcid, ITypeInfo **info)
 {
-    FIXME("%p,%u,%u,%p: stub\n", iface, index, lcid, info);
+    FIXME("%p,%u,%lu,%p: stub\n", iface, index, lcid, info);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI TaskSettings_GetIDsOfNames(ITaskSettings *iface, REFIID riid, LPOLESTR *names,
                                                  UINT count, LCID lcid, DISPID *dispid)
 {
-    FIXME("%p,%s,%p,%u,%u,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
+    FIXME("%p,%s,%p,%u,%lu,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI TaskSettings_Invoke(ITaskSettings *iface, DISPID dispid, REFIID riid, LCID lcid, WORD flags,
                                           DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *argerr)
 {
-    FIXME("%p,%d,%s,%04x,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
+    FIXME("%p,%ld,%s,%04lx,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
           params, result, excepinfo, argerr);
     return E_NOTIMPL;
 }
@@ -1532,21 +1532,21 @@ static HRESULT WINAPI Principal_GetTypeInfoCount(IPrincipal *iface, UINT *count)
 
 static HRESULT WINAPI Principal_GetTypeInfo(IPrincipal *iface, UINT index, LCID lcid, ITypeInfo **info)
 {
-    FIXME("%p,%u,%u,%p: stub\n", iface, index, lcid, info);
+    FIXME("%p,%u,%lu,%p: stub\n", iface, index, lcid, info);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI Principal_GetIDsOfNames(IPrincipal *iface, REFIID riid, LPOLESTR *names,
                                               UINT count, LCID lcid, DISPID *dispid)
 {
-    FIXME("%p,%s,%p,%u,%u,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
+    FIXME("%p,%s,%p,%u,%lu,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI Principal_Invoke(IPrincipal *iface, DISPID dispid, REFIID riid, LCID lcid, WORD flags,
                                        DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *argerr)
 {
-    FIXME("%p,%d,%s,%04x,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
+    FIXME("%p,%ld,%s,%04lx,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
           params, result, excepinfo, argerr);
     return E_NOTIMPL;
 }
@@ -1731,21 +1731,21 @@ static HRESULT WINAPI ExecAction_GetTypeInfoCount(IExecAction *iface, UINT *coun
 
 static HRESULT WINAPI ExecAction_GetTypeInfo(IExecAction *iface, UINT index, LCID lcid, ITypeInfo **info)
 {
-    FIXME("%p,%u,%u,%p: stub\n", iface, index, lcid, info);
+    FIXME("%p,%u,%lu,%p: stub\n", iface, index, lcid, info);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ExecAction_GetIDsOfNames(IExecAction *iface, REFIID riid, LPOLESTR *names,
                                                UINT count, LCID lcid, DISPID *dispid)
 {
-    FIXME("%p,%s,%p,%u,%u,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
+    FIXME("%p,%s,%p,%u,%lu,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ExecAction_Invoke(IExecAction *iface, DISPID dispid, REFIID riid, LCID lcid, WORD flags,
                                         DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *argerr)
 {
-    FIXME("%p,%d,%s,%04x,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
+    FIXME("%p,%ld,%s,%04lx,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
           params, result, excepinfo, argerr);
     return E_NOTIMPL;
 }
@@ -1973,21 +1973,21 @@ static HRESULT WINAPI Actions_GetTypeInfoCount(IActionCollection *iface, UINT *c
 
 static HRESULT WINAPI Actions_GetTypeInfo(IActionCollection *iface, UINT index, LCID lcid, ITypeInfo **info)
 {
-    FIXME("%p,%u,%u,%p: stub\n", iface, index, lcid, info);
+    FIXME("%p,%u,%lu,%p: stub\n", iface, index, lcid, info);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI Actions_GetIDsOfNames(IActionCollection *iface, REFIID riid, LPOLESTR *names,
                                             UINT count, LCID lcid, DISPID *dispid)
 {
-    FIXME("%p,%s,%p,%u,%u,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
+    FIXME("%p,%s,%p,%u,%lu,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI Actions_Invoke(IActionCollection *iface, DISPID dispid, REFIID riid, LCID lcid, WORD flags,
                                      DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *argerr)
 {
-    FIXME("%p,%d,%s,%04x,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
+    FIXME("%p,%ld,%s,%04lx,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
           params, result, excepinfo, argerr);
     return E_NOTIMPL;
 }
@@ -2000,7 +2000,7 @@ static HRESULT WINAPI Actions_get_Count(IActionCollection *iface, LONG *count)
 
 static HRESULT WINAPI Actions_get_Item(IActionCollection *iface, LONG index, IAction **action)
 {
-    FIXME("%p,%d,%p: stub\n", iface, index, action);
+    FIXME("%p,%ld,%p: stub\n", iface, index, action);
     return E_NOTIMPL;
 }
 
@@ -2175,21 +2175,21 @@ static HRESULT WINAPI TaskDefinition_GetTypeInfoCount(ITaskDefinition *iface, UI
 
 static HRESULT WINAPI TaskDefinition_GetTypeInfo(ITaskDefinition *iface, UINT index, LCID lcid, ITypeInfo **info)
 {
-    FIXME("%p,%u,%u,%p: stub\n", iface, index, lcid, info);
+    FIXME("%p,%u,%lu,%p: stub\n", iface, index, lcid, info);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI TaskDefinition_GetIDsOfNames(ITaskDefinition *iface, REFIID riid, LPOLESTR *names,
                                                    UINT count, LCID lcid, DISPID *dispid)
 {
-    FIXME("%p,%s,%p,%u,%u,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
+    FIXME("%p,%s,%p,%u,%lu,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI TaskDefinition_Invoke(ITaskDefinition *iface, DISPID dispid, REFIID riid, LCID lcid, WORD flags,
                                             DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *argerr)
 {
-    FIXME("%p,%d,%s,%04x,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
+    FIXME("%p,%ld,%s,%04lx,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
           params, result, excepinfo, argerr);
     return E_NOTIMPL;
 }
@@ -3637,21 +3637,21 @@ static HRESULT WINAPI TaskService_GetTypeInfoCount(ITaskService *iface, UINT *co
 
 static HRESULT WINAPI TaskService_GetTypeInfo(ITaskService *iface, UINT index, LCID lcid, ITypeInfo **info)
 {
-    FIXME("%p,%u,%u,%p: stub\n", iface, index, lcid, info);
+    FIXME("%p,%u,%lu,%p: stub\n", iface, index, lcid, info);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI TaskService_GetIDsOfNames(ITaskService *iface, REFIID riid, LPOLESTR *names,
                                                 UINT count, LCID lcid, DISPID *dispid)
 {
-    FIXME("%p,%s,%p,%u,%u,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
+    FIXME("%p,%s,%p,%u,%lu,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI TaskService_Invoke(ITaskService *iface, DISPID dispid, REFIID riid, LCID lcid, WORD flags,
                                          DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *argerr)
 {
-    FIXME("%p,%d,%s,%04x,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
+    FIXME("%p,%ld,%s,%04lx,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
           params, result, excepinfo, argerr);
     return E_NOTIMPL;
 }
@@ -3672,18 +3672,18 @@ static HRESULT WINAPI TaskService_GetFolder(ITaskService *iface, BSTR path, ITas
 
 static HRESULT WINAPI TaskService_GetRunningTasks(ITaskService *iface, LONG flags, IRunningTaskCollection **tasks)
 {
-    FIXME("%p,%x,%p: stub\n", iface, flags, tasks);
+    FIXME("%p,%lx,%p: stub\n", iface, flags, tasks);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI TaskService_NewTask(ITaskService *iface, DWORD flags, ITaskDefinition **definition)
 {
-    TRACE("%p,%x,%p\n", iface, flags, definition);
+    TRACE("%p,%lx,%p\n", iface, flags, definition);
 
     if (!definition) return E_POINTER;
 
     if (flags)
-        FIXME("unsupported flags %x\n", flags);
+        FIXME("unsupported flags %lx\n", flags);
 
     return TaskDefinition_create(definition);
 }
@@ -3718,7 +3718,7 @@ static HRESULT start_schedsvc(void)
 
                 if (!QueryServiceStatusEx(service, SC_STATUS_PROCESS_INFO, (BYTE *)&status, sizeof(status), &dummy))
                 {
-                    WARN("failed to query scheduler status (%u)\n", GetLastError());
+                    WARN("failed to query scheduler status (%lu)\n", GetLastError());
                     break;
                 }
 
@@ -3734,15 +3734,15 @@ static HRESULT start_schedsvc(void)
             } while (status.dwCurrentState == SERVICE_START_PENDING);
 
             if (status.dwCurrentState != SERVICE_RUNNING)
-                WARN("scheduler failed to start %u\n", status.dwCurrentState);
+                WARN("scheduler failed to start %lu\n", status.dwCurrentState);
         }
         else
-            WARN("failed to start scheduler service (%u)\n", GetLastError());
+            WARN("failed to start scheduler service (%lu)\n", GetLastError());
 
         CloseServiceHandle(service);
     }
     else
-        WARN("failed to open scheduler service (%u)\n", GetLastError());
+        WARN("failed to open scheduler service (%lu)\n", GetLastError());
 
     CloseServiceHandle(scm);
     return hr;
@@ -3803,7 +3803,7 @@ static HRESULT WINAPI TaskService_Connect(ITaskService *iface, VARIANT server, V
     hr = SchRpcHighestVersion(&task_svc->version);
     if (hr != S_OK) return hr;
 
-    TRACE("server version %#x\n", task_svc->version);
+    TRACE("server version %#lx\n", task_svc->version);
 
     lstrcpyW(task_svc->comp_name, comp_name);
     task_svc->connected = TRUE;

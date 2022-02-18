@@ -95,21 +95,21 @@ static HRESULT WINAPI regtask_GetTypeInfoCount(IRegisteredTask *iface, UINT *cou
 
 static HRESULT WINAPI regtask_GetTypeInfo(IRegisteredTask *iface, UINT index, LCID lcid, ITypeInfo **info)
 {
-    FIXME("%p,%u,%u,%p: stub\n", iface, index, lcid, info);
+    FIXME("%p,%u,%lu,%p: stub\n", iface, index, lcid, info);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI regtask_GetIDsOfNames(IRegisteredTask *iface, REFIID riid, LPOLESTR *names,
                                             UINT count, LCID lcid, DISPID *dispid)
 {
-    FIXME("%p,%s,%p,%u,%u,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
+    FIXME("%p,%s,%p,%u,%lu,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI regtask_Invoke(IRegisteredTask *iface, DISPID dispid, REFIID riid, LCID lcid, WORD flags,
                                      DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *argerr)
 {
-    FIXME("%p,%d,%s,%04x,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
+    FIXME("%p,%ld,%s,%04lx,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
           params, result, excepinfo, argerr);
     return E_NOTIMPL;
 }
@@ -192,13 +192,13 @@ static HRESULT WINAPI regtask_Run(IRegisteredTask *iface, VARIANT params, IRunni
 static HRESULT WINAPI regtask_RunEx(IRegisteredTask *iface, VARIANT params, LONG flags,
                                     LONG session_id, BSTR user, IRunningTask **task)
 {
-    FIXME("%p,%s,%x,%x,%s,%p: stub\n", iface, debugstr_variant(&params), flags, session_id, debugstr_w(user), task);
+    FIXME("%p,%s,%lx,%lx,%s,%p: stub\n", iface, debugstr_variant(&params), flags, session_id, debugstr_w(user), task);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI regtask_GetInstances(IRegisteredTask *iface, LONG flags, IRunningTaskCollection **tasks)
 {
-    FIXME("%p,%x,%p: stub\n", iface, flags, tasks);
+    FIXME("%p,%lx,%p: stub\n", iface, flags, tasks);
     return E_NOTIMPL;
 }
 
@@ -253,19 +253,19 @@ static HRESULT WINAPI regtask_get_Xml(IRegisteredTask *iface, BSTR *xml)
 
 static HRESULT WINAPI regtask_GetSecurityDescriptor(IRegisteredTask *iface, LONG info, BSTR *sddl)
 {
-    FIXME("%p,%x,%p: stub\n", iface, info, sddl);
+    FIXME("%p,%lx,%p: stub\n", iface, info, sddl);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI regtask_SetSecurityDescriptor(IRegisteredTask *iface, BSTR sddl, LONG flags)
 {
-    FIXME("%p,%s,%x: stub\n", iface, debugstr_w(sddl), flags);
+    FIXME("%p,%s,%lx: stub\n", iface, debugstr_w(sddl), flags);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI regtask_Stop(IRegisteredTask *iface, LONG flags)
 {
-    FIXME("%p,%x: stub\n", iface, flags);
+    FIXME("%p,%lx: stub\n", iface, flags);
     return E_NOTIMPL;
 }
 
@@ -443,21 +443,21 @@ static HRESULT WINAPI regtasks_GetTypeInfoCount(IRegisteredTaskCollection *iface
 
 static HRESULT WINAPI regtasks_GetTypeInfo(IRegisteredTaskCollection *iface, UINT index, LCID lcid, ITypeInfo **info)
 {
-    FIXME("%p,%u,%u,%p: stub\n", iface, index, lcid, info);
+    FIXME("%p,%u,%lu,%p: stub\n", iface, index, lcid, info);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI regtasks_GetIDsOfNames(IRegisteredTaskCollection *iface, REFIID riid, LPOLESTR *names,
                                                 UINT count, LCID lcid, DISPID *dispid)
 {
-    FIXME("%p,%s,%p,%u,%u,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
+    FIXME("%p,%s,%p,%u,%lu,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI regtasks_Invoke(IRegisteredTaskCollection *iface, DISPID dispid, REFIID riid, LCID lcid, WORD flags,
                                          DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *argerr)
 {
-    FIXME("%p,%d,%s,%04x,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
+    FIXME("%p,%ld,%s,%04lx,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
           params, result, excepinfo, argerr);
     return E_NOTIMPL;
 }
