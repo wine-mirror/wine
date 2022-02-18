@@ -97,7 +97,7 @@ INT16 WINAPI SetSoundNoise16(INT16 nSource, INT16 nDuration)
  */
 INT16 WINAPI SetVoiceSound16(INT16 nVoice, DWORD lFrequency, INT16 nDuration)
 {
-  FIXME("(%d, %d, %d): stub\n",nVoice,lFrequency, nDuration);
+  FIXME("(%d, %ld, %d): stub\n",nVoice,lFrequency, nDuration);
   return 0;
 }
 
