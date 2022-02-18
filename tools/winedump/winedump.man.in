@@ -70,12 +70,12 @@ Dumps file header information.
 This option dumps only the standard PE header structures,
 along with the COFF sections available in the file.
 .IP "\fB-j \fIdir_name\fR"
-Dumps only the content of directory \fIdir_name\fR, for files
-which header points to directories.
-For PE files, currently the import, export, debug, resource,
-tls and clr directories are implemented.
-For NE files, currently the export and resource directories are
-implemented.
+Dumps only the content of directory \fIdir_name\fR, for files which
+header points to directories.  For PE files, the \fBimport\fR,
+\fBexport\fR, \fBdebug\fR, \fBresource\fR, \fBtls\fR, \fBloadcfg\fR,
+\fBclr\fR, \fBreloc\fR and \fBexcept\fR directories, as well as the
+\fBapiset\fR section, are implemented.  For NE files, the \fBexport\fR
+and \fBresource\fR directories are implemented.
 .IP \fB-x\fR
 Dumps everything.
 This command prints all available information (including all

@@ -491,6 +491,111 @@ static void dump_sections(const void *base, const void* addr, unsigned num_sect)
     }
 }
 
+static char *get_str( char *buffer, unsigned int rva, unsigned int len )
+{
+    const WCHAR *wstr = PRD( rva, len );
+    char *ret = buffer;
+
+    len /= sizeof(WCHAR);
+    while (len--) *buffer++ = *wstr++;
+    *buffer = 0;
+    return ret;
+}
+
+static void dump_section_apiset(void)
+{
+    const IMAGE_SECTION_HEADER *sect = IMAGE_FIRST_SECTION(PE_nt_headers);
+    const UINT *ptr, *entry, *value, *hash;
+    unsigned int i, j, count, val_count, rva;
+    char buffer[128];
+
+    for (i = 0; i < PE_nt_headers->FileHeader.NumberOfSections; i++, sect++)
+    {
+        if (strncmp( (const char *)sect->Name, ".apiset", 8 )) continue;
+        rva = sect->PointerToRawData;
+        ptr = PRD( rva, sizeof(*ptr) );
+        printf( "ApiSet section:\n" );
+        switch (ptr[0]) /* version */
+        {
+        case 2:
+            printf( "  Version:     %u\n",   ptr[0] );
+            printf( "  Count:       %08x\n", ptr[1] );
+            count = ptr[1];
+            if (!(entry = PRD( rva + 2 * sizeof(*ptr), count * 3 * sizeof(*entry) ))) break;
+            for (i = 0; i < count; i++, entry += 3)
+            {
+                printf( "    %s ->", get_str( buffer, rva + entry[0], entry[1] ));
+                if (!(value = PRD( rva + entry[2], sizeof(*value) ))) break;
+                val_count = *value++;
+                for (j = 0; j < val_count; j++, value += 4)
+                {
+                    putchar( ' ' );
+                    if (value[1]) printf( "%s:", get_str( buffer, rva + value[0], value[1] ));
+                    printf( "%s", get_str( buffer, rva + value[2], value[3] ));
+                }
+                printf( "\n");
+            }
+            break;
+        case 4:
+            printf( "  Version:     %u\n",   ptr[0] );
+            printf( "  Size:        %08x\n", ptr[1] );
+            printf( "  Flags:       %08x\n", ptr[2] );
+            printf( "  Count:       %08x\n", ptr[3] );
+            count = ptr[3];
+            if (!(entry = PRD( rva + 4 * sizeof(*ptr), count * 6 * sizeof(*entry) ))) break;
+            for (i = 0; i < count; i++, entry += 6)
+            {
+                printf( "    %08x %s ->", entry[0], get_str( buffer, rva + entry[1], entry[2] ));
+                if (!(value = PRD( rva + entry[5], sizeof(*value) ))) break;
+                value++; /* flags */
+                val_count = *value++;
+                for (j = 0; j < val_count; j++, value += 5)
+                {
+                    putchar( ' ' );
+                    if (value[1]) printf( "%s:", get_str( buffer, rva + value[1], value[2] ));
+                    printf( "%s", get_str( buffer, rva + value[3], value[4] ));
+                }
+                printf( "\n");
+            }
+            break;
+        case 6:
+            printf( "  Version:     %u\n",   ptr[0] );
+            printf( "  Size:        %08x\n", ptr[1] );
+            printf( "  Flags:       %08x\n", ptr[2] );
+            printf( "  Count:       %08x\n", ptr[3] );
+            printf( "  EntryOffset: %08x\n", ptr[4] );
+            printf( "  HashOffset:  %08x\n", ptr[5] );
+            printf( "  HashFactor:  %08x\n", ptr[6] );
+            count = ptr[3];
+            if (!(entry = PRD( rva + ptr[4], count * 6 * sizeof(*entry) ))) break;
+            for (i = 0; i < count; i++, entry += 6)
+            {
+                printf( "    %08x %s ->", entry[0], get_str( buffer, rva + entry[1], entry[2] ));
+                if (!(value = PRD( rva + entry[4], entry[5] * 5 * sizeof(*value) ))) break;
+                for (j = 0; j < entry[5]; j++, value += 5)
+                {
+                    putchar( ' ' );
+                    if (value[1]) printf( "%s:", get_str( buffer, rva + value[1], value[2] ));
+                    printf( "%s", get_str( buffer, rva + value[3], value[4] ));
+                }
+                printf( "\n" );
+            }
+            printf( "  Hash table:\n" );
+            if (!(hash = PRD( rva + ptr[5], count * 2 * sizeof(*hash) ))) break;
+            for (i = 0; i < count; i++, hash += 2)
+            {
+                entry = PRD( rva + ptr[4] + hash[1] * 6 * sizeof(*entry), 6 * sizeof(*entry) );
+                printf( "    %08x -> %s\n", hash[0], get_str( buffer, rva + entry[1], entry[3] ));
+            }
+            break;
+        default:
+            printf( "*** Unknown version %u\n", ptr[0] );
+            break;
+        }
+        break;
+    }
+}
+
 static	void	dump_dir_exported_functions(void)
 {
     unsigned int size = 0;
@@ -2336,6 +2441,8 @@ void pe_dump(void)
 	    dump_dir_reloc();
 	if (all || !strcmp(globals.dumpsect, "except"))
 	    dump_dir_exceptions();
+	if (all || !strcmp(globals.dumpsect, "apiset"))
+	    dump_section_apiset();
     }
     if (globals.do_symbol_table)
         dump_symbol_table();

@@ -207,7 +207,8 @@ static const struct my_option option_table[] = {
   {"-C",    DUMP, 0, do_symdmngl, "-C              Turn on symbol demangling"},
   {"-f",    DUMP, 0, do_dumphead, "-f              Dump file header information"},
   {"-G",    DUMP, 0, do_rawdebug, "-G              Dump raw debug information"},
-  {"-j",    DUMP, 1, do_dumpsect, "-j <sect_name>  Dump only the content of section 'sect_name' (import, export, debug, resource, tls, loadcfg, clr, reloc, except)"},
+  {"-j",    DUMP, 1, do_dumpsect, "-j <sect_name>  Dump only the content of section 'sect_name'\n"
+                            "                        (import, export, debug, resource, tls, loadcfg, clr, reloc, except, apiset)"},
   {"-t",    DUMP, 0, do_symtable, "-t              Dump symbol table"},
   {"-x",    DUMP, 0, do_dumpall,  "-x              Dump everything"},
   {"sym",   DMGL, 0, do_demangle, "sym <sym>       Demangle C++ symbol <sym> and exit"},
@@ -232,22 +233,22 @@ void do_usage (const char *arg)
     const struct my_option *opt;
     printf ("Usage: winedump [-h | sym <sym> | spec <dll> | dump <file>]\n");
     printf ("Mode options (can be put as the mode (sym/spec/dump...) is declared):\n");
-    printf ("\tWhen used in --help mode\n");
+    printf ("   When used in --help mode\n");
     for (opt = option_table; opt->name; opt++)
 	if (opt->mode == NONE)
-	    printf ("\t   %s\n", opt->usage);
-    printf ("\tWhen used in sym mode\n");
+	    printf ("      %s\n", opt->usage);
+    printf ("   When used in sym mode\n");
     for (opt = option_table; opt->name; opt++)
 	if (opt->mode == DMGL)
-	    printf ("\t   %s\n", opt->usage);
-    printf ("\tWhen used in spec mode\n");
+	    printf ("      %s\n", opt->usage);
+    printf ("   When used in spec mode\n");
     for (opt = option_table; opt->name; opt++)
 	if (opt->mode == SPEC)
-	    printf ("\t   %s\n", opt->usage);
-    printf ("\tWhen used in dump mode\n");
+	    printf ("      %s\n", opt->usage);
+    printf ("   When used in dump mode\n");
     for (opt = option_table; opt->name; opt++)
 	if (opt->mode == DUMP)
-	    printf ("\t   %s\n", opt->usage);
+	    printf ("      %s\n", opt->usage);
 
     puts ("");
     exit (1);
