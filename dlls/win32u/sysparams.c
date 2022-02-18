@@ -4534,6 +4534,9 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
         return HandleToUlong( get_sys_color_pen(arg) );
     case NtUserGetSystemMetrics:
         return get_system_metrics( arg );
+    case NtUserGetVirtualScreenRect:
+        *(RECT *)arg = get_virtual_screen_rect( 0 );
+        return 1;
     case NtUserMessageBeep:
         return message_beep( arg );
     /* temporary exports */
