@@ -1273,7 +1273,7 @@ static HRESULT hid_joystick_read( IDirectInputDevice8W *iface )
             if (impl->base.hEvent && memcmp( &params.old_state, impl->base.device_state, format->dwDataSize ))
                 SetEvent( impl->base.hEvent );
         }
-        else if (report_buf[0] == impl->pid_effect_state.id)
+        else if (report_buf[0] == impl->pid_effect_state.id && is_exclusively_acquired( impl ))
         {
             status = HidP_GetUsageValue( HidP_Input, HID_USAGE_PAGE_PID, 0, PID_USAGE_EFFECT_BLOCK_INDEX,
                                          &index, impl->preparsed, report_buf, report_len );
