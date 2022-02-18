@@ -1279,7 +1279,6 @@ static HRESULT hid_joystick_read( IDirectInputDevice8W *iface )
                                          &index, impl->preparsed, report_buf, report_len );
             if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_GetUsageValue EFFECT_BLOCK_INDEX returned %#lx\n", status );
 
-            EnterCriticalSection( &impl->base.crit );
             effect_state = 0;
             device_state = impl->base.force_feedback_state & DIGFFS_EMPTY;
             while (count--)
@@ -1308,7 +1307,6 @@ static HRESULT hid_joystick_read( IDirectInputDevice8W *iface )
             LIST_FOR_EACH_ENTRY( effect, &impl->effect_list, struct hid_joystick_effect, entry )
                 if (effect->index == index) effect->status = effect_state;
             impl->base.force_feedback_state = device_state;
-            LeaveCriticalSection( &impl->base.crit );
         }
 
         memset( &impl->read_ovl, 0, sizeof(impl->read_ovl) );
