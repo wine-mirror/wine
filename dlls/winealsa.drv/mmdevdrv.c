@@ -327,7 +327,8 @@ static void set_stream_volumes(ACImpl *This)
     unsigned int i;
 
     for(i = 0; i < stream->fmt->nChannels; i++)
-        stream->vols[i] = This->vols[i] * This->session->channel_vols[i] * This->session->master_vol;
+        stream->vols[i] = This->session->mute ? 0.0f :
+            This->vols[i] * This->session->channel_vols[i] * This->session->master_vol;
 }
 
 HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids_out, GUID **guids_out,
@@ -1469,29 +1470,31 @@ static BYTE *remap_channels(struct alsa_stream *stream, BYTE *buf, snd_pcm_ufram
     return stream->remapping_buf;
 }
 
-static void adjust_buffer_volume(const ACImpl *This, BYTE *buf, snd_pcm_uframes_t frames, BOOL mute)
+static void adjust_buffer_volume(const ACImpl *This, BYTE *buf, snd_pcm_uframes_t frames)
 {
     struct alsa_stream *stream = This->stream;
     BOOL adjust = FALSE;
-    UINT32 i, channels;
+    UINT32 i, channels, mute = 0;
     BYTE *end;
 
     if (stream->vol_adjusted_frames >= frames)
         return;
     channels = stream->fmt->nChannels;
 
-    if (mute)
+    /* Adjust the buffer based on the volume for each channel */
+    for (i = 0; i < channels; i++)
+    {
+        adjust |= stream->vols[i] != 1.0f;
+        if (stream->vols[i] == 0.0f)
+            mute++;
+    }
+
+    if (mute == channels)
     {
         int err = snd_pcm_format_set_silence(stream->alsa_format, buf, frames * channels);
         if (err < 0)
             WARN("Setting buffer to silence failed: %d (%s)\n", err, snd_strerror(err));
         return;
-    }
-
-    /* Adjust the buffer based on the volume for each channel */
-    for (i = 0; i < channels; i++)
-    {
-        adjust |= stream->vols[i] != 1.0f;
     }
     if (!adjust) return;
 
@@ -1584,13 +1587,12 @@ static void adjust_buffer_volume(const ACImpl *This, BYTE *buf, snd_pcm_uframes_
     }
 }
 
-static snd_pcm_sframes_t alsa_write_best_effort(ACImpl *This, BYTE *buf,
-        snd_pcm_uframes_t frames, BOOL mute)
+static snd_pcm_sframes_t alsa_write_best_effort(ACImpl *This, BYTE *buf, snd_pcm_uframes_t frames)
 {
     struct alsa_stream *stream = This->stream;
     snd_pcm_sframes_t written;
 
-    adjust_buffer_volume(This, buf, frames, mute);
+    adjust_buffer_volume(This, buf, frames);
 
     /* Mark the frames we've already adjusted */
     if (stream->vol_adjusted_frames < frames)
@@ -1639,7 +1641,7 @@ static snd_pcm_sframes_t alsa_write_buffer_wrap(ACImpl *This, BYTE *buf,
         else
             chunk = to_write;
 
-        tmp = alsa_write_best_effort(This, buf + offs * stream->fmt->nBlockAlign, chunk, This->session->mute);
+        tmp = alsa_write_best_effort(This, buf + offs * stream->fmt->nBlockAlign, chunk);
         if(tmp < 0)
             return ret;
         if(!tmp)
@@ -1722,7 +1724,7 @@ static void alsa_write_data(ACImpl *This)
     if(stream->data_in_alsa_frames == 0 && stream->held_frames < stream->alsa_period_frames)
     {
         alsa_write_best_effort(This, stream->silence_buf,
-                               stream->alsa_period_frames - stream->held_frames, FALSE);
+                               stream->alsa_period_frames - stream->held_frames);
         stream->vol_adjusted_frames = 0;
     }
 
@@ -1766,6 +1768,7 @@ static void alsa_read_data(ACImpl *This)
     struct alsa_stream *stream = This->stream;
     snd_pcm_sframes_t nread;
     UINT32 pos = stream->wri_offs_frames, limit = stream->held_frames;
+    unsigned int i;
 
     if(!stream->started)
         goto exit;
@@ -1799,7 +1802,10 @@ static void alsa_read_data(ACImpl *This)
         }
     }
 
-    if(This->session->mute){
+    for(i = 0; i < stream->fmt->nChannels; i++)
+        if(stream->vols[i] != 0.0f)
+            break;
+    if(i == stream->fmt->nChannels){ /* mute */
         int err;
         if((err = snd_pcm_format_set_silence(stream->alsa_format,
                         stream->local_buffer + pos * stream->fmt->nBlockAlign,
@@ -3129,13 +3135,20 @@ static HRESULT WINAPI SimpleAudioVolume_SetMute(ISimpleAudioVolume *iface,
 {
     AudioSessionWrapper *This = impl_from_ISimpleAudioVolume(iface);
     AudioSession *session = This->session;
+    ACImpl *client;
 
     TRACE("(%p)->(%u, %s)\n", session, mute, debugstr_guid(context));
 
     if(context)
         FIXME("Notifications not supported yet\n");
 
+    EnterCriticalSection(&g_sessions_lock);
+
     session->mute = mute;
+    LIST_FOR_EACH_ENTRY(client, &session->clients, ACImpl, entry)
+        set_stream_volumes(client);
+
+    LeaveCriticalSection(&g_sessions_lock);
 
     return S_OK;
 }
