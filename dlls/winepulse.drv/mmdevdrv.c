@@ -30,6 +30,7 @@
 #include "wine/list.h"
 
 #include "ole2.h"
+#include "mimeole.h"
 #include "dshow.h"
 #include "dsound.h"
 #include "propsys.h"
@@ -243,13 +244,110 @@ static DWORD CALLBACK pulse_mainloop_thread(void *event)
     return 0;
 }
 
-static char *get_application_name(void)
+typedef struct tagLANGANDCODEPAGE
+{
+    WORD wLanguage;
+    WORD wCodePage;
+} LANGANDCODEPAGE;
+
+static BOOL query_productname(void *data, LANGANDCODEPAGE *lang, LPVOID *buffer, DWORD *len)
+{
+    WCHAR pn[37];
+    swprintf(pn, ARRAY_SIZE(pn), L"\\StringFileInfo\\%04x%04x\\ProductName", lang->wLanguage, lang->wCodePage);
+    return VerQueryValueW(data, pn, buffer, len) && *len;
+}
+
+static char *get_application_name(BOOL query_app_name)
 {
     WCHAR path[MAX_PATH], *name;
+    char *str = NULL;
     size_t len;
-    char *str;
 
     GetModuleFileNameW(NULL, path, ARRAY_SIZE(path));
+
+    if (query_app_name)
+    {
+        UINT translate_size, productname_size;
+        LANGANDCODEPAGE *translate;
+        LPVOID productname;
+        BOOL found = FALSE;
+        void *data = NULL;
+        unsigned int i;
+        LCID locale;
+        DWORD size;
+
+        size = GetFileVersionInfoSizeW(path, NULL);
+        if (!size)
+            goto skip;
+
+        data = malloc(size);
+        if (!data)
+            goto skip;
+
+        if (!GetFileVersionInfoW(path, 0, size, data))
+            goto skip;
+
+        if (!VerQueryValueW(data, L"\\VarFileInfo\\Translation", (LPVOID *)&translate, &translate_size))
+            goto skip;
+
+        /* no translations found */
+        if (translate_size < sizeof(LANGANDCODEPAGE))
+            goto skip;
+
+        /* The following code will try to find the best translation. We first search for an
+         * exact match of the language, then a match of the language PRIMARYLANGID, then we
+         * search for a LANG_NEUTRAL match, and if that still doesn't work we pick the
+         * first entry which contains a proper productname. */
+        locale = GetThreadLocale();
+
+        for (i = 0; i < translate_size / sizeof(LANGANDCODEPAGE); i++) {
+            if (translate[i].wLanguage == locale &&
+                    query_productname(data, &translate[i], &productname, &productname_size)) {
+                found = TRUE;
+                break;
+            }
+        }
+
+        if (!found) {
+            for (i = 0; i < translate_size / sizeof(LANGANDCODEPAGE); i++) {
+                if (PRIMARYLANGID(translate[i].wLanguage) == PRIMARYLANGID(locale) &&
+                        query_productname(data, &translate[i], &productname, &productname_size)) {
+                    found = TRUE;
+                    break;
+                }
+            }
+        }
+
+        if (!found) {
+            for (i = 0; i < translate_size / sizeof(LANGANDCODEPAGE); i++) {
+                if (PRIMARYLANGID(translate[i].wLanguage) == LANG_NEUTRAL &&
+                        query_productname(data, &translate[i], &productname, &productname_size)) {
+                    found = TRUE;
+                    break;
+                }
+            }
+        }
+
+        if (!found) {
+            for (i = 0; i < translate_size / sizeof(LANGANDCODEPAGE); i++) {
+                if (query_productname(data, &translate[i], &productname, &productname_size)) {
+                    found = TRUE;
+                    break;
+                }
+            }
+        }
+
+        if (found) {
+            len = WideCharToMultiByte(CP_UTF8, 0, productname, -1, NULL, 0, NULL, NULL);
+            str = malloc(len);
+            if (str) WideCharToMultiByte(CP_UTF8, 0, productname, -1, str, len, NULL, NULL);
+        }
+
+    skip:
+        free(data);
+        if (str) return str;
+    }
+
     name = wcsrchr(path, '\\');
     if (!name)
         name = path;
@@ -390,7 +488,7 @@ int WINAPI AUDDRV_GetPriority(void)
     struct test_connect_params params;
     char *name;
 
-    params.name   = name = get_application_name();
+    params.name   = name = get_application_name(FALSE);
     params.config = &pulse_config;
     pulse_call(test_connect, &params);
     free(name);
@@ -776,7 +874,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         CloseHandle(event);
     }
 
-    params.name = name = get_application_name();
+    params.name = name = get_application_name(TRUE);
     params.pulse_name  = This->pulse_name;
     params.dataflow = This->dataflow;
     params.mode     = mode;
