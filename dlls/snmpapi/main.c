@@ -120,7 +120,7 @@ BOOL WINAPI DllMain(
 	DWORD fdwReason,
 	LPVOID lpvReserved)
 {
-    TRACE("(%p,%d,%p)\n", hInstDLL, fdwReason, lpvReserved);
+    TRACE("(%p,%ld,%p)\n", hInstDLL, fdwReason, lpvReserved);
 
     switch(fdwReason) {
     case DLL_PROCESS_ATTACH:
@@ -572,14 +572,14 @@ VOID WINAPI SnmpUtilPrintAsnAny(AsnAny *any)
     switch (any->asnType)
     {
     case ASN_NULL:       TRACE("Null value\n"); return;
-    case ASN_INTEGER32:  TRACE("Integer32 %d\n", any->asnValue.number); return;
-    case ASN_UNSIGNED32: TRACE("Unsigned32 %u\n", any->asnValue.unsigned32); return;
-    case ASN_COUNTER32:  TRACE("Counter32 %u\n", any->asnValue.counter); return;
-    case ASN_GAUGE32:    TRACE("Gauge32 %u\n", any->asnValue.gauge); return;
-    case ASN_TIMETICKS:  TRACE("Timeticks %u\n", any->asnValue.ticks); return;
+    case ASN_INTEGER32:  TRACE("Integer32 %ld\n", any->asnValue.number); return;
+    case ASN_UNSIGNED32: TRACE("Unsigned32 %lu\n", any->asnValue.unsigned32); return;
+    case ASN_COUNTER32:  TRACE("Counter32 %lu\n", any->asnValue.counter); return;
+    case ASN_GAUGE32:    TRACE("Gauge32 %lu\n", any->asnValue.gauge); return;
+    case ASN_TIMETICKS:  TRACE("Timeticks %lu\n", any->asnValue.ticks); return;
     case ASN_COUNTER64:
     {
-        TRACE("Counter64 %x%08x\n", (DWORD)(any->asnValue.counter64.QuadPart>>32),(DWORD)any->asnValue.counter64.QuadPart);
+        TRACE("Counter64 %lx%08lx\n", (DWORD)(any->asnValue.counter64.QuadPart>>32),(DWORD)any->asnValue.counter64.QuadPart);
         return;
     }
     case ASN_OCTETSTRING:
