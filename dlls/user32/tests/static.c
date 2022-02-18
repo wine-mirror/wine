@@ -80,7 +80,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
 static void test_updates(int style, int flags)
 {
-    RECT r1 = {20, 20, 30, 30};
+    RECT r1 = {20, 20, 30, 30}, rcClient;
     HWND hStatic = build_static(style);
     int exp;
     LONG exstyle;
@@ -93,6 +93,16 @@ static void test_updates(int style, int flags)
         todo_wine_if(style == SS_ETCHEDHORZ || style == SS_ETCHEDVERT) ok(exstyle == WS_EX_STATICEDGE, "expected WS_EX_STATICEDGE, got %d\n", exstyle);
     else
         ok(exstyle == 0, "expected 0, got %d\n", exstyle);
+
+    GetClientRect(hStatic, &rcClient);
+    if (style == SS_ETCHEDVERT)
+        todo_wine ok(rcClient.right == 0, "expected zero width, got %d\n", rcClient.right);
+    else
+        ok(rcClient.right > 0, "expected non-zero width, got %d\n", rcClient.right);
+    if (style == SS_ETCHEDHORZ)
+        todo_wine ok(rcClient.bottom == 0, "expected zero height, got %d\n", rcClient.bottom);
+    else
+        ok(rcClient.bottom > 0, "expected non-zero height, got %d\n", rcClient.bottom);
 
     g_nReceivedColorStatic = 0;
     /* during each update parent WndProc will test the WM_CTLCOLORSTATIC message */
