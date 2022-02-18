@@ -4646,6 +4646,18 @@ static bool adapter_gl_alloc_bo(struct wined3d_device *device, struct wined3d_re
             return false;
         }
 
+        if (bo_gl->memory)
+        {
+            struct wined3d_allocator_chunk_gl *chunk = wined3d_allocator_chunk_gl(bo_gl->memory->chunk);
+
+            wined3d_allocator_chunk_gl_lock(chunk);
+
+            if ((bo_gl->b.map_ptr = chunk->c.map_ptr))
+                ++chunk->c.map_count;
+
+            wined3d_allocator_chunk_gl_unlock(chunk);
+        }
+
         addr->buffer_object = &bo_gl->b;
         addr->addr = NULL;
 
