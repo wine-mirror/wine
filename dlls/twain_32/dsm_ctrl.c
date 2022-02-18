@@ -427,7 +427,7 @@ TW_UINT16 TWAIN_UserSelect (pTW_IDENTITY pOrigin, TW_MEMREF pData)
     userselect_data param = {pOrigin, pData};
     HWND parent = DSM_parent;
 
-    TRACE("DG_CONTROL/DAT_IDENTITY/MSG_USERSELECT SupportedGroups=0x%x ProductName=%s\n",
+    TRACE("DG_CONTROL/DAT_IDENTITY/MSG_USERSELECT SupportedGroups=0x%lx ProductName=%s\n",
         pOrigin->SupportedGroups, wine_dbgstr_a(param.result->ProductName));
 
     twain_autodetect();
