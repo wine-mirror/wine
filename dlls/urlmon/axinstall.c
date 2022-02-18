@@ -74,7 +74,7 @@ static HRESULT extract_cab_file(install_ctx_t *ctx)
 
     hres = ExtractFilesW(ctx->cache_file, ctx->tmp_dir, 0, NULL, NULL, 0);
     if(FAILED(hres)) {
-        WARN("ExtractFilesW failed: %08x\n", hres);
+        WARN("ExtractFilesW failed: %08lx\n", hres);
         return hres;
     }
 
@@ -255,7 +255,7 @@ static HRESULT install_inf_file(install_ctx_t *ctx)
             hres = RunSetupCommandW(ctx->hwnd, ctx->install_file, sect_name,
                     ctx->tmp_dir, NULL, NULL, RSC_FLAG_INF, NULL);
             if(FAILED(hres)) {
-                WARN("RunSetupCommandW failed: %08x\n", hres);
+                WARN("RunSetupCommandW failed: %08lx\n", hres);
                 return hres;
             }
         }
@@ -264,7 +264,7 @@ static HRESULT install_inf_file(install_ctx_t *ctx)
     if(default_install) {
         hres = RunSetupCommandW(ctx->hwnd, ctx->install_file, NULL, ctx->tmp_dir, NULL, NULL, RSC_FLAG_INF, NULL);
         if(FAILED(hres)) {
-            WARN("RunSetupCommandW failed: %08x\n", hres);
+            WARN("RunSetupCommandW failed: %08lx\n", hres);
             return hres;
         }
     }
@@ -474,7 +474,7 @@ static HRESULT distunit_on_stop(void *ctx, const WCHAR *cache_file, HRESULT hres
 {
     install_ctx_t *install_ctx = ctx;
 
-    TRACE("(%p %s %08x %s)\n", ctx, debugstr_w(cache_file), hresult, debugstr_w(error_str));
+    TRACE("(%p %s %08lx %s)\n", ctx, debugstr_w(cache_file), hresult, debugstr_w(error_str));
 
     if(hresult == S_OK) {
         hresult = install_file(install_ctx, cache_file);
@@ -499,7 +499,7 @@ HRESULT WINAPI AsyncInstallDistributionUnit(const WCHAR *szDistUnit, const WCHAR
     install_ctx_t *ctx;
     HRESULT hres;
 
-    TRACE("(%s %s %s %x %x %s %p %p %x)\n", debugstr_w(szDistUnit), debugstr_w(szTYPE), debugstr_w(szExt),
+    TRACE("(%s %s %s %lx %lx %s %p %p %lx)\n", debugstr_w(szDistUnit), debugstr_w(szTYPE), debugstr_w(szExt),
           dwFileVersionMS, dwFileVersionLS, debugstr_w(szURL), pbc, pvReserved, flags);
 
     if(szDistUnit || szTYPE || szExt)

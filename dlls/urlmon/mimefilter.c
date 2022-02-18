@@ -65,7 +65,7 @@ static ULONG WINAPI MimeFilterProtocol_AddRef(IInternetProtocol *iface)
 {
     MimeFilter *This = impl_from_IInternetProtocol(iface);
     LONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
     return ref;
 }
 
@@ -74,7 +74,7 @@ static ULONG WINAPI MimeFilterProtocol_Release(IInternetProtocol *iface)
     MimeFilter *This = impl_from_IInternetProtocol(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
         heap_free(This);
@@ -90,7 +90,7 @@ static HRESULT WINAPI MimeFilterProtocol_Start(IInternetProtocol *iface, LPCWSTR
         DWORD grfPI, HANDLE_PTR dwReserved)
 {
     MimeFilter *This = impl_from_IInternetProtocol(iface);
-    FIXME("(%p)->(%s %p %p %08x %lx)\n", This, debugstr_w(szUrl), pOIProtSink,
+    FIXME("(%p)->(%s %p %p %08lx %Ix)\n", This, debugstr_w(szUrl), pOIProtSink,
           pOIBindInfo, grfPI, dwReserved);
     return E_NOTIMPL;
 }
@@ -106,14 +106,14 @@ static HRESULT WINAPI MimeFilterProtocol_Abort(IInternetProtocol *iface, HRESULT
         DWORD dwOptions)
 {
     MimeFilter *This = impl_from_IInternetProtocol(iface);
-    FIXME("(%p)->(%08x %08x)\n", This, hrReason, dwOptions);
+    FIXME("(%p)->(%08lx %08lx)\n", This, hrReason, dwOptions);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI MimeFilterProtocol_Terminate(IInternetProtocol *iface, DWORD dwOptions)
 {
     MimeFilter *This = impl_from_IInternetProtocol(iface);
-    FIXME("(%p)->(%08x)\n", This, dwOptions);
+    FIXME("(%p)->(%08lx)\n", This, dwOptions);
     return E_NOTIMPL;
 }
 
@@ -135,7 +135,7 @@ static HRESULT WINAPI MimeFilterProtocol_Read(IInternetProtocol *iface, void *pv
         ULONG cb, ULONG *pcbRead)
 {
     MimeFilter *This = impl_from_IInternetProtocol(iface);
-    FIXME("(%p)->(%p %u %p)\n", This, pv, cb, pcbRead);
+    FIXME("(%p)->(%p %lu %p)\n", This, pv, cb, pcbRead);
     return E_NOTIMPL;
 }
 
@@ -143,14 +143,14 @@ static HRESULT WINAPI MimeFilterProtocol_Seek(IInternetProtocol *iface, LARGE_IN
         DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
 {
     MimeFilter *This = impl_from_IInternetProtocol(iface);
-    FIXME("(%p)->(%d %d %p)\n", This, dlibMove.u.LowPart, dwOrigin, plibNewPosition);
+    FIXME("(%p)->(%ld %ld %p)\n", This, dlibMove.u.LowPart, dwOrigin, plibNewPosition);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI MimeFilterProtocol_LockRequest(IInternetProtocol *iface, DWORD dwOptions)
 {
     MimeFilter *This = impl_from_IInternetProtocol(iface);
-    FIXME("(%p)->(%08x)\n", This, dwOptions);
+    FIXME("(%p)->(%08lx)\n", This, dwOptions);
     return E_NOTIMPL;
 }
 
@@ -213,7 +213,7 @@ static HRESULT WINAPI MimeFilterSink_ReportProgress(IInternetProtocolSink *iface
         ULONG ulStatusCode, LPCWSTR szStatusText)
 {
     MimeFilter *This = impl_from_IInternetProtocolSink(iface);
-    FIXME("(%p)->(%u %s)\n", This, ulStatusCode, debugstr_w(szStatusText));
+    FIXME("(%p)->(%lu %s)\n", This, ulStatusCode, debugstr_w(szStatusText));
     return E_NOTIMPL;
 }
 
@@ -221,7 +221,7 @@ static HRESULT WINAPI MimeFilterSink_ReportData(IInternetProtocolSink *iface,
         DWORD grfBSCF, ULONG ulProgress, ULONG ulProgressMax)
 {
     MimeFilter *This = impl_from_IInternetProtocolSink(iface);
-    FIXME("(%p)->(%d %u %u)\n", This, grfBSCF, ulProgress, ulProgressMax);
+    FIXME("(%p)->(%ld %lu %lu)\n", This, grfBSCF, ulProgress, ulProgressMax);
     return E_NOTIMPL;
 }
 
@@ -229,7 +229,7 @@ static HRESULT WINAPI MimeFilterSink_ReportResult(IInternetProtocolSink *iface,
         HRESULT hrResult, DWORD dwError, LPCWSTR szResult)
 {
     MimeFilter *This = impl_from_IInternetProtocolSink(iface);
-    FIXME("(%p)->(%08x %d %s)\n", This, hrResult, dwError, debugstr_w(szResult));
+    FIXME("(%p)->(%08lx %ld %s)\n", This, hrResult, dwError, debugstr_w(szResult));
     return E_NOTIMPL;
 }
 
@@ -656,13 +656,13 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
         DWORD cbSize, LPCWSTR pwzMimeProposed, DWORD dwMimeFlags,
         LPWSTR* ppwzMimeOut, DWORD dwReserved)
 {
-    TRACE("(%p,%s,%p,%d,%s,0x%x,%p,0x%x)\n", pBC, debugstr_w(pwzUrl), pBuffer, cbSize,
+    TRACE("(%p,%s,%p,%ld,%s,0x%lx,%p,0x%lx)\n", pBC, debugstr_w(pwzUrl), pBuffer, cbSize,
             debugstr_w(pwzMimeProposed), dwMimeFlags, ppwzMimeOut, dwReserved);
 
     if(dwMimeFlags)
-        WARN("dwMimeFlags=%08x\n", dwMimeFlags);
+        WARN("dwMimeFlags=%08lx\n", dwMimeFlags);
     if(dwReserved)
-        WARN("dwReserved=%d\n", dwReserved);
+        WARN("dwReserved=%ld\n", dwReserved);
 
     /* pBC seems to not be used */
 

@@ -86,7 +86,7 @@ static ULONG WINAPI URLMoniker_AddRef(IMoniker *iface)
     URLMoniker *This = impl_from_IMoniker(iface);
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%u\n",This, refCount);
+    TRACE("(%p) ref=%lu\n",This, refCount);
 
     return refCount;
 }
@@ -96,7 +96,7 @@ static ULONG WINAPI URLMoniker_Release(IMoniker *iface)
     URLMoniker *This = impl_from_IMoniker(iface);
     ULONG refCount = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%u\n",This, refCount);
+    TRACE("(%p) ref=%lu\n",This, refCount);
 
     if (!refCount) {
         if(This->uri)
@@ -285,7 +285,7 @@ static HRESULT WINAPI URLMoniker_Reduce(IMoniker *iface, IBindCtx *pbc,
 {
     URLMoniker *This = impl_from_IMoniker(iface);
 
-    TRACE("(%p,%p,%d,%p,%p)\n", This, pbc, dwReduceHowFar, ppmkToLeft, ppmkReduced);
+    TRACE("(%p,%p,%ld,%p,%p)\n", This, pbc, dwReduceHowFar, ppmkToLeft, ppmkReduced);
 
     if(!ppmkReduced)
         return E_INVALIDARG;
@@ -634,7 +634,7 @@ HRESULT WINAPI CreateURLMonikerEx(IMoniker *pmkContext, LPCWSTR szURL, IMoniker 
     URLMoniker *obj;
     HRESULT hres;
 
-    TRACE("(%p, %s, %p, %08x)\n", pmkContext, debugstr_w(szURL), ppmk, dwFlags);
+    TRACE("(%p, %s, %p, %08lx)\n", pmkContext, debugstr_w(szURL), ppmk, dwFlags);
 
     if (ppmk)
         *ppmk = NULL;
@@ -643,7 +643,7 @@ HRESULT WINAPI CreateURLMonikerEx(IMoniker *pmkContext, LPCWSTR szURL, IMoniker 
         return E_INVALIDARG;
 
     if(dwFlags >= ARRAY_SIZE(create_flags_map)) {
-        FIXME("Unsupported flags %x\n", dwFlags);
+        FIXME("Unsupported flags %lx\n", dwFlags);
         return E_INVALIDARG;
     }
 
@@ -687,7 +687,7 @@ HRESULT WINAPI CreateURLMonikerEx2(IMoniker *pmkContext, IUri *pUri, IMoniker **
     URLMoniker *ret;
     HRESULT hres;
 
-    TRACE("(%p %p %p %x)\n", pmkContext, pUri, ppmk, dwFlags);
+    TRACE("(%p %p %p %lx)\n", pmkContext, pUri, ppmk, dwFlags);
 
     if (ppmk)
         *ppmk = NULL;
@@ -696,7 +696,7 @@ HRESULT WINAPI CreateURLMonikerEx2(IMoniker *pmkContext, IUri *pUri, IMoniker **
         return E_INVALIDARG;
 
     if(dwFlags >= ARRAY_SIZE(create_flags_map)) {
-        FIXME("Unsupported flags %x\n", dwFlags);
+        FIXME("Unsupported flags %lx\n", dwFlags);
         return E_INVALIDARG;
     }
 
@@ -788,7 +788,7 @@ HRESULT WINAPI BindAsyncMoniker(IMoniker *pmk, DWORD grfOpt, IBindStatusCallback
     LPBC pbc = NULL;
     HRESULT hr = E_INVALIDARG;
 
-    TRACE("(%p %08x %p %s %p)\n", pmk, grfOpt, pbsc, debugstr_guid(iidResult), ppvResult);
+    TRACE("(%p %08lx %p %s %p)\n", pmk, grfOpt, pbsc, debugstr_guid(iidResult), ppvResult);
 
     if (pmk && ppvResult)
     {
@@ -838,7 +838,7 @@ HRESULT WINAPI URLDownloadToCacheFileA(LPUNKNOWN lpUnkCaller, LPCSTR szURL, LPST
     int len;
     HRESULT hres;
 
-    TRACE("(%p %s %p %d %d %p)\n", lpUnkCaller, debugstr_a(szURL), szFileName,
+    TRACE("(%p %s %p %ld %ld %p)\n", lpUnkCaller, debugstr_a(szURL), szFileName,
             dwBufLength, dwReserved, pBSC);
 
     if(szURL) {
@@ -875,7 +875,7 @@ HRESULT WINAPI URLDownloadToCacheFileW(LPUNKNOWN lpUnkCaller, LPCWSTR szURL, LPW
 
     static WCHAR header[] = L"HTTP/1.0 200 OK\\r\\n\\r\\n";
 
-    TRACE("(%p, %s, %p, %d, %d, %p)\n", lpUnkCaller, debugstr_w(szURL),
+    TRACE("(%p, %s, %p, %ld, %ld, %p)\n", lpUnkCaller, debugstr_w(szURL),
           szFileName, dwBufLength, dwReserved, pBSC);
 
     if (!szURL || !szFileName)
@@ -935,7 +935,7 @@ HRESULT WINAPI HlinkSimpleNavigateToString( LPCWSTR szTarget,
     LPCWSTR szLocation, LPCWSTR szTargetFrameName, IUnknown *pUnk,
     IBindCtx *pbc, IBindStatusCallback *pbsc, DWORD grfHLNF, DWORD dwReserved)
 {
-    FIXME("%s %s %s %p %p %p %u %u partial stub\n", debugstr_w( szTarget ), debugstr_w( szLocation ),
+    FIXME("%s %s %s %p %p %p %lu %lu partial stub\n", debugstr_w( szTarget ), debugstr_w( szLocation ),
           debugstr_w( szTargetFrameName ), pUnk, pbc, pbsc, grfHLNF, dwReserved);
 
     /* undocumented: 0 means HLNF_OPENINNEWWINDOW*/

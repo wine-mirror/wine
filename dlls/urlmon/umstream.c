@@ -263,7 +263,7 @@ HRESULT WINAPI URLOpenBlockingStreamA(LPUNKNOWN pCaller, LPCSTR szURL,
     int len;
     HRESULT hr;
 
-    TRACE("(%p, %s, %p, 0x%x, %p)\n", pCaller, szURL, ppStream, dwReserved, lpfnCB);
+    TRACE("(%p, %s, %p, 0x%lx, %p)\n", pCaller, szURL, ppStream, dwReserved, lpfnCB);
 
     if (!szURL || !ppStream)
         return E_INVALIDARG;
@@ -293,7 +293,7 @@ HRESULT WINAPI URLOpenBlockingStreamW(LPUNKNOWN pCaller, LPCWSTR szURL,
 {
     ProxyBindStatusCallback blocking_bsc;
 
-    TRACE("(%p, %s, %p, 0x%x, %p)\n", pCaller, debugstr_w(szURL), ppStream,
+    TRACE("(%p, %s, %p, 0x%lx, %p)\n", pCaller, debugstr_w(szURL), ppStream,
           dwReserved, lpfnCB);
 
     if (!szURL || !ppStream)
@@ -315,7 +315,7 @@ HRESULT WINAPI URLOpenStreamA(LPUNKNOWN pCaller, LPCSTR szURL, DWORD dwReserved,
     int len;
     HRESULT hr;
 
-    TRACE("(%p, %s, 0x%x, %p)\n", pCaller, szURL, dwReserved, lpfnCB);
+    TRACE("(%p, %s, 0x%lx, %p)\n", pCaller, szURL, dwReserved, lpfnCB);
 
     if (!szURL)
         return E_INVALIDARG;
@@ -343,7 +343,7 @@ HRESULT WINAPI URLOpenStreamW(LPUNKNOWN pCaller, LPCWSTR szURL, DWORD dwReserved
     ProxyBindStatusCallback async_bsc;
     IStream *pStream;
 
-    TRACE("(%p, %s, 0x%x, %p)\n", pCaller, debugstr_w(szURL), dwReserved,
+    TRACE("(%p, %s, 0x%lx, %p)\n", pCaller, debugstr_w(szURL), dwReserved,
           lpfnCB);
 
     if (!szURL)
@@ -365,6 +365,6 @@ HRESULT WINAPI URLOpenStreamW(LPUNKNOWN pCaller, LPCWSTR szURL, DWORD dwReserved
 HRESULT WINAPI URLOpenPullStreamW(IUnknown *caller, const WCHAR *url, DWORD reserved,
                                   IBindStatusCallback *callback)
 {
-    FIXME("%p %s %u %p, stub!\n", caller, debugstr_w(url), reserved, callback);
+    FIXME("%p %s %lu %p, stub!\n", caller, debugstr_w(url), reserved, callback);
     return E_NOTIMPL;
 }

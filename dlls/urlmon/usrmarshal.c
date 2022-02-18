@@ -28,7 +28,7 @@ HRESULT CALLBACK IWinInetHttpInfo_QueryInfo_Proxy(IWinInetHttpInfo* This,
     DWORD dwOption, LPVOID pBuffer, DWORD *pcbBuf, DWORD *pdwFlags,
     DWORD *pdwReserved)
 {
-    TRACE("(%p %x %p %p %p %p)\n", This, dwOption, pBuffer, pcbBuf, pdwFlags, pdwReserved);
+    TRACE("(%p %lx %p %p %p %p)\n", This, dwOption, pBuffer, pcbBuf, pdwFlags, pdwReserved);
     return IWinInetHttpInfo_RemoteQueryInfo_Proxy(This, dwOption, pBuffer, pcbBuf, pdwFlags, pdwReserved);
 }
 
@@ -36,21 +36,21 @@ HRESULT __RPC_STUB IWinInetHttpInfo_QueryInfo_Stub(IWinInetHttpInfo* This,
     DWORD dwOption, BYTE *pBuffer, DWORD *pcbBuf, DWORD *pdwFlags,
     DWORD *pdwReserved)
 {
-    TRACE("(%p %x %p %p %p %p)\n", This, dwOption, pBuffer, pcbBuf, pdwFlags, pdwReserved);
+    TRACE("(%p %lx %p %p %p %p)\n", This, dwOption, pBuffer, pcbBuf, pdwFlags, pdwReserved);
     return IWinInetHttpInfo_QueryInfo(This, dwOption, pBuffer, pcbBuf, pdwFlags, pdwReserved);
 }
 
 HRESULT CALLBACK IWinInetInfo_QueryOption_Proxy(IWinInetInfo* This,
         DWORD dwOption, LPVOID pBuffer, DWORD *pcbBuf)
 {
-    TRACE("(%p %x %p %p)\n", This, dwOption, pBuffer, pcbBuf);
+    TRACE("(%p %lx %p %p)\n", This, dwOption, pBuffer, pcbBuf);
     return IWinInetInfo_RemoteQueryOption_Proxy(This, dwOption, pBuffer, pcbBuf);
 }
 
 HRESULT __RPC_STUB IWinInetInfo_QueryOption_Stub(IWinInetInfo* This,
         DWORD dwOption, BYTE *pBuffer, DWORD *pcbBuf)
 {
-    TRACE("(%p %x %p %p)\n", This, dwOption, pBuffer, pcbBuf);
+    TRACE("(%p %lx %p %p)\n", This, dwOption, pBuffer, pcbBuf);
     return IWinInetInfo_QueryOption(This, dwOption, pBuffer, pcbBuf);
 }
 
@@ -108,7 +108,7 @@ static HRESULT marshal_stgmed(STGMEDIUM *stgmed, RemSTGMEDIUM **ret)
                                       MSHCTX_LOCAL, NULL, MSHLFLAGS_NORMAL);
         break;
     default:
-        FIXME("unsupported tymed %u\n", stgmed->tymed);
+        FIXME("unsupported tymed %lu\n", stgmed->tymed);
         break;
     }
 
@@ -184,7 +184,7 @@ static HRESULT unmarshal_stgmed(RemSTGMEDIUM *rem_stgmed, STGMEDIUM *stgmed)
             hres = CoUnmarshalInterface(stream, &IID_IStream, (void**)&stgmed->u.pstm);
         break;
     default:
-        FIXME("unsupported tymed %u\n", stgmed->tymed);
+        FIXME("unsupported tymed %lu\n", stgmed->tymed);
         break;
     }
 
@@ -227,7 +227,7 @@ static void stub_unmarshal_bindinfo(RemBINDINFO *rem_bindinfo, BINDINFO *bindinf
     bindinfo->cbstgmedData = rem_bindinfo->cbstgmedData;
 
     if(bindinfo->stgmedData.tymed != TYMED_NULL)
-        WARN("stgmed data (tymed %u) will be lost!\n", bindinfo->stgmedData.tymed);
+        WARN("stgmed data (tymed %lu) will be lost!\n", bindinfo->stgmedData.tymed);
 }
 
 static void stub_marshal_bindinfo(BINDINFO *bindinfo, RemBINDINFO *rem_bindinfo)
@@ -319,7 +319,7 @@ HRESULT CALLBACK IBindStatusCallback_OnDataAvailable_Proxy(
     RemSTGMEDIUM *rem_stgmed;
     HRESULT hres;
 
-    TRACE("(%p)->(%x %u %p %p)\n", This, grfBSCF, dwSize, pformatetc, pstgmed);
+    TRACE("(%p)->(%lx %lu %p %p)\n", This, grfBSCF, dwSize, pformatetc, pstgmed);
 
     hres = marshal_stgmed(pstgmed, &rem_stgmed);
     if(FAILED(hres))
@@ -345,7 +345,7 @@ HRESULT __RPC_STUB IBindStatusCallback_OnDataAvailable_Stub(
     FORMATETC formatetc;
     HRESULT hres;
 
-    TRACE("(%p)->(%x %u %p %p)\n", This, grfBSCF, dwSize, pformatetc, pstgmed);
+    TRACE("(%p)->(%lx %lu %p %p)\n", This, grfBSCF, dwSize, pformatetc, pstgmed);
 
     hres = unmarshal_stgmed(pstgmed, &stgmed);
     if(FAILED(hres))

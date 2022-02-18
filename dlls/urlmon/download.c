@@ -79,7 +79,7 @@ static ULONG WINAPI DownloadBSC_AddRef(IBindStatusCallback *iface)
     DownloadBSC *This = impl_from_IBindStatusCallback(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref = %d\n", This, ref);
+    TRACE("(%p) ref = %ld\n", This, ref);
 
     return ref;
 }
@@ -89,7 +89,7 @@ static ULONG WINAPI DownloadBSC_Release(IBindStatusCallback *iface)
     DownloadBSC *This = impl_from_IBindStatusCallback(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref = %d\n", This, ref);
+    TRACE("(%p) ref = %ld\n", This, ref);
 
     if(!ref) {
         if(This->callback)
@@ -110,7 +110,7 @@ static HRESULT WINAPI DownloadBSC_OnStartBinding(IBindStatusCallback *iface,
     DownloadBSC *This = impl_from_IBindStatusCallback(iface);
     HRESULT hres = S_OK;
 
-    TRACE("(%p)->(%d %p)\n", This, dwReserved, pbind);
+    TRACE("(%p)->(%ld %p)\n", This, dwReserved, pbind);
 
     if(This->callback) {
         hres = IBindStatusCallback_OnStartBinding(This->callback, dwReserved, pbind);
@@ -133,7 +133,7 @@ static HRESULT WINAPI DownloadBSC_GetPriority(IBindStatusCallback *iface, LONG *
 static HRESULT WINAPI DownloadBSC_OnLowResource(IBindStatusCallback *iface, DWORD reserved)
 {
     DownloadBSC *This = impl_from_IBindStatusCallback(iface);
-    FIXME("(%p)->(%d)\n", This, reserved);
+    FIXME("(%p)->(%ld)\n", This, reserved);
     return E_NOTIMPL;
 }
 
@@ -161,7 +161,7 @@ static HRESULT WINAPI DownloadBSC_OnProgress(IBindStatusCallback *iface, ULONG u
     DownloadBSC *This = impl_from_IBindStatusCallback(iface);
     HRESULT hres = S_OK;
 
-    TRACE("%p)->(%u %u %u %s)\n", This, ulProgress, ulProgressMax, ulStatusCode,
+    TRACE("%p)->(%lu %lu %lu %s)\n", This, ulProgress, ulProgressMax, ulStatusCode,
             debugstr_w(szStatusText));
 
     switch(ulStatusCode) {
@@ -183,7 +183,7 @@ static HRESULT WINAPI DownloadBSC_OnProgress(IBindStatusCallback *iface, ULONG u
         break;
 
     default:
-        FIXME("Unsupported status %u\n", ulStatusCode);
+        FIXME("Unsupported status %lu\n", ulStatusCode);
     }
 
     return hres;
@@ -195,7 +195,7 @@ static HRESULT WINAPI DownloadBSC_OnStopBinding(IBindStatusCallback *iface,
     DownloadBSC *This = impl_from_IBindStatusCallback(iface);
     HRESULT hres = S_OK;
 
-    TRACE("(%p)->(%08x %s)\n", This, hresult, debugstr_w(szError));
+    TRACE("(%p)->(%08lx %s)\n", This, hresult, debugstr_w(szError));
 
     if(This->file_name) {
         if(This->cache_file) {
@@ -203,7 +203,7 @@ static HRESULT WINAPI DownloadBSC_OnStopBinding(IBindStatusCallback *iface,
 
             b = CopyFileW(This->cache_file, This->file_name, FALSE);
             if(!b)
-                FIXME("CopyFile failed: %u\n", GetLastError());
+                FIXME("CopyFile failed: %lu\n", GetLastError());
         }else {
             FIXME("No cache file\n");
         }
@@ -251,7 +251,7 @@ static HRESULT WINAPI DownloadBSC_OnDataAvailable(IBindStatusCallback *iface,
 {
     DownloadBSC *This = impl_from_IBindStatusCallback(iface);
 
-    TRACE("(%p)->(%08x %d %p %p)\n", This, grfBSCF, dwSize, pformatetc, pstgmed);
+    TRACE("(%p)->(%08lx %ld %p %p)\n", This, grfBSCF, dwSize, pformatetc, pstgmed);
 
     return S_OK;
 }
@@ -433,7 +433,7 @@ HRESULT WINAPI URLDownloadToFileW(LPUNKNOWN pCaller, LPCWSTR szURL, LPCWSTR szFi
     IBindCtx *bindctx;
     HRESULT hres;
 
-    TRACE("(%p %s %s %d %p)\n", pCaller, debugstr_w(szURL), debugstr_w(szFileName), dwReserved, lpfnCB);
+    TRACE("(%p %s %s %ld %p)\n", pCaller, debugstr_w(szURL), debugstr_w(szFileName), dwReserved, lpfnCB);
 
     if(pCaller)
         FIXME("pCaller not supported\n");
@@ -485,7 +485,7 @@ HRESULT WINAPI URLDownloadToFileA(LPUNKNOWN pCaller, LPCSTR szURL, LPCSTR szFile
     LPWSTR urlW, file_nameW;
     HRESULT hres;
 
-    TRACE("(%p %s %s %d %p)\n", pCaller, debugstr_a(szURL), debugstr_a(szFileName), dwReserved, lpfnCB);
+    TRACE("(%p %s %s %ld %p)\n", pCaller, debugstr_a(szURL), debugstr_a(szFileName), dwReserved, lpfnCB);
 
     urlW = heap_strdupAtoW(szURL);
     file_nameW = heap_strdupAtoW(szFileName);

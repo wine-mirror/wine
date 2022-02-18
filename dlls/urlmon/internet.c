@@ -84,7 +84,7 @@ static HRESULT parse_schema(LPCWSTR url, DWORD flags, LPWSTR result, DWORD size,
     WCHAR *ptr;
     DWORD len = 0;
 
-    TRACE("(%s %08x %p %d %p)\n", debugstr_w(url), flags, result, size, rsize);
+    TRACE("(%s %08lx %p %ld %p)\n", debugstr_w(url), flags, result, size, rsize);
 
     if(flags)
         ERR("wrong flags\n");
@@ -113,7 +113,7 @@ static HRESULT parse_canonicalize_url(LPCWSTR url, DWORD flags, LPWSTR result,
     DWORD prsize = size;
     HRESULT hres;
 
-    TRACE("(%s %08x %p %d %p)\n", debugstr_w(url), flags, result, size, rsize);
+    TRACE("(%s %08lx %p %ld %p)\n", debugstr_w(url), flags, result, size, rsize);
 
     protocol_info = get_protocol_info(url);
 
@@ -137,7 +137,7 @@ static HRESULT parse_security_url(LPCWSTR url, DWORD flags, LPWSTR result, DWORD
     IInternetProtocolInfo *protocol_info;
     HRESULT hres;
 
-    TRACE("(%s %08x %p %d %p)\n", debugstr_w(url), flags, result, size, rsize);
+    TRACE("(%s %08lx %p %ld %p)\n", debugstr_w(url), flags, result, size, rsize);
 
     protocol_info = get_protocol_info(url);
 
@@ -157,7 +157,7 @@ static HRESULT parse_encode(LPCWSTR url, PARSEACTION action, DWORD flags, LPWSTR
     DWORD prsize;
     HRESULT hres;
 
-    TRACE("(%s %08x %p %d %p)\n", debugstr_w(url), flags, result, size, rsize);
+    TRACE("(%s %08lx %p %ld %p)\n", debugstr_w(url), flags, result, size, rsize);
 
     protocol_info = get_protocol_info(url);
 
@@ -184,7 +184,7 @@ static HRESULT parse_path_from_url(LPCWSTR url, DWORD flags, LPWSTR result, DWOR
     DWORD prsize;
     HRESULT hres;
 
-    TRACE("(%s %08x %p %d %p)\n", debugstr_w(url), flags, result, size, rsize);
+    TRACE("(%s %08lx %p %ld %p)\n", debugstr_w(url), flags, result, size, rsize);
 
     protocol_info = get_protocol_info(url);
 
@@ -210,7 +210,7 @@ static HRESULT parse_security_domain(LPCWSTR url, DWORD flags, LPWSTR result,
     IInternetProtocolInfo *protocol_info;
     HRESULT hres;
 
-    TRACE("(%s %08x %p %d %p)\n", debugstr_w(url), flags, result, size, rsize);
+    TRACE("(%s %08lx %p %ld %p)\n", debugstr_w(url), flags, result, size, rsize);
 
     protocol_info = get_protocol_info(url);
 
@@ -231,7 +231,7 @@ static HRESULT parse_domain(LPCWSTR url, DWORD flags, LPWSTR result,
     IInternetProtocolInfo *protocol_info;
     HRESULT hres;
 
-    TRACE("(%s %08x %p %d %p)\n", debugstr_w(url), flags, result, size, rsize);
+    TRACE("(%s %08lx %p %ld %p)\n", debugstr_w(url), flags, result, size, rsize);
 
     protocol_info = get_protocol_info(url);
 
@@ -262,7 +262,7 @@ static HRESULT parse_rootdocument(LPCWSTR url, DWORD flags, LPWSTR result,
     PARSEDURLW url_info;
     HRESULT hres;
 
-    TRACE("(%s %08x %p %d %p)\n", debugstr_w(url), flags, result, size, rsize);
+    TRACE("(%s %08lx %p %ld %p)\n", debugstr_w(url), flags, result, size, rsize);
 
     protocol_info = get_protocol_info(url);
 
@@ -326,7 +326,7 @@ HRESULT WINAPI CoInternetParseUrl(LPCWSTR pwzUrl, PARSEACTION ParseAction, DWORD
         LPWSTR pszResult, DWORD cchResult, DWORD *pcchResult, DWORD dwReserved)
 {
     if(dwReserved)
-        WARN("dwReserved = %d\n", dwReserved);
+        WARN("dwReserved = %ld\n", dwReserved);
 
     switch(ParseAction) {
     case PARSE_CANONICALIZE:
@@ -364,7 +364,7 @@ HRESULT WINAPI CoInternetCombineUrl(LPCWSTR pwzBaseUrl, LPCWSTR pwzRelativeUrl,
     DWORD size = cchResult;
     HRESULT hres;
     
-    TRACE("(%s,%s,0x%08x,%p,%d,%p,%d)\n", debugstr_w(pwzBaseUrl),
+    TRACE("(%s,%s,0x%08lx,%p,%ld,%p,%ld)\n", debugstr_w(pwzBaseUrl),
           debugstr_w(pwzRelativeUrl), dwCombineFlags, pwzResult, cchResult, pcchResult,
           dwReserved);
 
@@ -395,7 +395,7 @@ HRESULT WINAPI CoInternetCompareUrl(LPCWSTR pwzUrl1, LPCWSTR pwzUrl2, DWORD dwCo
     IInternetProtocolInfo *protocol_info;
     HRESULT hres;
 
-    TRACE("(%s,%s,%08x)\n", debugstr_w(pwzUrl1), debugstr_w(pwzUrl2), dwCompareFlags);
+    TRACE("(%s,%s,%08lx)\n", debugstr_w(pwzUrl1), debugstr_w(pwzUrl2), dwCompareFlags);
 
     protocol_info = get_protocol_info(pwzUrl1);
 
@@ -422,7 +422,7 @@ HRESULT WINAPI CoInternetQueryInfo(LPCWSTR pwzUrl, QUERYOPTION QueryOption,
     IInternetProtocolInfo *protocol_info;
     HRESULT hres;
 
-    TRACE("(%s, %x, %x, %p, %x, %p, %x)\n", debugstr_w(pwzUrl),
+    TRACE("(%s, %x, %lx, %p, %lx, %p, %lx)\n", debugstr_w(pwzUrl),
           QueryOption, dwQueryFlags, pvBuffer, cbBuffer, pcbBuffer, dwReserved);
 
     protocol_info = get_protocol_info(pwzUrl);
@@ -471,7 +471,7 @@ static HRESULT set_internet_feature(INTERNETFEATURELIST feature, DWORD flags, BO
         return E_FAIL;
 
     if(flags & ~supported_flags)
-        FIXME("Unsupported flags: %08x\n", flags & ~supported_flags);
+        FIXME("Unsupported flags: %08lx\n", flags & ~supported_flags);
 
     if(flags & SET_FEATURE_ON_PROCESS)
         set_feature_on_process(feature, enable);
@@ -501,7 +501,7 @@ static BOOL get_feature_from_reg(HKEY feature_control, LPCWSTR feature_name, LPC
         return FALSE;
 
     if(type != REG_DWORD) {
-        WARN("Unexpected registry value type %d (expected REG_DWORD) for %s\n", type, debugstr_w(L"*"));
+        WARN("Unexpected registry value type %ld (expected REG_DWORD) for %s\n", type, debugstr_w(L"*"));
         return FALSE;
     }
 
@@ -521,7 +521,7 @@ static HRESULT load_process_feature(INTERNETFEATURELIST feature)
     BOOL enabled;
 
     if (!GetModuleFileNameW(NULL, module_name, ARRAY_SIZE(module_name))) {
-        ERR("Failed to get module file name: %u\n", GetLastError());
+        ERR("Failed to get module file name: %lu\n", GetLastError());
         return E_UNEXPECTED;
     }
 
@@ -594,7 +594,7 @@ static HRESULT get_internet_feature(INTERNETFEATURELIST feature, DWORD flags)
     if(flags == GET_FEATURE_FROM_PROCESS)
         hres = get_feature_from_process(feature);
     else {
-        FIXME("Unsupported flags: %08x\n", flags);
+        FIXME("Unsupported flags: %08lx\n", flags);
         hres = E_NOTIMPL;
     }
 
@@ -606,7 +606,7 @@ static HRESULT get_internet_feature(INTERNETFEATURELIST feature, DWORD flags)
  */
 HRESULT WINAPI CoInternetSetFeatureEnabled(INTERNETFEATURELIST FeatureEntry, DWORD dwFlags, BOOL fEnable)
 {
-    TRACE("(%d, %08x, %x)\n", FeatureEntry, dwFlags, fEnable);
+    TRACE("(%d, %08lx, %x)\n", FeatureEntry, dwFlags, fEnable);
     return set_internet_feature(FeatureEntry, dwFlags, fEnable);
 }
 
@@ -615,7 +615,7 @@ HRESULT WINAPI CoInternetSetFeatureEnabled(INTERNETFEATURELIST FeatureEntry, DWO
  */
 HRESULT WINAPI CoInternetIsFeatureEnabled(INTERNETFEATURELIST FeatureEntry, DWORD dwFlags)
 {
-    TRACE("(%d, %08x)\n", FeatureEntry, dwFlags);
+    TRACE("(%d, %08lx)\n", FeatureEntry, dwFlags);
     return get_internet_feature(FeatureEntry, dwFlags);
 }
 
@@ -628,7 +628,7 @@ HRESULT WINAPI CoInternetIsFeatureEnabledForUrl(INTERNETFEATURELIST FeatureEntry
     DWORD urlaction = 0;
     HRESULT hres;
 
-    TRACE("(%d %08x %s %p)\n", FeatureEntry, dwFlags, debugstr_w(szURL), pSecMgr);
+    TRACE("(%d %08lx %s %p)\n", FeatureEntry, dwFlags, debugstr_w(szURL), pSecMgr);
 
     if(FeatureEntry == FEATURE_MIME_SNIFFING)
         urlaction = URLACTION_FEATURE_MIME_SNIFFING;
@@ -647,7 +647,7 @@ HRESULT WINAPI CoInternetIsFeatureEnabledForUrl(INTERNETFEATURELIST FeatureEntry
     case GET_FEATURE_FROM_THREAD_TRUSTED:
     case GET_FEATURE_FROM_THREAD_INTERNET:
     case GET_FEATURE_FROM_THREAD_RESTRICTED:
-        FIXME("unsupported flags %x\n", dwFlags);
+        FIXME("unsupported flags %lx\n", dwFlags);
         return E_NOTIMPL;
 
     case GET_FEATURE_FROM_PROCESS:
@@ -676,7 +676,7 @@ HRESULT WINAPI CoInternetIsFeatureZoneElevationEnabled(LPCWSTR szFromURL, LPCWST
 {
     HRESULT hres;
 
-    TRACE("(%s %s %p %x)\n", debugstr_w(szFromURL), debugstr_w(szToURL), pSecMgr, dwFlags);
+    TRACE("(%s %s %p %lx)\n", debugstr_w(szFromURL), debugstr_w(szToURL), pSecMgr, dwFlags);
 
     if(!pSecMgr || !szToURL)
         return CoInternetIsFeatureEnabled(FEATURE_ZONE_ELEVATION, dwFlags);
@@ -688,7 +688,7 @@ HRESULT WINAPI CoInternetIsFeatureZoneElevationEnabled(LPCWSTR szFromURL, LPCWST
     case GET_FEATURE_FROM_THREAD_TRUSTED:
     case GET_FEATURE_FROM_THREAD_INTERNET:
     case GET_FEATURE_FROM_THREAD_RESTRICTED:
-        FIXME("unsupported flags %x\n", dwFlags);
+        FIXME("unsupported flags %lx\n", dwFlags);
         return E_NOTIMPL;
 
     case GET_FEATURE_FROM_PROCESS:
