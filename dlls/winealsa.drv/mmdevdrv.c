@@ -1030,6 +1030,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     }
 
     stream->alsa_format = format;
+    stream->flow = This->dataflow;
 
     rate = fmt->nSamplesPerSec;
     if((err = snd_pcm_hw_params_set_rate_near(stream->pcm_handle, stream->hw_params,
@@ -1276,7 +1277,7 @@ static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient3 *iface,
      * + mmdevapi_period such that at the end of it, ALSA still has data;
      * + EXTRA_SAFE (~4ms) to allow for late callback invocation / fluctuation;
      * + alsa_period such that ALSA always has at least one period to play. */
-    if(This->dataflow == eRender)
+    if(stream->flow == eRender)
         *latency = MulDiv(stream->hidden_frames, 10000000, stream->fmt->nSamplesPerSec);
     else
         *latency = MulDiv(stream->alsa_period_frames, 10000000, stream->fmt->nSamplesPerSec)
@@ -1826,9 +1827,9 @@ static void CALLBACK alsa_push_buffer_data(void *user, BOOLEAN timer)
 
     QueryPerformanceCounter(&stream->last_period_time);
 
-    if(This->dataflow == eRender)
+    if(stream->flow == eRender)
         alsa_write_data(stream);
-    else if(This->dataflow == eCapture)
+    else if(stream->flow == eCapture)
         alsa_read_data(stream);
 
     LeaveCriticalSection(&This->lock);
@@ -1900,7 +1901,7 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
         return AUDCLNT_E_NOT_STOPPED;
     }
 
-    if(This->dataflow == eCapture){
+    if(stream->flow == eCapture){
         /* dump any data that might be leftover in the ALSA capture buffer */
         snd_pcm_readi(stream->pcm_handle, stream->local_buffer,
                 stream->bufsize_frames);
@@ -1964,7 +1965,7 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient3 *iface)
         return S_FALSE;
     }
 
-    if(This->dataflow == eRender)
+    if(stream->flow == eRender)
         alsa_rewind_best_effort(This);
 
     stream->started = FALSE;
@@ -2007,7 +2008,7 @@ static HRESULT WINAPI AudioClient_Reset(IAudioClient3 *iface)
     if(snd_pcm_prepare(stream->pcm_handle) < 0)
         WARN("snd_pcm_prepare failed\n");
 
-    if(This->dataflow == eRender){
+    if(stream->flow == eRender){
         stream->written_frames = 0;
         stream->last_pos_frames = 0;
     }else{
@@ -2675,7 +2676,7 @@ static HRESULT WINAPI AudioClock_GetPosition(IAudioClock *iface, UINT64 *pos,
     snd_pcm_avail_update(stream->pcm_handle);
     alsa_state = snd_pcm_state(stream->pcm_handle);
 
-    if(This->dataflow == eRender){
+    if(stream->flow == eRender){
         position = stream->written_frames - stream->held_frames;
 
         if(stream->started && alsa_state == SND_PCM_STATE_RUNNING && stream->held_frames)

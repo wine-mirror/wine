@@ -30,6 +30,7 @@ struct alsa_stream
     WAVEFORMATEX *fmt;
     DWORD flags;
     AUDCLNT_SHAREMODE share;
+    EDataFlow flow;
     HANDLE event;
 
     BOOL need_remapping;
