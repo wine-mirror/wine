@@ -4520,7 +4520,7 @@ static void test_D3DXSHProjectCubeMap(void)
             {
                 hr = IDirect3DCubeTexture9_LockRect(texture, face, level, &map_desc, NULL, 0);
                 ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-                memset(map_desc.pBits, 0xcc, 4 * map_desc.Pitch);
+                memset(map_desc.pBits, 0xcc, (8 >> level) * map_desc.Pitch);
                 hr = IDirect3DCubeTexture9_UnlockRect(texture, face, level);
                 ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
             }
