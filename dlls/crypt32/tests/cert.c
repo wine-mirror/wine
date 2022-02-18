@@ -4318,6 +4318,7 @@ static void test_VerifySignature(void)
     BCryptDestroyHash(bhash);
 done:
     BCryptCloseAlgorithmProvider(alg, 0);
+    BCryptDestroyKey(bkey);
 
     LocalFree(info);
     CertFreeCertificateContext(cert);
