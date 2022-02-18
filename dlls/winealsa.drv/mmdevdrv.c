@@ -1491,13 +1491,11 @@ static void adjust_buffer_volume(const ACImpl *This, BYTE *buf, snd_pcm_uframes_
 
     /* Adjust the buffer based on the volume for each channel */
     for (i = 0; i < channels; i++)
-        vol[i] = stream->vols[i] * This->session->master_vol;
-    for (i = 0; i < min(channels, This->session->channel_count); i++)
     {
+        vol[i] = stream->vols[i] * This->session->master_vol;
         vol[i] *= This->session->channel_vols[i];
         adjust |= vol[i] != 1.0f;
     }
-    while (i < channels) adjust |= vol[i++] != 1.0f;
     if (!adjust) return;
 
     /* Skip the frames we've already adjusted before */
