@@ -233,15 +233,11 @@ static void testsign_cleanup(struct testsign_context *ctx)
     ret = CertFreeCertificateContext(ctx->cert);
     ok(ret, "Failed to free certificate, error %u\n", GetLastError());
 
-    ret = CertDeleteCertificateFromStore(ctx->root_cert);
-    ok(ret, "Failed to remove certificate, error %u\n", GetLastError());
     ret = CertFreeCertificateContext(ctx->root_cert);
     ok(ret, "Failed to free certificate context, error %u\n", GetLastError());
     ret = CertCloseStore(ctx->root_store, CERT_CLOSE_STORE_CHECK_FLAG);
     ok(ret, "Failed to close store, error %u\n", GetLastError());
 
-    ret = CertDeleteCertificateFromStore(ctx->publisher_cert);
-    ok(ret, "Failed to remove certificate, error %u\n", GetLastError());
     ret = CertFreeCertificateContext(ctx->publisher_cert);
     ok(ret, "Failed to free certificate context, error %u\n", GetLastError());
     ret = CertCloseStore(ctx->publisher_store, CERT_CLOSE_STORE_CHECK_FLAG);
