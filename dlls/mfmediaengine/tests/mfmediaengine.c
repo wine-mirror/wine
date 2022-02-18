@@ -295,9 +295,9 @@ static void test_Shutdown(void)
     IMFMediaEngineEx *media_engine_ex;
     IMFMediaTimeRange *time_range;
     IMFMediaEngine *media_engine;
+    DWORD flags, cx, cy;
     unsigned int state;
     UINT32 value;
-    DWORD cx, cy;
     double val;
     HRESULT hr;
     BSTR str;
@@ -449,6 +449,12 @@ static void test_Shutdown(void)
         ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
         hr = IMFMediaEngineEx_SetAudioEndpointRole(media_engine_ex, eConsole);
+        ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+        hr = IMFMediaEngineEx_GetResourceCharacteristics(media_engine_ex, NULL);
+        ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+        hr = IMFMediaEngineEx_GetResourceCharacteristics(media_engine_ex, &flags);
         ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
         IMFMediaEngineEx_Release(media_engine_ex);
@@ -863,6 +869,7 @@ static void test_SetSourceFromByteStream(void)
 {
     struct media_engine_notify *notify;
     IMFMediaEngineEx *media_engine;
+    DWORD flags;
     HRESULT hr;
 
     notify = create_callback();
@@ -877,6 +884,12 @@ static void test_SetSourceFromByteStream(void)
 
     hr = IMFMediaEngineEx_SetSourceFromByteStream(media_engine, NULL, NULL);
     ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaEngineEx_GetResourceCharacteristics(media_engine, NULL);
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaEngineEx_GetResourceCharacteristics(media_engine, &flags);
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
 
     IMFMediaEngineEx_Release(media_engine);
     IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
