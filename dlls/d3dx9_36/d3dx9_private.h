@@ -23,7 +23,6 @@
 #define __WINE_D3DX9_PRIVATE_H
 
 #include <stdint.h>
-#define NONAMELESSUNION
 #include "wine/debug.h"
 #include "wine/heap.h"
 #include "wine/rbtree.h"

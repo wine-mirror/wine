@@ -2368,22 +2368,22 @@ BOOL WINAPI D3DXIntersectTri(const D3DXVECTOR3 *p0, const D3DXVECTOR3 *p1, const
     TRACE("p0 %p, p1 %p, p2 %p, praypos %p, praydir %p, pu %p, pv %p, pdist %p.\n",
             p0, p1, p2, praypos, praydir, pu, pv, pdist);
 
-    m.u.m[0][0] = p1->x - p0->x;
-    m.u.m[1][0] = p2->x - p0->x;
-    m.u.m[2][0] = -praydir->x;
-    m.u.m[3][0] = 0.0f;
-    m.u.m[0][1] = p1->y - p0->y;
-    m.u.m[1][1] = p2->y - p0->y;
-    m.u.m[2][1] = -praydir->y;
-    m.u.m[3][1] = 0.0f;
-    m.u.m[0][2] = p1->z - p0->z;
-    m.u.m[1][2] = p2->z - p0->z;
-    m.u.m[2][2] = -praydir->z;
-    m.u.m[3][2] = 0.0f;
-    m.u.m[0][3] = 0.0f;
-    m.u.m[1][3] = 0.0f;
-    m.u.m[2][3] = 0.0f;
-    m.u.m[3][3] = 1.0f;
+    m.m[0][0] = p1->x - p0->x;
+    m.m[1][0] = p2->x - p0->x;
+    m.m[2][0] = -praydir->x;
+    m.m[3][0] = 0.0f;
+    m.m[0][1] = p1->y - p0->y;
+    m.m[1][1] = p2->y - p0->y;
+    m.m[2][1] = -praydir->y;
+    m.m[3][1] = 0.0f;
+    m.m[0][2] = p1->z - p0->z;
+    m.m[1][2] = p2->z - p0->z;
+    m.m[2][2] = -praydir->z;
+    m.m[3][2] = 0.0f;
+    m.m[0][3] = 0.0f;
+    m.m[1][3] = 0.0f;
+    m.m[2][3] = 0.0f;
+    m.m[3][3] = 1.0f;
 
     vec.x = praypos->x - p0->x;
     vec.y = praypos->y - p0->y;
@@ -3772,11 +3772,11 @@ static HRESULT load_mesh_container(struct ID3DXFileData *filedata, DWORD options
     char *name = NULL;
 
     mesh_data.Type = D3DXMESHTYPE_MESH;
-    mesh_data.u.pMesh = NULL;
+    mesh_data.pMesh = NULL;
 
     hr = D3DXLoadSkinMeshFromXof(filedata, options, device,
             &adjacency, &materials, &effects, &num_materials,
-            &skin_info, &mesh_data.u.pMesh);
+            &skin_info, &mesh_data.pMesh);
     if (FAILED(hr)) return hr;
 
     hr = filedata_get_name(filedata, &name);
@@ -3794,7 +3794,7 @@ cleanup:
     if (effects) ID3DXBuffer_Release(effects);
     if (adjacency) ID3DXBuffer_Release(adjacency);
     if (skin_info) IUnknown_Release(skin_info);
-    if (mesh_data.u.pMesh) IUnknown_Release(mesh_data.u.pMesh);
+    if (mesh_data.pMesh) IUnknown_Release(mesh_data.pMesh);
     HeapFree(GetProcessHeap(), 0, name);
     return hr;
 }

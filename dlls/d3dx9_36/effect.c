@@ -826,7 +826,7 @@ static void get_matrix(struct d3dx_parameter *param, D3DXMATRIX *matrix, BOOL tr
     {
         for (k = 0; k < 4; ++k)
         {
-            FLOAT *tmp = transpose ? (FLOAT *)&matrix->u.m[k][i] : (FLOAT *)&matrix->u.m[i][k];
+            FLOAT *tmp = transpose ? (FLOAT *)&matrix->m[k][i] : (FLOAT *)&matrix->m[i][k];
 
             if ((i < param->rows) && (k < param->columns))
                 set_number(tmp, D3DXPT_FLOAT, (DWORD *)param->data + i * param->columns + k, param->type);
@@ -844,12 +844,12 @@ static void set_matrix(struct d3dx_parameter *param, const D3DXMATRIX *matrix, v
     {
         if (param->columns == 4)
         {
-            memcpy(dst_data, matrix->u.m, param->rows * 4 * sizeof(float));
+            memcpy(dst_data, matrix->m, param->rows * 4 * sizeof(float));
         }
         else
         {
             for (i = 0; i < param->rows; ++i)
-                memcpy((float *)dst_data + i * param->columns, matrix->u.m + i, param->columns * sizeof(float));
+                memcpy((float *)dst_data + i * param->columns, matrix->m + i, param->columns * sizeof(float));
         }
         return;
     }
@@ -858,7 +858,7 @@ static void set_matrix(struct d3dx_parameter *param, const D3DXMATRIX *matrix, v
     {
         for (k = 0; k < param->columns; ++k)
             set_number((FLOAT *)dst_data + i * param->columns + k, param->type,
-                    &matrix->u.m[i][k], D3DXPT_FLOAT);
+                    &matrix->m[i][k], D3DXPT_FLOAT);
     }
 }
 
@@ -871,7 +871,7 @@ static void set_matrix_transpose(struct d3dx_parameter *param, const D3DXMATRIX 
         for (k = 0; k < param->columns; ++k)
         {
             set_number((FLOAT *)dst_data + i * param->columns + k, param->type,
-                    &matrix->u.m[k][i], D3DXPT_FLOAT);
+                    &matrix->m[k][i], D3DXPT_FLOAT);
         }
     }
 }
