@@ -30,7 +30,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 #define WINED3D_BUFFER_HASDESC      0x01    /* A vertex description has been found. */
 #define WINED3D_BUFFER_USE_BO       0x02    /* Use a buffer object for this buffer. */
-#define WINED3D_BUFFER_PIN_SYSMEM   0x04    /* Keep a system memory copy for this buffer. */
 
 #define VB_MAXDECLCHANGES     100     /* After that number of decl changes we stop converting */
 #define VB_RESETDECLCHANGE    1000    /* Reset the decl changecount after that number of draws */
@@ -47,7 +46,7 @@ struct wined3d_buffer_ops
 
 static void wined3d_buffer_evict_sysmem(struct wined3d_buffer *buffer)
 {
-    if (buffer->flags & WINED3D_BUFFER_PIN_SYSMEM)
+    if (buffer->resource.pin_sysmem)
     {
         TRACE("Not evicting system memory for buffer %p.\n", buffer);
         return;
@@ -513,7 +512,7 @@ static void buffer_conversion_upload(struct wined3d_buffer *buffer, struct wined
         ERR("Failed to load system memory.\n");
         return;
     }
-    buffer->flags |= WINED3D_BUFFER_PIN_SYSMEM;
+    buffer->resource.pin_sysmem = 1;
 
     /* Now for each vertex in the buffer that needs conversion. */
     vertex_count = buffer->resource.size / buffer->stride;
@@ -666,7 +665,7 @@ BOOL wined3d_buffer_load_location(struct wined3d_buffer *buffer,
 BYTE *wined3d_buffer_load_sysmem(struct wined3d_buffer *buffer, struct wined3d_context *context)
 {
     if (wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM))
-        buffer->flags |= WINED3D_BUFFER_PIN_SYSMEM;
+        buffer->resource.pin_sysmem = 1;
     return buffer->resource.heap_memory;
 }
 
@@ -966,7 +965,7 @@ static HRESULT buffer_resource_sub_resource_map(struct wined3d_resource *resourc
 
     if (((flags & WINED3D_MAP_WRITE) && !(flags & (WINED3D_MAP_NOOVERWRITE | WINED3D_MAP_DISCARD)))
             || (!(flags & WINED3D_MAP_WRITE) && (buffer->locations & WINED3D_LOCATION_SYSMEM))
-            || buffer->flags & WINED3D_BUFFER_PIN_SYSMEM
+            || buffer->resource.pin_sysmem
             || !(buffer->flags & WINED3D_BUFFER_USE_BO))
     {
         if (!(buffer->locations & WINED3D_LOCATION_SYSMEM))
@@ -1036,7 +1035,7 @@ static HRESULT buffer_resource_sub_resource_map(struct wined3d_resource *resourc
                 {
                     TRACE("Falling back to doublebuffered operation.\n");
                     wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM);
-                    buffer->flags |= WINED3D_BUFFER_PIN_SYSMEM;
+                    buffer->resource.pin_sysmem = 1;
                 }
                 TRACE("New pointer is %p.\n", resource->heap_memory);
             }
@@ -1302,7 +1301,7 @@ static HRESULT wined3d_buffer_init(struct wined3d_buffer *buffer, struct wined3d
          * maps and retain data in DISCARD maps. Keep a system memory copy of
          * the buffer to provide the same behavior to the application. */
         TRACE("Pinning system memory.\n");
-        buffer->flags |= WINED3D_BUFFER_PIN_SYSMEM;
+        buffer->resource.pin_sysmem = 1;
         buffer->locations = WINED3D_LOCATION_SYSMEM;
     }
 

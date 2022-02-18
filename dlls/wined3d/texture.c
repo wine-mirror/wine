@@ -48,8 +48,8 @@ struct wined3d_rect_f
 
 BOOL wined3d_texture_can_use_pbo(const struct wined3d_texture *texture, const struct wined3d_d3d_info *d3d_info)
 {
-    if (!d3d_info->pbo || texture->resource.format->conv_byte_count
-            || (texture->flags & (WINED3D_TEXTURE_PIN_SYSMEM | WINED3D_TEXTURE_COND_NP2_EMULATED)))
+    if (!d3d_info->pbo || texture->resource.format->conv_byte_count || texture->resource.pin_sysmem
+            || (texture->flags & WINED3D_TEXTURE_COND_NP2_EMULATED))
         return FALSE;
 
     return TRUE;
@@ -666,7 +666,8 @@ static void wined3d_texture_evict_sysmem(struct wined3d_texture *texture)
     struct wined3d_texture_sub_resource *sub_resource;
     unsigned int i, sub_count;
 
-    if (texture->flags & (WINED3D_TEXTURE_CONVERTED | WINED3D_TEXTURE_PIN_SYSMEM)
+    if ((texture->flags & WINED3D_TEXTURE_CONVERTED)
+            || texture->resource.pin_sysmem
             || texture->download_count > WINED3D_TEXTURE_DYNAMIC_MAP_THRESHOLD)
     {
         TRACE("Not evicting system memory for texture %p.\n", texture);
@@ -2462,8 +2463,8 @@ static void wined3d_texture_gl_upload_data(struct wined3d_context *context,
 
     if (dst_texture->sub_resources[dst_sub_resource_idx].map_count)
     {
-        WARN("Uploading a texture that is currently mapped, setting WINED3D_TEXTURE_PIN_SYSMEM.\n");
-        dst_texture->flags |= WINED3D_TEXTURE_PIN_SYSMEM;
+        WARN("Uploading a texture that is currently mapped, pinning sysmem.\n");
+        dst_texture->resource.pin_sysmem = 1;
     }
 
     if (src_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_HEIGHT_SCALE)
@@ -3825,7 +3826,10 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
     texture->flags |= WINED3D_TEXTURE_POW2_MAT_IDENT | WINED3D_TEXTURE_NORMALIZED_COORDS
             | WINED3D_TEXTURE_DOWNLOADABLE;
     if (flags & WINED3D_TEXTURE_CREATE_GET_DC_LENIENT)
-        texture->flags |= WINED3D_TEXTURE_PIN_SYSMEM | WINED3D_TEXTURE_GET_DC_LENIENT;
+    {
+        texture->flags |= WINED3D_TEXTURE_GET_DC_LENIENT;
+        texture->resource.pin_sysmem = 1;
+    }
     if (flags & (WINED3D_TEXTURE_CREATE_GET_DC | WINED3D_TEXTURE_CREATE_GET_DC_LENIENT))
         texture->flags |= WINED3D_TEXTURE_GET_DC;
     if (flags & WINED3D_TEXTURE_CREATE_DISCARD)
@@ -5744,7 +5748,7 @@ static bool blitter_use_cpu_clear(struct wined3d_rendertarget_view *view)
     locations = texture->sub_resources[view->sub_resource_idx].locations;
     if (locations & (resource->map_binding | WINED3D_LOCATION_DISCARDED))
         return !(resource->access & WINED3D_RESOURCE_ACCESS_GPU)
-                || (texture->flags & WINED3D_TEXTURE_PIN_SYSMEM);
+                || texture->resource.pin_sysmem;
 
     return !(resource->access & WINED3D_RESOURCE_ACCESS_GPU)
             && !(texture->flags & WINED3D_TEXTURE_CONVERTED);

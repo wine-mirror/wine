@@ -4332,6 +4332,8 @@ struct wined3d_resource
     DWORD priority;
     void *heap_memory;
 
+    uint32_t pin_sysmem : 1;
+
     struct wined3d_client_resource client;
 
     void *parent;
@@ -4450,7 +4452,6 @@ struct wined3d_texture_ops
 #define WINED3D_TEXTURE_SRGB_ALLOCATED      0x00000040
 #define WINED3D_TEXTURE_SRGB_VALID          0x00000080
 #define WINED3D_TEXTURE_CONVERTED           0x00000100
-#define WINED3D_TEXTURE_PIN_SYSMEM          0x00000200
 #define WINED3D_TEXTURE_NORMALIZED_COORDS   0x00000400
 #define WINED3D_TEXTURE_GET_DC_LENIENT      0x00000800
 #define WINED3D_TEXTURE_DC_IN_USE           0x00001000
