@@ -142,6 +142,10 @@ struct media_engine
     BSTR current_source;
     struct
     {
+        IMFMediaSource *source;
+    } presentation;
+    struct
+    {
         LONGLONG pts;
         SIZE size;
         SIZE ratio;
@@ -1071,6 +1075,16 @@ static HRESULT media_engine_create_video_renderer(struct media_engine *engine, I
     return hr;
 }
 
+static void media_engine_clear_presentation(struct media_engine *engine)
+{
+    if (engine->presentation.source)
+    {
+         IMFMediaSource_Shutdown(engine->presentation.source);
+         IMFMediaSource_Release(engine->presentation.source);
+    }
+    memset(&engine->presentation, 0, sizeof(engine->presentation));
+}
+
 static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMediaSource *source)
 {
     IMFStreamDescriptor *sd_audio = NULL, *sd_video = NULL;
@@ -1081,6 +1095,7 @@ static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMedi
     HRESULT hr;
 
     media_engine_release_video_frame_resources(engine);
+    media_engine_clear_presentation(engine);
 
     if (FAILED(hr = IMFMediaSource_CreatePresentationDescriptor(source, &pd)))
         return hr;
@@ -1133,6 +1148,9 @@ static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMedi
         IMFPresentationDescriptor_Release(pd);
         return E_UNEXPECTED;
     }
+
+    engine->presentation.source = source;
+    IMFMediaSource_AddRef(engine->presentation.source);
 
     media_engine_set_flag(engine, FLAGS_ENGINE_HAS_VIDEO, !!sd_video);
     media_engine_set_flag(engine, FLAGS_ENGINE_HAS_AUDIO, !!sd_audio);
@@ -1340,6 +1358,7 @@ static void free_media_engine(struct media_engine *engine)
     if (engine->resolver)
         IMFSourceResolver_Release(engine->resolver);
     media_engine_release_video_frame_resources(engine);
+    media_engine_clear_presentation(engine);
     if (engine->device_manager)
     {
         IMFDXGIDeviceManager_CloseDeviceHandle(engine->device_manager, engine->device_handle);
@@ -2086,6 +2105,7 @@ static HRESULT WINAPI media_engine_Shutdown(IMFMediaEngineEx *iface)
     else
     {
         media_engine_set_flag(engine, FLAGS_ENGINE_SHUT_DOWN, TRUE);
+        media_engine_clear_presentation(engine);
         IMFMediaSession_Shutdown(engine->session);
     }
     LeaveCriticalSection(&engine->cs);
