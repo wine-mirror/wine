@@ -19,6 +19,8 @@
 #include "wine/list.h"
 #include "wine/unixlib.h"
 
+#define MAX_PULSE_NAME_LEN 256
+
 struct pulse_stream;
 
 struct pulse_config
@@ -32,14 +34,31 @@ struct pulse_config
     unsigned int speakers_mask;
 };
 
+struct endpoint
+{
+    WCHAR *name;
+    char *pulse_name;
+};
+
 struct main_loop_params
 {
     HANDLE event;
 };
 
+struct get_endpoint_ids_params
+{
+    EDataFlow flow;
+    struct endpoint *endpoints;
+    unsigned int size;
+    HRESULT result;
+    unsigned int num;
+    unsigned int default_idx;
+};
+
 struct create_stream_params
 {
     const char *name;
+    const char *pulse_name;
     EDataFlow dataflow;
     AUDCLNT_SHAREMODE mode;
     DWORD flags;
@@ -191,6 +210,7 @@ enum unix_funcs
     process_attach,
     process_detach,
     main_loop,
+    get_endpoint_ids,
     create_stream,
     release_stream,
     start,

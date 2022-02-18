@@ -81,6 +81,12 @@ typedef struct _ACPacket
     UINT32 discont;
 } ACPacket;
 
+typedef struct _PhysDevice {
+    struct list entry;
+    WCHAR *name;
+    char pulse_name[0];
+} PhysDevice;
+
 static pa_context *pulse_ctx;
 static pa_mainloop *pulse_ml;
 
@@ -89,6 +95,8 @@ static WAVEFORMATEXTENSIBLE pulse_fmt[2];
 static REFERENCE_TIME pulse_min_period[2], pulse_def_period[2];
 
 static UINT g_phys_speakers_mask = 0;
+static struct list g_phys_speakers = LIST_INIT(g_phys_speakers);
+static struct list g_phys_sources = LIST_INIT(g_phys_sources);
 
 static const REFERENCE_TIME MinimumPeriod = 30000;
 static const REFERENCE_TIME DefaultPeriod = 100000;
@@ -126,6 +134,20 @@ static void dump_attr(const pa_buffer_attr *attr)
     TRACE("fragsize: %u\n", attr->fragsize);
     TRACE("tlength: %u\n", attr->tlength);
     TRACE("prebuf: %u\n", attr->prebuf);
+}
+
+static void free_phys_device_lists(void)
+{
+    static struct list *const lists[] = { &g_phys_speakers, &g_phys_sources, NULL };
+    struct list *const *list = lists;
+    PhysDevice *dev, *dev_next;
+
+    do {
+        LIST_FOR_EACH_ENTRY_SAFE(dev, dev_next, *list, PhysDevice, entry) {
+            free(dev->name);
+            free(dev);
+        }
+    } while (*(++list));
 }
 
 /* copied from kernelbase */
@@ -190,6 +212,7 @@ static NTSTATUS pulse_process_attach(void *args)
 
 static NTSTATUS pulse_process_detach(void *args)
 {
+    free_phys_device_lists();
     if (pulse_ctx)
     {
         pa_context_disconnect(pulse_ctx);
@@ -212,6 +235,44 @@ static NTSTATUS pulse_main_loop(void *args)
     pa_mainloop_run(pulse_ml, &ret);
     pa_mainloop_free(pulse_ml);
     pulse_unlock();
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS pulse_get_endpoint_ids(void *args)
+{
+    struct get_endpoint_ids_params *params = args;
+    struct list *list = (params->flow == eRender) ? &g_phys_speakers : &g_phys_sources;
+    struct endpoint *endpoint = params->endpoints;
+    DWORD len, name_len, needed;
+    PhysDevice *dev;
+    char *ptr;
+
+    params->num = list_count(list);
+    needed = params->num * sizeof(*params->endpoints);
+    ptr = (char*)(endpoint + params->num);
+
+    LIST_FOR_EACH_ENTRY(dev, list, PhysDevice, entry) {
+        name_len = lstrlenW(dev->name) + 1;
+        len = strlen(dev->pulse_name) + 1;
+        needed += name_len * sizeof(WCHAR) + ((len + 1) & ~1);
+
+        if (needed <= params->size) {
+            endpoint->name = (WCHAR*)ptr;
+            memcpy(endpoint->name, dev->name, name_len * sizeof(WCHAR));
+            ptr += name_len * sizeof(WCHAR);
+            endpoint->pulse_name = ptr;
+            memcpy(endpoint->pulse_name, dev->pulse_name, len);
+            ptr += (len + 1) & ~1;
+            endpoint++;
+        }
+    }
+    params->default_idx = 0;
+
+    if (needed > params->size) {
+        params->size = needed;
+        params->result = HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+    } else
+        params->result = S_OK;
     return STATUS_SUCCESS;
 }
 
@@ -357,12 +418,49 @@ static DWORD pulse_channel_map_to_channel_mask(const pa_channel_map *map)
     return mask;
 }
 
-/* For default PulseAudio render device, OR together all of the
- * PKEY_AudioEndpoint_PhysicalSpeakers values of the sinks. */
+static void pulse_add_device(struct list *list, const char *pulse_name, const char *name)
+{
+    DWORD len = strlen(pulse_name), name_len = strlen(name);
+    PhysDevice *dev = malloc(FIELD_OFFSET(PhysDevice, pulse_name[len + 1]));
+    WCHAR *wname;
+
+    if (!dev)
+        return;
+
+    if (!(wname = malloc((name_len + 1) * sizeof(WCHAR)))) {
+        free(dev);
+        return;
+    }
+
+    if (!(name_len = ntdll_umbstowcs(name, name_len, wname, name_len)) ||
+        !(dev->name = realloc(wname, (name_len + 1) * sizeof(WCHAR)))) {
+        free(wname);
+        free(dev);
+        return;
+    }
+    dev->name[name_len] = 0;
+    memcpy(dev->pulse_name, pulse_name, len + 1);
+
+    list_add_tail(list, &dev->entry);
+}
+
 static void pulse_phys_speakers_cb(pa_context *c, const pa_sink_info *i, int eol, void *userdata)
 {
-    if (i)
-        g_phys_speakers_mask |= pulse_channel_map_to_channel_mask(&i->channel_map);
+    if (!i || !i->name || !i->name[0])
+        return;
+
+    /* For default PulseAudio render device, OR together all of the
+     * PKEY_AudioEndpoint_PhysicalSpeakers values of the sinks. */
+    g_phys_speakers_mask |= pulse_channel_map_to_channel_mask(&i->channel_map);
+
+    pulse_add_device(&g_phys_speakers, i->name, i->description);
+}
+
+static void pulse_phys_sources_cb(pa_context *c, const pa_source_info *i, int eol, void *userdata)
+{
+    if (!i || !i->name || !i->name[0])
+        return;
+    pulse_add_device(&g_phys_sources, i->name, i->description);
 }
 
 /* For most hardware on Windows, users must choose a configuration with an even
@@ -579,8 +677,23 @@ static NTSTATUS pulse_test_connect(void *args)
     pulse_probe_settings(1, &pulse_fmt[0]);
     pulse_probe_settings(0, &pulse_fmt[1]);
 
+    free_phys_device_lists();
+    list_init(&g_phys_speakers);
+    list_init(&g_phys_sources);
     g_phys_speakers_mask = 0;
+
+    pulse_add_device(&g_phys_speakers, "", "PulseAudio");
+    pulse_add_device(&g_phys_sources, "", "PulseAudio");
+
     o = pa_context_get_sink_info_list(pulse_ctx, &pulse_phys_speakers_cb, NULL);
+    if (o) {
+        while (pa_mainloop_iterate(pulse_ml, 1, &ret) >= 0 &&
+                pa_operation_get_state(o) == PA_OPERATION_RUNNING)
+        {}
+        pa_operation_unref(o);
+    }
+
+    o = pa_context_get_source_info_list(pulse_ctx, &pulse_phys_sources_cb, NULL);
     if (o) {
         while (pa_mainloop_iterate(pulse_ml, 1, &ret) >= 0 &&
                 pa_operation_get_state(o) == PA_OPERATION_RUNNING)
@@ -771,8 +884,9 @@ static HRESULT pulse_spec_from_waveformat(struct pulse_stream *stream, const WAV
     return S_OK;
 }
 
-static HRESULT pulse_stream_connect(struct pulse_stream *stream, UINT32 period_bytes)
+static HRESULT pulse_stream_connect(struct pulse_stream *stream, const char *pulse_name, UINT32 period_bytes)
 {
+    pa_stream_flags_t flags = PA_STREAM_START_CORKED | PA_STREAM_START_UNMUTED | PA_STREAM_ADJUST_LATENCY;
     int ret;
     char buffer[64];
     static LONG number;
@@ -797,12 +911,17 @@ static HRESULT pulse_stream_connect(struct pulse_stream *stream, UINT32 period_b
     attr.maxlength = stream->bufsize_frames * pa_frame_size(&stream->ss);
     attr.prebuf = pa_frame_size(&stream->ss);
     dump_attr(&attr);
-    if (stream->dataflow == eRender)
-        ret = pa_stream_connect_playback(stream->stream, NULL, &attr,
-        PA_STREAM_START_CORKED|PA_STREAM_START_UNMUTED|PA_STREAM_ADJUST_LATENCY, NULL, NULL);
+
+    /* If specific device was requested, use it exactly */
+    if (pulse_name[0])
+        flags |= PA_STREAM_DONT_MOVE;
     else
-        ret = pa_stream_connect_record(stream->stream, NULL, &attr,
-        PA_STREAM_START_CORKED|PA_STREAM_START_UNMUTED|PA_STREAM_ADJUST_LATENCY);
+        pulse_name = NULL;  /* use default */
+
+    if (stream->dataflow == eRender)
+        ret = pa_stream_connect_playback(stream->stream, pulse_name, &attr, flags, NULL, NULL);
+    else
+        ret = pa_stream_connect_record(stream->stream, pulse_name, &attr, flags);
     if (ret < 0) {
         WARN("Returns %i\n", ret);
         return AUDCLNT_E_ENDPOINT_CREATE_FAILED;
@@ -864,7 +983,7 @@ static NTSTATUS pulse_create_stream(void *args)
 
     stream->share = params->mode;
     stream->flags = params->flags;
-    hr = pulse_stream_connect(stream, stream->period_bytes);
+    hr = pulse_stream_connect(stream, params->pulse_name, stream->period_bytes);
     if (SUCCEEDED(hr)) {
         UINT32 unalign;
         const pa_buffer_attr *attr = pa_stream_get_buffer_attr(stream->stream);
@@ -1967,6 +2086,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     pulse_process_attach,
     pulse_process_detach,
     pulse_main_loop,
+    pulse_get_endpoint_ids,
     pulse_create_stream,
     pulse_release_stream,
     pulse_start,
