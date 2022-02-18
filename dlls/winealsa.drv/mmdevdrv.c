@@ -327,7 +327,7 @@ static void set_stream_volumes(ACImpl *This)
     unsigned int i;
 
     for(i = 0; i < stream->fmt->nChannels; i++)
-        stream->vols[i] = This->vols[i] * This->session->channel_vols[i];
+        stream->vols[i] = This->vols[i] * This->session->channel_vols[i] * This->session->master_vol;
 }
 
 HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids_out, GUID **guids_out,
@@ -1472,7 +1472,6 @@ static BYTE *remap_channels(struct alsa_stream *stream, BYTE *buf, snd_pcm_ufram
 static void adjust_buffer_volume(const ACImpl *This, BYTE *buf, snd_pcm_uframes_t frames, BOOL mute)
 {
     struct alsa_stream *stream = This->stream;
-    float vol[ARRAY_SIZE(stream->alsa_channel_map)];
     BOOL adjust = FALSE;
     UINT32 i, channels;
     BYTE *end;
@@ -1492,8 +1491,7 @@ static void adjust_buffer_volume(const ACImpl *This, BYTE *buf, snd_pcm_uframes_
     /* Adjust the buffer based on the volume for each channel */
     for (i = 0; i < channels; i++)
     {
-        vol[i] = stream->vols[i] * This->session->master_vol;
-        adjust |= vol[i] != 1.0f;
+        adjust |= stream->vols[i] != 1.0f;
     }
     if (!adjust) return;
 
@@ -1510,7 +1508,7 @@ static void adjust_buffer_volume(const ACImpl *This, BYTE *buf, snd_pcm_uframes_
     do                                  \
     {                                   \
         for (i = 0; i < channels; i++)  \
-            p[i] = p[i] * vol[i];       \
+            p[i] = p[i] * stream->vols[i];       \
         p += i;                         \
     } while ((BYTE*)p != end);          \
 } while (0)
@@ -1548,7 +1546,7 @@ static void adjust_buffer_volume(const ACImpl *This, BYTE *buf, snd_pcm_uframes_
             v[3] = q[2] & ~0xff;
             for (k = 0; k < 4; k++)
             {
-                v[k] = (INT32)((INT32)v[k] * vol[i]);
+                v[k] = (INT32)((INT32)v[k] * stream->vols[i]);
                 v[k] &= mask;
                 if (++i == channels) i = 0;
             }
@@ -1559,7 +1557,7 @@ static void adjust_buffer_volume(const ACImpl *This, BYTE *buf, snd_pcm_uframes_
         p = (BYTE*)q;
         while (p != end)
         {
-            UINT32 v = (INT32)((INT32)(p[0] << 8 | p[1] << 16 | p[2] << 24) * vol[i]);
+            UINT32 v = (INT32)((INT32)(p[0] << 8 | p[1] << 16 | p[2] << 24) * stream->vols[i]);
             v &= mask;
             *p++ = v >> 8  & 0xff;
             *p++ = v >> 16 & 0xff;
@@ -1575,7 +1573,7 @@ static void adjust_buffer_volume(const ACImpl *This, BYTE *buf, snd_pcm_uframes_
         do
         {
             for (i = 0; i < channels; i++)
-                p[i] = (int)((p[i] - 128) * vol[i]) + 128;
+                p[i] = (int)((p[i] - 128) * stream->vols[i]) + 128;
             p += i;
         } while ((BYTE*)p != end);
         break;
@@ -3086,6 +3084,7 @@ static HRESULT WINAPI SimpleAudioVolume_SetMasterVolume(
 {
     AudioSessionWrapper *This = impl_from_ISimpleAudioVolume(iface);
     AudioSession *session = This->session;
+    ACImpl *client;
 
     TRACE("(%p)->(%f, %s)\n", session, level, wine_dbgstr_guid(context));
 
@@ -3100,6 +3099,9 @@ static HRESULT WINAPI SimpleAudioVolume_SetMasterVolume(
     EnterCriticalSection(&g_sessions_lock);
 
     session->master_vol = level;
+
+    LIST_FOR_EACH_ENTRY(client, &session->clients, ACImpl, entry)
+        set_stream_volumes(client);
 
     LeaveCriticalSection(&g_sessions_lock);
 
