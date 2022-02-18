@@ -136,7 +136,7 @@ void wined3d_buffer_invalidate_location(struct wined3d_buffer *buffer, DWORD loc
     wined3d_buffer_invalidate_range(buffer, location, 0, 0);
 }
 
-static GLenum wined3d_buffer_gl_binding_from_bind_flags(const struct wined3d_gl_info *gl_info, uint32_t bind_flags)
+GLenum wined3d_buffer_gl_binding_from_bind_flags(const struct wined3d_gl_info *gl_info, uint32_t bind_flags)
 {
     if (!bind_flags)
         return GL_PIXEL_UNPACK_BUFFER;

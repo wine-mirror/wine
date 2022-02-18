@@ -4616,6 +4616,49 @@ static void adapter_gl_flush_bo_address(struct wined3d_context *context,
 static bool adapter_gl_alloc_bo(struct wined3d_device *device, struct wined3d_resource *resource,
         unsigned int sub_resource_idx, struct wined3d_bo_address *addr)
 {
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    struct wined3d_device_gl *device_gl = wined3d_device_gl(device);
+
+    wined3d_not_from_cs(device->cs);
+    assert(device->context_count);
+
+    if (resource->type == WINED3D_RTYPE_BUFFER)
+    {
+        GLenum usage = GL_STATIC_DRAW;
+        struct wined3d_bo_gl *bo_gl;
+        bool coherent = true;
+
+        if (resource->usage & WINED3DUSAGE_DYNAMIC)
+        {
+            usage = GL_STREAM_DRAW_ARB;
+            coherent = false;
+        }
+
+        if (!(bo_gl = heap_alloc(sizeof(*bo_gl))))
+            return false;
+
+        if (!(wined3d_device_gl_create_bo(device_gl, NULL, resource->size,
+                wined3d_buffer_gl_binding_from_bind_flags(gl_info, resource->bind_flags),
+                usage, coherent, wined3d_resource_gl_storage_flags(resource), bo_gl)))
+        {
+            WARN("Failed to create OpenGL buffer.\n");
+            heap_free(bo_gl);
+            return false;
+        }
+
+        addr->buffer_object = &bo_gl->b;
+        addr->addr = NULL;
+
+        if (!bo_gl->b.map_ptr)
+        {
+            WARN_(d3d_perf)("BO %p (chunk %p) is not persistently mapped.\n",
+                    bo_gl, bo_gl->memory ? bo_gl->memory->chunk : NULL);
+            wined3d_cs_map_bo_address(device->cs, addr, resource->size, WINED3D_MAP_WRITE | WINED3D_MAP_DISCARD);
+        }
+
+        return true;
+    }
+
     return false;
 }
 

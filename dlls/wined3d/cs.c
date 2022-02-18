@@ -118,6 +118,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_UNLOAD_RESOURCE,
     WINED3D_CS_OP_MAP,
     WINED3D_CS_OP_UNMAP,
+    WINED3D_CS_OP_MAP_BO_ADDRESS,
     WINED3D_CS_OP_BLT_SUB_RESOURCE,
     WINED3D_CS_OP_UPDATE_SUB_RESOURCE,
     WINED3D_CS_OP_ADD_DIRTY_TEXTURE_REGION,
@@ -452,6 +453,14 @@ struct wined3d_cs_unmap
     HRESULT *hr;
 };
 
+struct wined3d_cs_map_bo_address
+{
+    enum wined3d_cs_op opcode;
+    struct wined3d_bo_address addr;
+    size_t size;
+    uint32_t flags;
+};
+
 struct wined3d_cs_blt_sub_resource
 {
     enum wined3d_cs_op opcode;
@@ -592,6 +601,7 @@ static const char *debug_cs_op(enum wined3d_cs_op op)
         WINED3D_TO_STR(WINED3D_CS_OP_UNLOAD_RESOURCE);
         WINED3D_TO_STR(WINED3D_CS_OP_MAP);
         WINED3D_TO_STR(WINED3D_CS_OP_UNMAP);
+        WINED3D_TO_STR(WINED3D_CS_OP_MAP_BO_ADDRESS);
         WINED3D_TO_STR(WINED3D_CS_OP_BLT_SUB_RESOURCE);
         WINED3D_TO_STR(WINED3D_CS_OP_UPDATE_SUB_RESOURCE);
         WINED3D_TO_STR(WINED3D_CS_OP_ADD_DIRTY_TEXTURE_REGION);
@@ -2548,6 +2558,31 @@ HRESULT wined3d_device_context_emit_unmap(struct wined3d_device_context *context
     return hr;
 }
 
+static void wined3d_cs_exec_map_bo_address(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_map_bo_address *op = data;
+    struct wined3d_context *context;
+
+    context = context_acquire(cs->c.device, NULL, 0);
+    wined3d_context_map_bo_address(context, &op->addr, op->size, op->flags);
+    context_release(context);
+}
+
+void wined3d_cs_map_bo_address(struct wined3d_cs *cs,
+        struct wined3d_bo_address *addr, size_t size, unsigned int flags)
+{
+    struct wined3d_device_context *context = &cs->c;
+    struct wined3d_cs_map_bo_address *op;
+
+    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_MAP);
+    op->opcode = WINED3D_CS_OP_MAP_BO_ADDRESS;
+    op->addr = *addr;
+    op->size = size;
+    op->flags = flags;
+    wined3d_device_context_submit(context, WINED3D_CS_QUEUE_MAP);
+    wined3d_device_context_finish(context, WINED3D_CS_QUEUE_MAP);
+}
+
 static void wined3d_cs_exec_blt_sub_resource(struct wined3d_cs *cs, const void *data)
 {
     const struct wined3d_cs_blt_sub_resource *op = data;
@@ -2966,6 +3001,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_UNLOAD_RESOURCE             */ wined3d_cs_exec_unload_resource,
     /* WINED3D_CS_OP_MAP                         */ wined3d_cs_exec_map,
     /* WINED3D_CS_OP_UNMAP                       */ wined3d_cs_exec_unmap,
+    /* WINED3D_CS_OP_MAP_BO_ADDRESS              */ wined3d_cs_exec_map_bo_address,
     /* WINED3D_CS_OP_BLT_SUB_RESOURCE            */ wined3d_cs_exec_blt_sub_resource,
     /* WINED3D_CS_OP_UPDATE_SUB_RESOURCE         */ wined3d_cs_exec_update_sub_resource,
     /* WINED3D_CS_OP_ADD_DIRTY_TEXTURE_REGION    */ wined3d_cs_exec_add_dirty_texture_region,
