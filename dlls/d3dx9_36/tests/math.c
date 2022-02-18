@@ -3309,6 +3309,7 @@ static void test_D3DXFloat_Array(void)
     };
 
     /* exception on NULL out or in parameter */
+    single.f = 0.0f;
     out = D3DXFloat32To16Array(&half, &single.f, 0);
     ok(out == &half, "Got %p, expected %p.\n", out, &half);
 
