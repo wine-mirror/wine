@@ -3092,6 +3092,12 @@ static bool wined3d_cs_map_upload_bo(struct wined3d_device_context *context, str
             return NULL;
         }
 
+        if (resource->pin_sysmem)
+        {
+            TRACE("Not allocating an upload buffer because system memory is pinned for this resource.\n");
+            return NULL;
+        }
+
         if (flags & WINED3D_MAP_DISCARD)
         {
             if (!device->adapter->adapter_ops->adapter_alloc_bo(device, resource, sub_resource_idx, &addr))
