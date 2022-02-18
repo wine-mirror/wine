@@ -37,7 +37,6 @@ struct pulse_config
         REFERENCE_TIME def_period;
         REFERENCE_TIME min_period;
     } modes[2];
-    unsigned int speakers_mask;
 };
 
 struct endpoint

@@ -2647,13 +2647,6 @@ HRESULT WINAPI AUDDRV_GetPropValue(GUID *guid, const PROPERTYKEY *prop, PROPVARI
 
     TRACE("%s, (%s,%u), %p\n", wine_dbgstr_guid(guid), wine_dbgstr_guid(&prop->fmtid), prop->pid, out);
 
-    if (IsEqualGUID(guid, &pulse_render_guid) && IsEqualPropertyKey(*prop, PKEY_AudioEndpoint_PhysicalSpeakers)) {
-        out->vt = VT_UI4;
-        out->ulVal = pulse_config.speakers_mask;
-
-        return out->ulVal ? S_OK : E_FAIL;
-    }
-
     if (!get_pulse_name_by_guid(guid, pulse_name, &params.flow))
         return E_FAIL;
 

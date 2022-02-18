@@ -87,6 +87,7 @@ typedef struct _PhysDevice {
     enum phys_device_bus_type bus_type;
     USHORT vendor_id, product_id;
     EndpointFormFactor form;
+    DWORD channel_mask;
     UINT index;
     char pulse_name[0];
 } PhysDevice;
@@ -98,7 +99,6 @@ static pa_mainloop *pulse_ml;
 static WAVEFORMATEXTENSIBLE pulse_fmt[2];
 static REFERENCE_TIME pulse_min_period[2], pulse_def_period[2];
 
-static UINT g_phys_speakers_mask = 0;
 static struct list g_phys_speakers = LIST_INIT(g_phys_speakers);
 static struct list g_phys_sources = LIST_INIT(g_phys_sources);
 
@@ -448,7 +448,7 @@ static void fill_device_info(PhysDevice *dev, pa_proplist *p)
 }
 
 static void pulse_add_device(struct list *list, pa_proplist *proplist, int index, EndpointFormFactor form,
-        const char *pulse_name, const char *name)
+        DWORD channel_mask, const char *pulse_name, const char *name)
 {
     DWORD len = strlen(pulse_name), name_len = strlen(name);
     PhysDevice *dev = malloc(FIELD_OFFSET(PhysDevice, pulse_name[len + 1]));
@@ -471,6 +471,7 @@ static void pulse_add_device(struct list *list, pa_proplist *proplist, int index
     dev->name[name_len] = 0;
     dev->form = form;
     dev->index = index;
+    dev->channel_mask = channel_mask;
     fill_device_info(dev, proplist);
     memcpy(dev->pulse_name, pulse_name, len + 1);
 
@@ -479,14 +480,20 @@ static void pulse_add_device(struct list *list, pa_proplist *proplist, int index
 
 static void pulse_phys_speakers_cb(pa_context *c, const pa_sink_info *i, int eol, void *userdata)
 {
+    struct list *speaker;
+    DWORD channel_mask;
+
     if (!i || !i->name || !i->name[0])
         return;
+    channel_mask = pulse_channel_map_to_channel_mask(&i->channel_map);
 
     /* For default PulseAudio render device, OR together all of the
      * PKEY_AudioEndpoint_PhysicalSpeakers values of the sinks. */
-    g_phys_speakers_mask |= pulse_channel_map_to_channel_mask(&i->channel_map);
+    speaker = list_head(&g_phys_speakers);
+    if (speaker)
+        LIST_ENTRY(speaker, PhysDevice, entry)->channel_mask |= channel_mask;
 
-    pulse_add_device(&g_phys_speakers, i->proplist, i->index, Speakers, i->name, i->description);
+    pulse_add_device(&g_phys_speakers, i->proplist, i->index, Speakers, channel_mask, i->name, i->description);
 }
 
 static void pulse_phys_sources_cb(pa_context *c, const pa_source_info *i, int eol, void *userdata)
@@ -494,7 +501,7 @@ static void pulse_phys_sources_cb(pa_context *c, const pa_source_info *i, int eo
     if (!i || !i->name || !i->name[0])
         return;
     pulse_add_device(&g_phys_sources, i->proplist, i->index,
-        (i->monitor_of_sink == PA_INVALID_INDEX) ? Microphone : LineLevel, i->name, i->description);
+        (i->monitor_of_sink == PA_INVALID_INDEX) ? Microphone : LineLevel, 0, i->name, i->description);
 }
 
 /* For most hardware on Windows, users must choose a configuration with an even
@@ -714,10 +721,9 @@ static NTSTATUS pulse_test_connect(void *args)
     free_phys_device_lists();
     list_init(&g_phys_speakers);
     list_init(&g_phys_sources);
-    g_phys_speakers_mask = 0;
 
-    pulse_add_device(&g_phys_speakers, NULL, 0, Speakers, "", "PulseAudio");
-    pulse_add_device(&g_phys_sources, NULL, 0, Microphone, "", "PulseAudio");
+    pulse_add_device(&g_phys_speakers, NULL, 0, Speakers, 0, "", "PulseAudio");
+    pulse_add_device(&g_phys_sources, NULL, 0, Microphone, 0, "", "PulseAudio");
 
     o = pa_context_get_sink_info_list(pulse_ctx, &pulse_phys_speakers_cb, NULL);
     if (o) {
@@ -740,7 +746,6 @@ static NTSTATUS pulse_test_connect(void *args)
     pa_mainloop_free(pulse_ml);
     pulse_ml = NULL;
 
-    config->speakers_mask = g_phys_speakers_mask;
     config->modes[0].format = pulse_fmt[0];
     config->modes[0].def_period = pulse_def_period[0];
     config->modes[0].min_period = pulse_min_period[0];
@@ -2172,6 +2177,12 @@ static NTSTATUS pulse_get_prop_value(void *args)
                 params->vt = VT_UI4;
                 params->ulVal = dev->form;
                 return STATUS_SUCCESS;
+            case 3:   /* PhysicalSpeakers */
+                if (!dev->channel_mask)
+                    goto fail;
+                params->vt = VT_UI4;
+                params->ulVal = dev->channel_mask;
+                return STATUS_SUCCESS;
             default:
                 break;
             }
@@ -2180,6 +2191,7 @@ static NTSTATUS pulse_get_prop_value(void *args)
         return STATUS_SUCCESS;
     }
 
+fail:
     params->result = E_FAIL;
     return STATUS_SUCCESS;
 }
