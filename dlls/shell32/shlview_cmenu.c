@@ -118,7 +118,7 @@ static ULONG WINAPI ContextMenu_AddRef(IContextMenu3 *iface)
 {
     ContextMenu *This = impl_from_IContextMenu3(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(%u)\n", This, ref);
+    TRACE("(%p)->(%lu)\n", This, ref);
     return ref;
 }
 
@@ -127,7 +127,7 @@ static ULONG WINAPI ContextMenu_Release(IContextMenu3 *iface)
     ContextMenu *This = impl_from_IContextMenu3(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(%u)\n", This, ref);
+    TRACE("(%p)->(%lu)\n", This, ref);
 
     if (!ref)
     {
@@ -834,7 +834,7 @@ static HRESULT WINAPI ItemMenu_GetCommandString(IContextMenu3 *iface, UINT_PTR c
     const WCHAR *cmdW = NULL;
     HRESULT hr = S_OK;
 
-    TRACE("(%p)->(%lx, %#x, %p, %p, %u)\n", This, cmdid, flags, reserved, name, maxlen);
+    TRACE("(%p)->(%Ix, %#x, %p, %p, %u)\n", This, cmdid, flags, reserved, name, maxlen);
 
     switch (flags)
     {
@@ -904,7 +904,7 @@ static HRESULT WINAPI ContextMenu_HandleMenuMsg(IContextMenu3 *iface, UINT msg,
     WPARAM wParam, LPARAM lParam)
 {
     ContextMenu *This = impl_from_IContextMenu3(iface);
-    FIXME("(%p)->(0x%x 0x%lx 0x%lx): stub\n", This, msg, wParam, lParam);
+    FIXME("(%p)->(0x%x 0x%Ix 0x%Ix): stub\n", This, msg, wParam, lParam);
     return E_NOTIMPL;
 }
 
@@ -912,7 +912,7 @@ static HRESULT WINAPI ContextMenu_HandleMenuMsg2(IContextMenu3 *iface, UINT msg,
     WPARAM wParam, LPARAM lParam, LRESULT *result)
 {
     ContextMenu *This = impl_from_IContextMenu3(iface);
-    FIXME("(%p)->(0x%x 0x%lx 0x%lx %p): stub\n", This, msg, wParam, lParam, result);
+    FIXME("(%p)->(0x%x 0x%Ix 0x%Ix %p): stub\n", This, msg, wParam, lParam, result);
     return E_NOTIMPL;
 }
 
@@ -1081,7 +1081,7 @@ static HRESULT WINAPI BackgroundMenu_QueryContextMenu(
     }
     DestroyMenu(hMyMenu);
 
-    TRACE("(%p)->returning 0x%x\n",This,hr);
+    TRACE("(%p)->returning 0x%lx\n",This,hr);
     return hr;
 }
 
@@ -1366,7 +1366,7 @@ static HRESULT WINAPI BackgroundMenu_GetCommandString(
     const WCHAR *cmdW = NULL;
     HRESULT hr = E_FAIL;
 
-    TRACE("(%p)->(idcom=%lx flags=%x %p name=%p len=%x)\n",This, idCommand, uFlags, lpReserved, lpszName, uMaxNameLen);
+    TRACE("(%p)->(idcom=%Ix flags=%x %p name=%p len=%x)\n",This, idCommand, uFlags, lpReserved, lpszName, uMaxNameLen);
 
     switch (uFlags)
     {

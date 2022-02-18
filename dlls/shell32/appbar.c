@@ -69,7 +69,7 @@ UINT_PTR WINAPI SHAppBarMessage(DWORD msg, PAPPBARDATA data)
     DWORD_PTR msg_result;
     UINT_PTR ret = 0;
 
-    TRACE("msg=%d, data={cb=%d, hwnd=%p}\n", msg, data->cbSize, data->hWnd);
+    TRACE("msg=%ld, data={cb=%ld, hwnd=%p}\n", msg, data->cbSize, data->hWnd);
 
     /* These members are message dependent */
     switch(msg)
@@ -92,11 +92,11 @@ UINT_PTR WINAPI SHAppBarMessage(DWORD msg, PAPPBARDATA data)
         break;
 
     case ABM_SETAUTOHIDEBAR:
-        TRACE("edge: %d, lParam: %lx\n", data->uEdge, data->lParam);
+        TRACE("edge: %d, lParam: %Ix\n", data->uEdge, data->lParam);
         break;
 
     default:
-        FIXME("unknown msg: %d\n", msg);
+        FIXME("unknown msg: %ld\n", msg);
         break;
     }
 

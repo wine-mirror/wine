@@ -78,7 +78,7 @@ static ULONG WINAPI FileSystemBindData_AddRef(IFileSystemBindData *iface)
 {
     FileSystemBindData *This = impl_from_IFileSystemBindData(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(%u)\n", This, ref);
+    TRACE("(%p)->(%lu)\n", This, ref);
     return ref;
 }
 
@@ -87,7 +87,7 @@ static ULONG WINAPI FileSystemBindData_Release(IFileSystemBindData *iface)
     FileSystemBindData *This = impl_from_IFileSystemBindData(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(%u)\n", This, ref);
+    TRACE("(%p)->(%lu)\n", This, ref);
 
     if (!ref)
         heap_free(This);

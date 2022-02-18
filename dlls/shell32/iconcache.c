@@ -78,7 +78,7 @@ static INT CALLBACK SIC_CompareEntries( LPVOID p1, LPVOID p2, LPARAM lparam)
 {
         LPSIC_ENTRY e1 = p1, e2 = p2;
 
-	TRACE("%p %p %8lx\n", p1, p2, lparam);
+	TRACE("%p %p %8Ix\n", p1, p2, lparam);
 
 	/* Icons in the cache are keyed by the name of the file they are
 	 * loaded from, their resource index and the fact if they have a shortcut
@@ -295,7 +295,7 @@ static INT SIC_IconAppend (const WCHAR *sourcefile, INT src_index, HICON *hicons
     SIC_ENTRY *entry;
     unsigned int i;
 
-    TRACE("%s %i %p %#x\n", debugstr_w(sourcefile), src_index, hicons, flags);
+    TRACE("%s %i %p %#lx\n", debugstr_w(sourcefile), src_index, hicons, flags);
 
     entry = SHAlloc(sizeof(*entry));
 
@@ -452,7 +452,7 @@ static BOOL WINAPI SIC_Initialize( INIT_ONCE *once, void *param, void **context 
     sizes[SHIL_SYSSMALL].cy = GetSystemMetrics( SM_CYSMICON );
     sizes[SHIL_JUMBO].cx = sizes[SHIL_JUMBO].cy = 256;
 
-    TRACE("large %dx%d small %dx%d\n", sizes[SHIL_LARGE].cx, sizes[SHIL_LARGE].cy, sizes[SHIL_SMALL].cx, sizes[SHIL_SMALL].cy);
+    TRACE("large %ldx%ld small %ldx%ld\n", sizes[SHIL_LARGE].cx, sizes[SHIL_LARGE].cy, sizes[SHIL_SMALL].cx, sizes[SHIL_SMALL].cy);
 
     sic_hdpa = DPA_Create(16);
     if (!sic_hdpa)

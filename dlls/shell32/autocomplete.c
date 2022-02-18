@@ -952,7 +952,7 @@ static ULONG WINAPI IAutoComplete2_fnAddRef(
     IAutoCompleteImpl *This = impl_from_IAutoComplete2(iface);
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(%u)\n", This, refCount - 1);
+    TRACE("(%p)->(%lu)\n", This, refCount - 1);
 
     return refCount;
 }
@@ -966,7 +966,7 @@ static ULONG WINAPI IAutoComplete2_fnRelease(
     IAutoCompleteImpl *This = impl_from_IAutoComplete2(iface);
     ULONG refCount = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(%u)\n", This, refCount + 1);
+    TRACE("(%p)->(%lu)\n", This, refCount + 1);
 
     if (!refCount) {
         TRACE("destroying IAutoComplete(%p)\n", This);
@@ -1147,7 +1147,7 @@ static HRESULT WINAPI IAutoComplete2_fnSetOptions(
     DWORD changed = This->options ^ dwFlag;
     HRESULT hr = S_OK;
 
-    TRACE("(%p) -> (0x%x)\n", This, dwFlag);
+    TRACE("(%p) -> (0x%lx)\n", This, dwFlag);
 
     This->options = dwFlag;
 

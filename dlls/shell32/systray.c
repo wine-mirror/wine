@@ -76,7 +76,7 @@ BOOL WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATAA pnid)
         pnid->cbSize != NOTIFYICONDATAA_V3_SIZE &&
         pnid->cbSize != sizeof(NOTIFYICONDATAA))
     {
-        WARN("Invalid cbSize (%d) - using only Win95 fields (size=%d)\n",
+        WARN("Invalid cbSize (%ld) - using only Win95 fields (size=%ld)\n",
             pnid->cbSize, NOTIFYICONDATAA_V1_SIZE);
         cbSize = NOTIFYICONDATAA_V1_SIZE;
     }
@@ -130,7 +130,7 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
     struct notify_data *data = &data_buffer;
     BOOL ret;
 
-    TRACE("dwMessage = %d, nid->cbSize=%d\n", dwMessage, nid->cbSize);
+    TRACE("dwMessage = %ld, nid->cbSize=%ld\n", dwMessage, nid->cbSize);
 
     /* Validate the cbSize so that WM_COPYDATA doesn't crash the application */
     if (nid->cbSize != NOTIFYICONDATAW_V1_SIZE &&
@@ -140,7 +140,7 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
     {
         NOTIFYICONDATAW newNid;
 
-        WARN("Invalid cbSize (%d) - using only Win95 fields (size=%d)\n",
+        WARN("Invalid cbSize (%ld) - using only Win95 fields (size=%ld)\n",
             nid->cbSize, NOTIFYICONDATAW_V1_SIZE);
         CopyMemory(&newNid, nid, NOTIFYICONDATAW_V1_SIZE);
         newNid.cbSize = NOTIFYICONDATAW_V1_SIZE;

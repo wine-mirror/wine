@@ -646,7 +646,7 @@ static HRESULT WINAPI RecycleBinMenu_GetCommandString(IContextMenu2 *iface,
                                                       LPSTR pszName,
                                                       UINT cchMax)
 {
-    TRACE("(%p, %lu, %u, %p, %s, %u) - stub\n",iface,idCmd,uType,pwReserved,debugstr_a(pszName),cchMax);
+    TRACE("(%p, %Iu, %u, %p, %s, %u) - stub\n",iface,idCmd,uType,pwReserved,debugstr_a(pszName),cchMax);
     return E_NOTIMPL;
 }
 
@@ -654,7 +654,7 @@ static HRESULT WINAPI RecycleBinMenu_HandleMenuMsg(IContextMenu2 *iface,
                                                    UINT uMsg, WPARAM wParam,
                                                    LPARAM lParam)
 {
-    TRACE("(%p, %u, 0x%lx, 0x%lx) - stub\n",iface,uMsg,wParam,lParam);
+    TRACE("(%p, %u, 0x%Ix, 0x%Ix) - stub\n",iface,uMsg,wParam,lParam);
     return E_NOTIMPL;
 }
 
@@ -799,7 +799,7 @@ static HRESULT WINAPI RecycleBin_EnumObjects(IShellFolder2 *iface, HWND hwnd, SH
     int pidls_count = 0;
     int i=0;
 
-    TRACE("(%p, %p, %x, %p)\n", This, hwnd, grfFlags, ppenumIDList);
+    TRACE("(%p, %p, %lx, %p)\n", This, hwnd, grfFlags, ppenumIDList);
 
     *ppenumIDList = NULL;
     list = IEnumIDList_Constructor();
@@ -887,7 +887,7 @@ static HRESULT WINAPI RecycleBin_CreateViewObject(IShellFolder2 *iface, HWND hwn
 static HRESULT WINAPI RecycleBin_GetAttributesOf(IShellFolder2 *This, UINT cidl, LPCITEMIDLIST *apidl,
                                    SFGAOF *rgfInOut)
 {
-    TRACE("(%p, %d, {%p, ...}, {%x})\n", This, cidl, apidl[0], *rgfInOut);
+    TRACE("(%p, %d, {%p, ...}, {%lx})\n", This, cidl, apidl[0], *rgfInOut);
     *rgfInOut &= SFGAO_CANMOVE|SFGAO_CANDELETE|SFGAO_HASPROPSHEET|SFGAO_FILESYSTEM;
     return S_OK;
 }
@@ -912,7 +912,7 @@ static HRESULT WINAPI RecycleBin_GetDisplayNameOf(IShellFolder2 *This, LPCITEMID
 {
     const WIN32_FIND_DATAW *data = get_trash_item_data( pidl );
 
-    TRACE("(%p, %p, %x, %p)\n", This, pidl, uFlags, pName);
+    TRACE("(%p, %p, %lx, %p)\n", This, pidl, uFlags, pName);
     pName->uType = STRRET_WSTR;
     return SHStrDupW(PathFindFileNameW(data->cFileName), &pName->u.pOleStr);
 }
@@ -970,7 +970,7 @@ static HRESULT WINAPI RecycleBin_GetDefaultColumn(IShellFolder2 *iface, DWORD re
 {
     RecycleBin *This = impl_from_IShellFolder2(iface);
 
-    TRACE("(%p)->(%#x, %p, %p)\n", This, reserved, sort, display);
+    TRACE("(%p)->(%#lx, %p, %p)\n", This, reserved, sort, display);
 
     return E_NOTIMPL;
 }
@@ -1267,7 +1267,7 @@ HRESULT WINAPI SHEmptyRecycleBinW(HWND hwnd, LPCWSTR pszRootPath, DWORD dwFlags)
     INT i=0;
     HRESULT ret;
 
-    TRACE("(%p, %s, 0x%08x)\n", hwnd, debugstr_w(pszRootPath) , dwFlags);
+    TRACE("(%p, %s, 0x%08lx)\n", hwnd, debugstr_w(pszRootPath) , dwFlags);
 
     ret = enum_trash_items(&apidl, &cidl);
     if (FAILED(ret))

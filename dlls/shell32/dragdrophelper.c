@@ -95,7 +95,7 @@ static ULONG WINAPI IDropTargetHelper_fnAddRef (IDropTargetHelper * iface)
     dragdrophelper *This = impl_from_IDropTargetHelper(iface);
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE ("(%p)->(count=%u)\n", This, refCount - 1);
+    TRACE ("(%p)->(count=%lu)\n", This, refCount - 1);
 
     return refCount;
 }
@@ -105,7 +105,7 @@ static ULONG WINAPI IDropTargetHelper_fnRelease (IDropTargetHelper * iface)
     dragdrophelper *This = impl_from_IDropTargetHelper(iface);
     ULONG refCount = InterlockedDecrement(&This->ref);
 
-    TRACE ("(%p)->(count=%u)\n", This, refCount + 1);
+    TRACE ("(%p)->(count=%lu)\n", This, refCount + 1);
 
     if (!refCount) {
         TRACE ("-- destroying (%p)\n", This);
@@ -123,7 +123,7 @@ static HRESULT WINAPI IDropTargetHelper_fnDragEnter (
 	DWORD dwEffect)
 {
     dragdrophelper *This = impl_from_IDropTargetHelper(iface);
-    FIXME ("(%p)->(%p %p %p 0x%08x)\n", This,hwndTarget, pDataObject, ppt, dwEffect);
+    FIXME ("(%p)->(%p %p %p 0x%08lx)\n", This,hwndTarget, pDataObject, ppt, dwEffect);
     return E_NOTIMPL;
 }
 
@@ -137,14 +137,14 @@ static HRESULT WINAPI IDropTargetHelper_fnDragLeave (IDropTargetHelper * iface)
 static HRESULT WINAPI IDropTargetHelper_fnDragOver (IDropTargetHelper * iface, POINT* ppt, DWORD dwEffect)
 {
     dragdrophelper *This = impl_from_IDropTargetHelper(iface);
-    FIXME ("(%p)->(%p 0x%08x)\n", This, ppt, dwEffect);
+    FIXME ("(%p)->(%p 0x%08lx)\n", This, ppt, dwEffect);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI IDropTargetHelper_fnDrop (IDropTargetHelper * iface, IDataObject* pDataObject, POINT* ppt, DWORD dwEffect)
 {
     dragdrophelper *This = impl_from_IDropTargetHelper(iface);
-    FIXME ("(%p)->(%p %p 0x%08x)\n", This, pDataObject, ppt, dwEffect);
+    FIXME ("(%p)->(%p %p 0x%08lx)\n", This, pDataObject, ppt, dwEffect);
     return E_NOTIMPL;
 }
 
@@ -209,7 +209,7 @@ static HRESULT WINAPI DragSourceHelper2_SetFlags(IDragSourceHelper2 *iface, DWOR
 {
     dragdrophelper *This = impl_from_IDragSourceHelper2(iface);
 
-    FIXME("(%p)->(%08x): stub\n", This, flags);
+    FIXME("(%p)->(%08lx): stub\n", This, flags);
 
     return S_OK;
 }

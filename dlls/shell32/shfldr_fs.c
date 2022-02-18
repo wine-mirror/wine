@@ -145,7 +145,7 @@ static ULONG WINAPI IUnknown_fnAddRef(IUnknown *iface)
     IGenericSFImpl *This = impl_from_IUnknown(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -155,7 +155,7 @@ static ULONG WINAPI IUnknown_fnRelease(IUnknown *iface)
     IGenericSFImpl *This = impl_from_IUnknown(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if (!ref) {
         TRACE("-- destroying IShellFolder(%p)\n", This);
@@ -389,7 +389,7 @@ IShellFolder_fnParseDisplayName (IShellFolder2 * iface,
     else
         *ppidl = NULL;
 
-    TRACE ("(%p)->(-- pidl=%p ret=0x%08x)\n", This, *ppidl, hr);
+    TRACE ("(%p)->(-- pidl=%p ret=0x%08lx)\n", This, *ppidl, hr);
 
     if (fsbd) IFileSystemBindData_Release( fsbd );
     return hr;
@@ -409,7 +409,7 @@ IShellFolder_fnEnumObjects (IShellFolder2 * iface, HWND hwndOwner,
     IGenericSFImpl *This = impl_from_IShellFolder2(iface);
     IEnumIDListImpl *list;
 
-    TRACE ("(%p)->(HWND=%p flags=0x%08x pplist=%p)\n", This, hwndOwner,
+    TRACE ("(%p)->(HWND=%p flags=0x%08lx pplist=%p)\n", This, hwndOwner,
      dwFlags, ppEnumIDList);
 
     if (!(list = IEnumIDList_Constructor()))
@@ -479,7 +479,7 @@ IShellFolder_fnCompareIDs (IShellFolder2 * iface, LPARAM lParam,
 
     int nReturn;
 
-    TRACE ("(%p)->(0x%08lx,pidl1=%p,pidl2=%p)\n", This, lParam, pidl1, pidl2);
+    TRACE ("(%p)->(0x%08Ix,pidl1=%p,pidl2=%p)\n", This, lParam, pidl1, pidl2);
     nReturn = SHELL32_CompareIDs(&This->IShellFolder2_iface, lParam, pidl1, pidl2);
     TRACE ("-- %i\n", nReturn);
     return nReturn;
@@ -536,7 +536,7 @@ IShellFolder_fnGetAttributesOf (IShellFolder2 * iface, UINT cidl,
 
     HRESULT hr = S_OK;
 
-    TRACE ("(%p)->(cidl=%d apidl=%p mask=%p (0x%08x))\n", This, cidl, apidl,
+    TRACE ("(%p)->(cidl=%d apidl=%p mask=%p (0x%08lx))\n", This, cidl, apidl,
      rgfInOut, rgfInOut ? *rgfInOut : 0);
 
     if (!rgfInOut)
@@ -576,7 +576,7 @@ IShellFolder_fnGetAttributesOf (IShellFolder2 * iface, UINT cidl,
     /* make sure SFGAO_VALIDATE is cleared, some apps depend on that */
     *rgfInOut &= ~SFGAO_VALIDATE;
 
-    TRACE ("-- result=0x%08x\n", *rgfInOut);
+    TRACE ("-- result=0x%08lx\n", *rgfInOut);
 
     return hr;
 }
@@ -736,7 +736,7 @@ IShellFolder_fnGetUIObjectOf (IShellFolder2 * iface,
 
         *ppvOut = pObj;
     }
-    TRACE ("(%p)->hr=0x%08x\n", This, hr);
+    TRACE ("(%p)->hr=0x%08lx\n", This, hr);
     return hr;
 }
 
@@ -852,7 +852,7 @@ IShellFolder_fnGetDisplayNameOf (IShellFolder2 * iface, LPCITEMIDLIST pidl,
 
     HRESULT hr = S_OK;
 
-    TRACE ("(%p)->(pidl=%p,0x%08x,%p)\n", This, pidl, dwFlags, strRet);
+    TRACE ("(%p)->(pidl=%p,0x%08lx,%p)\n", This, pidl, dwFlags, strRet);
     pdump (pidl);
 
     if (!strRet)
@@ -930,7 +930,7 @@ static HRESULT WINAPI IShellFolder_fnSetNameOf (IShellFolder2 * iface,
     LPWSTR ptr;
     BOOL bIsFolder = _ILIsFolder (ILFindLastID (pidl));
 
-    TRACE ("(%p)->(%p,pidl=%p,%s,%u,%p)\n", This, hwndOwner, pidl,
+    TRACE ("(%p)->(%p,pidl=%p,%s,%lu,%p)\n", This, hwndOwner, pidl,
      debugstr_w (lpName), dwFlags, pPidlOut);
 
     /* pidl has to contain a single non-empty SHITEMID */
@@ -993,7 +993,7 @@ IShellFolder_fnGetDefaultColumn(IShellFolder2 *iface, DWORD reserved, ULONG *sor
 {
     IGenericSFImpl *This = impl_from_IShellFolder2(iface);
 
-    TRACE("(%p)->(%#x, %p, %p)\n", This, reserved, sort, display);
+    TRACE("(%p)->(%#lx, %p, %p)\n", This, reserved, sort, display);
 
     return E_NOTIMPL;
 }
@@ -1515,7 +1515,7 @@ IFSFldr_PersistFolder3_InitializeEx (IPersistFolder3 * iface,
 
     TRACE ("(%p)->(%p,%p,%p)\n", This, pbc, pidlRoot, ppfti);
     if (ppfti)
-        TRACE ("--%p %s %s 0x%08x 0x%08x\n",
+        TRACE ("--%p %s %s 0x%08lx 0x%08x\n",
          ppfti->pidlTargetFolder, debugstr_w (ppfti->szTargetParsingName),
          debugstr_w (ppfti->szNetworkProvider), ppfti->dwAttributes,
          ppfti->csidl);
@@ -1716,7 +1716,7 @@ ISFDropTarget_DragEnter (IDropTarget * iface, IDataObject * pDataObject,
     FORMATETC format;
     STGMEDIUM medium;
 
-    TRACE("(%p)->(%p 0x%08x {.x=%d, .y=%d} %p)\n", This, pDataObject, dwKeyState, pt.x, pt.y, pdwEffect);
+    TRACE("(%p)->(%p 0x%08lx {.x=%ld, .y=%ld} %p)\n", This, pDataObject, dwKeyState, pt.x, pt.y, pdwEffect);
 
     if (!pdwEffect || !pDataObject)
         return E_INVALIDARG;
@@ -1751,7 +1751,7 @@ ISFDropTarget_DragOver (IDropTarget * iface, DWORD dwKeyState, POINTL pt,
 {
     IGenericSFImpl *This = impl_from_IDropTarget(iface);
 
-    TRACE("(%p)->(0x%08x {.x=%d, .y=%d} %p)\n", This, dwKeyState, pt.x, pt.y, pdwEffect);
+    TRACE("(%p)->(0x%08lx {.x=%ld, .y=%ld} %p)\n", This, dwKeyState, pt.x, pt.y, pdwEffect);
 
     if (!pdwEffect)
         return E_INVALIDARG;
@@ -1780,7 +1780,7 @@ ISFDropTarget_Drop (IDropTarget * iface, IDataObject * pDataObject,
     STGMEDIUM medium;
     HRESULT hr;
 
-    TRACE("(%p)->(%p %d {.x=%d, .y=%d} %p) semi-stub\n",
+    TRACE("(%p)->(%p %ld {.x=%ld, .y=%ld} %p) semi-stub\n",
         This, pDataObject, dwKeyState, pt.x, pt.y, pdwEffect);
 
     InitFormatEtc(format, cfShellIDList, TYMED_HGLOBAL);

@@ -131,7 +131,7 @@ static ULONG WINAPI IQueryAssociations_fnAddRef(IQueryAssociations *iface)
   IQueryAssociationsImpl *This = impl_from_IQueryAssociations(iface);
   ULONG refCount = InterlockedIncrement(&This->ref);
 
-  TRACE("(%p)->(ref before=%u)\n",This, refCount - 1);
+  TRACE("(%p)->(ref before=%lu)\n",This, refCount - 1);
 
   return refCount;
 }
@@ -146,7 +146,7 @@ static ULONG WINAPI IQueryAssociations_fnRelease(IQueryAssociations *iface)
   IQueryAssociationsImpl *This = impl_from_IQueryAssociations(iface);
   ULONG refCount = InterlockedDecrement(&This->ref);
 
-  TRACE("(%p)->(ref before=%u)\n",This, refCount + 1);
+  TRACE("(%p)->(ref before=%lu)\n",This, refCount + 1);
 
   if (!refCount)
   {
@@ -185,7 +185,7 @@ static HRESULT WINAPI IQueryAssociations_fnInit(
     IQueryAssociationsImpl *This = impl_from_IQueryAssociations(iface);
     LONG ret;
 
-    TRACE("(%p)->(%d,%s,%p,%p)\n", iface,
+    TRACE("(%p)->(%ld,%s,%p,%p)\n", iface,
                                     cfFlags,
                                     debugstr_w(pszAssoc),
                                     hkeyProgid,
@@ -193,7 +193,7 @@ static HRESULT WINAPI IQueryAssociations_fnInit(
     if (hWnd != NULL)
         FIXME("hwnd != NULL not supported\n");
     if (cfFlags != 0)
-	FIXME("unsupported flags: %x\n", cfFlags);
+	FIXME("unsupported flags: %lx\n", cfFlags);
 
     RegCloseKey(This->hkeySource);
     if (This->hkeySource != This->hkeyProgID)
@@ -439,7 +439,7 @@ static HRESULT ASSOC_ReturnString(ASSOCF flags, LPWSTR out, DWORD *outlen, LPCWS
     HRESULT hr = S_OK;
     DWORD len;
 
-    TRACE("flags=0x%08x, data=%s\n", flags, debugstr_w(data));
+    TRACE("flags=0x%08lx, data=%s\n", flags, debugstr_w(data));
 
     if (!out)
     {
@@ -502,10 +502,10 @@ static HRESULT WINAPI IQueryAssociations_fnGetString(
   HRESULT hr;
   WCHAR path[MAX_PATH];
 
-  TRACE("(%p)->(0x%08x, %u, %s, %p, %p)\n", This, flags, str, debugstr_w(pszExtra), pszOut, pcchOut);
+  TRACE("(%p)->(0x%08lx, %u, %s, %p, %p)\n", This, flags, str, debugstr_w(pszExtra), pszOut, pcchOut);
 
   if (flags & unimplemented_flags)
-    FIXME("%08x: unimplemented flags\n", flags & unimplemented_flags);
+    FIXME("%08lx: unimplemented flags\n", flags & unimplemented_flags);
 
   if (!pcchOut)
     return E_UNEXPECTED;
@@ -708,7 +708,7 @@ static HRESULT WINAPI IQueryAssociations_fnGetKey(
 {
   IQueryAssociationsImpl *This = impl_from_IQueryAssociations(iface);
 
-  FIXME("(%p,0x%8x,0x%8x,%s,%p)-stub!\n", This, cfFlags, assockey,
+  FIXME("(%p,0x%8lx,0x%8x,%s,%p)-stub!\n", This, cfFlags, assockey,
         debugstr_w(pszExtra), phkeyOut);
   return E_NOTIMPL;
 }
@@ -739,11 +739,11 @@ static HRESULT WINAPI IQueryAssociations_fnGetData(IQueryAssociations *iface,
     DWORD size;
     HRESULT hres;
 
-    TRACE("(%p,0x%8x,0x%8x,%s,%p,%p)\n", This, cfFlags, assocdata,
+    TRACE("(%p,0x%8lx,0x%8x,%s,%p,%p)\n", This, cfFlags, assocdata,
             debugstr_w(pszExtra), pvOut, pcbOut);
 
     if(cfFlags)
-        FIXME("Unsupported flags: %x\n", cfFlags);
+        FIXME("Unsupported flags: %lx\n", cfFlags);
 
     switch(assocdata) {
     case ASSOCDATA_EDITFLAGS:
@@ -791,7 +791,7 @@ static HRESULT WINAPI IQueryAssociations_fnGetEnum(
 {
   IQueryAssociationsImpl *This = impl_from_IQueryAssociations(iface);
 
-  FIXME("(%p,0x%8x,0x%8x,%s,%s,%p)-stub!\n", This, cfFlags, assocenum,
+  FIXME("(%p,0x%8lx,0x%8x,%s,%s,%p)-stub!\n", This, cfFlags, assocenum,
         debugstr_w(pszExtra), debugstr_guid(riid), ppvOut);
   return E_NOTIMPL;
 }
@@ -844,7 +844,7 @@ static ULONG WINAPI ApplicationAssociationRegistration_AddRef(IApplicationAssoci
     IApplicationAssociationRegistrationImpl *This = impl_from_IApplicationAssociationRegistration(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
     return ref;
 }
 
@@ -853,7 +853,7 @@ static ULONG WINAPI ApplicationAssociationRegistration_Release(IApplicationAssoc
     IApplicationAssociationRegistrationImpl *This = impl_from_IApplicationAssociationRegistration(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if (!ref) {
         SHFree(This);
@@ -1042,7 +1042,7 @@ HRESULT WINAPI ApplicationAssociationRegistration_Constructor(IUnknown *outer, R
     if (FAILED(hr))
         SHFree(This);
 
-    TRACE("returning 0x%x with %p\n", hr, *ppv);
+    TRACE("returning 0x%lx with %p\n", hr, *ppv);
     return hr;
 }
 
@@ -1069,7 +1069,7 @@ static ULONG WINAPI enumassochandlers_AddRef(IEnumAssocHandlers *iface)
     struct enumassochandlers *This = impl_from_IEnumAssocHandlers(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(%u)\n", This, ref);
+    TRACE("(%p)->(%lu)\n", This, ref);
     return ref;
 }
 
@@ -1078,7 +1078,7 @@ static ULONG WINAPI enumassochandlers_Release(IEnumAssocHandlers *iface)
     struct enumassochandlers *This = impl_from_IEnumAssocHandlers(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(%u)\n", This, ref);
+    TRACE("(%p)->(%lu)\n", This, ref);
 
     if (!ref)
         SHFree(This);
@@ -1091,7 +1091,7 @@ static HRESULT WINAPI enumassochandlers_Next(IEnumAssocHandlers *iface, ULONG co
 {
     struct enumassochandlers *This = impl_from_IEnumAssocHandlers(iface);
 
-    FIXME("(%p)->(%u %p %p): stub\n", This, count, handlers, fetched);
+    FIXME("(%p)->(%lu %p %p): stub\n", This, count, handlers, fetched);
 
     return E_NOTIMPL;
 }

@@ -171,7 +171,7 @@ SHChangeNotifyRegister(
 
     item = SHAlloc(sizeof(NOTIFICATIONLIST));
 
-    TRACE("(%p,0x%08x,0x%08x,0x%08x,%d,%p) item=%p\n",
+    TRACE("(%p,0x%08x,0x%08lx,0x%08x,%d,%p) item=%p\n",
 	hwnd, fSources, wEventMask, uMsg, cItems, lpItems, item);
 
     item->cidl = cItems;
@@ -205,7 +205,7 @@ BOOL WINAPI SHChangeNotifyDeregister(ULONG hNotify)
 {
     LPNOTIFICATIONLIST node;
 
-    TRACE("(0x%08x)\n", hNotify);
+    TRACE("(0x%08lx)\n", hNotify);
 
     EnterCriticalSection(&SHELL32_ChangenotifyCS);
 
@@ -228,7 +228,7 @@ BOOL WINAPI SHChangeNotifyDeregister(ULONG hNotify)
 BOOL WINAPI SHChangeNotifyUpdateEntryList(DWORD unknown1, DWORD unknown2,
 			      DWORD unknown3, DWORD unknown4)
 {
-    FIXME("(0x%08x, 0x%08x, 0x%08x, 0x%08x)\n",
+    FIXME("(0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx)\n",
           unknown1, unknown2, unknown3, unknown4);
 
     return TRUE;
@@ -275,7 +275,7 @@ void WINAPI SHChangeNotify(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID 
     Pidls[0] = NULL;
     Pidls[1] = NULL;
 
-    TRACE("(0x%08x,0x%08x,%p,%p)\n", wEventId, uFlags, dwItem1, dwItem2);
+    TRACE("(0x%08lx,0x%08x,%p,%p)\n", wEventId, uFlags, dwItem1, dwItem2);
 
     if(uFlags & ~(SHCNF_TYPE|SHCNF_FLUSH))
         FIXME("ignoring unsupported flags: %x\n", uFlags);
@@ -374,7 +374,7 @@ void WINAPI SHChangeNotify(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID 
 
     LIST_FOR_EACH_ENTRY_SAFE(cur, next, &recipients, struct notification_recipients, entry)
     {
-        TRACE("notifying %p, event %s(%x)\n", cur->hwnd, DumpEvent(wEventId), wEventId);
+        TRACE("notifying %p, event %s(%lx)\n", cur->hwnd, DumpEvent(wEventId), wEventId);
 
         if (cur->flags  & SHCNRF_NewDelivery) {
             if(!shared_data) {
@@ -437,7 +437,7 @@ DWORD WINAPI NTSHChangeNotifyRegister(
     int count,
     SHChangeNotifyEntry *idlist)
 {
-    FIXME("(%p,0x%08x,0x%08x,0x%08x,0x%08x,%p):semi stub.\n",
+    FIXME("(%p,0x%08lx,0x%08lx,0x%08lx,0x%08x,%p):semi stub.\n",
 		hwnd,events1,events2,msg,count,idlist);
 
     return SHChangeNotifyRegister(hwnd, events1, events2, msg, count, idlist);
@@ -455,7 +455,7 @@ HANDLE WINAPI SHChangeNotification_Lock(
     struct new_delivery_notification *ndn;
     UINT offset;
 
-    TRACE("%p %08x %p %p\n", hChange, dwProcessId, lppidls, lpwEventId);
+    TRACE("%p %08lx %p %p\n", hChange, dwProcessId, lppidls, lpwEventId);
 
     ndn = SHLockShared(hChange, dwProcessId);
     if(!ndn) {
@@ -490,7 +490,7 @@ BOOL WINAPI SHChangeNotification_Unlock ( HANDLE hLock)
  */
 DWORD WINAPI NTSHChangeNotifyDeregister(ULONG x1)
 {
-    FIXME("(0x%08x):semi stub.\n",x1);
+    FIXME("(0x%08lx):semi stub.\n",x1);
 
     return SHChangeNotifyDeregister( x1 );
 }

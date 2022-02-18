@@ -179,7 +179,7 @@ static ULONG WINAPI ISF_ControlPanel_fnAddRef(IShellFolder2 *iface)
     ICPanelImpl *This = impl_from_IShellFolder2(iface);
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(count=%u)\n", This, refCount - 1);
+    TRACE("(%p)->(count=%lu)\n", This, refCount - 1);
 
     return refCount;
 }
@@ -189,7 +189,7 @@ static ULONG WINAPI ISF_ControlPanel_fnRelease(IShellFolder2 *iface)
     ICPanelImpl *This = impl_from_IShellFolder2(iface);
     ULONG refCount = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(count=%u)\n", This, refCount + 1);
+    TRACE("(%p)->(count=%lu)\n", This, refCount + 1);
 
     if (!refCount) {
         TRACE("-- destroying IShellFolder(%p)\n", This);
@@ -217,7 +217,7 @@ static HRESULT WINAPI ISF_ControlPanel_fnParseDisplayName(IShellFolder2 *iface, 
     if (pchEaten)
 	*pchEaten = 0;
 
-    TRACE("(%p)->(-- ret=0x%08x)\n", This, hr);
+    TRACE("(%p)->(-- ret=0x%08lx)\n", This, hr);
 
     return hr;
 }
@@ -394,7 +394,7 @@ static BOOL CreateCPanelEnumList(IEnumIDListImpl *list, DWORD dwFlags)
     WIN32_FIND_DATAA wfd;
     HANDLE hFile;
 
-    TRACE("(%p)->(flags=0x%08x)\n", list, dwFlags);
+    TRACE("(%p)->(flags=0x%08lx)\n", list, dwFlags);
 
     /* enumerate control panel folders */
     if (dwFlags & SHCONTF_FOLDERS)
@@ -445,7 +445,7 @@ static HRESULT WINAPI ISF_ControlPanel_fnEnumObjects(IShellFolder2 *iface, HWND 
     ICPanelImpl *This = impl_from_IShellFolder2(iface);
     IEnumIDListImpl *list;
 
-    TRACE("(%p)->(HWND=%p flags=0x%08x pplist=%p)\n", This, hwndOwner, dwFlags, ppEnumIDList);
+    TRACE("(%p)->(HWND=%p flags=0x%08lx pplist=%p)\n", This, hwndOwner, dwFlags, ppEnumIDList);
 
     if (!(list = IEnumIDList_Constructor()))
         return E_OUTOFMEMORY;
@@ -495,7 +495,7 @@ static HRESULT WINAPI ISF_ControlPanel_fnCompareIDs(IShellFolder2 *iface, LPARAM
 
     int nReturn;
 
-    TRACE("(%p)->(0x%08lx,pidl1=%p,pidl2=%p)\n", This, lParam, pidl1, pidl2);
+    TRACE("(%p)->(0x%08Ix,pidl1=%p,pidl2=%p)\n", This, lParam, pidl1, pidl2);
     nReturn = SHELL32_CompareIDs(&This->IShellFolder2_iface, lParam, pidl1, pidl2);
     TRACE("-- %i\n", nReturn);
     return nReturn;
@@ -545,7 +545,7 @@ static HRESULT WINAPI ISF_ControlPanel_fnGetAttributesOf(IShellFolder2 *iface, U
 
     HRESULT hr = S_OK;
 
-    TRACE("(%p)->(cidl=%d apidl=%p mask=%p (0x%08x))\n",
+    TRACE("(%p)->(cidl=%d apidl=%p mask=%p (0x%08lx))\n",
           This, cidl, apidl, rgfInOut, rgfInOut ? *rgfInOut : 0);
 
     if (!rgfInOut)
@@ -565,7 +565,7 @@ static HRESULT WINAPI ISF_ControlPanel_fnGetAttributesOf(IShellFolder2 *iface, U
     /* make sure SFGAO_VALIDATE is cleared, some apps depend on that */
     *rgfInOut &= ~SFGAO_VALIDATE;
 
-    TRACE("-- result=0x%08x\n", *rgfInOut);
+    TRACE("-- result=0x%08lx\n", *rgfInOut);
     return hr;
 }
 
@@ -625,7 +625,7 @@ static HRESULT WINAPI ISF_ControlPanel_fnGetUIObjectOf(IShellFolder2 *iface, HWN
 
 	*ppvOut = pObj;
     }
-    TRACE("(%p)->hr=0x%08x\n", This, hr);
+    TRACE("(%p)->hr=0x%08lx\n", This, hr);
     return hr;
 }
 
@@ -643,7 +643,7 @@ static HRESULT WINAPI ISF_ControlPanel_fnGetDisplayNameOf(IShellFolder2 *iface, 
 
     *szPath = '\0';
 
-    TRACE("(%p)->(pidl=%p,0x%08x,%p)\n", This, pidl, dwFlags, strRet);
+    TRACE("(%p)->(pidl=%p,0x%08lx,%p)\n", This, pidl, dwFlags, strRet);
     pdump(pidl);
 
     if (!pidl || !strRet)
@@ -703,7 +703,7 @@ static HRESULT WINAPI ISF_ControlPanel_fnSetNameOf(IShellFolder2 *iface, HWND hw
         LPCITEMIDLIST pidl, LPCOLESTR lpName, DWORD dwFlags, LPITEMIDLIST *pPidlOut)
 {
     ICPanelImpl *This = impl_from_IShellFolder2(iface);
-    FIXME("(%p)->(%p,pidl=%p,%s,%u,%p)\n", This, hwndOwner, pidl, debugstr_w(lpName), dwFlags, pPidlOut);
+    FIXME("(%p)->(%p,pidl=%p,%s,%lu,%p)\n", This, hwndOwner, pidl, debugstr_w(lpName), dwFlags, pPidlOut);
     return E_FAIL;
 }
 
@@ -727,7 +727,7 @@ static HRESULT WINAPI ISF_ControlPanel_fnGetDefaultColumn(IShellFolder2 *iface, 
 {
     ICPanelImpl *This = impl_from_IShellFolder2(iface);
 
-    TRACE("(%p)->(%#x %p %p)\n", This, reserved, sort, display);
+    TRACE("(%p)->(%#lx %p %p)\n", This, reserved, sort, display);
 
     return E_NOTIMPL;
 }
@@ -837,7 +837,7 @@ static ULONG WINAPI ICPanel_PersistFolder2_AddRef(IPersistFolder2 * iface)
 {
     ICPanelImpl *This = impl_from_IPersistFolder2(iface);
 
-    TRACE("(%p)->(count=%u)\n", This, This->ref);
+    TRACE("(%p)->(count=%lu)\n", This, This->ref);
 
     return IShellFolder2_AddRef(&This->IShellFolder2_iface);
 }
@@ -849,7 +849,7 @@ static ULONG WINAPI ICPanel_PersistFolder2_Release(IPersistFolder2 * iface)
 {
     ICPanelImpl *This = impl_from_IPersistFolder2(iface);
 
-    TRACE("(%p)->(count=%u)\n", This, This->ref);
+    TRACE("(%p)->(count=%lu)\n", This, This->ref);
 
     return IShellFolder2_Release(&This->IShellFolder2_iface);
 }
@@ -932,7 +932,7 @@ static HRESULT WINAPI IShellExecuteHookW_fnQueryInterface(
 {
     ICPanelImpl *This = impl_from_IShellExecuteHookW(iface);
 
-    TRACE("(%p)->(count=%u)\n", This, This->ref);
+    TRACE("(%p)->(count=%lu)\n", This, This->ref);
 
     return IUnknown_QueryInterface(This->pUnkOuter, riid, ppvObject);
 }
@@ -941,7 +941,7 @@ static ULONG STDMETHODCALLTYPE IShellExecuteHookW_fnAddRef(IShellExecuteHookW* i
 {
     ICPanelImpl *This = impl_from_IShellExecuteHookW(iface);
 
-    TRACE("(%p)->(count=%u)\n", This, This->ref);
+    TRACE("(%p)->(count=%lu)\n", This, This->ref);
 
     return IUnknown_AddRef(This->pUnkOuter);
 }
@@ -1019,7 +1019,7 @@ static HRESULT WINAPI IShellExecuteHookA_fnQueryInterface(IShellExecuteHookA* if
 {
     ICPanelImpl *This = impl_from_IShellExecuteHookA(iface);
 
-    TRACE("(%p)->(count=%u)\n", This, This->ref);
+    TRACE("(%p)->(count=%lu)\n", This, This->ref);
 
     return IUnknown_QueryInterface(This->pUnkOuter, riid, ppvObject);
 }
@@ -1028,7 +1028,7 @@ static ULONG STDMETHODCALLTYPE IShellExecuteHookA_fnAddRef(IShellExecuteHookA* i
 {
     ICPanelImpl *This = impl_from_IShellExecuteHookA(iface);
 
-    TRACE("(%p)->(count=%u)\n", This, This->ref);
+    TRACE("(%p)->(count=%lu)\n", This, This->ref);
 
     return IUnknown_AddRef(This->pUnkOuter);
 }

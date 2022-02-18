@@ -1738,10 +1738,10 @@ HRESULT WINAPI SHPathPrepareForWriteW(HWND hwnd, IUnknown *modless, LPCWSTR path
     WCHAR* last_slash;
     WCHAR* temppath=NULL;
 
-    TRACE("%p %p %s 0x%08x\n", hwnd, modless, debugstr_w(path), flags);
+    TRACE("%p %p %s 0x%08lx\n", hwnd, modless, debugstr_w(path), flags);
 
     if (flags & ~(SHPPFW_DIRCREATE|SHPPFW_ASKDIRCREATE|SHPPFW_IGNOREFILENAME))
-        FIXME("unimplemented flags 0x%08x\n", flags);
+        FIXME("unimplemented flags 0x%08lx\n", flags);
 
     /* cut off filename if necessary */
     if (flags & SHPPFW_IGNOREFILENAME)
@@ -1795,7 +1795,7 @@ HRESULT WINAPI SHPathPrepareForWriteW(HWND hwnd, IUnknown *modless, LPCWSTR path
 
 HRESULT WINAPI SHMultiFileProperties(IDataObject *pdtobj, DWORD flags)
 {
-    FIXME("stub: %p %u\n", pdtobj, flags);
+    FIXME("stub: %p %lu\n", pdtobj, flags);
     return E_NOTIMPL;
 }
 
@@ -1835,7 +1835,7 @@ static ULONG WINAPI file_operation_AddRef(IFileOperation *iface)
     struct file_operation *operation = impl_from_IFileOperation(iface);
     ULONG ref = InterlockedIncrement(&operation->ref);
 
-    TRACE("(%p): ref=%u.\n", iface, ref);
+    TRACE("(%p): ref=%lu.\n", iface, ref);
 
     return ref;
 }
@@ -1845,7 +1845,7 @@ static ULONG WINAPI file_operation_Release(IFileOperation *iface)
     struct file_operation *operation = impl_from_IFileOperation(iface);
     ULONG ref = InterlockedDecrement(&operation->ref);
 
-    TRACE("(%p): ref=%u.\n", iface, ref);
+    TRACE("(%p): ref=%lu.\n", iface, ref);
 
     if (!ref)
     {
@@ -1864,14 +1864,14 @@ static HRESULT WINAPI file_operation_Advise(IFileOperation *iface, IFileOperatio
 
 static HRESULT WINAPI file_operation_Unadvise(IFileOperation *iface, DWORD cookie)
 {
-    FIXME("(%p, %x): stub.\n", iface, cookie);
+    FIXME("(%p, %lx): stub.\n", iface, cookie);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI file_operation_SetOperationFlags(IFileOperation *iface, DWORD flags)
 {
-    FIXME("(%p, %x): stub.\n", iface, flags);
+    FIXME("(%p, %lx): stub.\n", iface, flags);
 
     return E_NOTIMPL;
 }
@@ -1981,7 +1981,7 @@ static HRESULT WINAPI file_operation_DeleteItems(IFileOperation *iface, IUnknown
 static HRESULT WINAPI file_operation_NewItem(IFileOperation *iface, IShellItem *folder, DWORD attributes,
         LPCWSTR name, LPCWSTR template, IFileOperationProgressSink *sink)
 {
-    FIXME("(%p, %p, %x, %s, %s, %p): stub.\n", iface, folder, attributes,
+    FIXME("(%p, %p, %lx, %s, %s, %p): stub.\n", iface, folder, attributes,
           debugstr_w(name), debugstr_w(template), sink);
 
     return E_NOTIMPL;

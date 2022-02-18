@@ -221,7 +221,7 @@ static void InitializeTreeView( browse_info *info )
         IShellFolder *lpsfDesktop;
         hr = SHGetDesktopFolder(&lpsfDesktop);
         if (FAILED(hr)) {
-            WARN("SHGetDesktopFolder failed! hr = %08x\n", hr);
+            WARN("SHGetDesktopFolder failed! hr = %08lx\n", hr);
             ILFree(pidlChild);
             ILFree(pidlParent);
             return;
@@ -231,7 +231,7 @@ static void InitializeTreeView( browse_info *info )
     }
 
     if (FAILED(hr)) {
-        WARN("Could not bind to parent shell folder! hr = %08x\n", hr);
+        WARN("Could not bind to parent shell folder! hr = %08lx\n", hr);
         ILFree(pidlChild);
         ILFree(pidlParent);
         return;
@@ -245,7 +245,7 @@ static void InitializeTreeView( browse_info *info )
     }
 
     if (FAILED(hr)) {
-        WARN("Could not bind to root shell folder! hr = %08x\n", hr);
+        WARN("Could not bind to root shell folder! hr = %08lx\n", hr);
         IShellFolder_Release(lpsfParent);
         ILFree(pidlChild);
         ILFree(pidlParent);
@@ -255,7 +255,7 @@ static void InitializeTreeView( browse_info *info )
     flags = BrowseFlagsToSHCONTF( info->lpBrowseInfo->ulFlags );
     hr = IShellFolder_EnumObjects( lpsfRoot, info->hWnd, flags, &pEnumChildren );
     if (FAILED(hr)) {
-        WARN("Could not get child iterator! hr = %08x\n", hr);
+        WARN("Could not get child iterator! hr = %08lx\n", hr);
         IShellFolder_Release(lpsfParent);
         IShellFolder_Release(lpsfRoot);
         ILFree(pidlChild);
@@ -327,7 +327,7 @@ static BOOL GetName(LPSHELLFOLDER lpsf, LPCITEMIDLIST lpi, DWORD dwFlags, LPWSTR
 	BOOL   bSuccess=TRUE;
 	STRRET str;
 
-	TRACE("%p %p %x %p\n", lpsf, lpi, dwFlags, lpFriendlyName);
+	TRACE("%p %p %lx %p\n", lpsf, lpi, dwFlags, lpFriendlyName);
 	if (SUCCEEDED(IShellFolder_GetDisplayNameOf(lpsf, lpi, dwFlags, &str)))
           bSuccess = StrRetToStrNW(lpFriendlyName, MAX_PATH, &str, lpi);
 	else
@@ -1069,7 +1069,7 @@ static LRESULT BrsFolder_OnChange(browse_info *info, const LPCITEMIDLIST *pidls,
 {
     BOOL ret = TRUE;
 
-    TRACE("(%p)->(%p, %p, 0x%08x)\n", info, pidls[0], pidls[1], event);
+    TRACE("(%p)->(%p, %p, 0x%08lx)\n", info, pidls[0], pidls[1], event);
 
     switch (event)
     {
@@ -1096,7 +1096,7 @@ static INT_PTR CALLBACK BrsFolderDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
 {
     browse_info *info;
 
-    TRACE("hwnd=%p msg=%04x 0x%08lx 0x%08lx\n", hWnd, msg, wParam, lParam );
+    TRACE("hwnd=%p msg=%04x 0x%08Ix 0x%08Ix\n", hWnd, msg, wParam, lParam );
 
     if (msg == WM_INITDIALOG)
         return BrsFolder_OnCreate( hWnd, (browse_info*) lParam );
@@ -1132,7 +1132,7 @@ static INT_PTR CALLBACK BrsFolderDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
         break;
 
     case BFFM_ENABLEOK:
-        TRACE("Enable %ld\n", lParam);
+        TRACE("Enable %Id\n", lParam);
         EnableWindow(GetDlgItem(hWnd, 1), lParam != 0);
         break;
 

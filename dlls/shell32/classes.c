@@ -454,7 +454,7 @@ BOOL HCR_GetFolderAttributes(LPCITEMIDLIST pidlFolder, LPDWORD pdwAttributes)
         }
     }
 
-    TRACE("-- *pdwAttributes == 0x%08x\n", *pdwAttributes);
+    TRACE("-- *pdwAttributes == 0x%08lx\n", *pdwAttributes);
 
     return TRUE;
 }

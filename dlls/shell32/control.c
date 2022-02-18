@@ -811,7 +811,7 @@ void WINAPI Control_RunDLLW(HWND hWnd, HINSTANCE hInst, LPCWSTR cmd, DWORD nCmdS
 {
     CPanel	panel;
 
-    TRACE("(%p, %p, %s, 0x%08x)\n",
+    TRACE("(%p, %p, %s, 0x%08lx)\n",
 	  hWnd, hInst, debugstr_w(cmd), nCmdShow);
 
     memset(&panel, 0, sizeof(panel));
@@ -845,7 +845,7 @@ void WINAPI Control_RunDLLA(HWND hWnd, HINSTANCE hInst, LPCSTR cmd, DWORD nCmdSh
  */
 HRESULT WINAPI Control_FillCache_RunDLLW(HWND hWnd, HANDLE hModule, DWORD w, DWORD x)
 {
-    FIXME("%p %p 0x%08x 0x%08x stub\n", hWnd, hModule, w, x);
+    FIXME("%p %p 0x%08lx 0x%08lx stub\n", hWnd, hModule, w, x);
     return S_OK;
 }
 
@@ -867,7 +867,7 @@ HRESULT WINAPI Control_FillCache_RunDLLA(HWND hWnd, HANDLE hModule, DWORD w, DWO
  */
 DWORD WINAPI CallCPLEntry16(HMODULE hMod, FARPROC pFunc, DWORD dw3, DWORD dw4, DWORD dw5, DWORD dw6)
 {
-    FIXME("(%p, %p, %08x, %08x, %08x, %08x): stub.\n", hMod, pFunc, dw3, dw4, dw5, dw6);
+    FIXME("(%p, %p, %08lx, %08lx, %08lx, %08lx): stub.\n", hMod, pFunc, dw3, dw4, dw5, dw6);
     return 0x0deadbee;
 }
 

@@ -287,7 +287,7 @@ void pdump (LPCITEMIDLIST pidl)
               if ( pData && (PT_FOLDER == type || PT_VALUE == type) )
                 dwAttrib = pData->u.file.uFileAttribs;
 
-              MESSAGE ("[%p] size=%04u type=%x attr=0x%08x name=%s (%s,%s)\n",
+              MESSAGE ("[%p] size=%04u type=%lx attr=0x%08lx name=%s (%s,%s)\n",
                        pidltemp, pidltemp->mkid.cb, type, dwAttrib,
                            debugstr_a(szName), debugstr_w(szLongName), debugstr_w(szShortName));
           }
@@ -304,7 +304,7 @@ void pdump (LPCITEMIDLIST pidl)
               if ( pData && (PT_FOLDER == type || PT_VALUE == type) )
                 dwAttrib = pData->u.file.uFileAttribs;
 
-              MESSAGE ("[%p] size=%04u type=%x attr=0x%08x name=%s (%s,%s)\n",
+              MESSAGE ("[%p] size=%04u type=%lx attr=0x%08lx name=%s (%s,%s)\n",
                        pidltemp, pidltemp->mkid.cb, type, dwAttrib,
                            debugstr_a(szName), debugstr_a(szLongName), debugstr_a(szShortName));
           }
@@ -376,7 +376,7 @@ BOOL pcheck( LPCITEMIDLIST pidl )
         case PT_SHARE:
             break;
         default:
-            ERR("unknown IDLIST %p [%p] size=%u type=%x\n",
+            ERR("unknown IDLIST %p [%p] size=%u type=%lx\n",
                 pidl, pidltemp, pidltemp->mkid.cb,type );
             dump_pidl_hex( pidltemp );
             return FALSE;

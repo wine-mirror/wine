@@ -100,7 +100,7 @@ static ULONG WINAPI IShellFolder_Printers_fnAddRef (IShellFolder2 * iface)
 {
     IPrintersFolderImpl *This = impl_from_IShellFolder2(iface);
     ULONG refCount = InterlockedIncrement(&This->ref);
-    TRACE ("(%p)->(count=%u)\n", This, refCount - 1);
+    TRACE ("(%p)->(count=%lu)\n", This, refCount - 1);
     return refCount;
 }
 
@@ -109,7 +109,7 @@ static ULONG WINAPI IShellFolder_Printers_fnRelease (IShellFolder2 * iface)
     IPrintersFolderImpl *This = impl_from_IShellFolder2(iface);
     ULONG refCount = InterlockedDecrement(&This->ref);
 
-    TRACE ("(%p)->(count=%u)\n", This, refCount + 1);
+    TRACE ("(%p)->(count=%lu)\n", This, refCount + 1);
 
     if (!refCount)
     {
@@ -137,7 +137,7 @@ static HRESULT WINAPI IShellFolder_Printers_fnEnumObjects (IShellFolder2 *iface,
                HWND hwndOwner, DWORD dwFlags, LPENUMIDLIST *ppEnumIDList)
 {
     IPrintersFolderImpl *This = impl_from_IShellFolder2(iface);
-    FIXME("(%p)->(HWND=%p flags=0x%08x pplist=%p) stub\n", This,
+    FIXME("(%p)->(HWND=%p flags=0x%08lx pplist=%p) stub\n", This,
           hwndOwner, dwFlags, ppEnumIDList);
     return E_NOTIMPL;
 }
@@ -167,7 +167,7 @@ static HRESULT WINAPI IShellFolder_Printers_fnCompareIDs(IShellFolder2 *iface,
                LPARAM lParam, LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2)
 {
     IPrintersFolderImpl *This = impl_from_IShellFolder2(iface);
-    FIXME("(%p)->(0x%08lx,pidl1=%p,pidl2=%p) stub\n", This, lParam, pidl1, pidl2);
+    FIXME("(%p)->(0x%08Ix,pidl1=%p,pidl2=%p) stub\n", This, lParam, pidl1, pidl2);
     return E_NOTIMPL;
 }
 
@@ -207,7 +207,7 @@ static HRESULT WINAPI IShellFolder_Printers_fnGetAttributesOf (IShellFolder2 * i
                 UINT cidl, LPCITEMIDLIST * apidl, DWORD * rgfInOut)
 {
     IPrintersFolderImpl *This = impl_from_IShellFolder2(iface);
-    FIXME("(%p)->(cidl=%d apidl=%p mask=%p (0x%08x)) stub\n",
+    FIXME("(%p)->(cidl=%d apidl=%p mask=%p (0x%08lx)) stub\n",
            This, cidl, apidl, rgfInOut, rgfInOut ? *rgfInOut : 0);
     return E_NOTIMPL;
 }
@@ -234,7 +234,7 @@ static HRESULT WINAPI IShellFolder_Printers_fnGetDisplayNameOf (IShellFolder2 *i
 {
     IPrintersFolderImpl *This = impl_from_IShellFolder2(iface);
 
-    FIXME("(%p)->(pidl=%p,0x%08x,%p) stub\n", This, pidl, dwFlags, strRet);
+    FIXME("(%p)->(pidl=%p,0x%08lx,%p) stub\n", This, pidl, dwFlags, strRet);
 
     if (!strRet)
         return E_INVALIDARG;
@@ -247,7 +247,7 @@ static HRESULT WINAPI IShellFolder_Printers_fnSetNameOf (
                LPCOLESTR lpName, DWORD dwFlags, LPITEMIDLIST * pPidlOut)
 {
     IPrintersFolderImpl *This = impl_from_IShellFolder2(iface);
-    FIXME ("(%p)->(%p,pidl=%p,%s,%u,%p) stub\n", This,
+    FIXME ("(%p)->(%p,pidl=%p,%s,%lu,%p) stub\n", This,
            hwndOwner, pidl, debugstr_w (lpName), dwFlags, pPidlOut);
     return E_FAIL;
 }
@@ -272,7 +272,7 @@ static HRESULT WINAPI IShellFolder_Printers_fnGetDefaultColumn(IShellFolder2 *if
 {
     IPrintersFolderImpl *This = impl_from_IShellFolder2(iface);
 
-    TRACE("(%p)->(%#x, %p, %p)\n", This, reserved, sort, display);
+    TRACE("(%p)->(%#lx, %p, %p)\n", This, reserved, sort, display);
 
     return E_NOTIMPL;
 }

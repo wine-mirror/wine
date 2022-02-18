@@ -69,7 +69,7 @@ BOOL CreateFolderEnumList(IEnumIDListImpl *list, LPCWSTR lpszPath, DWORD dwFlags
     WCHAR  szPath[MAX_PATH];
     BOOL succeeded = TRUE;
 
-    TRACE("(%p)->(path=%s flags=0x%08x)\n", list, debugstr_w(lpszPath), dwFlags);
+    TRACE("(%p)->(path=%s flags=0x%08lx)\n", list, debugstr_w(lpszPath), dwFlags);
 
     if(!lpszPath || !lpszPath[0]) return FALSE;
 
@@ -157,7 +157,7 @@ static ULONG WINAPI IEnumIDList_fnAddRef(IEnumIDList *iface)
     IEnumIDListImpl *This = impl_from_IEnumIDList(iface);
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(%u)\n", This, refCount - 1);
+    TRACE("(%p)->(%lu)\n", This, refCount - 1);
 
     return refCount;
 }
@@ -170,7 +170,7 @@ static ULONG WINAPI IEnumIDList_fnRelease(IEnumIDList *iface)
     IEnumIDListImpl *This = impl_from_IEnumIDList(iface);
     ULONG refCount = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(%u)\n", This, refCount + 1);
+    TRACE("(%p)->(%lu)\n", This, refCount + 1);
 
     if (!refCount)
     {
@@ -199,7 +199,7 @@ static HRESULT WINAPI IEnumIDList_fnNext(IEnumIDList *iface, ULONG celt, LPITEMI
     HRESULT hr = S_OK;
     ULONG i;
 
-    TRACE("(%p)->(%d, %p, %p)\n", This, celt, rgelt, fetched);
+    TRACE("(%p)->(%ld, %p, %p)\n", This, celt, rgelt, fetched);
 
     /* It is valid to leave pceltFetched NULL when celt is 1. Some of explorer's
      * subsystems actually use it (and so may a third party browser)
@@ -239,7 +239,7 @@ static HRESULT WINAPI IEnumIDList_fnSkip(IEnumIDList *iface, ULONG celt)
     HRESULT hr = S_OK;
     ULONG i;
 
-    TRACE("(%p)->(%u)\n", This, celt);
+    TRACE("(%p)->(%lu)\n", This, celt);
 
     for (i = 0; i < celt; i++)
     {
