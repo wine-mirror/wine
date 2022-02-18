@@ -63,6 +63,14 @@ static struct pulse_config pulse_config;
 
 static HANDLE pulse_thread;
 static struct list g_sessions = LIST_INIT(g_sessions);
+static struct list g_devices_cache = LIST_INIT(g_devices_cache);
+
+struct device_cache {
+    struct list entry;
+    GUID guid;
+    EDataFlow dataflow;
+    char pulse_name[0];
+};
 
 static GUID pulse_render_guid =
 { 0xfd47d9cc, 0x4218, 0x4135, { 0x9c, 0xe2, 0x0c, 0x19, 0x5c, 0x87, 0x40, 0x5b } };
@@ -90,6 +98,10 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
         if (__wine_unix_call(pulse_handle, process_attach, NULL))
             return FALSE;
     } else if (reason == DLL_PROCESS_DETACH) {
+        struct device_cache *device, *device_next;
+
+        LIST_FOR_EACH_ENTRY_SAFE(device, device_next, &g_devices_cache, struct device_cache, entry)
+            free(device);
         __wine_unix_call(pulse_handle, process_detach, NULL);
         if (pulse_thread) {
             WaitForSingleObject(pulse_thread, INFINITE);
@@ -387,6 +399,7 @@ int WINAPI AUDDRV_GetPriority(void)
 
 static BOOL get_pulse_name_by_guid(const GUID *guid, char pulse_name[MAX_PULSE_NAME_LEN], EDataFlow *flow)
 {
+    struct device_cache *device;
     WCHAR key_name[MAX_PULSE_NAME_LEN + 2];
     DWORD key_name_size;
     DWORD index = 0;
@@ -402,6 +415,15 @@ static BOOL get_pulse_name_by_guid(const GUID *guid, char pulse_name[MAX_PULSE_N
         return TRUE;
     }
 
+    /* Check the cache first */
+    LIST_FOR_EACH_ENTRY(device, &g_devices_cache, struct device_cache, entry) {
+        if (!IsEqualGUID(guid, &device->guid))
+            continue;
+        *flow = device->dataflow;
+        strcpy(pulse_name, device->pulse_name);
+        return TRUE;
+    }
+
     if (RegOpenKeyExW(HKEY_CURRENT_USER, drv_key_devicesW, 0, KEY_READ | KEY_WOW64_64KEY, &key) != ERROR_SUCCESS) {
         WARN("No devices found in registry\n");
         return FALSE;
@@ -412,6 +434,7 @@ static BOOL get_pulse_name_by_guid(const GUID *guid, char pulse_name[MAX_PULSE_N
         LSTATUS status;
         GUID reg_guid;
         HKEY dev_key;
+        int len;
 
         key_name_size = ARRAY_SIZE(key_name);
         if (RegEnumKeyExW(key, index++, key_name, &key_name_size, NULL, NULL, NULL, NULL) != ERROR_SUCCESS)
@@ -440,7 +463,16 @@ static BOOL get_pulse_name_by_guid(const GUID *guid, char pulse_name[MAX_PULSE_N
                 return FALSE;
             }
 
-            return WideCharToMultiByte(CP_UNIXCP, 0, key_name + 2, -1, pulse_name, MAX_PULSE_NAME_LEN, NULL, NULL);
+            if (!(len = WideCharToMultiByte(CP_UNIXCP, 0, key_name + 2, -1, pulse_name, MAX_PULSE_NAME_LEN, NULL, NULL)))
+                return FALSE;
+
+            if ((device = malloc(FIELD_OFFSET(struct device_cache, pulse_name[len])))) {
+                device->guid = reg_guid;
+                device->dataflow = *flow;
+                strcpy(device->pulse_name, pulse_name);
+                list_add_tail(&g_devices_cache, &device->entry);
+            }
+            return TRUE;
         }
     }
 
