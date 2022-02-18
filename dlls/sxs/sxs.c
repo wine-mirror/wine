@@ -104,7 +104,7 @@ BOOL WINAPI SxsLookupClrGuid(DWORD flags, GUID *clsid, HANDLE actctx, void *buff
     char *ret_strings;
     ULONG_PTR cookie;
 
-    TRACE("%#x, %s, %p, %p, %lx, %p.\n", flags, wine_dbgstr_guid(clsid), actctx,
+    TRACE("%#lx, %s, %p, %p, %Ix, %p.\n", flags, wine_dbgstr_guid(clsid), actctx,
           buffer, buffer_len, buffer_len_required);
 
     if (flags & SXS_LOOKUP_CLR_GUID_USE_ACTCTX)

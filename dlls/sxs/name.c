@@ -104,7 +104,7 @@ static HRESULT WINAPI name_SetProperty(
     LPVOID property,
     DWORD size )
 {
-    FIXME("%p, %d, %p, %d\n", iface, id, property, size);
+    FIXME("%p, %ld, %p, %ld\n", iface, id, property, size);
     return E_NOTIMPL;
 }
 
@@ -114,7 +114,7 @@ static HRESULT WINAPI name_GetProperty(
     LPVOID buffer,
     LPDWORD buflen )
 {
-    FIXME("%p, %d, %p, %p\n", iface, id, buffer, buflen);
+    FIXME("%p, %ld, %p, %p\n", iface, id, buffer, buflen);
     return E_NOTIMPL;
 }
 
@@ -135,7 +135,7 @@ static HRESULT WINAPI name_GetDisplayName(
     struct name *name = impl_from_IAssemblyName( iface );
     unsigned int len;
 
-    TRACE("%p, %p, %p, 0x%08x\n", iface, buffer, buflen, flags);
+    TRACE("%p, %p, %p, 0x%08lx\n", iface, buffer, buflen, flags);
 
     if (!buflen || flags) return E_INVALIDARG;
 
@@ -169,7 +169,7 @@ static HRESULT WINAPI name_Reserved(
     DWORD cbReserved,
     LPVOID *ppReserved )
 {
-    FIXME("%p, %s, %p, %p, %s, %s, %p, %d, %p\n", iface,
+    FIXME("%p, %s, %p, %p, %s, %s, %p, %ld, %p\n", iface,
           debugstr_guid(riid), pUnkReserved1, pUnkReserved2,
           debugstr_w(szReserved), wine_dbgstr_longlong(llReserved),
           pvReserved, cbReserved, ppReserved);
@@ -262,7 +262,7 @@ static HRESULT WINAPI name_IsEqual(
     IAssemblyName *name2,
     DWORD flags )
 {
-    FIXME("%p, %p, 0x%08x\n", name1, name2, flags);
+    FIXME("%p, %p, 0x%08lx\n", name1, name2, flags);
     return E_NOTIMPL;
 }
 
@@ -368,7 +368,7 @@ HRESULT WINAPI CreateAssemblyNameObject(
     struct name *name;
     HRESULT hr;
 
-    TRACE("%p, %s, 0x%08x, %p\n", obj, debugstr_w(assembly), flags, reserved);
+    TRACE("%p, %s, 0x%08lx, %p\n", obj, debugstr_w(assembly), flags, reserved);
 
     if (!obj) return E_INVALIDARG;
 
