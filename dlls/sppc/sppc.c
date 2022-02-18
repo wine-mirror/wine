@@ -60,7 +60,7 @@ HRESULT WINAPI SLClose(HSLC handle)
 
 HRESULT WINAPI SLPersistApplicationPolicies(const SLID *app, const SLID *product, DWORD flags)
 {
-    FIXME("(%s,%s,%x) stub\n", wine_dbgstr_guid(app), wine_dbgstr_guid(product), flags);
+    FIXME("(%s,%s,%lx) stub\n", wine_dbgstr_guid(app), wine_dbgstr_guid(product), flags);
 
     if (!app)
         return E_INVALIDARG;
