@@ -2543,6 +2543,10 @@ HRESULT WINAPI AUDDRV_GetAudioSessionManager(IMMDevice *device,
 
 HRESULT WINAPI AUDDRV_GetPropValue(GUID *guid, const PROPERTYKEY *prop, PROPVARIANT *out)
 {
+    struct get_prop_value_params params;
+    char pulse_name[MAX_PULSE_NAME_LEN];
+    DWORD size;
+
     TRACE("%s, (%s,%u), %p\n", wine_dbgstr_guid(guid), wine_dbgstr_guid(&prop->fmtid), prop->pid, out);
 
     if (IsEqualGUID(guid, &pulse_render_guid) && IsEqualPropertyKey(*prop, PKEY_AudioEndpoint_PhysicalSpeakers)) {
@@ -2552,5 +2556,31 @@ HRESULT WINAPI AUDDRV_GetPropValue(GUID *guid, const PROPERTYKEY *prop, PROPVARI
         return out->ulVal ? S_OK : E_FAIL;
     }
 
-    return E_NOTIMPL;
+    if (!get_pulse_name_by_guid(guid, pulse_name, &params.flow))
+        return E_FAIL;
+
+    params.pulse_name = pulse_name;
+    params.guid = guid;
+    params.prop = prop;
+    pulse_call(get_prop_value, &params);
+
+    if (params.result != S_OK)
+        return params.result;
+
+    switch (params.vt) {
+    case VT_LPWSTR:
+        size = (wcslen(params.wstr) + 1) * sizeof(WCHAR);
+        if (!(out->pwszVal = CoTaskMemAlloc(size)))
+            return E_OUTOFMEMORY;
+        memcpy(out->pwszVal, params.wstr, size);
+        break;
+    case VT_UI4:
+        out->ulVal = params.ulVal;
+        break;
+    default:
+        assert(0);
+    }
+    out->vt = params.vt;
+
+    return S_OK;
 }

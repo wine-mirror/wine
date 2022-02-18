@@ -84,6 +84,10 @@ typedef struct _ACPacket
 typedef struct _PhysDevice {
     struct list entry;
     WCHAR *name;
+    enum phys_device_bus_type bus_type;
+    USHORT vendor_id, product_id;
+    EndpointFormFactor form;
+    UINT index;
     char pulse_name[0];
 } PhysDevice;
 
@@ -418,7 +422,33 @@ static DWORD pulse_channel_map_to_channel_mask(const pa_channel_map *map)
     return mask;
 }
 
-static void pulse_add_device(struct list *list, const char *pulse_name, const char *name)
+static void fill_device_info(PhysDevice *dev, pa_proplist *p)
+{
+    const char *buffer;
+
+    dev->bus_type = phys_device_bus_invalid;
+    dev->vendor_id = 0;
+    dev->product_id = 0;
+
+    if (!p)
+        return;
+
+    if ((buffer = pa_proplist_gets(p, PA_PROP_DEVICE_BUS))) {
+        if (!strcmp(buffer, "usb"))
+            dev->bus_type = phys_device_bus_usb;
+        else if (!strcmp(buffer, "pci"))
+            dev->bus_type = phys_device_bus_pci;
+    }
+
+    if ((buffer = pa_proplist_gets(p, PA_PROP_DEVICE_VENDOR_ID)))
+        dev->vendor_id = strtol(buffer, NULL, 16);
+
+    if ((buffer = pa_proplist_gets(p, PA_PROP_DEVICE_PRODUCT_ID)))
+        dev->product_id = strtol(buffer, NULL, 16);
+}
+
+static void pulse_add_device(struct list *list, pa_proplist *proplist, int index, EndpointFormFactor form,
+        const char *pulse_name, const char *name)
 {
     DWORD len = strlen(pulse_name), name_len = strlen(name);
     PhysDevice *dev = malloc(FIELD_OFFSET(PhysDevice, pulse_name[len + 1]));
@@ -439,6 +469,9 @@ static void pulse_add_device(struct list *list, const char *pulse_name, const ch
         return;
     }
     dev->name[name_len] = 0;
+    dev->form = form;
+    dev->index = index;
+    fill_device_info(dev, proplist);
     memcpy(dev->pulse_name, pulse_name, len + 1);
 
     list_add_tail(list, &dev->entry);
@@ -453,14 +486,15 @@ static void pulse_phys_speakers_cb(pa_context *c, const pa_sink_info *i, int eol
      * PKEY_AudioEndpoint_PhysicalSpeakers values of the sinks. */
     g_phys_speakers_mask |= pulse_channel_map_to_channel_mask(&i->channel_map);
 
-    pulse_add_device(&g_phys_speakers, i->name, i->description);
+    pulse_add_device(&g_phys_speakers, i->proplist, i->index, Speakers, i->name, i->description);
 }
 
 static void pulse_phys_sources_cb(pa_context *c, const pa_source_info *i, int eol, void *userdata)
 {
     if (!i || !i->name || !i->name[0])
         return;
-    pulse_add_device(&g_phys_sources, i->name, i->description);
+    pulse_add_device(&g_phys_sources, i->proplist, i->index,
+        (i->monitor_of_sink == PA_INVALID_INDEX) ? Microphone : LineLevel, i->name, i->description);
 }
 
 /* For most hardware on Windows, users must choose a configuration with an even
@@ -682,8 +716,8 @@ static NTSTATUS pulse_test_connect(void *args)
     list_init(&g_phys_sources);
     g_phys_speakers_mask = 0;
 
-    pulse_add_device(&g_phys_speakers, "", "PulseAudio");
-    pulse_add_device(&g_phys_sources, "", "PulseAudio");
+    pulse_add_device(&g_phys_speakers, NULL, 0, Speakers, "", "PulseAudio");
+    pulse_add_device(&g_phys_sources, NULL, 0, Microphone, "", "PulseAudio");
 
     o = pa_context_get_sink_info_list(pulse_ctx, &pulse_phys_speakers_cb, NULL);
     if (o) {
@@ -2081,6 +2115,75 @@ static NTSTATUS pulse_is_started(void *args)
     return STATUS_SUCCESS;
 }
 
+static BOOL get_device_path(PhysDevice *dev, struct get_prop_value_params *params)
+{
+    const GUID *guid = params->guid;
+    UINT serial_number;
+    const char *fmt;
+    char path[128];
+    int len;
+
+    switch (dev->bus_type) {
+    case phys_device_bus_pci:
+        fmt = "{1}.HDAUDIO\\FUNC_01&VEN_%04X&DEV_%04X\\%u&%08X";
+        break;
+    case phys_device_bus_usb:
+        fmt = "{1}.USB\\VID_%04X&PID_%04X\\%u&%08X";
+        break;
+    default:
+        return FALSE;
+    }
+
+    /* As hardly any audio devices have serial numbers, Windows instead
+       appears to use a persistent random number. We emulate this here
+       by instead using the last 8 hex digits of the GUID. */
+    serial_number = (guid->Data4[4] << 24) | (guid->Data4[5] << 16) | (guid->Data4[6] << 8) | guid->Data4[7];
+
+    len = sprintf(path, fmt, dev->vendor_id, dev->product_id, dev->index, serial_number);
+    ntdll_umbstowcs(path, len + 1, params->wstr, ARRAY_SIZE(params->wstr));
+
+    params->vt = VT_LPWSTR;
+    return TRUE;
+}
+
+static NTSTATUS pulse_get_prop_value(void *args)
+{
+    static const GUID PKEY_AudioEndpoint_GUID = {
+        0x1da5d803, 0xd492, 0x4edd, {0x8c, 0x23, 0xe0, 0xc0, 0xff, 0xee, 0x7f, 0x0e}
+    };
+    static const PROPERTYKEY devicepath_key = { /* undocumented? - {b3f8fa53-0004-438e-9003-51a46e139bfc},2 */
+        {0xb3f8fa53, 0x0004, 0x438e, {0x90, 0x03, 0x51, 0xa4, 0x6e, 0x13, 0x9b, 0xfc}}, 2
+    };
+    struct get_prop_value_params *params = args;
+    struct list *list = (params->flow == eRender) ? &g_phys_speakers : &g_phys_sources;
+    PhysDevice *dev;
+
+    params->result = S_OK;
+    LIST_FOR_EACH_ENTRY(dev, list, PhysDevice, entry) {
+        if (strcmp(params->pulse_name, dev->pulse_name))
+            continue;
+        if (IsEqualPropertyKey(*params->prop, devicepath_key)) {
+            if (!get_device_path(dev, params))
+                break;
+            return STATUS_SUCCESS;
+        } else if (IsEqualGUID(&params->prop->fmtid, &PKEY_AudioEndpoint_GUID)) {
+            switch (params->prop->pid) {
+            case 0:   /* FormFactor */
+                params->vt = VT_UI4;
+                params->ulVal = dev->form;
+                return STATUS_SUCCESS;
+            default:
+                break;
+            }
+        }
+        params->result = E_NOTIMPL;
+        return STATUS_SUCCESS;
+    }
+
+    params->result = E_FAIL;
+    return STATUS_SUCCESS;
+}
+
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     pulse_process_attach,
@@ -2107,4 +2210,5 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     pulse_set_event_handle,
     pulse_test_connect,
     pulse_is_started,
+    pulse_get_prop_value,
 };
