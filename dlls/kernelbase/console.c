@@ -175,6 +175,27 @@ static COORD get_largest_console_window_size( HANDLE handle )
     return c;
 }
 
+/* helper function for GetConsoleFontSize */
+static COORD get_console_font_size( HANDLE handle, DWORD index )
+{
+    struct condrv_output_info info;
+    COORD c = {0,0};
+
+    if (index >= 1 /* number of console fonts */)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return c;
+    }
+
+    if (DeviceIoControl( handle, IOCTL_CONDRV_GET_OUTPUT_INFO, NULL, 0, &info, sizeof(info), NULL, NULL ))
+    {
+        c.X = info.font_width;
+        c.Y = info.font_height;
+    }
+    else SetLastError( ERROR_INVALID_HANDLE );
+    return c;
+}
+
 static HANDLE create_console_server( void )
 {
     OBJECT_ATTRIBUTES attr = {sizeof(attr)};
@@ -277,6 +298,29 @@ static BOOL init_console_std_handles( BOOL override_all )
 
     return TRUE;
 }
+
+
+/******************************************************************
+ *	AddConsoleAliasA   (kernelbase.@)
+ */
+BOOL WINAPI AddConsoleAliasA( LPSTR source, LPSTR target, LPSTR exename )
+{
+    FIXME( ": (%s, %s, %s) stub!\n", debugstr_a(source), debugstr_a(target), debugstr_a(exename) );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
+
+/******************************************************************
+ *	AddConsoleAliasW   (kernelbase.@)
+ */
+BOOL WINAPI AddConsoleAliasW( LPWSTR source, LPWSTR target, LPWSTR exename )
+{
+    FIXME( ": (%s, %s, %s) stub!\n", debugstr_w(source), debugstr_w(target), debugstr_w(exename) );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
 
 /******************************************************************
  *	AttachConsole   (kernelbase.@)
@@ -470,6 +514,26 @@ DWORD WINAPI CtrlRoutine( void *arg )
 }
 
 
+/******************************************************************
+ *	ExpungeConsoleCommandHistoryA   (kernelbase.@)
+ */
+void WINAPI ExpungeConsoleCommandHistoryA( LPCSTR exename )
+{
+    FIXME( ": (%s) stub!\n", debugstr_a(exename) );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+}
+
+
+/******************************************************************
+ *	ExpungeConsoleCommandHistoryW   (kernelbase.@)
+ */
+void WINAPI ExpungeConsoleCommandHistoryW( LPCWSTR exename )
+{
+    FIXME( ": (%s) stub!\n", debugstr_w(exename) );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+}
+
+
 /******************************************************************************
  *	FillConsoleOutputAttribute   (kernelbase.@)
  */
@@ -588,6 +652,116 @@ BOOL WINAPI DECLSPEC_HOTPATCH GenerateConsoleCtrlEvent( DWORD event, DWORD group
 }
 
 
+/******************************************************************
+ *	GetConsoleAliasA   (kernelbase.@)
+ */
+DWORD WINAPI GetConsoleAliasA( LPSTR source, LPSTR buffer, DWORD len, LPSTR exename )
+{
+    FIXME( "(%s,%p,%ld,%s): stub\n", debugstr_a(source), buffer, len, debugstr_a(exename) );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return 0;
+}
+
+
+/******************************************************************
+ *	GetConsoleAliasW   (kernelbase.@)
+ */
+DWORD WINAPI GetConsoleAliasW( LPWSTR source, LPWSTR buffer, DWORD len, LPWSTR exename )
+{
+    FIXME( "(%s,%p,%ld,%s): stub\n", debugstr_w(source), buffer, len, debugstr_w(exename) );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return 0;
+}
+
+
+/******************************************************************
+ *	GetConsoleAliasExesLengthA   (kernelbase.@)
+ */
+DWORD WINAPI GetConsoleAliasExesLengthA(void)
+{
+    FIXME( ": stub\n" );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return 0;
+}
+
+
+/******************************************************************
+ *	GetConsoleAliasExesLengthW   (kernelbase.@)
+ */
+DWORD WINAPI GetConsoleAliasExesLengthW(void)
+{
+    FIXME( ": stub\n" );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return 0;
+}
+
+
+/******************************************************************
+ *	GetConsoleAliasesLengthA   (kernelbase.@)
+ */
+DWORD WINAPI GetConsoleAliasesLengthA( LPSTR unknown )
+{
+    FIXME( ": (%s) stub!\n", debugstr_a(unknown) );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return 0;
+}
+
+
+/******************************************************************
+ *	GetConsoleAliasesLengthW   (kernelbase.@)
+ */
+DWORD WINAPI GetConsoleAliasesLengthW( LPWSTR unknown )
+{
+    FIXME( ": (%s) stub!\n", debugstr_w(unknown) );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return 0;
+}
+
+
+/******************************************************************
+ *	GetConsoleCommandHistoryA   (kernelbase.@)
+ */
+DWORD WINAPI GetConsoleCommandHistoryA( LPSTR buffer, DWORD len, LPCSTR exename )
+{
+    FIXME( ": (%p, 0x%lx, %s) stub\n", buffer, len, debugstr_a(exename) );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return 0;
+}
+
+
+/******************************************************************
+ *	GetConsoleCommandHistoryW   (kernelbase.@)
+ */
+DWORD WINAPI GetConsoleCommandHistoryW( LPWSTR buffer, DWORD len, LPCWSTR exename )
+{
+    FIXME( ": (%p, 0x%lx, %s) stub\n", buffer, len, debugstr_w(exename) );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return 0;
+}
+
+
+/******************************************************************
+ *	GetConsoleCommandHistoryLengthA   (kernelbase.@)
+ */
+DWORD WINAPI GetConsoleCommandHistoryLengthA( LPCSTR exename )
+{
+    FIXME( ": (%s) stub!\n", debugstr_a(exename) );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return 0;
+}
+
+
+/******************************************************************
+ *	GetConsoleCommandHistoryLengthW   (kernelbase.@)
+ */
+DWORD WINAPI GetConsoleCommandHistoryLengthW( LPCWSTR exename )
+{
+    FIXME( ": (%s) stub!\n", debugstr_w(exename) );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return 0;
+}
+
+
 /******************************************************************************
  *	GetConsoleCP   (kernelbase.@)
  */
@@ -623,6 +797,41 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetConsoleCursorInfo( HANDLE handle, CONSOLE_CURSO
     TRACE("(%p) returning (%ld,%d)\n", handle, info->dwSize, info->bVisible);
     return TRUE;
 }
+
+
+/***********************************************************************
+ *	GetConsoleDisplayMode   (kernelbase.@)
+ */
+BOOL WINAPI GetConsoleDisplayMode( LPDWORD flags )
+{
+    TRACE( "semi-stub: %p\n", flags );
+    /* It is safe to successfully report windowed mode */
+    *flags = 0;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *	GetConsoleFontSize   (kernelbase.@)
+ */
+#if defined(__i386__) && !defined(__MINGW32__) && !defined(_MSC_VER)
+#undef GetConsoleFontSize
+DWORD WINAPI GetConsoleFontSize( HANDLE handle, DWORD index )
+{
+    union {
+        COORD c;
+        DWORD w;
+    } x;
+
+    x.c = get_console_font_size( handle, index );
+    return x.w;
+}
+#else
+COORD WINAPI GetConsoleFontSize( HANDLE handle, DWORD index )
+{
+    return get_console_font_size( handle, index );
+}
+#endif /* !defined(__i386__) */
 
 
 /***********************************************************************
@@ -672,6 +881,42 @@ UINT WINAPI DECLSPEC_HOTPATCH GetConsoleOutputCP(void)
                          IOCTL_CONDRV_GET_INPUT_INFO, NULL, 0, &info, sizeof(info), NULL ))
         return 0;
     return info.output_cp;
+}
+
+
+/***********************************************************************
+ *	GetConsoleProcessList   (kernelbase.@)
+ */
+DWORD WINAPI GetConsoleProcessList( DWORD *list, DWORD count )
+{
+    DWORD saved;
+    NTSTATUS status;
+    IO_STATUS_BLOCK io;
+
+    TRACE( "(%p,%ld)\n", list, count);
+
+    if (!list || count < 1)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    saved = *list;
+    status = NtDeviceIoControlFile( RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle,
+                                    NULL, NULL, NULL, &io, IOCTL_CONDRV_GET_PROCESS_LIST,
+                                    NULL, 0, list, count * sizeof(DWORD) );
+
+    if (!status) return io.Information / sizeof(DWORD);
+    if (status == STATUS_BUFFER_TOO_SMALL)
+    {
+        DWORD ret = *list;
+        *list = saved;
+        return ret;
+    }
+
+    *list = saved;
+    set_ntstatus( status );
+    return 0;
 }
 
 
@@ -743,6 +988,26 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetConsoleScreenBufferInfoEx( HANDLE handle,
 
 
 /******************************************************************************
+ *	GetConsoleTitleA   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH GetConsoleTitleA( LPSTR title, DWORD size )
+{
+    WCHAR *ptr = HeapAlloc( GetProcessHeap(), 0, sizeof(WCHAR) * size );
+    DWORD ret;
+
+    if (!ptr) return 0;
+    ret = GetConsoleTitleW( ptr, size );
+    if (ret)
+    {
+        WideCharToMultiByte( GetConsoleOutputCP(), 0, ptr, ret + 1, title, size, NULL, NULL);
+        ret = strlen(title);
+    }
+    HeapFree( GetProcessHeap(), 0, ptr );
+    return ret;
+}
+
+
+/******************************************************************************
  *	GetConsoleTitleW   (kernelbase.@)
  */
 DWORD WINAPI DECLSPEC_HOTPATCH GetConsoleTitleW( LPWSTR title, DWORD size )
@@ -756,6 +1021,86 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetConsoleTitleW( LPWSTR title, DWORD size )
     size /= sizeof(WCHAR);
     title[size] = 0;
     return size + 1;
+}
+
+
+/******************************************************************************
+ *	GetConsoleWindow   (kernelbase.@)
+ */
+HWND WINAPI GetConsoleWindow(void)
+{
+    condrv_handle_t win;
+    BOOL ret;
+
+    ret = DeviceIoControl( RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle,
+                           IOCTL_CONDRV_GET_WINDOW, NULL, 0, &win, sizeof(win), NULL, NULL );
+    return ret ? LongToHandle( win ) : NULL;
+}
+
+
+/***********************************************************************
+ *	GetCurrentConsoleFontEx   (kernelbase.@)
+ */
+BOOL WINAPI GetCurrentConsoleFontEx( HANDLE handle, BOOL maxwindow, CONSOLE_FONT_INFOEX *info )
+{
+    DWORD size;
+    struct
+    {
+        struct condrv_output_info info;
+        WCHAR face_name[LF_FACESIZE - 1];
+    } data;
+
+    if (info->cbSize != sizeof(CONSOLE_FONT_INFOEX))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (!DeviceIoControl( handle, IOCTL_CONDRV_GET_OUTPUT_INFO, NULL, 0,
+                          &data, sizeof(data), &size, NULL ))
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+
+    info->nFont = 0;
+    if (maxwindow)
+    {
+        info->dwFontSize.X = min( data.info.width, data.info.max_width );
+        info->dwFontSize.Y = min( data.info.height, data.info.max_height );
+    }
+    else
+    {
+        info->dwFontSize.X = data.info.font_width;
+        info->dwFontSize.Y = data.info.font_height;
+    }
+    size -= sizeof(data.info);
+    if (size) memcpy( info->FaceName, data.face_name, size );
+    info->FaceName[size / sizeof(WCHAR)] = 0;
+    info->FontFamily = data.info.font_pitch_family;
+    info->FontWeight = data.info.font_weight;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *	GetCurrentConsoleFont   (kernelbase.@)
+ */
+BOOL WINAPI GetCurrentConsoleFont( HANDLE handle, BOOL maxwindow, CONSOLE_FONT_INFO *info )
+{
+    BOOL ret;
+    CONSOLE_FONT_INFOEX res;
+
+    res.cbSize = sizeof(CONSOLE_FONT_INFOEX);
+
+    ret = GetCurrentConsoleFontEx( handle, maxwindow, &res );
+    if (ret)
+    {
+        info->nFont = res.nFont;
+        info->dwFontSize.X = res.dwFontSize.X;
+        info->dwFontSize.Y = res.dwFontSize.Y;
+    }
+    return ret;
 }
 
 
@@ -793,6 +1138,17 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetNumberOfConsoleInputEvents( HANDLE handle, DWOR
     if (!console_ioctl( handle, IOCTL_CONDRV_GET_INPUT_INFO, NULL, 0, &info, sizeof(info), NULL ))
         return FALSE;
     *count = info.input_count;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *	GetNumberOfConsoleMouseButtons   (kernelbase.@)
+ */
+BOOL WINAPI GetNumberOfConsoleMouseButtons( DWORD *count )
+{
+    FIXME( "(%p): stub\n", count );
+    *count = 2;
     return TRUE;
 }
 
@@ -1141,6 +1497,21 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleCursorPosition( HANDLE handle, COORD pos
 }
 
 
+/***********************************************************************
+ *	SetConsoleDisplayMode   (kernelbase.@)
+ */
+BOOL WINAPI SetConsoleDisplayMode( HANDLE handle, DWORD flags, COORD *size )
+{
+    TRACE( "(%p, %lx, (%d, %d))\n", handle, flags, size->X, size->Y );
+    if (flags == 1)
+    {
+        /* We cannot switch to fullscreen */
+        return FALSE;
+    }
+    return TRUE;
+}
+
+
 /******************************************************************************
  *	SetConsoleInputExeNameA   (kernelbase.@)
  */
@@ -1259,6 +1630,22 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleTextAttribute( HANDLE handle, WORD attr 
 
     params.info.attr = attr;
     return console_ioctl( handle, IOCTL_CONDRV_SET_OUTPUT_INFO, &params, sizeof(params), NULL, 0, NULL );
+}
+
+
+/******************************************************************************
+ *	SetConsoleTitleA   (kernelbase.@)
+ */
+BOOL WINAPI SetConsoleTitleA( LPCSTR title )
+{
+    LPWSTR titleW;
+    BOOL ret;
+    DWORD len = MultiByteToWideChar( GetConsoleOutputCP(), 0, title, -1, NULL, 0 );
+    if (!(titleW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return FALSE;
+    MultiByteToWideChar( GetConsoleOutputCP(), 0, title, -1, titleW, len );
+    ret = SetConsoleTitleW(titleW);
+    HeapFree( GetProcessHeap(), 0, titleW );
+    return ret;
 }
 
 

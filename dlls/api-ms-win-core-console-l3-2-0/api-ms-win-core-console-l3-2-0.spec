@@ -1,32 +1,32 @@
-@ stdcall AddConsoleAliasA(str str str) kernel32.AddConsoleAliasA
-@ stdcall AddConsoleAliasW(wstr wstr wstr) kernel32.AddConsoleAliasW
-@ stdcall ExpungeConsoleCommandHistoryA(str) kernel32.ExpungeConsoleCommandHistoryA
-@ stdcall ExpungeConsoleCommandHistoryW(wstr) kernel32.ExpungeConsoleCommandHistoryW
-@ stub GetConsoleAliasA
+@ stdcall AddConsoleAliasA(str str str) kernelbase.AddConsoleAliasA
+@ stdcall AddConsoleAliasW(wstr wstr wstr) kernelbase.AddConsoleAliasW
+@ stdcall ExpungeConsoleCommandHistoryA(str) kernelbase.ExpungeConsoleCommandHistoryA
+@ stdcall ExpungeConsoleCommandHistoryW(wstr) kernelbase.ExpungeConsoleCommandHistoryW
+@ stdcall GetConsoleAliasA(str ptr long str) kernelbase.GetConsoleAliasA
 @ stub GetConsoleAliasExesA
-@ stdcall GetConsoleAliasExesLengthA() kernel32.GetConsoleAliasExesLengthA
-@ stdcall GetConsoleAliasExesLengthW() kernel32.GetConsoleAliasExesLengthW
+@ stdcall GetConsoleAliasExesLengthA() kernelbase.GetConsoleAliasExesLengthA
+@ stdcall GetConsoleAliasExesLengthW() kernelbase.GetConsoleAliasExesLengthW
 @ stub GetConsoleAliasExesW
-@ stdcall GetConsoleAliasW(wstr ptr long wstr) kernel32.GetConsoleAliasW
+@ stdcall GetConsoleAliasW(wstr ptr long wstr) kernelbase.GetConsoleAliasW
 @ stub GetConsoleAliasesA
-@ stdcall GetConsoleAliasesLengthA(str) kernel32.GetConsoleAliasesLengthA
-@ stdcall GetConsoleAliasesLengthW(wstr) kernel32.GetConsoleAliasesLengthW
+@ stdcall GetConsoleAliasesLengthA(str) kernelbase.GetConsoleAliasesLengthA
+@ stdcall GetConsoleAliasesLengthW(wstr) kernelbase.GetConsoleAliasesLengthW
 @ stub GetConsoleAliasesW
-@ stdcall GetConsoleCommandHistoryA(long long long) kernel32.GetConsoleCommandHistoryA
-@ stdcall GetConsoleCommandHistoryLengthA(str) kernel32.GetConsoleCommandHistoryLengthA
-@ stdcall GetConsoleCommandHistoryLengthW(wstr) kernel32.GetConsoleCommandHistoryLengthW
-@ stdcall GetConsoleCommandHistoryW(long long long) kernel32.GetConsoleCommandHistoryW
-@ stdcall GetConsoleDisplayMode(ptr) kernel32.GetConsoleDisplayMode
-@ stdcall GetConsoleFontSize(long long) kernel32.GetConsoleFontSize
+@ stdcall GetConsoleCommandHistoryA(ptr long str) kernelbase.GetConsoleCommandHistoryA
+@ stdcall GetConsoleCommandHistoryLengthA(str) kernelbase.GetConsoleCommandHistoryLengthA
+@ stdcall GetConsoleCommandHistoryLengthW(wstr) kernelbase.GetConsoleCommandHistoryLengthW
+@ stdcall GetConsoleCommandHistoryW(ptr long wstr) kernelbase.GetConsoleCommandHistoryW
+@ stdcall GetConsoleDisplayMode(ptr) kernelbase.GetConsoleDisplayMode
+@ stdcall GetConsoleFontSize(long long) kernelbase.GetConsoleFontSize
 @ stub GetConsoleHistoryInfo
-@ stdcall GetConsoleProcessList(ptr long) kernel32.GetConsoleProcessList
+@ stdcall GetConsoleProcessList(ptr long) kernelbase.GetConsoleProcessList
 @ stub GetConsoleSelectionInfo
-@ stdcall GetConsoleWindow() kernel32.GetConsoleWindow
-@ stdcall GetCurrentConsoleFont(long long ptr) kernel32.GetCurrentConsoleFont
-@ stdcall GetCurrentConsoleFontEx(long long ptr) kernel32.GetCurrentConsoleFontEx
-@ stdcall GetNumberOfConsoleMouseButtons(ptr) kernel32.GetNumberOfConsoleMouseButtons
-@ stdcall SetConsoleDisplayMode(long long ptr) kernel32.SetConsoleDisplayMode
+@ stdcall GetConsoleWindow() kernelbase.GetConsoleWindow
+@ stdcall GetCurrentConsoleFont(long long ptr) kernelbase.GetCurrentConsoleFont
+@ stdcall GetCurrentConsoleFontEx(long long ptr) kernelbase.GetCurrentConsoleFontEx
+@ stdcall GetNumberOfConsoleMouseButtons(ptr) kernelbase.GetNumberOfConsoleMouseButtons
+@ stdcall SetConsoleDisplayMode(long long ptr) kernelbase.SetConsoleDisplayMode
 @ stub SetConsoleHistoryInfo
 @ stub SetConsoleNumberOfCommandsA
 @ stub SetConsoleNumberOfCommandsW
-@ stdcall SetCurrentConsoleFontEx(long long ptr) kernel32.SetCurrentConsoleFontEx
+@ stdcall SetCurrentConsoleFontEx(long long ptr) kernelbase.SetCurrentConsoleFontEx

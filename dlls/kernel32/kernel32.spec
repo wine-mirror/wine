@@ -138,8 +138,8 @@
 @ stdcall -import ActivateActCtx(ptr ptr)
 @ stdcall AddAtomA(str)
 @ stdcall AddAtomW(wstr)
-@ stdcall AddConsoleAliasA(str str str)
-@ stdcall AddConsoleAliasW(wstr wstr wstr)
+@ stdcall -import AddConsoleAliasA(str str str)
+@ stdcall -import AddConsoleAliasW(wstr wstr wstr)
 @ stdcall -import AddDllDirectory(wstr)
 # @ stub AddIntegrityLabelToBoundaryDescriptor
 # @ stub AddLocalAlternateComputerNameA
@@ -443,8 +443,8 @@
 @ stub ExitVDM
 @ stdcall -import ExpandEnvironmentStringsA(str ptr long)
 @ stdcall -import ExpandEnvironmentStringsW(wstr ptr long)
-@ stdcall ExpungeConsoleCommandHistoryA(str)
-@ stdcall ExpungeConsoleCommandHistoryW(wstr)
+@ stdcall -import ExpungeConsoleCommandHistoryA(str)
+@ stdcall -import ExpungeConsoleCommandHistoryW(wstr)
 @ stub ExtendVirtualBuffer
 @ stdcall -i386 -private -norelay FT_Exit0() krnl386.exe16.FT_Exit0
 @ stdcall -i386 -private -norelay FT_Exit12() krnl386.exe16.FT_Exit12
@@ -580,27 +580,27 @@
 @ stdcall GetComputerNameExA(long ptr ptr)
 @ stdcall -import GetComputerNameExW(long ptr ptr)
 @ stdcall GetComputerNameW(ptr ptr)
-@ stub GetConsoleAliasA
+@ stdcall -import GetConsoleAliasA(str ptr long str)
 @ stub GetConsoleAliasExesA
-@ stdcall GetConsoleAliasExesLengthA()
-@ stdcall GetConsoleAliasExesLengthW()
+@ stdcall -import GetConsoleAliasExesLengthA()
+@ stdcall -import GetConsoleAliasExesLengthW()
 @ stub GetConsoleAliasExesW
-@ stdcall GetConsoleAliasW(wstr ptr long wstr)
+@ stdcall -import GetConsoleAliasW(wstr ptr long wstr)
 @ stub GetConsoleAliasesA
-@ stdcall GetConsoleAliasesLengthA(str)
-@ stdcall GetConsoleAliasesLengthW(wstr)
+@ stdcall -import GetConsoleAliasesLengthA(str)
+@ stdcall -import GetConsoleAliasesLengthW(wstr)
 @ stub GetConsoleAliasesW
 @ stdcall -import GetConsoleCP()
 @ stub GetConsoleCharType
-@ stdcall GetConsoleCommandHistoryA(long long long)
-@ stdcall GetConsoleCommandHistoryLengthA(str)
-@ stdcall GetConsoleCommandHistoryLengthW(wstr)
-@ stdcall GetConsoleCommandHistoryW(long long long)
+@ stdcall -import GetConsoleCommandHistoryA(ptr long str)
+@ stdcall -import GetConsoleCommandHistoryLengthA(str)
+@ stdcall -import GetConsoleCommandHistoryLengthW(wstr)
+@ stdcall -import GetConsoleCommandHistoryW(ptr long wstr)
 @ stdcall -import GetConsoleCursorInfo(long ptr)
 @ stub GetConsoleCursorMode
-@ stdcall GetConsoleDisplayMode(ptr)
+@ stdcall -import GetConsoleDisplayMode(ptr)
 @ stdcall GetConsoleFontInfo(ptr long long ptr)
-@ stdcall GetConsoleFontSize(long long)
+@ stdcall -import GetConsoleFontSize(long long)
 @ stub GetConsoleHardwareState
 # @ stub GetConsoleHistoryInfo
 @ stdcall -import GetConsoleInputExeNameA(long ptr)
@@ -613,19 +613,19 @@
 # @ stub GetConsoleOriginalTitleA
 # @ stub GetConsoleOriginalTitleW
 @ stdcall -import GetConsoleOutputCP()
-@ stdcall GetConsoleProcessList(ptr long)
+@ stdcall -import GetConsoleProcessList(ptr long)
 @ stdcall -import GetConsoleScreenBufferInfo(long ptr)
 @ stdcall -import GetConsoleScreenBufferInfoEx(long ptr)
 # @ stub GetConsoleSelectionInfo
-@ stdcall GetConsoleTitleA(ptr long)
+@ stdcall -import GetConsoleTitleA(ptr long)
 @ stdcall -import GetConsoleTitleW(ptr long)
-@ stdcall GetConsoleWindow()
+@ stdcall -import GetConsoleWindow()
 @ stdcall GetCurrencyFormatA(long long str ptr ptr long)
 @ stdcall GetCurrencyFormatEx(wstr long wstr ptr ptr long)
 @ stdcall GetCurrencyFormatW(long long wstr ptr ptr long)
 @ stdcall -import GetCurrentActCtx(ptr)
-@ stdcall GetCurrentConsoleFont(long long ptr)
-@ stdcall GetCurrentConsoleFontEx(long long ptr)
+@ stdcall -import GetCurrentConsoleFont(long long ptr)
+@ stdcall -import GetCurrentConsoleFontEx(long long ptr)
 @ stdcall -import GetCurrentDirectoryA(long ptr)
 @ stdcall -import GetCurrentDirectoryW(long ptr)
 @ stdcall GetCurrentPackageFamilyName(ptr ptr) kernelbase.GetCurrentPackageFamilyName
@@ -760,7 +760,7 @@
 @ stdcall GetNumberFormatW(long long wstr ptr ptr long)
 @ stdcall GetNumberOfConsoleFonts()
 @ stdcall -import GetNumberOfConsoleInputEvents(long ptr)
-@ stdcall GetNumberOfConsoleMouseButtons(ptr)
+@ stdcall -import GetNumberOfConsoleMouseButtons(ptr)
 @ stdcall -import GetOEMCP()
 @ stdcall -import GetOverlappedResult(long ptr ptr long)
 @ stdcall -import GetOverlappedResultEx(long ptr ptr long long)
@@ -1366,7 +1366,7 @@
 @ stdcall -import SetConsoleCursorInfo(long ptr)
 @ stub SetConsoleCursorMode
 @ stdcall -import SetConsoleCursorPosition(long long)
-@ stdcall SetConsoleDisplayMode(long long ptr)
+@ stdcall -import SetConsoleDisplayMode(long long ptr)
 @ stdcall SetConsoleFont(long long)
 @ stub SetConsoleHardwareState
 @ stdcall SetConsoleIcon(ptr)
@@ -1386,7 +1386,7 @@
 @ stdcall -import SetConsoleScreenBufferInfoEx(long ptr)
 @ stdcall -import SetConsoleScreenBufferSize(long long)
 @ stdcall -import SetConsoleTextAttribute(long long)
-@ stdcall SetConsoleTitleA(str)
+@ stdcall -import SetConsoleTitleA(str)
 @ stdcall -import SetConsoleTitleW(wstr)
 @ stdcall -import SetConsoleWindowInfo(long long ptr)
 @ stdcall SetCriticalSectionSpinCount(ptr long) NTDLL.RtlSetCriticalSectionSpinCount
