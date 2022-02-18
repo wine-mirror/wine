@@ -497,6 +497,9 @@ static void test_Shutdown(void)
         hr = IMFMediaEngineEx_GetPresentationAttribute(media_engine_ex, &MF_PD_DURATION, &propvar);
         ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
+        hr = IMFMediaEngineEx_GetStreamAttribute(media_engine_ex, 0, &MF_SD_PROTECTED, &propvar);
+        ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
         IMFMediaEngineEx_Release(media_engine_ex);
     }
 
@@ -933,6 +936,9 @@ static void test_SetSourceFromByteStream(void)
     ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaEngineEx_GetPresentationAttribute(media_engine, &MF_PD_DURATION, &propvar);
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaEngineEx_GetStreamAttribute(media_engine, 0, &MF_SD_PROTECTED, &propvar);
     ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
 
     IMFMediaEngineEx_Release(media_engine);

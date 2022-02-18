@@ -2504,9 +2504,28 @@ static HRESULT WINAPI media_engine_GetNumberOfStreams(IMFMediaEngineEx *iface, D
 static HRESULT WINAPI media_engine_GetStreamAttribute(IMFMediaEngineEx *iface, DWORD stream_index, REFGUID attribute,
         PROPVARIANT *value)
 {
-    FIXME("%p, %ld, %s, %p stub.\n", iface, stream_index, debugstr_guid(attribute), value);
+    struct media_engine *engine = impl_from_IMFMediaEngineEx(iface);
+    IMFStreamDescriptor *sd;
+    HRESULT hr = E_FAIL;
+    BOOL selected;
 
-    return E_NOTIMPL;
+    TRACE("%p, %ld, %s, %p.\n", iface, stream_index, debugstr_guid(attribute), value);
+
+    EnterCriticalSection(&engine->cs);
+    if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else if (engine->presentation.pd)
+    {
+        if (SUCCEEDED(hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(engine->presentation.pd,
+                stream_index, &selected, &sd)))
+        {
+            hr = IMFStreamDescriptor_GetItem(sd, attribute, value);
+            IMFStreamDescriptor_Release(sd);
+        }
+    }
+    LeaveCriticalSection(&engine->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_engine_GetStreamSelection(IMFMediaEngineEx *iface, DWORD stream_index, BOOL *enabled)
