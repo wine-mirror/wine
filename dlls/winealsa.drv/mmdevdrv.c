@@ -327,7 +327,7 @@ static void set_stream_volumes(ACImpl *This)
     unsigned int i;
 
     for(i = 0; i < stream->fmt->nChannels; i++)
-        stream->vols[i] = This->vols[i];
+        stream->vols[i] = This->vols[i] * This->session->channel_vols[i];
 }
 
 HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids_out, GUID **guids_out,
@@ -1493,7 +1493,6 @@ static void adjust_buffer_volume(const ACImpl *This, BYTE *buf, snd_pcm_uframes_
     for (i = 0; i < channels; i++)
     {
         vol[i] = stream->vols[i] * This->session->master_vol;
-        vol[i] *= This->session->channel_vols[i];
         adjust |= vol[i] != 1.0f;
     }
     if (!adjust) return;
@@ -3375,6 +3374,7 @@ static HRESULT WINAPI ChannelAudioVolume_SetChannelVolume(
 {
     AudioSessionWrapper *This = impl_from_IChannelAudioVolume(iface);
     AudioSession *session = This->session;
+    ACImpl *client;
 
     TRACE("(%p)->(%d, %f, %s)\n", session, index, level,
             wine_dbgstr_guid(context));
@@ -3393,6 +3393,9 @@ static HRESULT WINAPI ChannelAudioVolume_SetChannelVolume(
     EnterCriticalSection(&g_sessions_lock);
 
     session->channel_vols[index] = level;
+
+    LIST_FOR_EACH_ENTRY(client, &session->clients, ACImpl, entry)
+        set_stream_volumes(client);
 
     LeaveCriticalSection(&g_sessions_lock);
 
@@ -3425,6 +3428,7 @@ static HRESULT WINAPI ChannelAudioVolume_SetAllVolumes(
     AudioSessionWrapper *This = impl_from_IChannelAudioVolume(iface);
     AudioSession *session = This->session;
     unsigned int i;
+    ACImpl *client;
 
     TRACE("(%p)->(%d, %p, %s)\n", session, count, levels,
             wine_dbgstr_guid(context));
@@ -3444,6 +3448,9 @@ static HRESULT WINAPI ChannelAudioVolume_SetAllVolumes(
 
     for(i = 0; i < count; ++i)
         session->channel_vols[i] = levels[i];
+
+    LIST_FOR_EACH_ENTRY(client, &session->clients, ACImpl, entry)
+        set_stream_volumes(client);
 
     LeaveCriticalSection(&g_sessions_lock);
 
