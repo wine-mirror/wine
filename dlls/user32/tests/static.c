@@ -326,14 +326,22 @@ START_TEST(static)
     ShowWindow(hMainWnd, SW_SHOW);
 
     test_updates(0, 0);
-    test_updates(SS_SIMPLE, 0);
     test_updates(SS_ICON, 0);
+    test_updates(SS_BLACKRECT, TODO_COUNT);
+    test_updates(SS_WHITERECT, TODO_COUNT);
+    test_updates(SS_BLACKFRAME, TODO_COUNT);
+    test_updates(SS_WHITEFRAME, TODO_COUNT);
+    test_updates(SS_USERITEM, TODO_COUNT);
+    test_updates(SS_SIMPLE, 0);
+    test_updates(SS_OWNERDRAW, 0);
     test_updates(SS_BITMAP, 0);
     test_updates(SS_BITMAP | SS_CENTERIMAGE, 0);
     test_updates(SS_BLACKRECT, TODO_COUNT);
     test_updates(SS_WHITERECT, TODO_COUNT);
     test_updates(SS_ETCHEDHORZ, TODO_COUNT);
     test_updates(SS_ETCHEDVERT, TODO_COUNT);
+    test_updates(SS_ETCHEDFRAME, TODO_COUNT);
+    test_updates(SS_SUNKEN, 0);
     test_set_text();
     test_set_image();
     test_STM_SETIMAGE();
