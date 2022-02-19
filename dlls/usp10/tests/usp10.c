@@ -58,15 +58,6 @@ typedef struct _font_fingerprint {
     WORD result[10];
 } font_fingerprint;
 
-/* Uniscribe 1.6 calls */
-static HRESULT (WINAPI *pScriptItemizeOpenType)( const WCHAR *pwcInChars, int cInChars, int cMaxItems, const SCRIPT_CONTROL *psControl, const SCRIPT_STATE *psState, SCRIPT_ITEM *pItems, ULONG *pScriptTags, int *pcItems);
-
-static HRESULT (WINAPI *pScriptShapeOpenType)( HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS *psa, OPENTYPE_TAG tagScript, OPENTYPE_TAG tagLangSys, int *rcRangeChars, TEXTRANGE_PROPERTIES **rpRangeProperties, int cRanges, const WCHAR *pwcChars, int cChars, int cMaxGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProps, WORD *pwOutGlyphs, SCRIPT_GLYPHPROP *pOutGlyphProps, int *pcGlyphs);
-
-static HRESULT (WINAPI *pScriptGetFontScriptTags)( HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS *psa, int cMaxTags, OPENTYPE_TAG *pScriptTags, int *pcTags);
-static HRESULT (WINAPI *pScriptGetFontLanguageTags)( HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS *psa, OPENTYPE_TAG tagScript, int cMaxTags, OPENTYPE_TAG *pLangSysTags, int *pcTags);
-static HRESULT (WINAPI *pScriptGetFontFeatureTags)( HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS *psa, OPENTYPE_TAG tagScript, OPENTYPE_TAG tagLangSys, int cMaxTags, OPENTYPE_TAG *pFeatureTags, int *pcTags);
-
 static inline void _test_items_ok(LPCWSTR string, DWORD cchString,
                          SCRIPT_CONTROL *Control, SCRIPT_STATE *State,
                          DWORD nItems, const itemTest* items, BOOL nItemsToDo,
@@ -77,11 +68,7 @@ static inline void _test_items_ok(LPCWSTR string, DWORD cchString,
     SCRIPT_ITEM outpItems[15];
     ULONG tags[15] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
 
-    if (pScriptItemizeOpenType)
-        hr = pScriptItemizeOpenType(string, cchString, 15, Control, State, outpItems, tags, &outnItems);
-    else
-        hr = ScriptItemize(string, cchString, 15, Control, State, outpItems, &outnItems);
-
+    hr = ScriptItemizeOpenType(string, cchString, 15, Control, State, outpItems, tags, &outnItems);
     winetest_ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (nItemsBroken && (broken(nItemsBroken[0] == outnItems) || broken(nItemsBroken[1] == outnItems)))
     {
@@ -120,14 +107,10 @@ static inline void _test_items_ok(LPCWSTR string, DWORD cchString,
 
         if (x != outnItems)
             winetest_ok(outpItems[x].a.eScript != SCRIPT_UNDEFINED, "%i: Undefined script\n",x);
-        if (pScriptItemizeOpenType)
-        {
-            if (items[x].isBroken && broken(tags[x] == items[x].broken_value[5]))
-                winetest_win_skip("This test broken on this platform: item %d Script Tag %lx\n", x, tags[x]);
-            else todo_wine_if (items[x].todo_flag[5])
+        if (items[x].isBroken && broken(tags[x] == items[x].broken_value[5]))
+            winetest_win_skip("This test broken on this platform: item %d Script Tag %lx\n", x, tags[x]);
+        else todo_wine_if (items[x].todo_flag[5])
                 winetest_ok(tags[x] == items[x].scriptTag,"%i:Incorrect Script Tag %lx != %lx\n",x,tags[x],items[x].scriptTag);
-        }
-
     }
 }
 
@@ -987,7 +970,7 @@ static inline void _test_shape_ok(int valid, HDC hdc, LPCWSTR string,
     hr = ScriptGetProperties(&script_properties, &script_count);
     winetest_ok(SUCCEEDED(hr), "Unexpected hr %#lx.\n", hr);
 
-    hr = pScriptItemizeOpenType(string, cchString, 15, Control, State, outpItems, tags, &outnItems);
+    hr = ScriptItemizeOpenType(string, cchString, 15, Control, State, outpItems, tags, &outnItems);
     if (valid > 0)
         winetest_ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     else if (hr != S_OK)
@@ -1023,7 +1006,7 @@ static inline void _test_shape_ok(int valid, HDC hdc, LPCWSTR string,
 
     winetest_ok(!outpItems[item].a.fLogicalOrder, "Got unexpected fLogicalOrder %#x.\n",
             outpItems[item].a.fLogicalOrder);
-    hr = pScriptShapeOpenType(hdc, &sc, &outpItems[item].a, tags[item], 0x00000000, NULL, NULL, 0, string, cchString, maxGlyphs, logclust, charProp, glyphs, glyphProp, &outnGlyphs);
+    hr = ScriptShapeOpenType(hdc, &sc, &outpItems[item].a, tags[item], 0x00000000, NULL, NULL, 0, string, cchString, maxGlyphs, logclust, charProp, glyphs, glyphProp, &outnGlyphs);
     if (valid > 0)
         winetest_ok(hr == S_OK, "Unexpected hr %#lx.\n",hr);
     else if (hr != S_OK)
@@ -1095,7 +1078,7 @@ static inline void _test_shape_ok(int valid, HDC hdc, LPCWSTR string,
     }
 
     outpItems[item].a.fLogicalOrder = 1;
-    hr = pScriptShapeOpenType(hdc, &sc, &outpItems[item].a, tags[item], 0x00000000, NULL, NULL, 0,
+    hr = ScriptShapeOpenType(hdc, &sc, &outpItems[item].a, tags[item], 0x00000000, NULL, NULL, 0,
             string, cchString, maxGlyphs, logclust2, charProp2, glyphs2, glyphProp2, &outnGlyphs2);
     winetest_ok(hr == S_OK, "Unexpected hr %#lx.\n",hr);
     /* Cluster maps are hard. */
@@ -1148,7 +1131,7 @@ static inline void _test_shape_ok(int valid, HDC hdc, LPCWSTR string,
         }
         outpItems[item].a.fLogicalOrder = 0;
         outpItems[item].a.fRTL = !outpItems[item].a.fRTL;
-        hr = pScriptShapeOpenType(hdc, &sc, &outpItems[item].a, tags[item], 0x00000000, NULL, NULL, 0,
+        hr = ScriptShapeOpenType(hdc, &sc, &outpItems[item].a, tags[item], 0x00000000, NULL, NULL, 0,
                 string2, cchString, maxGlyphs, logclust2, charProp2, glyphs2, glyphProp2, &outnGlyphs2);
         winetest_ok(hr == S_OK, "Unexpected hr %#lx.\n",hr);
         for (x = 0; x < cchString; ++x)
@@ -1180,7 +1163,7 @@ static inline void _test_shape_ok(int valid, HDC hdc, LPCWSTR string,
                     x, glyphProp2[x].sva.fZeroWidth, glyphProp[x].sva.fZeroWidth);
         }
         outpItems[item].a.fLogicalOrder = 1;
-        hr = pScriptShapeOpenType(hdc, &sc, &outpItems[item].a, tags[item], 0x00000000, NULL, NULL, 0,
+        hr = ScriptShapeOpenType(hdc, &sc, &outpItems[item].a, tags[item], 0x00000000, NULL, NULL, 0,
                 string2, cchString, maxGlyphs, logclust2, charProp2, glyphs2, glyphProp2, &outnGlyphs2);
         winetest_ok(hr == S_OK, "Unexpected hr %#lx.\n",hr);
         for (x = 0; x < cchString; ++x)
@@ -1638,32 +1621,25 @@ static void test_ScriptShapeOpenType(HDC hdc)
         {'A','a','B','b','C','c','D','d',0,0},
         {284,310,285,311,286,312,287,313,0,0}};
 
-
-    if (!pScriptItemizeOpenType || !pScriptShapeOpenType)
-    {
-        win_skip("ScriptShapeOpenType not available on this platform\n");
-        return;
-    }
-
     memset(&Control, 0 , sizeof(Control));
     memset(&State, 0 , sizeof(State));
 
-    hr = pScriptItemizeOpenType(test1, 4, 2, &Control, &State, items, tags, &outnItems);
+    hr = ScriptItemizeOpenType(test1, 4, 2, &Control, &State, items, tags, &outnItems);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(items[0].a.fNoGlyphIndex == FALSE, "fNoGlyphIndex TRUE\n");
 
-    hr = pScriptShapeOpenType(hdc, &sc, &items[0].a, tags[0], 0x00000000, NULL, NULL, 0, test1, 4, 4, NULL, NULL, glyphs, NULL, &nb);
+    hr = ScriptShapeOpenType(hdc, &sc, &items[0].a, tags[0], 0x00000000, NULL, NULL, 0, test1, 4, 4, NULL, NULL, glyphs, NULL, &nb);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
-    hr = pScriptShapeOpenType(hdc, &sc, &items[0].a, tags[0], 0x00000000, NULL, NULL, 0, test1, 4, 4, NULL, NULL, glyphs, glyphProp, NULL);
+    hr = ScriptShapeOpenType(hdc, &sc, &items[0].a, tags[0], 0x00000000, NULL, NULL, 0, test1, 4, 4, NULL, NULL, glyphs, glyphProp, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
-    hr = pScriptShapeOpenType(NULL, &sc, &items[0].a, tags[0], 0x00000000, NULL, NULL, 0, test1, 4, 4, NULL, NULL, glyphs, glyphProp, &nb);
+    hr = ScriptShapeOpenType(NULL, &sc, &items[0].a, tags[0], 0x00000000, NULL, NULL, 0, test1, 4, 4, NULL, NULL, glyphs, glyphProp, &nb);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
-    hr = pScriptShapeOpenType(hdc, &sc, &items[0].a, tags[0], 0x00000000, NULL, NULL, 0, test1, 4, 4, NULL, NULL, glyphs, glyphProp, &nb);
+    hr = ScriptShapeOpenType(hdc, &sc, &items[0].a, tags[0], 0x00000000, NULL, NULL, 0, test1, 4, 4, NULL, NULL, glyphs, glyphProp, &nb);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
-    hr = pScriptShapeOpenType(hdc, &sc, &items[0].a, tags[0], 0x00000000, NULL, NULL, 0, test1, 4, 4, logclust, NULL, glyphs, glyphProp, &nb);
+    hr = ScriptShapeOpenType(hdc, &sc, &items[0].a, tags[0], 0x00000000, NULL, NULL, 0, test1, 4, 4, logclust, NULL, glyphs, glyphProp, &nb);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     ScriptFreeCache(&sc);
@@ -3814,29 +3790,22 @@ static void test_ScriptGetFontFunctions(HDC hdc)
     int count = 0;
     HRESULT hr;
 
-    if (!pScriptGetFontScriptTags || !pScriptGetFontLanguageTags || !pScriptGetFontFeatureTags)
-    {
-        win_skip("ScriptGetFontScriptTags, ScriptGetFontLanguageTags or "
-                "ScriptGetFontFeatureTags not available on this platform.\n");
-        return;
-    }
-
-    hr = pScriptGetFontScriptTags(hdc, &sc, NULL, 0, NULL, NULL);
+    hr = ScriptGetFontScriptTags(hdc, &sc, NULL, 0, NULL, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(!sc, "Got unexpected script cache %p.\n", sc);
-    hr = pScriptGetFontScriptTags(hdc, &sc, NULL, 0, NULL, &count);
+    hr = ScriptGetFontScriptTags(hdc, &sc, NULL, 0, NULL, &count);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(!sc, "Got unexpected script cache %p.\n", sc);
-    hr = pScriptGetFontScriptTags(hdc, &sc, NULL, ARRAY_SIZE(tags), tags, NULL);
+    hr = ScriptGetFontScriptTags(hdc, &sc, NULL, ARRAY_SIZE(tags), tags, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(!sc, "Got unexpected script cache %p.\n", sc);
-    hr = pScriptGetFontScriptTags(hdc, &sc, NULL, 0, tags, &count);
+    hr = ScriptGetFontScriptTags(hdc, &sc, NULL, 0, tags, &count);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(!sc, "Got unexpected script cache %p.\n", sc);
-    hr = pScriptGetFontScriptTags(NULL, &sc, NULL, ARRAY_SIZE(tags), tags, &count);
+    hr = ScriptGetFontScriptTags(NULL, &sc, NULL, ARRAY_SIZE(tags), tags, &count);
     ok(hr == E_PENDING, "Unexpected hr %#lx.\n", hr);
     ok(!sc, "Got unexpected script cache %p.\n", sc);
-    hr = pScriptGetFontScriptTags(hdc, &sc, NULL, ARRAY_SIZE(tags), tags, &count);
+    hr = ScriptGetFontScriptTags(hdc, &sc, NULL, ARRAY_SIZE(tags), tags, &count);
     ok(hr == S_OK || hr == E_OUTOFMEMORY, "Unexpected hr %#lx.\n", hr);
     if (hr == S_OK)
         ok(count <= 5, "Got unexpected count %d.\n", count);
@@ -3847,22 +3816,22 @@ static void test_ScriptGetFontFunctions(HDC hdc)
     ScriptFreeCache(&sc);
     sc = NULL;
 
-    hr = pScriptGetFontLanguageTags(hdc, &sc, NULL, latn_tag, 0, NULL, NULL);
+    hr = ScriptGetFontLanguageTags(hdc, &sc, NULL, latn_tag, 0, NULL, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(!sc, "Got unexpected script cache %p.\n", sc);
-    hr = pScriptGetFontLanguageTags(hdc, &sc, NULL, latn_tag, 0, NULL, &count);
+    hr = ScriptGetFontLanguageTags(hdc, &sc, NULL, latn_tag, 0, NULL, &count);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(!sc, "Got unexpected script cache %p.\n", sc);
-    hr = pScriptGetFontLanguageTags(hdc, &sc, NULL, latn_tag, ARRAY_SIZE(tags), tags, NULL);
+    hr = ScriptGetFontLanguageTags(hdc, &sc, NULL, latn_tag, ARRAY_SIZE(tags), tags, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(!sc, "Got unexpected script cache %p.\n", sc);
-    hr = pScriptGetFontLanguageTags(hdc, &sc, NULL, latn_tag, 0, tags, &count);
+    hr = ScriptGetFontLanguageTags(hdc, &sc, NULL, latn_tag, 0, tags, &count);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(!sc, "Got unexpected script cache %p.\n", sc);
-    hr = pScriptGetFontLanguageTags(NULL, &sc, NULL, latn_tag, ARRAY_SIZE(tags), tags, &count);
+    hr = ScriptGetFontLanguageTags(NULL, &sc, NULL, latn_tag, ARRAY_SIZE(tags), tags, &count);
     ok(hr == E_PENDING, "Unexpected hr %#lx.\n", hr);
     ok(!sc, "Got unexpected script cache %p.\n", sc);
-    hr = pScriptGetFontLanguageTags(hdc, &sc, NULL, latn_tag, ARRAY_SIZE(tags), tags, &count);
+    hr = ScriptGetFontLanguageTags(hdc, &sc, NULL, latn_tag, ARRAY_SIZE(tags), tags, &count);
     ok(hr == S_OK || hr == E_OUTOFMEMORY, "Unexpected hr %#lx.\n", hr);
     if (hr == S_OK)
         ok(count <= 5, "Got unexpected count %d.\n", count);
@@ -3872,22 +3841,22 @@ static void test_ScriptGetFontFunctions(HDC hdc)
     ScriptFreeCache(&sc);
     sc = NULL;
 
-    hr = pScriptGetFontFeatureTags(hdc, &sc, NULL, latn_tag, 0x0, 0, NULL, NULL);
+    hr = ScriptGetFontFeatureTags(hdc, &sc, NULL, latn_tag, 0x0, 0, NULL, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(!sc, "Got unexpected script cache %p.\n", sc);
-    hr = pScriptGetFontFeatureTags(hdc, &sc, NULL, latn_tag, 0x0, 0, NULL, &count);
+    hr = ScriptGetFontFeatureTags(hdc, &sc, NULL, latn_tag, 0x0, 0, NULL, &count);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(!sc, "Got unexpected script cache %p.\n", sc);
-    hr = pScriptGetFontFeatureTags(hdc, &sc, NULL, latn_tag, 0x0, ARRAY_SIZE(tags), tags, NULL);
+    hr = ScriptGetFontFeatureTags(hdc, &sc, NULL, latn_tag, 0x0, ARRAY_SIZE(tags), tags, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(!sc, "Got unexpected script cache %p.\n", sc);
-    hr = pScriptGetFontFeatureTags(hdc, &sc, NULL, latn_tag, 0x0, 0, tags, &count);
+    hr = ScriptGetFontFeatureTags(hdc, &sc, NULL, latn_tag, 0x0, 0, tags, &count);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(!sc, "Got unexpected script cache %p.\n", sc);
-    hr = pScriptGetFontFeatureTags(NULL, &sc, NULL, latn_tag, 0x0, ARRAY_SIZE(tags), tags, &count);
+    hr = ScriptGetFontFeatureTags(NULL, &sc, NULL, latn_tag, 0x0, ARRAY_SIZE(tags), tags, &count);
     ok(hr == E_PENDING, "Unexpected hr %#lx.\n", hr);
     ok(!sc, "Got unexpected script cache %p.\n", sc);
-    hr = pScriptGetFontFeatureTags(hdc, &sc, NULL, latn_tag, 0x0, ARRAY_SIZE(tags), tags, &count);
+    hr = ScriptGetFontFeatureTags(hdc, &sc, NULL, latn_tag, 0x0, ARRAY_SIZE(tags), tags, &count);
     ok(hr == S_OK || hr == E_OUTOFMEMORY, "Unexpected hr %#lx.\n", hr);
     if (hr == S_OK)
         ok(count <= 5, "Got unexpected count %d.\n", count);
@@ -3901,17 +3870,17 @@ static void test_ScriptGetFontFunctions(HDC hdc)
             &control, &state, items, &count);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     memset(tags, 0, sizeof(tags));
-    hr = pScriptGetFontScriptTags(hdc, &sc, &items[0].a, ARRAY_SIZE(tags), tags, &count);
+    hr = ScriptGetFontScriptTags(hdc, &sc, &items[0].a, ARRAY_SIZE(tags), tags, &count);
     ok(hr == USP_E_SCRIPT_NOT_IN_FONT || broken(hr == S_OK), "Unexpected hr %#lx.\n", hr);
 
-    hr = pScriptGetFontLanguageTags(hdc, &sc, NULL, dsrt_tag, ARRAY_SIZE(tags), tags, &count);
+    hr = ScriptGetFontLanguageTags(hdc, &sc, NULL, dsrt_tag, ARRAY_SIZE(tags), tags, &count);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    hr = pScriptGetFontLanguageTags(hdc, &sc, &items[0].a, dsrt_tag, ARRAY_SIZE(tags), tags, &count);
+    hr = ScriptGetFontLanguageTags(hdc, &sc, &items[0].a, dsrt_tag, ARRAY_SIZE(tags), tags, &count);
     ok(hr == E_INVALIDARG || broken(hr == S_OK), "Unexpected hr %#lx.\n", hr);
 
-    hr = pScriptGetFontFeatureTags(hdc, &sc, NULL, dsrt_tag, 0x0, ARRAY_SIZE(tags), tags, &count);
+    hr = ScriptGetFontFeatureTags(hdc, &sc, NULL, dsrt_tag, 0x0, ARRAY_SIZE(tags), tags, &count);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    hr = pScriptGetFontFeatureTags(hdc, &sc, &items[0].a, dsrt_tag, 0x0, ARRAY_SIZE(tags), tags, &count);
+    hr = ScriptGetFontFeatureTags(hdc, &sc, &items[0].a, dsrt_tag, 0x0, ARRAY_SIZE(tags), tags, &count);
     ok(hr == E_INVALIDARG || broken(hr == S_OK), "Unexpected hr %#lx.\n", hr);
 
     ScriptFreeCache(&sc);
@@ -4167,19 +4136,6 @@ static void test_script_cache_reuse(void)
     DestroyWindow(hwnd2);
 }
 
-static void init_tests(void)
-{
-    HMODULE module = GetModuleHandleA("usp10.dll");
-
-    ok(module != 0, "Expected usp10.dll to be loaded.\n");
-
-    pScriptItemizeOpenType = (void *)GetProcAddress(module, "ScriptItemizeOpenType");
-    pScriptShapeOpenType = (void *)GetProcAddress(module, "ScriptShapeOpenType");
-    pScriptGetFontScriptTags = (void *)GetProcAddress(module, "ScriptGetFontScriptTags");
-    pScriptGetFontLanguageTags = (void *)GetProcAddress(module, "ScriptGetFontLanguageTags");
-    pScriptGetFontFeatureTags = (void *)GetProcAddress(module, "ScriptGetFontFeatureTags");
-}
-
 START_TEST(usp10)
 {
     HWND            hwnd;
@@ -4208,8 +4164,6 @@ START_TEST(usp10)
 
     hfont = SelectObject(hdc, CreateFontIndirectA(&lf));
     ok(hfont != NULL, "SelectObject failed: %p\n", hfont);
-
-    init_tests();
 
     test_ScriptItemize();
     test_ScriptItemize_surrogates();

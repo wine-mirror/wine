@@ -238,9 +238,19 @@ HRESULT WINAPI ScriptRecordDigitSubstitution(LCID Locale, SCRIPT_DIGITSUBSTITUTE
 HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItems, 
                              const SCRIPT_CONTROL *psControl, const SCRIPT_STATE *psState, 
                              SCRIPT_ITEM *pItems, int *pcItems);
+HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int cMaxItems,
+        const SCRIPT_CONTROL *psControl, const SCRIPT_STATE *psState, SCRIPT_ITEM  *pItems,
+        OPENTYPE_TAG *pScriptTags, int *pcItems);
 HRESULT WINAPI ScriptGetCMap(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcInChars, int cChars,
                              DWORD dwFlags, WORD *pwOutGlyphs);
+HRESULT WINAPI ScriptGetFontFeatureTags(HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS *psa,
+        OPENTYPE_TAG tagScript, OPENTYPE_TAG tagLangSys, int cMaxTags, OPENTYPE_TAG *pFeatureTags,
+        int *pcTags);
+HRESULT WINAPI ScriptGetFontLanguageTags(HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS *psa,
+        OPENTYPE_TAG tagScript, int cMaxTags, OPENTYPE_TAG *pLangsysTags, int *pcTags);
 HRESULT WINAPI ScriptGetFontProperties(HDC hdc, SCRIPT_CACHE *psc, SCRIPT_FONTPROPERTIES *sfp);
+HRESULT WINAPI ScriptGetFontScriptTags(HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS *psa,
+        int cMaxTags, OPENTYPE_TAG *pScriptTags, int *pcTags);
 HRESULT WINAPI ScriptGetGlyphABCWidth(HDC hdc, SCRIPT_CACHE *psc, WORD wGlyph, ABC *pABC);
 HRESULT WINAPI ScriptGetLogicalWidths(const SCRIPT_ANALYSIS *psa, int cChars, int cGlyphs,
                                       const int *piGlyphWidth, const WORD *pwLogClust,
@@ -268,6 +278,11 @@ HRESULT WINAPI ScriptJustify(const SCRIPT_VISATTR *psva, const int *piAdvance, i
 HRESULT WINAPI ScriptLayout(int cRuns, const BYTE *pbLevel, int *piVisualToLogical, int *piLogicalToVisual);
 HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars, int cChars, int cMaxGlyphs,
                            SCRIPT_ANALYSIS *psa, WORD *pwOutGlyphs, WORD *pwLogClust, SCRIPT_VISATTR *psva, int *pcGlyphs);
+HRESULT WINAPI ScriptShapeOpenType(HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS *psa, OPENTYPE_TAG tagScript,
+        OPENTYPE_TAG tagLangSys, int *rcRangeChars, TEXTRANGE_PROPERTIES **rpRangeProperties,
+        int cRanges, const WCHAR *pwcChars, int cChars, int cMaxGlyphs, WORD *pwLogClust,
+        SCRIPT_CHARPROP *pCharProps, WORD *pwOutGlyphs, SCRIPT_GLYPHPROP *pOutGlyphProps,
+        int *pcGlyphs);
 HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs, int cGlyphs, const SCRIPT_VISATTR *psva,
                            SCRIPT_ANALYSIS *psa, int *piAdvance, GOFFSET *pGoffset, ABC *pABC );
 HRESULT WINAPI ScriptBreak(const WCHAR *pwcChars, int cChars, const SCRIPT_ANALYSIS *psa, SCRIPT_LOGATTR *psla);
