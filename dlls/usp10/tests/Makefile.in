@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = usp10.dll
 IMPORTS   = usp10 user32 gdi32
 
