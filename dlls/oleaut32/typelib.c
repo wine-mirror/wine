@@ -207,7 +207,7 @@ static BOOL find_typelib_key( REFGUID guid, WORD *wMaj, WORD *wMin )
                     best_min = v_min;
                     break; /* exact match */
                 }
-                if (*wMin != 0xffff && v_min > best_min) best_min = v_min;
+                if (*wMin != 0xffff && v_min >= *wMin && v_min > best_min) best_min = v_min;
             }
         }
         len = sizeof(key_name);

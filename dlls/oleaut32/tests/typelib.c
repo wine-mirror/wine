@@ -1521,7 +1521,7 @@ cleanup:
 static BOOL do_typelib_reg_key(GUID *uid, WORD maj, WORD min, DWORD arch, LPCWSTR base, BOOL remove)
 {
     static const WCHAR typelibW[] = {'T','y','p','e','l','i','b','\\',0};
-    static const WCHAR formatW[] = {'\\','%','u','.','%','u','\\','0','\\','w','i','n','%','u',0};
+    static const WCHAR formatW[] = {'\\','%','x','.','%','x','\\','0','\\','w','i','n','%','u',0};
     static const WCHAR format2W[] = {'%','s','_','%','u','_','%','u','.','d','l','l',0};
     WCHAR buf[128];
     HKEY hkey;
@@ -1578,7 +1578,7 @@ static void test_QueryPathOfRegTypeLib(DWORD arch)
         { 3, 1, S_OK, {'f','a','k','e','_','3','_','1','.','d','l','l',0 } },
         { 3, 22, S_OK, {'f','a','k','e','_','3','_','3','7','.','d','l','l',0 } },
         { 3, 37, S_OK, {'f','a','k','e','_','3','_','3','7','.','d','l','l',0 } },
-        { 3, 40, S_OK, {'f','a','k','e','_','3','_','3','7','.','d','l','l',0 } },
+        { 3, 40, TYPE_E_LIBNOTREGISTERED, { 0 } },
         { 0xffff, 0xffff, S_OK, {'f','a','k','e','_','5','_','3','7','.','d','l','l',0 } },
         { 0xffff, 0, TYPE_E_LIBNOTREGISTERED, { 0 } },
         { 3, 0xffff, TYPE_E_LIBNOTREGISTERED, { 0 } },
