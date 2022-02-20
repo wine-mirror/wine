@@ -230,29 +230,38 @@ static HRESULT WINAPI WshExec_get_Status(IWshExec *iface, WshExecStatus *status)
 
 static HRESULT WINAPI WshExec_get_StdIn(IWshExec *iface, ITextStream **stream)
 {
-    WshExecImpl *This = impl_from_IWshExec(iface);
+    WshExecImpl *exec = impl_from_IWshExec(iface);
 
-    FIXME("(%p)->(%p): stub\n", This, stream);
+    TRACE("%p, %p.\n", iface, stream);
 
-    return E_NOTIMPL;
+    *stream = exec->stdin_stream;
+    ITextStream_AddRef(*stream);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI WshExec_get_StdOut(IWshExec *iface, ITextStream **stream)
 {
-    WshExecImpl *This = impl_from_IWshExec(iface);
+    WshExecImpl *exec = impl_from_IWshExec(iface);
 
-    FIXME("(%p)->(%p): stub\n", This, stream);
+    TRACE("%p, %p.\n", iface, stream);
 
-    return E_NOTIMPL;
+    *stream = exec->stdout_stream;
+    ITextStream_AddRef(*stream);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI WshExec_get_StdErr(IWshExec *iface, ITextStream **stream)
 {
-    WshExecImpl *This = impl_from_IWshExec(iface);
+    WshExecImpl *exec = impl_from_IWshExec(iface);
 
-    FIXME("(%p)->(%p): stub\n", This, stream);
+    TRACE("%p, %p.\n", iface, stream);
 
-    return E_NOTIMPL;
+    *stream = exec->stderr_stream;
+    ITextStream_AddRef(*stream);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI WshExec_get_ProcessID(IWshExec *iface, DWORD *pid)
