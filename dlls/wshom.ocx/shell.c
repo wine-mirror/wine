@@ -25,6 +25,8 @@
 
 #include "wine/debug.h"
 
+extern HRESULT WINAPI DoOpenPipeStream(HANDLE pipe, IOMode mode, ITextStream **stream);
+
 WINE_DEFAULT_DEBUG_CHANNEL(wshom);
 
 typedef struct
@@ -64,6 +66,9 @@ typedef struct
     IWshExec IWshExec_iface;
     LONG ref;
     PROCESS_INFORMATION info;
+    ITextStream *stdin_stream;
+    ITextStream *stdout_stream;
+    ITextStream *stderr_stream;
 } WshExecImpl;
 
 static inline WshCollection *impl_from_IWshCollection( IWshCollection *iface )
@@ -122,14 +127,22 @@ static ULONG WINAPI WshExec_AddRef(IWshExec *iface)
 
 static ULONG WINAPI WshExec_Release(IWshExec *iface)
 {
-    WshExecImpl *This = impl_from_IWshExec(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
+    WshExecImpl *exec = impl_from_IWshExec(iface);
+    LONG ref = InterlockedDecrement(&exec->ref);
+
     TRACE("%p, refcount %ld.\n", iface, ref);
 
-    if (!ref) {
-        CloseHandle(This->info.hThread);
-        CloseHandle(This->info.hProcess);
-        free(This);
+    if (!ref)
+    {
+        CloseHandle(exec->info.hThread);
+        CloseHandle(exec->info.hProcess);
+        if (exec->stdin_stream)
+            ITextStream_Release(exec->stdin_stream);
+        if (exec->stdout_stream)
+            ITextStream_Release(exec->stdout_stream);
+        if (exec->stderr_stream)
+            ITextStream_Release(exec->stderr_stream);
+        free(exec);
     }
 
     return ref;
@@ -314,10 +327,35 @@ static const IWshExecVtbl WshExecVtbl = {
     WshExec_Terminate
 };
 
+static HRESULT create_pipe(HANDLE *hread, HANDLE *hwrite)
+{
+    SECURITY_ATTRIBUTES sa;
+
+    sa.nLength = sizeof(sa);
+    sa.bInheritHandle = TRUE;
+    sa.lpSecurityDescriptor = NULL;
+
+    *hread = *hwrite = NULL;
+    if (!CreatePipe(hread, hwrite, &sa, 0))
+        return HRESULT_FROM_WIN32(GetLastError());
+    return S_OK;
+}
+
+static void close_pipe(HANDLE *hread, HANDLE *hwrite)
+{
+    CloseHandle(*hread);
+    CloseHandle(*hwrite);
+    *hread = *hwrite = NULL;
+}
+
 static HRESULT WshExec_create(BSTR command, IWshExec **ret)
 {
+    HANDLE stdout_read, stdout_write;
+    HANDLE stderr_read, stderr_write;
+    HANDLE stdin_read, stdin_write;
     STARTUPINFOW si = {0};
     WshExecImpl *object;
+    HRESULT hr;
 
     *ret = NULL;
 
@@ -326,17 +364,71 @@ static HRESULT WshExec_create(BSTR command, IWshExec **ret)
 
     object->IWshExec_iface.lpVtbl = &WshExecVtbl;
     object->ref = 1;
+    init_classinfo(&CLSID_WshExec, (IUnknown *)&object->IWshExec_iface, &object->classinfo);
 
-    if (!CreateProcessW(NULL, command, NULL, NULL, FALSE, 0, NULL, NULL, &si, &object->info))
+    if (FAILED(hr = create_pipe(&stdin_read, &stdin_write)))
     {
-        free(object);
-        return HRESULT_FROM_WIN32(GetLastError());
+        WARN("Failed to create stdin pipe.\n");
+        goto failed;
     }
 
-    init_classinfo(&CLSID_WshExec, (IUnknown *)&object->IWshExec_iface, &object->classinfo);
-    *ret = &object->IWshExec_iface;
+    if (FAILED(hr = create_pipe(&stdout_read, &stdout_write)))
+    {
+        close_pipe(&stdin_read, &stdin_write);
+        WARN("Failed to create stdout pipe.\n");
+        goto failed;
+    }
 
-    return S_OK;
+    if (FAILED(hr = create_pipe(&stderr_read, &stderr_write)))
+    {
+        close_pipe(&stdin_read, &stdin_write);
+        close_pipe(&stdout_read, &stdout_write);
+        WARN("Failed to create stderr pipe.\n");
+        goto failed;
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        SetHandleInformation(stdin_write, HANDLE_FLAG_INHERIT, 0);
+        SetHandleInformation(stdout_read, HANDLE_FLAG_INHERIT, 0);
+        SetHandleInformation(stderr_read, HANDLE_FLAG_INHERIT, 0);
+    }
+
+    if (SUCCEEDED(hr))
+        hr = DoOpenPipeStream(stdin_write, ForWriting, &object->stdin_stream);
+    if (SUCCEEDED(hr))
+        hr = DoOpenPipeStream(stdout_read, ForReading, &object->stdout_stream);
+    if (SUCCEEDED(hr))
+        hr = DoOpenPipeStream(stderr_read, ForReading, &object->stderr_stream);
+
+    si.cb = sizeof(si);
+    si.hStdError = stderr_write;
+    si.hStdOutput = stdout_write;
+    si.hStdInput = stdin_read;
+    si.dwFlags = STARTF_USESTDHANDLES;
+
+    if (SUCCEEDED(hr))
+    {
+        if (!CreateProcessW(NULL, command, NULL, NULL, FALSE, 0, NULL, NULL, &si, &object->info))
+            hr = HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    CloseHandle(stderr_write);
+    CloseHandle(stdout_write);
+    CloseHandle(stdin_read);
+
+    if (SUCCEEDED(hr))
+    {
+        *ret = &object->IWshExec_iface;
+
+        return S_OK;
+    }
+
+failed:
+
+    IWshExec_Release(&object->IWshExec_iface);
+
+    return hr;
 }
 
 static HRESULT WINAPI WshEnvironment_QueryInterface(IWshEnvironment *iface, REFIID riid, void **obj)
