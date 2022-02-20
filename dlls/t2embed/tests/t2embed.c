@@ -43,7 +43,7 @@ static int CALLBACK enum_font_proc(ENUMLOGFONTEXA *enumlf, NEWTEXTMETRICEXA *ntm
         UINT fsType = otm.otmfsType & 0xf;
 
         ret = TTGetEmbeddingType(hdc, &status);
-        ok(ret == E_NONE || ret == E_NOTATRUETYPEFONT, "Unexpected return value %#x.\n", ret);
+        ok(ret == E_NONE || ret == E_NOTATRUETYPEFONT, "Unexpected return value %#lx.\n", ret);
 
         if (ret == E_NONE)
         {
@@ -56,7 +56,7 @@ static int CALLBACK enum_font_proc(ENUMLOGFONTEXA *enumlf, NEWTEXTMETRICEXA *ntm
             else if (fsType & LICENSE_NOEMBEDDING)
                 expected = EMBED_NOEMBEDDING;
 
-            ok(expected == status, "%s: status %d, expected %d, fsType %#x\n", enumlf->elfLogFont.lfFaceName, status,
+            ok(expected == status, "%s: status %ld, expected %ld, fsType %#x\n", enumlf->elfLogFont.lfFaceName, status,
                     expected, otm.otmfsType);
         }
     }
@@ -64,8 +64,8 @@ static int CALLBACK enum_font_proc(ENUMLOGFONTEXA *enumlf, NEWTEXTMETRICEXA *ntm
     {
         status = 0xdeadbeef;
         ret = TTGetEmbeddingType(hdc, &status);
-        ok(ret == E_NOTATRUETYPEFONT, "%s: got %d\n", enumlf->elfLogFont.lfFaceName, ret);
-        ok(status == 0xdeadbeef, "%s: got status %d\n", enumlf->elfLogFont.lfFaceName, status);
+        ok(ret == E_NOTATRUETYPEFONT, "%s: got %ld.\n", enumlf->elfLogFont.lfFaceName, ret);
+        ok(status == 0xdeadbeef, "%s: got status %#lx.\n", enumlf->elfLogFont.lfFaceName, status);
     }
 
     SelectObject(hdc, old_font);
@@ -84,27 +84,28 @@ static void test_TTGetEmbeddingType(void)
     HDC hdc;
 
     ret = TTGetEmbeddingType(NULL, NULL);
-    ok(ret == E_HDCINVALID, "got %d\n", ret);
+    ok(ret == E_HDCINVALID, "Unexpected retval %#lx.\n", ret);
 
     status = 0xdeadbeef;
     ret = TTGetEmbeddingType(NULL, &status);
-    ok(ret == E_HDCINVALID, "got %#x\n", ret);
-    ok(status == 0xdeadbeef, "got %u\n", status);
+    ok(ret == E_HDCINVALID, "Unexpected retval %#lx.\n", ret);
+    ok(status == 0xdeadbeef, "Unexpected status %#lx.\n", status);
 
     status = 0xdeadbeef;
     ret = TTGetEmbeddingType((HDC)0xdeadbeef, &status);
-    ok(ret == E_NOTATRUETYPEFONT || broken(ret == E_ERRORACCESSINGFONTDATA) /* xp, vista */, "got %#x\n", ret);
-    ok(status == 0xdeadbeef, "got %u\n", status);
+    ok(ret == E_NOTATRUETYPEFONT || broken(ret == E_ERRORACCESSINGFONTDATA) /* xp, vista */,
+            "Unexpected retval %#lx.\n", ret);
+    ok(status == 0xdeadbeef, "Unexpected status %#lx.\n", status);
 
     hdc = CreateCompatibleDC(0);
 
     ret = TTGetEmbeddingType(hdc, NULL);
-    ok(ret == E_NOTATRUETYPEFONT, "got %#x\n", ret);
+    ok(ret == E_NOTATRUETYPEFONT, "Unexpected retval %#lx.\n", ret);
 
     status = 0xdeadbeef;
     ret = TTGetEmbeddingType(hdc, &status);
-    ok(ret == E_NOTATRUETYPEFONT, "got %#x\n", ret);
-    ok(status == 0xdeadbeef, "got %u\n", status);
+    ok(ret == E_NOTATRUETYPEFONT, "Unexpected retval %#lx.\n", ret);
+    ok(status == 0xdeadbeef, "Unexpected status %#lx.\n", status);
 
     memset(&logfont, 0, sizeof(logfont));
     logfont.lfHeight = 12;
@@ -117,11 +118,11 @@ static void test_TTGetEmbeddingType(void)
 
     status = 0;
     ret = TTGetEmbeddingType(hdc, &status);
-    ok(ret == E_NONE, "got %#x\n", ret);
-    ok(status != 0, "got %u\n", status);
+    ok(ret == E_NONE, "Unexpected retval %#lx.\n", ret);
+    ok(status != 0, "Unexpected status %lu.\n", status);
 
     ret = TTGetEmbeddingType(hdc, NULL);
-    ok(ret == E_PERMISSIONSINVALID, "got %#x\n", ret);
+    ok(ret == E_PERMISSIONSINVALID, "Unexpected retval %#lx.\n", ret);
 
     SelectObject(hdc, old_font);
     DeleteObject(hfont);
@@ -140,36 +141,37 @@ static void test_TTIsEmbeddingEnabledForFacename(void)
     LONG ret;
 
     ret = TTIsEmbeddingEnabledForFacename(NULL, NULL);
-    ok(ret == E_FACENAMEINVALID, "got %#x\n", ret);
+    ok(ret == E_FACENAMEINVALID, "Unexpected retval %#lx.\n", ret);
 
     status = 123;
     ret = TTIsEmbeddingEnabledForFacename(NULL, &status);
-    ok(ret == E_FACENAMEINVALID, "got %#x\n", ret);
+    ok(ret == E_FACENAMEINVALID, "Unexpected retval %#lx.\n", ret);
     ok(status == 123, "got %d\n", status);
 
     ret = TTIsEmbeddingEnabledForFacename("Arial", NULL);
-    ok(ret == E_PBENABLEDINVALID, "got %#x\n", ret);
+    ok(ret == E_PBENABLEDINVALID, "Unexpected retval %#lx.\n", ret);
 
     status = 123;
     ret = TTIsEmbeddingEnabledForFacename("Arial", &status);
-    ok(ret == E_NONE, "got %#x\n", ret);
+    ok(ret == E_NONE, "Unexpected retval %#lx.\n", ret);
     ok(status != 123, "got %d\n", status);
 }
 
 static void test_TTIsEmbeddingEnabled(void)
 {
     HFONT old_font, hfont;
-    LONG ret, status;
     LOGFONTA logfont;
+    BOOL status;
+    LONG ret;
     HDC hdc;
 
     ret = TTIsEmbeddingEnabled(NULL, NULL);
-    ok(ret == E_HDCINVALID, "got %#x\n", ret);
+    ok(ret == E_HDCINVALID, "Unexpected retval %#lx.\n", ret);
 
     status = 123;
     ret = TTIsEmbeddingEnabled(NULL, &status);
-    ok(ret == E_HDCINVALID, "got %#x\n", ret);
-    ok(status == 123, "got %d\n", status);
+    ok(ret == E_HDCINVALID, "Unexpected retval %#lx.\n", ret);
+    ok(status == 123, "Unexpected status %d.\n", status);
 
     hdc = CreateCompatibleDC(0);
 
@@ -183,12 +185,12 @@ static void test_TTIsEmbeddingEnabled(void)
     old_font = SelectObject(hdc, hfont);
 
     ret = TTIsEmbeddingEnabled(hdc, NULL);
-    ok(ret == E_PBENABLEDINVALID, "Unexpected return value %#x.\n", ret);
+    ok(ret == E_PBENABLEDINVALID, "Unexpected retval %#lx.\n", ret);
 
     status = 123;
     ret = TTIsEmbeddingEnabled(hdc, &status);
-    ok(ret == E_NONE, "got %#x\n", ret);
-    ok(status != 123, "got %u\n", status);
+    ok(ret == E_NONE, "Unexpected retval %#lx.\n", ret);
+    ok(status != 123, "Unexpected status %d.\n", status);
 
     SelectObject(hdc, old_font);
     DeleteObject(hfont);
