@@ -791,9 +791,11 @@ static HRESULT WINAPI pipestream_ReadAll(ITextStream *iface, BSTR *text)
 
 static HRESULT WINAPI pipestream_Write(ITextStream *iface, BSTR text)
 {
-    FIXME("%p, %s.\n", iface, debugstr_w(text));
+    struct textstream *stream = impl_from_ITextStream(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %s.\n", iface, debugstr_w(text));
+
+    return textstream_write(stream, text);
 }
 
 static HRESULT WINAPI pipestream_WriteLine(ITextStream *iface, BSTR text)

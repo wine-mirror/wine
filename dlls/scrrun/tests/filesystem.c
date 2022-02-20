@@ -2656,11 +2656,9 @@ static void test_DoOpenPipeStream(void)
     {
         str = SysAllocString(L"data");
         hr = ITextStream_Write(stream_write, str);
-        todo_wine
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
         hr = ITextStream_Write(stream_read, str);
-        todo_wine
         ok(hr == CTL_E_BADFILEMODE, "Unexpected hr %#lx.\n", hr);
 
         SysFreeString(str);
