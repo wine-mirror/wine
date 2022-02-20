@@ -66,14 +66,14 @@ static void test_surface_desc(IDirect3DSurface9 *surface)
     HRESULT hr;
 
     hr = IDirect3DSurface9_GetDesc(surface, &desc);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     ok(desc.Format == D3DFMT_X8R8G8B8, "Unexpected format %d.\n", desc.Format);
     ok(desc.Type == D3DRTYPE_SURFACE, "Unexpected type %d.\n", desc.Type);
-    ok(desc.Usage == 0, "Unexpected usage %d.\n", desc.Usage);
+    ok(!desc.Usage, "Unexpected usage %ld.\n", desc.Usage);
     ok(desc.Pool == D3DPOOL_DEFAULT, "Unexpected pool %d.\n", desc.Pool);
     ok(desc.MultiSampleType == D3DMULTISAMPLE_NONE, "Unexpected multisample type %d.\n", desc.MultiSampleType);
-    ok(desc.MultiSampleQuality == 0, "Unexpected multisample quality %d.\n", desc.MultiSampleQuality);
+    ok(!desc.MultiSampleQuality, "Unexpected multisample quality %ld.\n", desc.MultiSampleQuality);
     ok(desc.Width == 64, "Unexpected width %u.\n", desc.Width);
     ok(desc.Height == 64, "Unexpected height %u.\n", desc.Height);
 }
@@ -134,31 +134,31 @@ static void test_device_manager(void)
     }
 
     hr = DXVA2CreateDirect3DDeviceManager9(&token, &manager);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle);
-    ok(hr == DXVA2_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
+    ok(hr == DXVA2_E_NOT_INITIALIZED, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDeviceManager9_LockDevice(manager, 0, &device2, FALSE);
-    ok(hr == DXVA2_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
+    ok(hr == DXVA2_E_NOT_INITIALIZED, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, 0);
-    ok(hr == E_HANDLE, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_HANDLE, "Unexpected hr %#lx.\n", hr);
 
     /* Invalid token. */
     hr = IDirect3DDeviceManager9_ResetDevice(manager, device, token + 1);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDeviceManager9_ResetDevice(manager, device, token);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     refcount = get_refcount(device);
 
     hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, 0);
-    ok(hr == E_HANDLE, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_HANDLE, "Unexpected hr %#lx.\n", hr);
 
     handle1 = NULL;
     hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle1);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!!handle1, "Unexpected handle value.\n");
 
     refcount2 = get_refcount(device);
@@ -166,172 +166,172 @@ static void test_device_manager(void)
 
     handle = NULL;
     hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(handle != handle1, "Unexpected handle.\n");
 
     hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, handle);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     /* Already closed. */
     hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, handle);
-    ok(hr == E_HANDLE, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_HANDLE, "Unexpected hr %#lx.\n", hr);
 
     handle = NULL;
     hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, handle1);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDeviceManager9_TestDevice(manager, handle1);
-    ok(hr == E_HANDLE, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_HANDLE, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDeviceManager9_TestDevice(manager, 0);
-    ok(hr == E_HANDLE, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_HANDLE, "Unexpected hr %#lx.\n", hr);
 
     handle = NULL;
     hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     handle1 = NULL;
     hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle1);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDeviceManager9_GetVideoService(manager, handle, &IID_IDirectXVideoProcessorService,
             (void **)&processor_service);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     IDirectXVideoProcessorService_Release(processor_service);
 
     device2 = create_device(d3d, window);
 
     hr = IDirect3DDeviceManager9_ResetDevice(manager, device2, token);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDeviceManager9_GetVideoService(manager, handle, &IID_IDirectXVideoProcessorService,
             (void **)&processor_service);
-    ok(hr == DXVA2_E_NEW_VIDEO_DEVICE, "Unexpected hr %#x.\n", hr);
+    ok(hr == DXVA2_E_NEW_VIDEO_DEVICE, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDeviceManager9_TestDevice(manager, handle);
-    ok(hr == DXVA2_E_NEW_VIDEO_DEVICE, "Unexpected hr %#x.\n", hr);
+    ok(hr == DXVA2_E_NEW_VIDEO_DEVICE, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, handle);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     /* Lock/Unlock. */
     hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDeviceManager9_LockDevice(manager, handle, &device3, FALSE);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(device2 == device3, "Unexpected device pointer.\n");
     IDirect3DDevice9_Release(device3);
 
     hr = IDirect3DDeviceManager9_UnlockDevice(manager, handle, FALSE);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDeviceManager9_UnlockDevice(manager, handle, FALSE);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDeviceManager9_UnlockDevice(manager, (HANDLE)((ULONG_PTR)handle + 100), FALSE);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     /* Locked with one handle, unlock with another. */
     hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle1);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDeviceManager9_LockDevice(manager, handle, &device3, FALSE);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(device2 == device3, "Unexpected device pointer.\n");
     IDirect3DDevice9_Release(device3);
 
     hr = IDirect3DDeviceManager9_UnlockDevice(manager, handle1, FALSE);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     /* Closing unlocks the device. */
     hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, handle);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDeviceManager9_LockDevice(manager, handle1, &device3, FALSE);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(device2 == device3, "Unexpected device pointer.\n");
     IDirect3DDevice9_Release(device3);
 
     hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, handle1);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     /* Open two handles. */
     hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle1);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDeviceManager9_LockDevice(manager, handle, &device3, FALSE);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(device2 == device3, "Unexpected device pointer.\n");
     IDirect3DDevice9_Release(device3);
 
     hr = IDirect3DDeviceManager9_LockDevice(manager, handle1, &device3, FALSE);
-    ok(hr == DXVA2_E_VIDEO_DEVICE_LOCKED, "Unexpected hr %#x.\n", hr);
+    ok(hr == DXVA2_E_VIDEO_DEVICE_LOCKED, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, handle1);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, handle);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     /* State saving function. */
     hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDeviceManager9_LockDevice(manager, handle, &device3, FALSE);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(device2 == device3, "Unexpected device pointer.\n");
 
     SetRect(&rect, 50, 60, 70, 80);
     hr = IDirect3DDevice9_SetScissorRect(device3, &rect);
-    ok(SUCCEEDED(hr), "Failed to set scissor rect, hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDeviceManager9_UnlockDevice(manager, handle, TRUE);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     SetRect(&rect, 30, 60, 70, 80);
     hr = IDirect3DDevice9_SetScissorRect(device3, &rect);
-    ok(SUCCEEDED(hr), "Failed to set scissor rect, hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     IDirect3DDevice9_Release(device3);
 
     hr = IDirect3DDeviceManager9_LockDevice(manager, handle, &device3, FALSE);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(device2 == device3, "Unexpected device pointer.\n");
 
     hr = IDirect3DDevice9_GetScissorRect(device3, &rect);
-    ok(SUCCEEDED(hr), "Failed to get scissor rect, hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(rect.left == 50 && rect.top == 60 && rect.right == 70 && rect.bottom == 80,
             "Got unexpected scissor rect %s.\n", wine_dbgstr_rect(&rect));
 
     IDirect3DDevice9_Release(device3);
 
     hr = IDirect3DDeviceManager9_UnlockDevice(manager, handle, TRUE);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, handle);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     /* Acceleration service. */
     hr = DXVA2CreateVideoService(device, &IID_IDirectXVideoAccelerationService, (void **)&accel_service);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     surfaces[0] = surfaces[1] = NULL;
     hr = IDirectXVideoAccelerationService_CreateSurface(accel_service, 64, 64, 0, D3DFMT_X8R8G8B8,
             D3DPOOL_DEFAULT, 0, DXVA2_VideoProcessorRenderTarget, surfaces, NULL);
-    ok(hr == S_OK, "Failed to create a surface, hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!!surfaces[0] && !surfaces[1], "Unexpected surfaces.\n");
     IDirect3DSurface9_Release(surfaces[0]);
 
     hr = IDirectXVideoAccelerationService_CreateSurface(accel_service, 64, 64, 1, D3DFMT_X8R8G8B8,
             D3DPOOL_DEFAULT, 0, DXVA2_VideoProcessorRenderTarget, surfaces, NULL);
-    ok(hr == S_OK, "Failed to create a surface, hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!!surfaces[0] && !!surfaces[1], "Unexpected surfaces.\n");
     test_surface_desc(surfaces[0]);
     IDirect3DSurface9_Release(surfaces[0]);
@@ -341,12 +341,12 @@ static void test_device_manager(void)
 
     /* RT formats. */
     hr = DXVA2CreateVideoService(device, &IID_IDirectXVideoProcessorService, (void **)&proc_service);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     init_video_desc(&video_desc, D3DFMT_A8R8G8B8);
 
     hr = IDirectXVideoProcessorService_GetVideoProcessorDeviceGuids(proc_service, &video_desc, &count, &guids);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(count, "Unexpected format count %u.\n", count);
     CoTaskMemFree(guids);
 
@@ -357,7 +357,7 @@ static void test_device_manager(void)
         count = 0;
         hr = IDirectXVideoProcessorService_GetVideoProcessorDeviceGuids(proc_service, &video_desc, &count, &guids);
         todo_wine_if(rt_formats[i] == MAKEFOURCC('A','Y','U','V'))
-        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         if (FAILED(hr)) continue;
         ok(count > 0, "Unexpected device count.\n");
         CoTaskMemFree(guids);
@@ -365,7 +365,7 @@ static void test_device_manager(void)
         count = 0;
         hr = IDirectXVideoProcessorService_GetVideoProcessorRenderTargets(proc_service, &DXVA2_VideoProcSoftwareDevice,
                 &video_desc, &count, &formats);
-        ok(hr == S_OK, "Unexpected hr %#x, format %d.\n", hr, rt_formats[i]);
+        ok(hr == S_OK, "Unexpected hr %#lx, format %d.\n", hr, rt_formats[i]);
         ok(count == 2, "Unexpected format count %u.\n", count);
         if (count == 2)
             ok(formats[0] == D3DFMT_X8R8G8B8 && formats[1] == D3DFMT_A8R8G8B8, "Unexpected formats %d,%d.\n",
@@ -379,27 +379,27 @@ static void test_device_manager(void)
 
         hr = IDirectXVideoProcessorService_GetVideoProcessorRenderTargets(proc_service, &DXVA2_VideoProcSoftwareDevice,
                 &video_desc, &count, &formats);
-        ok(hr == E_FAIL, "Unexpected hr %#x, format %d.\n", hr, rt_unsupported_formats[i]);
+        ok(hr == E_FAIL, "Unexpected hr %#lx, format %d.\n", hr, rt_unsupported_formats[i]);
     }
 
     IDirectXVideoProcessorService_Release(proc_service);
 
     hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDeviceManager9_GetVideoService(manager, handle, &IID_IDirectXVideoAccelerationService,
             (void **)&accel_service);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, handle);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirectXVideoAccelerationService_CreateSurface(accel_service, 64, 64, 0, D3DFMT_X8R8G8B8,
             D3DPOOL_DEFAULT, 0, DXVA2_VideoProcessorRenderTarget, surfaces, NULL);
-    ok(hr == S_OK, "Failed to create a surface, hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DSurface9_GetDevice(surfaces[0], &device3);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(device2 == device3, "Unexpected device.\n");
     IDirect3DDevice9_Release(device3);
 
@@ -443,24 +443,24 @@ static void test_video_processor(void)
     }
 
     hr = DXVA2CreateDirect3DDeviceManager9(&token, &manager);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDeviceManager9_ResetDevice(manager, device, token);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     handle = NULL;
     hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     handle1 = NULL;
     hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle1);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     ok(get_refcount(manager) == 1, "Unexpected refcount %u.\n", get_refcount(manager));
 
     hr = IDirect3DDeviceManager9_GetVideoService(manager, handle, &IID_IDirectXVideoProcessorService,
             (void **)&service);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     memset(&video_desc, 0, sizeof(video_desc));
     video_desc.SampleWidth = 64;
@@ -470,24 +470,24 @@ static void test_video_processor(void)
     /* Number of substreams does not include reference stream. */
     hr = IDirectXVideoProcessorService_CreateVideoProcessor(service, &DXVA2_VideoProcSoftwareDevice, &video_desc,
             D3DFMT_A8R8G8B8, 16, &processor);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirectXVideoProcessorService_CreateVideoProcessor(service, &DXVA2_VideoProcSoftwareDevice, &video_desc,
             D3DFMT_A8R8G8B8, 15, &processor);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     IDirectXVideoProcessor_Release(processor);
 
     hr = IDirectXVideoProcessorService_CreateVideoProcessor(service, &DXVA2_VideoProcSoftwareDevice, &video_desc,
             D3DFMT_A8R8G8B8, 0, &processor);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     IDirectXVideoProcessor_Release(processor);
 
     hr = IDirectXVideoProcessorService_CreateVideoProcessor(service, &DXVA2_VideoProcSoftwareDevice, &video_desc,
             D3DFMT_A8R8G8B8, 1, &processor);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirectXVideoProcessor_GetVideoProcessorCaps(processor, &caps);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(caps.DeviceCaps == DXVA2_VPDev_SoftwareDevice, "Unexpected device type %#x.\n", caps.DeviceCaps);
     ok(caps.InputPool == D3DPOOL_SYSTEMMEM, "Unexpected input pool %#x.\n", caps.InputPool);
     ok(!caps.NumForwardRefSamples, "Unexpected sample count.\n");
@@ -507,18 +507,18 @@ static void test_video_processor(void)
 
     hr = IDirectXVideoProcessorService_CreateVideoProcessor(service, &DXVA2_VideoProcSoftwareDevice, &video_desc,
             D3DFMT_A8R8G8B8, 1, &processor2);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(processor2 != processor, "Unexpected instance.\n");
 
     hr = IDirectXVideoProcessor_GetCreationParameters(processor, NULL, NULL, NULL, NULL);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirectXVideoProcessor_GetCreationParameters(processor, &guid, NULL, NULL, NULL);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(IsEqualGUID(&guid, &DXVA2_VideoProcSoftwareDevice), "Unexpected device guid.\n");
 
     hr = IDirectXVideoProcessor_GetCreationParameters(processor, NULL, NULL, &format, NULL);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(format == D3DFMT_A8R8G8B8, "Unexpected format %u.\n", format);
 
     IDirectXVideoProcessor_Release(processor);
@@ -526,17 +526,17 @@ static void test_video_processor(void)
 
     hr = IDirect3DDeviceManager9_GetVideoService(manager, handle, &IID_IDirectXVideoProcessorService,
             (void **)&service2);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(service == service2, "Unexpected pointer.\n");
 
     IDirectXVideoProcessorService_Release(service2);
     IDirectXVideoProcessorService_Release(service);
 
     hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, handle);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, handle1);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     IDirect3DDevice9_Release(device);
     IDirect3DDeviceManager9_Release(manager);
@@ -597,18 +597,18 @@ static void test_progressive_device(void)
     }
 
     hr = DXVA2CreateDirect3DDeviceManager9(&token, &manager);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDeviceManager9_ResetDevice(manager, device, token);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     handle = NULL;
     hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDeviceManager9_GetVideoService(manager, handle, &IID_IDirectXVideoProcessorService,
             (void **)&service);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     memset(&video_desc, 0, sizeof(video_desc));
     video_desc.SampleWidth = 64;
@@ -631,7 +631,7 @@ static void test_progressive_device(void)
         /* Check that progressive device is returned for given input format. */
         count = 0;
         hr = IDirectXVideoProcessorService_GetVideoProcessorDeviceGuids(service, &video_desc, &count, &guids);
-        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         ok(count > 0, "Unexpected device count.\n");
         for (j = 0; j < count; ++j)
         {
@@ -643,7 +643,7 @@ static void test_progressive_device(void)
         count = 0;
         hr = IDirectXVideoProcessorService_GetVideoProcessorRenderTargets(service, &DXVA2_VideoProcProgressiveDevice,
                 &video_desc, &count, &rt_formats);
-        ok(hr == S_OK, "Unexpected hr %#x, format %d.\n", hr, input_formats[i]);
+        ok(hr == S_OK, "Unexpected hr %#lx, format %d.\n", hr, input_formats[i]);
         ok(count > 0, "Unexpected format count %u.\n", count);
         for (j = 0; j < count; ++j)
         {
@@ -660,10 +660,10 @@ static void test_progressive_device(void)
 
     hr = IDirectXVideoProcessorService_CreateVideoProcessor(service, &DXVA2_VideoProcProgressiveDevice, &video_desc,
             D3DFMT_A8R8G8B8, 0, &processor);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirectXVideoProcessor_GetVideoProcessorCaps(processor, &caps);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(caps.DeviceCaps == DXVA2_VPDev_HardwareDevice, "Unexpected device type %#x.\n", caps.DeviceCaps);
     ok(!caps.NumForwardRefSamples, "Unexpected sample count.\n");
     ok(!caps.NumBackwardRefSamples, "Unexpected sample count.\n");
@@ -672,7 +672,7 @@ static void test_progressive_device(void)
             caps.VideoProcessorOperations);
 
     hr = IDirectXVideoProcessor_GetCreationParameters(processor, &guid, NULL, &format, NULL);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(IsEqualGUID(&guid, &DXVA2_VideoProcProgressiveDevice), "Unexpected device guid.\n");
     ok(format == D3DFMT_A8R8G8B8, "Unexpected format %u.\n", format);
 
@@ -682,7 +682,7 @@ unsupported:
     IDirectXVideoProcessorService_Release(service);
 
     hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, handle);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     IDirect3DDevice9_Release(device);
     IDirect3DDeviceManager9_Release(manager);
