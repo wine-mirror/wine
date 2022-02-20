@@ -609,10 +609,13 @@ static HRESULT WINAPI textstream_ReadAll(ITextStream *iface, BSTR *text)
     return read_from_buffer(This, This->read_buf_size, text, 0) ? S_FALSE : E_OUTOFMEMORY;
 }
 
-static HRESULT textstream_writestr(struct textstream *stream, BSTR text)
+static HRESULT textstream_write(struct textstream *stream, BSTR text)
 {
     DWORD written = 0;
     BOOL ret;
+
+    if (textstream_check_iomode(stream, IOWrite))
+        return CTL_E_BADFILEMODE;
 
     if (stream->unicode) {
         ret = WriteFile(stream->file, text, SysStringByteLen(text), &written, NULL);
@@ -636,14 +639,11 @@ static HRESULT textstream_writestr(struct textstream *stream, BSTR text)
 
 static HRESULT WINAPI textstream_Write(ITextStream *iface, BSTR text)
 {
-    struct textstream *This = impl_from_ITextStream(iface);
+    struct textstream *stream = impl_from_ITextStream(iface);
 
-    TRACE("(%p)->(%s)\n", This, debugstr_w(text));
+    TRACE("%p, %s.\n", iface, debugstr_w(text));
 
-    if (textstream_check_iomode(This, IOWrite))
-        return CTL_E_BADFILEMODE;
-
-    return textstream_writestr(This, text);
+    return textstream_write(stream, text);
 }
 
 static HRESULT textstream_writecrlf(struct textstream *stream)
@@ -669,17 +669,14 @@ static HRESULT textstream_writecrlf(struct textstream *stream)
 
 static HRESULT WINAPI textstream_WriteLine(ITextStream *iface, BSTR text)
 {
-    struct textstream *This = impl_from_ITextStream(iface);
+    struct textstream *stream = impl_from_ITextStream(iface);
     HRESULT hr;
 
-    TRACE("(%p)->(%s)\n", This, debugstr_w(text));
+    TRACE("%p, %s.\n", iface, debugstr_w(text));
 
-    if (textstream_check_iomode(This, IOWrite))
-        return CTL_E_BADFILEMODE;
-
-    hr = textstream_writestr(This, text);
+    hr = textstream_write(stream, text);
     if (SUCCEEDED(hr))
-        hr = textstream_writecrlf(This);
+        hr = textstream_writecrlf(stream);
     return hr;
 }
 
