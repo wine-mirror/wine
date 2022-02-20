@@ -133,6 +133,8 @@ static inline const char *debugstr_propvar(const PROPVARIANT *v)
             return wine_dbg_sprintf("%p {VT_UI8: %s}", v, wine_dbgstr_longlong(v->uhVal.QuadPart));
         case VT_I8:
             return wine_dbg_sprintf("%p {VT_I8: %s}", v, wine_dbgstr_longlong(v->hVal.QuadPart));
+        case VT_R4:
+            return wine_dbg_sprintf("%p {VT_R4: %.8e}", v, v->fltVal);
         case VT_R8:
             return wine_dbg_sprintf("%p {VT_R8: %lf}", v, v->dblVal);
         case VT_CLSID:
