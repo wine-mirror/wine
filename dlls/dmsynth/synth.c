@@ -505,11 +505,29 @@ static HRESULT WINAPI IDirectMusicSynth8Impl_GetChannelPriority(IDirectMusicSynt
 }
 
 static HRESULT WINAPI IDirectMusicSynth8Impl_GetFormat(IDirectMusicSynth8 *iface,
-        WAVEFORMATEX *wave_format, DWORD *wave_format_size)
+        WAVEFORMATEX *format, DWORD *size)
 {
     IDirectMusicSynth8Impl *This = impl_from_IDirectMusicSynth8(iface);
+    WAVEFORMATEX fmt;
 
-    FIXME("(%p)->(%p, %p): stub\n", This, wave_format, wave_format_size);
+    TRACE("(%p, %p, %p)\n", This, format, size);
+
+    if (!size)
+        return E_POINTER;
+    if (!This->open)
+        return DMUS_E_SYNTHNOTCONFIGURED;
+
+    if (format) {
+        fmt.wFormatTag = WAVE_FORMAT_PCM;
+        fmt.nChannels = This->params.dwAudioChannels;
+        fmt.nSamplesPerSec = This->params.dwSampleRate;
+        fmt.wBitsPerSample = 16;
+        fmt.nBlockAlign = This->params.dwAudioChannels * fmt.wBitsPerSample / 8;
+        fmt.nAvgBytesPerSec = This->params.dwSampleRate * fmt.nBlockAlign;
+        fmt.cbSize = 0;
+        memcpy(format, &fmt, min(*size, sizeof(fmt)));
+    }
+    *size = sizeof(fmt);
 
     return S_OK;
 }
