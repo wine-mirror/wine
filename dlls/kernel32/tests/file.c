@@ -4098,14 +4098,14 @@ static void test_CreateFile(void)
         ok(hfile == INVALID_HANDLE_VALUE, "CreateFile should fail\n");
         if (i == 0 || i == 5)
         {
-/* FIXME: remove once Wine is fixed */
-todo_wine_if (i == 5)
+            /* FIXME: remove once Wine is fixed */
+            todo_wine_if (i == 5)
             ok(GetLastError() == ERROR_INVALID_PARAMETER, "%d: expected ERROR_INVALID_PARAMETER, got %d\n", i, GetLastError());
         }
         else
         {
-/* FIXME: remove once Wine is fixed */
-todo_wine_if (i == 1)
+            /* FIXME: remove once Wine is fixed */
+            todo_wine_if (i == 1)
             ok(GetLastError() == ERROR_ACCESS_DENIED, "%d: expected ERROR_ACCESS_DENIED, got %d\n", i, GetLastError());
         }
 
@@ -4116,8 +4116,8 @@ todo_wine_if (i == 1)
             ok(GetLastError() == ERROR_INVALID_PARAMETER, "%d: expected ERROR_INVALID_PARAMETER, got %d\n", i, GetLastError());
         else
         {
-/* FIXME: remove once Wine is fixed */
-todo_wine_if (i == 1)
+            /* FIXME: remove once Wine is fixed */
+            todo_wine_if (i == 1)
             ok(GetLastError() == ERROR_ACCESS_DENIED, "%d: expected ERROR_ACCESS_DENIED, got %d\n", i, GetLastError());
         }
     }
