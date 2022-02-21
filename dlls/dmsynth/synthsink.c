@@ -180,11 +180,22 @@ static HRESULT WINAPI IDirectMusicSynthSinkImpl_SetDirectSound(IDirectMusicSynth
 }
 
 static HRESULT WINAPI IDirectMusicSynthSinkImpl_GetDesiredBufferSize(IDirectMusicSynthSink *iface,
-        DWORD *buffer_size_in_samples)
+        DWORD *size)
 {
     IDirectMusicSynthSinkImpl *This = impl_from_IDirectMusicSynthSink(iface);
+    WAVEFORMATEX format;
+    DWORD fmtsize = sizeof(format);
 
-    FIXME("(%p)->(%p): stub\n", This, buffer_size_in_samples);
+    TRACE("(%p, %p)\n", This, size);
+
+    if (!size)
+        return E_POINTER;
+    if (!This->synth)
+        return DMUS_E_SYNTHNOTCONFIGURED;
+
+    if (FAILED(IDirectMusicSynth_GetFormat(This->synth, &format, &fmtsize)))
+        return E_UNEXPECTED;
+    *size = format.nSamplesPerSec * format.nChannels * 4;
 
     return S_OK;
 }

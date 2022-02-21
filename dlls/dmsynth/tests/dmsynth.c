@@ -149,6 +149,8 @@ static void test_dmsynth(void)
     /* Synth isn't fully initialized yet */
     hr = IDirectMusicSynth_Activate(dmsynth, TRUE);
     ok(hr == DMUS_E_NOSYNTHSINK, "IDirectMusicSynth_Activate returned: %#lx\n", hr);
+    hr = IDirectMusicSynthSink_GetDesiredBufferSize(dmsynth_sink, &size);
+    ok(hr == DMUS_E_SYNTHNOTCONFIGURED, "IDirectMusicSynthSink_GetDesiredBufferSize returned: %#lx\n", hr);
 
     /* Open / Close */
     hr = IDirectMusicSynth_Open(dmsynth, NULL);
@@ -274,6 +276,28 @@ static void test_dmsynth(void)
     hr = IDirectMusicSynth_GetFormat(dmsynth, &format, &size);
     ok(hr == S_OK, "GetFormat failed: %#lx\n", hr);
     ok(size == sizeof(format), "GetFormat size mismatch, got %ld\n", size);
+    IDirectMusicSynth_Close(dmsynth);
+
+    /* GetDesiredBufferSize */
+    hr = IDirectMusicSynthSink_GetDesiredBufferSize(dmsynth_sink, NULL);
+    ok(hr == E_POINTER, "IDirectMusicSynthSink_GetDesiredBufferSize returned: %#lx\n", hr);
+    hr = IDirectMusicSynthSink_GetDesiredBufferSize(dmsynth_sink, &size);
+    ok(hr == E_UNEXPECTED, "IDirectMusicSynthSink_GetDesiredBufferSize returned: %#lx\n", hr);
+    params.dwValidParams = 0;
+    hr = IDirectMusicSynth_Open(dmsynth, &params);
+    ok(hr == S_OK, "Open failed: %#lx\n", hr);
+    hr = IDirectMusicSynthSink_GetDesiredBufferSize(dmsynth_sink, &size);
+    ok(hr == S_OK, "IDirectMusicSynthSink_GetDesiredBufferSize returned: %#lx\n", hr);
+    ok(size == params.dwSampleRate * params.dwAudioChannels * 4, "size: %ld\n", size);
+    IDirectMusicSynth_Close(dmsynth);
+    params.dwValidParams = DMUS_PORTPARAMS_AUDIOCHANNELS;
+    params.dwAudioChannels = 1;
+    hr = IDirectMusicSynth_Open(dmsynth, &params);
+    ok(hr == S_OK, "Open failed: %#lx\n", hr);
+    hr = IDirectMusicSynthSink_GetDesiredBufferSize(dmsynth_sink, &size);
+    ok(hr == S_OK, "IDirectMusicSynthSink_GetDesiredBufferSize returned: %#lx\n", hr);
+    ok(size == params.dwSampleRate * params.dwAudioChannels * 4, "size: %ld\n", size);
+    IDirectMusicSynth_Close(dmsynth);
 
     if (control_synth)
         IDirectMusicSynth_Release(control_synth);
