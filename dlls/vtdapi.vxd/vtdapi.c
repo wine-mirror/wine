@@ -42,7 +42,7 @@ BOOL WINAPI VTDAPI_DeviceIoControl( DWORD code, LPVOID lpvInBuffer, DWORD cbInBu
         return TRUE;
 
     default:
-        FIXME( "Control %d not implemented\n", code);
+        FIXME( "Control %ld not implemented\n", code);
         return FALSE;
     }
 }
