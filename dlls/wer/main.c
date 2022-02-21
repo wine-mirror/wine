@@ -155,7 +155,7 @@ HRESULT WINAPI WerReportAddDump(HREPORT hReportHandle, HANDLE hProcess, HANDLE h
                                 WER_DUMP_TYPE dumpType, PWER_EXCEPTION_INFORMATION pExceptionParam,
                                 PWER_DUMP_CUSTOM_OPTIONS pDumpCustomOptions, DWORD dwFlags)
 {
-    FIXME("(%p, %p, %p, %d, %p, %p, %u) :stub\n", hReportHandle, hProcess, hThread, dumpType,
+    FIXME("(%p, %p, %p, %d, %p, %p, %lu) :stub\n", hReportHandle, hProcess, hThread, dumpType,
           pExceptionParam, pDumpCustomOptions, dwFlags);
 
     return E_NOTIMPL;
@@ -179,7 +179,7 @@ HRESULT WINAPI WerReportAddDump(HREPORT hReportHandle, HANDLE hProcess, HANDLE h
  */
 HRESULT WINAPI WerReportAddFile(HREPORT hreport, PCWSTR path, WER_FILE_TYPE type, DWORD flags)
 {
-    FIXME("(%p, %s, %d, 0x%x) :stub\n", hreport, debugstr_w(path), type, flags);
+    FIXME("(%p, %s, %d, 0x%lx) :stub\n", hreport, debugstr_w(path), type, flags);
 
     return S_OK;
 }
@@ -299,7 +299,7 @@ HRESULT WINAPI WerReportCreate(PCWSTR eventtype, WER_REPORT_TYPE reporttype, PWE
  */
 HRESULT WINAPI WerReportSetParameter(HREPORT hreport, DWORD id, PCWSTR name, PCWSTR value)
 {
-    FIXME("(%p, %d, %s, %s) :stub\n", hreport, id, debugstr_w(name), debugstr_w(value));
+    FIXME("(%p, %ld, %s, %s) :stub\n", hreport, id, debugstr_w(name), debugstr_w(value));
 
     return S_OK;
 }
@@ -323,7 +323,7 @@ HRESULT WINAPI WerReportSetParameter(HREPORT hreport, DWORD id, PCWSTR name, PCW
  */
 HRESULT WINAPI WerReportSubmit(HREPORT hreport, WER_CONSENT consent, DWORD flags, PWER_SUBMIT_RESULT presult)
 {
-    FIXME("(%p, %d, 0x%x, %p) :stub\n", hreport, consent, flags, presult);
+    FIXME("(%p, %d, 0x%lx, %p) :stub\n", hreport, consent, flags, presult);
 
     if(!presult)
         return E_INVALIDARG;
