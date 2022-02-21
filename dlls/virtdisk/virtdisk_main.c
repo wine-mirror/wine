@@ -30,7 +30,7 @@ DWORD WINAPI GetStorageDependencyInformation(HANDLE obj, GET_STORAGE_DEPENDENCY_
 {
     ULONG temp_size = sizeof(STORAGE_DEPENDENCY_INFO);
 
-    FIXME("(%p, 0x%x, %u, %p, %p): stub\n", obj, flags, size, info, used);
+    FIXME("(%p, 0x%x, %lu, %p, %p): stub\n", obj, flags, size, info, used);
 
     if (used) *used = temp_size;
 
@@ -61,6 +61,6 @@ DWORD WINAPI OpenVirtualDisk(VIRTUAL_STORAGE_TYPE *type, const WCHAR *path, VIRT
 
 DWORD WINAPI DetachVirtualDisk(HANDLE handle, DETACH_VIRTUAL_DISK_FLAG flags, ULONG specific_flags)
 {
-    FIXME("(%p, 0x%x, %d): stub\n", handle, flags, specific_flags);
+    FIXME("(%p, 0x%x, %ld): stub\n", handle, flags, specific_flags);
     return ERROR_INVALID_PARAMETER;
 }
