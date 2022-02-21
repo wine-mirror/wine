@@ -144,12 +144,12 @@ SECURITY_STATUS WINAPI NCryptFreeObject(NCRYPT_HANDLE handle)
     return ret;
 }
 
-static const struct object_property *get_object_property(struct object *object, const WCHAR *name)
+static struct object_property *get_object_property(struct object *object, const WCHAR *name)
 {
     unsigned int i;
     for (i = 0; i < object->num_properties; i++)
     {
-        const struct object_property *property = &object->properties[i];
+        struct object_property *property = &object->properties[i];
         if (!lstrcmpW(property->key, name)) return property;
     }
     return NULL;
@@ -181,17 +181,16 @@ static struct object *allocate_object(enum object_type type)
     return ret;
 }
 
-static SECURITY_STATUS set_object_property(struct object *object, const WCHAR *name, BYTE *value, DWORD value_size)
+struct object_property *add_object_property(struct object *object, const WCHAR *name)
 {
     struct object_property *property;
 
-    FIXME("check duplicates\n");
     if (!object->num_properties)
     {
         if (!(object->properties = malloc(sizeof(*property))))
         {
             ERR("Error allocating memory.\n");
-            return NTE_NO_MEMORY;
+            return NULL;
         }
         property = &object->properties[object->num_properties++];
     }
@@ -201,7 +200,7 @@ static SECURITY_STATUS set_object_property(struct object *object, const WCHAR *n
         if (!(tmp = realloc(object->properties, sizeof(*property) * (object->num_properties + 1))))
         {
             ERR("Error allocating memory.\n");
-            return NTE_NO_MEMORY;
+            return NULL;
         }
         object->properties = tmp;
         property = &object->properties[object->num_properties++];
@@ -211,12 +210,22 @@ static SECURITY_STATUS set_object_property(struct object *object, const WCHAR *n
     if (!(property->key = malloc((lstrlenW(name) + 1) * sizeof(WCHAR))))
     {
         ERR("Error allocating memory.\n");
-        return NTE_NO_MEMORY;
+        return NULL;
     }
 
     lstrcpyW(property->key, name);
+    return property;
+}
+
+static SECURITY_STATUS set_object_property(struct object *object, const WCHAR *name, BYTE *value, DWORD value_size)
+{
+    struct object_property *property = get_object_property(object, name);
+    void *tmp;
+
+    if (!property && !(property = add_object_property(object, name))) return NTE_NO_MEMORY;
+
     property->value_size = value_size;
-    if (!(property->value = malloc(value_size)))
+    if (!(tmp = realloc(property->value, value_size)))
     {
         ERR("Error allocating memory.\n");
         free(property->key);
@@ -224,7 +233,9 @@ static SECURITY_STATUS set_object_property(struct object *object, const WCHAR *n
         return NTE_NO_MEMORY;
     }
 
+    property->value = tmp;
     memcpy(property->value, value, value_size);
+
     return ERROR_SUCCESS;
 }
 
