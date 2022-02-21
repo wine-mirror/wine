@@ -510,50 +510,21 @@ static HRESULT WINAPI synth_port_SetDirectSound(IDirectMusicPort *iface, IDirect
     return S_OK;
 }
 
-static HRESULT WINAPI synth_port_GetFormat(IDirectMusicPort *iface, WAVEFORMATEX *pWaveFormatEx,
-        DWORD *pdwWaveFormatExSize, DWORD *pdwBufferSize)
+static HRESULT WINAPI synth_port_GetFormat(IDirectMusicPort *iface, WAVEFORMATEX *format,
+        DWORD *fmtsize, DWORD *bufsize)
 {
-	struct synth_port *This = synth_from_IDirectMusicPort(iface);
-	WAVEFORMATEX format;
-	FIXME("(%p, %p, %p, %p): stub\n", This, pWaveFormatEx, pdwWaveFormatExSize, pdwBufferSize);
+    struct synth_port *This = synth_from_IDirectMusicPort(iface);
+    HRESULT hr;
 
-	if (pWaveFormatEx == NULL)
-	{
-		if (pdwWaveFormatExSize)
-			*pdwWaveFormatExSize = sizeof(format);
-		else
-			return E_POINTER;
-	}
-	else
-	{
-		if (pdwWaveFormatExSize == NULL)
-			return E_POINTER;
+    TRACE("(%p, %p, %p, %p)\n", This, format, fmtsize, bufsize);
 
-		/* Just fill this in with something that will not crash Direct Sound for now. */
-		/* It won't be used anyway until Performances are completed */
-		format.wFormatTag = WAVE_FORMAT_PCM;
-		format.nChannels = 2; /* This->params.dwAudioChannels; */
-		format.nSamplesPerSec = 44100; /* This->params.dwSampleRate; */
-		format.wBitsPerSample = 16;	/* FIXME: check this */
-		format.nBlockAlign = (format.wBitsPerSample * format.nChannels) / 8;
-		format.nAvgBytesPerSec = format.nSamplesPerSec * format.nBlockAlign;
-		format.cbSize = 0;
+    if (FAILED(hr = IDirectMusicSynth_GetFormat(This->synth, format, fmtsize)))
+        return hr;
 
-		if (*pdwWaveFormatExSize >= sizeof(format))
-		{
-			CopyMemory(pWaveFormatEx, &format, min(sizeof(format), *pdwWaveFormatExSize));
-			*pdwWaveFormatExSize = sizeof(format);	/* FIXME check if this is set */
-		}
-		else
-			return E_POINTER;	/* FIXME find right error */
-	}
+    if (bufsize)
+        hr = IDirectMusicSynthSink_GetDesiredBufferSize(This->synth_sink, bufsize);
 
-	if (pdwBufferSize)
-		*pdwBufferSize = 44100 * 2 * 2;
-	else
-		return E_POINTER;
-
-	return S_OK;
+    return hr;
 }
 
 static const IDirectMusicPortVtbl synth_port_vtbl = {

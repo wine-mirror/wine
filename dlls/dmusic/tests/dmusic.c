@@ -877,6 +877,9 @@ static void test_synthport(void)
     IDirectMusicPort *port;
     DMUS_BUFFERDESC desc;
     DMUS_PORTCAPS caps;
+    WAVEFORMATEX fmt;
+    DWORD fmtsize, bufsize;
+
     HRESULT hr;
 
     port = create_synth_port(&dmusic);
@@ -921,6 +924,24 @@ static void test_synthport(void)
     ok(caps.dwMaxAudioChannels == 2, "Got dwMaxAudioChannels: %#lx\n", caps.dwMaxAudioChannels);
     ok(caps.dwEffectFlags == DMUS_EFFECT_REVERB, "Unexpected dwEffectFlags returned: %#lx\n", caps.dwEffectFlags);
     trace("Port wszDescription: %s\n", wine_dbgstr_w(caps.wszDescription));
+
+    /* GetFormat */
+    hr = IDirectMusicPort_GetFormat(port, NULL, NULL, NULL);
+    ok(hr == E_POINTER, "GetFormat failed: %#lx\n", hr);
+    hr = IDirectMusicPort_GetFormat(port, NULL, &fmtsize, NULL);
+    ok(hr == S_OK, "GetFormat failed: %#lx\n", hr);
+    ok(fmtsize == sizeof(fmt), "format size; %ld\n", fmtsize);
+    fmtsize = 0;
+    hr = IDirectMusicPort_GetFormat(port, &fmt, &fmtsize, NULL);
+    ok(hr == S_OK, "GetFormat failed: %#lx\n", hr);
+    ok(fmtsize == sizeof(fmt), "format size; %ld\n", fmtsize);
+    hr = IDirectMusicPort_GetFormat(port, NULL, NULL, &bufsize);
+    ok(hr == E_POINTER, "GetFormat failed: %#lx\n", hr);
+    hr = IDirectMusicPort_GetFormat(port, NULL, &fmtsize, &bufsize);
+    ok(hr == S_OK, "GetFormat failed: %#lx\n", hr);
+    hr = IDirectMusicPort_GetFormat(port, &fmt, &fmtsize, &bufsize);
+    ok(hr == S_OK, "GetFormat failed: %#lx\n", hr);
+    ok(bufsize == fmt.nSamplesPerSec * fmt.nChannels * 4, "buffer size: %ld\n", bufsize);
 
     IDirectMusicPort_Release(port);
     IDirectMusic_Release(dmusic);
