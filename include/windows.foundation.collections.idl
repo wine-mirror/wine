@@ -53,7 +53,8 @@ cpp_quote("#endif")
             contract(Windows.Foundation.FoundationContract, 1.0),
             uuid(fcdcf02c-e5d8-4478-915a-4d90b74b83a5)
         ]
-        delegate HRESULT AsyncOperationCompletedHandler<TResult>([in] IAsyncOperation<TResult> *info, [in] AsyncStatus status);
+        delegate HRESULT AsyncOperationCompletedHandler<TResult>([in] Windows.Foundation.IAsyncOperation<TResult> *info,
+                                                                 [in] AsyncStatus status);
 
         [
             contract(Windows.Foundation.FoundationContract, 1.0),
@@ -61,8 +62,8 @@ cpp_quote("#endif")
         ]
         interface IAsyncOperation<TResult> : IInspectable
         {
-            [propput] HRESULT Completed([in] AsyncOperationCompletedHandler<TResult> *handler);
-            [propget] HRESULT Completed([out, retval] AsyncOperationCompletedHandler<TResult> **handler);
+            [propput] HRESULT Completed([in] Windows.Foundation.AsyncOperationCompletedHandler<TResult> *handler);
+            [propget] HRESULT Completed([out, retval] Windows.Foundation.AsyncOperationCompletedHandler<TResult> **handler);
             HRESULT GetResults([out, retval] TResult **results);
         }
 
@@ -110,12 +111,13 @@ cpp_quote("#endif")
                 uuid(e480ce40-a338-4ada-adcf-272272e48cb9)
             ]
             interface IMapView<K, V> : IInspectable
-                requires IIterable<IKeyValuePair<K, V> *>
+                requires Windows.Foundation.Collections.IIterable<Windows.Foundation.Collections.IKeyValuePair<K, V> *>
             {
                 HRESULT Lookup([in] K key, [out, retval] V *value);
                 [propget] HRESULT Size([out, retval] unsigned int *size);
                 HRESULT HasKey([in] K key, [out, retval] boolean *found);
-                HRESULT Split([out] IMapView<K, V> **first, [out] IMapView<K, V> **second);
+                HRESULT Split([out] Windows.Foundation.Collections.IMapView<K, V> **first,
+                              [out] Windows.Foundation.Collections.IMapView<K, V> **second);
             }
 
             [
@@ -138,7 +140,7 @@ cpp_quote("#endif")
             {
                 HRESULT GetAt([in, optional] UINT32 index, [out, retval] T *value);
                 [propget] HRESULT Size([out, retval] UINT32 *value);
-                HRESULT GetView([out, retval] IVectorView<T> **value);
+                HRESULT GetView([out, retval] Windows.Foundation.Collections.IVectorView<T> **value);
                 HRESULT IndexOf([in, optional] T element, [out] UINT32 *index, [out, retval] BOOLEAN *value);
                 HRESULT SetAt([in] UINT32 index, [in, optional] T value);
                 HRESULT InsertAt([in] UINT32 index, [in, optional] T value);
