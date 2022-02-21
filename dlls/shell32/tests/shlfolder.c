@@ -4423,7 +4423,7 @@ static void test_contextmenu(IContextMenu *menu, BOOL background)
 
         cmi.lpVerb = "foobar_wine_test";
         hr = IContextMenu_InvokeCommand(menu, &cmi);
-    todo_wine_if(background)
+        todo_wine_if(background)
         ok((hr == E_INVALIDARG) || (hr == E_FAIL /* Win7 */) ||
            (hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION) /* Vista */),
             "Unexpected hr %#x.\n", hr);

@@ -1146,7 +1146,7 @@ static void test_ShellWindows(void)
         IDispatch_Release(app);
 
         hr = IWebBrowser2_get_Document(wb, &doc);
-todo_wine
+        todo_wine
         ok(hr == S_OK, "got 0x%08x\n", hr);
 if (hr == S_OK) {
         test_dispatch_typeinfo(doc, viewdual_riids);
