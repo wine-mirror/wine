@@ -39,7 +39,7 @@ BOOL WINAPI VNETBIOS_DeviceIoControl( DWORD code, LPVOID lpvInBuffer, DWORD cbIn
         Netbios(lpvInBuffer);
         return TRUE;
     default:
-        FIXME("(%d,%p,%d,%p,%d,%p,%p): stub\n",
+        FIXME("(%ld,%p,%ld,%p,%ld,%p,%p): stub\n",
               code, lpvInBuffer,cbInBuffer, lpvOutBuffer,cbOutBuffer,
               lpcbBytesReturned, lpOverlapped);
         return FALSE;
