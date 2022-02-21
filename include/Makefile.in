@@ -776,6 +776,7 @@ SOURCES = \
 	windns.h \
 	windot11.h \
 	windows.devices.enumeration.idl \
+	windows.devices.haptics.idl \
 	windows.foundation.collections.idl \
 	windows.foundation.idl \
 	windows.gaming.input.forcefeedback.idl \
