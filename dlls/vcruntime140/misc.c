@@ -46,7 +46,7 @@ void CDECL __telemetry_main_return_trigger(HINSTANCE hinst)
 BOOL CDECL __vcrt_InitializeCriticalSectionEx(
         CRITICAL_SECTION *cs, DWORD spin_count, DWORD flags)
 {
-    TRACE("(%p %x %x)\n", cs, spin_count, flags);
+    TRACE("(%p %lx %lx)\n", cs, spin_count, flags);
     return InitializeCriticalSectionEx(cs, spin_count, flags);
 }
 
