@@ -81,7 +81,7 @@ static void test_BCryptGetFipsAlgorithmMode(void)
     else
     {
         expected = FALSE;
-todo_wine
+        todo_wine
         ok(0, "Neither XP or Vista key is present\n");
     }
     RegCloseKey(hkey);
