@@ -309,7 +309,7 @@ void WINAPI SetDlgItemTextEx16( HWND16 hwnd, INT16 id,
  */
 BOOL16 WINAPI SetProcessDefaultLayout16( DWORD dwDefaultLayout )
 {
-    FIXME( "( %08x ): No BiDi16\n", dwDefaultLayout );
+    FIXME( "( %08lx ): No BiDi16\n", dwDefaultLayout );
     return SetProcessDefaultLayout( dwDefaultLayout );
 }
 

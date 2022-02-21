@@ -319,7 +319,7 @@ WORD WINAPI WNetGetUser16( LPSTR szUser, LPINT16 nBufferSize )
         case ERROR_MORE_DATA:
             return WN16_MORE_DATA;
         default:
-            FIXME("Untranslated return value %d\n", ret);
+            FIXME("Untranslated return value %ld\n", ret);
     }
     return ret;
 }

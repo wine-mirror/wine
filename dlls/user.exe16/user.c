@@ -1659,7 +1659,7 @@ HMODULE16 WINAPI GetDriverModuleHandle16(HDRVR16 hDrvr)
 LRESULT WINAPI DefDriverProc16(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg,
                                LPARAM lParam1, LPARAM lParam2)
 {
-    FIXME( "devID=0x%08x hDrv=0x%04x wMsg=%04x lP1=0x%08lx lP2=0x%08lx: stub\n",
+    FIXME( "devID=0x%08lx hDrv=0x%04x wMsg=%04x lP1=0x%08lx lP2=0x%08lx: stub\n",
 	  dwDevID, hDriv, wMsg, lParam1, lParam2);
     return 0;
 }
@@ -1681,7 +1681,7 @@ BOOL16 WINAPI GetDriverInfo16(HDRVR16 hDrvr, struct DRIVERINFOSTRUCT16 *lpDrvInf
  */
 HDRVR16 WINAPI GetNextDriver16(HDRVR16 hDrvr, DWORD dwFlags)
 {
-    FIXME( "(%04x, %08x): stub\n", hDrvr, dwFlags);
+    FIXME( "(%04x, %08lx): stub\n", hDrvr, dwFlags);
     return 0;
 }
 
@@ -3170,7 +3170,7 @@ DWORD WINAPI FormatMessage16(
     BOOL        eos = FALSE;
     LPSTR       allocstring = NULL;
 
-    TRACE("(0x%x,%x,%d,0x%x,%p,%d,%p)\n",
+    TRACE("(0x%lx,%lx,%d,0x%x,%p,%d,%p)\n",
           dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args);
         if ((dwFlags & FORMAT_MESSAGE_FROM_SYSTEM)
                 && (dwFlags & FORMAT_MESSAGE_FROM_HMODULE)) return 0;
@@ -3179,7 +3179,7 @@ DWORD WINAPI FormatMessage16(
                         || (dwFlags & FORMAT_MESSAGE_FROM_HMODULE))) return 0;
 
     if (width && width != FORMAT_MESSAGE_MAX_WIDTH_MASK)
-        FIXME("line wrapping (%u) not supported.\n", width);
+        FIXME("line wrapping (%lu) not supported.\n", width);
     from = NULL;
     if (dwFlags & FORMAT_MESSAGE_FROM_STRING)
     {

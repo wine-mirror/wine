@@ -194,11 +194,11 @@ static VOID WINAPI COMM16_ReadComplete(DWORD dwErrorCode, DWORD len, LPOVERLAPPE
 
 	/* read data from comm port */
 	if (dwErrorCode != NO_ERROR) {
-		ERR("async read failed, error %d\n",dwErrorCode);
+		ERR("async read failed, error %ld\n",dwErrorCode);
 		COM[cid].commerror = CE_RXOVER;
 		return;
 	}
-	TRACE("async read completed %d bytes\n",len);
+	TRACE("async read completed %ld bytes\n",len);
 
 	prev = comm_inbuf(ptr);
 
@@ -274,11 +274,11 @@ static VOID WINAPI COMM16_WriteComplete(DWORD dwErrorCode, DWORD len, LPOVERLAPP
 
 	/* read data from comm port */
 	if (dwErrorCode != NO_ERROR) {
-		ERR("async write failed, error %d\n",dwErrorCode);
+		ERR("async write failed, error %ld\n",dwErrorCode);
 		COM[cid].commerror = CE_RXOVER;
 		return;
 	}
-	TRACE("async write completed %d bytes\n",len);
+	TRACE("async write completed %ld bytes\n",len);
 
 	/* update the buffer pointers */
 	prev = comm_outbuf(&COM[cid]);
