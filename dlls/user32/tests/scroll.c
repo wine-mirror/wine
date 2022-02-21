@@ -358,7 +358,7 @@ static void scrollbar_test_default( DWORD style)
     if( !(style & WS_VSCROLL))
     {
         if (bThemeActive || style != WS_HSCROLL)
-todo_wine
+            todo_wine
             ok( (winstyle & (WS_HSCROLL|WS_VSCROLL)) == ( style | WS_VSCROLL),
                 "unexpected style change %08x/%08x\n", winstyle, style);
         else
@@ -394,7 +394,7 @@ todo_wine
     if( !(style & WS_HSCROLL))
     {
         if (bThemeActive || style != WS_VSCROLL)
-todo_wine
+            todo_wine
             ok( (winstyle & (WS_HSCROLL|WS_VSCROLL)) == ( style | WS_HSCROLL),
                 "unexpected style change %08x/%08x\n", winstyle, style);
         else
