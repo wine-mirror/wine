@@ -62,7 +62,7 @@ BOOL WINAPI VDHCP_DeviceIoControl(DWORD dwIoControlCode, LPVOID lpvInBuffer,
         break;
 
     default:
-        FIXME("(%d,%p,%d,%p,%d,%p,%p): stub\n",
+        FIXME("(%ld,%p,%ld,%p,%ld,%p,%p): stub\n",
                 dwIoControlCode,
                 lpvInBuffer,cbInBuffer,
                 lpvOutBuffer,cbOutBuffer,
