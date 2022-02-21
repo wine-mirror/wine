@@ -199,6 +199,9 @@ static void test_get_property(void)
     ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
     ok(keylength == 1024, "got %lu\n", keylength);
 
+    ret = NCryptGetProperty(0, NCRYPT_LENGTH_PROPERTY, (BYTE *)&keylength, size, &size, 0);
+    ok(ret == NTE_INVALID_HANDLE, "got %#lx\n", ret);
+
     NCryptFreeObject(prov);
 }
 

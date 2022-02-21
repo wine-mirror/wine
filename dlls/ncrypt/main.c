@@ -164,7 +164,9 @@ SECURITY_STATUS WINAPI NCryptGetProperty(NCRYPT_HANDLE handle, const WCHAR *name
     TRACE("(%#Ix, %s, %p, %lu, %p, %#lx)\n", handle, wine_dbgstr_w(name), output, outsize, result, flags);
     if (flags) FIXME("flags %#lx not supported\n", flags);
 
+    if (!object) return NTE_INVALID_HANDLE;
     if (!(property = get_object_property(object, name))) return NTE_INVALID_PARAMETER;
+
     *result = property->value_size;
     if (!output) return ERROR_SUCCESS;
     if (outsize < property->value_size) return NTE_BUFFER_TOO_SMALL;
@@ -376,6 +378,7 @@ SECURITY_STATUS WINAPI NCryptSetProperty(NCRYPT_HANDLE handle, const WCHAR *name
     TRACE("(%#Ix, %s, %p, %lu, %#lx)\n", handle, wine_dbgstr_w(name), input, insize, flags);
     if (flags) FIXME("flags %#lx not supported\n", flags);
 
+    if (!object) return NTE_INVALID_HANDLE;
     return set_object_property(object, name, input, insize);
 }
 
