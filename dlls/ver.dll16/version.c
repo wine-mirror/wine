@@ -436,7 +436,7 @@ DWORD WINAPI GetFileResource16( LPCSTR lpszFileName, LPCSTR lpszResType,
     OFSTRUCT ofs;
     DWORD reslen = dwResLen;
 
-    TRACE("(%s,type=%p,id=%p,off=%d,len=%d,data=%p)\n",
+    TRACE("(%s,type=%p,id=%p,off=%ld,len=%ld,data=%p)\n",
 		debugstr_a(lpszFileName), lpszResType, lpszResId,
                 dwFileOffset, dwResLen, lpvData );
 
@@ -476,7 +476,7 @@ DWORD WINAPI GetFileVersionInfoSize16( LPCSTR filename, LPDWORD handle )
  */
 DWORD WINAPI GetFileVersionInfo16( LPCSTR filename, DWORD handle, DWORD datasize, LPVOID data )
 {
-    TRACE("(%s, %08x, %d, %p)\n", debugstr_a(filename), handle, datasize, data );
+    TRACE("(%s, %08lx, %ld, %p)\n", debugstr_a(filename), handle, datasize, data );
 
     return GetFileResource16( filename, (LPCSTR)RT_VERSION, (LPCSTR)VS_VERSION_INFO, 0, datasize, data );
 }
