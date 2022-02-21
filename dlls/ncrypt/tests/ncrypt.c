@@ -136,7 +136,7 @@ static void test_key_import_rsa(void)
     NCryptFreeObject(prov);
 }
 
-static void test_ncrypt_free_object(void)
+static void test_free_object(void)
 {
     NCRYPT_PROV_HANDLE prov;
     NCRYPT_KEY_HANDLE key;
@@ -205,9 +205,55 @@ static void test_get_property(void)
     NCryptFreeObject(prov);
 }
 
+static void test_create_persisted_key(void)
+{
+    NCRYPT_PROV_HANDLE prov;
+    NCRYPT_KEY_HANDLE key;
+    SECURITY_STATUS ret;
+    DWORD size, keylength;
+    WCHAR alggroup[4];
+
+    ret = NCryptOpenStorageProvider(&prov, NULL, 0);
+    ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
+
+    todo_wine {
+    key = 0;
+    ret = NCryptCreatePersistedKey(0, &key, BCRYPT_RSA_ALGORITHM, NULL, 0, 0);
+    ok(ret == NTE_INVALID_HANDLE, "got %#lx\n", ret);
+
+    ret = NCryptCreatePersistedKey(prov, &key, NULL, NULL, 0, 0);
+    ok(ret == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER) || broken(ret == NTE_FAIL), "got %#lx\n", ret);
+
+    ret = NCryptCreatePersistedKey(prov, &key, BCRYPT_RSA_ALGORITHM, NULL, 0, 0);
+    ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
+    ok(key, "got null handle\n");
+
+    ret = NCryptGetProperty(key, NCRYPT_ALGORITHM_GROUP_PROPERTY, NULL, 0, &size, 0);
+    ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
+    ok(size == 8, "got %lu\n", size);
+
+    size = 0;
+    alggroup[0] = 0;
+    ret = NCryptGetProperty(key, NCRYPT_ALGORITHM_GROUP_PROPERTY, (BYTE *)alggroup, sizeof(alggroup), &size, 0);
+    ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
+    ok(size == 8, "got %lu\n", size);
+    ok(!lstrcmpW(alggroup, L"RSA"), "The string doesn't match with 'RSA'\n");
+
+    ret = NCryptGetProperty(key, NCRYPT_LENGTH_PROPERTY, (BYTE *)&keylength, sizeof(keylength), &size, 0);
+    ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
+    ok(size == 4, "got %lu\n", size);
+    ok(keylength == 1024, "got %lu\n", keylength);
+
+    NCryptFinalizeKey(key, 0);
+    NCryptFreeObject(key);
+    NCryptFreeObject(prov);
+    }
+}
+
 START_TEST(ncrypt)
 {
     test_key_import_rsa();
-    test_ncrypt_free_object();
+    test_free_object();
     test_get_property();
+    test_create_persisted_key();
 }
