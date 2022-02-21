@@ -518,7 +518,7 @@ static int parser_error(unsigned *loc, parser_ctx_t *ctx, const char *str)
         FIXME("%s: %s\n", debugstr_w(ctx->code + *loc), debugstr_a(str));
         ctx->hres = E_FAIL;
     }else {
-        WARN("%s: %08x\n", debugstr_w(ctx->code + *loc), ctx->hres);
+        WARN("%s: %08lx\n", debugstr_w(ctx->code + *loc), ctx->hres);
     }
     return 0;
 }

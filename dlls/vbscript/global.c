@@ -84,7 +84,7 @@ static ULONG WINAPI Builtin_AddRef(IDispatch *iface)
     BuiltinDisp *This = impl_from_IDispatch(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -94,7 +94,7 @@ static ULONG WINAPI Builtin_Release(IDispatch *iface)
     BuiltinDisp *This = impl_from_IDispatch(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
         assert(!This->ctx);
@@ -115,7 +115,7 @@ static HRESULT WINAPI Builtin_GetTypeInfoCount(IDispatch *iface, UINT *pctinfo)
 static HRESULT WINAPI Builtin_GetTypeInfo(IDispatch *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
 {
     BuiltinDisp *This = impl_from_IDispatch(iface);
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("(%p)->(%u %lu %p)\n", This, iTInfo, lcid, ppTInfo);
     return DISP_E_BADINDEX;
 }
 
@@ -148,7 +148,7 @@ static HRESULT WINAPI Builtin_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOLE
     unsigned i;
     HRESULT hres;
 
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), names, name_cnt, lcid, ids);
+    TRACE("(%p)->(%s %p %u %lu %p)\n", This, debugstr_guid(riid), names, name_cnt, lcid, ids);
 
     if(!This->ctx) {
         FIXME("NULL context\n");
@@ -173,7 +173,7 @@ static HRESULT WINAPI Builtin_Invoke(IDispatch *iface, DISPID id, REFIID riid, L
     unsigned argn, i;
     HRESULT hres;
 
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, id, debugstr_guid(riid), lcid, flags, dp, res, ei, err);
+    TRACE("(%p)->(%ld %s %ld %d %p %p %p %p)\n", This, id, debugstr_guid(riid), lcid, flags, dp, res, ei, err);
 
     if(!This->ctx) {
         FIXME("NULL context\n");
@@ -626,7 +626,7 @@ static HRESULT show_msgbox(script_ctx_t *ctx, BSTR prompt, unsigned type, BSTR o
     heap_free(title_buf);
     IActiveScriptSiteWindow_Release(acts_window);
     if(FAILED(hres)) {
-        FIXME("failed: %08x\n", hres);
+        FIXME("failed: %08lx\n", hres);
         return hres;
     }
 

@@ -62,7 +62,7 @@ static ULONG WINAPI safearray_iter_IEnumVARIANT_AddRef(IEnumVARIANT *iface)
     safearray_iter *This = impl_from_IEnumVARIANT(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -72,7 +72,7 @@ static ULONG WINAPI safearray_iter_IEnumVARIANT_Release(IEnumVARIANT *iface)
     safearray_iter *This = impl_from_IEnumVARIANT(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", iface, ref);
+    TRACE("(%p) ref=%ld\n", iface, ref);
 
     if(!ref) {
         if(This->sa)
@@ -90,7 +90,7 @@ static HRESULT WINAPI safearray_iter_IEnumVARIANT_Next(IEnumVARIANT *iface,
     HRESULT hres;
     VARIANT *v;
 
-    TRACE("(%p)->(%u %p %p)\n", This, celt, rgVar, pCeltFetched);
+    TRACE("(%p)->(%lu %p %p)\n", This, celt, rgVar, pCeltFetched);
 
     if(celt != 1) {
         FIXME("celt != 1\n");

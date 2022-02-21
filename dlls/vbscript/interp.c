@@ -1223,7 +1223,7 @@ static HRESULT interp_dim(exec_ctx_t *ctx)
 
         hres = lookup_identifier(ctx, ident, VBDISP_LET, &ref);
         if(FAILED(hres)) {
-            FIXME("lookup %s failed: %08x\n", debugstr_w(ident), hres);
+            FIXME("lookup %s failed: %08lx\n", debugstr_w(ident), hres);
             return hres;
         }
 
@@ -1292,7 +1292,7 @@ static HRESULT interp_redim(exec_ctx_t *ctx)
 
     hres = lookup_identifier(ctx, identifier, VBDISP_LET, &ref);
     if(FAILED(hres)) {
-        FIXME("lookup %s failed: %08x\n", debugstr_w(identifier), hres);
+        FIXME("lookup %s failed: %08lx\n", debugstr_w(identifier), hres);
         return hres;
     }
 
@@ -1332,7 +1332,7 @@ static HRESULT interp_redim_preserve(exec_ctx_t *ctx)
 
     hres = lookup_identifier(ctx, identifier, VBDISP_LET, &ref);
     if(FAILED(hres)) {
-        FIXME("lookup %s failed: %08x\n", debugstr_w(identifier), hres);
+        FIXME("lookup %s failed: %08lx\n", debugstr_w(identifier), hres);
         return hres;
     }
 
@@ -1367,7 +1367,7 @@ static HRESULT interp_redim_preserve(exec_ctx_t *ctx)
         /* can resize the last dimensions (if others match */
         for(i = 0; i+1 < dim_cnt; ++i) {
             if(array->rgsabound[array->cDims - 1 - i].cElements != bounds[i].cElements) {
-                TRACE("Can't resize %s, bound[%d] %d != %d\n", debugstr_w(identifier), i, array->rgsabound[i].cElements, bounds[i].cElements);
+                TRACE("Can't resize %s, bound[%d] %ld != %ld\n", debugstr_w(identifier), i, array->rgsabound[i].cElements, bounds[i].cElements);
                 return MAKE_VBSERROR(VBSE_OUT_OF_BOUNDS);
             }
         }
@@ -1448,7 +1448,7 @@ static HRESULT interp_newenum(exec_ctx_t *ctx)
         hres = IUnknown_QueryInterface(V_UNKNOWN(&iterv), &IID_IEnumVARIANT, (void**)&iter);
         IUnknown_Release(V_UNKNOWN(&iterv));
         if(FAILED(hres)) {
-            FIXME("Could not get IEnumVARIANT iface: %08x\n", hres);
+            FIXME("Could not get IEnumVARIANT iface: %08lx\n", hres);
             return hres;
         }
 
@@ -1689,7 +1689,7 @@ static HRESULT interp_int(exec_ctx_t *ctx)
     const LONG arg = ctx->instr->arg1.lng;
     VARIANT v;
 
-    TRACE("%d\n", arg);
+    TRACE("%ld\n", arg);
 
     if(arg == (INT16)arg) {
         V_VT(&v) = VT_I2;
@@ -2501,7 +2501,7 @@ HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbd
             if(exec.resume_next) {
                 unsigned stack_off;
 
-                WARN("Failed %08x in resume next mode\n", hres);
+                WARN("Failed %08lx in resume next mode\n", hres);
 
                 /*
                  * Unwinding here is simple. We need to find the next OP_catch, which contains

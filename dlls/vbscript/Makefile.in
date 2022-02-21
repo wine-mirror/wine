@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = vbscript.dll
 IMPORTS   = oleaut32 ole32 user32
 

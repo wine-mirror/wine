@@ -205,7 +205,7 @@ static HRESULT retrieve_named_item_disp(IActiveScriptSite *site, named_item_t *i
 
     hres = IActiveScriptSite_GetItemInfo(site, item->name, SCRIPTINFO_IUNKNOWN, &unk, NULL);
     if(FAILED(hres)) {
-        WARN("GetItemInfo failed: %08x\n", hres);
+        WARN("GetItemInfo failed: %08lx\n", hres);
         return hres;
     }
 
@@ -396,7 +396,7 @@ static ULONG WINAPI VBScriptError_AddRef(IActiveScriptError *iface)
     VBScriptError *This = impl_from_IActiveScriptError(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -406,7 +406,7 @@ static ULONG WINAPI VBScriptError_Release(IActiveScriptError *iface)
     VBScriptError *This = impl_from_IActiveScriptError(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
         heap_free(This);
@@ -531,7 +531,7 @@ static ULONG WINAPI VBScript_AddRef(IActiveScript *iface)
     VBScript *This = impl_from_IActiveScript(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -541,7 +541,7 @@ static ULONG WINAPI VBScript_Release(IActiveScript *iface)
     VBScript *This = impl_from_IActiveScript(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", iface, ref);
+    TRACE("(%p) ref=%ld\n", iface, ref);
 
     if(!ref) {
         decrease_state(This, SCRIPTSTATE_CLOSED);
@@ -690,7 +690,7 @@ static HRESULT WINAPI VBScript_AddNamedItem(IActiveScript *iface, LPCOLESTR pstr
     IDispatch *disp = NULL;
     HRESULT hres;
 
-    TRACE("(%p)->(%s %x)\n", This, debugstr_w(pstrName), dwFlags);
+    TRACE("(%p)->(%s %lx)\n", This, debugstr_w(pstrName), dwFlags);
 
     if(This->thread_id != GetCurrentThreadId() || !This->ctx->site)
         return E_UNEXPECTED;
@@ -700,7 +700,7 @@ static HRESULT WINAPI VBScript_AddNamedItem(IActiveScript *iface, LPCOLESTR pstr
 
         hres = IActiveScriptSite_GetItemInfo(This->ctx->site, pstrName, SCRIPTINFO_IUNKNOWN, &unk, NULL);
         if(FAILED(hres)) {
-            WARN("GetItemInfo failed: %08x\n", hres);
+            WARN("GetItemInfo failed: %08lx\n", hres);
             return hres;
         }
 
@@ -739,7 +739,7 @@ static HRESULT WINAPI VBScript_AddTypeLib(IActiveScript *iface, REFGUID rguidTyp
         DWORD dwMajor, DWORD dwMinor, DWORD dwFlags)
 {
     VBScript *This = impl_from_IActiveScript(iface);
-    FIXME("(%p)->(%s %d %d %d)\n", This, debugstr_guid(rguidTypeLib), dwMajor, dwMinor, dwFlags);
+    FIXME("(%p)->(%s %ld %ld %ld)\n", This, debugstr_guid(rguidTypeLib), dwMajor, dwMinor, dwFlags);
     return E_NOTIMPL;
 }
 
@@ -855,7 +855,7 @@ static HRESULT WINAPI VBScriptDebug_GetScriptTextAttributes(IActiveScriptDebug *
         LPCOLESTR code, ULONG len, LPCOLESTR delimiter, DWORD flags, SOURCE_TEXT_ATTR *attr)
 {
     VBScript *This = impl_from_IActiveScriptDebug(iface);
-    FIXME("(%p)->(%s %u %s %#x %p)\n", This, debugstr_w(code), len,
+    FIXME("(%p)->(%s %lu %s %#lx %p)\n", This, debugstr_w(code), len,
           debugstr_w(delimiter), flags, attr);
     return E_NOTIMPL;
 }
@@ -864,7 +864,7 @@ static HRESULT WINAPI VBScriptDebug_GetScriptletTextAttributes(IActiveScriptDebu
         LPCOLESTR code, ULONG len, LPCOLESTR delimiter, DWORD flags, SOURCE_TEXT_ATTR *attr)
 {
     VBScript *This = impl_from_IActiveScriptDebug(iface);
-    FIXME("(%p)->(%s %u %s %#x %p)\n", This, debugstr_w(code), len,
+    FIXME("(%p)->(%s %lu %s %#lx %p)\n", This, debugstr_w(code), len,
           debugstr_w(delimiter), flags, attr);
     return E_NOTIMPL;
 }
@@ -873,7 +873,7 @@ static HRESULT WINAPI VBScriptDebug_EnumCodeContextsOfPosition(IActiveScriptDebu
         CTXARG_T source, ULONG offset, ULONG len, IEnumDebugCodeContexts **ret)
 {
     VBScript *This = impl_from_IActiveScriptDebug(iface);
-    FIXME("(%p)->(%s %u %u %p)\n", This, wine_dbgstr_longlong(source), offset, len, ret);
+    FIXME("(%p)->(%s %lu %lu %p)\n", This, wine_dbgstr_longlong(source), offset, len, ret);
     return E_NOTIMPL;
 }
 
@@ -931,7 +931,7 @@ static HRESULT WINAPI VBScriptParse_AddScriptlet(IActiveScriptParse *iface,
         BSTR *pbstrName, EXCEPINFO *pexcepinfo)
 {
     VBScript *This = impl_from_IActiveScriptParse(iface);
-    FIXME("(%p)->(%s %s %s %s %s %s %s %u %x %p %p)\n", This, debugstr_w(pstrDefaultName),
+    FIXME("(%p)->(%s %s %s %s %s %s %s %lu %lx %p %p)\n", This, debugstr_w(pstrDefaultName),
           debugstr_w(pstrCode), debugstr_w(pstrItemName), debugstr_w(pstrSubItemName),
           debugstr_w(pstrEventName), debugstr_w(pstrDelimiter), wine_dbgstr_longlong(dwSourceContextCookie),
           ulStartingLineNumber, dwFlags, pbstrName, pexcepinfo);
@@ -947,7 +947,7 @@ static HRESULT WINAPI VBScriptParse_ParseScriptText(IActiveScriptParse *iface,
     vbscode_t *code;
     HRESULT hres;
 
-    TRACE("(%p)->(%s %s %p %s %s %u %x %p %p)\n", This, debugstr_w(pstrCode),
+    TRACE("(%p)->(%s %s %p %s %s %lu %lx %p %p)\n", This, debugstr_w(pstrCode),
           debugstr_w(pstrItemName), punkContext, debugstr_w(pstrDelimiter),
           wine_dbgstr_longlong(dwSourceContextCookie), ulStartingLine, dwFlags, pvarResult, pexcepinfo);
 
@@ -1009,7 +1009,7 @@ static HRESULT WINAPI VBScriptParseProcedure_ParseProcedureText(IActiveScriptPar
     vbdisp_t *vbdisp;
     HRESULT hres;
 
-    TRACE("(%p)->(%s %s %s %s %p %s %s %u %x %p)\n", This, debugstr_w(pstrCode), debugstr_w(pstrFormalParams),
+    TRACE("(%p)->(%s %s %s %s %p %s %s %lu %lx %p)\n", This, debugstr_w(pstrCode), debugstr_w(pstrFormalParams),
           debugstr_w(pstrProcedureName), debugstr_w(pstrItemName), punkContext, debugstr_w(pstrDelimiter),
           wine_dbgstr_longlong(dwSourceContextCookie), ulStartingLineNumber, dwFlags, ppdisp);
 
@@ -1081,7 +1081,7 @@ static HRESULT WINAPI VBScriptSafety_SetInterfaceSafetyOptions(IObjectSafety *if
 {
     VBScript *This = impl_from_IObjectSafety(iface);
 
-    TRACE("(%p)->(%s %x %x)\n", This, debugstr_guid(riid), dwOptionSetMask, dwEnabledOptions);
+    TRACE("(%p)->(%s %lx %lx)\n", This, debugstr_guid(riid), dwOptionSetMask, dwEnabledOptions);
 
     if(dwOptionSetMask & ~SUPPORTED_OPTIONS)
         return E_FAIL;
@@ -1179,7 +1179,7 @@ static ULONG WINAPI AXSite_AddRef(IServiceProvider *iface)
     AXSite *This = impl_from_IServiceProvider(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -1189,7 +1189,7 @@ static ULONG WINAPI AXSite_Release(IServiceProvider *iface)
     AXSite *This = impl_from_IServiceProvider(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref)
         heap_free(This);
@@ -1222,7 +1222,7 @@ IUnknown *create_ax_site(script_ctx_t *ctx)
 
     hres = IActiveScriptSite_QueryInterface(ctx->site, &IID_IServiceProvider, (void**)&sp);
     if(FAILED(hres)) {
-        ERR("Could not get IServiceProvider iface: %08x\n", hres);
+        ERR("Could not get IServiceProvider iface: %08lx\n", hres);
         return NULL;
     }
 

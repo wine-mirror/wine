@@ -56,7 +56,7 @@ static HRESULT init_regexp_typeinfo(regexp_tid_t tid)
 
         hres = LoadTypeLib(L"vbscript.dll\\3", &tl);
         if(FAILED(hres)) {
-            ERR("LoadRegTypeLib failed: %08x\n", hres);
+            ERR("LoadRegTypeLib failed: %08lx\n", hres);
             return hres;
         }
 
@@ -69,7 +69,7 @@ static HRESULT init_regexp_typeinfo(regexp_tid_t tid)
 
         hres = ITypeLib_GetTypeInfoOfGuid(typelib, tid_ids[tid], &ti);
         if(FAILED(hres)) {
-            ERR("GetTypeInfoOfGuid(%s) failed: %08x\n", debugstr_guid(tid_ids[tid]), hres);
+            ERR("GetTypeInfoOfGuid(%s) failed: %08lx\n", debugstr_guid(tid_ids[tid]), hres);
             return hres;
         }
 
@@ -170,7 +170,7 @@ static ULONG WINAPI SubMatches_AddRef(ISubMatches *iface)
     SubMatches *This = impl_from_ISubMatches(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -180,7 +180,7 @@ static ULONG WINAPI SubMatches_Release(ISubMatches *iface)
     SubMatches *This = impl_from_ISubMatches(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
         heap_free(This->match);
@@ -205,7 +205,7 @@ static HRESULT WINAPI SubMatches_GetTypeInfo(ISubMatches *iface,
         UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
 {
     SubMatches *This = impl_from_ISubMatches(iface);
-    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    FIXME("(%p)->(%u %lu %p)\n", This, iTInfo, lcid, ppTInfo);
     return E_NOTIMPL;
 }
 
@@ -214,7 +214,7 @@ static HRESULT WINAPI SubMatches_GetIDsOfNames(ISubMatches *iface,
 {
     SubMatches *This = impl_from_ISubMatches(iface);
 
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid),
+    TRACE("(%p)->(%s %p %u %lu %p)\n", This, debugstr_guid(riid),
             rgszNames, cNames, lcid, rgDispId);
 
     return ITypeInfo_GetIDsOfNames(typeinfos[SubMatches_tid], rgszNames, cNames, rgDispId);
@@ -226,7 +226,7 @@ static HRESULT WINAPI SubMatches_Invoke(ISubMatches *iface, DISPID dispIdMember,
 {
     SubMatches *This = impl_from_ISubMatches(iface);
 
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("(%p)->(%ld %s %ld %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
             lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     return ITypeInfo_Invoke(typeinfos[SubMatches_tid], iface, dispIdMember, wFlags,
@@ -238,7 +238,7 @@ static HRESULT WINAPI SubMatches_get_Item(ISubMatches *iface,
 {
     SubMatches *This = impl_from_ISubMatches(iface);
 
-    TRACE("(%p)->(%d %p)\n", This, index, pSubMatch);
+    TRACE("(%p)->(%ld %p)\n", This, index, pSubMatch);
 
     if(!pSubMatch)
         return E_POINTER;
@@ -377,7 +377,7 @@ static ULONG WINAPI Match2_AddRef(IMatch2 *iface)
     Match2 *This = impl_from_IMatch2(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -387,7 +387,7 @@ static ULONG WINAPI Match2_Release(IMatch2 *iface)
     Match2 *This = impl_from_IMatch2(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
         ISubMatches_Release(&This->sub_matches->ISubMatches_iface);
@@ -411,7 +411,7 @@ static HRESULT WINAPI Match2_GetTypeInfo(IMatch2 *iface,
         UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
 {
     Match2 *This = impl_from_IMatch2(iface);
-    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    FIXME("(%p)->(%u %lu %p)\n", This, iTInfo, lcid, ppTInfo);
     return E_NOTIMPL;
 }
 
@@ -420,7 +420,7 @@ static HRESULT WINAPI Match2_GetIDsOfNames(IMatch2 *iface,
 {
     Match2 *This = impl_from_IMatch2(iface);
 
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid),
+    TRACE("(%p)->(%s %p %u %lu %p)\n", This, debugstr_guid(riid),
             rgszNames, cNames, lcid, rgDispId);
 
     return ITypeInfo_GetIDsOfNames(typeinfos[Match2_tid], rgszNames, cNames, rgDispId);
@@ -432,7 +432,7 @@ static HRESULT WINAPI Match2_Invoke(IMatch2 *iface, DISPID dispIdMember,
 {
     Match2 *This = impl_from_IMatch2(iface);
 
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("(%p)->(%ld %s %ld %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
             lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     return ITypeInfo_Invoke(typeinfos[Match2_tid], iface, dispIdMember, wFlags,
@@ -657,7 +657,7 @@ static ULONG WINAPI MatchCollectionEnum_AddRef(IEnumVARIANT *iface)
     MatchCollectionEnum *This = impl_from_IMatchCollectionEnum(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -667,7 +667,7 @@ static ULONG WINAPI MatchCollectionEnum_Release(IEnumVARIANT *iface)
     MatchCollectionEnum *This = impl_from_IMatchCollectionEnum(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
         IMatchCollection2_Release(This->mc);
@@ -684,7 +684,7 @@ static HRESULT WINAPI MatchCollectionEnum_Next(IEnumVARIANT *iface,
     DWORD i;
     HRESULT hres = S_OK;
 
-    TRACE("(%p)->(%u %p %p)\n", This, celt, rgVar, pCeltFetched);
+    TRACE("(%p)->(%lu %p %p)\n", This, celt, rgVar, pCeltFetched);
 
     if(This->pos>=This->count) {
         if(pCeltFetched)
@@ -714,7 +714,7 @@ static HRESULT WINAPI MatchCollectionEnum_Skip(IEnumVARIANT *iface, ULONG celt)
 {
     MatchCollectionEnum *This = impl_from_IMatchCollectionEnum(iface);
 
-    TRACE("(%p)->(%u)\n", This, celt);
+    TRACE("(%p)->(%lu)\n", This, celt);
 
     if(This->pos+celt <= This->count)
         This->pos += celt;
@@ -810,7 +810,7 @@ static ULONG WINAPI MatchCollection2_AddRef(IMatchCollection2 *iface)
     MatchCollection2 *This = impl_from_IMatchCollection2(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -820,7 +820,7 @@ static ULONG WINAPI MatchCollection2_Release(IMatchCollection2 *iface)
     MatchCollection2 *This = impl_from_IMatchCollection2(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
         DWORD i;
@@ -849,7 +849,7 @@ static HRESULT WINAPI MatchCollection2_GetTypeInfo(IMatchCollection2 *iface,
         UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
 {
     MatchCollection2 *This = impl_from_IMatchCollection2(iface);
-    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    FIXME("(%p)->(%u %lu %p)\n", This, iTInfo, lcid, ppTInfo);
     return E_NOTIMPL;
 }
 
@@ -858,7 +858,7 @@ static HRESULT WINAPI MatchCollection2_GetIDsOfNames(IMatchCollection2 *iface,
 {
     MatchCollection2 *This = impl_from_IMatchCollection2(iface);
 
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid),
+    TRACE("(%p)->(%s %p %u %lu %p)\n", This, debugstr_guid(riid),
             rgszNames, cNames, lcid, rgDispId);
 
     return ITypeInfo_GetIDsOfNames(typeinfos[MatchCollection2_tid], rgszNames, cNames, rgDispId);
@@ -870,7 +870,7 @@ static HRESULT WINAPI MatchCollection2_Invoke(IMatchCollection2 *iface, DISPID d
 {
     MatchCollection2 *This = impl_from_IMatchCollection2(iface);
 
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("(%p)->(%ld %s %ld %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
             lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     return ITypeInfo_Invoke(typeinfos[MatchCollection2_tid], iface, dispIdMember, wFlags,
@@ -1103,7 +1103,7 @@ static ULONG WINAPI RegExp2_AddRef(IRegExp2 *iface)
     RegExp2 *This = impl_from_IRegExp2(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -1113,7 +1113,7 @@ static ULONG WINAPI RegExp2_Release(IRegExp2 *iface)
     RegExp2 *This = impl_from_IRegExp2(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
         heap_free(This->pattern);
@@ -1140,7 +1140,7 @@ static HRESULT WINAPI RegExp2_GetTypeInfo(IRegExp2 *iface,
         UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
 {
     RegExp2 *This = impl_from_IRegExp2(iface);
-    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    FIXME("(%p)->(%u %lu %p)\n", This, iTInfo, lcid, ppTInfo);
     return E_NOTIMPL;
 }
 
@@ -1149,7 +1149,7 @@ static HRESULT WINAPI RegExp2_GetIDsOfNames(IRegExp2 *iface, REFIID riid,
 {
     RegExp2 *This = impl_from_IRegExp2(iface);
 
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid),
+    TRACE("(%p)->(%s %p %u %lu %p)\n", This, debugstr_guid(riid),
             rgszNames, cNames, lcid, rgDispId);
 
     return ITypeInfo_GetIDsOfNames(typeinfos[RegExp2_tid], rgszNames, cNames, rgDispId);
@@ -1161,7 +1161,7 @@ static HRESULT WINAPI RegExp2_Invoke(IRegExp2 *iface, DISPID dispIdMember,
 {
     RegExp2 *This = impl_from_IRegExp2(iface);
 
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("(%p)->(%ld %s %ld %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
             lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     return ITypeInfo_Invoke(typeinfos[RegExp2_tid], iface, dispIdMember, wFlags,
