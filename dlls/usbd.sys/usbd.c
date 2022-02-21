@@ -173,7 +173,7 @@ PUSB_INTERFACE_DESCRIPTOR WINAPI USBD_ParseConfigurationDescriptorEx(
 
     PUSB_INTERFACE_DESCRIPTOR interface;
 
-    TRACE( "(%p, %p, %d, %d, %d, %d, %d)\n", ConfigurationDescriptor,
+    TRACE( "(%p, %p, %ld, %ld, %ld, %ld, %ld)\n", ConfigurationDescriptor,
             StartPosition, InterfaceNumber, AlternateSetting,
             InterfaceClass, InterfaceSubClass, InterfaceProtocol );
 
@@ -214,7 +214,7 @@ PUSB_COMMON_DESCRIPTOR WINAPI USBD_ParseDescriptors(
 {
     PUSB_COMMON_DESCRIPTOR common;
 
-    TRACE( "(%p, %u, %p, %d)\n", DescriptorBuffer, TotalLength, StartPosition, DescriptorType );
+    TRACE( "(%p, %lu, %p, %ld)\n", DescriptorBuffer, TotalLength, StartPosition, DescriptorType );
 
     for (common = (PUSB_COMMON_DESCRIPTOR)DescriptorBuffer;
          ((char*)common) + sizeof(USB_COMMON_DESCRIPTOR) <= ((char*)DescriptorBuffer) + TotalLength;
@@ -233,7 +233,7 @@ USBD_STATUS WINAPI USBD_ValidateConfigurationDescriptor(
         PUCHAR *offset,
         ULONG tag )
 {
-    FIXME( "(%p, %u, %u, %p, %u) partial stub!\n", descr, length, level, offset, tag );
+    FIXME( "(%p, %lu, %u, %p, %lu) partial stub!\n", descr, length, level, offset, tag );
 
     if (offset) *offset = 0;
 
