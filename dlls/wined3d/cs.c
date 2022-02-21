@@ -2739,43 +2739,17 @@ static void wined3d_cs_exec_update_sub_resource(struct wined3d_cs *cs, const voi
     const struct wined3d_cs_update_sub_resource *op = data;
     struct wined3d_resource *resource = op->resource;
     const struct wined3d_box *box = &op->box;
-    unsigned int width, height, depth, level;
     struct wined3d_context *context;
-    struct wined3d_texture *texture;
-    struct wined3d_box src_box;
 
     context = context_acquire(cs->c.device, NULL, 0);
 
     if (resource->type == WINED3D_RTYPE_BUFFER)
-    {
         wined3d_buffer_update_sub_resource(buffer_from_resource(resource),
                 context, &op->bo, box->left, box->right - box->left);
-        goto done;
-    }
-
-    texture = wined3d_texture_from_resource(resource);
-
-    level = op->sub_resource_idx % texture->level_count;
-    width = wined3d_texture_get_level_width(texture, level);
-    height = wined3d_texture_get_level_height(texture, level);
-    depth = wined3d_texture_get_level_depth(texture, level);
-
-    /* Only load the sub-resource for partial updates. */
-    if (!box->left && !box->top && !box->front
-            && box->right == width && box->bottom == height && box->back == depth)
-        wined3d_texture_prepare_location(texture, op->sub_resource_idx, context, WINED3D_LOCATION_TEXTURE_RGB);
     else
-        wined3d_texture_load_location(texture, op->sub_resource_idx, context, WINED3D_LOCATION_TEXTURE_RGB);
+        wined3d_texture_update_sub_resource(texture_from_resource(resource),
+                op->sub_resource_idx, context, &op->bo, box, op->row_pitch, op->slice_pitch);
 
-    wined3d_box_set(&src_box, 0, 0, box->right - box->left, box->bottom - box->top, 0, box->back - box->front);
-    texture->texture_ops->texture_upload_data(context, &op->bo.addr, texture->resource.format, &src_box,
-            op->row_pitch, op->slice_pitch, texture, op->sub_resource_idx,
-            WINED3D_LOCATION_TEXTURE_RGB, box->left, box->top, box->front);
-
-    wined3d_texture_validate_location(texture, op->sub_resource_idx, WINED3D_LOCATION_TEXTURE_RGB);
-    wined3d_texture_invalidate_location(texture, op->sub_resource_idx, ~WINED3D_LOCATION_TEXTURE_RGB);
-
-done:
     context_release(context);
 
     wined3d_resource_release(resource);
