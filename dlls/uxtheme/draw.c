@@ -57,7 +57,7 @@ HRESULT WINAPI EnableThemeDialogTexture(HWND hwnd, DWORD new_flag)
     DWORD old_flag = 0;
     BOOL res;
 
-    TRACE("(%p,%#x\n", hwnd, new_flag);
+    TRACE("(%p,%#lx\n", hwnd, new_flag);
 
     new_flag &= ETDT_VALIDBITS;
 
@@ -267,7 +267,7 @@ static PTHEME_PROPERTY UXTHEME_SelectImage(HTHEME hTheme, int iPartId, int iStat
                 }
             }
             if(reqsize.x <= size.x && reqsize.y <= size.y) {
-                TRACE("Using image size %dx%d, image %d\n", reqsize.x, reqsize.y,
+                TRACE("Using image size %ldx%ld, image %d\n", reqsize.x, reqsize.y,
                       imagefile_index_to_property(i));
                 return fileProp;
             }
@@ -957,7 +957,7 @@ static HRESULT UXTHEME_DrawBackgroundFill(HTHEME hTheme, HDC hdc, int iPartId,
     HRESULT hr = S_OK;
     int filltype = FT_SOLID;
 
-    TRACE("(%d,%d,%d)\n", iPartId, iStateId, pOptions->dwFlags);
+    TRACE("(%d,%d,%ld)\n", iPartId, iStateId, pOptions->dwFlags);
 
     if(pOptions->dwFlags & DTBG_OMITCONTENT)
         return S_OK;
@@ -1055,7 +1055,7 @@ HRESULT WINAPI DrawThemeBackgroundEx(HTHEME hTheme, HDC hdc, int iPartId,
     int bgtype = BT_BORDERFILL;
     RECT rt;
 
-    TRACE("(%p,%p,%d,%d,%d,%d)\n", hTheme, hdc, iPartId, iStateId,pRect->left,pRect->top);
+    TRACE("(%p,%p,%d,%d,%ld,%ld)\n", hTheme, hdc, iPartId, iStateId,pRect->left,pRect->top);
     if(!hTheme)
         return E_HANDLE;
 
@@ -1744,14 +1744,14 @@ HRESULT WINAPI DrawThemeTextEx(HTHEME hTheme, HDC hdc, int iPartId, int iStateId
     int oldBkMode;
     int fontProp;
 
-    TRACE("%p %p %d %d %s:%d 0x%08x %p %p\n", hTheme, hdc, iPartId, iStateId,
+    TRACE("%p %p %d %d %s:%d 0x%08lx %p %p\n", hTheme, hdc, iPartId, iStateId,
         debugstr_wn(pszText, iCharCount), iCharCount, flags, rect, options);
 
     if(!hTheme)
         return E_HANDLE;
 
     if (options->dwFlags & ~(DTT_TEXTCOLOR | DTT_FONTPROP))
-        FIXME("unsupported flags 0x%08x\n", options->dwFlags);
+        FIXME("unsupported flags 0x%08lx\n", options->dwFlags);
 
     if (options->dwFlags & DTT_FONTPROP)
         fontProp = options->iFontPropId;

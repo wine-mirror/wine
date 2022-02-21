@@ -33,7 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(uxtheme);
 /* For the moment, do nothing here. */
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, void *reserved)
 {
-    TRACE("%p 0x%x %p\n", hInstDLL, fdwReason, reserved);
+    TRACE("%p 0x%lx %p\n", hInstDLL, fdwReason, reserved);
     switch(fdwReason) {
         case DLL_PROCESS_ATTACH:
             DisableThreadLibraryCalls(hInstDLL);

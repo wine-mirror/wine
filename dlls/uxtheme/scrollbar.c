@@ -273,7 +273,7 @@ LRESULT WINAPI UXTHEME_ScrollbarWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
     HTHEME theme;
     LRESULT result;
 
-    TRACE("(%p, 0x%x, %lu, %lu, %d)\n", hwnd, msg, wParam, lParam, unicode);
+    TRACE("(%p, 0x%x, %Iu, %Iu, %d)\n", hwnd, msg, wParam, lParam, unicode);
 
     switch (msg) {
         case WM_CREATE:
