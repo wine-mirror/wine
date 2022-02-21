@@ -72,7 +72,7 @@ _fetch_versioninfo(LPSTR fn,VS_FIXEDFILEINFO **vffi) {
 	    if ((*vffi)->dwSignature == 0x004f0049) /* hack to detect unicode */
 		*vffi = (VS_FIXEDFILEINFO*)(buf+0x28);
 	    if ((*vffi)->dwSignature != VS_FFI_SIGNATURE)
-                WARN("Bad VS_FIXEDFILEINFO signature 0x%08x\n",(*vffi)->dwSignature);
+                WARN("Bad VS_FIXEDFILEINFO signature 0x%08lx\n",(*vffi)->dwSignature);
 	    return buf;
 	}
     }
@@ -106,7 +106,7 @@ DWORD WINAPI VerInstallFileA(
     LPBYTE	buf1,buf2;
     OFSTRUCT	ofs;
 
-    TRACE("(%x,%s,%s,%s,%s,%s,%p,%d)\n",
+    TRACE("(%lx,%s,%s,%s,%s,%s,%p,%d)\n",
           flags,debugstr_a(srcfilename),debugstr_a(destfilename),
           debugstr_a(srcdir),debugstr_a(destdir),debugstr_a(curdir),
           tmpfile,*tmpfilelen);
@@ -174,7 +174,7 @@ DWORD WINAPI VerInstallFileA(
 		xret = VIF_OUTOFMEMORY;
 		break;
 	    default: /* unknown error, should not happen */
-		FIXME("Unknown LZCopy error %d, ignoring.\n", ret);
+		FIXME("Unknown LZCopy error %ld, ignoring.\n", ret);
 		xret = 0;
 		break;
 	    }
