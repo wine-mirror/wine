@@ -2728,7 +2728,7 @@ static void test_BTNS_SEP(void)
     memset(&button, 0, sizeof(button));
     ret = SendMessageA(hwnd, TB_GETBUTTON, 0, (LPARAM)&button);
     ok(ret == 1, "Unexpected return value.\n");
-todo_wine
+    todo_wine
     ok(button.iBitmap == 8, "Unexpected iBitmap value %d.\n", button.iBitmap);
 
     rebuild_toolbar(&hwnd);
@@ -2789,7 +2789,7 @@ todo_wine
     memset(&button, 0, sizeof(button));
     ret = SendMessageA(hwnd, TB_GETBUTTON, 0, (LPARAM)&button);
     ok(ret == 1, "Unexpected return value.\n");
-todo_wine
+    todo_wine
     ok(button.iBitmap == 8, "Unexpected iBitmap value %d.\n", button.iBitmap);
 
     DestroyWindow(hwnd);
