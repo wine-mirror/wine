@@ -30,7 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(vdmdbg);
  */
 INT WINAPI VDMEnumTaskWOW(DWORD dwProcessId, TASKENUMPROC fp, LPARAM lparam)
 {
-    FIXME("(%d, %p): stub!\n", dwProcessId, fp);
+    FIXME("(%ld, %p): stub!\n", dwProcessId, fp);
     return 0;
 }
 
