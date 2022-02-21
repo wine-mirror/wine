@@ -321,7 +321,7 @@ typedef struct _PEB
     PVOID                        KernelCallbackTable;               /* 02c/058 */
     ULONG                        Reserved;                          /* 030/060 */
     ULONG                        AtlThunkSListPtr32;                /* 034/064 */
-    PVOID /*PPEB_FREE_BLOCK*/    FreeList;                          /* 038/068 */
+    PVOID                        ApiSetMap;                         /* 038/068 */
     ULONG                        TlsExpansionCounter;               /* 03c/070 */
     PRTL_BITMAP                  TlsBitmap;                         /* 040/078 */
     ULONG                        TlsBitmapBits[2];                  /* 044/080 */
@@ -731,7 +731,7 @@ typedef struct _PEB32
     ULONG                        KernelCallbackTable;               /* 002c */
     ULONG                        Reserved;                          /* 0030 */
     ULONG                        AtlThunkSListPtr32;                /* 0034 */
-    ULONG                        FreeList;                          /* 0038 */
+    ULONG                        ApiSetMap;                         /* 0038 */
     ULONG                        TlsExpansionCounter;               /* 003c */
     ULONG                        TlsBitmap;                         /* 0040 */
     ULONG                        TlsBitmapBits[2];                  /* 0044 */
@@ -822,7 +822,7 @@ typedef struct _PEB64
     ULONG64                      KernelCallbackTable;               /* 0058 */
     ULONG                        Reserved;                          /* 0060 */
     ULONG                        AtlThunkSListPtr32;                /* 0064 */
-    ULONG64                      FreeList;                          /* 0068 */
+    ULONG64                      ApiSetMap;                         /* 0068 */
     ULONG                        TlsExpansionCounter;               /* 0070 */
     ULONG64                      TlsBitmap;                         /* 0078 */
     ULONG                        TlsBitmapBits[2];                  /* 0080 */
@@ -3823,6 +3823,44 @@ typedef struct
     ULONG_PTR  ServiceLimit;
     BYTE      *ArgumentTable;
 } SYSTEM_SERVICE_TABLE;
+
+/* ApiSet structures (format for version 6) */
+
+typedef struct _API_SET_NAMESPACE
+{
+    ULONG Version;
+    ULONG Size;
+    ULONG Flags;
+    ULONG Count;
+    ULONG EntryOffset;
+    ULONG HashOffset;
+    ULONG HashFactor;
+} API_SET_NAMESPACE;
+
+typedef struct _API_SET_HASH_ENTRY
+{
+    ULONG Hash;
+    ULONG Index;
+} API_SET_HASH_ENTRY;
+
+typedef struct _API_SET_NAMESPACE_ENTRY
+{
+    ULONG Flags;
+    ULONG NameOffset;
+    ULONG NameLength;
+    ULONG HashedLength;
+    ULONG ValueOffset;
+    ULONG ValueCount;
+} API_SET_NAMESPACE_ENTRY;
+
+typedef struct _API_SET_VALUE_ENTRY
+{
+    ULONG Flags;
+    ULONG NameOffset;
+    ULONG NameLength;
+    ULONG ValueOffset;
+    ULONG ValueLength;
+} API_SET_VALUE_ENTRY;
 
 /***********************************************************************
  * Function declarations
