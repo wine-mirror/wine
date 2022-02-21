@@ -546,7 +546,7 @@ static void* WINAPI call_catch_block4(EXCEPTION_RECORD *rec)
         }
         __EXCEPT_CTX(cxx_rethrow_filter, &ctx)
         {
-            TRACE("detect rethrow: exception code: %x\n", prev_rec->ExceptionCode);
+            TRACE("detect rethrow: exception code: %lx\n", prev_rec->ExceptionCode);
             ctx.rethrow = TRUE;
             FlsSetValue(fls_index, (void*)(DWORD_PTR)ctx.search_state);
 
@@ -567,8 +567,8 @@ static void* WINAPI call_catch_block4(EXCEPTION_RECORD *rec)
     __FINALLY_CTX(cxx_catch_cleanup, &ctx)
 
     FlsSetValue(fls_index, (void*)-2);
-    TRACE("handler returned %p, ret_addr[0] %p, ret_addr[1] %p.\n",
-            ret_addr, rec->ExceptionInformation[8], rec->ExceptionInformation[9]);
+    TRACE("handler returned %p, ret_addr[0] %#Ix, ret_addr[1] %#Ix.\n",
+          ret_addr, rec->ExceptionInformation[8], rec->ExceptionInformation[9]);
 
     if (rec->ExceptionInformation[9])
     {
@@ -690,7 +690,7 @@ static LONG CALLBACK se_translation_filter(EXCEPTION_POINTERS *ep, void *c)
 
     if (rec->ExceptionCode != CXX_EXCEPTION)
     {
-        TRACE("non-c++ exception thrown in SEH handler: %x\n", rec->ExceptionCode);
+        TRACE("non-c++ exception thrown in SEH handler: %lx\n", rec->ExceptionCode);
         terminate();
     }
 
@@ -730,7 +730,7 @@ static DWORD cxx_frame_handler4(EXCEPTION_RECORD *rec, ULONG64 frame,
     {
         TRACE("nested exception detected\n");
         orig_frame = *(ULONG64*)rva_to_ptr(descr->frame, frame);
-        TRACE("setting orig_frame to %lx\n", orig_frame);
+        TRACE("setting orig_frame to %Ix\n", orig_frame);
     }
 
     if (rec->ExceptionFlags & (EH_UNWINDING|EH_EXIT_UNWIND))
@@ -763,7 +763,7 @@ static DWORD cxx_frame_handler4(EXCEPTION_RECORD *rec, ULONG64 frame,
 
         if (TRACE_ON(seh))
         {
-            TRACE("handling C++ exception rec %p frame %lx descr %p\n", rec, frame,  descr);
+            TRACE("handling C++ exception rec %p frame %Ix descr %p\n", rec, frame,  descr);
             dump_exception_type(exc_type, rec->ExceptionInformation[3]);
         }
     }
@@ -772,7 +772,7 @@ static DWORD cxx_frame_handler4(EXCEPTION_RECORD *rec, ULONG64 frame,
         _se_translator_function se_translator = get_se_translator();
 
         exc_type = NULL;
-        TRACE("handling C exception code %x rec %p frame %lx descr %p\n",
+        TRACE("handling C exception code %lx rec %p frame %Ix descr %p\n",
                 rec->ExceptionCode, rec, frame, descr);
 
         if (se_translator) {
@@ -810,7 +810,7 @@ EXCEPTION_DISPOSITION __cdecl __CxxFrameHandler4(EXCEPTION_RECORD *rec,
     BYTE *p, *count, *count_end;
     int trylevel;
 
-    TRACE("%p %lx %p %p\n", rec, frame, context, dispatch);
+    TRACE("%p %Ix %p %p\n", rec, frame, context, dispatch);
 
     trylevel = (DWORD_PTR)FlsGetValue(fls_index);
     FlsSetValue(fls_index, (void*)-2);
