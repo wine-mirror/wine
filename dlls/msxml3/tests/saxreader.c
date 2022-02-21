@@ -4504,7 +4504,7 @@ static void test_mxwriter_domdoc(void)
     V_DISPATCH(&dest) = (IDispatch *)domdoc;
 
     hr = IMXWriter_put_output(writer, dest);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Failed to set writer output, hr %#x.\n", hr);
     if (FAILED(hr))
     {
@@ -4530,11 +4530,11 @@ todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IXMLDOMDocument_get_documentElement(domdoc, &root);
-todo_wine
+    todo_wine
     ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
 
     hr = IXMLDOMDocument_createElement(domdoc, _bstr_("TestElement"), &root);
-todo_wine
+    todo_wine
     ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
 
     /* startElement allows document root node to be accessed. */
@@ -4547,7 +4547,7 @@ todo_wine
 
     hr = IXMLDOMElement_get_nodeName(root, &str);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine
+    todo_wine
     ok(!lstrcmpW(L"BankAccount", str), "Unexpected name %s.\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
@@ -4560,11 +4560,11 @@ todo_wine
 
     hr = IXMLDOMNodeList_get_length(node_list, &list_length);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine
+    todo_wine
     ok(list_length == 1, "list length %i, expected 1\n", list_length);
 
     hr = IXMLDOMNodeList_get_item(node_list, 0, &node);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IXMLDOMNode_get_nodeName(node, &str);
@@ -4618,7 +4618,7 @@ todo_wine {
     ok(2 == list_length, "list length %i, expected 2\n", list_length);
 }
     hr = IXMLDOMNodeList_get_item(node_list, 1, &node);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IXMLDOMNode_get_nodeName(node, &str);
