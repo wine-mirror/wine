@@ -25,6 +25,7 @@ import "asyncinfo.idl";
 import "eventtoken.idl";
 import "windowscontracts.idl";
 import "windows.foundation.idl";
+import "windows.devices.haptics.idl";
 import "windows.gaming.input.forcefeedback.idl";
 import "windows.system.idl";
 
@@ -258,6 +259,20 @@ namespace Windows.Gaming.Input {
                                   [in] UINT32 axes_size, [out, size_is(axes_size)] DOUBLE *axes,
                                   [out, retval] UINT64 *timestamp);
         HRESULT GetSwitchKind([in] INT32 index, [out, retval] Windows.Gaming.Input.GameControllerSwitchKind *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0),
+        exclusiveto(Windows.Gaming.Input.RawGameController),
+        uuid(43c0c035-bb73-4756-a787-3ed6bea617bd)
+    ]
+    interface IRawGameController2 : IInspectable
+        requires Windows.Gaming.Input.IRawGameController,
+                 Windows.Gaming.Input.IGameController
+    {
+        [propget] HRESULT SimpleHapticsControllers([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Devices.Haptics.SimpleHapticsController *> **value);
+        [propget] HRESULT NonRoamableId([out, retval] HSTRING *value);
+        [propget] HRESULT DisplayName([out, retval] HSTRING *value);
     }
 
     [
