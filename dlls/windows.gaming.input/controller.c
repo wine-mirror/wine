@@ -61,6 +61,7 @@ struct controller
     IGameControllerImpl IGameControllerImpl_iface;
     IGameControllerInputSink IGameControllerInputSink_iface;
     IRawGameController IRawGameController_iface;
+    IRawGameController2 IRawGameController2_iface;
     IGameController *IGameController_outer;
     LONG ref;
 
@@ -96,6 +97,12 @@ static HRESULT WINAPI controller_QueryInterface( IGameControllerImpl *iface, REF
     if (IsEqualGUID( iid, &IID_IRawGameController ))
     {
         IInspectable_AddRef( (*out = &impl->IRawGameController_iface) );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IRawGameController2 ))
+    {
+        IInspectable_AddRef( (*out = &impl->IRawGameController2_iface) );
         return S_OK;
     }
 
@@ -330,6 +337,58 @@ static const struct IRawGameControllerVtbl raw_controller_vtbl =
     raw_controller_GetSwitchKind,
 };
 
+DEFINE_IINSPECTABLE_OUTER( raw_controller_2, IRawGameController2, struct controller, IGameController_outer )
+
+static HRESULT WINAPI raw_controller_2_get_SimpleHapticsControllers( IRawGameController2 *iface, IVectorView_SimpleHapticsController** value)
+{
+    static const struct vector_iids iids =
+    {
+        .vector = &IID_IVector_SimpleHapticsController,
+        .view = &IID_IVectorView_SimpleHapticsController,
+        .iterable = &IID_IIterable_SimpleHapticsController,
+        .iterator = &IID_IIterator_SimpleHapticsController,
+    };
+    IVector_SimpleHapticsController *vector;
+    HRESULT hr;
+
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+
+    if (SUCCEEDED(hr = vector_create( &iids, (void **)&vector )))
+    {
+        hr = IVector_SimpleHapticsController_GetView( vector, value );
+        IVector_SimpleHapticsController_Release( vector );
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI raw_controller_2_get_NonRoamableId( IRawGameController2 *iface, HSTRING* value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI raw_controller_2_get_DisplayName( IRawGameController2 *iface, HSTRING* value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static const struct IRawGameController2Vtbl raw_controller_2_vtbl =
+{
+    raw_controller_2_QueryInterface,
+    raw_controller_2_AddRef,
+    raw_controller_2_Release,
+    /* IInspectable methods */
+    raw_controller_2_GetIids,
+    raw_controller_2_GetRuntimeClassName,
+    raw_controller_2_GetTrustLevel,
+    /* IRawGameController2 methods */
+    raw_controller_2_get_SimpleHapticsControllers,
+    raw_controller_2_get_NonRoamableId,
+    raw_controller_2_get_DisplayName,
+};
+
 struct controller_statics
 {
     IActivationFactory IActivationFactory_iface;
@@ -525,6 +584,7 @@ static HRESULT WINAPI controller_factory_CreateGameController( ICustomGameContro
     impl->IGameControllerImpl_iface.lpVtbl = &controller_vtbl;
     impl->IGameControllerInputSink_iface.lpVtbl = &input_sink_vtbl;
     impl->IRawGameController_iface.lpVtbl = &raw_controller_vtbl;
+    impl->IRawGameController2_iface.lpVtbl = &raw_controller_2_vtbl;
     impl->ref = 1;
 
     TRACE( "created RawGameController %p\n", impl );

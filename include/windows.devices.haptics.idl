@@ -30,7 +30,10 @@ namespace Windows.Devices.Haptics {
     runtimeclass SimpleHapticsController;
 
     declare {
+        interface Windows.Foundation.Collections.IIterator<Windows.Devices.Haptics.SimpleHapticsController *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Devices.Haptics.SimpleHapticsController *>;
         interface Windows.Foundation.Collections.IVectorView<Windows.Devices.Haptics.SimpleHapticsController *>;
+        interface Windows.Foundation.Collections.IVector<Windows.Devices.Haptics.SimpleHapticsController *>;
         interface Windows.Foundation.Collections.IVectorView<Windows.Devices.Haptics.SimpleHapticsControllerFeedback *>;
     }
 
