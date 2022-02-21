@@ -205,6 +205,51 @@ static void test_get_property(void)
     NCryptFreeObject(prov);
 }
 
+static void test_set_property(void)
+{
+    NCRYPT_PROV_HANDLE prov;
+    SECURITY_STATUS ret;
+    NCRYPT_KEY_HANDLE key;
+    DWORD keylength;
+
+    ret = NCryptOpenStorageProvider(&prov, NULL, 0);
+    ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
+
+    ret = NCryptImportKey(prov, 0, BCRYPT_RSAPUBLIC_BLOB, NULL, &key, rsa_key_blob, sizeof(rsa_key_blob), 0);
+    ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
+
+    keylength = 2048;
+    ret = NCryptSetProperty(key, NCRYPT_LENGTH_PROPERTY, (BYTE *)&keylength, sizeof(keylength), 0);
+    ok(ret == ERROR_SUCCESS || broken(ret == NTE_INVALID_HANDLE), "got %#lx\n", ret);
+
+    ret = NCryptSetProperty(0, NCRYPT_LENGTH_PROPERTY, (BYTE *)&keylength, sizeof(keylength), 0);
+    ok(ret == NTE_INVALID_HANDLE, "got %#lx\n", ret);
+
+    todo_wine
+    {
+    ret = NCryptSetProperty(key, NCRYPT_NAME_PROPERTY, (BYTE *)L"Key name", sizeof(L"Key name"), 0);
+    ok(ret == NTE_NOT_SUPPORTED, "got %#lx\n", ret);
+    NCryptFreeObject(key);
+
+    key = 0;
+    ret = NCryptCreatePersistedKey(prov, &key, BCRYPT_RSA_ALGORITHM, NULL, 0, 0);
+    ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
+    ok(key, "got null handle\n");
+
+    keylength = 2048;
+    ret = NCryptSetProperty(key, NCRYPT_LENGTH_PROPERTY, (BYTE *)&keylength, sizeof(keylength), 0);
+    ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
+
+    ret = NCryptSetProperty(key, NCRYPT_NAME_PROPERTY, (BYTE *)L"Key name", sizeof(L"Key name"), 0);
+    ok(ret == NTE_NOT_SUPPORTED, "got %#lx\n", ret);
+
+    ret = NCryptSetProperty(key, L"My Custom Property", (BYTE *)L"value", sizeof(L"value"), 0);
+    ok(ret == NTE_NOT_SUPPORTED, "got %#lx\n", ret);
+    }
+    NCryptFreeObject(key);
+    NCryptFreeObject(prov);
+}
+
 static void test_create_persisted_key(void)
 {
     NCRYPT_PROV_HANDLE prov;
@@ -255,5 +300,6 @@ START_TEST(ncrypt)
     test_key_import_rsa();
     test_free_object();
     test_get_property();
+    test_set_property();
     test_create_persisted_key();
 }
