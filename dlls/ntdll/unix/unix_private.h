@@ -393,11 +393,15 @@ static inline client_ptr_t iosb_client_ptr( IO_STATUS_BLOCK *io )
 
 #ifdef _WIN64
 typedef TEB32 WOW_TEB;
+typedef PEB32 WOW_PEB;
 static inline TEB64 *NtCurrentTeb64(void) { return NULL; }
 #else
 typedef TEB64 WOW_TEB;
+typedef PEB64 WOW_PEB;
 static inline TEB64 *NtCurrentTeb64(void) { return (TEB64 *)NtCurrentTeb()->GdiBatchCount; }
 #endif
+
+extern WOW_PEB *wow_peb DECLSPEC_HIDDEN;
 
 static inline WOW_TEB *get_wow_teb( TEB *teb )
 {

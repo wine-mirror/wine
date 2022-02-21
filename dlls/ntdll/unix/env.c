@@ -60,6 +60,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(environ);
 
 PEB *peb = NULL;
+WOW_PEB *wow_peb = NULL;
 USHORT *uctable = NULL, *lctable = NULL;
 SIZE_T startup_info_size = 0;
 BOOL is_prefix_bootstrap = FALSE;
@@ -2129,37 +2130,34 @@ static void init_peb( RTL_USER_PROCESS_PARAMETERS *params, void *module )
     {
         NtCurrentTeb()->WowTebOffset = teb_offset;
         NtCurrentTeb()->Tib.ExceptionList = (void *)((char *)NtCurrentTeb() + teb_offset);
+        wow_peb = (PEB32 *)((char *)peb + page_size);
         set_thread_id( NtCurrentTeb(),  GetCurrentProcessId(), GetCurrentThreadId() );
     }
 #endif
 
     load_global_options( &params->ImagePathName );
 
-    if (NtCurrentTeb()->WowTebOffset)
+    if (wow_peb)
     {
         void *wow64_params = build_wow64_parameters( params );
-#ifdef _WIN64
-        PEB32 *wow64_peb = (PEB32 *)((char *)peb + page_size);
-#else
-        PEB64 *wow64_peb = (PEB64 *)((char *)peb - page_size);
-#endif
-        wow64_peb->ImageBaseAddress                = PtrToUlong( peb->ImageBaseAddress );
-        wow64_peb->ProcessParameters               = PtrToUlong( wow64_params );
-        wow64_peb->NumberOfProcessors              = peb->NumberOfProcessors;
-        wow64_peb->NtGlobalFlag                    = peb->NtGlobalFlag;
-        wow64_peb->CriticalSectionTimeout.QuadPart = peb->CriticalSectionTimeout.QuadPart;
-        wow64_peb->HeapSegmentReserve              = peb->HeapSegmentReserve;
-        wow64_peb->HeapSegmentCommit               = peb->HeapSegmentCommit;
-        wow64_peb->HeapDeCommitTotalFreeThreshold  = peb->HeapDeCommitTotalFreeThreshold;
-        wow64_peb->HeapDeCommitFreeBlockThreshold  = peb->HeapDeCommitFreeBlockThreshold;
-        wow64_peb->OSMajorVersion                  = peb->OSMajorVersion;
-        wow64_peb->OSMinorVersion                  = peb->OSMinorVersion;
-        wow64_peb->OSBuildNumber                   = peb->OSBuildNumber;
-        wow64_peb->OSPlatformId                    = peb->OSPlatformId;
-        wow64_peb->ImageSubSystem                  = peb->ImageSubSystem;
-        wow64_peb->ImageSubSystemMajorVersion      = peb->ImageSubSystemMajorVersion;
-        wow64_peb->ImageSubSystemMinorVersion      = peb->ImageSubSystemMinorVersion;
-        wow64_peb->SessionId                       = peb->SessionId;
+
+        wow_peb->ImageBaseAddress                = PtrToUlong( peb->ImageBaseAddress );
+        wow_peb->ProcessParameters               = PtrToUlong( wow64_params );
+        wow_peb->NumberOfProcessors              = peb->NumberOfProcessors;
+        wow_peb->NtGlobalFlag                    = peb->NtGlobalFlag;
+        wow_peb->CriticalSectionTimeout.QuadPart = peb->CriticalSectionTimeout.QuadPart;
+        wow_peb->HeapSegmentReserve              = peb->HeapSegmentReserve;
+        wow_peb->HeapSegmentCommit               = peb->HeapSegmentCommit;
+        wow_peb->HeapDeCommitTotalFreeThreshold  = peb->HeapDeCommitTotalFreeThreshold;
+        wow_peb->HeapDeCommitFreeBlockThreshold  = peb->HeapDeCommitFreeBlockThreshold;
+        wow_peb->OSMajorVersion                  = peb->OSMajorVersion;
+        wow_peb->OSMinorVersion                  = peb->OSMinorVersion;
+        wow_peb->OSBuildNumber                   = peb->OSBuildNumber;
+        wow_peb->OSPlatformId                    = peb->OSPlatformId;
+        wow_peb->ImageSubSystem                  = peb->ImageSubSystem;
+        wow_peb->ImageSubSystemMajorVersion      = peb->ImageSubSystemMajorVersion;
+        wow_peb->ImageSubSystemMinorVersion      = peb->ImageSubSystemMinorVersion;
+        wow_peb->SessionId                       = peb->SessionId;
     }
 }
 
