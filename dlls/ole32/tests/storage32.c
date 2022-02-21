@@ -3313,7 +3313,7 @@ static void test_direct_swmr(void)
 
     /* it's possible to create in writer mode */
     hr = StgCreateDocfile(fileW, STGM_CREATE | STGM_READWRITE | STGM_SHARE_DENY_WRITE | STGM_DIRECT_SWMR, 0, &stg);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "got %08x\n", hr);
 if (hr == S_OK) {
     IStorage_Release(stg);

@@ -2809,7 +2809,7 @@ static void test_item_moniker(void)
 
     moniker3 = (void *)0xdeadbeef;
     hr = IMoniker_CommonPrefixWith(moniker, moniker2, &moniker3);
-todo_wine
+    todo_wine
 {
     ok(hr == MK_E_NOPREFIX, "Unexpected hr %#x.\n", hr);
     ok(!moniker3, "Unexpected object.\n");

@@ -1234,7 +1234,7 @@ static void test_OleLoad(IStorage *pStorage)
             if (fmt == CF_METAFILEPICT)
                 ok(hr == S_OK, "OleDraw error %#x: cfFormat = %u, advf = %#x\n", hr, fmt, header.advf);
             else if (fmt == CF_ENHMETAFILE)
-todo_wine
+                todo_wine
                 ok(hr == S_OK, "OleDraw error %#x: cfFormat = %u, advf = %#x\n", hr, fmt, header.advf);
             else
                 ok(hr == OLE_E_BLANK || hr == OLE_E_NOTRUNNING || hr == E_FAIL, "OleDraw should fail: %#x, cfFormat = %u, advf = %#x\n", hr, fmt, header.advf);
