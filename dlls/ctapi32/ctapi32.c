@@ -98,7 +98,7 @@ IS8 WINAPI CT_close(IU16 ctn)
  */
 BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    TRACE("%p,%x,%p\n", hinstDLL, fdwReason, lpvReserved);
+    TRACE("%p,%lx,%p\n", hinstDLL, fdwReason, lpvReserved);
 
     switch (fdwReason)
     {
