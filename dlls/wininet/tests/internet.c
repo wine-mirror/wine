@@ -917,14 +917,14 @@ static void test_InternetTimeToSystemTime(void)
     {
         { "Fri, 07 Jan 2005 12:06:35 GMT", &expect1, TRUE },
         { " fri, 7 jan 2005 12 06 35",     &expect1, TRUE },
-        { "Fri, 07-01-2005 12:06:35",      &expect1, TRUE, TRUE },
-        { "5, 07-01-2005 12:06:35 GMT",    &expect1, TRUE, TRUE },
-        { "5, 07-01-2005 12:06:35 GMT;",   &expect1, TRUE, TRUE },
-        { "5, 07-01-2005 12:06:35 GMT123", &expect1, TRUE, TRUE },
-        { "2, 11 01 2022 11 13 05",        &expect2, TRUE, TRUE },
-        { "2, 11-01-2022 11#13^05",        &expect2, TRUE, TRUE },
-        { "2, 11*01/2022 11+13=05",        &expect2, TRUE, TRUE },
-        { "2, 11-Jan-2022 11:13:05",       &expect2, TRUE, TRUE },
+        { "Fri, 07-01-2005 12:06:35",      &expect1, TRUE },
+        { "5, 07-01-2005 12:06:35 GMT",    &expect1, TRUE },
+        { "5, 07-01-2005 12:06:35 GMT;",   &expect1, TRUE },
+        { "5, 07-01-2005 12:06:35 GMT123", &expect1, TRUE },
+        { "2, 11 01 2022 11 13 05",        &expect2, TRUE },
+        { "2, 11-01-2022 11#13^05",        &expect2, TRUE },
+        { "2, 11*01/2022 11+13=05",        &expect2, TRUE },
+        { "2, 11-Jan-2022 11:13:05",       &expect2, TRUE },
         { "Fr",                            NULL,     FALSE },
     };
 

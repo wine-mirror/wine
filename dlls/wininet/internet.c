@@ -3302,6 +3302,11 @@ static const WCHAR WININET_month[12][4] =
       L"May", L"Jun", L"Jul", L"Aug",
       L"Sep", L"Oct", L"Nov", L"Dec"};
 
+static inline BOOL is_time_digit(const WCHAR c)
+{
+    return c >= '0' && c <= '9';
+}
+
 /***********************************************************************
  *           InternetTimeFromSystemTimeA (WININET.@)
  */
@@ -3400,54 +3405,72 @@ BOOL WINAPI InternetTimeToSystemTimeW( LPCWSTR string, SYSTEMTIME* time, DWORD r
      *  a SYSTEMTIME structure.
      */
 
-    while (*s && !iswalpha( *s )) s++;
-    if (s[0] == '\0' || s[1] == '\0' || s[2] == '\0') return TRUE;
+    while (*s && !iswalpha(*s) && !is_time_digit(*s)) s++;
+    if (*s == '\0') return TRUE;
     time->wDayOfWeek = 7;
 
-    for (i = 0; i < 7; i++)
+    if (iswalpha(*s))
     {
-        if (!wcsnicmp( WININET_wkday[i], s, 3 ))
+        if (s[1] == '\0' || s[2] == '\0') return TRUE;
+        for (i = 0; i < 7; i++)
         {
-            time->wDayOfWeek = i;
-            break;
+            if (!wcsnicmp(WININET_wkday[i], s, 3))
+            {
+                time->wDayOfWeek = i;
+                break;
+            }
         }
     }
-
+    else if (is_time_digit(*s))
+    {
+        time->wDayOfWeek = wcstol(s, &end, 10);
+        s = end;
+    }
     if (time->wDayOfWeek > 6) return TRUE;
-    while (*s && !iswdigit( *s )) s++;
+
+    while (*s && !is_time_digit(*s)) s++;
     time->wDay = wcstol( s, &end, 10 );
     s = end;
 
-    while (*s && !iswalpha( *s )) s++;
-    if (s[0] == '\0' || s[1] == '\0' || s[2] == '\0') return TRUE;
+    while (*s && !iswalpha(*s) && !is_time_digit(*s)) s++;
+    if (*s == '\0') return TRUE;
     time->wMonth = 0;
 
-    for (i = 0; i < 12; i++)
+    if (iswalpha(*s))
     {
-        if (!wcsnicmp( WININET_month[i], s, 3 ))
+        if (s[1] == '\0' || s[2] == '\0') return TRUE;
+        for (i = 0; i < 12; i++)
         {
-            time->wMonth = i + 1;
-            break;
+            if (!wcsnicmp(WININET_month[i], s, 3))
+            {
+                time->wMonth = i + 1;
+                break;
+            }
         }
+    }
+    else if (is_time_digit(*s))
+    {
+        time->wMonth = wcstol(s, &end, 10);
+        s = end;
     }
     if (time->wMonth == 0) return TRUE;
 
-    while (*s && !iswdigit( *s )) s++;
+    while (*s && !is_time_digit(*s)) s++;
     if (*s == '\0') return TRUE;
     time->wYear = wcstol( s, &end, 10 );
     s = end;
 
-    while (*s && !iswdigit( *s )) s++;
+    while (*s && !is_time_digit(*s)) s++;
     if (*s == '\0') return TRUE;
     time->wHour = wcstol( s, &end, 10 );
     s = end;
 
-    while (*s && !iswdigit( *s )) s++;
+    while (*s && !is_time_digit(*s)) s++;
     if (*s == '\0') return TRUE;
     time->wMinute = wcstol( s, &end, 10 );
     s = end;
 
-    while (*s && !iswdigit( *s )) s++;
+    while (*s && !is_time_digit(*s)) s++;
     if (*s == '\0') return TRUE;
     time->wSecond = wcstol( s, &end, 10 );
     s = end;
