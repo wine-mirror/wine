@@ -5070,7 +5070,6 @@ static void test_windows_gaming_input(void)
     check_interface( raw_controller, &IID_IInspectable, TRUE );
     check_interface( raw_controller, &IID_IAgileObject, TRUE );
     check_interface( raw_controller, &IID_IRawGameController, TRUE );
-    todo_wine
     check_interface( raw_controller, &IID_IRawGameController2, TRUE );
     check_interface( raw_controller, &IID_IGameController, TRUE );
     check_interface( raw_controller, &IID_IGamepad, FALSE );
@@ -5083,7 +5082,6 @@ static void test_windows_gaming_input(void)
     check_interface( game_controller, &IID_IInspectable, TRUE );
     check_interface( game_controller, &IID_IAgileObject, TRUE );
     check_interface( game_controller, &IID_IRawGameController, TRUE );
-    todo_wine
     check_interface( game_controller, &IID_IRawGameController2, TRUE );
     check_interface( game_controller, &IID_IGameController, TRUE );
     check_interface( game_controller, &IID_IGamepad, FALSE );
@@ -5101,23 +5099,31 @@ static void test_windows_gaming_input(void)
     IGameController_Release( game_controller );
 
     hr = IRawGameController_QueryInterface( raw_controller, &IID_IRawGameController2, (void **)&raw_controller2 );
-    todo_wine
     ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
-    if (hr != S_OK) goto skip_tests;
 
     hr = IRawGameController2_get_DisplayName( raw_controller2, &str );
+    todo_wine
     ok( hr == S_OK, "get_DisplayName returned %#lx\n", hr );
-    buffer = pWindowsGetStringRawBuffer( str, &length );
-    ok( !wcscmp( buffer, L"HID-compliant game controller" ),
-        "get_DisplayName returned %s\n", debugstr_wn( buffer, length ) );
-    pWindowsDeleteString( str );
+    if (hr == S_OK)
+    {
+        buffer = pWindowsGetStringRawBuffer( str, &length );
+        todo_wine
+        ok( !wcscmp( buffer, L"HID-compliant game controller" ),
+            "get_DisplayName returned %s\n", debugstr_wn( buffer, length ) );
+        pWindowsDeleteString( str );
+    }
 
     hr = IRawGameController2_get_NonRoamableId( raw_controller2, &str );
+    todo_wine
     ok( hr == S_OK, "get_NonRoamableId returned %#lx\n", hr );
-    buffer = pWindowsGetStringRawBuffer( str, &length );
-    ok( !wcsncmp( buffer, L"{wgi/nrid/", 10 ),
-        "get_NonRoamableId returned %s\n", debugstr_wn( buffer, length ) );
-    pWindowsDeleteString( str );
+    if (hr == S_OK)
+    {
+        buffer = pWindowsGetStringRawBuffer( str, &length );
+        todo_wine
+        ok( !wcsncmp( buffer, L"{wgi/nrid/", 10 ),
+            "get_NonRoamableId returned %s\n", debugstr_wn( buffer, length ) );
+        pWindowsDeleteString( str );
+    }
 
     /* FIXME: What kind of HID reports are needed to make this work? */
     hr = IRawGameController2_get_SimpleHapticsControllers( raw_controller2, &haptics_controllers );
@@ -5128,8 +5134,6 @@ static void test_windows_gaming_input(void)
     IVectorView_SimpleHapticsController_Release( haptics_controllers );
 
     IRawGameController2_Release( raw_controller2 );
-
-skip_tests:
     IRawGameController_Release( raw_controller );
 
     hr = IRawGameControllerStatics_remove_RawGameControllerAdded( controller_statics, controller_added_token );
