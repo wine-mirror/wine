@@ -1951,7 +1951,7 @@ void WINAPIV C2VectParallel(int start, int end, int step, BOOL end_included, int
 
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
 {
-    TRACE("(%p, %d, %p)\n", instance, reason, reserved);
+    TRACE("(%p, %ld, %p)\n", instance, reason, reserved);
 
     switch (reason)
     {
