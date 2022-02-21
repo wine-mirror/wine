@@ -349,7 +349,7 @@ BOOL WINAPI ExpandEnvironmentStringsForUserA( HANDLE hToken, LPCSTR lpSrc,
 {
     BOOL ret;
 
-    TRACE("%p %s %p %d\n", hToken, debugstr_a(lpSrc), lpDest, dwSize);
+    TRACE("%p %s %p %ld\n", hToken, debugstr_a(lpSrc), lpDest, dwSize);
 
     ret = ExpandEnvironmentStringsA( lpSrc, lpDest, dwSize );
     TRACE("<- %s\n", debugstr_a(lpDest));
@@ -361,7 +361,7 @@ BOOL WINAPI ExpandEnvironmentStringsForUserW( HANDLE hToken, LPCWSTR lpSrc,
 {
     BOOL ret;
 
-    TRACE("%p %s %p %d\n", hToken, debugstr_w(lpSrc), lpDest, dwSize);
+    TRACE("%p %s %p %ld\n", hToken, debugstr_w(lpSrc), lpDest, dwSize);
 
     ret = ExpandEnvironmentStringsW( lpSrc, lpDest, dwSize );
     TRACE("<- %s\n", debugstr_w(lpDest));
@@ -648,7 +648,7 @@ BOOL WINAPI LeaveCriticalPolicySection(HANDLE hSection)
 DWORD WINAPI GetAppliedGPOListW(DWORD dwFlags, LPCWSTR pMachineName, PSID pSidUser, GUID *pGuidExtension,
         PGROUP_POLICY_OBJECTW *ppGPOList)
 {
-    FIXME("(%x %s %p %s %p)\n", dwFlags, debugstr_w(pMachineName), pSidUser, debugstr_guid(pGuidExtension), ppGPOList);
+    FIXME("(%lx %s %p %s %p)\n", dwFlags, debugstr_w(pMachineName), pSidUser, debugstr_guid(pGuidExtension), ppGPOList);
     return ERROR_ACCESS_DENIED;
 }
 
@@ -681,7 +681,7 @@ BOOL WINAPI USERENV_138( int csidl, LPCSTR lnk_dir, LPCSTR lnk_filename,
             LPCSTR work_directory, WORD hotkey, DWORD win_state, LPCSTR comment,
             LPCSTR loc_filename_resfile, DWORD loc_filename_resid)
 {
-    FIXME("(%d,%s,%s,%s,%s,%d,%s,0x%x,%d,%s,%s,%d) - stub\n", csidl, debugstr_a(lnk_dir),
+    FIXME("(%d,%s,%s,%s,%s,%ld,%s,0x%x,%ld,%s,%s,%ld) - stub\n", csidl, debugstr_a(lnk_dir),
             debugstr_a(lnk_filename), debugstr_a(lnk_target), debugstr_a(lnk_iconfile),
             lnk_iconid, debugstr_a(work_directory), hotkey, win_state,
             debugstr_a(comment), debugstr_a(loc_filename_resfile), loc_filename_resid );
