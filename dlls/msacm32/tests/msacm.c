@@ -988,7 +988,7 @@ static void test_prepareheader(void)
         ok(hdr.fdwStatus == ACMSTREAMHEADER_STATUSF_DONE, "header wasn't unprepared: 0x%x\n", hdr.fdwStatus);
     }
     else
-todo_wine
+        todo_wine
         ok(mr == MMSYSERR_INVALPARAM, "expected 0x0b, got 0x%x\n", mr);
 
     memset(&hdr, 0, sizeof(hdr));
