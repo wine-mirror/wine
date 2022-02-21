@@ -149,7 +149,7 @@ BOOL WINAPI VNBT_DeviceIoControl(DWORD dwIoControlCode,
          * to unimplemented...
          */
     default:
-        FIXME( "Unimplemented control %d for VxD device VNB\n",
+        FIXME( "Unimplemented control %ld for VxD device VNB\n",
                dwIoControlCode );
         error = ERROR_NOT_SUPPORTED;
         break;
