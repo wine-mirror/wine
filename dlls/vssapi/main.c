@@ -61,7 +61,7 @@ HRESULT __thiscall VSSAPI_CVssWriter_Initialize( struct CVssWriter *writer, VSS_
     VSS_APPLICATION_LEVEL level, DWORD timeout, VSS_ALTERNATE_WRITER_STATE alt_writer_state,
     BOOL throttle, LPCWSTR instance )
 {
-    FIXME( "%p, %s, %s, %u, %u, %u, %u, %u, %d, %s\n", writer, debugstr_guid(&id),
+    FIXME( "%p, %s, %s, %u, %u, %u, %lu, %u, %d, %s\n", writer, debugstr_guid(&id),
            debugstr_w(name), usage_type, source_type, level, timeout, alt_writer_state,
            throttle, debugstr_w(instance) );
     return S_OK;
@@ -73,7 +73,7 @@ HRESULT __thiscall VSSAPI_CVssWriter_Initialize( struct CVssWriter *writer, VSS_
 DEFINE_THISCALL_WRAPPER( VSSAPI_CVssWriter_Subscribe, 8 )
 HRESULT __thiscall VSSAPI_CVssWriter_Subscribe( struct CVssWriter *writer, DWORD flags )
 {
-    FIXME( "%p, %x\n", writer, flags );
+    FIXME( "%p, %lx\n", writer, flags );
     return S_OK;
 }
 
