@@ -25,6 +25,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <math.h>
+#include <pthread.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -110,8 +111,6 @@ struct ACImpl {
     struct alsa_stream *stream;
 
     HANDLE timer;
-
-    CRITICAL_SECTION lock;
 
     AudioSession *session;
     AudioSessionWrapper *session_wrapper;
@@ -242,6 +241,16 @@ enum DriverPriority {
 int WINAPI AUDDRV_GetPriority(void)
 {
     return Priority_Neutral;
+}
+
+static void alsa_lock(struct alsa_stream *stream)
+{
+    pthread_mutex_lock(&stream->lock);
+}
+
+static void alsa_unlock(struct alsa_stream *stream)
+{
+    pthread_mutex_unlock(&stream->lock);
 }
 
 static void set_device_guid(EDataFlow flow, HKEY drv_key, const WCHAR *key_name,
@@ -515,9 +524,6 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
     This->dataflow = dataflow;
     memcpy(This->alsa_name, alsa_name, len + 1);
 
-    InitializeCriticalSection(&This->lock);
-    This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ACImpl.lock");
-
     This->parent = dev;
     IMMDevice_AddRef(This->parent);
 
@@ -584,8 +590,6 @@ static ULONG WINAPI AudioClient_Release(IAudioClient3 *iface)
         IAudioClient3_Stop(iface);
         IMMDevice_Release(This->parent);
         IUnknown_Release(This->pUnkFTMarshal);
-        This->lock.DebugInfo->Spare[0] = 0;
-        DeleteCriticalSection(&This->lock);
         if(This->session){
             EnterCriticalSection(&g_sessions_lock);
             list_remove(&This->entry);
@@ -602,6 +606,7 @@ static ULONG WINAPI AudioClient_Release(IAudioClient3 *iface)
             HeapFree(GetProcessHeap(), 0, stream->hw_params);
             CoTaskMemFree(stream->fmt);
             HeapFree(GetProcessHeap(), 0, stream->vols);
+            pthread_mutex_destroy(&stream->lock);
             HeapFree(GetProcessHeap(), 0, stream);
         }
         HeapFree(GetProcessHeap(), 0, This);
@@ -1167,6 +1172,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         hr = E_OUTOFMEMORY;
         goto exit;
     }
+    pthread_mutex_init(&stream->lock, NULL);
     silence_buffer(stream, stream->silence_buf, stream->alsa_period_frames);
 
     This->channel_count = fmt->nChannels;
@@ -1235,16 +1241,14 @@ static HRESULT WINAPI AudioClient_GetBufferSize(IAudioClient3 *iface,
     if(!out)
         return E_POINTER;
 
-    EnterCriticalSection(&This->lock);
-
-    if(!This->stream){
-        LeaveCriticalSection(&This->lock);
+    if(!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
-    }
+
+    alsa_lock(stream);
 
     *out = stream->bufsize_frames;
 
-    LeaveCriticalSection(&This->lock);
+    alsa_unlock(stream);
 
     return S_OK;
 }
@@ -1260,12 +1264,10 @@ static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient3 *iface,
     if(!latency)
         return E_POINTER;
 
-    EnterCriticalSection(&This->lock);
-
-    if(!This->stream){
-        LeaveCriticalSection(&This->lock);
+    if(!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
-    }
+
+    alsa_lock(stream);
 
     /* Hide some frames in the ALSA buffer. Allows us to return GetCurrentPadding=0
      * yet have enough data left to play (as if it were in native's mixer). Add:
@@ -1278,7 +1280,7 @@ static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient3 *iface,
         *latency = MulDiv(stream->alsa_period_frames, 10000000, stream->fmt->nSamplesPerSec)
                  + stream->mmdev_period_rt;
 
-    LeaveCriticalSection(&This->lock);
+    alsa_unlock(stream);
 
     return S_OK;
 }
@@ -1294,17 +1296,15 @@ static HRESULT WINAPI AudioClient_GetCurrentPadding(IAudioClient3 *iface,
     if(!out)
         return E_POINTER;
 
-    EnterCriticalSection(&This->lock);
-
-    if(!This->stream){
-        LeaveCriticalSection(&This->lock);
+    if(!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
-    }
+
+    alsa_lock(stream);
 
     /* padding is solely updated at callback time in shared mode */
     *out = stream->held_frames;
 
-    LeaveCriticalSection(&This->lock);
+    alsa_unlock(stream);
 
     TRACE("pad: %u\n", *out);
 
@@ -1818,7 +1818,7 @@ static void CALLBACK alsa_push_buffer_data(void *user, BOOLEAN timer)
     ACImpl *This = user;
     struct alsa_stream *stream = This->stream;
 
-    EnterCriticalSection(&This->lock);
+    alsa_lock(stream);
 
     QueryPerformanceCounter(&stream->last_period_time);
 
@@ -1827,7 +1827,7 @@ static void CALLBACK alsa_push_buffer_data(void *user, BOOLEAN timer)
     else if(stream->flow == eCapture)
         alsa_read_data(stream);
 
-    LeaveCriticalSection(&This->lock);
+    alsa_unlock(stream);
 }
 
 static snd_pcm_uframes_t interp_elapsed_frames(struct alsa_stream *stream)
@@ -1880,22 +1880,22 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
     TRACE("(%p)\n", This);
 
     EnterCriticalSection(&g_sessions_lock);
-    EnterCriticalSection(&This->lock);
 
     if(!This->stream){
-        LeaveCriticalSection(&This->lock);
         LeaveCriticalSection(&g_sessions_lock);
         return AUDCLNT_E_NOT_INITIALIZED;
     }
 
+    alsa_lock(stream);
+
     if((stream->flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK) && !stream->event){
-        LeaveCriticalSection(&This->lock);
+        alsa_unlock(stream);
         LeaveCriticalSection(&g_sessions_lock);
         return AUDCLNT_E_EVENTHANDLE_NOT_SET;
     }
 
     if(stream->started){
-        LeaveCriticalSection(&This->lock);
+        alsa_unlock(stream);
         LeaveCriticalSection(&g_sessions_lock);
         return AUDCLNT_E_NOT_STOPPED;
     }
@@ -1932,7 +1932,7 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
     if(!This->timer){
         if(!CreateTimerQueueTimer(&This->timer, g_timer_q, alsa_push_buffer_data,
                 This, 0, stream->mmdev_period_rt / 10000, WT_EXECUTEINTIMERTHREAD)){
-            LeaveCriticalSection(&This->lock);
+            alsa_unlock(stream);
             LeaveCriticalSection(&g_sessions_lock);
             WARN("Unable to create timer: %u\n", GetLastError());
             return E_OUTOFMEMORY;
@@ -1941,7 +1941,7 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
 
     stream->started = TRUE;
 
-    LeaveCriticalSection(&This->lock);
+    alsa_unlock(stream);
     LeaveCriticalSection(&g_sessions_lock);
 
     return S_OK;
@@ -1954,15 +1954,13 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient3 *iface)
 
     TRACE("(%p)\n", This);
 
-    EnterCriticalSection(&This->lock);
-
-    if(!This->stream){
-        LeaveCriticalSection(&This->lock);
+    if(!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
-    }
+
+    alsa_lock(stream);
 
     if(!stream->started){
-        LeaveCriticalSection(&This->lock);
+        alsa_unlock(stream);
         return S_FALSE;
     }
 
@@ -1971,7 +1969,7 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient3 *iface)
 
     stream->started = FALSE;
 
-    LeaveCriticalSection(&This->lock);
+    alsa_unlock(stream);
 
     return S_OK;
 }
@@ -1983,20 +1981,18 @@ static HRESULT WINAPI AudioClient_Reset(IAudioClient3 *iface)
 
     TRACE("(%p)\n", This);
 
-    EnterCriticalSection(&This->lock);
-
-    if(!This->stream){
-        LeaveCriticalSection(&This->lock);
+    if(!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
-    }
+
+    alsa_lock(stream);
 
     if(stream->started){
-        LeaveCriticalSection(&This->lock);
+        alsa_unlock(stream);
         return AUDCLNT_E_NOT_STOPPED;
     }
 
     if(stream->getbuf_last){
-        LeaveCriticalSection(&This->lock);
+        alsa_unlock(stream);
         return AUDCLNT_E_BUFFER_OPERATION_PENDING;
     }
 
@@ -2019,7 +2015,7 @@ static HRESULT WINAPI AudioClient_Reset(IAudioClient3 *iface)
     stream->lcl_offs_frames = 0;
     stream->wri_offs_frames = 0;
 
-    LeaveCriticalSection(&This->lock);
+    alsa_unlock(stream);
 
     return S_OK;
 }
@@ -2035,27 +2031,25 @@ static HRESULT WINAPI AudioClient_SetEventHandle(IAudioClient3 *iface,
     if(!event)
         return E_INVALIDARG;
 
-    EnterCriticalSection(&This->lock);
-
-    if(!This->stream){
-        LeaveCriticalSection(&This->lock);
+    if(!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
-    }
+
+    alsa_lock(stream);
 
     if(!(stream->flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK)){
-        LeaveCriticalSection(&This->lock);
+        alsa_unlock(stream);
         return AUDCLNT_E_EVENTHANDLE_NOT_EXPECTED;
     }
 
     if (stream->event){
-        LeaveCriticalSection(&This->lock);
+        alsa_unlock(stream);
         FIXME("called twice\n");
         return HRESULT_FROM_WIN32(ERROR_INVALID_NAME);
     }
 
     stream->event = event;
 
-    LeaveCriticalSection(&This->lock);
+    alsa_unlock(stream);
 
     return S_OK;
 }
@@ -2310,21 +2304,21 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
         return E_POINTER;
     *data = NULL;
 
-    EnterCriticalSection(&This->lock);
+    alsa_lock(stream);
 
     if(stream->getbuf_last){
-        LeaveCriticalSection(&This->lock);
+        alsa_unlock(stream);
         return AUDCLNT_E_OUT_OF_ORDER;
     }
 
     if(!frames){
-        LeaveCriticalSection(&This->lock);
+        alsa_unlock(stream);
         return S_OK;
     }
 
     /* held_frames == GetCurrentPadding_nolock(); */
     if(stream->held_frames + frames > stream->bufsize_frames){
-        LeaveCriticalSection(&This->lock);
+        alsa_unlock(stream);
         return AUDCLNT_E_BUFFER_TOO_LARGE;
     }
 
@@ -2335,7 +2329,7 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
             stream->tmp_buffer = HeapAlloc(GetProcessHeap(), 0,
                     frames * stream->fmt->nBlockAlign);
             if(!stream->tmp_buffer){
-                LeaveCriticalSection(&This->lock);
+                alsa_unlock(stream);
                 return E_OUTOFMEMORY;
             }
             stream->tmp_buffer_frames = frames;
@@ -2349,7 +2343,7 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
 
     silence_buffer(stream, *data, frames);
 
-    LeaveCriticalSection(&This->lock);
+    alsa_unlock(stream);
 
     return S_OK;
 }
@@ -2380,21 +2374,21 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
 
     TRACE("(%p)->(%u, %x)\n", This, written_frames, flags);
 
-    EnterCriticalSection(&This->lock);
+    alsa_lock(stream);
 
     if(!written_frames){
         stream->getbuf_last = 0;
-        LeaveCriticalSection(&This->lock);
+        alsa_unlock(stream);
         return S_OK;
     }
 
     if(!stream->getbuf_last){
-        LeaveCriticalSection(&This->lock);
+        alsa_unlock(stream);
         return AUDCLNT_E_OUT_OF_ORDER;
     }
 
     if(written_frames > (stream->getbuf_last >= 0 ? stream->getbuf_last : -stream->getbuf_last)){
-        LeaveCriticalSection(&This->lock);
+        alsa_unlock(stream);
         return AUDCLNT_E_INVALID_SIZE;
     }
 
@@ -2415,7 +2409,7 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
     stream->written_frames += written_frames;
     stream->getbuf_last = 0;
 
-    LeaveCriticalSection(&This->lock);
+    alsa_unlock(stream);
 
     return S_OK;
 }
@@ -2483,17 +2477,17 @@ static HRESULT WINAPI AudioCaptureClient_GetBuffer(IAudioCaptureClient *iface,
     if(!frames || !flags)
         return E_POINTER;
 
-    EnterCriticalSection(&This->lock);
+    alsa_lock(stream);
 
     if(stream->getbuf_last){
-        LeaveCriticalSection(&This->lock);
+        alsa_unlock(stream);
         return AUDCLNT_E_OUT_OF_ORDER;
     }
 
     /* hr = GetNextPacketSize(iface, frames); */
     if(stream->held_frames < stream->mmdev_period_frames){
         *frames = 0;
-        LeaveCriticalSection(&This->lock);
+        alsa_unlock(stream);
         return AUDCLNT_S_BUFFER_EMPTY;
     }
     *frames = stream->mmdev_period_frames;
@@ -2505,7 +2499,7 @@ static HRESULT WINAPI AudioCaptureClient_GetBuffer(IAudioCaptureClient *iface,
             stream->tmp_buffer = HeapAlloc(GetProcessHeap(), 0,
                     *frames * stream->fmt->nBlockAlign);
             if(!stream->tmp_buffer){
-                LeaveCriticalSection(&This->lock);
+                alsa_unlock(stream);
                 return E_OUTOFMEMORY;
             }
             stream->tmp_buffer_frames = *frames;
@@ -2535,7 +2529,7 @@ static HRESULT WINAPI AudioCaptureClient_GetBuffer(IAudioCaptureClient *iface,
         *qpcpos = (stamp.QuadPart * (INT64)10000000) / freq.QuadPart;
     }
 
-    LeaveCriticalSection(&This->lock);
+    alsa_unlock(stream);
 
     return *frames ? S_OK : AUDCLNT_S_BUFFER_EMPTY;
 }
@@ -2548,21 +2542,21 @@ static HRESULT WINAPI AudioCaptureClient_ReleaseBuffer(
 
     TRACE("(%p)->(%u)\n", This, done);
 
-    EnterCriticalSection(&This->lock);
+    alsa_lock(stream);
 
     if(!done){
         stream->getbuf_last = 0;
-        LeaveCriticalSection(&This->lock);
+        alsa_unlock(stream);
         return S_OK;
     }
 
     if(!stream->getbuf_last){
-        LeaveCriticalSection(&This->lock);
+        alsa_unlock(stream);
         return AUDCLNT_E_OUT_OF_ORDER;
     }
 
     if(stream->getbuf_last != done){
-        LeaveCriticalSection(&This->lock);
+        alsa_unlock(stream);
         return AUDCLNT_E_INVALID_SIZE;
     }
 
@@ -2572,7 +2566,7 @@ static HRESULT WINAPI AudioCaptureClient_ReleaseBuffer(
     stream->lcl_offs_frames %= stream->bufsize_frames;
     stream->getbuf_last = 0;
 
-    LeaveCriticalSection(&This->lock);
+    alsa_unlock(stream);
 
     return S_OK;
 }
@@ -2588,11 +2582,11 @@ static HRESULT WINAPI AudioCaptureClient_GetNextPacketSize(
     if(!frames)
         return E_POINTER;
 
-    EnterCriticalSection(&This->lock);
+    alsa_lock(stream);
 
     *frames = stream->held_frames < stream->mmdev_period_frames ? 0 : stream->mmdev_period_frames;
 
-    LeaveCriticalSection(&This->lock);
+    alsa_unlock(stream);
 
     return S_OK;
 }
@@ -2671,7 +2665,7 @@ static HRESULT WINAPI AudioClock_GetPosition(IAudioClock *iface, UINT64 *pos,
     if(!pos)
         return E_POINTER;
 
-    EnterCriticalSection(&This->lock);
+    alsa_lock(stream);
 
     /* avail_update required to get accurate snd_pcm_state() */
     snd_pcm_avail_update(stream->pcm_handle);
@@ -2702,7 +2696,7 @@ static HRESULT WINAPI AudioClock_GetPosition(IAudioClock *iface, UINT64 *pos,
             (UINT32)(stream->written_frames%1000000000), stream->held_frames,
             alsa_state, (UINT32)(position%1000000000));
 
-    LeaveCriticalSection(&This->lock);
+    alsa_unlock(stream);
 
     if(stream->share == AUDCLNT_SHAREMODE_SHARED)
         *pos = position * stream->fmt->nBlockAlign;
@@ -2874,14 +2868,14 @@ static HRESULT WINAPI AudioSessionControl_GetState(IAudioSessionControl2 *iface,
     }
 
     LIST_FOR_EACH_ENTRY(client, &This->session->clients, ACImpl, entry){
-        EnterCriticalSection(&client->lock);
+        alsa_lock(client->stream);
         if(client->stream->started){
             *state = AudioSessionStateActive;
-            LeaveCriticalSection(&client->lock);
+            alsa_unlock(client->stream);
             LeaveCriticalSection(&g_sessions_lock);
             return S_OK;
         }
-        LeaveCriticalSection(&client->lock);
+        alsa_unlock(client->stream);
     }
 
     LeaveCriticalSection(&g_sessions_lock);
