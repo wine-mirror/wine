@@ -33,26 +33,27 @@ static void test_IProgressDialog_QueryInterface(void)
     IUnknown *unk;
     HRESULT hr;
 
-    hr = CoCreateInstance(&CLSID_ProgressDialog, NULL, CLSCTX_INPROC_SERVER, &IID_IProgressDialog, (void*)&dlg);
-    if (FAILED(hr)) {
-        win_skip("CoCreateInstance for IProgressDialog returned 0x%x\n", hr);
+    hr = CoCreateInstance(&CLSID_ProgressDialog, NULL, CLSCTX_INPROC_SERVER, &IID_IProgressDialog, (void **)&dlg);
+    if (FAILED(hr))
+    {
+        win_skip("ProgressDialog is not supported, hr %#lx.\n", hr);
         return;
     }
 
     hr = IProgressDialog_QueryInterface(dlg, &IID_IUnknown, NULL);
-    ok(hr == E_POINTER, "got 0x%x (expected E_POINTER)\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     hr = IProgressDialog_QueryInterface(dlg, &IID_IUnknown, (void**)&unk);
-    ok(hr == S_OK, "QueryInterface (IUnknown) returned 0x%x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (SUCCEEDED(hr)) {
         IUnknown_Release(unk);
     }
 
     hr = IProgressDialog_QueryInterface(dlg, &IID_IOleWindow, (void**)&olewindow);
-    ok(hr == S_OK, "QueryInterface (IOleWindow) returned 0x%x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (SUCCEEDED(hr)) {
         hr = IOleWindow_QueryInterface(olewindow, &IID_IProgressDialog, (void**)&dlg2);
-        ok(hr == S_OK, "QueryInterface (IProgressDialog) returned 0x%x\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         if (SUCCEEDED(hr)) {
             IProgressDialog_Release(dlg2);
         }
