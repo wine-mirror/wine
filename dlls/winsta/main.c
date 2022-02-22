@@ -30,7 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(winsta);
 BOOLEAN WINAPI WinStationQueryInformationA( HANDLE server, ULONG logon_id, WINSTATIONINFOCLASS class,
                                             void *info, ULONG len, ULONG *ret_len )
 {
-    FIXME( "%p %u %u %p %u %p\n", server, logon_id, class, info, len, ret_len );
+    FIXME( "%p %lu %u %p %lu %p\n", server, logon_id, class, info, len, ret_len );
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return FALSE;
 }
@@ -38,14 +38,14 @@ BOOLEAN WINAPI WinStationQueryInformationA( HANDLE server, ULONG logon_id, WINST
 BOOLEAN WINAPI WinStationQueryInformationW( HANDLE server, ULONG logon_id, WINSTATIONINFOCLASS class,
                                             void *info, ULONG len, ULONG *ret_len )
 {
-    FIXME( "%p %u %u %p %u %p\n", server, logon_id, class, info, len, ret_len );
+    FIXME( "%p %lu %u %p %lu %p\n", server, logon_id, class, info, len, ret_len );
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return FALSE;
 }
 
 BOOLEAN WINAPI WinStationRegisterConsoleNotification( HANDLE server, HWND hwnd, ULONG flags )
 {
-    FIXME( "%p %p 0x%x\n", server, hwnd, flags );
+    FIXME( "%p %p 0x%lx\n", server, hwnd, flags );
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return FALSE;
 }
@@ -60,7 +60,7 @@ BOOLEAN WINAPI WinStationUnRegisterConsoleNotification( HANDLE server, HWND hwnd
 BOOLEAN WINAPI WinStationGetAllProcesses( HANDLE server, ULONG level,
                                           ULONG *process_count, PTS_ALL_PROCESSES_INFO *info )
 {
-    FIXME( "%p %u %p %p\n", server, level, process_count, info );
+    FIXME( "%p %lu %p %p\n", server, level, process_count, info );
     *process_count = 0;
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return FALSE;
@@ -69,7 +69,7 @@ BOOLEAN WINAPI WinStationGetAllProcesses( HANDLE server, ULONG level,
 BOOLEAN WINAPI WinStationGetProcessSid( HANDLE server, ULONG process_id, FILETIME *process_start_time,
                                         PVOID process_user_sid, PULONG sid_size )
 {
-    FIXME( "(%p, %d, %p, %p, %p): stub\n", server, process_id, process_start_time, process_user_sid, sid_size);
+    FIXME( "(%p, %ld, %p, %p, %p): stub\n", server, process_id, process_start_time, process_user_sid, sid_size);
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return FALSE;
 }
