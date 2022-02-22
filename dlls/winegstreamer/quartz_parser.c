@@ -75,6 +75,12 @@ struct parser_source
 
     CRITICAL_SECTION flushing_cs;
     HANDLE thread;
+
+    /* This variable is read and written by both the streaming thread and
+     * application threads. However, it is only written by the application
+     * thread when the streaming thread is not running, or when it is blocked
+     * by flushing_cs. */
+    bool need_segment;
 };
 
 static inline struct parser *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -750,6 +756,14 @@ static void send_buffer(struct parser_source *pin, const struct wg_parser_event 
     HRESULT hr;
     IMediaSample *sample;
 
+    if (pin->need_segment)
+    {
+        if (FAILED(hr = IPin_NewSegment(pin->pin.pin.peer,
+                pin->seek.llCurrent, pin->seek.llStop, pin->seek.dRate)))
+            WARN("Failed to deliver new segment, hr %#lx.\n", hr);
+        pin->need_segment = false;
+    }
+
     if (IsEqualGUID(&pin->pin.pin.mt.formattype, &FORMAT_WaveFormatEx)
             && (IsEqualGUID(&pin->pin.pin.mt.subtype, &MEDIASUBTYPE_PCM)
             || IsEqualGUID(&pin->pin.pin.mt.subtype, &MEDIASUBTYPE_IEEE_FLOAT)))
@@ -828,8 +842,6 @@ static DWORD CALLBACK stream_thread(void *arg)
                 break;
 
             case WG_PARSER_EVENT_SEGMENT:
-                IPin_NewSegment(pin->pin.pin.peer, event.u.segment.position,
-                        event.u.segment.stop, event.u.segment.rate);
                 break;
 
             case WG_PARSER_EVENT_NONE:
@@ -971,6 +983,8 @@ static HRESULT parser_init_stream(struct strmbase_filter *iface)
 
         if (FAILED(hr = IMemAllocator_Commit(filter->sources[i]->pin.pAllocator)))
             ERR("Failed to commit allocator, hr %#lx.\n", hr);
+
+        filter->sources[i]->need_segment = true;
 
         filter->sources[i]->thread = CreateThread(NULL, 0, stream_thread, filter->sources[i], 0, NULL);
     }
@@ -1358,6 +1372,8 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
     for (i = filter->source_count - 1; i >= 0; --i)
     {
         struct parser_source *flush_pin = filter->sources[i];
+
+        flush_pin->need_segment = true;
 
         if (flush_pin->pin.pin.peer)
             LeaveCriticalSection(&flush_pin->flushing_cs);
