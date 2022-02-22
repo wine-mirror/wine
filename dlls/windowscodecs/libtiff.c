@@ -975,7 +975,7 @@ static HRESULT CDECL tiff_decoder_copy_pixels(struct decoder* iface, UINT frame,
 
             if (FAILED(hr))
             {
-                TRACE("<-- 0x%x\n", hr);
+                TRACE("<-- 0x%lx\n", hr);
                 return hr;
             }
         }

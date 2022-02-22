@@ -646,7 +646,7 @@ static ULONG WINAPI GifFrameDecode_AddRef(IWICBitmapFrameDecode *iface)
     GifFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     return ref;
 }
@@ -656,7 +656,7 @@ static ULONG WINAPI GifFrameDecode_Release(IWICBitmapFrameDecode *iface)
     GifFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     if (ref == 0)
     {
@@ -1045,7 +1045,7 @@ static ULONG WINAPI GifDecoder_AddRef(IWICBitmapDecoder *iface)
     GifDecoder *This = impl_from_IWICBitmapDecoder(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     return ref;
 }
@@ -1055,7 +1055,7 @@ static ULONG WINAPI GifDecoder_Release(IWICBitmapDecoder *iface)
     GifDecoder *This = impl_from_IWICBitmapDecoder(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     if (ref == 0)
     {
@@ -1526,7 +1526,7 @@ static ULONG WINAPI GifFrameEncode_AddRef(IWICBitmapFrameEncode *iface)
     GifFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("%p -> %u\n", iface, ref);
+    TRACE("%p -> %lu\n", iface, ref);
     return ref;
 }
 
@@ -1535,7 +1535,7 @@ static ULONG WINAPI GifFrameEncode_Release(IWICBitmapFrameEncode *iface)
     GifFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("%p -> %u\n", iface, ref);
+    TRACE("%p -> %lu\n", iface, ref);
 
     if (!ref)
     {
@@ -2171,7 +2171,7 @@ static ULONG WINAPI GifEncoder_AddRef(IWICBitmapEncoder *iface)
     GifEncoder *This = impl_from_IWICBitmapEncoder(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("%p -> %u\n", iface, ref);
+    TRACE("%p -> %lu\n", iface, ref);
     return ref;
 }
 
@@ -2180,7 +2180,7 @@ static ULONG WINAPI GifEncoder_Release(IWICBitmapEncoder *iface)
     GifEncoder *This = impl_from_IWICBitmapEncoder(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("%p -> %u\n", iface, ref);
+    TRACE("%p -> %lu\n", iface, ref);
 
     if (!ref)
     {

@@ -74,7 +74,7 @@ static ULONG WINAPI CommonDecoder_AddRef(IWICBitmapDecoder *iface)
     CommonDecoder *This = impl_from_IWICBitmapDecoder(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     return ref;
 }
@@ -84,7 +84,7 @@ static ULONG WINAPI CommonDecoder_Release(IWICBitmapDecoder *iface)
     CommonDecoder *This = impl_from_IWICBitmapDecoder(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     if (ref == 0)
     {
@@ -296,7 +296,7 @@ static ULONG WINAPI CommonDecoderFrame_AddRef(IWICBitmapFrameDecode *iface)
     CommonDecoderFrame *This = impl_from_IWICBitmapFrameDecode(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     return ref;
 }
@@ -306,7 +306,7 @@ static ULONG WINAPI CommonDecoderFrame_Release(IWICBitmapFrameDecode *iface)
     CommonDecoderFrame *This = impl_from_IWICBitmapFrameDecode(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     if (ref == 0)
     {
@@ -762,7 +762,7 @@ static HRESULT WINAPI CommonDecoder_GetFrame(IWICBitmapDecoder *iface,
 
     if (SUCCEEDED(hr))
     {
-        TRACE("-> %ux%u, %u-bit pixelformat=%s res=%f,%f colors=%u contexts=%u\n",
+        TRACE("-> %ux%u, %u-bit pixelformat=%s res=%f,%f colors=%lu contexts=%lu\n",
             result->decoder_frame.width, result->decoder_frame.height,
             result->decoder_frame.bpp, wine_dbgstr_guid(&result->decoder_frame.pixel_format),
             result->decoder_frame.dpix, result->decoder_frame.dpiy,

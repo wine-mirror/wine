@@ -129,7 +129,7 @@ HMODULE windowscodecs_module = 0;
 
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
 {
-    TRACE("instance %p, reason %d, reserved %p\n", instance, reason, reserved);
+    TRACE("instance %p, reason %ld, reserved %p\n", instance, reason, reserved);
 
     switch (reason)
     {

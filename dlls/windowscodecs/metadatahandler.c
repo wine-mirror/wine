@@ -107,7 +107,7 @@ static ULONG WINAPI MetadataHandler_AddRef(IWICMetadataWriter *iface)
     MetadataHandler *This = impl_from_IWICMetadataWriter(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     return ref;
 }
@@ -117,7 +117,7 @@ static ULONG WINAPI MetadataHandler_Release(IWICMetadataWriter *iface)
     MetadataHandler *This = impl_from_IWICMetadataWriter(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     if (ref == 0)
     {
@@ -354,7 +354,7 @@ static HRESULT WINAPI MetadataHandler_LoadEx(IWICPersistStream *iface,
     MetadataItem *new_items=NULL;
     DWORD item_count=0;
 
-    TRACE("(%p,%p,%s,%x)\n", iface, pIStream, debugstr_guid(pguidPreferredVendor), dwPersistOptions);
+    TRACE("(%p,%p,%s,%lx)\n", iface, pIStream, debugstr_guid(pguidPreferredVendor), dwPersistOptions);
 
     EnterCriticalSection(&This->lock);
 
@@ -376,7 +376,7 @@ static HRESULT WINAPI MetadataHandler_LoadEx(IWICPersistStream *iface,
 static HRESULT WINAPI MetadataHandler_SaveEx(IWICPersistStream *iface,
     IStream *pIStream, DWORD dwPersistOptions, BOOL fClearDirty)
 {
-    FIXME("(%p,%p,%x,%i): stub\n", iface, pIStream, dwPersistOptions, fClearDirty);
+    FIXME("(%p,%p,%lx,%i): stub\n", iface, pIStream, dwPersistOptions, fClearDirty);
     return E_NOTIMPL;
 }
 
@@ -462,7 +462,7 @@ static ULONG WINAPI MetadataHandlerEnum_AddRef(IWICEnumMetadataItem *iface)
     MetadataHandlerEnum *This = impl_from_IWICEnumMetadataItem(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     return ref;
 }
@@ -472,7 +472,7 @@ static ULONG WINAPI MetadataHandlerEnum_Release(IWICEnumMetadataItem *iface)
     MetadataHandlerEnum *This = impl_from_IWICEnumMetadataItem(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     if (ref == 0)
     {
@@ -492,7 +492,7 @@ static HRESULT WINAPI MetadataHandlerEnum_Next(IWICEnumMetadataItem *iface,
     HRESULT hr=S_FALSE;
     ULONG i;
 
-    TRACE("(%p,%i)\n", iface, celt);
+    TRACE("(%p,%li)\n", iface, celt);
 
     EnterCriticalSection(&This->parent->lock);
 
@@ -986,7 +986,7 @@ static HRESULT load_IFD_entry(IStream *input, const struct IFD_entry *entry,
         }
         break;
     default:
-        FIXME("loading field of type %d, count %u is not implemented\n", type, count);
+        FIXME("loading field of type %d, count %lu is not implemented\n", type, count);
         break;
     }
     return S_OK;

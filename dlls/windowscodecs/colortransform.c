@@ -70,7 +70,7 @@ static ULONG WINAPI ColorTransform_AddRef(IWICColorTransform *iface)
     ColorTransform *This = impl_from_IWICColorTransform(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     return ref;
 }
@@ -80,7 +80,7 @@ static ULONG WINAPI ColorTransform_Release(IWICColorTransform *iface)
     ColorTransform *This = impl_from_IWICColorTransform(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     if (ref == 0)
     {

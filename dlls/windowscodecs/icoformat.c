@@ -109,7 +109,7 @@ static ULONG WINAPI IcoFrameDecode_AddRef(IWICBitmapFrameDecode *iface)
     IcoFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     return ref;
 }
@@ -119,7 +119,7 @@ static ULONG WINAPI IcoFrameDecode_Release(IWICBitmapFrameDecode *iface)
     IcoFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     if (ref == 0)
     {
@@ -463,7 +463,7 @@ static ULONG WINAPI IcoDecoder_AddRef(IWICBitmapDecoder *iface)
     IcoDecoder *This = impl_from_IWICBitmapDecoder(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     return ref;
 }
@@ -473,7 +473,7 @@ static ULONG WINAPI IcoDecoder_Release(IWICBitmapDecoder *iface)
     IcoDecoder *This = impl_from_IWICBitmapDecoder(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     if (ref == 0)
     {
@@ -545,7 +545,7 @@ static HRESULT WINAPI IcoDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
     hr = IStream_Stat(pIStream, &statstg, STATFLAG_NONAME);
     if (FAILED(hr))
     {
-        WARN("Stat() failed, hr %#x.\n", hr);
+        WARN("Stat() failed, hr %#lx.\n", hr);
         goto end;
     }
 
@@ -714,7 +714,7 @@ static HRESULT WINAPI IcoDecoder_GetFrame(IWICBitmapDecoder *iface,
         hr = ReadIcoPng((IStream*)substream, result);
         break;
     default:
-        FIXME("Unrecognized ICO frame magic: %x\n", magic);
+        FIXME("Unrecognized ICO frame magic: %lx\n", magic);
         hr = E_FAIL;
         break;
     }
@@ -733,7 +733,7 @@ fail:
     HeapFree(GetProcessHeap(), 0, result);
     if (substream) IWICStream_Release(substream);
     if (SUCCEEDED(hr)) hr = E_FAIL;
-    TRACE("<-- %x\n", hr);
+    TRACE("<-- %lx\n", hr);
     return hr;
 }
 

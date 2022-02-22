@@ -74,7 +74,7 @@ static ULONG WINAPI mqr_AddRef(IWICMetadataQueryReader *iface)
 {
     QueryReader *This = impl_from_IWICMetadataQueryReader(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p) refcount=%u\n", This, ref);
+    TRACE("(%p) refcount=%lu\n", This, ref);
     return ref;
 }
 
@@ -82,7 +82,7 @@ static ULONG WINAPI mqr_Release(IWICMetadataQueryReader *iface)
 {
     QueryReader *This = impl_from_IWICMetadataQueryReader(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
-    TRACE("(%p) refcount=%u\n", This, ref);
+    TRACE("(%p) refcount=%lu\n", This, ref);
     if (!ref)
     {
         IWICMetadataBlockReader_Release(This->block);
@@ -210,7 +210,7 @@ static HRESULT get_token(struct string_t *elem, PROPVARIANT *id, PROPVARIANT *sc
         hr = get_token(&next_elem, id, schema, idx);
         if (hr != S_OK)
         {
-            TRACE("get_token error %#x\n", hr);
+            TRACE("get_token error %#lx\n", hr);
             return hr;
         }
         elem->len = (end - start) + next_elem.len;
@@ -286,7 +286,7 @@ static HRESULT get_token(struct string_t *elem, PROPVARIANT *id, PROPVARIANT *sc
             hr = get_token(&next_elem, &next_id, &next_schema, &next_idx);
             if (hr != S_OK)
             {
-                TRACE("get_token error %#x\n", hr);
+                TRACE("get_token error %#lx\n", hr);
                 return hr;
             }
             elem->len = (end - start + 1) + next_elem.len;
@@ -346,7 +346,7 @@ static HRESULT get_token(struct string_t *elem, PROPVARIANT *id, PROPVARIANT *sc
         hr = get_token(&next_elem, &next_id, &next_schema, &next_idx);
         if (hr != S_OK)
         {
-            TRACE("get_token error %#x\n", hr);
+            TRACE("get_token error %#lx\n", hr);
             PropVariantClear(id);
             PropVariantClear(schema);
             return hr;
@@ -491,7 +491,7 @@ static HRESULT WINAPI mqr_GetMetadataByName(IWICMetadataQueryReader *iface, LPCW
         hr = get_token(&elem, &tk_id, &tk_schema, &index);
         if (hr != S_OK)
         {
-            WARN("get_token error %#x\n", hr);
+            WARN("get_token error %#lx\n", hr);
             break;
         }
         TRACE("parsed %d characters: %s, index %d\n", elem.len, wine_dbgstr_wn(elem.str, elem.len), index);
@@ -631,7 +631,7 @@ static ULONG WINAPI string_enumerator_AddRef(IEnumString *iface)
     struct string_enumerator *this = impl_from_IEnumString(iface);
     ULONG ref = InterlockedIncrement(&this->ref);
 
-    TRACE("iface %p, ref %u.\n", iface, ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
 
     return ref;
 }
@@ -641,7 +641,7 @@ static ULONG WINAPI string_enumerator_Release(IEnumString *iface)
     struct string_enumerator *this = impl_from_IEnumString(iface);
     ULONG ref = InterlockedDecrement(&this->ref);
 
-    TRACE("iface %p, ref %u.\n", iface, ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
 
     if (!ref)
         free(this);
@@ -651,7 +651,7 @@ static ULONG WINAPI string_enumerator_Release(IEnumString *iface)
 
 static HRESULT WINAPI string_enumerator_Next(IEnumString *iface, ULONG count, LPOLESTR *strings, ULONG *ret)
 {
-    FIXME("iface %p, count %u, strings %p, ret %p stub.\n", iface, count, strings, ret);
+    FIXME("iface %p, count %lu, strings %p, ret %p stub.\n", iface, count, strings, ret);
 
     if (!strings || !ret)
         return E_INVALIDARG;
@@ -669,7 +669,7 @@ static HRESULT WINAPI string_enumerator_Reset(IEnumString *iface)
 
 static HRESULT WINAPI string_enumerator_Skip(IEnumString *iface, ULONG count)
 {
-    FIXME("iface %p, count %u stub.\n", iface, count);
+    FIXME("iface %p, count %lu stub.\n", iface, count);
 
     return count ? S_FALSE : S_OK;
 }
@@ -789,7 +789,7 @@ static ULONG WINAPI mqw_AddRef(IWICMetadataQueryWriter *iface)
     QueryWriter *writer = impl_from_IWICMetadataQueryWriter(iface);
     ULONG ref = InterlockedIncrement(&writer->ref);
 
-    TRACE("writer %p, refcount=%u\n", writer, ref);
+    TRACE("writer %p, refcount=%lu\n", writer, ref);
 
     return ref;
 }
@@ -799,7 +799,7 @@ static ULONG WINAPI mqw_Release(IWICMetadataQueryWriter *iface)
     QueryWriter *writer = impl_from_IWICMetadataQueryWriter(iface);
     ULONG ref = InterlockedDecrement(&writer->ref);
 
-    TRACE("writer %p, refcount=%u.\n", writer, ref);
+    TRACE("writer %p, refcount=%lu.\n", writer, ref);
 
     if (!ref)
     {

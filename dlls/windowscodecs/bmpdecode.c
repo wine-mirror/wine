@@ -858,7 +858,7 @@ static HRESULT BmpDecoder_ReadHeaders(BmpDecoder* This, IStream *stream)
     }
     else /* struct is compatible with BITMAPINFOHEADER */
     {
-        TRACE("bitmap header=%i compression=%i depth=%i\n", This->bih.bV5Size, This->bih.bV5Compression, This->bih.bV5BitCount);
+        TRACE("bitmap header=%li compression=%li depth=%i\n", This->bih.bV5Size, This->bih.bV5Compression, This->bih.bV5BitCount);
         switch(This->bih.bV5Compression)
         {
         case BI_RGB:
@@ -932,7 +932,7 @@ static HRESULT BmpDecoder_ReadHeaders(BmpDecoder* This, IStream *stream)
             {
                 This->read_data_func = BmpFrameDecode_ReadUncompressed;
                 This->pixelformat = &GUID_WICPixelFormatUndefined;
-                FIXME("unsupported bitfields type depth=%i red=%x green=%x blue=%x alpha=%x\n",
+                FIXME("unsupported bitfields type depth=%i red=%lx green=%lx blue=%lx alpha=%lx\n",
                     This->bih.bV5BitCount, This->bih.bV5RedMask, This->bih.bV5GreenMask, This->bih.bV5BlueMask, This->bih.bV5AlphaMask);
             }
             break;
@@ -941,7 +941,7 @@ static HRESULT BmpDecoder_ReadHeaders(BmpDecoder* This, IStream *stream)
             This->bitsperpixel = 0;
             This->read_data_func = BmpFrameDecode_ReadUnsupported;
             This->pixelformat = &GUID_WICPixelFormatUndefined;
-            FIXME("unsupported bitmap type header=%i compression=%i depth=%i\n", This->bih.bV5Size, This->bih.bV5Compression, This->bih.bV5BitCount);
+            FIXME("unsupported bitmap type header=%li compression=%li depth=%i\n", This->bih.bV5Size, This->bih.bV5Compression, This->bih.bV5BitCount);
             break;
         }
     }
@@ -996,7 +996,7 @@ static ULONG WINAPI BmpDecoder_AddRef(IWICBitmapDecoder *iface)
     BmpDecoder *This = impl_from_IWICBitmapDecoder(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     return ref;
 }
@@ -1006,7 +1006,7 @@ static ULONG WINAPI BmpDecoder_Release(IWICBitmapDecoder *iface)
     BmpDecoder *This = impl_from_IWICBitmapDecoder(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     if (ref == 0)
     {

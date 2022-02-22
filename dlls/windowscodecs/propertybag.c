@@ -72,7 +72,7 @@ static ULONG WINAPI PropertyBag_AddRef(IPropertyBag2 *iface)
     PropertyBag *This = impl_from_IPropertyBag2(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     return ref;
 }
@@ -82,7 +82,7 @@ static ULONG WINAPI PropertyBag_Release(IPropertyBag2 *iface)
     PropertyBag *This = impl_from_IPropertyBag2(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     if (ref == 0)
     {
@@ -128,7 +128,7 @@ static HRESULT WINAPI PropertyBag_Read(IPropertyBag2 *iface, ULONG cProperties,
     ULONG i;
     PropertyBag *This = impl_from_IPropertyBag2(iface);
 
-    TRACE("(%p,%u,%p,%p,%p,%p)\n", iface, cProperties, pPropBag, pErrLog, pvarValue, phrError);
+    TRACE("(%p,%lu,%p,%p,%p,%p)\n", iface, cProperties, pPropBag, pErrLog, pvarValue, phrError);
 
     for (i=0; i < cProperties; i++)
     {
@@ -163,7 +163,7 @@ static HRESULT WINAPI PropertyBag_Write(IPropertyBag2 *iface, ULONG cProperties,
     ULONG i;
     PropertyBag *This = impl_from_IPropertyBag2(iface);
 
-    TRACE("(%p,%u,%p,%p)\n", iface, cProperties, pPropBag, pvarValue);
+    TRACE("(%p,%lu,%p,%p)\n", iface, cProperties, pPropBag, pvarValue);
 
     for (i=0; i < cProperties; i++)
     {
@@ -233,7 +233,7 @@ static HRESULT WINAPI PropertyBag_GetPropertyInfo(IPropertyBag2 *iface, ULONG iP
     ULONG i;
     PropertyBag *This = impl_from_IPropertyBag2(iface);
 
-    TRACE("(%p,%u,%u,%p,%p)\n", iface, iProperty, cProperties, pPropBag, pcProperties);
+    TRACE("(%p,%lu,%lu,%p,%p)\n", iface, iProperty, cProperties, pPropBag, pcProperties);
 
     if (iProperty >= This->prop_count && iProperty > 0)
         return WINCODEC_ERR_VALUEOUTOFRANGE;
@@ -260,7 +260,7 @@ static HRESULT WINAPI PropertyBag_GetPropertyInfo(IPropertyBag2 *iface, ULONG iP
 static HRESULT WINAPI PropertyBag_LoadObject(IPropertyBag2 *iface, LPCOLESTR pstrName,
     DWORD dwHint, IUnknown *pUnkObject, IErrorLog *pErrLog)
 {
-    FIXME("(%p,%s,%u,%p,%p): stub\n", iface, debugstr_w(pstrName), dwHint, pUnkObject, pErrLog);
+    FIXME("(%p,%s,%lu,%p,%p): stub\n", iface, debugstr_w(pstrName), dwHint, pUnkObject, pErrLog);
     return E_NOTIMPL;
 }
 

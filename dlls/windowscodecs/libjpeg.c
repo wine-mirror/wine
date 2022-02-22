@@ -413,7 +413,7 @@ static boolean dest_mgr_empty_output_buffer(j_compress_ptr cinfo)
 
     if (hr != S_OK || byteswritten == 0)
     {
-        ERR("Failed writing data, hr=%x\n", hr);
+        ERR("Failed writing data, hr=%lx\n", hr);
         return FALSE;
     }
 
@@ -434,7 +434,7 @@ static void dest_mgr_term_destination(j_compress_ptr cinfo)
             sizeof(This->dest_buffer) - This->dest_mgr.free_in_buffer, &byteswritten);
 
         if (hr != S_OK || byteswritten == 0)
-            ERR("Failed writing data, hr=%x\n", hr);
+            ERR("Failed writing data, hr=%lx\n", hr);
     }
 }
 

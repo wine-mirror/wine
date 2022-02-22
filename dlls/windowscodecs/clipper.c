@@ -72,7 +72,7 @@ static ULONG WINAPI BitmapClipper_AddRef(IWICBitmapClipper *iface)
     BitmapClipper *This = impl_from_IWICBitmapClipper(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     return ref;
 }
@@ -82,7 +82,7 @@ static ULONG WINAPI BitmapClipper_Release(IWICBitmapClipper *iface)
     BitmapClipper *This = impl_from_IWICBitmapClipper(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     if (ref == 0)
     {

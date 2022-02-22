@@ -115,7 +115,7 @@ HRESULT write_source(IWICBitmapFrameEncode *iface,
     hr = WICConvertBitmapSource(format, source, &converted_source);
     if (FAILED(hr))
     {
-        ERR("Failed to convert source, target format %s, %#x\n", debugstr_guid(format), hr);
+        ERR("Failed to convert source, target format %s, %#lx\n", debugstr_guid(format), hr);
         return E_NOTIMPL;
     }
 

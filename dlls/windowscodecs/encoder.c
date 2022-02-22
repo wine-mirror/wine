@@ -116,7 +116,7 @@ static ULONG WINAPI CommonEncoderFrame_AddRef(IWICBitmapFrameEncode *iface)
     CommonEncoderFrame *This = impl_from_IWICBitmapFrameEncode(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     return ref;
 }
@@ -126,7 +126,7 @@ static ULONG WINAPI CommonEncoderFrame_Release(IWICBitmapFrameEncode *iface)
     CommonEncoderFrame *This = impl_from_IWICBitmapFrameEncode(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     if (ref == 0)
     {
@@ -177,7 +177,7 @@ static HRESULT WINAPI CommonEncoderFrame_Initialize(IWICBitmapFrameEncode *iface
                 options.filter = V_UI1(val);
                 if (options.filter > WICPngFilterAdaptive)
                 {
-                    WARN("Unrecognized filter option value %u.\n", options.filter);
+                    WARN("Unrecognized filter option value %lu.\n", options.filter);
                     options.filter = WICPngFilterUnspecified;
                 }
                 break;
@@ -310,7 +310,7 @@ static HRESULT WINAPI CommonEncoderFrame_SetPixelFormat(IWICBitmapFrameEncode *i
 
     if (SUCCEEDED(hr))
     {
-        TRACE("<-- %s bpp=%i indexed=%i\n", wine_dbgstr_guid(&pixel_format), bpp, indexed);
+        TRACE("<-- %s bpp=%li indexed=%i\n", wine_dbgstr_guid(&pixel_format), bpp, indexed);
         *pPixelFormat = pixel_format;
         This->encoder_frame.pixel_format = pixel_format;
         This->encoder_frame.bpp = bpp;
@@ -528,7 +528,7 @@ static ULONG WINAPI CommonEncoder_AddRef(IWICBitmapEncoder *iface)
     CommonEncoder *This = impl_from_IWICBitmapEncoder(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     return ref;
 }
@@ -538,7 +538,7 @@ static ULONG WINAPI CommonEncoder_Release(IWICBitmapEncoder *iface)
     CommonEncoder *This = impl_from_IWICBitmapEncoder(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
 
     if (ref == 0)
     {
