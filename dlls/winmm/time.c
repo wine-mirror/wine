@@ -271,7 +271,7 @@ MMRESULT WINAPI timeSetEvent(UINT wDelay, UINT wResol, LPTIMECALLBACK lpFunc,
     WORD new_id = 0;
     int i;
 
-    TRACE("(%u, %u, %p, %08lX, %04X);\n", wDelay, wResol, lpFunc, dwUser, wFlags);
+    TRACE("(%u, %u, %p, %08IX, %04X);\n", wDelay, wResol, lpFunc, dwUser, wFlags);
 
     if (wDelay < MMSYSTIME_MININTERVAL || wDelay > MMSYSTIME_MAXINTERVAL)
 	return 0;

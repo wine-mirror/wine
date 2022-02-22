@@ -136,7 +136,7 @@ const char* WINMM_ErrorToString(MMRESULT error)
  */
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
-    TRACE("%p 0x%x %p\n", hInstDLL, fdwReason, fImpLoad);
+    TRACE("%p 0x%lx %p\n", hInstDLL, fdwReason, fImpLoad);
 
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
@@ -206,7 +206,7 @@ UINT WINAPI auxGetDevCapsW(UINT_PTR uDeviceID, LPAUXCAPSW lpCaps, UINT uSize)
 {
     LPWINE_MLD		wmld;
 
-    TRACE("(%04lX, %p, %d) !\n", uDeviceID, lpCaps, uSize);
+    TRACE("(%04IX, %p, %d) !\n", uDeviceID, lpCaps, uSize);
 
     if (lpCaps == NULL)	return MMSYSERR_INVALPARAM;
 
@@ -263,7 +263,7 @@ UINT WINAPI auxSetVolume(UINT uDeviceID, DWORD dwVolume)
 {
     LPWINE_MLD		wmld;
 
-    TRACE("(%04X, %u) !\n", uDeviceID, dwVolume);
+    TRACE("(%04X, %lu) !\n", uDeviceID, dwVolume);
 
     if ((wmld = MMDRV_Get((HANDLE)(DWORD_PTR)uDeviceID, MMDRV_AUX, TRUE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
@@ -299,7 +299,7 @@ UINT WINAPI midiOutGetDevCapsW(UINT_PTR uDeviceID, LPMIDIOUTCAPSW lpCaps,
 {
     LPWINE_MLD	wmld;
 
-    TRACE("(%lu, %p, %u);\n", uDeviceID, lpCaps, uSize);
+    TRACE("(%Iu, %p, %u);\n", uDeviceID, lpCaps, uSize);
 
     if (lpCaps == NULL)	return MMSYSERR_INVALPARAM;
 
@@ -425,7 +425,7 @@ MMRESULT WINAPI midiOutOpen(LPHMIDIOUT lphMidiOut, UINT uDeviceID,
     LPWINE_MIDI		lpwm;
     MMRESULT		dwRet;
 
-    TRACE("(%p, %d, %08lX, %08lX, %08X);\n",
+    TRACE("(%p, %d, %08IX, %08IX, %08lX);\n",
 	  lphMidiOut, uDeviceID, dwCallback, dwInstance, dwFlags);
 
     if (lphMidiOut != NULL) *lphMidiOut = 0;
@@ -513,7 +513,7 @@ UINT WINAPI midiOutShortMsg(HMIDIOUT hMidiOut, DWORD dwMsg)
 {
     LPWINE_MLD		wmld;
 
-    TRACE("(%p, %08X)\n", hMidiOut, dwMsg);
+    TRACE("(%p, %08lX)\n", hMidiOut, dwMsg);
 
     if ((wmld = MMDRV_Get(hMidiOut, MMDRV_MIDIOUT, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
@@ -574,7 +574,7 @@ UINT WINAPI midiOutSetVolume(HMIDIOUT hMidiOut, DWORD dwVolume)
 {
     LPWINE_MLD		wmld;
 
-    TRACE("(%p, %d);\n", hMidiOut, dwVolume);
+    TRACE("(%p, %ld);\n", hMidiOut, dwVolume);
 
     if ((wmld = MMDRV_Get(hMidiOut, MMDRV_MIDIOUT, TRUE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
@@ -628,7 +628,7 @@ UINT WINAPI midiOutMessage(HMIDIOUT hMidiOut, UINT uMessage,
 {
     LPWINE_MLD		wmld;
 
-    TRACE("(%p, %04X, %08lX, %08lX)\n", hMidiOut, uMessage, dwParam1, dwParam2);
+    TRACE("(%p, %04X, %08IX, %08IX)\n", hMidiOut, uMessage, dwParam1, dwParam2);
 
     if ((wmld = MMDRV_Get(hMidiOut, MMDRV_MIDIOUT, FALSE)) == NULL) {
 	/* HACK... */
@@ -666,7 +666,7 @@ UINT WINAPI midiInGetDevCapsW(UINT_PTR uDeviceID, LPMIDIINCAPSW lpCaps, UINT uSi
 {
     LPWINE_MLD	wmld;
 
-    TRACE("(%ld, %p, %d);\n", uDeviceID, lpCaps, uSize);
+    TRACE("(%Id, %p, %d);\n", uDeviceID, lpCaps, uSize);
 
     if (lpCaps == NULL)	return MMSYSERR_INVALPARAM;
 
@@ -711,7 +711,7 @@ MMRESULT WINAPI midiInOpen(HMIDIIN* lphMidiIn, UINT uDeviceID,
     LPWINE_MIDI		lpwm;
     MMRESULT		dwRet;
 
-    TRACE("(%p, %d, %08lX, %08lX, %08X);\n",
+    TRACE("(%p, %d, %08IX, %08IX, %08lX);\n",
 	  lphMidiIn, uDeviceID, dwCallback, dwInstance, dwFlags);
 
     if (lphMidiIn != NULL) *lphMidiIn = 0;
@@ -881,7 +881,7 @@ UINT WINAPI midiInMessage(HMIDIIN hMidiIn, UINT uMessage,
 {
     LPWINE_MLD		wmld;
 
-    TRACE("(%p, %04X, %08lX, %08lX)\n", hMidiIn, uMessage, dwParam1, dwParam2);
+    TRACE("(%p, %04X, %08IX, %08IX)\n", hMidiIn, uMessage, dwParam1, dwParam2);
 
     if ((wmld = MMDRV_Get(hMidiIn, MMDRV_MIDIIN, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
@@ -1129,7 +1129,7 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
                 lpMidiStrm->dwStartTicks = timeGetTime();
             lpMidiHdr = (LPMIDIHDR)msg->lParam;
             lpData = (LPBYTE)lpMidiHdr->lpData;
-            TRACE("Adding %s lpMidiHdr=%p [lpData=0x%p dwBytesRecorded=%u/%u dwFlags=0x%08x size=%lu]\n",
+            TRACE("Adding %s lpMidiHdr=%p [lpData=0x%p dwBytesRecorded=%lu/%lu dwFlags=0x%08lx size=%Iu]\n",
                   (lpMidiHdr->dwFlags & MHDR_ISSTRM) ? "stream" : "regular", lpMidiHdr,
                   lpData, lpMidiHdr->dwBytesRecorded, lpMidiHdr->dwBufferLength,
                   lpMidiHdr->dwFlags, msg->wParam);
@@ -1155,7 +1155,7 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
             if (((LPMIDIEVENT)lpData)->dwStreamID != 0 &&
                 ((LPMIDIEVENT)lpData)->dwStreamID != 0xFFFFFFFF &&
                 ((LPMIDIEVENT)lpData)->dwStreamID != lpMidiStrm->dwStreamID) {
-                FIXME("Dropping bad %s lpMidiHdr (streamID=%08x)\n",
+                FIXME("Dropping bad %s lpMidiHdr (streamID=%08lx)\n",
                       (lpMidiHdr->dwFlags & MHDR_ISSTRM) ? "stream" : "regular",
                       ((LPMIDIEVENT)lpData)->dwStreamID);
                 lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
@@ -1235,7 +1235,7 @@ start_header:
 
 	    dwToGo = lpMidiStrm->dwStartTicks + lpMidiStrm->position_usec / 1000;
 
-	    TRACE("%u/%u/%u\n", dwToGo, timeGetTime(), me->dwDeltaTime);
+	    TRACE("%lu/%lu/%lu\n", dwToGo, timeGetTime(), me->dwDeltaTime);
 	    while (dwToGo - (dwCurrTC = timeGetTime()) <= MAXLONG) {
 		if (MsgWaitForMultipleObjects(0, NULL, FALSE, dwToGo - dwCurrTC, QS_ALLINPUT) == WAIT_OBJECT_0) {
 		    /* got a message, handle it */
@@ -1368,7 +1368,7 @@ MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
     LPWINE_MIDI		lpwm;
     HMIDIOUT		hMidiOut;
 
-    TRACE("(%p, %p, %d, 0x%08lx, 0x%08lx, 0x%08x)!\n",
+    TRACE("(%p, %p, %ld, 0x%08Ix, 0x%08Ix, 0x%08lx)!\n",
 	  lphMidiStrm, lpuDeviceID, cMidi, dwCallback, dwInstance, fdwOpen);
 
     if (cMidi != 1 || lphMidiStrm == NULL || lpuDeviceID == NULL)
@@ -1496,7 +1496,7 @@ static MMRESULT midistream_post_message_and_wait(WINE_MIDIStream* lpMidiStrm, UI
         ret = WaitForMultipleObjects(ARRAY_SIZE(hObjects), hObjects, FALSE, INFINITE);
         if (ret != WAIT_OBJECT_0) {
             CloseHandle(hObjects[0]);
-            WARN("bad WaitForSingleObject (%u)\n", ret);
+            WARN("bad WaitForSingleObject (%lu)\n", ret);
             return MMSYSERR_ERROR;
         }
     }
@@ -1562,7 +1562,7 @@ MMRESULT WINAPI midiStreamPosition(HMIDISTRM hMidiStrm, LPMMTIME lpMMT, UINT cbm
 		pulses = midistream_get_current_pulse(lpMidiStrm);
 		lpMMT->u.midi.songptrpos = (pulses + tdiv/8) / (tdiv/4);
 		if (!lpMMT->u.midi.songptrpos && pulses) lpMMT->u.midi.songptrpos++;
-		TRACE("=> song position %d (pulses %u, tdiv %u)\n", lpMMT->u.midi.songptrpos, pulses, tdiv);
+		TRACE("=> song position %ld (pulses %lu, tdiv %lu)\n", lpMMT->u.midi.songptrpos, pulses, tdiv);
 		break;
 	    }
 	/* fall through */
@@ -1572,18 +1572,18 @@ MMRESULT WINAPI midiStreamPosition(HMIDISTRM hMidiStrm, LPMMTIME lpMMT, UINT cbm
 	    /* fall through to alternative format */
 	case TIME_MS:
 	    lpMMT->u.ms = midistream_get_playing_position(lpMidiStrm);
-	    TRACE("=> %d ms\n", lpMMT->u.ms);
+	    TRACE("=> %ld ms\n", lpMMT->u.ms);
 	    break;
 	case TIME_TICKS:
 	    lpMMT->u.ticks = midistream_get_current_pulse(lpMidiStrm);
-	    TRACE("=> %d ticks\n", lpMMT->u.ticks);
+	    TRACE("=> %ld ticks\n", lpMMT->u.ticks);
 	    break;
 	default:
 	    FIXME("Unsupported time type %x\n", lpMMT->wType);
 	    /* use TIME_MS instead */
 	    lpMMT->wType = TIME_MS;
 	    lpMMT->u.ms = midistream_get_playing_position(lpMidiStrm);
-	    TRACE("=> %d ms\n", lpMMT->u.ms);
+	    TRACE("=> %ld ms\n", lpMMT->u.ms);
 	    break;
 	}
 	LeaveCriticalSection(&lpMidiStrm->lock);
@@ -1599,7 +1599,7 @@ MMRESULT WINAPI midiStreamProperty(HMIDISTRM hMidiStrm, LPBYTE lpPropData, DWORD
     WINE_MIDIStream*	lpMidiStrm;
     MMRESULT		ret = MMSYSERR_NOERROR;
 
-    TRACE("(%p, %p, %x)\n", hMidiStrm, lpPropData, dwProperty);
+    TRACE("(%p, %p, %lx)\n", hMidiStrm, lpPropData, dwProperty);
 
     if (!MMSYSTEM_GetMidiStream(hMidiStrm, &lpMidiStrm, NULL)) {
 	ret = MMSYSERR_INVALHANDLE;
@@ -1613,10 +1613,10 @@ MMRESULT WINAPI midiStreamProperty(HMIDISTRM hMidiStrm, LPBYTE lpPropData, DWORD
 	    ret = MMSYSERR_INVALPARAM;
 	} else if (dwProperty & MIDIPROP_SET) {
 	    lpMidiStrm->dwTempo = mpt->dwTempo;
-	    TRACE("Setting tempo to %d\n", mpt->dwTempo);
+	    TRACE("Setting tempo to %ld\n", mpt->dwTempo);
 	} else if (dwProperty & MIDIPROP_GET) {
 	    mpt->dwTempo = lpMidiStrm->dwTempo;
-	    TRACE("Getting tempo <= %d\n", mpt->dwTempo);
+	    TRACE("Getting tempo <= %ld\n", mpt->dwTempo);
 	}
 	LeaveCriticalSection(&lpMidiStrm->lock);
     } else if (dwProperty & MIDIPROP_TIMEDIV) {
@@ -1628,14 +1628,14 @@ MMRESULT WINAPI midiStreamProperty(HMIDISTRM hMidiStrm, LPBYTE lpPropData, DWORD
 	    EnterCriticalSection(&lpMidiStrm->lock);
 	    if (lpMidiStrm->status != MSM_STATUS_PLAYING) {
 		lpMidiStrm->dwTimeDiv = mptd->dwTimeDiv;
-		TRACE("Setting time div to %d\n", mptd->dwTimeDiv);
+		TRACE("Setting time div to %ld\n", mptd->dwTimeDiv);
 	    }
 	    else
 		ret = MMSYSERR_INVALPARAM;
 	    LeaveCriticalSection(&lpMidiStrm->lock);
 	} else if (dwProperty & MIDIPROP_GET) {
 	    mptd->dwTimeDiv = lpMidiStrm->dwTimeDiv;
-	    TRACE("Getting time div <= %d\n", mptd->dwTimeDiv);
+	    TRACE("Getting time div <= %ld\n", mptd->dwTimeDiv);
 	}
     } else {
 	ret = MMSYSERR_INVALPARAM;

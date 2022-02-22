@@ -97,7 +97,7 @@ DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
     WINE_MM_DRIVER_PART*	part;
     WINE_LLTYPE*		llType = &llTypes[mld->type];
 
-    TRACE("(%s %d %u 0x%08lx 0x%08lx 0x%08lx)\n",
+    TRACE("(%s %d %u 0x%08Ix 0x%08Ix 0x%08Ix)\n",
 	  llTypes[mld->type].typestr, mld->uDeviceID, wMsg,
 	  mld->dwDriverInstance, dwParam1, dwParam2);
 
@@ -119,7 +119,7 @@ DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
 
     assert(part->fnMessage32);
 
-    TRACE("Calling message(dev=%d msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx)\n",
+    TRACE("Calling message(dev=%d msg=%u usr=0x%08Ix p1=0x%08Ix p2=0x%08Ix)\n",
           mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
     ret = part->fnMessage32(mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
     TRACE("=> %s\n", WINMM_ErrorToString(ret));
@@ -195,7 +195,7 @@ DWORD MMDRV_Open(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1, DWORD dwFlags)
     DWORD		dwRet = MMSYSERR_BADDEVICEID;
     DWORD_PTR		dwInstance;
     WINE_LLTYPE*	llType = &llTypes[mld->type];
-    TRACE("(%p, %04x, 0x%08lx, 0x%08x)\n", mld, wMsg, dwParam1, dwFlags);
+    TRACE("(%p, %04x, 0x%08Ix, 0x%08lx)\n", mld, wMsg, dwParam1, dwFlags);
 
     mld->dwDriverInstance = (DWORD_PTR)&dwInstance;
 
@@ -286,7 +286,7 @@ UINT	MMDRV_PhysicalFeatures(LPWINE_MLD mld, UINT uMsg,
 {
     WINE_MM_DRIVER*	lpDrv = &MMDrvs[mld->mmdIndex];
 
-    TRACE("(%p, %04x, %08lx, %08lx)\n", mld, uMsg, dwParam1, dwParam2);
+    TRACE("(%p, %04x, %08Ix, %08Ix)\n", mld, uMsg, dwParam1, dwParam2);
 
     /* all those function calls are undocumented */
     switch (uMsg) {
@@ -505,20 +505,20 @@ static void MMDRV_Init(void)
     hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL,
             CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&devenum);
     if(FAILED(hr)){
-        ERR("CoCreateInstance failed: %08x\n", hr);
+        ERR("CoCreateInstance failed: %08lx\n", hr);
         goto exit;
     }
 
     hr = IMMDeviceEnumerator_GetDevice(devenum, L"Wine info device", &device);
     IMMDeviceEnumerator_Release(devenum);
     if(FAILED(hr)){
-        ERR("GetDevice failed: %08x\n", hr);
+        ERR("GetDevice failed: %08lx\n", hr);
         goto exit;
     }
 
     hr = IMMDevice_OpenPropertyStore(device, STGM_READ, &ps);
     if(FAILED(hr)){
-        ERR("OpenPropertyStore failed: %08x\n", hr);
+        ERR("OpenPropertyStore failed: %08lx\n", hr);
         IMMDevice_Release(device);
         goto exit;
     }
@@ -528,7 +528,7 @@ static void MMDRV_Init(void)
     IPropertyStore_Release(ps);
     IMMDevice_Release(device);
     if(FAILED(hr)){
-        ERR("GetValue failed: %08x\n", hr);
+        ERR("GetValue failed: %08lx\n", hr);
         goto exit;
     }
 

@@ -156,7 +156,7 @@ static BOOL WINAPI joystick_load_once( INIT_ONCE *once, void *param, void **cont
 {
     HRESULT hr = DirectInput8Create( hWinMM32Instance, DIRECTINPUT_VERSION, &IID_IDirectInput8W,
                                      (void **)&dinput, NULL );
-    if (FAILED(hr)) ERR( "Could not create dinput instance, hr %#x\n", hr );
+    if (FAILED(hr)) ERR( "Could not create dinput instance, hr %#lx\n", hr );
     return TRUE;
 }
 
@@ -191,7 +191,7 @@ static void find_joysticks(void)
 
     index = 0;
     IDirectInput8_EnumDevices( dinput, DI8DEVCLASS_ALL, enum_instances, &index, DIEDFL_ATTACHEDONLY );
-    TRACE( "found %u device instances\n", index );
+    TRACE( "found %lu device instances\n", index );
 
     while (index--)
     {
@@ -205,18 +205,18 @@ static void find_joysticks(void)
         }
 
         if (!(event = CreateEventW( NULL, FALSE, FALSE, NULL )))
-            WARN( "could not event for device, error %u\n", GetLastError() );
+            WARN( "could not event for device, error %lu\n", GetLastError() );
         else if (FAILED(hr = IDirectInput8_CreateDevice( dinput, &instances[index].guidInstance, &device, NULL )))
-            WARN( "could not create device %s instance, hr %#x\n",
+            WARN( "could not create device %s instance, hr %#lx\n",
                   debugstr_guid( &instances[index].guidInstance ), hr );
         else if (FAILED(hr = IDirectInputDevice8_SetEventNotification( device, event )))
-            WARN( "SetEventNotification device %p hr %#x\n", device, hr );
+            WARN( "SetEventNotification device %p hr %#lx\n", device, hr );
         else if (FAILED(hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, DISCL_NONEXCLUSIVE|DISCL_BACKGROUND )))
-            WARN( "SetCooperativeLevel device %p hr %#x\n", device, hr );
+            WARN( "SetCooperativeLevel device %p hr %#lx\n", device, hr );
         else if (FAILED(hr = IDirectInputDevice8_SetDataFormat( device, &data_format )))
-            WARN( "SetDataFormat device %p hr %#x\n", device, hr );
+            WARN( "SetDataFormat device %p hr %#lx\n", device, hr );
         else if (FAILED(hr = IDirectInputDevice8_Acquire( device )))
-            WARN( "Acquire device %p hr %#x\n", device, hr );
+            WARN( "Acquire device %p hr %#lx\n", device, hr );
         else
         {
             TRACE( "opened device %p event %p\n", device, event );
@@ -295,7 +295,7 @@ static void CALLBACK joystick_timer( HWND hwnd, UINT msg, UINT_PTR timer, DWORD 
  */
 MMRESULT WINAPI joyConfigChanged(DWORD flags)
 {
-    FIXME( "flags %#x stub!\n", flags );
+    FIXME( "flags %#lx stub!\n", flags );
     if (flags) return JOYERR_PARMS;
     return JOYERR_NOERROR;
 }
@@ -351,13 +351,13 @@ MMRESULT WINAPI DECLSPEC_HOTPATCH joyGetDevCapsW( UINT_PTR id, JOYCAPSW *caps, U
     if (!(device = joysticks[id].device)) res = JOYERR_PARMS;
     else if (FAILED(hr = IDirectInputDevice8_GetCapabilities( device, &dicaps )))
     {
-        WARN( "GetCapabilities device %p returned %#x\n", device, hr );
+        WARN( "GetCapabilities device %p returned %#lx\n", device, hr );
         res = JOYERR_PARMS;
     }
     else
     {
         hr = IDirectInputDevice8_GetProperty( device, DIPROP_VIDPID, &diprop.diph );
-        if (FAILED(hr)) WARN( "GetProperty device %p returned %#x\n", device, hr );
+        if (FAILED(hr)) WARN( "GetProperty device %p returned %#lx\n", device, hr );
         else
         {
             caps->wMid = LOWORD(diprop.dwData);
@@ -487,7 +487,7 @@ MMRESULT WINAPI DECLSPEC_HOTPATCH joyGetPosEx( UINT id, JOYINFOEX *info )
         res = JOYERR_PARMS;
     else if (FAILED(hr = IDirectInputDevice8_GetDeviceState( device, sizeof(struct joystick_state), &state )))
     {
-        WARN( "GetDeviceState device %p returned %#x\n", device, hr );
+        WARN( "GetDeviceState device %p returned %#lx\n", device, hr );
         res = JOYERR_PARMS;
     }
     else

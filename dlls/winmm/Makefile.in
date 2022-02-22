@@ -1,4 +1,4 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES -D_WINMM_
+EXTRADEFS = -D_WINMM_
 MODULE    = winmm.dll
 IMPORTLIB = winmm
 IMPORTS   = uuid user32 advapi32 ole32 msacm32
