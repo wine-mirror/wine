@@ -36,9 +36,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 
-#define NB_USER_HANDLES  ((LAST_USER_HANDLE - FIRST_USER_HANDLE + 1) >> 1)
-#define USER_HANDLE_TO_INDEX(hwnd) ((LOWORD(hwnd) - FIRST_USER_HANDLE) >> 1)
-
 static DWORD process_layout = ~0u;
 
 
@@ -87,31 +84,12 @@ static inline void set_win_data( void *ptr, LONG_PTR val, UINT size )
 }
 
 
-static void *user_handles[NB_USER_HANDLES];
-
 /***********************************************************************
  *           alloc_user_handle
  */
 HANDLE alloc_user_handle( struct user_object *ptr, unsigned int type )
 {
-    HANDLE handle = 0;
-
-    SERVER_START_REQ( alloc_user_handle )
-    {
-        if (!wine_server_call_err( req )) handle = wine_server_ptr_handle( reply->handle );
-    }
-    SERVER_END_REQ;
-
-    if (handle)
-    {
-        UINT index = USER_HANDLE_TO_INDEX( handle );
-
-        assert( index < NB_USER_HANDLES );
-        ptr->handle = handle;
-        ptr->type = type;
-        InterlockedExchangePointer( &user_handles[index], ptr );
-    }
-    return handle;
+    return UlongToHandle( NtUserCallTwoParam( (UINT_PTR)ptr, type, NtUserAllocHandle ));
 }
 
 
@@ -120,23 +98,7 @@ HANDLE alloc_user_handle( struct user_object *ptr, unsigned int type )
  */
 void *get_user_handle_ptr( HANDLE handle, unsigned int type )
 {
-    struct user_object *ptr;
-    WORD index = USER_HANDLE_TO_INDEX( handle );
-
-    if (index >= NB_USER_HANDLES) return NULL;
-
-    USER_Lock();
-    if ((ptr = user_handles[index]))
-    {
-        if (ptr->type == type &&
-            ((UINT)(UINT_PTR)ptr->handle == (UINT)(UINT_PTR)handle ||
-             !HIWORD(handle) || HIWORD(handle) == 0xffff))
-            return ptr;
-        ptr = NULL;
-    }
-    else ptr = OBJ_OTHER_PROCESS;
-    USER_Unlock();
-    return ptr;
+    return (void *)NtUserCallTwoParam( HandleToUlong(handle), type, NtUserGetHandlePtr );
 }
 
 
@@ -155,21 +117,7 @@ void release_user_handle_ptr( void *ptr )
  */
 void *free_user_handle( HANDLE handle, unsigned int type )
 {
-    struct user_object *ptr;
-    WORD index = USER_HANDLE_TO_INDEX( handle );
-
-    if ((ptr = get_user_handle_ptr( handle, type )) && ptr != OBJ_OTHER_PROCESS)
-    {
-        SERVER_START_REQ( free_user_handle )
-        {
-            req->handle = wine_server_user_handle( handle );
-            if (wine_server_call( req )) ptr = NULL;
-            else InterlockedCompareExchangePointer( &user_handles[index], NULL, ptr );
-        }
-        SERVER_END_REQ;
-        USER_Unlock();
-    }
-    return ptr;
+    return UlongToHandle( NtUserCallTwoParam( HandleToUlong(handle), type, NtUserFreeHandle ));
 }
 
 
@@ -182,7 +130,6 @@ static WND *create_window_handle( HWND parent, HWND owner, LPCWSTR name,
                                   HINSTANCE instance, BOOL unicode,
                                   DWORD style, DWORD ex_style )
 {
-    WORD index;
     WND *win;
     HWND handle = 0, full_parent = 0, full_owner = 0;
     struct tagCLASS *class = NULL;
@@ -253,8 +200,6 @@ static WND *create_window_handle( HWND parent, HWND owner, LPCWSTR name,
 
     USER_Lock();
 
-    index = USER_HANDLE_TO_INDEX(handle);
-    assert( index < NB_USER_HANDLES );
     win->obj.handle = handle;
     win->obj.type   = NTUSER_OBJ_WINDOW;
     win->parent     = full_parent;
@@ -264,7 +209,7 @@ static WND *create_window_handle( HWND parent, HWND owner, LPCWSTR name,
     win->cbWndExtra = extra_bytes;
     win->dpi        = dpi;
     win->dpi_awareness = awareness;
-    InterlockedExchangePointer( &user_handles[index], win );
+    NtUserCallTwoParam( HandleToUlong(handle), (UINT_PTR)win, NtUserSetHandlePtr );
     if (WINPROC_IsUnicode( win->winproc, unicode )) win->flags |= WIN_ISUNICODE;
     return win;
 }
@@ -278,7 +223,6 @@ static WND *create_window_handle( HWND parent, HWND owner, LPCWSTR name,
 static void free_window_handle( HWND hwnd )
 {
     struct user_object *ptr;
-    WORD index = USER_HANDLE_TO_INDEX(hwnd);
 
     if ((ptr = get_user_handle_ptr( hwnd, NTUSER_OBJ_WINDOW )) && ptr != OBJ_OTHER_PROCESS)
     {
@@ -286,7 +230,7 @@ static void free_window_handle( HWND hwnd )
         {
             req->handle = wine_server_user_handle( hwnd );
             wine_server_call( req );
-            InterlockedCompareExchangePointer( &user_handles[index], NULL, ptr );
+            NtUserCallTwoParam( HandleToUlong(hwnd), 0, NtUserSetHandlePtr );
         }
         SERVER_END_REQ;
         USER_Unlock();
@@ -1156,20 +1100,7 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
  */
 static WND *next_thread_window( HWND *hwnd )
 {
-    struct user_object *ptr;
-    WND *win;
-    WORD index = *hwnd ? USER_HANDLE_TO_INDEX( *hwnd ) + 1 : 0;
-
-    while (index < NB_USER_HANDLES)
-    {
-        if (!(ptr = user_handles[index++])) continue;
-        if (ptr->type != NTUSER_OBJ_WINDOW) continue;
-        win = (WND *)ptr;
-        if (win->tid != GetCurrentThreadId()) continue;
-        *hwnd = ptr->handle;
-        return win;
-    }
-    return NULL;
+    return (WND *)NtUserCallOneParam( (UINT_PTR)hwnd, NtUserNextThreadWindow );
 }
 
 
@@ -1187,7 +1118,7 @@ void destroy_thread_windows(void)
     while ((win = next_thread_window( &hwnd )))
     {
         free_dce( win->dce, win->obj.handle );
-        InterlockedCompareExchangePointer( &user_handles[USER_HANDLE_TO_INDEX(hwnd)], NULL, win );
+        NtUserCallTwoParam( HandleToUlong(hwnd), 0, NtUserSetHandlePtr );
         win->obj.handle = *free_list_ptr;
         free_list_ptr = (WND **)&win->obj.handle;
     }

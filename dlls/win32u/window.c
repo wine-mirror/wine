@@ -24,14 +24,123 @@
 #endif
 
 #include <pthread.h>
+#include <assert.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "win32u_private.h"
+#include "ntuser_private.h"
 #include "wine/server.h"
+
+#define NB_USER_HANDLES  ((LAST_USER_HANDLE - FIRST_USER_HANDLE + 1) >> 1)
+#define USER_HANDLE_TO_INDEX(hwnd) ((LOWORD(hwnd) - FIRST_USER_HANDLE) >> 1)
+
+static void *user_handles[NB_USER_HANDLES];
 
 static struct list window_surfaces = LIST_INIT( window_surfaces );
 static pthread_mutex_t surfaces_lock = PTHREAD_MUTEX_INITIALIZER;
+
+/***********************************************************************
+ *           alloc_user_handle
+ */
+HANDLE alloc_user_handle( struct user_object *ptr, unsigned int type )
+{
+    HANDLE handle = 0;
+
+    SERVER_START_REQ( alloc_user_handle )
+    {
+        if (!wine_server_call_err( req )) handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+
+    if (handle)
+    {
+        UINT index = USER_HANDLE_TO_INDEX( handle );
+
+        assert( index < NB_USER_HANDLES );
+        ptr->handle = handle;
+        ptr->type = type;
+        InterlockedExchangePointer( &user_handles[index], ptr );
+    }
+    return handle;
+}
+
+/***********************************************************************
+ *           get_user_handle_ptr
+ */
+void *get_user_handle_ptr( HANDLE handle, unsigned int type )
+{
+    struct user_object *ptr;
+    WORD index = USER_HANDLE_TO_INDEX( handle );
+
+    if (index >= NB_USER_HANDLES) return NULL;
+
+    user_lock();
+    if ((ptr = user_handles[index]))
+    {
+        if (ptr->type == type &&
+            ((UINT)(UINT_PTR)ptr->handle == (UINT)(UINT_PTR)handle ||
+             !HIWORD(handle) || HIWORD(handle) == 0xffff))
+            return ptr;
+        ptr = NULL;
+    }
+    else ptr = OBJ_OTHER_PROCESS;
+    user_unlock();
+    return ptr;
+}
+
+/***********************************************************************
+ *           set_user_handle_ptr
+ */
+void set_user_handle_ptr( HANDLE handle, struct user_object *ptr )
+{
+    WORD index = USER_HANDLE_TO_INDEX(handle);
+    assert( index < NB_USER_HANDLES );
+    InterlockedExchangePointer( &user_handles[index], ptr );
+}
+
+/***********************************************************************
+ *           free_user_handle
+ */
+void *free_user_handle( HANDLE handle, unsigned int type )
+{
+    struct user_object *ptr;
+    WORD index = USER_HANDLE_TO_INDEX( handle );
+
+    if ((ptr = get_user_handle_ptr( handle, type )) && ptr != OBJ_OTHER_PROCESS)
+    {
+        SERVER_START_REQ( free_user_handle )
+        {
+            req->handle = wine_server_user_handle( handle );
+            if (wine_server_call( req )) ptr = NULL;
+            else InterlockedCompareExchangePointer( &user_handles[index], NULL, ptr );
+        }
+        SERVER_END_REQ;
+        user_unlock();
+    }
+    return ptr;
+}
+
+/***********************************************************************
+ *           next_thread_window
+ */
+WND *next_thread_window_ptr( HWND *hwnd )
+{
+    struct user_object *ptr;
+    WND *win;
+    WORD index = *hwnd ? USER_HANDLE_TO_INDEX( *hwnd ) + 1 : 0;
+
+    while (index < NB_USER_HANDLES)
+    {
+        if (!(ptr = user_handles[index++])) continue;
+        if (ptr->type != NTUSER_OBJ_WINDOW) continue;
+        win = (WND *)ptr;
+        if (win->tid != GetCurrentThreadId()) continue;
+        *hwnd = ptr->handle;
+        return win;
+    }
+    return NULL;
+}
 
 /*******************************************************************
  *           register_window_surface

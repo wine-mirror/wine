@@ -4589,6 +4589,8 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
         case 1: user_unlock(); return 0;
         default: user_check_not_lock(); return 0;
         }
+    case NtUserNextThreadWindow:
+        return (UINT_PTR)next_thread_window_ptr( (HWND *)arg );
     case NtUserSetCallbacks:
         return (UINT_PTR)InterlockedExchangePointer( (void **)&user_callbacks, (void *)arg );
     default:
@@ -4615,8 +4617,17 @@ ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code 
     case NtUserUnhookWindowsHook:
         return unhook_windows_hook( arg1, (HOOKPROC)arg2 );
     /* temporary exports */
+    case NtUserAllocHandle:
+        return HandleToUlong( alloc_user_handle( (struct user_object *)arg1, arg2 ));
+    case NtUserFreeHandle:
+        return (UINT_PTR)free_user_handle( UlongToHandle(arg1), arg2 );
+    case NtUserGetHandlePtr:
+        return (UINT_PTR)get_user_handle_ptr( UlongToHandle(arg1), arg2 );
     case NtUserRegisterWindowSurface:
         register_window_surface( (struct window_surface *)arg1, (struct window_surface *)arg2 );
+        return 0;
+    case NtUserSetHandlePtr:
+        set_user_handle_ptr( UlongToHandle(arg1), (struct user_object *)arg2 );
         return 0;
     default:
         FIXME( "invalid code %u\n", code );

@@ -88,6 +88,7 @@ enum
     NtUserGetDeskPattern,
     NtUserIncrementKeyStateCounter,
     NtUserLock,
+    NtUserNextThreadWindow,
     NtUserSetCallbacks,
 };
 
@@ -100,7 +101,11 @@ enum
     NtUserMonitorFromRect,
     NtUserUnhookWindowsHook,
     /* temporary exports */
+    NtUserAllocHandle,
+    NtUserFreeHandle,
+    NtUserGetHandlePtr,
     NtUserRegisterWindowSurface,
+    NtUserSetHandlePtr,
 };
 
 /* color index used to retrieve system 55aa brush */

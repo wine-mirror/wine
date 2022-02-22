@@ -34,6 +34,59 @@ struct user_callbacks
     HWND (WINAPI *pWindowFromDC)( HDC );
 };
 
+struct user_object
+{
+    HANDLE       handle;
+    unsigned int type;
+};
+
+#define OBJ_OTHER_PROCESS ((void *)1)  /* returned by get_user_handle_ptr on unknown handles */
+
+HANDLE alloc_user_handle( struct user_object *ptr, unsigned int type ) DECLSPEC_HIDDEN;
+void *get_user_handle_ptr( HANDLE handle, unsigned int type ) DECLSPEC_HIDDEN;
+void set_user_handle_ptr( HANDLE handle, struct user_object *ptr ) DECLSPEC_HIDDEN;
+void release_user_handle_ptr( void *ptr ) DECLSPEC_HIDDEN;
+void *free_user_handle( HANDLE handle, unsigned int type ) DECLSPEC_HIDDEN;
+
+typedef struct tagWND
+{
+    struct user_object obj;           /* object header */
+    HWND               parent;        /* Window parent */
+    HWND               owner;         /* Window owner */
+    struct tagCLASS   *class;         /* Window class */
+    struct dce        *dce;           /* DCE pointer */
+    WNDPROC            winproc;       /* Window procedure */
+    DWORD              tid;           /* Owner thread id */
+    HINSTANCE          hInstance;     /* Window hInstance (from CreateWindow) */
+    RECT               client_rect;   /* Client area rel. to parent client area */
+    RECT               window_rect;   /* Whole window rel. to parent client area */
+    RECT               visible_rect;  /* Visible part of the whole rect, rel. to parent client area */
+    RECT               normal_rect;   /* Normal window rect saved when maximized/minimized */
+    POINT              min_pos;       /* Position for minimized window */
+    POINT              max_pos;       /* Position for maximized window */
+    WCHAR             *text;          /* Window text */
+    void              *pScroll;       /* Scroll-bar info */
+    DWORD              dwStyle;       /* Window style (from CreateWindow) */
+    DWORD              dwExStyle;     /* Extended style (from CreateWindowEx) */
+    UINT_PTR           wIDmenu;       /* ID or hmenu (from CreateWindow) */
+    DWORD              helpContext;   /* Help context ID */
+    UINT               flags;         /* Misc. flags (see below) */
+    HMENU              hSysMenu;      /* window's copy of System Menu */
+    HICON              hIcon;         /* window's icon */
+    HICON              hIconSmall;    /* window's small icon */
+    HICON              hIconSmall2;   /* window's secondary small icon, derived from hIcon */
+    UINT               dpi;           /* window DPI */
+    DPI_AWARENESS      dpi_awareness; /* DPI awareness */
+    struct window_surface *surface;   /* Window surface if any */
+    struct tagDIALOGINFO *dlgInfo;    /* Dialog additional info (dialogs only) */
+    int                pixel_format;  /* Pixel format set by the graphics driver */
+    int                cbWndExtra;    /* class cbWndExtra at window creation */
+    DWORD_PTR          userdata;      /* User private data */
+    DWORD              wExtra[1];     /* Window extra bytes */
+} WND;
+
+WND *next_thread_window_ptr( HWND *hwnd );
+
 /* this is the structure stored in TEB->Win32ClientInfo */
 /* no attempt is made to keep the layout compatible with the Windows one */
 struct user_thread_info
