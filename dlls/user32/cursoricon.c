@@ -62,7 +62,6 @@ struct cursoricon_frame
 {
     UINT               width;    /* frame-specific width */
     UINT               height;   /* frame-specific height */
-    UINT               delay;    /* frame-specific delay between this frame and the next (in jiffies) */
     HBITMAP            color;    /* color bitmap */
     HBITMAP            alpha;    /* pre-multiplied alpha bitmap for 32-bpp icons */
     HBITMAP            mask;     /* mask bitmap (followed by color for 1-bpp icons) */
@@ -962,7 +961,6 @@ BOOL WINAPI NtUserSetCursorIconData( HCURSOR cursor, UNICODE_STRING *module, UNI
             memset( &frame_desc, 0, sizeof(frame_desc) );
             frame_desc.delay  = desc->frame_rates ? desc->frame_rates[i] : desc->delay;
             frame_desc.frames = &desc->frames[frame_id];
-            frame_desc.frames->delay = frame_desc.delay; /* FIXME */
             if (!(obj->ani.frames[i] = alloc_cursoricon_handle( obj->is_icon )) ||
                 !NtUserSetCursorIconData( obj->ani.frames[i], NULL, NULL, &frame_desc ))
             {
@@ -1243,7 +1241,6 @@ static BOOL create_icon_frame( const BITMAPINFO *bmi, DWORD maxsize, POINT hotsp
                        mask_bits, bmi_copy, DIB_RGB_COLORS, SRCCOPY );
     }
 
-    frame->delay   = ~0;
     frame->width   = width;
     frame->height  = height;
     frame->hotspot = hotspot;
@@ -2137,20 +2134,16 @@ HCURSOR WINAPI GetCursorFrameInfo(HCURSOR hCursor, DWORD reserved, DWORD istep, 
         }
         else if (istep < icon_steps)
         {
-            struct cursoricon_frame *frame;
+            struct cursoricon_object *frame;
 
             *num_steps = icon_steps;
-            frame = get_icon_frame( ptr, istep );
-            if (get_icon_steps(ptr) == 1)
+            frame = get_icon_ptr( ptr->ani.frames[istep] );
+            if (ptr->ani.num_steps == 1)
                 *num_steps = ~0;
             else
-                *num_steps = get_icon_steps(ptr);
-            /* If this specific frame does not have a delay then use the global delay */
-            if (frame->delay == ~0)
-                *rate_jiffies = ptr->delay;
-            else
-                *rate_jiffies = frame->delay;
-            release_icon_frame( ptr, frame );
+                *num_steps = ptr->ani.num_steps;
+            *rate_jiffies = frame->delay;
+            release_user_handle_ptr( frame );
         }
     }
 
