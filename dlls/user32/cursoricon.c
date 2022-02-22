@@ -2373,10 +2373,10 @@ static void stretch_blt_icon( HDC hdc_dst, int dst_x, int dst_y, int dst_width, 
  */
 HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
 {
+    struct cursoricon_frame frame = { 0 };
+    struct cursoricon_desc desc = { .frames = &frame };
     BITMAP bmpXor, bmpAnd;
-    HICON hObj;
-    HBITMAP color = 0, mask;
-    int width, height;
+    HICON ret;
     HDC hdc;
 
     TRACE("color %p, mask %p, hotspot %ux%u, fIcon %d\n",
@@ -2397,59 +2397,48 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
                bmpXor.bmWidth, bmpXor.bmHeight, bmpXor.bmWidthBytes,
                bmpXor.bmPlanes, bmpXor.bmBitsPixel);
 
-        width = bmpXor.bmWidth;
-        height = bmpXor.bmHeight;
-        color = create_color_bitmap( width, height );
+        frame.width = bmpXor.bmWidth;
+        frame.height = bmpXor.bmHeight;
+        frame.color = create_color_bitmap( frame.width, frame.height );
     }
     else
     {
-        width = bmpAnd.bmWidth;
-        height = bmpAnd.bmHeight;
+        frame.width = bmpAnd.bmWidth;
+        frame.height = bmpAnd.bmHeight;
     }
-    mask = CreateBitmap( width, height, 1, 1, NULL );
+    frame.mask = CreateBitmap( frame.width, frame.height, 1, 1, NULL );
 
     hdc = CreateCompatibleDC( 0 );
-    SelectObject( hdc, mask );
-    stretch_blt_icon( hdc, 0, 0, width, height, iconinfo->hbmMask, bmpAnd.bmWidth, bmpAnd.bmHeight );
+    SelectObject( hdc, frame.mask );
+    stretch_blt_icon( hdc, 0, 0, frame.width, frame.height, iconinfo->hbmMask,
+                      bmpAnd.bmWidth, bmpAnd.bmHeight );
 
-    if (color)
+    if (frame.color)
     {
-        SelectObject( hdc, color );
-        stretch_blt_icon( hdc, 0, 0, width, height, iconinfo->hbmColor, width, height );
+        SelectObject( hdc, frame.color );
+        stretch_blt_icon( hdc, 0, 0, frame.width, frame.height, iconinfo->hbmColor,
+                          frame.width, frame.height );
     }
-    else height /= 2;
+    else frame.height /= 2;
 
     DeleteDC( hdc );
 
-    hObj = alloc_icon_handle( FALSE, 0 );
-    if (hObj)
+    frame.alpha = create_alpha_bitmap( iconinfo->hbmColor, NULL, NULL );
+
+    if (iconinfo->fIcon)
     {
-        struct cursoricon_object *info = get_icon_ptr( hObj );
-        struct cursoricon_frame *frame;
-
-        info->is_icon = iconinfo->fIcon;
-        frame = get_icon_frame( info, 0 );
-        frame->delay  = ~0;
-        frame->width  = width;
-        frame->height = height;
-        frame->color  = color;
-        frame->mask   = mask;
-        frame->alpha  = create_alpha_bitmap( iconinfo->hbmColor, NULL, NULL );
-        if (info->is_icon)
-        {
-            frame->hotspot.x = width / 2;
-            frame->hotspot.y = height / 2;
-        }
-        else
-        {
-            frame->hotspot.x = iconinfo->xHotspot;
-            frame->hotspot.y = iconinfo->yHotspot;
-        }
-
-        release_icon_frame( info, frame );
-        release_user_handle_ptr( info );
+        frame.hotspot.x = frame.width / 2;
+        frame.hotspot.y = frame.height / 2;
     }
-    return hObj;
+    else
+    {
+        frame.hotspot.x = iconinfo->xHotspot;
+        frame.hotspot.y = iconinfo->yHotspot;
+    }
+
+    ret = create_cursoricon_object( &desc, iconinfo->fIcon, 0, 0, 0 );
+    if (!ret) free_icon_frame( &frame );
+    return ret;
 }
 
 /******************************************************************************
