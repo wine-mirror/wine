@@ -173,7 +173,7 @@ HBITMAP16 WINAPI WinGCreateBitmap16(HDC16 hdc, BITMAPINFO *bmpi, SEGPTR *bits)
     LPVOID bits32;
     HBITMAP hbitmap;
 
-    TRACE("(%d,%p,%p): create %dx%dx%d bitmap\n", hdc, bmpi, bits,
+    TRACE("(%d,%p,%p): create %ldx%ldx%d bitmap\n", hdc, bmpi, bits,
           bmpi->bmiHeader.biWidth, bmpi->bmiHeader.biHeight, bmpi->bmiHeader.biPlanes);
 
     hbitmap = CreateDIBSection( HDC_32(hdc), bmpi, DIB_RGB_COLORS, &bits32, 0, 0 );
@@ -278,7 +278,7 @@ HPALETTE16 WINAPI WinGCreateHalfTonePalette16(void)
 HBRUSH16 WINAPI WinGCreateHalfToneBrush16(HDC16 winDC, COLORREF col,
                                             WING_DITHER_TYPE type)
 {
-    TRACE("(%d,%d,%d)\n", winDC, col, type);
+    TRACE("(%d,%ld,%d)\n", winDC, col, type);
     return HBRUSH_16( CreateSolidBrush( col ));
 }
 
