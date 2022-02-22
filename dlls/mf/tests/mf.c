@@ -6535,10 +6535,11 @@ static void test_h264_decoder(void)
 
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Video, MFVideoFormat_H264};
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Video, MFVideoFormat_NV12};
+    MFT_INPUT_STREAM_INFO input_info;
     IMFMediaType *media_type;
     IMFTransform *transform;
+    ULONG flags, i, ret;
     GUID class_id;
-    ULONG i, ret;
     HRESULT hr;
 
     hr = CoInitialize(NULL);
@@ -6567,6 +6568,22 @@ static void test_h264_decoder(void)
     ok(ret == 0, "Release returned %u\n", ret);
 
     /* check available input types */
+
+    flags = MFT_INPUT_STREAM_WHOLE_SAMPLES | MFT_INPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER | MFT_INPUT_STREAM_FIXED_SAMPLE_SIZE;
+    memset(&input_info, 0xcd, sizeof(input_info));
+    hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
+    todo_wine
+    ok(hr == S_OK, "GetInputStreamInfo returned %#x\n", hr);
+    todo_wine
+    ok(input_info.hnsMaxLatency == 0, "got hnsMaxLatency %s\n", wine_dbgstr_longlong(input_info.hnsMaxLatency));
+    todo_wine
+    ok(input_info.dwFlags == flags, "got dwFlags %#x\n", input_info.dwFlags);
+    todo_wine
+    ok(input_info.cbSize == 0x1000, "got cbSize %u\n", input_info.cbSize);
+    todo_wine
+    ok(input_info.cbMaxLookahead == 0, "got cbMaxLookahead %#x\n", input_info.cbMaxLookahead);
+    todo_wine
+    ok(input_info.cbAlignment == 0, "got cbAlignment %#x\n", input_info.cbAlignment);
 
     i = -1;
     while (SUCCEEDED(hr = IMFTransform_GetInputAvailableType(transform, 0, ++i, &media_type)))
@@ -6653,6 +6670,22 @@ static void test_h264_decoder(void)
     ret = IMFMediaType_Release(media_type);
     todo_wine
     ok(ret == 1, "Release returned %u\n", ret);
+
+    flags = MFT_INPUT_STREAM_WHOLE_SAMPLES | MFT_INPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER | MFT_INPUT_STREAM_FIXED_SAMPLE_SIZE;
+    memset(&input_info, 0xcd, sizeof(input_info));
+    hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
+    todo_wine
+    ok(hr == S_OK, "GetInputStreamInfo returned %#x\n", hr);
+    todo_wine
+    ok(input_info.hnsMaxLatency == 0, "got hnsMaxLatency %s\n", wine_dbgstr_longlong(input_info.hnsMaxLatency));
+    todo_wine
+    ok(input_info.dwFlags == flags, "got dwFlags %#x\n", input_info.dwFlags);
+    todo_wine
+    ok(input_info.cbSize == 0x1000, "got cbSize %u\n", input_info.cbSize);
+    todo_wine
+    ok(input_info.cbMaxLookahead == 0, "got cbMaxLookahead %#x\n", input_info.cbMaxLookahead);
+    todo_wine
+    ok(input_info.cbAlignment == 0, "got cbAlignment %#x\n", input_info.cbAlignment);
 
     ret = IMFTransform_Release(transform);
     ok(ret == 0, "Release returned %u\n", ret);
