@@ -26,8 +26,12 @@
 /* KernelCallbackTable codes, not compatible with Windows */
 enum
 {
+    /* user32 callbacks */
     NtUserCallEnumDisplayMonitor,
     NtUserCallWinEventHook,
+    /* win16 hooks */
+    NtUserCallFreeIcon,
+    /* Vulkan support */
     NtUserCallVulkanDebugReportCallback,
     NtUserCallVulkanDebugUtilsCallback,
     NtUserCallCount
@@ -73,6 +77,7 @@ enum
 /* NtUserCallOneParam codes, not compatible with Windows */
 enum
 {
+    NtUserCreateCursorIcon,
     NtUserGetClipCursor,
     NtUserGetCursorPos,
     NtUserGetPrimaryMonitorRect,
@@ -120,6 +125,16 @@ enum
 #define NTUSER_OBJ_HOOK     0x0f
 
 /* NtUserSetCursorIconData parameter, not compatible with Windows */
+struct cursoricon_frame
+{
+    UINT     width;    /* frame-specific width */
+    UINT     height;   /* frame-specific height */
+    HBITMAP  color;    /* color bitmap */
+    HBITMAP  alpha;    /* pre-multiplied alpha bitmap for 32-bpp icons */
+    HBITMAP  mask;     /* mask bitmap (followed by color for 1-bpp icons) */
+    POINT    hotspot;
+};
+
 struct cursoricon_desc
 {
     UINT flags;
@@ -170,11 +185,14 @@ HDESK   WINAPI NtUserCreateDesktopEx( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *d
                                       ULONG heap_size );
 HWINSTA WINAPI NtUserCreateWindowStation( OBJECT_ATTRIBUTES *attr, ACCESS_MASK mask, ULONG arg3,
                                           ULONG arg4, ULONG arg5, ULONG arg6, ULONG arg7 );
+BOOL    WINAPI NtUserDestroyCursor( HCURSOR cursor, ULONG arg );
 NTSTATUS WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
                                           DISPLAY_DEVICEW *info, DWORD flags );
 BOOL    WINAPI NtUserEnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc, LPARAM lp );
 BOOL    WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD mode,
                                           DEVMODEW *dev_mode, DWORD flags );
+HICON   WINAPI NtUserFindExistingCursorIcon( UNICODE_STRING *module, UNICODE_STRING *res_name,
+                                             void *desc );
 SHORT   WINAPI NtUserGetAsyncKeyState( INT key );
 INT     WINAPI NtUserGetClipboardFormatName( UINT format, WCHAR *buffer, INT maxlen );
 HWND    WINAPI NtUserGetClipboardOwner(void);

@@ -23,6 +23,7 @@
 #define __WINE_NTUSER_PRIVATE_H
 
 #include "ntuser.h"
+#include "wine/list.h"
 
 struct user_callbacks
 {
@@ -123,5 +124,38 @@ struct user_key_state_info
     INT   counter;       /* Counter to invalidate the key state */
     BYTE  state[256];    /* State for each key */
 };
+
+struct cursoricon_object
+{
+    struct user_object      obj;        /* object header */
+    struct list             entry;      /* entry in shared icons list */
+    ULONG_PTR               param;      /* opaque param used by 16-bit code */
+    UNICODE_STRING          module;     /* module for icons loaded from resources */
+    LPWSTR                  resname;    /* resource name for icons loaded from resources */
+    HRSRC                   rsrc;       /* resource for shared icons */
+    BOOL                    is_shared;  /* whether this object is shared */
+    BOOL                    is_icon;    /* whether icon or cursor */
+    BOOL                    is_ani;     /* whether this object is a static cursor or an animated cursor */
+    UINT                    delay;      /* delay between this frame and the next (in jiffies) */
+    union
+    {
+        struct cursoricon_frame  frame; /* frame-specific icon data */
+        struct
+        {
+            UINT  num_frames;           /* number of frames in the icon/cursor */
+            UINT  num_steps;            /* number of sequence steps in the icon/cursor */
+            HICON *frames;              /* list of animated cursor frames */
+        } ani;
+    };
+};
+
+/* cursoricon.c */
+HICON alloc_cursoricon_handle( BOOL is_icon ) DECLSPEC_HIDDEN;
+
+/* window.c */
+HANDLE alloc_user_handle( struct user_object *ptr, unsigned int type ) DECLSPEC_HIDDEN;
+void *free_user_handle( HANDLE handle, unsigned int type ) DECLSPEC_HIDDEN;
+void *get_user_handle_ptr( HANDLE handle, unsigned int type ) DECLSPEC_HIDDEN;
+void release_user_handle_ptr( void *ptr ) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_NTUSER_PRIVATE_H */

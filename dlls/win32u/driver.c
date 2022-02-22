@@ -1045,6 +1045,7 @@ static const struct user_driver_funcs lazy_load_driver =
     .pUnregisterHotKey = loaderdrv_UnregisterHotKey,
     .pVkKeyScanEx = loaderdrv_VkKeyScanEx,
     /* cursor/icon functions */
+    .pDestroyCursorIcon = nulldrv_DestroyCursorIcon,
     .pSetCursor = loaderdrv_SetCursor,
     .pGetCursorPos = loaderdrv_GetCursorPos,
     .pSetCursorPos = loaderdrv_SetCursorPos,

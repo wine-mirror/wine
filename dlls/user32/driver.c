@@ -128,10 +128,6 @@ static void CDECL nulldrv_UnregisterHotKey( HWND hwnd, UINT modifiers, UINT vk )
 {
 }
 
-static void CDECL nulldrv_DestroyCursorIcon( HCURSOR cursor )
-{
-}
-
 static void CDECL nulldrv_SetCursor( HCURSOR cursor )
 {
 }
@@ -355,7 +351,7 @@ static struct user_driver_funcs lazy_load_driver =
     loaderdrv_UnregisterHotKey,
     NULL,
     /* cursor/icon functions */
-    nulldrv_DestroyCursorIcon,
+    NULL,
     loaderdrv_SetCursor,
     NULL,
     loaderdrv_SetCursorPos,
@@ -415,7 +411,6 @@ void CDECL __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT v
 
     SET_USER_FUNC(RegisterHotKey);
     SET_USER_FUNC(UnregisterHotKey);
-    SET_USER_FUNC(DestroyCursorIcon);
     SET_USER_FUNC(SetCursor);
     SET_USER_FUNC(SetCursorPos);
     SET_USER_FUNC(ClipCursor);

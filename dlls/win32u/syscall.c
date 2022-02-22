@@ -108,6 +108,7 @@ static void * const syscalls[] =
     NtUserCloseWindowStation,
     NtUserCreateDesktopEx,
     NtUserCreateWindowStation,
+    NtUserFindExistingCursorIcon,
     NtUserGetClipboardFormatName,
     NtUserGetClipboardOwner,
     NtUserGetClipboardSequenceNumber,

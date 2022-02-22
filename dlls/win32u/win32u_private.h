@@ -190,6 +190,7 @@ struct unix_funcs
                                                      DWORD flags, void *lparam );
     BOOL     (WINAPI *pNtUserClipCursor)( const RECT *rect );
     INT      (WINAPI *pNtUserCountClipboardFormats)(void);
+    BOOL     (WINAPI *pNtUserDestroyCursor)( HCURSOR cursor, ULONG arg );
     NTSTATUS (WINAPI *pNtUserEnumDisplayDevices)( UNICODE_STRING *device, DWORD index,
                                                   DISPLAY_DEVICEW *info, DWORD flags );
     BOOL     (WINAPI *pNtUserEnumDisplayMonitors)( HDC hdc, RECT *rect, MONITORENUMPROC proc, LPARAM lp );
@@ -208,6 +209,8 @@ struct unix_funcs
     BOOL     (WINAPI *pNtUserScrollDC)( HDC hdc, INT dx, INT dy, const RECT *scroll, const RECT *clip,
                                         HRGN ret_update_rgn, RECT *update_rect );
     HPALETTE (WINAPI *pNtUserSelectPalette)( HDC hdc, HPALETTE hpal, WORD bkg );
+    BOOL     (WINAPI *pNtUserSetCursorIconData)( HCURSOR cursor, UNICODE_STRING *module,
+                                                 UNICODE_STRING *res_name, struct cursoricon_desc *desc );
     BOOL     (WINAPI *pNtUserSetCursorPos)( INT x, INT y );
     BOOL     (WINAPI *pNtUserSetSysColors)( INT count, const INT *colors, const COLORREF *values );
     INT      (WINAPI *pNtUserShowCursor)( BOOL show );
@@ -237,6 +240,7 @@ struct unix_funcs
 };
 
 /* cursoricon.c */
+extern HICON alloc_cursoricon_handle( BOOL is_icon ) DECLSPEC_HIDDEN;
 extern BOOL get_clip_cursor( RECT *rect ) DECLSPEC_HIDDEN;
 
 /* hook.c */

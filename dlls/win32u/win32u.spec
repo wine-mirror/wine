@@ -829,7 +829,7 @@
 @ stub NtUserDestroyAcceleratorTable
 @ stub NtUserDestroyActivationGroup
 @ stub NtUserDestroyActivationObject
-@ stub NtUserDestroyCursor
+@ stdcall NtUserDestroyCursor(long long)
 @ stub NtUserDestroyDCompositionHwndTarget
 @ stub NtUserDestroyInputContext
 @ stub NtUserDestroyMenu
@@ -881,7 +881,7 @@
 @ stub NtUserEvent
 @ stub NtUserExcludeUpdateRgn
 @ stub NtUserFillWindow
-@ stub NtUserFindExistingCursorIcon
+@ stdcall -syscall NtUserFindExistingCursorIcon(ptr ptr ptr)
 @ stub NtUserFindWindowEx
 @ stub NtUserFlashWindowEx
 @ stub NtUserForceWindowToDpiForTest
@@ -1180,7 +1180,7 @@
 @ stub NtUserSetCoreWindowPartner
 @ stub NtUserSetCursor
 @ stub NtUserSetCursorContents
-@ stub NtUserSetCursorIconData
+@ stdcall NtUserSetCursorIconData(long ptr ptr ptr)
 @ stdcall NtUserSetCursorPos(long long)
 @ stub NtUserSetDesktopColorTransform
 @ stub NtUserSetDesktopVisualInputSink

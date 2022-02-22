@@ -4552,6 +4552,8 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
 {
     switch(code)
     {
+    case NtUserCreateCursorIcon:
+        return HandleToUlong( alloc_cursoricon_handle( arg ));
     case NtUserGetClipCursor:
         return get_clip_cursor( (RECT *)arg );
     case NtUserGetCursorPos:

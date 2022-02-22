@@ -100,6 +100,15 @@ void set_user_handle_ptr( HANDLE handle, struct user_object *ptr )
 }
 
 /***********************************************************************
+ *           release_user_handle_ptr
+ */
+void release_user_handle_ptr( void *ptr )
+{
+    assert( ptr && ptr != OBJ_OTHER_PROCESS );
+    user_unlock();
+}
+
+/***********************************************************************
  *           free_user_handle
  */
 void *free_user_handle( HANDLE handle, unsigned int type )

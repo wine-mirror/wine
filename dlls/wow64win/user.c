@@ -264,6 +264,21 @@ NTSTATUS WINAPI wow64_NtUserGetCursor( UINT *args )
     return HandleToUlong( NtUserGetCursor() );
 }
 
+NTSTATUS WINAPI wow64_NtUserFindExistingCursorIcon( UINT *args )
+{
+    UNICODE_STRING32 *module32 = get_ptr( &args );
+    UNICODE_STRING32 *res_name32 = get_ptr( &args );
+    void *desc = get_ptr( &args );
+
+    UNICODE_STRING module;
+    UNICODE_STRING res_name;
+    HICON ret;
+
+    ret = NtUserFindExistingCursorIcon( unicode_str_32to64( &module, module32 ),
+                                        unicode_str_32to64( &res_name, res_name32 ), desc );
+    return HandleToUlong( ret );
+}
+
 NTSTATUS WINAPI wow64_NtUserAttachThreadInput( UINT *args )
 {
     DWORD from = get_ulong( &args );

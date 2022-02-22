@@ -28,12 +28,15 @@
 #pragma makedep unix
 #endif
 
+#include <assert.h>
 #include "win32u_private.h"
+#include "ntuser_private.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cursor);
 
+static struct list icon_cache = LIST_INIT( icon_cache );
 
 /***********************************************************************
  *	     NtUserShowCursor    (win32u.@)
@@ -153,5 +156,219 @@ BOOL get_clip_cursor( RECT *rect )
         HMONITOR monitor = monitor_from_rect( rect, MONITOR_DEFAULTTOPRIMARY, 0 );
         *rect = map_dpi_rect( *rect, get_monitor_dpi( monitor ), dpi );
     }
+    return ret;
+}
+
+HICON alloc_cursoricon_handle( BOOL is_icon )
+{
+    struct cursoricon_object *obj;
+    HICON handle;
+
+    if (!(obj = calloc( 1, sizeof(*obj) ))) return NULL;
+    obj->is_icon = is_icon;
+    if (!(handle = alloc_user_handle( &obj->obj, NTUSER_OBJ_ICON ))) free( obj );
+    return handle;
+}
+
+static struct cursoricon_object *get_icon_ptr( HICON handle )
+{
+    struct cursoricon_object *obj = get_user_handle_ptr( handle, NTUSER_OBJ_ICON );
+    if (obj == OBJ_OTHER_PROCESS)
+    {
+        WARN( "icon handle %p from other process\n", handle );
+        obj = NULL;
+    }
+    return obj;
+}
+
+static BOOL free_icon_handle( HICON handle )
+{
+    struct cursoricon_object *obj = free_user_handle( handle, NTUSER_OBJ_ICON );
+
+    if (obj == OBJ_OTHER_PROCESS) WARN( "icon handle %p from other process\n", handle );
+    else if (obj)
+    {
+        ULONG param = obj->param;
+        void *ret_ptr;
+        ULONG ret_len;
+        UINT i;
+
+        assert( !obj->rsrc );  /* shared icons can't be freed */
+
+        if (!obj->is_ani)
+        {
+            if (obj->frame.alpha) NtGdiDeleteObjectApp( obj->frame.alpha );
+            if (obj->frame.color) NtGdiDeleteObjectApp( obj->frame.color );
+            if (obj->frame.mask)  NtGdiDeleteObjectApp( obj->frame.mask );
+        }
+        else
+        {
+            for (i = 0; i < obj->ani.num_steps; i++)
+            {
+                HICON hFrame = obj->ani.frames[i];
+
+                if (hFrame)
+                {
+                    UINT j;
+
+                    free_icon_handle( obj->ani.frames[i] );
+                    for (j = 0; j < obj->ani.num_steps; j++)
+                    {
+                        if (obj->ani.frames[j] == hFrame) obj->ani.frames[j] = 0;
+                    }
+                }
+            }
+            free( obj->ani.frames );
+        }
+        if (!IS_INTRESOURCE( obj->resname )) free( obj->resname );
+        free( obj );
+        if (param) KeUserModeCallback( NtUserCallFreeIcon, &param, sizeof(param), &ret_ptr, &ret_len );
+        user_driver->pDestroyCursorIcon( handle );
+        return TRUE;
+    }
+    return FALSE;
+}
+
+/***********************************************************************
+ *	     NtUserDestroyCursor (win32u.@)
+ */
+BOOL WINAPI NtUserDestroyCursor( HCURSOR cursor, ULONG arg )
+{
+    struct cursoricon_object *obj;
+    BOOL shared, ret;
+
+    TRACE( "%p\n", cursor );
+
+    if (!(obj = get_icon_ptr( cursor ))) return FALSE;
+    shared = obj->is_shared;
+    release_user_handle_ptr( obj );
+    ret = NtUserGetCursor() != cursor;
+    if (!shared) free_icon_handle( cursor );
+    return ret;
+}
+
+/***********************************************************************
+ *	     NtUserSetCursorIconData (win32u.@)
+ */
+BOOL WINAPI NtUserSetCursorIconData( HCURSOR cursor, UNICODE_STRING *module, UNICODE_STRING *res_name,
+                                     struct cursoricon_desc *desc )
+{
+    struct cursoricon_object *obj;
+    UINT i, j;
+
+    if (!(obj = get_icon_ptr( cursor ))) return FALSE;
+
+    if (obj->is_ani || obj->frame.width)
+    {
+        /* already initialized */
+        release_user_handle_ptr( obj );
+        SetLastError( ERROR_INVALID_CURSOR_HANDLE );
+        return FALSE;
+    }
+
+    obj->delay = desc->delay;
+
+    if (desc->num_steps)
+    {
+        if (!(obj->ani.frames = calloc( desc->num_steps, sizeof(*obj->ani.frames) )))
+        {
+            release_user_handle_ptr( obj );
+            return FALSE;
+        }
+        obj->is_ani = TRUE;
+        obj->ani.num_steps  = desc->num_steps;
+        obj->ani.num_frames = desc->num_frames;
+    }
+    else obj->frame = desc->frames[0];
+
+    if (!res_name)
+        obj->resname = NULL;
+    else if (res_name->Length)
+    {
+        obj->resname = malloc( res_name->Length + sizeof(WCHAR) );
+        if (obj->resname)
+        {
+            memcpy( obj->resname, res_name->Buffer, res_name->Length );
+            obj->resname[res_name->Length / sizeof(WCHAR)] = 0;
+        }
+    }
+    else
+        obj->resname = MAKEINTRESOURCEW( LOWORD(res_name->Buffer) );
+
+    if (module && module->Length && (obj->module.Buffer = malloc( module->Length )))
+    {
+        memcpy( obj->module.Buffer, module->Buffer, module->Length );
+        obj->module.Length = module->Length;
+    }
+
+    if (obj->is_ani)
+    {
+        /* Setup the animated frames in the correct sequence */
+        for (i = 0; i < desc->num_steps; i++)
+        {
+            struct cursoricon_desc frame_desc;
+            DWORD frame_id;
+
+            if (obj->ani.frames[i]) continue; /* already set */
+
+            frame_id = desc->frame_seq ? desc->frame_seq[i] : i;
+            if (frame_id >= obj->ani.num_frames)
+            {
+                frame_id = obj->ani.num_frames - 1;
+                ERR_(cursor)( "Sequence indicates frame past end of list, corrupt?\n" );
+            }
+            memset( &frame_desc, 0, sizeof(frame_desc) );
+            frame_desc.delay  = desc->frame_rates ? desc->frame_rates[i] : desc->delay;
+            frame_desc.frames = &desc->frames[frame_id];
+            if (!(obj->ani.frames[i] = alloc_cursoricon_handle( obj->is_icon )) ||
+                !NtUserSetCursorIconData( obj->ani.frames[i], NULL, NULL, &frame_desc ))
+            {
+                release_user_handle_ptr( obj );
+                return 0;
+            }
+
+            if (desc->frame_seq)
+            {
+                for (j = i + 1; j < obj->ani.num_steps; j++)
+                {
+                    if (desc->frame_seq[j] == frame_id) obj->ani.frames[j] = obj->ani.frames[i];
+                }
+            }
+        }
+    }
+
+    if (desc->flags & LR_SHARED)
+    {
+        obj->is_shared = TRUE;
+        if (obj->module.Length)
+        {
+            obj->rsrc = desc->rsrc;
+            list_add_head( &icon_cache, &obj->entry );
+        }
+    }
+
+    release_user_handle_ptr( obj );
+    return TRUE;
+}
+
+/***********************************************************************
+ *	     NtUserFindExistingCursorIcon (win32u.@)
+ */
+HICON WINAPI NtUserFindExistingCursorIcon( UNICODE_STRING *module, UNICODE_STRING *res_name, void *desc )
+{
+    struct cursoricon_object *ptr;
+    HICON ret = 0;
+
+    user_lock();
+    LIST_FOR_EACH_ENTRY( ptr, &icon_cache, struct cursoricon_object, entry )
+    {
+        if (ptr->module.Length != module->Length) continue;
+        if (memcmp( ptr->module.Buffer, module->Buffer, module->Length )) continue;
+        /* We pass rsrc as desc argument, this is not compatible with Windows */
+        if (ptr->rsrc != desc) continue;
+        ret = ptr->obj.handle;
+        break;
+    }
+    user_unlock();
     return ret;
 }

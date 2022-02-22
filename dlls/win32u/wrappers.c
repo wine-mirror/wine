@@ -738,6 +738,12 @@ INT WINAPI NtUserCountClipboardFormats(void)
     return unix_funcs->pNtUserCountClipboardFormats();
 }
 
+BOOL WINAPI NtUserDestroyCursor( HCURSOR cursor, ULONG arg )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserDestroyCursor( cursor, arg );
+}
+
 NTSTATUS WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
                                           DISPLAY_DEVICEW *info, DWORD flags )
 {
@@ -824,6 +830,13 @@ HPALETTE WINAPI NtUserSelectPalette( HDC hdc, HPALETTE hpal, WORD bkg )
 {
     if (!unix_funcs) return 0;
     return unix_funcs->pNtUserSelectPalette( hdc, hpal, bkg );
+}
+
+BOOL WINAPI NtUserSetCursorIconData( HCURSOR cursor, UNICODE_STRING *module, UNICODE_STRING *res_name,
+                                     struct cursoricon_desc *desc )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserSetCursorIconData( cursor, module, res_name, desc );
 }
 
 BOOL WINAPI NtUserSetCursorPos( INT x, INT y )
