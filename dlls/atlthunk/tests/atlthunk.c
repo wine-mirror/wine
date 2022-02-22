@@ -23,8 +23,8 @@
 static LRESULT WINAPI test_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     ok(msg == 1, "msg = %u\n", msg);
-    ok(wparam == 2, "wparam = %lu\n", wparam);
-    ok(lparam == 3, "lparam = %lu\n", lparam);
+    ok(wparam == 2, "wparam = %Id\n", wparam);
+    ok(lparam == 3, "lparam = %Id\n", lparam);
     return (LRESULT)hwnd | 0x1000;
 }
 
@@ -49,7 +49,7 @@ static void test_thunk_proc(void)
         ok(thunk_proc != NULL, "thunk_proc = NULL\n");
 
         res = thunk_proc((HWND)0x1234, 1, 2, 3);
-        ok(res == (i | 0x1000), "res = %lu\n", res);
+        ok(res == (i | 0x1000), "res = %Iu\n", res);
     }
 
     for(i=0; i < ARRAY_SIZE(thunks); i++)
