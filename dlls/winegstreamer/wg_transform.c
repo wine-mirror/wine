@@ -44,6 +44,7 @@ GST_DEBUG_CATEGORY_EXTERN(wine);
 
 struct wg_transform
 {
+    GstElement *container;
     GstPad *my_src, *my_sink;
 };
 
@@ -62,6 +63,8 @@ NTSTATUS wg_transform_destroy(void *args)
 {
     struct wg_transform *transform = args;
 
+    gst_element_set_state(transform->container, GST_STATE_NULL);
+    g_object_unref(transform->container);
     g_object_unref(transform->my_sink);
     g_object_unref(transform->my_src);
     free(transform);
@@ -84,9 +87,11 @@ NTSTATUS wg_transform_create(void *args)
 
     if (!(transform = calloc(1, sizeof(*transform))))
         return STATUS_NO_MEMORY;
+    if (!(transform->container = gst_bin_new("wg_transform")))
+        goto out_free_transform;
 
     if (!(src_caps = wg_format_to_caps(&input_format)))
-        goto out_free_transform;
+        goto out_free_container;
     if (!(template = gst_pad_template_new("src", GST_PAD_SRC, GST_PAD_ALWAYS, src_caps)))
         goto out_free_src_caps;
     transform->my_src = gst_pad_new_from_template(template, "src");
@@ -106,6 +111,10 @@ NTSTATUS wg_transform_create(void *args)
     gst_pad_set_element_private(transform->my_sink, transform);
     gst_pad_set_chain_function(transform->my_sink, transform_sink_chain_cb);
 
+    gst_element_set_state(transform->container, GST_STATE_PAUSED);
+    if (!gst_element_get_state(transform->container, NULL, NULL, -1))
+        goto out_free_sink_pad;
+
     gst_caps_unref(sink_caps);
     gst_caps_unref(src_caps);
 
@@ -113,12 +122,16 @@ NTSTATUS wg_transform_create(void *args)
     params->transform = transform;
     return STATUS_SUCCESS;
 
+out_free_sink_pad:
+    gst_object_unref(transform->my_sink);
 out_free_sink_caps:
     gst_caps_unref(sink_caps);
 out_free_src_pad:
     gst_object_unref(transform->my_src);
 out_free_src_caps:
     gst_caps_unref(src_caps);
+out_free_container:
+    gst_object_unref(transform->container);
 out_free_transform:
     free(transform);
     GST_ERROR("Failed to create winegstreamer transform.");
