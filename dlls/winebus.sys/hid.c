@@ -237,28 +237,29 @@ BOOL hid_device_add_hatswitch(struct unix_device *iface, INT count)
 
 static BOOL hid_device_add_axis_count(struct unix_device *iface, BOOL rel, BYTE count)
 {
-    USHORT offset = iface->hid_device_state.bit_size / 8;
+    struct hid_device_state *state = &iface->hid_device_state;
+    USHORT offset = state->bit_size / 8;
 
-    if (!rel && iface->hid_device_state.rel_axis_count)
+    if (!rel && state->rel_axis_count)
         ERR("absolute axes should be added before relative axes!\n");
-    else if (iface->hid_device_state.button_count || iface->hid_device_state.hatswitch_count)
+    else if (state->button_count || state->hatswitch_count)
         ERR("axes should be added before buttons or hatswitches!\n");
-    else if ((iface->hid_device_state.bit_size % 8))
+    else if ((state->bit_size % 8))
         ERR("axes should be byte aligned, missing padding!\n");
-    else if (iface->hid_device_state.bit_size + 32 * count > 0x80000)
+    else if (state->bit_size + 32 * count > 0x80000)
         ERR("report size overflow, too many elements!\n");
     else if (rel)
     {
-        if (!iface->hid_device_state.rel_axis_count) iface->hid_device_state.rel_axis_start = offset;
-        iface->hid_device_state.rel_axis_count += count;
-        iface->hid_device_state.bit_size += 32 * count;
+        if (!state->rel_axis_count) state->rel_axis_start = offset;
+        state->rel_axis_count += count;
+        state->bit_size += 32 * count;
         return TRUE;
     }
     else
     {
-        if (!iface->hid_device_state.abs_axis_count) iface->hid_device_state.abs_axis_start = offset;
-        iface->hid_device_state.abs_axis_count += count;
-        iface->hid_device_state.bit_size += 32 * count;
+        if (!state->abs_axis_count) state->abs_axis_start = offset;
+        state->abs_axis_count += count;
+        state->bit_size += 32 * count;
         return TRUE;
     }
 
