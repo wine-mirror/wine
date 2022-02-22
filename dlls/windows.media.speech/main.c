@@ -81,7 +81,7 @@ static ULONG STDMETHODCALLTYPE vector_view_voice_information_AddRef(
 {
     struct voice_information_vector *impl = impl_from_IVectorView_VoiceInformation(iface);
     ULONG ref = InterlockedIncrement(&impl->ref);
-    TRACE("iface %p, ref %u.\n", iface, ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
     return ref;
 }
 
@@ -90,7 +90,7 @@ static ULONG STDMETHODCALLTYPE vector_view_voice_information_Release(
 {
     struct voice_information_vector *impl = impl_from_IVectorView_VoiceInformation(iface);
     ULONG ref = InterlockedDecrement(&impl->ref);
-    TRACE("iface %p, ref %u.\n", iface, ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
     return ref;
 }
 
@@ -222,7 +222,7 @@ static ULONG STDMETHODCALLTYPE speech_synthesizer_AddRef(
     struct speech_synthesizer *impl = impl_from_ISpeechSynthesizer(iface);
     ULONG ref = InterlockedIncrement(&impl->ref);
 
-    TRACE("iface %p, ref %u.\n", iface, ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
 
     return ref;
 }
@@ -233,7 +233,7 @@ static ULONG STDMETHODCALLTYPE speech_synthesizer_Release(
     struct speech_synthesizer *impl = impl_from_ISpeechSynthesizer(iface);
     ULONG ref = InterlockedDecrement(&impl->ref);
 
-    TRACE("iface %p, ref %u.\n", iface, ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
 
     if (!ref)
         free(impl);
@@ -326,7 +326,7 @@ static ULONG STDMETHODCALLTYPE closable_AddRef(
     struct speech_synthesizer *impl = impl_from_IClosable(iface);
     ULONG ref = InterlockedIncrement(&impl->ref);
 
-    TRACE("iface %p, ref %u.\n", iface, ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
 
     return ref;
 }
@@ -337,7 +337,7 @@ static ULONG STDMETHODCALLTYPE closable_Release(
     struct speech_synthesizer *impl = impl_from_IClosable(iface);
     ULONG ref = InterlockedDecrement(&impl->ref);
 
-    TRACE("iface %p, ref %u.\n", iface, ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
 
     if (!ref)
         free(impl);
@@ -442,7 +442,7 @@ static ULONG STDMETHODCALLTYPE windows_media_speech_AddRef(
 {
     struct windows_media_speech *impl = impl_from_IActivationFactory(iface);
     ULONG ref = InterlockedIncrement(&impl->ref);
-    TRACE("iface %p, ref %u.\n", iface, ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
     return ref;
 }
 
@@ -451,7 +451,7 @@ static ULONG STDMETHODCALLTYPE windows_media_speech_Release(
 {
     struct windows_media_speech *impl = impl_from_IActivationFactory(iface);
     ULONG ref = InterlockedDecrement(&impl->ref);
-    TRACE("iface %p, ref %u.\n", iface, ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
     return ref;
 }
 
