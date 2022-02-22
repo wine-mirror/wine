@@ -74,7 +74,7 @@ int ASPI_GetNumControllers(void)
     }
 
     RegCloseKey(hkeyScsi);
-    TRACE("Returning %d host adapters\n", num_ha );
+    TRACE("Returning %ld host adapters\n", num_ha );
     return num_ha;
 }
 

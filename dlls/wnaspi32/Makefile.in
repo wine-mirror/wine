@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = wnaspi32.dll
 IMPORTLIB = wnaspi32
 IMPORTS   = advapi32
