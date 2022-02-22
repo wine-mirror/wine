@@ -809,7 +809,7 @@ struct testfilter
     const AM_MEDIA_TYPE *mt;
     HANDLE eos_event;
     unsigned int sample_count, eos_count, new_segment_count;
-    REFERENCE_TIME seek_start, seek_end;
+    REFERENCE_TIME segment_start, segment_end, seek_start, seek_end;
 };
 
 static inline struct testfilter *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -985,13 +985,19 @@ static HRESULT testsink_new_segment(struct strmbase_sink *iface,
     IMediaSeeking *seeking;
     HRESULT hr;
 
+    if (winetest_debug > 1)
+        trace("%04x: Got segment with timestamps %I64d-%I64d.\n", GetCurrentThreadId(), start, end);
+
     ++filter->new_segment_count;
 
     IPin_QueryInterface(iface->pin.peer, &IID_IMediaSeeking, (void **)&seeking);
     hr = IMediaSeeking_GetPositions(seeking, &filter->seek_start, &filter->seek_end);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(rate == 1.0, "Got rate %.16e.\n", rate);
     IMediaSeeking_Release(seeking);
+
+    ok(start == filter->segment_start, "Expected start %I64d, got %I64d.\n", filter->segment_start, start);
+    ok(end == filter->segment_end, "Expected end %I64d, got %I64d.\n", filter->segment_end, end);
+    ok(rate == 1.0, "Got rate %.16e.\n", rate);
 
     return S_OK;
 }
@@ -1092,6 +1098,7 @@ static void testfilter_init(struct testfilter *filter)
     strmbase_sink_init(&filter->sink, &filter->filter, L"sink", &testsink_ops, NULL);
     filter->IAsyncReader_iface.lpVtbl = &async_reader_vtbl;
     filter->eos_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    filter->segment_end = 50000000;
 }
 
 static void test_filter_state(IMediaControl *control)
@@ -1709,11 +1716,11 @@ static void test_streaming(void)
     ok(WaitForSingleObject(testsink.eos_event, 100) == WAIT_TIMEOUT, "Got more than one EOS.\n");
     ok(testsink.sample_count, "Expected at least one sample.\n");
 
-    testsink.sample_count = testsink.eos_count = 0;
-    start = 1500 * 10000;
-    end = 3500 * 10000;
-    hr = IMediaSeeking_SetPositions(seeking, &start, AM_SEEKING_AbsolutePositioning,
-            &end, AM_SEEKING_AbsolutePositioning);
+    testsink.new_segment_count = testsink.sample_count = testsink.eos_count = 0;
+    testsink.segment_start = 1500 * 10000;
+    testsink.segment_end = 3500 * 10000;
+    hr = IMediaSeeking_SetPositions(seeking, &testsink.segment_start, AM_SEEKING_AbsolutePositioning,
+            &testsink.segment_end, AM_SEEKING_AbsolutePositioning);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ok(!WaitForSingleObject(testsink.eos_event, 1000), "Did not receive EOS.\n");
