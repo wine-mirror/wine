@@ -34,7 +34,7 @@ const SCARD_IO_REQUEST g_rgSCardRawPci = { SCARD_PROTOCOL_RAW, 8 };
 
 BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    TRACE("%p,%x,%p\n", hinstDLL, fdwReason, lpvReserved);
+    TRACE("%p,%lx,%p\n", hinstDLL, fdwReason, lpvReserved);
 
     switch (fdwReason)
     {
@@ -84,14 +84,14 @@ LONG WINAPI SCardAddReaderToGroupW(SCARDCONTEXT context, LPCWSTR reader, LPCWSTR
 LONG WINAPI SCardEstablishContext(DWORD dwScope, LPCVOID pvReserved1,
     LPCVOID pvReserved2, LPSCARDCONTEXT phContext)
 {
-    FIXME("(%x,%p,%p,%p) stub\n", dwScope, pvReserved1, pvReserved2, phContext);
+    FIXME("(%lx,%p,%p,%p) stub\n", dwScope, pvReserved1, pvReserved2, phContext);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return SCARD_F_INTERNAL_ERROR;
 }
 
 LONG WINAPI SCardIsValidContext(SCARDCONTEXT context)
 {
-    FIXME("(%lx) stub\n", context);
+    FIXME("(%Ix) stub\n", context);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return SCARD_F_INTERNAL_ERROR;
 }
@@ -105,21 +105,21 @@ LONG WINAPI SCardListCardsA(SCARDCONTEXT hContext, LPCBYTE pbAtr, LPCGUID rgguid
 
 LONG WINAPI SCardReleaseContext(SCARDCONTEXT context)
 {
-    FIXME("(%lx) stub\n", context);
+    FIXME("(%Ix) stub\n", context);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return SCARD_F_INTERNAL_ERROR;
 }
 
 LONG WINAPI SCardStatusA(SCARDHANDLE context, LPSTR szReaderName, LPDWORD pcchReaderLen, LPDWORD pdwState, LPDWORD pdwProtocol, LPBYTE pbAtr, LPDWORD pcbAtrLen)
 {
-    FIXME("(%lx) stub\n", context);
+    FIXME("(%Ix) stub\n", context);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return SCARD_F_INTERNAL_ERROR;
 }
 
 LONG WINAPI SCardStatusW(SCARDHANDLE context, LPWSTR szReaderName, LPDWORD pcchReaderLen, LPDWORD pdwState,LPDWORD pdwProtocol,LPBYTE pbAtr,LPDWORD pcbArtLen)
 {
-    FIXME("(%lx) stub\n", context);
+    FIXME("(%Ix) stub\n", context);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return SCARD_F_INTERNAL_ERROR;
 }
@@ -131,19 +131,19 @@ void WINAPI SCardReleaseStartedEvent(void)
 
 LONG WINAPI SCardListReadersA(SCARDCONTEXT context, const CHAR *groups, CHAR *readers, DWORD *buflen)
 {
-    FIXME("(%lx, %s, %p, %p) stub\n", context, debugstr_a(groups), readers, buflen);
+    FIXME("(%Ix, %s, %p, %p) stub\n", context, debugstr_a(groups), readers, buflen);
     return SCARD_E_NO_READERS_AVAILABLE;
 }
 
 LONG WINAPI SCardListReadersW(SCARDCONTEXT context, const WCHAR *groups, WCHAR *readers, DWORD *buflen)
 {
-    FIXME("(%lx, %s, %p, %p) stub\n", context, debugstr_w(groups), readers, buflen);
+    FIXME("(%Ix, %s, %p, %p) stub\n", context, debugstr_w(groups), readers, buflen);
     return SCARD_E_NO_READERS_AVAILABLE;
 }
 
 LONG WINAPI SCardCancel(SCARDCONTEXT context)
 {
-    FIXME("(%lx) stub\n", context);
+    FIXME("(%Ix) stub\n", context);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return SCARD_F_INTERNAL_ERROR;
 }
