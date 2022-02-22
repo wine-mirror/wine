@@ -73,7 +73,7 @@ struct cursoricon_object
     struct user_object      obj;        /* object header */
     struct list             entry;      /* entry in shared icons list */
     ULONG_PTR               param;      /* opaque param used by 16-bit code */
-    HMODULE                 module;     /* module for icons loaded from resources */
+    UNICODE_STRING          module;     /* module for icons loaded from resources */
     LPWSTR                  resname;    /* resource name for icons loaded from resources */
     HRSRC                   rsrc;       /* resource for shared icons */
     BOOL                    is_shared;  /* whether this object is shared */
@@ -1184,7 +1184,6 @@ done:
         struct cursoricon_frame *frame;
 
         info->is_icon = bIcon;
-        info->module  = module;
         info->hotspot = hotspot;
         frame = get_icon_frame( info, 0 );
         frame->delay  = ~0;
@@ -1200,6 +1199,19 @@ done:
             if (info->resname) lstrcpyW( info->resname, resname );
         }
         else info->resname = MAKEINTRESOURCEW( LOWORD(resname) );
+
+        if (module)
+        {
+            WCHAR buf[MAX_PATH];
+            UNICODE_STRING module_name = { 0, sizeof(buf), buf };
+
+            if (!LdrGetDllFullName( module, &module_name ) &&
+                (info->module.Buffer = HeapAlloc( GetProcessHeap(), 0, module_name.Length )))
+            {
+                memcpy( info->module.Buffer, module_name.Buffer, module_name.Length );
+                info->module.Length = module_name.Length;
+            }
+        }
 
         if (cFlag & LR_SHARED)
         {
@@ -1687,18 +1699,24 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
     /* If shared icon, check whether it was already loaded */
     if (loadflags & LR_SHARED)
     {
+        WCHAR buf[MAX_PATH];
+        UNICODE_STRING module = { 0, sizeof(buf) - sizeof(WCHAR), buf };
         struct cursoricon_object *ptr;
 
-        USER_Lock();
-        LIST_FOR_EACH_ENTRY( ptr, &icon_cache, struct cursoricon_object, entry )
+        if (!LdrGetDllFullName( hInstance, &module ))
         {
-            if (ptr->module != hInstance) continue;
-            if (ptr->rsrc != hRsrc) continue;
-            hIcon = ptr->obj.handle;
-            break;
+            USER_Lock();
+            LIST_FOR_EACH_ENTRY( ptr, &icon_cache, struct cursoricon_object, entry )
+            {
+                if (ptr->module.Length != module.Length) continue;
+                if (memcmp( ptr->module.Buffer, module.Buffer, module.Length )) continue;
+                if (ptr->rsrc != hRsrc) continue;
+                hIcon = ptr->obj.handle;
+                break;
+            }
+            USER_Unlock();
+            if (hIcon) return hIcon;
         }
-        USER_Unlock();
-        if (hIcon) return hIcon;
     }
 
     if (!(handle = LoadResource( hInstance, hRsrc ))) return 0;
@@ -2159,7 +2177,6 @@ BOOL WINAPI GetIconInfoExW( HICON icon, ICONINFOEXW *info )
 {
     struct cursoricon_frame *frame;
     struct cursoricon_object *ptr;
-    HMODULE module;
     BOOL ret = TRUE;
 
     if (info->cbSize != sizeof(*info))
@@ -2191,10 +2208,12 @@ BOOL WINAPI GetIconInfoExW( HICON icon, ICONINFOEXW *info )
     info->wResID       = 0;
     info->szModName[0] = 0;
     info->szResName[0] = 0;
-    if (ptr->module)
+    if (ptr->module.Length)
     {
         if (IS_INTRESOURCE( ptr->resname )) info->wResID = LOWORD( ptr->resname );
         else lstrcpynW( info->szResName, ptr->resname, MAX_PATH );
+        memcpy( info->szModName, ptr->module.Buffer, ptr->module.Length );
+        info->szModName[ptr->module.Length / sizeof(WCHAR)] = 0;
     }
     if (!info->hbmMask || (!info->hbmColor && frame->color))
     {
@@ -2202,10 +2221,8 @@ BOOL WINAPI GetIconInfoExW( HICON icon, ICONINFOEXW *info )
         DeleteObject( info->hbmColor );
         ret = FALSE;
     }
-    module = ptr->module;
     release_icon_frame( ptr, frame );
     release_user_handle_ptr( ptr );
-    if (ret && module) GetModuleFileNameW( module, info->szModName, MAX_PATH );
     return ret;
 }
 
@@ -3003,14 +3020,16 @@ HANDLE WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
             struct cursoricon_object *icon;
             int depth = (flags & LR_MONOCHROME) ? 1 : get_display_bpp();
             HICON resource_icon = NULL;
+            HINSTANCE module;
             ICONINFO info;
             HICON res;
 
             if (!(icon = get_icon_ptr( hnd ))) return 0;
 
-            if (icon->rsrc && (flags & LR_COPYFROMRESOURCE))
+            if (icon->rsrc && (flags & LR_COPYFROMRESOURCE) && icon->module.Length &&
+                !LdrGetDllHandle( NULL, 0, &icon->module, &module ))
             {
-                resource_icon = CURSORICON_Load( icon->module, icon->resname, desiredx,
+                resource_icon = CURSORICON_Load( module, icon->resname, desiredx,
                                                  desiredy, depth, !icon->is_icon, flags );
                 release_user_handle_ptr( icon );
                 if (!(icon = get_icon_ptr( resource_icon )))
