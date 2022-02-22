@@ -371,7 +371,7 @@ static DWORD gzip_read(data_stream_t *stream, http_request_t *req, BYTE *buf, DW
     int zres;
     DWORD res = ERROR_SUCCESS;
 
-    TRACE("(%d %x)\n", size, allow_blocking);
+    TRACE("(%ld %x)\n", size, allow_blocking);
 
     while(size && !gzip_stream->end_of_data) {
         if(!gzip_stream->buf_size) {
@@ -418,7 +418,7 @@ static DWORD gzip_read(data_stream_t *stream, http_request_t *req, BYTE *buf, DW
             allow_blocking = FALSE;
     }
 
-    TRACE("read %u bytes\n", ret_read);
+    TRACE("read %lu bytes\n", ret_read);
     if(ret_read)
         res = ERROR_SUCCESS;
     *read = ret_read;
@@ -1052,7 +1052,7 @@ static BOOL HTTP_DoAuthorization( http_request_t *request, LPCWSTR pszAuthValue,
             }
             if (sec_status != SEC_E_OK)
             {
-                WARN("AcquireCredentialsHandleW for scheme %s failed with error 0x%08x\n",
+                WARN("AcquireCredentialsHandleW for scheme %s failed with error 0x%08lx\n",
                      debugstr_w(pAuthInfo->scheme), sec_status);
                 heap_free(pAuthInfo->scheme);
                 heap_free(pAuthInfo);
@@ -1176,7 +1176,7 @@ static BOOL HTTP_DoAuthorization( http_request_t *request, LPCWSTR pszAuthValue,
         }
         else
         {
-            ERR("InitializeSecurityContextW returned error 0x%08x\n", sec_status);
+            ERR("InitializeSecurityContextW returned error 0x%08lx\n", sec_status);
             heap_free(out.pvBuffer);
             destroy_authinfo(pAuthInfo);
             *ppAuthInfo = NULL;
@@ -1275,7 +1275,7 @@ BOOL WINAPI HttpAddRequestHeadersW(HINTERNET hHttpRequest,
     http_request_t *request;
     DWORD res = ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
 
-    TRACE("%p, %s, %u, %08x\n", hHttpRequest, debugstr_wn(lpszHeader, dwHeaderLength), dwHeaderLength, dwModifier);
+    TRACE("%p, %s, %lu, %08lx\n", hHttpRequest, debugstr_wn(lpszHeader, dwHeaderLength), dwHeaderLength, dwModifier);
 
     if (!lpszHeader) 
       return TRUE;
@@ -1307,7 +1307,7 @@ BOOL WINAPI HttpAddRequestHeadersA(HINTERNET hHttpRequest,
     WCHAR *headers = NULL;
     BOOL r;
 
-    TRACE("%p, %s, %u, %08x\n", hHttpRequest, debugstr_an(lpszHeader, dwHeaderLength), dwHeaderLength, dwModifier);
+    TRACE("%p, %s, %lu, %08lx\n", hHttpRequest, debugstr_an(lpszHeader, dwHeaderLength), dwHeaderLength, dwModifier);
 
     if(lpszHeader)
         headers = heap_strndupAtoW(lpszHeader, dwHeaderLength, &dwHeaderLength);
@@ -1391,7 +1391,7 @@ HINTERNET WINAPI HttpOpenRequestA(HINTERNET hHttpSession,
     LPWSTR szVersion = NULL, szReferrer = NULL, *szAcceptTypes = NULL;
     HINTERNET rc = NULL;
 
-    TRACE("(%p, %s, %s, %s, %s, %p, %08x, %08lx)\n", hHttpSession,
+    TRACE("(%p, %s, %s, %s, %s, %p, %08lx, %08Ix)\n", hHttpSession,
           debugstr_a(lpszVerb), debugstr_a(lpszObjectName),
           debugstr_a(lpszVersion), debugstr_a(lpszReferrer), lpszAcceptTypes,
           dwFlags, dwContext);
@@ -2067,7 +2067,7 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
         flags = is_valid_netconn(req->netconn) ? req->netconn->security_flags : req->security_flags | req->server->security_flags;
         *(DWORD *)buffer = flags;
 
-        TRACE("INTERNET_OPTION_SECURITY_FLAGS %x\n", flags);
+        TRACE("INTERNET_OPTION_SECURITY_FLAGS %lx\n", flags);
         return ERROR_SUCCESS;
     }
 
@@ -2245,7 +2245,7 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
                            "%s:\t(null)\r\n"
                            "%s:\t(null)\r\n"
                            "%s:\t(null)\r\n"
-                           "%s:\t%s (%u %s)",
+                           "%s:\t%s (%lu %s)",
                            subject, info.lpszSubjectInfo,
                            issuer, info.lpszIssuerInfo,
                            effective, start_date, start_time,
@@ -2263,7 +2263,7 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
                            "%s:\t(null)\r\n"
                            "%s:\t(null)\r\n"
                            "%s:\t(null)\r\n"
-                           "%s:\t%s (%u %s)",
+                           "%s:\t%s (%lu %s)",
                            subject, info.lpszSubjectInfo,
                            issuer, info.lpszIssuerInfo,
                            effective, start_date, start_time,
@@ -2305,7 +2305,7 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
         if(!req->status_code)
             flags |= INTERNET_REQFLAG_NO_HEADERS;
 
-        TRACE("INTERNET_OPTION_REQUEST_FLAGS returning %x\n", flags);
+        TRACE("INTERNET_OPTION_REQUEST_FLAGS returning %lx\n", flags);
 
         *size = sizeof(DWORD);
         *(DWORD*)buffer = flags;
@@ -2359,7 +2359,7 @@ static DWORD HTTPREQ_SetOption(object_header_t *hdr, DWORD option, void *buffer,
         if (!buffer || size != sizeof(DWORD))
             return ERROR_INVALID_PARAMETER;
         flags = *(DWORD *)buffer;
-        TRACE("INTERNET_OPTION_SECURITY_FLAGS %08x\n", flags);
+        TRACE("INTERNET_OPTION_SECURITY_FLAGS %08lx\n", flags);
         flags &= SECURITY_SET_MASK;
         req->security_flags |= flags;
         if(is_valid_netconn(req->netconn))
@@ -2425,7 +2425,7 @@ static void commit_cache_entry(http_request_t *req)
     if(res)
         req->req_file->is_committed = TRUE;
     else
-        WARN("CommitUrlCacheEntry failed: %u\n", GetLastError());
+        WARN("CommitUrlCacheEntry failed: %lu\n", GetLastError());
     heap_free(header);
 }
 
@@ -2497,7 +2497,7 @@ static void create_cache_entry(http_request_t *req)
 
     b = CreateUrlCacheEntryW(url, req->contentLength == ~0 ? 0 : req->contentLength, NULL, file_name, 0);
     if(!b) {
-        WARN("Could not create cache entry: %08x\n", GetLastError());
+        WARN("Could not create cache entry: %08lx\n", GetLastError());
         return;
     }
 
@@ -2507,7 +2507,7 @@ static void create_cache_entry(http_request_t *req)
     req->hCacheFile = CreateFileW(file_name, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
               NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if(req->hCacheFile == INVALID_HANDLE_VALUE) {
-        WARN("Could not create file: %u\n", GetLastError());
+        WARN("Could not create file: %lu\n", GetLastError());
         req->hCacheFile = NULL;
         return;
     }
@@ -2517,7 +2517,7 @@ static void create_cache_entry(http_request_t *req)
 
         b = WriteFile(req->hCacheFile, req->read_buf+req->read_pos, req->read_size, &written, NULL);
         if(!b)
-            FIXME("WriteFile failed: %u\n", GetLastError());
+            FIXME("WriteFile failed: %lu\n", GetLastError());
 
         if(req->data_stream->vtbl->end_of_data(req->data_stream, req))
             commit_cache_entry(req);
@@ -2580,7 +2580,7 @@ static DWORD read_line( http_request_t *req, LPSTR buffer, DWORD *len )
 
         if ((res = read_more_data( req, -1 )))
         {
-            WARN( "read failed %u\n", res );
+            WARN( "read failed %lu\n", res );
             LeaveCriticalSection( &req->read_section );
             return res;
         }
@@ -2626,7 +2626,7 @@ static DWORD read_http_stream(http_request_t *req, BYTE *buf, DWORD size, DWORD 
 
             bres = WriteFile(req->hCacheFile, buf, *read, &written, NULL);
             if(!bres)
-                FIXME("WriteFile failed: %u\n", GetLastError());
+                FIXME("WriteFile failed: %lu\n", GetLastError());
         }
 
         if((res == ERROR_SUCCESS && !*read) || req->data_stream->vtbl->end_of_data(req->data_stream, req))
@@ -2657,7 +2657,7 @@ static DWORD refill_read_buffer(http_request_t *req, BOOL allow_blocking, DWORD 
 
     req->read_size += read;
 
-    TRACE("read %u bytes, read_size %u\n", read, req->read_size);
+    TRACE("read %lu bytes, read_size %lu\n", read, req->read_size);
     if(read_bytes)
         *read_bytes = read;
     return res;
@@ -2687,7 +2687,7 @@ static DWORD netconn_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
         }
     }
 
-    TRACE("res %u read %u bytes\n", res, ret);
+    TRACE("res %lu read %u bytes\n", res, ret);
     *read = ret;
     return res;
 }
@@ -2802,7 +2802,7 @@ static DWORD chunked_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
             }else if (ch >= 'A' && ch <= 'F') {
                 chunked_stream->chunk_size = chunked_stream->chunk_size * 16 + ch - 'A' + 10;
             }else if (ch == ';' || ch == '\r' || ch == '\n') {
-                TRACE("reading %u byte chunk\n", chunked_stream->chunk_size);
+                TRACE("reading %lu byte chunk\n", chunked_stream->chunk_size);
                 chunked_stream->buf_size++;
                 chunked_stream->buf_pos--;
                 if(req->contentLength == ~0) req->contentLength = chunked_stream->chunk_size;
@@ -2886,7 +2886,7 @@ static DWORD chunked_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
     if(res != ERROR_SUCCESS)
         return res;
 
-    TRACE("read %d bytes\n", ret_read);
+    TRACE("read %ld bytes\n", ret_read);
     *read = ret_read;
     return ERROR_SUCCESS;
 }
@@ -3025,7 +3025,7 @@ static void HTTP_ReceiveRequestData(http_request_t *req)
     LeaveCriticalSection( &req->read_section );
 
     if(res != WSAEWOULDBLOCK && (res != ERROR_SUCCESS || !read)) {
-        WARN("res %u read %u, closing connection\n", res, read);
+        WARN("res %lu read %lu, closing connection\n", res, read);
         http_release_netconn(req, FALSE);
     }
 
@@ -3064,7 +3064,7 @@ static DWORD HTTPREQ_Read(http_request_t *req, void *buffer, DWORD size, DWORD *
     LeaveCriticalSection( &req->read_section );
 
     *read = ret_read;
-    TRACE( "retrieved %u bytes (res %u)\n", ret_read, res );
+    TRACE( "retrieved %lu bytes (res %lu)\n", ret_read, res );
 
     if(res != WSAEWOULDBLOCK) {
         if(res != ERROR_SUCCESS)
@@ -3108,7 +3108,7 @@ static void async_read_file_proc(task_header_t *hdr)
     http_request_t *req = (http_request_t*)task->hdr.hdr;
     DWORD res = ERROR_SUCCESS, read = task->read_pos, complete_arg = 0;
 
-    TRACE("req %p buf %p size %u read_pos %u ret_read %p\n", req, task->buf, task->size, task->read_pos, task->ret_read);
+    TRACE("req %p buf %p size %lu read_pos %lu ret_read %p\n", req, task->buf, task->size, task->read_pos, task->ret_read);
 
     if(task->buf) {
         DWORD read_bytes;
@@ -3129,7 +3129,7 @@ static void async_read_file_proc(task_header_t *hdr)
             http_release_netconn(req, drain_content(req, FALSE) == ERROR_SUCCESS);
     }
 
-    TRACE("res %u read %u\n", res, read);
+    TRACE("res %lu read %lu\n", res, read);
 
     if(task->ret_read)
         *task->ret_read = read;
@@ -3166,10 +3166,10 @@ static DWORD HTTPREQ_ReadFile(object_header_t *hdr, void *buf, DWORD size, DWORD
     DWORD res = ERROR_SUCCESS, read = 0, cread, error = ERROR_SUCCESS;
     BOOL allow_blocking, notify_received = FALSE;
 
-    TRACE("(%p %p %u %x)\n", req, buf, size, flags);
+    TRACE("(%p %p %lu %lx)\n", req, buf, size, flags);
 
     if (flags & ~(IRF_ASYNC|IRF_NO_WAIT))
-        FIXME("these dwFlags aren't implemented: 0x%x\n", flags & ~(IRF_ASYNC|IRF_NO_WAIT));
+        FIXME("these dwFlags aren't implemented: 0x%lx\n", flags & ~(IRF_ASYNC|IRF_NO_WAIT));
 
     allow_blocking = !(req->session->appInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC);
 
@@ -3252,10 +3252,10 @@ static DWORD HTTPREQ_QueryDataAvailable(object_header_t *hdr, DWORD *available, 
     DWORD res = ERROR_SUCCESS, avail = 0, error = ERROR_SUCCESS;
     BOOL allow_blocking, notify_received = FALSE;
 
-    TRACE("(%p %p %x %lx)\n", req, available, flags, ctx);
+    TRACE("(%p %p %lx %Ix)\n", req, available, flags, ctx);
 
     if (flags & ~(IRF_ASYNC|IRF_NO_WAIT))
-        FIXME("these dwFlags aren't implemented: 0x%x\n", flags & ~(IRF_ASYNC|IRF_NO_WAIT));
+        FIXME("these dwFlags aren't implemented: 0x%lx\n", flags & ~(IRF_ASYNC|IRF_NO_WAIT));
 
     *available = 0;
     allow_blocking = !(req->session->appInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC);
@@ -3405,7 +3405,7 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
                    URL_ESCAPE_SPACES_ONLY);
         if (rc != S_OK)
         {
-            ERR("Unable to escape string!(%s) (%d)\n",debugstr_w(lpszObjectName),rc);
+            ERR("Unable to escape string!(%s) (%ld)\n",debugstr_w(lpszObjectName),rc);
             lstrcpyW(request->path,lpszObjectName);
         }
     }else {
@@ -3463,7 +3463,7 @@ HINTERNET WINAPI HttpOpenRequestW(HINTERNET hHttpSession,
     HINTERNET handle = NULL;
     DWORD res;
 
-    TRACE("(%p, %s, %s, %s, %s, %p, %08x, %08lx)\n", hHttpSession,
+    TRACE("(%p, %s, %s, %s, %s, %p, %08lx, %08Ix)\n", hHttpSession,
           debugstr_w(lpszVerb), debugstr_w(lpszObjectName),
           debugstr_w(lpszVersion), debugstr_w(lpszReferrer), lpszAcceptTypes,
           dwFlags, dwContext);
@@ -3797,7 +3797,7 @@ static DWORD HTTP_HttpQueryInfoW(http_request_t *request, DWORD dwInfoLevel,
         }
 
         *(DWORD *)lpBuffer = value;
-        TRACE(" returning number: %u\n", *(DWORD *)lpBuffer);
+        TRACE(" returning number: %lu\n", *(DWORD *)lpBuffer);
     }
     else if (dwInfoLevel & HTTP_QUERY_FLAG_SYSTEMTIME && lpBuffer)
     {
@@ -3945,7 +3945,7 @@ BOOL WINAPI HttpQueryInfoW(HINTERNET hHttpRequest, DWORD dwInfoLevel,
 	DWORD info = dwInfoLevel & HTTP_QUERY_HEADER_MASK;
 	DWORD i;
 
-	TRACE("(%p, 0x%08x)--> %d\n", hHttpRequest, dwInfoLevel, info);
+	TRACE("(%p, 0x%08lx)--> %ld\n", hHttpRequest, dwInfoLevel, info);
 	TRACE("  Attribute:");
         for (i = 0; i < ARRAY_SIZE(query_flags); i++) {
 	    if (query_flags[i].val == info) {
@@ -3954,7 +3954,7 @@ BOOL WINAPI HttpQueryInfoW(HINTERNET hHttpRequest, DWORD dwInfoLevel,
 	    }
 	}
         if (i == ARRAY_SIZE(query_flags)) {
-	    TRACE(" Unknown (%08x)", info);
+	    TRACE(" Unknown (%08lx)", info);
 	}
 
 	TRACE(" Modifier:");
@@ -3966,7 +3966,7 @@ BOOL WINAPI HttpQueryInfoW(HINTERNET hHttpRequest, DWORD dwInfoLevel,
 	}
 	
 	if (info_mod) {
-	    TRACE(" Unknown (%08x)", info_mod);
+	    TRACE(" Unknown (%08lx)", info_mod);
 	}
 	TRACE("\n");
     }
@@ -3987,7 +3987,7 @@ lend:
     if( request )
          WININET_Release( &request->hdr );
 
-    TRACE("%u <--\n", res);
+    TRACE("%lu <--\n", res);
 
     SetLastError(res);
     return res == ERROR_SUCCESS;
@@ -4010,7 +4010,7 @@ BOOL WINAPI HttpQueryInfoA(HINTERNET hHttpRequest, DWORD dwInfoLevel,
     DWORD len;
     WCHAR* bufferW;
 
-    TRACE("%p %x\n", hHttpRequest, dwInfoLevel);
+    TRACE("%p %lx\n", hHttpRequest, dwInfoLevel);
 
     if((dwInfoLevel & HTTP_QUERY_FLAG_NUMBER) ||
        (dwInfoLevel & HTTP_QUERY_FLAG_SYSTEMTIME))
@@ -4220,13 +4220,13 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, WCHAR *url)
         path = heap_strndupW(urlComponents.lpszUrlPath, urlComponents.dwUrlPathLength);
         rc = UrlEscapeW(path, dummy, &needed, URL_ESCAPE_SPACES_ONLY);
         if (rc != E_POINTER)
-            ERR("Unable to escape string!(%s) (%d)\n",debugstr_w(path),rc);
+            ERR("Unable to escape string!(%s) (%ld)\n",debugstr_w(path),rc);
         request->path = heap_alloc(needed*sizeof(WCHAR));
         rc = UrlEscapeW(path, request->path, &needed,
                         URL_ESCAPE_SPACES_ONLY);
         if (rc != S_OK)
         {
-            ERR("Unable to escape string!(%s) (%d)\n",debugstr_w(path),rc);
+            ERR("Unable to escape string!(%s) (%ld)\n",debugstr_w(path),rc);
             lstrcpyW(request->path, path);
         }
         heap_free(path);
@@ -4849,7 +4849,7 @@ static DWORD open_http_connection(http_request_t *request, BOOL *reusing)
                          (request->hdr.ErrorMask & INTERNET_ERROR_MASK_COMBINED_SEC_CERT) != 0,
                          request->connect_timeout, &netconn);
     if(res != ERROR_SUCCESS) {
-        ERR("create_netconn failed: %u\n", res);
+        ERR("create_netconn failed: %lu\n", res);
         return res;
     }
 
@@ -5040,7 +5040,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
         res = NETCON_send(request->netconn, ascii_req, len, 0, &cnt);
         heap_free( ascii_req );
         if(res != ERROR_SUCCESS) {
-            TRACE("send failed: %u\n", res);
+            TRACE("send failed: %lu\n", res);
             if(!reusing_connection)
                 break;
             http_release_netconn(request, FALSE);
@@ -5341,7 +5341,7 @@ static DWORD HTTP_HttpEndRequestW(http_request_t *request, DWORD dwFlags, DWORD_
 BOOL WINAPI HttpEndRequestA(HINTERNET hRequest,
         LPINTERNET_BUFFERSA lpBuffersOut, DWORD dwFlags, DWORD_PTR dwContext)
 {
-    TRACE("(%p, %p, %08x, %08lx)\n", hRequest, lpBuffersOut, dwFlags, dwContext);
+    TRACE("(%p, %p, %08lx, %08Ix)\n", hRequest, lpBuffersOut, dwFlags, dwContext);
 
     if (lpBuffersOut)
     {
@@ -5384,7 +5384,7 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
     http_request_t *request;
     DWORD res;
 
-    TRACE("%p %p %x %lx -->\n", hRequest, lpBuffersOut, dwFlags, dwContext);
+    TRACE("%p %p %lx %Ix -->\n", hRequest, lpBuffersOut, dwFlags, dwContext);
 
     if (lpBuffersOut)
     {
@@ -5418,7 +5418,7 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
         res = HTTP_HttpEndRequestW(request, dwFlags, dwContext);
 
     WININET_Release( &request->hdr );
-    TRACE("%u <--\n", res);
+    TRACE("%lu <--\n", res);
     if(res != ERROR_SUCCESS)
         SetLastError(res);
     return res == ERROR_SUCCESS;
@@ -5444,7 +5444,7 @@ BOOL WINAPI HttpSendRequestExA(HINTERNET hRequest,
     DWORD headerlen;
     LPWSTR header = NULL;
 
-    TRACE("(%p, %p, %p, %08x, %08lx)\n", hRequest, lpBuffersIn,
+    TRACE("(%p, %p, %p, %08lx, %08Ix)\n", hRequest, lpBuffersIn,
 	    lpBuffersOut, dwFlags, dwContext);
 
     if (lpBuffersIn)
@@ -5499,7 +5499,7 @@ BOOL WINAPI HttpSendRequestExW(HINTERNET hRequest,
     appinfo_t *hIC;
     DWORD res;
 
-    TRACE("(%p, %p, %p, %08x, %08lx)\n", hRequest, lpBuffersIn,
+    TRACE("(%p, %p, %p, %08lx, %08Ix)\n", hRequest, lpBuffersIn,
             lpBuffersOut, dwFlags, dwContext);
 
     request = (http_request_t*) get_handle_object( hRequest );
@@ -5592,7 +5592,7 @@ BOOL WINAPI HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
     appinfo_t *hIC = NULL;
     DWORD res = ERROR_SUCCESS;
 
-    TRACE("%p, %s, %i, %p, %i)\n", hHttpRequest,
+    TRACE("%p, %s, %li, %p, %li)\n", hHttpRequest,
             debugstr_wn(lpszHeaders, dwHeaderLength), dwHeaderLength, lpOptional, dwOptionalLength);
 
     request = (http_request_t*) get_handle_object( hHttpRequest );
@@ -6113,7 +6113,7 @@ static DWORD HTTP_ProcessHeader(http_request_t *request, LPCWSTR field, LPCWSTR 
     BOOL request_only = !!(dwModifier & HTTP_ADDHDR_FLAG_REQ);
     DWORD res = ERROR_HTTP_INVALID_HEADER;
 
-    TRACE("--> %s: %s - 0x%08x\n", debugstr_w(field), debugstr_w(value), dwModifier);
+    TRACE("--> %s: %s - 0x%08lx\n", debugstr_w(field), debugstr_w(value), dwModifier);
 
     EnterCriticalSection( &request->headers_section );
 
@@ -6229,7 +6229,7 @@ static DWORD HTTP_ProcessHeader(http_request_t *request, LPCWSTR field, LPCWSTR 
             res = ERROR_OUTOFMEMORY;
         }
     }
-    TRACE("<-- %d\n", res);
+    TRACE("<-- %ld\n", res);
     LeaveCriticalSection( &request->headers_section );
     return res;
 }
@@ -6266,7 +6266,7 @@ static INT HTTP_GetCustomHeaderIndex(http_request_t *request, LPCWSTR lpszField,
     if (index >= request->nCustHeaders)
 	index = -1;
 
-    TRACE("Return: %d\n", index);
+    TRACE("Return: %ld\n", index);
     return index;
 }
 
@@ -6334,6 +6334,6 @@ static BOOL HTTP_DeleteCustomHeader(http_request_t *request, DWORD index)
  */
 BOOL WINAPI IsHostInProxyBypassList(INTERNET_SCHEME scheme, LPCSTR szHost, DWORD length)
 {
-    FIXME("STUB: scheme=%d host=%s length=%d\n", scheme, szHost, length);
+    FIXME("STUB: scheme=%d host=%s length=%ld\n", scheme, szHost, length);
     return FALSE;
 }

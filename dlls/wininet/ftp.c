@@ -1203,7 +1203,7 @@ static DWORD FTPFILE_ReadFile(object_header_t *hdr, void *buffer, DWORD size, DW
         DWORD bytes_written;
 
         if (!WriteFile(file->cache_file_handle, buffer, *read, &bytes_written, NULL))
-            WARN("WriteFile failed: %u\n", GetLastError());
+            WARN("WriteFile failed: %lu\n", GetLastError());
     }
     return error;
 }
@@ -1254,11 +1254,11 @@ static DWORD FTPFILE_QueryDataAvailable(object_header_t *hdr, DWORD *available, 
     ULONG unread = 0;
     int retval;
 
-    TRACE("(%p %p %x %lx)\n", file, available, flags, ctx);
+    TRACE("(%p %p %lx %Ix)\n", file, available, flags, ctx);
 
     retval = ioctlsocket(file->nDataSocket, FIONREAD, &unread);
     if (!retval)
-        TRACE("%d bytes of queued, but unread data\n", unread);
+        TRACE("%ld bytes of queued, but unread data\n", unread);
 
     *available = unread;
 
@@ -1386,7 +1386,7 @@ static HINTERNET FTP_FtpOpenFileW(ftp_session_t *lpwfs,
                                                       NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
                 if (lpwh->cache_file_handle == INVALID_HANDLE_VALUE)
                 {
-                    WARN("Could not create cache file: %u\n", GetLastError());
+                    WARN("Could not create cache file: %lu\n", GetLastError());
                     heap_free(lpwh->cache_file);
                     lpwh->cache_file = NULL;
                 }
@@ -1486,7 +1486,7 @@ HINTERNET WINAPI FtpOpenFileW(HINTERNET hFtpSession,
     appinfo_t *hIC = NULL;
     HINTERNET r = NULL;
 
-    TRACE("(%p,%s,0x%08x,0x%08x,0x%08lx)\n", hFtpSession,
+    TRACE("(%p,%s,0x%08lx,0x%08lx,0x%08Ix)\n", hFtpSession,
         debugstr_w(lpszFileName), fdwAccess, dwFlags, dwContext);
 
     lpwfs = (ftp_session_t*) get_handle_object( hFtpSession );
@@ -2217,7 +2217,7 @@ BOOL WINAPI FtpCommandA( HINTERNET hConnect, BOOL fExpectResponse, DWORD dwFlags
     BOOL r;
     WCHAR *cmdW;
 
-    TRACE("%p %d 0x%08x %s 0x%08lx %p\n", hConnect, fExpectResponse, dwFlags,
+    TRACE("%p %d 0x%08lx %s 0x%08Ix %p\n", hConnect, fExpectResponse, dwFlags,
           debugstr_a(lpszCommand), dwContext, phFtpCommand);
 
     if (fExpectResponse)
@@ -2256,7 +2256,7 @@ BOOL WINAPI FtpCommandW( HINTERNET hConnect, BOOL fExpectResponse, DWORD dwFlags
     DWORD len, nBytesSent= 0;
     INT nResCode, nRC = 0;
 
-    TRACE("%p %d 0x%08x %s 0x%08lx %p\n", hConnect, fExpectResponse, dwFlags,
+    TRACE("%p %d 0x%08lx %s 0x%08Ix %p\n", hConnect, fExpectResponse, dwFlags,
            debugstr_w(lpszCommand), dwContext, phFtpCommand);
 
     if (!lpszCommand || !lpszCommand[0])
@@ -2302,7 +2302,7 @@ BOOL WINAPI FtpCommandW( HINTERNET hConnect, BOOL fExpectResponse, DWORD dwFlags
     strcat(cmd, szCRLF);
     len--;
 
-    TRACE("Sending (%s) len(%d)\n", debugstr_a(cmd), len);
+    TRACE("Sending (%s) len(%ld)\n", debugstr_a(cmd), len);
     while ((nBytesSent < len) && (nRC != -1))
     {
         nRC = sock_send(lpwfs->sndSocket, cmd + nBytesSent, len - nBytesSent, 0);
@@ -2711,7 +2711,7 @@ static BOOL FTP_SendCommandA(INT nSocket, FTP_COMMAND ftpCmd, LPCSTR lpszParam,
 	sprintf(buf, "%s%s%s%s", szFtpCommands[ftpCmd], dwParamLen ? " " : "",
 		dwParamLen ? lpszParam : "", szCRLF);
 
-	TRACE("Sending (%s) len(%d)\n", debugstr_a(buf), len);
+	TRACE("Sending (%s) len(%ld)\n", debugstr_a(buf), len);
 	while((nBytesSent < len) && (nRC != -1))
 	{
 		nRC = sock_send(nSocket, buf+nBytesSent, len - nBytesSent, 0);
@@ -2725,7 +2725,7 @@ static BOOL FTP_SendCommandA(INT nSocket, FTP_COMMAND ftpCmd, LPCSTR lpszParam,
                          &nBytesSent, sizeof(DWORD));
         }
 
-	TRACE("Sent %d bytes\n", nBytesSent);
+	TRACE("Sent %ld bytes\n", nBytesSent);
 	return (nRC != -1);
 }
 
@@ -3307,13 +3307,13 @@ static BOOL FTP_SendData(ftp_session_t *lpwfs, INT nDataSocket, HANDLE hFile)
         nSeconds = e_long_time - s_long_time;
         if( nSeconds / 60 > 0 )
         {
-            TRACE( "%d bytes of %d bytes (%d%%) in %d min %d sec estimated remaining time %d sec\n",
+            TRACE( "%ld bytes of %ld bytes (%ld%%) in %ld min %ld sec estimated remaining time %ld sec\n",
             nTotalSent, fi.nFileSizeLow, nTotalSent*100/fi.nFileSizeLow, nSeconds / 60,
             nSeconds % 60, (fi.nFileSizeLow - nTotalSent) * nSeconds / nTotalSent );
         }
         else
         {
-            TRACE( "%d bytes of %d bytes (%d%%) in %d sec estimated remaining time %d sec\n",
+            TRACE( "%ld bytes of %ld bytes (%ld%%) in %ld sec estimated remaining time %ld sec\n",
             nTotalSent, fi.nFileSizeLow, nTotalSent*100/fi.nFileSizeLow, nSeconds,
             (fi.nFileSizeLow - nTotalSent) * nSeconds / nTotalSent);
         }
@@ -3442,7 +3442,7 @@ static DWORD FTPFINDNEXT_FindNextFileProc(WININETFTPFINDNEXTW *find, LPVOID data
     WIN32_FIND_DATAW *find_data = data;
     DWORD res = ERROR_SUCCESS;
 
-    TRACE("index(%d) size(%d)\n", find->index, find->size);
+    TRACE("index(%ld) size(%ld)\n", find->index, find->size);
 
     ZeroMemory(find_data, sizeof(WIN32_FIND_DATAW));
 
@@ -3450,7 +3450,7 @@ static DWORD FTPFINDNEXT_FindNextFileProc(WININETFTPFINDNEXTW *find, LPVOID data
         FTP_ConvertFileProp(&find->lpafp[find->index], find_data);
         find->index++;
 
-        TRACE("Name: %s\nSize: %d\n", debugstr_w(find_data->cFileName), find_data->nFileSizeLow);
+        TRACE("Name: %s\nSize: %ld\n", debugstr_w(find_data->cFileName), find_data->nFileSizeLow);
     }else {
         res = ERROR_NO_MORE_FILES;
     }
@@ -3545,7 +3545,7 @@ static HINTERNET FTP_ReceiveFileList(ftp_session_t *lpwfs, INT nSocket, LPCWSTR 
     LPFILEPROPERTIESW lpafp = NULL;
     LPWININETFTPFINDNEXTW lpwfn = NULL;
 
-    TRACE("(%p,%d,%s,%p,%08lx)\n", lpwfs, nSocket, debugstr_w(lpszSearchFile), lpFindFileData, dwContext);
+    TRACE("(%p,%d,%s,%p,%08Ix)\n", lpwfs, nSocket, debugstr_w(lpszSearchFile), lpFindFileData, dwContext);
 
     if (FTP_ParseDirectory(lpwfs, nSocket, lpszSearchFile, &lpafp, &dwSize))
     {
@@ -3567,7 +3567,7 @@ static HINTERNET FTP_ReceiveFileList(ftp_session_t *lpwfs, INT nSocket, LPCWSTR 
         }
     }
 
-    TRACE("Matched %d files\n", dwSize);
+    TRACE("Matched %ld files\n", dwSize);
     return lpwfn ? lpwfn->hdr.hInternet : NULL;
 }
 
@@ -3743,7 +3743,7 @@ static BOOL FTP_ParseNextFile(INT nSocket, LPCWSTR lpszSearchFile, LPFILEPROPERT
             else {
                 lpfp->bIsDirectory = FALSE;
                 lpfp->nSize = atol(pszToken);
-                TRACE("Size: %d\n", lpfp->nSize);
+                TRACE("Size: %ld\n", lpfp->nSize);
             }
             
             pszToken = strtok(NULL, szSpace);

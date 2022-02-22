@@ -214,7 +214,7 @@ static INT_PTR WINAPI WININET_ProxyPasswordDialog(
 
     if( uMsg == WM_INITDIALOG )
     {
-        TRACE("WM_INITDIALOG (%08lx)\n", lParam);
+        TRACE("WM_INITDIALOG (%08Ix)\n", lParam);
 
         /* save the parameter list */
         params = (struct WININET_ErrorDlgParams*) lParam;
@@ -289,7 +289,7 @@ static INT_PTR WINAPI WININET_PasswordDialog(
 
     if( uMsg == WM_INITDIALOG )
     {
-        TRACE("WM_INITDIALOG (%08lx)\n", lParam);
+        TRACE("WM_INITDIALOG (%08Ix)\n", lParam);
 
         /* save the parameter list */
         params = (struct WININET_ErrorDlgParams*) lParam;
@@ -366,7 +366,7 @@ static INT_PTR WINAPI WININET_InvalidCertificateDialog(
 
     if( uMsg == WM_INITDIALOG )
     {
-        TRACE("WM_INITDIALOG (%08lx)\n", lParam);
+        TRACE("WM_INITDIALOG (%08Ix)\n", lParam);
 
         /* save the parameter list */
         params = (struct WININET_ErrorDlgParams*) lParam;
@@ -390,7 +390,7 @@ static INT_PTR WINAPI WININET_InvalidCertificateDialog(
             LoadStringW( WININET_hModule, IDS_CERT_ERRORS, buf, 1024 );
             break;
         default:
-            FIXME( "No message for error %d\n", params->dwError );
+            FIXME( "No message for error %ld\n", params->dwError );
             buf[0] = '\0';
         }
 
@@ -472,7 +472,7 @@ DWORD WINAPI InternetErrorDlg(HWND hWnd, HINTERNET hRequest,
     http_request_t *req = NULL;
     DWORD res = ERROR_SUCCESS;
 
-    TRACE("%p %p %d %08x %p\n", hWnd, hRequest, dwError, dwFlags, lppvData);
+    TRACE("%p %p %ld %08lx %p\n", hWnd, hRequest, dwError, dwFlags, lppvData);
 
     if( !hWnd && !(dwFlags & FLAGS_ERROR_UI_FLAGS_NO_UI) )
         return ERROR_INVALID_HANDLE;
@@ -510,7 +510,7 @@ DWORD WINAPI InternetErrorDlg(HWND hWnd, HINTERNET hRequest,
                                     hWnd, WININET_PasswordDialog, (LPARAM) &params );
             break;
         default:
-            WARN("unhandled status %u\n", req->status_code);
+            WARN("unhandled status %lu\n", req->status_code);
         }
         break;
     }
@@ -531,7 +531,7 @@ DWORD WINAPI InternetErrorDlg(HWND hWnd, HINTERNET hRequest,
         }
 
         if( dwFlags & ~FLAGS_ERROR_UI_FLAGS_CHANGE_OPTIONS )
-            FIXME("%08x contains unsupported flags.\n", dwFlags);
+            FIXME("%08lx contains unsupported flags.\n", dwFlags);
 
         res = DialogBoxParamW( WININET_hModule, MAKEINTRESOURCEW( IDD_INVCERTDLG ),
                                hWnd, WININET_InvalidCertificateDialog, (LPARAM) &params );
@@ -542,7 +542,7 @@ DWORD WINAPI InternetErrorDlg(HWND hWnd, HINTERNET hRequest,
             res = ERROR_HTTP_COOKIE_DECLINED;
             break;
         }
-        FIXME("Need to display dialog for error %d\n", dwError);
+        FIXME("Need to display dialog for error %ld\n", dwError);
         res = ERROR_CANCELLED;
         break;
 
@@ -556,7 +556,7 @@ DWORD WINAPI InternetErrorDlg(HWND hWnd, HINTERNET hRequest,
     case ERROR_INTERNET_MIXED_SECURITY:
     case ERROR_INTERNET_HTTPS_HTTP_SUBMIT_REDIR:
         if(!(dwFlags & FLAGS_ERROR_UI_FLAGS_NO_UI))
-            FIXME("Need to display dialog for error %d\n", dwError);
+            FIXME("Need to display dialog for error %ld\n", dwError);
         res = ERROR_CANCELLED;
         break;
 
@@ -566,14 +566,14 @@ DWORD WINAPI InternetErrorDlg(HWND hWnd, HINTERNET hRequest,
             res = ERROR_SUCCESS;
             break;
         }
-        FIXME("Need to display dialog for error %d\n", dwError);
+        FIXME("Need to display dialog for error %ld\n", dwError);
         res = ERROR_CANCELLED;
         break;
 
     case ERROR_INTERNET_HTTP_TO_HTTPS_ON_REDIR:
     case ERROR_INTERNET_POST_IS_NON_SECURE:
         if (!(dwFlags & FLAGS_ERROR_UI_FLAGS_NO_UI))
-            FIXME("Need to display dialog for error %d\n", dwError);
+            FIXME("Need to display dialog for error %ld\n", dwError);
         res = ERROR_SUCCESS;
         break;
 
@@ -611,7 +611,7 @@ BOOL WINAPI InternetShowSecurityInfoByURLW(LPCWSTR url, HWND window)
  */
 DWORD WINAPI ParseX509EncodedCertificateForListBoxEntry(LPBYTE cert, DWORD len, LPSTR szlistbox, LPDWORD listbox)
 {
-   FIXME("stub: %p %d %s %p\n", cert, len, debugstr_a(szlistbox), listbox);
+   FIXME("stub: %p %ld %s %p\n", cert, len, debugstr_a(szlistbox), listbox);
    return ERROR_CALL_NOT_IMPLEMENTED;
 }
 

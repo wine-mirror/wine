@@ -225,7 +225,7 @@ static const char *debugstr_status_info(DWORD status, void *info)
     switch(status) {
     case INTERNET_STATUS_REQUEST_COMPLETE: {
         INTERNET_ASYNC_RESULT *iar = info;
-        return wine_dbg_sprintf("{%s, %d}", wine_dbgstr_longlong(iar->dwResult), iar->dwError);
+        return wine_dbg_sprintf("{%s, %ld}", wine_dbgstr_longlong(iar->dwResult), iar->dwError);
     }
     default:
         return wine_dbg_sprintf("%p", info);
@@ -264,7 +264,7 @@ void INTERNET_SendCallback(object_header_t *hdr, DWORD_PTR context, DWORD status
         }
     }
     
-    TRACE(" callback(%p) (%p (%p), %08lx, %d (%s), %s, %d)\n",
+    TRACE(" callback(%p) (%p (%p), %08Ix, %ld (%s), %s, %ld)\n",
 	  hdr->lpfnStatusCB, hdr->hInternet, hdr, context, status, get_callback_name(status),
 	  debugstr_status_info(status, new_info), info_len);
     
