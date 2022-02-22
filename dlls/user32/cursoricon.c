@@ -904,6 +904,123 @@ static const CURSORICONFILEDIRENTRY *CURSORICON_FindBestIconFile( const CURSORIC
     return &dir->idEntries[n];
 }
 
+static HICON alloc_cursoricon_handle( BOOL is_icon )
+{
+    struct cursoricon_object *obj;
+    HICON handle;
+
+    if (!(obj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*obj) ))) return NULL;
+    obj->is_icon = is_icon;
+
+    if (!(handle = alloc_user_handle( &obj->obj, NTUSER_OBJ_ICON ))) free( obj );
+    return handle;
+}
+
+/***********************************************************************
+ *	     NtUserSetCursorIconData (win32u.@)
+ */
+BOOL WINAPI NtUserSetCursorIconData( HCURSOR cursor, UNICODE_STRING *module, UNICODE_STRING *res_name,
+                                     struct cursoricon_desc *desc )
+{
+    struct cursoricon_object *obj;
+    UINT i, j;
+
+    if (!(obj = get_icon_ptr( cursor ))) return FALSE;
+
+    if (obj->is_ani || obj->frame.width)
+    {
+        /* already initialized */
+        release_user_handle_ptr( obj );
+        SetLastError( ERROR_INVALID_CURSOR_HANDLE );
+        return FALSE;
+    }
+
+    obj->delay = desc->delay;
+
+    if (desc->num_steps)
+    {
+        if (!(obj->ani.frames = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                           desc->num_steps * sizeof(*obj->ani.frames) )))
+        {
+            release_user_handle_ptr( obj );
+            return FALSE;
+        }
+        obj->is_ani = TRUE;
+        obj->ani.num_steps  = desc->num_steps;
+        obj->ani.num_frames = desc->num_frames;
+    }
+    else obj->frame = desc->frames[0];
+
+    if (!res_name)
+        obj->resname = NULL;
+    else if (res_name->Length)
+    {
+        obj->resname = HeapAlloc( GetProcessHeap(), 0, res_name->Length + sizeof(WCHAR) );
+        if (obj->resname)
+        {
+            memcpy( obj->resname, res_name->Buffer, res_name->Length );
+            obj->resname[res_name->Length / sizeof(WCHAR)] = 0;
+        }
+    }
+    else
+        obj->resname = MAKEINTRESOURCEW( LOWORD(res_name->Buffer) );
+
+    if (module && module->Length && (obj->module.Buffer = HeapAlloc( GetProcessHeap(), 0, module->Length )))
+    {
+        memcpy( obj->module.Buffer, module->Buffer, module->Length );
+        obj->module.Length = module->Length;
+    }
+
+    if (obj->is_ani)
+    {
+        /* Setup the animated frames in the correct sequence */
+        for (i = 0; i < desc->num_steps; i++)
+        {
+            struct cursoricon_desc frame_desc;
+            DWORD frame_id;
+
+            if (obj->ani.frames[i]) continue; /* already set */
+
+            frame_id = desc->frame_seq ? desc->frame_seq[i] : i;
+            if (frame_id >= obj->ani.num_frames)
+            {
+                frame_id = obj->ani.num_frames - 1;
+                ERR_(cursor)( "Sequence indicates frame past end of list, corrupt?\n" );
+            }
+            memset( &frame_desc, 0, sizeof(frame_desc) );
+            frame_desc.delay  = desc->frame_rates ? desc->frame_rates[i] : desc->delay;
+            frame_desc.frames = &desc->frames[frame_id];
+            if (!(obj->ani.frames[i] = alloc_cursoricon_handle( obj->is_icon )) ||
+                !NtUserSetCursorIconData( obj->ani.frames[i], NULL, NULL, &frame_desc ))
+            {
+                release_user_handle_ptr( obj );
+                return 0;
+            }
+
+            if (desc->frame_seq)
+            {
+                for (j = i + 1; j < obj->ani.num_steps; j++)
+                {
+                    if (desc->frame_seq[j] == frame_id) obj->ani.frames[j] = obj->ani.frames[i];
+                }
+            }
+        }
+    }
+
+    if (desc->flags & LR_SHARED)
+    {
+        obj->is_shared = TRUE;
+        if (obj->module.Length)
+        {
+            obj->rsrc = desc->rsrc;
+            list_add_head( &icon_cache, &obj->entry );
+        }
+    }
+
+    release_user_handle_ptr( obj );
+    return TRUE;
+}
+
 /***********************************************************************
  *          bmi_has_alpha
  */
@@ -1167,6 +1284,35 @@ done:
     return ret;
 }
 
+static HICON create_cursoricon_object( struct cursoricon_desc *desc, BOOL is_icon, HINSTANCE module,
+                                       const WCHAR *resname, HRSRC rsrc )
+{
+    WCHAR buf[MAX_PATH];
+    UNICODE_STRING module_name = { 0, sizeof(buf), buf };
+    UNICODE_STRING res_str = { 0 };
+    HICON handle;
+
+    if (!(handle = alloc_cursoricon_handle( is_icon ))) return 0;
+
+    if (module) LdrGetDllFullName( module, &module_name );
+
+    res_str.Buffer = (WCHAR *)resname;
+    if (!IS_INTRESOURCE(resname))
+    {
+        res_str.Length = lstrlenW( resname ) * sizeof(WCHAR);
+        res_str.MaximumLength = res_str.Length + sizeof(WCHAR);
+    }
+    desc->rsrc = rsrc; /* FIXME: we should probably avoid storing rsrc */
+
+    if (!NtUserSetCursorIconData( handle, &module_name, &res_str, desc ))
+    {
+        DestroyCursor( handle );
+        return 0;
+    }
+
+    return handle;
+}
+
 /***********************************************************************
  *          create_icon_from_bmi
  *
@@ -1177,53 +1323,17 @@ static HICON create_icon_from_bmi( const BITMAPINFO *bmi, DWORD maxsize, HMODULE
                                    UINT flags )
 {
     struct cursoricon_frame frame;
+    struct cursoricon_desc desc =
+    {
+        .flags = flags,
+        .frames = &frame,
+    };
     HICON ret;
 
     if (!create_icon_frame( bmi, maxsize, hotspot, bIcon, width, height, flags, &frame )) return 0;
 
-    ret = alloc_icon_handle( FALSE, 0 );
-    if (ret)
-    {
-        struct cursoricon_object *info = get_icon_ptr( ret );
-
-        info->is_icon = bIcon;
-        info->frame = frame;
-
-        if (!IS_INTRESOURCE(resname))
-        {
-            info->resname = HeapAlloc( GetProcessHeap(), 0, (lstrlenW(resname) + 1) * sizeof(WCHAR) );
-            if (info->resname) lstrcpyW( info->resname, resname );
-        }
-        else info->resname = MAKEINTRESOURCEW( LOWORD(resname) );
-
-        if (module)
-        {
-            WCHAR buf[MAX_PATH];
-            UNICODE_STRING module_name = { 0, sizeof(buf), buf };
-
-            if (!LdrGetDllFullName( module, &module_name ) &&
-                (info->module.Buffer = HeapAlloc( GetProcessHeap(), 0, module_name.Length )))
-            {
-                memcpy( info->module.Buffer, module_name.Buffer, module_name.Length );
-                info->module.Length = module_name.Length;
-            }
-        }
-
-        if (flags & LR_SHARED)
-        {
-            info->is_shared = TRUE;
-            if (module)
-            {
-                info->rsrc = rsrc;
-                list_add_head( &icon_cache, &info->entry );
-            }
-        }
-        release_user_handle_ptr( info );
-    }
-    else
-    {
-        free_icon_frame( &frame );
-    }
+    ret = create_cursoricon_object( &desc, bIcon, module, resname, rsrc );
+    if (!ret) free_icon_frame( &frame );
     return ret;
 }
 

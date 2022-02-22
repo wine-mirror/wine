@@ -113,6 +113,19 @@ enum
 #define NTUSER_OBJ_ACCEL    0x08
 #define NTUSER_OBJ_HOOK     0x0f
 
+/* NtUserSetCursorIconData parameter, not compatible with Windows */
+struct cursoricon_desc
+{
+    UINT flags;
+    UINT num_steps;
+    UINT num_frames;
+    UINT delay;
+    struct cursoricon_frame *frames;
+    DWORD *frame_seq;
+    DWORD *frame_rates;
+    HRSRC rsrc;
+};
+
 /* internal messages codes */
 enum wine_internal_message
 {
@@ -199,6 +212,8 @@ HANDLE  WINAPI NtUserRemoveProp( HWND hwnd, const WCHAR *str );
 BOOL    WINAPI NtUserScrollDC( HDC hdc, INT dx, INT dy, const RECT *scroll, const RECT *clip,
                                HRGN ret_update_rgn, RECT *update_rect );
 HPALETTE WINAPI NtUserSelectPalette( HDC hdc, HPALETTE palette, WORD force_background );
+BOOL    WINAPI NtUserSetCursorIconData( HCURSOR cursor, UNICODE_STRING *module, UNICODE_STRING *res_name,
+                                        struct cursoricon_desc *desc );
 BOOL    WINAPI NtUserSetCursorPos( INT x, INT y );
 BOOL    WINAPI NtUserSetKeyboardState( BYTE *state );
 BOOL    WINAPI NtUserSetProcessDpiAwarenessContext( ULONG awareness, ULONG unknown );
