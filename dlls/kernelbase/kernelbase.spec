@@ -868,6 +868,7 @@
 # @ stub InternetTimeToSystemTimeW
 # @ stub InvalidateAppModelVersionCache
 @ stub InvalidateTzSpecificCache
+@ stdcall IsApiSetImplemented(str)
 @ stdcall IsCharAlphaA(long)
 @ stdcall IsCharAlphaNumericA(long)
 @ stdcall IsCharAlphaNumericW(long)

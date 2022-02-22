@@ -468,6 +468,22 @@ FARPROC WINAPI DECLSPEC_HOTPATCH GetProcAddress( HMODULE module, LPCSTR function
 
 
 /***********************************************************************
+ *	IsApiSetImplemented   (kernelbase.@)
+ */
+BOOL WINAPI IsApiSetImplemented( LPCSTR name )
+{
+    UNICODE_STRING str;
+    NTSTATUS status;
+    BOOLEAN in_schema, present;
+
+    if (!RtlCreateUnicodeStringFromAsciiz( &str, name )) return FALSE;
+    status = ApiSetQueryApiSetPresenceEx( &str, &in_schema, &present );
+    RtlFreeUnicodeString( &str );
+    return !status && present;
+}
+
+
+/***********************************************************************
  *	LoadLibraryA   (kernelbase.@)
  */
 HMODULE WINAPI DECLSPEC_HOTPATCH LoadLibraryA( LPCSTR name )

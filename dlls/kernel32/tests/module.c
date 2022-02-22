@@ -1469,7 +1469,6 @@ static void test_apisets(void)
         return;
     }
     if (!pApiSetQueryApiSetPresenceEx) win_skip( "ApiSetQueryApiSetPresenceEx not implemented\n" );
-    todo_wine
     if (!pIsApiSetImplemented) win_skip( "IsApiSetImplemented not implemented\n" );
 
     for (i = 0; i < ARRAY_SIZE(tests); i++)
