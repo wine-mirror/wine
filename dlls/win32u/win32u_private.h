@@ -263,6 +263,9 @@ extern HMONITOR monitor_from_rect( const RECT *rect, DWORD flags, UINT dpi ) DEC
 extern void flush_window_surfaces( BOOL idle ) DECLSPEC_HIDDEN;
 extern void register_window_surface( struct window_surface *old,
                                      struct window_surface *new ) DECLSPEC_HIDDEN;
+extern void user_lock(void) DECLSPEC_HIDDEN;
+extern void user_unlock(void) DECLSPEC_HIDDEN;
+extern void user_check_not_lock(void) DECLSPEC_HIDDEN;
 
 extern void wrappers_init( unixlib_handle_t handle ) DECLSPEC_HIDDEN;
 extern NTSTATUS gdi_init(void) DECLSPEC_HIDDEN;

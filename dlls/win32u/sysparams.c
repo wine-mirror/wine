@@ -25,6 +25,8 @@
 #endif
 
 #include <pthread.h>
+#include <assert.h>
+
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "ntgdi_private.h"
@@ -359,6 +361,30 @@ static RECT work_area;
 
 static HDC display_dc;
 static pthread_mutex_t display_dc_lock = PTHREAD_MUTEX_INITIALIZER;
+
+static pthread_mutex_t user_mutex;
+static unsigned int user_lock_thread, user_lock_rec;
+
+void user_lock(void)
+{
+    pthread_mutex_lock( &user_mutex );
+    if (!user_lock_rec++) user_lock_thread = GetCurrentThreadId();
+}
+
+void user_unlock(void)
+{
+    if (!--user_lock_rec) user_lock_thread = 0;
+    pthread_mutex_unlock( &user_mutex );
+}
+
+void user_check_not_lock(void)
+{
+    if (user_lock_thread == GetCurrentThreadId())
+    {
+        ERR( "BUG: holding USER lock\n" );
+        assert( 0 );
+    }
+}
 
 static HANDLE get_display_device_init_mutex( void )
 {
@@ -3008,6 +3034,7 @@ void sysparams_init(void)
 
     DWORD i, dispos, dpi_scaling;
     WCHAR layout[KL_NAMELENGTH];
+    pthread_mutexattr_t attr;
     HKEY hkey;
 
     static const WCHAR software_wineW[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e'};
@@ -3017,6 +3044,11 @@ void sysparams_init(void)
     static const WCHAR oneW[] = {'1',0};
     static const WCHAR kl_preloadW[] =
         {'K','e','y','b','o','a','r','d',' ','L','a','y','o','u','t','\\','P','r','e','l','o','a','d'};
+
+    pthread_mutexattr_init( &attr );
+    pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_RECURSIVE );
+    pthread_mutex_init( &user_mutex, &attr );
+    pthread_mutexattr_destroy( &attr );
 
     if ((hkey = reg_create_key( hkcu_key, kl_preloadW, sizeof(kl_preloadW), 0, NULL )))
     {
@@ -4550,6 +4582,13 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
         return get_entry( &entry_DESKPATTERN, 256, (WCHAR *)arg );
     case NtUserIncrementKeyStateCounter:
         return InterlockedAdd( &global_key_state_counter, arg );
+    case NtUserLock:
+        switch( arg )
+        {
+        case 0: user_lock(); return 0;
+        case 1: user_unlock(); return 0;
+        default: user_check_not_lock(); return 0;
+        }
     case NtUserSetCallbacks:
         return (UINT_PTR)InterlockedExchangePointer( (void **)&user_callbacks, (void *)arg );
     default:

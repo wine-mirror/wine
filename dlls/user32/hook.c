@@ -651,8 +651,6 @@ BOOL WINAPI User32CallWinEventHook( const struct win_hook_proc_params *params, U
     WINEVENTPROC proc = params->proc;
     HMODULE free_module = 0;
 
-    USER_CheckNotLock(); /* FIXME: move to NtUserNotifyWinEvent */
-
     if (params->module[0] && !(proc = get_hook_proc( proc, params->module, &free_module ))) return FALSE;
 
     TRACE_(relay)( "\1Call winevent hook proc %p (hhook=%p,event=%x,hwnd=%p,object_id=%x,child_id=%x,tid=%04x,time=%x)\n",

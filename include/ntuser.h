@@ -87,6 +87,7 @@ enum
     NtUserFlushWindowSurfaces,
     NtUserGetDeskPattern,
     NtUserIncrementKeyStateCounter,
+    NtUserLock,
     NtUserSetCallbacks,
 };
 

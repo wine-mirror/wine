@@ -35,15 +35,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(graphics);
 
 HMODULE user32_module = 0;
 
-static CRITICAL_SECTION user_section;
-static CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &user_section,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": user_section") }
-};
-static CRITICAL_SECTION user_section = { &critsect_debug, -1, 0, 0, 0, 0 };
-
 static DWORD exiting_thread_id;
 
 extern void WDML_NotifyThreadDetach(void);
@@ -53,7 +44,7 @@ extern void WDML_NotifyThreadDetach(void);
  */
 void USER_Lock(void)
 {
-    EnterCriticalSection( &user_section );
+    NtUserCallOneParam( 0, NtUserLock );
 }
 
 
@@ -62,7 +53,7 @@ void USER_Lock(void)
  */
 void USER_Unlock(void)
 {
-    LeaveCriticalSection( &user_section );
+    NtUserCallOneParam( 1, NtUserLock );
 }
 
 
@@ -73,11 +64,7 @@ void USER_Unlock(void)
  */
 void USER_CheckNotLock(void)
 {
-    if (RtlIsCriticalSectionLockedByThread(&user_section))
-    {
-        ERR( "BUG: holding USER lock\n" );
-        DebugBreak();
-    }
+    NtUserCallOneParam( 2, NtUserLock );
 }
 
 
@@ -237,7 +224,6 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
     case DLL_PROCESS_DETACH:
         USER_unload_driver();
         FreeLibrary(imm32_module);
-        DeleteCriticalSection(&user_section);
         break;
     }
     return ret;

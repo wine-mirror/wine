@@ -254,6 +254,8 @@ void WINAPI NtUserNotifyWinEvent( DWORD event, HWND hwnd, LONG object_id, LONG c
 
     TRACE( "%04x, %p, %d, %d\n", event, hwnd, object_id, child_id );
 
+    user_check_not_lock();
+
     if (!hwnd)
     {
         SetLastError( ERROR_INVALID_WINDOW_HANDLE );
