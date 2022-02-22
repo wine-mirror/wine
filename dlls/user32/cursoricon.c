@@ -129,7 +129,7 @@ static HICON alloc_icon_handle( BOOL is_ani, UINT num_steps )
         obj->ani.num_frames = num_steps; /* changed later for some animated cursors */
     }
 
-    if (!(handle = alloc_user_handle( &obj->obj, USER_ICON )))
+    if (!(handle = alloc_user_handle( &obj->obj, NTUSER_OBJ_ICON )))
     {
         if (obj->is_ani) HeapFree( GetProcessHeap(), 0, obj->ani.frames );
         HeapFree( GetProcessHeap(), 0, obj );
@@ -139,7 +139,7 @@ static HICON alloc_icon_handle( BOOL is_ani, UINT num_steps )
 
 static struct cursoricon_object *get_icon_ptr( HICON handle )
 {
-    struct cursoricon_object *obj = get_user_handle_ptr( handle, USER_ICON );
+    struct cursoricon_object *obj = get_user_handle_ptr( handle, NTUSER_OBJ_ICON );
     if (obj == OBJ_OTHER_PROCESS)
     {
         WARN( "icon handle %p from other process\n", handle );
@@ -175,7 +175,7 @@ static UINT get_icon_steps( struct cursoricon_object *obj )
 
 static BOOL free_icon_handle( HICON handle )
 {
-    struct cursoricon_object *obj = free_user_handle( handle, USER_ICON );
+    struct cursoricon_object *obj = free_user_handle( handle, NTUSER_OBJ_ICON );
 
     if (obj == OBJ_OTHER_PROCESS) WARN( "icon handle %p from other process\n", handle );
     else if (obj)
@@ -225,7 +225,7 @@ static BOOL free_icon_handle( HICON handle )
 ULONG_PTR get_icon_param( HICON handle )
 {
     ULONG_PTR ret = 0;
-    struct cursoricon_object *obj = get_user_handle_ptr( handle, USER_ICON );
+    struct cursoricon_object *obj = get_user_handle_ptr( handle, NTUSER_OBJ_ICON );
 
     if (obj == OBJ_OTHER_PROCESS) WARN( "icon handle %p from other process\n", handle );
     else if (obj)
@@ -239,7 +239,7 @@ ULONG_PTR get_icon_param( HICON handle )
 ULONG_PTR set_icon_param( HICON handle, ULONG_PTR param )
 {
     ULONG_PTR ret = 0;
-    struct cursoricon_object *obj = get_user_handle_ptr( handle, USER_ICON );
+    struct cursoricon_object *obj = get_user_handle_ptr( handle, NTUSER_OBJ_ICON );
 
     if (obj == OBJ_OTHER_PROCESS) WARN( "icon handle %p from other process\n", handle );
     else if (obj)

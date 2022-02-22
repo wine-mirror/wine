@@ -287,7 +287,7 @@ static void do_debug_print_menuitem(const char *prefix, const MENUITEM *mp,
  */
 static POPUPMENU *MENU_GetMenu(HMENU hMenu)
 {
-    POPUPMENU *menu = get_user_handle_ptr( hMenu, USER_MENU );
+    POPUPMENU *menu = get_user_handle_ptr( hMenu, NTUSER_OBJ_MENU );
 
     if (menu == OBJ_OTHER_PROCESS)
     {
@@ -301,7 +301,7 @@ static POPUPMENU *MENU_GetMenu(HMENU hMenu)
 
 static POPUPMENU *grab_menu_ptr(HMENU hMenu)
 {
-    POPUPMENU *menu = get_user_handle_ptr( hMenu, USER_MENU );
+    POPUPMENU *menu = get_user_handle_ptr( hMenu, NTUSER_OBJ_MENU );
 
     if (menu == OBJ_OTHER_PROCESS)
     {
@@ -4246,7 +4246,7 @@ HMENU WINAPI CreateMenu(void)
     menu->FocusedItem = NO_SELECTED_ITEM;
     menu->refcount = 1;
 
-    if (!(hMenu = alloc_user_handle( &menu->obj, USER_MENU ))) HeapFree( GetProcessHeap(), 0, menu );
+    if (!(hMenu = alloc_user_handle( &menu->obj, NTUSER_OBJ_MENU ))) HeapFree( GetProcessHeap(), 0, menu );
 
     TRACE("return %p\n", hMenu );
 
@@ -4263,7 +4263,7 @@ BOOL WINAPI DestroyMenu( HMENU hMenu )
 
     TRACE("(%p)\n", hMenu);
 
-    if (!(lppop = free_user_handle( hMenu, USER_MENU ))) return FALSE;
+    if (!(lppop = free_user_handle( hMenu, NTUSER_OBJ_MENU ))) return FALSE;
     if (lppop == OBJ_OTHER_PROCESS) return FALSE;
 
     /* DestroyMenu should not destroy system menu popup owner */

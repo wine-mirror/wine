@@ -105,6 +105,14 @@ enum
 /* color index used to retrieve system 55aa brush */
 #define COLOR_55AA_BRUSH  0x100
 
+/* user object types */
+#define NTUSER_OBJ_WINDOW   0x01
+#define NTUSER_OBJ_MENU     0x02
+#define NTUSER_OBJ_ICON     0x03
+#define NTUSER_OBJ_WINPOS   0x04
+#define NTUSER_OBJ_ACCEL    0x08
+#define NTUSER_OBJ_HOOK     0x0f
+
 /* internal messages codes */
 enum wine_internal_message
 {

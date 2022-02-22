@@ -68,7 +68,7 @@ HACCEL WINAPI LoadAcceleratorsW(HINSTANCE instance, LPCWSTR name)
     if (!accel) return 0;
     accel->count = count;
     memcpy( accel->table, table, count * sizeof(*table) );
-    if (!(handle = alloc_user_handle( &accel->obj, USER_ACCEL )))
+    if (!(handle = alloc_user_handle( &accel->obj, NTUSER_OBJ_ACCEL )))
         HeapFree( GetProcessHeap(), 0, accel );
     TRACE_(accel)("%p %s returning %p\n", instance, debugstr_w(name), handle );
     return handle;
@@ -123,7 +123,7 @@ INT WINAPI CopyAcceleratorTableW(HACCEL src, LPACCEL dst, INT count)
     struct accelerator *accel;
     int i;
 
-    if (!(accel = get_user_handle_ptr( src, USER_ACCEL ))) return 0;
+    if (!(accel = get_user_handle_ptr( src, NTUSER_OBJ_ACCEL ))) return 0;
     if (accel == OBJ_OTHER_PROCESS)
     {
         FIXME( "other process handle %p?\n", src );
@@ -172,7 +172,7 @@ HACCEL WINAPI CreateAcceleratorTableA(LPACCEL lpaccel, INT count)
         }
         else accel->table[i].key = lpaccel[i].key;
     }
-    if (!(handle = alloc_user_handle( &accel->obj, USER_ACCEL )))
+    if (!(handle = alloc_user_handle( &accel->obj, NTUSER_OBJ_ACCEL )))
         HeapFree( GetProcessHeap(), 0, accel );
     TRACE_(accel)("returning %p\n", handle );
     return handle;
@@ -201,7 +201,7 @@ HACCEL WINAPI CreateAcceleratorTableW(LPACCEL lpaccel, INT count)
         accel->table[i].key   = lpaccel[i].key;
         accel->table[i].cmd   = lpaccel[i].cmd;
     }
-    if (!(handle = alloc_user_handle( &accel->obj, USER_ACCEL )))
+    if (!(handle = alloc_user_handle( &accel->obj, NTUSER_OBJ_ACCEL )))
         HeapFree( GetProcessHeap(), 0, accel );
     TRACE_(accel)("returning %p\n", handle );
     return handle;
@@ -222,7 +222,7 @@ BOOL WINAPI DestroyAcceleratorTable( HACCEL handle )
 {
     struct accelerator *accel;
 
-    if (!(accel = free_user_handle( handle, USER_ACCEL ))) return FALSE;
+    if (!(accel = free_user_handle( handle, NTUSER_OBJ_ACCEL ))) return FALSE;
     if (accel == OBJ_OTHER_PROCESS)
     {
         FIXME( "other process handle %p?\n", accel );

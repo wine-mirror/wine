@@ -2520,7 +2520,7 @@ HDWP WINAPI BeginDeferWindowPos( INT count )
     pDWP->hwndParent     = 0;
 
     if (!(pDWP->winPos = HeapAlloc( GetProcessHeap(), 0, count * sizeof(WINDOWPOS) )) ||
-        !(handle = alloc_user_handle( &pDWP->obj, USER_DWP )))
+        !(handle = alloc_user_handle( &pDWP->obj, NTUSER_OBJ_WINPOS )))
     {
         HeapFree( GetProcessHeap(), 0, pDWP->winPos );
         HeapFree( GetProcessHeap(), 0, pDWP );
@@ -2561,7 +2561,7 @@ HDWP WINAPI DeferWindowPos( HDWP hdwp, HWND hwnd, HWND hwndAfter,
     winpos.cy = cy;
     map_dpi_winpos( &winpos );
 
-    if (!(pDWP = get_user_handle_ptr( hdwp, USER_DWP ))) return 0;
+    if (!(pDWP = get_user_handle_ptr( hdwp, NTUSER_OBJ_WINPOS ))) return 0;
     if (pDWP == OBJ_OTHER_PROCESS)
     {
         FIXME( "other process handle %p?\n", hdwp );
@@ -2626,7 +2626,7 @@ BOOL WINAPI EndDeferWindowPos( HDWP hdwp )
 
     TRACE("%p\n", hdwp);
 
-    if (!(pDWP = free_user_handle( hdwp, USER_DWP ))) return FALSE;
+    if (!(pDWP = free_user_handle( hdwp, NTUSER_OBJ_WINPOS ))) return FALSE;
     if (pDWP == OBJ_OTHER_PROCESS)
     {
         FIXME( "other process handle %p?\n", hdwp );

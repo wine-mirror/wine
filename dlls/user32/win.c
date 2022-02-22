@@ -92,7 +92,7 @@ static void *user_handles[NB_USER_HANDLES];
 /***********************************************************************
  *           alloc_user_handle
  */
-HANDLE alloc_user_handle( struct user_object *ptr, enum user_obj_type type )
+HANDLE alloc_user_handle( struct user_object *ptr, unsigned int type )
 {
     HANDLE handle = 0;
 
@@ -118,7 +118,7 @@ HANDLE alloc_user_handle( struct user_object *ptr, enum user_obj_type type )
 /***********************************************************************
  *           get_user_handle_ptr
  */
-void *get_user_handle_ptr( HANDLE handle, enum user_obj_type type )
+void *get_user_handle_ptr( HANDLE handle, unsigned int type )
 {
     struct user_object *ptr;
     WORD index = USER_HANDLE_TO_INDEX( handle );
@@ -153,7 +153,7 @@ void release_user_handle_ptr( void *ptr )
 /***********************************************************************
  *           free_user_handle
  */
-void *free_user_handle( HANDLE handle, enum user_obj_type type )
+void *free_user_handle( HANDLE handle, unsigned int type )
 {
     struct user_object *ptr;
     WORD index = USER_HANDLE_TO_INDEX( handle );
@@ -256,7 +256,7 @@ static WND *create_window_handle( HWND parent, HWND owner, LPCWSTR name,
     index = USER_HANDLE_TO_INDEX(handle);
     assert( index < NB_USER_HANDLES );
     win->obj.handle = handle;
-    win->obj.type   = USER_WINDOW;
+    win->obj.type   = NTUSER_OBJ_WINDOW;
     win->parent     = full_parent;
     win->owner      = full_owner;
     win->class      = class;
@@ -280,7 +280,7 @@ static void free_window_handle( HWND hwnd )
     struct user_object *ptr;
     WORD index = USER_HANDLE_TO_INDEX(hwnd);
 
-    if ((ptr = get_user_handle_ptr( hwnd, USER_WINDOW )) && ptr != OBJ_OTHER_PROCESS)
+    if ((ptr = get_user_handle_ptr( hwnd, NTUSER_OBJ_WINDOW )) && ptr != OBJ_OTHER_PROCESS)
     {
         SERVER_START_REQ( destroy_window )
         {
@@ -748,7 +748,7 @@ WND *WIN_GetPtr( HWND hwnd )
 {
     WND *ptr;
 
-    if ((ptr = get_user_handle_ptr( hwnd, USER_WINDOW )) == WND_OTHER_PROCESS)
+    if ((ptr = get_user_handle_ptr( hwnd, NTUSER_OBJ_WINDOW )) == WND_OTHER_PROCESS)
     {
         if (is_desktop_window( hwnd )) ptr = WND_DESKTOP;
     }
@@ -1163,7 +1163,7 @@ static WND *next_thread_window( HWND *hwnd )
     while (index < NB_USER_HANDLES)
     {
         if (!(ptr = user_handles[index++])) continue;
-        if (ptr->type != USER_WINDOW) continue;
+        if (ptr->type != NTUSER_OBJ_WINDOW) continue;
         win = (WND *)ptr;
         if (win->tid != GetCurrentThreadId()) continue;
         *hwnd = ptr->handle;
