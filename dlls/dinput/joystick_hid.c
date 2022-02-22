@@ -2296,7 +2296,7 @@ static void convert_directions_to_spherical( const DIEFFECT *in, DIEFFECT *out )
             tmp = atan2( in->rglDirection[i], tmp );
             out->rglDirection[i - 1] = tmp * 18000 / M_PI;
         }
-        out->rglDirection[in->cAxes - 1] = 0;
+        if (in->cAxes) out->rglDirection[in->cAxes - 1] = 0;
         out->cAxes = in->cAxes;
         break;
     case DIEFF_POLAR:
@@ -2306,7 +2306,8 @@ static void convert_directions_to_spherical( const DIEFFECT *in, DIEFFECT *out )
         out->cAxes = in->cAxes;
         break;
     case DIEFF_SPHERICAL:
-        for (i = 0; i < in->cAxes - 1; ++i)
+        if (!in->cAxes) i = 0;
+        else for (i = 0; i < in->cAxes - 1; ++i)
         {
             out->rglDirection[i] = in->rglDirection[i] % 36000;
             if (out->rglDirection[i] < 0) out->rglDirection[i] += 36000;
