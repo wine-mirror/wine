@@ -6023,7 +6023,7 @@ static void test_LVM_INSERTITEM(void)
         if ((insert_item[i].mask & LVIF_STATE) && (insert_item[i].state & (LVIS_FOCUSED | LVIS_SELECTED)))
         {
             sprintf(buf, "%d: insert focused", i);
-            ok_sequence(sequences, PARENT_SEQ_INDEX, parent_insert_focused0_seq, buf, TRUE);
+            ok_sequence(sequences, PARENT_SEQ_INDEX, parent_insert_focused0_seq, buf, insert_item[i].mask != LVIF_STATE);
         }
         else
         {
@@ -6060,7 +6060,7 @@ static void test_insertitem(void)
     item.iSubItem = 0;
     ret = SendMessageA(hwnd, LVM_INSERTITEMA, 0, (LPARAM)&item);
     ok(ret == 0, "got %d\n", ret);
-    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_insert_focused0_seq, "insert focused 0", TRUE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_insert_focused0_seq, "insert focused 0", FALSE);
 
     state = SendMessageA(hwnd, LVM_GETITEMSTATE, 0, LVIS_FOCUSED);
     ok(state == LVIS_FOCUSED, "got %x\n", state);
@@ -6073,7 +6073,7 @@ static void test_insertitem(void)
     item.iSubItem = 0;
     ret = SendMessageA(hwnd, LVM_INSERTITEMA, 0, (LPARAM)&item);
     ok(ret == 1, "got %d\n", ret);
-    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_insert_focused1_seq, "insert focused 1", TRUE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_insert_focused1_seq, "insert focused 1", FALSE);
 
     state = SendMessageA(hwnd, LVM_GETITEMSTATE, 1, LVIS_FOCUSED);
     ok(state == LVIS_FOCUSED, "got %x\n", state);

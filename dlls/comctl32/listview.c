@@ -4200,6 +4200,7 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
     LVITEMW item;
     /* stateMask is ignored for LVM_INSERTITEM */
     UINT stateMask = isNew ? ~0 : lpLVItem->stateMask;
+    BOOL send_change_notification;
 
     TRACE("()\n");
 
@@ -4260,11 +4261,16 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
     nmlv.uChanged = uChanged ? uChanged : lpLVItem->mask;
     nmlv.lParam = item.lParam;
 
-    /* Send LVN_ITEMCHANGING notification, if the item is not being inserted
+    /* Send change notification if the item is not being inserted, or inserted (selected|focused),
        and we are _NOT_ virtual (LVS_OWNERDATA), and change notifications
-       are enabled. Even nothing really changed we still need to send this,
+       are enabled. Even if nothing really changed we still need to send this,
        in this case uChanged mask is just set to passed item mask. */
-    if (lpItem && !isNew && (infoPtr->notify_mask & NOTIFY_MASK_ITEM_CHANGE))
+
+    send_change_notification = !isNew;
+    send_change_notification |= (uChanged & LVIF_STATE) && (lpLVItem->state & (LVIS_FOCUSED | LVIS_SELECTED));
+    send_change_notification &= !!(infoPtr->notify_mask & NOTIFY_MASK_ITEM_CHANGE);
+
+    if (lpItem && send_change_notification)
     {
       HWND hwndSelf = infoPtr->hwndSelf;
 
@@ -4352,13 +4358,11 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
 	}
     }
 
-    /* if we're inserting the item, we're done */
-    if (isNew) return TRUE;
-
-    /* send LVN_ITEMCHANGED notification */
-    if (lpLVItem->mask & LVIF_PARAM) nmlv.lParam = lpLVItem->lParam;
-    if (infoPtr->notify_mask & NOTIFY_MASK_ITEM_CHANGE)
+    if (send_change_notification)
+    {
+        if (lpLVItem->mask & LVIF_PARAM) nmlv.lParam = lpLVItem->lParam;
         notify_listview(infoPtr, LVN_ITEMCHANGED, &nmlv);
+    }
 
     return TRUE;
 }
