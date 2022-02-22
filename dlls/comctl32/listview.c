@@ -4258,7 +4258,7 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
         nmlv.uNewState = (item.state & ~stateMask) | (lpLVItem->state & stateMask);
         nmlv.uOldState = item.state;
     }
-    nmlv.uChanged = uChanged ? uChanged : lpLVItem->mask;
+    nmlv.uChanged = isNew ? LVIF_STATE : (uChanged ? uChanged : lpLVItem->mask);
     nmlv.lParam = item.lParam;
 
     /* Send change notification if the item is not being inserted, or inserted (selected|focused),
