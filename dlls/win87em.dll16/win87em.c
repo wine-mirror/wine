@@ -101,7 +101,7 @@ static void WIN87_Init( CONTEXT *context )
  */
 void WINAPI _fpMath( CONTEXT *context )
 {
-    TRACE("(cs:eip=%04x:%04x es=%04x bx=%04x ax=%04x dx=%04x)\n",
+    TRACE("(cs:eip=%04lx:%04lx es=%04lx bx=%04lx ax=%04lx dx=%04lx)\n",
           context->SegCs, context->Eip, context->SegEs, context->Ebx,
           context->Eax, context->Edx );
 
@@ -174,7 +174,7 @@ void WINAPI _fpMath( CONTEXT *context )
              */
 /* FIXME: could someone who really understands asm() fix this please? --AJ */
 /*            __asm__("fistp %0;wait" : "=m" (dw) : : "memory"); */
-            TRACE("On top of stack was %d\n",dw);
+            TRACE("On top of stack was %ld\n",dw);
             context->Eax = (context->Eax & ~0xffff) | LOWORD(dw);
             context->Edx = (context->Edx & ~0xffff) | HIWORD(dw);
         }
