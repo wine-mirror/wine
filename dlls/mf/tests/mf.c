@@ -6369,6 +6369,27 @@ failed:
     CoUninitialize();
 }
 
+#define next_h264_sample(a, b) next_h264_sample_(__LINE__, a, b)
+static IMFSample *next_h264_sample_(int line, const BYTE **h264_buf, ULONG *h264_len)
+{
+    const BYTE *sample_data;
+
+    ok_(__FILE__, line)(*h264_len > 4, "invalid h264 length\n");
+    ok_(__FILE__, line)(*(UINT32 *)*h264_buf == 0x01000000, "invalid h264 buffer\n");
+    sample_data = *h264_buf;
+
+    (*h264_len) -= 4;
+    (*h264_buf) += 4;
+
+    while (*h264_len >= 4 && *(UINT32 *)*h264_buf != 0x01000000)
+    {
+        (*h264_len)--;
+        (*h264_buf)++;
+    }
+
+    return create_sample(sample_data, *h264_buf - sample_data);
+}
+
 static void test_h264_decoder(void)
 {
     static const media_type_desc transform_inputs[] =
@@ -6534,10 +6555,16 @@ static void test_h264_decoder(void)
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Video, MFVideoFormat_NV12};
     MFT_OUTPUT_STREAM_INFO output_info;
     MFT_INPUT_STREAM_INFO input_info;
+    MFT_OUTPUT_DATA_BUFFER output;
+    const BYTE *h264_encoded_data;
+    ULONG h264_encoded_data_len;
     IMFMediaType *media_type;
     IMFTransform *transform;
-    ULONG flags, i, ret;
+    ULONG i, ret, flags;
+    IMFSample *sample;
+    HRSRC resource;
     GUID class_id;
+    DWORD status;
     HRESULT hr;
 
     hr = CoInitialize(NULL);
@@ -6723,7 +6750,73 @@ static void test_h264_decoder(void)
     todo_wine
     ok(output_info.cbAlignment == 0, "got cbAlignment %#x\n", output_info.cbAlignment);
 
+    resource = FindResourceW(NULL, L"h264data.bin", (const WCHAR *)RT_RCDATA);
+    ok(resource != 0, "FindResourceW failed, error %u\n", GetLastError());
+    h264_encoded_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
+    h264_encoded_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
+
+    /* As output_info.dwFlags doesn't have MFT_OUTPUT_STREAM_CAN_PROVIDE_SAMPLES
+     * IMFTransform_ProcessOutput needs a sample or returns an error */
+
+    status = 0;
+    memset(&output, 0, sizeof(output));
+    hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
+    todo_wine
+    ok(hr == E_INVALIDARG || hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#x\n", hr);
+    ok(output.dwStreamID == 0, "got dwStreamID %u\n", output.dwStreamID);
+    ok(!output.pSample, "got pSample %p\n", output.pSample);
+    ok(output.dwStatus == 0, "got dwStatus %#x\n", output.dwStatus);
+    ok(!output.pEvents, "got pEvents %p\n", output.pEvents);
+    ok(status == 0, "got status %#x\n", status);
+
+    sample = next_h264_sample(&h264_encoded_data, &h264_encoded_data_len);
+    while (1)
+    {
+        status = 0;
+        memset(&output, 0, sizeof(output));
+        output.pSample = create_sample(NULL, output_info.cbSize);
+        hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
+        if (hr != MF_E_TRANSFORM_NEED_MORE_INPUT) break;
+        ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#x\n", hr);
+        ok(output.dwStreamID == 0, "got dwStreamID %u\n", output.dwStreamID);
+        ok(!!output.pSample, "got pSample %p\n", output.pSample);
+        ok(output.dwStatus == 0, "got dwStatus %#x\n", output.dwStatus);
+        ok(!output.pEvents, "got pEvents %p\n", output.pEvents);
+        ok(status == 0, "got status %#x\n", status);
+        check_sample(output.pSample, NULL, 0, NULL);
+        ret = IMFSample_Release(output.pSample);
+        ok(ret == 0, "Release returned %u\n", ret);
+
+        while (h264_encoded_data_len > 4)
+        {
+            hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+            if (FAILED(hr)) break;
+            ok(hr == S_OK, "ProcessInput returned %#x\n", hr);
+            ret = IMFSample_Release(sample);
+            ok(ret <= 1, "Release returned %u\n", ret);
+            sample = next_h264_sample(&h264_encoded_data, &h264_encoded_data_len);
+        }
+        ok(hr == MF_E_NOTACCEPTING, "ProcessInput returned %#x\n", hr);
+        EXPECT_REF(sample, 1);
+    }
+    todo_wine
+    ok(hr == MF_E_TRANSFORM_STREAM_CHANGE, "ProcessOutput returned %#x\n", hr);
+    ok(output.dwStreamID == 0, "got dwStreamID %u\n", output.dwStreamID);
+    ok(!!output.pSample, "got pSample %p\n", output.pSample);
+    todo_wine
+    ok(output.dwStatus == MFT_OUTPUT_DATA_BUFFER_FORMAT_CHANGE,
+            "got dwStatus %#x\n", output.dwStatus);
+    ok(!output.pEvents, "got pEvents %p\n", output.pEvents);
+    todo_wine
+    ok(status == MFT_PROCESS_OUTPUT_STATUS_NEW_STREAMS,
+            "got status %#x\n", status);
+    check_sample(output.pSample, NULL, 0, NULL);
+    ret = IMFSample_Release(output.pSample);
+    ok(ret == 0, "Release returned %u\n", ret);
+
     ret = IMFTransform_Release(transform);
+    ok(ret == 0, "Release returned %u\n", ret);
+    ret = IMFSample_Release(sample);
     ok(ret == 0, "Release returned %u\n", ret);
 
 failed:

@@ -22,3 +22,6 @@
 
 /* @makedep: wmadata.bin */
 wmadata.bin RCDATA wmadata.bin
+
+/* @makedep: h264data.bin */
+h264data.bin RCDATA h264data.bin
