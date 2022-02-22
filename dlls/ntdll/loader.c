@@ -2830,6 +2830,30 @@ done:
 }
 
 
+
+/******************************************************************************
+ *	find_apiset_dll
+ */
+static NTSTATUS find_apiset_dll( const WCHAR *name, WCHAR **fullname )
+{
+    const API_SET_NAMESPACE *map = NtCurrentTeb()->Peb->ApiSetMap;
+    const API_SET_NAMESPACE_ENTRY *entry;
+    UNICODE_STRING str;
+    ULONG len;
+
+    if (get_apiset_entry( map, name, wcslen(name), &entry )) return STATUS_APISET_NOT_PRESENT;
+    if (get_apiset_target( map, entry, NULL, &str )) return STATUS_DLL_NOT_FOUND;
+
+    len = wcslen( system_dir ) + str.Length / sizeof(WCHAR);
+    if (!(*fullname = RtlAllocateHeap( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) )))
+        return STATUS_NO_MEMORY;
+    wcscpy( *fullname, system_dir );
+    memcpy( *fullname + wcslen( system_dir ), str.Buffer, str.Length );
+    (*fullname)[len] = 0;
+    return STATUS_SUCCESS;
+}
+
+
 /***********************************************************************
  *	get_env_var
  */
@@ -2992,17 +3016,6 @@ done:
 }
 
 /***********************************************************************
- *	is_apiset_dll_name
- *
- */
-static BOOL is_apiset_dll_name( const WCHAR *name )
-{
-    static const WCHAR name_prefix[] = L"api-ms-win-";
-
-    return !wcsnicmp( name, name_prefix, ARRAY_SIZE(name_prefix) - 1 );
-}
-
-/***********************************************************************
  *	find_dll_file
  *
  * Find the file (or already loaded module) for a given dll name.
@@ -3024,7 +3037,11 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname, UNI
 
     if (!contains_path( libname ))
     {
-        status = find_actctx_dll( libname, &fullname );
+        status = find_apiset_dll( libname, &fullname );
+        if (status == STATUS_DLL_NOT_FOUND) goto done;
+
+        if (status) status = find_actctx_dll( libname, &fullname );
+
         if (status == STATUS_SUCCESS)
         {
             TRACE ("found %s for %s\n", debugstr_w(fullname), debugstr_w(libname) );
@@ -3044,8 +3061,6 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname, UNI
     if (RtlDetermineDosPathNameType_U( libname ) == RELATIVE_PATH)
     {
         status = search_dll_file( load_path, libname, nt_name, pwm, mapping, image_info, id );
-        if (status == STATUS_DLL_NOT_FOUND && load_path && is_apiset_dll_name( libname ))
-            status = search_dll_file( NULL, libname, nt_name, pwm, mapping, image_info, id );
         if (status == STATUS_DLL_NOT_FOUND)
             status = find_builtin_without_file( libname, nt_name, pwm, mapping, image_info, id );
     }

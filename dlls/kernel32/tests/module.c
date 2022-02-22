@@ -708,7 +708,6 @@ static void test_LoadLibraryEx_search_flags(void)
             ok( !!mod, "Got NULL module, error %u.\n", GetLastError() );
             ok( !!GetModuleHandleA( apiset_dll ), "Got NULL handle.\n" );
             shcore = GetModuleHandleA( "shcore.dll" );
-            todo_wine
             ok( mod == shcore, "wrong module %p/%p\n", mod, shcore );
             ret = FreeLibrary( mod );
             ok( ret, "FreeLibrary failed, error %u.\n", GetLastError() );
@@ -722,7 +721,6 @@ static void test_LoadLibraryEx_search_flags(void)
             ok( !!mod, "Got NULL module, error %u.\n", GetLastError() );
             ok( !!GetModuleHandleA( apiset_dll ), "Got NULL handle.\n" );
             shcore = GetModuleHandleA( "shcore.dll" );
-            todo_wine
             ok( mod == shcore, "wrong module %p/%p\n", mod, shcore );
             ret = FreeLibrary( mod );
             ok( ret, "FreeLibrary failed, error %u.\n", GetLastError() );
@@ -733,7 +731,6 @@ static void test_LoadLibraryEx_search_flags(void)
             strcpy( buffer, apiset_dll );
             buffer[strlen(buffer) - 5] = '9';
             mod = LoadLibraryExA( buffer, NULL, LOAD_LIBRARY_SEARCH_APPLICATION_DIR );
-            todo_wine
             ok( !!mod || broken(!mod) /* win8 */, "Got NULL module, error %u.\n", GetLastError() );
             if (mod)
             {
@@ -776,9 +773,10 @@ static void test_LoadLibraryEx_search_flags(void)
         ok( GetLastError() == ERROR_MOD_NOT_FOUND, "wrong error %u\n", GetLastError() );
         SetLastError( 0xdeadbeef );
         mod = LoadLibraryExA( "ext-ms-win-ras-rasapi32-l1-1-0.dll", NULL, LOAD_LIBRARY_SEARCH_APPLICATION_DIR );
+        todo_wine /* rasapi32 doesn't have interesting dependencies on wine */
         ok( !mod, "rasapi32 loaded\n" );
-        ok( GetLastError() == ERROR_MOD_NOT_FOUND, "wrong error %u\n", GetLastError() );
         if (mod) FreeLibrary( mod );
+        else ok( GetLastError() == ERROR_MOD_NOT_FOUND, "wrong error %u\n", GetLastError() );
         mod = LoadLibraryA( "ext-ms-win-ras-rasapi32-l1-1-0.dll" );
         ok( !!mod || broken(!mod) /* win7 */, "rasapi32 not found %u\n", GetLastError() );
         if (mod) FreeLibrary( mod );
