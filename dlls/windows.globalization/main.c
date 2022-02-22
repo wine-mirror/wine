@@ -87,7 +87,7 @@ static ULONG STDMETHODCALLTYPE hstring_vector_AddRef(IVectorView_HSTRING *iface)
 {
     struct hstring_vector *impl = impl_from_IVectorView_HSTRING(iface);
     ULONG ref = InterlockedIncrement(&impl->ref);
-    TRACE("iface %p, ref %u.\n", iface, ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
     return ref;
 }
 
@@ -95,7 +95,7 @@ static ULONG STDMETHODCALLTYPE hstring_vector_Release(IVectorView_HSTRING *iface
 {
     struct hstring_vector *impl = impl_from_IVectorView_HSTRING(iface);
     ULONG ref = InterlockedDecrement(&impl->ref);
-    TRACE("iface %p, ref %u.\n", iface, ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
     if (ref == 0)
     {
         while (impl->count--) WindowsDeleteString(impl->values[impl->count]);
@@ -275,7 +275,7 @@ static ULONG STDMETHODCALLTYPE windows_globalization_AddRef(
 {
     struct windows_globalization *impl = impl_from_IActivationFactory(iface);
     ULONG ref = InterlockedIncrement(&impl->ref);
-    TRACE("iface %p, ref %u.\n", iface, ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
     return ref;
 }
 
@@ -284,7 +284,7 @@ static ULONG STDMETHODCALLTYPE windows_globalization_Release(
 {
     struct windows_globalization *impl = impl_from_IActivationFactory(iface);
     ULONG ref = InterlockedDecrement(&impl->ref);
-    TRACE("iface %p, ref %u.\n", iface, ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
     return ref;
 }
 
