@@ -109,7 +109,7 @@ static ULONG STDMETHODCALLTYPE windows_media_devices_AddRef(
 {
     struct windows_media_devices *impl = impl_from_IActivationFactory(iface);
     ULONG ref = InterlockedIncrement(&impl->ref);
-    TRACE("iface %p, ref %u.\n", iface, ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
     return ref;
 }
 
@@ -118,7 +118,7 @@ static ULONG STDMETHODCALLTYPE windows_media_devices_Release(
 {
     struct windows_media_devices *impl = impl_from_IActivationFactory(iface);
     ULONG ref = InterlockedDecrement(&impl->ref);
-    TRACE("iface %p, ref %u.\n", iface, ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
     return ref;
 }
 
@@ -181,14 +181,14 @@ static HRESULT get_default_device_id(EDataFlow direction, AudioDeviceRole role, 
             CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&devenum);
     if (FAILED(hr))
     {
-        WARN("Failed to create MMDeviceEnumerator: %08x\n", hr);
+        WARN("Failed to create MMDeviceEnumerator: %08lx\n", hr);
         return hr;
     }
 
     hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(devenum, direction, mmdev_role, &dev);
     if (FAILED(hr))
     {
-        WARN("GetDefaultAudioEndpoint failed: %08x\n", hr);
+        WARN("GetDefaultAudioEndpoint failed: %08lx\n", hr);
         IMMDeviceEnumerator_Release(devenum);
         return hr;
     }
@@ -196,7 +196,7 @@ static HRESULT get_default_device_id(EDataFlow direction, AudioDeviceRole role, 
     hr = IMMDevice_GetId(dev, &devid);
     if (FAILED(hr))
     {
-        WARN("GetId failed: %08x\n", hr);
+        WARN("GetId failed: %08lx\n", hr);
         IMMDevice_Release(dev);
         IMMDeviceEnumerator_Release(devenum);
         return hr;
@@ -217,7 +217,7 @@ static HRESULT get_default_device_id(EDataFlow direction, AudioDeviceRole role, 
 
     hr = WindowsCreateString(s, wcslen(s), device_id_hstr);
     if (FAILED(hr))
-        WARN("WindowsCreateString failed: %08x\n", hr);
+        WARN("WindowsCreateString failed: %08lx\n", hr);
 
     heap_free(s);
 
