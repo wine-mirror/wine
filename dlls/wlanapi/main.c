@@ -117,7 +117,7 @@ DWORD WINAPI WlanOpenHandle(DWORD client_version, void *reserved, DWORD *negotia
     struct wine_wlan *wlan;
     HANDLE ret_handle;
 
-    TRACE("(%u, %p, %p, %p)\n", client_version, reserved, negotiated_version, handle);
+    TRACE("(%lu, %p, %p, %p)\n", client_version, reserved, negotiated_version, handle);
 
     if (reserved || !negotiated_version || !handle)
         return ERROR_INVALID_PARAMETER;
@@ -149,7 +149,7 @@ DWORD WINAPI WlanRegisterNotification(HANDLE handle, DWORD notify_source, BOOL i
                                       WLAN_NOTIFICATION_CALLBACK callback, void *context,
                                       void *reserved, DWORD *notify_prev)
 {
-    FIXME("(%p, %d, %d, %p, %p, %p, %p) stub\n",
+    FIXME("(%p, %ld, %d, %p, %p, %p, %p) stub\n",
           handle, notify_source, ignore_dup, callback, context, reserved, notify_prev);
 
     return ERROR_CALL_NOT_IMPLEMENTED;
@@ -158,7 +158,7 @@ DWORD WINAPI WlanRegisterNotification(HANDLE handle, DWORD notify_source, BOOL i
 DWORD WINAPI WlanGetAvailableNetworkList(HANDLE handle, const GUID *guid, DWORD flags,
                                          void *reserved, WLAN_AVAILABLE_NETWORK_LIST **network_list)
 {
-    FIXME("(%p, %s, 0x%x, %p, %p) stub\n",
+    FIXME("(%p, %s, 0x%lx, %p, %p) stub\n",
           handle, wine_dbgstr_guid(guid), flags, reserved, network_list);
 
     return ERROR_CALL_NOT_IMPLEMENTED;
@@ -211,7 +211,7 @@ void *WINAPI WlanAllocateMemory(DWORD size)
 {
     void *ret;
 
-    TRACE("(%d)\n", size);
+    TRACE("(%ld)\n", size);
 
     if (!size)
     {
