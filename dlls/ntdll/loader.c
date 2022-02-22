@@ -4526,6 +4526,51 @@ void WINAPI RtlReleasePath( PWSTR path )
 }
 
 
+/*********************************************************************
+ *           ApiSetQueryApiSetPresence   (NTDLL.@)
+ */
+NTSTATUS WINAPI ApiSetQueryApiSetPresence( const UNICODE_STRING *name, BOOLEAN *present )
+{
+    const API_SET_NAMESPACE *map = NtCurrentTeb()->Peb->ApiSetMap;
+    const API_SET_NAMESPACE_ENTRY *entry;
+    UNICODE_STRING str;
+
+    *present = (!get_apiset_entry( map, name->Buffer, name->Length / sizeof(WCHAR), &entry ) &&
+                !get_apiset_target( map, entry, NULL, &str ));
+    return STATUS_SUCCESS;
+}
+
+
+/*********************************************************************
+ *           ApiSetQueryApiSetPresenceEx   (NTDLL.@)
+ */
+NTSTATUS WINAPI ApiSetQueryApiSetPresenceEx( const UNICODE_STRING *name, BOOLEAN *in_schema, BOOLEAN *present )
+{
+    const API_SET_NAMESPACE *map = NtCurrentTeb()->Peb->ApiSetMap;
+    const API_SET_NAMESPACE_ENTRY *entry;
+    NTSTATUS status;
+    UNICODE_STRING str;
+    ULONG i, len = name->Length / sizeof(WCHAR);
+
+    /* extension not allowed */
+    for (i = 0; i < len; i++) if (name->Buffer[i] == '.') return STATUS_INVALID_PARAMETER;
+
+    status = get_apiset_entry( map, name->Buffer, len, &entry );
+    if (status == STATUS_APISET_NOT_PRESENT)
+    {
+        *in_schema = *present = FALSE;
+        return STATUS_SUCCESS;
+    }
+    if (status) return status;
+
+    /* the name must match exactly */
+    *in_schema = (entry->NameLength == name->Length &&
+                  !wcsnicmp( (WCHAR *)((char *)map + entry->NameOffset), name->Buffer, len ));
+    *present = *in_schema && !get_apiset_target( map, entry, NULL, &str );
+    return STATUS_SUCCESS;
+}
+
+
 /******************************************************************
  *		DllMain   (NTDLL.@)
  */

@@ -1468,7 +1468,6 @@ static void test_apisets(void)
         win_skip( "ApiSetQueryApiSetPresence not implemented\n" );
         return;
     }
-    todo_wine
     if (!pApiSetQueryApiSetPresenceEx) win_skip( "ApiSetQueryApiSetPresenceEx not implemented\n" );
     todo_wine
     if (!pIsApiSetImplemented) win_skip( "IsApiSetImplemented not implemented\n" );
@@ -1480,9 +1479,7 @@ static void test_apisets(void)
         winetest_push_context( "%u:%s", i, tests[i].name );
         present = 0xff;
         status = pApiSetQueryApiSetPresence( &name, &present );
-        todo_wine
         ok( status == STATUS_SUCCESS, "wrong ret %x\n", status );
-        todo_wine_if( !tests[i].present )
         ok( present == tests[i].present || broken(!present && tests[i].broken) /* win8 */,
             "wrong present %u\n", present );
         if (pApiSetQueryApiSetPresenceEx)
