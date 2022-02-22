@@ -66,6 +66,7 @@ struct cursoricon_frame
     HBITMAP            color;    /* color bitmap */
     HBITMAP            alpha;    /* pre-multiplied alpha bitmap for 32-bpp icons */
     HBITMAP            mask;     /* mask bitmap (followed by color for 1-bpp icons) */
+    POINT              hotspot;
 };
 
 struct cursoricon_object
@@ -80,7 +81,6 @@ struct cursoricon_object
     BOOL                    is_icon;    /* whether icon or cursor */
     BOOL                    is_ani;     /* whether this object is a static cursor or an animated cursor */
     UINT                    delay;      /* delay between this frame and the next (in jiffies) */
-    POINT                   hotspot;
     union
     {
         struct cursoricon_frame  frame; /* frame-specific icon data */
@@ -1184,7 +1184,6 @@ done:
         struct cursoricon_frame *frame;
 
         info->is_icon = bIcon;
-        info->hotspot = hotspot;
         frame = get_icon_frame( info, 0 );
         frame->delay  = ~0;
         frame->width  = width;
@@ -1192,6 +1191,7 @@ done:
         frame->color  = color;
         frame->mask   = mask;
         frame->alpha  = alpha;
+        frame->hotspot = hotspot;
         release_icon_frame( info, frame );
         if (!IS_INTRESOURCE(resname))
         {
@@ -1435,13 +1435,14 @@ static HCURSOR CURSORICON_CreateIconFromANI( const BYTE *bits, DWORD bits_size, 
         const CURSORICONFILEDIRENTRY *entry;
         INT frameWidth, frameHeight;
         const BITMAPINFO *bmi;
+        POINT hotspot;
 
         entry = CURSORICON_FindBestIconFile((const CURSORICONFILEDIR *) icon_data,
                                             bits + bits_size - icon_data,
                                             width, height, depth, loadflags );
 
-        info->hotspot.x = entry->xHotspot;
-        info->hotspot.y = entry->yHotspot;
+        hotspot.x = entry->xHotspot;
+        hotspot.y = entry->yHotspot;
         if (!header.width || !header.height)
         {
             frameWidth = entry->bWidth;
@@ -1459,7 +1460,7 @@ static HCURSOR CURSORICON_CreateIconFromANI( const BYTE *bits, DWORD bits_size, 
             bmi = (const BITMAPINFO *) (icon_data + entry->dwDIBOffset);
             /* Grab a frame from the animation */
             frames[i] = create_icon_from_bmi( bmi, bits + bits_size - (const BYTE *)bmi,
-                                              NULL, NULL, NULL, info->hotspot,
+                                              NULL, NULL, NULL, hotspot,
                                               is_icon, frameWidth, frameHeight, loadflags );
         }
 
@@ -2201,8 +2202,8 @@ BOOL WINAPI GetIconInfoExW( HICON icon, ICONINFOEXW *info )
     TRACE("%p => %dx%d\n", icon, frame->width, frame->height);
 
     info->fIcon        = ptr->is_icon;
-    info->xHotspot     = ptr->hotspot.x;
-    info->yHotspot     = ptr->hotspot.y;
+    info->xHotspot     = frame->hotspot.x;
+    info->yHotspot     = frame->hotspot.y;
     info->hbmColor     = copy_bitmap( frame->color );
     info->hbmMask      = copy_bitmap( frame->mask );
     info->wResID       = 0;
@@ -2330,18 +2331,18 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
         frame->color  = color;
         frame->mask   = mask;
         frame->alpha  = create_alpha_bitmap( iconinfo->hbmColor, NULL, NULL );
-        release_icon_frame( info, frame );
         if (info->is_icon)
         {
-            info->hotspot.x = width / 2;
-            info->hotspot.y = height / 2;
+            frame->hotspot.x = width / 2;
+            frame->hotspot.y = height / 2;
         }
         else
         {
-            info->hotspot.x = iconinfo->xHotspot;
-            info->hotspot.y = iconinfo->yHotspot;
+            frame->hotspot.x = iconinfo->xHotspot;
+            frame->hotspot.y = iconinfo->yHotspot;
         }
 
+        release_icon_frame( info, frame );
         release_user_handle_ptr( info );
     }
     return hObj;
@@ -3052,8 +3053,8 @@ HANDLE WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
             }
 
             info.fIcon = icon->is_icon;
-            info.xHotspot = icon->hotspot.x;
-            info.yHotspot = icon->hotspot.y;
+            info.xHotspot = frame->hotspot.x;
+            info.yHotspot = frame->hotspot.y;
 
             if (desiredx == frame->width && desiredy == frame->height)
             {
