@@ -836,10 +836,21 @@ static void testfilter_destroy(struct strmbase_filter *iface)
     strmbase_filter_cleanup(&filter->filter);
 }
 
+static HRESULT testfilter_init_stream(struct strmbase_filter *iface)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface);
+
+    filter->new_segment_count = 0;
+    filter->eos_count = 0;
+    filter->sample_count = 0;
+    return S_OK;
+}
+
 static const struct strmbase_filter_ops testfilter_ops =
 {
     .filter_get_pin = testfilter_get_pin,
     .filter_destroy = testfilter_destroy,
+    .filter_init_stream = testfilter_init_stream,
 };
 
 static HRESULT testsource_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
@@ -1689,7 +1700,6 @@ static void test_streaming(void)
     ok(WaitForSingleObject(testsink.eos_event, 100) == WAIT_TIMEOUT, "Got more than one EOS.\n");
     ok(testsink.sample_count, "Expected at least one sample.\n");
 
-    testsink.sample_count = testsink.eos_count = 0;
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaControl_Pause(control);
@@ -1716,7 +1726,6 @@ static void test_streaming(void)
     ok(start == testsink.seek_start, "Expected start position %I64u, got %I64u.\n", testsink.seek_start, start);
     ok(end == testsink.seek_end, "Expected end position %I64u, got %I64u.\n", testsink.seek_end, end);
 
-    testsink.sample_count = testsink.eos_count = 0;
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaControl_Pause(control);
