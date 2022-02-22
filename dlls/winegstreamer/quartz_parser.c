@@ -841,9 +841,6 @@ static DWORD CALLBACK stream_thread(void *arg)
                 IPin_EndOfStream(pin->pin.pin.peer);
                 break;
 
-            case WG_PARSER_EVENT_SEGMENT:
-                break;
-
             case WG_PARSER_EVENT_NONE:
                 assert(0);
         }

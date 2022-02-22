@@ -554,9 +554,6 @@ static void wait_on_sample(struct media_stream *stream, IUnknown *token)
                 dispatch_end_of_presentation(stream->parent_source);
                 return;
 
-            case WG_PARSER_EVENT_SEGMENT:
-                break;
-
             case WG_PARSER_EVENT_NONE:
                 assert(0);
         }

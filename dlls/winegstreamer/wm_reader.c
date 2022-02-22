@@ -1935,9 +1935,6 @@ HRESULT wm_reader_get_stream_sample(struct wm_stream *stream,
                 TRACE("End of stream.\n");
                 return NS_E_NO_MORE_SAMPLES;
 
-            case WG_PARSER_EVENT_SEGMENT:
-                break;
-
             case WG_PARSER_EVENT_NONE:
                 assert(0);
         }

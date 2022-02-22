@@ -500,7 +500,6 @@ static gboolean sink_event_cb(GstPad *pad, GstObject *parent, GstEvent *event)
         case GST_EVENT_SEGMENT:
             if (stream->enabled)
             {
-                struct wg_parser_event stream_event;
                 const GstSegment *segment;
 
                 gst_event_parse_segment(event, &segment);
@@ -512,12 +511,6 @@ static gboolean sink_event_cb(GstPad *pad, GstObject *parent, GstEvent *event)
                 }
 
                 gst_segment_copy_into(segment, &stream->segment);
-
-                stream_event.type = WG_PARSER_EVENT_SEGMENT;
-                stream_event.u.segment.position = segment->position / 100;
-                stream_event.u.segment.stop = segment->stop / 100;
-                stream_event.u.segment.rate = segment->rate * segment->applied_rate;
-                queue_stream_event(stream, &stream_event, NULL);
             }
             break;
 
