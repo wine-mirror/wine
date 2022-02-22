@@ -31,8 +31,6 @@
 
 #include "wine/test.h"
 
-#define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08x\n", hr)
-
 #define RELEASEMARSHALDATA WM_USER
 
 struct host_object_data
@@ -59,7 +57,7 @@ static DWORD CALLBACK host_object_proc(LPVOID p)
         IMessageFilter * prev_filter = NULL;
         hr = CoRegisterMessageFilter(data->filter, &prev_filter);
         if (prev_filter) IMessageFilter_Release(prev_filter);
-        ok_ole_success(hr, CoRegisterMessageFilter);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     }
 
     hr = CoMarshalInterface(data->stream, &data->iid, data->object, MSHCTX_INPROC, NULL, data->marshal_flags);
@@ -132,7 +130,7 @@ static DWORD start_host_object(IStream *stream, REFIID riid, IUnknown *object, M
 static void end_host_object(DWORD tid, HANDLE thread)
 {
     BOOL ret = PostThreadMessageA(tid, WM_QUIT, 0, 0);
-    ok(ret, "PostThreadMessage failed with error %d\n", GetLastError());
+    ok(ret, "PostThreadMessage failed with error %ld\n", GetLastError());
     /* be careful of races - don't return until hosting thread has terminated */
     WaitForSingleObject(thread, INFINITE);
     CloseHandle(thread);
@@ -373,7 +371,7 @@ static void test_dispex(void)
     EXCEPINFO excepinfo;
 
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     tid = start_host_object(stream, &IID_IDispatchEx, (IUnknown *)dispex, MSHLFLAGS_NORMAL, &thread);
     IDispatchEx_Release(dispex);
     if(tid == 0)
@@ -384,7 +382,7 @@ static void test_dispex(void)
 
     IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
     hr = CoUnmarshalInterface(stream, &IID_IDispatchEx, (void **)&dispex);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     IStream_Release(stream);
 
     params.rgvarg = NULL;
@@ -392,7 +390,7 @@ static void test_dispex(void)
     params.cArgs = 0;
     params.cNamedArgs = 0;
     hr = IDispatchEx_InvokeEx(dispex, 1, LOCALE_SYSTEM_DEFAULT, DISPATCH_METHOD, &params, NULL, NULL, NULL);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     params.rgvarg = args;
     params.rgdispidNamedArgs = NULL;
@@ -404,23 +402,23 @@ static void test_dispex(void)
     V_INTREF(&args[1]) = &i;
     i = 0xbeef;
     hr = IDispatchEx_InvokeEx(dispex, 2, LOCALE_SYSTEM_DEFAULT, DISPATCH_METHOD, &params, NULL, NULL, NULL);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(i == 0xdead, "got %08x\n", i);
 
     /* change one of the argument vts */
     i = 0xbeef;
     hr = IDispatchEx_InvokeEx(dispex, 3, LOCALE_SYSTEM_DEFAULT, DISPATCH_METHOD, &params, NULL, NULL, NULL);
-    ok(hr == DISP_E_BADCALLEE, "got %08x\n", hr);
+    ok(hr == DISP_E_BADCALLEE, "Unexpected hr %#lx.\n", hr);
 
     hr = IDispatchEx_InvokeEx(dispex, 4, LOCALE_SYSTEM_DEFAULT, 0xffff, &params, NULL, NULL, NULL);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     params.cArgs = 0;
     hr = IDispatchEx_InvokeEx(dispex, 5, LOCALE_SYSTEM_DEFAULT, DISPATCH_METHOD, &params, NULL, NULL, NULL);
-    ok(hr == DISP_E_EXCEPTION, "got %08x\n", hr);
+    ok(hr == DISP_E_EXCEPTION, "Unexpected hr %#lx.\n", hr);
     hr = IDispatchEx_InvokeEx(dispex, 5, LOCALE_SYSTEM_DEFAULT, DISPATCH_METHOD, &params, NULL, &excepinfo, NULL);
-    ok(hr == DISP_E_EXCEPTION, "got %08x\n", hr);
-    ok(excepinfo.scode == E_OUTOFMEMORY, "got scode %08x\n", excepinfo.scode);
+    ok(hr == DISP_E_EXCEPTION, "Unexpected hr %#lx.\n", hr);
+    ok(excepinfo.scode == E_OUTOFMEMORY, "got scode %#lx.\n", excepinfo.scode);
     ok(excepinfo.pfnDeferredFillIn == NULL, "got non-NULL pfnDeferredFillIn\n");
 
     IDispatchEx_Release(dispex);
