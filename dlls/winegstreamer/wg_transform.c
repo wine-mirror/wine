@@ -72,6 +72,50 @@ NTSTATUS wg_transform_destroy(void *args)
     return STATUS_SUCCESS;
 }
 
+static GstElement *transform_find_element(GstElementFactoryListType type, GstCaps *src_caps, GstCaps *sink_caps)
+{
+    GstElement *element = NULL;
+    GList *tmp, *transforms;
+    const gchar *name;
+
+    if (!(transforms = gst_element_factory_list_get_elements(type, GST_RANK_MARGINAL)))
+        goto done;
+
+    tmp = gst_element_factory_list_filter(transforms, src_caps, GST_PAD_SINK, FALSE);
+    gst_plugin_feature_list_free(transforms);
+    if (!(transforms = tmp))
+        goto done;
+
+    tmp = gst_element_factory_list_filter(transforms, sink_caps, GST_PAD_SRC, FALSE);
+    gst_plugin_feature_list_free(transforms);
+    if (!(transforms = tmp))
+        goto done;
+
+    transforms = g_list_sort(transforms, gst_plugin_feature_rank_compare_func);
+    for (tmp = transforms; tmp != NULL && element == NULL; tmp = tmp->next)
+    {
+        name = gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(tmp->data));
+        if (!(element = gst_element_factory_create(GST_ELEMENT_FACTORY(tmp->data), NULL)))
+            GST_WARNING("Failed to create %s element.", name);
+    }
+    gst_plugin_feature_list_free(transforms);
+
+done:
+    if (element)
+    {
+        GST_DEBUG("Created %s element %p.", name, element);
+    }
+    else
+    {
+        gchar *src_str = gst_caps_to_string(src_caps), *sink_str = gst_caps_to_string(sink_caps);
+        GST_WARNING("Failed to create transform matching caps %s / %s.", src_str, sink_str);
+        g_free(sink_str);
+        g_free(src_str);
+    }
+
+    return element;
+}
+
 static bool transform_append_element(struct wg_transform *transform, GstElement *element,
         GstElement **first, GstElement **last)
 {
@@ -99,13 +143,14 @@ static bool transform_append_element(struct wg_transform *transform, GstElement 
 NTSTATUS wg_transform_create(void *args)
 {
     struct wg_transform_create_params *params = args;
+    GstCaps *raw_caps = NULL, *src_caps = NULL, *sink_caps = NULL;
     struct wg_format output_format = *params->output_format;
     struct wg_format input_format = *params->input_format;
     GstElement *first = NULL, *last = NULL, *element;
-    GstCaps *src_caps = NULL, *sink_caps = NULL;
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     GstPadTemplate *template = NULL;
     struct wg_transform *transform;
+    const gchar *media_type;
 
     if (!init_gstreamer())
         return STATUS_UNSUCCESSFUL;
@@ -135,6 +180,35 @@ NTSTATUS wg_transform_create(void *args)
 
     gst_pad_set_element_private(transform->my_sink, transform);
     gst_pad_set_chain_function(transform->my_sink, transform_sink_chain_cb);
+
+    /* Since we append conversion elements, we don't want to filter decoders
+     * based on the actual output caps now. Matching decoders with the
+     * raw output media type should be enough.
+     */
+    media_type = gst_structure_get_name(gst_caps_get_structure(sink_caps, 0));
+    if (!(raw_caps = gst_caps_new_empty_simple(media_type)))
+        goto out_free_sink_pad;
+
+    switch (input_format.major_type)
+    {
+        case WG_MAJOR_TYPE_WMA:
+            if (!(element = transform_find_element(GST_ELEMENT_FACTORY_TYPE_DECODER, src_caps, raw_caps))
+                    || !transform_append_element(transform, element, &first, &last))
+            {
+                gst_caps_unref(raw_caps);
+                goto out_free_sink_pad;
+            }
+            break;
+
+        case WG_MAJOR_TYPE_AUDIO:
+        case WG_MAJOR_TYPE_VIDEO:
+        case WG_MAJOR_TYPE_UNKNOWN:
+            GST_FIXME("Format %u not implemented!", input_format.major_type);
+            gst_caps_unref(raw_caps);
+            goto out_free_sink_pad;
+    }
+
+    gst_caps_unref(raw_caps);
 
     switch (output_format.major_type)
     {
