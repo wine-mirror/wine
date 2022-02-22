@@ -102,7 +102,7 @@ static const char* DUMPBITS(int x)
 
 static inline void DUMPPACKET(WTPACKET packet)
 {
-    TRACE("pkContext: %p pkStatus: 0x%x pkTime : 0x%x pkChanged: 0x%x pkSerialNumber: 0x%x pkCursor : %i pkButtons: %x pkX: %i pkY: %i pkZ: %i pkNormalPressure: %i pkTangentPressure: %i pkOrientation: (%i,%i,%i) pkRotation: (%i,%i,%i)\n",
+    TRACE("pkContext: %p pkStatus: 0x%x pkTime : 0x%lx pkChanged: 0x%lx pkSerialNumber: 0x%x pkCursor : %i pkButtons: %lx pkX: %li pkY: %li pkZ: %li pkNormalPressure: %i pkTangentPressure: %i pkOrientation: (%i,%i,%i) pkRotation: (%i,%i,%i)\n",
           packet.pkContext, packet.pkStatus, packet.pkTime, packet.pkChanged, packet.pkSerialNumber,
           packet.pkCursor, packet.pkButtons, packet.pkX, packet.pkY, packet.pkZ,
           packet.pkNormalPressure, packet.pkTangentPressure,
@@ -115,19 +115,19 @@ static inline void DUMPCONTEXT(LOGCONTEXTW lc)
     TRACE("Name: %s, Options: %x, Status: %x, Locks: %x, MsgBase: %x, Device: %x\n",
             wine_dbgstr_w(lc.lcName), lc.lcOptions, lc.lcStatus, lc.lcLocks, lc.lcMsgBase, lc.lcDevice);
     TRACE("PktRate %x\n", lc.lcPktRate);
-    TRACE("PktData 0x%04x %s\n", lc.lcPktData, DUMPBITS(lc.lcPktData));
-    TRACE("PktMode 0x%04x %s\n", lc.lcPktMode, DUMPBITS(lc.lcPktMode));
-    TRACE("MovMask 0x%04x %s\n", lc.lcMoveMask, DUMPBITS(lc.lcMoveMask));
-    TRACE("BtnDnMask: %x, BtnUpMask: %x\n", lc.lcBtnDnMask, lc.lcBtnUpMask);
-    TRACE("InOrgX: %i, InOrgY: %i, InOrgZ: %i\n", lc.lcInOrgX, lc.lcInOrgY, lc.lcInOrgZ);
-    TRACE("InExtX: %i, InExtY: %i, InExtZ: %i\n", lc.lcInExtX, lc.lcInExtY, lc.lcInExtZ);
-    TRACE("OutOrgX: %i, OutOrgY: %i, OutOrgZ: %i\n", lc.lcOutOrgX, lc.lcOutOrgY, lc.lcOutOrgZ);
-    TRACE("OutExtX: %i, OutExtY: %i, OutExtZ: %i\n", lc.lcOutExtX, lc.lcOutExtY, lc.lcOutExtZ);
-    TRACE("SensX: %i, SensY: %i, SensZ: %i\n", lc.lcSensX, lc.lcSensY, lc.lcSensZ);
+    TRACE("PktData 0x%04lx %s\n", lc.lcPktData, DUMPBITS(lc.lcPktData));
+    TRACE("PktMode 0x%04lx %s\n", lc.lcPktMode, DUMPBITS(lc.lcPktMode));
+    TRACE("MovMask 0x%04lx %s\n", lc.lcMoveMask, DUMPBITS(lc.lcMoveMask));
+    TRACE("BtnDnMask: %lx, BtnUpMask: %lx\n", lc.lcBtnDnMask, lc.lcBtnUpMask);
+    TRACE("InOrgX: %li, InOrgY: %li, InOrgZ: %li\n", lc.lcInOrgX, lc.lcInOrgY, lc.lcInOrgZ);
+    TRACE("InExtX: %li, InExtY: %li, InExtZ: %li\n", lc.lcInExtX, lc.lcInExtY, lc.lcInExtZ);
+    TRACE("OutOrgX: %li, OutOrgY: %li, OutOrgZ: %li\n", lc.lcOutOrgX, lc.lcOutOrgY, lc.lcOutOrgZ);
+    TRACE("OutExtX: %li, OutExtY: %li, OutExtZ: %li\n", lc.lcOutExtX, lc.lcOutExtY, lc.lcOutExtZ);
+    TRACE("SensX: %li, SensY: %li, SensZ: %li\n", lc.lcSensX, lc.lcSensY, lc.lcSensZ);
     TRACE("SysMode: %i\n", lc.lcSysMode);
     TRACE("SysOrgX: %i, SysOrgY: %i\n", lc.lcSysOrgX, lc.lcSysOrgY);
     TRACE("SysExtX: %i, SysExtY: %i\n", lc.lcSysExtX, lc.lcSysExtY);
-    TRACE("SysSensX: %i, SysSensY: %i\n", lc.lcSysSensX, lc.lcSysSensY);
+    TRACE("SysSensX: %li, SysSensY: %li\n", lc.lcSysSensX, lc.lcSysSensY);
 }
 
 

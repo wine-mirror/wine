@@ -95,7 +95,7 @@ static HMODULE load_graphics_driver(void)
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
 {
-    TRACE("%p, %x, %p\n",hInstDLL,fdwReason,lpReserved);
+    TRACE("%p, %lx, %p\n",hInstDLL,fdwReason,lpReserved);
     switch (fdwReason)
     {
         case DLL_PROCESS_ATTACH:

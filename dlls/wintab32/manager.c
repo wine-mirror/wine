@@ -59,7 +59,7 @@ BOOL WINAPI WTMgrClose(HMGR hMgr)
  */
 BOOL WINAPI WTMgrContextEnum(HMGR hMgr, WTENUMPROC lpEnumFunc, LPARAM lParam)
 {
-    FIXME("(%p, %p, %ld): stub\n", hMgr, lpEnumFunc, lParam);
+    FIXME("(%p, %p, %Id): stub\n", hMgr, lpEnumFunc, lParam);
 
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 
@@ -190,7 +190,7 @@ BOOL WINAPI WTMgrPacketUnhook(HWTHOOK hHook)
 LRESULT WINAPI WTMgrPacketHookNext(HWTHOOK hHook, int nCode,
 				   WPARAM wParam, LPARAM lParam)
 {
-    FIXME("(%p, %d, %lu, %lu): stub\n", hHook, nCode, wParam, lParam);
+    FIXME("(%p, %d, %Iu, %Iu): stub\n", hHook, nCode, wParam, lParam);
 
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 
@@ -243,7 +243,7 @@ BOOL WINAPI WTMgrCsrButtonMap(HMGR hMgr, UINT wCursor,
 BOOL WINAPI WTMgrCsrPressureBtnMarks(HMGR hMgr, UINT wCsr,
 				     DWORD dwNMarks, DWORD dwTMarks)
 {
-    FIXME("(%p, %u, %u, %u): stub\n", hMgr, wCsr, dwNMarks, dwTMarks);
+    FIXME("(%p, %u, %lu, %lu): stub\n", hMgr, wCsr, dwNMarks, dwTMarks);
 
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 
