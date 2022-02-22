@@ -235,10 +235,11 @@ BOOL hid_device_add_hatswitch(struct unix_device *iface, INT count)
     return hid_report_descriptor_append(desc, template, sizeof(template));
 }
 
-static BOOL hid_device_add_axis_count(struct unix_device *iface, BOOL rel, BYTE count)
+static BOOL hid_device_add_axis_count(struct unix_device *iface, BOOL rel, BYTE count,
+                                      USAGE usage_page, const USAGE *usages)
 {
     struct hid_device_state *state = &iface->hid_device_state;
-    USHORT offset = state->bit_size / 8;
+    USHORT i, offset = state->bit_size / 8;
 
     if (!rel && state->rel_axis_count)
         ERR("absolute axes should be added before relative axes!\n");
@@ -257,6 +258,17 @@ static BOOL hid_device_add_axis_count(struct unix_device *iface, BOOL rel, BYTE 
     }
     else
     {
+        if (state->abs_axis_count + count > ARRAY_SIZE(state->abs_axis_usages))
+        {
+            ERR("absolute axis usage overflow, too many elements!\n");
+            return FALSE;
+        }
+        for (i = 0; i < count; ++i)
+        {
+            state->abs_axis_usages[state->abs_axis_count + i].UsagePage = usage_page;
+            state->abs_axis_usages[state->abs_axis_count + i].Usage = usages[i];
+        }
+
         if (!state->abs_axis_count) state->abs_axis_start = offset;
         state->abs_axis_count += count;
         state->bit_size += 32 * count;
@@ -289,7 +301,7 @@ BOOL hid_device_add_axes(struct unix_device *iface, BYTE count, USAGE usage_page
     };
     int i;
 
-    if (!hid_device_add_axis_count(iface, rel, count))
+    if (!hid_device_add_axis_count(iface, rel, count, usage_page, usages))
         return FALSE;
 
     if (!hid_report_descriptor_append(desc, template_begin, sizeof(template_begin)))
@@ -872,8 +884,8 @@ BOOL hid_device_add_physical(struct unix_device *iface, USAGE *usages, USHORT co
 
             USAGE(1, PID_USAGE_AXES_ENABLE),
             COLLECTION(1, Logical),
-                USAGE(4, (HID_USAGE_PAGE_GENERIC<<16)|HID_USAGE_GENERIC_X),
-                USAGE(4, (HID_USAGE_PAGE_GENERIC<<16)|HID_USAGE_GENERIC_Y),
+                USAGE(4, (state->abs_axis_usages[0].UsagePage<<16)|state->abs_axis_usages[0].Usage),
+                USAGE(4, (state->abs_axis_usages[1].UsagePage<<16)|state->abs_axis_usages[1].Usage),
                 LOGICAL_MINIMUM(1, 0),
                 LOGICAL_MAXIMUM(1, 1),
                 REPORT_SIZE(1, 1),

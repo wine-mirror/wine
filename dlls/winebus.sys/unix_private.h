@@ -24,6 +24,7 @@
 #include <windef.h>
 #include <winbase.h>
 #include <winternl.h>
+#include <ddk/hidsdi.h>
 
 #include "unixlib.h"
 
@@ -189,6 +190,7 @@ struct hid_physical
 struct hid_device_state
 {
     ULONG bit_size;
+    USAGE_AND_PAGE abs_axis_usages[32];
     USHORT abs_axis_start;
     USHORT abs_axis_count;
     USHORT rel_axis_start;
