@@ -5692,18 +5692,15 @@ static IMFSample *create_sample(const BYTE *data, ULONG size)
     ok(hr == S_OK, "MFCreateSample returned %#x\n", hr);
     hr = MFCreateMemoryBuffer(size, &media_buffer);
     ok(hr == S_OK, "MFCreateMemoryBuffer returned %#x\n", hr);
-    if (data)
-    {
-        hr = IMFMediaBuffer_SetCurrentLength(media_buffer, size);
-        ok(hr == S_OK, "SetCurrentLength returned %#x\n", hr);
-        hr = IMFMediaBuffer_Lock(media_buffer, &buffer, NULL, &length);
-        ok(hr == S_OK, "Lock returned %#x\n", hr);
-        ok(length == size, "got size %u\n", length);
-        if (!data) memset(buffer, 0xcd, length);
-        else memcpy(buffer, data, length);
-        hr = IMFMediaBuffer_Unlock(media_buffer);
-        ok(hr == S_OK, "Unlock returned %#x\n", hr);
-    }
+    hr = IMFMediaBuffer_Lock(media_buffer, &buffer, NULL, &length);
+    ok(hr == S_OK, "Lock returned %#x\n", hr);
+    ok(length == 0, "got length %u\n", length);
+    if (!data) memset(buffer, 0xcd, size);
+    else memcpy(buffer, data, size);
+    hr = IMFMediaBuffer_Unlock(media_buffer);
+    ok(hr == S_OK, "Unlock returned %#x\n", hr);
+    hr = IMFMediaBuffer_SetCurrentLength(media_buffer, data ? size : 0);
+    ok(hr == S_OK, "SetCurrentLength returned %#x\n", hr);
     hr = IMFSample_AddBuffer(sample, media_buffer);
     ok(hr == S_OK, "AddBuffer returned %#x\n", hr);
     ret = IMFMediaBuffer_Release(media_buffer);
