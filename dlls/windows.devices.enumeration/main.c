@@ -82,7 +82,7 @@ static ULONG STDMETHODCALLTYPE windows_devices_enumeration_AddRef(
 {
     struct windows_devices_enumeration *impl = impl_from_IActivationFactory(iface);
     ULONG ref = InterlockedIncrement(&impl->ref);
-    TRACE("iface %p, ref %u.\n", iface, ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
     return ref;
 }
 
@@ -91,7 +91,7 @@ static ULONG STDMETHODCALLTYPE windows_devices_enumeration_Release(
 {
     struct windows_devices_enumeration *impl = impl_from_IActivationFactory(iface);
     ULONG ref = InterlockedDecrement(&impl->ref);
-    TRACE("iface %p, ref %u.\n", iface, ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
     return ref;
 }
 
