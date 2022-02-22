@@ -50,7 +50,7 @@ HFONT CDECL PSDRV_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
 
     *aa_flags = GGO_BITMAP; /* no anti-aliasing on printer devices */
 
-    TRACE("FaceName = %s Height = %d Italic = %d Weight = %d\n",
+    TRACE("FaceName = %s Height = %ld Italic = %d Weight = %ld\n",
 	  debugstr_w(lf.lfFaceName), lf.lfHeight, lf.lfItalic,
 	  lf.lfWeight);
 

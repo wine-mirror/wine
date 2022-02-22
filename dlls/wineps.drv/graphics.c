@@ -110,7 +110,7 @@ BOOL CDECL PSDRV_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT botto
     {
         char buf[256];
 
-        sprintf(buf, "N %d %d %d %d B\n", rect.right - rect.left, rect.bottom - rect.top, rect.left, rect.top);
+        sprintf(buf, "N %ld %ld %ld %ld B\n", rect.right - rect.left, rect.bottom - rect.top, rect.left, rect.top);
         write_spool(dev, buf, strlen(buf));
         physDev->job.passthrough_state = passthrough_had_rect;
         return TRUE;

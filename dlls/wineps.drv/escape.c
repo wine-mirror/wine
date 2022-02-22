@@ -69,7 +69,7 @@ INT CDECL PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_dat
 	    return 0;
 	} else {
 	    DWORD num = (cbInput < sizeof(DWORD)) ? *(const USHORT *)in_data : *(const DWORD *)in_data;
-	    TRACE("QUERYESCSUPPORT for %d\n", num);
+	    TRACE("QUERYESCSUPPORT for %ld\n", num);
 
 	    switch(num) {
 	    case NEXTBAND:
@@ -112,7 +112,7 @@ INT CDECL PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_dat
                 return FALSE; /* suppress the FIXME below */
 
 	    default:
-		FIXME("QUERYESCSUPPORT(%d) - not supported.\n", num);
+		FIXME("QUERYESCSUPPORT(%ld) - not supported.\n", num);
 	        return FALSE;
 	    }
 	}
@@ -149,7 +149,7 @@ INT CDECL PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_dat
     {
 	DRAWPATRECT	*dpr = (DRAWPATRECT*)in_data;
 
-	FIXME("DRAWPATTERNRECT(pos (%d,%d), size %dx%d, style %d, pattern %x), stub!\n",
+	FIXME("DRAWPATTERNRECT(pos (%ld,%ld), size %ldx%ld, style %d, pattern %x), stub!\n",
 		dpr->ptPosition.x, dpr->ptPosition.y,
 		dpr->ptSize.x, dpr->ptSize.y,
 		dpr->wStyle, dpr->wPattern
@@ -453,7 +453,7 @@ INT CDECL PSDRV_StartDoc( PHYSDEV dev, const DOCINFOW *doc )
 
     if (!OpenPrinterW( physDev->pi->friendly_name, &physDev->job.hprinter, &prn_def ))
     {
-        WARN("OpenPrinter(%s, ...) failed: %d\n",
+        WARN("OpenPrinter(%s, ...) failed: %ld\n",
             debugstr_w(physDev->pi->friendly_name), GetLastError());
         return 0;
     }
@@ -474,7 +474,7 @@ INT CDECL PSDRV_StartDoc( PHYSDEV dev, const DOCINFOW *doc )
        is done during winspool.drv,ScheduleJob */
     physDev->job.id = StartDocPrinterW(physDev->job.hprinter, 1, (LPBYTE) &di);
     if(!physDev->job.id) {
-        WARN("StartDocPrinter() failed: %d\n", GetLastError());
+        WARN("StartDocPrinter() failed: %ld\n", GetLastError());
         ClosePrinter(physDev->job.hprinter);
 	return 0;
     }

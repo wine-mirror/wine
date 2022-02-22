@@ -77,8 +77,8 @@ TYPE1 *T1_download_header(PHYSDEV dev, char *ps_name, RECT *bbox, UINT emsize)
       " /FontName /%s def\n"
       " /Encoding 256 array 0 1 255{1 index exch /.notdef put} for def\n"
       " /PaintType 0 def\n"
-      " /FontMatrix [1 %d div 0 0 1 %d div 0 0] def\n"
-      " /FontBBox [%d %d %d %d] def\n"
+      " /FontMatrix [1 %ld div 0 0 1 %ld div 0 0] def\n"
+      " /FontBBox [%ld %ld %ld %ld] def\n"
       " /FontType 1 def\n"
       " /Private 7 dict begin\n"
       "  /RD {string currentfile exch readhexstring pop} def\n"
@@ -545,12 +545,12 @@ BOOL T1_download_glyph(PHYSDEV dev, DOWNLOAD *pdl, DWORD index, char *glyph_name
       "/%s findfont dup\n"
       "/Private get begin\n"
       "/CharStrings get begin\n"
-      "/%s %d RD\n";
+      "/%s %ld RD\n";
     static const char glyph_def_end[] =
       "ND\n"
       "end end\n";
 
-    TRACE("%d %s\n", index, glyph_name);
+    TRACE("%ld %s\n", index, glyph_name);
     assert(pdl->type == Type1);
     t1 = pdl->typeinfo.Type1;
 
@@ -649,7 +649,7 @@ BOOL T1_download_glyph(PHYSDEV dev, DOWNLOAD *pdl, DWORD index, char *glyph_name
     buf = HeapAlloc(GetProcessHeap(), 0, sizeof(glyph_def_begin) +
 		    strlen(pdl->ps_name) + strlen(glyph_name) + 100);
 
-    sprintf(buf, "%%%%glyph %04x\n", index);
+    sprintf(buf, "%%%%glyph %04lx\n", index);
     PSDRV_WriteSpool(dev, buf, strlen(buf));
 
     len = str_get_bytes(charstring, &bytes);

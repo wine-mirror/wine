@@ -456,7 +456,7 @@ INT WINAPI DrvDocumentProperties(HWND hwnd, const WCHAR *device, DEVMODEW *outpu
 {
   PRINTERINFO *pi;
 
-  TRACE("(hwnd=%p, Device='%s', devOut=%p, devIn=%p, Mode=%04x)\n",
+  TRACE("(hwnd=%p, Device='%s', devOut=%p, devIn=%p, Mode=%04lx)\n",
         hwnd, debugstr_w(device), output, input, mode);
 
   if (!(pi = PSDRV_FindPrinterInfo(device))) return -1;
@@ -468,7 +468,7 @@ INT WINAPI DrvDocumentProperties(HWND hwnd, const WCHAR *device, DEVMODEW *outpu
   /* If DM_MODIFY is set, change settings in accordance with lpdmInput */
   if ((mode & DM_MODIFY) && input)
   {
-    TRACE("DM_MODIFY set. devIn->dmFields = %08x\n", input->dmFields);
+    TRACE("DM_MODIFY set. devIn->dmFields = %08lx\n", input->dmFields);
     PSDRV_MergeDevmodes(pi->Devmode, (PSDRV_DEVMODE *)input, pi);
   }
 
@@ -681,7 +681,7 @@ DWORD WINAPI DrvDeviceCapabilities(HANDLE printer, WCHAR *device_name, WORD capa
     ret = 0;
     if(pi->ppd->DefaultDuplex && pi->ppd->DefaultDuplex->WinDuplex != 0)
       ret = 1;
-    TRACE("DC_DUPLEX: returning %d\n", ret);
+    TRACE("DC_DUPLEX: returning %ld\n", ret);
     break;
 
   case DC_EMF_COMPLIANT:

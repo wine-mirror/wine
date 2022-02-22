@@ -168,7 +168,7 @@ static const char psarc[] = /* x, y, w, h, ang1, ang2 */
 "tmpmtrx setmatrix\n";
 
 static const char pscurveto[] = /* x1, y1, x2, y2, x3, y3 */
-"%d %d %d %d %d %d curveto\n";
+"%ld %ld %ld %ld %ld %ld curveto\n";
 
 static const char psgsave[] =
 "gsave\n";
@@ -207,7 +207,7 @@ static const char psrotate[] = /* ang */
 "%.1f rotate\n";
 
 static const char psarrayput[] =
-"%s %d %d put\n";
+"%s %d %ld put\n";
 
 static const char psarraydef[] =
 "/%s %d array def\n";
@@ -680,7 +680,7 @@ BOOL PSDRV_WriteSetPen(PHYSDEV dev)
     if (physDev->pen.dash_len)
     {
         for (i = pos = 0; i < physDev->pen.dash_len; i++)
-            pos += sprintf( buf + pos, " %u", physDev->pen.dash[i] );
+            pos += sprintf( buf + pos, " %lu", physDev->pen.dash[i] );
         buf[0] = '[';
         sprintf(buf + pos, "] %u setdash\n", 0);
     }
@@ -963,7 +963,7 @@ BOOL PSDRV_WriteDIBPatternDict(PHYSDEV dev, const BITMAPINFO *bmi, BYTE *bits, U
     INT w, h, x, y, w_mult, h_mult, abs_height = abs( bmi->bmiHeader.biHeight );
     COLORREF map[2];
 
-    TRACE( "size %dx%dx%d\n",
+    TRACE( "size %ldx%ldx%d\n",
            bmi->bmiHeader.biWidth, bmi->bmiHeader.biHeight, bmi->bmiHeader.biBitCount);
 
     if(bmi->bmiHeader.biBitCount != 1) {

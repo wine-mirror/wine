@@ -60,7 +60,7 @@ BOOL CDECL PSDRV_PatBlt(PHYSDEV dev, struct bitblt_coords *dst, DWORD dwRop)
 	return TRUE;
       }
     default:
-        FIXME("Unsupported rop %06x\n", dwRop);
+        FIXME("Unsupported rop %06lx\n", dwRop);
 	return FALSE;
     }
 }

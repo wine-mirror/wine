@@ -108,7 +108,7 @@ static const struct gdi_dc_funcs psdrv_funcs;
  */
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
-    TRACE("(%p, %d, %p)\n", hinst, reason, reserved);
+    TRACE("(%p, %ld, %p)\n", hinst, reason, reserved);
 
     switch(reason) {
 
@@ -187,7 +187,7 @@ while (0)
     CHECK_FIELD(DM_DITHERTYPE);
     CHECK_FIELD(DM_PANNINGWIDTH);
     CHECK_FIELD(DM_PANNINGHEIGHT);
-    if (fields) TRACE(" %#x", fields);
+    if (fields) TRACE(" %#lx", fields);
     TRACE("\n");
 #undef CHECK_FIELD
 }
@@ -205,7 +205,7 @@ static void dump_devmode(const DEVMODEW *dm)
     TRACE("dmDriverVersion: 0x%04x\n", dm->dmDriverVersion);
     TRACE("dmSize: 0x%04x\n", dm->dmSize);
     TRACE("dmDriverExtra: 0x%04x\n", dm->dmDriverExtra);
-    TRACE("dmFields: 0x%04x\n", dm->dmFields);
+    TRACE("dmFields: 0x%04lx\n", dm->dmFields);
     dump_fields(dm->dmFields);
     TRACE("dmOrientation: %d\n", dm->dmOrientation);
     TRACE("dmPaperSize: %d\n", dm->dmPaperSize);
@@ -222,9 +222,9 @@ static void dump_devmode(const DEVMODEW *dm)
     TRACE("dmCollate: %d\n", dm->dmCollate);
     TRACE("dmFormName: %s\n", debugstr_w(dm->dmFormName));
     TRACE("dmLogPixels %u\n", dm->dmLogPixels);
-    TRACE("dmBitsPerPel %u\n", dm->dmBitsPerPel);
-    TRACE("dmPelsWidth %u\n", dm->dmPelsWidth);
-    TRACE("dmPelsHeight %u\n", dm->dmPelsHeight);
+    TRACE("dmBitsPerPel %lu\n", dm->dmBitsPerPel);
+    TRACE("dmPelsWidth %lu\n", dm->dmPelsWidth);
+    TRACE("dmPelsHeight %lu\n", dm->dmPelsHeight);
 }
 
 static void PSDRV_UpdateDevCaps( PSDRV_PDEVICE *physDev )
@@ -307,13 +307,13 @@ static void PSDRV_UpdateDevCaps( PSDRV_PDEVICE *physDev )
 	physDev->ImageableArea.top = physDev->PageSize.cy =
 	  physDev->Devmode->dmPublic.dmPaperLength * physDev->logPixelsY / 254;
     } else {
-        FIXME("Odd dmFields %x\n", physDev->Devmode->dmPublic.dmFields);
+        FIXME("Odd dmFields %lx\n", physDev->Devmode->dmPublic.dmFields);
         SetRectEmpty(&physDev->ImageableArea);
 	physDev->PageSize.cx = 0;
 	physDev->PageSize.cy = 0;
     }
 
-    TRACE("ImageableArea = %s: PageSize = %dx%d\n", wine_dbgstr_rect(&physDev->ImageableArea),
+    TRACE("ImageableArea = %s: PageSize = %ldx%ld\n", wine_dbgstr_rect(&physDev->ImageableArea),
 	  physDev->PageSize.cx, physDev->PageSize.cy);
 
     /* these are in device units */
@@ -671,7 +671,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
     lstrcpyW( pi->friendly_name, name );
 
     if (OpenPrinterW( pi->friendly_name, &hPrinter, NULL ) == 0) {
-        ERR ("OpenPrinter failed with code %i\n", GetLastError ());
+        ERR ("OpenPrinter failed with code %li\n", GetLastError ());
         goto fail;
     }
 

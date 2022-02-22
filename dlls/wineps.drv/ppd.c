@@ -758,7 +758,7 @@ PPD *PSDRV_ParsePPD( const WCHAR *fname, HANDLE printer )
             SIZE sz;
             if(parse_resolution(tuple.value, &sz))
             {
-                TRACE("DefaultResolution %dx%d\n", sz.cx, sz.cy);
+                TRACE("DefaultResolution %ldx%ld\n", sz.cx, sz.cy);
                 ppd->DefaultResolution = sz.cx;
             }
             else
@@ -772,7 +772,7 @@ PPD *PSDRV_ParsePPD( const WCHAR *fname, HANDLE printer )
             {
                 RESOLUTION *res;
 
-                TRACE("Resolution %dx%d, invocation %s\n", sz.cx, sz.cy, tuple.value);
+                TRACE("Resolution %ldx%ld, invocation %s\n", sz.cx, sz.cy, tuple.value);
 
                 res = HeapAlloc( GetProcessHeap(), 0, sizeof(*res) );
                 res->resx = sz.cx;

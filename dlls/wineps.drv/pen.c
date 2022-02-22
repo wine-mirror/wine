@@ -60,7 +60,7 @@ HPEN CDECL PSDRV_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *
         logpen.lopnColor = elp->elpColor;
     }
 
-    TRACE("hpen = %p colour = %08x\n", hpen, logpen.lopnColor);
+    TRACE("hpen = %p colour = %08lx\n", hpen, logpen.lopnColor);
 
     physDev->pen.width = logpen.lopnWidth.x;
     if ((logpen.lopnStyle & PS_GEOMETRIC) || (physDev->pen.width > 1))

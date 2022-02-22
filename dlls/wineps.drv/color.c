@@ -73,7 +73,7 @@ void PSDRV_CreateColor( PHYSDEV dev, PSCOLOR *pscolor, COLORREF wincolor )
     float r, g, b;
 
     if(ctype != 0 && ctype != 2)
-        FIXME("Colour is %08x\n", wincolor);
+        FIXME("Colour is %08lx\n", wincolor);
 
     r = (wincolor & 0xff) / 256.0;
     g = ((wincolor >> 8) & 0xff) / 256.0;
