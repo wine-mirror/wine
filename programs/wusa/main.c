@@ -480,10 +480,10 @@ static WCHAR *lookup_expression(struct assembly_entry *assembly, const WCHAR *ke
 {
     WCHAR path[MAX_PATH];
 
-    if (!wcscmp(key, L"runtime.system32"))
+    if (!wcsicmp(key, L"runtime.system32"))
     {
 #ifdef __x86_64__
-        if (!wcscmp(assembly->identity.architecture, L"x86"))
+        if (!wcsicmp(assembly->identity.architecture, L"x86"))
         {
             GetSystemWow64DirectoryW(path, ARRAY_SIZE(path));
             return strdupW(path);
@@ -492,7 +492,7 @@ static WCHAR *lookup_expression(struct assembly_entry *assembly, const WCHAR *ke
         GetSystemDirectoryW(path, ARRAY_SIZE(path));
         return strdupW(path);
     }
-    if (!wcscmp(key, L"runtime.windows"))
+    if (!wcsicmp(key, L"runtime.windows"))
     {
         GetWindowsDirectoryW(path, ARRAY_SIZE(path));
         return strdupW(path);
