@@ -2055,7 +2055,6 @@ static void load_apiset_dll(void)
             {
                 NtCurrentTeb()->Peb->ApiSetMap = map;
                 if (wow_peb) wow_peb->ApiSetMap = PtrToUlong(map);
-                NtUnmapViewOfSection( NtCurrentProcess(), ptr );
                 TRACE( "loaded %s apiset at %p\n", debugstr_w(path), map );
                 return;
             }
