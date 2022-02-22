@@ -692,7 +692,7 @@ static gboolean sink_query_cb(GstPad *pad, GstObject *parent, GstQuery *query)
     }
 }
 
-static GstElement *create_element(const char *name, const char *plugin_set)
+GstElement *create_element(const char *name, const char *plugin_set)
 {
     GstElement *element;
 

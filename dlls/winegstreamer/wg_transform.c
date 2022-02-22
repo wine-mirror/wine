@@ -72,11 +72,36 @@ NTSTATUS wg_transform_destroy(void *args)
     return STATUS_SUCCESS;
 }
 
+static bool transform_append_element(struct wg_transform *transform, GstElement *element,
+        GstElement **first, GstElement **last)
+{
+    gchar *name = gst_element_get_name(element);
+    bool success = false;
+
+    if (!gst_bin_add(GST_BIN(transform->container), element) ||
+            (*last && !gst_element_link(*last, element)))
+    {
+        GST_ERROR("Failed to link %s element.", name);
+    }
+    else
+    {
+        GST_DEBUG("Linked %s element %p.", name, element);
+        if (!*first)
+            *first = element;
+        *last = element;
+        success = true;
+    }
+
+    g_free(name);
+    return success;
+}
+
 NTSTATUS wg_transform_create(void *args)
 {
     struct wg_transform_create_params *params = args;
     struct wg_format output_format = *params->output_format;
     struct wg_format input_format = *params->input_format;
+    GstElement *first = NULL, *last = NULL, *element;
     GstCaps *src_caps = NULL, *sink_caps = NULL;
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     GstPadTemplate *template = NULL;
@@ -110,6 +135,33 @@ NTSTATUS wg_transform_create(void *args)
 
     gst_pad_set_element_private(transform->my_sink, transform);
     gst_pad_set_chain_function(transform->my_sink, transform_sink_chain_cb);
+
+    switch (output_format.major_type)
+    {
+        case WG_MAJOR_TYPE_AUDIO:
+            /* The MF audio decoder transforms allow decoding to various formats
+             * as well as resampling the audio at the same time, whereas
+             * GStreamer decoder plugins usually only support decoding to a
+             * single format and at the original rate.
+             *
+             * The WMA decoder transform also has output samples interleaved on
+             * Windows, whereas GStreamer avdec_wmav2 output uses
+             * non-interleaved format.
+             */
+            if (!(element = create_element("audioconvert", "base"))
+                    || !transform_append_element(transform, element, &first, &last))
+                goto out_free_sink_pad;
+            if (!(element = create_element("audioresample", "base"))
+                    || !transform_append_element(transform, element, &first, &last))
+                goto out_free_sink_pad;
+            break;
+
+        case WG_MAJOR_TYPE_VIDEO:
+        case WG_MAJOR_TYPE_WMA:
+        case WG_MAJOR_TYPE_UNKNOWN:
+            GST_FIXME("Format %u not implemented!", output_format.major_type);
+            goto out_free_sink_pad;
+    }
 
     gst_element_set_state(transform->container, GST_STATE_PAUSED);
     if (!gst_element_get_state(transform->container, NULL, NULL, -1))
