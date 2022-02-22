@@ -242,7 +242,7 @@ BOOL WINAPI WintrustAddActionID( GUID* pgActionID, DWORD fdwFlags,
     LONG Res;
     LONG WriteActionError = ERROR_SUCCESS;
 
-    TRACE("%s %x %p\n", debugstr_guid(pgActionID), fdwFlags, psProvInfo);
+    TRACE("%s %lx %p\n", debugstr_guid(pgActionID), fdwFlags, psProvInfo);
 
     /* Some sanity checks.
      * We use the W2K3 last error as it makes more sense (W2K leaves the last error
@@ -1134,7 +1134,7 @@ add_trust_providers:
     /* Create a dummy context to force creation of the MachineGuid registry key. */
     ret = CryptAcquireContextW(&crypt_provider, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
     if (ret) CryptReleaseContext(crypt_provider, 0);
-    else ERR("Failed to acquire cryptographic context: %u\n", GetLastError());
+    else ERR("Failed to acquire cryptographic context: %lu\n", GetLastError());
 
     /* If CryptRegisterRes is not S_OK it will always overrule the return value. */
     if (CryptRegisterRes != S_OK)

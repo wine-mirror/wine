@@ -110,7 +110,7 @@ BOOL WINAPI CryptCATAdminAcquireContext(HCATADMIN *catAdmin,
     WCHAR catroot_dir[MAX_PATH];
     struct catadmin *ca;
 
-    TRACE("%p %s %x\n", catAdmin, debugstr_guid(sys), dwFlags);
+    TRACE("%p %s %lx\n", catAdmin, debugstr_guid(sys), dwFlags);
 
     if (!catAdmin || dwFlags)
     {
@@ -151,7 +151,7 @@ BOOL WINAPI CryptCATAdminAcquireContext(HCATADMIN *catAdmin,
 BOOL WINAPI CryptCATAdminAcquireContext2(HCATADMIN *catAdmin, const GUID *sys, const WCHAR *algorithm,
                                          const CERT_STRONG_SIGN_PARA *policy, DWORD flags)
 {
-    FIXME("%p %s %s %p %x stub\n", catAdmin, debugstr_guid(sys), debugstr_w(algorithm), policy, flags);
+    FIXME("%p %s %s %p %lx stub\n", catAdmin, debugstr_guid(sys), debugstr_w(algorithm), policy, flags);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -168,7 +168,7 @@ HCATINFO WINAPI CryptCATAdminAddCatalog(HCATADMIN catAdmin, PWSTR catalogFile,
     WCHAR *target;
     DWORD len;
 
-    TRACE("%p %s %s %d\n", catAdmin, debugstr_w(catalogFile),
+    TRACE("%p %s %s %ld\n", catAdmin, debugstr_w(catalogFile),
           debugstr_w(selectBaseName), flags);
 
     if (!selectBaseName)
@@ -221,7 +221,7 @@ BOOL WINAPI CryptCATAdminCalcHashFromFileHandle(HANDLE hFile, DWORD* pcbHash,
 {
     BOOL ret = FALSE;
 
-    TRACE("%p %p %p %x\n", hFile, pcbHash, pbHash, dwFlags);
+    TRACE("%p %p %p %lx\n", hFile, pcbHash, pbHash, dwFlags);
 
     if (!hFile || !pcbHash || dwFlags)
     {
@@ -291,7 +291,7 @@ HCATINFO WINAPI CryptCATAdminEnumCatalogFromHash(HCATADMIN hCatAdmin, BYTE* pbHa
     DWORD size;
     BOOL ret;
 
-    TRACE("%p %p %d %x %p\n", hCatAdmin, pbHash, cbHash, dwFlags, phPrevCatInfo);
+    TRACE("%p %p %ld %lx %p\n", hCatAdmin, pbHash, cbHash, dwFlags, phPrevCatInfo);
 
     if (!ca || ca->magic != CATADMIN_MAGIC || !pbHash || cbHash != 20 || dwFlags)
     {
@@ -354,14 +354,14 @@ HCATINFO WINAPI CryptCATAdminEnumCatalogFromHash(HCATADMIN hCatAdmin, BYTE* pbHa
         hcat = CryptCATOpen(filename, CRYPTCAT_OPEN_EXISTING, prov, 0, 0);
         if (hcat == INVALID_HANDLE_VALUE)
         {
-            WARN("couldn't open %s (%u)\n", debugstr_w(filename), GetLastError());
+            WARN("couldn't open %s (%lu)\n", debugstr_w(filename), GetLastError());
             continue;
         }
         while ((member = CryptCATEnumerateMember(hcat, member)))
         {
             if (member->pIndirectData->Digest.cbData != cbHash)
             {
-                WARN("amount of hash bytes differs: %u/%u\n", member->pIndirectData->Digest.cbData, cbHash);
+                WARN("amount of hash bytes differs: %lu/%lu\n", member->pIndirectData->Digest.cbData, cbHash);
                 continue;
             }
             if (!memcmp(member->pIndirectData->Digest.pbData, pbHash, cbHash))
@@ -416,7 +416,7 @@ BOOL WINAPI CryptCATAdminReleaseCatalogContext(HCATADMIN hCatAdmin,
     struct catinfo *ci = hCatInfo;
     struct catadmin *ca = hCatAdmin;
 
-    TRACE("%p %p %x\n", hCatAdmin, hCatInfo, dwFlags);
+    TRACE("%p %p %lx\n", hCatAdmin, hCatInfo, dwFlags);
 
     if (!ca || ca->magic != CATADMIN_MAGIC || !ci || ci->magic != CATINFO_MAGIC)
     {
@@ -445,7 +445,7 @@ BOOL WINAPI CryptCATAdminReleaseContext(HCATADMIN hCatAdmin, DWORD dwFlags )
 {
     struct catadmin *ca = hCatAdmin;
 
-    TRACE("%p %x\n", hCatAdmin, dwFlags);
+    TRACE("%p %lx\n", hCatAdmin, dwFlags);
 
     if (!ca || ca->magic != CATADMIN_MAGIC)
     {
@@ -476,7 +476,7 @@ BOOL WINAPI CryptCATAdminRemoveCatalog(HCATADMIN hCatAdmin, LPCWSTR pwszCatalogF
 {
     struct catadmin *ca = hCatAdmin;
 
-    TRACE("%p %s %x\n", hCatAdmin, debugstr_w(pwszCatalogFile), dwFlags);
+    TRACE("%p %s %lx\n", hCatAdmin, debugstr_w(pwszCatalogFile), dwFlags);
 
     if (!ca || ca->magic != CATADMIN_MAGIC)
     {
@@ -520,7 +520,7 @@ BOOL WINAPI CryptCATAdminResolveCatalogPath(HCATADMIN hcatadmin, WCHAR *catalog_
     static const WCHAR slashW[] = {'\\',0};
     struct catadmin *ca = hcatadmin;
 
-    TRACE("%p %s %p %x\n", hcatadmin, debugstr_w(catalog_file), info, flags);
+    TRACE("%p %s %p %lx\n", hcatadmin, debugstr_w(catalog_file), info, flags);
 
     if (!ca || ca->magic != CATADMIN_MAGIC || !info || info->cbStruct != sizeof(*info) || flags)
     {
@@ -701,7 +701,7 @@ CRYPTCATMEMBER * WINAPI CryptCATEnumerateMember(HANDLE hCatalog, CRYPTCATMEMBER 
 
         if (attr->cValue != 1)
         {
-            ERR("Can't handle attr->cValue of %u\n", attr->cValue);
+            ERR("Can't handle attr->cValue of %lu\n", attr->cValue);
             continue;
         }
         if (!strcmp(attr->pszObjId, CAT_MEMBERINFO_OBJID))
@@ -836,7 +836,7 @@ BOOL WINAPI CryptCATCatalogInfoFromContext(HCATINFO hcatinfo, CATALOG_INFO *info
 {
     struct catinfo *ci = hcatinfo;
 
-    TRACE("%p, %p, %x\n", hcatinfo, info, flags);
+    TRACE("%p, %p, %lx\n", hcatinfo, info, flags);
 
     if (!hcatinfo || hcatinfo == INVALID_HANDLE_VALUE || ci->magic != CATINFO_MAGIC ||
         flags || !info || info->cbStruct != sizeof(*info))
@@ -854,7 +854,7 @@ BOOL WINAPI CryptCATCatalogInfoFromContext(HCATINFO hcatinfo, CATALOG_INFO *info
 CRYPTCATATTRIBUTE * WINAPI CryptCATPutAttrInfo(HANDLE catalog, CRYPTCATMEMBER *member,
         WCHAR *name, DWORD flags, DWORD size, BYTE *data)
 {
-    FIXME("catalog %p, member %p, name %s, flags %#x, size %u, data %p, stub!\n",
+    FIXME("catalog %p, member %p, name %s, flags %#lx, size %lu, data %p, stub!\n",
             catalog, member, debugstr_w(name), flags, size, data);
 
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -867,7 +867,7 @@ CRYPTCATATTRIBUTE * WINAPI CryptCATPutAttrInfo(HANDLE catalog, CRYPTCATMEMBER *m
 CRYPTCATATTRIBUTE * WINAPI CryptCATPutCatAttrInfo(HANDLE catalog,
         WCHAR *name, DWORD flags, DWORD size, BYTE *data)
 {
-    FIXME("catalog %p, name %s, flags %#x, size %u, data %p, stub!\n",
+    FIXME("catalog %p, name %s, flags %#lx, size %lu, data %p, stub!\n",
             catalog, debugstr_w(name), flags, size, data);
 
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -880,7 +880,7 @@ CRYPTCATATTRIBUTE * WINAPI CryptCATPutCatAttrInfo(HANDLE catalog,
 CRYPTCATMEMBER * WINAPI CryptCATPutMemberInfo(HANDLE catalog, WCHAR *filename,
         WCHAR *member, GUID *subject, DWORD version, DWORD size, BYTE *data)
 {
-    FIXME("catalog %p, filename %s, member %s, subject %s, version %u, size %u, data %p, stub!\n",
+    FIXME("catalog %p, filename %s, member %s, subject %s, version %lu, size %lu, data %p, stub!\n",
             catalog, debugstr_w(filename), debugstr_w(member), debugstr_guid(subject), version, size, data);
 
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -910,7 +910,7 @@ HANDLE WINAPI CryptCATOpen(WCHAR *filename, DWORD flags, HCRYPTPROV hProv,
     struct cryptcat *cc;
     BOOL valid;
 
-    TRACE("filename %s, flags %#x, provider %#lx, version %#x, type %#x\n",
+    TRACE("filename %s, flags %#lx, provider %#Ix, version %#lx, type %#lx\n",
           debugstr_w(filename), flags, hProv, dwPublicVersion, dwEncodingType);
 
     if (!filename)
@@ -1095,7 +1095,7 @@ static BOOL WINTRUST_GetSignedMsgFromPEFile(SIP_SUBJECTINFO *pSubjectInfo,
     WIN_CERTIFICATE *pCert = NULL;
     HANDLE file;
 
-    TRACE("(%p %p %d %p %p)\n", pSubjectInfo, pdwEncodingType, dwIndex,
+    TRACE("(%p %p %ld %p %p)\n", pSubjectInfo, pdwEncodingType, dwIndex,
           pcbSignedDataMsg, pbSignedDataMsg);
 
     if(pSubjectInfo->hFile && pSubjectInfo->hFile!=INVALID_HANDLE_VALUE)
@@ -1256,7 +1256,7 @@ static BOOL WINTRUST_GetSignedMsgFromCabFile(SIP_SUBJECTINFO *pSubjectInfo,
     BYTE buf[64];
     DWORD cert_offset, cert_size, dwRead;
 
-    TRACE("(%p %p %d %p %p)\n", pSubjectInfo, pdwEncodingType, dwIndex,
+    TRACE("(%p %p %ld %p %p)\n", pSubjectInfo, pdwEncodingType, dwIndex,
           pcbSignedDataMsg, pbSignedDataMsg);
 
     /* get basic offset & size info */
@@ -1342,9 +1342,9 @@ static BOOL WINTRUST_GetSignedMsgFromCabFile(SIP_SUBJECTINFO *pSubjectInfo,
     }
 
     cert_offset = EndGetI32(buf+cfsigninfo_CertOffset);
-    TRACE("cert_offset: %d\n", cert_offset);
+    TRACE("cert_offset: %ld\n", cert_offset);
     cert_size = EndGetI32(buf+cfsigninfo_CertSize);
-    TRACE("cert_size: %d\n", cert_size);
+    TRACE("cert_size: %ld\n", cert_size);
 
     /* The redundant checks are to avoid wraparound */
     if (cert_offset > cabsize || cert_size > cabsize ||
@@ -1394,7 +1394,7 @@ static BOOL WINTRUST_GetSignedMsgFromCatFile(SIP_SUBJECTINFO *pSubjectInfo,
 {
     BOOL ret;
 
-    TRACE("(%p %p %d %p %p)\n", pSubjectInfo, pdwEncodingType, dwIndex,
+    TRACE("(%p %p %ld %p %p)\n", pSubjectInfo, pdwEncodingType, dwIndex,
           pcbSignedDataMsg, pbSignedDataMsg);
 
     if (!pbSignedDataMsg)
@@ -1439,7 +1439,7 @@ BOOL WINAPI CryptSIPGetSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pdwEn
 {
     BOOL ret;
 
-    TRACE("(%p %p %d %p %p)\n", pSubjectInfo, pdwEncodingType, dwIndex,
+    TRACE("(%p %p %ld %p %p)\n", pSubjectInfo, pdwEncodingType, dwIndex,
           pcbSignedDataMsg, pbSignedDataMsg);
 
     if(!pSubjectInfo)
@@ -1474,7 +1474,7 @@ BOOL WINAPI CryptSIPGetSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pdwEn
 BOOL WINAPI CryptSIPPutSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD pdwEncodingType,
         DWORD* pdwIndex, DWORD cbSignedDataMsg, BYTE* pbSignedDataMsg)
 {
-    TRACE("(%p %d %p %d %p)\n", pSubjectInfo, pdwEncodingType, pdwIndex,
+    TRACE("(%p %ld %p %ld %p)\n", pSubjectInfo, pdwEncodingType, pdwIndex,
           cbSignedDataMsg, pbSignedDataMsg);
 
     if(!pSubjectInfo) {
@@ -1498,7 +1498,7 @@ BOOL WINAPI CryptSIPPutSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD pdwEnc
 BOOL WINAPI CryptSIPRemoveSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo,
                                        DWORD dwIndex)
 {
-    FIXME("(%p %d) stub\n", pSubjectInfo, dwIndex);
+    FIXME("(%p %ld) stub\n", pSubjectInfo, dwIndex);
  
     return FALSE;
 }
