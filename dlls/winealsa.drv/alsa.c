@@ -25,6 +25,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <pthread.h>
 
 #include <alsa/asoundlib.h>
 
@@ -43,6 +44,8 @@
 #include "unixlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(alsa);
+
+#define                     EXTRA_SAFE_RT   40000
 
 static const WCHAR drv_keyW[] = {'S','o','f','t','w','a','r','e','\\',
     'W','i','n','e','\\','D','r','i','v','e','r','s','\\',
@@ -130,6 +133,30 @@ static WCHAR *strdupAtoW(const char *str)
     len = strlen(str) + 1;
     ret = malloc(len * sizeof(WCHAR));
     if(ret) ntdll_umbstowcs(str, len, ret, len);
+    return ret;
+}
+
+/* copied from kernelbase */
+static int muldiv( int a, int b, int c )
+{
+    LONGLONG ret;
+
+    if (!c) return -1;
+
+    /* We want to deal with a positive divisor to simplify the logic. */
+    if (c < 0)
+    {
+        a = -a;
+        c = -c;
+    }
+
+    /* If the result is positive, we "add" to round. else, we subtract to round. */
+    if ((a < 0 && b < 0) || (a >= 0 && b >= 0))
+        ret = (((LONGLONG)a * b) + (c / 2)) / c;
+    else
+        ret = (((LONGLONG)a * b) - (c / 2)) / c;
+
+    if (ret > 2147483647 || ret < -2147483647) return -1;
     return ret;
 }
 
@@ -663,6 +690,280 @@ static HRESULT map_channels(EDataFlow flow, const WAVEFORMATEX *fmt, int *alsa_c
     return need_remap ? S_OK : S_FALSE;
 }
 
+static void silence_buffer(struct alsa_stream *stream, BYTE *buffer, UINT32 frames)
+{
+    WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE*)stream->fmt;
+    if((stream->fmt->wFormatTag == WAVE_FORMAT_PCM ||
+            (stream->fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+             IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))) &&
+            stream->fmt->wBitsPerSample == 8)
+        memset(buffer, 128, frames * stream->fmt->nBlockAlign);
+    else
+        memset(buffer, 0, frames * stream->fmt->nBlockAlign);
+}
+
+static NTSTATUS create_stream(void *args)
+{
+    struct create_stream_params *params = args;
+    struct alsa_stream *stream;
+    snd_pcm_sw_params_t *sw_params = NULL;
+    snd_pcm_format_t format;
+    unsigned int rate, alsa_period_us, i;
+    WAVEFORMATEXTENSIBLE *fmtex;
+    int err;
+    SIZE_T size;
+
+    stream = calloc(1, sizeof(*stream));
+    if(!stream){
+        params->result = E_OUTOFMEMORY;
+        return STATUS_SUCCESS;
+    }
+
+    params->result = alsa_open_device(params->alsa_name, params->flow, &stream->pcm_handle, &stream->hw_params);
+    if(FAILED(params->result)){
+        free(stream);
+        return STATUS_SUCCESS;
+    }
+
+    stream->need_remapping = map_channels(params->flow, params->fmt, &stream->alsa_channels, stream->alsa_channel_map) == S_OK;
+
+    if((err = snd_pcm_hw_params_any(stream->pcm_handle, stream->hw_params)) < 0){
+        WARN("Unable to get hw_params: %d (%s)\n", err, snd_strerror(err));
+        params->result = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
+        goto exit;
+    }
+
+    if((err = snd_pcm_hw_params_set_access(stream->pcm_handle, stream->hw_params,
+                SND_PCM_ACCESS_RW_INTERLEAVED)) < 0){
+        WARN("Unable to set access: %d (%s)\n", err, snd_strerror(err));
+        params->result = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
+        goto exit;
+    }
+
+    format = alsa_format(params->fmt);
+    if (format == SND_PCM_FORMAT_UNKNOWN){
+        params->result = AUDCLNT_E_UNSUPPORTED_FORMAT;
+        goto exit;
+    }
+
+    if((err = snd_pcm_hw_params_set_format(stream->pcm_handle, stream->hw_params,
+                format)) < 0){
+        WARN("Unable to set ALSA format to %u: %d (%s)\n", format, err,
+                snd_strerror(err));
+        params->result = AUDCLNT_E_UNSUPPORTED_FORMAT;
+        goto exit;
+    }
+
+    stream->alsa_format = format;
+    stream->flow = params->flow;
+
+    rate = params->fmt->nSamplesPerSec;
+    if((err = snd_pcm_hw_params_set_rate_near(stream->pcm_handle, stream->hw_params,
+                &rate, NULL)) < 0){
+        WARN("Unable to set rate to %u: %d (%s)\n", rate, err,
+                snd_strerror(err));
+        params->result = AUDCLNT_E_UNSUPPORTED_FORMAT;
+        goto exit;
+    }
+
+    if((err = snd_pcm_hw_params_set_channels(stream->pcm_handle, stream->hw_params,
+               stream->alsa_channels)) < 0){
+        WARN("Unable to set channels to %u: %d (%s)\n", params->fmt->nChannels, err,
+                snd_strerror(err));
+        params->result = AUDCLNT_E_UNSUPPORTED_FORMAT;
+        goto exit;
+    }
+
+    stream->mmdev_period_rt = params->period;
+    alsa_period_us = stream->mmdev_period_rt / 10;
+    if((err = snd_pcm_hw_params_set_period_time_near(stream->pcm_handle,
+                stream->hw_params, &alsa_period_us, NULL)) < 0)
+        WARN("Unable to set period time near %u: %d (%s)\n", alsa_period_us,
+                err, snd_strerror(err));
+    /* ALSA updates the output variable alsa_period_us */
+
+    stream->mmdev_period_frames = muldiv(params->fmt->nSamplesPerSec,
+            stream->mmdev_period_rt, 10000000);
+
+    /* Buffer 4 ALSA periods if large enough, else 4 mmdevapi periods */
+    stream->alsa_bufsize_frames = stream->mmdev_period_frames * 4;
+    if(err < 0 || alsa_period_us < params->period / 10)
+        err = snd_pcm_hw_params_set_buffer_size_near(stream->pcm_handle,
+                stream->hw_params, &stream->alsa_bufsize_frames);
+    else{
+        unsigned int periods = 4;
+        err = snd_pcm_hw_params_set_periods_near(stream->pcm_handle, stream->hw_params, &periods, NULL);
+    }
+    if(err < 0)
+        WARN("Unable to set buffer size: %d (%s)\n", err, snd_strerror(err));
+
+    if((err = snd_pcm_hw_params(stream->pcm_handle, stream->hw_params)) < 0){
+        WARN("Unable to set hw params: %d (%s)\n", err, snd_strerror(err));
+        params->result = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
+        goto exit;
+    }
+
+    if((err = snd_pcm_hw_params_get_period_size(stream->hw_params,
+                    &stream->alsa_period_frames, NULL)) < 0){
+        WARN("Unable to get period size: %d (%s)\n", err, snd_strerror(err));
+        params->result = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
+        goto exit;
+    }
+
+    if((err = snd_pcm_hw_params_get_buffer_size(stream->hw_params,
+                    &stream->alsa_bufsize_frames)) < 0){
+        WARN("Unable to get buffer size: %d (%s)\n", err, snd_strerror(err));
+        params->result = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
+        goto exit;
+    }
+
+    sw_params = calloc(1, snd_pcm_sw_params_sizeof());
+    if(!sw_params){
+        params->result = E_OUTOFMEMORY;
+        goto exit;
+    }
+
+    if((err = snd_pcm_sw_params_current(stream->pcm_handle, sw_params)) < 0){
+        WARN("Unable to get sw_params: %d (%s)\n", err, snd_strerror(err));
+        params->result = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
+        goto exit;
+    }
+
+    if((err = snd_pcm_sw_params_set_start_threshold(stream->pcm_handle,
+                    sw_params, 1)) < 0){
+        WARN("Unable set start threshold to 1: %d (%s)\n", err, snd_strerror(err));
+        params->result = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
+        goto exit;
+    }
+
+    if((err = snd_pcm_sw_params_set_stop_threshold(stream->pcm_handle,
+                    sw_params, stream->alsa_bufsize_frames)) < 0){
+        WARN("Unable set stop threshold to %lu: %d (%s)\n",
+                stream->alsa_bufsize_frames, err, snd_strerror(err));
+        params->result = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
+        goto exit;
+    }
+
+    if((err = snd_pcm_sw_params(stream->pcm_handle, sw_params)) < 0){
+        WARN("Unable to set sw params: %d (%s)\n", err, snd_strerror(err));
+        params->result = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
+        goto exit;
+    }
+
+    if((err = snd_pcm_prepare(stream->pcm_handle)) < 0){
+        WARN("Unable to prepare device: %d (%s)\n", err, snd_strerror(err));
+        params->result = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
+        goto exit;
+    }
+
+    /* Bear in mind weird situations where
+     * ALSA period (50ms) > mmdevapi buffer (3x10ms)
+     * or surprising rounding as seen with 22050x8x1 with Pulse:
+     * ALSA period 220 vs.  221 frames in mmdevapi and
+     *      buffer 883 vs. 2205 frames in mmdevapi! */
+    stream->bufsize_frames = muldiv(params->duration, params->fmt->nSamplesPerSec, 10000000);
+    if(params->share == AUDCLNT_SHAREMODE_EXCLUSIVE)
+        stream->bufsize_frames -= stream->bufsize_frames % stream->mmdev_period_frames;
+    stream->hidden_frames = stream->alsa_period_frames + stream->mmdev_period_frames +
+        muldiv(params->fmt->nSamplesPerSec, EXTRA_SAFE_RT, 10000000);
+    /* leave no less than about 1.33ms or 256 bytes of data after a rewind */
+    stream->safe_rewind_frames = max(256 / params->fmt->nBlockAlign, muldiv(133, params->fmt->nSamplesPerSec, 100000));
+
+    /* Check if the ALSA buffer is so small that it will run out before
+     * the next MMDevAPI period tick occurs. Allow a little wiggle room
+     * with 120% of the period time. */
+    if(stream->alsa_bufsize_frames < 1.2 * stream->mmdev_period_frames)
+        FIXME("ALSA buffer time is too small. Expect underruns. (%lu < %u * 1.2)\n",
+                stream->alsa_bufsize_frames, stream->mmdev_period_frames);
+
+    fmtex = clone_format(params->fmt);
+    if(!fmtex){
+        params->result = E_OUTOFMEMORY;
+        goto exit;
+    }
+    stream->fmt = &fmtex->Format;
+
+    size = stream->bufsize_frames * params->fmt->nBlockAlign;
+    if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer, 0, &size,
+                               MEM_COMMIT, PAGE_READWRITE)){
+        params->result = E_OUTOFMEMORY;
+        goto exit;
+    }
+    silence_buffer(stream, stream->local_buffer, stream->bufsize_frames);
+
+    stream->silence_buf = malloc(stream->alsa_period_frames * stream->fmt->nBlockAlign);
+    if(!stream->silence_buf){
+        params->result = E_OUTOFMEMORY;
+        goto exit;
+    }
+    silence_buffer(stream, stream->silence_buf, stream->alsa_period_frames);
+
+    stream->vols = malloc(params->fmt->nChannels * sizeof(float));
+    if(!stream->vols){
+        params->result = E_OUTOFMEMORY;
+        goto exit;
+    }
+    for(i = 0; i < params->fmt->nChannels; ++i)
+        stream->vols[i] = 1.f;
+
+    stream->share = params->share;
+    stream->flags = params->flags;
+
+    pthread_mutex_init(&stream->lock, NULL);
+
+    TRACE("ALSA period: %lu frames\n", stream->alsa_period_frames);
+    TRACE("ALSA buffer: %lu frames\n", stream->alsa_bufsize_frames);
+    TRACE("MMDevice period: %u frames\n", stream->mmdev_period_frames);
+    TRACE("MMDevice buffer: %u frames\n", stream->bufsize_frames);
+
+exit:
+    free(sw_params);
+    if(FAILED(params->result)){
+        snd_pcm_close(stream->pcm_handle);
+        if(stream->local_buffer){
+            size = 0;
+            NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer, &size, MEM_RELEASE);
+        }
+        free(stream->silence_buf);
+        free(stream->hw_params);
+        free(stream->fmt);
+        free(stream->vols);
+        free(stream);
+    }else{
+        *params->stream = stream;
+    }
+
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS release_stream(void *args)
+{
+    struct release_stream_params *params = args;
+    struct alsa_stream *stream = params->stream;
+    SIZE_T size;
+
+    snd_pcm_drop(stream->pcm_handle);
+    snd_pcm_close(stream->pcm_handle);
+    if(stream->local_buffer){
+        size = 0;
+        NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer, &size, MEM_RELEASE);
+    }
+    if(stream->tmp_buffer){
+        size = 0;
+        NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, &size, MEM_RELEASE);
+    }
+    /* free(stream->remapping_buf); */
+    free(stream->silence_buf);
+    free(stream->hw_params);
+    free(stream->fmt);
+    free(stream->vols);
+    pthread_mutex_destroy(&stream->lock);
+    free(stream);
+
+    params->result = S_OK;
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS is_format_supported(void *args)
 {
     struct is_format_supported_params *params = args;
@@ -922,6 +1223,8 @@ exit:
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     get_endpoint_ids,
+    create_stream,
+    release_stream,
     is_format_supported,
     get_mix_format,
 };

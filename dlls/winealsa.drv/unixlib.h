@@ -71,6 +71,25 @@ struct get_endpoint_ids_params
     unsigned int default_idx;
 };
 
+struct create_stream_params
+{
+    const char *alsa_name;
+    EDataFlow flow;
+    AUDCLNT_SHAREMODE share;
+    DWORD flags;
+    REFERENCE_TIME duration;
+    REFERENCE_TIME period;
+    const WAVEFORMATEX *fmt;
+    HRESULT result;
+    struct alsa_stream **stream;
+};
+
+struct release_stream_params
+{
+    struct alsa_stream *stream;
+    HRESULT result;
+};
+
 struct is_format_supported_params
 {
     const char *alsa_name;
@@ -92,6 +111,8 @@ struct get_mix_format_params
 enum alsa_funcs
 {
     alsa_get_endpoint_ids,
+    alsa_create_stream,
+    alsa_release_stream,
     alsa_is_format_supported,
     alsa_get_mix_format,
 };
