@@ -500,7 +500,7 @@ BOOL16 WINAPI WTMgrCsrButtonMap16(HMGR16 hMgr, UINT16 wCursor,
 BOOL16 WINAPI WTMgrCsrPressureBtnMarks16(HMGR16 hMgr, UINT16 wCsr,
 					 DWORD dwNMarks, DWORD dwTMarks)
 {
-    FIXME("(0x%04hx, %hu, %u, %u): stub\n", hMgr, wCsr, dwNMarks, dwTMarks);
+    FIXME("(0x%04hx, %hu, %lu, %lu): stub\n", hMgr, wCsr, dwNMarks, dwTMarks);
 
     return FALSE;
 }
