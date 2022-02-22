@@ -67,7 +67,7 @@ static ULONG WINAPI enumwiadevinfo_AddRef(IEnumWIA_DEV_INFO *iface)
 {
     enumwiadevinfo *This = impl_from_IEnumWIA_DEV_INFO(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(%u)\n", This, ref);
+    TRACE("(%p)->(%lu)\n", This, ref);
     return ref;
 }
 
@@ -76,7 +76,7 @@ static ULONG WINAPI enumwiadevinfo_Release(IEnumWIA_DEV_INFO *iface)
     enumwiadevinfo *This = impl_from_IEnumWIA_DEV_INFO(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(%u)\n", This, ref);
+    TRACE("(%p)->(%lu)\n", This, ref);
 
     if (ref == 0)
         HeapFree(GetProcessHeap(), 0, This);
@@ -87,7 +87,7 @@ static HRESULT WINAPI enumwiadevinfo_Next(IEnumWIA_DEV_INFO *iface, ULONG count,
 {
     enumwiadevinfo *This = impl_from_IEnumWIA_DEV_INFO(iface);
 
-    FIXME("(%p, %d, %p, %p): stub\n", This, count, elem, fetched);
+    FIXME("(%p, %ld, %p, %p): stub\n", This, count, elem, fetched);
 
     *fetched = 0;
     return E_NOTIMPL;
@@ -97,7 +97,7 @@ static HRESULT WINAPI enumwiadevinfo_Skip(IEnumWIA_DEV_INFO *iface, ULONG count)
 {
     enumwiadevinfo *This = impl_from_IEnumWIA_DEV_INFO(iface);
 
-    FIXME("(%p, %u): stub\n", This, count);
+    FIXME("(%p, %lu): stub\n", This, count);
 
     return E_NOTIMPL;
 }
@@ -182,7 +182,7 @@ static HRESULT WINAPI wiadevmgr_EnumDeviceInfo(IWiaDevMgr *iface, LONG flag, IEn
     wiadevmgr *This = impl_from_IWiaDevMgr(iface);
     enumwiadevinfo *enuminfo;
 
-    TRACE("(%p)->(%x, %p)\n", This, flag, ret);
+    TRACE("(%p)->(%lx, %p)\n", This, flag, ret);
 
     *ret = NULL;
 
@@ -208,7 +208,7 @@ static HRESULT WINAPI wiadevmgr_SelectDeviceDlg(IWiaDevMgr *iface, HWND hwndPare
                                                 LONG lFlags, BSTR *pbstrDeviceID, IWiaItem **ppItemRoot)
 {
     wiadevmgr *This = impl_from_IWiaDevMgr(iface);
-    FIXME("(%p, %p, %d, 0x%x, %p, %p): stub\n", This, hwndParent, lDeviceType, lFlags, pbstrDeviceID, ppItemRoot);
+    FIXME("(%p, %p, %ld, 0x%lx, %p, %p): stub\n", This, hwndParent, lDeviceType, lFlags, pbstrDeviceID, ppItemRoot);
     return E_NOTIMPL;
 }
 
@@ -216,7 +216,7 @@ static HRESULT WINAPI wiadevmgr_SelectDeviceDlgID(IWiaDevMgr *iface, HWND hwndPa
                                                   LONG lFlags, BSTR *pbstrDeviceID)
 {
     wiadevmgr *This = impl_from_IWiaDevMgr(iface);
-    FIXME("(%p, %p, %d, 0x%x, %p): stub\n", This, hwndParent, lDeviceType, lFlags, pbstrDeviceID);
+    FIXME("(%p, %p, %ld, 0x%lx, %p): stub\n", This, hwndParent, lDeviceType, lFlags, pbstrDeviceID);
     return E_NOTIMPL;
 }
 
@@ -225,7 +225,7 @@ static HRESULT WINAPI wiadevmgr_GetImageDlg(IWiaDevMgr *iface, HWND hwndParent, 
                                             BSTR bstrFilename, GUID *pguidFormat)
 {
     wiadevmgr *This = impl_from_IWiaDevMgr(iface);
-    FIXME("(%p, %p, %d, 0x%x, %d, %p, %s, %s): stub\n", This, hwndParent, lDeviceType, lFlags,
+    FIXME("(%p, %p, %ld, 0x%lx, %ld, %p, %s, %s): stub\n", This, hwndParent, lDeviceType, lFlags,
         lIntent, pItemRoot, debugstr_w(bstrFilename), debugstr_guid(pguidFormat));
     return E_NOTIMPL;
 }
@@ -235,7 +235,7 @@ static HRESULT WINAPI wiadevmgr_RegisterEventCallbackProgram(IWiaDevMgr *iface, 
                                                              BSTR bstrName, BSTR bstrDescription, BSTR bstrIcon)
 {
     wiadevmgr *This = impl_from_IWiaDevMgr(iface);
-    FIXME("(%p, 0x%x, %s, %s, %s, %s, %s, %s): stub\n", This, lFlags, debugstr_w(bstrDeviceID),
+    FIXME("(%p, 0x%lx, %s, %s, %s, %s, %s, %s): stub\n", This, lFlags, debugstr_w(bstrDeviceID),
         debugstr_guid(pEventGUID), debugstr_w(bstrCommandline), debugstr_w(bstrName),
         debugstr_w(bstrDescription), debugstr_w(bstrIcon));
     return E_NOTIMPL;
@@ -246,7 +246,7 @@ static HRESULT WINAPI wiadevmgr_RegisterEventCallbackInterface(IWiaDevMgr *iface
                                                                IUnknown **pEventObject)
 {
     wiadevmgr *This = impl_from_IWiaDevMgr(iface);
-    FIXME("(%p, 0x%x, %s, %s, %p, %p): stub\n", This, lFlags, debugstr_w(bstrDeviceID),
+    FIXME("(%p, 0x%lx, %s, %s, %p, %p): stub\n", This, lFlags, debugstr_w(bstrDeviceID),
         debugstr_guid(pEventGUID), pIWiaEventCallback, pEventObject);
     return E_NOTIMPL;
 }
@@ -256,7 +256,7 @@ static HRESULT WINAPI wiadevmgr_RegisterEventCallbackCLSID(IWiaDevMgr *iface, LO
                                                            BSTR bstrDescription, BSTR bstrIcon)
 {
     wiadevmgr *This = impl_from_IWiaDevMgr(iface);
-    FIXME("(%p, 0x%x, %s, %s, %s, %s, %s, %s): stub\n", This, lFlags, debugstr_w(bstrDeviceID),
+    FIXME("(%p, 0x%lx, %s, %s, %s, %s, %s, %s): stub\n", This, lFlags, debugstr_w(bstrDeviceID),
         debugstr_guid(pEventGUID), debugstr_guid(pClsID), debugstr_w(bstrName),
         debugstr_w(bstrDescription), debugstr_w(bstrIcon));
     return E_NOTIMPL;
@@ -265,7 +265,7 @@ static HRESULT WINAPI wiadevmgr_RegisterEventCallbackCLSID(IWiaDevMgr *iface, LO
 static HRESULT WINAPI wiadevmgr_AddDeviceDlg(IWiaDevMgr *iface, HWND hwndParent, LONG lFlags)
 {
     wiadevmgr *This = impl_from_IWiaDevMgr(iface);
-    FIXME("(%p, %p, 0x%x): stub\n", This, hwndParent, lFlags);
+    FIXME("(%p, %p, 0x%lx): stub\n", This, hwndParent, lFlags);
     return E_NOTIMPL;
 }
 
