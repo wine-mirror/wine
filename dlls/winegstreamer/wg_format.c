@@ -327,12 +327,12 @@ static void wg_channel_mask_to_gst(GstAudioChannelPosition *positions, uint32_t 
             if (bit < ARRAY_SIZE(position_map))
                 positions[i] = position_map[bit];
             else
-                GST_WARNING("Invalid channel mask %#x.\n", orig_mask);
+                GST_WARNING("Invalid channel mask %#x.", orig_mask);
             mask &= ~(1 << bit);
         }
         else
         {
-            GST_WARNING("Incomplete channel mask %#x.\n", orig_mask);
+            GST_WARNING("Incomplete channel mask %#x.", orig_mask);
         }
     }
 }

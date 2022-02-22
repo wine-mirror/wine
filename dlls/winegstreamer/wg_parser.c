@@ -1436,7 +1436,7 @@ static BOOL decodebin_parser_init_gst(struct wg_parser *parser)
 
     if ((ret = gst_pad_link(parser->my_src, parser->their_sink)) < 0)
     {
-        GST_ERROR("Failed to link pads, error %d.\n", ret);
+        GST_ERROR("Failed to link pads, error %d.", ret);
         return FALSE;
     }
 
@@ -1465,7 +1465,7 @@ static BOOL avi_parser_init_gst(struct wg_parser *parser)
 
     if ((ret = gst_pad_link(parser->my_src, parser->their_sink)) < 0)
     {
-        GST_ERROR("Failed to link pads, error %d.\n", ret);
+        GST_ERROR("Failed to link pads, error %d.", ret);
         return FALSE;
     }
 
@@ -1486,7 +1486,7 @@ static BOOL mpeg_audio_parser_init_gst(struct wg_parser *parser)
     parser->their_sink = gst_element_get_static_pad(element, "sink");
     if ((ret = gst_pad_link(parser->my_src, parser->their_sink)) < 0)
     {
-        GST_ERROR("Failed to link sink pads, error %d.\n", ret);
+        GST_ERROR("Failed to link sink pads, error %d.", ret);
         return FALSE;
     }
 
@@ -1496,7 +1496,7 @@ static BOOL mpeg_audio_parser_init_gst(struct wg_parser *parser)
     gst_object_ref(stream->their_src = gst_element_get_static_pad(element, "src"));
     if ((ret = gst_pad_link(stream->their_src, stream->my_sink)) < 0)
     {
-        GST_ERROR("Failed to link source pads, error %d.\n", ret);
+        GST_ERROR("Failed to link source pads, error %d.", ret);
         return FALSE;
     }
     gst_pad_set_active(stream->my_sink, 1);
@@ -1520,7 +1520,7 @@ static BOOL wave_parser_init_gst(struct wg_parser *parser)
     parser->their_sink = gst_element_get_static_pad(element, "sink");
     if ((ret = gst_pad_link(parser->my_src, parser->their_sink)) < 0)
     {
-        GST_ERROR("Failed to link sink pads, error %d.\n", ret);
+        GST_ERROR("Failed to link sink pads, error %d.", ret);
         return FALSE;
     }
 
@@ -1531,7 +1531,7 @@ static BOOL wave_parser_init_gst(struct wg_parser *parser)
     gst_object_ref(stream->their_src);
     if ((ret = gst_pad_link(stream->their_src, stream->my_sink)) < 0)
     {
-        GST_ERROR("Failed to link source pads, error %d.\n", ret);
+        GST_ERROR("Failed to link source pads, error %d.", ret);
         return FALSE;
     }
     gst_pad_set_active(stream->my_sink, 1);
@@ -1559,7 +1559,7 @@ static void init_gstreamer_once(void)
 
     GST_DEBUG_CATEGORY_INIT(wine, "WINE", GST_DEBUG_FG_RED, "Wine GStreamer support");
 
-    GST_INFO("GStreamer library version %s; wine built with %d.%d.%d.\n",
+    GST_INFO("GStreamer library version %s; wine built with %d.%d.%d.",
             gst_version_string(), GST_VERSION_MAJOR, GST_VERSION_MINOR, GST_VERSION_MICRO);
 }
 
@@ -1597,7 +1597,7 @@ static NTSTATUS wg_parser_create(void *args)
     parser->init_gst = init_funcs[params->type];
     parser->unlimited_buffering = params->unlimited_buffering;
 
-    GST_DEBUG("Created winegstreamer parser %p.\n", parser);
+    GST_DEBUG("Created winegstreamer parser %p.", parser);
     params->parser = parser;
     return S_OK;
 }
