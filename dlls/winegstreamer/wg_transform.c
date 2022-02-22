@@ -62,12 +62,10 @@ NTSTATUS wg_transform_destroy(void *args)
 {
     struct wg_transform *transform = args;
 
-    if (transform->my_sink)
-        g_object_unref(transform->my_sink);
-    if (transform->my_src)
-        g_object_unref(transform->my_src);
-
+    g_object_unref(transform->my_sink);
+    g_object_unref(transform->my_src);
     free(transform);
+
     return STATUS_SUCCESS;
 }
 
@@ -77,61 +75,52 @@ NTSTATUS wg_transform_create(void *args)
     struct wg_format output_format = *params->output_format;
     struct wg_format input_format = *params->input_format;
     GstCaps *src_caps = NULL, *sink_caps = NULL;
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
     GstPadTemplate *template = NULL;
     struct wg_transform *transform;
-    NTSTATUS status;
 
     if (!init_gstreamer())
         return STATUS_UNSUCCESSFUL;
 
-    status = STATUS_NO_MEMORY;
-
     if (!(transform = calloc(1, sizeof(*transform))))
-        goto done;
+        return STATUS_NO_MEMORY;
 
     if (!(src_caps = wg_format_to_caps(&input_format)))
-        goto done;
-    if (!(sink_caps = wg_format_to_caps(&output_format)))
-        goto done;
-
+        goto out_free_transform;
     if (!(template = gst_pad_template_new("src", GST_PAD_SRC, GST_PAD_ALWAYS, src_caps)))
-        goto done;
-    if (!(transform->my_src = gst_pad_new_from_template(template, "src")))
-        goto done;
+        goto out_free_src_caps;
+    transform->my_src = gst_pad_new_from_template(template, "src");
     g_object_unref(template);
-    template = NULL;
+    if (!transform->my_src)
+        goto out_free_src_caps;
 
+    if (!(sink_caps = wg_format_to_caps(&output_format)))
+        goto out_free_src_pad;
     if (!(template = gst_pad_template_new("sink", GST_PAD_SINK, GST_PAD_ALWAYS, sink_caps)))
-        goto done;
-    if (!(transform->my_sink = gst_pad_new_from_template(template, "sink")))
-        goto done;
+        goto out_free_sink_caps;
+    transform->my_sink = gst_pad_new_from_template(template, "sink");
     g_object_unref(template);
-    template = NULL;
+    if (!transform->my_sink)
+        goto out_free_sink_caps;
 
     gst_pad_set_element_private(transform->my_sink, transform);
     gst_pad_set_chain_function(transform->my_sink, transform_sink_chain_cb);
 
-    status = STATUS_SUCCESS;
+    gst_caps_unref(sink_caps);
+    gst_caps_unref(src_caps);
 
-done:
-    if (template)
-        g_object_unref(template);
-    if (sink_caps)
-        gst_caps_unref(sink_caps);
-    if (src_caps)
-        gst_caps_unref(src_caps);
+    GST_INFO("Created winegstreamer transform %p.", transform);
+    params->transform = transform;
+    return STATUS_SUCCESS;
 
-    if (status)
-    {
-        GST_ERROR("Failed to create winegstreamer transform.");
-        if (transform)
-            wg_transform_destroy(transform);
-    }
-    else
-    {
-        GST_INFO("Created winegstreamer transform %p.", transform);
-        params->transform = transform;
-    }
-
+out_free_sink_caps:
+    gst_caps_unref(sink_caps);
+out_free_src_pad:
+    gst_object_unref(transform->my_src);
+out_free_src_caps:
+    gst_caps_unref(src_caps);
+out_free_transform:
+    free(transform);
+    GST_ERROR("Failed to create winegstreamer transform.");
     return status;
 }
