@@ -69,7 +69,7 @@ static ULONG WINAPI WMWriter_AddRef(IWMWriter *iface)
     WMWriter *This = impl_from_IWMWriter(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -79,7 +79,7 @@ static ULONG WINAPI WMWriter_Release(IWMWriter *iface)
     WMWriter *This = impl_from_IWMWriter(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref)
         heap_free(This);
@@ -118,21 +118,21 @@ static HRESULT WINAPI WMWriter_GetInputCount(IWMWriter *iface, DWORD *pcInputs)
 static HRESULT WINAPI WMWriter_GetInputProps(IWMWriter *iface, DWORD dwInputNum, IWMInputMediaProps **input)
 {
     WMWriter *This = impl_from_IWMWriter(iface);
-    FIXME("(%p)->(%d %p)\n", This, dwInputNum, input);
+    FIXME("(%p)->(%ld %p)\n", This, dwInputNum, input);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI WMWriter_SetInputProps(IWMWriter *iface, DWORD dwInputNum, IWMInputMediaProps *input)
 {
     WMWriter *This = impl_from_IWMWriter(iface);
-    FIXME("(%p)->(%d %p)\n", This, dwInputNum, input);
+    FIXME("(%p)->(%ld %p)\n", This, dwInputNum, input);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI WMWriter_GetInputFormatCount(IWMWriter *iface, DWORD dwInputNumber, DWORD *pcFormat)
 {
     WMWriter *This = impl_from_IWMWriter(iface);
-    FIXME("(%p)->(%d %p)\n", This, dwInputNumber, pcFormat);
+    FIXME("(%p)->(%ld %p)\n", This, dwInputNumber, pcFormat);
     return E_NOTIMPL;
 }
 
@@ -140,7 +140,7 @@ static HRESULT WINAPI WMWriter_GetInputFormat(IWMWriter *iface, DWORD dwInputNum
         IWMInputMediaProps **props)
 {
     WMWriter *This = impl_from_IWMWriter(iface);
-    FIXME("(%p)->(%d %d %p)\n", This, dwInputNumber, dwFormatNumber, props);
+    FIXME("(%p)->(%ld %ld %p)\n", This, dwInputNumber, dwFormatNumber, props);
     return E_NOTIMPL;
 }
 
@@ -161,7 +161,7 @@ static HRESULT WINAPI WMWriter_EndWriting(IWMWriter *iface)
 static HRESULT WINAPI WMWriter_AllocateSample(IWMWriter *iface, DWORD size, INSSBuffer **sample)
 {
     WMWriter *This = impl_from_IWMWriter(iface);
-    FIXME("(%p)->(%d %p)\n", This, size, sample);
+    FIXME("(%p)->(%ld %p)\n", This, size, sample);
     return E_NOTIMPL;
 }
 
@@ -169,7 +169,7 @@ static HRESULT WINAPI WMWriter_WriteSample(IWMWriter *iface, DWORD dwInputNum, Q
         DWORD flags, INSSBuffer *sample)
 {
     WMWriter *This = impl_from_IWMWriter(iface);
-    FIXME("(%p)->(%d %s %x %p)\n", This, dwInputNum, wine_dbgstr_longlong(cnsSampleTime), flags, sample);
+    FIXME("(%p)->(%ld %s %lx %p)\n", This, dwInputNum, wine_dbgstr_longlong(cnsSampleTime), flags, sample);
     return E_NOTIMPL;
 }
 
@@ -232,7 +232,7 @@ static HRESULT WINAPI WMWriterAdvanced_GetSinkCount(IWMWriterAdvanced3 *iface, D
 static HRESULT WINAPI WMWriterAdvanced_GetSink(IWMWriterAdvanced3 *iface, DWORD sink_num, IWMWriterSink **sink)
 {
     WMWriter *This = impl_from_IWMWriterAdvanced3(iface);
-    FIXME("(%p)->(%u %p)\n", This, sink_num, sink);
+    FIXME("(%p)->(%lu %p)\n", This, sink_num, sink);
     return E_NOTIMPL;
 }
 
@@ -254,7 +254,7 @@ static HRESULT WINAPI WMWriterAdvanced_WriteStreamSample(IWMWriterAdvanced3 *ifa
         QWORD sample_time, DWORD sample_send_time, QWORD sample_duration, DWORD flags, INSSBuffer *sample)
 {
     WMWriter *This = impl_from_IWMWriterAdvanced3(iface);
-    FIXME("(%p)->(%u %s %u %s %x %p)\n", This, stream_num, wine_dbgstr_longlong(sample_time),
+    FIXME("(%p)->(%u %s %lu %s %lx %p)\n", This, stream_num, wine_dbgstr_longlong(sample_time),
           sample_send_time, wine_dbgstr_longlong(sample_duration), flags, sample);
     return E_NOTIMPL;
 }
@@ -290,7 +290,7 @@ static HRESULT WINAPI WMWriterAdvanced_GetStatistics(IWMWriterAdvanced3 *iface, 
 static HRESULT WINAPI WMWriterAdvanced_SetSyncTolerance(IWMWriterAdvanced3 *iface, DWORD window)
 {
     WMWriter *This = impl_from_IWMWriterAdvanced3(iface);
-    FIXME("(%p)->(%u)\n", This, window);
+    FIXME("(%p)->(%lu)\n", This, window);
     return E_NOTIMPL;
 }
 
@@ -305,7 +305,7 @@ static HRESULT WINAPI WMWriterAdvanced2_GetInputSetting(IWMWriterAdvanced3 *ifac
         const WCHAR *name, WMT_ATTR_DATATYPE *time, BYTE *value, WORD *length)
 {
     WMWriter *This = impl_from_IWMWriterAdvanced3(iface);
-    FIXME("(%p)->(%u %s %p %p %p)\n", This, input_num, debugstr_w(name), time, value, length);
+    FIXME("(%p)->(%lu %s %p %p %p)\n", This, input_num, debugstr_w(name), time, value, length);
     return E_NOTIMPL;
 }
 
@@ -313,7 +313,7 @@ static HRESULT WINAPI WMWriterAdvanced2_SetInputSetting(IWMWriterAdvanced3 *ifac
         const WCHAR *name, WMT_ATTR_DATATYPE type, const BYTE *value, WORD length)
 {
     WMWriter *This = impl_from_IWMWriterAdvanced3(iface);
-    FIXME("(%p)->(%u %s %d %p %u)\n", This, input_num, debugstr_w(name), type, value, length);
+    FIXME("(%p)->(%lu %s %d %p %u)\n", This, input_num, debugstr_w(name), type, value, length);
     return E_NOTIMPL;
 }
 
