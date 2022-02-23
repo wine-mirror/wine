@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = crypt32.dll
 IMPORTS   = crypt32 advapi32 user32 shlwapi shell32 bcrypt
 

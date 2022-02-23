@@ -49,7 +49,7 @@ static void test_AddRemoveProvider(void)
     ret = CryptSIPRemoveProvider(NULL);
     ok (!ret, "Expected CryptSIPRemoveProvider to fail.\n");
     ok (GetLastError() == ERROR_INVALID_PARAMETER,
-        "Expected ERROR_INVALID_PARAMETER, got %d.\n", GetLastError());
+        "Expected ERROR_INVALID_PARAMETER, got %ld.\n", GetLastError());
 
     /* nonexistent provider should result in a registry error */
     SetLastError(0xdeadbeef);
@@ -68,7 +68,7 @@ static void test_AddRemoveProvider(void)
          */
         if (!ret)
             ok (GetLastError() == ERROR_FILE_NOT_FOUND,
-                "Expected ERROR_FILE_NOT_FOUND, got %d.\n", GetLastError());
+                "Expected ERROR_FILE_NOT_FOUND, got %ld.\n", GetLastError());
     }
 
     /* Everything OK, pwszIsFunctionName and pwszIsFunctionNameFmt2 are left NULL
@@ -90,7 +90,7 @@ static void test_AddRemoveProvider(void)
         skip("Need admin rights\n");
         return;
     }
-    ok ( ret, "CryptSIPAddProvider should have succeeded, last error %d\n", GetLastError());
+    ok ( ret, "CryptSIPAddProvider should have succeeded, last error %ld\n", GetLastError());
 
     /* Dummy provider will be deleted, but the function still fails because
      * pwszIsFunctionName and pwszIsFunctionNameFmt2 are not present in the
@@ -105,7 +105,7 @@ static void test_AddRemoveProvider(void)
      */
     if (!ret)
         ok (GetLastError() == ERROR_FILE_NOT_FOUND,
-            "Expected ERROR_FILE_NOT_FOUND, got %d.\n", GetLastError());
+            "Expected ERROR_FILE_NOT_FOUND, got %ld.\n", GetLastError());
 
     /* Everything OK */
     memset(&newprov, 0, sizeof(SIP_ADD_NEWPROVIDER));
@@ -124,12 +124,12 @@ static void test_AddRemoveProvider(void)
 
     SetLastError(0xdeadbeef);
     ret = CryptSIPAddProvider(&newprov);
-    ok ( ret, "CryptSIPAddProvider should have succeeded, last error %d\n", GetLastError());
+    ok ( ret, "CryptSIPAddProvider should have succeeded, last error %ld\n", GetLastError());
 
     /* Dummy provider should be deleted */
     SetLastError(0xdeadbeef);
     ret = CryptSIPRemoveProvider(&actionid);
-    ok ( ret, "CryptSIPRemoveProvider should have succeeded, last error %d\n", GetLastError());
+    ok ( ret, "CryptSIPRemoveProvider should have succeeded, last error %ld\n", GetLastError());
 }
 
 static const BYTE cabFileData[] = {
@@ -164,7 +164,7 @@ static void test_SIPRetrieveSubjectGUID(void)
     ret = CryptSIPRetrieveSubjectGuid(NULL, NULL, NULL);
     ok ( !ret, "Expected CryptSIPRetrieveSubjectGuid to fail\n");
     ok (GetLastError() == ERROR_INVALID_PARAMETER,
-        "Expected ERROR_INVALID_PARAMETER, got %d.\n", GetLastError());
+        "Expected ERROR_INVALID_PARAMETER, got %ld.\n", GetLastError());
 
     /* Test with a nonexistent file (hopefully) */
     SetLastError(0xdeadbeef);
@@ -174,7 +174,7 @@ static void test_SIPRetrieveSubjectGUID(void)
     ok ( !ret, "Expected CryptSIPRetrieveSubjectGuid to fail\n");
     ok (GetLastError() == ERROR_FILE_NOT_FOUND ||
         GetLastError() == ERROR_PATH_NOT_FOUND,
-        "Expected ERROR_FILE_NOT_FOUND or ERROR_PATH_NOT_FOUND, got %d.\n",
+        "Expected ERROR_FILE_NOT_FOUND or ERROR_PATH_NOT_FOUND, got %ld.\n",
         GetLastError());
     ok(IsEqualGUID(&subject, &nullSubject),
        "Expected a NULL GUID for c:\\deadbeef.dbf, not %s\n", wine_dbgstr_guid(&subject));
@@ -184,7 +184,7 @@ static void test_SIPRetrieveSubjectGUID(void)
      * Use A-functions where possible as that should be available on all platforms
      */
     ret = GetEnvironmentVariableA(windir, regeditPath, MAX_PATH);
-    ok (ret > 0, "expected GEVA(windir) to succeed, last error %d\n", GetLastError());
+    ok (ret > 0, "expected GEVA(windir) to succeed, last error %ld\n", GetLastError());
     strcat(regeditPath, "\\");
     strcat(regeditPath, regeditExe);
     MultiByteToWideChar(CP_ACP, 0, regeditPath, strlen(regeditPath)+1, regeditPathW,
@@ -230,7 +230,7 @@ static void test_SIPRetrieveSubjectGUID(void)
          GetLastError() == ERROR_INVALID_PARAMETER /* Vista */ ||
          GetLastError() == ERROR_SUCCESS /* most Win98 */ ||
          GetLastError() == TRUST_E_SUBJECT_FORM_UNKNOWN /* some Win98 */,
-        "Expected ERROR_FILE_INVALID, ERROR_INVALID_PARAMETER, ERROR_SUCCESS or TRUST_E_SUBJECT_FORM_UNKNOWN, got 0x%08x\n", GetLastError());
+        "Expected ERROR_FILE_INVALID, ERROR_INVALID_PARAMETER, ERROR_SUCCESS or TRUST_E_SUBJECT_FORM_UNKNOWN, got 0x%08lx\n", GetLastError());
     ok(IsEqualGUID(&subject, &nullSubject),
        "Expected a NULL GUID for empty file %s, not %s\n", tempfile, wine_dbgstr_guid(&subject));
 
@@ -246,7 +246,7 @@ static void test_SIPRetrieveSubjectGUID(void)
     ok ( GetLastError() == ERROR_INVALID_PARAMETER ||
          GetLastError() == ERROR_SUCCESS /* most Win98 */ ||
          GetLastError() == TRUST_E_SUBJECT_FORM_UNKNOWN /* some Win98 */,
-        "Expected ERROR_INVALID_PARAMETER, ERROR_SUCCESS or TRUST_E_SUBJECT_FORM_UNKNOWN, got 0x%08x\n", GetLastError());
+        "Expected ERROR_INVALID_PARAMETER, ERROR_SUCCESS or TRUST_E_SUBJECT_FORM_UNKNOWN, got 0x%08lx\n", GetLastError());
     ok(IsEqualGUID(&subject, &nullSubject),
        "Expected a NULL GUID for empty file %s, not %s\n", tempfile, wine_dbgstr_guid(&subject));
 
@@ -261,7 +261,7 @@ static void test_SIPRetrieveSubjectGUID(void)
     ok ( !ret, "Expected CryptSIPRetrieveSubjectGuid to fail\n");
     ok ( GetLastError() == TRUST_E_SUBJECT_FORM_UNKNOWN ||
          GetLastError() == ERROR_SUCCESS /* Win98 */,
-        "Expected TRUST_E_SUBJECT_FORM_UNKNOWN or ERROR_SUCCESS, got 0x%08x\n", GetLastError());
+        "Expected TRUST_E_SUBJECT_FORM_UNKNOWN or ERROR_SUCCESS, got 0x%08lx\n", GetLastError());
     ok(IsEqualGUID(&subject, &nullSubject),
        "Expected a NULL GUID for empty file %s, not %s\n", tempfile, wine_dbgstr_guid(&subject));
 
@@ -271,14 +271,14 @@ static void test_SIPRetrieveSubjectGUID(void)
     /* Create a file with just the .cab header 'MSCF' */
     SetLastError(0xdeadbeef);
     file = CreateFileA(tempfile, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "failed with %u\n", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "failed with %lu\n", GetLastError());
     WriteFile(file, cabFileData, 4, &written, NULL);
     CloseHandle(file);
 
     SetLastError(0xdeadbeef);
     memset(&subject, 1, sizeof(GUID));
     ret = CryptSIPRetrieveSubjectGuid(tempfileW, NULL, &subject);
-    ok( ret, "CryptSIPRetrieveSubjectGuid failed: %d (0x%08x)\n",
+    ok( ret, "CryptSIPRetrieveSubjectGuid failed: %ld (0x%08lx)\n",
             GetLastError(), GetLastError() );
     ok(IsEqualGUID(&subject, &cabGUID),
        "Expected GUID %s for cabinet file, not %s\n", wine_dbgstr_guid(&cabGUID), wine_dbgstr_guid(&subject));
@@ -289,14 +289,14 @@ static void test_SIPRetrieveSubjectGUID(void)
     /* Create a .cab file */
     SetLastError(0xdeadbeef);
     file = CreateFileA(tempfile, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "failed with %u\n", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "failed with %lu\n", GetLastError());
     WriteFile(file, cabFileData, sizeof(cabFileData), &written, NULL);
     CloseHandle(file);
 
     SetLastError(0xdeadbeef);
     memset(&subject, 1, sizeof(GUID));
     ret = CryptSIPRetrieveSubjectGuid(tempfileW, NULL, &subject);
-    ok( ret, "CryptSIPRetrieveSubjectGuid failed: %d (0x%08x)\n",
+    ok( ret, "CryptSIPRetrieveSubjectGuid failed: %ld (0x%08lx)\n",
             GetLastError(), GetLastError() );
     ok(IsEqualGUID(&subject, &cabGUID),
        "Expected GUID %s for cabinet file, not %s\n", wine_dbgstr_guid(&cabGUID), wine_dbgstr_guid(&subject));
@@ -322,14 +322,14 @@ static void test_SIPLoad(void)
     ret = CryptSIPLoad(NULL, 0, NULL);
     ok ( !ret, "Expected CryptSIPLoad to fail\n");
     ok ( GetLastError() == ERROR_INVALID_PARAMETER,
-        "Expected ERROR_INVALID_PARAMETER, got 0x%08x\n", GetLastError());
+        "Expected ERROR_INVALID_PARAMETER, got 0x%08lx\n", GetLastError());
 
     /* Only pSipDispatch NULL */
     SetLastError(0xdeadbeef);
     ret = CryptSIPLoad(&subject, 0, NULL);
     ok ( !ret, "Expected CryptSIPLoad to fail\n");
     ok ( GetLastError() == ERROR_INVALID_PARAMETER,
-        "Expected ERROR_INVALID_PARAMETER, got 0x%08x\n", GetLastError());
+        "Expected ERROR_INVALID_PARAMETER, got 0x%08lx\n", GetLastError());
 
     /* No NULLs, but nonexistent pgSubject */
     SetLastError(0xdeadbeef);
@@ -339,7 +339,7 @@ static void test_SIPLoad(void)
     ret = CryptSIPLoad(&dummySubject, 0, &sdi);
     ok ( !ret, "Expected CryptSIPLoad to fail\n");
     ok ( GetLastError() == TRUST_E_SUBJECT_FORM_UNKNOWN,
-        "Expected TRUST_E_SUBJECT_FORM_UNKNOWN, got 0x%08x\n", GetLastError());
+        "Expected TRUST_E_SUBJECT_FORM_UNKNOWN, got 0x%08lx\n", GetLastError());
     ok( sdi.pfGet == (pCryptSIPGetSignedDataMsg)0xdeadbeef, "Expected no change to the function pointer\n");
 
     hCrypt = GetModuleHandleA("crypt32.dll");
@@ -430,7 +430,7 @@ static void test_SIPLoad(void)
     ret = CryptSIPLoad(&unknown, 1, &sdi);
     ok ( !ret, "Expected CryptSIPLoad to fail\n");
     ok ( GetLastError() == ERROR_INVALID_PARAMETER,
-        "Expected ERROR_INVALID_PARAMETER, got 0x%08x\n", GetLastError());
+        "Expected ERROR_INVALID_PARAMETER, got 0x%08lx\n", GetLastError());
     ok( sdi.pfGet == (pCryptSIPGetSignedDataMsg)0xdeadbeef, "Expected no change to the function pointer\n");
 }
 

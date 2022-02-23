@@ -53,40 +53,40 @@ static void test_msg_get_signer_count(void)
 
     SetLastError(0xdeadbeef);
     count = CryptGetMessageSignerCount(0, NULL, 0);
-    ok(count == -1, "Expected -1, got %d\n", count);
-    ok(GetLastError() == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n",
+    ok(count == -1, "Expected -1, got %ld\n", count);
+    ok(GetLastError() == E_INVALIDARG, "Expected E_INVALIDARG, got %08lx\n",
      GetLastError());
     SetLastError(0xdeadbeef);
     count = CryptGetMessageSignerCount(PKCS_7_ASN_ENCODING, NULL, 0);
-    ok(count == -1, "Expected -1, got %d\n", count);
+    ok(count == -1, "Expected -1, got %ld\n", count);
     ok(GetLastError() == CRYPT_E_ASN1_EOD ||
        GetLastError() == OSS_BAD_ARG, /* win9x */
-     "Expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
+     "Expected CRYPT_E_ASN1_EOD, got %08lx\n", GetLastError());
     SetLastError(0xdeadbeef);
     count = CryptGetMessageSignerCount(PKCS_7_ASN_ENCODING,
      dataEmptyBareContent, sizeof(dataEmptyBareContent));
-    ok(count == -1, "Expected -1, got %d\n", count);
+    ok(count == -1, "Expected -1, got %ld\n", count);
     ok(GetLastError() == CRYPT_E_ASN1_BADTAG ||
        GetLastError() == OSS_PDU_MISMATCH, /* win9x */
-     "Expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
+     "Expected CRYPT_E_ASN1_BADTAG, got %08lx\n", GetLastError());
     SetLastError(0xdeadbeef);
     count = CryptGetMessageSignerCount(PKCS_7_ASN_ENCODING,
      dataEmptyContent, sizeof(dataEmptyContent));
-    ok(count == -1, "Expected -1, got %d\n", count);
+    ok(count == -1, "Expected -1, got %ld\n", count);
     ok(GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
-     "Expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
+     "Expected CRYPT_E_INVALID_MSG_TYPE, got %08lx\n", GetLastError());
     SetLastError(0xdeadbeef);
     count = CryptGetMessageSignerCount(PKCS_7_ASN_ENCODING,
      signedEmptyBareContent, sizeof(signedEmptyBareContent));
-    ok(count == -1, "Expected -1, got %d\n", count);
+    ok(count == -1, "Expected -1, got %ld\n", count);
     ok(GetLastError() == CRYPT_E_ASN1_BADTAG ||
        GetLastError() == OSS_DATA_ERROR, /* win9x */
-     "Expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
+     "Expected CRYPT_E_ASN1_BADTAG, got %08lx\n", GetLastError());
     count = CryptGetMessageSignerCount(PKCS_7_ASN_ENCODING,
      signedEmptyContent, sizeof(signedEmptyContent));
     ok(count == 1 ||
        broken(count == -1), /* win9x */
-       "Expected 1, got %d\n", count);
+       "Expected 1, got %ld\n", count);
 }
 
 static BYTE detachedHashContent[] = {
@@ -115,13 +115,13 @@ static void test_verify_detached_message_hash(void)
     ret = CryptVerifyDetachedMessageHash(&para, NULL, 0, 0, NULL, NULL, NULL,
      NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "expected E_INVALIDARG, got %08x\n", GetLastError());
+     "expected E_INVALIDARG, got %08lx\n", GetLastError());
     para.cbSize = sizeof(para);
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageHash(&para, NULL, 0, 0, NULL, NULL, NULL,
      NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "expected E_INVALIDARG, got %08x\n", GetLastError());
+     "expected E_INVALIDARG, got %08lx\n", GetLastError());
     para.dwMsgEncodingType = PKCS_7_ASN_ENCODING;
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageHash(&para, NULL, 0, 0, NULL, NULL, NULL,
@@ -129,13 +129,13 @@ static void test_verify_detached_message_hash(void)
     ok(!ret &&
      (GetLastError() == CRYPT_E_ASN1_EOD ||
       GetLastError() == OSS_BAD_ARG), /* win9x */
-     "expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
+     "expected CRYPT_E_ASN1_EOD, got %08lx\n", GetLastError());
     para.dwMsgEncodingType = X509_ASN_ENCODING;
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageHash(&para, NULL, 0, 0, NULL, NULL, NULL,
      NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "expected E_INVALIDARG, got %08x\n", GetLastError());
+     "expected E_INVALIDARG, got %08lx\n", GetLastError());
     para.dwMsgEncodingType = X509_ASN_ENCODING | PKCS_7_ASN_ENCODING;
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageHash(&para, NULL, 0, 0, NULL, NULL, NULL,
@@ -143,18 +143,18 @@ static void test_verify_detached_message_hash(void)
     ok(!ret &&
      (GetLastError() == CRYPT_E_ASN1_EOD ||
       GetLastError() == OSS_BAD_ARG), /* win9x */
-     "expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
+     "expected CRYPT_E_ASN1_EOD, got %08lx\n", GetLastError());
     /* Curiously, passing no data to hash succeeds.. */
     ret = CryptVerifyDetachedMessageHash(&para, detachedHashContent,
      sizeof(detachedHashContent), 0, NULL, NULL, NULL, NULL);
     todo_wine
-    ok(ret, "CryptVerifyDetachedMessageHash failed: %08x\n", GetLastError());
+    ok(ret, "CryptVerifyDetachedMessageHash failed: %08lx\n", GetLastError());
     /* as does passing the actual content of the message to hash.. */
     size = sizeof(msgData);
     pMsgData = msgData;
     ret = CryptVerifyDetachedMessageHash(&para, detachedHashContent,
      sizeof(detachedHashContent), 1, &pMsgData, &size, NULL, NULL);
-    ok(ret, "CryptVerifyDetachedMessageHash failed: %08x\n", GetLastError());
+    ok(ret, "CryptVerifyDetachedMessageHash failed: %08lx\n", GetLastError());
     /* while passing data to hash that isn't the content of the message fails.
      */
     size = sizeof(detachedHashContent);
@@ -163,7 +163,7 @@ static void test_verify_detached_message_hash(void)
     ret = CryptVerifyDetachedMessageHash(&para, detachedHashContent,
      sizeof(detachedHashContent), 1, &pMsgData, &size, NULL, NULL);
     ok(!ret && GetLastError() == CRYPT_E_HASH_VALUE,
-     "expected CRYPT_E_HASH_VALUE, got %08x\n", GetLastError());
+     "expected CRYPT_E_HASH_VALUE, got %08lx\n", GetLastError());
     /* Getting the size of the hash while passing no hash data causes the
      * hash to be checked (and fail.)
      */
@@ -171,23 +171,23 @@ static void test_verify_detached_message_hash(void)
     ret = CryptVerifyDetachedMessageHash(&para, detachedHashContent,
      sizeof(detachedHashContent), 0, NULL, NULL, NULL, &hashSize);
     ok(!ret && GetLastError() == CRYPT_E_HASH_VALUE,
-     "expected CRYPT_E_HASH_VALUE, got %08x\n", GetLastError());
+     "expected CRYPT_E_HASH_VALUE, got %08lx\n", GetLastError());
     size = sizeof(msgData);
     pMsgData = msgData;
     ret = CryptVerifyDetachedMessageHash(&para, detachedHashContent,
      sizeof(detachedHashContent), 1, &pMsgData, &size, NULL, &hashSize);
-    ok(ret, "CryptVerifyDetachedMessageHash failed: %08x\n", GetLastError());
-    ok(hashSize == sizeof(hash), "unexpected size %d\n", hashSize);
+    ok(ret, "CryptVerifyDetachedMessageHash failed: %08lx\n", GetLastError());
+    ok(hashSize == sizeof(hash), "unexpected size %ld\n", hashSize);
     hashSize = 1;
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageHash(&para, detachedHashContent,
      sizeof(detachedHashContent), 1, &pMsgData, &size, hash, &hashSize);
     ok(!ret && GetLastError() == ERROR_MORE_DATA,
-     "expected ERROR_MORE_DATA, got %08x\n", GetLastError());
+     "expected ERROR_MORE_DATA, got %08lx\n", GetLastError());
     hashSize = sizeof(hash);
     ret = CryptVerifyDetachedMessageHash(&para, detachedHashContent,
      sizeof(detachedHashContent), 1, &pMsgData, &size, hash, &hashSize);
-    ok(ret, "CryptVerifyDetachedMessageHash failed: %08x\n", GetLastError());
+    ok(ret, "CryptVerifyDetachedMessageHash failed: %08lx\n", GetLastError());
 }
 
 static BYTE hashContent[] = {
@@ -211,31 +211,31 @@ static void test_verify_message_hash(void)
     SetLastError(0xdeadbeef);
     ret = CryptVerifyMessageHash(&para, NULL, 0, NULL, NULL, NULL, NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "expected E_INVALIDARG, got %08x\n", GetLastError());
+     "expected E_INVALIDARG, got %08lx\n", GetLastError());
     para.cbSize = sizeof(para);
     SetLastError(0xdeadbeef);
     ret = CryptVerifyMessageHash(&para, NULL, 0, NULL, NULL, NULL, NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "expected E_INVALIDARG, got %08x\n", GetLastError());
+     "expected E_INVALIDARG, got %08lx\n", GetLastError());
     para.dwMsgEncodingType = PKCS_7_ASN_ENCODING;
     SetLastError(0xdeadbeef);
     ret = CryptVerifyMessageHash(&para, NULL, 0, NULL, NULL, NULL, NULL);
     ok(!ret, "Expected 0, got %d\n", ret);
     ok(GetLastError() == CRYPT_E_ASN1_EOD ||
        GetLastError() == OSS_BAD_ARG, /* win98 */
-     "Expected CRYPT_E_ASN1_EOD or OSS_BAD_ARG, got %08x\n", GetLastError());
+     "Expected CRYPT_E_ASN1_EOD or OSS_BAD_ARG, got %08lx\n", GetLastError());
     /* Verifying the hash of a detached message succeeds? */
     ret = CryptVerifyMessageHash(&para, detachedHashContent,
      sizeof(detachedHashContent), NULL, NULL, NULL, NULL);
     todo_wine
-    ok(ret, "CryptVerifyMessageHash failed: %08x\n", GetLastError());
+    ok(ret, "CryptVerifyMessageHash failed: %08lx\n", GetLastError());
     /* As does verifying the hash of a regular message. */
     ret = CryptVerifyMessageHash(&para, hashContent, sizeof(hashContent),
      NULL, NULL, NULL, NULL);
-    ok(ret, "CryptVerifyMessageHash failed: %08x\n", GetLastError());
+    ok(ret, "CryptVerifyMessageHash failed: %08lx\n", GetLastError());
     ret = CryptVerifyMessageHash(&para, hashContent, sizeof(hashContent),
      NULL, &size, NULL, NULL);
-    ok(ret, "CryptVerifyMessageHash failed: %08x\n", GetLastError());
+    ok(ret, "CryptVerifyMessageHash failed: %08lx\n", GetLastError());
     if (ret)
         buf = CryptMemAlloc(size);
     if (buf)
@@ -244,11 +244,11 @@ static void test_verify_message_hash(void)
         ret = CryptVerifyMessageHash(&para, hashContent, sizeof(hashContent),
          buf, &size, NULL, NULL);
         ok(!ret && GetLastError() == ERROR_MORE_DATA,
-         "expected ERROR_MORE_DATA, got %08x\n", GetLastError());
+         "expected ERROR_MORE_DATA, got %08lx\n", GetLastError());
         ret = CryptVerifyMessageHash(&para, hashContent, sizeof(hashContent),
          buf, &size, NULL, NULL);
-        ok(ret, "CryptVerifyMessageHash failed: %08x\n", GetLastError());
-        ok(size == sizeof(msgData), "unexpected size %d\n", size);
+        ok(ret, "CryptVerifyMessageHash failed: %08lx\n", GetLastError());
+        ok(size == sizeof(msgData), "unexpected size %ld\n", size);
         ok(!memcmp(buf, msgData, size), "unexpected value\n");
         CryptMemFree(buf);
     }
@@ -338,24 +338,24 @@ static void test_verify_detached_message_signature(void)
     ret = CryptVerifyDetachedMessageSignature(NULL, 0, NULL, 0, 0, NULL,
      NULL, NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "Expected E_INVALIDARG, got %08x\n", GetLastError());
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageSignature(&para, 0, NULL, 0, 0, NULL,
      NULL, NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "Expected E_INVALIDARG, got %08x\n", GetLastError());
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     para.cbSize = sizeof(para);
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageSignature(&para, 0, NULL, 0, 0, NULL,
      NULL, NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "Expected E_INVALIDARG, got %08x\n", GetLastError());
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     para.dwMsgAndCertEncodingType = X509_ASN_ENCODING;
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageSignature(&para, 0, NULL, 0, 0, NULL,
      NULL, NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "Expected E_INVALIDARG, got %08x\n", GetLastError());
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     para.dwMsgAndCertEncodingType = PKCS_7_ASN_ENCODING;
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageSignature(&para, 0, NULL, 0, 0, NULL,
@@ -363,7 +363,7 @@ static void test_verify_detached_message_signature(void)
     ok(!ret, "Expected 0, got %d\n", ret);
     ok(GetLastError() == CRYPT_E_ASN1_EOD ||
      GetLastError() == OSS_BAD_ARG, /* win98 */
-     "Expected CRYPT_E_ASN1_EOD or OSS_BAD_ARG, got %08x\n", GetLastError());
+     "Expected CRYPT_E_ASN1_EOD or OSS_BAD_ARG, got %08lx\n", GetLastError());
     /* None of these messages contains a cert in the message itself, so the
      * default callback isn't able to verify their signature.
      */
@@ -374,21 +374,21 @@ static void test_verify_detached_message_signature(void)
     todo_wine
     ok(GetLastError() == CRYPT_E_NOT_FOUND ||
      GetLastError() == OSS_DATA_ERROR, /* win98 */
-     "Expected CRYPT_E_NOT_FOUND or OSS_DATA_ERROR, got %08x\n", GetLastError());
+     "Expected CRYPT_E_NOT_FOUND or OSS_DATA_ERROR, got %08lx\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageSignature(&para, 0, signedContent,
      sizeof(signedContent), 0, NULL, NULL, NULL);
     ok(!ret, "Expected 0, got %d\n", ret);
     ok(GetLastError() == CRYPT_E_NOT_FOUND ||
      GetLastError() == OSS_DATA_ERROR, /* win98 */
-     "Expected CRYPT_E_NOT_FOUND or OSS_DATA_ERROR, got %08x\n", GetLastError());
+     "Expected CRYPT_E_NOT_FOUND or OSS_DATA_ERROR, got %08lx\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageSignature(&para, 0, detachedSignedContent,
      sizeof(detachedSignedContent), 0, NULL, NULL, NULL);
     ok(!ret, "Expected 0, got %d\n", ret);
     ok(GetLastError() == CRYPT_E_NOT_FOUND ||
      GetLastError() == OSS_DATA_ERROR, /* win98 */
-     "Expected CRYPT_E_NOT_FOUND or OSS_DATA_ERROR, got %08x\n", GetLastError());
+     "Expected CRYPT_E_NOT_FOUND or OSS_DATA_ERROR, got %08lx\n", GetLastError());
     SetLastError(0xdeadbeef);
     pContent = msgData;
     cbContent = sizeof(msgData);
@@ -397,14 +397,14 @@ static void test_verify_detached_message_signature(void)
     ok(!ret, "Expected 0, got %d\n", ret);
     ok(GetLastError() == CRYPT_E_NOT_FOUND ||
      GetLastError() == OSS_DATA_ERROR, /* win98 */
-     "Expected CRYPT_E_NOT_FOUND or OSS_DATA_ERROR, got %08x\n", GetLastError());
+     "Expected CRYPT_E_NOT_FOUND or OSS_DATA_ERROR, got %08lx\n", GetLastError());
     /* Passing the correct callback results in success */
     para.pfnGetSignerCertificate = msg_get_signer_callback;
     ret = CryptVerifyDetachedMessageSignature(&para, 0, detachedSignedContent,
      sizeof(detachedSignedContent), 1, &pContent, &cbContent, NULL);
     ok(ret ||
      broken(!ret), /* win98 */
-     "CryptVerifyDetachedMessageSignature failed: %08x\n",
+     "CryptVerifyDetachedMessageSignature failed: %08lx\n",
      GetLastError());
     /* Not passing the correct data to be signed results in the signature not
      * matching.
@@ -415,7 +415,7 @@ static void test_verify_detached_message_signature(void)
     ok(!ret, "Expected 0, got %d\n", ret);
     ok(GetLastError() == NTE_BAD_SIGNATURE ||
      GetLastError() == OSS_DATA_ERROR, /* win98 */
-     "Expected NTE_BAD_SIGNATURE or OSS_DATA_ERROR, got %08x\n", GetLastError());
+     "Expected NTE_BAD_SIGNATURE or OSS_DATA_ERROR, got %08lx\n", GetLastError());
 }
 
 static const BYTE signedWithCertEmptyContent[] = {
@@ -493,42 +493,42 @@ static void test_verify_message_signature(void)
     SetLastError(0xdeadbeef);
     ret = CryptVerifyMessageSignature(NULL, 0, NULL, 0, NULL, 0, NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "Expected E_INVALIDARG, got %08x\n", GetLastError());
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     /* Is cbDecoded set when invalid parameters are passed? */
     cbDecoded = 0xdeadbeef;
     ret = CryptVerifyMessageSignature(NULL, 0, NULL, 0, NULL, &cbDecoded,
      NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "Expected E_INVALIDARG, got %08x\n", GetLastError());
-    ok(cbDecoded == 0, "expected 0, got %08x\n", cbDecoded);
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+    ok(cbDecoded == 0, "expected 0, got %08lx\n", cbDecoded);
     SetLastError(0xdeadbeef);
     ret = CryptVerifyMessageSignature(&para, 0, NULL, 0, NULL, 0, NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "Expected E_INVALIDARG, got %08x\n", GetLastError());
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     para.cbSize = sizeof(para);
     SetLastError(0xdeadbeef);
     ret = CryptVerifyMessageSignature(&para, 0, NULL, 0, NULL, 0, NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "Expected E_INVALIDARG, got %08x\n", GetLastError());
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     para.cbSize = 0;
     para.dwMsgAndCertEncodingType = PKCS_7_ASN_ENCODING;
     SetLastError(0xdeadbeef);
     ret = CryptVerifyMessageSignature(&para, 0, NULL, 0, NULL, 0, NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "Expected E_INVALIDARG, got %08x\n", GetLastError());
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     para.cbSize = sizeof(para);
     SetLastError(0xdeadbeef);
     ret = CryptVerifyMessageSignature(&para, 0, NULL, 0, NULL, 0, NULL);
     ok(!ret &&
      (GetLastError() == CRYPT_E_ASN1_EOD ||
       GetLastError() == OSS_BAD_ARG), /* win9x */
-     "Expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
+     "Expected CRYPT_E_ASN1_EOD, got %08lx\n", GetLastError());
     /* Check whether cert is set on error */
     cert = (PCCERT_CONTEXT)0xdeadbeef;
     ret = CryptVerifyMessageSignature(&para, 0, NULL, 0, NULL, 0, &cert);
     ok(!ret && (GetLastError() == CRYPT_E_ASN1_EOD ||
     GetLastError() == OSS_BAD_ARG /* NT40 */),
-     "Expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
+     "Expected CRYPT_E_ASN1_EOD, got %08lx\n", GetLastError());
     ok(cert == NULL, "Expected NULL cert\n");
     /* Check whether cbDecoded is set on error */
     cbDecoded = 0xdeadbeef;
@@ -536,43 +536,43 @@ static void test_verify_message_signature(void)
      NULL);
     ok(!ret && (GetLastError() == CRYPT_E_ASN1_EOD ||
      GetLastError() == OSS_BAD_ARG /* NT40 */),
-     "Expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
+     "Expected CRYPT_E_ASN1_EOD, got %08lx\n", GetLastError());
     ok(!cbDecoded, "Expected 0\n");
     SetLastError(0xdeadbeef);
     ret = CryptVerifyMessageSignature(&para, 0, dataEmptyBareContent,
      sizeof(dataEmptyBareContent), NULL, 0, NULL);
     ok(!ret && (GetLastError() == CRYPT_E_ASN1_BADTAG ||
      GetLastError() == OSS_PDU_MISMATCH /* NT40 */),
-     "Expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
+     "Expected CRYPT_E_ASN1_BADTAG, got %08lx\n", GetLastError());
     ok(GetLastError() == CRYPT_E_ASN1_BADTAG ||
      GetLastError() == OSS_PDU_MISMATCH, /* win9x */
-     "Expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
+     "Expected CRYPT_E_ASN1_BADTAG, got %08lx\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CryptVerifyMessageSignature(&para, 0, dataEmptyContent,
      sizeof(dataEmptyContent), NULL, 0, NULL);
     ok(!ret && GetLastError() == CRYPT_E_UNEXPECTED_MSG_TYPE,
-     "Expected CRYPT_E_UNEXPECTED_MSG_TYPE, got %08x\n", GetLastError());
+     "Expected CRYPT_E_UNEXPECTED_MSG_TYPE, got %08lx\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CryptVerifyMessageSignature(&para, 0, signedEmptyBareContent,
      sizeof(signedEmptyBareContent), NULL, 0, NULL);
     ok(!ret &&
      (GetLastError() == CRYPT_E_ASN1_BADTAG ||
       GetLastError() == OSS_DATA_ERROR), /* win9x */
-     "Expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
+     "Expected CRYPT_E_ASN1_BADTAG, got %08lx\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CryptVerifyMessageSignature(&para, 0, signedEmptyContent,
      sizeof(signedEmptyContent), NULL, 0, NULL);
     ok(!ret &&
      (GetLastError() == CRYPT_E_NOT_FOUND ||
       GetLastError() == OSS_DATA_ERROR), /* win9x */
-     "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
+     "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CryptVerifyMessageSignature(&para, 0, signedContent,
      sizeof(signedContent), NULL, 0, NULL);
     ok(!ret &&
      (GetLastError() == CRYPT_E_NOT_FOUND ||
       GetLastError() == OSS_DATA_ERROR), /* win9x */
-     "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
+     "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
     /* FIXME: Windows fails with CRYPT_E_NOT_FOUND for these messages, but
      * their signer certs have invalid public keys that fail to decode.  In
      * Wine therefore the failure is an ASN error.  Need some messages with
@@ -599,22 +599,22 @@ static void test_verify_message_signature(void)
     ret = CryptVerifyMessageSignature(&para, 0,
      signedWithCertWithValidPubKeyContent,
      sizeof(signedWithCertWithValidPubKeyContent), NULL, &cbDecoded, NULL);
-    ok(ret, "CryptVerifyMessageSignature failed: %08x\n", GetLastError());
-    ok(cbDecoded == sizeof(msgData), "expected 4, got %d\n", cbDecoded);
+    ok(ret, "CryptVerifyMessageSignature failed: %08lx\n", GetLastError());
+    ok(cbDecoded == sizeof(msgData), "expected 4, got %ld\n", cbDecoded);
     cbDecoded = 0;
     ret = CryptVerifyMessageSignature(&para, 0,
      signedWithCertWithValidPubKeyContent,
      sizeof(signedWithCertWithValidPubKeyContent), NULL, &cbDecoded, NULL);
     /* Setting cbDecoded to 0 succeeds when a NULL buffer is provided */
-    ok(ret, "CryptVerifyMessageSignature failed: %08x\n", GetLastError());
-    ok(cbDecoded == sizeof(msgData), "expected 4, got %d\n", cbDecoded);
+    ok(ret, "CryptVerifyMessageSignature failed: %08lx\n", GetLastError());
+    ok(cbDecoded == sizeof(msgData), "expected 4, got %ld\n", cbDecoded);
     cbDecoded = 0;
     ret = CryptVerifyMessageSignature(&para, 0,
      signedWithCertWithValidPubKeyContent,
      sizeof(signedWithCertWithValidPubKeyContent), decoded, &cbDecoded, NULL);
     /* When a non-NULL buffer is provided, cbDecoded must not be too small */
     ok(!ret && GetLastError() == ERROR_MORE_DATA,
-     "expected ERROR_MORE_DATA, got %d (%08x)\n", GetLastError(),
+     "expected ERROR_MORE_DATA, got %ld (%08lx)\n", GetLastError(),
      GetLastError());
 }
 
@@ -653,38 +653,38 @@ static void test_hash_message(void)
     SetLastError(0xdeadbeef);
     ret = CryptHashMessage(&para, FALSE, 0, NULL, NULL, NULL, NULL, NULL, NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "expected E_INVALIDARG, got 0x%08x\n", GetLastError());
+     "expected E_INVALIDARG, got 0x%08lx\n", GetLastError());
     para.cbSize = sizeof(para);
     /* Not quite sure what "success" means in this case, but it does succeed */
     SetLastError(0xdeadbeef);
     ret = CryptHashMessage(&para, FALSE, 0, NULL, NULL, NULL, NULL, NULL, NULL);
-    ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
+    ok(ret, "CryptHashMessage failed: 0x%08lx\n", GetLastError());
     /* With a bogus encoding type it "succeeds" */
     para.dwMsgEncodingType = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = CryptHashMessage(&para, FALSE, 0, NULL, NULL, NULL, NULL, NULL, NULL);
-    ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
+    ok(ret, "CryptHashMessage failed: 0x%08lx\n", GetLastError());
     /* According to MSDN, the third parameter (cToBeHashed) must be 1 if the
      * second parameter (fDetached) is FALSE, but again it "succeeds."
      */
     SetLastError(0xdeadbeef);
     ret = CryptHashMessage(&para, FALSE, 2, NULL, NULL, NULL, NULL, NULL, NULL);
-    ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
+    ok(ret, "CryptHashMessage failed: 0x%08lx\n", GetLastError());
     /* Even passing parameters to hash results in "success." */
     SetLastError(0xdeadbeef);
     ret = CryptHashMessage(&para, FALSE, 2, toHash, hashSize, NULL, NULL, NULL,
      NULL);
-    ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
+    ok(ret, "CryptHashMessage failed: 0x%08lx\n", GetLastError());
     /* Try again with a valid encoding type */
     para.dwMsgEncodingType = PKCS_7_ASN_ENCODING;
     SetLastError(0xdeadbeef);
     ret = CryptHashMessage(&para, FALSE, 2, NULL, NULL, NULL, NULL, NULL, NULL);
-    ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
+    ok(ret, "CryptHashMessage failed: 0x%08lx\n", GetLastError());
     /* And with valid data to hash */
     SetLastError(0xdeadbeef);
     ret = CryptHashMessage(&para, FALSE, 2, toHash, hashSize, NULL, NULL, NULL,
      NULL);
-    ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
+    ok(ret, "CryptHashMessage failed: 0x%08lx\n", GetLastError());
     /* But requesting the size of the hashed blob and indicating there's data
      * to hash results in a crash
      */
@@ -702,7 +702,7 @@ static void test_hash_message(void)
     ok(!ret &&
      (GetLastError() == CRYPT_E_UNKNOWN_ALGO ||
       GetLastError() == CRYPT_E_OID_FORMAT), /* Vista */
-     "expected CRYPT_E_UNKNOWN_ALGO or CRYPT_E_OID_FORMAT, got 0x%08x (%d)\n",
+     "expected CRYPT_E_UNKNOWN_ALGO or CRYPT_E_OID_FORMAT, got 0x%08lx (%ld)\n",
      GetLastError(), GetLastError());
     para.HashAlgorithm.pszObjId = oid_rsa_md5;
     /* With a valid hash algorithm, this succeeds, even though fDetached is
@@ -712,7 +712,7 @@ static void test_hash_message(void)
     ret = CryptHashMessage(&para, FALSE, 2, toHash, hashSize, NULL,
      &hashedBlobSize, NULL, NULL);
     todo_wine
-    ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
+    ok(ret, "CryptHashMessage failed: 0x%08lx\n", GetLastError());
     if (ret)
     {
         /* Actually attempting to get the hashed data fails, perhaps because
@@ -723,7 +723,7 @@ static void test_hash_message(void)
         ret = CryptHashMessage(&para, FALSE, 2, toHash, hashSize, hashedBlob,
          &hashedBlobSize, NULL, NULL);
         ok(!ret && GetLastError() == CRYPT_E_MSG_ERROR,
-         "expected CRYPT_E_MSG_ERROR, got 0x%08x (%d)\n", GetLastError(),
+         "expected CRYPT_E_MSG_ERROR, got 0x%08lx (%ld)\n", GetLastError(),
          GetLastError());
         HeapFree(GetProcessHeap(), 0, hashedBlob);
     }
@@ -731,16 +731,16 @@ static void test_hash_message(void)
     SetLastError(0xdeadbeef);
     ret = CryptHashMessage(&para, TRUE, 2, toHash, hashSize, NULL,
      &hashedBlobSize, NULL, NULL);
-    ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
+    ok(ret, "CryptHashMessage failed: 0x%08lx\n", GetLastError());
     if (ret)
     {
         hashedBlob = HeapAlloc(GetProcessHeap(), 0, hashedBlobSize);
         SetLastError(0xdeadbeef);
         ret = CryptHashMessage(&para, TRUE, 2, toHash, hashSize, hashedBlob,
          &hashedBlobSize, NULL, NULL);
-        ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
+        ok(ret, "CryptHashMessage failed: 0x%08lx\n", GetLastError());
         ok(hashedBlobSize == sizeof(detachedHashBlob),
-         "unexpected size of detached blob %d\n", hashedBlobSize);
+         "unexpected size of detached blob %ld\n", hashedBlobSize);
         ok(!memcmp(hashedBlob, detachedHashBlob, hashedBlobSize),
          "unexpected detached blob value\n");
         HeapFree(GetProcessHeap(), 0, hashedBlob);
@@ -749,15 +749,15 @@ static void test_hash_message(void)
     SetLastError(0xdeadbeef);
     ret = CryptHashMessage(&para, FALSE, 1, toHash, hashSize, NULL,
      &hashedBlobSize, NULL, NULL);
-    ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
+    ok(ret, "CryptHashMessage failed: 0x%08lx\n", GetLastError());
     if (ret)
     {
         hashedBlob = HeapAlloc(GetProcessHeap(), 0, hashedBlobSize);
         ret = CryptHashMessage(&para, FALSE, 1, toHash, hashSize, hashedBlob,
          &hashedBlobSize, NULL, NULL);
-        ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
+        ok(ret, "CryptHashMessage failed: 0x%08lx\n", GetLastError());
         ok(hashedBlobSize == sizeof(hashBlob),
-         "unexpected size of detached blob %d\n", hashedBlobSize);
+         "unexpected size of detached blob %ld\n", hashedBlobSize);
         ok(!memcmp(hashedBlob, hashBlob, hashedBlobSize),
          "unexpected detached blob value\n");
         HeapFree(GetProcessHeap(), 0, hashedBlob);
@@ -768,8 +768,8 @@ static void test_hash_message(void)
     computedHashSize = 0xdeadbeef;
     ret = CryptHashMessage(&para, TRUE, 2, toHash, hashSize, NULL,
      &hashedBlobSize, NULL, &computedHashSize);
-    ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
-    ok(computedHashSize == 16, "expected hash size of 16, got %d\n",
+    ok(ret, "CryptHashMessage failed: 0x%08lx\n", GetLastError());
+    ok(computedHashSize == 16, "expected hash size of 16, got %ld\n",
      computedHashSize);
     if (ret)
     {
@@ -777,9 +777,9 @@ static void test_hash_message(void)
         SetLastError(0xdeadbeef);
         ret = CryptHashMessage(&para, TRUE, 2, toHash, hashSize, NULL,
          &hashedBlobSize, computedHash, &computedHashSize);
-        ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
+        ok(ret, "CryptHashMessage failed: 0x%08lx\n", GetLastError());
         ok(computedHashSize == sizeof(hashVal),
-         "unexpected size of hash value %d\n", computedHashSize);
+         "unexpected size of hash value %ld\n", computedHashSize);
         ok(!memcmp(computedHash, hashVal, computedHashSize),
          "unexpected value\n");
         HeapFree(GetProcessHeap(), 0, computedHash);
@@ -996,7 +996,7 @@ static void test_sign_message(void)
     ok(!ret &&
      (GetLastError() == E_INVALIDARG ||
       GetLastError() == ERROR_ARITHMETIC_OVERFLOW), /* Win7 */
-     "expected E_INVALIDARG or ERROR_ARITHMETIC_OVERFLOW, got %08x\n",
+     "expected E_INVALIDARG or ERROR_ARITHMETIC_OVERFLOW, got %08lx\n",
      GetLastError());
     para.cbSize = sizeof(para);
     para.dwMsgEncodingType = X509_ASN_ENCODING;
@@ -1004,20 +1004,20 @@ static void test_sign_message(void)
     signedBlobSize = 255;
     ret = CryptSignMessage(&para, FALSE, 0, NULL, NULL, NULL, &signedBlobSize);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "expected E_INVALIDARG, got %08x\n", GetLastError());
-    ok(!signedBlobSize, "unexpected size %d\n", signedBlobSize);
+     "expected E_INVALIDARG, got %08lx\n", GetLastError());
+    ok(!signedBlobSize, "unexpected size %ld\n", signedBlobSize);
     para.dwMsgEncodingType = PKCS_7_ASN_ENCODING;
     SetLastError(0xdeadbeef);
     signedBlobSize = 0;
     ret = CryptSignMessage(&para, FALSE, 0, NULL, NULL, NULL, &signedBlobSize);
-    ok(ret, "CryptSignMessage failed: %08x\n", GetLastError());
+    ok(ret, "CryptSignMessage failed: %08lx\n", GetLastError());
     todo_wine
     ok(signedBlobSize, "bad size\n");
 
     SetLastError(0xdeadbeef);
     ret = CryptAcquireContextA(&hCryptProv, NULL, NULL, PROV_RSA_FULL,
      CRYPT_VERIFYCONTEXT);
-    ok(ret, "CryptAcquireContextA failed: %08x\n", GetLastError());
+    ok(ret, "CryptAcquireContextA failed: %08lx\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CryptImportKey(hCryptProv, publicPrivateKeyPair,
      sizeof(publicPrivateKeyPair), 0, 0, &hKey);
@@ -1028,13 +1028,13 @@ static void test_sign_message(void)
             CryptReleaseContext(hCryptProv, 0);
         return;
     }
-    ok(ret, "CryptImportKey failed: %08x\n", GetLastError());
+    ok(ret, "CryptImportKey failed: %08lx\n", GetLastError());
 
     para.dwMsgEncodingType = X509_ASN_ENCODING | PKCS_7_ASN_ENCODING;
     SetLastError(0xdeadbeef);
     para.pSigningCert = CertCreateCertificateContext(X509_ASN_ENCODING |
      PKCS_7_ASN_ENCODING, cert1, sizeof(cert1));
-    ok(para.pSigningCert != NULL, "CertCreateCertificateContext failed: %08x\n",
+    ok(para.pSigningCert != NULL, "CertCreateCertificateContext failed: %08lx\n",
      GetLastError());
     para.HashAlgorithm.pszObjId = oid_rsa_md5;
 
@@ -1045,21 +1045,21 @@ static void test_sign_message(void)
     SetLastError(0xdeadbeef);
     ret = CertSetCertificateContextProperty(para.pSigningCert,
      CERT_KEY_CONTEXT_PROP_ID, 0, &keyContext);
-    ok(ret, "CertSetCertificateContextProperty failed: %08x\n", GetLastError());
+    ok(ret, "CertSetCertificateContextProperty failed: %08lx\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     signedBlobSize = 0;
     ret = CryptSignMessage(&para, TRUE, 0, NULL, NULL, NULL, &signedBlobSize);
-    ok(ret, "CryptSignMessage failed: %08x\n", GetLastError());
+    ok(ret, "CryptSignMessage failed: %08lx\n", GetLastError());
     signedBlob = CryptMemAlloc(signedBlobSize);
     if (signedBlob)
     {
         SetLastError(0xdeadbeef);
         ret = CryptSignMessage(&para, TRUE, 0, NULL, NULL, signedBlob,
          &signedBlobSize);
-        ok(ret, "CryptSignMessage failed: %08x\n", GetLastError());
+        ok(ret, "CryptSignMessage failed: %08lx\n", GetLastError());
         ok(signedBlobSize == sizeof(signedHashForEmptyMessage),
-         "unexpected size %d\n", signedBlobSize);
+         "unexpected size %ld\n", signedBlobSize);
         ok(!memcmp(signedBlob, signedHashForEmptyMessage, signedBlobSize),
          "unexpected value\n");
         CryptMemFree(signedBlob);
@@ -1068,15 +1068,15 @@ static void test_sign_message(void)
     SetLastError(0xdeadbeef);
     signedBlobSize = 0;
     ret = CryptSignMessage(&para, FALSE, 0, NULL, NULL, NULL, &signedBlobSize);
-    ok(ret, "CryptSignMessage failed: %08x\n", GetLastError());
+    ok(ret, "CryptSignMessage failed: %08lx\n", GetLastError());
     signedBlob = CryptMemAlloc(signedBlobSize);
     if (signedBlob)
     {
         SetLastError(0xdeadbeef);
         ret = CryptSignMessage(&para, FALSE, 0, NULL, NULL, signedBlob,
          &signedBlobSize);
-        ok(ret, "CryptSignMessage failed: %08x\n", GetLastError());
-        ok(signedBlobSize == sizeof(signedEmptyMessage), "unexpected size %d\n",
+        ok(ret, "CryptSignMessage failed: %08lx\n", GetLastError());
+        ok(signedBlobSize == sizeof(signedEmptyMessage), "unexpected size %ld\n",
          signedBlobSize);
         ok(!memcmp(signedBlob, signedEmptyMessage, signedBlobSize),
          "unexpected value\n");
@@ -1087,16 +1087,16 @@ static void test_sign_message(void)
     signedBlobSize = 0;
     ret = CryptSignMessage(&para, TRUE, 2, toSign, signSize, NULL,
      &signedBlobSize);
-    ok(ret, "CryptSignMessage failed: %08x\n", GetLastError());
+    ok(ret, "CryptSignMessage failed: %08lx\n", GetLastError());
     signedBlob = CryptMemAlloc(signedBlobSize);
     if (signedBlob)
     {
         SetLastError(0xdeadbeef);
         ret = CryptSignMessage(&para, TRUE, 2, toSign, signSize, signedBlob,
          &signedBlobSize);
-        ok(ret, "CryptSignMessage failed: %08x\n", GetLastError());
+        ok(ret, "CryptSignMessage failed: %08lx\n", GetLastError());
         ok(signedBlobSize == sizeof(signedHash),
-         "unexpected size of signed blob %d\n", signedBlobSize);
+         "unexpected size of signed blob %ld\n", signedBlobSize);
         ok(!memcmp(signedBlob, signedHash, signedBlobSize),
          "unexpected value\n");
         CryptMemFree(signedBlob);
@@ -1109,16 +1109,16 @@ static void test_sign_message(void)
     signedBlobSize = 0;
     ret = CryptSignMessage(&para, TRUE, 2, toSign, signSize, NULL,
      &signedBlobSize);
-    ok(ret, "CryptSignMessage failed: %08x\n", GetLastError());
+    ok(ret, "CryptSignMessage failed: %08lx\n", GetLastError());
     signedBlob = CryptMemAlloc(signedBlobSize);
     if (signedBlob)
     {
         SetLastError(0xdeadbeef);
         ret = CryptSignMessage(&para, TRUE, 2, toSign, signSize, signedBlob,
          &signedBlobSize);
-        ok(ret, "CryptSignMessage failed: %08x\n", GetLastError());
+        ok(ret, "CryptSignMessage failed: %08lx\n", GetLastError());
         ok(signedBlobSize == sizeof(signedHashWithCert),
-         "unexpected size of signed blob %d\n", signedBlobSize);
+         "unexpected size of signed blob %ld\n", signedBlobSize);
         ok(!memcmp(signedBlob, signedHashWithCert, signedBlobSize),
          "unexpected value\n");
         CryptMemFree(signedBlob);
@@ -1130,7 +1130,7 @@ static void test_sign_message(void)
     SetLastError(0xdeadbeef);
     crlContext = CertCreateCRLContext(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
      crl, sizeof(crl));
-    ok(crlContext != NULL, "CertCreateCRLContext failed: %08x\n",
+    ok(crlContext != NULL, "CertCreateCRLContext failed: %08lx\n",
      GetLastError());
     para.rgpMsgCrl = &crlContext;
 
@@ -1138,16 +1138,16 @@ static void test_sign_message(void)
     signedBlobSize = 0;
     ret = CryptSignMessage(&para, TRUE, 2, toSign, signSize, NULL,
      &signedBlobSize);
-    ok(ret, "CryptSignMessage failed: %08x\n", GetLastError());
+    ok(ret, "CryptSignMessage failed: %08lx\n", GetLastError());
     signedBlob = CryptMemAlloc(signedBlobSize);
     if (signedBlob)
     {
         SetLastError(0xdeadbeef);
         ret = CryptSignMessage(&para, TRUE, 2, toSign, signSize, signedBlob,
          &signedBlobSize);
-        ok(ret, "CryptSignMessage failed: %08x\n", GetLastError());
+        ok(ret, "CryptSignMessage failed: %08lx\n", GetLastError());
         ok(signedBlobSize == sizeof(signedHashWithCRL),
-         "unexpected size of signed blob %d\n", signedBlobSize);
+         "unexpected size of signed blob %ld\n", signedBlobSize);
         ok(!memcmp(signedBlob, signedHashWithCRL, signedBlobSize),
          "unexpected value\n");
         CryptMemFree(signedBlob);
@@ -1161,16 +1161,16 @@ static void test_sign_message(void)
     signedBlobSize = 0;
     ret = CryptSignMessage(&para, FALSE, 1, toSign, signSize, NULL,
      &signedBlobSize);
-    ok(ret, "CryptSignMessage failed: %08x\n", GetLastError());
+    ok(ret, "CryptSignMessage failed: %08lx\n", GetLastError());
     signedBlob = CryptMemAlloc(signedBlobSize);
     if (signedBlob)
     {
         SetLastError(0xdeadbeef);
         ret = CryptSignMessage(&para, FALSE, 1, toSign, signSize, signedBlob,
          &signedBlobSize);
-        ok(ret, "CryptSignMessage failed: %08x\n", GetLastError());
+        ok(ret, "CryptSignMessage failed: %08lx\n", GetLastError());
         ok(signedBlobSize == sizeof(signedData),
-         "unexpected size of signed blob %d\n", signedBlobSize);
+         "unexpected size of signed blob %ld\n", signedBlobSize);
         ok(!memcmp(signedBlob, signedData, signedBlobSize),
          "unexpected value\n");
         CryptMemFree(signedBlob);
@@ -1204,17 +1204,17 @@ static void test_encrypt_message(void)
     SetLastError(0xdeadbeef);
     ret = CryptAcquireContextA(&hCryptProv, NULL, NULL, PROV_RSA_FULL,
      CRYPT_VERIFYCONTEXT);
-    ok(ret, "CryptAcquireContextA failed: %08x\n", GetLastError());
+    ok(ret, "CryptAcquireContextA failed: %08lx\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     certs[0] = CertCreateCertificateContext(X509_ASN_ENCODING |
      PKCS_7_ASN_ENCODING, cert1, sizeof(cert1));
-    ok(certs[0] != NULL, "CertCreateCertificateContext failed: %08x\n",
+    ok(certs[0] != NULL, "CertCreateCertificateContext failed: %08lx\n",
      GetLastError());
     SetLastError(0xdeadbeef);
     certs[1] = CertCreateCertificateContext(X509_ASN_ENCODING |
      PKCS_7_ASN_ENCODING, cert2, sizeof(cert2));
-    ok(certs[1] != NULL, "CertCreateCertificateContext failed: %08x\n",
+    ok(certs[1] != NULL, "CertCreateCertificateContext failed: %08lx\n",
      GetLastError());
 
     memset(&para, 0, sizeof(para));
@@ -1223,8 +1223,8 @@ static void test_encrypt_message(void)
     ret = CryptEncryptMessage(&para, 0, NULL, NULL, 0, NULL,
      &encryptedBlobSize);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "expected E_INVALIDARG, got %08x\n", GetLastError());
-    ok(!encryptedBlobSize, "unexpected size %d\n", encryptedBlobSize);
+     "expected E_INVALIDARG, got %08lx\n", GetLastError());
+    ok(!encryptedBlobSize, "unexpected size %ld\n", encryptedBlobSize);
     para.cbSize = sizeof(para);
     para.dwMsgEncodingType = X509_ASN_ENCODING;
     SetLastError(0xdeadbeef);
@@ -1232,8 +1232,8 @@ static void test_encrypt_message(void)
     ret = CryptEncryptMessage(&para, 0, NULL, NULL, 0, NULL,
      &encryptedBlobSize);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "expected E_INVALIDARG, got %08x\n", GetLastError());
-    ok(!encryptedBlobSize, "unexpected size %d\n", encryptedBlobSize);
+     "expected E_INVALIDARG, got %08lx\n", GetLastError());
+    ok(!encryptedBlobSize, "unexpected size %ld\n", encryptedBlobSize);
     para.dwMsgEncodingType = PKCS_7_ASN_ENCODING;
     SetLastError(0xdeadbeef);
     encryptedBlobSize = 255;
@@ -1242,9 +1242,9 @@ static void test_encrypt_message(void)
     ok(!ret &&
      (GetLastError() == CRYPT_E_UNKNOWN_ALGO ||
       GetLastError() == E_INVALIDARG), /* Win9x */
-     "expected CRYPT_E_UNKNOWN_ALGO or E_INVALIDARG, got %08x\n",
+     "expected CRYPT_E_UNKNOWN_ALGO or E_INVALIDARG, got %08lx\n",
      GetLastError());
-    ok(!encryptedBlobSize, "unexpected size %d\n", encryptedBlobSize);
+    ok(!encryptedBlobSize, "unexpected size %ld\n", encryptedBlobSize);
 
     para.hCryptProv = hCryptProv;
     para.ContentEncryptionAlgorithm.pszObjId = oid_rsa_rc4;
@@ -1255,7 +1255,7 @@ static void test_encrypt_message(void)
      &encryptedBlobSize);
     ok(ret ||
      broken(!ret) /* Win9x */,
-     "CryptEncryptMessage failed: %08x\n", GetLastError());
+     "CryptEncryptMessage failed: %08lx\n", GetLastError());
     if (ret)
     {
         encryptedBlob = CryptMemAlloc(encryptedBlobSize);
@@ -1264,9 +1264,9 @@ static void test_encrypt_message(void)
             SetLastError(0xdeadbeef);
             ret = CryptEncryptMessage(&para, 0, NULL, NULL, 0, encryptedBlob,
              &encryptedBlobSize);
-            ok(ret, "CryptEncryptMessage failed: %08x\n", GetLastError());
+            ok(ret, "CryptEncryptMessage failed: %08lx\n", GetLastError());
 	    ok(encryptedBlobSize == sizeof(encryptedMessage),
-             "unexpected size of encrypted blob %d\n", encryptedBlobSize);
+             "unexpected size of encrypted blob %ld\n", encryptedBlobSize);
             ok(!memcmp(encryptedBlob, encryptedMessage, encryptedBlobSize),
              "unexpected value\n");
             CryptMemFree(encryptedBlob);
@@ -1277,7 +1277,7 @@ static void test_encrypt_message(void)
     encryptedBlobSize = 0;
     ret = CryptEncryptMessage(&para, 2, certs, NULL, 0, NULL,
      &encryptedBlobSize);
-    ok(ret, "CryptEncryptMessage failed: %08x\n", GetLastError());
+    ok(ret, "CryptEncryptMessage failed: %08lx\n", GetLastError());
     if (ret)
     {
         encryptedBlob = CryptMemAlloc(encryptedBlobSize);
@@ -1286,7 +1286,7 @@ static void test_encrypt_message(void)
             SetLastError(0xdeadbeef);
             ret = CryptEncryptMessage(&para, 2, certs, NULL, 0, encryptedBlob,
              &encryptedBlobSize);
-            ok(ret, "CryptEncryptMessage failed: %08x\n", GetLastError());
+            ok(ret, "CryptEncryptMessage failed: %08lx\n", GetLastError());
             CryptMemFree(encryptedBlob);
         }
     }
@@ -1297,7 +1297,7 @@ static void test_encrypt_message(void)
      &encryptedBlobSize);
     ok(ret ||
      broken(!ret) /* Win9x */,
-     "CryptEncryptMessage failed: %08x\n", GetLastError());
+     "CryptEncryptMessage failed: %08lx\n", GetLastError());
     if (ret)
     {
         encryptedBlob = CryptMemAlloc(encryptedBlobSize);
@@ -1308,11 +1308,11 @@ static void test_encrypt_message(void)
              encryptedBlob, &encryptedBlobSize);
             ok(ret ||
              broken(!ret && GetLastError() == NTE_PERM), /* some NT4 */
-             "CryptEncryptMessage failed: %08x\n", GetLastError());
+             "CryptEncryptMessage failed: %08lx\n", GetLastError());
             if (ret)
             {
                 ok(encryptedBlobSize == 55,
-                 "unexpected size of encrypted blob %d\n", encryptedBlobSize);
+                 "unexpected size of encrypted blob %ld\n", encryptedBlobSize);
             }
             CryptMemFree(encryptedBlob);
         }
@@ -1322,7 +1322,7 @@ static void test_encrypt_message(void)
     encryptedBlobSize = 0;
     ret = CryptEncryptMessage(&para, 2, certs, blob, sizeof(blob), NULL,
      &encryptedBlobSize);
-    ok(ret, "CryptEncryptMessage failed: %08x\n", GetLastError());
+    ok(ret, "CryptEncryptMessage failed: %08lx\n", GetLastError());
     if (ret)
     {
         encryptedBlob = CryptMemAlloc(encryptedBlobSize);
@@ -1333,7 +1333,7 @@ static void test_encrypt_message(void)
              encryptedBlob, &encryptedBlobSize);
             ok(ret ||
              broken(!ret), /* some Win95 and some NT4 */
-             "CryptEncryptMessage failed: %08x\n", GetLastError());
+             "CryptEncryptMessage failed: %08lx\n", GetLastError());
             CryptMemFree(encryptedBlob);
         }
     }

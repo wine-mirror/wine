@@ -256,7 +256,7 @@ static void test_CertRDNValueToStrA(void)
          buffer, sizeof(buffer));
         todo_wine_if (attrs[i].todo)
         {
-            ok(ret == strlen(attrs[i].str) + 1, "Expected length %d, got %d\n",
+            ok(ret == strlen(attrs[i].str) + 1, "Expected length %d, got %ld\n",
              lstrlenA(attrs[i].str) + 1, ret);
             ok(!strcmp(buffer, attrs[i].str), "Expected %s, got %s\n",
              attrs[i].str, buffer);
@@ -267,7 +267,7 @@ static void test_CertRDNValueToStrA(void)
     ret = pCertRDNValueToStrA(CERT_RDN_UTF8_STRING, &blob, buffer,
      sizeof(buffer));
     ok(ret == strlen(ePKI) + 1 || broken(ret != strlen(ePKI) + 1),
-     "Expected length %d, got %d\n", lstrlenA(ePKI), ret);
+     "Expected length %d, got %ld\n", lstrlenA(ePKI), ret);
     if (ret == strlen(ePKI) + 1)
         ok(!strcmp(buffer, ePKI), "Expected %s, got %s\n", ePKI, buffer);
 }
@@ -351,7 +351,7 @@ static void test_CertRDNValueToStrW(void)
         todo_wine_if (attrs[i].todo)
         {
             ok(ret == lstrlenW(attrs[i].str) + 1,
-             "Expected length %d, got %d\n", lstrlenW(attrs[i].str) + 1, ret);
+             "Expected length %d, got %ld\n", lstrlenW(attrs[i].str) + 1, ret);
             ok(!lstrcmpW(buffer, attrs[i].str), "Expected %s, got %s\n",
              wine_dbgstr_w(attrs[i].str), wine_dbgstr_w(buffer));
         }
@@ -361,7 +361,7 @@ static void test_CertRDNValueToStrW(void)
     ret = pCertRDNValueToStrW(CERT_RDN_UTF8_STRING, &blob, buffer,
      sizeof(buffer));
     ok(ret == lstrlenW(ePKIW) + 1 || broken(ret != lstrlenW(ePKIW) + 1),
-     "Expected length %d, got %d\n", lstrlenW(ePKIW), ret);
+     "Expected length %d, got %ld\n", lstrlenW(ePKIW), ret);
     if (ret == lstrlenW(ePKIW) + 1)
         ok(!lstrcmpW(buffer, ePKIW), "Expected %s, got %s\n",
          wine_dbgstr_w(ePKIW), wine_dbgstr_w(buffer));
@@ -375,12 +375,12 @@ static void test_NameToStrConversionA(PCERT_NAME_BLOB pName, DWORD dwStrType,
 
     i = pCertNameToStrA(X509_ASN_ENCODING, pName, dwStrType, NULL, 0);
     todo_wine_if (todo)
-        ok(i == strlen(expected) + 1, "Expected %d chars, got %d\n",
+        ok(i == strlen(expected) + 1, "Expected %d chars, got %ld\n",
          lstrlenA(expected) + 1, i);
     i = pCertNameToStrA(X509_ASN_ENCODING,pName, dwStrType, buffer,
      sizeof(buffer));
     todo_wine_if (todo)
-        ok(i == strlen(expected) + 1, "Expected %d chars, got %d\n",
+        ok(i == strlen(expected) + 1, "Expected %d chars, got %ld\n",
          lstrlenA(expected) + 1, i);
     todo_wine_if (todo)
         ok(!strcmp(buffer, expected), "Expected %s, got %s\n", expected,
@@ -441,7 +441,7 @@ static void test_CertNameToStrA(void)
 
     context = CertCreateCertificateContext(X509_ASN_ENCODING, cert,
      sizeof(cert));
-    ok(context != NULL, "CertCreateCertificateContext failed: %08x\n",
+    ok(context != NULL, "CertCreateCertificateContext failed: %08lx\n",
      GetLastError());
     if (context)
     {
@@ -454,13 +454,13 @@ static void test_CertNameToStrA(void)
         SetLastError(0xdeadbeef);
         ret = pCertNameToStrA(0, &context->pCertInfo->Issuer, 0, NULL, 0);
         ok(ret == 1 && GetLastError() == ERROR_FILE_NOT_FOUND,
-         "Expected retval 1 and ERROR_FILE_NOT_FOUND, got %d - %08x\n",
+         "Expected retval 1 and ERROR_FILE_NOT_FOUND, got %ld - %08lx\n",
          ret, GetLastError());
         SetLastError(0xdeadbeef);
         ret = pCertNameToStrA(X509_ASN_ENCODING, &context->pCertInfo->Issuer,
          0, NULL, 0);
         ok(ret && GetLastError() == ERROR_SUCCESS,
-         "Expected positive return and ERROR_SUCCESS, got %d - %08x\n",
+         "Expected positive return and ERROR_SUCCESS, got %ld - %08lx\n",
          ret, GetLastError());
 
         test_NameToStrConversionA(&context->pCertInfo->Issuer,
@@ -546,11 +546,11 @@ static void test_NameToStrConversionW(PCERT_NAME_BLOB pName, DWORD dwStrType,
 
     i = pCertNameToStrW(X509_ASN_ENCODING,pName, dwStrType, NULL, 0);
     todo_wine_if (todo)
-        ok(i == lstrlenW(expected) + 1, "Expected %d chars, got %d\n",
+        ok(i == lstrlenW(expected) + 1, "Expected %d chars, got %ld\n",
          lstrlenW(expected) + 1, i);
     i = pCertNameToStrW(X509_ASN_ENCODING,pName, dwStrType, buffer, ARRAY_SIZE(buffer));
     todo_wine_if (todo)
-        ok(i == lstrlenW(expected) + 1, "Expected %d chars, got %d\n",
+        ok(i == lstrlenW(expected) + 1, "Expected %d chars, got %ld\n",
          lstrlenW(expected) + 1, i);
     todo_wine_if (todo)
         ok(!lstrcmpW(buffer, expected), "Expected %s, got %s\n",
@@ -594,7 +594,7 @@ static void test_CertNameToStrW(void)
 
     context = CertCreateCertificateContext(X509_ASN_ENCODING, cert,
      sizeof(cert));
-    ok(context != NULL, "CertCreateCertificateContext failed: %08x\n",
+    ok(context != NULL, "CertCreateCertificateContext failed: %08lx\n",
      GetLastError());
     if (context)
     {
@@ -607,13 +607,13 @@ static void test_CertNameToStrW(void)
         SetLastError(0xdeadbeef);
         ret = pCertNameToStrW(0, &context->pCertInfo->Issuer, 0, NULL, 0);
         ok(ret == 1 && GetLastError() == ERROR_FILE_NOT_FOUND,
-         "Expected retval 1 and ERROR_FILE_NOT_FOUND, got %d - %08x\n",
+         "Expected retval 1 and ERROR_FILE_NOT_FOUND, got %ld - %08lx\n",
          ret, GetLastError());
         SetLastError(0xdeadbeef);
         ret = pCertNameToStrW(X509_ASN_ENCODING, &context->pCertInfo->Issuer,
          0, NULL, 0);
         ok(ret && GetLastError() == ERROR_SUCCESS,
-         "Expected positive return and ERROR_SUCCESS, got %d - %08x\n",
+         "Expected positive return and ERROR_SUCCESS, got %ld - %08lx\n",
          ret, GetLastError());
 
         test_NameToStrConversionW(&context->pCertInfo->Issuer,
@@ -746,61 +746,61 @@ static void test_CertStrToNameA(void)
     ok(!ret, "Expected failure\n");
     ret = pCertStrToNameA(0, "bogus", 0, NULL, NULL, &size, NULL);
     ok(!ret && GetLastError() == CRYPT_E_INVALID_X500_STRING,
-     "Expected CRYPT_E_INVALID_X500_STRING, got %08x\n", GetLastError());
+     "Expected CRYPT_E_INVALID_X500_STRING, got %08lx\n", GetLastError());
     ret = pCertStrToNameA(0, "foo=1", 0, NULL, NULL, &size, NULL);
     ok(!ret && GetLastError() == CRYPT_E_INVALID_X500_STRING,
-     "Expected CRYPT_E_INVALID_X500_STRING, got %08x\n", GetLastError());
+     "Expected CRYPT_E_INVALID_X500_STRING, got %08lx\n", GetLastError());
     ret = pCertStrToNameA(0, "CN=1", 0, NULL, NULL, &size, NULL);
     ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
-     "Expected ERROR_FILE_NOT_FOUND, got %08x\n", GetLastError());
+     "Expected ERROR_FILE_NOT_FOUND, got %08lx\n", GetLastError());
     ret = pCertStrToNameA(X509_ASN_ENCODING, "CN=1", 0, NULL, NULL, &size, NULL);
-    ok(ret, "CertStrToNameA failed: %08x\n", GetLastError());
+    ok(ret, "CertStrToNameA failed: %08lx\n", GetLastError());
     size = sizeof(buf);
     ret = pCertStrToNameA(X509_ASN_ENCODING, "CN=\"\"1\"\"", 0, NULL, buf, &size,
      NULL);
     ok(!ret && GetLastError() == CRYPT_E_INVALID_X500_STRING,
-     "Expected CRYPT_E_INVALID_X500_STRING, got %08x\n", GetLastError());
+     "Expected CRYPT_E_INVALID_X500_STRING, got %08lx\n", GetLastError());
     ret = pCertStrToNameA(X509_ASN_ENCODING, "CN=1+2", 0, NULL, buf,
      &size, NULL);
     ok(!ret && GetLastError() == CRYPT_E_INVALID_X500_STRING,
-     "Expected CRYPT_E_INVALID_X500_STRING, got %08x\n", GetLastError());
+     "Expected CRYPT_E_INVALID_X500_STRING, got %08lx\n", GetLastError());
     ret = pCertStrToNameA(X509_ASN_ENCODING, "CN=1+2", CERT_NAME_STR_NO_PLUS_FLAG, NULL, buf,
                           &size, NULL);
     ok(ret && GetLastError() == ERROR_SUCCESS,
-                 "Expected ERROR_SUCCESS, got %08x\n", GetLastError());
+                 "Expected ERROR_SUCCESS, got %08lx\n", GetLastError());
     ret = pCertStrToNameA(X509_ASN_ENCODING, "CN=1,2", CERT_NAME_STR_NO_QUOTING_FLAG, NULL, buf,
                           &size, NULL);
     ok(!ret && GetLastError() == CRYPT_E_INVALID_X500_STRING,
-                 "Expected CRYPT_E_INVALID_X500_STRING, got %08x\n", GetLastError());
+                 "Expected CRYPT_E_INVALID_X500_STRING, got %08lx\n", GetLastError());
     ret = pCertStrToNameA(X509_ASN_ENCODING, "CN=\"1,2;3,4\"", CERT_NAME_STR_NO_QUOTING_FLAG, NULL, buf,
                           &size, NULL);
     ok(!ret && GetLastError() == CRYPT_E_INVALID_X500_STRING,
-                 "Expected CRYPT_E_INVALID_X500_STRING, got %08x\n", GetLastError());
+                 "Expected CRYPT_E_INVALID_X500_STRING, got %08lx\n", GetLastError());
     ret = pCertStrToNameA(X509_ASN_ENCODING, "CN=abc", 0, NULL, buf,
                           &size, NULL);
     ok(ret && GetLastError() == ERROR_SUCCESS,
-                 "Expected ERROR_SUCCESS, got %08x\n", GetLastError());
+                 "Expected ERROR_SUCCESS, got %08lx\n", GetLastError());
     ret = pCertStrToNameA(X509_ASN_ENCODING, "CN=abc", CERT_NAME_STR_NO_QUOTING_FLAG, NULL, buf,
                           &size, NULL);
     ok(ret && GetLastError() == ERROR_SUCCESS,
-                 "Expected ERROR_SUCCESS, got %08x\n", GetLastError());
+                 "Expected ERROR_SUCCESS, got %08lx\n", GetLastError());
     ret = pCertStrToNameA(X509_ASN_ENCODING, "CN=\"abc\"", 0, NULL, buf,
                           &size, NULL);
     ok(ret && GetLastError() == ERROR_SUCCESS,
-                 "Expected ERROR_SUCCESS, got %08x\n", GetLastError());
+                 "Expected ERROR_SUCCESS, got %08lx\n", GetLastError());
     ret = pCertStrToNameA(X509_ASN_ENCODING, "CN=\"abc\"", CERT_NAME_STR_NO_QUOTING_FLAG, NULL, buf,
                           &size, NULL);
     ok(!ret && GetLastError() == ERROR_MORE_DATA,
-                 "Expected ERROR_MORE_DATA, got %08x\n", GetLastError());
+                 "Expected ERROR_MORE_DATA, got %08lx\n", GetLastError());
     for (i = 0; i < ARRAY_SIZE(namesA); i++)
     {
         size = sizeof(buf);
         ret = pCertStrToNameA(X509_ASN_ENCODING, namesA[i].x500, 0, NULL, buf,
          &size, NULL);
-        ok(ret, "CertStrToNameA failed on string %s: %08x\n", namesA[i].x500,
+        ok(ret, "CertStrToNameA failed on string %s: %08lx\n", namesA[i].x500,
          GetLastError());
         ok(size == namesA[i].encodedSize,
-         "Expected size %d, got %d\n", namesA[i].encodedSize, size);
+         "Expected size %ld, got %ld\n", namesA[i].encodedSize, size);
         if (ret)
             ok(!memcmp(buf, namesA[i].encoded, namesA[i].encodedSize),
              "Unexpected value for string %s\n", namesA[i].x500);
@@ -866,38 +866,38 @@ static void test_CertStrToNameW(void)
     ok(!ret, "Expected failure\n");
     ret = pCertStrToNameW(0, bogusW, 0, NULL, NULL, &size, NULL);
     ok(!ret && GetLastError() == CRYPT_E_INVALID_X500_STRING,
-     "Expected CRYPT_E_INVALID_X500_STRING, got %08x\n", GetLastError());
+     "Expected CRYPT_E_INVALID_X500_STRING, got %08lx\n", GetLastError());
     ret = pCertStrToNameW(0, fooW, 0, NULL, NULL, &size, NULL);
     ok(!ret && GetLastError() == CRYPT_E_INVALID_X500_STRING,
-     "Expected CRYPT_E_INVALID_X500_STRING, got %08x\n", GetLastError());
+     "Expected CRYPT_E_INVALID_X500_STRING, got %08lx\n", GetLastError());
     ret = pCertStrToNameW(0, simpleCN_W, 0, NULL, NULL, &size, NULL);
     ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
-     "Expected ERROR_FILE_NOT_FOUND, got %08x\n", GetLastError());
+     "Expected ERROR_FILE_NOT_FOUND, got %08lx\n", GetLastError());
     ret = pCertStrToNameW(X509_ASN_ENCODING, simpleCN_W, 0, NULL, NULL, &size,
      NULL);
-    ok(ret, "CertStrToNameW failed: %08x\n", GetLastError());
+    ok(ret, "CertStrToNameW failed: %08lx\n", GetLastError());
     size = sizeof(buf);
     ret = pCertStrToNameW(X509_ASN_ENCODING, badlyQuotedCN_W, 0, NULL, buf,
      &size, NULL);
     ok(!ret && GetLastError() == CRYPT_E_INVALID_X500_STRING,
-     "Expected CRYPT_E_INVALID_X500_STRING, got %08x\n", GetLastError());
+     "Expected CRYPT_E_INVALID_X500_STRING, got %08lx\n", GetLastError());
     ret = pCertStrToNameW(X509_ASN_ENCODING, badlyQuotedCN_W, 0, NULL, buf,
      &size, &errorPtr);
     ok(!ret && GetLastError() == CRYPT_E_INVALID_X500_STRING,
-     "Expected CRYPT_E_INVALID_X500_STRING, got %08x\n", GetLastError());
+     "Expected CRYPT_E_INVALID_X500_STRING, got %08lx\n", GetLastError());
     ok(errorPtr && *errorPtr == '1', "Expected first error character was 1\n");
     for (i = 0; i < ARRAY_SIZE(namesW); i++)
     {
         size = sizeof(buf);
         ret = pCertStrToNameW(X509_ASN_ENCODING, namesW[i].x500, 0, NULL, buf,
          &size, NULL);
-        ok(ret, "Index %d: CertStrToNameW failed: %08x\n", i, GetLastError());
+        ok(ret, "Index %ld: CertStrToNameW failed: %08lx\n", i, GetLastError());
         ok(size == namesW[i].encodedSize,
-         "Index %d: expected size %d, got %d\n", i, namesW[i].encodedSize,
+         "Index %ld: expected size %ld, got %ld\n", i, namesW[i].encodedSize,
          size);
         if (ret)
             ok(!memcmp(buf, namesW[i].encoded, size),
-             "Index %d: unexpected value for string %s\n", i, wine_dbgstr_w(namesW[i].x500));
+             "Index %ld: unexpected value for string %s\n", i, wine_dbgstr_w(namesW[i].x500));
     }
 }
 
@@ -913,7 +913,7 @@ static void test_CertGetNameStringA(void)
 
     context = CertCreateCertificateContext(X509_ASN_ENCODING, cert,
      sizeof(cert));
-    ok(context != NULL, "CertCreateCertificateContext failed: %08x\n",
+    ok(context != NULL, "CertCreateCertificateContext failed: %08lx\n",
      GetLastError());
     if (context)
     {
@@ -924,16 +924,16 @@ static void test_CertGetNameStringA(void)
 
         /* Bad string types/types missing from the cert */
         len = pCertGetNameStringA(NULL, 0, 0, NULL, NULL, 0);
-        ok(len == 1, "expected 1, got %d\n", len);
+        ok(len == 1, "expected 1, got %ld\n", len);
         len = pCertGetNameStringA(context, 0, 0, NULL, NULL, 0);
-        ok(len == 1, "expected 1, got %d\n", len);
+        ok(len == 1, "expected 1, got %ld\n", len);
         len = pCertGetNameStringA(context, CERT_NAME_URL_TYPE, 0, NULL, NULL,
          0);
-        ok(len == 1, "expected 1, got %d\n", len);
+        ok(len == 1, "expected 1, got %ld\n", len);
 
         len = pCertGetNameStringA(context, CERT_NAME_EMAIL_TYPE, 0, NULL, NULL,
          0);
-        ok(len == strlen(aric) + 1, "unexpected length %d\n", len);
+        ok(len == strlen(aric) + 1, "unexpected length %ld\n", len);
         str = HeapAlloc(GetProcessHeap(), 0, len);
         if (str)
         {
@@ -945,7 +945,7 @@ static void test_CertGetNameStringA(void)
 
         len = pCertGetNameStringA(context, CERT_NAME_RDN_TYPE, 0, NULL, NULL,
          0);
-        ok(len == strlen(issuerStr) + 1, "unexpected length %d\n", len);
+        ok(len == strlen(issuerStr) + 1, "unexpected length %ld\n", len);
         str = HeapAlloc(GetProcessHeap(), 0, len);
         if (str)
         {
@@ -957,7 +957,7 @@ static void test_CertGetNameStringA(void)
         type = 0;
         len = pCertGetNameStringA(context, CERT_NAME_RDN_TYPE, 0, &type, NULL,
          0);
-        ok(len == strlen(issuerStr) + 1, "unexpected length %d\n", len);
+        ok(len == strlen(issuerStr) + 1, "unexpected length %ld\n", len);
         str = HeapAlloc(GetProcessHeap(), 0, len);
         if (str)
         {
@@ -969,7 +969,7 @@ static void test_CertGetNameStringA(void)
         type = CERT_OID_NAME_STR;
         len = pCertGetNameStringA(context, CERT_NAME_RDN_TYPE, 0, &type, NULL,
          0);
-        ok(len == strlen(subjectStr) + 1, "unexpected length %d\n", len);
+        ok(len == strlen(subjectStr) + 1, "unexpected length %ld\n", len);
         str = HeapAlloc(GetProcessHeap(), 0, len);
         if (str)
         {
@@ -981,7 +981,7 @@ static void test_CertGetNameStringA(void)
 
         len = pCertGetNameStringA(context, CERT_NAME_ATTR_TYPE, 0, NULL, NULL,
          0);
-        ok(len == strlen(aric) + 1, "unexpected length %d\n", len);
+        ok(len == strlen(aric) + 1, "unexpected length %ld\n", len);
         str = HeapAlloc(GetProcessHeap(), 0, len);
         if (str)
         {
@@ -992,7 +992,7 @@ static void test_CertGetNameStringA(void)
         }
         len = pCertGetNameStringA(context, CERT_NAME_ATTR_TYPE, 0,
          (void *)szOID_RSA_emailAddr, NULL, 0);
-        ok(len == strlen(aric) + 1, "unexpected length %d\n", len);
+        ok(len == strlen(aric) + 1, "unexpected length %ld\n", len);
         str = HeapAlloc(GetProcessHeap(), 0, len);
         if (str)
         {
@@ -1003,7 +1003,7 @@ static void test_CertGetNameStringA(void)
         }
         len = pCertGetNameStringA(context, CERT_NAME_ATTR_TYPE, 0,
          (void *)szOID_COMMON_NAME, NULL, 0);
-        ok(len == strlen(localhost) + 1, "unexpected length %d\n", len);
+        ok(len == strlen(localhost) + 1, "unexpected length %ld\n", len);
         str = HeapAlloc(GetProcessHeap(), 0, len);
         if (str)
         {
@@ -1015,7 +1015,7 @@ static void test_CertGetNameStringA(void)
 
         len = pCertGetNameStringA(context, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0,
          NULL, NULL, 0);
-        ok(len == strlen(localhost) + 1, "unexpected length %d\n", len);
+        ok(len == strlen(localhost) + 1, "unexpected length %ld\n", len);
         str = HeapAlloc(GetProcessHeap(), 0, len);
         if (str)
         {
@@ -1027,7 +1027,7 @@ static void test_CertGetNameStringA(void)
 
         len = pCertGetNameStringA(context, CERT_NAME_FRIENDLY_DISPLAY_TYPE, 0,
          NULL, NULL, 0);
-        ok(len == strlen(localhost) + 1, "unexpected length %d\n", len);
+        ok(len == strlen(localhost) + 1, "unexpected length %ld\n", len);
         str = HeapAlloc(GetProcessHeap(), 0, len);
         if (str)
         {
@@ -1040,7 +1040,7 @@ static void test_CertGetNameStringA(void)
         len = pCertGetNameStringA(context, CERT_NAME_DNS_TYPE, 0, NULL, NULL,
          0);
         ok(len == strlen(localhost) + 1 || broken(len == 1) /* NT4 */,
-         "unexpected length %d\n", len);
+         "unexpected length %ld\n", len);
         if (len > 1)
         {
             str = HeapAlloc(GetProcessHeap(), 0, len);

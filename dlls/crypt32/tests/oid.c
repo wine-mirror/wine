@@ -105,13 +105,13 @@ static void testOIDToAlgID(void)
 
     /* Test with a bogus one */
     alg = CertOIDToAlgId("1.2.3");
-    ok(!alg, "Expected failure, got %d\n", alg);
+    ok(!alg, "Expected failure, got %ld\n", alg);
 
     for (i = 0; i < ARRAY_SIZE(oidToAlgID); i++)
     {
         alg = CertOIDToAlgId(oidToAlgID[i].oid);
         ok(alg == oidToAlgID[i].algID || (oidToAlgID[i].altAlgID && alg == oidToAlgID[i].altAlgID),
-         "Expected %d, got %d\n", oidToAlgID[i].algID, alg);
+         "Expected %ld, got %ld\n", oidToAlgID[i].algID, alg);
     }
 }
 
@@ -124,7 +124,7 @@ static void testAlgIDToOID(void)
     SetLastError(0xdeadbeef);
     oid = CertAlgIdToOID(ALG_CLASS_SIGNATURE | ALG_TYPE_ANY | 80);
     ok(!oid && GetLastError() == 0xdeadbeef,
-     "Didn't expect last error (%08x) to be set\n", GetLastError());
+     "Didn't expect last error (%08lx) to be set\n", GetLastError());
     for (i = 0; i < ARRAY_SIZE(algIDToOID); i++)
     {
         oid = CertAlgIdToOID(algIDToOID[i].algID);
@@ -166,7 +166,7 @@ static void test_oidFunctionSet(void)
 
     /* The name doesn't mean much */
     set1 = CryptInitOIDFunctionSet("funky", 0);
-    ok(set1 != 0, "CryptInitOIDFunctionSet failed: %08x\n", GetLastError());
+    ok(set1 != 0, "CryptInitOIDFunctionSet failed: %08lx\n", GetLastError());
     if (set1)
     {
         /* These crash
@@ -175,14 +175,14 @@ static void test_oidFunctionSet(void)
          */
         size = 0;
         ret = CryptGetDefaultOIDDllList(set1, 0, NULL, &size);
-        ok(ret, "CryptGetDefaultOIDDllList failed: %08x\n", GetLastError());
+        ok(ret, "CryptGetDefaultOIDDllList failed: %08lx\n", GetLastError());
         if (ret)
         {
             buf = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
             if (buf)
             {
                 ret = CryptGetDefaultOIDDllList(set1, 0, buf, &size);
-                ok(ret, "CryptGetDefaultOIDDllList failed: %08x\n",
+                ok(ret, "CryptGetDefaultOIDDllList failed: %08lx\n",
                  GetLastError());
                 ok(!*buf, "Expected empty DLL list\n");
                 HeapFree(GetProcessHeap(), 0, buf);
@@ -192,9 +192,9 @@ static void test_oidFunctionSet(void)
 
     /* MSDN says flags must be 0, but it's not checked */
     set1 = CryptInitOIDFunctionSet("", 1);
-    ok(set1 != 0, "CryptInitOIDFunctionSet failed: %08x\n", GetLastError());
+    ok(set1 != 0, "CryptInitOIDFunctionSet failed: %08lx\n", GetLastError());
     set2 = CryptInitOIDFunctionSet("", 0);
-    ok(set2 != 0, "CryptInitOIDFunctionSet failed: %08x\n", GetLastError());
+    ok(set2 != 0, "CryptInitOIDFunctionSet failed: %08lx\n", GetLastError());
     /* There isn't a free function, so there must be only one set per name to
      * limit leaks.  (I guess the sets are freed when crypt32 is unloaded.)
      */
@@ -208,7 +208,7 @@ static void test_oidFunctionSet(void)
 
     /* There's no installed function for a built-in encoding. */
     set1 = CryptInitOIDFunctionSet("CryptDllEncodeObject", 0);
-    ok(set1 != 0, "CryptInitOIDFunctionSet failed: %08x\n", GetLastError());
+    ok(set1 != 0, "CryptInitOIDFunctionSet failed: %08lx\n", GetLastError());
     if (set1)
     {
         void *funcAddr;
@@ -218,7 +218,7 @@ static void test_oidFunctionSet(void)
          &funcAddr, &hFuncAddr);
         ok((!ret && GetLastError() == ERROR_FILE_NOT_FOUND) ||
          broken(ret) /* some Win98 */,
-         "Expected ERROR_FILE_NOT_FOUND, got %08x\n", GetLastError());
+         "Expected ERROR_FILE_NOT_FOUND, got %08lx\n", GetLastError());
     }
 }
 
@@ -243,21 +243,21 @@ static void test_installOIDFunctionAddress(void)
     SetLastError(0xdeadbeef);
     ret = CryptInstallOIDFunctionAddress(NULL, 0, "CryptDllEncodeObject", 0,
      NULL, 0);
-    ok(ret && GetLastError() == 0xdeadbeef, "Expected success, got %08x\n",
+    ok(ret && GetLastError() == 0xdeadbeef, "Expected success, got %08lx\n",
      GetLastError());
 
     /* The function name doesn't much matter */
     SetLastError(0xdeadbeef);
     ret = CryptInstallOIDFunctionAddress(NULL, 0, "OhSoFunky", 0, NULL, 0);
-    ok(ret && GetLastError() == 0xdeadbeef, "Expected success, got %08x\n",
+    ok(ret && GetLastError() == 0xdeadbeef, "Expected success, got %08lx\n",
      GetLastError());
     SetLastError(0xdeadbeef);
     entry.pszOID = X509_CERT;
     ret = CryptInstallOIDFunctionAddress(NULL, 0, "OhSoFunky", 1, &entry, 0);
-    ok(ret && GetLastError() == 0xdeadbeef, "Expected success, got %08x\n",
+    ok(ret && GetLastError() == 0xdeadbeef, "Expected success, got %08lx\n",
      GetLastError());
     set = CryptInitOIDFunctionSet("OhSoFunky", 0);
-    ok(set != 0, "CryptInitOIDFunctionSet failed: %08x\n", GetLastError());
+    ok(set != 0, "CryptInitOIDFunctionSet failed: %08lx\n", GetLastError());
     if (set)
     {
         funcY funcAddr = NULL;
@@ -271,15 +271,15 @@ static void test_installOIDFunctionAddress(void)
          (void **)&funcAddr, &hFuncAddr);
         ok(!ret && (GetLastError() == ERROR_FILE_NOT_FOUND ||
          GetLastError() == E_INVALIDARG /* some Win98 */),
-         "Expected ERROR_FILE_NOT_FOUND or E_INVALIDARG, got %d\n",
+         "Expected ERROR_FILE_NOT_FOUND or E_INVALIDARG, got %ld\n",
          GetLastError());
         ret = CryptGetOIDFunctionAddress(set, X509_ASN_ENCODING, X509_CERT, 0,
          (void **)&funcAddr, &hFuncAddr);
         ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
-         "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+         "Expected ERROR_FILE_NOT_FOUND, got %ld\n", GetLastError());
         ret = CryptGetOIDFunctionAddress(set, 0, X509_CERT, 0,
          (void **)&funcAddr, &hFuncAddr);
-        ok(ret, "CryptGetOIDFunctionAddress failed: %d\n", GetLastError());
+        ok(ret, "CryptGetOIDFunctionAddress failed: %ld\n", GetLastError());
         if (funcAddr)
         {
             int y = funcAddr(0xabadc0da);
@@ -306,11 +306,11 @@ static void test_registerOIDFunction(void)
     ret = CryptRegisterOIDFunction(X509_ASN_ENCODING, "foo", NULL, bogusDll,
      NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "Expected E_INVALIDARG: %d\n", GetLastError());
+     "Expected E_INVALIDARG: %ld\n", GetLastError());
     /* This has no effect, but "succeeds" on XP */
     ret = CryptRegisterOIDFunction(X509_ASN_ENCODING, "foo",
      "1.2.3.4.5.6.7.8.9.10", NULL, NULL);
-    ok(ret, "Expected pseudo-success, got %d\n", GetLastError());
+    ok(ret, "Expected pseudo-success, got %ld\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CryptRegisterOIDFunction(X509_ASN_ENCODING, "CryptDllEncodeObject",
      "1.2.3.4.5.6.7.8.9.10", bogusDll, NULL);
@@ -319,16 +319,16 @@ static void test_registerOIDFunction(void)
         skip("Need admin rights\n");
         return;
     }
-    ok(ret, "CryptRegisterOIDFunction failed: %d\n", GetLastError());
+    ok(ret, "CryptRegisterOIDFunction failed: %ld\n", GetLastError());
     ret = CryptUnregisterOIDFunction(X509_ASN_ENCODING, "CryptDllEncodeObject",
      "1.2.3.4.5.6.7.8.9.10");
-    ok(ret, "CryptUnregisterOIDFunction failed: %d\n", GetLastError());
+    ok(ret, "CryptUnregisterOIDFunction failed: %ld\n", GetLastError());
     ret = CryptRegisterOIDFunction(X509_ASN_ENCODING, "bogus",
      "1.2.3.4.5.6.7.8.9.10", bogusDll, NULL);
-    ok(ret, "CryptRegisterOIDFunction failed: %d\n", GetLastError());
+    ok(ret, "CryptRegisterOIDFunction failed: %ld\n", GetLastError());
     ret = CryptUnregisterOIDFunction(X509_ASN_ENCODING, "bogus",
      "1.2.3.4.5.6.7.8.9.10");
-    ok(ret, "CryptUnregisterOIDFunction failed: %d\n", GetLastError());
+    ok(ret, "CryptUnregisterOIDFunction failed: %ld\n", GetLastError());
     /* Unwanted Cryptography\OID\EncodingType 1\bogus\ will still be there */
     ok(!RegDeleteKeyA(HKEY_LOCAL_MACHINE,
      "SOFTWARE\\Microsoft\\Cryptography\\OID\\EncodingType 1\\bogus"),
@@ -336,17 +336,17 @@ static void test_registerOIDFunction(void)
     /* Shouldn't have effect but registry keys are created */
     ret = CryptRegisterOIDFunction(PKCS_7_ASN_ENCODING, "CryptDllEncodeObject",
      "1.2.3.4.5.6.7.8.9.10", bogusDll, NULL);
-    ok(ret, "CryptRegisterOIDFunction failed: %d\n", GetLastError());
+    ok(ret, "CryptRegisterOIDFunction failed: %ld\n", GetLastError());
     ret = CryptUnregisterOIDFunction(PKCS_7_ASN_ENCODING, "CryptDllEncodeObject",
      "1.2.3.4.5.6.7.8.9.10");
-    ok(ret, "CryptUnregisterOIDFunction failed: %d\n", GetLastError());
+    ok(ret, "CryptUnregisterOIDFunction failed: %ld\n", GetLastError());
     /* Check with bogus encoding type. Registry keys are still created */
     ret = CryptRegisterOIDFunction(0, "CryptDllEncodeObject",
      "1.2.3.4.5.6.7.8.9.10", bogusDll, NULL);
-    ok(ret, "CryptRegisterOIDFunction failed: %d\n", GetLastError());
+    ok(ret, "CryptRegisterOIDFunction failed: %ld\n", GetLastError());
     ret = CryptUnregisterOIDFunction(0, "CryptDllEncodeObject",
      "1.2.3.4.5.6.7.8.9.10");
-    ok(ret, "CryptUnregisterOIDFunction failed: %d\n", GetLastError());
+    ok(ret, "CryptUnregisterOIDFunction failed: %ld\n", GetLastError());
     /* Unwanted Cryptography\OID\EncodingType 0\CryptDllEncodeObject\
      * will still be there
      */
@@ -358,10 +358,10 @@ static void test_registerOIDFunction(void)
      */
     ret = CryptRegisterOIDFunction(3, "CryptDllEncodeObject",
      "1.2.3.4.5.6.7.8.9.10", bogusDll, NULL);
-    ok(ret, "CryptRegisterOIDFunction failed: %d\n", GetLastError());
+    ok(ret, "CryptRegisterOIDFunction failed: %ld\n", GetLastError());
     ret = CryptUnregisterOIDFunction(3, "CryptDllEncodeObject",
      "1.2.3.4.5.6.7.8.9.10");
-    ok(ret, "CryptUnregisterOIDFunction failed: %d\n", GetLastError());
+    ok(ret, "CryptUnregisterOIDFunction failed: %ld\n", GetLastError());
     /* Unwanted Cryptography\OID\EncodingType 3\CryptDllEncodeObject
      * will still be there.
      */
@@ -385,7 +385,7 @@ static void test_registerDefaultOIDFunction(void)
 
     ret = CryptRegisterDefaultOIDFunction(0, NULL, 0, NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "Expected E_INVALIDARG, got %08x\n", GetLastError());
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     /* This succeeds on WinXP, although the bogus entry is unusable.
     ret = CryptRegisterDefaultOIDFunction(0, NULL, 0, bogusDll);
      */
@@ -398,24 +398,24 @@ static void test_registerDefaultOIDFunction(void)
         skip("Need admin rights\n");
         return;
     }
-    ok(ret, "CryptRegisterDefaultOIDFunction failed: %08x\n", GetLastError());
+    ok(ret, "CryptRegisterDefaultOIDFunction failed: %08lx\n", GetLastError());
     /* Reregistering should fail */
     ret = CryptRegisterDefaultOIDFunction(0, "CertDllOpenStoreProv", 0,
      bogusDll);
     ok(!ret && GetLastError() == ERROR_FILE_EXISTS,
-     "Expected ERROR_FILE_EXISTS, got %08x\n", GetLastError());
+     "Expected ERROR_FILE_EXISTS, got %08lx\n", GetLastError());
     /* Registering the same one at index 1 should also fail */
     ret = CryptRegisterDefaultOIDFunction(0, "CertDllOpenStoreProv", 1,
      bogusDll);
     ok(!ret && GetLastError() == ERROR_FILE_EXISTS,
-     "Expected ERROR_FILE_EXISTS, got %08x\n", GetLastError());
+     "Expected ERROR_FILE_EXISTS, got %08lx\n", GetLastError());
     /* Registering a different one at index 1 succeeds */
     ret = CryptRegisterDefaultOIDFunction(0, "CertDllOpenStoreProv", 1,
      bogus2Dll);
-    ok(ret, "CryptRegisterDefaultOIDFunction failed: %08x\n", GetLastError());
+    ok(ret, "CryptRegisterDefaultOIDFunction failed: %08lx\n", GetLastError());
     sprintf(buf, fmt, 0, func);
     rc = RegOpenKeyA(HKEY_LOCAL_MACHINE, buf, &key);
-    ok(rc == 0, "Expected key to exist, RegOpenKeyA failed: %d\n", rc);
+    ok(rc == 0, "Expected key to exist, RegOpenKeyA failed: %ld\n", rc);
     if (rc == 0)
     {
         static const CHAR dllA[] = "Dll";
@@ -428,8 +428,8 @@ static void test_registerDefaultOIDFunction(void)
         size = ARRAY_SIZE(dllBuf);
         rc = RegQueryValueExA(key, dllA, NULL, &type, (LPBYTE)dllBuf, &size);
         ok(rc == 0,
-         "Expected Dll value to exist, RegQueryValueExA failed: %d\n", rc);
-        ok(type == REG_MULTI_SZ, "Expected type REG_MULTI_SZ, got %d\n", type);
+         "Expected Dll value to exist, RegQueryValueExA failed: %ld\n", rc);
+        ok(type == REG_MULTI_SZ, "Expected type REG_MULTI_SZ, got %ld\n", type);
         /* bogusDll was registered first, so that should be first */
         ptr = dllBuf;
         ok(!lstrcmpiA(ptr, bogusDll_A), "Unexpected dll\n");
@@ -440,17 +440,17 @@ static void test_registerDefaultOIDFunction(void)
     /* Unregister both of them */
     ret = CryptUnregisterDefaultOIDFunction(0, "CertDllOpenStoreProv",
      bogusDll);
-    ok(ret, "CryptUnregisterDefaultOIDFunction failed: %08x\n",
+    ok(ret, "CryptUnregisterDefaultOIDFunction failed: %08lx\n",
      GetLastError());
     ret = CryptUnregisterDefaultOIDFunction(0, "CertDllOpenStoreProv",
      bogus2Dll);
-    ok(ret, "CryptUnregisterDefaultOIDFunction failed: %08x\n",
+    ok(ret, "CryptUnregisterDefaultOIDFunction failed: %08lx\n",
      GetLastError());
     /* Now that they're both unregistered, unregistering should fail */
     ret = CryptUnregisterDefaultOIDFunction(0, "CertDllOpenStoreProv",
      bogusDll);
     ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
-     "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+     "Expected ERROR_FILE_NOT_FOUND, got %ld\n", GetLastError());
 
     /* Repeat a few tests on the normal encoding type */
     ret = CryptRegisterDefaultOIDFunction(X509_ASN_ENCODING,
@@ -462,7 +462,7 @@ static void test_registerDefaultOIDFunction(void)
     ret = CryptUnregisterDefaultOIDFunction(X509_ASN_ENCODING,
      "CertDllOpenStoreProv", bogusDll);
     ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
-     "Expected ERROR_FILE_NOT_FOUND, got %08x\n", GetLastError());
+     "Expected ERROR_FILE_NOT_FOUND, got %08lx\n", GetLastError());
 }
 
 static void test_getDefaultOIDFunctionAddress(void)
@@ -480,20 +480,20 @@ static void test_getDefaultOIDFunctionAddress(void)
      &hFuncAddr);
      */
     set = CryptInitOIDFunctionSet("CertDllOpenStoreProv", 0);
-    ok(set != 0, "CryptInitOIDFunctionSet failed: %d\n", GetLastError());
+    ok(set != 0, "CryptInitOIDFunctionSet failed: %ld\n", GetLastError());
     /* This crashes if hFuncAddr is not 0 to begin with */
     hFuncAddr = 0;
     ret = CryptGetDefaultOIDFunctionAddress(set, 0, NULL, 0, &funcAddr,
      &hFuncAddr);
     ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
-     "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+     "Expected ERROR_FILE_NOT_FOUND, got %ld\n", GetLastError());
     /* This fails with the normal encoding too, so built-in functions aren't
      * returned.
      */
     ret = CryptGetDefaultOIDFunctionAddress(set, X509_ASN_ENCODING, NULL, 0,
      &funcAddr, &hFuncAddr);
     ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
-     "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+     "Expected ERROR_FILE_NOT_FOUND, got %ld\n", GetLastError());
 
     /* Even with a registered dll, this fails (since the dll doesn't exist) */
     SetLastError(0xdeadbeef);
@@ -502,11 +502,11 @@ static void test_getDefaultOIDFunctionAddress(void)
     if (!ret && GetLastError() == ERROR_ACCESS_DENIED)
         skip("Need admin rights\n");
     else
-        ok(ret, "CryptRegisterDefaultOIDFunction failed: %08x\n", GetLastError());
+        ok(ret, "CryptRegisterDefaultOIDFunction failed: %08lx\n", GetLastError());
     ret = CryptGetDefaultOIDFunctionAddress(set, 0, NULL, 0, &funcAddr,
      &hFuncAddr);
     ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
-     "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+     "Expected ERROR_FILE_NOT_FOUND, got %ld\n", GetLastError());
     CryptUnregisterDefaultOIDFunction(0, "CertDllOpenStoreProv", bogusDll);
 }
 
@@ -591,20 +591,20 @@ static void test_findOIDInfo(void)
     {
         DWORD *data;
 
-        ok(info->cbSize == sizeof(*info), "Unexpected structure size %d.\n", info->cbSize);
+        ok(info->cbSize == sizeof(*info), "Unexpected structure size %ld.\n", info->cbSize);
         ok(!strcmp(info->pszOID, oid_ecdsa_sha256), "Expected %s, got %s\n", oid_ecdsa_sha256, info->pszOID);
         ok(!lstrcmpW(info->pwszName, sha256ECDSA), "Expected %s, got %s\n",
             wine_dbgstr_w(sha256ECDSA), wine_dbgstr_w(info->pwszName));
         ok(info->dwGroupId == CRYPT_SIGN_ALG_OID_GROUP_ID,
-           "Expected CRYPT_SIGN_ALG_OID_GROUP_ID, got %u\n", info->dwGroupId);
+           "Expected CRYPT_SIGN_ALG_OID_GROUP_ID, got %lu\n", info->dwGroupId);
         ok(U(*info).Algid == CALG_OID_INFO_CNG_ONLY,
            "Expected CALG_OID_INFO_CNG_ONLY, got %d\n", U(*info).Algid);
 
         data = (DWORD *)info->ExtraInfo.pbData;
-        ok(info->ExtraInfo.cbData == 8, "Expected 8, got %d\n", info->ExtraInfo.cbData);
-        ok(data[0] == CALG_OID_INFO_PARAMETERS, "Expected CALG_OID_INFO_PARAMETERS, got %x\n", data[0]);
+        ok(info->ExtraInfo.cbData == 8, "Expected 8, got %ld\n", info->ExtraInfo.cbData);
+        ok(data[0] == CALG_OID_INFO_PARAMETERS, "Expected CALG_OID_INFO_PARAMETERS, got %lx\n", data[0]);
         ok(data[1] == CRYPT_OID_NO_NULL_ALGORITHM_PARA_FLAG,
-            "Expected CRYPT_OID_NO_NULL_ALGORITHM_PARA_FLAG, got %x\n", data[1]);
+            "Expected CRYPT_OID_NO_NULL_ALGORITHM_PARA_FLAG, got %lx\n", data[1]);
 
         ok(!lstrcmpW(info->pwszCNGAlgid, BCRYPT_SHA256_ALGORITHM), "Expected %s, got %s\n",
            wine_dbgstr_w(BCRYPT_SHA256_ALGORITHM), wine_dbgstr_w(info->pwszCNGAlgid));
@@ -628,26 +628,26 @@ static void test_registerOIDInfo(void)
     SetLastError(0xdeadbeef);
     ret = CryptUnregisterOIDInfo(NULL);
     ok(!ret, "should fail\n");
-    ok(GetLastError() == E_INVALIDARG, "got %#x\n", GetLastError());
+    ok(GetLastError() == E_INVALIDARG, "got %#lx\n", GetLastError());
 
     memset(&info1, 0, sizeof(info1));
     SetLastError(0xdeadbeef);
     ret = CryptUnregisterOIDInfo(&info1);
     ok(!ret, "should fail\n");
-    ok(GetLastError() == E_INVALIDARG, "got %#x\n", GetLastError());
+    ok(GetLastError() == E_INVALIDARG, "got %#lx\n", GetLastError());
 
     info1.cbSize = sizeof(info1);
     SetLastError(0xdeadbeef);
     ret = CryptUnregisterOIDInfo(&info1);
     ok(!ret, "should fail\n");
-    ok(GetLastError() == E_INVALIDARG, "got %#x\n", GetLastError());
+    ok(GetLastError() == E_INVALIDARG, "got %#lx\n", GetLastError());
 
     info1.pszOID = test_oid;
     SetLastError(0xdeadbeef);
     ret = CryptUnregisterOIDInfo(&info1);
     ok(!ret, "should fail\n");
     ok(GetLastError() == ERROR_FILE_NOT_FOUND ||
-       GetLastError() == ERROR_ACCESS_DENIED, "got %u\n", GetLastError());
+       GetLastError() == ERROR_ACCESS_DENIED, "got %lu\n", GetLastError());
 
     info2 = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY, (void *)test_oid, 0);
     ok(!info2, "should fail\n");
@@ -657,10 +657,10 @@ static void test_registerOIDInfo(void)
      * registry on Windows because dwGroupId == 0.
      */
     ret = CryptRegisterOIDInfo(&info1, 0);
-    ok(ret, "got %u\n", GetLastError());
+    ok(ret, "got %lu\n", GetLastError());
 
     ret = RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Cryptography\\OID\\EncodingType 0\\CryptDllFindOIDInfo\\1.2.3.4.5.6.7.8.9.10!1", &key);
-    ok(ret == ERROR_FILE_NOT_FOUND, "got %u\n", ret);
+    ok(ret == ERROR_FILE_NOT_FOUND, "got %lu\n", ret);
 
     info2 = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY, (void *)test_oid, 0);
     ok(!info2, "should fail\n");
@@ -674,7 +674,7 @@ static void test_registerOIDInfo(void)
         skip("Need admin rights\n");
         return;
     }
-    ok(ret, "got %u\n", GetLastError());
+    ok(ret, "got %lu\n", GetLastError());
 
     /* It looks like crypt32 reads the OID info from registry only on load,
      * and CryptFindOIDInfo will find the registered OID on next run
@@ -683,28 +683,28 @@ static void test_registerOIDInfo(void)
     ok(!info2, "should fail\n");
 
     ret = RegCreateKeyA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Cryptography\\OID\\EncodingType 0\\CryptDllFindOIDInfo\\1.2.3.4.5.6.7.8.9.10!1", &key);
-    ok(!ret, "got %u\n", ret);
+    ok(!ret, "got %lu\n", ret);
 
     memset(buf, 0, sizeof(buf));
     size = sizeof(buf);
     ret = RegQueryValueExA(key, "Name", NULL, &type, (BYTE *)buf, &size);
-    ok(!ret, "got %u\n", ret);
-    ok(type == REG_SZ, "got %u\n", type);
+    ok(!ret, "got %lu\n", ret);
+    ok(type == REG_SZ, "got %lu\n", type);
     ok(!strcmp(buf, "winetest"), "got %s\n", buf);
 
     value = 0xdeadbeef;
     size = sizeof(value);
     ret = RegQueryValueExA(key, "Flags", NULL, &type, (BYTE *)&value, &size);
-    ok(!ret, "got %u\n", ret);
-    ok(type == REG_DWORD, "got %u\n", type);
-    ok(value == 1, "got %u\n", value);
+    ok(!ret, "got %lu\n", ret);
+    ok(type == REG_DWORD, "got %lu\n", type);
+    ok(value == 1, "got %lu\n", value);
 
     RegCloseKey(key);
 
     CryptUnregisterOIDInfo(&info1);
 
     ret = RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Cryptography\\OID\\EncodingType 0\\CryptDllFindOIDInfo\\1.2.3.4.5.6.7.8.9.10!1", &key);
-    ok(ret == ERROR_FILE_NOT_FOUND, "got %u\n", ret);
+    ok(ret == ERROR_FILE_NOT_FOUND, "got %lu\n", ret);
 }
 
 START_TEST(oid)

@@ -134,12 +134,12 @@ static void test_query_object(void)
     ret = pCryptQueryObject(0, NULL, 0, 0, 0, NULL, NULL, NULL, NULL, NULL,
      NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "expected E_INVALIDARG, got %08x\n", GetLastError());
+     "expected E_INVALIDARG, got %08lx\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = pCryptQueryObject(CERT_QUERY_OBJECT_BLOB, NULL, 0, 0, 0, NULL, NULL,
      NULL, NULL, NULL, NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "expected E_INVALIDARG, got %08x\n", GetLastError());
+     "expected E_INVALIDARG, got %08lx\n", GetLastError());
     /* Test with a simple cert */
     blob.pbData = bigCert;
     blob.cbData = sizeof(bigCert);
@@ -147,7 +147,7 @@ static void test_query_object(void)
     ret = pCryptQueryObject(CERT_QUERY_OBJECT_BLOB, &blob,
      CERT_QUERY_CONTENT_FLAG_ALL, CERT_QUERY_FORMAT_FLAG_ALL, 0, NULL, NULL,
      NULL, NULL, NULL, NULL);
-    ok(ret, "CryptQueryObject failed: %08x\n", GetLastError());
+    ok(ret, "CryptQueryObject failed: %08lx\n", GetLastError());
     /* The same cert, base64-encoded */
     blob.pbData = (BYTE *)bigCertBase64;
     blob.cbData = sizeof(bigCertBase64);
@@ -155,19 +155,19 @@ static void test_query_object(void)
     ret = pCryptQueryObject(CERT_QUERY_OBJECT_BLOB, &blob,
      CERT_QUERY_CONTENT_FLAG_ALL, CERT_QUERY_FORMAT_FLAG_ALL, 0, NULL, NULL,
      NULL, NULL, NULL, NULL);
-    ok(ret, "CryptQueryObject failed: %08x\n", GetLastError());
+    ok(ret, "CryptQueryObject failed: %08lx\n", GetLastError());
     /* The same base64-encoded cert, restricting the format types */
     SetLastError(0xdeadbeef);
     ret = pCryptQueryObject(CERT_QUERY_OBJECT_BLOB, &blob,
      CERT_QUERY_CONTENT_FLAG_ALL, CERT_QUERY_FORMAT_FLAG_BINARY, 0, NULL, NULL,
      NULL, NULL, NULL, NULL);
     ok(!ret && GetLastError() == CRYPT_E_NO_MATCH,
-     "expected CRYPT_E_NO_MATCH, got %08x\n", GetLastError());
+     "expected CRYPT_E_NO_MATCH, got %08lx\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = pCryptQueryObject(CERT_QUERY_OBJECT_BLOB, &blob,
      CERT_QUERY_CONTENT_FLAG_ALL, CERT_QUERY_FORMAT_FLAG_BASE64_ENCODED, 0,
      NULL, NULL, NULL, NULL, NULL, NULL);
-    ok(ret, "CryptQueryObject failed: %08x\n", GetLastError());
+    ok(ret, "CryptQueryObject failed: %08lx\n", GetLastError());
     /* The same cert, base64-encoded but as a wide character string */
     blob.pbData = (BYTE *)bigCertBase64W;
     blob.cbData = sizeof(bigCertBase64W);
@@ -176,7 +176,7 @@ static void test_query_object(void)
      CERT_QUERY_CONTENT_FLAG_ALL, CERT_QUERY_FORMAT_FLAG_ALL, 0, NULL, NULL,
      NULL, NULL, NULL, NULL);
     ok(!ret && GetLastError() == CRYPT_E_NO_MATCH,
-     "expected CRYPT_E_NO_MATCH, got %08x\n", GetLastError());
+     "expected CRYPT_E_NO_MATCH, got %08lx\n", GetLastError());
     /* For brevity, not tested here, but tested on Windows:  same failure
      * (CRYPT_E_NO_MATCH) when the wide character base64-encoded cert
      * is written to a file and queried.
@@ -188,14 +188,14 @@ static void test_query_object(void)
     ret = pCryptQueryObject(CERT_QUERY_OBJECT_BLOB, &blob,
      CERT_QUERY_CONTENT_FLAG_ALL, CERT_QUERY_FORMAT_FLAG_ALL, 0, NULL, NULL,
      NULL, NULL, NULL, NULL);
-    ok(ret, "CryptQueryObject failed: %08x\n", GetLastError());
+    ok(ret, "CryptQueryObject failed: %08lx\n", GetLastError());
     blob.pbData = (BYTE *)signedWithCertWithValidPubKeyContentBase64;
     blob.cbData = sizeof(signedWithCertWithValidPubKeyContentBase64);
     SetLastError(0xdeadbeef);
     ret = pCryptQueryObject(CERT_QUERY_OBJECT_BLOB, &blob,
      CERT_QUERY_CONTENT_FLAG_ALL, CERT_QUERY_FORMAT_FLAG_ALL, 0, NULL, NULL,
      NULL, NULL, NULL, NULL);
-    ok(ret, "CryptQueryObject failed: %08x\n", GetLastError());
+    ok(ret, "CryptQueryObject failed: %08lx\n", GetLastError());
     /* A valid signed message, encoded as a wide character base64 string, can
      * be queried successfully.
      */
@@ -205,18 +205,18 @@ static void test_query_object(void)
     ret = pCryptQueryObject(CERT_QUERY_OBJECT_BLOB, &blob,
      CERT_QUERY_CONTENT_FLAG_ALL, CERT_QUERY_FORMAT_FLAG_ALL, 0, NULL, NULL,
      NULL, NULL, NULL, NULL);
-    ok(ret, "CryptQueryObject failed: %08x\n", GetLastError());
+    ok(ret, "CryptQueryObject failed: %08lx\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = pCryptQueryObject(CERT_QUERY_OBJECT_BLOB, &blob,
      CERT_QUERY_CONTENT_FLAG_ALL, CERT_QUERY_FORMAT_FLAG_BINARY, 0, NULL, NULL,
      NULL, NULL, NULL, NULL);
     ok(!ret && GetLastError() == CRYPT_E_NO_MATCH,
-     "expected CRYPT_E_NO_MATCH, got %08x\n", GetLastError());
+     "expected CRYPT_E_NO_MATCH, got %08lx\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = pCryptQueryObject(CERT_QUERY_OBJECT_BLOB, &blob,
      CERT_QUERY_CONTENT_FLAG_ALL, CERT_QUERY_FORMAT_FLAG_BASE64_ENCODED, 0,
      NULL, NULL, NULL, NULL, NULL, NULL);
-    ok(ret, "CryptQueryObject failed: %08x\n", GetLastError());
+    ok(ret, "CryptQueryObject failed: %08lx\n", GetLastError());
 }
 
 START_TEST(object)
