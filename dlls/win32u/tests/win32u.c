@@ -180,6 +180,51 @@ static void test_NtUserBuildHwndList(void)
     DestroyWindow( hwnd );
 }
 
+static void test_cursoricon(void)
+{
+    BYTE bmp_bits[1024];
+    LONG width, height;
+    HANDLE handle;
+    unsigned int i;
+    BOOL ret;
+
+    for (i = 0; i < sizeof(bmp_bits); ++i)
+        bmp_bits[i] = 111 * i;
+
+    handle = CreateIcon( 0, 16, 16, 1, 1, bmp_bits, &bmp_bits[16 * 16 / 8] );
+    ok(handle != 0, "CreateIcon failed\n");
+
+    ret = NtUserGetIconSize( handle, 0, &width, &height );
+    ok( ret, "NtUserGetIconSize failed: %lu\n", GetLastError() );
+    ok( width == 16, "width = %ld\n", width );
+    ok( height == 32, "height = %ld\n", height );
+
+    ret = NtUserGetIconSize( handle, 6, &width, &height );
+    ok( ret, "NtUserGetIconSize failed: %lu\n", GetLastError() );
+    ok( width == 16, "width = %ld\n", width );
+    ok( height == 32, "height = %ld\n", height );
+
+    ret = NtUserDestroyCursor( handle, 0 );
+    ok( ret, "NtUserDestroyIcon failed: %lu\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    ret = NtUserGetIconSize( handle, 0, &width, &height );
+    ok( !ret && GetLastError() == ERROR_INVALID_CURSOR_HANDLE,
+        "NtUserGetIconSize returned %x %lu\n", ret, GetLastError() );
+
+    /* Test a system icon */
+    handle = LoadIconA( 0, (LPCSTR)IDI_HAND );
+    ok( handle != NULL, "LoadIcon icon failed, error %lu\n", GetLastError() );
+
+    ret = NtUserGetIconSize( handle, 0, &width, &height );
+    ok( width == 32, "width = %ld\n", width );
+    ok( height == 64, "height = %ld\n", height );
+    ok( ret, "NtUserGetIconSize failed: %lu\n", GetLastError() );
+
+    ret = DestroyIcon(handle);
+    ok(ret, "Destroy icon failed, error %lu.\n", GetLastError());
+}
+
 START_TEST(win32u)
 {
     /* native win32u.dll fails if user32 is not loaded, so make sure it's fully initialized */
@@ -188,6 +233,7 @@ START_TEST(win32u)
     test_NtUserEnumDisplayDevices();
     test_window_props();
     test_NtUserBuildHwndList();
+    test_cursoricon();
 
     test_NtUserCloseWindowStation();
 }
