@@ -212,6 +212,22 @@ HICON alloc_cursoricon_handle( BOOL is_icon )
     return handle;
 }
 
+static struct cursoricon_object *get_icon_frame_ptr( HICON handle, UINT step )
+{
+    struct cursoricon_object *obj, *ret;
+
+    if (!(obj = get_icon_ptr( handle ))) return NULL;
+    if (!obj->is_ani) return obj;
+    if (step >= obj->ani.num_steps)
+    {
+        release_user_handle_ptr( obj );
+        return NULL;
+    }
+    ret = get_icon_ptr( obj->ani.frames[step] );
+    release_user_handle_ptr( obj );
+    return ret;
+}
+
 static BOOL free_icon_handle( HICON handle )
 {
     struct cursoricon_object *obj = free_user_handle( handle, NTUSER_OBJ_ICON );
@@ -402,4 +418,23 @@ HICON WINAPI NtUserFindExistingCursorIcon( UNICODE_STRING *module, UNICODE_STRIN
     }
     user_unlock();
     return ret;
+}
+
+/***********************************************************************
+ *	     NtUserGetIconSize (win32u.@)
+ */
+BOOL WINAPI NtUserGetIconSize( HICON handle, UINT step, LONG *width, LONG *height )
+{
+    struct cursoricon_object *obj;
+
+    if (!(obj = get_icon_frame_ptr( handle, step )))
+    {
+        SetLastError( ERROR_INVALID_CURSOR_HANDLE );
+        return FALSE;
+    }
+
+    *width  = obj->frame.width;
+    *height = obj->frame.height * 2;
+    release_user_handle_ptr( obj );
+    return TRUE;
 }

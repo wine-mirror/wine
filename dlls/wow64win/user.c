@@ -279,6 +279,16 @@ NTSTATUS WINAPI wow64_NtUserFindExistingCursorIcon( UINT *args )
     return HandleToUlong( ret );
 }
 
+NTSTATUS WINAPI wow64_NtUserGetIconSize( UINT *args )
+{
+    HICON handle = get_handle( &args );
+    UINT step = get_ulong( &args );
+    LONG *width = get_ptr( &args );
+    LONG *height = get_ptr( &args );
+
+    return NtUserGetIconSize( handle, step, width, height );
+}
+
 NTSTATUS WINAPI wow64_NtUserAttachThreadInput( UINT *args )
 {
     DWORD from = get_ulong( &args );

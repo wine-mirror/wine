@@ -334,16 +334,9 @@ static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
  */
 BOOL get_icon_size( HICON handle, SIZE *size )
 {
-    struct cursoricon_object *info;
-    struct cursoricon_frame *frame;
-
-    if (!(info = get_icon_ptr( handle ))) return FALSE;
-    frame = get_icon_frame( info, 0 );
-    size->cx = frame->width;
-    size->cy = frame->height;
-    release_icon_frame( info, frame);
-    release_user_handle_ptr( info );
-    return TRUE;
+    BOOL ret = NtUserGetIconSize( handle, 0, &size->cx, &size->cy );
+    if (ret) size->cy /= 2;
+    return ret;
 }
 
 struct png_wrapper
