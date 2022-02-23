@@ -438,7 +438,7 @@ NTSTATUS WINAPI RtlCreateSecurityDescriptor(
 /**************************************************************************
  * RtlCopySecurityDescriptor            [NTDLL.@]
  *
- * Copies an absolute or sefl-relative SECURITY_DESCRIPTOR.
+ * Copies an absolute or self-relative SECURITY_DESCRIPTOR.
  *
  * PARAMS
  *  pSourceSD      [O] SD to copy from.
