@@ -242,10 +242,10 @@ static listener_container_t *get_listener_container(EventTarget *event_target, c
     memcpy(container->type, type, (type_len + 1) * sizeof(WCHAR));
     list_init(&container->listeners);
     vtbl = dispex_get_vtbl(&event_target->dispex);
-    if(vtbl->bind_event)
-        vtbl->bind_event(&event_target->dispex, eid);
-    else
+    if (!vtbl->bind_event)
         FIXME("Unsupported event binding on target %p\n", event_target);
+    else if(eid != EVENTID_LAST)
+        vtbl->bind_event(&event_target->dispex, eid);
 
     wine_rb_put(&event_target->handler_map, container->type, &container->entry);
     return container;
