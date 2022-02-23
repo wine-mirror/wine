@@ -64,13 +64,13 @@ static void test_ApphelpCheckShellObject(void)
         flags = 0xdeadbeef;
         SetLastError(0xdeadbeef);
         res = pApphelpCheckShellObject(objects[i], FALSE, &flags);
-        ok(res && (flags == 0), "%s 0: got %d and %s with 0x%x (expected TRUE and 0)\n",
+        ok(res && (flags == 0), "%s 0: got %d and %s with 0x%lx (expected TRUE and 0)\n",
             wine_dbgstr_guid(objects[i]), res, wine_dbgstr_longlong(flags), GetLastError());
 
         flags = 0xdeadbeef;
         SetLastError(0xdeadbeef);
         res = pApphelpCheckShellObject(objects[i], TRUE, &flags);
-        ok(res && (flags == 0), "%s 1: got %d and %s with 0x%x (expected TRUE and 0)\n",
+        ok(res && (flags == 0), "%s 1: got %d and %s with 0x%lx (expected TRUE and 0)\n",
             wine_dbgstr_guid(objects[i]), res, wine_dbgstr_longlong(flags), GetLastError());
 
     }
@@ -78,7 +78,7 @@ static void test_ApphelpCheckShellObject(void)
     /* NULL as pointer to flags is checked */
     SetLastError(0xdeadbeef);
     res = pApphelpCheckShellObject(&GUID_NULL, FALSE, NULL);
-    ok(res, "%s 0: got %d with 0x%x (expected != FALSE)\n", wine_dbgstr_guid(&GUID_NULL), res, GetLastError());
+    ok(res, "%s 0: got %d with 0x%lx (expected != FALSE)\n", wine_dbgstr_guid(&GUID_NULL), res, GetLastError());
 
     /* NULL as CLSID* crash on Windows */
     if (0)
@@ -86,7 +86,7 @@ static void test_ApphelpCheckShellObject(void)
         flags = 0xdeadbeef;
         SetLastError(0xdeadbeef);
         res = pApphelpCheckShellObject(NULL, FALSE, &flags);
-        trace("NULL as CLSID*: got %d and %s with 0x%x\n", res, wine_dbgstr_longlong(flags), GetLastError());
+        trace("NULL as CLSID*: got %d and %s with 0x%lx\n", res, wine_dbgstr_longlong(flags), GetLastError());
     }
 }
 
