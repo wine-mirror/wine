@@ -223,8 +223,6 @@ static BOOL show_dll_in_list( const WCHAR *name )
         /* skip exes */
         if (!wcscmp( ext, L".exe" )) return FALSE;
     }
-    /* skip api set placeholders */
-    if (!wcsncmp( name, L"api-ms-", 7 ) || !wcsncmp( name, L"ext-ms-", 7 )) return FALSE;
     /* skip dlls that should always be builtin */
     return !is_builtin_only( name );
 }

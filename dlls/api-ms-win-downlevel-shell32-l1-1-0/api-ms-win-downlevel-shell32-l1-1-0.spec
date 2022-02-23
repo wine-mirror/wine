@@ -1,3 +1,0 @@
-@ stdcall CommandLineToArgvW(wstr ptr) shcore.CommandLineToArgvW
-@ stdcall GetCurrentProcessExplicitAppUserModelID(ptr) shcore.GetCurrentProcessExplicitAppUserModelID
-@ stdcall SetCurrentProcessExplicitAppUserModelID(wstr) shcore.SetCurrentProcessExplicitAppUserModelID

@@ -1,2 +1,0 @@
-@ stub RoFailFastWithErrorContextInternal
-@ stub RoReportCapabilityCheckFailure
