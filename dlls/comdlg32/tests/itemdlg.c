@@ -96,10 +96,10 @@ static HWND get_hwnd_from_ifiledialog(IFileDialog *pfd)
     HRESULT hr;
 
     hr = IFileDialog_QueryInterface(pfd, &IID_IOleWindow, (void**)&pow);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
 
     hr = IOleWindow_GetWindow(pow, &dlg_hwnd);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
 
     IOleWindow_Release(pow);
 
@@ -213,7 +213,7 @@ static HRESULT WINAPI IFileDialogEvents_fnOnFolderChange(IFileDialogEvents *ifac
         ok(dlg_hwnd != NULL, "Got NULL.\n");
 
         hr = IFileDialog_SetFileName(pfd, This->set_filename);
-        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        ok(hr == S_OK, "Got 0x%08lx\n", hr);
 
         if(!This->set_filename_tried)
         {
@@ -290,7 +290,7 @@ static HRESULT WINAPI IFileDialogEvents_fnOnOverwrite(IFileDialogEvents *iface,
     This->OnOverwrite++;
     ok(*pResponse == FDEOR_DEFAULT, "overwrite response %u\n", *pResponse);
     *pResponse = FDEOR_ACCEPT;
-    ok(!This->OnFileOk, "OnFileOk already called %u times\n", This->OnFileOk);
+    ok(!This->OnFileOk, "OnFileOk already called %lu times\n", This->OnFileOk);
     return S_OK;
 }
 
@@ -337,88 +337,88 @@ static BOOL test_instantiation(void)
         win_skip("Could not instantiate the FileOpenDialog.\n");
         return FALSE;
     }
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     hr = IFileOpenDialog_QueryInterface(pfod, &IID_IFileDialog, (void**)&pfd);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     if(SUCCEEDED(hr)) IFileDialog_Release(pfd);
 
     hr = IFileOpenDialog_QueryInterface(pfod, &IID_IFileDialogCustomize, (void**)&punk);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     hr = IFileOpenDialog_QueryInterface(pfod, &IID_IFileDialogCustomizeAlt, (void**)&unk2);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(punk == unk2, "got %p, %p\n", punk, unk2);
     IUnknown_Release(punk);
     IUnknown_Release(unk2);
 
     hr = IFileOpenDialog_QueryInterface(pfod, &IID_IFileSaveDialog, (void**)&pfsd);
-    ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
+    ok(hr == E_NOINTERFACE, "got 0x%08lx.\n", hr);
     if(SUCCEEDED(hr)) IFileSaveDialog_Release(pfsd);
 
     hr = IFileOpenDialog_QueryInterface(pfod, &IID_IServiceProvider, (void**)&psp);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     if(SUCCEEDED(hr))
     {
         IExplorerBrowser *peb;
         IShellBrowser *psb;
 
         hr = IServiceProvider_QueryService(psp, &SID_SExplorerBrowserFrame, &IID_ICommDlgBrowser, (void**)&punk);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
         if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
         /* since win8, the result is E_NOTIMPL for all other services */
         hr = IServiceProvider_QueryService(psp, &SID_STopLevelBrowser, &IID_IExplorerBrowser, (void**)&peb);
-        ok(hr == E_NOTIMPL || broken(hr == E_FAIL), "got 0x%08x (expected E_NOTIMPL)\n", hr);
+        ok(hr == E_NOTIMPL || broken(hr == E_FAIL), "got 0x%08lx (expected E_NOTIMPL)\n", hr);
         if(SUCCEEDED(hr)) IExplorerBrowser_Release(peb);
         hr = IServiceProvider_QueryService(psp, &SID_STopLevelBrowser, &IID_IShellBrowser, (void**)&psb);
-        ok(hr == E_NOTIMPL || broken(hr == E_FAIL), "got 0x%08x (expected E_NOTIMPL)\n", hr);
+        ok(hr == E_NOTIMPL || broken(hr == E_FAIL), "got 0x%08lx (expected E_NOTIMPL)\n", hr);
         if(SUCCEEDED(hr)) IShellBrowser_Release(psb);
         hr = IServiceProvider_QueryService(psp, &SID_STopLevelBrowser, &IID_ICommDlgBrowser, (void**)&punk);
-        ok(hr == E_NOTIMPL || broken(hr == E_FAIL), "got 0x%08x (expected E_NOTIMPL)\n", hr);
+        ok(hr == E_NOTIMPL || broken(hr == E_FAIL), "got 0x%08lx (expected E_NOTIMPL)\n", hr);
         if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
         hr = IServiceProvider_QueryService(psp, &SID_STopLevelBrowser, &IID_IUnknown, (void**)&punk);
-        ok(hr == E_NOTIMPL || broken(hr == E_FAIL), "got 0x%08x (expected E_NOTIMPL)\n", hr);
+        ok(hr == E_NOTIMPL || broken(hr == E_FAIL), "got 0x%08lx (expected E_NOTIMPL)\n", hr);
         if(SUCCEEDED(hr)) IUnknown_Release(punk);
         hr = IServiceProvider_QueryService(psp, &IID_IUnknown, &IID_IUnknown, (void**)&punk);
-        ok(hr == E_NOTIMPL || broken(hr == E_FAIL), "got 0x%08x (expected E_NOTIMPL)\n", hr);
+        ok(hr == E_NOTIMPL || broken(hr == E_FAIL), "got 0x%08lx (expected E_NOTIMPL)\n", hr);
         if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
         IServiceProvider_Release(psp);
     }
 
     hr = IFileOpenDialog_QueryInterface(pfod, &IID_IFileDialogEvents, (void**)&punk);
-    ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
+    ok(hr == E_NOINTERFACE, "got 0x%08lx.\n", hr);
     if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
     hr = IFileOpenDialog_QueryInterface(pfod, &IID_IExplorerBrowser, (void**)&punk);
-    ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
+    ok(hr == E_NOINTERFACE, "got 0x%08lx.\n", hr);
     if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
     hr = IFileOpenDialog_QueryInterface(pfod, &IID_IExplorerBrowserEvents, (void**)&punk);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
     hr = IFileOpenDialog_QueryInterface(pfod, &IID_ICommDlgBrowser3, (void**)&punk);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
     hr = IFileOpenDialog_QueryInterface(pfod, &IID_IShellBrowser, (void**)&punk);
-    ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
+    ok(hr == E_NOINTERFACE, "got 0x%08lx.\n", hr);
     if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
     hr = IFileOpenDialog_QueryInterface(pfod, &IID_IOleWindow, (void**)&pow);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     if(SUCCEEDED(hr))
     {
         HWND hwnd;
 
         hr = IOleWindow_ContextSensitiveHelp(pow, TRUE);
-        todo_wine ok(hr == S_OK, "Got 0x%08x\n", hr);
+        todo_wine ok(hr == S_OK, "Got 0x%08lx\n", hr);
 
         hr = IOleWindow_ContextSensitiveHelp(pow, FALSE);
-        todo_wine ok(hr == S_OK, "Got 0x%08x\n", hr);
+        todo_wine ok(hr == S_OK, "Got 0x%08lx\n", hr);
 
         if(0)
         {
@@ -427,14 +427,14 @@ static BOOL test_instantiation(void)
         }
 
         hr = IOleWindow_GetWindow(pow, &hwnd);
-        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        ok(hr == S_OK, "Got 0x%08lx\n", hr);
         ok(hwnd == NULL, "Got %p\n", hwnd);
 
         IOleWindow_Release(pow);
     }
 
     ref = IFileOpenDialog_Release(pfod);
-    ok(!ref, "Got refcount %d, should have been released.\n", ref);
+    ok(!ref, "Got refcount %ld, should have been released.\n", ref);
 
     /* Instantiate FileSaveDialog */
     hr = CoCreateInstance(&CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER,
@@ -444,56 +444,56 @@ static BOOL test_instantiation(void)
         win_skip("Could not instantiate the FileSaveDialog.\n");
         return FALSE;
     }
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IFileDialog, (void**)&pfd);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     if(SUCCEEDED(hr)) IFileDialog_Release(pfd);
 
     hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IFileDialogCustomize, (void**)&punk);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IFileDialogCustomizeAlt, (void**)&unk2);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(punk == unk2, "got %p, %p\n", punk, unk2);
     IUnknown_Release(punk);
     IUnknown_Release(unk2);
 
     hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IFileOpenDialog, (void**)&pfod);
-    ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
+    ok(hr == E_NOINTERFACE, "got 0x%08lx.\n", hr);
     if(SUCCEEDED(hr)) IFileOpenDialog_Release(pfod);
 
     hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IFileDialogEvents, (void**)&punk);
-    ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
+    ok(hr == E_NOINTERFACE, "got 0x%08lx.\n", hr);
     if(SUCCEEDED(hr)) IFileDialog_Release(pfd);
 
     hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IExplorerBrowser, (void**)&punk);
-    ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
+    ok(hr == E_NOINTERFACE, "got 0x%08lx.\n", hr);
     if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
     hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IExplorerBrowserEvents, (void**)&punk);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
     hr = IFileSaveDialog_QueryInterface(pfsd, &IID_ICommDlgBrowser3, (void**)&punk);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
     hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IShellBrowser, (void**)&punk);
-    ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
+    ok(hr == E_NOINTERFACE, "got 0x%08lx.\n", hr);
     if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
     hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IOleWindow, (void**)&pow);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     if(SUCCEEDED(hr))
     {
         HWND hwnd;
 
         hr = IOleWindow_ContextSensitiveHelp(pow, TRUE);
-        todo_wine ok(hr == S_OK, "Got 0x%08x\n", hr);
+        todo_wine ok(hr == S_OK, "Got 0x%08lx\n", hr);
 
         hr = IOleWindow_ContextSensitiveHelp(pow, FALSE);
-        todo_wine ok(hr == S_OK, "Got 0x%08x\n", hr);
+        todo_wine ok(hr == S_OK, "Got 0x%08lx\n", hr);
 
         if(0)
         {
@@ -502,7 +502,7 @@ static BOOL test_instantiation(void)
         }
 
         hr = IOleWindow_GetWindow(pow, &hwnd);
-        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        ok(hr == S_OK, "Got 0x%08lx\n", hr);
         ok(hwnd == NULL, "Got %p\n", hwnd);
 
         IOleWindow_Release(pow);
@@ -510,7 +510,7 @@ static BOOL test_instantiation(void)
 
 
     ref = IFileSaveDialog_Release(pfsd);
-    ok(!ref, "Got refcount %d, should have been released.\n", ref);
+    ok(!ref, "Got refcount %ld, should have been released.\n", ref);
     return TRUE;
 }
 
@@ -558,205 +558,205 @@ static void test_basics(void)
     /* Instantiate FileOpenDialog and FileSaveDialog */
     hr = CoCreateInstance(&CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IFileOpenDialog, (void**)&pfod);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     hr = CoCreateInstance(&CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IFileSaveDialog, (void**)&pfsd);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     /* ClearClientData */
     todo_wine
     {
     hr = IFileOpenDialog_ClearClientData(pfod);
-    ok(hr == E_FAIL, "got 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "got 0x%08lx.\n", hr);
     hr = IFileSaveDialog_ClearClientData(pfsd);
-    ok(hr == E_FAIL, "got 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "got 0x%08lx.\n", hr);
     }
 
     /* GetOptions */
     hr = IFileOpenDialog_GetOptions(pfod, NULL);
-    ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
+    ok(hr == E_INVALIDARG, "got 0x%08lx.\n", hr);
     hr = IFileSaveDialog_GetOptions(pfsd, NULL);
-    ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
+    ok(hr == E_INVALIDARG, "got 0x%08lx.\n", hr);
 
     /* Check default options */
     hr = IFileOpenDialog_GetOptions(pfod, &fdoptions);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(fdoptions == (FOS_PATHMUSTEXIST | FOS_FILEMUSTEXIST | FOS_NOCHANGEDIR),
-       "Unexpected default options: 0x%08x\n", fdoptions);
+       "Unexpected default options: 0x%08lx\n", fdoptions);
     hr = IFileSaveDialog_GetOptions(pfsd, &fdoptions);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(fdoptions == (FOS_OVERWRITEPROMPT | FOS_NOREADONLYRETURN | FOS_PATHMUSTEXIST | FOS_NOCHANGEDIR),
-       "Unexpected default options: 0x%08x\n", fdoptions);
+       "Unexpected default options: 0x%08lx\n", fdoptions);
 
     /* Check SetOptions invalid options handling */
     for (i = 0; i < ARRAY_SIZE(invalid_fos); i++)
     {
         hr = IFileOpenDialog_SetOptions(pfod, invalid_fos[i]);
-        ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
+        ok(hr == E_INVALIDARG, "got 0x%08lx.\n", hr);
         hr = IFileOpenDialog_GetOptions(pfod, &fdoptions);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
-        ok(fdoptions == (FOS_PATHMUSTEXIST | FOS_FILEMUSTEXIST | FOS_NOCHANGEDIR), "got %08x\n", fdoptions);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
+        ok(fdoptions == (FOS_PATHMUSTEXIST | FOS_FILEMUSTEXIST | FOS_NOCHANGEDIR), "got %08lx\n", fdoptions);
 
         hr = IFileSaveDialog_SetOptions(pfsd, invalid_fos[i]);
-        ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
+        ok(hr == E_INVALIDARG, "got 0x%08lx.\n", hr);
         hr = IFileSaveDialog_GetOptions(pfsd, &fdoptions);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
         ok(fdoptions == (FOS_OVERWRITEPROMPT | FOS_NOREADONLYRETURN | FOS_PATHMUSTEXIST | FOS_NOCHANGEDIR),
-           "got %08x\n", fdoptions);
+           "got %08lx\n", fdoptions);
     }
 
     /* GetResult */
     hr = IFileOpenDialog_GetResult(pfod, NULL);
-    ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
+    ok(hr == E_INVALIDARG, "got 0x%08lx.\n", hr);
     hr = IFileSaveDialog_GetResult(pfsd, NULL);
-    ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
+    ok(hr == E_INVALIDARG, "got 0x%08lx.\n", hr);
 
     psi = (void*)0xdeadbeef;
     hr = IFileOpenDialog_GetResult(pfod, &psi);
-    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    ok(hr == E_UNEXPECTED, "got 0x%08lx.\n", hr);
     ok(psi == (void*)0xdeadbeef, "got %p.\n", psi);
     psi = (void*)0xdeadbeef;
     hr = IFileSaveDialog_GetResult(pfsd, &psi);
-    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    ok(hr == E_UNEXPECTED, "got 0x%08lx.\n", hr);
     ok(psi == (void*)0xdeadbeef, "got %p.\n", psi);
 
     /* GetCurrentSelection */
     if(0) {
         /* Crashes on Vista/W2K8. Tests below passes on Windows 7 */
         hr = IFileOpenDialog_GetCurrentSelection(pfod, NULL);
-        ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
+        ok(hr == E_INVALIDARG, "got 0x%08lx.\n", hr);
         hr = IFileSaveDialog_GetCurrentSelection(pfsd, NULL);
-        ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
+        ok(hr == E_INVALIDARG, "got 0x%08lx.\n", hr);
         hr = IFileOpenDialog_GetCurrentSelection(pfod, &psi);
-        ok(hr == E_FAIL, "got 0x%08x.\n", hr);
+        ok(hr == E_FAIL, "got 0x%08lx.\n", hr);
         hr = IFileSaveDialog_GetCurrentSelection(pfsd, &psi);
-        ok(hr == E_FAIL, "got 0x%08x.\n", hr);
+        ok(hr == E_FAIL, "got 0x%08lx.\n", hr);
     }
 
     /* GetFileName */
     hr = IFileOpenDialog_GetFileName(pfod, NULL);
-    ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
+    ok(hr == E_INVALIDARG, "got 0x%08lx.\n", hr);
     filename = (void*)0xdeadbeef;
     hr = IFileOpenDialog_GetFileName(pfod, &filename);
-    ok(hr == E_FAIL, "got 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "got 0x%08lx.\n", hr);
     ok(filename == NULL, "got %p\n", filename);
     hr = IFileSaveDialog_GetFileName(pfsd, NULL);
-    ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
+    ok(hr == E_INVALIDARG, "got 0x%08lx.\n", hr);
     filename = (void*)0xdeadbeef;
     hr = IFileSaveDialog_GetFileName(pfsd, &filename);
-    ok(hr == E_FAIL, "got 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "got 0x%08lx.\n", hr);
     ok(filename == NULL, "got %p\n", filename);
 
     /* GetFileTypeIndex */
     hr = IFileOpenDialog_GetFileTypeIndex(pfod, NULL);
-    ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
+    ok(hr == E_INVALIDARG, "got 0x%08lx.\n", hr);
     filetype = 0x12345;
     hr = IFileOpenDialog_GetFileTypeIndex(pfod, &filetype);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(filetype == 0, "got %d.\n", filetype);
     hr = IFileSaveDialog_GetFileTypeIndex(pfsd, NULL);
-    ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
+    ok(hr == E_INVALIDARG, "got 0x%08lx.\n", hr);
     filetype = 0x12345;
     hr = IFileSaveDialog_GetFileTypeIndex(pfsd, &filetype);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(filetype == 0, "got %d.\n", filetype);
 
     /* SetFileTypes / SetFileTypeIndex */
     hr = IFileOpenDialog_SetFileTypes(pfod, 0, NULL);
-    ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
+    ok(hr == E_INVALIDARG, "got 0x%08lx.\n", hr);
     hr = IFileOpenDialog_SetFileTypes(pfod, 0, filterspec);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     hr = IFileOpenDialog_SetFileTypeIndex(pfod, 0);
-    ok(hr == E_FAIL, "got 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "got 0x%08lx.\n", hr);
     hr = IFileOpenDialog_SetFileTypeIndex(pfod, 1);
-    ok(hr == E_FAIL, "got 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "got 0x%08lx.\n", hr);
     hr = IFileOpenDialog_SetFileTypes(pfod, 1, filterspec);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     hr = IFileOpenDialog_SetFileTypes(pfod, 0, filterspec);
-    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    ok(hr == E_UNEXPECTED, "got 0x%08lx.\n", hr);
     hr = IFileOpenDialog_SetFileTypes(pfod, 0, NULL);
-    ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
+    ok(hr == E_INVALIDARG, "got 0x%08lx.\n", hr);
     hr = IFileOpenDialog_SetFileTypeIndex(pfod, 0);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     hr = IFileOpenDialog_GetFileTypeIndex(pfod, &filetype);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(filetype == 1, "got %d\n", filetype);
     hr = IFileOpenDialog_SetFileTypeIndex(pfod, 100);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     hr = IFileOpenDialog_GetFileTypeIndex(pfod, &filetype);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(filetype == 1, "got %d\n", filetype);
     hr = IFileOpenDialog_SetFileTypes(pfod, 1, filterspec);
-    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    ok(hr == E_UNEXPECTED, "got 0x%08lx.\n", hr);
     hr = IFileOpenDialog_SetFileTypes(pfod, 1, &filterspec[1]);
-    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    ok(hr == E_UNEXPECTED, "got 0x%08lx.\n", hr);
 
     hr = IFileSaveDialog_SetFileTypeIndex(pfsd, 0);
-    ok(hr == E_FAIL, "got 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "got 0x%08lx.\n", hr);
     hr = IFileSaveDialog_SetFileTypeIndex(pfsd, 1);
-    ok(hr == E_FAIL, "got 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "got 0x%08lx.\n", hr);
     hr = IFileSaveDialog_SetFileTypes(pfsd, 2, filterspec);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     hr = IFileSaveDialog_GetFileTypeIndex(pfsd, &filetype);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     /* I hope no one relies on this one */
     todo_wine ok(filetype == 0, "got %d\n", filetype);
     hr = IFileSaveDialog_SetFileTypeIndex(pfsd, 0);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     hr = IFileSaveDialog_GetFileTypeIndex(pfsd, &filetype);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(filetype == 1, "got %d\n", filetype);
     hr = IFileSaveDialog_SetFileTypeIndex(pfsd, 100);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     hr = IFileSaveDialog_GetFileTypeIndex(pfsd, &filetype);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(filetype == 2, "got %d\n", filetype);
     hr = IFileSaveDialog_SetFileTypes(pfsd, 1, filterspec);
-    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    ok(hr == E_UNEXPECTED, "got 0x%08lx.\n", hr);
     hr = IFileSaveDialog_SetFileTypes(pfsd, 1, &filterspec[1]);
-    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    ok(hr == E_UNEXPECTED, "got 0x%08lx.\n", hr);
 
     /* SetFilter */
     todo_wine
     {
     hr = IFileOpenDialog_SetFilter(pfod, NULL);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     hr = IFileSaveDialog_SetFilter(pfsd, NULL);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     }
 
     /* SetFolder */
     hr = IFileOpenDialog_SetFolder(pfod, NULL);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     hr = IFileSaveDialog_SetFolder(pfsd, NULL);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     /* SetDefaultExtension */
     hr = IFileOpenDialog_SetDefaultExtension(pfod, NULL);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     hr = IFileOpenDialog_SetDefaultExtension(pfod, txt);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     hr = IFileOpenDialog_SetDefaultExtension(pfod, null);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     hr = IFileSaveDialog_SetDefaultExtension(pfsd, NULL);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     hr = IFileSaveDialog_SetDefaultExtension(pfsd, txt);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     hr = IFileSaveDialog_SetDefaultExtension(pfsd, null);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     /* SetDefaultFolder */
     hr = IFileOpenDialog_SetDefaultFolder(pfod, NULL);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     hr = IFileSaveDialog_SetDefaultFolder(pfsd, NULL);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IFileOpenDialog_SetDefaultFolder(pfod, psidesktop);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     hr = IFileSaveDialog_SetDefaultFolder(pfsd, psidesktop);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     if(0)
     {
@@ -767,27 +767,27 @@ static void test_basics(void)
 
     /* GetFolder / SetFolder */
     hr = IFileOpenDialog_GetFolder(pfod, NULL);
-    ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
+    ok(hr == E_INVALIDARG, "got 0x%08lx.\n", hr);
 
     hr = IFileOpenDialog_GetFolder(pfod, &psi_original);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     if(SUCCEEDED(hr))
     {
         hr = IFileOpenDialog_SetFolder(pfod, psidesktop);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
         hr = IFileOpenDialog_SetFolder(pfod, psi_original);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
         IShellItem_Release(psi_original);
     }
 
     hr = IFileSaveDialog_GetFolder(pfsd, &psi_original);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     if(SUCCEEDED(hr))
     {
         hr = IFileSaveDialog_SetFolder(pfsd, psidesktop);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
         hr = IFileSaveDialog_SetFolder(pfsd, psi_original);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
         IShellItem_Release(psi_original);
     }
 
@@ -800,105 +800,105 @@ static void test_basics(void)
     }
 
     hr = IFileOpenDialog_AddPlace(pfod, psidesktop, FDAP_TOP + 1);
-    todo_wine ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    todo_wine ok(hr == E_INVALIDARG, "got 0x%08lx\n", hr);
     hr = IFileOpenDialog_AddPlace(pfod, psidesktop, FDAP_BOTTOM);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     hr = IFileOpenDialog_AddPlace(pfod, psidesktop, FDAP_TOP);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IFileSaveDialog_AddPlace(pfsd, psidesktop, FDAP_TOP + 1);
-    todo_wine ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    todo_wine ok(hr == E_INVALIDARG, "got 0x%08lx\n", hr);
     hr = IFileSaveDialog_AddPlace(pfsd, psidesktop, FDAP_BOTTOM);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     hr = IFileSaveDialog_AddPlace(pfsd, psidesktop, FDAP_TOP);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     /* SetFileName */
     hr = IFileOpenDialog_SetFileName(pfod, NULL);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     hr = IFileOpenDialog_SetFileName(pfod, null);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     filename = NULL;
     hr = IFileOpenDialog_GetFileName(pfod, &filename);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
     ok(!lstrcmpW(filename, null), "Strings do not match.\n");
     CoTaskMemFree(filename);
 
     hr = IFileOpenDialog_SetFileName(pfod, NULL);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     filename = (void*)0xdeadbeef;
     hr = IFileOpenDialog_GetFileName(pfod, &filename);
-    ok(hr == E_FAIL, "Got 0x%08x\n", hr);
+    ok(hr == E_FAIL, "Got 0x%08lx\n", hr);
     ok(filename == NULL, "got %p.\n", filename);
 
     hr = IFileOpenDialog_SetFileName(pfod, txt);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     hr = IFileOpenDialog_GetFileName(pfod, &filename);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
     ok(!lstrcmpW(filename, txt), "Strings do not match.\n");
     CoTaskMemFree(filename);
 
     hr = IFileSaveDialog_SetFileName(pfsd, NULL);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     hr = IFileSaveDialog_SetFileName(pfsd, null);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     hr = IFileSaveDialog_SetFileName(pfsd, txt);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     hr = IFileSaveDialog_GetFileName(pfsd, &filename);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
     ok(!lstrcmpW(filename, txt), "Strings do not match.\n");
     CoTaskMemFree(filename);
 
     /* SetFileNameLabel */
     hr = IFileOpenDialog_SetFileNameLabel(pfod, NULL);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     hr = IFileOpenDialog_SetFileNameLabel(pfod, null);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     hr = IFileOpenDialog_SetFileNameLabel(pfod, txt);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IFileSaveDialog_SetFileNameLabel(pfsd, NULL);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     hr = IFileSaveDialog_SetFileNameLabel(pfsd, null);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     hr = IFileSaveDialog_SetFileNameLabel(pfsd, txt);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     /* Close */
     hr = IFileOpenDialog_Close(pfod, S_FALSE);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     hr = IFileSaveDialog_Close(pfsd, S_FALSE);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     /* SetOkButtonLabel */
     hr = IFileOpenDialog_SetOkButtonLabel(pfod, NULL);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     hr = IFileOpenDialog_SetOkButtonLabel(pfod, null);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     hr = IFileOpenDialog_SetOkButtonLabel(pfod, txt);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     hr = IFileSaveDialog_SetOkButtonLabel(pfsd, NULL);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     hr = IFileSaveDialog_SetOkButtonLabel(pfsd, null);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     hr = IFileSaveDialog_SetOkButtonLabel(pfsd, txt);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     /* SetTitle */
     hr = IFileOpenDialog_SetTitle(pfod, NULL);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     hr = IFileOpenDialog_SetTitle(pfod, null);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     hr = IFileOpenDialog_SetTitle(pfod, txt);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     hr = IFileSaveDialog_SetTitle(pfsd, NULL);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     hr = IFileSaveDialog_SetTitle(pfsd, null);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     hr = IFileSaveDialog_SetTitle(pfsd, txt);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     /** IFileOpenDialog specific **/
 
@@ -910,7 +910,7 @@ static void test_basics(void)
     }
     psia = (void*)0xdeadbeef;
     hr = IFileOpenDialog_GetResults(pfod, &psia);
-    ok(hr == E_FAIL, "got 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "got 0x%08lx.\n", hr);
     ok(psia == NULL, "got %p.\n", psia);
 
     /* GetSelectedItems */
@@ -918,10 +918,10 @@ static void test_basics(void)
     {
         /* Crashes under W2K8 */
         hr = IFileOpenDialog_GetSelectedItems(pfod, NULL);
-        ok(hr == E_FAIL, "got 0x%08x.\n", hr);
+        ok(hr == E_FAIL, "got 0x%08lx.\n", hr);
         psia = (void*)0xdeadbeef;
         hr = IFileOpenDialog_GetSelectedItems(pfod, &psia);
-        ok(hr == E_FAIL, "got 0x%08x.\n", hr);
+        ok(hr == E_FAIL, "got 0x%08lx.\n", hr);
         ok(psia == (void*)0xdeadbeef, "got %p.\n", psia);
     }
 
@@ -937,10 +937,10 @@ static void test_basics(void)
 
     /* GetProperties */
     hr = IFileSaveDialog_GetProperties(pfsd, NULL);
-    todo_wine ok(hr == E_UNEXPECTED, "got 0x%08x\n", hr);
+    todo_wine ok(hr == E_UNEXPECTED, "got 0x%08lx\n", hr);
     pps = (void*)0xdeadbeef;
     hr = IFileSaveDialog_GetProperties(pfsd, &pps);
-    todo_wine ok(hr == E_UNEXPECTED, "got 0x%08x\n", hr);
+    todo_wine ok(hr == E_UNEXPECTED, "got 0x%08lx\n", hr);
     ok(pps == (void*)0xdeadbeef, "got %p\n", pps);
 
     /* SetProperties */
@@ -948,72 +948,72 @@ static void test_basics(void)
     {
         /* Crashes under W2K8 */
         hr = IFileSaveDialog_SetProperties(pfsd, NULL);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
     }
 
     /* SetCollectedProperties */
     todo_wine
     {
     hr = IFileSaveDialog_SetCollectedProperties(pfsd, NULL, TRUE);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     hr = IFileSaveDialog_SetCollectedProperties(pfsd, NULL, FALSE);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     }
 
     /* SetSaveAsItem */
     todo_wine
     {
     hr = IFileSaveDialog_SetSaveAsItem(pfsd, NULL);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     hr = IFileSaveDialog_SetSaveAsItem(pfsd, psidesktop);
-    ok(hr == MK_E_NOOBJECT, "got 0x%08x\n", hr);
+    ok(hr == MK_E_NOOBJECT, "got 0x%08lx\n", hr);
     }
 
     /** IFileDialog2 **/
 
     hr = IFileOpenDialog_QueryInterface(pfod, &IID_IFileDialog2, (void**)&pfd2);
-    ok((hr == S_OK) || broken(hr == E_NOINTERFACE), "got 0x%08x\n", hr);
+    ok((hr == S_OK) || broken(hr == E_NOINTERFACE), "got 0x%08lx\n", hr);
     if(SUCCEEDED(hr))
     {
         /* SetCancelButtonLabel */
         hr = IFileDialog2_SetOkButtonLabel(pfd2, NULL);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         hr = IFileDialog2_SetOkButtonLabel(pfd2, null);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         hr = IFileDialog2_SetOkButtonLabel(pfd2, txt);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
 
         /* SetNavigationRoot */
         todo_wine
         {
         hr = IFileDialog2_SetNavigationRoot(pfd2, NULL);
-        ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+        ok(hr == E_INVALIDARG, "got 0x%08lx\n", hr);
         hr = IFileDialog2_SetNavigationRoot(pfd2, psidesktop);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         }
 
         IFileDialog2_Release(pfd2);
     }
 
     hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IFileDialog2, (void**)&pfd2);
-    ok((hr == S_OK) || broken(hr == E_NOINTERFACE), "got 0x%08x\n", hr);
+    ok((hr == S_OK) || broken(hr == E_NOINTERFACE), "got 0x%08lx\n", hr);
     if(SUCCEEDED(hr))
     {
         /* SetCancelButtonLabel */
         hr = IFileDialog2_SetOkButtonLabel(pfd2, NULL);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         hr = IFileDialog2_SetOkButtonLabel(pfd2, null);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         hr = IFileDialog2_SetOkButtonLabel(pfd2, txt);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
 
         /* SetNavigationRoot */
         todo_wine
         {
         hr = IFileDialog2_SetNavigationRoot(pfd2, NULL);
-        ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+        ok(hr == E_INVALIDARG, "got 0x%08lx\n", hr);
         hr = IFileDialog2_SetNavigationRoot(pfd2, psidesktop);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         }
 
         IFileDialog2_Release(pfd2);
@@ -1022,20 +1022,20 @@ static void test_basics(void)
     /* Cleanup */
     IShellItem_Release(psidesktop);
     ref = IFileOpenDialog_Release(pfod);
-    ok(!ref, "Got refcount %d, should have been released.\n", ref);
+    ok(!ref, "Got refcount %ld, should have been released.\n", ref);
     ref = IFileSaveDialog_Release(pfsd);
-    ok(!ref, "Got refcount %d, should have been released.\n", ref);
+    ok(!ref, "Got refcount %ld, should have been released.\n", ref);
 }
 
 static void ensure_zero_events_(const char *file, int line, IFileDialogEventsImpl *impl)
 {
-    ok_(file, line)(!impl->OnFileOk, "OnFileOk: %d\n", impl->OnFileOk);
-    ok_(file, line)(!impl->OnFolderChanging, "OnFolderChanging: %d\n", impl->OnFolderChanging);
-    ok_(file, line)(!impl->OnFolderChange, "OnFolderChange: %d\n", impl->OnFolderChange);
-    ok_(file, line)(!impl->OnSelectionChange, "OnSelectionChange: %d\n", impl->OnSelectionChange);
-    ok_(file, line)(!impl->OnShareViolation, "OnShareViolation: %d\n", impl->OnShareViolation);
-    ok_(file, line)(!impl->OnTypeChange, "OnTypeChange: %d\n", impl->OnTypeChange);
-    ok_(file, line)(!impl->OnOverwrite, "OnOverwrite: %d\n", impl->OnOverwrite);
+    ok_(file, line)(!impl->OnFileOk, "OnFileOk: %ld\n", impl->OnFileOk);
+    ok_(file, line)(!impl->OnFolderChanging, "OnFolderChanging: %ld\n", impl->OnFolderChanging);
+    ok_(file, line)(!impl->OnFolderChange, "OnFolderChange: %ld\n", impl->OnFolderChange);
+    ok_(file, line)(!impl->OnSelectionChange, "OnSelectionChange: %ld\n", impl->OnSelectionChange);
+    ok_(file, line)(!impl->OnShareViolation, "OnShareViolation: %ld\n", impl->OnShareViolation);
+    ok_(file, line)(!impl->OnTypeChange, "OnTypeChange: %ld\n", impl->OnTypeChange);
+    ok_(file, line)(!impl->OnOverwrite, "OnOverwrite: %ld\n", impl->OnOverwrite);
     impl->OnFileOk = impl->OnFolderChanging = impl->OnFolderChange = 0;
     impl->OnSelectionChange = impl->OnShareViolation = impl->OnTypeChange = 0;
     impl->OnOverwrite = 0;
@@ -1057,55 +1057,55 @@ static void test_advise_helper(IFileDialog *pfd)
     if (0)
     {
         hr = IFileDialog_Advise(pfd, NULL, NULL);
-        ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+        ok(hr == E_INVALIDARG, "got 0x%08lx\n", hr);
         hr = IFileDialog_Advise(pfd, pfde, NULL);
-        ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+        ok(hr == E_INVALIDARG, "got 0x%08lx\n", hr);
     }
     hr = IFileDialog_Advise(pfd, NULL, &cookie[0]);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
-    ok(pfdeimpl->ref == 1, "got ref %d\n", pfdeimpl->ref);
+    ok(hr == E_INVALIDARG, "got 0x%08lx\n", hr);
+    ok(pfdeimpl->ref == 1, "got ref %ld\n", pfdeimpl->ref);
     ensure_zero_events(pfdeimpl);
 
     hr = IFileDialog_Unadvise(pfd, 0);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(hr == E_INVALIDARG, "got 0x%08lx\n", hr);
     for(i = 0; i < 10; i++) {
         hr = IFileDialog_Advise(pfd, pfde, &cookie[i]);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(cookie[i] == i+cookie[0], "Got cookie: %d\n", cookie[i]);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
+        ok(cookie[i] == i+cookie[0], "Got cookie: %ld\n", cookie[i]);
     }
-    ok(pfdeimpl->ref == 10+1, "got ref %d\n", pfdeimpl->ref);
+    ok(pfdeimpl->ref == 10+1, "got ref %ld\n", pfdeimpl->ref);
     ensure_zero_events(pfdeimpl);
 
     for(i = 3; i < 7; i++) {
         hr = IFileDialog_Unadvise(pfd, cookie[i]);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
     }
-    ok(pfdeimpl->ref == 6+1, "got ref %d\n", pfdeimpl->ref);
+    ok(pfdeimpl->ref == 6+1, "got ref %ld\n", pfdeimpl->ref);
     ensure_zero_events(pfdeimpl);
 
     for(i = 0; i < 3; i++) {
         hr = IFileDialog_Unadvise(pfd, cookie[i]);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
     }
-    ok(pfdeimpl->ref == 3+1, "got ref %d\n", pfdeimpl->ref);
+    ok(pfdeimpl->ref == 3+1, "got ref %ld\n", pfdeimpl->ref);
     ensure_zero_events(pfdeimpl);
 
     for(i = 7; i < 10; i++) {
         hr = IFileDialog_Unadvise(pfd, cookie[i]);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
     }
-    ok(pfdeimpl->ref == 1, "got ref %d\n", pfdeimpl->ref);
+    ok(pfdeimpl->ref == 1, "got ref %ld\n", pfdeimpl->ref);
     ensure_zero_events(pfdeimpl);
 
     hr = IFileDialog_Unadvise(pfd, cookie[9]+1);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
-    ok(pfdeimpl->ref == 1, "got ref %d\n", pfdeimpl->ref);
+    ok(hr == E_INVALIDARG, "got 0x%08lx\n", hr);
+    ok(pfdeimpl->ref == 1, "got ref %ld\n", pfdeimpl->ref);
     ensure_zero_events(pfdeimpl);
 
     hr = IFileDialog_Advise(pfd, pfde, &cookie[0]);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(cookie[0] >= 1, "got cookie: %d\n", cookie[0]);
-    ok(pfdeimpl->ref == 1+1, "got ref %d\n", pfdeimpl->ref);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(cookie[0] >= 1, "got cookie: %ld\n", cookie[0]);
+    ok(pfdeimpl->ref == 1+1, "got ref %ld\n", pfdeimpl->ref);
     ensure_zero_events(pfdeimpl);
 
     hr = IFileDialog_Unadvise(pfd, cookie[0]);
@@ -1130,18 +1130,18 @@ static void test_advise(void)
     trace("Testing FileOpenDialog (advise)\n");
     hr = CoCreateInstance(&CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IFileDialog, (void**)&pfd);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     test_advise_helper(pfd);
     ref = IFileDialog_Release(pfd);
-    ok(!ref, "Got refcount %d, should have been released.\n", ref);
+    ok(!ref, "Got refcount %ld, should have been released.\n", ref);
 
     trace("Testing FileSaveDialog (advise)\n");
     hr = CoCreateInstance(&CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IFileDialog, (void**)&pfd);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     test_advise_helper(pfd);
     ref = IFileDialog_Release(pfd);
-    ok(!ref, "Got refcount %d, should have been released.\n", ref);
+    ok(!ref, "Got refcount %ld, should have been released.\n", ref);
 }
 
 static void filedialog_change_filetype(IFileDialog *pfd, HWND dlg_hwnd)
@@ -1191,35 +1191,35 @@ static void test_events(void)
      */
     hr = CoCreateInstance(&CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IFileDialog, (void**)&pfd);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     pfde = IFileDialogEvents_Constructor();
     pfdeimpl = impl_from_IFileDialogEvents(pfde);
     pfdeimpl->events_test = IFDEVENT_TEST2;
 
     hr = IFileDialog_Advise(pfd, pfde, &cookie);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     hr = IFileDialog_Show(pfd, NULL);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_CANCELLED), "got 0x%08x.\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_CANCELLED), "got 0x%08lx.\n", hr);
 
-    ok(pfdeimpl->OnFolderChanging == 1, "Got %d\n", pfdeimpl->OnFolderChanging);
+    ok(pfdeimpl->OnFolderChanging == 1, "Got %ld\n", pfdeimpl->OnFolderChanging);
     pfdeimpl->OnFolderChanging = 0;
-    ok(pfdeimpl->OnFolderChange == 1, "Got %d\n", pfdeimpl->OnFolderChange);
+    ok(pfdeimpl->OnFolderChange == 1, "Got %ld\n", pfdeimpl->OnFolderChange);
     pfdeimpl->OnFolderChange = 0;
     /* pfdeimpl->OnSelectionChange too unreliable to test. Can be 0, 1 or even 2. */
     pfdeimpl->OnSelectionChange = 0;
-    ok(pfdeimpl->OnTypeChange == 0, "Got %d\n", pfdeimpl->OnTypeChange);
+    ok(pfdeimpl->OnTypeChange == 0, "Got %ld\n", pfdeimpl->OnTypeChange);
     pfdeimpl->OnTypeChange = 0;
 
     ensure_zero_events(pfdeimpl);
 
     hr = IFileDialog_Unadvise(pfd, cookie);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     IFileDialogEvents_Release(pfde);
     ref = IFileDialog_Release(pfd);
-    ok(!ref || broken(ref /* win2008_64 (intermittently) */), "Got %d\n", ref);
+    ok(!ref || broken(ref /* win2008_64 (intermittently) */), "Got %ld\n", ref);
 
 
     /*
@@ -1227,41 +1227,41 @@ static void test_events(void)
      */
     hr = CoCreateInstance(&CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IFileDialog, (void**)&pfd);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     pfde = IFileDialogEvents_Constructor();
     pfdeimpl = impl_from_IFileDialogEvents(pfde);
     pfdeimpl->events_test = IFDEVENT_TEST2;
 
     hr = IFileDialog_Advise(pfd, pfde, &cookie);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     hr = IFileDialog_SetFileTypes(pfd, 2, filterspec);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     ensure_zero_events(pfdeimpl);
 
     hr = IFileDialog_Show(pfd, NULL);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_CANCELLED), "got 0x%08x.\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_CANCELLED), "got 0x%08lx.\n", hr);
 
-    ok(pfdeimpl->OnFolderChanging == 1, "Got %d\n", pfdeimpl->OnFolderChanging);
+    ok(pfdeimpl->OnFolderChanging == 1, "Got %ld\n", pfdeimpl->OnFolderChanging);
     pfdeimpl->OnFolderChanging = 0;
-    ok(pfdeimpl->OnFolderChange == 1, "Got %d\n", pfdeimpl->OnFolderChange);
+    ok(pfdeimpl->OnFolderChange == 1, "Got %ld\n", pfdeimpl->OnFolderChange);
     pfdeimpl->OnFolderChange = 0;
     /* pfdeimpl->OnSelectionChange too unreliable to test. Can be 0, 1 or even 2. */
     pfdeimpl->OnSelectionChange = 0;
     /* Called once just by showing the dialog */
-    ok(pfdeimpl->OnTypeChange == 1, "Got %d\n", pfdeimpl->OnTypeChange);
+    ok(pfdeimpl->OnTypeChange == 1, "Got %ld\n", pfdeimpl->OnTypeChange);
     pfdeimpl->OnTypeChange = 0;
 
     ensure_zero_events(pfdeimpl);
 
     hr = IFileDialog_Unadvise(pfd, cookie);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     IFileDialogEvents_Release(pfde);
     ref = IFileDialog_Release(pfd);
-    ok(!ref || broken(ref /* win2008_64 (intermittently) */), "Got %d\n", ref);
+    ok(!ref || broken(ref /* win2008_64 (intermittently) */), "Got %ld\n", ref);
 
 
     /*
@@ -1269,41 +1269,41 @@ static void test_events(void)
      */
     hr = CoCreateInstance(&CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IFileDialog, (void**)&pfd);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     pfde = IFileDialogEvents_Constructor();
     pfdeimpl = impl_from_IFileDialogEvents(pfde);
     pfdeimpl->events_test = IFDEVENT_TEST3;
 
     hr = IFileDialog_Advise(pfd, pfde, &cookie);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     hr = IFileDialog_SetFileTypes(pfd, 2, filterspec);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     ensure_zero_events(pfdeimpl);
 
     hr = IFileDialog_Show(pfd, NULL);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_CANCELLED), "got 0x%08x.\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_CANCELLED), "got 0x%08lx.\n", hr);
 
-    ok(pfdeimpl->OnFolderChanging == 1, "Got %d\n", pfdeimpl->OnFolderChanging);
+    ok(pfdeimpl->OnFolderChanging == 1, "Got %ld\n", pfdeimpl->OnFolderChanging);
     pfdeimpl->OnFolderChanging = 0;
-    ok(pfdeimpl->OnFolderChange == 1, "Got %d\n", pfdeimpl->OnFolderChange);
+    ok(pfdeimpl->OnFolderChange == 1, "Got %ld\n", pfdeimpl->OnFolderChange);
     pfdeimpl->OnFolderChange = 0;
     /* pfdeimpl->OnSelectionChange too unreliable to test. Can be 0, 1 or even 2. */
     pfdeimpl->OnSelectionChange = 0;
     /* Called once by showing the dialog and once again when changing the filetype */
-    todo_wine ok(pfdeimpl->OnTypeChange == 2, "Got %d\n", pfdeimpl->OnTypeChange);
+    todo_wine ok(pfdeimpl->OnTypeChange == 2, "Got %ld\n", pfdeimpl->OnTypeChange);
     pfdeimpl->OnTypeChange = 0;
 
     ensure_zero_events(pfdeimpl);
 
     hr = IFileDialog_Unadvise(pfd, cookie);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     IFileDialogEvents_Release(pfde);
     ref = IFileDialog_Release(pfd);
-    ok(!ref || broken(ref /* win2008_64 (intermittently) */), "Got %d\n", ref);
+    ok(!ref || broken(ref /* win2008_64 (intermittently) */), "Got %ld\n", ref);
 }
 
 static void touch_file(LPCWSTR filename)
@@ -1329,48 +1329,48 @@ static void test_filename_savedlg_(LPCWSTR set_filename, LPCWSTR defext,
 
     hr = CoCreateInstance(&CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IFileSaveDialog, (void**)&pfsd);
-    ok_(file,line)(hr == S_OK, "Got 0x%08x\n", hr);
+    ok_(file,line)(hr == S_OK, "Got 0x%08lx\n", hr);
 
     if(fs_count)
     {
         hr = IFileSaveDialog_SetFileTypes(pfsd, fs_count, filterspec);
-        ok_(file,line)(hr == S_OK, "SetFileTypes failed: Got 0x%08x\n", hr);
+        ok_(file,line)(hr == S_OK, "SetFileTypes failed: Got 0x%08lx\n", hr);
     }
 
     if(defext)
     {
         hr = IFileSaveDialog_SetDefaultExtension(pfsd, defext);
-        ok_(file,line)(hr == S_OK, "SetDefaultExtensions failed: Got 0x%08x\n", hr);
+        ok_(file,line)(hr == S_OK, "SetDefaultExtensions failed: Got 0x%08lx\n", hr);
     }
 
     pfde = IFileDialogEvents_Constructor();
     pfdeimpl = impl_from_IFileDialogEvents(pfde);
     pfdeimpl->set_filename = set_filename;
     hr = IFileSaveDialog_Advise(pfsd, pfde, &cookie);
-    ok_(file,line)(hr == S_OK, "Advise failed: Got 0x%08x\n", hr);
+    ok_(file,line)(hr == S_OK, "Advise failed: Got 0x%08lx\n", hr);
 
     hr = IFileSaveDialog_Show(pfsd, NULL);
-    ok_(file,line)(hr == S_OK, "Show failed: Got 0x%08x\n", hr);
+    ok_(file,line)(hr == S_OK, "Show failed: Got 0x%08lx\n", hr);
 
     hr = IFileSaveDialog_GetFileName(pfsd, &filename);
-    ok_(file,line)(hr == S_OK, "GetFileName failed: Got 0x%08x\n", hr);
+    ok_(file,line)(hr == S_OK, "GetFileName failed: Got 0x%08lx\n", hr);
     ok_(file,line)(!lstrcmpW(filename, set_filename), "Got %s\n", wine_dbgstr_w(filename));
     CoTaskMemFree(filename);
 
     hr = IFileSaveDialog_GetResult(pfsd, &psi);
-    ok_(file,line)(hr == S_OK, "GetResult failed: Got 0x%08x\n", hr);
+    ok_(file,line)(hr == S_OK, "GetResult failed: Got 0x%08lx\n", hr);
 
     hr = IShellItem_GetDisplayName(psi, SIGDN_PARENTRELATIVEPARSING, &filename);
-    ok_(file,line)(hr == S_OK, "GetDisplayName failed: Got 0x%08x\n", hr);
+    ok_(file,line)(hr == S_OK, "GetDisplayName failed: Got 0x%08lx\n", hr);
     ok_(file,line)(!lstrcmpW(filename, exp_filename), "(GetDisplayName) Got %s\n", wine_dbgstr_w(filename));
     CoTaskMemFree(filename);
     IShellItem_Release(psi);
 
     hr = IFileSaveDialog_Unadvise(pfsd, cookie);
-    ok_(file,line)(hr == S_OK, "Unadvise failed: Got 0x%08x\n", hr);
+    ok_(file,line)(hr == S_OK, "Unadvise failed: Got 0x%08lx\n", hr);
 
     ref = IFileSaveDialog_Release(pfsd);
-    ok_(file,line)(!ref, "Got refcount %d, should have been released.\n", ref);
+    ok_(file,line)(!ref, "Got refcount %ld, should have been released.\n", ref);
 
     IFileDialogEvents_Release(pfde);
 }
@@ -1393,51 +1393,51 @@ static void test_filename_opendlg_(LPCWSTR set_filename, IShellItem *psi_current
 
     hr = CoCreateInstance(&CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IFileOpenDialog, (void**)&pfod);
-    ok_(file,line)(hr == S_OK, "CoCreateInstance failed: Got 0x%08x\n", hr);
+    ok_(file,line)(hr == S_OK, "CoCreateInstance failed: Got 0x%08lx\n", hr);
 
     if(defext)
     {
         hr = IFileOpenDialog_SetDefaultExtension(pfod, defext);
-        ok_(file,line)(hr == S_OK, "SetDefaultExtensions failed: Got 0x%08x\n", hr);
+        ok_(file,line)(hr == S_OK, "SetDefaultExtensions failed: Got 0x%08lx\n", hr);
     }
 
     if(fs_count)
     {
         hr = IFileOpenDialog_SetFileTypes(pfod, 2, filterspec);
-        ok_(file,line)(hr == S_OK, "SetFileTypes failed: Got 0x%08x\n", hr);
+        ok_(file,line)(hr == S_OK, "SetFileTypes failed: Got 0x%08lx\n", hr);
     }
 
     hr = IFileOpenDialog_SetFolder(pfod, psi_current);
-    ok_(file,line)(hr == S_OK, "SetFolder failed: Got 0x%08x\n", hr);
+    ok_(file,line)(hr == S_OK, "SetFolder failed: Got 0x%08lx\n", hr);
 
     pfde = IFileDialogEvents_Constructor();
     pfdeimpl = impl_from_IFileDialogEvents(pfde);
     pfdeimpl->set_filename = set_filename;
     pfdeimpl->set_filename_tried = FALSE;
     hr = IFileOpenDialog_Advise(pfod, pfde, &cookie);
-    ok_(file,line)(hr == S_OK, "Advise failed: Got 0x%08x\n", hr);
+    ok_(file,line)(hr == S_OK, "Advise failed: Got 0x%08lx\n", hr);
 
     hr = IFileOpenDialog_Show(pfod, NULL);
     ok_(file,line)(hr == S_OK || (!exp_filename && hr == HRESULT_FROM_WIN32(ERROR_CANCELLED)),
-                   "Show failed: Got 0x%08x\n", hr);
+                   "Show failed: Got 0x%08lx\n", hr);
     if(hr == S_OK)
     {
         hr = IFileOpenDialog_GetResult(pfod, &psi);
-        ok_(file,line)(hr == S_OK, "GetResult failed: Got 0x%08x\n", hr);
+        ok_(file,line)(hr == S_OK, "GetResult failed: Got 0x%08lx\n", hr);
 
         hr = IShellItem_GetDisplayName(psi, SIGDN_PARENTRELATIVEPARSING, &filename);
-        ok_(file,line)(hr == S_OK, "GetDisplayName(Result) failed: Got 0x%08x\n", hr);
+        ok_(file,line)(hr == S_OK, "GetDisplayName(Result) failed: Got 0x%08lx\n", hr);
         ok_(file,line)(!lstrcmpW(filename, exp_filename), "(GetResult) Got %s\n", wine_dbgstr_w(filename));
         CoTaskMemFree(filename);
         IShellItem_Release(psi);
 
         hr = IFileOpenDialog_GetResults(pfod, &psia);
-        ok_(file,line)(hr == S_OK, "GetResults failed: Got 0x%08x\n", hr);
+        ok_(file,line)(hr == S_OK, "GetResults failed: Got 0x%08lx\n", hr);
         hr = IShellItemArray_GetItemAt(psia, 0, &psi);
-        ok_(file,line)(hr == S_OK, "GetItemAt failed: Got 0x%08x\n", hr);
+        ok_(file,line)(hr == S_OK, "GetItemAt failed: Got 0x%08lx\n", hr);
 
         hr = IShellItem_GetDisplayName(psi, SIGDN_PARENTRELATIVEPARSING, &filename);
-        ok_(file,line)(hr == S_OK, "GetDisplayName(Results) failed: Got 0x%08x\n", hr);
+        ok_(file,line)(hr == S_OK, "GetDisplayName(Results) failed: Got 0x%08lx\n", hr);
         ok_(file,line)(!lstrcmpW(filename, exp_filename), "(GetResults) Got %s\n", wine_dbgstr_w(filename));
         CoTaskMemFree(filename);
 
@@ -1447,23 +1447,23 @@ static void test_filename_opendlg_(LPCWSTR set_filename, IShellItem *psi_current
     else
     {
         hr = IFileOpenDialog_GetResult(pfod, &psi);
-        ok_(file,line)(hr == E_UNEXPECTED, "GetResult: Got 0x%08x\n", hr);
+        ok_(file,line)(hr == E_UNEXPECTED, "GetResult: Got 0x%08lx\n", hr);
 
         hr = IFileOpenDialog_GetResults(pfod, &psia);
-        ok_(file,line)(hr == E_FAIL, "GetResults: Got 0x%08x\n", hr);
+        ok_(file,line)(hr == E_FAIL, "GetResults: Got 0x%08lx\n", hr);
     }
 
     hr = IFileOpenDialog_GetFileName(pfod, &filename);
-    ok_(file,line)(hr == S_OK, "GetFileName failed: Got 0x%08x\n", hr);
+    ok_(file,line)(hr == S_OK, "GetFileName failed: Got 0x%08lx\n", hr);
     ok_(file,line)(!lstrcmpW(filename, set_filename), "(GetFileName) Got %s\n", wine_dbgstr_w(filename));
     CoTaskMemFree(filename);
 
 
     hr = IFileOpenDialog_Unadvise(pfod, cookie);
-    ok_(file,line)(hr == S_OK, "Unadvise failed: Got 0x%08x\n", hr);
+    ok_(file,line)(hr == S_OK, "Unadvise failed: Got 0x%08lx\n", hr);
 
     ref = IFileOpenDialog_Release(pfod);
-    ok_(file,line)(!ref, "Got refcount %d, should have been released.\n", ref);
+    ok_(file,line)(!ref, "Got refcount %ld, should have been released.\n", ref);
 
     IFileDialogEvents_Release(pfde);
 }
@@ -1520,7 +1520,7 @@ static void test_filename(void)
     GetCurrentDirectoryW(MAX_PATH, buf);
     ok(!!pSHCreateItemFromParsingName, "SHCreateItemFromParsingName is missing.\n");
     hr = pSHCreateItemFromParsingName(buf, NULL, &IID_IShellItem, (void**)&psi_current);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
 
     touch_file(filename_noextW);
     touch_file(filename_defextW);
@@ -1643,10 +1643,10 @@ static void test_customize(void)
     HRESULT hr;
     hr = CoCreateInstance(&CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IFileDialog, (void**)&pfod);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     hr = IFileDialog_QueryInterface(pfod, &IID_IFileDialogCustomize, (void**)&pfdc);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     if(FAILED(hr))
     {
         skip("Skipping IFileDialogCustomize tests.\n");
@@ -1656,195 +1656,195 @@ static void test_customize(void)
 
     i = 0;
     hr = IFileDialogCustomize_AddPushButton(pfdc, i, pushbutton1W);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     hr = IFileDialogCustomize_AddPushButton(pfdc, i, pushbutton1W);
-    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    ok(hr == E_UNEXPECTED, "got 0x%08lx.\n", hr);
 
     hr = IFileDialog_QueryInterface(pfod, &IID_IOleWindow, (void**)&pow);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
     hr = IOleWindow_GetWindow(pow, &dlg_hwnd);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
     ok(dlg_hwnd == NULL, "NULL\n");
     IOleWindow_Release(pow);
 
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlState(pfdc, i, &cdstate);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
 
     hr = IFileDialogCustomize_AddControlItem(pfdc, i, 0, label);
-    ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
+    ok(hr == E_NOINTERFACE, "got 0x%08lx.\n", hr);
 
     hr = IFileDialogCustomize_SetControlLabel(pfdc, i, label2);
-    ok(hr == S_OK, "got 0x%08x (control: %d).\n", hr, i);
+    ok(hr == S_OK, "got 0x%08lx (control: %d).\n", hr, i);
 
     hr = IFileDialogCustomize_EnableOpenDropDown(pfdc, i);
-    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    ok(hr == E_UNEXPECTED, "got 0x%08lx.\n", hr);
     hr = IFileDialogCustomize_EnableOpenDropDown(pfdc, ++i);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     hr = IFileDialogCustomize_EnableOpenDropDown(pfdc, i);
-    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    ok(hr == E_UNEXPECTED, "got 0x%08lx.\n", hr);
     hr = IFileDialogCustomize_EnableOpenDropDown(pfdc, i+1);
-    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    ok(hr == E_UNEXPECTED, "got 0x%08lx.\n", hr);
 
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlState(pfdc, i, &cdstate);
-    ok(hr == E_NOTIMPL, "got 0x%08x.\n", hr);
+    ok(hr == E_NOTIMPL, "got 0x%08lx.\n", hr);
     ok(cdstate == 0xdeadbeef, "got 0x%08x.\n", cdstate);
 
     hr = IFileDialogCustomize_AddControlItem(pfdc, i, 0, label);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     hr = IFileDialogCustomize_AddControlItem(pfdc, i, 0, label);
-    ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
+    ok(hr == E_INVALIDARG, "got 0x%08lx.\n", hr);
 
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlItemState(pfdc, i, 0, &cdstate);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
     hr = IFileDialogCustomize_SetControlItemState(pfdc, i, 0, 0);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlItemState(pfdc, i, 0, &cdstate);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(!cdstate, "got 0x%08x.\n", cdstate);
     hr = IFileDialogCustomize_SetControlItemState(pfdc, i, 0, CDCS_ENABLEDVISIBLE);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlItemState(pfdc, i, 0, &cdstate);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
 
     hr = IFileDialogCustomize_SetControlLabel(pfdc, i, label2);
-    ok(hr == E_NOTIMPL, "got 0x%08x (control: %d).\n", hr, i);
+    ok(hr == E_NOTIMPL, "got 0x%08lx (control: %d).\n", hr, i);
 
     hr = IFileDialogCustomize_AddMenu(pfdc, i, menuW);
-    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    ok(hr == E_UNEXPECTED, "got 0x%08lx.\n", hr);
     hr = IFileDialogCustomize_AddMenu(pfdc, ++i, label);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlState(pfdc, i, &cdstate);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
 
     hr = IFileDialogCustomize_AddControlItem(pfdc, i, 0, label);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     hr = IFileDialogCustomize_AddControlItem(pfdc, i, 0, label);
-    ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
+    ok(hr == E_INVALIDARG, "got 0x%08lx.\n", hr);
 
     hr = IFileDialogCustomize_SetControlLabel(pfdc, i, label2);
-    ok(hr == S_OK, "got 0x%08x (control: %d).\n", hr, i);
+    ok(hr == S_OK, "got 0x%08lx (control: %d).\n", hr, i);
 
     hr = IFileDialogCustomize_AddPushButton(pfdc, i, pushbutton2W);
-    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    ok(hr == E_UNEXPECTED, "got 0x%08lx.\n", hr);
     hr = IFileDialogCustomize_AddPushButton(pfdc, ++i, pushbutton2W);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlState(pfdc, i, &cdstate);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
 
     hr = IFileDialogCustomize_AddControlItem(pfdc, i, 0, label);
-    ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
+    ok(hr == E_NOINTERFACE, "got 0x%08lx.\n", hr);
 
     hr = IFileDialogCustomize_SetControlLabel(pfdc, i, label2);
-    ok(hr == S_OK, "got 0x%08x (control: %d).\n", hr, i);
+    ok(hr == S_OK, "got 0x%08lx (control: %d).\n", hr, i);
 
     hr = IFileDialogCustomize_AddComboBox(pfdc, i);
-    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    ok(hr == E_UNEXPECTED, "got 0x%08lx.\n", hr);
     hr = IFileDialogCustomize_AddComboBox(pfdc, ++i);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlState(pfdc, i, &cdstate);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
 
     hr = IFileDialogCustomize_AddControlItem(pfdc, i, 0, label);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     hr = IFileDialogCustomize_AddControlItem(pfdc, i, 0, label);
-    ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
+    ok(hr == E_INVALIDARG, "got 0x%08lx.\n", hr);
 
     hr = IFileDialogCustomize_SetControlLabel(pfdc, i, label2);
-    ok(hr == S_OK, "got 0x%08x (control: %d).\n", hr, i);
+    ok(hr == S_OK, "got 0x%08lx (control: %d).\n", hr, i);
 
     hr = IFileDialogCustomize_AddRadioButtonList(pfdc, i);
-    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    ok(hr == E_UNEXPECTED, "got 0x%08lx.\n", hr);
     hr = IFileDialogCustomize_AddRadioButtonList(pfdc, ++i);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlState(pfdc, i, &cdstate);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
 
     hr = IFileDialogCustomize_AddControlItem(pfdc, i, 0, radiobutton1W);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     hr = IFileDialogCustomize_AddControlItem(pfdc, i, 0, radiobutton1W);
-    ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
+    ok(hr == E_INVALIDARG, "got 0x%08lx.\n", hr);
 
     hr = IFileDialogCustomize_SetControlLabel(pfdc, i, radiobutton2W);
-    ok(hr == S_OK, "got 0x%08x (control: %d).\n", hr, i);
+    ok(hr == S_OK, "got 0x%08lx (control: %d).\n", hr, i);
 
     hr = IFileDialogCustomize_AddCheckButton(pfdc, i, label, TRUE);
-    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    ok(hr == E_UNEXPECTED, "got 0x%08lx.\n", hr);
     hr = IFileDialogCustomize_AddCheckButton(pfdc, ++i, checkbutton1W, TRUE);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlState(pfdc, i, &cdstate);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
 
     hr = IFileDialogCustomize_AddControlItem(pfdc, i, 0, label);
-    ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
+    ok(hr == E_NOINTERFACE, "got 0x%08lx.\n", hr);
 
     hr = IFileDialogCustomize_SetControlLabel(pfdc, i, checkbutton2W);
-    ok(hr == S_OK, "got 0x%08x (control: %d).\n", hr, i);
+    ok(hr == S_OK, "got 0x%08lx (control: %d).\n", hr, i);
 
     if(SUCCEEDED(hr))
     {
         BOOL checked;
         hr = IFileDialogCustomize_GetCheckButtonState(pfdc, i, &checked);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
         ok(checked, "checkbox not checked.\n");
 
         hr = IFileDialogCustomize_SetCheckButtonState(pfdc, i, FALSE);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
         hr = IFileDialogCustomize_GetCheckButtonState(pfdc, i, &checked);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
         ok(!checked, "checkbox checked.\n");
 
         hr = IFileDialogCustomize_SetCheckButtonState(pfdc, i, TRUE);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
         hr = IFileDialogCustomize_GetCheckButtonState(pfdc, i, &checked);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
         ok(checked, "checkbox not checked.\n");
     }
 
     hr = IFileDialogCustomize_AddEditBox(pfdc, i, label);
-    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    ok(hr == E_UNEXPECTED, "got 0x%08lx.\n", hr);
     hr = IFileDialogCustomize_AddEditBox(pfdc, ++i, editbox1W);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlState(pfdc, i, &cdstate);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
 
     hr = IFileDialogCustomize_AddControlItem(pfdc, i, 0, label);
-    ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
+    ok(hr == E_NOINTERFACE, "got 0x%08lx.\n", hr);
 
     /* Does not affect the text in the editbox */
     hr = IFileDialogCustomize_SetControlLabel(pfdc, i, editbox2W);
-    ok(hr == S_OK, "got 0x%08x (control: %d).\n", hr, i);
+    ok(hr == S_OK, "got 0x%08lx (control: %d).\n", hr, i);
 
     hr = IFileDialogCustomize_GetEditBoxText(pfdc, i, &tmpstr);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     if(SUCCEEDED(hr))
     {
         ok(!lstrcmpW(tmpstr, editbox1W), "got %s.\n", wine_dbgstr_w(tmpstr));
@@ -1852,10 +1852,10 @@ static void test_customize(void)
     }
 
     hr = IFileDialogCustomize_SetEditBoxText(pfdc, i, label2);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     hr = IFileDialogCustomize_GetEditBoxText(pfdc, i, &tmpstr);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     if(SUCCEEDED(hr))
     {
         ok(!lstrcmpW(tmpstr, label2), "got %s.\n", wine_dbgstr_w(tmpstr));
@@ -1863,96 +1863,96 @@ static void test_customize(void)
     }
 
     hr = IFileDialogCustomize_AddSeparator(pfdc, i);
-    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    ok(hr == E_UNEXPECTED, "got 0x%08lx.\n", hr);
     hr = IFileDialogCustomize_AddSeparator(pfdc, ++i);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlState(pfdc, i, &cdstate);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
 
     hr = IFileDialogCustomize_AddControlItem(pfdc, i, 0, label);
-    ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
+    ok(hr == E_NOINTERFACE, "got 0x%08lx.\n", hr);
 
     hr = IFileDialogCustomize_SetControlLabel(pfdc, i, separatorW);
-    ok(hr == S_OK, "got 0x%08x (control: %d).\n", hr, i);
+    ok(hr == S_OK, "got 0x%08lx (control: %d).\n", hr, i);
 
     hr = IFileDialogCustomize_AddText(pfdc, i, label);
-    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    ok(hr == E_UNEXPECTED, "got 0x%08lx.\n", hr);
     hr = IFileDialogCustomize_AddText(pfdc, ++i, textW);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlState(pfdc, i, &cdstate);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
 
     hr = IFileDialogCustomize_AddControlItem(pfdc, i, 0, label);
-    ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
+    ok(hr == E_NOINTERFACE, "got 0x%08lx.\n", hr);
 
     hr = IFileDialogCustomize_SetControlLabel(pfdc, i, text2W);
-    ok(hr == S_OK, "got 0x%08x (control: %d).\n", hr, i);
+    ok(hr == S_OK, "got 0x%08lx (control: %d).\n", hr, i);
 
     hr = IFileDialogCustomize_StartVisualGroup(pfdc, i, label);
-    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    ok(hr == E_UNEXPECTED, "got 0x%08lx.\n", hr);
     hr = IFileDialogCustomize_StartVisualGroup(pfdc, ++i, visualgroup1W);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     hr = IFileDialogCustomize_AddControlItem(pfdc, i, 0, label);
-    ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
+    ok(hr == E_NOINTERFACE, "got 0x%08lx.\n", hr);
 
     hr = IFileDialogCustomize_SetControlLabel(pfdc, i, visualgroup2W);
-    ok(hr == S_OK, "got 0x%08x (control: %d).\n", hr, i);
+    ok(hr == S_OK, "got 0x%08lx (control: %d).\n", hr, i);
 
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlState(pfdc, i, &cdstate);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
 
     hr = IFileDialogCustomize_StartVisualGroup(pfdc, ++i, label);
-    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    ok(hr == E_UNEXPECTED, "got 0x%08lx.\n", hr);
     hr = IFileDialogCustomize_EndVisualGroup(pfdc);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     i++; /* Nonexisting control */
     hr = IFileDialogCustomize_AddControlItem(pfdc, i, 0, label);
-    todo_wine ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
+    todo_wine ok(hr == E_INVALIDARG, "got 0x%08lx.\n", hr);
     hr = IFileDialogCustomize_SetControlLabel(pfdc, i, label2);
-    ok(hr == E_INVALIDARG, "got 0x%08x (control: %d).\n", hr, i);
+    ok(hr == E_INVALIDARG, "got 0x%08lx (control: %d).\n", hr, i);
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlState(pfdc, i, &cdstate);
-    todo_wine ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
+    todo_wine ok(hr == E_INVALIDARG, "got 0x%08lx.\n", hr);
     ok(cdstate == 0xdeadbeef, "got 0x%08x.\n", cdstate);
 
     pfde = IFileDialogEvents_Constructor();
     pfdeimpl = impl_from_IFileDialogEvents(pfde);
     pfdeimpl->events_test = IFDEVENT_TEST1;
     hr = IFileDialog_Advise(pfod, pfde, &cookie);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
 
     hr = IFileDialog_Show(pfod, NULL);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_CANCELLED), "Got 0x%08x\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_CANCELLED), "Got 0x%08lx\n", hr);
 
     hr = IFileDialog_Unadvise(pfod, cookie);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
 
     IFileDialogEvents_Release(pfde);
     IFileDialogCustomize_Release(pfdc);
     ref = IFileDialog_Release(pfod);
-    ok(!ref, "Refcount not zero (%d).\n", ref);
+    ok(!ref, "Refcount not zero (%ld).\n", ref);
 
 
     hr = CoCreateInstance(&CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IFileDialog, (void**)&pfod);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     hr = IFileDialog_QueryInterface(pfod, &IID_IFileDialogCustomize, (void**)&pfdc);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     i = 0;
     hr = IFileDialogCustomize_AddMenu(pfdc, ++i, label);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     if(SUCCEEDED(hr))
     {
         DWORD selected;
@@ -1961,42 +1961,42 @@ static void test_customize(void)
         for(j = 0; j < 10; j++)
         {
             hr = IFileDialogCustomize_AddControlItem(pfdc, i, j, label);
-            ok(hr == S_OK, "got 0x%08x.\n", hr);
+            ok(hr == S_OK, "got 0x%08lx.\n", hr);
         }
 
         hr = IFileDialogCustomize_GetSelectedControlItem(pfdc, i, &selected);
-        ok(hr == E_NOTIMPL, "got 0x%08x.\n", hr);
+        ok(hr == E_NOTIMPL, "got 0x%08lx.\n", hr);
 
         cdstate = 0xdeadbeef;
         hr = IFileDialogCustomize_GetControlItemState(pfdc, i, 0, &cdstate);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
         ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
         hr = IFileDialogCustomize_SetControlItemState(pfdc, i, 0, 0);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
         cdstate = 0xdeadbeef;
         hr = IFileDialogCustomize_GetControlItemState(pfdc, i, 0, &cdstate);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
         ok(cdstate == 0, "got 0x%08x.\n", cdstate);
         hr = IFileDialogCustomize_SetControlItemState(pfdc, i, 0, CDCS_ENABLEDVISIBLE);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
         cdstate = 0xdeadbeef;
         hr = IFileDialogCustomize_GetControlItemState(pfdc, i, 0, &cdstate);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
         ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
 
         hr = IFileDialogCustomize_RemoveAllControlItems(pfdc, i);
-        ok(hr == E_NOTIMPL, "got 0x%08x.\n", hr);
+        ok(hr == E_NOTIMPL, "got 0x%08lx.\n", hr);
 
         for(j = 0; j < 10; j++)
         {
             hr = IFileDialogCustomize_RemoveControlItem(pfdc, i, j);
-            ok(hr == S_OK, "got 0x%08x.\n", hr);
+            ok(hr == S_OK, "got 0x%08lx.\n", hr);
         }
     }
     hr = IFileDialogCustomize_AddPushButton(pfdc, ++i, label);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     hr = IFileDialogCustomize_AddComboBox(pfdc, ++i);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     if(SUCCEEDED(hr))
     {
         DWORD selected = -1;
@@ -2005,54 +2005,54 @@ static void test_customize(void)
         for(j = 0; j < 10; j++)
         {
             hr = IFileDialogCustomize_AddControlItem(pfdc, i, j, label);
-            ok(hr == S_OK, "got 0x%08x.\n", hr);
+            ok(hr == S_OK, "got 0x%08lx.\n", hr);
         }
 
         hr = IFileDialogCustomize_GetSelectedControlItem(pfdc, i, &selected);
-        ok(hr == E_FAIL, "got 0x%08x.\n", hr);
-        ok(selected == -1, "got %d.\n", selected);
+        ok(hr == E_FAIL, "got 0x%08lx.\n", hr);
+        ok(selected == -1, "got %ld.\n", selected);
 
         cdstate = 0xdeadbeef;
         hr = IFileDialogCustomize_GetControlItemState(pfdc, i, 0, &cdstate);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
         ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
         hr = IFileDialogCustomize_SetControlItemState(pfdc, i, 0, 0);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
         cdstate = 0xdeadbeef;
         hr = IFileDialogCustomize_GetControlItemState(pfdc, i, 0, &cdstate);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
         ok(cdstate == 0, "got 0x%08x.\n", cdstate);
         hr = IFileDialogCustomize_SetControlItemState(pfdc, i, 0, CDCS_ENABLEDVISIBLE);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
         cdstate = 0xdeadbeef;
         hr = IFileDialogCustomize_GetControlItemState(pfdc, i, 0, &cdstate);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
         ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
 
         for(j = 0; j < 10; j++)
         {
             hr = IFileDialogCustomize_SetSelectedControlItem(pfdc, i, j);
-            ok(hr == S_OK, "got 0x%08x.\n", hr);
+            ok(hr == S_OK, "got 0x%08lx.\n", hr);
             hr = IFileDialogCustomize_GetSelectedControlItem(pfdc, i, &selected);
-            ok(hr == S_OK, "got 0x%08x.\n", hr);
-            ok(selected == j, "got %d.\n", selected);
+            ok(hr == S_OK, "got 0x%08lx.\n", hr);
+            ok(selected == j, "got %ld.\n", selected);
         }
         j++;
         hr = IFileDialogCustomize_SetSelectedControlItem(pfdc, i, j);
-        ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
+        ok(hr == E_INVALIDARG, "got 0x%08lx.\n", hr);
 
         hr = IFileDialogCustomize_RemoveAllControlItems(pfdc, i);
-        ok(hr == E_NOTIMPL, "got 0x%08x.\n", hr);
+        ok(hr == E_NOTIMPL, "got 0x%08lx.\n", hr);
 
         for(j = 0; j < 10; j++)
         {
             hr = IFileDialogCustomize_RemoveControlItem(pfdc, i, j);
-            ok(hr == S_OK, "got 0x%08x.\n", hr);
+            ok(hr == S_OK, "got 0x%08lx.\n", hr);
         }
     }
 
     hr = IFileDialogCustomize_AddRadioButtonList(pfdc, ++i);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     if(SUCCEEDED(hr))
     {
         DWORD selected = -1;
@@ -2061,53 +2061,53 @@ static void test_customize(void)
         for(j = 0; j < 10; j++)
         {
             hr = IFileDialogCustomize_AddControlItem(pfdc, i, j, label);
-            ok(hr == S_OK, "got 0x%08x.\n", hr);
+            ok(hr == S_OK, "got 0x%08lx.\n", hr);
         }
 
         hr = IFileDialogCustomize_GetSelectedControlItem(pfdc, i, &selected);
-        ok(hr == E_FAIL, "got 0x%08x.\n", hr);
-        ok(selected == -1, "got %d.\n", selected);
+        ok(hr == E_FAIL, "got 0x%08lx.\n", hr);
+        ok(selected == -1, "got %ld.\n", selected);
 
         cdstate = 0xdeadbeef;
         hr = IFileDialogCustomize_GetControlItemState(pfdc, i, 0, &cdstate);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
         ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
         hr = IFileDialogCustomize_SetControlItemState(pfdc, i, 0, 0);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
         cdstate = 0xdeadbeef;
         hr = IFileDialogCustomize_GetControlItemState(pfdc, i, 0, &cdstate);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
         ok(cdstate == 0, "got 0x%08x.\n", cdstate);
         hr = IFileDialogCustomize_SetControlItemState(pfdc, i, 0, CDCS_ENABLEDVISIBLE);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
         cdstate = 0xdeadbeef;
         hr = IFileDialogCustomize_GetControlItemState(pfdc, i, 0, &cdstate);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
         ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
 
         for(j = 0; j < 10; j++)
         {
             hr = IFileDialogCustomize_SetSelectedControlItem(pfdc, i, j);
-            ok(hr == S_OK, "got 0x%08x.\n", hr);
+            ok(hr == S_OK, "got 0x%08lx.\n", hr);
             hr = IFileDialogCustomize_GetSelectedControlItem(pfdc, i, &selected);
-            ok(hr == S_OK, "got 0x%08x.\n", hr);
-            ok(selected == j, "got %d.\n", selected);
+            ok(hr == S_OK, "got 0x%08lx.\n", hr);
+            ok(selected == j, "got %ld.\n", selected);
         }
         j++;
         hr = IFileDialogCustomize_SetSelectedControlItem(pfdc, i, j);
-        ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
+        ok(hr == E_INVALIDARG, "got 0x%08lx.\n", hr);
 
         hr = IFileDialogCustomize_RemoveAllControlItems(pfdc, i);
-        ok(hr == E_NOTIMPL, "got 0x%08x.\n", hr);
+        ok(hr == E_NOTIMPL, "got 0x%08lx.\n", hr);
 
         for(j = 0; j < 10; j++)
         {
             hr = IFileDialogCustomize_RemoveControlItem(pfdc, i, j);
-            ok(hr == S_OK, "got 0x%08x.\n", hr);
+            ok(hr == S_OK, "got 0x%08lx.\n", hr);
         }
     }
     hr = IFileDialogCustomize_EnableOpenDropDown(pfdc, ++i);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     if(SUCCEEDED(hr))
     {
         DWORD selected = -1;
@@ -2116,166 +2116,166 @@ static void test_customize(void)
         for(j = 0; j < 10; j++)
         {
             hr = IFileDialogCustomize_AddControlItem(pfdc, i, j, label);
-            ok(hr == S_OK, "got 0x%08x.\n", hr);
+            ok(hr == S_OK, "got 0x%08lx.\n", hr);
         }
 
         hr = IFileDialogCustomize_GetSelectedControlItem(pfdc, i, &selected);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
-        ok(selected == 0, "got %d.\n", selected);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
+        ok(selected == 0, "got %ld.\n", selected);
 
         cdstate = 0xdeadbeef;
         hr = IFileDialogCustomize_GetControlItemState(pfdc, i, 0, &cdstate);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
         ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
         hr = IFileDialogCustomize_SetControlItemState(pfdc, i, 0, 0);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
         cdstate = 0xdeadbeef;
         hr = IFileDialogCustomize_GetControlItemState(pfdc, i, 0, &cdstate);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
         ok(cdstate == 0, "got 0x%08x.\n", cdstate);
         hr = IFileDialogCustomize_SetControlItemState(pfdc, i, 0, CDCS_ENABLEDVISIBLE);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
         cdstate = 0xdeadbeef;
         hr = IFileDialogCustomize_GetControlItemState(pfdc, i, 0, &cdstate);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08lx.\n", hr);
         ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
         hr = IFileDialogCustomize_SetSelectedControlItem(pfdc, i, 0);
-        todo_wine ok(hr == E_NOTIMPL, "got 0x%08x.\n", hr);
+        todo_wine ok(hr == E_NOTIMPL, "got 0x%08lx.\n", hr);
 
         hr = IFileDialogCustomize_RemoveAllControlItems(pfdc, i);
-        ok(hr == E_NOTIMPL, "got 0x%08x.\n", hr);
+        ok(hr == E_NOTIMPL, "got 0x%08lx.\n", hr);
 
         for(j = 0; j < 10; j++)
         {
             hr = IFileDialogCustomize_RemoveControlItem(pfdc, i, j);
-            ok(hr == S_OK, "got 0x%08x.\n", hr);
+            ok(hr == S_OK, "got 0x%08lx.\n", hr);
         }
     }
 
     IFileDialogCustomize_Release(pfdc);
     ref = IFileDialog_Release(pfod);
-    ok(!ref, "Refcount not zero (%d).\n", ref);
+    ok(!ref, "Refcount not zero (%ld).\n", ref);
 
 
     /* Some more tests for VisualGroup behavior */
     hr = CoCreateInstance(&CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IFileDialog, (void**)&pfod);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     hr = IFileDialog_QueryInterface(pfod, &IID_IFileDialogCustomize, (void**)&pfdc);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     i = -1;
     id_vgroup1 = ++i;
     hr = IFileDialogCustomize_StartVisualGroup(pfdc, id_vgroup1, visualgroup1W);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlState(pfdc, id_vgroup1, &cdstate);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
 
     id_text = ++i;
     hr = IFileDialogCustomize_AddText(pfdc, id_text, label);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlState(pfdc, id_text, &cdstate);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
 
     id_editbox1 = ++i;
     hr = IFileDialogCustomize_AddEditBox(pfdc, id_editbox1, editbox1W);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlState(pfdc, id_editbox1, &cdstate);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
 
 
     /* Set all Visible but not Enabled */
     hr = IFileDialogCustomize_SetControlState(pfdc, id_vgroup1, CDCS_VISIBLE);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlState(pfdc, id_vgroup1, &cdstate);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(cdstate == CDCS_VISIBLE, "got 0x%08x.\n", cdstate);
     cdstate = 0xdeadbeef;
 
     hr = IFileDialogCustomize_GetControlState(pfdc, id_text, &cdstate);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
 
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlState(pfdc, id_editbox1, &cdstate);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
 
     /* Set text to Visible but not Enabled */
     hr = IFileDialogCustomize_SetControlState(pfdc, id_text, CDCS_VISIBLE);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlState(pfdc, id_vgroup1, &cdstate);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(cdstate == CDCS_VISIBLE, "got 0x%08x.\n", cdstate);
     cdstate = 0xdeadbeef;
 
     hr = IFileDialogCustomize_GetControlState(pfdc, id_text, &cdstate);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(cdstate == CDCS_VISIBLE, "got 0x%08x.\n", cdstate);
 
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlState(pfdc, id_editbox1, &cdstate);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
 
     /* Set vgroup to inactive */
     hr = IFileDialogCustomize_SetControlState(pfdc, id_vgroup1, CDCS_INACTIVE);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlState(pfdc, id_vgroup1, &cdstate);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(cdstate == CDCS_INACTIVE, "got 0x%08x.\n", cdstate);
 
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlState(pfdc, id_text, &cdstate);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(cdstate == CDCS_VISIBLE, "got 0x%08x.\n", cdstate);
 
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlState(pfdc, id_editbox1, &cdstate);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
 
     /* Set vgroup to Enabled and Visible again */
     hr = IFileDialogCustomize_SetControlState(pfdc, id_vgroup1, CDCS_ENABLEDVISIBLE);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlState(pfdc, id_vgroup1, &cdstate);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
 
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlState(pfdc, id_text, &cdstate);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(cdstate == CDCS_VISIBLE, "got 0x%08x.\n", cdstate);
 
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlState(pfdc, id_editbox1, &cdstate);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
     ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
 
     hr = IFileDialogCustomize_MakeProminent(pfdc, id_vgroup1);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     IFileDialogCustomize_Release(pfdc);
     ref = IFileDialog_Release(pfod);
-    ok(!ref, "Refcount not zero (%d).\n", ref);
+    ok(!ref, "Refcount not zero (%ld).\n", ref);
 }
 
 static void test_persistent_state(void)
@@ -2285,7 +2285,7 @@ static void test_persistent_state(void)
 
     hr = CoCreateInstance(&CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IFileDialog, (void**)&fd);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
 if (0)
 {
@@ -2294,10 +2294,10 @@ if (0)
 }
 
     hr = IFileDialog_SetClientGuid(fd, &IID_IUnknown);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IFileDialog_SetClientGuid(fd, &IID_NULL);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     IFileDialog_Release(fd);
 }
@@ -2317,40 +2317,40 @@ static void test_overwrite(void)
     GetCurrentDirectoryW(MAX_PATH, buf);
     ok(!!pSHCreateItemFromParsingName, "SHCreateItemFromParsingName is missing.\n");
     hr = pSHCreateItemFromParsingName(buf, NULL, &IID_IShellItem, (void**)&psi_current);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
 
     touch_file(filename_winetest);
 
     /* FOS_OVERWRITEPROMPT has no effect on open dialog */
     hr = CoCreateInstance(&CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IFileDialog, (void**)&fd);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     hr = IFileDialog_SetOptions(fd, FOS_OVERWRITEPROMPT | FOS_NOCHANGEDIR);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     hr = IFileDialog_SetFolder(fd, psi_current);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     pfde = IFileDialogEvents_Constructor();
     pfdeimpl = impl_from_IFileDialogEvents(pfde);
     pfdeimpl->set_filename = filename_winetest;
     hr = IFileDialog_Advise(fd, pfde, &cookie);
-    ok(hr == S_OK, "Advise failed: Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Advise failed: Got 0x%08lx\n", hr);
 
     hr = IFileDialog_Show(fd, NULL);
-    ok(hr == S_OK, "Show failed: Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Show failed: Got 0x%08lx\n", hr);
 
-    ok(!pfdeimpl->OnOverwrite, "got %u overwrite events\n", pfdeimpl->OnOverwrite);
-    ok(pfdeimpl->OnFileOk == 1, "got %u ok events\n", pfdeimpl->OnFileOk);
+    ok(!pfdeimpl->OnOverwrite, "got %lu overwrite events\n", pfdeimpl->OnOverwrite);
+    ok(pfdeimpl->OnFileOk == 1, "got %lu ok events\n", pfdeimpl->OnFileOk);
 
     hr = IFileDialog_GetFileName(fd, &filename);
-    ok(hr == S_OK, "GetFileName failed: Got 0x%08x\n", hr);
+    ok(hr == S_OK, "GetFileName failed: Got 0x%08lx\n", hr);
     ok(!lstrcmpW(filename, filename_winetest), "Got %s\n", wine_dbgstr_w(filename));
     CoTaskMemFree(filename);
 
     hr = IFileDialog_Unadvise(fd, cookie);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     IFileDialog_Release(fd);
 
@@ -2359,33 +2359,33 @@ static void test_overwrite(void)
     /* Save dialog doesn't check for overwrite without FOS_OVERWRITEPROMPT set */
     hr = CoCreateInstance(&CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IFileDialog, (void**)&fd);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     hr = IFileDialog_SetOptions(fd, FOS_NOREADONLYRETURN | FOS_PATHMUSTEXIST | FOS_NOCHANGEDIR);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     hr = IFileDialog_SetFolder(fd, psi_current);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     pfde = IFileDialogEvents_Constructor();
     pfdeimpl = impl_from_IFileDialogEvents(pfde);
     pfdeimpl->set_filename = filename_winetest;
     hr = IFileDialog_Advise(fd, pfde, &cookie);
-    ok(hr == S_OK, "Advise failed: Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Advise failed: Got 0x%08lx\n", hr);
 
     hr = IFileDialog_Show(fd, NULL);
-    ok(hr == S_OK, "Show failed: Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Show failed: Got 0x%08lx\n", hr);
 
-    ok(!pfdeimpl->OnOverwrite, "got %u overwrite events\n", pfdeimpl->OnOverwrite);
-    ok(pfdeimpl->OnFileOk == 1, "got %u ok events\n", pfdeimpl->OnFileOk);
+    ok(!pfdeimpl->OnOverwrite, "got %lu overwrite events\n", pfdeimpl->OnOverwrite);
+    ok(pfdeimpl->OnFileOk == 1, "got %lu ok events\n", pfdeimpl->OnFileOk);
 
     hr = IFileDialog_GetFileName(fd, &filename);
-    ok(hr == S_OK, "GetFileName failed: Got 0x%08x\n", hr);
+    ok(hr == S_OK, "GetFileName failed: Got 0x%08lx\n", hr);
     ok(!lstrcmpW(filename, filename_winetest), "Got %s\n", wine_dbgstr_w(filename));
     CoTaskMemFree(filename);
 
     hr = IFileDialog_Unadvise(fd, cookie);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     IFileDialog_Release(fd);
 
@@ -2394,30 +2394,30 @@ static void test_overwrite(void)
     /* Save dialog with FOS_OVERWRITEPROMPT set */
     hr = CoCreateInstance(&CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IFileDialog, (void**)&fd);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     hr = IFileDialog_SetFolder(fd, psi_current);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     pfde = IFileDialogEvents_Constructor();
     pfdeimpl = impl_from_IFileDialogEvents(pfde);
     pfdeimpl->set_filename = filename_winetest;
     hr = IFileDialog_Advise(fd, pfde, &cookie);
-    ok(hr == S_OK, "Advise failed: Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Advise failed: Got 0x%08lx\n", hr);
 
     hr = IFileDialog_Show(fd, NULL);
-    ok(hr == S_OK, "Show failed: Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Show failed: Got 0x%08lx\n", hr);
 
-    ok(pfdeimpl->OnOverwrite == 1, "got %u overwrite events\n", pfdeimpl->OnOverwrite);
-    ok(pfdeimpl->OnFileOk == 1, "got %u ok events\n", pfdeimpl->OnFileOk);
+    ok(pfdeimpl->OnOverwrite == 1, "got %lu overwrite events\n", pfdeimpl->OnOverwrite);
+    ok(pfdeimpl->OnFileOk == 1, "got %lu ok events\n", pfdeimpl->OnFileOk);
 
     hr = IFileDialog_GetFileName(fd, &filename);
-    ok(hr == S_OK, "GetFileName failed: Got 0x%08x\n", hr);
+    ok(hr == S_OK, "GetFileName failed: Got 0x%08lx\n", hr);
     ok(!lstrcmpW(filename, filename_winetest), "Got %s\n", wine_dbgstr_w(filename));
     CoTaskMemFree(filename);
 
     hr = IFileDialog_Unadvise(fd, cookie);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     IFileDialog_Release(fd);
 
@@ -2428,30 +2428,30 @@ static void test_overwrite(void)
     /* Save dialog with FOS_OVERWRITEPROMPT set but without existing file */
     hr = CoCreateInstance(&CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IFileDialog, (void**)&fd);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     hr = IFileDialog_SetFolder(fd, psi_current);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     pfde = IFileDialogEvents_Constructor();
     pfdeimpl = impl_from_IFileDialogEvents(pfde);
     pfdeimpl->set_filename = filename_winetest;
     hr = IFileDialog_Advise(fd, pfde, &cookie);
-    ok(hr == S_OK, "Advise failed: Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Advise failed: Got 0x%08lx\n", hr);
 
     hr = IFileDialog_Show(fd, NULL);
-    ok(hr == S_OK, "Show failed: Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Show failed: Got 0x%08lx\n", hr);
 
-    ok(!pfdeimpl->OnOverwrite, "got %u overwrite events\n", pfdeimpl->OnOverwrite);
-    ok(pfdeimpl->OnFileOk == 1, "got %u ok events\n", pfdeimpl->OnFileOk);
+    ok(!pfdeimpl->OnOverwrite, "got %lu overwrite events\n", pfdeimpl->OnOverwrite);
+    ok(pfdeimpl->OnFileOk == 1, "got %lu ok events\n", pfdeimpl->OnFileOk);
 
     hr = IFileDialog_GetFileName(fd, &filename);
-    ok(hr == S_OK, "GetFileName failed: Got 0x%08x\n", hr);
+    ok(hr == S_OK, "GetFileName failed: Got 0x%08lx\n", hr);
     ok(!lstrcmpW(filename, filename_winetest), "Got %s\n", wine_dbgstr_w(filename));
     CoTaskMemFree(filename);
 
     hr = IFileDialog_Unadvise(fd, cookie);
-    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     IFileDialog_Release(fd);
 
