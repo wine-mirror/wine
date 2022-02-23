@@ -1507,8 +1507,11 @@ static void char_key_press( struct console *console, WCHAR ch, unsigned int ctrl
     key_press( console, ch, vk, ctrl );
 }
 
-static unsigned int escape_char_to_vk( WCHAR ch )
+static unsigned int escape_char_to_vk( WCHAR ch, unsigned int *ctrl, WCHAR *outuch )
 {
+    if (ctrl) *ctrl = 0;
+    if (outuch) *outuch = '\0';
+
     switch (ch)
     {
     case 'A': return VK_UP;
@@ -1521,6 +1524,8 @@ static unsigned int escape_char_to_vk( WCHAR ch )
     case 'Q': return VK_F2;
     case 'R': return VK_F3;
     case 'S': return VK_F4;
+    case 'Z': if (ctrl && outuch) {*ctrl = SHIFT_PRESSED; *outuch = '\t'; return VK_TAB;}
+        return 0;
     default:  return 0;
     }
 }
@@ -1558,7 +1563,8 @@ static unsigned int convert_modifiers( unsigned int n )
 
 static unsigned int process_csi_sequence( struct console *console, const WCHAR *buf, size_t size )
 {
-    unsigned int n, count = 0, params[8], params_cnt = 0, vk;
+    unsigned int n, count = 0, params[8], params_cnt = 0, vk, ctrl;
+    WCHAR outuch;
 
     for (;;)
     {
@@ -1572,9 +1578,9 @@ static unsigned int process_csi_sequence( struct console *console, const WCHAR *
         if (++count == size) return 0;
     }
 
-    if ((vk = escape_char_to_vk( buf[count] )))
+    if ((vk = escape_char_to_vk( buf[count], &ctrl, &outuch )))
     {
-        key_press( console, 0, vk, params_cnt >= 2 ? convert_modifiers( params[1] ) : 0 );
+        key_press( console, outuch, vk, params_cnt >= 2 ? convert_modifiers( params[1] ) : ctrl );
         return count + 1;
     }
 
@@ -1610,7 +1616,7 @@ static unsigned int process_input_escape( struct console *console, const WCHAR *
 
     case 'O':
         if (++count == size) break;
-        vk = escape_char_to_vk( buf[1] );
+        vk = escape_char_to_vk( buf[1], NULL, NULL );
         if (vk)
         {
             key_press( console, 0, vk, 0 );
