@@ -32,10 +32,20 @@
 #include "dinputd.h"
 #include "devguid.h"
 #include "dbt.h"
+#include "unknwn.h"
+#include "winstring.h"
 
 #include "wine/hid.h"
 
 #include "dinput_test.h"
+
+#include "initguid.h"
+#include "roapi.h"
+#define WIDL_using_Windows_Foundation
+#define WIDL_using_Windows_Foundation_Collections
+#include "windows.foundation.h"
+#define WIDL_using_Windows_Gaming_Input
+#include "windows.gaming.input.h"
 
 static BOOL test_input_lost( DWORD version )
 {
@@ -322,6 +332,7 @@ static void test_RegisterDeviceNotification(void)
 
     while (device_change_count < device_change_expect)
     {
+        MsgWaitForMultipleObjects( 0, NULL, FALSE, INFINITE, QS_ALLINPUT );
         while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE ))
         {
             TranslateMessage( &msg );
@@ -355,6 +366,7 @@ static void test_RegisterDeviceNotification(void)
 
     while (device_change_count < device_change_expect)
     {
+        MsgWaitForMultipleObjects( 0, NULL, FALSE, INFINITE, QS_ALLINPUT );
         while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE ))
         {
             TranslateMessage( &msg );
@@ -385,6 +397,7 @@ static void test_RegisterDeviceNotification(void)
 
     while (device_change_count < device_change_expect)
     {
+        MsgWaitForMultipleObjects( 0, NULL, FALSE, INFINITE, QS_ALLINPUT );
         while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE ))
         {
             TranslateMessage( &msg );
@@ -404,6 +417,236 @@ static void test_RegisterDeviceNotification(void)
     UnregisterClassW( class.lpszClassName, class.hInstance );
 }
 
+struct controller_handler
+{
+    IEventHandler_RawGameController IEventHandler_RawGameController_iface;
+    BOOL invoked;
+};
+
+static inline struct controller_handler *impl_from_IEventHandler_RawGameController( IEventHandler_RawGameController *iface )
+{
+    return CONTAINING_RECORD( iface, struct controller_handler, IEventHandler_RawGameController_iface );
+}
+
+static HRESULT WINAPI controller_handler_QueryInterface( IEventHandler_RawGameController *iface, REFIID iid, void **out )
+{
+    if (IsEqualGUID( iid, &IID_IUnknown ) ||
+        IsEqualGUID( iid, &IID_IAgileObject ) ||
+        IsEqualGUID( iid, &IID_IEventHandler_RawGameController ))
+    {
+        IUnknown_AddRef( iface );
+        *out = iface;
+        return S_OK;
+    }
+
+    trace( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI controller_handler_AddRef( IEventHandler_RawGameController *iface )
+{
+    return 2;
+}
+
+static ULONG WINAPI controller_handler_Release( IEventHandler_RawGameController *iface )
+{
+    return 1;
+}
+
+static HRESULT WINAPI controller_handler_Invoke( IEventHandler_RawGameController *iface,
+                                                 IInspectable *sender, IRawGameController *controller )
+{
+    struct controller_handler *impl = impl_from_IEventHandler_RawGameController( iface );
+
+    trace( "iface %p, sender %p, controller %p\n", iface, sender, controller );
+
+    ok( sender == NULL, "got sender %p\n", sender );
+    impl->invoked = TRUE;
+
+    return S_OK;
+}
+
+static const IEventHandler_RawGameControllerVtbl controller_handler_vtbl =
+{
+    controller_handler_QueryInterface,
+    controller_handler_AddRef,
+    controller_handler_Release,
+    controller_handler_Invoke,
+};
+
+static struct controller_handler controller_removed = {{&controller_handler_vtbl}};
+static struct controller_handler controller_added = {{&controller_handler_vtbl}};
+
+static LRESULT CALLBACK windows_gaming_input_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    if (msg == WM_DEVICECHANGE)
+    {
+        winetest_push_context( "%u", device_change_count );
+        if (device_change_count++ >= device_change_expect / 2)
+        {
+            ok( wparam == DBT_DEVICEREMOVECOMPLETE, "got wparam %#Ix\n", wparam );
+            ok( controller_added.invoked, "controller added handler not invoked\n" );
+            ok( controller_removed.invoked, "controller removed handler not invoked\n" );
+        }
+        else
+        {
+            ok( wparam == DBT_DEVICEARRIVAL, "got wparam %#Ix\n", wparam );
+            ok( !controller_added.invoked, "controller added handler not invoked\n" );
+            ok( !controller_removed.invoked, "controller removed handler invoked\n" );
+        }
+        winetest_pop_context();
+    }
+
+    return DefWindowProcW( hwnd, msg, wparam, lparam );
+}
+
+static void test_windows_gaming_input(void)
+{
+    static const WCHAR *class_name = RuntimeClass_Windows_Gaming_Input_RawGameController;
+    DEV_BROADCAST_DEVICEINTERFACE_A iface_filter_a =
+    {
+        .dbcc_size = sizeof(DEV_BROADCAST_DEVICEINTERFACE_A),
+        .dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE,
+        .dbcc_classguid = GUID_DEVINTERFACE_HID,
+    };
+    WNDCLASSEXW class =
+    {
+        .cbSize = sizeof(WNDCLASSEXW),
+        .hInstance = GetModuleHandleW( NULL ),
+        .lpszClassName = L"devnotify",
+        .lpfnWndProc = windows_gaming_input_wndproc,
+    };
+    EventRegistrationToken controller_removed_token;
+    IVectorView_RawGameController *controller_view;
+    EventRegistrationToken controller_added_token;
+    IRawGameControllerStatics *statics;
+    HANDLE hwnd, thread, stop_event;
+    HDEVNOTIFY devnotify;
+    BOOL removed;
+    HSTRING str;
+    UINT32 size;
+    HRESULT hr;
+    MSG msg;
+
+    hr = RoInitialize( RO_INIT_MULTITHREADED );
+    ok( hr == RPC_E_CHANGED_MODE, "RoInitialize failed, hr %#lx\n", hr );
+
+    hr = WindowsCreateString( class_name, wcslen( class_name ), &str );
+    ok( hr == S_OK, "WindowsCreateString failed, hr %#lx\n", hr );
+
+    hr = RoGetActivationFactory( str, &IID_IRawGameControllerStatics, (void **)&statics );
+    ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "RoGetActivationFactory failed, hr %#lx\n", hr );
+    WindowsDeleteString( str );
+
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip( "%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w( class_name ) );
+        RoUninitialize();
+        return;
+    }
+
+    hr = IRawGameControllerStatics_add_RawGameControllerAdded( statics, &controller_added.IEventHandler_RawGameController_iface,
+                                                               &controller_added_token );
+    ok( hr == S_OK, "add_RawGameControllerAdded returned %#lx\n", hr );
+    todo_wine
+    ok( controller_added_token.value, "got token %I64u\n", controller_added_token.value );
+    if (!controller_added_token.value) goto done;
+
+    hr = IRawGameControllerStatics_add_RawGameControllerRemoved( statics, &controller_removed.IEventHandler_RawGameController_iface,
+                                                                 &controller_removed_token );
+    ok( hr == S_OK, "add_RawGameControllerAdded returned %#lx\n", hr );
+
+    hr = IRawGameControllerStatics_get_RawGameControllers( statics, &controller_view );
+    ok( hr == S_OK, "get_RawGameControllers returned %#lx\n", hr );
+
+    RegisterClassExW( &class );
+
+    hwnd = CreateWindowW( class.lpszClassName, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, NULL );
+    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+
+    devnotify = RegisterDeviceNotificationA( hwnd, &iface_filter_a, DEVICE_NOTIFY_WINDOW_HANDLE );
+    ok( !!devnotify, "RegisterDeviceNotificationA failed, error %lu\n", GetLastError() );
+    while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
+
+    device_change_count = 0;
+    device_change_expect = 2;
+    device_change_hwnd = hwnd;
+    device_change_all = FALSE;
+    stop_event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok( !!stop_event, "CreateEventW failed, error %lu\n", GetLastError() );
+    thread = CreateThread( NULL, 0, dinput_test_device_thread, stop_event, 0, NULL );
+    ok( !!thread, "CreateThread failed, error %lu\n", GetLastError() );
+
+    removed = FALSE;
+    while (device_change_count < device_change_expect)
+    {
+        MsgWaitForMultipleObjects( 0, NULL, FALSE, 50, QS_ALLINPUT );
+        while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE ))
+        {
+            TranslateMessage( &msg );
+            ok( msg.message != WM_DEVICECHANGE, "got WM_DEVICECHANGE\n" );
+            DispatchMessageW( &msg );
+        }
+        if (controller_added.invoked && !removed)
+        {
+            ok( !controller_removed.invoked, "controller removed handler invoked\n" );
+            removed = TRUE;
+
+            hr = IVectorView_RawGameController_get_Size( controller_view, &size );
+            ok( hr == S_OK, "get_Size returned %#lx\n", hr );
+            ok( size == 0, "got size %u\n", size );
+
+            IVectorView_RawGameController_Release( controller_view );
+            hr = IRawGameControllerStatics_get_RawGameControllers( statics, &controller_view );
+            ok( hr == S_OK, "get_RawGameControllers returned %#lx\n", hr );
+
+            hr = IVectorView_RawGameController_get_Size( controller_view, &size );
+            ok( hr == S_OK, "get_Size returned %#lx\n", hr );
+            ok( size == 1, "got size %u\n", size );
+
+            SetEvent( stop_event );
+        }
+    }
+
+    ok( controller_added.invoked, "controller added handler not invoked\n" );
+    ok( controller_removed.invoked, "controller removed handler not invoked\n" );
+
+    hr = IVectorView_RawGameController_get_Size( controller_view, &size );
+    ok( hr == S_OK, "get_Size returned %#lx\n", hr );
+    ok( size == 1, "got size %u\n", size );
+
+    IVectorView_RawGameController_Release( controller_view );
+    hr = IRawGameControllerStatics_get_RawGameControllers( statics, &controller_view );
+    ok( hr == S_OK, "get_RawGameControllers returned %#lx\n", hr );
+
+    hr = IVectorView_RawGameController_get_Size( controller_view, &size );
+    ok( hr == S_OK, "get_Size returned %#lx\n", hr );
+    ok( size == 0, "got size %u\n", size );
+
+    hr = IRawGameControllerStatics_remove_RawGameControllerAdded( statics, controller_added_token );
+    ok( hr == S_OK, "remove_RawGameControllerAdded returned %#lx\n", hr );
+    hr = IRawGameControllerStatics_remove_RawGameControllerRemoved( statics, controller_removed_token );
+    ok( hr == S_OK, "remove_RawGameControllerRemoved returned %#lx\n", hr );
+    hr = IRawGameControllerStatics_remove_RawGameControllerRemoved( statics, controller_removed_token );
+    ok( hr == S_OK, "remove_RawGameControllerRemoved returned %#lx\n", hr );
+
+    IVectorView_RawGameController_Release( controller_view );
+    IRawGameControllerStatics_Release( statics );
+
+    WaitForSingleObject( thread, INFINITE );
+    CloseHandle( thread );
+    CloseHandle( stop_event );
+
+    UnregisterDeviceNotification( devnotify );
+
+    DestroyWindow( hwnd );
+    UnregisterClassW( class.lpszClassName, class.hInstance );
+
+done:
+    RoUninitialize();
+}
+
 START_TEST( hotplug )
 {
     if (!dinput_test_init()) return;
@@ -415,6 +658,7 @@ START_TEST( hotplug )
         test_input_lost( 0x800 );
 
         test_RegisterDeviceNotification();
+        test_windows_gaming_input();
     }
     CoUninitialize();
 
