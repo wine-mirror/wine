@@ -494,3 +494,101 @@ HCURSOR WINAPI NtUserGetCursorFrameInfo( HCURSOR cursor, DWORD istep, DWORD *rat
     release_user_handle_ptr( obj );
     return ret;
 }
+
+/***********************************************************************
+ *             copy_bitmap
+ *
+ * Helper function to duplicate a bitmap.
+ */
+static HBITMAP copy_bitmap( HBITMAP bitmap )
+{
+    HDC src, dst = 0;
+    HBITMAP new_bitmap = 0;
+    BITMAP bmp;
+
+    if (!bitmap) return 0;
+    if (!NtGdiExtGetObjectW( bitmap, sizeof(bmp), &bmp )) return 0;
+
+    if ((src = NtGdiCreateCompatibleDC( 0 )) && (dst = NtGdiCreateCompatibleDC( 0 )))
+    {
+        NtGdiSelectBitmap( src, bitmap );
+        if ((new_bitmap = NtGdiCreateCompatibleBitmap( src, bmp.bmWidth, bmp.bmHeight )))
+        {
+            NtGdiSelectBitmap( dst, new_bitmap );
+            NtGdiBitBlt( dst, 0, 0, bmp.bmWidth, bmp.bmHeight, src, 0, 0, SRCCOPY, 0, 0 );
+        }
+    }
+    NtGdiDeleteObjectApp( dst );
+    NtGdiDeleteObjectApp( src );
+    return new_bitmap;
+}
+
+/**********************************************************************
+ *           NtUserGetIconInfo (win32u.@)
+ */
+BOOL WINAPI NtUserGetIconInfo( HICON icon, ICONINFO *info, UNICODE_STRING *module,
+                               UNICODE_STRING *res_name, DWORD *bpp, LONG unk )
+{
+    struct cursoricon_object *obj, *frame_obj;
+    BOOL ret = TRUE;
+
+    if (!(obj = get_icon_ptr( icon )))
+    {
+        SetLastError( ERROR_INVALID_CURSOR_HANDLE );
+        return FALSE;
+    }
+    if (!(frame_obj = get_icon_frame_ptr( icon, 0 )))
+    {
+        release_user_handle_ptr( obj );
+        return FALSE;
+    }
+
+    TRACE( "%p => %dx%d\n", icon, frame_obj->frame.width, frame_obj->frame.height );
+
+    info->fIcon        = obj->is_icon;
+    info->xHotspot     = frame_obj->frame.hotspot.x;
+    info->yHotspot     = frame_obj->frame.hotspot.y;
+    info->hbmColor     = copy_bitmap( frame_obj->frame.color );
+    info->hbmMask      = copy_bitmap( frame_obj->frame.mask );
+    if (!info->hbmMask || (!info->hbmColor && frame_obj->frame.color))
+    {
+        NtGdiDeleteObjectApp( info->hbmMask );
+        NtGdiDeleteObjectApp( info->hbmColor );
+        ret = FALSE;
+    }
+    else if (obj->module.Length)
+    {
+        if (module)
+        {
+            size_t size = min( module->MaximumLength, obj->module.Length );
+            if (size) memcpy( module->Buffer, obj->module.Buffer, size );
+            module->Length = size / sizeof(WCHAR); /* length in chars, not bytes */
+        }
+        if (res_name)
+        {
+            if (IS_INTRESOURCE( obj->resname ))
+            {
+                res_name->Buffer = obj->resname;
+                res_name->Length = 0;
+            }
+            else
+            {
+                size_t size = min( res_name->MaximumLength, lstrlenW( obj->resname) * sizeof(WCHAR) );
+                if (size) memcpy( res_name->Buffer, obj->resname, size );
+                module->Length = size / sizeof(WCHAR); /* length in chars, not bytes */
+            }
+        }
+    }
+    else
+    {
+        if (module) module->Length = 0;
+        if (res_name)
+        {
+            res_name->Length = 0;
+            res_name->Buffer = NULL;
+        }
+    }
+    release_user_handle_ptr( frame_obj );
+    release_user_handle_ptr( obj );
+    return ret;
+}

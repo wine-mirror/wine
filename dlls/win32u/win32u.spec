@@ -934,7 +934,7 @@
 @ stub NtUserGetGuiResources
 @ stub NtUserGetHDevName
 @ stub NtUserGetHimetricScaleFactorFromPixelLocation
-@ stub NtUserGetIconInfo
+@ stdcall NtUserGetIconInfo(long ptr ptr ptr ptr long)
 @ stdcall -syscall NtUserGetIconSize(long long ptr ptr)
 @ stub NtUserGetImeHotKey
 @ stub NtUserGetImeInfoEx

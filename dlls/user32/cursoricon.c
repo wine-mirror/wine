@@ -218,35 +218,6 @@ int bitmap_info_size( const BITMAPINFO * info, WORD coloruse )
 
 
 /***********************************************************************
- *             copy_bitmap
- *
- * Helper function to duplicate a bitmap.
- */
-static HBITMAP copy_bitmap( HBITMAP bitmap )
-{
-    HDC src, dst = 0;
-    HBITMAP new_bitmap = 0;
-    BITMAP bmp;
-
-    if (!bitmap) return 0;
-    if (!GetObjectW( bitmap, sizeof(bmp), &bmp )) return 0;
-
-    if ((src = CreateCompatibleDC( 0 )) && (dst = CreateCompatibleDC( 0 )))
-    {
-        SelectObject( src, bitmap );
-        if ((new_bitmap = CreateCompatibleBitmap( src, bmp.bmWidth, bmp.bmHeight )))
-        {
-            SelectObject( dst, new_bitmap );
-            BitBlt( dst, 0, 0, bmp.bmWidth, bmp.bmHeight, src, 0, 0, SRCCOPY );
-        }
-    }
-    DeleteDC( dst );
-    DeleteDC( src );
-    return new_bitmap;
-}
-
-
-/***********************************************************************
  *          is_dib_monochrome
  *
  * Returns whether a DIB can be converted to a monochrome DDB.
@@ -1886,57 +1857,31 @@ BOOL WINAPI GetIconInfoExA( HICON icon, ICONINFOEXA *info )
 /**********************************************************************
  *              GetIconInfoExW (USER32.@)
  */
-BOOL WINAPI GetIconInfoExW( HICON icon, ICONINFOEXW *info )
+BOOL WINAPI GetIconInfoExW( HICON handle, ICONINFOEXW *ret )
 {
-    struct cursoricon_frame *frame;
-    struct cursoricon_object *ptr;
-    BOOL ret = TRUE;
+    UNICODE_STRING module, res_name;
+    ICONINFO info;
 
-    if (info->cbSize != sizeof(*info))
+    if (ret->cbSize != sizeof(*ret))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
-    if (!(ptr = get_icon_ptr( icon )))
-    {
-        SetLastError( ERROR_INVALID_CURSOR_HANDLE );
-        return FALSE;
-    }
 
-    frame = get_icon_frame( ptr, 0 );
-    if (!frame)
-    {
-        release_user_handle_ptr( ptr );
-        SetLastError( ERROR_INVALID_CURSOR_HANDLE );
-        return FALSE;
-    }
-
-    TRACE("%p => %dx%d\n", icon, frame->width, frame->height);
-
-    info->fIcon        = ptr->is_icon;
-    info->xHotspot     = frame->hotspot.x;
-    info->yHotspot     = frame->hotspot.y;
-    info->hbmColor     = copy_bitmap( frame->color );
-    info->hbmMask      = copy_bitmap( frame->mask );
-    info->wResID       = 0;
-    info->szModName[0] = 0;
-    info->szResName[0] = 0;
-    if (ptr->module.Length)
-    {
-        if (IS_INTRESOURCE( ptr->resname )) info->wResID = LOWORD( ptr->resname );
-        else lstrcpynW( info->szResName, ptr->resname, MAX_PATH );
-        memcpy( info->szModName, ptr->module.Buffer, ptr->module.Length );
-        info->szModName[ptr->module.Length / sizeof(WCHAR)] = 0;
-    }
-    if (!info->hbmMask || (!info->hbmColor && frame->color))
-    {
-        DeleteObject( info->hbmMask );
-        DeleteObject( info->hbmColor );
-        ret = FALSE;
-    }
-    release_icon_frame( ptr, frame );
-    release_user_handle_ptr( ptr );
-    return ret;
+    module.Buffer = ret->szModName;
+    module.MaximumLength = sizeof(ret->szModName) - sizeof(WCHAR);
+    res_name.Buffer = ret->szResName;
+    res_name.MaximumLength = sizeof(ret->szResName) - sizeof(WCHAR);
+    if (!NtUserGetIconInfo( handle, &info, &module, &res_name, NULL, 0 )) return FALSE;
+    ret->fIcon    = info.fIcon;
+    ret->xHotspot = info.xHotspot;
+    ret->yHotspot = info.yHotspot;
+    ret->hbmColor = info.hbmColor;
+    ret->hbmMask  = info.hbmMask;
+    ret->wResID   = res_name.Length ? 0 : LOWORD( res_name.Buffer );
+    ret->szModName[module.Length] = 0;
+    ret->szResName[res_name.Length] = 0;
+    return TRUE;
 }
 
 /* copy an icon bitmap, even when it can't be selected into a DC */

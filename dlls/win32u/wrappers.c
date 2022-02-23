@@ -777,6 +777,13 @@ LONG WINAPI NtUserGetDisplayConfigBufferSizes( UINT32 flags, UINT32 *num_path_in
     return unix_funcs->pNtUserGetDisplayConfigBufferSizes( flags, num_path_info, num_mode_info );
 }
 
+BOOL WINAPI NtUserGetIconInfo( HICON icon, ICONINFO *info, UNICODE_STRING *module,
+                               UNICODE_STRING *res_name, DWORD *bpp, LONG unk )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserGetIconInfo( icon, info, module, res_name, bpp, unk );
+}
+
 UINT WINAPI NtUserGetKeyboardLayoutList( INT size, HKL *layouts )
 {
     if (!unix_funcs) return 0;

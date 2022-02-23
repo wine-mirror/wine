@@ -182,11 +182,14 @@ static void test_NtUserBuildHwndList(void)
 
 static void test_cursoricon(void)
 {
+    WCHAR module[MAX_PATH], res_buf[MAX_PATH];
+    UNICODE_STRING module_str, res_str;
     BYTE bmp_bits[1024];
     LONG width, height;
     DWORD rate, steps;
     HCURSOR frame;
     HANDLE handle;
+    ICONINFO info;
     unsigned int i;
     BOOL ret;
 
@@ -212,6 +215,34 @@ static void test_cursoricon(void)
     ok( rate == 0, "rate = %lu\n", rate );
     ok( steps == 1, "steps = %lu\n", steps );
 
+    ret = NtUserGetIconInfo( handle, &info, NULL, NULL, NULL, 0 );
+    ok( ret, "NtUserGetIconInfo failed: %lu\n", GetLastError() );
+    ok( info.fIcon == TRUE, "fIcon = %x\n", info.fIcon );
+    ok( info.xHotspot == 8, "xHotspot = %lx\n", info.xHotspot );
+    ok( info.yHotspot == 8, "yHotspot = %lx\n", info.yHotspot );
+    DeleteObject( info.hbmColor );
+    DeleteObject( info.hbmMask );
+
+    memset( module, 0xcc, sizeof(module) );
+    module_str.Buffer = module;
+    module_str.Length = 0xdead;
+    module_str.MaximumLength = sizeof(module);
+    memset( res_buf, 0xcc, sizeof(res_buf) );
+    res_str.Buffer = res_buf;
+    res_str.Length = 0xdead;
+    res_str.MaximumLength = sizeof(res_buf);
+    ret = NtUserGetIconInfo( handle, &info, &module_str, &res_str, NULL, 0 );
+    ok( ret, "NtUserGetIconInfo failed: %lu\n", GetLastError() );
+    ok( info.fIcon == TRUE, "fIcon = %x\n", info.fIcon );
+    ok( !module_str.Length, "module_str.Length = %u\n", module_str.Length );
+    ok( !res_str.Length, "res_str.Length = %u\n", res_str.Length );
+    ok( module_str.Buffer == module, "module_str.Buffer = %p\n", module_str.Buffer );
+    ok( !res_str.Buffer, "res_str.Buffer = %p\n", res_str.Buffer );
+    ok( module[0] == 0xcccc, "module[0] = %x\n", module[0] );
+    ok( res_buf[0] == 0xcccc, "res_buf[0] = %x\n", res_buf[0] );
+    DeleteObject( info.hbmColor );
+    DeleteObject( info.hbmMask );
+
     ret = NtUserDestroyCursor( handle, 0 );
     ok( ret, "NtUserDestroyIcon failed: %lu\n", GetLastError() );
 
@@ -228,6 +259,28 @@ static void test_cursoricon(void)
     ok( width == 32, "width = %ld\n", width );
     ok( height == 64, "height = %ld\n", height );
     ok( ret, "NtUserGetIconSize failed: %lu\n", GetLastError() );
+
+    memset( module, 0xcc, sizeof(module) );
+    module_str.Buffer = module;
+    module_str.Length = 0xdead;
+    module_str.MaximumLength = sizeof(module);
+    memset( res_buf, 0xcc, sizeof(res_buf) );
+    res_str.Buffer = res_buf;
+    res_str.Length = 0xdead;
+    res_str.MaximumLength = sizeof(res_buf);
+    ret = NtUserGetIconInfo( handle, &info, &module_str, &res_str, NULL, 0 );
+    ok( ret, "NtUserGetIconInfo failed: %lu\n", GetLastError() );
+    ok( info.fIcon == TRUE, "fIcon = %x\n", info.fIcon );
+    ok( module_str.Length, "module_str.Length = 0\n" );
+    ok( !res_str.Length, "res_str.Length = %u\n", res_str.Length );
+    ok( module_str.Buffer == module, "module_str.Buffer = %p\n", module_str.Buffer );
+    ok( res_str.Buffer == (WCHAR *)IDI_HAND, "res_str.Buffer = %p\n", res_str.Buffer );
+    DeleteObject( info.hbmColor );
+    DeleteObject( info.hbmMask );
+
+    module[module_str.Length] = 0;
+    ok( GetModuleHandleW(module) == GetModuleHandleW(L"user32.dll"),
+        "GetIconInfoEx wrong module %s\n", wine_dbgstr_w(module) );
 
     ret = DestroyIcon(handle);
     ok(ret, "Destroy icon failed, error %lu.\n", GetLastError());

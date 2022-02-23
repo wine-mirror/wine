@@ -199,6 +199,8 @@ struct unix_funcs
     SHORT    (WINAPI *pNtUserGetAsyncKeyState)( INT key );
     LONG     (WINAPI *pNtUserGetDisplayConfigBufferSizes)( UINT32 flags, UINT32 *num_path_info,
                                                            UINT32 *num_mode_info );
+    BOOL     (WINAPI *pNtUserGetIconInfo)( HICON icon, ICONINFO *info, UNICODE_STRING *module,
+                                           UNICODE_STRING *res_name, DWORD *bpp, LONG unk );
     INT      (WINAPI *pNtUserGetKeyNameText)( LONG lparam, WCHAR *buffer, INT size );
     UINT     (WINAPI *pNtUserGetKeyboardLayoutList)( INT size, HKL *layouts );
     INT      (WINAPI *pNtUserGetPriorityClipboardFormat)( UINT *list, INT count );
