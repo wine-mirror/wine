@@ -3271,11 +3271,14 @@ static void test_windows_gaming_input(void)
         .InputReportByteLength = 8,
     };
     static const WCHAR *controller_class_name = RuntimeClass_Windows_Gaming_Input_RawGameController;
+    static const WCHAR *gamepad_class_name = RuntimeClass_Windows_Gaming_Input_Gamepad;
 
     IRawGameController *raw_controller, *tmp_raw_controller;
     IVectorView_RawGameController *controllers_view;
     IRawGameControllerStatics *controller_statics;
     WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
+    IVectorView_Gamepad *gamepads_view;
+    IGamepadStatics *gamepad_statics;
     IGameController *game_controller;
     UINT32 size;
     HSTRING str;
@@ -3330,6 +3333,21 @@ static void test_windows_gaming_input(void)
         IRawGameControllerStatics_Release( controller_statics );
         goto done;
     }
+
+    /* HID gamepads aren't exposed as WGI gamepads on Windows */
+
+    hr = WindowsCreateString( gamepad_class_name, wcslen( gamepad_class_name ), &str );
+    ok( hr == S_OK, "WindowsCreateString returned %#lx\n", hr );
+    hr = RoGetActivationFactory( str, &IID_IGamepadStatics, (void **)&gamepad_statics );
+    ok( hr == S_OK, "RoGetActivationFactory returned %#lx\n", hr );
+    WindowsDeleteString( str );
+    hr = IGamepadStatics_get_Gamepads( gamepad_statics, &gamepads_view );
+    ok( hr == S_OK, "get_Gamepads returned %#lx\n", hr );
+    hr = IVectorView_Gamepad_get_Size( gamepads_view, &size );
+    ok( hr == S_OK, "get_Size returned %#lx\n", hr );
+    ok( size == 0, "got size %u\n", size );
+    IVectorView_Gamepad_Release( gamepads_view );
+    IGamepadStatics_Release( gamepad_statics );
 
     check_runtimeclass( raw_controller, RuntimeClass_Windows_Gaming_Input_RawGameController );
     check_interface( raw_controller, &IID_IUnknown, TRUE );
