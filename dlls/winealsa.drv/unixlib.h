@@ -108,6 +108,13 @@ struct get_mix_format_params
     HRESULT result;
 };
 
+struct get_buffer_size_params
+{
+    struct alsa_stream *stream;
+    HRESULT result;
+    UINT32 *size;
+};
+
 enum alsa_funcs
 {
     alsa_get_endpoint_ids,
@@ -115,6 +122,7 @@ enum alsa_funcs
     alsa_release_stream,
     alsa_is_format_supported,
     alsa_get_mix_format,
+    alsa_get_buffer_size,
 };
 
 extern unixlib_handle_t alsa_handle;

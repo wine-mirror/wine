@@ -827,7 +827,7 @@ static HRESULT WINAPI AudioClient_GetBufferSize(IAudioClient3 *iface,
         UINT32 *out)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
-    struct alsa_stream *stream = This->stream;
+    struct get_buffer_size_params params;
 
     TRACE("(%p)->(%p)\n", This, out);
 
@@ -837,13 +837,12 @@ static HRESULT WINAPI AudioClient_GetBufferSize(IAudioClient3 *iface,
     if(!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
 
-    alsa_lock(stream);
+    params.stream = This->stream;
+    params.size = out;
 
-    *out = stream->bufsize_frames;
+    ALSA_CALL(get_buffer_size, &params);
 
-    alsa_unlock(stream);
-
-    return S_OK;
+    return params.result;
 }
 
 static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient3 *iface,

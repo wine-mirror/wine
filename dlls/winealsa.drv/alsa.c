@@ -160,6 +160,24 @@ static int muldiv( int a, int b, int c )
     return ret;
 }
 
+static void alsa_lock(struct alsa_stream *stream)
+{
+    pthread_mutex_lock(&stream->lock);
+}
+
+static void alsa_unlock(struct alsa_stream *stream)
+{
+    pthread_mutex_unlock(&stream->lock);
+}
+
+static NTSTATUS alsa_unlock_result(struct alsa_stream *stream,
+                                   HRESULT *result, HRESULT value)
+{
+    *result = value;
+    alsa_unlock(stream);
+    return STATUS_SUCCESS;
+}
+
 static BOOL alsa_try_open(const char *devnode, EDataFlow flow)
 {
     snd_pcm_t *handle;
@@ -1220,6 +1238,18 @@ exit:
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS get_buffer_size(void *args)
+{
+    struct get_buffer_size_params *params = args;
+    struct alsa_stream *stream = params->stream;
+
+    alsa_lock(stream);
+
+    *params->size = stream->bufsize_frames;
+
+    return alsa_unlock_result(stream, &params->result, S_OK);
+}
+
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     get_endpoint_ids,
@@ -1227,4 +1257,5 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     release_stream,
     is_format_supported,
     get_mix_format,
+    get_buffer_size,
 };
