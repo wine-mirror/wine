@@ -87,7 +87,7 @@ static const BYTE certWithAIAWithCAIssuers[] = {
 static void compareUrlArray(const CRYPT_URL_ARRAY *expected,
  const CRYPT_URL_ARRAY *got)
 {
-    ok(expected->cUrl == got->cUrl, "Expected %d URLs, got %d\n",
+    ok(expected->cUrl == got->cUrl, "Expected %ld URLs, got %ld\n",
      expected->cUrl, got->cUrl);
     if (expected->cUrl == got->cUrl)
     {
@@ -95,7 +95,7 @@ static void compareUrlArray(const CRYPT_URL_ARRAY *expected,
 
         for (i = 0; i < got->cUrl; i++)
             ok(!lstrcmpiW(expected->rgwszUrl[i], got->rgwszUrl[i]),
-             "%d: unexpected URL\n", i);
+             "%ld: unexpected URL\n", i);
     }
 }
 
@@ -110,7 +110,7 @@ static void test_getObjectUrl(void)
     SetLastError(0xdeadbeef);
     ret = CryptGetObjectUrl(NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL);
     ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
-     "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+     "Expected ERROR_FILE_NOT_FOUND, got %ld\n", GetLastError());
     /* Crash
     ret = CryptGetObjectUrl(URL_OID_CERTIFICATE_ISSUER, NULL, 0, NULL, NULL,
      NULL, NULL, NULL);
@@ -126,7 +126,7 @@ static void test_getObjectUrl(void)
     ret = CryptGetObjectUrl(URL_OID_CERTIFICATE_ISSUER, (void *)cert, 0, NULL,
      NULL, NULL, NULL, NULL);
     ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
-     "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
+     "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
     CertFreeCertificateContext(cert);
 
     cert = CertCreateCertificateContext(X509_ASN_ENCODING,
@@ -138,17 +138,17 @@ static void test_getObjectUrl(void)
         ret = CryptGetObjectUrl(URL_OID_CERTIFICATE_ISSUER, (void *)cert, 0,
          NULL, NULL, NULL, NULL, NULL);
         ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
-         "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
+         "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
         SetLastError(0xdeadbeef);
         ret = CryptGetObjectUrl(URL_OID_CERTIFICATE_ISSUER, (void *)cert,
          CRYPT_GET_URL_FROM_PROPERTY, NULL, NULL, NULL, NULL, NULL);
         ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
-         "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
+         "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
         SetLastError(0xdeadbeef);
         ret = CryptGetObjectUrl(URL_OID_CERTIFICATE_ISSUER, (void *)cert,
          CRYPT_GET_URL_FROM_EXTENSION, NULL, NULL, NULL, NULL, NULL);
         ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
-         "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
+         "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
         /* It does have an issuing dist point extension, but that's not what
          * this is looking for (it wants a CRL dist points extension)
          */
@@ -156,19 +156,19 @@ static void test_getObjectUrl(void)
         ret = CryptGetObjectUrl(URL_OID_CERTIFICATE_CRL_DIST_POINT,
          (void *)cert, 0, NULL, NULL, NULL, NULL, NULL);
         ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
-         "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
+         "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
         SetLastError(0xdeadbeef);
         ret = CryptGetObjectUrl(URL_OID_CERTIFICATE_CRL_DIST_POINT,
          (void *)cert, CRYPT_GET_URL_FROM_PROPERTY, NULL, NULL, NULL, NULL,
          NULL);
         ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
-         "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
+         "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
         SetLastError(0xdeadbeef);
         ret = CryptGetObjectUrl(URL_OID_CERTIFICATE_CRL_DIST_POINT,
          (void *)cert, CRYPT_GET_URL_FROM_EXTENSION, NULL, NULL, NULL, NULL,
          NULL);
         ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
-         "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
+         "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
         CertFreeCertificateContext(cert);
     }
     cert = CertCreateCertificateContext(X509_ASN_ENCODING,
@@ -182,38 +182,38 @@ static void test_getObjectUrl(void)
         ret = CryptGetObjectUrl(URL_OID_CERTIFICATE_ISSUER, (void *)cert, 0,
          NULL, NULL, NULL, NULL, NULL);
         ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
-         "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
+         "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
         SetLastError(0xdeadbeef);
         ret = CryptGetObjectUrl(URL_OID_CERTIFICATE_ISSUER, (void *)cert,
          CRYPT_GET_URL_FROM_PROPERTY, NULL, NULL, NULL, NULL, NULL);
         ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
-         "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
+         "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
         SetLastError(0xdeadbeef);
         ret = CryptGetObjectUrl(URL_OID_CERTIFICATE_ISSUER, (void *)cert,
          CRYPT_GET_URL_FROM_EXTENSION, NULL, NULL, NULL, NULL, NULL);
         ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
-         "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
+         "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
         /* It does have a CRL dist points extension */
         SetLastError(0xdeadbeef);
         ret = CryptGetObjectUrl(URL_OID_CERTIFICATE_CRL_DIST_POINT,
          (void *)cert, 0, NULL, NULL, NULL, NULL, NULL);
         ok(!ret && GetLastError() == E_INVALIDARG,
-         "Expected E_INVALIDARG, got %08x\n", GetLastError());
+         "Expected E_INVALIDARG, got %08lx\n", GetLastError());
         SetLastError(0xdeadbeef);
         ret = CryptGetObjectUrl(URL_OID_CERTIFICATE_CRL_DIST_POINT,
          (void *)cert, 0, NULL, NULL, NULL, &infoSize, NULL);
         ok(!ret && GetLastError() == E_INVALIDARG,
-         "Expected E_INVALIDARG, got %08x\n", GetLastError());
+         "Expected E_INVALIDARG, got %08lx\n", GetLastError());
         /* Can get it without specifying the location: */
         ret = CryptGetObjectUrl(URL_OID_CERTIFICATE_CRL_DIST_POINT,
          (void *)cert, 0, NULL, &urlArraySize, NULL, NULL, NULL);
-        ok(ret, "CryptGetObjectUrl failed: %08x\n", GetLastError());
+        ok(ret, "CryptGetObjectUrl failed: %08lx\n", GetLastError());
         urlArray = HeapAlloc(GetProcessHeap(), 0, urlArraySize);
         if (urlArray)
         {
             ret = CryptGetObjectUrl(URL_OID_CERTIFICATE_CRL_DIST_POINT,
              (void *)cert, 0, urlArray, &urlArraySize, NULL, NULL, NULL);
-            ok(ret, "CryptGetObjectUrl failed: %08x\n", GetLastError());
+            ok(ret, "CryptGetObjectUrl failed: %08lx\n", GetLastError());
             if (ret)
             {
                 LPWSTR pUrl = url;
@@ -227,14 +227,14 @@ static void test_getObjectUrl(void)
         ret = CryptGetObjectUrl(URL_OID_CERTIFICATE_CRL_DIST_POINT,
          (void *)cert, CRYPT_GET_URL_FROM_EXTENSION, NULL, &urlArraySize, NULL,
          NULL, NULL);
-        ok(ret, "CryptGetObjectUrl failed: %08x\n", GetLastError());
+        ok(ret, "CryptGetObjectUrl failed: %08lx\n", GetLastError());
         urlArray = HeapAlloc(GetProcessHeap(), 0, urlArraySize);
         if (urlArray)
         {
             ret = CryptGetObjectUrl(URL_OID_CERTIFICATE_CRL_DIST_POINT,
              (void *)cert, CRYPT_GET_URL_FROM_EXTENSION, urlArray,
              &urlArraySize, NULL, NULL, NULL);
-            ok(ret, "CryptGetObjectUrl failed: %08x\n", GetLastError());
+            ok(ret, "CryptGetObjectUrl failed: %08lx\n", GetLastError());
             if (ret)
             {
                 LPWSTR pUrl = url;
@@ -250,7 +250,7 @@ static void test_getObjectUrl(void)
          (void *)cert, CRYPT_GET_URL_FROM_PROPERTY, NULL, &urlArraySize, NULL,
          NULL, NULL);
         ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
-         "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
+         "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
         CertFreeCertificateContext(cert);
     }
     cert = CertCreateCertificateContext(X509_ASN_ENCODING,
@@ -264,7 +264,7 @@ static void test_getObjectUrl(void)
          */
         ret = CryptGetObjectUrl(URL_OID_CERTIFICATE_ISSUER,
          (void *)cert, 0, NULL, &urlArraySize, NULL, NULL, NULL);
-        ok(ret, "CryptGetObjectUrl failed: %08x\n", GetLastError());
+        ok(ret, "CryptGetObjectUrl failed: %08lx\n", GetLastError());
         if (ret)
         {
             urlArray = HeapAlloc(GetProcessHeap(), 0, urlArraySize);
@@ -273,7 +273,7 @@ static void test_getObjectUrl(void)
                 ret = CryptGetObjectUrl(URL_OID_CERTIFICATE_ISSUER,
                  (void *)cert, CRYPT_GET_URL_FROM_EXTENSION, urlArray,
                  &urlArraySize, NULL, NULL, NULL);
-                ok(ret, "CryptGetObjectUrl failed: %08x\n", GetLastError());
+                ok(ret, "CryptGetObjectUrl failed: %08lx\n", GetLastError());
                 if (ret)
                 {
                     LPWSTR pUrl = url;
@@ -289,7 +289,7 @@ static void test_getObjectUrl(void)
         ret = CryptGetObjectUrl(URL_OID_CERTIFICATE_CRL_DIST_POINT,
          (void *)cert, 0, NULL, &urlArraySize, NULL, NULL, NULL);
         ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
-         "expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
+         "expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
         CertFreeCertificateContext(cert);
     }
 }
@@ -327,7 +327,7 @@ static void test_retrieveObjectByUrl(void)
     ret = CryptRetrieveObjectByUrlA(NULL, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL);
     ok(!ret && (GetLastError() == ERROR_INVALID_PARAMETER ||
                 GetLastError() == E_INVALIDARG),
-       "got 0x%x/%u (expected ERROR_INVALID_PARAMETER or E_INVALIDARG)\n",
+       "got 0x%lx/%lu (expected ERROR_INVALID_PARAMETER or E_INVALIDARG)\n",
        GetLastError(), GetLastError());
 
     make_tmp_file(tmpfile);
@@ -342,21 +342,21 @@ static void test_retrieveObjectByUrl(void)
         win_skip("File URLs not supported\n");
         return;
     }
-    ok(ret, "CryptRetrieveObjectByUrlA failed: %d\n", GetLastError());
+    ok(ret, "CryptRetrieveObjectByUrlA failed: %ld\n", GetLastError());
     ok(pBlobArray && pBlobArray != (CRYPT_BLOB_ARRAY *)0xdeadbeef,
      "Expected a valid pointer\n");
     if (pBlobArray && pBlobArray != (CRYPT_BLOB_ARRAY *)0xdeadbeef)
     {
-        ok(pBlobArray->cBlob == 1, "Expected 1 blob, got %d\n",
+        ok(pBlobArray->cBlob == 1, "Expected 1 blob, got %ld\n",
          pBlobArray->cBlob);
         ok(pBlobArray->rgBlob[0].cbData == sizeof(certWithCRLDistPoint),
-         "Unexpected size %d\n", pBlobArray->rgBlob[0].cbData);
+         "Unexpected size %ld\n", pBlobArray->rgBlob[0].cbData);
         CryptMemFree(pBlobArray);
     }
     cert = (PCCERT_CONTEXT)0xdeadbeef;
     ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CERTIFICATE, 0, 0,
      (void **)&cert, NULL, NULL, NULL, NULL);
-    ok(ret, "CryptRetrieveObjectByUrlA failed: %d\n", GetLastError());
+    ok(ret, "CryptRetrieveObjectByUrlA failed: %ld\n", GetLastError());
     ok(cert && cert != (PCCERT_CONTEXT)0xdeadbeef, "Expected a cert\n");
     if (cert && cert != (PCCERT_CONTEXT)0xdeadbeef)
         CertFreeCertificateContext(cert);
@@ -370,7 +370,7 @@ static void test_retrieveObjectByUrl(void)
     ok(!ret && (GetLastError() == CRYPT_E_NO_MATCH ||
                 broken(GetLastError() == CRYPT_E_ASN1_BADTAG ||
                        GetLastError() == OSS_DATA_ERROR)),
-        "got 0x%x/%u (expected CRYPT_E_NO_MATCH)\n", GetLastError(), GetLastError());
+        "got 0x%lx/%lu (expected CRYPT_E_NO_MATCH)\n", GetLastError(), GetLastError());
 
     /* only newer versions of cryptnet do the cleanup */
     if(!ret && GetLastError() != CRYPT_E_ASN1_BADTAG &&
@@ -383,7 +383,7 @@ static void test_retrieveObjectByUrl(void)
     store = (HCERTSTORE)0xdeadbeef;
     ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CAPI2_ANY, 0, 0,
      &store, NULL, NULL, NULL, NULL);
-    ok(ret, "CryptRetrieveObjectByUrlA failed: %d\n", GetLastError());
+    ok(ret, "CryptRetrieveObjectByUrlA failed: %ld\n", GetLastError());
     if (store && store != (HCERTSTORE)0xdeadbeef)
     {
         DWORD certs = 0;
@@ -394,14 +394,14 @@ static void test_retrieveObjectByUrl(void)
             if (cert)
                 certs++;
         } while (cert);
-        ok(certs == 1, "Expected 1 cert, got %d\n", certs);
+        ok(certs == 1, "Expected 1 cert, got %ld\n", certs);
         CertCloseStore(store, 0);
     }
     /* Are file URLs cached? */
     cert = (PCCERT_CONTEXT)0xdeadbeef;
     ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CERTIFICATE,
      CRYPT_CACHE_ONLY_RETRIEVAL, 0, (void **)&cert, NULL, NULL, NULL, NULL);
-    ok(ret, "CryptRetrieveObjectByUrlA failed: %08x\n", GetLastError());
+    ok(ret, "CryptRetrieveObjectByUrlA failed: %08lx\n", GetLastError());
     if (cert && cert != (PCCERT_CONTEXT)0xdeadbeef)
         CertFreeCertificateContext(cert);
 
@@ -410,7 +410,7 @@ static void test_retrieveObjectByUrl(void)
      (void **)&cert, NULL, NULL, NULL, &aux);
     /* w2k: failure with E_INVALIDARG */
     ok(ret || broken(GetLastError() == E_INVALIDARG),
-       "got %u with 0x%x/%u (expected '!=0' or '0' with E_INVALIDARG)\n",
+       "got %u with 0x%lx/%lu (expected '!=0' or '0' with E_INVALIDARG)\n",
        ret, GetLastError(), GetLastError());
     if (cert && cert != (PCCERT_CONTEXT)0xdeadbeef)
         CertFreeCertificateContext(cert);
@@ -421,7 +421,7 @@ static void test_retrieveObjectByUrl(void)
      (void **)&cert, NULL, NULL, NULL, &aux);
     /* w2k: failure with E_INVALIDARG */
     ok(ret || broken(GetLastError() == E_INVALIDARG),
-       "got %u with 0x%x/%u (expected '!=0' or '0' with E_INVALIDARG)\n",
+       "got %u with 0x%lx/%lu (expected '!=0' or '0' with E_INVALIDARG)\n",
        ret, GetLastError(), GetLastError());
     if (!ret) {
         /* no more tests useful */
@@ -434,7 +434,7 @@ static void test_retrieveObjectByUrl(void)
     aux.pLastSyncTime = &ft;
     ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CERTIFICATE, 0, 0,
      (void **)&cert, NULL, NULL, NULL, &aux);
-    ok(ret, "CryptRetrieveObjectByUrlA failed: %08x\n", GetLastError());
+    ok(ret, "CryptRetrieveObjectByUrlA failed: %08lx\n", GetLastError());
     CertFreeCertificateContext(cert);
     ok(ft.dwLowDateTime || ft.dwHighDateTime,
      "Expected last sync time to be set\n");
@@ -445,7 +445,7 @@ static void test_retrieveObjectByUrl(void)
      CRYPT_CACHE_ONLY_RETRIEVAL, 0, (void **)&cert, NULL, NULL, NULL, NULL);
     ok(!ret && (GetLastError() == ERROR_FILE_NOT_FOUND ||
      GetLastError() == ERROR_PATH_NOT_FOUND),
-     "Expected ERROR_FILE_NOT_FOUND or ERROR_PATH_NOT_FOUND, got %d\n",
+     "Expected ERROR_FILE_NOT_FOUND or ERROR_PATH_NOT_FOUND, got %ld\n",
      GetLastError());
 }
 
@@ -612,30 +612,30 @@ static void test_verifyRevocation(void)
     status.cbSize = sizeof(status);
     ret = pCertVerifyRevocation(0, 0, 0, NULL, 0, NULL, &status);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == E_INVALIDARG, "got error %#x\n", GetLastError());
-    todo_wine ok(!status.dwIndex, "got index %u\n", status.dwIndex);
-    todo_wine ok(status.dwError == E_INVALIDARG, "got error %#x\n", status.dwError);
-    todo_wine ok(!status.dwReason, "got reason %u\n", status.dwReason);
+    ok(GetLastError() == E_INVALIDARG, "got error %#lx\n", GetLastError());
+    todo_wine ok(!status.dwIndex, "got index %lu\n", status.dwIndex);
+    todo_wine ok(status.dwError == E_INVALIDARG, "got error %#lx\n", status.dwError);
+    todo_wine ok(!status.dwReason, "got reason %lu\n", status.dwReason);
 
     SetLastError(0xdeadbeef);
     memset(&status, 0xcc, sizeof(status));
     status.cbSize = sizeof(status);
     ret = pCertVerifyRevocation(X509_ASN_ENCODING, 0, 0, NULL, 0, NULL, &status);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == E_INVALIDARG, "got error %#x\n", GetLastError());
-    todo_wine ok(!status.dwIndex, "got index %u\n", status.dwIndex);
-    todo_wine ok(status.dwError == E_INVALIDARG, "got error %#x\n", status.dwError);
-    todo_wine ok(!status.dwReason, "got reason %u\n", status.dwReason);
+    ok(GetLastError() == E_INVALIDARG, "got error %#lx\n", GetLastError());
+    todo_wine ok(!status.dwIndex, "got index %lu\n", status.dwIndex);
+    todo_wine ok(status.dwError == E_INVALIDARG, "got error %#lx\n", status.dwError);
+    todo_wine ok(!status.dwReason, "got reason %lu\n", status.dwReason);
 
     SetLastError(0xdeadbeef);
     memset(&status, 0xcc, sizeof(status));
     status.cbSize = sizeof(status);
     ret = pCertVerifyRevocation(0, CERT_CONTEXT_REVOCATION_TYPE, 0, NULL, 0, NULL, &status);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == E_INVALIDARG, "got error %#x\n", GetLastError());
-    todo_wine ok(!status.dwIndex, "got index %u\n", status.dwIndex);
-    todo_wine ok(status.dwError == E_INVALIDARG, "got error %#x\n", status.dwError);
-    todo_wine ok(!status.dwReason, "got reason %u\n", status.dwReason);
+    ok(GetLastError() == E_INVALIDARG, "got error %#lx\n", GetLastError());
+    todo_wine ok(!status.dwIndex, "got index %lu\n", status.dwIndex);
+    todo_wine ok(status.dwError == E_INVALIDARG, "got error %#lx\n", status.dwError);
+    todo_wine ok(!status.dwReason, "got reason %lu\n", status.dwReason);
 
     certs[0] = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert, sizeof(bigCert));
 
@@ -644,10 +644,10 @@ static void test_verifyRevocation(void)
     status.cbSize = sizeof(status);
     ret = pCertVerifyRevocation(0, CERT_CONTEXT_REVOCATION_TYPE, 1, (void **)certs, 0, NULL, &status);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", GetLastError());
-    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
-    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", status.dwError);
-    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+    ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#lx\n", GetLastError());
+    ok(!status.dwIndex, "got index %lu\n", status.dwIndex);
+    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK, "got error %#lx\n", status.dwError);
+    ok(!status.dwReason, "got reason %lu\n", status.dwReason);
 
     CertFreeCertificateContext(certs[0]);
 
@@ -660,10 +660,10 @@ static void test_verifyRevocation(void)
     status.cbSize = sizeof(status);
     ret = pCertVerifyRevocation(0, CERT_CONTEXT_REVOCATION_TYPE, 1, (void **)&certs[0], 0, NULL, &status);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", GetLastError());
-    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
-    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", status.dwError);
-    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+    ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#lx\n", GetLastError());
+    ok(!status.dwIndex, "got index %lu\n", status.dwIndex);
+    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK, "got error %#lx\n", status.dwError);
+    ok(!status.dwReason, "got reason %lu\n", status.dwReason);
 
     /* Neither can the end cert */
     SetLastError(0xdeadbeef);
@@ -671,10 +671,10 @@ static void test_verifyRevocation(void)
     status.cbSize = sizeof(status);
     ret = pCertVerifyRevocation(0, CERT_CONTEXT_REVOCATION_TYPE, 1, (void **)&certs[1], 0, NULL, &status);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", GetLastError());
-    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
-    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", status.dwError);
-    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+    ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#lx\n", GetLastError());
+    ok(!status.dwIndex, "got index %lu\n", status.dwIndex);
+    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK, "got error %#lx\n", status.dwError);
+    ok(!status.dwReason, "got reason %lu\n", status.dwReason);
 
     /* Both certs together can't, either (they're not CRLs) */
     SetLastError(0xdeadbeef);
@@ -682,17 +682,17 @@ static void test_verifyRevocation(void)
     status.cbSize = sizeof(status);
     ret = pCertVerifyRevocation(0, CERT_CONTEXT_REVOCATION_TYPE, 2, (void **)certs, 0, NULL, &status);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", GetLastError());
-    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
-    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", status.dwError);
-    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+    ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#lx\n", GetLastError());
+    ok(!status.dwIndex, "got index %lu\n", status.dwIndex);
+    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK, "got error %#lx\n", status.dwError);
+    ok(!status.dwReason, "got reason %lu\n", status.dwReason);
 
     /* Test with an invalid CRL */
 
     params.hCrlStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0, CERT_STORE_CREATE_NEW_FLAG, NULL);
     ret = CertAddEncodedCRLToStore(params.hCrlStore, X509_ASN_ENCODING, rootSignedCRLWithBadAKI,
             sizeof(rootSignedCRLWithBadAKI), CERT_STORE_ADD_ALWAYS, NULL);
-    ok(ret, "failed to add CRL, error %u\n", GetLastError());
+    ok(ret, "failed to add CRL, error %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     memset(&status, 0xcc, sizeof(status));
@@ -700,10 +700,10 @@ static void test_verifyRevocation(void)
     ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
             2, (void **)certs, 0, &params, &status);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", GetLastError());
-    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
-    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", status.dwError);
-    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+    ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#lx\n", GetLastError());
+    ok(!status.dwIndex, "got index %lu\n", status.dwIndex);
+    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK, "got error %#lx\n", status.dwError);
+    ok(!status.dwReason, "got reason %lu\n", status.dwReason);
 
     /* Specifying CERT_VERIFY_REV_CHAIN_FLAG doesn't change things either */
     SetLastError(0xdeadbeef);
@@ -712,10 +712,10 @@ static void test_verifyRevocation(void)
     ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
             2, (void **)certs, CERT_VERIFY_REV_CHAIN_FLAG, &params, &status);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", GetLastError());
-    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
-    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", status.dwError);
-    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+    ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#lx\n", GetLastError());
+    ok(!status.dwIndex, "got index %lu\n", status.dwIndex);
+    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK, "got error %#lx\n", status.dwError);
+    ok(!status.dwReason, "got reason %lu\n", status.dwReason);
 
     /* Again, specifying the issuer cert: no change */
     params.pIssuerCert = certs[0];
@@ -725,10 +725,10 @@ static void test_verifyRevocation(void)
     ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
             1, (void **)&certs[1], 0, &params, &status);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", GetLastError());
-    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
-    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", status.dwError);
-    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+    ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#lx\n", GetLastError());
+    ok(!status.dwIndex, "got index %lu\n", status.dwIndex);
+    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK, "got error %#lx\n", status.dwError);
+    ok(!status.dwReason, "got reason %lu\n", status.dwReason);
 
     /* Specifying the time to check: still no change */
     SystemTimeToFileTime(&oct2007, &time);
@@ -740,10 +740,10 @@ static void test_verifyRevocation(void)
     ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
             1, (void **)&certs[1], 0, &params, &status);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", GetLastError());
-    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
-    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", status.dwError);
-    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+    ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#lx\n", GetLastError());
+    ok(!status.dwIndex, "got index %lu\n", status.dwIndex);
+    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK, "got error %#lx\n", status.dwError);
+    ok(!status.dwReason, "got reason %lu\n", status.dwReason);
 
     CertCloseStore(params.hCrlStore, 0);
 
@@ -755,7 +755,7 @@ static void test_verifyRevocation(void)
     params.hCrlStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0, CERT_STORE_CREATE_NEW_FLAG, NULL);
     ret = CertAddEncodedCRLToStore(params.hCrlStore, X509_ASN_ENCODING,
             rootSignedCRL, sizeof(rootSignedCRL), CERT_STORE_ADD_ALWAYS, NULL);
-    ok(ret, "failed to add CRL, error %u\n", GetLastError());
+    ok(ret, "failed to add CRL, error %lu\n", GetLastError());
 
     params.pftTimeToUse = NULL;
 
@@ -765,10 +765,10 @@ static void test_verifyRevocation(void)
     ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
             1, (void **)&certs[1], 0, &params, &status);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == CRYPT_E_REVOKED, "got error %#x\n", GetLastError());
-    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
-    ok(status.dwError == CRYPT_E_REVOKED, "got error %#x\n", status.dwError);
-    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+    ok(GetLastError() == CRYPT_E_REVOKED, "got error %#lx\n", GetLastError());
+    ok(!status.dwIndex, "got index %lu\n", status.dwIndex);
+    ok(status.dwError == CRYPT_E_REVOKED, "got error %#lx\n", status.dwError);
+    ok(!status.dwReason, "got reason %lu\n", status.dwReason);
 
     SystemTimeToFileTime(&oct2007, &time);
     params.pftTimeToUse = &time;
@@ -778,10 +778,10 @@ static void test_verifyRevocation(void)
     ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
             1, (void **)&certs[1], 0, &params, &status);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == CRYPT_E_REVOKED, "got error %#x\n", GetLastError());
-    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
-    ok(status.dwError == CRYPT_E_REVOKED, "got error %#x\n", status.dwError);
-    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+    ok(GetLastError() == CRYPT_E_REVOKED, "got error %#lx\n", GetLastError());
+    ok(!status.dwIndex, "got index %lu\n", status.dwIndex);
+    ok(status.dwError == CRYPT_E_REVOKED, "got error %#lx\n", status.dwError);
+    ok(!status.dwReason, "got reason %lu\n", status.dwReason);
 
     SystemTimeToFileTime(&may2007, &time);
     SetLastError(0xdeadbeef);
@@ -790,10 +790,10 @@ static void test_verifyRevocation(void)
     ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
             1, (void **)&certs[1], 0, &params, &status);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == CRYPT_E_REVOCATION_OFFLINE, "got error %#x\n", GetLastError());
-    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
-    ok(status.dwError == CRYPT_E_REVOCATION_OFFLINE, "got error %#x\n", status.dwError);
-    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+    ok(GetLastError() == CRYPT_E_REVOCATION_OFFLINE, "got error %#lx\n", GetLastError());
+    ok(!status.dwIndex, "got index %lu\n", status.dwIndex);
+    ok(status.dwError == CRYPT_E_REVOCATION_OFFLINE, "got error %#lx\n", status.dwError);
+    ok(!status.dwReason, "got reason %lu\n", status.dwReason);
 
     CertFreeCertificateContext(certs[1]);
 
@@ -809,10 +809,10 @@ static void test_verifyRevocation(void)
     ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
             1, (void **)&certs[1], 0, &params, &status);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == CRYPT_E_REVOCATION_OFFLINE, "got error %#x\n", GetLastError());
-    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
-    ok(status.dwError == CRYPT_E_REVOCATION_OFFLINE, "got error %#x\n", status.dwError);
-    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+    ok(GetLastError() == CRYPT_E_REVOCATION_OFFLINE, "got error %#lx\n", GetLastError());
+    ok(!status.dwIndex, "got index %lu\n", status.dwIndex);
+    ok(status.dwError == CRYPT_E_REVOCATION_OFFLINE, "got error %#lx\n", status.dwError);
+    ok(!status.dwReason, "got reason %lu\n", status.dwReason);
 
     SystemTimeToFileTime(&oct2007, &time);
     params.pftTimeToUse = &time;
@@ -822,10 +822,10 @@ static void test_verifyRevocation(void)
     ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
             1, (void **)&certs[1], 0, &params, &status);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == CRYPT_E_REVOCATION_OFFLINE, "got error %#x\n", GetLastError());
-    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
-    ok(status.dwError == CRYPT_E_REVOCATION_OFFLINE, "got error %#x\n", status.dwError);
-    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+    ok(GetLastError() == CRYPT_E_REVOCATION_OFFLINE, "got error %#lx\n", GetLastError());
+    ok(!status.dwIndex, "got index %lu\n", status.dwIndex);
+    ok(status.dwError == CRYPT_E_REVOCATION_OFFLINE, "got error %#lx\n", status.dwError);
+    ok(!status.dwReason, "got reason %lu\n", status.dwReason);
 
     SystemTimeToFileTime(&may2007, &time);
     SetLastError(0xdeadbeef);
@@ -834,10 +834,10 @@ static void test_verifyRevocation(void)
     ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
             1, (void **)&certs[1], 0, &params, &status);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == CRYPT_E_REVOCATION_OFFLINE, "got error %#x\n", GetLastError());
-    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
-    ok(status.dwError == CRYPT_E_REVOCATION_OFFLINE, "got error %#x\n", status.dwError);
-    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+    ok(GetLastError() == CRYPT_E_REVOCATION_OFFLINE, "got error %#lx\n", GetLastError());
+    ok(!status.dwIndex, "got index %lu\n", status.dwIndex);
+    ok(status.dwError == CRYPT_E_REVOCATION_OFFLINE, "got error %#lx\n", status.dwError);
+    ok(!status.dwReason, "got reason %lu\n", status.dwReason);
 
     params.pftTimeToUse = NULL;
 
@@ -848,10 +848,10 @@ static void test_verifyRevocation(void)
     ret = pCertVerifyRevocation(0, CERT_CONTEXT_REVOCATION_TYPE,
             1, (void **)&certs[1], 0, &params, &status);
     ok(!ret, "expected failure\n");
-    todo_wine ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", GetLastError());
-    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
-    todo_wine ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", status.dwError);
-    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+    todo_wine ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#lx\n", GetLastError());
+    ok(!status.dwIndex, "got index %lu\n", status.dwIndex);
+    todo_wine ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK, "got error %#lx\n", status.dwError);
+    ok(!status.dwReason, "got reason %lu\n", status.dwReason);
 
     /* Test with the wrong context type. */
     SetLastError(0xdeadbeef);
@@ -860,10 +860,10 @@ static void test_verifyRevocation(void)
     ret = pCertVerifyRevocation(X509_ASN_ENCODING, 0xdeadbeef,
             1, (void **)&certs[1], 0, &params, &status);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", GetLastError());
-    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
-    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", status.dwError);
-    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+    ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#lx\n", GetLastError());
+    ok(!status.dwIndex, "got index %lu\n", status.dwIndex);
+    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK, "got error %#lx\n", status.dwError);
+    ok(!status.dwReason, "got reason %lu\n", status.dwReason);
 
     CertCloseStore(params.hCrlStore, 0);
     CertFreeCertificateContext(certs[1]);
