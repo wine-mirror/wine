@@ -122,6 +122,13 @@ struct get_latency_params
     REFERENCE_TIME *latency;
 };
 
+struct get_current_padding_params
+{
+    struct alsa_stream *stream;
+    HRESULT result;
+    UINT32 *padding;
+};
+
 enum alsa_funcs
 {
     alsa_get_endpoint_ids,
@@ -131,6 +138,7 @@ enum alsa_funcs
     alsa_get_mix_format,
     alsa_get_buffer_size,
     alsa_get_latency,
+    alsa_get_current_padding,
 };
 
 extern unixlib_handle_t alsa_handle;

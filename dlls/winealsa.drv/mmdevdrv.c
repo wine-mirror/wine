@@ -871,7 +871,7 @@ static HRESULT WINAPI AudioClient_GetCurrentPadding(IAudioClient3 *iface,
         UINT32 *out)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
-    struct alsa_stream *stream = This->stream;
+    struct get_current_padding_params params;
 
     TRACE("(%p)->(%p)\n", This, out);
 
@@ -881,16 +881,14 @@ static HRESULT WINAPI AudioClient_GetCurrentPadding(IAudioClient3 *iface,
     if(!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
 
-    alsa_lock(stream);
+    params.stream = This->stream;
+    params.padding = out;
 
-    /* padding is solely updated at callback time in shared mode */
-    *out = stream->held_frames;
-
-    alsa_unlock(stream);
+    ALSA_CALL(get_current_padding, &params);
 
     TRACE("pad: %u\n", *out);
 
-    return S_OK;
+    return params.result;
 }
 
 static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient3 *iface,

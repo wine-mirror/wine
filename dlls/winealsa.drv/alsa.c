@@ -1271,6 +1271,19 @@ static NTSTATUS get_latency(void *args)
     return alsa_unlock_result(stream, &params->result, S_OK);
 }
 
+static NTSTATUS get_current_padding(void *args)
+{
+    struct get_current_padding_params *params = args;
+    struct alsa_stream *stream = params->stream;
+
+    alsa_lock(stream);
+
+    /* padding is solely updated at callback time in shared mode */
+    *params->padding = stream->held_frames;
+
+    return alsa_unlock_result(stream, &params->result, S_OK);
+}
+
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     get_endpoint_ids,
@@ -1280,4 +1293,5 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     get_mix_format,
     get_buffer_size,
     get_latency,
+    get_current_padding,
 };
