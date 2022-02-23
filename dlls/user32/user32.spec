@@ -192,7 +192,7 @@
 @ stub DrawFrame
 @ stdcall DrawFrameControl(long ptr long long)
 @ stdcall DrawIcon(long long long long)
-@ stdcall DrawIconEx(long long long long long long long long long)
+@ stdcall DrawIconEx(long long long long long long long long long) NtUserDrawIconEx
 @ stdcall DrawMenuBar(long)
 @ stdcall DrawMenuBarTemp(long long ptr long long)
 @ stdcall DrawStateA(long long ptr long long long long long long long)

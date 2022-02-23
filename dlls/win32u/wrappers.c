@@ -744,6 +744,13 @@ BOOL WINAPI NtUserDestroyCursor( HCURSOR cursor, ULONG arg )
     return unix_funcs->pNtUserDestroyCursor( cursor, arg );
 }
 
+BOOL WINAPI NtUserDrawIconEx( HDC hdc, INT x0, INT y0, HICON icon, INT width,
+                              INT height, UINT istep, HBRUSH hbr, UINT flags )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserDrawIconEx( hdc, x0, y0, icon, width, height, istep, hbr, flags );
+}
+
 NTSTATUS WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
                                           DISPLAY_DEVICEW *info, DWORD flags )
 {

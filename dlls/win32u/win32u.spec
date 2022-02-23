@@ -850,7 +850,7 @@
 @ stub NtUserDrawAnimatedRects
 @ stub NtUserDrawCaption
 @ stub NtUserDrawCaptionTemp
-@ stub NtUserDrawIconEx
+@ stdcall NtUserDrawIconEx(long long long long long long long long long)
 @ stub NtUserDrawMenuBarTemp
 @ stub NtUserDwmGetRemoteSessionOcclusionEvent
 @ stub NtUserDwmGetRemoteSessionOcclusionState

@@ -891,6 +891,18 @@ static BOOL set_graphics_mode( DC *dc, int mode )
 }
 
 
+DWORD set_stretch_blt_mode( HDC hdc, DWORD mode )
+{
+    DWORD ret;
+    DC *dc;
+    if (!(dc = get_dc_ptr( hdc ))) return 0;
+    ret = dc->attr->stretch_blt_mode;
+    dc->attr->stretch_blt_mode = mode;
+    release_dc_ptr( dc );
+    return ret;
+}
+
+
 /***********************************************************************
  *           NtGdiGetAndSetDCDword    (win32u.@)
  */

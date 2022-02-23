@@ -1157,6 +1157,7 @@ static struct unix_funcs unix_funcs =
     NtUserClipCursor,
     NtUserCountClipboardFormats,
     NtUserDestroyCursor,
+    NtUserDrawIconEx,
     NtUserEnumDisplayDevices,
     NtUserEnumDisplayMonitors,
     NtUserEnumDisplaySettings,

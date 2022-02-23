@@ -1543,7 +1543,7 @@ static BOOL UITOOLS_DrawStateJam( HDC hdc, UINT opcode, DRAWSTATEPROC func, LPAR
             return DrawTextA(hdc, (LPSTR)lp, (INT)wp, rc, dtflags);
 
     case DST_ICON:
-        return DrawIconEx(hdc, rc->left, rc->top, (HICON)lp, 0, 0, 0, NULL, DI_NORMAL);
+        return NtUserDrawIconEx(hdc, rc->left, rc->top, (HICON)lp, 0, 0, 0, NULL, DI_NORMAL);
 
     case DST_BITMAP:
         memdc = CreateCompatibleDC(hdc);

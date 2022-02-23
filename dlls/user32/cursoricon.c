@@ -103,11 +103,6 @@ static void release_icon_frame( struct cursoricon_object *obj, struct cursoricon
     }
 }
 
-static UINT get_icon_steps( struct cursoricon_object *obj )
-{
-    return obj->is_ani ? obj->ani.num_steps : 1;
-}
-
 static void free_icon_frame( struct cursoricon_frame *frame )
 {
     if (frame->color) DeleteObject( frame->color );
@@ -1667,7 +1662,7 @@ BOOL WINAPI DestroyCursor( HCURSOR hCursor )
  */
 BOOL WINAPI DrawIcon( HDC hdc, INT x, INT y, HICON hIcon )
 {
-    return DrawIconEx( hdc, x, y, hIcon, 0, 0, 0, 0, DI_NORMAL | DI_COMPAT | DI_DEFAULTSIZE );
+    return NtUserDrawIconEx( hdc, x, y, hIcon, 0, 0, 0, 0, DI_NORMAL | DI_COMPAT | DI_DEFAULTSIZE );
 }
 
 /***********************************************************************
@@ -1982,173 +1977,6 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
     ret = create_cursoricon_object( &desc, iconinfo->fIcon, 0, 0, 0 );
     if (!ret) free_icon_frame( &frame );
     return ret;
-}
-
-/******************************************************************************
- *		DrawIconEx (USER32.@) Draws an icon or cursor on device context
- *
- * NOTES
- *    Why is this using SM_CXICON instead of SM_CXCURSOR?
- *
- * PARAMS
- *    hdc     [I] Handle to device context
- *    x0      [I] X coordinate of upper left corner
- *    y0      [I] Y coordinate of upper left corner
- *    hIcon   [I] Handle to icon to draw
- *    cxWidth [I] Width of icon
- *    cyWidth [I] Height of icon
- *    istep   [I] Index of frame in animated cursor
- *    hbr     [I] Handle to background brush
- *    flags   [I] Icon-drawing flags
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
- */
-BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
-                            INT cxWidth, INT cyWidth, UINT istep,
-                            HBRUSH hbr, UINT flags )
-{
-    struct cursoricon_frame *frame;
-    struct cursoricon_object *ptr;
-    HDC hdc_dest, hMemDC;
-    BOOL result = FALSE, DoOffscreen;
-    HBITMAP hB_off = 0;
-    COLORREF oldFg, oldBg;
-    INT x, y, nStretchMode;
-
-    TRACE_(icon)("(hdc=%p,pos=%d.%d,hicon=%p,extend=%d.%d,istep=%d,br=%p,flags=0x%08x)\n",
-                 hdc,x0,y0,hIcon,cxWidth,cyWidth,istep,hbr,flags );
-
-    if (!(ptr = get_icon_ptr( hIcon ))) return FALSE;
-    if (istep >= get_icon_steps( ptr ))
-    {
-        TRACE_(icon)("Stepped past end of animated frames=%d\n", istep);
-        release_user_handle_ptr( ptr );
-        return FALSE;
-    }
-    if (!(frame = get_icon_frame( ptr, istep )))
-    {
-        FIXME_(icon)("Error retrieving icon frame %d\n", istep);
-        release_user_handle_ptr( ptr );
-        return FALSE;
-    }
-    if (!(hMemDC = CreateCompatibleDC( hdc )))
-    {
-        release_icon_frame( ptr, frame );
-        release_user_handle_ptr( ptr );
-        return FALSE;
-    }
-
-    if (flags & DI_NOMIRROR)
-        FIXME_(icon)("Ignoring flag DI_NOMIRROR\n");
-
-    /* Calculate the size of the destination image.  */
-    if (cxWidth == 0)
-    {
-        if (flags & DI_DEFAULTSIZE)
-            cxWidth = GetSystemMetrics (SM_CXICON);
-        else
-            cxWidth = frame->width;
-    }
-    if (cyWidth == 0)
-    {
-        if (flags & DI_DEFAULTSIZE)
-            cyWidth = GetSystemMetrics (SM_CYICON);
-        else
-            cyWidth = frame->height;
-    }
-
-    DoOffscreen = (GetObjectType( hbr ) == OBJ_BRUSH);
-
-    if (DoOffscreen) {
-        RECT r;
-
-        SetRect(&r, 0, 0, cxWidth, cxWidth);
-
-        if (!(hdc_dest = CreateCompatibleDC(hdc))) goto failed;
-        if (!(hB_off = CreateCompatibleBitmap(hdc, cxWidth, cyWidth)))
-        {
-            DeleteDC( hdc_dest );
-            goto failed;
-        }
-        SelectObject(hdc_dest, hB_off);
-        FillRect(hdc_dest, &r, hbr);
-        x = y = 0;
-    }
-    else
-    {
-        hdc_dest = hdc;
-        x = x0;
-        y = y0;
-    }
-
-    nStretchMode = SetStretchBltMode (hdc, STRETCH_DELETESCANS);
-
-    oldFg = SetTextColor( hdc, RGB(0,0,0) );
-    oldBg = SetBkColor( hdc, RGB(255,255,255) );
-
-    if (frame->alpha && (flags & DI_IMAGE))
-    {
-        BOOL alpha_blend = TRUE;
-
-        if (GetObjectType( hdc_dest ) == OBJ_MEMDC)
-        {
-            BITMAP bm;
-            HBITMAP bmp = GetCurrentObject( hdc_dest, OBJ_BITMAP );
-            alpha_blend = GetObjectW( bmp, sizeof(bm), &bm ) && bm.bmBitsPixel > 8;
-        }
-        if (alpha_blend)
-        {
-            BLENDFUNCTION pixelblend = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
-            SelectObject( hMemDC, frame->alpha );
-            if (GdiAlphaBlend( hdc_dest, x, y, cxWidth, cyWidth, hMemDC,
-                               0, 0, frame->width, frame->height,
-                               pixelblend )) goto done;
-        }
-    }
-
-    if (flags & DI_MASK)
-    {
-        DWORD rop = (flags & DI_IMAGE) ? SRCAND : SRCCOPY;
-        SelectObject( hMemDC, frame->mask );
-        StretchBlt( hdc_dest, x, y, cxWidth, cyWidth,
-                    hMemDC, 0, 0, frame->width, frame->height, rop );
-    }
-
-    if (flags & DI_IMAGE)
-    {
-        if (frame->color)
-        {
-            DWORD rop = (flags & DI_MASK) ? SRCINVERT : SRCCOPY;
-            SelectObject( hMemDC, frame->color );
-            StretchBlt( hdc_dest, x, y, cxWidth, cyWidth,
-                        hMemDC, 0, 0, frame->width, frame->height, rop );
-        }
-        else
-        {
-            DWORD rop = (flags & DI_MASK) ? SRCINVERT : SRCCOPY;
-            SelectObject( hMemDC, frame->mask );
-            StretchBlt( hdc_dest, x, y, cxWidth, cyWidth,
-                        hMemDC, 0, frame->height, frame->width,
-                        frame->height, rop );
-        }
-    }
-
-done:
-    if (DoOffscreen) BitBlt( hdc, x0, y0, cxWidth, cyWidth, hdc_dest, 0, 0, SRCCOPY );
-
-    SetTextColor( hdc, oldFg );
-    SetBkColor( hdc, oldBg );
-    SetStretchBltMode (hdc, nStretchMode);
-    result = TRUE;
-    if (hdc_dest != hdc) DeleteDC( hdc_dest );
-    if (hB_off) DeleteObject(hB_off);
-failed:
-    DeleteDC( hMemDC );
-    release_icon_frame( ptr, frame );
-    release_user_handle_ptr( ptr );
-    return result;
 }
 
 /***********************************************************************

@@ -728,8 +728,8 @@ static void STATIC_PaintIconfn( HWND hwnd, HDC hdc, HBRUSH hbrush, DWORD style )
         else
             iconRect = rc;
         FillRect( hdc, &rc, hbrush );
-        DrawIconEx( hdc, iconRect.left, iconRect.top, hIcon, iconRect.right - iconRect.left,
-                    iconRect.bottom - iconRect.top, 0, NULL, DI_NORMAL );
+        NtUserDrawIconEx( hdc, iconRect.left, iconRect.top, hIcon, iconRect.right - iconRect.left,
+                          iconRect.bottom - iconRect.top, 0, NULL, DI_NORMAL );
     }
 }
 

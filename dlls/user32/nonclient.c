@@ -243,8 +243,8 @@ BOOL WINAPI DrawCaptionTempW (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
         pt.y = (rc.bottom + rc.top - GetSystemMetrics(SM_CYSMICON)) / 2;
 
         if (!hIcon) hIcon = NC_IconForWindow(hwnd);
-        DrawIconEx (hdc, pt.x, pt.y, hIcon, GetSystemMetrics(SM_CXSMICON),
-                    GetSystemMetrics(SM_CYSMICON), 0, 0, DI_NORMAL);
+        NtUserDrawIconEx( hdc, pt.x, pt.y, hIcon, GetSystemMetrics(SM_CXSMICON),
+                          GetSystemMetrics(SM_CYSMICON), 0, 0, DI_NORMAL );
         rc.left = pt.x + GetSystemMetrics( SM_CXSMICON );
     }
 
@@ -686,9 +686,9 @@ BOOL NC_DrawSysButton (HWND hwnd, HDC hdc, BOOL down)
         NC_GetInsideRect( hwnd, COORDS_WINDOW, &rect, style, ex_style );
         pt.x = rect.left + 2;
         pt.y = rect.top + (GetSystemMetrics(SM_CYCAPTION) - GetSystemMetrics(SM_CYSMICON)) / 2;
-        DrawIconEx (hdc, pt.x, pt.y, hIcon,
-                    GetSystemMetrics(SM_CXSMICON),
-                    GetSystemMetrics(SM_CYSMICON), 0, 0, DI_NORMAL);
+        NtUserDrawIconEx( hdc, pt.x, pt.y, hIcon,
+                          GetSystemMetrics(SM_CXSMICON),
+                          GetSystemMetrics(SM_CYSMICON), 0, 0, DI_NORMAL );
     }
     return (hIcon != 0);
 }
