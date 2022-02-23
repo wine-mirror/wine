@@ -295,7 +295,7 @@ static HRESULT stream_read(IStream *stream, void *data, ULONG size)
 
     hr = IStream_Read(stream, data, size, &read);
     if (FAILED(hr))
-        TRACE_(dmfile)("IStream_Read failed: %08lx\n", hr);
+        TRACE_(dmfile)("IStream_Read failed: %#lx\n", hr);
     else if (!read && read < size) {
         /* All or nothing: Handle a partial read due to end of stream as an error */
         TRACE_(dmfile)("Short read: %lu < %lu\n", read, size);
