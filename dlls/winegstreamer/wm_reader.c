@@ -1512,7 +1512,6 @@ static HRESULT init_stream(struct wm_reader *reader, QWORD file_size)
         wg_parser_stream_enable(stream->wg_stream, &stream->format);
     }
 
-    wg_parser_end_flush(reader->wg_parser);
     /* We probably discarded events because streams weren't enabled yet.
      * Now that they're all enabled seek back to the start again. */
     wg_parser_stream_seek(reader->streams[0].wg_stream, 1.0, 0, 0,
@@ -1836,11 +1835,7 @@ HRESULT wm_reader_get_stream_sample(struct wm_stream *stream,
 
     for (;;)
     {
-        if (!wg_parser_stream_get_event(wg_stream, &event))
-        {
-            FIXME("Stream is flushing.\n");
-            return E_NOTIMPL;
-        }
+        wg_parser_stream_get_event(wg_stream, &event);
 
         TRACE("Got event of type %#x for %s stream %p.\n", event.type,
                 get_major_type_string(stream->format.major_type), stream);

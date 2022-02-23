@@ -238,9 +238,6 @@ enum unix_funcs
     unix_wg_parser_connect,
     unix_wg_parser_disconnect,
 
-    unix_wg_parser_begin_flush,
-    unix_wg_parser_end_flush,
-
     unix_wg_parser_get_next_read_offset,
     unix_wg_parser_push_data,
 

@@ -70,9 +70,6 @@ void wg_parser_destroy(struct wg_parser *parser);
 HRESULT wg_parser_connect(struct wg_parser *parser, uint64_t file_size);
 void wg_parser_disconnect(struct wg_parser *parser);
 
-void wg_parser_begin_flush(struct wg_parser *parser);
-void wg_parser_end_flush(struct wg_parser *parser);
-
 bool wg_parser_get_next_read_offset(struct wg_parser *parser, uint64_t *offset, uint32_t *size);
 void wg_parser_push_data(struct wg_parser *parser, const void *data, uint32_t size);
 
@@ -83,7 +80,7 @@ void wg_parser_stream_get_preferred_format(struct wg_parser_stream *stream, stru
 void wg_parser_stream_enable(struct wg_parser_stream *stream, const struct wg_format *format);
 void wg_parser_stream_disable(struct wg_parser_stream *stream);
 
-bool wg_parser_stream_get_event(struct wg_parser_stream *stream, struct wg_parser_event *event);
+void wg_parser_stream_get_event(struct wg_parser_stream *stream, struct wg_parser_event *event);
 bool wg_parser_stream_copy_buffer(struct wg_parser_stream *stream,
         void *data, uint32_t offset, uint32_t size);
 void wg_parser_stream_release_buffer(struct wg_parser_stream *stream);

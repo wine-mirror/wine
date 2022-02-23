@@ -87,7 +87,7 @@ struct wg_parser
         GstFlowReturn ret;
     } read_request;
 
-    bool flushing, sink_connected;
+    bool sink_connected;
 
     bool unlimited_buffering;
 };
@@ -124,35 +124,6 @@ static NTSTATUS wg_parser_get_stream(void *args)
     struct wg_parser_get_stream_params *params = args;
 
     params->stream = params->parser->streams[params->index];
-    return S_OK;
-}
-
-static NTSTATUS wg_parser_begin_flush(void *args)
-{
-    struct wg_parser *parser = args;
-    unsigned int i;
-
-    pthread_mutex_lock(&parser->mutex);
-    parser->flushing = true;
-    pthread_mutex_unlock(&parser->mutex);
-
-    for (i = 0; i < parser->stream_count; ++i)
-    {
-        if (parser->streams[i]->enabled)
-            pthread_cond_signal(&parser->streams[i]->event_cond);
-    }
-
-    return S_OK;
-}
-
-static NTSTATUS wg_parser_end_flush(void *args)
-{
-    struct wg_parser *parser = args;
-
-    pthread_mutex_lock(&parser->mutex);
-    parser->flushing = false;
-    pthread_mutex_unlock(&parser->mutex);
-
     return S_OK;
 }
 
@@ -288,15 +259,8 @@ static NTSTATUS wg_parser_stream_get_event(void *args)
 
     pthread_mutex_lock(&parser->mutex);
 
-    while (!parser->flushing && stream->event.type == WG_PARSER_EVENT_NONE)
+    while (stream->event.type == WG_PARSER_EVENT_NONE)
         pthread_cond_wait(&stream->event_cond, &parser->mutex);
-
-    if (parser->flushing)
-    {
-        pthread_mutex_unlock(&parser->mutex);
-        GST_DEBUG("Filter is flushing.\n");
-        return VFW_E_WRONG_STATE;
-    }
 
     *params->event = stream->event;
 
@@ -1593,7 +1557,6 @@ static NTSTATUS wg_parser_create(void *args)
     pthread_cond_init(&parser->init_cond, NULL);
     pthread_cond_init(&parser->read_cond, NULL);
     pthread_cond_init(&parser->read_done_cond, NULL);
-    parser->flushing = true;
     parser->init_gst = init_funcs[params->type];
     parser->unlimited_buffering = params->unlimited_buffering;
 
@@ -1629,9 +1592,6 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
 
     X(wg_parser_connect),
     X(wg_parser_disconnect),
-
-    X(wg_parser_begin_flush),
-    X(wg_parser_end_flush),
 
     X(wg_parser_get_next_read_offset),
     X(wg_parser_push_data),

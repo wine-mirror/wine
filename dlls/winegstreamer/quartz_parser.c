@@ -833,11 +833,7 @@ static DWORD CALLBACK stream_thread(void *arg)
             continue;
         }
 
-        if (!wg_parser_stream_get_event(pin->wg_stream, &event))
-        {
-            LeaveCriticalSection(&pin->flushing_cs);
-            continue;
-        }
+        wg_parser_stream_get_event(pin->wg_stream, &event);
 
         TRACE("Got event of type %#x.\n", event.type);
 
@@ -971,7 +967,6 @@ static HRESULT parser_init_stream(struct strmbase_filter *iface)
         return S_OK;
 
     filter->streaming = true;
-    wg_parser_end_flush(filter->wg_parser);
 
     /* DirectShow retains the old seek positions, but resets to them every time
      * it transitions from stopped -> paused. */
@@ -1011,7 +1006,6 @@ static HRESULT parser_cleanup_stream(struct strmbase_filter *iface)
         return S_OK;
 
     filter->streaming = false;
-    wg_parser_begin_flush(filter->wg_parser);
 
     for (i = 0; i < filter->source_count; ++i)
     {
@@ -1336,8 +1330,6 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
 
     if (!(current_flags & AM_SEEKING_NoFlush))
     {
-        wg_parser_begin_flush(filter->wg_parser);
-
         for (i = 0; i < filter->source_count; ++i)
         {
             if (filter->sources[i]->pin.pin.peer)
@@ -1365,8 +1357,6 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
 
     if (!(current_flags & AM_SEEKING_NoFlush))
     {
-        wg_parser_end_flush(filter->wg_parser);
-
         for (i = 0; i < filter->source_count; ++i)
         {
             struct parser_source *flush_pin = filter->sources[i];
