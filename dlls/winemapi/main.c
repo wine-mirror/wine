@@ -64,7 +64,7 @@ ULONG WINAPI MAPIFindNext(LHANDLE session, ULONG_PTR uiparam, LPSTR msg_type,
 ULONG WINAPI MAPILogon(ULONG_PTR uiparam, LPSTR profile, LPSTR password,
     FLAGS flags, ULONG reserved, LPLHANDLE session)
 {
-    TRACE("(0x%08lx %s %p 0x%08x 0x%08x %p)\n", uiparam,
+    TRACE("(0x%08Ix %s %p 0x%08lx 0x%08lx %p)\n", uiparam,
           debugstr_a(profile), password, flags, reserved, session);
 
     if (session)
@@ -76,7 +76,7 @@ ULONG WINAPI MAPILogon(ULONG_PTR uiparam, LPSTR profile, LPSTR password,
 ULONG WINAPI MAPILogoff(LHANDLE session, ULONG_PTR uiparam, FLAGS flags,
     ULONG reserved)
 {
-    TRACE("(0x%08lx 0x%08lx 0x%08x 0x%08x)\n", session,
+    TRACE("(0x%08Ix 0x%08Ix 0x%08lx 0x%08lx)\n", session,
           uiparam, flags, reserved);
 
     return SUCCESS_SUCCESS;
@@ -97,7 +97,7 @@ ULONG WINAPI MAPIResolveName(LHANDLE session, ULONG_PTR uiparam, LPSTR name,
     SCODE scode;
     char *p;
 
-    TRACE("(0x%08lx 0x%08lx %s 0x%08x 0x%08x %p)\n", session, uiparam,
+    TRACE("(0x%08Ix 0x%08Ix %s 0x%08lx 0x%08lx %p)\n", session, uiparam,
           debugstr_a(name), flags, reserved, recip);
 
     if (!name || !name[0])
