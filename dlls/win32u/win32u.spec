@@ -1178,7 +1178,7 @@
 @ stub NtUserSetClipboardViewer
 @ stub NtUserSetCoreWindow
 @ stub NtUserSetCoreWindowPartner
-@ stub NtUserSetCursor
+@ stdcall NtUserSetCursor(long)
 @ stub NtUserSetCursorContents
 @ stdcall NtUserSetCursorIconData(long ptr ptr ptr)
 @ stdcall NtUserSetCursorPos(long long)

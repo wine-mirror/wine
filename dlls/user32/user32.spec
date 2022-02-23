@@ -657,7 +657,7 @@
 @ stdcall SetClipboardViewer(long)
 @ stdcall SetCoalescableTimer(long long long ptr long)
 # @ stub SetConsoleReserveKeys
-@ stdcall SetCursor(long)
+@ stdcall -import SetCursor(long) NtUserSetCursor
 @ stub SetCursorContents
 @ stdcall -import SetCursorPos(long long) NtUserSetCursorPos
 @ stdcall SetDebugErrorLevel(long)

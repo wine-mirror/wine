@@ -1151,7 +1151,7 @@ LRESULT NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam )
         {
             HCURSOR hCursor = (HCURSOR)GetClassLongPtrW(hwnd, GCLP_HCURSOR);
             if(hCursor) {
-                SetCursor(hCursor);
+                NtUserSetCursor(hCursor);
                 return TRUE;
             }
             return FALSE;
@@ -1159,23 +1159,23 @@ LRESULT NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam )
 
     case HTLEFT:
     case HTRIGHT:
-        return (LRESULT)SetCursor( LoadCursorA( 0, (LPSTR)IDC_SIZEWE ) );
+        return (LRESULT)NtUserSetCursor( LoadCursorA( 0, (LPSTR)IDC_SIZEWE ) );
 
     case HTTOP:
     case HTBOTTOM:
-        return (LRESULT)SetCursor( LoadCursorA( 0, (LPSTR)IDC_SIZENS ) );
+        return (LRESULT)NtUserSetCursor( LoadCursorA( 0, (LPSTR)IDC_SIZENS ) );
 
     case HTTOPLEFT:
     case HTBOTTOMRIGHT:
-        return (LRESULT)SetCursor( LoadCursorA( 0, (LPSTR)IDC_SIZENWSE ) );
+        return (LRESULT)NtUserSetCursor( LoadCursorA( 0, (LPSTR)IDC_SIZENWSE ) );
 
     case HTTOPRIGHT:
     case HTBOTTOMLEFT:
-        return (LRESULT)SetCursor( LoadCursorA( 0, (LPSTR)IDC_SIZENESW ) );
+        return (LRESULT)NtUserSetCursor( LoadCursorA( 0, (LPSTR)IDC_SIZENESW ) );
     }
 
     /* Default cursor: arrow */
-    return (LRESULT)SetCursor( LoadCursorA( 0, (LPSTR)IDC_ARROW ) );
+    return (LRESULT)NtUserSetCursor( LoadCursorA( 0, (LPSTR)IDC_ARROW ) );
 }
 
 /***********************************************************************

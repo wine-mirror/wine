@@ -38,6 +38,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(cursor);
 
 static struct list icon_cache = LIST_INIT( icon_cache );
 
+static struct cursoricon_object *get_icon_ptr( HICON handle )
+{
+    struct cursoricon_object *obj = get_user_handle_ptr( handle, NTUSER_OBJ_ICON );
+    if (obj == OBJ_OTHER_PROCESS)
+    {
+        WARN( "icon handle %p from other process\n", handle );
+        obj = NULL;
+    }
+    return obj;
+}
+
 /***********************************************************************
  *	     NtUserShowCursor    (win32u.@)
  */
@@ -65,6 +76,37 @@ INT WINAPI NtUserShowCursor( BOOL show )
     return count;
 }
 
+/***********************************************************************
+ *	     NtUserSetCursor (win32u.@)
+ */
+HCURSOR WINAPI NtUserSetCursor( HCURSOR cursor )
+{
+    struct cursoricon_object *obj;
+    HCURSOR old_cursor;
+    int show_count;
+    BOOL ret;
+
+    TRACE( "%p\n", cursor );
+
+    SERVER_START_REQ( set_cursor )
+    {
+        req->flags = SET_CURSOR_HANDLE;
+        req->handle = wine_server_user_handle( cursor );
+        if ((ret = !wine_server_call_err( req )))
+        {
+            old_cursor = wine_server_ptr_handle( reply->prev_handle );
+            show_count = reply->prev_count;
+        }
+    }
+    SERVER_END_REQ;
+    if (!ret) return 0;
+
+    user_driver->pSetCursor( show_count >= 0 ? cursor : 0 );
+
+    if (!(obj = get_icon_ptr( old_cursor ))) return 0;
+    release_user_handle_ptr( obj );
+    return old_cursor;
+}
 
 /***********************************************************************
  *	     NtUserGetCursor (win32u.@)
@@ -168,17 +210,6 @@ HICON alloc_cursoricon_handle( BOOL is_icon )
     obj->is_icon = is_icon;
     if (!(handle = alloc_user_handle( &obj->obj, NTUSER_OBJ_ICON ))) free( obj );
     return handle;
-}
-
-static struct cursoricon_object *get_icon_ptr( HICON handle )
-{
-    struct cursoricon_object *obj = get_user_handle_ptr( handle, NTUSER_OBJ_ICON );
-    if (obj == OBJ_OTHER_PROCESS)
-    {
-        WARN( "icon handle %p from other process\n", handle );
-        obj = NULL;
-    }
-    return obj;
 }
 
 static BOOL free_icon_handle( HICON handle )

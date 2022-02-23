@@ -1532,7 +1532,7 @@ LRESULT WINAPI USER_ScrollBarProc( HWND hwnd, UINT message, WPARAM wParam, LPARA
         if (GetWindowLongW( hwnd, GWL_STYLE ) & SBS_SIZEGRIP)
         {
             ULONG_PTR cursor = (GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL) ? IDC_SIZENESW : IDC_SIZENWSE;
-            return (LRESULT)SetCursor( LoadCursorA( 0, (LPSTR)cursor ));
+            return (LRESULT)NtUserSetCursor( LoadCursorA( 0, (LPSTR)cursor ));
         }
         return DefWindowProcW( hwnd, message, wParam, lParam );
 

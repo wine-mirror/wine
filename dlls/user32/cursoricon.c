@@ -1708,44 +1708,6 @@ BOOL WINAPI DrawIcon( HDC hdc, INT x, INT y, HICON hIcon )
 }
 
 /***********************************************************************
- *		SetCursor (USER32.@)
- *
- * Set the cursor shape.
- *
- * RETURNS
- *	A handle to the previous cursor shape.
- */
-HCURSOR WINAPI DECLSPEC_HOTPATCH SetCursor( HCURSOR hCursor /* [in] Handle of cursor to show */ )
-{
-    struct cursoricon_object *obj;
-    HCURSOR hOldCursor;
-    int show_count;
-    BOOL ret;
-
-    TRACE("%p\n", hCursor);
-
-    SERVER_START_REQ( set_cursor )
-    {
-        req->flags = SET_CURSOR_HANDLE;
-        req->handle = wine_server_user_handle( hCursor );
-        if ((ret = !wine_server_call_err( req )))
-        {
-            hOldCursor = wine_server_ptr_handle( reply->prev_handle );
-            show_count = reply->prev_count;
-        }
-    }
-    SERVER_END_REQ;
-
-    if (!ret) return 0;
-    USER_Driver->pSetCursor( show_count >= 0 ? hCursor : 0 );
-
-    if (!(obj = get_icon_ptr( hOldCursor ))) return 0;
-    release_user_handle_ptr( obj );
-    return hOldCursor;
-}
-
-
-/***********************************************************************
  *		GetClipCursor (USER32.@)
  */
 BOOL WINAPI DECLSPEC_HOTPATCH GetClipCursor( RECT *rect )

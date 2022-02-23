@@ -832,6 +832,12 @@ HPALETTE WINAPI NtUserSelectPalette( HDC hdc, HPALETTE hpal, WORD bkg )
     return unix_funcs->pNtUserSelectPalette( hdc, hpal, bkg );
 }
 
+HCURSOR WINAPI NtUserSetCursor( HCURSOR cursor )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserSetCursor( cursor );
+}
+
 BOOL WINAPI NtUserSetCursorIconData( HCURSOR cursor, UNICODE_STRING *module, UNICODE_STRING *res_name,
                                      struct cursoricon_desc *desc )
 {

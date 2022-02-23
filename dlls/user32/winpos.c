@@ -2761,7 +2761,7 @@ static LONG start_size_move( HWND hwnd, WPARAM wParam, POINT *capturePoint, LONG
     }
     else  /* SC_SIZE */
     {
-        SetCursor( LoadCursorW( 0, (LPWSTR)IDC_SIZEALL ) );
+        NtUserSetCursor( LoadCursorW( 0, (LPWSTR)IDC_SIZEALL ) );
         pt.x = pt.y = 0;
         while(!hittest)
         {
