@@ -6469,10 +6469,11 @@ static HRESULT resolver_get_scheme_handler(const WCHAR *url, DWORD flags, IMFSch
     if (ptr == url || *ptr != ':')
     {
         url = fileschemeW;
-        ptr = fileschemeW + ARRAY_SIZE(fileschemeW) - 1;
+        len = ARRAY_SIZE(fileschemeW) - 1;
     }
+    else
+        len = ptr - url + 1;
 
-    len = ptr - url;
     scheme = malloc((len + 1) * sizeof(WCHAR));
     if (!scheme)
         return E_OUTOFMEMORY;
