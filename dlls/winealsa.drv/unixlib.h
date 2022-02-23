@@ -115,6 +115,13 @@ struct get_buffer_size_params
     UINT32 *size;
 };
 
+struct get_latency_params
+{
+    struct alsa_stream *stream;
+    HRESULT result;
+    REFERENCE_TIME *latency;
+};
+
 enum alsa_funcs
 {
     alsa_get_endpoint_ids,
@@ -123,6 +130,7 @@ enum alsa_funcs
     alsa_is_format_supported,
     alsa_get_mix_format,
     alsa_get_buffer_size,
+    alsa_get_latency,
 };
 
 extern unixlib_handle_t alsa_handle;

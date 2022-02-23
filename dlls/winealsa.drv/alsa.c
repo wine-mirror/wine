@@ -1250,6 +1250,27 @@ static NTSTATUS get_buffer_size(void *args)
     return alsa_unlock_result(stream, &params->result, S_OK);
 }
 
+static NTSTATUS get_latency(void *args)
+{
+    struct get_latency_params *params = args;
+    struct alsa_stream *stream = params->stream;
+
+    alsa_lock(stream);
+
+    /* Hide some frames in the ALSA buffer. Allows us to return GetCurrentPadding=0
+     * yet have enough data left to play (as if it were in native's mixer). Add:
+     * + mmdevapi_period such that at the end of it, ALSA still has data;
+     * + EXTRA_SAFE (~4ms) to allow for late callback invocation / fluctuation;
+     * + alsa_period such that ALSA always has at least one period to play. */
+    if(stream->flow == eRender)
+        *params->latency = muldiv(stream->hidden_frames, 10000000, stream->fmt->nSamplesPerSec);
+    else
+        *params->latency = muldiv(stream->alsa_period_frames, 10000000, stream->fmt->nSamplesPerSec)
+            + stream->mmdev_period_rt;
+
+    return alsa_unlock_result(stream, &params->result, S_OK);
+}
+
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     get_endpoint_ids,
@@ -1258,4 +1279,5 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     is_format_supported,
     get_mix_format,
     get_buffer_size,
+    get_latency,
 };

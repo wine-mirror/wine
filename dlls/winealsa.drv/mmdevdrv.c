@@ -849,7 +849,7 @@ static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient3 *iface,
         REFERENCE_TIME *latency)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
-    struct alsa_stream *stream = This->stream;
+    struct get_latency_params params;
 
     TRACE("(%p)->(%p)\n", This, latency);
 
@@ -859,22 +859,12 @@ static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient3 *iface,
     if(!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
 
-    alsa_lock(stream);
+    params.stream = This->stream;
+    params.latency = latency;
 
-    /* Hide some frames in the ALSA buffer. Allows us to return GetCurrentPadding=0
-     * yet have enough data left to play (as if it were in native's mixer). Add:
-     * + mmdevapi_period such that at the end of it, ALSA still has data;
-     * + EXTRA_SAFE (~4ms) to allow for late callback invocation / fluctuation;
-     * + alsa_period such that ALSA always has at least one period to play. */
-    if(stream->flow == eRender)
-        *latency = MulDiv(stream->hidden_frames, 10000000, stream->fmt->nSamplesPerSec);
-    else
-        *latency = MulDiv(stream->alsa_period_frames, 10000000, stream->fmt->nSamplesPerSec)
-                 + stream->mmdev_period_rt;
+    ALSA_CALL(get_latency, &params);
 
-    alsa_unlock(stream);
-
-    return S_OK;
+    return params.result;
 }
 
 static HRESULT WINAPI AudioClient_GetCurrentPadding(IAudioClient3 *iface,
