@@ -1295,6 +1295,7 @@ static void test_tty_input(void)
         { "\x1b[D",          0,      VK_LEFT,     0 },
         { "\x1b[H",          0,      VK_HOME,     0 },
         { "\x1b[F",          0,      VK_END,      0 },
+        { "\x1b[Z",          0x9,    VK_TAB,      SHIFT_PRESSED },
         { "\x1b[2~",         0,      VK_INSERT,   0 },
         { "\x1b[3~",         0,      VK_DELETE,   0 },
         { "\x1b[5~",         0,      VK_PRIOR,    0 },
@@ -1304,8 +1305,8 @@ static void test_tty_input(void)
         { "\x1b[18~",        0,      VK_F7,       0 },
         { "\x1b[19~",        0,      VK_F8,       0 },
         { "\x1b[20~",        0,      VK_F9,       0 },
-        { "\x1b[21~",        0,      VK_F10,      0 },
         /* 0x10 */
+        { "\x1b[21~",        0,      VK_F10,      0 },
         { "\x1b[23~",        0,      VK_F11,      0 },
         { "\x1b[24~",        0,      VK_F12,      0 },
         { "\x1bOP",          0,      VK_F1,       0 },
@@ -1321,8 +1322,8 @@ static void test_tty_input(void)
         { "\x1b[1;7A",       0,      VK_UP,       LEFT_ALT_PRESSED  | LEFT_CTRL_PRESSED },
         { "\x1b[1;8A",       0,      VK_UP,       SHIFT_PRESSED | LEFT_ALT_PRESSED  | LEFT_CTRL_PRESSED },
         { "\x1b[1;9A",       0,      VK_UP,       0 },
-        { "\x1b[1;10A",      0,      VK_UP,       SHIFT_PRESSED },
         /* 0x20 */
+        { "\x1b[1;10A",      0,      VK_UP,       SHIFT_PRESSED },
         { "\x1b[1;11A",      0,      VK_UP,       LEFT_ALT_PRESSED },
         { "\x1b[1;12A",      0,      VK_UP,       SHIFT_PRESSED | LEFT_ALT_PRESSED },
         { "\x1b[1;13A",      0,      VK_UP,       LEFT_CTRL_PRESSED },
@@ -1338,6 +1339,7 @@ static void test_tty_input(void)
         { "\x1b""1",         '1',    '1',         LEFT_ALT_PRESSED },
         { "\x1b""x",         'x',    'X',         LEFT_ALT_PRESSED },
         { "\x1b""[",         '[',    VK_OEM_4,    LEFT_ALT_PRESSED },
+        /* 0x30 */
         { "\x7f",            '\b',   VK_BACK,     0 },
     };
 
