@@ -136,29 +136,34 @@ done:
 /* load a VxD and return a file handle to it */
 HANDLE __wine_vxd_open( LPCWSTR filenameW, DWORD access, SECURITY_ATTRIBUTES *sa )
 {
-    static const WCHAR dotVxDW[] = {'.','v','x','d',0};
     int i;
     HANDLE handle;
     HMODULE module;
-    WCHAR *p, name[16];
+    WCHAR *p, name[13];
 
     /* normalize the filename */
 
-    if (lstrlenW( filenameW ) >= ARRAY_SIZE(name) - 4 ||
-        wcschr( filenameW, '/' ) || wcschr( filenameW, '\\' ))
+    if (wcschr( filenameW, '/' ) || wcschr( filenameW, '\\' ))
     {
         SetLastError( ERROR_FILE_NOT_FOUND );
         return 0;
     }
-    lstrcpyW( name, filenameW );
+    p = wcschr( filenameW, '.' );
+    if (!p && lstrlenW( filenameW ) <= 8)
+    {
+        wcscpy( name, filenameW );
+        wcscat( name, L".vxd" );
+    }
+    else if (p && !wcsicmp( p, L".vxd" ) && lstrlenW( filenameW ) <= 12)  /* existing extension has to be .vxd */
+    {
+        wcscpy( name, filenameW );
+    }
+    else
+    {
+        SetLastError( ERROR_FILE_NOT_FOUND );
+        return 0;
+    }
     wcslwr( name );
-    p = wcschr( name, '.' );
-    if (!p) lstrcatW( name, dotVxDW );
-    else if (wcsicmp( p, dotVxDW ))  /* existing extension has to be .vxd */
-    {
-        SetLastError( ERROR_FILE_NOT_FOUND );
-        return 0;
-    }
 
     /* try to load the module first */
 
