@@ -349,27 +349,27 @@ static void test_crypt_ui_wiz_import(void)
     SetLastError(0xdeadbeef);
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI, 0, NULL, NULL, NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "expected E_INVALIDARG, got %08x\n", GetLastError());
+     "expected E_INVALIDARG, got %08lx\n", GetLastError());
     memset(&info, 0, sizeof(info));
     SetLastError(0xdeadbeef);
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI, 0, NULL, &info, NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "expected E_INVALIDARG, got %08x\n", GetLastError());
+     "expected E_INVALIDARG, got %08lx\n", GetLastError());
     info.dwSize = sizeof(info);
     SetLastError(0xdeadbeef);
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI, 0, NULL, &info, NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "expected E_INVALIDARG, got %08x\n", GetLastError());
+     "expected E_INVALIDARG, got %08lx\n", GetLastError());
     info.dwSubjectChoice = CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_CONTEXT;
     SetLastError(0xdeadbeef);
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI, 0, NULL, &info, NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "expected E_INVALIDARG, got %08x\n", GetLastError());
+     "expected E_INVALIDARG, got %08lx\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI | CRYPTUI_WIZ_IMPORT_ALLOW_CERT,
      0, NULL, &info, NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "expected E_INVALIDARG, got %08x\n", GetLastError());
+     "expected E_INVALIDARG, got %08lx\n", GetLastError());
     /* Check allowed vs. given type mismatches */
     info.u.pCertContext = CertCreateCertificateContext(X509_ASN_ENCODING,
      v1CertWithValidPubKey, sizeof(v1CertWithValidPubKey));
@@ -377,7 +377,7 @@ static void test_crypt_ui_wiz_import(void)
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI | CRYPTUI_WIZ_IMPORT_ALLOW_CRL,
      0, NULL, &info, NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "expected E_INVALIDARG, got %08x\n", GetLastError());
+     "expected E_INVALIDARG, got %08lx\n", GetLastError());
     CertFreeCertificateContext(info.u.pCertContext);
     info.dwSubjectChoice = CRYPTUI_WIZ_IMPORT_SUBJECT_CRL_CONTEXT;
     info.u.pCRLContext = CertCreateCRLContext(X509_ASN_ENCODING,
@@ -386,7 +386,7 @@ static void test_crypt_ui_wiz_import(void)
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI | CRYPTUI_WIZ_IMPORT_ALLOW_CERT,
      0, NULL, &info, NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "expected E_INVALIDARG, got %08x\n", GetLastError());
+     "expected E_INVALIDARG, got %08lx\n", GetLastError());
     CertFreeCRLContext(info.u.pCRLContext);
     /* Imports the following cert--self-signed, with no basic constraints set--
      * to the CA store.  Puts up a dialog at the end if it succeeds or fails.
@@ -395,7 +395,7 @@ static void test_crypt_ui_wiz_import(void)
     info.u.pCertContext = CertCreateCertificateContext(X509_ASN_ENCODING,
      v1CertWithValidPubKey, sizeof(v1CertWithValidPubKey));
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI, 0, NULL, &info, NULL);
-    ok(ret, "CryptUIWizImport failed: %08x\n", GetLastError());
+    ok(ret, "CryptUIWizImport failed: %08lx\n", GetLastError());
     if (ret)
     {
         HCERTSTORE ca = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0,
@@ -418,7 +418,7 @@ static void test_crypt_ui_wiz_import(void)
     info.u.pCertContext = CertCreateCertificateContext(X509_ASN_ENCODING,
      iTunesCert3, sizeof(iTunesCert3));
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI, 0, NULL, &info, NULL);
-    ok(ret, "CryptUIWizImport failed: %08x\n", GetLastError());
+    ok(ret, "CryptUIWizImport failed: %08lx\n", GetLastError());
     if (ret)
     {
         HCERTSTORE addressBook = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0,
@@ -442,7 +442,7 @@ static void test_crypt_ui_wiz_import(void)
     {
         ret = pCryptUIWizImport(CRYPTUI_WIZ_IMPORT_NO_CHANGE_DEST_STORE, 0,
          NULL, &info, NULL);
-        ok(ret, "CryptUIWizImport failed: %08x\n", GetLastError());
+        ok(ret, "CryptUIWizImport failed: %08lx\n", GetLastError());
     }
     store = CertOpenStore(CERT_STORE_PROV_MEMORY, X509_ASN_ENCODING, 0,
      CERT_STORE_CREATE_NEW_FLAG, NULL);
@@ -455,11 +455,11 @@ static void test_crypt_ui_wiz_import(void)
     {
         ret = pCryptUIWizImport(CRYPTUI_WIZ_IMPORT_NO_CHANGE_DEST_STORE, 0,
          NULL, &info, store);
-        ok(ret, "CryptUIWizImport failed: %08x\n", GetLastError());
+        ok(ret, "CryptUIWizImport failed: %08lx\n", GetLastError());
     }
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI |
      CRYPTUI_WIZ_IMPORT_NO_CHANGE_DEST_STORE, 0, NULL, &info, store);
-    ok(ret, "CryptUIWizImport failed: %08x\n", GetLastError());
+    ok(ret, "CryptUIWizImport failed: %08lx\n", GetLastError());
     ret = find_and_delete_cert_in_store(store, info.u.pCertContext);
     ok(ret ||
      broken(!ret) /* Win9x/NT4 */,
@@ -470,7 +470,7 @@ static void test_crypt_ui_wiz_import(void)
     info.u.pCertContext = CertCreateCertificateContext(X509_ASN_ENCODING,
      iTunesCert1, sizeof(iTunesCert1));
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI, 0, NULL, &info, NULL);
-    ok(ret, "CryptUIWizImport failed: %08x\n", GetLastError());
+    ok(ret, "CryptUIWizImport failed: %08lx\n", GetLastError());
     if (ret)
     {
         HCERTSTORE addressBook = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0,
@@ -491,7 +491,7 @@ static void test_crypt_ui_wiz_import(void)
     info.u.pCertContext = CertCreateCertificateContext(X509_ASN_ENCODING,
      iTunesCert2, sizeof(iTunesCert2));
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI, 0, NULL, &info, NULL);
-    ok(ret, "CryptUIWizImport failed: %08x\n", GetLastError());
+    ok(ret, "CryptUIWizImport failed: %08lx\n", GetLastError());
     if (ret)
     {
         HCERTSTORE ca = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0,
@@ -525,18 +525,18 @@ static void test_crypt_ui_wiz_import(void)
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI | CRYPTUI_WIZ_IMPORT_ALLOW_CERT,
      0, NULL, &info, store);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "expected E_INVALIDARG, got %08x\n", GetLastError());
+     "expected E_INVALIDARG, got %08lx\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI | CRYPTUI_WIZ_IMPORT_ALLOW_CRL,
      0, NULL, &info, store);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "expected E_INVALIDARG, got %08x\n", GetLastError());
+     "expected E_INVALIDARG, got %08lx\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI |
      CRYPTUI_WIZ_IMPORT_NO_CHANGE_DEST_STORE |
      CRYPTUI_WIZ_IMPORT_ALLOW_CERT | CRYPTUI_WIZ_IMPORT_ALLOW_CRL, 0, NULL,
      &info, store);
-    ok(ret, "CryptUIWizImport failed: %08x\n", GetLastError());
+    ok(ret, "CryptUIWizImport failed: %08lx\n", GetLastError());
     if (ret)
     {
         count = 0;
@@ -546,7 +546,7 @@ static void test_crypt_ui_wiz_import(void)
             if (cert)
                 count++;
         } while (cert);
-        ok(count == 1, "expected 1 cert, got %d\n", count);
+        ok(count == 1, "expected 1 cert, got %ld\n", count);
         count = 0;
         crl = NULL;
         do {
@@ -554,7 +554,7 @@ static void test_crypt_ui_wiz_import(void)
             if (crl)
                 count++;
         } while (crl);
-        ok(count == 1, "expected 1 CRL, got %d\n", count);
+        ok(count == 1, "expected 1 CRL, got %ld\n", count);
     }
     CertCloseStore(store, 0);
     CertCloseStore(info.u.hCertStore, 0);
@@ -572,7 +572,7 @@ static void test_crypt_ui_wiz_import(void)
     SetLastError(0xdeadbeef);
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI | CRYPTUI_WIZ_IMPORT_ALLOW_CERT,
      0, NULL, &info, store);
-    ok(ret, "CryptUIWizImport failed: %08x\n", GetLastError());
+    ok(ret, "CryptUIWizImport failed: %08lx\n", GetLastError());
     if (ret)
     {
         count = 0;
@@ -582,7 +582,7 @@ static void test_crypt_ui_wiz_import(void)
             if (cert)
                 count++;
         } while (cert);
-        ok(count == 1, "expected 1 cert, got %d\n", count);
+        ok(count == 1, "expected 1 cert, got %ld\n", count);
         count = 0;
         crl = NULL;
         do {
@@ -590,13 +590,13 @@ static void test_crypt_ui_wiz_import(void)
             if (crl)
                 count++;
         } while (crl);
-        ok(count == 0, "expected 0 CRLs, got %d\n", count);
+        ok(count == 0, "expected 0 CRLs, got %ld\n", count);
     }
     SetLastError(0xdeadbeef);
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI | CRYPTUI_WIZ_IMPORT_ALLOW_CRL,
      0, NULL, &info, store);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "expected E_INVALIDARG, got %08x\n", GetLastError());
+     "expected E_INVALIDARG, got %08lx\n", GetLastError());
     CertCloseStore(store, 0);
     CertCloseStore(info.u.hCertStore, 0);
 
@@ -612,7 +612,7 @@ static void test_crypt_ui_wiz_import(void)
     SetLastError(0xdeadbeef);
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI | CRYPTUI_WIZ_IMPORT_ALLOW_CRL,
      0, NULL, &info, store);
-    ok(ret, "CryptUIWizImport failed: %08x\n", GetLastError());
+    ok(ret, "CryptUIWizImport failed: %08lx\n", GetLastError());
     if (ret)
     {
         count = 0;
@@ -622,7 +622,7 @@ static void test_crypt_ui_wiz_import(void)
             if (cert)
                 count++;
         } while (cert);
-        ok(count == 0, "expected 0 certs, got %d\n", count);
+        ok(count == 0, "expected 0 certs, got %ld\n", count);
         count = 0;
         crl = NULL;
         do {
@@ -630,13 +630,13 @@ static void test_crypt_ui_wiz_import(void)
             if (crl)
                 count++;
         } while (crl);
-        ok(count == 1, "expected 1 CRL, got %d\n", count);
+        ok(count == 1, "expected 1 CRL, got %ld\n", count);
     }
     SetLastError(0xdeadbeef);
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI | CRYPTUI_WIZ_IMPORT_ALLOW_CERT,
      0, NULL, &info, store);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "expected E_INVALIDARG, got %08x\n", GetLastError());
+     "expected E_INVALIDARG, got %08lx\n", GetLastError());
     CertCloseStore(store, 0);
     CertCloseStore(info.u.hCertStore, 0);
 
