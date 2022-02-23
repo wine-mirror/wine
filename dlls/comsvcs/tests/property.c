@@ -70,35 +70,35 @@ static void test_interfaces(void)
 
     hr = CoCreateInstance(&CLSID_SharedPropertyGroupManager, &test_outer, CLSCTX_INPROC_SERVER,
             &IID_ISharedPropertyGroupManager, (void **)&manager);
-    ok(hr == CLASS_E_NOAGGREGATION, "Got hr %#x.\n", hr);
+    ok(hr == CLASS_E_NOAGGREGATION, "Got hr %#lx.\n", hr);
 
     hr = CoCreateInstance(&CLSID_SharedPropertyGroupManager, NULL, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void **)&unk);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     expected_refcount = get_refcount(unk) + 1;
     hr = IUnknown_QueryInterface(unk, &IID_ISharedPropertyGroupManager, (void **)&manager);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     refcount = get_refcount(unk);
-    ok(refcount == expected_refcount, "Got refcount: %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got refcount: %lu, expected %lu.\n", refcount, expected_refcount);
 
     expected_refcount = get_refcount(manager) + 1;
     hr = CoCreateInstance(&CLSID_SharedPropertyGroupManager, NULL, CLSCTX_INPROC_SERVER,
             &IID_ISharedPropertyGroupManager, (void **)&manager1);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(manager1 == manager, "Got wrong pointer: %p.\n", manager1);
     refcount = get_refcount(manager1);
-    ok(refcount == expected_refcount, "Got refcount: %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got refcount: %lu, expected %lu.\n", refcount, expected_refcount);
     refcount = get_refcount(manager);
-    ok(refcount == expected_refcount, "Got refcount: %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got refcount: %lu, expected %lu.\n", refcount, expected_refcount);
     ISharedPropertyGroupManager_Release(manager1);
 
     hr = IUnknown_QueryInterface(unk, &IID_IDispatch, (void **)&dispatch);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     refcount = get_refcount(dispatch);
-    ok(refcount == expected_refcount, "Got refcount: %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got refcount: %lu, expected %lu.\n", refcount, expected_refcount);
     refcount = get_refcount(manager);
-    ok(refcount == expected_refcount, "Got refcount: %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got refcount: %lu, expected %lu.\n", refcount, expected_refcount);
 
     IDispatch_Release(dispatch);
     IUnknown_Release(unk);

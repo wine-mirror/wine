@@ -63,7 +63,7 @@ static void _expect_ref(IUnknown* obj, ULONG ref, int line)
     ULONG rc;
     IUnknown_AddRef(obj);
     rc = IUnknown_Release(obj);
-    ok_(__FILE__,line)(rc == ref, "expected refcount %d, got %d\n", ref, rc);
+    ok_(__FILE__,line)(rc == ref, "expected refcount %ld, got %ld\n", ref, rc);
 }
 
 struct test_driver
@@ -186,7 +186,7 @@ static void create_dispenser(void)
     struct test_driver driver;
 
     hr = CoCreateInstance( &CLSID_DispenserManager, NULL, CLSCTX_ALL, &IID_IDispenserManager, (void**)&dispenser);
-    ok(hr == S_OK, "Failed to create object 0x%08x\n", hr);
+    ok(hr == S_OK, "Failed to create object 0x%08lx\n", hr);
     if(FAILED(hr))
     {
         win_skip("DispenserManager not available\n");
@@ -196,13 +196,13 @@ static void create_dispenser(void)
     thread = CreateThread(NULL, 0, com_thread, NULL, 0, NULL);
     ok(!WaitForSingleObject(thread, 1000), "wait failed\n");
     GetExitCodeThread(thread, &ret);
-    ok(ret == CO_E_NOTINITIALIZED, "got unexpected hr %#x\n", ret);
+    ok(ret == CO_E_NOTINITIALIZED, "got unexpected hr %#lx\n", ret);
     CloseHandle(thread);
 
     init_test_driver(&driver);
 
     hr = IDispenserManager_RegisterDispenser(dispenser, &driver.IDispenserDriver_iface, L"SC.Pool 0 0", &holder1);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     /* The above call creates an MTA thread, but we need to wait for it to
      * actually initialize. */
@@ -210,15 +210,15 @@ static void create_dispenser(void)
     thread = CreateThread(NULL, 0, com_thread, NULL, 0, NULL);
     ok(!WaitForSingleObject(thread, 20000), "wait failed\n");
     GetExitCodeThread(thread, &ret);
-    ok(ret == S_OK, "got unexpected hr %#x\n", ret);
+    ok(ret == S_OK, "got unexpected hr %#lx\n", ret);
     CloseHandle(thread);
 
     hr = IDispenserManager_RegisterDispenser(dispenser, &driver.IDispenserDriver_iface, L"SC.Pool 0 0", &holder2);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(holder1 != holder2, "same holder object returned\n");
 
     hr = IDispenserManager_RegisterDispenser(dispenser, &driver.IDispenserDriver_iface, L"SC.Pool 1 1", &holder3);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     if(holder1)
     {
@@ -227,7 +227,7 @@ static void create_dispenser(void)
 
         str = SysAllocString(L"data1");
         hr = IHolder_AllocResource(holder1, (RESTYPID)str, &resid);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         ok(resid == 10, "got %d\n", (int)resid);
         SysFreeString(str);
 
@@ -236,13 +236,13 @@ static void create_dispenser(void)
 
         SET_EXPECT(driver_ResetResource);
         hr = IHolder_FreeResource(holder1, resid);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         todo_wine CHECK_CALLED(driver_ResetResource);
 
         SET_EXPECT(driver_DestroyResource);
         SET_EXPECT(driver_Release);
         hr = IHolder_Close(holder1);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         CHECK_CALLED(driver_Release);
         CHECK_CALLED(driver_DestroyResource);
 
@@ -255,7 +255,7 @@ static void create_dispenser(void)
 
         str = SysAllocString(L"data1");
         hr = IHolder_AllocResource(holder2, (RESTYPID)str, &resid);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         ok(resid == 10, "got %d\n", (int)resid);
         SysFreeString(str);
 
@@ -264,7 +264,7 @@ static void create_dispenser(void)
 
         SET_EXPECT(driver_ResetResource);
         hr = IHolder_FreeResource(holder2, resid);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         todo_wine CHECK_CALLED(driver_ResetResource);
 
         /* DestroyResource return doesn't directly affect the Holder Close return value */
@@ -272,7 +272,7 @@ static void create_dispenser(void)
         SET_EXPECT(driver_DestroyResource);
         SET_EXPECT(driver_Release);
         hr = IHolder_Close(holder2);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         CHECK_CALLED(driver_Release);
         CHECK_CALLED(driver_DestroyResource);
         driver.destroy_resource_hr = S_OK;
@@ -282,7 +282,7 @@ static void create_dispenser(void)
     {
         SET_EXPECT(driver_Release);
         hr = IHolder_Close(holder3);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         CHECK_CALLED(driver_Release);
         IHolder_Release(holder3);
     }
@@ -301,7 +301,7 @@ static void test_new_moniker_serialize(const WCHAR *clsid, const WCHAR *progid, 
     DWORD *ptr;
 
     hr = IMoniker_GetSizeMax(moniker, NULL);
-    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     expected_size = sizeof(GUID) + 2 * sizeof(DWORD);
     if (progid)
@@ -312,24 +312,24 @@ static void test_new_moniker_serialize(const WCHAR *clsid, const WCHAR *progid, 
 
     size.QuadPart = 0;
     hr = IMoniker_GetSizeMax(moniker, &size);
-    ok(hr == S_OK, "Failed to get size, hr %#x.\n", hr);
-    ok(size.QuadPart == expected_size, "Unexpected size %s, expected %#x.\n", wine_dbgstr_longlong(size.QuadPart),
+    ok(hr == S_OK, "Failed to get size, hr %#lx.\n", hr);
+    ok(size.QuadPart == expected_size, "Unexpected size %s, expected %#lx.\n", wine_dbgstr_longlong(size.QuadPart),
             expected_size);
 
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
-    ok(hr == S_OK, "Failed to create a stream, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create a stream, hr %#lx.\n", hr);
 
     hr = IMoniker_Save(moniker, stream, FALSE);
-    ok(hr == S_OK, "Failed to save moniker, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to save moniker, hr %#lx.\n", hr);
 
     hr = GetHGlobalFromStream(stream, &hglobal);
-    ok(hr == S_OK, "Failed to get a handle, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get a handle, hr %#lx.\n", hr);
 
     ptr = GlobalLock(hglobal);
     ok(!!ptr, "Failed to get data pointer.\n");
 
     hr = CLSIDFromString(clsid, &guid);
-    ok(hr == S_OK, "Failed to get CLSID, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get CLSID, hr %#lx.\n", hr);
     ok(IsEqualGUID((GUID *)ptr, &guid), "Unexpected buffer content.\n");
     ptr += sizeof(GUID)/sizeof(DWORD);
 
@@ -376,51 +376,51 @@ static void test_new_moniker(void)
     WCHAR *str;
 
     hr = CreateBindCtx(0, &bindctx);
-    ok(hr == S_OK, "Failed to create bind context, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create bind context, hr %#lx.\n", hr);
 
     eaten = 0;
     hr = MkParseDisplayName(bindctx, L"new:20d04fe0-3aea-1069-a2d8-08002b30309d", &eaten, &moniker);
-    ok(hr == S_OK, "Failed to parse display name, hr %#x.\n", hr);
-    ok(eaten == 40, "Unexpected eaten length %u.\n", eaten);
+    ok(hr == S_OK, "Failed to parse display name, hr %#lx.\n", hr);
+    ok(eaten == 40, "Unexpected eaten length %lu.\n", eaten);
 
     hr = IMoniker_QueryInterface(moniker, &IID_IROTData, (void **)&rot_data);
-    ok(hr == S_OK, "Failed to get IROTData, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get IROTData, hr %#lx.\n", hr);
     IROTData_Release(rot_data);
 
     eaten = 0;
     hr = IMoniker_ParseDisplayName(moniker, bindctx, NULL, (WCHAR *)L"new:20d04fe0-3aea-1069-a2d8-08002b30309d",
             &eaten, &moniker2);
-    ok(hr == S_OK, "Failed to parse display name, hr %#x.\n", hr);
-    ok(eaten == 40, "Unexpected eaten length %u.\n", eaten);
+    ok(hr == S_OK, "Failed to parse display name, hr %#lx.\n", hr);
+    ok(eaten == 40, "Unexpected eaten length %lu.\n", eaten);
     IMoniker_Release(moniker2);
 
     hr = IMoniker_QueryInterface(moniker, &IID_IParseDisplayName, (void **)&obj);
-    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#lx.\n", hr);
 
     /* Object creation. */
     hr = CLSIDFromProgID(L"new", &clsid);
-    ok(hr == S_OK, "Failed to get clsid, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get clsid, hr %#lx.\n", hr);
 
     hr = CreateClassMoniker(&clsid, &class_moniker);
-    ok(hr == S_OK, "Failed to create class moniker, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create class moniker, hr %#lx.\n", hr);
 
     hr = IMoniker_BindToObject(class_moniker, bindctx, NULL, &IID_IParseDisplayName, (void **)&obj);
-    ok(hr == S_OK, "Failed to get parsing interface, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get parsing interface, hr %#lx.\n", hr);
     IUnknown_Release(obj);
 
     hr = IMoniker_BindToObject(class_moniker, bindctx, NULL, &IID_IClassFactory, (void **)&obj);
-    ok(hr == S_OK, "Failed to get parsing interface, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get parsing interface, hr %#lx.\n", hr);
     IUnknown_Release(obj);
 
     hr = CoGetClassObject(&clsid, CLSCTX_INPROC_SERVER, NULL, &IID_IParseDisplayName, (void **)&obj);
-    ok(hr == S_OK, "Failed to get parsing interface, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get parsing interface, hr %#lx.\n", hr);
     IUnknown_Release(obj);
 
     hr = CoGetClassObject(&clsid, CLSCTX_INPROC_SERVER, NULL, &IID_IClassFactory, (void **)&obj);
-    ok(hr == S_OK, "Failed to get parsing interface, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get parsing interface, hr %#lx.\n", hr);
 
     hr = IUnknown_QueryInterface(obj, &IID_IParseDisplayName, (void **)&obj2);
-    ok(hr == S_OK, "Failed to get parsing interface, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get parsing interface, hr %#lx.\n", hr);
     IUnknown_Release(obj);
 
     IMoniker_Release(class_moniker);
@@ -428,73 +428,73 @@ static void test_new_moniker(void)
     /* Reducing. */
     moniker_left = (void *)0xdeadbeef;
     hr = IMoniker_Reduce(moniker, bindctx, MKRREDUCE_ONE, &moniker_left, &moniker2);
-    ok(hr == MK_S_REDUCED_TO_SELF, "Unexpected hr %#x.\n", hr);
+    ok(hr == MK_S_REDUCED_TO_SELF, "Unexpected hr %#lx.\n", hr);
     ok(moniker_left == (void *)0xdeadbeef, "Unexpected left moniker.\n");
     ok(moniker2 == moniker, "Unexpected returned moniker.\n");
     IMoniker_Release(moniker2);
 
     hr = IMoniker_Reduce(moniker, bindctx, MKRREDUCE_ONE, NULL, &moniker2);
-    ok(hr == MK_S_REDUCED_TO_SELF, "Unexpected hr %#x.\n", hr);
+    ok(hr == MK_S_REDUCED_TO_SELF, "Unexpected hr %#lx.\n", hr);
     ok(moniker2 == moniker, "Unexpected returned moniker.\n");
     IMoniker_Release(moniker2);
 
     hr = IMoniker_Reduce(moniker, bindctx, MKRREDUCE_ONE, NULL, NULL);
-    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     /* Hashing */
     hash = 0;
     hr = IMoniker_Hash(moniker, &hash);
-    ok(hr == S_OK, "Failed to get a hash, hr %#x.\n", hr);
-    ok(hash == 0x20d04fe0, "Unexpected hash value %#x.\n", hash);
+    ok(hr == S_OK, "Failed to get a hash, hr %#lx.\n", hr);
+    ok(hash == 0x20d04fe0, "Unexpected hash value %#lx.\n", hash);
 
     moniker_type = MKSYS_CLASSMONIKER;
     hr = IMoniker_IsSystemMoniker(moniker, &moniker_type);
-    ok(hr == S_FALSE || broken(hr == S_OK) /* XP */, "Unexpected hr %#x.\n", hr);
-    ok(moniker_type == MKSYS_NONE, "Unexpected moniker type %d.\n", moniker_type);
+    ok(hr == S_FALSE || broken(hr == S_OK) /* XP */, "Unexpected hr %#lx.\n", hr);
+    ok(moniker_type == MKSYS_NONE, "Unexpected moniker type %ld.\n", moniker_type);
 
     hr = IMoniker_IsRunning(moniker, NULL, NULL, NULL);
     todo_wine
-    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
 
     hr = IMoniker_IsRunning(moniker, bindctx, NULL, NULL);
     todo_wine
-    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
 
     hr = IMoniker_GetTimeOfLastChange(moniker, bindctx, NULL, &filetime);
-    ok(hr == MK_E_UNAVAILABLE, "Unexpected hr %#x.\n", hr);
+    ok(hr == MK_E_UNAVAILABLE, "Unexpected hr %#lx.\n", hr);
 
     hr = IMoniker_BindToObject(moniker, bindctx, NULL, &IID_IUnknown, (void **)&obj);
-    ok(hr == S_OK, "Failed to bind to object, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to bind to object, hr %#lx.\n", hr);
     IUnknown_Release(obj);
 
     hr = IMoniker_BindToStorage(moniker, bindctx, NULL, &IID_IUnknown, (void **)&obj);
     todo_wine
-    ok(hr == MK_E_NOSTORAGE, "Unexpected hr %#x.\n", hr);
+    ok(hr == MK_E_NOSTORAGE, "Unexpected hr %#lx.\n", hr);
 
     hr = IMoniker_Inverse(moniker, &inverse);
-    ok(hr == S_OK, "Failed to create inverse moniker, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create inverse moniker, hr %#lx.\n", hr);
     moniker_type = MKSYS_NONE;
     hr = IMoniker_IsSystemMoniker(inverse, &moniker_type);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    ok(moniker_type == MKSYS_ANTIMONIKER, "Unexpected moniker type %d.\n", moniker_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(moniker_type == MKSYS_ANTIMONIKER, "Unexpected moniker type %ld.\n", moniker_type);
     IMoniker_Release(inverse);
 
     hr = IMoniker_Enum(moniker, FALSE, NULL);
-    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     obj = (IUnknown *)moniker;
     hr = IMoniker_Enum(moniker, FALSE, (IEnumMoniker **)&obj);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(obj == NULL, "Unexpected return value.\n");
 
     /* Serialization. */
     test_new_moniker_serialize(L"{20d04fe0-3aea-1069-a2d8-08002b30309d}", NULL, moniker);
 
     hr = IMoniker_IsDirty(moniker);
-    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
 
     hr = IMoniker_GetClassID(moniker, NULL);
-    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     IMoniker_Release(moniker);
 
@@ -504,39 +504,39 @@ static void test_new_moniker(void)
     bind_opts.dwClassContext = CLSCTX_INPROC_SERVER;
 
     hr = CoGetObject(L"new:msxml2.domdocument", (BIND_OPTS *)&bind_opts, &IID_IXMLDOMDocument, (void **)&obj);
-    ok(hr == S_OK, "Failed to create object, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create object, hr %#lx.\n", hr);
     IUnknown_Release(obj);
 
     IBindCtx_Release(bindctx);
 
     /* Returned object is not bound to context. */
     hr = CreateBindCtx(0, &bindctx);
-    ok(hr == S_OK, "Failed to create bind context, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create bind context, hr %#lx.\n", hr);
 
     eaten = 0;
     hr = MkParseDisplayName(bindctx, L"new:msxml2.domdocument", &eaten, &moniker);
-    ok(hr == S_OK, "Failed to parse display name, hr %#x.\n", hr);
-    ok(eaten, "Unexpected eaten length %u.\n", eaten);
+    ok(hr == S_OK, "Failed to parse display name, hr %#lx.\n", hr);
+    ok(eaten, "Unexpected eaten length %lu.\n", eaten);
 
     hr = CLSIDFromProgID(L"msxml2.domdocument", &clsid);
-    ok(hr == S_OK, "Failed to get clsid, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get clsid, hr %#lx.\n", hr);
 
     hr = StringFromCLSID(&clsid, &str);
-    ok(hr == S_OK, "Failed to get guid string, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get guid string, hr %#lx.\n", hr);
 
     test_new_moniker_serialize(str, L"msxml2.domdocument", moniker);
     CoTaskMemFree(str);
 
     hr = IMoniker_BindToObject(moniker, bindctx, NULL, &IID_IUnknown, (void **)&obj);
-    ok(hr == S_OK, "Failed to bind to object, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to bind to object, hr %#lx.\n", hr);
     EXPECT_REF(obj, 1);
 
     hr = IBindCtx_GetRunningObjectTable(bindctx, &rot);
-    ok(hr == S_OK, "Failed to get rot, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get rot, hr %#lx.\n", hr);
 
     hr = IRunningObjectTable_GetObject(rot, moniker, &obj2);
     todo_wine
-    ok(hr == MK_E_UNAVAILABLE, "Unexpected hr %#x.\n", hr);
+    ok(hr == MK_E_UNAVAILABLE, "Unexpected hr %#lx.\n", hr);
 
     IRunningObjectTable_Release(rot);
 
