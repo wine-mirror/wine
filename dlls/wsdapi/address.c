@@ -78,7 +78,7 @@ static ULONG WINAPI IWSDUdpAddressImpl_AddRef(IWSDUdpAddress *iface)
     IWSDUdpAddressImpl *This = impl_from_IWSDUdpAddress(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
     return ref;
 }
 
@@ -87,7 +87,7 @@ static ULONG WINAPI IWSDUdpAddressImpl_Release(IWSDUdpAddress *iface)
     IWSDUdpAddressImpl *This = impl_from_IWSDUdpAddress(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if (ref == 0)
     {
@@ -99,7 +99,7 @@ static ULONG WINAPI IWSDUdpAddressImpl_Release(IWSDUdpAddress *iface)
 
 static HRESULT WINAPI IWSDUdpAddressImpl_Serialize(IWSDUdpAddress *This, LPWSTR pszBuffer, DWORD cchLength, BOOL fSafe)
 {
-    FIXME("(%p, %p, %d, %d)\n", This, pszBuffer, cchLength, fSafe);
+    FIXME("(%p, %p, %ld, %d)\n", This, pszBuffer, cchLength, fSafe);
     return E_NOTIMPL;
 }
 
@@ -294,7 +294,7 @@ static HRESULT WINAPI IWSDUdpAddressImpl_GetMessageType(IWSDUdpAddress *This, WS
 
 static HRESULT WINAPI IWSDUdpAddressImpl_SetTTL(IWSDUdpAddress *This, DWORD dwTTL)
 {
-    FIXME("(%p, %d)\n", This, dwTTL);
+    FIXME("(%p, %ld)\n", This, dwTTL);
     return E_NOTIMPL;
 }
 

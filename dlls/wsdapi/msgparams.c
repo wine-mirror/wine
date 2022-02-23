@@ -58,7 +58,7 @@ static ULONG IWSDMessageParametersImpl_AddRef(IWSDMessageParameters *iface)
     IWSDMessageParametersImpl *This = impl_from_IWSDMessageParameters(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
     return ref;
 }
 
@@ -67,7 +67,7 @@ static ULONG IWSDMessageParametersImpl_Release(IWSDMessageParameters *iface)
     IWSDMessageParametersImpl *This = impl_from_IWSDMessageParameters(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if (ref == 0)
     {

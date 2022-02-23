@@ -116,7 +116,7 @@ static BOOL send_udp_multicast_of_type(char *data, int length, int max_initial_d
 
     if (retval != ERROR_BUFFER_OVERFLOW)
     {
-        WARN("GetAdaptorsAddresses failed with error %08x\n", retval);
+        WARN("GetAdaptorsAddresses failed with error %08lx\n", retval);
         goto cleanup;
     }
 
@@ -133,7 +133,7 @@ static BOOL send_udp_multicast_of_type(char *data, int length, int max_initial_d
 
     if (retval != ERROR_SUCCESS)
     {
-        WARN("GetAdaptorsAddresses failed with error %08x\n", retval);
+        WARN("GetAdaptorsAddresses failed with error %08lx\n", retval);
         goto cleanup;
     }
 
@@ -200,7 +200,7 @@ static BOOL send_udp_multicast_of_type(char *data, int length, int max_initial_d
 
         if (thread_handle == NULL)
         {
-            WARN("CreateThread failed (error %d)\n", GetLastError());
+            WARN("CreateThread failed (error %ld)\n", GetLastError());
             closesocket(s);
 
             heap_free(send_params->data);
@@ -487,7 +487,7 @@ static int start_listening(IWSDiscoveryPublisherImpl *impl, SOCKADDR_STORAGE *bi
 
     if (thread_handle == NULL)
     {
-        WARN("CreateThread failed (error %d)\n", GetLastError());
+        WARN("CreateThread failed (error %ld)\n", GetLastError());
         goto cleanup;
     }
 
@@ -514,7 +514,7 @@ static BOOL start_listening_on_all_addresses(IWSDiscoveryPublisherImpl *impl, UL
 
     if (ret != ERROR_BUFFER_OVERFLOW)
     {
-        WARN("GetAdaptorsAddresses failed with error %08x\n", ret);
+        WARN("GetAdaptorsAddresses failed with error %08lx\n", ret);
         return FALSE;
     }
 
@@ -532,7 +532,7 @@ static BOOL start_listening_on_all_addresses(IWSDiscoveryPublisherImpl *impl, UL
 
     if (ret != ERROR_SUCCESS)
     {
-        WARN("GetAdaptorsAddresses failed with error %08x\n", ret);
+        WARN("GetAdaptorsAddresses failed with error %08lx\n", ret);
         goto cleanup;
     }
 

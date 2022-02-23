@@ -466,7 +466,7 @@ static ULONG WINAPI IWSDXMLContextImpl_AddRef(IWSDXMLContext *iface)
     IWSDXMLContextImpl *This = impl_from_IWSDXMLContext(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
     return ref;
 }
 
@@ -475,7 +475,7 @@ static ULONG WINAPI IWSDXMLContextImpl_Release(IWSDXMLContext *iface)
     IWSDXMLContextImpl *This = impl_from_IWSDXMLContext(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if (ref == 0)
     {
@@ -617,7 +617,7 @@ static HRESULT WINAPI IWSDXMLContextImpl_SetNamespaces(IWSDXMLContext *iface, co
 
 static HRESULT WINAPI IWSDXMLContextImpl_SetTypes(IWSDXMLContext *iface, const PCWSDXML_TYPE *pTypes, DWORD dwTypesCount, BYTE bLayerNumber)
 {
-    FIXME("(%p, %p, %d, %d)\n", iface, pTypes, dwTypesCount, bLayerNumber);
+    FIXME("(%p, %p, %ld, %d)\n", iface, pTypes, dwTypesCount, bLayerNumber);
     return E_NOTIMPL;
 }
 

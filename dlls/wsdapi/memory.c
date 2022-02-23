@@ -82,7 +82,7 @@ void * WINAPI WSDAllocateLinkedMemory(void *pParent, SIZE_T cbSize)
     struct memory_allocation *allocation, *parent;
     void *ptr;
 
-    TRACE("(%p, %lu)\n", pParent, cbSize);
+    TRACE("(%p, %Iu)\n", pParent, cbSize);
 
     ptr = HeapAlloc(GetProcessHeap(), 0, MEMORY_ALLOCATION_SIZE + cbSize);
 
