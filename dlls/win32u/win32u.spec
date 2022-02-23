@@ -913,7 +913,7 @@
 @ stub NtUserGetCurrentDpiInfoForWindow
 @ stub NtUserGetCurrentInputMessageSource
 @ stdcall -syscall NtUserGetCursor()
-@ stub NtUserGetCursorFrameInfo
+@ stdcall -syscall NtUserGetCursorFrameInfo(long long ptr ptr)
 @ stub NtUserGetCursorInfo
 @ stub NtUserGetDC
 @ stub NtUserGetDCEx

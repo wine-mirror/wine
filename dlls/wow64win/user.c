@@ -289,6 +289,16 @@ NTSTATUS WINAPI wow64_NtUserGetIconSize( UINT *args )
     return NtUserGetIconSize( handle, step, width, height );
 }
 
+NTSTATUS WINAPI wow64_NtUserGetCursorFrameInfo( UINT *args )
+{
+    HCURSOR cursor = get_ptr( &args );
+    DWORD istep = get_ulong( &args );
+    DWORD *rate_jiffies = get_ptr( &args );
+    DWORD *num_steps = get_ptr( &args );
+
+    return HandleToUlong( NtUserGetCursorFrameInfo( cursor, istep, rate_jiffies, num_steps ));
+}
+
 NTSTATUS WINAPI wow64_NtUserAttachThreadInput( UINT *args )
 {
     DWORD from = get_ulong( &args );

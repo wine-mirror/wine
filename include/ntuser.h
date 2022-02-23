@@ -199,6 +199,8 @@ HWND    WINAPI NtUserGetClipboardOwner(void);
 DWORD   WINAPI NtUserGetClipboardSequenceNumber(void);
 HWND    WINAPI NtUserGetClipboardViewer(void);
 HCURSOR WINAPI NtUserGetCursor(void);
+HCURSOR WINAPI NtUserGetCursorFrameInfo( HCURSOR hCursor, DWORD istep, DWORD *rate_jiffies,
+                                         DWORD *num_steps );
 LONG    WINAPI NtUserGetDisplayConfigBufferSizes( UINT32 flags, UINT32 *num_path_info,
                                                   UINT32 *num_mode_info );
 UINT    WINAPI NtUserGetDoubleClickTime(void);

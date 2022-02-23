@@ -1835,59 +1835,10 @@ HICON WINAPI LoadIconA(HINSTANCE hInstance, LPCSTR name)
  *    Success: Handle to a frame of the cursor (specified by istep)
  *    Failure: NULL cursor (0)
  */
-HCURSOR WINAPI GetCursorFrameInfo(HCURSOR hCursor, DWORD reserved, DWORD istep, DWORD *rate_jiffies, DWORD *num_steps)
+HCURSOR WINAPI GetCursorFrameInfo( HCURSOR handle, DWORD reserved, DWORD istep,
+                                   DWORD *rate_jiffies, DWORD *num_steps )
 {
-    struct cursoricon_object *ptr;
-    HCURSOR ret = 0;
-    UINT icon_steps;
-
-    if (rate_jiffies == NULL || num_steps == NULL) return 0;
-
-    if (!(ptr = get_icon_ptr( hCursor ))) return 0;
-
-    TRACE("%p => %d %d %p %p\n", hCursor, reserved, istep, rate_jiffies, num_steps);
-    if (reserved != 0)
-        FIXME("Second parameter non-zero (%d), please report this!\n", reserved);
-
-    icon_steps = get_icon_steps(ptr);
-    if (istep < icon_steps || !ptr->is_ani)
-    {
-        UINT icon_frames = 1;
-
-        if (ptr->is_ani)
-            icon_frames = ptr->ani.num_frames;
-        if (ptr->is_ani && icon_frames > 1)
-            ret = ptr->ani.frames[istep];
-        else
-            ret = hCursor;
-        if (icon_frames == 1)
-        {
-            *rate_jiffies = 0;
-            *num_steps = 1;
-        }
-        else if (icon_steps == 1)
-        {
-            *num_steps = ~0;
-            *rate_jiffies = ptr->delay;
-        }
-        else if (istep < icon_steps)
-        {
-            struct cursoricon_object *frame;
-
-            *num_steps = icon_steps;
-            frame = get_icon_ptr( ptr->ani.frames[istep] );
-            if (ptr->ani.num_steps == 1)
-                *num_steps = ~0;
-            else
-                *num_steps = ptr->ani.num_steps;
-            *rate_jiffies = frame->delay;
-            release_user_handle_ptr( frame );
-        }
-    }
-
-    release_user_handle_ptr( ptr );
-
-    return ret;
+    return NtUserGetCursorFrameInfo( handle, istep, rate_jiffies, num_steps );
 }
 
 /**********************************************************************

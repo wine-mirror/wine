@@ -438,3 +438,59 @@ BOOL WINAPI NtUserGetIconSize( HICON handle, UINT step, LONG *width, LONG *heigh
     release_user_handle_ptr( obj );
     return TRUE;
 }
+
+/**********************************************************************
+ *           NtUserGetCursorFrameInfo (win32u.@)
+ */
+HCURSOR WINAPI NtUserGetCursorFrameInfo( HCURSOR cursor, DWORD istep, DWORD *rate_jiffies,
+                                         DWORD *num_steps )
+{
+    struct cursoricon_object *obj;
+    HCURSOR ret = 0;
+    UINT icon_steps;
+
+    if (!rate_jiffies || !num_steps) return 0;
+
+    if (!(obj = get_icon_ptr( cursor ))) return 0;
+
+    TRACE( "%p => %d %p %p\n", cursor, istep, rate_jiffies, num_steps );
+
+    icon_steps = obj->is_ani ? obj->ani.num_steps : 1;
+    if (istep < icon_steps || !obj->is_ani)
+    {
+        UINT icon_frames = 1;
+
+        if (obj->is_ani)
+            icon_frames = obj->ani.num_frames;
+        if (obj->is_ani && icon_frames > 1)
+            ret = obj->ani.frames[istep];
+        else
+            ret = cursor;
+        if (icon_frames == 1)
+        {
+            *rate_jiffies = 0;
+            *num_steps = 1;
+        }
+        else if (icon_steps == 1)
+        {
+            *num_steps = ~0;
+            *rate_jiffies = obj->delay;
+        }
+        else if (istep < icon_steps)
+        {
+            struct cursoricon_object *frame;
+
+            *num_steps = icon_steps;
+            frame = get_icon_ptr( obj->ani.frames[istep] );
+            if (obj->ani.num_steps == 1)
+                *num_steps = ~0;
+            else
+                *num_steps = obj->ani.num_steps;
+            *rate_jiffies = frame->delay;
+            release_user_handle_ptr( frame );
+        }
+    }
+
+    release_user_handle_ptr( obj );
+    return ret;
+}

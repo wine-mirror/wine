@@ -184,6 +184,8 @@ static void test_cursoricon(void)
 {
     BYTE bmp_bits[1024];
     LONG width, height;
+    DWORD rate, steps;
+    HCURSOR frame;
     HANDLE handle;
     unsigned int i;
     BOOL ret;
@@ -203,6 +205,12 @@ static void test_cursoricon(void)
     ok( ret, "NtUserGetIconSize failed: %lu\n", GetLastError() );
     ok( width == 16, "width = %ld\n", width );
     ok( height == 32, "height = %ld\n", height );
+
+    frame = NtUserGetCursorFrameInfo( handle, 0, &rate, &steps );
+    ok( frame != NULL, "NtUserGetCursorFrameInfo failed: %lu\n", GetLastError() );
+    ok( frame == handle, "frame != handle\n" );
+    ok( rate == 0, "rate = %lu\n", rate );
+    ok( steps == 1, "steps = %lu\n", steps );
 
     ret = NtUserDestroyCursor( handle, 0 );
     ok( ret, "NtUserDestroyIcon failed: %lu\n", GetLastError() );
