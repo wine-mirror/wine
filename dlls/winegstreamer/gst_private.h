@@ -80,7 +80,7 @@ void wg_parser_stream_get_preferred_format(struct wg_parser_stream *stream, stru
 void wg_parser_stream_enable(struct wg_parser_stream *stream, const struct wg_format *format);
 void wg_parser_stream_disable(struct wg_parser_stream *stream);
 
-bool wg_parser_stream_get_event(struct wg_parser_stream *stream, struct wg_parser_event *event);
+bool wg_parser_stream_get_buffer(struct wg_parser_stream *stream, struct wg_parser_buffer *buffer);
 bool wg_parser_stream_copy_buffer(struct wg_parser_stream *stream,
         void *data, uint32_t offset, uint32_t size);
 void wg_parser_stream_release_buffer(struct wg_parser_stream *stream);

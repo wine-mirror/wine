@@ -102,7 +102,6 @@ struct wg_parser_stream
     struct wg_format preferred_format, current_format;
 
     pthread_cond_t event_cond, event_empty_cond;
-    struct wg_parser_event event;
     GstBuffer *buffer;
     GstMapInfo map_info;
 
@@ -251,22 +250,37 @@ static NTSTATUS wg_parser_stream_disable(void *args)
     return S_OK;
 }
 
-static NTSTATUS wg_parser_stream_get_event(void *args)
+static NTSTATUS wg_parser_stream_get_buffer(void *args)
 {
-    const struct wg_parser_stream_get_event_params *params = args;
+    const struct wg_parser_stream_get_buffer_params *params = args;
+    struct wg_parser_buffer *wg_buffer = params->buffer;
     struct wg_parser_stream *stream = params->stream;
     struct wg_parser *parser = stream->parser;
+    GstBuffer *buffer;
 
     pthread_mutex_lock(&parser->mutex);
 
-    while (!stream->eos && stream->event.type == WG_PARSER_EVENT_NONE)
+    while (!stream->eos && !stream->buffer)
         pthread_cond_wait(&stream->event_cond, &parser->mutex);
 
     /* Note that we can both have a buffer and stream->eos, in which case we
      * must return the buffer. */
-    if (stream->event.type != WG_PARSER_EVENT_NONE)
+    if ((buffer = stream->buffer))
     {
-        *params->event = stream->event;
+        /* FIXME: Should we use gst_segment_to_stream_time_full()? Under what
+         * circumstances is the stream time not equal to the buffer PTS? Note
+         * that this will need modification to wg_parser_stream_notify_qos() as
+         * well. */
+
+        if ((wg_buffer->has_pts = GST_BUFFER_PTS_IS_VALID(buffer)))
+            wg_buffer->pts = GST_BUFFER_PTS(buffer) / 100;
+        if ((wg_buffer->has_duration = GST_BUFFER_DURATION_IS_VALID(buffer)))
+            wg_buffer->duration = GST_BUFFER_DURATION(buffer) / 100;
+        wg_buffer->discontinuity = GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DISCONT);
+        wg_buffer->preroll = GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_LIVE);
+        wg_buffer->delta = GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT);
+        wg_buffer->size = gst_buffer_get_size(buffer);
+
         pthread_mutex_unlock(&parser->mutex);
         return S_OK;
     }
@@ -291,7 +305,6 @@ static NTSTATUS wg_parser_stream_copy_buffer(void *args)
         return VFW_E_WRONG_STATE;
     }
 
-    assert(stream->event.type == WG_PARSER_EVENT_BUFFER);
     assert(offset < stream->map_info.size);
     assert(offset + size <= stream->map_info.size);
     memcpy(params->data, stream->map_info.data + offset, size);
@@ -307,12 +320,11 @@ static NTSTATUS wg_parser_stream_release_buffer(void *args)
 
     pthread_mutex_lock(&parser->mutex);
 
-    assert(stream->event.type == WG_PARSER_EVENT_BUFFER);
+    assert(stream->buffer);
 
     gst_buffer_unmap(stream->buffer, &stream->map_info);
     gst_buffer_unref(stream->buffer);
     stream->buffer = NULL;
-    stream->event.type = WG_PARSER_EVENT_NONE;
 
     pthread_mutex_unlock(&parser->mutex);
     pthread_cond_signal(&stream->event_empty_cond);
@@ -459,13 +471,12 @@ static gboolean sink_event_cb(GstPad *pad, GstObject *parent, GstEvent *event)
                 stream->flushing = true;
                 pthread_cond_signal(&stream->event_empty_cond);
 
-                if (stream->event.type == WG_PARSER_EVENT_BUFFER)
+                if (stream->buffer)
                 {
                     gst_buffer_unmap(stream->buffer, &stream->map_info);
                     gst_buffer_unref(stream->buffer);
                     stream->buffer = NULL;
                 }
-                stream->event.type = WG_PARSER_EVENT_NONE;
 
                 pthread_mutex_unlock(&parser->mutex);
             }
@@ -514,7 +525,6 @@ static GstFlowReturn sink_chain_cb(GstPad *pad, GstObject *parent, GstBuffer *bu
 {
     struct wg_parser_stream *stream = gst_pad_get_element_private(pad);
     struct wg_parser *parser = stream->parser;
-    struct wg_parser_event stream_event;
 
     GST_LOG("stream %p, buffer %p.", stream, buffer);
 
@@ -524,27 +534,12 @@ static GstFlowReturn sink_chain_cb(GstPad *pad, GstObject *parent, GstBuffer *bu
         return GST_FLOW_OK;
     }
 
-    stream_event.type = WG_PARSER_EVENT_BUFFER;
-
-    /* FIXME: Should we use gst_segment_to_stream_time_full()? Under what
-     * circumstances is the stream time not equal to the buffer PTS? Note that
-     * this will need modification to wg_parser_stream_notify_qos() as well. */
-
-    if ((stream_event.u.buffer.has_pts = GST_BUFFER_PTS_IS_VALID(buffer)))
-        stream_event.u.buffer.pts = GST_BUFFER_PTS(buffer) / 100;
-    if ((stream_event.u.buffer.has_duration = GST_BUFFER_DURATION_IS_VALID(buffer)))
-        stream_event.u.buffer.duration = GST_BUFFER_DURATION(buffer) / 100;
-    stream_event.u.buffer.discontinuity = GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DISCONT);
-    stream_event.u.buffer.preroll = GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_LIVE);
-    stream_event.u.buffer.delta = GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT);
-    stream_event.u.buffer.size = gst_buffer_get_size(buffer);
-
     /* Allow this buffer to be flushed by GStreamer. We are effectively
      * implementing a queue object here. */
 
     pthread_mutex_lock(&parser->mutex);
 
-    while (!stream->flushing && stream->event.type != WG_PARSER_EVENT_NONE)
+    while (!stream->flushing && stream->buffer)
         pthread_cond_wait(&stream->event_empty_cond, &parser->mutex);
     if (stream->flushing)
     {
@@ -562,7 +557,6 @@ static GstFlowReturn sink_chain_cb(GstPad *pad, GstObject *parent, GstBuffer *bu
         return GST_FLOW_ERROR;
     }
 
-    stream->event = stream_event;
     stream->buffer = buffer;
 
     pthread_mutex_unlock(&parser->mutex);
@@ -1591,7 +1585,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     X(wg_parser_stream_enable),
     X(wg_parser_stream_disable),
 
-    X(wg_parser_stream_get_event),
+    X(wg_parser_stream_get_buffer),
     X(wg_parser_stream_copy_buffer),
     X(wg_parser_stream_release_buffer),
     X(wg_parser_stream_notify_qos),

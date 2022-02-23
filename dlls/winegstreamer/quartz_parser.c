@@ -686,7 +686,7 @@ static uint64_t scale_uint64(uint64_t value, uint32_t numerator, uint32_t denomi
 
 /* Fill and send a single IMediaSample. */
 static HRESULT send_sample(struct parser_source *pin, IMediaSample *sample,
-        const struct wg_parser_event *event, uint32_t offset, uint32_t size, DWORD bytes_per_second)
+        const struct wg_parser_buffer *buffer, uint32_t offset, uint32_t size, DWORD bytes_per_second)
 {
     HRESULT hr;
     BYTE *ptr = NULL;
@@ -707,21 +707,21 @@ static HRESULT send_sample(struct parser_source *pin, IMediaSample *sample,
         return S_OK;
     }
 
-    if (event->u.buffer.has_pts)
+    if (buffer->has_pts)
     {
-        REFERENCE_TIME start_pts = event->u.buffer.pts;
+        REFERENCE_TIME start_pts = buffer->pts;
 
         if (offset)
             start_pts += scale_uint64(offset, 10000000, bytes_per_second);
         start_pts -= pin->seek.llCurrent;
         start_pts *= pin->seek.dRate;
 
-        if (event->u.buffer.has_duration)
+        if (buffer->has_duration)
         {
-            REFERENCE_TIME end_pts = event->u.buffer.pts + event->u.buffer.duration;
+            REFERENCE_TIME end_pts = buffer->pts + buffer->duration;
 
-            if (offset + size < event->u.buffer.size)
-                end_pts = event->u.buffer.pts + scale_uint64(offset + size, 10000000, bytes_per_second);
+            if (offset + size < buffer->size)
+                end_pts = buffer->pts + scale_uint64(offset + size, 10000000, bytes_per_second);
             end_pts -= pin->seek.llCurrent;
             end_pts *= pin->seek.dRate;
 
@@ -740,9 +740,9 @@ static HRESULT send_sample(struct parser_source *pin, IMediaSample *sample,
         IMediaSample_SetMediaTime(sample, NULL, NULL);
     }
 
-    IMediaSample_SetDiscontinuity(sample, !offset && event->u.buffer.discontinuity);
-    IMediaSample_SetPreroll(sample, event->u.buffer.preroll);
-    IMediaSample_SetSyncPoint(sample, !event->u.buffer.delta);
+    IMediaSample_SetDiscontinuity(sample, !offset && buffer->discontinuity);
+    IMediaSample_SetPreroll(sample, buffer->preroll);
+    IMediaSample_SetSyncPoint(sample, !buffer->delta);
 
     if (!pin->pin.pin.peer)
         return VFW_E_NOT_CONNECTED;
@@ -754,7 +754,7 @@ static HRESULT send_sample(struct parser_source *pin, IMediaSample *sample,
 
 /* Send a single GStreamer buffer (splitting it into multiple IMediaSamples if
  * necessary). */
-static void send_buffer(struct parser_source *pin, const struct wg_parser_event *event)
+static void send_buffer(struct parser_source *pin, const struct wg_parser_buffer *buffer)
 {
     HRESULT hr;
     IMediaSample *sample;
@@ -774,7 +774,7 @@ static void send_buffer(struct parser_source *pin, const struct wg_parser_event 
         WAVEFORMATEX *format = (WAVEFORMATEX *)pin->pin.pin.mt.pbFormat;
         uint32_t offset = 0;
 
-        while (offset < event->u.buffer.size)
+        while (offset < buffer->size)
         {
             uint32_t advance;
 
@@ -784,9 +784,9 @@ static void send_buffer(struct parser_source *pin, const struct wg_parser_event 
                 break;
             }
 
-            advance = min(IMediaSample_GetSize(sample), event->u.buffer.size - offset);
+            advance = min(IMediaSample_GetSize(sample), buffer->size - offset);
 
-            hr = send_sample(pin, sample, event, offset, advance, format->nAvgBytesPerSec);
+            hr = send_sample(pin, sample, buffer, offset, advance, format->nAvgBytesPerSec);
 
             IMediaSample_Release(sample);
 
@@ -804,7 +804,7 @@ static void send_buffer(struct parser_source *pin, const struct wg_parser_event 
         }
         else
         {
-            hr = send_sample(pin, sample, event, 0, event->u.buffer.size, 0);
+            hr = send_sample(pin, sample, buffer, 0, buffer->size, 0);
 
             IMediaSample_Release(sample);
         }
@@ -822,7 +822,7 @@ static DWORD CALLBACK stream_thread(void *arg)
 
     while (filter->streaming)
     {
-        struct wg_parser_event event;
+        struct wg_parser_buffer buffer;
 
         EnterCriticalSection(&pin->flushing_cs);
 
@@ -833,9 +833,9 @@ static DWORD CALLBACK stream_thread(void *arg)
             continue;
         }
 
-        if (wg_parser_stream_get_event(pin->wg_stream, &event))
+        if (wg_parser_stream_get_buffer(pin->wg_stream, &buffer))
         {
-            send_buffer(pin, &event);
+            send_buffer(pin, &buffer);
         }
         else
         {
@@ -843,8 +843,6 @@ static DWORD CALLBACK stream_thread(void *arg)
             IPin_EndOfStream(pin->pin.pin.peer);
             pin->eos = true;
         }
-
-        TRACE("Got event of type %#x.\n", event.type);
 
         LeaveCriticalSection(&pin->flushing_cs);
     }
