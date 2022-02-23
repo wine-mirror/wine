@@ -1632,11 +1632,10 @@ HICON WINAPI CreateIcon( HINSTANCE instance, int width, int height, BYTE planes,
  */
 HICON WINAPI CopyIcon( HICON icon )
 {
-    ICONINFOEXW info;
+    ICONINFO info;
     HICON res;
 
-    info.cbSize = sizeof(info);
-    if (!GetIconInfoExW( icon, &info ))
+    if (!GetIconInfo( icon, &info ))
         return NULL;
 
     res = CopyImage( icon, info.fIcon ? IMAGE_ICON : IMAGE_CURSOR, 0, 0, 0 );
