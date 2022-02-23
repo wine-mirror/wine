@@ -4795,6 +4795,7 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, ITERAT
                 lvItem.lParam = 0;
                 lvItem.cchTextMax = DISP_TEXT_SIZE;
                 lvItem.pszText = szDispText;
+                szDispText[0] = 0;
                 if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return FALSE;
                 if (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT)
 	            lvItem.state = LISTVIEW_GetItemState(infoPtr, nItem, LVIS_SELECTED);
