@@ -31,10 +31,20 @@
 #include "dinputd.h"
 #include "devguid.h"
 #include "mmsystem.h"
+#include "roapi.h"
+#include "unknwn.h"
+#include "winstring.h"
 
 #include "wine/hid.h"
 
 #include "dinput_test.h"
+
+#define WIDL_using_Windows_Foundation
+#define WIDL_using_Windows_Foundation_Collections
+#include "windows.foundation.h"
+#define WIDL_using_Windows_Devices_Haptics
+#define WIDL_using_Windows_Gaming_Input
+#include "windows.gaming.input.h"
 
 struct check_objects_todos
 {
@@ -3181,6 +3191,165 @@ done:
     return device != NULL;
 }
 
+#define check_interface( a, b, c ) check_interface_( __LINE__, a, b, c )
+static void check_interface_( unsigned int line, void *iface_ptr, REFIID iid, BOOL supported )
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected;
+    IUnknown *unk;
+
+    expected = supported ? S_OK : E_NOINTERFACE;
+    hr = IUnknown_QueryInterface( iface, iid, (void **)&unk );
+    ok_ (__FILE__, line)( hr == expected, "got hr %#lx, expected %#lx.\n", hr, expected );
+    if (SUCCEEDED(hr)) IUnknown_Release( unk );
+}
+
+#define check_runtimeclass( a, b ) check_runtimeclass_( __LINE__, (IInspectable *)a, b )
+static void check_runtimeclass_( int line, IInspectable *inspectable, const WCHAR *class_name )
+{
+    const WCHAR *buffer;
+    UINT32 length;
+    HSTRING str;
+    HRESULT hr;
+
+    hr = IInspectable_GetRuntimeClassName( inspectable, &str );
+    ok_ (__FILE__, line)( hr == S_OK, "GetRuntimeClassName returned %#lx\n", hr );
+    buffer = WindowsGetStringRawBuffer( str, &length );
+    ok_ (__FILE__, line)( !wcscmp( buffer, class_name ), "got class name %s\n", debugstr_w(buffer) );
+    WindowsDeleteString( str );
+}
+
+static void test_windows_gaming_input(void)
+{
+#include "psh_hid_macros.h"
+    const unsigned char report_desc[] = {
+        USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+        USAGE(1, HID_USAGE_GENERIC_GAMEPAD),
+        COLLECTION(1, Application),
+            USAGE(1, HID_USAGE_GENERIC_GAMEPAD),
+            COLLECTION(1, Physical),
+                USAGE(1, HID_USAGE_GENERIC_X),
+                USAGE(1, HID_USAGE_GENERIC_Y),
+                USAGE(1, HID_USAGE_GENERIC_RX),
+                USAGE(1, HID_USAGE_GENERIC_RY),
+                USAGE(1, HID_USAGE_GENERIC_Z),
+                USAGE(1, HID_USAGE_GENERIC_RZ),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 127),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 127),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 6),
+                INPUT(1, Data|Var|Abs),
+
+                USAGE(1, HID_USAGE_GENERIC_HATSWITCH),
+                LOGICAL_MINIMUM(1, 1),
+                LOGICAL_MAXIMUM(1, 8),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 8),
+                REPORT_SIZE(1, 4),
+                REPORT_COUNT(1, 1),
+                INPUT(1, Data|Var|Abs|Null),
+
+                USAGE_PAGE(1, HID_USAGE_PAGE_BUTTON),
+                USAGE_MINIMUM(1, 1),
+                USAGE_MAXIMUM(1, 12),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 1),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 1),
+                REPORT_SIZE(1, 1),
+                REPORT_COUNT(1, 12),
+                INPUT(1, Data|Var|Abs),
+            END_COLLECTION,
+        END_COLLECTION,
+    };
+#include "pop_hid_macros.h"
+
+    static const HIDP_CAPS hid_caps =
+    {
+        .InputReportByteLength = 8,
+    };
+    static const WCHAR *controller_class_name = RuntimeClass_Windows_Gaming_Input_RawGameController;
+
+    IVectorView_RawGameController *controllers_view;
+    IRawGameControllerStatics *controller_statics;
+    WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
+    IRawGameController *raw_controller;
+    UINT32 size;
+    HSTRING str;
+    HRESULT hr;
+
+    GetCurrentDirectoryW( ARRAY_SIZE(cwd), cwd );
+    GetTempPathW( ARRAY_SIZE(tempdir), tempdir );
+    SetCurrentDirectoryW( tempdir );
+
+    cleanup_registry_keys();
+
+    hr = RoInitialize( RO_INIT_MULTITHREADED );
+    ok( hr == RPC_E_CHANGED_MODE, "RoInitialize returned %#lx\n", hr );
+
+    hr = WindowsCreateString( controller_class_name, wcslen( controller_class_name ), &str );
+    ok( hr == S_OK, "WindowsCreateString returned %#lx\n", hr );
+    hr = RoGetActivationFactory( str, &IID_IRawGameControllerStatics, (void **)&controller_statics );
+    ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "RoGetActivationFactory returned %#lx\n", hr );
+    WindowsDeleteString( str );
+
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip( "%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w( controller_class_name ) );
+        goto done;
+    }
+
+    hr = IRawGameControllerStatics_get_RawGameControllers( controller_statics, &controllers_view );
+    ok( hr == S_OK, "get_RawGameControllers returned %#lx\n", hr );
+    hr = IVectorView_RawGameController_get_Size( controllers_view, &size );
+    ok( hr == S_OK, "get_Size returned %#lx\n", hr );
+    ok( size == 0, "got size %u\n", size );
+
+    if (!dinput_driver_start( report_desc, sizeof(report_desc), &hid_caps, NULL, 0 )) goto done;
+
+    hr = IVectorView_RawGameController_get_Size( controllers_view, &size );
+    ok( hr == S_OK, "get_Size returned %#lx\n", hr );
+    ok( size == 0, "got size %u\n", size );
+    IVectorView_RawGameController_Release( controllers_view );
+
+    hr = IRawGameControllerStatics_get_RawGameControllers( controller_statics, &controllers_view );
+    ok( hr == S_OK, "get_RawGameControllers returned %#lx\n", hr );
+    hr = IVectorView_RawGameController_get_Size( controllers_view, &size );
+    ok( hr == S_OK, "get_Size returned %#lx\n", hr );
+    todo_wine
+    ok( size == 1, "got size %u\n", size );
+    hr = IVectorView_RawGameController_GetAt( controllers_view, 0, &raw_controller );
+    todo_wine
+    ok( hr == S_OK, "GetAt returned %#lx\n", hr );
+    IVectorView_RawGameController_Release( controllers_view );
+    if (hr != S_OK)
+    {
+        IRawGameControllerStatics_Release( controller_statics );
+        goto done;
+    }
+
+    check_runtimeclass( raw_controller, RuntimeClass_Windows_Gaming_Input_RawGameController );
+    check_interface( raw_controller, &IID_IUnknown, TRUE );
+    check_interface( raw_controller, &IID_IInspectable, TRUE );
+    check_interface( raw_controller, &IID_IAgileObject, TRUE );
+    check_interface( raw_controller, &IID_IRawGameController, TRUE );
+    check_interface( raw_controller, &IID_IRawGameController2, TRUE );
+    check_interface( raw_controller, &IID_IGameController, TRUE );
+    check_interface( raw_controller, &IID_IGamepad, FALSE );
+
+    IRawGameController_Release( raw_controller );
+    IRawGameControllerStatics_Release( controller_statics );
+
+done:
+    pnp_driver_stop();
+    cleanup_registry_keys();
+    SetCurrentDirectoryW( cwd );
+
+    RoUninitialize();
+}
+
 START_TEST( joystick8 )
 {
     if (!dinput_test_init()) return;
@@ -3200,6 +3369,7 @@ START_TEST( joystick8 )
         test_simple_joystick( 0x800 );
 
         test_driving_wheel_axes();
+        test_windows_gaming_input();
     }
     CoUninitialize();
 
