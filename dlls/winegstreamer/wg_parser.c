@@ -259,19 +259,20 @@ static NTSTATUS wg_parser_stream_get_event(void *args)
 
     pthread_mutex_lock(&parser->mutex);
 
-    while (stream->event.type == WG_PARSER_EVENT_NONE)
+    while (!stream->eos && stream->event.type == WG_PARSER_EVENT_NONE)
         pthread_cond_wait(&stream->event_cond, &parser->mutex);
 
-    *params->event = stream->event;
-
-    if (stream->event.type != WG_PARSER_EVENT_BUFFER)
+    /* Note that we can both have a buffer and stream->eos, in which case we
+     * must return the buffer. */
+    if (stream->event.type != WG_PARSER_EVENT_NONE)
     {
-        stream->event.type = WG_PARSER_EVENT_NONE;
-        pthread_cond_signal(&stream->event_empty_cond);
+        *params->event = stream->event;
+        pthread_mutex_unlock(&parser->mutex);
+        return S_OK;
     }
-    pthread_mutex_unlock(&parser->mutex);
 
-    return S_OK;
+    pthread_mutex_unlock(&parser->mutex);
+    return S_FALSE;
 }
 
 static NTSTATUS wg_parser_stream_copy_buffer(void *args)
@@ -434,16 +435,15 @@ static GstFlowReturn queue_stream_event(struct wg_parser_stream *stream,
         GST_DEBUG("Filter is flushing; discarding event.");
         return GST_FLOW_FLUSHING;
     }
-    if (buffer)
+
+    assert(GST_IS_BUFFER(buffer));
+    if (!gst_buffer_map(buffer, &stream->map_info, GST_MAP_READ))
     {
-        assert(GST_IS_BUFFER(buffer));
-        if (!gst_buffer_map(buffer, &stream->map_info, GST_MAP_READ))
-        {
-            pthread_mutex_unlock(&parser->mutex);
-            GST_ERROR("Failed to map buffer.\n");
-            return GST_FLOW_ERROR;
-        }
+        pthread_mutex_unlock(&parser->mutex);
+        GST_ERROR("Failed to map buffer.\n");
+        return GST_FLOW_ERROR;
     }
+
     stream->event = *event;
     stream->buffer = buffer;
     pthread_mutex_unlock(&parser->mutex);
@@ -479,20 +479,13 @@ static gboolean sink_event_cb(GstPad *pad, GstObject *parent, GstEvent *event)
             break;
 
         case GST_EVENT_EOS:
+            pthread_mutex_lock(&parser->mutex);
+            stream->eos = true;
+            pthread_mutex_unlock(&parser->mutex);
             if (stream->enabled)
-            {
-                struct wg_parser_event stream_event;
-
-                stream_event.type = WG_PARSER_EVENT_EOS;
-                queue_stream_event(stream, &stream_event, NULL);
-            }
+                pthread_cond_signal(&stream->event_cond);
             else
-            {
-                pthread_mutex_lock(&parser->mutex);
-                stream->eos = true;
-                pthread_mutex_unlock(&parser->mutex);
                 pthread_cond_signal(&parser->init_cond);
-            }
             break;
 
         case GST_EVENT_FLUSH_START:
@@ -524,12 +517,13 @@ static gboolean sink_event_cb(GstPad *pad, GstObject *parent, GstEvent *event)
             if (reset_time)
                 gst_segment_init(&stream->segment, GST_FORMAT_UNDEFINED);
 
+            pthread_mutex_lock(&parser->mutex);
+
+            stream->eos = false;
             if (stream->enabled)
-            {
-                pthread_mutex_lock(&parser->mutex);
                 stream->flushing = false;
-                pthread_mutex_unlock(&parser->mutex);
-            }
+
+            pthread_mutex_unlock(&parser->mutex);
             break;
         }
 

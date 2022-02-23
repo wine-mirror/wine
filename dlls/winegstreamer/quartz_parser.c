@@ -833,24 +833,18 @@ static DWORD CALLBACK stream_thread(void *arg)
             continue;
         }
 
-        wg_parser_stream_get_event(pin->wg_stream, &event);
+        if (wg_parser_stream_get_event(pin->wg_stream, &event))
+        {
+            send_buffer(pin, &event);
+        }
+        else
+        {
+            TRACE("Got EOS.\n");
+            IPin_EndOfStream(pin->pin.pin.peer);
+            pin->eos = true;
+        }
 
         TRACE("Got event of type %#x.\n", event.type);
-
-        switch (event.type)
-        {
-            case WG_PARSER_EVENT_BUFFER:
-                send_buffer(pin, &event);
-                break;
-
-            case WG_PARSER_EVENT_EOS:
-                IPin_EndOfStream(pin->pin.pin.peer);
-                pin->eos = true;
-                break;
-
-            case WG_PARSER_EVENT_NONE:
-                assert(0);
-        }
 
         LeaveCriticalSection(&pin->flushing_cs);
     }

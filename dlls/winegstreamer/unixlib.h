@@ -107,7 +107,6 @@ enum wg_parser_event_type
 {
     WG_PARSER_EVENT_NONE = 0,
     WG_PARSER_EVENT_BUFFER,
-    WG_PARSER_EVENT_EOS,
 };
 
 struct wg_parser_event

@@ -172,7 +172,7 @@ void wg_parser_stream_disable(struct wg_parser_stream *stream)
     __wine_unix_call(unix_handle, unix_wg_parser_stream_disable, stream);
 }
 
-void wg_parser_stream_get_event(struct wg_parser_stream *stream, struct wg_parser_event *event)
+bool wg_parser_stream_get_event(struct wg_parser_stream *stream, struct wg_parser_event *event)
 {
     struct wg_parser_stream_get_event_params params =
     {
@@ -180,7 +180,7 @@ void wg_parser_stream_get_event(struct wg_parser_stream *stream, struct wg_parse
         .event = event,
     };
 
-    __wine_unix_call(unix_handle, unix_wg_parser_stream_get_event, &params);
+    return !__wine_unix_call(unix_handle, unix_wg_parser_stream_get_event, &params);
 }
 
 bool wg_parser_stream_copy_buffer(struct wg_parser_stream *stream,

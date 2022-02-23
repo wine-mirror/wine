@@ -532,33 +532,15 @@ static void wait_on_sample(struct media_stream *stream, IUnknown *token)
 
     TRACE("%p, %p\n", stream, token);
 
-    if (stream->eos)
+    if (wg_parser_stream_get_event(stream->wg_stream, &event))
     {
-        IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEError, &GUID_NULL, MF_E_END_OF_STREAM, &empty_var);
-        return;
+        send_buffer(stream, &event, token);
     }
-
-    for (;;)
+    else
     {
-        wg_parser_stream_get_event(stream->wg_stream, &event);
-
-        TRACE("Got event of type %#x.\n", event.type);
-
-        switch (event.type)
-        {
-            case WG_PARSER_EVENT_BUFFER:
-                send_buffer(stream, &event, token);
-                return;
-
-            case WG_PARSER_EVENT_EOS:
-                stream->eos = TRUE;
-                IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEEndOfStream, &GUID_NULL, S_OK, &empty_var);
-                dispatch_end_of_presentation(stream->parent_source);
-                return;
-
-            case WG_PARSER_EVENT_NONE:
-                assert(0);
-        }
+        stream->eos = TRUE;
+        IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEEndOfStream, &GUID_NULL, S_OK, &empty_var);
+        dispatch_end_of_presentation(stream->parent_source);
     }
 }
 
