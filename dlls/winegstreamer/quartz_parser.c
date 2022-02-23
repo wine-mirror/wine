@@ -74,6 +74,7 @@ struct parser_source
     SourceSeeking seek;
 
     CRITICAL_SECTION flushing_cs;
+    CONDITION_VARIABLE eos_cv;
     HANDLE thread;
 
     /* This variable is read and written by both the streaming thread and
@@ -81,6 +82,8 @@ struct parser_source
      * thread when the streaming thread is not running, or when it is blocked
      * by flushing_cs. */
     bool need_segment;
+
+    bool eos;
 };
 
 static inline struct parser *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -823,6 +826,13 @@ static DWORD CALLBACK stream_thread(void *arg)
 
         EnterCriticalSection(&pin->flushing_cs);
 
+        if (pin->eos)
+        {
+            SleepConditionVariableCS(&pin->eos_cv, &pin->flushing_cs, INFINITE);
+            LeaveCriticalSection(&pin->flushing_cs);
+            continue;
+        }
+
         if (!wg_parser_stream_get_event(pin->wg_stream, &event))
         {
             LeaveCriticalSection(&pin->flushing_cs);
@@ -839,6 +849,7 @@ static DWORD CALLBACK stream_thread(void *arg)
 
             case WG_PARSER_EVENT_EOS:
                 IPin_EndOfStream(pin->pin.pin.peer);
+                pin->eos = true;
                 break;
 
             case WG_PARSER_EVENT_NONE:
@@ -973,17 +984,19 @@ static HRESULT parser_init_stream(struct strmbase_filter *iface)
 
     for (i = 0; i < filter->source_count; ++i)
     {
+        struct parser_source *pin = filter->sources[i];
         HRESULT hr;
 
-        if (!filter->sources[i]->pin.pin.peer)
+        if (!pin->pin.pin.peer)
             continue;
 
-        if (FAILED(hr = IMemAllocator_Commit(filter->sources[i]->pin.pAllocator)))
+        if (FAILED(hr = IMemAllocator_Commit(pin->pin.pAllocator)))
             ERR("Failed to commit allocator, hr %#lx.\n", hr);
 
-        filter->sources[i]->need_segment = true;
+        pin->need_segment = true;
+        pin->eos = false;
 
-        filter->sources[i]->thread = CreateThread(NULL, 0, stream_thread, filter->sources[i], 0, NULL);
+        pin->thread = CreateThread(NULL, 0, stream_thread, pin, 0, NULL);
     }
 
     return S_OK;
@@ -1009,6 +1022,7 @@ static HRESULT parser_cleanup_stream(struct strmbase_filter *iface)
 
         IMemAllocator_Decommit(pin->pin.pAllocator);
 
+        WakeConditionVariable(&pin->eos_cv);
         WaitForSingleObject(pin->thread, INFINITE);
         CloseHandle(pin->thread);
         pin->thread = NULL;
@@ -1371,9 +1385,13 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
         struct parser_source *flush_pin = filter->sources[i];
 
         flush_pin->need_segment = true;
+        flush_pin->eos = false;
 
         if (flush_pin->pin.pin.peer)
+        {
             LeaveCriticalSection(&flush_pin->flushing_cs);
+            WakeConditionVariable(&flush_pin->eos_cv);
+        }
     }
 
     return S_OK;
@@ -1613,6 +1631,7 @@ static struct parser_source *create_pin(struct parser *filter,
 
     InitializeCriticalSection(&pin->flushing_cs);
     pin->flushing_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": pin.flushing_cs");
+    InitializeConditionVariable(&pin->eos_cv);
 
     filter->sources[filter->source_count++] = pin;
     return pin;
