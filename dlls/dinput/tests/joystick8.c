@@ -3272,10 +3272,11 @@ static void test_windows_gaming_input(void)
     };
     static const WCHAR *controller_class_name = RuntimeClass_Windows_Gaming_Input_RawGameController;
 
+    IRawGameController *raw_controller, *tmp_raw_controller;
     IVectorView_RawGameController *controllers_view;
     IRawGameControllerStatics *controller_statics;
     WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
-    IRawGameController *raw_controller;
+    IGameController *game_controller;
     UINT32 size;
     HSTRING str;
     HRESULT hr;
@@ -3339,7 +3340,26 @@ static void test_windows_gaming_input(void)
     check_interface( raw_controller, &IID_IGameController, TRUE );
     check_interface( raw_controller, &IID_IGamepad, FALSE );
 
+    hr = IRawGameController_QueryInterface( raw_controller, &IID_IGameController, (void **)&game_controller );
+    ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
+
+    check_runtimeclass( game_controller, RuntimeClass_Windows_Gaming_Input_RawGameController );
+    check_interface( game_controller, &IID_IUnknown, TRUE );
+    check_interface( game_controller, &IID_IInspectable, TRUE );
+    check_interface( game_controller, &IID_IAgileObject, TRUE );
+    check_interface( game_controller, &IID_IRawGameController, TRUE );
+    check_interface( game_controller, &IID_IRawGameController2, TRUE );
+    check_interface( game_controller, &IID_IGameController, TRUE );
+    check_interface( game_controller, &IID_IGamepad, FALSE );
+
+    hr = IRawGameControllerStatics_FromGameController( controller_statics, game_controller, &tmp_raw_controller );
+    ok( hr == S_OK, "FromGameController returned %#lx\n", hr );
+    ok( tmp_raw_controller == raw_controller, "got unexpected IGameController interface\n" );
+    IRawGameController_Release( tmp_raw_controller );
+
+    IGameController_Release( game_controller );
     IRawGameController_Release( raw_controller );
+
     IRawGameControllerStatics_Release( controller_statics );
 
 done:
