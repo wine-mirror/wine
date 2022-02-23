@@ -1815,18 +1815,9 @@ HCURSOR WINAPI GetCursorFrameInfo( HCURSOR handle, DWORD reserved, DWORD istep,
 /**********************************************************************
  *              GetIconInfo (USER32.@)
  */
-BOOL WINAPI GetIconInfo(HICON hIcon, PICONINFO iconinfo)
+BOOL WINAPI GetIconInfo( HICON icon, ICONINFO *info )
 {
-    ICONINFOEXW infoW;
-
-    infoW.cbSize = sizeof(infoW);
-    if (!GetIconInfoExW( hIcon, &infoW )) return FALSE;
-    iconinfo->fIcon    = infoW.fIcon;
-    iconinfo->xHotspot = infoW.xHotspot;
-    iconinfo->yHotspot = infoW.yHotspot;
-    iconinfo->hbmColor = infoW.hbmColor;
-    iconinfo->hbmMask  = infoW.hbmMask;
-    return TRUE;
+    return NtUserGetIconInfo( icon, info, NULL, NULL, NULL, 0 );
 }
 
 /**********************************************************************
