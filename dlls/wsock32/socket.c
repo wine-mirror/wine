@@ -250,7 +250,7 @@ DWORD WINAPI WsControl(DWORD protocol,
                       */
                      if (index == 1)
                         return NO_ERROR;
-                     ERR ("Error retrieving data for interface index %u\n",
+                     ERR ("Error retrieving data for interface index %lu\n",
                       index);
                      return ret;
                   }
@@ -405,8 +405,8 @@ DWORD WINAPI WsControl(DWORD protocol,
             {
                if (table->table[i].dwIndex == index)
                {
-                  TRACE("Found IP info for tei_instance 0x%x:\n", index);
-                  TRACE("IP 0x%08x, mask 0x%08x\n", table->table[i].dwAddr,
+                  TRACE("Found IP info for tei_instance 0x%lx:\n", index);
+                  TRACE("IP 0x%08lx, mask 0x%08lx\n", table->table[i].dwAddr,
                    table->table[i].dwMask);
                   *baseIPInfo = table->table[i];
                   break;
@@ -615,7 +615,7 @@ DWORD WINAPI WsControl(DWORD protocol,
    }
 
    default:
-      FIXME("Protocol Not Supported -> protocol=0x%x, action=0x%x, Request=%p, RequestLen=%p, Response=%p, ResponseLen=%p\n",
+      FIXME("Protocol Not Supported -> protocol=0x%lx, action=0x%lx, Request=%p, RequestLen=%p, Response=%p, ResponseLen=%p\n",
        protocol, action, pRequestInfo, pcbRequestInfoLen, pResponseInfo, pcbResponseInfoLen);
 
       return (WSAEOPNOTSUPP);
