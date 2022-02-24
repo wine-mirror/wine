@@ -745,7 +745,7 @@ void wined3d_texture_get_bo_address(const struct wined3d_texture *texture,
     if (location == WINED3D_LOCATION_BUFFER)
     {
         data->addr = NULL;
-        data->buffer_object = &sub_resource->bo.b;
+        data->buffer_object = sub_resource->bo;
     }
     else
     {
@@ -903,12 +903,15 @@ static void wined3d_texture_get_memory(struct wined3d_texture *texture, unsigned
 static void wined3d_texture_remove_buffer_object(struct wined3d_texture *texture,
         unsigned int sub_resource_idx, struct wined3d_context_gl *context_gl)
 {
-    struct wined3d_bo_gl *bo = &texture->sub_resources[sub_resource_idx].bo.gl;
+    struct wined3d_texture_sub_resource *sub_resource = &texture->sub_resources[sub_resource_idx];
+    struct wined3d_bo_gl *bo_gl = wined3d_bo_gl(sub_resource->bo);
 
     TRACE("texture %p, sub_resource_idx %u, context_gl %p.\n", texture, sub_resource_idx, context_gl);
 
-    wined3d_context_gl_destroy_bo(context_gl, bo);
+    wined3d_context_gl_destroy_bo(context_gl, bo_gl);
     wined3d_texture_invalidate_location(texture, sub_resource_idx, WINED3D_LOCATION_BUFFER);
+    sub_resource->bo = NULL;
+    heap_free(bo_gl);
 }
 
 static void wined3d_texture_unload_location(struct wined3d_texture *texture,
@@ -2059,16 +2062,23 @@ static void wined3d_texture_gl_prepare_buffer_object(struct wined3d_texture_gl *
     struct wined3d_bo_gl *bo;
 
     sub_resource = &texture_gl->t.sub_resources[sub_resource_idx];
-    bo = &sub_resource->bo.gl;
-    if (bo->id)
+
+    if (sub_resource->bo)
+        return;
+
+    if (!(bo = heap_alloc(sizeof(*bo))))
         return;
 
     if (!wined3d_device_gl_create_bo(wined3d_device_gl(texture_gl->t.resource.device),
             context_gl, sub_resource->size, GL_PIXEL_UNPACK_BUFFER, GL_STREAM_DRAW, true,
             GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_CLIENT_STORAGE_BIT, bo))
+    {
+        heap_free(bo);
         return;
+    }
 
     TRACE("Created buffer object %u for texture %p, sub-resource %u.\n", bo->id, texture_gl, sub_resource_idx);
+    sub_resource->bo = &bo->b;
 }
 
 static void wined3d_texture_force_reload(struct wined3d_texture *texture)
@@ -3249,7 +3259,7 @@ static BOOL wined3d_texture_gl_load_texture(struct wined3d_texture_gl *texture_g
     /* Don't use PBOs for converted surfaces. During PBO conversion we look at
      * WINED3D_TEXTURE_CONVERTED but it isn't set (yet) in all cases it is
      * getting called. */
-    if (conversion && sub_resource->bo.gl.id)
+    if (conversion && sub_resource->bo)
     {
         TRACE("Removing the pbo attached to texture %p, %u.\n", texture_gl, sub_resource_idx);
 
@@ -3386,7 +3396,7 @@ static void wined3d_texture_gl_unload_location(struct wined3d_texture *texture,
             sub_count = texture->level_count * texture->layer_count;
             for (i = 0; i < sub_count; ++i)
             {
-                if (texture_gl->t.sub_resources[i].bo.gl.id)
+                if (texture_gl->t.sub_resources[i].bo)
                     wined3d_texture_remove_buffer_object(&texture_gl->t, i, context_gl);
             }
             break;
@@ -5294,18 +5304,24 @@ static BOOL wined3d_texture_vk_prepare_buffer_object(struct wined3d_texture_vk *
     struct wined3d_bo_vk *bo;
 
     sub_resource = &texture_vk->t.sub_resources[sub_resource_idx];
-    bo = &sub_resource->bo.vk;
-    if (bo->vk_buffer)
+    if (sub_resource->bo)
         return TRUE;
+
+    if (!(bo = heap_alloc(sizeof(*bo))))
+        return FALSE;
 
     if (!wined3d_context_vk_create_bo(context_vk, sub_resource->size,
             VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, bo))
+    {
+        heap_free(bo);
         return FALSE;
+    }
 
     /* Texture buffer objects receive a barrier to HOST_READ in wined3d_texture_vk_download_data(),
      * so they don't need it when they are mapped for reading. */
     bo->host_synced = true;
+    sub_resource->bo = &bo->b;
     TRACE("Created buffer object %p for texture %p, sub-resource %u.\n", bo, texture_vk, sub_resource_idx);
     return TRUE;
 }
@@ -5380,10 +5396,15 @@ static void wined3d_texture_vk_unload_location(struct wined3d_texture *texture,
             sub_count = texture->level_count * texture->layer_count;
             for (i = 0; i < sub_count; ++i)
             {
-                if (texture->sub_resources[i].bo.vk.vk_buffer)
+                struct wined3d_texture_sub_resource *sub_resource = &texture->sub_resources[i];
+
+                if (sub_resource->bo)
                 {
-                    wined3d_context_vk_destroy_bo(context_vk, &texture->sub_resources[i].bo.vk);
-                    texture->sub_resources[i].bo.vk.vk_buffer = VK_NULL_HANDLE;
+                    struct wined3d_bo_vk *bo_vk = wined3d_bo_vk(sub_resource->bo);
+
+                    wined3d_context_vk_destroy_bo(context_vk, bo_vk);
+                    heap_free(bo_vk);
+                    sub_resource->bo = NULL;
                 }
             }
             break;
