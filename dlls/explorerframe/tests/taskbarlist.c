@@ -30,132 +30,132 @@ static void test_ITaskbarList(void)
     HWND hwnd;
 
     hwnd = CreateWindowA(WC_STATICA, "test", WS_POPUP | WS_VISIBLE, 0, 0, 50, 50, 0, 0, 0, NULL);
-    ok(hwnd != NULL, "Failed to create a test window, error %u.\n", GetLastError());
+    ok(hwnd != NULL, "Failed to create a test window, error %lu.\n", GetLastError());
 
     hr = CoCreateInstance((const CLSID *)&CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER,
                           (const IID *)&IID_ITaskbarList, (void **)&taskbarlist);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     ref_count = ITaskbarList_AddRef(taskbarlist);
-    ok(ref_count == 2, "Got unexpected reference count %u.\n", ref_count);
+    ok(ref_count == 2, "Got unexpected reference count %lu.\n", ref_count);
     ref_count = ITaskbarList_Release(taskbarlist);
-    ok(ref_count == 1, "Got unexpected reference count %u.\n", ref_count);
+    ok(ref_count == 1, "Got unexpected reference count %lu.\n", ref_count);
 
     /* Test calling methods before calling ITaskbarList::HrInit() */
     hr = ITaskbarList_AddTab(taskbarlist, hwnd);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = ITaskbarList_SetActiveAlt(taskbarlist, hwnd);
     todo_wine
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = ITaskbarList_ActivateTab(taskbarlist, hwnd);
     todo_wine
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = ITaskbarList_DeleteTab(taskbarlist, hwnd);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     /* Call ITaskbarList::HrInit() */
     hr = ITaskbarList_HrInit(taskbarlist);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     /* Test ITaskbarList::HrInit() */
     /* Call ITaskbarList::HrInit() again */
     hr = ITaskbarList_HrInit(taskbarlist);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     /* Test ITaskbarList::AddTab() */
     /* Check invalid parameters */
     hr = ITaskbarList_AddTab(taskbarlist, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = ITaskbarList_AddTab(taskbarlist, (HWND)0xdeadbeef);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     /* Normal ITaskbarList::AddTab() */
     hr = ITaskbarList_AddTab(taskbarlist, hwnd);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     /* Repeat ITaskbarList::AddTab() with the same hwnd */
     hr = ITaskbarList_AddTab(taskbarlist, hwnd);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = ITaskbarList_DeleteTab(taskbarlist, hwnd);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     /* Test ITaskbarList::SetActiveAlt() */
     /* Check invalid parameters */
     hr = ITaskbarList_SetActiveAlt(taskbarlist, NULL);
     todo_wine
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = ITaskbarList_SetActiveAlt(taskbarlist, (HWND)0xdeadbeef);
     todo_wine
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     /* Normal ITaskbarList::SetActiveAlt() */
     hr = ITaskbarList_AddTab(taskbarlist, hwnd);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = ITaskbarList_SetActiveAlt(taskbarlist, hwnd);
     todo_wine
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     /* Repeat ITaskbarList::SetActiveAlt() with the same hwnd */
     hr = ITaskbarList_SetActiveAlt(taskbarlist, hwnd);
     todo_wine
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = ITaskbarList_DeleteTab(taskbarlist, hwnd);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     /* Test ITaskbarList::ActivateTab() */
     /* Check invalid parameters */
     hr = ITaskbarList_ActivateTab(taskbarlist, NULL);
     todo_wine
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = ITaskbarList_ActivateTab(taskbarlist, (HWND)0xdeadbeef);
     todo_wine
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     /* Normal ITaskbarList::ActivateTab() */
     hr = ITaskbarList_AddTab(taskbarlist, hwnd);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = ITaskbarList_ActivateTab(taskbarlist, hwnd);
     todo_wine
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     /* Repeat ITaskbarList::ActivateTab() with the same hwnd */
     hr = ITaskbarList_ActivateTab(taskbarlist, hwnd);
     todo_wine
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = ITaskbarList_DeleteTab(taskbarlist, hwnd);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     /* Test ITaskbarList::DeleteTab() */
     /* Check invalid parameters */
     hr = ITaskbarList_DeleteTab(taskbarlist, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = ITaskbarList_DeleteTab(taskbarlist, (HWND)0xdeadbeef);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = ITaskbarList_DeleteTab(taskbarlist, hwnd);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     /* Normal ITaskbarList::DeleteTab() */
     hr = ITaskbarList_AddTab(taskbarlist, hwnd);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = ITaskbarList_DeleteTab(taskbarlist, hwnd);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     ref_count = ITaskbarList_Release(taskbarlist);
-    ok(ref_count == 0, "Got unexpected reference count %u.\n", ref_count);
+    ok(ref_count == 0, "Got unexpected reference count %lu.\n", ref_count);
     DestroyWindow(hwnd);
 }
 
