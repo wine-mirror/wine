@@ -25,11 +25,11 @@ static void test_DwmIsCompositionEnabled(void)
     HRESULT hr;
 
     hr = DwmIsCompositionEnabled(NULL);
-    ok(hr == E_INVALIDARG, "Expected %#x, got %#x.\n", E_INVALIDARG, hr);
+    ok(hr == E_INVALIDARG, "Expected %#lx, got %#lx.\n", E_INVALIDARG, hr);
 
     enabled = -1;
     hr = DwmIsCompositionEnabled(&enabled);
-    ok(hr == S_OK, "Expected %#x, got %#x.\n", S_OK, hr);
+    ok(hr == S_OK, "Expected %#lx, got %#lx.\n", S_OK, hr);
     ok(enabled == TRUE || enabled == FALSE, "Got unexpected %#x.\n", enabled);
 }
 
