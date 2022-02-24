@@ -42,13 +42,13 @@ static WCHAR sessionname[] = L"winegamesserver";
 
 static HRESULT WINAPI DirectPlayMessageHandler(void *lpvUserContext, DWORD dwMessageId, void *lpMessage)
 {
-    trace("msgid: 0x%08x\n", dwMessageId);
+    trace("msgid: 0x%08lx\n", dwMessageId);
     return S_OK;
 }
 
 static HRESULT WINAPI DirectPlayClientMessageHandler(void *lpvUserContext, DWORD dwMessageId, void *lpMessage)
 {
-    trace("cmsgid: 0x%08x\n", dwMessageId);
+    trace("cmsgid: 0x%08lx\n", dwMessageId);
     switch(dwMessageId)
     {
         case DPN_MSGID_CONNECT_COMPLETE:
@@ -56,7 +56,7 @@ static HRESULT WINAPI DirectPlayClientMessageHandler(void *lpvUserContext, DWORD
             PDPNMSG_CONNECT_COMPLETE completemsg;
             completemsg = (PDPNMSG_CONNECT_COMPLETE)lpMessage;
 
-            trace("DPN_MSGID_CONNECT_COMPLETE code: 0x%08x\n", completemsg->hResultCode);
+            trace("DPN_MSGID_CONNECT_COMPLETE code: 0x%08lx\n", completemsg->hResultCode);
             SetEvent(connected);
             break;
         }
@@ -67,13 +67,13 @@ static HRESULT WINAPI DirectPlayClientMessageHandler(void *lpvUserContext, DWORD
 
 static HRESULT CALLBACK DirectPlayVoiceServerMessageHandler(void *lpvUserContext, DWORD dwMessageId, void *lpMessage)
 {
-    trace("vserver: 0x%08x\n", dwMessageId);
+    trace("vserver: 0x%08lx\n", dwMessageId);
     return S_OK;
 }
 
 static HRESULT CALLBACK DirectPlayVoiceClientMessageHandler(void *lpvUserContext, DWORD dwMessageId, void *lpMessage)
 {
-    trace("cserver: 0x%08x\n", dwMessageId);
+    trace("cserver: 0x%08lx\n", dwMessageId);
 
     return S_OK;
 }
@@ -90,23 +90,23 @@ static BOOL test_init_dpvoice_server(void)
         DPN_APPLICATION_DESC dpnAppDesc;
 
         hr = CoCreateInstance(&CLSID_DirectPlay8Server, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectPlay8Server, (void **)&dpserver);
-        ok(hr == S_OK, "CoCreateInstance failed with 0x%08x\n", hr);
+        ok(hr == S_OK, "CoCreateInstance failed with 0x%08lx\n", hr);
 
         hr = IDirectPlay8Server_Initialize(dpserver, NULL, DirectPlayMessageHandler, 0);
-        ok(hr == S_OK, "Initialize failed with 0x%08x\n", hr);
+        ok(hr == S_OK, "Initialize failed with 0x%08lx\n", hr);
 
         hr = CoCreateInstance(&CLSID_DirectPlay8Address, NULL, CLSCTX_ALL, &IID_IDirectPlay8Address, (void **)&localaddr);
-        ok(hr == S_OK, "CoCreateInstance failed with 0x%08x\n", hr);
+        ok(hr == S_OK, "CoCreateInstance failed with 0x%08lx\n", hr);
 
         hr = IDirectPlay8Address_SetSP(localaddr, &CLSID_DP8SP_TCPIP);
-        ok(hr == S_OK, "SetSP with 0x%08x\n", hr);
+        ok(hr == S_OK, "SetSP with 0x%08lx\n", hr);
 
         hr = IDirectPlay8Address_AddComponent(localaddr, DPNA_KEY_HOSTNAME, L"localhost", sizeof(L"localhost"),
                                             DPNA_DATATYPE_STRING );
-        ok(hr == S_OK, "AddComponent(addr) with 0x%08x\n", hr);
+        ok(hr == S_OK, "AddComponent(addr) with 0x%08lx\n", hr);
 
         hr = IDirectPlay8Address_AddComponent(localaddr, DPNA_KEY_PORT, &port, sizeof(port), DPNA_DATATYPE_DWORD);
-        ok(hr == S_OK, "AddComponent(port)) with 0x%08x\n", hr);
+        ok(hr == S_OK, "AddComponent(port)) with 0x%08lx\n", hr);
 
         memset(&dpnAppDesc, 0, sizeof(DPN_APPLICATION_DESC) );
         dpnAppDesc.dwSize           = sizeof( DPN_APPLICATION_DESC );
@@ -115,13 +115,13 @@ static BOOL test_init_dpvoice_server(void)
         dpnAppDesc.pwszSessionName  = sessionname;
 
         hr = IDirectPlay8Server_Host(dpserver, &dpnAppDesc, &localaddr, 1, NULL, NULL, NULL, 0  );
-        todo_wine ok(hr == S_OK, "Host failed with 0x%08x\n", hr);
+        todo_wine ok(hr == S_OK, "Host failed with 0x%08lx\n", hr);
 
         hr = IDirectPlayVoiceServer_Initialize(vserver, NULL, &DirectPlayVoiceServerMessageHandler, NULL, 0, 0);
-        todo_wine ok(hr == DVERR_NOTRANSPORT, "Initialize failed with 0x%08x\n", hr);
+        todo_wine ok(hr == DVERR_NOTRANSPORT, "Initialize failed with 0x%08lx\n", hr);
 
         hr = IDirectPlayVoiceServer_Initialize(vserver, (IUnknown*)dpserver, &DirectPlayVoiceServerMessageHandler, NULL, 0, 0);
-        todo_wine ok(hr == S_OK, "Initialize failed with 0x%08x\n", hr);
+        todo_wine ok(hr == S_OK, "Initialize failed with 0x%08lx\n", hr);
 
         memset( &dvSessionDesc, 0, sizeof(DVSESSIONDESC) );
         dvSessionDesc.dwSize                 = sizeof( DVSESSIONDESC );
@@ -132,7 +132,7 @@ static BOOL test_init_dpvoice_server(void)
         dvSessionDesc.guidCT                 = DPVCTGUID_DEFAULT;
 
         hr = IDirectPlayVoiceServer_StartSession(vserver, &dvSessionDesc, 0);
-        todo_wine ok(hr == S_OK, "StartSession failed with 0x%08x\n", hr);
+        todo_wine ok(hr == S_OK, "StartSession failed with 0x%08lx\n", hr);
 
         if(localaddr)
             IDirectPlay8Address_Release(localaddr);
@@ -165,29 +165,29 @@ static BOOL test_init_dpvoice_client(void)
         connected = CreateEventA(NULL, FALSE, FALSE, NULL);
 
         hr = CoCreateInstance(&CLSID_DirectPlay8Client, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectPlay8Client, (void **)&dpclient);
-        ok(hr == S_OK, "CoCreateInstance failed with 0x%08x\n", hr);
+        ok(hr == S_OK, "CoCreateInstance failed with 0x%08lx\n", hr);
 
         hr = IDirectPlay8Client_Initialize(dpclient, NULL, DirectPlayClientMessageHandler, 0);
-        ok(hr == S_OK, "Initialize failed with 0x%08x\n", hr);
+        ok(hr == S_OK, "Initialize failed with 0x%08lx\n", hr);
 
         hr = CoCreateInstance(&CLSID_DirectPlay8Address, NULL, CLSCTX_ALL, &IID_IDirectPlay8Address, (void **)&hostaddr);
-        ok(hr == S_OK, "CoCreateInstance failed with 0x%08x\n", hr);
+        ok(hr == S_OK, "CoCreateInstance failed with 0x%08lx\n", hr);
 
         hr = IDirectPlay8Address_SetSP(hostaddr, &CLSID_DP8SP_TCPIP);
-        ok(hr == S_OK, "SetSP with 0x%08x\n", hr);
+        ok(hr == S_OK, "SetSP with 0x%08lx\n", hr);
 
         hr = CoCreateInstance(&CLSID_DirectPlay8Address, NULL, CLSCTX_ALL, &IID_IDirectPlay8Address, (void **)&localaddr);
-        ok(hr == S_OK, "CoCreateInstance failed with 0x%08x\n", hr);
+        ok(hr == S_OK, "CoCreateInstance failed with 0x%08lx\n", hr);
 
         hr = IDirectPlay8Address_SetSP(localaddr, &CLSID_DP8SP_TCPIP);
-        ok(hr == S_OK, "SetSP with 0x%08x\n", hr);
+        ok(hr == S_OK, "SetSP with 0x%08lx\n", hr);
 
         hr = IDirectPlay8Address_AddComponent(hostaddr, DPNA_KEY_HOSTNAME, L"localhost", sizeof(L"localhost"),
                                             DPNA_DATATYPE_STRING );
-        ok(hr == S_OK, "AddComponent(addr) with 0x%08x\n", hr);
+        ok(hr == S_OK, "AddComponent(addr) with 0x%08lx\n", hr);
 
         hr = IDirectPlay8Address_AddComponent(hostaddr, DPNA_KEY_PORT, &port, sizeof(port), DPNA_DATATYPE_DWORD);
-        ok(hr == S_OK, "AddComponent(port)) with 0x%08x\n", hr);
+        ok(hr == S_OK, "AddComponent(port)) with 0x%08lx\n", hr);
 
         memset( &playerinfo, 0, sizeof(DPN_PLAYER_INFO) );
         playerinfo.dwSize = sizeof(DPN_PLAYER_INFO);
@@ -195,7 +195,7 @@ static BOOL test_init_dpvoice_client(void)
         playerinfo.pwszName = player;
 
         hr = IDirectPlay8Client_SetClientInfo(dpclient, &playerinfo, NULL, NULL, DPNOP_SYNC);
-        ok(hr == S_OK, "SetClientInfo with 0x%08x\n", hr);
+        ok(hr == S_OK, "SetClientInfo with 0x%08lx\n", hr);
 
         memset( &appdesc, 0, sizeof(DPN_APPLICATION_DESC));
         appdesc.dwSize = sizeof( DPN_APPLICATION_DESC );
@@ -203,12 +203,12 @@ static BOOL test_init_dpvoice_client(void)
 
         hr = IDirectPlay8Client_Connect(dpclient, &appdesc, hostaddr, localaddr, NULL, NULL, NULL, 0,
                            NULL, &asyncop, DPNCONNECT_OKTOQUERYFORADDRESSING);
-        ok(hr == S_OK || hr == DPNSUCCESS_PENDING, "Connect with 0x%08x\n", hr);
+        ok(hr == S_OK || hr == DPNSUCCESS_PENDING, "Connect with 0x%08lx\n", hr);
 
         WaitForSingleObject(connected, 5000);
 
         hr = IDirectPlayVoiceClient_Initialize(vclient, (IUnknown*)dpclient, DirectPlayVoiceClientMessageHandler, NULL, 0, 0 );
-        todo_wine ok(hr == S_OK, "Connect failed with 0x%08x\n", hr);
+        todo_wine ok(hr == S_OK, "Connect failed with 0x%08lx\n", hr);
 
         soundDeviceConfig.dwSize                    = sizeof(soundDeviceConfig);
         soundDeviceConfig.dwFlags                   = 0;
@@ -239,16 +239,16 @@ static BOOL test_init_dpvoice_client(void)
 
             /* See if we can get the default values from the registry and try again. */
             hr = CoCreateInstance(&CLSID_DirectPlayVoiceTest, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectPlayVoiceTest, (void **)&voicetest);
-            ok(hr == S_OK, "CoCreateInstance failed with 0x%08x\n", hr);
+            ok(hr == S_OK, "CoCreateInstance failed with 0x%08lx\n", hr);
             if(hr == S_OK)
             {
                 hr = IDirectPlayVoiceTest_CheckAudioSetup(voicetest, &DSDEVID_DefaultVoicePlayback, &DSDEVID_DefaultVoiceCapture,
                                                           NULL, DVFLAGS_QUERYONLY);
-                todo_wine ok(hr == S_OK || hr == DVERR_RUNSETUP, "CheckAudioSetup failed with 0x%08x\n", hr);
+                todo_wine ok(hr == S_OK || hr == DVERR_RUNSETUP, "CheckAudioSetup failed with 0x%08lx\n", hr);
                 if(hr == S_OK)
                 {
                     hr = IDirectPlayVoiceClient_Connect(vclient, &soundDeviceConfig, &clientConfig, DVFLAGS_SYNC);
-                    todo_wine ok(hr == S_OK, "Voice Connect failed with 0x%08x\n", hr);
+                    todo_wine ok(hr == S_OK, "Voice Connect failed with 0x%08lx\n", hr);
                 }
                 else
                 {
@@ -292,7 +292,7 @@ static void test_cleanup_dpvoice(void)
         if(HasConnected)
         {
             hr = IDirectPlayVoiceClient_Disconnect(vclient, 0);
-            todo_wine ok(hr == S_OK || hr == DV_PENDING, "Disconnect failed with 0x%08x\n", hr);
+            todo_wine ok(hr == S_OK || hr == DV_PENDING, "Disconnect failed with 0x%08lx\n", hr);
         }
         IDirectPlayVoiceClient_Release(vclient);
     }
@@ -300,7 +300,7 @@ static void test_cleanup_dpvoice(void)
     if(dpclient)
     {
         hr = IDirectPlay8Client_Close(dpclient, 0);
-        ok(hr == S_OK, "IDirectPlay8Client_Close failed with 0x%08x\n", hr);
+        ok(hr == S_OK, "IDirectPlay8Client_Close failed with 0x%08lx\n", hr);
 
         IDirectPlay8Client_Release(dpclient);
     }
@@ -308,7 +308,7 @@ static void test_cleanup_dpvoice(void)
     if(vserver)
     {
         hr = IDirectPlayVoiceServer_StopSession(vserver, 0);
-        todo_wine ok(hr == S_OK, "StopSession failed with 0x%08x\n", hr);
+        todo_wine ok(hr == S_OK, "StopSession failed with 0x%08lx\n", hr);
 
         IDirectPlayVoiceServer_Release(vserver);
     }
@@ -316,7 +316,7 @@ static void test_cleanup_dpvoice(void)
     if(dpserver)
     {
         hr = IDirectPlay8Server_Close(dpserver, 0);
-        todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+        todo_wine ok(hr == S_OK, "got 0x%08lx\n", hr);
 
         IDirectPlay8Server_Release(dpserver);
     }
@@ -332,7 +332,7 @@ static void create_voicetest(void)
     {
         hr = IDirectPlayVoiceTest_CheckAudioSetup(voicetest, &DSDEVID_DefaultVoicePlayback, &DSDEVID_DefaultVoiceCapture,
                                                           NULL, DVFLAGS_QUERYONLY);
-        todo_wine ok(hr == S_OK || hr == DVERR_RUNSETUP, "CheckAudioSetup failed with 0x%08x\n", hr);
+        todo_wine ok(hr == S_OK || hr == DVERR_RUNSETUP, "CheckAudioSetup failed with 0x%08lx\n", hr);
 
         IDirectPlayVoiceTest_Release(voicetest);
     }
@@ -424,9 +424,9 @@ static void test_GetCompressionTypes(IDirectPlayVoiceClient *client_iface, IDire
     else
         ret = IDirectPlayVoiceServer_GetCompressionTypes(server_iface, NULL, &data_size, &num_elements, 0);
     ok(ret == DVERR_BUFFERTOOSMALL,
-       "%s: expected ret=%x got ret=%x\n", name, DVERR_BUFFERTOOSMALL, ret);
+       "%s: expected ret=%lx got ret=%lx\n", name, DVERR_BUFFERTOOSMALL, ret);
     ok(data_size > sizeof(DVCOMPRESSIONINFO) && data_size < sizeof(data) - 1,
-       "%s: got data_size=%u\n", name, data_size);
+       "%s: got data_size=%lu\n", name, data_size);
     tests[ARRAY_SIZE(tests) - 3].data_size = data_size - 1;
     tests[ARRAY_SIZE(tests) - 2].data_size = data_size;
     tests[ARRAY_SIZE(tests) - 1].data_size = data_size + 1;
@@ -458,23 +458,23 @@ static void test_GetCompressionTypes(IDirectPlayVoiceClient *client_iface, IDire
             );
 
         ok(ret == tests[i].ret,
-           "%s: tests[%u]: expected ret=%x got ret=%x\n", name, i, tests[i].ret, ret);
+           "%s: tests[%lu]: expected ret=%lx got ret=%lx\n", name, i, tests[i].ret, ret);
 
         if(ret == DV_OK || ret == DVERR_BUFFERTOOSMALL || tests[i].test_flags == NULL_DATA)
         {
             ok(data_size > sizeof(DVCOMPRESSIONINFO) && data_size < sizeof(data) - 1,
-               "%s: tests[%u]: got data_size=%u\n", name, i, data_size);
+               "%s: tests[%lu]: got data_size=%lu\n", name, i, data_size);
             if(!(tests[i].test_flags & SHARED_VARIABLE))
                 ok(num_elements > 0 && num_elements < data_size / sizeof(DVCOMPRESSIONINFO) + 1,
-                   "%s: tests[%u]: got num_elements=%u\n", name, i, num_elements);
+                   "%s: tests[%lu]: got num_elements=%lu\n", name, i, num_elements);
         }
         else
         {
             ok(data_size == tests[i].data_size,
-               "%s: tests[%u]: expected data_size=%u got data_size=%u\n",
+               "%s: tests[%lu]: expected data_size=%lu got data_size=%lu\n",
                name, i, tests[i].data_size, data_size);
             ok(num_elements == tests[i].num_elements,
-               "%s: tests[%u]: expected num_elements=%u got num_elements=%u\n",
+               "%s: tests[%lu]: expected num_elements=%lu got num_elements=%lu\n",
                name, i, tests[i].num_elements, num_elements);
         }
 
@@ -487,36 +487,36 @@ static void test_GetCompressionTypes(IDirectPlayVoiceClient *client_iface, IDire
                 if(memcmp(&data[j].guidType, &DPVCTGUID_NONE, sizeof(GUID)) == 0)
                 {
                     ok(data[j].dwMaxBitsPerSecond == 64000,
-                       "%s: tests[%u]: data[%u]: expected dwMaxBitsPerSecond=64000 got dwMaxBitsPerSecond=%u\n",
+                       "%s: tests[%lu]: data[%lu]: expected dwMaxBitsPerSecond=64000 got dwMaxBitsPerSecond=%lu\n",
                        name, i, j, data[j].dwMaxBitsPerSecond);
                     found_pcm = TRUE;
                 }
                 ok(data[j].dwSize == 80,
-                   "%s: tests[%u]: data[%u]: expected dwSize=80 got dwSize=%u\n",
+                   "%s: tests[%lu]: data[%lu]: expected dwSize=80 got dwSize=%lu\n",
                    name, i, j, data[j].dwSize);
                 ok(data[j].lpszName == string_loc,
-                   "%s: tests[%u]: data[%u]: expected lpszName=%p got lpszName=%p\n",
+                   "%s: tests[%lu]: data[%lu]: expected lpszName=%p got lpszName=%p\n",
                    name, i, j, string_loc, data[j].lpszName);
                 ok(!data[j].lpszDescription,
-                   "%s: tests[%u]: data[%u]: expected lpszDescription=NULL got lpszDescription=%s\n",
+                   "%s: tests[%lu]: data[%lu]: expected lpszDescription=NULL got lpszDescription=%s\n",
                    name, i, j, wine_dbgstr_w(data[j].lpszDescription));
                 ok(!data[j].dwFlags,
-                   "%s: tests[%u]: data[%u]: expected dwFlags=0 got dwFlags=%u\n",
+                   "%s: tests[%lu]: data[%lu]: expected dwFlags=0 got dwFlags=%lu\n",
                    name, i, j, data[j].dwFlags);
                 string_loc += lstrlenW(data[j].lpszName) + 1;
             }
             ok((char*)string_loc == (char*)data + data_size,
-               "%s: tests[%u]: expected string_loc=%p got string_loc=%p\n",
+               "%s: tests[%lu]: expected string_loc=%p got string_loc=%p\n",
                name, i, (char*)data + data_size, string_loc);
             ok(*(char*)string_loc == 0x23,
-               "%s: tests[%u]: expected *(char*)string_loc=0x23 got *(char*)string_loc=0x%x\n",
+               "%s: tests[%lu]: expected *(char*)string_loc=0x23 got *(char*)string_loc=0x%x\n",
                name, i, *(char*)string_loc);
-            ok(found_pcm, "%s: tests[%u]: MS-PCM codec not found\n", name, i);
+            ok(found_pcm, "%s: tests[%lu]: MS-PCM codec not found\n", name, i);
         }
         else
         {
             ok(*(char*)data == 0x23,
-               "%s: tests[%u]: expected *(char*)data=0x23 got *(char*)data=0x%x\n",
+               "%s: tests[%lu]: expected *(char*)data=0x23 got *(char*)data=0x%x\n",
                name, i, *(char*)data);
         }
     }
