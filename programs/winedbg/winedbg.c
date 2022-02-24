@@ -444,14 +444,13 @@ struct dbg_thread* dbg_add_thread(struct dbg_process* p, DWORD tid,
     t->step_over_bp.enabled = FALSE;
     t->step_over_bp.refcount = 0;
     t->stopped_xpoint = -1;
+    t->name[0] = '\0';
     t->in_exception = FALSE;
     t->frames = NULL;
     t->num_frames = 0;
     t->curr_frame = -1;
     t->addr_mode = AddrModeFlat;
     t->suspended = FALSE;
-
-    snprintf(t->name, sizeof(t->name), "%04lx", tid);
 
     list_add_head(&p->threads, &t->entry);
 
