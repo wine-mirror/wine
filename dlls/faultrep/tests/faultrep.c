@@ -82,11 +82,11 @@ static void test_AddERExcludedApplicationA(void)
 
     SetLastError(0xdeadbeef);
     res = AddERExcludedApplicationA(NULL);
-    ok(!res, "got %d and 0x%x (expected FALSE)\n", res, GetLastError());
+    ok(!res, "got %d and 0x%lx (expected FALSE)\n", res, GetLastError());
 
     SetLastError(0xdeadbeef);
     res = AddERExcludedApplicationA("");
-    ok(!res, "got %d and 0x%x (expected FALSE)\n", res, GetLastError());
+    ok(!res, "got %d and 0x%lx (expected FALSE)\n", res, GetLastError());
 
     SetLastError(0xdeadbeef);
     /* existence of the path doesn't matter this function succeeded */
@@ -99,12 +99,12 @@ static void test_AddERExcludedApplicationA(void)
     }
     else
     {
-        ok(res, "AddERExcludedApplicationA failed (le=0x%x)\n", GetLastError());
+        ok(res, "AddERExcludedApplicationA failed (le=0x%lx)\n", GetLastError());
 
         /* add, when already present */
         SetLastError(0xdeadbeef);
         res = AddERExcludedApplicationA("winetest_faultrep.exe");
-        ok(res, "AddERExcludedApplicationA failed (le=0x%x)\n", GetLastError());
+        ok(res, "AddERExcludedApplicationA failed (le=0x%lx)\n", GetLastError());
     }
 
     /* cleanup */
