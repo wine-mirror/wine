@@ -50,7 +50,7 @@ static LPCSTR dwFlags2str(DWORD dwFlags, DWORD flagType);
 static void checkFlags_(unsigned line, DWORD expected, DWORD result, DWORD flags)
 {
     ok_(__FILE__, line)( expected == result,
-        "expected=0x%08x(%s) got=0x%08x(%s)\n",
+        "expected=0x%08lx(%s) got=0x%08lx(%s)\n",
         expected, dwFlags2str(expected, flags),
         result, dwFlags2str(result, flags) );
 }
@@ -58,10 +58,10 @@ static void checkFlags_(unsigned line, DWORD expected, DWORD result, DWORD flags
     ok( IsEqualGUID(expected, result),          \
         "expected=%s got=%s\n",                 \
         Guid2str(expected), Guid2str(result) );
-#define checkConv(expected, result, function)   \
-    ok( (expected) == (result),                 \
-        "expected=0x%08x(%s) got=0x%08x(%s)\n", \
-        expected, function(expected),           \
+#define checkConv(expected, result, function)    \
+    ok( (expected) == (result),                  \
+        "expected=0x%08x(%s) got=0x%08lx(%s)\n", \
+        expected, function(expected),            \
         result, function(result) );
 
 
@@ -218,7 +218,7 @@ static LPCSTR dpResult2str(HRESULT hr)
     default:
     {
         LPSTR buffer = get_temp_buffer();
-        sprintf( buffer, "%d", HRESULT_CODE(hr) );
+        sprintf( buffer, "%ld", HRESULT_CODE(hr) );
         return buffer;
     }
     }
@@ -639,7 +639,7 @@ static void check_messages( IDirectPlay4 *pDP, DPID *dpid, DWORD dpidSize,
         callbackData->szTrace1[ 3*i+1 ] = dpid2char( dpid, dpidSize, idTo );
         callbackData->szTrace1[ 3*i+2 ] = ',';
 
-        sprintf( temp, "%d,", dwDataSize );
+        sprintf( temp, "%ld,", dwDataSize );
         strcat( callbackData->szTrace2, temp );
 
         dwDataSize = 1024;
@@ -780,7 +780,7 @@ static BOOL CALLBACK callback_providersA(GUID* guid, char *name, DWORD major, DW
     }
 
     if (prov->ret_value) /* Only trace when looping all providers */
-        trace("Provider #%d '%s' (%d.%d)\n", prov->call_count, name, major, minor);
+        trace("Provider #%d '%s' (%ld.%ld)\n", prov->call_count, name, major, minor);
     return prov->ret_value;
 }
 
@@ -816,12 +816,12 @@ static void test_EnumerateProviders(void)
     SetLastError(0xdeadbeef);
     hr = pDirectPlayEnumerateA(NULL, &arg);
     ok(FAILED(hr), "DirectPlayEnumerateA expected to fail\n");
-    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got 0x%x\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got 0x%lx\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     hr = pDirectPlayEnumerateA(NULL, NULL);
     ok(FAILED(hr), "DirectPlayEnumerateA expected to fail\n");
-    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got 0x%x\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got 0x%lx\n", GetLastError());
 
     hr = pDirectPlayEnumerateA(callback_providersA, &arg);
     ok(SUCCEEDED(hr), "DirectPlayEnumerateA failed\n");
@@ -846,12 +846,12 @@ static void test_EnumerateProviders(void)
     SetLastError(0xdeadbeef);
     hr = pDirectPlayEnumerateW(NULL, &arg);
     ok(FAILED(hr), "DirectPlayEnumerateW expected to fail\n");
-    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got 0x%x\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got 0x%lx\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     hr = pDirectPlayEnumerateW(NULL, NULL);
     ok(FAILED(hr), "DirectPlayEnumerateW expected to fail\n");
-    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got 0x%x\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got 0x%lx\n", GetLastError());
 
     memset(&arg, 0, sizeof(arg));
     arg.ret_value = TRUE;
@@ -6561,64 +6561,64 @@ static void test_COM(void)
     hr = CoCreateInstance(&CLSID_DirectPlay, (IUnknown*)0xdeadbeef, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void**)&dp4);
     ok(hr == CLASS_E_NOAGGREGATION || broken(hr == E_INVALIDARG),
-            "DirectPlay create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);
+            "DirectPlay create failed: %08lx, expected CLASS_E_NOAGGREGATION\n", hr);
     ok(!dp4 || dp4 == (IDirectPlay4*)0xdeadbeef, "dp4 = %p\n", dp4);
 
     /* Invalid RIID */
     hr = CoCreateInstance(&CLSID_DirectPlay, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectPlayLobby,
             (void**)&dp4);
-    ok(hr == E_NOINTERFACE, "DirectPlay create failed: %08x, expected E_NOINTERFACE\n", hr);
+    ok(hr == E_NOINTERFACE, "DirectPlay create failed: %08lx, expected E_NOINTERFACE\n", hr);
 
     /* Different refcount for all DirectPlay Interfaces */
     hr = CoCreateInstance(&CLSID_DirectPlay, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectPlay4,
             (void**)&dp4);
-    ok(hr == S_OK, "DirectPlay create failed: %08x, expected S_OK\n", hr);
+    ok(hr == S_OK, "DirectPlay create failed: %08lx, expected S_OK\n", hr);
     refcount = IDirectPlayX_AddRef(dp4);
-    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
 
     hr = IDirectPlayX_QueryInterface(dp4, &IID_IDirectPlay2A, (void**)&dp2A);
-    ok(hr == S_OK, "QueryInterface for IID_IDirectPlay2A failed: %08x\n", hr);
+    ok(hr == S_OK, "QueryInterface for IID_IDirectPlay2A failed: %08lx\n", hr);
     refcount = IDirectPlay2_AddRef(dp2A);
-    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
     IDirectPlay2_Release(dp2A);
 
     hr = IDirectPlayX_QueryInterface(dp4, &IID_IDirectPlay2, (void**)&dp2);
-    ok(hr == S_OK, "QueryInterface for IID_IDirectPlay2 failed: %08x\n", hr);
+    ok(hr == S_OK, "QueryInterface for IID_IDirectPlay2 failed: %08lx\n", hr);
     refcount = IDirectPlay2_AddRef(dp2);
-    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
     IDirectPlay2_Release(dp2);
 
     hr = IDirectPlayX_QueryInterface(dp4, &IID_IDirectPlay3A, (void**)&dp3A);
-    ok(hr == S_OK, "QueryInterface for IID_IDirectPlay3A failed: %08x\n", hr);
+    ok(hr == S_OK, "QueryInterface for IID_IDirectPlay3A failed: %08lx\n", hr);
     refcount = IDirectPlay3_AddRef(dp3A);
-    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
     IDirectPlay3_Release(dp3A);
 
     hr = IDirectPlayX_QueryInterface(dp4, &IID_IDirectPlay3, (void**)&dp3);
-    ok(hr == S_OK, "QueryInterface for IID_IDirectPlay3 failed: %08x\n", hr);
+    ok(hr == S_OK, "QueryInterface for IID_IDirectPlay3 failed: %08lx\n", hr);
     refcount = IDirectPlay3_AddRef(dp3);
-    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
     IDirectPlay3_Release(dp3);
 
     hr = IDirectPlayX_QueryInterface(dp4, &IID_IDirectPlay4A, (void**)&dp4A);
-    ok(hr == S_OK, "QueryInterface for IID_IDirectPlay4A failed: %08x\n", hr);
+    ok(hr == S_OK, "QueryInterface for IID_IDirectPlay4A failed: %08lx\n", hr);
     refcount = IDirectPlayX_AddRef(dp4A);
-    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
     IDirectPlayX_Release(dp4A);
 
     /* IDirectPlay and IUnknown share a refcount */
     hr = IDirectPlayX_QueryInterface(dp4, &IID_IDirectPlay, (void**)&dp);
-    ok(hr == S_OK, "QueryInterface for IID_IDirectPlay failed: %08x\n", hr);
+    ok(hr == S_OK, "QueryInterface for IID_IDirectPlay failed: %08lx\n", hr);
     refcount = IDirectPlayX_AddRef(dp);
-    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
     IDirectPlay_Release(dp);
 
     hr = IDirectPlayX_QueryInterface(dp4, &IID_IUnknown, (void**)&unk);
-    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08x\n", hr);
+    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08lx\n", hr);
     refcount = IUnknown_AddRef(unk);
-    ok(refcount == 3, "refcount == %u, expected 3\n", refcount);
+    ok(refcount == 3, "refcount == %lu, expected 3\n", refcount);
     refcount = IUnknown_Release(unk);
-    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
 
     IUnknown_Release(unk);
     IDirectPlay_Release(dp);
@@ -6629,7 +6629,7 @@ static void test_COM(void)
     IDirectPlay2_Release(dp2A);
     IDirectPlayX_Release(dp4);
     refcount = IDirectPlayX_Release(dp4);
-    ok(refcount == 0, "refcount == %u, expected 0\n", refcount);
+    ok(refcount == 0, "refcount == %lu, expected 0\n", refcount);
 }
 
 static void test_COM_dplobby(void)
@@ -6648,56 +6648,56 @@ static void test_COM_dplobby(void)
     hr = CoCreateInstance(&CLSID_DirectPlayLobby, (IUnknown*)0xdeadbeef, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void**)&dpl);
     ok(hr == CLASS_E_NOAGGREGATION || broken(hr == E_INVALIDARG),
-            "DirectPlayLobby create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);
+            "DirectPlayLobby create failed: %08lx, expected CLASS_E_NOAGGREGATION\n", hr);
     ok(!dpl || dpl == (IDirectPlayLobby*)0xdeadbeef, "dpl = %p\n", dpl);
 
     /* Invalid RIID */
     hr = CoCreateInstance(&CLSID_DirectPlayLobby, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectPlay,
             (void**)&dpl);
-    ok(hr == E_NOINTERFACE, "DirectPlayLobby create failed: %08x, expected E_NOINTERFACE\n", hr);
+    ok(hr == E_NOINTERFACE, "DirectPlayLobby create failed: %08lx, expected E_NOINTERFACE\n", hr);
 
     /* Different refcount for all DirectPlayLobby Interfaces */
     hr = CoCreateInstance(&CLSID_DirectPlayLobby, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectPlayLobby,
             (void**)&dpl);
-    ok(hr == S_OK, "DirectPlayLobby create failed: %08x, expected S_OK\n", hr);
+    ok(hr == S_OK, "DirectPlayLobby create failed: %08lx, expected S_OK\n", hr);
     refcount = IDirectPlayLobby_AddRef(dpl);
-    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
 
     hr = IDirectPlayLobby_QueryInterface(dpl, &IID_IDirectPlayLobbyA, (void**)&dplA);
-    ok(hr == S_OK, "QueryInterface for IID_IDirectPlayLobbyA failed: %08x\n", hr);
+    ok(hr == S_OK, "QueryInterface for IID_IDirectPlayLobbyA failed: %08lx\n", hr);
     refcount = IDirectPlayLobby_AddRef(dplA);
-    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
     IDirectPlayLobby_Release(dplA);
 
     hr = IDirectPlayLobby_QueryInterface(dpl, &IID_IDirectPlayLobby2, (void**)&dpl2);
-    ok(hr == S_OK, "QueryInterface for IID_IDirectPlayLobby2 failed: %08x\n", hr);
+    ok(hr == S_OK, "QueryInterface for IID_IDirectPlayLobby2 failed: %08lx\n", hr);
     refcount = IDirectPlayLobby_AddRef(dpl2);
-    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
     IDirectPlayLobby_Release(dpl2);
 
     hr = IDirectPlayLobby_QueryInterface(dpl, &IID_IDirectPlayLobby2A, (void**)&dpl2A);
-    ok(hr == S_OK, "QueryInterface for IID_IDirectPlayLobby2A failed: %08x\n", hr);
+    ok(hr == S_OK, "QueryInterface for IID_IDirectPlayLobby2A failed: %08lx\n", hr);
     refcount = IDirectPlayLobby_AddRef(dpl2A);
-    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
     IDirectPlayLobby_Release(dpl2A);
 
     hr = IDirectPlayLobby_QueryInterface(dpl, &IID_IDirectPlayLobby3, (void**)&dpl3);
-    ok(hr == S_OK, "QueryInterface for IID_IDirectPlayLobby3 failed: %08x\n", hr);
+    ok(hr == S_OK, "QueryInterface for IID_IDirectPlayLobby3 failed: %08lx\n", hr);
     refcount = IDirectPlayLobby_AddRef(dpl3);
-    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
     IDirectPlayLobby_Release(dpl3);
 
     hr = IDirectPlayLobby_QueryInterface(dpl, &IID_IDirectPlayLobby3A, (void**)&dpl3A);
-    ok(hr == S_OK, "QueryInterface for IID_IDirectPlayLobby3A failed: %08x\n", hr);
+    ok(hr == S_OK, "QueryInterface for IID_IDirectPlayLobby3A failed: %08lx\n", hr);
     refcount = IDirectPlayLobby_AddRef(dpl3A);
-    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
     IDirectPlayLobby_Release(dpl3A);
 
     /* IDirectPlayLobby and IUnknown share a refcount */
     hr = IDirectPlayX_QueryInterface(dpl, &IID_IUnknown, (void**)&unk);
-    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08x\n", hr);
+    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08lx\n", hr);
     refcount = IUnknown_AddRef(unk);
-    ok(refcount == 4, "refcount == %u, expected 4\n", refcount);
+    ok(refcount == 4, "refcount == %lu, expected 4\n", refcount);
     IDirectPlayLobby_Release(unk);
 
     IUnknown_Release(unk);
@@ -6708,7 +6708,7 @@ static void test_COM_dplobby(void)
     IDirectPlayLobby_Release(dplA);
     IDirectPlayLobby_Release(dpl);
     refcount = IDirectPlayLobby_Release(dpl);
-    ok(refcount == 0, "refcount == %u, expected 0\n", refcount);
+    ok(refcount == 0, "refcount == %lu, expected 0\n", refcount);
 }
 
 enum firewall_op
@@ -6745,18 +6745,18 @@ static BOOL is_firewall_enabled(void)
 
     hr = CoCreateInstance( &CLSID_NetFwMgr, NULL, CLSCTX_INPROC_SERVER, &IID_INetFwMgr,
                            (void **)&mgr );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %08lx\n", hr );
     if (hr != S_OK) goto done;
 
     hr = INetFwMgr_get_LocalPolicy( mgr, &policy );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %08lx\n", hr );
     if (hr != S_OK) goto done;
 
     hr = INetFwPolicy_get_CurrentProfile( policy, &profile );
     if (hr != S_OK) goto done;
 
     hr = INetFwProfile_get_FirewallEnabled( profile, &enabled );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %08lx\n", hr );
 
 done:
     if (policy) INetFwPolicy_Release( policy );
@@ -6794,23 +6794,23 @@ static HRESULT set_firewall( enum firewall_op op )
 
     hr = CoCreateInstance( &CLSID_NetFwMgr, NULL, CLSCTX_INPROC_SERVER, &IID_INetFwMgr,
                            (void **)&mgr );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %08lx\n", hr );
     if (hr != S_OK) goto done;
 
     hr = INetFwMgr_get_LocalPolicy( mgr, &policy );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %08lx\n", hr );
     if (hr != S_OK) goto done;
 
     hr = INetFwPolicy_get_CurrentProfile( policy, &profile );
     if (hr != S_OK) goto done;
 
     hr = INetFwProfile_get_AuthorizedApplications( profile, &apps );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %08lx\n", hr );
     if (hr != S_OK) goto done;
 
     hr = CoCreateInstance( &CLSID_NetFwAuthorizedApplication, NULL, CLSCTX_INPROC_SERVER,
                            &IID_INetFwAuthorizedApplication, (void **)&app );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %08lx\n", hr );
     if (hr != S_OK) goto done;
 
     hr = INetFwAuthorizedApplication_put_ProcessImageFileName( app, image );
@@ -6819,7 +6819,7 @@ static HRESULT set_firewall( enum firewall_op op )
     name = SysAllocString( L"dplay_client" );
     hr = INetFwAuthorizedApplication_put_Name( app, name );
     SysFreeString( name );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %08lx\n", hr );
     if (hr != S_OK) goto done;
 
     if (op == APP_ADD)
@@ -6833,7 +6833,7 @@ static HRESULT set_firewall( enum firewall_op op )
     INetFwAuthorizedApplication_Release( app );
     hr = CoCreateInstance( &CLSID_NetFwAuthorizedApplication, NULL, CLSCTX_INPROC_SERVER,
                            &IID_INetFwAuthorizedApplication, (void **)&app );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %08lx\n", hr );
     if (hr != S_OK) goto done;
 
     SysFreeString( image );
@@ -6844,7 +6844,7 @@ static HRESULT set_firewall( enum firewall_op op )
     name = SysAllocString( L"dplay_server" );
     hr = INetFwAuthorizedApplication_put_Name( app, name );
     SysFreeString( name );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %08lx\n", hr );
     if (hr != S_OK) goto done;
 
     if (op == APP_ADD)
@@ -6923,7 +6923,7 @@ START_TEST(dplayx)
         hr = set_firewall(APP_ADD);
         if (hr != S_OK)
         {
-            skip("can't authorize app in firewall %08x\n", hr);
+            skip("can't authorize app in firewall %08lx\n", hr);
             return;
         }
     }
