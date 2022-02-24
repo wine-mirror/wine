@@ -646,41 +646,6 @@ BOOL WINAPI BlockInput(BOOL fBlockIt)
 
 
 /***********************************************************************
- *		RegisterHotKey (USER32.@)
- */
-BOOL WINAPI RegisterHotKey(HWND hwnd,INT id,UINT modifiers,UINT vk)
-{
-    BOOL ret;
-    int replaced=0;
-
-    TRACE_(keyboard)("(%p,%d,0x%08x,%X)\n",hwnd,id,modifiers,vk);
-
-    if ((hwnd == NULL || WIN_IsCurrentThread(hwnd)) &&
-        !USER_Driver->pRegisterHotKey(hwnd, modifiers, vk))
-        return FALSE;
-
-    SERVER_START_REQ( register_hotkey )
-    {
-        req->window = wine_server_user_handle( hwnd );
-        req->id = id;
-        req->flags = modifiers;
-        req->vkey = vk;
-        if ((ret = !wine_server_call_err( req )))
-        {
-            replaced = reply->replaced;
-            modifiers = reply->flags;
-            vk = reply->vkey;
-        }
-    }
-    SERVER_END_REQ;
-
-    if (ret && replaced)
-        USER_Driver->pUnregisterHotKey(hwnd, modifiers, vk);
-
-    return ret;
-}
-
-/***********************************************************************
  *		LoadKeyboardLayoutW (USER32.@)
  */
 HKL WINAPI LoadKeyboardLayoutW( const WCHAR *name, UINT flags )

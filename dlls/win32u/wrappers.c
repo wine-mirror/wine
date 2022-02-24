@@ -833,6 +833,12 @@ UINT WINAPI NtUserMapVirtualKeyEx( UINT code, UINT type, HKL layout )
     return unix_funcs->pNtUserMapVirtualKeyEx( code, type, layout );
 }
 
+BOOL WINAPI NtUserRegisterHotKey( HWND hwnd, INT id, UINT modifiers, UINT vk )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserRegisterHotKey( hwnd, id, modifiers, vk );
+}
+
 BOOL WINAPI NtUserScrollDC( HDC hdc, INT dx, INT dy, const RECT *scroll, const RECT *clip,
                             HRGN ret_update_rgn, RECT *update_rect )
 {

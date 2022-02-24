@@ -188,6 +188,62 @@ done:
     pthread_mutex_unlock( &surfaces_lock );
 }
 
+/*******************************************************************
+ *           is_desktop_window
+ *
+ * Check if window is the desktop or the HWND_MESSAGE top parent.
+ */
+static BOOL is_desktop_window( HWND hwnd )
+{
+    struct user_thread_info *thread_info = get_user_thread_info();
+
+    if (!hwnd) return FALSE;
+    if (hwnd == thread_info->top_window) return TRUE;
+    if (hwnd == thread_info->msg_window) return TRUE;
+
+    if (!HIWORD(hwnd) || HIWORD(hwnd) == 0xffff)
+    {
+        if (LOWORD(thread_info->top_window) == LOWORD(hwnd)) return TRUE;
+        if (LOWORD(thread_info->msg_window) == LOWORD(hwnd)) return TRUE;
+    }
+    return FALSE;
+}
+
+/***********************************************************************
+ *           win_get_ptr
+ *
+ * Return a pointer to the WND structure if local to the process,
+ * or WND_OTHER_PROCESS if handle may be valid in other process.
+ * If ret value is a valid pointer, it must be released with WIN_ReleasePtr.
+ */
+static WND *get_win_ptr( HWND hwnd )
+{
+    WND *win;
+
+    if ((win = get_user_handle_ptr( hwnd, NTUSER_OBJ_WINDOW )) == WND_OTHER_PROCESS)
+    {
+        if (is_desktop_window( hwnd )) win = WND_DESKTOP;
+    }
+    return win;
+}
+
+/***********************************************************************
+ *           is_current_thread_window
+ *
+ * Check whether a given window belongs to the current process (and return the full handle).
+ */
+HWND is_current_thread_window( HWND hwnd )
+{
+    WND *win;
+    HWND ret = 0;
+
+    if (!(win = get_win_ptr( hwnd )) || win == WND_OTHER_PROCESS || win == WND_DESKTOP)
+        return 0;
+    if (win->tid == GetCurrentThreadId()) ret = win->obj.handle;
+    release_win_ptr( win );
+    return ret;
+}
+
 /***********************************************************************
  *           NtUserGetProp   (win32u.@)
  *

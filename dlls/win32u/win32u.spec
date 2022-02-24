@@ -1126,7 +1126,7 @@
 @ stub NtUserRegisterDManipHook
 @ stub NtUserRegisterEdgy
 @ stub NtUserRegisterErrorReportingDialog
-@ stub NtUserRegisterHotKey
+@ stdcall NtUserRegisterHotKey(long long long long)
 @ stub NtUserRegisterManipulationThread
 @ stub NtUserRegisterPointerDeviceNotifications
 @ stub NtUserRegisterPointerInputTarget

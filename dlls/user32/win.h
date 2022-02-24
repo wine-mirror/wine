@@ -76,9 +76,6 @@ static inline void WIN_ReleasePtr( WND *ptr )
     USER_Unlock();
 }
 
-#define WND_OTHER_PROCESS ((WND *)1)  /* returned by WIN_GetPtr on unknown window handles */
-#define WND_DESKTOP       ((WND *)2)  /* returned by WIN_GetPtr on the desktop window */
-
 extern LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL unicode ) DECLSPEC_HIDDEN;
 
 extern MINMAXINFO WINPOS_GetMinMaxInfo( HWND hwnd ) DECLSPEC_HIDDEN;

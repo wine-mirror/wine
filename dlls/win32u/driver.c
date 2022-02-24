@@ -976,6 +976,11 @@ static INT CDECL loaderdrv_ToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
     return load_driver()->pToUnicodeEx( virt, scan, state, str, size, flags, layout );
 }
 
+static BOOL CDECL loaderdrv_RegisterHotKey( HWND hwnd, UINT modifiers, UINT vk )
+{
+    return load_driver()->pRegisterHotKey( hwnd, modifiers, vk );
+}
+
 static void CDECL loaderdrv_UnregisterHotKey( HWND hwnd, UINT modifiers, UINT vk )
 {
     load_driver()->pUnregisterHotKey( hwnd, modifiers, vk );
@@ -1042,6 +1047,7 @@ static const struct user_driver_funcs lazy_load_driver =
     .pGetKeyboardLayoutList = loaderdrv_GetKeyboardLayoutList,
     .pMapVirtualKeyEx = loaderdrv_MapVirtualKeyEx,
     .pToUnicodeEx = loaderdrv_ToUnicodeEx,
+    .pRegisterHotKey = loaderdrv_RegisterHotKey,
     .pUnregisterHotKey = loaderdrv_UnregisterHotKey,
     .pVkKeyScanEx = loaderdrv_VkKeyScanEx,
     /* cursor/icon functions */

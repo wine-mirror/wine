@@ -210,6 +210,7 @@ struct unix_funcs
     BOOL     (WINAPI *pNtUserGetUpdatedClipboardFormats)( UINT *formats, UINT size, UINT *out_size );
     BOOL     (WINAPI *pNtUserIsClipboardFormatAvailable)( UINT format );
     UINT     (WINAPI *pNtUserMapVirtualKeyEx)( UINT code, UINT type, HKL layout );
+    BOOL     (WINAPI *pNtUserRegisterHotKey)( HWND hwnd, INT id, UINT modifiers, UINT vk );
     BOOL     (WINAPI *pNtUserScrollDC)( HDC hdc, INT dx, INT dy, const RECT *scroll, const RECT *clip,
                                         HRGN ret_update_rgn, RECT *update_rect );
     HPALETTE (WINAPI *pNtUserSelectPalette)( HDC hdc, HPALETTE hpal, WORD bkg );
@@ -269,14 +270,22 @@ extern POINT map_dpi_point( POINT pt, UINT dpi_from, UINT dpi_to ) DECLSPEC_HIDD
 extern RECT map_dpi_rect( RECT rect, UINT dpi_from, UINT dpi_to ) DECLSPEC_HIDDEN;
 extern HMONITOR monitor_from_point( POINT pt, DWORD flags, UINT dpi ) DECLSPEC_HIDDEN;
 extern HMONITOR monitor_from_rect( const RECT *rect, DWORD flags, UINT dpi ) DECLSPEC_HIDDEN;
-
-/* window.c */
-extern void flush_window_surfaces( BOOL idle ) DECLSPEC_HIDDEN;
-extern void register_window_surface( struct window_surface *old,
-                                     struct window_surface *new ) DECLSPEC_HIDDEN;
 extern void user_lock(void) DECLSPEC_HIDDEN;
 extern void user_unlock(void) DECLSPEC_HIDDEN;
 extern void user_check_not_lock(void) DECLSPEC_HIDDEN;
+
+/* window.c */
+struct tagWND;
+extern HWND is_current_thread_window( HWND hwnd ) DECLSPEC_HIDDEN;
+extern void flush_window_surfaces( BOOL idle ) DECLSPEC_HIDDEN;
+extern void register_window_surface( struct window_surface *old,
+                                     struct window_surface *new ) DECLSPEC_HIDDEN;
+
+/* to release pointers retrieved by win_get_ptr */
+static inline void release_win_ptr( struct tagWND *ptr )
+{
+    user_unlock();
+}
 
 extern void wrappers_init( unixlib_handle_t handle ) DECLSPEC_HIDDEN;
 extern NTSTATUS gdi_init(void) DECLSPEC_HIDDEN;

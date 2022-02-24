@@ -599,7 +599,7 @@
 @ stdcall RegisterClipboardFormatW(wstr)
 @ stdcall RegisterDeviceNotificationA(long ptr long)
 @ stdcall RegisterDeviceNotificationW(long ptr long)
-@ stdcall RegisterHotKey(long long long long)
+@ stdcall RegisterHotKey(long long long long) NtUserRegisterHotKey
 @ stdcall RegisterLogonProcess(long long)
 # @ stub RegisterMessagePumpHook
 @ stub RegisterNetworkCapabilities

@@ -914,6 +914,41 @@ BOOL WINAPI NtUserGetKeyboardLayoutName( WCHAR *name )
 }
 
 /***********************************************************************
+ *	     NtUserRegisterHotKey (win32u.@)
+ */
+BOOL WINAPI NtUserRegisterHotKey( HWND hwnd, INT id, UINT modifiers, UINT vk )
+{
+    BOOL ret;
+    int replaced = 0;
+
+    TRACE_(keyboard)( "(%p,%d,0x%08x,%X)\n", hwnd, id, modifiers, vk );
+
+    if ((!hwnd || is_current_thread_window( hwnd )) &&
+        !user_driver->pRegisterHotKey( hwnd, modifiers, vk ))
+        return FALSE;
+
+    SERVER_START_REQ( register_hotkey )
+    {
+        req->window = wine_server_user_handle( hwnd );
+        req->id = id;
+        req->flags = modifiers;
+        req->vkey = vk;
+        if ((ret = !wine_server_call_err( req )))
+        {
+            replaced = reply->replaced;
+            modifiers = reply->flags;
+            vk = reply->vkey;
+        }
+    }
+    SERVER_END_REQ;
+
+    if (ret && replaced)
+        user_driver->pUnregisterHotKey(hwnd, modifiers, vk);
+
+    return ret;
+}
+
+/***********************************************************************
  *	     NtUserUnregisterHotKey    (win32u.@)
  */
 BOOL WINAPI NtUserUnregisterHotKey( HWND hwnd, INT id )

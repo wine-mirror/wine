@@ -86,6 +86,9 @@ typedef struct tagWND
     DWORD              wExtra[1];     /* Window extra bytes */
 } WND;
 
+#define WND_OTHER_PROCESS ((WND *)1)  /* returned by WIN_GetPtr on unknown window handles */
+#define WND_DESKTOP       ((WND *)2)  /* returned by WIN_GetPtr on the desktop window */
+
 WND *next_thread_window_ptr( HWND *hwnd );
 
 /* this is the structure stored in TEB->Win32ClientInfo */
