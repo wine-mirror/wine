@@ -1852,7 +1852,7 @@ static void WIN_SendDestroyMsg( HWND hwnd )
     GUITHREADINFO info;
 
     info.cbSize = sizeof(info);
-    if (GetGUIThreadInfo( GetCurrentThreadId(), &info ))
+    if (NtUserGetGUIThreadInfo( GetCurrentThreadId(), &info ))
     {
         if (hwnd == info.hwndCaret) DestroyCaret();
         if (hwnd == info.hwndActive) WINPOS_ActivateOtherWindow( hwnd );

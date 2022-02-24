@@ -898,7 +898,7 @@ static HWND fix_caret(HWND hWnd, const RECT *scroll_rect, INT dx, INT dy,
     RECT rect, mapped_rcCaret;
 
     info.cbSize = sizeof(info);
-    if (!GetGUIThreadInfo( GetCurrentThreadId(), &info )) return 0;
+    if (!NtUserGetGUIThreadInfo( GetCurrentThreadId(), &info )) return 0;
     if (!info.hwndCaret) return 0;
     
     mapped_rcCaret = info.rcCaret;

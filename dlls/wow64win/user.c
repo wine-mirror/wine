@@ -455,3 +455,39 @@ NTSTATUS WINAPI wow64_NtUserGetForegroundWindow( UINT *args )
 {
     return HandleToUlong( NtUserGetForegroundWindow() );
 }
+
+NTSTATUS WINAPI wow64_NtUserGetGUIThreadInfo( UINT *args )
+{
+    DWORD id = get_ulong( &args );
+    struct
+    {
+        DWORD  cbSize;
+        DWORD  flags;
+        ULONG  hwndActive;
+        ULONG  hwndFocus;
+        ULONG  hwndCapture;
+        ULONG  hwndMenuOwner;
+        ULONG  hwndMoveSize;
+        ULONG  hwndCaret;
+        RECT   rcCaret;
+    } *info32 = get_ptr( &args );
+    GUITHREADINFO info;
+
+    if (info32->cbSize != sizeof(*info32))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    info.cbSize = sizeof(info);
+    if (!NtUserGetGUIThreadInfo( id, &info )) return FALSE;
+    info32->flags         = info.flags;
+    info32->hwndActive    = HandleToUlong( info.hwndActive );
+    info32->hwndFocus     = HandleToUlong( info.hwndFocus );
+    info32->hwndCapture   = HandleToUlong( info.hwndCapture );
+    info32->hwndMenuOwner = HandleToUlong( info.hwndMenuOwner );
+    info32->hwndMoveSize  = HandleToUlong( info.hwndMoveSize );
+    info32->hwndCaret     = HandleToUlong( info.hwndCaret );
+    info32->rcCaret       = info.rcCaret;
+    return TRUE;
+}

@@ -32,6 +32,7 @@ C_SRCS = \
 	input.c \
 	main.c \
 	mapping.c \
+	message.c \
 	opentype.c \
 	painting.c \
 	palette.c \

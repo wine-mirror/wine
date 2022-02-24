@@ -2408,7 +2408,7 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
     /* find the window to dispatch this mouse message to */
 
     info.cbSize = sizeof(info);
-    GetGUIThreadInfo( GetCurrentThreadId(), &info );
+    NtUserGetGUIThreadInfo( GetCurrentThreadId(), &info );
     if (info.hwndCapture)
     {
         hittest = HTCLIENT;
@@ -4556,45 +4556,6 @@ BOOL WINAPI IsGUIThread( BOOL convert )
 {
     FIXME( "%u: stub\n", convert );
     return TRUE;
-}
-
-
-/**********************************************************************
- *		GetGUIThreadInfo  (USER32.@)
- */
-BOOL WINAPI GetGUIThreadInfo( DWORD id, GUITHREADINFO *info )
-{
-    BOOL ret;
-
-    if (info->cbSize != sizeof(*info))
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
-
-    SERVER_START_REQ( get_thread_input )
-    {
-        req->tid = id;
-        if ((ret = !wine_server_call_err( req )))
-        {
-            info->flags          = 0;
-            info->hwndActive     = wine_server_ptr_handle( reply->active );
-            info->hwndFocus      = wine_server_ptr_handle( reply->focus );
-            info->hwndCapture    = wine_server_ptr_handle( reply->capture );
-            info->hwndMenuOwner  = wine_server_ptr_handle( reply->menu_owner );
-            info->hwndMoveSize   = wine_server_ptr_handle( reply->move_size );
-            info->hwndCaret      = wine_server_ptr_handle( reply->caret );
-            info->rcCaret.left   = reply->rect.left;
-            info->rcCaret.top    = reply->rect.top;
-            info->rcCaret.right  = reply->rect.right;
-            info->rcCaret.bottom = reply->rect.bottom;
-            if (reply->menu_owner) info->flags |= GUI_INMENUMODE;
-            if (reply->move_size) info->flags |= GUI_INMOVESIZE;
-            if (reply->caret) info->flags |= GUI_CARETBLINKING;
-        }
-    }
-    SERVER_END_REQ;
-    return ret;
 }
 
 

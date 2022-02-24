@@ -305,7 +305,7 @@
 @ stdcall GetForegroundWindow() NtUserGetForegroundWindow
 @ stdcall GetGestureConfig(long long long ptr ptr long)
 @ stdcall GetGestureInfo(long ptr)
-@ stdcall GetGUIThreadInfo(long ptr)
+@ stdcall GetGUIThreadInfo(long ptr) NtUserGetGUIThreadInfo
 @ stdcall GetGuiResources(long long)
 @ stdcall GetIconInfo(long ptr)
 @ stdcall GetIconInfoExA(long ptr)

@@ -105,6 +105,7 @@
     SYSCALL_ENTRY( NtUserGetDoubleClickTime ) \
     SYSCALL_ENTRY( NtUserGetDpiForMonitor ) \
     SYSCALL_ENTRY( NtUserGetForegroundWindow ) \
+    SYSCALL_ENTRY( NtUserGetGUIThreadInfo ) \
     SYSCALL_ENTRY( NtUserGetIconSize ) \
     SYSCALL_ENTRY( NtUserGetKeyState ) \
     SYSCALL_ENTRY( NtUserGetKeyboardLayout ) \

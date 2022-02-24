@@ -211,6 +211,7 @@ LONG    WINAPI NtUserGetDisplayConfigBufferSizes( UINT32 flags, UINT32 *num_path
 UINT    WINAPI NtUserGetDoubleClickTime(void);
 BOOL    WINAPI NtUserGetDpiForMonitor( HMONITOR monitor, UINT type, UINT *x, UINT *y );
 HWND    WINAPI NtUserGetForegroundWindow(void);
+BOOL    WINAPI NtUserGetGUIThreadInfo( DWORD id, GUITHREADINFO *info );
 BOOL    WINAPI NtUserGetIconInfo( HICON icon, ICONINFO *info, UNICODE_STRING *module,
                                   UNICODE_STRING *res_name, DWORD *bpp, LONG unk );
 BOOL    WINAPI NtUserGetIconSize( HICON handle, UINT step, LONG *width, LONG *height );
