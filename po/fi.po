@@ -6950,54 +6950,40 @@ msgid "This network connection does not exist.\n"
 msgstr "Tätä verkkoyhteyttä ei ole.\n"
 
 #: dlls/kernel32/winerror.mc:3748
-#, fuzzy
-#| msgid "Invalid at interrupt time.\n"
 msgid "Call interrupted.\n"
-msgstr "Keskeytysaikana virheellinen.\n"
+msgstr "Kutsu keskeytetty.\n"
 
 #: dlls/kernel32/winerror.mc:3753
-#, fuzzy
-#| msgid "Invalid handle.\n"
 msgid "Invalid file handle.\n"
-msgstr "Kahva ei kelpaa.\n"
+msgstr "Tiedoston kahva ei kelpaa.\n"
 
 #: dlls/kernel32/winerror.mc:3763
-#, fuzzy
-#| msgid "Invalid network address.\n"
 msgid "Invalid pointer address.\n"
-msgstr "Verkko-osoite ei kelpaa.\n"
+msgstr "Osoittimen osoite ei kelpaa.\n"
 
 #: dlls/kernel32/winerror.mc:3768
-#, fuzzy
-#| msgid "Invalid name.\n"
 msgid "Invalid argument.\n"
-msgstr "Nimi ei kelpaa.\n"
+msgstr "Argumentti ei kelpaa.\n"
 
 #: dlls/kernel32/winerror.mc:3778
 msgid "Connection reset by peer.\n"
 msgstr "Vastapuoli nollasi yhteyden.\n"
 
 #: dlls/kernel32/winerror.mc:3788
-#, fuzzy
-#| msgid "Point not found.\n"
 msgid "Host not found.\n"
-msgstr "Pistettä ei löydy.\n"
+msgstr "Isäntää ei löydy.\n"
 
 #: dlls/kernel32/winerror.mc:3793
-#, fuzzy
-#| msgid "Attribute is not found.\n"
 msgid "Nonauthoritative host not found.\n"
-msgstr "Attribuuttia ei löydy.\n"
+msgstr "Isäntää ei löydy (ei-autoritatiivinen).\n"
 
 #: dlls/kernel32/winerror.mc:3798
-#, fuzzy
-#| msgid "Unrecoverable error occurred.\n"
 msgid "Nonrecoverable error.\n"
-msgstr "On tapahtunut peruuttamaton virhe.\n"
+msgstr "Peruuttamaton virhe.\n"
 
 #: dlls/kernel32/winerror.mc:3803
 msgid "Name valid, no data record.\n"
-msgstr ""
+msgstr "Nimi kelpaa, ei tietuetta.\n"
 
 #: dlls/kernel32/winerror.mc:3817
 msgid "Not implemented.\n"
@@ -18357,8 +18343,8 @@ msgid ""
 msgstr ""
 "Jos tätä ongelmaa ei esiinny Windowsin kanssa eikä sitä ole vielä "
 "raportoitu, voit tallentaa yksityiskohtaisemmat tiedot tiedostoon Tallenna "
-"nimellä -kohdassa ja sitten <a href=\"https://wiki.winehq.org/Bugs"
-"\">lähettää virheraportin</a> ja liittää tiedoston raporttiin."
+"nimellä -kohdassa ja sitten <a href=\"https://wiki.winehq.org/"
+"Bugs\">lähettää virheraportin</a> ja liittää tiedoston raporttiin."
 
 #: programs/winedbg/winedbg.rc:40
 msgid ""
