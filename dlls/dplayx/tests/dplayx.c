@@ -45,11 +45,15 @@ static HRESULT (WINAPI *pDirectPlayCreate)( GUID *GUID, LPDIRECTPLAY *lplpDP, IU
     ok( (result != NULL) && (!strcmp(expected, result)),        \
         "expected=%s got=%s\n",                                 \
         expected, result );
-#define checkFlags(expected, result, flags)     \
-    ok( (expected) == (result),                 \
-        "expected=0x%08x(%s) got=0x%08x(%s)\n", \
-        expected, dwFlags2str(expected, flags), \
+static LPCSTR dwFlags2str(DWORD dwFlags, DWORD flagType);
+#define checkFlags(expected, result, flags) checkFlags_(__LINE__, expected, result, flags)
+static void checkFlags_(unsigned line, DWORD expected, DWORD result, DWORD flags)
+{
+    ok_(__FILE__, line)( expected == result,
+        "expected=0x%08x(%s) got=0x%08x(%s)\n",
+        expected, dwFlags2str(expected, flags),
         result, dwFlags2str(result, flags) );
+}
 #define checkGuid(expected, result)             \
     ok( IsEqualGUID(expected, result),          \
         "expected=%s got=%s\n",                 \
