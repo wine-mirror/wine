@@ -815,6 +815,23 @@ BOOL wined3d_texture_load_location(struct wined3d_texture *texture,
         return TRUE;
     }
 
+    if (current & WINED3D_LOCATION_CLEARED)
+    {
+        struct wined3d_bo_address addr;
+
+        /* FIXME: Clear textures on the GPU if possible. */
+
+        if (!wined3d_texture_prepare_location(texture, sub_resource_idx, context, WINED3D_LOCATION_SYSMEM))
+            return FALSE;
+        wined3d_texture_get_bo_address(texture, sub_resource_idx, &addr, WINED3D_LOCATION_SYSMEM);
+        memset(addr.addr, 0, texture->sub_resources[sub_resource_idx].size);
+        wined3d_texture_validate_location(texture, sub_resource_idx, WINED3D_LOCATION_SYSMEM);
+        current |= WINED3D_LOCATION_SYSMEM;
+
+        if (current & location)
+            return TRUE;
+    }
+
     if (!current)
     {
         ERR("Sub-resource %u of texture %p does not have any up to date location.\n",
