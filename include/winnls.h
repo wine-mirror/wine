@@ -316,6 +316,9 @@ extern "C" {
 #define LOCALE_SSHORTTIME           0x0079
 #define LOCALE_SOPENTYPELANGUAGETAG 0X007A
 #define LOCALE_SSORTLOCALE          0x007B
+#define LOCALE_SRELATIVELONGDATE    0x007C
+#define LOCALE_SSHORTESTAM          0x007E
+#define LOCALE_SSHORTESTPM          0x007F
 
 #define LOCALE_IDEFAULTEBCDICCODEPAGE 0x1012
 #define LOCALE_IPAPERSIZE             0x100A
@@ -538,6 +541,9 @@ static const WCHAR LOCALE_NAME_SYSTEM_DEFAULT[] = {'!','s','y','s','-','d','e','
 #define CAL_SSHORTESTDAYNAME7  0x37
 #define CAL_SMONTHDAY          0x38
 #define CAL_SABBREVERASTRING   0x39
+#define CAL_SRELATIVELONGDATE  0x3a
+#define CAL_SENGLISHERANAME    0x3b
+#define CAL_SENGLISHABBREVERANAME 0x3c
 
 /* Calendar types */
 #define CAL_GREGORIAN              1
