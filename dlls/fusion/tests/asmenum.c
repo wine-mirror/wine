@@ -176,7 +176,7 @@ static void test_CreateAssemblyEnum(void)
     to_widechar(namestr, "wine");
     asmname = NULL;
     hr = pCreateAssemblyNameObject(&asmname, namestr, CANOF_PARSE_DISPLAY_NAME, NULL);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(asmname != NULL, "Expected non-NULL asmname\n");
 
     /* pEnum is NULL */
@@ -184,13 +184,13 @@ static void test_CreateAssemblyEnum(void)
     {
         /* Crashes on .NET 1.x */
         hr = pCreateAssemblyEnum(NULL, NULL, asmname, ASM_CACHE_GAC, NULL);
-        ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+        ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08lx\n", hr);
     }
 
     /* pName is NULL */
     asmenum = NULL;
     hr = pCreateAssemblyEnum(&asmenum, NULL, NULL, ASM_CACHE_GAC, NULL);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(asmenum != NULL, "Expected non-NULL asmenum\n");
 
     IAssemblyEnum_Release(asmenum);
@@ -198,14 +198,14 @@ static void test_CreateAssemblyEnum(void)
     /* dwFlags is ASM_CACHE_ROOT */
     asmenum = (IAssemblyEnum *)0xdeadbeef;
     hr = pCreateAssemblyEnum(&asmenum, NULL, NULL, ASM_CACHE_ROOT, NULL);
-    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08lx\n", hr);
     ok(asmenum == (IAssemblyEnum *)0xdeadbeef,
        "Expected asmenum to be unchanged, got %p\n", asmenum);
 
     /* invalid dwFlags */
     asmenum = (IAssemblyEnum *)0xdeadbeef;
     hr = pCreateAssemblyEnum(&asmenum, NULL, NULL, 0, NULL);
-    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08lx\n", hr);
     ok(asmenum == (IAssemblyEnum *)0xdeadbeef,
        "Expected asmenum to be unchanged, got %p\n", asmenum);
 
@@ -306,7 +306,7 @@ static void test_enumerate(void)
 
     size = MAX_PATH;
     hr = pGetCachePath(ASM_CACHE_GAC, buf, &size);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
 
     to_multibyte(path, buf);
     lstrcatA(path, "_32");
@@ -325,7 +325,7 @@ static void test_enumerate(void)
 
     asmenum = NULL;
     hr = pCreateAssemblyEnum(&asmenum, NULL, NULL, ASM_CACHE_GAC, NULL);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(asmenum != NULL, "Expected non-NULL asmenum\n");
 
     while (IAssemblyEnum_GetNextAssembly(asmenum, NULL, &next, 0) == S_OK)
@@ -356,7 +356,7 @@ static void test_enumerate(void)
     /* enumeration is exhausted */
     next = (IAssemblyName *)0xdeadbeef;
     hr = IAssemblyEnum_GetNextAssembly(asmenum, NULL, &next, 0);
-    ok(hr == S_FALSE, "Expected S_FALSE, got %08x\n", hr);
+    ok(hr == S_FALSE, "Expected S_FALSE, got %08lx\n", hr);
     ok(next == (IAssemblyName *)0xdeadbeef,
        "Expected next to be unchanged, got %p\n", next);
 
@@ -395,7 +395,7 @@ static void test_enumerate_name(void)
 
     size = MAX_PATH;
     hr = pGetCachePath(ASM_CACHE_GAC, buf, &size);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
 
     to_multibyte(gac, buf);
     create_full_path(gac);
@@ -437,23 +437,23 @@ static void test_enumerate_name(void)
     to_widechar(namestr, "wine");
     asmname = NULL;
     hr = pCreateAssemblyNameObject(&asmname, namestr, CANOF_PARSE_DISPLAY_NAME, NULL);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(asmname != NULL, "Expected non-NULL asmname\n");
 
     asmenum = NULL;
     hr = pCreateAssemblyEnum(&asmenum, NULL, asmname, ASM_CACHE_GAC, NULL);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(asmenum != NULL, "Expected non-NULL asmenum\n");
 
     next = NULL;
     hr = IAssemblyEnum_GetNextAssembly(asmenum, NULL, &next, 0);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(next != NULL, "Expected non-NULL next\n");
 
     size = MAX_PATH;
     hr = IAssemblyName_GetDisplayName(next, buf, &size, 0);
     to_multibyte(disp, buf);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(!lstrcmpA(disp, exp[0]),
        "Expected \"%s\" or \"%s\", got \"%s\"\n", exp[0], exp[1], disp);
 
@@ -461,13 +461,13 @@ static void test_enumerate_name(void)
 
     next = NULL;
     hr = IAssemblyEnum_GetNextAssembly(asmenum, NULL, &next, 0);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(next != NULL, "Expected non-NULL next\n");
 
     size = MAX_PATH;
     hr = IAssemblyName_GetDisplayName(next, buf, &size, 0);
     to_multibyte(disp, buf);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(!lstrcmpA(disp, exp[1]) ||
        !lstrcmpA(disp, exp[2]), /* Win98 */
        "Expected \"%s\" or \"%s\", got \"%s\"\n", exp[1], exp[2], disp);
@@ -476,13 +476,13 @@ static void test_enumerate_name(void)
 
     next = NULL;
     hr = IAssemblyEnum_GetNextAssembly(asmenum, NULL, &next, 0);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(next != NULL, "Expected non-NULL next\n");
 
     size = MAX_PATH;
     hr = IAssemblyName_GetDisplayName(next, buf, &size, 0);
     to_multibyte(disp, buf);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(!lstrcmpA(disp, exp[2]) ||
        !lstrcmpA(disp, exp[1]), /* Win98 */
        "Expected \"%s\" or \"%s\", got \"%s\"\n", exp[2], exp[1], disp);
@@ -491,7 +491,7 @@ static void test_enumerate_name(void)
 
     next = (IAssemblyName *)0xdeadbeef;
     hr = IAssemblyEnum_GetNextAssembly(asmenum, NULL, &next, 0);
-    ok(hr == S_FALSE, "Expected S_FALSE, got %08x\n", hr);
+    ok(hr == S_FALSE, "Expected S_FALSE, got %08lx\n", hr);
     ok(next == (IAssemblyName *)0xdeadbeef,
        "Expected next to be unchanged, got %p\n", next);
 
@@ -502,23 +502,23 @@ static void test_enumerate_name(void)
     to_widechar(namestr, "Wine, Version=1.0.1.2");
     asmname = NULL;
     hr = pCreateAssemblyNameObject(&asmname, namestr, CANOF_PARSE_DISPLAY_NAME, NULL);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(asmname != NULL, "Expected non-NULL asmname\n");
 
     asmenum = NULL;
     hr = pCreateAssemblyEnum(&asmenum, NULL, asmname, ASM_CACHE_GAC, NULL);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(asmenum != NULL, "Expected non-NULL asmenum\n");
 
     next = NULL;
     hr = IAssemblyEnum_GetNextAssembly(asmenum, NULL, &next, 0);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(next != NULL, "Expected non-NULL next\n");
 
     size = MAX_PATH;
     hr = IAssemblyName_GetDisplayName(next, buf, &size, 0);
     to_multibyte(disp, buf);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(!lstrcmpA(disp, exp[4]) ||
        !lstrcmpA(disp, exp[5]), /* Win98 */
        "Expected \"%s\" or \"%s\", got \"%s\"\n", exp[4], exp[5], disp);
@@ -527,13 +527,13 @@ static void test_enumerate_name(void)
 
     next = NULL;
     hr = IAssemblyEnum_GetNextAssembly(asmenum, NULL, &next, 0);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(next != NULL, "Expected non-NULL next\n");
 
     size = MAX_PATH;
     hr = IAssemblyName_GetDisplayName(next, buf, &size, 0);
     to_multibyte(disp, buf);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(!lstrcmpA(disp, exp[5]) ||
        !lstrcmpA(disp, exp[4]), /* Win98 */
        "Expected \"%s\" or \"%s\", got \"%s\"\n", exp[5], exp[4], disp);
@@ -542,7 +542,7 @@ static void test_enumerate_name(void)
 
     next = (IAssemblyName *)0xdeadbeef;
     hr = IAssemblyEnum_GetNextAssembly(asmenum, NULL, &next, 0);
-    ok(hr == S_FALSE, "Expected S_FALSE, got %08x\n", hr);
+    ok(hr == S_FALSE, "Expected S_FALSE, got %08lx\n", hr);
     ok(next == (IAssemblyName *)0xdeadbeef,
        "Expected next to be unchanged, got %p\n", next);
 
@@ -553,43 +553,43 @@ static void test_enumerate_name(void)
     to_widechar(namestr, "Wine, PublicKeyToken=16a3fcd171e93a8d");
     asmname = NULL;
     hr = pCreateAssemblyNameObject(&asmname, namestr, CANOF_PARSE_DISPLAY_NAME, NULL);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(asmname != NULL, "Expected non-NULL asmname\n");
 
     asmenum = NULL;
     hr = pCreateAssemblyEnum(&asmenum, NULL, asmname, ASM_CACHE_GAC, NULL);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(asmenum != NULL, "Expected non-NULL asmenum\n");
 
     next = NULL;
     hr = IAssemblyEnum_GetNextAssembly(asmenum, NULL, &next, 0);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(next != NULL, "Expected non-NULL next\n");
 
     size = MAX_PATH;
     hr = IAssemblyName_GetDisplayName(next, buf, &size, 0);
     to_multibyte(disp, buf);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(!lstrcmpA(disp, exp[3]), "Expected \"%s\", got \"%s\"\n", exp[3], disp);
 
     IAssemblyName_Release(next);
 
     next = NULL;
     hr = IAssemblyEnum_GetNextAssembly(asmenum, NULL, &next, 0);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(next != NULL, "Expected non-NULL next\n");
 
     size = MAX_PATH;
     hr = IAssemblyName_GetDisplayName(next, buf, &size, 0);
     to_multibyte(disp, buf);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(!lstrcmpA(disp, exp[5]), "Expected \"%s\", got \"%s\"\n", exp[5], disp);
 
     IAssemblyName_Release(next);
 
     next = (IAssemblyName *)0xdeadbeef;
     hr = IAssemblyEnum_GetNextAssembly(asmenum, NULL, &next, 0);
-    ok(hr == S_FALSE, "Expected S_FALSE, got %08x\n", hr);
+    ok(hr == S_FALSE, "Expected S_FALSE, got %08lx\n", hr);
     ok(next == (IAssemblyName *)0xdeadbeef,
        "Expected next to be unchanged, got %p\n", next);
 
@@ -600,36 +600,36 @@ static void test_enumerate_name(void)
     to_widechar(namestr, "wine, Culture=neutral");
     asmname = NULL;
     hr = pCreateAssemblyNameObject(&asmname, namestr, CANOF_PARSE_DISPLAY_NAME, NULL);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(asmname != NULL, "Expected non-NULL asmname\n");
 
     asmenum = NULL;
     hr = pCreateAssemblyEnum(&asmenum, NULL, asmname, ASM_CACHE_GAC, NULL);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(asmenum != NULL, "Expected non-NULL asmenum\n");
 
     next = NULL;
     hr = IAssemblyEnum_GetNextAssembly(asmenum, NULL, &next, 0);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(next != NULL, "Expected non-NULL next\n");
 
     size = MAX_PATH;
     hr = IAssemblyName_GetDisplayName(next, buf, &size, 0);
     to_multibyte(disp, buf);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(!lstrcmpA(disp, exp[0]), "Expected \"%s\", got \"%s\"\n", exp[0], disp);
 
     IAssemblyName_Release(next);
 
     next = NULL;
     hr = IAssemblyEnum_GetNextAssembly(asmenum, NULL, &next, 0);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(next != NULL, "Expected non-NULL next\n");
 
     size = MAX_PATH;
     hr = IAssemblyName_GetDisplayName(next, buf, &size, 0);
     to_multibyte(disp, buf);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(!lstrcmpA(disp, exp[1]) ||
        !lstrcmpA(disp, exp[2]), /* Win98 */
        "Expected \"%s\" or \"%s\", got \"%s\"\n", exp[1], exp[2], disp);
@@ -638,13 +638,13 @@ static void test_enumerate_name(void)
 
     next = NULL;
     hr = IAssemblyEnum_GetNextAssembly(asmenum, NULL, &next, 0);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(next != NULL, "Expected non-NULL next\n");
 
     size = MAX_PATH;
     hr = IAssemblyName_GetDisplayName(next, buf, &size, 0);
     to_multibyte(disp, buf);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok(!lstrcmpA(disp, exp[2]) ||
        !lstrcmpA(disp, exp[1]), /* Win98 */
        "Expected \"%s\" or \"%s\", got \"%s\"\n", exp[2], exp[1], disp);
@@ -653,7 +653,7 @@ static void test_enumerate_name(void)
 
     next = (IAssemblyName *)0xdeadbeef;
     hr = IAssemblyEnum_GetNextAssembly(asmenum, NULL, &next, 0);
-    ok(hr == S_FALSE, "Expected S_FALSE, got %08x\n", hr);
+    ok(hr == S_FALSE, "Expected S_FALSE, got %08lx\n", hr);
     ok(next == (IAssemblyName *)0xdeadbeef,
        "Expected next to be unchanged, got %p\n", next);
 

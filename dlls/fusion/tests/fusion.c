@@ -88,25 +88,25 @@ static void test_GetCachePath(void)
     /* NULL pwzCachePath, pcchPath is 0 */
     size = 0;
     hr = pGetCachePath(ASM_CACHE_GAC, NULL, &size);
-    ok(hr == E_NOT_SUFFICIENT_BUFFER, "Expected E_NOT_SUFFICIENT_BUFFER, got %08x\n", hr);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "Expected E_NOT_SUFFICIENT_BUFFER, got %08lx\n", hr);
     ok(size == lstrlenW(cachepath) + 1,
-       "Expected %d, got %d\n", lstrlenW(cachepath) + 1, size);
+       "Expected %d, got %ld\n", lstrlenW(cachepath) + 1, size);
 
     /* NULL pwszCachePath, pcchPath is MAX_PATH */
     size = MAX_PATH;
     hr = pGetCachePath(ASM_CACHE_GAC, NULL, &size);
-    ok(hr == E_NOT_SUFFICIENT_BUFFER, "Expected E_NOT_SUFFICIENT_BUFFER, got %08x\n", hr);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "Expected E_NOT_SUFFICIENT_BUFFER, got %08lx\n", hr);
     ok(size == lstrlenW(cachepath) + 1,
-       "Expected %d, got %d\n", lstrlenW(cachepath) + 1, size);
+       "Expected %d, got %ld\n", lstrlenW(cachepath) + 1, size);
 
     /* both pwszCachePath and pcchPath NULL */
     hr = pGetCachePath(ASM_CACHE_GAC, NULL, NULL);
-    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08lx\n", hr);
 
     /* NULL pcchPath */
     lstrcpyW(path, L"nochange");
     hr = pGetCachePath(ASM_CACHE_GAC, path, NULL);
-    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08lx\n", hr);
     ok(!lstrcmpW(L"nochange", path), "Expected %s,  got %s\n", wine_dbgstr_w(L"nochange"),
        wine_dbgstr_w(path));
 
@@ -114,14 +114,14 @@ static void test_GetCachePath(void)
     lstrcpyW(path, L"nochange");
     size = MAX_PATH;
     hr = pGetCachePath(ASM_CACHE_GAC, path, &size);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
     ok( !lstrcmpW( cachepath, path ), "Expected %s,  got %s\n", wine_dbgstr_w(cachepath), wine_dbgstr_w(path));
 
     /* pcchPath has no room for NULL terminator */
     lstrcpyW(path, L"nochange");
     size = lstrlenW(cachepath);
     hr = pGetCachePath(ASM_CACHE_GAC, path, &size);
-    ok(hr == E_NOT_SUFFICIENT_BUFFER, "Expected E_NOT_SUFFICIENT_BUFFER, got %08x\n", hr);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "Expected E_NOT_SUFFICIENT_BUFFER, got %08lx\n", hr);
     ok(!lstrcmpW(L"nochange", path), "Expected %s,  got %s\n", wine_dbgstr_w(L"nochange"),
        wine_dbgstr_w(path));
 
@@ -134,7 +134,7 @@ static void test_GetCachePath(void)
     hr = pGetCachePath(ASM_CACHE_ROOT, path, &size);
     ok(hr == S_OK ||
        broken(hr == E_INVALIDARG), /* .NET 1.1 */
-       "Expected S_OK, got %08x\n", hr);
+       "Expected S_OK, got %08lx\n", hr);
     if (hr == S_OK)
         ok( !lstrcmpW( cachepath, path ), "Expected %s,  got %s\n", wine_dbgstr_w(cachepath), wine_dbgstr_w(path));
 
@@ -170,7 +170,7 @@ static void test_GetCachePath(void)
         lstrcpyW(path, L"nochange");
         size = MAX_PATH;
         hr = pGetCachePath(ASM_CACHE_ZAP, path, &size);
-        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+        ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
         ok( !lstrcmpW( cachepath, path ), "Expected %s,  got %s\n", wine_dbgstr_w(cachepath), wine_dbgstr_w(path));
     }
 
@@ -178,7 +178,7 @@ static void test_GetCachePath(void)
     lstrcpyW(path, L"nochange");
     size = MAX_PATH;
     hr = pGetCachePath(ASM_CACHE_GAC | ASM_CACHE_ROOT, path, &size);
-    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08lx\n", hr);
     ok(!lstrcmpW(L"nochange", path), "Expected %s,  got %s\n", wine_dbgstr_w(L"nochange"),
        wine_dbgstr_w(path));
 }
