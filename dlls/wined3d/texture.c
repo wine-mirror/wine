@@ -737,6 +737,32 @@ void wined3d_texture_invalidate_location(struct wined3d_texture *texture,
                 sub_resource_idx, texture);
 }
 
+void wined3d_texture_get_bo_address(const struct wined3d_texture *texture,
+        unsigned int sub_resource_idx, struct wined3d_bo_address *data, DWORD location)
+{
+    struct wined3d_texture_sub_resource *sub_resource = &texture->sub_resources[sub_resource_idx];
+
+    if (location == WINED3D_LOCATION_BUFFER)
+    {
+        data->addr = NULL;
+        data->buffer_object = &sub_resource->bo.b;
+    }
+    else
+    {
+        assert(location == WINED3D_LOCATION_SYSMEM);
+        if (sub_resource->user_memory)
+        {
+            data->addr = sub_resource->user_memory;
+        }
+        else
+        {
+            data->addr = texture->resource.heap_memory;
+            data->addr += sub_resource->offset;
+        }
+        data->buffer_object = 0;
+    }
+}
+
 void wined3d_texture_clear_dirty_regions(struct wined3d_texture *texture)
 {
     unsigned int i;
@@ -804,8 +830,8 @@ BOOL wined3d_texture_load_location(struct wined3d_texture *texture,
 
         if (!wined3d_texture_prepare_location(texture, sub_resource_idx, context, location))
             return FALSE;
-        wined3d_texture_get_memory(texture, sub_resource_idx, &source, current);
-        wined3d_texture_get_memory(texture, sub_resource_idx, &destination, location);
+        wined3d_texture_get_bo_address(texture, sub_resource_idx, &source, (current & wined3d_texture_sysmem_locations));
+        wined3d_texture_get_bo_address(texture, sub_resource_idx, &destination, location);
         range.offset = 0;
         range.size = texture->sub_resources[sub_resource_idx].size;
         wined3d_context_copy_bo_address(context, &destination, &source, 1, &range);
@@ -820,34 +846,21 @@ BOOL wined3d_texture_load_location(struct wined3d_texture *texture,
     return ret;
 }
 
-void wined3d_texture_get_memory(struct wined3d_texture *texture, unsigned int sub_resource_idx,
+static void wined3d_texture_get_memory(struct wined3d_texture *texture, unsigned int sub_resource_idx,
         struct wined3d_bo_address *data, DWORD locations)
 {
-    struct wined3d_texture_sub_resource *sub_resource;
-
     TRACE("texture %p, sub_resource_idx %u, data %p, locations %s.\n",
             texture, sub_resource_idx, data, wined3d_debug_location(locations));
 
-    sub_resource = &texture->sub_resources[sub_resource_idx];
     if (locations & WINED3D_LOCATION_BUFFER)
     {
-        data->addr = NULL;
-        data->buffer_object = &sub_resource->bo.b;
+        wined3d_texture_get_bo_address(texture, sub_resource_idx, data, WINED3D_LOCATION_BUFFER);
         return;
     }
 
     if (locations & WINED3D_LOCATION_SYSMEM)
     {
-        if (texture->sub_resources[sub_resource_idx].user_memory)
-        {
-            data->addr = texture->sub_resources[sub_resource_idx].user_memory;
-        }
-        else
-        {
-            data->addr = texture->resource.heap_memory;
-            data->addr += sub_resource->offset;
-        }
-        data->buffer_object = 0;
+        wined3d_texture_get_bo_address(texture, sub_resource_idx, data, WINED3D_LOCATION_SYSMEM);
         return;
     }
 
@@ -1085,7 +1098,7 @@ static void wined3d_texture_create_dc(void *object)
     }
     wined3d_texture_invalidate_location(texture, sub_resource_idx, ~texture->resource.map_binding);
     wined3d_texture_get_pitch(texture, level, &row_pitch, &slice_pitch);
-    wined3d_texture_get_memory(texture, sub_resource_idx, &data, texture->resource.map_binding);
+    wined3d_texture_get_bo_address(texture, sub_resource_idx, &data, texture->resource.map_binding);
     if (data.buffer_object)
     {
         if (!context)
@@ -1158,7 +1171,7 @@ static void wined3d_texture_destroy_dc(void *object)
     dc_info->dc = NULL;
     dc_info->bitmap = NULL;
 
-    wined3d_texture_get_memory(texture, sub_resource_idx, &data, texture->resource.map_binding);
+    wined3d_texture_get_bo_address(texture, sub_resource_idx, &data, texture->resource.map_binding);
     if (data.buffer_object)
     {
         context = context_acquire(device, NULL, 0);
@@ -2998,7 +3011,7 @@ static BOOL wined3d_texture_gl_load_sysmem(struct wined3d_texture_gl *texture_gl
         unsigned int src_location;
 
         level = sub_resource_idx % texture_gl->t.level_count;
-        wined3d_texture_get_memory(&texture_gl->t, sub_resource_idx, &data, dst_location);
+        wined3d_texture_get_bo_address(&texture_gl->t, sub_resource_idx, &data, dst_location);
         src_location = sub_resource->locations & WINED3D_LOCATION_TEXTURE_RGB
                 ? WINED3D_LOCATION_TEXTURE_RGB : WINED3D_LOCATION_TEXTURE_SRGB;
         wined3d_texture_get_level_box(&texture_gl->t, level, &src_box);
@@ -3573,7 +3586,7 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
             && (!(flags & WINED3D_MAP_NO_DIRTY_UPDATE) || (resource->usage & WINED3DUSAGE_DYNAMIC)))
         wined3d_texture_invalidate_location(texture, sub_resource_idx, ~resource->map_binding);
 
-    wined3d_texture_get_memory(texture, sub_resource_idx, &data, resource->map_binding);
+    wined3d_texture_get_bo_address(texture, sub_resource_idx, &data, resource->map_binding);
     base_memory = wined3d_context_map_bo_address(context, &data, sub_resource->size, flags);
     sub_resource->map_flags = flags;
     TRACE("Base memory pointer %p.\n", base_memory);
@@ -3623,7 +3636,7 @@ static HRESULT texture_resource_sub_resource_unmap(struct wined3d_resource *reso
 
     context = context_acquire(device, NULL, 0);
 
-    wined3d_texture_get_memory(texture, sub_resource_idx, &data, texture->resource.map_binding);
+    wined3d_texture_get_bo_address(texture, sub_resource_idx, &data, texture->resource.map_binding);
     range.offset = 0;
     range.size = sub_resource->size;
     wined3d_context_unmap_bo_address(context, &data, !!(sub_resource->map_flags & WINED3D_MAP_WRITE), &range);
@@ -4512,7 +4525,7 @@ void wined3d_texture_download_from_texture(struct wined3d_texture *dst_texture, 
     context = context_acquire(src_texture->resource.device, NULL, 0);
 
     wined3d_texture_prepare_location(dst_texture, dst_sub_resource_idx, context, dst_location);
-    wined3d_texture_get_memory(dst_texture, dst_sub_resource_idx, &data, dst_location);
+    wined3d_texture_get_bo_address(dst_texture, dst_sub_resource_idx, &data, dst_location);
 
     if (src_texture->sub_resources[src_sub_resource_idx].locations & WINED3D_LOCATION_TEXTURE_RGB)
         src_location = WINED3D_LOCATION_TEXTURE_RGB;
@@ -5139,7 +5152,7 @@ static BOOL wined3d_texture_vk_load_sysmem(struct wined3d_texture_vk *texture_vk
     }
 
     level = sub_resource_idx % texture_vk->t.level_count;
-    wined3d_texture_get_memory(&texture_vk->t, sub_resource_idx, &data, location);
+    wined3d_texture_get_bo_address(&texture_vk->t, sub_resource_idx, &data, location);
     wined3d_texture_get_level_box(&texture_vk->t, level, &src_box);
     wined3d_texture_get_pitch(&texture_vk->t, level, &row_pitch, &slice_pitch);
     wined3d_texture_vk_download_data(context, &texture_vk->t, sub_resource_idx, WINED3D_LOCATION_TEXTURE_RGB,

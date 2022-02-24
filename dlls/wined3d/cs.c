@@ -2671,7 +2671,7 @@ static void wined3d_cs_exec_blt_sub_resource(struct wined3d_cs *cs, const void *
             goto error;
         }
 
-        wined3d_texture_get_memory(src_texture, op->src_sub_resource_idx, &addr, location);
+        wined3d_texture_get_bo_address(src_texture, op->src_sub_resource_idx, &addr, location);
         wined3d_texture_get_pitch(src_texture, op->src_sub_resource_idx % src_texture->level_count,
                 &row_pitch, &slice_pitch);
 
