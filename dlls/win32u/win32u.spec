@@ -914,7 +914,7 @@
 @ stub NtUserGetCurrentInputMessageSource
 @ stdcall -syscall NtUserGetCursor()
 @ stdcall -syscall NtUserGetCursorFrameInfo(long long ptr ptr)
-@ stub NtUserGetCursorInfo
+@ stdcall NtUserGetCursorInfo(ptr)
 @ stub NtUserGetDC
 @ stub NtUserGetDCEx
 @ stub NtUserGetDManipHookInitFunction

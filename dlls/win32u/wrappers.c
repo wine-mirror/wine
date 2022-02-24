@@ -777,6 +777,12 @@ SHORT WINAPI NtUserGetAsyncKeyState( INT key )
     return unix_funcs->pNtUserGetAsyncKeyState( key );
 }
 
+BOOL WINAPI NtUserGetCursorInfo( CURSORINFO *info )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserGetCursorInfo( info );
+}
+
 LONG WINAPI NtUserGetDisplayConfigBufferSizes( UINT32 flags, UINT32 *num_path_info,
                                                UINT32 *num_mode_info )
 {

@@ -131,6 +131,29 @@ BOOL get_cursor_pos( POINT *pt )
     return ret;
 }
 
+/***********************************************************************
+ *	     NtUserGetCursorInfo (win32u.@)
+ */
+BOOL WINAPI NtUserGetCursorInfo( CURSORINFO *info )
+{
+    BOOL ret;
+
+    if (!info) return FALSE;
+
+    SERVER_START_REQ( get_thread_input )
+    {
+        req->tid = 0;
+        if ((ret = !wine_server_call( req )))
+        {
+            info->hCursor = wine_server_ptr_handle( reply->cursor );
+            info->flags = reply->show_count >= 0 ? CURSOR_SHOWING : 0;
+        }
+    }
+    SERVER_END_REQ;
+    get_cursor_pos( &info->ptScreenPos );
+    return ret;
+}
+
 static void check_for_events( UINT flags )
 {
     if (user_driver->pMsgWaitForMultipleObjectsEx( 0, NULL, 0, flags, 0 ) == WAIT_TIMEOUT)

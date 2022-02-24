@@ -284,7 +284,7 @@
 @ stdcall GetCurrentInputMessageSource(ptr)
 @ stdcall GetCursor() NtUserGetCursor
 @ stdcall GetCursorFrameInfo(long long long ptr ptr)
-@ stdcall GetCursorInfo(ptr)
+@ stdcall GetCursorInfo(ptr) NtUserGetCursorInfo
 @ stdcall GetCursorPos(ptr)
 @ stdcall GetDC(long)
 @ stdcall GetDCEx(long long long)

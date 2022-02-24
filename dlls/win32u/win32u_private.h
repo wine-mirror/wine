@@ -199,6 +199,7 @@ struct unix_funcs
     BOOL     (WINAPI *pNtUserEnumDisplaySettings)( UNICODE_STRING *device, DWORD mode,
                                                    DEVMODEW *dev_mode, DWORD flags );
     SHORT    (WINAPI *pNtUserGetAsyncKeyState)( INT key );
+    BOOL     (WINAPI *pNtUserGetCursorInfo)( CURSORINFO *info );
     LONG     (WINAPI *pNtUserGetDisplayConfigBufferSizes)( UINT32 flags, UINT32 *num_path_info,
                                                            UINT32 *num_mode_info );
     BOOL     (WINAPI *pNtUserGetIconInfo)( HICON icon, ICONINFO *info, UNICODE_STRING *module,
