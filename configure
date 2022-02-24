@@ -1556,6 +1556,7 @@ enable_conhost
 enable_control
 enable_cscript
 enable_dism
+enable_dllhost
 enable_dplaysvr
 enable_dpnsvr
 enable_dpvsetup
@@ -21984,6 +21985,7 @@ wine_fn_config_makefile programs/conhost/tests enable_tests
 wine_fn_config_makefile programs/control enable_control
 wine_fn_config_makefile programs/cscript enable_cscript
 wine_fn_config_makefile programs/dism enable_dism
+wine_fn_config_makefile programs/dllhost enable_dllhost
 wine_fn_config_makefile programs/dplaysvr enable_dplaysvr
 wine_fn_config_makefile programs/dpnsvr enable_dpnsvr
 wine_fn_config_makefile programs/dpvsetup enable_dpvsetup
