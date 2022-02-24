@@ -26,7 +26,7 @@
 static DWORD CALLBACK stack_walk_thread(void *arg)
 {
     DWORD count = SuspendThread(GetCurrentThread());
-    ok(!count, "got %d\n", count);
+    ok(!count, "got %ld\n", count);
     return 0;
 }
 
@@ -86,7 +86,7 @@ static void test_stack_walk(void)
     /* first invocation just calculates the return address */
     ret = StackWalk64(machine, GetCurrentProcess(), thread, &frame, &ctx, NULL,
         SymFunctionTableAccess64, SymGetModuleBase64, NULL);
-    ok(ret, "StackWalk64() failed: %u\n", GetLastError());
+    ok(ret, "StackWalk64() failed: %lu\n", GetLastError());
     ok(frame.AddrPC.Offset == frame0.AddrPC.Offset, "expected %s, got %s\n",
         wine_dbgstr_longlong(frame0.AddrPC.Offset),
         wine_dbgstr_longlong(frame.AddrPC.Offset));
@@ -102,7 +102,7 @@ static void test_stack_walk(void)
 
         ret = StackWalk64(machine, GetCurrentProcess(), thread, &frame, &ctx, NULL,
             SymFunctionTableAccess64, SymGetModuleBase64, NULL);
-        ok(ret, "StackWalk64() failed: %u\n", GetLastError());
+        ok(ret, "StackWalk64() failed: %lu\n", GetLastError());
 
         addr = (void *)(DWORD_PTR)frame.AddrPC.Offset;
 
@@ -199,11 +199,11 @@ START_TEST(dbghelp)
     SetEnvironmentVariableA("_NT_ALT_SYMBOL_PATH", NULL);
 
     ret = SymInitialize(GetCurrentProcess(), NULL, TRUE);
-    ok(ret, "got error %u\n", GetLastError());
+    ok(ret, "got error %lu\n", GetLastError());
 
     test_stack_walk();
     test_search_path();
 
     ret = SymCleanup(GetCurrentProcess());
-    ok(ret, "got error %u\n", GetLastError());
+    ok(ret, "got error %lu\n", GetLastError());
 }
