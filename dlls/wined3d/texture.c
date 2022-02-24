@@ -3918,16 +3918,6 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
     if (wined3d_texture_use_pbo(texture, d3d_info))
         texture->resource.map_binding = WINED3D_LOCATION_BUFFER;
 
-    if (desc->resource_type != WINED3D_RTYPE_TEXTURE_3D
-            || !wined3d_texture_use_pbo(texture, d3d_info))
-    {
-        if (!wined3d_resource_prepare_sysmem(&texture->resource))
-        {
-            wined3d_texture_cleanup_sync(texture);
-            return E_OUTOFMEMORY;
-        }
-    }
-
     sub_count = level_count * layer_count;
     if (sub_count / layer_count != level_count)
     {
@@ -3956,12 +3946,7 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
         struct wined3d_texture_sub_resource *sub_resource;
 
         sub_resource = &texture->sub_resources[i];
-        sub_resource->locations = WINED3D_LOCATION_DISCARDED;
-        if (desc->resource_type != WINED3D_RTYPE_TEXTURE_3D)
-        {
-            wined3d_texture_validate_location(texture, i, WINED3D_LOCATION_SYSMEM);
-            wined3d_texture_invalidate_location(texture, i, ~WINED3D_LOCATION_SYSMEM);
-        }
+        sub_resource->locations = WINED3D_LOCATION_CLEARED;
 
         if (FAILED(hr = device_parent->ops->texture_sub_resource_created(device_parent,
                 desc->resource_type, texture, i, &sub_resource->parent, &sub_resource->parent_ops)))
