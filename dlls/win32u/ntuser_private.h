@@ -125,30 +125,6 @@ struct user_key_state_info
     BYTE  state[256];    /* State for each key */
 };
 
-struct cursoricon_object
-{
-    struct user_object      obj;        /* object header */
-    struct list             entry;      /* entry in shared icons list */
-    ULONG_PTR               param;      /* opaque param used by 16-bit code */
-    UNICODE_STRING          module;     /* module for icons loaded from resources */
-    LPWSTR                  resname;    /* resource name for icons loaded from resources */
-    HRSRC                   rsrc;       /* resource for shared icons */
-    BOOL                    is_shared;  /* whether this object is shared */
-    BOOL                    is_icon;    /* whether icon or cursor */
-    BOOL                    is_ani;     /* whether this object is a static cursor or an animated cursor */
-    UINT                    delay;      /* delay between this frame and the next (in jiffies) */
-    union
-    {
-        struct cursoricon_frame  frame; /* frame-specific icon data */
-        struct
-        {
-            UINT  num_frames;           /* number of frames in the icon/cursor */
-            UINT  num_steps;            /* number of sequence steps in the icon/cursor */
-            HICON *frames;              /* list of animated cursor frames */
-        } ani;
-    };
-};
-
 /* cursoricon.c */
 HICON alloc_cursoricon_handle( BOOL is_icon ) DECLSPEC_HIDDEN;
 

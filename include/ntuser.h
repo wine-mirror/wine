@@ -80,6 +80,7 @@ enum
     NtUserCreateCursorIcon,
     NtUserGetClipCursor,
     NtUserGetCursorPos,
+    NtUserGetIconParam,
     NtUserGetPrimaryMonitorRect,
     NtUserGetSysColor,
     NtUserGetSysColorBrush,
@@ -104,6 +105,7 @@ enum
     NtUserGetSystemMetricsForDpi,
     NtUserMirrorRgn,
     NtUserMonitorFromRect,
+    NtUserSetIconParam,
     NtUserUnhookWindowsHook,
     /* temporary exports */
     NtUserAllocHandle,

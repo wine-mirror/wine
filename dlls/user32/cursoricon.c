@@ -81,31 +81,12 @@ static void free_icon_frame( struct cursoricon_frame *frame )
 
 ULONG_PTR get_icon_param( HICON handle )
 {
-    ULONG_PTR ret = 0;
-    struct cursoricon_object *obj = get_user_handle_ptr( handle, NTUSER_OBJ_ICON );
-
-    if (obj == OBJ_OTHER_PROCESS) WARN( "icon handle %p from other process\n", handle );
-    else if (obj)
-    {
-        ret = obj->param;
-        release_user_handle_ptr( obj );
-    }
-    return ret;
+    return NtUserCallOneParam( HandleToUlong(handle), NtUserGetIconParam );
 }
 
 ULONG_PTR set_icon_param( HICON handle, ULONG_PTR param )
 {
-    ULONG_PTR ret = 0;
-    struct cursoricon_object *obj = get_user_handle_ptr( handle, NTUSER_OBJ_ICON );
-
-    if (obj == OBJ_OTHER_PROCESS) WARN( "icon handle %p from other process\n", handle );
-    else if (obj)
-    {
-        ret = obj->param;
-        obj->param = param;
-        release_user_handle_ptr( obj );
-    }
-    return ret;
+    return NtUserCallTwoParam( HandleToUlong(handle), param, NtUserSetIconParam );
 }
 
 

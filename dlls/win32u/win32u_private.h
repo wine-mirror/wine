@@ -247,6 +247,8 @@ struct unix_funcs
 /* cursoricon.c */
 extern HICON alloc_cursoricon_handle( BOOL is_icon ) DECLSPEC_HIDDEN;
 extern BOOL get_clip_cursor( RECT *rect ) DECLSPEC_HIDDEN;
+extern ULONG_PTR get_icon_param( HICON handle ) DECLSPEC_HIDDEN;
+extern ULONG_PTR set_icon_param( HICON handle, ULONG_PTR param ) DECLSPEC_HIDDEN;
 
 /* hook.c */
 extern BOOL unhook_windows_hook( INT id, HOOKPROC proc ) DECLSPEC_HIDDEN;

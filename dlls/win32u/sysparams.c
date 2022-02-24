@@ -4558,6 +4558,8 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
         return get_clip_cursor( (RECT *)arg );
     case NtUserGetCursorPos:
         return get_cursor_pos( (POINT *)arg );
+    case NtUserGetIconParam:
+        return get_icon_param( UlongToHandle(arg) );
     case NtUserGetSysColor:
         return get_sys_color( arg );
     case NtUserRealizePalette:
@@ -4616,6 +4618,8 @@ ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code 
         return mirror_window_region( UlongToHandle(arg1), UlongToHandle(arg2) );
     case NtUserMonitorFromRect:
         return HandleToUlong( monitor_from_rect( (const RECT *)arg1, arg2, get_thread_dpi() ));
+    case NtUserSetIconParam:
+        return set_icon_param( UlongToHandle(arg1), arg2 );
     case NtUserUnhookWindowsHook:
         return unhook_windows_hook( arg1, (HOOKPROC)arg2 );
     /* temporary exports */
