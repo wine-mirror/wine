@@ -72,37 +72,6 @@ static int get_display_bpp(void)
     return ret;
 }
 
-static struct cursoricon_object *get_icon_ptr( HICON handle )
-{
-    struct cursoricon_object *obj = get_user_handle_ptr( handle, NTUSER_OBJ_ICON );
-    if (obj == OBJ_OTHER_PROCESS)
-    {
-        WARN( "icon handle %p from other process\n", handle );
-        obj = NULL;
-    }
-    return obj;
-}
-
-static struct cursoricon_frame *get_icon_frame( struct cursoricon_object *obj, int istep )
-{
-    struct cursoricon_object *req_frame;
-
-    if (!obj->is_ani) return &obj->frame;
-    if (!(req_frame = get_icon_ptr( obj->ani.frames[istep] ))) return 0;
-    return &req_frame->frame;
-}
-
-static void release_icon_frame( struct cursoricon_object *obj, struct cursoricon_frame *frame )
-{
-    if (obj->is_ani)
-    {
-        struct cursoricon_object *frameobj;
-
-        frameobj = (struct cursoricon_object *) (((char *)frame) - FIELD_OFFSET(struct cursoricon_object, frame));
-        release_user_handle_ptr( frameobj );
-    }
-}
-
 static void free_icon_frame( struct cursoricon_frame *frame )
 {
     if (frame->color) DeleteObject( frame->color );
@@ -2481,29 +2450,31 @@ HANDLE WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
         case IMAGE_ICON:
         case IMAGE_CURSOR:
         {
-            struct cursoricon_frame *frame;
-            struct cursoricon_object *icon;
+            ICONINFOEXW icon_info;
             int depth = (flags & LR_MONOCHROME) ? 1 : get_display_bpp();
-            HICON resource_icon = NULL;
-            HINSTANCE module;
+            HICON resource_icon = 0;
+            LONG width, height;
             ICONINFO info;
+            HANDLE module;
             HICON res;
 
-            if (!(icon = get_icon_ptr( hnd ))) return 0;
+            icon_info.cbSize = sizeof(icon_info);
+            if (!GetIconInfoExW( hnd, &icon_info )) return 0;
 
-            if (icon->rsrc && (flags & LR_COPYFROMRESOURCE) && icon->module.Length &&
-                !LdrGetDllHandle( NULL, 0, &icon->module, &module ))
+            if (icon_info.szModName[0] && (flags & LR_COPYFROMRESOURCE) &&
+                (module = GetModuleHandleW( icon_info.szModName )))
             {
-                resource_icon = CURSORICON_Load( module, icon->resname, desiredx,
-                                                 desiredy, depth, !icon->is_icon, flags );
-                release_user_handle_ptr( icon );
-                if (!(icon = get_icon_ptr( resource_icon )))
-                {
-                    if (resource_icon) DestroyIcon( resource_icon );
-                    return 0;
-                }
+                const WCHAR *res = icon_info.szResName[0] ? icon_info.szResName
+                    : MAKEINTRESOURCEW( icon_info.wResID );
+                resource_icon = CURSORICON_Load( module, res, desiredx, desiredy, depth,
+                                                 !icon_info.fIcon, flags );
+                DeleteObject( icon_info.hbmColor );
+                DeleteObject( icon_info.hbmMask );
+                NtUserGetIconSize( resource_icon, 0, &width, &height );
+                if (!GetIconInfoExW( resource_icon, &icon_info )) return 0;
             }
-            frame = get_icon_frame( icon, 0 );
+            else NtUserGetIconSize( hnd, 0, &width, &height );
+            height /= 2;
 
             if (flags & LR_DEFAULTSIZE)
             {
@@ -2512,44 +2483,44 @@ HANDLE WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
             }
             else
             {
-                if (!desiredx) desiredx = frame->width;
-                if (!desiredy) desiredy = frame->height;
+                if (!desiredx) desiredx = width;
+                if (!desiredy) desiredy = height;
             }
 
-            info.fIcon = icon->is_icon;
-            info.xHotspot = frame->hotspot.x;
-            info.yHotspot = frame->hotspot.y;
+            info.fIcon    = icon_info.fIcon;
+            info.xHotspot = icon_info.xHotspot;
+            info.yHotspot = icon_info.yHotspot;
 
-            if (desiredx == frame->width && desiredy == frame->height)
+            if (desiredx == width && desiredy == height)
             {
-                info.hbmColor = frame->color;
-                info.hbmMask = frame->mask;
+                info.hbmColor = icon_info.hbmColor;
+                info.hbmMask  = icon_info.hbmMask;
                 res = CreateIconIndirect( &info );
             }
             else
             {
-                if (frame->color)
+                if (icon_info.hbmColor)
                 {
                     if (!(info.hbmColor = create_color_bitmap( desiredx, desiredy )))
                     {
-                        release_icon_frame( icon, frame );
-                        release_user_handle_ptr( icon );
+                        DeleteObject( icon_info.hbmColor );
+                        DeleteObject( icon_info.hbmMask );
                         if (resource_icon) DestroyIcon( resource_icon );
                         return 0;
                     }
-                    stretch_bitmap( info.hbmColor, frame->color, desiredx, desiredy,
-                                    frame->width, frame->height );
+                    stretch_bitmap( info.hbmColor, icon_info.hbmColor, desiredx, desiredy,
+                                    width, height );
 
                     if (!(info.hbmMask = CreateBitmap( desiredx, desiredy, 1, 1, NULL )))
                     {
+                        DeleteObject( icon_info.hbmColor );
+                        DeleteObject( icon_info.hbmMask );
                         DeleteObject( info.hbmColor );
-                        release_icon_frame( icon, frame );
-                        release_user_handle_ptr( icon );
                         if (resource_icon) DestroyIcon( resource_icon );
                         return 0;
                     }
-                    stretch_bitmap( info.hbmMask, frame->mask, desiredx, desiredy,
-                                    frame->width, frame->height );
+                    stretch_bitmap( info.hbmMask, icon_info.hbmMask, desiredx, desiredy,
+                                    width, height );
                 }
                 else
                 {
@@ -2557,12 +2528,13 @@ HANDLE WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
 
                     if (!(info.hbmMask = CreateBitmap( desiredx, desiredy * 2, 1, 1, NULL )))
                     {
-                        release_user_handle_ptr( icon );
+                        DeleteObject( icon_info.hbmColor );
+                        DeleteObject( icon_info.hbmMask );
                         if (resource_icon) DestroyIcon( resource_icon );
                         return 0;
                     }
-                    stretch_bitmap( info.hbmMask, frame->mask, desiredx, desiredy * 2,
-                                    frame->width, frame->height * 2 );
+                    stretch_bitmap( info.hbmMask, icon_info.hbmMask, desiredx, desiredy * 2,
+                                    width, height * 2 );
                 }
 
                 res = CreateIconIndirect( &info );
@@ -2571,8 +2543,8 @@ HANDLE WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
                 DeleteObject( info.hbmMask );
             }
 
-            release_icon_frame( icon, frame );
-            release_user_handle_ptr( icon );
+            DeleteObject( icon_info.hbmColor );
+            DeleteObject( icon_info.hbmMask );
 
             if (res && (flags & LR_COPYDELETEORG)) DestroyIcon( hnd );
             if (resource_icon) DestroyIcon( resource_icon );
