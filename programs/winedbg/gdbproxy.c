@@ -269,6 +269,18 @@ static inline void reply_buffer_append_str(struct reply_buffer* reply, const cha
     reply_buffer_append(reply, str, strlen(str));
 }
 
+static inline void reply_buffer_append_wstr(struct reply_buffer* reply, const WCHAR* wstr)
+{
+    char* str;
+    int len;
+
+    len = WideCharToMultiByte(CP_ACP, 0, wstr, -1, NULL, 0, NULL, NULL);
+    str = malloc(len);
+    if (str && WideCharToMultiByte(CP_ACP, 0, wstr, -1, str, len, NULL, NULL))
+        reply_buffer_append_str(reply, str);
+    free(str);
+}
+
 static inline void reply_buffer_append_hex(struct reply_buffer* reply, const void* src, size_t len)
 {
     reply_buffer_grow(reply, len * 2);
@@ -1777,6 +1789,7 @@ static enum packet_return packet_query_threads(struct gdb_context* gdbctx)
     struct reply_buffer* reply = &gdbctx->qxfer_buffer;
     struct dbg_process* process = gdbctx->process;
     struct dbg_thread* thread;
+    WCHAR* description;
 
     if (!process) return packet_error;
 
@@ -1790,7 +1803,12 @@ static enum packet_return packet_query_threads(struct gdb_context* gdbctx)
         reply_buffer_append_str(reply, "id=\"");
         reply_buffer_append_uinthex(reply, thread->tid, 4);
         reply_buffer_append_str(reply, "\" name=\"");
-        if (strlen(thread->name))
+        if ((description = fetch_thread_description(thread->tid)))
+        {
+            reply_buffer_append_wstr(reply, description);
+            LocalFree(description);
+        }
+        else if (strlen(thread->name))
         {
             reply_buffer_append_str(reply, thread->name);
         }
