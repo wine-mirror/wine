@@ -1253,41 +1253,51 @@ static bool adapter_vk_alloc_bo(struct wined3d_device *device, struct wined3d_re
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(device);
     struct wined3d_context_vk *context_vk = &device_vk->context_vk;
+    VkMemoryPropertyFlags memory_type;
+    VkBufferUsageFlags buffer_usage;
+    struct wined3d_bo_vk *bo_vk;
+    VkDeviceSize size;
 
     wined3d_not_from_cs(device->cs);
     assert(device->context_count);
 
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
-        struct wined3d_bo_vk *bo_vk;
+        buffer_usage = vk_buffer_usage_from_bind_flags(resource->bind_flags);
+        memory_type = vk_memory_type_from_access_flags(resource->access, resource->usage);
+        size = resource->size;
+    }
+    else
+    {
+        struct wined3d_texture *texture = texture_from_resource(resource);
 
-        if (!(bo_vk = heap_alloc(sizeof(*bo_vk))))
-            return false;
-
-        if (!(wined3d_context_vk_create_bo(context_vk, resource->size,
-                vk_buffer_usage_from_bind_flags(resource->bind_flags),
-                vk_memory_type_from_access_flags(resource->access, resource->usage), bo_vk)))
-        {
-            WARN("Failed to create Vulkan buffer.\n");
-            heap_free(bo_vk);
-            return false;
-        }
-
-        if (!bo_vk->b.map_ptr)
-        {
-            WARN_(d3d_perf)("BO %p (chunk %p, slab %p) is not mapped.\n",
-                    bo_vk, bo_vk->memory ? bo_vk->memory->chunk : NULL, bo_vk->slab);
-
-            if (!wined3d_bo_vk_map(bo_vk, context_vk))
-                ERR("Failed to map bo.\n");
-        }
-
-        addr->buffer_object = &bo_vk->b;
-        addr->addr = NULL;
-        return true;
+        buffer_usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+        memory_type = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+        size = texture->sub_resources[sub_resource_idx].size;
     }
 
-    return false;
+    if (!(bo_vk = heap_alloc(sizeof(*bo_vk))))
+        return false;
+
+    if (!(wined3d_context_vk_create_bo(context_vk, size, buffer_usage, memory_type, bo_vk)))
+    {
+        WARN("Failed to create Vulkan buffer.\n");
+        heap_free(bo_vk);
+        return false;
+    }
+
+    if (!bo_vk->b.map_ptr)
+    {
+        WARN_(d3d_perf)("BO %p (chunk %p, slab %p) is not mapped.\n",
+                bo_vk, bo_vk->memory ? bo_vk->memory->chunk : NULL, bo_vk->slab);
+
+        if (!wined3d_bo_vk_map(bo_vk, context_vk))
+            ERR("Failed to map bo.\n");
+    }
+
+    addr->buffer_object = &bo_vk->b;
+    addr->addr = NULL;
+    return true;
 }
 
 static void adapter_vk_destroy_bo(struct wined3d_context *context, struct wined3d_bo *bo)

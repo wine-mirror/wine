@@ -4618,60 +4618,70 @@ static bool adapter_gl_alloc_bo(struct wined3d_device *device, struct wined3d_re
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_device_gl *device_gl = wined3d_device_gl(device);
+    struct wined3d_bo_gl *bo_gl;
+    GLenum binding, usage;
+    bool coherent = true;
+    GLbitfield flags;
+    GLsizeiptr size;
 
     wined3d_not_from_cs(device->cs);
     assert(device->context_count);
 
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
-        GLenum usage = GL_STATIC_DRAW;
-        struct wined3d_bo_gl *bo_gl;
-        bool coherent = true;
-
+        size = resource->size;
+        binding = wined3d_buffer_gl_binding_from_bind_flags(gl_info, resource->bind_flags);
+        usage = GL_STATIC_DRAW;
+        flags = wined3d_resource_gl_storage_flags(resource);
         if (resource->usage & WINED3DUSAGE_DYNAMIC)
         {
-            usage = GL_STREAM_DRAW_ARB;
+            usage = GL_STREAM_DRAW;
             coherent = false;
         }
+    }
+    else
+    {
+        struct wined3d_texture *texture = texture_from_resource(resource);
 
-        if (!(bo_gl = heap_alloc(sizeof(*bo_gl))))
-            return false;
-
-        if (!(wined3d_device_gl_create_bo(device_gl, NULL, resource->size,
-                wined3d_buffer_gl_binding_from_bind_flags(gl_info, resource->bind_flags),
-                usage, coherent, wined3d_resource_gl_storage_flags(resource), bo_gl)))
-        {
-            WARN("Failed to create OpenGL buffer.\n");
-            heap_free(bo_gl);
-            return false;
-        }
-
-        if (bo_gl->memory)
-        {
-            struct wined3d_allocator_chunk_gl *chunk = wined3d_allocator_chunk_gl(bo_gl->memory->chunk);
-
-            wined3d_allocator_chunk_gl_lock(chunk);
-
-            if ((bo_gl->b.map_ptr = chunk->c.map_ptr))
-                ++chunk->c.map_count;
-
-            wined3d_allocator_chunk_gl_unlock(chunk);
-        }
-
-        addr->buffer_object = &bo_gl->b;
-        addr->addr = NULL;
-
-        if (!bo_gl->b.map_ptr)
-        {
-            WARN_(d3d_perf)("BO %p (chunk %p) is not persistently mapped.\n",
-                    bo_gl, bo_gl->memory ? bo_gl->memory->chunk : NULL);
-            wined3d_cs_map_bo_address(device->cs, addr, resource->size, WINED3D_MAP_WRITE | WINED3D_MAP_DISCARD);
-        }
-
-        return true;
+        size = texture->sub_resources[sub_resource_idx].size;
+        binding = GL_PIXEL_UNPACK_BUFFER;
+        usage = GL_STREAM_DRAW;
+        flags = GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_CLIENT_STORAGE_BIT;
     }
 
-    return false;
+    if (!(bo_gl = heap_alloc(sizeof(*bo_gl))))
+        return false;
+
+    if (!(wined3d_device_gl_create_bo(device_gl, NULL, size, binding, usage, coherent, flags, bo_gl)))
+    {
+        WARN("Failed to create OpenGL buffer.\n");
+        heap_free(bo_gl);
+        return false;
+    }
+
+    if (bo_gl->memory)
+    {
+        struct wined3d_allocator_chunk_gl *chunk = wined3d_allocator_chunk_gl(bo_gl->memory->chunk);
+
+        wined3d_allocator_chunk_gl_lock(chunk);
+
+        if ((bo_gl->b.map_ptr = chunk->c.map_ptr))
+            ++chunk->c.map_count;
+
+        wined3d_allocator_chunk_gl_unlock(chunk);
+    }
+
+    addr->buffer_object = &bo_gl->b;
+    addr->addr = NULL;
+
+    if (!bo_gl->b.map_ptr)
+    {
+        WARN_(d3d_perf)("BO %p (chunk %p) is not persistently mapped.\n",
+                bo_gl, bo_gl->memory ? bo_gl->memory->chunk : NULL);
+        wined3d_cs_map_bo_address(device->cs, addr, resource->size, WINED3D_MAP_WRITE | WINED3D_MAP_DISCARD);
+    }
+
+    return true;
 }
 
 static void adapter_gl_destroy_bo(struct wined3d_context *context, struct wined3d_bo *bo)

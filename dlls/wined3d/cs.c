@@ -3091,9 +3091,7 @@ static void wined3d_cs_st_finish(struct wined3d_device_context *context, enum wi
 static bool wined3d_cs_map_upload_bo(struct wined3d_device_context *context, struct wined3d_resource *resource,
         unsigned int sub_resource_idx, struct wined3d_map_desc *map_desc, const struct wined3d_box *box, uint32_t flags)
 {
-    /* Limit NOOVERWRITE maps to buffers for now; there are too many ways that
-     * a texture can be invalidated to even count. */
-    if (resource->type == WINED3D_RTYPE_BUFFER && (flags & (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE)))
+    if (flags & (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE))
     {
         const struct wined3d_d3d_info *d3d_info = &context->device->adapter->d3d_info;
         struct wined3d_client_resource *client = &resource->client;
@@ -3124,7 +3122,10 @@ static bool wined3d_cs_map_upload_bo(struct wined3d_device_context *context, str
             if (!device->adapter->adapter_ops->adapter_alloc_bo(device, resource, sub_resource_idx, &addr))
                 return false;
 
-            client->addr = addr;
+            /* Limit NOOVERWRITE maps to buffers for now; there are too many
+             * ways that a texture can be invalidated to even count. */
+            if (resource->type == WINED3D_RTYPE_BUFFER)
+                client->addr = addr;
         }
         else
         {

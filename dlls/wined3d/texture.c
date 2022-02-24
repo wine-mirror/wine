@@ -4570,6 +4570,30 @@ void wined3d_texture_download_from_texture(struct wined3d_texture *dst_texture, 
     wined3d_texture_invalidate_location(dst_texture, dst_sub_resource_idx, ~dst_location);
 }
 
+static void wined3d_texture_set_bo(struct wined3d_texture *texture,
+        unsigned sub_resource_idx, struct wined3d_context *context, struct wined3d_bo *bo)
+{
+    struct wined3d_texture_sub_resource *sub_resource = &texture->sub_resources[sub_resource_idx];
+    struct wined3d_bo *prev_bo = sub_resource->bo;
+
+    TRACE("texture %p, sub_resource_idx %u, context %p, bo %p.\n", texture, sub_resource_idx, context, bo);
+
+    if (prev_bo)
+    {
+        struct wined3d_bo_user *bo_user;
+
+        LIST_FOR_EACH_ENTRY(bo_user, &prev_bo->users, struct wined3d_bo_user, entry)
+            bo_user->valid = false;
+        assert(list_empty(&bo->users));
+        list_move_head(&bo->users, &prev_bo->users);
+
+        wined3d_context_destroy_bo(context, prev_bo);
+        heap_free(prev_bo);
+    }
+
+    sub_resource->bo = bo;
+}
+
 void wined3d_texture_update_sub_resource(struct wined3d_texture *texture, unsigned int sub_resource_idx,
         struct wined3d_context *context, const struct upload_bo *upload_bo, const struct wined3d_box *box,
         unsigned int row_pitch, unsigned int slice_pitch)
@@ -4579,6 +4603,15 @@ void wined3d_texture_update_sub_resource(struct wined3d_texture *texture, unsign
     unsigned int height = wined3d_texture_get_level_height(texture, level);
     unsigned int depth = wined3d_texture_get_level_depth(texture, level);
     struct wined3d_box src_box;
+
+    if (upload_bo->flags & UPLOAD_BO_RENAME_ON_UNMAP)
+    {
+        wined3d_texture_set_bo(texture, sub_resource_idx, context, upload_bo->addr.buffer_object);
+        wined3d_texture_validate_location(texture, sub_resource_idx, WINED3D_LOCATION_BUFFER);
+        wined3d_texture_invalidate_location(texture, sub_resource_idx, ~WINED3D_LOCATION_BUFFER);
+        /* Try to free address space if we are not mapping persistently. */
+        wined3d_context_unmap_bo_address(context, (const struct wined3d_bo_address *)&upload_bo->addr, 0, NULL);
+    }
 
     /* Only load the sub-resource for partial updates. */
     if (!box->left && !box->top && !box->front
