@@ -910,7 +910,7 @@ static void test_basics(void)
             ok(style == tmp, "Got style %x (expected %x)\n", style, tmp);
             if(SUCCEEDED(hr))
             {
-                DWORD tmp2;
+                NSTCSTYLE tmp2;
                 for(i = 0; styles[i] != 0; i++)
                 {
                     hr = INameSpaceTreeControl2_GetControlStyle(pnstc2, styles[i], &tmp2);
@@ -966,7 +966,7 @@ static void test_basics(void)
             ok(style2 == tmp, "Got style %x (expected %x)\n", style2, tmp);
             if(SUCCEEDED(hr))
             {
-                DWORD tmp2;
+                NSTCSTYLE2 tmp2;
                 for(i = 0; styles2[i] != 0; i++)
                 {
                     hr = INameSpaceTreeControl2_GetControlStyle2(pnstc2, styles2[i], &tmp2);
@@ -1372,7 +1372,7 @@ static void test_basics(void)
     ok(hr == S_OK, "Got 0x%08x\n", hr);
     if(SUCCEEDED(hr))
     {
-        UINT count;
+        DWORD count;
         hr = IShellItemArray_GetCount(psia, &count);
         ok(hr == S_OK, "Got 0x%08x\n", hr);
         ok(count == 1, "Got %d selected items.\n", count);
@@ -1400,7 +1400,7 @@ static void test_basics(void)
     ok(hr == S_OK, "Got 0x%08x\n", hr);
     if(SUCCEEDED(hr))
     {
-        UINT count;
+        DWORD count;
         hr = IShellItemArray_GetCount(psia, &count);
         ok(hr == S_OK, "Got 0x%08x\n", hr);
         ok(count == 1, "Got %d selected items.\n", count);
@@ -1426,7 +1426,7 @@ static void test_basics(void)
     ok(hr == S_OK, "Got 0x%08x\n", hr);
     if(SUCCEEDED(hr))
     {
-        UINT count;
+        DWORD count;
         hr = IShellItemArray_GetCount(psia, &count);
         ok(hr == S_OK, "Got 0x%08x\n", hr);
         ok(count == 1, "Got %d selected items.\n", count);
