@@ -1210,7 +1210,7 @@ static void test_wm_notify(void)
          DONT_CONVERT_SEND | DONT_CONVERT_RECEIVE},
         {&nmtbr, sizeof(nmtbr), NULL, 0, (WCHAR **)&nmtbr.tbButton.iString, NULL, TBN_RESTORE, TBN_RESTORE,
          DONT_CONVERT_SEND | DONT_CONVERT_RECEIVE},
-        {&nmtbdi, sizeof(nmtbdi), &nmtbdi.dwMask, TBNF_TEXT, &nmtbdi.pszText, &nmtbdi.cchText, TBN_GETDISPINFOW,
+        {&nmtbdi, sizeof(nmtbdi), (UINT*)&nmtbdi.dwMask, TBNF_TEXT, &nmtbdi.pszText, &nmtbdi.cchText, TBN_GETDISPINFOW,
          TBN_GETDISPINFOW, DONT_CONVERT_SEND | DONT_CONVERT_RECEIVE},
         {&nmtb, sizeof(nmtb), NULL, 0, &nmtb.pszText, &nmtb.cchText, TBN_GETBUTTONINFOW, TBN_GETBUTTONINFOA,
          SEND_EMPTY_IF_NULL | CONVERT_SEND | CONVERT_RECEIVE},

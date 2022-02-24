@@ -195,7 +195,7 @@ static int string_width(const CHAR *s) {
 
 typedef struct {
     RECT rc;
-    DWORD fStyle;
+    UINT fStyle;
     UINT cx;
 } rbband_result_t;
 
