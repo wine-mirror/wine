@@ -28,9 +28,182 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dllhost);
 
+struct factory
+{
+    IClassFactory IClassFactory_iface;
+    IMarshal IMarshal_iface;
+    CLSID clsid;
+    LONG ref;
+};
+
+static inline struct factory *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, struct factory, IClassFactory_iface);
+}
+
+static inline struct factory *impl_from_IMarshal(IMarshal *iface)
+{
+    return CONTAINING_RECORD(iface, struct factory, IMarshal_iface);
+}
+
+static HRESULT WINAPI factory_QueryInterface(IClassFactory *iface,
+    REFIID iid, void **ppv)
+{
+    struct factory *factory = impl_from_IClassFactory(iface);
+
+    TRACE("(%p,%s,%p)\n", iface, wine_dbgstr_guid(iid), ppv);
+
+    if (!ppv) return E_INVALIDARG;
+
+    if (IsEqualIID(iid, &IID_IUnknown) ||
+        IsEqualIID(iid, &IID_IClassFactory))
+    {
+        IClassFactory_AddRef(&factory->IClassFactory_iface);
+        *ppv = &factory->IClassFactory_iface;
+        return S_OK;
+    }
+    else if (IsEqualIID(iid, &IID_IMarshal))
+    {
+        IClassFactory_AddRef(&factory->IClassFactory_iface);
+        *ppv = &factory->IMarshal_iface;
+        return S_OK;
+    }
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI factory_AddRef(IClassFactory *iface)
+{
+    struct factory *factory = impl_from_IClassFactory(iface);
+    ULONG ref = InterlockedIncrement(&factory->ref);
+
+    TRACE("(%p)->%lu\n", iface, ref);
+    return ref;
+}
+
+static ULONG WINAPI factory_Release(IClassFactory *iface)
+{
+    struct factory *factory = impl_from_IClassFactory(iface);
+    ULONG ref = InterlockedDecrement(&factory->ref);
+
+    TRACE("(%p)->%lu\n", iface, ref);
+
+    if (!ref)
+        HeapFree(GetProcessHeap(), 0, factory);
+
+    return ref;
+}
+
+static HRESULT WINAPI factory_CreateInstance(IClassFactory *iface,
+    IUnknown *punkouter, REFIID iid, void **ppv)
+{
+    FIXME("(%p,%p,%s,%p): stub\n", iface, punkouter, wine_dbgstr_guid(iid), ppv);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI factory_LockServer(IClassFactory *iface, BOOL lock)
+{
+    TRACE("(%p,%d)\n", iface, lock);
+    return S_OK;
+}
+
+static const IClassFactoryVtbl ClassFactory_Vtbl =
+{
+    factory_QueryInterface,
+    factory_AddRef,
+    factory_Release,
+    factory_CreateInstance,
+    factory_LockServer
+};
+
+static HRESULT WINAPI marshal_QueryInterface(IMarshal *iface, REFIID iid, LPVOID *ppv)
+{
+    struct factory *factory = impl_from_IMarshal(iface);
+
+    TRACE("(%p,%s,%p)\n", iface, wine_dbgstr_guid(iid), ppv);
+
+    return IClassFactory_QueryInterface(&factory->IClassFactory_iface, iid, ppv);
+}
+
+static ULONG WINAPI marshal_AddRef(IMarshal *iface)
+{
+    struct factory *factory = impl_from_IMarshal(iface);
+
+    TRACE("(%p)\n", iface);
+
+    return IClassFactory_AddRef(&factory->IClassFactory_iface);
+}
+
+static ULONG WINAPI marshal_Release(IMarshal *iface)
+{
+    struct factory *factory = impl_from_IMarshal(iface);
+
+    TRACE("(%p)\n", iface);
+
+    return IClassFactory_Release(&factory->IClassFactory_iface);
+}
+
+static HRESULT WINAPI marshal_GetUnmarshalClass(IMarshal *iface, REFIID iid, void *pv,
+        DWORD dwDestContext, void *pvDestContext, DWORD mshlflags, CLSID *clsid)
+{
+    FIXME("(%p,%s,%p,%08lx,%p,%08lx,%p): stub\n", iface, wine_dbgstr_guid(iid), pv,
+          dwDestContext, pvDestContext, mshlflags, clsid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI marshal_GetMarshalSizeMax(IMarshal *iface, REFIID iid, void *pv,
+        DWORD dwDestContext, void *pvDestContext, DWORD mshlflags, DWORD *size)
+{
+    FIXME("(%p,%s,%p,%08lx,%p,%08lx,%p): stub\n", iface, wine_dbgstr_guid(iid), pv,
+          dwDestContext, pvDestContext, mshlflags, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI marshal_MarshalInterface(IMarshal *iface, IStream *stream, REFIID iid,
+        void *pv, DWORD dwDestContext, void *pvDestContext, DWORD mshlflags)
+{
+    FIXME("(%p,%s,%p,%08lx,%p,%08lx): stub\n", stream, wine_dbgstr_guid(iid), pv, dwDestContext, pvDestContext, mshlflags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI marshal_UnmarshalInterface(IMarshal *iface, IStream *stream,
+        REFIID iid, void **ppv)
+{
+    FIXME("(%p,%p,%s,%p): stub\n", iface, stream, wine_dbgstr_guid(iid), ppv);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI marshal_ReleaseMarshalData(IMarshal *iface, IStream *stream)
+{
+    TRACE("(%p,%p)\n", iface, stream);
+    return S_OK;
+}
+
+static HRESULT WINAPI marshal_DisconnectObject(IMarshal *iface, DWORD reserved)
+{
+    TRACE("(%p, %08lx)\n", iface, reserved);
+    return S_OK;
+}
+
+static const IMarshalVtbl Marshal_Vtbl =
+{
+    marshal_QueryInterface,
+    marshal_AddRef,
+    marshal_Release,
+    marshal_GetUnmarshalClass,
+    marshal_GetMarshalSizeMax,
+    marshal_MarshalInterface,
+    marshal_UnmarshalInterface,
+    marshal_ReleaseMarshalData,
+    marshal_DisconnectObject
+};
+
 struct surrogate
 {
     ISurrogate ISurrogate_iface;
+    IClassFactory *factory;
+    DWORD cookie;
     LONG ref;
 };
 
@@ -74,8 +247,29 @@ static ULONG WINAPI surrogate_Release(ISurrogate *iface)
 
 static HRESULT WINAPI surrogate_LoadDllServer(ISurrogate *iface, const CLSID *clsid)
 {
-    FIXME("(%p,%s): stub\n", iface, wine_dbgstr_guid(clsid));
-    return E_NOTIMPL;
+    struct surrogate *surrogate = impl_from_ISurrogate(iface);
+    struct factory *factory;
+    HRESULT hr;
+
+    TRACE("(%p,%s)\n", iface, wine_dbgstr_guid(clsid));
+
+    factory = HeapAlloc(GetProcessHeap(), 0, sizeof(*factory));
+    if (!factory)
+        return E_OUTOFMEMORY;
+
+    factory->IClassFactory_iface.lpVtbl = &ClassFactory_Vtbl;
+    factory->IMarshal_iface.lpVtbl = &Marshal_Vtbl;
+    factory->clsid = *clsid;
+    factory->ref = 1;
+
+    hr = CoRegisterClassObject(clsid, (IUnknown *)&factory->IClassFactory_iface,
+                               CLSCTX_LOCAL_SERVER, REGCLS_SURROGATE, &surrogate->cookie);
+    if (hr != S_OK)
+        IClassFactory_Release(&factory->IClassFactory_iface);
+    else
+        surrogate->factory = &factory->IClassFactory_iface;
+
+    return hr;
 }
 
 static HRESULT WINAPI surrogate_FreeSurrogate(ISurrogate *iface)
@@ -105,6 +299,8 @@ int WINAPI wWinMain(HINSTANCE hinst, HINSTANCE previnst, LPWSTR cmdline, int sho
     cmdline += 11;
 
     surrogate.ISurrogate_iface.lpVtbl = &Surrogate_Vtbl;
+    surrogate.factory = NULL;
+    surrogate.cookie = 0;
     surrogate.ref = 1;
 
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
