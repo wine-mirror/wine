@@ -32,7 +32,11 @@
 #include "wine/test.h"
 #include "v6util.h"
 
-#define expect(expected, got) ok(got == expected, "Expected %d, got %d\n", expected, got)
+#define expect(expected,got) expect_(__LINE__, expected, got)
+static inline void expect_(unsigned line, DWORD expected, DWORD got)
+{
+    ok_(__FILE__, line)(expected == got, "Expected %d, got %d\n", expected, got);
+}
 
 typedef struct _STREAMDATA
 {

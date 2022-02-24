@@ -32,8 +32,17 @@
 #include <windows.h>
 #include "msg.h"
 
-#define expect(expected, got) ok(expected == got, "Expected %d, got %d\n", expected, got);
-#define expect_hex(expected, got) ok(expected == got, "Expected %x, got %x\n", expected, got);
+#define expect(expected,got) expect_(__LINE__, expected, got)
+static inline void expect_(unsigned line, DWORD expected, DWORD got)
+{
+    ok_(__FILE__, line)(expected == got, "Expected %d, got %d\n", expected, got);
+}
+
+#define expect_hex(expected,got) expect_hex_(__LINE__, expected, got)
+static inline void expect_hex_(unsigned line, DWORD expected, DWORD got)
+{
+    ok_(__FILE__, line)(expected == got, "Expected %x, got %x\n", expected, got);
+}
 #define expect_d(expected, got) ok(abs((expected) - (got)) <= 2, "Expected %d, got %d\n", expected, got);
 
 #define NUM_MSG_SEQUENCES   2

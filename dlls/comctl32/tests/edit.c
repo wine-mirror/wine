@@ -2032,8 +2032,11 @@ static void test_margins_font_change(void)
 
 }
 
-#define edit_pos_ok(exp, got, txt) \
-    ok(exp == got, "wrong " #txt " expected %d got %d\n", exp, got);
+#define edit_pos_ok(expected, got, txt) edit_pos_ok_(__LINE__, expected, got, #txt)
+static inline void edit_pos_ok_(unsigned line, DWORD expected, DWORD got, const char* txt)
+{
+    ok_(__FILE__, line)(expected == got, "wrong %s expected %d got %d\n", txt, expected, got);
+}
 
 #define check_pos(hwEdit, set_height, test_top, test_height, test_left) \
 do { \

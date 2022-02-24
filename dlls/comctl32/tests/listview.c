@@ -46,9 +46,19 @@ enum seq_index {
 #define LISTVIEW_ID 0
 #define HEADER_ID   1
 
-#define expect(expected, got) ok(got == expected, "Expected %d, got %d\n", expected, got)
-#define expect2(expected1, expected2, got1, got2) ok(expected1 == got1 && expected2 == got2, \
-       "expected (%d,%d), got (%d,%d)\n", expected1, expected2, got1, got2)
+#define expect(expected,got) expect_(__LINE__, expected, got)
+static inline void expect_(unsigned line, DWORD expected, DWORD got)
+{
+    ok_(__FILE__, line)(expected == got, "Expected %d, got %d\n", expected, got);
+}
+
+#define expect2(expected1, expected2, got1, got2) expect2_(__LINE__, expected1, expected2, got1, got2)
+static inline void expect2_(unsigned line, DWORD expected1, DWORD expected2, DWORD got1, DWORD got2)
+{
+    ok_(__FILE__, line)(expected1 == got1 && expected2 == got2,
+                        "expected (%d,%d), got (%d,%d)\n",
+                        expected1, expected2, got1, got2);
+}
 
 static HWND hwndparent, hwndparentW;
 /* prevents edit box creation, LVN_BEGINLABELEDIT return value */

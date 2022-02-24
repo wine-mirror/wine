@@ -50,7 +50,11 @@
 #include "wine/test.h"
 #include "msg.h"
 
-#define expect(EXPECTED,GOT) ok((GOT)==(EXPECTED), "Expected %d, got %d\n", (EXPECTED), (GOT))
+#define expect(expected,got) expect_(__LINE__, expected, got)
+static inline void expect_(unsigned line, DWORD expected, DWORD got)
+{
+    ok_(__FILE__, line)(expected == got, "Expected %d, got %d\n", expected, got);
+}
 
 #define NUM_MSG_SEQUENCES   3
 #define PARENT_SEQ_INDEX    0

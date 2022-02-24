@@ -56,7 +56,11 @@ static HWND hWndHeader;
 
 #define compare(val, exp, fmt)  ok((val) == (exp), #val " value: " fmt ", expected: " fmt "\n", (val), (exp))
 
-#define expect(expected, got) ok(expected == got, "expected %d, got %d\n", expected,got)
+#define expect(expected,got) expect_(__LINE__, expected, got)
+static inline void expect_(unsigned line, DWORD expected, DWORD got)
+{
+    ok_(__FILE__, line)(expected == got, "Expected %d, got %d\n", expected, got);
+}
 
 #define NUM_MSG_SEQUENCES    2
 #define PARENT_SEQ_INDEX     0

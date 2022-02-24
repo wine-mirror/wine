@@ -57,7 +57,11 @@ static BOOL g_v6;
 #define PARENT_SEQ_INDEX    1
 #define PARENT_CD_SEQ_INDEX 2
 
-#define expect(expected, got) ok(got == expected, "Expected %d, got %d\n", expected, got)
+#define expect(expected,got) expect_(__LINE__, expected, got)
+static inline void expect_(unsigned line, DWORD expected, DWORD got)
+{
+    ok_(__FILE__, line)(expected == got, "Expected %d, got %d\n", expected, got);
+}
 
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
 static struct msg_sequence *item_sequence[1];

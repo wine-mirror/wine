@@ -25,7 +25,12 @@
 #include "msg.h"
 #include "v6util.h"
 
-#define expect(expected, got) ok(got == expected, "Expected %d, got %d\n", expected, got)
+#define expect(expected,got) expect_(__LINE__, expected, got)
+static inline void expect_(unsigned line, DWORD expected, DWORD got)
+{
+    ok_(__FILE__, line)(expected == got, "Expected %d, got %d\n", expected, got);
+}
+
 #define NUM_MSG_SEQUENCE 2
 #define PARENT_SEQ_INDEX 0
 #define TRACKBAR_SEQ_INDEX 1

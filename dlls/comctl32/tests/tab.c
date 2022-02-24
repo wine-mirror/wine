@@ -34,7 +34,12 @@
 #define PARENT_SEQ_INDEX   0
 #define TAB_SEQ_INDEX      1
 
-#define expect(expected, got) ok ( expected == got, "Expected %d, got %d\n", expected, got)
+#define expect(expected,got) expect_(__LINE__, expected, got)
+static inline void expect_(unsigned line, DWORD expected, DWORD got)
+{
+    ok_(__FILE__, line)(expected == got, "Expected %d, got %d\n", expected, got);
+}
+
 #define expect_str(expected, got)\
  ok ( strcmp(expected, got) == 0, "Expected '%s', got '%s'\n", expected, got)
 
