@@ -46,7 +46,7 @@ static HRESULT WINAPI DirectPlayThreadHandler(void *context, DWORD message_id, v
                 SetEvent(enumevent);
             break;
         default:
-            trace("DirectPlayThreadHandler: 0x%08x\n", message_id);
+            trace("DirectPlayThreadHandler: 0x%08lx\n", message_id);
     }
     return S_OK;
 }
@@ -59,52 +59,52 @@ static void create_threadpool(void)
     DWORD threadcnt = 10;
 
     hr = CoCreateInstance( &CLSID_DirectPlay8ThreadPool, NULL, CLSCTX_ALL, &IID_IDirectPlay8ThreadPool, (void**)&pool1);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = CoCreateInstance( &CLSID_DirectPlay8ThreadPool, NULL, CLSCTX_ALL, &IID_IDirectPlay8ThreadPool, (void**)&pool2);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IDirectPlay8ThreadPool_Initialize(pool1, NULL, NULL, 0);
-    ok(hr == DPNERR_INVALIDPARAM, "got 0x%08x\n", hr);
+    ok(hr == DPNERR_INVALIDPARAM, "got 0x%08lx\n", hr);
 
     hr = IDirectPlay8ThreadPool_Initialize(pool1, NULL, &DirectPlayThreadHandler, 0);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IDirectPlay8ThreadPool_Initialize(pool2, NULL, &DirectPlayThreadHandler, 0);
-    ok(hr == DPNERR_ALREADYINITIALIZED, "got 0x%08x\n", hr);
+    ok(hr == DPNERR_ALREADYINITIALIZED, "got 0x%08lx\n", hr);
 
     hr = IDirectPlay8ThreadPool_GetThreadCount(pool1, -1, &threadcnt, 0);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(threadcnt == 0, "got %d\n", threadcnt);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(threadcnt == 0, "got %ld\n", threadcnt);
 
     hr = IDirectPlay8ThreadPool_SetThreadCount(pool1, -1, 5, 0);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    todo_wine ok(cnt_thread_create == 5, "got %d\n", threadcnt);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    todo_wine ok(cnt_thread_create == 5, "got %ld\n", threadcnt);
 
     hr = IDirectPlay8ThreadPool_SetThreadCount(pool2, -1, 5, 0);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    todo_wine ok(cnt_thread_create == 5, "got %d\n", threadcnt);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    todo_wine ok(cnt_thread_create == 5, "got %ld\n", threadcnt);
 
     /* Thead count must be zero before DoWork can be called. */
     hr = IDirectPlay8ThreadPool_DoWork(pool1, 100, 0);
-    todo_wine ok(hr == DPNERR_NOTREADY, "got 0x%08x\n", hr);
+    todo_wine ok(hr == DPNERR_NOTREADY, "got 0x%08lx\n", hr);
 
     hr = IDirectPlay8ThreadPool_GetThreadCount(pool1, -1, &threadcnt, 0);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    todo_wine ok(threadcnt == 5, "got %d\n", threadcnt);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    todo_wine ok(threadcnt == 5, "got %ld\n", threadcnt);
 
     hr = IDirectPlay8ThreadPool_SetThreadCount(pool1, -1, 0, 0);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    todo_wine ok(cnt_thread_destroy == 5, "got %d\n", threadcnt);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    todo_wine ok(cnt_thread_destroy == 5, "got %ld\n", threadcnt);
 
     hr = IDirectPlay8ThreadPool_DoWork(pool1, 100, 0);
-    ok(hr == DPN_OK, "got 0x%08x\n", hr);
+    ok(hr == DPN_OK, "got 0x%08lx\n", hr);
 
     hr = IDirectPlay8ThreadPool_Close(pool1, 0);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IDirectPlay8ThreadPool_Close(pool2, 0);
-    ok(hr == DPNERR_UNINITIALIZED, "got 0x%08x\n", hr);
+    ok(hr == DPNERR_UNINITIALIZED, "got 0x%08lx\n", hr);
 
     IDirectPlay8ThreadPool_Release(pool1);
     IDirectPlay8ThreadPool_Release(pool2);
@@ -128,81 +128,81 @@ static void test_enum_hosts(void)
     appdesc.guidApplication  = appguid;
 
     hr = CoCreateInstance( &CLSID_DirectPlay8ThreadPool, NULL, CLSCTX_ALL, &IID_IDirectPlay8ThreadPool, (void**)&pool1);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IDirectPlay8ThreadPool_Initialize(pool1, NULL, &DirectPlayThreadHandler, 0);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IDirectPlay8ThreadPool_Initialize(pool1, NULL, &DirectPlayThreadHandler, 0);
-    ok(hr == DPNERR_ALREADYINITIALIZED, "got 0x%08x\n", hr);
+    ok(hr == DPNERR_ALREADYINITIALIZED, "got 0x%08lx\n", hr);
 
     hr = IDirectPlay8ThreadPool_GetThreadCount(pool1, -1, &threadcnt, 0);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(threadcnt == 0, "got %d\n", threadcnt);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(threadcnt == 0, "got %ld\n", threadcnt);
 
     hr = CoCreateInstance(&CLSID_DirectPlay8Client, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectPlay8Client, (void **)&client);
-    ok(hr == S_OK, "CoCreateInstance failed with 0x%x\n", hr);
+    ok(hr == S_OK, "CoCreateInstance failed with 0x%lx\n", hr);
 
     hr = IDirectPlay8Client_Initialize(client, NULL, DirectPlayThreadHandler, 0);
-    ok(hr == S_OK, "IDirectPlay8Client_Initialize failed with %x\n", hr);
+    ok(hr == S_OK, "IDirectPlay8Client_Initialize failed with %lx\n", hr);
 
     hr = IDirectPlay8ThreadPool_GetThreadCount(pool1, -1, &threadcnt, 0);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    todo_wine ok(threadcnt == 1, "got %d\n", threadcnt);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    todo_wine ok(threadcnt == 1, "got %ld\n", threadcnt);
 
     hr = CoCreateInstance( &CLSID_DirectPlay8Address, NULL, CLSCTX_ALL, &IID_IDirectPlay8Address, (LPVOID*)&local);
-    ok(hr == S_OK, "IDirectPlay8Address failed with 0x%08x\n", hr);
+    ok(hr == S_OK, "IDirectPlay8Address failed with 0x%08lx\n", hr);
 
     hr = IDirectPlay8Address_SetSP(local, &CLSID_DP8SP_TCPIP);
-    ok(hr == S_OK, "IDirectPlay8Address_SetSP failed with 0x%08x\n", hr);
+    ok(hr == S_OK, "IDirectPlay8Address_SetSP failed with 0x%08lx\n", hr);
 
     hr = CoCreateInstance( &CLSID_DirectPlay8Address, NULL, CLSCTX_ALL, &IID_IDirectPlay8Address, (LPVOID*)&host);
-    ok(hr == S_OK, "IDirectPlay8Address failed with 0x%08x\n", hr);
+    ok(hr == S_OK, "IDirectPlay8Address failed with 0x%08lx\n", hr);
 
     hr = IDirectPlay8Address_SetSP(host, &CLSID_DP8SP_TCPIP);
-    ok(hr == S_OK, "IDirectPlay8Address_SetSP failed with 0x%08x\n", hr);
+    ok(hr == S_OK, "IDirectPlay8Address_SetSP failed with 0x%08lx\n", hr);
 
     hr = IDirectPlay8Address_AddComponent(host, DPNA_KEY_HOSTNAME, L"127.0.0.1", sizeof(L"127.0.0.1"),
                                           DPNA_DATATYPE_STRING);
-    ok(hr == S_OK, "IDirectPlay8Address failed with 0x%08x\n", hr);
+    ok(hr == S_OK, "IDirectPlay8Address failed with 0x%08lx\n", hr);
 
     hr = IDirectPlay8Client_EnumHosts(client, &appdesc, host, local, NULL, 0, INFINITE, 0, INFINITE, NULL,  &async, 0);
-    ok(hr == DPNSUCCESS_PENDING, "IDirectPlay8Client_EnumHosts failed with 0x%08x\n", hr);
+    ok(hr == DPNSUCCESS_PENDING, "IDirectPlay8Client_EnumHosts failed with 0x%08lx\n", hr);
     todo_wine ok(async, "No Handle returned\n");
 
     /* The first EnumHosts call will increase the thread count */
     hr = IDirectPlay8ThreadPool_GetThreadCount(pool1, -1, &threadorig, 0);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    todo_wine ok(threadorig > 1, "got %d\n", threadorig);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    todo_wine ok(threadorig > 1, "got %ld\n", threadorig);
 
     hr = IDirectPlay8Client_EnumHosts(client, &appdesc, host, local, NULL, 0, INFINITE, 0, INFINITE, NULL,  &async2, 0);
-    ok(hr == DPNSUCCESS_PENDING, "IDirectPlay8Client_EnumHosts failed with 0x%08x\n", hr);
+    ok(hr == DPNSUCCESS_PENDING, "IDirectPlay8Client_EnumHosts failed with 0x%08lx\n", hr);
 
     WaitForSingleObject(enumevent, 1000);
 
     hr = IDirectPlay8ThreadPool_GetThreadCount(pool1, -1, &threadcnt, 0);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(threadcnt == threadorig, "got %d\n", threadcnt);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(threadcnt == threadorig, "got %ld\n", threadcnt);
 
     hr = IDirectPlay8Client_CancelAsyncOperation(client, async, 0);
-    ok(hr == S_OK, "IDirectPlay8Client_CancelAsyncOperation failed with 0x%08x\n", hr);
+    ok(hr == S_OK, "IDirectPlay8Client_CancelAsyncOperation failed with 0x%08lx\n", hr);
 
     hr = IDirectPlay8ThreadPool_GetThreadCount(pool1, -1, &threadcnt, 0);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(threadcnt == threadorig, "got %d\n", threadcnt);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(threadcnt == threadorig, "got %ld\n", threadcnt);
 
     hr = IDirectPlay8Client_CancelAsyncOperation(client, async2, 0);
-    ok(hr == S_OK, "IDirectPlay8Client_CancelAsyncOperation failed with 0x%08x\n", hr);
+    ok(hr == S_OK, "IDirectPlay8Client_CancelAsyncOperation failed with 0x%08lx\n", hr);
 
     hr = IDirectPlay8ThreadPool_GetThreadCount(pool1, -1, &threadcnt, 0);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(threadcnt == threadorig, "got %d\n", threadcnt);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(threadcnt == threadorig, "got %ld\n", threadcnt);
 
     IDirectPlay8Address_Release(local);
     IDirectPlay8Address_Release(host);
 
     hr = IDirectPlay8ThreadPool_Close(pool1, 0);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     IDirectPlay8Client_Release(client);
     IDirectPlay8ThreadPool_Release(pool1);
@@ -216,23 +216,23 @@ static void test_singleton(void)
     IDirectPlay8ThreadPool *pool1, *pool2;
 
     hr = CoCreateInstance( &CLSID_DirectPlay8ThreadPool, NULL, CLSCTX_ALL, &IID_IDirectPlay8ThreadPool, (void**)&pool1);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = CoCreateInstance( &CLSID_DirectPlay8ThreadPool, NULL, CLSCTX_ALL, &IID_IDirectPlay8ThreadPool, (void**)&pool2);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(pool1 != pool2, "same pointer returned.\n");
 
     hr = IDirectPlay8ThreadPool_Initialize(pool1, NULL, &DirectPlayThreadHandler, 0);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IDirectPlay8ThreadPool_Initialize(pool2, NULL, &DirectPlayThreadHandler, 0);
-    ok(hr == DPNERR_ALREADYINITIALIZED, "got 0x%08x\n", hr);
+    ok(hr == DPNERR_ALREADYINITIALIZED, "got 0x%08lx\n", hr);
 
     hr = IDirectPlay8ThreadPool_Close(pool1, 0);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IDirectPlay8ThreadPool_Close(pool2, 0);
-    ok(hr == DPNERR_UNINITIALIZED, "got 0x%08x\n", hr);
+    ok(hr == DPNERR_UNINITIALIZED, "got 0x%08lx\n", hr);
 
     IDirectPlay8ThreadPool_Release(pool1);
     IDirectPlay8ThreadPool_Release(pool2);
@@ -268,7 +268,7 @@ START_TEST(thread)
         HRESULT hr = set_firewall(APP_ADD);
         if (hr != S_OK)
         {
-            skip("can't authorize app in firewall %08x\n", hr);
+            skip("can't authorize app in firewall %08lx\n", hr);
             return;
         }
     }
