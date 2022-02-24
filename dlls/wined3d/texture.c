@@ -847,8 +847,11 @@ BOOL wined3d_texture_load_location(struct wined3d_texture *texture,
 }
 
 static void wined3d_texture_get_memory(struct wined3d_texture *texture, unsigned int sub_resource_idx,
-        struct wined3d_bo_address *data, DWORD locations)
+        struct wined3d_bo_address *data)
 {
+    struct wined3d_texture_sub_resource *sub_resource = &texture->sub_resources[sub_resource_idx];
+    DWORD locations = sub_resource->locations;
+
     TRACE("texture %p, sub_resource_idx %u, data %p, locations %s.\n",
             texture, sub_resource_idx, data, wined3d_debug_location(locations));
 
@@ -3227,7 +3230,7 @@ static BOOL wined3d_texture_gl_load_texture(struct wined3d_texture_gl *texture_g
         wined3d_texture_set_map_binding(&texture_gl->t, WINED3D_LOCATION_SYSMEM);
     }
 
-    wined3d_texture_get_memory(&texture_gl->t, sub_resource_idx, &data, sub_resource->locations);
+    wined3d_texture_get_memory(&texture_gl->t, sub_resource_idx, &data);
     if (conversion)
     {
         width = src_box.right - src_box.left;
@@ -4497,8 +4500,7 @@ void wined3d_texture_upload_from_texture(struct wined3d_texture *dst_texture, un
         wined3d_texture_load_location(dst_texture, dst_sub_resource_idx, context, WINED3D_LOCATION_TEXTURE_RGB);
 
     src_level = src_sub_resource_idx % src_texture->level_count;
-    wined3d_texture_get_memory(src_texture, src_sub_resource_idx, &data,
-            src_texture->sub_resources[src_sub_resource_idx].locations);
+    wined3d_texture_get_memory(src_texture, src_sub_resource_idx, &data);
     wined3d_texture_get_pitch(src_texture, src_level, &src_row_pitch, &src_slice_pitch);
 
     dst_texture->texture_ops->texture_upload_data(context, wined3d_const_bo_address(&data),
@@ -5126,7 +5128,7 @@ static BOOL wined3d_texture_vk_load_texture(struct wined3d_texture_vk *texture_v
     }
 
     level = sub_resource_idx % texture_vk->t.level_count;
-    wined3d_texture_get_memory(&texture_vk->t, sub_resource_idx, &data, sub_resource->locations);
+    wined3d_texture_get_memory(&texture_vk->t, sub_resource_idx, &data);
     wined3d_texture_get_level_box(&texture_vk->t, level, &src_box);
     wined3d_texture_get_pitch(&texture_vk->t, level, &row_pitch, &slice_pitch);
     wined3d_texture_vk_upload_data(context, wined3d_const_bo_address(&data), texture_vk->t.resource.format,
