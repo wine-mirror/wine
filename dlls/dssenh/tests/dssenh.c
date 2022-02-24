@@ -38,36 +38,36 @@ static void test_acquire_context(void)
     SetLastError(0xdeadbeef);
     result = CryptAcquireContextA(&hProv, NULL, NULL, 0, 0);
     ok(!result && GetLastError() == NTE_BAD_PROV_TYPE,
-        "Expected NTE_BAD_PROV_TYPE, got %08x\n", GetLastError());
+        "Expected NTE_BAD_PROV_TYPE, got %08lx\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     result = CryptAcquireContextA(&hProv, NULL, NULL, 0, CRYPT_VERIFYCONTEXT);
     ok(!result && GetLastError() == NTE_BAD_PROV_TYPE,
-        "Expected NTE_BAD_PROV_TYPE, got %08x\n", GetLastError());
+        "Expected NTE_BAD_PROV_TYPE, got %08lx\n", GetLastError());
 
     /* flag allows us to delete a keyset, but not of an unknown provider */
     SetLastError(0xdeadbeef);
     result = CryptAcquireContextA(&hProv, NULL, NULL, 0, CRYPT_DELETEKEYSET);
     ok(!result && GetLastError() == NTE_BAD_PROV_TYPE,
-        "Expected NTE_BAD_PROV_TYPE, got %08x\n", GetLastError());
+        "Expected NTE_BAD_PROV_TYPE, got %08lx\n", GetLastError());
 
     /* cannot acquire along with PROV_RSA_SIG, not compatible */
     SetLastError(0xdeadbeef);
     result = CryptAcquireContextA(&hProv, NULL, MS_DEF_DSS_PROV_A, PROV_RSA_SIG, 0);
     ok(!result && GetLastError() == NTE_PROV_TYPE_NO_MATCH,
-        "Expected NTE_PROV_TYPE_NO_MATCH, got %08x\n", GetLastError());
+        "Expected NTE_PROV_TYPE_NO_MATCH, got %08lx\n", GetLastError());
 
     /* cannot acquire along with MS_DEF_RSA_SIG_PROV_A, not compatible */
     SetLastError(0xdeadbeef);
     result = CryptAcquireContextA(&hProv, NULL, MS_DEF_RSA_SIG_PROV_A, PROV_DSS, 0);
     ok(!result && GetLastError() == NTE_KEYSET_NOT_DEF,
-        "Expected NTE_KEYSET_NOT_DEF, got %08x\n", GetLastError());
+        "Expected NTE_KEYSET_NOT_DEF, got %08lx\n", GetLastError());
 
     /* cannot acquire provider with 0 as Prov Type */
     SetLastError(0xdeadbeef);
     result = CryptAcquireContextA(&hProv, NULL, MS_DEF_DSS_PROV_A, 0, 0);
     ok(!result && GetLastError() == NTE_BAD_PROV_TYPE,
-        "Expected NTE_BAD_PROV_TYPE, got %08x\n", GetLastError());
+        "Expected NTE_BAD_PROV_TYPE, got %08lx\n", GetLastError());
 
     /* test base DSS provider (PROV_DSS) */
 
@@ -75,7 +75,7 @@ static void test_acquire_context(void)
     result = CryptAcquireContextA(&hProv, NULL, NULL, PROV_DSS, 0);
     if (!result)
     {
-        ok(GetLastError() == NTE_BAD_KEYSET, "Expected NTE_BAD_KEYSET, got %08x\n", GetLastError());
+        ok(GetLastError() == NTE_BAD_KEYSET, "Expected NTE_BAD_KEYSET, got %08lx\n", GetLastError());
         SetLastError(0xdeadbeef);
         result = CryptAcquireContextA(&hProv, NULL, NULL, PROV_DSS, CRYPT_NEWKEYSET);
     }
@@ -176,19 +176,19 @@ static void test_acquire_context(void)
     result = CryptAcquireContextA(
         &hProv, NULL, MS_DEF_DSS_DH_PROV_A, PROV_DSS_DH, CRYPT_NEWKEYSET);
     ok(!result && GetLastError() == NTE_EXISTS,
-        "Expected NTE_EXISTS, got %08x\n", GetLastError());
+        "Expected NTE_EXISTS, got %08lx\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     result = CryptAcquireContextA(
         &hProv, NULL, MS_ENH_DSS_DH_PROV_A, PROV_DSS_DH, CRYPT_NEWKEYSET);
     ok(!result && GetLastError() == NTE_EXISTS,
-        "Expected NTE_EXISTS, got %08x\n", GetLastError());
+        "Expected NTE_EXISTS, got %08lx\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     result = CryptAcquireContextA(
         &hProv, NULL, MS_DEF_DH_SCHANNEL_PROV_A, PROV_DH_SCHANNEL, CRYPT_NEWKEYSET);
     ok(!result && GetLastError() == NTE_EXISTS,
-        "Expected NTE_EXISTS, got %08x\n", GetLastError());
+        "Expected NTE_EXISTS, got %08lx\n", GetLastError());
 }
 
 struct keylength_test {
@@ -324,19 +324,19 @@ static void test_keylength_array(HCRYPTPROV hProv,const struct keylength_test *t
         /* success */
         if (tests[i].expectedResult)
         {
-            todo_wine_if (tests[i].todo_result) ok(result, "%d: got %08x\n", i, GetLastError());
+            todo_wine_if (tests[i].todo_result) ok(result, "%d: got %08lx\n", i, GetLastError());
             if (result)
             {
                 result = CryptDestroyKey(key);
-                ok(result, "%d: got %08x\n", i, GetLastError());
+                ok(result, "%d: got %08lx\n", i, GetLastError());
             }
         }
         else
         {
-            todo_wine_if (tests[i].todo_result) ok(!result, "%d: got %x\n", i, GetLastError());
+            todo_wine_if (tests[i].todo_result) ok(!result, "%d: got %lx\n", i, GetLastError());
             todo_wine_if (tests[i].todo_error)
                 ok(GetLastError() == tests[i].expectedError ||
-                   broken(GetLastError() == tests[i].brokenError), "%d: got %08x\n", i, GetLastError());
+                   broken(GetLastError() == tests[i].brokenError), "%d: got %08lx\n", i, GetLastError());
         }
     }
 }
@@ -469,7 +469,7 @@ static void test_hash(const struct hash_test *tests, int testLen)
 
         dataLen = sizeof(DWORD);
         result = CryptGetHashParam(hHash, HP_HASHSIZE, (BYTE *)&hashLen, &dataLen, 0);
-        ok(result && (hashLen == tests[i].hashLen), "Expected %d hash len, got %d.Error: %x\n",
+        ok(result && (hashLen == tests[i].hashLen), "Expected %ld hash len, got %ld.Error: %lx\n",
             tests[i].hashLen, hashLen, GetLastError());
 
         dataLen = 0xdeadbeef;
@@ -734,19 +734,19 @@ static void test_cipher_modes(const struct ciphermode_test *tests, int testLen)
     mode = 0xdeadbeef;
     dataLen = sizeof(mode);
     result = CryptGetKeyParam(pKey, KP_MODE, (BYTE*)&mode, &dataLen, 0);
-    ok(result, "Expected getting of KP_MODE, got %x.\n", GetLastError());
+    ok(result, "Expected getting of KP_MODE, got %lx.\n", GetLastError());
     ok(mode == CRYPT_MODE_CBC, "Default mode should be CBC\n");
 
     memcpy(pbData, plainText, plainLen);
     dataLen = plainLen;
     result = CryptEncrypt(pKey, 0, TRUE, 0, pbData, &dataLen, 36);
-    ok(result, "Expected data encryption, got %x.\n", GetLastError());
+    ok(result, "Expected data encryption, got %lx.\n", GetLastError());
 
     /* Verify we have the correct encrypted data */
     ok(!memcmp(pbData, tests[1].encrypted, dataLen), "Incorrect encrypted data.\n");
 
     result = CryptDecrypt(pKey, 0, TRUE, 0, pbData, &dataLen);
-    ok(result, "Expected data decryption, got %x.\n", GetLastError());
+    ok(result, "Expected data decryption, got %lx.\n", GetLastError());
 
     /* Verify we have the correct decrypted data */
     ok(!memcmp(pbData, (BYTE *)plainText, dataLen), "Incorrect decrypted data.\n");
@@ -762,23 +762,23 @@ static void test_cipher_modes(const struct ciphermode_test *tests, int testLen)
         result = CryptSetKeyParam(pKey, KP_MODE, (BYTE*)&mode, 0);
         if(tests[i].expectedResult)
         {
-            ok(result, "Expected setting of KP_MODE, got %x.\n", GetLastError());
+            ok(result, "Expected setting of KP_MODE, got %lx.\n", GetLastError());
 
             result = CryptEncrypt(pKey, 0, TRUE, 0, pbData, &dataLen, 36);
-            ok(result, "Expected data encryption, got %x.\n", GetLastError());
+            ok(result, "Expected data encryption, got %lx.\n", GetLastError());
 
             /* Verify we have the correct encrypted data */
             ok(!memcmp(pbData, tests[i].encrypted, dataLen), "Incorrect encrypted data.\n");
 
             result = CryptDecrypt(pKey, 0, TRUE, 0, pbData, &dataLen);
-            ok(result, "Expected data decryption, got %x.\n", GetLastError());
+            ok(result, "Expected data decryption, got %lx.\n", GetLastError());
 
             /* Verify we have the correct decrypted data */
             ok(!memcmp(pbData, (BYTE *)plainText, dataLen), "Incorrect decrypted data.\n");
         }
         else
         {   /* Expected error */
-            ok(!result && GetLastError() == tests[i].expectedError, "Expected %d, got %x.\n",
+            ok(!result && GetLastError() == tests[i].expectedError, "Expected %ld, got %lx.\n",
                 tests[i].expectedError, GetLastError());
         }
     }
@@ -876,33 +876,33 @@ static void test_signhash_array(HCRYPTPROV hProv, const struct signature_test *t
 
         /* Get a private key of array specified ALG_ID */
         result = CryptImportKey(hProv, tests[i].privateKey, tests[i].keyLen, 0, 0, &privKey);
-        ok(result, "Failed to imported key, got %x\n", GetLastError());
+        ok(result, "Failed to imported key, got %lx\n", GetLastError());
 
         /* Create hash object and add data for signature 1 */
         result = CryptCreateHash(hProv, CALG_SHA, 0, 0, &hHash1);
-        ok(result, "Failed to create a hash, got %x\n", GetLastError());
+        ok(result, "Failed to create a hash, got %lx\n", GetLastError());
 
         result = CryptHashData(hHash1, tests[i].signData, signLen1, 0);
-        ok(result, "Failed to add data to hash, got %x\n", GetLastError());
+        ok(result, "Failed to add data to hash, got %lx\n", GetLastError());
 
         /* Create hash object and add data for signature 2 */
         result = CryptCreateHash(hProv, CALG_SHA, 0, 0, &hHash2);
-        ok(result, "Failed to create a hash, got %x\n", GetLastError());
+        ok(result, "Failed to create a hash, got %lx\n", GetLastError());
 
         result = CryptHashData(hHash2, tests[i].signData, signLen2, 0);
-        ok(result, "Failed to add data to hash, got %x\n", GetLastError());
+        ok(result, "Failed to add data to hash, got %lx\n", GetLastError());
 
         /* Acquire hash length and hash value */
         dataLen1 = sizeof(DWORD);
         result = CryptGetHashParam(hHash1, HP_HASHSIZE, (BYTE *)&hashLen1, &dataLen1, 0);
-        ok(result, "Failed to get hash length, got %x\n", GetLastError());
+        ok(result, "Failed to get hash length, got %lx\n", GetLastError());
 
         result = CryptGetHashParam(hHash1, HP_HASHVAL, hashValue1, &hashLen1, 0);
         ok(result, "Failed to return hash value.\n");
 
         dataLen2 = sizeof(DWORD);
         result = CryptGetHashParam(hHash2, HP_HASHSIZE, (BYTE *)&hashLen2, &dataLen2, 0);
-        ok(result, "Failed to get hash length, got %x\n", GetLastError());
+        ok(result, "Failed to get hash length, got %lx\n", GetLastError());
 
         result = CryptGetHashParam(hHash2, HP_HASHVAL, hashValue2, &hashLen2, 0);
         ok(result, "Failed to return hash value.\n");
@@ -914,20 +914,20 @@ static void test_signhash_array(HCRYPTPROV hProv, const struct signature_test *t
         /* Sign hash 1 */
         signLen1 = 0;
         result = CryptSignHashA(hHash1, AT_SIGNATURE, NULL, 0, NULL, &signLen1);
-        ok(result, "Failed to get signature length, got %x\n", GetLastError());
-        ok(signLen1 == 40, "Expected a 40-byte signature, got %d\n", signLen1);
+        ok(result, "Failed to get signature length, got %lx\n", GetLastError());
+        ok(signLen1 == 40, "Expected a 40-byte signature, got %ld\n", signLen1);
 
         result = CryptSignHashA(hHash1, AT_SIGNATURE, NULL, 0, signValue1, &signLen1);
-        ok(result, "Failed to sign hash, got %x\n", GetLastError());
+        ok(result, "Failed to sign hash, got %lx\n", GetLastError());
 
         /* Sign hash 2 */
         signLen2 = 0;
         result = CryptSignHashA(hHash2, AT_SIGNATURE, NULL, 0, NULL, &signLen2);
-        ok(result, "Failed to get signature length, got %x\n", GetLastError());
-        ok(signLen2 == 40, "Expected a 40-byte signature, got %d\n", signLen2);
+        ok(result, "Failed to get signature length, got %lx\n", GetLastError());
+        ok(signLen2 == 40, "Expected a 40-byte signature, got %ld\n", signLen2);
 
         result = CryptSignHashA(hHash2, AT_SIGNATURE, NULL, 0, signValue2, &signLen2);
-        ok(result, "Failed to sign hash2, got %x\n", GetLastError());
+        ok(result, "Failed to sign hash2, got %lx\n", GetLastError());
 
         /* Compare signatures to ensure they are both different, because every DSS signature
            should be different even if the input hash data is identical */
@@ -935,31 +935,31 @@ static void test_signhash_array(HCRYPTPROV hProv, const struct signature_test *t
             "the same hash input.\n");
 
         result = CryptExportKey(privKey, 0, PUBLICKEYBLOB, 0, NULL, &pubKeyLen);
-        ok(result, "Failed to acquire public key length, got %x\n", GetLastError());
+        ok(result, "Failed to acquire public key length, got %lx\n", GetLastError());
 
         /* Export the public key */
         result = CryptExportKey(privKey, 0, PUBLICKEYBLOB, 0, pubKeyBuffer, &pubKeyLen);
-        ok(result, "Failed to export public key, got %x\n", GetLastError());
+        ok(result, "Failed to export public key, got %lx\n", GetLastError());
 
         result = CryptDestroyHash(hHash1);
-        ok(result, "Failed to destroy hash1, got %x\n", GetLastError());
+        ok(result, "Failed to destroy hash1, got %lx\n", GetLastError());
         result = CryptDestroyHash(hHash2);
-        ok(result, "Failed to destroy hash2, got %x\n", GetLastError());
+        ok(result, "Failed to destroy hash2, got %lx\n", GetLastError());
 
         /* Destroy the private key */
         result = CryptDestroyKey(privKey);
-        ok(result, "Failed to destroy private key, got %x\n", GetLastError());
+        ok(result, "Failed to destroy private key, got %lx\n", GetLastError());
 
         /* Import the public key we obtained earlier */
         result = CryptImportKey(hProv, pubKeyBuffer, pubKeyLen, 0, 0, &pubKey);
-        ok(result, "Failed to import public key, got %x\n", GetLastError());
+        ok(result, "Failed to import public key, got %lx\n", GetLastError());
 
         result = CryptCreateHash(hProv, CALG_SHA, 0, 0, &hHash1);
-        ok(result, "Failed to create hash, got %x\n", GetLastError());
+        ok(result, "Failed to create hash, got %lx\n", GetLastError());
 
         /* Hash the data to compare with the signed hash */
         result = CryptHashData(hHash1, tests[i].signData, tests[i].dataLen, 0);
-        ok(result, "Failed to add data to hash1, got %x\n", GetLastError());
+        ok(result, "Failed to add data to hash1, got %lx\n", GetLastError());
 
         /* Verify signed hash 1 */
         result = CryptVerifySignatureA(hHash1, signValue1, sizeof(signValue1), pubKey, NULL, 0);
@@ -968,27 +968,27 @@ static void test_signhash_array(HCRYPTPROV hProv, const struct signature_test *t
             skip("skipping sign tests\n");
             return;
         }
-        ok(result, "Failed to verify signature, got %x\n", GetLastError());
+        ok(result, "Failed to verify signature, got %lx\n", GetLastError());
 
         result = CryptCreateHash(hProv, CALG_SHA, 0, 0, &hHash2);
-        ok(result, "Failed to create hash, got %x\n", GetLastError());
+        ok(result, "Failed to create hash, got %lx\n", GetLastError());
 
         /* Hash the data to compare with the signed hash */
         result = CryptHashData(hHash2, tests[i].signData, tests[i].dataLen, 0);
-        ok(result, "Failed to add data to hash2, got %x\n", GetLastError());
+        ok(result, "Failed to add data to hash2, got %lx\n", GetLastError());
 
         /* Verify signed hash 2 */
         result = CryptVerifySignatureA(hHash2, signValue2, sizeof(signValue2), pubKey, NULL, 0);
-        ok(result, "Failed to verify signature, got %x\n", GetLastError());
+        ok(result, "Failed to verify signature, got %lx\n", GetLastError());
 
         result = CryptDestroyHash(hHash1);
-        ok(result, "Failed to destroy hash1, got %x\n", GetLastError());
+        ok(result, "Failed to destroy hash1, got %lx\n", GetLastError());
         result = CryptDestroyHash(hHash2);
-        ok(result, "Failed to destroy hash2, got %x\n", GetLastError());
+        ok(result, "Failed to destroy hash2, got %lx\n", GetLastError());
 
         /* Destroy the public key */
         result = CryptDestroyKey(pubKey);
-        ok(result, "Failed to destroy public key, got %x\n", GetLastError());
+        ok(result, "Failed to destroy public key, got %lx\n", GetLastError());
     }
 }
 
@@ -1142,55 +1142,55 @@ static void test_keyExchange_baseDSS(HCRYPTPROV hProv, const struct keyExchange_
             return;
         }
         ok(!result && GetLastError() == NTE_BAD_ALGID,
-           "Expected NTE_BAD_ALGID, got %x\n", GetLastError());
+           "Expected NTE_BAD_ALGID, got %lx\n", GetLastError());
 
         result = CryptGenKey(hProv, tests[i].algid, 512 << 16 | CRYPT_PREGEN, &privKey2);
         ok(!result && GetLastError() == NTE_BAD_ALGID,
-           "Expected NTE_BAD_ALGID, got %x\n", GetLastError());
+           "Expected NTE_BAD_ALGID, got %lx\n", GetLastError());
 
         /* Set the prime and generator values, which are agreed upon */
         result = CryptSetKeyParam(privKey1, KP_P, (BYTE *)&Prime, 0);
         ok(!result && GetLastError() == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+           "Expected ERROR_INVALID_PARAMETER, got %lx\n", GetLastError());
 
         result = CryptSetKeyParam(privKey2, KP_P, (BYTE *)&Prime, 0);
         ok(!result && GetLastError() == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+           "Expected ERROR_INVALID_PARAMETER, got %lx\n", GetLastError());
 
         result = CryptSetKeyParam(privKey1, KP_G, (BYTE *)&Generator, 0);
         ok(!result && GetLastError() == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+           "Expected ERROR_INVALID_PARAMETER, got %lx\n", GetLastError());
 
         result = CryptSetKeyParam(privKey2, KP_G, (BYTE *)&Generator, 0);
         ok(!result && GetLastError() == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+           "Expected ERROR_INVALID_PARAMETER, got %lx\n", GetLastError());
 
         /* Generate the secret value for user1 and user2 */
         result = CryptSetKeyParam(privKey1, KP_X, NULL, 0);
         ok(!result && GetLastError() == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+           "Expected ERROR_INVALID_PARAMETER, got %lx\n", GetLastError());
 
         result = CryptSetKeyParam(privKey2, KP_X, NULL, 0);
         ok(!result && GetLastError() == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+           "Expected ERROR_INVALID_PARAMETER, got %lx\n", GetLastError());
 
         /* Acquire required size for the public keys */
         result = CryptExportKey(privKey1, 0, PUBLICKEYBLOB, 0, NULL, &pubKeyLen1);
         ok(!result && GetLastError() == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+           "Expected ERROR_INVALID_PARAMETER, got %lx\n", GetLastError());
 
         result = CryptExportKey(privKey2, 0, PUBLICKEYBLOB, 0, NULL, &pubKeyLen2);
         ok(!result && GetLastError() == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+           "Expected ERROR_INVALID_PARAMETER, got %lx\n", GetLastError());
 
         /* Export public key which will be calculated into the shared key */
         result = CryptExportKey(privKey1, 0, PUBLICKEYBLOB, 0, pubKeyBuffer1, &pubKeyLen1);
         ok(!result && GetLastError() == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+           "Expected ERROR_INVALID_PARAMETER, got %lx\n", GetLastError());
 
         result = CryptExportKey(privKey2, 0, PUBLICKEYBLOB, 0, pubKeyBuffer2, &pubKeyLen2);
         ok(!result && GetLastError() == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+           "Expected ERROR_INVALID_PARAMETER, got %lx\n", GetLastError());
 
         /* Import the public key and convert it into a shared key */
         result = CryptImportKey(hProv, pubKeyBuffer2, pubKeyLen2, privKey1, 0, &sessionKey1);
@@ -1198,25 +1198,25 @@ static void test_keyExchange_baseDSS(HCRYPTPROV hProv, const struct keyExchange_
             broken(!result && GetLastError() == NTE_BAD_DATA) || /* Vista.64 */
             broken(!result && GetLastError() == NTE_BAD_TYPE) || /* Win2K-W2K8, Win7.64 */
             broken(!result && GetLastError() == NTE_BAD_ALGID),  /* W7SP164 (32 bit dssenh) */
-            "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+            "Expected ERROR_INVALID_PARAMETER, got %lx\n", GetLastError());
 
         result = CryptImportKey(hProv, pubKeyBuffer1, pubKeyLen1, privKey2, 0, &sessionKey2);
         ok((!result && GetLastError() == ERROR_INVALID_PARAMETER) ||
             broken(!result && GetLastError() == NTE_BAD_DATA) || /* Win 7 */
             broken(!result && GetLastError() == NTE_BAD_TYPE) || /* Win2K-W2K8, Win7.64 */
             broken(!result && GetLastError() == NTE_BAD_ALGID),  /* W7SP164 (32 bit dssenh) */
-            "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+            "Expected ERROR_INVALID_PARAMETER, got %lx\n", GetLastError());
 
         /* Set the shared key parameters to matching type */
         algid = CALG_RC4;
         result = CryptSetKeyParam(sessionKey1, KP_ALGID, (BYTE *)&algid, 0);
         ok(!result && GetLastError() == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+           "Expected ERROR_INVALID_PARAMETER, got %lx\n", GetLastError());
 
         algid = CALG_RC4;
         result = CryptSetKeyParam(sessionKey2, KP_ALGID, (BYTE *)&algid, 0);
         ok(!result && GetLastError() == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+           "Expected ERROR_INVALID_PARAMETER, got %lx\n", GetLastError());
 
         /* Encrypt some data and verify we are getting the same output */
         memcpy(pbData1, plainText, plainLen);
@@ -1224,11 +1224,11 @@ static void test_keyExchange_baseDSS(HCRYPTPROV hProv, const struct keyExchange_
 
         result = CryptEncrypt(sessionKey1, 0, TRUE, 0, pbData1, &dataLen, 36);
         ok(!result && GetLastError() == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+           "Expected ERROR_INVALID_PARAMETER, got %lx\n", GetLastError());
 
         result = CryptDecrypt(sessionKey2, 0, TRUE, 0, pbData1, &dataLen);
         ok(!result && GetLastError() == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+           "Expected ERROR_INVALID_PARAMETER, got %lx\n", GetLastError());
 
         ok(!memcmp(pbData1, (BYTE *)plainText, sizeof(plainText)), "Incorrect decrypted data.\n");
 
@@ -1237,30 +1237,30 @@ static void test_keyExchange_baseDSS(HCRYPTPROV hProv, const struct keyExchange_
 
         result = CryptEncrypt(sessionKey2, 0, TRUE, 0, pbData2, &dataLen, 36);
         ok(!result && GetLastError() == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+           "Expected ERROR_INVALID_PARAMETER, got %lx\n", GetLastError());
 
         result = CryptDecrypt(sessionKey1, 0, TRUE, 0, pbData2, &dataLen);
         ok(!result && GetLastError() == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+           "Expected ERROR_INVALID_PARAMETER, got %lx\n", GetLastError());
 
         ok(!memcmp(pbData1, pbData2, dataLen), "Decrypted data is not identical.\n");
 
         /* Destroy all user keys */
         result = CryptDestroyKey(sessionKey1);
         ok(!result && GetLastError() == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+           "Expected ERROR_INVALID_PARAMETER, got %lx\n", GetLastError());
 
         result = CryptDestroyKey(sessionKey2);
         ok(!result && GetLastError() == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+           "Expected ERROR_INVALID_PARAMETER, got %lx\n", GetLastError());
 
         result = CryptDestroyKey(privKey1);
         ok(!result && GetLastError() == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+           "Expected ERROR_INVALID_PARAMETER, got %lx\n", GetLastError());
 
         result = CryptDestroyKey(privKey2);
         ok(!result && GetLastError() == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+           "Expected ERROR_INVALID_PARAMETER, got %lx\n", GetLastError());
     }
 }
 
@@ -1295,70 +1295,70 @@ static void test_keyExchange_dssDH(HCRYPTPROV hProv, const struct keyExchange_te
             skip("skipping key exchange tests\n");
             return;
         }
-        ok(result, "Failed to generate a key for user1, got %x\n", GetLastError());
+        ok(result, "Failed to generate a key for user1, got %lx\n", GetLastError());
 
         result = CryptGenKey(hProv, tests[i].algid, 512 << 16 | CRYPT_PREGEN, &privKey2);
-        ok(result, "Failed to generate a key for user2, got %x\n", GetLastError());
+        ok(result, "Failed to generate a key for user2, got %lx\n", GetLastError());
 
         /* Set the prime and generator values, which are agreed upon */
         result = CryptSetKeyParam(privKey1, KP_P, (BYTE *)&Prime, 0);
-        ok(result, "Failed to set prime for user 1's key, got %x\n", GetLastError());
+        ok(result, "Failed to set prime for user 1's key, got %lx\n", GetLastError());
 
         result = CryptSetKeyParam(privKey2, KP_P, (BYTE *)&Prime, 0);
-        ok(result, "Failed to set prime for user 2's key, got %x\n", GetLastError());
+        ok(result, "Failed to set prime for user 2's key, got %lx\n", GetLastError());
 
         result = CryptSetKeyParam(privKey1, KP_G, (BYTE *)&Generator, 0);
-        ok(result, "Failed to set generator for user 1's key, got %x\n", GetLastError());
+        ok(result, "Failed to set generator for user 1's key, got %lx\n", GetLastError());
 
         result = CryptSetKeyParam(privKey2, KP_G, (BYTE *)&Generator, 0);
-        ok(result, "Failed to set generator for user 2's key, got %x\n", GetLastError());
+        ok(result, "Failed to set generator for user 2's key, got %lx\n", GetLastError());
 
         /* Generate the secret value for user1 and user2 */
         result = CryptSetKeyParam(privKey1, KP_X, NULL, 0);
-        ok(result, "Failed to set secret value for user 1, got %x\n", GetLastError());
+        ok(result, "Failed to set secret value for user 1, got %lx\n", GetLastError());
 
         result = CryptSetKeyParam(privKey2, KP_X, NULL, 0);
-        ok(result, "Failed to set secret value for user 2, got %x\n", GetLastError());
+        ok(result, "Failed to set secret value for user 2, got %lx\n", GetLastError());
 
         /* Acquire required size for the public keys */
         result = CryptExportKey(privKey1, 0, PUBLICKEYBLOB, 0, NULL, &pubKeyLen1);
-        ok(result, "Failed to acquire public key length for user 1, got %x\n", GetLastError());
+        ok(result, "Failed to acquire public key length for user 1, got %lx\n", GetLastError());
 
         result = CryptExportKey(privKey2, 0, PUBLICKEYBLOB, 0, NULL, &pubKeyLen2);
-        ok(result, "Failed to acquire public key length for user 2, got %x\n", GetLastError());
+        ok(result, "Failed to acquire public key length for user 2, got %lx\n", GetLastError());
 
         /* Export public key which will be calculated into the shared key */
         result = CryptExportKey(privKey1, 0, PUBLICKEYBLOB, 0, pubKeyBuffer1, &pubKeyLen1);
-        ok(result, "Failed to export public key for user 1, got %x\n", GetLastError());
+        ok(result, "Failed to export public key for user 1, got %lx\n", GetLastError());
 
         result = CryptExportKey(privKey2, 0, PUBLICKEYBLOB, 0, pubKeyBuffer2, &pubKeyLen2);
-        ok(result, "Failed to export public key for user 2, got %x\n", GetLastError());
+        ok(result, "Failed to export public key for user 2, got %lx\n", GetLastError());
 
         /* Import the public key and convert it into a shared key */
         result = CryptImportKey(hProv, pubKeyBuffer2, pubKeyLen2, privKey1, 0, &sessionKey1);
-        ok(result, "Failed to import key for user 1, got %x\n", GetLastError());
+        ok(result, "Failed to import key for user 1, got %lx\n", GetLastError());
 
         result = CryptImportKey(hProv, pubKeyBuffer1, pubKeyLen1, privKey2, 0, &sessionKey2);
-        ok(result, "Failed to import key for user 2, got %x\n", GetLastError());
+        ok(result, "Failed to import key for user 2, got %lx\n", GetLastError());
 
         /* Set the shared key parameters to matching cipher type */
         algid = CALG_3DES;
         result = CryptSetKeyParam(sessionKey1, KP_ALGID, (BYTE *)&algid, 0);
-        ok(result, "Failed to set session key for user 1, got %x\n", GetLastError());
+        ok(result, "Failed to set session key for user 1, got %lx\n", GetLastError());
 
         algid = CALG_3DES;
         result = CryptSetKeyParam(sessionKey2, KP_ALGID, (BYTE *)&algid, 0);
-        ok(result, "Failed to set session key for user 2, got %x\n", GetLastError());
+        ok(result, "Failed to set session key for user 2, got %lx\n", GetLastError());
 
         /* Encrypt some data and verify we are getting the correct output */
         memcpy(pbData1, plainText, plainLen);
         dataLen = plainLen;
 
         result = CryptEncrypt(sessionKey1, 0, TRUE, 0, pbData1, &dataLen, 36);
-        ok(result, "Failed to encrypt data, got %x.\n", GetLastError());
+        ok(result, "Failed to encrypt data, got %lx.\n", GetLastError());
 
         result = CryptDecrypt(sessionKey2, 0, TRUE, 0, pbData1, &dataLen);
-        ok(result, "Failed to decrypt data, got %x.\n", GetLastError());
+        ok(result, "Failed to decrypt data, got %lx.\n", GetLastError());
 
         ok(!memcmp(pbData1, (BYTE *)plainText, sizeof(plainText)), "Incorrect decrypted data.\n");
 
@@ -1366,25 +1366,25 @@ static void test_keyExchange_dssDH(HCRYPTPROV hProv, const struct keyExchange_te
         dataLen = plainLen;
 
         result = CryptEncrypt(sessionKey2, 0, TRUE, 0, pbData2, &dataLen, 36);
-        ok(result, "Failed to encrypt data, got %x.\n", GetLastError());
+        ok(result, "Failed to encrypt data, got %lx.\n", GetLastError());
 
         result = CryptDecrypt(sessionKey1, 0, TRUE, 0, pbData2, &dataLen);
-        ok(result, "Failed to decrypt data, got %x.\n", GetLastError());
+        ok(result, "Failed to decrypt data, got %lx.\n", GetLastError());
 
         ok(!memcmp(pbData1, pbData2, dataLen), "Decrypted data is not identical.\n");
 
         /* Destroy all user keys */
         result = CryptDestroyKey(sessionKey1);
-        ok(result, "Failed to destroy session key 1, got %x\n", GetLastError());
+        ok(result, "Failed to destroy session key 1, got %lx\n", GetLastError());
 
         result = CryptDestroyKey(sessionKey2);
-        ok(result, "Failed to destroy session key 2, got %x\n", GetLastError());
+        ok(result, "Failed to destroy session key 2, got %lx\n", GetLastError());
 
         result = CryptDestroyKey(privKey1);
-        ok(result, "Failed to destroy key private key 1, got %x\n", GetLastError());
+        ok(result, "Failed to destroy key private key 1, got %lx\n", GetLastError());
 
         result = CryptDestroyKey(privKey2);
-        ok(result, "Failed to destroy key private key 2, got %x\n", GetLastError());
+        ok(result, "Failed to destroy key private key 2, got %lx\n", GetLastError());
     }
 }
 
@@ -1449,45 +1449,45 @@ static void test_duplicate_hash(void)
     BOOL result;
 
     result = CryptAcquireContextA(&hprov, NULL, MS_DEF_DSS_PROV_A, PROV_DSS, CRYPT_VERIFYCONTEXT);
-    ok(result, "got %08x\n", GetLastError());
+    ok(result, "got %08lx\n", GetLastError());
 
     result = CryptCreateHash(hprov, CALG_SHA, 0, 0, &hhash);
-    ok(result, "got %08x\n", GetLastError());
+    ok(result, "got %08lx\n", GetLastError());
 
     result = CryptHashData(hhash, (const BYTE *)"winetest", sizeof("winetest"), 0);
-    ok(result, "got %08x\n", GetLastError());
+    ok(result, "got %08lx\n", GetLastError());
 
     len = sizeof(buf);
     result = CryptGetHashParam(hhash, HP_HASHVAL, buf, &len, 0);
-    ok(result, "got %08x\n", GetLastError());
+    ok(result, "got %08lx\n", GetLastError());
     ok(!memcmp(buf, expected, sizeof(expected)), "wrong data\n");
 
     SetLastError(0xdeadbeef);
     result = CryptHashData(hhash, (const BYTE *)"winetest", sizeof("winetest"), 0);
     ok(!result, "success\n");
-    ok(GetLastError() == NTE_BAD_HASH_STATE, "got %08x\n", GetLastError());
+    ok(GetLastError() == NTE_BAD_HASH_STATE, "got %08lx\n", GetLastError());
 
     result = CryptDuplicateHash(hhash, NULL, 0, &hhash2);
-    ok(result, "got %08x\n", GetLastError());
+    ok(result, "got %08lx\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     result = CryptHashData(hhash2, (const BYTE *)"winetest", sizeof("winetest"), 0);
     ok(!result, "success\n");
-    ok(GetLastError() == NTE_BAD_HASH_STATE, "got %08x\n", GetLastError());
+    ok(GetLastError() == NTE_BAD_HASH_STATE, "got %08lx\n", GetLastError());
 
     len = sizeof(buf);
     result = CryptGetHashParam(hhash2, HP_HASHVAL, buf, &len, 0);
-    ok(result, "got %08x\n", GetLastError());
+    ok(result, "got %08lx\n", GetLastError());
     ok(!memcmp(buf, expected, sizeof(expected)), "wrong data\n");
 
     result = CryptDestroyHash(hhash2);
-    ok(result, "got %08x\n", GetLastError());
+    ok(result, "got %08lx\n", GetLastError());
 
     result = CryptDestroyHash(hhash);
-    ok(result, "got %08x\n", GetLastError());
+    ok(result, "got %08lx\n", GetLastError());
 
     result = CryptReleaseContext(hprov, 0);
-    ok(result, "got %08x\n", GetLastError());
+    ok(result, "got %08lx\n", GetLastError());
 }
 
 static void test_userkey(void)
@@ -1498,40 +1498,40 @@ static void test_userkey(void)
 
     CryptAcquireContextA(&hprov, "winetest", MS_ENH_DSS_DH_PROV_A, PROV_DSS_DH, CRYPT_DELETEKEYSET);
     result = CryptAcquireContextA(&hprov, "winetest", MS_ENH_DSS_DH_PROV_A, PROV_DSS_DH, CRYPT_NEWKEYSET);
-    ok(result, "got %08x\n", GetLastError());
+    ok(result, "got %08lx\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     result = CryptGetUserKey(hprov, AT_KEYEXCHANGE, &hkey);
     ok(!result, "success\n");
-    ok(GetLastError() == NTE_NO_KEY, "got %08x\n", GetLastError());
+    ok(GetLastError() == NTE_NO_KEY, "got %08lx\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     result = CryptGetUserKey(hprov, AT_SIGNATURE, &hkey);
     ok(!result, "success\n");
-    ok(GetLastError() == NTE_NO_KEY, "got %08x\n", GetLastError());
+    ok(GetLastError() == NTE_NO_KEY, "got %08lx\n", GetLastError());
 
     result = CryptGenKey(hprov, AT_SIGNATURE, 1024 << 16, &hkey);
-    ok(result, "got %08x\n", GetLastError());
+    ok(result, "got %08lx\n", GetLastError());
     result = CryptDestroyKey(hkey);
-    ok(result, "got %08x\n", GetLastError());
+    ok(result, "got %08lx\n", GetLastError());
 
     result = CryptGetUserKey(hprov, AT_SIGNATURE, &hkey);
-    ok(result, "got %08x\n", GetLastError());
+    ok(result, "got %08lx\n", GetLastError());
     result = CryptDestroyKey(hkey);
-    ok(result, "got %08x\n", GetLastError());
+    ok(result, "got %08lx\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     result = CryptGetUserKey(hprov, AT_KEYEXCHANGE, &hkey);
     ok(!result, "success\n");
-    ok(GetLastError() == NTE_NO_KEY, "got %08x\n", GetLastError());
+    ok(GetLastError() == NTE_NO_KEY, "got %08lx\n", GetLastError());
 
     result = CryptReleaseContext(hprov, 0);
-    ok(result, "got %08x\n", GetLastError());
+    ok(result, "got %08lx\n", GetLastError());
 
     hprov = 0xdeadbeef;
     result = CryptAcquireContextA(&hprov, "winetest", MS_ENH_DSS_DH_PROV_A, PROV_DSS_DH, CRYPT_DELETEKEYSET);
-    ok(result, "got %08x\n", GetLastError());
-    ok(!hprov, "got %08x\n", (DWORD)hprov);
+    ok(result, "got %08lx\n", GetLastError());
+    ok(!hprov, "got %08lx\n", (DWORD)hprov);
 }
 
 static void test_duplicate_key(void)
@@ -1543,25 +1543,25 @@ static void test_duplicate_key(void)
     BYTE buf[512];
 
     result = CryptAcquireContextA(&hprov, NULL, MS_DEF_DSS_PROV_A, PROV_DSS, CRYPT_VERIFYCONTEXT);
-    ok(result, "got %08x\n", GetLastError());
+    ok(result, "got %08lx\n", GetLastError());
 
     result = CryptImportKey(hprov, DSS_SIGN_PrivateKey, sizeof(DSS_SIGN_PrivateKey), 0, CRYPT_EXPORTABLE, &hkey);
-    ok(result, "got %08x\n", GetLastError());
+    ok(result, "got %08lx\n", GetLastError());
 
     result = CryptDuplicateKey(hkey, NULL, 0, &hkey2);
-    ok(result, "got %08x\n", GetLastError());
+    ok(result, "got %08lx\n", GetLastError());
 
     len = sizeof(buf);
     result = CryptExportKey(hkey2, 0, PRIVATEKEYBLOB, 0, buf, &len);
-    ok(result, "got %08x\n", GetLastError());
-    ok(len == sizeof(DSS_SIGN_PrivateKey), "got %u\n", len);
+    ok(result, "got %08lx\n", GetLastError());
+    ok(len == sizeof(DSS_SIGN_PrivateKey), "got %lu\n", len);
     ok(!memcmp(buf, DSS_SIGN_PrivateKey, sizeof(DSS_SIGN_PrivateKey)), "wrong data\n");
 
     result = CryptDestroyKey(hkey2);
-    ok(result, "got %08x\n", GetLastError());
+    ok(result, "got %08lx\n", GetLastError());
 
     result = CryptDestroyKey(hkey);
-    ok(result, "got %08x\n", GetLastError());
+    ok(result, "got %08lx\n", GetLastError());
 }
 
 START_TEST(dssenh)
