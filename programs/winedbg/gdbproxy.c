@@ -485,6 +485,8 @@ static BOOL handle_exception(struct gdb_context* gdbctx, EXCEPTION_DEBUG_INFO* e
         char name[9];
         SIZE_T read;
 
+        if (threadname->dwType != 0x1000)
+            return FALSE;
         if (threadname->dwThreadID == -1)
             thread = dbg_get_thread(gdbctx->process, gdbctx->de.dwThreadId);
         else

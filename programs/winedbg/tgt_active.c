@@ -245,6 +245,9 @@ static DWORD dbg_handle_exception(const EXCEPTION_RECORD* rec, BOOL first_chance
         break;
     case EXCEPTION_WINE_NAME_THREAD:
         pThreadName = (const THREADNAME_INFO*)(rec->ExceptionInformation);
+
+        if (pThreadName->dwType != 0x1000)
+            return DBG_EXCEPTION_NOT_HANDLED;
         if (pThreadName->dwThreadID == -1)
             pThread = dbg_curr_thread;
         else
