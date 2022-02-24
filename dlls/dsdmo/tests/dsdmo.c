@@ -80,53 +80,53 @@ static void test_aggregation(const GUID *clsid)
     dmo = (IMediaObject *)0xdeadbeef;
     hr = CoCreateInstance(clsid, &test_outer, CLSCTX_INPROC_SERVER,
             &IID_IMediaObject, (void **)&dmo);
-    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
     ok(!dmo, "Got interface %p.\n", dmo);
 
     hr = CoCreateInstance(clsid, &test_outer, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void **)&unk);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
     ok(unk != &test_outer, "Returned IUnknown should not be outer IUnknown.\n");
     ref = get_refcount(unk);
-    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
 
     ref = IUnknown_AddRef(unk);
-    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
-    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
 
     ref = IUnknown_Release(unk);
-    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
-    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
 
     hr = IUnknown_QueryInterface(unk, &IID_IUnknown, (void **)&unk2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(unk2 == unk, "Got unexpected IUnknown %p.\n", unk2);
     IUnknown_Release(unk2);
 
     hr = IUnknown_QueryInterface(unk, &IID_IMediaObject, (void **)&dmo);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IMediaObject_QueryInterface(dmo, &IID_IUnknown, (void **)&unk2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(unk2 == (IUnknown *)0xdeadbeef, "Got unexpected IUnknown %p.\n", unk2);
 
     hr = IMediaObject_QueryInterface(dmo, &IID_IMediaObject, (void **)&dmo2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(dmo2 == (IMediaObject *)0xdeadbeef, "Got unexpected IMediaObject %p.\n", dmo2);
 
     hr = IUnknown_QueryInterface(unk, &test_iid, (void **)&unk2);
-    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
     ok(!unk2, "Got unexpected IUnknown %p.\n", unk2);
 
     hr = IMediaObject_QueryInterface(dmo, &test_iid, (void **)&unk2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(unk2 == (IUnknown *)0xdeadbeef, "Got unexpected IUnknown %p.\n", unk2);
 
     IMediaObject_Release(dmo);
     ref = IUnknown_Release(unk);
-    ok(!ref, "Got unexpected refcount %d.\n", ref);
-    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(!ref, "Got unexpected refcount %ld.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
 }
 
 static void test_interfaces(const GUID *clsid, const GUID *iid)
@@ -136,26 +136,26 @@ static void test_interfaces(const GUID *clsid, const GUID *iid)
     ULONG ref;
 
     hr = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER, iid, (void **)&unk);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IUnknown_QueryInterface(unk, &IID_IMediaObject, (void **)&unk2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IUnknown_QueryInterface(unk2, iid, (void **)&unk3);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(unk3 == unk, "Interface pointers didn't match.\n");
     IUnknown_Release(unk3);
     IUnknown_Release(unk2);
 
     hr = IUnknown_QueryInterface(unk, &IID_IMediaObjectInPlace, (void **)&unk2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IUnknown_QueryInterface(unk2, iid, (void **)&unk3);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(unk3 == unk, "Interface pointers didn't match.\n");
     IUnknown_Release(unk3);
     IUnknown_Release(unk2);
 
     ref = IUnknown_Release(unk);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
 static void build_pcm_format(WAVEFORMATEX *format, WORD tag, WORD depth, DWORD sample_rate, WORD channels)
@@ -200,38 +200,38 @@ static void test_media_types(const GUID *clsid)
     };
 
     hr = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IMediaObject, (void **)&dmo);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     build_pcm_format(&wfx, WAVE_FORMAT_PCM, 16, 44100, 2);
 
     mt.majortype = MEDIATYPE_Video;
     hr = IMediaObject_SetInputType(dmo, 0, &mt, 0);
-    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
     mt.majortype = GUID_NULL;
     hr = IMediaObject_SetInputType(dmo, 0, &mt, 0);
-    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
     mt.majortype = MEDIATYPE_Audio;
 
     mt.subtype = MEDIASUBTYPE_RGB8;
     hr = IMediaObject_SetInputType(dmo, 0, &mt, 0);
-    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
     mt.subtype = GUID_NULL;
     hr = IMediaObject_SetInputType(dmo, 0, &mt, 0);
-    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
     mt.subtype = MEDIASUBTYPE_IEEE_FLOAT;
     hr = IMediaObject_SetInputType(dmo, 0, &mt, 0);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     mt.subtype = MEDIASUBTYPE_PCM;
 
     mt.formattype = FORMAT_VideoInfo;
     hr = IMediaObject_SetInputType(dmo, 0, &mt, 0);
-    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
     mt.formattype = FORMAT_None;
     hr = IMediaObject_SetInputType(dmo, 0, &mt, 0);
-    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
     mt.formattype = GUID_NULL;
     hr = IMediaObject_SetInputType(dmo, 0, &mt, 0);
-    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
     mt.formattype = FORMAT_WaveFormatEx;
 
     for (i = 0; i < ARRAY_SIZE(sample_rates); ++i)
@@ -247,48 +247,48 @@ static void test_media_types(const GUID *clsid)
                 build_pcm_format(&wfx, depths[j].format, depths[j].depth, sample_rates[i], channels);
 
                 hr = IMediaObject_SetInputType(dmo, 0, &mt, 0);
-                ok(hr == S_OK, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
+                ok(hr == S_OK, "Got hr %#lx for %lu Hz, %u channels, format %#x, depth %u.\n",
                         hr, sample_rates[i], channels, depths[j].format, depths[j].depth);
 
                 /* The output type must match the input type. */
 
                 build_pcm_format(&wfx, depths[j].format, depths[j].depth, sample_rates[i], 3 - channels);
                 hr = IMediaObject_SetOutputType(dmo, 0, &mt, 0);
-                ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
+                ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#lx for %lu Hz, %u channels, format %#x, depth %u.\n",
                         hr, sample_rates[i], channels, depths[j].format, depths[j].depth);
 
                 build_pcm_format(&wfx, depths[j].format, depths[j].depth, 2 * sample_rates[i], channels);
                 hr = IMediaObject_SetOutputType(dmo, 0, &mt, 0);
-                ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
+                ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#lx for %lu Hz, %u channels, format %#x, depth %u.\n",
                         hr, sample_rates[i], channels, depths[j].format, depths[j].depth);
 
                 build_pcm_format(&wfx, depths[j].format, 24 - depths[j].depth, sample_rates[i], channels);
                 hr = IMediaObject_SetOutputType(dmo, 0, &mt, 0);
-                ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
+                ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#lx for %lu Hz, %u channels, format %#x, depth %u.\n",
                         hr, sample_rates[i], channels, depths[j].format, depths[j].depth);
 
                 build_pcm_format(&wfx, depths[j].format, depths[j].depth, sample_rates[i], channels);
                 hr = IMediaObject_SetOutputType(dmo, 0, &mt, 0);
-                ok(hr == S_OK, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
+                ok(hr == S_OK, "Got hr %#lx for %lu Hz, %u channels, format %#x, depth %u.\n",
                         hr, sample_rates[i], channels, depths[j].format, depths[j].depth);
 
                 hr = IMediaObject_SetInputType(dmo, 0, NULL, DMO_SET_TYPEF_CLEAR);
-                ok(hr == S_OK, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
+                ok(hr == S_OK, "Got hr %#lx for %lu Hz, %u channels, format %#x, depth %u.\n",
                         hr, sample_rates[i], channels, depths[j].format, depths[j].depth);
 
                 hr = IMediaObject_SetOutputType(dmo, 0, NULL, DMO_SET_TYPEF_CLEAR);
-                ok(hr == S_OK, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
+                ok(hr == S_OK, "Got hr %#lx for %lu Hz, %u channels, format %#x, depth %u.\n",
                         hr, sample_rates[i], channels, depths[j].format, depths[j].depth);
 
                 hr = IMediaObject_SetInputType(dmo, 0, NULL, DMO_SET_TYPEF_CLEAR);
-                ok(hr == S_OK, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
+                ok(hr == S_OK, "Got hr %#lx for %lu Hz, %u channels, format %#x, depth %u.\n",
                         hr, sample_rates[i], channels, depths[j].format, depths[j].depth);
             }
         }
     }
 
     ref = IMediaObject_Release(dmo);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
 static void test_chorus_parameters(void)
@@ -300,22 +300,22 @@ static void test_chorus_parameters(void)
 
     hr = CoCreateInstance(&GUID_DSFX_STANDARD_CHORUS, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectSoundFXChorus, (void **)&chorus);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (hr != S_OK)
         return;
 
     hr = IDirectSoundFXChorus_GetAllParameters(chorus, &params);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(params.fWetDryMix == 50.0f, "Got wetness %.8e%%.\n", params.fWetDryMix);
     ok(params.fDepth == 10.0f, "Got depth %.8e.\n", params.fDepth);
     ok(params.fFeedback == 25.0f, "Got feedback %.8e.\n", params.fFeedback);
     ok(params.fFrequency == 1.1f, "Got LFO frequency %.8e.\n", params.fFrequency);
-    ok(params.lWaveform == DSFXCHORUS_WAVE_SIN, "Got LFO waveform %d.\n", params.lWaveform);
+    ok(params.lWaveform == DSFXCHORUS_WAVE_SIN, "Got LFO waveform %ld.\n", params.lWaveform);
     ok(params.fDelay == 16.0f, "Got delay %.8e.\n", params.fDelay);
-    ok(params.lPhase == 3, "Got phase differential %d.\n", params.lPhase);
+    ok(params.lPhase == 3, "Got phase differential %ld.\n", params.lPhase);
 
     ref = IDirectSoundFXChorus_Release(chorus);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
 static void test_compressor_parameters(void)
@@ -327,12 +327,12 @@ static void test_compressor_parameters(void)
 
     hr = CoCreateInstance(&GUID_DSFX_STANDARD_COMPRESSOR, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectSoundFXCompressor, (void **)&compressor);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (hr != S_OK)
         return;
 
     hr = IDirectSoundFXCompressor_GetAllParameters(compressor, &params);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(params.fGain == 0.0f, "Got gain %.8e dB.\n", params.fGain);
     ok(params.fAttack == 10.0f, "Got attack time %.8e ms.\n", params.fAttack);
     ok(params.fThreshold == -20.0f, "Got threshold %.8e dB.\n", params.fThreshold);
@@ -340,7 +340,7 @@ static void test_compressor_parameters(void)
     ok(params.fPredelay == 4.0f, "Got pre-delay %.8e ms.\n", params.fPredelay);
 
     ref = IDirectSoundFXCompressor_Release(compressor);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
 static void test_distortion_parameters(void)
@@ -352,12 +352,12 @@ static void test_distortion_parameters(void)
 
     hr = CoCreateInstance(&GUID_DSFX_STANDARD_DISTORTION, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectSoundFXDistortion, (void **)&distortion);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (hr != S_OK)
         return;
 
     hr = IDirectSoundFXDistortion_GetAllParameters(distortion, &params);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(params.fGain == -18.0f, "Got gain %.8e dB.\n", params.fGain);
     ok(params.fEdge == 15.0f, "Got edge %.8e%%.\n", params.fEdge);
     ok(params.fPostEQCenterFrequency == 2400.0f, "Got center frequency %.8e Hz.\n", params.fPostEQCenterFrequency);
@@ -365,7 +365,7 @@ static void test_distortion_parameters(void)
     ok(params.fPreLowpassCutoff == 8000.0f, "Got pre-lowpass cutoff %.8e Hz.\n", params.fPreLowpassCutoff);
 
     ref = IDirectSoundFXDistortion_Release(distortion);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
 static void test_echo_parameters(void)
@@ -377,20 +377,20 @@ static void test_echo_parameters(void)
 
     hr = CoCreateInstance(&GUID_DSFX_STANDARD_ECHO, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectSoundFXEcho, (void **)&echo);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (hr != S_OK)
         return;
 
     hr = IDirectSoundFXEcho_GetAllParameters(echo, &params);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(params.fWetDryMix == 50.0f, "Got %.8e%% wetness.\n", params.fWetDryMix);
     ok(params.fFeedback == 50.0f, "Got %.8e%% feedback.\n", params.fFeedback);
     ok(params.fLeftDelay == 500.0f, "Got left delay %.8e ms.\n", params.fLeftDelay);
     ok(params.fRightDelay == 500.0f, "Got right delay %.8e ms.\n", params.fRightDelay);
-    ok(!params.lPanDelay, "Got delay swap %d.\n", params.lPanDelay);
+    ok(!params.lPanDelay, "Got delay swap %ld.\n", params.lPanDelay);
 
     ref = IDirectSoundFXEcho_Release(echo);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
 static void test_flanger_parameters(void)
@@ -402,21 +402,21 @@ static void test_flanger_parameters(void)
 
     hr = CoCreateInstance(&GUID_DSFX_STANDARD_FLANGER, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectSoundFXFlanger, (void **)&flanger);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (hr != S_OK)
         return;
 
     hr = IDirectSoundFXFlanger_GetAllParameters(flanger, &params);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(params.fWetDryMix == 50.0f, "Got %.8e%% wetness.\n", params.fWetDryMix);
     ok(params.fDepth == 100.0f, "Got %.8e * 0.01%% depth.\n", params.fDepth);
     ok(params.fFeedback == -50.0f, "Got %.8e%% feedback.\n", params.fFeedback);
-    ok(params.lWaveform == DSFXFLANGER_WAVE_SIN, "Got LFO waveform %d.\n", params.lWaveform);
+    ok(params.lWaveform == DSFXFLANGER_WAVE_SIN, "Got LFO waveform %ld.\n", params.lWaveform);
     ok(params.fDelay == 2.0f, "Got delay %.8e ms.\n", params.fDelay);
-    ok(params.lPhase == DSFXFLANGER_PHASE_ZERO, "Got phase differential %d.\n", params.lPhase);
+    ok(params.lPhase == DSFXFLANGER_PHASE_ZERO, "Got phase differential %ld.\n", params.lPhase);
 
     ref = IDirectSoundFXFlanger_Release(flanger);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
 static void test_gargle_parameters(void)
@@ -428,17 +428,17 @@ static void test_gargle_parameters(void)
 
     hr = CoCreateInstance(&GUID_DSFX_STANDARD_GARGLE, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectSoundFXGargle, (void **)&gargle);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (hr != S_OK)
         return;
 
     hr = IDirectSoundFXGargle_GetAllParameters(gargle, &params);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(params.dwRateHz == 20, "Got rate %u Hz.\n", params.dwRateHz);
-    ok(params.dwWaveShape == DSFXGARGLE_WAVE_TRIANGLE, "Got wave shape %u.\n", params.dwWaveShape);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(params.dwRateHz == 20, "Got rate %lu Hz.\n", params.dwRateHz);
+    ok(params.dwWaveShape == DSFXGARGLE_WAVE_TRIANGLE, "Got wave shape %lu.\n", params.dwWaveShape);
 
     ref = IDirectSoundFXGargle_Release(gargle);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
 static void test_eq_parameters(void)
@@ -450,33 +450,33 @@ static void test_eq_parameters(void)
 
     hr = CoCreateInstance(&GUID_DSFX_STANDARD_PARAMEQ, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectSoundFXParamEq, (void **)&eq);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IDirectSoundFXParamEq_GetAllParameters(eq, &params);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(params.fCenter == 8000.0f, "Got center frequency %.8e Hz.\n", params.fCenter);
     ok(params.fBandwidth == 12.0f, "Got band width %.8e semitones.\n", params.fBandwidth);
     ok(params.fGain == 0.0f, "Got gain %.8e.\n", params.fGain);
 
     params.fCenter = 79.0f;
     hr = IDirectSoundFXParamEq_SetAllParameters(eq, &params);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     params.fCenter = 16001.0f;
     hr = IDirectSoundFXParamEq_SetAllParameters(eq, &params);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     params.fCenter = 738.0f;
     hr = IDirectSoundFXParamEq_SetAllParameters(eq, &params);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     memset(&params, 0xcc, sizeof(params));
     hr = IDirectSoundFXParamEq_GetAllParameters(eq, &params);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(params.fCenter == 738.0f, "Got center frequency %.8e Hz.\n", params.fCenter);
     ok(params.fBandwidth == 12.0f, "Got band width %.8e semitones.\n", params.fBandwidth);
     ok(params.fGain == 0.0f, "Got gain %.8e.\n", params.fGain);
 
     ref = IDirectSoundFXParamEq_Release(eq);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
 static void test_reverb_parameters(void)
@@ -488,18 +488,18 @@ static void test_reverb_parameters(void)
 
     hr = CoCreateInstance(&GUID_DSFX_STANDARD_I3DL2REVERB, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectSoundFXI3DL2Reverb, (void **)&reverb);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IDirectSoundFXI3DL2Reverb_GetAllParameters(reverb, &params);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(params.lRoom == -1000, "Got room attenuation %d mB.\n", params.lRoom);
-    ok(params.lRoomHF == -100, "Got room high-frequency attenuation %d mB.\n", params.lRoomHF);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(params.lRoom == -1000, "Got room attenuation %ld mB.\n", params.lRoom);
+    ok(params.lRoomHF == -100, "Got room high-frequency attenuation %ld mB.\n", params.lRoomHF);
     ok(params.flRoomRolloffFactor == 0.0f, "Got room rolloff factor %.8e.\n", params.flRoomRolloffFactor);
     ok(params.flDecayTime == 1.49f, "Got decay time %.8e s.\n", params.flDecayTime);
     ok(params.flDecayHFRatio == 0.83f, "Got decay time ratio %.8e.\n", params.flDecayHFRatio);
-    ok(params.lReflections == -2602, "Got early reflection attenuation %d mB.\n", params.lReflections);
+    ok(params.lReflections == -2602, "Got early reflection attenuation %ld mB.\n", params.lReflections);
     ok(params.flReflectionsDelay == 0.007f, "Got first reflection delay %.8e s.\n", params.flReflectionsDelay);
-    ok(params.lReverb == 200, "Got reverb attenuation %d mB.\n", params.lReverb);
+    ok(params.lReverb == 200, "Got reverb attenuation %ld mB.\n", params.lReverb);
     ok(params.flReverbDelay == 0.011f, "Got reverb delay %.8e s.\n", params.flReverbDelay);
     ok(params.flDiffusion == 100.0f, "Got diffusion %.8e%%.\n", params.flDiffusion);
     ok(params.flDensity == 100.0f, "Got density %.8e%%.\n", params.flDensity);
@@ -507,21 +507,21 @@ static void test_reverb_parameters(void)
 
     params.lRoom = -10001;
     hr = IDirectSoundFXI3DL2Reverb_SetAllParameters(reverb, &params);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     params.lRoom = 1;
     hr = IDirectSoundFXI3DL2Reverb_SetAllParameters(reverb, &params);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     params.lRoom = -900;
     hr = IDirectSoundFXI3DL2Reverb_SetAllParameters(reverb, &params);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     memset(&params, 0xcc, sizeof(params));
     hr = IDirectSoundFXI3DL2Reverb_GetAllParameters(reverb, &params);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(params.lRoom == -900, "Got room attenuation %d mB.\n", params.lRoom);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(params.lRoom == -900, "Got room attenuation %ld mB.\n", params.lRoom);
 
     ref = IDirectSoundFXI3DL2Reverb_Release(reverb);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
 START_TEST(dsdmo)
@@ -554,7 +554,7 @@ START_TEST(dsdmo)
         HRESULT hr;
 
         hr = CoCreateInstance(tests[i].clsid, NULL, CLSCTX_INPROC_SERVER, tests[i].iid, (void **)&unk);
-        todo_wine_if(tests[i].todo) ok(hr == S_OK, "Failed to create %s, hr %#x.\n",
+        todo_wine_if(tests[i].todo) ok(hr == S_OK, "Failed to create %s, hr %#lx.\n",
                 debugstr_guid(tests[i].clsid), hr);
         if (hr == S_OK)
             IUnknown_Release(unk);
