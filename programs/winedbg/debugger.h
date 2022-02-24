@@ -385,6 +385,7 @@ extern void             info_win32_virtual(DWORD pid);
 extern void             info_win32_segments(DWORD start, int length);
 extern void             info_win32_exception(void);
 extern void             info_wine_dbg_channel(BOOL add, const char* chnl, const char* name);
+extern WCHAR*           fetch_thread_description(DWORD tid);
 
   /* memory.c */
 extern BOOL             memory_read_value(const struct dbg_lvalue* lvalue, DWORD size, void* result);
