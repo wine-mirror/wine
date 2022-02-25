@@ -487,7 +487,7 @@ static IDWriteFontFace *create_fontface(void)
     HRESULT hr;
 
     hr = IDWriteFactory_GetGdiInterop(factory, &interop);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     memset(&logfont, 0, sizeof(logfont));
     logfont.lfHeight = 12;
@@ -497,10 +497,10 @@ static IDWriteFontFace *create_fontface(void)
     lstrcpyW(logfont.lfFaceName, L"Tahoma");
 
     hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDWriteFont_CreateFontFace(font, &fontface);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     IDWriteFont_Release(font);
     IDWriteGdiInterop_Release(interop);
@@ -520,7 +520,7 @@ static WCHAR *create_testfontfile(const WCHAR *filename)
     lstrcatW(pathW, filename);
 
     file = CreateFileW(pathW, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
-    ok(file != INVALID_HANDLE_VALUE, "file creation failed, at %s, error %d\n", wine_dbgstr_w(pathW),
+    ok(file != INVALID_HANDLE_VALUE, "file creation failed, at %s, error %ld\n", wine_dbgstr_w(pathW),
         GetLastError());
 
     res = FindResourceA(GetModuleHandleA(NULL), (LPCSTR)MAKEINTRESOURCE(1), (LPCSTR)RT_RCDATA);
@@ -537,7 +537,7 @@ static WCHAR *create_testfontfile(const WCHAR *filename)
 static void _delete_testfontfile(const WCHAR *filename, int line)
 {
     BOOL ret = DeleteFileW(filename);
-    ok_(__FILE__,line)(ret, "failed to delete file %s, error %d\n", wine_dbgstr_w(filename), GetLastError());
+    ok_(__FILE__,line)(ret, "failed to delete file %s, error %ld\n", wine_dbgstr_w(filename), GetLastError());
 }
 
 static IDWriteFontFace *create_testfontface(const WCHAR *filename)
@@ -547,11 +547,11 @@ static IDWriteFontFace *create_testfontface(const WCHAR *filename)
     HRESULT hr;
 
     hr = IDWriteFactory_CreateFontFileReference(factory, filename, NULL, &file);
-    ok(hr == S_OK, "got 0x%08x\n",hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n",hr);
 
     hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_TRUETYPE, 1, &file, 0,
         DWRITE_FONT_SIMULATIONS_NONE, &face);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     IDWriteFontFile_Release(file);
 
     return face;
@@ -1041,11 +1041,11 @@ static void get_script_analysis(const WCHAR *str, DWRITE_SCRIPT_ANALYSIS *sa)
 
     init_textsource(&analysissource, str, DWRITE_READING_DIRECTION_LEFT_TO_RIGHT);
     hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDWriteTextAnalyzer_AnalyzeScript(analyzer, &analysissource.IDWriteTextAnalysisSource_iface, 0,
         lstrlenW(analysissource.text), &analysissink2);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     *sa = g_sa;
 }
@@ -1057,7 +1057,7 @@ static void test_AnalyzeScript(void)
     HRESULT hr;
 
     hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     while (*ptr->string)
     {
@@ -1066,7 +1066,7 @@ static void test_AnalyzeScript(void)
         init_expected_sa(expected_seq, ptr);
         hr = IDWriteTextAnalyzer_AnalyzeScript(analyzer, &analysissource.IDWriteTextAnalysisSource_iface, 0,
             lstrlenW(ptr->string), &analysissink);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         ok_sequence(sequences, ANALYZER_ID, expected_seq[0]->sequence, wine_dbgstr_w(ptr->string), FALSE);
         ptr++;
     }
@@ -1169,12 +1169,12 @@ static void test_AnalyzeLineBreakpoints(void)
     HRESULT hr;
 
     hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     init_textsource(&analysissource, L"", DWRITE_READING_DIRECTION_LEFT_TO_RIGHT);
     hr = IDWriteTextAnalyzer_AnalyzeLineBreakpoints(analyzer, &analysissource.IDWriteTextAnalysisSource_iface, 0, 0,
         &analysissink);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     while (*ptr->text)
     {
@@ -1193,7 +1193,7 @@ static void test_AnalyzeLineBreakpoints(void)
         memset(g_actual_bp, 0, sizeof(g_actual_bp));
         hr = IDWriteTextAnalyzer_AnalyzeLineBreakpoints(analyzer, &analysissource.IDWriteTextAnalysisSource_iface,
             0, len, &analysissink);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         compare_breakpoints(ptr, g_actual_bp);
 
         i++;
@@ -1212,7 +1212,7 @@ static void test_GetScriptProperties(void)
     HRESULT hr;
 
     hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDWriteTextAnalyzer_QueryInterface(analyzer, &IID_IDWriteTextAnalyzer1, (void**)&analyzer1);
     IDWriteTextAnalyzer_Release(analyzer);
@@ -1223,14 +1223,14 @@ static void test_GetScriptProperties(void)
 
     sa.script = 1000;
     hr = IDWriteTextAnalyzer1_GetScriptProperties(analyzer1, sa, &props);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     if (0) /* crashes on native */
         hr = IDWriteTextAnalyzer1_GetScriptProperties(analyzer1, sa, NULL);
 
     sa.script = 0;
     hr = IDWriteTextAnalyzer1_GetScriptProperties(analyzer1, sa, &props);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     IDWriteTextAnalyzer1_Release(analyzer1);
 }
@@ -1277,7 +1277,7 @@ static void test_GetTextComplexity(void)
     int i;
 
     hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDWriteTextAnalyzer_QueryInterface(analyzer, &IID_IDWriteTextAnalyzer1, (void**)&analyzer1);
     IDWriteTextAnalyzer_Release(analyzer);
@@ -1297,7 +1297,7 @@ if (0) { /* crashes on native */
     len = 1;
     simple = TRUE;
     hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer1, NULL, 0, NULL, &simple, &len, NULL);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(len == 0, "got %d\n", len);
     ok(simple == FALSE, "got %d\n", simple);
 
@@ -1305,7 +1305,7 @@ if (0) { /* crashes on native */
     simple = TRUE;
     indices[0] = 1;
     hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer1, L"ABC", 3, NULL, &simple, &len, NULL);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(len == 0, "got %d\n", len);
     ok(simple == FALSE, "got %d\n", simple);
     ok(indices[0] == 1, "got %d\n", indices[0]);
@@ -1318,7 +1318,7 @@ if (0) { /* crashes on native */
        simple = !ptr->simple;
        indices[0] = 0;
        hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer1, ptr->text, ptr->length, fontface, &simple, &len, indices);
-       ok(hr == S_OK, "%d: got 0x%08x\n", i, hr);
+       ok(hr == S_OK, "%d: Unexpected hr %#lx.\n", i, hr);
        ok(len == ptr->len_read, "%d: read length: got %d, expected %d\n", i, len, ptr->len_read);
        ok(simple == ptr->simple, "%d: simple: got %d, expected %d\n", i, simple, ptr->simple);
        if (simple && ptr->length)
@@ -1338,43 +1338,43 @@ static void test_numbersubstitution(void)
 
     /* locale is not specified, method does not require it */
     hr = IDWriteFactory_CreateNumberSubstitution(factory, DWRITE_NUMBER_SUBSTITUTION_METHOD_NONE, NULL, FALSE, &substitution);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     IDWriteNumberSubstitution_Release(substitution);
 
     /* invalid locale name, method does not require it */
     hr = IDWriteFactory_CreateNumberSubstitution(factory, DWRITE_NUMBER_SUBSTITUTION_METHOD_NONE, L"dummy",
             FALSE, &substitution);
-    ok(hr == S_OK, "Failed to create number substitution, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create number substitution, hr %#lx.\n", hr);
     IDWriteNumberSubstitution_Release(substitution);
 
     /* invalid method */
     hr = IDWriteFactory_CreateNumberSubstitution(factory, DWRITE_NUMBER_SUBSTITUTION_METHOD_TRADITIONAL+1, NULL, FALSE, &substitution);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     /* invalid method */
     hr = IDWriteFactory_CreateNumberSubstitution(factory, -1, NULL, FALSE, &substitution);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     /* invalid locale */
     hr = IDWriteFactory_CreateNumberSubstitution(factory, DWRITE_NUMBER_SUBSTITUTION_METHOD_TRADITIONAL, NULL, FALSE, &substitution);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = IDWriteFactory_CreateNumberSubstitution(factory, DWRITE_NUMBER_SUBSTITUTION_METHOD_TRADITIONAL, L"dummy",
             FALSE, &substitution);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = IDWriteFactory_CreateNumberSubstitution(factory, DWRITE_NUMBER_SUBSTITUTION_METHOD_CONTEXTUAL, L"dummy",
             FALSE, &substitution);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = IDWriteFactory_CreateNumberSubstitution(factory, DWRITE_NUMBER_SUBSTITUTION_METHOD_NATIONAL, L"dummy",
             FALSE, &substitution);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     /* invalid locale, but it's not needed for this method */
     hr = IDWriteFactory_CreateNumberSubstitution(factory, DWRITE_NUMBER_SUBSTITUTION_METHOD_NONE, L"dummy", FALSE,
             &substitution);
-    ok(hr == S_OK, "Failed to create number substitution, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create number substitution, hr %#lx.\n", hr);
     IDWriteNumberSubstitution_Release(substitution);
 }
 
@@ -1385,7 +1385,7 @@ static void get_fontface_glyphs(IDWriteFontFace *fontface, const WCHAR *str, UIN
         HRESULT hr;
 
         hr = IDWriteFontFace_GetGlyphIndices(fontface, &codepoint, 1, glyphs++);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         str++;
     }
 }
@@ -1401,7 +1401,7 @@ static void get_fontface_advances(IDWriteFontFace *fontface, FLOAT emsize, const
         HRESULT hr;
 
         hr = IDWriteFontFace_GetDesignGlyphMetrics(fontface, glyphs + i, 1, &metrics, FALSE);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
         advances[i] = (FLOAT)metrics.advanceWidth * emsize / (FLOAT)fontmetrics.designUnitsPerEm;
     }
@@ -1504,14 +1504,14 @@ static void get_enus_string(IDWriteLocalizedStrings *strings, WCHAR *buff, unsig
     HRESULT hr;
 
     hr = IDWriteLocalizedStrings_FindLocaleName(strings, L"en-us", &index, &exists);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     /* Not all fonts have an en-us name! */
     if (!exists)
         index = 0;
 
     hr = IDWriteLocalizedStrings_GetString(strings, index, buff, size);
-    ok(hr == S_OK, "Failed to get name string, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get name string, hr %#lx.\n", hr);
 }
 
 static void test_glyph_props(IDWriteTextAnalyzer *analyzer, const WCHAR *family, const WCHAR *face,
@@ -1526,7 +1526,7 @@ static void test_glyph_props(IDWriteTextAnalyzer *analyzer, const WCHAR *family,
 
     hr = IDWriteFontFace_TryGetFontTable(fontface, MS_GDEF_TAG, (const void **)&gdef.data, &gdef.size,
             &gdef.context, &exists);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     if (!exists)
         return;
@@ -1545,12 +1545,12 @@ static void test_glyph_props(IDWriteTextAnalyzer *analyzer, const WCHAR *family,
     }
 
     hr = IDWriteFontFace1_GetUnicodeRanges(fontface1, 0, NULL, &count);
-    ok(hr == E_NOT_SUFFICIENT_BUFFER, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "Unexpected hr %#lx.\n", hr);
 
     ranges = malloc(count * sizeof(*ranges));
 
     hr = IDWriteFontFace1_GetUnicodeRanges(fontface1, count, ranges, &count);
-    ok(hr == S_OK, "Failed to get ranges, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get ranges, hr %#lx.\n", hr);
 
     for (i = 0; i < count; ++i)
     {
@@ -1567,7 +1567,7 @@ static void test_glyph_props(IDWriteTextAnalyzer *analyzer, const WCHAR *family,
             WCHAR text[1];
 
             hr = IDWriteFontFace1_GetGlyphIndices(fontface1, &ch, 1, &glyph);
-            ok(hr == S_OK, "Failed to get glyph index, hr %#x.\n", hr);
+            ok(hr == S_OK, "Failed to get glyph index, hr %#lx.\n", hr);
 
             if (!glyph)
                 continue;
@@ -1578,7 +1578,7 @@ static void test_glyph_props(IDWriteTextAnalyzer *analyzer, const WCHAR *family,
             memset(glyph_props, 0, sizeof(glyph_props));
             hr = IDWriteTextAnalyzer_GetGlyphs(analyzer, text, 1, fontface, FALSE, FALSE, &sa, NULL,
                     NULL, NULL, NULL, 0, ARRAY_SIZE(glyphs), clustermap, text_props, glyphs, glyph_props, &actual_count);
-            ok(hr == S_OK, "Failed to shape, hr %#x.\n", hr);
+            ok(hr == S_OK, "Failed to shape, hr %#lx.\n", hr);
             if (actual_count > 1)
                 continue;
 
@@ -1631,7 +1631,7 @@ static void test_GetGlyphs(void)
     HRESULT hr;
 
     hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     fontface = create_fontface();
 
@@ -1640,7 +1640,7 @@ static void test_GetGlyphs(void)
     sa.shapes = DWRITE_SCRIPT_SHAPES_DEFAULT;
     hr = IDWriteTextAnalyzer_GetGlyphs(analyzer, test1W, lstrlenW(test1W), fontface, FALSE, FALSE, &sa, NULL,
         NULL, NULL, NULL, 0, maxglyphcount, clustermap, props, glyphs1, shapingprops, &actual_count);
-    ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "Unexpected hr %#lx.\n", hr);
 
 if (0) {
     /* NULL fontface - crashes on Windows */
@@ -1655,7 +1655,7 @@ if (0) {
     sa.shapes = DWRITE_SCRIPT_SHAPES_DEFAULT;
     hr = IDWriteTextAnalyzer_GetGlyphs(analyzer, test1W, lstrlenW(test1W), fontface, FALSE, FALSE, &sa, NULL,
         NULL, NULL, NULL, 0, maxglyphcount, clustermap, props, glyphs1, shapingprops, &actual_count);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(actual_count == 4, "got %d\n", actual_count);
     ok(sa.script == 999, "got %u\n", sa.script);
 
@@ -1664,13 +1664,13 @@ if (0) {
     actual_count = 0;
     hr = IDWriteTextAnalyzer_GetGlyphs(analyzer, test1W, lstrlenW(test1W), fontface, FALSE, FALSE, &sa, NULL,
         NULL, NULL, NULL, 0, maxglyphcount, clustermap, props, glyphs1, shapingprops, &actual_count);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(actual_count == 4, "got %d\n", actual_count);
 
     actual_count = 0;
     hr = IDWriteTextAnalyzer_GetGlyphs(analyzer, test2W, lstrlenW(test2W), fontface, FALSE, FALSE, &sa, NULL,
         NULL, NULL, NULL, 0, maxglyphcount, clustermap, props, glyphs2, shapingprops, &actual_count);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(actual_count == 4, "got %d\n", actual_count);
     ok(glyphs1[2] != glyphs2[2], "got %d\n", glyphs1[2]);
 
@@ -1679,13 +1679,13 @@ if (0) {
     actual_count = 0;
     hr = IDWriteTextAnalyzer_GetGlyphs(analyzer, test1W, lstrlenW(test1W), fontface, FALSE, FALSE, &sa, NULL,
         NULL, NULL, NULL, 0, maxglyphcount, clustermap, props, glyphs1, shapingprops, &actual_count);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(actual_count == 4, "got %d\n", actual_count);
 
     actual_count = 0;
     hr = IDWriteTextAnalyzer_GetGlyphs(analyzer, test1W, lstrlenW(test1W), fontface, FALSE, TRUE, &sa, NULL,
         NULL, NULL, NULL, 0, maxglyphcount, clustermap, props, glyphs2, shapingprops, &actual_count);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(actual_count == 4, "got %d\n", actual_count);
     ok(glyphs1[0] != glyphs2[0], "got %d\n", glyphs1[0]);
 
@@ -1696,7 +1696,7 @@ if (0) {
     actual_count = 0;
     hr = IDWriteTextAnalyzer_GetGlyphs(analyzer, test3W, lstrlenW(test3W), fontface, FALSE, TRUE, &sa, NULL,
         NULL, NULL, NULL, 0, maxglyphcount, clustermap, props, glyphs1, shapingprops, &actual_count);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(actual_count == 2, "got %d\n", actual_count);
     ok(glyphs1[0] == glyphs2[0], "got %u, expected %u\n", glyphs1[0], glyphs2[0]);
     ok(glyphs1[1] == glyphs2[1], "got %u, expected %u\n", glyphs1[1], glyphs2[1]);
@@ -1711,7 +1711,7 @@ if (0) {
     hr = IDWriteTextAnalyzer_GetGlyphPlacements(analyzer, test3W, clustermap, props, lstrlenW(test3W),
         glyphs1, shapingprops, actual_count, fontface, 10.0, FALSE, FALSE, &sa, NULL, NULL,
         NULL, 0, advances, offsets);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(advances[0] == advances2[0], "got %.2f, expected %.2f\n", advances[0], advances2[0]);
     ok(advances[1] == advances2[1], "got %.2f, expected %.2f\n", advances[1], advances2[1]);
 
@@ -1722,7 +1722,7 @@ if (0) {
     actual_count = 0;
     hr = IDWriteTextAnalyzer_GetGlyphs(analyzer, test3W, lstrlenW(test3W), fontface, FALSE, FALSE, &sa, NULL,
         NULL, NULL, NULL, 0, maxglyphcount, clustermap, props, glyphs1, shapingprops, &actual_count);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(actual_count == 2, "got %d\n", actual_count);
     ok(glyphs1[0] == glyphs2[0], "got %u, expected %u\n", glyphs1[0], glyphs2[0]);
     ok(glyphs1[1] == glyphs2[1], "got %u, expected %u\n", glyphs1[1], glyphs2[1]);
@@ -1737,7 +1737,7 @@ if (0) {
     hr = IDWriteTextAnalyzer_GetGlyphPlacements(analyzer, test3W, clustermap, props, lstrlenW(test3W),
         glyphs1, shapingprops, actual_count, fontface, 10.0, FALSE, FALSE, &sa, NULL, NULL,
         NULL, 0, advances, offsets);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(advances[0] == advances2[0], "got %.2f, expected %.2f\n", advances[0], advances2[0]);
     ok(advances[1] == advances2[1], "got %.2f, expected %.2f\n", advances[1], advances2[1]);
 
@@ -1748,7 +1748,7 @@ if (0) {
     sa.shapes = DWRITE_SCRIPT_SHAPES_NO_VISUAL;
     hr = IDWriteTextAnalyzer_GetGlyphs(analyzer, test1W, lstrlenW(test1W), fontface, FALSE, FALSE, &sa, NULL,
         NULL, NULL, NULL, 0, maxglyphcount, clustermap, props, glyphs1, shapingprops, &actual_count);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(actual_count == 4, "got %d\n", actual_count);
     ok(sa.script == 0, "got %u\n", sa.script);
     ok(!shapingprops[0].isZeroWidthSpace, "got %d\n", shapingprops[0].isZeroWidthSpace);
@@ -1757,7 +1757,7 @@ if (0) {
 
     /* Test setting glyph properties from GDEF. */
     hr = IDWriteFactory_GetSystemFontCollection(factory, &syscoll, FALSE);
-    ok(hr == S_OK, "Failed to get system collection, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get system collection, hr %#lx.\n", hr);
 
     for (i = 0; i < IDWriteFontCollection_GetFontFamilyCount(syscoll); ++i)
     {
@@ -1766,10 +1766,10 @@ if (0) {
         WCHAR familyW[256];
 
         hr = IDWriteFontCollection_GetFontFamily(syscoll, i, &family);
-        ok(hr == S_OK, "Failed to get font family, hr %#x.\n", hr);
+        ok(hr == S_OK, "Failed to get font family, hr %#lx.\n", hr);
 
         hr = IDWriteFontFamily_GetFamilyNames(family, &names);
-        ok(hr == S_OK, "Failed to get family names, hr %#x.\n", hr);
+        ok(hr == S_OK, "Failed to get family names, hr %#lx.\n", hr);
         get_enus_string(names, familyW, ARRAY_SIZE(familyW));
         IDWriteLocalizedStrings_Release(names);
 
@@ -1779,13 +1779,13 @@ if (0) {
             WCHAR faceW[256];
 
             hr = IDWriteFontFamily_GetFont(family, j, &font);
-            ok(hr == S_OK, "Failed to get font instance, hr %#x.\n", hr);
+            ok(hr == S_OK, "Failed to get font instance, hr %#lx.\n", hr);
 
             hr = IDWriteFont_CreateFontFace(font, &fontface);
-            ok(hr == S_OK, "Failed to create fontface, hr %#x.\n", hr);
+            ok(hr == S_OK, "Failed to create fontface, hr %#lx.\n", hr);
 
             hr = IDWriteFont_GetFaceNames(font, &names);
-            ok(hr == S_OK, "Failed to get face names, hr %#x.\n", hr);
+            ok(hr == S_OK, "Failed to get face names, hr %#lx.\n", hr);
             get_enus_string(names, faceW, ARRAY_SIZE(faceW));
             IDWriteLocalizedStrings_Release(names);
 
@@ -1815,7 +1815,7 @@ static void test_GetTypographicFeatures(void)
     HRESULT hr;
 
     hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDWriteTextAnalyzer_QueryInterface(analyzer, &IID_IDWriteTextAnalyzer2, (void**)&analyzer2);
     IDWriteTextAnalyzer_Release(analyzer);
@@ -1829,14 +1829,14 @@ static void test_GetTypographicFeatures(void)
     get_script_analysis(L"abc", &sa);
     count = 0;
     hr = IDWriteTextAnalyzer2_GetTypographicFeatures(analyzer2, fontface, sa, NULL, 0, &count, NULL);
-    ok(hr == E_NOT_SUFFICIENT_BUFFER, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "Unexpected hr %#lx.\n", hr);
     ok(!!count, "Unexpected count %u.\n", count);
 
     /* invalid locale name is ignored */
     get_script_analysis(L"abc", &sa);
     count = 0;
     hr = IDWriteTextAnalyzer2_GetTypographicFeatures(analyzer2, fontface, sa, L"cadabra", 0, &count, NULL);
-    ok(hr == E_NOT_SUFFICIENT_BUFFER, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "Unexpected hr %#lx.\n", hr);
     ok(!!count, "Unexpected count %u.\n", count);
 
     /* Make some calls for different scripts. */
@@ -1845,14 +1845,14 @@ static void test_GetTypographicFeatures(void)
     memset(tags, 0, sizeof(tags));
     count = 0;
     hr = IDWriteTextAnalyzer2_GetTypographicFeatures(analyzer2, fontface, sa, NULL, ARRAY_SIZE(tags), &count, tags);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!!count, "Unexpected count %u.\n", count);
 
     get_script_analysis(L"abc", &sa);
     memset(tags, 0, sizeof(tags));
     count = 0;
     hr = IDWriteTextAnalyzer2_GetTypographicFeatures(analyzer2, fontface, sa, NULL, ARRAY_SIZE(tags), &count, tags);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!!count, "Unexpected count %u.\n", count);
 
     IDWriteFontFace_Release(fontface);
@@ -1875,7 +1875,7 @@ static void test_GetGlyphPlacements(void)
     HRESULT hr;
 
     hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     path = create_testfontfile(L"wine_test_font.ttf");
     fontface = create_testfontface(path);
@@ -1885,7 +1885,7 @@ static void test_GetGlyphPlacements(void)
     len = lstrlenW(aW);
     hr = IDWriteTextAnalyzer_GetGlyphs(analyzer, aW, len, fontface, FALSE, FALSE, &sa, NULL,
         NULL, NULL, NULL, 0, len, clustermap, textprops, glyphs, glyphprops, &count);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(count == 2, "got %u\n", count);
 
     /* just return on zero glyphs */
@@ -1894,7 +1894,7 @@ static void test_GetGlyphPlacements(void)
     hr = IDWriteTextAnalyzer_GetGlyphPlacements(analyzer, aW, clustermap, textprops,
         len, glyphs, glyphprops, 0, fontface, 0.0, FALSE, FALSE, &sa, NULL, NULL,
         NULL, 0, advances, offsets);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(advances[0] == 1.0, "got %.2f\n", advances[0]);
     ok(offsets[0].advanceOffset == 2.0 && offsets[0].ascenderOffset == 2.0, "got %.2f,%.2f\n",
         offsets[0].advanceOffset, offsets[0].ascenderOffset);
@@ -1905,7 +1905,7 @@ static void test_GetGlyphPlacements(void)
     hr = IDWriteTextAnalyzer_GetGlyphPlacements(analyzer, aW, clustermap, textprops,
         len, glyphs, glyphprops, len, fontface, 0.0, FALSE, FALSE, &sa, NULL, NULL,
         NULL, 0, advances, offsets);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(advances[0] == 0.0, "got %.2f\n", advances[0]);
     ok(offsets[0].advanceOffset == 0.0 && offsets[0].ascenderOffset == 0.0, "got %.2f,%.2f\n",
         offsets[0].advanceOffset, offsets[0].ascenderOffset);
@@ -1915,7 +1915,7 @@ static void test_GetGlyphPlacements(void)
     hr = IDWriteTextAnalyzer_GetGlyphPlacements(analyzer, aW, clustermap, textprops,
         len, glyphs, glyphprops, len, fontface, 2048.0, FALSE, FALSE, &sa, NULL, NULL,
         NULL, 0, advances, offsets);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(advances[0] == 1000.0, "got %.2f\n", advances[0]);
     ok(offsets[0].advanceOffset == 0.0 && offsets[0].ascenderOffset == 0.0, "got %.2f,%.2f\n",
         offsets[0].advanceOffset, offsets[0].ascenderOffset);
@@ -1925,7 +1925,7 @@ static void test_GetGlyphPlacements(void)
     hr = IDWriteTextAnalyzer_GetGlyphPlacements(analyzer, aW, clustermap, textprops,
         len, glyphs, glyphprops, len, fontface, 1024.0, FALSE, FALSE, &sa, NULL, NULL,
         NULL, 0, advances, offsets);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(advances[0] == 500.0, "got %.2f\n", advances[0]);
     ok(advances[1] == 500.0, "got %.2f\n", advances[1]);
     ok(offsets[0].advanceOffset == 0.0 && offsets[0].ascenderOffset == 0.0, "got %.2f,%.2f\n",
@@ -1936,7 +1936,7 @@ static void test_GetGlyphPlacements(void)
     hr = IDWriteTextAnalyzer_GetGlyphPlacements(analyzer, aW, clustermap, textprops,
         len, glyphs, glyphprops, len, fontface, 20.48, FALSE, FALSE, &sa, NULL, NULL,
         NULL, 0, advances, offsets);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(advances[0] == 10.0, "got %.2f\n", advances[0]);
     ok(advances[1] == 10.0, "got %.2f\n", advances[1]);
     ok(offsets[0].advanceOffset == 0.0 && offsets[0].ascenderOffset == 0.0, "got %.2f,%.2f\n",
@@ -1947,7 +1947,7 @@ static void test_GetGlyphPlacements(void)
     hr = IDWriteTextAnalyzer_GetGlyphPlacements(analyzer, aW, NULL, textprops,
         len, glyphs, glyphprops, len, fontface, 1024.0, FALSE, FALSE, &sa, NULL, NULL,
         NULL, 0, advances, offsets);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(advances[0] == 500.0, "got %.2f\n", advances[0]);
     ok(advances[1] == 500.0, "got %.2f\n", advances[1]);
 
@@ -1957,7 +1957,7 @@ static void test_GetGlyphPlacements(void)
     hr = IDWriteTextAnalyzer_GetGlyphPlacements(analyzer, aW, clustermap, textprops,
         len, glyphs, glyphprops, len, fontface, -10.24, FALSE, FALSE, &sa, NULL, NULL,
         NULL, 0, advances, offsets);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(advances[0] == -5.0, "got %.2f\n", advances[0]);
     ok(offsets[0].advanceOffset == 0.0 && offsets[0].ascenderOffset == 0.0, "got %.2f,%.2f\n",
         offsets[0].advanceOffset, offsets[0].ascenderOffset);
@@ -1969,7 +1969,7 @@ static void test_GetGlyphPlacements(void)
     hr = IDWriteTextAnalyzer_GetGlyphPlacements(analyzer, aW, clustermap, textprops,
         len, glyphs, glyphprops, len, fontface, 2048.0f, FALSE, FALSE, &sa, NULL, NULL,
         NULL, 0, advances, offsets);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(advances[0] == 1000.0f, "got %.2f\n", advances[0]);
     ok(advances[1] == 1000.0f, "got %.2f\n", advances[1]);
     ok(offsets[0].advanceOffset == 0.0f && offsets[0].ascenderOffset == 0.0f, "got %.2f,%.2f\n",
@@ -1983,7 +1983,7 @@ static void test_GetGlyphPlacements(void)
     hr = IDWriteTextAnalyzer_GetGlyphPlacements(analyzer, aW, clustermap, textprops,
         len, glyphs, glyphprops, len, fontface, 2048.0f, FALSE, FALSE, &sa, NULL, NULL,
         NULL, 0, advances, offsets);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(advances[0] == 0.0f, "got %.2f\n", advances[0]);
     ok(advances[1] == 1000.0f, "got %.2f\n", advances[1]);
     ok(offsets[0].advanceOffset == 0.0f && offsets[0].ascenderOffset == 0.0f, "got %.2f,%.2f\n",
@@ -2160,7 +2160,7 @@ static void test_ApplyCharacterSpacing(void)
     int i;
 
     hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDWriteTextAnalyzer_QueryInterface(analyzer, &IID_IDWriteTextAnalyzer1, (void**)&analyzer1);
     IDWriteTextAnalyzer_Release(analyzer);
@@ -2216,7 +2216,7 @@ static void test_ApplyCharacterSpacing(void)
             props,
             advances,
             offsets);
-        ok(hr == (ptr->min_advance < 0.0f ? E_INVALIDARG : S_OK), "Unexpected hr %#x.\n", hr);
+        ok(hr == (ptr->min_advance < 0.0f ? E_INVALIDARG : S_OK), "Unexpected hr %#lx.\n", hr);
 
         if (hr == S_OK) {
             ok(ptr->modified_advances[0] == advances[0], "Got advance[0] %.2f, expected %.2f.\n", advances[0], ptr->modified_advances[0]);
@@ -2270,7 +2270,7 @@ static void test_ApplyCharacterSpacing(void)
             props,
             advances,
             offsets);
-        ok(hr == (ptr->min_advance < 0.0f ? E_INVALIDARG : S_OK), "Unexpected hr %#x.\n", hr);
+        ok(hr == (ptr->min_advance < 0.0f ? E_INVALIDARG : S_OK), "Unexpected hr %#lx.\n", hr);
 
         if (hr == S_OK)
         {
@@ -2346,7 +2346,7 @@ static void test_GetGlyphOrientationTransform(void)
     int i;
 
     hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDWriteTextAnalyzer_QueryInterface(analyzer, &IID_IDWriteTextAnalyzer1, (void**)&analyzer1);
     IDWriteTextAnalyzer_Release(analyzer);
@@ -2359,14 +2359,14 @@ static void test_GetGlyphOrientationTransform(void)
     memset(&m, 0xcc, sizeof(m));
     hr = IDWriteTextAnalyzer1_GetGlyphOrientationTransform(analyzer1,
         DWRITE_GLYPH_ORIENTATION_ANGLE_270_DEGREES + 1, FALSE, &m);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(m.m11 == 0.0, "got %.2f\n", m.m11);
 
     for (i = 0; i < ARRAY_SIZE(ot_tests); i++) {
         memset(&m, 0, sizeof(m));
         hr = IDWriteTextAnalyzer1_GetGlyphOrientationTransform(analyzer1, ot_tests[i].angle,
             ot_tests[i].is_sideways, &m);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         ok(!memcmp(&ot_tests[i].m, &m, sizeof(m)), "%d: wrong matrix %s\n", i, dbgstr_matrix(&m));
     }
 
@@ -2381,7 +2381,7 @@ static void test_GetGlyphOrientationTransform(void)
     memset(&m, 0xcc, sizeof(m));
     hr = IDWriteTextAnalyzer2_GetGlyphOrientationTransform(analyzer2,
         DWRITE_GLYPH_ORIENTATION_ANGLE_270_DEGREES + 1, FALSE, 0.0, 0.0, &m);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(m.m11 == 0.0, "got %.2f\n", m.m11);
 
     originx = 50.0;
@@ -2395,13 +2395,13 @@ static void test_GetGlyphOrientationTransform(void)
         /* zero offset gives same result as a call from IDWriteTextAnalyzer1 */
         hr = IDWriteTextAnalyzer2_GetGlyphOrientationTransform(analyzer2, ot_tests[i].angle,
             ot_tests[i].is_sideways, 0.0, 0.0, &m);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         ok(!memcmp(&ot_tests[i].m, &m, sizeof(m)), "%d: wrong matrix %s\n", i, dbgstr_matrix(&m));
 
         m_exp = ot_tests[i].m;
         hr = IDWriteTextAnalyzer2_GetGlyphOrientationTransform(analyzer2, ot_tests[i].angle,
             ot_tests[i].is_sideways, originx, originy, &m);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
         /* 90 degrees more for sideways */
         if (ot_tests[i].is_sideways) {
@@ -2464,7 +2464,7 @@ static void test_GetBaseline(void)
     HRESULT hr;
 
     hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDWriteTextAnalyzer_QueryInterface(analyzer, &IID_IDWriteTextAnalyzer1, (void**)&analyzer1);
     IDWriteTextAnalyzer_Release(analyzer);
@@ -2481,7 +2481,7 @@ static void test_GetBaseline(void)
     baseline = 456;
     hr = IDWriteTextAnalyzer1_GetBaseline(analyzer1, fontface, DWRITE_BASELINE_DEFAULT, FALSE,
            TRUE, sa, NULL, &baseline, &exists);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!baseline, "Unexpected baseline %d.\n", baseline);
     ok(!exists, "Unexpected flag %d.\n", exists);
 
@@ -2489,7 +2489,7 @@ static void test_GetBaseline(void)
     baseline = 456;
     hr = IDWriteTextAnalyzer1_GetBaseline(analyzer1, fontface, DWRITE_BASELINE_DEFAULT, FALSE,
            FALSE, sa, NULL, &baseline, &exists);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!baseline, "Unexpected baseline %d.\n", baseline);
     ok(!exists, "Unexpected flag %d.\n", exists);
 
@@ -2497,7 +2497,7 @@ static void test_GetBaseline(void)
     baseline = 0;
     hr = IDWriteTextAnalyzer1_GetBaseline(analyzer1, fontface, DWRITE_BASELINE_CENTRAL, FALSE,
            TRUE, sa, NULL, &baseline, &exists);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(baseline != 0, "Unexpected baseline %d.\n", baseline);
     ok(!exists, "Unexpected flag %d.\n", exists);
 
@@ -2505,7 +2505,7 @@ static void test_GetBaseline(void)
     baseline = 0;
     hr = IDWriteTextAnalyzer1_GetBaseline(analyzer1, fontface, DWRITE_BASELINE_CENTRAL, FALSE,
            FALSE, sa, NULL, &baseline, &exists);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!baseline, "Unexpected baseline %d.\n", baseline);
     ok(!exists, "Unexpected flag %d.\n", exists);
 
@@ -2513,7 +2513,7 @@ static void test_GetBaseline(void)
     baseline = 456;
     hr = IDWriteTextAnalyzer1_GetBaseline(analyzer1, fontface, DWRITE_BASELINE_DEFAULT + 100, FALSE,
            TRUE, sa, NULL, &baseline, &exists);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(!baseline, "Unexpected baseline %d.\n", baseline);
     ok(!exists, "Unexpected flag %d.\n", exists);
 
@@ -2551,7 +2551,7 @@ static void test_GetGdiCompatibleGlyphPlacements(void)
     float emsize;
 
     hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     fontface = create_fontface();
 
@@ -2560,7 +2560,7 @@ static void test_GetGdiCompatibleGlyphPlacements(void)
     count = 0;
     hr = IDWriteTextAnalyzer_GetGlyphs(analyzer, L"A", 1, fontface, FALSE, FALSE, &sa, NULL, NULL, NULL, NULL, 0, 1,
             clustermap, textprops, glyphs, glyphprops, &count);
-    ok(hr == S_OK, "Failed to get glyphs, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get glyphs, hr %#lx.\n", hr);
     ok(count == 1, "got %u\n", count);
 
     for (emsize = 12.0f; emsize <= 20.0f; emsize += 1.0f)
@@ -2570,20 +2570,20 @@ static void test_GetGdiCompatibleGlyphPlacements(void)
 
         hr = IDWriteTextAnalyzer_GetGlyphPlacements(analyzer, L"A", clustermap, textprops, 1, glyphs, glyphprops,
                 count, fontface, emsize, FALSE, FALSE, &sa, NULL, NULL, NULL, 0, &advance, offsets);
-        ok(hr == S_OK, "Failed to get glyph placements, hr %#x.\n", hr);
+        ok(hr == S_OK, "Failed to get glyph placements, hr %#lx.\n", hr);
         ok(advance > 0.0f, "Unexpected advance %f.\n", advance);
 
         /* 1 ppdip, no transform */
         ppdip = 1.0;
         hr = IDWriteFontFace_GetGdiCompatibleGlyphMetrics(fontface, emsize, ppdip, NULL, FALSE,
             glyphs, 1, &metrics, FALSE);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
         expected = floorf(metrics.advanceWidth * emsize * ppdip / fontmetrics.designUnitsPerEm + 0.5f) / ppdip;
         hr = IDWriteTextAnalyzer_GetGdiCompatibleGlyphPlacements(analyzer, L"A", clustermap, textprops, 1, glyphs,
                 glyphprops, count, fontface, emsize, ppdip, NULL, FALSE, FALSE, FALSE, &sa, NULL, NULL, NULL, 0,
                 &compatadvance, offsets);
-        ok(hr == S_OK, "Failed to get glyph placements, hr %#x.\n", hr);
+        ok(hr == S_OK, "Failed to get glyph placements, hr %#lx.\n", hr);
         ok(compatadvance == expected, "%.0f: got advance %f, expected %f, natural %f\n", emsize,
             compatadvance, expected, advance);
 
@@ -2591,13 +2591,13 @@ static void test_GetGdiCompatibleGlyphPlacements(void)
         ppdip = 1.2f;
         hr = IDWriteFontFace_GetGdiCompatibleGlyphMetrics(fontface, emsize, ppdip, NULL, FALSE,
             glyphs, 1, &metrics, FALSE);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
         expected = floorf(metrics.advanceWidth * emsize * ppdip / fontmetrics.designUnitsPerEm + 0.5f) / ppdip;
         hr = IDWriteTextAnalyzer_GetGdiCompatibleGlyphPlacements(analyzer, L"A", clustermap, textprops, 1, glyphs,
                 glyphprops, count, fontface, emsize, ppdip, NULL, FALSE, FALSE, FALSE, &sa, NULL, NULL, NULL, 0,
                 &compatadvance, offsets);
-        ok(hr == S_OK, "Failed to get glyph placements, hr %#x.\n", hr);
+        ok(hr == S_OK, "Failed to get glyph placements, hr %#lx.\n", hr);
         ok(float_eq(compatadvance, expected), "%.0f: got advance %f, expected %f, natural %f\n", emsize,
             compatadvance, expected, advance);
     }
@@ -2783,7 +2783,7 @@ static void test_AnalyzeBidi(void)
     HRESULT hr;
 
     hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     while (*ptr->text)
     {
@@ -2803,7 +2803,7 @@ static void test_AnalyzeBidi(void)
         memset(g_resolved_levels, 0, sizeof(g_resolved_levels));
         hr = IDWriteTextAnalyzer_AnalyzeBidi(analyzer, &analysissource.IDWriteTextAnalysisSource_iface, 0,
             len, &analysissink);
-        ok(hr == S_OK, "%u: got 0x%08x\n", i, hr);
+        ok(hr == S_OK, "%u: unexpected hr %#lx.\n", i, hr);
         compare_bidi_levels(i, ptr, len, g_explicit_levels, g_resolved_levels);
 
         i++;
@@ -2818,7 +2818,7 @@ START_TEST(analyzer)
     HRESULT hr;
 
     hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_ISOLATED, &IID_IDWriteFactory, (IUnknown**)&factory);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (hr != S_OK)
     {
         win_skip("failed to create factory\n");
