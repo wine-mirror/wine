@@ -125,17 +125,6 @@ static const char * const hook_names[WH_WINEVENT - WH_MINHOOK + 1] =
 
 
 /***********************************************************************
- *		get_ll_hook_timeout
- *
- */
-static UINT get_ll_hook_timeout(void)
-{
-    /* FIXME: should retrieve LowLevelHooksTimeout in HKEY_CURRENT_USER\Control Panel\Desktop */
-    return 2000;
-}
-
-
-/***********************************************************************
  *		set_windows_hook
  *
  * Implementation of SetWindowsHookExA and SetWindowsHookExW.
@@ -334,149 +323,19 @@ void *get_hook_proc( void *proc, const WCHAR *module, HMODULE *free_module )
     return (char *)mod + (ULONG_PTR)proc;
 }
 
-/***********************************************************************
- *		call_hook
- *
- * Call hook either in current thread or send message to the destination
- * thread.
- */
-static LRESULT call_hook( struct hook_info *info, INT code, WPARAM wparam, LPARAM lparam )
-{
-    DWORD_PTR ret = 0;
-
-    if (info->tid)
-    {
-        struct hook_extra_info h_extra;
-        h_extra.handle = info->handle;
-        h_extra.lparam = lparam;
-
-        TRACE( "calling hook in thread %04x %s code %x wp %lx lp %lx\n",
-               info->tid, hook_names[info->id-WH_MINHOOK], code, wparam, lparam );
-
-        switch(info->id)
-        {
-        case WH_KEYBOARD_LL:
-            MSG_SendInternalMessageTimeout( info->pid, info->tid, WM_WINE_KEYBOARD_LL_HOOK,
-                                            wparam, (LPARAM)&h_extra, SMTO_ABORTIFHUNG,
-                                            get_ll_hook_timeout(), &ret );
-            break;
-        case WH_MOUSE_LL:
-            MSG_SendInternalMessageTimeout( info->pid, info->tid, WM_WINE_MOUSE_LL_HOOK,
-                                            wparam, (LPARAM)&h_extra, SMTO_ABORTIFHUNG,
-                                            get_ll_hook_timeout(), &ret );
-            break;
-        default:
-            ERR("Unknown hook id %d\n", info->id);
-            assert(0);
-            break;
-        }
-    }
-    else if (info->proc)
-    {
-        struct user_thread_info *thread_info = get_user_thread_info();
-        HMODULE free_module = 0;
-
-        /*
-         * Windows protects from stack overflow in recursive hook calls. Different Windows
-         * allow different depths.
-         */
-        if (thread_info->hook_call_depth >= 25)
-        {
-            WARN("Too many hooks called recursively, skipping call.\n");
-            return 0;
-        }
-
-        TRACE( "calling hook %p %s code %x wp %lx lp %lx module %s\n",
-               info->proc, hook_names[info->id-WH_MINHOOK], code, wparam,
-               lparam, debugstr_w(info->module) );
-
-        if (!info->module[0] ||
-            (info->proc = get_hook_proc( info->proc, info->module, &free_module )) != NULL)
-        {
-            HHOOK prev = thread_info->hook;
-            BOOL prev_unicode = thread_info->hook_unicode;
-
-            thread_info->hook = info->handle;
-            thread_info->hook_unicode = info->next_unicode;
-            thread_info->hook_call_depth++;
-            ret = call_hook_proc( info->proc, info->id, code, wparam, lparam,
-                                  info->prev_unicode, info->next_unicode );
-            thread_info->hook = prev;
-            thread_info->hook_unicode = prev_unicode;
-            thread_info->hook_call_depth--;
-
-            if (free_module) FreeLibrary(free_module);
-        }
-    }
-
-    if (info->id == WH_KEYBOARD_LL || info->id == WH_MOUSE_LL)
-        NtUserCallOneParam( 1, NtUserIncrementKeyStateCounter ); /* force refreshing the key state cache */
-
-    return ret;
-}
-
-
-/***********************************************************************
- *           HOOK_IsHooked
- */
-static BOOL HOOK_IsHooked( INT id )
-{
-    struct user_thread_info *thread_info = get_user_thread_info();
-
-    if (!thread_info->active_hooks) return TRUE;
-    return (thread_info->active_hooks & (1 << (id - WH_MINHOOK))) != 0;
-}
-
 
 /***********************************************************************
  *		HOOK_CallHooks
  */
 LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL unicode )
 {
-    struct user_thread_info *thread_info = get_user_thread_info();
-    struct hook_info info;
-    DWORD_PTR ret;
-
-    USER_CheckNotLock();
-
-    if (!HOOK_IsHooked( id ))
-    {
-        TRACE( "skipping hook %s mask %x\n", hook_names[id-WH_MINHOOK], thread_info->active_hooks );
-        return 0;
-    }
-
-    ZeroMemory( &info, sizeof(info) - sizeof(info.module) );
-    info.prev_unicode = unicode;
-    info.id = id;
-
-    SERVER_START_REQ( start_hook_chain )
-    {
-        req->id = info.id;
-        req->event = EVENT_MIN;
-        wine_server_set_reply( req, info.module, sizeof(info.module)-sizeof(WCHAR) );
-        if (!wine_server_call( req ))
-        {
-            info.module[wine_server_reply_size(req) / sizeof(WCHAR)] = 0;
-            info.handle       = wine_server_ptr_handle( reply->handle );
-            info.pid          = reply->pid;
-            info.tid          = reply->tid;
-            info.proc         = wine_server_get_ptr( reply->proc );
-            info.next_unicode = reply->unicode;
-            thread_info->active_hooks = reply->active_hooks;
-        }
-    }
-    SERVER_END_REQ;
-
-    if (!info.tid && !info.proc) return 0;
-    ret = call_hook( &info, code, wparam, lparam );
-
-    SERVER_START_REQ( finish_hook_chain )
-    {
-        req->id = id;
-        wine_server_call( req );
-    }
-    SERVER_END_REQ;
-    return ret;
+    struct win_hook_params params;
+    params.id = id;
+    params.code = code;
+    params.wparam = wparam;
+    params.lparam = lparam;
+    params.next_unicode = unicode;
+    return NtUserCallOneParam( (UINT_PTR)&params, NtUserCallHooks );
 }
 
 

@@ -107,6 +107,7 @@ enum
     NtUserMessageBeep,
     NtUserRealizePalette,
     /* temporary exports */
+    NtUserCallHooks,
     NtUserFlushWindowSurfaces,
     NtUserGetDeskPattern,
     NtUserHandleInternalMessage,

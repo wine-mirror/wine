@@ -324,6 +324,57 @@ LRESULT call_current_hook( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam )
     return call_hook( &info );
 }
 
+LRESULT call_hooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL unicode )
+{
+    struct user_thread_info *thread_info = get_user_thread_info();
+    struct win_hook_params info;
+    DWORD_PTR ret;
+
+    user_check_not_lock();
+
+    if (!is_hooked( id ))
+    {
+        TRACE( "skipping hook %s mask %x\n", hook_names[id-WH_MINHOOK], thread_info->active_hooks );
+        return 0;
+    }
+
+    memset( &info, 0, sizeof(info) - sizeof(info.module) );
+    info.prev_unicode = unicode;
+    info.id = id;
+
+    SERVER_START_REQ( start_hook_chain )
+    {
+        req->id = info.id;
+        req->event = EVENT_MIN;
+        wine_server_set_reply( req, info.module, sizeof(info.module)-sizeof(WCHAR) );
+        if (!wine_server_call( req ))
+        {
+            info.module[wine_server_reply_size(req) / sizeof(WCHAR)] = 0;
+            info.handle       = wine_server_ptr_handle( reply->handle );
+            info.pid          = reply->pid;
+            info.tid          = reply->tid;
+            info.proc         = wine_server_get_ptr( reply->proc );
+            info.next_unicode = reply->unicode;
+            thread_info->active_hooks = reply->active_hooks;
+        }
+    }
+    SERVER_END_REQ;
+    if (!info.tid && !info.proc) return 0;
+
+    info.code   = code;
+    info.wparam = wparam;
+    info.lparam = lparam;
+    ret = call_hook( &info );
+
+    SERVER_START_REQ( finish_hook_chain )
+    {
+        req->id = id;
+        wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
 /***********************************************************************
  *           NtUserSetWinEventHook   (win32u.@)
  */

@@ -4579,6 +4579,11 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
     case NtUserMessageBeep:
         return message_beep( arg );
     /* temporary exports */
+    case NtUserCallHooks:
+        {
+            const struct win_hook_params *params = (struct win_hook_params *)arg;
+            call_hooks( params->id, params->code, params->wparam, params->lparam, params->next_unicode );
+        }
     case NtUserFlushWindowSurfaces:
         flush_window_surfaces( arg );
         return 0;
