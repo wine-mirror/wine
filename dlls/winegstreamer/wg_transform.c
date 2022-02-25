@@ -47,6 +47,7 @@ struct wg_transform
     GstElement *container;
     GstPad *my_src, *my_sink;
     GstPad *their_sink, *their_src;
+    GstSegment segment;
 };
 
 static GstFlowReturn transform_sink_chain_cb(GstPad *pad, GstObject *parent, GstBuffer *buffer)
@@ -154,6 +155,7 @@ NTSTATUS wg_transform_create(void *args)
     GstPadTemplate *template = NULL;
     struct wg_transform *transform;
     const gchar *media_type;
+    GstEvent *event;
 
     if (!init_gstreamer())
         return STATUS_UNSUCCESSFUL;
@@ -257,6 +259,22 @@ NTSTATUS wg_transform_create(void *args)
     if (!gst_element_get_state(transform->container, NULL, NULL, -1))
         goto out;
 
+    if (!(event = gst_event_new_stream_start("stream"))
+            || !gst_pad_push_event(transform->my_src, event))
+        goto out;
+    if (!(event = gst_event_new_caps(src_caps))
+            || !gst_pad_push_event(transform->my_src, event))
+        goto out;
+
+    /* We need to use GST_FORMAT_TIME here because it's the only format
+     * some elements such avdec_wmav2 correctly support. */
+    gst_segment_init(&transform->segment, GST_FORMAT_TIME);
+    transform->segment.start = 0;
+    transform->segment.stop = -1;
+    if (!(event = gst_event_new_segment(&transform->segment))
+            || !gst_pad_push_event(transform->my_src, event))
+        goto out;
+
     gst_caps_unref(sink_caps);
     gst_caps_unref(src_caps);
 
@@ -278,7 +296,10 @@ out:
     if (src_caps)
         gst_caps_unref(src_caps);
     if (transform->container)
+    {
+        gst_element_set_state(transform->container, GST_STATE_NULL);
         gst_object_unref(transform->container);
+    }
     free(transform);
     GST_ERROR("Failed to create winegstreamer transform.");
     return status;
