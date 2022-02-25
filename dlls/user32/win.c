@@ -3063,26 +3063,7 @@ INT WINAPI GetWindowTextLengthW( HWND hwnd )
  */
 BOOL WINAPI IsWindow( HWND hwnd )
 {
-    WND *ptr;
-    BOOL ret;
-
-    if (!(ptr = WIN_GetPtr( hwnd ))) return FALSE;
-    if (ptr == WND_DESKTOP) return TRUE;
-
-    if (ptr != WND_OTHER_PROCESS)
-    {
-        WIN_ReleasePtr( ptr );
-        return TRUE;
-    }
-
-    /* check other processes */
-    SERVER_START_REQ( get_window_info )
-    {
-        req->handle = wine_server_user_handle( hwnd );
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
+    return NtUserCallHwnd( hwnd, NtUserIsWindow );
 }
 
 

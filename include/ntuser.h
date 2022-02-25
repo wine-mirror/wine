@@ -134,6 +134,12 @@ enum
     NtUserSetHandlePtr,
 };
 
+/* NtUserCallHwnd codes, not compatible with Windows */
+enum
+{
+    NtUserIsWindow,
+};
+
 /* NtUserCallHwndParam codes, not compatible with Windows */
 enum
 {
@@ -198,6 +204,7 @@ BOOL    WINAPI NtUserAddClipboardFormatListener( HWND hwnd );
 BOOL    WINAPI NtUserAttachThreadInput( DWORD from, DWORD to, BOOL attach );
 NTSTATUS WINAPI NtUserBuildHwndList( HDESK desktop, ULONG unk2, ULONG unk3, ULONG unk4,
                                      ULONG thread_id, ULONG count, HWND *buffer, ULONG *size );
+DWORD   WINAPI NtUserCallHwnd( HWND hwnd, DWORD code );
 DWORD   WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code );
 LRESULT WINAPI NtUserCallNextHookEx( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam );
 ULONG_PTR WINAPI NtUserCallNoParam( ULONG code );

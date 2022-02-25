@@ -1150,6 +1150,7 @@ static struct unix_funcs unix_funcs =
     NtGdiUpdateColors,
     NtGdiWidenPath,
     NtUserActivateKeyboardLayout,
+    NtUserCallHwnd,
     NtUserCallHwndParam,
     NtUserCallNextHookEx,
     NtUserCallNoParam,
