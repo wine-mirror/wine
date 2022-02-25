@@ -683,14 +683,10 @@ static void free_stream(struct wg_parser_stream *stream)
     {
         if (stream->post_sink)
         {
-            gst_pad_unlink(stream->their_src, stream->post_sink);
-            gst_pad_unlink(stream->post_src, stream->my_sink);
             gst_object_unref(stream->post_src);
             gst_object_unref(stream->post_sink);
             stream->post_src = stream->post_sink = NULL;
         }
-        else
-            gst_pad_unlink(stream->their_src, stream->my_sink);
         gst_object_unref(stream->their_src);
     }
     gst_object_unref(stream->my_sink);
@@ -1286,7 +1282,6 @@ out:
         gst_element_set_state(parser->container, GST_STATE_NULL);
     if (parser->their_sink)
     {
-        gst_pad_unlink(parser->my_src, parser->their_sink);
         gst_object_unref(parser->their_sink);
         parser->my_src = parser->their_sink = NULL;
     }
@@ -1327,7 +1322,6 @@ static NTSTATUS wg_parser_disconnect(void *args)
     pthread_mutex_unlock(&parser->mutex);
 
     gst_element_set_state(parser->container, GST_STATE_NULL);
-    gst_pad_unlink(parser->my_src, parser->their_sink);
     gst_object_unref(parser->my_src);
     gst_object_unref(parser->their_sink);
     parser->my_src = parser->their_sink = NULL;
