@@ -28,7 +28,7 @@
 @ stdcall CallMsgFilter(ptr long) CallMsgFilterA
 @ stdcall CallMsgFilterA(ptr long)
 @ stdcall CallMsgFilterW(ptr long)
-@ stdcall CallNextHookEx(long long long long)
+@ stdcall CallNextHookEx(long long long long) NtUserCallNextHookEx
 @ stdcall CallWindowProcA(ptr long long long long)
 @ stdcall CallWindowProcW(ptr long long long long)
 @ stdcall CascadeChildWindows(long long)

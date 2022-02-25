@@ -191,6 +191,7 @@ BOOL    WINAPI NtUserAddClipboardFormatListener( HWND hwnd );
 BOOL    WINAPI NtUserAttachThreadInput( DWORD from, DWORD to, BOOL attach );
 NTSTATUS WINAPI NtUserBuildHwndList( HDESK desktop, ULONG unk2, ULONG unk3, ULONG unk4,
                                      ULONG thread_id, ULONG count, HWND *buffer, ULONG *size );
+LRESULT WINAPI NtUserCallNextHookEx( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam );
 ULONG_PTR WINAPI NtUserCallNoParam( ULONG code );
 ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code );
 ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code );

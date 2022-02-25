@@ -256,6 +256,42 @@ static LRESULT call_hook( struct win_hook_params *info )
     return ret;
 }
 
+/***********************************************************************
+ *	     NtUserCallNextHookEx (win32u.@)
+ */
+LRESULT WINAPI NtUserCallNextHookEx( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam )
+{
+    struct user_thread_info *thread_info = get_user_thread_info();
+    struct win_hook_params info;
+
+    memset( &info, 0, sizeof(info) - sizeof(info.module) );
+
+    SERVER_START_REQ( get_hook_info )
+    {
+        req->handle = wine_server_user_handle( thread_info->hook );
+        req->get_next = 1;
+        req->event = EVENT_MIN;
+        wine_server_set_reply( req, info.module, sizeof(info.module)-sizeof(WCHAR) );
+        if (!wine_server_call_err( req ))
+        {
+            info.module[wine_server_reply_size(req) / sizeof(WCHAR)] = 0;
+            info.handle       = wine_server_ptr_handle( reply->handle );
+            info.id           = reply->id;
+            info.pid          = reply->pid;
+            info.tid          = reply->tid;
+            info.proc         = wine_server_get_ptr( reply->proc );
+            info.next_unicode = reply->unicode;
+        }
+    }
+    SERVER_END_REQ;
+
+    info.code   = code;
+    info.wparam = wparam;
+    info.lparam = lparam;
+    info.prev_unicode = thread_info->hook_unicode;
+    return call_hook( &info );
+}
+
 LRESULT call_current_hook( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam )
 {
     struct win_hook_params info;

@@ -701,6 +701,12 @@ HKL WINAPI NtUserActivateKeyboardLayout( HKL layout, UINT flags )
     return unix_funcs->pNtUserActivateKeyboardLayout( layout, flags );
 }
 
+LRESULT WINAPI NtUserCallNextHookEx( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserCallNextHookEx( hhook, code, wparam, lparam );
+}
+
 ULONG_PTR WINAPI NtUserCallNoParam( ULONG code )
 {
     if (!unix_funcs) return 0;
