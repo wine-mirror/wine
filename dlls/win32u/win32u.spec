@@ -772,7 +772,7 @@
 @ stub NtUserCallHwndLock
 @ stub NtUserCallHwndLockSafe
 @ stub NtUserCallHwndOpt
-@ stub NtUserCallHwndParam
+@ stdcall NtUserCallHwndParam(long ptr long)
 @ stub NtUserCallHwndParamLock
 @ stub NtUserCallHwndParamLockSafe
 @ stub NtUserCallHwndSafe

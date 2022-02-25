@@ -31,6 +31,9 @@
 #include "win32u_private.h"
 #include "ntuser_private.h"
 #include "wine/server.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(win);
 
 #define NB_USER_HANDLES  ((LAST_USER_HANDLE - FIRST_USER_HANDLE + 1) >> 1)
 #define USER_HANDLE_TO_INDEX(hwnd) ((LOWORD(hwnd) - FIRST_USER_HANDLE) >> 1)
@@ -244,6 +247,41 @@ HWND is_current_thread_window( HWND hwnd )
     return ret;
 }
 
+/* see GetWindowThreadProcessId */
+static DWORD get_window_thread( HWND hwnd, DWORD *process )
+{
+    WND *ptr;
+    DWORD tid = 0;
+
+    if (!(ptr = get_win_ptr( hwnd )))
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE);
+        return 0;
+    }
+
+    if (ptr != WND_OTHER_PROCESS && ptr != WND_DESKTOP)
+    {
+        /* got a valid window */
+        tid = ptr->tid;
+        if (process) *process = GetCurrentProcessId();
+        release_win_ptr( ptr );
+        return tid;
+    }
+
+    /* check other processes */
+    SERVER_START_REQ( get_window_info )
+    {
+        req->handle = wine_server_user_handle( hwnd );
+        if (!wine_server_call_err( req ))
+        {
+            tid = (DWORD)reply->tid;
+            if (process) *process = (DWORD)reply->pid;
+        }
+    }
+    SERVER_END_REQ;
+    return tid;
+}
+
 /***********************************************************************
  *           NtUserGetProp   (win32u.@)
  *
@@ -360,4 +398,19 @@ NTSTATUS WINAPI NtUserBuildHwndList( HDESK desktop, ULONG unk2, ULONG unk3, ULON
         buffer[i] = wine_server_ptr_handle( list[i] );
     buffer[*size - 1] = HWND_BOTTOM;
     return STATUS_SUCCESS;
+}
+
+/*****************************************************************************
+ *           NtUserCallHwndParam (win32u.@)
+ */
+DWORD WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
+{
+    switch (code)
+    {
+    case NtUserGetWindowThread:
+        return get_window_thread( hwnd, (DWORD *)param );
+    default:
+        FIXME( "invalid code %u\n", code );
+        return 0;
+    }
 }

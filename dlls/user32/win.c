@@ -3091,36 +3091,7 @@ BOOL WINAPI IsWindow( HWND hwnd )
  */
 DWORD WINAPI GetWindowThreadProcessId( HWND hwnd, LPDWORD process )
 {
-    WND *ptr;
-    DWORD tid = 0;
-
-    if (!(ptr = WIN_GetPtr( hwnd )))
-    {
-        SetLastError( ERROR_INVALID_WINDOW_HANDLE);
-        return 0;
-    }
-
-    if (ptr != WND_OTHER_PROCESS && ptr != WND_DESKTOP)
-    {
-        /* got a valid window */
-        tid = ptr->tid;
-        if (process) *process = GetCurrentProcessId();
-        WIN_ReleasePtr( ptr );
-        return tid;
-    }
-
-    /* check other processes */
-    SERVER_START_REQ( get_window_info )
-    {
-        req->handle = wine_server_user_handle( hwnd );
-        if (!wine_server_call_err( req ))
-        {
-            tid = (DWORD)reply->tid;
-            if (process) *process = (DWORD)reply->pid;
-        }
-    }
-    SERVER_END_REQ;
-    return tid;
+    return NtUserCallHwndParam( hwnd, (UINT_PTR)process, NtUserGetWindowThread );
 }
 
 

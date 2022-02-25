@@ -134,6 +134,12 @@ enum
     NtUserSetHandlePtr,
 };
 
+/* NtUserCallHwndParam codes, not compatible with Windows */
+enum
+{
+    NtUserGetWindowThread,
+};
+
 /* color index used to retrieve system 55aa brush */
 #define COLOR_55AA_BRUSH  0x100
 
@@ -192,6 +198,7 @@ BOOL    WINAPI NtUserAddClipboardFormatListener( HWND hwnd );
 BOOL    WINAPI NtUserAttachThreadInput( DWORD from, DWORD to, BOOL attach );
 NTSTATUS WINAPI NtUserBuildHwndList( HDESK desktop, ULONG unk2, ULONG unk3, ULONG unk4,
                                      ULONG thread_id, ULONG count, HWND *buffer, ULONG *size );
+DWORD   WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code );
 LRESULT WINAPI NtUserCallNextHookEx( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam );
 ULONG_PTR WINAPI NtUserCallNoParam( ULONG code );
 ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code );
