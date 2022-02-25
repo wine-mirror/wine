@@ -558,35 +558,6 @@ LRESULT WINAPI CallNextHookEx( HHOOK hhook, INT code, WPARAM wparam, LPARAM lpar
 }
 
 
-LRESULT call_current_hook( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam )
-{
-    struct hook_info info;
-
-    ZeroMemory( &info, sizeof(info) - sizeof(info.module) );
-
-    SERVER_START_REQ( get_hook_info )
-    {
-        req->handle = wine_server_user_handle( hhook );
-        req->get_next = 0;
-        req->event = EVENT_MIN;
-        wine_server_set_reply( req, info.module, sizeof(info.module)-sizeof(WCHAR) );
-        if (!wine_server_call_err( req ))
-        {
-            info.module[wine_server_reply_size(req) / sizeof(WCHAR)] = 0;
-            info.handle       = wine_server_ptr_handle( reply->handle );
-            info.id           = reply->id;
-            info.pid          = reply->pid;
-            info.tid          = reply->tid;
-            info.proc         = wine_server_get_ptr( reply->proc );
-            info.next_unicode = reply->unicode;
-        }
-    }
-    SERVER_END_REQ;
-
-    info.prev_unicode = TRUE;  /* assume Unicode for this function */
-    return call_hook( &info, code, wparam, lparam );
-}
-
 /***********************************************************************
  *		CallMsgFilterA (USER32.@)
  */
@@ -646,7 +617,7 @@ HWINEVENTHOOK WINAPI SetWinEventHook(DWORD event_min, DWORD event_max,
     return NtUserSetWinEventHook( event_min, event_max, inst, &str, proc, pid, tid, flags );
 }
 
-BOOL WINAPI User32CallWinEventHook( const struct win_hook_proc_params *params, ULONG size )
+BOOL WINAPI User32CallWinEventHook( const struct win_event_hook_params *params, ULONG size )
 {
     WINEVENTPROC proc = params->proc;
     HMODULE free_module = 0;
@@ -666,6 +637,21 @@ BOOL WINAPI User32CallWinEventHook( const struct win_hook_proc_params *params, U
 
     if (free_module) FreeLibrary( free_module );
     return TRUE;
+}
+
+BOOL WINAPI User32CallWindowsHook( const struct win_hook_params *params, ULONG size )
+{
+    HOOKPROC proc = params->proc;
+    HMODULE free_module = 0;
+    LRESULT ret;
+
+    if (params->module[0] && !(proc = get_hook_proc( proc, params->module, &free_module ))) return FALSE;
+
+    ret = call_hook_proc( proc, params->id, params->code, params->wparam, params->lparam,
+                          params->prev_unicode, params->next_unicode );
+
+    if (free_module) FreeLibrary( free_module );
+    return ret;
 }
 
 /***********************************************************************

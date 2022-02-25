@@ -1878,13 +1878,6 @@ LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     case WM_WINE_SETACTIVEWINDOW:
         if (!wparam && NtUserGetForegroundWindow() == hwnd) return 0;
         return (LRESULT)SetActiveWindow( (HWND)wparam );
-    case WM_WINE_KEYBOARD_LL_HOOK:
-    case WM_WINE_MOUSE_LL_HOOK:
-    {
-        struct hook_extra_info *h_extra = (struct hook_extra_info *)lparam;
-
-        return call_current_hook( h_extra->handle, HC_ACTION, wparam, h_extra->lparam );
-    }
     case WM_WINE_UPDATEWINDOWSTATE:
         update_window_state( hwnd );
         return 0;
@@ -3350,9 +3343,9 @@ NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, const RAWINPUT *r
  * Same as SendMessageTimeoutW but sends the message to a specific thread
  * without requiring a window handle. Only works for internal Wine messages.
  */
-LRESULT MSG_SendInternalMessageTimeout( DWORD dest_pid, DWORD dest_tid,
-                                        UINT msg, WPARAM wparam, LPARAM lparam,
-                                        UINT flags, UINT timeout, PDWORD_PTR res_ptr )
+LRESULT WINAPI MSG_SendInternalMessageTimeout( DWORD dest_pid, DWORD dest_tid,
+                                               UINT msg, WPARAM wparam, LPARAM lparam,
+                                               UINT flags, UINT timeout, PDWORD_PTR res_ptr )
 {
     struct send_message_info info;
     LRESULT ret, result;

@@ -23,6 +23,7 @@
 #pragma makedep unix
 #endif
 
+#include <assert.h>
 #include "win32u_private.h"
 #include "ntuser_private.h"
 #include "wine/server.h"
@@ -171,6 +172,122 @@ BOOL unhook_windows_hook( INT id, HOOKPROC proc )
     return !status;
 }
 
+static UINT get_ll_hook_timeout(void)
+{
+    /* FIXME: should retrieve LowLevelHooksTimeout in HKEY_CURRENT_USER\Control Panel\Desktop */
+    return 2000;
+}
+
+/***********************************************************************
+ *	     call_hook
+ *
+ * Call hook either in current thread or send message to the destination
+ * thread.
+ */
+static LRESULT call_hook( struct win_hook_params *info )
+{
+    DWORD_PTR ret = 0;
+
+    if (info->tid)
+    {
+        struct hook_extra_info h_extra;
+        h_extra.handle = info->handle;
+        h_extra.lparam = info->lparam;
+
+        TRACE( "calling hook in thread %04x %s code %x wp %lx lp %lx\n",
+               info->tid, hook_names[info->id-WH_MINHOOK], info->code, info->wparam, info->lparam );
+
+        switch(info->id)
+        {
+        case WH_KEYBOARD_LL:
+            if (!user_callbacks) break;
+            user_callbacks->send_ll_message( info->pid, info->tid, WM_WINE_KEYBOARD_LL_HOOK,
+                                             info->wparam, (LPARAM)&h_extra, SMTO_ABORTIFHUNG,
+                                             get_ll_hook_timeout(), &ret );
+            break;
+        case WH_MOUSE_LL:
+            if (!user_callbacks) break;
+            user_callbacks->send_ll_message( info->pid, info->tid, WM_WINE_MOUSE_LL_HOOK,
+                                             info->wparam, (LPARAM)&h_extra, SMTO_ABORTIFHUNG,
+                                             get_ll_hook_timeout(), &ret );
+            break;
+        default:
+            ERR("Unknown hook id %d\n", info->id);
+            assert(0);
+            break;
+        }
+    }
+    else if (info->proc)
+    {
+        struct user_thread_info *thread_info = get_user_thread_info();
+        HHOOK prev = thread_info->hook;
+        BOOL prev_unicode = thread_info->hook_unicode;
+        size_t len = lstrlenW( info->module );
+        void *ret_ptr;
+        ULONG ret_len;
+
+        /*
+         * Windows protects from stack overflow in recursive hook calls. Different Windows
+         * allow different depths.
+         */
+        if (thread_info->hook_call_depth >= 25)
+        {
+            WARN("Too many hooks called recursively, skipping call.\n");
+            return 0;
+        }
+
+        TRACE( "calling hook %p %s code %x wp %lx lp %lx module %s\n",
+               info->proc, hook_names[info->id-WH_MINHOOK], info->code, info->wparam,
+               info->lparam, debugstr_w(info->module) );
+
+        thread_info->hook = info->handle;
+        thread_info->hook_unicode = info->next_unicode;
+        thread_info->hook_call_depth++;
+        ret = KeUserModeCallback( NtUserCallWindowsHook, info,
+                                  FIELD_OFFSET( struct win_hook_params, module[len + 1] ),
+                                  &ret_ptr, &ret_len );
+        thread_info->hook = prev;
+        thread_info->hook_unicode = prev_unicode;
+        thread_info->hook_call_depth--;
+    }
+
+    if (info->id == WH_KEYBOARD_LL || info->id == WH_MOUSE_LL)
+        InterlockedIncrement( &global_key_state_counter ); /* force refreshing the key state cache */
+    return ret;
+}
+
+LRESULT call_current_hook( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam )
+{
+    struct win_hook_params info;
+
+    memset( &info, 0, sizeof(info) - sizeof(info.module) );
+
+    SERVER_START_REQ( get_hook_info )
+    {
+        req->handle = wine_server_user_handle( hhook );
+        req->get_next = 0;
+        req->event = EVENT_MIN;
+        wine_server_set_reply( req, info.module, sizeof(info.module)-sizeof(WCHAR) );
+        if (!wine_server_call_err( req ))
+        {
+            info.module[wine_server_reply_size(req) / sizeof(WCHAR)] = 0;
+            info.handle       = wine_server_ptr_handle( reply->handle );
+            info.id           = reply->id;
+            info.pid          = reply->pid;
+            info.tid          = reply->tid;
+            info.proc         = wine_server_get_ptr( reply->proc );
+            info.next_unicode = reply->unicode;
+        }
+    }
+    SERVER_END_REQ;
+
+    info.code   = code;
+    info.wparam = wparam;
+    info.lparam = lparam;
+    info.prev_unicode = TRUE;  /* assume Unicode for this function */
+    return call_hook( &info );
+}
+
 /***********************************************************************
  *           NtUserSetWinEventHook   (win32u.@)
  */
@@ -247,7 +364,7 @@ BOOL WINAPI NtUserUnhookWinEvent( HWINEVENTHOOK handle )
 void WINAPI NtUserNotifyWinEvent( DWORD event, HWND hwnd, LONG object_id, LONG child_id )
 {
     struct user_thread_info *thread_info = get_user_thread_info();
-    struct win_hook_proc_params info;
+    struct win_event_hook_params info;
     void *ret_ptr;
     ULONG ret_len;
     BOOL ret;
@@ -299,7 +416,7 @@ void WINAPI NtUserNotifyWinEvent( DWORD event, HWND hwnd, LONG object_id, LONG c
                info.proc, event, hwnd, object_id, child_id, debugstr_w(info.module) );
 
         KeUserModeCallback( NtUserCallWinEventHook, &info,
-                            FIELD_OFFSET( struct win_hook_proc_params, module[lstrlenW(info.module) + 1] ),
+                            FIELD_OFFSET( struct win_hook_params, module[lstrlenW(info.module) + 1] ),
                             &ret_ptr, &ret_len );
 
         SERVER_START_REQ( get_hook_info )

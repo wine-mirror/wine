@@ -141,6 +141,7 @@ static const struct user_callbacks user_funcs =
     RedrawWindow,
     SendMessageTimeoutW,
     WindowFromDC,
+    MSG_SendInternalMessageTimeout,
 };
 
 static void WINAPI User32CallFreeIcon( ULONG *param, ULONG size )
@@ -152,6 +153,7 @@ static const void *kernel_callback_table[NtUserCallCount] =
 {
     User32CallEnumDisplayMonitor,
     User32CallWinEventHook,
+    User32CallWindowsHook,
     User32CallFreeIcon,
 };
 

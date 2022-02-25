@@ -86,12 +86,6 @@ extern void (WINAPI *imm_unregister_window)(HWND) DECLSPEC_HIDDEN;
 #define IME_INTERNAL_ACTIVATE 0x17
 #define IME_INTERNAL_DEACTIVATE 0x18
 
-struct hook_extra_info
-{
-    HHOOK handle;
-    LPARAM lparam;
-};
-
 static inline struct user_thread_info *get_user_thread_info(void)
 {
     return (struct user_thread_info *)NtCurrentTeb()->Win32ClientInfo;
@@ -135,13 +129,12 @@ extern void wait_graphics_driver_ready(void) DECLSPEC_HIDDEN;
 extern void *get_hook_proc( void *proc, const WCHAR *module, HMODULE *free_module ) DECLSPEC_HIDDEN;
 extern RECT get_virtual_screen_rect(void) DECLSPEC_HIDDEN;
 extern RECT get_primary_monitor_rect(void) DECLSPEC_HIDDEN;
-extern LRESULT call_current_hook( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam ) DECLSPEC_HIDDEN;
 extern DWORD get_input_codepage( void ) DECLSPEC_HIDDEN;
 extern BOOL map_wparam_AtoW( UINT message, WPARAM *wparam, enum wm_char_mapping mapping ) DECLSPEC_HIDDEN;
 extern NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, const RAWINPUT *rawinput, UINT flags ) DECLSPEC_HIDDEN;
-extern LRESULT MSG_SendInternalMessageTimeout( DWORD dest_pid, DWORD dest_tid,
-                                               UINT msg, WPARAM wparam, LPARAM lparam,
-                                               UINT flags, UINT timeout, PDWORD_PTR res_ptr ) DECLSPEC_HIDDEN;
+extern LRESULT WINAPI MSG_SendInternalMessageTimeout( DWORD dest_pid, DWORD dest_tid,
+                                                      UINT msg, WPARAM wparam, LPARAM lparam,
+                                                      UINT flags, UINT timeout, PDWORD_PTR res_ptr ) DECLSPEC_HIDDEN;
 extern HPEN SYSCOLOR_GetPen( INT index ) DECLSPEC_HIDDEN;
 extern HBRUSH SYSCOLOR_Get55AABrush(void) DECLSPEC_HIDDEN;
 extern void SYSPARAMS_Init(void) DECLSPEC_HIDDEN;
@@ -172,7 +165,8 @@ extern const WCHAR *CLASS_GetVersionedName(const WCHAR *classname, UINT *basenam
 /* kernel callbacks */
 
 BOOL WINAPI User32CallEnumDisplayMonitor( struct enum_display_monitor_params *params, ULONG size );
-BOOL WINAPI User32CallWinEventHook( const struct win_hook_proc_params *params, ULONG size );
+BOOL WINAPI User32CallWinEventHook( const struct win_event_hook_params *params, ULONG size );
+BOOL WINAPI User32CallWindowsHook( const struct win_hook_params *params, ULONG size );
 
 /* message spy definitions */
 

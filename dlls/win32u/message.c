@@ -25,6 +25,7 @@
 #endif
 
 #include "win32u_private.h"
+#include "ntuser_private.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 
@@ -40,6 +41,13 @@ LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
 {
     switch(msg)
     {
+    case WM_WINE_KEYBOARD_LL_HOOK:
+    case WM_WINE_MOUSE_LL_HOOK:
+    {
+        struct hook_extra_info *h_extra = (struct hook_extra_info *)lparam;
+
+        return call_current_hook( h_extra->handle, HC_ACTION, wparam, h_extra->lparam );
+    }
     case WM_WINE_CLIPCURSOR:
         if (wparam)
         {

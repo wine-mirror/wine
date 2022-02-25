@@ -29,6 +29,7 @@ enum
     /* user32 callbacks */
     NtUserCallEnumDisplayMonitor,
     NtUserCallWinEventHook,
+    NtUserCallWindowsHook,
     /* win16 hooks */
     NtUserCallFreeIcon,
     /* Vulkan support */
@@ -48,7 +49,7 @@ struct enum_display_monitor_params
 };
 
 /* NtUserCallWinEventHook params */
-struct win_hook_proc_params
+struct win_event_hook_params
 {
     DWORD event;
     HWND hwnd;
@@ -56,6 +57,22 @@ struct win_hook_proc_params
     LONG child_id;
     void *handle;
     WINEVENTPROC proc;
+    WCHAR module[MAX_PATH];
+};
+
+/* NtUserCallWindowsHook params */
+struct win_hook_params
+{
+    void *proc;
+    void *handle;
+    DWORD pid;
+    DWORD tid;
+    int id;
+    int code;
+    WPARAM wparam;
+    LPARAM lparam;
+    BOOL prev_unicode;
+    BOOL next_unicode;
     WCHAR module[MAX_PATH];
 };
 

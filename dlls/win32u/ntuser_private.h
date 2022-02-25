@@ -33,6 +33,7 @@ struct user_callbacks
     BOOL (WINAPI *pRedrawWindow)( HWND, const RECT*, HRGN, UINT );
     LRESULT (WINAPI *pSendMessageTimeoutW)( HWND, UINT, WPARAM, LPARAM, UINT, UINT, PDWORD_PTR );
     HWND (WINAPI *pWindowFromDC)( HDC );
+    LRESULT (WINAPI *send_ll_message)( DWORD, DWORD, UINT, WPARAM, LPARAM, UINT, UINT, PDWORD_PTR );
 };
 
 struct user_object
@@ -126,6 +127,12 @@ struct user_key_state_info
     UINT  time;          /* Time of last key state refresh */
     INT   counter;       /* Counter to invalidate the key state */
     BYTE  state[256];    /* State for each key */
+};
+
+struct hook_extra_info
+{
+    HHOOK handle;
+    LPARAM lparam;
 };
 
 /* cursoricon.c */
