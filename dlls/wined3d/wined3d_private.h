@@ -3382,6 +3382,7 @@ bool wined3d_driver_info_init(struct wined3d_driver_info *driver_info,
 
 #define UPLOAD_BO_UPLOAD_ON_UNMAP   0x1
 #define UPLOAD_BO_RENAME_ON_UNMAP   0x2
+#define UPLOAD_BO_FREE_ON_UNMAP     0x4
 
 struct upload_bo
 {

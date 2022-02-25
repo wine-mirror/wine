@@ -2753,6 +2753,14 @@ static void wined3d_cs_exec_update_sub_resource(struct wined3d_cs *cs, const voi
     context_release(context);
 
     wined3d_resource_release(resource);
+
+    if (op->bo.flags & UPLOAD_BO_FREE_ON_UNMAP)
+    {
+        if (op->bo.addr.buffer_object)
+            FIXME("Free BO address %s.\n", debug_const_bo_address(&op->bo.addr));
+        else
+            heap_free((void *)op->bo.addr.addr);
+    }
 }
 
 void wined3d_device_context_emit_update_sub_resource(struct wined3d_device_context *context,
@@ -3091,10 +3099,13 @@ static void wined3d_cs_st_finish(struct wined3d_device_context *context, enum wi
 static bool wined3d_cs_map_upload_bo(struct wined3d_device_context *context, struct wined3d_resource *resource,
         unsigned int sub_resource_idx, struct wined3d_map_desc *map_desc, const struct wined3d_box *box, uint32_t flags)
 {
+    struct wined3d_client_resource *client = &resource->client;
+    const struct wined3d_format *format = resource->format;
+    size_t size;
+
     if (flags & (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE))
     {
         const struct wined3d_d3d_info *d3d_info = &context->device->adapter->d3d_info;
-        struct wined3d_client_resource *client = &resource->client;
         struct wined3d_device *device = context->device;
         struct wined3d_bo_address addr;
         struct wined3d_bo *bo;
@@ -3184,7 +3195,23 @@ static bool wined3d_cs_map_upload_bo(struct wined3d_device_context *context, str
         return true;
     }
 
-    return false;
+    wined3d_format_calculate_pitch(format, 1, box->right - box->left,
+            box->bottom - box->top, &map_desc->row_pitch, &map_desc->slice_pitch);
+
+    size = (box->back - box->front - 1) * map_desc->slice_pitch
+            + ((box->bottom - box->top - 1) / format->block_height) * map_desc->row_pitch
+            + ((box->right - box->left + format->block_width - 1) / format->block_width) * format->block_byte_count;
+
+    if (!(map_desc->data = heap_alloc(size)))
+    {
+        WARN_(d3d_perf)("Failed to allocate a heap memory buffer.\n");
+        return false;
+    }
+    client->mapped_upload.addr.buffer_object = 0;
+    client->mapped_upload.addr.addr = map_desc->data;
+    client->mapped_upload.flags = UPLOAD_BO_UPLOAD_ON_UNMAP | UPLOAD_BO_FREE_ON_UNMAP;
+    client->mapped_box = *box;
+    return true;
 }
 
 static bool wined3d_bo_address_is_null(struct wined3d_const_bo_address *addr)
