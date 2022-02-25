@@ -158,25 +158,25 @@ NTSTATUS wg_transform_create(void *args)
     if (!(transform = calloc(1, sizeof(*transform))))
         return STATUS_NO_MEMORY;
     if (!(transform->container = gst_bin_new("wg_transform")))
-        goto out_free_transform;
+        goto out;
 
     if (!(src_caps = wg_format_to_caps(&input_format)))
-        goto out_free_container;
+        goto out;
     if (!(template = gst_pad_template_new("src", GST_PAD_SRC, GST_PAD_ALWAYS, src_caps)))
-        goto out_free_src_caps;
+        goto out;
     transform->my_src = gst_pad_new_from_template(template, "src");
     g_object_unref(template);
     if (!transform->my_src)
-        goto out_free_src_caps;
+        goto out;
 
     if (!(sink_caps = wg_format_to_caps(&output_format)))
-        goto out_free_src_pad;
+        goto out;
     if (!(template = gst_pad_template_new("sink", GST_PAD_SINK, GST_PAD_ALWAYS, sink_caps)))
-        goto out_free_sink_caps;
+        goto out;
     transform->my_sink = gst_pad_new_from_template(template, "sink");
     g_object_unref(template);
     if (!transform->my_sink)
-        goto out_free_sink_caps;
+        goto out;
 
     gst_pad_set_element_private(transform->my_sink, transform);
     gst_pad_set_chain_function(transform->my_sink, transform_sink_chain_cb);
@@ -187,7 +187,7 @@ NTSTATUS wg_transform_create(void *args)
      */
     media_type = gst_structure_get_name(gst_caps_get_structure(sink_caps, 0));
     if (!(raw_caps = gst_caps_new_empty_simple(media_type)))
-        goto out_free_sink_pad;
+        goto out;
 
     switch (input_format.major_type)
     {
@@ -196,7 +196,7 @@ NTSTATUS wg_transform_create(void *args)
                     || !transform_append_element(transform, element, &first, &last))
             {
                 gst_caps_unref(raw_caps);
-                goto out_free_sink_pad;
+                goto out;
             }
             break;
 
@@ -205,7 +205,7 @@ NTSTATUS wg_transform_create(void *args)
         case WG_MAJOR_TYPE_UNKNOWN:
             GST_FIXME("Format %u not implemented!", input_format.major_type);
             gst_caps_unref(raw_caps);
-            goto out_free_sink_pad;
+            goto out;
     }
 
     gst_caps_unref(raw_caps);
@@ -224,22 +224,22 @@ NTSTATUS wg_transform_create(void *args)
              */
             if (!(element = create_element("audioconvert", "base"))
                     || !transform_append_element(transform, element, &first, &last))
-                goto out_free_sink_pad;
+                goto out;
             if (!(element = create_element("audioresample", "base"))
                     || !transform_append_element(transform, element, &first, &last))
-                goto out_free_sink_pad;
+                goto out;
             break;
 
         case WG_MAJOR_TYPE_VIDEO:
         case WG_MAJOR_TYPE_WMA:
         case WG_MAJOR_TYPE_UNKNOWN:
             GST_FIXME("Format %u not implemented!", output_format.major_type);
-            goto out_free_sink_pad;
+            goto out;
     }
 
     gst_element_set_state(transform->container, GST_STATE_PAUSED);
     if (!gst_element_get_state(transform->container, NULL, NULL, -1))
-        goto out_free_sink_pad;
+        goto out;
 
     gst_caps_unref(sink_caps);
     gst_caps_unref(src_caps);
@@ -248,17 +248,17 @@ NTSTATUS wg_transform_create(void *args)
     params->transform = transform;
     return STATUS_SUCCESS;
 
-out_free_sink_pad:
-    gst_object_unref(transform->my_sink);
-out_free_sink_caps:
-    gst_caps_unref(sink_caps);
-out_free_src_pad:
-    gst_object_unref(transform->my_src);
-out_free_src_caps:
-    gst_caps_unref(src_caps);
-out_free_container:
-    gst_object_unref(transform->container);
-out_free_transform:
+out:
+    if (transform->my_sink)
+        gst_object_unref(transform->my_sink);
+    if (sink_caps)
+        gst_caps_unref(sink_caps);
+    if (transform->my_src)
+        gst_object_unref(transform->my_src);
+    if (src_caps)
+        gst_caps_unref(src_caps);
+    if (transform->container)
+        gst_object_unref(transform->container);
     free(transform);
     GST_ERROR("Failed to create winegstreamer transform.");
     return status;
