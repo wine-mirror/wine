@@ -1302,7 +1302,7 @@
 @ stdcall RestoreLastError(long) NTDLL.RtlRestoreLastWin32Error
 @ stdcall -import ResumeThread(long)
 @ cdecl -arch=arm,arm64,x86_64 RtlAddFunctionTable(ptr long long) NTDLL.RtlAddFunctionTable
-@ stdcall -norelay RtlCaptureContext(ptr) NTDLL.RtlCaptureContext
+@ stdcall -norelay -import RtlCaptureContext(ptr)
 @ stdcall RtlCaptureStackBackTrace(long long ptr ptr) NTDLL.RtlCaptureStackBackTrace
 @ stdcall -arch=arm,arm64,x86_64 RtlCompareMemory(ptr ptr long) NTDLL.RtlCompareMemory
 @ stdcall -arch=x86_64 RtlCopyMemory(ptr ptr long) NTDLL.RtlCopyMemory
