@@ -92,6 +92,7 @@ enum
     /* temporary exports */
     NtUserFlushWindowSurfaces,
     NtUserGetDeskPattern,
+    NtUserHandleInternalMessage,
     NtUserIncrementKeyStateCounter,
     NtUserLock,
     NtUserNextThreadWindow,

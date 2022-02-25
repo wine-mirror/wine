@@ -26,7 +26,35 @@
 
 #include "win32u_private.h"
 #include "wine/server.h"
+#include "wine/debug.h"
 
+WINE_DEFAULT_DEBUG_CHANNEL(msg);
+
+
+/***********************************************************************
+ *           handle_internal_message
+ *
+ * Handle an internal Wine message instead of calling the window proc.
+ */
+LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    switch(msg)
+    {
+    case WM_WINE_CLIPCURSOR:
+        if (wparam)
+        {
+            RECT rect;
+            get_clip_cursor( &rect );
+            return user_driver->pClipCursor( &rect );
+        }
+        return user_driver->pClipCursor( NULL );
+    default:
+        if (msg >= WM_WINE_FIRST_DRIVER_MSG && msg <= WM_WINE_LAST_DRIVER_MSG)
+            return user_driver->pWindowMessage( hwnd, msg, wparam, lparam );
+        FIXME( "unknown internal message %x\n", msg );
+        return 0;
+    }
+}
 
 /**********************************************************************
  *	     NtUserGetGUIThreadInfo  (win32u.@)

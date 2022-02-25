@@ -1855,7 +1855,7 @@ static void reply_message( struct received_message_info *info, LRESULT result, B
  *
  * Handle an internal Wine message instead of calling the window proc.
  */
-static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     switch(msg)
     {
@@ -1885,22 +1885,18 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
 
         return call_current_hook( h_extra->handle, HC_ACTION, wparam, h_extra->lparam );
     }
-    case WM_WINE_CLIPCURSOR:
-        if (wparam)
-        {
-            RECT rect;
-            GetClipCursor( &rect );
-            return USER_Driver->pClipCursor( &rect );
-        }
-        return USER_Driver->pClipCursor( NULL );
     case WM_WINE_UPDATEWINDOWSTATE:
         update_window_state( hwnd );
         return 0;
     default:
-        if (msg >= WM_WINE_FIRST_DRIVER_MSG && msg <= WM_WINE_LAST_DRIVER_MSG)
-            return USER_Driver->pWindowMessage( hwnd, msg, wparam, lparam );
-        FIXME( "unknown internal message %x\n", msg );
-        return 0;
+        {
+            MSG m;
+            m.hwnd    = hwnd;
+            m.message = msg;
+            m.wParam  = wparam;
+            m.lParam  = lparam;
+            return NtUserCallOneParam( (UINT_PTR)&m, NtUserHandleInternalMessage );
+        }
     }
 }
 

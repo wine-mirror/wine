@@ -131,6 +131,9 @@ struct user_key_state_info
 /* cursoricon.c */
 HICON alloc_cursoricon_handle( BOOL is_icon ) DECLSPEC_HIDDEN;
 
+/* message.c */
+LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam ) DECLSPEC_HIDDEN;
+
 /* window.c */
 HANDLE alloc_user_handle( struct user_object *ptr, unsigned int type ) DECLSPEC_HIDDEN;
 void *free_user_handle( HANDLE handle, unsigned int type ) DECLSPEC_HIDDEN;

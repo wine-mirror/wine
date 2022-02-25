@@ -1065,6 +1065,7 @@ static const struct user_driver_funcs lazy_load_driver =
     /* windowing functions */
     .pMsgWaitForMultipleObjectsEx = nulldrv_MsgWaitForMultipleObjectsEx,
     .pScrollDC = nulldrv_ScrollDC,
+    .pWindowMessage = nulldrv_WindowMessage,
     /* system parameters */
     .pSystemParametersInfo = nulldrv_SystemParametersInfo,
     /* vulkan support */
