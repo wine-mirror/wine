@@ -32,9 +32,16 @@ import "windows.globalization.idl";
 namespace Windows {
     namespace Media {
         namespace SpeechRecognition {
+            typedef enum SpeechRecognitionConfidence SpeechRecognitionConfidence;
             typedef enum SpeechRecognitionConstraintProbability SpeechRecognitionConstraintProbability;
             typedef enum SpeechRecognitionConstraintType SpeechRecognitionConstraintType;
+            typedef enum SpeechRecognitionResultStatus SpeechRecognitionResultStatus;
             interface ISpeechRecognitionConstraint;
+            interface ISpeechRecognitionResult;
+            interface ISpeechRecognitionResult2;
+            interface ISpeechRecognitionSemanticInterpretation;
+            runtimeclass SpeechRecognitionResult;
+            runtimeclass SpeechRecognitionSemanticInterpretation;
         }
     }
 }
@@ -43,6 +50,9 @@ namespace Windows {
     namespace Media {
         namespace SpeechRecognition {
             declare {
+                interface Windows.Foundation.Collections.IIterable<Windows.Media.SpeechRecognition.SpeechRecognitionResult*>;
+                interface Windows.Foundation.Collections.IIterator<Windows.Media.SpeechRecognition.SpeechRecognitionResult*>;
+                interface Windows.Foundation.Collections.IVectorView<Windows.Media.SpeechRecognition.SpeechRecognitionResult*>;
             }
         }
     }
@@ -51,6 +61,15 @@ namespace Windows {
 namespace Windows {
     namespace Media {
         namespace SpeechRecognition {
+
+            [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+            enum SpeechRecognitionConfidence
+            {
+                High = 0,
+                Medium = 1,
+                Low = 2,
+                Rejected = 3,
+            };
 
             [contract(Windows.Foundation.UniversalApiContract, 1.0)]
             enum SpeechRecognitionConstraintProbability
@@ -69,6 +88,26 @@ namespace Windows {
                 VoiceCommandDefinition = 3,
             };
 
+            [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+            enum SpeechRecognitionResultStatus
+            {
+                Success = 0,
+                TopicLanguageNotSupported = 1,
+                GrammarLanguageMismatch = 2,
+                GrammarCompilationFailure = 3,
+                AudioQualityFailure = 4,
+                UserCanceled = 5,
+                Unknown = 6,
+                [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+                TimeoutExceeded = 7,
+                [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+                PauseLimitExceeded = 8,
+                [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+                NetworkFailure = 9,
+                [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+                MicrophoneUnavailable = 10,
+            };
+
             [
                 contract(Windows.Foundation.UniversalApiContract, 1.0),
                 uuid(79ac1628-4d68-43c4-8911-40dc4101b55b)
@@ -82,6 +121,63 @@ namespace Windows {
                 [propget] HRESULT Type([out, retval] Windows.Media.SpeechRecognition.SpeechRecognitionConstraintType *value);
                 [propget] HRESULT Probability([out, retval] Windows.Media.SpeechRecognition.SpeechRecognitionConstraintProbability *value);
                 [propput] HRESULT Probability([in] Windows.Media.SpeechRecognition.SpeechRecognitionConstraintProbability value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognitionResult),
+                uuid(4e303157-034e-4652-857e-d0454cc4beec)
+            ]
+            interface ISpeechRecognitionResult : IInspectable
+            {
+                [propget] HRESULT Status([out, retval] Windows.Media.SpeechRecognition.SpeechRecognitionResultStatus *value);
+                [propget] HRESULT Text([out, retval] HSTRING *value);
+                [propget] HRESULT Confidence([out, retval] Windows.Media.SpeechRecognition.SpeechRecognitionConfidence *value);
+                [propget] HRESULT SemanticInterpretation([out, retval] Windows.Media.SpeechRecognition.SpeechRecognitionSemanticInterpretation **value);
+                HRESULT GetAlternates([in] UINT32 max_amount, [out, retval] Windows.Foundation.Collections.IVectorView<Windows.Media.SpeechRecognition.SpeechRecognitionResult*> **results);
+                [propget] HRESULT Constraint([out, retval] Windows.Media.SpeechRecognition.ISpeechRecognitionConstraint **value);
+                [propget] HRESULT RulePath([out, retval] Windows.Foundation.Collections.IVectorView<HSTRING> **value);
+                [propget] HRESULT RawConfidence([out, retval] DOUBLE *value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognitionResult),
+                uuid(af7ed1ba-451b-4166-a0c1-1ffe84032d03)
+            ]
+            interface ISpeechRecognitionResult2 : IInspectable
+            {
+                [propget] HRESULT PhraseStartTime([out, retval] Windows.Foundation.DateTime *value);
+                [propget] HRESULT PhraseDuration([out, retval] Windows.Foundation.TimeSpan *value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognitionSemanticInterpretation),
+                uuid(aae1da9b-7e32-4c1f-89fe-0c65f486f52e)
+            ]
+            interface ISpeechRecognitionSemanticInterpretation : IInspectable
+            {
+                [propget] HRESULT Properties([out, retval] Windows.Foundation.Collections.IMapView<HSTRING, Windows.Foundation.Collections.IVectorView<HSTRING>*> **value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile)
+            ]
+            runtimeclass SpeechRecognitionResult
+            {
+                [default] interface Windows.Media.SpeechRecognition.ISpeechRecognitionResult;
+                [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Media.SpeechRecognition.ISpeechRecognitionResult2;
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile)
+            ]
+            runtimeclass SpeechRecognitionSemanticInterpretation
+            {
+                [default] interface Windows.Media.SpeechRecognition.ISpeechRecognitionSemanticInterpretation;
             }
         }
     }
