@@ -35,3 +35,4 @@
 #include "windows.gaming.input.h"
 
 extern IActivationFactory *controller_factory;
+extern IActivationFactory *gamepad_factory;

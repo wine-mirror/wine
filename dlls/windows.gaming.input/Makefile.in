@@ -3,6 +3,7 @@ IMPORTS = combase uuid
 
 C_SRCS = \
 	controller.c \
+	gamepad.c \
 	main.c
 
 IDL_SRCS = classes.idl
