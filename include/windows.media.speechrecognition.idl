@@ -41,12 +41,14 @@ namespace Windows {
             interface ISpeechContinuousRecognitionResultGeneratedEventArgs;
             interface ISpeechContinuousRecognitionSession;
             interface ISpeechRecognitionConstraint;
+            interface ISpeechRecognitionHypothesis;
             interface ISpeechRecognitionResult;
             interface ISpeechRecognitionResult2;
             interface ISpeechRecognitionSemanticInterpretation;
             runtimeclass SpeechContinuousRecognitionCompletedEventArgs;
             runtimeclass SpeechContinuousRecognitionResultGeneratedEventArgs;
             runtimeclass SpeechContinuousRecognitionSession;
+            runtimeclass SpeechRecognitionHypothesis;
             runtimeclass SpeechRecognitionResult;
             runtimeclass SpeechRecognitionSemanticInterpretation;
         }
@@ -186,6 +188,16 @@ namespace Windows {
 
             [
                 contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognitionHypothesis),
+                uuid(7a7b25b0-99c5-4f7d-bf84-10aa1302b634)
+            ]
+            interface ISpeechRecognitionHypothesis : IInspectable
+            {
+                [propget] HRESULT Text([out, retval] HSTRING *value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
                 exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognitionResult),
                 uuid(4e303157-034e-4652-857e-d0454cc4beec)
             ]
@@ -250,6 +262,16 @@ namespace Windows {
             runtimeclass SpeechContinuousRecognitionSession
             {
                 [default] interface Windows.Media.SpeechRecognition.ISpeechContinuousRecognitionSession;
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile),
+                threading(both)
+            ]
+            runtimeclass SpeechRecognitionHypothesis
+            {
+                [default] interface Windows.Media.SpeechRecognition.ISpeechRecognitionHypothesis;
             }
 
             [
