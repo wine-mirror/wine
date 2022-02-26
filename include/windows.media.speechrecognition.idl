@@ -32,14 +32,21 @@ import "windows.globalization.idl";
 namespace Windows {
     namespace Media {
         namespace SpeechRecognition {
+            typedef enum SpeechContinuousRecognitionMode SpeechContinuousRecognitionMode;
             typedef enum SpeechRecognitionConfidence SpeechRecognitionConfidence;
             typedef enum SpeechRecognitionConstraintProbability SpeechRecognitionConstraintProbability;
             typedef enum SpeechRecognitionConstraintType SpeechRecognitionConstraintType;
             typedef enum SpeechRecognitionResultStatus SpeechRecognitionResultStatus;
+            interface ISpeechContinuousRecognitionCompletedEventArgs;
+            interface ISpeechContinuousRecognitionResultGeneratedEventArgs;
+            interface ISpeechContinuousRecognitionSession;
             interface ISpeechRecognitionConstraint;
             interface ISpeechRecognitionResult;
             interface ISpeechRecognitionResult2;
             interface ISpeechRecognitionSemanticInterpretation;
+            runtimeclass SpeechContinuousRecognitionCompletedEventArgs;
+            runtimeclass SpeechContinuousRecognitionResultGeneratedEventArgs;
+            runtimeclass SpeechContinuousRecognitionSession;
             runtimeclass SpeechRecognitionResult;
             runtimeclass SpeechRecognitionSemanticInterpretation;
         }
@@ -53,6 +60,8 @@ namespace Windows {
                 interface Windows.Foundation.Collections.IIterable<Windows.Media.SpeechRecognition.SpeechRecognitionResult*>;
                 interface Windows.Foundation.Collections.IIterator<Windows.Media.SpeechRecognition.SpeechRecognitionResult*>;
                 interface Windows.Foundation.Collections.IVectorView<Windows.Media.SpeechRecognition.SpeechRecognitionResult*>;
+                interface Windows.Foundation.TypedEventHandler<Windows.Media.SpeechRecognition.SpeechContinuousRecognitionSession*, Windows.Media.SpeechRecognition.SpeechContinuousRecognitionCompletedEventArgs*>;
+                interface Windows.Foundation.TypedEventHandler<Windows.Media.SpeechRecognition.SpeechContinuousRecognitionSession*, Windows.Media.SpeechRecognition.SpeechContinuousRecognitionResultGeneratedEventArgs*>;
             }
         }
     }
@@ -61,6 +70,13 @@ namespace Windows {
 namespace Windows {
     namespace Media {
         namespace SpeechRecognition {
+
+            [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+            enum SpeechContinuousRecognitionMode
+            {
+                Default = 0,
+                PauseOnRecognition = 1,
+            };
 
             [contract(Windows.Foundation.UniversalApiContract, 1.0)]
             enum SpeechRecognitionConfidence
@@ -107,6 +123,51 @@ namespace Windows {
                 [contract(Windows.Foundation.UniversalApiContract, 1.0)]
                 MicrophoneUnavailable = 10,
             };
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechContinuousRecognitionCompletedEventArgs),
+                uuid(e3d069bb-e30c-5e18-424b-7fbe81f8fbd0)
+            ]
+            interface ISpeechContinuousRecognitionCompletedEventArgs : IInspectable
+            {
+                [propget] HRESULT Status([out, retval] Windows.Media.SpeechRecognition.SpeechRecognitionResultStatus *value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechContinuousRecognitionResultGeneratedEventArgs),
+                uuid(19091e1e-6e7e-5a46-40fb-76594f786504)
+            ]
+            interface ISpeechContinuousRecognitionResultGeneratedEventArgs : IInspectable
+            {
+                [propget] HRESULT Result([out, retval] Windows.Media.SpeechRecognition.SpeechRecognitionResult **value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechContinuousRecognitionSession),
+                uuid(6a213c04-6614-49f8-99a2-b5e9b3a085c8)
+            ]
+            interface ISpeechContinuousRecognitionSession : IInspectable
+            {
+                [propget] HRESULT AutoStopSilenceTimeout([out, retval] Windows.Foundation.TimeSpan *value);
+                [propput] HRESULT AutoStopSilenceTimeout([in] Windows.Foundation.TimeSpan value);
+                [overload("StartAsync")] HRESULT StartAsync([out, retval] Windows.Foundation.IAsyncAction **action);
+                [overload("StartAsync")] HRESULT StartWithModeAsync([in] Windows.Media.SpeechRecognition.SpeechContinuousRecognitionMode mode, [out, retval] Windows.Foundation.IAsyncAction **action);
+                HRESULT StopAsync([out, retval] Windows.Foundation.IAsyncAction **action);
+                HRESULT CancelAsync([out, retval] Windows.Foundation.IAsyncAction **action);
+                HRESULT PauseAsync([out, retval] Windows.Foundation.IAsyncAction **action);
+                HRESULT Resume();
+                [eventadd] HRESULT Completed(
+                    [in] Windows.Foundation.TypedEventHandler<Windows.Media.SpeechRecognition.SpeechContinuousRecognitionSession*, Windows.Media.SpeechRecognition.SpeechContinuousRecognitionCompletedEventArgs*> *value,
+                    [out, retval] EventRegistrationToken *token);
+                [eventremove] HRESULT Completed([in] EventRegistrationToken token);
+                [eventadd] HRESULT ResultGenerated(
+                    [in] Windows.Foundation.TypedEventHandler<Windows.Media.SpeechRecognition.SpeechContinuousRecognitionSession*, Windows.Media.SpeechRecognition.SpeechContinuousRecognitionResultGeneratedEventArgs*> *value,
+                    [out, retval] EventRegistrationToken *token);
+                [eventremove] HRESULT ResultGenerated([in] EventRegistrationToken token);
+            }
 
             [
                 contract(Windows.Foundation.UniversalApiContract, 1.0),
@@ -159,6 +220,36 @@ namespace Windows {
             interface ISpeechRecognitionSemanticInterpretation : IInspectable
             {
                 [propget] HRESULT Properties([out, retval] Windows.Foundation.Collections.IMapView<HSTRING, Windows.Foundation.Collections.IVectorView<HSTRING>*> **value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile),
+                threading(both)
+            ]
+            runtimeclass SpeechContinuousRecognitionCompletedEventArgs
+            {
+                [default] interface Windows.Media.SpeechRecognition.ISpeechContinuousRecognitionCompletedEventArgs;
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile),
+                threading(both)
+            ]
+            runtimeclass SpeechContinuousRecognitionResultGeneratedEventArgs
+            {
+                [default] interface Windows.Media.SpeechRecognition.ISpeechContinuousRecognitionResultGeneratedEventArgs;
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile),
+                threading(both)
+            ]
+            runtimeclass SpeechContinuousRecognitionSession
+            {
+                [default] interface Windows.Media.SpeechRecognition.ISpeechContinuousRecognitionSession;
             }
 
             [
