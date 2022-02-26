@@ -623,7 +623,7 @@ static const char * const CRYPT_knownLocations[] = {
 
 static void load_root_certs(void)
 {
-    DWORD i;
+    unsigned int i;
 
 #ifdef HAVE_SECURITY_SECURITY_H
     const SecTrustSettingsDomain domains[] = {
@@ -651,7 +651,7 @@ static void load_root_certs(void)
                     CFRelease(certData);
                 }
                 else
-                    WARN("could not export certificate %d to X509 format: 0x%08x\n", i, (unsigned int)status);
+                    WARN("could not export certificate %u to X509 format: 0x%08x\n", i, (unsigned int)status);
             }
             CFRelease(certs);
         }
