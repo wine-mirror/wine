@@ -1324,6 +1324,7 @@ static void test_AccessibleObjectFromPoint(void)
     if (WindowFromPoint(point) != hwnd)
     {
         win_skip("test window not returned from WindowFromPoint\n");
+        DestroyWindow(hwnd);
         return;
     }
 
@@ -1358,6 +1359,7 @@ static void test_AccessibleObjectFromPoint(void)
     if (WindowFromPoint(point) != child)
     {
         win_skip("test window not returned from WindowFromPoint\n");
+        DestroyWindow(hwnd);
         return;
     }
 
@@ -1464,7 +1466,7 @@ static void test_CreateStdAccessibleObject_classes(void)
         IAccessible_Release(acc);
 
         SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (LONG_PTR)win_proc);
-        CloseWindow(hwnd);
+        DestroyWindow(hwnd);
         winetest_pop_context();
     }
 }
