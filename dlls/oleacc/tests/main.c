@@ -1037,6 +1037,7 @@ static void test_default_client_accessible_object(void)
     ShowWindow(hwnd, SW_SHOW);
     SetFocus(hwnd);
     hr = IAccessible_get_accFocus(acc, &v);
+    ok(GetFocus() == hwnd, "test window has no focus\n");
     ok(hr == S_OK, "hr %#x\n", hr);
     ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
     ok(V_I4(&v) == CHILDID_SELF, "V_I4(&v) = %d\n", V_I4(&v));
@@ -1044,6 +1045,7 @@ static void test_default_client_accessible_object(void)
     /* Set focus to each child window. */
     SetFocus(btn);
     hr = IAccessible_get_accFocus(acc, &v);
+    ok(GetFocus() == btn, "test window has no focus\n");
     ok(hr == S_OK, "hr %#x\n", hr);
     ok(V_VT(&v) == VT_DISPATCH, "V_VT(&v) = %d\n", V_VT(&v));
     ok(V_DISPATCH(&v) != NULL, "V_DISPATCH(&v) = %p\n", V_DISPATCH(&v));
