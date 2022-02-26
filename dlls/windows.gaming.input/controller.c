@@ -23,124 +23,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(input);
 
-struct controller_vector
-{
-    IVectorView_RawGameController IVectorView_RawGameController_iface;
-    LONG ref;
-};
-
-static inline struct controller_vector *impl_from_IVectorView_RawGameController( IVectorView_RawGameController *iface )
-{
-    return CONTAINING_RECORD( iface, struct controller_vector, IVectorView_RawGameController_iface );
-}
-
-static HRESULT WINAPI controllers_QueryInterface( IVectorView_RawGameController *iface, REFIID iid, void **out )
-{
-    TRACE( "iface %p, iid %s, out %p.\n", iface, debugstr_guid( iid ), out );
-
-    if (IsEqualGUID( iid, &IID_IUnknown ) ||
-        IsEqualGUID( iid, &IID_IInspectable ) ||
-        IsEqualGUID( iid, &IID_IAgileObject ) ||
-        IsEqualGUID( iid, &IID_IVectorView_RawGameController ))
-    {
-        IUnknown_AddRef( iface );
-        *out = iface;
-        return S_OK;
-    }
-
-    WARN( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
-    *out = NULL;
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI controllers_AddRef( IVectorView_RawGameController *iface )
-{
-    struct controller_vector *impl = impl_from_IVectorView_RawGameController( iface );
-    ULONG ref = InterlockedIncrement( &impl->ref );
-    TRACE( "iface %p increasing refcount to %lu.\n", iface, ref );
-    return ref;
-}
-
-static ULONG WINAPI controllers_Release( IVectorView_RawGameController *iface )
-{
-    struct controller_vector *impl = impl_from_IVectorView_RawGameController( iface );
-    ULONG ref = InterlockedDecrement( &impl->ref );
-    TRACE( "iface %p decreasing refcount to %lu.\n", iface, ref );
-    return ref;
-}
-
-static HRESULT WINAPI controllers_GetIids( IVectorView_RawGameController *iface, ULONG *iid_count, IID **iids )
-{
-    FIXME( "iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids );
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI controllers_GetRuntimeClassName( IVectorView_RawGameController *iface, HSTRING *class_name )
-{
-    FIXME( "iface %p, class_name %p stub!\n", iface, class_name );
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI controllers_GetTrustLevel( IVectorView_RawGameController *iface, TrustLevel *trust_level )
-{
-    FIXME( "iface %p, trust_level %p stub!\n", iface, trust_level );
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI controllers_GetAt( IVectorView_RawGameController *iface, UINT32 index, IRawGameController **value )
-{
-    FIXME( "iface %p, index %u, value %p stub!\n", iface, index, value );
-    *value = NULL;
-    return E_BOUNDS;
-}
-
-static HRESULT WINAPI controllers_get_Size( IVectorView_RawGameController *iface, UINT32 *value )
-{
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    *value = 0;
-    return S_OK;
-}
-
-static HRESULT WINAPI controllers_IndexOf( IVectorView_RawGameController *iface, IRawGameController *element,
-                                           UINT32 *index, BOOLEAN *found )
-{
-    FIXME( "iface %p, element %p, index %p, found %p stub!\n", iface, element, index, found );
-    *index = 0;
-    *found = FALSE;
-    return S_OK;
-}
-
-static HRESULT WINAPI controllers_GetMany( IVectorView_RawGameController *iface, UINT32 start_index,
-                                           UINT32 items_size, IRawGameController **items, UINT *value )
-{
-    FIXME( "iface %p, start_index %u, items_size %u, items %p, value %p stub!\n", iface,
-           start_index, items_size, items, value );
-    *value = 0;
-    return E_BOUNDS;
-}
-
-static const struct IVectorView_RawGameControllerVtbl controllers_vtbl =
-{
-    controllers_QueryInterface,
-    controllers_AddRef,
-    controllers_Release,
-    /* IInspectable methods */
-    controllers_GetIids,
-    controllers_GetRuntimeClassName,
-    controllers_GetTrustLevel,
-    /* IVectorView<RawGameController> methods */
-    controllers_GetAt,
-    controllers_get_Size,
-    controllers_IndexOf,
-    controllers_GetMany,
-};
-
-static struct controller_vector controllers =
-{
-    {&controllers_vtbl},
-    0,
-};
-
 struct controller_statics
 {
     IActivationFactory IActivationFactory_iface;
@@ -307,10 +189,20 @@ static HRESULT WINAPI statics_remove_RawGameControllerRemoved( IRawGameControlle
 
 static HRESULT WINAPI statics_get_RawGameControllers( IRawGameControllerStatics *iface, IVectorView_RawGameController **value )
 {
+    static const GUID *view_iid = &IID_IVectorView_RawGameController;
+    static const GUID *iid = &IID_IVector_RawGameController;
+    IVector_RawGameController *controllers;
+    HRESULT hr;
+
     TRACE( "iface %p, value %p.\n", iface, value );
-    *value = &controllers.IVectorView_RawGameController_iface;
-    IVectorView_RawGameController_AddRef( *value );
-    return S_OK;
+
+    if (SUCCEEDED(hr = vector_create( iid, view_iid, (void **)&controllers )))
+    {
+        hr = IVector_RawGameController_GetView( controllers, value );
+        IVector_RawGameController_Release( controllers );
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI statics_FromGameController( IRawGameControllerStatics *iface, IGameController *game_controller,

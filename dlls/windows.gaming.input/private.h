@@ -36,3 +36,5 @@
 
 extern IActivationFactory *controller_factory;
 extern IActivationFactory *gamepad_factory;
+
+extern HRESULT vector_create( REFIID iid, REFIID view_iid, void **out );
