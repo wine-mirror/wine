@@ -46,6 +46,7 @@ namespace Windows {
             interface ISpeechRecognitionResult;
             interface ISpeechRecognitionResult2;
             interface ISpeechRecognitionSemanticInterpretation;
+            interface ISpeechRecognizerTimeouts;
             runtimeclass SpeechContinuousRecognitionCompletedEventArgs;
             runtimeclass SpeechContinuousRecognitionResultGeneratedEventArgs;
             runtimeclass SpeechContinuousRecognitionSession;
@@ -53,6 +54,7 @@ namespace Windows {
             runtimeclass SpeechRecognitionHypothesisGeneratedEventArgs;
             runtimeclass SpeechRecognitionResult;
             runtimeclass SpeechRecognitionSemanticInterpretation;
+            runtimeclass SpeechRecognizerTimeouts;
         }
     }
 }
@@ -248,6 +250,21 @@ namespace Windows {
 
             [
                 contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognizerTimeouts),
+                uuid(2ef76fca-6a3c-4dca-a153-df1bc88a79af)
+            ]
+            interface ISpeechRecognizerTimeouts : IInspectable
+            {
+                [propget] HRESULT InitialSilenceTimeout([out, retval] Windows.Foundation.TimeSpan *value);
+                [propput] HRESULT InitialSilenceTimeout([in] Windows.Foundation.TimeSpan value);
+                [propget] HRESULT EndSilenceTimeout([out, retval] Windows.Foundation.TimeSpan *value);
+                [propput] HRESULT EndSilenceTimeout([in] Windows.Foundation.TimeSpan value);
+                [propget] HRESULT BabbleTimeout([out, retval] Windows.Foundation.TimeSpan *value);
+                [propput] HRESULT BabbleTimeout([in] Windows.Foundation.TimeSpan value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
                 marshaling_behavior(agile),
                 threading(both)
             ]
@@ -313,6 +330,15 @@ namespace Windows {
             runtimeclass SpeechRecognitionSemanticInterpretation
             {
                 [default] interface Windows.Media.SpeechRecognition.ISpeechRecognitionSemanticInterpretation;
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile)
+            ]
+            runtimeclass SpeechRecognizerTimeouts
+            {
+                [default] interface Windows.Media.SpeechRecognition.ISpeechRecognizerTimeouts;
             }
         }
     }
