@@ -42,6 +42,7 @@ namespace Windows {
             interface ISpeechContinuousRecognitionSession;
             interface ISpeechRecognitionConstraint;
             interface ISpeechRecognitionHypothesis;
+            interface ISpeechRecognitionHypothesisGeneratedEventArgs;
             interface ISpeechRecognitionResult;
             interface ISpeechRecognitionResult2;
             interface ISpeechRecognitionSemanticInterpretation;
@@ -49,6 +50,7 @@ namespace Windows {
             runtimeclass SpeechContinuousRecognitionResultGeneratedEventArgs;
             runtimeclass SpeechContinuousRecognitionSession;
             runtimeclass SpeechRecognitionHypothesis;
+            runtimeclass SpeechRecognitionHypothesisGeneratedEventArgs;
             runtimeclass SpeechRecognitionResult;
             runtimeclass SpeechRecognitionSemanticInterpretation;
         }
@@ -198,6 +200,16 @@ namespace Windows {
 
             [
                 contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognitionHypothesisGeneratedEventArgs),
+                uuid(55161a7a-8023-5866-411d-1213bb271476)
+            ]
+            interface ISpeechRecognitionHypothesisGeneratedEventArgs : IInspectable
+            {
+                [propget] HRESULT Hypothesis([out, retval] Windows.Media.SpeechRecognition.SpeechRecognitionHypothesis **value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
                 exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognitionResult),
                 uuid(4e303157-034e-4652-857e-d0454cc4beec)
             ]
@@ -272,6 +284,16 @@ namespace Windows {
             runtimeclass SpeechRecognitionHypothesis
             {
                 [default] interface Windows.Media.SpeechRecognition.ISpeechRecognitionHypothesis;
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile),
+                threading(both)
+            ]
+            runtimeclass SpeechRecognitionHypothesisGeneratedEventArgs
+            {
+                [default] interface Windows.Media.SpeechRecognition.ISpeechRecognitionHypothesisGeneratedEventArgs;
             }
 
             [
