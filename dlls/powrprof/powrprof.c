@@ -350,6 +350,12 @@ DWORD WINAPI PowerSettingRegisterNotification(const GUID *setting, DWORD flags, 
     return ERROR_SUCCESS;
 }
 
+DWORD WINAPI PowerSettingUnregisterNotification(HPOWERNOTIFY handle)
+{
+    FIXME("(%p) stub!\n", handle);
+    return ERROR_SUCCESS;
+}
+
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
    switch(fdwReason) {
