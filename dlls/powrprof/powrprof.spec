@@ -18,6 +18,7 @@
 @ stdcall PowerReadDCValue (ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall PowerReadFriendlyName (ptr ptr ptr ptr ptr ptr)
 @ stdcall PowerRegisterSuspendResumeNotification(long ptr ptr)
+@ stdcall PowerUnregisterSuspendResumeNotification(ptr)
 @ stdcall ReadGlobalPwrPolicy (ptr)
 @ stdcall ReadProcessorPwrScheme (long ptr)
 @ stdcall ReadPwrScheme (long ptr)
