@@ -343,6 +343,13 @@ DWORD WINAPI PowerUnregisterSuspendResumeNotification(HPOWERNOTIFY handle)
     return ERROR_SUCCESS;
 }
 
+DWORD WINAPI PowerSettingRegisterNotification(const GUID *setting, DWORD flags, HANDLE recipient, PHPOWERNOTIFY handle)
+{
+    FIXME("(%s,0x%08lx,%p,%p) stub!\n", debugstr_guid(setting), flags, recipient, handle);
+    *handle = (PHPOWERNOTIFY)0xdeadbeef;
+    return ERROR_SUCCESS;
+}
+
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
    switch(fdwReason) {
