@@ -49,48 +49,48 @@ static void test_InternetInitializeAutoProxyDll(void)
     ret = pInternetInitializeAutoProxyDll( 0, NULL, NULL, NULL, &buf );
     err = GetLastError();
     ok( !ret, "unexpected success\n" );
-    ok( err == ERROR_INVALID_PARAMETER, "got %u\n", err );
+    ok( err == ERROR_INVALID_PARAMETER, "got %lu\n", err );
 
     buf.dwScriptBufferSize = strlen(script) + 1;
     ret = pInternetInitializeAutoProxyDll( 0, NULL, NULL, NULL, &buf );
-    ok( ret, "got %u\n", GetLastError() );
+    ok( ret, "got %lu\n", GetLastError() );
 
     ret = pInternetGetProxyInfo( url, strlen(url), host, strlen(host), &proxy, &len );
-    ok( ret, "got %u\n", GetLastError() );
+    ok( ret, "got %lu\n", GetLastError() );
     ok( !strcmp( proxy, "DIRECT" ), "got \"%s\"\n", proxy );
     GlobalFree( proxy );
 
     buf.dwScriptBufferSize = strlen(script2) + 1;
     buf.lpszScriptBuffer = script2;
     ret = pInternetInitializeAutoProxyDll( 0, NULL, NULL, NULL, &buf );
-    ok( ret, "got %u\n", GetLastError() );
+    ok( ret, "got %lu\n", GetLastError() );
 
     ret = pInternetGetProxyInfo( url, strlen(url), host, strlen(host), &proxy, &len );
-    ok( ret, "got %u\n", GetLastError() );
+    ok( ret, "got %lu\n", GetLastError() );
     ok( !strcmp( proxy, "PROXY 10.0.0.1:8080" ), "got \"%s\"\n", proxy );
     GlobalFree( proxy );
 
     buf.dwScriptBufferSize = strlen(script2) + 2;
     ret = pInternetInitializeAutoProxyDll( 0, NULL, NULL, NULL, &buf );
-    ok( ret, "got %u\n", GetLastError() );
+    ok( ret, "got %lu\n", GetLastError() );
 
     ret = pInternetGetProxyInfo( url, strlen(url), host, strlen(host), &proxy, &len );
-    ok( ret, "got %u\n", GetLastError() );
+    ok( ret, "got %lu\n", GetLastError() );
     ok( !strcmp( proxy, "PROXY 10.0.0.1:8080" ), "got \"%s\"\n", proxy );
     GlobalFree( proxy );
 
     buf.lpszScriptBuffer = script3;
     buf.dwScriptBufferSize = strlen(script3);
     ret = pInternetInitializeAutoProxyDll( 0, NULL, NULL, NULL, &buf );
-    ok( ret || broken(old_jsproxy && !ret), "got %u\n", GetLastError() );
+    ok( ret || broken(old_jsproxy && !ret), "got %lu\n", GetLastError() );
 
     buf.dwScriptBufferSize = 1;
     script3[0] = 0;
     ret = pInternetInitializeAutoProxyDll( 0, NULL, NULL, NULL, &buf );
-    ok( ret, "got %u\n", GetLastError() );
+    ok( ret, "got %lu\n", GetLastError() );
 
     ret = pInternetDeInitializeAutoProxyDll( NULL, 0 );
-    ok( ret, "got %u\n", GetLastError() );
+    ok( ret, "got %lu\n", GetLastError() );
 }
 
 static void test_InternetGetProxyInfo(void)
@@ -106,48 +106,48 @@ static void test_InternetGetProxyInfo(void)
     ret = pInternetGetProxyInfo( url, strlen(url), host, strlen(host), &proxy, &len );
     err = GetLastError();
     ok( !ret, "unexpected success\n" );
-    ok( err == ERROR_CAN_NOT_COMPLETE, "got %u\n", err );
+    ok( err == ERROR_CAN_NOT_COMPLETE, "got %lu\n", err );
 
     buf.dwStructSize = sizeof(buf);
     buf.lpszScriptBuffer = script;
     buf.dwScriptBufferSize = strlen(script) + 1;
     ret = pInternetInitializeAutoProxyDll( 0, NULL, NULL, NULL, &buf );
-    ok( ret, "got %u\n", GetLastError() );
+    ok( ret, "got %lu\n", GetLastError() );
 
     len = 0;
     proxy = NULL;
     ret = pInternetGetProxyInfo( url, strlen(url), host, strlen(host), &proxy, &len );
-    ok( ret, "got %u\n", GetLastError() );
+    ok( ret, "got %lu\n", GetLastError() );
     ok( !strcmp( proxy, "DIRECT" ), "got \"%s\"\n", proxy );
-    ok( len == strlen("DIRECT") + 1, "got %u\n", len );
+    ok( len == strlen("DIRECT") + 1, "got %lu\n", len );
     GlobalFree( proxy );
 
     len = 0;
     proxy = NULL;
     ret = pInternetGetProxyInfo( url, strlen(url) + 1, host, strlen(host), &proxy, &len );
-    ok( ret, "got %u\n", GetLastError() );
+    ok( ret, "got %lu\n", GetLastError() );
     ok( !strcmp( proxy, "DIRECT" ), "got \"%s\"\n", proxy );
-    ok( len == strlen("DIRECT") + 1, "got %u\n", len );
+    ok( len == strlen("DIRECT") + 1, "got %lu\n", len );
     GlobalFree( proxy );
 
     len = 0;
     proxy = NULL;
     ret = pInternetGetProxyInfo( url, strlen(url) - 1, host, strlen(host), &proxy, &len );
-    ok( ret, "got %u\n", GetLastError() );
+    ok( ret, "got %lu\n", GetLastError() );
     ok( !strcmp( proxy, "DIRECT" ), "got \"%s\"\n", proxy );
-    ok( len == strlen("DIRECT") + 1, "got %u\n", len );
+    ok( len == strlen("DIRECT") + 1, "got %lu\n", len );
     GlobalFree( proxy );
 
     len = 0;
     proxy = NULL;
     ret = pInternetGetProxyInfo( url, strlen(url), host, strlen(host) + 1, &proxy, &len );
-    ok( ret, "got %u\n", GetLastError() );
+    ok( ret, "got %lu\n", GetLastError() );
     ok( !strcmp( proxy, "DIRECT" ), "got \"%s\"\n", proxy );
-    ok( len == strlen("DIRECT") + 1, "got %u\n", len );
+    ok( len == strlen("DIRECT") + 1, "got %lu\n", len );
     GlobalFree( proxy );
 
     ret = pInternetDeInitializeAutoProxyDll( NULL, 0 );
-    ok( ret, "got %u\n", GetLastError() );
+    ok( ret, "got %lu\n", GetLastError() );
 }
 
 START_TEST(jsproxy)
