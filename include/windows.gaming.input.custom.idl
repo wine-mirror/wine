@@ -29,9 +29,37 @@ import "windows.gaming.input.idl";
 import "windows.storage.streams.idl";
 
 namespace Windows.Gaming.Input.Custom {
+    typedef enum XusbDeviceSubtype XusbDeviceSubtype;
+    typedef enum XusbDeviceType XusbDeviceType;
     typedef struct GameControllerVersionInfo GameControllerVersionInfo;
     interface IGameControllerProvider;
     interface ICustomGameControllerFactory;
+    interface IGameControllerFactoryManagerStatics;
+    interface IGameControllerFactoryManagerStatics2;
+    runtimeclass GameControllerFactoryManager;
+
+    [contract(Windows.Foundation.UniversalApiContract, 3.0)]
+    enum XusbDeviceSubtype
+    {
+        Unknown = 0,
+        Gamepad = 1,
+        ArcadePad = 2,
+        ArcadeStick = 3,
+        FlightStick = 4,
+        Wheel = 5,
+        Guitar = 6,
+        GuitarAlternate = 7,
+        GuitarBass = 8,
+        DrumKit = 9,
+        DancePad = 10,
+    };
+
+    [contract(Windows.Foundation.UniversalApiContract, 3.0)]
+    enum XusbDeviceType
+    {
+        Unknown = 0,
+        Gamepad = 1,
+    };
 
     [contract(Windows.Foundation.UniversalApiContract, 3.0)]
     struct GameControllerVersionInfo
@@ -65,5 +93,45 @@ namespace Windows.Gaming.Input.Custom {
                                      [out, retval] IInspectable **value);
         HRESULT OnGameControllerAdded([in] Windows.Gaming.Input.IGameController *value);
         HRESULT OnGameControllerRemoved([in] Windows.Gaming.Input.IGameController *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        exclusiveto(Windows.Gaming.Input.Custom.GameControllerFactoryManager),
+        uuid(36cb66e3-d0a1-4986-a24c-40b137deba9e)
+    ]
+    interface IGameControllerFactoryManagerStatics : IInspectable
+    {
+        HRESULT RegisterCustomFactoryForGipInterface([in] Windows.Gaming.Input.Custom.ICustomGameControllerFactory *factory,
+                                                     [in] GUID interfaceId);
+        HRESULT RegisterCustomFactoryForHardwareId([in] Windows.Gaming.Input.Custom.ICustomGameControllerFactory *factory,
+                                                   [in] UINT16 vendor_id, [in] UINT16 product_id);
+        HRESULT RegisterCustomFactoryForXusbType([in] Windows.Gaming.Input.Custom.ICustomGameControllerFactory *factory,
+                                                 [in] Windows.Gaming.Input.Custom.XusbDeviceType type,
+                                                 [in] Windows.Gaming.Input.Custom.XusbDeviceSubtype subtype);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.Gaming.Input.Custom.GameControllerFactoryManager),
+        uuid(eace5644-19df-4115-b32a-2793e2aea3bb)
+    ]
+    interface IGameControllerFactoryManagerStatics2 : IInspectable
+        requires Windows.Gaming.Input.Custom.IGameControllerFactoryManagerStatics
+    {
+        HRESULT TryGetFactoryControllerFromGameController([in] Windows.Gaming.Input.Custom.ICustomGameControllerFactory *factory,
+                                                          [in] Windows.Gaming.Input.IGameController *controller,
+                                                          [out, retval] Windows.Gaming.Input.IGameController **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        marshaling_behavior(agile),
+        static(Windows.Gaming.Input.Custom.IGameControllerFactoryManagerStatics, Windows.Foundation.UniversalApiContract, 3.0),
+        static(Windows.Gaming.Input.Custom.IGameControllerFactoryManagerStatics2, Windows.Foundation.UniversalApiContract, 4.0),
+        threading(both)
+    ]
+    runtimeclass GameControllerFactoryManager
+    {
     }
 }
