@@ -77,7 +77,7 @@ static SOCKET create_client_socket(unsigned short port)
     };
     SOCKET s = socket(AF_INET, SOCK_STREAM, 0), ret;
     ret = connect(s, (struct sockaddr *)&sockaddr, sizeof(sockaddr));
-    ok(!ret, "Failed to connect socket, error %u.\n", GetLastError());
+    ok(!ret, "Failed to connect socket, error %lu.\n", GetLastError());
     return s;
 }
 
@@ -101,7 +101,7 @@ static unsigned short add_url_v1(HANDLE queue)
 {
     unsigned short port;
     WCHAR url[50];
-    ULONG ret;
+    int ret;
 
     for (port = 50000; port < 51000; ++port)
     {
@@ -114,11 +114,11 @@ static unsigned short add_url_v1(HANDLE queue)
     return 0;
 }
 
-static ULONG add_url_v2(HTTP_URL_GROUP_ID group)
+static unsigned short add_url_v2(HTTP_URL_GROUP_ID group)
 {
     unsigned short port;
     WCHAR url[50];
-    ULONG ret;
+    int ret;
 
     for (port = 50010; port < 51000; ++port)
     {
@@ -158,9 +158,8 @@ static void test_v1_server(void)
     OVERLAPPED ovl;
     DWORD ret_size;
     WCHAR url[50];
-    ULONG ret;
+    int ret, len;
     SOCKET s;
-    int len;
 
     ovl.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
     memset(req_buffer, 0xcc, sizeof(req_buffer));
@@ -179,7 +178,7 @@ static void test_v1_server(void)
     ok(!ret, "Unexpected ret value %u.\n", ret);
     ok(queue2 && queue2 != queue, "Unexpected handle %p.\n", queue2);
     ret = CloseHandle(queue2);
-    ok(ret, "Failed to close queue handle, error %u.\n", GetLastError());
+    ok(ret, "Failed to close queue handle, error %lu.\n", GetLastError());
 
     ret_size = 0xdeadbeef;
     ret = HttpReceiveHttpRequest(NULL, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), &ret_size, NULL);
@@ -194,7 +193,7 @@ static void test_v1_server(void)
     SetLastError(0xdeadbeef);
     ret = GetOverlappedResult(queue, &ovl, &ret_size, FALSE);
     ok(!ret, "Expected failure.\n");
-    ok(GetLastError() == ERROR_IO_INCOMPLETE, "Got error %u.\n", GetLastError());
+    ok(GetLastError() == ERROR_IO_INCOMPLETE, "Got error %lu.\n", GetLastError());
 
     ret = HttpAddUrl(NULL, L"http://localhost:50000/", NULL);
     ok(ret == ERROR_INVALID_HANDLE || ret == ERROR_INVALID_PARAMETER /* < Vista */, "Got error %u.\n", ret);
@@ -223,15 +222,15 @@ static void test_v1_server(void)
     SetLastError(0xdeadbeef);
     ret = GetOverlappedResult(queue, &ovl, &ret_size, FALSE);
     ok(!ret, "Expected failure.\n");
-    ok(GetLastError() == ERROR_IO_INCOMPLETE, "Got error %u.\n", GetLastError());
+    ok(GetLastError() == ERROR_IO_INCOMPLETE, "Got error %lu.\n", GetLastError());
 
     sprintf(req_text, simple_req, port);
     ret = send(s, req_text, strlen(req_text), 0);
     ok(ret == strlen(req_text), "send() returned %d.\n", ret);
 
     ret = GetOverlappedResult(queue, &ovl, &ret_size, TRUE);
-    ok(ret, "Got error %u.\n", GetLastError());
-    ok(ret_size > sizeof(*req), "Got size %u.\n", ret_size);
+    ok(ret, "Got error %lu.\n", GetLastError());
+    ok(ret_size > sizeof(*req), "Got size %lu.\n", ret_size);
 
     /* Various versions of Windows (observed on 64-bit Windows 8 and Windows 10
      * version 1507, but probably affecting others) suffer from a bug where the
@@ -240,7 +239,7 @@ static void test_v1_server(void)
      * around this. */
     Sleep(100);
 
-    ok(!req->Flags, "Got flags %#x.\n", req->Flags);
+    ok(!req->Flags, "Got flags %#lx.\n", req->Flags);
     ok(req->ConnectionId, "Expected nonzero connection ID.\n");
     ok(req->RequestId, "Expected nonzero connection ID.\n");
     ok(!req->UrlContext, "Got URL context %s.\n", wine_dbgstr_longlong(req->UrlContext));
@@ -265,7 +264,7 @@ static void test_v1_server(void)
     sin = (SOCKADDR_IN *)req->Address.pLocalAddress;
     ok(sin->sin_family == AF_INET, "Got family %u.\n", sin->sin_family);
     ok(ntohs(sin->sin_port) == port, "Got wrong port %u.\n", ntohs(sin->sin_port));
-    ok(sin->sin_addr.S_un.S_addr == inet_addr("127.0.0.1"), "Got address %08x.\n", sin->sin_addr.S_un.S_addr);
+    ok(sin->sin_addr.S_un.S_addr == inet_addr("127.0.0.1"), "Got address %08lx.\n", sin->sin_addr.S_un.S_addr);
     ok(!req->Headers.UnknownHeaderCount, "Got %u unknown headers.\n", req->Headers.UnknownHeaderCount);
     ok(!req->Headers.pUnknownHeaders, "Got unknown headers %p.\n", req->Headers.pUnknownHeaders);
     for (i = 0; i < ARRAY_SIZE(req->Headers.KnownHeaders); ++i)
@@ -317,10 +316,10 @@ static void test_v1_server(void)
     ret = HttpSendHttpResponse(queue, req->RequestId, 0, (HTTP_RESPONSE *)&response, NULL, NULL, NULL, 0, &ovl, NULL);
     ok(!ret, "Got error %u.\n", ret);
     ret = GetOverlappedResult(queue, &ovl, &ret_size, FALSE);
-    ok(ret, "Got error %u.\n", GetLastError());
+    ok(ret, "Got error %lu.\n", GetLastError());
 
     ret = recv(s, response_buffer, sizeof(response_buffer), 0);
-    ok(ret == ret_size, "Expected size %u, got %u.\n", ret_size, ret);
+    ok(ret == ret_size, "Expected size %lu, got %u.\n", ret_size, ret);
 
     if (winetest_debug > 1)
         trace("%.*s\n", ret, response_buffer);
@@ -347,20 +346,20 @@ static void test_v1_server(void)
     ok(ret == ERROR_IO_PENDING, "Got error %u.\n", ret);
 
     ret = CancelIo(queue);
-    ok(ret, "Failed to close queue handle, error %u.\n", GetLastError());
+    ok(ret, "Failed to close queue handle, error %lu.\n", GetLastError());
 
     ret = WaitForSingleObject(ovl.hEvent, 100);
     ok(!ret, "Got %u.\n", ret);
     ret_size = 0xdeadbeef;
     ret = GetOverlappedResult(queue, &ovl, &ret_size, FALSE);
     ok(!ret, "Expected failure.\n");
-    ok(GetLastError() == ERROR_OPERATION_ABORTED, "Got error %u.\n", GetLastError());
-    ok(!ret_size, "Got size %u.\n", ret_size);
+    ok(GetLastError() == ERROR_OPERATION_ABORTED, "Got error %lu.\n", GetLastError());
+    ok(!ret_size, "Got size %lu.\n", ret_size);
 
     closesocket(s);
     CloseHandle(ovl.hEvent);
     ret = CloseHandle(queue);
-    ok(ret, "Failed to close queue handle, error %u.\n", GetLastError());
+    ok(ret, "Failed to close queue handle, error %lu.\n", GetLastError());
 
     ret = HttpAddUrl(queue, L"http://localhost:50000/", NULL);
     ok(ret == ERROR_INVALID_HANDLE, "Got error %u.\n", ret);
@@ -377,8 +376,8 @@ static void test_v1_completion_port(void)
     char req_text[200];
     DWORD ret_size;
     ULONG_PTR key;
-    ULONG ret;
     SOCKET s;
+    int ret;
 
     ovl.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
 
@@ -386,11 +385,11 @@ static void test_v1_completion_port(void)
     ok(!ret, "Got error %u.\n", ret);
 
     port = CreateIoCompletionPort(queue, NULL, 123, 0);
-    ok(!!port, "Failed to create completion port, error %u.\n", GetLastError());
+    ok(!!port, "Failed to create completion port, error %lu.\n", GetLastError());
 
     ret = GetQueuedCompletionStatus(port, &ret_size, &key, &povl, 0);
     ok(!ret, "Expected failure.\n");
-    ok(GetLastError() == WAIT_TIMEOUT, "Got error %u.\n", GetLastError());
+    ok(GetLastError() == WAIT_TIMEOUT, "Got error %lu.\n", GetLastError());
 
     ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), NULL, &ovl);
     ok(ret == ERROR_IO_PENDING, "Got error %u.\n", ret);
@@ -400,7 +399,7 @@ static void test_v1_completion_port(void)
 
     ret = GetQueuedCompletionStatus(port, &ret_size, &key, &povl, 0);
     ok(!ret, "Expected failure.\n");
-    ok(GetLastError() == WAIT_TIMEOUT, "Got error %u.\n", GetLastError());
+    ok(GetLastError() == WAIT_TIMEOUT, "Got error %lu.\n", GetLastError());
 
     sprintf(req_text, simple_req, tcp_port);
     ret = send(s, req_text, strlen(req_text), 0);
@@ -408,14 +407,14 @@ static void test_v1_completion_port(void)
 
     ret_size = key = 0xdeadbeef;
     ret = GetQueuedCompletionStatus(port, &ret_size, &key, &povl, 1000);
-    ok(ret, "Got error %u.\n", GetLastError());
+    ok(ret, "Got error %lu.\n", GetLastError());
     ok(povl == &ovl, "OVERLAPPED pointers didn't match.\n");
-    ok(key == 123, "Got unexpected key %lu.\n", key);
-    ok(ret_size > sizeof(*req), "Got size %u.\n", ret_size);
+    ok(key == 123, "Got unexpected key %Iu.\n", key);
+    ok(ret_size > sizeof(*req), "Got size %lu.\n", ret_size);
 
     ret = GetQueuedCompletionStatus(port, &ret_size, &key, &povl, 0);
     ok(!ret, "Expected failure.\n");
-    ok(GetLastError() == WAIT_TIMEOUT, "Got error %u.\n", GetLastError());
+    ok(GetLastError() == WAIT_TIMEOUT, "Got error %lu.\n", GetLastError());
 
     response.StatusCode = 418;
     response.pReason = "I'm a teapot";
@@ -425,12 +424,12 @@ static void test_v1_completion_port(void)
 
     ret_size = key = 0xdeadbeef;
     ret = GetQueuedCompletionStatus(port, &ret_size, &key, &povl, 1000);
-    ok(ret, "Got error %u.\n", GetLastError());
+    ok(ret, "Got error %lu.\n", GetLastError());
     ok(povl == &ovl, "OVERLAPPED pointers didn't match.\n");
-    ok(key == 123, "Got unexpected key %lu.\n", key);
+    ok(key == 123, "Got unexpected key %Iu.\n", key);
 
     ret = recv(s, response_buffer, sizeof(response_buffer), 0);
-    ok(ret == ret_size, "Expected size %u, got %u.\n", ret_size, ret);
+    ok(ret == ret_size, "Expected size %lu, got %u.\n", ret_size, ret);
 
     ret = remove_url_v1(queue, tcp_port);
     ok(!ret, "Got error %u.\n", ret);
@@ -438,7 +437,7 @@ static void test_v1_completion_port(void)
     CloseHandle(port);
     CloseHandle(ovl.hEvent);
     ret = CloseHandle(queue);
-    ok(ret, "Failed to close queue handle, error %u.\n", GetLastError());
+    ok(ret, "Failed to close queue handle, error %lu.\n", GetLastError());
 }
 
 static void test_v1_multiple_requests(void)
@@ -454,8 +453,7 @@ static void test_v1_multiple_requests(void)
     DWORD ret_size;
     SOCKET s1, s2;
     HANDLE queue;
-    ULONG ret;
-    int len;
+    int ret, len;
 
     ovl1.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
     ovl2.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
@@ -472,7 +470,7 @@ static void test_v1_multiple_requests(void)
     SetLastError(0xdeadbeef);
     ret = GetOverlappedResult(queue, &ovl1, &ret_size, FALSE);
     ok(!ret, "Expected failure.\n");
-    ok(GetLastError() == ERROR_IO_INCOMPLETE, "Got error %u.\n", GetLastError());
+    ok(GetLastError() == ERROR_IO_INCOMPLETE, "Got error %lu.\n", GetLastError());
 
     s1 = create_client_socket(port);
     sprintf(req_text, simple_req, port);
@@ -545,7 +543,7 @@ static void test_v1_multiple_requests(void)
     CloseHandle(ovl1.hEvent);
     CloseHandle(ovl2.hEvent);
     ret = CloseHandle(queue);
-    ok(ret, "Failed to close queue handle, error %u.\n", GetLastError());
+    ok(ret, "Failed to close queue handle, error %lu.\n", GetLastError());
 }
 
 static void test_v1_short_buffer(void)
@@ -559,8 +557,8 @@ static void test_v1_short_buffer(void)
     OVERLAPPED ovl;
     DWORD ret_size;
     HANDLE queue;
-    ULONG ret;
     SOCKET s;
+    int ret;
 
     ovl.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
 
@@ -578,7 +576,7 @@ static void test_v1_short_buffer(void)
     ok(ret == ERROR_INSUFFICIENT_BUFFER, "Got error %u.\n", ret);
     ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(HTTP_REQUEST_V1), &ret_size, NULL);
     ok(ret == ERROR_MORE_DATA, "Got error %u.\n", ret);
-    ok(ret_size > sizeof(*req), "Got size %u.\n", ret_size);
+    ok(ret_size > sizeof(*req), "Got size %lu.\n", ret_size);
     ok(!!req->ConnectionId, "Got connection ID %s.\n", wine_dbgstr_longlong(req->ConnectionId));
     ok(!!req->RequestId, "Got request ID %s.\n", wine_dbgstr_longlong(req->RequestId));
     ok(!req->Version.MajorVersion || req->Version.MajorVersion == 0xcccc /* < Vista */,
@@ -608,7 +606,7 @@ static void test_v1_short_buffer(void)
     closesocket(s);
     CloseHandle(ovl.hEvent);
     ret = CloseHandle(queue);
-    ok(ret, "Failed to close queue handle, error %u.\n", GetLastError());
+    ok(ret, "Failed to close queue handle, error %lu.\n", GetLastError());
 }
 
 static void test_v1_entity_body(void)
@@ -617,8 +615,8 @@ static void test_v1_entity_body(void)
     HTTP_REQUEST_V1 *req = (HTTP_REQUEST_V1 *)req_buffer;
     HTTP_RESPONSE_V1 response = {};
     HTTP_DATA_CHUNK chunks[2] = {};
-    ULONG ret, chunk_size;
     unsigned short port;
+    int ret, chunk_size;
     char req_text[200];
     unsigned int i;
     OVERLAPPED ovl;
@@ -664,8 +662,8 @@ static void test_v1_entity_body(void)
     memset(req_buffer, 0xcc, sizeof(req_buffer));
     ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), &ret_size, NULL);
     ok(!ret, "Got error %u.\n", ret);
-    ok(ret_size > sizeof(*req), "Got size %u.\n", ret_size);
-    ok(req->Flags == HTTP_REQUEST_FLAG_MORE_ENTITY_BODY_EXISTS, "Got flags %#x.\n", req->Flags);
+    ok(ret_size > sizeof(*req), "Got size %lu.\n", ret_size);
+    ok(req->Flags == HTTP_REQUEST_FLAG_MORE_ENTITY_BODY_EXISTS, "Got flags %#lx.\n", req->Flags);
     ok(req->BytesReceived == strlen(req_text) + 1, "Got %s bytes.\n", wine_dbgstr_longlong(req->BytesReceived));
     ok(req->Headers.KnownHeaders[HttpHeaderContentLength].RawValueLength == 1,
             "Got header length %u.\n", req->Headers.KnownHeaders[HttpHeaderContentLength].RawValueLength);
@@ -737,8 +735,8 @@ static void test_v1_entity_body(void)
     ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, HTTP_RECEIVE_REQUEST_FLAG_COPY_BODY,
             (HTTP_REQUEST *)req, sizeof(req_buffer), &ret_size, NULL);
     ok(!ret, "Got error %u.\n", ret);
-    ok(ret_size > sizeof(*req), "Got size %u.\n", ret_size);
-    ok(!req->Flags, "Got flags %#x.\n", req->Flags);
+    ok(ret_size > sizeof(*req), "Got size %lu.\n", ret_size);
+    ok(!req->Flags, "Got flags %#lx.\n", req->Flags);
     ok(req->BytesReceived == strlen(req_text) + 1, "Got %s bytes.\n", wine_dbgstr_longlong(req->BytesReceived));
     ok(req->Headers.KnownHeaders[HttpHeaderContentLength].RawValueLength == 1,
             "Got header length %u.\n", req->Headers.KnownHeaders[HttpHeaderContentLength].RawValueLength);
@@ -748,7 +746,7 @@ static void test_v1_entity_body(void)
     ok(req->pEntityChunks[0].DataChunkType == HttpDataChunkFromMemory,
             "Got chunk type %u.\n", req->pEntityChunks[0].DataChunkType);
     ok(req->pEntityChunks[0].FromMemory.BufferLength == 5,
-            "Got chunk length %u.\n", req->pEntityChunks[0].FromMemory.BufferLength);
+            "Got chunk length %lu.\n", req->pEntityChunks[0].FromMemory.BufferLength);
     ok(!memcmp(req->pEntityChunks[0].FromMemory.pBuffer, "ping", 5),
             "Got chunk data '%s'.\n", (char *)req->pEntityChunks[0].FromMemory.pBuffer);
 
@@ -765,8 +763,8 @@ static void test_v1_entity_body(void)
     ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, HTTP_RECEIVE_REQUEST_FLAG_COPY_BODY,
             (HTTP_REQUEST *)req, 2000, &ret_size, NULL);
     ok(!ret, "Got error %u.\n", ret);
-    ok(ret_size == 2000, "Got size %u.\n", ret_size);
-    ok(req->Flags == HTTP_REQUEST_FLAG_MORE_ENTITY_BODY_EXISTS, "Got flags %#x.\n", req->Flags);
+    ok(ret_size == 2000, "Got size %lu.\n", ret_size);
+    ok(req->Flags == HTTP_REQUEST_FLAG_MORE_ENTITY_BODY_EXISTS, "Got flags %#lx.\n", req->Flags);
     ok(req->BytesReceived == strlen(req_text) + 2048, "Got %s bytes.\n", wine_dbgstr_longlong(req->BytesReceived));
     ok(req->Headers.KnownHeaders[HttpHeaderContentLength].RawValueLength == 4,
             "Got header length %u.\n", req->Headers.KnownHeaders[HttpHeaderContentLength].RawValueLength);
@@ -803,13 +801,13 @@ static void test_v1_entity_body(void)
     ret_size = 0xdeadbeef;
     ret = HttpReceiveRequestEntityBody(queue, req->RequestId, 0, recv_body, sizeof(recv_body), &ret_size, NULL);
     ok(!ret, "Got error %u.\n", ret);
-    ok(ret_size == 5, "Got size %u.\n", ret_size);
+    ok(ret_size == 5, "Got size %lu.\n", ret_size);
     ok(!memcmp(recv_body, "ping", 5), "Entity body didn't match.\n");
 
     ret_size = 0xdeadbeef;
     ret = HttpReceiveRequestEntityBody(queue, req->RequestId, 0, recv_body, sizeof(recv_body), &ret_size, NULL);
     ok(ret == ERROR_HANDLE_EOF, "Got error %u.\n", ret);
-    ok(ret_size == 0xdeadbeef || !ret_size /* Win10+ */, "Got size %u.\n", ret_size);
+    ok(ret_size == 0xdeadbeef || !ret_size /* Win10+ */, "Got size %lu.\n", ret_size);
 
     send_response_v1(queue, req->RequestId, s);
 
@@ -827,19 +825,19 @@ static void test_v1_entity_body(void)
     ret_size = 0xdeadbeef;
     ret = HttpReceiveRequestEntityBody(queue, req->RequestId, 0, recv_body, 2, &ret_size, NULL);
     ok(!ret, "Got error %u.\n", ret);
-    ok(ret_size == 2, "Got size %u.\n", ret_size);
+    ok(ret_size == 2, "Got size %lu.\n", ret_size);
     ok(!memcmp(recv_body, "pi", 2), "Entity body didn't match.\n");
 
     ret_size = 0xdeadbeef;
     ret = HttpReceiveRequestEntityBody(queue, req->RequestId, 0, recv_body, 4, &ret_size, NULL);
     ok(!ret, "Got error %u.\n", ret);
-    ok(ret_size == 3, "Got size %u.\n", ret_size);
+    ok(ret_size == 3, "Got size %lu.\n", ret_size);
     ok(!memcmp(recv_body, "ng", 3), "Entity body didn't match.\n");
 
     ret_size = 0xdeadbeef;
     ret = HttpReceiveRequestEntityBody(queue, req->RequestId, 0, recv_body, sizeof(recv_body), &ret_size, NULL);
     ok(ret == ERROR_HANDLE_EOF, "Got error %u.\n", ret);
-    ok(ret_size == 0xdeadbeef || !ret_size /* Win10+ */, "Got size %u.\n", ret_size);
+    ok(ret_size == 0xdeadbeef || !ret_size /* Win10+ */, "Got size %lu.\n", ret_size);
 
     send_response_v1(queue, req->RequestId, s);
 
@@ -855,8 +853,8 @@ static void test_v1_entity_body(void)
     ret = HttpReceiveRequestEntityBody(queue, req->RequestId, 0, recv_body, sizeof(recv_body), NULL, &ovl);
     ok(!ret || ret == ERROR_IO_PENDING, "Got error %u.\n", ret);
     ret = GetOverlappedResult(queue, &ovl, &ret_size, TRUE);
-    ok(ret, "Got error %u.\n", GetLastError());
-    ok(ret_size == 5, "Got size %u.\n", ret_size);
+    ok(ret, "Got error %lu.\n", GetLastError());
+    ok(ret_size == 5, "Got size %lu.\n", ret_size);
     ok(!memcmp(recv_body, "ping", 5), "Entity body didn't match.\n");
 
     ret = HttpReceiveRequestEntityBody(queue, req->RequestId, 0, recv_body, sizeof(recv_body), NULL, &ovl);
@@ -888,15 +886,15 @@ static void test_v1_entity_body(void)
     ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, HTTP_RECEIVE_REQUEST_FLAG_COPY_BODY,
             (HTTP_REQUEST *)req, 2000, &ret_size, NULL);
     ok(!ret, "Got error %u.\n", ret);
-    ok(ret_size == 2000, "Got size %u.\n", ret_size);
-    ok(req->Flags == HTTP_REQUEST_FLAG_MORE_ENTITY_BODY_EXISTS, "Got flags %#x.\n", req->Flags);
+    ok(ret_size == 2000, "Got size %lu.\n", ret_size);
+    ok(req->Flags == HTTP_REQUEST_FLAG_MORE_ENTITY_BODY_EXISTS, "Got flags %#lx.\n", req->Flags);
     chunk_size = req->pEntityChunks[0].FromMemory.BufferLength;
 
     memset(recv_body, 0xcc, sizeof(recv_body));
     ret_size = 0xdeadbeef;
     ret = HttpReceiveRequestEntityBody(queue, req->RequestId, 0, recv_body, sizeof(recv_body), &ret_size, NULL);
     ok(!ret, "Got error %u.\n", ret);
-    ok(ret_size == 2048 - chunk_size, "Got size %u.\n", ret_size);
+    ok(ret_size == 2048 - chunk_size, "Got size %lu.\n", ret_size);
     ok(!memcmp(recv_body, req_body + chunk_size, ret_size), "Entity body didn't match.\n");
 
     send_response_v1(queue, req->RequestId, s);
@@ -906,7 +904,7 @@ static void test_v1_entity_body(void)
     ok(!ret, "Got error %u.\n", ret);
     closesocket(s);
     ret = CloseHandle(queue);
-    ok(ret, "Failed to close queue handle, error %u.\n", GetLastError());
+    ok(ret, "Failed to close queue handle, error %lu.\n", GetLastError());
 }
 
 static void test_v1_bad_request(void)
@@ -914,8 +912,8 @@ static void test_v1_bad_request(void)
     char response_buffer[2048];
     unsigned short port;
     HANDLE queue;
-    ULONG ret;
     SOCKET s;
+    int ret;
 
     ret = HttpCreateHttpHandle(&queue, 0);
     ok(!ret, "Got error %u.\n", ret);
@@ -946,7 +944,7 @@ static void test_v1_bad_request(void)
     ok(!ret, "Got error %u.\n", ret);
     closesocket(s);
     ret = CloseHandle(queue);
-    ok(ret, "Failed to close queue handle, error %u.\n", GetLastError());
+    ok(ret, "Failed to close queue handle, error %lu.\n", GetLastError());
 }
 
 static void test_v1_cooked_url(void)
@@ -958,8 +956,8 @@ static void test_v1_cooked_url(void)
     WCHAR expectW[50];
     DWORD ret_size;
     HANDLE queue;
-    ULONG ret;
     SOCKET s;
+    int ret;
 
     static const char req1[] =
         "GET /foobar?a=b HTTP/1.1\r\n"
@@ -985,7 +983,7 @@ static void test_v1_cooked_url(void)
     memset(req_buffer, 0xcc, sizeof(req_buffer));
     ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), &ret_size, NULL);
     ok(!ret, "Got error %u.\n", ret);
-    ok(ret_size > sizeof(*req), "Got size %u.\n", ret_size);
+    ok(ret_size > sizeof(*req), "Got size %lu.\n", ret_size);
     ok(req->RawUrlLength == 11, "Got raw URL length %u.\n", req->RawUrlLength);
     ok(!strcmp(req->pRawUrl, "/foobar?a=b"), "Got raw URL %s.\n", req->pRawUrl);
     ok(req->CookedUrl.FullUrlLength == 66, "Got full URL length %u.\n", req->CookedUrl.FullUrlLength);
@@ -1010,7 +1008,7 @@ static void test_v1_cooked_url(void)
     memset(req_buffer, 0xcc, sizeof(req_buffer));
     ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), &ret_size, NULL);
     ok(!ret, "Got error %u.\n", ret);
-    ok(ret_size > sizeof(*req), "Got size %u.\n", ret_size);
+    ok(ret_size > sizeof(*req), "Got size %lu.\n", ret_size);
     ok(req->RawUrlLength == 23, "Got raw URL length %u.\n", req->RawUrlLength);
     sprintf(expect, "http://localhost:%u/", port);
     ok(!strcmp(req->pRawUrl, expect), "Expected raw URL \"%s\", got \"%s\".\n", expect, req->pRawUrl);
@@ -1032,7 +1030,7 @@ static void test_v1_cooked_url(void)
     ok(!ret, "Got error %u.\n", ret);
     closesocket(s);
     ret = CloseHandle(queue);
-    ok(ret, "Failed to close queue handle, error %u.\n", GetLastError());
+    ok(ret, "Failed to close queue handle, error %lu.\n", GetLastError());
 }
 
 static void test_v1_unknown_tokens(void)
@@ -1043,8 +1041,8 @@ static void test_v1_unknown_tokens(void)
     char req_text[200];
     DWORD ret_size;
     HANDLE queue;
-    ULONG ret;
     SOCKET s;
+    int ret;
 
     static const char req1[] =
         "xyzzy / HTTP/1.1\r\n"
@@ -1082,7 +1080,7 @@ static void test_v1_unknown_tokens(void)
     ok(!ret, "Got error %u.\n", ret);
     closesocket(s);
     ret = CloseHandle(queue);
-    ok(ret, "Failed to close queue handle, error %u.\n", GetLastError());
+    ok(ret, "Failed to close queue handle, error %lu.\n", GetLastError());
 }
 
 static void test_v1_urls(void)
@@ -1094,8 +1092,8 @@ static void test_v1_urls(void)
     DWORD ret_size;
     WCHAR url[50];
     HANDLE queue;
-    ULONG ret;
     SOCKET s;
+    int ret;
 
     ret = HttpCreateHttpHandle(&queue, 0);
     ok(!ret, "Got error %u.\n", ret);
@@ -1124,7 +1122,7 @@ static void test_v1_urls(void)
     memset(req_buffer, 0xcc, sizeof(req_buffer));
     ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), &ret_size, NULL);
     ok(!ret, "Got error %u.\n", ret);
-    ok(ret_size > sizeof(*req), "Got size %u.\n", ret_size);
+    ok(ret_size > sizeof(*req), "Got size %lu.\n", ret_size);
 
     send_response_v1(queue, req->RequestId, s);
 
@@ -1132,14 +1130,14 @@ static void test_v1_urls(void)
     ok(!ret, "Got error %u.\n", ret);
     closesocket(s);
     ret = CloseHandle(queue);
-    ok(ret, "Failed to close queue handle, error %u.\n", GetLastError());
+    ok(ret, "Failed to close queue handle, error %lu.\n", GetLastError());
 }
 
 static void test_HttpCreateServerSession(void)
 {
     HTTP_SERVER_SESSION_ID session;
     HTTPAPI_VERSION version;
-    ULONG ret;
+    int ret;
 
     version.HttpApiMajorVersion = 1;
     version.HttpApiMinorVersion = 0;
@@ -1179,7 +1177,7 @@ static void test_HttpCreateUrlGroup(void)
     HTTP_SERVER_SESSION_ID session;
     HTTP_URL_GROUP_ID group_id;
     HTTPAPI_VERSION version;
-    ULONG ret;
+    int ret;
 
     group_id = 1;
     ret = pHttpCreateUrlGroup(0, &group_id, 0);
@@ -1238,9 +1236,8 @@ static void test_v2_server(void)
     DWORD ret_size;
     WCHAR url[50];
     HANDLE queue;
-    ULONG ret;
+    int ret, len;
     SOCKET s;
-    int len;
 
     ovl.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
     memset(req_buffer, 0xcc, sizeof(req_buffer));
@@ -1266,7 +1263,7 @@ static void test_v2_server(void)
     SetLastError(0xdeadbeef);
     ret = GetOverlappedResult(queue, &ovl, &ret_size, FALSE);
     ok(!ret, "Expected failure.\n");
-    ok(GetLastError() == ERROR_IO_INCOMPLETE, "Got error %u.\n", GetLastError());
+    ok(GetLastError() == ERROR_IO_INCOMPLETE, "Got error %lu.\n", GetLastError());
 
     port = add_url_v2(group);
 
@@ -1294,7 +1291,7 @@ static void test_v2_server(void)
     SetLastError(0xdeadbeef);
     ret = GetOverlappedResult(queue, &ovl, &ret_size, FALSE);
     ok(!ret, "Expected failure.\n");
-    ok(GetLastError() == ERROR_IO_INCOMPLETE, "Got error %u.\n", GetLastError());
+    ok(GetLastError() == ERROR_IO_INCOMPLETE, "Got error %lu.\n", GetLastError());
 
     sprintf(req_text, simple_req, port);
     ret = send(s, req_text, strlen(req_text), 0);
@@ -1306,10 +1303,10 @@ static void test_v2_server(void)
     Sleep(100);
 
     ret = GetOverlappedResult(queue, &ovl, &ret_size, TRUE);
-    ok(ret, "Got error %u.\n", GetLastError());
-    ok(ret_size > sizeof(*req), "Got size %u.\n", ret_size);
+    ok(ret, "Got error %lu.\n", GetLastError());
+    ok(ret_size > sizeof(*req), "Got size %lu.\n", ret_size);
 
-    ok(!req->Flags, "Got flags %#x.\n", req->Flags);
+    ok(!req->Flags, "Got flags %#lx.\n", req->Flags);
     ok(req->ConnectionId, "Expected nonzero connection ID.\n");
     ok(req->RequestId, "Expected nonzero connection ID.\n");
     ok(req->UrlContext == 0xdeadbeef, "Got URL context %s.\n", wine_dbgstr_longlong(req->UrlContext));
@@ -1335,7 +1332,7 @@ static void test_v2_server(void)
     sin = (SOCKADDR_IN *)req->Address.pLocalAddress;
     ok(sin->sin_family == AF_INET, "Got family %u.\n", sin->sin_family);
     ok(ntohs(sin->sin_port) == port, "Got wrong port %u.\n", ntohs(sin->sin_port));
-    ok(sin->sin_addr.S_un.S_addr == inet_addr("127.0.0.1"), "Got address %08x.\n", sin->sin_addr.S_un.S_addr);
+    ok(sin->sin_addr.S_un.S_addr == inet_addr("127.0.0.1"), "Got address %08lx.\n", sin->sin_addr.S_un.S_addr);
     ok(!req->Headers.UnknownHeaderCount, "Got %u unknown headers.\n", req->Headers.UnknownHeaderCount);
     ok(!req->Headers.pUnknownHeaders, "Got unknown headers %p.\n", req->Headers.pUnknownHeaders);
     for (i = 0; i < ARRAY_SIZE(req->Headers.KnownHeaders); ++i)
@@ -1388,10 +1385,10 @@ static void test_v2_server(void)
     ret = HttpSendHttpResponse(queue, req->RequestId, 0, (HTTP_RESPONSE *)&response, NULL, NULL, NULL, 0, &ovl, NULL);
     ok(!ret, "Got error %u.\n", ret);
     ret = GetOverlappedResult(queue, &ovl, &ret_size, FALSE);
-    ok(ret, "Got error %u.\n", GetLastError());
+    ok(ret, "Got error %lu.\n", GetLastError());
 
     ret = recv(s, response_buffer, sizeof(response_buffer), 0);
-    ok(ret == ret_size, "Expected size %u, got %u.\n", ret_size, ret);
+    ok(ret == ret_size, "Expected size %lu, got %u.\n", ret_size, ret);
 
     if (winetest_debug > 1)
         trace("%.*s\n", ret, response_buffer);
@@ -1433,8 +1430,8 @@ static void test_v2_completion_port(void)
     char req_text[100];
     DWORD ret_size;
     ULONG_PTR key;
-    ULONG ret;
     SOCKET s;
+    int ret;
 
     ovl.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
 
@@ -1450,11 +1447,11 @@ static void test_v2_completion_port(void)
     ok(!ret, "Failed to bind request queue, error %u.\n", ret);
 
     port = CreateIoCompletionPort(queue, NULL, 123, 0);
-    ok(!!port, "Failed to create completion port, error %u.\n", GetLastError());
+    ok(!!port, "Failed to create completion port, error %lu.\n", GetLastError());
 
     ret = GetQueuedCompletionStatus(port, &ret_size, &key, &povl, 0);
     ok(!ret, "Expected failure.\n");
-    ok(GetLastError() == WAIT_TIMEOUT, "Got error %u.\n", GetLastError());
+    ok(GetLastError() == WAIT_TIMEOUT, "Got error %lu.\n", GetLastError());
 
     ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), NULL, &ovl);
     ok(ret == ERROR_IO_PENDING, "Got error %u.\n", ret);
@@ -1464,7 +1461,7 @@ static void test_v2_completion_port(void)
 
     ret = GetQueuedCompletionStatus(port, &ret_size, &key, &povl, 0);
     ok(!ret, "Expected failure.\n");
-    ok(GetLastError() == WAIT_TIMEOUT, "Got error %u.\n", GetLastError());
+    ok(GetLastError() == WAIT_TIMEOUT, "Got error %lu.\n", GetLastError());
 
     sprintf(req_text, simple_req, tcp_port);
     ret = send(s, req_text, strlen(req_text), 0);
@@ -1472,14 +1469,14 @@ static void test_v2_completion_port(void)
 
     ret_size = key = 0xdeadbeef;
     ret = GetQueuedCompletionStatus(port, &ret_size, &key, &povl, 1000);
-    ok(ret, "Got error %u.\n", GetLastError());
+    ok(ret, "Got error %lu.\n", GetLastError());
     ok(povl == &ovl, "OVERLAPPED pointers didn't match.\n");
-    ok(key == 123, "Got unexpected key %lu.\n", key);
-    ok(ret_size > sizeof(*req), "Got size %u.\n", ret_size);
+    ok(key == 123, "Got unexpected key %Iu.\n", key);
+    ok(ret_size > sizeof(*req), "Got size %lu.\n", ret_size);
 
     ret = GetQueuedCompletionStatus(port, &ret_size, &key, &povl, 0);
     ok(!ret, "Expected failure.\n");
-    ok(GetLastError() == WAIT_TIMEOUT, "Got error %u.\n", GetLastError());
+    ok(GetLastError() == WAIT_TIMEOUT, "Got error %lu.\n", GetLastError());
 
     response.s.StatusCode = 418;
     response.s.pReason = "I'm a teapot";
@@ -1489,12 +1486,12 @@ static void test_v2_completion_port(void)
 
     ret_size = key = 0xdeadbeef;
     ret = GetQueuedCompletionStatus(port, &ret_size, &key, &povl, 1000);
-    ok(ret, "Got error %u.\n", GetLastError());
+    ok(ret, "Got error %lu.\n", GetLastError());
     ok(povl == &ovl, "OVERLAPPED pointers didn't match.\n");
-    ok(key == 123, "Got unexpected key %lu.\n", key);
+    ok(key == 123, "Got unexpected key %Iu.\n", key);
 
     ret = recv(s, response_buffer, sizeof(response_buffer), 0);
-    ok(ret == ret_size, "Expected size %u, got %u.\n", ret_size, ret);
+    ok(ret == ret_size, "Expected size %lu, got %u.\n", ret_size, ret);
 
     ret = remove_url_v2(group, tcp_port);
     ok(!ret, "Got error %u.\n", ret);
@@ -1513,7 +1510,7 @@ START_TEST(httpapi)
 {
     HTTPAPI_VERSION version = { 1, 0 };
     WSADATA wsadata;
-    ULONG ret;
+    int ret;
 
     init();
 
