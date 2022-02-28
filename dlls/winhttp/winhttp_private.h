@@ -269,6 +269,8 @@ struct socket
     SRWLOCK send_lock;
     volatile LONG pending_noncontrol_send;
     enum fragment_type sending_fragment_type;
+    enum fragment_type receiving_fragment_type;
+    BOOL last_receive_final;
 };
 
 struct send_request
