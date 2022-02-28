@@ -283,10 +283,10 @@ static void test_STM_SETIMAGE(void)
 
     for (type = SS_LEFT; type < SS_ETCHEDFRAME; type++)
     {
-        winetest_push_context("%u", type);
+        winetest_push_context("%lu", type);
 
         hwnd = create_static(type);
-        ok(hwnd != 0, "failed to create static type %#x\n", type);
+        ok(hwnd != 0, "failed to create static type %#lx\n", type);
 
         /* set icon */
         g_nReceivedColorStatic = 0;

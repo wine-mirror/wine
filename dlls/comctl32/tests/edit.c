@@ -669,7 +669,7 @@ static void set_client_height(HWND Wnd, unsigned Height)
 
     GetClientRect(Wnd, &ClientRect);
     ok(ClientRect.bottom - ClientRect.top == Height,
-        "The client height should be %d, but is %d\n",
+        "The client height should be %d, but is %ld\n",
         Height, ClientRect.bottom - ClientRect.top);
 }
 
@@ -685,52 +685,52 @@ static void test_edit_control_1(void)
     trace("EDIT: Single line\n");
     hwEdit = create_editcontrol(ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
     r = get_edit_style(hwEdit);
-    ok(r == (ES_AUTOVSCROLL | ES_AUTOHSCROLL), "Wrong style expected 0xc0 got: 0x%x\n", r);
+    ok(r == (ES_AUTOVSCROLL | ES_AUTOHSCROLL), "Wrong style expected 0xc0 got: 0x%lx\n", r);
     for (i = 0; i < 65535; i++)
     {
         msMessage.wParam = i;
         r = SendMessageA(hwEdit, WM_GETDLGCODE, 0, (LPARAM) &msMessage);
         ok(r == (DLGC_WANTCHARS | DLGC_HASSETSEL | DLGC_WANTARROWS),
-            "Expected DLGC_WANTCHARS | DLGC_HASSETSEL | DLGC_WANTARROWS got %x\n", r);
+            "Expected DLGC_WANTCHARS | DLGC_HASSETSEL | DLGC_WANTARROWS got %lx\n", r);
     }
     DestroyWindow(hwEdit);
 
     trace("EDIT: Single line want returns\n");
     hwEdit = create_editcontrol(ES_WANTRETURN | ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
     r = get_edit_style(hwEdit);
-    ok(r == (ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN), "Wrong style expected 0x10c0 got: 0x%x\n", r);
+    ok(r == (ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN), "Wrong style expected 0x10c0 got: 0x%lx\n", r);
     for (i = 0; i < 65535; i++)
     {
         msMessage.wParam = i;
         r = SendMessageA(hwEdit, WM_GETDLGCODE, 0, (LPARAM) &msMessage);
         ok(r == (DLGC_WANTCHARS | DLGC_HASSETSEL | DLGC_WANTARROWS),
-            "Expected DLGC_WANTCHARS | DLGC_HASSETSEL | DLGC_WANTARROWS got %x\n", r);
+            "Expected DLGC_WANTCHARS | DLGC_HASSETSEL | DLGC_WANTARROWS got %lx\n", r);
     }
     DestroyWindow(hwEdit);
 
     trace("EDIT: Multiline line\n");
     hwEdit = create_editcontrol(ES_MULTILINE | WS_VSCROLL | ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
     r = get_edit_style(hwEdit);
-    ok(r == (ES_AUTOHSCROLL | ES_AUTOVSCROLL | ES_MULTILINE), "Wrong style expected 0xc4 got: 0x%x\n", r);
+    ok(r == (ES_AUTOHSCROLL | ES_AUTOVSCROLL | ES_MULTILINE), "Wrong style expected 0xc4 got: 0x%lx\n", r);
     for (i = 0; i < 65535; i++)
     {
         msMessage.wParam = i;
         r = SendMessageA(hwEdit, WM_GETDLGCODE, 0, (LPARAM) &msMessage);
         ok(r == (DLGC_WANTCHARS | DLGC_HASSETSEL | DLGC_WANTALLKEYS | DLGC_WANTARROWS),
-            "Expected DLGC_WANTCHARS | DLGC_HASSETSEL | DLGC_WANTALLKEYS | DLGC_WANTARROWS got %x\n", r);
+            "Expected DLGC_WANTCHARS | DLGC_HASSETSEL | DLGC_WANTALLKEYS | DLGC_WANTARROWS got %lx\n", r);
     }
     DestroyWindow(hwEdit);
 
     trace("EDIT: Multi line want returns\n");
     hwEdit = create_editcontrol(ES_MULTILINE | WS_VSCROLL | ES_WANTRETURN | ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
     r = get_edit_style(hwEdit);
-    ok(r == (ES_WANTRETURN | ES_AUTOHSCROLL | ES_AUTOVSCROLL | ES_MULTILINE), "Wrong style expected 0x10c4 got: 0x%x\n", r);
+    ok(r == (ES_WANTRETURN | ES_AUTOHSCROLL | ES_AUTOVSCROLL | ES_MULTILINE), "Wrong style expected 0x10c4 got: 0x%lx\n", r);
     for (i = 0; i < 65535; i++)
     {
         msMessage.wParam = i;
         r = SendMessageA(hwEdit, WM_GETDLGCODE, 0, (LPARAM) &msMessage);
         ok(r == (DLGC_WANTCHARS | DLGC_HASSETSEL | DLGC_WANTALLKEYS | DLGC_WANTARROWS),
-            "Expected DLGC_WANTCHARS | DLGC_HASSETSEL | DLGC_WANTALLKEYS | DLGC_WANTARROWS got %x\n", r);
+            "Expected DLGC_WANTCHARS | DLGC_HASSETSEL | DLGC_WANTALLKEYS | DLGC_WANTARROWS got %lx\n", r);
     }
     DestroyWindow(hwEdit);
 }
@@ -765,11 +765,11 @@ static void test_edit_control_2(void)
     trace("EDIT: SETTEXT atomicity\n");
     /* Send messages to "type" in the word 'foo'. */
     r = SendMessageA(hwndET2, WM_CHAR, 'f', 1);
-    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
+    ok(1 == r, "Expected: %d, got: %ld\n", 1, r);
     r = SendMessageA(hwndET2, WM_CHAR, 'o', 1);
-    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
+    ok(1 == r, "Expected: %d, got: %ld\n", 1, r);
     r = SendMessageA(hwndET2, WM_CHAR, 'o', 1);
-    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
+    ok(1 == r, "Expected: %d, got: %ld\n", 1, r);
     /* 'foo' should have been changed to 'bar' by the UPDATE handler. */
     GetWindowTextA(hwndET2, szLocalString, MAXLEN);
     ok(strcmp(szLocalString, "bar")==0,
@@ -777,34 +777,34 @@ static void test_edit_control_2(void)
 
     /* try setting the caret before it's visible */
     r = SetCaretPos(0, 0);
-    todo_wine ok(0 == r, "SetCaretPos succeeded unexpectedly, expected: 0, got: %d\n", r);
+    todo_wine ok(0 == r, "SetCaretPos succeeded unexpectedly, expected: 0, got: %ld\n", r);
     phwnd = SetFocus(hwndET2);
     ok(phwnd != NULL, "SetFocus failed unexpectedly, expected non-zero, got NULL\n");
     r = SetCaretPos(0, 0);
-    ok(1 == r, "SetCaretPos failed unexpectedly, expected: 1, got: %d\n", r);
+    ok(1 == r, "SetCaretPos failed unexpectedly, expected: 1, got: %ld\n", r);
     r = GetCaretPos(&cpos);
-    ok(1 == r, "GetCaretPos failed unexpectedly, expected: 1, got: %d\n", r);
-    ok(cpos.x == 0 && cpos.y == 0, "Wrong caret position, expected: (0,0), got: (%d,%d)\n", cpos.x, cpos.y);
+    ok(1 == r, "GetCaretPos failed unexpectedly, expected: 1, got: %ld\n", r);
+    ok(cpos.x == 0 && cpos.y == 0, "Wrong caret position, expected: (0,0), got: (%ld,%ld)\n", cpos.x, cpos.y);
     r = SetCaretPos(-1, -1);
-    ok(1 == r, "SetCaretPos failed unexpectedly, expected: 1, got: %d\n", r);
+    ok(1 == r, "SetCaretPos failed unexpectedly, expected: 1, got: %ld\n", r);
     r = GetCaretPos(&cpos);
-    ok(1 == r, "GetCaretPos failed unexpectedly, expected: 1, got: %d\n", r);
-    ok(cpos.x == -1 && cpos.y == -1, "Wrong caret position, expected: (-1,-1), got: (%d,%d)\n", cpos.x, cpos.y);
+    ok(1 == r, "GetCaretPos failed unexpectedly, expected: 1, got: %ld\n", r);
+    ok(cpos.x == -1 && cpos.y == -1, "Wrong caret position, expected: (-1,-1), got: (%ld,%ld)\n", cpos.x, cpos.y);
     r = SetCaretPos(w << 1, h << 1);
-    ok(1 == r, "SetCaretPos failed unexpectedly, expected: 1, got: %d\n", r);
+    ok(1 == r, "SetCaretPos failed unexpectedly, expected: 1, got: %ld\n", r);
     r = GetCaretPos(&cpos);
-    ok(1 == r, "GetCaretPos failed unexpectedly, expected: 1, got: %d\n", r);
-    ok(cpos.x == (w << 1) && cpos.y == (h << 1), "Wrong caret position, expected: (%d,%d), got: (%d,%d)\n", w << 1, h << 1, cpos.x, cpos.y);
+    ok(1 == r, "GetCaretPos failed unexpectedly, expected: 1, got: %ld\n", r);
+    ok(cpos.x == (w << 1) && cpos.y == (h << 1), "Wrong caret position, expected: (%ld,%ld), got: (%ld,%ld)\n", w << 1, h << 1, cpos.x, cpos.y);
     r = SetCaretPos(w, h);
-    ok(1 == r, "SetCaretPos failed unexpectedly, expected: 1, got: %d\n", r);
+    ok(1 == r, "SetCaretPos failed unexpectedly, expected: 1, got: %ld\n", r);
     r = GetCaretPos(&cpos);
-    ok(1 == r, "GetCaretPos failed unexpectedly, expected: 1, got: %d\n", r);
-    ok(cpos.x == w && cpos.y == h, "Wrong caret position, expected: (%d,%d), got: (%d,%d)\n", w, h, cpos.x, cpos.y);
+    ok(1 == r, "GetCaretPos failed unexpectedly, expected: 1, got: %ld\n", r);
+    ok(cpos.x == w && cpos.y == h, "Wrong caret position, expected: (%ld,%ld), got: (%ld,%ld)\n", w, h, cpos.x, cpos.y);
     r = SetCaretPos(w - 1, h - 1);
-    ok(1 == r, "SetCaretPos failed unexpectedly, expected: 1, got: %d\n", r);
+    ok(1 == r, "SetCaretPos failed unexpectedly, expected: 1, got: %ld\n", r);
     r = GetCaretPos(&cpos);
-    ok(1 == r, "GetCaretPos failed unexpectedly, expected: 1, got: %d\n", r);
-    ok(cpos.x == (w - 1) && cpos.y == (h - 1), "Wrong caret position, expected: (%d,%d), got: (%d,%d)\n", w - 1, h - 1, cpos.x, cpos.y);
+    ok(1 == r, "GetCaretPos failed unexpectedly, expected: 1, got: %ld\n", r);
+    ok(cpos.x == (w - 1) && cpos.y == (h - 1), "Wrong caret position, expected: (%ld,%ld), got: (%ld,%ld)\n", w - 1, h - 1, cpos.x, cpos.y);
 
     DestroyWindow(hwndET2);
     DestroyWindow(hwndMain);
@@ -1361,7 +1361,7 @@ static void test_edit_control_5(void)
 
     /* size of non-child edit control is (much) bigger than requested */
     GetWindowRect( hWnd, &rc);
-    ok( rc.right - rc.left > 20, "size of the window (%d) is smaller than expected\n",
+    ok( rc.right - rc.left > 20, "size of the window (%ld) is smaller than expected\n",
             rc.right - rc.left);
     DestroyWindow(hWnd);
     /* so create a parent, and give it edit controls children to test with */
@@ -1413,25 +1413,25 @@ static void test_edit_control_6(void)
     ok(hWnd != NULL, "Failed to create edit control.\n");
 
     ret = SendMessageA(hWnd, WM_SETTEXT, 0, (LPARAM)str);
-    ok(ret == TRUE, "Expected %d, got %d\n", TRUE, ret);
+    ok(ret == TRUE, "Expected %d, got %ld\n", TRUE, ret);
     ret = SendMessageA(hWnd, WM_GETTEXT, MAXLEN, (LPARAM)buf);
-    ok(ret == strlen(str), "Expected %s, got len %d\n", str, ret);
+    ok(ret == strlen(str), "Expected %s, got len %ld\n", str, ret);
     ok(!strcmp(buf, str), "Expected %s, got %s\n", str, buf);
 
     buf[0] = 0;
     ret = SendMessageA(hWnd, WM_DESTROY, 0, 0);
     todo_wine
-    ok(ret == 1, "Unexpected return value %d\n", ret);
+    ok(ret == 1, "Unexpected return value %ld\n", ret);
     ret = SendMessageA(hWnd, WM_GETTEXT, MAXLEN, (LPARAM)buf);
-    ok(ret == strlen(str), "Expected %s, got len %d\n", str, ret);
+    ok(ret == strlen(str), "Expected %s, got len %ld\n", str, ret);
     ok(!strcmp(buf, str), "Expected %s, got %s\n", str, buf);
 
     buf[0] = 0;
     ret = SendMessageA(hWnd, WM_NCDESTROY, 0, 0);
-    ok(ret == 0, "Expected 0, got %d\n", ret);
+    ok(ret == 0, "Expected 0, got %ld\n", ret);
     ret = SendMessageA(hWnd, WM_GETTEXT, MAXLEN, (LPARAM)buf);
 todo_wine {
-    ok(ret == strlen("Test"), "Unexpected text length %d\n", ret);
+    ok(ret == strlen("Test"), "Unexpected text length %ld\n", ret);
     ok(!strcmp(buf, "Test"), "Unexpected text %s\n", buf);
 }
     DestroyWindow(hWnd);
@@ -1446,20 +1446,20 @@ static void test_edit_control_limittext(void)
     trace("EDIT: buffer limit for single-line\n");
     hwEdit = create_editcontrol(ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
     r = SendMessageA(hwEdit, EM_GETLIMITTEXT, 0, 0);
-    ok(r == 30000, "Incorrect default text limit, expected 30000 got %u\n", r);
+    ok(r == 30000, "Incorrect default text limit, expected 30000 got %lu\n", r);
     SendMessageA(hwEdit, EM_SETLIMITTEXT, 0, 0);
     r = SendMessageA(hwEdit, EM_GETLIMITTEXT, 0, 0);
-    ok( r == 2147483646, "got limit %u (expected 2147483646)\n", r);
+    ok( r == 2147483646, "got limit %lu (expected 2147483646)\n", r);
     DestroyWindow(hwEdit);
 
     /* Test default limit for multi-line control */
     trace("EDIT: buffer limit for multi-line\n");
     hwEdit = create_editcontrol(ES_MULTILINE | WS_VSCROLL | ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
     r = SendMessageA(hwEdit, EM_GETLIMITTEXT, 0, 0);
-    ok(r == 30000, "Incorrect default text limit, expected 30000 got %u\n", r);
+    ok(r == 30000, "Incorrect default text limit, expected 30000 got %lu\n", r);
     SendMessageA(hwEdit, EM_SETLIMITTEXT, 0, 0);
     r = SendMessageA(hwEdit, EM_GETLIMITTEXT, 0, 0);
-    ok( r == 4294967295U, "got limit %u (expected 4294967295)\n", r);
+    ok( r == 4294967295U, "got limit %lu (expected 4294967295)\n", r);
     DestroyWindow(hwEdit);
 }
 
@@ -1479,16 +1479,16 @@ static void test_edit_control_scroll(void)
     ok(hwEdit != NULL, "Failed to create Edit control.\n");
 
     ret = SendMessageA(hwEdit, EM_SCROLL, SB_PAGEDOWN, 0);
-    ok(!ret, "Returned %x, expected 0.\n", ret);
+    ok(!ret, "Returned %lx, expected 0.\n", ret);
 
     ret = SendMessageA(hwEdit, EM_SCROLL, SB_PAGEUP, 0);
-    ok(!ret, "Returned %x, expected 0.\n", ret);
+    ok(!ret, "Returned %lx, expected 0.\n", ret);
 
     ret = SendMessageA(hwEdit, EM_SCROLL, SB_LINEUP, 0);
-    ok(!ret, "Returned %x, expected 0.\n", ret);
+    ok(!ret, "Returned %lx, expected 0.\n", ret);
 
     ret = SendMessageA(hwEdit, EM_SCROLL, SB_LINEDOWN, 0);
-    ok(!ret, "Returned %x, expected 0.\n", ret);
+    ok(!ret, "Returned %lx, expected 0.\n", ret);
 
     DestroyWindow (hwEdit);
 
@@ -1500,7 +1500,7 @@ static void test_edit_control_scroll(void)
     ok(hwEdit != NULL, "Failed to create Edit control.\n");
 
     ret = SendMessageA(hwEdit, EM_SCROLL, SB_PAGEDOWN, 0);
-    ok(!ret, "Returned %x, expected 0.\n", ret);
+    ok(!ret, "Returned %lx, expected 0.\n", ret);
 
     DestroyWindow (hwEdit);
 }
@@ -1782,16 +1782,16 @@ static LRESULT CALLBACK test_class_proc(HWND hwnd, UINT message, WPARAM wParam, 
 
             memset(&rect, 0, sizeof(rect));
             SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rect);
-            ok(!rect.right && !rect.bottom, "Invalid size after NCCREATE: %d x %d\n", rect.right, rect.bottom);
+            ok(!rect.right && !rect.bottom, "Invalid size after NCCREATE: %ld x %ld\n", rect.right, rect.bottom);
 
             /* test that messages between WM_NCCREATE and WM_CREATE
                don't crash or cause unexpected behavior */
             r = SendMessageA(hwnd, EM_SETSEL, 0, 0);
-            ok(r == 1, "Returned %ld, expected 1.\n", r);
+            ok(r == 1, "Returned %Id, expected 1.\n", r);
             r = SendMessageA(hwnd, WM_SIZE, 0, 0x00100010);
-            todo_wine ok(r == 1, "Returned %ld, expected 1.\n", r);
+            todo_wine ok(r == 1, "Returned %Id, expected 1.\n", r);
             r = SendMessageA(hwnd, EM_LINESCROLL, 1, 1);
-            ok(r == 1, "Returned %ld, expected 1.\n", r);
+            ok(r == 1, "Returned %Id, expected 1.\n", r);
 
             return result;
 
@@ -1799,11 +1799,11 @@ static LRESULT CALLBACK test_class_proc(HWND hwnd, UINT message, WPARAM wParam, 
             /* test that messages between WM_NCCREATE and WM_CREATE
                don't crash or cause unexpected behavior */
             r = SendMessageA(hwnd, EM_SETSEL, 0, 0);
-            ok(r == 1, "Returned %ld, expected 1.\n", r);
+            ok(r == 1, "Returned %Id, expected 1.\n", r);
             r = SendMessageA(hwnd, WM_SIZE, 0, 0x00100010);
-            todo_wine ok(r == 1, "Returned %ld, expected 1.\n", r);
+            todo_wine ok(r == 1, "Returned %Id, expected 1.\n", r);
             r = SendMessageA(hwnd, EM_LINESCROLL, 1, 1);
-            ok(r == 1, "Returned %ld, expected 1.\n", r);
+            ok(r == 1, "Returned %Id, expected 1.\n", r);
 
             break;
     }
@@ -2035,7 +2035,7 @@ static void test_margins_font_change(void)
 #define edit_pos_ok(expected, got, txt) edit_pos_ok_(__LINE__, expected, got, #txt)
 static inline void edit_pos_ok_(unsigned line, DWORD expected, DWORD got, const char* txt)
 {
-    ok_(__FILE__, line)(expected == got, "wrong %s expected %d got %d\n", txt, expected, got);
+    ok_(__FILE__, line)(expected == got, "wrong %s expected %ld got %ld\n", txt, expected, got);
 }
 
 #define check_pos(hwEdit, set_height, test_top, test_height, test_left) \
@@ -2188,39 +2188,39 @@ static void test_espassword(void)
 
     hwEdit = create_editcontrol(ES_PASSWORD, 0);
     r = get_edit_style(hwEdit);
-    ok(r == ES_PASSWORD, "Wrong style expected ES_PASSWORD got: 0x%x\n", r);
+    ok(r == ES_PASSWORD, "Wrong style expected ES_PASSWORD got: 0x%lx\n", r);
     /* set text */
     r = SendMessageA(hwEdit , WM_SETTEXT, 0, (LPARAM) password);
-    ok(r == TRUE, "Expected: %d, got: %d\n", TRUE, r);
+    ok(r == TRUE, "Expected: %d, got: %ld\n", TRUE, r);
 
     /* select all, cut (ctrl-x) */
     SendMessageA(hwEdit, EM_SETSEL, 0, -1);
     r = SendMessageA(hwEdit, WM_CHAR, 24, 0);
-    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
+    ok(1 == r, "Expected: %d, got: %ld\n", 1, r);
 
     /* get text */
     r = SendMessageA(hwEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
-    ok(r == strlen(password), "Expected: %s, got len %d\n", password, r);
+    ok(r == strlen(password), "Expected: %s, got len %ld\n", password, r);
     ok(strcmp(buffer, password) == 0, "expected %s, got %s\n", password, buffer);
 
     r = OpenClipboard(hwEdit);
-    ok(r == TRUE, "expected %d, got %d\n", TRUE, r);
+    ok(r == TRUE, "expected %d, got %ld\n", TRUE, r);
     r = EmptyClipboard();
-    ok(r == TRUE, "expected %d, got %d\n", TRUE, r);
+    ok(r == TRUE, "expected %d, got %ld\n", TRUE, r);
     r = CloseClipboard();
-    ok(r == TRUE, "expected %d, got %d\n", TRUE, r);
+    ok(r == TRUE, "expected %d, got %ld\n", TRUE, r);
 
     /* select all, copy (ctrl-c) and paste (ctrl-v) */
     SendMessageA(hwEdit, EM_SETSEL, 0, -1);
     r = SendMessageA(hwEdit, WM_CHAR, 3, 0);
-    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
+    ok(1 == r, "Expected: %d, got: %ld\n", 1, r);
     r = SendMessageA(hwEdit, WM_CHAR, 22, 0);
-    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
+    ok(1 == r, "Expected: %d, got: %ld\n", 1, r);
 
     /* get text */
     buffer[0] = 0;
     r = SendMessageA(hwEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
-    ok(r == 0, "Expected: 0, got: %d\n", r);
+    ok(r == 0, "Expected: 0, got: %ld\n", r);
     ok(strcmp(buffer, "") == 0, "expected empty string, got %s\n", buffer);
 
     DestroyWindow(hwEdit);
@@ -2236,48 +2236,48 @@ static void test_undo(void)
 
     hwEdit = create_editcontrol(0, 0);
     r = get_edit_style(hwEdit);
-    ok(0 == r, "Wrong style expected 0x%x got: 0x%x\n", 0, r);
+    ok(0 == r, "Wrong style expected 0x%x got: 0x%lx\n", 0, r);
 
     /* set text */
     r = SendMessageA(hwEdit , WM_SETTEXT, 0, (LPARAM) text);
-    ok(TRUE == r, "Expected: %d, got: %d\n", TRUE, r);
+    ok(TRUE == r, "Expected: %d, got: %ld\n", TRUE, r);
 
     /* select all, */
     cpMin = cpMax = 0xdeadbeef;
     SendMessageA(hwEdit, EM_SETSEL, 0, -1);
     r = SendMessageA(hwEdit, EM_GETSEL, (WPARAM) &cpMin, (LPARAM) &cpMax);
-    ok((strlen(text) << 16) == r, "Unexpected length %d\n", r);
-    ok(0 == cpMin, "Expected: %d, got %d\n", 0, cpMin);
-    ok(9 == cpMax, "Expected: %d, got %d\n", 9, cpMax);
+    ok((strlen(text) << 16) == r, "Unexpected length %ld\n", r);
+    ok(0 == cpMin, "Expected: %d, got %ld\n", 0, cpMin);
+    ok(9 == cpMax, "Expected: %d, got %ld\n", 9, cpMax);
 
     /* cut (ctrl-x) */
     r = SendMessageA(hwEdit, WM_CHAR, 24, 0);
-    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
+    ok(1 == r, "Expected: %d, got: %ld\n", 1, r);
 
     /* get text */
     buffer[0] = 0;
     r = SendMessageA(hwEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
-    ok(0 == r, "Expected: %d, got len %d\n", 0, r);
+    ok(0 == r, "Expected: %d, got len %ld\n", 0, r);
     ok(0 == strcmp(buffer, ""), "expected %s, got %s\n", "", buffer);
 
     /* undo (ctrl-z) */
     r = SendMessageA(hwEdit, WM_CHAR, 26, 0);
-    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
+    ok(1 == r, "Expected: %d, got: %ld\n", 1, r);
 
     /* get text */
     buffer[0] = 0;
     r = SendMessageA(hwEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
-    ok(strlen(text) == r, "Unexpected length %d\n", r);
+    ok(strlen(text) == r, "Unexpected length %ld\n", r);
     ok(0 == strcmp(buffer, text), "expected %s, got %s\n", text, buffer);
 
     /* undo again (ctrl-z) */
     r = SendMessageA(hwEdit, WM_CHAR, 26, 0);
-    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
+    ok(1 == r, "Expected: %d, got: %ld\n", 1, r);
 
     /* get text */
     buffer[0] = 0;
     r = SendMessageA(hwEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
-    ok(r == 0, "Expected: %d, got len %d\n", 0, r);
+    ok(r == 0, "Expected: %d, got len %ld\n", 0, r);
     ok(0 == strcmp(buffer, ""), "expected %s, got %s\n", "", buffer);
 
     DestroyWindow(hwEdit);
@@ -2292,19 +2292,19 @@ static void test_enter(void)
     /* multiline */
     hwEdit = create_editcontrol(ES_MULTILINE, 0);
     r = get_edit_style(hwEdit);
-    ok(ES_MULTILINE == r, "Wrong style expected ES_MULTILINE got: 0x%x\n", r);
+    ok(ES_MULTILINE == r, "Wrong style expected ES_MULTILINE got: 0x%lx\n", r);
 
     /* set text */
     r = SendMessageA(hwEdit , WM_SETTEXT, 0, (LPARAM) "");
-    ok(TRUE == r, "Expected: %d, got: %d\n", TRUE, r);
+    ok(TRUE == r, "Expected: %d, got: %ld\n", TRUE, r);
 
     r = SendMessageA(hwEdit, WM_CHAR, VK_RETURN, 0);
-    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
+    ok(1 == r, "Expected: %d, got: %ld\n", 1, r);
 
     /* get text */
     buffer[0] = 0;
     r = SendMessageA(hwEdit, WM_GETTEXT, 16, (LPARAM) buffer);
-    ok(2 == r, "Expected: %d, got len %d\n", 2, r);
+    ok(2 == r, "Expected: %d, got len %ld\n", 2, r);
     ok(0 == strcmp(buffer, "\r\n"), "expected \"\\r\\n\", got \"%s\"\n", buffer);
 
     DestroyWindow (hwEdit);
@@ -2312,19 +2312,19 @@ static void test_enter(void)
     /* single line */
     hwEdit = create_editcontrol(0, 0);
     r = get_edit_style(hwEdit);
-    ok(0 == r, "Wrong style expected 0x%x got: 0x%x\n", 0, r);
+    ok(0 == r, "Wrong style expected 0x%x got: 0x%lx\n", 0, r);
 
     /* set text */
     r = SendMessageA(hwEdit , WM_SETTEXT, 0, (LPARAM) "");
-    ok(TRUE == r, "Expected: %d, got: %d\n", TRUE, r);
+    ok(TRUE == r, "Expected: %d, got: %ld\n", TRUE, r);
 
     r = SendMessageA(hwEdit, WM_CHAR, VK_RETURN, 0);
-    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
+    ok(1 == r, "Expected: %d, got: %ld\n", 1, r);
 
     /* get text */
     buffer[0] = 0;
     r = SendMessageA(hwEdit, WM_GETTEXT, 16, (LPARAM) buffer);
-    ok(0 == r, "Expected: %d, got len %d\n", 0, r);
+    ok(0 == r, "Expected: %d, got len %ld\n", 0, r);
     ok(0 == strcmp(buffer, ""), "expected \"\", got \"%s\"\n", buffer);
 
     DestroyWindow(hwEdit);
@@ -2332,19 +2332,19 @@ static void test_enter(void)
     /* single line with ES_WANTRETURN */
     hwEdit = create_editcontrol(ES_WANTRETURN, 0);
     r = get_edit_style(hwEdit);
-    ok(ES_WANTRETURN == r, "Wrong style expected ES_WANTRETURN got: 0x%x\n", r);
+    ok(ES_WANTRETURN == r, "Wrong style expected ES_WANTRETURN got: 0x%lx\n", r);
 
     /* set text */
     r = SendMessageA(hwEdit , WM_SETTEXT, 0, (LPARAM) "");
-    ok(TRUE == r, "Expected: %d, got: %d\n", TRUE, r);
+    ok(TRUE == r, "Expected: %d, got: %ld\n", TRUE, r);
 
     r = SendMessageA(hwEdit, WM_CHAR, VK_RETURN, 0);
-    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
+    ok(1 == r, "Expected: %d, got: %ld\n", 1, r);
 
     /* get text */
     buffer[0] = 0;
     r = SendMessageA(hwEdit, WM_GETTEXT, 16, (LPARAM) buffer);
-    ok(0 == r, "Expected: %d, got len %d\n", 0, r);
+    ok(0 == r, "Expected: %d, got len %ld\n", 0, r);
     ok(0 == strcmp(buffer, ""), "expected \"\", got \"%s\"\n", buffer);
 
     DestroyWindow(hwEdit);
@@ -2359,19 +2359,19 @@ static void test_tab(void)
     /* multiline */
     hwEdit = create_editcontrol(ES_MULTILINE, 0);
     r = get_edit_style(hwEdit);
-    ok(ES_MULTILINE == r, "Wrong style expected ES_MULTILINE got: 0x%x\n", r);
+    ok(ES_MULTILINE == r, "Wrong style expected ES_MULTILINE got: 0x%lx\n", r);
 
     /* set text */
     r = SendMessageA(hwEdit , WM_SETTEXT, 0, (LPARAM) "");
-    ok(TRUE == r, "Expected: %d, got: %d\n", TRUE, r);
+    ok(TRUE == r, "Expected: %d, got: %ld\n", TRUE, r);
 
     r = SendMessageA(hwEdit, WM_CHAR, VK_TAB, 0);
-    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
+    ok(1 == r, "Expected: %d, got: %ld\n", 1, r);
 
     /* get text */
     buffer[0] = 0;
     r = SendMessageA(hwEdit, WM_GETTEXT, 16, (LPARAM) buffer);
-    ok(1 == r, "Expected: %d, got len %d\n", 1, r);
+    ok(1 == r, "Expected: %d, got len %ld\n", 1, r);
     ok(0 == strcmp(buffer, "\t"), "expected \"\\t\", got \"%s\"\n", buffer);
 
     DestroyWindow(hwEdit);
@@ -2379,19 +2379,19 @@ static void test_tab(void)
     /* single line */
     hwEdit = create_editcontrol(0, 0);
     r = get_edit_style(hwEdit);
-    ok(0 == r, "Wrong style expected 0x%x got: 0x%x\n", 0, r);
+    ok(0 == r, "Wrong style expected 0x%x got: 0x%lx\n", 0, r);
 
     /* set text */
     r = SendMessageA(hwEdit , WM_SETTEXT, 0, (LPARAM) "");
-    ok(TRUE == r, "Expected: %d, got: %d\n", TRUE, r);
+    ok(TRUE == r, "Expected: %d, got: %ld\n", TRUE, r);
 
     r = SendMessageA(hwEdit, WM_CHAR, VK_TAB, 0);
-    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
+    ok(1 == r, "Expected: %d, got: %ld\n", 1, r);
 
     /* get text */
     buffer[0] = 0;
     r = SendMessageA(hwEdit, WM_GETTEXT, 16, (LPARAM) buffer);
-    ok(0 == r, "Expected: %d, got len %d\n", 0, r);
+    ok(0 == r, "Expected: %d, got len %ld\n", 0, r);
     ok(0 == strcmp(buffer, ""), "expected \"\", got \"%s\"\n", buffer);
 
     DestroyWindow(hwEdit);
@@ -2802,11 +2802,11 @@ static void test_fontsize(void)
         ShowWindow (hwEdit, SW_SHOW);
 
     r = SendMessageA(hwEdit, WM_CHAR, 'A', 1);
-    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
+    ok(1 == r, "Expected: %d, got: %ld\n", 1, r);
     r = SendMessageA(hwEdit, WM_CHAR, 'B', 1);
-    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
+    ok(1 == r, "Expected: %d, got: %ld\n", 1, r);
     r = SendMessageA(hwEdit, WM_CHAR, 'C', 1);
-    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
+    ok(1 == r, "Expected: %d, got: %ld\n", 1, r);
 
     GetWindowTextA(hwEdit, szLocalString, MAXLEN);
     ok(strcmp(szLocalString, "ABC")==0,
@@ -2992,7 +2992,7 @@ static void test_dialogmode(void)
 
     hwButton = CreateWindowA("BUTTON", "OK", WS_VISIBLE|WS_CHILD|BS_PUSHBUTTON,
         100, 100, 50, 20, hwParent, (HMENU)ID_EDITTESTDBUTTON, hinst, NULL);
-    ok(hwButton!=NULL, "CreateWindow failed with error code %d\n", GetLastError());
+    ok(hwButton!=NULL, "CreateWindow failed with error code %ld\n", GetLastError());
 
     r = SendMessageA(hwEdit, WM_KEYDOWN, VK_RETURN, 0x1c0001);
     ok(1 == r, "expected 1, got %d\n", r);
@@ -3290,13 +3290,13 @@ static void test_wordbreak_proc(void)
     ok(proc == NULL, "Unexpected wordbreak proc %p.\n", proc);
 
     ret = SendMessageA(hwnd, EM_SETWORDBREAKPROC, 0, (LPARAM)test_wordbreak_procA);
-    ok(ret == 1, "Unexpected return value %ld.\n", ret);
+    ok(ret == 1, "Unexpected return value %Id.\n", ret);
 
     proc = (void *)SendMessageA(hwnd, EM_GETWORDBREAKPROC, 0, 0);
     ok(proc == test_wordbreak_procA, "Unexpected wordbreak proc %p.\n", proc);
 
     ret = SendMessageA(hwnd, EM_SETWORDBREAKPROC, 0, 0);
-    ok(ret == 1, "Unexpected return value %ld.\n", ret);
+    ok(ret == 1, "Unexpected return value %Id.\n", ret);
 
     proc = (void *)SendMessageA(hwnd, EM_GETWORDBREAKPROC, 0, 0);
     ok(proc == NULL, "Unexpected wordbreak proc %p.\n", proc);

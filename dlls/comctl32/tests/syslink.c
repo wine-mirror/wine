@@ -184,7 +184,7 @@ static void test_create_syslink(void)
     /* Create an invisible SysLink control */
     flush_sequences(sequences, NUM_MSG_SEQUENCE);
     hWndSysLink = create_syslink(WS_CHILD | WS_TABSTOP, hWndParent);
-    ok(hWndSysLink != NULL, "Expected non NULL value (le %u)\n", GetLastError());
+    ok(hWndSysLink != NULL, "Expected non NULL value (le %lu)\n", GetLastError());
     flush_events();
     ok_sequence(sequences, SYSLINK_SEQ_INDEX, empty_wnd_seq, "create SysLink", FALSE);
     ok_sequence(sequences, PARENT_SEQ_INDEX, parent_create_syslink_wnd_seq, "create SysLink (parent)", TRUE);
@@ -210,7 +210,7 @@ static void test_LM_GETIDEALHEIGHT(void)
     ok(hwnd != NULL, "Failed to create SysLink window.\n");
 
     ret = SendMessageA(hwnd, LM_GETIDEALHEIGHT, 0, 0);
-    ok(ret > 0, "Unexpected ideal height, %d.\n", ret);
+    ok(ret > 0, "Unexpected ideal height, %ld.\n", ret);
 
     DestroyWindow(hwnd);
 }
@@ -226,13 +226,13 @@ static void test_LM_GETIDEALSIZE(void)
 
     memset(&sz, 0, sizeof(sz));
     ret = SendMessageA(hwnd, LM_GETIDEALSIZE, 0, (LPARAM)&sz);
-    ok(ret > 0, "Unexpected return value, %d.\n", ret);
+    ok(ret > 0, "Unexpected return value, %ld.\n", ret);
     if (sz.cy == 0)
         win_skip("LM_GETIDEALSIZE is not supported.\n");
     else
     {
-        ok(sz.cx > 5, "Unexpected ideal width, %d.\n", sz.cx);
-        ok(sz.cy == ret, "Unexpected ideal height, %d.\n", sz.cy);
+        ok(sz.cx > 5, "Unexpected ideal width, %ld.\n", sz.cx);
+        ok(sz.cy == ret, "Unexpected ideal height, %ld.\n", sz.cy);
     }
 
     DestroyWindow(hwnd);

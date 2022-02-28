@@ -53,7 +53,7 @@
 #define expect(expected,got) expect_(__LINE__, expected, got)
 static inline void expect_(unsigned line, DWORD expected, DWORD got)
 {
-    ok_(__FILE__, line)(expected == got, "Expected %d, got %d\n", expected, got);
+    ok_(__FILE__, line)(expected == got, "Expected %ld, got %ld\n", expected, got);
 }
 
 #define NUM_MSG_SEQUENCES   3
@@ -806,7 +806,7 @@ static void test_updown_create(void)
     ok(updown != NULL, "Failed to create updown control\n");
     r.right = 0;
     GetClientRect(updown, &r);
-    ok(r.right > 0, "Expected default width, got %d\n", r.right);
+    ok(r.right > 0, "Expected default width, got %ld\n", r.right);
     DestroyWindow(updown);
     /* create with really small width */
     updown = CreateWindowA (UPDOWN_CLASSA, 0, WS_CHILD | WS_BORDER | WS_VISIBLE, 0, 0, 2, 0,
@@ -814,7 +814,7 @@ static void test_updown_create(void)
     ok(updown != NULL, "Failed to create updown control\n");
     r.right = 0;
     GetClientRect(updown, &r);
-    ok(r.right != 2 && r.right > 0, "Expected default width, got %d\n", r.right);
+    ok(r.right != 2 && r.right > 0, "Expected default width, got %ld\n", r.right);
     DestroyWindow(updown);
     /* create with width greater than default */
     updown = CreateWindowA (UPDOWN_CLASSA, 0, WS_CHILD | WS_BORDER | WS_VISIBLE, 0, 0, 100, 0,
@@ -822,7 +822,7 @@ static void test_updown_create(void)
     ok(updown != NULL, "Failed to create updown control\n");
     r.right = 0;
     GetClientRect(updown, &r);
-    ok(r.right < 100 && r.right > 0, "Expected default width, got %d\n", r.right);
+    ok(r.right < 100 && r.right > 0, "Expected default width, got %ld\n", r.right);
     DestroyWindow(updown);
     /* create with zero height, UDS_HORZ */
     updown = CreateWindowA (UPDOWN_CLASSA, 0, UDS_HORZ | WS_CHILD | WS_BORDER | WS_VISIBLE, 0, 0, 0, 0,
@@ -830,7 +830,7 @@ static void test_updown_create(void)
     ok(updown != NULL, "Failed to create updown control\n");
     r.bottom = 0;
     GetClientRect(updown, &r);
-    ok(r.bottom == 0, "Expected zero height, got %d\n", r.bottom);
+    ok(r.bottom == 0, "Expected zero height, got %ld\n", r.bottom);
     DestroyWindow(updown);
     /* create with really small height, UDS_HORZ */
     updown = CreateWindowA (UPDOWN_CLASSA, 0, UDS_HORZ | WS_CHILD | WS_BORDER | WS_VISIBLE, 0, 0, 0, 2,
@@ -838,7 +838,7 @@ static void test_updown_create(void)
     ok(updown != NULL, "Failed to create updown control\n");
     r.bottom = 0;
     GetClientRect(updown, &r);
-    ok(r.bottom == 0, "Expected zero height, got %d\n", r.bottom);
+    ok(r.bottom == 0, "Expected zero height, got %ld\n", r.bottom);
     DestroyWindow(updown);
     /* create with height greater than default, UDS_HORZ */
     updown = CreateWindowA (UPDOWN_CLASSA, 0, UDS_HORZ | WS_CHILD | WS_BORDER | WS_VISIBLE, 0, 0, 0, 100,
@@ -846,7 +846,7 @@ static void test_updown_create(void)
     ok(updown != NULL, "Failed to create updown control\n");
     r.bottom = 0;
     GetClientRect(updown, &r);
-    ok(r.bottom < 100 && r.bottom > 0, "Expected default height, got %d\n", r.bottom);
+    ok(r.bottom < 100 && r.bottom > 0, "Expected default height, got %ld\n", r.bottom);
     DestroyWindow(updown);
 }
 
@@ -987,9 +987,9 @@ static void test_UDS_SETBUDDY(void)
 
     updown = create_updown_control(UDS_ALIGNRIGHT | UDS_SETBUDDYINT | UDS_ARROWKEYS, g_edit);
     ret = SetWindowPos(g_edit, 0, 100, 100, start_width, start_height, SWP_NOACTIVATE | SWP_NOZORDER);
-    ok(ret, "SetWindowPos failed, error %u.\n", GetLastError());
+    ok(ret, "SetWindowPos failed, error %lu.\n", GetLastError());
     ret = GetWindowRect(g_edit, &rect);
-    ok(ret, "GetWindowRect failed, error %u.\n", GetLastError());
+    ok(ret, "GetWindowRect failed, error %lu.\n", GetLastError());
     width = rect.right - rect.left;
     height = rect.bottom - rect.top;
     ok(width == start_width, "Expected width %d, got %d.\n", start_width, width);
@@ -997,13 +997,13 @@ static void test_UDS_SETBUDDY(void)
 
     SendMessageA(updown, UDM_SETBUDDY, (WPARAM)g_edit, 0);
     ret = GetWindowRect(g_edit, &rect);
-    ok(ret, "GetWindowRect failed, error %u.\n", GetLastError());
+    ok(ret, "GetWindowRect failed, error %lu.\n", GetLastError());
     updown_width = start_width - (rect.right - rect.left);
     ok(updown_width > 0, "Expected updown width > 0, got %d.\n", updown_width);
 
     SendMessageA(updown, UDM_SETBUDDY, (WPARAM)g_edit, 0);
     ret = GetWindowRect(g_edit, &rect);
-    ok(ret, "GetWindowRect failed, error %u.\n", GetLastError());
+    ok(ret, "GetWindowRect failed, error %lu.\n", GetLastError());
     width = rect.right - rect.left;
     height = rect.bottom - rect.top;
     ok(width == start_width - 2 * updown_width, "Expected width %d, got %d.\n",

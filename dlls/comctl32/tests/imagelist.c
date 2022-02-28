@@ -373,7 +373,7 @@ static void test_hotspot(void)
             /* check new hotspot, it should be the same like the old one */
             himlNew = pImageList_GetDragImage(NULL, &ppt);
             ok(ppt.x == dx1 && ppt.y == dy1,
-                    "Expected drag hotspot [%d,%d] got [%d,%d]\n",
+                    "Expected drag hotspot [%d,%d] got [%ld,%ld]\n",
                     dx1, dy1, ppt.x, ppt.y);
             /* check size of new dragged image */
             pImageList_GetIconSize(himlNew, &newx, &newy);
@@ -755,7 +755,7 @@ static HRESULT STDMETHODCALLTYPE Test_Stream_Seek(IStream *iface, LARGE_INTEGER 
 
     if (is_v6_test())
     {
-        ok(origin == STREAM_SEEK_CUR, "Unexpected origin %d.\n", origin);
+        ok(origin == STREAM_SEEK_CUR, "Unexpected origin %ld.\n", origin);
         ok(offset.QuadPart == 0, "Unexpected offset %s.\n", wine_dbgstr_longlong(offset.QuadPart));
         ok(new_pos != NULL, "Unexpected out position pointer.\n");
         return IStream_Seek(stream->stream, offset, origin, new_pos);
@@ -844,7 +844,7 @@ static void init_memstream(struct memstream *stream)
 
     stream->IStream_iface.lpVtbl = &Test_Stream_Vtbl;
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream->stream);
-    ok(hr == S_OK, "Failed to create a stream, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create a stream, hr %#lx.\n", hr);
 }
 
 static void cleanup_memstream(struct memstream *stream)
@@ -868,19 +868,19 @@ static ULONG check_bitmap_data(const ILHEAD *header, const char *bm_data,
     if (bmih->biBitCount <= 8) hdr_size += (1 << bpp) * sizeof(RGBQUAD);
 
     ok(bmfh->bfType == (('M' << 8) | 'B'), "wrong bfType 0x%02x\n", bmfh->bfType);
-    ok(bmfh->bfSize == hdr_size, "wrong bfSize 0x%02x\n", bmfh->bfSize);
+    ok(bmfh->bfSize == hdr_size, "wrong bfSize 0x%02lx\n", bmfh->bfSize);
     ok(bmfh->bfReserved1 == 0, "wrong bfReserved1 0x%02x\n", bmfh->bfReserved1);
     ok(bmfh->bfReserved2 == 0, "wrong bfReserved2 0x%02x\n", bmfh->bfReserved2);
-    ok(bmfh->bfOffBits == hdr_size, "wrong bfOffBits 0x%02x\n", bmfh->bfOffBits);
+    ok(bmfh->bfOffBits == hdr_size, "wrong bfOffBits 0x%02lx\n", bmfh->bfOffBits);
 
-    ok(bmih->biSize == sizeof(*bmih), "wrong biSize %d\n", bmih->biSize);
+    ok(bmih->biSize == sizeof(*bmih), "wrong biSize %ld\n", bmih->biSize);
     ok(bmih->biPlanes == 1, "wrong biPlanes %d\n", bmih->biPlanes);
     ok(bmih->biBitCount == bpp, "wrong biBitCount %d\n", bmih->biBitCount);
 
     image_size = DIB_GetWidthBytes(bmih->biWidth, bmih->biBitCount) * bmih->biHeight;
-    ok(bmih->biSizeImage == image_size, "wrong biSizeImage %u\n", bmih->biSizeImage);
-    ok(bmih->biWidth == bmpsize->cx && bmih->biHeight == bmpsize->cy, "Unexpected bitmap size %d x %d, "
-            "expected %d x %d\n", bmih->biWidth, bmih->biHeight, bmpsize->cx, bmpsize->cy);
+    ok(bmih->biSizeImage == image_size, "wrong biSizeImage %lu\n", bmih->biSizeImage);
+    ok(bmih->biWidth == bmpsize->cx && bmih->biHeight == bmpsize->cy, "Unexpected bitmap size %ld x %ld, "
+            "expected %ld x %ld\n", bmih->biWidth, bmih->biHeight, bmpsize->cx, bmpsize->cy);
 
 if (0)
 {
@@ -927,7 +927,7 @@ static void check_ilhead_data(const ILHEAD *ilh, INT cx, INT cy, INT cur, INT ma
 
     ok(ilh->cx == cx, "wrong cx %d (expected %d)\n", ilh->cx, cx);
     ok(ilh->cy == cy, "wrong cy %d (expected %d)\n", ilh->cy, cy);
-    ok(ilh->bkcolor == CLR_NONE, "wrong bkcolor %x\n", ilh->bkcolor);
+    ok(ilh->bkcolor == CLR_NONE, "wrong bkcolor %lx\n", ilh->bkcolor);
     ok(ilh->flags == flags || broken(!(ilh->flags & 0xfe) && (flags & 0xfe) == ILC_COLOR4),  /* <= w2k */
        "wrong flags %04x\n", ilh->flags);
     ok(ilh->ovls[0] == -1, "wrong ovls[0] %04x\n", ilh->ovls[0]);
@@ -1014,10 +1014,10 @@ static void check_iml_data(HIMAGELIST himl, INT cx, INT cy, INT cur, INT max, IN
     ok(b, "%s: ImageList_Write failed\n", comment);
 
     hr = GetHGlobalFromStream(stream.stream, &hglobal);
-    ok(hr == S_OK, "%s: Failed to get hglobal, %#x\n", comment, hr);
+    ok(hr == S_OK, "%s: Failed to get hglobal, %#lx\n", comment, hr);
 
     hr = IStream_Stat(stream.stream, &stat, STATFLAG_NONAME);
-    ok(hr == S_OK, "Stat() failed, hr %#x.\n", hr);
+    ok(hr == S_OK, "Stat() failed, hr %#lx.\n", hr);
 
     data = GlobalLock(hglobal);
 
@@ -1031,7 +1031,7 @@ static void check_iml_data(HIMAGELIST himl, INT cx, INT cy, INT cur, INT max, IN
             &bmpsize, flags & 0xfe, comment);
     if (!is_v6_header(header) && size < stat.cbSize.LowPart - sizeof(ILHEAD))  /* mask is present */
     {
-        ok( flags & ILC_MASK, "%s: extra data %u/%u but mask not expected\n", comment, stat.cbSize.LowPart, size );
+        ok( flags & ILC_MASK, "%s: extra data %lu/%u but mask not expected\n", comment, stat.cbSize.LowPart, size );
         check_bitmap_data(header, data + sizeof(ILHEAD) + size, stat.cbSize.LowPart - sizeof(ILHEAD) - size,
             &bmpsize, 1, comment);
     }
@@ -1341,7 +1341,7 @@ static void test_shell_imagelist(void)
 
     /* Get system image list */
     hr = pSHGetImageList(SHIL_SYSSMALL, &IID_IImageList, (void**)&iml);
-    ok(SUCCEEDED(hr), "SHGetImageList failed, hr=%x\n", hr);
+    ok(SUCCEEDED(hr), "SHGetImageList failed, hr=%lx\n", hr);
 
     if (hr != S_OK) {
         FreeLibrary(hShell32);
@@ -1358,7 +1358,7 @@ static void test_shell_imagelist(void)
     /* Check icon size matches */
     IImageList_GetImageRect(iml, 0, &rect);
     ok(((rect.right == cx) && (rect.bottom == cy)),
-                 "IImageList_GetImageRect returned r:%d,b:%d\n",
+                 "IImageList_GetImageRect returned r:%ld,b:%ld\n",
                  rect.right, rect.bottom);
 
     IImageList_Release(iml);
@@ -1530,7 +1530,7 @@ static void test_ImageList_DrawIndirect(void)
     ok(himl != 0, "ImageList_Create failed\n");
 
     hr = pHIMAGELIST_QueryInterface(himl, &IID_IImageList, (void **) &imgl);
-    ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get interface, hr %#lx.\n", hr);
 
     /* Add a no-alpha image */
     hbmImage = create_test_bitmap(hdcDst, 2, 1, 32, bits_image);
@@ -1540,14 +1540,14 @@ static void test_ImageList_DrawIndirect(void)
     ok(iImage != -1, "ImageList_Add failed\n");
 
     hr = IImageList_GetItemFlags(imgl, 1000, &flags);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = IImageList_GetItemFlags(imgl, 1000, NULL);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = IImageList_GetItemFlags(imgl, iImage, &flags);
-    ok(hr == S_OK, "Failed to get item flags, hr %#x.\n", hr);
-    ok(!flags, "Unexpected flags %#x.\n", flags);
+    ok(hr == S_OK, "Failed to get item flags, hr %#lx.\n", hr);
+    ok(!flags, "Unexpected flags %#lx.\n", flags);
 
     /* Add an alpha image */
     hbmAlphaImage = create_test_bitmap(hdcDst, 2, 1, 32, bits_alpha);
@@ -1557,8 +1557,8 @@ static void test_ImageList_DrawIndirect(void)
     ok(iAlphaImage != -1, "ImageList_Add failed\n");
 
     hr = IImageList_GetItemFlags(imgl, iAlphaImage, &flags);
-    ok(hr == S_OK, "Failed to get item flags, hr %#x.\n", hr);
-    ok(flags & ILIF_ALPHA, "Unexpected flags %#x.\n", flags);
+    ok(hr == S_OK, "Failed to get item flags, hr %#lx.\n", hr);
+    ok(flags & ILIF_ALPHA, "Unexpected flags %#lx.\n", flags);
 
     /* Add a transparent alpha image */
     hbmTransparentImage = create_test_bitmap(hdcDst, 2, 1, 32, bits_transparent);
@@ -1568,8 +1568,8 @@ static void test_ImageList_DrawIndirect(void)
     ok(iTransparentImage != -1, "ImageList_Add failed\n");
 
     hr = IImageList_GetItemFlags(imgl, iTransparentImage, &flags);
-    ok(hr == S_OK, "Failed to get item flags, hr %#x.\n", hr);
-    ok(flags & ILIF_ALPHA, "Unexpected flags %#x.\n", flags);
+    ok(hr == S_OK, "Failed to get item flags, hr %#lx.\n", hr);
+    ok(flags & ILIF_ALPHA, "Unexpected flags %#lx.\n", flags);
 
     /* 32-bit Tests */
     bitmapInfo.bmiHeader.biBitCount = 32;
@@ -1682,31 +1682,31 @@ static void test_iimagelist(void)
     /* test reference counting on destruction */
     imgl = (IImageList*)createImageList(32, 32);
     ret = IImageList_AddRef(imgl);
-    ok(ret == 2, "Expected 2, got %d\n", ret);
+    ok(ret == 2, "Expected 2, got %ld\n", ret);
     ret = pImageList_Destroy((HIMAGELIST)imgl);
-    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+    ok(ret == TRUE, "Expected TRUE, got %ld\n", ret);
     ret = pImageList_Destroy((HIMAGELIST)imgl);
-    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+    ok(ret == TRUE, "Expected TRUE, got %ld\n", ret);
     ret = pImageList_Destroy((HIMAGELIST)imgl);
-    ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
+    ok(ret == FALSE, "Expected FALSE, got %ld\n", ret);
 
     imgl = (IImageList*)createImageList(32, 32);
     ret = IImageList_AddRef(imgl);
-    ok(ret == 2, "Expected 2, got %d\n", ret);
+    ok(ret == 2, "Expected 2, got %ld\n", ret);
     ret = pImageList_Destroy((HIMAGELIST)imgl);
-    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+    ok(ret == TRUE, "Expected TRUE, got %ld\n", ret);
     ret = IImageList_Release(imgl);
-    ok(ret == 0, "Expected 0, got %d\n", ret);
+    ok(ret == 0, "Expected 0, got %ld\n", ret);
     ret = pImageList_Destroy((HIMAGELIST)imgl);
-    ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
+    ok(ret == FALSE, "Expected FALSE, got %ld\n", ret);
 
     /* ref counting, HIMAGELIST_QueryInterface adds a reference */
     imgl = (IImageList*)createImageList(32, 32);
     hr = pHIMAGELIST_QueryInterface((HIMAGELIST)imgl, &IID_IImageList, (void**)&imgl2);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(imgl2 == imgl, "got different pointer\n");
     ret = IImageList_Release(imgl);
-    ok(ret == 1, "got %u\n", ret);
+    ok(ret == 1, "got %lu\n", ret);
     IImageList_Release(imgl);
 
     if (!pImageList_CoCreateInstance)
@@ -1716,7 +1716,7 @@ static void test_iimagelist(void)
     }
 
     hr = pImageList_CoCreateInstance(&CLSID_ImageList, NULL, &IID_IImageList, (void **) &imgl);
-    ok(SUCCEEDED(hr), "ImageList_CoCreateInstance failed, hr=%x\n", hr);
+    ok(SUCCEEDED(hr), "ImageList_CoCreateInstance failed, hr=%lx\n", hr);
 
     if (hr == S_OK)
         IImageList_Release(imgl);
@@ -1727,7 +1727,7 @@ static void test_iimagelist(void)
         return;
 
     hr = pHIMAGELIST_QueryInterface(himl, &IID_IImageList, (void **) &imgl);
-    ok(SUCCEEDED(hr), "HIMAGELIST_QueryInterface failed, hr=%x\n", hr);
+    ok(SUCCEEDED(hr), "HIMAGELIST_QueryInterface failed, hr=%lx\n", hr);
 
     if (hr == S_OK)
         IImageList_Release(imgl);
@@ -1741,7 +1741,7 @@ static void test_iimagelist(void)
         win_skip("IImageList2 is not supported.\n");
         return;
     }
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     IImageList2_Release(imagelist);
 }
 
@@ -1773,7 +1773,7 @@ static void test_IImageList_Add_Remove(void)
 
     /* remove when nothing exists */
     hr = IImageList_Remove(imgl, 0);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(hr == E_INVALIDARG, "got 0x%08lx\n", hr);
 
     /* removing everything from an empty imagelist should succeed */
     hr = IImageList_Remove(imgl, -1);
@@ -1788,7 +1788,7 @@ static void test_IImageList_Add_Remove(void)
     ok( IImageList_ReplaceIcon(imgl, -1, hicon3, &ret) == S_OK && (ret == 2),"failed to add icon3\n");
 
     /* remove an index out of range */
-    ok( IImageList_Remove(imgl, 4711) == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok( IImageList_Remove(imgl, 4711) == E_INVALIDARG, "got 0x%08lx\n", hr);
 
     /* remove three */
     ok( IImageList_Remove(imgl,0) == S_OK, "can't remove 0\n");
@@ -1796,7 +1796,7 @@ static void test_IImageList_Add_Remove(void)
     ok( IImageList_Remove(imgl,0) == S_OK, "can't remove 0\n");
 
     /* remove one extra */
-    ok( IImageList_Remove(imgl, 0) == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok( IImageList_Remove(imgl, 0) == E_INVALIDARG, "got 0x%08lx\n", hr);
 
     IImageList_Release(imgl);
     ok(DestroyIcon(hicon1),"icon 1 wasn't deleted\n");
@@ -1819,17 +1819,17 @@ static void test_IImageList_Get_SetImageCount(void)
 
     /* check SetImageCount/GetImageCount */
     hr = IImageList_SetImageCount(imgl, 3);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ret = 0;
     hr = IImageList_GetImageCount(imgl, &ret);
     ok(hr == S_OK && ret == 3, "invalid image count after increase\n");
     hr = IImageList_SetImageCount(imgl, 1);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ret = 0;
     hr = IImageList_GetImageCount(imgl, &ret);
     ok(hr == S_OK && ret == 1, "invalid image count after decrease to 1\n");
     hr = IImageList_SetImageCount(imgl, 0);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ret = -1;
     hr = IImageList_GetImageCount(imgl, &ret);
     ok(hr == S_OK && ret == 0, "invalid image count after decrease to 0\n");
@@ -1887,7 +1887,7 @@ if (0)
 
     memset(&imldp, 0, sizeof (imldp));
     hr = IImageList_Draw(imgl, &imldp);
-    ok( hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok( hr == E_INVALIDARG, "got 0x%08lx\n", hr);
 
     imldp.cbSize = IMAGELISTDRAWPARAMS_V3_SIZE;
     imldp.hdcDst = hdc;
@@ -2334,14 +2334,14 @@ static void test_loadimage(void)
                                  IMAGE_BITMAP, LR_CREATEDIBSECTION );
     ok( list != NULL, "got %p\n", list );
     flags = pImageList_GetFlags( list );
-    ok( flags == (ILC_COLOR4 | ILC_MASK), "got %08x\n", flags );
+    ok( flags == (ILC_COLOR4 | ILC_MASK), "got %08lx\n", flags );
     pImageList_Destroy( list );
 
     list = pImageList_LoadImageW( hinst, MAKEINTRESOURCEW(IDB_BITMAP_128x15), 16, 1, CLR_NONE,
                                  IMAGE_BITMAP, LR_CREATEDIBSECTION );
     ok( list != NULL, "got %p\n", list );
     flags = pImageList_GetFlags( list );
-    ok( flags == ILC_COLOR4, "got %08x\n", flags );
+    ok( flags == ILC_COLOR4, "got %08lx\n", flags );
     pImageList_Destroy( list );
 }
 
@@ -2470,9 +2470,9 @@ if (0)
 }
 
     hr = IImageList_Clone(imgl, &IID_IImageList, (void**)&imgl2);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ref = IImageList_Release(imgl2);
-    ok(ref == 0, "got %u\n", ref);
+    ok(ref == 0, "got %lu\n", ref);
 
     IImageList_Release(imgl);
 }
@@ -2494,7 +2494,7 @@ if (0)
 }
 
     hr = IImageList_GetBkColor(imgl, &color);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     IImageList_Release(imgl);
 }
@@ -2516,15 +2516,15 @@ if (0)
 }
 
     hr = IImageList_SetBkColor(imgl, CLR_NONE, &color);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IImageList_SetBkColor(imgl, CLR_NONE, &color);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     color = 0xdeadbeef;
     hr = IImageList_GetBkColor(imgl, &color);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(color == CLR_NONE, "got %x\n", color);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(color == CLR_NONE, "got %lx\n", color);
 
     IImageList_Release(imgl);
 }
@@ -2547,7 +2547,7 @@ if (0)
 
     count = -1;
     hr = IImageList_GetImageCount(imgl, &count);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(count == 0, "got %d\n", count);
 
     IImageList_Release(imgl);
@@ -2564,13 +2564,13 @@ static void test_IImageList_GetIconSize(void)
     imgl = (IImageList*)himl;
 
     hr = IImageList_GetIconSize(imgl, NULL, NULL);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(hr == E_INVALIDARG, "got 0x%08lx\n", hr);
 
     hr = IImageList_GetIconSize(imgl, &cx, NULL);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(hr == E_INVALIDARG, "got 0x%08lx\n", hr);
 
     hr = IImageList_GetIconSize(imgl, NULL, &cy);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(hr == E_INVALIDARG, "got 0x%08lx\n", hr);
 
     IImageList_Release(imgl);
 }
@@ -2585,13 +2585,13 @@ static void test_ImageList_WriteEx(void)
     ok(himl != 0, "Failed to create an imagelist.\n");
 
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = pImageList_WriteEx(himl, ILP_NORMAL, stream);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = pImageList_WriteEx(himl, ILP_DOWNLEVEL, stream);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     IStream_Release(stream);
     pImageList_Destroy(himl);

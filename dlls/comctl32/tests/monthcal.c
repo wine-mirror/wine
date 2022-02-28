@@ -35,15 +35,15 @@
 #define expect(expected,got) expect_(__LINE__, expected, got)
 static inline void expect_(unsigned line, DWORD expected, DWORD got)
 {
-    ok_(__FILE__, line)(expected == got, "Expected %d, got %d\n", expected, got);
+    ok_(__FILE__, line)(expected == got, "Expected %ld, got %ld\n", expected, got);
 }
 
 #define expect_hex(expected,got) expect_hex_(__LINE__, expected, got)
 static inline void expect_hex_(unsigned line, DWORD expected, DWORD got)
 {
-    ok_(__FILE__, line)(expected == got, "Expected %x, got %x\n", expected, got);
+    ok_(__FILE__, line)(expected == got, "Expected %lx, got %lx\n", expected, got);
 }
-#define expect_d(expected, got) ok(abs((expected) - (got)) <= 2, "Expected %d, got %d\n", expected, got);
+#define expect_d(expected, got) ok(abs((expected) - (got)) <= 2, "Expected %ld, got %ld\n", expected, got);
 
 #define NUM_MSG_SEQUENCES   2
 #define PARENT_SEQ_INDEX    0
@@ -285,7 +285,7 @@ static void test_monthcal(void)
     limits = SendMessageA(hwnd, MCM_GETRANGE, 0, (LPARAM)st);
     ok(limits == 0 ||
        broken(limits == GDTR_MIN), /* comctl32 <= 4.70 */
-       "No limits should be set (%d)\n", limits);
+       "No limits should be set (%ld)\n", limits);
     if (limits == GDTR_MIN)
     {
         win_skip("comctl32 <= 4.70 is broken\n");
@@ -318,7 +318,7 @@ static void test_monthcal(void)
     expect(0, st[1].wMilliseconds);
 
     limits = SendMessageA(hwnd, MCM_GETRANGE, 0, 0);
-    ok(limits == 0, "got %u\n", limits);
+    ok(limits == 0, "got %lu\n", limits);
 
     GetSystemTime(&st[0]);
     st[1] = st[0];
@@ -468,7 +468,7 @@ static void test_monthcal(void)
 
     /* 0 limit flags */
     limits = SendMessageA(hwnd, MCM_GETRANGE, 0, (LPARAM)st1);
-    ok(limits == GDTR_MIN, "got 0x%08x\n", limits);
+    ok(limits == GDTR_MIN, "got 0x%08lx\n", limits);
 
     GetSystemTime(st);
     st[1] = st[0];
@@ -477,7 +477,7 @@ static void test_monthcal(void)
     ok(r, "got %d\n", r);
 
     limits = SendMessageA(hwnd, MCM_GETRANGE, 0, (LPARAM)st);
-    ok(limits == 0, "got 0x%08x\n", limits);
+    ok(limits == 0, "got 0x%08lx\n", limits);
     ok(st[0].wYear == 0 && st[1].wYear == 0, "got %u, %u\n", st[0].wYear, st[1].wYear);
 
     /* flags are 0, set min limit */
@@ -489,7 +489,7 @@ static void test_monthcal(void)
     ok(r, "got %d\n", r);
 
     limits = SendMessageA(hwnd, MCM_GETRANGE, 0, (LPARAM)st1);
-    ok(limits == GDTR_MIN, "got 0x%08x\n", limits);
+    ok(limits == GDTR_MIN, "got 0x%08lx\n", limits);
     ok(st1[1].wYear == 0, "got %u\n", st1[1].wYear);
 
     /* now set max limit, check flags */
@@ -497,7 +497,7 @@ static void test_monthcal(void)
     ok(r, "got %d\n", r);
 
     limits = SendMessageA(hwnd, MCM_GETRANGE, 0, (LPARAM)st1);
-    ok(limits == GDTR_MAX, "got 0x%08x\n", limits);
+    ok(limits == GDTR_MAX, "got 0x%08lx\n", limits);
     ok(st1[0].wYear == 0, "got %u\n", st1[0].wYear);
 
     DestroyWindow(hwnd);
@@ -652,7 +652,7 @@ static LRESULT WINAPI monthcal_subclass_proc(HWND hwnd, UINT message, WPARAM wPa
          message == WM_STYLECHANGED) && lParam)
     {
         STYLESTRUCT *style = (STYLESTRUCT*)lParam;
-        trace("\told style: 0x%08x, new style: 0x%08x\n", style->styleOld, style->styleNew);
+        trace("\told style: 0x%08lx, new style: 0x%08lx\n", style->styleOld, style->styleNew);
     }
 
     defwndproc_counter++;
@@ -927,7 +927,7 @@ static void test_firstDay(void)
     SetLastError(0xdeadbeef);
     ret = GetLocaleInfoA(lcid, LOCALE_ICALENDARTYPE, caltype, 3);
     if (ret == 0) {
-        skip("Must know local calendar type (%x)\n", GetLastError());
+        skip("Must know local calendar type (%lx)\n", GetLastError());
         return;
     } else if (atoi(caltype) != CAL_GREGORIAN) {
         skip("MonthCalendar Control only supports Gregorian calendar (type: %s)\n", caltype);
@@ -1236,7 +1236,7 @@ if (0)
                     break;
 
                 todo_wine_if(title_hits[title_index].todo)
-                    ok(title_hits[title_index].ht == res, "Expected %x, got %x, pos %d\n",
+                    ok(title_hits[title_index].ht == res, "Expected %x, got %x, pos %ld\n",
                                                           title_hits[title_index].ht, res, x);
             }
             old_res = res;
@@ -1841,7 +1841,7 @@ static void test_hittest_v6(void)
     expect(0, mchit.rc.left);
     expect(0, mchit.rc.top);
     expect_d(r.right, mchit.rc.right);
-    ok(mchit.rc.bottom > 0, "got %d\n", mchit.rc.bottom);
+    ok(mchit.rc.bottom > 0, "got %ld\n", mchit.rc.bottom);
 
     /* between two calendars */
     MoveWindow(hwnd, 0, 0, r.right * 5/2, r.bottom, FALSE);
@@ -1907,7 +1907,7 @@ static void test_MCM_SIZERECTTOMIN(void)
     }
 
     ret = SendMessageA(hwnd, MCM_SIZERECTTOMIN, 0, 0);
-    ok(ret == 0, "got %d\n", ret);
+    ok(ret == 0, "got %ld\n", ret);
 
     SetRectEmpty(&r);
     ret = SendMessageA(hwnd, MCM_SIZERECTTOMIN, 0, (LPARAM)&r);
@@ -1917,18 +1917,18 @@ static void test_MCM_SIZERECTTOMIN(void)
         DestroyWindow(hwnd);
         return;
     }
-    ok(ret == 1, "got %d\n", ret);
-    ok(r.left == 0 && r.right > 0, "got %d, %d\n", r.left, r.right);
+    ok(ret == 1, "got %ld\n", ret);
+    ok(r.left == 0 && r.right > 0, "got %ld, %ld\n", r.left, r.right);
 
     r = r2;
     ret = SendMessageA(hwnd, MCM_SIZERECTTOMIN, 0, (LPARAM)&r);
-    ok(ret == 1, "got %d\n", ret);
+    ok(ret == 1, "got %ld\n", ret);
 
     r2.right = (r2.right - r2.left) * 3;
     r2.bottom = (r2.bottom - r2.top) * 3;
     r2.left = r2.top = 0;
     ret = SendMessageA(hwnd, MCM_SIZERECTTOMIN, 0, (LPARAM)&r2);
-    ok(ret == 1, "got %d\n", ret);
+    ok(ret == 1, "got %ld\n", ret);
 
     DestroyWindow(hwnd);
 }
@@ -1984,7 +1984,7 @@ static void test_daystate(void)
     /* try to switch on */
     SetWindowLongA(hwnd, GWL_STYLE, GetWindowLongA(hwnd, GWL_STYLE) | MCS_DAYSTATE);
     style = GetWindowLongA(hwnd, GWL_STYLE);
-    ok((style & MCS_DAYSTATE) == 0, "got 0x%08x\n", style);
+    ok((style & MCS_DAYSTATE) == 0, "got 0x%08lx\n", style);
 
     DestroyWindow(hwnd);
 
@@ -2006,7 +2006,7 @@ static void test_daystate(void)
     /* try to switch off */
     SetWindowLongA(hwnd, GWL_STYLE, GetWindowLongA(hwnd, GWL_STYLE) & ~MCS_DAYSTATE);
     style = GetWindowLongA(hwnd, GWL_STYLE);
-    ok((style & MCS_DAYSTATE) == MCS_DAYSTATE, "got 0x%08x\n", style);
+    ok((style & MCS_DAYSTATE) == MCS_DAYSTATE, "got 0x%08lx\n", style);
 
     DestroyWindow(hwnd);
 }

@@ -476,8 +476,8 @@ typedef struct
 struct _IMAGELIST;
 typedef struct _IMAGELIST *HIMAGELIST;
 
-#define CLR_NONE         0xFFFFFFFF
-#define CLR_DEFAULT      0xFF000000
+#define CLR_NONE         __MSABI_LONG(0xFFFFFFFF)
+#define CLR_DEFAULT      __MSABI_LONG(0xFF000000)
 #define CLR_HILIGHT      CLR_DEFAULT
 
 #define ILC_MASK             0x00000001

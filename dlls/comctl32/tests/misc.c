@@ -219,7 +219,7 @@ static void test_Alloc(void)
     size = pGetSize(p);
     ok(size == 1 ||
        broken(size == min), /* win9x */
-       "Expected 1, got %d\n", size);
+       "Expected 1, got %ld\n", size);
 
     /* reallocate the block */
     p = pReAlloc(p, 2);
@@ -229,7 +229,7 @@ static void test_Alloc(void)
     size = pGetSize(p);
     ok(size == 2 ||
        broken(size == min), /* win9x */
-       "Expected 2, got %d\n", size);
+       "Expected 2, got %ld\n", size);
 
     /* free the block */
     res = pFree(p);
@@ -279,7 +279,7 @@ static void test_LoadIconWithScaleDown(void)
     GetTempFileNameW(tmp_path, L"ICO", 0, icon_path);
     handle = CreateFileW(icon_path, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
                          FILE_ATTRIBUTE_NORMAL, NULL);
-    ok(handle != INVALID_HANDLE_VALUE, "CreateFileW failed with error %u\n", GetLastError());
+    ok(handle != INVALID_HANDLE_VALUE, "CreateFileW failed with error %lu\n", GetLastError());
     res = WriteFile(handle, testicon_data, sizeof(testicon_data), &written, NULL);
     ok(res && written == sizeof(testicon_data), "Failed to write icon file\n");
     CloseHandle(handle);
@@ -296,43 +296,43 @@ static void test_LoadIconWithScaleDown(void)
     /* invalid arguments */
     icon = (HICON)0x1234;
     hr = pLoadIconMetric(NULL, (LPWSTR)IDI_APPLICATION, 0x100, &icon);
-    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %x\n", hr);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %lx\n", hr);
     ok(icon == NULL, "Expected NULL, got %p\n", icon);
 
     icon = (HICON)0x1234;
     hr = pLoadIconMetric(NULL, NULL, LIM_LARGE, &icon);
-    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %x\n", hr);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %lx\n", hr);
     ok(icon == NULL, "Expected NULL, got %p\n", icon);
 
     icon = (HICON)0x1234;
     hr = pLoadIconWithScaleDown(NULL, NULL, 32, 32, &icon);
-    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %x\n", hr);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %lx\n", hr);
     ok(icon == NULL, "Expected NULL, got %p\n", icon);
 
     /* non-existing filename */
     hr = pLoadIconMetric(NULL, L"nonexisting.ico", LIM_LARGE, &icon);
     ok(hr == HRESULT_FROM_WIN32(ERROR_RESOURCE_TYPE_NOT_FOUND) || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) /* Win7 */,
-       "Expected HRESULT_FROM_WIN32(ERROR_RESOURCE_TYPE_NOT_FOUND), got %x\n", hr);
+       "Expected HRESULT_FROM_WIN32(ERROR_RESOURCE_TYPE_NOT_FOUND), got %lx\n", hr);
 
     hr = pLoadIconWithScaleDown(NULL, L"nonexisting.ico", 32, 32, &icon);
     todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_RESOURCE_TYPE_NOT_FOUND),
-       "Expected HRESULT_FROM_WIN32(ERROR_RESOURCE_TYPE_NOT_FOUND), got %x\n", hr);
+       "Expected HRESULT_FROM_WIN32(ERROR_RESOURCE_TYPE_NOT_FOUND), got %lx\n", hr);
 
     /* non-existing resource name */
     hr = pLoadIconMetric(hinst, L"Nonexisting", LIM_LARGE, &icon);
     ok(hr == HRESULT_FROM_WIN32(ERROR_RESOURCE_TYPE_NOT_FOUND),
-       "Expected HRESULT_FROM_WIN32(ERROR_RESOURCE_TYPE_NOT_FOUND), got %x\n", hr);
+       "Expected HRESULT_FROM_WIN32(ERROR_RESOURCE_TYPE_NOT_FOUND), got %lx\n", hr);
 
     hr = pLoadIconWithScaleDown(hinst, L"Noneexisting", 32, 32, &icon);
     ok(hr == HRESULT_FROM_WIN32(ERROR_RESOURCE_TYPE_NOT_FOUND),
-       "Expected HRESULT_FROM_WIN32(ERROR_RESOURCE_TYPE_NOT_FOUND), got %x\n", hr);
+       "Expected HRESULT_FROM_WIN32(ERROR_RESOURCE_TYPE_NOT_FOUND), got %lx\n", hr);
 
     /* load icon using predefined identifier */
     hr = pLoadIconMetric(NULL, (LPWSTR)IDI_APPLICATION, LIM_SMALL, &icon);
-    ok(hr == S_OK, "Expected S_OK, got %x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %lx\n", hr);
     res = GetIconInfo(icon, &info);
-    ok(res, "Failed to get icon info, error %u\n", GetLastError());
+    ok(res, "Failed to get icon info, error %lu\n", GetLastError());
     bytes = GetObjectA(info.hbmColor, sizeof(bmp), &bmp);
     ok(bytes > 0, "Failed to get bitmap info for icon\n");
     ok(bmp.bmWidth  == GetSystemMetrics(SM_CXSMICON), "Wrong icon width %d\n", bmp.bmWidth);
@@ -340,9 +340,9 @@ static void test_LoadIconWithScaleDown(void)
     DestroyIcon(icon);
 
     hr = pLoadIconMetric(NULL, (LPWSTR)IDI_APPLICATION, LIM_LARGE, &icon);
-    ok(hr == S_OK, "Expected S_OK, got %x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %lx\n", hr);
     res = GetIconInfo(icon, &info);
-    ok(res, "Failed to get icon info, error %u\n", GetLastError());
+    ok(res, "Failed to get icon info, error %lu\n", GetLastError());
     bytes = GetObjectA(info.hbmColor, sizeof(bmp), &bmp);
     ok(bytes > 0, "Failed to get bitmap info for icon\n");
     ok(bmp.bmWidth  == GetSystemMetrics(SM_CXICON), "Wrong icon width %d\n", bmp.bmWidth);
@@ -350,9 +350,9 @@ static void test_LoadIconWithScaleDown(void)
     DestroyIcon(icon);
 
     hr = pLoadIconWithScaleDown(NULL, (LPWSTR)IDI_APPLICATION, 42, 42, &icon);
-    ok(hr == S_OK, "Expected S_OK, got %x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %lx\n", hr);
     res = GetIconInfo(icon, &info);
-    ok(res, "Failed to get icon info, error %u\n", GetLastError());
+    ok(res, "Failed to get icon info, error %lu\n", GetLastError());
     bytes = GetObjectA(info.hbmColor, sizeof(bmp), &bmp);
     ok(bytes > 0, "Failed to get bitmap info for icon\n");
     ok(bmp.bmWidth  == 42, "Wrong icon width %d\n", bmp.bmWidth);
@@ -361,9 +361,9 @@ static void test_LoadIconWithScaleDown(void)
 
     /* load icon from file */
     hr = pLoadIconMetric(NULL, icon_path, LIM_SMALL, &icon);
-    ok(hr == S_OK, "Expected S_OK, got %x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %lx\n", hr);
     res = GetIconInfo(icon, &info);
-    ok(res, "Failed to get icon info, error %u\n", GetLastError());
+    ok(res, "Failed to get icon info, error %lu\n", GetLastError());
     bytes = GetObjectA(info.hbmColor, sizeof(bmp), &bmp);
     ok(bytes > 0, "Failed to get bitmap info for icon\n");
     ok(bmp.bmWidth  == GetSystemMetrics(SM_CXSMICON), "Wrong icon width %d\n", bmp.bmWidth);
@@ -371,9 +371,9 @@ static void test_LoadIconWithScaleDown(void)
     DestroyIcon(icon);
 
     hr = pLoadIconWithScaleDown(NULL, icon_path, 42, 42, &icon);
-    ok(hr == S_OK, "Expected S_OK, got %x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %lx\n", hr);
     res = GetIconInfo(icon, &info);
-    ok(res, "Failed to get icon info, error %u\n", GetLastError());
+    ok(res, "Failed to get icon info, error %lu\n", GetLastError());
     bytes = GetObjectA(info.hbmColor, sizeof(bmp), &bmp);
     ok(bytes > 0, "Failed to get bitmap info for icon\n");
     ok(bmp.bmWidth  == 42, "Wrong icon width %d\n", bmp.bmWidth);
@@ -522,7 +522,7 @@ static HWND create_control(const char *class, DWORD style, HWND parent, DWORD_PT
     if (parent)
         style |= WS_CHILD;
     hwnd = CreateWindowExA(0, class, "test", style, 0, 0, 50, 20, parent, 0, 0, NULL);
-    ok(!!hwnd, "Failed to create %s style %#x parent %p\n", class, style, parent);
+    ok(!!hwnd, "Failed to create %s style %#lx parent %p\n", class, style, parent);
     pSetWindowSubclass(hwnd, test_wm_themechanged_proc, 0, data);
     return hwnd;
 }
@@ -637,13 +637,13 @@ static void test_WM_SYSCOLORCHANGE(void)
 
     parent = CreateWindowExA(0, WC_STATICA, "parent", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100,
                              200, 200, 0, 0, 0, NULL);
-    ok(!!parent, "CreateWindowExA failed, error %d\n", GetLastError());
+    ok(!!parent, "CreateWindowExA failed, error %ld\n", GetLastError());
 
     temp.tmplate.style = WS_CHILD | WS_VISIBLE;
     temp.tmplate.cx = 50;
     temp.tmplate.cy = 50;
     dialog = CreateDialogIndirectParamA(NULL, &temp.tmplate, parent, wm_syscolorchange_dlg_proc, 0);
-    ok(!!dialog, "CreateDialogIndirectParamA failed, error %d\n", GetLastError());
+    ok(!!dialog, "CreateDialogIndirectParamA failed, error %ld\n", GetLastError());
     flush_events();
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -917,15 +917,15 @@ static void test_themed_background(void)
 
     parent = CreateWindowA(cls.lpszClassName, "parent", WS_POPUP | WS_VISIBLE, 100, 100, 100, 100,
                            0, 0, 0, 0);
-    ok(parent != NULL, "CreateWindowA failed, error %u.\n", GetLastError());
+    ok(parent != NULL, "CreateWindowA failed, error %lu.\n", GetLastError());
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
-        winetest_push_context("%s %#x", tests[i].class_name, tests[i].style);
+        winetest_push_context("%s %#lx", tests[i].class_name, tests[i].style);
 
         child = CreateWindowA(tests[i].class_name, "    ", WS_CHILD | WS_VISIBLE | tests[i].style,
                               0, 0, 50, 50, parent, 0, 0, 0);
-        ok(child != NULL, "CreateWindowA failed, error %u.\n", GetLastError());
+        ok(child != NULL, "CreateWindowA failed, error %lu.\n", GetLastError());
         flush_events();
         flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -953,17 +953,17 @@ static void test_themed_background(void)
                 color = GetPixel(hdc, 40, 40);
                 /* BS_PUSHBOX is unimplemented on Wine */
                 todo_wine_if(i == 11)
-                ok(color == 0x808080, "Expected color %#x, got %#x.\n", 0x808080, color);
+                ok(color == 0x808080, "Expected color %#x, got %#lx.\n", 0x808080, color);
             }
             else if (tests[i].seq == groupbox_seq)
             {
                 /* DrawThemeParentBackground() is used to fill content background */
                 color = GetPixel(hdc, 40, 40);
-                ok(color == 0xff, "Expected color %#x, got %#x.\n", 0xff, color);
+                ok(color == 0xff, "Expected color %#x, got %#lx.\n", 0xff, color);
 
                 /* WM_CTLCOLORSTATIC is used to fill text background */
                 color = GetPixel(hdc, 10, 10);
-                ok(color == 0x808080, "Expected color %#x, got %#x.\n", 0x808080, color);
+                ok(color == 0x808080, "Expected color %#x, got %#lx.\n", 0x808080, color);
             }
 
             ReleaseDC(child, hdc);

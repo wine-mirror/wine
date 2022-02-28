@@ -25,7 +25,12 @@
 
 #define SUBCLASS_NAME "MyStatusBar"
 
-#define expect(expected,got) ok (expected == got,"Expected %d, got %d\n",expected,got)
+#define expect(expected,got) expect_(__LINE__, expected, got)
+static inline void expect_(unsigned line, DWORD expected, DWORD got)
+{
+    ok_(__FILE__, line)(expected == got, "Expected %ld, got %ld\n", expected, got);
+}
+
 #define expect_rect(_left,_top,_right,_bottom,got) do { \
         RECT exp = {abs(got.left - _left), abs(got.top - _top), \
                     abs(got.right - _right), abs(got.bottom - _bottom)}; \
@@ -145,7 +150,7 @@ static int CALLBACK check_height_font_enumproc(ENUMLOGFONTEXA *enumlf, NEWTEXTME
         y = tm.tmHeight + (tm.tmInternalLeading ? tm.tmInternalLeading : 2) + 4;
 
         ok( (rcCtrl.bottom == max(y, g_ysize)) || (rcCtrl.bottom == max(y, g_dpisize)),
-            "got %d (expected %d or %d) for %s #%d\n",
+            "got %ld (expected %d or %d) for %s #%d\n",
             rcCtrl.bottom, max(y, g_ysize), max(y, g_dpisize), facename, sizes[i]);
 
         SelectObject(hdc, hOldFont);
@@ -370,11 +375,11 @@ static void test_status_control(void)
     crColor = SendMessageA(hWndStatus, SB_SETBKCOLOR , 0, RGB(255,0,0));
     ok(crColor == CLR_DEFAULT ||
        broken(crColor == RGB(0,0,0)), /* win95 */
-       "Expected 0x%.8x, got 0x%.8x\n", CLR_DEFAULT, crColor);
+       "Expected 0x%.8lx, got 0x%.8lx\n", CLR_DEFAULT, crColor);
     crColor = SendMessageA(hWndStatus, SB_SETBKCOLOR , 0, CLR_DEFAULT);
     ok(crColor == RGB(255,0,0) ||
        broken(crColor == RGB(0,0,0)), /* win95 */
-       "Expected 0x%.8x, got 0x%.8x\n", RGB(255,0,0), crColor);
+       "Expected 0x%.8lx, got 0x%.8lx\n", RGB(255,0,0), crColor);
 
     /* Add an icon to the status bar */
     hIcon = LoadIconA(NULL, (LPCSTR)IDI_QUESTION);

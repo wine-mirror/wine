@@ -60,7 +60,7 @@ static BOOL g_v6;
 #define expect(expected,got) expect_(__LINE__, expected, got)
 static inline void expect_(unsigned line, DWORD expected, DWORD got)
 {
-    ok_(__FILE__, line)(expected == got, "Expected %d, got %d\n", expected, got);
+    ok_(__FILE__, line)(expected == got, "Expected %ld, got %ld\n", expected, got);
 }
 
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
@@ -800,17 +800,17 @@ static void test_get_set_bkcolor(void)
 
     /* If the value is -1, the control is using the system color for the background color. */
     crColor = SendMessageA(hTree, TVM_GETBKCOLOR, 0, 0);
-    ok(crColor == ~0u, "Default background color reported as 0x%.8x\n", crColor);
+    ok(crColor == ~0u, "Default background color reported as 0x%.8lx\n", crColor);
 
     /* Test for black background */
     SendMessageA(hTree, TVM_SETBKCOLOR, 0, RGB(0,0,0));
     crColor = SendMessageA(hTree, TVM_GETBKCOLOR, 0, 0);
-    ok(crColor == RGB(0,0,0), "Black background color reported as 0x%.8x\n", crColor);
+    ok(crColor == RGB(0,0,0), "Black background color reported as 0x%.8lx\n", crColor);
 
     /* Test for white background */
     SendMessageA(hTree, TVM_SETBKCOLOR, 0, RGB(255,255,255));
     crColor = SendMessageA(hTree, TVM_GETBKCOLOR, 0, 0);
-    ok(crColor == RGB(255,255,255), "White background color reported as 0x%.8x\n", crColor);
+    ok(crColor == RGB(255,255,255), "White background color reported as 0x%.8lx\n", crColor);
 
     /* Reset the default background */
     SendMessageA(hTree, TVM_SETBKCOLOR, 0, -1);
@@ -884,7 +884,7 @@ static void test_get_set_insertmark(void)
 
     SendMessageA(hTree, TVM_SETINSERTMARKCOLOR, 0, crColor);
     crColor = SendMessageA(hTree, TVM_GETINSERTMARKCOLOR, 0, 0);
-    ok(crColor == RGB(0,0,0), "Insert mark color reported as 0x%.8x, expected 0x00000000\n", crColor);
+    ok(crColor == RGB(0,0,0), "Insert mark color reported as 0x%.8lx, expected 0x00000000\n", crColor);
 
     ok_sequence(sequences, TREEVIEW_SEQ_INDEX, test_get_set_insertmarkcolor_seq,
         "test get set insertmark color", FALSE);
@@ -1057,17 +1057,17 @@ static void test_get_set_textcolor(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     crColor = SendMessageA(hTree, TVM_GETTEXTCOLOR, 0, 0);
-    ok(crColor == ~0u, "Default text color reported as 0x%.8x\n", crColor);
+    ok(crColor == ~0u, "Default text color reported as 0x%.8lx\n", crColor);
 
     /* Test for black text */
     SendMessageA(hTree, TVM_SETTEXTCOLOR, 0, RGB(0,0,0));
     crColor = SendMessageA(hTree, TVM_GETTEXTCOLOR, 0, 0);
-    ok(crColor == RGB(0,0,0), "Black text color reported as 0x%.8x\n", crColor);
+    ok(crColor == RGB(0,0,0), "Black text color reported as 0x%.8lx\n", crColor);
 
     /* Test for white text */
     SendMessageA(hTree, TVM_SETTEXTCOLOR, 0, RGB(255,255,255));
     crColor = SendMessageA(hTree, TVM_GETTEXTCOLOR, 0, 0);
-    ok(crColor == RGB(255,255,255), "White text color reported as 0x%.8x\n", crColor);
+    ok(crColor == RGB(255,255,255), "White text color reported as 0x%.8lx\n", crColor);
 
     /* Reset the default text color */
     SendMessageA(hTree, TVM_SETTEXTCOLOR, 0, CLR_NONE);
@@ -1359,7 +1359,7 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, 
                   g_item_expanding.mask = TVIF_STATE;
                   g_item_expanding.hItem = hRoot;
                   ret = SendMessageA(pHdr->hwndFrom, TVM_GETITEMA, 0, (LPARAM)&g_item_expanding);
-                  ok(ret == TRUE, "got %lu\n", ret);
+                  ok(ret == TRUE, "got %Iu\n", ret);
                 }
                 break;
               }
@@ -1375,7 +1375,7 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, 
                   g_item_expanded.mask = TVIF_STATE;
                   g_item_expanded.hItem = hRoot;
                   ret = SendMessageA(pHdr->hwndFrom, TVM_GETITEMA, 0, (LPARAM)&g_item_expanded);
-                  ok(ret == TRUE, "got %lu\n", ret);
+                  ok(ret == TRUE, "got %Iu\n", ret);
                 }
                 if (g_get_rect_in_expand)
                 {
@@ -1424,9 +1424,9 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, 
                     return CDRF_NOTIFYITEMDRAW|CDRF_NOTIFYITEMERASE|CDRF_NOTIFYPOSTPAINT;
                 case CDDS_ITEMPREPAINT:
                     ok(text == nmcd->clrText || (g_v6 && nmcd->clrText == 0xffffffff),
-                       "got %08x vs %08x\n", text, nmcd->clrText);
+                       "got %08lx vs %08lx\n", text, nmcd->clrText);
                     ok(bkgnd == nmcd->clrTextBk || (g_v6 && nmcd->clrTextBk == 0xffffffff),
-                       "got %08x vs %08x\n", bkgnd, nmcd->clrTextBk);
+                       "got %08lx vs %08lx\n", bkgnd, nmcd->clrTextBk);
                     nmcd->clrText = cafe;
                     nmcd->clrTextBk = c0ffee;
                     SetTextColor(nmcd->nmcd.hdc, c0ffee);
@@ -1436,10 +1436,10 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, 
                     return CDRF_NOTIFYPOSTPAINT|CDRF_NEWFONT;
                 case CDDS_ITEMPOSTPAINT:
                     /* at the point of post paint notification colors are already restored */
-                    ok(nmcd->clrText == cafe, "got 0%x\n", nmcd->clrText);
-                    ok(nmcd->clrTextBk == c0ffee, "got 0%x\n", nmcd->clrTextBk);
-                    ok(text != cafe, "got 0%x\n", text);
-                    ok(bkgnd != c0ffee, "got 0%x\n", bkgnd);
+                    ok(nmcd->clrText == cafe, "got 0%lx\n", nmcd->clrText);
+                    ok(nmcd->clrTextBk == c0ffee, "got 0%lx\n", nmcd->clrTextBk);
+                    ok(text != cafe, "got 0%lx\n", text);
+                    ok(bkgnd != c0ffee, "got 0%lx\n", bkgnd);
                     if (g_customdraw_font)
                         ok(GetCurrentObject(nmcd->nmcd.hdc, OBJ_FONT) != g_customdraw_font, "got %p\n",
                            GetCurrentObject(nmcd->nmcd.hdc, OBJ_FONT));
@@ -1587,8 +1587,8 @@ static void test_expand(void)
     *(HTREEITEM *)&rect = first;
     visible = SendMessageA(tv, TVM_GETITEMRECT, FALSE, (LPARAM)&rect);
     ok(visible, "first node should be visible\n");
-    ok(!rect.left, "rect.left = %d\n", rect.left);
-    ok(!rect.top, "rect.top = %d\n", rect.top);
+    ok(!rect.left, "rect.left = %ld\n", rect.left);
+    ok(!rect.top, "rect.top = %ld\n", rect.top);
     ok(rect.right, "rect.right = 0\n");
     ok(rect.bottom, "rect.bottom = 0\n");
 
@@ -1705,7 +1705,7 @@ static void test_itemedit(void)
     r = SetWindowTextA(edit, buffA);
     expect(TRUE, r);
     r = GetWindowTextA(edit, buffA, ARRAY_SIZE(buffA));
-    ok( r == ARRAY_SIZE(buffA) - 1, "got %d\n", r );
+    ok( r == ARRAY_SIZE(buffA) - 1, "got %ld\n", r );
     /* ...but it's trimmed to MAX_PATH chars when editing ends */
     r = SendMessageA(hTree, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), (LPARAM)edit);
     expect(0, r);
@@ -2141,7 +2141,7 @@ static void test_WM_PAINT(void)
     hTree = create_treeview_control(0);
 
     clr = SendMessageA(hTree, TVM_SETBKCOLOR, 0, RGB(255, 0, 0));
-    ok(clr == ~0u, "got %d, expected -1\n", clr);
+    ok(clr == ~0u, "got %ld, expected -1\n", clr);
 
     hdc = GetDC(hMainWnd);
 
@@ -2149,10 +2149,10 @@ static void test_WM_PAINT(void)
     FillRect(hdc, &rc, GetStockObject(BLACK_BRUSH));
 
     clr = GetPixel(hdc, 1, 1);
-    ok(clr == RGB(0, 0, 0), "got 0x%x\n", clr);
+    ok(clr == RGB(0, 0, 0), "got 0x%lx\n", clr);
 
     ret = SendMessageA(hTree, WM_PAINT, (WPARAM)hdc, 0);
-    ok(ret == 0, "got %d\n", ret);
+    ok(ret == 0, "got %ld\n", ret);
 
     clr = GetPixel(hdc, 1, 1);
     htheme = pGetWindowTheme(hTree);
@@ -2160,7 +2160,7 @@ static void test_WM_PAINT(void)
     ok(clr == RGB(255, 0, 0) || broken(clr == RGB(0, 0, 0)) /* win98 */
        /* When theming is on and treeview glyphs are transparent, parent window needs to be repainted */
        || (is_glyph_transparent && clr == GetSysColor(COLOR_WINDOW)),
-        "got 0x%x\n", clr);
+        "got 0x%lx\n", clr);
 
     ReleaseDC(hMainWnd, hdc);
 
@@ -2191,8 +2191,8 @@ static void test_delete_items(void)
 
     if (item_sequence[0]->count == 2)
     {
-      ok(msg[0].lParam == (LPARAM)hChild, "expected %p, got 0x%lx\n", hChild, msg[0].lParam);
-      ok(msg[1].lParam == (LPARAM)hRoot, "expected %p, got 0x%lx\n", hRoot, msg[1].lParam);
+      ok(msg[0].lParam == (LPARAM)hChild, "expected %p, got 0x%Ix\n", hChild, msg[0].lParam);
+      ok(msg[1].lParam == (LPARAM)hRoot, "expected %p, got 0x%Ix\n", hRoot, msg[1].lParam);
     }
 
     ret = SendMessageA(hTree, TVM_GETCOUNT, 0, 0);
@@ -2334,7 +2334,7 @@ static void _check_item(HWND hwnd, HTREEITEM item, BOOL is_version_6, int line)
             width = data->width;
     todo_wine
         ok_(__FILE__, line)(width == (rect.right - rect.left) || broken(is_version_6 && width == 0) /* XP */,
-                "Width %d, rect width %d.\n", width, rect.right - rect.left);
+                "Width %d, rect width %ld.\n", width, rect.right - rect.left);
     }
 }
 
@@ -2647,7 +2647,7 @@ static void test_WM_GETDLGCODE(void)
     hTree = create_treeview_control(0);
 
     code = SendMessageA(hTree, WM_GETDLGCODE, VK_TAB, 0);
-    ok(code == (DLGC_WANTCHARS | DLGC_WANTARROWS), "0x%08x\n", code);
+    ok(code == (DLGC_WANTCHARS | DLGC_WANTARROWS), "0x%08lx\n", code);
 
     DestroyWindow(hTree);
 }
@@ -2707,7 +2707,7 @@ static void test_TVS_FULLROWSELECT(void)
     hwnd = create_treeview_control(TVS_FULLROWSELECT);
 
     style = GetWindowLongA(hwnd, GWL_STYLE);
-    ok((style & (TVS_FULLROWSELECT | TVS_HASLINES)) == (TVS_FULLROWSELECT | TVS_HASLINES), "got style 0x%08x\n", style);
+    ok((style & (TVS_FULLROWSELECT | TVS_HASLINES)) == (TVS_FULLROWSELECT | TVS_HASLINES), "got style 0x%08lx\n", style);
 
     DestroyWindow(hwnd);
 
@@ -2717,7 +2717,7 @@ static void test_TVS_FULLROWSELECT(void)
     style = GetWindowLongA(hwnd, GWL_STYLE);
     SetWindowLongA(hwnd, GWL_STYLE, style | TVS_FULLROWSELECT);
     style = GetWindowLongA(hwnd, GWL_STYLE);
-    ok(style & TVS_FULLROWSELECT, "got style 0x%08x\n", style);
+    ok(style & TVS_FULLROWSELECT, "got style 0x%08lx\n", style);
 
     DestroyWindow(hwnd);
 }

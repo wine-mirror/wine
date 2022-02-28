@@ -155,7 +155,7 @@ static void ok_sequence(const struct message *expected, const char *context)
             "%s: the procnum %d was expected, but got procnum %d instead\n",
             context, expected->procnum, actual->procnum);
         ok(expected->wParam == actual->wParam,
-            "%s: in procnum %d expecting wParam 0x%lx got 0x%lx\n",
+            "%s: in procnum %d expecting wParam 0x%Ix got 0x%Ix\n",
             context, expected->procnum, expected->wParam, actual->wParam);
         expected++;
         actual++;

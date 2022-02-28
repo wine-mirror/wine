@@ -216,7 +216,7 @@ static LRESULT parent_wnd_notify(LPARAM lParam)
         case TBN_GETDISPINFOW:
             nmdisp = (NMTBDISPINFOA *)lParam;
 
-            compare(nmdisp->dwMask, g_dwExpectedDispInfoMask, "%x");
+            compare(nmdisp->dwMask, g_dwExpectedDispInfoMask, "%lx");
             ok(nmdisp->pszText == NULL, "pszText is not NULL\n");
         break;
         case TBN_SAVE:
@@ -260,7 +260,7 @@ static LRESULT parent_wnd_notify(LPARAM lParam)
             if (restore->iItem == -1)
             {
                 ok( restore->cButtons == 25, "got %d\n", restore->cButtons );
-                ok( *restore->pCurrent == 0xcafe, "got %08x\n", *restore->pCurrent );
+                ok( *restore->pCurrent == 0xcafe, "got %08lx\n", *restore->pCurrent );
                 /* Skip the last one */
                 restore->cButtons = 11;
                 restore->pCurrent++;
@@ -269,7 +269,7 @@ static LRESULT parent_wnd_notify(LPARAM lParam)
             }
             else
             {
-                ok( *restore->pCurrent == 0xcafe0000 + restore->iItem, "got %08x\n", *restore->pCurrent );
+                ok( *restore->pCurrent == 0xcafe0000 + restore->iItem, "got %08lx\n", *restore->pCurrent );
                 if (restore->iItem < 7 || restore->iItem == 10)
                 {
                     ok( restore->tbButton.iBitmap == -1, "got %08x\n", restore->tbButton.iBitmap );
@@ -291,8 +291,8 @@ static LRESULT parent_wnd_notify(LPARAM lParam)
                     ok( restore->tbButton.fsStyle == BTNS_SEP, "%d: got %02x\n", restore->iItem, restore->tbButton.fsStyle );
                 }
 
-                ok( restore->tbButton.dwData == 0, "got %08lx\n", restore->tbButton.dwData );
-                ok( restore->tbButton.iString == 0, "got %08lx\n", restore->tbButton.iString );
+                ok( restore->tbButton.dwData == 0, "got %08Ix\n", restore->tbButton.dwData );
+                ok( restore->tbButton.iString == 0, "got %08Ix\n", restore->tbButton.iString );
 
                 restore->tbButton.iBitmap = 0;
                 restore->tbButton.fsState = TBSTATE_ENABLED;
@@ -467,12 +467,12 @@ static void basic_test(void)
     ok(SendMessageA(hToolbar, TB_ISBUTTONCHECKED, 1008, 0), "B3 pressed\n");
 
     /* tests with invalid index */
-    compare(SendMessageA(hToolbar, TB_ISBUTTONCHECKED, 0xdeadbeef, 0), -1L, "%ld");
-    compare(SendMessageA(hToolbar, TB_ISBUTTONPRESSED, 0xdeadbeef, 0), -1L, "%ld");
-    compare(SendMessageA(hToolbar, TB_ISBUTTONENABLED, 0xdeadbeef, 0), -1L, "%ld");
-    compare(SendMessageA(hToolbar, TB_ISBUTTONINDETERMINATE, 0xdeadbeef, 0), -1L, "%ld");
-    compare(SendMessageA(hToolbar, TB_ISBUTTONHIGHLIGHTED, 0xdeadbeef, 0), -1L, "%ld");
-    compare(SendMessageA(hToolbar, TB_ISBUTTONHIDDEN, 0xdeadbeef, 0), -1L, "%ld");
+    compare(SendMessageA(hToolbar, TB_ISBUTTONCHECKED, 0xdeadbeef, 0), (LRESULT)-1L, "%Id");
+    compare(SendMessageA(hToolbar, TB_ISBUTTONPRESSED, 0xdeadbeef, 0), (LRESULT)-1L, "%Id");
+    compare(SendMessageA(hToolbar, TB_ISBUTTONENABLED, 0xdeadbeef, 0), (LRESULT)-1L, "%Id");
+    compare(SendMessageA(hToolbar, TB_ISBUTTONINDETERMINATE, 0xdeadbeef, 0), (LRESULT)-1L, "%Id");
+    compare(SendMessageA(hToolbar, TB_ISBUTTONHIGHLIGHTED, 0xdeadbeef, 0), (LRESULT)-1L, "%Id");
+    compare(SendMessageA(hToolbar, TB_ISBUTTONHIDDEN, 0xdeadbeef, 0), (LRESULT)-1L, "%Id");
 
     DestroyWindow(hToolbar);
 }
@@ -753,11 +753,11 @@ static void test_add_bitmap(void)
     /* however TB_SETBITMAPSIZE/add std bitmap won't change the image size (the button size does change) */
     ok(SendMessageA(hToolbar, TB_SETBITMAPSIZE, 0, MAKELONG(8, 8)) == TRUE, "TB_SETBITMAPSIZE failed\n");
     UpdateWindow(hToolbar);
-    compare((int)SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0), MAKELONG(15, 14), "%x");
+    compare((LONG)SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0), MAKELONG(15, 14), "%lx");
     CHECK_IMAGELIST(10, 20, 15);
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 0, (LPARAM)&stdsmall) == 1, "TB_SETBITMAPSIZE failed\n");
     UpdateWindow(hToolbar);
-    compare((int)SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0), MAKELONG(23, 22), "%x");
+    compare((LONG)SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0), MAKELONG(23, 22), "%lx");
     CHECK_IMAGELIST(22, 20, 15);
 
     /* check standard bitmaps */
@@ -768,12 +768,12 @@ static void test_add_bitmap(void)
 
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&addbmp) == 0, "TB_ADDBITMAP - unexpected return\n");
     CHECK_IMAGELIST(15, 16, 16);
-    compare((int)SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0), MAKELONG(23, 22), "%x");
+    compare((LONG)SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0), MAKELONG(23, 22), "%lx");
     addbmp.nID = IDB_STD_LARGE_COLOR;
     rebuild_toolbar(&hToolbar);
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&addbmp) == 0, "TB_ADDBITMAP - unexpected return\n");
     CHECK_IMAGELIST(15, 24, 24);
-    compare((int)SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0), MAKELONG(31, 30), "%x");
+    compare((LONG)SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0), MAKELONG(31, 30), "%lx");
 
     addbmp.nID = IDB_VIEW_SMALL_COLOR;
     rebuild_toolbar(&hToolbar);
@@ -901,71 +901,71 @@ static void test_hotitem(void)
      * comctl6 doesn't have this requirement even when theme == NULL */
     SetWindowLongA(hToolbar, GWL_STYLE, TBSTYLE_FLAT | GetWindowLongA(hToolbar, GWL_STYLE));
     ret = SendMessageA(hToolbar, TB_GETHOTITEM, 0, 0);
-    ok(ret == -1, "Hot item: %ld, expected -1\n", ret);
+    ok(ret == -1, "Hot item: %Id, expected -1\n", ret);
     ret = SendMessageA(hToolbar, TB_SETHOTITEM, 1, 0);
-    ok(ret == -1, "TB_SETHOTITEM returned %ld, expected -1\n", ret);
+    ok(ret == -1, "TB_SETHOTITEM returned %Id, expected -1\n", ret);
     ret = SendMessageA(hToolbar, TB_GETHOTITEM, 0, 0);
-    ok(ret == 1, "Hot item: %ld, expected 1\n", ret);
+    ok(ret == 1, "Hot item: %Id, expected 1\n", ret);
     ret = SendMessageA(hToolbar, TB_SETHOTITEM, 2, 0);
-    ok(ret == 1, "TB_SETHOTITEM returned %ld, expected 1\n", ret);
+    ok(ret == 1, "TB_SETHOTITEM returned %Id, expected 1\n", ret);
 
     ret = SendMessageA(hToolbar, TB_SETHOTITEM, 0xbeef, 0);
-    ok(ret == 2, "TB_SETHOTITEM returned %ld, expected 2\n", ret);
+    ok(ret == 2, "TB_SETHOTITEM returned %Id, expected 2\n", ret);
     ret = SendMessageA(hToolbar, TB_GETHOTITEM, 0, 0);
-    ok(ret == 2, "Hot item: %lx, expected 2\n", ret);
+    ok(ret == 2, "Hot item: %Ix, expected 2\n", ret);
     ret = SendMessageA(hToolbar, TB_SETHOTITEM, -0xbeef, 0);
-    ok(ret == 2, "TB_SETHOTITEM returned %ld, expected 2\n", ret);
+    ok(ret == 2, "TB_SETHOTITEM returned %Id, expected 2\n", ret);
     ret = SendMessageA(hToolbar, TB_GETHOTITEM, 0, 0);
-    ok(ret == -1, "Hot item: %lx, expected -1\n", ret);
+    ok(ret == -1, "Hot item: %Ix, expected -1\n", ret);
 
     expect_hot_notify(0, 7);
     ret = SendMessageA(hToolbar, TB_SETHOTITEM, 3, 0);
-    ok(ret == -1, "TB_SETHOTITEM returned %ld, expected -1\n", ret);
+    ok(ret == -1, "TB_SETHOTITEM returned %Id, expected -1\n", ret);
     check_hot_notify();
     ret = SendMessageA(hToolbar, TB_GETHOTITEM, 0, 0);
-    ok(ret == 3, "Hot item: %lx, expected 3\n", ret);
+    ok(ret == 3, "Hot item: %Ix, expected 3\n", ret);
     g_fBlockHotItemChange = TRUE;
     ret = SendMessageA(hToolbar, TB_SETHOTITEM, 2, 0);
-    ok(ret == 3, "TB_SETHOTITEM returned %ld, expected 3\n", ret);
+    ok(ret == 3, "TB_SETHOTITEM returned %Id, expected 3\n", ret);
     ret = SendMessageA(hToolbar, TB_GETHOTITEM, 0, 0);
-    ok(ret == 3, "Hot item: %lx, expected 3\n", ret);
+    ok(ret == 3, "Hot item: %Ix, expected 3\n", ret);
     g_fBlockHotItemChange = FALSE;
 
     g_fReceivedHotItemChange = FALSE;
     ret = SendMessageA(hToolbar, TB_SETHOTITEM, 0xbeaf, 0);
-    ok(ret == 3, "TB_SETHOTITEM returned %ld, expected 3\n", ret);
+    ok(ret == 3, "TB_SETHOTITEM returned %Id, expected 3\n", ret);
     ok(g_fReceivedHotItemChange == FALSE, "TBN_HOTITEMCHANGE received for invalid parameter\n");
 
     g_fReceivedHotItemChange = FALSE;
     ret = SendMessageA(hToolbar, TB_SETHOTITEM, 3, 0);
-    ok(ret == 3, "TB_SETHOTITEM returned %ld, expected 3\n", ret);
+    ok(ret == 3, "TB_SETHOTITEM returned %Id, expected 3\n", ret);
     ok(g_fReceivedHotItemChange == FALSE, "TBN_HOTITEMCHANGE received after a duplication\n");
 
     expect_hot_notify(7, 0);
     ret = SendMessageA(hToolbar, TB_SETHOTITEM, -0xbeaf, 0);
-    ok(ret == 3, "TB_SETHOTITEM returned %ld, expected 3\n", ret);
+    ok(ret == 3, "TB_SETHOTITEM returned %Id, expected 3\n", ret);
     check_hot_notify();
     SendMessageA(hToolbar, TB_SETHOTITEM, 3, 0);
 
     /* setting disabled buttons will generate a notify with the button id but no button will be hot */
     expect_hot_notify(7, 9);
     ret = SendMessageA(hToolbar, TB_SETHOTITEM, 4, 0);
-    ok(ret == 3, "TB_SETHOTITEM returned %ld, expected 3\n", ret);
+    ok(ret == 3, "TB_SETHOTITEM returned %Id, expected 3\n", ret);
     check_hot_notify();
     ret = SendMessageA(hToolbar, TB_GETHOTITEM, 0, 0);
-    ok(ret == -1, "Hot item: %lx, expected -1\n", ret);
+    ok(ret == -1, "Hot item: %Ix, expected -1\n", ret);
     /* enabling the button won't change that */
     SendMessageA(hToolbar, TB_ENABLEBUTTON, 9, TRUE);
     ret = SendMessageA(hToolbar, TB_GETHOTITEM, 0, 0);
-    ok(ret == -1, "TB_GETHOTITEM returned %ld, expected -1\n", ret);
+    ok(ret == -1, "TB_GETHOTITEM returned %Id, expected -1\n", ret);
 
     /* disabling a hot button works */
     ret = SendMessageA(hToolbar, TB_SETHOTITEM, 3, 0);
-    ok(ret == -1, "TB_SETHOTITEM returned %ld, expected -1\n", ret);
+    ok(ret == -1, "TB_SETHOTITEM returned %Id, expected -1\n", ret);
     g_fReceivedHotItemChange = FALSE;
     SendMessageA(hToolbar, TB_ENABLEBUTTON, 7, FALSE);
     ret = SendMessageA(hToolbar, TB_GETHOTITEM, 0, 0);
-    ok(ret == 3, "TB_GETHOTITEM returned %ld, expected 3\n", ret);
+    ok(ret == 3, "TB_GETHOTITEM returned %Id, expected 3\n", ret);
     ok(g_fReceivedHotItemChange == FALSE, "Unexpected TBN_HOTITEMCHANGE\n");
 
     SendMessageA(hToolbar, TB_SETHOTITEM, 1, 0);
@@ -975,17 +975,17 @@ static void test_hotitem(void)
     g_fReceivedHotItemChange = FALSE;
     ok(SendMessageA(hToolbar, TB_SETBUTTONINFOA, 1, (LPARAM)&tbinfo) == TRUE, "TB_SETBUTTONINFOA failed\n");
     ret = SendMessageA(hToolbar, TB_GETHOTITEM, 0, 0);
-    ok(ret == 1, "TB_GETHOTITEM returned %ld, expected 1\n", ret);
+    ok(ret == 1, "TB_GETHOTITEM returned %Id, expected 1\n", ret);
     ok(g_fReceivedHotItemChange == FALSE, "Unexpected TBN_HOTITEMCHANGE\n");
 
     /* deleting a button unsets the hot item */
     ret = SendMessageA(hToolbar, TB_SETHOTITEM, 0, 0);
-    ok(ret == 1, "TB_SETHOTITEM returned %ld, expected 1\n", ret);
+    ok(ret == 1, "TB_SETHOTITEM returned %Id, expected 1\n", ret);
     g_fReceivedHotItemChange = FALSE;
     ret = SendMessageA(hToolbar, TB_DELETEBUTTON, 1, 0);
-    ok(ret == TRUE, "TB_DELETEBUTTON returned %ld, expected TRUE\n", ret);
+    ok(ret == TRUE, "TB_DELETEBUTTON returned %Id, expected TRUE\n", ret);
     ret = SendMessageA(hToolbar, TB_GETHOTITEM, 0, 0);
-    ok(ret == -1, "TB_GETHOTITEM returned %ld, expected -1\n", ret);
+    ok(ret == -1, "TB_GETHOTITEM returned %Id, expected -1\n", ret);
     ok(g_fReceivedHotItemChange == FALSE, "Unexpected TBN_HOTITEMCHANGE\n");
 
     DestroyWindow(hToolbar);
@@ -1519,11 +1519,11 @@ static void test_sizes(void)
     /* -1 in TB_SETBITMAPSIZE is a special code meaning that the coordinate shouldn't be changed */
     add_128x15_bitmap(hToolbar, 16);
     ok(SendMessageA(hToolbar, TB_SETBITMAPSIZE, 0, MAKELONG(14, -1)), "TB_SETBITMAPSIZE failed\n");
-    compare((int)SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0), MAKELONG(21, 21), "%x");
+    compare((LONG)SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0), MAKELONG(21, 21), "%lx");
     ok(SendMessageA(hToolbar, TB_SETBITMAPSIZE, 0, MAKELONG(-1, 12)), "TB_SETBITMAPSIZE failed\n");
-    compare((int)SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0), MAKELONG(21, 18), "%x");
+    compare((LONG)SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0), MAKELONG(21, 18), "%lx");
     ok(SendMessageA(hToolbar, TB_SETBITMAPSIZE, 0, MAKELONG(-1, -1)), "TB_SETBITMAPSIZE failed\n");
-    compare((int)SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0), MAKELONG(21, 18), "%x");
+    compare((LONG)SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0), MAKELONG(21, 18), "%lx");
     /* check the imagelist */
     InvalidateRect(hToolbar, NULL, TRUE);
     UpdateWindow(hToolbar);
@@ -1689,13 +1689,13 @@ static void test_sizes(void)
     SendMessageA(hToolbar, TB_ADDBUTTONSA, 1, (LPARAM)buttons1);
     check_sizes();
     GetClientRect(hToolbar, &rect);
-    ok(rect.top == 0, "rect.top = %d\n", rect.top);
-    ok(rect.bottom == 26, "rect.bottom = %d\n", rect.bottom);
+    ok(rect.top == 0, "rect.top = %ld\n", rect.top);
+    ok(rect.bottom == 26, "rect.bottom = %ld\n", rect.bottom);
 
     rebuild_toolbar_ex(&hToolbar, WS_EX_DLGMODALFRAME);
     GetClientRect(hToolbar, &rect);
-    ok(rect.top == 0, "rect.top = %d\n", rect.top);
-    ok(rect.bottom == 26, "rect.bottom = %d\n", rect.bottom);
+    ok(rect.top == 0, "rect.top = %ld\n", rect.top);
+    ok(rect.bottom == 26, "rect.bottom = %ld\n", rect.bottom);
 
     free_tbsize_results();
     DestroyWindow(hToolbar);
@@ -1714,7 +1714,7 @@ static void prepare_recalc_test(HWND *phToolbar)
     SetWindowLongA(*phToolbar, GWL_STYLE,
         GetWindowLongA(*phToolbar, GWL_STYLE) | TBSTYLE_FLAT);
     SendMessageA(*phToolbar, TB_GETITEMRECT, 1, (LPARAM)&rect);
-    ok(rect.top == 2, "Test will make no sense because initial top is %d instead of 2\n",
+    ok(rect.top == 2, "Test will make no sense because initial top is %ld instead of 2\n",
         rect.top);
 }
 
@@ -1722,7 +1722,7 @@ static BOOL did_recalc(HWND hToolbar)
 {
     RECT rect;
     SendMessageA(hToolbar, TB_GETITEMRECT, 1, (LPARAM)&rect);
-    ok(rect.top == 2 || rect.top == 0, "Unexpected top margin %d in recalc test\n",
+    ok(rect.top == 2 || rect.top == 0, "Unexpected top margin %ld in recalc test\n",
         rect.top);
     return (rect.top == 0);
 }
@@ -1741,7 +1741,7 @@ static void restore_recalc_state(HWND hToolbar)
                    SendMessageA(hToolbar, TB_GETSTYLE, 0, 0) | TBSTYLE_FLAT);
     /* safety check */
     SendMessageA(hToolbar, TB_GETITEMRECT, 1, (LPARAM)&rect);
-    ok(rect.top == 2, "Test will make no sense because initial top is %d instead of 2\n",
+    ok(rect.top == 2, "Test will make no sense because initial top is %ld instead of 2\n",
         rect.top);
 }
 
@@ -1960,13 +1960,13 @@ static void test_dispinfo(void)
 
     ret = (BOOL)SendMessageA(hToolbar, CCM_SETUNICODEFORMAT, TRUE, 0);
     compare(ret, FALSE, "%d");
-    compare(SendMessageA(hToolbar, CCM_GETUNICODEFORMAT, 0, 0), 1L, "%ld");
+    compare(SendMessageA(hToolbar, CCM_GETUNICODEFORMAT, 0, 0), (LRESULT)1L, "%Id");
     InvalidateRect(hToolbar, NULL, FALSE);
     UpdateWindow(hToolbar);
 
     ret = (BOOL)SendMessageA(hToolbar, CCM_SETUNICODEFORMAT, FALSE, 0);
     compare(ret, TRUE, "%d");
-    compare(SendMessageA(hToolbar, CCM_GETUNICODEFORMAT, 0, 0), 0L, "%ld");
+    compare(SendMessageA(hToolbar, CCM_GETUNICODEFORMAT, 0, 0), (LRESULT)0L, "%Id");
     InvalidateRect(hToolbar, NULL, FALSE);
     UpdateWindow(hToolbar);
 
@@ -2023,7 +2023,7 @@ static void test_setrows(void)
 
         rows = SendMessageA(hToolbar, TB_GETROWS, MAKELONG(0,0), MAKELONG(0,0));
         ok(rows == tbrows_results[i].expectedRows,
-                   "[%d] Unexpected number of rows %d (expected %d)\n", i, rows,
+                   "[%ld] Unexpected number of rows %d (expected %d)\n", i, rows,
                    tbrows_results[i].expectedRows);
     }
 
@@ -2133,25 +2133,25 @@ static void test_get_set_style(void)
     style = SendMessageA(hToolbar, TB_GETSTYLE, 0, 0);
     style2 = GetWindowLongA(hToolbar, GWL_STYLE);
     todo_wine
-    ok(style == style2, "got 0x%08x, expected 0x%08x\n", style, style2);
+    ok(style == style2, "got 0x%08lx, expected 0x%08lx\n", style, style2);
 
     /* try to alter common window bits */
     style2 |= WS_BORDER;
     ret = SendMessageA(hToolbar, TB_SETSTYLE, 0, style2);
-    ok(ret == 0, "got %d\n", ret);
+    ok(ret == 0, "got %ld\n", ret);
     style = SendMessageA(hToolbar, TB_GETSTYLE, 0, 0);
     style2 = GetWindowLongA(hToolbar, GWL_STYLE);
     ok((style != style2) && (style == (style2 | WS_BORDER)),
-        "got 0x%08x, expected 0x%08x\n", style, style2);
-    ok(style & WS_BORDER, "got 0x%08x\n", style);
+        "got 0x%08lx, expected 0x%08lx\n", style, style2);
+    ok(style & WS_BORDER, "got 0x%08lx\n", style);
 
     /* now styles are the same, alter window style */
     ret = SendMessageA(hToolbar, TB_SETSTYLE, 0, style2);
-    ok(ret == 0, "got %d\n", ret);
+    ok(ret == 0, "got %ld\n", ret);
     style2 |= WS_BORDER;
     SetWindowLongA(hToolbar, GWL_STYLE, style2);
     style = SendMessageA(hToolbar, TB_GETSTYLE, 0, 0);
-    ok(style == style2, "got 0x%08x, expected 0x%08x\n", style, style2);
+    ok(style == style2, "got 0x%08lx, expected 0x%08lx\n", style, style2);
 
     DestroyWindow(hToolbar);
 }
@@ -2179,13 +2179,13 @@ static LRESULT WINAPI toolbar_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, 
 
             /* control is already set up */
             style = SendMessageA(hwnd, TB_GETSTYLE, 0, 0);
-            ok(style != 0, "got %x\n", style);
+            ok(style != 0, "got %lx\n", style);
 
             style = GetWindowLongA(hwnd, GWL_STYLE);
-            ok((style & TBSTYLE_TOOLTIPS) == 0, "got 0x%08x\n", style);
+            ok((style & TBSTYLE_TOOLTIPS) == 0, "got 0x%08lx\n", style);
             SetWindowLongA(hwnd, GWL_STYLE, style|TBSTYLE_TOOLTIPS);
             style = GetWindowLongA(hwnd, GWL_STYLE);
-            ok((style & TBSTYLE_TOOLTIPS) == TBSTYLE_TOOLTIPS, "got 0x%08x\n", style);
+            ok((style & TBSTYLE_TOOLTIPS) == TBSTYLE_TOOLTIPS, "got 0x%08lx\n", style);
 
             return ret;
         }
@@ -2199,23 +2199,23 @@ static LRESULT WINAPI toolbar_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, 
             CHECK_EXPECT2(g_hook_WM_CREATE);
 
             style = GetWindowLongA(hwnd, GWL_STYLE);
-            ok((style & TBSTYLE_TOOLTIPS) == TBSTYLE_TOOLTIPS, "got 0x%08x\n", style);
+            ok((style & TBSTYLE_TOOLTIPS) == TBSTYLE_TOOLTIPS, "got 0x%08lx\n", style);
 
             /* test if toolbar-specific messages are already working before WM_CREATE */
             style = SendMessageA(hwnd, TB_GETSTYLE, 0, 0);
-            ok(style != 0, "got %x\n", style);
-            ok((style & TBSTYLE_TOOLTIPS) == TBSTYLE_TOOLTIPS, "got 0x%x\n", style);
-            ok((cs->style & TBSTYLE_TOOLTIPS) == 0, "0x%08x\n", cs->style);
+            ok(style != 0, "got %lx\n", style);
+            ok((style & TBSTYLE_TOOLTIPS) == TBSTYLE_TOOLTIPS, "got 0x%lx\n", style);
+            ok((cs->style & TBSTYLE_TOOLTIPS) == 0, "0x%08lx\n", cs->style);
 
             ret = CallWindowProcA(oldproc, hwnd, msg, wParam, lParam);
 
             style = GetWindowLongA(hwnd, GWL_STYLE);
-            ok((style & TBSTYLE_TOOLTIPS) == TBSTYLE_TOOLTIPS, "got 0x%08x\n", style);
+            ok((style & TBSTYLE_TOOLTIPS) == TBSTYLE_TOOLTIPS, "got 0x%08lx\n", style);
 
             /* test if toolbar-specific messages are already working before WM_CREATE */
             style = SendMessageA(hwnd, TB_GETSTYLE, 0, 0);
-            ok(style != 0, "got %x\n", style);
-            ok((style & TBSTYLE_TOOLTIPS) == TBSTYLE_TOOLTIPS, "got 0x%x\n", style);
+            ok(style != 0, "got %lx\n", style);
+            ok((style & TBSTYLE_TOOLTIPS) == TBSTYLE_TOOLTIPS, "got 0x%lx\n", style);
 
             return ret;
         }
@@ -2276,11 +2276,11 @@ static void test_create(BOOL v6)
     style = GetWindowLongA(hwnd, GWL_STYLE);
     if (v6)
     {
-        ok(!(style & TBSTYLE_TOOLTIPS), "got 0x%08x\n", style);
+        ok(!(style & TBSTYLE_TOOLTIPS), "got 0x%08lx\n", style);
     }
     else
     {
-        ok((style & TBSTYLE_TOOLTIPS) == TBSTYLE_TOOLTIPS, "got 0x%08x\n", style);
+        ok((style & TBSTYLE_TOOLTIPS) == TBSTYLE_TOOLTIPS, "got 0x%08lx\n", style);
 
         tooltip = (HWND)SendMessageA(hwnd, TB_GETTOOLTIPS, 0, 0);
         ok(tooltip != NULL, "got %p\n", tooltip);
@@ -2296,10 +2296,10 @@ static void test_create(BOOL v6)
         0, 0, 0, 0, hMainWnd, (HMENU)5, GetModuleHandleA(NULL), NULL);
 
     style = GetWindowLongA(hwnd, GWL_STYLE);
-    ok((style & TBSTYLE_TRANSPARENT) == TBSTYLE_TRANSPARENT, "got 0x%08x\n", style);
+    ok((style & TBSTYLE_TRANSPARENT) == TBSTYLE_TRANSPARENT, "got 0x%08lx\n", style);
 
     style = SendMessageA(hwnd, TB_GETSTYLE, 0, 0);
-    ok((style & TBSTYLE_TRANSPARENT) == TBSTYLE_TRANSPARENT, "got 0x%08x\n", style);
+    ok((style & TBSTYLE_TRANSPARENT) == TBSTYLE_TRANSPARENT, "got 0x%08lx\n", style);
 
     DestroyWindow(hwnd);
 
@@ -2314,10 +2314,10 @@ static void test_create(BOOL v6)
                          GetModuleHandleA(NULL), NULL);
 
     style = GetWindowLongA(hwnd, GWL_STYLE);
-    ok(!(style & TBSTYLE_TRANSPARENT), "got 0x%08x\n", style);
+    ok(!(style & TBSTYLE_TRANSPARENT), "got 0x%08lx\n", style);
 
     style = SendMessageA(hwnd, TB_GETSTYLE, 0, 0);
-    ok(!(style & TBSTYLE_TRANSPARENT), "got 0x%08x\n", style);
+    ok(!(style & TBSTYLE_TRANSPARENT), "got 0x%08lx\n", style);
 
     DestroyWindow(hwnd);
 }
@@ -2384,20 +2384,20 @@ static void test_TB_GET_SET_EXTENDEDSTYLE(void)
         oldstyle2 = SendMessageA(hwnd, TB_GETEXTENDEDSTYLE, 0, 0);
 
         oldstyle = SendMessageA(hwnd, TB_SETEXTENDEDSTYLE, ptr->mask, ptr->style);
-        ok(oldstyle == oldstyle2, "%d: got old style 0x%08x, expected 0x%08x\n", i, oldstyle, oldstyle2);
+        ok(oldstyle == oldstyle2, "%d: got old style 0x%08lx, expected 0x%08lx\n", i, oldstyle, oldstyle2);
         style = SendMessageA(hwnd, TB_GETEXTENDEDSTYLE, 0, 0);
-        ok(style == ptr->style_set, "%d: got style 0x%08x, expected 0x%08x\n", i, style, ptr->style_set);
+        ok(style == ptr->style_set, "%d: got style 0x%08lx, expected 0x%08lx\n", i, style, ptr->style_set);
     }
 
     /* Windows sets CCS_VERT when TB_GETEXTENDEDSTYLE is set */
     oldstyle2 = SendMessageA(hwnd, TB_GETEXTENDEDSTYLE, 0, 0);
     oldstyle = SendMessageA(hwnd, TB_SETEXTENDEDSTYLE, 0, TBSTYLE_EX_VERTICAL);
-    ok(oldstyle == oldstyle2, "got old style 0x%08x, expected 0x%08x\n", oldstyle, oldstyle2);
+    ok(oldstyle == oldstyle2, "got old style 0x%08lx, expected 0x%08lx\n", oldstyle, oldstyle2);
     style = SendMessageA(hwnd, TB_GETEXTENDEDSTYLE, 0, 0);
-    ok(style == TBSTYLE_EX_VERTICAL, "got style 0x%08x, expected 0x%08x\n", style, TBSTYLE_EX_VERTICAL);
+    ok(style == TBSTYLE_EX_VERTICAL, "got style 0x%08lx, expected 0x%08x\n", style, TBSTYLE_EX_VERTICAL);
     style = SendMessageA(hwnd, TB_GETSTYLE, 0, 0);
     todo_wine
-    ok(style == CCS_VERT, "got style 0x%08x, expected CCS_VERT\n", style);
+    ok(style == CCS_VERT, "got style 0x%08lx, expected CCS_VERT\n", style);
 
     DestroyWindow(hwnd);
 }
@@ -2504,11 +2504,11 @@ static void test_save(void)
     DestroyWindow( wnd );
 
     res = RegOpenKeyW( HKEY_CURRENT_USER, L"Software\\Wine\\WineTest", &key );
-    ok( !res, "got %08x\n", res );
+    ok( !res, "got %08lx\n", res );
     res = RegQueryValueExW( key, L"toolbartest", NULL, &type, data, &size );
-    ok( !res, "got %08x\n", res );
-    ok( type == REG_BINARY, "got %08x\n", type );
-    ok( size == sizeof(expect), "got %08x\n", size );
+    ok( !res, "got %08lx\n", res );
+    ok( type == REG_BINARY, "got %08lx\n", type );
+    ok( size == sizeof(expect), "got %08lx\n", size );
     ok( !memcmp( data, expect, size ), "mismatch\n" );
 
     RegCloseKey( key );
@@ -2521,23 +2521,23 @@ static void test_save(void)
     ok( res, "restoring failed\n" );
     ok_sequence(sequences, PARENT_SEQ_INDEX, restore_parent_seq, "restore", FALSE);
     count = SendMessageW( wnd, TB_BUTTONCOUNT, 0, 0 );
-    ok( count == ARRAY_SIZE(expect_btns), "got %d\n", count );
+    ok( count == ARRAY_SIZE(expect_btns), "got %ld\n", count );
 
     for (i = 0; i < count; i++)
     {
         res = SendMessageW( wnd, TB_GETBUTTON, i, (LPARAM)&tb );
-        ok( res, "got %d\n", res );
+        ok( res, "got %ld\n", res );
 
-        ok( tb.iBitmap == expect_btns[i].iBitmap, "%d: got %d\n", i, tb.iBitmap );
-        ok( tb.idCommand == expect_btns[i].idCommand, "%d: got %d\n", i, tb.idCommand );
-        ok( tb.fsState == expect_btns[i].fsState, "%d: got %02x\n", i, tb.fsState );
-        ok( tb.fsStyle == expect_btns[i].fsStyle, "%d: got %02x\n", i, tb.fsStyle );
-        ok( tb.dwData == expect_btns[i].dwData, "%d: got %lx\n", i, tb.dwData );
+        ok( tb.iBitmap == expect_btns[i].iBitmap, "%ld: got %d\n", i, tb.iBitmap );
+        ok( tb.idCommand == expect_btns[i].idCommand, "%ld: got %d\n", i, tb.idCommand );
+        ok( tb.fsState == expect_btns[i].fsState, "%ld: got %02x\n", i, tb.fsState );
+        ok( tb.fsStyle == expect_btns[i].fsStyle, "%ld: got %02x\n", i, tb.fsStyle );
+        ok( tb.dwData == expect_btns[i].dwData, "%ld: got %Ix\n", i, tb.dwData );
         if (IS_INTRESOURCE(expect_btns[i].iString))
-            ok( tb.iString == expect_btns[i].iString, "%d: got %lx\n", i, tb.iString );
+            ok( tb.iString == expect_btns[i].iString, "%ld: got %Ix\n", i, tb.iString );
         else
             ok( !strcmp( (char *)tb.iString, (char *)expect_btns[i].iString ),
-                "%d: got %s\n", i, (char *)tb.iString );
+                "%ld: got %s\n", i, (char *)tb.iString );
 
         /* In fact the ptr value set in TBN_GETBUTTONINFOA is simply copied */
         if (tb.idCommand == 7)

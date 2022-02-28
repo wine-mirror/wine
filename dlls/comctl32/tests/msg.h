@@ -114,7 +114,7 @@ static void dump_sequence( struct msg_sequence **seq, int sequence_index,
     trace_(file, line)("Failed sequence %s:\n", context );
     while (expected->message && actual->message)
     {
-        trace_(file, line)( "  %u: expected: %04x - actual: %04x wp %08lx lp %08lx\n",
+        trace_(file, line)( "  %u: expected: %04x - actual: %04x wp %08Ix lp %08Ix\n",
                             count, expected->message, actual->message, actual->wParam, actual->lParam );
 
 	if (expected->message == actual->message)
@@ -155,7 +155,7 @@ static void dump_sequence( struct msg_sequence **seq, int sequence_index,
 
     while (actual->message)
     {
-        trace_(file, line)( "  %u: expected: nothing - actual: %04x wp %08lx lp %08lx\n",
+        trace_(file, line)( "  %u: expected: nothing - actual: %04x wp %08Ix lp %08Ix\n",
                             count, actual->message, actual->wParam, actual->lParam );
         actual++;
         count++;
@@ -190,14 +190,14 @@ static void ok_sequence_(struct msg_sequence **seq, int sequence_index,
                         failcount++;
                         dump++;
                         ok_(file, line) (FALSE,
-                            "%s: in msg 0x%04x expecting wParam 0x%lx got 0x%lx\n",
+                            "%s: in msg 0x%04x expecting wParam 0x%Ix got 0x%Ix\n",
                             context, expected->message, expected->wParam, actual->wParam);
                     }
                 }
                 else
                 {
                     ok_(file, line) (expected->wParam == actual->wParam,
-                        "%s: in msg 0x%04x expecting wParam 0x%lx got 0x%lx\n",
+                        "%s: in msg 0x%04x expecting wParam 0x%Ix got 0x%Ix\n",
                         context, expected->message, expected->wParam, actual->wParam);
                     if (expected->wParam != actual->wParam) dump++;
                 }
@@ -212,14 +212,14 @@ static void ok_sequence_(struct msg_sequence **seq, int sequence_index,
                         failcount++;
                         dump++;
                         ok_(file, line) (FALSE,
-                            "%s: in msg 0x%04x expecting lParam 0x%lx got 0x%lx\n",
+                            "%s: in msg 0x%04x expecting lParam 0x%Ix got 0x%Ix\n",
                             context, expected->message, expected->lParam, actual->lParam);
                     }
                 }
                 else
                 {
                     ok_(file, line) (expected->lParam == actual->lParam,
-                        "%s: in msg 0x%04x expecting lParam 0x%lx got 0x%lx\n",
+                        "%s: in msg 0x%04x expecting lParam 0x%Ix got 0x%Ix\n",
                         context, expected->message, expected->lParam, actual->lParam);
                     if (expected->lParam != actual->lParam) dump++;
                 }
@@ -234,14 +234,14 @@ static void ok_sequence_(struct msg_sequence **seq, int sequence_index,
                         failcount++;
                         dump++;
                         ok_(file, line) (FALSE,
-                            "%s: in msg 0x%04x expecting cd stage 0x%08x got 0x%08x\n",
+                            "%s: in msg 0x%04x expecting cd stage 0x%08lx got 0x%08lx\n",
                             context, expected->message, expected->stage, actual->stage);
                     }
                 }
                 else
                 {
                     ok_(file, line) (expected->stage == actual->stage,
-                        "%s: in msg 0x%04x expecting cd stage 0x%08x got 0x%08x\n",
+                        "%s: in msg 0x%04x expecting cd stage 0x%08lx got 0x%08lx\n",
                         context, expected->message, expected->stage, actual->stage);
                     if (expected->stage != actual->stage) dump++;
                 }

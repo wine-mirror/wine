@@ -35,7 +35,7 @@
 #define expect(expected,got) expect_(__LINE__, expected, got)
 static inline void expect_(unsigned line, DWORD expected, DWORD got)
 {
-    ok_(__FILE__, line)(expected == got, "Expected %d, got %d\n", expected, got);
+    ok_(__FILE__, line)(expected == got, "Expected %ld, got %ld\n", expected, got);
 }
 
 typedef struct _STREAMDATA
@@ -96,13 +96,13 @@ static void init_functions(void)
 /* Callbacks */
 static INT CALLBACK CB_CmpLT(PVOID p1, PVOID p2, LPARAM lp)
 {
-    ok(lp == 0x1abe11ed, "lp=%ld\n", lp);
+    ok(lp == 0x1abe11ed, "lp=%Id\n", lp);
     return p1 < p2 ? -1 : p1 > p2 ? 1 : 0;
 }
 
 static INT CALLBACK CB_CmpGT(PVOID p1, PVOID p2, LPARAM lp)
 {
-    ok(lp == 0x1abe11ed, "lp=%ld\n", lp);
+    ok(lp == 0x1abe11ed, "lp=%Id\n", lp);
     return p1 > p2 ? -1 : p1 < p2 ? 1 : 0;
 }
 
@@ -115,14 +115,14 @@ static INT nMessages[4];
 static PVOID CALLBACK CB_MergeInsertSrc(UINT op, PVOID p1, PVOID p2, LPARAM lp)
 {
     nMessages[op]++;
-    ok(lp == 0x1abe11ed, "lp=%ld\n", lp);
+    ok(lp == 0x1abe11ed, "lp=%Id\n", lp);
     return p1;
 }        
 
 static PVOID CALLBACK CB_MergeDeleteOddSrc(UINT op, PVOID p1, PVOID p2, LPARAM lp)
 {
     nMessages[op]++;
-    ok(lp == 0x1abe11ed, "lp=%ld\n", lp);
+    ok(lp == 0x1abe11ed, "lp=%Id\n", lp);
     return ((PCHAR)p2)+1;
 }
 
@@ -209,12 +209,12 @@ static void test_dpa(void)
     
     GetSystemInfo(&si);
     hHeap = HeapCreate(0, 1, 2);
-    ok(hHeap != NULL, "error=%d\n", GetLastError());
+    ok(hHeap != NULL, "error=%ld\n", GetLastError());
     dpa3 = pDPA_CreateEx(0, hHeap);
     ok(dpa3 != NULL, "\n");
     ret = pDPA_Grow(dpa3, si.dwPageSize + 1);
     ok(!ret && GetLastError() == ERROR_NOT_ENOUGH_MEMORY,
-       "ret=%d error=%d\n", ret, GetLastError());
+       "ret=%d error=%ld\n", ret, GetLastError());
 
     dpa = pDPA_Create(0);
     ok(dpa != NULL, "\n");
@@ -224,7 +224,7 @@ static void test_dpa(void)
     /* Fill the created gap */
     ok(pDPA_SetPtr(dpa, 0, (PVOID)5), "\n");
     rc=CheckDPA(dpa, 0x56, &dw);
-    ok(rc, "dw=0x%x\n", dw);
+    ok(rc, "dw=0x%lx\n", dw);
     
     /* Prepend item */
     ret = pDPA_InsertPtr(dpa, 1, (PVOID)1);
@@ -240,7 +240,7 @@ static void test_dpa(void)
     ok(ret == 5, "ret=%d\n", ret);
 
     rc=CheckDPA(dpa, 0x516324, &dw);
-    ok(rc, "dw=0x%x\n", dw);
+    ok(rc, "dw=0x%lx\n", dw);
 
     for(i = 1; i <= 6; i++)
     {
@@ -254,28 +254,28 @@ static void test_dpa(void)
     /* Sort DPA */
     ok(pDPA_Sort(dpa, CB_CmpGT, 0x1abe11ed), "\n");
     rc=CheckDPA(dpa, 0x654321, &dw);
-    ok(rc, "dw=0x%x\n", dw);
+    ok(rc, "dw=0x%lx\n", dw);
     
     /* Clone into a new DPA */
     dpa2 = pDPA_Clone(dpa, NULL);
     ok(dpa2 != NULL, "\n");
     /* The old data should have been preserved */
     rc=CheckDPA(dpa2, 0x654321, &dw2);
-    ok(rc, "dw=0x%x\n", dw2);
+    ok(rc, "dw=0x%lx\n", dw2);
     ok(pDPA_Sort(dpa, CB_CmpLT, 0x1abe11ed), "\n");
     
     /* Test if the DPA itself was really copied */
     rc=CheckDPA(dpa,  0x123456, &dw);
-    ok(rc, "dw=0x%x\n",  dw );
+    ok(rc, "dw=0x%lx\n",  dw );
     rc=CheckDPA(dpa2, 0x654321, &dw2);
-    ok(rc, "dw2=0x%x\n", dw2);
+    ok(rc, "dw2=0x%lx\n", dw2);
 
     /* Clone into an old DPA */
     SetLastError(ERROR_SUCCESS);
     p = pDPA_Clone(dpa, dpa3);
     ok(p == dpa3, "p=%p\n", p);
     rc=CheckDPA(dpa3, 0x123456, &dw3);
-    ok(rc, "dw3=0x%x\n", dw3);
+    ok(rc, "dw3=0x%lx\n", dw3);
 
     for(i = 1; i <= 6; i++)
     {
@@ -309,7 +309,7 @@ static void test_dpa(void)
     p = pDPA_DeletePtr(dpa, 2);
     ok(p == (PVOID)3, "p=%p\n", p);
     rc=CheckDPA(dpa, 0x12456, &dw);
-    ok(rc, "dw=0x%x\n", dw);
+    ok(rc, "dw=0x%lx\n", dw);
 
     /* Check where to re-insert the deleted item */
     i = pDPA_Search(dpa, (PVOID)3, 0, 
@@ -328,7 +328,7 @@ static void test_dpa(void)
     ret = pDPA_InsertPtr(dpa, 2, (PVOID)3);
     ok(ret == 2, "ret=%d i=%d\n", ret, 2);
     rc=CheckDPA(dpa, 0x123456, &dw);
-    ok(rc, "dw=0x%x\n", dw);
+    ok(rc, "dw=0x%lx\n", dw);
     
     /* When doing a binary search while claiming reverse order all indexes
      * should be bogus */
@@ -346,7 +346,7 @@ static void test_dpa(void)
           
     pDPA_DeleteAllPtrs(dpa2);
     rc=CheckDPA(dpa2, 0, &dw2);
-    ok(rc, "dw2=0x%x\n", dw2);
+    ok(rc, "dw2=0x%lx\n", dw2);
 
     pDPA_Destroy(dpa);
     pDPA_Destroy(dpa2);
@@ -372,7 +372,7 @@ static void test_DPA_Merge(void)
     ok(ret == 2, "ret=%d\n", ret);
 
     rc = CheckDPA(dpa, 0x135, &dw);
-    ok(rc, "dw=0x%x\n", dw);
+    ok(rc, "dw=0x%lx\n", dw);
 
     for (i = 0; i < 6; i++)
     {
@@ -383,16 +383,16 @@ static void test_DPA_Merge(void)
     }
 
     rc = CheckDPA(dpa2, 0x654321, &dw);
-    ok(rc, "dw=0x%x\n", dw);
+    ok(rc, "dw=0x%lx\n", dw);
     rc = CheckDPA(dpa3, 0x123456, &dw);
-    ok(rc, "dw=0x%x\n", dw);
+    ok(rc, "dw=0x%lx\n", dw);
 
     /* Delete all odd entries from dpa2 */
     memset(nMessages, 0, sizeof(nMessages));
     pDPA_Merge(dpa2, dpa, DPAM_INTERSECT,
                CB_CmpLT, CB_MergeDeleteOddSrc, 0x1abe11ed);
     rc = CheckDPA(dpa2, 0x246, &dw);
-    ok(rc, "dw=0x%x\n", dw);
+    ok(rc, "dw=0x%lx\n", dw);
 
     expect(3, nMessages[DPAMM_MERGE]);
     expect(3, nMessages[DPAMM_DELETE]);
@@ -409,7 +409,7 @@ static void test_DPA_Merge(void)
     pDPA_Merge(dpa2, dpa, DPAM_INTERSECT,
                CB_CmpLT, CB_MergeInsertSrc, 0x1abe11ed);
     rc = CheckDPA(dpa2, 0x135, &dw);
-    ok(rc, "dw=0x%x\n", dw);
+    ok(rc, "dw=0x%lx\n", dw);
 
     expect(3, nMessages[DPAMM_MERGE]);
     expect(6, nMessages[DPAMM_DELETE]);
@@ -431,7 +431,7 @@ static void test_DPA_Merge(void)
     rc = CheckDPA(dpa2, 0x123456, &dw);
     ok(rc ||
        broken(!rc && dw == 0x23456), /* 4.7x */
-       "dw=0x%x\n", dw);
+       "dw=0x%lx\n", dw);
 
     expect(0, nMessages[DPAMM_MERGE]);
     expect(0, nMessages[DPAMM_DELETE]);
@@ -463,13 +463,13 @@ static void test_DPA_Merge(void)
        "Expected 3, got %d\n", nMessages[DPAMM_INSERT]);
 
     rc = CheckDPA(dpa,  0x123456, &dw);
-    ok(rc, "dw=0x%x\n",  dw);
+    ok(rc, "dw=0x%lx\n",  dw);
     rc = CheckDPA(dpa2, 0x123456, &dw);
     ok(rc ||
        broken(!rc), /* win98 */
-       "dw=0x%x\n", dw);
+       "dw=0x%lx\n", dw);
     rc = CheckDPA(dpa3, 0x123456, &dw);
-    ok(rc, "dw=0x%x\n", dw);
+    ok(rc, "dw=0x%lx\n", dw);
 
     pDPA_Destroy(dpa);
     pDPA_Destroy(dpa2);
@@ -492,13 +492,13 @@ static void test_DPA_EnumCallback(void)
     }
 
     rc = CheckDPA(dpa, 0x123456, &dw);
-    ok(rc, "dw=0x%x\n", dw);
+    ok(rc, "dw=0x%lx\n", dw);
 
     nEnum = 0;
     /* test callback sets first 3 items to 7 */
     pDPA_EnumCallback(dpa, CB_EnumFirstThree, dpa);
     rc = CheckDPA(dpa, 0x777456, &dw);
-    ok(rc, "dw=0x%x\n", dw);
+    ok(rc, "dw=0x%lx\n", dw);
     ok(nEnum == 3, "nEnum=%d\n", nEnum);
 
     pDPA_Destroy(dpa);
@@ -535,7 +535,7 @@ static void test_DPA_LoadStream(void)
     HDPA dpa;
 
     hRes = CoInitialize(NULL);
-    ok(hRes == S_OK, "Failed to initialize COM, hr %#x.\n", hRes);
+    ok(hRes == S_OK, "Failed to initialize COM, hr %#lx.\n", hRes);
 
     dwMode = STGM_DIRECT|STGM_CREATE|STGM_READWRITE|STGM_SHARE_EXCLUSIVE;
     hRes = StgCreateDocfile(NULL, dwMode|STGM_DELETEONRELEASE, 0, &pStg);
@@ -622,10 +622,10 @@ static void test_DPA_LoadStream(void)
     expect(E_FAIL, hRes);
 
     ret = IStream_Release(pStm);
-    ok(!ret, "ret=%d\n", ret);
+    ok(!ret, "ret=%ld\n", ret);
 
     ret = IStorage_Release(pStg);
-    ok(!ret, "ret=%d\n", ret);
+    ok(!ret, "ret=%ld\n", ret);
 
     CoUninitialize();
 }
@@ -643,7 +643,7 @@ static void test_DPA_SaveStream(void)
     LARGE_INTEGER liZero;
 
     hRes = CoInitialize(NULL);
-    ok(hRes == S_OK, "Failed to initialize COM, hr %#x.\n", hRes);
+    ok(hRes == S_OK, "Failed to initialize COM, hr %#lx.\n", hRes);
 
     dwMode = STGM_DIRECT|STGM_CREATE|STGM_READWRITE|STGM_SHARE_EXCLUSIVE;
     hRes = StgCreateDocfile(NULL, dwMode|STGM_DELETEONRELEASE, 0, &pStg);
@@ -657,7 +657,7 @@ static void test_DPA_SaveStream(void)
     /* simple parameter check */
     hRes = pDPA_SaveStream(dpa, NULL, pStm, NULL);
     ok(hRes == E_INVALIDARG ||
-       broken(hRes == S_OK) /* XP and below */, "Wrong result, %d\n", hRes);
+       broken(hRes == S_OK) /* XP and below */, "Wrong result, %ld\n", hRes);
 if (0) {
     /* crashes on XP */
     hRes = pDPA_SaveStream(NULL, CB_Save, pStm, NULL);
@@ -688,7 +688,7 @@ if (0) {
     hRes = pDPA_LoadStream(&dpa, CB_Load, pStm, (void*)0xdeadbeef);
     expect(S_OK, hRes);
     rc = CheckDPA(dpa, 0x123456, &dw);
-    ok(rc, "dw=0x%x\n", dw);
+    ok(rc, "dw=0x%lx\n", dw);
     pDPA_Destroy(dpa);
 
     ret = IStream_Release(pStm);

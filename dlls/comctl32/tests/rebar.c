@@ -930,8 +930,8 @@ static void expect_band_content_(int line, HWND hRebar, UINT uBand, INT fStyle, 
     rb.cch = MAX_PATH;
     ok(SendMessageA(hRebar, RB_GETBANDINFOA, uBand, (LPARAM)&rb), "RB_GETBANDINFOA failed from line %d\n", line);
     expect_eq(line, rb.fStyle, fStyle, int, "%x");
-    expect_eq(line, rb.clrFore, clrFore, COLORREF, "%x");
-    expect_eq(line, rb.clrBack, clrBack, COLORREF, "%x");
+    expect_eq(line, rb.clrFore, clrFore, COLORREF, "%lx");
+    expect_eq(line, rb.clrBack, clrBack, COLORREF, "%lx");
     expect_eq(line, strcmp(rb.lpText, lpText), 0, int, "%d");
     expect_eq(line, rb.iImage, iImage, int, "%x");
     expect_eq(line, rb.hwndChild, hwndChild, HWND, "%p");
@@ -945,7 +945,7 @@ static void expect_band_content_(int line, HWND hRebar, UINT uBand, INT fStyle, 
     expect_eq(line, rb.cyMaxChild, cyMaxChild, int, "%x");
     expect_eq(line, rb.cyIntegral, cyIntegral, int, "%x");
     expect_eq(line, rb.cxIdeal, cxIdeal, int, "%d");
-    expect_eq(line, rb.lParam, lParam, LPARAM, "%ld");
+    expect_eq(line, rb.lParam, lParam, LPARAM, "%Id");
     ok(rb.cxHeader == cxHeader || rb.cxHeader == cxHeader + 1 || broken(rb.cxHeader == cxHeader_broken),
         "expected %d for %d from line %d\n", cxHeader, rb.cxHeader, line);
 }
@@ -1029,9 +1029,9 @@ static void test_colors(void)
 
     /* test default colors */
     clr = SendMessageA(hRebar, RB_GETTEXTCOLOR, 0, 0);
-    compare(clr, CLR_NONE, "%x");
+    compare(clr, CLR_NONE, "%lx");
     clr = SendMessageA(hRebar, RB_GETBKCOLOR, 0, 0);
-    compare(clr, CLR_NONE, "%x");
+    compare(clr, CLR_NONE, "%lx");
 
     scheme.dwSize = sizeof(scheme);
     scheme.clrBtnHighlight = 0;
@@ -1039,8 +1039,8 @@ static void test_colors(void)
     ret = SendMessageA(hRebar, RB_GETCOLORSCHEME, 0, (LPARAM)&scheme);
     if (ret)
     {
-        compare(scheme.clrBtnHighlight, CLR_DEFAULT, "%x");
-        compare(scheme.clrBtnShadow, CLR_DEFAULT, "%x");
+        compare(scheme.clrBtnHighlight, CLR_DEFAULT, "%lx");
+        compare(scheme.clrBtnShadow, CLR_DEFAULT, "%lx");
     }
     else
         skip("RB_GETCOLORSCHEME not supported\n");
@@ -1052,14 +1052,14 @@ static void test_colors(void)
     bi.clrFore = bi.clrBack = 0xc0ffe;
     ret = SendMessageA(hRebar, RB_GETBANDINFOA, 0, (LPARAM)&bi);
     ok(ret, "RB_GETBANDINFOA failed\n");
-    compare(bi.clrFore, RGB(0, 0, 0), "%x");
-    compare(bi.clrBack, GetSysColor(COLOR_3DFACE), "%x");
+    compare(bi.clrFore, RGB(0, 0, 0), "%lx");
+    compare(bi.clrBack, GetSysColor(COLOR_3DFACE), "%lx");
 
     SendMessageA(hRebar, RB_SETTEXTCOLOR, 0, RGB(255, 0, 0));
     bi.clrFore = bi.clrBack = 0xc0ffe;
     ret = SendMessageA(hRebar, RB_GETBANDINFOA, 0, (LPARAM)&bi);
     ok(ret, "RB_GETBANDINFOA failed\n");
-    compare(bi.clrFore, RGB(0, 0, 0), "%x");
+    compare(bi.clrFore, RGB(0, 0, 0), "%lx");
 
     DestroyWindow(hRebar);
 }

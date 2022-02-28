@@ -417,7 +417,7 @@ static void run_test_(TASKDIALOGCONFIG *info, int expect_button, int expect_radi
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     hr = pTaskDialogIndirect(info, &ret_button, &ret_radio, &ret_verification);
-    ok_(file, line)(hr == S_OK, "TaskDialogIndirect() failed, got %#x.\n", hr);
+    ok_(file, line)(hr == S_OK, "TaskDialogIndirect() failed, got %#lx.\n", hr);
 
     ok_sequence_(sequences, TASKDIALOG_SEQ_INDEX, msg_start, context, FALSE, file, line);
     ok_(file, line)(ret_button == expect_button,
@@ -437,7 +437,7 @@ static HRESULT CALLBACK taskdialog_callback_proc(HWND hwnd, UINT notification,
     const struct message_info *msg_send;
     struct message msg;
 
-    ok(test_ref_data == ref_data, "Unexpected ref data %lu.\n", ref_data);
+    ok(test_ref_data == ref_data, "Unexpected ref data %Iu.\n", ref_data);
 
     init_test_message(notification, (short)wParam, lParam, &msg);
     add_message(sequences, TASKDIALOG_SEQ_INDEX, &msg);
@@ -458,19 +458,19 @@ static void test_invalid_parameters(void)
     HRESULT hr;
 
     hr = pTaskDialogIndirect(NULL, NULL, NULL, NULL);
-    ok(hr == E_INVALIDARG, "Unexpected return value %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected return value %#lx.\n", hr);
 
     info.cbSize = 0;
     hr = pTaskDialogIndirect(&info, NULL, NULL, NULL);
-    ok(hr == E_INVALIDARG, "Unexpected return value %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected return value %#lx.\n", hr);
 
     info.cbSize = sizeof(TASKDIALOGCONFIG) - 1;
     hr = pTaskDialogIndirect(&info, NULL, NULL, NULL);
-    ok(hr == E_INVALIDARG, "Unexpected return value %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected return value %#lx.\n", hr);
 
     info.cbSize = sizeof(TASKDIALOGCONFIG) + 1;
     hr = pTaskDialogIndirect(&info, NULL, NULL, NULL);
-    ok(hr == E_INVALIDARG, "Unexpected return value %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected return value %#lx.\n", hr);
 }
 
 static void test_callback(void)
@@ -729,9 +729,9 @@ static HRESULT CALLBACK taskdialog_callback_proc_progress_bar(HWND hwnd, UINT no
 
         /* TDM_SET_PROGRESS_BAR_RANGE */
         ret = SendMessageW(hwnd, TDM_SET_PROGRESS_BAR_RANGE, 0, MAKELPARAM(0, 200));
-        ok(ret == MAKELONG(0, 100), "Expect range:%x got:%lx\n", MAKELONG(0, 100), ret);
+        ok(ret == MAKELONG(0, 100), "Expect range:%lx got:%lx\n", MAKELONG(0, 100), ret);
         ret = SendMessageW(hwnd, TDM_SET_PROGRESS_BAR_RANGE, 0, MAKELPARAM(0, 200));
-        ok(ret == MAKELONG(0, 200), "Expect range:%x got:%lx\n", MAKELONG(0, 200), ret);
+        ok(ret == MAKELONG(0, 200), "Expect range:%lx got:%lx\n", MAKELONG(0, 200), ret);
 
         /* TDM_SET_PROGRESS_BAR_POS */
         if (flags & TDF_SHOW_MARQUEE_PROGRESS_BAR)
