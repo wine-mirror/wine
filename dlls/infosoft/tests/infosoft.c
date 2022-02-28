@@ -76,10 +76,10 @@ static HRESULT WINAPI ws_PutWord(IWordSink *iface, ULONG cwc, const WCHAR *pwcIn
     winetest_push_context("word %d", wordnum);
     if (wordnum < ARRAY_SIZE(testres))
     {
-        ok(testres[wordnum].len == cwcSrcLen, "expected length %d, got %d\n",
+        ok(testres[wordnum].len == cwcSrcLen, "expected length %d, got %ld\n",
            testres[wordnum].len, cwcSrcLen);
         ok(!cwcSrcPos || (testres[wordnum].ofs == cwcSrcPos),
-           "expected offset %d, got %d\n", testres[wordnum].ofs, cwcSrcPos);
+           "expected offset %d, got %ld\n", testres[wordnum].ofs, cwcSrcPos);
         ok(!memcmp(testres[wordnum].data, pwcInBuf, cwcSrcLen),
            "expected data %s, got %s\n",
            wine_dbgstr_wn(testres[wordnum].data, cwcSrcLen),
@@ -176,7 +176,7 @@ START_TEST(infosoft)
     TEXT_SOURCE ts;
 
     r = CoInitialize(NULL);
-    ok( r == S_OK, "failed: %08x\n", r);
+    ok( r == S_OK, "failed: %08lx\n", r);
 
     r = CoCreateInstance( &CLSID_wb_neutral, NULL, CLSCTX_INPROC_SERVER,
                         &_IID_IWordBreaker, (LPVOID)&wb);
@@ -194,7 +194,7 @@ START_TEST(infosoft)
     ts.iEnd = lstrlenW(ts.awcBuffer);
     ts.iCur = 0;
     r = IWordBreaker_BreakText(wb, &ts, &wordsink.IWordSink_iface, NULL);
-    ok( r == S_OK, "failed: %08x\n", r);
+    ok( r == S_OK, "failed: %08lx\n", r);
 
     ok(wordnum == 4, "expected 4 words, got %d\n", wordnum);
 
@@ -205,10 +205,10 @@ START_TEST(infosoft)
     ts.iCur = 0;
 
     r = fillbuf_many(&ts);
-    ok( r == S_OK, "failed: %08x\n", r);
+    ok( r == S_OK, "failed: %08lx\n", r);
 
     r = IWordBreaker_BreakText(wb, &ts, &wordsink.IWordSink_iface, NULL);
-    ok( r == S_OK, "failed: %08x\n", r);
+    ok( r == S_OK, "failed: %08lx\n", r);
 
     ok(wordnum == 4, "expected 4 words, got %d\n", wordnum);
     IWordBreaker_Release( wb );
