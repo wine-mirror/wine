@@ -102,7 +102,7 @@ static void _call_change_type(unsigned line, IVariantChangeType *change_type, VA
         SET_EXPECT(OnLeaveScript);
     }
     hres = IVariantChangeType_ChangeType(change_type, dst, src, 0, vt);
-    ok_(__FILE__,line)(hres == S_OK, "ChangeType(%d) failed: %08x\n", vt, hres);
+    ok_(__FILE__,line)(hres == S_OK, "ChangeType(%d) failed: %08lx\n", vt, hres);
     ok_(__FILE__,line)(V_VT(dst) == vt, "V_VT(dst) = %d\n", V_VT(dst));
     if(V_VT(src) == VT_DISPATCH && vt != VT_BOOL) {
         CHECK_CALLED(OnEnterScript);
@@ -118,7 +118,7 @@ static void _change_type_fail(unsigned line, IVariantChangeType *change_type, VA
 
     V_VT(&v) = VT_EMPTY;
     hres = IVariantChangeType_ChangeType(change_type, &v, src, 0, vt);
-    ok_(__FILE__,line)(hres == exhres, "ChangeType failed: %08x, expected %08x\n", hres, exhres);
+    ok_(__FILE__,line)(hres == exhres, "ChangeType failed: %08lx, expected %08lx\n", hres, exhres);
 }
 
 static void test_change_type(IVariantChangeType *change_type, VARIANT *src, const conv_results_t *ex)
@@ -126,7 +126,7 @@ static void test_change_type(IVariantChangeType *change_type, VARIANT *src, cons
     VARIANT v;
 
     call_change_type(change_type, &v, src, VT_I4);
-    ok(V_I4(&v) == ex->int_result, "V_I4(v) = %d, expected %d\n", V_I4(&v), ex->int_result);
+    ok(V_I4(&v) == ex->int_result, "V_I4(v) = %ld, expected %d\n", V_I4(&v), ex->int_result);
 
     call_change_type(change_type, &v, src, VT_UI2);
     ok(V_UI2(&v) == (UINT16)ex->int_result, "V_UI2(v) = %u, expected %u\n", V_UI2(&v), (UINT16)ex->int_result);
@@ -208,14 +208,14 @@ static void test_change_types(IVariantChangeType *change_type, IDispatch *obj_di
     V_BOOL(&v) = VARIANT_FALSE;
     V_VT(&dst) = 0xdead;
     hres = IVariantChangeType_ChangeType(change_type, &dst, &v, 0, VT_I4);
-    ok(hres == DISP_E_BADVARTYPE, "ChangeType failed: %08x, expected DISP_E_BADVARTYPE\n", hres);
+    ok(hres == DISP_E_BADVARTYPE, "ChangeType failed: %08lx, expected DISP_E_BADVARTYPE\n", hres);
     ok(V_VT(&dst) == 0xdead, "V_VT(dst) = %d\n", V_VT(&dst));
 
     /* Test conversion in place */
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = str = SysAllocString(L"test");
     hres = IVariantChangeType_ChangeType(change_type, &v, &v, 0, VT_BSTR);
-    ok(hres == S_OK, "ChangeType failed: %08x\n", hres);
+    ok(hres == S_OK, "ChangeType failed: %08lx\n", hres);
     ok(V_VT(&v) == VT_BSTR, "V_VT(v) = %d\n", V_VT(&v));
     ok(V_BSTR(&v) != str, "V_BSTR(v) == str\n");
     ok(!lstrcmpW(V_BSTR(&v), L"test"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
@@ -228,7 +228,7 @@ static void test_caller(IServiceProvider *caller, IDispatch *arg_obj)
     HRESULT hres;
 
     hres = IServiceProvider_QueryService(caller, &SID_VariantConversion, &IID_IVariantChangeType, (void**)&change_type);
-    ok(hres == S_OK, "Could not get SID_VariantConversion service: %08x\n", hres);
+    ok(hres == S_OK, "Could not get SID_VariantConversion service: %08lx\n", hres);
 
     ok(change_type == script_change_type, "change_type != script_change_type\n");
     test_change_types(change_type, arg_obj);
@@ -291,7 +291,7 @@ static HRESULT WINAPI DispatchEx_Invoke(IDispatchEx *iface, DISPID dispIdMember,
 
 static HRESULT WINAPI DispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
 {
-    ok(0, "unexpected call %s %x\n", wine_dbgstr_w(bstrName), grfdex);
+    ok(0, "unexpected call %s %lx\n", wine_dbgstr_w(bstrName), grfdex);
     return E_NOTIMPL;
 }
 
@@ -328,7 +328,7 @@ static HRESULT WINAPI DispatchEx_GetNameSpaceParent(IDispatchEx *iface, IUnknown
 static HRESULT WINAPI Test_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
     if(!lstrcmpW(bstrName, L"testArgConv")) {
-        ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
+        ok(grfdex == fdexNameCaseSensitive, "grfdex = %lx\n", grfdex);
         *pid = DISPID_TEST_TESTARGCONV;
         return S_OK;
     }
@@ -424,7 +424,7 @@ static HRESULT WINAPI ActiveScriptSite_GetLCID(IActiveScriptSite *iface, LCID *p
 static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface, LPCOLESTR pstrName,
         DWORD dwReturnMask, IUnknown **ppiunkItem, ITypeInfo **ppti)
 {
-    ok(dwReturnMask == SCRIPTINFO_IUNKNOWN, "unexpected dwReturnMask %x\n", dwReturnMask);
+    ok(dwReturnMask == SCRIPTINFO_IUNKNOWN, "unexpected dwReturnMask %lx\n", dwReturnMask);
     ok(!ppti, "ppti != NULL\n");
     ok(!lstrcmpW(pstrName, L"test"), "pstrName = %s\n", wine_dbgstr_w(pstrName));
 
@@ -487,7 +487,7 @@ static void _parse_script(unsigned line, IActiveScriptParse *parser, const WCHAR
     HRESULT hres;
 
     hres = IActiveScriptParse_ParseScriptText(parser, script, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
-    ok_(__FILE__,line)(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    ok_(__FILE__,line)(hres == S_OK, "ParseScriptText failed: %08lx\n", hres);
 }
 
 static IActiveScriptParse *create_script(void)
@@ -502,20 +502,20 @@ static IActiveScriptParse *create_script(void)
         return NULL;
 
     hres = IActiveScript_QueryInterface(script, &IID_IActiveScriptParse, (void**)&parser);
-    ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
+    ok(hres == S_OK, "Could not get IActiveScriptParse: %08lx\n", hres);
 
     hres = IActiveScriptParse_InitNew(parser);
-    ok(hres == S_OK, "InitNew failed: %08x\n", hres);
+    ok(hres == S_OK, "InitNew failed: %08lx\n", hres);
 
     hres = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
-    ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
+    ok(hres == S_OK, "SetScriptSite failed: %08lx\n", hres);
 
     hres = IActiveScript_AddNamedItem(script, L"test",
             SCRIPTITEM_ISVISIBLE|SCRIPTITEM_ISSOURCE|SCRIPTITEM_GLOBALMEMBERS);
-    ok(hres == S_OK, "AddNamedItem failed: %08x\n", hres);
+    ok(hres == S_OK, "AddNamedItem failed: %08lx\n", hres);
 
     hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_STARTED);
-    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_STARTED) failed: %08x\n", hres);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_STARTED) failed: %08lx\n", hres);
 
     IActiveScript_Release(script);
 
@@ -530,7 +530,7 @@ static void run_scripts(void)
     parser = create_script();
 
     hres = IActiveScriptParse_QueryInterface(parser, &IID_IVariantChangeType, (void**)&script_change_type);
-    ok(hres == S_OK, "Could not get IVariantChangeType iface: %08x\n", hres);
+    ok(hres == S_OK, "Could not get IVariantChangeType iface: %08lx\n", hres);
 
     SET_EXPECT(OnEnterScript); /* checked in callback */
     SET_EXPECT(testArgConv);
