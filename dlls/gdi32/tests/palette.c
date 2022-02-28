@@ -58,7 +58,7 @@ static void test_DIB_PAL_COLORS(void) {
     memcpy( logpalette->palPalEntry, logpalettedata, sizeof(logpalettedata) );
     hpal = CreatePalette( logpalette ); 
     hpalOld = SelectPalette( memhdc, hpal, FALSE );
-    ok( hpalOld != NULL, "error=%d\n", GetLastError() );
+    ok( hpalOld != NULL, "error=%ld\n", GetLastError() );
 
     /* Create a DIB BMP which references colours in the logical palette */
     memset( bmp, 0x00, sizeof(BITMAPINFO) );
@@ -78,9 +78,9 @@ static void test_DIB_PAL_COLORS(void) {
     *bmpPalPtr++ = 19; /* Pointer to bad logical palette index */
 
     hbmp = CreateDIBSection( memhdc, bmp, DIB_PAL_COLORS, 0, 0, 0 );
-    ok( hbmp != NULL, "error=%d\n", GetLastError() );
+    ok( hbmp != NULL, "error=%ld\n", GetLastError() );
     hbmpOld = SelectObject( memhdc, hbmp );
-    ok( hbmpOld != NULL, "error=%d\n", GetLastError() );
+    ok( hbmpOld != NULL, "error=%ld\n", GetLastError() );
 
     /* Test with a RGB to DIB_PAL_COLORS */
     setColor = RGB( logpalettedata[1].peRed, logpalettedata[1].peGreen, logpalettedata[1].peBlue );

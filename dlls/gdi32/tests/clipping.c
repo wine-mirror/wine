@@ -132,19 +132,19 @@ static void verify_region(HRGN hrgn, const RECT *rc)
 
     ret = GetRegionData(hrgn, 0, NULL);
     if (IsRectEmpty(rc))
-        ok(ret == sizeof(rgn.data.rdh), "expected sizeof(rdh), got %u\n", ret);
+        ok(ret == sizeof(rgn.data.rdh), "expected sizeof(rdh), got %lu\n", ret);
     else
-        ok(ret == sizeof(rgn.data.rdh) + sizeof(RECT), "expected sizeof(rgn), got %u\n", ret);
+        ok(ret == sizeof(rgn.data.rdh) + sizeof(RECT), "expected sizeof(rgn), got %lu\n", ret);
 
     if (!ret) return;
 
     ret = GetRegionData(hrgn, sizeof(rgn), &rgn.data);
     if (IsRectEmpty(rc))
-        ok(ret == sizeof(rgn.data.rdh), "expected sizeof(rdh), got %u\n", ret);
+        ok(ret == sizeof(rgn.data.rdh), "expected sizeof(rdh), got %lu\n", ret);
     else
-        ok(ret == sizeof(rgn.data.rdh) + sizeof(RECT), "expected sizeof(rgn), got %u\n", ret);
+        ok(ret == sizeof(rgn.data.rdh) + sizeof(RECT), "expected sizeof(rgn), got %lu\n", ret);
 
-    trace("size %u, type %u, count %u, rgn size %u, bound %s\n",
+    trace("size %lu, type %lu, count %lu, rgn size %lu, bound %s\n",
           rgn.data.rdh.dwSize, rgn.data.rdh.iType, rgn.data.rdh.nCount, rgn.data.rdh.nRgnSize,
           wine_dbgstr_rect(&rgn.data.rdh.rcBound));
     if (rgn.data.rdh.nCount != 0)
@@ -154,21 +154,21 @@ static void verify_region(HRGN hrgn, const RECT *rc)
         ok(EqualRect(rect, rc), "rects don't match\n");
     }
 
-    ok(rgn.data.rdh.dwSize == sizeof(rgn.data.rdh), "expected sizeof(rdh), got %u\n", rgn.data.rdh.dwSize);
-    ok(rgn.data.rdh.iType == RDH_RECTANGLES, "expected RDH_RECTANGLES, got %u\n", rgn.data.rdh.iType);
+    ok(rgn.data.rdh.dwSize == sizeof(rgn.data.rdh), "expected sizeof(rdh), got %lu\n", rgn.data.rdh.dwSize);
+    ok(rgn.data.rdh.iType == RDH_RECTANGLES, "expected RDH_RECTANGLES, got %lu\n", rgn.data.rdh.iType);
     if (IsRectEmpty(rc))
     {
-        ok(rgn.data.rdh.nCount == 0, "expected 0, got %u\n", rgn.data.rdh.nCount);
+        ok(rgn.data.rdh.nCount == 0, "expected 0, got %lu\n", rgn.data.rdh.nCount);
         ok(rgn.data.rdh.nRgnSize == 0 ||
            broken(rgn.data.rdh.nRgnSize == 168), /* NT4 */
-           "expected 0, got %u\n", rgn.data.rdh.nRgnSize);
+           "expected 0, got %lu\n", rgn.data.rdh.nRgnSize);
     }
     else
     {
-        ok(rgn.data.rdh.nCount == 1, "expected 1, got %u\n", rgn.data.rdh.nCount);
+        ok(rgn.data.rdh.nCount == 1, "expected 1, got %lu\n", rgn.data.rdh.nCount);
         ok(rgn.data.rdh.nRgnSize == sizeof(RECT) ||
            broken(rgn.data.rdh.nRgnSize == 168), /* NT4 */
-           "expected sizeof(RECT), got %u\n", rgn.data.rdh.nRgnSize);
+           "expected sizeof(RECT), got %lu\n", rgn.data.rdh.nRgnSize);
     }
     ok(EqualRect(&rgn.data.rdh.rcBound, rc), "rects don't match\n");
 }
@@ -190,7 +190,7 @@ static void test_ExtCreateRegion(void)
     SetLastError(0xdeadbeef);
     hrgn = ExtCreateRegion(NULL, 0, NULL);
     ok(!hrgn, "ExtCreateRegion should fail\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "ERROR_INVALID_PARAMETER, got %lu\n", GetLastError());
 
     rgn.data.rdh.dwSize = 0;
     rgn.data.rdh.iType = 0;
@@ -202,14 +202,14 @@ static void test_ExtCreateRegion(void)
     SetLastError(0xdeadbeef);
     hrgn = ExtCreateRegion(NULL, sizeof(rgn), &rgn.data);
     ok(!hrgn, "ExtCreateRegion should fail\n");
-    ok(GetLastError() == 0xdeadbeef, "0xdeadbeef, got %u\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "0xdeadbeef, got %lu\n", GetLastError());
 
     rgn.data.rdh.dwSize = sizeof(rgn.data.rdh) - 1;
 
     SetLastError(0xdeadbeef);
     hrgn = ExtCreateRegion(NULL, sizeof(rgn), &rgn.data);
     ok(!hrgn, "ExtCreateRegion should fail\n");
-    ok(GetLastError() == 0xdeadbeef, "0xdeadbeef, got %u\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "0xdeadbeef, got %lu\n", GetLastError());
 
     /* although XP doesn't care about the type Win9x does */
     rgn.data.rdh.iType = RDH_RECTANGLES;
@@ -218,7 +218,7 @@ static void test_ExtCreateRegion(void)
     /* sizeof(RGNDATAHEADER) is large enough */
     SetLastError(0xdeadbeef);
     hrgn = ExtCreateRegion(NULL, sizeof(RGNDATAHEADER), &rgn.data);
-    ok(hrgn != 0, "ExtCreateRegion error %u\n", GetLastError());
+    ok(hrgn != 0, "ExtCreateRegion error %lu\n", GetLastError());
     verify_region(hrgn, &empty_rect);
     DeleteObject(hrgn);
 
@@ -229,11 +229,11 @@ static void test_ExtCreateRegion(void)
     ok(!hrgn, "ExtCreateRegion should fail\n");
     todo_wine
     ok(GetLastError() == ERROR_INVALID_PARAMETER ||
-       broken(GetLastError() == 0xdeadbeef), "0xdeadbeef, got %u\n", GetLastError());
+       broken(GetLastError() == 0xdeadbeef), "0xdeadbeef, got %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     hrgn = ExtCreateRegion(NULL, sizeof(rgn), &rgn.data);
-    ok(hrgn != 0, "ExtCreateRegion error %u\n", GetLastError());
+    ok(hrgn != 0, "ExtCreateRegion error %lu\n", GetLastError());
     verify_region(hrgn, &empty_rect);
     DeleteObject(hrgn);
 
@@ -243,7 +243,7 @@ static void test_ExtCreateRegion(void)
 
     SetLastError(0xdeadbeef);
     hrgn = ExtCreateRegion(NULL, sizeof(rgn), &rgn.data);
-    ok(hrgn != 0, "ExtCreateRegion error %u\n", GetLastError());
+    ok(hrgn != 0, "ExtCreateRegion error %lu\n", GetLastError());
     verify_region(hrgn, &rc);
     DeleteObject(hrgn);
 
@@ -256,7 +256,7 @@ static void test_ExtCreateRegion(void)
 
     SetLastError(0xdeadbeef);
     hrgn = ExtCreateRegion(&xform, sizeof(rgn), &rgn.data);
-    ok(hrgn != 0, "ExtCreateRegion error %u/%x\n", GetLastError(), GetLastError());
+    ok(hrgn != 0, "ExtCreateRegion error %lu/%lx\n", GetLastError(), GetLastError());
     verify_region(hrgn, &rc_xformed);
     DeleteObject(hrgn);
 
@@ -269,7 +269,7 @@ static void test_ExtCreateRegion(void)
     hrgn = ExtCreateRegion(NULL, sizeof(RGNDATAHEADER) + 2 * sizeof(RECT) - 1, &rgn.data);
     todo_wine
     ok(!hrgn, "ExtCreateRegion should fail\n");
-    ok(GetLastError() == 0xdeadbeef, "0xdeadbeef, got %u\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "0xdeadbeef, got %lu\n", GetLastError());
 
 }
 

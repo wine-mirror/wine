@@ -39,8 +39,8 @@ static BOOL (WINAPI *pSetVirtualResolution)(HDC, DWORD, DWORD, DWORD, DWORD);
 { \
     POINT _pt = { 1000, 1000 }; \
     LPtoDP(_hdc, &_pt, 1); \
-    ok(rough_match(_pt.x, _x), "expected x %d, got %d\n", (_x), _pt.x); \
-    ok(rough_match(_pt.y, _y), "expected y %d, got %d\n", (_y), _pt.y); \
+    ok(rough_match(_pt.x, _x), "expected x %d, got %ld\n", (_x), _pt.x); \
+    ok(rough_match(_pt.y, _y), "expected y %d, got %ld\n", (_y), _pt.y); \
 }
 
 #define expect_world_transform(_hdc, _em11, _em22) \
@@ -51,7 +51,7 @@ static BOOL (WINAPI *pSetVirtualResolution)(HDC, DWORD, DWORD, DWORD, DWORD);
     _ret = GetWorldTransform(_hdc, &_xform); \
     if (GetLastError() != ERROR_CALL_NOT_IMPLEMENTED) \
     { \
-        ok(_ret, "GetWorldTransform error %u\n", GetLastError()); \
+        ok(_ret, "GetWorldTransform error %lu\n", GetLastError()); \
         ok(_xform.eM11 == (_em11), "expected %f, got %f\n", (_em11), _xform.eM11); \
         ok(_xform.eM12 == 0.0, "expected 0.0, got %f\n", _xform.eM12); \
         ok(_xform.eM21 == 0.0, "expected 0.0, got %f\n", _xform.eM21); \
@@ -67,9 +67,9 @@ static BOOL (WINAPI *pSetVirtualResolution)(HDC, DWORD, DWORD, DWORD, DWORD);
     SIZE _size; \
     SetLastError(0xdeadbeef); \
     _ret = _func(_hdc, &_size); \
-    ok(_ret, #_func " error %u\n", GetLastError()); \
-    ok(_size.cx == (_cx), "expected cx %d, got %d\n", (_cx), _size.cx); \
-    ok(_size.cy == (_cy), "expected cy %d, got %d\n", (_cy), _size.cy); \
+    ok(_ret, #_func " error %lu\n", GetLastError()); \
+    ok(_size.cx == (_cx), "expected cx %ld, got %ld\n", (_cx), _size.cx); \
+    ok(_size.cy == (_cy), "expected cy %ld, got %ld\n", (_cy), _size.cy); \
 }
 
 #define expect_viewport_ext(_hdc, _cx, _cy) expect_dc_ext(GetViewportExtEx, _hdc, _cx, _cy)
@@ -78,7 +78,8 @@ static BOOL (WINAPI *pSetVirtualResolution)(HDC, DWORD, DWORD, DWORD, DWORD);
 static void test_world_transform(void)
 {
     HDC hdc;
-    INT ret, size_cx, size_cy, res_x, res_y, dpi_x, dpi_y;
+    int ret;
+    LONG size_cx, size_cy, res_x, res_y, dpi_x, dpi_y;
     XFORM xform;
     SIZE size;
 
@@ -99,11 +100,11 @@ static void test_world_transform(void)
     res_y = GetDeviceCaps(hdc, VERTRES);
     dpi_x = GetDeviceCaps(hdc, LOGPIXELSX);
     dpi_y = GetDeviceCaps(hdc, LOGPIXELSY);
-    trace("dc size %d x %d, resolution %d x %d dpi %d x %d\n",
+    trace("dc size %ld x %ld, resolution %ld x %ld dpi %ld x %ld\n",
           size_cx, size_cy, res_x, res_y, dpi_x, dpi_y );
 
-    expect_viewport_ext(hdc, 1, 1);
-    expect_window_ext(hdc, 1, 1);
+    expect_viewport_ext(hdc, 1l, 1l);
+    expect_window_ext(hdc, 1l, 1l);
     expect_world_transform(hdc, 1.0, 1.0);
     expect_LPtoDP(hdc, 1000, 1000);
 
@@ -115,10 +116,10 @@ static void test_world_transform(void)
     ok( GetWindowExtEx( hdc, &size ), "GetWindowExtEx failed\n" );
     ok( rough_match( size.cx, size_cx * 10 ) ||
         rough_match( size.cx, MulDiv( res_x, 254, dpi_x )),  /* Vista uses a more precise method */
-        "expected cx %d or %d, got %d\n", size_cx * 10, MulDiv( res_x, 254, dpi_x ), size.cx );
+        "expected cx %ld or %d, got %ld\n", size_cx * 10, MulDiv( res_x, 254, dpi_x ), size.cx );
     ok( rough_match( size.cy, size_cy * 10 ) ||
         rough_match( size.cy, MulDiv( res_y, 254, dpi_y )),  /* Vista uses a more precise method */
-        "expected cy %d or %d, got %d\n", size_cy * 10, MulDiv( res_y, 254, dpi_y ), size.cy );
+        "expected cy %ld or %d, got %ld\n", size_cy * 10, MulDiv( res_y, 254, dpi_y ), size.cy );
     expect_world_transform(hdc, 1.0, 1.0);
     expect_LPtoDP(hdc, MulDiv(1000 / 10, res_x, size_cx), -MulDiv(1000 / 10, res_y, size_cy));
 
@@ -126,8 +127,8 @@ static void test_world_transform(void)
     ret = SetMapMode(hdc, MM_TEXT);
     ok(ret == MM_LOMETRIC, "expected MM_LOMETRIC, got %d\n", ret);
 
-    expect_viewport_ext(hdc, 1, 1);
-    expect_window_ext(hdc, 1, 1);
+    expect_viewport_ext(hdc, 1l, 1l);
+    expect_window_ext(hdc, 1l, 1l);
     expect_world_transform(hdc, 1.0, 1.0);
     expect_LPtoDP(hdc, 1000, 1000);
 
@@ -139,8 +140,8 @@ static void test_world_transform(void)
         return;
     }
 
-    expect_viewport_ext(hdc, 1, 1);
-    expect_window_ext(hdc, 1, 1);
+    expect_viewport_ext(hdc, 1l, 1l);
+    expect_window_ext(hdc, 1l, 1l);
     expect_world_transform(hdc, 1.0, 1.0);
     expect_LPtoDP(hdc, 1000, 1000);
 
@@ -164,10 +165,10 @@ static void test_world_transform(void)
     xform.eDy = 0.0f;
     SetLastError(0xdeadbeef);
     ret = SetWorldTransform(hdc, &xform);
-    ok(ret, "SetWorldTransform error %u\n", GetLastError());
+    ok(ret, "SetWorldTransform error %lu\n", GetLastError());
 
-    expect_viewport_ext(hdc, 1, 1);
-    expect_window_ext(hdc, 1, 1);
+    expect_viewport_ext(hdc, 1l, 1l);
+    expect_window_ext(hdc, 1l, 1l);
     expect_world_transform(hdc, 20.0, 20.0);
     expect_LPtoDP(hdc, 20000, 20000);
 
@@ -179,10 +180,10 @@ static void test_world_transform(void)
     ok( GetWindowExtEx( hdc, &size ), "GetWindowExtEx failed\n" );
     ok( rough_match( size.cx, size_cx * 10 ) ||
         rough_match( size.cx, MulDiv( res_x, 254, dpi_x )),  /* Vista uses a more precise method */
-        "expected cx %d or %d, got %d\n", size_cx * 10, MulDiv( res_x, 254, dpi_x ), size.cx );
+        "expected cx %ld or %d, got %ld\n", size_cx * 10, MulDiv( res_x, 254, dpi_x ), size.cx );
     ok( rough_match( size.cy, size_cy * 10 ) ||
         rough_match( size.cy, MulDiv( res_y, 254, dpi_y )),  /* Vista uses a more precise method */
-        "expected cy %d or %d, got %d\n", size_cy * 10, MulDiv( res_y, 254, dpi_y ), size.cy );
+        "expected cy %ld or %d, got %ld\n", size_cy * 10, MulDiv( res_y, 254, dpi_y ), size.cy );
     expect_world_transform(hdc, 20.0, 20.0);
     expect_LPtoDP(hdc, MulDiv(20000, res_x, size.cx), -MulDiv(20000, res_y, size.cy));
 
@@ -190,8 +191,8 @@ static void test_world_transform(void)
     ret = SetMapMode(hdc, MM_TEXT);
     ok(ret == MM_LOMETRIC, "expected MM_LOMETRIC, got %d\n", ret);
 
-    expect_viewport_ext(hdc, 1, 1);
-    expect_window_ext(hdc, 1, 1);
+    expect_viewport_ext(hdc, 1l, 1l);
+    expect_window_ext(hdc, 1l, 1l);
     expect_world_transform(hdc, 20.0, 20.0);
     expect_LPtoDP(hdc, 20000, 20000);
 
@@ -199,17 +200,17 @@ static void test_world_transform(void)
     size.cy = 0xdeadbeef;
     ret = SetViewportExtEx(hdc, -1, -1, &size);
     ok(ret, "SetViewportExtEx(-1, -1) failed\n");
-    ok(size.cx == 1 && size.cy == 1, "expected 1,1 got %d,%d\n", size.cx, size.cy);
-    expect_viewport_ext(hdc, 1, 1);
-    expect_window_ext(hdc, 1, 1);
+    ok(size.cx == 1 && size.cy == 1, "expected 1,1 got %ld,%ld\n", size.cx, size.cy);
+    expect_viewport_ext(hdc, 1l, 1l);
+    expect_window_ext(hdc, 1l, 1l);
     expect_world_transform(hdc, 20.0, 20.0);
     expect_LPtoDP(hdc, 20000, 20000);
 
     ret = SetMapMode(hdc, MM_ANISOTROPIC);
     ok(ret == MM_TEXT, "expected MM_TEXT, got %d\n", ret);
 
-    expect_viewport_ext(hdc, 1, 1);
-    expect_window_ext(hdc, 1, 1);
+    expect_viewport_ext(hdc, 1l, 1l);
+    expect_window_ext(hdc, 1l, 1l);
     expect_world_transform(hdc, 20.0, 20.0);
     expect_LPtoDP(hdc, 20000, 20000);
 
@@ -217,9 +218,9 @@ static void test_world_transform(void)
     size.cy = 0xdeadbeef;
     ret = SetViewportExtEx(hdc, -1, -1, &size);
     ok(ret, "SetViewportExtEx(-1, -1) failed\n");
-    ok(size.cx == 1 && size.cy == 1, "expected 1,1 got %d,%d\n", size.cx, size.cy);
-    expect_viewport_ext(hdc, -1, -1);
-    expect_window_ext(hdc, 1, 1);
+    ok(size.cx == 1 && size.cy == 1, "expected 1,1 got %ld,%ld\n", size.cx, size.cy);
+    expect_viewport_ext(hdc, -1l, -1l);
+    expect_window_ext(hdc, 1l, 1l);
     expect_world_transform(hdc, 20.0, 20.0);
     expect_LPtoDP(hdc, -20000, -20000);
 
@@ -228,8 +229,8 @@ static void test_world_transform(void)
     ret = GetGraphicsMode(hdc);
     ok(ret == GM_COMPATIBLE, "expected GM_COMPATIBLE, got %d\n", ret);
 
-    expect_viewport_ext(hdc, -1, -1);
-    expect_window_ext(hdc, 1, 1);
+    expect_viewport_ext(hdc, -1l, -1l);
+    expect_window_ext(hdc, 1l, 1l);
     expect_world_transform(hdc, 20.0, 20.0);
     expect_LPtoDP(hdc, -20000, -20000);
 
@@ -238,7 +239,8 @@ static void test_world_transform(void)
 
 static void test_dc_layout(void)
 {
-    INT ret, size_cx, size_cy, res_x, res_y, dpi_x, dpi_y;
+    INT ret;
+    LONG size_cx, size_cy, res_x, res_y, dpi_x, dpi_y;
     SIZE size;
     POINT pt;
     HBITMAP bitmap;
@@ -265,8 +267,8 @@ static void test_dc_layout(void)
 
     ret = GetMapMode( hdc );
     ok(ret == MM_TEXT, "expected MM_TEXT, got %d\n", ret);
-    expect_viewport_ext(hdc, 1, 1);
-    expect_window_ext(hdc, 1, 1);
+    expect_viewport_ext(hdc, 1l, 1l);
+    expect_window_ext(hdc, 1l, 1l);
     expect_world_transform(hdc, 1.0, 1.0);
     expect_LPtoDP(hdc, 1000, 1000);
 
@@ -282,16 +284,16 @@ static void test_dc_layout(void)
     ok(ret == MM_ANISOTROPIC, "expected MM_ANISOTROPIC, got %d\n", ret);
     ret = pGetLayout( hdc );
     ok(ret == LAYOUT_RTL, "got %x\n", ret);
-    expect_viewport_ext(hdc, 1, 1);
-    expect_window_ext(hdc, 1, 1);
+    expect_viewport_ext(hdc, 1l, 1l);
+    expect_window_ext(hdc, 1l, 1l);
     expect_world_transform(hdc, 1.0, 1.0);
     expect_LPtoDP(hdc, -1000 + 99, 1000);
     GetViewportOrgEx( hdc, &pt );
-    ok( pt.x == 0 && pt.y == 0, "wrong origin %d,%d\n", pt.x, pt.y );
+    ok( pt.x == 0 && pt.y == 0, "wrong origin %ld,%ld\n", pt.x, pt.y );
     GetWindowOrgEx( hdc, &pt );
-    ok( pt.x == 0 && pt.y == 0, "wrong origin %d,%d\n", pt.x, pt.y );
+    ok( pt.x == 0 && pt.y == 0, "wrong origin %ld,%ld\n", pt.x, pt.y );
     GetDCOrgEx( hdc, &pt );
-    ok( pt.x == 0 && pt.y == 0, "wrong origin %d,%d\n", pt.x, pt.y );
+    ok( pt.x == 0 && pt.y == 0, "wrong origin %ld,%ld\n", pt.x, pt.y );
     if (pGetTransform)
     {
         XFORM xform;
@@ -361,10 +363,10 @@ static void test_dc_layout(void)
     ok( GetWindowExtEx( hdc, &size ), "GetWindowExtEx failed\n" );
     ok( rough_match( size.cx, size_cx * 10 ) ||
         rough_match( size.cx, MulDiv( res_x, 254, dpi_x )),  /* Vista uses a more precise method */
-        "expected cx %d or %d, got %d\n", size_cx * 10, MulDiv( res_x, 254, dpi_x ), size.cx );
+        "expected cx %ld or %d, got %ld\n", size_cx * 10, MulDiv( res_x, 254, dpi_x ), size.cx );
     ok( rough_match( size.cy, size_cy * 10 ) ||
         rough_match( size.cy, MulDiv( res_y, 254, dpi_y )),  /* Vista uses a more precise method */
-        "expected cy %d or %d, got %d\n", size_cy * 10, MulDiv( res_y, 254, dpi_y ), size.cy );
+        "expected cy %lxd or %d, got %ld\n", size_cy * 10, MulDiv( res_y, 254, dpi_y ), size.cy );
     expect_world_transform(hdc, 1.0, 1.0);
     expect_LPtoDP(hdc, -MulDiv(1000 / 10, res_x, size_cx) + 99, -MulDiv(1000 / 10, res_y, size_cy));
 
@@ -435,22 +437,22 @@ static void test_SetWindowExt(HDC hdc, LONG cx, LONG cy, LONG expected_vp_cx, LO
     SetWindowExtEx(hdc, cx, cy, NULL);
     GetWindowExtEx(hdc, &windowExt);
     ok(windowExt.cx == cx && windowExt.cy == cy,
-       "Window extension: Expected %dx%d, got %dx%d\n",
+       "Window extension: Expected %ldx%ld, got %ldx%ld\n",
        cx, cy, windowExt.cx, windowExt.cy);
 
     GetViewportExtEx(hdc, &viewportExt);
     ok(rough_match(viewportExt.cx, expected_vp_cx) && rough_match(viewportExt.cy, expected_vp_cy),
-        "Viewport extents have not been properly adjusted: Expected %dx%d, got %dx%d\n",
+        "Viewport extents have not been properly adjusted: Expected %ldx%ld, got %ldx%ld\n",
         expected_vp_cx, expected_vp_cy, viewportExt.cx, viewportExt.cy);
 
     GetWindowOrgEx(hdc, &windowOrgAfter);
     ok(windowOrg.x == windowOrgAfter.x && windowOrg.y == windowOrgAfter.y,
-        "Window origin changed from (%d,%d) to (%d,%d)\n",
+        "Window origin changed from (%ld,%ld) to (%ld,%ld)\n",
         windowOrg.x, windowOrg.y, windowOrgAfter.x, windowOrgAfter.y);
 
     GetViewportOrgEx(hdc, &viewportOrgAfter);
     ok(viewportOrg.x == viewportOrgAfter.x && viewportOrg.y == viewportOrgAfter.y,
-        "Viewport origin changed from (%d,%d) to (%d,%d)\n",
+        "Viewport origin changed from (%ld,%ld) to (%ld,%ld)\n",
         viewportOrg.x, viewportOrg.y, viewportOrgAfter.x, viewportOrgAfter.y);
 }
 
@@ -466,22 +468,22 @@ static void test_SetViewportExt(HDC hdc, LONG cx, LONG cy, LONG expected_vp_cx, 
     SetViewportExtEx(hdc, cx, cy, NULL);
     GetViewportExtEx(hdc, &viewportExt);
     ok(rough_match(viewportExt.cx, expected_vp_cx) && rough_match(viewportExt.cy, expected_vp_cy),
-        "Viewport extents have not been properly adjusted: Expected %dx%d, got %dx%d\n",
+        "Viewport extents have not been properly adjusted: Expected %ldx%ld, got %ldx%ld\n",
         expected_vp_cx, expected_vp_cy, viewportExt.cx, viewportExt.cy);
 
     GetWindowExtEx(hdc, &windowExtAfter);
     ok(windowExt.cx == windowExtAfter.cx && windowExt.cy == windowExtAfter.cy,
-       "Window extension changed from %dx%d to %dx%d\n",
+       "Window extension changed from %ldx%ld to %ldx%ld\n",
        windowExt.cx, windowExt.cy, windowExtAfter.cx, windowExtAfter.cy);
 
     GetWindowOrgEx(hdc, &windowOrgAfter);
     ok(windowOrg.x == windowOrgAfter.x && windowOrg.y == windowOrgAfter.y,
-        "Window origin changed from (%d,%d) to (%d,%d)\n",
+        "Window origin changed from (%ld,%ld) to (%ld,%ld)\n",
         windowOrg.x, windowOrg.y, windowOrgAfter.x, windowOrgAfter.y);
 
     GetViewportOrgEx(hdc, &viewportOrgAfter);
     ok(viewportOrg.x == viewportOrgAfter.x && viewportOrg.y == viewportOrgAfter.y,
-        "Viewport origin changed from (%d,%d) to (%d,%d)\n",
+        "Viewport origin changed from (%ld,%ld) to (%ld,%ld)\n",
         viewportOrg.x, viewportOrg.y, viewportOrgAfter.x, viewportOrgAfter.y);
 }
 
@@ -548,13 +550,13 @@ static void test_setvirtualresolution(void)
     r = pSetVirtualResolution(hdc, 4000, 1000, 400, 200); /* 10 pix/mm x 5 pix/mm */
     ok(r == TRUE, "got %d\n", r);
     expect_LPtoDP(hdc, 1000, 1000);
-    expect_viewport_ext(hdc, 1, 1);
-    expect_window_ext(hdc, 1, 1);
+    expect_viewport_ext(hdc, 1l, 1l);
+    expect_window_ext(hdc, 1l, 1l);
 
     SetMapMode(hdc, MM_LOMETRIC);
     expect_LPtoDP(hdc, 1000, -500);
-    expect_viewport_ext(hdc, 4000, -1000);
-    expect_window_ext(hdc, 4000, 2000);
+    expect_viewport_ext(hdc, 4000l, -1000l);
+    expect_window_ext(hdc, 4000l, 2000l);
 
     /* Doesn't change the device caps */
     ok(horz_res == GetDeviceCaps(hdc, HORZRES), "horz_res changed\n");
@@ -567,40 +569,40 @@ static void test_setvirtualresolution(void)
     SetMapMode(hdc, MM_TEXT);
     SetMapMode(hdc, MM_LOMETRIC);
     expect_LPtoDP(hdc, 2000, -500);
-    expect_viewport_ext(hdc, 8000, -1000);
-    expect_window_ext(hdc, 4000, 2000);
+    expect_viewport_ext(hdc, 8000l, -1000l);
+    expect_window_ext(hdc, 4000l, 2000l);
 
     r = pSetVirtualResolution(hdc, 8000, 1000, 200, 200); /* 40 pix/mm x 5 pix/mm */
     ok(r == TRUE, "got %d\n", r);
     SetMapMode(hdc, MM_TEXT);
     SetMapMode(hdc, MM_LOMETRIC);
     expect_LPtoDP(hdc, 4000, -500);
-    expect_viewport_ext(hdc, 8000, -1000);
-    expect_window_ext(hdc, 2000, 2000);
+    expect_viewport_ext(hdc, 8000l, -1000l);
+    expect_window_ext(hdc, 2000l, 2000l);
 
     r = pSetVirtualResolution(hdc, 8000, 1000, 200, 200); /* 40 pix/mm x 5 pix/mm */
     ok(r == TRUE, "got %d\n", r);
     SetMapMode(hdc, MM_TEXT);
     SetMapMode(hdc, MM_LOMETRIC);
     expect_LPtoDP(hdc, 4000, -500);
-    expect_viewport_ext(hdc, 8000, -1000);
-    expect_window_ext(hdc, 2000, 2000);
+    expect_viewport_ext(hdc, 8000l, -1000l);
+    expect_window_ext(hdc, 2000l, 2000l);
 
     r = pSetVirtualResolution(hdc, 8000, 2000, 200, 200); /* 40 pix/mm x 10 pix/mm */
     ok(r == TRUE, "got %d\n", r);
     SetMapMode(hdc, MM_TEXT);
     SetMapMode(hdc, MM_LOMETRIC);
     expect_LPtoDP(hdc, 4000, -1000);
-    expect_viewport_ext(hdc, 8000, -2000);
-    expect_window_ext(hdc, 2000, 2000);
+    expect_viewport_ext(hdc, 8000l, -2000l);
+    expect_window_ext(hdc, 2000l, 2000l);
 
     r = pSetVirtualResolution(hdc, 0, 0, 10, 0); /* Error */
     ok(r == FALSE, "got %d\n", r);
     SetMapMode(hdc, MM_TEXT);
     SetMapMode(hdc, MM_LOMETRIC);
     expect_LPtoDP(hdc, 4000, -1000);
-    expect_viewport_ext(hdc, 8000, -2000);
-    expect_window_ext(hdc, 2000, 2000);
+    expect_viewport_ext(hdc, 8000l, -2000l);
+    expect_window_ext(hdc, 2000l, 2000l);
 
     r = pSetVirtualResolution(hdc, 0, 0, 0, 0); /* Reset to true resolution */
     ok(r == TRUE, "got %d\n", r);
