@@ -3178,7 +3178,7 @@ static void test_GdipGetNearestColor(void)
     todo_wine
     ok(color == 0xffa8b8e8 ||
        broken(color == 0xffa0b8e0), /* Win98/WinMe */
-       "Expected ffa8b8e8, got %.8x\n", color);
+       "Expected ffa8b8e8, got %.8lx\n", color);
     GdipDeleteGraphics(graphics);
     GdipDisposeImage((GpImage*)bitmap);
 
@@ -3784,7 +3784,7 @@ static void test_GdipMeasureString(void)
         height = units_to_pixels(font_size, td[i].unit, td[i].res_y);
         if (td[i].unit != UnitDisplay)
             height *= td[i].page_scale;
-        ok(-lf.lfHeight == (LONG)(height + 0.5), "%u: expected %d (%f), got %d\n",
+        ok(-lf.lfHeight == (LONG)(height + 0.5), "%u: expected %ld (%f), got %ld\n",
            i, (LONG)(height + 0.5), height, lf.lfHeight);
 
         height = font_size + 2.0 * font_size / 6.0;
@@ -3865,7 +3865,7 @@ static void test_GdipMeasureString(void)
             else
                 height = units_to_pixels(font_size, font_unit, td[i].res_y);
             /*trace("%.1f font units = %f pixels with %.1f dpi, page_scale %.1f\n", font_size, height, td[i].res_y, td[i].page_scale);*/
-            ok(-lf.lfHeight == (LONG)(height + 0.5), "%u: expected %d (%f), got %d\n",
+            ok(-lf.lfHeight == (LONG)(height + 0.5), "%u: expected %ld (%f), got %ld\n",
                i, (LONG)(height + 0.5), height, lf.lfHeight);
 
             if (td[i].unit == UnitDisplay || td[i].unit == UnitPixel)
@@ -3955,7 +3955,7 @@ static void test_GdipMeasureString(void)
         lf.lfHeight = 0xdeadbeef;
         status = GdipGetLogFontW(font, graphics, &lf);
         expect(Ok, status);
-        ok(lf.lfHeight == -100, "%u: expected -100, got %d\n", i, lf.lfHeight);
+        ok(lf.lfHeight == -100, "%u: expected -100, got %ld\n", i, lf.lfHeight);
 
         set_rect_empty(&rc);
         set_rect_empty(&bounds);
@@ -6421,7 +6421,7 @@ static DWORD* GetBitmapPixelBuffer(HDC hdc, HBITMAP hbmp, int width, int height)
     bi.biClrImportant = 0;
 
     lines = GetDIBits(hdc, hbmp, 0, height, buffer, (BITMAPINFO *)&bi, DIB_RGB_COLORS);
-    ok(lines == height, "Expected GetDIBits:%p,%d->%d,%d\n", buffer, height, lines, GetLastError());
+    ok(lines == height, "Expected GetDIBits:%p,%d->%d,%ld\n", buffer, height, lines, GetLastError());
 
     return buffer;
 }
@@ -7204,7 +7204,7 @@ static void test_printer_dc(void)
     rect.Width = pixel_per_unit_x;
     rect.Height = pixel_per_unit_y;
     match = check_rect_pixels(pixel, &rect, width, 0, &pt);
-    ok(match, "Expected pixel (%u, %u) to be %08x, got %08x\n",
+    ok(match, "Expected pixel (%u, %u) to be %08x, got %08lx\n",
        pt.X, pt.Y, 0, pixel[pt.X + pt.Y * width]);
 
     /* pixels at (1, 1) should all be 0x00ffffff */
@@ -7213,7 +7213,7 @@ static void test_printer_dc(void)
     rect.Width = pixel_per_unit_x;
     rect.Height = pixel_per_unit_y;
     match = check_rect_pixels(pixel, &rect, width, 0x00ffffff, &pt);
-    ok(match, "Expected pixel (%u, %u) to be %08x, got %08x\n",
+    ok(match, "Expected pixel (%u, %u) to be %08x, got %08lx\n",
        pt.X, pt.Y, 0x00ffffff, pixel[pt.X + pt.Y * width]);
 
     GdipFree(pixel);

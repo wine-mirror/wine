@@ -28,7 +28,7 @@
 #define expect(expected,got) expect_(__LINE__, expected, got)
 static inline void expect_(unsigned line, DWORD expected, DWORD got)
 {
-    ok_(__FILE__, line)(expected == got, "Expected %.8d, got %.8d\n", expected, got);
+    ok_(__FILE__, line)(expected == got, "Expected %.8ld, got %.8ld\n", expected, got);
 }
 #define expectf_(expected, got, precision) ok(fabs((expected) - (got)) <= (precision), "Expected %f, got %f\n", (expected), (got))
 #define expectf(expected, got) expectf_((expected), (got), 0.001)
@@ -64,14 +64,14 @@ static void check_record(int count, const char *desc, const struct emfplus_recor
     todo_wine_if (expected->todo)
         ok(expected->record_type == actual->record_type && (expected->flags == actual->flags ||
             broken(expected->broken_flags == actual->flags)),
-            "%s.%i: Expected record type 0x%x, got 0x%x. Expected flags %#x, got %#x.\n", desc, count,
+            "%s.%i: Expected record type 0x%lx, got 0x%lx. Expected flags %#lx, got %#lx.\n", desc, count,
             expected->record_type, actual->record_type, expected->flags, actual->flags);
     }
     else
     {
     todo_wine_if (expected->todo)
         ok(expected->record_type == actual->record_type,
-            "%s.%i: Expected record type 0x%x, got 0x%x.\n", desc, count,
+            "%s.%i: Expected record type 0x%lx, got 0x%lx.\n", desc, count,
             expected->record_type, actual->record_type);
     }
 }
@@ -136,7 +136,7 @@ static int CALLBACK enum_emf_proc(HDC hDC, HANDLETABLE *lpHTable, const ENHMETAR
                 const EmfPlusRecordHeader *record = (const EmfPlusRecordHeader*)&comment->Data[offset];
 
                 ok(record->Size == record->DataSize + sizeof(EmfPlusRecordHeader),
-                    "%s: EMF+ record datasize %u and size %u mismatch\n", state->desc, record->DataSize, record->Size);
+                    "%s: EMF+ record datasize %lu and size %lu mismatch\n", state->desc, record->DataSize, record->Size);
 
                 ok(offset + record->DataSize <= comment->cbData,
                     "%s: EMF+ record truncated\n", state->desc);
@@ -196,7 +196,7 @@ static int CALLBACK enum_emf_proc(HDC hDC, HANDLETABLE *lpHTable, const ENHMETAR
     }
     else
     {
-        ok(0, "%s: Unexpected EMF 0x%x record\n", state->desc, lpEMFR->iType);
+        ok(0, "%s: Unexpected EMF 0x%lx record\n", state->desc, lpEMFR->iType);
     }
 
     return 1;
@@ -294,7 +294,7 @@ static BOOL CALLBACK play_metafile_proc(EmfPlusRecordType record_type, unsigned 
 
         todo_wine_if (state->expected[state->count].todo)
             ok(state->expected[state->count].record_type == record_type,
-                "%s.%i: expected record type 0x%x, got 0x%x\n", state->desc, state->count,
+                "%s.%i: expected record type 0x%lx, got 0x%x\n", state->desc, state->count,
                 state->expected[state->count].record_type, record_type);
         state->count++;
     }
@@ -3154,7 +3154,7 @@ static void test_unknownfontdecode(void)
     lstrcatW(path, L"wine_testfont0.ttf");
 
     file = CreateFileW(path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
-    ok(file != INVALID_HANDLE_VALUE, "file creation failed, at %s, error %d\n",
+    ok(file != INVALID_HANDLE_VALUE, "file creation failed, at %s, error %ld\n",
         wine_dbgstr_w(path), GetLastError());
 
     res = FindResourceA(GetModuleHandleA(NULL), MAKEINTRESOURCEA(testfont0_resnum),
