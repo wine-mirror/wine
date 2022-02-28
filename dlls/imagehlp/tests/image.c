@@ -41,11 +41,11 @@ static char *load_resource(const char *name)
     strcat(path, name);
 
     file = CreateFileA(path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
-    ok(file != INVALID_HANDLE_VALUE, "Failed to create file %s, error %u.\n",
+    ok(file != INVALID_HANDLE_VALUE, "Failed to create file %s, error %lu.\n",
             debugstr_a(path), GetLastError());
 
     res = FindResourceA(NULL, name, "TESTDLL");
-    ok(!!res, "Failed to load resource, error %u.\n", GetLastError());
+    ok(!!res, "Failed to load resource, error %lu.\n", GetLastError());
     ptr = LockResource(LoadResource(GetModuleHandleA(NULL), res));
     WriteFile(file, ptr, SizeofResource( GetModuleHandleA(NULL), res), &written, NULL);
     ok(written == SizeofResource(GetModuleHandleA(NULL), res), "Failed to write resource.\n");
@@ -204,15 +204,15 @@ static void check_updates(LPCSTR header, const struct expected_update_accum *exp
     DWORD i;
 
     todo_wine_if (expected->todo)
-        ok(expected->cUpdates == got->cUpdates, "%s: expected %d updates, got %d\n",
+        ok(expected->cUpdates == got->cUpdates, "%s: expected %ld updates, got %ld\n",
             header, expected->cUpdates, got->cUpdates);
     for (i = 0; i < min(expected->cUpdates, got->cUpdates); i++)
     {
-        ok(expected->updates[i].cb == got->updates[i].cb, "%s, update %d: expected %d bytes, got %d\n",
+        ok(expected->updates[i].cb == got->updates[i].cb, "%s, update %ld: expected %ld bytes, got %ld\n",
                 header, i, expected->updates[i].cb, got->updates[i].cb);
         if (expected->updates[i].cb && expected->updates[i].cb == got->updates[i].cb)
             ok(!memcmp(expected->updates[i].pb, got->updates[i].pb, got->updates[i].cb),
-                    "%s, update %d: unexpected value\n", header, i);
+                    "%s, update %ld: unexpected value\n", header, i);
     }
 }
 
@@ -304,7 +304,7 @@ static void test_get_digest_stream(void)
     SetLastError(0xdeadbeef);
     ret = ImageGetDigestStream(NULL, 0, NULL, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-     "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+     "expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
     file = create_temp_file(temp_file);
     if (file == INVALID_HANDLE_VALUE)
     {
@@ -314,16 +314,16 @@ static void test_get_digest_stream(void)
     SetLastError(0xdeadbeef);
     ret = ImageGetDigestStream(file, 0, NULL, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-     "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+     "expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = ImageGetDigestStream(NULL, 0, accumulating_stream_output, &accum);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-     "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+     "expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
     /* Even with "valid" parameters, it fails with an empty file */
     SetLastError(0xdeadbeef);
     ret = ImageGetDigestStream(file, 0, accumulating_stream_output, &accum);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-     "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+     "expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
     /* Finally, with a valid executable in the file, it succeeds.  Note that
      * the file pointer need not be positioned at the beginning.
      */
@@ -337,12 +337,12 @@ static void test_get_digest_stream(void)
     bin.nt_headers.OptionalHeader.SizeOfImage = 0;
 
     ret = ImageGetDigestStream(file, 0, accumulating_stream_output, &accum);
-    ok(ret, "ImageGetDigestStream failed: %d\n", GetLastError());
+    ok(ret, "ImageGetDigestStream failed: %ld\n", GetLastError());
     check_updates("flags = 0", &a1, &accum);
     free_updates(&accum);
     ret = ImageGetDigestStream(file, CERT_PE_IMAGE_DIGEST_ALL_IMPORT_INFO,
      accumulating_stream_output, &accum);
-    ok(ret, "ImageGetDigestStream failed: %d\n", GetLastError());
+    ok(ret, "ImageGetDigestStream failed: %ld\n", GetLastError());
     check_updates("flags = CERT_PE_IMAGE_DIGEST_ALL_IMPORT_INFO", &a2, &accum);
     free_updates(&accum);
     CloseHandle(file);
@@ -374,7 +374,7 @@ static BOOL WINAPI bind_image_cb(IMAGEHLP_STATUS_REASON reason, const char *file
 
         todo_wine ok(!!va, "expected nonzero VA\n");
         ret = SearchPathA(NULL, last_module, ".dll", sizeof(full_path), full_path, NULL);
-        ok(ret, "got error %u\n", GetLastError());
+        ok(ret, "got error %lu\n", GetLastError());
         ok(!strcmp(module, full_path), "expected %s, got %s\n", debugstr_a(full_path), debugstr_a(module));
 
         if (!strcmp((const char *)param, "SysAllocString"))
@@ -410,17 +410,17 @@ static void test_bind_image_ex(void)
             "nonexistent.dll", 0, 0, bind_image_cb);
     ok(!ret, "expected failure\n");
     ok(GetLastError() == ERROR_FILE_NOT_FOUND || GetLastError() == ERROR_INVALID_PARAMETER,
-            "got error %u\n", GetLastError());
+            "got error %lu\n", GetLastError());
 
     ret = BindImageEx(BIND_ALL_IMAGES | BIND_NO_BOUND_IMPORTS | BIND_NO_UPDATE,
             filename, NULL, NULL, bind_image_cb);
-    ok(ret, "got error %u\n", GetLastError());
+    ok(ret, "got error %lu\n", GetLastError());
     ok(got_SysAllocString == 1, "got %u imports of SysAllocString\n", got_SysAllocString);
     ok(got_GetOpenFileNameA == 1, "got %u imports of GetOpenFileNameA\n", got_GetOpenFileNameA);
     todo_wine ok(got_SHRegGetIntW == 1, "got %u imports of SHRegGetIntW\n", got_SHRegGetIntW);
 
     ret = DeleteFileA(filename);
-    ok(ret, "got error %u\n", GetLastError());
+    ok(ret, "got error %lu\n", GetLastError());
 }
 
 static void test_image_load(void)
@@ -460,7 +460,7 @@ static void test_image_load(void)
                 "FileHeader doesn't point to IMAGE_NT_HEADERS32\n");
         }
         ok(img->NumberOfSections == 3,
-           "unexpected NumberOfSections, got %d instead of 3\n", img->NumberOfSections);
+           "unexpected NumberOfSections, got %ld instead of 3\n", img->NumberOfSections);
         if (img->NumberOfSections >= 3)
         {
             ok(!strcmp((const char *)img->Sections[0].Name, ".text"),
@@ -474,7 +474,7 @@ static void test_image_load(void)
                (const char *)img->Sections[2].Name);
         }
         ok(img->Characteristics == 0x102,
-           "unexpected Characteristics, got 0x%x instead of 0x102\n", img->Characteristics);
+           "unexpected Characteristics, got 0x%lx instead of 0x102\n", img->Characteristics);
         ok(img->fSystemImage == 0,
            "unexpected fSystemImage, got %d instead of 0\n", img->fSystemImage);
         ok(img->fDOSImage == 0,
@@ -484,14 +484,14 @@ static void test_image_load(void)
         todo_wine ok(img->Version == 1 || broken(!img->Version) /* <= WinXP */,
            "unexpected Version, got %d instead of 1\n", img->Version);
         ok(img->SizeOfImage == 0x600,
-           "unexpected SizeOfImage, got 0x%x instead of 0x600\n", img->SizeOfImage);
+           "unexpected SizeOfImage, got 0x%lx instead of 0x600\n", img->SizeOfImage);
 
         count = 0xdeadbeef;
         ret = GetImageUnusedHeaderBytes(img, &count);
         todo_wine
-        ok(ret == 448, "GetImageUnusedHeaderBytes returned %u instead of 448\n", ret);
+        ok(ret == 448, "GetImageUnusedHeaderBytes returned %lu instead of 448\n", ret);
         todo_wine
-        ok(count == 64, "unexpected size for unused header bytes, got %u instead of 64\n", count);
+        ok(count == 64, "unexpected size for unused header bytes, got %lu instead of 64\n", count);
 
         ImageUnload(img);
     }
