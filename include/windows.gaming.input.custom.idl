@@ -1,0 +1,56 @@
+/*
+ * Copyright 2022 Rémi Bernon for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+import "windows.gaming.input.idl";
+import "windows.storage.streams.idl";
+
+namespace Windows.Gaming.Input.Custom {
+    typedef struct GameControllerVersionInfo GameControllerVersionInfo;
+    interface IGameControllerProvider;
+
+    [contract(Windows.Foundation.UniversalApiContract, 3.0)]
+    struct GameControllerVersionInfo
+    {
+        UINT16 Major;
+        UINT16 Minor;
+        UINT16 Build;
+        UINT16 Revision;
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        uuid(e6d73982-2996-4559-b16c-3e57d46e58d6)
+    ]
+    interface IGameControllerProvider : IInspectable
+    {
+        [propget] HRESULT FirmwareVersionInfo([out, retval] Windows.Gaming.Input.Custom.GameControllerVersionInfo *value);
+        [propget] HRESULT HardwareProductId([out, retval] UINT16 *value);
+        [propget] HRESULT HardwareVendorId([out, retval] UINT16 *value);
+        [propget] HRESULT HardwareVersionInfo([out, retval] Windows.Gaming.Input.Custom.GameControllerVersionInfo *value);
+        [propget] HRESULT IsConnected([out, retval] boolean *value);
+    }
+}
