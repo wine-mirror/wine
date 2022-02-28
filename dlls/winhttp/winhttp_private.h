@@ -260,6 +260,7 @@ struct socket
     unsigned int bytes_in_send_frame_buffer;
     unsigned int client_buffer_offset;
     SRWLOCK send_lock;
+    volatile LONG pending_noncontrol_send;
 };
 
 struct send_request

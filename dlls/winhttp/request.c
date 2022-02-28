@@ -3349,6 +3349,7 @@ static void CALLBACK task_socket_send( TP_CALLBACK_INSTANCE *instance, void *ctx
     else                   ret = socket_send( s->socket, s->type, s->buf, s->len, NULL );
 
     send_io_complete( &s->socket->hdr );
+    InterlockedExchange( &s->socket->pending_noncontrol_send, 0 );
     socket_send_complete( s->socket, ret, s->type, s->len );
 
     release_object( &s->socket->hdr );
@@ -3386,8 +3387,16 @@ DWORD WINAPI WinHttpWebSocketSend( HINTERNET hsocket, WINHTTP_WEB_SOCKET_BUFFER_
         BOOL async_send, complete_async = FALSE;
         struct socket_send *s;
 
+        if (InterlockedCompareExchange( &socket->pending_noncontrol_send, 1, 0 ))
+        {
+            WARN( "Previous send is still queued.\n" );
+            release_object( &socket->hdr );
+            return ERROR_INVALID_OPERATION;
+        }
+
         if (!(s = malloc( sizeof(*s) )))
         {
+            InterlockedExchange( &socket->pending_noncontrol_send, 0 );
             release_object( &socket->hdr );
             return ERROR_OUTOFMEMORY;
         }
@@ -3417,11 +3426,16 @@ DWORD WINAPI WinHttpWebSocketSend( HINTERNET hsocket, WINHTTP_WEB_SOCKET_BUFFER_
             if ((ret = queue_task( &socket->send_q, task_socket_send, s )))
             {
                 InterlockedDecrement( &socket->hdr.pending_sends );
+                InterlockedExchange( &socket->pending_noncontrol_send, 0 );
                 release_object( &socket->hdr );
                 free( s );
             }
         }
-        else InterlockedDecrement( &socket->hdr.pending_sends );
+        else
+        {
+            InterlockedDecrement( &socket->hdr.pending_sends );
+            InterlockedExchange( &socket->pending_noncontrol_send, 0 );
+        }
         ReleaseSRWLockExclusive( &socket->send_lock );
         if (!async_send)
         {
