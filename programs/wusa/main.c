@@ -23,6 +23,7 @@
 #include <fdi.h>
 #include <shlwapi.h>
 
+#include "shlobj.h"
 #include "wine/debug.h"
 #include "wine/list.h"
 #include "wusa.h"
@@ -479,27 +480,52 @@ static BOOL strbuf_append(struct strbuf *buf, const WCHAR *str, DWORD len)
 static WCHAR *lookup_expression(struct assembly_entry *assembly, const WCHAR *key)
 {
     WCHAR path[MAX_PATH];
+    int csidl = 0;
 
-    if (!wcsicmp(key, L"runtime.system32"))
+    if (!wcsicmp(key, L"runtime.system32") || !wcsicmp(key, L"runtime.drivers") || !wcsicmp(key, L"runtime.wbem"))
     {
 #ifdef __x86_64__
-        if (!wcsicmp(assembly->identity.architecture, L"x86"))
-        {
-            GetSystemWow64DirectoryW(path, ARRAY_SIZE(path));
-            return strdupW(path);
-        }
+        if (!wcsicmp(assembly->identity.architecture, L"x86")) csidl = CSIDL_SYSTEMX86;
 #endif
-        GetSystemDirectoryW(path, ARRAY_SIZE(path));
-        return strdupW(path);
+        if (!csidl) csidl = CSIDL_SYSTEM;
     }
-    if (!wcsicmp(key, L"runtime.windows"))
+    else if (!wcsicmp(key, L"runtime.windows") || !wcsicmp(key, L"runtime.inf")) csidl = CSIDL_WINDOWS;
+    else if (!wcsicmp(key, L"runtime.programfiles"))
     {
-        GetWindowsDirectoryW(path, ARRAY_SIZE(path));
-        return strdupW(path);
+#ifdef __x86_64__
+        if (!wcsicmp(assembly->identity.architecture, L"x86")) csidl = CSIDL_PROGRAM_FILESX86;
+#endif
+        if (!csidl) csidl = CSIDL_PROGRAM_FILES;
+    }
+    else if (!wcsicmp(key, L"runtime.commonfiles"))
+    {
+#ifdef __x86_64__
+        if (!wcsicmp(assembly->identity.architecture, L"x86")) csidl = CSIDL_PROGRAM_FILES_COMMONX86;
+#endif
+        if (!csidl) csidl = CSIDL_PROGRAM_FILES_COMMON;
+    }
+#ifdef __x86_64__
+    else if (!wcsicmp(key, L"runtime.programfilesx86")) csidl = CSIDL_PROGRAM_FILESX86;
+    else if (!wcsicmp(key, L"runtime.commonfilesx86")) csidl = CSIDL_PROGRAM_FILES_COMMONX86;
+#endif
+    else if (!wcsicmp(key, L"runtime.programdata")) csidl = CSIDL_COMMON_APPDATA;
+    else if (!wcsicmp(key, L"runtime.fonts")) csidl = CSIDL_FONTS;
+
+    if (!csidl)
+    {
+        FIXME("Unknown expression %s\n", debugstr_w(key));
+        return NULL;
+    }
+    if (!SHGetSpecialFolderPathW(NULL, path, csidl, TRUE))
+    {
+        ERR("Failed to get folder path for %s\n", debugstr_w(key));
+        return NULL;
     }
 
-    FIXME("Unknown expression %s\n", debugstr_w(key));
-    return NULL;
+    if (!wcsicmp(key, L"runtime.inf")) wcscat(path, L"\\inf");
+    else if (!wcsicmp(key, L"runtime.drivers")) wcscat(path, L"\\drivers");
+    else if (!wcsicmp(key, L"runtime.wbem")) wcscat(path, L"\\wbem");
+    return strdupW(path);
 }
 
 static WCHAR *expand_expression(struct assembly_entry *assembly, const WCHAR *expression)
