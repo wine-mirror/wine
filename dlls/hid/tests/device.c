@@ -43,11 +43,11 @@ static void test_device_info(HANDLE device)
     int i;
 
     rc = HidD_GetPreparsedData(device, &ppd);
-    ok(rc, "Failed to get preparsed data(0x%x)\n", GetLastError());
+    ok(rc, "Failed to get preparsed data(0x%lx)\n", GetLastError());
     status = HidP_GetCaps(ppd, &Caps);
-    ok(status == HIDP_STATUS_SUCCESS, "Failed to get Caps(0x%x)\n", status);
+    ok(status == HIDP_STATUS_SUCCESS, "Failed to get Caps(0x%lx)\n", status);
     rc = HidD_GetProductString(device, device_name, sizeof(device_name));
-    ok(rc, "Failed to get product string(0x%x)\n", GetLastError());
+    ok(rc, "Failed to get product string(0x%lx)\n", GetLastError());
     trace("Found device %s (%02x, %02x)\n", wine_dbgstr_w(device_name), Caps.UsagePage, Caps.Usage);
 
     trace("LinkCollectionNodes: (%d)\n", Caps.NumberLinkCollectionNodes);
@@ -55,11 +55,11 @@ static void test_device_info(HANDLE device)
 
     nodes_count = 0;
     status = HidP_GetLinkCollectionNodes(nodes, &nodes_count, ppd);
-    ok(status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetLinkCollectionNodes succeeded:%x\n", status);
+    ok(status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetLinkCollectionNodes succeeded:%lx\n", status);
 
     nodes_count = ARRAY_SIZE(nodes);
     status = HidP_GetLinkCollectionNodes(nodes, &nodes_count, ppd);
-    ok(status == HIDP_STATUS_SUCCESS, "HidP_GetLinkCollectionNodes failed:%x\n", status);
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_GetLinkCollectionNodes failed:%lx\n", status);
 
     for (i = 0; i < nodes_count; ++i)
     {
@@ -71,16 +71,16 @@ static void test_device_info(HANDLE device)
               nodes[i].CollectionType, nodes[i].IsAlias, nodes[i].UserContext);
     }
 
-    ok(nodes_count > 0, "Unexpected number of link collection nodes:%u.\n", nodes_count);
+    ok(nodes_count > 0, "Unexpected number of link collection nodes:%lu.\n", nodes_count);
     ok(nodes[0].LinkUsagePage == Caps.UsagePage, "Unexpected top collection usage page:%x\n", nodes[0].LinkUsagePage);
     ok(nodes[0].LinkUsage == Caps.Usage, "Unexpected top collection usage:%x\n", nodes[0].LinkUsage);
     ok(nodes[0].CollectionType == 1, "Unexpected top collection type:%x\n", nodes[0].CollectionType);
 
     rc = HidD_FreePreparsedData(ppd);
-    ok(rc, "Failed to free preparsed data(0x%x)\n", GetLastError());
+    ok(rc, "Failed to free preparsed data(0x%lx)\n", GetLastError());
     rc = HidD_GetAttributes(device, &attributes);
-    ok(rc, "Failed to get device attributes (0x%x)\n", GetLastError());
-    ok(attributes.Size == sizeof(attributes), "Unexpected HIDD_ATTRIBUTES size: %d\n", attributes.Size);
+    ok(rc, "Failed to get device attributes (0x%lx)\n", GetLastError());
+    ok(attributes.Size == sizeof(attributes), "Unexpected HIDD_ATTRIBUTES size: %ld\n", attributes.Size);
     trace("Device attributes: vid:%04x pid:%04x ver:%04x\n", attributes.VendorID, attributes.ProductID, attributes.VersionNumber);
 }
 
@@ -120,7 +120,7 @@ static void run_for_each_device(device_test *test)
                 continue;
             }
 
-            ok(file != INVALID_HANDLE_VALUE, "Failed to open %s, error %u.\n",
+            ok(file != INVALID_HANDLE_VALUE, "Failed to open %s, error %lu.\n",
                 wine_dbgstr_w(data->DevicePath), GetLastError());
 
             if (file != INVALID_HANDLE_VALUE)
@@ -167,14 +167,14 @@ static HANDLE get_device(USHORT page, USHORT usages[], UINT usage_count, DWORD a
                 trace("Not enough permissions to read device %s.\n", wine_dbgstr_w(data->DevicePath));
                 continue;
             }
-            ok(file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+            ok(file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError());
 
             rc = HidD_GetPreparsedData(file, &ppd);
-            ok(rc, "Failed to get preparsed data(0x%x)\n", GetLastError());
+            ok(rc, "Failed to get preparsed data(0x%lx)\n", GetLastError());
             status = HidP_GetCaps(ppd, &Caps);
-            ok(status == HIDP_STATUS_SUCCESS, "Failed to get Caps(0x%x)\n", status);
+            ok(status == HIDP_STATUS_SUCCESS, "Failed to get Caps(0x%lx)\n", status);
             rc = HidD_FreePreparsedData(ppd);
-            ok(rc, "Failed to free preparsed data(0x%x)\n", GetLastError());
+            ok(rc, "Failed to free preparsed data(0x%lx)\n", GetLastError());
             if (!page || page == Caps.UsagePage)
             {
                 int j;
@@ -214,7 +214,7 @@ static void process_data(HIDP_CAPS Caps, PHIDP_PREPARSED_DATA ppd, CHAR *data, D
             ULONG usage_length = 100;
             status = HidP_GetUsages(HidP_Input, i, 0, button_pages, &usage_length, ppd, data, data_length);
             ok (status == HIDP_STATUS_SUCCESS || usage_length == 0,
-                "HidP_GetUsages failed (%x) but usage length still %i\n", status, usage_length);
+                "HidP_GetUsages failed (%lx) but usage length still %li\n", status, usage_length);
             if (status == HIDP_STATUS_SUCCESS && usage_length)
             {
                 CHAR report[50];
@@ -224,7 +224,7 @@ static void process_data(HIDP_CAPS Caps, PHIDP_PREPARSED_DATA ppd, CHAR *data, D
                 count = usage_length;
                 j = 0;
                 report[0] = 0;
-                trace("\tButtons [0x%x: %i buttons]:\n", i, usage_length);
+                trace("\tButtons [0x%x: %li buttons]:\n", i, usage_length);
                 for (count = 0; count < usage_length; count += 15)
                 {
                     for (j=count; j < count+15 && j < usage_length; j++)
@@ -248,7 +248,7 @@ static void process_data(HIDP_CAPS Caps, PHIDP_PREPARSED_DATA ppd, CHAR *data, D
         values = HeapAlloc(GetProcessHeap(), 0, sizeof(HIDP_VALUE_CAPS) * Caps.NumberInputValueCaps);
         length = Caps.NumberInputValueCaps;
         status = HidP_GetValueCaps(HidP_Input, values, &length, ppd);
-        ok(status == HIDP_STATUS_SUCCESS, "Failed to get value caps (%x)\n",status);
+        ok(status == HIDP_STATUS_SUCCESS, "Failed to get value caps (%lx)\n",status);
 
         trace("\tValues:\n");
         for (i = 0; i < length; i++)
@@ -258,9 +258,9 @@ static void process_data(HIDP_CAPS Caps, PHIDP_PREPARSED_DATA ppd, CHAR *data, D
             {
                 status = HidP_GetUsageValue(HidP_Input, values[i].UsagePage, 0,
                     values[i].Range.UsageMin, &value, ppd, data, data_length);
-                ok(status == HIDP_STATUS_SUCCESS, "Failed to get value [%i,%i] (%x)\n",
+                ok(status == HIDP_STATUS_SUCCESS, "Failed to get value [%i,%i] (%lx)\n",
                     values[i].UsagePage, values[i].Range.UsageMin, status);
-                trace("[%02x, %02x]: %u\n", values[i].UsagePage, values[i].Range.UsageMin, value);
+                trace("[%02x, %02x]: %lu\n", values[i].UsagePage, values[i].Range.UsageMin, value);
             }
             else
             {
@@ -270,7 +270,7 @@ static void process_data(HIDP_CAPS Caps, PHIDP_PREPARSED_DATA ppd, CHAR *data, D
 
                 status = HidP_GetUsageValueArray(HidP_Input, values[i].UsagePage, 0,
                     values[i].NotRange.Usage, array, array_size, ppd, data, data_length);
-                ok(status == HIDP_STATUS_SUCCESS, "Failed to get value array [%i,%i] (%x)\n",
+                ok(status == HIDP_STATUS_SUCCESS, "Failed to get value array [%i,%i] (%lx)\n",
                     values[i].UsagePage, values[i].NotRange.Usage, status);
                 dump[0] = 0;
                 for (k = 0; k < array_size; k++)
@@ -316,13 +316,13 @@ static void test_read_device(void)
         return;
     }
     rc = HidD_GetProductString(device, device_name, sizeof(device_name));
-    ok(rc, "Failed to get product string(0x%x)\n", GetLastError());
+    ok(rc, "Failed to get product string(0x%lx)\n", GetLastError());
     trace("Read tests on device :%s\n",wine_dbgstr_w(device_name));
 
     rc = HidD_GetPreparsedData(device, &ppd);
-    ok(rc, "Failed to get preparsed data(0x%x)\n", GetLastError());
+    ok(rc, "Failed to get preparsed data(0x%lx)\n", GetLastError());
     status = HidP_GetCaps(ppd, &Caps);
-    ok(status == HIDP_STATUS_SUCCESS, "Failed to get Caps(0x%x)\n", status);
+    ok(status == HIDP_STATUS_SUCCESS, "Failed to get Caps(0x%lx)\n", status);
     data = HeapAlloc(GetProcessHeap(), 0, Caps.InputReportByteLength);
 
     memset(&overlapped, 0, sizeof(overlapped));
@@ -335,7 +335,7 @@ static void test_read_device(void)
     else
         max_time = timeout = 100;
     if (winetest_interactive)
-        trace("Test your device for the next %i seconds\n", max_time/1000);
+        trace("Test your device for the next %li seconds\n", max_time/1000);
     report = HeapAlloc(GetProcessHeap(), 0, 3 * Caps.InputReportByteLength);
     tick = GetTickCount();
     spent = 0;
@@ -346,7 +346,7 @@ static void test_read_device(void)
         {
             ResetEvent(overlapped.hEvent);
             spent = GetTickCount() - tick;
-            trace("REMAINING: %d ms\n", max_time - spent);
+            trace("REMAINING: %ld ms\n", max_time - spent);
             continue;
         }
         ResetEvent(overlapped.hEvent);
@@ -363,16 +363,16 @@ static void test_read_device(void)
                 sprintf(bytestr, "%x ", (BYTE)data[i]);
                 strcat(report, bytestr);
             }
-            trace("Input report (%i): %s\n", read, report);
+            trace("Input report (%li): %s\n", read, report);
 
             process_data(Caps, ppd, data, read);
         }
-        trace("REMAINING: %d ms\n", max_time - spent);
+        trace("REMAINING: %ld ms\n", max_time - spent);
     } while(spent < max_time);
 
     CloseHandle(overlapped.hEvent);
     rc = HidD_FreePreparsedData(ppd);
-    ok(rc, "Failed to free preparsed data(0x%x)\n", GetLastError());
+    ok(rc, "Failed to free preparsed data(0x%lx)\n", GetLastError());
     CancelIo(device);
     CloseHandle(device);
     HeapFree(GetProcessHeap(), 0, data);
@@ -402,13 +402,13 @@ static void test_get_input_report(void)
         return;
     }
     rc = HidD_GetProductString(device, device_name, sizeof(device_name));
-    ok(rc, "Failed to get product string(0x%x)\n", GetLastError());
+    ok(rc, "Failed to get product string(0x%lx)\n", GetLastError());
     trace("HidD_GetInputRpeort tests on device :%s\n",wine_dbgstr_w(device_name));
 
     rc = HidD_GetPreparsedData(device, &ppd);
-    ok(rc, "Failed to get preparsed data(0x%x)\n", GetLastError());
+    ok(rc, "Failed to get preparsed data(0x%lx)\n", GetLastError());
     status = HidP_GetCaps(ppd, &Caps);
-    ok(status == HIDP_STATUS_SUCCESS, "Failed to get Caps(0x%x)\n", status);
+    ok(status == HIDP_STATUS_SUCCESS, "Failed to get Caps(0x%lx)\n", status);
     data = HeapAlloc(GetProcessHeap(), 0, Caps.InputReportByteLength);
 
     if (winetest_interactive)
@@ -416,7 +416,7 @@ static void test_get_input_report(void)
     else
         max_time = 100;
     if (winetest_interactive)
-        trace("Test your device for the next %i seconds\n", max_time/1000);
+        trace("Test your device for the next %li seconds\n", max_time/1000);
     report = HeapAlloc(GetProcessHeap(), 0, 3 * Caps.InputReportByteLength);
     tick = GetTickCount();
     spent = 0;
@@ -444,12 +444,12 @@ static void test_get_input_report(void)
         }
         else
             trace("Failed to get Input Report, (%x)\n", rc);
-        trace("REMAINING: %d ms\n", max_time - spent);
+        trace("REMAINING: %ld ms\n", max_time - spent);
         Sleep(500);
     } while(spent < max_time);
 
     rc = HidD_FreePreparsedData(ppd);
-    ok(rc, "Failed to free preparsed data(0x%x)\n", GetLastError());
+    ok(rc, "Failed to free preparsed data(0x%lx)\n", GetLastError());
     CloseHandle(device);
     HeapFree(GetProcessHeap(), 0, data);
     HeapFree(GetProcessHeap(), 0, report);
