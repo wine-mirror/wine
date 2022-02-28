@@ -31,6 +31,7 @@ import "windows.storage.streams.idl";
 namespace Windows.Gaming.Input.Custom {
     typedef struct GameControllerVersionInfo GameControllerVersionInfo;
     interface IGameControllerProvider;
+    interface ICustomGameControllerFactory;
 
     [contract(Windows.Foundation.UniversalApiContract, 3.0)]
     struct GameControllerVersionInfo
@@ -52,5 +53,17 @@ namespace Windows.Gaming.Input.Custom {
         [propget] HRESULT HardwareVendorId([out, retval] UINT16 *value);
         [propget] HRESULT HardwareVersionInfo([out, retval] Windows.Gaming.Input.Custom.GameControllerVersionInfo *value);
         [propget] HRESULT IsConnected([out, retval] boolean *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        uuid(69a0ae5e-758e-4cbe-ace6-62155fe9126f)
+    ]
+    interface ICustomGameControllerFactory : IInspectable
+    {
+        HRESULT CreateGameController([in] Windows.Gaming.Input.Custom.IGameControllerProvider *provider,
+                                     [out, retval] IInspectable **value);
+        HRESULT OnGameControllerAdded([in] Windows.Gaming.Input.IGameController *value);
+        HRESULT OnGameControllerRemoved([in] Windows.Gaming.Input.IGameController *value);
     }
 }
