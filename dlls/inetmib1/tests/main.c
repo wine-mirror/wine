@@ -65,7 +65,7 @@ if (0) /* crashes on native */
 }
 
     ret = pSnmpExtensionInit(0, &event, &oid);
-    ok(ret, "SnmpExtensionInit failed: %d\n", GetLastError());
+    ok(ret, "SnmpExtensionInit failed: %ld\n", GetLastError());
     ok(!strcmp("1.3.6.1.2.1.1", SnmpUtilOidToA(&oid)),
         "Expected 1.3.6.1.2.1.1, got %s\n", SnmpUtilOidToA(&oid));
 
@@ -115,10 +115,10 @@ if (0) /* crashes on native */
     error = 0xdeadbeef;
     index = 0xdeadbeef;
     ret = pSnmpExtensionQuery(SNMP_PDU_GET, &list, &error, &index);
-    ok(ret, "SnmpExtensionQuery failed: %d, %d\n", error, index);
+    ok(ret, "SnmpExtensionQuery failed: %ld, %ld\n", error, index);
     ok(error == SNMP_ERRORSTATUS_NOERROR,
-        "expected SNMP_ERRORSTATUS_NOERROR, got %d\n", error);
-    ok(index == 0, "expected index 0, got %d\n", index);
+        "expected SNMP_ERRORSTATUS_NOERROR, got %ld\n", error);
+    ok(index == 0, "expected index 0, got %ld\n", index);
 
     /* Oddly enough, this "succeeds," even though the OID is clearly
      * unsupported.
@@ -132,15 +132,15 @@ if (0) /* crashes on native */
     error = 0xdeadbeef;
     index = 0xdeadbeef;
     ret = pSnmpExtensionQuery(SNMP_PDU_GET, &list, &error, &index);
-    ok(ret, "SnmpExtensionQuery failed: %d, %d\n", error, index);
+    ok(ret, "SnmpExtensionQuery failed: %ld, %ld\n", error, index);
     ok(error == SNMP_ERRORSTATUS_NOERROR ||
         broken(error == ERROR_FILE_NOT_FOUND) /* NT4 */,
-        "expected SNMP_ERRORSTATUS_NOERROR or ERROR_FILE_NOT_FOUND, got %d\n",
+        "expected SNMP_ERRORSTATUS_NOERROR or ERROR_FILE_NOT_FOUND, got %ld\n",
         error);
     if (error == SNMP_ERRORSTATUS_NOERROR)
-        ok(index == 0, "expected index 0, got %d\n", index);
+        ok(index == 0, "expected index 0, got %ld\n", index);
     else if (error == ERROR_FILE_NOT_FOUND)
-        ok(index == 1, "expected index 1, got %d\n", index);
+        ok(index == 1, "expected index 1, got %ld\n", index);
     /* The OID isn't changed either: */
     ok(!strcmp("1.2.3.4", SnmpUtilOidToA(&vars[0].name)),
         "expected 1.2.3.4, got %s\n", SnmpUtilOidToA(&vars[0].name));
@@ -152,11 +152,11 @@ if (0) /* crashes on native */
     error = 0xdeadbeef;
     index = 0xdeadbeef;
     ret = pSnmpExtensionQuery(SNMP_PDU_GET, &list, &error, &index);
-    ok(ret, "SnmpExtensionQuery failed: %d, %d\n", error, index);
+    ok(ret, "SnmpExtensionQuery failed: %ld, %ld\n", error, index);
     ok(error == SNMP_ERRORSTATUS_NOSUCHNAME,
-        "expected SNMP_ERRORSTATUS_NOSUCHNAME, got %d\n", error);
+        "expected SNMP_ERRORSTATUS_NOSUCHNAME, got %ld\n", error);
     /* The index is 1-based rather than 0-based */
-    ok(index == 1, "expected index 1, got %d\n", index);
+    ok(index == 1, "expected index 1, got %ld\n", index);
 
     /* A Get fails on something that specifies a table (but not a particular
      * entry in it)...
@@ -172,10 +172,10 @@ if (0) /* crashes on native */
     error = 0xdeadbeef;
     index = 0xdeadbeef;
     ret = pSnmpExtensionQuery(SNMP_PDU_GET, &list, &error, &index);
-    ok(ret, "SnmpExtensionQuery failed: %d, %d\n", error, index);
+    ok(ret, "SnmpExtensionQuery failed: %ld, %ld\n", error, index);
     ok(error == SNMP_ERRORSTATUS_NOSUCHNAME,
-        "expected SNMP_ERRORSTATUS_NOSUCHNAME, got %d\n", error);
-    ok(index == 1, "expected index 1, got %d\n", index);
+        "expected SNMP_ERRORSTATUS_NOSUCHNAME, got %ld\n", error);
+    ok(index == 1, "expected index 1, got %ld\n", index);
     /* but a GetNext succeeds with the same values, because GetNext gets the
      * entry after the specified OID, not the entry specified by it.  The
      * successor to the table is the first entry in the table.
@@ -194,10 +194,10 @@ if (0) /* crashes on native */
         error = 0xdeadbeef;
         index = 0xdeadbeef;
         ret = pSnmpExtensionQuery(SNMP_PDU_GETNEXT, &list, &error, &index);
-        ok(ret, "SnmpExtensionQuery failed: %d, %d\n", error, index);
+        ok(ret, "SnmpExtensionQuery failed: %ld, %ld\n", error, index);
         ok(error == SNMP_ERRORSTATUS_NOERROR,
-            "expected SNMP_ERRORSTATUS_NOERROR, got %d\n", error);
-        ok(index == 0, "expected index 0, got %d\n", index);
+            "expected SNMP_ERRORSTATUS_NOERROR, got %ld\n", error);
+        ok(index == 0, "expected index 0, got %ld\n", index);
         if (!ret)
             moreData = FALSE;
         else if (error)
@@ -276,10 +276,10 @@ if (0) /* crashes on native */
     list.list = vars2;
     noChange = FALSE;
     ret = pSnmpExtensionQuery(SNMP_PDU_GETNEXT, &list, &error, &index);
-    ok(ret, "SnmpExtensionQuery failed: %d, %d\n", error, index);
+    ok(ret, "SnmpExtensionQuery failed: %ld, %ld\n", error, index);
     ok(error == SNMP_ERRORSTATUS_NOERROR,
-        "expected SNMP_ERRORSTATUS_NOERROR, got %d\n", error);
-    ok(index == 0, "expected index 0, got %d\n", index);
+        "expected SNMP_ERRORSTATUS_NOERROR, got %ld\n", error);
+    ok(index == 0, "expected index 0, got %ld\n", index);
     vars3[0].name.idLength = ARRAY_SIZE(mib2If);
     vars3[0].name.ids = mib2If;
     ok(!SnmpUtilOidNCmp(&vars2[0].name, &vars[0].name, vars[0].name.idLength) ||
@@ -298,10 +298,10 @@ if (0) /* crashes on native */
     moreData = TRUE;
     do {
         ret = pSnmpExtensionQuery(SNMP_PDU_GETNEXT, &list, &error, &index);
-        ok(ret, "SnmpExtensionQuery failed: %d, %d\n", error, index);
+        ok(ret, "SnmpExtensionQuery failed: %ld, %ld\n", error, index);
         ok(error == SNMP_ERRORSTATUS_NOERROR,
-            "expected SNMP_ERRORSTATUS_NOERROR, got %d\n", error);
-        ok(index == 0, "expected index 0, got %d\n", index);
+            "expected SNMP_ERRORSTATUS_NOERROR, got %ld\n", error);
+        ok(index == 0, "expected index 0, got %ld\n", index);
         if (!ret)
             moreData = FALSE;
         else if (error)
@@ -364,10 +364,10 @@ if (0) /* crashes on native */
     noChange = FALSE;
     do {
         ret = pSnmpExtensionQuery(SNMP_PDU_GETNEXT, &list, &error, &index);
-        ok(ret, "SnmpExtensionQuery failed: %d, %d\n", error, index);
+        ok(ret, "SnmpExtensionQuery failed: %ld, %ld\n", error, index);
         ok(error == SNMP_ERRORSTATUS_NOERROR,
-            "expected SNMP_ERRORSTATUS_NOERROR, got %d\n", error);
-        ok(index == 0, "expected index 0, got %d\n", index);
+            "expected SNMP_ERRORSTATUS_NOERROR, got %ld\n", error);
+        ok(index == 0, "expected index 0, got %ld\n", index);
         if (!ret)
             moreData = FALSE;
         else if (error)
@@ -430,7 +430,7 @@ if (0) /* crashes on native */
     noChange = FALSE;
     do {
         ret = pSnmpExtensionQuery(SNMP_PDU_GETNEXT, &list, &error, &index);
-        ok(ret, "SnmpExtensionQuery failed: %d, %d\n", error, index);
+        ok(ret, "SnmpExtensionQuery failed: %ld, %ld\n", error, index);
         /* FIXME:  error and index aren't checked here because the UDP table is
          * the last OID currently supported by Wine, so the last GetNext fails.
          * todo_wine is also not effective because it will succeed for all but
@@ -439,8 +439,8 @@ if (0) /* crashes on native */
          */
         if (0) {
         ok(error == SNMP_ERRORSTATUS_NOERROR,
-            "expected SNMP_ERRORSTATUS_NOERROR, got %d\n", error);
-        ok(index == 0, "expected index 0, got %d\n", index);
+            "expected SNMP_ERRORSTATUS_NOERROR, got %ld\n", error);
+        ok(index == 0, "expected index 0, got %ld\n", index);
         }
         if (!ret)
             moreData = FALSE;
