@@ -47,6 +47,31 @@
 #define WIDL_using_Windows_Gaming_Input
 #include "windows.gaming.input.h"
 
+#define MAKE_FUNC(f) static typeof(f) *p ## f
+MAKE_FUNC( RoGetActivationFactory );
+MAKE_FUNC( RoInitialize );
+MAKE_FUNC( WindowsCreateString );
+MAKE_FUNC( WindowsDeleteString );
+#undef MAKE_FUNC
+
+static BOOL load_combase_functions(void)
+{
+    HMODULE combase = GetModuleHandleW( L"combase.dll" );
+
+#define LOAD_FUNC(m, f) if (!(p ## f = (void *)GetProcAddress( m, #f ))) goto failed;
+    LOAD_FUNC( combase, RoGetActivationFactory );
+    LOAD_FUNC( combase, RoInitialize );
+    LOAD_FUNC( combase, WindowsCreateString );
+    LOAD_FUNC( combase, WindowsDeleteString );
+#undef LOAD_FUNC
+
+    return TRUE;
+
+failed:
+    win_skip("Failed to load combase.dll functions, skipping tests\n");
+    return FALSE;
+}
+
 static BOOL test_input_lost( DWORD version )
 {
 #include "psh_hid_macros.h"
@@ -529,20 +554,20 @@ static void test_windows_gaming_input(void)
     HRESULT hr;
     MSG msg;
 
-    hr = RoInitialize( RO_INIT_MULTITHREADED );
+    if (!load_combase_functions()) return;
+
+    hr = pRoInitialize( RO_INIT_MULTITHREADED );
     ok( hr == RPC_E_CHANGED_MODE, "RoInitialize failed, hr %#lx\n", hr );
 
-    hr = WindowsCreateString( class_name, wcslen( class_name ), &str );
+    hr = pWindowsCreateString( class_name, wcslen( class_name ), &str );
     ok( hr == S_OK, "WindowsCreateString failed, hr %#lx\n", hr );
-
-    hr = RoGetActivationFactory( str, &IID_IRawGameControllerStatics, (void **)&statics );
+    hr = pRoGetActivationFactory( str, &IID_IRawGameControllerStatics, (void **)&statics );
     ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "RoGetActivationFactory failed, hr %#lx\n", hr );
-    WindowsDeleteString( str );
+    pWindowsDeleteString( str );
 
     if (hr == REGDB_E_CLASSNOTREG)
     {
         win_skip( "%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w( class_name ) );
-        RoUninitialize();
         return;
     }
 
@@ -551,7 +576,7 @@ static void test_windows_gaming_input(void)
     ok( hr == S_OK, "add_RawGameControllerAdded returned %#lx\n", hr );
     todo_wine
     ok( controller_added_token.value, "got token %I64u\n", controller_added_token.value );
-    if (!controller_added_token.value) goto done;
+    if (!controller_added_token.value) return;
 
     hr = IRawGameControllerStatics_add_RawGameControllerRemoved( statics, &controller_removed.IEventHandler_RawGameController_iface,
                                                                  &controller_removed_token );
@@ -642,9 +667,6 @@ static void test_windows_gaming_input(void)
 
     DestroyWindow( hwnd );
     UnregisterClassW( class.lpszClassName, class.hInstance );
-
-done:
-    RoUninitialize();
 }
 
 START_TEST( hotplug )
