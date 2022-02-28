@@ -44,46 +44,46 @@ static void test_CompareObjectHandles(void)
     }
 
     ret = pCompareObjectHandles( GetCurrentProcess(), GetCurrentProcess() );
-    ok( ret, "comparing GetCurrentProcess() to self failed with %u\n", GetLastError() );
+    ok( ret, "comparing GetCurrentProcess() to self failed with %lu\n", GetLastError() );
 
     ret = pCompareObjectHandles( GetCurrentThread(), GetCurrentThread() );
-    ok( ret, "comparing GetCurrentThread() to self failed with %u\n", GetLastError() );
+    ok( ret, "comparing GetCurrentThread() to self failed with %lu\n", GetLastError() );
 
     SetLastError(0);
     ret = pCompareObjectHandles( GetCurrentProcess(), GetCurrentThread() );
     ok( !ret && GetLastError() == ERROR_NOT_SAME_OBJECT,
-        "comparing GetCurrentProcess() to GetCurrentThread() returned %u\n", GetLastError() );
+        "comparing GetCurrentProcess() to GetCurrentThread() returned %lu\n", GetLastError() );
 
     h1 = NULL;
     ret = DuplicateHandle( GetCurrentProcess(), GetCurrentProcess(), GetCurrentProcess(),
                            &h1, 0, FALSE, DUPLICATE_SAME_ACCESS );
-    ok( ret, "failed to duplicate current process handle: %u\n", GetLastError() );
+    ok( ret, "failed to duplicate current process handle: %lu\n", GetLastError() );
 
     ret = pCompareObjectHandles( GetCurrentProcess(), h1 );
-    ok( ret, "comparing GetCurrentProcess() with %p failed with %u\n", h1, GetLastError() );
+    ok( ret, "comparing GetCurrentProcess() with %p failed with %lu\n", h1, GetLastError() );
 
     CloseHandle( h1 );
 
     h1 = CreateFileA( "\\\\.\\NUL", GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0 );
-    ok( h1 != INVALID_HANDLE_VALUE, "CreateFile failed (%d)\n", GetLastError() );
+    ok( h1 != INVALID_HANDLE_VALUE, "CreateFile failed (%ld)\n", GetLastError() );
 
     h2 = NULL;
     ret = DuplicateHandle( GetCurrentProcess(), h1, GetCurrentProcess(),
                            &h2, 0, FALSE, DUPLICATE_SAME_ACCESS );
-    ok( ret, "failed to duplicate handle %p: %u\n", h1, GetLastError() );
+    ok( ret, "failed to duplicate handle %p: %lu\n", h1, GetLastError() );
 
     ret = pCompareObjectHandles( h1, h2 );
-    ok( ret, "comparing %p with %p failed with %u\n", h1, h2, GetLastError() );
+    ok( ret, "comparing %p with %p failed with %lu\n", h1, h2, GetLastError() );
 
     CloseHandle( h2 );
 
     h2 = CreateFileA( "\\\\.\\NUL", GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0 );
-    ok( h2 != INVALID_HANDLE_VALUE, "CreateFile failed (%d)\n", GetLastError() );
+    ok( h2 != INVALID_HANDLE_VALUE, "CreateFile failed (%ld)\n", GetLastError() );
 
     SetLastError(0);
     ret = pCompareObjectHandles( h1, h2 );
     ok( !ret && GetLastError() == ERROR_NOT_SAME_OBJECT,
-        "comparing %p with %p returned %u\n", h1, h2, GetLastError() );
+        "comparing %p with %p returned %lu\n", h1, h2, GetLastError() );
 
     CloseHandle( h2 );
     CloseHandle( h1 );
