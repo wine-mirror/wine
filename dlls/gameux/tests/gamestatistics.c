@@ -50,13 +50,13 @@ static void test_register_game(IGameExplorer **explorer)
     PathRemoveFileSpecW(pathW);
 
     hr = CoCreateInstance(&CLSID_GameExplorer, NULL, CLSCTX_INPROC_SERVER, &IID_IGameExplorer, (void**)explorer);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     gameInstanceId = GUID_NULL;
     bstrExeName = SysAllocString(sExeName);
     bstrExePath = SysAllocString(pathW);
     hr = IGameExplorer_AddGame(*explorer, bstrExeName, bstrExePath, GIS_CURRENT_USER, &gameInstanceId);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     SysFreeString(bstrExeName);
     SysFreeString(bstrExePath);
@@ -72,7 +72,7 @@ static void test_unregister_game(IGameExplorer *ge)
     if (!ge) return;
 
     hr = IGameExplorer_RemoveGame(ge, gameInstanceId);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     IGameExplorer_Release(ge);
 }
 
@@ -164,13 +164,13 @@ static void test_gamestatisticsmgr( void )
         win_skip("gameux is partially stubbed, skipping tests\n");
         return;
     }
-    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "GetGameStatistics returned unexpected value: 0x%08x\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "GetGameStatistics returned unexpected value: 0x%08lx\n", hr);
     ok(gs == NULL, "Expected output pointer to be NULL, got %s\n",
        (gs == (void *)0xdeadbeef ? "deadbeef" : "neither NULL nor deadbeef"));
 
     /* now, allow them to be created */
     hr = IGameStatisticsMgr_GetGameStatistics(gsm, sExeName, GAMESTATS_OPEN_OPENORCREATE, &openResult, &gs);
-    ok(SUCCEEDED(hr), "GetGameStatistics returned error: 0x%x\n", hr);
+    ok(SUCCEEDED(hr), "GetGameStatistics returned error: 0x%lx\n", hr);
     ok(gs!=NULL, "GetGameStatistics did not return valid interface pointer\n");
     if(gs)
     {
@@ -197,16 +197,16 @@ static void test_gamestatisticsmgr( void )
 
         /* create name of statistics file */
         hr = _buildStatisticsFilePath(&guidApplicationId, &lpStatisticsFile);
-        ok(SUCCEEDED(hr), "cannot build path to game statistics (error 0x%x)\n", hr);
+        ok(SUCCEEDED(hr), "cannot build path to game statistics (error 0x%lx)\n", hr);
         trace("statistics file path: %s\n", wine_dbgstr_w(lpStatisticsFile));
         ok(_isFileExists(lpStatisticsFile) == FALSE, "statistics file %s already exists\n", wine_dbgstr_w(lpStatisticsFile));
 
         /* write sample statistics */
         hr = IGameStatistics_SetCategoryTitle(gs, wMaxCategories, NULL);
-        ok(hr==E_INVALIDARG, "setting category title invalid value: 0x%x\n", hr);
+        ok(hr==E_INVALIDARG, "setting category title invalid value: 0x%lx\n", hr);
 
         hr = IGameStatistics_SetCategoryTitle(gs, wMaxCategories, L"Category0");
-        ok(hr==E_INVALIDARG, "setting category title invalid value: 0x%x\n", hr);
+        ok(hr==E_INVALIDARG, "setting category title invalid value: 0x%lx\n", hr);
 
         /* check what happen if string is too long */
         sTooLongString = CoTaskMemAlloc(sizeof(WCHAR)*(uMaxCategoryLength+2));
@@ -215,7 +215,7 @@ static void test_gamestatisticsmgr( void )
 
         /* when string is too long, Windows returns S_FALSE, but saves string (stripped to expected number of characters) */
         hr = IGameStatistics_SetCategoryTitle(gs, 0, sTooLongString);
-        ok(hr==S_FALSE, "setting category title invalid result: 0x%x\n", hr);
+        ok(hr==S_FALSE, "setting category title invalid result: 0x%lx\n", hr);
         CoTaskMemFree(sTooLongString);
 
         ok(IGameStatistics_SetCategoryTitle(gs, 0, L"Category0")==S_OK, "setting category title failed: Category0\n");
@@ -224,32 +224,32 @@ static void test_gamestatisticsmgr( void )
 
         /* check what happen if any string is NULL */
         hr = IGameStatistics_SetStatistic(gs, 0, 0, NULL, L"Value00");
-        ok(hr == S_FALSE, "setting statistic returned unexpected value: 0x%x)\n", hr);
+        ok(hr == S_FALSE, "setting statistic returned unexpected value: 0x%lx)\n", hr);
 
         hr = IGameStatistics_SetStatistic(gs, 0, 0, L"Statistic00", NULL);
-        ok(hr == S_OK, "setting statistic returned unexpected value: 0x%x)\n", hr);
+        ok(hr == S_OK, "setting statistic returned unexpected value: 0x%lx)\n", hr);
 
         /* check what happen if any string is too long */
         sTooLongString = CoTaskMemAlloc(sizeof(WCHAR)*(uMaxNameLength+2));
         memset(sTooLongString, 'a', sizeof(WCHAR)*(uMaxNameLength+1));
         sTooLongString[uMaxNameLength+1]=0;
         hr = IGameStatistics_SetStatistic(gs, 0, 0, sTooLongString, L"Value00");
-        ok(hr == S_FALSE, "setting statistic returned unexpected value: 0x%x)\n", hr);
+        ok(hr == S_FALSE, "setting statistic returned unexpected value: 0x%lx)\n", hr);
         CoTaskMemFree(sTooLongString);
 
         sTooLongString = CoTaskMemAlloc(sizeof(WCHAR)*(uMaxValueLength+2));
         memset(sTooLongString, 'a', sizeof(WCHAR)*(uMaxValueLength+1));
         sTooLongString[uMaxValueLength+1]=0;
         hr = IGameStatistics_SetStatistic(gs, 0, 0, L"Statistic00", sTooLongString);
-        ok(hr == S_FALSE, "setting statistic returned unexpected value: 0x%x)\n", hr);
+        ok(hr == S_FALSE, "setting statistic returned unexpected value: 0x%lx)\n", hr);
         CoTaskMemFree(sTooLongString);
 
         /* check what happen on too big index of category or statistic */
         hr = IGameStatistics_SetStatistic(gs, wMaxCategories, 0, L"Statistic00", L"Value00");
-        ok(hr == E_INVALIDARG, "setting statistic returned unexpected value: 0x%x)\n", hr);
+        ok(hr == E_INVALIDARG, "setting statistic returned unexpected value: 0x%lx)\n", hr);
 
         hr = IGameStatistics_SetStatistic(gs, 0, wMaxStatsPerCategory, L"Statistic00", L"Value00");
-        ok(hr == E_INVALIDARG, "setting statistic returned unexpected value: 0x%x)\n", hr);
+        ok(hr == E_INVALIDARG, "setting statistic returned unexpected value: 0x%lx)\n", hr);
 
         ok(IGameStatistics_SetStatistic(gs, 0, 0, L"Statistic00", L"Value00")==S_OK,
                 "setting statistic failed: name=Statistic00, value=Value00\n");
@@ -274,11 +274,11 @@ static void test_gamestatisticsmgr( void )
         ok(IGameStatistics_SetCategoryTitle(gs, 0, L"Category0a")==S_OK, "setting category title failed: Category0a\n");
 
         hr = IGameStatistics_Release(gs);
-        ok(SUCCEEDED(hr), "releasing IGameStatistics returned error: 0x%08x\n", hr);
+        ok(SUCCEEDED(hr), "releasing IGameStatistics returned error: 0x%08lx\n", hr);
 
         /* try to read written statistics */
         hr = IGameStatisticsMgr_GetGameStatistics(gsm, sExeName, GAMESTATS_OPEN_OPENORCREATE, &openResult, &gs);
-        ok(SUCCEEDED(hr), "GetGameStatistics returned error: 0x%08x\n", hr);
+        ok(SUCCEEDED(hr), "GetGameStatistics returned error: 0x%08lx\n", hr);
         ok(openResult == GAMESTATS_OPEN_OPENED, "GetGameStatistics returned invalid open result: 0x%x\n", openResult);
         ok(gs!=NULL, "GetGameStatistics did not return valid interface pointer\n");
 
@@ -350,17 +350,17 @@ static void test_gamestatisticsmgr( void )
         CoTaskMemFree(lpValue);
 
         hr = IGameStatistics_Release(gs);
-        ok(SUCCEEDED(hr), "releasing IGameStatistics returned error: 0x%x\n", hr);
+        ok(SUCCEEDED(hr), "releasing IGameStatistics returned error: 0x%lx\n", hr);
 
         /* test of removing game statistics from underlying storage */
         ok(_isFileExists(lpStatisticsFile) == TRUE, "statistics file %s does not exists\n", wine_dbgstr_w(lpStatisticsFile));
         hr = IGameStatisticsMgr_RemoveGameStatistics(gsm, sExeName);
-        ok(SUCCEEDED(hr), "cannot remove game statistics, error: 0x%x\n", hr);
+        ok(SUCCEEDED(hr), "cannot remove game statistics, error: 0x%lx\n", hr);
         ok(_isFileExists(lpStatisticsFile) == FALSE, "statistics file %s still exists\n", wine_dbgstr_w(lpStatisticsFile));
     }
 
     hr = IGameStatisticsMgr_Release(gsm);
-    ok(SUCCEEDED(hr), "releasing IGameStatisticsMgr returned error: 0x%x\n", hr);
+    ok(SUCCEEDED(hr), "releasing IGameStatisticsMgr returned error: 0x%lx\n", hr);
 
     CoTaskMemFree(lpStatisticsFile);
 }

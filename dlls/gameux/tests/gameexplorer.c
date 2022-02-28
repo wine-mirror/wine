@@ -102,25 +102,25 @@ static void test_add_remove_game(void)
             memcpy(&guid, &defaultGUID, sizeof (guid));
 
             hr = IGameExplorer_AddGame(ge, bstrExeName, bstrExePath, GIS_CURRENT_USER, &guid);
-            ok(SUCCEEDED(hr), "IGameExplorer::AddGame failed (error 0x%08x)\n", hr);
+            ok(SUCCEEDED(hr), "IGameExplorer::AddGame failed (error 0x%08lx)\n", hr);
             ok(memcmp(&guid, &defaultGUID, sizeof (guid)) == 0, "AddGame unexpectedly modified GUID\n");
 
             if(SUCCEEDED(hr))
             {
                 hr = IGameExplorer_RemoveGame(ge, guid);
-                ok(SUCCEEDED(hr), "IGameExplorer::RemoveGame failed (error 0x%08x)\n", hr);
+                ok(SUCCEEDED(hr), "IGameExplorer::RemoveGame failed (error 0x%08lx)\n", hr);
             }
 
             /* try to register game with empty guid */
             memcpy(&guid, &GUID_NULL, sizeof (guid));
 
             hr = IGameExplorer_AddGame(ge, bstrExeName, bstrExePath, GIS_CURRENT_USER, &guid);
-            ok(SUCCEEDED(hr), "IGameExplorer::AddGame failed (error 0x%08x)\n", hr);
+            ok(SUCCEEDED(hr), "IGameExplorer::AddGame failed (error 0x%08lx)\n", hr);
 
             if(SUCCEEDED(hr))
             {
                 hr = IGameExplorer_RemoveGame(ge, guid);
-                ok(SUCCEEDED(hr), "IGameExplorer::RemoveGame failed (error 0x%08x)\n", hr);
+                ok(SUCCEEDED(hr), "IGameExplorer::RemoveGame failed (error 0x%08lx)\n", hr);
             }
         }
 
@@ -157,12 +157,12 @@ static void test_install_uninstall_game(void)
 
 
         hr = IGameExplorer2_InstallGame(ge2, sExeName, sExePath, GIS_CURRENT_USER);
-        ok(SUCCEEDED(hr), "IGameExplorer2::InstallGame failed (error 0x%08x)\n", hr);
+        ok(SUCCEEDED(hr), "IGameExplorer2::InstallGame failed (error 0x%08lx)\n", hr);
 
         if(SUCCEEDED(hr))
         {
             hr = IGameExplorer2_UninstallGame(ge2, sExeName);
-            ok(SUCCEEDED(hr), "IGameExplorer2::UninstallGame failed (error 0x%08x)\n", hr);
+            ok(SUCCEEDED(hr), "IGameExplorer2::UninstallGame failed (error 0x%08lx)\n", hr);
         }
 
         IGameExplorer2_Release(ge2);
@@ -188,13 +188,13 @@ START_TEST(gameexplorer)
     HRESULT hr;
 
     hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
-    ok(hr == S_OK, "Failed to initialize COM, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to initialize COM, hr %#lx.\n", hr);
     trace("Running multithreaded tests.\n");
     run_tests();
     CoUninitialize();
 
     hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
-    ok(hr == S_OK, "Failed to initialize COM, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to initialize COM, hr %#lx.\n", hr);
     trace("Running apartment threaded tests.\n");
     run_tests();
     CoUninitialize();
