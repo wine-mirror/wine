@@ -130,10 +130,12 @@ MonoThread* (CDECL *mono_thread_attach)(MonoDomain *domain);
 void (CDECL *mono_thread_manage)(void);
 void (CDECL *mono_trace_set_print_handler)(MonoPrintCallback callback);
 void (CDECL *mono_trace_set_printerr_handler)(MonoPrintCallback callback);
+static void (CDECL *wine_mono_install_assembly_preload_hook)(WineMonoAssemblyPreLoadFunc func, void *user_data);
 
 static BOOL find_mono_dll(LPCWSTR path, LPWSTR dll_path);
 
 static MonoAssembly* CDECL mono_assembly_preload_hook_fn(MonoAssemblyName *aname, char **assemblies_path, void *user_data);
+static MonoAssembly* CDECL wine_mono_assembly_preload_hook_fn(MonoAssemblyName *aname, char **assemblies_path, int *search_path, void *user_data);
 
 static void CDECL mono_shutdown_callback_fn(MonoProfiler *prof);
 
@@ -249,6 +251,7 @@ static HRESULT load_mono(LPCWSTR mono_path)
         LOAD_OPT_MONO_FUNCTION(mono_set_crash_chaining, set_crash_chaining_dummy);
         LOAD_OPT_MONO_FUNCTION(mono_trace_set_print_handler, set_print_handler_dummy);
         LOAD_OPT_MONO_FUNCTION(mono_trace_set_printerr_handler, set_print_handler_dummy);
+        LOAD_OPT_MONO_FUNCTION(wine_mono_install_assembly_preload_hook, NULL);
 
 #undef LOAD_OPT_MONO_FUNCTION
 
@@ -279,7 +282,10 @@ static HRESULT load_mono(LPCWSTR mono_path)
 
         mono_config_parse(NULL);
 
-        mono_install_assembly_preload_hook(mono_assembly_preload_hook_fn, NULL);
+        if (wine_mono_install_assembly_preload_hook)
+            wine_mono_install_assembly_preload_hook(wine_mono_assembly_preload_hook_fn, NULL);
+        else
+            mono_install_assembly_preload_hook(mono_assembly_preload_hook_fn, NULL);
 
         aot_size = GetEnvironmentVariableA("WINE_MONO_AOT", aot_setting, sizeof(aot_setting));
 
@@ -1366,6 +1372,9 @@ HRESULT CLRMetaHostPolicy_CreateInstance(REFIID riid, void **ppobj)
  * WINE_MONO_OVERRIDES=*,Gac=n
  *  Never search the GAC for libraries.
  *
+ * WINE_MONO_OVERRIDES=*,PrivatePath=n
+ *  Never search the AppDomain search path for libraries.
+ *
  * WINE_MONO_OVERRIDES=Microsoft.Xna.Framework,Gac=n
  *  Never search the GAC for Microsoft.Xna.Framework
  *
@@ -1377,7 +1386,8 @@ HRESULT CLRMetaHostPolicy_CreateInstance(REFIID riid, void **ppobj)
 /* assembly search override flags */
 #define ASSEMBLY_SEARCH_GAC 1
 #define ASSEMBLY_SEARCH_UNDEFINED 2
-#define ASSEMBLY_SEARCH_DEFAULT ASSEMBLY_SEARCH_GAC
+#define ASSEMBLY_SEARCH_PRIVATEPATH 4
+#define ASSEMBLY_SEARCH_DEFAULT (ASSEMBLY_SEARCH_GAC|ASSEMBLY_SEARCH_PRIVATEPATH)
 
 typedef struct override_entry {
     char *name;
@@ -1424,6 +1434,14 @@ static void parse_override_entry(override_entry *entry, const char *string, int 
                         entry->flags |= ASSEMBLY_SEARCH_GAC;
                     else if (IS_OPTION_FALSE(*value))
                         entry->flags &= ~ASSEMBLY_SEARCH_GAC;
+                }
+                break;
+            case 11:
+                if (!_strnicmp(string, "privatepath", 11)) {
+                    if (IS_OPTION_TRUE(*value))
+                        entry->flags |= ASSEMBLY_SEARCH_PRIVATEPATH;
+                    else if (IS_OPTION_FALSE(*value))
+                        entry->flags &= ~ASSEMBLY_SEARCH_PRIVATEPATH;
                 }
                 break;
             default:
@@ -1689,6 +1707,12 @@ static MonoAssembly* mono_assembly_try_load(WCHAR *path)
 
 static MonoAssembly* CDECL mono_assembly_preload_hook_fn(MonoAssemblyName *aname, char **assemblies_path, void *user_data)
 {
+    int dummy;
+    return wine_mono_assembly_preload_hook_fn(aname, assemblies_path, &dummy, user_data);
+}
+
+static MonoAssembly* CDECL wine_mono_assembly_preload_hook_fn(MonoAssemblyName *aname, char **assemblies_path, int *halt_search, void *user_data)
+{
     HRESULT hr;
     MonoAssembly *result=NULL;
     char *stringname=NULL;
@@ -1720,7 +1744,7 @@ static MonoAssembly* CDECL mono_assembly_preload_hook_fn(MonoAssemblyName *aname
     if (!stringname || !assemblyname) return NULL;
 
     search_flags = get_assembly_search_flags(aname);
-    if (private_path)
+    if (private_path && (search_flags & ASSEMBLY_SEARCH_PRIVATEPATH) != 0)
     {
         stringnameW_size = MultiByteToWideChar(CP_UTF8, 0, assemblyname, -1, NULL, 0);
         stringnameW = HeapAlloc(GetProcessHeap(), 0, stringnameW_size * sizeof(WCHAR));
@@ -1797,6 +1821,12 @@ static MonoAssembly* CDECL mono_assembly_preload_hook_fn(MonoAssemblyName *aname
     }
     else
         TRACE("skipping Windows GAC search due to override setting\n");
+
+    if ((search_flags & ASSEMBLY_SEARCH_PRIVATEPATH) == 0)
+    {
+        TRACE("skipping AppDomain search path due to override setting\n");
+        *halt_search = 1;
+    }
 
 done:
     HeapFree(GetProcessHeap(), 0, cultureW);
