@@ -75,17 +75,17 @@ static void test_Aggregability(void)
     IUnknown *pUnknown = NULL;
 
     hr = CoCreateInstance(&CLSID_InternetShortcut, NULL, CLSCTX_ALL, &IID_IUnknown, (void**)&pUnknown);
-    ok(hr == S_OK, "could not create instance of CLSID_InternetShortcut with IID_IUnknown, hr = 0x%x\n", hr);
+    ok(hr == S_OK, "could not create instance of CLSID_InternetShortcut with IID_IUnknown, hr = 0x%lx\n", hr);
     if (pUnknown)
         IUnknown_Release(pUnknown);
 
     hr = CoCreateInstance(&CLSID_InternetShortcut, NULL, CLSCTX_ALL, &IID_IUniformResourceLocatorA, (void**)&pUnknown);
-    ok(hr == S_OK, "could not create instance of CLSID_InternetShortcut with IID_IUniformResourceLocatorA, hr = 0x%x\n", hr);
+    ok(hr == S_OK, "could not create instance of CLSID_InternetShortcut with IID_IUniformResourceLocatorA, hr = 0x%lx\n", hr);
     if (pUnknown)
         IUnknown_Release(pUnknown);
 
     hr = CoCreateInstance(&CLSID_InternetShortcut, &unknown, CLSCTX_ALL, &IID_IUnknown, (void**)&pUnknown);
-    ok(hr == CLASS_E_NOAGGREGATION, "aggregation didn't fail like it should, hr = 0x%x\n", hr);
+    ok(hr == CLASS_E_NOAGGREGATION, "aggregation didn't fail like it should, hr = 0x%lx\n", hr);
     if (pUnknown)
         IUnknown_Release(pUnknown);
 }
@@ -106,7 +106,7 @@ static void test_QueryInterface(void)
     IUnknown *pUnknown;
 
     hr = CoCreateInstance(&CLSID_InternetShortcut, NULL, CLSCTX_ALL, &IID_IUnknown, (void**)&pUnknown);
-    ok(hr == S_OK, "Could not create InternetShortcut object: %08x\n", hr);
+    ok(hr == S_OK, "Could not create InternetShortcut object: %08lx\n", hr);
 
     can_query_interface(pUnknown, &IID_IUniformResourceLocatorA);
     can_query_interface(pUnknown, &IID_IUniformResourceLocatorW);
@@ -122,10 +122,10 @@ static void _test_shortcut_url(unsigned line, IUnknown *unk, const char *exurl)
     HRESULT hres;
 
     hres = IUnknown_QueryInterface(unk, &IID_IUniformResourceLocatorA, (void**)&locator_a);
-    ok_(__FILE__,line)(hres == S_OK, "Could not get IUniformResourceLocatorA iface: %08x\n", hres);
+    ok_(__FILE__,line)(hres == S_OK, "Could not get IUniformResourceLocatorA iface: %08lx\n", hres);
 
     hres = locator_a->lpVtbl->GetURL(locator_a, &url_a);
-    ok_(__FILE__,line)(hres == S_OK, "GetURL failed: %08x\n", hres);
+    ok_(__FILE__,line)(hres == S_OK, "GetURL failed: %08lx\n", hres);
     ok_(__FILE__,line)(!strcmp(url_a, exurl), "unexpected URL, got %s, expected %s\n", url_a, exurl);
     CoTaskMemFree(url_a);
 
@@ -140,7 +140,7 @@ static void _check_string_transform(unsigned line, IUniformResourceLocatorA *url
     HRESULT hr;
 
     hr = urlA->lpVtbl->SetURL(urlA, input, flags);
-    ok_(__FILE__,line)(hr == S_OK, "SetUrl failed, hr=0x%x\n", hr);
+    ok_(__FILE__,line)(hr == S_OK, "SetUrl failed, hr=0x%lx\n", hr);
     if (FAILED(hr))
         return;
 
@@ -148,14 +148,14 @@ static void _check_string_transform(unsigned line, IUniformResourceLocatorA *url
     hr = urlA->lpVtbl->GetURL(urlA, &output);
     if(expectedOutput) {
         todo_wine_if(is_todo) {
-            ok_(__FILE__,line)(hr == S_OK, "GetUrl failed, hr=0x%x\n", hr);
+            ok_(__FILE__,line)(hr == S_OK, "GetUrl failed, hr=0x%lx\n", hr);
         }
         todo_wine
         ok_(__FILE__,line)(!lstrcmpA(output, expectedOutput), "unexpected URL change %s -> %s (expected %s)\n",
             input, output, expectedOutput);
     }else {
         todo_wine
-        ok_(__FILE__,line)(hr == S_FALSE, "GetUrl failed, hr=0x%x\n", hr);
+        ok_(__FILE__,line)(hr == S_FALSE, "GetUrl failed, hr=0x%lx\n", hr);
         todo_wine
         ok_(__FILE__,line)(!output, "GetUrl returned %s\n", output);
     }
@@ -184,7 +184,7 @@ static void test_ReadAndWriteProperties(void)
     lstrcatW(fileNameW, L"testshortcut.url");
 
     hr = CoCreateInstance(&CLSID_InternetShortcut, NULL, CLSCTX_ALL, &IID_IUniformResourceLocatorA, (void**)&urlA);
-    ok(hr == S_OK, "Could not create CLSID_InternetShortcut instance: %08x\n", hr);
+    ok(hr == S_OK, "Could not create CLSID_InternetShortcut instance: %08lx\n", hr);
     if (hr == S_OK)
     {
         IPersistFile *pf;
@@ -194,14 +194,14 @@ static void test_ReadAndWriteProperties(void)
 
         /* We need to set a URL -- IPersistFile refuses to save without one. */
         hr = urlA->lpVtbl->SetURL(urlA, testurl, 0);
-        ok(hr == S_OK, "Failed to set a URL.  hr=0x%x\n", hr);
+        ok(hr == S_OK, "Failed to set a URL.  hr=0x%lx\n", hr);
 
         /* Write this shortcut out to a file so that we can test reading it in again. */
         hr = urlA->lpVtbl->QueryInterface(urlA, &IID_IPersistFile, (void **) &pf);
-        ok(hr == S_OK, "Failed to get the IPersistFile for writing.  hr=0x%x\n", hr);
+        ok(hr == S_OK, "Failed to get the IPersistFile for writing.  hr=0x%lx\n", hr);
 
         hr = IPersistFile_Save(pf, fileNameW, TRUE);
-        ok(hr == S_OK, "Failed to save via IPersistFile. hr=0x%x\n", hr);
+        ok(hr == S_OK, "Failed to save via IPersistFile. hr=0x%lx\n", hr);
 
         IPersistFile_Release(pf);
 
@@ -210,16 +210,16 @@ static void test_ReadAndWriteProperties(void)
         pv[1].vt = VT_I4;
         U(pv[1]).lVal = iconIndex;
         hr = urlA->lpVtbl->QueryInterface(urlA, &IID_IPropertySetStorage, (void **) &pPropSetStg);
-        ok(hr == S_OK, "Unable to get an IPropertySetStorage, hr=0x%x\n", hr);
+        ok(hr == S_OK, "Unable to get an IPropertySetStorage, hr=0x%lx\n", hr);
 
         hr = IPropertySetStorage_Open(pPropSetStg, &FMTID_Intshcut, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, &pPropStgWrite);
-        ok(hr == S_OK, "Unable to get an IPropertyStorage for writing, hr=0x%x\n", hr);
+        ok(hr == S_OK, "Unable to get an IPropertyStorage for writing, hr=0x%lx\n", hr);
 
         hr = IPropertyStorage_WriteMultiple(pPropStgWrite, 2, ps, pv, 0);
-        ok(hr == S_OK, "Unable to set properties, hr=0x%x\n", hr);
+        ok(hr == S_OK, "Unable to set properties, hr=0x%lx\n", hr);
 
         hr = IPropertyStorage_Commit(pPropStgWrite, STGC_DEFAULT);
-        ok(hr == S_OK, "Failed to commit properties, hr=0x%x\n", hr);
+        ok(hr == S_OK, "Failed to commit properties, hr=0x%lx\n", hr);
 
         pPropStgWrite->lpVtbl->Release(pPropStgWrite);
         urlA->lpVtbl->Release(urlA);
@@ -227,7 +227,7 @@ static void test_ReadAndWriteProperties(void)
     }
 
     hr = CoCreateInstance(&CLSID_InternetShortcut, NULL, CLSCTX_ALL, &IID_IUniformResourceLocatorA, (void**)&urlAFromFile);
-    ok(hr == S_OK, "Could not create CLSID_InternetShortcut instance: %08x\n", hr);
+    ok(hr == S_OK, "Could not create CLSID_InternetShortcut instance: %08lx\n", hr);
     if (hr == S_OK)
     {
         IPropertySetStorage *pPropSetStg;
@@ -238,29 +238,29 @@ static void test_ReadAndWriteProperties(void)
 
         /* Now read that .url file back in. */
         hr = urlAFromFile->lpVtbl->QueryInterface(urlAFromFile, &IID_IPersistFile, (void **) &pf);
-        ok(hr == S_OK, "Failed to get the IPersistFile for reading.  hr=0x%x\n", hr);
+        ok(hr == S_OK, "Failed to get the IPersistFile for reading.  hr=0x%lx\n", hr);
 
         hr = IPersistFile_Load(pf, fileNameW, 0);
-        ok(hr == S_OK, "Failed to load via IPersistFile. hr=0x%x\n", hr);
+        ok(hr == S_OK, "Failed to load via IPersistFile. hr=0x%lx\n", hr);
         IPersistFile_Release(pf);
 
 
         hr = urlAFromFile->lpVtbl->GetURL(urlAFromFile, &url);
-        ok(hr == S_OK, "Unable to get url from file, hr=0x%x\n", hr);
+        ok(hr == S_OK, "Unable to get url from file, hr=0x%lx\n", hr);
         ok(lstrcmpA(url, testurl) == 0, "Wrong url read from file: %s\n",url);
         CoTaskMemFree(url);
 
         hr = urlAFromFile->lpVtbl->QueryInterface(urlAFromFile, &IID_IPropertySetStorage, (void **) &pPropSetStg);
-        ok(hr == S_OK, "Unable to get an IPropertySetStorage, hr=0x%x\n", hr);
+        ok(hr == S_OK, "Unable to get an IPropertySetStorage, hr=0x%lx\n", hr);
 
         hr = IPropertySetStorage_Open(pPropSetStg, &FMTID_Intshcut, STGM_READ | STGM_SHARE_EXCLUSIVE, &pPropStgRead);
-        ok(hr == S_OK, "Unable to get an IPropertyStorage for reading, hr=0x%x\n", hr);
+        ok(hr == S_OK, "Unable to get an IPropertyStorage for reading, hr=0x%lx\n", hr);
 
         memset(pvread, 0, sizeof(pvread));
         hr = IPropertyStorage_ReadMultiple(pPropStgRead, 2, ps, pvread);
     todo_wine /* Wine doesn't yet support setting properties after save */
     {
-        ok(hr == S_OK, "Unable to read properties, hr=0x%x\n", hr);
+        ok(hr == S_OK, "Unable to read properties, hr=0x%lx\n", hr);
         ok(pvread[1].vt == VT_I4, "got %d\n", pvread[1].vt);
         ok(U(pvread[1]).lVal == iconIndex, "Read wrong icon index: %d\n", U(pvread[1]).iVal);
         ok(pvread[0].vt == VT_LPWSTR, "got %d\n", pvread[0].vt);
@@ -282,17 +282,17 @@ static void test_NullURLs(void)
     IUniformResourceLocatorA *urlA;
 
     hr = CoCreateInstance(&CLSID_InternetShortcut, NULL, CLSCTX_ALL, &IID_IUniformResourceLocatorA, (void**)&urlA);
-    ok(hr == S_OK, "Could not create InternetShortcut object: %08x\n", hr);
+    ok(hr == S_OK, "Could not create InternetShortcut object: %08lx\n", hr);
 
     hr = urlA->lpVtbl->GetURL(urlA, &url);
-    ok(hr == S_FALSE, "getting uninitialized URL unexpectedly failed, hr=0x%x\n", hr);
+    ok(hr == S_FALSE, "getting uninitialized URL unexpectedly failed, hr=0x%lx\n", hr);
     ok(url == NULL, "uninitialized URL is not NULL but %s\n", url);
 
     hr = urlA->lpVtbl->SetURL(urlA, NULL, 0);
-    ok(hr == S_OK, "setting NULL URL unexpectedly failed, hr=0x%x\n", hr);
+    ok(hr == S_OK, "setting NULL URL unexpectedly failed, hr=0x%lx\n", hr);
 
     hr = urlA->lpVtbl->GetURL(urlA, &url);
-    ok(hr == S_FALSE, "getting NULL URL unexpectedly failed, hr=0x%x\n", hr);
+    ok(hr == S_FALSE, "getting NULL URL unexpectedly failed, hr=0x%lx\n", hr);
     ok(url == NULL, "URL unexpectedly not NULL but %s\n", url);
 
     urlA->lpVtbl->Release(urlA);
@@ -342,31 +342,31 @@ static void test_Load(void)
         CloseHandle(file);
 
         hres = CoCreateInstance(&CLSID_InternetShortcut, NULL, CLSCTX_ALL, &IID_IPersistFile, (void**)&persist_file);
-        ok(hres == S_OK, "Could not create InternetShortcut instance: %08x\n", hres);
+        ok(hres == S_OK, "Could not create InternetShortcut instance: %08lx\n", hres);
 
         hres = IPersistFile_Load(persist_file, file_path, 0);
-        ok(hres == S_OK, "Load failed: %08x\n", hres);
+        ok(hres == S_OK, "Load failed: %08lx\n", hres);
 
         test_shortcut_url((IUnknown*)persist_file, test->url);
 
         hres = IPersistFile_QueryInterface(persist_file, &IID_IPropertySetStorage, (void **)&propsetstorage);
-        ok(hres == S_OK, "Unable to get an IPropertySetStorage, hr=0x%x\n", hres);
+        ok(hres == S_OK, "Unable to get an IPropertySetStorage, hr=0x%lx\n", hres);
 
         hres = IPropertySetStorage_Open(propsetstorage, &FMTID_Intshcut, STGM_READ | STGM_SHARE_EXCLUSIVE, &propstorage);
-        ok(hres == S_OK, "Unable to get an IPropertyStorage for reading, hr=0x%x\n", hres);
+        ok(hres == S_OK, "Unable to get an IPropertyStorage for reading, hr=0x%lx\n", hres);
 
         ps.ulKind = PRSPEC_PROPID;
         U(ps).propid = PID_IS_ICONFILE;
         v.vt = VT_NULL;
         hres = IPropertyStorage_ReadMultiple(propstorage, 1, &ps, &v);
-        ok(hres == S_FALSE, "got 0x%08x\n", hres);
+        ok(hres == S_FALSE, "got 0x%08lx\n", hres);
         ok(v.vt == VT_EMPTY, "got %d\n", v.vt);
 
         ps.ulKind = PRSPEC_PROPID;
         U(ps).propid = PID_IS_ICONINDEX;
         v.vt = VT_EMPTY;
         hres = IPropertyStorage_ReadMultiple(propstorage, 1, &ps, &v);
-        ok(hres == S_FALSE, "got 0x%08x\n", hres);
+        ok(hres == S_FALSE, "got 0x%08lx\n", hres);
         ok(v.vt == VT_EMPTY, "got %d\n", v.vt);
 
         IPropertyStorage_Release(propstorage);
@@ -383,7 +383,7 @@ static void test_SetURLFlags(void)
     IUniformResourceLocatorA *urlA;
 
     hr = CoCreateInstance(&CLSID_InternetShortcut, NULL, CLSCTX_ALL, &IID_IUniformResourceLocatorA, (void**)&urlA);
-    ok(hr == S_OK, "Could not create InternetShortcut object: %08x\n", hr);
+    ok(hr == S_OK, "Could not create InternetShortcut object: %08lx\n", hr);
 
     check_string_transform(urlA, "somerandomstring", 0, NULL, TRUE);
     check_string_transform(urlA, "www.winehq.org", 0, NULL, TRUE);
@@ -400,7 +400,7 @@ static void test_InternetShortcut(void)
     HRESULT hres;
 
     hres = CoCreateInstance(&CLSID_InternetShortcut, NULL, CLSCTX_ALL, &IID_IUniformResourceLocatorA, (void**)&url);
-    ok(hres == S_OK, "Could not create CLSID_InternetShortcut instance: %08x\n", hres);
+    ok(hres == S_OK, "Could not create CLSID_InternetShortcut instance: %08lx\n", hres);
     if(FAILED(hres))
         return;
     url->lpVtbl->Release(url);

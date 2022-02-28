@@ -135,22 +135,22 @@ static void advise_cp(IUnknown *unk, BOOL init)
     static DWORD cookie = 100;
 
     hres = IUnknown_QueryInterface(unk, &IID_IConnectionPointContainer, (void**)&container);
-    ok(hres == S_OK, "QueryInterface(IID_IConnectionPointContainer) failed: %08x\n", hres);
+    ok(hres == S_OK, "QueryInterface(IID_IConnectionPointContainer) failed: %08lx\n", hres);
     if(FAILED(hres))
         return;
 
     hres = IConnectionPointContainer_FindConnectionPoint(container, &DIID_DWebBrowserEvents2, &point);
     IConnectionPointContainer_Release(container);
-    ok(hres == S_OK, "FindConnectionPoint failed: %08x\n", hres);
+    ok(hres == S_OK, "FindConnectionPoint failed: %08lx\n", hres);
     if(FAILED(hres))
         return;
 
     if(init) {
         hres = IConnectionPoint_Advise(point, (IUnknown*)&Dispatch, &cookie);
-        ok(hres == S_OK, "Advise failed: %08x\n", hres);
+        ok(hres == S_OK, "Advise failed: %08lx\n", hres);
     }else {
         hres = IConnectionPoint_Unadvise(point, cookie);
-        ok(hres == S_OK, "Unadvise failed: %08x\n", hres);
+        ok(hres == S_OK, "Unadvise failed: %08lx\n", hres);
     }
 
     IConnectionPoint_Release(point);
@@ -164,19 +164,19 @@ static void test_visible(IWebBrowser2 *wb)
 
     b = 0x100;
     hres = IWebBrowser2_get_Visible(wb, &b);
-    ok(hres == S_OK, "get_Visible failed: %08x\n", hres);
+    ok(hres == S_OK, "get_Visible failed: %08lx\n", hres);
     ok(b == VARIANT_FALSE, "Visible = %x\n", b);
 
     hres = IWebBrowser2_put_Visible(wb, VARIANT_TRUE);
-    ok(hres == S_OK, "put_Visible failed: %08x\n", hres);
+    ok(hres == S_OK, "put_Visible failed: %08lx\n", hres);
 
     b = 0x100;
     hres = IWebBrowser2_get_Visible(wb, &b);
-    ok(hres == S_OK, "get_Visible failed: %08x\n", hres);
+    ok(hres == S_OK, "get_Visible failed: %08lx\n", hres);
     ok(b == VARIANT_TRUE, "Visible = %x\n", b);
 
     hres = IWebBrowser2_put_Visible(wb, VARIANT_FALSE);
-    ok(hres == S_OK, "put_Visible failed: %08x\n", hres);
+    ok(hres == S_OK, "put_Visible failed: %08lx\n", hres);
 }
 
 static void test_html_window(IWebBrowser2 *wb)
@@ -186,11 +186,11 @@ static void test_html_window(IWebBrowser2 *wb)
     HRESULT hres;
 
     hres = IWebBrowser2_QueryInterface(wb, &IID_IServiceProvider, (void**)&sp);
-    ok(hres == S_OK, "Could not get IServiceProvider iface: %08x\n", hres);
+    ok(hres == S_OK, "Could not get IServiceProvider iface: %08lx\n", hres);
 
     hres = IServiceProvider_QueryService(sp, &SID_SHTMLWindow, &IID_IHTMLWindow2, (void**)&html_window);
     IServiceProvider_Release(sp);
-    ok(hres == S_OK, "Could not get SHTMLWindow service: %08x\n", hres);
+    ok(hres == S_OK, "Could not get SHTMLWindow service: %08lx\n", hres);
 
     IHTMLWindow2_Release(html_window);
 }
@@ -203,7 +203,7 @@ static void test_window(IWebBrowser2 *wb)
     HRESULT hres;
 
     hres = IWebBrowser2_get_HWND(wb, &handle);
-    ok(hres == S_OK, "get_HWND failed: %08x\n", hres);
+    ok(hres == S_OK, "get_HWND failed: %08lx\n", hres);
     ok(handle, "handle == 0\n");
 
     hwnd = (HWND)handle;
@@ -223,7 +223,7 @@ static void test_navigate(IWebBrowser2 *wb, const WCHAR *url)
     V_BSTR(&urlv) = SysAllocString(url);
     V_VT(&emptyv) = VT_EMPTY;
     hres = IWebBrowser2_Navigate2(wb, &urlv, &emptyv, &emptyv, &emptyv, &emptyv);
-    ok(hres == S_OK, "Navigate2 failed: %08x\n", hres);
+    ok(hres == S_OK, "Navigate2 failed: %08lx\n", hres);
     SysFreeString(V_BSTR(&urlv));
 
     while(!navigate_complete && GetMessageW(&msg, NULL, 0, 0)) {
@@ -241,7 +241,7 @@ static void test_busy(IWebBrowser2 *wb)
 
     b = 0xdead;
     hres = IWebBrowser2_get_Busy(wb, &b);
-    ok(hres == S_OK, "get_Busy failed: %08x\n", hres);
+    ok(hres == S_OK, "get_Busy failed: %08lx\n", hres);
     ok(b == VARIANT_FALSE, "Busy = %x\n", b);
 }
 
@@ -254,13 +254,13 @@ static void test_InternetExplorer(void)
 
     hres = CoCreateInstance(&CLSID_InternetExplorer, NULL, CLSCTX_SERVER,
             &IID_IUnknown, (void**)&unk);
-    ok(hres == S_OK, "Could not create InternetExplorer instance: %08x\n", hres);
+    ok(hres == S_OK, "Could not create InternetExplorer instance: %08lx\n", hres);
 
     if(hres != S_OK)
         return;
 
     hres = IUnknown_QueryInterface(unk, &IID_IWebBrowser2, (void**)&wb);
-    ok(hres == S_OK, "Could not get IWebBrowser2 interface: %08x\n", hres);
+    ok(hres == S_OK, "Could not get IWebBrowser2 interface: %08lx\n", hres);
     if (hres != S_OK) {
         IUnknown_Release(unk);
         return;
@@ -278,7 +278,7 @@ static void test_InternetExplorer(void)
 
     IWebBrowser2_Release(wb);
     ref = IUnknown_Release(unk);
-    ok(!ref, "object not destroyed, ref=%u\n", ref);
+    ok(!ref, "object not destroyed, ref=%lu\n", ref);
 }
 
 static void test_InternetExplorerManager(void)
@@ -289,7 +289,7 @@ static void test_InternetExplorerManager(void)
 
     hres = CoCreateInstance(&CLSID_InternetExplorerManager, NULL, CLSCTX_LOCAL_SERVER,
             &IID_IInternetExplorerManager, (void**)&unk);
-    ok(hres == S_OK || broken(hres == REGDB_E_CLASSNOTREG), "Could not create InternetExplorerManager instance: %08x\n", hres);
+    ok(hres == S_OK || broken(hres == REGDB_E_CLASSNOTREG), "Could not create InternetExplorerManager instance: %08lx\n", hres);
 
     if(hres != S_OK)
     {
@@ -298,7 +298,7 @@ static void test_InternetExplorerManager(void)
     }
 
     ref = IUnknown_Release(unk);
-    ok(!ref, "object not destroyed, ref=%u\n", ref);
+    ok(!ref, "object not destroyed, ref=%lu\n", ref);
 }
 
 START_TEST(ie)

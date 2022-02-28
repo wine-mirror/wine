@@ -244,7 +244,7 @@ static IWebBrowser2 *_create_webbrowser(unsigned line)
 
     hres = CoCreateInstance(&CLSID_WebBrowser, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IWebBrowser2, (void**)&ret);
-    ok_(__FILE__,line)(hres == S_OK, "Creating WebBrowser object failed: %08x\n", hres);
+    ok_(__FILE__,line)(hres == S_OK, "Creating WebBrowser object failed: %08lx\n", hres);
     return ret;
 }
 
@@ -255,7 +255,7 @@ static void _test_LocationURL(unsigned line, IWebBrowser2 *wb, const WCHAR *exur
     HRESULT hres;
 
     hres = IWebBrowser2_get_LocationURL(wb, &url);
-    ok_(__FILE__,line) (hres == (*exurl ? S_OK : S_FALSE), "get_LocationURL failed: %08x\n", hres);
+    ok_(__FILE__,line) (hres == (*exurl ? S_OK : S_FALSE), "get_LocationURL failed: %08lx\n", hres);
     if (SUCCEEDED(hres))
     {
         ok_(__FILE__,line) (!lstrcmpW(url, exurl), "unexpected URL: %s\n", wine_dbgstr_w(url));
@@ -270,7 +270,7 @@ static void _test_LocationName(unsigned line, IWebBrowser2 *wb, const WCHAR *exn
     HRESULT hres;
 
     hres = IWebBrowser2_get_LocationName(wb, &name);
-    ok_(__FILE__,line) (hres == (*exname ? S_OK : S_FALSE), "get_LocationName failed: %08x\n", hres);
+    ok_(__FILE__,line) (hres == (*exname ? S_OK : S_FALSE), "get_LocationName failed: %08lx\n", hres);
     ok_(__FILE__,line) (!lstrcmpW(name, exname) || broken(is_http && !lstrcmpW(name, current_url)) /* Win10 2004 */,
             "expected %s, got %s\n", wine_dbgstr_w(exname), wine_dbgstr_w(name));
     SysFreeString(name);
@@ -284,17 +284,17 @@ static void _test_ready_state(unsigned line, READYSTATE exstate, VARIANT_BOOL ex
     HRESULT hres;
 
     hres = IWebBrowser2_get_ReadyState(wb, &state);
-    ok_(__FILE__,line)(hres == S_OK, "get_ReadyState failed: %08x\n", hres);
+    ok_(__FILE__,line)(hres == S_OK, "get_ReadyState failed: %08lx\n", hres);
     ok_(__FILE__,line)(state == exstate, "ReadyState = %d, expected %d\n", state, exstate);
 
     hres = IWebBrowser2_get_Busy(wb, &busy);
     if(expect_busy != BUSY_FAIL) {
-        ok_(__FILE__,line)(hres == S_OK, "get_ReadyState failed: %08x\n", hres);
+        ok_(__FILE__,line)(hres == S_OK, "get_ReadyState failed: %08lx\n", hres);
         ok_(__FILE__,line)(busy == expect_busy, "Busy = %x, expected %x for ready state %d\n",
                            busy, expect_busy, state);
     }else {
         todo_wine
-        ok_(__FILE__,line)(hres == E_FAIL, "get_ReadyState returned: %08x\n", hres);
+        ok_(__FILE__,line)(hres == E_FAIL, "get_ReadyState returned: %08lx\n", hres);
     }
 }
 
@@ -307,11 +307,11 @@ static IHTMLDocument2 *_get_document(unsigned line, IWebBrowser2 *wb)
 
     disp = NULL;
     hres = IWebBrowser2_get_Document(wb, &disp);
-    ok_(__FILE__,line)(hres == S_OK, "get_Document failed: %08x\n", hres);
+    ok_(__FILE__,line)(hres == S_OK, "get_Document failed: %08lx\n", hres);
     ok_(__FILE__,line)(disp != NULL, "doc_disp == NULL\n");
 
     hres = IDispatch_QueryInterface(disp, &IID_IHTMLDocument2, (void**)&html_doc);
-    ok_(__FILE__,line)(hres == S_OK, "Could not get IHTMLDocument iface: %08x\n", hres);
+    ok_(__FILE__,line)(hres == S_OK, "Could not get IHTMLDocument iface: %08lx\n", hres);
     ok(disp == (IDispatch*)html_doc, "disp != html_doc\n");
     IDispatch_Release(disp);
 
@@ -329,11 +329,11 @@ static IOleClientSite *_get_dochost(unsigned line, IWebBrowser2 *unk)
     doc = _get_document(line, unk);
     hres = IHTMLDocument2_QueryInterface(doc, &IID_IOleObject, (void**)&oleobj);
     IHTMLDocument2_Release(doc);
-    ok_(__FILE__,line)(hres == S_OK, "Got 0x%08x\n", hres);
+    ok_(__FILE__,line)(hres == S_OK, "Got 0x%08lx\n", hres);
 
     hres = IOleObject_GetClientSite(oleobj, &client_site);
     IOleObject_Release(oleobj);
-    ok_(__FILE__,line)(hres == S_OK, "Got 0x%08x\n", hres);
+    ok_(__FILE__,line)(hres == S_OK, "Got 0x%08lx\n", hres);
 
     return client_site;
 }
@@ -361,7 +361,7 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
         ULONG cCmds, OLECMD prgCmds[], OLECMDTEXT *pCmdText)
 {
     ok(!pguidCmdGroup, "pguidCmdGroup != MULL\n");
-    ok(cCmds == 1, "cCmds=%d, expected 1\n", cCmds);
+    ok(cCmds == 1, "cCmds=%ld, expected 1\n", cCmds);
     ok(!pCmdText, "pCmdText != NULL\n");
 
     switch(prgCmds[0].cmdID) {
@@ -383,7 +383,7 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
         prgCmds[0].cmdf = 0;
         return S_OK;
     default:
-        ok(0, "unexpected command %d\n", prgCmds[0].cmdID);
+        ok(0, "unexpected command %ld\n", prgCmds[0].cmdID);
     }
 
     return E_FAIL;
@@ -396,7 +396,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         switch(nCmdID) {
         case OLECMDID_SETPROGRESSMAX:
             CHECK_EXPECT2(Exec_SETPROGRESSMAX);
-            ok(nCmdexecopt == OLECMDEXECOPT_DONTPROMPTUSER, "nCmdexecopts=%08x\n", nCmdexecopt);
+            ok(nCmdexecopt == OLECMDEXECOPT_DONTPROMPTUSER, "nCmdexecopts=%08lx\n", nCmdexecopt);
             ok(pvaIn != NULL, "pvaIn == NULL\n");
             if(pvaIn)
                 ok(V_VT(pvaIn) == VT_I4, "V_VT(pvaIn)=%d, expected VT_I4\n", V_VT(pvaIn));
@@ -404,7 +404,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             return S_OK;
         case OLECMDID_SETPROGRESSPOS:
             CHECK_EXPECT2(Exec_SETPROGRESSPOS);
-            ok(nCmdexecopt == OLECMDEXECOPT_DONTPROMPTUSER, "nCmdexecopts=%08x\n", nCmdexecopt);
+            ok(nCmdexecopt == OLECMDEXECOPT_DONTPROMPTUSER, "nCmdexecopts=%08lx\n", nCmdexecopt);
             ok(pvaIn != NULL, "pvaIn == NULL\n");
             if(pvaIn)
                 ok(V_VT(pvaIn) == VT_I4, "V_VT(pvaIn)=%d, expected VT_I4\n", V_VT(pvaIn));
@@ -413,9 +413,9 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         case OLECMDID_SETDOWNLOADSTATE:
             if(is_downloading)
                 ok(nCmdexecopt == OLECMDEXECOPT_DONTPROMPTUSER || !nCmdexecopt,
-                   "nCmdexecopts=%08x\n", nCmdexecopt);
+                   "nCmdexecopts=%08lx\n", nCmdexecopt);
             else
-                ok(!nCmdexecopt, "nCmdexecopts=%08x\n", nCmdexecopt);
+                ok(!nCmdexecopt, "nCmdexecopts=%08lx\n", nCmdexecopt);
             ok(pvaOut == NULL, "pvaOut=%p\n", pvaOut);
             ok(pvaIn != NULL, "pvaIn == NULL\n");
             ok(V_VT(pvaIn) == VT_I4, "V_VT(pvaIn)=%d\n", V_VT(pvaIn));
@@ -427,12 +427,12 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
                 CHECK_EXPECT2(Exec_SETDOWNLOADSTATE_1);
                 break;
             default:
-                ok(0, "unexpected V_I4(pvaIn)=%d\n", V_I4(pvaIn));
+                ok(0, "unexpected V_I4(pvaIn)=%ld\n", V_I4(pvaIn));
             }
             return S_OK;
         case OLECMDID_UPDATECOMMANDS:
             CHECK_EXPECT2(Exec_UPDATECOMMANDS);
-            ok(nCmdexecopt == OLECMDEXECOPT_DONTPROMPTUSER, "nCmdexecopts=%08x\n", nCmdexecopt);
+            ok(nCmdexecopt == OLECMDEXECOPT_DONTPROMPTUSER, "nCmdexecopts=%08lx\n", nCmdexecopt);
             ok(!pvaIn, "pvaIn != NULL\n");
             ok(!pvaOut, "pvaOut=%p, expected NULL\n", pvaOut);
             return S_OK;
@@ -457,7 +457,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         case 6058: /* TODO */
             return E_NOTIMPL;
         default:
-            ok(0, "unexpected nCmdID %d\n", nCmdID);
+            ok(0, "unexpected nCmdID %ld\n", nCmdID);
         }
     }else if(IsEqualGUID(&CGID_Explorer, pguidCmdGroup)) {
         switch(nCmdID) {
@@ -475,7 +475,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         case 119: /* IE11 */
             return E_FAIL;
         default:
-            ok(0, "unexpected nCmdID %d\n", nCmdID);
+            ok(0, "unexpected nCmdID %ld\n", nCmdID);
         }
     }else if(IsEqualGUID(&CGID_ShellDocView, pguidCmdGroup)) {
         switch(nCmdID) {
@@ -497,14 +497,14 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         case 182: /* win10 */
             return E_FAIL;
         default:
-            ok(0, "unexpected nCmdID %d\n", nCmdID);
+            ok(0, "unexpected nCmdID %ld\n", nCmdID);
         }
     }else if(IsEqualGUID(&CGID_DocHostCmdPriv, pguidCmdGroup)) {
         switch(nCmdID) {
         case 11: /* TODO */
             break;
         default:
-            ok(0, "unexpected nCmdID %d of CGID_DocHostCmdPriv\n", nCmdID);
+            ok(0, "unexpected nCmdID %ld of CGID_DocHostCmdPriv\n", nCmdID);
         }
     }else if(IsEqualGUID(&CGID_DocHostCommandHandler, pguidCmdGroup)) {
         switch(nCmdID) {
@@ -514,7 +514,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             CHECK_EXPECT(Exec_DocHostCommandHandler_2300);
             return E_NOTIMPL;
         default:
-            ok(0, "unexpected nCmdID %d of CGID_DocHostCommandHandler\n", nCmdID);
+            ok(0, "unexpected nCmdID %ld of CGID_DocHostCommandHandler\n", nCmdID);
         }
     }else {
         ok(0, "unexpected pguidCmdGroup %s\n", wine_dbgstr_guid(pguidCmdGroup));
@@ -673,7 +673,7 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
         return S_OK;
     }
 
-    ok(0, "unexpected dispIdMember %d\n", dispIdMember);
+    ok(0, "unexpected dispIdMember %ld\n", dispIdMember);
     return E_NOTIMPL;
 }
 
@@ -748,9 +748,9 @@ static void test_OnBeforeNavigate(const VARIANT *disp, const VARIANT *url, const
         f = V_I4(V_VARIANTREF(flags));
         f &= ~0x100; /* IE11 sets this flag */
         if(is_first_load)
-            ok(!f, "flags = %x, expected 0\n", V_I4(V_VARIANTREF(flags)));
+            ok(!f, "flags = %lx, expected 0\n", V_I4(V_VARIANTREF(flags)));
         else
-            ok(!(f & ~0x40), "flags = %x, expected 0x40 or 0\n", V_I4(V_VARIANTREF(flags)));
+            ok(!(f & ~0x40), "flags = %lx, expected 0x40 or 0\n", V_I4(V_VARIANTREF(flags)));
     }
 
     ok(V_VT(frame) == (VT_BYREF|VT_VARIANT), "V_VT(frame)=%x, expected VT_BYREF|VT_VARIANT\n",
@@ -937,7 +937,7 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
         ok(V_I4(pDispParams->rgvarg+1) == CSC_NAVIGATEFORWARD ||
            V_I4(pDispParams->rgvarg+1) == CSC_NAVIGATEBACK ||
            V_I4(pDispParams->rgvarg+1) == CSC_UPDATECOMMANDS,
-           "V_I4(pDispParams->rgvarg+1) = %x\n", V_I4(pDispParams->rgvarg+1));
+           "V_I4(pDispParams->rgvarg+1) = %lx\n", V_I4(pDispParams->rgvarg+1));
 
         if (V_I4(pDispParams->rgvarg+1) == CSC_NAVIGATEFORWARD)
         {
@@ -1052,7 +1052,7 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
         break;
 
     default:
-        ok(0, "unexpected dispIdMember %d\n", dispIdMember);
+        ok(0, "unexpected dispIdMember %ld\n", dispIdMember);
     }
 
     return S_OK;
@@ -1573,7 +1573,7 @@ static ULONG WINAPI DocHostUIHandler_Release(IDocHostUIHandler2 *iface)
 static HRESULT WINAPI DocHostUIHandler_ShowContextMenu(IDocHostUIHandler2 *iface, DWORD dwID, POINT *ppt,
         IUnknown *pcmdtReserved, IDispatch *pdicpReserved)
 {
-    ok(0, "unexpected call %d %p %p %p\n", dwID, ppt, pcmdtReserved, pdicpReserved);
+    ok(0, "unexpected call %ld %p %p %p\n", dwID, ppt, pcmdtReserved, pdicpReserved);
     return S_FALSE;
 }
 
@@ -1582,9 +1582,9 @@ static HRESULT WINAPI DocHostUIHandler_GetHostInfo(IDocHostUIHandler2 *iface, DO
     CHECK_EXPECT2(GetHostInfo);
     ok(pInfo != NULL, "pInfo=NULL\n");
     if(pInfo) {
-        ok(pInfo->cbSize == sizeof(DOCHOSTUIINFO) || broken(!pInfo->cbSize), "pInfo->cbSize=%u\n", pInfo->cbSize);
-        ok(!pInfo->dwFlags, "pInfo->dwFlags=%08x, expected 0\n", pInfo->dwFlags);
-        ok(!pInfo->dwDoubleClick, "pInfo->dwDoubleClick=%08x, expected 0\n", pInfo->dwDoubleClick);
+        ok(pInfo->cbSize == sizeof(DOCHOSTUIINFO) || broken(!pInfo->cbSize), "pInfo->cbSize=%lu\n", pInfo->cbSize);
+        ok(!pInfo->dwFlags, "pInfo->dwFlags=%08lx, expected 0\n", pInfo->dwFlags);
+        ok(!pInfo->dwDoubleClick, "pInfo->dwDoubleClick=%08lx, expected 0\n", pInfo->dwDoubleClick);
         ok(!pInfo->pchHostCss, "pInfo->pchHostCss=%p, expected NULL\n", pInfo->pchHostCss);
         ok(!pInfo->pchHostNS, "pInfo->pchhostNS=%p, expected NULL\n", pInfo->pchHostNS);
     }
@@ -1658,7 +1658,7 @@ static HRESULT WINAPI DocHostUIHandler_GetOptionKeyPath(IDocHostUIHandler2 *ifac
     ok(pchKey != NULL, "pchKey==NULL\n");
     if(pchKey)
         ok(*pchKey == NULL, "*pchKey=%p\n", *pchKey);
-    ok(!dw, "dw=%x\n", dw);
+    ok(!dw, "dw=%lx\n", dw);
     return E_NOTIMPL;
 }
 
@@ -1698,7 +1698,7 @@ static HRESULT WINAPI DocHostUIHandler_GetOverrideKeyPath(IDocHostUIHandler2 *if
     ok(pchKey != NULL, "pchKey==NULL\n");
     if(pchKey)
         ok(*pchKey == NULL, "*pchKey=%p\n", *pchKey);
-    ok(!dw, "dw=%x\n", dw);
+    ok(!dw, "dw=%lx\n", dw);
     return E_NOTIMPL;
 }
 
@@ -1859,12 +1859,12 @@ static void test_DoVerb(IWebBrowser2 *unk)
     DWORD connection;
 
     hres = IWebBrowser2_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
-    ok(hres == S_OK, "QueryInterface(IID_OleObject) failed: %08x\n", hres);
+    ok(hres == S_OK, "QueryInterface(IID_OleObject) failed: %08lx\n", hres);
     if(FAILED(hres))
         return;
 
     hres = IOleObject_Advise(oleobj, &test_sink, &connection);
-    ok(hres == S_OK, "Advise failed: %08x\n", hres);
+    ok(hres == S_OK, "Advise failed: %08lx\n", hres);
 
     SET_EXPECT(CanInPlaceActivate);
     SET_EXPECT(Site_GetWindow);
@@ -1881,7 +1881,7 @@ static void test_DoVerb(IWebBrowser2 *unk)
 
     hres = IOleObject_DoVerb(oleobj, OLEIVERB_SHOW, NULL, &ClientSite,
                              0, (HWND)0xdeadbeef, &rect);
-    ok(hres == S_OK, "DoVerb failed: %08x\n", hres);
+    ok(hres == S_OK, "DoVerb failed: %08lx\n", hres);
 
     CHECK_CALLED(CanInPlaceActivate);
     CHECK_CALLED(Site_GetWindow);
@@ -1898,10 +1898,10 @@ static void test_DoVerb(IWebBrowser2 *unk)
 
     hres = IOleObject_DoVerb(oleobj, OLEIVERB_SHOW, NULL, &ClientSite,
                            0, (HWND)0xdeadbeef, &rect);
-    ok(hres == S_OK, "DoVerb failed: %08x\n", hres);
+    ok(hres == S_OK, "DoVerb failed: %08lx\n", hres);
 
     hres = IOleObject_Unadvise(oleobj, connection);
-    ok(hres == S_OK, "Unadvise failed: %08x\n", hres);
+    ok(hres == S_OK, "Unadvise failed: %08lx\n", hres);
 
     IOleObject_Release(oleobj);
 }
@@ -1913,13 +1913,13 @@ static void call_DoVerb(IWebBrowser2 *unk, LONG verb)
     HRESULT hres;
 
     hres = IWebBrowser2_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
-    ok(hres == S_OK, "QueryInterface(IID_OleObject) failed: %08x\n", hres);
+    ok(hres == S_OK, "QueryInterface(IID_OleObject) failed: %08lx\n", hres);
     if(FAILED(hres))
         return;
 
     hres = IOleObject_DoVerb(oleobj, verb, NULL, &ClientSite,
                              -1, container_hwnd, &rect);
-    ok(hres == S_OK, "DoVerb failed: %08x\n", hres);
+    ok(hres == S_OK, "DoVerb failed: %08lx\n", hres);
 
     IOleObject_Release(oleobj);
 }
@@ -1931,10 +1931,10 @@ static HWND get_hwnd(IWebBrowser2 *unk)
     HRESULT hres;
 
     hres = IWebBrowser2_QueryInterface(unk, &IID_IOleInPlaceObject, (void**)&inplace);
-    ok(hres == S_OK, "QueryInterface(IID_OleInPlaceObject) failed: %08x\n", hres);
+    ok(hres == S_OK, "QueryInterface(IID_OleInPlaceObject) failed: %08lx\n", hres);
 
     hres = IOleInPlaceObject_GetWindow(inplace, &hwnd);
-    ok(hres == S_OK, "GetWindow failed: %08x\n", hres);
+    ok(hres == S_OK, "GetWindow failed: %08lx\n", hres);
 
     IOleInPlaceObject_Release(inplace);
     return hwnd;
@@ -1948,10 +1948,10 @@ static void test_GetMiscStatus(IOleObject *oleobj)
     for(i=0; i<10; i++) {
         st = 0xdeadbeef;
         hres = IOleObject_GetMiscStatus(oleobj, i, &st);
-        ok(hres == S_OK, "GetMiscStatus failed: %08x\n", hres);
+        ok(hres == S_OK, "GetMiscStatus failed: %08lx\n", hres);
         ok(st == (OLEMISC_SETCLIENTSITEFIRST|OLEMISC_ACTIVATEWHENVISIBLE|OLEMISC_INSIDEOUT
                   |OLEMISC_CANTLINKINSIDE|OLEMISC_RECOMPOSEONRESIZE),
-           "st=%08x, expected OLEMISC_SETCLIENTSITEFIRST|OLEMISC_ACTIVATEWHENVISIBLE|"
+           "st=%08lx, expected OLEMISC_SETCLIENTSITEFIRST|OLEMISC_ACTIVATEWHENVISIBLE|"
            "OLEMISC_INSIDEOUT|OLEMISC_CANTLINKINSIDE|OLEMISC_RECOMPOSEONRESIZE)\n", st);
     }
 }
@@ -1961,7 +1961,7 @@ static void test_SetHostNames(IOleObject *oleobj)
     HRESULT hres;
 
     hres = IOleObject_SetHostNames(oleobj, L"test app", (void*)0xdeadbeef);
-    ok(hres == S_OK, "SetHostNames failed: %08x\n", hres);
+    ok(hres == S_OK, "SetHostNames failed: %08lx\n", hres);
 }
 
 static void test_ClientSite(IWebBrowser2 *unk, IOleClientSite *client, BOOL stop_download)
@@ -1973,7 +1973,7 @@ static void test_ClientSite(IWebBrowser2 *unk, IOleClientSite *client, BOOL stop
     HRESULT hres;
 
     hres = IWebBrowser2_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
-    ok(hres == S_OK, "QueryInterface(IID_OleObject) failed: %08x\n", hres);
+    ok(hres == S_OK, "QueryInterface(IID_OleObject) failed: %08lx\n", hres);
     if(FAILED(hres))
         return;
 
@@ -1981,14 +1981,14 @@ static void test_ClientSite(IWebBrowser2 *unk, IOleClientSite *client, BOOL stop
     test_SetHostNames(oleobj);
 
     hres = IWebBrowser2_QueryInterface(unk, &IID_IOleInPlaceObject, (void**)&inplace);
-    ok(hres == S_OK, "QueryInterface(IID_OleInPlaceObject) failed: %08x\n", hres);
+    ok(hres == S_OK, "QueryInterface(IID_OleInPlaceObject) failed: %08lx\n", hres);
     if(FAILED(hres)) {
         IOleObject_Release(oleobj);
         return;
     }
 
     hres = IOleInPlaceObject_GetWindow(inplace, &hwnd);
-    ok(hres == S_OK, "GetWindow failed: %08x\n", hres);
+    ok(hres == S_OK, "GetWindow failed: %08lx\n", hres);
     ok((hwnd == NULL) ^ (client == NULL), "unexpected hwnd %p\n", hwnd);
 
     if(client) {
@@ -2017,11 +2017,11 @@ static void test_ClientSite(IWebBrowser2 *unk, IOleClientSite *client, BOOL stop
     }
 
     hres = IOleObject_SetClientSite(oleobj, client);
-    ok(hres == S_OK, "SetClientSite failed: %08x\n", hres);
+    ok(hres == S_OK, "SetClientSite failed: %08lx\n", hres);
 
     if(client) {
         DWORD count = pSetQueryNetSessionCount(SESSION_QUERY);
-        ok(count == session_count + 1, "count = %u expected %u\n", count, session_count + 1);
+        ok(count == session_count + 1, "count = %lu expected %lu\n", count, session_count + 1);
 
         CHECK_CALLED(GetContainer);
         CHECK_CALLED(Site_GetWindow);
@@ -2046,7 +2046,7 @@ static void test_ClientSite(IWebBrowser2 *unk, IOleClientSite *client, BOOL stop
     }
 
     hres = IOleInPlaceObject_GetWindow(inplace, &hwnd);
-    ok(hres == S_OK, "GetWindow failed: %08x\n", hres);
+    ok(hres == S_OK, "GetWindow failed: %08lx\n", hres);
     ok((hwnd == NULL) == (client == NULL), "unexpected hwnd %p\n", hwnd);
 
     shell_embedding_hwnd = hwnd;
@@ -2068,7 +2068,7 @@ static void test_change_ClientSite(IWebBrowser2 *unk)
     HWND hwnd;
 
     hres = IWebBrowser2_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
-    ok(hres == S_OK, "QueryInterface(IID_OleObject) failed: %08x\n", hres);
+    ok(hres == S_OK, "QueryInterface(IID_OleObject) failed: %08lx\n", hres);
     if(FAILED(hres))
         return;
 
@@ -2079,7 +2079,7 @@ static void test_change_ClientSite(IWebBrowser2 *unk)
     SET_EXPECT(Invoke_AMBIENT_SILENT);
 
     hres = IOleObject_SetClientSite(oleobj, &ClientSite2);
-    ok(hres == S_OK, "SetClientSite failed: %08x\n", hres);
+    ok(hres == S_OK, "SetClientSite failed: %08lx\n", hres);
     IOleObject_Release(oleobj);
 
     CHECK_CALLED(Site_GetWindow);
@@ -2088,13 +2088,13 @@ static void test_change_ClientSite(IWebBrowser2 *unk)
 
     doc_clientsite = get_dochost(unk);
     hres = IOleClientSite_QueryInterface(doc_clientsite, &IID_IOleCommandTarget, (void**)&olecmd);
-    ok(hres == S_OK, "QueryInterface(IOleCommandTarget) failed: %08x\n", hres);
+    ok(hres == S_OK, "QueryInterface(IOleCommandTarget) failed: %08lx\n", hres);
     IOleClientSite_Release(doc_clientsite);
 
     hres = IWebBrowser2_QueryInterface(unk, &IID_IOleInPlaceObject, (void**)&inplace);
-    ok(hres == S_OK, "QueryInterface(OleInPlaceObject) failed: %08x\n", hres);
+    ok(hres == S_OK, "QueryInterface(OleInPlaceObject) failed: %08lx\n", hres);
     hres = IOleInPlaceObject_GetWindow(inplace, &hwnd);
-    ok(hres == S_OK, "GetWindow failed: %08x\n", hres);
+    ok(hres == S_OK, "GetWindow failed: %08lx\n", hres);
     ok(hwnd == shell_embedding_hwnd, "unexpected hwnd %p\n", hwnd);
     IOleInPlaceObject_Release(inplace);
 
@@ -2103,7 +2103,7 @@ static void test_change_ClientSite(IWebBrowser2 *unk)
 
         hres = IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_UPDATECOMMANDS,
                 OLECMDEXECOPT_DONTPROMPTUSER, NULL, NULL);
-        ok(hres == S_OK, "Exec(OLECMDID_UPDATECOMMAND) failed: %08x\n", hres);
+        ok(hres == S_OK, "Exec(OLECMDID_UPDATECOMMAND) failed: %08lx\n", hres);
 
         CHECK_CALLED(Exec_UPDATECOMMANDS);
         use_container_olecmd = TRUE;
@@ -2121,35 +2121,35 @@ static void test_ClassInfo(IWebBrowser2 *unk)
     HRESULT hres;
 
     hres = IWebBrowser2_QueryInterface(unk, &IID_IProvideClassInfo2, (void**)&class_info);
-    ok(hres == S_OK, "QueryInterface(IID_IProvideClassInfo)  failed: %08x\n", hres);
+    ok(hres == S_OK, "QueryInterface(IID_IProvideClassInfo)  failed: %08lx\n", hres);
     if(FAILED(hres))
         return;
 
     hres = IProvideClassInfo2_GetGUID(class_info, GUIDKIND_DEFAULT_SOURCE_DISP_IID, &guid);
-    ok(hres == S_OK, "GetGUID failed: %08x\n", hres);
+    ok(hres == S_OK, "GetGUID failed: %08lx\n", hres);
     ok(IsEqualGUID(wb_version > 1 ? &DIID_DWebBrowserEvents2 : &DIID_DWebBrowserEvents, &guid), "wrong guid\n");
 
     hres = IProvideClassInfo2_GetGUID(class_info, 0, &guid);
-    ok(hres == E_FAIL, "GetGUID failed: %08x, expected E_FAIL\n", hres);
+    ok(hres == E_FAIL, "GetGUID failed: %08lx, expected E_FAIL\n", hres);
     ok(IsEqualGUID(&IID_NULL, &guid), "wrong guid\n");
 
     hres = IProvideClassInfo2_GetGUID(class_info, 2, &guid);
-    ok(hres == E_FAIL, "GetGUID failed: %08x, expected E_FAIL\n", hres);
+    ok(hres == E_FAIL, "GetGUID failed: %08lx, expected E_FAIL\n", hres);
     ok(IsEqualGUID(&IID_NULL, &guid), "wrong guid\n");
 
     hres = IProvideClassInfo2_GetGUID(class_info, GUIDKIND_DEFAULT_SOURCE_DISP_IID, NULL);
-    ok(hres == E_POINTER, "GetGUID failed: %08x, expected E_POINTER\n", hres);
+    ok(hres == E_POINTER, "GetGUID failed: %08lx, expected E_POINTER\n", hres);
 
     hres = IProvideClassInfo2_GetGUID(class_info, 0, NULL);
-    ok(hres == E_POINTER, "GetGUID failed: %08x, expected E_POINTER\n", hres);
+    ok(hres == E_POINTER, "GetGUID failed: %08lx, expected E_POINTER\n", hres);
 
     typeinfo = NULL;
     hres = IProvideClassInfo2_GetClassInfo(class_info, &typeinfo);
-    ok(hres == S_OK, "GetClassInfo failed: %08x\n", hres);
+    ok(hres == S_OK, "GetClassInfo failed: %08lx\n", hres);
     ok(typeinfo != NULL, "typeinfo == NULL\n");
 
     hres = ITypeInfo_GetTypeAttr(typeinfo, &type_attr);
-    ok(hres == S_OK, "GetTypeAtr failed: %08x\n", hres);
+    ok(hres == S_OK, "GetTypeAtr failed: %08lx\n", hres);
 
     ok(IsEqualGUID(&type_attr->guid, wb_version > 1 ? &CLSID_WebBrowser : &CLSID_WebBrowser_V1),
        "guid = %s\n", wine_dbgstr_guid(&type_attr->guid));
@@ -2163,10 +2163,10 @@ static void test_ClassInfo(IWebBrowser2 *unk)
 #define expect_oleverb(a,b) _expect_oleverb(__LINE__,a,b)
 static void _expect_oleverb(unsigned line, const OLEVERB *verb, LONG exverb)
 {
-    ok_(__FILE__,line)(verb->lVerb == exverb, "verb->lVerb = %d, expected %d\n", verb->lVerb, exverb);
+    ok_(__FILE__,line)(verb->lVerb == exverb, "verb->lVerb = %ld, expected %ld\n", verb->lVerb, exverb);
     ok_(__FILE__,line)(!verb->lpszVerbName, "verb->lpszVerbName = %s\n", wine_dbgstr_w(verb->lpszVerbName));
-    ok_(__FILE__,line)(!verb->fuFlags, "verb->fuFlags = %x\n", verb->fuFlags);
-    ok_(__FILE__,line)(!verb->grfAttribs, "verb->grfAttribs = %x\n", verb->grfAttribs);
+    ok_(__FILE__,line)(!verb->fuFlags, "verb->fuFlags = %lx\n", verb->fuFlags);
+    ok_(__FILE__,line)(!verb->grfAttribs, "verb->grfAttribs = %lx\n", verb->grfAttribs);
 }
 
 #define test_next_oleverb(a,b) _test_next_oleverb(__LINE__,a,b)
@@ -2179,8 +2179,8 @@ static void _test_next_oleverb(unsigned line, IEnumOLEVERB *enum_verbs, LONG exv
     fetched = 0xdeadbeef;
     memset(&verb, 0xa, sizeof(verb));
     hres = IEnumOLEVERB_Next(enum_verbs, 1, &verb, &fetched);
-    ok_(__FILE__,line)(hres == S_OK, "Next failed: %08x\n", hres);
-    ok_(__FILE__,line)(!fetched, "fetched = %d\n", fetched);
+    ok_(__FILE__,line)(hres == S_OK, "Next failed: %08lx\n", hres);
+    ok_(__FILE__,line)(!fetched, "fetched = %ld\n", fetched);
     _expect_oleverb(line, &verb, exverb);
 }
 
@@ -2193,23 +2193,23 @@ static void test_EnumVerbs(IWebBrowser2 *wb)
     HRESULT hres;
 
     hres = IWebBrowser2_QueryInterface(wb, &IID_IOleObject, (void**)&oleobj);
-    ok(hres == S_OK, "QueryInterface(IID_IOleObject) failed: %08x\n", hres);
+    ok(hres == S_OK, "QueryInterface(IID_IOleObject) failed: %08lx\n", hres);
 
     hres = IOleObject_EnumVerbs(oleobj, &enum_verbs);
     IOleObject_Release(oleobj);
-    ok(hres == S_OK, "EnumVerbs failed: %08x\n", hres);
+    ok(hres == S_OK, "EnumVerbs failed: %08lx\n", hres);
     ok(enum_verbs != NULL, "enum_verbs == NULL\n");
 
     fetched = 0xdeadbeef;
     memset(verbs, 0xa, sizeof(verbs));
     verbs[1].lVerb = 0xdeadbeef;
     hres = IEnumOLEVERB_Next(enum_verbs, ARRAY_SIZE(verbs), verbs, &fetched);
-    ok(hres == S_OK, "Next failed: %08x\n", hres);
-    ok(!fetched, "fetched = %d\n", fetched);
+    ok(hres == S_OK, "Next failed: %08lx\n", hres);
+    ok(!fetched, "fetched = %ld\n", fetched);
     /* Although fetched==0, an element is returned. */
     expect_oleverb(verbs, OLEIVERB_PRIMARY);
     /* The first argument is ignored and always one element is returned. */
-    ok(verbs[1].lVerb == 0xdeadbeef, "verbs[1].lVerb = %x\n", verbs[1].lVerb);
+    ok(verbs[1].lVerb == 0xdeadbeef, "verbs[1].lVerb = %lx\n", verbs[1].lVerb);
 
     test_next_oleverb(enum_verbs, OLEIVERB_INPLACEACTIVATE);
     test_next_oleverb(enum_verbs, OLEIVERB_UIACTIVATE);
@@ -2221,32 +2221,32 @@ static void test_EnumVerbs(IWebBrowser2 *wb)
     memset(verbs, 0xa, sizeof(verbs));
     verbs[0].lVerb = 0xdeadbeef;
     hres = IEnumOLEVERB_Next(enum_verbs, ARRAY_SIZE(verbs), verbs, &fetched);
-    todo_wine ok(hres == S_OK, "Next failed: %08x\n", hres);
-    todo_wine ok(fetched == 1, "fetched = %d\n", fetched);
-    todo_wine ok(verbs[0].lVerb != 0xdeadbeef, "verbs[0].lVerb = %x\n", verbs[0].lVerb);
+    todo_wine ok(hres == S_OK, "Next failed: %08lx\n", hres);
+    todo_wine ok(fetched == 1, "fetched = %ld\n", fetched);
+    todo_wine ok(verbs[0].lVerb != 0xdeadbeef, "verbs[0].lVerb = %lx\n", verbs[0].lVerb);
 
     hres = IEnumOLEVERB_Next(enum_verbs, ARRAY_SIZE(verbs), verbs, &fetched);
-    ok(hres == S_FALSE, "Next failed: %08x\n", hres);
-    ok(!fetched, "fetched = %d\n", fetched);
+    ok(hres == S_FALSE, "Next failed: %08lx\n", hres);
+    ok(!fetched, "fetched = %ld\n", fetched);
 
     hres = IEnumOLEVERB_Reset(enum_verbs);
-    ok(hres == S_OK, "Reset failed: %08x\n", hres);
+    ok(hres == S_OK, "Reset failed: %08lx\n", hres);
 
     fetched = 0xdeadbeef;
     hres = IEnumOLEVERB_Next(enum_verbs, 1, verbs, &fetched);
-    ok(hres == S_OK, "Next failed: %08x\n", hres);
-    ok(!fetched, "fetched = %d\n", fetched);
+    ok(hres == S_OK, "Next failed: %08lx\n", hres);
+    ok(!fetched, "fetched = %ld\n", fetched);
 
     hres = IEnumOLEVERB_Next(enum_verbs, 1, verbs, NULL);
-    ok(hres == S_OK, "Next failed: %08x\n", hres);
+    ok(hres == S_OK, "Next failed: %08lx\n", hres);
 
     hres = IEnumOLEVERB_Skip(enum_verbs, 20);
-    ok(hres == S_OK, "Reset failed: %08x\n", hres);
+    ok(hres == S_OK, "Reset failed: %08lx\n", hres);
 
     fetched = 0xdeadbeef;
     hres = IEnumOLEVERB_Next(enum_verbs, 1, verbs, &fetched);
-    ok(hres == S_OK, "Next failed: %08x\n", hres);
-    ok(!fetched, "fetched = %d\n", fetched);
+    ok(hres == S_OK, "Next failed: %08lx\n", hres);
+    ok(!fetched, "fetched = %ld\n", fetched);
 
     test_next_oleverb(enum_verbs, OLEIVERB_SHOW);
 
@@ -2260,10 +2260,10 @@ static void test_Persist(IWebBrowser2 *wb, int version)
     HRESULT hr;
 
     hr = IWebBrowser2_QueryInterface(wb, &IID_IPersist, (void **)&persist);
-    ok(hr == S_OK, "QueryInterface(IID_IPersist) failed: %08x\n", hr);
+    ok(hr == S_OK, "QueryInterface(IID_IPersist) failed: %08lx\n", hr);
 
     hr = IPersist_GetClassID(persist, &guid);
-    ok(hr == S_OK, "GetClassID failed: %08x\n", hr);
+    ok(hr == S_OK, "GetClassID failed: %08lx\n", hr);
     if (version == 1)
         ok(IsEqualGUID(&guid, &CLSID_WebBrowser_V1), "got wrong CLSID: %s\n", wine_dbgstr_guid(&guid));
     else
@@ -2279,10 +2279,10 @@ static void test_OleObject(IWebBrowser2 *wb, int version)
     HRESULT hr;
 
     hr = IWebBrowser2_QueryInterface(wb, &IID_IOleObject, (void **)&oleobj);
-    ok(hr == S_OK, "QueryInterface(IID_IOleObject) failed: %08x\n", hr);
+    ok(hr == S_OK, "QueryInterface(IID_IOleObject) failed: %08lx\n", hr);
 
     hr = IOleObject_GetUserClassID(oleobj, &clsid);
-    ok(hr == S_OK, "GetUserClassID failed: %08x\n", hr);
+    ok(hr == S_OK, "GetUserClassID failed: %08lx\n", hr);
     if (version == 1)
         ok(IsEqualGUID(&clsid, &CLSID_WebBrowser_V1), "got wrong CLSID: %s\n", wine_dbgstr_guid(&clsid));
     else
@@ -2304,218 +2304,218 @@ static void test_ie_funcs(IWebBrowser2 *wb)
 
     hwnd = 0xdeadbeef;
     hres = IWebBrowser2_get_HWND(wb, &hwnd);
-    ok(hres == E_FAIL, "get_HWND failed: %08x, expected E_FAIL\n", hres);
+    ok(hres == E_FAIL, "get_HWND failed: %08lx, expected E_FAIL\n", hres);
     ok(hwnd == 0, "unexpected hwnd %p\n", (PVOID)hwnd);
 
     /* MenuBar */
 
     hres = IWebBrowser2_get_MenuBar(wb, &b);
-    ok(hres == S_OK, "get_MenuBar failed: %08x\n", hres);
+    ok(hres == S_OK, "get_MenuBar failed: %08lx\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
     SET_EXPECT(Invoke_ONMENUBAR);
     hres = IWebBrowser2_put_MenuBar(wb, (exvb = VARIANT_FALSE));
-    ok(hres == S_OK, "put_MenuBar failed: %08x\n", hres);
+    ok(hres == S_OK, "put_MenuBar failed: %08lx\n", hres);
     CHECK_CALLED(Invoke_ONMENUBAR);
 
     hres = IWebBrowser2_get_MenuBar(wb, &b);
-    ok(hres == S_OK, "get_MenuBar failed: %08x\n", hres);
+    ok(hres == S_OK, "get_MenuBar failed: %08lx\n", hres);
     ok(b == VARIANT_FALSE, "b=%x\n", b);
 
     SET_EXPECT(Invoke_ONMENUBAR);
     hres = IWebBrowser2_put_MenuBar(wb, (exvb = 100));
-    ok(hres == S_OK, "put_MenuBar failed: %08x\n", hres);
+    ok(hres == S_OK, "put_MenuBar failed: %08lx\n", hres);
     CHECK_CALLED(Invoke_ONMENUBAR);
 
     hres = IWebBrowser2_get_MenuBar(wb, &b);
-    ok(hres == S_OK, "get_MenuBar failed: %08x\n", hres);
+    ok(hres == S_OK, "get_MenuBar failed: %08lx\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
     /* AddressBar */
 
     hres = IWebBrowser2_get_AddressBar(wb, &b);
-    ok(hres == S_OK, "get_AddressBar failed: %08x\n", hres);
+    ok(hres == S_OK, "get_AddressBar failed: %08lx\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
     SET_EXPECT(Invoke_ONADDRESSBAR);
     hres = IWebBrowser2_put_AddressBar(wb, (exvb = VARIANT_FALSE));
-    ok(hres == S_OK, "put_AddressBar failed: %08x\n", hres);
+    ok(hres == S_OK, "put_AddressBar failed: %08lx\n", hres);
     CHECK_CALLED(Invoke_ONADDRESSBAR);
 
     hres = IWebBrowser2_get_AddressBar(wb, &b);
-    ok(hres == S_OK, "get_MenuBar failed: %08x\n", hres);
+    ok(hres == S_OK, "get_MenuBar failed: %08lx\n", hres);
     ok(b == VARIANT_FALSE, "b=%x\n", b);
 
     SET_EXPECT(Invoke_ONADDRESSBAR);
     hres = IWebBrowser2_put_AddressBar(wb, (exvb = 100));
-    ok(hres == S_OK, "put_AddressBar failed: %08x\n", hres);
+    ok(hres == S_OK, "put_AddressBar failed: %08lx\n", hres);
     CHECK_CALLED(Invoke_ONADDRESSBAR);
 
     hres = IWebBrowser2_get_AddressBar(wb, &b);
-    ok(hres == S_OK, "get_AddressBar failed: %08x\n", hres);
+    ok(hres == S_OK, "get_AddressBar failed: %08lx\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
     SET_EXPECT(Invoke_ONADDRESSBAR);
     hres = IWebBrowser2_put_AddressBar(wb, (exvb = VARIANT_TRUE));
-    ok(hres == S_OK, "put_MenuBar failed: %08x\n", hres);
+    ok(hres == S_OK, "put_MenuBar failed: %08lx\n", hres);
     CHECK_CALLED(Invoke_ONADDRESSBAR);
 
     /* StatusBar */
 
     hres = IWebBrowser2_get_StatusBar(wb, &b);
-    ok(hres == S_OK, "get_StatusBar failed: %08x\n", hres);
+    ok(hres == S_OK, "get_StatusBar failed: %08lx\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
     SET_EXPECT(Invoke_ONSTATUSBAR);
     hres = IWebBrowser2_put_StatusBar(wb, (exvb = VARIANT_TRUE));
-    ok(hres == S_OK, "put_StatusBar failed: %08x\n", hres);
+    ok(hres == S_OK, "put_StatusBar failed: %08lx\n", hres);
     CHECK_CALLED(Invoke_ONSTATUSBAR);
 
     hres = IWebBrowser2_get_StatusBar(wb, &b);
-    ok(hres == S_OK, "get_StatusBar failed: %08x\n", hres);
+    ok(hres == S_OK, "get_StatusBar failed: %08lx\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
     SET_EXPECT(Invoke_ONSTATUSBAR);
     hres = IWebBrowser2_put_StatusBar(wb, (exvb = VARIANT_FALSE));
-    ok(hres == S_OK, "put_StatusBar failed: %08x\n", hres);
+    ok(hres == S_OK, "put_StatusBar failed: %08lx\n", hres);
     CHECK_CALLED(Invoke_ONSTATUSBAR);
 
     hres = IWebBrowser2_get_StatusBar(wb, &b);
-    ok(hres == S_OK, "get_StatusBar failed: %08x\n", hres);
+    ok(hres == S_OK, "get_StatusBar failed: %08lx\n", hres);
     ok(b == VARIANT_FALSE, "b=%x\n", b);
 
     SET_EXPECT(Invoke_ONSTATUSBAR);
     hres = IWebBrowser2_put_StatusBar(wb, (exvb = 100));
-    ok(hres == S_OK, "put_StatusBar failed: %08x\n", hres);
+    ok(hres == S_OK, "put_StatusBar failed: %08lx\n", hres);
     CHECK_CALLED(Invoke_ONSTATUSBAR);
 
     hres = IWebBrowser2_get_StatusBar(wb, &b);
-    ok(hres == S_OK, "get_StatusBar failed: %08x\n", hres);
+    ok(hres == S_OK, "get_StatusBar failed: %08lx\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
     /* ToolBar */
 
     hres = IWebBrowser2_get_ToolBar(wb, &i);
-    ok(hres == S_OK, "get_ToolBar failed: %08x\n", hres);
+    ok(hres == S_OK, "get_ToolBar failed: %08lx\n", hres);
     ok(i, "i=%x\n", i);
 
     SET_EXPECT(Invoke_ONTOOLBAR);
     hres = IWebBrowser2_put_ToolBar(wb, (exvb = VARIANT_FALSE));
-    ok(hres == S_OK, "put_ToolBar failed: %08x\n", hres);
+    ok(hres == S_OK, "put_ToolBar failed: %08lx\n", hres);
     CHECK_CALLED(Invoke_ONTOOLBAR);
 
     hres = IWebBrowser2_get_ToolBar(wb, &i);
-    ok(hres == S_OK, "get_ToolBar failed: %08x\n", hres);
+    ok(hres == S_OK, "get_ToolBar failed: %08lx\n", hres);
     ok(i == VARIANT_FALSE, "b=%x\n", i);
 
     SET_EXPECT(Invoke_ONTOOLBAR);
     hres = IWebBrowser2_put_ToolBar(wb, (exvb = 100));
-    ok(hres == S_OK, "put_ToolBar failed: %08x\n", hres);
+    ok(hres == S_OK, "put_ToolBar failed: %08lx\n", hres);
     CHECK_CALLED(Invoke_ONTOOLBAR);
 
     hres = IWebBrowser2_get_ToolBar(wb, &i);
-    ok(hres == S_OK, "get_ToolBar failed: %08x\n", hres);
+    ok(hres == S_OK, "get_ToolBar failed: %08lx\n", hres);
     ok(i, "i=%x\n", i);
 
     SET_EXPECT(Invoke_ONTOOLBAR);
     hres = IWebBrowser2_put_ToolBar(wb, (exvb = VARIANT_TRUE));
-    ok(hres == S_OK, "put_ToolBar failed: %08x\n", hres);
+    ok(hres == S_OK, "put_ToolBar failed: %08lx\n", hres);
     CHECK_CALLED(Invoke_ONTOOLBAR);
 
     /* FullScreen */
 
     hres = IWebBrowser2_get_FullScreen(wb, &b);
-    ok(hres == S_OK, "get_FullScreen failed: %08x\n", hres);
+    ok(hres == S_OK, "get_FullScreen failed: %08lx\n", hres);
     ok(b == VARIANT_FALSE, "b=%x\n", b);
 
     SET_EXPECT(Invoke_ONFULLSCREEN);
     hres = IWebBrowser2_put_FullScreen(wb, (exvb = VARIANT_TRUE));
-    ok(hres == S_OK, "put_FullScreen failed: %08x\n", hres);
+    ok(hres == S_OK, "put_FullScreen failed: %08lx\n", hres);
     CHECK_CALLED(Invoke_ONFULLSCREEN);
 
     hres = IWebBrowser2_get_FullScreen(wb, &b);
-    ok(hres == S_OK, "get_FullScreen failed: %08x\n", hres);
+    ok(hres == S_OK, "get_FullScreen failed: %08lx\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
     SET_EXPECT(Invoke_ONFULLSCREEN);
     hres = IWebBrowser2_put_FullScreen(wb, (exvb = 100));
-    ok(hres == S_OK, "put_FullScreen failed: %08x\n", hres);
+    ok(hres == S_OK, "put_FullScreen failed: %08lx\n", hres);
     CHECK_CALLED(Invoke_ONFULLSCREEN);
 
     hres = IWebBrowser2_get_FullScreen(wb, &b);
-    ok(hres == S_OK, "get_FullScreen failed: %08x\n", hres);
+    ok(hres == S_OK, "get_FullScreen failed: %08lx\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
     SET_EXPECT(Invoke_ONFULLSCREEN);
     hres = IWebBrowser2_put_FullScreen(wb, (exvb = VARIANT_FALSE));
-    ok(hres == S_OK, "put_FullScreen failed: %08x\n", hres);
+    ok(hres == S_OK, "put_FullScreen failed: %08lx\n", hres);
     CHECK_CALLED(Invoke_ONFULLSCREEN);
 
     /* TheaterMode */
 
     hres = IWebBrowser2_get_TheaterMode(wb, &b);
-    ok(hres == S_OK, "get_TheaterMode failed: %08x\n", hres);
+    ok(hres == S_OK, "get_TheaterMode failed: %08lx\n", hres);
     ok(b == VARIANT_FALSE, "b=%x\n", b);
 
     SET_EXPECT(Invoke_ONTHEATERMODE);
     hres = IWebBrowser2_put_TheaterMode(wb, (exvb = VARIANT_TRUE));
-    ok(hres == S_OK, "put_TheaterMode failed: %08x\n", hres);
+    ok(hres == S_OK, "put_TheaterMode failed: %08lx\n", hres);
     CHECK_CALLED(Invoke_ONTHEATERMODE);
 
     hres = IWebBrowser2_get_TheaterMode(wb, &b);
-    ok(hres == S_OK, "get_TheaterMode failed: %08x\n", hres);
+    ok(hres == S_OK, "get_TheaterMode failed: %08lx\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
     SET_EXPECT(Invoke_ONTHEATERMODE);
     hres = IWebBrowser2_put_TheaterMode(wb, (exvb = 100));
-    ok(hres == S_OK, "put_TheaterMode failed: %08x\n", hres);
+    ok(hres == S_OK, "put_TheaterMode failed: %08lx\n", hres);
     CHECK_CALLED(Invoke_ONTHEATERMODE);
 
     hres = IWebBrowser2_get_TheaterMode(wb, &b);
-    ok(hres == S_OK, "get_TheaterMode failed: %08x\n", hres);
+    ok(hres == S_OK, "get_TheaterMode failed: %08lx\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
     SET_EXPECT(Invoke_ONTHEATERMODE);
     hres = IWebBrowser2_put_TheaterMode(wb, (exvb = VARIANT_FALSE));
-    ok(hres == S_OK, "put_TheaterMode failed: %08x\n", hres);
+    ok(hres == S_OK, "put_TheaterMode failed: %08lx\n", hres);
     CHECK_CALLED(Invoke_ONTHEATERMODE);
 
     /* Resizable */
 
     b = 0x100;
     hres = IWebBrowser2_get_Resizable(wb, &b);
-    ok(hres == E_NOTIMPL, "get_Resizable failed: %08x\n", hres);
+    ok(hres == E_NOTIMPL, "get_Resizable failed: %08lx\n", hres);
     ok(b == 0x100, "b=%x\n", b);
 
     SET_EXPECT(Invoke_WINDOWSETRESIZABLE);
     hres = IWebBrowser2_put_Resizable(wb, (exvb = VARIANT_TRUE));
-    ok(hres == S_OK, "put_Resizable failed: %08x\n", hres);
+    ok(hres == S_OK, "put_Resizable failed: %08lx\n", hres);
     CHECK_CALLED(Invoke_WINDOWSETRESIZABLE);
 
     SET_EXPECT(Invoke_WINDOWSETRESIZABLE);
     hres = IWebBrowser2_put_Resizable(wb, (exvb = VARIANT_FALSE));
-    ok(hres == S_OK, "put_Resizable failed: %08x\n", hres);
+    ok(hres == S_OK, "put_Resizable failed: %08lx\n", hres);
     CHECK_CALLED(Invoke_WINDOWSETRESIZABLE);
 
     hres = IWebBrowser2_get_Resizable(wb, &b);
-    ok(hres == E_NOTIMPL, "get_Resizable failed: %08x\n", hres);
+    ok(hres == E_NOTIMPL, "get_Resizable failed: %08lx\n", hres);
     ok(b == 0x100, "b=%x\n", b);
 
     /* Application */
 
     disp = NULL;
     hres = IWebBrowser2_get_Application(wb, &disp);
-    ok(hres == S_OK, "get_Application failed: %08x\n", hres);
+    ok(hres == S_OK, "get_Application failed: %08lx\n", hres);
     ok(disp == (void*)wb, "disp=%p, expected %p\n", disp, wb);
     if(disp)
         IDispatch_Release(disp);
 
     hres = IWebBrowser2_get_Application(wb, NULL);
-    ok(hres == E_POINTER, "get_Application failed: %08x, expected E_POINTER\n", hres);
+    ok(hres == E_POINTER, "get_Application failed: %08lx, expected E_POINTER\n", hres);
 
     /* Name */
     hres = IWebBrowser2_get_Name(wb, &sName);
-    ok(hres == S_OK, "getName failed: %08x, expected S_OK\n", hres);
+    ok(hres == S_OK, "getName failed: %08lx, expected S_OK\n", hres);
     if (is_lang_english())
         ok(!lstrcmpW(sName, L"Microsoft Web Browser Control"), "got '%s', expected 'Microsoft Web Browser Control'\n", wine_dbgstr_w(sName));
     else /* Non-English cannot be blank. */
@@ -2524,12 +2524,12 @@ static void test_ie_funcs(IWebBrowser2 *wb)
 
     /* RegisterAsDropTarget */
     hres = IWebBrowser2_get_RegisterAsDropTarget(wb, NULL);
-    ok(hres == E_INVALIDARG, "get_RegisterAsDropTarget returned: %08x\n", hres);
+    ok(hres == E_INVALIDARG, "get_RegisterAsDropTarget returned: %08lx\n", hres);
 
     /* Quit */
 
     hres = IWebBrowser2_Quit(wb);
-    ok(hres == E_FAIL, "Quit failed: %08x, expected E_FAIL\n", hres);
+    ok(hres == E_FAIL, "Quit failed: %08lx, expected E_FAIL\n", hres);
 }
 
 static void test_Silent(IWebBrowser2 *wb, IOleControl *control, BOOL is_clientsite)
@@ -2539,49 +2539,49 @@ static void test_Silent(IWebBrowser2 *wb, IOleControl *control, BOOL is_clientsi
 
     b = 100;
     hres = IWebBrowser2_get_Silent(wb, &b);
-    ok(hres == S_OK, "get_Silent failed: %08x\n", hres);
+    ok(hres == S_OK, "get_Silent failed: %08lx\n", hres);
     ok(b == VARIANT_FALSE, "b=%x\n", b);
 
     hres = IWebBrowser2_put_Silent(wb, VARIANT_TRUE);
-    ok(hres == S_OK, "set_Silent failed: %08x\n", hres);
+    ok(hres == S_OK, "set_Silent failed: %08lx\n", hres);
 
     b = 100;
     hres = IWebBrowser2_get_Silent(wb, &b);
-    ok(hres == S_OK, "get_Silent failed: %08x\n", hres);
+    ok(hres == S_OK, "get_Silent failed: %08lx\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
     hres = IWebBrowser2_put_Silent(wb, 100);
-    ok(hres == S_OK, "set_Silent failed: %08x\n", hres);
+    ok(hres == S_OK, "set_Silent failed: %08lx\n", hres);
 
     b = 100;
     hres = IWebBrowser2_get_Silent(wb, &b);
-    ok(hres == S_OK, "get_Silent failed: %08x\n", hres);
+    ok(hres == S_OK, "get_Silent failed: %08lx\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
     hres = IWebBrowser2_put_Silent(wb, VARIANT_FALSE);
-    ok(hres == S_OK, "set_Silent failed: %08x\n", hres);
+    ok(hres == S_OK, "set_Silent failed: %08lx\n", hres);
 
     b = 100;
     hres = IWebBrowser2_get_Silent(wb, &b);
-    ok(hres == S_OK, "get_Silent failed: %08x\n", hres);
+    ok(hres == S_OK, "get_Silent failed: %08lx\n", hres);
     ok(b == VARIANT_FALSE, "b=%x\n", b);
 
     if(is_clientsite) {
         hres = IWebBrowser2_put_Silent(wb, VARIANT_TRUE);
-        ok(hres == S_OK, "set_Silent failed: %08x\n", hres);
+        ok(hres == S_OK, "set_Silent failed: %08lx\n", hres);
 
         SET_EXPECT(Invoke_AMBIENT_SILENT);
     }
 
     hres = IOleControl_OnAmbientPropertyChange(control, DISPID_AMBIENT_SILENT);
-    ok(hres == S_OK, "OnAmbientPropertyChange failed %08x\n", hres);
+    ok(hres == S_OK, "OnAmbientPropertyChange failed %08lx\n", hres);
 
     if(is_clientsite)
         CHECK_CALLED(Invoke_AMBIENT_SILENT);
 
     b = 100;
     hres = IWebBrowser2_get_Silent(wb, &b);
-    ok(hres == S_OK, "get_Silent failed: %08x\n", hres);
+    ok(hres == S_OK, "get_Silent failed: %08lx\n", hres);
     ok(b == VARIANT_FALSE, "b=%x\n", b);
 }
 
@@ -2592,49 +2592,49 @@ static void test_Offline(IWebBrowser2 *wb, IOleControl *control, BOOL is_clients
 
     b = 100;
     hres = IWebBrowser2_get_Offline(wb, &b);
-    ok(hres == S_OK, "get_Offline failed: %08x\n", hres);
+    ok(hres == S_OK, "get_Offline failed: %08lx\n", hres);
     ok(b == VARIANT_FALSE, "b=%x\n", b);
 
     hres = IWebBrowser2_put_Offline(wb, VARIANT_TRUE);
-    ok(hres == S_OK, "set_Offline failed: %08x\n", hres);
+    ok(hres == S_OK, "set_Offline failed: %08lx\n", hres);
 
     b = 100;
     hres = IWebBrowser2_get_Offline(wb, &b);
-    ok(hres == S_OK, "get_Offline failed: %08x\n", hres);
+    ok(hres == S_OK, "get_Offline failed: %08lx\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
     hres = IWebBrowser2_put_Offline(wb, 100);
-    ok(hres == S_OK, "set_Offline failed: %08x\n", hres);
+    ok(hres == S_OK, "set_Offline failed: %08lx\n", hres);
 
     b = 100;
     hres = IWebBrowser2_get_Offline(wb, &b);
-    ok(hres == S_OK, "get_Offline failed: %08x\n", hres);
+    ok(hres == S_OK, "get_Offline failed: %08lx\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
     hres = IWebBrowser2_put_Offline(wb, VARIANT_FALSE);
-    ok(hres == S_OK, "set_Offline failed: %08x\n", hres);
+    ok(hres == S_OK, "set_Offline failed: %08lx\n", hres);
 
     b = 100;
     hres = IWebBrowser2_get_Offline(wb, &b);
-    ok(hres == S_OK, "get_Offline failed: %08x\n", hres);
+    ok(hres == S_OK, "get_Offline failed: %08lx\n", hres);
     ok(b == VARIANT_FALSE, "b=%x\n", b);
 
     if(is_clientsite) {
         hres = IWebBrowser2_put_Offline(wb, VARIANT_TRUE);
-        ok(hres == S_OK, "set_Offline failed: %08x\n", hres);
+        ok(hres == S_OK, "set_Offline failed: %08lx\n", hres);
 
         SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
     }
 
     hres = IOleControl_OnAmbientPropertyChange(control, DISPID_AMBIENT_OFFLINEIFNOTCONNECTED);
-    ok(hres == S_OK, "OnAmbientPropertyChange failed %08x\n", hres);
+    ok(hres == S_OK, "OnAmbientPropertyChange failed %08lx\n", hres);
 
     if(is_clientsite)
         CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
 
     b = 100;
     hres = IWebBrowser2_get_Offline(wb, &b);
-    ok(hres == S_OK, "get_Offline failed: %08x\n", hres);
+    ok(hres == S_OK, "get_Offline failed: %08lx\n", hres);
     ok(b == VARIANT_FALSE, "b=%x\n", b);
 }
 
@@ -2650,7 +2650,7 @@ static void test_ambient_unknown(IWebBrowser2 *wb, IOleControl *control, BOOL is
     SET_EXPECT(Invoke_AMBIENT_PALETTE);
 
     hres = IOleControl_OnAmbientPropertyChange(control, DISPID_UNKNOWN);
-    ok(hres == S_OK, "OnAmbientPropertyChange failed %08x\n", hres);
+    ok(hres == S_OK, "OnAmbientPropertyChange failed %08lx\n", hres);
 
     CHECK_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
     CHECK_EXPECT(Invoke_AMBIENT_SILENT);
@@ -2673,7 +2673,7 @@ static void test_wb_funcs(IWebBrowser2 *wb, BOOL is_clientsite)
     HRESULT hres;
 
     hres = IWebBrowser2_QueryInterface(wb, &IID_IOleControl, (void**)&control);
-    ok(hres == S_OK, "Could not get IOleControl interface: %08x\n", hres);
+    ok(hres == S_OK, "Could not get IOleControl interface: %08lx\n", hres);
 
     test_Silent(wb, control, is_clientsite);
     test_Offline(wb, control, is_clientsite);
@@ -2689,14 +2689,14 @@ static void test_GetControlInfo(IWebBrowser2 *unk)
     HRESULT hres;
 
     hres = IWebBrowser2_QueryInterface(unk, &IID_IOleControl, (void**)&control);
-    ok(hres == S_OK, "Could not get IOleControl: %08x\n", hres);
+    ok(hres == S_OK, "Could not get IOleControl: %08lx\n", hres);
     if(FAILED(hres))
         return;
 
     hres = IOleControl_GetControlInfo(control, &info);
-    ok(hres == E_NOTIMPL, "GetControlInfo failed: %08x, expected E_NOTIMPL\n", hres);
+    ok(hres == E_NOTIMPL, "GetControlInfo failed: %08lx, expected E_NOTIMPL\n", hres);
     hres = IOleControl_GetControlInfo(control, NULL);
-    ok(hres == E_NOTIMPL, "GetControlInfo failed: %08x, expected E_NOTIMPL\n", hres);
+    ok(hres == E_NOTIMPL, "GetControlInfo failed: %08lx, expected E_NOTIMPL\n", hres);
 
     IOleControl_Release(control);
 }
@@ -2716,66 +2716,66 @@ static void test_Extent(IWebBrowser2 *unk)
     dpi_y = GetDeviceCaps(hdc, LOGPIXELSY);
     ReleaseDC(0, hdc);
     if (dpi_x != 96 || dpi_y != 96)
-        trace("dpi: %d / %d\n", dpi_y, dpi_y);
+        trace("dpi: %ld / %ld\n", dpi_y, dpi_y);
 
     hres = IWebBrowser2_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
-    ok(hres == S_OK, "Could not get IOleObject: %08x\n", hres);
+    ok(hres == S_OK, "Could not get IOleObject: %08lx\n", hres);
     if(FAILED(hres))
         return;
 
     size.cx = size.cy = 0xdeadbeef;
     hres = IOleObject_GetExtent(oleobj, DVASPECT_CONTENT, &size);
-    ok(hres == S_OK, "GetExtent failed: %08x\n", hres);
+    ok(hres == S_OK, "GetExtent failed: %08lx\n", hres);
     /* Default size is 50x20 pixels, in himetric units */
     expected.cx = MulDiv( 50, 2540, dpi_x );
     expected.cy = MulDiv( 20, 2540, dpi_y );
-    ok(size.cx == expected.cx && size.cy == expected.cy, "size = {%d %d} (expected %d %d)\n",
+    ok(size.cx == expected.cx && size.cy == expected.cy, "size = {%ld %ld} (expected %ld %ld)\n",
        size.cx, size.cy, expected.cx, expected.cy );
 
     size.cx = 800;
     size.cy = 700;
     hres = IOleObject_SetExtent(oleobj, DVASPECT_CONTENT, &size);
-    ok(hres == S_OK, "SetExtent failed: %08x\n", hres);
+    ok(hres == S_OK, "SetExtent failed: %08lx\n", hres);
 
     size.cx = size.cy = 0xdeadbeef;
     hres = IOleObject_GetExtent(oleobj, DVASPECT_CONTENT, &size);
-    ok(hres == S_OK, "GetExtent failed: %08x\n", hres);
-    ok(size.cx == 800 && size.cy == 700, "size = {%d %d}\n", size.cx, size.cy);
+    ok(hres == S_OK, "GetExtent failed: %08lx\n", hres);
+    ok(size.cx == 800 && size.cy == 700, "size = {%ld %ld}\n", size.cx, size.cy);
 
     size.cx = size.cy = 0xdeadbeef;
     hres = IOleObject_GetExtent(oleobj, 0, &size);
-    ok(hres == S_OK, "GetExtent failed: %08x\n", hres);
-    ok(size.cx == 800 && size.cy == 700, "size = {%d %d}\n", size.cx, size.cy);
+    ok(hres == S_OK, "GetExtent failed: %08lx\n", hres);
+    ok(size.cx == 800 && size.cy == 700, "size = {%ld %ld}\n", size.cx, size.cy);
 
     size.cx = 900;
     size.cy = 800;
     hres = IOleObject_SetExtent(oleobj, 0, &size);
-    ok(hres == S_OK, "SetExtent failed: %08x\n", hres);
+    ok(hres == S_OK, "SetExtent failed: %08lx\n", hres);
 
     size.cx = size.cy = 0xdeadbeef;
     hres = IOleObject_GetExtent(oleobj, 0, &size);
-    ok(hres == S_OK, "GetExtent failed: %08x\n", hres);
-    ok(size.cx == 900 && size.cy == 800, "size = {%d %d}\n", size.cx, size.cy);
+    ok(hres == S_OK, "GetExtent failed: %08lx\n", hres);
+    ok(size.cx == 900 && size.cy == 800, "size = {%ld %ld}\n", size.cx, size.cy);
 
     size.cx = size.cy = 0xdeadbeef;
     hres = IOleObject_GetExtent(oleobj, 0xdeadbeef, &size);
-    ok(hres == S_OK, "GetExtent failed: %08x\n", hres);
-    ok(size.cx == 900 && size.cy == 800, "size = {%d %d}\n", size.cx, size.cy);
+    ok(hres == S_OK, "GetExtent failed: %08lx\n", hres);
+    ok(size.cx == 900 && size.cy == 800, "size = {%ld %ld}\n", size.cx, size.cy);
 
     size.cx = 1000;
     size.cy = 900;
     hres = IOleObject_SetExtent(oleobj, 0xdeadbeef, &size);
-    ok(hres == S_OK, "SetExtent failed: %08x\n", hres);
+    ok(hres == S_OK, "SetExtent failed: %08lx\n", hres);
 
     size.cx = size.cy = 0xdeadbeef;
     hres = IOleObject_GetExtent(oleobj, 0xdeadbeef, &size);
-    ok(hres == S_OK, "GetExtent failed: %08x\n", hres);
-    ok(size.cx == 1000 && size.cy == 900, "size = {%d %d}\n", size.cx, size.cy);
+    ok(hres == S_OK, "GetExtent failed: %08lx\n", hres);
+    ok(size.cx == 1000 && size.cy == 900, "size = {%ld %ld}\n", size.cx, size.cy);
 
     size.cx = size.cy = 0xdeadbeef;
     hres = IOleObject_GetExtent(oleobj, DVASPECT_CONTENT, &size);
-    ok(hres == S_OK, "GetExtent failed: %08x\n", hres);
-    ok(size.cx == 1000 && size.cy == 900, "size = {%d %d}\n", size.cx, size.cy);
+    ok(hres == S_OK, "GetExtent failed: %08lx\n", hres);
+    ok(size.cx == 1000 && size.cy == 900, "size = {%ld %ld}\n", size.cx, size.cy);
 
     IOleObject_Release(oleobj);
 }
@@ -2789,23 +2789,23 @@ static void test_ConnectionPoint(IWebBrowser2 *unk, BOOL init)
     static DWORD dw = 100;
 
     hres = IWebBrowser2_QueryInterface(unk, &IID_IConnectionPointContainer, (void**)&container);
-    ok(hres == S_OK, "QueryInterface(IID_IConnectionPointContainer) failed: %08x\n", hres);
+    ok(hres == S_OK, "QueryInterface(IID_IConnectionPointContainer) failed: %08lx\n", hres);
     if(FAILED(hres))
         return;
 
     hres = IConnectionPointContainer_FindConnectionPoint(container, &DIID_DWebBrowserEvents2, &point);
     IConnectionPointContainer_Release(container);
-    ok(hres == S_OK, "FindConnectionPoint failed: %08x\n", hres);
+    ok(hres == S_OK, "FindConnectionPoint failed: %08lx\n", hres);
     if(FAILED(hres))
         return;
 
     if(init) {
         hres = IConnectionPoint_Advise(point, (IUnknown*)&WebBrowserEvents2, &dw);
-        ok(hres == S_OK, "Advise failed: %08x\n", hres);
-        ok(dw == 1, "dw=%d, expected 1\n", dw);
+        ok(hres == S_OK, "Advise failed: %08lx\n", hres);
+        ok(dw == 1, "dw=%ld, expected 1\n", dw);
     }else {
         hres = IConnectionPoint_Unadvise(point, dw);
-        ok(hres == S_OK, "Unadvise failed: %08x\n", hres);
+        ok(hres == S_OK, "Unadvise failed: %08lx\n", hres);
     }
 
     IConnectionPoint_Release(point);
@@ -2863,7 +2863,7 @@ static void test_Navigate2(IWebBrowser2 *webbrowser, const WCHAR *nav_url)
     }
 
     hres = IWebBrowser2_Navigate2(webbrowser, &url, NULL, NULL, NULL, NULL);
-    ok(hres == S_OK, "Navigate2 failed: %08x\n", hres);
+    ok(hres == S_OK, "Navigate2 failed: %08lx\n", hres);
 
     if(is_first_load) {
         CHECK_CALLED(Invoke_AMBIENT_USERMODE);
@@ -2932,14 +2932,14 @@ static void test_QueryStatusWB(IWebBrowser2 *webbrowser, BOOL has_document)
     status = 0xdeadbeef;
     if (use_container_olecmd) SET_EXPECT(QueryStatus_STOP);
     hres = IWebBrowser2_QueryStatusWB(webbrowser, OLECMDID_STOP, &status);
-    ok(hres == success_state, "QueryStatusWB failed: %08x %08x\n", hres, success_state);
+    ok(hres == success_state, "QueryStatusWB failed: %08lx %08lx\n", hres, success_state);
     todo_wine_if (!use_container_olecmd && has_document)
         ok((has_document && status == success_flags) || (!has_document && status == 0xdeadbeef),
            "OLECMDID_STOP not enabled/supported: %08x %08x\n", status, success_flags);
     status = 0xdeadbeef;
     if (use_container_olecmd) SET_EXPECT(QueryStatus_IDM_STOP);
     hres = IWebBrowser2_QueryStatusWB(webbrowser, IDM_STOP, &status);
-    ok(hres == success_state, "QueryStatusWB failed: %08x %08x\n", hres, success_state);
+    ok(hres == success_state, "QueryStatusWB failed: %08lx %08lx\n", hres, success_state);
     ok((has_document && status == 0) || (!has_document && status == 0xdeadbeef),
        "IDM_STOP is enabled/supported: %08x %d\n", status, has_document);
 }
@@ -2973,16 +2973,16 @@ static void test_ExecWB(IWebBrowser2 *webbrowser, BOOL has_document)
     }
     hres = IWebBrowser2_ExecWB(webbrowser, OLECMDID_STOP, OLECMDEXECOPT_DONTPROMPTUSER, 0, 0);
     if(!use_container_olecmd && has_document) {
-        todo_wine ok(hres == olecmdid_state, "ExecWB failed: %08x %08x\n", hres, olecmdid_state);
+        todo_wine ok(hres == olecmdid_state, "ExecWB failed: %08lx %08lx\n", hres, olecmdid_state);
         CLEAR_CALLED(Invoke_STATUSTEXTCHANGE); /* Called by IE9 */
         CLEAR_CALLED(SetStatusText); /* Called by IE9 */
     }else {
-        ok(hres == olecmdid_state, "ExecWB failed: %08x %08x\n", hres, olecmdid_state);
+        ok(hres == olecmdid_state, "ExecWB failed: %08lx %08lx\n", hres, olecmdid_state);
     }
     if (use_container_olecmd)
         SET_EXPECT(Exec_IDM_STOP);
     hres = IWebBrowser2_ExecWB(webbrowser, IDM_STOP, OLECMDEXECOPT_DONTPROMPTUSER, 0, 0);
-    ok(hres == idm_state, "ExecWB failed: %08x %08x\n", hres, idm_state);
+    ok(hres == idm_state, "ExecWB failed: %08lx %08lx\n", hres, idm_state);
 }
 
 static void test_download(DWORD flags)
@@ -3166,10 +3166,10 @@ static void test_Refresh(IWebBrowser2 *webbrowser, BOOL use_refresh2)
         V_I4(&v) = REFRESH_NORMAL;
 
         hres = IWebBrowser2_Refresh2(webbrowser, &v);
-        ok(hres == S_OK, "Refresh failed: %08x\n", hres);
+        ok(hres == S_OK, "Refresh failed: %08lx\n", hres);
     }else {
         hres = IWebBrowser2_Refresh(webbrowser);
-        ok(hres == S_OK, "Refresh failed: %08x\n", hres);
+        ok(hres == S_OK, "Refresh failed: %08lx\n", hres);
     }
 
     if(use_container_olecmd)
@@ -3185,7 +3185,7 @@ static void test_olecmd(IWebBrowser2 *unk, BOOL loaded)
     HRESULT hres;
 
     hres = IWebBrowser2_QueryInterface(unk, &IID_IOleCommandTarget, (void**)&cmdtrg);
-    ok(hres == S_OK, "Could not get IOleCommandTarget iface: %08x\n", hres);
+    ok(hres == S_OK, "Could not get IOleCommandTarget iface: %08lx\n", hres);
     if(FAILED(hres))
         return;
 
@@ -3195,14 +3195,14 @@ static void test_olecmd(IWebBrowser2 *unk, BOOL loaded)
     cmds[1].cmdf = 0xdeadbeef;
     hres = IOleCommandTarget_QueryStatus(cmdtrg, NULL, 2, cmds, NULL);
     if(loaded) {
-        ok(hres == S_OK, "QueryStatus failed: %08x\n", hres);
-        ok(cmds[0].cmdf == OLECMDF_SUPPORTED, "OLECMDID_SPELL cmdf = %x\n", cmds[0].cmdf);
+        ok(hres == S_OK, "QueryStatus failed: %08lx\n", hres);
+        ok(cmds[0].cmdf == OLECMDF_SUPPORTED, "OLECMDID_SPELL cmdf = %lx\n", cmds[0].cmdf);
         ok(cmds[1].cmdf == (OLECMDF_ENABLED|OLECMDF_SUPPORTED),
-           "OLECMDID_REFRESH cmdf = %x\n", cmds[1].cmdf);
+           "OLECMDID_REFRESH cmdf = %lx\n", cmds[1].cmdf);
     }else {
-        ok(hres == 0x80040104, "QueryStatus failed: %08x\n", hres);
-        ok(cmds[0].cmdf == 0xdeadbeef, "OLECMDID_SPELL cmdf = %x\n", cmds[0].cmdf);
-        ok(cmds[1].cmdf == 0xdeadbeef, "OLECMDID_REFRESH cmdf = %x\n", cmds[0].cmdf);
+        ok(hres == 0x80040104, "QueryStatus failed: %08lx\n", hres);
+        ok(cmds[0].cmdf == 0xdeadbeef, "OLECMDID_SPELL cmdf = %lx\n", cmds[0].cmdf);
+        ok(cmds[1].cmdf == 0xdeadbeef, "OLECMDID_REFRESH cmdf = %lx\n", cmds[0].cmdf);
     }
 
     IOleCommandTarget_Release(cmdtrg);
@@ -3215,18 +3215,18 @@ static void test_IServiceProvider(IWebBrowser2 *unk)
     HRESULT hres;
 
     hres = IWebBrowser2_QueryInterface(unk, &IID_IServiceProvider, (void**)&servprov);
-    ok(hres == S_OK, "QueryInterface returned %08x, expected S_OK\n", hres);
+    ok(hres == S_OK, "QueryInterface returned %08lx, expected S_OK\n", hres);
     if(FAILED(hres))
         return;
 
     hres = IServiceProvider_QueryService(servprov, &SID_STopLevelBrowser, &IID_IBrowserService2, (LPVOID*)&iface);
-    ok(hres == E_FAIL, "QueryService returned %08x, expected E_FAIL\n", hres);
+    ok(hres == E_FAIL, "QueryService returned %08lx, expected E_FAIL\n", hres);
     ok(!iface, "QueryService returned %p, expected NULL\n", iface);
     if(hres == S_OK)
         IUnknown_Release(iface);
 
     hres = IServiceProvider_QueryService(servprov, &SID_SHTMLWindow, &IID_IHTMLWindow2, (LPVOID*)&iface);
-    ok(hres == S_OK, "QueryService returned %08x, expected S_OK\n", hres);
+    ok(hres == S_OK, "QueryService returned %08lx, expected S_OK\n", hres);
     ok(iface != NULL, "QueryService returned NULL\n");
     if(hres == S_OK)
         IUnknown_Release(iface);
@@ -3248,7 +3248,7 @@ static void test_put_href(IWebBrowser2 *unk, const WCHAR *url)
     location = NULL;
     hres = IHTMLDocument2_get_location(doc, &location);
     IHTMLDocument2_Release(doc);
-    ok(hres == S_OK, "get_location failed: %08x\n", hres);
+    ok(hres == S_OK, "get_location failed: %08lx\n", hres);
     ok(location != NULL, "location == NULL\n");
 
     is_http = !wcsncmp(url, L"http:", 5);
@@ -3271,7 +3271,7 @@ static void test_put_href(IWebBrowser2 *unk, const WCHAR *url)
 
     IHTMLLocation_Release(location);
     SysFreeString(str);
-    ok(hres == S_OK, "put_href failed: %08x\n", hres);
+    ok(hres == S_OK, "put_href failed: %08lx\n", hres);
 
     test_ready_state(READYSTATE_COMPLETE, VARIANT_FALSE);
 }
@@ -3297,7 +3297,7 @@ static void test_go_back(IWebBrowser2 *wb, const WCHAR *back_url, int back_enabl
     nav_forward_todo = forward_todo;
     SET_EXPECT(Invoke_PROPERTYCHANGE);
     hres = IWebBrowser2_GoBack(wb);
-    ok(hres == S_OK, "GoBack failed: %08x\n", hres);
+    ok(hres == S_OK, "GoBack failed: %08lx\n", hres);
     CHECK_CALLED(Invoke_BEFORENAVIGATE2);
     nav_forward_todo = FALSE;
 
@@ -3338,7 +3338,7 @@ static void test_go_forward(IWebBrowser2 *wb, const WCHAR *forward_url, int back
         SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_FALSE);
 
     hres = IWebBrowser2_GoForward(wb);
-    ok(hres == S_OK, "GoForward failed: %08x\n", hres);
+    ok(hres == S_OK, "GoForward failed: %08lx\n", hres);
     CHECK_CALLED(Invoke_BEFORENAVIGATE2);
 
     if(back_enable)
@@ -3367,39 +3367,39 @@ static void test_QueryInterface(IWebBrowser2 *wb)
     HRESULT hres;
 
     hres = IUnknown_QueryInterface(unk, &IID_IQuickActivate, (void**)&qa);
-    ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
+    ok(hres == E_NOINTERFACE, "QueryInterface returned %08lx, expected E_NOINTERFACE\n", hres);
     ok(qa == NULL, "qa=%p, expected NULL\n", qa);
 
     hres = IUnknown_QueryInterface(unk, &IID_IRunnableObject, (void**)&runnable);
-    ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
+    ok(hres == E_NOINTERFACE, "QueryInterface returned %08lx, expected E_NOINTERFACE\n", hres);
     ok(runnable == NULL, "runnable=%p, expected NULL\n", runnable);
 
     hres = IUnknown_QueryInterface(unk, &IID_IPerPropertyBrowsing, (void**)&propbrowse);
-    ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
+    ok(hres == E_NOINTERFACE, "QueryInterface returned %08lx, expected E_NOINTERFACE\n", hres);
     ok(propbrowse == NULL, "propbrowse=%p, expected NULL\n", propbrowse);
 
     hres = IUnknown_QueryInterface(unk, &IID_IOleCache, (void**)&cache);
-    ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
+    ok(hres == E_NOINTERFACE, "QueryInterface returned %08lx, expected E_NOINTERFACE\n", hres);
     ok(cache == NULL, "cache=%p, expected NULL\n", cache);
 
     hres = IUnknown_QueryInterface(unk, &IID_IOleInPlaceSite, (void**)&inplace);
-    ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
+    ok(hres == E_NOINTERFACE, "QueryInterface returned %08lx, expected E_NOINTERFACE\n", hres);
     ok(inplace == NULL, "inplace=%p, expected NULL\n", inplace);
 
     hres = IUnknown_QueryInterface(unk, &IID_IObjectWithSite, (void**)&site);
-    ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
+    ok(hres == E_NOINTERFACE, "QueryInterface returned %08lx, expected E_NOINTERFACE\n", hres);
     ok(site == NULL, "site=%p, expected NULL\n", site);
 
     hres = IUnknown_QueryInterface(unk, &IID_IViewObjectEx, (void**)&viewex);
-    ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
+    ok(hres == E_NOINTERFACE, "QueryInterface returned %08lx, expected E_NOINTERFACE\n", hres);
     ok(viewex == NULL, "viewex=%p, expected NULL\n", viewex);
 
     hres = IUnknown_QueryInterface(unk, &IID_IOleLink, (void**)&link);
-    ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
+    ok(hres == E_NOINTERFACE, "QueryInterface returned %08lx, expected E_NOINTERFACE\n", hres);
     ok(link == NULL, "link=%p, expected NULL\n", link);
 
     hres = IUnknown_QueryInterface(unk, &IID_IMarshal, (void**)&marshal);
-    ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
+    ok(hres == E_NOINTERFACE, "QueryInterface returned %08lx, expected E_NOINTERFACE\n", hres);
     ok(marshal == NULL, "marshal=%p, expected NULL\n", marshal);
 
 }
@@ -3413,7 +3413,7 @@ static void test_UIActivate(IWebBrowser2 *unk, BOOL activate)
     doc = get_document(unk);
 
     hres = IHTMLDocument2_QueryInterface(doc, &IID_IOleDocumentView, (void**)&docview);
-    ok(hres == S_OK, "Got 0x%08x\n", hres);
+    ok(hres == S_OK, "Got 0x%08lx\n", hres);
     if(SUCCEEDED(hres)) {
         if(activate) {
             SET_EXPECT(RequestUIActivate);
@@ -3424,7 +3424,7 @@ static void test_UIActivate(IWebBrowser2 *unk, BOOL activate)
 
         hres = IOleDocumentView_UIActivate(docview, activate);
         todo_wine_if(activate)
-            ok(hres == S_OK, "Got 0x%08x\n", hres);
+            ok(hres == S_OK, "Got 0x%08lx\n", hres);
 
         if(activate) {
             todo_wine {
@@ -3451,7 +3451,7 @@ static void test_external(IWebBrowser2 *unk)
     client = get_dochost(unk);
 
     hres = IOleClientSite_QueryInterface(client, &IID_IDocHostUIHandler2, (void**)&dochost);
-    ok(hres == S_OK, "Could not get IDocHostUIHandler2 iface: %08x\n", hres);
+    ok(hres == S_OK, "Could not get IDocHostUIHandler2 iface: %08lx\n", hres);
     IOleClientSite_Release(client);
 
     if(use_container_dochostui)
@@ -3460,16 +3460,16 @@ static void test_external(IWebBrowser2 *unk)
     hres = IDocHostUIHandler2_GetExternal(dochost, &disp);
     if(use_container_dochostui) {
         CHECK_CALLED(GetExternal);
-        ok(hres == S_FALSE, "GetExternal failed: %08x\n", hres);
+        ok(hres == S_FALSE, "GetExternal failed: %08lx\n", hres);
         ok(!disp, "disp = %p\n", disp);
     }else {
         IShellUIHelper *uihelper;
 
-        ok(hres == S_OK, "GetExternal failed: %08x\n", hres);
+        ok(hres == S_OK, "GetExternal failed: %08lx\n", hres);
         ok(disp != NULL, "disp == NULL\n");
 
         hres = IDispatch_QueryInterface(disp, &IID_IShellUIHelper, (void**)&uihelper);
-        ok(hres == S_OK, "Could not get IShellUIHelper iface: %08x\n", hres);
+        ok(hres == S_OK, "Could not get IShellUIHelper iface: %08lx\n", hres);
         IShellUIHelper_Release(uihelper);
         IDispatch_Release(disp);
     }
@@ -3486,13 +3486,13 @@ static void test_htmlwindow_close(IWebBrowser2 *wb)
     doc = get_document(wb);
 
     hres = IHTMLDocument2_get_parentWindow(doc, &window);
-    ok(hres == S_OK, "get_parentWindow failed: %08x\n", hres);
+    ok(hres == S_OK, "get_parentWindow failed: %08lx\n", hres);
     IHTMLDocument2_Release(doc);
 
     SET_EXPECT(Invoke_WINDOWCLOSING);
 
     hres = IHTMLWindow2_close(window);
-    ok(hres == S_OK, "close failed: %08x\n", hres);
+    ok(hres == S_OK, "close failed: %08lx\n", hres);
 
     CHECK_CALLED(Invoke_WINDOWCLOSING);
 
@@ -3515,19 +3515,19 @@ static void test_TranslateAccelerator(IWebBrowser2 *unk)
     test_Navigate2(unk, L"about:blank");
 
     hres = IWebBrowser2_QueryInterface(unk, &IID_IOleInPlaceActiveObject, (void**)&pao);
-    ok(hres == S_OK, "Got 0x%08x\n", hres);
+    ok(hres == S_OK, "Got 0x%08lx\n", hres);
     if(SUCCEEDED(hres)) {
         /* One accelerator that should be handled by mshtml */
         msg_a.message = WM_KEYDOWN;
         msg_a.wParam = VK_F1;
         hres = IOleInPlaceActiveObject_TranslateAccelerator(pao, &msg_a);
-        ok(hres == S_FALSE, "Got 0x%08x (%04x::%02lx)\n", hres, msg_a.message, msg_a.wParam);
+        ok(hres == S_FALSE, "Got 0x%08lx (%04x::%02Ix)\n", hres, msg_a.message, msg_a.wParam);
 
         /* And one that should not */
         msg_a.message = WM_KEYDOWN;
         msg_a.wParam = VK_F5;
         hres = IOleInPlaceActiveObject_TranslateAccelerator(pao, &msg_a);
-        ok(hres == S_FALSE, "Got 0x%08x (%04x::%02lx)\n", hres, msg_a.message, msg_a.wParam);
+        ok(hres == S_FALSE, "Got 0x%08lx (%04x::%02Ix)\n", hres, msg_a.message, msg_a.wParam);
 
         IOleInPlaceActiveObject_Release(pao);
     }
@@ -3536,7 +3536,7 @@ static void test_TranslateAccelerator(IWebBrowser2 *unk)
 
     /* Test again after UIActivate */
     hres = IWebBrowser2_QueryInterface(unk, &IID_IOleInPlaceActiveObject, (void**)&pao);
-    ok(hres == S_OK, "Got 0x%08x\n", hres);
+    ok(hres == S_OK, "Got 0x%08lx\n", hres);
     if(SUCCEEDED(hres)) {
         /* One accelerator that should be handled by mshtml */
         msg_a.message = WM_KEYDOWN;
@@ -3544,7 +3544,7 @@ static void test_TranslateAccelerator(IWebBrowser2 *unk)
         SET_EXPECT(DocHost_TranslateAccelerator);
         SET_EXPECT(ControlSite_TranslateAccelerator);
         hres = IOleInPlaceActiveObject_TranslateAccelerator(pao, &msg_a);
-        ok(hres == S_FALSE, "Got 0x%08x (%04x::%02lx)\n", hres, msg_a.message, msg_a.wParam);
+        ok(hres == S_FALSE, "Got 0x%08lx (%04x::%02Ix)\n", hres, msg_a.message, msg_a.wParam);
         todo_wine CHECK_CALLED(DocHost_TranslateAccelerator);
         todo_wine CHECK_CALLED(ControlSite_TranslateAccelerator);
 
@@ -3553,7 +3553,7 @@ static void test_TranslateAccelerator(IWebBrowser2 *unk)
         msg_a.wParam = VK_F5;
         SET_EXPECT(DocHost_TranslateAccelerator);
         hres = IOleInPlaceActiveObject_TranslateAccelerator(pao, &msg_a);
-        todo_wine ok(hres == S_OK, "Got 0x%08x (%04x::%02lx)\n", hres, msg_a.message, msg_a.wParam);
+        todo_wine ok(hres == S_OK, "Got 0x%08lx (%04x::%02Ix)\n", hres, msg_a.message, msg_a.wParam);
         todo_wine CHECK_CALLED(DocHost_TranslateAccelerator);
 
         IOleInPlaceActiveObject_Release(pao);
@@ -3566,19 +3566,19 @@ static void test_TranslateAccelerator(IWebBrowser2 *unk)
         IUnknown *unk_test;
 
         hres = IOleClientSite_QueryInterface(doc_clientsite, &IID_IOleInPlaceFrame, (void**)&unk_test);
-        ok(hres == E_NOINTERFACE, "Got 0x%08x\n", hres);
+        ok(hres == E_NOINTERFACE, "Got 0x%08lx\n", hres);
         if(SUCCEEDED(hres)) IUnknown_Release(unk_test);
 
         hres = IOleClientSite_QueryInterface(doc_clientsite, &IID_IDocHostShowUI, (void**)&unk_test);
-        todo_wine ok(hres == S_OK, "Got 0x%08x\n", hres);
+        todo_wine ok(hres == S_OK, "Got 0x%08lx\n", hres);
         if(SUCCEEDED(hres)) IUnknown_Release(unk_test);
 
         hres = IOleClientSite_QueryInterface(doc_clientsite, &IID_IDocHostUIHandler, (void**)&unk_test);
-        ok(hres == S_OK, "Got 0x%08x\n", hres);
+        ok(hres == S_OK, "Got 0x%08lx\n", hres);
         if(SUCCEEDED(hres)) IUnknown_Release(unk_test);
 
         hres = IOleClientSite_QueryInterface(doc_clientsite, &IID_IDocHostUIHandler2, (void**)&dochost);
-        ok(hres == S_OK, "Got 0x%08x\n", hres);
+        ok(hres == S_OK, "Got 0x%08lx\n", hres);
         if(SUCCEEDED(hres)) {
             msg_a.message = WM_KEYDOWN;
             hr_dochost_TranslateAccelerator = 0xdeadbeef;
@@ -3586,21 +3586,21 @@ static void test_TranslateAccelerator(IWebBrowser2 *unk)
                 msg_a.wParam = keycode;
                 SET_EXPECT(DocHost_TranslateAccelerator);
                 hres = IDocHostUIHandler2_TranslateAccelerator(dochost, &msg_a, &CGID_MSHTML, 1234);
-                ok(hres == 0xdeadbeef, "Got 0x%08x\n", hres);
+                ok(hres == 0xdeadbeef, "Got 0x%08lx\n", hres);
                 CHECK_CALLED(DocHost_TranslateAccelerator);
             }
             hr_dochost_TranslateAccelerator = E_NOTIMPL;
 
             SET_EXPECT(DocHost_TranslateAccelerator);
             hres = IDocHostUIHandler2_TranslateAccelerator(dochost, &msg_a, &CGID_MSHTML, 1234);
-            ok(hres == E_NOTIMPL, "Got 0x%08x\n", hres);
+            ok(hres == E_NOTIMPL, "Got 0x%08lx\n", hres);
             CHECK_CALLED(DocHost_TranslateAccelerator);
 
             IDocHostUIHandler2_Release(dochost);
         }
 
         hres = IOleClientSite_QueryInterface(doc_clientsite, &IID_IOleControlSite, (void**)&doc_controlsite);
-        ok(hres == S_OK, "Got 0x%08x\n", hres);
+        ok(hres == S_OK, "Got 0x%08lx\n", hres);
         if(SUCCEEDED(hres)) {
             msg_a.message = WM_KEYDOWN;
             hr_site_TranslateAccelerator = 0xdeadbeef;
@@ -3609,28 +3609,28 @@ static void test_TranslateAccelerator(IWebBrowser2 *unk)
                 SET_EXPECT(ControlSite_TranslateAccelerator);
                 hres = IOleControlSite_TranslateAccelerator(doc_controlsite, &msg_a, 0);
                 if(keycode == 0x9 || keycode == 0x75)
-                    todo_wine ok(hres == S_OK, "Got 0x%08x (keycode: %04x)\n", hres, keycode);
+                    todo_wine ok(hres == S_OK, "Got 0x%08lx (keycode: %04lx)\n", hres, keycode);
                 else
-                    ok(hres == S_FALSE, "Got 0x%08x (keycode: %04x)\n", hres, keycode);
+                    ok(hres == S_FALSE, "Got 0x%08lx (keycode: %04lx)\n", hres, keycode);
 
                 CHECK_CALLED(ControlSite_TranslateAccelerator);
             }
             msg_a.wParam = VK_LEFT;
             SET_EXPECT(ControlSite_TranslateAccelerator);
             hres = IOleControlSite_TranslateAccelerator(doc_controlsite, &msg_a, 0);
-            ok(hres == S_FALSE, "Got 0x%08x (keycode: %04x)\n", hres, keycode);
+            ok(hres == S_FALSE, "Got 0x%08lx (keycode: %04lx)\n", hres, keycode);
             CHECK_CALLED(ControlSite_TranslateAccelerator);
 
             hr_site_TranslateAccelerator = S_OK;
             SET_EXPECT(ControlSite_TranslateAccelerator);
             hres = IOleControlSite_TranslateAccelerator(doc_controlsite, &msg_a, 0);
-            ok(hres == S_OK, "Got 0x%08x (keycode: %04x)\n", hres, keycode);
+            ok(hres == S_OK, "Got 0x%08lx (keycode: %04lx)\n", hres, keycode);
             CHECK_CALLED(ControlSite_TranslateAccelerator);
 
             hr_site_TranslateAccelerator = E_NOTIMPL;
             SET_EXPECT(ControlSite_TranslateAccelerator);
             hres = IOleControlSite_TranslateAccelerator(doc_controlsite, &msg_a, 0);
-            ok(hres == S_FALSE, "Got 0x%08x (keycode: %04x)\n", hres, keycode);
+            ok(hres == S_FALSE, "Got 0x%08lx (keycode: %04lx)\n", hres, keycode);
             CHECK_CALLED(ControlSite_TranslateAccelerator);
 
             IOleControlSite_Release(doc_controlsite);
@@ -3652,33 +3652,33 @@ static void test_dochost_qs(IWebBrowser2 *webbrowser)
     client_site = get_dochost(webbrowser);
     hres = IOleClientSite_QueryInterface(client_site, &IID_IServiceProvider, (void**)&serv_prov);
     IOleClientSite_Release(client_site);
-    ok(hres == S_OK, "Could not get IServiceProvider iface: %08x\n", hres);
+    ok(hres == S_OK, "Could not get IServiceProvider iface: %08lx\n", hres);
 
     hres = IServiceProvider_QueryService(serv_prov, &IID_IHlinkFrame, &IID_IHlinkFrame, (void**)&service);
-    ok(hres == S_OK, "QueryService failed: %08x\n", hres);
+    ok(hres == S_OK, "QueryService failed: %08lx\n", hres);
     ok(iface_cmp(service, (IUnknown*)webbrowser), "service != unk\n");
     IUnknown_Release(service);
 
     hres = IServiceProvider_QueryService(serv_prov, &IID_IWebBrowserApp, &IID_IHlinkFrame, (void**)&service);
-    ok(hres == S_OK, "QueryService failed: %08x\n", hres);
+    ok(hres == S_OK, "QueryService failed: %08lx\n", hres);
     ok(iface_cmp(service, (IUnknown*)webbrowser), "service != unk\n");
     IUnknown_Release(service);
 
     hres = IServiceProvider_QueryService(serv_prov, &IID_ITargetFrame, &IID_ITargetFrame, (void**)&service);
-    ok(hres == S_OK, "QueryService failed: %08x\n", hres);
+    ok(hres == S_OK, "QueryService failed: %08lx\n", hres);
     ok(iface_cmp(service, (IUnknown*)webbrowser), "service != unk\n");
     IUnknown_Release(service);
 
     hres = IServiceProvider_QueryService(serv_prov, &IID_IShellBrowser, &IID_IShellBrowser, (void**)&service);
-    ok(hres == S_OK, "QueryService failed: %08x\n", hres);
+    ok(hres == S_OK, "QueryService failed: %08lx\n", hres);
     IUnknown_Release(service);
 
     hres = IServiceProvider_QueryService(serv_prov, &IID_IShellBrowser, &IID_IBrowserService, (void**)&service);
-    ok(hres == S_OK, "QueryService failed: %08x\n", hres);
+    ok(hres == S_OK, "QueryService failed: %08lx\n", hres);
     IUnknown_Release(service);
 
     hres = IServiceProvider_QueryService(serv_prov, &IID_IShellBrowser, &IID_IDocObjectService, (void**)&service);
-    ok(hres == S_OK, "QueryService failed: %08x\n", hres);
+    ok(hres == S_OK, "QueryService failed: %08lx\n", hres);
     IUnknown_Release(service);
 
     IServiceProvider_Release(serv_prov);
@@ -3691,7 +3691,7 @@ static void test_Close(IWebBrowser2 *wb, BOOL do_download)
     HRESULT hres;
 
     hres = IWebBrowser2_QueryInterface(wb, &IID_IOleObject, (void**)&oo);
-    ok(hres == S_OK, "QueryInterface failed: %08x\n", hres);
+    ok(hres == S_OK, "QueryInterface failed: %08lx\n", hres);
     if(hres != S_OK)
         return;
 
@@ -3718,7 +3718,7 @@ static void test_Close(IWebBrowser2 *wb, BOOL do_download)
     }
     SET_EXPECT(Advise_OnClose);
     hres = IOleObject_Close(oo, OLECLOSE_NOSAVE);
-    ok(hres == S_OK, "OleObject_Close failed: %x\n", hres);
+    ok(hres == S_OK, "OleObject_Close failed: %lx\n", hres);
     CHECK_CALLED(Frame_SetActiveObject);
     CHECK_CALLED(UIWindow_SetActiveObject);
     CHECK_CALLED(OnUIDeactivate);
@@ -3741,7 +3741,7 @@ static void test_Close(IWebBrowser2 *wb, BOOL do_download)
     CHECK_CALLED(Advise_OnClose);
 
     hres = IOleObject_GetClientSite(oo, &ocs);
-    ok(hres == S_OK, "hres = %x\n", hres);
+    ok(hres == S_OK, "hres = %lx\n", hres);
     ok(!ocs, "ocs != NULL\n");
 
     SET_EXPECT(GetContainer);
@@ -3750,14 +3750,14 @@ static void test_Close(IWebBrowser2 *wb, BOOL do_download)
     SET_EXPECT(Invoke_AMBIENT_SILENT);
     hres = IOleObject_DoVerb(oo, OLEIVERB_HIDE, NULL, (IOleClientSite*)0xdeadbeef,
             0, (HWND)0xdeadbeef, NULL);
-    ok(hres == S_OK, "DoVerb failed: %08x\n", hres);
+    ok(hres == S_OK, "DoVerb failed: %08lx\n", hres);
     CHECK_CALLED(GetContainer);
     CHECK_CALLED(Site_GetWindow);
     CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
     CHECK_CALLED(Invoke_AMBIENT_SILENT);
 
     hres = IOleObject_GetClientSite(oo, &ocs);
-    ok(hres == S_OK, "hres = %x\n", hres);
+    ok(hres == S_OK, "hres = %lx\n", hres);
     ok(ocs == &ClientSite, "ocs != &ClientSite\n");
     if(ocs)
         IOleClientSite_Release(ocs);
@@ -3767,7 +3767,7 @@ static void test_Close(IWebBrowser2 *wb, BOOL do_download)
     SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_FALSE);
     SET_EXPECT(Advise_OnClose);
     hres = IOleObject_Close(oo, OLECLOSE_NOSAVE);
-    ok(hres == S_OK, "OleObject_Close failed: %x\n", hres);
+    ok(hres == S_OK, "OleObject_Close failed: %lx\n", hres);
     CHECK_NOT_CALLED(OnFocus_FALSE);
     todo_wine CHECK_NOT_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_FALSE);
     todo_wine CHECK_NOT_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_FALSE);
@@ -3785,42 +3785,42 @@ static void test_Advise(IWebBrowser2 *wb)
     HRESULT hres;
 
     hres = IWebBrowser2_QueryInterface(wb, &IID_IOleObject, (void **)&oleobj);
-    ok(hres == S_OK, "QueryInterface(IID_IOleObject) failed: %08x\n", hres);
+    ok(hres == S_OK, "QueryInterface(IID_IOleObject) failed: %08lx\n", hres);
 
     hres = IOleObject_Unadvise(oleobj, 0);
-    ok(hres == OLE_E_NOCONNECTION, "Unadvise returned: %08x\n", hres);
+    ok(hres == OLE_E_NOCONNECTION, "Unadvise returned: %08lx\n", hres);
 
     data = (void *)0xdeadbeef;
     hres = IOleObject_EnumAdvise(oleobj, &data);
-    ok(hres == E_NOTIMPL, "EnumAdvise returned: %08x\n", hres);
+    ok(hres == E_NOTIMPL, "EnumAdvise returned: %08lx\n", hres);
     ok(data == NULL, "got data %p\n", data);
 
     connection[0] = 0xdeadbeef;
     hres = IOleObject_Advise(oleobj, NULL, &connection[0]);
-    ok(hres == E_INVALIDARG, "Advise returned: %08x\n", hres);
-    ok(connection[0] == 0, "got connection %u\n", connection[0]);
+    ok(hres == E_INVALIDARG, "Advise returned: %08lx\n", hres);
+    ok(connection[0] == 0, "got connection %lu\n", connection[0]);
 
     hres = IOleObject_Advise(oleobj, &test_sink, NULL);
-    ok(hres == E_INVALIDARG, "Advise returned: %08x\n", hres);
+    ok(hres == E_INVALIDARG, "Advise returned: %08lx\n", hres);
 
     connection[0] = 0xdeadbeef;
     hres = IOleObject_Advise(oleobj, &test_sink, &connection[0]);
-    ok(hres == S_OK, "Advise returned: %08x\n", hres);
-    ok(connection[0] != 0xdeadbeef, "got connection %u\n", connection[0]);
+    ok(hres == S_OK, "Advise returned: %08lx\n", hres);
+    ok(connection[0] != 0xdeadbeef, "got connection %lu\n", connection[0]);
 
     connection[1] = 0xdeadbeef;
     hres = IOleObject_Advise(oleobj, &test_sink, &connection[1]);
-    ok(hres == S_OK, "Advise returned: %08x\n", hres);
-    ok(connection[1] == connection[0] + 1, "got connection %u\n", connection[1]);
+    ok(hres == S_OK, "Advise returned: %08lx\n", hres);
+    ok(connection[1] == connection[0] + 1, "got connection %lu\n", connection[1]);
 
     hres = IOleObject_Unadvise(oleobj, connection[1]);
-    ok(hres == S_OK, "Unadvise returned: %08x\n", hres);
+    ok(hres == S_OK, "Unadvise returned: %08lx\n", hres);
 
     hres = IOleObject_Unadvise(oleobj, connection[1]);
-    ok(hres == OLE_E_NOCONNECTION, "Unadvise returned: %08x\n", hres);
+    ok(hres == OLE_E_NOCONNECTION, "Unadvise returned: %08lx\n", hres);
 
     hres = IOleObject_Unadvise(oleobj, connection[0]);
-    ok(hres == S_OK, "Unadvise returned: %08x\n", hres);
+    ok(hres == S_OK, "Unadvise returned: %08lx\n", hres);
 
     IOleObject_Release(oleobj);
 }
@@ -3854,10 +3854,10 @@ static void test_WebBrowser(DWORD flags, BOOL do_close)
     init_test(webbrowser, flags);
 
     hres = IWebBrowser2_QueryInterface(webbrowser, &IID_IOleObject, (void **)&oleobj);
-    ok(hres == S_OK, "QueryInterface(IID_OleObject) failed: %08x\n", hres);
+    ok(hres == S_OK, "QueryInterface(IID_OleObject) failed: %08lx\n", hres);
 
     hres = IOleObject_Advise(oleobj, &test_sink, &connection);
-    ok(hres == S_OK, "Advise failed: %08x\n", hres);
+    ok(hres == S_OK, "Advise failed: %08lx\n", hres);
 
     test_QueryStatusWB(webbrowser, FALSE);
     test_ExecWB(webbrowser, FALSE);
@@ -3964,12 +3964,12 @@ static void test_WebBrowser(DWORD flags, BOOL do_close)
     test_IServiceProvider(webbrowser);
 
     hres = IOleObject_Unadvise(oleobj, connection);
-    ok(hres == S_OK, "Unadvise failed: %08x\n", hres);
+    ok(hres == S_OK, "Unadvise failed: %08lx\n", hres);
 
     IOleObject_Release(oleobj);
 
     ref = IWebBrowser2_Release(webbrowser);
-    ok(ref == 0 || broken(do_download && !do_close), "ref=%d, expected 0\n", ref);
+    ok(ref == 0 || broken(do_download && !do_close), "ref=%ld, expected 0\n", ref);
 }
 
 static void test_WebBrowserV1(void)
@@ -3981,16 +3981,16 @@ static void test_WebBrowserV1(void)
 
     hres = CoCreateInstance(&CLSID_WebBrowser_V1, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IWebBrowser2, (void**)&wb);
-    ok(hres == S_OK, "Could not get WebBrowserV1 instance: %08x\n", hres);
+    ok(hres == S_OK, "Could not get WebBrowserV1 instance: %08lx\n", hres);
 
     init_test(wb, 0);
     wb_version = 1;
 
     hres = IWebBrowser2_QueryInterface(wb, &IID_IOleObject, (void **)&oleobj);
-    ok(hres == S_OK, "QueryInterface(IID_OleObject) failed: %08x\n", hres);
+    ok(hres == S_OK, "QueryInterface(IID_OleObject) failed: %08lx\n", hres);
 
     hres = IOleObject_Advise(oleobj, &test_sink, &connection);
-    ok(hres == S_OK, "Advise failed: %08x\n", hres);
+    ok(hres == S_OK, "Advise failed: %08lx\n", hres);
 
     test_QueryStatusWB(wb, FALSE);
     test_ExecWB(wb, FALSE);
@@ -4003,12 +4003,12 @@ static void test_WebBrowserV1(void)
     test_Advise(wb);
 
     hres = IOleObject_Unadvise(oleobj, connection);
-    ok(hres == S_OK, "Unadvise failed: %08x\n", hres);
+    ok(hres == S_OK, "Unadvise failed: %08lx\n", hres);
 
     IOleObject_Release(oleobj);
 
     ref = IWebBrowser2_Release(wb);
-    ok(ref == 0, "ref=%d, expected 0\n", ref);
+    ok(ref == 0, "ref=%ld, expected 0\n", ref);
 }
 
 static void test_WebBrowser_slim_container(void)
@@ -4034,7 +4034,7 @@ static void test_WebBrowser_slim_container(void)
     test_ConnectionPoint(webbrowser, FALSE);
 
     ref = IWebBrowser2_Release(webbrowser);
-    ok(ref == 0, "ref=%d, expected 0\n", ref);
+    ok(ref == 0, "ref=%ld, expected 0\n", ref);
 }
 
 static void test_WebBrowser_DoVerb(void)
@@ -4072,7 +4072,7 @@ static void test_WebBrowser_DoVerb(void)
 
     memset(&rect, 0xa, sizeof(rect));
     res = GetWindowRect(hwnd, &rect);
-    ok(res, "GetWindowRect failed: %u\n", GetLastError());
+    ok(res, "GetWindowRect failed: %lu\n", GetLastError());
 
     SET_EXPECT(OnInPlaceDeactivate);
     call_DoVerb(webbrowser, OLEIVERB_HIDE);
@@ -4080,7 +4080,7 @@ static void test_WebBrowser_DoVerb(void)
 
     b = 0x100;
     hres = IWebBrowser2_get_Visible(webbrowser, &b);
-    ok(hres == S_OK, "get_Visible failed: %08x\n", hres);
+    ok(hres == S_OK, "get_Visible failed: %08lx\n", hres);
     ok(b == VARIANT_TRUE, "Visible = %x\n", b);
 
     SET_EXPECT(CanInPlaceActivate);
@@ -4111,7 +4111,7 @@ static void test_WebBrowser_DoVerb(void)
 
     b = 0x100;
     hres = IWebBrowser2_get_Visible(webbrowser, &b);
-    ok(hres == S_OK, "get_Visible failed: %08x\n", hres);
+    ok(hres == S_OK, "get_Visible failed: %08lx\n", hres);
     ok(b == VARIANT_TRUE, "Visible = %x\n", b);
 
     call_DoVerb(webbrowser, OLEIVERB_SHOW);
@@ -4133,7 +4133,7 @@ static void test_WebBrowser_DoVerb(void)
 
     b = 0x100;
     hres = IWebBrowser2_get_Visible(webbrowser, &b);
-    ok(hres == S_OK, "get_Visible failed: %08x\n", hres);
+    ok(hres == S_OK, "get_Visible failed: %08lx\n", hres);
     ok(b == VARIANT_TRUE, "Visible = %x\n", b);
 
     SET_EXPECT(CanInPlaceActivate);
@@ -4164,7 +4164,7 @@ static void test_WebBrowser_DoVerb(void)
 
     b = 0x100;
     hres = IWebBrowser2_get_Visible(webbrowser, &b);
-    ok(hres == S_OK, "get_Visible failed: %08x\n", hres);
+    ok(hres == S_OK, "get_Visible failed: %08lx\n", hres);
     ok(b == VARIANT_TRUE, "Visible = %x\n", b);
 
     SET_EXPECT(Frame_SetActiveObject);
@@ -4185,7 +4185,7 @@ static void test_WebBrowser_DoVerb(void)
 
     b = 0x100;
     hres = IWebBrowser2_get_Visible(webbrowser, &b);
-    ok(hres == S_OK, "get_Visible failed: %08x\n", hres);
+    ok(hres == S_OK, "get_Visible failed: %08lx\n", hres);
     ok(b == VARIANT_TRUE, "Visible = %x\n", b);
 
     SET_EXPECT(CanInPlaceActivate);
@@ -4216,7 +4216,7 @@ static void test_WebBrowser_DoVerb(void)
 
     b = 0x100;
     hres = IWebBrowser2_get_Visible(webbrowser, &b);
-    ok(hres == S_OK, "get_Visible failed: %08x\n", hres);
+    ok(hres == S_OK, "get_Visible failed: %08lx\n", hres);
     ok(b == VARIANT_TRUE, "Visible = %x\n", b);
 
     call_DoVerb(webbrowser, OLEIVERB_SHOW);
@@ -4224,7 +4224,7 @@ static void test_WebBrowser_DoVerb(void)
     test_ClientSite(webbrowser, NULL, FALSE);
 
     ref = IWebBrowser2_Release(webbrowser);
-    ok(ref == 0, "ref=%d, expected 0\n", ref);
+    ok(ref == 0, "ref=%ld, expected 0\n", ref);
 }
 
 
@@ -4285,7 +4285,7 @@ static void test_FileProtocol(void)
     test_ClientSite(webbrowser, NULL, TRUE);
 
     ref = IWebBrowser2_Release(webbrowser);
-    ok(ref == 0, "ref=%u, expected 0\n", ref);
+    ok(ref == 0, "ref=%lu, expected 0\n", ref);
 
     if(file != INVALID_HANDLE_VALUE)
         DeleteFileW(file_path);
@@ -4322,7 +4322,7 @@ static void WINAPI sink_OnDataChange(IAdviseSink *iface, FORMATETC *format, STGM
 
 static void WINAPI sink_OnViewChange(IAdviseSink *iface, DWORD aspect, LONG index)
 {
-    trace("OnViewChange(%p, %08x, %d)\n", iface, aspect, index);
+    trace("OnViewChange(%p, %08lx, %ld)\n", iface, aspect, index);
 }
 
 static void WINAPI sink_OnRename(IAdviseSink *iface, IMoniker *moniker)
@@ -4369,37 +4369,37 @@ static void test_SetAdvise(void)
     init_test(browser, 0);
 
     hr = IWebBrowser2_QueryInterface(browser, &IID_IViewObject2, (void **)&view);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
     if (FAILED(hr)) return;
 
     aspects = flags = 0xdeadbeef;
     sink = (IAdviseSink *)0xdeadbeef;
     hr = IViewObject2_GetAdvise(view, &aspects, &flags, &sink);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(!aspects, "got %08x\n", aspects);
-    ok(!flags, "got %08x\n", aspects);
+    ok(hr == S_OK, "got %08lx\n", hr);
+    ok(!aspects, "got %08lx\n", aspects);
+    ok(!flags, "got %08lx\n", aspects);
     ok(sink == NULL, "got %p\n", sink);
 
     hr = IViewObject2_SetAdvise(view, DVASPECT_CONTENT, 0, &test_sink);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
 
     aspects = flags = 0xdeadbeef;
     sink = (IAdviseSink *)0xdeadbeef;
     hr = IViewObject2_GetAdvise(view, &aspects, &flags, &sink);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(aspects == DVASPECT_CONTENT, "got %08x\n", aspects);
-    ok(!flags, "got %08x\n", aspects);
+    ok(hr == S_OK, "got %08lx\n", hr);
+    ok(aspects == DVASPECT_CONTENT, "got %08lx\n", aspects);
+    ok(!flags, "got %08lx\n", aspects);
     ok(sink == &test_sink, "got %p\n", sink);
 
     hr = IWebBrowser2_QueryInterface(browser, &IID_IOleObject, (void **)&oleobj);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
 
     SET_EXPECT(GetContainer);
     SET_EXPECT(Site_GetWindow);
     SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
     SET_EXPECT(Invoke_AMBIENT_SILENT);
     hr = IOleObject_SetClientSite(oleobj, &ClientSite);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
     CHECK_CALLED(GetContainer);
     CHECK_CALLED(Site_GetWindow);
     CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
@@ -4407,24 +4407,24 @@ static void test_SetAdvise(void)
 
     sink = (IAdviseSink *)0xdeadbeef;
     hr = IViewObject2_GetAdvise(view, &aspects, &flags, &sink);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
     ok(sink == &test_sink, "got %p\n", sink);
 
     hr = IOleObject_SetClientSite(oleobj, NULL);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
 
     aspects = flags = 0xdeadbeef;
     sink = (IAdviseSink *)0xdeadbeef;
     hr = IViewObject2_GetAdvise(view, &aspects, &flags, &sink);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
     ok(sink == &test_sink, "got %p\n", sink);
 
     hr = IViewObject2_SetAdvise(view, 0, 0, NULL);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
 
     doc = (void*)0xdeadbeef;
     hr = IWebBrowser2_get_Document(browser, &doc);
-    ok(hr == S_FALSE, "get_Document failed: %08x\n", hr);
+    ok(hr == S_FALSE, "get_Document failed: %08lx\n", hr);
     ok(!doc, "doc = %p\n", doc);
 
     IOleObject_Release(oleobj);
@@ -4437,19 +4437,19 @@ static void test_SetQueryNetSessionCount(void)
     LONG count, init_count;
 
     init_count = pSetQueryNetSessionCount(SESSION_QUERY);
-    trace("init_count %d\n", init_count);
+    trace("init_count %ld\n", init_count);
 
     count = pSetQueryNetSessionCount(SESSION_INCREMENT);
-    ok(count == init_count + 1, "count = %d\n", count);
+    ok(count == init_count + 1, "count = %ld\n", count);
 
     count = pSetQueryNetSessionCount(SESSION_QUERY);
-    ok(count == init_count + 1, "count = %d\n", count);
+    ok(count == init_count + 1, "count = %ld\n", count);
 
     count = pSetQueryNetSessionCount(SESSION_DECREMENT);
-    ok(count == init_count, "count = %d\n", count);
+    ok(count == init_count, "count = %ld\n", count);
 
     count = pSetQueryNetSessionCount(SESSION_QUERY);
-    ok(count == init_count, "count = %d\n", count);
+    ok(count == init_count, "count = %ld\n", count);
 }
 
 static HRESULT WINAPI outer_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
@@ -4489,19 +4489,19 @@ static void test_com_aggregation(void)
     IUnknown *unk2 = NULL;
 
     hr = CoGetClassObject(&CLSID_WebBrowser, CLSCTX_INPROC_SERVER, NULL, &IID_IClassFactory, (void**)&class_factory);
-    ok(hr == S_OK, "CoGetClassObject failed: %08x\n", hr);
+    ok(hr == S_OK, "CoGetClassObject failed: %08lx\n", hr);
 
     hr = IClassFactory_CreateInstance(class_factory, &outer, &IID_IUnknown, (void**)&unk);
-    ok(hr == S_OK, "CreateInstance returned hr = %08x\n", hr);
-    ok(unk != NULL, "result NULL, hr = %08x\n", hr);
+    ok(hr == S_OK, "CreateInstance returned hr = %08lx\n", hr);
+    ok(unk != NULL, "result NULL, hr = %08lx\n", hr);
 
     hr = IUnknown_QueryInterface(unk, &IID_IWebBrowser, (void**)&web_browser);
-    ok(hr == S_OK, "QI to IWebBrowser failed, hr=%08x\n", hr);
+    ok(hr == S_OK, "QI to IWebBrowser failed, hr=%08lx\n", hr);
 
     SET_EXPECT(outer_QI_test);
     hr = IWebBrowser_QueryInterface(web_browser, &outer_test_iid, (void**)&unk2);
     CHECK_CALLED(outer_QI_test);
-    ok(hr == S_OK, "Could not get test iface: %08x\n", hr);
+    ok(hr == S_OK, "Could not get test iface: %08lx\n", hr);
     ok(unk2 == (IUnknown*)0xdeadbeef, "unexpected unk2\n");
 
     IWebBrowser_Release(web_browser);
