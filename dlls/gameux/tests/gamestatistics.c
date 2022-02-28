@@ -141,7 +141,7 @@ static void test_gamestatisticsmgr( void )
     static const GUID guidApplicationId = { 0x17A6558E, 0x60BE, 0x4078, { 0xB6, 0x6F, 0x9C, 0x3A, 0xDA, 0x2A, 0x32, 0xE6 } };
 
     HRESULT hr;
-    DWORD dwOpenResult;
+    GAMESTATS_OPEN_RESULT openResult;
     LPWSTR lpStatisticsFile = NULL;
     LPWSTR lpName = NULL, lpValue = NULL, sTooLongString = NULL;
     UINT uMaxCategoryLength = 0, uMaxNameLength = 0, uMaxValueLength = 0;
@@ -157,7 +157,7 @@ static void test_gamestatisticsmgr( void )
 
     /* this should fail, because statistics don't exist yet */
     gs = (void *)0xdeadbeef;
-    hr = IGameStatisticsMgr_GetGameStatistics(gsm, sExeName, GAMESTATS_OPEN_OPENONLY, &dwOpenResult, &gs);
+    hr = IGameStatisticsMgr_GetGameStatistics(gsm, sExeName, GAMESTATS_OPEN_OPENONLY, &openResult, &gs);
     if (hr != HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
     {
         /* With win10 1803 game explorer functionality was removed and gameux became a stub */
@@ -169,7 +169,7 @@ static void test_gamestatisticsmgr( void )
        (gs == (void *)0xdeadbeef ? "deadbeef" : "neither NULL nor deadbeef"));
 
     /* now, allow them to be created */
-    hr = IGameStatisticsMgr_GetGameStatistics(gsm, sExeName, GAMESTATS_OPEN_OPENORCREATE, &dwOpenResult, &gs);
+    hr = IGameStatisticsMgr_GetGameStatistics(gsm, sExeName, GAMESTATS_OPEN_OPENORCREATE, &openResult, &gs);
     ok(SUCCEEDED(hr), "GetGameStatistics returned error: 0x%x\n", hr);
     ok(gs!=NULL, "GetGameStatistics did not return valid interface pointer\n");
     if(gs)
@@ -277,9 +277,9 @@ static void test_gamestatisticsmgr( void )
         ok(SUCCEEDED(hr), "releasing IGameStatistics returned error: 0x%08x\n", hr);
 
         /* try to read written statistics */
-        hr = IGameStatisticsMgr_GetGameStatistics(gsm, sExeName, GAMESTATS_OPEN_OPENORCREATE, &dwOpenResult, &gs);
+        hr = IGameStatisticsMgr_GetGameStatistics(gsm, sExeName, GAMESTATS_OPEN_OPENORCREATE, &openResult, &gs);
         ok(SUCCEEDED(hr), "GetGameStatistics returned error: 0x%08x\n", hr);
-        ok(dwOpenResult == GAMESTATS_OPEN_OPENED, "GetGameStatistics returned invalid open result: 0x%x\n", dwOpenResult);
+        ok(openResult == GAMESTATS_OPEN_OPENED, "GetGameStatistics returned invalid open result: 0x%x\n", openResult);
         ok(gs!=NULL, "GetGameStatistics did not return valid interface pointer\n");
 
         /* verify values with these which we stored before*/
