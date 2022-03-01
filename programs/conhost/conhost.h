@@ -88,6 +88,7 @@ struct console
     unsigned int           read_ioctl;          /* current read ioctl */
     size_t                 pending_read;        /* size of pending read buffer */
     struct edit_line       edit_line;           /* edit line context */
+    unsigned int           key_state;
     struct console_window *window;
     WCHAR                 *title;               /* console title */
     struct history_line  **history;             /* lines history */

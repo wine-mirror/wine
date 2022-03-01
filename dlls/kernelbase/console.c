@@ -2031,7 +2031,7 @@ BOOL WINAPI ReadConsoleW( HANDLE handle, void *buffer, DWORD length, DWORD *coun
             SetLastError( ERROR_INVALID_PARAMETER );
             return FALSE;
         }
-        if (!(tmp = HeapAlloc( GetProcessHeap(), 0, sizeof(DWORD) + crc->nInitialChars * sizeof(WCHAR) )))
+        if (!(tmp = HeapAlloc( GetProcessHeap(), 0, sizeof(DWORD) + length * sizeof(WCHAR) )))
         {
             SetLastError( ERROR_NOT_ENOUGH_MEMORY );
             return FALSE;
@@ -2041,9 +2041,13 @@ BOOL WINAPI ReadConsoleW( HANDLE handle, void *buffer, DWORD length, DWORD *coun
         memcpy( tmp + sizeof(DWORD), buffer, crc->nInitialChars * sizeof(WCHAR) );
         ret = console_ioctl( handle, IOCTL_CONDRV_READ_CONSOLE_CONTROL,
                              tmp, sizeof(DWORD) + crc->nInitialChars * sizeof(WCHAR),
-                             buffer, length * sizeof(WCHAR),
-                             count );
-        crc->dwConsoleKeyState = 0;
+                             tmp, sizeof(DWORD) + length * sizeof(WCHAR), count );
+        if (ret)
+        {
+            memcpy( &crc->dwConsoleKeyState, tmp, sizeof(DWORD) );
+            *count -= sizeof(DWORD);
+            memcpy( buffer, tmp + sizeof(DWORD), *count );
+        }
         HeapFree( GetProcessHeap(), 0, tmp );
     }
     else

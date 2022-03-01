@@ -457,6 +457,8 @@ static NTSTATUS read_complete( struct console *console, NTSTATUS status, const v
         req->signal = signal;
         req->read   = 1;
         req->status = status;
+        if (console->read_ioctl == IOCTL_CONDRV_READ_CONSOLE_CONTROL)
+            wine_server_add_data( req, &console->key_state, sizeof(console->key_state) );
         wine_server_add_data( req, buf, size );
         status = wine_server_call( req );
     }
@@ -1250,6 +1252,7 @@ static NTSTATUS process_console_input( struct console *console )
     struct edit_line *ctx = &console->edit_line;
     unsigned int i;
     WCHAR ctrl_value = FIRST_NON_CONTROL_CHAR;
+    unsigned int ctrl_keyvalue = 0;
 
     switch (console->read_ioctl)
     {
@@ -1297,6 +1300,7 @@ static NTSTATUS process_console_input( struct console *console )
                 if (ctx->ctrl_mask & (1u << ir.Event.KeyEvent.uChar.UnicodeChar))
                 {
                     ctrl_value = ir.Event.KeyEvent.uChar.UnicodeChar;
+                    ctrl_keyvalue = ir.Event.KeyEvent.dwControlKeyState;
                     ctx->status = STATUS_SUCCESS;
                     TRACE("Found ctrl char in mask: ^%lc %x\n", ir.Event.KeyEvent.uChar.UnicodeChar + '@', ctx->ctrl_mask);
                     continue;
@@ -1363,6 +1367,7 @@ static NTSTATUS process_console_input( struct console *console )
         if (ctrl_value < FIRST_NON_CONTROL_CHAR)
         {
             edit_line_insert( console, &ctrl_value, 1 );
+            console->key_state = ctrl_keyvalue;
         }
         else
         {
@@ -1404,6 +1409,7 @@ static NTSTATUS read_console( struct console *console, unsigned int ioctl, size_
     }
 
     console->read_ioctl = ioctl;
+    console->key_state = 0;
     if (!out_size || console->read_buffer_count)
     {
         read_from_buffer( console, out_size );
@@ -2562,10 +2568,10 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
 
     case IOCTL_CONDRV_READ_CONSOLE_CONTROL:
         if ((in_size < sizeof(DWORD)) || ((in_size - sizeof(DWORD)) % sizeof(WCHAR)) ||
-            (*out_size % sizeof(WCHAR)))
+            (*out_size < sizeof(DWORD)) || ((*out_size - sizeof(DWORD)) % sizeof(WCHAR)))
             return STATUS_INVALID_PARAMETER;
         ensure_tty_input_thread( console );
-        status = read_console( console, code, *out_size,
+        status = read_console( console, code, *out_size - sizeof(DWORD),
                                (const WCHAR*)((const char*)in_data + sizeof(DWORD)),
                                (in_size - sizeof(DWORD)) / sizeof(WCHAR),
                                *(DWORD*)in_data );
