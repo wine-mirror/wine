@@ -1331,3 +1331,14 @@ sync_test("__proto__", function() {
     r = Object.getPrototypeOf(x);
     ok(r === ctor.prototype, "x.__proto__ after delete = " + r);
 });
+
+async_test("postMessage", function() {
+    var v = document.documentMode;
+    var onmessage_called = false;
+    window.onmessage = function() {
+        onmessage_called = true;
+        next_test();
+    }
+    window.postMessage("test", "*");
+    ok(onmessage_called == (v < 9 ? true : false), "onmessage not called");
+});

@@ -365,20 +365,6 @@ function test_xhr() {
     ok(typeof(xhr) === "object", "typeof(xhr) = " + typeof(xhr));
 }
 
-function test_postMessage() {
-    if(!("postMessage" in window)) {
-        win_skip("postMessage not available");
-        return;
-    }
-
-    var onmessage_called = false;
-    window.onmessage = function() {
-        onmessage_called = true;
-    }
-    window.postMessage("test", "*");
-    ok(onmessage_called, "onmessage not called");
-}
-
 var globalVar = false;
 
 function runTests() {
@@ -405,7 +391,6 @@ function runTests() {
     test_language_attribute();
     test_text_node();
     test_xhr();
-    test_postMessage();
 
     var r = window.execScript("globalVar = true;");
     ok(r === undefined, "execScript returned " + r);

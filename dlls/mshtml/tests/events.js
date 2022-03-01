@@ -809,6 +809,5 @@ async_test("message event", function() {
     });
 
     window.postMessage("test", "http://winetest.example.org");
-    todo_wine.
     ok(listener_called == false, "listener already called");
 });

@@ -2194,6 +2194,25 @@ static HRESULT WINAPI HTMLWindow6_get_maxConnectionsPerServer(IHTMLWindow6 *ifac
     return E_NOTIMPL;
 }
 
+struct post_message_task {
+    task_t header;
+    HTMLInnerWindow *window;
+    DOMEvent *event;
+} ;
+
+static void post_message_proc(task_t *_task)
+{
+    struct post_message_task *task = (struct post_message_task *)_task;
+    dispatch_event(&task->window->event_target, task->event);
+}
+
+static void post_message_destr(task_t *_task)
+{
+    struct post_message_task *task = (struct post_message_task *)_task;
+    IDOMEvent_Release(&task->event->IDOMEvent_iface);
+    IHTMLWindow2_Release(&task->window->base.IHTMLWindow2_iface);
+}
+
 static HRESULT WINAPI HTMLWindow6_postMessage(IHTMLWindow6 *iface, BSTR msg, VARIANT targetOrigin)
 {
     HTMLWindow *This = impl_from_IHTMLWindow6(iface);
@@ -2210,6 +2229,20 @@ static HRESULT WINAPI HTMLWindow6_postMessage(IHTMLWindow6 *iface, BSTR msg, VAR
     hres = create_message_event(This->inner_window->doc, msg, &event);
     if(FAILED(hres))
         return hres;
+
+    if(dispex_compat_mode(&This->inner_window->event_target.dispex) >= COMPAT_MODE_IE9) {
+        struct post_message_task *task;
+        if(!(task = heap_alloc(sizeof(*task)))) {
+            IDOMEvent_Release(&event->IDOMEvent_iface);
+            return E_OUTOFMEMORY;
+        }
+
+        task->event = event;
+        task->window = This->inner_window;
+        IHTMLWindow2_AddRef(&task->window->base.IHTMLWindow2_iface);
+        return push_task(&task->header, post_message_proc, post_message_destr,
+                         This->inner_window->task_magic);
+    }
 
     dispatch_event(&This->inner_window->event_target, event);
     IDOMEvent_Release(&event->IDOMEvent_iface);
