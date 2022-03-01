@@ -2147,6 +2147,128 @@ static void DOMCustomEvent_destroy(DOMEvent *event)
     VariantClear(&custom_event->detail);
 }
 
+typedef struct {
+    DOMEvent event;
+    IDOMMessageEvent IDOMMessageEvent_iface;
+} DOMMessageEvent;
+
+static inline DOMMessageEvent *impl_from_IDOMMessageEvent(IDOMMessageEvent *iface)
+{
+    return CONTAINING_RECORD(iface, DOMMessageEvent, IDOMMessageEvent_iface);
+}
+
+static HRESULT WINAPI DOMMessageEvent_QueryInterface(IDOMMessageEvent *iface, REFIID riid, void **ppv)
+{
+    DOMMessageEvent *This = impl_from_IDOMMessageEvent(iface);
+    return IDOMEvent_QueryInterface(&This->event.IDOMEvent_iface, riid, ppv);
+}
+
+static ULONG WINAPI DOMMessageEvent_AddRef(IDOMMessageEvent *iface)
+{
+    DOMMessageEvent *This = impl_from_IDOMMessageEvent(iface);
+    return IDOMEvent_AddRef(&This->event.IDOMEvent_iface);
+}
+
+static ULONG WINAPI DOMMessageEvent_Release(IDOMMessageEvent *iface)
+{
+    DOMMessageEvent *This = impl_from_IDOMMessageEvent(iface);
+    return IDOMEvent_Release(&This->event.IDOMEvent_iface);
+}
+
+static HRESULT WINAPI DOMMessageEvent_GetTypeInfoCount(IDOMMessageEvent *iface, UINT *pctinfo)
+{
+    DOMMessageEvent *This = impl_from_IDOMMessageEvent(iface);
+    return IDispatchEx_GetTypeInfoCount(&This->event.dispex.IDispatchEx_iface, pctinfo);
+}
+
+static HRESULT WINAPI DOMMessageEvent_GetTypeInfo(IDOMMessageEvent *iface, UINT iTInfo,
+                                                   LCID lcid, ITypeInfo **ppTInfo)
+{
+    DOMMessageEvent *This = impl_from_IDOMMessageEvent(iface);
+    return IDispatchEx_GetTypeInfo(&This->event.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI DOMMessageEvent_GetIDsOfNames(IDOMMessageEvent *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    DOMMessageEvent *This = impl_from_IDOMMessageEvent(iface);
+    return IDispatchEx_GetIDsOfNames(&This->event.dispex.IDispatchEx_iface, riid, rgszNames, cNames,
+            lcid, rgDispId);
+}
+
+static HRESULT WINAPI DOMMessageEvent_Invoke(IDOMMessageEvent *iface, DISPID dispIdMember,
+        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
+        EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    DOMMessageEvent *This = impl_from_IDOMMessageEvent(iface);
+    return IDispatchEx_Invoke(&This->event.dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
+            wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI DOMMessageEvent_get_data(IDOMMessageEvent *iface, BSTR *p)
+{
+    DOMMessageEvent *This = impl_from_IDOMMessageEvent(iface);
+
+    FIXME("(%p)->(%p)\n", This, p);
+
+    *p = NULL;
+    return S_OK;
+}
+
+static HRESULT WINAPI DOMMessageEvent_get_origin(IDOMMessageEvent *iface, BSTR *p)
+{
+    DOMMessageEvent *This = impl_from_IDOMMessageEvent(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DOMMessageEvent_get_source(IDOMMessageEvent *iface, IHTMLWindow2 **p)
+{
+    DOMMessageEvent *This = impl_from_IDOMMessageEvent(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DOMMessageEvent_initMessageEvent(IDOMMessageEvent *iface, BSTR type, VARIANT_BOOL can_bubble,
+                                                       VARIANT_BOOL cancelable, BSTR data, BSTR origin,
+                                                       BSTR last_event_id, IHTMLWindow2 *source)
+{
+    DOMMessageEvent *This = impl_from_IDOMMessageEvent(iface);
+    FIXME("(%p)->(%s %x %x %s %s %s %p)\n", This, debugstr_w(type), can_bubble, cancelable,
+          debugstr_w(data), debugstr_w(origin), debugstr_w(last_event_id), source);
+    return E_NOTIMPL;
+}
+
+static const IDOMMessageEventVtbl DOMMessageEventVtbl = {
+    DOMMessageEvent_QueryInterface,
+    DOMMessageEvent_AddRef,
+    DOMMessageEvent_Release,
+    DOMMessageEvent_GetTypeInfoCount,
+    DOMMessageEvent_GetTypeInfo,
+    DOMMessageEvent_GetIDsOfNames,
+    DOMMessageEvent_Invoke,
+    DOMMessageEvent_get_data,
+    DOMMessageEvent_get_origin,
+    DOMMessageEvent_get_source,
+    DOMMessageEvent_initMessageEvent
+};
+
+static DOMMessageEvent *DOMMessageEvent_from_DOMEvent(DOMEvent *event)
+{
+    return CONTAINING_RECORD(event, DOMMessageEvent, event);
+}
+
+static void *DOMMessageEvent_query_interface(DOMEvent *event, REFIID riid)
+{
+    DOMMessageEvent *message_event = DOMMessageEvent_from_DOMEvent(event);
+    if(IsEqualGUID(&IID_IDOMMessageEvent, riid))
+        return &message_event->IDOMMessageEvent_iface;
+    return NULL;
+}
+
+static void DOMMessageEvent_destroy(DOMEvent *event)
+{
+}
 
 static const tid_t DOMEvent_iface_tids[] = {
     IDOMEvent_tid,
@@ -2214,6 +2336,19 @@ static dispex_static_data_t DOMCustomEvent_dispex = {
     DOMCustomEvent_iface_tids
 };
 
+static const tid_t DOMMessageEvent_iface_tids[] = {
+    IDOMEvent_tid,
+    IDOMMessageEvent_tid,
+    0
+};
+
+dispex_static_data_t DOMMessageEvent_dispex = {
+    L"MessageEvent",
+    NULL,
+    DispDOMMessageEvent_tid,
+    DOMMessageEvent_iface_tids
+};
+
 static BOOL check_event_iface(nsIDOMEvent *event, REFIID riid)
 {
     nsISupports *iface;
@@ -2243,6 +2378,16 @@ static DOMEvent *alloc_event(nsIDOMEvent *nsevent, compat_mode_t compat_mode, ev
         custom_event->event.destroy = DOMCustomEvent_destroy;
         event = &custom_event->event;
         dispex_data = &DOMCustomEvent_dispex;
+    }else if(event_id == EVENTID_MESSAGE) {
+        DOMMessageEvent *message_event = heap_alloc_zero(sizeof(*message_event));
+        if(!message_event)
+            return NULL;
+
+        message_event->IDOMMessageEvent_iface.lpVtbl = &DOMMessageEventVtbl;
+        message_event->event.query_interface = DOMMessageEvent_query_interface;
+        message_event->event.destroy = DOMMessageEvent_destroy;
+        event = &message_event->event;
+        dispex_data = &DOMMessageEvent_dispex;
     }else {
         event = heap_alloc_zero(sizeof(*event));
         if(!event)

@@ -28462,6 +28462,38 @@ interface IDOMMessageEvent : IDispatch
             [in] IHTMLWindow2 *source);
 }
 
+/*****************************************************************************
+ *    DispDOMMessageEvent dispinterface
+ */
+[
+    hidden,
+    uuid(30590092-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispDOMMessageEvent
+{
+properties:
+methods:
+    WINE_IDOMEVENT_DISPINTERFACE_DECL;
+
+    [propget, id(DISPID_IDOMMESSAGEEVENT_DATA)]
+    BSTR data();
+
+    [propget, id(DISPID_IDOMMESSAGEEVENT_ORIGIN)]
+    BSTR origin();
+
+    [propget, id(DISPID_IDOMMESSAGEEVENT_SOURCE)]
+    IHTMLWindow2 *source();
+
+    [id(DISPID_IDOMMESSAGEEVENT_INITMESSAGEEVENT)]
+    void initMessageEvent(
+            [in] BSTR eventType,
+            [in] VARIANT_BOOL canBubble,
+            [in] VARIANT_BOOL cancelable,
+            [in] BSTR data,
+            [in] BSTR origin,
+            [in] BSTR lastEventId,
+            [in] IHTMLWindow2 *source);
+}
 
 /*****************************************************************************
  *    IHTMLNamespaceCollection interface
