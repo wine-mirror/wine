@@ -413,7 +413,7 @@ static void test_ApplyPatchToFile(void)
         ok(pApplyPatchToFileA(patch_null_input_uncompressed_tmp, NULL, output_file_temp, APPLY_OPTION_FAIL_IF_EXACT),
             "ApplyPatchToFileA: expected TRUE\n");
         err = GetLastError();
-        ok(err == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%X\n", err);
+        ok(err == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%lX\n", err);
     }
 
     /* dual input patch - first file */
@@ -421,7 +421,7 @@ static void test_ApplyPatchToFile(void)
     ok(pApplyPatchToFileA(patch_two_files_ranges_tmp, old_two_files_ranges_0_tmp, output_file_temp, APPLY_OPTION_FAIL_IF_EXACT),
         "ApplyPatchToFileA: expected TRUE\n");
     err = GetLastError();
-    ok(err == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%X\n", err);
+    ok(err == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%lX\n", err);
     /* ensure that ranges were applied properly by comparing with the result from Windows */
     compare_file(output_file_temp, windows_output_0, sizeof(windows_output_0));
     /* handles were closed */
@@ -437,7 +437,7 @@ static void test_ApplyPatchToFile(void)
     err = GetLastError();
     /* error code is unstable across Windows versions and architectures (bug) */
     ok(err == ERROR_PATCH_WRONG_FILE || err == ERROR_SUCCESS,
-        "Expected ERROR_SUCCESS or ERROR_PATCH_WRONG_FILE, got 0x%X\n", err);
+        "Expected ERROR_SUCCESS or ERROR_PATCH_WRONG_FILE, got 0x%lX\n", err);
     /* output deleted on failure */
     ok(GetFileAttributesA(output_file_temp) == INVALID_FILE_ATTRIBUTES, "Output file should not exist\n");
     /* handles were closed */
@@ -452,7 +452,7 @@ static void test_ApplyPatchToFile(void)
     err = GetLastError();
     /* error code is unstable across Windows versions and architectures (bug) */
     ok(err == ERROR_PATCH_WRONG_FILE || err == ERROR_SUCCESS,
-        "Expected ERROR_SUCCESS or ERROR_PATCH_WRONG_FILE, got 0x%X\n", err);
+        "Expected ERROR_SUCCESS or ERROR_PATCH_WRONG_FILE, got 0x%lX\n", err);
     /* output deleted on failure */
     ok(GetFileAttributesA(output_file_temp) == INVALID_FILE_ATTRIBUTES, "Output file should not exist\n");
 
@@ -460,7 +460,7 @@ static void test_ApplyPatchToFile(void)
     SetLastError(0xdeadbeef);
     ok(!pApplyPatchToFileA("snarfalargle", old_two_files_ranges_0_tmp, output_file_temp, 0), "ApplyPatchToFileA: expected FALSE\n");
     err = GetLastError();
-    ok(err == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got 0x%X\n", err);
+    ok(err == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got 0x%lX\n", err);
     ok(file_closed(old_two_files_ranges_0_tmp), "File handle was not closed: %s\n", old_two_files_ranges_0_tmp);
     ok(GetFileAttributesA(output_file_temp) == INVALID_FILE_ATTRIBUTES, "Output file should not exist\n");
 
@@ -468,7 +468,7 @@ static void test_ApplyPatchToFile(void)
     SetLastError(0xdeadbeef);
     ok(!pApplyPatchToFileA(patch_two_files_ranges_tmp, "elbernoffle", output_file_temp, 0), "ApplyPatchToFileA: expected FALSE\n");
     err = GetLastError();
-    ok(err == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got 0x%X\n", err);
+    ok(err == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got 0x%lX\n", err);
     ok(file_closed(patch_two_files_ranges_tmp), "File handle was not closed: %s\n", patch_two_files_ranges_tmp);
     ok(GetFileAttributesA(output_file_temp) == INVALID_FILE_ATTRIBUTES, "Output file should not exist\n");
 
@@ -477,7 +477,7 @@ static void test_ApplyPatchToFile(void)
     ok(!pApplyPatchToFileA(patch_two_files_ranges_tmp, old_two_files_ranges_0_tmp, "up\\down\\left\\right", 0),
         "ApplyPatchToFileA: expected FALSE\n");
     err = GetLastError();
-    ok(err == ERROR_PATH_NOT_FOUND, "Expected ERROR_PATH_NOT_FOUND, got 0x%X\n", err);
+    ok(err == ERROR_PATH_NOT_FOUND, "Expected ERROR_PATH_NOT_FOUND, got 0x%lX\n", err);
     ok(file_closed(patch_two_files_ranges_tmp), "File handle was not closed: %s\n", patch_two_files_ranges_tmp);
     ok(file_closed(old_two_files_ranges_0_tmp), "File handle was not closed: %s\n", old_two_files_ranges_0_tmp);
 
@@ -490,7 +490,7 @@ static void test_ApplyPatchToFile(void)
     ok(pApplyPatchToFileExA(patch_two_files_ranges_tmp, old_two_files_ranges_0_tmp, output_file_temp, APPLY_OPTION_FAIL_IF_EXACT,
         progress, &current), "ApplyPatchToFileExA: expected TRUE\n");
     err = GetLastError();
-    ok(err == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%X\n", err);
+    ok(err == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%lX\n", err);
     ok(current <= 100, "Expected 0-100, got 0xdeadbeef\n");
 
     /* cancellation in ApplyPatchToFileExA */
@@ -500,7 +500,7 @@ static void test_ApplyPatchToFile(void)
         progress_cancel, &current), "ApplyPatchToFileExA: expected FALSE\n");
     err = GetLastError();
     /* the file is so small that cancellation occurs on completion and sometimes Windows reports success */
-    ok(err == ERROR_CANCELLED || err == ERROR_SUCCESS, "Expected ERROR_SUCCESS or ERROR_CANCELLED, got 0x%X\n", err);
+    ok(err == ERROR_CANCELLED || err == ERROR_SUCCESS, "Expected ERROR_SUCCESS or ERROR_CANCELLED, got 0x%lX\n", err);
     ok(current <= 100, "Expected 0-100, got 0xdeadbeef\n");
 }
 
@@ -520,21 +520,21 @@ static void test_ApplyPatchToFileByHandles(void)
     patch_hndl = CreateFileA(patch_two_files_ranges_tmp, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
     if (patch_hndl == INVALID_HANDLE_VALUE)
     {
-        skip("Failed to open patch file %s: %u\n", patch_two_files_ranges_tmp, GetLastError());
+        skip("Failed to open patch file %s: %lu\n", patch_two_files_ranges_tmp, GetLastError());
         goto close_handles;
     }
 
     old_hndl = CreateFileA(old_two_files_ranges_0_tmp, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
     if (old_hndl == INVALID_HANDLE_VALUE)
     {
-        skip("Failed to open old file %s: %u\n", old_two_files_ranges_0_tmp, GetLastError());
+        skip("Failed to open old file %s: %lu\n", old_two_files_ranges_0_tmp, GetLastError());
         goto close_handles;
     }
 
     new_hndl = CreateFileA(output_file_temp, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
     if (new_hndl == INVALID_HANDLE_VALUE)
     {
-        skip("Failed to open new file %s: %u\n", output_file_temp, GetLastError());
+        skip("Failed to open new file %s: %lu\n", output_file_temp, GetLastError());
         goto close_handles;
     }
 
@@ -542,15 +542,15 @@ static void test_ApplyPatchToFileByHandles(void)
     ok(pApplyPatchToFileByHandles(patch_hndl, old_hndl, new_hndl, APPLY_OPTION_FAIL_IF_EXACT),
         "ApplyPatchToFileByHandles: expected TRUE\n");
     err = GetLastError();
-    ok(err == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%X\n", err);
+    ok(err == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%lX\n", err);
     w = SetFilePointer(patch_hndl, 0, NULL, FILE_CURRENT);
-    ok(w == 0, "Expected file pointer 0, got %u\n", w);
+    ok(w == 0, "Expected file pointer 0, got %lu\n", w);
     w = SetFilePointer(old_hndl, 0, NULL, FILE_CURRENT);
-    ok(w == 0, "Expected file pointer 0, got %u\n", w);
+    ok(w == 0, "Expected file pointer 0, got %lu\n", w);
     w = SetFilePointer(new_hndl, 0, NULL, FILE_CURRENT);
-    ok(w == sizeof(windows_output_0), "Expected file pointer %u, got %u\n", (unsigned)sizeof(windows_output_0), w);
+    ok(w == sizeof(windows_output_0), "Expected file pointer %u, got %lu\n", (unsigned)sizeof(windows_output_0), w);
     size = SetFilePointer(new_hndl, 0, NULL, FILE_END);
-    ok(size == sizeof(windows_output_0), "Expected file size %u, got %u\n",(unsigned)sizeof(windows_output_0), size);
+    ok(size == sizeof(windows_output_0), "Expected file size %u, got %lu\n",(unsigned)sizeof(windows_output_0), size);
 
     /* lengthen and check for truncation */
     WriteFile(new_hndl, "", 1, &w, 0);
@@ -558,9 +558,9 @@ static void test_ApplyPatchToFileByHandles(void)
     ok(pApplyPatchToFileByHandles(patch_hndl, old_hndl, new_hndl, APPLY_OPTION_FAIL_IF_EXACT),
         "ApplyPatchToFileByHandles: expected TRUE\n");
     err = GetLastError();
-    ok(err == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%X\n", err);
+    ok(err == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%lX\n", err);
     w = SetFilePointer(new_hndl, 0, NULL, FILE_END);
-    ok(w == size, "Expected file size %u, got %u\n", size, w);
+    ok(w == size, "Expected file size %lu, got %lu\n", size, w);
 
     if (!pTestApplyPatchToFileByHandles)
         goto close_handles;
@@ -569,7 +569,7 @@ static void test_ApplyPatchToFileByHandles(void)
     ok(pTestApplyPatchToFileByHandles(patch_hndl, old_hndl, APPLY_OPTION_FAIL_IF_EXACT),
         "TestApplyPatchToFileByHandles: expected TRUE\n");
     err = GetLastError();
-    ok(err == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%X\n", err);
+    ok(err == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%lX\n", err);
 
     if (!pApplyPatchToFileByHandlesEx)
         goto close_handles;
@@ -580,10 +580,10 @@ static void test_ApplyPatchToFileByHandles(void)
     ok(pApplyPatchToFileByHandlesEx(patch_hndl, old_hndl, new_hndl, APPLY_OPTION_FAIL_IF_EXACT, progress, &current),
         "ApplyPatchToFileByHandlesEx: expected TRUE\n");
     err = GetLastError();
-    ok(err == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%X\n", err);
+    ok(err == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%lX\n", err);
     ok(current <= 100, "Expected 0-100, got 0xdeadbeef\n");
     w = SetFilePointer(new_hndl, 0, NULL, FILE_END);
-    ok(w == size, "Expected file size %u, got %u\n", size, w);
+    ok(w == size, "Expected file size %lu, got %lu\n", size, w);
 
     /* progress cancelled */
     SetLastError(0xdeadbeef);
@@ -591,7 +591,7 @@ static void test_ApplyPatchToFileByHandles(void)
     ok(!pApplyPatchToFileByHandlesEx(patch_hndl, old_hndl, new_hndl, APPLY_OPTION_FAIL_IF_EXACT,
         progress_cancel, &current), "ApplyPatchToFileByHandlesEx: expected FALSE\n");
     err = GetLastError();
-    ok(err == ERROR_CANCELLED || err == ERROR_SUCCESS, "Expected ERROR_SUCCESS or ERROR_CANCELLED, got 0x%X\n", err);
+    ok(err == ERROR_CANCELLED || err == ERROR_SUCCESS, "Expected ERROR_SUCCESS or ERROR_CANCELLED, got 0x%lX\n", err);
     ok(current <= 100, "Expected 0-100, got 0xdeadbeef\n");
 
 close_handles:
@@ -622,9 +622,9 @@ static void test_ApplyPatchToFileByBuffers(void)
         old_two_files_ranges_0, sizeof(old_two_files_ranges_0), &new_buf, 0, &new_size, &new_time, 0, progress, &current),
         "ApplyPatchToFileByBuffers: expected TRUE\n");
     err = GetLastError();
-    ok(err == 0xdeadbeef || err == ERROR_SUCCESS, "Expected 0xdeadbeef or ERROR_SUCCESS, got 0x%X\n", err);
+    ok(err == 0xdeadbeef || err == ERROR_SUCCESS, "Expected 0xdeadbeef or ERROR_SUCCESS, got 0x%lX\n", err);
     ok(new_buf != NULL, "Expected buffer returned, got NULL\n");
-    ok(new_size == sizeof(windows_output_0), "Expected size %u, got %u\n", (unsigned)sizeof(windows_output_0), new_size);
+    ok(new_size == sizeof(windows_output_0), "Expected size %u, got %lu\n", (unsigned)sizeof(windows_output_0), new_size);
     if(new_buf != NULL)
         ok(memcmp(new_buf, windows_output_0, new_size) == 0, "Expected data equal, got not equal\n");
     ok(current <= 100, "Expected progress 0-100, got 0xdeadbeef\n");
@@ -642,9 +642,9 @@ static void test_ApplyPatchToFileByBuffers(void)
         old_blocktype2_no_timestamp, sizeof(old_blocktype2_no_timestamp), &new_buf, sizeof(target_buf), &new_size,
         &new_time, 0, NULL, NULL), "ApplyPatchToFileByBuffers: expected TRUE\n");
     err = GetLastError();
-    ok(err == 0xdeadbeef || err == ERROR_SUCCESS, "Expected 0xdeadbeef or ERROR_SUCCESS, got 0x%X\n", err);
+    ok(err == 0xdeadbeef || err == ERROR_SUCCESS, "Expected 0xdeadbeef or ERROR_SUCCESS, got 0x%lX\n", err);
     ok(new_buf == target_buf, "Buffer pre-allocated; pointer should not be modified\n");
-    ok(new_size == BLOCKTYPE2_NO_TIMESTAMP_SIZE, "Expected size %u, got %u\n", BLOCKTYPE2_NO_TIMESTAMP_SIZE, new_size);
+    ok(new_size == BLOCKTYPE2_NO_TIMESTAMP_SIZE, "Expected size %u, got %lu\n", BLOCKTYPE2_NO_TIMESTAMP_SIZE, new_size);
     ok(new_time.dwHighDateTime == 0, "Expected datetime 0, got nonzero\n");
 
     /* null old file */
@@ -656,8 +656,8 @@ static void test_ApplyPatchToFileByBuffers(void)
         NULL, 0, &new_buf, sizeof(target_buf), &new_size, &new_time, 0, NULL, NULL),
         "ApplyPatchToFileByBuffers: expected TRUE\n");
     err = GetLastError();
-    ok(err == 0xdeadbeef || err == ERROR_SUCCESS, "Expected 0xdeadbeef or ERROR_SUCCESS, got 0x%X\n", err);
-    ok(new_size == NULL_INPUT_UNCOMPRESSED_SIZE, "Expected size %u, got %u\n", NULL_INPUT_UNCOMPRESSED_SIZE, new_size);
+    ok(err == 0xdeadbeef || err == ERROR_SUCCESS, "Expected 0xdeadbeef or ERROR_SUCCESS, got 0x%lX\n", err);
+    ok(new_size == NULL_INPUT_UNCOMPRESSED_SIZE, "Expected size %u, got %lu\n", NULL_INPUT_UNCOMPRESSED_SIZE, new_size);
     ok(new_time.dwHighDateTime != 0, "Expected nonzero, got 0\n");
 
     /* null output */
@@ -665,7 +665,7 @@ static void test_ApplyPatchToFileByBuffers(void)
     ok(!pApplyPatchToFileByBuffers(patch_null_input_uncompressed, sizeof(patch_null_input_uncompressed),
         NULL, 0, NULL, 0, &new_size, &new_time, 0, NULL, NULL), "ApplyPatchToFileByBuffers: expected FALSE\n");
     err = GetLastError();
-    ok(err == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got 0x%X\n", err);
+    ok(err == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got 0x%lX\n", err);
 
     /* null output test only */
     new_time.dwHighDateTime = 0;
@@ -674,7 +674,7 @@ static void test_ApplyPatchToFileByBuffers(void)
         NULL, 0, NULL, 0, NULL, &new_time, APPLY_OPTION_TEST_ONLY, NULL, NULL),
         "ApplyPatchToFileByBuffers: expected TRUE\n");
     err = GetLastError();
-    ok(err == 0xdeadbeef || err == ERROR_SUCCESS, "Expected 0xdeadbeef or ERROR_SUCCESS, got 0x%X\n", err);
+    ok(err == 0xdeadbeef || err == ERROR_SUCCESS, "Expected 0xdeadbeef or ERROR_SUCCESS, got 0x%lX\n", err);
     ok(new_time.dwHighDateTime != 0, "Expected nonzero, got 0\n");
 
     /* null old file test only */
@@ -684,8 +684,8 @@ static void test_ApplyPatchToFileByBuffers(void)
         NULL, 0, NULL, 0, &new_size, NULL, APPLY_OPTION_TEST_ONLY, NULL, NULL),
         "ApplyPatchToFileByBuffers: expected TRUE\n");
     err = GetLastError();
-    ok(err == 0xdeadbeef || err == ERROR_SUCCESS, "Expected 0xdeadbeef or ERROR_SUCCESS, got 0x%X\n", err);
-    ok(new_size == NULL_INPUT_UNCOMPRESSED_SIZE, "Expected size %u, got %u\n", NULL_INPUT_UNCOMPRESSED_SIZE, new_size);
+    ok(err == 0xdeadbeef || err == ERROR_SUCCESS, "Expected 0xdeadbeef or ERROR_SUCCESS, got 0x%lX\n", err);
+    ok(new_size == NULL_INPUT_UNCOMPRESSED_SIZE, "Expected size %u, got %lu\n", NULL_INPUT_UNCOMPRESSED_SIZE, new_size);
 
     /* alternate old file */
     new_buf = target_buf;
@@ -695,8 +695,8 @@ static void test_ApplyPatchToFileByBuffers(void)
         old_two_files_ranges_1, sizeof(old_two_files_ranges_1), &new_buf, sizeof(target_buf), &new_size,
         NULL, 0, NULL, NULL), "ApplyPatchToFileByBuffers: expected TRUE\n");
     err = GetLastError();
-    ok(new_size == TWO_FILES_RANGES_SIZE, "Expected size %u, got %u\n", TWO_FILES_RANGES_SIZE, new_size);
-    ok(err == 0xdeadbeef || err == ERROR_SUCCESS, "Expected 0xdeadbeef or ERROR_SUCCESS, got 0x%X\n", err);
+    ok(new_size == TWO_FILES_RANGES_SIZE, "Expected size %u, got %lu\n", TWO_FILES_RANGES_SIZE, new_size);
+    ok(err == 0xdeadbeef || err == ERROR_SUCCESS, "Expected 0xdeadbeef or ERROR_SUCCESS, got 0x%lX\n", err);
 
     /* wrong old file */
     new_buf = target_buf;
@@ -705,7 +705,7 @@ static void test_ApplyPatchToFileByBuffers(void)
         old_blocktype2_no_timestamp, sizeof(old_blocktype2_no_timestamp), &new_buf, sizeof(target_buf),
         NULL, &new_time, 0, NULL, NULL), "ApplyPatchToFileByBuffers: expected FALSE\n");
     err = GetLastError();
-    ok(err == ERROR_PATCH_WRONG_FILE, "Expected ERROR_PATCH_WRONG_FILE, got 0x%X\n", err);
+    ok(err == ERROR_PATCH_WRONG_FILE, "Expected ERROR_PATCH_WRONG_FILE, got 0x%lX\n", err);
 
     memcpy(corrupt_buf, patch_blocktype2_no_timestamp, sizeof(corrupt_buf));
 
@@ -716,7 +716,7 @@ static void test_ApplyPatchToFileByBuffers(void)
         old_blocktype2_no_timestamp, sizeof(old_blocktype2_no_timestamp), &new_buf, sizeof(target_buf),
         NULL, &new_time, 0, NULL, NULL), "ApplyPatchToFileByBuffers: expected FALSE\n");
     err = GetLastError();
-    ok(err == ERROR_PATCH_CORRUPT, "Expected ERROR_PATCH_CORRUPT, got 0x%X\n", err);
+    ok(err == ERROR_PATCH_CORRUPT, "Expected ERROR_PATCH_CORRUPT, got 0x%lX\n", err);
 
     corrupt_buf[sizeof(corrupt_buf) / 2] ^= 0xFF;
 
@@ -727,7 +727,7 @@ static void test_ApplyPatchToFileByBuffers(void)
         old_blocktype2_no_timestamp, sizeof(old_blocktype2_no_timestamp), &new_buf, sizeof(target_buf),
         NULL, &new_time, 0, NULL, NULL), "ApplyPatchToFileByBuffers: expected FALSE\n");
     err = GetLastError();
-    ok(err == ERROR_PATCH_CORRUPT, "Expected ERROR_PATCH_CORRUPT, got 0x%X\n", err);
+    ok(err == ERROR_PATCH_CORRUPT, "Expected ERROR_PATCH_CORRUPT, got 0x%lX\n", err);
 
     /* patch created from identical files */
     new_buf = target_buf;
@@ -736,7 +736,7 @@ static void test_ApplyPatchToFileByBuffers(void)
         old_unnecessary, sizeof(old_unnecessary), &new_buf, sizeof(target_buf), NULL, &new_time, 0, NULL, NULL),
         "ApplyPatchToFileByBuffers: expected TRUE\n");
     err = GetLastError();
-    ok(err == 0xdeadbeef || err == ERROR_SUCCESS, "Expected 0xdeadbeef or ERROR_SUCCESS, got 0x%X\n", err);
+    ok(err == 0xdeadbeef || err == ERROR_SUCCESS, "Expected 0xdeadbeef or ERROR_SUCCESS, got 0x%lX\n", err);
 
     /* patch created from identical files and APPLY_OPTION_FAIL_IF_EXACT */
     new_buf = target_buf;
@@ -745,7 +745,7 @@ static void test_ApplyPatchToFileByBuffers(void)
         old_unnecessary, sizeof(old_unnecessary), &new_buf, sizeof(target_buf), NULL, &new_time,
         APPLY_OPTION_FAIL_IF_EXACT, NULL, NULL), "ApplyPatchToFileByBuffers: expected FALSE\n");
     err = GetLastError();
-    ok(err == ERROR_PATCH_NOT_NECESSARY, "Expected ERROR_PATCH_NOT_NECESSARY, got 0x%X\n", err);
+    ok(err == ERROR_PATCH_NOT_NECESSARY, "Expected ERROR_PATCH_NOT_NECESSARY, got 0x%lX\n", err);
 
     if (!pTestApplyPatchToFileByBuffers)
         return;
@@ -757,8 +757,8 @@ static void test_ApplyPatchToFileByBuffers(void)
         old_blocktype2_no_timestamp, sizeof(old_blocktype2_no_timestamp), &new_size, 0),
         "TestApplyPatchToFileByBuffers: expected TRUE\n");
     err = GetLastError();
-    ok(err == 0xdeadbeef || err == ERROR_SUCCESS, "Expected 0xdeadbeef or ERROR_SUCCESS, got 0x%X\n", err);
-    ok(new_size == BLOCKTYPE2_NO_TIMESTAMP_SIZE, "Expected size %u, got %u\n", BLOCKTYPE2_NO_TIMESTAMP_SIZE, new_size);
+    ok(err == 0xdeadbeef || err == ERROR_SUCCESS, "Expected 0xdeadbeef or ERROR_SUCCESS, got 0x%lX\n", err);
+    ok(new_size == BLOCKTYPE2_NO_TIMESTAMP_SIZE, "Expected size %u, got %lu\n", BLOCKTYPE2_NO_TIMESTAMP_SIZE, new_size);
 
     /* header test, no size returned */
     SetLastError(0xdeadbeef);
@@ -766,7 +766,7 @@ static void test_ApplyPatchToFileByBuffers(void)
         old_blocktype2_no_timestamp, sizeof(old_blocktype2_no_timestamp), NULL, 0),
         "TestApplyPatchToFileByBuffers: expected TRUE\n");
     err = GetLastError();
-    ok(err == 0xdeadbeef || err == ERROR_SUCCESS, "Expected 0xdeadbeef or ERROR_SUCCESS, got 0x%X\n", err);
+    ok(err == 0xdeadbeef || err == ERROR_SUCCESS, "Expected 0xdeadbeef or ERROR_SUCCESS, got 0x%lX\n", err);
 }
 
 static void test_TestApplyPatchToFile(void)
@@ -788,13 +788,13 @@ static void test_TestApplyPatchToFile(void)
     SetLastError(0xdeadbeef);
     ok(pTestApplyPatchToFileA(patch_header_only_tmp, old_two_files_ranges_0_tmp, 0), "TestApplyPatchToFileA: expected TRUE\n");
     err = GetLastError();
-    ok(err == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%X\n", err);
+    ok(err == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%lX\n", err);
 
     /* wrong old file */
     SetLastError(0xdeadbeef);
     ok(!pTestApplyPatchToFileA(patch_header_only_tmp, old_blocktype2_no_timestamp_tmp, 0), "TestApplyPatchToFileA: expected FALSE\n");
     err = GetLastError();
-    ok(err == ERROR_PATCH_WRONG_FILE, "Expected ERROR_PATCH_WRONG_FILE, got 0x%X\n", err);
+    ok(err == ERROR_PATCH_WRONG_FILE, "Expected ERROR_PATCH_WRONG_FILE, got 0x%lX\n", err);
 }
 
 START_TEST(apply_patch)
