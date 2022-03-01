@@ -297,7 +297,6 @@ static void test_IsThemePartDefined(void)
         int state;
         BOOL defined;
         DWORD error;
-        BOOL todo;
     }
     tests[] =
     {
@@ -308,7 +307,7 @@ static void test_IsThemePartDefined(void)
         {L"Button", BP_PUSHBUTTON, PBS_NORMAL, FALSE, NO_ERROR},
         {L"Button", BP_PUSHBUTTON, PBS_DEFAULTED_ANIMATING, FALSE, NO_ERROR},
         {L"Button", BP_PUSHBUTTON, PBS_DEFAULTED_ANIMATING + 1, FALSE, NO_ERROR},
-        {L"Edit", EP_EDITTEXT, 0, TRUE, NO_ERROR, TRUE},
+        {L"Edit", EP_EDITTEXT, 0, TRUE, NO_ERROR},
         {L"Edit", EP_EDITTEXT, ETS_NORMAL, FALSE, NO_ERROR},
         {L"Edit", EP_EDITTEXT, ETS_FOCUSED, FALSE, NO_ERROR},
     };
@@ -334,9 +333,7 @@ static void test_IsThemePartDefined(void)
         SetLastError(0xdeadbeef);
         ret = IsThemePartDefined(theme, tests[i].part, tests[i].state);
         error = GetLastError();
-        todo_wine_if(tests[i].todo)
         ok(ret == tests[i].defined, "Expected %d.\n", tests[i].defined);
-        todo_wine_if(error == 0xdeadbeef && tests[i].error == NO_ERROR)
         ok(error == tests[i].error, "Expected %#x, got %#x.\n", tests[i].error, error);
 
         if (theme)
@@ -586,12 +583,8 @@ static void test_OpenThemeData(void)
     SetLastError(0xdeadbeef);
     bTPDefined = IsThemePartDefined(hTheme, 0 , 0);
     todo_wine
-    {
-        ok( bTPDefined == FALSE, "Expected FALSE\n");
-        ok( GetLastError() == ERROR_SUCCESS,
-            "Expected ERROR_SUCCESS, got 0x%08x\n",
-            GetLastError());
-    }
+    ok( bTPDefined == FALSE, "Expected FALSE\n" );
+    ok( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08x\n", GetLastError() );
 
     DestroyWindow(hWnd);
 }

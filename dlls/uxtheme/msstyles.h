@@ -95,6 +95,7 @@ BOOL MSSTYLES_LookupEnum(LPCWSTR pszValueName, int dwEnum, int *dwValue) DECLSPE
 BOOL MSSTYLES_LookupPartState(LPCWSTR pszClass, LPCWSTR pszPart, LPCWSTR pszState, int *iPartId, int *iStateId) DECLSPEC_HIDDEN;
 PUXINI_FILE MSSTYLES_GetThemeIni(PTHEME_FILE tf) DECLSPEC_HIDDEN;
 UINT MSSTYLES_GetThemeDPI(PTHEME_CLASS tc) DECLSPEC_HIDDEN;
+PTHEME_PARTSTATE MSSTYLES_FindPart(PTHEME_CLASS tc, int iPartId) DECLSPEC_HIDDEN;
 PTHEME_PARTSTATE MSSTYLES_FindPartState(PTHEME_CLASS tc, int iPartId, int iStateId, PTHEME_CLASS *tcNext) DECLSPEC_HIDDEN;
 PTHEME_PROPERTY MSSTYLES_FindProperty(PTHEME_CLASS tc, int iPartId, int iStateId, int iPropertyPrimitive, int iPropertyId) DECLSPEC_HIDDEN;
 PTHEME_PROPERTY MSSTYLES_FindMetric(int iPropertyPrimitive, int iPropertyId) DECLSPEC_HIDDEN;

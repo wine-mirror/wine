@@ -809,9 +809,9 @@ BOOL WINAPI IsThemePartDefined(HTHEME hTheme, int iPartId, int iStateId)
         SetLastError(E_HANDLE);
         return FALSE;
     }
-    if(MSSTYLES_FindPartState(hTheme, iPartId, iStateId, NULL))
-        return TRUE;
-    return FALSE;
+
+    SetLastError(NO_ERROR);
+    return !iStateId && MSSTYLES_FindPart(hTheme, iPartId);
 }
 
 /***********************************************************************
