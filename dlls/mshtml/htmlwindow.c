@@ -2207,7 +2207,7 @@ static HRESULT WINAPI HTMLWindow6_postMessage(IHTMLWindow6 *iface, BSTR msg, VAR
         return E_FAIL;
     }
 
-    hres = create_document_event(This->inner_window->doc, EVENTID_MESSAGE, &event);
+    hres = create_message_event(This->inner_window->doc, msg, &event);
     if(FAILED(hres))
         return hres;
 

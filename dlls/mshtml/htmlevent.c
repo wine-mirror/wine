@@ -2150,6 +2150,7 @@ static void DOMCustomEvent_destroy(DOMEvent *event)
 typedef struct {
     DOMEvent event;
     IDOMMessageEvent IDOMMessageEvent_iface;
+    WCHAR *data;
 } DOMMessageEvent;
 
 static inline DOMMessageEvent *impl_from_IDOMMessageEvent(IDOMMessageEvent *iface)
@@ -2209,10 +2210,9 @@ static HRESULT WINAPI DOMMessageEvent_get_data(IDOMMessageEvent *iface, BSTR *p)
 {
     DOMMessageEvent *This = impl_from_IDOMMessageEvent(iface);
 
-    FIXME("(%p)->(%p)\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
 
-    *p = NULL;
-    return S_OK;
+    return (*p = SysAllocString(This->data)) ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI DOMMessageEvent_get_origin(IDOMMessageEvent *iface, BSTR *p)
@@ -2268,6 +2268,8 @@ static void *DOMMessageEvent_query_interface(DOMEvent *event, REFIID riid)
 
 static void DOMMessageEvent_destroy(DOMEvent *event)
 {
+    DOMMessageEvent *message_event = DOMMessageEvent_from_DOMEvent(event);
+    heap_free(message_event->data);
 }
 
 static const tid_t DOMEvent_iface_tids[] = {
@@ -2510,6 +2512,26 @@ HRESULT create_document_event(HTMLDocumentNode *doc, eventid_t event_id, DOMEven
     event->event_id = event_id;
     event->trusted = TRUE;
     *ret_event = event;
+    return S_OK;
+}
+
+HRESULT create_message_event(HTMLDocumentNode *doc, BSTR data, DOMEvent **ret)
+{
+    DOMMessageEvent *message_event;
+    DOMEvent *event;
+    HRESULT hres;
+
+    hres = create_document_event(doc, EVENTID_MESSAGE, &event);
+    if(FAILED(hres))
+        return hres;
+    message_event = DOMMessageEvent_from_DOMEvent(event);
+
+    if(!(message_event->data = heap_strdupW(data))) {
+        IDOMEvent_Release(&event->IDOMEvent_iface);
+        return E_OUTOFMEMORY;
+    }
+
+    *ret = event;
     return S_OK;
 }
 

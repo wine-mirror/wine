@@ -796,3 +796,19 @@ async_test("detached_img_error_event", function() {
     }
     img.src = "about:blank";
 });
+
+async_test("message event", function() {
+    var listener_called = false;
+
+    window.addEventListener("message", function(e) {
+        listener_called = true;
+        ok(e.data === "test", "e.data = " + e.data);
+        ok(e.bubbles === false, "bubbles = " + e.bubbles);
+        ok(e.cancelable === false, "cancelable = " + e.cancelable);
+        next_test();
+    });
+
+    window.postMessage("test", "http://winetest.example.org");
+    todo_wine.
+    ok(listener_called == false, "listener already called");
+});
