@@ -44,9 +44,9 @@ static void test_get_version(void)
         LONG lMajor, lMinor;
 
         hr = IMMCVersionInfo_GetMMCVersion(ver_info, &lMajor, &lMinor);
-        ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
+        ok(hr == S_OK, "got 0x%08lx, expected 0x%08lx\n", hr, S_OK);
         if (hr == S_OK)
-            trace("MMC Version is %d.%d\n", lMajor, lMinor);
+            trace("MMC Version is %ld.%ld\n", lMajor, lMinor);
     }
 
     if (ver_info)
