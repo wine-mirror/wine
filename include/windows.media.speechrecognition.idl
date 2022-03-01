@@ -47,6 +47,7 @@ namespace Windows {
             interface ISpeechRecognitionResult2;
             interface ISpeechRecognitionSemanticInterpretation;
             interface ISpeechRecognizerTimeouts;
+            interface ISpeechRecognizerUIOptions;
             runtimeclass SpeechContinuousRecognitionCompletedEventArgs;
             runtimeclass SpeechContinuousRecognitionResultGeneratedEventArgs;
             runtimeclass SpeechContinuousRecognitionSession;
@@ -55,6 +56,7 @@ namespace Windows {
             runtimeclass SpeechRecognitionResult;
             runtimeclass SpeechRecognitionSemanticInterpretation;
             runtimeclass SpeechRecognizerTimeouts;
+            runtimeclass SpeechRecognizerUIOptions;
         }
     }
 }
@@ -265,6 +267,23 @@ namespace Windows {
 
             [
                 contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognizerUIOptions),
+                uuid(7888d641-b92b-44ba-a25f-d1864630641f)
+            ]
+            interface ISpeechRecognizerUIOptions : IInspectable
+            {
+                [propget] HRESULT ExampleText([out, retval] HSTRING *value);
+                [propput] HRESULT ExampleText([in] HSTRING value);
+                [propget] HRESULT AudiblePrompt([out, retval] HSTRING *value);
+                [propput] HRESULT AudiblePrompt([in] HSTRING value);
+                [propget] HRESULT IsReadBackEnabled([out, retval] boolean *value);
+                [propput] HRESULT IsReadBackEnabled([in] boolean value);
+                [propget] HRESULT ShowConfirmation([out, retval] boolean *value);
+                [propput] HRESULT ShowConfirmation([in] boolean value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
                 marshaling_behavior(agile),
                 threading(both)
             ]
@@ -339,6 +358,15 @@ namespace Windows {
             runtimeclass SpeechRecognizerTimeouts
             {
                 [default] interface Windows.Media.SpeechRecognition.ISpeechRecognizerTimeouts;
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile)
+            ]
+            runtimeclass SpeechRecognizerUIOptions
+            {
+                [default] interface Windows.Media.SpeechRecognition.ISpeechRecognizerUIOptions;
             }
         }
     }
