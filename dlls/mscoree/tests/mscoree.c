@@ -101,23 +101,23 @@ static int check_runtime(void)
         win_skip("CLRCreateInstance not implemented\n");
         return 1;
     }
-    ok(SUCCEEDED(hr), "CLRCreateInstance failed, hr=%#.8x\n", hr);
+    ok(SUCCEEDED(hr), "CLRCreateInstance failed, hr=%#.8lx\n", hr);
     if (FAILED(hr))
         return 1;
 
     hr = ICLRMetaHost_GetRuntime(metahost, v4_0, &IID_ICLRRuntimeInfo, (void **)&runtimeinfo);
-    ok(SUCCEEDED(hr), "ICLRMetaHost::GetRuntime failed, hr=%#.8x\n", hr);
+    ok(SUCCEEDED(hr), "ICLRMetaHost::GetRuntime failed, hr=%#.8lx\n", hr);
     if (FAILED(hr))
         return 1;
 
     hr = ICLRRuntimeInfo_GetInterface(runtimeinfo, &CLSID_CorRuntimeHost, &IID_ICorRuntimeHost,
         (void **)&runtimehost);
-    todo_wine_if(!has_mono) ok(SUCCEEDED(hr), "ICLRRuntimeInfo::GetInterface failed, hr=%#.8x\n", hr);
+    todo_wine_if(!has_mono) ok(SUCCEEDED(hr), "ICLRRuntimeInfo::GetInterface failed, hr=%#.8lx\n", hr);
     if (FAILED(hr))
         return 1;
 
     hr = ICorRuntimeHost_Start(runtimehost);
-    ok(SUCCEEDED(hr), "ICorRuntimeHost::Start failed, hr=%#.8x\n", hr);
+    ok(SUCCEEDED(hr), "ICorRuntimeHost::Start failed, hr=%#.8lx\n", hr);
     if (FAILED(hr))
         return 1;
 
@@ -187,7 +187,7 @@ static void test_versioninfo(void)
     if (0)  /* crashes on <= w2k3 */
     {
         hr = pGetCORVersion(NULL, MAX_PATH, &size);
-        ok(hr == E_POINTER,"GetCORVersion returned %08x\n", hr);
+        ok(hr == E_POINTER,"GetCORVersion returned %08lx\n", hr);
     }
 
     hr =  pGetCORVersion(version, 1, &size);
@@ -198,31 +198,31 @@ static void test_versioninfo(void)
         return;
     }
 
-    ok(hr == E_NOT_SUFFICIENT_BUFFER, "GetCORVersion returned %08x\n", hr);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "GetCORVersion returned %08lx\n", hr);
 
     hr =  pGetCORVersion(version, MAX_PATH, &size);
-    ok(hr == S_OK,"GetCORVersion returned %08x\n", hr);
+    ok(hr == S_OK,"GetCORVersion returned %08lx\n", hr);
 
     trace("latest installed .net runtime: %s\n", wine_dbgstr_w(version));
 
     hr = pGetCORSystemDirectory(path, MAX_PATH , &size);
-    todo_wine_if(!has_mono) ok(hr == S_OK, "GetCORSystemDirectory returned %08x\n", hr);
+    todo_wine_if(!has_mono) ok(hr == S_OK, "GetCORSystemDirectory returned %08lx\n", hr);
     /* size includes terminating null-character */
-    todo_wine_if(!has_mono) ok(size == (lstrlenW(path) + 1),"size is %d instead of %d\n", size, (lstrlenW(path) + 1));
+    todo_wine_if(!has_mono) ok(size == (lstrlenW(path) + 1),"size is %ld instead of %d\n", size, (lstrlenW(path) + 1));
 
     path_len = size;
 
     hr = pGetCORSystemDirectory(path, path_len-1 , &size);
-    todo_wine_if(!has_mono) ok(hr == E_NOT_SUFFICIENT_BUFFER, "GetCORSystemDirectory returned %08x\n", hr);
+    todo_wine_if(!has_mono) ok(hr == E_NOT_SUFFICIENT_BUFFER, "GetCORSystemDirectory returned %08lx\n", hr);
 
     if (0)  /* crashes on <= w2k3 */
     {
         hr = pGetCORSystemDirectory(NULL, MAX_PATH , &size);
-        ok(hr == E_NOT_SUFFICIENT_BUFFER, "GetCORSystemDirectory returned %08x\n", hr);
+        ok(hr == E_NOT_SUFFICIENT_BUFFER, "GetCORSystemDirectory returned %08lx\n", hr);
     }
 
     hr = pGetCORSystemDirectory(path, MAX_PATH , NULL);
-    ok(hr == E_POINTER,"GetCORSystemDirectory returned %08x\n", hr);
+    ok(hr == E_POINTER,"GetCORSystemDirectory returned %08lx\n", hr);
 
     trace("latest installed .net installed in directory: %s\n", wine_dbgstr_w(path));
 
@@ -231,43 +231,43 @@ static void test_versioninfo(void)
 
     if(hr == CLR_E_SHIM_RUNTIME) return; /* skipping rest of tests on win2k as .net 2.0 not installed */
 
-    todo_wine_if(!has_mono) ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
+    todo_wine_if(!has_mono) ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08lx\n", hr);
     trace(" installed in directory %s is .net version %s\n", wine_dbgstr_w(path), wine_dbgstr_w(version));
 
     hr = pGetRequestedRuntimeInfo( NULL, v1_1, NULL, 0, 0, path, MAX_PATH, &path_len, version, MAX_PATH, &size);
-    todo_wine_if(!has_mono) ok(hr == S_OK || hr == CLR_E_SHIM_RUNTIME /*v1_1 not installed*/, "GetRequestedRuntimeInfo returned %08x\n", hr);
+    todo_wine_if(!has_mono) ok(hr == S_OK || hr == CLR_E_SHIM_RUNTIME /*v1_1 not installed*/, "GetRequestedRuntimeInfo returned %08lx\n", hr);
     if(hr == S_OK)
         trace(" installed in directory %s is .net version %s\n", wine_dbgstr_w(path), wine_dbgstr_w(version));
     /* version number NULL not allowed without RUNTIME_INFO_UPGRADE_VERSION flag */
     hr = pGetRequestedRuntimeInfo( NULL, NULL, NULL, 0, 0, path, MAX_PATH, &path_len, version, MAX_PATH, &size);
-    ok(hr == CLR_E_SHIM_RUNTIME, "GetRequestedRuntimeInfo returned %08x\n", hr);
+    ok(hr == CLR_E_SHIM_RUNTIME, "GetRequestedRuntimeInfo returned %08lx\n", hr);
     /* with RUNTIME_INFO_UPGRADE_VERSION flag and version number NULL, latest installed version is returned */
     hr = pGetRequestedRuntimeInfo( NULL, NULL, NULL, 0, RUNTIME_INFO_UPGRADE_VERSION, path, MAX_PATH, &path_len, version, MAX_PATH, &size);
-    todo_wine_if(!has_mono) ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
+    todo_wine_if(!has_mono) ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08lx\n", hr);
 
     hr = pGetRequestedRuntimeInfo( NULL, v2_0, NULL, 0, 0, path, 1, &path_len, version, MAX_PATH, &size);
-    todo_wine_if(!has_mono) ok(hr == E_NOT_SUFFICIENT_BUFFER, "GetRequestedRuntimeInfo returned %08x\n", hr);
+    todo_wine_if(!has_mono) ok(hr == E_NOT_SUFFICIENT_BUFFER, "GetRequestedRuntimeInfo returned %08lx\n", hr);
 
     /* if one of the buffers is NULL, the other one is still happily filled */
     memset(version, 0, sizeof(version));
     hr = pGetRequestedRuntimeInfo( NULL, v2_0, NULL, 0, 0, NULL, MAX_PATH, &path_len, version, MAX_PATH, &size);
-    todo_wine_if(!has_mono) ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
+    todo_wine_if(!has_mono) ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08lx\n", hr);
     ok(!wcscmp(version, v2_0), "version is %s , expected %s\n", wine_dbgstr_w(version), wine_dbgstr_w(v2_0));
     /* With NULL-pointer for bufferlength, the buffer itself still gets filled with correct string */
     memset(version, 0, sizeof(version));
     hr = pGetRequestedRuntimeInfo( NULL, v2_0, NULL, 0, 0, path, MAX_PATH, &path_len, version, MAX_PATH, NULL);
-    todo_wine_if(!has_mono) ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
+    todo_wine_if(!has_mono) ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08lx\n", hr);
     ok(!wcscmp(version, v2_0), "version is %s , expected %s\n", wine_dbgstr_w(version), wine_dbgstr_w(v2_0));
 
     memset(version, 0, sizeof(version));
     hr = pGetRequestedRuntimeInfo( NULL, v2_0cap, NULL, 0, 0, path, MAX_PATH, &path_len, version, MAX_PATH, NULL);
-    todo_wine_if(!has_mono) ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
+    todo_wine_if(!has_mono) ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08lx\n", hr);
     ok(!wcscmp(version, v2_0cap), "version is %s , expected %s\n", wine_dbgstr_w(version), wine_dbgstr_w(v2_0cap));
 
     /* Invalid Version and RUNTIME_INFO_UPGRADE_VERSION flag*/
     memset(version, 0, sizeof(version));
     hr = pGetRequestedRuntimeInfo( NULL, v1_1, NULL, 0, RUNTIME_INFO_UPGRADE_VERSION, path, MAX_PATH, &path_len, version, MAX_PATH, NULL);
-    todo_wine_if(!has_mono) ok(hr == S_OK  || hr == CLR_E_SHIM_RUNTIME , "GetRequestedRuntimeInfo returned %08x\n", hr);
+    todo_wine_if(!has_mono) ok(hr == S_OK  || hr == CLR_E_SHIM_RUNTIME , "GetRequestedRuntimeInfo returned %08lx\n", hr);
     if(hr == S_OK)
     {
         /* .NET 1.1 may not be installed. */
@@ -278,28 +278,28 @@ static void test_versioninfo(void)
 
     memset(version, 0, sizeof(version));
     hr = pGetRequestedRuntimeInfo( NULL, v9_0, NULL, 0, RUNTIME_INFO_UPGRADE_VERSION, path, MAX_PATH, &path_len, version, MAX_PATH, NULL);
-    ok(hr == CLR_E_SHIM_RUNTIME, "GetRequestedRuntimeInfo returned %08x\n", hr);
+    ok(hr == CLR_E_SHIM_RUNTIME, "GetRequestedRuntimeInfo returned %08lx\n", hr);
 
     memset(version, 0, sizeof(version));
     hr = pGetRequestedRuntimeInfo( NULL, v1_1_0, NULL, 0, 0, path, MAX_PATH, &path_len, version, MAX_PATH, NULL);
-    ok(hr == CLR_E_SHIM_RUNTIME, "GetRequestedRuntimeInfo returned %08x\n", hr);
+    ok(hr == CLR_E_SHIM_RUNTIME, "GetRequestedRuntimeInfo returned %08lx\n", hr);
 
     memset(version, 0, sizeof(version));
     hr = pGetRequestedRuntimeInfo( NULL, v1_1_0, NULL, 0, RUNTIME_INFO_UPGRADE_VERSION, path, MAX_PATH, &path_len, version, MAX_PATH, NULL);
-    todo_wine_if(!has_mono) ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
+    todo_wine_if(!has_mono) ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08lx\n", hr);
     ok(!wcscmp(version, v2_0), "version is %s , expected %s\n", wine_dbgstr_w(version), wine_dbgstr_w(v2_0));
 
     memset(version, 0, sizeof(version));
     hr = pGetRequestedRuntimeInfo( NULL, v2_0_0, NULL, 0, 0, path, MAX_PATH, &path_len, version, MAX_PATH, NULL);
-    ok(hr == CLR_E_SHIM_RUNTIME, "GetRequestedRuntimeInfo returned %08x\n", hr);
+    ok(hr == CLR_E_SHIM_RUNTIME, "GetRequestedRuntimeInfo returned %08lx\n", hr);
 
     memset(version, 0, sizeof(version));
     hr = pGetRequestedRuntimeInfo( NULL, v2_0_0, NULL, 0, RUNTIME_INFO_UPGRADE_VERSION, path, MAX_PATH, &path_len, version, MAX_PATH, NULL);
-    todo_wine_if(!has_mono) ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
+    todo_wine_if(!has_mono) ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08lx\n", hr);
     ok(!wcscmp(version, v2_0), "version is %s , expected %s\n", wine_dbgstr_w(version), wine_dbgstr_w(v2_0));
 
     hr =  pCorIsLatestSvc(NULL, NULL);
-    ok(hr == E_POINTER, "CorIsLatestSvc returned %08x\n", hr);
+    ok(hr == E_POINTER, "CorIsLatestSvc returned %08lx\n", hr);
 }
 
 static void test_loadlibraryshim(void)
@@ -324,7 +324,7 @@ static void test_loadlibraryshim(void)
     }
 
     hr = pLoadLibraryShim(fusion, v1_1, NULL, &hdll);
-    ok(hr == S_OK || hr == E_HANDLE, "LoadLibraryShim failed, hr=%x\n", hr);
+    ok(hr == S_OK || hr == E_HANDLE, "LoadLibraryShim failed, hr=%lx\n", hr);
     if (SUCCEEDED(hr))
     {
         latest = v1_1;
@@ -338,7 +338,7 @@ static void test_loadlibraryshim(void)
     }
 
     hr = pLoadLibraryShim(fusion, v2_0, NULL, &hdll);
-    ok(hr == S_OK || hr == E_HANDLE, "LoadLibraryShim failed, hr=%x\n", hr);
+    ok(hr == S_OK || hr == E_HANDLE, "LoadLibraryShim failed, hr=%lx\n", hr);
     if (SUCCEEDED(hr))
     {
         latest = v2_0;
@@ -352,7 +352,7 @@ static void test_loadlibraryshim(void)
     }
 
     hr = pLoadLibraryShim(fusion, v4_0, NULL, &hdll);
-    ok(hr == S_OK || hr == E_HANDLE, "LoadLibraryShim failed, hr=%x\n", hr);
+    ok(hr == S_OK || hr == E_HANDLE, "LoadLibraryShim failed, hr=%lx\n", hr);
     if (SUCCEEDED(hr))
     {
         /* LoadLibraryShim with a NULL version prefers 2.0 and earlier */
@@ -368,14 +368,14 @@ static void test_loadlibraryshim(void)
     }
 
     hr = pLoadLibraryShim(fusion, vbogus, NULL, &hdll);
-    ok(hr == E_HANDLE, "LoadLibraryShim failed, hr=%x\n", hr);
+    ok(hr == E_HANDLE, "LoadLibraryShim failed, hr=%lx\n", hr);
     if (SUCCEEDED(hr))
         FreeLibrary(hdll);
 
     WideCharToMultiByte(CP_ACP, 0, latest, -1, latestA, MAX_PATH, NULL, NULL);
 
     hr = pLoadLibraryShim(fusion, NULL, NULL, &hdll);
-    ok(hr == S_OK, "LoadLibraryShim failed, hr=%x\n", hr);
+    ok(hr == S_OK, "LoadLibraryShim failed, hr=%lx\n", hr);
     if (SUCCEEDED(hr))
     {
         GetModuleFileNameA(hdll, dllpath, MAX_PATH);
@@ -388,7 +388,7 @@ static void test_loadlibraryshim(void)
     }
 
     hr = pLoadLibraryShim(fusiondll, NULL, NULL, &hdll);
-    ok(hr == S_OK, "LoadLibraryShim failed, hr=%x\n", hr);
+    ok(hr == S_OK, "LoadLibraryShim failed, hr=%lx\n", hr);
     if (SUCCEEDED(hr))
     {
         GetModuleFileNameA(hdll, dllpath, MAX_PATH);
@@ -401,12 +401,12 @@ static void test_loadlibraryshim(void)
     }
 
     hr = pLoadLibraryShim(nosuchdll, latest, NULL, &hdll);
-    ok(hr == E_HANDLE, "LoadLibraryShim failed, hr=%x\n", hr);
+    ok(hr == E_HANDLE, "LoadLibraryShim failed, hr=%lx\n", hr);
     if (SUCCEEDED(hr))
         FreeLibrary(hdll);
 
     hr = pLoadLibraryShim(gdidll, latest, NULL, &hdll);
-    ok(hr == E_HANDLE, "LoadLibraryShim failed, hr=%x\n", hr);
+    ok(hr == E_HANDLE, "LoadLibraryShim failed, hr=%lx\n", hr);
     if (SUCCEEDED(hr))
         FreeLibrary(hdll);
 }
@@ -451,20 +451,20 @@ static void test_createconfigstream(void)
     ok(hr == E_FAIL ||
        broken(hr == HRESULT_FROM_WIN32(ERROR_PROC_NOT_FOUND)) || /* some WinXP, Win2K3 and Win7 */
        broken(hr == S_OK && !stream), /* some Win2K3 */
-       "CreateConfigStream returned %x\n", hr);
+       "CreateConfigStream returned %lx\n", hr);
 
     hr = pCreateConfigStream(path, NULL);
-    ok(hr == COR_E_NULLREFERENCE, "CreateConfigStream returned %x\n", hr);
+    ok(hr == COR_E_NULLREFERENCE, "CreateConfigStream returned %lx\n", hr);
 
     hr = pCreateConfigStream(NULL, NULL);
-    ok(hr == COR_E_NULLREFERENCE, "CreateConfigStream returned %x\n", hr);
+    ok(hr == COR_E_NULLREFERENCE, "CreateConfigStream returned %lx\n", hr);
 
     hr = pCreateConfigStream(nonexistent, &stream);
-    ok(hr == COR_E_FILENOTFOUND, "CreateConfigStream returned %x\n", hr);
+    ok(hr == COR_E_FILENOTFOUND, "CreateConfigStream returned %lx\n", hr);
     ok(stream == NULL, "Expected stream to be NULL\n");
 
     hr = pCreateConfigStream(path, &stream);
-    ok(hr == S_OK, "CreateConfigStream failed, hr=%x\n", hr);
+    ok(hr == S_OK, "CreateConfigStream failed, hr=%lx\n", hr);
     ok(stream != NULL, "Expected non-NULL stream\n");
 
     if (stream)
@@ -476,36 +476,36 @@ static void test_createconfigstream(void)
         ULONG ref;
 
         hr = IStream_Read(stream, buffer, strlen(xmldata), &count);
-        ok(hr == S_OK, "IStream_Read failed, hr=%x\n", hr);
-        ok(count == strlen(xmldata), "wrong count: %u\n", count);
+        ok(hr == S_OK, "IStream_Read failed, hr=%lx\n", hr);
+        ok(count == strlen(xmldata), "wrong count: %lu\n", count);
         ok(!strcmp(buffer, xmldata), "Strings do not match\n");
 
         hr = IStream_Read(stream, buffer, sizeof(buffer), &count);
-        ok(hr == S_OK, "IStream_Read failed, hr=%x\n", hr);
-        ok(!count, "wrong count: %u\n", count);
+        ok(hr == S_OK, "IStream_Read failed, hr=%lx\n", hr);
+        ok(!count, "wrong count: %lu\n", count);
 
         hr = IStream_Write(stream, xmldata, strlen(xmldata), &count);
-        ok(hr == E_FAIL, "IStream_Write returned hr=%x\n", hr);
+        ok(hr == E_FAIL, "IStream_Write returned hr=%lx\n", hr);
 
         pos.QuadPart = strlen(xmldata);
         hr = IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
-        ok(hr == E_NOTIMPL, "IStream_Seek returned hr=%x\n", hr);
+        ok(hr == E_NOTIMPL, "IStream_Seek returned hr=%lx\n", hr);
 
         size.QuadPart = strlen(xmldata);
         hr = IStream_SetSize(stream, size);
-        ok(hr == E_NOTIMPL, "IStream_SetSize returned hr=%x\n", hr);
+        ok(hr == E_NOTIMPL, "IStream_SetSize returned hr=%lx\n", hr);
 
         hr = IStream_Clone(stream, &stream2);
-        ok(hr == E_NOTIMPL, "IStream_Clone returned hr=%x\n", hr);
+        ok(hr == E_NOTIMPL, "IStream_Clone returned hr=%lx\n", hr);
 
         hr = IStream_Commit(stream, STGC_DEFAULT);
-        ok(hr == E_NOTIMPL, "IStream_Commit returned hr=%x\n", hr);
+        ok(hr == E_NOTIMPL, "IStream_Commit returned hr=%lx\n", hr);
 
         hr = IStream_Revert(stream);
-        ok(hr == E_NOTIMPL, "IStream_Revert returned hr=%x\n", hr);
+        ok(hr == E_NOTIMPL, "IStream_Revert returned hr=%lx\n", hr);
 
         ref = IStream_Release(stream);
-        ok(!ref, "IStream_Release returned %u\n", ref);
+        ok(!ref, "IStream_Release returned %lu\n", ref);
     }
     DeleteFileW(file);
 }
@@ -581,7 +581,7 @@ static BOOL compile_cs(const WCHAR *source, const WCHAR *target, const WCHAR *ty
 
     si.cb = sizeof(si);
     ret = CreateProcessW(csc, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
-    ok(ret, "Could not create process: %u\n", GetLastError());
+    ok(ret, "Could not create process: %lu\n", GetLastError());
 
     wait_child_process(pi.hProcess);
     CloseHandle(pi.hThread);
@@ -606,24 +606,24 @@ static void test_loadpaths_execute(const WCHAR *exe_name, const WCHAR *dll_name,
 
     GetTempPathW(MAX_PATH, tmp);
     ret = AllocateLocallyUniqueId(&id);
-    ok(ret, "AllocateLocallyUniqueId failed: %u\n", GetLastError());
+    ok(ret, "AllocateLocallyUniqueId failed: %lu\n", GetLastError());
     ret = GetTempFileNameW(tmp, L"loadpaths", id.LowPart, tmpdir);
-    ok(ret, "GetTempFileNameW failed: %u\n", GetLastError());
+    ok(ret, "GetTempFileNameW failed: %lu\n", GetLastError());
 
     ret = CreateDirectoryW(tmpdir, NULL);
-    ok(ret, "CreateDirectoryW(%s) failed: %u\n", debugstr_w(tmpdir), GetLastError());
+    ok(ret, "CreateDirectoryW(%s) failed: %lu\n", debugstr_w(tmpdir), GetLastError());
 
     wcscpy(tmpexe, tmpdir);
     PathAppendW(tmpexe, exe_name);
     ret = CopyFileW(exe_name, tmpexe, FALSE);
-    ok(ret, "CopyFileW(%s) failed: %u\n", debugstr_w(tmpexe), GetLastError());
+    ok(ret, "CopyFileW(%s) failed: %lu\n", debugstr_w(tmpexe), GetLastError());
 
     if (cfg_name)
     {
         wcscpy(tmpcfg, tmpdir);
         PathAppendW(tmpcfg, cfg_name);
         ret = CopyFileW(cfg_name, tmpcfg, FALSE);
-        ok(ret, "CopyFileW(%s) failed: %u\n", debugstr_w(tmpcfg), GetLastError());
+        ok(ret, "CopyFileW(%s) failed: %lu\n", debugstr_w(tmpcfg), GetLastError());
     }
 
     ptr = tmpdir + wcslen(tmpdir);
@@ -632,7 +632,7 @@ static void test_loadpaths_execute(const WCHAR *exe_name, const WCHAR *dll_name,
     {
         *ptr = '\0';
         ret = CreateDirectoryW(tmpdir, NULL);
-        ok(ret, "CreateDirectoryW(%s) failed: %u\n", debugstr_w(tmpdir), GetLastError());
+        ok(ret, "CreateDirectoryW(%s) failed: %lu\n", debugstr_w(tmpdir), GetLastError());
         *ptr = '\\';
     }
 
@@ -640,17 +640,17 @@ static void test_loadpaths_execute(const WCHAR *exe_name, const WCHAR *dll_name,
     if ((ptr = wcsrchr(tmpdir, '\\'))) *ptr = '\0';
 
     ret = CopyFileW(dll_name, tmpdll, FALSE);
-    ok(ret, "CopyFileW(%s) failed: %u\n", debugstr_w(tmpdll), GetLastError());
+    ok(ret, "CopyFileW(%s) failed: %lu\n", debugstr_w(tmpdll), GetLastError());
 
     si.cb = sizeof(si);
     ret = CreateProcessW(tmpexe, tmpexe, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
-    ok(ret, "CreateProcessW(%s) failed: %u\n", debugstr_w(tmpexe), GetLastError());
+    ok(ret, "CreateProcessW(%s) failed: %lu\n", debugstr_w(tmpexe), GetLastError());
 
     if (expect_failure) ret = WaitForSingleObject(pi.hProcess, 2000);
     else
     {
         ret = WaitForSingleObject(pi.hProcess, 5000);
-        ok(ret == WAIT_OBJECT_0, "%s: WaitForSingleObject returned %d: %u\n", debugstr_w(dll_dest), ret, GetLastError());
+        ok(ret == WAIT_OBJECT_0, "%s: WaitForSingleObject returned %d: %lu\n", debugstr_w(dll_dest), ret, GetLastError());
     }
 
     GetExitCodeProcess(pi.hProcess, &exit_code);
@@ -667,19 +667,19 @@ static void test_loadpaths_execute(const WCHAR *exe_name, const WCHAR *dll_name,
     if (cfg_name)
     {
         ret = DeleteFileW(tmpcfg);
-        ok(ret, "DeleteFileW(%s) failed: %u\n", debugstr_w(tmpcfg), GetLastError());
+        ok(ret, "DeleteFileW(%s) failed: %lu\n", debugstr_w(tmpcfg), GetLastError());
     }
     ret = DeleteFileW(tmpdll);
-    ok(ret, "DeleteFileW(%s) failed: %u\n", debugstr_w(tmpdll), GetLastError());
+    ok(ret, "DeleteFileW(%s) failed: %lu\n", debugstr_w(tmpdll), GetLastError());
     ret = DeleteFileW(tmpexe);
-    ok(ret, "DeleteFileW(%s) failed: %u\n", debugstr_w(tmpexe), GetLastError());
+    ok(ret, "DeleteFileW(%s) failed: %lu\n", debugstr_w(tmpexe), GetLastError());
 
     end = tmpdir + wcslen(tmp);
     ptr = tmpdir + wcslen(tmpdir) - 1;
     while (ptr > end && (ptr = wcsrchr(tmpdir, '\\')))
     {
         ret = RemoveDirectoryW(tmpdir);
-        ok(ret, "RemoveDirectoryW(%s) failed: %u\n", debugstr_w(tmpdir), GetLastError());
+        ok(ret, "RemoveDirectoryW(%s) failed: %lu\n", debugstr_w(tmpdir), GetLastError());
         *ptr = '\0';
     }
 }
@@ -698,25 +698,25 @@ static void test_loadpaths(BOOL neutral)
 
     DeleteFileW(dll_source);
     ret = write_resource(dll_source, dll_source);
-    ok(ret, "Could not write resource: %u\n", GetLastError());
+    ok(ret, "Could not write resource: %lu\n", GetLastError());
     DeleteFileW(dll_name);
     ret = compile_cs(dll_source, dll_name, L"library", neutral ? L"-define:NEUTRAL" : L"");
     if (!ret) return;
     ret = DeleteFileW(dll_source);
-    ok(ret, "DeleteFileW failed: %u\n", GetLastError());
+    ok(ret, "DeleteFileW failed: %lu\n", GetLastError());
 
     DeleteFileW(exe_source);
     ret = write_resource(exe_source, exe_source);
-    ok(ret, "Could not write resource: %u\n", GetLastError());
+    ok(ret, "Could not write resource: %lu\n", GetLastError());
     DeleteFileW(exe_name);
     ret = compile_cs(exe_source, exe_name, L"exe", L"/reference:libloadpaths.dll");
     if (!ret) return;
     ret = DeleteFileW(exe_source);
-    ok(ret, "DeleteFileW failed: %u\n", GetLastError());
+    ok(ret, "DeleteFileW failed: %lu\n", GetLastError());
 
     DeleteFileW(cfg_name);
     ret = write_resource(cfg_name, cfg_name);
-    ok(ret, "Could not write resource: %u\n", GetLastError());
+    ok(ret, "Could not write resource: %lu\n", GetLastError());
 
     for (i = 0; i < ARRAY_SIZE(loadpaths); ++i)
     {
@@ -754,11 +754,11 @@ static void test_loadpaths(BOOL neutral)
     }
 
     ret = DeleteFileW(cfg_name);
-    ok(ret, "DeleteFileW failed: %u\n", GetLastError());
+    ok(ret, "DeleteFileW failed: %lu\n", GetLastError());
     ret = DeleteFileW(exe_name);
-    ok(ret, "DeleteFileW failed: %u\n", GetLastError());
+    ok(ret, "DeleteFileW failed: %lu\n", GetLastError());
     ret = DeleteFileW(dll_name);
-    ok(ret, "DeleteFileW failed: %u\n", GetLastError());
+    ok(ret, "DeleteFileW failed: %lu\n", GetLastError());
 }
 
 static void test_createdomain(void)
@@ -779,20 +779,20 @@ static void test_createdomain(void)
     }
 
     hr = pCLRCreateInstance(&CLSID_CLRMetaHost, &IID_ICLRMetaHost, (void **)&metahost);
-    ok(SUCCEEDED(hr), "CLRCreateInstance failed, hr=%#.8x\n", hr);
+    ok(SUCCEEDED(hr), "CLRCreateInstance failed, hr=%#.8lx\n", hr);
 
     hr = ICLRMetaHost_GetRuntime(metahost, v4_0, &IID_ICLRRuntimeInfo, (void **)&runtimeinfo);
-    ok(SUCCEEDED(hr), "ICLRMetaHost::GetRuntime failed, hr=%#.8x\n", hr);
+    ok(SUCCEEDED(hr), "ICLRMetaHost::GetRuntime failed, hr=%#.8lx\n", hr);
 
     hr = ICLRRuntimeInfo_GetInterface(runtimeinfo, &CLSID_CorRuntimeHost, &IID_ICorRuntimeHost,
         (void **)&runtimehost);
-    ok(SUCCEEDED(hr), "ICLRRuntimeInfo::GetInterface failed, hr=%#.8x\n", hr);
+    ok(SUCCEEDED(hr), "ICLRRuntimeInfo::GetInterface failed, hr=%#.8lx\n", hr);
 
     hr = ICorRuntimeHost_Start(runtimehost);
-    ok(SUCCEEDED(hr), "ICorRuntimeHost::Start failed, hr=%#.8x\n", hr);
+    ok(SUCCEEDED(hr), "ICorRuntimeHost::Start failed, hr=%#.8lx\n", hr);
 
     hr = ICorRuntimeHost_GetDefaultDomain(runtimehost, &domain);
-    ok(SUCCEEDED(hr), "ICorRuntimeHost::GetDefaultDomain failed, hr=%#.8x\n", hr);
+    ok(SUCCEEDED(hr), "ICorRuntimeHost::GetDefaultDomain failed, hr=%#.8lx\n", hr);
 
     hr = IUnknown_QueryInterface(domain, &IID_IUnknown, (void **)&defaultdomain_unk);
     ok(SUCCEEDED(hr), "COM object doesn't support IUnknown?!\n");
@@ -803,7 +803,7 @@ static void test_createdomain(void)
     IUnknown_Release(domain);
 
     hr = ICorRuntimeHost_CreateDomain(runtimehost, test_name, NULL, &domain);
-    ok(SUCCEEDED(hr), "ICorRuntimeHost::CreateDomain failed, hr=%#.8x\n", hr);
+    ok(SUCCEEDED(hr), "ICorRuntimeHost::CreateDomain failed, hr=%#.8lx\n", hr);
 
     hr = IUnknown_QueryInterface(domain, &IID_IUnknown, (void **)&newdomain_unk);
     ok(SUCCEEDED(hr), "COM object doesn't support IUnknown?!\n");
@@ -816,10 +816,10 @@ static void test_createdomain(void)
     ok(defaultdomain_unk != newdomain_unk, "New and default domain objects are the same\n");
 
     hr = ICorRuntimeHost_CreateDomainSetup(runtimehost, &domainsetup);
-    ok(SUCCEEDED(hr), "ICorRuntimeHost::CreateDomainSetup failed, hr=%#.8x\n", hr);
+    ok(SUCCEEDED(hr), "ICorRuntimeHost::CreateDomainSetup failed, hr=%#.8lx\n", hr);
 
     hr = ICorRuntimeHost_CreateDomainEx(runtimehost, test2_name, domainsetup, NULL, &domain);
-    ok(SUCCEEDED(hr), "ICorRuntimeHost::CreateDomainEx failed, hr=%#.8x\n", hr);
+    ok(SUCCEEDED(hr), "ICorRuntimeHost::CreateDomainEx failed, hr=%#.8lx\n", hr);
 
     hr = IUnknown_QueryInterface(domain, &IID_IUnknown, (void **)&newdomain2_unk);
     ok(SUCCEEDED(hr), "COM object doesn't support IUnknown?!\n");

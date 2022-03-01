@@ -92,7 +92,7 @@ static BOOL compile_cs_to_dll(char *source_path, char *dest_path)
 
     si.cb = sizeof(si);
     ret = CreateProcessA(path_csc, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
-    ok(ret, "Could not create process: %u\n", GetLastError());
+    ok(ret, "Could not create process: %lu\n", GetLastError());
 
     WaitForSingleObject(pi.hProcess, 5000);
     CloseHandle(pi.hThread);
@@ -117,13 +117,13 @@ static void run_test(BOOL expect_success)
 
     hr = CoCreateInstance(&CLSID_Test, NULL, CLSCTX_INPROC_SERVER, &IID_ITest, (void**)&test);
     todo_wine_if(!expect_success)
-    ok(hr == result_expected, "Expected %x, got %x\n", result_expected, hr);
+    ok(hr == result_expected, "Expected %lx, got %lx\n", result_expected, hr);
 
     if (hr == S_OK)
     {
         int i = 0;
         hr = ITest_Func(test, &i);
-        ok(hr == S_OK, "Got %x\n", hr);
+        ok(hr == S_OK, "Got %lx\n", hr);
         ok(i == 42, "Expected 42, got %d\n", i);
         ITest_Release(test);
     }
@@ -131,20 +131,20 @@ static void run_test(BOOL expect_success)
     getClassObject = (_DllGetClassObject)GetProcAddress(hmscoree, "DllGetClassObject");
     hr = getClassObject(&CLSID_Test, &IID_IClassFactory, (void **)&classFactory);
     todo_wine_if(!expect_success)
-    ok(hr == result_expected, "Expected %x, got %x\n", result_expected, hr);
+    ok(hr == result_expected, "Expected %lx, got %lx\n", result_expected, hr);
 
     if (hr == S_OK)
     {
         ITest *test2 = NULL;
         hr = IClassFactory_CreateInstance(classFactory, NULL, &IID_ITest, (void **)&test2);
         todo_wine_if(!expect_success)
-        ok(hr == S_OK, "Got %x\n", hr);
+        ok(hr == S_OK, "Got %lx\n", hr);
 
         if (hr == S_OK)
         {
             int i = 0;
             hr = ITest_Func(test2, &i);
-            ok(hr == S_OK, "Got %x\n", hr);
+            ok(hr == S_OK, "Got %lx\n", hr);
             ok(i == 42, "Expected 42, got %d\n", i);
             ITest_Release(test2);
         }
@@ -174,28 +174,28 @@ static void run_registry_test(run_type run)
         RegCloseKey(hkey);
         return;
     }
-    ok(ret == ERROR_SUCCESS, "RegCreateKeyA returned %x\n", ret);
+    ok(ret == ERROR_SUCCESS, "RegCreateKeyA returned %lx\n", ret);
 
     ret = RegSetKeyValueA(hkey, "InprocServer32", NULL, REG_SZ, "mscoree.dll", 11);
-    ok(ret == ERROR_SUCCESS, "RegSetKeyValueA returned %x\n", ret);
+    ok(ret == ERROR_SUCCESS, "RegSetKeyValueA returned %lx\n", ret);
     ret = RegSetKeyValueA(hkey, "InprocServer32", "Assembly", REG_SZ, "comtest, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null", 74);
-    ok(ret == ERROR_SUCCESS, "RegSetKeyValueA returned %x\n", ret);
+    ok(ret == ERROR_SUCCESS, "RegSetKeyValueA returned %lx\n", ret);
     ret = RegSetKeyValueA(hkey, "InprocServer32", "Class", REG_SZ, "DLL.Test", 8);
-    ok(ret == ERROR_SUCCESS, "RegSetKeyValueA returned %x\n", ret);
+    ok(ret == ERROR_SUCCESS, "RegSetKeyValueA returned %lx\n", ret);
     ret = RegSetKeyValueA(hkey, "InprocServer32", "CodeBase", REG_SZ, "file:///U:/invalid/path/to/comtest.dll", 41);
-    ok(ret == ERROR_SUCCESS, "RegSetKeyValueA returned %x\n", ret);
+    ok(ret == ERROR_SUCCESS, "RegSetKeyValueA returned %lx\n", ret);
 
     hr = CoCreateInstance(&CLSID_Test, NULL, CLSCTX_INPROC_SERVER, &IID_ITest, (void**)&test);
     todo_wine_if(result_expected != S_OK)
-    ok(hr == result_expected, "Expected %x, got %x\n", result_expected, hr);
+    ok(hr == result_expected, "Expected %lx, got %lx\n", result_expected, hr);
 
     if (hr == S_OK)
     {
         hr = ITest_Func(test, &i);
-        ok(hr == S_OK, "Got %x\n", hr);
+        ok(hr == S_OK, "Got %lx\n", hr);
         ok(i == 42, "Expected 42, got %d\n", i);
         hr = ITest_QueryInterface(test, &IID_ITest2, (void**)&unk);
-        ok(hr == S_OK, "ITest_QueryInterface returned %x\n", hr);
+        ok(hr == S_OK, "ITest_QueryInterface returned %lx\n", hr);
         if (hr == S_OK) IUnknown_Release(unk);
         ITest_Release(test);
     }
@@ -290,7 +290,7 @@ static void prepare_and_run_test(const char *dll_source, run_type run)
     context.dwFlags = ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID;
 
     handle_context = CreateActCtxA(&context);
-    ok(handle_context != NULL && handle_context != INVALID_HANDLE_VALUE, "run: %d, CreateActCtxA failed: %d\n", run, GetLastError());
+    ok(handle_context != NULL && handle_context != INVALID_HANDLE_VALUE, "run: %d, CreateActCtxA failed: %ld\n", run, GetLastError());
 
     if (handle_context == NULL || handle_context == INVALID_HANDLE_VALUE)
     {
@@ -299,7 +299,7 @@ static void prepare_and_run_test(const char *dll_source, run_type run)
     }
 
     success = ActivateActCtx(handle_context, &cookie);
-    ok(success, "run: %d, ActivateActCtx failed: %d\n", run,  GetLastError());
+    ok(success, "run: %d, ActivateActCtx failed: %ld\n", run,  GetLastError());
 
     if (run == run_type_current_working_directory)
         SetCurrentDirectoryA(path_tmp);
@@ -311,23 +311,23 @@ cleanup:
     if (handle_context != NULL && handle_context != INVALID_HANDLE_VALUE)
     {
         success = DeactivateActCtx(0, cookie);
-        ok(success, "run: %d, DeactivateActCtx failed: %d\n", run, GetLastError());
+        ok(success, "run: %d, DeactivateActCtx failed: %ld\n", run, GetLastError());
         ReleaseActCtx(handle_context);
     }
     if (*path_manifest_exe)
     {
         success = DeleteFileA(path_manifest_exe);
-        ok(success, "run: %d, DeleteFileA failed: %d\n", run, GetLastError());
+        ok(success, "run: %d, DeleteFileA failed: %ld\n", run, GetLastError());
     }
     if(*path_manifest_dll)
     {
         success = DeleteFileA(path_manifest_dll);
-        ok(success, "run: %d, DeleteFileA failed: %d\n", run, GetLastError());
+        ok(success, "run: %d, DeleteFileA failed: %ld\n", run, GetLastError());
     }
     if(*path_dll_source)
     {
         success = DeleteFileA(path_dll_source);
-        ok(success, "run: %d, DeleteFileA failed: %d\n", run, GetLastError());
+        ok(success, "run: %d, DeleteFileA failed: %ld\n", run, GetLastError());
     }
     RemoveDirectoryA(path_tmp_manifest);
     /* dll cleanup is handled by the parent, because it might still be used by the child */
@@ -350,7 +350,7 @@ static void cleanup_test(run_type run)
         Sleep(500);
         success = DeleteFileA(path_dll);
     }
-    ok(success, "DeleteFileA failed: %d\n", GetLastError());
+    ok(success, "DeleteFileA failed: %ld\n", GetLastError());
 }
 
 static void run_child_process(const char *dll_source, run_type run)
@@ -372,7 +372,7 @@ static void run_child_process(const char *dll_source, run_type run)
 
     si.cb = sizeof(si);
     ret = CreateProcessA(exe, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
-    ok(ret, "Could not create process: %u\n", GetLastError());
+    ok(ret, "Could not create process: %lu\n", GetLastError());
 
     wait_child_process(pi.hProcess);
 

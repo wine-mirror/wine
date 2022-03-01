@@ -84,16 +84,16 @@ static void test_getruntime(WCHAR *version)
     WCHAR buf[MAX_PATH];
 
     hr = ICLRMetaHost_GetRuntime(metahost, NULL, &IID_ICLRRuntimeInfo, (void**)&info);
-    ok(hr == E_POINTER, "GetVersion failed, hr=%x\n", hr);
+    ok(hr == E_POINTER, "GetVersion failed, hr=%lx\n", hr);
 
     hr = ICLRMetaHost_GetRuntime(metahost, version, &IID_ICLRRuntimeInfo, (void**)&info);
-    ok(hr == S_OK, "GetVersion failed, hr=%x\n", hr);
+    ok(hr == S_OK, "GetVersion failed, hr=%lx\n", hr);
     if (hr != S_OK) return;
 
     count = MAX_PATH;
     hr = ICLRRuntimeInfo_GetVersionString(info, buf, &count);
-    ok(hr == S_OK, "GetVersionString returned %x\n", hr);
-    ok(count == lstrlenW(buf)+1, "GetVersionString returned count %u but string of length %u\n", count, lstrlenW(buf)+1);
+    ok(hr == S_OK, "GetVersionString returned %lx\n", hr);
+    ok(count == lstrlenW(buf)+1, "GetVersionString returned count %lu but string of length %u\n", count, lstrlenW(buf)+1);
     ok(lstrcmpW(buf, version) == 0, "got unexpected version %s\n", wine_dbgstr_w(buf));
 
     ICLRRuntimeInfo_Release(info);
@@ -102,7 +102,7 @@ static void test_getruntime(WCHAR *version)
     dot = wcsrchr(version, '.');
     lstrcpyW(dot, dotzero);
     hr = ICLRMetaHost_GetRuntime(metahost, version, &IID_ICLRRuntimeInfo, (void**)&info);
-    ok(hr == CLR_E_SHIM_RUNTIME, "GetVersion failed, hr=%x\n", hr);
+    ok(hr == CLR_E_SHIM_RUNTIME, "GetVersion failed, hr=%lx\n", hr);
 }
 
 static void test_enumruntimes(void)
@@ -115,28 +115,28 @@ static void test_enumruntimes(void)
     WCHAR buf[MAX_PATH];
 
     hr = ICLRMetaHost_EnumerateInstalledRuntimes(metahost, &runtime_enum);
-    ok(hr == S_OK, "EnumerateInstalledRuntimes returned %x\n", hr);
+    ok(hr == S_OK, "EnumerateInstalledRuntimes returned %lx\n", hr);
     if (FAILED(hr)) return;
 
     while ((hr = IEnumUnknown_Next(runtime_enum, 1, &unk, &count)) == S_OK)
     {
         hr = IUnknown_QueryInterface(unk, &IID_ICLRRuntimeInfo, (void**)&runtime_info);
-        ok(hr == S_OK, "QueryInterface returned %x\n", hr);
+        ok(hr == S_OK, "QueryInterface returned %lx\n", hr);
 
         count = 1;
         hr = ICLRRuntimeInfo_GetVersionString(runtime_info, buf, &count);
-        ok(hr == E_NOT_SUFFICIENT_BUFFER, "GetVersionString returned %x\n", hr);
-        ok(count > 1, "GetVersionString returned count %u\n", count);
+        ok(hr == E_NOT_SUFFICIENT_BUFFER, "GetVersionString returned %lx\n", hr);
+        ok(count > 1, "GetVersionString returned count %lu\n", count);
 
         count = 0xdeadbeef;
         hr = ICLRRuntimeInfo_GetVersionString(runtime_info, NULL, &count);
-        ok(hr == S_OK, "GetVersionString returned %x\n", hr);
-        ok(count > 1 && count != 0xdeadbeef, "GetVersionString returned count %u\n", count);
+        ok(hr == S_OK, "GetVersionString returned %lx\n", hr);
+        ok(count > 1 && count != 0xdeadbeef, "GetVersionString returned count %lu\n", count);
 
         count = MAX_PATH;
         hr = ICLRRuntimeInfo_GetVersionString(runtime_info, buf, &count);
-        ok(hr == S_OK, "GetVersionString returned %x\n", hr);
-        ok(count > 1, "GetVersionString returned count %u\n", count);
+        ok(hr == S_OK, "GetVersionString returned %lx\n", hr);
+        ok(count > 1, "GetVersionString returned count %lu\n", count);
 
         trace("runtime found: %s\n", wine_dbgstr_w(buf));
 
@@ -146,7 +146,7 @@ static void test_enumruntimes(void)
         test_getruntime(buf);
     }
 
-    ok(hr == S_FALSE, "IEnumUnknown_Next returned %x\n", hr);
+    ok(hr == S_FALSE, "IEnumUnknown_Next returned %lx\n", hr);
 
     IEnumUnknown_Release(runtime_enum);
 }
@@ -169,19 +169,19 @@ static void WINAPI notification_callback(ICLRRuntimeInfo *pRuntimeInfo, Callback
     if (expect_runtime_tid != 0)
     {
         ok(GetCurrentThreadId() == expect_runtime_tid,
-            "expected call on thread %04x, got thread %04x\n", expect_runtime_tid, GetCurrentThreadId());
+            "expected call on thread %04lx, got thread %04lx\n", expect_runtime_tid, GetCurrentThreadId());
         expect_runtime_tid = 0;
     }
 
     hr = ICLRRuntimeInfo_GetVersionString(pRuntimeInfo, buf, &buf_size);
-    ok(hr == S_OK, "GetVersion returned %x\n", hr);
+    ok(hr == S_OK, "GetVersion returned %lx\n", hr);
     ok(lstrcmpW(buf, v4_0) == 0, "GetVersion returned %s\n", wine_dbgstr_w(buf));
 
     hr = pfnCallbackThreadSet();
-    ok(hr == S_OK, "pfnCallbackThreadSet returned %x\n", hr);
+    ok(hr == S_OK, "pfnCallbackThreadSet returned %lx\n", hr);
 
     hr = pfnCallbackThreadUnset();
-    ok(hr == S_OK, "pfnCallbackThreadUnset returned %x\n", hr);
+    ok(hr == S_OK, "pfnCallbackThreadUnset returned %lx\n", hr);
 }
 
 static void test_notification(void)
@@ -189,13 +189,13 @@ static void test_notification(void)
     HRESULT hr;
 
     hr = ICLRMetaHost_RequestRuntimeLoadedNotification(metahost, NULL);
-    ok(hr == E_POINTER, "RequestRuntimeLoadedNotification returned %x\n", hr);
+    ok(hr == E_POINTER, "RequestRuntimeLoadedNotification returned %lx\n", hr);
 
     hr = ICLRMetaHost_RequestRuntimeLoadedNotification(metahost,notification_callback);
-    ok(hr == S_OK, "RequestRuntimeLoadedNotification failed, hr=%x\n", hr);
+    ok(hr == S_OK, "RequestRuntimeLoadedNotification failed, hr=%lx\n", hr);
 
     hr = ICLRMetaHost_RequestRuntimeLoadedNotification(metahost,notification_dummy_callback);
-    ok(hr == HOST_E_INVALIDOPERATION, "RequestRuntimeLoadedNotification returned %x\n", hr);
+    ok(hr == HOST_E_INVALIDOPERATION, "RequestRuntimeLoadedNotification returned %lx\n", hr);
 }
 
 static void test_notification_cb(void)
@@ -205,12 +205,12 @@ static void test_notification_cb(void)
     ICLRRuntimeHost *host;
 
     hr = ICLRMetaHost_GetRuntime(metahost, v4_0, &IID_ICLRRuntimeInfo, (void**)&info);
-    ok(hr == S_OK, "GetRuntime returned %x\n", hr);
+    ok(hr == S_OK, "GetRuntime returned %lx\n", hr);
 
     expect_runtime_tid = GetCurrentThreadId();
     hr = ICLRRuntimeInfo_GetInterface(info, &CLSID_CLRRuntimeHost, &IID_ICLRRuntimeHost, (void**)&host);
 
-    todo_wine_if(!has_mono) ok(hr == S_OK, "GetInterface returned %x\n", hr);
+    todo_wine_if(!has_mono) ok(hr == S_OK, "GetInterface returned %lx\n", hr);
     todo_wine if(!has_mono) ok(expect_runtime_tid == 0, "notification_callback was not called\n");
 
     if(has_mono)
