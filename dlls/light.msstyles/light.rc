@@ -26,14 +26,12 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 STRINGTABLE
 {
     IDS_COLOR_DISPLAY_NAME_BLUE         "Blue"
-    IDS_COLOR_DISPLAY_NAME_CLASSIC_BLUE "Classic Blue"
 }
 
 /* Theme color tooltips */
 STRINGTABLE
 {
     IDS_COLOR_TOOLTIP_BLUE         "Blue"
-    IDS_COLOR_TOOLTIP_CLASSIC_BLUE "Classic Blue"
 }
 
 /* Theme size display names */
@@ -57,7 +55,6 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 1 COLORNAMES
 {
 "Blue\0"
-"Classic Blue\0"
 "\0"
 }
 
@@ -72,7 +69,6 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 1 FILERESNAMES
 {
 "BLUE_INI\0"
-"CLASSIC_BLUE_INI\0"
 "\0"
 }
 
@@ -85,54 +81,6 @@ THEMES_INI TEXTFILE
 }
 
 /* Light theme definition */
-/* Classic blue theme, no bitmaps */
-CLASSIC_BLUE_INI TEXTFILE
-{
-"[Globals]\r\n"
-"EdgeLightColor = 255 255 255\r\n"
-"EdgeHighLightColor = 255 255 255\r\n"
-"EdgeShadowColor = 189 189 189\r\n"
-"EdgeDkShadowColor = 158 158 158\r\n"
-"EdgeFillColor = 255 255 255\r\n"
-
-"\r\n[SysMetrics]\r\n"
-"; System colors\r\n"
-"Scrollbar = 255 255 255\r\n"
-"Background = 37 111 149\r\n"
-"ActiveCaption = 50 150 250\r\n"
-"InactiveCaption = 245 245 245\r\n"
-"Menu = 255 255 255\r\n"
-"Window = 255 255 255\r\n"
-"WindowFrame = 158 158 158\r\n"
-"MenuText = 0 0 0\r\n"
-"WindowText = 0 0 0\r\n"
-"CaptionText = 0 0 0\r\n"
-"ActiveBorder = 255 255 255\r\n"
-"InactiveBorder = 255 255 255\r\n"
-"AppWorkSpace = 128 128 128\r\n"
-"Highlight = 48 150 250\r\n"
-"HighlightText = 255 255 255\r\n"
-"BtnFace = 245 245 245\r\n"
-"BtnShadow = 166 166 166\r\n"
-"GrayText = 166 166 166\r\n"
-"BtnText = 0 0 0\r\n"
-"InactiveCaptionText = 100 100 100\r\n"
-"BtnHighlight = 255 255 255\r\n"
-"DkShadow3d = 106 106 106\r\n"
-"Light3d = 227 227 227\r\n"
-"InfoText = 0 0 0\r\n"
-"InfoBk = 255 255 255\r\n"
-"ButtonAlternateFace = 255 255 255\r\n"
-"HotTracking = 224 224 224\r\n"
-"GradientActiveCaption = 50 150 250\r\n"
-"GradientInactiveCaption = 245 245 245\r\n"
-"MenuHilight = 48 150 250\r\n"
-"MenuBar = 255 255 255\r\n"
-
-"\r\n; Flat menus\r\n"
-"FlatMenus = true\r\n"
-}
-
 /* Blue theme */
 BLUE_INI TEXTFILE
 {

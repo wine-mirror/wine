@@ -184,8 +184,8 @@ msgstr ""
 "HTML, aby fungovali správne. Wine ho môže automaticky stiahnuť a "
 "nainštalovať pre Vás.\n"
 "\n"
-"Poznámka: odporúča sa použiť balíček Vašej distribúcie. Pozrite <a href="
-"\"https://wiki.winehq.org/Gecko\">https://wiki.winehq.org/Gecko</a> pre "
+"Poznámka: odporúča sa použiť balíček Vašej distribúcie. Pozrite <a "
+"href=\"https://wiki.winehq.org/Gecko\">https://wiki.winehq.org/Gecko</a> pre "
 "bližšie informácie."
 
 #: dlls/appwiz.cpl/appwiz.rc:109 dlls/appwiz.cpl/appwiz.rc:124
@@ -264,8 +264,8 @@ msgstr ""
 "HTML, aby fungovali správne. Wine ho môže automaticky stiahnuť a "
 "nainštalovať pre Vás.\n"
 "\n"
-"Poznámka: odporúča sa použiť balíček Vašej distribúcie. Pozrite <a href="
-"\"https://wiki.winehq.org/Gecko\">https://wiki.winehq.org/Gecko</a> pre "
+"Poznámka: odporúča sa použiť balíček Vašej distribúcie. Pozrite <a "
+"href=\"https://wiki.winehq.org/Gecko\">https://wiki.winehq.org/Gecko</a> pre "
 "bližšie informácie."
 
 #: dlls/appwiz.cpl/appwiz.rc:31
@@ -1118,7 +1118,7 @@ msgid "Yellow"
 msgstr "Žltá"
 
 #: dlls/comdlg32/comdlg32.rc:134 dlls/light.msstyles/light.rc:29
-#: dlls/light.msstyles/light.rc:36 programs/wordpad/wordpad.rc:137
+#: dlls/light.msstyles/light.rc:35 programs/wordpad/wordpad.rc:137
 msgid "Blue"
 msgstr "Modrá"
 
@@ -7082,11 +7082,7 @@ msgstr "Nesprávne údaje.\n"
 msgid "Resource is not currently available.\n"
 msgstr "Nápoveda nedostupná."
 
-#: dlls/light.msstyles/light.rc:30 dlls/light.msstyles/light.rc:37
-msgid "Classic Blue"
-msgstr ""
-
-#: dlls/light.msstyles/light.rc:43 dlls/light.msstyles/light.rc:49
+#: dlls/light.msstyles/light.rc:41 dlls/light.msstyles/light.rc:47
 #: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
 msgid "Normal"
 msgstr "Normálne"

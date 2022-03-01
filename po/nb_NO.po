@@ -1085,7 +1085,7 @@ msgid "Yellow"
 msgstr "Gul"
 
 #: dlls/comdlg32/comdlg32.rc:134 dlls/light.msstyles/light.rc:29
-#: dlls/light.msstyles/light.rc:36 programs/wordpad/wordpad.rc:137
+#: dlls/light.msstyles/light.rc:35 programs/wordpad/wordpad.rc:137
 msgid "Blue"
 msgstr "Blå"
 
@@ -7046,11 +7046,7 @@ msgstr "Ugyldig kall.\n"
 msgid "Resource is not currently available.\n"
 msgstr "Ressursen er for øyeblikket ikke tilgjengelig.\n"
 
-#: dlls/light.msstyles/light.rc:30 dlls/light.msstyles/light.rc:37
-msgid "Classic Blue"
-msgstr "Klassisk Blå"
-
-#: dlls/light.msstyles/light.rc:43 dlls/light.msstyles/light.rc:49
+#: dlls/light.msstyles/light.rc:41 dlls/light.msstyles/light.rc:47
 #: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
 msgid "Normal"
 msgstr "Normal"
@@ -18685,8 +18681,8 @@ msgid ""
 msgstr ""
 "Hvis dette problemet ikke oppstår i Windows og ikke har blitt rapportert "
 "ennå, så kan du lagre detaljert informasjon til en fil ved å trykke på "
-"\"Lagre som\"-knappen. Deretter kan du <a href=\"https://wiki.winehq.org/Bugs"
-"\">opprette en feilrapport</a> og legge ved loggfilen."
+"\"Lagre som\"-knappen. Deretter kan du <a href=\"https://wiki.winehq.org/"
+"Bugs\">opprette en feilrapport</a> og legge ved loggfilen."
 
 #: programs/winedbg/winedbg.rc:40
 msgid ""

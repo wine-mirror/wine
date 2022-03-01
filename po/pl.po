@@ -1091,7 +1091,7 @@ msgid "Yellow"
 msgstr "Żółty"
 
 #: dlls/comdlg32/comdlg32.rc:134 dlls/light.msstyles/light.rc:29
-#: dlls/light.msstyles/light.rc:36 programs/wordpad/wordpad.rc:137
+#: dlls/light.msstyles/light.rc:35 programs/wordpad/wordpad.rc:137
 msgid "Blue"
 msgstr "Niebieski"
 
@@ -7043,11 +7043,7 @@ msgstr "Nieprawidłowe wywołanie.\n"
 msgid "Resource is not currently available.\n"
 msgstr "Zasób jest obecnie niedostępny.\n"
 
-#: dlls/light.msstyles/light.rc:30 dlls/light.msstyles/light.rc:37
-msgid "Classic Blue"
-msgstr "Klasyczny niebieski"
-
-#: dlls/light.msstyles/light.rc:43 dlls/light.msstyles/light.rc:49
+#: dlls/light.msstyles/light.rc:41 dlls/light.msstyles/light.rc:47
 #: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
 msgid "Normal"
 msgstr "Normalne"
@@ -18466,8 +18462,8 @@ msgid ""
 msgstr ""
 "Jeżeli problem ten nie występuje w systemie Windows i nie został jeszcze "
 "zgłoszony, to możesz zapisać szczegółowe informacje do pliku używając "
-"przycisku \"Zapisz jako\", a następnie <a href=\"https://wiki.winehq.org/Bugs"
-"\">wypełnić zgłoszenie o błędzie</a> i dołączyć ten plik do zgłoszenia."
+"przycisku \"Zapisz jako\", a następnie <a href=\"https://wiki.winehq.org/"
+"Bugs\">wypełnić zgłoszenie o błędzie</a> i dołączyć ten plik do zgłoszenia."
 
 #: programs/winedbg/winedbg.rc:40
 msgid ""

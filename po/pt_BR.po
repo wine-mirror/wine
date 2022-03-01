@@ -1088,7 +1088,7 @@ msgid "Yellow"
 msgstr "Amarelo"
 
 #: dlls/comdlg32/comdlg32.rc:134 dlls/light.msstyles/light.rc:29
-#: dlls/light.msstyles/light.rc:36 programs/wordpad/wordpad.rc:137
+#: dlls/light.msstyles/light.rc:35 programs/wordpad/wordpad.rc:137
 msgid "Blue"
 msgstr "Azul"
 
@@ -7040,11 +7040,7 @@ msgstr "Chamada inválida.\n"
 msgid "Resource is not currently available.\n"
 msgstr "Recurso atualmente não disponível.\n"
 
-#: dlls/light.msstyles/light.rc:30 dlls/light.msstyles/light.rc:37
-msgid "Classic Blue"
-msgstr "Azul Clássico"
-
-#: dlls/light.msstyles/light.rc:43 dlls/light.msstyles/light.rc:49
+#: dlls/light.msstyles/light.rc:41 dlls/light.msstyles/light.rc:47
 #: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
 msgid "Normal"
 msgstr "Normal"

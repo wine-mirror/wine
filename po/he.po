@@ -1107,7 +1107,7 @@ msgid "Yellow"
 msgstr "צהוב"
 
 #: dlls/comdlg32/comdlg32.rc:134 dlls/light.msstyles/light.rc:29
-#: dlls/light.msstyles/light.rc:36 programs/wordpad/wordpad.rc:137
+#: dlls/light.msstyles/light.rc:35 programs/wordpad/wordpad.rc:137
 msgid "Blue"
 msgstr "כחול"
 
@@ -7327,13 +7327,7 @@ msgstr "אפשרות שגויה.\n"
 msgid "Resource is not currently available.\n"
 msgstr "הגודל הזמין.\n"
 
-#: dlls/light.msstyles/light.rc:30 dlls/light.msstyles/light.rc:37
-#, fuzzy
-#| msgid "Class Name:"
-msgid "Classic Blue"
-msgstr "שם המחלקה:"
-
-#: dlls/light.msstyles/light.rc:43 dlls/light.msstyles/light.rc:49
+#: dlls/light.msstyles/light.rc:41 dlls/light.msstyles/light.rc:47
 #: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
 msgid "Normal"
 msgstr "רגילים"
@@ -10826,8 +10820,8 @@ msgstr ""
 "הפחות כללי של  GNU כפי שפורסם על ידי מוסד התכנה החופשית; או גרסה 2.1 של "
 "הרישיון או (לבחירתך) כל גרסה עדכנית יותר.\n"
 "\n"
-"Wine מופצת בתקווה שתביא תועלת, אך ללא כל אחריות; אפילו לא מרומזת למטרות, ‎"
-"מסחר או התאמה לצרכים מסוימים. נא לעיין בתנאי הרישיון הציבורי הפחות כללי של "
+"Wine מופצת בתקווה שתביא תועלת, אך ללא כל אחריות; אפילו לא מרומזת למטרות, "
+"‎מסחר או התאמה לצרכים מסוימים. נא לעיין בתנאי הרישיון הציבורי הפחות כללי של "
 "GNU לפרטים נוספים.\n"
 "\n"
 "ל־Wine אמור היה להיות מצורף עותק של הרישיון הציבורי הפחות כללי של GNU; במידה "

@@ -1117,7 +1117,7 @@ msgid "Yellow"
 msgstr "Rumena"
 
 #: dlls/comdlg32/comdlg32.rc:134 dlls/light.msstyles/light.rc:29
-#: dlls/light.msstyles/light.rc:36 programs/wordpad/wordpad.rc:137
+#: dlls/light.msstyles/light.rc:35 programs/wordpad/wordpad.rc:137
 msgid "Blue"
 msgstr "Modra"
 
@@ -7148,13 +7148,7 @@ msgstr "Neveljavna raven.\n"
 msgid "Resource is not currently available.\n"
 msgstr "Pomoč ni na voljo."
 
-#: dlls/light.msstyles/light.rc:30 dlls/light.msstyles/light.rc:37
-#, fuzzy
-#| msgid "Class Name:"
-msgid "Classic Blue"
-msgstr "Ime razreda:"
-
-#: dlls/light.msstyles/light.rc:43 dlls/light.msstyles/light.rc:49
+#: dlls/light.msstyles/light.rc:41 dlls/light.msstyles/light.rc:47
 #: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
 msgid "Normal"
 msgstr "Običajna"
@@ -19166,9 +19160,9 @@ msgid ""
 "and attach that file to the report."
 msgstr ""
 "Če ta težava ni prisotna na sistemu Windows in še ni bila prijavljena, vas "
-"prosimo, da shranite podrobnosti napake v datoteko preko gumba \"Shrani kot"
-"\", nato pa <a href=\"https://bugs.winehq.org\">prijavite napako</a> in ji "
-"priložite ravno ustvarjeno datoteko."
+"prosimo, da shranite podrobnosti napake v datoteko preko gumba \"Shrani "
+"kot\", nato pa <a href=\"https://bugs.winehq.org\">prijavite napako</a> in "
+"ji priložite ravno ustvarjeno datoteko."
 
 #: programs/winedbg/winedbg.rc:40
 msgid ""

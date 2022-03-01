@@ -174,9 +174,9 @@ msgstr ""
 "aplicaciones incrustaes en HTML funcionen correutamente. Wine pue baxalu ya "
 "instalalu automáticamente por ti.\n"
 "\n"
-"Nota: aconséyase qu'uses el paquete de la to distribución. Mira <a href="
-"\"https://wiki.winehq.org/Mono\">https://wiki.winehq.org/Gecko</a> pa los "
-"detalles."
+"Nota: aconséyase qu'uses el paquete de la to distribución. Mira <a "
+"href=\"https://wiki.winehq.org/Mono\">https://wiki.winehq.org/Gecko</a> pa "
+"los detalles."
 
 #: dlls/appwiz.cpl/appwiz.rc:109 dlls/appwiz.cpl/appwiz.rc:124
 msgid "&Install"
@@ -243,9 +243,9 @@ msgstr ""
 "aplicaciones en .NET funcionen correutamente. Wine pue baxalu ya instalalu "
 "automáticamente por ti.\n"
 "\n"
-"Nota: aconséyase qu'uses el paquete de la to distribución. Mira <a href="
-"\"https://wiki.winehq.org/Mono\">https://wiki.winehq.org/Mono</a> pa los "
-"detalles."
+"Nota: aconséyase qu'uses el paquete de la to distribución. Mira <a "
+"href=\"https://wiki.winehq.org/Mono\">https://wiki.winehq.org/Mono</a> pa "
+"los detalles."
 
 #: dlls/appwiz.cpl/appwiz.rc:31
 msgid "Add/Remove Programs"
@@ -1087,7 +1087,7 @@ msgid "Yellow"
 msgstr "Mariellu"
 
 #: dlls/comdlg32/comdlg32.rc:134 dlls/light.msstyles/light.rc:29
-#: dlls/light.msstyles/light.rc:36 programs/wordpad/wordpad.rc:137
+#: dlls/light.msstyles/light.rc:35 programs/wordpad/wordpad.rc:137
 msgid "Blue"
 msgstr "Azul"
 
@@ -6951,11 +6951,7 @@ msgstr "El nivel nun ye válidu.\n"
 msgid "Resource is not currently available.\n"
 msgstr "L'ayuda nun ta disponible."
 
-#: dlls/light.msstyles/light.rc:30 dlls/light.msstyles/light.rc:37
-msgid "Classic Blue"
-msgstr ""
-
-#: dlls/light.msstyles/light.rc:43 dlls/light.msstyles/light.rc:49
+#: dlls/light.msstyles/light.rc:41 dlls/light.msstyles/light.rc:47
 #: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
 msgid "Normal"
 msgstr ""

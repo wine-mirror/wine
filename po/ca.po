@@ -1089,7 +1089,7 @@ msgid "Yellow"
 msgstr "Groga"
 
 #: dlls/comdlg32/comdlg32.rc:134 dlls/light.msstyles/light.rc:29
-#: dlls/light.msstyles/light.rc:36 programs/wordpad/wordpad.rc:137
+#: dlls/light.msstyles/light.rc:35 programs/wordpad/wordpad.rc:137
 msgid "Blue"
 msgstr "Blau"
 
@@ -7045,11 +7045,7 @@ msgstr "La trucada no és vàlida.\n"
 msgid "Resource is not currently available.\n"
 msgstr "El recurs actualment no està disponible.\n"
 
-#: dlls/light.msstyles/light.rc:30 dlls/light.msstyles/light.rc:37
-msgid "Classic Blue"
-msgstr "Blau clásic"
-
-#: dlls/light.msstyles/light.rc:43 dlls/light.msstyles/light.rc:49
+#: dlls/light.msstyles/light.rc:41 dlls/light.msstyles/light.rc:47
 #: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
 msgid "Normal"
 msgstr "Normal"
@@ -18547,8 +18543,8 @@ msgid ""
 msgstr ""
 "Si aquest problema no està present en el Windows i encara no s'ha reportat, "
 "podeu desar la informació detallada a un fitxer utilitzant el botó "
-"\"Anomenar i Desar\", i llavors <a href=\"https://wiki.winehq.org/Bugs"
-"\">presentar un informe d'error</a> i ajuntar aquest fitxer a l'informe."
+"\"Anomenar i Desar\", i llavors <a href=\"https://wiki.winehq.org/"
+"Bugs\">presentar un informe d'error</a> i ajuntar aquest fitxer a l'informe."
 
 #: programs/winedbg/winedbg.rc:40
 msgid ""

@@ -19,8 +19,6 @@
 #include <winnt.h>
 
 #define IDS_COLOR_DISPLAY_NAME_BLUE            1000
-#define IDS_COLOR_DISPLAY_NAME_CLASSIC_BLUE    1001
 #define IDS_COLOR_TOOLTIP_BLUE                 2000
-#define IDS_COLOR_TOOLTIP_CLASSIC_BLUE         2001
 #define IDS_SIZE_DISPLAY_NAME_NORMAL           3000
 #define IDS_SIZE_TOOLTIP_NORMAL                4000
