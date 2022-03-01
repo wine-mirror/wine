@@ -952,6 +952,7 @@ static int is_blocking_read_ioctl( unsigned int code )
     {
     case IOCTL_CONDRV_READ_INPUT:
     case IOCTL_CONDRV_READ_CONSOLE:
+    case IOCTL_CONDRV_READ_CONSOLE_CONTROL:
     case IOCTL_CONDRV_READ_FILE:
         return 1;
     default:

@@ -69,6 +69,7 @@ struct edit_line
     unsigned int           end_offset;          /* offset of the last written char */
     unsigned int           home_x;              /* home position */
     unsigned int           home_y;
+    unsigned int           ctrl_mask;           /* mask for ctrl characters for completion */
 };
 
 struct console
