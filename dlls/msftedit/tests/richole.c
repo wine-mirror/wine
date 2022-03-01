@@ -40,7 +40,7 @@ static void _expect_ref(IUnknown* obj, ULONG ref, int line)
     ULONG rc;
     IUnknown_AddRef(obj);
     rc = IUnknown_Release(obj);
-    ok_(__FILE__,line)(rc == ref, "expected refcount %d, got %d.\n", ref, rc);
+    ok_(__FILE__,line)(rc == ref, "expected refcount %ld, got %ld.\n", ref, rc);
 }
 
 static HWND new_window(LPCWSTR classname, DWORD dwstyle, HWND parent)
@@ -83,22 +83,22 @@ static void test_Interfaces(void)
     EXPECT_REF(reole, 3);
 
     hres = IRichEditOle_QueryInterface(reole, &IID_ITextDocument, (void **)&txtdoc);
-    ok(hres == S_OK, "IRichEditOle_QueryInterface failed: 0x%08x.\n", hres);
+    ok(hres == S_OK, "IRichEditOle_QueryInterface failed: 0x%08lx.\n", hres);
     ok(txtdoc != NULL, "IRichEditOle_QueryInterface\n");
 
     hres = ITextDocument_GetSelection(txtdoc, NULL);
-    ok(hres == E_INVALIDARG, "ITextDocument_GetSelection: 0x%08x.\n", hres);
+    ok(hres == E_INVALIDARG, "ITextDocument_GetSelection: 0x%08lx.\n", hres);
 
     EXPECT_REF(txtdoc, 4);
 
     hres = ITextDocument_GetSelection(txtdoc, &txtsel);
-    ok(hres == S_OK, "ITextDocument_GetSelection failed 0x%08x.\n", hres);
+    ok(hres == S_OK, "ITextDocument_GetSelection failed 0x%08lx.\n", hres);
 
     EXPECT_REF(txtdoc, 4);
     EXPECT_REF(txtsel, 2);
 
     hres = ITextDocument_GetSelection(txtdoc, &txtsel2);
-    ok(hres == S_OK, "ITextDocument_GetSelection failed: 0x%08x.\n", hres);
+    ok(hres == S_OK, "ITextDocument_GetSelection failed: 0x%08lx.\n", hres);
     ok(txtsel2 == txtsel, "got %p, %p\n", txtsel, txtsel2);
 
     EXPECT_REF(txtdoc, 4);
@@ -108,38 +108,38 @@ static void test_Interfaces(void)
 
     punk = NULL;
     hres = ITextSelection_QueryInterface(txtsel, &IID_ITextSelection, (void **)&punk);
-    ok(hres == S_OK, "ITextSelection_QueryInterface failed: 0x%08x.\n", hres);
+    ok(hres == S_OK, "ITextSelection_QueryInterface failed: 0x%08lx.\n", hres);
     ok(punk != NULL, "ITextSelection_QueryInterface\n");
     IUnknown_Release(punk);
 
     punk = NULL;
     hres = ITextSelection_QueryInterface(txtsel, &IID_ITextRange, (void **)&punk);
-    ok(hres == S_OK, "ITextSelection_QueryInterface failed: 0x%08x.\n", hres);
+    ok(hres == S_OK, "ITextSelection_QueryInterface failed: 0x%08lx.\n", hres);
     ok(punk != NULL, "ITextSelection_QueryInterface\n");
     IUnknown_Release(punk);
 
     punk = NULL;
     hres = ITextSelection_QueryInterface(txtsel, &IID_IDispatch, (void **)&punk);
-    ok(hres == S_OK, "ITextSelection_QueryInterface failed: 0x%08x.\n", hres);
+    ok(hres == S_OK, "ITextSelection_QueryInterface failed: 0x%08lx.\n", hres);
     ok(punk != NULL, "ITextSelection_QueryInterface\n");
     IUnknown_Release(punk);
 
     punk = NULL;
     hres = IRichEditOle_QueryInterface(reole, &IID_IOleClientSite, (void **)&punk);
-    ok(hres == E_NOINTERFACE, "IRichEditOle_QueryInterface: 0x%08x.\n", hres);
+    ok(hres == E_NOINTERFACE, "IRichEditOle_QueryInterface: 0x%08lx.\n", hres);
 
     punk = NULL;
     hres = IRichEditOle_QueryInterface(reole, &IID_IOleWindow, (void **)&punk);
-    ok(hres == E_NOINTERFACE, "IRichEditOle_QueryInterface: 0x%08x.\n", hres);
+    ok(hres == E_NOINTERFACE, "IRichEditOle_QueryInterface: 0x%08lx.\n", hres);
 
     punk = NULL;
     hres = IRichEditOle_QueryInterface(reole, &IID_IOleInPlaceSite, (void **)&punk);
-    ok(hres == E_NOINTERFACE, "IRichEditOle_QueryInterface: 0x%08x.\n", hres);
+    ok(hres == E_NOINTERFACE, "IRichEditOle_QueryInterface: 0x%08lx.\n", hres);
 
     /* ITextDocument2 is implemented on msftedit after win8 for superseding ITextDocument2Old  */
     hres = IRichEditOle_QueryInterface(reole, &IID_ITextDocument2, (void **)&txtdoc2);
     ok(hres == S_OK ||
-       hres == E_NOINTERFACE /* before win8 */, "IRichEditOle_QueryInterface: 0x%08x.\n", hres);
+       hres == E_NOINTERFACE /* before win8 */, "IRichEditOle_QueryInterface: 0x%08lx.\n", hres);
     if (hres != E_NOINTERFACE)
     {
         ok(txtdoc2 != NULL, "IRichEditOle_QueryInterface\n");
@@ -148,7 +148,7 @@ static void test_Interfaces(void)
         EXPECT_REF(reole, 5);
 
         hres = ITextDocument2_QueryInterface(txtdoc2, &IID_ITextDocument2Old, (void **)&txtdoc2old);
-        ok(hres == S_OK, "ITextDocument2_QueryInterface failed: 0x%08x.\n", hres);
+        ok(hres == S_OK, "ITextDocument2_QueryInterface failed: 0x%08lx.\n", hres);
         ok((ITextDocument *)txtdoc2old != txtdoc, "Interface pointer is equal.\n");
         EXPECT_REF(txtdoc2, 5);
         EXPECT_REF(reole, 5);
@@ -159,7 +159,7 @@ static void test_Interfaces(void)
     else
     {
         hres = IRichEditOle_QueryInterface(reole, &IID_ITextDocument2Old, (void **)&txtdoc2old);
-        ok(hres == S_OK, "IRichEditOle_QueryInterface failed: 0x%08x.\n", hres);
+        ok(hres == S_OK, "IRichEditOle_QueryInterface failed: 0x%08lx.\n", hres);
         ok(txtdoc2old != NULL, "IRichEditOle_QueryInterface\n");
         ok((ITextDocument *)txtdoc2old == txtdoc, "Interface pointer is equal.\n");
         EXPECT_REF(txtdoc2old, 5);
@@ -170,7 +170,7 @@ static void test_Interfaces(void)
     ITextDocument_Release(txtdoc);
     IRichEditOle_Release(reole);
     refcount = IRichEditOle_Release(reole);
-    ok(refcount == 1, "Got wrong ref count: %d.\n", refcount);
+    ok(refcount == 1, "Got wrong ref count: %ld.\n", refcount);
     DestroyWindow(hwnd);
 
     /* Methods should return CO_E_RELEASED if the backing document has
