@@ -71,12 +71,6 @@ coclass GStreamerByteStreamHandler {}
 
 [
     threading(both),
-    uuid(6a170414-aad9-4693-b806-3a0c47c570d6)
-]
-coclass WINEAudioConverter { }
-
-[
-    threading(both),
     uuid(2eeb4adf-4578-4d10-bca7-bb955f56320a)
 ]
 coclass CWMADecMediaObject {};

@@ -397,8 +397,6 @@ failed:
 
 static const GUID CLSID_GStreamerByteStreamHandler = {0x317df618, 0x5e5a, 0x468a, {0x9f, 0x15, 0xd8, 0x27, 0xa9, 0xa0, 0x81, 0x62}};
 
-static const GUID CLSID_WINEAudioConverter = {0x6a170414,0xaad9,0x4693,{0xb8,0x06,0x3a,0x0c,0x47,0xc5,0x70,0xd6}};
-
 static const struct class_object
 {
     const GUID *clsid;
@@ -408,7 +406,6 @@ class_objects[] =
 {
     { &CLSID_VideoProcessorMFT, &video_processor_create },
     { &CLSID_GStreamerByteStreamHandler, &winegstreamer_stream_handler_create },
-    { &CLSID_WINEAudioConverter, &audio_converter_create },
     { &CLSID_MSH264DecoderMFT, &h264_decoder_create },
 };
 
@@ -536,16 +533,6 @@ HRESULT mfplat_DllRegisterServer(void)
     }
     mfts[] =
     {
-        {
-            CLSID_WINEAudioConverter,
-            MFT_CATEGORY_AUDIO_EFFECT,
-            L"Audio Converter",
-            MFT_ENUM_FLAG_SYNCMFT,
-            ARRAY_SIZE(resampler_types),
-            resampler_types,
-            ARRAY_SIZE(resampler_types),
-            resampler_types,
-        },
         {
             CLSID_WMADecMediaObject,
             MFT_CATEGORY_AUDIO_DECODER,
