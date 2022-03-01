@@ -38,6 +38,7 @@ namespace Windows {
             typedef enum SpeechRecognitionConstraintProbability SpeechRecognitionConstraintProbability;
             typedef enum SpeechRecognitionConstraintType SpeechRecognitionConstraintType;
             typedef enum SpeechRecognitionResultStatus SpeechRecognitionResultStatus;
+            typedef enum SpeechRecognizerState SpeechRecognizerState;
             interface ISpeechContinuousRecognitionCompletedEventArgs;
             interface ISpeechContinuousRecognitionResultGeneratedEventArgs;
             interface ISpeechContinuousRecognitionSession;
@@ -49,6 +50,7 @@ namespace Windows {
             interface ISpeechRecognitionResult;
             interface ISpeechRecognitionResult2;
             interface ISpeechRecognitionSemanticInterpretation;
+            interface ISpeechRecognizerStateChangedEventArgs;
             interface ISpeechRecognizerTimeouts;
             interface ISpeechRecognizerUIOptions;
             runtimeclass SpeechContinuousRecognitionCompletedEventArgs;
@@ -60,6 +62,7 @@ namespace Windows {
             runtimeclass SpeechRecognitionQualityDegradingEventArgs;
             runtimeclass SpeechRecognitionResult;
             runtimeclass SpeechRecognitionSemanticInterpretation;
+            runtimeclass SpeechRecognizerStateChangedEventArgs;
             runtimeclass SpeechRecognizerTimeouts;
             runtimeclass SpeechRecognizerUIOptions;
         }
@@ -147,6 +150,20 @@ namespace Windows {
                 NetworkFailure = 9,
                 [contract(Windows.Foundation.UniversalApiContract, 1.0)]
                 MicrophoneUnavailable = 10,
+            };
+
+            [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+            enum SpeechRecognizerState
+            {
+                Idle = 0,
+                Capturing = 1,
+                Processing = 2,
+                SoundStarted = 3,
+                SoundEnded = 4,
+                [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+                SpeechDetected = 5,
+                [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+                Paused = 6,
             };
 
             [
@@ -289,6 +306,16 @@ namespace Windows {
 
             [
                 contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognizerStateChangedEventArgs),
+                uuid(563d4f09-ba03-4bad-ad81-ddc6c4dab0c3)
+            ]
+            interface ISpeechRecognizerStateChangedEventArgs : IInspectable
+            {
+                [propget] HRESULT State([out, retval] Windows.Media.SpeechRecognition.SpeechRecognizerState *value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
                 exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognizerTimeouts),
                 uuid(2ef76fca-6a3c-4dca-a153-df1bc88a79af)
             ]
@@ -404,6 +431,15 @@ namespace Windows {
             runtimeclass SpeechRecognitionSemanticInterpretation
             {
                 [default] interface Windows.Media.SpeechRecognition.ISpeechRecognitionSemanticInterpretation;
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile)
+            ]
+            runtimeclass SpeechRecognizerStateChangedEventArgs
+            {
+                [default] interface Windows.Media.SpeechRecognition.ISpeechRecognizerStateChangedEventArgs;
             }
 
             [
