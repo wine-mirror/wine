@@ -37,11 +37,13 @@ namespace Windows.Gaming.Input.Custom {
     interface IHidGameControllerInputSink;
     interface IHidGameControllerProvider;
     interface IXusbGameControllerInputSink;
+    interface IXusbGameControllerProvider;
     interface ICustomGameControllerFactory;
     interface IGameControllerFactoryManagerStatics;
     interface IGameControllerFactoryManagerStatics2;
     runtimeclass GameControllerFactoryManager;
     runtimeclass HidGameControllerProvider;
+    runtimeclass XusbGameControllerProvider;
 
     [contract(Windows.Foundation.UniversalApiContract, 3.0)]
     enum XusbDeviceSubtype
@@ -140,6 +142,17 @@ namespace Windows.Gaming.Input.Custom {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 3.0),
+        exclusiveto(Windows.Gaming.Input.Custom.XusbGameControllerProvider),
+        uuid(6e2971eb-0efb-48b4-808b-837643b2f216)
+    ]
+    interface IXusbGameControllerProvider : IInspectable
+        requires Windows.Gaming.Input.Custom.IGameControllerProvider
+    {
+        HRESULT SetVibration([in] DOUBLE rumble_intensity, [in] DOUBLE buzz_intensity);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
         uuid(69a0ae5e-758e-4cbe-ace6-62155fe9126f)
     ]
     interface ICustomGameControllerFactory : IInspectable
@@ -198,6 +211,17 @@ namespace Windows.Gaming.Input.Custom {
     runtimeclass HidGameControllerProvider
     {
         [default] interface Windows.Gaming.Input.Custom.IHidGameControllerProvider;
+        interface Windows.Gaming.Input.Custom.IGameControllerProvider;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass XusbGameControllerProvider
+    {
+        [default] interface Windows.Gaming.Input.Custom.IXusbGameControllerProvider;
         interface Windows.Gaming.Input.Custom.IGameControllerProvider;
     }
 }
