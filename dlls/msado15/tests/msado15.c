@@ -676,7 +676,7 @@ static void test_Fields(void)
     LONG count;
     ADO_LONGPTR size;
     DataTypeEnum type;
-    FieldAttributeEnum attrs;
+    LONG attrs;
     HRESULT hr;
 
     hr = CoCreateInstance( &CLSID_Recordset, NULL, CLSCTX_INPROC_SERVER, &IID__Recordset, (void **)&recordset );
