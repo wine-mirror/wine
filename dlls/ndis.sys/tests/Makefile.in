@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = ndis.sys
 IMPORTS   = iphlpapi advapi32 ole32
 
