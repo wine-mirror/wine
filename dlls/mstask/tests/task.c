@@ -66,7 +66,7 @@ static void test_SetApplicationName_GetApplicationName(void)
 
     /* Attempt getting before setting application name */
     hres = ITask_GetApplicationName(test_task, &stored_name);
-    ok(hres == S_OK, "GetApplicationName failed: %08x\n", hres);
+    ok(hres == S_OK, "GetApplicationName failed: %08lx\n", hres);
     if (hres == S_OK)
     {
         ok(!lstrcmpiW(stored_name, empty),
@@ -77,10 +77,10 @@ static void test_SetApplicationName_GetApplicationName(void)
     /* Set application name to a nonexistent application and then get
      * the application name that is actually stored */
     hres = ITask_SetApplicationName(test_task, non_application_name);
-    ok(hres == S_OK, "Failed setting name %s: %08x\n",
+    ok(hres == S_OK, "Failed setting name %s: %08lx\n",
             wine_dbgstr_w(non_application_name), hres);
     hres = ITask_GetApplicationName(test_task, &stored_name);
-    ok(hres == S_OK, "GetApplicationName failed: %08x\n", hres);
+    ok(hres == S_OK, "GetApplicationName failed: %08lx\n", hres);
     if (hres == S_OK)
     {
         full_name = path_resolve_name(non_application_name);
@@ -92,10 +92,10 @@ static void test_SetApplicationName_GetApplicationName(void)
     /* Set a valid application name with program type extension and then
      * get the stored name */
     hres = ITask_SetApplicationName(test_task, notepad_exe);
-    ok(hres == S_OK, "Failed setting name %s: %08x\n",
+    ok(hres == S_OK, "Failed setting name %s: %08lx\n",
             wine_dbgstr_w(notepad_exe), hres);
     hres = ITask_GetApplicationName(test_task, &stored_name);
-    ok(hres == S_OK, "GetApplicationName failed: %08x\n", hres);
+    ok(hres == S_OK, "GetApplicationName failed: %08lx\n", hres);
     if (hres == S_OK)
     {
         full_name = path_resolve_name(notepad_exe);
@@ -107,9 +107,9 @@ static void test_SetApplicationName_GetApplicationName(void)
     /* Set a valid application name without program type extension and
      * then get the stored name */
     hres = ITask_SetApplicationName(test_task, notepad);
-    ok(hres == S_OK, "Failed setting name %s: %08x\n", wine_dbgstr_w(notepad), hres);
+    ok(hres == S_OK, "Failed setting name %s: %08lx\n", wine_dbgstr_w(notepad), hres);
     hres = ITask_GetApplicationName(test_task, &stored_name);
-    ok(hres == S_OK, "GetApplicationName failed: %08x\n", hres);
+    ok(hres == S_OK, "GetApplicationName failed: %08lx\n", hres);
     if (hres == S_OK)
     {
         full_name = path_resolve_name(notepad_exe);  /* XP SP1 appends .exe */
@@ -126,10 +126,10 @@ static void test_SetApplicationName_GetApplicationName(void)
      * to a nonexistent application and then get the name that is
      * actually stored */
     hres = ITask_SetApplicationName(test_task, non_application_name);
-    ok(hres == S_OK, "Failed setting name %s: %08x\n",
+    ok(hres == S_OK, "Failed setting name %s: %08lx\n",
             wine_dbgstr_w(non_application_name), hres);
     hres = ITask_GetApplicationName(test_task, &stored_name);
-    ok(hres == S_OK, "GetApplicationName failed: %08x\n", hres);
+    ok(hres == S_OK, "GetApplicationName failed: %08lx\n", hres);
     if (hres == S_OK)
     {
         full_name = path_resolve_name(non_application_name);
@@ -140,9 +140,9 @@ static void test_SetApplicationName_GetApplicationName(void)
 
     /* Clear application name */
     hres = ITask_SetApplicationName(test_task, empty);
-    ok(hres == S_OK, "Failed setting name %s: %08x\n", wine_dbgstr_w(empty), hres);
+    ok(hres == S_OK, "Failed setting name %s: %08lx\n", wine_dbgstr_w(empty), hres);
     hres = ITask_GetApplicationName(test_task, &stored_name);
-    ok(hres == S_OK, "GetApplicationName failed: %08x\n", hres);
+    ok(hres == S_OK, "GetApplicationName failed: %08lx\n", hres);
     if (hres == S_OK)
     {
         ok(!lstrcmpiW(stored_name, empty),
@@ -165,7 +165,7 @@ static void test_CreateTrigger(void)
     ok(hres == S_OK, "Failed to setup test_task\n");
 
     hres = ITask_CreateTrigger(test_task, &trigger_index, &test_trigger);
-    ok(hres == S_OK, "Failed to create trigger: 0x%08x\n", hres);
+    ok(hres == S_OK, "Failed to create trigger: 0x%08lx\n", hres);
 
     ITaskTrigger_Release(test_trigger);
     ITask_Release(test_task);
@@ -186,7 +186,7 @@ static void test_SetParameters_GetParameters(void)
 
     /* Get parameters before setting them */
     hres = ITask_GetParameters(test_task, &parameters);
-    ok(hres == S_OK, "GetParameters failed: %08x\n", hres);
+    ok(hres == S_OK, "GetParameters failed: %08lx\n", hres);
     if (hres == S_OK)
     {
         ok(!lstrcmpW(parameters, empty),
@@ -196,10 +196,10 @@ static void test_SetParameters_GetParameters(void)
 
     /* Set parameters to a simple string */
     hres = ITask_SetParameters(test_task, parameters_a);
-    ok(hres == S_OK, "Failed setting parameters %s: %08x\n",
+    ok(hres == S_OK, "Failed setting parameters %s: %08lx\n",
             wine_dbgstr_w(parameters_a), hres);
     hres = ITask_GetParameters(test_task, &parameters);
-    ok(hres == S_OK, "GetParameters failed: %08x\n", hres);
+    ok(hres == S_OK, "GetParameters failed: %08lx\n", hres);
     if (hres == S_OK)
     {
         ok(!lstrcmpW(parameters, parameters_a), "Got %s, expected %s\n",
@@ -209,10 +209,10 @@ static void test_SetParameters_GetParameters(void)
 
     /* Update parameters to a different simple string */
     hres = ITask_SetParameters(test_task, parameters_b);
-    ok(hres == S_OK, "Failed setting parameters %s: %08x\n",
+    ok(hres == S_OK, "Failed setting parameters %s: %08lx\n",
             wine_dbgstr_w(parameters_b), hres);
     hres = ITask_GetParameters(test_task, &parameters);
-    ok(hres == S_OK, "GetParameters failed: %08x\n", hres);
+    ok(hres == S_OK, "GetParameters failed: %08lx\n", hres);
     if (hres == S_OK)
     {
         ok(!lstrcmpW(parameters, parameters_b), "Got %s, expected %s\n",
@@ -222,10 +222,10 @@ static void test_SetParameters_GetParameters(void)
 
     /* Clear parameters */
     hres = ITask_SetParameters(test_task, empty);
-    ok(hres == S_OK, "Failed setting parameters %s: %08x\n",
+    ok(hres == S_OK, "Failed setting parameters %s: %08lx\n",
             wine_dbgstr_w(empty), hres);
     hres = ITask_GetParameters(test_task, &parameters);
-    ok(hres == S_OK, "GetParameters failed: %08x\n", hres);
+    ok(hres == S_OK, "GetParameters failed: %08lx\n", hres);
     if (hres == S_OK)
     {
         ok(!lstrcmpW(parameters, empty),
@@ -251,7 +251,7 @@ static void test_SetComment_GetComment(void)
 
     /* Get comment before setting it*/
     hres = ITask_GetComment(test_task, &comment);
-    ok(hres == S_OK, "GetComment failed: %08x\n", hres);
+    ok(hres == S_OK, "GetComment failed: %08lx\n", hres);
     if (hres == S_OK)
     {
         ok(!lstrcmpW(comment, empty),
@@ -261,10 +261,10 @@ static void test_SetComment_GetComment(void)
 
     /* Set comment to a simple string */
     hres = ITask_SetComment(test_task, comment_a);
-    ok(hres == S_OK, "Failed setting comment %s: %08x\n",
+    ok(hres == S_OK, "Failed setting comment %s: %08lx\n",
             wine_dbgstr_w(comment_a), hres);
     hres = ITask_GetComment(test_task, &comment);
-    ok(hres == S_OK, "GetComment failed: %08x\n", hres);
+    ok(hres == S_OK, "GetComment failed: %08lx\n", hres);
     if (hres == S_OK)
     {
         ok(!lstrcmpW(comment, comment_a), "Got %s, expected %s\n",
@@ -274,10 +274,10 @@ static void test_SetComment_GetComment(void)
 
     /* Update comment to a different simple string */
     hres = ITask_SetComment(test_task, comment_b);
-    ok(hres == S_OK, "Failed setting comment %s: %08x\n",
+    ok(hres == S_OK, "Failed setting comment %s: %08lx\n",
             wine_dbgstr_w(comment_b), hres);
     hres = ITask_GetComment(test_task, &comment);
-    ok(hres == S_OK, "GetComment failed: %08x\n", hres);
+    ok(hres == S_OK, "GetComment failed: %08lx\n", hres);
     if (hres == S_OK)
     {
         ok(!lstrcmpW(comment, comment_b), "Got %s, expected %s\n",
@@ -287,10 +287,10 @@ static void test_SetComment_GetComment(void)
 
     /* Clear comment */
     hres = ITask_SetComment(test_task, empty);
-    ok(hres == S_OK, "Failed setting comment %s: %08x\n",
+    ok(hres == S_OK, "Failed setting comment %s: %08lx\n",
             wine_dbgstr_w(empty), hres);
     hres = ITask_GetComment(test_task, &comment);
-    ok(hres == S_OK, "GetComment failed: %08x\n", hres);
+    ok(hres == S_OK, "GetComment failed: %08lx\n", hres);
     if (hres == S_OK)
     {
         ok(!lstrcmpW(comment, empty),
@@ -315,40 +315,40 @@ static void test_SetMaxRunTime_GetMaxRunTime(void)
      * 3 days * 24 hours * 60 minutes * 60 seconds * 1000 ms = 259200000 */
     max_run_time = 0;
     hres = ITask_GetMaxRunTime(test_task, &max_run_time);
-    ok(hres == S_OK, "Failed to get max runtime: 0x%08x\n", hres);
-    ok(max_run_time == 259200000, "Expected 259200000: %d\n", max_run_time);
+    ok(hres == S_OK, "Failed to get max runtime: 0x%08lx\n", hres);
+    ok(max_run_time == 259200000, "Expected 259200000: %ld\n", max_run_time);
 
     /* Basic set test */
     max_run_time = 0;
     hres = ITask_SetMaxRunTime(test_task, 1234);
-    ok(hres == S_OK, "Failed to set max runtime: 0x%08x\n", hres);
+    ok(hres == S_OK, "Failed to set max runtime: 0x%08lx\n", hres);
     hres = ITask_GetMaxRunTime(test_task, &max_run_time);
-    ok(hres == S_OK, "Failed to get max runtime: 0x%08x\n", hres);
-    ok(max_run_time == 1234, "Expected 1234: %d\n", max_run_time);
+    ok(hres == S_OK, "Failed to get max runtime: 0x%08lx\n", hres);
+    ok(max_run_time == 1234, "Expected 1234: %ld\n", max_run_time);
 
     /* Verify that time can be set to zero */
     max_run_time = 1;
     hres = ITask_SetMaxRunTime(test_task, 0);
-    ok(hres == S_OK, "Failed to set max runtime: 0x%08x\n", hres);
+    ok(hres == S_OK, "Failed to set max runtime: 0x%08lx\n", hres);
     hres = ITask_GetMaxRunTime(test_task, &max_run_time);
-    ok(hres == S_OK, "Failed to get max runtime: 0x%08x\n", hres);
-    ok(max_run_time == 0, "Expected 0: %d\n", max_run_time);
+    ok(hres == S_OK, "Failed to get max runtime: 0x%08lx\n", hres);
+    ok(max_run_time == 0, "Expected 0: %ld\n", max_run_time);
 
     /* Check resolution by setting time to one */
     max_run_time = 0;
     hres = ITask_SetMaxRunTime(test_task, 1);
-    ok(hres == S_OK, "Failed to set max runtime: 0x%08x\n", hres);
+    ok(hres == S_OK, "Failed to set max runtime: 0x%08lx\n", hres);
     hres = ITask_GetMaxRunTime(test_task, &max_run_time);
-    ok(hres == S_OK, "Failed to get max runtime: 0x%08x\n", hres);
-    ok(max_run_time == 1, "Expected 1: %d\n", max_run_time);
+    ok(hres == S_OK, "Failed to get max runtime: 0x%08lx\n", hres);
+    ok(max_run_time == 1, "Expected 1: %ld\n", max_run_time);
 
     /* Verify that time can be set to INFINITE */
     max_run_time = 0;
     hres = ITask_SetMaxRunTime(test_task, INFINITE);
-    ok(hres == S_OK, "Failed to set max runtime: 0x%08x\n", hres);
+    ok(hres == S_OK, "Failed to set max runtime: 0x%08lx\n", hres);
     hres = ITask_GetMaxRunTime(test_task, &max_run_time);
-    ok(hres == S_OK, "Failed to get max runtime: 0x%08x\n", hres);
-    ok(max_run_time == INFINITE, "Expected INFINITE: %d\n", max_run_time);
+    ok(hres == S_OK, "Failed to get max runtime: 0x%08lx\n", hres);
+    ok(max_run_time == INFINITE, "Expected INFINITE: %ld\n", max_run_time);
 
     ITask_Release(test_task);
 }
@@ -379,19 +379,19 @@ static void test_SetAccountInformation_GetAccountInformation(void)
     }
     ok(hres == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) ||
             hres == SCHED_E_CANNOT_OPEN_TASK,
-            "Unset account name generated: 0x%08x\n", hres);
+            "Unset account name generated: 0x%08lx\n", hres);
 
     /* Attempt to set to a dummy account without a password */
     /* This test passes on WinXP but fails on Win2K */
     hres = ITask_SetAccountInformation(test_task, dummy_account_name, NULL);
     ok(hres == S_OK,
-            "Failed setting dummy account with no password: %08x\n", hres);
+            "Failed setting dummy account with no password: %08lx\n", hres);
     hres = ITask_GetAccountInformation(test_task, &account_name);
     ok(hres == S_OK ||
        broken(hres == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) ||
               hres == SCHED_E_CANNOT_OPEN_TASK ||
               hres == 0x200),  /* win2k */
-       "GetAccountInformation failed: %08x\n", hres);
+       "GetAccountInformation failed: %08lx\n", hres);
     if (hres == S_OK)
     {
         ok(!lstrcmpW(account_name, dummy_account_name),
@@ -405,13 +405,13 @@ static void test_SetAccountInformation_GetAccountInformation(void)
     hres = ITask_SetAccountInformation(test_task, dummy_account_name_b,
             dummy_account_name_b);
     ok(hres == S_OK,
-            "Failed setting dummy account with password: %08x\n", hres);
+            "Failed setting dummy account with password: %08lx\n", hres);
     hres = ITask_GetAccountInformation(test_task, &account_name);
     ok(hres == S_OK ||
        broken(hres == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) ||
               hres == SCHED_E_CANNOT_OPEN_TASK ||
               hres == 0x200),  /* win2k */
-       "GetAccountInformation failed: %08x\n", hres);
+       "GetAccountInformation failed: %08lx\n", hres);
     if (hres == S_OK)
     {
         ok(!lstrcmpW(account_name, dummy_account_name_b),
@@ -422,13 +422,13 @@ static void test_SetAccountInformation_GetAccountInformation(void)
 
     /* Attempt to set to the local system account */
     hres = ITask_SetAccountInformation(test_task, empty, NULL);
-    ok(hres == S_OK, "Failed setting system account: %08x\n", hres);
+    ok(hres == S_OK, "Failed setting system account: %08lx\n", hres);
     hres = ITask_GetAccountInformation(test_task, &account_name);
     ok(hres == S_OK ||
        broken(hres == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) ||
               hres == SCHED_E_CANNOT_OPEN_TASK ||
               hres == 0x200),  /* win2k */
-       "GetAccountInformation failed: %08x\n", hres);
+       "GetAccountInformation failed: %08lx\n", hres);
     if (hres == S_OK)
     {
         ok(!lstrcmpW(account_name, empty),
@@ -456,36 +456,36 @@ static void test_task_state(void)
 
     flags = 0xdeadbeef;
     hr = ITask_GetFlags(test_task, &flags);
-    ok(hr == S_OK, "GetFlags error %#x\n", hr);
-    ok(flags == 0, "got %#x\n", flags);
+    ok(hr == S_OK, "GetFlags error %#lx\n", hr);
+    ok(flags == 0, "got %#lx\n", flags);
 
     if (0) /* crashes under Windows */
         hr = ITask_GetTaskFlags(test_task, NULL);
 
     flags = 0xdeadbeef;
     hr = ITask_GetTaskFlags(test_task, &flags);
-    ok(hr == S_OK, "GetTaskFlags error %#x\n", hr);
-    ok(flags == 0, "got %#x\n", flags);
+    ok(hr == S_OK, "GetTaskFlags error %#lx\n", hr);
+    ok(flags == 0, "got %#lx\n", flags);
 
     if (0) /* crashes under Windows */
         hr = ITask_GetStatus(test_task, NULL);
 
     status = 0xdeadbeef;
     hr = ITask_GetStatus(test_task, &status);
-    ok(hr == S_OK, "GetStatus error %#x\n", hr);
-    ok(status == SCHED_S_TASK_NOT_SCHEDULED, "got %#x\n", status);
+    ok(hr == S_OK, "GetStatus error %#lx\n", hr);
+    ok(status == SCHED_S_TASK_NOT_SCHEDULED, "got %#lx\n", status);
 
     if (0) /* crashes under Windows */
         hr = ITask_GetErrorRetryCount(test_task, NULL);
 
     hr = ITask_GetErrorRetryCount(test_task, &val1);
-    ok(hr == E_NOTIMPL, "got %#x\n", hr);
+    ok(hr == E_NOTIMPL, "got %#lx\n", hr);
 
     if (0) /* crashes under Windows */
         hr = ITask_GetErrorRetryInterval(test_task, NULL);
 
     hr = ITask_GetErrorRetryInterval(test_task, &val1);
-    ok(hr == E_NOTIMPL, "got %#x\n", hr);
+    ok(hr == E_NOTIMPL, "got %#lx\n", hr);
 
     if (0) /* crashes under Windows */
         hr = ITask_GetIdleWait(test_task, NULL, NULL);
@@ -493,7 +493,7 @@ static void test_task_state(void)
     val1 = 0xdead;
     val2 = 0xbeef;
     hr = ITask_GetIdleWait(test_task, &val1, &val2);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
     ok(val1 == 10, "got %u\n", val1);
     ok(val2 == 60, "got %u\n", val2);
 
@@ -502,23 +502,23 @@ static void test_task_state(void)
 
     val = 0xdeadbeef;
     hr = ITask_GetPriority(test_task, &val);
-    ok(hr == S_OK, "got %#x\n", hr);
-    ok(val == NORMAL_PRIORITY_CLASS, "got %#x\n", val);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(val == NORMAL_PRIORITY_CLASS, "got %#lx\n", val);
 
     if (0) /* crashes under Windows */
         hr = ITask_GetExitCode(test_task, NULL);
 
     val = 0xdeadbeef;
     hr = ITask_GetExitCode(test_task, &val);
-    ok(hr == SCHED_S_TASK_HAS_NOT_RUN, "got %#x\n", hr);
-    ok(val == 0, "got %#x\n", val);
+    ok(hr == SCHED_S_TASK_HAS_NOT_RUN, "got %#lx\n", hr);
+    ok(val == 0, "got %#lx\n", val);
 
     if (0) /* crashes under Windows */
         hr = ITask_GetMostRecentRunTime(test_task, NULL);
 
     memset(&st, 0xff, sizeof(st));
     hr = ITask_GetMostRecentRunTime(test_task, &st);
-    ok(hr == SCHED_S_TASK_HAS_NOT_RUN, "got %#x\n", hr);
+    ok(hr == SCHED_S_TASK_HAS_NOT_RUN, "got %#lx\n", hr);
     ok(st.wYear == 0, "got %u\n", st.wYear);
     ok(st.wMonth == 0, "got %u\n", st.wMonth);
     ok(st.wDay == 0, "got %u\n", st.wDay);
@@ -535,10 +535,10 @@ static void save_job(ITask *task)
     IPersistFile *pfile;
 
     hr = ITask_QueryInterface(task, &IID_IPersistFile, (void **)&pfile);
-    ok(hr == S_OK, "QueryInterface error %#x\n", hr);
+    ok(hr == S_OK, "QueryInterface error %#lx\n", hr);
 
     hr = IPersistFile_Save(pfile, NULL, FALSE);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     IPersistFile_Release(pfile);
 }
@@ -559,26 +559,26 @@ static void test_Run(void)
 
     hr = ITaskScheduler_NewWorkItem(scheduler, wine_test_runW, &CLSID_CTask,
                                     &IID_ITask, (IUnknown **)&task);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     hr = ITask_Run(task);
-    ok(hr == SCHED_E_TASK_NOT_READY, "got %#x\n", hr);
+    ok(hr == SCHED_E_TASK_NOT_READY, "got %#lx\n", hr);
 
     hr = ITask_Terminate(task);
-    ok(hr == SCHED_E_TASK_NOT_RUNNING, "got %#x\n", hr);
+    ok(hr == SCHED_E_TASK_NOT_RUNNING, "got %#lx\n", hr);
 
     hr = ITask_GetStatus(task, &status);
-    ok(hr == S_OK, "got %#x\n", hr);
-    ok(status == SCHED_S_TASK_NOT_SCHEDULED, "got %#x\n", status);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(status == SCHED_S_TASK_NOT_SCHEDULED, "got %#lx\n", status);
 
     save_job(task);
 
     hr = ITask_GetStatus(task, &status);
-    ok(hr == S_OK, "got %#x\n", hr);
-    ok(status == SCHED_S_TASK_NOT_SCHEDULED, "got %#x\n", status);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(status == SCHED_S_TASK_NOT_SCHEDULED, "got %#lx\n", status);
 
     hr = ITask_CreateTrigger(task, &idx, &trigger);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     memset(&trigger_data, 0, sizeof(trigger_data));
     trigger_data.cbTriggerSize = sizeof(trigger_data);
@@ -593,32 +593,32 @@ static void test_Run(void)
     trigger_data.Type.Weekly.WeeksInterval = 1;
     trigger_data.Type.Weekly.rgfDaysOfTheWeek = 0x7f; /* every day */
     hr = ITaskTrigger_SetTrigger(trigger, &trigger_data);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
     ITaskTrigger_Release(trigger);
 
     hr = ITask_SetApplicationName(task, cmdW);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     hr = ITask_SetParameters(task, empty);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     hr = ITask_SetWorkingDirectory(task, empty);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     /* Save the task so that the Scheduler service would notice the changes */
     save_job(task);
 
     hr = ITask_GetStatus(task, &status);
-    ok(hr == S_OK, "got %#x\n", hr);
-    ok(status == SCHED_S_TASK_HAS_NOT_RUN, "got %#x\n", status);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(status == SCHED_S_TASK_HAS_NOT_RUN, "got %#lx\n", status);
 
     hr = ITask_Run(task);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     /* According to MSDN the task status doesn't update dynamically */
     hr = ITask_GetStatus(task, &status);
-    ok(hr == S_OK, "got %#x\n", hr);
-    ok(status == SCHED_S_TASK_HAS_NOT_RUN, "got %#x\n", status);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(status == SCHED_S_TASK_HAS_NOT_RUN, "got %#lx\n", status);
 
     ITask_Release(task);
 
@@ -632,10 +632,10 @@ static void test_Run(void)
     for (i = 0; i < 5; i++)
     {
         hr = ITaskScheduler_Activate(scheduler, wine_test_runW, &IID_ITask, (IUnknown **)&task);
-        ok(hr == S_OK, "Activate error %#x\n", hr);
+        ok(hr == S_OK, "Activate error %#lx\n", hr);
 
         hr = ITask_GetStatus(task, &status);
-        ok(hr == S_OK, "got %#x\n", hr);
+        ok(hr == S_OK, "got %#lx\n", hr);
 
         ITask_Release(task);
 
@@ -645,15 +645,15 @@ static void test_Run(void)
     }
 
     hr = ITaskScheduler_Activate(scheduler, wine_test_runW, &IID_ITask, (IUnknown **)&task);
-    ok(hr == S_OK, "Activate error %#x\n", hr);
+    ok(hr == S_OK, "Activate error %#lx\n", hr);
 
     hr = ITask_GetStatus(task, &status);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     if (status == SCHED_S_TASK_RUNNING)
     {
         hr = ITask_Terminate(task);
-        ok(hr == S_OK, "got %#x\n", hr);
+        ok(hr == S_OK, "got %#lx\n", hr);
 
         ITask_Release(task);
 
@@ -667,10 +667,10 @@ static void test_Run(void)
         for (i = 0; i < 5; i++)
         {
             hr = ITaskScheduler_Activate(scheduler, wine_test_runW, &IID_ITask, (IUnknown **)&task);
-            ok(hr == S_OK, "Activate error %#x\n", hr);
+            ok(hr == S_OK, "Activate error %#lx\n", hr);
 
             hr = ITask_GetStatus(task, &status);
-            ok(hr == S_OK, "got %#x\n", hr);
+            ok(hr == S_OK, "got %#lx\n", hr);
 
             ITask_Release(task);
 
@@ -683,7 +683,7 @@ static void test_Run(void)
         ITask_Release(task);
 
     hr = taskscheduler_delete(scheduler, wine_test_runW);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 }
 
 static void test_SetFlags(void)
@@ -694,31 +694,31 @@ static void test_SetFlags(void)
 
     hr = ITaskScheduler_NewWorkItem(scheduler, task_name, &CLSID_CTask,
                                     &IID_ITask, (IUnknown **)&task);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     hr = ITask_SetFlags(task, 0);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     flags = 0xdeadbeef;
     hr = ITask_GetFlags(task, &flags);
-    ok(hr == S_OK, "got %#x\n", hr);
-    ok(flags == 0, "got %#x\n", flags);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(flags == 0, "got %#lx\n", flags);
 
     hr = ITask_SetFlags(task, 0xffffffff);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     flags = 0xdeadbeef;
     hr = ITask_GetFlags(task, &flags);
-    ok(hr == S_OK, "got %#x\n", hr);
-    ok(flags == 0x7fff, "got %#x\n", flags);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(flags == 0x7fff, "got %#lx\n", flags);
 
     hr = ITask_SetFlags(task, 0x9234);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     flags = 0xdeadbeef;
     hr = ITask_GetFlags(task, &flags);
-    ok(hr == S_OK, "got %#x\n", hr);
-    ok(flags == 0x1234, "got %#x\n", flags);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(flags == 0x1234, "got %#lx\n", flags);
 
     ITask_Release(task);
 }
@@ -733,7 +733,7 @@ static void test_workitem_data(void)
 
     hr = ITaskScheduler_NewWorkItem(scheduler, task_name, &CLSID_CTask,
                                     &IID_ITask, (IUnknown **)&task);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     if (0) /* crashes under Windows */
         hr = ITask_GetWorkItemData(task, &count, NULL);
@@ -743,35 +743,35 @@ static void test_workitem_data(void)
     count = 0xdead;
     data = (BYTE *)0xdeadbeef;
     hr = ITask_GetWorkItemData(task, &count, &data);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
     ok(count == 0, "got %u\n", count);
     ok(data == NULL, "got %p\n", data);
 
     hr = ITask_SetWorkItemData(task, sizeof(hello), NULL);
-    ok(hr == E_INVALIDARG, "got %#x\n", hr);
+    ok(hr == E_INVALIDARG, "got %#lx\n", hr);
 
     hr = ITask_SetWorkItemData(task, 0, hello);
-    ok(hr == E_INVALIDARG, "got %#x\n", hr);
+    ok(hr == E_INVALIDARG, "got %#lx\n", hr);
 
     hr = ITask_SetWorkItemData(task, sizeof(hello), hello);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     count = 0xdead;
     data = NULL;
     hr = ITask_GetWorkItemData(task, &count, &data);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
     ok(count == sizeof(hello), "got %u\n", count);
     ok(data != NULL, "got NULL\n");
     ok(!memcmp(data, hello, sizeof(hello)), "data mismatch\n");
     CoTaskMemFree(data);
 
     hr = ITask_SetWorkItemData(task, 0, NULL);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     count = 0xdead;
     data = (BYTE *)0xdeadbeef;
     hr = ITask_GetWorkItemData(task, &count, &data);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
     ok(count == 0, "got %u\n", count);
     ok(data == NULL, "got %p\n", data);
 
@@ -785,7 +785,7 @@ START_TEST(task)
     CoInitialize(NULL);
     hr = CoCreateInstance(&CLSID_CTaskScheduler, NULL, CLSCTX_INPROC_SERVER,
                           &IID_ITaskScheduler, (void **)&scheduler);
-    ok(hr == S_OK, "failed to create task scheduler: %#x\n", hr);
+    ok(hr == S_OK, "failed to create task scheduler: %#lx\n", hr);
 
     test_SetApplicationName_GetApplicationName();
     test_CreateTrigger();

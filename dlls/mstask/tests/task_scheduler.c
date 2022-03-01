@@ -65,7 +65,7 @@ static void test_NewWorkItem(void)
     /* Create TaskScheduler */
     hres = CoCreateInstance(&CLSID_CTaskScheduler, NULL, CLSCTX_INPROC_SERVER,
             &IID_ITaskScheduler, (void **) &test_task_scheduler);
-    ok(hres == S_OK, "CTaskScheduler CoCreateInstance failed: %08x\n", hres);
+    ok(hres == S_OK, "CTaskScheduler CoCreateInstance failed: %08lx\n", hres);
     if (hres != S_OK)
     {
         skip("Failed to create task scheduler.  Skipping tests.\n");
@@ -75,7 +75,7 @@ static void test_NewWorkItem(void)
     /* Test basic task creation */
     hres = ITaskScheduler_NewWorkItem(test_task_scheduler, task_name,
             &CLSID_CTask, &IID_ITask, (IUnknown**)&task);
-    ok(hres == S_OK, "NewNetworkItem failed: %08x\n", hres);
+    ok(hres == S_OK, "NewNetworkItem failed: %08lx\n", hres);
     if (hres == S_OK)
         ITask_Release(task);
 
@@ -83,18 +83,18 @@ static void test_NewWorkItem(void)
     hres = ITaskScheduler_NewWorkItem(test_task_scheduler, task_name,
             &GUID_BAD, &IID_ITask, (IUnknown**)&task);
     ok(hres == CLASS_E_CLASSNOTAVAILABLE,
-            "Expected CLASS_E_CLASSNOTAVAILABLE: %08x\n", hres);
+            "Expected CLASS_E_CLASSNOTAVAILABLE: %08lx\n", hres);
 
     /* Task creation attempt using invalid interface ID */
     hres = ITaskScheduler_NewWorkItem(test_task_scheduler, task_name,
             &CLSID_CTask, &GUID_BAD, (IUnknown**)&task);
-    ok(hres == E_NOINTERFACE, "Expected E_NOINTERFACE: %08x\n", hres);
+    ok(hres == E_NOINTERFACE, "Expected E_NOINTERFACE: %08lx\n", hres);
 
     /* Task creation attempt using invalid work item class and interface ID */
     hres = ITaskScheduler_NewWorkItem(test_task_scheduler, task_name,
             &GUID_BAD, &GUID_BAD, (IUnknown**)&task);
     ok(hres == CLASS_E_CLASSNOTAVAILABLE,
-            "Expected CLASS_E_CLASSNOTAVAILABLE: %08x\n", hres);
+            "Expected CLASS_E_CLASSNOTAVAILABLE: %08lx\n", hres);
 
     ITaskScheduler_Release(test_task_scheduler);
     return;
@@ -110,7 +110,7 @@ static void test_Activate(void)
     /* Create TaskScheduler */
     hres = CoCreateInstance(&CLSID_CTaskScheduler, NULL, CLSCTX_INPROC_SERVER,
             &IID_ITaskScheduler, (void **) &test_task_scheduler);
-    ok(hres == S_OK, "CTaskScheduler CoCreateInstance failed: %08x\n", hres);
+    ok(hres == S_OK, "CTaskScheduler CoCreateInstance failed: %08lx\n", hres);
     if (hres != S_OK)
     {
         skip("Failed to create task scheduler.  Skipping tests.\n");
@@ -120,7 +120,7 @@ static void test_Activate(void)
     /* Attempt to activate a nonexistent task */
     hres = ITaskScheduler_Activate(test_task_scheduler, not_task_name,
             &IID_ITask, (IUnknown**)&task);
-    ok(hres == COR_E_FILENOTFOUND, "Expected COR_E_FILENOTFOUND: %08x\n", hres);
+    ok(hres == COR_E_FILENOTFOUND, "Expected COR_E_FILENOTFOUND: %08lx\n", hres);
 
     ITaskScheduler_Release(test_task_scheduler);
     return;
@@ -134,7 +134,7 @@ static void test_GetTargetComputer(void)
     /* Create TaskScheduler */
     hres = CoCreateInstance(&CLSID_CTaskScheduler, NULL, CLSCTX_INPROC_SERVER,
             &IID_ITaskScheduler, (void **) &test_task_scheduler);
-    ok(hres == S_OK, "CTaskScheduler CoCreateInstance failed: %08x\n", hres);
+    ok(hres == S_OK, "CTaskScheduler CoCreateInstance failed: %08lx\n", hres);
     if (hres != S_OK)
     {
         skip("Failed to create task scheduler.\n");
@@ -145,12 +145,12 @@ static void test_GetTargetComputer(void)
     {
         /* This crashes on w2k */
         hres = ITaskScheduler_GetTargetComputer(test_task_scheduler, NULL);
-        ok(hres == E_INVALIDARG, "got 0x%x (expected E_INVALIDARG)\n", hres);
+        ok(hres == E_INVALIDARG, "got 0x%lx (expected E_INVALIDARG)\n", hres);
     }
 
     hres = ITaskScheduler_GetTargetComputer(test_task_scheduler, &oldname);
     ok((hres == S_OK) && oldname && oldname[0] == '\\' && oldname[1] == '\\' && oldname[2],
-        "got 0x%x and %s (expected S_OK and an unc name)\n", hres, wine_dbgstr_w(oldname));
+        "got 0x%lx and %s (expected S_OK and an unc name)\n", hres, wine_dbgstr_w(oldname));
 
     CoTaskMemFree(oldname);
 
@@ -175,7 +175,7 @@ static void test_SetTargetComputer(void)
     /* Create TaskScheduler */
     hres = CoCreateInstance(&CLSID_CTaskScheduler, NULL, CLSCTX_INPROC_SERVER,
             &IID_ITaskScheduler, (void **) &test_task_scheduler);
-    ok(hres == S_OK, "CTaskScheduler CoCreateInstance failed: %08x\n", hres);
+    ok(hres == S_OK, "CTaskScheduler CoCreateInstance failed: %08lx\n", hres);
     if (hres != S_OK)
     {
         skip("Failed to create task scheduler.  Skipping tests.\n");
@@ -183,24 +183,24 @@ static void test_SetTargetComputer(void)
     }
 
     hres = ITaskScheduler_GetTargetComputer(test_task_scheduler, &oldname);
-    ok(hres == S_OK, "got 0x%x and %s (expected S_OK)\n", hres, wine_dbgstr_w(oldname));
+    ok(hres == S_OK, "got 0x%lx and %s (expected S_OK)\n", hres, wine_dbgstr_w(oldname));
 
     /* NULL is an alias for the local computer */
     hres = ITaskScheduler_SetTargetComputer(test_task_scheduler, NULL);
-    ok(hres == S_OK, "got 0x%x (expected S_OK)\n", hres);
+    ok(hres == S_OK, "got 0x%lx (expected S_OK)\n", hres);
     hres = ITaskScheduler_GetTargetComputer(test_task_scheduler, &name);
     ok((hres == S_OK && !lstrcmpiW(name, buffer)),
-        "got 0x%x with %s (expected S_OK and %s)\n",
+        "got 0x%lx with %s (expected S_OK and %s)\n",
         hres, wine_dbgstr_w(name), wine_dbgstr_w(buffer));
     CoTaskMemFree(name);
 
     /* The name must be valid */
     hres = ITaskScheduler_SetTargetComputer(test_task_scheduler, does_not_existW);
-    ok(hres == HRESULT_FROM_WIN32(ERROR_BAD_NETPATH), "got 0x%x (expected 0x80070035)\n", hres);
+    ok(hres == HRESULT_FROM_WIN32(ERROR_BAD_NETPATH), "got 0x%lx (expected 0x80070035)\n", hres);
     /* the name of the target computer is unchanged */
     hres = ITaskScheduler_GetTargetComputer(test_task_scheduler, &name);
     ok((hres == S_OK && !lstrcmpiW(name, buffer)),
-        "got 0x%x with %s (expected S_OK and %s)\n",
+        "got 0x%lx with %s (expected S_OK and %s)\n",
         hres, wine_dbgstr_w(name), wine_dbgstr_w(buffer));
     CoTaskMemFree(name);
 
@@ -211,19 +211,19 @@ static void test_SetTargetComputer(void)
         skip("SetTargetComputer failed with E_ACCESSDENIED (needs admin rights)\n");
         goto done;
     }
-    ok(hres == S_OK, "got 0x%x (expected S_OK)\n", hres);
+    ok(hres == S_OK, "got 0x%lx (expected S_OK)\n", hres);
 
     /* the case is ignored */
     CharUpperW(buffer);
     hres = ITaskScheduler_SetTargetComputer(test_task_scheduler, buffer);
-    ok(hres == S_OK, "got 0x%x (expected S_OK)\n", hres);
+    ok(hres == S_OK, "got 0x%lx (expected S_OK)\n", hres);
     CharLowerW(buffer);
     hres = ITaskScheduler_SetTargetComputer(test_task_scheduler, buffer);
-    ok(hres == S_OK, "got 0x%x (expected S_OK)\n", hres);
+    ok(hres == S_OK, "got 0x%lx (expected S_OK)\n", hres);
 
     /* cleanup */
     hres = ITaskScheduler_SetTargetComputer(test_task_scheduler, oldname);
-    ok(hres == S_OK, "got 0x%x (expected S_OK)\n", hres);
+    ok(hres == S_OK, "got 0x%lx (expected S_OK)\n", hres);
 
 done:
     CoTaskMemFree(oldname);
@@ -243,37 +243,37 @@ static void test_Enum(void)
 
     hr = CoCreateInstance(&CLSID_CTaskScheduler, NULL, CLSCTX_INPROC_SERVER,
             &IID_ITaskScheduler, (void **)&scheduler);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     /* cleanup after previous runs */
     taskscheduler_delete(scheduler, Task1);
 
     hr = ITaskScheduler_NewWorkItem(scheduler, Task1, &CLSID_CTask, &IID_ITask, (IUnknown **)&task);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
     hr = ITaskScheduler_AddWorkItem(scheduler, Task1, (IScheduledWorkItem *)task);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     ITask_Release(task);
 
     hr = ITaskScheduler_Enum(scheduler, NULL);
-    ok(hr == E_INVALIDARG, "got %#x\n", hr);
+    ok(hr == E_INVALIDARG, "got %#lx\n", hr);
 
     hr = ITaskScheduler_Enum(scheduler, &tasks);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     names = (void *)0xdeadbeef;
     fetched = 0xdeadbeef;
     hr = IEnumWorkItems_Next(tasks, 0, &names, &fetched);
-    ok(hr == E_INVALIDARG, "got %#x\n", hr);
+    ok(hr == E_INVALIDARG, "got %#lx\n", hr);
     ok(names == (void *)0xdeadbeef, "got %p\n", names);
-    ok(fetched == 0xdeadbeef, "got %#x\n", fetched);
+    ok(fetched == 0xdeadbeef, "got %#lx\n", fetched);
 
     hr = IEnumWorkItems_Next(tasks, 1, NULL, NULL);
-    ok(hr == E_INVALIDARG, "got %#x\n", hr);
+    ok(hr == E_INVALIDARG, "got %#lx\n", hr);
 
     names = NULL;
     hr = IEnumWorkItems_Next(tasks, 1, &names, NULL);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
     ok(names != NULL, "got NULL\n");
     ok(names[0] != NULL, "got NULL\n");
     CoTaskMemFree(names[0]);
@@ -281,19 +281,19 @@ static void test_Enum(void)
 
     names = (void *)0xdeadbeef;
     hr = IEnumWorkItems_Next(tasks, 2, &names, NULL);
-    ok(hr == E_INVALIDARG, "got %#x\n", hr);
+    ok(hr == E_INVALIDARG, "got %#lx\n", hr);
     ok(names == (void *)0xdeadbeef, "got %p\n", names);
 
     hr = IEnumWorkItems_Reset(tasks);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     names = NULL;
     fetched = 0xdeadbeef;
     hr = IEnumWorkItems_Next(tasks, 1, &names, &fetched);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
     ok(names != NULL, "got NULL\n");
     ok(names[0] != NULL, "got NULL\n");
-    ok(fetched == 1, "got %u\n", fetched);
+    ok(fetched == 1, "got %lu\n", fetched);
     CoTaskMemFree(names[0]);
     CoTaskMemFree(names);
 
@@ -301,19 +301,19 @@ static void test_Enum(void)
         /* do nothing*/;
 
     hr = IEnumWorkItems_Skip(tasks, 1);
-    ok(hr == S_FALSE, "got %#x\n", hr);
+    ok(hr == S_FALSE, "got %#lx\n", hr);
 
     names = (void *)0xdeadbeef;
     fetched = 0xdeadbeef;
     hr = IEnumWorkItems_Next(tasks, 1, &names, &fetched);
-    ok(hr == S_FALSE, "got %#x\n", hr);
+    ok(hr == S_FALSE, "got %#lx\n", hr);
     ok(names == NULL, "got %p\n", names);
-    ok(fetched == 0, "got %u\n", fetched);
+    ok(fetched == 0, "got %lu\n", fetched);
 
     IEnumWorkItems_Release(tasks);
 
     hr = taskscheduler_delete(scheduler, Task1);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     ITaskScheduler_Release(scheduler);
 }
@@ -330,31 +330,31 @@ static void test_save_task_curfile(ITask *task)
     WCHAR *curfile;
 
     hr = ITask_QueryInterface(task, &IID_IPersistFile, (void **)&pfile);
-    ok(hr == S_OK, "QueryInterface error %#x\n", hr);
+    ok(hr == S_OK, "QueryInterface error %#lx\n", hr);
 
     curfile = NULL;
     hr = IPersistFile_GetCurFile(pfile, &curfile);
-    ok(hr == S_OK, "GetCurFile error %#x\n", hr);
+    ok(hr == S_OK, "GetCurFile error %#lx\n", hr);
     ok(curfile && curfile[0], "curfile should not be NULL\n");
 
     ok(file_exists(curfile), "curfile should exist\n");
 
     hr = IPersistFile_Save(pfile, curfile, FALSE);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_EXISTS), "wrong error %#x\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_EXISTS), "wrong error %#lx\n", hr);
 
     hr = IPersistFile_Save(pfile, curfile, TRUE);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_EXISTS), "wrong error %#x\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_EXISTS), "wrong error %#lx\n", hr);
 
     hr = IPersistFile_Save(pfile, NULL, FALSE);
-    ok(hr == S_OK, "Save error %#x\n", hr);
+    ok(hr == S_OK, "Save error %#lx\n", hr);
 
     hr = IPersistFile_Save(pfile, NULL, TRUE);
-    ok(hr == S_OK, "Save error %#x\n", hr);
+    ok(hr == S_OK, "Save error %#lx\n", hr);
     CoTaskMemFree(curfile);
 
     curfile = NULL;
     hr = IPersistFile_GetCurFile(pfile, &curfile);
-    ok(hr == S_OK, "GetCurFile error %#x\n", hr);
+    ok(hr == S_OK, "GetCurFile error %#lx\n", hr);
     ok(curfile && curfile[0] , "curfile should not be NULL\n");
     CoTaskMemFree(curfile);
 
@@ -369,27 +369,27 @@ static WCHAR *get_task_curfile(ITask *task, BOOL should_exist, BOOL is_dirty, in
     CLSID clsid;
 
     hr = ITask_QueryInterface(task, &IID_IPersistFile, (void **)&pfile);
-    ok_(__FILE__, line)(hr == S_OK, "QueryInterface error %#x\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "QueryInterface error %#lx\n", hr);
 
     hr = IPersistFile_IsDirty(pfile);
-    ok_(__FILE__, line)(hr == is_dirty ? S_OK : S_FALSE, "got %#x\n", hr);
+    ok_(__FILE__, line)(hr == is_dirty ? S_OK : S_FALSE, "got %#lx\n", hr);
 
     curfile = NULL;
     hr = IPersistFile_GetCurFile(pfile, &curfile);
-    ok_(__FILE__, line)(hr == S_OK, "GetCurFile error %#x\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "GetCurFile error %#lx\n", hr);
     ok_(__FILE__, line)(curfile && curfile[0] , "curfile should not be NULL\n");
 
     hr = IPersistFile_Load(pfile, curfile, STGM_READ);
     if (should_exist)
-        ok_(__FILE__, line)(hr == S_OK, "Load error %#x\n", hr);
+        ok_(__FILE__, line)(hr == S_OK, "Load error %#lx\n", hr);
     else
-        ok_(__FILE__, line)(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "wrong error %#x\n", hr);
+        ok_(__FILE__, line)(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "wrong error %#lx\n", hr);
 
     if (0) /* crashes under Windows */
         hr = IPersistFile_GetClassID(pfile, NULL);
 
     hr = IPersistFile_GetClassID(pfile, &clsid);
-    ok_(__FILE__, line)(hr == S_OK, "GetClassID error %#x\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "GetClassID error %#lx\n", hr);
     ok_(__FILE__, line)(IsEqualCLSID(&clsid, &CLSID_CTask), "got %s\n", wine_dbgstr_guid(&clsid));
 
     IPersistFile_Release(pfile);
@@ -427,28 +427,28 @@ static void test_task_storage(void)
     hr = CoCreateInstance(&CLSID_CTaskScheduler, NULL, CLSCTX_INPROC_SERVER, &IID_ITaskScheduler, (void **)&scheduler);
     if (hr != S_OK)
     {
-        win_skip("CoCreateInstance(CLSID_CTaskScheduler) error %#x\n", hr);
+        win_skip("CoCreateInstance(CLSID_CTaskScheduler) error %#lx\n", hr);
         return;
     }
 
     hr = ITaskScheduler_Delete(scheduler, Task1_ext);
-    ok(hr == E_INVALIDARG, "wrong error %#x\n", hr);
+    ok(hr == E_INVALIDARG, "wrong error %#lx\n", hr);
 
     hr = ITaskScheduler_Delete(scheduler, Task1);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "wrong error %#x\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "wrong error %#lx\n", hr);
 
     hr = ITaskScheduler_NewWorkItem(scheduler, Task1_ext, &CLSID_CTask, &IID_ITask, (IUnknown **)&task);
-    ok(hr == E_INVALIDARG, "wrong error %#x\n", hr);
+    ok(hr == E_INVALIDARG, "wrong error %#lx\n", hr);
 
     hr = ITaskScheduler_NewWorkItem(scheduler, Task1, &CLSID_CTask, &IID_ITask, (IUnknown **)&task);
-    ok(hr == S_OK, "NewWorkItem error %#x\n", hr);
+    ok(hr == S_OK, "NewWorkItem error %#lx\n", hr);
 
     curfile = get_task_curfile(task, FALSE, FALSE, __LINE__);
     ok(!file_exists(curfile), "curfile should not exist\n");
     ok(!lstrcmpW(curfile, task1_full_name), "name is wrong %s\n", wine_dbgstr_w(curfile));
 
     hr = ITask_SetComment(task, Task1);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     curfile2 = get_task_curfile(task, FALSE, TRUE, __LINE__);
     ok(!file_exists(curfile2), "curfile should not exist\n");
@@ -456,7 +456,7 @@ static void test_task_storage(void)
     CoTaskMemFree(curfile2);
 
     hr = ITaskScheduler_NewWorkItem(scheduler, Task1, &CLSID_CTask, &IID_ITask, (IUnknown **)&task2);
-    ok(hr == S_OK, "NewWorkItem error %#x\n", hr);
+    ok(hr == S_OK, "NewWorkItem error %#lx\n", hr);
     ok(task2 != task, "tasks should not be equal\n");
 
     curfile2 = get_task_curfile(task2, FALSE, FALSE, __LINE__);
@@ -469,32 +469,32 @@ static void test_task_storage(void)
 
     task2 = (ITask *)0xdeadbeef;
     hr = ITaskScheduler_Activate(scheduler, Task1, &IID_ITask, (IUnknown **)&task2);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "wrong error %#x\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "wrong error %#lx\n", hr);
     ok(task2 == (ITask *)0xdeadbeef, "task should not be set to NULL\n");
 
     hr = ITaskScheduler_AddWorkItem(scheduler, Task2, (IScheduledWorkItem *)task);
-    ok(hr == S_OK, "AddWorkItem error %#x\n", hr);
+    ok(hr == S_OK, "AddWorkItem error %#lx\n", hr);
     curfile = get_task_curfile(task, TRUE, FALSE, __LINE__);
     ok(file_exists(curfile), "curfile should exist\n");
     ok(!lstrcmpW(curfile, task2_full_name), "name is wrong %s\n", wine_dbgstr_w(curfile));
     CoTaskMemFree(curfile);
 
     hr = ITaskScheduler_AddWorkItem(scheduler, Task3, (IScheduledWorkItem *)task);
-    ok(hr == S_OK, "AddWorkItem error %#x\n", hr);
+    ok(hr == S_OK, "AddWorkItem error %#lx\n", hr);
     curfile = get_task_curfile(task, TRUE, FALSE, __LINE__);
     ok(file_exists(curfile), "curfile should exist\n");
     ok(!lstrcmpW(curfile, task3_full_name), "name is wrong %s\n", wine_dbgstr_w(curfile));
     CoTaskMemFree(curfile);
 
     hr = ITaskScheduler_AddWorkItem(scheduler, Task1, (IScheduledWorkItem *)task);
-    ok(hr == S_OK, "AddWorkItem error %#x\n", hr);
+    ok(hr == S_OK, "AddWorkItem error %#lx\n", hr);
     curfile = get_task_curfile(task, TRUE, FALSE, __LINE__);
     ok(file_exists(curfile), "curfile should exist\n");
     ok(!lstrcmpW(curfile, task1_full_name), "name is wrong %s\n", wine_dbgstr_w(curfile));
     CoTaskMemFree(curfile);
 
     hr = ITaskScheduler_AddWorkItem(scheduler, Task1, (IScheduledWorkItem *)task);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_EXISTS), "wrong error %#x\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_EXISTS), "wrong error %#lx\n", hr);
 
     curfile = get_task_curfile(task, TRUE, FALSE, __LINE__);
     ok(file_exists(curfile), "curfile should exist\n");
@@ -504,7 +504,7 @@ static void test_task_storage(void)
 
     task = NULL;
     hr = ITaskScheduler_Activate(scheduler, Task1, &IID_ITask, (IUnknown **)&task);
-    ok(hr == S_OK, "Activate error %#x\n", hr);
+    ok(hr == S_OK, "Activate error %#lx\n", hr);
     ok(task != NULL, "task should not be set to NULL\n");
 
     curfile = get_task_curfile(task, TRUE, FALSE, __LINE__);
@@ -516,11 +516,11 @@ static void test_task_storage(void)
     test_save_task_curfile(task);
 
     hr = taskscheduler_delete(scheduler, Task1);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
     hr = taskscheduler_delete(scheduler, Task2);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
     hr = taskscheduler_delete(scheduler, Task3);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     ITask_Release(task);
     ITaskScheduler_Release(scheduler);
