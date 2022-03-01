@@ -43,7 +43,7 @@ static void IDirectSoundFullDuplex_test(LPDIRECTSOUNDFULLDUPLEX dsfdo,
 
     /* Try to Query for objects */
     rc=IDirectSoundFullDuplex_QueryInterface(dsfdo,&IID_IUnknown,(LPVOID*)&unknown);
-    ok(rc==DS_OK,"IDirectSoundFullDuplex_QueryInterface(IID_IUnknown) failed: %08x\n", rc);
+    ok(rc==DS_OK,"IDirectSoundFullDuplex_QueryInterface(IID_IUnknown) failed: %08lx\n", rc);
     if (rc==DS_OK) {
         ref = IUnknown_Release(unknown);
         ok(ref==0, "IDirectSoundFullDuplex_Release() has %d references, "
@@ -51,7 +51,7 @@ static void IDirectSoundFullDuplex_test(LPDIRECTSOUNDFULLDUPLEX dsfdo,
     }
 
     rc=IDirectSoundFullDuplex_QueryInterface(dsfdo,&IID_IDirectSound,(LPVOID*)&ds);
-    ok(rc==(initialized?DS_OK:E_NOINTERFACE),"IDirectSoundFullDuplex_QueryInterface(IID_IDirectSound) failed: %08x\n", rc);
+    ok(rc==(initialized?DS_OK:E_NOINTERFACE),"IDirectSoundFullDuplex_QueryInterface(IID_IDirectSound) failed: %08lx\n", rc);
     if (rc==DS_OK) {
         ref=IDirectSound_Release(ds);
         ok(ref==0, "IDirectSound_Release() has %d references, "
@@ -60,12 +60,12 @@ static void IDirectSoundFullDuplex_test(LPDIRECTSOUNDFULLDUPLEX dsfdo,
 
     rc=IDirectSoundFullDuplex_QueryInterface(dsfdo,&IID_IDirectSound8,(LPVOID*)&ds8);
     ok(rc==(initialized?DS_OK:E_NOINTERFACE),"IDirectSoundFullDuplex_QueryInterface(IID_IDirectSound8) "
-       "failed: %08x\n",rc);
+       "failed: %08lx\n",rc);
     if (rc==DS_OK) {
         IDirectSoundFullDuplex * dsfd1;
         rc=IDirectSound8_QueryInterface(ds8,&IID_IDirectSoundFullDuplex,(LPVOID*)&dsfd1);
         ok(rc==DS_OK,"IDirectSound8_QueryInterface(IID_IDirectSoundFullDuplex) "
-           "failed: %08x\n",rc);
+           "failed: %08lx\n",rc);
         if (rc==DS_OK) {
             ref=IDirectSoundFullDuplex_Release(dsfd1);
             ok(ref==1, "IDirectSoundFullDuplex_Release() has %d references, "
@@ -78,7 +78,7 @@ static void IDirectSoundFullDuplex_test(LPDIRECTSOUNDFULLDUPLEX dsfdo,
 
     rc=IDirectSoundFullDuplex_QueryInterface(dsfdo,&IID_IDirectSoundCapture,(LPVOID*)&dsc);
     ok(rc==(initialized?DS_OK:E_NOINTERFACE),"IDirectSoundFullDuplex_QueryInterface(IID_IDirectSoundCapture) "
-       "failed: %08x\n",rc);
+       "failed: %08lx\n",rc);
     if (rc==DS_OK) {
         ref=IDirectSoundCapture_Release(dsc);
         ok(ref==0, "IDirectSoundCapture_Release() has %d references, "
@@ -87,7 +87,7 @@ static void IDirectSoundFullDuplex_test(LPDIRECTSOUNDFULLDUPLEX dsfdo,
 
     rc=IDirectSoundFullDuplex_QueryInterface(dsfdo,&IID_IDirectSoundFullDuplex,(LPVOID*)&dsfd);
     ok(rc==DS_OK,"IDirectSoundFullDuplex_QueryInterface(IID_IDirectSoundFullDuplex) "
-       "failed: %08x\n",rc);
+       "failed: %08lx\n",rc);
     if (rc==DS_OK) {
         ok(dsfdo==dsfd, "different interfaces\n");
         ref=IDirectSoundFullDuplex_Release(dsfd);
@@ -116,7 +116,7 @@ static void IDirectSoundFullDuplex_tests(void)
                         CLSCTX_INPROC_SERVER, &IID_IDirectSoundFullDuplex,
                         (void**)&dsfdo);
     ok(rc==S_OK||rc==REGDB_E_CLASSNOTREG||rc==CLASS_E_CLASSNOTAVAILABLE,
-       "CoCreateInstance(CLSID_DirectSoundFullDuplex) failed: 0x%08x\n", rc);
+       "CoCreateInstance(CLSID_DirectSoundFullDuplex) failed: 0x%08lx\n", rc);
     if (rc==REGDB_E_CLASSNOTREG) {
         trace("  Class Not Registered\n");
         return;
@@ -132,7 +132,7 @@ static void IDirectSoundFullDuplex_tests(void)
     rc=CoCreateInstance(&CLSID_DirectSoundFullDuplex, NULL,
                         CLSCTX_INPROC_SERVER, &IID_IDirectSoundFullDuplex,
                         (void**)&dsfdo);
-    ok(rc==S_OK,"CoCreateInstance(CLSID_DirectSoundFullDuplex) failed: 0x%08x\n", rc);
+    ok(rc==S_OK,"CoCreateInstance(CLSID_DirectSoundFullDuplex) failed: 0x%08lx\n", rc);
     if (dsfdo)
         IDirectSoundFullDuplex_test(dsfdo, FALSE, &DSDEVID_DefaultCapture,
                                     &DSDEVID_DefaultPlayback);
@@ -142,7 +142,7 @@ static void IDirectSoundFullDuplex_tests(void)
     rc=CoCreateInstance(&CLSID_DirectSoundFullDuplex, NULL,
                         CLSCTX_INPROC_SERVER, &IID_IDirectSoundFullDuplex,
                         (void**)&dsfdo);
-    ok(rc==S_OK,"CoCreateInstance(CLSID_DirectSoundFullDuplex) failed: 0x%08x\n", rc);
+    ok(rc==S_OK,"CoCreateInstance(CLSID_DirectSoundFullDuplex) failed: 0x%08lx\n", rc);
     if (dsfdo)
         IDirectSoundFullDuplex_test(dsfdo, FALSE, &DSDEVID_DefaultVoiceCapture,
                                     &DSDEVID_DefaultVoicePlayback);
@@ -154,7 +154,7 @@ static void IDirectSoundFullDuplex_tests(void)
                         (void**)&dsfdo);
     ok(rc==E_NOINTERFACE,
        "CoCreateInstance(CLSID_DirectSoundFullDuplex,CLSID_DirectSoundPrivate) "
-       "should have failed: 0x%08x\n", rc);
+       "should have failed: 0x%08lx\n", rc);
 
     ZeroMemory(&wfex, sizeof(wfex));
     wfex.wFormatTag = WAVE_FORMAT_PCM;
@@ -180,7 +180,7 @@ static void IDirectSoundFullDuplex_tests(void)
     rc = DirectSoundFullDuplexCreate(NULL, NULL, &DSCBufferDesc, &DSBufferDesc,
             get_hwnd(), DSSCL_EXCLUSIVE, &dsfdo, &pDSCBuffer8, &pDSBuffer8, NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL||rc==DSERR_INVALIDCALL,
-       "DirectSoundFullDuplexCreate(NULL,NULL) failed: %08x\n",rc);
+       "DirectSoundFullDuplexCreate(NULL,NULL) failed: %08lx\n",rc);
     if (rc==S_OK && dsfdo)
         IDirectSoundFullDuplex_test(dsfdo, TRUE, NULL, NULL);
 
@@ -190,7 +190,7 @@ static void IDirectSoundFullDuplex_tests(void)
             DSSCL_EXCLUSIVE, &dsfdo, &pDSCBuffer8,&pDSBuffer8, NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL||rc==DSERR_INVALIDCALL,
        "DirectSoundFullDuplexCreate(DSDEVID_DefaultCapture,"
-       "DSDEVID_DefaultPlayback) failed: %08x\n", rc);
+       "DSDEVID_DefaultPlayback) failed: %08lx\n", rc);
     if (rc==DS_OK && dsfdo)
         IDirectSoundFullDuplex_test(dsfdo, TRUE, NULL, NULL);
 
@@ -200,7 +200,7 @@ static void IDirectSoundFullDuplex_tests(void)
             get_hwnd(), DSSCL_EXCLUSIVE, &dsfdo, &pDSCBuffer8, &pDSBuffer8, NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL||rc==DSERR_INVALIDCALL,
        "DirectSoundFullDuplexCreate(DSDEVID_DefaultVoiceCapture,"
-       "DSDEVID_DefaultVoicePlayback) failed: %08x\n", rc);
+       "DSDEVID_DefaultVoicePlayback) failed: %08lx\n", rc);
     if (rc==DS_OK && dsfdo)
         IDirectSoundFullDuplex_test(dsfdo, TRUE, NULL, NULL);
 
@@ -210,7 +210,7 @@ static void IDirectSoundFullDuplex_tests(void)
             get_hwnd(), DSSCL_EXCLUSIVE, &dsfdo, &pDSCBuffer8, &pDSBuffer8, NULL);
     ok(rc==DSERR_NODRIVER||rc==DSERR_INVALIDCALL,
        "DirectSoundFullDuplexCreate(DSDEVID_DefaultVoicePlayback,"
-       "DSDEVID_DefaultVoiceCapture) should have failed: %08x\n", rc);
+       "DSDEVID_DefaultVoiceCapture) should have failed: %08lx\n", rc);
     if (rc==DS_OK && dsfdo)
         IDirectSoundFullDuplex_Release(dsfdo);
 }
@@ -234,33 +234,33 @@ static void test_COM(void)
     hr = CoCreateInstance(&CLSID_DirectSoundFullDuplex, (IUnknown*)0xdeadbeef, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void**)&dsfd);
     ok(hr == CLASS_E_NOAGGREGATION,
-            "DirectSoundFullDuplex create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);
+            "DirectSoundFullDuplex create failed: %08lx, expected CLASS_E_NOAGGREGATION\n", hr);
     ok(!dsfd, "dsfd = %p\n", dsfd);
 
     /* Invalid RIID */
     hr = CoCreateInstance(&CLSID_DirectSoundFullDuplex, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectSound3DBuffer, (void**)&dsfd);
     ok(hr == E_NOINTERFACE,
-            "DirectSoundFullDuplex create failed: %08x, expected E_NOINTERFACE\n", hr);
+            "DirectSoundFullDuplex create failed: %08lx, expected E_NOINTERFACE\n", hr);
 
     /* Different refcount for IDirectSoundFullDuplex and for IUnknown */
     hr = CoCreateInstance(&CLSID_DirectSoundFullDuplex, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectSoundFullDuplex, (void**)&dsfd);
-    ok(hr == S_OK, "DirectSoundFullDuplex create failed: %08x, expected S_OK\n", hr);
+    ok(hr == S_OK, "DirectSoundFullDuplex create failed: %08lx, expected S_OK\n", hr);
     refcount = IDirectSoundFullDuplex_AddRef(dsfd);
-    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
     hr = IDirectSoundFullDuplex_QueryInterface(dsfd, &IID_IUnknown, (void**)&unk);
-    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08x\n", hr);
+    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08lx\n", hr);
     refcount = IUnknown_AddRef(unk);
-    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
 
     /* Not initialized */
     hr = IDirectSoundFullDuplex_QueryInterface(dsfd, &IID_IDirectSound8, (void**)&ds8);
     ok(hr == E_NOINTERFACE,
-            "QueryInterface for IID_IDirectSound8 failed: %08x, expected E_NOINTERFACE\n", hr);
+            "QueryInterface for IID_IDirectSound8 failed: %08lx, expected E_NOINTERFACE\n", hr);
     hr = IDirectSoundFullDuplex_QueryInterface(dsfd, &IID_IDirectSoundCapture, (void**)&dsc);
     ok(hr == E_NOINTERFACE,
-            "QueryInterface for IID_IDirectSoundCapture failed: %08x, expected E_NOINTERFACE\n", hr);
+            "QueryInterface for IID_IDirectSoundCapture failed: %08lx, expected E_NOINTERFACE\n", hr);
 
     init_format(&wfx, WAVE_FORMAT_PCM, 44100, 16, 1);
     ZeroMemory(&bufdesc, sizeof(bufdesc));
@@ -274,49 +274,49 @@ static void test_COM(void)
     hr = IDirectSoundFullDuplex_Initialize(dsfd, NULL, NULL, &cbufdesc, &bufdesc, get_hwnd(),
             DSSCL_EXCLUSIVE, NULL, NULL);
     ok(hr == E_INVALIDARG,
-            "IDirectSoundFullDuplex_Initialize failed: %08x, expected E_INVALIDARG\n", hr);
+            "IDirectSoundFullDuplex_Initialize failed: %08lx, expected E_INVALIDARG\n", hr);
     hr = IDirectSoundFullDuplex_Initialize(dsfd, NULL, NULL, &cbufdesc, &bufdesc, get_hwnd(),
             DSSCL_EXCLUSIVE, &dscb8, &dsb8);
     if (hr == DSERR_NODRIVER || hr == DSERR_INVALIDCALL) {
         skip("No driver\n");
         return;
     }
-    ok(hr == S_OK, "IDirectSoundFullDuplex_Initialize failed: %08x\n", hr);
+    ok(hr == S_OK, "IDirectSoundFullDuplex_Initialize failed: %08lx\n", hr);
 
     /* IDirectSound and IDirectSound8 */
     hr = IDirectSoundFullDuplex_QueryInterface(dsfd, &IID_IDirectSound8, (void**)&ds8);
-    ok(hr == S_OK, "QueryInterface for IID_IDirectSound8 failed: %08x\n", hr);
+    ok(hr == S_OK, "QueryInterface for IID_IDirectSound8 failed: %08lx\n", hr);
     refcount = IDirectSound8_AddRef(ds8);
-    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
     hr = IDirectSoundFullDuplex_QueryInterface(dsfd, &IID_IDirectSound, (void**)&ds);
-    ok(hr == S_OK, "QueryInterface for IID_IDirectSound failed: %08x\n", hr);
+    ok(hr == S_OK, "QueryInterface for IID_IDirectSound failed: %08lx\n", hr);
     refcount = IDirectSound8_AddRef(ds8);
-    ok(refcount == 4, "refcount == %u, expected 4\n", refcount);
+    ok(refcount == 4, "refcount == %lu, expected 4\n", refcount);
     refcount = IDirectSound_AddRef(ds);
-    ok(refcount == 5, "refcount == %u, expected 5\n", refcount);
+    ok(refcount == 5, "refcount == %lu, expected 5\n", refcount);
     hr = IDirectSound8_QueryInterface(ds8, &IID_IUnknown, (void**)&unk8);
-    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08x\n", hr);
+    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08lx\n", hr);
     ok(unk == unk8, "Got different IUnknown when QI'ing IDirectSoundFullDuplex and IDirectSound\n");
     refcount = IUnknown_AddRef(unk8);
-    ok(refcount == 4, "refcount == %u, expected 4\n", refcount);
+    ok(refcount == 4, "refcount == %lu, expected 4\n", refcount);
     refcount = IDirectSound_AddRef(ds);
-    ok(refcount == 6, "refcount == %u, expected 6\n", refcount);
+    ok(refcount == 6, "refcount == %lu, expected 6\n", refcount);
     refcount = IDirectSoundFullDuplex_AddRef(dsfd);
-    ok(refcount == 3, "refcount == %u, expected 3\n", refcount);
+    ok(refcount == 3, "refcount == %lu, expected 3\n", refcount);
 
     /* IDirectSoundCapture */
     hr = IDirectSoundFullDuplex_QueryInterface(dsfd, &IID_IDirectSoundCapture, (void**)&dsc);
-    ok(hr == S_OK, "QueryInterface for IID_IDirectSoundCapture failed: %08x\n", hr);
+    ok(hr == S_OK, "QueryInterface for IID_IDirectSoundCapture failed: %08lx\n", hr);
     refcount = IDirectSoundCapture_AddRef(dsc);
-    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
     refcount = IDirectSoundFullDuplex_AddRef(dsfd);
-    ok(refcount == 4, "refcount == %u, expected 4\n", refcount);
+    ok(refcount == 4, "refcount == %lu, expected 4\n", refcount);
     hr = IDirectSound8_QueryInterface(ds8, &IID_IUnknown, (void**)&unk8);
-    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08x\n", hr);
+    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08lx\n", hr);
     ok(unk == unk8,
             "Got different IUnknown when QI'ing IDirectSoundFullDuplex and IDirectSoundCapture\n");
     refcount = IUnknown_AddRef(unk8);
-    ok(refcount == 6, "refcount == %u, expected 6\n", refcount);
+    ok(refcount == 6, "refcount == %lu, expected 6\n", refcount);
 
     IDirectSoundBuffer8_Release(dsb8);
     IDirectSoundCaptureBuffer8_Release(dscb8);

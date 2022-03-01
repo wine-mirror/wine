@@ -90,7 +90,7 @@ const char * format_string(const WAVEFORMATEX* wfx)
 {
     static char str[64];
 
-    sprintf(str, "%5dx%2dx%d %s",
+    sprintf(str, "%5ldx%2dx%d %s",
 	wfx->nSamplesPerSec, wfx->wBitsPerSample, wfx->nChannels,
         get_format_str(wfx->wFormatTag));
 
@@ -110,14 +110,14 @@ static void IDirectSoundCapture_test(LPDIRECTSOUNDCAPTURE dsco,
     rc=IDirectSoundCapture_QueryInterface(dsco, &IID_IUnknown,
                                           (LPVOID*)&unknown);
     ok(rc==DS_OK, "IDirectSoundCapture_QueryInterface(IID_IUnknown) "
-       "failed: %08x\n", rc);
+       "failed: %08lx\n", rc);
     if (rc==DS_OK)
         IUnknown_Release(unknown);
 
     rc=IDirectSoundCapture_QueryInterface(dsco, &IID_IDirectSoundCapture,
                                           (LPVOID*)&dsc);
     ok(rc==DS_OK, "IDirectSoundCapture_QueryInterface(IID_IDirectSoundCapture) "
-       "failed: %08x\n", rc);
+       "failed: %08lx\n", rc);
     if (rc==DS_OK)
         IDirectSoundCapture_Release(dsc);
 
@@ -126,16 +126,16 @@ static void IDirectSoundCapture_test(LPDIRECTSOUNDCAPTURE dsco,
         rc=IDirectSoundCapture_GetCaps(dsco,0);
         ok(rc==DSERR_UNINITIALIZED||rc==E_INVALIDARG,
            "IDirectSoundCapture_GetCaps(NULL) should have returned "
-           "DSERR_UNINITIALIZED or E_INVALIDARG, returned: %08x\n", rc);
+           "DSERR_UNINITIALIZED or E_INVALIDARG, returned: %08lx\n", rc);
 
         rc=IDirectSoundCapture_GetCaps(dsco, &dsccaps);
         ok(rc==DSERR_UNINITIALIZED,"IDirectSoundCapture_GetCaps() "
-           "should have returned DSERR_UNINITIALIZED, returned: %08x\n", rc);
+           "should have returned DSERR_UNINITIALIZED, returned: %08lx\n", rc);
 
         rc=IDirectSoundCapture_Initialize(dsco, lpGuid);
         ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||
            rc==E_FAIL||rc==E_INVALIDARG,
-           "IDirectSoundCapture_Initialize() failed: %08x\n", rc);
+           "IDirectSoundCapture_Initialize() failed: %08lx\n", rc);
         if (rc==DSERR_NODRIVER||rc==E_INVALIDARG) {
             trace("  No Driver\n");
             goto EXIT;
@@ -150,25 +150,25 @@ static void IDirectSoundCapture_test(LPDIRECTSOUNDCAPTURE dsco,
 
     rc=IDirectSoundCapture_Initialize(dsco, lpGuid);
     ok(rc==DSERR_ALREADYINITIALIZED, "IDirectSoundCapture_Initialize() "
-       "should have returned DSERR_ALREADYINITIALIZED: %08x\n", rc);
+       "should have returned DSERR_ALREADYINITIALIZED: %08lx\n", rc);
 
     /* DSOUND: Error: Invalid caps buffer */
     rc=IDirectSoundCapture_GetCaps(dsco, 0);
     ok(rc==DSERR_INVALIDPARAM, "IDirectSoundCapture_GetCaps(NULL) "
-       "should have returned DSERR_INVALIDPARAM, returned: %08x\n", rc);
+       "should have returned DSERR_INVALIDPARAM, returned: %08lx\n", rc);
 
     ZeroMemory(&dsccaps, sizeof(dsccaps));
 
     /* DSOUND: Error: Invalid caps buffer */
     rc=IDirectSoundCapture_GetCaps(dsco, &dsccaps);
     ok(rc==DSERR_INVALIDPARAM, "IDirectSound_GetCaps() "
-       "should have returned DSERR_INVALIDPARAM, returned: %08x\n", rc);
+       "should have returned DSERR_INVALIDPARAM, returned: %08lx\n", rc);
 
     dsccaps.dwSize=sizeof(dsccaps);
 
     /* DSOUND: Running on a certified driver */
     rc=IDirectSoundCapture_GetCaps(dsco, &dsccaps);
-    ok(rc==DS_OK, "IDirectSoundCapture_GetCaps() failed: %08x\n", rc);
+    ok(rc==DS_OK, "IDirectSoundCapture_GetCaps() failed: %08lx\n", rc);
 
 EXIT:
     ref=IDirectSoundCapture_Release(dsco);
@@ -187,17 +187,17 @@ static void test_capture(void)
     rc=CoGetClassObject(&CLSID_DirectSoundCapture, CLSCTX_INPROC_SERVER, NULL,
                         &IID_IClassFactory, (void**)&cf);
     ok(rc==S_OK,"CoGetClassObject(CLSID_DirectSoundCapture, IID_IClassFactory) "
-       "failed: %08x\n", rc);
+       "failed: %08lx\n", rc);
 
     rc=CoGetClassObject(&CLSID_DirectSoundCapture, CLSCTX_INPROC_SERVER, NULL,
                         &IID_IUnknown, (void**)&cf);
     ok(rc==S_OK,"CoGetClassObject(CLSID_DirectSoundCapture, IID_IUnknown) "
-       "failed: %08x\n", rc);
+       "failed: %08lx\n", rc);
 
     /* try the COM class factory method of creation with no device specified */
     rc=CoCreateInstance(&CLSID_DirectSoundCapture, NULL, CLSCTX_INPROC_SERVER,
                         &IID_IDirectSoundCapture, (void**)&dsco);
-    ok(rc==S_OK||rc==REGDB_E_CLASSNOTREG,"CoCreateInstance(CLSID_DirectSoundCapture) failed: %08x\n", rc);
+    ok(rc==S_OK||rc==REGDB_E_CLASSNOTREG,"CoCreateInstance(CLSID_DirectSoundCapture) failed: %08lx\n", rc);
     if (rc==REGDB_E_CLASSNOTREG) {
         trace("  Class Not Registered\n");
         return;
@@ -209,7 +209,7 @@ static void test_capture(void)
      * device specified */
     rc=CoCreateInstance(&CLSID_DirectSoundCapture, NULL, CLSCTX_INPROC_SERVER,
                         &IID_IDirectSoundCapture, (void**)&dsco);
-    ok(rc==S_OK,"CoCreateInstance(CLSID_DirectSoundCapture) failed: %08x\n", rc);
+    ok(rc==S_OK,"CoCreateInstance(CLSID_DirectSoundCapture) failed: %08lx\n", rc);
     if (dsco)
         IDirectSoundCapture_test(dsco, FALSE, &DSDEVID_DefaultCapture);
 
@@ -217,7 +217,7 @@ static void test_capture(void)
      * capture device specified */
     rc=CoCreateInstance(&CLSID_DirectSoundCapture, NULL, CLSCTX_INPROC_SERVER,
                         &IID_IDirectSoundCapture, (void**)&dsco);
-    ok(rc==S_OK,"CoCreateInstance(CLSID_DirectSoundCapture) failed: %08x\n", rc);
+    ok(rc==S_OK,"CoCreateInstance(CLSID_DirectSoundCapture) failed: %08lx\n", rc);
     if (dsco)
         IDirectSoundCapture_test(dsco, FALSE, &DSDEVID_DefaultVoiceCapture);
 
@@ -227,26 +227,26 @@ static void test_capture(void)
                         &CLSID_DirectSoundPrivate, (void**)&dsco);
     ok(rc==E_NOINTERFACE,
        "CoCreateInstance(CLSID_DirectSoundCapture,CLSID_DirectSoundPrivate) "
-       "should have failed: %08x\n",rc);
+       "should have failed: %08lx\n",rc);
 
     /* try with no device specified */
     rc = DirectSoundCaptureCreate(NULL, &dsco, NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL,
-       "DirectSoundCaptureCreate(NULL) failed: %08x\n",rc);
+       "DirectSoundCaptureCreate(NULL) failed: %08lx\n",rc);
     if (rc==S_OK && dsco)
         IDirectSoundCapture_test(dsco, TRUE, NULL);
 
     /* try with default capture device specified */
     rc = DirectSoundCaptureCreate(&DSDEVID_DefaultCapture, &dsco, NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL,
-       "DirectSoundCaptureCreate(DSDEVID_DefaultCapture) failed: %08x\n", rc);
+       "DirectSoundCaptureCreate(DSDEVID_DefaultCapture) failed: %08lx\n", rc);
     if (rc==DS_OK && dsco)
         IDirectSoundCapture_test(dsco, TRUE, NULL);
 
     /* try with default voice capture device specified */
     rc = DirectSoundCaptureCreate(&DSDEVID_DefaultVoiceCapture, &dsco, NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL,
-       "DirectSoundCaptureCreate(DSDEVID_DefaultVoiceCapture) failed: %08x\n", rc);
+       "DirectSoundCaptureCreate(DSDEVID_DefaultVoiceCapture) failed: %08lx\n", rc);
     if (rc==DS_OK && dsco)
         IDirectSoundCapture_test(dsco, TRUE, NULL);
 
@@ -254,7 +254,7 @@ static void test_capture(void)
     rc = DirectSoundCaptureCreate(&DSDEVID_DefaultVoicePlayback, &dsco, NULL);
     ok(rc==DSERR_NODRIVER,
        "DirectSoundCaptureCreate(DSDEVID_DefaultVoicePlatback) "
-       "should have failed: %08x\n",rc);
+       "should have failed: %08lx\n",rc);
     if (rc==DS_OK && dsco)
         IDirectSoundCapture_Release(dsco);
 }
@@ -286,18 +286,18 @@ static BOOL capture_buffer_service(capture_state_t* state)
 
     rc=IDirectSoundCaptureBuffer_GetCurrentPosition(state->dscbo,&capture_pos,
                                                     &read_pos);
-    ok(rc==DS_OK,"IDirectSoundCaptureBuffer_GetCurrentPosition() failed: %08x\n", rc);
+    ok(rc==DS_OK,"IDirectSoundCaptureBuffer_GetCurrentPosition() failed: %08lx\n", rc);
     if (rc!=DS_OK)
         return FALSE;
 
     rc=IDirectSoundCaptureBuffer_Lock(state->dscbo,state->offset,state->size,
                                       &ptr1,&len1,&ptr2,&len2,0);
-    ok(rc==DS_OK,"IDirectSoundCaptureBuffer_Lock() failed: %08x\n", rc);
+    ok(rc==DS_OK,"IDirectSoundCaptureBuffer_Lock() failed: %08lx\n", rc);
     if (rc!=DS_OK)
         return FALSE;
 
     rc=IDirectSoundCaptureBuffer_Unlock(state->dscbo,ptr1,len1,ptr2,len2);
-    ok(rc==DS_OK,"IDirectSoundCaptureBuffer_Unlock() failed: %08x\n", rc);
+    ok(rc==DS_OK,"IDirectSoundCaptureBuffer_Unlock() failed: %08lx\n", rc);
     if (rc!=DS_OK)
         return FALSE;
 
@@ -319,19 +319,19 @@ static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco,
     /* Private dsound.dll: Error: Invalid caps pointer */
     rc=IDirectSoundCaptureBuffer_GetCaps(dscbo,0);
     ok(rc==DSERR_INVALIDPARAM,"IDirectSoundCaptureBuffer_GetCaps() should "
-       "have returned DSERR_INVALIDPARAM, returned: %08x\n", rc);
+       "have returned DSERR_INVALIDPARAM, returned: %08lx\n", rc);
 
     /* Private dsound.dll: Error: Invalid caps pointer */
     dscbcaps.dwSize=0;
     rc=IDirectSoundCaptureBuffer_GetCaps(dscbo,&dscbcaps);
     ok(rc==DSERR_INVALIDPARAM,"IDirectSoundCaptureBuffer_GetCaps() should "
-       "have returned DSERR_INVALIDPARAM, returned: %08x\n", rc);
+       "have returned DSERR_INVALIDPARAM, returned: %08lx\n", rc);
 
     dscbcaps.dwSize=sizeof(dscbcaps);
     rc=IDirectSoundCaptureBuffer_GetCaps(dscbo,&dscbcaps);
-    ok(rc==DS_OK,"IDirectSoundCaptureBuffer_GetCaps() failed: %08x\n", rc);
+    ok(rc==DS_OK,"IDirectSoundCaptureBuffer_GetCaps() failed: %08lx\n", rc);
     if (rc==DS_OK && winetest_debug > 1) {
-	trace("    Caps: size = %d flags=0x%08x buffer size=%d\n",
+	trace("    Caps: size = %ld flags=0x%08lx buffer size=%ld\n",
 	    dscbcaps.dwSize,dscbcaps.dwFlags,dscbcaps.dwBufferBytes);
     }
 
@@ -340,17 +340,17 @@ static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco,
      * be non-NULL */
     rc=IDirectSoundCaptureBuffer_GetFormat(dscbo,NULL,0,NULL);
     ok(rc==DSERR_INVALIDPARAM,"IDirectSoundCaptureBuffer_GetFormat() should "
-       "have returned DSERR_INVALIDPARAM, returned: %08x\n", rc);
+       "have returned DSERR_INVALIDPARAM, returned: %08lx\n", rc);
 
     size=0;
     rc=IDirectSoundCaptureBuffer_GetFormat(dscbo,NULL,0,&size);
     ok(rc==DS_OK && size!=0,"IDirectSoundCaptureBuffer_GetFormat() should "
-       "have returned the needed size: rc=%08x, size=%d\n", rc,size);
+       "have returned the needed size: rc=%08lx, size=%ld\n", rc,size);
 
     rc=IDirectSoundCaptureBuffer_GetFormat(dscbo,&wfx,sizeof(wfx),NULL);
-    ok(rc==DS_OK,"IDirectSoundCaptureBuffer_GetFormat() failed: %08x\n", rc);
+    ok(rc==DS_OK,"IDirectSoundCaptureBuffer_GetFormat() failed: %08lx\n", rc);
     if (rc==DS_OK && winetest_debug > 1) {
-	trace("    Format: tag=0x%04x %dx%dx%d avg.B/s=%d align=%d\n",
+	trace("    Format: tag=0x%04x %ldx%dx%d avg.B/s=%ld align=%d\n",
 	      wfx.wFormatTag,wfx.nSamplesPerSec,wfx.wBitsPerSample,
 	      wfx.nChannels,wfx.nAvgBytesPerSec,wfx.nBlockAlign);
     }
@@ -358,12 +358,12 @@ static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco,
     /* Private dsound.dll: Error: Invalid status pointer */
     rc=IDirectSoundCaptureBuffer_GetStatus(dscbo,0);
     ok(rc==DSERR_INVALIDPARAM,"IDirectSoundCaptureBuffer_GetStatus() should "
-       "have returned DSERR_INVALIDPARAM, returned: %08x\n", rc);
+       "have returned DSERR_INVALIDPARAM, returned: %08lx\n", rc);
 
     rc=IDirectSoundCaptureBuffer_GetStatus(dscbo,&status);
-    ok(rc==DS_OK,"IDirectSoundCaptureBuffer_GetStatus() failed: %08x\n", rc);
+    ok(rc==DS_OK,"IDirectSoundCaptureBuffer_GetStatus() failed: %08lx\n", rc);
     if (rc==DS_OK && winetest_debug > 1) {
-	trace("    Status=0x%04x\n",status);
+	trace("    Status=0x%04lx\n",status);
     }
 
     ZeroMemory(&state, sizeof(state));
@@ -377,7 +377,7 @@ static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco,
     rc=IDirectSoundCaptureBuffer_QueryInterface(dscbo,&IID_IDirectSoundNotify,
                                                 (void **)&(state.notify));
     ok((rc==DS_OK)&&(state.notify!=NULL),
-       "IDirectSoundCaptureBuffer_QueryInterface() failed: %08x\n", rc);
+       "IDirectSoundCaptureBuffer_QueryInterface() failed: %08lx\n", rc);
 
     for (i = 0; i < TIMESTAMP_NOTIFICATIONS; i++) {
 	state.posnotify[i].dwOffset = (i * state.size) + state.size - 1;
@@ -389,32 +389,32 @@ static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco,
 
     rc = IDirectSoundNotify_SetNotificationPositions(state.notify, TOTAL_NOTIFICATIONS,
                                                    state.posnotify);
-    ok(rc==DS_OK,"IDirectSoundNotify_SetNotificationPositions() failed: %08x\n", rc);
+    ok(rc==DS_OK,"IDirectSoundNotify_SetNotificationPositions() failed: %08lx\n", rc);
 
     ref=IDirectSoundNotify_Release(state.notify);
     ok(ref==0,"IDirectSoundNotify_Release(): has %d references, should have "
        "0\n",ref);
 
     rc=IDirectSoundCaptureBuffer_Start(dscbo,DSCBSTART_LOOPING);
-    ok(rc==DS_OK,"IDirectSoundCaptureBuffer_Start() failed: %08x\n", rc);
+    ok(rc==DS_OK,"IDirectSoundCaptureBuffer_Start() failed: %08lx\n", rc);
 
     rc=IDirectSoundCaptureBuffer_Start(dscbo,0);
-    ok(rc==DS_OK,"IDirectSoundCaptureBuffer_Start() failed: %08x\n", rc);
+    ok(rc==DS_OK,"IDirectSoundCaptureBuffer_Start() failed: %08lx\n", rc);
 
     rc=IDirectSoundCaptureBuffer_GetStatus(dscbo,&status);
-    ok(rc==DS_OK,"IDirectSoundCaptureBuffer_GetStatus() failed: %08x\n", rc);
+    ok(rc==DS_OK,"IDirectSoundCaptureBuffer_GetStatus() failed: %08lx\n", rc);
     ok(status==(DSCBSTATUS_CAPTURING|DSCBSTATUS_LOOPING) || broken(status==DSCBSTATUS_CAPTURING),
-       "GetStatus: bad status: %x\n",status);
+       "GetStatus: bad status: %lx\n",status);
 
     if (record) {
 	/* wait for timestamp notifications */
 	for (i = 0; i < (TIMESTAMP_NOTIFICATIONS * 2); i++) {
 	    rc = WaitForMultipleObjects(TOTAL_NOTIFICATIONS, state.event, FALSE, 3000);
 	    ok(rc == (WAIT_OBJECT_0 + (i % TIMESTAMP_NOTIFICATIONS)),
-               "WaitForMultipleObjects failed: 0x%x\n",rc);
+               "WaitForMultipleObjects failed: 0x%lx\n",rc);
 	    if (rc != (WAIT_OBJECT_0 + (i % TIMESTAMP_NOTIFICATIONS))) {
 		ok((rc==WAIT_TIMEOUT)||(rc==WAIT_FAILED),
-                   "Wrong notification: should be %d, got %d\n",
+                   "Wrong notification: should be %d, got %ld\n",
 		    i % TIMESTAMP_NOTIFICATIONS, rc - WAIT_OBJECT_0);
 	    }
 	    if (!capture_buffer_service(&state))
@@ -423,14 +423,14 @@ static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco,
 
     }
     rc=IDirectSoundCaptureBuffer_Stop(dscbo);
-    ok(rc==DS_OK,"IDirectSoundCaptureBuffer_Stop() failed: %08x\n", rc);
+    ok(rc==DS_OK,"IDirectSoundCaptureBuffer_Stop() failed: %08lx\n", rc);
 
     /* wait for stop notification */
     rc = WaitForSingleObject(state.event[TIMESTAMP_NOTIFICATIONS], 3000);
-    ok(rc == WAIT_OBJECT_0, "WaitForSingleObject failed: 0x%x\n", rc);
+    ok(rc == WAIT_OBJECT_0, "WaitForSingleObject failed: 0x%lx\n", rc);
 
     rc=IDirectSoundCaptureBuffer_Stop(dscbo);
-    ok(rc==DS_OK,"IDirectSoundCaptureBuffer_Stop() failed: %08x\n", rc);
+    ok(rc==DS_OK,"IDirectSoundCaptureBuffer_Stop() failed: %08lx\n", rc);
 }
 
 static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
@@ -449,11 +449,11 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     trace("*** Testing %s - %s ***\n",lpcstrDescription,lpcstrModule);
     rc = DirectSoundCaptureCreate(lpGuid, NULL, NULL);
     ok(rc==DSERR_INVALIDPARAM,"DirectSoundCaptureCreate() should have "
-       "returned DSERR_INVALIDPARAM, returned: %08x\n",rc);
+       "returned DSERR_INVALIDPARAM, returned: %08lx\n",rc);
 
     rc = DirectSoundCaptureCreate(lpGuid, &dsco, NULL);
     ok((rc==DS_OK)||(rc==DSERR_NODRIVER)||(rc==E_FAIL)||(rc==DSERR_ALLOCATED),
-       "DirectSoundCaptureCreate() failed: %08x\n",rc);
+       "DirectSoundCaptureCreate() failed: %08lx\n",rc);
     if (rc!=DS_OK) {
         if (rc==DSERR_NODRIVER)
             trace("  No Driver\n");
@@ -467,19 +467,19 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     /* Private dsound.dll: Error: Invalid caps buffer */
     rc=IDirectSoundCapture_GetCaps(dsco,NULL);
     ok(rc==DSERR_INVALIDPARAM,"IDirectSoundCapture_GetCaps() should have "
-       "returned DSERR_INVALIDPARAM, returned: %08x\n",rc);
+       "returned DSERR_INVALIDPARAM, returned: %08lx\n",rc);
 
     /* Private dsound.dll: Error: Invalid caps buffer */
     dsccaps.dwSize=0;
     rc=IDirectSoundCapture_GetCaps(dsco,&dsccaps);
     ok(rc==DSERR_INVALIDPARAM,"IDirectSoundCapture_GetCaps() should have "
-       "returned DSERR_INVALIDPARAM, returned: %08x\n",rc);
+       "returned DSERR_INVALIDPARAM, returned: %08lx\n",rc);
 
     dsccaps.dwSize=sizeof(dsccaps);
     rc=IDirectSoundCapture_GetCaps(dsco,&dsccaps);
-    ok(rc==DS_OK,"IDirectSoundCapture_GetCaps() failed: %08x\n", rc);
+    ok(rc==DS_OK,"IDirectSoundCapture_GetCaps() failed: %08lx\n", rc);
     if (rc==DS_OK && winetest_debug > 1) {
-	trace("  Caps: size=%d flags=0x%08x formats=%05x channels=%d\n",
+	trace("  Caps: size=%ld flags=0x%08lx formats=%05lx channels=%ld\n",
 	      dsccaps.dwSize,dsccaps.dwFlags,dsccaps.dwFormats,
               dsccaps.dwChannels);
     }
@@ -494,7 +494,7 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     bufdesc.lpwfxFormat=NULL;
     rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
     ok(rc==DSERR_INVALIDPARAM,"IDirectSoundCapture_CreateCaptureBuffer() "
-       "should have returned DSERR_INVALIDPARAM, returned: %08x\n", rc);
+       "should have returned DSERR_INVALIDPARAM, returned: %08lx\n", rc);
     if (rc==DS_OK) {
 	ref=IDirectSoundCaptureBuffer_Release(dscbo);
 	ok(ref==0,"IDirectSoundCaptureBuffer_Release() has %d references, "
@@ -511,7 +511,7 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     bufdesc.lpwfxFormat=NULL;
     rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
     ok(rc==DSERR_INVALIDPARAM,"IDirectSoundCapture_CreateCaptureBuffer() "
-       "should have returned DSERR_INVALIDPARAM, returned %08x\n", rc);
+       "should have returned DSERR_INVALIDPARAM, returned %08lx\n", rc);
     if (rc==DS_OK) {
 	ref=IDirectSoundCaptureBuffer_Release(dscbo);
 	ok(ref==0,"IDirectSoundCaptureBuffer_Release() has %d references, "
@@ -529,7 +529,7 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     bufdesc.lpwfxFormat=&wfx;
     rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
     ok(rc==DSERR_INVALIDPARAM,"IDirectSoundCapture_CreateCaptureBuffer() "
-       "should have returned DSERR_INVALIDPARAM, returned: %08x\n", rc);
+       "should have returned DSERR_INVALIDPARAM, returned: %08lx\n", rc);
     if (rc==DS_OK) {
 	ref=IDirectSoundCaptureBuffer_Release(dscbo);
 	ok(ref==0,"IDirectSoundCaptureBuffer_Release() has %d references, "
@@ -547,7 +547,7 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     bufdesc.lpwfxFormat=&wfx;
     rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
     ok(rc==DSERR_INVALIDPARAM,"IDirectSoundCapture_CreateCaptureBuffer() "
-       "should have returned DSERR_INVALIDPARAM, returned: %08x\n", rc);
+       "should have returned DSERR_INVALIDPARAM, returned: %08lx\n", rc);
     if (rc==DS_OK) {
 	ref=IDirectSoundCaptureBuffer_Release(dscbo);
 	ok(ref==0,"IDirectSoundCaptureBuffer_Release() has %d references, "
@@ -571,7 +571,7 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
            || rc==DSERR_BADFORMAT || rc==DSERR_INVALIDCALL || rc==DSERR_NODRIVER
            || rc==DSERR_ALLOCATED || rc==E_INVALIDARG || rc==E_FAIL,
            "IDirectSoundCapture_CreateCaptureBuffer() failed to create a "
-           "%s capture buffer: %08x\n",format_string(&wfx),rc);
+           "%s capture buffer: %08lx\n",format_string(&wfx),rc);
 	if (rc==DS_OK) {
 	    test_capture_buffer(dsco, dscbo, winetest_interactive);
 	    ref=IDirectSoundCaptureBuffer_Release(dscbo);
@@ -599,7 +599,7 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
                 (DSCBUFFERDESC*)&bufdesc1,&dscbo,NULL);
             ok(rc==DS_OK || broken(rc==DSERR_INVALIDPARAM),
                "IDirectSoundCapture_CreateCaptureBuffer() failed to create a "
-               "%s capture buffer: %08x\n",format_string(&wfx), rc);
+               "%s capture buffer: %08lx\n",format_string(&wfx), rc);
             if (rc==DSERR_INVALIDPARAM) {
                 skip("broken driver\n");
                 goto EXIT;
@@ -634,7 +634,7 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
         trace("  Testing the capture buffer at %s\n", format_string(&wfx));
     rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
     ok((rc==DS_OK)&&(dscbo!=NULL),"IDirectSoundCapture_CreateCaptureBuffer() "
-       "failed to create a capture buffer: %08x\n",rc);
+       "failed to create a capture buffer: %08lx\n",rc);
     if ((rc==DS_OK)&&(dscbo!=NULL)) {
 	test_capture_buffer(dsco, dscbo, winetest_interactive);
 	ref=IDirectSoundCaptureBuffer_Release(dscbo);
@@ -658,7 +658,7 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
         trace("  Testing the capture buffer at %s\n", format_string(&wfx));
     rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
     ok(rc!=DS_OK,"IDirectSoundCapture_CreateCaptureBuffer() should have failed "
-       "at 2 MHz %08x\n",rc);
+       "at 2 MHz %08lx\n",rc);
     }
 
 EXIT:
@@ -675,7 +675,7 @@ static void test_enumerate(void)
 {
     HRESULT rc;
     rc = DirectSoundCaptureEnumerateA(dscenum_callback, NULL);
-    ok(rc==DS_OK,"DirectSoundCaptureEnumerateA() failed: %08x\n", rc);
+    ok(rc==DS_OK,"DirectSoundCaptureEnumerateA() failed: %08lx\n", rc);
 }
 
 static void test_COM(void)
@@ -691,7 +691,7 @@ static void test_COM(void)
 
     hr = DirectSoundCaptureCreate(NULL, &dsc, (IUnknown *)0xdeadbeef);
     ok(hr == DSERR_NOAGGREGATION,
-       "DirectSoundCaptureCreate failed: %08x, expected DSERR_NOAGGREGATION\n", hr);
+       "DirectSoundCaptureCreate failed: %08lx, expected DSERR_NOAGGREGATION\n", hr);
     ok(dsc == (IDirectSoundCapture*)0xdeadbeef, "dsc = %p\n", dsc);
 
     hr = DirectSoundCaptureCreate(NULL, &dsc, NULL);
@@ -699,15 +699,15 @@ static void test_COM(void)
         skip("No driver\n");
         return;
     }
-    ok(hr == DS_OK, "DirectSoundCaptureCreate failed: %08x, expected DS_OK\n", hr);
+    ok(hr == DS_OK, "DirectSoundCaptureCreate failed: %08lx, expected DS_OK\n", hr);
 
     /* Different refcount for IDirectSoundCapture and for IUnknown */
     refcount = IDirectSoundCapture_AddRef(dsc);
-    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
     hr = IDirectSoundCapture_QueryInterface(dsc, &IID_IUnknown, (void**)&unk);
-    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08x\n", hr);
+    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08lx\n", hr);
     refcount = IUnknown_AddRef(unk);
-    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
     IUnknown_Release(unk);
     IUnknown_Release(unk);
     IDirectSoundCapture_Release(dsc);
@@ -725,37 +725,37 @@ static void test_COM(void)
         hr = IDirectSoundCapture_CreateCaptureBuffer(dsc, &bufdesc, &buffer, (IUnknown*)0xdeadbeef);
     }
     ok(hr == DSERR_NOAGGREGATION,
-       "IDirectSoundCapture_CreateCaptureBuffer failed: %08x, expected DSERR_NOAGGREGATION\n", hr);
+       "IDirectSoundCapture_CreateCaptureBuffer failed: %08lx, expected DSERR_NOAGGREGATION\n", hr);
     ok(buffer == (IDirectSoundCaptureBuffer*)0xdeadbeef || !buffer /* Win2k without DirectX9 */,
        "buffer = %p\n", buffer);
 
     hr = IDirectSoundCapture_CreateCaptureBuffer(dsc, &bufdesc, &buffer, NULL);
-    ok(hr == DS_OK, "IDirectSoundCapture_CreateCaptureBuffer failed: %08x, expected DS_OK\n", hr);
+    ok(hr == DS_OK, "IDirectSoundCapture_CreateCaptureBuffer failed: %08lx, expected DS_OK\n", hr);
 
     /* IDirectSoundCaptureBuffer and IDirectSoundNotify have separate refcounts */
     IDirectSoundCaptureBuffer_AddRef(buffer);
     refcount = IDirectSoundCaptureBuffer_AddRef(buffer);
-    ok(refcount == 3, "IDirectSoundCaptureBuffer refcount is %u, expected 3\n", refcount);
+    ok(refcount == 3, "IDirectSoundCaptureBuffer refcount is %lu, expected 3\n", refcount);
     hr = IDirectSoundCaptureBuffer_QueryInterface(buffer, &IID_IDirectSoundNotify, (void**)&notify);
-    ok(hr == DS_OK, "IDirectSoundCapture_QueryInterface failed: %08x, expected DS_OK\n", hr);
+    ok(hr == DS_OK, "IDirectSoundCapture_QueryInterface failed: %08lx, expected DS_OK\n", hr);
     refcount = IDirectSoundNotify_AddRef(notify);
-    ok(refcount == 2, "IDirectSoundNotify refcount is %u, expected 2\n", refcount);
+    ok(refcount == 2, "IDirectSoundNotify refcount is %lu, expected 2\n", refcount);
     IDirectSoundCaptureBuffer_AddRef(buffer);
     refcount = IDirectSoundCaptureBuffer_Release(buffer);
-    ok(refcount == 3, "IDirectSoundCaptureBuffer refcount is %u, expected 3\n", refcount);
+    ok(refcount == 3, "IDirectSoundCaptureBuffer refcount is %lu, expected 3\n", refcount);
 
     /* Release IDirectSoundCaptureBuffer while keeping IDirectSoundNotify alive */
     while (IDirectSoundCaptureBuffer_Release(buffer) > 0);
     refcount = IDirectSoundNotify_AddRef(notify);
-    ok(refcount == 3, "IDirectSoundNotify refcount is %u, expected 3\n", refcount);
+    ok(refcount == 3, "IDirectSoundNotify refcount is %lu, expected 3\n", refcount);
     refcount = IDirectSoundCaptureBuffer_AddRef(buffer);
-    ok(refcount == 1, "IDirectSoundCaptureBuffer refcount is %u, expected 1\n", refcount);
+    ok(refcount == 1, "IDirectSoundCaptureBuffer refcount is %lu, expected 1\n", refcount);
 
     while (IDirectSoundNotify_Release(notify) > 0);
     refcount = IDirectSoundCaptureBuffer_Release(buffer);
-    ok(refcount == 0, "IDirectSoundCaptureBuffer refcount is %u, expected 0\n", refcount);
+    ok(refcount == 0, "IDirectSoundCaptureBuffer refcount is %lu, expected 0\n", refcount);
     refcount = IDirectSoundCapture_Release(dsc);
-    ok(refcount == 0, "IDirectSoundCapture refcount is %u, expected 0\n", refcount);
+    ok(refcount == 0, "IDirectSoundCapture refcount is %lu, expected 0\n", refcount);
 }
 
 START_TEST(capture)

@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = dsound.dll
 IMPORTS   = dmoguids dsound msdmo ole32 version user32
 
