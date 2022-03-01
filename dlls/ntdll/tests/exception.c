@@ -9068,7 +9068,7 @@ static DWORD test_extended_context_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGI
 
 done:
 #ifdef __GNUC__
-    __asm__ volatile("vmovups %0,%%ymm0" : : "m"(test_extended_context_spoil_data2));
+    __asm__ volatile("vmovups (%0),%%ymm0" : : "r"(test_extended_context_spoil_data2));
 #endif
 #ifdef __x86_64__
     ++context->Rip;
