@@ -62,37 +62,37 @@ static void test_encode(void)
     ok(hic != NULL, "ICOpen failed\n");
 
     res = ICGetInfo(hic, &info, sizeof(info));
-    ok(res == sizeof(info), "res = %ld\n", res);
-    ok(info.dwSize == sizeof(info), "dwSize = %d\n", info.dwSize);
-    ok(info.fccHandler == FCC('M','R','L','E'), "fccHandler = %x\n", info.fccHandler);
-    ok(info.dwFlags == (VIDCF_QUALITY|VIDCF_CRUNCH|VIDCF_TEMPORAL), "dwFlags = %x\n", info.dwFlags);
-    ok(info.dwVersionICM == ICVERSION, "dwVersionICM = %d\n", info.dwVersionICM);
+    ok(res == sizeof(info), "res = %Id\n", res);
+    ok(info.dwSize == sizeof(info), "dwSize = %ld\n", info.dwSize);
+    ok(info.fccHandler == FCC('M','R','L','E'), "fccHandler = %lx\n", info.fccHandler);
+    ok(info.dwFlags == (VIDCF_QUALITY|VIDCF_CRUNCH|VIDCF_TEMPORAL), "dwFlags = %lx\n", info.dwFlags);
+    ok(info.dwVersionICM == ICVERSION, "dwVersionICM = %ld\n", info.dwVersionICM);
 
     quality = 0xdeadbeef;
     res = ICSendMessage(hic, ICM_GETDEFAULTQUALITY, (DWORD_PTR)&quality, 0);
-    ok(res == ICERR_OK, "ICSendMessage(ICM_GETDEFAULTQUALITY) failed: %ld\n", res);
-    ok(quality == 8500, "quality = %d\n", quality);
+    ok(res == ICERR_OK, "ICSendMessage(ICM_GETDEFAULTQUALITY) failed: %Id\n", res);
+    ok(quality == 8500, "quality = %ld\n", quality);
 
     quality = 0xdeadbeef;
     res = ICSendMessage(hic, ICM_GETQUALITY, (DWORD_PTR)&quality, 0);
-    ok(res == ICERR_UNSUPPORTED, "ICSendMessage(ICM_GETQUALITY) failed: %ld\n", res);
-    ok(quality == 0xdeadbeef, "quality = %d\n", quality);
+    ok(res == ICERR_UNSUPPORTED, "ICSendMessage(ICM_GETQUALITY) failed: %Id\n", res);
+    ok(quality == 0xdeadbeef, "quality = %ld\n", quality);
 
     quality = ICQUALITY_HIGH;
     res = ICSendMessage(hic, ICM_SETQUALITY, (DWORD_PTR)&quality, 0);
-    ok(res == ICERR_UNSUPPORTED, "ICSendMessage(ICM_SETQUALITY) failed: %ld\n", res);
+    ok(res == ICERR_UNSUPPORTED, "ICSendMessage(ICM_SETQUALITY) failed: %Id\n", res);
 
     output_size = ICCompressGetFormatSize(hic, &input_header.header);
-    ok(output_size == 1064, "output_size = %d\n", output_size);
+    ok(output_size == 1064, "output_size = %ld\n", output_size);
 
     output_header = HeapAlloc(GetProcessHeap(), 0, output_size);
     ICCompressGetFormat(hic, &input_header.header, output_header);
 
     flags = 0;
     res = ICCompress(hic, ICCOMPRESS_KEYFRAME, output_header, buf, &input_header.header, input1, 0, &flags, 0, 0, 0, NULL, NULL);
-    ok(res == ICERR_OK, "ICCompress failed: %ld\n", res);
+    ok(res == ICERR_OK, "ICCompress failed: %Id\n", res);
     test_output(buf, output_header->biSizeImage, output1, sizeof(output1));
-    ok(flags == (AVIIF_TWOCC|AVIIF_KEYFRAME), "flags = %x\n", flags);
+    ok(flags == (AVIIF_TWOCC|AVIIF_KEYFRAME), "flags = %lx\n", flags);
 
     HeapFree(GetProcessHeap(), 0, output_header);
 
@@ -135,25 +135,25 @@ static void test_raw_decompress(void)
 
         /* Check which codec is able to decompress uncompressed data */
         hic = ICLocate(FCC('V', 'I', 'D', 'C'), codecs[i], bih, NULL, ICMODE_DECOMPRESS);
-        ok(hic != NULL, "Test[%d]: Expected non-NULL return\n", i);
+        ok(hic != NULL, "Test[%ld]: Expected non-NULL return\n", i);
 
         /* Now which is this codec? Windows returns MRLE for uncompressed cases */
         memset(&codec_info, 0, sizeof(codec_info));
         hr = ICGetInfo(hic, &codec_info, sizeof(codec_info));
-        ok(hr == sizeof(codec_info), "Test[%d]: Incorrect amount of data returned\n", i);
+        ok(hr == sizeof(codec_info), "Test[%ld]: Incorrect amount of data returned\n", i);
         ok(codec_info.fccType == FCC('v', 'i', 'd', 'c'),
-           "Test[%d]: Expected a video type, got 0x%x\n", i, codec_info.fccType);
+           "Test[%ld]: Expected a video type, got 0x%lx\n", i, codec_info.fccType);
         ok(codec_info.fccHandler == FCC('M', 'R', 'L', 'E'),
-           "Test[%d]: Expected MRLE, got 0x%x\n", i, codec_info.fccHandler);
+           "Test[%ld]: Expected MRLE, got 0x%lx\n", i, codec_info.fccHandler);
 
         /* Decompress the frame and check if we get the same output */
         memset(outbits, 0, bih->biSizeImage);
         hr = ICDecompress(hic, 0, bih, bits, &biho, outbits);
-        ok(hr == ICERR_OK, "Test[%d]: Expected ICERR_OK, got %d\n", i, hr);
-        ok(!memcmp(bits, outbits, bih->biSizeImage), "Test[%d]: Image contents do not match!\n", i);
+        ok(hr == ICERR_OK, "Test[%ld]: Expected ICERR_OK, got %ld\n", i, hr);
+        ok(!memcmp(bits, outbits, bih->biSizeImage), "Test[%ld]: Image contents do not match!\n", i);
 
         hr = ICClose(hic);
-        ok(hr == ICERR_OK, "Test[%d]: Expected ICERR_OK, got %d\n", i, hr);
+        ok(hr == ICERR_OK, "Test[%ld]: Expected ICERR_OK, got %ld\n", i, hr);
     }
     HeapFree(GetProcessHeap(), 0, bits);
     HeapFree(GetProcessHeap(), 0, outbits);
