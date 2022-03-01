@@ -33,6 +33,7 @@ namespace Windows {
     namespace Media {
         namespace SpeechRecognition {
             typedef enum SpeechContinuousRecognitionMode SpeechContinuousRecognitionMode;
+            typedef enum SpeechRecognitionAudioProblem SpeechRecognitionAudioProblem;
             typedef enum SpeechRecognitionConfidence SpeechRecognitionConfidence;
             typedef enum SpeechRecognitionConstraintProbability SpeechRecognitionConstraintProbability;
             typedef enum SpeechRecognitionConstraintType SpeechRecognitionConstraintType;
@@ -44,6 +45,7 @@ namespace Windows {
             interface ISpeechRecognitionConstraint;
             interface ISpeechRecognitionHypothesis;
             interface ISpeechRecognitionHypothesisGeneratedEventArgs;
+            interface ISpeechRecognitionQualityDegradingEventArgs;
             interface ISpeechRecognitionResult;
             interface ISpeechRecognitionResult2;
             interface ISpeechRecognitionSemanticInterpretation;
@@ -55,6 +57,7 @@ namespace Windows {
             runtimeclass SpeechRecognitionCompilationResult;
             runtimeclass SpeechRecognitionHypothesis;
             runtimeclass SpeechRecognitionHypothesisGeneratedEventArgs;
+            runtimeclass SpeechRecognitionQualityDegradingEventArgs;
             runtimeclass SpeechRecognitionResult;
             runtimeclass SpeechRecognitionSemanticInterpretation;
             runtimeclass SpeechRecognizerTimeouts;
@@ -86,6 +89,18 @@ namespace Windows {
             {
                 Default = 0,
                 PauseOnRecognition = 1,
+            };
+
+            [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+            enum SpeechRecognitionAudioProblem
+            {
+                None = 0,
+                TooNoisy = 1,
+                NoSignal = 2,
+                TooLoud = 3,
+                TooQuiet = 4,
+                TooFast = 5,
+                TooSlow = 6,
             };
 
             [contract(Windows.Foundation.UniversalApiContract, 1.0)]
@@ -226,6 +241,16 @@ namespace Windows {
 
             [
                 contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognitionQualityDegradingEventArgs),
+                uuid(4fe24105-8c3a-4c7e-8d0a-5bd4f5b14ad8)
+            ]
+            interface ISpeechRecognitionQualityDegradingEventArgs : IInspectable
+            {
+                [propget] HRESULT Problem([out, retval] Windows.Media.SpeechRecognition.SpeechRecognitionAudioProblem *value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
                 exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognitionResult),
                 uuid(4e303157-034e-4652-857e-d0454cc4beec)
             ]
@@ -351,6 +376,15 @@ namespace Windows {
             runtimeclass SpeechRecognitionHypothesisGeneratedEventArgs
             {
                 [default] interface Windows.Media.SpeechRecognition.ISpeechRecognitionHypothesisGeneratedEventArgs;
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile)
+            ]
+            runtimeclass SpeechRecognitionQualityDegradingEventArgs
+            {
+                [default] interface Windows.Media.SpeechRecognition.ISpeechRecognitionQualityDegradingEventArgs;
             }
 
             [
