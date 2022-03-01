@@ -520,7 +520,7 @@ NTSTATUS WINAPI RtlInt64ToUnicodeString(
 #ifdef __i386__
 
 /* those builtin functions use stdcall calling convention, but compilers reference them without stdcall declarations */
-#if defined(__MINGW32__) || defined(_MSC_VER)
+#ifdef __WINE_PE_BUILD
 LONGLONG WINAPI _alldiv( LONGLONG a, LONGLONG b ) asm(__ASM_NAME("_alldiv"));
 LONGLONG WINAPI _allmul( LONGLONG a, LONGLONG b ) asm(__ASM_NAME("_allmul"));
 LONGLONG WINAPI _allrem( LONGLONG a, LONGLONG b ) asm(__ASM_NAME("_allrem"));
