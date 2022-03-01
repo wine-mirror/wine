@@ -119,12 +119,12 @@ static BOOL create_avi_file(char *fname)
     ULONG buffer_length;
 
     ret = GetTempPathA(sizeof(temp_path), temp_path);
-    ok(ret, "Failed to get a temp path, err %d\n", GetLastError());
+    ok(ret, "Failed to get a temp path, err %ld\n", GetLastError());
     if (!ret)
         return FALSE;
 
     ret = GetTempFileNameA(temp_path, "mci", 0, fname);
-    ok(ret, "Failed to get a temp name, err %d\n", GetLastError());
+    ok(ret, "Failed to get a temp name, err %ld\n", GetLastError());
     if (!ret)
         return FALSE;
     DeleteFileA(fname);
@@ -132,7 +132,7 @@ static BOOL create_avi_file(char *fname)
     lstrcatA(fname, ".avi");
 
     hFile = CreateFileA(fname, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-    ok(hFile != INVALID_HANDLE_VALUE, "Failed to create a file, err %d\n", GetLastError());
+    ok(hFile != INVALID_HANDLE_VALUE, "Failed to create a file, err %ld\n", GetLastError());
     if (hFile == INVALID_HANDLE_VALUE) return FALSE;
 
     buffer_length = padding[1];
@@ -169,7 +169,7 @@ static void test_MCIWndCreate(void)
 
     ret = SendMessageA(window, MCIWNDM_GETERRORA, sizeof(error), (LPARAM)error);
     ok(!ret || broken(ret == ERROR_INVALID_HANDLE) /* w2003std, w2008s64 */,
-       "Unexpected error %ld\n", ret);
+       "Unexpected error %Id\n", ret);
 
     DestroyWindow(window);
 
@@ -182,7 +182,7 @@ static void test_MCIWndCreate(void)
 
     ret = SendMessageA(window, MCIWNDM_GETERRORA, sizeof(error), (LPARAM)error);
     ok(!ret || broken(ret == ERROR_INVALID_HANDLE) /* w2003std, w2008s64 */,
-       "Unexpected error %ld\n", ret);
+       "Unexpected error %Id\n", ret);
 
     DestroyWindow(parent);
 
@@ -190,7 +190,7 @@ static void test_MCIWndCreate(void)
     ok(window != NULL, "Failed to create an MCIWnd window\n");
 
     ret = SendMessageA(window, MCIWNDM_GETERRORA, sizeof(error), (LPARAM)error);
-    todo_wine ok(ret == MCIERR_FILE_NOT_FOUND, "Unexpected error %ld\n", ret);
+    todo_wine ok(ret == MCIERR_FILE_NOT_FOUND, "Unexpected error %Id\n", ret);
 
     DestroyWindow(window);
 
