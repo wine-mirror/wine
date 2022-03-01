@@ -72,13 +72,13 @@ static void run_usergetinfo_tests(void)
 
     if((rc = create_test_user()) != NERR_Success )
     {
-        skip("Skipping usergetinfo_tests, create_test_user failed: 0x%08x\n", rc);
+        skip("Skipping usergetinfo_tests, create_test_user failed: 0x%08lx\n", rc);
         return;
     }
 
     /* Level 0 */
     rc = NetUserGetInfo(NULL, L"testuser", 0, (BYTE **)&ui0);
-    ok(rc == NERR_Success, "NetUserGetInfo level 0 failed: 0x%08x.\n", rc);
+    ok(rc == NERR_Success, "NetUserGetInfo level 0 failed: 0x%08lx.\n", rc);
     ok(!wcscmp(L"testuser", ui0->usri0_name), "Got level 0 name %s.\n", debugstr_w(ui0->usri0_name));
     NetApiBufferSize(ui0, &dwSize);
     ok(dwSize >= (sizeof(USER_INFO_0) + (wcslen(ui0->usri0_name) + 1) * sizeof(WCHAR)),
@@ -86,7 +86,7 @@ static void run_usergetinfo_tests(void)
 
     /* Level 10 */
     rc = NetUserGetInfo(NULL, L"testuser", 10, (BYTE **)&ui10);
-    ok(rc == NERR_Success, "NetUserGetInfo level 10 failed: 0x%08x.\n", rc);
+    ok(rc == NERR_Success, "NetUserGetInfo level 10 failed: 0x%08lx.\n", rc);
     ok(!wcscmp(L"testuser", ui10->usri10_name), "Got level 10 name %s.\n", debugstr_w(ui10->usri10_name));
     NetApiBufferSize(ui10, &dwSize);
     ok(dwSize >= (sizeof(USER_INFO_10) +
@@ -101,14 +101,14 @@ static void run_usergetinfo_tests(void)
 
     /* NetUserGetInfo should always work for the current user. */
     rc = NetUserGetInfo(NULL, user_name, 0, (BYTE **)&ui0);
-    ok(rc == NERR_Success, "NetUsetGetInfo for current user failed: 0x%08x.\n", rc);
+    ok(rc == NERR_Success, "NetUsetGetInfo for current user failed: 0x%08lx.\n", rc);
     NetApiBufferFree(ui0);
 
     /* errors handling */
     rc = NetUserGetInfo(NULL, L"testuser", 10000, (BYTE **)&ui0);
-    ok(rc == ERROR_INVALID_LEVEL,"Invalid Level: rc=%d\n",rc);
+    ok(rc == ERROR_INVALID_LEVEL,"Invalid Level: rc=%ld\n",rc);
     rc = NetUserGetInfo(NULL, L"Nonexistent User", 0, (BYTE **)&ui0);
-    ok(rc == NERR_UserNotFound,"Invalid User Name: rc=%d\n",rc);
+    ok(rc == NERR_UserNotFound,"Invalid User Name: rc=%ld\n",rc);
     todo_wine {
         /* FIXME - Currently Wine can't verify whether the network path is good or bad */
         rc = NetUserGetInfo(L"\\\\Ba  path", L"testuser", 0, (BYTE **)&ui0);
@@ -117,15 +117,15 @@ static void run_usergetinfo_tests(void)
            rc == RPC_S_SERVER_UNAVAILABLE ||
            rc == NERR_WkstaNotStarted || /* workstation service not running */
            rc == RPC_S_INVALID_NET_ADDR, /* Some Win7 */
-           "Bad Network Path: rc=%d\n",rc);
+           "Bad Network Path: rc=%ld\n",rc);
     }
     rc = NetUserGetInfo(L"", L"testuser", 0, (BYTE **)&ui0);
     ok(rc == ERROR_BAD_NETPATH || rc == NERR_Success,
-       "Bad Network Path: rc=%d\n",rc);
+       "Bad Network Path: rc=%ld\n",rc);
     rc = NetUserGetInfo(L"\\", L"testuser", 0, (BYTE **)&ui0);
-    ok(rc == ERROR_INVALID_NAME || rc == ERROR_INVALID_HANDLE,"Invalid Server Name: rc=%d\n",rc);
+    ok(rc == ERROR_INVALID_NAME || rc == ERROR_INVALID_HANDLE,"Invalid Server Name: rc=%ld\n",rc);
     rc = NetUserGetInfo(L"\\\\", L"testuser", 0, (BYTE **)&ui0);
-    ok(rc == ERROR_INVALID_NAME || rc == ERROR_INVALID_HANDLE,"Invalid Server Name: rc=%d\n",rc);
+    ok(rc == ERROR_INVALID_NAME || rc == ERROR_INVALID_HANDLE,"Invalid Server Name: rc=%ld\n",rc);
 
     if(delete_test_user() != NERR_Success)
         trace("Deleting the test user failed. You might have to manually delete it.\n");
@@ -182,7 +182,7 @@ static void run_usermodalsget_tests(void)
     USER_MODALS_INFO_2 * umi2 = NULL;
 
     rc = NetUserModalsGet(NULL, 2, (BYTE **)&umi2);
-    ok(rc == ERROR_SUCCESS, "NetUserModalsGet failed, rc = %d\n", rc);
+    ok(rc == ERROR_SUCCESS, "NetUserModalsGet failed, rc = %ld\n", rc);
 
     if (umi2)
         NetApiBufferFree(umi2);
@@ -209,14 +209,14 @@ static void run_userhandling_tests(void)
         return;
     }
     else
-        ok(ret == NERR_BadUsername, "Got %u.\n", ret);
+        ok(ret == NERR_BadUsername, "Got %lu.\n", ret);
 
     usri.usri1_name = (WCHAR *)L"testuser";
     usri.usri1_password = sTooLongPassword;
 
     ret = NetUserAdd(NULL, 1, (BYTE *)&usri, NULL);
     ok(ret == NERR_PasswordTooShort || ret == ERROR_ACCESS_DENIED /* Win2003 */,
-       "Adding user with too long password returned 0x%08x\n", ret);
+       "Adding user with too long password returned 0x%08lx\n", ret);
 
     usri.usri1_name = sTooLongName;
     usri.usri1_password = sTooLongPassword;
@@ -226,13 +226,13 @@ static void run_userhandling_tests(void)
      * as the error. NERR_PasswordTooShort is reported for all kind of password related errors.
      */
     ok(ret == NERR_BadUsername || ret == NERR_PasswordTooShort,
-            "Adding user with too long username/password returned 0x%08x\n", ret);
+            "Adding user with too long username/password returned 0x%08lx\n", ret);
 
     usri.usri1_name = (WCHAR *)L"testuser";
     usri.usri1_password = sTestUserOldPass;
 
     ret = NetUserAdd(NULL, 5, (BYTE *)&usri, NULL);
-    ok(ret == ERROR_INVALID_LEVEL, "Adding user with level 5 returned 0x%08x\n", ret);
+    ok(ret == ERROR_INVALID_LEVEL, "Adding user with level 5 returned 0x%08lx\n", ret);
 
     ret = NetUserAdd(NULL, 1, (BYTE *)&usri, NULL);
     if(ret == ERROR_ACCESS_DENIED)
@@ -246,7 +246,7 @@ static void run_userhandling_tests(void)
         return;
     }
 
-    ok(!ret, "Got %u.\n", ret);
+    ok(!ret, "Got %lu.\n", ret);
 
     /* On Windows XP (and newer), calling NetUserChangePassword with a NULL
      * domainname parameter creates a user home directory, iff the machine is
@@ -260,7 +260,7 @@ static void run_userhandling_tests(void)
     ok(ret == NERR_Success, "Deleting the user failed.\n");
 
     ret = NetUserDel(NULL, L"testuser");
-    ok(ret == NERR_UserNotFound, "Deleting a nonexistent user returned 0x%08x\n",ret);
+    ok(ret == NERR_UserNotFound, "Deleting a nonexistent user returned 0x%08lx\n",ret);
 }
 
 static void run_localgroupgetinfo_tests(void)
@@ -273,7 +273,7 @@ static void run_localgroupgetinfo_tests(void)
 
     status = NetLocalGroupGetInfo(NULL, L"Administrators", 1, (BYTE **)&lgi);
     ok(status == NERR_Success || broken(status == NERR_GroupNotFound),
-       "NetLocalGroupGetInfo unexpectedly returned %d\n", status);
+       "NetLocalGroupGetInfo unexpectedly returned %ld\n", status);
     if (status != NERR_Success) return;
 
     trace("Local groupname:%s\n", wine_dbgstr_w( lgi->lgrpi1_name));
@@ -283,7 +283,7 @@ static void run_localgroupgetinfo_tests(void)
 
     status = NetLocalGroupGetMembers(NULL, L"Administrators", 3, (BYTE **)&buffer,
             MAX_PREFERRED_LENGTH, &entries_read, &total_entries, NULL);
-    ok(status == NERR_Success, "NetLocalGroupGetMembers unexpectedly returned %d\n", status);
+    ok(status == NERR_Success, "NetLocalGroupGetMembers unexpectedly returned %ld\n", status);
     ok(entries_read > 0 && total_entries > 0, "Amount of entries is unexpectedly 0\n");
 
     for(i=0;i<entries_read;i++)
@@ -344,32 +344,32 @@ static void test_DavGetHTTPFromUNCPath(void)
     if (0) /* crashes on Windows */
     {
         ret = pDavGetHTTPFromUNCPath(NULL, NULL, NULL);
-        ok(ret == ERROR_INVALID_PARAMETER, "got %u\n", ret);
+        ok(ret == ERROR_INVALID_PARAMETER, "got %lu\n", ret);
 
         size = 0;
         ret = pDavGetHTTPFromUNCPath(L"", buf, &size);
-        ok(ret == ERROR_INVALID_PARAMETER, "got %u\n", ret);
+        ok(ret == ERROR_INVALID_PARAMETER, "got %lu\n", ret);
 
         ret = pDavGetHTTPFromUNCPath(L"\\\\a\\b", buf, NULL);
-        ok(ret == ERROR_INVALID_PARAMETER, "got %u\n", ret);
+        ok(ret == ERROR_INVALID_PARAMETER, "got %lu\n", ret);
     }
 
     ret = pDavGetHTTPFromUNCPath(L"", buf, NULL);
-    ok(ret == ERROR_INVALID_PARAMETER, "got %u\n", ret);
+    ok(ret == ERROR_INVALID_PARAMETER, "got %lu\n", ret);
 
     size = 0;
     ret = pDavGetHTTPFromUNCPath(L"", NULL, &size);
-    ok(ret == ERROR_INVALID_PARAMETER || ret == ERROR_BAD_NET_NAME /* Win10 1709+ */, "got %u\n", ret);
+    ok(ret == ERROR_INVALID_PARAMETER || ret == ERROR_BAD_NET_NAME /* Win10 1709+ */, "got %lu\n", ret);
 
     size = 0;
     ret = pDavGetHTTPFromUNCPath(L"\\\\a\\b", NULL, &size);
-    ok(ret == ERROR_INSUFFICIENT_BUFFER, "got %u\n", ret);
+    ok(ret == ERROR_INSUFFICIENT_BUFFER, "got %lu\n", ret);
 
     buf[0] = 0;
     size = 0;
     ret = pDavGetHTTPFromUNCPath(L"\\\\a\\b", buf, &size);
-    ok(ret == ERROR_INSUFFICIENT_BUFFER, "got %u\n", ret);
-    ok(size == 11, "got %u\n", size);
+    ok(ret == ERROR_INSUFFICIENT_BUFFER, "got %lu\n", ret);
+    ok(size == 11, "got %lu\n", size);
 
     for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
@@ -378,16 +378,16 @@ static void test_DavGetHTTPFromUNCPath(void)
         ret = pDavGetHTTPFromUNCPath( tests[i].path, buf, &size );
         todo_wine_if (tests[i].todo)
             ok(ret == tests[i].ret || broken(ret == tests[i].broken_ret),
-                    "%u: expected %u got %u\n", i, tests[i].ret, ret);
+                    "%lu: expected %lu got %lu\n", i, tests[i].ret, ret);
         if (!ret)
         {
             if (tests[i].ret_path)
-                ok(!wcscmp(buf, tests[i].ret_path), "%u: expected %s got %s\n",
+                ok(!wcscmp(buf, tests[i].ret_path), "%lu: expected %s got %s\n",
                         i, wine_dbgstr_w(tests[i].ret_path), wine_dbgstr_w(buf));
-            ok(size == wcslen(buf) + 1, "%u: got %u\n", i, size);
+            ok(size == wcslen(buf) + 1, "%lu: got %lu\n", i, size);
         }
         else
-            ok(size == ARRAY_SIZE(buf), "%u: wrong size %u\n", i, size);
+            ok(size == ARRAY_SIZE(buf), "%lu: wrong size %lu\n", i, size);
     }
 }
 
@@ -437,33 +437,33 @@ static void test_DavGetUNCFromHTTPPath(void)
     if (0) /* crashes on Windows */
     {
         ret = pDavGetUNCFromHTTPPath(NULL, NULL, NULL);
-        ok(ret == ERROR_INVALID_PARAMETER, "got %u\n", ret);
+        ok(ret == ERROR_INVALID_PARAMETER, "got %lu\n", ret);
 
         ret = pDavGetUNCFromHTTPPath(L"http://server/path", buf, NULL);
-        ok(ret == ERROR_INVALID_PARAMETER, "got %u\n", ret);
+        ok(ret == ERROR_INVALID_PARAMETER, "got %lu\n", ret);
     }
 
     ret = pDavGetUNCFromHTTPPath(L"", buf, NULL);
-    ok(ret == ERROR_INVALID_PARAMETER, "got %u\n", ret);
+    ok(ret == ERROR_INVALID_PARAMETER, "got %lu\n", ret);
 
     size = 0;
     ret = pDavGetUNCFromHTTPPath(L"", NULL, &size);
-    ok(ret == ERROR_INVALID_PARAMETER, "got %u\n", ret);
+    ok(ret == ERROR_INVALID_PARAMETER, "got %lu\n", ret);
 
     buf[0] = 0;
     size = 0;
     ret = pDavGetUNCFromHTTPPath(L"", buf, &size);
-    ok(ret == ERROR_INVALID_PARAMETER, "got %u\n", ret);
+    ok(ret == ERROR_INVALID_PARAMETER, "got %lu\n", ret);
 
     size = 0;
     ret = pDavGetUNCFromHTTPPath(L"http://server/path", NULL, &size);
-    ok( ret == ERROR_INSUFFICIENT_BUFFER, "got %u\n", ret );
+    ok( ret == ERROR_INSUFFICIENT_BUFFER, "got %lu\n", ret );
 
     buf[0] = 0;
     size = 0;
     ret = pDavGetUNCFromHTTPPath(L"http://server/path", buf, &size);
-    ok(ret == ERROR_INSUFFICIENT_BUFFER, "got %u\n", ret);
-    ok(size == 25, "got %u\n", size);
+    ok(ret == ERROR_INSUFFICIENT_BUFFER, "got %lu\n", ret);
+    ok(size == 25, "got %lu\n", size);
 
     for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
@@ -472,16 +472,16 @@ static void test_DavGetUNCFromHTTPPath(void)
         ret = pDavGetUNCFromHTTPPath( tests[i].path, buf, &size );
         todo_wine_if (tests[i].todo)
             ok(ret == tests[i].ret || broken(ret == tests[i].broken_ret),
-                    "%u: expected %u got %u\n", i, tests[i].ret, ret);
+                    "%lu: expected %lu got %lu\n", i, tests[i].ret, ret);
         if (!ret)
         {
             if (tests[i].ret_path)
-                ok(!wcscmp(buf, tests[i].ret_path), "%u: expected %s got %s\n",
+                ok(!wcscmp(buf, tests[i].ret_path), "%lu: expected %s got %s\n",
                         i, wine_dbgstr_w(tests[i].ret_path), wine_dbgstr_w(buf));
-            ok(size == wcslen(buf) + 1, "%u: got %u\n", i, size);
+            ok(size == wcslen(buf) + 1, "%lu: got %lu\n", i, size);
         }
         else
-            ok(size == ARRAY_SIZE(buf), "%u: wrong size %u\n", i, size);
+            ok(size == ARRAY_SIZE(buf), "%lu: wrong size %lu\n", i, size);
     }
 }
 
@@ -496,10 +496,10 @@ START_TEST(access)
 
     size = ARRAY_SIZE(user_name);
     ret = GetUserNameW(user_name, &size);
-    ok(ret, "Failed to get user name, error %u.\n", GetLastError());
+    ok(ret, "Failed to get user name, error %lu.\n", GetLastError());
     size = ARRAY_SIZE(computer_name);
     ret = GetComputerNameW(computer_name, &size);
-    ok(ret, "Failed to get computer name, error %u.\n", GetLastError());
+    ok(ret, "Failed to get computer name, error %lu.\n", GetLastError());
 
     run_userhandling_tests();
     run_usergetinfo_tests();

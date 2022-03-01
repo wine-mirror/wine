@@ -62,7 +62,7 @@ static void run_wkstausergetinfo_tests(void)
         skip("Workstation service not running\n");
         return;
     }
-    ok(!rc && ui0, "got %d and %p (expected NERR_Success and != NULL\n", rc, ui0);
+    ok(!rc && ui0, "got %ld and %p (expected NERR_Success and != NULL\n", rc, ui0);
     ok(!wcscmp(user_name, ui0->wkui0_username), "Expected username %s, got %s.\n",
             debugstr_w(user_name), debugstr_w(ui0->wkui0_username));
     NetApiBufferSize(ui0, &dwSize);
@@ -110,7 +110,7 @@ static void run_wkstatransportenum_tests(void)
     apiReturn = NetWkstaTransportEnum(NULL, 1, NULL, MAX_PREFERRED_LENGTH,
         NULL, &totalEntries, NULL);
     ok(apiReturn == ERROR_INVALID_LEVEL || apiReturn == ERROR_INVALID_PARAMETER,
-       "NetWkstaTransportEnum returned %d\n", apiReturn);
+       "NetWkstaTransportEnum returned %ld\n", apiReturn);
 
     /* 2nd check: is param 5 passed? (only if level passes?) */
     apiReturn = NetWkstaTransportEnum(NULL, 0, NULL, MAX_PREFERRED_LENGTH,
@@ -121,25 +121,25 @@ static void run_wkstatransportenum_tests(void)
         return;
 
     ok(apiReturn == STATUS_ACCESS_VIOLATION || apiReturn == ERROR_INVALID_PARAMETER,
-       "NetWkstaTransportEnum returned %d\n", apiReturn);
+       "NetWkstaTransportEnum returned %ld\n", apiReturn);
 
     /* 3rd check: is param 3 passed? */
     apiReturn = NetWkstaTransportEnum(NULL, 0, NULL, MAX_PREFERRED_LENGTH,
         NULL, NULL, NULL);
     ok(apiReturn == STATUS_ACCESS_VIOLATION || apiReturn == RPC_X_NULL_REF_POINTER || apiReturn == ERROR_INVALID_PARAMETER,
-       "NetWkstaTransportEnum returned %d\n", apiReturn);
+       "NetWkstaTransportEnum returned %ld\n", apiReturn);
 
     /* 4th check: is param 6 passed? */
     apiReturn = NetWkstaTransportEnum(NULL, 0, &bufPtr, MAX_PREFERRED_LENGTH,
         &entriesRead, NULL, NULL);
     ok(apiReturn == RPC_X_NULL_REF_POINTER,
-       "NetWkstaTransportEnum returned %d\n", apiReturn);
+       "NetWkstaTransportEnum returned %ld\n", apiReturn);
 
     /* final check: valid return, actually get data back */
     apiReturn = NetWkstaTransportEnum(NULL, 0, &bufPtr, MAX_PREFERRED_LENGTH,
         &entriesRead, &totalEntries, NULL);
     ok(apiReturn == NERR_Success || apiReturn == ERROR_NETWORK_UNREACHABLE || apiReturn == NERR_WkstaNotStarted,
-       "NetWkstaTransportEnum returned %d\n", apiReturn);
+       "NetWkstaTransportEnum returned %ld\n", apiReturn);
     if (apiReturn == NERR_Success) {
         /* WKSTA_TRANSPORT_INFO_0 *transports = (WKSTA_TRANSPORT_INFO_0 *)bufPtr; */
 
@@ -158,11 +158,11 @@ static void run_wkstajoininfo_tests(void)
     NETSETUP_JOIN_STATUS buffertype = 0xdada;
 
     ret = NetGetJoinInformation(NULL, NULL, NULL);
-    ok(ret == ERROR_INVALID_PARAMETER, "NetJoinGetInformation returned unexpected 0x%08x\n", ret);
+    ok(ret == ERROR_INVALID_PARAMETER, "NetJoinGetInformation returned unexpected 0x%08lx\n", ret);
     ok(buffertype == 0xdada, "buffertype set to unexpected value %d\n", buffertype);
 
     ret = NetGetJoinInformation(NULL, &buffer, &buffertype);
-    ok(ret == NERR_Success, "NetJoinGetInformation returned unexpected 0x%08x\n", ret);
+    ok(ret == NERR_Success, "NetJoinGetInformation returned unexpected 0x%08lx\n", ret);
     ok(buffertype != 0xdada && buffertype != NetSetupUnknownStatus, "buffertype set to unexpected value %d\n", buffertype);
     trace("workstation joined to %s with status %d\n", wine_dbgstr_w(buffer), buffertype);
     NetApiBufferFree(buffer);
@@ -177,10 +177,10 @@ START_TEST(wksta)
 
     size = ARRAY_SIZE(user_name);
     ret = GetUserNameW(user_name, &size);
-    ok(ret, "Failed to get user name, error %u.\n", GetLastError());
+    ok(ret, "Failed to get user name, error %lu.\n", GetLastError());
     size = ARRAY_SIZE(computer_name);
     ret = GetComputerNameW(computer_name, &size);
-    ok(ret, "Failed to get computer name, error %u.\n", GetLastError());
+    ok(ret, "Failed to get computer name, error %lu.\n", GetLastError());
 
     if (pNetpGetComputerName)
         run_get_comp_name_tests();

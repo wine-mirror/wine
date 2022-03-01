@@ -71,13 +71,13 @@ static void run_apibuf_tests(void)
     SetLastError(0xdeadbeef);
     res = NetApiBufferAllocate(0, NULL);
     ok( (res == ERROR_INVALID_PARAMETER) && (GetLastError() == 0xdeadbeef),
-        "returned %d with 0x%x (expected ERROR_INVALID_PARAMETER with "
+        "returned %ld with 0x%lx (expected ERROR_INVALID_PARAMETER with "
         "0xdeadbeef)\n", res, GetLastError());
 
     SetLastError(0xdeadbeef);
     res = NetApiBufferAllocate(1024, NULL);
     ok( (res == ERROR_INVALID_PARAMETER) && (GetLastError() == 0xdeadbeef),
-        "returned %d with 0x%x (expected ERROR_INVALID_PARAMETER with "
+        "returned %ld with 0x%lx (expected ERROR_INVALID_PARAMETER with "
         "0xdeadbeef)\n", res, GetLastError());
 }
 

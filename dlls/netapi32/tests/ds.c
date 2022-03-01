@@ -33,18 +33,18 @@ static void test_params(void)
 
     SetLastError(0xdeadbeef);
     ret = DsRoleGetPrimaryDomainInformation(NULL, DsRolePrimaryDomainInfoBasic, NULL);
-    ok( ret == ERROR_INVALID_PARAMETER, "Expected error ERROR_INVALID_PARAMETER, got (%d)\n", ret);
+    ok( ret == ERROR_INVALID_PARAMETER, "Expected error ERROR_INVALID_PARAMETER, got (%ld)\n", ret);
 
     SetLastError(0xdeadbeef);
     ret = DsRoleGetPrimaryDomainInformation(NULL, 0, NULL);
-    ok( ret == ERROR_INVALID_PARAMETER, "Expected error ERROR_INVALID_PARAMETER, got (%d)\n", ret);
+    ok( ret == ERROR_INVALID_PARAMETER, "Expected error ERROR_INVALID_PARAMETER, got (%ld)\n", ret);
     SetLastError(0xdeadbeef);
     ret = DsRoleGetPrimaryDomainInformation(NULL, 4, NULL);
-    ok( ret == ERROR_INVALID_PARAMETER, "Expected error ERROR_INVALID_PARAMETER, got (%d)\n", ret);
+    ok( ret == ERROR_INVALID_PARAMETER, "Expected error ERROR_INVALID_PARAMETER, got (%ld)\n", ret);
 
     SetLastError(0xdeadbeef);
     ret = DsRoleGetPrimaryDomainInformation(NULL, 4, (BYTE **)&dpdi);
-    ok( ret == ERROR_INVALID_PARAMETER, "Expected error ERROR_INVALID_PARAMETER, got (%d)\n", ret);
+    ok( ret == ERROR_INVALID_PARAMETER, "Expected error ERROR_INVALID_PARAMETER, got (%ld)\n", ret);
 }
 
 static void test_get(void)
@@ -56,17 +56,17 @@ static void test_get(void)
 
     SetLastError(0xdeadbeef);
     ret = DsRoleGetPrimaryDomainInformation(NULL, DsRolePrimaryDomainInfoBasic, (BYTE **)&dpdi);
-    ok( ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got (%d)\n", ret);
+    ok( ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got (%ld)\n", ret);
     DsRoleFreeMemory(dpdi);
 
     SetLastError(0xdeadbeef);
     ret = DsRoleGetPrimaryDomainInformation(NULL, DsRoleUpgradeStatus, (BYTE **)&dusi);
-    todo_wine { ok( ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got (%d)\n", ret); }
+    todo_wine { ok( ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got (%ld)\n", ret); }
     DsRoleFreeMemory(dusi);
    
     SetLastError(0xdeadbeef);
     ret = DsRoleGetPrimaryDomainInformation(NULL, DsRoleOperationState, (BYTE **)&dosi);
-    todo_wine { ok( ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got (%d)\n", ret); }
+    todo_wine { ok( ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got (%ld)\n", ret); }
     DsRoleFreeMemory(dosi);
 }
 
