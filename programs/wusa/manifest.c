@@ -32,28 +32,28 @@ WINE_DEFAULT_DEBUG_CHANNEL(wusa);
 
 static struct dependency_entry *alloc_dependency(void)
 {
-    struct dependency_entry *entry = heap_alloc_zero(sizeof(*entry));
+    struct dependency_entry *entry = calloc(1, sizeof(*entry));
     if (!entry) ERR("Failed to allocate memory for dependency\n");
     return entry;
 }
 
 static struct fileop_entry *alloc_fileop(void)
 {
-    struct fileop_entry *entry = heap_alloc_zero(sizeof(*entry));
+    struct fileop_entry *entry = calloc(1, sizeof(*entry));
     if (!entry) ERR("Failed to allocate memory for fileop\n");
     return entry;
 }
 
 static struct registrykv_entry *alloc_registrykv(void)
 {
-    struct registrykv_entry *entry = heap_alloc_zero(sizeof(*entry));
+    struct registrykv_entry *entry = calloc(1, sizeof(*entry));
     if (!entry) ERR("Failed to allocate memory for registrykv\n");
     return entry;
 }
 
 static struct registryop_entry *alloc_registryop(void)
 {
-    struct registryop_entry *entry = heap_alloc_zero(sizeof(*entry));
+    struct registryop_entry *entry = calloc(1, sizeof(*entry));
     if (!entry) ERR("Failed to allocate memory for registryop\n");
     else
     {
@@ -64,7 +64,7 @@ static struct registryop_entry *alloc_registryop(void)
 
 static struct assembly_entry *alloc_assembly(void)
 {
-    struct assembly_entry *entry = heap_alloc_zero(sizeof(*entry));
+    struct assembly_entry *entry = calloc(1, sizeof(*entry));
     if (!entry) ERR("Failed to allocate memory for assembly\n");
     else
     {
@@ -77,39 +77,39 @@ static struct assembly_entry *alloc_assembly(void)
 
 static void clear_identity(struct assembly_identity *entry)
 {
-    heap_free(entry->name);
-    heap_free(entry->version);
-    heap_free(entry->architecture);
-    heap_free(entry->language);
-    heap_free(entry->pubkey_token);
+    free(entry->name);
+    free(entry->version);
+    free(entry->architecture);
+    free(entry->language);
+    free(entry->pubkey_token);
 }
 
 void free_dependency(struct dependency_entry *entry)
 {
     clear_identity(&entry->identity);
-    heap_free(entry);
+    free(entry);
 }
 
 static void free_fileop(struct fileop_entry *entry)
 {
-    heap_free(entry->source);
-    heap_free(entry->target);
-    heap_free(entry);
+    free(entry->source);
+    free(entry->target);
+    free(entry);
 }
 
 static void free_registrykv(struct registrykv_entry *entry)
 {
-    heap_free(entry->name);
-    heap_free(entry->value_type);
-    heap_free(entry->value);
-    heap_free(entry);
+    free(entry->name);
+    free(entry->value_type);
+    free(entry->value);
+    free(entry);
 }
 
 static void free_registryop(struct registryop_entry *entry)
 {
     struct registrykv_entry *keyvalue, *keyvalue2;
 
-    heap_free(entry->key);
+    free(entry->key);
 
     LIST_FOR_EACH_ENTRY_SAFE(keyvalue, keyvalue2, &entry->keyvalues, struct registrykv_entry, entry)
     {
@@ -117,7 +117,7 @@ static void free_registryop(struct registryop_entry *entry)
         free_registrykv(keyvalue);
     }
 
-    heap_free(entry);
+    free(entry);
 }
 
 void free_assembly(struct assembly_entry *entry)
@@ -126,8 +126,8 @@ void free_assembly(struct assembly_entry *entry)
     struct fileop_entry *fileop, *fileop2;
     struct registryop_entry *registryop, *registryop2;
 
-    heap_free(entry->filename);
-    heap_free(entry->displayname);
+    free(entry->filename);
+    free(entry->displayname);
     clear_identity(&entry->identity);
 
     LIST_FOR_EACH_ENTRY_SAFE(dependency, dependency2, &entry->dependencies, struct dependency_entry, entry)
@@ -146,7 +146,7 @@ void free_assembly(struct assembly_entry *entry)
         free_registryop(registryop);
     }
 
-    heap_free(entry);
+    free(entry);
 }
 
 static WCHAR *get_xml_attribute(IXMLDOMElement *root, const WCHAR *name)
@@ -304,7 +304,7 @@ static BOOL read_dependent_assembly(IXMLDOMElement *root, struct assembly_identi
 
 error:
     if (child) IXMLDOMElement_Release(child);
-    heap_free(dependency_type);
+    free(dependency_type);
     return ret;
 }
 
@@ -498,7 +498,7 @@ static BOOL read_registry_keys(IXMLDOMElement *child, WCHAR *tagname, void *cont
         free_registryop(entry);
     }
 
-    heap_free(keyname);
+    free(keyname);
     return FALSE;
 }
 
@@ -622,7 +622,7 @@ static BOOL read_servicing(IXMLDOMElement *child, WCHAR *tagname, void *context)
     else
         FIXME("action %s not supported\n", debugstr_w(action));
 
-    heap_free(action);
+    free(action);
     return ret;
 }
 
