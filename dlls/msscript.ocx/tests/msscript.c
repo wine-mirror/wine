@@ -126,7 +126,7 @@ static void _expect_ref(IUnknown* obj, ULONG ref, int line)
     ULONG rc;
     IUnknown_AddRef(obj);
     rc = IUnknown_Release(obj);
-    ok_(__FILE__,line)(rc == ref, "expected refcount %d, got %d\n", ref, rc);
+    ok_(__FILE__,line)(rc == ref, "expected refcount %ld, got %ld\n", ref, rc);
 }
 
 static IActiveScriptSite *site;
@@ -228,9 +228,9 @@ static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *ifac
     ok(!punkContext, "got wrong pointer: %p.\n", punkContext);
     ok(!pstrDelimiter, "got wrong pointer: %p.\n", pstrDelimiter);
     ok(!dwSourceContextCookie, "got wrong value: %s.\n", wine_dbgstr_longlong(dwSourceContextCookie));
-    ok(ulStartingLine == 1, "got wrong value: %d.\n", ulStartingLine);
+    ok(ulStartingLine == 1, "got wrong value: %ld.\n", ulStartingLine);
     ok(!!pexcepinfo, "got wrong pointer: %p.\n", pexcepinfo);
-    ok(dwFlags == parse_flags, "got wrong flags: %x.\n", dwFlags);
+    ok(dwFlags == parse_flags, "got wrong flags: %lx.\n", dwFlags);
     if (parse_flags == SCRIPTTEXT_ISEXPRESSION)
         ok(!!pvarResult, "got wrong pointer: %p.\n", pvarResult);
     else
@@ -284,7 +284,7 @@ static HRESULT WINAPI ObjectSafety_SetInterfaceSafetyOptions(IObjectSafety *ifac
         CHECK_EXPECT(SetInterfaceSafetyOptions);
 
     ok(IsEqualGUID(&IID_IActiveScriptParse, riid), "unexpected riid %s\n", wine_dbgstr_guid(riid));
-    ok(mask == INTERFACESAFE_FOR_UNTRUSTED_DATA, "option mask = %x\n", mask);
+    ok(mask == INTERFACESAFE_FOR_UNTRUSTED_DATA, "option mask = %lx\n", mask);
 
     return S_OK;
 }
@@ -323,7 +323,7 @@ static HRESULT WINAPI TypeComp_Bind(ITypeComp *iface, LPOLESTR szName, ULONG lHa
     UINT i;
 
     CHECK_EXPECT(Bind);
-    ok(lHashVal == hash, "wrong hash, expected 0x%08x, got 0x%08x.\n", hash, lHashVal);
+    ok(lHashVal == hash, "wrong hash, expected 0x%08lx, got 0x%08lx.\n", hash, lHashVal);
     ok(wFlags == INVOKE_FUNC, "wrong flags, got 0x%x.\n", wFlags);
 
     *ppTInfo = NULL;
@@ -615,7 +615,7 @@ static HRESULT WINAPI DispatchEx_GetTypeInfo(IDispatchEx *iface, UINT iTInfo, LC
 {
     CHECK_EXPECT(GetTypeInfo);
     ok(iTInfo == 0, "unexpected iTInfo %u.\n", iTInfo);
-    ok(lcid == LOCALE_USER_DEFAULT, "unexpected lcid %u\n", lcid);
+    ok(lcid == LOCALE_USER_DEFAULT, "unexpected lcid %lu\n", lcid);
 
     *ppTInfo = &TypeInfo;
     return S_OK;
@@ -627,7 +627,7 @@ static HRESULT WINAPI DispatchEx_GetIDsOfNames(IDispatchEx *iface, REFIID riid, 
 {
     CHECK_EXPECT(GetIDsOfNames);
     ok(IsEqualGUID(&IID_NULL, riid), "unexpected riid %s\n", wine_dbgstr_guid(riid));
-    ok(lcid == LOCALE_USER_DEFAULT, "unexpected lcid %u\n", lcid);
+    ok(lcid == LOCALE_USER_DEFAULT, "unexpected lcid %lu\n", lcid);
     ok(cNames == 1, "unexpected cNames %u\n", cNames);
     ok(Dispatch_expected_name && !lstrcmpW(rgszNames[0], Dispatch_expected_name),
         "unexpected name %s (expected %s).\n", wine_dbgstr_w(rgszNames[0]), wine_dbgstr_w(Dispatch_expected_name));
@@ -641,9 +641,9 @@ static HRESULT WINAPI DispatchEx_Invoke(IDispatchEx *iface, DISPID dispIdMember,
 {
     CHECK_EXPECT(Invoke);
     ok(IsEqualGUID(&IID_NULL, riid), "unexpected riid %s.\n", wine_dbgstr_guid(riid));
-    ok(lcid == LOCALE_USER_DEFAULT, "unexpected lcid %u.\n", lcid);
+    ok(lcid == LOCALE_USER_DEFAULT, "unexpected lcid %lu.\n", lcid);
     ok(wFlags == DISPATCH_METHOD, "unexpected wFlags %u.\n", wFlags);
-    ok(dispIdMember == 0xdeadbeef, "unexpected dispIdMember %d.\n", dispIdMember);
+    ok(dispIdMember == 0xdeadbeef, "unexpected dispIdMember %ld.\n", dispIdMember);
     ok(pDispParams->cNamedArgs == 0, "unexpected number of named args %u.\n", pDispParams->cNamedArgs);
     ok(!pDispParams->rgdispidNamedArgs, "unexpected named args array %p\n", pDispParams->rgdispidNamedArgs);
     ok(pDispParams->cArgs == 2, "unexpected number of args %u.\n", pDispParams->cArgs);
@@ -651,10 +651,10 @@ static HRESULT WINAPI DispatchEx_Invoke(IDispatchEx *iface, DISPID dispIdMember,
     if (pDispParams->rgvarg && pDispParams->cArgs >= 2)
     {
         ok(V_VT(pDispParams->rgvarg + 1) == VT_I4 && V_I4(pDispParams->rgvarg + 1) == 10,
-            "unexpected first parameter V_VT = %d, V_I4 = %d.\n",
+            "unexpected first parameter V_VT = %d, V_I4 = %ld.\n",
             V_VT(pDispParams->rgvarg + 1), V_I4(pDispParams->rgvarg + 1));
         ok(V_VT(pDispParams->rgvarg) == VT_I4 && V_I4(pDispParams->rgvarg) == 3,
-            "unexpected second parameter V_VT = %d, V_I4 = %d.\n",
+            "unexpected second parameter V_VT = %d, V_I4 = %ld.\n",
             V_VT(pDispParams->rgvarg), V_I4(pDispParams->rgvarg));
     }
 
@@ -677,9 +677,9 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     HRESULT hr;
 
     CHECK_EXPECT(InvokeEx);
-    ok(lcid == LOCALE_USER_DEFAULT, "unexpected lcid %u.\n", lcid);
+    ok(lcid == LOCALE_USER_DEFAULT, "unexpected lcid %lu.\n", lcid);
     ok(wFlags == DISPATCH_METHOD, "unexpected wFlags %u.\n", wFlags);
-    ok(id == 0xdeadbeef, "unexpected id %d.\n", id);
+    ok(id == 0xdeadbeef, "unexpected id %ld.\n", id);
     ok(pdp->cNamedArgs == 0, "unexpected number of named args %u.\n", pdp->cNamedArgs);
     ok(!pdp->rgdispidNamedArgs, "unexpected named args array %p.\n", pdp->rgdispidNamedArgs);
     ok(pdp->cArgs == 2, "unexpected number of args %u.\n", pdp->cArgs);
@@ -687,37 +687,37 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     if (pdp->rgvarg && pdp->cArgs >= 2)
     {
         ok(V_VT(pdp->rgvarg + 1) == VT_I4 && V_I4(pdp->rgvarg + 1) == 10,
-            "unexpected first parameter V_VT = %d, V_I4 = %d.\n",
+            "unexpected first parameter V_VT = %d, V_I4 = %ld.\n",
             V_VT(pdp->rgvarg + 1), V_I4(pdp->rgvarg + 1));
         ok(V_VT(pdp->rgvarg) == VT_I4 && V_I4(pdp->rgvarg) == 3,
-            "unexpected second parameter V_VT = %d, V_I4 = %d.\n",
+            "unexpected second parameter V_VT = %d, V_I4 = %ld.\n",
             V_VT(pdp->rgvarg), V_I4(pdp->rgvarg));
     }
     ok(!!pspCaller, "unexpected NULL pspCaller.\n");
 
     hr = IActiveScriptSite_QueryInterface(site, &IID_IServiceProvider, (void**)&sp);
-    ok(hr == S_OK, "Failed to retrieve IID_IServiceProvider from script site: 0x%08x.\n", hr);
+    ok(hr == S_OK, "Failed to retrieve IID_IServiceProvider from script site: 0x%08lx.\n", hr);
     ok(sp != pspCaller, "Same IServiceProvider objects.\n");
     IServiceProvider_Release(sp);
 
     hr = IServiceProvider_QueryInterface(pspCaller, &IID_IActiveScriptSite, (void**)&unk);
-    ok(hr == E_NOINTERFACE, "QueryInterface IActiveScriptSite returned: 0x%08x.\n", hr);
+    ok(hr == E_NOINTERFACE, "QueryInterface IActiveScriptSite returned: 0x%08lx.\n", hr);
 
     unk = (IUnknown*)0xdeadbeef;
     hr = IServiceProvider_QueryService(pspCaller, &SID_GetCaller, NULL, (void**)&unk);
-    ok(hr == S_OK, "QueryService failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "QueryService failed: 0x%08lx.\n", hr);
     ok(!unk, "unexpected object returned %p.\n", unk);
     unk = (IUnknown*)0xdeadbeef;
     hr = IServiceProvider_QueryService(pspCaller, &SID_GetCaller, &IID_IUnknown, (void**)&unk);
-    ok(hr == S_OK, "QueryService failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "QueryService failed: 0x%08lx.\n", hr);
     ok(!unk, "unexpected object returned %p.\n", unk);
     sp = (IServiceProvider*)0xdeadbeef;
     hr = IServiceProvider_QueryService(pspCaller, &SID_GetCaller, &IID_IServiceProvider, (void**)&sp);
-    ok(hr == S_OK, "QueryService failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "QueryService failed: 0x%08lx.\n", hr);
     ok(!sp, "unexpected object returned %p.\n", sp);
     unk = (IUnknown*)0xdeadbeef;
     hr = IServiceProvider_QueryService(pspCaller, &SID_VariantConversion, &IID_IVariantChangeType, (void**)&unk);
-    ok(hr == E_NOINTERFACE, "QueryService returned: 0x%08x.\n", hr);
+    ok(hr == E_NOINTERFACE, "QueryService returned: 0x%08lx.\n", hr);
     ok(!unk, "unexpected object returned %p.\n", unk);
 
     V_VT(pvarRes) = VT_I2;
@@ -834,26 +834,26 @@ static HRESULT WINAPI ActiveScript_SetScriptSite(IActiveScript *iface, IActiveSc
     ok(pass != NULL, "pass == NULL\n");
 
     hres = IActiveScriptSite_QueryInterface(pass, &IID_IActiveScriptSiteInterruptPoll, (void**)&poll);
-    ok(hres == E_NOINTERFACE, "Got IActiveScriptSiteInterruptPoll interface: %08x\n", hres);
+    ok(hres == E_NOINTERFACE, "Got IActiveScriptSiteInterruptPoll interface: %08lx\n", hres);
 
     hres = IActiveScriptSite_GetLCID(pass, &lcid);
-    ok(hres == S_OK, "GetLCID failed: %08x\n", hres);
+    ok(hres == S_OK, "GetLCID failed: %08lx\n", hres);
 
     hres = IActiveScriptSite_OnStateChange(pass, (state = SCRIPTSTATE_INITIALIZED));
-    ok(hres == E_NOTIMPL, "OnStateChange failed: %08x\n", hres);
+    ok(hres == E_NOTIMPL, "OnStateChange failed: %08lx\n", hres);
 
     hres = IActiveScriptSite_QueryInterface(pass, &IID_IActiveScriptSiteDebug, (void**)&debug);
-    ok(hres == E_NOINTERFACE, "Got IActiveScriptSiteDebug interface: %08x\n", hres);
+    ok(hres == E_NOINTERFACE, "Got IActiveScriptSiteDebug interface: %08lx\n", hres);
 
     hres = IActiveScriptSite_QueryInterface(pass, &IID_ICanHandleException, (void**)&canexception);
-    ok(hres == E_NOINTERFACE, "Got IID_ICanHandleException interface: %08x\n", hres);
+    ok(hres == E_NOINTERFACE, "Got IID_ICanHandleException interface: %08lx\n", hres);
 
     hres = IActiveScriptSite_QueryInterface(pass, &IID_IServiceProvider, (void**)&service);
-    ok(hres == S_OK, "Could not get IServiceProvider interface: %08x\n", hres);
+    ok(hres == S_OK, "Could not get IServiceProvider interface: %08lx\n", hres);
     IServiceProvider_Release(service);
 
     hres = IActiveScriptSite_QueryInterface(pass, &IID_IActiveScriptSiteWindow, (void**)&window);
-    ok(hres == S_OK, "Could not get IActiveScriptSiteWindow interface: %08x\n", hres);
+    ok(hres == S_OK, "Could not get IActiveScriptSiteWindow interface: %08lx\n", hres);
     IActiveScriptSiteWindow_Release(window);
 
     if (site)
@@ -911,7 +911,7 @@ static HRESULT WINAPI ActiveScript_AddNamedItem(IActiveScript *iface, LPCOLESTR 
 {
     CHECK_EXPECT(AddNamedItem);
     ok(!lstrcmpW(name, AddNamedItem_expected_name), "got name %s\n", wine_dbgstr_w(name));
-    ok(flags == AddNamedItem_expected_flags, "got flags %#x\n", flags);
+    ok(flags == AddNamedItem_expected_flags, "got flags %#lx\n", flags);
     return S_OK;
 }
 
@@ -1174,7 +1174,7 @@ static BOOL register_script_engine(void)
 
     hres = CoRegisterClassObject(&CLSID_TestScript, (IUnknown *)&script_cf,
                                  CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &regid);
-    ok(hres == S_OK, "Could not register script engine: %08x\n", hres);
+    ok(hres == S_OK, "Could not register script engine: %08lx\n", hres);
 
     return TRUE;
 }
@@ -1260,32 +1260,32 @@ static void test_oleobject(void)
 
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IOleObject, (void**)&obj);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     if (0) /* crashes on w2k3 */
         hr = IOleObject_GetMiscStatus(obj, DVASPECT_CONTENT, NULL);
 
     status = 0;
     hr = IOleObject_GetMiscStatus(obj, DVASPECT_CONTENT, &status);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(status != 0, "got 0x%08x\n", status);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(status != 0, "got 0x%08lx\n", status);
 
     hr = IOleObject_SetClientSite(obj, &testclientsite);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     if (0) /* crashes on w2k3 */
         hr = IOleObject_GetClientSite(obj, NULL);
 
     hr = IOleObject_GetClientSite(obj, &site);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(site == &testclientsite, "got %p, %p\n", site, &testclientsite);
     IOleClientSite_Release(site);
 
     hr = IOleObject_SetClientSite(obj, NULL);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IOleObject_GetClientSite(obj, &site);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(site == NULL, "got %p\n", site);
 
     /* extents */
@@ -1296,27 +1296,27 @@ static void test_oleobject(void)
 
     memset(&extent, 0, sizeof(extent));
     hr = IOleObject_GetExtent(obj, DVASPECT_CONTENT, &extent);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(extent.cx == MulDiv(38, 2540, dpi_x), "got %d\n", extent.cx);
-    ok(extent.cy == MulDiv(38, 2540, dpi_y), "got %d\n", extent.cy);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(extent.cx == MulDiv(38, 2540, dpi_x), "got %ld\n", extent.cx);
+    ok(extent.cy == MulDiv(38, 2540, dpi_y), "got %ld\n", extent.cy);
 
     extent.cx = extent.cy = 0xdeadbeef;
     hr = IOleObject_GetExtent(obj, DVASPECT_THUMBNAIL, &extent);
-    ok(hr == DV_E_DVASPECT, "got 0x%08x\n", hr);
-    ok(extent.cx == 0xdeadbeef, "got %d\n", extent.cx);
-    ok(extent.cy == 0xdeadbeef, "got %d\n", extent.cy);
+    ok(hr == DV_E_DVASPECT, "got 0x%08lx\n", hr);
+    ok(extent.cx == 0xdeadbeef, "got %ld\n", extent.cx);
+    ok(extent.cy == 0xdeadbeef, "got %ld\n", extent.cy);
 
     extent.cx = extent.cy = 0xdeadbeef;
     hr = IOleObject_GetExtent(obj, DVASPECT_ICON, &extent);
-    ok(hr == DV_E_DVASPECT, "got 0x%08x\n", hr);
-    ok(extent.cx == 0xdeadbeef, "got %d\n", extent.cx);
-    ok(extent.cy == 0xdeadbeef, "got %d\n", extent.cy);
+    ok(hr == DV_E_DVASPECT, "got 0x%08lx\n", hr);
+    ok(extent.cx == 0xdeadbeef, "got %ld\n", extent.cx);
+    ok(extent.cy == 0xdeadbeef, "got %ld\n", extent.cy);
 
     extent.cx = extent.cy = 0xdeadbeef;
     hr = IOleObject_GetExtent(obj, DVASPECT_DOCPRINT, &extent);
-    ok(hr == DV_E_DVASPECT, "got 0x%08x\n", hr);
-    ok(extent.cx == 0xdeadbeef, "got %d\n", extent.cx);
-    ok(extent.cy == 0xdeadbeef, "got %d\n", extent.cy);
+    ok(hr == DV_E_DVASPECT, "got 0x%08lx\n", hr);
+    ok(extent.cx == 0xdeadbeef, "got %ld\n", extent.cx);
+    ok(extent.cy == 0xdeadbeef, "got %ld\n", extent.cy);
 
     IOleObject_Release(obj);
 }
@@ -1328,7 +1328,7 @@ static void test_persiststreaminit(void)
 
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IPersistStreamInit, (void**)&init);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     IPersistStreamInit_Release(init);
 }
@@ -1341,28 +1341,28 @@ static void test_olecontrol(void)
 
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IOleControl, (void**)&olecontrol);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     memset(&info, 0xab, sizeof(info));
     info.cb = sizeof(info);
     hr = IOleControl_GetControlInfo(olecontrol, &info);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(info.hAccel == NULL, "got %p\n", info.hAccel);
     ok(info.cAccel == 0, "got %d\n", info.cAccel);
-    ok(info.dwFlags == 0xabababab, "got %x\n", info.dwFlags);
+    ok(info.dwFlags == 0xabababab, "got %lx\n", info.dwFlags);
 
     memset(&info, 0xab, sizeof(info));
     info.cb = sizeof(info) - 1;
     hr = IOleControl_GetControlInfo(olecontrol, &info);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(info.hAccel == NULL, "got %p\n", info.hAccel);
     ok(info.cAccel == 0, "got %d\n", info.cAccel);
-    ok(info.dwFlags == 0xabababab, "got %x\n", info.dwFlags);
+    ok(info.dwFlags == 0xabababab, "got %lx\n", info.dwFlags);
 
     if (0) /* crashes on win2k3 */
     {
         hr = IOleControl_GetControlInfo(olecontrol, NULL);
-        ok(hr == E_POINTER, "got 0x%08x\n", hr);
+        ok(hr == E_POINTER, "got 0x%08lx\n", hr);
     }
 
     IOleControl_Release(olecontrol);
@@ -1376,56 +1376,56 @@ static void test_Language(void)
 
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IScriptControl, (void**)&sc);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IScriptControl_get_Language(sc, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "got 0x%08lx\n", hr);
 
     str = (BSTR)0xdeadbeef;
     hr = IScriptControl_get_Language(sc, &str);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(str == NULL, "got %s\n", wine_dbgstr_w(str));
 
     str = SysAllocString(L"VBScript");
     hr = IScriptControl_put_Language(sc, str);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     SysFreeString(str);
 
     str = SysAllocString(L"vBscript");
     hr = IScriptControl_put_Language(sc, str);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     SysFreeString(str);
 
     hr = IScriptControl_get_Language(sc, &str);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(!lstrcmpW(str, L"VBScript"), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     str = SysAllocString(L"dummy");
     hr = IScriptControl_put_Language(sc, str);
-    ok(hr == CTL_E_INVALIDPROPERTYVALUE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_INVALIDPROPERTYVALUE, "got 0x%08lx\n", hr);
     SysFreeString(str);
 
     hr = IScriptControl_get_Language(sc, &str);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(!lstrcmpW(str, L"VBScript"), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     str = SysAllocString(L"JScript");
     hr = IScriptControl_put_Language(sc, str);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     SysFreeString(str);
 
     hr = IScriptControl_get_Language(sc, &str);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(!lstrcmpW(str, L"JScript"), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     hr = IScriptControl_put_Language(sc, NULL);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IScriptControl_get_Language(sc, &str);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(str == NULL, "got %s\n", wine_dbgstr_w(str));
 
     IScriptControl_Release(sc);
@@ -1434,7 +1434,7 @@ static void test_Language(void)
     if (have_custom_engine) {
         hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
                 &IID_IScriptControl, (void**)&sc);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
 
         SET_EXPECT(CreateInstance);
         SET_EXPECT(SetInterfaceSafetyOptions);
@@ -1444,7 +1444,7 @@ static void test_Language(void)
 
         str = SysAllocString(L"testscript");
         hr = IScriptControl_put_Language(sc, str);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         SysFreeString(str);
 
         CHECK_CALLED(CreateInstance);
@@ -1454,7 +1454,7 @@ static void test_Language(void)
         CHECK_CALLED(InitNew);
         hr = IScriptControl_get_Language(sc, &str);
         todo_wine
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
          if (hr == S_OK)
             ok(!lstrcmpW(L"testscript", str), "%s\n", wine_dbgstr_w(str));
         SysFreeString(str);
@@ -1479,49 +1479,49 @@ static void test_connectionpoints(void)
 
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IScriptControl, (void**)&sc);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     EXPECT_REF(sc, 1);
     hr = IScriptControl_QueryInterface(sc, &IID_IConnectionPointContainer, (void**)&container);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     EXPECT_REF(sc, 2);
     EXPECT_REF(container, 2);
 
     hr = IConnectionPointContainer_FindConnectionPoint(container, &IID_IPropertyNotifySink, &cp);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     if (0) /* crashes on win2k3 */
     {
         hr = IConnectionPoint_GetConnectionPointContainer(cp, NULL);
-        ok(hr == E_POINTER, "got 0x%08x\n", hr);
+        ok(hr == E_POINTER, "got 0x%08lx\n", hr);
     }
 
     hr = IConnectionPoint_GetConnectionInterface(cp, &iid);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(IsEqualIID(&iid, &IID_IPropertyNotifySink), "got %s\n", wine_dbgstr_guid(&iid));
 
     hr = IConnectionPoint_GetConnectionPointContainer(cp, &container2);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(container2 == container, "got %p, expected %p\n", container2, container);
     IConnectionPointContainer_Release(container2);
 
     IConnectionPoint_Release(cp);
 
     hr = IConnectionPointContainer_FindConnectionPoint(container, &DIID_DScriptControlSource, &cp);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     if (0) /* crashes on win2k3 */
     {
         hr = IConnectionPoint_GetConnectionPointContainer(cp, NULL);
-        ok(hr == E_POINTER, "got 0x%08x\n", hr);
+        ok(hr == E_POINTER, "got 0x%08lx\n", hr);
     }
 
     hr = IConnectionPoint_GetConnectionInterface(cp, &iid);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(IsEqualIID(&iid, &DIID_DScriptControlSource), "got %s\n", wine_dbgstr_guid(&iid));
 
     hr = IConnectionPoint_GetConnectionPointContainer(cp, &container2);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(container2 == container, "got %p, expected %p\n", container2, container);
     IConnectionPointContainer_Release(container2);
 
@@ -1539,10 +1539,10 @@ static void test_quickactivate(void)
 
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IScriptControl, (void**)&sc);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IScriptControl_QueryInterface(sc, &IID_IQuickActivate, (void**)&qa);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     IQuickActivate_Release(qa);
     IScriptControl_Release(sc);
@@ -1559,53 +1559,53 @@ static void test_viewobject(void)
 
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IScriptControl, (void**)&sc);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IScriptControl_QueryInterface(sc, &IID_IViewObject, (void**)&view);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     IViewObject_Release(view);
 
     hr = IScriptControl_QueryInterface(sc, &IID_IViewObject2, (void**)&view);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     sink = (IAdviseSink*)0xdeadbeef;
     hr = IViewObject_GetAdvise(view, &aspect, &flags, &sink);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(aspect == DVASPECT_CONTENT, "got %u\n", aspect);
-    ok(flags == 0, "got %#x\n", flags);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(aspect == DVASPECT_CONTENT, "got %lu\n", aspect);
+    ok(flags == 0, "got %#lx\n", flags);
     ok(sink == NULL, "got %p\n", sink);
 
     hr = IViewObject_SetAdvise(view, DVASPECT_CONTENT, 0, NULL);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IViewObject_SetAdvise(view, DVASPECT_THUMBNAIL, 0, NULL);
-    ok(hr == DV_E_DVASPECT, "got 0x%08x\n", hr);
+    ok(hr == DV_E_DVASPECT, "got 0x%08lx\n", hr);
 
     hr = IViewObject_SetAdvise(view, DVASPECT_ICON, 0, NULL);
-    ok(hr == DV_E_DVASPECT, "got 0x%08x\n", hr);
+    ok(hr == DV_E_DVASPECT, "got 0x%08lx\n", hr);
 
     hr = IViewObject_SetAdvise(view, DVASPECT_DOCPRINT, 0, NULL);
-    ok(hr == DV_E_DVASPECT, "got 0x%08x\n", hr);
+    ok(hr == DV_E_DVASPECT, "got 0x%08lx\n", hr);
 
     sink = (IAdviseSink*)0xdeadbeef;
     hr = IViewObject_GetAdvise(view, &aspect, &flags, &sink);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(aspect == DVASPECT_CONTENT, "got %u\n", aspect);
-    ok(flags == 0, "got %#x\n", flags);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(aspect == DVASPECT_CONTENT, "got %lu\n", aspect);
+    ok(flags == 0, "got %#lx\n", flags);
     ok(sink == NULL, "got %p\n", sink);
 
     IViewObject_Release(view);
 
     hr = IScriptControl_QueryInterface(sc, &IID_IViewObjectEx, (void**)&viewex);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     if (0) /* crashes */
         hr = IViewObjectEx_GetViewStatus(viewex, NULL);
 
     status = 0;
     hr = IViewObjectEx_GetViewStatus(viewex, &status);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(status == VIEWSTATUS_OPAQUE, "got %#x\n", status);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(status == VIEWSTATUS_OPAQUE, "got %#lx\n", status);
 
     IViewObjectEx_Release(viewex);
 
@@ -1621,18 +1621,18 @@ static void test_pointerinactive(void)
 
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IScriptControl, (void**)&sc);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IScriptControl_QueryInterface(sc, &IID_IPointerInactive, (void**)&pi);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     if (0) /* crashes w2k3 */
         hr = IPointerInactive_GetActivationPolicy(pi, NULL);
 
     policy = 123;
     hr = IPointerInactive_GetActivationPolicy(pi, &policy);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(policy == 0, "got %#x\n", policy);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(policy == 0, "got %#lx\n", policy);
 
     IPointerInactive_Release(pi);
     IScriptControl_Release(sc);
@@ -1647,52 +1647,52 @@ static void test_timeout(void)
 
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IScriptControl, (void**)&sc);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IScriptControl_get_Timeout(sc, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "got 0x%08lx\n", hr);
 
     val = 0;
     hr = IScriptControl_get_Timeout(sc, &val);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(val == 10000, "got %d\n", val);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(val == 10000, "got %ld\n", val);
 
     hr = IScriptControl_put_Timeout(sc, -1);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     val = 0;
     hr = IScriptControl_get_Timeout(sc, &val);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(val == -1, "got %d\n", val);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(val == -1, "got %ld\n", val);
 
     hr = IScriptControl_put_Timeout(sc, -2);
-    ok(hr == CTL_E_INVALIDPROPERTYVALUE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_INVALIDPROPERTYVALUE, "got 0x%08lx\n", hr);
 
     val = 0;
     hr = IScriptControl_get_Timeout(sc, &val);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(val == -1, "got %d\n", val);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(val == -1, "got %ld\n", val);
 
     hr = IScriptControl_put_Timeout(sc, 0);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     val = 1;
     hr = IScriptControl_get_Timeout(sc, &val);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(val == 0, "got %d\n", val);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(val == 0, "got %ld\n", val);
 
     str = SysAllocString(L"VBScript");
     hr = IScriptControl_put_Language(sc, str);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     SysFreeString(str);
 
     val = 1;
     hr = IScriptControl_get_Timeout(sc, &val);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(val == 0, "got %d\n", val);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(val == 0, "got %ld\n", val);
 
     hr = IScriptControl_put_Timeout(sc, 10000);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     IScriptControl_Release(sc);
 }
@@ -1705,21 +1705,21 @@ static void test_Reset(void)
 
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IScriptControl, (void**)&sc);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IScriptControl_Reset(sc);
-    ok(hr == E_FAIL, "got 0x%08x\n", hr);
+    ok(hr == E_FAIL, "got 0x%08lx\n", hr);
 
     str = SysAllocString(L"VBScript");
     hr = IScriptControl_put_Language(sc, str);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     SysFreeString(str);
 
     hr = IScriptControl_Reset(sc);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IScriptControl_get_Language(sc, &str);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(!lstrcmpW(str, L"VBScript"), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
@@ -1729,7 +1729,7 @@ static void test_Reset(void)
     if (have_custom_engine) {
         hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
                 &IID_IScriptControl, (void**)&sc);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
 
         SET_EXPECT(CreateInstance);
         SET_EXPECT(SetInterfaceSafetyOptions);
@@ -1739,17 +1739,17 @@ static void test_Reset(void)
 
         str = SysAllocString(L"testscript");
         hr = IScriptControl_put_Language(sc, str);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         SysFreeString(str);
 
         SET_EXPECT(SetScriptState_INITIALIZED);
         hr = IScriptControl_Reset(sc);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         CHECK_CALLED(SetScriptState_INITIALIZED);
 
         SET_EXPECT(SetScriptState_INITIALIZED);
         hr = IScriptControl_Reset(sc);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         CHECK_CALLED(SetScriptState_INITIALIZED);
 
         CHECK_CALLED(SetScriptSite);
@@ -1831,28 +1831,28 @@ static void test_AddObject(void)
 
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IScriptControl, (void**)&sc);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     objname = SysAllocString(L"o");
     hr = IScriptControl_AddObject(sc, objname, NULL, VARIANT_FALSE);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(hr == E_INVALIDARG, "got 0x%08lx\n", hr);
 
     hr = IScriptControl_AddObject(sc, objname, &testdisp, VARIANT_FALSE);
-    ok(hr == E_FAIL, "got 0x%08x\n", hr);
+    ok(hr == E_FAIL, "got 0x%08lx\n", hr);
 
     str = SysAllocString(L"VBScript");
     hr = IScriptControl_put_Language(sc, str);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     SysFreeString(str);
 
     hr = IScriptControl_AddObject(sc, objname, &testdisp, VARIANT_TRUE);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IScriptControl_Reset(sc);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IScriptControl_AddObject(sc, objname, &testdisp, VARIANT_TRUE);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     IScriptControl_Release(sc);
 
@@ -1860,7 +1860,7 @@ static void test_AddObject(void)
     if (have_custom_engine) {
         hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
                 &IID_IScriptControl, (void**)&sc);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
 
         SET_EXPECT(CreateInstance);
         SET_EXPECT(SetInterfaceSafetyOptions);
@@ -1870,21 +1870,21 @@ static void test_AddObject(void)
 
         str = SysAllocString(L"testscript");
         hr = IScriptControl_put_Language(sc, str);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         SysFreeString(str);
 
         hr = IScriptControl_AddObject(sc, objname, NULL, VARIANT_FALSE);
-        ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+        ok(hr == E_INVALIDARG, "got 0x%08lx\n", hr);
 
         SET_EXPECT(AddNamedItem);
         AddNamedItem_expected_name = objname;
         AddNamedItem_expected_flags = SCRIPTITEM_ISVISIBLE|SCRIPTITEM_ISSOURCE|SCRIPTITEM_GLOBALMEMBERS;
         hr = IScriptControl_AddObject(sc, objname, &testdisp, VARIANT_TRUE);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         CHECK_CALLED(AddNamedItem);
 
         hr = IScriptControl_AddObject(sc, objname, &testdisp, VARIANT_TRUE);
-        ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+        ok(hr == E_INVALIDARG, "got 0x%08lx\n", hr);
 
         CHECK_CALLED(SetScriptSite);
         IActiveScriptSite_Release(site);
@@ -1907,20 +1907,20 @@ static void test_AllowUI(void)
 
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IScriptControl, (void**)&sc);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IScriptControl_get_AllowUI(sc, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "got 0x%08lx\n", hr);
 
     hr = IScriptControl_get_AllowUI(sc, &allow);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(allow == VARIANT_TRUE, "got %d\n", allow);
 
     hr = IScriptControl_put_AllowUI(sc, VARIANT_FALSE);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IScriptControl_get_AllowUI(sc, &allow);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(allow == VARIANT_FALSE, "got %d\n", allow);
 
     IScriptControl_Release(sc);
@@ -1935,42 +1935,42 @@ static void test_SitehWnd(void)
     BSTR str;
 
     hwnd = CreateWindowA("static", NULL, WS_OVERLAPPEDWINDOW, 50, 50, 100, 100, NULL, NULL, NULL, NULL);
-    ok(hwnd != NULL, "failed to create window, error %08x\n", GetLastError());
+    ok(hwnd != NULL, "failed to create window, error %08lx\n", GetLastError());
 
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IScriptControl, (void**)&sc);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IScriptControl_get_SitehWnd(sc, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "got 0x%08lx\n", hr);
 
     site_hwnd = 0xdeadbeef;
     hr = IScriptControl_get_SitehWnd(sc, &site_hwnd);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(!site_hwnd, "got %p\n", (HWND)(LONG_PTR)site_hwnd);
 
     hr = IScriptControl_put_SitehWnd(sc, 1);
-    ok(hr == CTL_E_INVALIDPROPERTYVALUE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_INVALIDPROPERTYVALUE, "got 0x%08lx\n", hr);
 
     site_hwnd = 0xdeadbeef;
     hr = IScriptControl_get_SitehWnd(sc, &site_hwnd);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(!site_hwnd, "got %p\n", (HWND)(LONG_PTR)site_hwnd);
 
     hr = IScriptControl_put_SitehWnd(sc, 0);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IScriptControl_put_SitehWnd(sc, (LONG)(LONG_PTR)hwnd);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     str = SysAllocString(L"vbscript");
     hr = IScriptControl_put_Language(sc, str);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     SysFreeString(str);
 
     site_hwnd = 0;
     hr = IScriptControl_get_SitehWnd(sc, &site_hwnd);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok((HWND)(LONG_PTR)site_hwnd == hwnd, "got %p, expected %p\n", (HWND)(LONG_PTR)site_hwnd, hwnd);
 
     IScriptControl_Release(sc);
@@ -1983,10 +1983,10 @@ static void test_SitehWnd(void)
 
         hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
                               &IID_IScriptControl, (void **)&sc);
-        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08lx.\n", hr);
 
         hr = IScriptControl_put_SitehWnd(sc, (LONG)(LONG_PTR)hwnd);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
 
         SET_EXPECT(CreateInstance);
         SET_EXPECT(SetInterfaceSafetyOptions);
@@ -1996,7 +1996,7 @@ static void test_SitehWnd(void)
 
         str = SysAllocString(L"testscript");
         hr = IScriptControl_put_Language(sc, str);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         SysFreeString(str);
 
         CHECK_CALLED(CreateInstance);
@@ -2006,67 +2006,67 @@ static void test_SitehWnd(void)
         CHECK_CALLED(InitNew);
 
         hr = IActiveScriptSite_QueryInterface(site, &IID_IActiveScriptSiteWindow, (void**)&site_window);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
 
         site_hwnd = 0;
         hr = IScriptControl_get_SitehWnd(sc, &site_hwnd);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         ok((HWND)(LONG_PTR)site_hwnd == hwnd, "got %p, expected %p\n", (HWND)(LONG_PTR)site_hwnd, hwnd);
 
         window = NULL;
         hr = IActiveScriptSiteWindow_GetWindow(site_window, NULL);
-        ok(hr == E_POINTER, "got 0x%08x\n", hr);
+        ok(hr == E_POINTER, "got 0x%08lx\n", hr);
         hr = IActiveScriptSiteWindow_GetWindow(site_window, &window);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         ok(window == hwnd, "got %p, expected %p\n", window, hwnd);
 
         hr = IActiveScriptSiteWindow_EnableModeless(site_window, FALSE);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         hr = IActiveScriptSiteWindow_EnableModeless(site_window, TRUE);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
 
         site_hwnd = 0xdeadbeef;
         hr = IScriptControl_put_SitehWnd(sc, 0);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         hr = IScriptControl_get_SitehWnd(sc, &site_hwnd);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         ok(!site_hwnd, "got %p\n", (HWND)(LONG_PTR)site_hwnd);
 
         window = (HWND)0xdeadbeef;
         hr = IActiveScriptSiteWindow_GetWindow(site_window, &window);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         ok(!window, "got %p\n", window);
 
         site_hwnd = 0;
         hr = IScriptControl_put_SitehWnd(sc, (LONG)(LONG_PTR)hwnd);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         hr = IScriptControl_get_SitehWnd(sc, &site_hwnd);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         ok((HWND)(LONG_PTR)site_hwnd == hwnd, "got %p, expected %p\n", (HWND)(LONG_PTR)site_hwnd, hwnd);
 
         window = NULL;
         hr = IActiveScriptSiteWindow_GetWindow(site_window, &window);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         ok(window == hwnd, "got %p, expected %p\n", window, hwnd);
 
         hr = IScriptControl_put_AllowUI(sc, VARIANT_FALSE);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
 
         hr = IScriptControl_get_SitehWnd(sc, &site_hwnd);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         ok((HWND)(LONG_PTR)site_hwnd == hwnd, "got %p, expected %p\n", (HWND)(LONG_PTR)site_hwnd, hwnd);
 
         window = NULL;
         hr = IActiveScriptSiteWindow_GetWindow(site_window, &window);
-        ok(hr == E_FAIL, "got 0x%08x\n", hr);
+        ok(hr == E_FAIL, "got 0x%08lx\n", hr);
         ok(!window, "got %p\n", window);
 
         hr = IScriptControl_put_AllowUI(sc, VARIANT_TRUE);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
 
         window = NULL;
         hr = IActiveScriptSiteWindow_GetWindow(site_window, &window);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         ok(window == hwnd, "got %p, expected %p\n", window, hwnd);
 
         IActiveScriptSite_Release(site);
@@ -2077,7 +2077,7 @@ static void test_SitehWnd(void)
 
         window = NULL;
         hr = IActiveScriptSiteWindow_GetWindow(site_window, &window);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         ok(window == hwnd, "got %p, expected %p\n", window, hwnd);
 
         IActiveScriptSiteWindow_Release(site_window);
@@ -2095,29 +2095,29 @@ static void test_UseSafeSubset(void)
 
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IScriptControl, (void**)&sc);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IScriptControl_get_UseSafeSubset(sc, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "got 0x%08lx\n", hr);
 
     hr = IScriptControl_get_UseSafeSubset(sc, &use_safe_subset);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(use_safe_subset == VARIANT_FALSE, "got %d\n", use_safe_subset);
 
     hr = IScriptControl_put_UseSafeSubset(sc, VARIANT_TRUE);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IScriptControl_get_UseSafeSubset(sc, &use_safe_subset);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(use_safe_subset == VARIANT_TRUE, "got %d\n", use_safe_subset);
 
     str = SysAllocString(L"VBScript");
     hr = IScriptControl_put_Language(sc, str);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     SysFreeString(str);
 
     hr = IScriptControl_get_UseSafeSubset(sc, &use_safe_subset);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(use_safe_subset == VARIANT_TRUE, "got %d\n", use_safe_subset);
 
     IScriptControl_Release(sc);
@@ -2127,7 +2127,7 @@ static void test_UseSafeSubset(void)
     {
         hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
                               &IID_IScriptControl, (void **)&sc);
-        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08lx.\n", hr);
 
         SET_EXPECT(CreateInstance);
         SET_EXPECT(SetInterfaceSafetyOptions);
@@ -2137,7 +2137,7 @@ static void test_UseSafeSubset(void)
 
         str = SysAllocString(L"testscript");
         hr = IScriptControl_put_Language(sc, str);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         SysFreeString(str);
 
         CHECK_CALLED(CreateInstance);
@@ -2147,28 +2147,28 @@ static void test_UseSafeSubset(void)
         CHECK_CALLED(InitNew);
 
         hr = IScriptControl_get_UseSafeSubset(sc, &use_safe_subset);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         ok(use_safe_subset == VARIANT_FALSE, "got %d\n", use_safe_subset);
 
         SET_EXPECT(SetInterfaceSafetyOptions_UseSafeSubset);
         hr = IScriptControl_put_UseSafeSubset(sc, VARIANT_TRUE);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         CHECK_CALLED(SetInterfaceSafetyOptions_UseSafeSubset);
 
         hr = IScriptControl_get_UseSafeSubset(sc, &use_safe_subset);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         ok(use_safe_subset == VARIANT_TRUE, "got %d\n", use_safe_subset);
 
         hr = IScriptControl_put_UseSafeSubset(sc, VARIANT_TRUE);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
 
         SET_EXPECT(SetInterfaceSafetyOptions);
         hr = IScriptControl_put_UseSafeSubset(sc, VARIANT_FALSE);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         CHECK_CALLED(SetInterfaceSafetyOptions);
 
         hr = IScriptControl_put_UseSafeSubset(sc, VARIANT_FALSE);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
 
         IActiveScriptSite_Release(site);
 
@@ -2178,10 +2178,10 @@ static void test_UseSafeSubset(void)
 
         hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
                               &IID_IScriptControl, (void **)&sc);
-        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08lx.\n", hr);
 
         hr = IScriptControl_put_UseSafeSubset(sc, VARIANT_TRUE);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
 
         SET_EXPECT(CreateInstance);
         SET_EXPECT(SetInterfaceSafetyOptions_UseSafeSubset);
@@ -2191,7 +2191,7 @@ static void test_UseSafeSubset(void)
 
         str = SysAllocString(L"testscript");
         hr = IScriptControl_put_Language(sc, str);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         SysFreeString(str);
 
         CHECK_CALLED(CreateInstance);
@@ -2217,45 +2217,45 @@ static void test_State(void)
 
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IScriptControl, (void**)&sc);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IScriptControl_get_State(sc, NULL);
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "got 0x%08lx\n", hr);
 
     hr = IScriptControl_get_State(sc, &state);
-    ok(hr == E_FAIL, "got 0x%08x\n", hr);
+    ok(hr == E_FAIL, "got 0x%08lx\n", hr);
 
     hr = IScriptControl_put_State(sc, Connected);
-    ok(hr == E_FAIL, "got 0x%08x\n", hr);
+    ok(hr == E_FAIL, "got 0x%08lx\n", hr);
 
     str = SysAllocString(L"VBScript");
     hr = IScriptControl_put_Language(sc, str);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     SysFreeString(str);
 
     hr = IScriptControl_get_State(sc, &state);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(state == Initialized, "got %d\n", state);
 
     hr = IScriptControl_put_State(sc, Connected);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IScriptControl_get_State(sc, &state);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(state == Connected, "got %d\n", state);
 
     hr = IScriptControl_put_State(sc, 2);
-    ok(hr == CTL_E_INVALIDPROPERTYVALUE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_INVALIDPROPERTYVALUE, "got 0x%08lx\n", hr);
 
     hr = IScriptControl_get_State(sc, &state);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(state == Connected, "got %d\n", state);
 
     hr = IScriptControl_put_State(sc, -1);
-    ok(hr == CTL_E_INVALIDPROPERTYVALUE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_INVALIDPROPERTYVALUE, "got 0x%08lx\n", hr);
 
     hr = IScriptControl_get_State(sc, &state);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(state == Connected, "got %d\n", state);
 
     IScriptControl_Release(sc);
@@ -2267,7 +2267,7 @@ static void test_State(void)
 
         hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
                               &IID_IScriptControl, (void **)&sc);
-        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08lx.\n", hr);
 
         SET_EXPECT(CreateInstance);
         SET_EXPECT(SetInterfaceSafetyOptions);
@@ -2277,7 +2277,7 @@ static void test_State(void)
 
         language = SysAllocString(L"testscript");
         hr = IScriptControl_put_Language(sc, language);
-        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08lx.\n", hr);
         SysFreeString(language);
 
         CHECK_CALLED(CreateInstance);
@@ -2288,22 +2288,22 @@ static void test_State(void)
 
         SET_EXPECT(SetScriptState_STARTED);
         hr = IScriptControl_put_State(sc, Initialized);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         CHECK_CALLED(SetScriptState_STARTED);
 
         SET_EXPECT(SetScriptState_STARTED);
         hr = IScriptControl_put_State(sc, Initialized);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         CHECK_CALLED(SetScriptState_STARTED);
 
         SET_EXPECT(SetScriptState_CONNECTED);
         hr = IScriptControl_put_State(sc, Connected);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         CHECK_CALLED(SetScriptState_CONNECTED);
 
         SET_EXPECT(SetScriptState_STARTED);
         hr = IScriptControl_put_State(sc, Initialized);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         CHECK_CALLED(SetScriptState_STARTED);
 
         SET_EXPECT(SetScriptState_STARTED);
@@ -2312,7 +2312,7 @@ static void test_State(void)
         parse_flags = SCRIPTTEXT_ISVISIBLE;
         code_str = SysAllocString(L"1 + 1");
         hr = IScriptControl_AddCode(sc, code_str);
-        ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08lx.\n", hr);
         SysFreeString(code_str);
         CHECK_CALLED(SetScriptState_STARTED);
         CHECK_CALLED(ParseScriptText);
@@ -2320,34 +2320,34 @@ static void test_State(void)
         emulated_script_state = SCRIPTSTATE_INITIALIZED;
         SET_EXPECT(GetScriptState);
         hr = IScriptControl_get_State(sc, &state);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         ok(state == Initialized, "got %d\n", state);
         CHECK_CALLED(GetScriptState);
 
         emulated_script_state = SCRIPTSTATE_STARTED;
         SET_EXPECT(GetScriptState);
         hr = IScriptControl_get_State(sc, &state);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         ok(state == Initialized, "got %d\n", state);
         CHECK_CALLED(GetScriptState);
 
         emulated_script_state = SCRIPTSTATE_CONNECTED;
         SET_EXPECT(GetScriptState);
         hr = IScriptControl_get_State(sc, &state);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         ok(state == Connected, "got %d\n", state);
         CHECK_CALLED(GetScriptState);
 
         emulated_script_state = SCRIPTSTATE_UNINITIALIZED;
         SET_EXPECT(GetScriptState);
         hr = IScriptControl_get_State(sc, &state);
-        ok(hr == E_FAIL, "got 0x%08x\n", hr);
+        ok(hr == E_FAIL, "got 0x%08lx\n", hr);
         CHECK_CALLED(GetScriptState);
 
         SET_EXPECT(ParseScriptText);
         code_str = SysAllocString(L"0x100");
         hr = IScriptControl_AddCode(sc, code_str);
-        ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08lx.\n", hr);
         SysFreeString(code_str);
         CHECK_CALLED(ParseScriptText);
 
@@ -2359,7 +2359,7 @@ static void test_State(void)
 
         hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
                               &IID_IScriptControl, (void **)&sc);
-        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08lx.\n", hr);
 
         SET_EXPECT(CreateInstance);
         SET_EXPECT(SetInterfaceSafetyOptions);
@@ -2369,7 +2369,7 @@ static void test_State(void)
 
         language = SysAllocString(L"testscript");
         hr = IScriptControl_put_Language(sc, language);
-        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08lx.\n", hr);
         SysFreeString(language);
 
         CHECK_CALLED(CreateInstance);
@@ -2380,17 +2380,17 @@ static void test_State(void)
 
         SET_EXPECT(SetScriptState_STARTED);
         hr = IScriptControl_put_State(sc, Initialized);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         CHECK_CALLED(SetScriptState_STARTED);
 
         SET_EXPECT(SetScriptState_STARTED);
         hr = IScriptControl_put_State(sc, Initialized);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         CHECK_CALLED(SetScriptState_STARTED);
 
         SET_EXPECT(SetScriptState_CONNECTED);
         hr = IScriptControl_put_State(sc, Connected);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         CHECK_CALLED(SetScriptState_CONNECTED);
 
         SET_EXPECT(SetScriptState_STARTED);
@@ -2399,20 +2399,20 @@ static void test_State(void)
         parse_flags = SCRIPTTEXT_ISVISIBLE;
         code_str = SysAllocString(L"1 + 1");
         hr = IScriptControl_AddCode(sc, code_str);
-        ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08lx.\n", hr);
         SysFreeString(code_str);
         CHECK_CALLED(SetScriptState_STARTED);
         CHECK_CALLED(ParseScriptText);
 
         SET_EXPECT(SetScriptState_CONNECTED);
         hr = IScriptControl_put_State(sc, Connected);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         CHECK_CALLED(SetScriptState_CONNECTED);
 
         SET_EXPECT(ParseScriptText);
         code_str = SysAllocString(L"0x100");
         hr = IScriptControl_AddCode(sc, code_str);
-        ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08lx.\n", hr);
         SysFreeString(code_str);
         CHECK_CALLED(ParseScriptText);
 
@@ -2433,12 +2433,12 @@ static void _check_error(IScriptControl *sc, LONG exp_num, BOOL todo, int line)
     HRESULT hr;
 
     hr = IScriptControl_get_Error(sc, &script_err);
-    ok_(__FILE__,line)(hr == S_OK, "IScriptControl_get_Error failed: 0x%08x.\n", hr);
+    ok_(__FILE__,line)(hr == S_OK, "IScriptControl_get_Error failed: 0x%08lx.\n", hr);
     error_num = 0xdeadbeef;
     hr = IScriptError_get_Number(script_err, &error_num);
-    ok_(__FILE__,line)(hr == S_OK, "IScriptError_get_Number failed: 0x%08x.\n", hr);
+    ok_(__FILE__,line)(hr == S_OK, "IScriptError_get_Number failed: 0x%08lx.\n", hr);
     todo_wine_if(todo == TRUE)
-    ok_(__FILE__,line)(error_num == exp_num, "got wrong error number: %d, expected %d.\n",
+    ok_(__FILE__,line)(error_num == exp_num, "got wrong error number: %ld, expected %ld.\n",
                        error_num, exp_num);
     IScriptError_Release(script_err);
 }
@@ -2453,21 +2453,21 @@ static void test_IScriptControl_Eval(void)
 
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
                           &IID_IScriptControl, (void **)&sc);
-    ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+    ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08lx.\n", hr);
 
     hr = IScriptControl_Eval(sc, NULL, NULL);
-    ok(hr == E_POINTER, "IScriptControl_Eval returned: 0x%08x.\n", hr);
+    ok(hr == E_POINTER, "IScriptControl_Eval returned: 0x%08lx.\n", hr);
 
     script_str = SysAllocString(L"1 + 1");
     hr = IScriptControl_Eval(sc, script_str, NULL);
-    ok(hr == E_POINTER, "IScriptControl_Eval returned: 0x%08x.\n", hr);
+    ok(hr == E_POINTER, "IScriptControl_Eval returned: 0x%08lx.\n", hr);
     SysFreeString(script_str);
 
     V_VT(&var) = VT_NULL;
     V_I4(&var) = 0xdeadbeef;
     hr = IScriptControl_Eval(sc, NULL, &var);
-    ok(hr == E_FAIL, "IScriptControl_Eval returned: 0x%08x.\n", hr);
-    ok((V_VT(&var) == VT_EMPTY) && (V_I4(&var) == 0xdeadbeef), "V_VT(var) = %d, V_I4(var) = %d.\n",
+    ok(hr == E_FAIL, "IScriptControl_Eval returned: 0x%08lx.\n", hr);
+    ok((V_VT(&var) == VT_EMPTY) && (V_I4(&var) == 0xdeadbeef), "V_VT(var) = %d, V_I4(var) = %ld.\n",
        V_VT(&var), V_I4(&var));
     CHECK_ERROR(sc, 0);
 
@@ -2475,27 +2475,27 @@ static void test_IScriptControl_Eval(void)
     V_VT(&var) = VT_NULL;
     V_I4(&var) = 0xdeadbeef;
     hr = IScriptControl_Eval(sc, script_str, &var);
-    ok(hr == E_FAIL, "IScriptControl_Eval returned: 0x%08x.\n", hr);
-    ok((V_VT(&var) == VT_EMPTY) && (V_I4(&var) == 0xdeadbeef), "V_VT(var) = %d, V_I4(var) = %d.\n",
+    ok(hr == E_FAIL, "IScriptControl_Eval returned: 0x%08lx.\n", hr);
+    ok((V_VT(&var) == VT_EMPTY) && (V_I4(&var) == 0xdeadbeef), "V_VT(var) = %d, V_I4(var) = %ld.\n",
        V_VT(&var), V_I4(&var));
     SysFreeString(script_str);
 
     language = SysAllocString(L"jscript");
     hr = IScriptControl_put_Language(sc, language);
-    ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08lx.\n", hr);
     hr = IScriptControl_get_State(sc, &state);
-    ok(hr == S_OK, "IScriptControl_get_State failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptControl_get_State failed: 0x%08lx.\n", hr);
     ok(state == Initialized, "got wrong state: %d\n", state);
     SysFreeString(language);
     script_str = SysAllocString(L"var1 = 1 + 1");
     V_VT(&var) = VT_NULL;
     V_I4(&var) = 0xdeadbeef;
     hr = IScriptControl_Eval(sc, script_str, &var);
-    ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08x.\n", hr);
-    ok((V_VT(&var) == VT_I4) && (V_I4(&var) == 2), "V_VT(var) = %d, V_I4(var) = %d.\n",
+    ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08lx.\n", hr);
+    ok((V_VT(&var) == VT_I4) && (V_I4(&var) == 2), "V_VT(var) = %d, V_I4(var) = %ld.\n",
        V_VT(&var), V_I4(&var));
     hr = IScriptControl_get_State(sc, &state);
-    ok(hr == S_OK, "IScriptControl_get_State failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptControl_get_State failed: 0x%08lx.\n", hr);
     ok(state == Initialized, "got wrong state: %d\n", state);
     SysFreeString(script_str);
 
@@ -2503,8 +2503,8 @@ static void test_IScriptControl_Eval(void)
     V_VT(&var) = VT_NULL;
     V_I4(&var) = 0xdeadbeef;
     hr = IScriptControl_Eval(sc, script_str, &var);
-    ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08x.\n", hr);
-    ok((V_VT(&var) == VT_I4) && (V_I4(&var) == 12), "V_VT(var) = %d, V_I4(var) = %d.\n",
+    ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08lx.\n", hr);
+    ok((V_VT(&var) == VT_I4) && (V_I4(&var) == 12), "V_VT(var) = %d, V_I4(var) = %ld.\n",
        V_VT(&var), V_I4(&var));
     SysFreeString(script_str);
 
@@ -2512,10 +2512,10 @@ static void test_IScriptControl_Eval(void)
     V_VT(&var) = VT_NULL;
     V_I4(&var) = 0xdeadbeef;
     hr = IScriptControl_Eval(sc, script_str, &var);
-    todo_wine ok(hr == 0x800a03ec, "IScriptControl_Eval failed: 0x%08x.\n", hr);
+    todo_wine ok(hr == 0x800a03ec, "IScriptControl_Eval failed: 0x%08lx.\n", hr);
     ok(V_VT(&var) == VT_EMPTY, "V_VT(var) = %d\n", V_VT(&var));
     ok(V_I4(&var) == 0xdeadbeef || broken(V_I4(&var) == 0) /* after Win8 */,
-       "V_I4(var) = %d.\n", V_I4(&var));
+       "V_I4(var) = %ld.\n", V_I4(&var));
     SysFreeString(script_str);
     CHECK_ERROR_TODO(sc, 1004);
 
@@ -2523,8 +2523,8 @@ static void test_IScriptControl_Eval(void)
     V_VT(&var) = VT_NULL;
     V_I4(&var) = 0xdeadbeef;
     hr = IScriptControl_Eval(sc, script_str, &var);
-    ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08x.\n", hr);
-    ok((V_VT(&var) == VT_I4) && (V_I4(&var) == 14), "V_VT(var) = %d, V_I4(var) = %d.\n",
+    ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08lx.\n", hr);
+    ok((V_VT(&var) == VT_I4) && (V_I4(&var) == 14), "V_VT(var) = %d, V_I4(var) = %ld.\n",
        V_VT(&var), V_I4(&var));
     SysFreeString(script_str);
 
@@ -2532,7 +2532,7 @@ static void test_IScriptControl_Eval(void)
     V_VT(&var) = VT_NULL;
     V_I4(&var) = 0xdeadbeef;
     hr = IScriptControl_Eval(sc, script_str, &var);
-    ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08lx.\n", hr);
     expected_string = SysAllocString(L"Hello");
     ok((V_VT(&var) == VT_BSTR) && (!lstrcmpW(V_BSTR(&var), expected_string)),
        "V_VT(var) = %d, V_BSTR(var) = %s.\n", V_VT(&var), wine_dbgstr_w(V_BSTR(&var)));
@@ -2545,7 +2545,7 @@ static void test_IScriptControl_Eval(void)
     {
         hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
                               &IID_IScriptControl, (void **)&sc);
-        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08lx.\n", hr);
 
         SET_EXPECT(CreateInstance);
         SET_EXPECT(SetInterfaceSafetyOptions);
@@ -2555,7 +2555,7 @@ static void test_IScriptControl_Eval(void)
 
         language= SysAllocString(L"testscript");
         hr = IScriptControl_put_Language(sc, language);
-        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08lx.\n", hr);
         SysFreeString(language);
 
         CHECK_CALLED(CreateInstance);
@@ -2571,7 +2571,7 @@ static void test_IScriptControl_Eval(void)
         script_str = SysAllocString(L"var1 = 1 + 1");
         V_VT(&var) = VT_NULL;
         hr = IScriptControl_Eval(sc, script_str, &var);
-        ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08lx.\n", hr);
         ok(V_VT(&var) == VT_EMPTY, "V_VT(var) = %d.\n", V_VT(&var));
         SysFreeString(script_str);
         CHECK_CALLED(SetScriptState_STARTED);
@@ -2582,15 +2582,15 @@ static void test_IScriptControl_Eval(void)
         V_VT(&var) = VT_NULL;
         V_I4(&var) = 0xdeadbeef;
         hr = IScriptControl_Eval(sc, script_str, &var);
-        ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08x.\n", hr);
-        ok((V_VT(&var) == VT_EMPTY) && (V_I4(&var) == 0xdeadbeef), "V_VT(var) = %d, V_I4(var) = %d.\n",
+        ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08lx.\n", hr);
+        ok((V_VT(&var) == VT_EMPTY) && (V_I4(&var) == 0xdeadbeef), "V_VT(var) = %d, V_I4(var) = %ld.\n",
            V_VT(&var), V_I4(&var));
         SysFreeString(script_str);
         CHECK_CALLED(ParseScriptText);
 
         SET_EXPECT(SetScriptState_INITIALIZED);
         hr = IScriptControl_Reset(sc);
-        ok(hr == S_OK, "IScriptControl_Reset failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_Reset failed: 0x%08lx.\n", hr);
         CHECK_CALLED(SetScriptState_INITIALIZED);
 
         SET_EXPECT(SetScriptState_STARTED);
@@ -2599,8 +2599,8 @@ static void test_IScriptControl_Eval(void)
         V_VT(&var) = VT_NULL;
         V_I4(&var) = 0xdeadbeef;
         hr = IScriptControl_Eval(sc, script_str, &var);
-        ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08x.\n", hr);
-        ok((V_VT(&var) == VT_EMPTY) && (V_I4(&var) == 0xdeadbeef), "V_VT(var) = %d, V_I4(var) = %d.\n",
+        ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08lx.\n", hr);
+        ok((V_VT(&var) == VT_EMPTY) && (V_I4(&var) == 0xdeadbeef), "V_VT(var) = %d, V_I4(var) = %ld.\n",
            V_VT(&var), V_I4(&var));
         SysFreeString(script_str);
         CHECK_CALLED(SetScriptState_STARTED);
@@ -2625,30 +2625,30 @@ static void test_IScriptControl_AddCode(void)
 
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
                           &IID_IScriptControl, (void **)&sc);
-    ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+    ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08lx.\n", hr);
 
     code_str = SysAllocString(L"1 + 1");
     hr = IScriptControl_AddCode(sc, code_str);
-    ok(hr == E_FAIL, "IScriptControl_AddCode returned: 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "IScriptControl_AddCode returned: 0x%08lx.\n", hr);
     SysFreeString(code_str);
 
     hr = IScriptControl_AddCode(sc, NULL);
-    ok(hr == E_FAIL, "IScriptControl_AddCode returned: 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "IScriptControl_AddCode returned: 0x%08lx.\n", hr);
 
     language = SysAllocString(L"jscript");
     hr = IScriptControl_put_Language(sc, language);
-    ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08lx.\n", hr);
     SysFreeString(language);
 
     code_str = SysAllocString(L"1 + 1");
     hr = IScriptControl_AddCode(sc, code_str);
-    ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08lx.\n", hr);
     SysFreeString(code_str);
     CHECK_ERROR(sc, 0);
 
     code_str = SysAllocString(L"invalid syntax");
     hr = IScriptControl_AddCode(sc, code_str);
-    todo_wine ok(hr == 0x800a03ec, "IScriptControl_AddCode returned: 0x%08x.\n", hr);
+    todo_wine ok(hr == 0x800a03ec, "IScriptControl_AddCode returned: 0x%08lx.\n", hr);
     SysFreeString(code_str);
     CHECK_ERROR_TODO(sc, 1004);
 
@@ -2659,7 +2659,7 @@ static void test_IScriptControl_AddCode(void)
     {
         hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
                               &IID_IScriptControl, (void **)&sc);
-        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08lx.\n", hr);
 
         SET_EXPECT(CreateInstance);
         SET_EXPECT(SetInterfaceSafetyOptions);
@@ -2669,7 +2669,7 @@ static void test_IScriptControl_AddCode(void)
 
         language = SysAllocString(L"testscript");
         hr = IScriptControl_put_Language(sc, language);
-        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08lx.\n", hr);
         SysFreeString(language);
 
         CHECK_CALLED(CreateInstance);
@@ -2684,7 +2684,7 @@ static void test_IScriptControl_AddCode(void)
         parse_flags = SCRIPTTEXT_ISVISIBLE;
         code_str = SysAllocString(L"1 + 1");
         hr = IScriptControl_AddCode(sc, code_str);
-        ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08lx.\n", hr);
         SysFreeString(code_str);
         CHECK_CALLED(SetScriptState_STARTED);
         CHECK_CALLED(ParseScriptText);
@@ -2692,7 +2692,7 @@ static void test_IScriptControl_AddCode(void)
         SET_EXPECT(ParseScriptText);
         code_str = SysAllocString(L"0x100");
         hr = IScriptControl_AddCode(sc, code_str);
-        ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08lx.\n", hr);
         SysFreeString(code_str);
         CHECK_CALLED(ParseScriptText);
 
@@ -2703,7 +2703,7 @@ static void test_IScriptControl_AddCode(void)
         code_str = SysAllocString(L"var2 = 10 + var1");
         V_VT(&var) = VT_NULL;
         hr = IScriptControl_Eval(sc, code_str, &var);
-        ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08lx.\n", hr);
         ok(V_VT(&var) == VT_EMPTY, "V_VT(var) = %d.\n", V_VT(&var));
         SysFreeString(code_str);
         CHECK_CALLED(ParseScriptText);
@@ -2726,30 +2726,30 @@ static void test_IScriptControl_ExecuteStatement(void)
 
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
                           &IID_IScriptControl, (void**)&sc);
-    ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+    ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08lx.\n", hr);
 
     str = SysAllocString(L"1 + 1");
     hr = IScriptControl_ExecuteStatement(sc, str);
-    ok(hr == E_FAIL, "IScriptControl_ExecuteStatement returned: 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "IScriptControl_ExecuteStatement returned: 0x%08lx.\n", hr);
     SysFreeString(str);
 
     hr = IScriptControl_ExecuteStatement(sc, NULL);
-    ok(hr == E_FAIL, "IScriptControl_ExecuteStatement returned: 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "IScriptControl_ExecuteStatement returned: 0x%08lx.\n", hr);
 
     str = SysAllocString(L"jscript");
     hr = IScriptControl_put_Language(sc, str);
-    ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08lx.\n", hr);
     SysFreeString(str);
 
     str = SysAllocString(L"1 + 1");
     hr = IScriptControl_ExecuteStatement(sc, str);
-    ok(hr == S_OK, "IScriptControl_ExecuteStatement failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptControl_ExecuteStatement failed: 0x%08lx.\n", hr);
     SysFreeString(str);
     CHECK_ERROR(sc, 0);
 
     str = SysAllocString(L"invalid syntax");
     hr = IScriptControl_ExecuteStatement(sc, str);
-    todo_wine ok(hr == 0x800a03ec, "IScriptControl_ExecuteStatement returned: 0x%08x.\n", hr);
+    todo_wine ok(hr == 0x800a03ec, "IScriptControl_ExecuteStatement returned: 0x%08lx.\n", hr);
     SysFreeString(str);
     CHECK_ERROR_TODO(sc, 1004);
 
@@ -2760,7 +2760,7 @@ static void test_IScriptControl_ExecuteStatement(void)
     {
         hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
                               &IID_IScriptControl, (void**)&sc);
-        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08lx.\n", hr);
 
         SET_EXPECT(CreateInstance);
         SET_EXPECT(SetInterfaceSafetyOptions);
@@ -2770,7 +2770,7 @@ static void test_IScriptControl_ExecuteStatement(void)
 
         str = SysAllocString(L"testscript");
         hr = IScriptControl_put_Language(sc, str);
-        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08lx.\n", hr);
         SysFreeString(str);
 
         CHECK_CALLED(CreateInstance);
@@ -2785,7 +2785,7 @@ static void test_IScriptControl_ExecuteStatement(void)
         parse_flags = 0;
         str = SysAllocString(L"1 + 1");
         hr = IScriptControl_ExecuteStatement(sc, str);
-        ok(hr == S_OK, "IScriptControl_ExecuteStatement failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_ExecuteStatement failed: 0x%08lx.\n", hr);
         SysFreeString(str);
         CHECK_CALLED(SetScriptState_STARTED);
         CHECK_CALLED(ParseScriptText);
@@ -2793,7 +2793,7 @@ static void test_IScriptControl_ExecuteStatement(void)
         SET_EXPECT(ParseScriptText);
         str = SysAllocString(L"0x100");
         hr = IScriptControl_ExecuteStatement(sc, str);
-        ok(hr == S_OK, "IScriptControl_ExecuteStatement failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_ExecuteStatement failed: 0x%08lx.\n", hr);
         SysFreeString(str);
         CHECK_CALLED(ParseScriptText);
 
@@ -2820,12 +2820,12 @@ static void test_IScriptControl_Run(void)
 
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
                           &IID_IScriptControl, (void**)&sc);
-    ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+    ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08lx.\n", hr);
 
     params = NULL;
     str = SysAllocString(L"identifier");
     hr = IScriptControl_Run(sc, str, &params, &var);
-    ok(hr == E_POINTER, "IScriptControl_Run returned: 0x%08x.\n", hr);
+    ok(hr == E_POINTER, "IScriptControl_Run returned: 0x%08lx.\n", hr);
 
     params = SafeArrayCreate(VT_VARIANT, 1, bnd);
     ok(params != NULL, "Failed to create SafeArray.\n");
@@ -2837,48 +2837,48 @@ static void test_IScriptControl_Run(void)
     SafeArrayPutElement(params, idx0_1, &var);
 
     hr = IScriptControl_Run(sc, str, &params, &var);
-    ok(hr == E_FAIL, "IScriptControl_Run returned: 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "IScriptControl_Run returned: 0x%08lx.\n", hr);
 
     hr = IScriptControl_Run(sc, str, NULL, &var);
-    ok(hr == E_POINTER, "IScriptControl_Run returned: 0x%08x.\n", hr);
+    ok(hr == E_POINTER, "IScriptControl_Run returned: 0x%08lx.\n", hr);
 
     hr = IScriptControl_Run(sc, str, &params, NULL);
-    ok(hr == E_POINTER, "IScriptControl_Run returned: 0x%08x.\n", hr);
+    ok(hr == E_POINTER, "IScriptControl_Run returned: 0x%08lx.\n", hr);
     SysFreeString(str);
 
     hr = IScriptControl_Run(sc, NULL, &params, &var);
-    ok(hr == E_FAIL, "IScriptControl_Run returned: 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "IScriptControl_Run returned: 0x%08lx.\n", hr);
 
     str = SysAllocString(L"jscript");
     hr = IScriptControl_put_Language(sc, str);
-    ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08lx.\n", hr);
     SysFreeString(str);
 
     str = SysAllocString(L"foobar");
     hr = IScriptControl_Run(sc, str, &params, &var);
-    ok(hr == DISP_E_UNKNOWNNAME, "IScriptControl_Run failed: 0x%08x.\n", hr);
+    ok(hr == DISP_E_UNKNOWNNAME, "IScriptControl_Run failed: 0x%08lx.\n", hr);
     CHECK_ERROR(sc, 0);
     SysFreeString(str);
 
     str = SysAllocString(L"function subtract(a, b) { return a - b; }\n");
     hr = IScriptControl_AddCode(sc, str);
-    ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08lx.\n", hr);
     CHECK_ERROR(sc, 0);
     SysFreeString(str);
 
     str = SysAllocString(L"Subtract");
     hr = IScriptControl_Run(sc, str, &params, &var);
-    ok(hr == DISP_E_UNKNOWNNAME, "IScriptControl_Run failed: 0x%08x.\n", hr);
+    ok(hr == DISP_E_UNKNOWNNAME, "IScriptControl_Run failed: 0x%08lx.\n", hr);
     SysFreeString(str);
 
     str = SysAllocString(L"subtract");
     hr = IScriptControl_Run(sc, str, &params, NULL);
-    ok(hr == E_POINTER, "IScriptControl_Run failed: 0x%08x.\n", hr);
+    ok(hr == E_POINTER, "IScriptControl_Run failed: 0x%08lx.\n", hr);
     CHECK_ERROR(sc, 0);
 
     hr = IScriptControl_Run(sc, str, &params, &var);
-    ok(hr == S_OK, "IScriptControl_Run failed: 0x%08x.\n", hr);
-    ok((V_VT(&var) == VT_I4) && (V_I4(&var) == 7), "V_VT(var) = %d, V_I4(var) = %d.\n", V_VT(&var), V_I4(&var));
+    ok(hr == S_OK, "IScriptControl_Run failed: 0x%08lx.\n", hr);
+    ok((V_VT(&var) == VT_I4) && (V_I4(&var) == 7), "V_VT(var) = %d, V_I4(var) = %ld.\n", V_VT(&var), V_I4(&var));
     CHECK_ERROR(sc, 0);
     SafeArrayDestroy(params);
 
@@ -2897,13 +2897,13 @@ static void test_IScriptControl_Run(void)
     SafeArrayPutElement(params, idx1_1, &var);
 
     hr = IScriptControl_Run(sc, str, &params, &var);
-    ok(hr == S_OK, "IScriptControl_Run failed: 0x%08x.\n", hr);
-    ok((V_VT(&var) == VT_I4) && (V_I4(&var) == 7), "V_VT(var) = %d, V_I4(var) = %d.\n", V_VT(&var), V_I4(&var));
+    ok(hr == S_OK, "IScriptControl_Run failed: 0x%08lx.\n", hr);
+    ok((V_VT(&var) == VT_I4) && (V_I4(&var) == 7), "V_VT(var) = %d, V_I4(var) = %ld.\n", V_VT(&var), V_I4(&var));
 
     /* Hack the array's dimensions to 0 */
     params->cDims = 0;
     hr = IScriptControl_Run(sc, str, &params, &var);
-    ok(hr == DISP_E_BADINDEX, "IScriptControl_Run returned: 0x%08x.\n", hr);
+    ok(hr == DISP_E_BADINDEX, "IScriptControl_Run returned: 0x%08lx.\n", hr);
     ok(V_VT(&var) == VT_EMPTY, "V_VT(var) = %d.\n", V_VT(&var));
     params->cDims = 2;
     SysFreeString(str);
@@ -2914,7 +2914,7 @@ static void test_IScriptControl_Run(void)
     {
         hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
                               &IID_IScriptControl, (void**)&sc);
-        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08lx.\n", hr);
 
         SET_EXPECT(CreateInstance);
         SET_EXPECT(SetInterfaceSafetyOptions);
@@ -2923,7 +2923,7 @@ static void test_IScriptControl_Run(void)
         SET_EXPECT(InitNew);
         str = SysAllocString(L"testscript");
         hr = IScriptControl_put_Language(sc, str);
-        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08lx.\n", hr);
         SysFreeString(str);
         CHECK_CALLED(CreateInstance);
         CHECK_CALLED(SetInterfaceSafetyOptions);
@@ -2939,7 +2939,7 @@ static void test_IScriptControl_Run(void)
         SET_EXPECT(Invoke);
         Dispatch_expected_name = SysAllocString(L"function");
         hr = IScriptControl_Run(sc, Dispatch_expected_name, &params, &var);
-        ok(hr == S_OK, "IScriptControl_Run failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_Run failed: 0x%08lx.\n", hr);
         ok((V_VT(&var) == VT_R8) && (V_R8(&var) == 4.2), "V_VT(var) = %d, V_R8(var) = %lf.\n", V_VT(&var), V_R8(&var));
         SysFreeString(Dispatch_expected_name);
         CHECK_CALLED(SetScriptState_STARTED);
@@ -2955,7 +2955,7 @@ static void test_IScriptControl_Run(void)
         SET_EXPECT(Invoke);
         Dispatch_expected_name = SysAllocString(L"BarFoo");
         hr = IScriptControl_Run(sc, Dispatch_expected_name, &params, &var);
-        ok(hr == S_OK, "IScriptControl_Run failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_Run failed: 0x%08lx.\n", hr);
         SysFreeString(Dispatch_expected_name);
         CHECK_NOT_CALLED(GetScriptDispatch);
         CHECK_CALLED(QI_IDispatchEx);
@@ -2970,7 +2970,7 @@ static void test_IScriptControl_Run(void)
         SET_EXPECT(InvokeEx);
         Dispatch_expected_name = SysAllocString(L"FooBar");
         hr = IScriptControl_Run(sc, Dispatch_expected_name, &params, &var);
-        ok(hr == S_OK, "IScriptControl_Run failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_Run failed: 0x%08lx.\n", hr);
         ok((V_VT(&var) == VT_I2) && (V_I2(&var) == 42), "V_VT(var) = %d, V_I2(var) = %d.\n", V_VT(&var), V_I2(&var));
         SysFreeString(Dispatch_expected_name);
         CHECK_NOT_CALLED(GetScriptDispatch);
@@ -2985,7 +2985,7 @@ static void test_IScriptControl_Run(void)
         SET_EXPECT(InvokeEx);
         Dispatch_expected_name = SysAllocString(L"1");
         hr = IScriptControl_Run(sc, Dispatch_expected_name, &params, &var);
-        ok(hr == S_OK, "IScriptControl_Run failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_Run failed: 0x%08lx.\n", hr);
         SysFreeString(Dispatch_expected_name);
         CHECK_NOT_CALLED(GetScriptDispatch);
         CHECK_CALLED(QI_IDispatchEx);
@@ -3029,108 +3029,108 @@ static void test_IScriptControl_get_Modules(void)
 
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
                           &IID_IScriptControl, (void**)&sc);
-    ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+    ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08lx.\n", hr);
 
     hr = IScriptControl_get_Modules(sc, &mods);
-    ok(hr == E_FAIL, "IScriptControl_get_Modules returned: 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "IScriptControl_get_Modules returned: 0x%08lx.\n", hr);
 
     str = SysAllocString(L"jscript");
     hr = IScriptControl_put_Language(sc, str);
-    ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08lx.\n", hr);
     SysFreeString(str);
 
     hr = IScriptControl_get_Modules(sc, &mods);
-    ok(hr == S_OK, "IScriptControl_get_Modules failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptControl_get_Modules failed: 0x%08lx.\n", hr);
 
     hr = IScriptModuleCollection_get_Count(mods, NULL);
-    ok(hr == E_POINTER, "IScriptModuleCollection_get_Count returned: 0x%08x.\n", hr);
+    ok(hr == E_POINTER, "IScriptModuleCollection_get_Count returned: 0x%08lx.\n", hr);
     count = 0;
     hr = IScriptModuleCollection_get_Count(mods, &count);
-    ok(hr == S_OK, "IScriptModuleCollection_get_Count failed: 0x%08x.\n", hr);
-    ok(count == 1, "count is not 1, got %d.\n", count);
+    ok(hr == S_OK, "IScriptModuleCollection_get_Count failed: 0x%08lx.\n", hr);
+    ok(count == 1, "count is not 1, got %ld.\n", count);
 
     V_VT(&var) = VT_I4;
     V_I4(&var) = -1;
     hr = IScriptModuleCollection_get_Item(mods, var, NULL);
-    ok(hr == E_POINTER, "IScriptModuleCollection_get_Item returned: 0x%08x.\n", hr);
+    ok(hr == E_POINTER, "IScriptModuleCollection_get_Item returned: 0x%08lx.\n", hr);
     hr = IScriptModuleCollection_get_Item(mods, var, &mod);
-    ok(hr == 0x800a0009, "IScriptModuleCollection_get_Item returned: 0x%08x.\n", hr);
+    ok(hr == 0x800a0009, "IScriptModuleCollection_get_Item returned: 0x%08lx.\n", hr);
 
     V_VT(&var) = VT_EMPTY;
     str = SysAllocString(L"foobar");
     hr = IScriptModuleCollection_Add(mods, str, &var, &mod);
-    ok(hr == E_INVALIDARG, "IScriptModuleCollection_Add returned: 0x%08x.\n", hr);
+    ok(hr == E_INVALIDARG, "IScriptModuleCollection_Add returned: 0x%08lx.\n", hr);
     hr = IScriptModuleCollection_Add(mods, str, &var, NULL);
-    ok(hr == E_POINTER, "IScriptModuleCollection_Add returned: 0x%08x.\n", hr);
+    ok(hr == E_POINTER, "IScriptModuleCollection_Add returned: 0x%08lx.\n", hr);
     V_VT(&var) = VT_DISPATCH;
     V_DISPATCH(&var) = NULL;
     hr = IScriptModuleCollection_Add(mods, NULL, &var, &mod);
-    ok(hr == E_INVALIDARG, "IScriptModuleCollection_Add returned: 0x%08x.\n", hr);
+    ok(hr == E_INVALIDARG, "IScriptModuleCollection_Add returned: 0x%08lx.\n", hr);
     hr = IScriptModuleCollection_Add(mods, str, &var, &mod);
-    ok(hr == S_OK, "IScriptModuleCollection_Add failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptModuleCollection_Add failed: 0x%08lx.\n", hr);
     IScriptModule_Release(mod);
     SysFreeString(str);
 
     /* Grab an enumerator before we add another module */
     hr = IScriptModuleCollection_get__NewEnum(mods, NULL);
-    ok(hr == E_POINTER, "IScriptModuleCollection_get__NewEnum returned: 0x%08x.\n", hr);
+    ok(hr == E_POINTER, "IScriptModuleCollection_get__NewEnum returned: 0x%08lx.\n", hr);
     hr = IScriptModuleCollection_get__NewEnum(mods, &unknown);
-    ok(hr == S_OK, "IScriptModuleCollection_get__NewEnum failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptModuleCollection_get__NewEnum failed: 0x%08lx.\n", hr);
     hr = IUnknown_QueryInterface(unknown, &IID_IEnumVARIANT, (void**)&enumvar);
-    ok(hr == S_OK, "Failed to query for IEnumVARIANT: 0x%08x.\n", hr);
+    ok(hr == S_OK, "Failed to query for IEnumVARIANT: 0x%08lx.\n", hr);
     ok((char*)unknown == (char*)enumvar, "unknown and enumvar are not the same (%p vs %p).\n", unknown, enumvar);
     IUnknown_Release(unknown);
 
     str = SysAllocString(L"some other Module");
     hr = IScriptModuleCollection_Add(mods, str, &var, &mod);
-    ok(hr == S_OK, "IScriptModuleCollection_Add failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptModuleCollection_Add failed: 0x%08lx.\n", hr);
     IScriptModule_Release(mod);
     SysFreeString(str);
 
     /* Adding a module with the same name is invalid (case insensitive) */
     str = SysAllocString(L"FooBar");
     hr = IScriptModuleCollection_Add(mods, str, &var, &mod);
-    ok(hr == E_INVALIDARG, "IScriptModuleCollection_Add failed: 0x%08x.\n", hr);
+    ok(hr == E_INVALIDARG, "IScriptModuleCollection_Add failed: 0x%08lx.\n", hr);
     SysFreeString(str);
 
     hr = IScriptModuleCollection_get_Count(mods, &count);
-    ok(hr == S_OK, "IScriptModuleCollection_get_Count failed: 0x%08x.\n", hr);
-    ok(count == 3, "count is not 3, got %d.\n", count);
+    ok(hr == S_OK, "IScriptModuleCollection_get_Count failed: 0x%08lx.\n", hr);
+    ok(count == 3, "count is not 3, got %ld.\n", count);
     V_VT(&var) = VT_I4;
     V_I4(&var) = count + 1;
     hr = IScriptModuleCollection_get_Item(mods, var, &mod);
-    ok(hr == 0x800a0009, "IScriptModuleCollection_get_Item returned: 0x%08x.\n", hr);
+    ok(hr == 0x800a0009, "IScriptModuleCollection_get_Item returned: 0x%08lx.\n", hr);
     V_VT(&var) = VT_BSTR;
     V_BSTR(&var) = SysAllocString(L"non-existent module");
     hr = IScriptModuleCollection_get_Item(mods, var, &mod);
-    ok(hr == CTL_E_ILLEGALFUNCTIONCALL, "IScriptModuleCollection_get_Item returned: 0x%08x.\n", hr);
+    ok(hr == CTL_E_ILLEGALFUNCTIONCALL, "IScriptModuleCollection_get_Item returned: 0x%08lx.\n", hr);
     ok(V_VT(&var) == VT_BSTR, "var type not BSTR, got %d.\n", V_VT(&var));
     VariantClear(&var);
 
     V_VT(&var) = VT_I4;
     V_I4(&var) = 1;
     hr = IScriptModuleCollection_get_Item(mods, var, &mod);
-    ok(hr == S_OK, "IScriptModuleCollection_get_Item failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptModuleCollection_get_Item failed: 0x%08lx.\n", hr);
     hr = IScriptModule_get_Name(mod, NULL);
-    ok(hr == E_POINTER, "IScriptModule_get_Name returned: 0x%08x.\n", hr);
+    ok(hr == E_POINTER, "IScriptModule_get_Name returned: 0x%08lx.\n", hr);
     hr = IScriptModule_get_Name(mod, &str);
-    ok(hr == S_OK, "IScriptModule_get_Name failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptModule_get_Name failed: 0x%08lx.\n", hr);
     ok(!lstrcmpW(str, L"Global"), "got %s.\n", wine_dbgstr_w(str));
     SysFreeString(str);
     str = SysAllocString(L"function add(a, b) { return a + b; }\n");
     hr = IScriptModule_AddCode(mod, str);
-    ok(hr == S_OK, "IScriptModule_AddCode failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptModule_AddCode failed: 0x%08lx.\n", hr);
     IScriptModule_Release(mod);
     SysFreeString(str);
 
     V_VT(&var) = VT_BSTR;
     V_BSTR(&var) = SysAllocString(L"some other module");
     hr = IScriptModuleCollection_get_Item(mods, var, &mod);
-    ok(hr == S_OK, "IScriptModuleCollection_get_Item failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptModuleCollection_get_Item failed: 0x%08lx.\n", hr);
     ok(V_VT(&var) == VT_BSTR, "var type not BSTR, got %d.\n", V_VT(&var));
     VariantClear(&var);
     hr = IScriptModule_get_Name(mod, &str);
-    ok(hr == S_OK, "IScriptModule_get_Name failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptModule_get_Name failed: 0x%08lx.\n", hr);
     ok(!lstrcmpW(str, L"some other Module"), "got %s.\n", wine_dbgstr_w(str));
     IScriptModule_Release(mod);
     SysFreeString(str);
@@ -3138,53 +3138,53 @@ static void test_IScriptControl_get_Modules(void)
     V_VT(&var) = VT_R8;
     V_R8(&var) = 2.0;
     hr = IScriptModuleCollection_get_Item(mods, var, &mod);
-    ok(hr == S_OK, "IScriptModuleCollection_get_Item failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptModuleCollection_get_Item failed: 0x%08lx.\n", hr);
     hr = IScriptModule_get_Name(mod, &str);
-    ok(hr == S_OK, "IScriptModule_get_Name failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptModule_get_Name failed: 0x%08lx.\n", hr);
     ok(!lstrcmpW(str, L"foobar"), "got %s.\n", wine_dbgstr_w(str));
     SysFreeString(str);
     str = SysAllocString(L"function sub(a, b) { return a - b; }\n");
     hr = IScriptModule_AddCode(mod, str);
-    ok(hr == S_OK, "IScriptModule_AddCode failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptModule_AddCode failed: 0x%08lx.\n", hr);
     IScriptModule_Release(mod);
     SysFreeString(str);
 
     /* Test the enumerator, should be updated */
     fetched = 0xdeadbeef;
     hr = IEnumVARIANT_Next(enumvar, 0, NULL, NULL);
-    ok(hr == E_POINTER, "IEnumVARIANT_Next returned: 0x%08x.\n", hr);
+    ok(hr == E_POINTER, "IEnumVARIANT_Next returned: 0x%08lx.\n", hr);
     hr = IEnumVARIANT_Next(enumvar, 0, NULL, &fetched);
-    ok(hr == E_POINTER, "IEnumVARIANT_Next failed: 0x%08x.\n", hr);
-    ok(fetched == 0xdeadbeef, "got %u.\n", fetched);
+    ok(hr == E_POINTER, "IEnumVARIANT_Next failed: 0x%08lx.\n", hr);
+    ok(fetched == 0xdeadbeef, "got %lu.\n", fetched);
     hr = IEnumVARIANT_Next(enumvar, 0, &var, &fetched);
-    ok(hr == S_OK, "IEnumVARIANT_Next returned: 0x%08x.\n", hr);
-    ok(fetched == 0, "got %u.\n", fetched);
+    ok(hr == S_OK, "IEnumVARIANT_Next returned: 0x%08lx.\n", hr);
+    ok(fetched == 0, "got %lu.\n", fetched);
     hr = IEnumVARIANT_Next(enumvar, 0, &var, NULL);
-    ok(hr == S_OK, "IEnumVARIANT_Next returned: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IEnumVARIANT_Next returned: 0x%08lx.\n", hr);
     hr = IEnumVARIANT_Clone(enumvar, NULL);
-    ok(hr == E_POINTER, "IEnumVARIANT_Clone failed: 0x%08x.\n", hr);
+    ok(hr == E_POINTER, "IEnumVARIANT_Clone failed: 0x%08lx.\n", hr);
 
     hr = IEnumVARIANT_Next(enumvar, ARRAY_SIZE(vars), vars, &fetched);
-    ok(hr == S_OK, "IEnumVARIANT_Next failed: 0x%08x.\n", hr);
-    ok(fetched == ARRAY_SIZE(vars), "got %u.\n", fetched);
+    ok(hr == S_OK, "IEnumVARIANT_Next failed: 0x%08lx.\n", hr);
+    ok(fetched == ARRAY_SIZE(vars), "got %lu.\n", fetched);
     hr = IEnumVARIANT_Next(enumvar, 1, &var, &fetched);
-    ok(hr == S_FALSE, "IEnumVARIANT_Next failed: 0x%08x.\n", hr);
-    ok(fetched == 0, "got %u.\n", fetched);
+    ok(hr == S_FALSE, "IEnumVARIANT_Next failed: 0x%08lx.\n", hr);
+    ok(fetched == 0, "got %lu.\n", fetched);
     hr = IEnumVARIANT_Skip(enumvar, 0);
-    ok(hr == S_OK, "IEnumVARIANT_Skip failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IEnumVARIANT_Skip failed: 0x%08lx.\n", hr);
     hr = IEnumVARIANT_Skip(enumvar, 1);
-    ok(hr == S_FALSE, "IEnumVARIANT_Skip failed: 0x%08x.\n", hr);
+    ok(hr == S_FALSE, "IEnumVARIANT_Skip failed: 0x%08lx.\n", hr);
     hr = IEnumVARIANT_Clone(enumvar, &enumvar2);
-    ok(hr == S_OK, "IEnumVARIANT_Clone failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IEnumVARIANT_Clone failed: 0x%08lx.\n", hr);
     hr = IEnumVARIANT_Skip(enumvar2, 1);
-    ok(hr == S_FALSE, "IEnumVARIANT_Skip failed: 0x%08x.\n", hr);
+    ok(hr == S_FALSE, "IEnumVARIANT_Skip failed: 0x%08lx.\n", hr);
     IEnumVARIANT_Release(enumvar2);
 
     for (i = 0; i < ARRAY_SIZE(vars); i++)
     {
         ok(V_VT(&vars[i]) == VT_DISPATCH, "V_VT(vars[%u]) = %d.\n", i, V_VT(&vars[i]));
         hr = IDispatch_QueryInterface(V_DISPATCH(&vars[i]), &IID_IScriptModule, (void**)&mod);
-        ok(hr == S_OK, "Failed to query IScriptModule from vars[%u]: 0x%08x.\n", i, hr);
+        ok(hr == S_OK, "Failed to query IScriptModule from vars[%u]: 0x%08lx.\n", i, hr);
         IScriptModule_Release(mod);
         VariantClear(&vars[i]);
     }
@@ -3192,32 +3192,32 @@ static void test_IScriptControl_get_Modules(void)
     /* The 'Global' module is the same as the script control */
     str = SysAllocString(L"add(10, 5)");
     hr = IScriptControl_Eval(sc, str, &var);
-    ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08x.\n", hr);
-    ok(V_VT(&var) == VT_I4 && V_I4(&var) == 15, "V_VT(var) = %d, V_I4(var) = %d.\n", V_VT(&var), V_I4(&var));
+    ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08lx.\n", hr);
+    ok(V_VT(&var) == VT_I4 && V_I4(&var) == 15, "V_VT(var) = %d, V_I4(var) = %ld.\n", V_VT(&var), V_I4(&var));
     SysFreeString(str);
     str = SysAllocString(L"sub(10, 5)");
     hr = IScriptControl_Eval(sc, str, &var);
-    ok(FAILED(hr), "IScriptControl_Eval succeeded: 0x%08x.\n", hr);
+    ok(FAILED(hr), "IScriptControl_Eval succeeded: 0x%08lx.\n", hr);
     SysFreeString(str);
 
     V_VT(&var) = VT_R4;
     V_R4(&var) = 2.0f;
     hr = IScriptModuleCollection_get_Item(mods, var, &mod);
-    ok(hr == S_OK, "IScriptModuleCollection_get_Item failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptModuleCollection_get_Item failed: 0x%08lx.\n", hr);
 
     hr = IScriptModule_get_CodeObject(mod, &disp);
-    ok(hr == S_OK, "IScriptModule_get_CodeObject failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptModule_get_CodeObject failed: 0x%08lx.\n", hr);
 
     str = SysAllocString(L"sub");
     hr = IDispatch_GetIDsOfNames(disp, &IID_NULL, &str, 1, LOCALE_USER_DEFAULT, &id);
-    ok(hr == S_OK, "IDispatch_GetIDsOfNames failed: 0x%08x.\n", hr);
-    ok(id != -1, "Unexpected id %d.\n", id);
+    ok(hr == S_OK, "IDispatch_GetIDsOfNames failed: 0x%08lx.\n", hr);
+    ok(id != -1, "Unexpected id %ld.\n", id);
     SysFreeString(str);
 
     str = SysAllocString(L"add");
     hr = IDispatch_GetIDsOfNames(disp, &IID_NULL, &str, 1, LOCALE_USER_DEFAULT, &id);
-    ok(hr == DISP_E_UNKNOWNNAME, "IDispatch_GetIDsOfNames returned: 0x%08x.\n", hr);
-    ok(id == -1, "Unexpected id %d.\n", id);
+    ok(hr == DISP_E_UNKNOWNNAME, "IDispatch_GetIDsOfNames returned: 0x%08lx.\n", hr);
+    ok(id == -1, "Unexpected id %ld.\n", id);
     SysFreeString(str);
 
     IDispatch_Release(disp);
@@ -3233,23 +3233,23 @@ static void test_IScriptControl_get_Modules(void)
 
     str = SysAllocString(L"sub");
     hr = IScriptModule_Run(mod, str, NULL, &var);
-    ok(hr == E_POINTER, "IScriptModule_Run returned: 0x%08x.\n", hr);
+    ok(hr == E_POINTER, "IScriptModule_Run returned: 0x%08lx.\n", hr);
     hr = IScriptModule_Run(mod, str, &params, NULL);
-    ok(hr == E_POINTER, "IScriptModule_Run returned: 0x%08x.\n", hr);
+    ok(hr == E_POINTER, "IScriptModule_Run returned: 0x%08lx.\n", hr);
 
     hr = IScriptControl_Run(sc, str, &params, &var);
-    ok(hr == DISP_E_UNKNOWNNAME, "IScriptControl_Run failed: 0x%08x.\n", hr);
+    ok(hr == DISP_E_UNKNOWNNAME, "IScriptControl_Run failed: 0x%08lx.\n", hr);
     hr = IScriptModule_Run(mod, str, &params, &var);
-    ok(hr == S_OK, "IScriptModule_Run failed: 0x%08x.\n", hr);
-    ok((V_VT(&var) == VT_I4) && (V_I4(&var) == 7), "V_VT(var) = %d, V_I4(var) = %d.\n", V_VT(&var), V_I4(&var));
+    ok(hr == S_OK, "IScriptModule_Run failed: 0x%08lx.\n", hr);
+    ok((V_VT(&var) == VT_I4) && (V_I4(&var) == 7), "V_VT(var) = %d, V_I4(var) = %ld.\n", V_VT(&var), V_I4(&var));
     SysFreeString(str);
 
     str = SysAllocString(L"add");
     hr = IScriptControl_Run(sc, str, &params, &var);
-    ok(hr == S_OK, "IScriptControl_Run failed: 0x%08x.\n", hr);
-    ok((V_VT(&var) == VT_I4) && (V_I4(&var) == 13), "V_VT(var) = %d, V_I4(var) = %d.\n", V_VT(&var), V_I4(&var));
+    ok(hr == S_OK, "IScriptControl_Run failed: 0x%08lx.\n", hr);
+    ok((V_VT(&var) == VT_I4) && (V_I4(&var) == 13), "V_VT(var) = %d, V_I4(var) = %ld.\n", V_VT(&var), V_I4(&var));
     hr = IScriptModule_Run(mod, str, &params, &var);
-    ok(hr == DISP_E_UNKNOWNNAME, "IScriptModule_Run failed: 0x%08x.\n", hr);
+    ok(hr == DISP_E_UNKNOWNNAME, "IScriptModule_Run failed: 0x%08lx.\n", hr);
     SysFreeString(str);
 
     SafeArrayDestroy(params);
@@ -3268,12 +3268,12 @@ static void test_IScriptControl_get_Modules(void)
 
     str = SysAllocString(L"sub");
     hr = IScriptModule_Run(mod, str, &params, &var);
-    ok(hr == S_OK, "IScriptModule_Run failed: 0x%08x.\n", hr);
-    ok((V_VT(&var) == VT_I4) && (V_I4(&var) == 42), "V_VT(var) = %d, V_I4(var) = %d.\n", V_VT(&var), V_I4(&var));
+    ok(hr == S_OK, "IScriptModule_Run failed: 0x%08lx.\n", hr);
+    ok((V_VT(&var) == VT_I4) && (V_I4(&var) == 42), "V_VT(var) = %d, V_I4(var) = %ld.\n", V_VT(&var), V_I4(&var));
 
     params->cDims = 0;
     hr = IScriptModule_Run(mod, str, &params, &var);
-    ok(hr == DISP_E_BADINDEX, "IScriptModule_Run returned: 0x%08x.\n", hr);
+    ok(hr == DISP_E_BADINDEX, "IScriptModule_Run returned: 0x%08lx.\n", hr);
     ok(V_VT(&var) == VT_EMPTY, "V_VT(var) = %d.\n", V_VT(&var));
     params->cDims = 2;
     SysFreeString(str);
@@ -3284,69 +3284,69 @@ static void test_IScriptControl_get_Modules(void)
     V_VT(&var) = VT_I2;
     V_I2(&var) = 3;
     hr = IScriptModuleCollection_get_Item(mods, var, &mod);
-    ok(hr == S_OK, "IScriptModuleCollection_get_Item failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptModuleCollection_get_Item failed: 0x%08lx.\n", hr);
     str = SysAllocString(L"vbscript");
     hr = IScriptControl_put_Language(sc, str);
-    ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08lx.\n", hr);
     SysFreeString(str);
 
     /* The module collection changes and module ref is invalid */
     hr = IScriptModuleCollection_get_Count(mods, &count);
-    ok(hr == S_OK, "IScriptModuleCollection_get_Count failed: 0x%08x.\n", hr);
-    ok(count == 1, "count is not 1, got %d.\n", count);
+    ok(hr == S_OK, "IScriptModuleCollection_get_Count failed: 0x%08lx.\n", hr);
+    ok(count == 1, "count is not 1, got %ld.\n", count);
     hr = IScriptModule_get_Name(mod, &str);
-    ok(hr == E_FAIL, "IScriptModule_get_Name returned: 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "IScriptModule_get_Name returned: 0x%08lx.\n", hr);
     hr = IScriptModule_get_CodeObject(mod, &disp);
-    ok(hr == E_FAIL, "IScriptModule_get_CodeObject returned: 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "IScriptModule_get_CodeObject returned: 0x%08lx.\n", hr);
     hr = IScriptModule_get_Procedures(mod, &procs);
-    ok(hr == E_FAIL, "IScriptModule_get_Procedures returned: 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "IScriptModule_get_Procedures returned: 0x%08lx.\n", hr);
     str = SysAllocString(L"function closed() { }\n");
     hr = IScriptModule_AddCode(mod, str);
-    ok(hr == E_FAIL, "IScriptModule_AddCode failed: 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "IScriptModule_AddCode failed: 0x%08lx.\n", hr);
     SysFreeString(str);
     str = SysAllocString(L"sub closed\nend sub");
     hr = IScriptModule_AddCode(mod, str);
-    ok(hr == E_FAIL, "IScriptModule_AddCode failed: 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "IScriptModule_AddCode failed: 0x%08lx.\n", hr);
     SysFreeString(str);
     str = SysAllocString(L"identifier");
     hr = IScriptModule_Run(mod, str, &params, &var);
-    ok(hr == E_FAIL, "IScriptModule_Run returned: 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "IScriptModule_Run returned: 0x%08lx.\n", hr);
     IScriptModule_Release(mod);
     SafeArrayDestroy(params);
     SysFreeString(str);
 
     /* The enumerator is also invalid */
     hr = IEnumVARIANT_Reset(enumvar);
-    ok(hr == E_FAIL, "IEnumVARIANT_Skip returned: 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "IEnumVARIANT_Skip returned: 0x%08lx.\n", hr);
     hr = IEnumVARIANT_Next(enumvar, 1, &var, &fetched);
-    ok(hr == E_FAIL, "IEnumVARIANT_Next returned: 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "IEnumVARIANT_Next returned: 0x%08lx.\n", hr);
     hr = IEnumVARIANT_Skip(enumvar, 0);
-    ok(hr == E_FAIL, "IEnumVARIANT_Skip returned: 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "IEnumVARIANT_Skip returned: 0x%08lx.\n", hr);
     hr = IEnumVARIANT_Clone(enumvar, &enumvar2);
-    ok(hr == E_FAIL, "IEnumVARIANT_Clone returned: 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "IEnumVARIANT_Clone returned: 0x%08lx.\n", hr);
     IEnumVARIANT_Release(enumvar);
 
     hr = IScriptControl_put_Language(sc, NULL);
-    ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08lx.\n", hr);
 
     hr = IScriptModuleCollection_get_Count(mods, &count);
-    ok(hr == E_FAIL, "IScriptModuleCollection_get_Count returned: 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "IScriptModuleCollection_get_Count returned: 0x%08lx.\n", hr);
     V_VT(&var) = VT_I4;
     V_I4(&var) = 1;
     hr = IScriptModuleCollection_get_Item(mods, var, &mod);
-    ok(hr == E_FAIL, "IScriptModuleCollection_get_Item returned: 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "IScriptModuleCollection_get_Item returned: 0x%08lx.\n", hr);
     V_VT(&var) = VT_DISPATCH;
     V_DISPATCH(&var) = NULL;
     str = SysAllocString(L"module_name");
     hr = IScriptModuleCollection_Add(mods, str, &var, &mod);
-    ok(hr == E_FAIL, "IScriptModuleCollection_Add returned: 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "IScriptModuleCollection_Add returned: 0x%08lx.\n", hr);
     SysFreeString(str);
     hr = IScriptModuleCollection_get__NewEnum(mods, &unknown);
-    ok(hr == E_FAIL, "IScriptModuleCollection_get__NewEnum returned: 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "IScriptModuleCollection_get__NewEnum returned: 0x%08lx.\n", hr);
 
     IScriptModuleCollection_Release(mods);
     hr = IScriptControl_get_Modules(sc, &mods);
-    ok(hr == E_FAIL, "IScriptControl_get_Modules returned: 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "IScriptControl_get_Modules returned: 0x%08lx.\n", hr);
 
     IScriptControl_Release(sc);
 
@@ -3358,7 +3358,7 @@ static void test_IScriptControl_get_Modules(void)
         /* A module collection ref keeps the control alive */
         hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
                               &IID_IScriptControl, (void**)&sc);
-        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08lx.\n", hr);
 
         SET_EXPECT(CreateInstance);
         SET_EXPECT(SetInterfaceSafetyOptions);
@@ -3367,7 +3367,7 @@ static void test_IScriptControl_get_Modules(void)
         SET_EXPECT(InitNew);
         str = SysAllocString(L"testscript");
         hr = IScriptControl_put_Language(sc, str);
-        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08lx.\n", hr);
         SysFreeString(str);
         CHECK_CALLED(CreateInstance);
         CHECK_CALLED(SetInterfaceSafetyOptions);
@@ -3376,7 +3376,7 @@ static void test_IScriptControl_get_Modules(void)
         CHECK_CALLED(InitNew);
 
         hr = IScriptControl_get_Modules(sc, &mods);
-        ok(hr == S_OK, "IScriptControl_get_Modules failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_get_Modules failed: 0x%08lx.\n", hr);
 
         IActiveScriptSite_Release(site);
         IScriptControl_Release(sc);
@@ -3388,7 +3388,7 @@ static void test_IScriptControl_get_Modules(void)
         /* Add a module with a non-null object and add some code to it */
         hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
                               &IID_IScriptControl, (void**)&sc);
-        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08lx.\n", hr);
 
         SET_EXPECT(CreateInstance);
         SET_EXPECT(SetInterfaceSafetyOptions);
@@ -3397,7 +3397,7 @@ static void test_IScriptControl_get_Modules(void)
         SET_EXPECT(InitNew);
         str = SysAllocString(L"testscript");
         hr = IScriptControl_put_Language(sc, str);
-        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08lx.\n", hr);
         SysFreeString(str);
         CHECK_CALLED(CreateInstance);
         CHECK_CALLED(SetInterfaceSafetyOptions);
@@ -3406,7 +3406,7 @@ static void test_IScriptControl_get_Modules(void)
         CHECK_CALLED(InitNew);
 
         hr = IScriptControl_get_Modules(sc, &mods);
-        ok(hr == S_OK, "IScriptControl_get_Modules failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_get_Modules failed: 0x%08lx.\n", hr);
 
         SET_EXPECT(AddNamedItem);
         str = SysAllocString(L"modname");
@@ -3415,13 +3415,13 @@ static void test_IScriptControl_get_Modules(void)
         V_VT(&var) = VT_DISPATCH;
         V_DISPATCH(&var) = &testdisp;
         hr = IScriptModuleCollection_Add(mods, str, &var, &mod);
-        ok(hr == S_OK, "IScriptModuleCollection_Add failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptModuleCollection_Add failed: 0x%08lx.\n", hr);
         VariantClear(&var);
         CHECK_CALLED(AddNamedItem);
 
         unknown = (IUnknown*)0xdeadbeef;
         hr = IActiveScriptSite_GetItemInfo(site, str, SCRIPTINFO_IUNKNOWN, &unknown, NULL);
-        ok(hr == S_OK, "IActiveScriptSite_GetItemInfo failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IActiveScriptSite_GetItemInfo failed: 0x%08lx.\n", hr);
         ok(unknown == (IUnknown*)&testdisp, "Unexpected IUnknown for the item: %p.\n", unknown);
         IUnknown_Release(unknown);
 
@@ -3429,7 +3429,7 @@ static void test_IScriptControl_get_Modules(void)
         SET_EXPECT(SetScriptState_STARTED);
         SET_EXPECT(GetScriptDispatch);
         hr = IScriptModule_get_CodeObject(mod, &disp);
-        ok(hr == S_OK, "IScriptModule_get_CodeObject failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptModule_get_CodeObject failed: 0x%08lx.\n", hr);
         ok(disp == (IDispatch*)&DispatchEx, "Unexpected code object %p.\n", disp);
         CHECK_CALLED(GetScriptDispatch);
         CHECK_CALLED(SetScriptState_STARTED);
@@ -3441,7 +3441,7 @@ static void test_IScriptControl_get_Modules(void)
         parse_flags = SCRIPTTEXT_ISVISIBLE;
         code_str = SysAllocString(L"some code");
         hr = IScriptModule_AddCode(mod, code_str);
-        ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08lx.\n", hr);
         CHECK_CALLED(ParseScriptText);
         SysFreeString(code_str);
         SysFreeString(str);
@@ -3449,7 +3449,7 @@ static void test_IScriptControl_get_Modules(void)
         /* Keep the module ref before changing the language */
         SET_EXPECT(Close);
         hr = IScriptControl_put_Language(sc, NULL);
-        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08lx.\n", hr);
         CHECK_CALLED(Close);
         IScriptModuleCollection_Release(mods);
         IActiveScriptSite_Release(site);
@@ -3459,7 +3459,7 @@ static void test_IScriptControl_get_Modules(void)
         /* Now try holding a module ref while closing the script */
         hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
                               &IID_IScriptControl, (void**)&sc);
-        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08lx.\n", hr);
 
         SET_EXPECT(CreateInstance);
         SET_EXPECT(SetInterfaceSafetyOptions);
@@ -3468,7 +3468,7 @@ static void test_IScriptControl_get_Modules(void)
         SET_EXPECT(InitNew);
         str = SysAllocString(L"testscript");
         hr = IScriptControl_put_Language(sc, str);
-        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08lx.\n", hr);
         SysFreeString(str);
         CHECK_CALLED(CreateInstance);
         CHECK_CALLED(SetInterfaceSafetyOptions);
@@ -3477,7 +3477,7 @@ static void test_IScriptControl_get_Modules(void)
         CHECK_CALLED(InitNew);
 
         hr = IScriptControl_get_Modules(sc, &mods);
-        ok(hr == S_OK, "IScriptControl_get_Modules failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_get_Modules failed: 0x%08lx.\n", hr);
 
         SET_EXPECT(AddNamedItem);
         str = SysAllocString(L"foo");
@@ -3486,13 +3486,13 @@ static void test_IScriptControl_get_Modules(void)
         V_VT(&var) = VT_DISPATCH;
         V_DISPATCH(&var) = NULL;
         hr = IScriptModuleCollection_Add(mods, str, &var, &mod);
-        ok(hr == S_OK, "IScriptModuleCollection_Add failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptModuleCollection_Add failed: 0x%08lx.\n", hr);
         VariantClear(&var);
         CHECK_CALLED(AddNamedItem);
 
         unknown = (IUnknown*)0xdeadbeef;
         hr = IActiveScriptSite_GetItemInfo(site, str, SCRIPTINFO_IUNKNOWN, &unknown, NULL);
-        ok(hr == TYPE_E_ELEMENTNOTFOUND, "IActiveScriptSite_GetItemInfo returned: 0x%08x.\n", hr);
+        ok(hr == TYPE_E_ELEMENTNOTFOUND, "IActiveScriptSite_GetItemInfo returned: 0x%08lx.\n", hr);
         IScriptModuleCollection_Release(mods);
         IActiveScriptSite_Release(site);
         IScriptControl_Release(sc);
@@ -3503,7 +3503,7 @@ static void test_IScriptControl_get_Modules(void)
         parse_flags = SCRIPTTEXT_ISVISIBLE;
         code_str = SysAllocString(L"code after close");
         hr = IScriptModule_AddCode(mod, code_str);
-        ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08lx.\n", hr);
         CHECK_CALLED(SetScriptState_STARTED);
         CHECK_CALLED(ParseScriptText);
         SysFreeString(code_str);
@@ -3516,7 +3516,7 @@ static void test_IScriptControl_get_Modules(void)
         /* Hold an enumerator while releasing the script control */
         hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
                               &IID_IScriptControl, (void**)&sc);
-        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08lx.\n", hr);
 
         SET_EXPECT(CreateInstance);
         SET_EXPECT(SetInterfaceSafetyOptions);
@@ -3525,7 +3525,7 @@ static void test_IScriptControl_get_Modules(void)
         SET_EXPECT(InitNew);
         str = SysAllocString(L"testscript");
         hr = IScriptControl_put_Language(sc, str);
-        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08lx.\n", hr);
         SysFreeString(str);
         CHECK_CALLED(CreateInstance);
         CHECK_CALLED(SetInterfaceSafetyOptions);
@@ -3534,7 +3534,7 @@ static void test_IScriptControl_get_Modules(void)
         CHECK_CALLED(InitNew);
 
         hr = IScriptControl_get_Modules(sc, &mods);
-        ok(hr == S_OK, "IScriptControl_get_Modules failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_get_Modules failed: 0x%08lx.\n", hr);
         IScriptControl_Release(sc);
 
         SET_EXPECT(AddNamedItem);
@@ -3544,31 +3544,31 @@ static void test_IScriptControl_get_Modules(void)
         V_VT(&var) = VT_DISPATCH;
         V_DISPATCH(&var) = NULL;
         hr = IScriptModuleCollection_Add(mods, str, &var, &mod);
-        ok(hr == S_OK, "IScriptModuleCollection_Add failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptModuleCollection_Add failed: 0x%08lx.\n", hr);
         IScriptModule_Release(mod);
         VariantClear(&var);
         SysFreeString(str);
         CHECK_CALLED(AddNamedItem);
 
         hr = IScriptModuleCollection_get__NewEnum(mods, &unknown);
-        ok(hr == S_OK, "IScriptModuleCollection_get__NewEnum failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptModuleCollection_get__NewEnum failed: 0x%08lx.\n", hr);
         hr = IUnknown_QueryInterface(unknown, &IID_IEnumVARIANT, (void**)&enumvar);
-        ok(hr == S_OK, "Failed to query for IEnumVARIANT: 0x%08x.\n", hr);
+        ok(hr == S_OK, "Failed to query for IEnumVARIANT: 0x%08lx.\n", hr);
         IUnknown_Release(unknown);
 
         IScriptModuleCollection_Release(mods);
         IActiveScriptSite_Release(site);
 
         hr = IEnumVARIANT_Next(enumvar, ARRAY_SIZE(vars), vars, &fetched);
-        ok(hr == S_FALSE, "IEnumVARIANT_Next failed: 0x%08x.\n", hr);
-        ok(fetched == 2, "got %u.\n", fetched);
+        ok(hr == S_FALSE, "IEnumVARIANT_Next failed: 0x%08lx.\n", hr);
+        ok(fetched == 2, "got %lu.\n", fetched);
         for (i = 0; i < fetched; i++)
         {
             ok(V_VT(&vars[i]) == VT_DISPATCH, "V_VT(vars[%u]) = %d.\n", i, V_VT(&vars[i]));
             hr = IDispatch_QueryInterface(V_DISPATCH(&vars[i]), &IID_IScriptModule, (void**)&mod);
-            ok(hr == S_OK, "Failed to query IScriptModule from vars[%u]: 0x%08x.\n", i, hr);
+            ok(hr == S_OK, "Failed to query IScriptModule from vars[%u]: 0x%08lx.\n", i, hr);
             hr = IScriptModule_get_Name(mod, &str);
-            ok(hr == S_OK, "IScriptModule_get_Name failed for vars[%u]: 0x%08x.\n", i, hr);
+            ok(hr == S_OK, "IScriptModule_get_Name failed for vars[%u]: 0x%08lx.\n", i, hr);
             ok(!lstrcmpW(str, i ? L"bar" : L"Global"), "wrong name for vars[%u]: %s.\n", i, wine_dbgstr_w(str));
             IScriptModule_Release(mod);
             VariantClear(&vars[i]);
@@ -3591,42 +3591,42 @@ static void test_IScriptControl_get_Error(void)
 
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
                           &IID_IScriptControl, (void**)&sc);
-    ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+    ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08lx.\n", hr);
 
     hr = IScriptControl_get_Error(sc, NULL);
-    ok(hr == E_POINTER, "IScriptControl_get_Error returned: 0x%08x.\n", hr);
+    ok(hr == E_POINTER, "IScriptControl_get_Error returned: 0x%08lx.\n", hr);
     hr = IScriptControl_get_Error(sc, &error);
-    ok(hr == S_OK, "IScriptControl_get_Error failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptControl_get_Error failed: 0x%08lx.\n", hr);
 
     x = 0xdeadbeef;
     hr = IScriptError_get_Number(error, &x);
-    ok(hr == S_OK, "IScriptError_get_Number failed: 0x%08x.\n", hr);
-    ok(x == 0, "Error Number is not 0, got %d.\n", x);
+    ok(hr == S_OK, "IScriptError_get_Number failed: 0x%08lx.\n", hr);
+    ok(x == 0, "Error Number is not 0, got %ld.\n", x);
     hr = IScriptError_get_Source(error, &str);
-    ok(hr == S_OK, "IScriptError_get_Source failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptError_get_Source failed: 0x%08lx.\n", hr);
     ok(str == NULL, "Error Source is not (null), got %s.\n", wine_dbgstr_w(str));
     hr = IScriptError_get_Description(error, &str);
-    ok(hr == S_OK, "IScriptError_get_Description failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptError_get_Description failed: 0x%08lx.\n", hr);
     ok(str == NULL, "Error Description is not (null), got %s.\n", wine_dbgstr_w(str));
     hr = IScriptError_get_HelpFile(error, &str);
-    ok(hr == S_OK, "IScriptError_get_HelpFile failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptError_get_HelpFile failed: 0x%08lx.\n", hr);
     ok(str == NULL, "Error HelpFile is not (null), got %s.\n", wine_dbgstr_w(str));
     hr = IScriptError_get_HelpContext(error, &x);
-    ok(hr == S_OK, "IScriptError_get_HelpContext failed: 0x%08x.\n", hr);
-    ok(x == 0, "Error HelpContext is not 0, got %d.\n", x);
+    ok(hr == S_OK, "IScriptError_get_HelpContext failed: 0x%08lx.\n", hr);
+    ok(x == 0, "Error HelpContext is not 0, got %ld.\n", x);
     hr = IScriptError_get_Text(error, &str);
-    ok(hr == S_OK, "IScriptError_get_Text failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptError_get_Text failed: 0x%08lx.\n", hr);
     ok(str == NULL, "Error Text is not (null), got %s.\n", wine_dbgstr_w(str));
     hr = IScriptError_get_Line(error, &x);
-    ok(hr == S_OK, "IScriptError_get_Line failed: 0x%08x.\n", hr);
-    ok(x == 0, "Error Line is not 0, got %d.\n", x);
+    ok(hr == S_OK, "IScriptError_get_Line failed: 0x%08lx.\n", hr);
+    ok(x == 0, "Error Line is not 0, got %ld.\n", x);
     hr = IScriptError_get_Column(error, &x);
-    ok(hr == S_OK, "IScriptError_get_Column failed: 0x%08x.\n", hr);
-    ok(x == 0, "Error Column is not 0, got %d.\n", x);
+    ok(hr == S_OK, "IScriptError_get_Column failed: 0x%08lx.\n", hr);
+    ok(x == 0, "Error Column is not 0, got %ld.\n", x);
 
     str = SysAllocString(L"jscript");
     hr = IScriptControl_put_Language(sc, str);
-    ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08lx.\n", hr);
     SysFreeString(str);
 
     str = SysAllocString(L""
@@ -3634,62 +3634,62 @@ static void test_IScriptControl_get_Error(void)
         "// comment\n"
         "this is an invalid line\n");
     hr = IScriptControl_AddCode(sc, str);
-    ok(FAILED(hr), "IScriptControl_AddCode succeeded: 0x%08x.\n", hr);
+    ok(FAILED(hr), "IScriptControl_AddCode succeeded: 0x%08lx.\n", hr);
     SysFreeString(str);
 
     x = 0xdeadbeef;
     hr = IScriptError_get_Number(error, &x);
-    ok(hr == S_OK, "IScriptError_get_Number failed: 0x%08x.\n", hr);
-    todo_wine ok(x > 1000, "Error Number is wrong, got %d.\n", x);
+    ok(hr == S_OK, "IScriptError_get_Number failed: 0x%08lx.\n", hr);
+    todo_wine ok(x > 1000, "Error Number is wrong, got %ld.\n", x);
     hr = IScriptError_get_Source(error, &str);
-    ok(hr == S_OK, "IScriptError_get_Source failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptError_get_Source failed: 0x%08lx.\n", hr);
     ok(str != NULL, "Error Source is (null).\n");
     SysFreeString(str);
     hr = IScriptError_get_Description(error, &str);
-    ok(hr == S_OK, "IScriptError_get_Description failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptError_get_Description failed: 0x%08lx.\n", hr);
     ok(str != NULL, "Error Description is (null).\n");
     SysFreeString(str);
     hr = IScriptError_get_Text(error, &str);
-    ok(hr == S_OK, "IScriptError_get_Text failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptError_get_Text failed: 0x%08lx.\n", hr);
     ok(!lstrcmpW(str, L"this is an invalid line"), "Error Text is wrong, got %s.\n", wine_dbgstr_w(str));
     SysFreeString(str);
     hr = IScriptError_get_Line(error, &x);
-    ok(hr == S_OK, "IScriptError_get_Line failed: 0x%08x.\n", hr);
-    ok(x == 3, "Error Line is not 3, got %d.\n", x);
+    ok(hr == S_OK, "IScriptError_get_Line failed: 0x%08lx.\n", hr);
+    ok(x == 3, "Error Line is not 3, got %ld.\n", x);
     hr = IScriptError_get_Column(error, &x);
-    ok(hr == S_OK, "IScriptError_get_Column failed: 0x%08x.\n", hr);
-    ok(x == 5, "Error Column is not 5, got %d.\n", x);
+    ok(hr == S_OK, "IScriptError_get_Column failed: 0x%08lx.\n", hr);
+    ok(x == 5, "Error Column is not 5, got %ld.\n", x);
 
     hr = IScriptError_Clear(error);
-    ok(hr == S_OK, "IScriptError_Clear failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptError_Clear failed: 0x%08lx.\n", hr);
     x = 0xdeadbeef;
     hr = IScriptError_get_Number(error, &x);
-    ok(hr == S_OK, "IScriptError_get_Number failed: 0x%08x.\n", hr);
-    ok(x == 0, "Error Number is not 0, got %d.\n", x);
+    ok(hr == S_OK, "IScriptError_get_Number failed: 0x%08lx.\n", hr);
+    ok(x == 0, "Error Number is not 0, got %ld.\n", x);
     hr = IScriptError_get_Source(error, &str);
-    ok(hr == S_OK, "IScriptError_get_Source failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptError_get_Source failed: 0x%08lx.\n", hr);
     ok(str == NULL, "Error Source is not (null), got %s.\n", wine_dbgstr_w(str));
     hr = IScriptError_get_Description(error, &str);
-    ok(hr == S_OK, "IScriptError_get_Description failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptError_get_Description failed: 0x%08lx.\n", hr);
     ok(str == NULL, "Error Description is not (null), got %s.\n", wine_dbgstr_w(str));
     hr = IScriptError_get_HelpFile(error, &str);
-    ok(hr == S_OK, "IScriptError_get_HelpFile failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptError_get_HelpFile failed: 0x%08lx.\n", hr);
     ok(str == NULL, "Error HelpFile is not (null), got %s.\n", wine_dbgstr_w(str));
     hr = IScriptError_get_HelpContext(error, &x);
-    ok(hr == S_OK, "IScriptError_get_HelpContext failed: 0x%08x.\n", hr);
-    ok(x == 0, "Error HelpContext is not 0, got %d.\n", x);
+    ok(hr == S_OK, "IScriptError_get_HelpContext failed: 0x%08lx.\n", hr);
+    ok(x == 0, "Error HelpContext is not 0, got %ld.\n", x);
     hr = IScriptError_get_Text(error, &str);
-    ok(hr == S_OK, "IScriptError_get_Text failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptError_get_Text failed: 0x%08lx.\n", hr);
     ok(str == NULL, "Error Text is not (null), got %s.\n", wine_dbgstr_w(str));
     hr = IScriptError_get_Line(error, &x);
-    ok(hr == S_OK, "IScriptError_get_Line failed: 0x%08x.\n", hr);
-    ok(x == 0, "Error Line is not 0, got %d.\n", x);
+    ok(hr == S_OK, "IScriptError_get_Line failed: 0x%08lx.\n", hr);
+    ok(x == 0, "Error Line is not 0, got %ld.\n", x);
     hr = IScriptError_get_Column(error, &x);
-    ok(hr == S_OK, "IScriptError_get_Column failed: 0x%08x.\n", hr);
-    ok(x == 0, "Error Column is not 0, got %d.\n", x);
+    ok(hr == S_OK, "IScriptError_get_Column failed: 0x%08lx.\n", hr);
+    ok(x == 0, "Error Column is not 0, got %ld.\n", x);
 
     hr = IScriptControl_get_Error(sc, &error2);
-    ok(hr == S_OK, "IScriptControl_get_Error failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptControl_get_Error failed: 0x%08lx.\n", hr);
     ok(error == error2, "Error objects are not the same (%p vs %p).\n", error, error2);
     IScriptError_Release(error2);
 
@@ -3701,7 +3701,7 @@ static void test_IScriptControl_get_Error(void)
     {
         hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
                               &IID_IScriptControl, (void**)&sc);
-        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08lx.\n", hr);
 
         SET_EXPECT(CreateInstance);
         SET_EXPECT(SetInterfaceSafetyOptions);
@@ -3710,7 +3710,7 @@ static void test_IScriptControl_get_Error(void)
         SET_EXPECT(InitNew);
         str = SysAllocString(L"testscript");
         hr = IScriptControl_put_Language(sc, str);
-        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08lx.\n", hr);
         SysFreeString(str);
         CHECK_CALLED(CreateInstance);
         CHECK_CALLED(SetInterfaceSafetyOptions);
@@ -3719,125 +3719,125 @@ static void test_IScriptControl_get_Error(void)
         CHECK_CALLED(InitNew);
 
         hr = IScriptControl_get_Error(sc, &error);
-        ok(hr == S_OK, "IScriptControl_get_Error failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_get_Error failed: 0x%08lx.\n", hr);
 
         x = 0xdeadbeef;
         hr = IScriptError_get_Number(error, &x);
-        ok(hr == S_OK, "IScriptError_get_Number failed: 0x%08x.\n", hr);
-        ok(x == 0, "Error Number is not 0, got %d.\n", x);
+        ok(hr == S_OK, "IScriptError_get_Number failed: 0x%08lx.\n", hr);
+        ok(x == 0, "Error Number is not 0, got %ld.\n", x);
 
         /* The calls are cached even if they fail */
         ActiveScriptError_stage = 0;
         hr = IActiveScriptSite_OnScriptError(site, &ActiveScriptError);
-        ok(hr == S_FALSE, "IActiveScriptSite_OnScriptError returned: 0x%08x.\n", hr);
+        ok(hr == S_FALSE, "IActiveScriptSite_OnScriptError returned: 0x%08lx.\n", hr);
 
         SET_EXPECT(GetExceptionInfo);
         x = 0xdeadbeef;
         hr = IScriptError_get_Number(error, &x);
-        ok(hr == S_OK, "IScriptError_get_Number failed: 0x%08x.\n", hr);
-        ok(x == 0, "Error Number is not 0, got %d.\n", x);
+        ok(hr == S_OK, "IScriptError_get_Number failed: 0x%08lx.\n", hr);
+        ok(x == 0, "Error Number is not 0, got %ld.\n", x);
         CHECK_CALLED(GetExceptionInfo);
         hr = IScriptError_get_Source(error, &str);
-        ok(hr == S_OK, "IScriptError_get_Source failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptError_get_Source failed: 0x%08lx.\n", hr);
         ok(str == NULL, "Error Source is not (null), got %s.\n", wine_dbgstr_w(str));
         hr = IScriptError_get_Description(error, &str);
-        ok(hr == S_OK, "IScriptError_get_Description failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptError_get_Description failed: 0x%08lx.\n", hr);
         ok(str == NULL, "Error Description is not (null), got %s.\n", wine_dbgstr_w(str));
         hr = IScriptError_get_HelpFile(error, &str);
-        ok(hr == S_OK, "IScriptError_get_HelpFile failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptError_get_HelpFile failed: 0x%08lx.\n", hr);
         ok(str == NULL, "Error HelpFile is not (null), got %s.\n", wine_dbgstr_w(str));
         hr = IScriptError_get_HelpContext(error, &x);
-        ok(hr == S_OK, "IScriptError_get_HelpContext failed: 0x%08x.\n", hr);
-        ok(x == 0, "Error HelpContext is not 0, got %d.\n", x);
+        ok(hr == S_OK, "IScriptError_get_HelpContext failed: 0x%08lx.\n", hr);
+        ok(x == 0, "Error HelpContext is not 0, got %ld.\n", x);
 
         SET_EXPECT(GetSourceLineText);
         hr = IScriptError_get_Text(error, &str);
-        ok(hr == S_OK, "IScriptError_get_Text failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptError_get_Text failed: 0x%08lx.\n", hr);
         ok(!lstrcmpW(str, L"source line"), "Error Text is wrong, got %s.\n", wine_dbgstr_w(str));
         SysFreeString(str);
         CHECK_CALLED(GetSourceLineText);
 
         SET_EXPECT(GetSourcePosition);
         hr = IScriptError_get_Line(error, &x);
-        ok(hr == S_OK, "IScriptError_get_Line failed: 0x%08x.\n", hr);
-        ok(x == 0, "Error Line is not 0, got %d.\n", x);
+        ok(hr == S_OK, "IScriptError_get_Line failed: 0x%08lx.\n", hr);
+        ok(x == 0, "Error Line is not 0, got %ld.\n", x);
         CHECK_CALLED(GetSourcePosition);
         hr = IScriptError_get_Column(error, &x);
-        ok(hr == S_OK, "IScriptError_get_Column failed: 0x%08x.\n", hr);
-        ok(x == 0, "Error Column is not 0, got %d.\n", x);
+        ok(hr == S_OK, "IScriptError_get_Column failed: 0x%08lx.\n", hr);
+        ok(x == 0, "Error Column is not 0, got %ld.\n", x);
 
         /* Check with deferred fill-in */
         ActiveScriptError_stage = 1;
         hr = IActiveScriptSite_OnScriptError(site, &ActiveScriptError);
-        ok(hr == S_FALSE, "IActiveScriptSite_OnScriptError returned: 0x%08x.\n", hr);
+        ok(hr == S_FALSE, "IActiveScriptSite_OnScriptError returned: 0x%08lx.\n", hr);
 
         SET_EXPECT(GetExceptionInfo);
         SET_EXPECT(DeferredFillIn);
         x = 0xdeadbeef;
         hr = IScriptError_get_Number(error, &x);
-        ok(hr == S_OK, "IScriptError_get_Number failed: 0x%08x.\n", hr);
-        ok(x == 0, "Error Number is not 0, got %d.\n", x);
+        ok(hr == S_OK, "IScriptError_get_Number failed: 0x%08lx.\n", hr);
+        ok(x == 0, "Error Number is not 0, got %ld.\n", x);
         CHECK_CALLED(GetExceptionInfo);
         CHECK_CALLED(DeferredFillIn);
         hr = IScriptError_get_Source(error, &str);
-        ok(hr == S_OK, "IScriptError_get_Source failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptError_get_Source failed: 0x%08lx.\n", hr);
         ok(!lstrcmpW(str, L"foobar"), "Error Source is wrong, got %s.\n", wine_dbgstr_w(str));
         SysFreeString(str);
         hr = IScriptError_get_Description(error, &str);
-        ok(hr == S_OK, "IScriptError_get_Description failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptError_get_Description failed: 0x%08lx.\n", hr);
         ok(!lstrcmpW(str, L"barfoo"), "Error Description is wrong, got %s.\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         SET_EXPECT(GetSourceLineText);
         hr = IScriptError_get_Text(error, &str);
-        ok(hr == S_OK, "IScriptError_get_Text failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptError_get_Text failed: 0x%08lx.\n", hr);
         ok(!lstrcmpW(str, L"source line"), "Error Text is wrong, got %s.\n", wine_dbgstr_w(str));
         SysFreeString(str);
         CHECK_CALLED(GetSourceLineText);
 
         SET_EXPECT(GetSourcePosition);
         hr = IScriptError_get_Line(error, &x);
-        ok(hr == S_OK, "IScriptError_get_Line failed: 0x%08x.\n", hr);
-        ok(x == 42, "Error Line is not 42, got %d.\n", x);
+        ok(hr == S_OK, "IScriptError_get_Line failed: 0x%08lx.\n", hr);
+        ok(x == 42, "Error Line is not 42, got %ld.\n", x);
         CHECK_CALLED(GetSourcePosition);
         hr = IScriptError_get_Column(error, &x);
-        ok(hr == S_OK, "IScriptError_get_Column failed: 0x%08x.\n", hr);
-        ok(x == 10, "Error Column is not 10, got %d.\n", x);
+        ok(hr == S_OK, "IScriptError_get_Column failed: 0x%08lx.\n", hr);
+        ok(x == 10, "Error Column is not 10, got %ld.\n", x);
 
         /* Check without deferred fill-in, but using scode */
         ActiveScriptError_stage = 2;
         hr = IActiveScriptSite_OnScriptError(site, &ActiveScriptError);
-        ok(hr == S_FALSE, "IActiveScriptSite_OnScriptError returned: 0x%08x.\n", hr);
+        ok(hr == S_FALSE, "IActiveScriptSite_OnScriptError returned: 0x%08lx.\n", hr);
 
         SET_EXPECT(GetExceptionInfo);
         x = 0xdeadbeef;
         hr = IScriptError_get_Number(error, &x);
-        ok(hr == S_OK, "IScriptError_get_Number failed: 0x%08x.\n", hr);
-        ok(x == 0xbeef, "Error Number is not 0xbeef, got 0x%04x.\n", x);
+        ok(hr == S_OK, "IScriptError_get_Number failed: 0x%08lx.\n", hr);
+        ok(x == 0xbeef, "Error Number is not 0xbeef, got 0x%04lx.\n", x);
         CHECK_CALLED(GetExceptionInfo);
         hr = IScriptError_get_Source(error, &str);
-        ok(hr == S_OK, "IScriptError_get_Source failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptError_get_Source failed: 0x%08lx.\n", hr);
         ok(!lstrcmpW(str, L"source"), "Error Source is wrong, got %s.\n", wine_dbgstr_w(str));
         SysFreeString(str);
         hr = IScriptError_get_Description(error, &str);
-        ok(hr == S_OK, "IScriptError_get_Description failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptError_get_Description failed: 0x%08lx.\n", hr);
         ok(str == NULL, "Error Description is not (null), got %s.\n", wine_dbgstr_w(str));
 
         SET_EXPECT(GetSourceLineText);
         hr = IScriptError_get_Text(error, &str);
-        ok(hr == S_OK, "IScriptError_get_Text failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptError_get_Text failed: 0x%08lx.\n", hr);
         ok(!lstrcmpW(str, L"source line"), "Error Text is wrong, got %s.\n", wine_dbgstr_w(str));
         SysFreeString(str);
         CHECK_CALLED(GetSourceLineText);
 
         SET_EXPECT(GetSourcePosition);
         hr = IScriptError_get_Line(error, &x);
-        ok(hr == S_OK, "IScriptError_get_Line failed: 0x%08x.\n", hr);
-        ok(x == 42, "Error Line is not 42, got %d.\n", x);
+        ok(hr == S_OK, "IScriptError_get_Line failed: 0x%08lx.\n", hr);
+        ok(x == 42, "Error Line is not 42, got %ld.\n", x);
         CHECK_CALLED(GetSourcePosition);
         hr = IScriptError_get_Column(error, &x);
-        ok(hr == S_OK, "IScriptError_get_Column failed: 0x%08x.\n", hr);
-        ok(x == 10, "Error Column is not 10, got %d.\n", x);
+        ok(hr == S_OK, "IScriptError_get_Column failed: 0x%08lx.\n", hr);
+        ok(x == 10, "Error Column is not 10, got %ld.\n", x);
 
         IActiveScriptSite_Release(site);
 
@@ -3858,18 +3858,18 @@ static void test_IScriptControl_get_CodeObject(void)
 
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
                           &IID_IScriptControl, (void**)&sc);
-    ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+    ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08lx.\n", hr);
 
     hr = IScriptControl_get_CodeObject(sc, &disp);
-    ok(hr == E_FAIL, "IScriptControl_get_CodeObject returned: 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "IScriptControl_get_CodeObject returned: 0x%08lx.\n", hr);
 
     str = SysAllocString(L"jscript");
     hr = IScriptControl_put_Language(sc, str);
-    ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08lx.\n", hr);
     SysFreeString(str);
 
     hr = IScriptControl_get_CodeObject(sc, &disp);
-    ok(hr == S_OK, "IScriptControl_get_CodeObject failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptControl_get_CodeObject failed: 0x%08lx.\n", hr);
 
     IDispatch_Release(disp);
     IScriptControl_Release(sc);
@@ -3878,7 +3878,7 @@ static void test_IScriptControl_get_CodeObject(void)
     {
         hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
                               &IID_IScriptControl, (void**)&sc);
-        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08lx.\n", hr);
 
         SET_EXPECT(CreateInstance);
         SET_EXPECT(SetInterfaceSafetyOptions);
@@ -3888,7 +3888,7 @@ static void test_IScriptControl_get_CodeObject(void)
 
         str = SysAllocString(L"testscript");
         hr = IScriptControl_put_Language(sc, str);
-        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08lx.\n", hr);
         SysFreeString(str);
 
         CHECK_CALLED(CreateInstance);
@@ -3901,7 +3901,7 @@ static void test_IScriptControl_get_CodeObject(void)
         SET_EXPECT(SetScriptState_STARTED);
         SET_EXPECT(GetScriptDispatch);
         hr = IScriptControl_get_CodeObject(sc, &disp);
-        ok(hr == S_OK, "IScriptControl_get_CodeObject failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_get_CodeObject failed: 0x%08lx.\n", hr);
         ok(disp == (IDispatch*)&DispatchEx, "unexpected code object %p\n", disp);
         CHECK_CALLED(GetScriptDispatch);
         CHECK_CALLED(SetScriptState_STARTED);
@@ -3932,31 +3932,31 @@ static void test_IScriptControl_get_Procedures(void)
 
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
                           &IID_IScriptControl, (void**)&sc);
-    ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+    ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08lx.\n", hr);
 
     hr = IScriptControl_get_Procedures(sc, &procs);
-    ok(hr == E_FAIL, "IScriptControl_get_Procedures returned: 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "IScriptControl_get_Procedures returned: 0x%08lx.\n", hr);
 
     str = SysAllocString(L"jscript");
     hr = IScriptControl_put_Language(sc, str);
-    ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08lx.\n", hr);
     SysFreeString(str);
 
     hr = IScriptControl_get_Procedures(sc, &procs);
-    ok(hr == S_OK, "IScriptControl_get_Procedures failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptControl_get_Procedures failed: 0x%08lx.\n", hr);
 
     hr = IScriptProcedureCollection_get_Count(procs, NULL);
-    ok(hr == E_POINTER, "IScriptProcedureCollection_get_Count returned: 0x%08x.\n", hr);
+    ok(hr == E_POINTER, "IScriptProcedureCollection_get_Count returned: 0x%08lx.\n", hr);
     hr = IScriptProcedureCollection_get_Count(procs, &count);
-    ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08x.\n", hr);
-    ok(count == 0, "count is not 0, got %d.\n", count);
+    ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08lx.\n", hr);
+    ok(count == 0, "count is not 0, got %ld.\n", count);
 
     V_VT(&var) = VT_I4;
     V_I4(&var) = -1;
     hr = IScriptProcedureCollection_get_Item(procs, var, NULL);
-    ok(hr == E_POINTER, "IScriptProcedureCollection_get_Item returned: 0x%08x.\n", hr);
+    ok(hr == E_POINTER, "IScriptProcedureCollection_get_Item returned: 0x%08lx.\n", hr);
     hr = IScriptProcedureCollection_get_Item(procs, var, &proc);
-    ok(hr == 0x800a0009, "IScriptProcedureCollection_get_Item returned: 0x%08x.\n", hr);
+    ok(hr == 0x800a0009, "IScriptProcedureCollection_get_Item returned: 0x%08lx.\n", hr);
 
     str = SysAllocString(L""
         "function add(a, b) { return a + b; }\n"
@@ -3964,70 +3964,70 @@ static void test_IScriptControl_get_Procedures(void)
         "function muladd(a, b, c) { return a * b + c; }\n"
     );
     hr = IScriptControl_AddCode(sc, str);
-    ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08lx.\n", hr);
     CHECK_ERROR(sc, 0);
     SysFreeString(str);
 
     hr = IScriptProcedureCollection_get_Count(procs, &count);
-    ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08x.\n", hr);
-    ok(count == 3, "count is not 3, got %d.\n", count);
+    ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08lx.\n", hr);
+    ok(count == 3, "count is not 3, got %ld.\n", count);
 
     V_VT(&var) = VT_I4;
     V_I4(&var) = 1;
     IScriptProcedureCollection_AddRef(procs);
     i = IScriptProcedureCollection_Release(procs);
     hr = IScriptProcedureCollection_get_Item(procs, var, &proc);
-    ok(hr == S_OK, "IScriptProcedureCollection_get_Item failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptProcedureCollection_get_Item failed: 0x%08lx.\n", hr);
     IScriptProcedureCollection_AddRef(procs);
     ok(i == IScriptProcedureCollection_Release(procs),
         "IScriptProcedureCollection_get_Item should not have added a ref to the collection.\n");
     hr = IScriptProcedure_get_Name(proc, NULL);
-    ok(hr == E_POINTER, "IScriptProcedure_get_Name returned: 0x%08x.\n", hr);
+    ok(hr == E_POINTER, "IScriptProcedure_get_Name returned: 0x%08lx.\n", hr);
     hr = IScriptProcedure_get_Name(proc, &str);
-    ok(hr == S_OK, "IScriptProcedure_get_Name failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptProcedure_get_Name failed: 0x%08lx.\n", hr);
     ok(!lstrcmpW(str, L"add"), "Wrong name, got %s.\n", wine_dbgstr_w(str));
     SysFreeString(str);
     hr = IScriptProcedure_get_NumArgs(proc, NULL);
-    ok(hr == E_POINTER, "IScriptProcedure_get_NumArgs returned: 0x%08x.\n", hr);
+    ok(hr == E_POINTER, "IScriptProcedure_get_NumArgs returned: 0x%08lx.\n", hr);
     hr = IScriptProcedure_get_NumArgs(proc, &count);
-    ok(hr == S_OK, "IScriptProcedure_get_NumArgs failed: 0x%08x.\n", hr);
-    ok(count == 2, "Wrong NumArgs, got %d.\n", count);
+    ok(hr == S_OK, "IScriptProcedure_get_NumArgs failed: 0x%08lx.\n", hr);
+    ok(count == 2, "Wrong NumArgs, got %ld.\n", count);
     hr = IScriptProcedure_get_HasReturnValue(proc, NULL);
-    ok(hr == E_POINTER, "IScriptProcedure_get_HasReturnValue returned: 0x%08x.\n", hr);
+    ok(hr == E_POINTER, "IScriptProcedure_get_HasReturnValue returned: 0x%08lx.\n", hr);
     hr = IScriptProcedure_get_HasReturnValue(proc, &vbool);
-    ok(hr == S_OK, "IScriptProcedure_get_HasReturnValue failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptProcedure_get_HasReturnValue failed: 0x%08lx.\n", hr);
     ok(vbool == VARIANT_TRUE, "HasReturnValue did not return True, got %x.\n", vbool);
     IScriptProcedure_Release(proc);
 
     V_VT(&var) = VT_BSTR;
     V_BSTR(&var) = SysAllocString(L"Nop");
     hr = IScriptProcedureCollection_get_Item(procs, var, &proc);
-    ok(hr == S_OK, "IScriptProcedureCollection_get_Item failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptProcedureCollection_get_Item failed: 0x%08lx.\n", hr);
     ok(V_VT(&var) == VT_BSTR, "var type not BSTR, got %d.\n", V_VT(&var));
     VariantClear(&var);
     hr = IScriptProcedure_get_Name(proc, &str);
-    ok(hr == S_OK, "IScriptProcedure_get_Name failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptProcedure_get_Name failed: 0x%08lx.\n", hr);
     ok(!lstrcmpW(str, L"nop"), "Wrong name, got %s.\n", wine_dbgstr_w(str));
     SysFreeString(str);
     hr = IScriptProcedure_get_NumArgs(proc, &count);
-    ok(hr == S_OK, "IScriptProcedure_get_NumArgs failed: 0x%08x.\n", hr);
-    ok(count == 1, "Wrong NumArgs, got %d.\n", count);
+    ok(hr == S_OK, "IScriptProcedure_get_NumArgs failed: 0x%08lx.\n", hr);
+    ok(count == 1, "Wrong NumArgs, got %ld.\n", count);
     hr = IScriptProcedure_get_HasReturnValue(proc, &vbool);
-    ok(hr == S_OK, "IScriptProcedure_get_HasReturnValue failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptProcedure_get_HasReturnValue failed: 0x%08lx.\n", hr);
     ok(vbool == VARIANT_TRUE, "HasReturnValue did not return True, got %x.\n", vbool);
     IScriptProcedure_Release(proc);
 
     V_VT(&var) = VT_R8;
     V_R8(&var) = 3.0;
     hr = IScriptProcedureCollection_get_Item(procs, var, &proc);
-    ok(hr == S_OK, "IScriptProcedureCollection_get_Item failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptProcedureCollection_get_Item failed: 0x%08lx.\n", hr);
     hr = IScriptProcedure_get_Name(proc, &str);
-    ok(hr == S_OK, "IScriptProcedure_get_Name failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptProcedure_get_Name failed: 0x%08lx.\n", hr);
     ok(!lstrcmpW(str, L"muladd"), "Wrong name, got %s.\n", wine_dbgstr_w(str));
     SysFreeString(str);
     hr = IScriptProcedure_get_NumArgs(proc, &count);
-    ok(hr == S_OK, "IScriptProcedure_get_NumArgs failed: 0x%08x.\n", hr);
-    ok(count == 3, "Wrong NumArgs, got %d.\n", count);
+    ok(hr == S_OK, "IScriptProcedure_get_NumArgs failed: 0x%08lx.\n", hr);
+    ok(count == 3, "Wrong NumArgs, got %ld.\n", count);
     IScriptProcedure_Release(proc);
 
     IScriptProcedureCollection_Release(procs);
@@ -4037,7 +4037,7 @@ static void test_IScriptControl_get_Procedures(void)
     {
         hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
                               &IID_IScriptControl, (void**)&sc);
-        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08lx.\n", hr);
 
         SET_EXPECT(CreateInstance);
         SET_EXPECT(SetInterfaceSafetyOptions);
@@ -4047,7 +4047,7 @@ static void test_IScriptControl_get_Procedures(void)
 
         str = SysAllocString(L"testscript");
         hr = IScriptControl_put_Language(sc, str);
-        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08lx.\n", hr);
         SysFreeString(str);
 
         CHECK_CALLED(CreateInstance);
@@ -4057,9 +4057,9 @@ static void test_IScriptControl_get_Procedures(void)
         CHECK_CALLED(InitNew);
 
         hr = IScriptControl_get_Procedures(sc, &procs);
-        ok(hr == S_OK, "IScriptControl_get_Procedures failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_get_Procedures failed: 0x%08lx.\n", hr);
         hr = IScriptControl_get_Procedures(sc, &procs2);
-        ok(hr == S_OK, "IScriptControl_get_Procedures failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_get_Procedures failed: 0x%08lx.\n", hr);
         ok(procs == procs2, "Procedure collections are not the same (%p vs %p).\n", procs, procs2);
         IScriptProcedureCollection_Release(procs2);
 
@@ -4071,8 +4071,8 @@ static void test_IScriptControl_get_Procedures(void)
         SET_EXPECT(ReleaseTypeAttr);
         TypeInfo_GetTypeAttr_cFuncs = 1337;
         hr = IScriptProcedureCollection_get_Count(procs, &count);
-        ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08x.\n", hr);
-        ok(count == 1337, "count is not 1337, got %d.\n", count);
+        ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08lx.\n", hr);
+        ok(count == 1337, "count is not 1337, got %ld.\n", count);
         CHECK_CALLED(SetScriptState_STARTED);
         CHECK_CALLED(GetScriptDispatch);
         CHECK_CALLED(GetTypeInfo);
@@ -4081,19 +4081,19 @@ static void test_IScriptControl_get_Procedures(void)
         TypeInfo_GetTypeAttr_cFuncs = ARRAY_SIZE(custom_engine_funcs);
         count = 0;
         hr = IScriptProcedureCollection_get_Count(procs, &count);
-        ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08x.\n", hr);
-        ok(count == 1337, "count is not 1337, got %d.\n", count);
+        ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08lx.\n", hr);
+        ok(count == 1337, "count is not 1337, got %ld.\n", count);
 
         /* Reload the collection to update the cached function count */
         IScriptProcedureCollection_Release(procs);
         hr = IScriptControl_get_Procedures(sc, &procs);
-        ok(hr == S_OK, "IScriptControl_get_Procedures failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_get_Procedures failed: 0x%08lx.\n", hr);
         count = 0;
         SET_EXPECT(GetTypeAttr);
         SET_EXPECT(ReleaseTypeAttr);
         hr = IScriptProcedureCollection_get_Count(procs, &count);
-        ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08x.\n", hr);
-        ok(count == ARRAY_SIZE(custom_engine_funcs), "count is not %u, got %d.\n", TypeInfo_GetTypeAttr_cFuncs, count);
+        ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08lx.\n", hr);
+        ok(count == ARRAY_SIZE(custom_engine_funcs), "count is not %u, got %ld.\n", TypeInfo_GetTypeAttr_cFuncs, count);
         CHECK_CALLED(GetTypeAttr);
         CHECK_CALLED(ReleaseTypeAttr);
 
@@ -4103,7 +4103,7 @@ static void test_IScriptControl_get_Procedures(void)
         parse_flags = SCRIPTTEXT_ISVISIBLE;
         str = SysAllocString(L" ");
         hr = IScriptControl_AddCode(sc, str);
-        ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08lx.\n", hr);
         SysFreeString(str);
         CHECK_ERROR(sc, 0);
         CHECK_CALLED(ParseScriptText);
@@ -4114,8 +4114,8 @@ static void test_IScriptControl_get_Procedures(void)
         SET_EXPECT(GetTypeAttr);
         SET_EXPECT(ReleaseTypeAttr);
         hr = IScriptProcedureCollection_get_Count(procs, &count);
-        ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08x.\n", hr);
-        ok(count == ARRAY_SIZE(custom_engine_funcs), "count is not %u, got %d.\n", TypeInfo_GetTypeAttr_cFuncs, count);
+        ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08lx.\n", hr);
+        ok(count == ARRAY_SIZE(custom_engine_funcs), "count is not %u, got %ld.\n", TypeInfo_GetTypeAttr_cFuncs, count);
         CHECK_CALLED(GetScriptDispatch);
         CHECK_CALLED(GetTypeInfo);
         CHECK_CALLED(GetTypeAttr);
@@ -4127,8 +4127,8 @@ static void test_IScriptControl_get_Procedures(void)
         CHECK_CALLED(SetScriptState_INITIALIZED);
         count = 0;
         hr = IScriptProcedureCollection_get_Count(procs, &count);
-        ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08x.\n", hr);
-        ok(count == ARRAY_SIZE(custom_engine_funcs), "count is not %u, got %d.\n", TypeInfo_GetTypeAttr_cFuncs, count);
+        ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08lx.\n", hr);
+        ok(count == ARRAY_SIZE(custom_engine_funcs), "count is not %u, got %ld.\n", TypeInfo_GetTypeAttr_cFuncs, count);
 
         /* Try without ITypeComp interface */
         SET_EXPECT(SetScriptState_STARTED);
@@ -4138,7 +4138,7 @@ static void test_IScriptControl_get_Procedures(void)
         V_VT(&var) = VT_BSTR;
         V_BSTR(&var) = SysAllocString(L"foobar");
         hr = IScriptProcedureCollection_get_Item(procs, var, &proc);
-        ok(hr == E_NOINTERFACE, "IScriptProcedureCollection_get_Item returned: 0x%08x.\n", hr);
+        ok(hr == E_NOINTERFACE, "IScriptProcedureCollection_get_Item returned: 0x%08lx.\n", hr);
         ok(V_VT(&var) == VT_BSTR, "var type not BSTR, got %d.\n", V_VT(&var));
         VariantClear(&var);
         CHECK_CALLED(SetScriptState_STARTED);
@@ -4148,8 +4148,8 @@ static void test_IScriptControl_get_Procedures(void)
 
         count = 0;
         hr = IScriptProcedureCollection_get_Count(procs, &count);
-        ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08x.\n", hr);
-        ok(count == ARRAY_SIZE(custom_engine_funcs), "count is not %u, got %d.\n", TypeInfo_GetTypeAttr_cFuncs, count);
+        ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08lx.\n", hr);
+        ok(count == ARRAY_SIZE(custom_engine_funcs), "count is not %u, got %ld.\n", TypeInfo_GetTypeAttr_cFuncs, count);
 
         /* Make ITypeComp available */
         TypeComp_available = TRUE;
@@ -4158,7 +4158,7 @@ static void test_IScriptControl_get_Procedures(void)
         V_VT(&var) = VT_BSTR;
         V_BSTR(&var) = SysAllocString(L"type_mismatch");
         hr = IScriptProcedureCollection_get_Item(procs, var, &proc);
-        ok(hr == TYPE_E_TYPEMISMATCH, "IScriptProcedureCollection_get_Item returned: 0x%08x.\n", hr);
+        ok(hr == TYPE_E_TYPEMISMATCH, "IScriptProcedureCollection_get_Item returned: 0x%08lx.\n", hr);
         VariantClear(&var);
         CHECK_CALLED(QI_ITypeComp);
         CHECK_CALLED(Bind);
@@ -4168,7 +4168,7 @@ static void test_IScriptControl_get_Procedures(void)
         V_VT(&var) = VT_BSTR;
         V_BSTR(&var) = SysAllocString(L"not_found");
         hr = IScriptProcedureCollection_get_Item(procs, var, &proc);
-        ok(hr == CTL_E_ILLEGALFUNCTIONCALL, "IScriptProcedureCollection_get_Item failed: 0x%08x.\n", hr);
+        ok(hr == CTL_E_ILLEGALFUNCTIONCALL, "IScriptProcedureCollection_get_Item failed: 0x%08lx.\n", hr);
         VariantClear(&var);
         CHECK_CALLED(Bind);
 
@@ -4177,7 +4177,7 @@ static void test_IScriptControl_get_Procedures(void)
         V_VT(&var) = VT_BSTR;
         V_BSTR(&var) = SysAllocString(L"variable");
         hr = IScriptProcedureCollection_get_Item(procs, var, &proc);
-        ok(hr == CTL_E_ILLEGALFUNCTIONCALL, "IScriptProcedureCollection_get_Item failed: 0x%08x.\n", hr);
+        ok(hr == CTL_E_ILLEGALFUNCTIONCALL, "IScriptProcedureCollection_get_Item failed: 0x%08lx.\n", hr);
         VariantClear(&var);
         CHECK_CALLED(Bind);
         CHECK_CALLED(ReleaseVarDesc);
@@ -4186,53 +4186,53 @@ static void test_IScriptControl_get_Procedures(void)
         V_VT(&var) = VT_I4;
         V_I4(&var) = 0;
         hr = IScriptProcedureCollection_get_Item(procs, var, &proc);
-        ok(hr == 0x800a0009, "IScriptProcedureCollection_get_Item returned: 0x%08x.\n", hr);
+        ok(hr == 0x800a0009, "IScriptProcedureCollection_get_Item returned: 0x%08lx.\n", hr);
         V_I4(&var) = -1;
         hr = IScriptProcedureCollection_get_Item(procs, var, &proc);
-        ok(hr == 0x800a0009, "IScriptProcedureCollection_get_Item returned: 0x%08x.\n", hr);
+        ok(hr == 0x800a0009, "IScriptProcedureCollection_get_Item returned: 0x%08lx.\n", hr);
         SET_EXPECT(GetFuncDesc);
         V_I4(&var) = 1337;
         hr = IScriptProcedureCollection_get_Item(procs, var, &proc);
-        ok(hr == E_INVALIDARG, "IScriptProcedureCollection_get_Item returned: 0x%08x.\n", hr);
+        ok(hr == E_INVALIDARG, "IScriptProcedureCollection_get_Item returned: 0x%08lx.\n", hr);
         CHECK_CALLED(GetFuncDesc);
 
         /* _NewEnum never caches the function count */
         hr = IScriptProcedureCollection_get__NewEnum(procs, NULL);
-        ok(hr == E_POINTER, "IScriptProcedureCollection_get__NewEnum returned: 0x%08x.\n", hr);
+        ok(hr == E_POINTER, "IScriptProcedureCollection_get__NewEnum returned: 0x%08lx.\n", hr);
         SET_EXPECT(GetTypeAttr);
         SET_EXPECT(ReleaseTypeAttr);
         hr = IScriptProcedureCollection_get__NewEnum(procs, &unknown);
-        ok(hr == S_OK, "IScriptProcedureCollection_get__NewEnum failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptProcedureCollection_get__NewEnum failed: 0x%08lx.\n", hr);
         CHECK_CALLED(GetTypeAttr);
         CHECK_CALLED(ReleaseTypeAttr);
         hr = IUnknown_QueryInterface(unknown, &IID_IEnumVARIANT, (void**)&enumvar);
-        ok(hr == S_OK, "Failed to query for IEnumVARIANT: 0x%08x.\n", hr);
+        ok(hr == S_OK, "Failed to query for IEnumVARIANT: 0x%08lx.\n", hr);
         ok((char*)unknown == (char*)enumvar, "unknown and enumvar are not the same (%p vs %p).\n", unknown, enumvar);
         IEnumVARIANT_Release(enumvar);
         IUnknown_Release(unknown);
         SET_EXPECT(GetTypeAttr);
         SET_EXPECT(ReleaseTypeAttr);
         hr = IScriptProcedureCollection_get__NewEnum(procs, &unknown);
-        ok(hr == S_OK, "IScriptProcedureCollection_get__NewEnum failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IScriptProcedureCollection_get__NewEnum failed: 0x%08lx.\n", hr);
         CHECK_CALLED(GetTypeAttr);
         CHECK_CALLED(ReleaseTypeAttr);
         hr = IUnknown_QueryInterface(unknown, &IID_IEnumVARIANT, (void**)&enumvar);
-        ok(hr == S_OK, "Failed to query for IEnumVARIANT: 0x%08x.\n", hr);
+        ok(hr == S_OK, "Failed to query for IEnumVARIANT: 0x%08lx.\n", hr);
         IUnknown_Release(unknown);
 
         fetched = 0xdeadbeef;
         hr = IEnumVARIANT_Next(enumvar, 0, NULL, NULL);
-        ok(hr == E_POINTER, "IEnumVARIANT_Next returned: 0x%08x.\n", hr);
+        ok(hr == E_POINTER, "IEnumVARIANT_Next returned: 0x%08lx.\n", hr);
         hr = IEnumVARIANT_Next(enumvar, 0, NULL, &fetched);
-        ok(hr == E_POINTER, "IEnumVARIANT_Next failed: 0x%08x.\n", hr);
-        ok(fetched == 0xdeadbeef, "got %u.\n", fetched);
+        ok(hr == E_POINTER, "IEnumVARIANT_Next failed: 0x%08lx.\n", hr);
+        ok(fetched == 0xdeadbeef, "got %lu.\n", fetched);
         hr = IEnumVARIANT_Next(enumvar, 0, &var, &fetched);
-        ok(hr == S_OK, "IEnumVARIANT_Next returned: 0x%08x.\n", hr);
-        ok(fetched == 0, "got %u.\n", fetched);
+        ok(hr == S_OK, "IEnumVARIANT_Next returned: 0x%08lx.\n", hr);
+        ok(fetched == 0, "got %lu.\n", fetched);
         hr = IEnumVARIANT_Next(enumvar, 0, &var, NULL);
-        ok(hr == S_OK, "IEnumVARIANT_Next returned: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IEnumVARIANT_Next returned: 0x%08lx.\n", hr);
         hr = IEnumVARIANT_Clone(enumvar, NULL);
-        ok(hr == E_POINTER, "IEnumVARIANT_Clone failed: 0x%08x.\n", hr);
+        ok(hr == E_POINTER, "IEnumVARIANT_Clone failed: 0x%08lx.\n", hr);
 
         for (i = 0; i < ARRAY_SIZE(custom_engine_funcs); i++)
         {
@@ -4243,7 +4243,7 @@ static void test_IScriptControl_get_Procedures(void)
             V_VT(&var) = VT_R4;
             V_R4(&var) = i + 1;
             hr = IScriptProcedureCollection_get_Item(procs, var, &proc);
-            ok(hr == S_OK, "get_Item for index %u failed: 0x%08x.\n", i, hr);
+            ok(hr == S_OK, "get_Item for index %u failed: 0x%08lx.\n", i, hr);
             CHECK_CALLED(GetFuncDesc);
             CHECK_CALLED(GetNames);
             CHECK_CALLED(ReleaseFuncDesc);
@@ -4252,7 +4252,7 @@ static void test_IScriptControl_get_Procedures(void)
             V_VT(&var) = VT_BSTR;
             V_BSTR(&var) = SysAllocString(custom_engine_funcs[i].name);
             hr = IScriptProcedureCollection_get_Item(procs, var, &proc2);
-            ok(hr == S_OK, "get_Item for %s failed: 0x%08x.\n", wine_dbgstr_w(custom_engine_funcs[i].name), hr);
+            ok(hr == S_OK, "get_Item for %s failed: 0x%08lx.\n", wine_dbgstr_w(custom_engine_funcs[i].name), hr);
             ok(proc == proc2, "proc and proc2 are not the same for %s and index %u.\n",
                 wine_dbgstr_w(custom_engine_funcs[i].name), i + 1);
             IScriptProcedure_Release(proc);
@@ -4263,7 +4263,7 @@ static void test_IScriptControl_get_Procedures(void)
             SET_EXPECT(GetNames);
             SET_EXPECT(ReleaseFuncDesc);
             hr = IScriptProcedureCollection_get_Item(procs, var, &proc);
-            ok(hr == S_OK, "get_Item for %s failed: 0x%08x.\n", wine_dbgstr_w(custom_engine_funcs[i].name), hr);
+            ok(hr == S_OK, "get_Item for %s failed: 0x%08lx.\n", wine_dbgstr_w(custom_engine_funcs[i].name), hr);
             VariantClear(&var);
             CHECK_CALLED(Bind);
             CHECK_CALLED(GetNames);
@@ -4274,14 +4274,14 @@ static void test_IScriptControl_get_Procedures(void)
             SET_EXPECT(GetNames);
             SET_EXPECT(ReleaseFuncDesc);
             hr = IEnumVARIANT_Next(enumvar, 1, &var, &fetched);
-            ok(hr == S_OK, "IEnumVARIANT_Next for index %u failed: 0x%08x.\n", i, hr);
-            ok(fetched == 1, "got %u.\n", fetched);
+            ok(hr == S_OK, "IEnumVARIANT_Next for index %u failed: 0x%08lx.\n", i, hr);
+            ok(fetched == 1, "got %lu.\n", fetched);
             ok(V_VT(&var) == VT_DISPATCH, "V_VT(var) = %d.\n", V_VT(&var));
             CHECK_CALLED(GetFuncDesc);
             CHECK_CALLED(GetNames);
             CHECK_CALLED(ReleaseFuncDesc);
             hr = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IScriptProcedure, (void**)&proc2);
-            ok(hr == S_OK, "Failed to query IScriptProcedure for index %u: 0x%08x.\n", i, hr);
+            ok(hr == S_OK, "Failed to query IScriptProcedure for index %u: 0x%08lx.\n", i, hr);
             VariantClear(&var);
 
             ok(proc == proc2, "proc and proc2 are not the same for %s and enum index %u.\n",
@@ -4290,16 +4290,16 @@ static void test_IScriptControl_get_Procedures(void)
 
             /* Verify the properties */
             hr = IScriptProcedure_get_Name(proc, &str);
-            ok(hr == S_OK, "get_Name for %s failed: 0x%08x.\n", wine_dbgstr_w(custom_engine_funcs[i].name), hr);
+            ok(hr == S_OK, "get_Name for %s failed: 0x%08lx.\n", wine_dbgstr_w(custom_engine_funcs[i].name), hr);
             ok(!lstrcmpW(str, custom_engine_funcs[i].name), "Name is not %s, got %s.\n",
                 wine_dbgstr_w(custom_engine_funcs[i].name), wine_dbgstr_w(str));
             SysFreeString(str);
             hr = IScriptProcedure_get_NumArgs(proc, &count);
-            ok(hr == S_OK, "get_NumArgs for %s failed: 0x%08x.\n", wine_dbgstr_w(custom_engine_funcs[i].name), hr);
+            ok(hr == S_OK, "get_NumArgs for %s failed: 0x%08lx.\n", wine_dbgstr_w(custom_engine_funcs[i].name), hr);
             ok(count == custom_engine_funcs[i].num_args + custom_engine_funcs[i].num_opt_args,
-                "NumArgs is not %d, got %d.\n", custom_engine_funcs[i].num_args + custom_engine_funcs[i].num_opt_args, count);
+                "NumArgs is not %d, got %ld.\n", custom_engine_funcs[i].num_args + custom_engine_funcs[i].num_opt_args, count);
             hr = IScriptProcedure_get_HasReturnValue(proc, &vbool);
-            ok(hr == S_OK, "get_HasReturnValue for %s failed: 0x%08x.\n", wine_dbgstr_w(custom_engine_funcs[i].name), hr);
+            ok(hr == S_OK, "get_HasReturnValue for %s failed: 0x%08lx.\n", wine_dbgstr_w(custom_engine_funcs[i].name), hr);
             ok(vbool == ((custom_engine_funcs[i].ret_type == VT_VOID) ? VARIANT_FALSE : VARIANT_TRUE),
                 "get_HasReturnValue for %s returned %x.\n", wine_dbgstr_w(custom_engine_funcs[i].name), vbool);
 
@@ -4307,22 +4307,22 @@ static void test_IScriptControl_get_Procedures(void)
         }
 
         hr = IEnumVARIANT_Next(enumvar, 1, &var, &fetched);
-        ok(hr == S_FALSE, "IEnumVARIANT_Next failed: 0x%08x.\n", hr);
-        ok(fetched == 0, "got %u.\n", fetched);
+        ok(hr == S_FALSE, "IEnumVARIANT_Next failed: 0x%08lx.\n", hr);
+        ok(fetched == 0, "got %lu.\n", fetched);
         hr = IEnumVARIANT_Skip(enumvar, 0);
-        ok(hr == S_OK, "IEnumVARIANT_Skip failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IEnumVARIANT_Skip failed: 0x%08lx.\n", hr);
         hr = IEnumVARIANT_Skip(enumvar, 1);
-        ok(hr == S_FALSE, "IEnumVARIANT_Skip failed: 0x%08x.\n", hr);
+        ok(hr == S_FALSE, "IEnumVARIANT_Skip failed: 0x%08lx.\n", hr);
         hr = IEnumVARIANT_Reset(enumvar);
-        ok(hr == S_OK, "IEnumVARIANT_Reset failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IEnumVARIANT_Reset failed: 0x%08lx.\n", hr);
         hr = IEnumVARIANT_Skip(enumvar, ARRAY_SIZE(custom_engine_funcs) - 1);
-        ok(hr == S_OK, "IEnumVARIANT_Skip failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IEnumVARIANT_Skip failed: 0x%08lx.\n", hr);
         hr = IEnumVARIANT_Clone(enumvar, &enumvar2);
-        ok(hr == S_OK, "IEnumVARIANT_Clone failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IEnumVARIANT_Clone failed: 0x%08lx.\n", hr);
         hr = IEnumVARIANT_Skip(enumvar2, 1);
-        ok(hr == S_OK, "IEnumVARIANT_Skip failed: 0x%08x.\n", hr);
+        ok(hr == S_OK, "IEnumVARIANT_Skip failed: 0x%08lx.\n", hr);
         hr = IEnumVARIANT_Skip(enumvar2, 1);
-        ok(hr == S_FALSE, "IEnumVARIANT_Skip failed: 0x%08x.\n", hr);
+        ok(hr == S_FALSE, "IEnumVARIANT_Skip failed: 0x%08lx.\n", hr);
 
         IEnumVARIANT_Release(enumvar2);
         IEnumVARIANT_Release(enumvar);
@@ -4345,7 +4345,7 @@ START_TEST(msscript)
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IUnknown, (void**)&unk);
     if (FAILED(hr)) {
-        win_skip("Could not create ScriptControl object: %08x\n", hr);
+        win_skip("Could not create ScriptControl object: %08lx\n", hr);
         return;
     }
     IUnknown_Release(unk);
