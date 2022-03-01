@@ -571,11 +571,6 @@ static NTSTATUS CDECL nulldrv_D3DKMTSetVidPnSourceOwner( const D3DKMT_SETVIDPNSO
     return STATUS_PROCEDURE_NOT_FOUND;
 }
 
-static struct opengl_funcs * CDECL nulldrv_wine_get_wgl_driver( PHYSDEV dev, UINT version )
-{
-    return (void *)-1;
-}
-
 const struct gdi_dc_funcs null_driver =
 {
     nulldrv_AbortDoc,                   /* pAbortDoc */
@@ -669,7 +664,6 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_UnrealizePalette,           /* pUnrealizePalette */
     nulldrv_D3DKMTCheckVidPnExclusiveOwnership, /* pD3DKMTCheckVidPnExclusiveOwnership */
     nulldrv_D3DKMTSetVidPnSourceOwner,  /* pD3DKMTSetVidPnSourceOwner */
-    nulldrv_wine_get_wgl_driver,        /* wine_get_wgl_driver */
 
     GDI_PRIORITY_NULL_DRV               /* priority */
 };
@@ -928,6 +922,11 @@ static const struct vulkan_funcs * CDECL nulldrv_wine_get_vulkan_driver( UINT ve
     return NULL;
 }
 
+static struct opengl_funcs * CDECL nulldrv_wine_get_wgl_driver( UINT version )
+{
+    return (void *)-1;
+}
+
 static void CDECL nulldrv_ThreadDetach( void )
 {
 }
@@ -1070,6 +1069,8 @@ static const struct user_driver_funcs lazy_load_driver =
     .pSystemParametersInfo = nulldrv_SystemParametersInfo,
     /* vulkan support */
     .pwine_get_vulkan_driver = loaderdrv_wine_get_vulkan_driver,
+    /* opengl support */
+    .pwine_get_wgl_driver = nulldrv_wine_get_wgl_driver,
     /* thread management */
     .pThreadDetach = nulldrv_ThreadDetach,
 };
@@ -1133,6 +1134,7 @@ void CDECL __wine_set_display_driver( struct user_driver_funcs *driver, UINT ver
     SET_USER_FUNC(WindowPosChanged);
     SET_USER_FUNC(SystemParametersInfo);
     SET_USER_FUNC(wine_get_vulkan_driver);
+    SET_USER_FUNC(wine_get_wgl_driver);
     SET_USER_FUNC(ThreadDetach);
 #undef SET_USER_FUNC
 
@@ -1374,21 +1376,4 @@ NTSTATUS WINAPI NtGdiDdDDICheckVidPnExclusiveOwnership( const D3DKMT_CHECKVIDPNE
         return STATUS_INVALID_PARAMETER;
 
     return get_display_driver()->pD3DKMTCheckVidPnExclusiveOwnership( desc );
-}
-
-/***********************************************************************
- *      __wine_get_wgl_driver  (win32u.@)
- */
-struct opengl_funcs * CDECL __wine_get_wgl_driver( HDC hdc, UINT version )
-{
-    struct opengl_funcs *ret = NULL;
-    DC * dc = get_dc_ptr( hdc );
-
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, wine_get_wgl_driver );
-        ret = physdev->funcs->wine_get_wgl_driver( physdev, version );
-        release_dc_ptr( dc );
-    }
-    return ret;
 }

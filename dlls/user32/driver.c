@@ -346,8 +346,10 @@ static struct user_driver_funcs lazy_load_driver =
     NULL,
     /* vulkan support */
     NULL,
+    /* opengl support */
+    NULL,
     /* thread management */
-    NULL
+    NULL,
 };
 
 void CDECL __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version )

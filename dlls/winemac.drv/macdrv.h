@@ -263,7 +263,7 @@ extern BOOL query_drag_operation(macdrv_query* query) DECLSPEC_HIDDEN;
 extern BOOL query_drag_exited(macdrv_query* query) DECLSPEC_HIDDEN;
 extern BOOL query_drag_drop(macdrv_query* query) DECLSPEC_HIDDEN;
 
-extern struct opengl_funcs * CDECL macdrv_wine_get_wgl_driver(PHYSDEV dev, UINT version) DECLSPEC_HIDDEN;
+extern struct opengl_funcs * CDECL macdrv_wine_get_wgl_driver(UINT version) DECLSPEC_HIDDEN;
 extern const struct vulkan_funcs * CDECL macdrv_wine_get_vulkan_driver(UINT version) DECLSPEC_HIDDEN;
 extern void sync_gl_view(struct macdrv_win_data* data, const RECT* old_whole_rect, const RECT* old_client_rect) DECLSPEC_HIDDEN;
 

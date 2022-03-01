@@ -159,14 +159,13 @@ struct gdi_dc_funcs
     BOOL     (CDECL *pUnrealizePalette)(HPALETTE);
     NTSTATUS (CDECL *pD3DKMTCheckVidPnExclusiveOwnership)(const D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP *);
     NTSTATUS (CDECL *pD3DKMTSetVidPnSourceOwner)(const D3DKMT_SETVIDPNSOURCEOWNER *);
-    struct opengl_funcs * (CDECL *wine_get_wgl_driver)(PHYSDEV,UINT);
 
     /* priority order for the driver on the stack */
     UINT       priority;
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 74
+#define WINE_GDI_DRIVER_VERSION 75
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */
@@ -321,6 +320,8 @@ struct user_driver_funcs
     BOOL    (CDECL *pSystemParametersInfo)(UINT,UINT,void*,UINT);
     /* vulkan support */
     const struct vulkan_funcs * (CDECL *pwine_get_vulkan_driver)(UINT);
+    /* opengl support */
+    struct opengl_funcs * (CDECL *pwine_get_wgl_driver)(UINT);
     /* thread management */
     void    (CDECL *pThreadDetach)(void);
 };

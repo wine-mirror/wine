@@ -603,15 +603,10 @@ static struct opengl_funcs opengl_funcs =
 };
 
 /**********************************************************************
- *	     dibdrv_wine_get_wgl_driver
+ *	     dibdrv_get_wgl_driver
  */
-static struct opengl_funcs * CDECL dibdrv_wine_get_wgl_driver( PHYSDEV dev, UINT version )
+struct opengl_funcs *dibdrv_get_wgl_driver(void)
 {
-    if (version != WINE_WGL_DRIVER_VERSION)
-    {
-        ERR( "version mismatch, opengl32 wants %u but dibdrv has %u\n", version, WINE_WGL_DRIVER_VERSION );
-        return NULL;
-    }
     if (!osmesa_funcs && !(osmesa_funcs = init_opengl_lib()))
     {
         static int warned;
@@ -715,7 +710,6 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pD3DKMTCheckVidPnExclusiveOwnership */
     NULL,                               /* pD3DKMTSetVidPnSourceOwner */
-    dibdrv_wine_get_wgl_driver,         /* wine_get_wgl_driver */
     GDI_PRIORITY_DIB_DRV                /* priority */
 };
 
@@ -1177,13 +1171,6 @@ static INT CDECL windrv_StretchDIBits( PHYSDEV dev, INT x_dst, INT y_dst, INT wi
     return ret;
 }
 
-static struct opengl_funcs * CDECL windrv_wine_get_wgl_driver( PHYSDEV dev, UINT version )
-{
-    dev = GET_NEXT_PHYSDEV( dev, wine_get_wgl_driver );
-    if (dev->funcs == &dib_driver) dev = GET_NEXT_PHYSDEV( dev, wine_get_wgl_driver );
-    return dev->funcs->wine_get_wgl_driver( dev, version );
-}
-
 static const struct gdi_dc_funcs window_driver =
 {
     NULL,                               /* pAbortDoc */
@@ -1277,6 +1264,5 @@ static const struct gdi_dc_funcs window_driver =
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pD3DKMTCheckVidPnExclusiveOwnership */
     NULL,                               /* pD3DKMTSetVidPnSourceOwner */
-    windrv_wine_get_wgl_driver,         /* wine_get_wgl_driver */
     GDI_PRIORITY_DIB_DRV + 10           /* priority */
 };

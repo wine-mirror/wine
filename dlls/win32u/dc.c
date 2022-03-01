@@ -36,6 +36,8 @@
 #include "winternl.h"
 #include "winerror.h"
 #include "ntgdi_private.h"
+#include "wine/wgl.h"
+#include "wine/wgl_driver.h"
 
 #include "wine/debug.h"
 
@@ -763,6 +765,7 @@ HDC WINAPI NtGdiOpenDCW( UNICODE_STRING *device, const DEVMODEW *devmode, UNICOD
     dc->attr->vis_rect.top    = 0;
     dc->attr->vis_rect.right  = NtGdiGetDeviceCaps( hdc, DESKTOPHORZRES );
     dc->attr->vis_rect.bottom = NtGdiGetDeviceCaps( hdc, DESKTOPVERTRES );
+    dc->is_display            = !!is_display;
 
     DC_InitDC( dc );
     release_dc_ptr( dc );
@@ -1363,4 +1366,34 @@ BOOL CDECL __wine_get_icm_profile( HDC hdc, BOOL allow_default, DWORD *size, WCH
     ret = physdev->funcs->pGetICMProfile( physdev, allow_default, size, filename );
     release_dc_ptr(dc);
     return ret;
+}
+
+/***********************************************************************
+ *      __wine_get_wgl_driver  (win32u.@)
+ */
+struct opengl_funcs * CDECL __wine_get_wgl_driver( HDC hdc, UINT version )
+{
+    BOOL is_display, is_memdc;
+    DC *dc;
+
+    if (version != WINE_WGL_DRIVER_VERSION)
+    {
+        ERR( "version mismatch, opengl32 wants %u but dibdrv has %u\n",
+             version, WINE_WGL_DRIVER_VERSION );
+        return NULL;
+    }
+
+    if (!(dc = get_dc_obj( hdc ))) return NULL;
+    if (dc->attr->disabled)
+    {
+        GDI_ReleaseObj( hdc );
+        return NULL;
+    }
+    is_display = dc->is_display;
+    is_memdc = get_gdi_object_type( hdc ) == NTGDI_OBJ_MEMDC;
+    GDI_ReleaseObj( hdc );
+
+    if (is_display) return user_driver->pwine_get_wgl_driver( version );
+    if (is_memdc) return dibdrv_get_wgl_driver();
+    return (void *)-1;
 }
