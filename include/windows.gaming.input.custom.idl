@@ -34,6 +34,7 @@ namespace Windows.Gaming.Input.Custom {
     typedef struct GameControllerVersionInfo GameControllerVersionInfo;
     interface IGameControllerInputSink;
     interface IGameControllerProvider;
+    interface IHidGameControllerInputSink;
     interface ICustomGameControllerFactory;
     interface IGameControllerFactoryManagerStatics;
     interface IGameControllerFactoryManagerStatics2;
@@ -92,6 +93,17 @@ namespace Windows.Gaming.Input.Custom {
         [propget] HRESULT HardwareVendorId([out, retval] UINT16 *value);
         [propget] HRESULT HardwareVersionInfo([out, retval] Windows.Gaming.Input.Custom.GameControllerVersionInfo *value);
         [propget] HRESULT IsConnected([out, retval] boolean *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        uuid(f754c322-182d-40e4-a126-fcee4ffa1e31)
+    ]
+    interface IHidGameControllerInputSink : IInspectable
+        requires Windows.Gaming.Input.Custom.IGameControllerInputSink
+    {
+        HRESULT OnInputReportReceived([in] UINT64 timestamp, [in] BYTE id, [in] UINT32 report_len,
+                                      [in, size_is(report_len)] BYTE *report_buf);
     }
 
     [
