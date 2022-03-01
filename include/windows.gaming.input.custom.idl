@@ -35,10 +35,12 @@ namespace Windows.Gaming.Input.Custom {
     interface IGameControllerInputSink;
     interface IGameControllerProvider;
     interface IHidGameControllerInputSink;
+    interface IHidGameControllerProvider;
     interface ICustomGameControllerFactory;
     interface IGameControllerFactoryManagerStatics;
     interface IGameControllerFactoryManagerStatics2;
     runtimeclass GameControllerFactoryManager;
+    runtimeclass HidGameControllerProvider;
 
     [contract(Windows.Foundation.UniversalApiContract, 3.0)]
     enum XusbDeviceSubtype
@@ -107,6 +109,24 @@ namespace Windows.Gaming.Input.Custom {
     }
 
     [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.Gaming.Input.Custom.HidGameControllerProvider),
+        uuid(95ce3af4-abf0-4b68-a081-3b7de73ff0e7)
+    ]
+    interface IHidGameControllerProvider : IInspectable
+        requires Windows.Gaming.Input.Custom.IGameControllerProvider
+    {
+        [propget] HRESULT UsageId([out, retval] UINT16 *value);
+        [propget] HRESULT UsagePage([out, retval] UINT16 *value);
+        HRESULT GetFeatureReport([in] BYTE id, [in] UINT32 report_len,
+                                 [out, size_is(report_len)] BYTE *report_buf);
+        HRESULT SendFeatureReport([in] BYTE id, [in] UINT32 report_len,
+                                  [in, size_is(report_len)] BYTE *report_buf);
+        HRESULT SendOutputReport([in] BYTE id, [in] UINT32 report_len,
+                                 [in, size_is(report_len)] BYTE *report_buf);
+    }
+
+    [
         contract(Windows.Foundation.UniversalApiContract, 3.0),
         uuid(69a0ae5e-758e-4cbe-ace6-62155fe9126f)
     ]
@@ -156,5 +176,16 @@ namespace Windows.Gaming.Input.Custom {
     ]
     runtimeclass GameControllerFactoryManager
     {
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass HidGameControllerProvider
+    {
+        [default] interface Windows.Gaming.Input.Custom.IHidGameControllerProvider;
+        interface Windows.Gaming.Input.Custom.IGameControllerProvider;
     }
 }
