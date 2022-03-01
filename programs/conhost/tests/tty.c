@@ -153,6 +153,7 @@ enum req_type
     REQ_READ_CONSOLE,
     REQ_READ_CONSOLE_A,
     REQ_READ_CONSOLE_FILE,
+    REQ_READ_CONSOLE_CONTROL,
     REQ_SCROLL,
     REQ_SET_ACTIVE,
     REQ_SET_CURSOR,
@@ -201,6 +202,12 @@ struct pseudoconsole_req
             DWORD count;
             COORD coord;
         } fill;
+        struct
+        {
+            size_t size;
+            DWORD mask;
+            WCHAR initial[1];
+        } control;
     } u;
 };
 
@@ -415,6 +422,21 @@ static void child_read_console_file(HANDLE pipe, size_t size)
     ok(ret, "WriteFile failed: %lu\n", GetLastError());
 }
 
+static void child_read_console_control(HANDLE pipe, size_t size, DWORD control, const WCHAR* recall)
+{
+    char tmp[4096];
+    struct pseudoconsole_req *req = (void *)tmp;
+    DWORD count;
+    BOOL ret;
+
+    req->type = REQ_READ_CONSOLE_CONTROL;
+    req->u.control.size = size;
+    req->u.control.mask = control;
+    wcscpy(req->u.control.initial, recall);
+    ret = WriteFile(pipe, req, sizeof(*req) + wcslen(recall) * sizeof(WCHAR), &count, NULL);
+    ok(ret, "WriteFile failed: %lu\n", GetLastError());
+}
+
 #define child_expect_read_result(a,b) child_expect_read_result_(__LINE__,a,b)
 static void child_expect_read_result_(unsigned int line, HANDLE pipe, const WCHAR *expect)
 {
@@ -429,6 +451,25 @@ static void child_expect_read_result_(unsigned int line, HANDLE pipe, const WCHA
                        count, exlen * sizeof(WCHAR));
     buf[count / sizeof(WCHAR)] = 0;
     ok_(__FILE__,line)(!memcmp(expect, buf, count), "unexpected data %s\n", wine_dbgstr_w(buf));
+}
+
+#define child_expect_read_control_result(a,b,c) child_expect_read_control_result_(__LINE__,a,b,c)
+static void child_expect_read_control_result_(unsigned int line, HANDLE pipe, const WCHAR *expect, DWORD state)
+{
+    size_t exlen = wcslen(expect);
+    WCHAR buf[4096];
+    WCHAR *ptr = (void *)((char *)buf + sizeof(DWORD));
+    DWORD count;
+    BOOL ret;
+
+    ret = ReadFile(pipe, buf, sizeof(buf), &count, NULL);
+    ok_(__FILE__,line)(ret, "ReadFile failed: %lu\n", GetLastError());
+    ok_(__FILE__,line)(count == sizeof(DWORD) + exlen * sizeof(WCHAR), "got %lu, expected %Iu\n",
+                       count, sizeof(DWORD) + exlen * sizeof(WCHAR));
+    buf[count / sizeof(WCHAR)] = 0;
+    todo_wine_if(*(DWORD *)buf != state && *(DWORD *)buf == 0)
+    ok_(__FILE__,line)(*(DWORD *)buf == state, "keyboard state: got %lx, expected %lx\n", *(DWORD *)buf, state);
+    ok_(__FILE__,line)(!memcmp(expect, ptr, count - sizeof(DWORD)), "unexpected data %s %s\n", wine_dbgstr_w(ptr), wine_dbgstr_w(expect));
 }
 
 #define child_expect_read_result_a(a,b) child_expect_read_result_a_(__LINE__,a,b)
@@ -552,19 +593,25 @@ static void expect_char_key_(unsigned int line, WCHAR ch)
     expect_key_pressed_(line, ch, ch, vk, ctrl);
 }
 
-#define test_cursor_pos(a,b) _test_cursor_pos(__LINE__,a,b)
-static void _test_cursor_pos(unsigned line, int expect_x, int expect_y)
+static void fetch_child_sb_info(CONSOLE_SCREEN_BUFFER_INFO *info)
 {
     struct pseudoconsole_req req = { REQ_GET_SB_INFO };
-    CONSOLE_SCREEN_BUFFER_INFO info;
     DWORD read;
     BOOL ret;
 
     ret = WriteFile(child_pipe, &req, sizeof(req), &read, NULL);
     ok(ret, "WriteFile failed: %lu\n", GetLastError());
 
-    ret = ReadFile(child_pipe, &info, sizeof(info), &read, NULL);
+    ret = ReadFile(child_pipe, info, sizeof(*info), &read, NULL);
     ok(ret, "ReadFile failed: %lu\n", GetLastError());
+}
+
+#define test_cursor_pos(a,b) _test_cursor_pos(__LINE__,a,b)
+static void _test_cursor_pos(unsigned line, int expect_x, int expect_y)
+{
+    CONSOLE_SCREEN_BUFFER_INFO info;
+
+    fetch_child_sb_info(&info);
 
     ok_(__FILE__,line)(info.dwCursorPosition.X == expect_x, "dwCursorPosition.X = %u, expected %u\n",
                        info.dwCursorPosition.X, expect_x);
@@ -1276,6 +1323,108 @@ static void test_read_console(void)
     expect_empty_output();
 }
 
+static void test_read_console_control(void)
+{
+    CONSOLE_SCREEN_BUFFER_INFO info1, info2;
+    char ctrl;
+    char buf[16];
+    WCHAR bufw[16];
+
+    child_set_input_mode(child_pipe, ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT |
+                         ENABLE_ECHO_INPUT | ENABLE_MOUSE_INPUT | ENABLE_INSERT_MODE |
+                         ENABLE_QUICK_EDIT_MODE | ENABLE_EXTENDED_FLAGS | ENABLE_AUTO_POSITION);
+
+    /* test simple behavior */
+    for (ctrl = 0; ctrl < ' '; ctrl++)
+    {
+        /* don't play with fire */
+        if (ctrl == 0 || ctrl == 3 || ctrl == '\n' || ctrl == 27) continue;
+
+        /* Simulate initial characters
+         * Note: as ReadConsole with CONTROL structure will need to back up the cursor
+         * up to the length of the initial characters, all the following tests ensure that
+         * this backup doesn't imply backing up to the previous line.
+         * This is the "regular" behavior when using completion.
+         */
+        child_string_request(REQ_WRITE_CONSOLE, L"\rabc");
+        skip_sequence("\x1b[25l");  /* broken hide cursor */
+        skip_sequence("\x1b[?25l"); /* hide cursor */
+        skip_sequence("\x1b[H");
+        skip_sequence("\r");
+        expect_output_sequence("abc");
+        skip_sequence("\x1b[?25h"); /* show cursor */
+
+        fetch_child_sb_info(&info1);
+        child_read_console_control(child_pipe, 100, 1ul << ctrl, L"abc");
+        strcpy(buf, "def."); buf[3] = ctrl;
+        write_console_pipe(buf);
+        wcscpy(bufw, L"abcdef."); bufw[6] = (WCHAR)ctrl;
+        child_expect_read_control_result(child_pipe, bufw,
+                                         (ctrl == '\t' || ctrl == '\r') ? 0
+                                         : ((ctrl == 30 || ctrl == 31) ? (LEFT_CTRL_PRESSED | SHIFT_PRESSED)
+                                            : LEFT_CTRL_PRESSED));
+        skip_sequence("\x1b[?25l"); /* hide cursor */
+        expect_output_sequence("def");
+        skip_sequence("\x1b[?25h"); /* show cursor */
+        fetch_child_sb_info(&info2);
+        ok(info1.dwCursorPosition.X + 3 == info2.dwCursorPosition.X,
+           "Bad x-position: expected %u => %u but got => %u instead\n",
+           info1.dwCursorPosition.X, info1.dwCursorPosition.X + 3, info2.dwCursorPosition.X);
+        ok(info1.dwCursorPosition.Y == info2.dwCursorPosition.Y, "Cursor shouldn't have changed line\n");
+    }
+
+    /* test two different control characters in input */
+    fetch_child_sb_info(&info1);
+    child_read_console_control(child_pipe, 100, 1ul << '\x01', L"abc");
+    write_console_pipe("d\x02""ef\x01");
+    child_expect_read_control_result(child_pipe, L"abcd\x02""ef\x01", LEFT_CTRL_PRESSED);
+    skip_sequence("\x1b[?25l"); /* hide cursor */
+    expect_output_sequence("d^Bef");
+    skip_sequence("\x1b[?25h"); /* show cursor */
+    fetch_child_sb_info(&info2);
+    ok(info1.dwCursorPosition.X + 5 == info2.dwCursorPosition.X,
+       "Bad x-position: expected %u => %u but got => %u instead\n",
+       info1.dwCursorPosition.X, info1.dwCursorPosition.X + 5, info2.dwCursorPosition.X);
+    ok(info1.dwCursorPosition.Y == info2.dwCursorPosition.Y, "Cursor shouldn't have changed line\n");
+
+    /* test that ctrl character not in mask is handled as without ctrl mask */
+    child_read_console_control(child_pipe, 100, 1ul << '\x01', L"abc");
+    write_console_pipe("d\ref\x01");
+    child_expect_read_control_result(child_pipe, L"abcd\r\n", 0);
+    skip_sequence("\x1b[?25l"); /* hide cursor */
+    expect_output_sequence("d\r\n");
+    skip_sequence("\x1b[?25h"); /* show cursor */
+    expect_empty_output();
+    /* see note above... ditto */
+    child_string_request(REQ_WRITE_CONSOLE, L"abc");
+    skip_sequence("\x1b[?25l"); /* hide cursor */
+    expect_output_sequence("abc");
+    skip_sequence("\x1b[?25h"); /* show cursor */
+
+    child_read_console_control(child_pipe, 100, 1ul << '\x01', L"abc");
+    child_expect_read_control_result(child_pipe, L"abcef\x01", LEFT_CTRL_PRESSED);
+    skip_sequence("\x1b[?25l"); /* hide cursor */
+    expect_output_sequence("ef");
+    skip_sequence("\x1b[?25h"); /* show cursor */
+
+    /* test when output buffer becomes full before control event */
+    child_read_console_control(child_pipe, 4, 1ul << '\x01', L"abc");
+    write_console_pipe("def\x01");
+    child_expect_read_control_result(child_pipe, L"abcd", LEFT_CTRL_PRESSED);
+    skip_sequence("\x1b[?25l"); /* hide cursor */
+    expect_output_sequence("def");
+    skip_sequence("\x1b[?25h"); /* show cursor */
+    expect_empty_output();
+    child_read_console_control(child_pipe, 20, 1ul << '\x01', L"abc");
+    child_expect_read_control_result(child_pipe, L"ef\x01", 0);
+
+    /* TODO: add tests:
+     * - when initial characters go back to previous line
+     * - edition inside initial characters can occur
+     */
+    expect_empty_output();
+}
+
 static void test_tty_input(void)
 {
     INPUT_RECORD ir;
@@ -1481,6 +1630,27 @@ static void child_process(HANDLE pipe)
             ok(ret, "WriteFile failed: %lu\n", GetLastError());
             break;
 
+        case REQ_READ_CONSOLE_CONTROL:
+            {
+                CONSOLE_READCONSOLE_CONTROL crc;
+                WCHAR result[1024];
+                WCHAR *ptr = (void *)((char *)result + sizeof(DWORD));
+
+                count = req->u.control.size;
+                memset(result, 0xcc, sizeof(result));
+                crc.nLength = sizeof(crc);
+                crc.dwCtrlWakeupMask = req->u.control.mask;
+                crc.nInitialChars = wcslen(req->u.control.initial);
+                crc.dwConsoleKeyState = 0xa5;
+                memcpy(ptr, req->u.control.initial, crc.nInitialChars * sizeof(WCHAR));
+                ret = ReadConsoleW(input, ptr, count, &count, &crc);
+                ok(ret, "ReadConsoleW failed: %lu\n", GetLastError());
+                *(DWORD *)result = crc.dwConsoleKeyState;
+                ret = WriteFile(pipe, result, sizeof(DWORD) + count * sizeof(WCHAR), NULL, NULL);
+                ok(ret, "WriteFile failed: %lu\n", GetLastError());
+            }
+            break;
+
         case REQ_SCROLL:
             ret = ScrollConsoleScreenBufferW(output, &req->u.scroll.rect, NULL, req->u.scroll.dst, &req->u.scroll.fill);
             ok(ret, "ScrollConsoleScreenBuffer failed: %lu\n", GetLastError());
@@ -1641,6 +1811,7 @@ static void test_pseudoconsole(void)
     if (!broken_version)
     {
         test_tty_output();
+        test_read_console_control();
         test_read_console();
         test_tty_input();
     }
