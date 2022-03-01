@@ -36,6 +36,7 @@ namespace Windows.Gaming.Input.Custom {
     interface IGameControllerProvider;
     interface IHidGameControllerInputSink;
     interface IHidGameControllerProvider;
+    interface IXusbGameControllerInputSink;
     interface ICustomGameControllerFactory;
     interface IGameControllerFactoryManagerStatics;
     interface IGameControllerFactoryManagerStatics2;
@@ -124,6 +125,17 @@ namespace Windows.Gaming.Input.Custom {
                                   [in, size_is(report_len)] BYTE *report_buf);
         HRESULT SendOutputReport([in] BYTE id, [in] UINT32 report_len,
                                  [in, size_is(report_len)] BYTE *report_buf);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        uuid(b2ac1d95-6ecb-42b3-8aab-025401ca4712)
+    ]
+    interface IXusbGameControllerInputSink : IInspectable
+        requires Windows.Gaming.Input.Custom.IGameControllerInputSink
+    {
+        HRESULT OnInputReceived([in] UINT64 timestamp, [in] BYTE id, [in] UINT32 report_len,
+                                [in, size_is(report_len)] BYTE *report_buf);
     }
 
     [
