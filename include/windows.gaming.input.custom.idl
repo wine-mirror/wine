@@ -32,6 +32,7 @@ namespace Windows.Gaming.Input.Custom {
     typedef enum XusbDeviceSubtype XusbDeviceSubtype;
     typedef enum XusbDeviceType XusbDeviceType;
     typedef struct GameControllerVersionInfo GameControllerVersionInfo;
+    interface IGameControllerInputSink;
     interface IGameControllerProvider;
     interface ICustomGameControllerFactory;
     interface IGameControllerFactoryManagerStatics;
@@ -69,6 +70,16 @@ namespace Windows.Gaming.Input.Custom {
         UINT16 Build;
         UINT16 Revision;
     };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        uuid(1ff6f922-c640-4c78-a820-9a715c558bcb)
+    ]
+    interface IGameControllerInputSink : IInspectable
+    {
+        HRESULT OnInputResumed([in] UINT64 timestamp);
+        HRESULT OnInputSuspended([in] UINT64 timestamp);
+    }
 
     [
         contract(Windows.Foundation.UniversalApiContract, 3.0),
