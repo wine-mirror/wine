@@ -36,7 +36,7 @@ static void test_HTMLLoadOptions(void)
 
     hres = CoCreateInstance(&CLSID_HTMLLoadOptions, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IHtmlLoadOptions, (void**)&loadopts);
-    ok(hres == S_OK, "creating HTMLLoadOptions failed: %08x\n", hres);
+    ok(hres == S_OK, "creating HTMLLoadOptions failed: %08lx\n", hres);
     if(FAILED(hres))
         return;
 
@@ -44,64 +44,64 @@ static void test_HTMLLoadOptions(void)
         size = 0xdeadbeef;
         memset(buf, 0xdd, sizeof(buf));
         hres = IHtmlLoadOptions_QueryOption(loadopts, i, NULL, &size);
-        ok(hres == S_OK, "QueryOption failed: %08x\n", hres);
-        ok(size == 0, "size = %d\n", size);
+        ok(hres == S_OK, "QueryOption failed: %08lx\n", hres);
+        ok(size == 0, "size = %ld\n", size);
         ok(buf[0] == 0xdd, "buf changed\n");
     }
 
     size = 0xdeadbeef;
     hres = IHtmlLoadOptions_QueryOption(loadopts, HTMLLOADOPTION_CODEPAGE, NULL, &size);
-    ok(hres == S_OK, "QueryOption failed: %08x\n", hres);
-    ok(size == 0, "size = %d\n", size);
+    ok(hres == S_OK, "QueryOption failed: %08lx\n", hres);
+    ok(size == 0, "size = %ld\n", size);
 
     hres = IHtmlLoadOptions_SetOption(loadopts, HTMLLOADOPTION_CODEPAGE, &data, sizeof(data));
-    ok(hres == S_OK, "SetOption failed: %08x\n", hres);
+    ok(hres == S_OK, "SetOption failed: %08lx\n", hres);
 
     size = sizeof(data);
     memset(buf, 0xdd, sizeof(buf));
     hres = IHtmlLoadOptions_QueryOption(loadopts, HTMLLOADOPTION_CODEPAGE, buf, &size);
-    ok(hres == S_OK, "QueryOption failed: %08x\n", hres);
-    ok(size == sizeof(data), "size = %d\n", size);
+    ok(hres == S_OK, "QueryOption failed: %08lx\n", hres);
+    ok(size == sizeof(data), "size = %ld\n", size);
     ok(*(DWORD*)buf == data, "unexpected buf\n");
 
     size = sizeof(data)-1;
     memset(buf, 0xdd, sizeof(buf));
     hres = IHtmlLoadOptions_QueryOption(loadopts, HTMLLOADOPTION_CODEPAGE, buf, &size);
-    ok(hres == E_FAIL, "QueryOption failed: %08x\n", hres);
-    ok(size == sizeof(data) || !size, "size = %d\n", size);
+    ok(hres == E_FAIL, "QueryOption failed: %08lx\n", hres);
+    ok(size == sizeof(data) || !size, "size = %ld\n", size);
     ok(buf[0] == 0xdd, "buf changed\n");
 
     data = 100;
     hres = IHtmlLoadOptions_SetOption(loadopts, HTMLLOADOPTION_CODEPAGE, &data, 0);
-    ok(hres == S_OK, "SetOption failed: %08x\n", hres);
+    ok(hres == S_OK, "SetOption failed: %08lx\n", hres);
 
     size = 0xdeadbeef; 
     memset(buf, 0xdd, sizeof(buf));
     hres = IHtmlLoadOptions_QueryOption(loadopts, HTMLLOADOPTION_CODEPAGE, buf, &size);
-    ok(hres == S_OK, "QueryOption failed: %08x\n", hres);
-    ok(size == 0, "size = %d\n", size);
+    ok(hres == S_OK, "QueryOption failed: %08lx\n", hres);
+    ok(size == 0, "size = %ld\n", size);
     ok(buf[0] == 0xdd, "buf changed\n");
 
     hres = IHtmlLoadOptions_SetOption(loadopts, HTMLLOADOPTION_CODEPAGE, NULL, 0);
-    ok(hres == S_OK, "SetOption failed: %08x\n", hres);
+    ok(hres == S_OK, "SetOption failed: %08lx\n", hres);
 
     hres = IHtmlLoadOptions_SetOption(loadopts, 1000, &data, sizeof(data));
-    ok(hres == S_OK, "SetOption failed: %08x\n", hres);
+    ok(hres == S_OK, "SetOption failed: %08lx\n", hres);
 
     size = sizeof(data);
     memset(buf, 0xdd, sizeof(buf));
     hres = IHtmlLoadOptions_QueryOption(loadopts, 1000, buf, &size);
-    ok(hres == S_OK, "QueryOption failed: %08x\n", hres);
-    ok(size == sizeof(data), "size = %d\n", size);
+    ok(hres == S_OK, "QueryOption failed: %08lx\n", hres);
+    ok(size == sizeof(data), "size = %ld\n", size);
     ok(*(DWORD*)buf == data, "unexpected buf\n");
 
     hres = IHtmlLoadOptions_SetOption(loadopts, 1000, buf, sizeof(buf));
-    ok(hres == S_OK, "SetOption failed: %08x\n", hres);
+    ok(hres == S_OK, "SetOption failed: %08lx\n", hres);
 
     size = 0xdeadbeef;
     hres = IHtmlLoadOptions_QueryOption(loadopts, 1000, buf, &size);
-    ok(hres == S_OK, "QueryOption failed: %08x\n", hres);
-    ok(size == sizeof(buf), "size = %d\n", size);
+    ok(hres == S_OK, "QueryOption failed: %08lx\n", hres);
+    ok(size == sizeof(buf), "size = %ld\n", size);
 
     IHtmlLoadOptions_Release(loadopts);
 }

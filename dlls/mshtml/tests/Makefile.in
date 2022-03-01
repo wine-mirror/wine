@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = mshtml.dll
 IMPORTS   = ole32 oleaut32 wininet user32 urlmon gdi32 advapi32
 C_SRCS = \
