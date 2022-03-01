@@ -44,14 +44,14 @@ static void test_DMOUnregister(void)
     HRESULT hr;
 
     hr = DMOUnregister(&GUID_unknowndmo, &GUID_unknowncategory);
-    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(hr == S_FALSE, "got 0x%08lx\n", hr);
 
     hr = DMOUnregister(&GUID_unknowndmo, &GUID_NULL);
-    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(hr == S_FALSE, "got 0x%08lx\n", hr);
 
     /* can't register for all categories */
     hr = DMORegister(L"testdmo", &GUID_unknowndmo, &GUID_NULL, 0, 0, NULL, 0, NULL);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(hr == E_INVALIDARG, "got 0x%08lx\n", hr);
 
     hr = DMORegister(L"testdmo", &GUID_unknowndmo, &GUID_unknowncategory, 0, 0, NULL, 0, NULL);
     if (hr != S_OK) {
@@ -60,10 +60,10 @@ static void test_DMOUnregister(void)
     }
 
     hr = DMOUnregister(&GUID_unknowndmo, &GUID_NULL);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = DMOUnregister(&GUID_unknowndmo, &GUID_NULL);
-    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(hr == S_FALSE, "got 0x%08lx\n", hr);
 
     /* clean up category since Windows doesn't */
     sprintf(buffer, "DirectShow\\MediaObjects\\Categories\\%s", guid_to_string(&GUID_unknowncategory));
@@ -76,12 +76,12 @@ static void test_DMOGetName(void)
     HRESULT hr;
 
     hr = DMOGetName(&GUID_unknowndmo, NULL);
-    ok(hr == E_FAIL, "got 0x%08x\n", hr);
+    ok(hr == E_FAIL, "got 0x%08lx\n", hr);
 
     /* no such DMO */
     name[0] = 'a';
     hr = DMOGetName(&GUID_wmp1, name);
-    ok(hr == E_FAIL, "got 0x%08x\n", hr);
+    ok(hr == E_FAIL, "got 0x%08lx\n", hr);
     ok(name[0] == 'a', "got %x\n", name[0]);
 }
 
@@ -97,24 +97,24 @@ static void test_DMOEnum(void)
     DWORD count;
 
     hr = DMOEnum(&GUID_unknowncategory, 0, 0, NULL, 0, NULL, &enum_dmo);
-    ok(hr == S_OK, "DMOEnum() failed with %#x\n", hr);
+    ok(hr == S_OK, "DMOEnum() failed with %#lx\n", hr);
 
     hr = IEnumDMO_Next(enum_dmo, 1, &clsid, &name, NULL);
-    ok(hr == S_FALSE, "expected S_FALSE, got %#x\n", hr);
+    ok(hr == S_FALSE, "expected S_FALSE, got %#lx\n", hr);
 
     hr = IEnumDMO_Next(enum_dmo, 2, &clsid, &name, NULL);
-    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#lx\n", hr);
 
     hr = IEnumDMO_Next(enum_dmo, 2, &clsid, &name, &count);
-    ok(hr == S_FALSE, "expected S_FALSE, got %#x\n", hr);
-    ok(count == 0, "expected 0, got %d\n", count);
+    ok(hr == S_FALSE, "expected S_FALSE, got %#lx\n", hr);
+    ok(count == 0, "expected 0, got %ld\n", count);
 
     hr = IEnumDMO_Next(enum_dmo, 2, NULL, &name, &count);
-    ok(hr == E_POINTER, "expected S_FALSE, got %#x\n", hr);
+    ok(hr == E_POINTER, "expected S_FALSE, got %#lx\n", hr);
 
     hr = IEnumDMO_Next(enum_dmo, 2, &clsid, NULL, &count);
-    ok(hr == S_FALSE, "expected S_FALSE, got %#x\n", hr);
-    ok(count == 0, "expected 0, got %d\n", count);
+    ok(hr == S_FALSE, "expected S_FALSE, got %#lx\n", hr);
+    ok(count == 0, "expected 0, got %ld\n", count);
 
     IEnumDMO_Release(enum_dmo);
 
@@ -123,41 +123,41 @@ static void test_DMOEnum(void)
         return;
 
     hr = DMOEnum(&GUID_unknowncategory, 0, 0, NULL, 0, NULL, &enum_dmo);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IEnumDMO_Next(enum_dmo, 1, &clsid, &name, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(IsEqualGUID(&clsid, &GUID_unknowndmo), "Got clsid %s.\n", debugstr_guid(&clsid));
     ok(!wcscmp(name, L"testdmo"), "Got name %s.\n", debugstr_w(name));
 
     hr = IEnumDMO_Next(enum_dmo, 1, &clsid, &name, NULL);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     IEnumDMO_Release(enum_dmo);
 
     hr = DMOEnum(&GUID_unknowncategory, 0, 1, &input_type, 0, NULL, &enum_dmo);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IEnumDMO_Next(enum_dmo, 1, &clsid, &name, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(IsEqualGUID(&clsid, &GUID_unknowndmo), "Got clsid %s.\n", debugstr_guid(&clsid));
     ok(!wcscmp(name, L"testdmo"), "Got name %s.\n", debugstr_w(name));
 
     hr = IEnumDMO_Next(enum_dmo, 1, &clsid, &name, NULL);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     IEnumDMO_Release(enum_dmo);
 
     hr = DMOEnum(&GUID_unknowncategory, 0, 1, &wrong_type, 0, NULL, &enum_dmo);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IEnumDMO_Next(enum_dmo, 1, &clsid, &name, NULL);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     IEnumDMO_Release(enum_dmo);
 
     hr = DMOUnregister(&GUID_unknowndmo, &GUID_unknowncategory);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 }
 
 static void test_DMOGetTypes(void)
@@ -172,7 +172,7 @@ static void test_DMOGetTypes(void)
     HRESULT hr;
 
     hr = DMOGetTypes(&GUID_unknowndmo, 0, &input_count, types, 0, &output_count, NULL);
-    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
 
     hr = DMORegister(L"testdmo", &GUID_unknowndmo, &GUID_unknowncategory, 0,
             ARRAY_SIZE(input_types), input_types, 0, NULL);
@@ -180,33 +180,33 @@ static void test_DMOGetTypes(void)
         return;
 
     hr = DMOGetTypes(&GUID_unknowndmo, 0, &input_count, types, 0, &output_count, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(!input_count, "Got input count %u.\n", input_count);
-    ok(!output_count, "Got output count %u.\n", output_count);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(!input_count, "Got input count %lu.\n", input_count);
+    ok(!output_count, "Got output count %lu.\n", output_count);
 
     memset(types, 0, sizeof(types));
     hr = DMOGetTypes(&GUID_unknowndmo, 1, &input_count, types, 0, &output_count, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(input_count == 1, "Got input count %u.\n", input_count);
-    ok(!output_count, "Got output count %u.\n", output_count);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(input_count == 1, "Got input count %lu.\n", input_count);
+    ok(!output_count, "Got output count %lu.\n", output_count);
     todo_wine ok(!memcmp(types, input_types, sizeof(DMO_PARTIAL_MEDIATYPE)), "Types didn't match.\n");
 
     memset(types, 0, sizeof(types));
     hr = DMOGetTypes(&GUID_unknowndmo, 2, &input_count, types, 0, &output_count, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(input_count == 2, "Got input count %u.\n", input_count);
-    ok(!output_count, "Got output count %u.\n", output_count);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(input_count == 2, "Got input count %lu.\n", input_count);
+    ok(!output_count, "Got output count %lu.\n", output_count);
     ok(!memcmp(types, input_types, 2 * sizeof(DMO_PARTIAL_MEDIATYPE)), "Types didn't match.\n");
 
     memset(types, 0, sizeof(types));
     hr = DMOGetTypes(&GUID_unknowndmo, 2, &input_count, types, 0, &output_count, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(input_count == 2, "Got input count %u.\n", input_count);
-    ok(!output_count, "Got output count %u.\n", output_count);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(input_count == 2, "Got input count %lu.\n", input_count);
+    ok(!output_count, "Got output count %lu.\n", output_count);
     ok(!memcmp(types, input_types, 2 * sizeof(DMO_PARTIAL_MEDIATYPE)), "Types didn't match.\n");
 
     hr = DMOUnregister(&GUID_unknowndmo, &GUID_unknowncategory);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 }
 
 START_TEST(msdmo)
