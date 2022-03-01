@@ -40,6 +40,7 @@ namespace Windows {
             interface ISpeechContinuousRecognitionCompletedEventArgs;
             interface ISpeechContinuousRecognitionResultGeneratedEventArgs;
             interface ISpeechContinuousRecognitionSession;
+            interface ISpeechRecognitionCompilationResult;
             interface ISpeechRecognitionConstraint;
             interface ISpeechRecognitionHypothesis;
             interface ISpeechRecognitionHypothesisGeneratedEventArgs;
@@ -51,6 +52,7 @@ namespace Windows {
             runtimeclass SpeechContinuousRecognitionCompletedEventArgs;
             runtimeclass SpeechContinuousRecognitionResultGeneratedEventArgs;
             runtimeclass SpeechContinuousRecognitionSession;
+            runtimeclass SpeechRecognitionCompilationResult;
             runtimeclass SpeechRecognitionHypothesis;
             runtimeclass SpeechRecognitionHypothesisGeneratedEventArgs;
             runtimeclass SpeechRecognitionResult;
@@ -175,6 +177,16 @@ namespace Windows {
                     [in] Windows.Foundation.TypedEventHandler<Windows.Media.SpeechRecognition.SpeechContinuousRecognitionSession*, Windows.Media.SpeechRecognition.SpeechContinuousRecognitionResultGeneratedEventArgs*> *value,
                     [out, retval] EventRegistrationToken *token);
                 [eventremove] HRESULT ResultGenerated([in] EventRegistrationToken token);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognitionCompilationResult),
+                uuid(407e6c5d-6ac7-4da4-9cc1-2fce32cf7489)
+            ]
+            interface ISpeechRecognitionCompilationResult : IInspectable
+            {
+                [propget] HRESULT Status([out, retval] Windows.Media.SpeechRecognition.SpeechRecognitionResultStatus *value);
             }
 
             [
@@ -310,6 +322,15 @@ namespace Windows {
             runtimeclass SpeechContinuousRecognitionSession
             {
                 [default] interface Windows.Media.SpeechRecognition.ISpeechContinuousRecognitionSession;
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile)
+            ]
+            runtimeclass SpeechRecognitionCompilationResult
+            {
+                [default] interface Windows.Media.SpeechRecognition.ISpeechRecognitionCompilationResult;
             }
 
             [
