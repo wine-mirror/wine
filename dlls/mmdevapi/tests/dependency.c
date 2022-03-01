@@ -42,25 +42,25 @@ START_TEST(dependency)
     hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL, CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&mme);
     if (FAILED(hr))
     {
-        skip("mmdevapi not available: 0x%08x\n", hr);
+        skip("mmdevapi not available: 0x%08lx\n", hr);
         goto cleanup;
     }
 
     hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(mme, eRender, eMultimedia, &dev);
-    ok(hr == S_OK || hr == E_NOTFOUND, "GetDefaultAudioEndpoint failed: 0x%08x\n", hr);
+    ok(hr == S_OK || hr == E_NOTFOUND, "GetDefaultAudioEndpoint failed: 0x%08lx\n", hr);
     if (hr != S_OK)
     {
         if (hr == E_NOTFOUND)
             skip("No sound card available\n");
         else
-            skip("GetDefaultAudioEndpoint returns 0x%08x\n", hr);
+            skip("GetDefaultAudioEndpoint returns 0x%08lx\n", hr);
         goto cleanup;
     }
 
     ok(!GetModuleHandleA("dsound.dll"), "dsound.dll was already loaded!\n");
 
     hr = IMMDevice_Activate(dev, &IID_IDirectSound8, CLSCTX_INPROC_SERVER, NULL, (void**)&ds8);
-    ok(hr == S_OK, "Activating ds8 interface failed: 0x%08x\n", hr);
+    ok(hr == S_OK, "Activating ds8 interface failed: 0x%08lx\n", hr);
     if (hr == S_OK)
     {
         ok(GetModuleHandleA("dsound.dll") != NULL, "dsound.dll not loaded!\n");
@@ -71,7 +71,7 @@ START_TEST(dependency)
 
     ok(!GetModuleHandleA("quartz.dll"), "quartz.dll was already loaded!\n");
     hr = IMMDevice_Activate(dev, &IID_IBaseFilter, CLSCTX_INPROC_SERVER, NULL, (void**)&bf);
-    ok(hr == S_OK, "Activating bf failed: 0x%08x\n", hr);
+    ok(hr == S_OK, "Activating bf failed: 0x%08lx\n", hr);
     if (hr == S_OK)
     {
         ok(GetModuleHandleA("quartz.dll") != NULL, "quartz.dll not loaded!\n");
@@ -80,7 +80,7 @@ START_TEST(dependency)
         {
             CLSID clsid;
             hr = IBaseFilter_GetClassID(bf, &clsid);
-            ok(hr == S_OK, "GetClassId failed with 0x%08x\n", hr);
+            ok(hr == S_OK, "GetClassId failed with 0x%08lx\n", hr);
             if (hr == S_OK)
                 ok(IsEqualCLSID(&clsid, &CLSID_DSoundRender), "Wrong class id %s\n", wine_dbgstr_guid(&clsid));
         }

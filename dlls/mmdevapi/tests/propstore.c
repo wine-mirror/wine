@@ -45,7 +45,7 @@ static void test_propertystore(IPropertyStore *store)
 
     pv.vt = VT_EMPTY;
     hr = IPropertyStore_GetValue(store, &PKEY_AudioEndpoint_GUID, &pv);
-    ok(hr == S_OK, "Failed with %08x\n", hr);
+    ok(hr == S_OK, "Failed with %08lx\n", hr);
     ok(pv.vt == VT_LPWSTR, "Value should be %i, is %i\n", VT_LPWSTR, pv.vt);
     if (hr == S_OK && pv.vt == VT_LPWSTR)
     {
@@ -56,19 +56,19 @@ static void test_propertystore(IPropertyStore *store)
 
     pv.vt = VT_EMPTY;
     hr = IPropertyStore_GetValue(store, (const PROPERTYKEY*)&DEVPKEY_DeviceInterface_FriendlyName, &pv);
-    ok(hr == S_OK, "Failed with %08x\n", hr);
+    ok(hr == S_OK, "Failed with %08lx\n", hr);
     ok(pv.vt == VT_LPWSTR && pv.pwszVal, "FriendlyName value had wrong type: 0x%x or was NULL\n", pv.vt);
     PropVariantClear(&pv);
 
     pv.vt = VT_EMPTY;
     hr = IPropertyStore_GetValue(store, (const PROPERTYKEY*)&DEVPKEY_DeviceInterface_Enabled, &pv);
-    ok(hr == S_OK, "Failed with %08x\n", hr);
+    ok(hr == S_OK, "Failed with %08lx\n", hr);
     ok(pv.vt == VT_EMPTY, "Key should not be found\n");
     PropVariantClear(&pv);
 
     pv.vt = VT_EMPTY;
     hr = IPropertyStore_GetValue(store, (const PROPERTYKEY*)&DEVPKEY_DeviceInterface_ClassGuid, &pv);
-    ok(hr == S_OK, "Failed with %08x\n", hr);
+    ok(hr == S_OK, "Failed with %08lx\n", hr);
     ok(pv.vt == VT_EMPTY, "Key should not be found\n");
     PropVariantClear(&pv);
 }
@@ -84,7 +84,7 @@ static void test_deviceinterface(IPropertyStore *store)
 
     pv.vt = VT_EMPTY;
     hr = IPropertyStore_GetValue(store, &deviceinterface_key, &pv);
-    ok(hr == S_OK, "GetValue failed: %08x\n", hr);
+    ok(hr == S_OK, "GetValue failed: %08lx\n", hr);
     ok(pv.vt == VT_LPWSTR, "Got wrong variant type: 0x%x\n", pv.vt);
     trace("device interface: %s\n", wine_dbgstr_w(pv.pwszVal));
     PropVariantClear(&pv);
@@ -103,12 +103,12 @@ static void test_getat(IPropertyStore *store)
 
     hr = IPropertyStore_GetCount(store, &propcount);
 
-    ok(hr == S_OK, "Failed with %08x\n", hr);
-    ok(propcount > 0, "Propcount %d should be greater than zero\n", propcount);
+    ok(hr == S_OK, "Failed with %08lx\n", hr);
+    ok(propcount > 0, "Propcount %ld should be greater than zero\n", propcount);
 
     for (prop = 0; prop < propcount; prop++) {
 	hr = IPropertyStore_GetAt(store, prop, &pkey);
-	ok(hr == S_OK, "Failed with %08x\n", hr);
+	ok(hr == S_OK, "Failed with %08lx\n", hr);
 	if (IsEqualPropertyKey(pkey, DEVPKEY_Device_FriendlyName))
 	    found_name = TRUE;
 	if (IsEqualPropertyKey(pkey, DEVPKEY_Device_DeviceDesc))
@@ -137,7 +137,7 @@ static void test_setvalue_on_wow64(IPropertyStore *store)
 
     pv.vt = VT_EMPTY;
     hr = IPropertyStore_GetValue(store, &PKEY_AudioEndpoint_GUID, &pv);
-    ok(hr == S_OK, "Failed to get Endpoint GUID: %08x\n", hr);
+    ok(hr == S_OK, "Failed to get Endpoint GUID: %08lx\n", hr);
 
     guidW = pv.pwszVal;
 
@@ -145,7 +145,7 @@ static void test_setvalue_on_wow64(IPropertyStore *store)
     pv.ulVal = 0xAB;
 
     hr = IPropertyStore_SetValue(store, &PKEY_Bogus, &pv);
-    ok(hr == S_OK || hr == E_ACCESSDENIED, "SetValue failed: %08x\n", hr);
+    ok(hr == S_OK || hr == E_ACCESSDENIED, "SetValue failed: %08lx\n", hr);
     if (hr != S_OK)
     {
         win_skip("Missing permission to write to registry\n");
@@ -155,25 +155,25 @@ static void test_setvalue_on_wow64(IPropertyStore *store)
     pv.ulVal = 0x00;
 
     hr = IPropertyStore_GetValue(store, &PKEY_Bogus, &pv);
-    ok(hr == S_OK, "GetValue failed: %08x\n", hr);
-    ok(pv.ulVal == 0xAB, "Got wrong value: 0x%x\n", pv.ulVal);
+    ok(hr == S_OK, "GetValue failed: %08lx\n", hr);
+    ok(pv.ulVal == 0xAB, "Got wrong value: 0x%lx\n", pv.ulVal);
 
     /* should find the key in 64-bit view */
     ret = RegOpenKeyExW(HKEY_LOCAL_MACHINE, software_renderW, 0, KEY_READ|KEY_WOW64_64KEY, &root);
-    ok(ret == ERROR_SUCCESS, "Couldn't open mmdevices Render key: %u\n", ret);
+    ok(ret == ERROR_SUCCESS, "Couldn't open mmdevices Render key: %lu\n", ret);
 
     ret = RegOpenKeyExW(root, guidW, 0, KEY_READ|KEY_WOW64_64KEY, &devkey);
-    ok(ret == ERROR_SUCCESS, "Couldn't open mmdevice guid key: %u\n", ret);
+    ok(ret == ERROR_SUCCESS, "Couldn't open mmdevice guid key: %lu\n", ret);
 
     ret = RegOpenKeyExW(devkey, L"Properties", 0, KEY_READ|KEY_WOW64_64KEY, &props);
-    ok(ret == ERROR_SUCCESS, "Couldn't open mmdevice property key: %u\n", ret);
+    ok(ret == ERROR_SUCCESS, "Couldn't open mmdevice property key: %lu\n", ret);
 
     /* Note: the registry key exists even without calling IPropStore::Commit */
     size = sizeof(regval);
     ret = RegQueryValueExW(props, bogusW, NULL, &type, (LPBYTE)&regval, &size);
-    ok(ret == ERROR_SUCCESS, "Couldn't get bogus propertykey value: %u\n", ret);
-    ok(type == REG_DWORD, "Got wrong value type: %u\n", type);
-    ok(regval == 0xAB, "Got wrong value: 0x%x\n", regval);
+    ok(ret == ERROR_SUCCESS, "Couldn't get bogus propertykey value: %lu\n", ret);
+    ok(type == REG_DWORD, "Got wrong value type: %lu\n", type);
+    ok(regval == 0xAB, "Got wrong value: 0x%lx\n", regval);
 
     RegCloseKey(props);
     RegCloseKey(devkey);
@@ -183,7 +183,7 @@ static void test_setvalue_on_wow64(IPropertyStore *store)
 
     /* should NOT find the key in 32-bit view */
     ret = RegOpenKeyExW(HKEY_LOCAL_MACHINE, software_renderW, 0, KEY_READ, &root);
-    ok(ret == ERROR_FILE_NOT_FOUND, "Wrong error when opening mmdevices Render key: %u\n", ret);
+    ok(ret == ERROR_FILE_NOT_FOUND, "Wrong error when opening mmdevices Render key: %lu\n", ret);
 }
 
 START_TEST(propstore)
@@ -204,39 +204,39 @@ START_TEST(propstore)
     hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL, CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&mme);
     if (FAILED(hr))
     {
-        skip("mmdevapi not available: 0x%08x\n", hr);
+        skip("mmdevapi not available: 0x%08lx\n", hr);
         goto cleanup;
     }
 
     hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(mme, eRender, eMultimedia, &dev);
-    ok(hr == S_OK || hr == E_NOTFOUND, "GetDefaultAudioEndpoint failed: 0x%08x\n", hr);
+    ok(hr == S_OK || hr == E_NOTFOUND, "GetDefaultAudioEndpoint failed: 0x%08lx\n", hr);
     if (hr != S_OK)
     {
         if (hr == E_NOTFOUND)
             skip("No sound card available\n");
         else
-            skip("GetDefaultAudioEndpoint returns 0x%08x\n", hr);
+            skip("GetDefaultAudioEndpoint returns 0x%08lx\n", hr);
         goto cleanup;
     }
     store = NULL;
     hr = IMMDevice_OpenPropertyStore(dev, 3, &store);
-    ok(hr == E_INVALIDARG, "Wrong hr returned: %08x\n", hr);
+    ok(hr == E_INVALIDARG, "Wrong hr returned: %08lx\n", hr);
     if (hr != S_OK)
         /* It seems on windows returning with E_INVALIDARG doesn't
          * set store to NULL, so just don't set store to non-null
          * before calling this function
          */
-        ok(!store, "Store set to non-NULL on failure: %p/%08x\n", store, hr);
+        ok(!store, "Store set to non-NULL on failure: %p/%08lx\n", store, hr);
     else if (store)
         IPropertyStore_Release(store);
     hr = IMMDevice_OpenPropertyStore(dev, STGM_READ, NULL);
-    ok(hr == E_POINTER, "Wrong hr returned: %08x\n", hr);
+    ok(hr == E_POINTER, "Wrong hr returned: %08lx\n", hr);
 
     store = NULL;
     hr = IMMDevice_OpenPropertyStore(dev, STGM_READWRITE, &store);
     if(hr == E_ACCESSDENIED)
         hr = IMMDevice_OpenPropertyStore(dev, STGM_READ, &store);
-    ok(hr == S_OK, "Opening valid store returned %08x\n", hr);
+    ok(hr == S_OK, "Opening valid store returned %08lx\n", hr);
     if (store)
     {
         test_propertystore(store);
