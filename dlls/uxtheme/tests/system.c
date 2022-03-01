@@ -274,20 +274,80 @@ static void test_IsThemed(void)
 {
     BOOL bThemeActive;
     BOOL bAppThemed;
-    BOOL bTPDefined;
 
     bThemeActive = IsThemeActive();
     trace("Theming is %s\n", (bThemeActive) ? "active" : "inactive");
 
     bAppThemed = IsAppThemed();
     trace("Test executable is %s\n", (bAppThemed) ? "themed" : "not themed");
+}
 
-    SetLastError(0xdeadbeef);
-    bTPDefined = IsThemePartDefined(NULL, 0 , 0);
-    ok( bTPDefined == FALSE, "Expected FALSE\n");
-    ok( GetLastError() == E_HANDLE,
-        "Expected E_HANDLE, got 0x%08x\n",
-        GetLastError());
+static void test_IsThemePartDefined(void)
+{
+    BOOL is_theme_active, ret;
+    HTHEME theme = NULL;
+    DWORD error;
+    HWND hwnd;
+    int i;
+
+    static const struct
+    {
+        const WCHAR *class_name;
+        int part;
+        int state;
+        BOOL defined;
+        DWORD error;
+        BOOL todo;
+    }
+    tests[] =
+    {
+        {NULL, 0, 0, FALSE, E_HANDLE},
+        {NULL, 0xdeadbeef, 0, FALSE, E_HANDLE},
+        {L"Button", 0xdeadbeef, 0, FALSE, NO_ERROR},
+        {L"Button", BP_PUSHBUTTON, 0, TRUE, NO_ERROR},
+        {L"Button", BP_PUSHBUTTON, PBS_NORMAL, FALSE, NO_ERROR},
+        {L"Button", BP_PUSHBUTTON, PBS_DEFAULTED_ANIMATING, FALSE, NO_ERROR},
+        {L"Button", BP_PUSHBUTTON, PBS_DEFAULTED_ANIMATING + 1, FALSE, NO_ERROR},
+        {L"Edit", EP_EDITTEXT, 0, TRUE, NO_ERROR, TRUE},
+        {L"Edit", EP_EDITTEXT, ETS_NORMAL, FALSE, NO_ERROR},
+        {L"Edit", EP_EDITTEXT, ETS_FOCUSED, FALSE, NO_ERROR},
+    };
+
+    is_theme_active = IsThemeActive();
+    hwnd = CreateWindowA(WC_STATICA, "", WS_POPUP, 0, 0, 1, 1, 0, 0, 0, NULL);
+    ok(hwnd != NULL, "CreateWindowA failed, error %#x.\n", GetLastError());
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        if (!is_theme_active && tests[i].class_name)
+            continue;
+
+        winetest_push_context("class %s part %d state %d", wine_dbgstr_w(tests[i].class_name),
+                              tests[i].part, tests[i].state);
+
+        if (tests[i].class_name)
+        {
+            theme = OpenThemeData(hwnd, tests[i].class_name);
+            ok(theme != NULL, "OpenThemeData failed, error %#x.\n", GetLastError());
+        }
+
+        SetLastError(0xdeadbeef);
+        ret = IsThemePartDefined(theme, tests[i].part, tests[i].state);
+        error = GetLastError();
+        todo_wine_if(tests[i].todo)
+        ok(ret == tests[i].defined, "Expected %d.\n", tests[i].defined);
+        todo_wine_if(error == 0xdeadbeef && tests[i].error == NO_ERROR)
+        ok(error == tests[i].error, "Expected %#x, got %#x.\n", tests[i].error, error);
+
+        if (theme)
+        {
+            CloseThemeData(theme);
+            theme = NULL;
+        }
+        winetest_pop_context();
+    }
+
+    DestroyWindow(hwnd);
 }
 
 static void test_GetWindowTheme(void)
@@ -1555,6 +1615,7 @@ START_TEST(system)
      */
 
     test_IsThemed();
+    test_IsThemePartDefined();
     test_GetWindowTheme();
     test_SetWindowTheme();
     test_OpenThemeData();
