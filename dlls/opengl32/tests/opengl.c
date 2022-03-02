@@ -238,7 +238,7 @@ static int test_pfd(const PIXELFORMATDESCRIPTOR *pfd, PIXELFORMATDESCRIPTOR *fmt
         INT ret;
         memset(fmt, 0, sizeof(*fmt));
         ret = DescribePixelFormat( hdc, pf, sizeof(*fmt), fmt );
-        ok(ret, "DescribePixelFormat failed with error: %u\n", GetLastError());
+        ok(ret, "DescribePixelFormat failed with error: %lu\n", GetLastError());
     }
     ReleaseDC( hwnd, hdc );
     DestroyWindow( hwnd );
@@ -371,7 +371,7 @@ static void test_debug_message_callback(void)
     count = 0;
     pglDebugMessageInsertARB(GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_OTHER, 0x42424242,
                              GL_DEBUG_SEVERITY_LOW, sizeof(testmsg), testmsg);
-    ok(count == 1, "expected count == 1, got %u\n", count);
+    ok(count == 1, "expected count == 1, got %lu\n", count);
 
     glDisable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glDisable(GL_DEBUG_OUTPUT);
@@ -431,7 +431,7 @@ static void test_setpixelformat(HDC winhdc)
 
     hwnd = CreateWindowA("static", "Title", WS_OVERLAPPEDWINDOW, 10, 10, 200, 200, NULL, NULL,
             NULL, NULL);
-    ok(hwnd != NULL, "err: %d\n", GetLastError());
+    ok(hwnd != NULL, "err: %ld\n", GetLastError());
     if (hwnd)
     {
         HDC hdc = GetDC( hwnd );
@@ -451,31 +451,31 @@ static void test_setpixelformat(HDC winhdc)
         SetLastError( 0xdeadbeef );
         i = GetPixelFormat( hdc );
         ok( i == 0, "GetPixelFormat succeeded\n" );
-        ok( GetLastError() == ERROR_INVALID_PIXEL_FORMAT, "wrong error %u\n", GetLastError() );
+        ok( GetLastError() == ERROR_INVALID_PIXEL_FORMAT, "wrong error %lu\n", GetLastError() );
         SetLastError( 0xdeadbeef );
         res = SetPixelFormat( hdc, pf, &pfd );
         ok( !res, "SetPixelFormat succeeded\n" );
-        ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %u\n", GetLastError() );
+        ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %lu\n", GetLastError() );
         SetLastError( 0xdeadbeef );
         res = DescribePixelFormat( hdc, 0, 0, NULL );
         ok( !res, "DescribePixelFormat succeeded\n" );
-        ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %u\n", GetLastError() );
+        ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %lu\n", GetLastError() );
         SetLastError( 0xdeadbeef );
         pf = ChoosePixelFormat( hdc, &pfd );
         ok( !pf, "ChoosePixelFormat succeeded\n" );
-        ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %u\n", GetLastError() );
+        ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %lu\n", GetLastError() );
         SetLastError( 0xdeadbeef );
         res = SwapBuffers( hdc );
         ok( !res, "SwapBuffers succeeded\n" );
-        ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %u\n", GetLastError() );
+        ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %lu\n", GetLastError() );
         SetLastError( 0xdeadbeef );
         ok( !wglCreateContext( hdc ), "CreateContext succeeded\n" );
-        ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %u\n", GetLastError() );
+        ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %lu\n", GetLastError() );
     }
 
     hwnd = CreateWindowA("static", "Title", WS_OVERLAPPEDWINDOW, 10, 10, 200, 200, NULL, NULL,
             NULL, NULL);
-    ok(hwnd != NULL, "err: %d\n", GetLastError());
+    ok(hwnd != NULL, "err: %ld\n", GetLastError());
     if (hwnd)
     {
         HDC hdc = GetWindowDC( hwnd );
@@ -571,7 +571,7 @@ static void test_makecurrent(HDC winhdc)
     ret = wglMakeCurrent( NULL, NULL );
     ok( !ret || broken(ret) /* nt4 */, "wglMakeCurrent succeeded\n" );
     if (!ret) ok( GetLastError() == ERROR_INVALID_HANDLE,
-                  "Expected ERROR_INVALID_HANDLE, got error=%x\n", GetLastError() );
+                  "Expected ERROR_INVALID_HANDLE, got error=%lx\n", GetLastError() );
 
     ret = wglMakeCurrent( winhdc, NULL );
     ok( ret, "wglMakeCurrent failed\n" );
@@ -588,7 +588,7 @@ static void test_makecurrent(HDC winhdc)
     ret = wglMakeCurrent( NULL, NULL );
     ok( !ret || broken(ret) /* nt4 */, "wglMakeCurrent succeeded\n" );
     if (!ret) ok( GetLastError() == ERROR_INVALID_HANDLE,
-                  "Expected ERROR_INVALID_HANDLE, got error=%x\n", GetLastError() );
+                  "Expected ERROR_INVALID_HANDLE, got error=%lx\n", GetLastError() );
 
     ret = wglMakeCurrent( winhdc, hglrc );
     ok( ret, "wglMakeCurrent failed\n" );
@@ -687,13 +687,13 @@ static void test_acceleration(HDC hdc)
         switch(iAttribRet[0])
         {
             case WGL_NO_ACCELERATION_ARB:
-                ok( (pfd.dwFlags & (PFD_GENERIC_FORMAT | PFD_GENERIC_ACCELERATED)) == PFD_GENERIC_FORMAT , "Expected only PFD_GENERIC_FORMAT to be set for WGL_NO_ACCELERATION_ARB!: iPixelFormat=%d, dwFlags=%x!\n", iPixelFormat, pfd.dwFlags);
+                ok( (pfd.dwFlags & (PFD_GENERIC_FORMAT | PFD_GENERIC_ACCELERATED)) == PFD_GENERIC_FORMAT , "Expected only PFD_GENERIC_FORMAT to be set for WGL_NO_ACCELERATION_ARB!: iPixelFormat=%d, dwFlags=%lx!\n", iPixelFormat, pfd.dwFlags);
                 break;
             case WGL_GENERIC_ACCELERATION_ARB:
-                ok( (pfd.dwFlags & (PFD_GENERIC_FORMAT | PFD_GENERIC_ACCELERATED)) == (PFD_GENERIC_FORMAT | PFD_GENERIC_ACCELERATED), "Expected both PFD_GENERIC_FORMAT and PFD_GENERIC_ACCELERATION to be set for WGL_GENERIC_ACCELERATION_ARB: iPixelFormat=%d, dwFlags=%x!\n", iPixelFormat, pfd.dwFlags);
+                ok( (pfd.dwFlags & (PFD_GENERIC_FORMAT | PFD_GENERIC_ACCELERATED)) == (PFD_GENERIC_FORMAT | PFD_GENERIC_ACCELERATED), "Expected both PFD_GENERIC_FORMAT and PFD_GENERIC_ACCELERATION to be set for WGL_GENERIC_ACCELERATION_ARB: iPixelFormat=%d, dwFlags=%lx!\n", iPixelFormat, pfd.dwFlags);
                 break;
             case WGL_FULL_ACCELERATION_ARB:
-                ok( (pfd.dwFlags & (PFD_GENERIC_FORMAT | PFD_GENERIC_ACCELERATED)) == 0, "Expected no PFD_GENERIC_FORMAT/_ACCELERATION to be set for WGL_FULL_ACCELERATION_ARB: iPixelFormat=%d, dwFlags=%x!\n", iPixelFormat, pfd.dwFlags);
+                ok( (pfd.dwFlags & (PFD_GENERIC_FORMAT | PFD_GENERIC_ACCELERATED)) == 0, "Expected no PFD_GENERIC_FORMAT/_ACCELERATION to be set for WGL_FULL_ACCELERATION_ARB: iPixelFormat=%d, dwFlags=%lx!\n", iPixelFormat, pfd.dwFlags);
                 break;
         }
     }
@@ -890,7 +890,7 @@ static void test_deletecontext(HWND hwnd, HDC hdc)
     SetLastError(0xdeadbeef);
     res = wglDeleteContext(NULL);
     ok(res == FALSE, "wglDeleteContext succeeded\n");
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected last error to be ERROR_INVALID_HANDLE, got %u\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected last error to be ERROR_INVALID_HANDLE, got %lu\n", GetLastError());
 
     if(!hglrc)
     {
@@ -912,14 +912,14 @@ static void test_deletecontext(HWND hwnd, HDC hdc)
     thread_params.hwnd  = hwnd;
     thread_params.test_finished = CreateEventW(NULL, FALSE, FALSE, NULL);
     thread_handle = CreateThread(NULL, 0, wgl_thread, &thread_params, 0, &tid);
-    ok(!!thread_handle, "Failed to create thread, last error %#x.\n", GetLastError());
+    ok(!!thread_handle, "Failed to create thread, last error %#lx.\n", GetLastError());
     if(thread_handle)
     {
         WaitForSingleObject(thread_handle, INFINITE);
         ok(!thread_params.make_current, "Attempt to make WGL context from another thread passed\n");
         ok(thread_params.make_current_error == ERROR_BUSY, "Expected last error to be ERROR_BUSY, got %u\n", thread_params.make_current_error);
         ok(!thread_params.deleted, "Attempt to delete WGL context from another thread passed\n");
-        ok(thread_params.deleted_error == ERROR_BUSY, "Expected last error to be ERROR_BUSY, got %u\n", thread_params.deleted_error);
+        ok(thread_params.deleted_error == ERROR_BUSY, "Expected last error to be ERROR_BUSY, got %lu\n", thread_params.deleted_error);
     }
     CloseHandle(thread_params.test_finished);
 
@@ -930,7 +930,7 @@ static void test_deletecontext(HWND hwnd, HDC hdc)
     SetLastError(0xdeadbeef);
     res = wglDeleteContext(hglrc);
     ok(res == FALSE, "wglDeleteContext succeeded\n");
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected last error to be ERROR_INVALID_HANDLE, got %u\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected last error to be ERROR_INVALID_HANDLE, got %lu\n", GetLastError());
 
     /* WGL makes a context not current when deleting it. This differs from GLX behavior where
      * deletion takes place when the thread becomes not current. */
@@ -975,12 +975,12 @@ static void test_getprocaddress(HDC hdc)
     }
 
     func = wglGetProcAddress("glActiveTextureARB");
-    ok(func != NULL, "Unable to lookup glActiveTextureARB, last error %#x\n", GetLastError());
+    ok(func != NULL, "Unable to lookup glActiveTextureARB, last error %#lx\n", GetLastError());
 
     /* Temporarily disable the context, so we can see that we can't retrieve functions now. */
     wglMakeCurrent(hdc, NULL);
     func = wglGetProcAddress("glActiveTextureARB");
-    ok(func == NULL, "Function lookup without a context passed, expected a failure; last error %#x\n", GetLastError());
+    ok(func == NULL, "Function lookup without a context passed, expected a failure; last error %#lx\n", GetLastError());
     wglMakeCurrent(hdc, ctx);
 }
 
@@ -1061,7 +1061,7 @@ static void test_opengl3(HDC hdc)
         ok(error == ERROR_DC_NOT_FOUND || error == ERROR_INVALID_HANDLE ||
            broken(error == ERROR_DS_GENERIC_ERROR) ||
            broken(error == NVIDIA_HRESULT_FROM_WIN32(ERROR_INVALID_DATA)), /* Nvidia Vista + Win7 */
-           "Expected ERROR_DC_NOT_FOUND, got error=%x\n", error);
+           "Expected ERROR_DC_NOT_FOUND, got error=%lx\n", error);
         wglDeleteContext(gl3Ctx);
     }
 
@@ -1075,7 +1075,7 @@ static void test_opengl3(HDC hdc)
         error = GetLastError();
         /* The Nvidia implementation seems to return hresults instead of win32 error codes */
         ok(error == ERROR_INVALID_OPERATION || error == ERROR_INVALID_DATA ||
-           error == NVIDIA_HRESULT_FROM_WIN32(ERROR_INVALID_OPERATION), "Expected ERROR_INVALID_OPERATION, got error=%x\n", error);
+           error == NVIDIA_HRESULT_FROM_WIN32(ERROR_INVALID_OPERATION), "Expected ERROR_INVALID_OPERATION, got error=%lx\n", error);
         wglDeleteContext(gl3Ctx);
     }
 
@@ -1168,7 +1168,7 @@ static void test_minimized(void)
 
     window = CreateWindowA("static", "opengl32_test",
             WS_POPUP | WS_MINIMIZE, 0, 0, 640, 480, 0, 0, 0, 0);
-    ok(!!window, "Failed to create window, last error %#x.\n", GetLastError());
+    ok(!!window, "Failed to create window, last error %#lx.\n", GetLastError());
 
     dc = GetDC(window);
     ok(!!dc, "Failed to get DC.\n");
@@ -1183,25 +1183,25 @@ static void test_minimized(void)
     }
 
     ret = SetPixelFormat(dc, pixel_format, &pf_desc);
-    ok(ret, "Failed to set pixel format, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to set pixel format, last error %#lx.\n", GetLastError());
 
     style = GetWindowLongA(window, GWL_STYLE);
-    ok(style & WS_MINIMIZE, "Window should be minimized, got style %#x.\n", style);
+    ok(style & WS_MINIMIZE, "Window should be minimized, got style %#lx.\n", style);
 
     ctx = wglCreateContext(dc);
-    ok(!!ctx, "Failed to create GL context, last error %#x.\n", GetLastError());
+    ok(!!ctx, "Failed to create GL context, last error %#lx.\n", GetLastError());
 
     ret = wglMakeCurrent(dc, ctx);
-    ok(ret, "Failed to make context current, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to make context current, last error %#lx.\n", GetLastError());
 
     style = GetWindowLongA(window, GWL_STYLE);
-    ok(style & WS_MINIMIZE, "window should be minimized, got style %#x.\n", style);
+    ok(style & WS_MINIMIZE, "window should be minimized, got style %#lx.\n", style);
 
     ret = wglMakeCurrent(NULL, NULL);
-    ok(ret, "Failed to clear current context, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to clear current context, last error %#lx.\n", GetLastError());
 
     ret = wglDeleteContext(ctx);
-    ok(ret, "Failed to delete GL context, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to delete GL context, last error %#lx.\n", GetLastError());
 
     ReleaseDC(window, dc);
     DestroyWindow(window);
@@ -1237,7 +1237,7 @@ static void test_window_dc(void)
 
     window = CreateWindowA("static", "opengl32_test",
             WS_OVERLAPPEDWINDOW, 0, 0, 640, 480, 0, 0, 0, 0);
-    ok(!!window, "Failed to create window, last error %#x.\n", GetLastError());
+    ok(!!window, "Failed to create window, last error %#lx.\n", GetLastError());
 
     ShowWindow(window, SW_SHOW);
 
@@ -1254,23 +1254,23 @@ static void test_window_dc(void)
     }
 
     ret = SetPixelFormat(dc, pixel_format, &pf_desc);
-    ok(ret, "Failed to set pixel format, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to set pixel format, last error %#lx.\n", GetLastError());
 
     ctx = wglCreateContext(dc);
-    ok(!!ctx, "Failed to create GL context, last error %#x.\n", GetLastError());
+    ok(!!ctx, "Failed to create GL context, last error %#lx.\n", GetLastError());
 
     ret = wglMakeCurrent(dc, ctx);
-    ok(ret, "Failed to make context current, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to make context current, last error %#lx.\n", GetLastError());
 
     GetClientRect(window, &r);
     glGetIntegerv(GL_VIEWPORT, (GLint *)&vp);
     ok(EqualRect(&r, &vp), "Viewport not equal to client rect.\n");
 
     ret = wglMakeCurrent(NULL, NULL);
-    ok(ret, "Failed to clear current context, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to clear current context, last error %#lx.\n", GetLastError());
 
     ret = wglDeleteContext(ctx);
-    ok(ret, "Failed to delete GL context, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to delete GL context, last error %#lx.\n", GetLastError());
 
     ReleaseDC(window, dc);
     DestroyWindow(window);
@@ -1325,13 +1325,13 @@ static void test_message_window(void)
     }
 
     ret = SetPixelFormat(dc, pixel_format, &pf_desc);
-    ok(ret, "Failed to set pixel format, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to set pixel format, last error %#lx.\n", GetLastError());
 
     ctx = wglCreateContext(dc);
-    ok(!!ctx, "Failed to create GL context, last error %#x.\n", GetLastError());
+    ok(!!ctx, "Failed to create GL context, last error %#lx.\n", GetLastError());
 
     ret = wglMakeCurrent(dc, ctx);
-    ok(ret, "Failed to make context current, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to make context current, last error %#lx.\n", GetLastError());
 
     GetClientRect(window, &r);
     glGetIntegerv(GL_VIEWPORT, (GLint *)&vp);
@@ -1342,13 +1342,13 @@ static void test_message_window(void)
     glerr = glGetError();
     ok(glerr == GL_NO_ERROR, "Failed glClear, error %#x.\n", glerr);
     ret = SwapBuffers(dc);
-    ok(ret, "Failed SwapBuffers, error %#x.\n", GetLastError());
+    ok(ret, "Failed SwapBuffers, error %#lx.\n", GetLastError());
 
     ret = wglMakeCurrent(NULL, NULL);
-    ok(ret, "Failed to clear current context, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to clear current context, last error %#lx.\n", GetLastError());
 
     ret = wglDeleteContext(ctx);
-    ok(ret, "Failed to delete GL context, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to delete GL context, last error %#lx.\n", GetLastError());
 
     ReleaseDC(window, dc);
     DestroyWindow(window);
@@ -1388,7 +1388,7 @@ static void test_destroy(HDC oldhdc)
 
     window = CreateWindowA("static", "opengl32_test",
             WS_POPUP, 0, 0, 640, 480, 0, 0, 0, 0);
-    ok(!!window, "Failed to create window, last error %#x.\n", GetLastError());
+    ok(!!window, "Failed to create window, last error %#lx.\n", GetLastError());
 
     dc = GetDC(window);
     ok(!!dc, "Failed to get DC.\n");
@@ -1403,23 +1403,23 @@ static void test_destroy(HDC oldhdc)
     }
 
     ret = SetPixelFormat(dc, pixel_format, &pf_desc);
-    ok(ret, "Failed to set pixel format, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to set pixel format, last error %#lx.\n", GetLastError());
 
     ctx = wglCreateContext(dc);
-    ok(!!ctx, "Failed to create GL context, last error %#x.\n", GetLastError());
+    ok(!!ctx, "Failed to create GL context, last error %#lx.\n", GetLastError());
 
     ret = wglMakeCurrent(dc, ctx);
-    ok(ret, "Failed to make context current, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to make context current, last error %#lx.\n", GetLastError());
 
     glClear(GL_COLOR_BUFFER_BIT);
     glFinish();
     glerr = glGetError();
     ok(glerr == GL_NO_ERROR, "Failed glClear, error %#x.\n", glerr);
     ret = SwapBuffers(dc);
-    ok(ret, "Failed SwapBuffers, error %#x.\n", GetLastError());
+    ok(ret, "Failed SwapBuffers, error %#lx.\n", GetLastError());
 
     ret = DestroyWindow(window);
-    ok(ret, "Failed to destroy window, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to destroy window, last error %#lx.\n", GetLastError());
 
     ok(wglGetCurrentContext() == ctx, "Wrong current context.\n");
 
@@ -1427,11 +1427,11 @@ static void test_destroy(HDC oldhdc)
     ret = wglMakeCurrent(dc, ctx);
     err = GetLastError();
     ok(!ret && err == ERROR_INVALID_HANDLE,
-            "Unexpected behavior when making context current, ret %d, last error %#x.\n", ret, err);
+            "Unexpected behavior when making context current, ret %d, last error %#lx.\n", ret, err);
     SetLastError(0xdeadbeef);
     ret = SwapBuffers(dc);
     err = GetLastError();
-    ok(!ret && err == ERROR_INVALID_HANDLE, "Unexpected behavior with SwapBuffer, last error %#x.\n", err);
+    ok(!ret && err == ERROR_INVALID_HANDLE, "Unexpected behavior with SwapBuffer, last error %#lx.\n", err);
 
     ok(wglGetCurrentContext() == ctx, "Wrong current context.\n");
 
@@ -1442,10 +1442,10 @@ static void test_destroy(HDC oldhdc)
     SetLastError(0xdeadbeef);
     ret = SwapBuffers(dc);
     err = GetLastError();
-    ok(!ret && err == ERROR_INVALID_HANDLE, "Unexpected behavior with SwapBuffer, last error %#x.\n", err);
+    ok(!ret && err == ERROR_INVALID_HANDLE, "Unexpected behavior with SwapBuffer, last error %#lx.\n", err);
 
     ret = wglMakeCurrent(NULL, NULL);
-    ok(ret, "Failed to clear current context, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to clear current context, last error %#lx.\n", GetLastError());
 
     glClear(GL_COLOR_BUFFER_BIT);
     glFinish();
@@ -1454,35 +1454,35 @@ static void test_destroy(HDC oldhdc)
     SetLastError(0xdeadbeef);
     ret = SwapBuffers(dc);
     err = GetLastError();
-    ok(!ret && err == ERROR_INVALID_HANDLE, "Unexpected behavior with SwapBuffer, last error %#x.\n", err);
+    ok(!ret && err == ERROR_INVALID_HANDLE, "Unexpected behavior with SwapBuffer, last error %#lx.\n", err);
 
     SetLastError(0xdeadbeef);
     ret = wglMakeCurrent(dc, ctx);
     err = GetLastError();
     ok(!ret && err == ERROR_INVALID_HANDLE,
-            "Unexpected behavior when making context current, ret %d, last error %#x.\n", ret, err);
+            "Unexpected behavior when making context current, ret %d, last error %#lx.\n", ret, err);
 
     ok(wglGetCurrentContext() == NULL, "Wrong current context.\n");
 
     ret = wglMakeCurrent(oldhdc, oldctx);
-    ok(ret, "Failed to make context current, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to make context current, last error %#lx.\n", GetLastError());
     ok(wglGetCurrentContext() == oldctx, "Wrong current context.\n");
 
     SetLastError(0xdeadbeef);
     ret = wglMakeCurrent(dc, ctx);
     err = GetLastError();
     ok(!ret && err == ERROR_INVALID_HANDLE,
-            "Unexpected behavior when making context current, ret %d, last error %#x.\n", ret, err);
+            "Unexpected behavior when making context current, ret %d, last error %#lx.\n", ret, err);
 
     ok(wglGetCurrentContext() == oldctx, "Wrong current context.\n");
 
     ret = wglDeleteContext(ctx);
-    ok(ret, "Failed to delete GL context, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to delete GL context, last error %#lx.\n", GetLastError());
 
     ReleaseDC(window, dc);
 
     ret = wglMakeCurrent(oldhdc, oldctx);
-    ok(ret, "Failed to make context current, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to make context current, last error %#lx.\n", GetLastError());
 }
 
 static void test_destroy_read(HDC oldhdc)
@@ -1519,7 +1519,7 @@ static void test_destroy_read(HDC oldhdc)
 
     draw_window = CreateWindowA("static", "opengl32_test",
             WS_POPUP, 0, 0, 640, 480, 0, 0, 0, 0);
-    ok(!!draw_window, "Failed to create window, last error %#x.\n", GetLastError());
+    ok(!!draw_window, "Failed to create window, last error %#lx.\n", GetLastError());
 
     draw_dc = GetDC(draw_window);
     ok(!!draw_dc, "Failed to get DC.\n");
@@ -1534,11 +1534,11 @@ static void test_destroy_read(HDC oldhdc)
     }
 
     ret = SetPixelFormat(draw_dc, pixel_format, &pf_desc);
-    ok(ret, "Failed to set pixel format, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to set pixel format, last error %#lx.\n", GetLastError());
 
     read_window = CreateWindowA("static", "opengl32_test",
             WS_POPUP, 0, 0, 640, 480, 0, 0, 0, 0);
-    ok(!!read_window, "Failed to create window, last error %#x.\n", GetLastError());
+    ok(!!read_window, "Failed to create window, last error %#lx.\n", GetLastError());
 
     read_dc = GetDC(read_window);
     ok(!!draw_dc, "Failed to get DC.\n");
@@ -1555,23 +1555,23 @@ static void test_destroy_read(HDC oldhdc)
     }
 
     ret = SetPixelFormat(read_dc, pixel_format, &pf_desc);
-    ok(ret, "Failed to set pixel format, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to set pixel format, last error %#lx.\n", GetLastError());
 
     ctx = wglCreateContext(draw_dc);
-    ok(!!ctx, "Failed to create GL context, last error %#x.\n", GetLastError());
+    ok(!!ctx, "Failed to create GL context, last error %#lx.\n", GetLastError());
 
     ret = pwglMakeContextCurrentARB(draw_dc, read_dc, ctx);
-    ok(ret, "Failed to make context current, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to make context current, last error %#lx.\n", GetLastError());
 
     glCopyPixels(0, 0, 640, 480, GL_COLOR);
     glFinish();
     glerr = glGetError();
     ok(glerr == GL_NO_ERROR, "Failed glCopyPixel, error %#x.\n", glerr);
     ret = SwapBuffers(draw_dc);
-    ok(ret, "Failed SwapBuffers, error %#x.\n", GetLastError());
+    ok(ret, "Failed SwapBuffers, error %#lx.\n", GetLastError());
 
     ret = DestroyWindow(read_window);
-    ok(ret, "Failed to destroy window, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to destroy window, last error %#lx.\n", GetLastError());
 
     ok(wglGetCurrentContext() == ctx, "Wrong current context.\n");
 
@@ -1588,10 +1588,10 @@ static void test_destroy_read(HDC oldhdc)
     glerr = glGetError();
     ok(glerr == GL_NO_ERROR, "Failed glClear, error %#x.\n", glerr);
     ret = SwapBuffers(draw_dc);
-    ok(ret, "Failed SwapBuffers, error %#x.\n", GetLastError());
+    ok(ret, "Failed SwapBuffers, error %#lx.\n", GetLastError());
 
     ret = wglMakeCurrent(NULL, NULL);
-    ok(ret, "Failed to clear current context, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to clear current context, last error %#lx.\n", GetLastError());
 
     if (0) /* This crashes with Nvidia drivers on Windows. */
     {
@@ -1599,11 +1599,11 @@ static void test_destroy_read(HDC oldhdc)
         ret = pwglMakeContextCurrentARB(draw_dc, read_dc, ctx);
         err = GetLastError();
         ok(!ret && err == ERROR_INVALID_HANDLE,
-                "Unexpected behavior when making context current, ret %d, last error %#x.\n", ret, err);
+                "Unexpected behavior when making context current, ret %d, last error %#lx.\n", ret, err);
     }
 
     ret = DestroyWindow(draw_window);
-    ok(ret, "Failed to destroy window, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to destroy window, last error %#lx.\n", GetLastError());
 
     glClear(GL_COLOR_BUFFER_BIT);
     glFinish();
@@ -1612,13 +1612,13 @@ static void test_destroy_read(HDC oldhdc)
     SetLastError(0xdeadbeef);
     ret = SwapBuffers(draw_dc);
     err = GetLastError();
-    ok(!ret && err == ERROR_INVALID_HANDLE, "Unexpected behavior with SwapBuffer, last error %#x.\n", err);
+    ok(!ret && err == ERROR_INVALID_HANDLE, "Unexpected behavior with SwapBuffer, last error %#lx.\n", err);
 
     SetLastError(0xdeadbeef);
     ret = pwglMakeContextCurrentARB(draw_dc, read_dc, ctx);
     err = GetLastError();
     ok(!ret && (err == ERROR_INVALID_HANDLE || err == 0xc0070006),
-            "Unexpected behavior when making context current, ret %d, last error %#x.\n", ret, err);
+            "Unexpected behavior when making context current, ret %d, last error %#lx.\n", ret, err);
 
     ok(wglGetCurrentContext() == NULL, "Wrong current context.\n");
 
@@ -1631,12 +1631,12 @@ static void test_destroy_read(HDC oldhdc)
     ret = pwglMakeContextCurrentARB(draw_dc, read_dc, ctx);
     err = GetLastError();
     ok(!ret && (err == ERROR_INVALID_HANDLE || err == 0xc0070006),
-            "Unexpected behavior when making context current, last error %#x.\n", err);
+            "Unexpected behavior when making context current, last error %#lx.\n", err);
 
     ok(wglGetCurrentContext() == oldctx, "Wrong current context.\n");
 
     ret = wglDeleteContext(ctx);
-    ok(ret, "Failed to delete GL context, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to delete GL context, last error %#lx.\n", GetLastError());
 
     ReleaseDC(read_window, read_dc);
     ReleaseDC(draw_window, draw_dc);
@@ -1677,7 +1677,7 @@ static void test_swap_control(HDC oldhdc)
 
     window1 = CreateWindowA("static", "opengl32_test",
             WS_POPUP, 0, 0, 640, 480, 0, 0, 0, 0);
-    ok(!!window1, "Failed to create window1, last error %#x.\n", GetLastError());
+    ok(!!window1, "Failed to create window1, last error %#lx.\n", GetLastError());
 
     dc1 = GetDC(window1);
     ok(!!dc1, "Failed to get DC.\n");
@@ -1692,29 +1692,29 @@ static void test_swap_control(HDC oldhdc)
     }
 
     ret = SetPixelFormat(dc1, pixel_format, &pf_desc);
-    ok(ret, "Failed to set pixel format, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to set pixel format, last error %#lx.\n", GetLastError());
 
     ctx1 = wglCreateContext(dc1);
-    ok(!!ctx1, "Failed to create GL context, last error %#x.\n", GetLastError());
+    ok(!!ctx1, "Failed to create GL context, last error %#lx.\n", GetLastError());
 
     ret = wglMakeCurrent(dc1, ctx1);
-    ok(ret, "Failed to make context current, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to make context current, last error %#lx.\n", GetLastError());
 
     interval = pwglGetSwapIntervalEXT();
     ok(interval == 1, "Expected default swap interval 1, got %d\n", interval);
 
     ret = pwglSwapIntervalEXT(0);
-    ok(ret, "Failed to set swap interval to 0, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to set swap interval to 0, last error %#lx.\n", GetLastError());
 
     interval = pwglGetSwapIntervalEXT();
     ok(interval == 0, "Expected swap interval 0, got %d\n", interval);
 
     /* Check what interval we get on a second context on the same drawable.*/
     ctx2 = wglCreateContext(dc1);
-    ok(!!ctx2, "Failed to create GL context, last error %#x.\n", GetLastError());
+    ok(!!ctx2, "Failed to create GL context, last error %#lx.\n", GetLastError());
 
     ret = wglMakeCurrent(dc1, ctx2);
-    ok(ret, "Failed to make context current, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to make context current, last error %#lx.\n", GetLastError());
 
     interval = pwglGetSwapIntervalEXT();
     ok(interval == 0, "Expected swap interval 0, got %d\n", interval);
@@ -1724,16 +1724,16 @@ static void test_swap_control(HDC oldhdc)
      */
     window2 = CreateWindowA("static", "opengl32_test",
             WS_POPUP, 0, 0, 640, 480, 0, 0, 0, 0);
-    ok(!!window2, "Failed to create window2, last error %#x.\n", GetLastError());
+    ok(!!window2, "Failed to create window2, last error %#lx.\n", GetLastError());
 
     dc2 = GetDC(window2);
     ok(!!dc2, "Failed to get DC.\n");
 
     ret = SetPixelFormat(dc2, pixel_format, &pf_desc);
-    ok(ret, "Failed to set pixel format, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to set pixel format, last error %#lx.\n", GetLastError());
 
     ret = wglMakeCurrent(dc2, ctx1);
-    ok(ret, "Failed to make context current, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to make context current, last error %#lx.\n", GetLastError());
 
     /* Since the second window lacks the swap interval, this proves that the interval
      * is not global or shared among contexts.
@@ -1743,18 +1743,18 @@ static void test_swap_control(HDC oldhdc)
 
     /* Test if setting the parent of a window resets the swap interval. */
     ret = wglMakeCurrent(dc1, ctx1);
-    ok(ret, "Failed to make context current, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to make context current, last error %#lx.\n", GetLastError());
 
     old_parent = SetParent(window1, window2);
-    ok(!!old_parent, "Failed to make window1 a child of window2, last error %#x.\n", GetLastError());
+    ok(!!old_parent, "Failed to make window1 a child of window2, last error %#lx.\n", GetLastError());
 
     interval = pwglGetSwapIntervalEXT();
     ok(interval == 0, "Expected swap interval 0, got %d\n", interval);
 
     ret = wglDeleteContext(ctx1);
-    ok(ret, "Failed to delete GL context, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to delete GL context, last error %#lx.\n", GetLastError());
     ret = wglDeleteContext(ctx2);
-    ok(ret, "Failed to delete GL context, last error %#x.\n", GetLastError());
+    ok(ret, "Failed to delete GL context, last error %#lx.\n", GetLastError());
 
     ReleaseDC(window1, dc1);
     DestroyWindow(window1);
@@ -1846,7 +1846,7 @@ START_TEST(opengl)
 
     hwnd = CreateWindowA("static", "Title", WS_OVERLAPPEDWINDOW, 10, 10, 200, 200, NULL, NULL,
             NULL, NULL);
-    ok(hwnd != NULL, "err: %d\n", GetLastError());
+    ok(hwnd != NULL, "err: %ld\n", GetLastError());
     if (hwnd)
     {
         HDC hdc;
@@ -1869,10 +1869,10 @@ START_TEST(opengl)
         hglrc = wglCreateContext(hdc);
         ok(hglrc == NULL, "wglCreateContext should fail when no pixel format has been set, but it passed\n");
         error = GetLastError();
-        ok(error == ERROR_INVALID_PIXEL_FORMAT, "expected ERROR_INVALID_PIXEL_FORMAT for wglCreateContext without a pixelformat set, but received %#x\n", error);
+        ok(error == ERROR_INVALID_PIXEL_FORMAT, "expected ERROR_INVALID_PIXEL_FORMAT for wglCreateContext without a pixelformat set, but received %#lx\n", error);
 
         res = SetPixelFormat(hdc, iPixelFormat, &pfd);
-        ok(res, "SetPixelformat failed: %x\n", GetLastError());
+        ok(res, "SetPixelformat failed: %lx\n", GetLastError());
 
         test_bitmap_rendering( TRUE );
         test_bitmap_rendering( FALSE );
