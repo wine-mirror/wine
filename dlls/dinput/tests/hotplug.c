@@ -45,7 +45,8 @@
 #define WIDL_using_Windows_Foundation_Collections
 #include "windows.foundation.h"
 #define WIDL_using_Windows_Gaming_Input
-#include "windows.gaming.input.h"
+#define WIDL_using_Windows_Gaming_Input_Custom
+#include "windows.gaming.input.custom.h"
 
 #define MAKE_FUNC(f) static typeof(f) *p ## f
 MAKE_FUNC( RoGetActivationFactory );
@@ -527,6 +528,104 @@ static const IEventHandler_RawGameControllerVtbl controller_handler_vtbl =
 static struct controller_handler controller_removed = {{&controller_handler_vtbl}};
 static struct controller_handler controller_added = {{&controller_handler_vtbl}};
 
+struct custom_factory
+{
+    ICustomGameControllerFactory ICustomGameControllerFactory_iface;
+    BOOL create_controller_called;
+};
+
+static inline struct custom_factory *impl_from_ICustomGameControllerFactory( ICustomGameControllerFactory *iface )
+{
+    return CONTAINING_RECORD( iface, struct custom_factory, ICustomGameControllerFactory_iface );
+}
+
+static HRESULT WINAPI custom_factory_QueryInterface( ICustomGameControllerFactory *iface, REFIID iid, void **out )
+{
+    struct custom_factory *impl = impl_from_ICustomGameControllerFactory( iface );
+
+    if (IsEqualGUID( iid, &IID_IUnknown ) ||
+        IsEqualGUID( iid, &IID_IInspectable ) ||
+        IsEqualGUID( iid, &IID_IAgileObject ) ||
+        IsEqualGUID( iid, &IID_ICustomGameControllerFactory ))
+    {
+        IInspectable_AddRef( (*out = &impl->ICustomGameControllerFactory_iface) );
+        return S_OK;
+    }
+
+    ok( 0, "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI custom_factory_AddRef( ICustomGameControllerFactory *iface )
+{
+    return 2;
+}
+
+static ULONG WINAPI custom_factory_Release( ICustomGameControllerFactory *iface )
+{
+    return 1;
+}
+
+static HRESULT WINAPI custom_factory_GetIids( ICustomGameControllerFactory *iface, ULONG *iid_count, IID **iids )
+{
+    ok( 0, "unexpected call\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI custom_factory_GetRuntimeClassName( ICustomGameControllerFactory *iface, HSTRING *class_name )
+{
+    ok( 0, "unexpected call\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI custom_factory_GetTrustLevel( ICustomGameControllerFactory *iface, TrustLevel *trust_level )
+{
+    ok( 0, "unexpected call\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI custom_factory_CreateGameController( ICustomGameControllerFactory *iface, IGameControllerProvider *provider,
+                                                           IInspectable **value )
+{
+    struct custom_factory *impl = impl_from_ICustomGameControllerFactory( iface );
+
+    ok( !controller_added.invoked, "controller added handler invoked\n" );
+    ok( !impl->create_controller_called, "unexpected call\n" );
+    impl->create_controller_called = TRUE;
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI custom_factory_OnGameControllerAdded( ICustomGameControllerFactory *iface, IGameController *value )
+{
+    ok( 0, "unexpected call\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI custom_factory_OnGameControllerRemoved( ICustomGameControllerFactory *iface, IGameController *value )
+{
+    ok( 0, "unexpected call\n" );
+    return E_NOTIMPL;
+}
+
+static const struct ICustomGameControllerFactoryVtbl custom_factory_vtbl =
+{
+    custom_factory_QueryInterface,
+    custom_factory_AddRef,
+    custom_factory_Release,
+    /* IInspectable methods */
+    custom_factory_GetIids,
+    custom_factory_GetRuntimeClassName,
+    custom_factory_GetTrustLevel,
+    /* ICustomGameControllerFactory methods */
+    custom_factory_CreateGameController,
+    custom_factory_OnGameControllerAdded,
+    custom_factory_OnGameControllerRemoved,
+};
+
+static struct custom_factory custom_factory = {{&custom_factory_vtbl}};
+
 static LRESULT CALLBACK windows_gaming_input_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     if (msg == WM_DEVICECHANGE)
@@ -552,6 +651,7 @@ static LRESULT CALLBACK windows_gaming_input_wndproc( HWND hwnd, UINT msg, WPARA
 
 static void test_windows_gaming_input(void)
 {
+    static const WCHAR *manager_class_name = RuntimeClass_Windows_Gaming_Input_Custom_GameControllerFactoryManager;
     static const WCHAR *class_name = RuntimeClass_Windows_Gaming_Input_RawGameController;
     DEV_BROADCAST_DEVICEINTERFACE_A iface_filter_a =
     {
@@ -566,6 +666,10 @@ static void test_windows_gaming_input(void)
         .lpszClassName = L"devnotify",
         .lpfnWndProc = windows_gaming_input_wndproc,
     };
+    IGameControllerFactoryManagerStatics2 *manager_statics2;
+    IRawGameController *raw_controller, *tmp_raw_controller;
+    IGameController *game_controller, *tmp_game_controller;
+    IGameControllerFactoryManagerStatics *manager_statics;
     EventRegistrationToken controller_removed_token;
     IVectorView_RawGameController *controller_view;
     EventRegistrationToken controller_added_token;
@@ -594,10 +698,23 @@ static void test_windows_gaming_input(void)
         return;
     }
 
+    hr = pWindowsCreateString( manager_class_name, wcslen( manager_class_name ), &str );
+    ok( hr == S_OK, "WindowsCreateString failed, hr %#lx\n", hr );
+    hr = pRoGetActivationFactory( str, &IID_IGameControllerFactoryManagerStatics, (void **)&manager_statics );
+    ok( hr == S_OK, "RoGetActivationFactory failed, hr %#lx\n", hr );
+    hr = pRoGetActivationFactory( str, &IID_IGameControllerFactoryManagerStatics2, (void **)&manager_statics2 );
+    ok( hr == S_OK, "RoGetActivationFactory failed, hr %#lx\n", hr );
+    pWindowsDeleteString( str );
+
     controller_added.event = CreateEventW( NULL, FALSE, FALSE, NULL );
     ok( !!controller_added.event, "CreateEventW failed, error %lu\n", GetLastError() );
     controller_removed.event = CreateEventW( NULL, FALSE, FALSE, NULL );
     ok( !!controller_removed.event, "CreateEventW failed, error %lu\n", GetLastError() );
+
+    hr = IGameControllerFactoryManagerStatics_RegisterCustomFactoryForHardwareId( manager_statics, &custom_factory.ICustomGameControllerFactory_iface,
+                                                                                  LOWORD(EXPECT_VIDPID), HIWORD(EXPECT_VIDPID) );
+    todo_wine
+    ok( hr == S_OK, "RegisterCustomFactoryForHardwareId returned %#lx\n", hr );
 
     hr = IRawGameControllerStatics_add_RawGameControllerAdded( statics, &controller_added.IEventHandler_RawGameController_iface,
                                                                &controller_added_token );
@@ -633,6 +750,7 @@ static void test_windows_gaming_input(void)
 
     ok( controller_added.invoked, "controller added handler not invoked\n" );
     ok( !controller_removed.invoked, "controller removed handler invoked\n" );
+    ok( custom_factory.create_controller_called, "CreateGameController not called\n" );
 
     hr = IVectorView_RawGameController_get_Size( controller_view, &size );
     ok( hr == S_OK, "get_Size returned %#lx\n", hr );
@@ -645,6 +763,23 @@ static void test_windows_gaming_input(void)
     hr = IVectorView_RawGameController_get_Size( controller_view, &size );
     ok( hr == S_OK, "get_Size returned %#lx\n", hr );
     ok( size == 1, "got size %u\n", size );
+    hr = IVectorView_RawGameController_GetAt( controller_view, 0, &raw_controller );
+    ok( hr == S_OK, "GetAt returned %#lx\n", hr );
+    hr = IRawGameController_QueryInterface( raw_controller, &IID_IGameController, (void **)&game_controller );
+    ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
+
+    hr = IGameControllerFactoryManagerStatics2_TryGetFactoryControllerFromGameController( manager_statics2,
+            &custom_factory.ICustomGameControllerFactory_iface, game_controller, &tmp_game_controller );
+    ok( hr == S_OK, "TryGetFactoryControllerFromGameController returned %#lx\n", hr );
+    ok( !tmp_game_controller, "got controller %p\n", tmp_game_controller );
+
+    hr = IRawGameControllerStatics_FromGameController( statics, game_controller, &tmp_raw_controller );
+    ok( hr == S_OK, "FromGameController returned %#lx\n", hr );
+    ok( tmp_raw_controller == raw_controller, "got controller %p\n", tmp_raw_controller );
+    IRawGameController_Release( tmp_raw_controller );
+
+    IGameController_Release( game_controller );
+    IRawGameController_Release( raw_controller );
 
     SetEvent( stop_event );
     wait_for_events( 1, &controller_removed.event, INFINITE );
@@ -672,8 +807,10 @@ static void test_windows_gaming_input(void)
     ok( hr == S_OK, "remove_RawGameControllerRemoved returned %#lx\n", hr );
 
     IVectorView_RawGameController_Release( controller_view );
-    IRawGameControllerStatics_Release( statics );
 
+    IGameControllerFactoryManagerStatics2_Release( manager_statics2 );
+    IGameControllerFactoryManagerStatics_Release( manager_statics );
+    IRawGameControllerStatics_Release( statics );
     WaitForSingleObject( thread, INFINITE );
     CloseHandle( thread );
     CloseHandle( stop_event );
