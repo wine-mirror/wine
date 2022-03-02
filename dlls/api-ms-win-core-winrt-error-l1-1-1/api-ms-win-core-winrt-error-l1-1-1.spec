@@ -13,7 +13,7 @@
 @ stub RoReportFailedDelegate
 @ stub RoReportUnhandledError
 @ stub RoResolveRestrictedErrorInfoReference
-@ stub RoSetErrorReportingFlags
+@ stdcall RoSetErrorReportingFlags(long) combase.RoSetErrorReportingFlags
 @ stub RoTransformError
 @ stub RoTransformErrorW
 @ stub SetRestrictedErrorInfo

@@ -5,7 +5,7 @@
 @ stdcall RoOriginateError(long ptr) combase.RoOriginateError
 @ stub RoOriginateErrorW
 @ stub RoResolveRestrictedErrorInfoReference
-@ stub RoSetErrorReportingFlags
+@ stdcall RoSetErrorReportingFlags(long) combase.RoSetErrorReportingFlags
 @ stub RoTransformError
 @ stub RoTransformErrorW
 @ stub SetRestrictedErrorInfo
