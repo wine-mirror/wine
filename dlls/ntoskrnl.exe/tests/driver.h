@@ -55,8 +55,8 @@ struct test_data
     int running_under_wine;
     int winetest_report_success;
     int winetest_debug;
-    int failures;
-    int todo_failures;
+    LONG failures;
+    LONG todo_failures;
 };
 
 struct main_test_input
