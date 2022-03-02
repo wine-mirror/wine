@@ -312,7 +312,7 @@
 @ stub RoReportUnhandledError
 @ stub RoResolveRestrictedErrorInfoReference
 @ stub RoRevokeActivationFactories
-@ stub RoSetErrorReportingFlags
+@ stdcall RoSetErrorReportingFlags(long)
 @ stub RoTransformError
 @ stub RoTransformErrorW
 @ stdcall RoUninitialize()

@@ -23,8 +23,18 @@
 #include <restrictederrorinfo.h>
 #include <rpc.h>
 
+typedef enum
+{
+    RO_ERROR_REPORTING_NONE                 = 0x0,
+    RO_ERROR_REPORTING_SUPPRESSEXCEPTIONS   = 0x1,
+    RO_ERROR_REPORTING_FORCEEXCEPTIONS      = 0x2,
+    RO_ERROR_REPORTING_USESETERRORINFO      = 0x4,
+    RO_ERROR_REPORTING_SUPPRESSSETERRORINFO = 0x8,
+} RO_ERROR_REPORTING_FLAGS;
+
 HRESULT WINAPI GetRestrictedErrorInfo(IRestrictedErrorInfo **info);
 BOOL    WINAPI RoOriginateError(HRESULT error, HSTRING message);
 BOOL    WINAPI RoOriginateLanguageException(HRESULT error, HSTRING message, IUnknown *language_exception);
+HRESULT WINAPI RoSetErrorReportingFlags(UINT32 flags);
 
 #endif /* _ROERROR_H */
