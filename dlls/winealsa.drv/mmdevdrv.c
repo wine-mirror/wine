@@ -1038,7 +1038,7 @@ static HRESULT WINAPI AudioClient_SetEventHandle(IAudioClient3 *iface,
         HANDLE event)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
-    struct alsa_stream *stream = This->stream;
+    struct set_event_handle_params params;
 
     TRACE("(%p)->(%p)\n", This, event);
 
@@ -1048,24 +1048,12 @@ static HRESULT WINAPI AudioClient_SetEventHandle(IAudioClient3 *iface,
     if(!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
 
-    alsa_lock(stream);
+    params.stream = This->stream;
+    params.event = event;
 
-    if(!(stream->flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK)){
-        alsa_unlock(stream);
-        return AUDCLNT_E_EVENTHANDLE_NOT_EXPECTED;
-    }
+    ALSA_CALL(set_event_handle, &params);
 
-    if (stream->event){
-        alsa_unlock(stream);
-        FIXME("called twice\n");
-        return HRESULT_FROM_WIN32(ERROR_INVALID_NAME);
-    }
-
-    stream->event = event;
-
-    alsa_unlock(stream);
-
-    return S_OK;
+    return params.result;
 }
 
 static HRESULT WINAPI AudioClient_GetService(IAudioClient3 *iface, REFIID riid,

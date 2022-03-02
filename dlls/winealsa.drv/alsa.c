@@ -1889,6 +1889,26 @@ static NTSTATUS get_current_padding(void *args)
     return alsa_unlock_result(stream, &params->result, S_OK);
 }
 
+static NTSTATUS set_event_handle(void *args)
+{
+    struct set_event_handle_params *params = args;
+    struct alsa_stream *stream = params->stream;
+
+    alsa_lock(stream);
+
+    if(!(stream->flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK))
+        return alsa_unlock_result(stream, &params->result, AUDCLNT_E_EVENTHANDLE_NOT_EXPECTED);
+
+    if (stream->event){
+        FIXME("called twice\n");
+        return alsa_unlock_result(stream, &params->result, HRESULT_FROM_WIN32(ERROR_INVALID_NAME));
+    }
+
+    stream->event = params->event;
+
+    return alsa_unlock_result(stream, &params->result, S_OK);
+}
+
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     get_endpoint_ids,
@@ -1903,4 +1923,5 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     get_buffer_size,
     get_latency,
     get_current_padding,
+    set_event_handle,
 };

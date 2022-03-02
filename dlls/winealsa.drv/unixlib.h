@@ -153,6 +153,13 @@ struct get_current_padding_params
     UINT32 *padding;
 };
 
+struct set_event_handle_params
+{
+    struct alsa_stream *stream;
+    HANDLE event;
+    HRESULT result;
+};
+
 enum alsa_funcs
 {
     alsa_get_endpoint_ids,
@@ -167,6 +174,7 @@ enum alsa_funcs
     alsa_get_buffer_size,
     alsa_get_latency,
     alsa_get_current_padding,
+    alsa_set_event_handle,
 };
 
 extern unixlib_handle_t alsa_handle;
