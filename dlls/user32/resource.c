@@ -46,7 +46,7 @@ struct accelerator
 {
     struct user_object obj;
     unsigned int       count;
-    PE_ACCEL           table[1];
+    ACCEL              table[1];
 };
 
 /**********************************************************************
@@ -55,19 +55,25 @@ struct accelerator
 HACCEL WINAPI LoadAcceleratorsW(HINSTANCE instance, LPCWSTR name)
 {
     struct accelerator *accel;
-    const PE_ACCEL *table;
+    const PE_ACCEL *pe_table;
+    unsigned int i;
     HRSRC rsrc;
     HACCEL handle;
     DWORD count;
 
     if (!(rsrc = FindResourceW( instance, name, (LPWSTR)RT_ACCELERATOR ))) return 0;
-    table = LoadResource( instance, rsrc );
-    count = SizeofResource( instance, rsrc ) / sizeof(*table);
+    pe_table = LoadResource( instance, rsrc );
+    count = SizeofResource( instance, rsrc ) / sizeof(*pe_table);
     if (!count) return 0;
     accel = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET( struct accelerator, table[count] ));
     if (!accel) return 0;
     accel->count = count;
-    memcpy( accel->table, table, count * sizeof(*table) );
+    for (i = 0; i < count; i++)
+    {
+        accel->table[i].fVirt = pe_table[i].fVirt;
+        accel->table[i].key   = pe_table[i].key;
+        accel->table[i].cmd   = pe_table[i].cmd;
+    }
     if (!(handle = alloc_user_handle( &accel->obj, NTUSER_OBJ_ACCEL )))
         HeapFree( GetProcessHeap(), 0, accel );
     TRACE_(accel)("%p %s returning %p\n", instance, debugstr_w(name), handle );
@@ -185,7 +191,6 @@ HACCEL WINAPI CreateAcceleratorTableW(LPACCEL lpaccel, INT count)
 {
     struct accelerator *accel;
     HACCEL handle;
-    int i;
 
     if (count < 1)
     {
@@ -195,12 +200,8 @@ HACCEL WINAPI CreateAcceleratorTableW(LPACCEL lpaccel, INT count)
     accel = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET( struct accelerator, table[count] ));
     if (!accel) return 0;
     accel->count = count;
-    for (i = 0; i < count; i++)
-    {
-        accel->table[i].fVirt = lpaccel[i].fVirt;
-        accel->table[i].key   = lpaccel[i].key;
-        accel->table[i].cmd   = lpaccel[i].cmd;
-    }
+    memcpy( accel->table, lpaccel, count * sizeof(*lpaccel) );
+
     if (!(handle = alloc_user_handle( &accel->obj, NTUSER_OBJ_ACCEL )))
         HeapFree( GetProcessHeap(), 0, accel );
     TRACE_(accel)("returning %p\n", handle );
