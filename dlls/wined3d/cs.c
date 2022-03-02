@@ -3284,12 +3284,13 @@ static void *wined3d_cs_mt_require_space(struct wined3d_device_context *context,
 static void wined3d_cs_mt_finish(struct wined3d_device_context *context, enum wined3d_cs_queue_id queue_id)
 {
     struct wined3d_cs *cs = wined3d_cs_from_context(context);
+    unsigned int spin_count = 0;
 
     if (cs->thread_id == GetCurrentThreadId())
         return wined3d_cs_st_finish(context, queue_id);
 
     while (cs->queue[queue_id].head != *(volatile ULONG *)&cs->queue[queue_id].tail)
-        YieldProcessor();
+        wined3d_pause(&spin_count);
 }
 
 static const struct wined3d_device_context_ops wined3d_cs_mt_ops =

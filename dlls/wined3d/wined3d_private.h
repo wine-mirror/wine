@@ -3566,6 +3566,8 @@ enum wined3d_cs_queue_id
 #define WINED3D_CS_SPIN_COUNT           2000u
 /* How long to wait for commands when there are active queries, in µs. */
 #define WINED3D_CS_COMMAND_WAIT_WITH_QUERIES_TIMEOUT 100
+/* How long to wait for the CS from the client thread, in µs. */
+#define WINED3D_CS_CLIENT_WAIT_TIMEOUT  0
 #define WINED3D_CS_QUEUE_MASK           (WINED3D_CS_QUEUE_SIZE - 1)
 
 C_ASSERT(!(WINED3D_CS_QUEUE_SIZE & (WINED3D_CS_QUEUE_SIZE - 1)));
@@ -3758,6 +3760,16 @@ static inline void wined3d_resource_reference(struct wined3d_resource *resource)
     resource->access_time = cs->queue[WINED3D_CS_QUEUE_DEFAULT].head;
 }
 
+#define WINED3D_PAUSE_SPIN_COUNT 200u
+
+static inline void wined3d_pause(unsigned int *spin_count)
+{
+    static const LARGE_INTEGER timeout = {.QuadPart = WINED3D_CS_CLIENT_WAIT_TIMEOUT * -10};
+
+    if (++*spin_count >= WINED3D_PAUSE_SPIN_COUNT)
+        NtDelayExecution(FALSE, &timeout);
+}
+
 static inline BOOL wined3d_ge_wrap(ULONG x, ULONG y)
 {
     return (x - y) < UINT_MAX / 2;
@@ -3768,6 +3780,7 @@ static inline void wined3d_resource_wait_idle(const struct wined3d_resource *res
 {
     const struct wined3d_cs *cs = resource->device->cs;
     ULONG access_time, tail, head;
+    unsigned int spin_count = 0;
 
     if (!cs->thread || cs->thread_id == GetCurrentThreadId())
         return;
@@ -3806,7 +3819,7 @@ static inline void wined3d_resource_wait_idle(const struct wined3d_resource *res
         if (!wined3d_ge_wrap(access_time, tail) && access_time != tail)
             break;
 
-        YieldProcessor();
+        wined3d_pause(&spin_count);
     }
 }
 
