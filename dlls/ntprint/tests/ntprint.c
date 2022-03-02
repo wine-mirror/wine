@@ -67,7 +67,7 @@ static void test_PSetupCreateMonitorInfo(VOID)
 {
     HANDLE  mi;
     WCHAR buffer[1024] = {'\\','\\'};
-    UINT len = ARRAY_SIZE(buffer) - 2;
+    DWORD len = ARRAY_SIZE(buffer) - 2;
     GetComputerNameW(buffer + 2, &len);
 
     SetLastError(0xdeadbeef);
