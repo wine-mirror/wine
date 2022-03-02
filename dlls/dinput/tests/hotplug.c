@@ -41,6 +41,7 @@
 
 #include "initguid.h"
 #include "roapi.h"
+#include "weakreference.h"
 #define WIDL_using_Windows_Foundation
 #define WIDL_using_Windows_Foundation_Collections
 #include "windows.foundation.h"
@@ -93,6 +94,19 @@ static DWORD wait_for_events( DWORD count, HANDLE *events, DWORD timeout )
 
     ok( ret == WAIT_TIMEOUT, "MsgWaitForMultipleObjects returned %#lx\n", ret );
     return ret;
+}
+
+#define check_interface( a, b, c ) check_interface_( __LINE__, a, b, c )
+static void check_interface_( unsigned int line, void *iface_ptr, REFIID iid, BOOL supported )
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected;
+    IUnknown *unk;
+
+    expected = supported ? S_OK : E_NOINTERFACE;
+    hr = IUnknown_QueryInterface( iface, iid, (void **)&unk );
+    ok_ (__FILE__, line)( hr == expected, "got hr %#lx, expected %#lx.\n", hr, expected );
+    if (SUCCEEDED(hr)) IUnknown_Release( unk );
 }
 
 static BOOL test_input_lost( DWORD version )
@@ -528,10 +542,246 @@ static const IEventHandler_RawGameControllerVtbl controller_handler_vtbl =
 static struct controller_handler controller_removed = {{&controller_handler_vtbl}};
 static struct controller_handler controller_added = {{&controller_handler_vtbl}};
 
+DEFINE_GUID( IID_IGameControllerImpl, 0x06e58977, 0x7684, 0x4dc5, 0xba, 0xd1, 0xcd, 0xa5, 0x2a, 0x4a, 0xa0, 0x6d );
+typedef IInspectable IGameControllerImpl;
+
+#define DEFINE_IINSPECTABLE_OUTER( pfx, iface_type, impl_type, outer_iface )                       \
+    static inline impl_type *impl_from_##iface_type( iface_type *iface )                           \
+    {                                                                                              \
+        return CONTAINING_RECORD( iface, impl_type, iface_type##_iface );                          \
+    }                                                                                              \
+    static HRESULT WINAPI pfx##_QueryInterface( iface_type *iface, REFIID iid, void **out )        \
+    {                                                                                              \
+        impl_type *impl = impl_from_##iface_type( iface );                                         \
+        return IInspectable_QueryInterface( (IInspectable *)impl->outer_iface, iid, out );         \
+    }                                                                                              \
+    static ULONG WINAPI pfx##_AddRef( iface_type *iface )                                          \
+    {                                                                                              \
+        impl_type *impl = impl_from_##iface_type( iface );                                         \
+        return IInspectable_AddRef( (IInspectable *)impl->outer_iface );                           \
+    }                                                                                              \
+    static ULONG WINAPI pfx##_Release( iface_type *iface )                                         \
+    {                                                                                              \
+        impl_type *impl = impl_from_##iface_type( iface );                                         \
+        return IInspectable_Release( (IInspectable *)impl->outer_iface );                          \
+    }                                                                                              \
+    static HRESULT WINAPI pfx##_GetIids( iface_type *iface, ULONG *iid_count, IID **iids )         \
+    {                                                                                              \
+        impl_type *impl = impl_from_##iface_type( iface );                                         \
+        return IInspectable_GetIids( (IInspectable *)impl->outer_iface, iid_count, iids );         \
+    }                                                                                              \
+    static HRESULT WINAPI pfx##_GetRuntimeClassName( iface_type *iface, HSTRING *class_name )      \
+    {                                                                                              \
+        impl_type *impl = impl_from_##iface_type( iface );                                         \
+        return IInspectable_GetRuntimeClassName( (IInspectable *)impl->outer_iface, class_name );  \
+    }                                                                                              \
+    static HRESULT WINAPI pfx##_GetTrustLevel( iface_type *iface, TrustLevel *trust_level )        \
+    {                                                                                              \
+        impl_type *impl = impl_from_##iface_type( iface );                                         \
+        return IInspectable_GetTrustLevel( (IInspectable *)impl->outer_iface, trust_level );       \
+    }
+
+struct custom_controller
+{
+    IGameControllerImpl IGameControllerImpl_iface;
+    IGameControllerInputSink IGameControllerInputSink_iface;
+    IHidGameControllerInputSink IHidGameControllerInputSink_iface;
+    IGameController *IGameController_outer;
+    LONG ref;
+
+    BOOL initialize_called;
+    BOOL on_input_resumed_called;
+    BOOL on_input_suspended_called;
+    BOOL raw_game_controller_queried;
+};
+
+static inline struct custom_controller *impl_from_IGameControllerImpl( IGameControllerImpl *iface )
+{
+    return CONTAINING_RECORD( iface, struct custom_controller, IGameControllerImpl_iface );
+}
+
+static HRESULT WINAPI controller_QueryInterface( IGameControllerImpl *iface, REFIID iid, void **out )
+{
+    struct custom_controller *impl = impl_from_IGameControllerImpl( iface );
+
+    if (IsEqualGUID( iid, &IID_IUnknown ) ||
+        IsEqualGUID( iid, &IID_IInspectable ) ||
+        IsEqualGUID( iid, &IID_IGameControllerImpl ))
+    {
+        IInspectable_AddRef( (*out = &impl->IGameControllerImpl_iface) );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IGameControllerInputSink ))
+    {
+        IInspectable_AddRef( (*out = &impl->IGameControllerInputSink_iface) );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IHidGameControllerInputSink ))
+    {
+        IInspectable_AddRef( (*out = &impl->IHidGameControllerInputSink_iface) );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IRawGameController ))
+    {
+        impl->raw_game_controller_queried = TRUE;
+        *out = NULL;
+        return E_NOINTERFACE;
+    }
+
+    ok( 0, "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI controller_AddRef( IGameControllerImpl *iface )
+{
+    struct custom_controller *impl = impl_from_IGameControllerImpl( iface );
+    return InterlockedIncrement( &impl->ref );
+}
+
+static ULONG WINAPI controller_Release( IGameControllerImpl *iface )
+{
+    struct custom_controller *impl = impl_from_IGameControllerImpl( iface );
+    return InterlockedDecrement( &impl->ref );
+}
+
+static HRESULT WINAPI controller_GetIids( IGameControllerImpl *iface, ULONG *iid_count, IID **iids )
+{
+    ok( 0, "unexpected call\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI controller_GetRuntimeClassName( IGameControllerImpl *iface, HSTRING *class_name )
+{
+    ok( 0, "unexpected call\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI controller_GetTrustLevel( IGameControllerImpl *iface, TrustLevel *trust_level )
+{
+    ok( 0, "unexpected call\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI controller_Initialize( IGameControllerImpl *iface, IGameController *outer, IGameControllerProvider *provider )
+{
+    struct custom_controller *impl = impl_from_IGameControllerImpl( iface );
+
+    ok( !impl->initialize_called, "Initialize already called\n" );
+    impl->initialize_called = TRUE;
+
+    check_interface( outer, &IID_IUnknown, TRUE );
+    check_interface( outer, &IID_IInspectable, TRUE );
+    check_interface( outer, &IID_IAgileObject, TRUE );
+    check_interface( outer, &IID_IWeakReferenceSource, TRUE );
+    check_interface( outer, &IID_IGameController, TRUE );
+    impl->IGameController_outer = outer;
+
+    check_interface( provider, &IID_IUnknown, TRUE );
+    check_interface( provider, &IID_IInspectable, TRUE );
+    check_interface( provider, &IID_IAgileObject, TRUE );
+    check_interface( provider, &IID_IWeakReferenceSource, TRUE );
+    check_interface( provider, &IID_IGameControllerProvider, TRUE );
+    check_interface( provider, &IID_IHidGameControllerProvider, TRUE );
+
+    return S_OK;
+}
+
+static const void *controller_vtbl[] =
+{
+    controller_QueryInterface,
+    controller_AddRef,
+    controller_Release,
+    /* IInspectable methods */
+    controller_GetIids,
+    controller_GetRuntimeClassName,
+    controller_GetTrustLevel,
+    /* IGameControllerImpl methods */
+    controller_Initialize,
+};
+
+DEFINE_IINSPECTABLE_OUTER( input_sink, IGameControllerInputSink, struct custom_controller, IGameController_outer )
+
+static HRESULT WINAPI input_sink_OnInputResumed( IGameControllerInputSink *iface, UINT64 timestamp )
+{
+    struct custom_controller *impl = impl_from_IGameControllerInputSink( iface );
+
+    trace( "iface %p, timestamp %I64u\n", iface, timestamp );
+
+    ok( !controller_added.invoked, "controller added handler invoked\n" );
+    ok( !impl->on_input_resumed_called, "OnInputResumed already called\n" );
+    impl->on_input_resumed_called = TRUE;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI input_sink_OnInputSuspended( IGameControllerInputSink *iface, UINT64 timestamp )
+{
+    struct custom_controller *impl = impl_from_IGameControllerInputSink( iface );
+
+    trace( "iface %p, timestamp %I64u\n", iface, timestamp );
+
+    ok( !controller_removed.invoked, "controller removed handler invoked\n" );
+    ok( !impl->on_input_suspended_called, "OnInputSuspended already called\n" );
+    impl->on_input_suspended_called = TRUE;
+
+    return S_OK;
+}
+
+static const struct IGameControllerInputSinkVtbl input_sink_vtbl =
+{
+    input_sink_QueryInterface,
+    input_sink_AddRef,
+    input_sink_Release,
+    /* IInspectable methods */
+    input_sink_GetIids,
+    input_sink_GetRuntimeClassName,
+    input_sink_GetTrustLevel,
+    /* IGameControllerInputSink methods */
+    input_sink_OnInputResumed,
+    input_sink_OnInputSuspended,
+};
+
+DEFINE_IINSPECTABLE_OUTER( hid_sink, IHidGameControllerInputSink, struct custom_controller, IGameController_outer )
+
+static HRESULT WINAPI hid_sink_OnInputReportReceived( IHidGameControllerInputSink *iface, UINT64 timestamp, BYTE id, UINT32 report_len, BYTE *report_buf )
+{
+    ok( 0, "unexpected call\n" );
+    return S_OK;
+}
+
+static const struct IHidGameControllerInputSinkVtbl hid_sink_vtbl =
+{
+    hid_sink_QueryInterface,
+    hid_sink_AddRef,
+    hid_sink_Release,
+    /* IInspectable methods */
+    hid_sink_GetIids,
+    hid_sink_GetRuntimeClassName,
+    hid_sink_GetTrustLevel,
+    /* IGameControllerInputSink methods */
+    hid_sink_OnInputReportReceived,
+};
+
+static struct custom_controller custom_controller =
+{
+    {(IInspectableVtbl *)controller_vtbl},
+    {&input_sink_vtbl},
+    {&hid_sink_vtbl},
+};
+
 struct custom_factory
 {
     ICustomGameControllerFactory ICustomGameControllerFactory_iface;
     BOOL create_controller_called;
+    BOOL create_controller;
+    BOOL on_game_controller_added_called;
+    HANDLE added_event;
+    BOOL on_game_controller_removed_called;
+    HANDLE removed_event;
 };
 
 static inline struct custom_factory *impl_from_ICustomGameControllerFactory( ICustomGameControllerFactory *iface )
@@ -590,23 +840,60 @@ static HRESULT WINAPI custom_factory_CreateGameController( ICustomGameController
 {
     struct custom_factory *impl = impl_from_ICustomGameControllerFactory( iface );
 
+    trace( "iface %p, provider %p, value %p\n", iface, provider, value );
+
     ok( !controller_added.invoked, "controller added handler invoked\n" );
     ok( !impl->create_controller_called, "unexpected call\n" );
     impl->create_controller_called = TRUE;
+    if (!impl->create_controller) return E_NOTIMPL;
 
-    return E_NOTIMPL;
+    check_interface( provider, &IID_IUnknown, TRUE );
+    check_interface( provider, &IID_IInspectable, TRUE );
+    check_interface( provider, &IID_IAgileObject, TRUE );
+    check_interface( provider, &IID_IGameControllerProvider, TRUE );
+    check_interface( provider, &IID_IHidGameControllerProvider, TRUE );
+    check_interface( provider, &IID_IXusbGameControllerProvider, FALSE );
+    check_interface( provider, &IID_IGameControllerInputSink, FALSE );
+    custom_controller.ref = 1;
+
+    *value = &custom_controller.IGameControllerImpl_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI custom_factory_OnGameControllerAdded( ICustomGameControllerFactory *iface, IGameController *value )
 {
-    ok( 0, "unexpected call\n" );
-    return E_NOTIMPL;
+    struct custom_factory *impl = impl_from_ICustomGameControllerFactory( iface );
+
+    trace( "iface %p, value %p\n", iface, value );
+
+    ok( controller_added.invoked, "controller added handler not invoked\n" );
+    ok( impl->create_controller_called, "CreateGameController not called\n" );
+    ok( impl->create_controller, "unexpected call\n" );
+    ok( custom_controller.initialize_called, "Initialize not called\n" );
+    ok( custom_controller.on_input_resumed_called, "OnInputResumed not called\n" );
+    ok( !custom_controller.on_input_suspended_called, "OnInputSuspended not called\n" );
+    ok( !impl->on_game_controller_added_called, "OnGameControllerAdded already called\n" );
+    impl->on_game_controller_added_called = TRUE;
+    SetEvent( impl->added_event );
+
+    return S_OK;
 }
 
 static HRESULT WINAPI custom_factory_OnGameControllerRemoved( ICustomGameControllerFactory *iface, IGameController *value )
 {
-    ok( 0, "unexpected call\n" );
-    return E_NOTIMPL;
+    struct custom_factory *impl = impl_from_ICustomGameControllerFactory( iface );
+
+    trace( "iface %p, value %p\n", iface, value );
+
+    ok( controller_removed.invoked, "controller removed handler invoked\n" );
+    ok( custom_controller.on_input_suspended_called, "OnInputSuspended not called\n" );
+    ok( impl->create_controller, "unexpected call\n" );
+    ok( impl->on_game_controller_added_called, "OnGameControllerAdded already called\n" );
+    ok( !impl->on_game_controller_removed_called, "OnGameControllerRemoved already called\n" );
+    impl->on_game_controller_removed_called = TRUE;
+    SetEvent( impl->removed_event );
+
+    return S_OK;
 }
 
 static const struct ICustomGameControllerFactoryVtbl custom_factory_vtbl =
@@ -675,6 +962,7 @@ static void test_windows_gaming_input(void)
     EventRegistrationToken controller_added_token;
     IRawGameControllerStatics *statics;
     HANDLE hwnd, thread, stop_event;
+    IInspectable *tmp_inspectable;
     HDEVNOTIFY devnotify;
     HSTRING str;
     UINT32 size;
@@ -799,6 +1087,75 @@ static void test_windows_gaming_input(void)
     ok( hr == S_OK, "get_Size returned %#lx\n", hr );
     ok( size == 0, "got size %u\n", size );
 
+    IVectorView_RawGameController_Release( controller_view );
+
+    WaitForSingleObject( thread, INFINITE );
+    CloseHandle( thread );
+    while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
+
+    device_change_count = 0;
+    device_change_expect = 2;
+    custom_factory.create_controller = TRUE;
+    custom_factory.create_controller_called = FALSE;
+    ResetEvent( controller_added.event );
+    controller_added.invoked = FALSE;
+    ResetEvent( controller_removed.event );
+    controller_removed.invoked = FALSE;
+    ResetEvent( stop_event );
+
+    custom_factory.added_event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok( !!custom_factory.added_event, "CreateEventW failed, error %lu\n", GetLastError() );
+    custom_factory.removed_event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok( !!custom_factory.removed_event, "CreateEventW failed, error %lu\n", GetLastError() );
+
+    thread = CreateThread( NULL, 0, dinput_test_device_thread, stop_event, 0, NULL );
+    ok( !!thread, "CreateThread failed, error %lu\n", GetLastError() );
+    wait_for_events( 1, &controller_added.event, INFINITE );
+    wait_for_events( 1, &custom_factory.added_event, INFINITE );
+    hr = IRawGameControllerStatics_get_RawGameControllers( statics, &controller_view );
+    ok( hr == S_OK, "get_RawGameControllers returned %#lx\n", hr );
+    hr = IVectorView_RawGameController_GetAt( controller_view, 0, &raw_controller );
+    ok( hr == S_OK, "GetAt returned %#lx\n", hr );
+    hr = IRawGameController_QueryInterface( raw_controller, &IID_IGameController, (void **)&game_controller );
+    ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
+    ok( game_controller != custom_controller.IGameController_outer, "got controller %p\n", game_controller );
+
+    hr = IGameControllerFactoryManagerStatics2_TryGetFactoryControllerFromGameController( manager_statics2,
+            &custom_factory.ICustomGameControllerFactory_iface, game_controller, &tmp_game_controller );
+    ok( hr == S_OK, "TryGetFactoryControllerFromGameController returned %#lx\n", hr );
+    ok( tmp_game_controller == custom_controller.IGameController_outer, "got controller %p\n", tmp_game_controller );
+    hr = IGameController_QueryInterface( tmp_game_controller, &IID_IInspectable, (void **)&tmp_inspectable );
+    ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
+    ok( tmp_inspectable == (void *)tmp_game_controller, "got inspectable %p\n", tmp_inspectable );
+
+    check_interface( tmp_inspectable, &IID_IUnknown, TRUE );
+    check_interface( tmp_inspectable, &IID_IInspectable, TRUE );
+    check_interface( tmp_inspectable, &IID_IAgileObject, TRUE );
+    check_interface( tmp_inspectable, &IID_IWeakReferenceSource, TRUE );
+    check_interface( tmp_inspectable, &IID_IGameController, TRUE );
+    check_interface( tmp_inspectable, &IID_IGameControllerBatteryInfo, TRUE );
+    check_interface( tmp_inspectable, &IID_IGameControllerInputSink, TRUE );
+    check_interface( tmp_inspectable, &IID_IHidGameControllerInputSink, TRUE );
+    check_interface( tmp_inspectable, &IID_IGameControllerImpl, TRUE );
+
+    check_interface( tmp_inspectable, &IID_IRawGameController, FALSE );
+    check_interface( tmp_inspectable, &IID_IGameControllerProvider, FALSE );
+    IInspectable_Release( tmp_inspectable );
+    ok( custom_controller.raw_game_controller_queried, "IRawGameController not queried\n" );
+
+    IGameController_Release( tmp_game_controller );
+
+    hr = IRawGameControllerStatics_FromGameController( statics, custom_controller.IGameController_outer, &tmp_raw_controller );
+    ok( hr == S_OK, "FromGameController returned %#lx\n", hr );
+    ok( tmp_raw_controller == raw_controller, "got controller %p\n", tmp_raw_controller );
+    IRawGameController_Release( tmp_raw_controller );
+
+    IGameController_Release( game_controller );
+    IRawGameController_Release( raw_controller );
+    SetEvent( stop_event );
+    wait_for_events( 1, &custom_factory.removed_event, INFINITE );
+    wait_for_events( 1, &controller_removed.event, INFINITE );
+
     hr = IRawGameControllerStatics_remove_RawGameControllerAdded( statics, controller_added_token );
     ok( hr == S_OK, "remove_RawGameControllerAdded returned %#lx\n", hr );
     hr = IRawGameControllerStatics_remove_RawGameControllerRemoved( statics, controller_removed_token );
@@ -820,6 +1177,8 @@ static void test_windows_gaming_input(void)
     DestroyWindow( hwnd );
     UnregisterClassW( class.lpszClassName, class.hInstance );
 
+    CloseHandle( custom_factory.added_event );
+    CloseHandle( custom_factory.removed_event );
     CloseHandle( controller_added.event );
     CloseHandle( controller_removed.event );
 }
