@@ -35,11 +35,6 @@ static inline struct gamepad_statics *impl_from_IActivationFactory( IActivationF
     return CONTAINING_RECORD( iface, struct gamepad_statics, IActivationFactory_iface );
 }
 
-static inline struct gamepad_statics *impl_from_IGamepadStatics( IGamepadStatics *iface )
-{
-    return CONTAINING_RECORD( iface, struct gamepad_statics, IGamepadStatics_iface );
-}
-
 static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID iid, void **out )
 {
     struct gamepad_statics *impl = impl_from_IActivationFactory( iface );
@@ -121,41 +116,7 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
-static HRESULT WINAPI statics_QueryInterface( IGamepadStatics *iface, REFIID iid, void **out )
-{
-    struct gamepad_statics *impl = impl_from_IGamepadStatics( iface );
-    return IActivationFactory_QueryInterface( &impl->IActivationFactory_iface, iid, out );
-}
-
-static ULONG WINAPI statics_AddRef( IGamepadStatics *iface )
-{
-    struct gamepad_statics *impl = impl_from_IGamepadStatics( iface );
-    return IActivationFactory_AddRef( &impl->IActivationFactory_iface );
-}
-
-static ULONG WINAPI statics_Release( IGamepadStatics *iface )
-{
-    struct gamepad_statics *impl = impl_from_IGamepadStatics( iface );
-    return IActivationFactory_Release( &impl->IActivationFactory_iface );
-}
-
-static HRESULT WINAPI statics_GetIids( IGamepadStatics *iface, ULONG *iid_count, IID **iids )
-{
-    struct gamepad_statics *impl = impl_from_IGamepadStatics( iface );
-    return IActivationFactory_Release( &impl->IActivationFactory_iface );
-}
-
-static HRESULT WINAPI statics_GetRuntimeClassName( IGamepadStatics *iface, HSTRING *class_name )
-{
-    struct gamepad_statics *impl = impl_from_IGamepadStatics( iface );
-    return IActivationFactory_Release( &impl->IActivationFactory_iface );
-}
-
-static HRESULT WINAPI statics_GetTrustLevel( IGamepadStatics *iface, TrustLevel *trust_level )
-{
-    struct gamepad_statics *impl = impl_from_IGamepadStatics( iface );
-    return IActivationFactory_Release( &impl->IActivationFactory_iface );
-}
+DEFINE_IINSPECTABLE( statics, IGamepadStatics, struct gamepad_statics, IActivationFactory_iface )
 
 static HRESULT WINAPI statics_add_GamepadAdded( IGamepadStatics *iface, IEventHandler_Gamepad *value,
                                                 EventRegistrationToken *token )

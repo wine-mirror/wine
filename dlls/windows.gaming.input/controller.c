@@ -35,11 +35,6 @@ static inline struct controller_statics *impl_from_IActivationFactory( IActivati
     return CONTAINING_RECORD( iface, struct controller_statics, IActivationFactory_iface );
 }
 
-static inline struct controller_statics *impl_from_IRawGameControllerStatics( IRawGameControllerStatics *iface )
-{
-    return CONTAINING_RECORD( iface, struct controller_statics, IRawGameControllerStatics_iface );
-}
-
 static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID iid, void **out )
 {
     struct controller_statics *impl = impl_from_IActivationFactory( iface );
@@ -121,41 +116,7 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
-static HRESULT WINAPI statics_QueryInterface( IRawGameControllerStatics *iface, REFIID iid, void **out )
-{
-    struct controller_statics *impl = impl_from_IRawGameControllerStatics( iface );
-    return IActivationFactory_QueryInterface( &impl->IActivationFactory_iface, iid, out );
-}
-
-static ULONG WINAPI statics_AddRef( IRawGameControllerStatics *iface )
-{
-    struct controller_statics *impl = impl_from_IRawGameControllerStatics( iface );
-    return IActivationFactory_AddRef( &impl->IActivationFactory_iface );
-}
-
-static ULONG WINAPI statics_Release( IRawGameControllerStatics *iface )
-{
-    struct controller_statics *impl = impl_from_IRawGameControllerStatics( iface );
-    return IActivationFactory_Release( &impl->IActivationFactory_iface );
-}
-
-static HRESULT WINAPI statics_GetIids( IRawGameControllerStatics *iface, ULONG *iid_count, IID **iids )
-{
-    struct controller_statics *impl = impl_from_IRawGameControllerStatics( iface );
-    return IActivationFactory_Release( &impl->IActivationFactory_iface );
-}
-
-static HRESULT WINAPI statics_GetRuntimeClassName( IRawGameControllerStatics *iface, HSTRING *class_name )
-{
-    struct controller_statics *impl = impl_from_IRawGameControllerStatics( iface );
-    return IActivationFactory_Release( &impl->IActivationFactory_iface );
-}
-
-static HRESULT WINAPI statics_GetTrustLevel( IRawGameControllerStatics *iface, TrustLevel *trust_level )
-{
-    struct controller_statics *impl = impl_from_IRawGameControllerStatics( iface );
-    return IActivationFactory_Release( &impl->IActivationFactory_iface );
-}
+DEFINE_IINSPECTABLE( statics, IRawGameControllerStatics, struct controller_statics, IActivationFactory_iface )
 
 static HRESULT WINAPI statics_add_RawGameControllerAdded( IRawGameControllerStatics *iface, IEventHandler_RawGameController *value,
                                                           EventRegistrationToken *token )
