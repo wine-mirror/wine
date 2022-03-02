@@ -1214,13 +1214,6 @@ static snd_pcm_sframes_t alsa_write_best_effort(struct alsa_stream *stream, BYTE
     return written;
 }
 
-static NTSTATUS write_best_effort(void *args)
-{
-    struct write_best_effort_tmp_params *params = args;
-    *params->written = alsa_write_best_effort(params->stream, params->buf, params->frames);
-    return STATUS_SUCCESS;
-}
-
 static snd_pcm_sframes_t alsa_write_buffer_wrap(struct alsa_stream *stream, BYTE *buf,
         snd_pcm_uframes_t buflen, snd_pcm_uframes_t offs,
         snd_pcm_uframes_t to_write)
@@ -1414,6 +1407,52 @@ static void alsa_read_data(struct alsa_stream *stream)
 exit:
     if(stream->event)
         NtSetEvent(stream->event, NULL);
+}
+
+static NTSTATUS start(void *args)
+{
+    struct start_params *params = args;
+    struct alsa_stream *stream = params->stream;
+
+    alsa_lock(stream);
+
+    if((stream->flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK) && !stream->event)
+        return alsa_unlock_result(stream, &params->result, AUDCLNT_E_EVENTHANDLE_NOT_SET);
+
+    if(stream->started)
+        return alsa_unlock_result(stream, &params->result, AUDCLNT_E_NOT_STOPPED);
+
+    if(stream->flow == eCapture){
+        /* dump any data that might be leftover in the ALSA capture buffer */
+        snd_pcm_readi(stream->pcm_handle, stream->local_buffer,
+                stream->bufsize_frames);
+    }else{
+        snd_pcm_sframes_t avail, written;
+        snd_pcm_uframes_t offs;
+
+        avail = snd_pcm_avail_update(stream->pcm_handle);
+        avail = min(avail, stream->held_frames);
+
+        if(stream->wri_offs_frames < stream->held_frames)
+            offs = stream->bufsize_frames - stream->held_frames + stream->wri_offs_frames;
+        else
+            offs = stream->wri_offs_frames - stream->held_frames;
+
+        /* fill it with data */
+        written = alsa_write_buffer_wrap(stream, stream->local_buffer,
+                stream->bufsize_frames, offs, avail);
+
+        if(written > 0){
+            stream->lcl_offs_frames = (offs + written) % stream->bufsize_frames;
+            stream->data_in_alsa_frames = written;
+        }else{
+            stream->lcl_offs_frames = offs;
+            stream->data_in_alsa_frames = 0;
+        }
+    }
+    stream->started = TRUE;
+
+    return alsa_unlock_result(stream, &params->result, S_OK);
 }
 
 static NTSTATUS timer_loop(void *args)
@@ -1761,12 +1800,11 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     get_endpoint_ids,
     create_stream,
     release_stream,
+    start,
     timer_loop,
     is_format_supported,
     get_mix_format,
     get_buffer_size,
     get_latency,
     get_current_padding,
-
-    write_best_effort /* temporary */
 };

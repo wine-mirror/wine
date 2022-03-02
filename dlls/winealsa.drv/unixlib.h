@@ -91,6 +91,12 @@ struct release_stream_params
     HRESULT result;
 };
 
+struct start_params
+{
+    struct alsa_stream *stream;
+    HRESULT result;
+};
+
 struct timer_loop_params
 {
     struct alsa_stream *stream;
@@ -135,27 +141,18 @@ struct get_current_padding_params
     UINT32 *padding;
 };
 
-struct write_best_effort_tmp_params
-{
-    struct alsa_stream *stream;
-    BYTE *buf;
-    snd_pcm_uframes_t frames;
-    snd_pcm_sframes_t *written;
-};
-
 enum alsa_funcs
 {
     alsa_get_endpoint_ids,
     alsa_create_stream,
     alsa_release_stream,
+    alsa_start,
     alsa_timer_loop,
     alsa_is_format_supported,
     alsa_get_mix_format,
     alsa_get_buffer_size,
     alsa_get_latency,
     alsa_get_current_padding,
-
-    alsa_write_best_effort_tmp
 };
 
 extern unixlib_handle_t alsa_handle;

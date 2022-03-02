@@ -963,51 +963,6 @@ static HRESULT WINAPI AudioClient_GetDevicePeriod(IAudioClient3 *iface,
     return S_OK;
 }
 
-static snd_pcm_sframes_t alsa_write_best_effort(struct alsa_stream *stream, BYTE *buf, snd_pcm_uframes_t frames)
-{
-    struct write_best_effort_tmp_params params;
-    snd_pcm_sframes_t written;
-
-    params.stream = stream;
-    params.buf = buf;
-    params.frames = frames;
-    params.written = &written;
-
-    ALSA_CALL(write_best_effort_tmp, &params);
-
-    return written;
-}
-
-static snd_pcm_sframes_t alsa_write_buffer_wrap(struct alsa_stream *stream, BYTE *buf,
-        snd_pcm_uframes_t buflen, snd_pcm_uframes_t offs,
-        snd_pcm_uframes_t to_write)
-{
-    snd_pcm_sframes_t ret = 0;
-
-    while(to_write){
-        snd_pcm_uframes_t chunk;
-        snd_pcm_sframes_t tmp;
-
-        if(offs + to_write > buflen)
-            chunk = buflen - offs;
-        else
-            chunk = to_write;
-
-        tmp = alsa_write_best_effort(stream, buf + offs * stream->fmt->nBlockAlign, chunk);
-        if(tmp < 0)
-            return ret;
-        if(!tmp)
-            break;
-
-        ret += tmp;
-        to_write -= tmp;
-        offs += tmp;
-        offs %= buflen;
-    }
-
-    return ret;
-}
-
 static snd_pcm_uframes_t interp_elapsed_frames(struct alsa_stream *stream)
 {
     LARGE_INTEGER time_freq, current_time, time_diff;
@@ -1053,7 +1008,7 @@ static int alsa_rewind_best_effort(ACImpl *This)
 static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
-    struct alsa_stream *stream = This->stream;
+    struct start_params params;
 
     TRACE("(%p)\n", This);
 
@@ -1064,60 +1019,18 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
         return AUDCLNT_E_NOT_INITIALIZED;
     }
 
-    alsa_lock(stream);
+    params.stream = This->stream;
 
-    if((stream->flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK) && !stream->event){
-        alsa_unlock(stream);
-        LeaveCriticalSection(&g_sessions_lock);
-        return AUDCLNT_E_EVENTHANDLE_NOT_SET;
-    }
+    ALSA_CALL(start, &params);
 
-    if(stream->started){
-        alsa_unlock(stream);
-        LeaveCriticalSection(&g_sessions_lock);
-        return AUDCLNT_E_NOT_STOPPED;
-    }
-
-    if(stream->flow == eCapture){
-        /* dump any data that might be leftover in the ALSA capture buffer */
-        snd_pcm_readi(stream->pcm_handle, stream->local_buffer,
-                stream->bufsize_frames);
-    }else{
-        snd_pcm_sframes_t avail, written;
-        snd_pcm_uframes_t offs;
-
-        avail = snd_pcm_avail_update(stream->pcm_handle);
-        avail = min(avail, stream->held_frames);
-
-        if(stream->wri_offs_frames < stream->held_frames)
-            offs = stream->bufsize_frames - stream->held_frames + stream->wri_offs_frames;
-        else
-            offs = stream->wri_offs_frames - stream->held_frames;
-
-        /* fill it with data */
-        written = alsa_write_buffer_wrap(stream, stream->local_buffer,
-                stream->bufsize_frames, offs, avail);
-
-        if(written > 0){
-            stream->lcl_offs_frames = (offs + written) % stream->bufsize_frames;
-            stream->data_in_alsa_frames = written;
-        }else{
-            stream->lcl_offs_frames = offs;
-            stream->data_in_alsa_frames = 0;
-        }
-    }
-
-    if(!This->timer_thread){
+    if(SUCCEEDED(params.result) && !This->timer_thread){
         This->timer_thread = CreateThread(NULL, 0, alsa_timer_thread, This->stream, 0, NULL);
         SetThreadPriority(This->timer_thread, THREAD_PRIORITY_TIME_CRITICAL);
     }
 
-    stream->started = TRUE;
-
-    alsa_unlock(stream);
     LeaveCriticalSection(&g_sessions_lock);
 
-    return S_OK;
+    return params.result;
 }
 
 static HRESULT WINAPI AudioClient_Stop(IAudioClient3 *iface)
