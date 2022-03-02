@@ -4095,7 +4095,7 @@ static void test_thread_context(void)
            expect.SegFs, expect.SegGs, expect.SegSs, expect.EFlags, expect.prev_frame );
     trace( "actual: rax=%p rbx=%p rcx=%p rdx=%p rsi=%p rdi=%p "
            "r8=%p r9=%p r10=%p r11=%p r12=%p r13=%p r14=%p r15=%p "
-           "rbp=%p rsp=%p rip=%p cs=%04x ds=%04x es=%04x fs=%04x gs=%04x ss=%04x flags=%08x prev=%08x\n",
+           "rbp=%p rsp=%p rip=%p cs=%04x ds=%04x es=%04x fs=%04x gs=%04x ss=%04x flags=%08x\n",
            (void *)context.Rax, (void *)context.Rbx, (void *)context.Rcx, (void *)context.Rdx,
            (void *)context.Rsi, (void *)context.Rdi, (void *)context.R8, (void *)context.R9,
            (void *)context.R10, (void *)context.R11, (void *)context.R12, (void *)context.R13,
@@ -4155,7 +4155,7 @@ static void test_thread_context(void)
            expect.SegFs, expect.SegGs, expect.SegSs, expect.EFlags, expect.prev_frame );
     trace( "actual: rax=%p rbx=%p rcx=%p rdx=%p rsi=%p rdi=%p "
            "r8=%p r9=%p r10=%p r11=%p r12=%p r13=%p r14=%p r15=%p "
-           "rbp=%p rsp=%p rip=%p cs=%04x ds=%04x es=%04x fs=%04x gs=%04x ss=%04x flags=%08x prev=%08x\n",
+           "rbp=%p rsp=%p rip=%p cs=%04x ds=%04x es=%04x fs=%04x gs=%04x ss=%04x flags=%08x\n",
            (void *)context.Rax, (void *)context.Rbx, (void *)context.Rcx, (void *)context.Rdx,
            (void *)context.Rsi, (void *)context.Rdi, (void *)context.R8, (void *)context.R9,
            (void *)context.R10, (void *)context.R11, (void *)context.R12, (void *)context.R13,
@@ -4293,7 +4293,7 @@ static void test_wow64_context(void)
         ok((WORD)ctx_ptr->FloatSave.ControlWord == ctx.FloatSave.ControlWord,
            "got control word %08x / %08x\n", ctx_ptr->FloatSave.ControlWord, ctx.FloatSave.ControlWord);
         ok(*(WORD *)ctx_ptr->ExtendedRegisters == *(WORD *)ctx.ExtendedRegisters,
-           "got SSE control word %04x\n", *(WORD *)ctx_ptr->ExtendedRegisters,
+           "got SSE control word %04x / %04x\n", *(WORD *)ctx_ptr->ExtendedRegisters,
            *(WORD *)ctx.ExtendedRegisters);
 
         ecx = ctx.Ecx;

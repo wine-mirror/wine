@@ -604,7 +604,7 @@ static void test_cpu_area(void)
                 ok( info.ContextFlagsLocation == (char *)info.Context + tests[i].offset,
                     "%u:%u: wrong flags offset %u\n",
                     i, j, (ULONG)((char *)info.ContextFlagsLocation - (char *)info.Context) );
-                ok( info.CpuReserved == cpu, "%u:%u: wrong cpu %p / %p\n", info.CpuReserved, cpu );
+                ok( info.CpuReserved == cpu, "%u:%u: wrong cpu %p / %p\n", i, j, info.CpuReserved, cpu );
                 ok( info.ContextFlag == tests[i].flag, "%u:%u: wrong flag %08x\n", i, j, info.ContextFlag );
                 ok( info.Machine == tests[i].machine, "%u:%u: wrong machine %x\n", i, j, info.Machine );
             }
