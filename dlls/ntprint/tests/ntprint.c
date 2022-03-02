@@ -76,19 +76,19 @@ static void test_PSetupCreateMonitorInfo(VOID)
         win_skip("The service 'Spooler' is required for many tests\n");
         return;
     }
-    ok( mi != NULL, "got %p with %u (expected '!= NULL')\n", mi, GetLastError());
+    ok( mi != NULL, "got %p with %lu (expected '!= NULL')\n", mi, GetLastError());
     if (mi) pPSetupDestroyMonitorInfo(mi);
 
     SetLastError(0xdeadbeef);
     mi = pPSetupCreateMonitorInfo(0, buffer);
-    ok( mi != NULL, "got %p with %u (expected '!= NULL')\n", mi, GetLastError());
+    ok( mi != NULL, "got %p with %lu (expected '!= NULL')\n", mi, GetLastError());
     if (mi) pPSetupDestroyMonitorInfo(mi);
 
     SetLastError(0xdeadbeef);
     mi = pPSetupCreateMonitorInfo(0, buffer + 1);
     todo_wine {
     ok( mi == NULL, "got %p\n", mi );
-    ok( GetLastError() == ERROR_INVALID_NAME, "got %d\n", GetLastError() );
+    ok( GetLastError() == ERROR_INVALID_NAME, "got %ld\n", GetLastError() );
     }
     if (mi) pPSetupDestroyMonitorInfo(mi);
 }
@@ -103,7 +103,7 @@ static void test_PSetupDestroyMonitorInfo(VOID)
     SetLastError(0xdeadbeef);
     pPSetupDestroyMonitorInfo(NULL);
     /* lasterror is returned */
-    trace("returned with %u\n", GetLastError());
+    trace("returned with %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     mi = pPSetupCreateMonitorInfo(0, NULL);
@@ -111,20 +111,20 @@ static void test_PSetupDestroyMonitorInfo(VOID)
         win_skip("The service 'Spooler' is required for many tests\n");
         return;
     }
-    ok( mi != NULL, "got %p with %u (expected '!= NULL')\n", mi, GetLastError());
+    ok( mi != NULL, "got %p with %lu (expected '!= NULL')\n", mi, GetLastError());
 
     if (!mi) return;
 
     SetLastError(0xdeadbeef);
     pPSetupDestroyMonitorInfo(mi);
     /* lasterror is returned */
-    trace("returned with %u\n", GetLastError());
+    trace("returned with %lu\n", GetLastError());
 
     /* Trying to destroy the handle twice crashes with native ntprint.dll */
     if (0) {
         SetLastError(0xdeadbeef);
         pPSetupDestroyMonitorInfo(mi);
-        trace(" with %u\n", GetLastError());
+        trace(" with %lu\n", GetLastError());
     }
 
 }
@@ -151,13 +151,13 @@ static void test_PSetupEnumMonitor(VOID)
     SetLastError(0xdeadbeef);
     res = pPSetupEnumMonitor(mi, 0, NULL, &minsize);
     ok( !res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER) && (minsize > 0),
-        "got %u with %u and %u (expected '0' with ERROR_INSUFFICIENT_BUFFER "
+        "got %lu with %lu and %lu (expected '0' with ERROR_INSUFFICIENT_BUFFER "
         "and '> 0')\n", res, GetLastError(), minsize);
 
 
     size = ARRAY_SIZE(buffer);
     if ((minsize + 1) > size) {
-        skip("overflow: %u\n", minsize);
+        skip("overflow: %lu\n", minsize);
         pPSetupDestroyMonitorInfo(mi);
         return;
     }
@@ -168,7 +168,7 @@ static void test_PSetupEnumMonitor(VOID)
         size = ARRAY_SIZE(buffer);
         res = pPSetupEnumMonitor(NULL, 0, buffer, &size);
         ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
-            "got %u with %u (expected '0' with ERROR_INVALID_PARAMETER)\n",
+            "got %lu with %lu (expected '0' with ERROR_INVALID_PARAMETER)\n",
             res, GetLastError());
     }
 
@@ -177,7 +177,7 @@ static void test_PSetupEnumMonitor(VOID)
         SetLastError(0xdeadbeef);
         size = ARRAY_SIZE(buffer);
         res = pPSetupEnumMonitor(mi, 0, NULL, &size);
-        trace("got %u with %u and %u\n", res, GetLastError(), size);
+        trace("got %lu with %lu and %lu\n", res, GetLastError(), size);
     }
 
     if (0) {
@@ -185,7 +185,7 @@ static void test_PSetupEnumMonitor(VOID)
         SetLastError(0xdeadbeef);
         res = pPSetupEnumMonitor(mi, 0, buffer, NULL);
         ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
-            "got %u with %u (expected '0' with ERROR_INVALID_PARAMETER)\n",
+            "got %lu with %lu (expected '0' with ERROR_INVALID_PARAMETER)\n",
             res, GetLastError());
     }
 
@@ -193,20 +193,20 @@ static void test_PSetupEnumMonitor(VOID)
     size = minsize - 1;
     res = pPSetupEnumMonitor(mi, 0, buffer, &size);
     ok( !res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
-        "got %u with %u and %u (expected '0' with ERROR_INSUFFICIENT_BUFFER)\n",
+        "got %lu with %lu and %lu (expected '0' with ERROR_INSUFFICIENT_BUFFER)\n",
         res, GetLastError(), size);
 
 
     SetLastError(0xdeadbeef);
     size = minsize;
     res = pPSetupEnumMonitor(mi, 0, buffer, &size);
-    ok( res, "got %u with %u and %u (expected '!= 0')\n",
+    ok( res, "got %lu with %lu and %lu (expected '!= 0')\n",
         res, GetLastError(), size);
 
     SetLastError(0xdeadbeef);
     size = minsize + 1;
     res = pPSetupEnumMonitor(mi, 0, buffer, &size);
-    ok( res, "got %u with %u and %u (expected '!= 0')\n",
+    ok( res, "got %lu with %lu and %lu (expected '!= 0')\n",
         res, GetLastError(), size);
 
     /* try max. 20 monitors */
@@ -216,7 +216,7 @@ static void test_PSetupEnumMonitor(VOID)
         size = ARRAY_SIZE(buffer);
         res = pPSetupEnumMonitor(mi, index, buffer, &size);
         ok( res || (GetLastError() == ERROR_NO_MORE_ITEMS),
-            "(%u) got %u with %u and %u (expected '!=0' or: '0' with "
+            "(%lu) got %lu with %lu and %lu (expected '!=0' or: '0' with "
             "ERROR_NO_MORE_ITEMS)\n", index, res, GetLastError(), size);
 
         if (res) index++;
