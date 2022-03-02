@@ -579,34 +579,34 @@ static void test_LresultFromObject(const char *name)
     LRESULT lres;
 
     lres = LresultFromObject(NULL, 0, 0);
-    ok(lres == E_INVALIDARG, "got %lx\n", lres);
+    ok(lres == E_INVALIDARG, "got %Ix\n", lres);
 
     hres = ObjectFromLresult(0, &IID_IUnknown, 0, (void**)&unk);
-    ok(hres == E_FAIL, "got %x\n", hres);
+    ok(hres == E_FAIL, "got %lx\n", hres);
     hres = ObjectFromLresult(0x10000, &IID_IUnknown, 0, (void**)&unk);
-    ok(hres == E_FAIL, "got %x\n", hres);
+    ok(hres == E_FAIL, "got %lx\n", hres);
 
-    ok(Object_ref == 1, "Object_ref = %d\n", Object_ref);
+    ok(Object_ref == 1, "Object_ref = %ld\n", Object_ref);
     lres = LresultFromObject(&IID_IUnknown, 0, &Object);
-    ok(SUCCEEDED(lres), "got %lx\n", lres);
-    ok(Object_ref > 1, "Object_ref = %d\n", Object_ref);
+    ok(SUCCEEDED(lres), "got %Ix\n", lres);
+    ok(Object_ref > 1, "Object_ref = %ld\n", Object_ref);
 
     hres = ObjectFromLresult(lres, &IID_IUnknown, 0, (void**)&unk);
-    ok(hres == S_OK, "hres = %x\n", hres);
+    ok(hres == S_OK, "hres = %lx\n", hres);
     ok(unk == &Object, "unk != &Object\n");
     IUnknown_Release(unk);
-    ok(Object_ref == 1, "Object_ref = %d\n", Object_ref);
+    ok(Object_ref == 1, "Object_ref = %ld\n", Object_ref);
 
     lres = LresultFromObject(&IID_IUnknown, 0, &Object);
-    ok(SUCCEEDED(lres), "got %lx\n", lres);
-    ok(Object_ref > 1, "Object_ref = %d\n", Object_ref);
+    ok(SUCCEEDED(lres), "got %Ix\n", lres);
+    ok(Object_ref > 1, "Object_ref = %ld\n", Object_ref);
 
     sprintf(cmdline, "\"%s\" main ObjectFromLresult %s", name, wine_dbgstr_longlong(lres));
     memset(&startup, 0, sizeof(startup));
     startup.cb = sizeof(startup);
     CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &proc);
     wait_child_process(proc.hProcess);
-    ok(Object_ref == 1, "Object_ref = %d\n", Object_ref);
+    ok(Object_ref == 1, "Object_ref = %ld\n", Object_ref);
 }
 
 static LRESULT WINAPI test_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -614,11 +614,11 @@ static LRESULT WINAPI test_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARA
     switch(msg) {
     case WM_GETOBJECT:
         if(lparam == OBJID_QUERYCLASSNAMEIDX) {
-            ok(!wparam, "wparam = %lx\n", wparam);
+            ok(!wparam, "wparam = %Ix\n", wparam);
             return 0;
         }
 
-        ok(wparam==0xffffffff, "wparam = %lx\n", wparam);
+        ok(wparam==0xffffffff, "wparam = %Ix\n", wparam);
         if(lparam == (DWORD)OBJID_CURSOR)
             return E_UNEXPECTED;
         if(lparam == (DWORD)OBJID_CLIENT)
@@ -628,7 +628,7 @@ static LRESULT WINAPI test_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARA
         if(lparam == 1)
             return LresultFromObject(&IID_IUnknown, wparam, (IUnknown*)&Accessible);
 
-        ok(0, "unexpected (%ld)\n", lparam);
+        ok(0, "unexpected (%Id)\n", lparam);
         return 0;
     }
 
@@ -659,10 +659,10 @@ static void test_AccessibleObjectFromWindow(void)
     HWND hwnd;
 
     hr = AccessibleObjectFromWindow(NULL, OBJID_CURSOR, &IID_IUnknown, NULL);
-    ok(hr == E_INVALIDARG, "got %x\n", hr);
+    ok(hr == E_INVALIDARG, "got %lx\n", hr);
 
     hr = AccessibleObjectFromWindow(NULL, OBJID_CURSOR, &IID_IUnknown, (void**)&unk);
-    todo_wine ok(hr == S_OK, "got %x\n", hr);
+    todo_wine ok(hr == S_OK, "got %lx\n", hr);
     if(hr == S_OK) IUnknown_Release(unk);
 
     hwnd = CreateWindowA("oleacc_test", "test", WS_OVERLAPPEDWINDOW,
@@ -670,12 +670,12 @@ static void test_AccessibleObjectFromWindow(void)
     ok(hwnd != NULL, "CreateWindow failed\n");
 
     hr = AccessibleObjectFromWindow(hwnd, OBJID_CURSOR, &IID_IUnknown, (void**)&unk);
-    ok(hr == E_UNEXPECTED, "got %x\n", hr);
+    ok(hr == E_UNEXPECTED, "got %lx\n", hr);
 
-    ok(Object_ref == 1, "Object_ref = %d\n", Object_ref);
+    ok(Object_ref == 1, "Object_ref = %ld\n", Object_ref);
     hr = AccessibleObjectFromWindow(hwnd, OBJID_CLIENT, &IID_IUnknown, (void**)&unk);
-    ok(hr == S_OK, "got %x\n", hr);
-    ok(Object_ref == 2, "Object_ref = %d\n", Object_ref);
+    ok(hr == S_OK, "got %lx\n", hr);
+    ok(Object_ref == 2, "Object_ref = %ld\n", Object_ref);
     IUnknown_Release(unk);
 
     DestroyWindow(hwnd);
@@ -693,16 +693,16 @@ static void test_AccessibleObjectFromEvent(void)
     ok(hwnd != NULL, "CreateWindow failed\n");
 
     hr = AccessibleObjectFromEvent(NULL, OBJID_CLIENT, CHILDID_SELF, &acc, &cid);
-    ok(hr == E_FAIL, "got %#x\n", hr);
+    ok(hr == E_FAIL, "got %#lx\n", hr);
 
     hr = AccessibleObjectFromEvent(hwnd, OBJID_CLIENT, CHILDID_SELF, NULL, &cid);
-    ok(hr == E_INVALIDARG, "got %#x\n", hr);
+    ok(hr == E_INVALIDARG, "got %#lx\n", hr);
 
     acc = (IAccessible*)0xdeadbeef;
     V_VT(&cid) = VT_UNKNOWN;
     V_UNKNOWN(&cid) = (IUnknown*)0xdeadbeef;
     hr = AccessibleObjectFromEvent(hwnd, OBJID_CLIENT, CHILDID_SELF, &acc, &cid);
-    ok(hr == E_NOINTERFACE || broken(hr == S_OK), "got %#x\n", hr);
+    ok(hr == E_NOINTERFACE || broken(hr == S_OK), "got %#lx\n", hr);
     if (hr == S_OK)
         IAccessible_Release(acc);
     else
@@ -712,20 +712,20 @@ static void test_AccessibleObjectFromEvent(void)
     }
 
     hr = AccessibleObjectFromEvent(hwnd, OBJID_CURSOR, CHILDID_SELF, &acc, &cid);
-    ok(hr == E_UNEXPECTED, "got %#x\n", hr);
+    ok(hr == E_UNEXPECTED, "got %#lx\n", hr);
 
     SET_EXPECT(Accessible_get_accChild);
     hr = AccessibleObjectFromEvent(hwnd, 1, 1, &acc, &cid);
     CHECK_CALLED(Accessible_get_accChild);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
     todo_wine ok(!iface_cmp((IUnknown*)acc, (IUnknown*)&Accessible), "acc == &Accessible\n");
     ok(V_VT(&cid) == VT_I4, "got %#x, expected %#x\n", V_VT(&cid), VT_I4);
-    ok(V_I4(&cid) == 1, "got %#x, expected 1\n", V_I4(&cid));
+    ok(V_I4(&cid) == 1, "got %#lx, expected 1\n", V_I4(&cid));
     SET_EXPECT(Accessible_get_accParent);
     SET_EXPECT(Accessible_get_accName);
     V_I4(&cid) = 0;
     hr = IAccessible_get_accName(acc, cid, NULL);
-    ok(hr == E_INVALIDARG, "get_accName returned %x\n", hr);
+    ok(hr == E_INVALIDARG, "get_accName returned %lx\n", hr);
     todo_wine CHECK_CALLED(Accessible_get_accParent);
     CHECK_CALLED(Accessible_get_accName);
     IAccessible_Release(acc);
@@ -733,15 +733,15 @@ static void test_AccessibleObjectFromEvent(void)
     SET_EXPECT(Accessible_get_accChild);
     hr = AccessibleObjectFromEvent(hwnd, 1, 2, &acc, &cid);
     CHECK_CALLED(Accessible_get_accChild);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
     todo_wine ok(!iface_cmp((IUnknown*)acc, (IUnknown*)&Accessible), "acc == &Accessible\n");
     ok(V_VT(&cid) == VT_I4, "got %#x, expected %#x\n", V_VT(&cid), VT_I4);
-    ok(V_I4(&cid) == 2, "got %#x, expected 2\n", V_I4(&cid));
+    ok(V_I4(&cid) == 2, "got %#lx, expected 2\n", V_I4(&cid));
     SET_EXPECT(Accessible_get_accParent);
     SET_EXPECT(Accessible_get_accName);
     V_I4(&cid) = 0;
     hr = IAccessible_get_accName(acc, cid, NULL);
-    ok(hr == E_INVALIDARG, "get_accName returned %x\n", hr);
+    ok(hr == E_INVALIDARG, "get_accName returned %lx\n", hr);
     todo_wine CHECK_CALLED(Accessible_get_accParent);
     CHECK_CALLED(Accessible_get_accName);
     IAccessible_Release(acc);
@@ -749,14 +749,14 @@ static void test_AccessibleObjectFromEvent(void)
     SET_EXPECT(Accessible_get_accChild);
     hr = AccessibleObjectFromEvent(hwnd, 1, 3, &acc, &cid);
     CHECK_CALLED(Accessible_get_accChild);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
     todo_wine ok(!iface_cmp((IUnknown*)acc, (IUnknown*)&Accessible_child), "acc == &Accessible_child\n");
     ok(V_VT(&cid) == VT_I4, "got %#x, expected %#x\n", V_VT(&cid), VT_I4);
-    ok(V_I4(&cid) == CHILDID_SELF, "got %#x, expected %#x\n", V_I4(&cid), CHILDID_SELF);
+    ok(V_I4(&cid) == CHILDID_SELF, "got %#lx, expected %#x\n", V_I4(&cid), CHILDID_SELF);
     SET_EXPECT(Accessible_child_get_accParent);
     SET_EXPECT(Accessible_child_get_accName);
     hr = IAccessible_get_accName(acc, cid, NULL);
-    ok(hr == E_INVALIDARG, "get_accName returned %x\n", hr);
+    ok(hr == E_INVALIDARG, "get_accName returned %lx\n", hr);
     todo_wine CHECK_CALLED(Accessible_child_get_accParent);
     CHECK_CALLED(Accessible_child_get_accName);
     IAccessible_Release(acc);
@@ -764,13 +764,13 @@ static void test_AccessibleObjectFromEvent(void)
     SET_EXPECT(Accessible_get_accChild);
     hr = AccessibleObjectFromEvent(hwnd, 1, 4, &acc, &cid);
     CHECK_CALLED(Accessible_get_accChild);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
     ok(acc == &Accessible_child, "acc != &Accessible_child\n");
     ok(V_VT(&cid) == VT_I4, "got %#x, expected %#x\n", V_VT(&cid), VT_I4);
-    ok(V_I4(&cid) == CHILDID_SELF, "got %#x, expected %#x\n", V_I4(&cid), CHILDID_SELF);
+    ok(V_I4(&cid) == CHILDID_SELF, "got %#lx, expected %#x\n", V_I4(&cid), CHILDID_SELF);
     SET_EXPECT(Accessible_child_get_accName);
     hr = IAccessible_get_accName(acc, cid, NULL);
-    ok(hr == E_INVALIDARG, "get_accName returned %x\n", hr);
+    ok(hr == E_INVALIDARG, "get_accName returned %lx\n", hr);
     CHECK_CALLED(Accessible_child_get_accName);
     IAccessible_Release(acc);
 
@@ -803,37 +803,37 @@ static void test_AccessibleChildren(IAccessible *acc)
 
     count = -1;
     hr = AccessibleChildren(NULL, 0, 0, children, &count);
-    ok(hr == E_INVALIDARG, "AccessibleChildren returned %x\n", hr);
-    ok(count == -1, "count = %d\n", count);
+    ok(hr == E_INVALIDARG, "AccessibleChildren returned %lx\n", hr);
+    ok(count == -1, "count = %ld\n", count);
     hr = AccessibleChildren(acc, 0, 0, NULL, &count);
-    ok(hr == E_INVALIDARG, "AccessibleChildren returned %x\n", hr);
-    ok(count == -1, "count = %d\n", count);
+    ok(hr == E_INVALIDARG, "AccessibleChildren returned %lx\n", hr);
+    ok(count == -1, "count = %ld\n", count);
     hr = AccessibleChildren(acc, 0, 0, children, NULL);
-    ok(hr == E_INVALIDARG, "AccessibleChildren returned %x\n", hr);
+    ok(hr == E_INVALIDARG, "AccessibleChildren returned %lx\n", hr);
 
     if(acc == &Accessible) {
         SET_EXPECT(Accessible_QI_IEnumVARIANT);
         SET_EXPECT(Accessible_get_accChildCount);
     }
     hr = AccessibleChildren(acc, 0, 0, children, &count);
-    ok(hr == S_OK, "AccessibleChildren returned %x\n", hr);
+    ok(hr == S_OK, "AccessibleChildren returned %lx\n", hr);
     if(acc == &Accessible) {
         CHECK_CALLED(Accessible_QI_IEnumVARIANT);
         CHECK_CALLED(Accessible_get_accChildCount);
     }
-    ok(!count, "count = %d\n", count);
+    ok(!count, "count = %ld\n", count);
     count = -1;
     if(acc == &Accessible) {
         SET_EXPECT(Accessible_QI_IEnumVARIANT);
         SET_EXPECT(Accessible_get_accChildCount);
     }
     hr = AccessibleChildren(acc, 5, 0, children, &count);
-    ok(hr == S_OK, "AccessibleChildren returned %x\n", hr);
+    ok(hr == S_OK, "AccessibleChildren returned %lx\n", hr);
     if(acc == &Accessible) {
         CHECK_CALLED(Accessible_QI_IEnumVARIANT);
         CHECK_CALLED(Accessible_get_accChildCount);
     }
-    ok(!count, "count = %d\n", count);
+    ok(!count, "count = %ld\n", count);
 
     memset(children, 0xfe, sizeof(children));
     V_VT(children) = VT_DISPATCH;
@@ -843,19 +843,19 @@ static void test_AccessibleChildren(IAccessible *acc)
         SET_EXPECT(Accessible_get_accChild);
     }
     hr = AccessibleChildren(acc, 0, 1, children, &count);
-    ok(hr == S_OK, "AccessibleChildren returned %x\n", hr);
+    ok(hr == S_OK, "AccessibleChildren returned %lx\n", hr);
     if(acc == &Accessible) {
         CHECK_CALLED(Accessible_QI_IEnumVARIANT);
         CHECK_CALLED(Accessible_get_accChildCount);
         CHECK_CALLED(Accessible_get_accChild);
 
         ok(V_VT(children) == VT_I4, "V_VT(children) = %d\n", V_VT(children));
-        ok(V_I4(children) == 1, "V_I4(children) = %d\n", V_I4(children));
+        ok(V_I4(children) == 1, "V_I4(children) = %ld\n", V_I4(children));
     }else {
         ok(V_VT(children) == VT_DISPATCH, "V_VT(children) = %d\n", V_VT(children));
         IDispatch_Release(V_DISPATCH(children));
     }
-    ok(count == 1, "count = %d\n", count);
+    ok(count == 1, "count = %ld\n", count);
 
     if(acc == &Accessible) {
         SET_EXPECT(Accessible_QI_IEnumVARIANT);
@@ -863,22 +863,22 @@ static void test_AccessibleChildren(IAccessible *acc)
         SET_EXPECT(Accessible_get_accChild);
     }
     hr = AccessibleChildren(acc, 0, 3, children, &count);
-    ok(hr == S_FALSE, "AccessibleChildren returned %x\n", hr);
+    ok(hr == S_FALSE, "AccessibleChildren returned %lx\n", hr);
     if(acc == &Accessible) {
         CHECK_CALLED(Accessible_QI_IEnumVARIANT);
         CHECK_CALLED(Accessible_get_accChildCount);
         CHECK_CALLED(Accessible_get_accChild);
 
         ok(V_VT(children) == VT_I4, "V_VT(children) = %d\n", V_VT(children));
-        ok(V_I4(children) == 1, "V_I4(children) = %d\n", V_I4(children));
+        ok(V_I4(children) == 1, "V_I4(children) = %ld\n", V_I4(children));
 
-        ok(count == 1, "count = %d\n", count);
+        ok(count == 1, "count = %ld\n", count);
         ok(V_VT(children+1) == VT_EMPTY, "V_VT(children+1) = %d\n", V_VT(children+1));
     }else {
         ok(V_VT(children) == VT_DISPATCH, "V_VT(children) = %d\n", V_VT(children));
         IDispatch_Release(V_DISPATCH(children));
 
-        ok(count == 2, "count = %d\n", count);
+        ok(count == 2, "count = %ld\n", count);
         ok(V_VT(children+1) == VT_DISPATCH, "V_VT(children+1) = %d\n", V_VT(children+1));
         IDispatch_Release(V_DISPATCH(children+1));
     }
@@ -894,9 +894,9 @@ static void _check_acc_state(unsigned line, IAccessible *acc, INT state)
     V_VT(&vid) = VT_I4;
     V_I4(&vid) = CHILDID_SELF;
     hr = IAccessible_get_accState(acc, vid, &v);
-    ok_(__FILE__, line)(hr == S_OK, "got %x\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "got %lx\n", hr);
     ok_(__FILE__, line)(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
-    ok_(__FILE__, line)(V_I4(&v) == state, "V_I4(&v) = %x\n", V_I4(&v));
+    ok_(__FILE__, line)(V_I4(&v) == state, "V_I4(&v) = %lx\n", V_I4(&v));
 }
 
 #define check_acc_hwnd(unk, hwnd) _check_acc_hwnd(__LINE__, unk, hwnd)
@@ -907,9 +907,9 @@ static void _check_acc_hwnd(unsigned line, IUnknown *unk, HWND exp)
     HWND hwnd;
 
     hr = IUnknown_QueryInterface(unk, &IID_IOleWindow, (void**)&ow);
-    ok_(__FILE__, line)(hr == S_OK, "got %x\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "got %lx\n", hr);
     hr = IOleWindow_GetWindow(ow, &hwnd);
-    ok_(__FILE__, line)(hr == S_OK, "got %x\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "got %lx\n", hr);
     ok_(__FILE__, line)(hwnd == exp, "hwnd = %p, expected %p\n", hwnd, exp);
     IOleWindow_Release(ow);
 }
@@ -922,9 +922,9 @@ static DWORD WINAPI default_client_thread(LPVOID param)
     HWND hwnd;
 
     hr = IAccessible_QueryInterface(acc, &IID_IOleWindow, (void**)&ow);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     hr = IOleWindow_GetWindow(ow, &hwnd);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     IOleWindow_Release(ow);
 
     ShowWindow(hwnd, SW_SHOW);
@@ -961,22 +961,22 @@ static void test_default_client_accessible_object(void)
     ok(chld2 != NULL, "CreateWindow failed\n");
 
     hr = CreateStdAccessibleObject(NULL, OBJID_CLIENT, &IID_IAccessible, (void**)&acc);
-    ok(hr == E_FAIL, "got %x\n", hr);
+    ok(hr == E_FAIL, "got %lx\n", hr);
 
 
     /* Test the static message */
     hr = CreateStdAccessibleObject(chld, OBJID_CLIENT, &IID_IAccessible, (void**)&acc);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
 
     V_VT(&vid) = VT_I4;
     V_I4(&vid) = CHILDID_SELF;
     hr = IAccessible_get_accName(acc, vid, &str);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     ok(!lstrcmpW(str, L"static t &junk"), "name = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     hr = IAccessible_get_accKeyboardShortcut(acc, vid, &str);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     ok(!lstrcmpW(str, L"Alt+t"), "str = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
@@ -985,17 +985,17 @@ static void test_default_client_accessible_object(void)
 
     /* Test the button */
     hr = CreateStdAccessibleObject(btn, OBJID_CLIENT, &IID_IAccessible, (void**)&acc);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
 
     V_VT(&vid) = VT_I4;
     V_I4(&vid) = CHILDID_SELF;
     hr = IAccessible_get_accName(acc, vid, &str);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     ok(!lstrcmpW(str, L"btn t &junk"), "name = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     hr = IAccessible_get_accKeyboardShortcut(acc, vid, &str);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     ok(!lstrcmpW(str, L"Alt+t"), "str = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
@@ -1004,33 +1004,33 @@ static void test_default_client_accessible_object(void)
 
     /* Now we can test and destroy the top-level window */
     hr = CreateStdAccessibleObject(hwnd, OBJID_CLIENT, &IID_IAccessible, (void**)&acc);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
 
     check_acc_hwnd((IUnknown*)acc, hwnd);
     hr = WindowFromAccessibleObject(acc, &hwnd2);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     ok(hwnd == hwnd2, "hwnd2 = %p, expected %p\n", hwnd2, hwnd);
 
     hr = IAccessible_get_accChildCount(acc, &l);
-    ok(hr == S_OK, "got %x\n", hr);
-    ok(l == 2, "l = %d\n", l);
+    ok(hr == S_OK, "got %lx\n", hr);
+    ok(l == 2, "l = %ld\n", l);
 
     V_VT(&vid) = VT_I4;
     V_I4(&vid) = CHILDID_SELF;
     disp = (void*)0xdeadbeef;
     hr = IAccessible_get_accChild(acc, vid, &disp);
-    ok(hr == E_INVALIDARG, "get_accChild returned %x\n", hr);
+    ok(hr == E_INVALIDARG, "get_accChild returned %lx\n", hr);
     ok(disp == NULL, "disp = %p\n", disp);
 
     V_I4(&vid) = 1;
     disp = (void*)0xdeadbeef;
     hr = IAccessible_get_accChild(acc, vid, &disp);
-    ok(hr == E_INVALIDARG, "get_accChild returned %x\n", hr);
+    ok(hr == E_INVALIDARG, "get_accChild returned %lx\n", hr);
     ok(disp == NULL, "disp = %p\n", disp);
 
     /* Neither the parent nor any child windows have focus, VT_EMPTY. */
     hr = IAccessible_get_accFocus(acc, &v);
-    ok(hr == S_OK, "hr %#x\n", hr);
+    ok(hr == S_OK, "hr %#lx\n", hr);
     ok(V_VT(&v) == VT_EMPTY, "V_VT(&v) = %d\n", V_VT(&v));
 
     /* Set the focus to the parent window. */
@@ -1038,91 +1038,91 @@ static void test_default_client_accessible_object(void)
     SetFocus(hwnd);
     hr = IAccessible_get_accFocus(acc, &v);
     ok(GetFocus() == hwnd, "test window has no focus\n");
-    ok(hr == S_OK, "hr %#x\n", hr);
+    ok(hr == S_OK, "hr %#lx\n", hr);
     ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
-    ok(V_I4(&v) == CHILDID_SELF, "V_I4(&v) = %d\n", V_I4(&v));
+    ok(V_I4(&v) == CHILDID_SELF, "V_I4(&v) = %ld\n", V_I4(&v));
 
     /* Set focus to each child window. */
     SetFocus(btn);
     hr = IAccessible_get_accFocus(acc, &v);
     ok(GetFocus() == btn, "test window has no focus\n");
-    ok(hr == S_OK, "hr %#x\n", hr);
+    ok(hr == S_OK, "hr %#lx\n", hr);
     ok(V_VT(&v) == VT_DISPATCH, "V_VT(&v) = %d\n", V_VT(&v));
     ok(V_DISPATCH(&v) != NULL, "V_DISPATCH(&v) = %p\n", V_DISPATCH(&v));
     check_acc_hwnd((IUnknown*)V_DISPATCH(&v), btn);
 
     hr = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IAccessible, (void**)&win);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     IDispatch_Release(V_DISPATCH(&v));
 
     V_VT(&vid) = VT_I4;
     V_I4(&vid) = CHILDID_SELF;
     hr = IAccessible_get_accRole(win, vid, &v);
-    todo_wine ok(hr == S_OK, "got %x\n", hr);
+    todo_wine ok(hr == S_OK, "got %lx\n", hr);
     todo_wine ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
-    todo_wine ok(V_I4(&v) == ROLE_SYSTEM_WINDOW, "V_I4(&v) = %d\n", V_I4(&v));
+    todo_wine ok(V_I4(&v) == ROLE_SYSTEM_WINDOW, "V_I4(&v) = %ld\n", V_I4(&v));
     IAccessible_Release(win);
 
     SetFocus(chld);
     hr = IAccessible_get_accFocus(acc, &v);
-    ok(hr == S_OK, "hr %#x\n", hr);
+    ok(hr == S_OK, "hr %#lx\n", hr);
     ok(V_VT(&v) == VT_DISPATCH, "V_VT(&v) = %d\n", V_VT(&v));
     ok(V_DISPATCH(&v) != NULL, "V_DISPATCH(&v) = %p\n", V_DISPATCH(&v));
     check_acc_hwnd((IUnknown*)V_DISPATCH(&v), chld);
 
     hr = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IAccessible, (void**)&win);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     IDispatch_Release(V_DISPATCH(&v));
 
     hr = IAccessible_get_accRole(win, vid, &v);
-    todo_wine ok(hr == S_OK, "got %x\n", hr);
+    todo_wine ok(hr == S_OK, "got %lx\n", hr);
     todo_wine ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
-    todo_wine ok(V_I4(&v) == ROLE_SYSTEM_WINDOW, "V_I4(&v) = %d\n", V_I4(&v));
+    todo_wine ok(V_I4(&v) == ROLE_SYSTEM_WINDOW, "V_I4(&v) = %ld\n", V_I4(&v));
     IAccessible_Release(win);
 
     /* Child of a child, still works on parent HWND. */
     SetFocus(chld2);
     hr = IAccessible_get_accFocus(acc, &v);
-    ok(hr == S_OK, "hr %#x\n", hr);
+    ok(hr == S_OK, "hr %#lx\n", hr);
     ok(V_VT(&v) == VT_DISPATCH, "V_VT(&v) = %d\n", V_VT(&v));
     ok(V_DISPATCH(&v) != NULL, "V_DISPATCH(&v) = %p\n", V_DISPATCH(&v));
     check_acc_hwnd((IUnknown*)V_DISPATCH(&v), chld2);
 
     hr = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IAccessible, (void**)&win);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     IDispatch_Release(V_DISPATCH(&v));
 
     hr = IAccessible_get_accRole(win, vid, &v);
-    todo_wine ok(hr == S_OK, "got %x\n", hr);
+    todo_wine ok(hr == S_OK, "got %lx\n", hr);
     todo_wine ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
-    todo_wine ok(V_I4(&v) == ROLE_SYSTEM_WINDOW, "V_I4(&v) = %d\n", V_I4(&v));
+    todo_wine ok(V_I4(&v) == ROLE_SYSTEM_WINDOW, "V_I4(&v) = %ld\n", V_I4(&v));
     IAccessible_Release(win);
 
     ShowWindow(hwnd, SW_HIDE);
 
     hr = IAccessible_QueryInterface(acc, &IID_IEnumVARIANT, (void**)&ev);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
 
     hr = IEnumVARIANT_Skip(ev, 100);
-    ok(hr == S_FALSE, "Skip returned %x\n", hr);
+    ok(hr == S_FALSE, "Skip returned %lx\n", hr);
 
     V_VT(&v) = VT_I4;
     fetched = 1;
     hr = IEnumVARIANT_Next(ev, 1, &v, &fetched);
-    ok(hr == S_FALSE, "got %x\n", hr);
+    ok(hr == S_FALSE, "got %lx\n", hr);
     ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
-    ok(fetched == 0, "fetched = %d\n", fetched);
+    ok(fetched == 0, "fetched = %ld\n", fetched);
 
     hr = IEnumVARIANT_Reset(ev);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
 
     V_VT(&v) = VT_I4;
     fetched = 2;
     hr = IEnumVARIANT_Next(ev, 1, &v, &fetched);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     ok(V_VT(&v) == VT_DISPATCH, "V_VT(&v) = %d\n", V_VT(&v));
     IDispatch_Release(V_DISPATCH(&v));
-    ok(fetched == 1, "fetched = %d\n", fetched);
+    ok(fetched == 1, "fetched = %ld\n", fetched);
     IEnumVARIANT_Release(ev);
 
     test_AccessibleChildren(acc);
@@ -1130,7 +1130,7 @@ static void test_default_client_accessible_object(void)
     V_VT(&vid) = VT_I4;
     V_I4(&vid) = CHILDID_SELF;
     hr = IAccessible_get_accName(acc, vid, &str);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     /* Window names don't have keyboard shortcuts */
     todo_wine ok(!lstrcmpW(str, L"wnd &t &junk") ||
        broken(!lstrcmpW(str, L"wnd t &junk")), /* Windows < 10 1607 */
@@ -1138,33 +1138,33 @@ static void test_default_client_accessible_object(void)
     SysFreeString(str);
 
     hr = IAccessible_get_accKeyboardShortcut(acc, vid, &str);
-    todo_wine ok(hr == S_FALSE || broken(hr == S_OK), "got %x\n", hr);
+    todo_wine ok(hr == S_FALSE || broken(hr == S_OK), "got %lx\n", hr);
     todo_wine ok(str == NULL || broken(!lstrcmpW(str, L"Alt+t")), "str = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     V_I4(&vid) = 1;
     str = (void*)0xdeadbeef;
     hr = IAccessible_get_accName(acc, vid, &str);
-    ok(hr == E_INVALIDARG, "got %x\n", hr);
+    ok(hr == E_INVALIDARG, "got %lx\n", hr);
     ok(!str, "str != NULL\n");
     V_I4(&vid) = CHILDID_SELF;
 
     str = (void*)0xdeadbeef;
     hr = IAccessible_get_accValue(acc, vid, &str);
-    ok(hr == S_FALSE, "got %x\n", hr);
+    ok(hr == S_FALSE, "got %lx\n", hr);
     ok(!str, "str != NULL\n");
 
     str = (void*)0xdeadbeef;
     hr = IAccessible_get_accDescription(acc, vid, &str);
-    ok(hr == S_FALSE, "got %x\n", hr);
+    ok(hr == S_FALSE, "got %lx\n", hr);
     ok(!str, "str != NULL\n");
 
     V_VT(&v) = VT_DISPATCH;
     V_DISPATCH(&v) = (void*)0xdeadbeef;
     hr = IAccessible_get_accRole(acc, vid, &v);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
-    ok(V_I4(&v) == ROLE_SYSTEM_CLIENT, "V_I4(&v) = %d\n", V_I4(&v));
+    ok(V_I4(&v) == ROLE_SYSTEM_CLIENT, "V_I4(&v) = %ld\n", V_I4(&v));
 
     check_acc_state(acc, STATE_SYSTEM_FOCUSABLE | STATE_SYSTEM_INVISIBLE);
     SetFocus(hwnd);
@@ -1181,40 +1181,40 @@ static void test_default_client_accessible_object(void)
 
     str = (void*)0xdeadbeef;
     hr = IAccessible_get_accHelp(acc, vid, &str);
-    ok(hr == S_FALSE, "got %x\n", hr);
+    ok(hr == S_FALSE, "got %lx\n", hr);
     ok(!str, "str != NULL\n");
 
     str = (void*)0xdeadbeef;
     hr = IAccessible_get_accDefaultAction(acc, vid, &str);
-    ok(hr == S_FALSE, "got %x\n", hr);
+    ok(hr == S_FALSE, "got %lx\n", hr);
     ok(!str, "str != NULL\n");
 
     pt.x = pt.y = 60;
     ok(ClientToScreen(hwnd, &pt), "ClientToScreen failed\n");
     hr = IAccessible_accHitTest(acc, pt.x, pt.y, &v);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
-    ok(V_I4(&v) == 0, "V_I4(&v) = %d\n", V_I4(&v));
+    ok(V_I4(&v) == 0, "V_I4(&v) = %ld\n", V_I4(&v));
 
     pt.x = pt.y = 25;
     ok(ClientToScreen(hwnd, &pt), "ClientToScreen failed\n");
     hr = IAccessible_accHitTest(acc, pt.x, pt.y, &v);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
-    ok(V_I4(&v) == 0, "V_I4(&v) = %d\n", V_I4(&v));
+    ok(V_I4(&v) == 0, "V_I4(&v) = %ld\n", V_I4(&v));
 
     ShowWindow(hwnd, SW_SHOW);
     pt.x = pt.y = 60;
     ok(ClientToScreen(hwnd, &pt), "ClientToScreen failed\n");
     hr = IAccessible_accHitTest(acc, pt.x, pt.y, &v);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
-    ok(V_I4(&v) == 0, "V_I4(&v) = %d\n", V_I4(&v));
+    ok(V_I4(&v) == 0, "V_I4(&v) = %ld\n", V_I4(&v));
 
     pt.x = pt.y = 25;
     ok(ClientToScreen(hwnd, &pt), "ClientToScreen failed\n");
     hr = IAccessible_accHitTest(acc, pt.x, pt.y, &v);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     ok(V_VT(&v) == VT_DISPATCH, "V_VT(&v) = %d\n", V_VT(&v));
     ok(V_DISPATCH(&v) != NULL, "V_DISPATCH(&v) = %p\n", V_DISPATCH(&v));
     VariantClear(&v);
@@ -1223,12 +1223,12 @@ static void test_default_client_accessible_object(void)
     pt.x = pt.y = 25;
     ok(ClientToScreen(hwnd, &pt), "ClientToScreen failed\n");
     hr = IAccessible_accHitTest(acc, pt.x, pt.y, &v);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
-    ok(V_I4(&v) == 0, "V_I4(&v) = %d\n", V_I4(&v));
+    ok(V_I4(&v) == 0, "V_I4(&v) = %ld\n", V_I4(&v));
 
     hr = IAccessible_get_accParent(acc, &disp);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     ok(disp != NULL, "disp == NULL\n");
     IDispatch_Release(disp);
 
@@ -1242,11 +1242,11 @@ static void test_default_client_accessible_object(void)
     pt.y = rect.bottom;
     MapWindowPoints(hwnd, NULL, &pt, 1);
     hr = IAccessible_accLocation(acc, &left, &top, &width, &height, vid);
-    ok(hr == S_OK, "got %x\n", hr);
-    ok(left == rect.left, "left = %d, expected %d\n", left, rect.left);
-    ok(top == rect.top, "top = %d, expected %d\n", top, rect.top);
-    ok(width == pt.x-rect.left, "width = %d, expected %d\n", width, pt.x-rect.left);
-    ok(height == pt.y-rect.top, "height = %d, expected %d\n", height, pt.y-rect.top);
+    ok(hr == S_OK, "got %lx\n", hr);
+    ok(left == rect.left, "left = %ld, expected %ld\n", left, rect.left);
+    ok(top == rect.top, "top = %ld, expected %ld\n", top, rect.top);
+    ok(width == pt.x-rect.left, "width = %ld, expected %ld\n", width, pt.x-rect.left);
+    ok(height == pt.y-rect.top, "height = %ld, expected %ld\n", height, pt.y-rect.top);
 
     thread = CreateThread(NULL, 0, default_client_thread, (void *)acc, 0, NULL);
     while(MsgWaitForMultipleObjects(1, &thread, FALSE, INFINITE, QS_ALLINPUT) != WAIT_OBJECT_0)
@@ -1263,45 +1263,45 @@ static void test_default_client_accessible_object(void)
     DestroyWindow(hwnd);
 
     hr = IAccessible_get_accChildCount(acc, &l);
-    ok(hr == S_OK, "got %x\n", hr);
-    ok(l == 0, "l = %d\n", l);
+    ok(hr == S_OK, "got %lx\n", hr);
+    ok(l == 0, "l = %ld\n", l);
 
     hr = IAccessible_get_accName(acc, vid, &str);
-    ok(hr == E_INVALIDARG, "got %x\n", hr);
+    ok(hr == E_INVALIDARG, "got %lx\n", hr);
 
     hr = IAccessible_get_accValue(acc, vid, &str);
-    ok(hr == S_FALSE, "got %x\n", hr);
+    ok(hr == S_FALSE, "got %lx\n", hr);
 
     hr = IAccessible_get_accRole(acc, vid, &v);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
-    ok(V_I4(&v) == ROLE_SYSTEM_CLIENT, "V_I4(&v) = %d\n", V_I4(&v));
+    ok(V_I4(&v) == ROLE_SYSTEM_CLIENT, "V_I4(&v) = %ld\n", V_I4(&v));
 
     hr = IAccessible_get_accState(acc, vid, &v);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
-    ok(V_I4(&v) == STATE_SYSTEM_INVISIBLE, "V_I4(&v) = %x\n", V_I4(&v));
+    ok(V_I4(&v) == STATE_SYSTEM_INVISIBLE, "V_I4(&v) = %lx\n", V_I4(&v));
 
     hr = IAccessible_get_accFocus(acc, &v);
-    ok(hr == S_OK, "hr %#x\n", hr);
+    ok(hr == S_OK, "hr %#lx\n", hr);
     ok(V_VT(&v) == VT_EMPTY, "V_VT(&v) = %d\n", V_VT(&v));
 
     hr = IAccessible_accHitTest(acc, 200, 200, &v);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
-    ok(V_I4(&v) == 0, "V_I4(&v) = %d\n", V_I4(&v));
+    ok(V_I4(&v) == 0, "V_I4(&v) = %ld\n", V_I4(&v));
 
     disp = (void*)0xdeadbeef;
     hr = IAccessible_get_accParent(acc, &disp);
-    ok(hr == E_FAIL, "got %x\n", hr);
+    ok(hr == E_FAIL, "got %lx\n", hr);
     ok(disp == NULL, "disp = %p\n", disp);
 
     hr = IAccessible_accLocation(acc, &left, &top, &width, &height, vid);
-    ok(hr == S_OK, "got %x\n", hr);
-    ok(left == 0, "left =  %d\n", left);
-    ok(top == 0, "top =  %d\n", top);
-    ok(width == 0, "width =  %d\n", width);
-    ok(height == 0, "height =  %d\n", height);
+    ok(hr == S_OK, "got %lx\n", hr);
+    ok(left == 0, "left =  %ld\n", left);
+    ok(top == 0, "top =  %ld\n", top);
+    ok(width == 0, "width =  %ld\n", width);
+    ok(height == 0, "height =  %ld\n", height);
 
     IAccessible_Release(acc);
 }
@@ -1331,26 +1331,26 @@ static void test_AccessibleObjectFromPoint(void)
     }
 
     hr = AccessibleObjectFromPoint(point, NULL, NULL);
-    ok(hr == E_INVALIDARG, "got %x\n", hr);
+    ok(hr == E_INVALIDARG, "got %lx\n", hr);
 
     hr = AccessibleObjectFromPoint(point, &acc, NULL);
-    ok(hr == E_INVALIDARG, "got %x\n", hr);
+    ok(hr == E_INVALIDARG, "got %lx\n", hr);
 
     V_VT(&cid) = VT_DISPATCH;
     V_DISPATCH(&cid) = (IDispatch*)0xdeadbeef;
     hr = AccessibleObjectFromPoint(point, NULL, &cid);
-    ok(hr == E_INVALIDARG, "got %x\n", hr);
+    ok(hr == E_INVALIDARG, "got %lx\n", hr);
     ok(V_VT(&cid) == VT_DISPATCH, "got %#x, expected %#x\n", V_VT(&cid), VT_DISPATCH);
 
     hr = AccessibleObjectFromPoint(point, &acc, &cid);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     ok(V_VT(&cid) == VT_I4, "got %#x, expected %#x\n", V_VT(&cid), VT_I4);
-    ok(V_I4(&cid) == CHILDID_SELF, "got %#x, expected %#x\n", V_I4(&cid), CHILDID_SELF);
+    ok(V_I4(&cid) == CHILDID_SELF, "got %#lx, expected %#x\n", V_I4(&cid), CHILDID_SELF);
     check_acc_hwnd((IUnknown*)acc, hwnd);
     hr = IAccessible_get_accRole(acc, cid, &var);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     ok(V_VT(&var) == VT_I4, "got %#x, expected %#x\n", V_VT(&var), VT_I4);
-    ok(V_I4(&var) == ROLE_SYSTEM_CLIENT, "got %#x, expected %#x\n",
+    ok(V_I4(&var) == ROLE_SYSTEM_CLIENT, "got %#lx, expected %#x\n",
             V_I4(&var), ROLE_SYSTEM_CLIENT);
     IAccessible_Release(acc);
 
@@ -1366,14 +1366,14 @@ static void test_AccessibleObjectFromPoint(void)
     }
 
     hr = AccessibleObjectFromPoint(point, &acc, &cid);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     ok(V_VT(&cid) == VT_I4, "got %#x, expected %#x\n", V_VT(&cid), VT_I4);
-    ok(V_I4(&cid) == CHILDID_SELF, "got %#x, expected %#x\n", V_I4(&cid), CHILDID_SELF);
+    ok(V_I4(&cid) == CHILDID_SELF, "got %#lx, expected %#x\n", V_I4(&cid), CHILDID_SELF);
     check_acc_hwnd((IUnknown*)acc, child);
     hr = IAccessible_get_accRole(acc, cid, &var);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     ok(V_VT(&var) == VT_I4, "got %#x, expected %#x\n", V_VT(&var), VT_I4);
-    ok(V_I4(&var) == ROLE_SYSTEM_TEXT, "got %#x, expected %#x\n",
+    ok(V_I4(&var) == ROLE_SYSTEM_TEXT, "got %#lx, expected %#x\n",
             V_I4(&var), ROLE_SYSTEM_TEXT);
     IAccessible_Release(acc);
 
@@ -1387,7 +1387,7 @@ static void test_CAccPropServices(void)
 
     hres = CoCreateInstance(&CLSID_CAccPropServices, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IAccPropServices, (void**)&acc_prop_services);
-    ok(hres == S_OK, "Could not create CAccPropServices instance: %08x\n", hres);
+    ok(hres == S_OK, "Could not create CAccPropServices instance: %08lx\n", hres);
 
     IAccPropServices_Release(acc_prop_services);
 }
@@ -1398,8 +1398,8 @@ static LRESULT WINAPI test_query_class(HWND hwnd, UINT msg, WPARAM wparam, LPARA
         return 0;
 
     CHECK_EXPECT(winproc_GETOBJECT);
-    ok(!wparam, "wparam = %lx\n", wparam);
-    ok(lparam == OBJID_QUERYCLASSNAMEIDX, "lparam = %lx\n", lparam);
+    ok(!wparam, "wparam = %Ix\n", wparam);
+    ok(lparam == OBJID_QUERYCLASSNAMEIDX, "lparam = %Ix\n", lparam);
     return 0;
 }
 
@@ -1454,7 +1454,7 @@ static void test_CreateStdAccessibleObject_classes(void)
         if (tests[i].client)
             SET_EXPECT(winproc_GETOBJECT);
         hr = CreateStdAccessibleObject(hwnd, OBJID_CLIENT, &IID_IAccessible, (void**)&acc);
-        ok(hr == S_OK, "CreateStdAccessibleObject failed %x\n", hr);
+        ok(hr == S_OK, "CreateStdAccessibleObject failed %lx\n", hr);
         if (tests[i].client)
             CHECK_CALLED(winproc_GETOBJECT);
         IAccessible_Release(acc);
@@ -1462,7 +1462,7 @@ static void test_CreateStdAccessibleObject_classes(void)
         if (tests[i].window)
             SET_EXPECT(winproc_GETOBJECT);
         hr = CreateStdAccessibleObject(hwnd, OBJID_WINDOW, &IID_IAccessible, (void**)&acc);
-        ok(hr == S_OK, "CreateStdAccessibleObject failed %x\n", hr);
+        ok(hr == S_OK, "CreateStdAccessibleObject failed %lx\n", hr);
         if (tests[i].window)
             CHECK_CALLED(winproc_GETOBJECT);
         IAccessible_Release(acc);
@@ -1511,42 +1511,42 @@ static void check_acc_vals_(IAccessible *acc, const acc_expected_vals *vals,
     V_VT(&vid) = VT_I4;
     V_I4(&vid) = CHILDID_SELF;
     hr = IAccessible_get_accName(acc, vid, &str);
-    ok_(__FILE__, line) (hr == (vals->name ? S_OK : S_FALSE), "get_accName returned %#x, expected %#x\n",
+    ok_(__FILE__, line) (hr == (vals->name ? S_OK : S_FALSE), "get_accName returned %#lx, expected %#lx\n",
             hr, (vals->name ? S_OK : S_FALSE));
     ok_(__FILE__, line) (!lstrcmpW(str, vals->name), "get_accName returned %s, expected %s\n",
             wine_dbgstr_w(str), wine_dbgstr_w(vals->name));
     SysFreeString(str);
 
     hr = IAccessible_get_accValue(acc, vid, &str);
-    ok_(__FILE__, line) (hr == vals->value_hr, "get_accValue returned %#x, expected %#x\n",
+    ok_(__FILE__, line) (hr == vals->value_hr, "get_accValue returned %#lx, expected %#lx\n",
             hr, vals->value_hr);
     ok_(__FILE__, line) (!lstrcmpW(str, vals->value), "get_accValue returned %s, expected %s\n",
             wine_dbgstr_w(str), wine_dbgstr_w(vals->value));
     SysFreeString(str);
 
     hr = IAccessible_get_accDescription(acc, vid, &str);
-    ok_(__FILE__, line) (hr == (vals->description ? S_OK : S_FALSE), "get_accDescription returned %#x, expected %#x\n",
+    ok_(__FILE__, line) (hr == (vals->description ? S_OK : S_FALSE), "get_accDescription returned %#lx, expected %#lx\n",
             hr, vals->help ? S_OK : S_FALSE);
     ok_(__FILE__, line) (!lstrcmpW(str, vals->description), "get_accDescription returned %s, expected %s\n",
             wine_dbgstr_w(str), wine_dbgstr_w(vals->description));
     SysFreeString(str);
 
     hr = IAccessible_get_accHelp(acc, vid, &str);
-    ok_(__FILE__, line) (hr == (vals->help ? S_OK : S_FALSE), "get_accHelp returned %#x, expected %#x\n",
+    ok_(__FILE__, line) (hr == (vals->help ? S_OK : S_FALSE), "get_accHelp returned %#lx, expected %#lx\n",
             hr, vals->help ? S_OK : S_FALSE);
     ok_(__FILE__, line) (!lstrcmpW(str, vals->help), "get_accHelp returned %s, expected %s\n",
             wine_dbgstr_w(str), wine_dbgstr_w(vals->help));
     SysFreeString(str);
 
     hr = IAccessible_get_accKeyboardShortcut(acc, vid, &str);
-    ok_(__FILE__, line) (hr == (vals->kbd_shortcut ? S_OK : S_FALSE), "get_accKeyboardShortcut returned %#x, expected %#x\n",
+    ok_(__FILE__, line) (hr == (vals->kbd_shortcut ? S_OK : S_FALSE), "get_accKeyboardShortcut returned %#lx, expected %#lx\n",
             hr, vals->help ? S_OK : S_FALSE);
     ok_(__FILE__, line) (!lstrcmpW(str, vals->kbd_shortcut), "get_accKeyboardShortcut returned %s, expected %s\n",
             wine_dbgstr_w(str), wine_dbgstr_w(vals->kbd_shortcut));
     SysFreeString(str);
 
     hr = IAccessible_get_accDefaultAction(acc, vid, &str);
-    ok_(__FILE__, line) (hr == (vals->default_action ? S_OK : S_FALSE), "get_accDefaultAction returned %#x, expected %#x\n",
+    ok_(__FILE__, line) (hr == (vals->default_action ? S_OK : S_FALSE), "get_accDefaultAction returned %#lx, expected %#lx\n",
             hr, vals->help ? S_OK : S_FALSE);
     ok_(__FILE__, line) (!lstrcmpW(str, vals->default_action), "get_accDefaultAction returned %s, expected %s\n",
             wine_dbgstr_w(str), wine_dbgstr_w(vals->default_action));
@@ -1555,21 +1555,21 @@ static void check_acc_vals_(IAccessible *acc, const acc_expected_vals *vals,
     V_VT(&var) = VT_DISPATCH;
     V_DISPATCH(&var) = (void*)0xdeadbeef;
     hr = IAccessible_get_accRole(acc, vid, &var);
-    ok_(__FILE__, line) (hr == S_OK, "get_accRole returned %#x\n", hr);
+    ok_(__FILE__, line) (hr == S_OK, "get_accRole returned %#lx\n", hr);
     ok_(__FILE__, line) (V_VT(&var) == VT_I4, "V_VT(&var) returned %d, expected %d\n", V_VT(&var), VT_I4);
-    ok_(__FILE__, line) (V_I4(&var) == vals->role, "get_accRole returned %d, expected %d\n",
+    ok_(__FILE__, line) (V_I4(&var) == vals->role, "get_accRole returned %ld, expected %d\n",
             V_I4(&var), vals->role);
 
     V_VT(&var) = VT_DISPATCH;
     V_DISPATCH(&var) = (void*)0xdeadbeef;
     hr = IAccessible_get_accState(acc, vid, &var);
-    ok_(__FILE__, line) (hr == S_OK, "get_accState returned %#x\n", hr);
+    ok_(__FILE__, line) (hr == S_OK, "get_accState returned %#lx\n", hr);
     ok_(__FILE__, line) (V_VT(&var) == VT_I4, "V_VT(&var) returned %d, expected %d\n", V_VT(&var), VT_I4);
-    ok_(__FILE__, line) (V_I4(&var) == vals->state, "get_accState returned %#x, expected %#x\n",
+    ok_(__FILE__, line) (V_I4(&var) == vals->state, "get_accState returned %#lx, expected %#x\n",
             V_I4(&var), vals->state);
 
     hr = WindowFromAccessibleObject(acc, &hwnd);
-    ok_(__FILE__, line) (hr == S_OK, "got %x\n", hr);
+    ok_(__FILE__, line) (hr == S_OK, "got %lx\n", hr);
     ok_(__FILE__, line) (GetClientRect(hwnd, &rect), "GetClientRect failed\n");
     pt.x = rect.left;
     pt.y = rect.top;
@@ -1580,23 +1580,23 @@ static void check_acc_vals_(IAccessible *acc, const acc_expected_vals *vals,
     pt.y = rect.bottom;
     MapWindowPoints(hwnd, NULL, &pt, 1);
     hr = IAccessible_accLocation(acc, &left, &top, &width, &height, vid);
-    ok_(__FILE__, line) (hr == S_OK, "got %x\n", hr);
-    ok_(__FILE__, line) (left == rect.left, "left = %d, expected %d\n", left, rect.left);
-    ok_(__FILE__, line) (top == rect.top, "top = %d, expected %d\n", top, rect.top);
-    ok_(__FILE__, line) (width == pt.x-rect.left, "width = %d, expected %d\n", width, pt.x-rect.left);
-    ok_(__FILE__, line) (height == pt.y-rect.top, "height = %d, expected %d\n", height, pt.y-rect.top);
+    ok_(__FILE__, line) (hr == S_OK, "got %lx\n", hr);
+    ok_(__FILE__, line) (left == rect.left, "left = %ld, expected %ld\n", left, rect.left);
+    ok_(__FILE__, line) (top == rect.top, "top = %ld, expected %ld\n", top, rect.top);
+    ok_(__FILE__, line) (width == pt.x-rect.left, "width = %ld, expected %ld\n", width, pt.x-rect.left);
+    ok_(__FILE__, line) (height == pt.y-rect.top, "height = %ld, expected %ld\n", height, pt.y-rect.top);
 
     child_count = -1;
     hr = IAccessible_get_accChildCount(acc, &child_count);
-    ok_(__FILE__, line) (hr == S_OK, "get_accChildCount returned %#x\n", hr);
-    ok_(__FILE__, line) (child_count == vals->child_count, "get_accChildCount returned %d, expected %#x\n",
+    ok_(__FILE__, line) (hr == S_OK, "get_accChildCount returned %#lx\n", hr);
+    ok_(__FILE__, line) (child_count == vals->child_count, "get_accChildCount returned %ld, expected %#lx\n",
             child_count, vals->child_count);
 
     disp = (void *)0xdeadbeef;
     V_VT(&var) = VT_I4;
     V_I4(&var) = 1;
     hr = IAccessible_get_accChild(acc, var, &disp);
-    ok_(__FILE__, line) (hr == (vals->valid_child ? S_OK : E_INVALIDARG), "get_accChild returned %#x, expected %#x\n",
+    ok_(__FILE__, line) (hr == (vals->valid_child ? S_OK : E_INVALIDARG), "get_accChild returned %#lx, expected %#lx\n",
             hr, (vals->valid_child ? S_OK : E_INVALIDARG));
     if (disp)
     {
@@ -1608,19 +1608,19 @@ static void check_acc_vals_(IAccessible *acc, const acc_expected_vals *vals,
 
     disp = (void *)0xdeadbeef;
     hr = IAccessible_get_accParent(acc, &disp);
-    ok_(__FILE__, line) (hr == S_OK, "get_accParent returned %#x\n", hr);
+    ok_(__FILE__, line) (hr == S_OK, "get_accParent returned %#lx\n", hr);
     ok_(__FILE__, line) (disp != NULL, "get_accParent returned a NULL pareent\n");
     IDispatch_Release(disp);
 
     V_VT(&var) = VT_EMPTY;
     hr = IAccessible_get_accFocus(acc, &var);
-    ok_(__FILE__, line) (hr == S_OK, "get_accFocus returned %#x\n", hr);
+    ok_(__FILE__, line) (hr == S_OK, "get_accFocus returned %#lx\n", hr);
     ok_(__FILE__, line) (V_VT(&var) == vals->focus_vt, "get_accFocus returned V_VT(&var) %d, expected %d\n",
             V_VT(&var), vals->focus_vt);
     switch(vals->focus_vt)
     {
     case VT_I4:
-        ok_(__FILE__, line) (V_I4(&var) == vals->focus_cid, "get_accFocus returned childID %d, expected %d\n",
+        ok_(__FILE__, line) (V_I4(&var) == vals->focus_cid, "get_accFocus returned childID %ld, expected %d\n",
                 V_I4(&var), vals->focus_cid);
         break;
 
@@ -1744,21 +1744,21 @@ static void test_default_edit_accessible_object(void)
     ok(!!btn1, "Failed to create btn1 hwnd\n");
 
     hr = CreateStdAccessibleObject(edit[0], OBJID_CLIENT, &IID_IAccessible, (void**)&acc);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     V_VT(&v) = VT_I4;
     V_I4(&v) = CHILDID_SELF;
     str = SysAllocString(L"edit0-test");
     hr = IAccessible_put_accValue(acc, v, str);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     SysFreeString(str);
     check_acc_vals(acc, &edit_acc_vals[0]);
     IAccessible_Release(acc);
 
     hr = CreateStdAccessibleObject(edit[1], OBJID_CLIENT, &IID_IAccessible, (void**)&acc);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     str = SysAllocString(L"password");
     hr = IAccessible_put_accValue(acc, v, str);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     SysFreeString(str);
     check_acc_vals(acc, &edit_acc_vals[1]);
     IAccessible_Release(acc);
@@ -1767,7 +1767,7 @@ static void test_default_edit_accessible_object(void)
     hr = CreateStdAccessibleObject(edit[2], OBJID_CLIENT, &IID_IAccessible, (void**)&acc);
     str = SysAllocString(L"edit2-test\r\ntest-edit2\n");
     hr = IAccessible_put_accValue(acc, v, str);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     SysFreeString(str);
     check_acc_vals(acc, &edit_acc_vals[2]);
     IAccessible_Release(acc);
@@ -1780,7 +1780,7 @@ static void test_default_edit_accessible_object(void)
     ShowWindow(label1, SW_HIDE);
     SetFocus(btn1);
     hr = CreateStdAccessibleObject(edit[3], OBJID_CLIENT, &IID_IAccessible, (void**)&acc);
-    ok(hr == S_OK, "got %x\n", hr);
+    ok(hr == S_OK, "got %lx\n", hr);
     check_acc_vals(acc, &edit_acc_vals[3]);
     IAccessible_Release(acc);
 
@@ -1805,7 +1805,7 @@ START_TEST(main)
 
         lres = strtoll( argv[3], NULL, 16 );
         hres = ObjectFromLresult(lres, &IID_IUnknown, 0, (void**)&unk);
-        ok(hres == S_OK, "hres = %x\n", hres);
+        ok(hres == S_OK, "hres = %lx\n", hres);
         IUnknown_Release(unk);
 
         CoUninitialize();
