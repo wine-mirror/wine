@@ -129,6 +129,14 @@ struct get_current_padding_params
     UINT32 *padding;
 };
 
+struct write_best_effort_tmp_params
+{
+    struct alsa_stream *stream;
+    BYTE *buf;
+    snd_pcm_uframes_t frames;
+    snd_pcm_sframes_t *written;
+};
+
 enum alsa_funcs
 {
     alsa_get_endpoint_ids,
@@ -139,6 +147,8 @@ enum alsa_funcs
     alsa_get_buffer_size,
     alsa_get_latency,
     alsa_get_current_padding,
+
+    alsa_write_best_effort_tmp
 };
 
 extern unixlib_handle_t alsa_handle;

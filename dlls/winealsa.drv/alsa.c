@@ -970,7 +970,7 @@ static NTSTATUS release_stream(void *args)
         size = 0;
         NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, &size, MEM_RELEASE);
     }
-    /* free(stream->remapping_buf); */
+    free(stream->remapping_buf);
     free(stream->silence_buf);
     free(stream->hw_params);
     free(stream->fmt);
@@ -979,6 +979,239 @@ static NTSTATUS release_stream(void *args)
     free(stream);
 
     params->result = S_OK;
+    return STATUS_SUCCESS;
+}
+
+static BYTE *remap_channels(struct alsa_stream *stream, BYTE *buf, snd_pcm_uframes_t frames)
+{
+    snd_pcm_uframes_t i;
+    UINT c;
+    UINT bytes_per_sample = stream->fmt->wBitsPerSample / 8;
+
+    if(!stream->need_remapping)
+        return buf;
+
+    if(stream->remapping_buf_frames < frames){
+        stream->remapping_buf = realloc(stream->remapping_buf,
+                                        bytes_per_sample * stream->alsa_channels * frames);
+        stream->remapping_buf_frames = frames;
+    }
+
+    snd_pcm_format_set_silence(stream->alsa_format, stream->remapping_buf,
+            frames * stream->alsa_channels);
+
+    switch(stream->fmt->wBitsPerSample){
+    case 8: {
+            UINT8 *tgt_buf, *src_buf;
+            tgt_buf = stream->remapping_buf;
+            src_buf = buf;
+            for(i = 0; i < frames; ++i){
+                for(c = 0; c < stream->fmt->nChannels; ++c)
+                    tgt_buf[stream->alsa_channel_map[c]] = src_buf[c];
+                tgt_buf += stream->alsa_channels;
+                src_buf += stream->fmt->nChannels;
+            }
+            break;
+        }
+    case 16: {
+            UINT16 *tgt_buf, *src_buf;
+            tgt_buf = (UINT16*)stream->remapping_buf;
+            src_buf = (UINT16*)buf;
+            for(i = 0; i < frames; ++i){
+                for(c = 0; c < stream->fmt->nChannels; ++c)
+                    tgt_buf[stream->alsa_channel_map[c]] = src_buf[c];
+                tgt_buf += stream->alsa_channels;
+                src_buf += stream->fmt->nChannels;
+            }
+        }
+        break;
+    case 32: {
+            UINT32 *tgt_buf, *src_buf;
+            tgt_buf = (UINT32*)stream->remapping_buf;
+            src_buf = (UINT32*)buf;
+            for(i = 0; i < frames; ++i){
+                for(c = 0; c < stream->fmt->nChannels; ++c)
+                    tgt_buf[stream->alsa_channel_map[c]] = src_buf[c];
+                tgt_buf += stream->alsa_channels;
+                src_buf += stream->fmt->nChannels;
+            }
+        }
+        break;
+    default: {
+            BYTE *tgt_buf, *src_buf;
+            tgt_buf = stream->remapping_buf;
+            src_buf = buf;
+            for(i = 0; i < frames; ++i){
+                for(c = 0; c < stream->fmt->nChannels; ++c)
+                    memcpy(&tgt_buf[stream->alsa_channel_map[c] * bytes_per_sample],
+                            &src_buf[c * bytes_per_sample], bytes_per_sample);
+                tgt_buf += stream->alsa_channels * bytes_per_sample;
+                src_buf += stream->fmt->nChannels * bytes_per_sample;
+            }
+        }
+        break;
+    }
+
+    return stream->remapping_buf;
+}
+
+static void adjust_buffer_volume(const struct alsa_stream *stream, BYTE *buf, snd_pcm_uframes_t frames)
+{
+    BOOL adjust = FALSE;
+    UINT32 i, channels, mute = 0;
+    BYTE *end;
+
+    if (stream->vol_adjusted_frames >= frames)
+        return;
+    channels = stream->fmt->nChannels;
+
+    /* Adjust the buffer based on the volume for each channel */
+    for (i = 0; i < channels; i++)
+    {
+        adjust |= stream->vols[i] != 1.0f;
+        if (stream->vols[i] == 0.0f)
+            mute++;
+    }
+
+    if (mute == channels)
+    {
+        int err = snd_pcm_format_set_silence(stream->alsa_format, buf, frames * channels);
+        if (err < 0)
+            WARN("Setting buffer to silence failed: %d (%s)\n", err, snd_strerror(err));
+        return;
+    }
+    if (!adjust) return;
+
+    /* Skip the frames we've already adjusted before */
+    end = buf + frames * stream->fmt->nBlockAlign;
+    buf += stream->vol_adjusted_frames * stream->fmt->nBlockAlign;
+
+    switch (stream->alsa_format)
+    {
+#ifndef WORDS_BIGENDIAN
+#define PROCESS_BUFFER(type) do         \
+{                                       \
+    type *p = (type*)buf;               \
+    do                                  \
+    {                                   \
+        for (i = 0; i < channels; i++)  \
+            p[i] = p[i] * stream->vols[i];       \
+        p += i;                         \
+    } while ((BYTE*)p != end);          \
+} while (0)
+    case SND_PCM_FORMAT_S16_LE:
+        PROCESS_BUFFER(INT16);
+        break;
+    case SND_PCM_FORMAT_S32_LE:
+        PROCESS_BUFFER(INT32);
+        break;
+    case SND_PCM_FORMAT_FLOAT_LE:
+        PROCESS_BUFFER(float);
+        break;
+    case SND_PCM_FORMAT_FLOAT64_LE:
+        PROCESS_BUFFER(double);
+        break;
+#undef PROCESS_BUFFER
+    case SND_PCM_FORMAT_S20_3LE:
+    case SND_PCM_FORMAT_S24_3LE:
+    {
+        /* Do it 12 bytes at a time until it is no longer possible */
+        UINT32 *q = (UINT32*)buf, mask = ~0xff;
+        BYTE *p;
+
+        /* After we adjust the volume, we need to mask out low bits */
+        if (stream->alsa_format == SND_PCM_FORMAT_S20_3LE)
+            mask = ~0x0fff;
+
+        i = 0;
+        while (end - (BYTE*)q >= 12)
+        {
+            UINT32 v[4], k;
+            v[0] = q[0] << 8;
+            v[1] = q[1] << 16 | (q[0] >> 16 & ~0xff);
+            v[2] = q[2] << 24 | (q[1] >> 8  & ~0xff);
+            v[3] = q[2] & ~0xff;
+            for (k = 0; k < 4; k++)
+            {
+                v[k] = (INT32)((INT32)v[k] * stream->vols[i]);
+                v[k] &= mask;
+                if (++i == channels) i = 0;
+            }
+            *q++ = v[0] >> 8  | v[1] << 16;
+            *q++ = v[1] >> 16 | v[2] << 8;
+            *q++ = v[2] >> 24 | v[3];
+        }
+        p = (BYTE*)q;
+        while (p != end)
+        {
+            UINT32 v = (INT32)((INT32)(p[0] << 8 | p[1] << 16 | p[2] << 24) * stream->vols[i]);
+            v &= mask;
+            *p++ = v >> 8  & 0xff;
+            *p++ = v >> 16 & 0xff;
+            *p++ = v >> 24;
+            if (++i == channels) i = 0;
+        }
+        break;
+    }
+#endif
+    case SND_PCM_FORMAT_U8:
+    {
+        UINT8 *p = (UINT8*)buf;
+        do
+        {
+            for (i = 0; i < channels; i++)
+                p[i] = (int)((p[i] - 128) * stream->vols[i]) + 128;
+            p += i;
+        } while ((BYTE*)p != end);
+        break;
+    }
+    default:
+        TRACE("Unhandled format %i, not adjusting volume.\n", stream->alsa_format);
+        break;
+    }
+}
+
+static snd_pcm_sframes_t alsa_write_best_effort(struct alsa_stream *stream, BYTE *buf, snd_pcm_uframes_t frames)
+{
+    snd_pcm_sframes_t written;
+
+    adjust_buffer_volume(stream, buf, frames);
+
+    /* Mark the frames we've already adjusted */
+    if (stream->vol_adjusted_frames < frames)
+        stream->vol_adjusted_frames = frames;
+
+    buf = remap_channels(stream, buf, frames);
+
+    written = snd_pcm_writei(stream->pcm_handle, buf, frames);
+    if(written < 0){
+        int ret;
+
+        if(written == -EAGAIN)
+            /* buffer full */
+            return 0;
+
+        WARN("writei failed, recovering: %ld (%s)\n", written,
+                snd_strerror(written));
+
+        ret = snd_pcm_recover(stream->pcm_handle, written, 0);
+        if(ret < 0){
+            WARN("Could not recover: %d (%s)\n", ret, snd_strerror(ret));
+            return ret;
+        }
+
+        written = snd_pcm_writei(stream->pcm_handle, buf, frames);
+    }
+
+    if (written > 0)
+        stream->vol_adjusted_frames -= written;
+    return written;
+}
+
+static NTSTATUS write_best_effort(void *args)
+{
+    struct write_best_effort_tmp_params *params = args;
+    *params->written = alsa_write_best_effort(params->stream, params->buf, params->frames);
     return STATUS_SUCCESS;
 }
 
@@ -1294,4 +1527,6 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     get_buffer_size,
     get_latency,
     get_current_padding,
+
+    write_best_effort /* temporary */
 };
