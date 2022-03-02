@@ -75,7 +75,7 @@ static void load_resource(const WCHAR *name, WCHAR *filename)
     GetTempFileNameW(path, name, 0, filename);
 
     file = CreateFileW(filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
-    ok(file != INVALID_HANDLE_VALUE, "failed to create %s, error %u\n", debugstr_w(filename), GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "failed to create %s, error %lu\n", debugstr_w(filename), GetLastError());
 
     res = FindResourceW(NULL, name, L"TESTDLL");
     ok( res != 0, "couldn't find resource\n" );
@@ -114,31 +114,31 @@ static BOOL testsign_create_cert(struct testsign_context *ctx)
     swprintf(container_name, ARRAY_SIZE(container_name), L"wine_testsign%u", rand());
 
     ret = CryptAcquireContextW(&ctx->provider, container_name, NULL, PROV_RSA_FULL, CRYPT_NEWKEYSET);
-    ok(ret, "Failed to create container, error %#x\n", GetLastError());
+    ok(ret, "Failed to create container, error %#lx\n", GetLastError());
 
     ret = CryptGenKey(ctx->provider, AT_SIGNATURE, CRYPT_EXPORTABLE, &key);
-    ok(ret, "Failed to create key, error %#x\n", GetLastError());
+    ok(ret, "Failed to create key, error %#lx\n", GetLastError());
     ret = CryptDestroyKey(key);
-    ok(ret, "Failed to destroy key, error %#x\n", GetLastError());
+    ok(ret, "Failed to destroy key, error %#lx\n", GetLastError());
     ret = CryptGetUserKey(ctx->provider, AT_SIGNATURE, &key);
-    ok(ret, "Failed to get user key, error %#x\n", GetLastError());
+    ok(ret, "Failed to get user key, error %#lx\n", GetLastError());
     ret = CryptDestroyKey(key);
-    ok(ret, "Failed to destroy key, error %#x\n", GetLastError());
+    ok(ret, "Failed to destroy key, error %#lx\n", GetLastError());
 
     size = sizeof(encoded_name);
     ret = CertStrToNameA(X509_ASN_ENCODING, "CN=winetest_cert", CERT_X500_NAME_STR, NULL, encoded_name, &size, NULL);
-    ok(ret, "Failed to convert name, error %#x\n", GetLastError());
+    ok(ret, "Failed to convert name, error %#lx\n", GetLastError());
     key_info.CertIssuer.cbData = size;
     key_info.CertIssuer.pbData = encoded_name;
 
     size = sizeof(public_key_info_buffer);
     ret = CryptExportPublicKeyInfo(ctx->provider, AT_SIGNATURE, X509_ASN_ENCODING, public_key_info, &size);
-    ok(ret, "Failed to export public key, error %#x\n", GetLastError());
+    ok(ret, "Failed to export public key, error %#lx\n", GetLastError());
     cert_info.SubjectPublicKeyInfo = *public_key_info;
 
     size = sizeof(hash_buffer);
     ret = CryptHashPublicKeyInfo(ctx->provider, CALG_MD5, 0, X509_ASN_ENCODING, public_key_info, hash_buffer, &size);
-    ok(ret, "Failed to hash public key, error %#x\n", GetLastError());
+    ok(ret, "Failed to hash public key, error %#lx\n", GetLastError());
 
     key_info.KeyId.cbData = size;
     key_info.KeyId.pbData = hash_buffer;
@@ -149,7 +149,7 @@ static BOOL testsign_create_cert(struct testsign_context *ctx)
 
     size = sizeof(encoded_key_id);
     ret = CryptEncodeObject(X509_ASN_ENCODING, X509_AUTHORITY_KEY_ID, &key_info, encoded_key_id, &size);
-    ok(ret, "Failed to convert name, error %#x\n", GetLastError());
+    ok(ret, "Failed to convert name, error %#lx\n", GetLastError());
 
     extension.pszObjId = (char *)szOID_AUTHORITY_KEY_IDENTIFIER;
     extension.fCritical = TRUE;
@@ -170,14 +170,14 @@ static BOOL testsign_create_cert(struct testsign_context *ctx)
     size = sizeof(cert_buffer);
     ret = CryptSignAndEncodeCertificate(ctx->provider, AT_SIGNATURE, X509_ASN_ENCODING,
             X509_CERT_TO_BE_SIGNED, &cert_info, &algid, NULL, cert_buffer, &size);
-    ok(ret, "Failed to create certificate, error %#x\n", GetLastError());
+    ok(ret, "Failed to create certificate, error %#lx\n", GetLastError());
 
     ctx->cert = CertCreateCertificateContext(X509_ASN_ENCODING, cert_buffer, size);
-    ok(!!ctx->cert, "Failed to create context, error %#x\n", GetLastError());
+    ok(!!ctx->cert, "Failed to create context, error %#lx\n", GetLastError());
 
     size = sizeof(provider_nameA);
     ret = CryptGetProvParam(ctx->provider, PP_NAME, provider_nameA, &size, 0);
-    ok(ret, "Failed to get prov param, error %#x\n", GetLastError());
+    ok(ret, "Failed to get prov param, error %#lx\n", GetLastError());
     MultiByteToWideChar(CP_ACP, 0, (char *)provider_nameA, -1, provider_nameW, ARRAY_SIZE(provider_nameW));
 
     provider_info.pwszContainerName = (WCHAR *)container_name;
@@ -185,7 +185,7 @@ static BOOL testsign_create_cert(struct testsign_context *ctx)
     provider_info.dwProvType = PROV_RSA_FULL;
     provider_info.dwKeySpec = AT_SIGNATURE;
     ret = CertSetCertificateContextProperty(ctx->cert, CERT_KEY_PROV_INFO_PROP_ID, 0, &provider_info);
-    ok(ret, "Failed to set provider info, error %#x\n", GetLastError());
+    ok(ret, "Failed to set provider info, error %#lx\n", GetLastError());
 
     ctx->root_store = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY_A, 0, 0, CERT_SYSTEM_STORE_LOCAL_MACHINE, "root");
     if (!ctx->root_store && GetLastError() == ERROR_ACCESS_DENIED)
@@ -193,35 +193,35 @@ static BOOL testsign_create_cert(struct testsign_context *ctx)
         skip("Failed to open root store.\n");
 
         ret = CertFreeCertificateContext(ctx->cert);
-        ok(ret, "Failed to free certificate, error %u\n", GetLastError());
+        ok(ret, "Failed to free certificate, error %lu\n", GetLastError());
         ret = CryptReleaseContext(ctx->provider, 0);
-        ok(ret, "failed to release context, error %u\n", GetLastError());
+        ok(ret, "failed to release context, error %lu\n", GetLastError());
 
         return FALSE;
     }
-    ok(!!ctx->root_store, "Failed to open store, error %u\n", GetLastError());
+    ok(!!ctx->root_store, "Failed to open store, error %lu\n", GetLastError());
     ret = CertAddCertificateContextToStore(ctx->root_store, ctx->cert, CERT_STORE_ADD_ALWAYS, &ctx->root_cert);
     if (!ret && GetLastError() == ERROR_ACCESS_DENIED)
     {
         skip("Failed to add self-signed certificate to store.\n");
 
         ret = CertFreeCertificateContext(ctx->cert);
-        ok(ret, "Failed to free certificate, error %u\n", GetLastError());
+        ok(ret, "Failed to free certificate, error %lu\n", GetLastError());
         ret = CertCloseStore(ctx->root_store, CERT_CLOSE_STORE_CHECK_FLAG);
-        ok(ret, "Failed to close store, error %u\n", GetLastError());
+        ok(ret, "Failed to close store, error %lu\n", GetLastError());
         ret = CryptReleaseContext(ctx->provider, 0);
-        ok(ret, "failed to release context, error %u\n", GetLastError());
+        ok(ret, "failed to release context, error %lu\n", GetLastError());
 
         return FALSE;
     }
-    ok(ret, "Failed to add certificate, error %u\n", GetLastError());
+    ok(ret, "Failed to add certificate, error %lu\n", GetLastError());
 
     ctx->publisher_store = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY_A, 0, 0,
             CERT_SYSTEM_STORE_LOCAL_MACHINE, "trustedpublisher");
-    ok(!!ctx->publisher_store, "Failed to open store, error %u\n", GetLastError());
+    ok(!!ctx->publisher_store, "Failed to open store, error %lu\n", GetLastError());
     ret = CertAddCertificateContextToStore(ctx->publisher_store, ctx->cert,
             CERT_STORE_ADD_ALWAYS, &ctx->publisher_cert);
-    ok(ret, "Failed to add certificate, error %u\n", GetLastError());
+    ok(ret, "Failed to add certificate, error %lu\n", GetLastError());
 
     return TRUE;
 }
@@ -231,20 +231,20 @@ static void testsign_cleanup(struct testsign_context *ctx)
     BOOL ret;
 
     ret = CertFreeCertificateContext(ctx->cert);
-    ok(ret, "Failed to free certificate, error %u\n", GetLastError());
+    ok(ret, "Failed to free certificate, error %lu\n", GetLastError());
 
     ret = CertFreeCertificateContext(ctx->root_cert);
-    ok(ret, "Failed to free certificate context, error %u\n", GetLastError());
+    ok(ret, "Failed to free certificate context, error %lu\n", GetLastError());
     ret = CertCloseStore(ctx->root_store, CERT_CLOSE_STORE_CHECK_FLAG);
-    ok(ret, "Failed to close store, error %u\n", GetLastError());
+    ok(ret, "Failed to close store, error %lu\n", GetLastError());
 
     ret = CertFreeCertificateContext(ctx->publisher_cert);
-    ok(ret, "Failed to free certificate context, error %u\n", GetLastError());
+    ok(ret, "Failed to free certificate context, error %lu\n", GetLastError());
     ret = CertCloseStore(ctx->publisher_store, CERT_CLOSE_STORE_CHECK_FLAG);
-    ok(ret, "Failed to close store, error %u\n", GetLastError());
+    ok(ret, "Failed to close store, error %lu\n", GetLastError());
 
     ret = CryptReleaseContext(ctx->provider, 0);
-    ok(ret, "failed to release context, error %u\n", GetLastError());
+    ok(ret, "failed to release context, error %lu\n", GetLastError());
 }
 
 static void testsign_sign(struct testsign_context *ctx, const WCHAR *filename)
@@ -272,7 +272,7 @@ static void testsign_sign(struct testsign_context *ctx, const WCHAR *filename)
     authcode.pwszName = L"";
     authcode.pwszInfo = L"";
     hr = pSignerSign(&subject, &cert_info, &signature, NULL, NULL, NULL, NULL);
-    todo_wine ok(hr == S_OK || broken(hr == NTE_BAD_ALGID) /* < 7 */, "Failed to sign, hr %#x\n", hr);
+    todo_wine ok(hr == S_OK || broken(hr == NTE_BAD_ALGID) /* < 7 */, "Failed to sign, hr %#lx\n", hr);
 }
 
 static void unload_driver(SC_HANDLE service)
@@ -285,10 +285,10 @@ static void unload_driver(SC_HANDLE service)
         BOOL ret;
         Sleep(100);
         ret = QueryServiceStatus(service, &status);
-        ok(ret, "QueryServiceStatus failed: %u\n", GetLastError());
+        ok(ret, "QueryServiceStatus failed: %lu\n", GetLastError());
     }
     ok(status.dwCurrentState == SERVICE_STOPPED,
-       "expected SERVICE_STOPPED, got %d\n", status.dwCurrentState);
+       "expected SERVICE_STOPPED, got %ld\n", status.dwCurrentState);
 
     DeleteService(service);
     CloseServiceHandle(service);
@@ -319,7 +319,7 @@ static SC_HANDLE load_driver(struct testsign_context *ctx, WCHAR *filename,
                              SERVICE_ALL_ACCESS, SERVICE_KERNEL_DRIVER,
                              SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL,
                              filename, NULL, NULL, NULL, NULL, NULL);
-    ok(!!service, "CreateService failed: %u\n", GetLastError());
+    ok(!!service, "CreateService failed: %lu\n", GetLastError());
 
     CloseServiceHandle(manager);
     return service;
@@ -348,21 +348,21 @@ static BOOL start_driver(HANDLE service, BOOL vista_plus)
         CloseServiceHandle(service);
         return FALSE;
     }
-    ok(ret, "StartService failed: %u\n", GetLastError());
+    ok(ret, "StartService failed: %lu\n", GetLastError());
 
     /* wait for the service to start up properly */
     ret = QueryServiceStatus(service, &status);
-    ok(ret, "QueryServiceStatus failed: %u\n", GetLastError());
+    ok(ret, "QueryServiceStatus failed: %lu\n", GetLastError());
     while (status.dwCurrentState == SERVICE_START_PENDING)
     {
         Sleep(100);
         ret = QueryServiceStatus(service, &status);
-        ok(ret, "QueryServiceStatus failed: %u\n", GetLastError());
+        ok(ret, "QueryServiceStatus failed: %lu\n", GetLastError());
     }
     ok(status.dwCurrentState == SERVICE_RUNNING,
-       "expected SERVICE_RUNNING, got %d\n", status.dwCurrentState);
+       "expected SERVICE_RUNNING, got %ld\n", status.dwCurrentState);
     ok(status.dwServiceType == SERVICE_KERNEL_DRIVER,
-       "expected SERVICE_KERNEL_DRIVER, got %#x\n", status.dwServiceType);
+       "expected SERVICE_KERNEL_DRIVER, got %#lx\n", status.dwServiceType);
 
     return TRUE;
 }
@@ -379,7 +379,7 @@ static void cat_okfile(void)
     do
     {
         ReadFile(okfile, buffer, sizeof(buffer), &size, NULL);
-        printf("%.*s", size, buffer);
+        printf("%.*s", (int)size, buffer);
     } while (size == sizeof(buffer));
 
     SetFilePointer(okfile, 0, NULL, FILE_BEGIN);
@@ -404,8 +404,8 @@ static void main_test(void)
     modified_value = 0;
 
     res = DeviceIoControl(device, IOCTL_WINETEST_MAIN_TEST, test_input, sizeof(*test_input), NULL, 0, &size, NULL);
-    ok(res, "DeviceIoControl failed: %u\n", GetLastError());
-    ok(!size, "got size %u\n", size);
+    ok(res, "DeviceIoControl failed: %lu\n", GetLastError());
+    ok(!size, "got size %lu\n", size);
 
     heap_free(test_input);
 }
@@ -418,15 +418,15 @@ static void test_basic_ioctl(void)
 
     res = DeviceIoControl(device, IOCTL_WINETEST_BASIC_IOCTL, NULL, 0, buf,
                           sizeof(buf), &written, NULL);
-    ok(res, "DeviceIoControl failed: %u\n", GetLastError());
-    ok(written == sizeof(teststr), "got size %d\n", written);
+    ok(res, "DeviceIoControl failed: %lu\n", GetLastError());
+    ok(written == sizeof(teststr), "got size %ld\n", written);
     ok(!strcmp(buf, teststr), "got '%s'\n", buf);
 
     memset(buf, 0, sizeof(buf));
     res = DeviceIoControl(device, IOCTL_WINETEST_BASIC_IOCTL, inbuf,
             sizeof(inbuf), buf, 10, &written, NULL);
-    ok(res, "DeviceIoControl failed: %u\n", GetLastError());
-    ok(written == 10, "got size %d\n", written);
+    ok(res, "DeviceIoControl failed: %lu\n", GetLastError());
+    ok(written == 10, "got size %ld\n", written);
     ok(!strcmp(buf, "Wine is no"), "got '%s'\n", buf);
 }
 
@@ -443,77 +443,77 @@ static void test_overlapped(void)
 
     file = CreateFileA("\\\\.\\WineTestDriver", FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES,
                        0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "failed to open device: %u\n", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "failed to open device: %lu\n", GetLastError());
 
     /* test cancelling all device requests */
     res = DeviceIoControl(file, IOCTL_WINETEST_RESET_CANCEL, NULL, 0, NULL, 0, NULL, &overlapped);
-    ok(res, "DeviceIoControl failed: %u\n", GetLastError());
+    ok(res, "DeviceIoControl failed: %lu\n", GetLastError());
 
     res = DeviceIoControl(file, IOCTL_WINETEST_TEST_CANCEL, NULL, 0, NULL, 0, NULL, &overlapped);
-    ok(!res && GetLastError() == ERROR_IO_PENDING, "DeviceIoControl failed: %u\n", GetLastError());
+    ok(!res && GetLastError() == ERROR_IO_PENDING, "DeviceIoControl failed: %lu\n", GetLastError());
 
     res = DeviceIoControl(file, IOCTL_WINETEST_TEST_CANCEL, NULL, 0, NULL, 0, NULL, &overlapped2);
-    ok(!res && GetLastError() == ERROR_IO_PENDING, "DeviceIoControl failed: %u\n", GetLastError());
+    ok(!res && GetLastError() == ERROR_IO_PENDING, "DeviceIoControl failed: %lu\n", GetLastError());
 
     cancel_cnt = 0xdeadbeef;
     res = DeviceIoControl(file, IOCTL_WINETEST_GET_CANCEL_COUNT, NULL, 0, &cancel_cnt, sizeof(cancel_cnt), NULL, &overlapped);
-    ok(res, "DeviceIoControl failed: %u\n", GetLastError());
-    ok(cancel_cnt == 0, "cancel_cnt = %u\n", cancel_cnt);
+    ok(res, "DeviceIoControl failed: %lu\n", GetLastError());
+    ok(cancel_cnt == 0, "cancel_cnt = %lu\n", cancel_cnt);
 
     CancelIo(file);
 
     cancel_cnt = 0xdeadbeef;
     res = DeviceIoControl(file, IOCTL_WINETEST_GET_CANCEL_COUNT, NULL, 0, &cancel_cnt, sizeof(cancel_cnt), NULL, &overlapped);
-    ok(res, "DeviceIoControl failed: %u\n", GetLastError());
-    ok(cancel_cnt == 2, "cancel_cnt = %u\n", cancel_cnt);
+    ok(res, "DeviceIoControl failed: %lu\n", GetLastError());
+    ok(cancel_cnt == 2, "cancel_cnt = %lu\n", cancel_cnt);
 
     /* test cancelling selected overlapped event */
     if (pCancelIoEx)
     {
         res = DeviceIoControl(file, IOCTL_WINETEST_RESET_CANCEL, NULL, 0, NULL, 0, NULL, &overlapped);
-        ok(res, "DeviceIoControl failed: %u\n", GetLastError());
+        ok(res, "DeviceIoControl failed: %lu\n", GetLastError());
 
         res = DeviceIoControl(file, IOCTL_WINETEST_TEST_CANCEL, NULL, 0, NULL, 0, NULL, &overlapped);
-        ok(!res && GetLastError() == ERROR_IO_PENDING, "DeviceIoControl failed: %u\n", GetLastError());
+        ok(!res && GetLastError() == ERROR_IO_PENDING, "DeviceIoControl failed: %lu\n", GetLastError());
 
         res = DeviceIoControl(file, IOCTL_WINETEST_TEST_CANCEL, NULL, 0, NULL, 0, NULL, &overlapped2);
-        ok(!res && GetLastError() == ERROR_IO_PENDING, "DeviceIoControl failed: %u\n", GetLastError());
+        ok(!res && GetLastError() == ERROR_IO_PENDING, "DeviceIoControl failed: %lu\n", GetLastError());
 
         pCancelIoEx(file, &overlapped);
 
         cancel_cnt = 0xdeadbeef;
         res = DeviceIoControl(file, IOCTL_WINETEST_GET_CANCEL_COUNT, NULL, 0, &cancel_cnt, sizeof(cancel_cnt), NULL, &overlapped);
-        ok(res, "DeviceIoControl failed: %u\n", GetLastError());
-        ok(cancel_cnt == 1, "cancel_cnt = %u\n", cancel_cnt);
+        ok(res, "DeviceIoControl failed: %lu\n", GetLastError());
+        ok(cancel_cnt == 1, "cancel_cnt = %lu\n", cancel_cnt);
 
         pCancelIoEx(file, &overlapped2);
 
         cancel_cnt = 0xdeadbeef;
         res = DeviceIoControl(file, IOCTL_WINETEST_GET_CANCEL_COUNT, NULL, 0, &cancel_cnt, sizeof(cancel_cnt), NULL, &overlapped);
-        ok(res, "DeviceIoControl failed: %u\n", GetLastError());
-        ok(cancel_cnt == 2, "cancel_cnt = %u\n", cancel_cnt);
+        ok(res, "DeviceIoControl failed: %lu\n", GetLastError());
+        ok(cancel_cnt == 2, "cancel_cnt = %lu\n", cancel_cnt);
     }
 
     port = CreateIoCompletionPort(file, NULL, 0xdeadbeef, 0);
-    ok(port != NULL, "CreateIoCompletionPort failed, error %u\n", GetLastError());
+    ok(port != NULL, "CreateIoCompletionPort failed, error %lu\n", GetLastError());
     res = GetQueuedCompletionStatus(port, &size, &key, &o, 0);
-    ok(!res && GetLastError() == WAIT_TIMEOUT, "GetQueuedCompletionStatus returned %x(%u)\n", res, GetLastError());
+    ok(!res && GetLastError() == WAIT_TIMEOUT, "GetQueuedCompletionStatus returned %x(%lu)\n", res, GetLastError());
 
     res = DeviceIoControl(file, IOCTL_WINETEST_RESET_CANCEL, NULL, 0, NULL, 0, NULL, &overlapped);
-    ok(res, "DeviceIoControl failed: %u\n", GetLastError());
+    ok(res, "DeviceIoControl failed: %lu\n", GetLastError());
     res = GetQueuedCompletionStatus(port, &size, &key, &o, 0);
-    ok(res, "GetQueuedCompletionStatus failed: %u\n", GetLastError());
+    ok(res, "GetQueuedCompletionStatus failed: %lu\n", GetLastError());
     ok(o == &overlapped, "o != overlapped\n");
 
     if (pSetFileCompletionNotificationModes)
     {
         res = pSetFileCompletionNotificationModes(file, FILE_SKIP_COMPLETION_PORT_ON_SUCCESS);
-        ok(res, "SetFileCompletionNotificationModes failed: %u\n", GetLastError());
+        ok(res, "SetFileCompletionNotificationModes failed: %lu\n", GetLastError());
 
         res = DeviceIoControl(file, IOCTL_WINETEST_RESET_CANCEL, NULL, 0, NULL, 0, NULL, &overlapped);
-        ok(res, "DeviceIoControl failed: %u\n", GetLastError());
+        ok(res, "DeviceIoControl failed: %lu\n", GetLastError());
         res = GetQueuedCompletionStatus(port, &size, &key, &o, 0);
-        ok(!res && GetLastError() == WAIT_TIMEOUT, "GetQueuedCompletionStatus returned %x(%u)\n", res, GetLastError());
+        ok(!res && GetLastError() == WAIT_TIMEOUT, "GetQueuedCompletionStatus returned %x(%lu)\n", res, GetLastError());
     }
 
     CloseHandle(port);
@@ -529,24 +529,24 @@ static void test_load_driver(SC_HANDLE service)
     DWORD sz;
 
     res = QueryServiceStatus(service, &status);
-    ok(res, "QueryServiceStatusEx failed: %u\n", GetLastError());
-    ok(status.dwCurrentState == SERVICE_STOPPED, "got state %#x\n", status.dwCurrentState);
+    ok(res, "QueryServiceStatusEx failed: %lu\n", GetLastError());
+    ok(status.dwCurrentState == SERVICE_STOPPED, "got state %#lx\n", status.dwCurrentState);
 
     load = TRUE;
     res = DeviceIoControl(device, IOCTL_WINETEST_LOAD_DRIVER, &load, sizeof(load), NULL, 0, &sz, NULL);
-    ok(res, "DeviceIoControl failed: %u\n", GetLastError());
+    ok(res, "DeviceIoControl failed: %lu\n", GetLastError());
 
     res = QueryServiceStatus(service, &status);
-    ok(res, "QueryServiceStatusEx failed: %u\n", GetLastError());
-    ok(status.dwCurrentState == SERVICE_RUNNING, "got state %#x\n", status.dwCurrentState);
+    ok(res, "QueryServiceStatusEx failed: %lu\n", GetLastError());
+    ok(status.dwCurrentState == SERVICE_RUNNING, "got state %#lx\n", status.dwCurrentState);
 
     load = FALSE;
     res = DeviceIoControl(device, IOCTL_WINETEST_LOAD_DRIVER, &load, sizeof(load), NULL, 0, &sz, NULL);
-    ok(res, "DeviceIoControl failed: %u\n", GetLastError());
+    ok(res, "DeviceIoControl failed: %lu\n", GetLastError());
 
     res = QueryServiceStatus(service, &status);
-    ok(res, "QueryServiceStatusEx failed: %u\n", GetLastError());
-    ok(status.dwCurrentState == SERVICE_STOPPED, "got state %#x\n", status.dwCurrentState);
+    ok(res, "QueryServiceStatusEx failed: %lu\n", GetLastError());
+    ok(status.dwCurrentState == SERVICE_STOPPED, "got state %#lx\n", status.dwCurrentState);
 }
 
 static void test_file_handles(void)
@@ -556,67 +556,67 @@ static void test_file_handles(void)
     BOOL ret;
 
     ret = DeviceIoControl(device, IOCTL_WINETEST_GET_CREATE_COUNT, NULL, 0, &count, sizeof(count), &ret_size, NULL);
-    ok(ret, "ioctl failed: %u\n", GetLastError());
-    ok(count == 2, "got %u\n", count);
+    ok(ret, "ioctl failed: %lu\n", GetLastError());
+    ok(count == 2, "got %lu\n", count);
 
     ret = DeviceIoControl(device, IOCTL_WINETEST_GET_CLOSE_COUNT, NULL, 0, &count, sizeof(count), &ret_size, NULL);
-    ok(ret, "ioctl failed: %u\n", GetLastError());
-    ok(count == 1, "got %u\n", count);
+    ok(ret, "ioctl failed: %lu\n", GetLastError());
+    ok(count == 1, "got %lu\n", count);
 
     file = CreateFileA("\\\\.\\WineTestDriver", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "failed to open device: %u\n", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "failed to open device: %lu\n", GetLastError());
 
     ret = DeviceIoControl(device, IOCTL_WINETEST_GET_CREATE_COUNT, NULL, 0, &count, sizeof(count), &ret_size, NULL);
-    ok(ret, "ioctl failed: %u\n", GetLastError());
-    ok(count == 3, "got %u\n", count);
+    ok(ret, "ioctl failed: %lu\n", GetLastError());
+    ok(count == 3, "got %lu\n", count);
 
     file2 = CreateFileA("\\\\.\\WineTestDriver", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
-    ok(file2 != INVALID_HANDLE_VALUE, "failed to open device: %u\n", GetLastError());
+    ok(file2 != INVALID_HANDLE_VALUE, "failed to open device: %lu\n", GetLastError());
 
     ret = DeviceIoControl(device, IOCTL_WINETEST_GET_CREATE_COUNT, NULL, 0, &count, sizeof(count), &ret_size, NULL);
-    ok(ret, "ioctl failed: %u\n", GetLastError());
-    ok(count == 4, "got %u\n", count);
+    ok(ret, "ioctl failed: %lu\n", GetLastError());
+    ok(count == 4, "got %lu\n", count);
 
     ret = DuplicateHandle(GetCurrentProcess(), file, GetCurrentProcess(), &dup, 0, FALSE, DUPLICATE_SAME_ACCESS);
-    ok(ret, "failed to duplicate handle: %u\n", GetLastError());
+    ok(ret, "failed to duplicate handle: %lu\n", GetLastError());
 
     ret = DeviceIoControl(device, IOCTL_WINETEST_GET_CREATE_COUNT, NULL, 0, &count, sizeof(count), &ret_size, NULL);
-    ok(ret, "ioctl failed: %u\n", GetLastError());
-    ok(count == 4, "got %u\n", count);
+    ok(ret, "ioctl failed: %lu\n", GetLastError());
+    ok(count == 4, "got %lu\n", count);
 
     ret = DeviceIoControl(device, IOCTL_WINETEST_GET_FSCONTEXT, NULL, 0, &count, sizeof(count), &ret_size, NULL);
-    ok(ret, "ioctl failed: %u\n", GetLastError());
-    ok(count == 1, "got %u\n", count);
+    ok(ret, "ioctl failed: %lu\n", GetLastError());
+    ok(count == 1, "got %lu\n", count);
 
     ret = DeviceIoControl(file, IOCTL_WINETEST_GET_FSCONTEXT, NULL, 0, &count, sizeof(count), &ret_size, NULL);
-    ok(ret, "ioctl failed: %u\n", GetLastError());
-    ok(count == 3, "got %u\n", count);
+    ok(ret, "ioctl failed: %lu\n", GetLastError());
+    ok(count == 3, "got %lu\n", count);
 
     ret = DeviceIoControl(file2, IOCTL_WINETEST_GET_FSCONTEXT, NULL, 0, &count, sizeof(count), &ret_size, NULL);
-    ok(ret, "ioctl failed: %u\n", GetLastError());
-    ok(count == 4, "got %u\n", count);
+    ok(ret, "ioctl failed: %lu\n", GetLastError());
+    ok(count == 4, "got %lu\n", count);
 
     ret = DeviceIoControl(dup, IOCTL_WINETEST_GET_FSCONTEXT, NULL, 0, &count, sizeof(count), &ret_size, NULL);
-    ok(ret, "ioctl failed: %u\n", GetLastError());
-    ok(count == 3, "got %u\n", count);
+    ok(ret, "ioctl failed: %lu\n", GetLastError());
+    ok(count == 3, "got %lu\n", count);
 
     CloseHandle(dup);
 
     ret = DeviceIoControl(device, IOCTL_WINETEST_GET_CLOSE_COUNT, NULL, 0, &count, sizeof(count), &ret_size, NULL);
-    ok(ret, "ioctl failed: %u\n", GetLastError());
-    ok(count == 1, "got %u\n", count);
+    ok(ret, "ioctl failed: %lu\n", GetLastError());
+    ok(count == 1, "got %lu\n", count);
 
     CloseHandle(file2);
 
     ret = DeviceIoControl(device, IOCTL_WINETEST_GET_CLOSE_COUNT, NULL, 0, &count, sizeof(count), &ret_size, NULL);
-    ok(ret, "ioctl failed: %u\n", GetLastError());
-    ok(count == 2, "got %u\n", count);
+    ok(ret, "ioctl failed: %lu\n", GetLastError());
+    ok(count == 2, "got %lu\n", count);
 
     CloseHandle(file);
 
     ret = DeviceIoControl(device, IOCTL_WINETEST_GET_CLOSE_COUNT, NULL, 0, &count, sizeof(count), &ret_size, NULL);
-    ok(ret, "ioctl failed: %u\n", GetLastError());
-    ok(count == 3, "got %u\n", count);
+    ok(ret, "ioctl failed: %lu\n", GetLastError());
+    ok(count == 3, "got %lu\n", count);
 }
 
 static unsigned int got_return_status_apc;
@@ -625,7 +625,7 @@ static void WINAPI return_status_apc(void *apc_user, IO_STATUS_BLOCK *io, ULONG 
 {
     ++got_return_status_apc;
     ok(apc_user == (void *)456, "got %p\n", apc_user);
-    ok(!reserved, "got reserved %#x\n", reserved);
+    ok(!reserved, "got reserved %#lx\n", reserved);
 }
 
 static void do_return_status(ULONG ioctl, struct return_status_params *params)
@@ -668,16 +668,16 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     if (NT_SUCCESS(expect_status))
     {
         todo_wine_if (params->ret_status == STATUS_PENDING && params->iosb_status == STATUS_PENDING)
-            ok(GetLastError() == 0xdeadf00d, "got error %u\n", GetLastError());
+            ok(GetLastError() == 0xdeadf00d, "got error %lu\n", GetLastError());
     }
     else
     {
-        ok(GetLastError() == RtlNtStatusToDosError(expect_status), "got error %u\n", GetLastError());
+        ok(GetLastError() == RtlNtStatusToDosError(expect_status), "got error %lu\n", GetLastError());
     }
     if (NT_ERROR(expect_status))
-        ok(size == 0xdeadf00d, "got size %u\n", size);
+        ok(size == 0xdeadf00d, "got size %lu\n", size);
     else if (!NT_ERROR(params->iosb_status))
-        ok(size == 3, "got size %u\n", size);
+        ok(size == 3, "got size %lu\n", size);
     /* size is garbage if !NT_ERROR(expect_status) && NT_ERROR(iosb_status) */
     ok(!strcmp(buffer, expect_buffer), "got buffer %s\n", buffer);
 
@@ -689,12 +689,12 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     ok(ret == expect_status, "got %#x\n", ret);
     if (NT_ERROR(params->iosb_status))
     {
-        ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
+        ok(io.Status == 0xdeadf00d, "got %#lx\n", io.Status);
         ok(io.Information == 0xdeadf00d, "got size %Iu\n", io.Information);
     }
     else
     {
-        ok(io.Status == params->iosb_status, "got %#x\n", io.Status);
+        ok(io.Status == params->iosb_status, "got %#lx\n", io.Status);
         ok(io.Information == 3, "got size %Iu\n", io.Information);
     }
     ok(!strcmp(buffer, expect_buffer), "got buffer %s\n", buffer);
@@ -703,9 +703,9 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
 
     file = CreateFileA("\\\\.\\WineTestDriver", FILE_ALL_ACCESS,
             0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "failed to open device, error %u\n", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "failed to open device, error %lu\n", GetLastError());
     port = CreateIoCompletionPort(file, NULL, 123, 0);
-    ok(port != NULL, "failed to create port, error %u\n", GetLastError());
+    ok(port != NULL, "failed to create port, error %lu\n", GetLastError());
 
     ret = WaitForSingleObject(file, 0);
     ok(!ret, "got %d\n", ret);
@@ -721,14 +721,14 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
             "got %#x\n", ret);
     if (!params->pending && NT_ERROR(params->iosb_status))
     {
-        ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
+        ok(io.Status == 0xdeadf00d, "got %#lx\n", io.Status);
         ok(io.Information == 0xdeadf00d, "got size %Iu\n", io.Information);
         ret = WaitForSingleObject(event, 0);
         ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
     }
     else
     {
-        ok(io.Status == params->iosb_status, "got %#x\n", io.Status);
+        ok(io.Status == params->iosb_status, "got %#lx\n", io.Status);
         ok(io.Information == 3, "got size %Iu\n", io.Information);
         ret = WaitForSingleObject(event, 0);
         ok(!ret, "got %d\n", ret);
@@ -751,7 +751,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
         ok(!ret, "got %#x\n", ret);
         ok(key == 123, "got key %Iu\n", key);
         ok(value == 456, "got value %Iu\n", value);
-        ok(io.Status == params->iosb_status, "got iosb status %#x\n", io.Status);
+        ok(io.Status == params->iosb_status, "got iosb status %#lx\n", io.Status);
         ok(io.Information == 3, "got information %Iu\n", io.Information);
     }
 
@@ -768,14 +768,14 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
             "got %#x\n", ret);
     if (!params->pending && NT_ERROR(params->iosb_status))
     {
-        ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
+        ok(io.Status == 0xdeadf00d, "got %#lx\n", io.Status);
         ok(io.Information == 0xdeadf00d, "got size %Iu\n", io.Information);
         ret = WaitForSingleObject(event, 0);
         ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
     }
     else
     {
-        ok(io.Status == params->iosb_status, "got %#x\n", io.Status);
+        ok(io.Status == params->iosb_status, "got %#lx\n", io.Status);
         ok(io.Information == 3, "got size %Iu\n", io.Information);
         ret = WaitForSingleObject(event, 0);
         ok(!ret, "got %d\n", ret);
@@ -796,14 +796,14 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
             "got %#x\n", ret);
     if (!params->pending && NT_ERROR(params->iosb_status))
     {
-        ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
+        ok(io.Status == 0xdeadf00d, "got %#lx\n", io.Status);
         ok(io.Information == 0xdeadf00d, "got size %Iu\n", io.Information);
         ret = WaitForSingleObject(file, 0);
         ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
     }
     else
     {
-        ok(io.Status == params->iosb_status, "got %#x\n", io.Status);
+        ok(io.Status == params->iosb_status, "got %#lx\n", io.Status);
         ok(io.Information == 3, "got size %Iu\n", io.Information);
         ret = WaitForSingleObject(file, 0);
         ok(!ret, "got %d\n", ret);
@@ -815,7 +815,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     if (pSetFileCompletionNotificationModes)
     {
         ret = pSetFileCompletionNotificationModes(file, FILE_SKIP_COMPLETION_PORT_ON_SUCCESS);
-        ok(ret, "got error %u\n", GetLastError());
+        ok(ret, "got error %lu\n", GetLastError());
 
         SetEvent(event);
         strcpy(buffer, "abcdef");
@@ -828,14 +828,14 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
                 "got %#x\n", ret);
         if (!params->pending && NT_ERROR(params->iosb_status))
         {
-            ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
+            ok(io.Status == 0xdeadf00d, "got %#lx\n", io.Status);
             ok(io.Information == 0xdeadf00d, "got size %Iu\n", io.Information);
             ret = WaitForSingleObject(event, 0);
             ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
         }
         else
         {
-            ok(io.Status == params->iosb_status, "got %#x\n", io.Status);
+            ok(io.Status == params->iosb_status, "got %#lx\n", io.Status);
             ok(io.Information == 3, "got size %Iu\n", io.Information);
             ret = WaitForSingleObject(event, 0);
             ok(!ret, "got %d\n", ret);
@@ -866,15 +866,15 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
         {
             ok(key == 123, "got key %Iu\n", key);
             ok(value == 456, "got value %Iu\n", value);
-            ok(io.Status == params->iosb_status, "got iosb status %#x\n", io.Status);
+            ok(io.Status == params->iosb_status, "got iosb status %#lx\n", io.Status);
             ok(io.Information == 3, "got information %Iu\n", io.Information);
         }
     }
 
     ret = CloseHandle(file);
-    ok(ret, "failed to close file, error %u\n", GetLastError());
+    ok(ret, "failed to close file, error %lu\n", GetLastError());
     ret = CloseHandle(port);
-    ok(ret, "failed to close port, error %u\n", GetLastError());
+    ok(ret, "failed to close port, error %lu\n", GetLastError());
 
     /* Test with an APC. */
 
@@ -882,7 +882,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
 
     file = CreateFileA("\\\\.\\WineTestDriver", FILE_ALL_ACCESS,
             0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "failed to open device, error %u\n", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "failed to open device, error %lu\n", GetLastError());
 
     strcpy(buffer, "abcdef");
     io.Status = 0xdeadf00d;
@@ -892,12 +892,12 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     ok(ret == params->ret_status, "got %#x\n", ret);
     if (!params->pending && NT_ERROR(params->iosb_status))
     {
-        ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
+        ok(io.Status == 0xdeadf00d, "got %#lx\n", io.Status);
         ok(io.Information == 0xdeadf00d, "got size %Iu\n", io.Information);
     }
     else
     {
-        ok(io.Status == params->iosb_status, "got %#x\n", io.Status);
+        ok(io.Status == params->iosb_status, "got %#lx\n", io.Status);
         ok(io.Information == 3, "got size %Iu\n", io.Information);
     }
     ok(!strcmp(buffer, expect_buffer), "got buffer %s\n", buffer);
@@ -915,7 +915,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     }
 
     ret = CloseHandle(file);
-    ok(ret, "failed to close file, error %u\n", GetLastError());
+    ok(ret, "failed to close file, error %lu\n", GetLastError());
 
     CloseHandle(event);
 }
@@ -956,7 +956,7 @@ static void test_return_status(void)
                     params.ret_status = status_tests[i];
                     params.iosb_status = status_tests[j];
 
-                    winetest_push_context("return 0x%08x, iosb 0x%08x, pending %d, method %u",
+                    winetest_push_context("return 0x%08lx, iosb 0x%08lx, pending %d, method %lu",
                             params.ret_status, params.iosb_status, params.pending, method_tests[k] & 3);
 
                     do_return_status(method_tests[k], &params);
@@ -986,120 +986,120 @@ static void test_object_info(void)
     ULONG size;
 
     status = NtQueryObject(device, ObjectNameInformation, buffer, sizeof(buffer), NULL);
-    ok(!status, "got %#x\n", status);
+    ok(!status, "got %#lx\n", status);
     ok(compare_unicode_string(name_info->Name.Buffer, name_info->Name.Length, L"\\Device\\WineTestDriver"),
             "wrong name %s\n", debugstr_w(name_info->Name.Buffer));
 
     status = NtQueryObject(device, ObjectTypeInformation, buffer, sizeof(buffer), NULL);
-    ok(!status, "got %#x\n", status);
+    ok(!status, "got %#lx\n", status);
     ok(compare_unicode_string(type_info->TypeName.Buffer, type_info->TypeName.Length, L"File"),
             "wrong name %s\n", debugstr_wn(type_info->TypeName.Buffer, type_info->TypeName.Length / sizeof(WCHAR)));
 
     status = NtQueryInformationFile(device, &io, buffer, sizeof(buffer), FileNameInformation);
-    todo_wine ok(status == STATUS_INVALID_DEVICE_REQUEST, "got %#x\n", status);
+    todo_wine ok(status == STATUS_INVALID_DEVICE_REQUEST, "got %#lx\n", status);
 
     status = NtQueryVolumeInformationFile(device, &io, buffer, sizeof(buffer), FileFsVolumeInformation);
-    todo_wine ok(status == STATUS_INVALID_DEVICE_REQUEST, "got %#x\n", status);
+    todo_wine ok(status == STATUS_INVALID_DEVICE_REQUEST, "got %#lx\n", status);
 
     file = CreateFileA("\\\\.\\WineTestDriver\\subfile", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
-    todo_wine ok(file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+    todo_wine ok(file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError());
     if (file == INVALID_HANDLE_VALUE) return;
 
     memset(buffer, 0xcc, sizeof(buffer));
     status = NtQueryObject(file, ObjectNameInformation, buffer, sizeof(buffer), &size);
-    ok(!status, "got %#x\n", status);
-    ok(size == sizeof(*name_info) + sizeof(L"\\Device\\WineTestDriver\\subfile"), "wrong size %u\n", size);
+    ok(!status, "got %#lx\n", status);
+    ok(size == sizeof(*name_info) + sizeof(L"\\Device\\WineTestDriver\\subfile"), "wrong size %lu\n", size);
     ok(compare_unicode_string(name_info->Name.Buffer, name_info->Name.Length, L"\\Device\\WineTestDriver\\subfile"),
             "wrong name %s\n", debugstr_w(name_info->Name.Buffer));
 
     memset(buffer, 0xcc, sizeof(buffer));
     status = NtQueryObject(file, ObjectNameInformation, buffer, size - 2, &size);
-    ok(status == STATUS_BUFFER_OVERFLOW, "got %#x\n", status);
-    ok(size == sizeof(*name_info) + sizeof(L"\\Device\\WineTestDriver\\subfile"), "wrong size %u\n", size);
+    ok(status == STATUS_BUFFER_OVERFLOW, "got %#lx\n", status);
+    ok(size == sizeof(*name_info) + sizeof(L"\\Device\\WineTestDriver\\subfile"), "wrong size %lu\n", size);
     ok(compare_unicode_string(name_info->Name.Buffer, name_info->Name.Length, L"\\Device\\WineTestDriver\\subfil"),
             "wrong name %s\n", debugstr_w(name_info->Name.Buffer));
 
     memset(buffer, 0xcc, sizeof(buffer));
     status = NtQueryObject(file, ObjectNameInformation, buffer, sizeof(*name_info), &size);
-    ok(status == STATUS_BUFFER_OVERFLOW, "got %#x\n", status);
-    ok(size == sizeof(*name_info) + sizeof(L"\\Device\\WineTestDriver\\subfile"), "wrong size %u\n", size);
+    ok(status == STATUS_BUFFER_OVERFLOW, "got %#lx\n", status);
+    ok(size == sizeof(*name_info) + sizeof(L"\\Device\\WineTestDriver\\subfile"), "wrong size %lu\n", size);
 
     status = NtQueryObject(file, ObjectTypeInformation, buffer, sizeof(buffer), NULL);
-    ok(!status, "got %#x\n", status);
+    ok(!status, "got %#lx\n", status);
     ok(compare_unicode_string(type_info->TypeName.Buffer, type_info->TypeName.Length, L"File"),
             "wrong name %s\n", debugstr_wn(type_info->TypeName.Buffer, type_info->TypeName.Length / sizeof(WCHAR)));
 
     status = NtQueryInformationFile(file, &io, buffer, sizeof(buffer), FileNameInformation);
-    ok(!status, "got %#x\n", status);
+    ok(!status, "got %#lx\n", status);
     ok(compare_unicode_string(file_info->FileName, file_info->FileNameLength, L"\\subfile"),
             "wrong name %s\n", debugstr_wn(file_info->FileName, file_info->FileNameLength / sizeof(WCHAR)));
 
     io.Status = 0xdeadf00d;
     io.Information = 0xdeadf00d;
     status = NtQueryVolumeInformationFile(file, &io, buffer, sizeof(buffer), FileFsVolumeInformation);
-    ok(!status, "got %#x\n", status);
-    ok(!io.Status, "got status %#x\n", io.Status);
+    ok(!status, "got %#lx\n", status);
+    ok(!io.Status, "got status %#lx\n", io.Status);
     size = offsetof(FILE_FS_VOLUME_INFORMATION, VolumeLabel) + volume_info->VolumeLabelLength;
-    ok(io.Information == size, "expected information %Iu, got %Iu\n", size, io.Information);
+    ok(io.Information == size, "expected information %lu, got %Iu\n", size, io.Information);
     ok(volume_info->VolumeSerialNumber == 0xdeadbeef,
-            "wrong serial number 0x%08x\n", volume_info->VolumeSerialNumber);
+            "wrong serial number 0x%08lx\n", volume_info->VolumeSerialNumber);
     ok(compare_unicode_string(volume_info->VolumeLabel, volume_info->VolumeLabelLength, L"WineTestDriver"),
             "wrong name %s\n", debugstr_wn(volume_info->VolumeLabel, volume_info->VolumeLabelLength / sizeof(WCHAR)));
 
     io.Status = 0xdeadf00d;
     io.Information = 0xdeadf00d;
     status = NtQueryVolumeInformationFile(file, &io, buffer, sizeof(buffer), FileFsAttributeInformation);
-    ok(status == STATUS_NOT_IMPLEMENTED, "got %#x\n", status);
-    ok(io.Status == 0xdeadf00d, "got status %#x\n", io.Status);
+    ok(status == STATUS_NOT_IMPLEMENTED, "got %#lx\n", status);
+    ok(io.Status == 0xdeadf00d, "got status %#lx\n", io.Status);
     ok(io.Information == 0xdeadf00d, "got information %Iu\n", io.Information);
 
     CloseHandle(file);
 
     file = CreateFileA("\\\\.\\WineTestDriver\\notimpl", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError());
 
     status = NtQueryObject(file, ObjectNameInformation, buffer, sizeof(buffer), NULL);
-    ok(!status, "got %#x\n", status);
+    ok(!status, "got %#lx\n", status);
     ok(compare_unicode_string(name_info->Name.Buffer, name_info->Name.Length, L"\\Device\\WineTestDriver"),
             "wrong name %s\n", debugstr_w(name_info->Name.Buffer));
 
     status = NtQueryInformationFile(file, &io, buffer, sizeof(buffer), FileNameInformation);
-    ok(status == STATUS_NOT_IMPLEMENTED, "got %#x\n", status);
+    ok(status == STATUS_NOT_IMPLEMENTED, "got %#lx\n", status);
 
     CloseHandle(file);
 
     file = CreateFileA("\\\\.\\WineTestDriver\\badparam", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError());
 
     status = NtQueryObject(file, ObjectNameInformation, buffer, sizeof(buffer), NULL);
-    ok(!status, "got %#x\n", status);
+    ok(!status, "got %#lx\n", status);
     ok(compare_unicode_string(name_info->Name.Buffer, name_info->Name.Length, L"\\Device\\WineTestDriver"),
             "wrong name %s\n", debugstr_w(name_info->Name.Buffer));
 
     status = NtQueryInformationFile(file, &io, buffer, sizeof(buffer), FileNameInformation);
-    ok(status == STATUS_INVALID_PARAMETER, "got %#x\n", status);
+    ok(status == STATUS_INVALID_PARAMETER, "got %#lx\n", status);
 
     CloseHandle(file);
 
     file = CreateFileA("\\\\.\\WineTestDriver\\genfail", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError());
 
     status = NtQueryObject(file, ObjectNameInformation, buffer, sizeof(buffer), NULL);
-    ok(status == STATUS_UNSUCCESSFUL, "got %#x\n", status);
+    ok(status == STATUS_UNSUCCESSFUL, "got %#lx\n", status);
 
     status = NtQueryInformationFile(file, &io, buffer, sizeof(buffer), FileNameInformation);
-    ok(status == STATUS_UNSUCCESSFUL, "got %#x\n", status);
+    ok(status == STATUS_UNSUCCESSFUL, "got %#lx\n", status);
 
     CloseHandle(file);
 
     file = CreateFileA("\\\\.\\WineTestDriver\\badtype", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError());
 
     status = NtQueryObject(file, ObjectNameInformation, buffer, sizeof(buffer), NULL);
-    ok(status == STATUS_OBJECT_TYPE_MISMATCH, "got %#x\n", status);
+    ok(status == STATUS_OBJECT_TYPE_MISMATCH, "got %#lx\n", status);
 
     status = NtQueryInformationFile(file, &io, buffer, sizeof(buffer), FileNameInformation);
-    ok(status == STATUS_OBJECT_TYPE_MISMATCH, "got %#x\n", status);
+    ok(status == STATUS_OBJECT_TYPE_MISMATCH, "got %#lx\n", status);
 
     CloseHandle(file);
 }
@@ -1112,36 +1112,36 @@ static void test_blocking_irp(void)
     HANDLE file;
 
     file = CreateFileA("\\\\.\\WineTestDriver\\", FILE_ALL_ACCESS, 0, NULL, OPEN_EXISTING, 0, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "failed to open device: %u\n", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "failed to open device: %lu\n", GetLastError());
 
     memset(&io, 0xcc, sizeof(io));
     status = NtQueryVolumeInformationFile(file, &io, buffer, sizeof(buffer), FileFsSizeInformation);
-    ok(!status, "got %#x\n", status);
-    ok(!io.Status, "got iosb status %#x\n", io.Status);
+    ok(!status, "got %#lx\n", status);
+    ok(!io.Status, "got iosb status %#lx\n", io.Status);
     ok(!io.Information, "got information %#Ix\n", io.Information);
 
     io.Status = 0xdeadf00d;
     io.Information = 0xdeadf00d;
     status = NtQueryVolumeInformationFile(file, &io, buffer, sizeof(buffer), FileFsFullSizeInformation);
-    ok(status == STATUS_DEVICE_NOT_READY, "got %#x\n", status);
-    ok(io.Status == 0xdeadf00d, "got iosb status %#x\n", io.Status);
+    ok(status == STATUS_DEVICE_NOT_READY, "got %#lx\n", status);
+    ok(io.Status == 0xdeadf00d, "got iosb status %#lx\n", io.Status);
     ok(io.Information == 0xdeadf00d, "got information %#Ix\n", io.Information);
 
     CloseHandle(file);
 
     file = CreateFileA("\\\\.\\WineTestDriver\\", FILE_ALL_ACCESS, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "failed to open device: %u\n", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "failed to open device: %lu\n", GetLastError());
 
     memset(&io, 0xcc, sizeof(io));
     status = NtQueryVolumeInformationFile(file, &io, buffer, sizeof(buffer), FileFsSizeInformation);
-    ok(!status, "got %#x\n", status);
-    ok(!io.Status, "got iosb status %#x\n", io.Status);
+    ok(!status, "got %#lx\n", status);
+    ok(!io.Status, "got iosb status %#lx\n", io.Status);
     ok(!io.Information, "got information %#Ix\n", io.Information);
 
     memset(&io, 0xcc, sizeof(io));
     status = NtQueryVolumeInformationFile(file, &io, buffer, sizeof(buffer), FileFsFullSizeInformation);
-    ok(status == STATUS_DEVICE_NOT_READY, "got %#x\n", status);
-    ok(io.Status == STATUS_DEVICE_NOT_READY, "got iosb status %#x\n", io.Status);
+    ok(status == STATUS_DEVICE_NOT_READY, "got %#lx\n", status);
+    ok(io.Status == STATUS_DEVICE_NOT_READY, "got iosb status %#lx\n", io.Status);
     ok(!io.Information, "got information %#Ix\n", io.Information);
 
     CloseHandle(file);
@@ -1161,7 +1161,7 @@ static void test_driver3(struct testsign_context *ctx)
     ok(GetLastError() == ERROR_CALL_NOT_IMPLEMENTED ||
        GetLastError() == ERROR_INVALID_FUNCTION ||
        GetLastError() == ERROR_PROC_NOT_FOUND /* XP */ ||
-       GetLastError() == ERROR_FILE_NOT_FOUND /* Win7 */, "got %u\n", GetLastError());
+       GetLastError() == ERROR_FILE_NOT_FOUND /* Win7 */, "got %lu\n", GetLastError());
 
     DeleteService(service);
     CloseServiceHandle(service);
@@ -1244,7 +1244,7 @@ static void test_driver_netio(struct testsign_context *ctx)
     }
 
     device = CreateFileA("\\\\.\\winetest_netio", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
-    ok(device != INVALID_HANDLE_VALUE, "failed to open device: %u\n", GetLastError());
+    ok(device != INVALID_HANDLE_VALUE, "failed to open device: %lu\n", GetLastError());
 
     hthread = CreateThread(NULL, 0, wsk_test_thread, NULL, 0, NULL);
     main_test();
@@ -1254,7 +1254,7 @@ static void test_driver_netio(struct testsign_context *ctx)
 
     unload_driver(service);
     ret = DeleteFileW(filename);
-    ok(ret, "DeleteFile failed: %u\n", GetLastError());
+    ok(ret, "DeleteFile failed: %lu\n", GetLastError());
 
     cat_okfile();
 }
@@ -1324,7 +1324,7 @@ static void add_file_to_catalog(HANDLE catalog, const WCHAR *file)
     BOOL ret;
 
     ret = CryptSIPRetrieveSubjectGuidForCatalogFile(file, NULL, &subject_guid);
-    todo_wine ok(ret, "Failed to get subject guid, error %u\n", GetLastError());
+    todo_wine ok(ret, "Failed to get subject guid, error %lu\n", GetLastError());
 
     size = 0;
     subject_info.pgSubjectType = &subject_guid;
@@ -1332,11 +1332,11 @@ static void add_file_to_catalog(HANDLE catalog, const WCHAR *file)
     subject_info.DigestAlgorithm.pszObjId = (char *)szOID_OIWSEC_sha1;
     subject_info.dwFlags = SPC_INC_PE_RESOURCES_FLAG | SPC_INC_PE_IMPORT_ADDR_TABLE_FLAG | SPC_EXC_PE_PAGE_HASHES_FLAG | 0x10000;
     ret = CryptSIPCreateIndirectData(&subject_info, &size, NULL);
-    todo_wine ok(ret, "Failed to get indirect data size, error %u\n", GetLastError());
+    todo_wine ok(ret, "Failed to get indirect data size, error %lu\n", GetLastError());
 
     indirect_data = malloc(size);
     ret = CryptSIPCreateIndirectData(&subject_info, &size, indirect_data);
-    todo_wine ok(ret, "Failed to get indirect data, error %u\n", GetLastError());
+    todo_wine ok(ret, "Failed to get indirect data, error %lu\n", GetLastError());
     if (ret)
     {
         memset(hash_buffer, 0, sizeof(hash_buffer));
@@ -1345,7 +1345,7 @@ static void add_file_to_catalog(HANDLE catalog, const WCHAR *file)
 
         member = CryptCATPutMemberInfo(catalog, (WCHAR *)file,
                 hash_buffer, &subject_guid, 0, size, (BYTE *)indirect_data);
-        ok(!!member, "Failed to write member, error %u\n", GetLastError());
+        ok(!!member, "Failed to write member, error %lu\n", GetLastError());
 
         if (wcsrchr(file, '\\'))
             filepart = wcsrchr(file, '\\') + 1;
@@ -1353,12 +1353,12 @@ static void add_file_to_catalog(HANDLE catalog, const WCHAR *file)
         ret = !!CryptCATPutAttrInfo(catalog, member, (WCHAR *)L"File",
                 CRYPTCAT_ATTR_NAMEASCII | CRYPTCAT_ATTR_DATAASCII | CRYPTCAT_ATTR_AUTHENTICATED,
                 (wcslen(filepart) + 1) * 2, (BYTE *)filepart);
-        ok(ret, "Failed to write attr, error %u\n", GetLastError());
+        ok(ret, "Failed to write attr, error %lu\n", GetLastError());
 
         ret = !!CryptCATPutAttrInfo(catalog, member, (WCHAR *)L"OSAttr",
                 CRYPTCAT_ATTR_NAMEASCII | CRYPTCAT_ATTR_DATAASCII | CRYPTCAT_ATTR_AUTHENTICATED,
                 sizeof(L"2:6.0"), (BYTE *)L"2:6.0");
-        ok(ret, "Failed to write attr, error %u\n", GetLastError());
+        ok(ret, "Failed to write attr, error %lu\n", GetLastError());
     }
 
     free(indirect_data);
@@ -1379,7 +1379,7 @@ static LRESULT WINAPI device_notify_proc(HWND window, UINT message, WPARAM wpara
         case DBT_DEVNODES_CHANGED:
             if (winetest_debug > 1) trace("device nodes changed\n");
 
-            ok(InSendMessageEx(NULL) == ISMEX_NOTIFY, "got message flags %#x\n", InSendMessageEx(NULL));
+            ok(InSendMessageEx(NULL) == ISMEX_NOTIFY, "got message flags %#lx\n", InSendMessageEx(NULL));
             ok(!lparam, "got lparam %#Ix\n", lparam);
             break;
 
@@ -1390,12 +1390,12 @@ static LRESULT WINAPI device_notify_proc(HWND window, UINT message, WPARAM wpara
 
             if (winetest_debug > 1) trace("device arrival %s\n", iface->dbcc_name);
 
-            ok(InSendMessageEx(NULL) == ISMEX_SEND, "got message flags %#x\n", InSendMessageEx(NULL));
+            ok(InSendMessageEx(NULL) == ISMEX_SEND, "got message flags %#lx\n", InSendMessageEx(NULL));
 
             ok(iface->dbcc_devicetype == DBT_DEVTYP_DEVICEINTERFACE,
-                    "got unexpected notification type %#x\n", iface->dbcc_devicetype);
-            ok(iface->dbcc_size >= expect_size, "expected size at least %u, got %u\n", expect_size, iface->dbcc_size);
-            ok(!iface->dbcc_reserved, "got reserved %#x\n", iface->dbcc_reserved);
+                    "got unexpected notification type %#lx\n", iface->dbcc_devicetype);
+            ok(iface->dbcc_size >= expect_size, "expected size at least %lu, got %lu\n", expect_size, iface->dbcc_size);
+            ok(!iface->dbcc_reserved, "got reserved %#lx\n", iface->dbcc_reserved);
             if (IsEqualGUID(&iface->dbcc_classguid, &bus_class))
             {
                 ++got_bus_arrival;
@@ -1418,12 +1418,12 @@ static LRESULT WINAPI device_notify_proc(HWND window, UINT message, WPARAM wpara
 
             if (winetest_debug > 1) trace("device removal %s\n", iface->dbcc_name);
 
-            ok(InSendMessageEx(NULL) == ISMEX_SEND, "got message flags %#x\n", InSendMessageEx(NULL));
+            ok(InSendMessageEx(NULL) == ISMEX_SEND, "got message flags %#lx\n", InSendMessageEx(NULL));
 
             ok(iface->dbcc_devicetype == DBT_DEVTYP_DEVICEINTERFACE,
-                    "got unexpected notification type %#x\n", iface->dbcc_devicetype);
-            ok(iface->dbcc_size >= expect_size, "expected size at least %u, got %u\n", expect_size, iface->dbcc_size);
-            ok(!iface->dbcc_reserved, "got reserved %#x\n", iface->dbcc_reserved);
+                    "got unexpected notification type %#lx\n", iface->dbcc_devicetype);
+            ok(iface->dbcc_size >= expect_size, "expected size at least %lu, got %lu\n", expect_size, iface->dbcc_size);
+            ok(!iface->dbcc_reserved, "got reserved %#lx\n", iface->dbcc_reserved);
             if (IsEqualGUID(&iface->dbcc_classguid, &bus_class))
             {
                 ++got_bus_removal;
@@ -1492,173 +1492,173 @@ static void test_pnp_devices(void)
     window = CreateWindowA("ntoskrnl_test_wc", NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, NULL);
     ok(!!window, "failed to create window\n");
     notify_handle = RegisterDeviceNotificationA(window, &filter, DEVICE_NOTIFY_ALL_INTERFACE_CLASSES);
-    ok(!!notify_handle, "failed to register window, error %u\n", GetLastError());
+    ok(!!notify_handle, "failed to register window, error %lu\n", GetLastError());
 
     set = SetupDiGetClassDevsA(&control_class, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
-    ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#x\n", GetLastError());
+    ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#lx\n", GetLastError());
 
     ret = SetupDiEnumDeviceInfo(set, 0, &device);
-    ok(ret, "failed to get device, error %#x\n", GetLastError());
+    ok(ret, "failed to get device, error %#lx\n", GetLastError());
     ok(IsEqualGUID(&device.ClassGuid, &GUID_DEVCLASS_SYSTEM), "wrong class %s\n", debugstr_guid(&device.ClassGuid));
 
     ret = SetupDiGetDeviceInstanceIdA(set, &device, buffer, sizeof(buffer), NULL);
-    ok(ret, "failed to get device ID, error %#x\n", GetLastError());
+    ok(ret, "failed to get device ID, error %#lx\n", GetLastError());
     ok(!strcasecmp(buffer, "root\\winetest\\0"), "got ID %s\n", debugstr_a(buffer));
 
     ret = SetupDiEnumDeviceInterfaces(set, NULL, &control_class, 0, &iface);
-    ok(ret, "failed to get interface, error %#x\n", GetLastError());
+    ok(ret, "failed to get interface, error %#lx\n", GetLastError());
     ok(IsEqualGUID(&iface.InterfaceClassGuid, &control_class),
             "wrong class %s\n", debugstr_guid(&iface.InterfaceClassGuid));
-    ok(iface.Flags == SPINT_ACTIVE, "got flags %#x\n", iface.Flags);
+    ok(iface.Flags == SPINT_ACTIVE, "got flags %#lx\n", iface.Flags);
 
     iface_detail->cbSize = sizeof(*iface_detail);
     ret = SetupDiGetDeviceInterfaceDetailA(set, &iface, iface_detail, sizeof(buffer), NULL, NULL);
-    ok(ret, "failed to get interface path, error %#x\n", GetLastError());
+    ok(ret, "failed to get interface path, error %#lx\n", GetLastError());
     ok(!strcasecmp(iface_detail->DevicePath, "\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}"),
             "wrong path %s\n", debugstr_a(iface_detail->DevicePath));
 
     SetupDiDestroyDeviceInfoList(set);
 
     bus = CreateFileA(iface_detail->DevicePath, 0, 0, NULL, OPEN_EXISTING, 0, NULL);
-    ok(bus != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+    ok(bus != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError());
 
     ret = DeviceIoControl(bus, IOCTL_WINETEST_BUS_MAIN, NULL, 0, NULL, 0, &size, NULL);
-    ok(ret, "got error %u\n", GetLastError());
+    ok(ret, "got error %lu\n", GetLastError());
 
     /* Test IoRegisterDeviceInterface() and IoSetDeviceInterfaceState(). */
 
     set = SetupDiGetClassDevsA(&bus_class, NULL, NULL, DIGCF_DEVICEINTERFACE);
-    ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#x\n", GetLastError());
+    ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#lx\n", GetLastError());
     ret = SetupDiEnumDeviceInterfaces(set, NULL, &bus_class, 0, &iface);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == ERROR_NO_MORE_ITEMS, "got error %#x\n", GetLastError());
+    ok(GetLastError() == ERROR_NO_MORE_ITEMS, "got error %#lx\n", GetLastError());
     SetupDiDestroyDeviceInfoList(set);
 
     ret = DeviceIoControl(bus, IOCTL_WINETEST_BUS_REGISTER_IFACE, NULL, 0, NULL, 0, &size, NULL);
-    ok(ret, "got error %u\n", GetLastError());
+    ok(ret, "got error %lu\n", GetLastError());
 
     set = SetupDiGetClassDevsA(&bus_class, NULL, NULL, DIGCF_DEVICEINTERFACE);
-    ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#x\n", GetLastError());
+    ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#lx\n", GetLastError());
     ret = SetupDiEnumDeviceInterfaces(set, NULL, &bus_class, 0, &iface);
-    ok(ret, "failed to get interface, error %#x\n", GetLastError());
+    ok(ret, "failed to get interface, error %#lx\n", GetLastError());
     ok(IsEqualGUID(&iface.InterfaceClassGuid, &bus_class),
             "wrong class %s\n", debugstr_guid(&iface.InterfaceClassGuid));
-    ok(!iface.Flags, "got flags %#x\n", iface.Flags);
+    ok(!iface.Flags, "got flags %#lx\n", iface.Flags);
     SetupDiDestroyDeviceInfoList(set);
 
     set = SetupDiGetClassDevsA(&bus_class, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
-    ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#x\n", GetLastError());
+    ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#lx\n", GetLastError());
     ret = SetupDiEnumDeviceInterfaces(set, NULL, &bus_class, 0, &iface);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == ERROR_NO_MORE_ITEMS, "got error %#x\n", GetLastError());
+    ok(GetLastError() == ERROR_NO_MORE_ITEMS, "got error %#lx\n", GetLastError());
     SetupDiDestroyDeviceInfoList(set);
 
     ret = DeviceIoControl(bus, IOCTL_WINETEST_BUS_ENABLE_IFACE, NULL, 0, NULL, 0, &size, NULL);
-    ok(ret, "got error %u\n", GetLastError());
+    ok(ret, "got error %lu\n", GetLastError());
 
     pump_messages();
     ok(got_bus_arrival == 1, "got %u bus arrival messages\n", got_bus_arrival);
     ok(!got_bus_removal, "got %u bus removal messages\n", got_bus_removal);
 
     set = SetupDiGetClassDevsA(&bus_class, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
-    ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#x\n", GetLastError());
+    ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#lx\n", GetLastError());
     ret = SetupDiEnumDeviceInterfaces(set, NULL, &bus_class, 0, &iface);
-    ok(ret, "failed to get interface, error %#x\n", GetLastError());
+    ok(ret, "failed to get interface, error %#lx\n", GetLastError());
     ok(IsEqualGUID(&iface.InterfaceClassGuid, &bus_class),
             "wrong class %s\n", debugstr_guid(&iface.InterfaceClassGuid));
-    ok(iface.Flags == SPINT_ACTIVE, "got flags %#x\n", iface.Flags);
+    ok(iface.Flags == SPINT_ACTIVE, "got flags %#lx\n", iface.Flags);
     SetupDiDestroyDeviceInfoList(set);
 
     ret = DeviceIoControl(bus, IOCTL_WINETEST_BUS_DISABLE_IFACE, NULL, 0, NULL, 0, &size, NULL);
-    ok(ret, "got error %u\n", GetLastError());
+    ok(ret, "got error %lu\n", GetLastError());
 
     pump_messages();
     ok(got_bus_arrival == 1, "got %u bus arrival messages\n", got_bus_arrival);
     ok(got_bus_removal == 1, "got %u bus removal messages\n", got_bus_removal);
 
     set = SetupDiGetClassDevsA(&bus_class, NULL, NULL, DIGCF_DEVICEINTERFACE);
-    ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#x\n", GetLastError());
+    ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#lx\n", GetLastError());
     ret = SetupDiEnumDeviceInterfaces(set, NULL, &bus_class, 0, &iface);
-    ok(ret, "failed to get interface, error %#x\n", GetLastError());
+    ok(ret, "failed to get interface, error %#lx\n", GetLastError());
     ok(IsEqualGUID(&iface.InterfaceClassGuid, &bus_class),
             "wrong class %s\n", debugstr_guid(&iface.InterfaceClassGuid));
-    ok(!iface.Flags, "got flags %#x\n", iface.Flags);
+    ok(!iface.Flags, "got flags %#lx\n", iface.Flags);
     SetupDiDestroyDeviceInfoList(set);
 
     set = SetupDiGetClassDevsA(&bus_class, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
-    ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#x\n", GetLastError());
+    ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#lx\n", GetLastError());
     ret = SetupDiEnumDeviceInterfaces(set, NULL, &bus_class, 0, &iface);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == ERROR_NO_MORE_ITEMS, "got error %#x\n", GetLastError());
+    ok(GetLastError() == ERROR_NO_MORE_ITEMS, "got error %#lx\n", GetLastError());
     SetupDiDestroyDeviceInfoList(set);
 
     /* Test exposing a child device. */
 
     id = 1;
     ret = DeviceIoControl(bus, IOCTL_WINETEST_BUS_ADD_CHILD, &id, sizeof(id), NULL, 0, &size, NULL);
-    ok(ret, "got error %u\n", GetLastError());
+    ok(ret, "got error %lu\n", GetLastError());
 
     pump_messages();
     ok(got_child_arrival == 1, "got %u child arrival messages\n", got_child_arrival);
     ok(!got_child_removal, "got %u child removal messages\n", got_child_removal);
 
     set = SetupDiGetClassDevsA(&child_class, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
-    ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#x\n", GetLastError());
+    ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#lx\n", GetLastError());
 
     ret = SetupDiEnumDeviceInfo(set, 0, &device);
-    ok(ret, "failed to get device, error %#x\n", GetLastError());
+    ok(ret, "failed to get device, error %#lx\n", GetLastError());
     ok(IsEqualGUID(&device.ClassGuid, &GUID_NULL), "wrong class %s\n", debugstr_guid(&device.ClassGuid));
 
     ret = SetupDiGetDeviceInstanceIdA(set, &device, buffer, sizeof(buffer), NULL);
-    ok(ret, "failed to get device ID, error %#x\n", GetLastError());
+    ok(ret, "failed to get device ID, error %#lx\n", GetLastError());
     ok(!strcasecmp(buffer, "wine\\test\\1"), "got ID %s\n", debugstr_a(buffer));
 
     ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_CAPABILITIES,
             &type, (BYTE *)&dword, sizeof(dword), NULL);
-    todo_wine ok(ret, "got error %#x\n", GetLastError());
+    todo_wine ok(ret, "got error %#lx\n", GetLastError());
     if (ret)
     {
         ok(dword == (CM_DEVCAP_EJECTSUPPORTED | CM_DEVCAP_UNIQUEID
-                | CM_DEVCAP_RAWDEVICEOK | CM_DEVCAP_SURPRISEREMOVALOK), "got flags %#x\n", dword);
-        ok(type == REG_DWORD, "got type %u\n", type);
+                | CM_DEVCAP_RAWDEVICEOK | CM_DEVCAP_SURPRISEREMOVALOK), "got flags %#lx\n", dword);
+        ok(type == REG_DWORD, "got type %lu\n", type);
     }
 
     ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_CLASSGUID,
             &type, (BYTE *)buffer, sizeof(buffer), NULL);
     todo_wine ok(!ret, "expected failure\n");
     if (ret)
-        ok(GetLastError() == ERROR_INVALID_DATA, "got error %#x\n", GetLastError());
+        ok(GetLastError() == ERROR_INVALID_DATA, "got error %#lx\n", GetLastError());
 
     ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_DEVTYPE,
             &type, (BYTE *)&dword, sizeof(dword), NULL);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == ERROR_INVALID_DATA, "got error %#x\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_DATA, "got error %#lx\n", GetLastError());
 
     ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_DRIVER,
             &type, (BYTE *)buffer, sizeof(buffer), NULL);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == ERROR_INVALID_DATA, "got error %#x\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_DATA, "got error %#lx\n", GetLastError());
 
     ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_HARDWAREID,
             &type, (BYTE *)buffer, sizeof(buffer), &size);
-    ok(ret, "got error %#x\n", GetLastError());
-    ok(type == REG_MULTI_SZ, "got type %u\n", type);
-    ok(size == sizeof(expect_hardware_id), "got size %u\n", size);
+    ok(ret, "got error %#lx\n", GetLastError());
+    ok(type == REG_MULTI_SZ, "got type %lu\n", type);
+    ok(size == sizeof(expect_hardware_id), "got size %lu\n", size);
     ok(!memcmp(buffer, expect_hardware_id, size), "got hardware IDs %s\n", debugstr_an(buffer, size));
 
     ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_COMPATIBLEIDS,
             &type, (BYTE *)buffer, sizeof(buffer), &size);
-    ok(ret, "got error %#x\n", GetLastError());
-    ok(type == REG_MULTI_SZ, "got type %u\n", type);
-    ok(size == sizeof(expect_compat_id), "got size %u\n", size);
+    ok(ret, "got error %#lx\n", GetLastError());
+    ok(type == REG_MULTI_SZ, "got type %lu\n", type);
+    ok(size == sizeof(expect_compat_id), "got size %lu\n", size);
     ok(!memcmp(buffer, expect_compat_id, size), "got compatible IDs %s\n", debugstr_an(buffer, size));
 
     ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_PHYSICAL_DEVICE_OBJECT_NAME,
             &type, (BYTE *)buffer, sizeof(buffer), NULL);
-    todo_wine ok(ret, "got error %#x\n", GetLastError());
+    todo_wine ok(ret, "got error %#lx\n", GetLastError());
     if (ret)
     {
-        ok(type == REG_SZ, "got type %u\n", type);
+        ok(type == REG_SZ, "got type %lu\n", type);
         ok(!strcmp(buffer, "\\Device\\winetest_pnp_1"), "got PDO name %s\n", debugstr_a(buffer));
     }
 
@@ -1671,9 +1671,9 @@ static void test_pnp_devices(void)
 
     id = 0xdeadbeef;
     ret = DeviceIoControl(child, IOCTL_WINETEST_CHILD_GET_ID, NULL, 0, &id, sizeof(id), &size, NULL);
-    ok(ret, "got error %u\n", GetLastError());
+    ok(ret, "got error %lu\n", GetLastError());
     ok(id == 1, "got id %d\n", id);
-    ok(size == sizeof(id), "got size %u\n", size);
+    ok(size == sizeof(id), "got size %lu\n", size);
 
     CloseHandle(child);
 
@@ -1682,27 +1682,27 @@ static void test_pnp_devices(void)
 
     ret = DeviceIoControl(child, IOCTL_WINETEST_CHILD_MARK_PENDING, NULL, 0, NULL, 0, &size, &ovl);
     ok(!ret, "DeviceIoControl succeeded\n");
-    ok(GetLastError() == ERROR_IO_PENDING, "got error %u\n", GetLastError());
-    ok(size == 0, "got size %u\n", size);
+    ok(GetLastError() == ERROR_IO_PENDING, "got error %lu\n", GetLastError());
+    ok(size == 0, "got size %lu\n", size);
 
     id = 1;
     ret = DeviceIoControl(bus, IOCTL_WINETEST_BUS_REMOVE_CHILD, &id, sizeof(id), NULL, 0, &size, NULL);
-    ok(ret, "got error %u\n", GetLastError());
+    ok(ret, "got error %lu\n", GetLastError());
 
     pump_messages();
     ok(got_child_arrival == 1, "got %u child arrival messages\n", got_child_arrival);
     ok(got_child_removal == 1, "got %u child removal messages\n", got_child_removal);
 
     ret = DeviceIoControl(child, IOCTL_WINETEST_CHILD_CHECK_REMOVED, NULL, 0, NULL, 0, &size, NULL);
-    todo_wine ok(ret, "got error %u\n", GetLastError());
+    todo_wine ok(ret, "got error %lu\n", GetLastError());
 
     ret = NtOpenFile(&tmp, SYNCHRONIZE, &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT);
     todo_wine ok(ret == STATUS_NO_SUCH_DEVICE, "got %#x\n", ret);
 
     ret = GetOverlappedResult(child, &ovl, &size, TRUE);
     ok(!ret, "unexpected success.\n");
-    ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
-    ok(size == 0, "got size %u\n", size);
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %lu\n", GetLastError());
+    ok(size == 0, "got size %lu\n", size);
 
     CloseHandle(child);
 
@@ -1740,7 +1740,7 @@ static void test_pnp_driver(struct testsign_context *ctx)
 
     load_resource(L"driver_pnp.dll", driver_filename);
     ret = MoveFileExW(driver_filename, L"winetest.sys", MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING);
-    ok(ret, "failed to move file, error %u\n", GetLastError());
+    ok(ret, "failed to move file, error %lu\n", GetLastError());
 
     f = fopen("winetest.inf", "w");
     ok(!!f, "failed to open winetest.inf: %s\n", strerror(errno));
@@ -1750,47 +1750,47 @@ static void test_pnp_driver(struct testsign_context *ctx)
     /* Create the catalog file. */
 
     catalog = CryptCATOpen((WCHAR *)L"winetest.cat", CRYPTCAT_OPEN_CREATENEW, 0, CRYPTCAT_VERSION_1, 0);
-    ok(catalog != INVALID_HANDLE_VALUE, "Failed to create catalog, error %#x\n", GetLastError());
+    ok(catalog != INVALID_HANDLE_VALUE, "Failed to create catalog, error %#lx\n", GetLastError());
 
     ret = !!CryptCATPutCatAttrInfo(catalog, (WCHAR *)L"HWID1",
             CRYPTCAT_ATTR_NAMEASCII | CRYPTCAT_ATTR_DATAASCII | CRYPTCAT_ATTR_AUTHENTICATED,
             sizeof(L"test_hardware_id"), (BYTE *)L"test_hardware_id");
-    todo_wine ok(ret, "failed to add attribute, error %#x\n", GetLastError());
+    todo_wine ok(ret, "failed to add attribute, error %#lx\n", GetLastError());
 
     ret = !!CryptCATPutCatAttrInfo(catalog, (WCHAR *)L"OS",
             CRYPTCAT_ATTR_NAMEASCII | CRYPTCAT_ATTR_DATAASCII | CRYPTCAT_ATTR_AUTHENTICATED,
             sizeof(L"VistaX64"), (BYTE *)L"VistaX64");
-    todo_wine ok(ret, "failed to add attribute, error %#x\n", GetLastError());
+    todo_wine ok(ret, "failed to add attribute, error %#lx\n", GetLastError());
 
     add_file_to_catalog(catalog, L"winetest.sys");
     add_file_to_catalog(catalog, L"winetest.inf");
 
     ret = CryptCATPersistStore(catalog);
-    todo_wine ok(ret, "Failed to write catalog, error %u\n", GetLastError());
+    todo_wine ok(ret, "Failed to write catalog, error %lu\n", GetLastError());
 
     ret = CryptCATClose(catalog);
-    ok(ret, "Failed to close catalog, error %u\n", GetLastError());
+    ok(ret, "Failed to close catalog, error %lu\n", GetLastError());
 
     testsign_sign(ctx, L"winetest.cat");
 
     /* Install the driver. */
 
     set = SetupDiCreateDeviceInfoList(NULL, NULL);
-    ok(set != INVALID_HANDLE_VALUE, "failed to create device list, error %#x\n", GetLastError());
+    ok(set != INVALID_HANDLE_VALUE, "failed to create device list, error %#lx\n", GetLastError());
 
     ret = SetupDiCreateDeviceInfoA(set, "root\\winetest\\0", &GUID_NULL, NULL, NULL, 0, &device);
-    ok(ret, "failed to create device, error %#x\n", GetLastError());
+    ok(ret, "failed to create device, error %#lx\n", GetLastError());
 
     ret = SetupDiSetDeviceRegistryPropertyA( set, &device, SPDRP_HARDWAREID,
             (const BYTE *)hardware_id, sizeof(hardware_id) );
-    ok(ret, "failed to create set hardware ID, error %#x\n", GetLastError());
+    ok(ret, "failed to create set hardware ID, error %#lx\n", GetLastError());
 
     ret = SetupDiCallClassInstaller(DIF_REGISTERDEVICE, set, &device);
-    ok(ret, "failed to register device, error %#x\n", GetLastError());
+    ok(ret, "failed to register device, error %#lx\n", GetLastError());
 
     GetFullPathNameA("winetest.inf", sizeof(path), path, NULL);
     ret = UpdateDriverForPlugAndPlayDevicesA(NULL, hardware_id, path, INSTALLFLAG_FORCE, &need_reboot);
-    ok(ret, "failed to install device, error %#x\n", GetLastError());
+    ok(ret, "failed to install device, error %#lx\n", GetLastError());
     ok(!need_reboot, "expected no reboot necessary\n");
 
     /* Tests. */
@@ -1800,31 +1800,31 @@ static void test_pnp_driver(struct testsign_context *ctx)
     /* Clean up. */
 
     ret = SetupDiCallClassInstaller(DIF_REMOVE, set, &device);
-    ok(ret, "failed to remove device, error %#x\n", GetLastError());
+    ok(ret, "failed to remove device, error %#lx\n", GetLastError());
 
     file = CreateFileA("\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
     ok(file == INVALID_HANDLE_VALUE, "expected failure\n");
-    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "got error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "got error %lu\n", GetLastError());
 
     ret = SetupDiDestroyDeviceInfoList(set);
-    ok(ret, "failed to destroy set, error %#x\n", GetLastError());
+    ok(ret, "failed to destroy set, error %#lx\n", GetLastError());
 
     set = SetupDiGetClassDevsA(NULL, "wine", NULL, DIGCF_ALLCLASSES);
-    ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#x\n", GetLastError());
+    ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#lx\n", GetLastError());
 
     for (i = 0; SetupDiEnumDeviceInfo(set, i, &device); ++i)
     {
         ret = SetupDiCallClassInstaller(DIF_REMOVE, set, &device);
-        ok(ret, "failed to remove device, error %#x\n", GetLastError());
+        ok(ret, "failed to remove device, error %#lx\n", GetLastError());
     }
 
     SetupDiDestroyDeviceInfoList(set);
 
     /* Windows stops the service but does not delete it. */
     manager = OpenSCManagerA(NULL, NULL, SC_MANAGER_CONNECT);
-    ok(!!manager, "failed to open service manager, error %u\n", GetLastError());
+    ok(!!manager, "failed to open service manager, error %lu\n", GetLastError());
     service = OpenServiceA(manager, "winetest", SERVICE_STOP | DELETE);
-    ok(!!service, "failed to open service, error %u\n", GetLastError());
+    ok(!!service, "failed to open service, error %lu\n", GetLastError());
     unload_driver(service);
     CloseServiceHandle(manager);
 
@@ -1832,19 +1832,19 @@ static void test_pnp_driver(struct testsign_context *ctx)
 
     GetFullPathNameA("winetest.inf", sizeof(path), path, NULL);
     ret = SetupCopyOEMInfA(path, NULL, 0, 0, dest, sizeof(dest), NULL, &filepart);
-    ok(ret, "Failed to copy INF, error %#x\n", GetLastError());
+    ok(ret, "Failed to copy INF, error %#lx\n", GetLastError());
     ret = SetupUninstallOEMInfA(filepart, 0, NULL);
-    ok(ret, "Failed to uninstall INF, error %u\n", GetLastError());
+    ok(ret, "Failed to uninstall INF, error %lu\n", GetLastError());
 
     ret = DeleteFileA("winetest.cat");
-    ok(ret, "Failed to delete file, error %u\n", GetLastError());
+    ok(ret, "Failed to delete file, error %lu\n", GetLastError());
     ret = DeleteFileA("winetest.inf");
-    ok(ret, "Failed to delete file, error %u\n", GetLastError());
+    ok(ret, "Failed to delete file, error %lu\n", GetLastError());
     ret = DeleteFileA("winetest.sys");
-    ok(ret, "Failed to delete file, error %u\n", GetLastError());
+    ok(ret, "Failed to delete file, error %lu\n", GetLastError());
     /* Windows 10 apparently deletes the image in SetupUninstallOEMInf(). */
     ret = DeleteFileA("C:/windows/system32/drivers/winetest.sys");
-    ok(ret || GetLastError() == ERROR_FILE_NOT_FOUND, "Failed to delete file, error %u\n", GetLastError());
+    ok(ret || GetLastError() == ERROR_FILE_NOT_FOUND, "Failed to delete file, error %lu\n", GetLastError());
 
     SetCurrentDirectoryA(cwd);
 }
@@ -1877,7 +1877,7 @@ START_TEST(ntoskrnl)
 
     mapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE,
             0, sizeof(*test_data), "Global\\winetest_ntoskrnl_section");
-    ok(!!mapping, "got error %u\n", GetLastError());
+    ok(!!mapping, "got error %lu\n", GetLastError());
     test_data = MapViewOfFile(mapping, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 1024);
     test_data->running_under_wine = !strcmp(winetest_platform, "wine");
     test_data->winetest_report_success = winetest_report_success;
@@ -1885,7 +1885,7 @@ START_TEST(ntoskrnl)
 
     okfile = CreateFileA("C:\\windows\\winetest_ntoskrnl_okfile", GENERIC_READ | GENERIC_WRITE,
             FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, 0, NULL);
-    ok(okfile != INVALID_HANDLE_VALUE, "failed to create file, error %u\n", GetLastError());
+    ok(okfile != INVALID_HANDLE_VALUE, "failed to create file, error %lu\n", GetLastError());
 
     subtest("driver");
     if (!(service = load_driver(&ctx, filename, L"driver.dll", L"WineTestDriver")))
@@ -1899,7 +1899,7 @@ START_TEST(ntoskrnl)
     service2 = load_driver(&ctx, filename2, L"driver2.dll", L"WineTestDriver2");
 
     device = CreateFileA("\\\\.\\WineTestDriver", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
-    ok(device != INVALID_HANDLE_VALUE, "failed to open device: %u\n", GetLastError());
+    ok(device != INVALID_HANDLE_VALUE, "failed to open device: %lu\n", GetLastError());
 
     test_basic_ioctl();
 
@@ -1916,16 +1916,16 @@ START_TEST(ntoskrnl)
     /* We need a separate ioctl to call IoDetachDevice(); calling it in the
      * driver unload routine causes a live-lock. */
     ret = DeviceIoControl(device, IOCTL_WINETEST_DETACH, NULL, 0, NULL, 0, &written, NULL);
-    ok(ret, "DeviceIoControl failed: %u\n", GetLastError());
+    ok(ret, "DeviceIoControl failed: %lu\n", GetLastError());
 
     CloseHandle(device);
 
     unload_driver(service2);
     unload_driver(service);
     ret = DeleteFileW(filename);
-    ok(ret, "DeleteFile failed: %u\n", GetLastError());
+    ok(ret, "DeleteFile failed: %lu\n", GetLastError());
     ret = DeleteFileW(filename2);
-    ok(ret, "DeleteFile failed: %u\n", GetLastError());
+    ok(ret, "DeleteFile failed: %lu\n", GetLastError());
 
     cat_okfile();
 

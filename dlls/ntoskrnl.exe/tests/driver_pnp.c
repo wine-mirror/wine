@@ -264,7 +264,7 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
             ok(!stack->Parameters.StartDevice.AllocatedResourcesTranslated, "expected no translated resources\n");
 
             status = IoRegisterDeviceInterface(device_obj, &child_class, NULL, &device->child_symlink);
-            ok(!status, "Failed to register interface, status %#x.\n", status);
+            ok(!status, "Failed to register interface, status %#lx.\n", status);
 
             IoSetDeviceInterfaceState(&device->child_symlink, TRUE);
 
@@ -322,15 +322,15 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
             ok(!caps->NonDynamic, "got NonDynamic %u\n", caps->NonDynamic);
             ok(!caps->WarmEjectSupported, "got WarmEjectSupported %u\n", caps->WarmEjectSupported);
             ok(!caps->NoDisplayInUI, "got NoDisplayInUI %u\n", caps->NoDisplayInUI);
-            ok(caps->Address == 0xffffffff, "got Address %#x\n", caps->Address);
-            ok(caps->UINumber == 0xffffffff, "got UINumber %#x\n", caps->UINumber);
+            ok(caps->Address == 0xffffffff, "got Address %#lx\n", caps->Address);
+            ok(caps->UINumber == 0xffffffff, "got UINumber %#lx\n", caps->UINumber);
             for (i = 0; i < PowerSystemMaximum; ++i)
                 ok(caps->DeviceState[i] == PowerDeviceUnspecified, "got DeviceState[%u] %u\n", i, caps->DeviceState[i]);
             ok(caps->SystemWake == PowerSystemUnspecified, "got SystemWake %u\n", caps->SystemWake);
             ok(caps->DeviceWake == PowerDeviceUnspecified, "got DeviceWake %u\n", caps->DeviceWake);
-            ok(!caps->D1Latency, "got D1Latency %u\n", caps->D1Latency);
-            ok(!caps->D2Latency, "got D2Latency %u\n", caps->D2Latency);
-            ok(!caps->D3Latency, "got D3Latency %u\n", caps->D3Latency);
+            ok(!caps->D1Latency, "got D1Latency %lu\n", caps->D1Latency);
+            ok(!caps->D2Latency, "got D2Latency %lu\n", caps->D2Latency);
+            ok(!caps->D3Latency, "got D3Latency %lu\n", caps->D3Latency);
 
             /* If caps->RawDeviceOK is not set, we won't receive
              * IRP_MN_START_DEVICE unless there's a function driver. */
@@ -430,8 +430,8 @@ static void test_bus_query_caps(DEVICE_OBJECT *top_device)
     stack->MinorFunction = IRP_MN_QUERY_CAPABILITIES;
     stack->Parameters.DeviceCapabilities.Capabilities = &caps;
     ret = IoCallDriver(top_device, irp);
-    ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
-    ok(io.Status == STATUS_SUCCESS, "got %#x\n", ret);
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+    ok(io.Status == STATUS_SUCCESS, "got %#lx\n", ret);
 
     ok(caps.Size == sizeof(caps), "wrong size %u\n", caps.Size);
     ok(caps.Version == 1, "wrong version %u\n", caps.Version);
@@ -453,8 +453,8 @@ static void test_bus_query_caps(DEVICE_OBJECT *top_device)
     ok(!caps.NonDynamic, "got NonDynamic %u\n", caps.NonDynamic);
     ok(!caps.WarmEjectSupported, "got WarmEjectSupported %u\n", caps.WarmEjectSupported);
     ok(!caps.NoDisplayInUI, "got NoDisplayInUI %u\n", caps.NoDisplayInUI);
-    ok(!caps.Address, "got Address %#x\n", caps.Address);
-    ok(!caps.UINumber, "got UINumber %#x\n", caps.UINumber);
+    ok(!caps.Address, "got Address %#lx\n", caps.Address);
+    ok(!caps.UINumber, "got UINumber %#lx\n", caps.UINumber);
     ok(caps.DeviceState[PowerSystemUnspecified] == PowerDeviceUnspecified,
             "got DeviceState[PowerSystemUnspecified] %u\n", caps.DeviceState[PowerSystemUnspecified]);
     todo_wine ok(caps.DeviceState[PowerSystemWorking] == PowerDeviceD0,
@@ -463,9 +463,9 @@ static void test_bus_query_caps(DEVICE_OBJECT *top_device)
         todo_wine ok(caps.DeviceState[i] == PowerDeviceD3, "got DeviceState[%u] %u\n", i, caps.DeviceState[i]);
     ok(caps.SystemWake == PowerSystemUnspecified, "got SystemWake %u\n", caps.SystemWake);
     ok(caps.DeviceWake == PowerDeviceUnspecified, "got DeviceWake %u\n", caps.DeviceWake);
-    ok(!caps.D1Latency, "got D1Latency %u\n", caps.D1Latency);
-    ok(!caps.D2Latency, "got D2Latency %u\n", caps.D2Latency);
-    ok(!caps.D3Latency, "got D3Latency %u\n", caps.D3Latency);
+    ok(!caps.D1Latency, "got D1Latency %lu\n", caps.D1Latency);
+    ok(!caps.D2Latency, "got D2Latency %lu\n", caps.D2Latency);
+    ok(!caps.D3Latency, "got D3Latency %lu\n", caps.D3Latency);
 
     memset(&caps, 0xff, sizeof(caps));
     caps.Size = sizeof(caps);
@@ -479,8 +479,8 @@ static void test_bus_query_caps(DEVICE_OBJECT *top_device)
     stack->MinorFunction = IRP_MN_QUERY_CAPABILITIES;
     stack->Parameters.DeviceCapabilities.Capabilities = &caps;
     ret = IoCallDriver(top_device, irp);
-    ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
-    ok(io.Status == STATUS_SUCCESS, "got %#x\n", ret);
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+    ok(io.Status == STATUS_SUCCESS, "got %#lx\n", ret);
 
     ok(caps.Size == sizeof(caps), "wrong size %u\n", caps.Size);
     ok(caps.Version == 1, "wrong version %u\n", caps.Version);
@@ -502,8 +502,8 @@ static void test_bus_query_caps(DEVICE_OBJECT *top_device)
     ok(caps.NonDynamic, "got NonDynamic %u\n", caps.NonDynamic);
     ok(caps.WarmEjectSupported, "got WarmEjectSupported %u\n", caps.WarmEjectSupported);
     ok(caps.NoDisplayInUI, "got NoDisplayInUI %u\n", caps.NoDisplayInUI);
-    ok(caps.Address == 0xffffffff, "got Address %#x\n", caps.Address);
-    ok(caps.UINumber == 0xffffffff, "got UINumber %#x\n", caps.UINumber);
+    ok(caps.Address == 0xffffffff, "got Address %#lx\n", caps.Address);
+    ok(caps.UINumber == 0xffffffff, "got UINumber %#lx\n", caps.UINumber);
     todo_wine ok(caps.DeviceState[PowerSystemUnspecified] == PowerDeviceUnspecified,
             "got DeviceState[PowerSystemUnspecified] %u\n", caps.DeviceState[PowerSystemUnspecified]);
     todo_wine ok(caps.DeviceState[PowerSystemWorking] == PowerDeviceD0,
@@ -512,9 +512,9 @@ static void test_bus_query_caps(DEVICE_OBJECT *top_device)
         todo_wine ok(caps.DeviceState[i] == PowerDeviceD3, "got DeviceState[%u] %u\n", i, caps.DeviceState[i]);
     ok(caps.SystemWake == 0xffffffff, "got SystemWake %u\n", caps.SystemWake);
     ok(caps.DeviceWake == 0xffffffff, "got DeviceWake %u\n", caps.DeviceWake);
-    ok(caps.D1Latency == 0xffffffff, "got D1Latency %u\n", caps.D1Latency);
-    ok(caps.D2Latency == 0xffffffff, "got D2Latency %u\n", caps.D2Latency);
-    ok(caps.D3Latency == 0xffffffff, "got D3Latency %u\n", caps.D3Latency);
+    ok(caps.D1Latency == 0xffffffff, "got D1Latency %lu\n", caps.D1Latency);
+    ok(caps.D2Latency == 0xffffffff, "got D2Latency %lu\n", caps.D2Latency);
+    ok(caps.D3Latency == 0xffffffff, "got D3Latency %lu\n", caps.D3Latency);
 }
 
 static void test_bus_query_id(DEVICE_OBJECT *top_device)
@@ -533,8 +533,8 @@ static void test_bus_query_id(DEVICE_OBJECT *top_device)
     stack->MinorFunction = IRP_MN_QUERY_ID;
     stack->Parameters.QueryId.IdType = BusQueryDeviceID;
     ret = IoCallDriver(top_device, irp);
-    ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
-    ok(io.Status == STATUS_SUCCESS, "got %#x\n", ret);
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+    ok(io.Status == STATUS_SUCCESS, "got %#lx\n", ret);
     ok(!wcscmp((WCHAR *)io.Information, L"ROOT\\WINETEST"), "got id '%ls'\n", (WCHAR *)io.Information);
     ExFreePool((WCHAR *)io.Information);
 
@@ -544,8 +544,8 @@ static void test_bus_query_id(DEVICE_OBJECT *top_device)
     stack->MinorFunction = IRP_MN_QUERY_ID;
     stack->Parameters.QueryId.IdType = BusQueryInstanceID;
     ret = IoCallDriver(top_device, irp);
-    ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
-    ok(io.Status == STATUS_SUCCESS, "got %#x\n", ret);
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+    ok(io.Status == STATUS_SUCCESS, "got %#lx\n", ret);
     ok(!wcscmp((WCHAR *)io.Information, L"0"), "got id '%ls'\n", (WCHAR *)io.Information);
     ExFreePool((WCHAR *)io.Information);
 }
@@ -598,7 +598,7 @@ static NTSTATUS fdo_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG code)
             swprintf(name, ARRAY_SIZE(name), L"\\Device\\winetest_pnp_%x", id);
             RtlInitUnicodeString(&string, name);
             status = IoCreateDevice(driver_obj, sizeof(*device), &string, FILE_DEVICE_UNKNOWN, 0, FALSE, &device_obj);
-            ok(!status, "Failed to create device, status %#x.\n", status);
+            ok(!status, "Failed to create device, status %#lx.\n", status);
 
             device = device_obj->DeviceExtension;
             memset(device, 0, sizeof(*device));
@@ -647,7 +647,7 @@ static NTSTATUS fdo_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG code)
         }
 
         default:
-            ok(0, "Unexpected ioctl %#x.\n", code);
+            ok(0, "Unexpected ioctl %#lx.\n", code);
             return STATUS_NOT_IMPLEMENTED;
     }
 }
@@ -682,7 +682,7 @@ static NTSTATUS pdo_ioctl(DEVICE_OBJECT *device_obj, IRP *irp, IO_STACK_LOCATION
             return STATUS_SUCCESS;
 
         default:
-            ok(0, "Unexpected ioctl %#x.\n", code);
+            ok(0, "Unexpected ioctl %#lx.\n", code);
             return STATUS_NOT_IMPLEMENTED;
     }
 }
