@@ -2036,7 +2036,8 @@ static BOOL config_dialog( struct console *console, BOOL current )
     header.hwndParent = console->win;
     header.u3.phpage  = pages;
     header.dwFlags    = PSH_NOAPPLYNOW;
-    PropertySheetW( &header );
+    if (PropertySheetW( &header ) < 1)
+        return TRUE;
 
     if (!memcmp( &prev_config, &di.config, sizeof(prev_config) ))
         return TRUE;
