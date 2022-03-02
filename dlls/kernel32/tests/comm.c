@@ -17,6 +17,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include <stdio.h>
 
@@ -450,7 +451,7 @@ static void check_result(const char *function, const TEST *ptest, int initial_va
 	DWORD LastError = GetLastError();
 	DWORD CorrectError = (ptest->result ? 0xdeadbeef : ERROR_INVALID_PARAMETER);
 
-	ok(LastError == CorrectError, "%s(\"%s\"), 0x%02x: GetLastError() returned %d, should be %d\n", function, ptest->string, initial_value, LastError, CorrectError);
+	ok(LastError == CorrectError, "%s(\"%s\"), 0x%02x: GetLastError() returned %ld, should be %ld\n", function, ptest->string, initial_value, LastError, CorrectError);
 	ok(result == ptest->result, "%s(\"%s\"), 0x%02x: return value should be %s\n", function, ptest->string, initial_value, ptest->result ? "TRUE" : "FALSE");
 }
 
@@ -461,7 +462,7 @@ static void check_dcb(const char *function, const TEST *ptest, int initial_value
 {
 	/* DCBlength is a special case since Win 9x sets it but NT does not.
 	   We will accept either as correct. */
-	check_dcb_member2(DCBlength, (DWORD)sizeof(DCB), "%u");
+	check_dcb_member2(DCBlength, (DWORD)sizeof(DCB), "%lu");
 
 	/* For old style control strings Win 9x does not set the next five members, NT does. */
 	if(ptest->old_style && ptest->result)
@@ -505,7 +506,7 @@ static void check_dcb(const char *function, const TEST *ptest, int initial_value
 	}
 
 	/* Check the result of the DCB members. */
-	check_dcb_member(BaudRate, "%u");
+	check_dcb_member(BaudRate, "%lu");
 	check_dcb_member(fBinary, "%u");
 	check_dcb_member(fParity, "%u");
 	check_dcb_member(fTXContinueOnXoff, "%u");
@@ -527,7 +528,7 @@ static void check_dcb(const char *function, const TEST *ptest, int initial_value
 	check_dcb_member(wReserved1, "%u");
 }
 
-#define check_timeouts_member(a) ok(ptimeouts1->a == ptimeouts2->a, "%s(\"%s\"), 0x%02x: "#a" is %u, should be %u\n", function, ptest->string, initial_value, ptimeouts1->a, ptimeouts2->a);
+#define check_timeouts_member(a) ok(ptimeouts1->a == ptimeouts2->a, "%s(\"%s\"), 0x%02x: "#a" is %lu, should be %lu\n", function, ptest->string, initial_value, ptimeouts1->a, ptimeouts2->a);
 
 static void check_timeouts(const char *function, const TEST *ptest, int initial_value, const COMMTIMEOUTS *ptimeouts1, const COMMTIMEOUTS *ptimeouts2)
 {
@@ -723,10 +724,10 @@ static HANDLE test_OpenComm(BOOL doOverlap)
             return INVALID_HANDLE_VALUE;
         }
 
-        ok(ret, "Unexpected error %u on open\n", GetLastError());
-        ok(comstat.cbInQue == 0, "Unexpected %d chars in InQueue\n",comstat.cbInQue);
-        ok(comstat.cbOutQue == 0, "Still pending %d characters in OutQueue\n", comstat.cbOutQue);
-        ok(errors == 0, "Unexpected errors 0x%08x\n", errors);
+        ok(ret, "Unexpected error %lu on open\n", GetLastError());
+        ok(comstat.cbInQue == 0, "Unexpected %ld chars in InQueue\n",comstat.cbInQue);
+        ok(comstat.cbOutQue == 0, "Still pending %ld characters in OutQueue\n", comstat.cbOutQue);
+        ok(errors == 0, "Unexpected errors 0x%08lx\n", errors);
     }
     return hcom;
 }
@@ -736,7 +737,7 @@ static void test_GetModemStatus(HANDLE hcom)
     DWORD ModemStat = 0;
 
     ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
-    trace("GetCommModemStatus returned 0x%08x->%s%s%s%s\n", ModemStat,
+    trace("GetCommModemStatus returned 0x%08lx->%s%s%s%s\n", ModemStat,
 	  (ModemStat &MS_RLSD_ON)?"MS_RLSD_ON ":"",
 	  (ModemStat &MS_RING_ON)?"MS_RING_ON ":"",
 	  (ModemStat &MS_DSR_ON)?"MS_DSR_ON ":"",
@@ -777,10 +778,10 @@ static void test_ReadTimeOut(void)
     LastError = GetLastError();
     after = GetTickCount();
     ok( res == TRUE, "A timed-out read should return TRUE\n");
-    ok( LastError == 0xdeadbeef, "err=%d\n", LastError);
+    ok( LastError == 0xdeadbeef, "err=%ld\n", LastError);
     timediff = after - before;
     ok( timediff > TIMEOUT>>2 && timediff < TIMEOUT *2,
-	"Unexpected TimeOut %d, expected %d\n", timediff, TIMEOUT);
+	"Unexpected TimeOut %ld, expected %d\n", timediff, TIMEOUT);
 
     CloseHandle(hcom);
 }
@@ -802,7 +803,7 @@ static void test_waittxempty(void)
 
     /* set a low baud rate to have ample time*/
     res = GetCommState(hcom, &dcb);
-    ok(res, "GetCommState error %d\n", GetLastError());
+    ok(res, "GetCommState error %ld\n", GetLastError());
     dcb.BaudRate = baud;
     dcb.ByteSize = 8;
     dcb.Parity = NOPARITY;
@@ -810,26 +811,26 @@ static void test_waittxempty(void)
     dcb.fDtrControl=DTR_CONTROL_ENABLE;
     dcb.StopBits = ONESTOPBIT;
     res = SetCommState(hcom, &dcb);
-    ok(res, "SetCommState error %d\n", GetLastError());
+    ok(res, "SetCommState error %ld\n", GetLastError());
 
     ZeroMemory( &timeouts, sizeof(timeouts));
     timeouts.ReadTotalTimeoutConstant = TIMEOUT;
     res = SetCommTimeouts(hcom, &timeouts);
-    ok(res,"SetCommTimeouts error %d\n", GetLastError());
+    ok(res,"SetCommTimeouts error %ld\n", GetLastError());
 
     res = SetupComm(hcom, 1024, 1024);
-    ok(res, "SetUpComm error %d\n", GetLastError());
+    ok(res, "SetUpComm error %ld\n", GetLastError());
 
     /* calling SetCommMask after WriteFile leads to WaitCommEvent failures
      * due to timeout (no events) under testbot VMs and VirtualBox
      */
     res = SetCommMask(hcom, EV_TXEMPTY);
-    ok(res, "SetCommMask error %d\n", GetLastError());
+    ok(res, "SetCommMask error %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     res = WriteFile(hcom, tbuf, sizeof(tbuf), &bytes, NULL);
     ok(!res, "WriteFile on an overlapped handle without ovl structure should fail\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
 
     S(U(ovl_write)).Offset = 0;
     S(U(ovl_write)).OffsetHigh = 0;
@@ -839,9 +840,9 @@ static void test_waittxempty(void)
     res = WriteFile(hcom, tbuf, sizeof(tbuf), &bytes, &ovl_write);
     after = GetTickCount();
     ok((!res && GetLastError() == ERROR_IO_PENDING) || (res && bytes == sizeof(tbuf)),
-       "WriteFile returned %d, written %u bytes, error %d\n", res, bytes, GetLastError());
-    if (!res) ok(!bytes, "expected 0, got %u\n", bytes);
-    ok(after - before < 30, "WriteFile took %d ms to write %d Bytes at %d Baud\n",
+       "WriteFile returned %d, written %lu bytes, error %ld\n", res, bytes, GetLastError());
+    if (!res) ok(!bytes, "expected 0, got %lu\n", bytes);
+    ok(after - before < 30, "WriteFile took %ld ms to write %ld Bytes at %ld Baud\n",
        after - before, bytes, baud);
     /* don't wait for WriteFile completion */
 
@@ -852,16 +853,16 @@ static void test_waittxempty(void)
     before = GetTickCount();
     SetLastError(0xdeadbeef);
     res = WaitCommEvent(hcom, &evtmask, &ovl_wait);
-    ok(res || GetLastError() == ERROR_IO_PENDING, "WaitCommEvent error %d\n", GetLastError());
+    ok(res || GetLastError() == ERROR_IO_PENDING, "WaitCommEvent error %ld\n", GetLastError());
     after = GetTickCount();
-    ok(after - before < 30, "WaitCommEvent should have returned immediately, took %d ms\n", after - before);
+    ok(after - before < 30, "WaitCommEvent should have returned immediately, took %ld ms\n", after - before);
     res = WaitForSingleObject(ovl_wait.hEvent, 1500);
     ok(res == WAIT_OBJECT_0, "WaitCommEvent failed with a timeout\n");
     if (res == WAIT_OBJECT_0)
     {
         res = GetOverlappedResult(hcom, &ovl_wait, &bytes, FALSE);
-        ok(res, "GetOverlappedResult reported error %d\n", GetLastError());
-        ok(bytes == sizeof(evtmask), "expected %u, written %u\n", (UINT)sizeof(evtmask), bytes);
+        ok(res, "GetOverlappedResult reported error %ld\n", GetLastError());
+        ok(bytes == sizeof(evtmask), "expected %u, written %lu\n", (UINT)sizeof(evtmask), bytes);
         res = TRUE;
     }
     else
@@ -869,7 +870,7 @@ static void test_waittxempty(void)
         /* unblock pending wait */
         trace("recovering after WAIT_TIMEOUT...\n");
         res = SetCommMask(hcom, EV_TXEMPTY);
-        ok(res, "SetCommMask error %d\n", GetLastError());
+        ok(res, "SetCommMask error %ld\n", GetLastError());
 
         res = WaitForSingleObject(ovl_wait.hEvent, TIMEOUT);
         ok(res == WAIT_OBJECT_0, "WaitCommEvent failed with a timeout\n");
@@ -877,19 +878,19 @@ static void test_waittxempty(void)
         res = FALSE;
     }
     after = GetTickCount();
-    ok(res, "WaitCommEvent error %d\n", GetLastError());
-    ok(evtmask & EV_TXEMPTY, "WaitCommEvent: expected EV_TXEMPTY, got %#x\n", evtmask);
+    ok(res, "WaitCommEvent error %ld\n", GetLastError());
+    ok(evtmask & EV_TXEMPTY, "WaitCommEvent: expected EV_TXEMPTY, got %#lx\n", evtmask);
     CloseHandle(ovl_wait.hEvent);
 
     timediff = after - before;
-    trace("WaitCommEvent for EV_TXEMPTY took %d ms (timeout 1500)\n", timediff);
-    ok(timediff < 1200, "WaitCommEvent used %d ms for waiting\n", timediff);
+    trace("WaitCommEvent for EV_TXEMPTY took %ld ms (timeout 1500)\n", timediff);
+    ok(timediff < 1200, "WaitCommEvent used %ld ms for waiting\n", timediff);
 
     res = WaitForSingleObject(ovl_write.hEvent, 0);
     ok(res == WAIT_OBJECT_0, "WriteFile failed with a timeout\n");
     res = GetOverlappedResult(hcom, &ovl_write, &bytes, FALSE);
-    ok(res, "GetOverlappedResult reported error %d\n", GetLastError());
-    ok(bytes == sizeof(tbuf), "expected %u, written %u\n", (UINT)sizeof(tbuf), bytes);
+    ok(res, "GetOverlappedResult reported error %ld\n", GetLastError());
+    ok(bytes == sizeof(tbuf), "expected %u, written %lu\n", (UINT)sizeof(tbuf), bytes);
     CloseHandle(ovl_write.hEvent);
 
     CloseHandle(hcom);
@@ -900,7 +901,7 @@ static void test_waittxempty(void)
         if (hcom == INVALID_HANDLE_VALUE) return;
 
         res = SetCommMask(hcom, EV_TXEMPTY);
-        ok(res, "SetCommMask error %d\n", GetLastError());
+        ok(res, "SetCommMask error %ld\n", GetLastError());
 
         if (i == 0)
         {
@@ -910,27 +911,27 @@ static void test_waittxempty(void)
             SetLastError(0xdeadbeef);
             res = WriteFile(hcom, tbuf, sizeof(tbuf), &bytes, &ovl_write);
             ok((!res && GetLastError() == ERROR_IO_PENDING) || (res && bytes == sizeof(tbuf)),
-               "WriteFile returned %d, written %u bytes, error %d\n", res, bytes, GetLastError());
-            if (!res) ok(!bytes, "expected 0, got %u\n", bytes);
+               "WriteFile returned %d, written %lu bytes, error %ld\n", res, bytes, GetLastError());
+            if (!res) ok(!bytes, "expected 0, got %lu\n", bytes);
 
             ClearCommError(hcom, &errors, &stat);
-            ok(stat.cbInQue == 0, "InQueue should be empty, got %d bytes\n", stat.cbInQue);
+            ok(stat.cbInQue == 0, "InQueue should be empty, got %ld bytes\n", stat.cbInQue);
             ok(stat.cbOutQue != 0 || broken(stat.cbOutQue == 0) /* VM */, "OutQueue should not be empty\n");
-            ok(errors == 0, "ClearCommErrors: Unexpected error 0x%08x\n", errors);
+            ok(errors == 0, "ClearCommErrors: Unexpected error 0x%08lx\n", errors);
 
             res = GetOverlappedResult(hcom, &ovl_write, &bytes, TRUE);
-            ok(res, "GetOverlappedResult reported error %d\n", GetLastError());
-            ok(bytes == sizeof(tbuf), "expected %u, written %u\n", (UINT)sizeof(tbuf), bytes);
+            ok(res, "GetOverlappedResult reported error %ld\n", GetLastError());
+            ok(bytes == sizeof(tbuf), "expected %u, written %lu\n", (UINT)sizeof(tbuf), bytes);
             CloseHandle(ovl_write.hEvent);
 
             res = FlushFileBuffers(hcom);
-            ok(res, "FlushFileBuffers error %d\n", GetLastError());
+            ok(res, "FlushFileBuffers error %ld\n", GetLastError());
         }
 
         ClearCommError(hcom, &errors, &stat);
-        ok(stat.cbInQue == 0, "InQueue should be empty, got %d bytes\n", stat.cbInQue);
-        ok(stat.cbOutQue == 0, "OutQueue should be empty, got %d bytes\n", stat.cbOutQue);
-        ok(errors == 0, "ClearCommErrors: Unexpected error 0x%08x\n", errors);
+        ok(stat.cbInQue == 0, "InQueue should be empty, got %ld bytes\n", stat.cbInQue);
+        ok(stat.cbOutQue == 0, "OutQueue should be empty, got %ld bytes\n", stat.cbOutQue);
+        ok(errors == 0, "ClearCommErrors: Unexpected error 0x%08lx\n", errors);
 
         S(U(ovl_wait)).Offset = 0;
         S(U(ovl_wait)).OffsetHigh = 0;
@@ -939,7 +940,7 @@ static void test_waittxempty(void)
         SetLastError(0xdeadbeef);
         res = WaitCommEvent(hcom, &evtmask, &ovl_wait);
         ok(res /* busy system */ || GetLastError() == ERROR_IO_PENDING,
-           "%d: WaitCommEvent error %d\n", i, GetLastError());
+           "%ld: WaitCommEvent error %ld\n", i, GetLastError());
 
         res = WaitForSingleObject(ovl_wait.hEvent, TIMEOUT);
         if (i == 0)
@@ -949,14 +950,14 @@ static void test_waittxempty(void)
         if (res == WAIT_OBJECT_0)
         {
             res = GetOverlappedResult(hcom, &ovl_wait, &bytes, FALSE);
-            ok(res, "GetOverlappedResult reported error %d\n", GetLastError());
-            ok(bytes == sizeof(evtmask), "expected %u, written %u\n", (UINT)sizeof(evtmask), bytes);
-            ok(res, "WaitCommEvent error %d\n", GetLastError());
-            ok(evtmask & EV_TXEMPTY, "WaitCommEvent: expected EV_TXEMPTY, got %#x\n", evtmask);
+            ok(res, "GetOverlappedResult reported error %ld\n", GetLastError());
+            ok(bytes == sizeof(evtmask), "expected %u, written %lu\n", (UINT)sizeof(evtmask), bytes);
+            ok(res, "WaitCommEvent error %ld\n", GetLastError());
+            ok(evtmask & EV_TXEMPTY, "WaitCommEvent: expected EV_TXEMPTY, got %#lx\n", evtmask);
         }
         else
         {
-            ok(!evtmask, "WaitCommEvent: expected 0, got %#x\n", evtmask);
+            ok(!evtmask, "WaitCommEvent: expected 0, got %#lx\n", evtmask);
 
             S(U(ovl_wait2)).Offset = 0;
             S(U(ovl_wait2)).OffsetHigh = 0;
@@ -964,13 +965,13 @@ static void test_waittxempty(void)
             SetLastError(0xdeadbeef);
             res = WaitCommEvent(hcom, &evtmask, &ovl_wait2);
             ok(!res, "WaitCommEvent should fail if there is a pending wait\n");
-            ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+            ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
             CloseHandle(ovl_wait2.hEvent);
 
             /* unblock pending wait */
             trace("recovering after WAIT_TIMEOUT...\n");
             res = SetCommMask(hcom, EV_TXEMPTY);
-            ok(res, "SetCommMask error %d\n", GetLastError());
+            ok(res, "SetCommMask error %ld\n", GetLastError());
 
             res = WaitForSingleObject(ovl_wait.hEvent, TIMEOUT);
             ok(res == WAIT_OBJECT_0, "WaitCommEvent failed with a timeout\n");
@@ -992,9 +993,9 @@ static void test_ClearCommError(void)
     if (hcom == INVALID_HANDLE_VALUE) return;
 
     ok(ClearCommError(hcom, &errors, &lpStat), "ClearCommError failed\n");
-    ok(lpStat.cbInQue == 0, "Unexpected %d chars in InQueue\n", lpStat.cbInQue);
-    ok(lpStat.cbOutQue == 0, "Unexpected %d chars in OutQueue\n", lpStat.cbOutQue);
-    ok(errors == 0, "ClearCommErrors: Unexpected error 0x%08x\n", errors);
+    ok(lpStat.cbInQue == 0, "Unexpected %ld chars in InQueue\n", lpStat.cbInQue);
+    ok(lpStat.cbOutQue == 0, "Unexpected %ld chars in OutQueue\n", lpStat.cbOutQue);
+    ok(errors == 0, "ClearCommErrors: Unexpected error 0x%08lx\n", errors);
 
     CloseHandle(hcom);
 }
@@ -1012,7 +1013,7 @@ static void test_non_pending_errors(void)
     dcb.ByteSize = 255; /* likely bogus */
     ok(!SetCommState(hcom, &dcb), "SetCommState should have failed\n");
     ok(ClearCommError(hcom, &err, NULL), "ClearCommError should succeed\n");
-    ok(!(err & CE_MODE), "ClearCommError shouldn't set CE_MODE byte in this case (%x)\n", err);
+    ok(!(err & CE_MODE), "ClearCommError shouldn't set CE_MODE byte in this case (%lx)\n", err);
 
     CloseHandle(hcom);
 }
@@ -1051,20 +1052,20 @@ static void test_LoopbackRead(void)
     before = GetTickCount();
     ok(WriteFile(hcom,tbuf,sizeof(tbuf),&written, NULL), "WriteFile failed\n");
     after = GetTickCount();
-    ok(written == sizeof(tbuf),"WriteFile %d bytes written\n", written);
+    ok(written == sizeof(tbuf),"WriteFile %ld bytes written\n", written);
     diff = after -before;
 
     /* make sure all bytes are written, so Readfile will succeed in one call*/
     ok(WaitCommEvent(hcom, &evtmask, NULL), "WaitCommEvent failed\n");
     before = GetTickCount();
     ok(evtmask == EV_TXEMPTY,
-                 "WaitCommEvent: Unexpected EvtMask 0x%08x, expected 0x%08x\n",
+                 "WaitCommEvent: Unexpected EvtMask 0x%08lx, expected 0x%08x\n",
 		 evtmask, EV_TXEMPTY);
-    trace("Write %d ms WaitCommEvent EV_TXEMPTY %d ms\n", diff, before- after);
+    trace("Write %ld ms WaitCommEvent EV_TXEMPTY %ld ms\n", diff, before- after);
 
     read=0;
     ok(ReadFile(hcom, rbuf, sizeof(rbuf), &read, NULL), "Readfile failed\n");
-    ok(read == sizeof(tbuf),"ReadFile read %d bytes, expected \"%s\"\n", read,rbuf);
+    ok(read == sizeof(tbuf),"ReadFile read %ld bytes, expected \"%s\"\n", read,rbuf);
 
     /* Now do the same with a slower Baud rate.
        As we request more characters than written, we will hit the timeout
@@ -1081,22 +1082,22 @@ static void test_LoopbackRead(void)
 
     ok(SetCommMask(hcom, EV_RXCHAR), "SetCommMask failed\n");
     ok(WriteFile(hcom,tbuf,sizeof(tbuf),&written, NULL), "WriteFile failed\n");
-    ok(written == sizeof(tbuf),"WriteFile %d bytes written\n", written);
+    ok(written == sizeof(tbuf),"WriteFile %ld bytes written\n", written);
 
     trace("WaitCommEventEV_RXCHAR\n");
     ok(WaitCommEvent(hcom, &evtmask, NULL), "WaitCommEvent failed\n");
-    ok(evtmask == EV_RXCHAR, "WaitCommEvent: Unexpected EvtMask 0x%08x, expected 0x%08x\n",
+    ok(evtmask == EV_RXCHAR, "WaitCommEvent: Unexpected EvtMask 0x%08lx, expected 0x%08x\n",
        evtmask, EV_RXCHAR);
 
     before = GetTickCount();
     res = ReadFile(hcom, rbuf, sizeof(rbuf), &read, NULL);
     after = GetTickCount();
     ok(res, "Readfile failed\n");
-    ok(read == sizeof(tbuf),"ReadFile read %d bytes\n", read);
+    ok(read == sizeof(tbuf),"ReadFile read %ld bytes\n", read);
     diff = after - before;
-    trace("Readfile for %d chars took %d ms\n", read, diff);
+    trace("Readfile for %ld chars took %ld ms\n", read, diff);
     ok( (diff > TIMEOUT - TIMEDELTA) && (diff < TIMEOUT + TIMEDELTA),
-	"Timedout Wait took %d ms, expected around %d\n", diff, TIMEOUT);
+	"Timedout Wait took %ld ms, expected around %d\n", diff, TIMEOUT);
 
     /* now do a plain read with slow speed
      * This will result in several low level reads and a timeout to happen
@@ -1117,8 +1118,8 @@ static void test_LoopbackRead(void)
     }
     while ((read < sizeof(tbuf)) && (i <10));
     after =  GetTickCount();
-    ok( read == sizeof(tbuf),"ReadFile read %d bytes\n", read);
-    trace("Plain Read for %d char at %d baud took %d ms\n", read, SLOWBAUD, after-before);
+    ok( read == sizeof(tbuf),"ReadFile read %ld bytes\n", read);
+    trace("Plain Read for %ld char at %d baud took %ld ms\n", read, SLOWBAUD, after-before);
 
     CloseHandle(hcom);
 }
@@ -1149,11 +1150,11 @@ static void test_LoopbackCtsRts(void)
     {
 	ok(EscapeCommFunction(hcom, CLRRTS), "EscapeCommFunction failed to clear RTS\n");
 	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
-	ok ((ModemStat & MS_CTS_ON) == 0, "CTS didn't react: 0x%04x,  expected 0x%04x\n",
+	ok ((ModemStat & MS_CTS_ON) == 0, "CTS didn't react: 0x%04lx,  expected 0x%04lx\n",
 	    ModemStat, (defaultStat & ~MS_CTS_ON));
 	ok(EscapeCommFunction(hcom, SETRTS), "EscapeCommFunction failed to clear RTS\n");
 	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
-	ok (ModemStat ==  defaultStat, "Failed to restore CTS: 0x%04x, expected 0x%04x\n",
+	ok (ModemStat ==  defaultStat, "Failed to restore CTS: 0x%04lx, expected 0x%04lx\n",
 	    ModemStat, defaultStat);
     }
     else
@@ -1161,11 +1162,11 @@ static void test_LoopbackCtsRts(void)
 	ok(EscapeCommFunction(hcom, SETRTS), "EscapeCommFunction failed to set RTS\n");
 	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
 	ok ((ModemStat & MS_CTS_ON) == MS_CTS_ON,
-            "CTS didn't react: 0x%04x,  expected 0x%04x\n",
+            "CTS didn't react: 0x%04lx,  expected 0x%04lx\n",
 	    ModemStat, (defaultStat | MS_CTS_ON));
 	ok(EscapeCommFunction(hcom, CLRRTS), "EscapeCommFunction failed to clear RTS\n");
 	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
-	ok (ModemStat ==  defaultStat, "Failed to restore CTS: 0x%04x, expected 0x%04x\n",
+	ok (ModemStat ==  defaultStat, "Failed to restore CTS: 0x%04lx, expected 0x%04lx\n",
 	    ModemStat, defaultStat);
     }
 
@@ -1197,11 +1198,11 @@ static void test_LoopbackDtrDcd(void)
     {
 	ok(EscapeCommFunction(hcom, CLRDTR), "EscapeCommFunction failed to clear DTR\n");
 	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
-	ok ((ModemStat & MS_RLSD_ON) == 0, "RLSD didn't react: 0x%04x,  expected 0x%04x\n",
+	ok ((ModemStat & MS_RLSD_ON) == 0, "RLSD didn't react: 0x%04lx,  expected 0x%04lx\n",
 	    ModemStat, (defaultStat & ~MS_RLSD_ON));
 	ok(EscapeCommFunction(hcom, SETDTR), "EscapeCommFunction failed to set DTR\n");
 	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
-	ok (ModemStat ==  defaultStat, "Failed to restore RLSD: 0x%04x, expected 0x%04x\n",
+	ok (ModemStat ==  defaultStat, "Failed to restore RLSD: 0x%04lx, expected 0x%04lx\n",
 	    ModemStat, defaultStat);
     }
     else
@@ -1209,11 +1210,11 @@ static void test_LoopbackDtrDcd(void)
 	ok(EscapeCommFunction(hcom, SETDTR), "EscapeCommFunction failed to set DTR\n");
 	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
 	ok ((ModemStat & MS_RLSD_ON) == MS_RLSD_ON,
-            "RLSD didn't react: 0x%04x,  expected 0x%04x\n",
+            "RLSD didn't react: 0x%04lx,  expected 0x%04lx\n",
 	    ModemStat, (defaultStat | MS_RLSD_ON));
 	ok(EscapeCommFunction(hcom, CLRDTR), "EscapeCommFunction failed to clear DTR\n");
 	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
-	ok (ModemStat ==  defaultStat, "Failed to restore RLSD: 0x%04x, expected 0x%04x\n",
+	ok (ModemStat ==  defaultStat, "Failed to restore RLSD: 0x%04lx, expected 0x%04lx\n",
 	    ModemStat, defaultStat);
     }
 
@@ -1245,11 +1246,11 @@ static void test_LoopbackDtrDsr(void)
     {
 	ok(EscapeCommFunction(hcom, CLRDTR), "EscapeCommFunction failed to clear DTR\n");
 	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
-	ok ((ModemStat & MS_DSR_ON) == 0, "CTS didn't react: 0x%04x,  expected 0x%04x\n",
+	ok ((ModemStat & MS_DSR_ON) == 0, "CTS didn't react: 0x%04lx,  expected 0x%04lx\n",
 	    ModemStat, (defaultStat & ~MS_DSR_ON));
 	ok(EscapeCommFunction(hcom, SETDTR), "EscapeCommFunction failed to clear DTR\n");
 	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
-	ok (ModemStat ==  defaultStat, "Failed to restore DSR: 0x%04x, expected 0x%04x\n",
+	ok (ModemStat ==  defaultStat, "Failed to restore DSR: 0x%04lx, expected 0x%04lx\n",
 	    ModemStat, defaultStat);
     }
     else
@@ -1257,11 +1258,11 @@ static void test_LoopbackDtrDsr(void)
 	ok(EscapeCommFunction(hcom, SETDTR), "EscapeCommFunction failed to set DTR\n");
 	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
 	ok ((ModemStat & MS_DSR_ON) == MS_DSR_ON,
-            "CTS didn't react: 0x%04x,expected 0x%04x\n",
+            "CTS didn't react: 0x%04lx,expected 0x%04lx\n",
 	    ModemStat, (defaultStat | MS_DSR_ON));
 	ok(EscapeCommFunction(hcom, CLRDTR), "EscapeCommFunction failed to clear DTR\n");
 	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
-	ok (ModemStat ==  defaultStat, "Failed to restore DSR: 0x%04x, expected 0x%04x\n",
+	ok (ModemStat ==  defaultStat, "Failed to restore DSR: 0x%04lx, expected 0x%04lx\n",
 	    ModemStat, defaultStat);
     }
 
@@ -1293,11 +1294,11 @@ static void test_LoopbackDtrRing(void)
     {
 	ok(EscapeCommFunction(hcom, CLRDTR), "EscapeCommFunction failed to clear DTR\n");
 	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
-	ok ((ModemStat & MS_RING_ON) == 0, "RING didn't react: 0x%04x,  expected 0x%04x\n",
+	ok ((ModemStat & MS_RING_ON) == 0, "RING didn't react: 0x%04lx,  expected 0x%04lx\n",
 	    ModemStat, (defaultStat & ~MS_RING_ON));
 	ok(EscapeCommFunction(hcom, SETDTR), "EscapeCommFunction failed to set DTR\n");
 	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
-	ok (ModemStat ==  defaultStat, "Failed to restore RING: 0x%04x, expected 0x%04x\n",
+	ok (ModemStat ==  defaultStat, "Failed to restore RING: 0x%04lx, expected 0x%04lx\n",
 	    ModemStat, defaultStat);
     }
     else
@@ -1305,11 +1306,11 @@ static void test_LoopbackDtrRing(void)
 	ok(EscapeCommFunction(hcom, SETDTR), "EscapeCommFunction failed to set DTR\n");
 	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
 	ok ((ModemStat & MS_RING_ON) == MS_RING_ON,
-            "RING didn't react: 0x%04x,expected 0x%04x\n",
+            "RING didn't react: 0x%04lx,expected 0x%04lx\n",
 	    ModemStat, (defaultStat | MS_RING_ON));
 	ok(EscapeCommFunction(hcom, CLRDTR), "EscapeCommFunction failed to clear DTR\n");
 	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
-	ok (ModemStat ==  defaultStat, "Failed to restore RING: 0x%04x, expected 0x%04x\n",
+	ok (ModemStat ==  defaultStat, "Failed to restore RING: 0x%04lx, expected 0x%04lx\n",
 	    ModemStat, defaultStat);
     }
 
@@ -1342,7 +1343,7 @@ static void test_WaitRx(void)
     overlapped.hEvent = hComPortEvent;
 
     hComWriteEvent = CreateEventW( NULL, TRUE, FALSE, NULL );
-    ok(hComWriteEvent != NULL, "CreateEvent res %d\n", GetLastError());
+    ok(hComWriteEvent != NULL, "CreateEvent res %ld\n", GetLastError());
     ZeroMemory( &overlapped_w, sizeof(overlapped_w));
     overlapped_w.hEvent = hComWriteEvent;
 
@@ -1350,47 +1351,47 @@ static void test_WaitRx(void)
     success_wait = WaitCommEvent(hcom, &evtmask, &overlapped);
     err_wait = GetLastError();
     after = GetTickCount();
-    trace("Success 0x%08x err %d evtmask 0x%08x\n", success_wait, err_wait, evtmask);
+    trace("Success 0x%08lx err %ld evtmask 0x%08lx\n", success_wait, err_wait, evtmask);
     ok(success_wait || err_wait == ERROR_IO_PENDING, "overlapped WaitCommEvent failed\n");
     trace("overlapped WaitCommEvent returned.\n");
 
     success_write= WriteFile(hcom, "X", 1, &written, &overlapped_w);
     err_write = GetLastError();
     ok(success_write || err_write == ERROR_IO_PENDING,
-       "overlapped WriteFile failed, err %d\n",
+       "overlapped WriteFile failed, err %ld\n",
        err_write);
 
     if (!success_write && (err_write == ERROR_IO_PENDING)) {
       success_write = WaitForSingleObjectEx(hComWriteEvent, TIMEOUT, TRUE);
       err_write = GetLastError();
-      ok(success_write == WAIT_OBJECT_0, "WaitForSingleObjectEx, res %d, err %d\n",
+      ok(success_write == WAIT_OBJECT_0, "WaitForSingleObjectEx, res %ld, err %ld\n",
 	 success_write, err_write);
     }
     Sleep(TIMEOUT >>1);
     success_write = GetOverlappedResult(hcom, &overlapped_w, &written, FALSE);
     err_write = GetLastError();
 
-    trace("Write after Wait res 0x%08x err %d\n",success_write, err_write);
-    ok(success_write && written ==1, "Write after Wait res 0x%08x err %d\n",
+    trace("Write after Wait res 0x%08lx err %ld\n",success_write, err_write);
+    ok(success_write && written ==1, "Write after Wait res 0x%08lx err %ld\n",
        success_write, err_write);
 
     if (!success_wait && (err_wait == ERROR_IO_PENDING)) {
       success_wait = WaitForSingleObjectEx(hComPortEvent, TIMEOUT, TRUE);
       err_wait = GetLastError();
-      ok(success_wait == WAIT_OBJECT_0, "wait hComPortEvent, res 0x%08x, err %d\n",
+      ok(success_wait == WAIT_OBJECT_0, "wait hComPortEvent, res 0x%08lx, err %ld\n",
 	 success_wait, err_wait);
     }
     success_wait = GetOverlappedResult(hcom, &overlapped, &written, FALSE);
     err_wait = GetLastError();
     after1 = GetTickCount();
-    trace("Success 0x%08x err %d evtmask 0x%08x diff1 %d, diff2 %d\n",
+    trace("Success 0x%08lx err %ld evtmask 0x%08lx diff1 %ld, diff2 %ld\n",
 	  success_wait, err_wait, evtmask, after-before, after1-before);
 
-    ok(evtmask & EV_RXCHAR, "Detect  EV_RXCHAR: 0x%08x, expected 0x%08x\n",
+    ok(evtmask & EV_RXCHAR, "Detect  EV_RXCHAR: 0x%08lx, expected 0x%08x\n",
        evtmask, EV_RXCHAR);
     diff = after1 - before;
     ok ((diff > (TIMEOUT>>1) -TIMEDELTA) && (diff < (TIMEOUT>>1) + TIMEDELTA),
-	"Unexpected time %d, expected around %d\n", diff, TIMEOUT>>1);
+	"Unexpected time %ld, expected around %d\n", diff, TIMEOUT>>1);
 
     CloseHandle(hcom);
 }
@@ -1407,13 +1408,13 @@ static DWORD CALLBACK toggle_ctlLine(LPVOID arg)
     HANDLE hComPortEvent = (HANDLE) args[3];
     DWORD success, err;
 
-    trace("toggle_ctlLine timeout %d ctl 0x%08x handle %p\n", timeout, ctl, hcom );
+    trace("toggle_ctlLine timeout %ld ctl 0x%08lx handle %p\n", timeout, ctl, hcom );
     Sleep(timeout);
-    ok(EscapeCommFunction(hcom, ctl),"EscapeCommFunction 0x%08x failed\n", ctl);
+    ok(EscapeCommFunction(hcom, ctl),"EscapeCommFunction 0x%08lx failed\n", ctl);
     trace("toggle_ctline done\n");
     success = WaitForSingleObjectEx(hComPortEvent, TIMEOUT, TRUE);
     err = GetLastError();
-    trace("toggle_ctline WaitForSingleObjectEx res 0x%08x err %d\n",
+    trace("toggle_ctline WaitForSingleObjectEx res 0x%08lx err %ld\n",
 	  success, err);
     return 0;
 }
@@ -1453,7 +1454,7 @@ static void test_WaitCts(void)
 	args[1] = SETRTS;
     args[2]=(DWORD_PTR)hcom;
 
-    trace("test_WaitCts timeout %ld clt 0x%08lx handle %p\n",args[0], args[1], hcom);
+    trace("test_WaitCts timeout %Id clt 0x%08Ix handle %p\n",args[0], args[1], hcom);
 
     ok(SetCommMask(hcom, EV_CTS), "SetCommMask failed\n");
     hComPortEvent =  CreateEventW( NULL, TRUE, FALSE, NULL );
@@ -1472,7 +1473,7 @@ static void test_WaitCts(void)
     err = GetLastError();
     after = GetTickCount();
 
-    trace("Success 0x%08x err %d evtmask 0x%08x\n", success, err, evtmask);
+    trace("Success 0x%08lx err %ld evtmask 0x%08lx\n", success, err, evtmask);
     ok(success || err == ERROR_IO_PENDING, "overlapped WaitCommEvent failed\n");
     trace("overlapped WaitCommEvent returned.\n");
     if (!success && (err == ERROR_IO_PENDING))
@@ -1481,10 +1482,10 @@ static void test_WaitCts(void)
     success = GetOverlappedResult(hcom, &overlapped, &written, FALSE);
     err = GetLastError();
     after1 = GetTickCount();
-    trace("Success 0x%08x err %d evtmask 0x%08x diff1 %d, diff2 %d\n",
+    trace("Success 0x%08lx err %ld evtmask 0x%08lx diff1 %ld, diff2 %ld\n",
 	  success, err, evtmask, after-before, after1-before);
 
-    ok(evtmask & EV_CTS, "Failed to detect  EV_CTS: 0x%08x, expected 0x%08x\n",
+    ok(evtmask & EV_CTS, "Failed to detect  EV_CTS: 0x%08lx, expected 0x%08x\n",
 		 evtmask, EV_CTS);
     ok(GetCommModemStatus(hcom, &evtmask), "GetCommModemStatus failed\n");
     if(defaultStat & MS_CTS_ON)
@@ -1494,7 +1495,7 @@ static void test_WaitCts(void)
 
     diff = after1 - before;
     ok ((diff > (TIMEOUT>>1) -TIMEDELTA) && (diff < (TIMEOUT>>1) + TIMEDELTA),
-                  "Unexpected time %d, expected around %d\n", diff, TIMEOUT>>1);
+                  "Unexpected time %ld, expected around %d\n", diff, TIMEOUT>>1);
 
     /*restore RTS Settings*/
     if(defaultStat & MS_CTS_ON)
@@ -1516,7 +1517,7 @@ static DWORD CALLBACK reset_CommMask(LPVOID arg)
     DWORD timeout = args[0];
     HANDLE hcom   = (HANDLE) args[1];
 
-    trace(" Changing CommMask on the fly for handle %p after timeout %d\n",
+    trace(" Changing CommMask on the fly for handle %p after timeout %ld\n",
 	  hcom, timeout);
     Sleep(timeout);
     ok(SetCommMask(hcom, 0),"SetCommMask %p failed\n", hcom);
@@ -1549,7 +1550,7 @@ static void test_AbortWaitCts(void)
     args[0]= TIMEOUT >>1;
     args[1]= (DWORD_PTR)hcom;
 
-    trace("test_AbortWaitCts timeout %ld handle %p\n",args[0], hcom);
+    trace("test_AbortWaitCts timeout %Id handle %p\n",args[0], hcom);
 
     ok(SetCommMask(hcom, EV_CTS), "SetCommMask failed\n");
     hComPortEvent =  CreateEventW( NULL, TRUE, FALSE, NULL );
@@ -1567,7 +1568,7 @@ static void test_AbortWaitCts(void)
     err = GetLastError();
     after = GetTickCount();
 
-    trace("Success 0x%08x err %d evtmask 0x%08x\n", success, err, evtmask);
+    trace("Success 0x%08lx err %ld evtmask 0x%08lx\n", success, err, evtmask);
     ok(success || err == ERROR_IO_PENDING, "overlapped WaitCommEvent failed\n");
     trace("overlapped WaitCommEvent returned.\n");
     if (!success && (err == ERROR_IO_PENDING))
@@ -1576,15 +1577,15 @@ static void test_AbortWaitCts(void)
     success = GetOverlappedResult(hcom, &overlapped, &written, FALSE);
     err = GetLastError();
     after1 = GetTickCount();
-    trace("Success 0x%08x err %d evtmask 0x%08x diff1 %d, diff2 %d\n",
+    trace("Success 0x%08lx err %ld evtmask 0x%08lx diff1 %ld, diff2 %ld\n",
 	  success, err, evtmask, after-before, after1-before);
 
-    ok(evtmask == 0, "Incorrect EventMask 0x%08x returned on Wait aborted bu SetCommMask, expected 0x%08x\n",
+    ok(evtmask == 0, "Incorrect EventMask 0x%08lx returned on Wait aborted bu SetCommMask, expected 0x%08x\n",
 		 evtmask, 0);
     ok(GetCommModemStatus(hcom, &evtmask), "GetCommModemStatus failed\n");
     diff = after1 - before;
     ok ((diff > (TIMEOUT>>1) -TIMEDELTA) && (diff < (TIMEOUT>>1) + TIMEDELTA),
-                  "Unexpected time %d, expected around %d\n", diff, TIMEOUT>>1);
+                  "Unexpected time %ld, expected around %d\n", diff, TIMEOUT>>1);
 
     CloseHandle(hcom);
     ok( !WaitForSingleObject( alarmThread, 10000 ), "thread still running\n" );
@@ -1623,7 +1624,7 @@ static void test_WaitDsr(void)
 	args[1] = SETDTR;
     args[2]= (DWORD_PTR)hcom;
 
-    trace("test_WaitDsr timeout %ld clt 0x%08lx handle %p\n",args[0], args[1], hcom);
+    trace("test_WaitDsr timeout %Id clt 0x%08Ix handle %p\n",args[0], args[1], hcom);
 
     ok(SetCommMask(hcom, EV_DSR), "SetCommMask failed\n");
     hComPortEvent =  CreateEventW( NULL, TRUE, FALSE, NULL );
@@ -1638,7 +1639,7 @@ static void test_WaitDsr(void)
     err = GetLastError();
     after = GetTickCount();
 
-    trace("Success 0x%08x err %d evtmask 0x%08x\n", success, err, evtmask);
+    trace("Success 0x%08lx err %ld evtmask 0x%08lx\n", success, err, evtmask);
     ok(success || err == ERROR_IO_PENDING, "overlapped WaitCommEvent failed\n");
     trace("overlapped WaitCommEvent returned.\n");
     if (!success && (err == ERROR_IO_PENDING))
@@ -1647,10 +1648,10 @@ static void test_WaitDsr(void)
     success = GetOverlappedResult(hcom, &overlapped, &written, FALSE);
     err = GetLastError();
     after1 = GetTickCount();
-    trace("Success 0x%08x err %d evtmask 0x%08x diff1 %d, diff2 %d\n",
+    trace("Success 0x%08lx err %ld evtmask 0x%08lx diff1 %ld, diff2 %ld\n",
 	  success, err, evtmask, after-before, after1-before);
 
-    ok(evtmask & EV_DSR, "Failed to detect  EV_DSR: 0x%08x, expected 0x%08x\n",
+    ok(evtmask & EV_DSR, "Failed to detect  EV_DSR: 0x%08lx, expected 0x%08x\n",
 		 evtmask, EV_DSR);
     ok(GetCommModemStatus(hcom, &evtmask), "GetCommModemStatus failed\n");
     if(defaultStat & MS_DSR_ON)
@@ -1660,7 +1661,7 @@ static void test_WaitDsr(void)
 
     diff = after1 - before;
     ok ((diff > (TIMEOUT>>1) -TIMEDELTA) && (diff < (TIMEOUT>>1) + TIMEDELTA),
-                  "Unexpected time %d, expected around %d\n", diff, TIMEOUT>>1);
+                  "Unexpected time %ld, expected around %d\n", diff, TIMEOUT>>1);
 
     /*restore RTS Settings*/
     if(defaultStat & MS_DSR_ON)
@@ -1711,7 +1712,7 @@ static void test_WaitRing(void)
 	args[1] = SETDTR;
     args[2]=(DWORD_PTR) hcom;
 
-    trace("test_WaitRing timeout %ld clt 0x%08lx handle %p\n",args[0], args[1], hcom);
+    trace("test_WaitRing timeout %Id clt 0x%08Ix handle %p\n",args[0], args[1], hcom);
 
     ok(SetCommMask(hcom, EV_RING), "SetCommMask failed\n");
     hComPortEvent =  CreateEventW( NULL, TRUE, FALSE, NULL );
@@ -1726,7 +1727,7 @@ static void test_WaitRing(void)
     err = GetLastError();
     after = GetTickCount();
 
-    trace("Success 0x%08x err %d evtmask 0x%08x\n", success, err, evtmask);
+    trace("Success 0x%08lx err %ld evtmask 0x%08lx\n", success, err, evtmask);
     ok(success || err == ERROR_IO_PENDING, "overlapped WaitCommEvent failed\n");
     trace("overlapped WaitCommEvent returned.\n");
     if (!success && (err == ERROR_IO_PENDING))
@@ -1735,10 +1736,10 @@ static void test_WaitRing(void)
     success = GetOverlappedResult(hcom, &overlapped, &written, FALSE);
     err = GetLastError();
     after1 = GetTickCount();
-    trace("Success 0x%08x err %d evtmask 0x%08x diff1 %d, diff2 %d\n",
+    trace("Success 0x%08lx err %ld evtmask 0x%08lx diff1 %ld, diff2 %ld\n",
 	  success, err, evtmask, after-before, after1-before);
 
-    ok(evtmask & EV_RING, "Failed to detect  EV_RING: 0x%08x, expected 0x%08x\n",
+    ok(evtmask & EV_RING, "Failed to detect  EV_RING: 0x%08lx, expected 0x%08x\n",
        evtmask, EV_RING);
     ok(GetCommModemStatus(hcom, &evtmask), "GetCommModemStatus failed\n");
     if(defaultStat & MS_RING_ON)
@@ -1748,7 +1749,7 @@ static void test_WaitRing(void)
 
     diff = after1 - before;
     ok ((diff > (TIMEOUT>>1) -TIMEDELTA) && (diff < (TIMEOUT>>1) + TIMEDELTA),
-                  "Unexpected time %d, expected around %d\n", diff, TIMEOUT>>1);
+                  "Unexpected time %ld, expected around %d\n", diff, TIMEOUT>>1);
 
     /*restore RTS Settings*/
     if(defaultStat & MS_RING_ON)
@@ -1792,7 +1793,7 @@ static void test_WaitDcd(void)
 	args[1] = SETDTR;
     args[2]= (DWORD_PTR)hcom;
 
-    trace("test_WaitDcd timeout %ld clt 0x%08lx handle %p\n",args[0], args[1], hcom);
+    trace("test_WaitDcd timeout %Id clt 0x%08Ix handle %p\n",args[0], args[1], hcom);
 
     ok(SetCommMask(hcom, EV_RLSD), "SetCommMask failed\n");
     hComPortEvent =  CreateEventW( NULL, TRUE, FALSE, NULL );
@@ -1807,7 +1808,7 @@ static void test_WaitDcd(void)
     err = GetLastError();
     after = GetTickCount();
 
-    trace("Success 0x%08x err %d evtmask 0x%08x\n", success, err, evtmask);
+    trace("Success 0x%08lx err %ld evtmask 0x%08lx\n", success, err, evtmask);
     ok(success || err == ERROR_IO_PENDING, "overlapped WaitCommEvent failed\n");
     trace("overlapped WaitCommEvent returned.\n");
     if (!success && (err == ERROR_IO_PENDING))
@@ -1816,10 +1817,10 @@ static void test_WaitDcd(void)
     success = GetOverlappedResult(hcom, &overlapped, &written, FALSE);
     err = GetLastError();
     after1 = GetTickCount();
-    trace("Success 0x%08x err %d evtmask 0x%08x diff1 %d, diff2 %d\n",
+    trace("Success 0x%08lx err %ld evtmask 0x%08lx diff1 %ld, diff2 %ld\n",
 	  success, err, evtmask, after-before, after1-before);
 
-    ok(evtmask & EV_RLSD, "Failed to detect  EV_RLSD: 0x%08x, expected 0x%08x\n",
+    ok(evtmask & EV_RLSD, "Failed to detect  EV_RLSD: 0x%08lx, expected 0x%08x\n",
 		 evtmask, EV_RLSD);
     ok(GetCommModemStatus(hcom, &evtmask), "GetCommModemStatus failed\n");
     if(defaultStat & MS_RLSD_ON)
@@ -1829,7 +1830,7 @@ static void test_WaitDcd(void)
 
     diff = after1 - before;
     ok ((diff > (TIMEOUT>>1) -TIMEDELTA) && (diff < (TIMEOUT>>1) + TIMEDELTA),
-                  "Unexpected time %d, expected around %d\n", diff, TIMEOUT>>1);
+                  "Unexpected time %ld, expected around %d\n", diff, TIMEOUT>>1);
 
     /*restore RTS Settings*/
     if(defaultStat & MS_RLSD_ON)
@@ -1851,7 +1852,7 @@ static DWORD CALLBACK set_CommBreak(LPVOID arg)
     DWORD timeout = args[0];
     HANDLE hcom   = (HANDLE) args[1];
 
-    trace("SetCommBreak for handle %p after timeout %d\n",
+    trace("SetCommBreak for handle %p after timeout %ld\n",
 	  hcom, timeout);
     Sleep(timeout);
     ok(SetCommBreak(hcom),"SetCommBreak %p failed\n", hcom);
@@ -1895,28 +1896,28 @@ static void test_WaitBreak(void)
     err = GetLastError();
     after = GetTickCount();
 
-    trace("Success 0x%08x err %d evtmask 0x%08x\n", success, err, evtmask);
+    trace("Success 0x%08lx err %ld evtmask 0x%08lx\n", success, err, evtmask);
     ok(success || err == ERROR_IO_PENDING, "overlapped WaitCommEvent failed\n");
     trace("overlapped WaitCommEvent returned.\n");
 
     if (!success && (err == ERROR_IO_PENDING))
     {
         success = WaitForSingleObjectEx(hComPortEvent, TIMEOUT, TRUE);
-        ok(!success, "wait hComPortEvent res %d\n", GetLastError());
+        ok(!success, "wait hComPortEvent res %ld\n", GetLastError());
     }
     success = GetOverlappedResult(hcom, &overlapped, &written, FALSE);
     err = GetLastError();
     after1 = GetTickCount();
-    trace("Success 0x%08x err %d evtmask 0x%08x diff1 %d, diff2 %d\n",
+    trace("Success 0x%08lx err %ld evtmask 0x%08lx diff1 %ld, diff2 %ld\n",
 	  success, err, evtmask, after-before, after1-before);
 
-    ok(evtmask & EV_BREAK, "Failed to detect  EV_BREAK: 0x%08x, expected 0x%08x\n",
+    ok(evtmask & EV_BREAK, "Failed to detect  EV_BREAK: 0x%08lx, expected 0x%08x\n",
        evtmask, EV_BREAK);
     ok(GetCommModemStatus(hcom, &evtmask), "GetCommModemStatus failed\n");
 
     diff = after1 - before;
     ok ((diff > (TIMEOUT>>1) -TIMEDELTA) && (diff < (TIMEOUT>>1) + TIMEDELTA),
-	"Unexpected time %d, expected around %d\n", diff, TIMEOUT>>1);
+	"Unexpected time %ld, expected around %d\n", diff, TIMEOUT>>1);
 
     ok(ClearCommBreak(hcom), "ClearCommBreak failed\n");
 
@@ -1932,7 +1933,7 @@ static void test_stdio(void)
     /* cygwin tries this to determine the stdin handle type */
     ok( !GetCommState( GetStdHandle(STD_INPUT_HANDLE), &dcb ), "GetCommState succeeded on stdin\n" );
     ok( GetLastError() == ERROR_INVALID_HANDLE || GetLastError() == ERROR_INVALID_FUNCTION,
-        "got error %u\n", GetLastError() );
+        "got error %lu\n", GetLastError() );
 }
 
 static void test_WaitCommEvent(void)
@@ -1947,7 +1948,7 @@ static void test_WaitCommEvent(void)
     test_GetModemStatus(hcom);
 
     ret = SetCommMask(hcom, 0x1fff);
-    ok(ret, "SetCommMask error %d\n", GetLastError());
+    ok(ret, "SetCommMask error %ld\n", GetLastError());
 
     S(U(ovl_wait)).Offset = 0;
     S(U(ovl_wait)).OffsetHigh = 0;
@@ -1961,7 +1962,7 @@ static void test_WaitCommEvent(void)
         evtmask = 0;
         SetLastError(0xdeadbeef);
         ret = WaitCommEvent(hcom, &evtmask, &ovl_wait);
-        ok(!ret && GetLastError() == ERROR_IO_PENDING, "WaitCommEvent returned %d, error %d\n", ret, GetLastError());
+        ok(!ret && GetLastError() == ERROR_IO_PENDING, "WaitCommEvent returned %ld, error %ld\n", ret, GetLastError());
         if (GetLastError() != ERROR_IO_PENDING) goto done; /* no point in further testing */
         for (;;)
         {
@@ -1971,9 +1972,9 @@ static void test_WaitCommEvent(void)
             {
                 last_event_time = after;
                 ret = GetOverlappedResult(hcom, &ovl_wait, &bytes, FALSE);
-                ok(ret, "GetOverlappedResult reported error %d\n", GetLastError());
-                ok(bytes == sizeof(evtmask), "expected %u, written %u\n", (UINT)sizeof(evtmask), bytes);
-                trace("WaitCommEvent: got events %#x\n", evtmask);
+                ok(ret, "GetOverlappedResult reported error %ld\n", GetLastError());
+                ok(bytes == sizeof(evtmask), "expected %u, written %lu\n", (UINT)sizeof(evtmask), bytes);
+                trace("WaitCommEvent: got events %#lx\n", evtmask);
                 test_GetModemStatus(hcom);
                 break;
             }
@@ -1999,17 +2000,17 @@ static void test_FlushFileBuffers(void)
     if (hcom == INVALID_HANDLE_VALUE) return;
 
     ret = WriteFile(hcom, "\0\0\0\0\0\0\0", 7, &bytes, NULL);
-    ok(ret, "WriteFile error %d\n", GetLastError());
-    ok(bytes == 7, "expected 7, got %u\n", bytes);
+    ok(ret, "WriteFile error %ld\n", GetLastError());
+    ok(bytes == 7, "expected 7, got %lu\n", bytes);
 
     ret = FlushFileBuffers(hcom);
-    ok(ret, "FlushFileBuffers error %d\n", GetLastError());
+    ok(ret, "FlushFileBuffers error %ld\n", GetLastError());
 
     ret = ClearCommError(hcom, &errors, &stat);
-    ok(ret, "ClearCommError error %d\n", GetLastError());
-    ok(stat.cbInQue == 0, "expected 0, got %d bytes in InQueue\n", stat.cbInQue);
-    ok(stat.cbOutQue == 0, "expected 0, got %d bytes in OutQueue\n", stat.cbOutQue);
-    ok(errors == 0, "expected errors 0, got %#x\n", errors);
+    ok(ret, "ClearCommError error %ld\n", GetLastError());
+    ok(stat.cbInQue == 0, "expected 0, got %ld bytes in InQueue\n", stat.cbInQue);
+    ok(stat.cbOutQue == 0, "expected 0, got %ld bytes in OutQueue\n", stat.cbOutQue);
+    ok(errors == 0, "expected errors 0, got %#lx\n", errors);
 
     CloseHandle(hcom);
 }
@@ -2037,7 +2038,7 @@ static void test_read_write(void)
     if (hcom == INVALID_HANDLE_VALUE) return;
 
     ret = GetCommState(hcom, &dcb);
-    ok(ret, "GetCommState error %d\n", GetLastError());
+    ok(ret, "GetCommState error %ld\n", GetLastError());
     dcb.BaudRate = 9600;
     dcb.ByteSize = 8;
     dcb.Parity = NOPARITY;
@@ -2045,29 +2046,29 @@ static void test_read_write(void)
     dcb.fDtrControl = DTR_CONTROL_ENABLE;
     dcb.StopBits = ONESTOPBIT;
     ret = SetCommState(hcom, &dcb);
-    ok(ret, "SetCommState error %d\n", GetLastError());
+    ok(ret, "SetCommState error %ld\n", GetLastError());
 
     memset(&timeouts, 0, sizeof(timeouts));
     timeouts.ReadTotalTimeoutConstant = TIMEOUT;
     ret = SetCommTimeouts(hcom, &timeouts);
-    ok(ret,"SetCommTimeouts error %d\n", GetLastError());
+    ok(ret,"SetCommTimeouts error %ld\n", GetLastError());
 
     ret = SetupComm(hcom, 1024, 1024);
-    ok(ret, "SetUpComm error %d\n", GetLastError());
+    ok(ret, "SetUpComm error %ld\n", GetLastError());
 
     bytes = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = WriteFile(hcom, atz, 0, &bytes, NULL);
     ok(!ret, "WriteFile should fail\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-    ok(bytes == 0, "bytes %u\n", bytes);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
+    ok(bytes == 0, "bytes %lu\n", bytes);
 
     U(iob).Status = -1;
     iob.Information = -1;
     status = pNtWriteFile(hcom, 0, NULL, NULL, &iob, atz, 0, NULL, NULL);
-    ok(status == STATUS_INVALID_PARAMETER, "expected STATUS_INVALID_PARAMETER, got %#x\n", status);
-    ok(U(iob).Status == -1, "expected -1, got %#x\n", U(iob).Status);
-    ok(iob.Information == -1, "expected -1, got %ld\n", iob.Information);
+    ok(status == STATUS_INVALID_PARAMETER, "expected STATUS_INVALID_PARAMETER, got %#lx\n", status);
+    ok(U(iob).Status == -1, "expected -1, got %#lx\n", U(iob).Status);
+    ok(iob.Information == -1, "expected -1, got %Id\n", iob.Information);
 
     for (i = -20; i < 20; i++)
     {
@@ -2077,15 +2078,15 @@ static void test_read_write(void)
         status = pNtWriteFile(hcom, 0, NULL, NULL, &iob, atz, 0, &offset, NULL);
         if (i >= 0 || i == -1)
         {
-            ok(status == STATUS_SUCCESS, "%d: expected STATUS_SUCCESS, got %#x\n", i, status);
-            ok(U(iob).Status == STATUS_SUCCESS, "%d: expected STATUS_SUCCESS, got %#x\n", i, U(iob).Status);
-            ok(iob.Information == 0, "%d: expected 0, got %lu\n", i, iob.Information);
+            ok(status == STATUS_SUCCESS, "%ld: expected STATUS_SUCCESS, got %#lx\n", i, status);
+            ok(U(iob).Status == STATUS_SUCCESS, "%ld: expected STATUS_SUCCESS, got %#lx\n", i, U(iob).Status);
+            ok(iob.Information == 0, "%ld: expected 0, got %Iu\n", i, iob.Information);
         }
         else
         {
-            ok(status == STATUS_INVALID_PARAMETER, "%d: expected STATUS_INVALID_PARAMETER, got %#x\n", i, status);
-            ok(U(iob).Status == -1, "%d: expected -1, got %#x\n", i, U(iob).Status);
-            ok(iob.Information == -1, "%d: expected -1, got %ld\n", i, iob.Information);
+            ok(status == STATUS_INVALID_PARAMETER, "%ld: expected STATUS_INVALID_PARAMETER, got %#lx\n", i, status);
+            ok(U(iob).Status == -1, "%ld: expected -1, got %#lx\n", i, U(iob).Status);
+            ok(iob.Information == -1, "%ld: expected -1, got %Id\n", i, iob.Information);
         }
     }
 
@@ -2093,7 +2094,7 @@ static void test_read_write(void)
     iob.Information = -1;
     offset.QuadPart = 0;
     status = pNtWriteFile(hcom, 0, NULL, NULL, &iob, atz, sizeof(atz), &offset, NULL);
-    ok(status == STATUS_PENDING || status == STATUS_SUCCESS, "expected STATUS_PENDING or STATUS_SUCCESS, got %#x\n", status);
+    ok(status == STATUS_PENDING || status == STATUS_SUCCESS, "expected STATUS_PENDING or STATUS_SUCCESS, got %#lx\n", status);
     /* Under Windows checking IO_STATUS_BLOCK right after the call leads
      * to races, iob.Status is either -1 or STATUS_SUCCESS, which means
      * that it's set only when the operation completes.
@@ -2105,12 +2106,12 @@ static void test_read_write(void)
         CloseHandle(hcom);
         return;
     }
-    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject error %d\n", ret);
-    ok(U(iob).Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", U(iob).Status);
-    ok(iob.Information == sizeof(atz), "expected sizeof(atz), got %lu\n", iob.Information);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject error %ld\n", ret);
+    ok(U(iob).Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", U(iob).Status);
+    ok(iob.Information == sizeof(atz), "expected sizeof(atz), got %Iu\n", iob.Information);
 
     ret = SetCommMask(hcom, EV_RXCHAR);
-    ok(ret, "SetCommMask error %d\n", GetLastError());
+    ok(ret, "SetCommMask error %ld\n", GetLastError());
 
     S(U(ovl_wait)).Offset = 0;
     S(U(ovl_wait)).OffsetHigh = 0;
@@ -2124,7 +2125,7 @@ static void test_read_write(void)
         evtmask = 0;
         SetLastError(0xdeadbeef);
         ret = WaitCommEvent(hcom, &evtmask, &ovl_wait);
-        ok(!ret && GetLastError() == ERROR_IO_PENDING, "WaitCommEvent returned %d, error %d\n", ret, GetLastError());
+        ok(!ret && GetLastError() == ERROR_IO_PENDING, "WaitCommEvent returned %ld, error %ld\n", ret, GetLastError());
         if (GetLastError() != ERROR_IO_PENDING) goto done; /* no point in further testing */
         for (;;)
         {
@@ -2136,23 +2137,23 @@ static void test_read_write(void)
 
                 last_event_time = after;
                 ret = GetOverlappedResult(hcom, &ovl_wait, &bytes, FALSE);
-                ok(ret, "GetOverlappedResult reported error %d\n", GetLastError());
-                ok(bytes == sizeof(evtmask), "expected sizeof(evtmask), got %u\n", bytes);
+                ok(ret, "GetOverlappedResult reported error %ld\n", GetLastError());
+                ok(bytes == sizeof(evtmask), "expected sizeof(evtmask), got %lu\n", bytes);
                 ok(evtmask & EV_RXCHAR, "EV_RXCHAR should be set\n");
 
                 bytes = 0xdeadbeef;
                 SetLastError(0xdeadbeef);
                 ret = ReadFile(hcom, buf, 0, &bytes, NULL);
                 ok(!ret, "ReadFile should fail\n");
-                ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-                ok(bytes == 0, "bytes %u\n", bytes);
+                ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
+                ok(bytes == 0, "bytes %lu\n", bytes);
 
                 U(iob).Status = -1;
                 iob.Information = -1;
                 status = pNtReadFile(hcom, 0, NULL, NULL, &iob, buf, 0, NULL, NULL);
-                ok(status == STATUS_INVALID_PARAMETER, "expected STATUS_INVALID_PARAMETER, got %#x\n", status);
-                ok(U(iob).Status == -1, "expected -1, got %#x\n", U(iob).Status);
-                ok(iob.Information == -1, "expected -1, got %ld\n", iob.Information);
+                ok(status == STATUS_INVALID_PARAMETER, "expected STATUS_INVALID_PARAMETER, got %#lx\n", status);
+                ok(U(iob).Status == -1, "expected -1, got %#lx\n", U(iob).Status);
+                ok(iob.Information == -1, "expected -1, got %Id\n", iob.Information);
 
                 for (i = -20; i < 20; i++)
                 {
@@ -2162,15 +2163,15 @@ static void test_read_write(void)
                     status = pNtReadFile(hcom, 0, NULL, NULL, &iob, buf, 0, &offset, NULL);
                     if (i >= 0)
                     {
-                        ok(status == STATUS_SUCCESS, "%d: expected STATUS_SUCCESS, got %#x\n", i, status);
-                        ok(U(iob).Status == STATUS_SUCCESS, "%d: expected STATUS_SUCCESS, got %#x\n", i, U(iob).Status);
-                        ok(iob.Information == 0, "%d: expected 0, got %lu\n", i, iob.Information);
+                        ok(status == STATUS_SUCCESS, "%ld: expected STATUS_SUCCESS, got %#lx\n", i, status);
+                        ok(U(iob).Status == STATUS_SUCCESS, "%ld: expected STATUS_SUCCESS, got %#lx\n", i, U(iob).Status);
+                        ok(iob.Information == 0, "%ld: expected 0, got %Iu\n", i, iob.Information);
                     }
                     else
                     {
-                        ok(status == STATUS_INVALID_PARAMETER, "%d: expected STATUS_INVALID_PARAMETER, got %#x\n", i, status);
-                        ok(U(iob).Status == -1, "%d: expected -1, got %#x\n", i, U(iob).Status);
-                        ok(iob.Information == -1, "%d: expected -1, got %ld\n", i, iob.Information);
+                        ok(status == STATUS_INVALID_PARAMETER, "%ld: expected STATUS_INVALID_PARAMETER, got %#lx\n", i, status);
+                        ok(U(iob).Status == -1, "%ld: expected -1, got %#lx\n", i, U(iob).Status);
+                        ok(iob.Information == -1, "%ld: expected -1, got %Id\n", i, iob.Information);
                     }
                 }
 
@@ -2178,9 +2179,9 @@ static void test_read_write(void)
                 iob.Information = -1;
                 offset.QuadPart = 0;
                 status = pNtReadFile(hcom, 0, NULL, NULL, &iob, buf, 1, &offset, NULL);
-                ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", status);
-                ok(U(iob).Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", U(iob).Status);
-                ok(iob.Information == 1, "expected 1, got %lu\n", iob.Information);
+                ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", status);
+                ok(U(iob).Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", U(iob).Status);
+                ok(iob.Information == 1, "expected 1, got %Iu\n", iob.Information);
                 goto done;
             }
             else
