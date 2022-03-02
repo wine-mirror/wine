@@ -49,6 +49,8 @@ HRESULT WINAPI DllGetActivationFactory( HSTRING class_str, IActivationFactory **
         IActivationFactory_AddRef( (*factory = controller_factory) );
     if (!wcscmp( buffer, RuntimeClass_Windows_Gaming_Input_Gamepad ))
         IActivationFactory_AddRef( (*factory = gamepad_factory) );
+    if (!wcscmp( buffer, RuntimeClass_Windows_Gaming_Input_Custom_GameControllerFactoryManager ))
+        IActivationFactory_AddRef( (*factory = manager_factory) );
 
     if (*factory) return S_OK;
     return REGDB_E_CLASSNOTREG;

@@ -5,6 +5,7 @@ C_SRCS = \
 	controller.c \
 	gamepad.c \
 	main.c \
+	manager.c \
 	vector.c
 
 IDL_SRCS = classes.idl

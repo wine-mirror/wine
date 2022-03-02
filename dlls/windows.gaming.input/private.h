@@ -32,10 +32,12 @@
 #define WIDL_using_Windows_Foundation_Collections
 #include "windows.foundation.h"
 #define WIDL_using_Windows_Gaming_Input
-#include "windows.gaming.input.h"
+#define WIDL_using_Windows_Gaming_Input_Custom
+#include "windows.gaming.input.custom.h"
 
 extern IActivationFactory *controller_factory;
 extern IActivationFactory *gamepad_factory;
+extern IActivationFactory *manager_factory;
 
 extern HRESULT vector_create( REFIID iid, REFIID view_iid, void **out );
 
