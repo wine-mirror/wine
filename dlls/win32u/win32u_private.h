@@ -22,6 +22,7 @@
 #define __WINE_WIN32U_PRIVATE
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include "windef.h"
 #include "winbase.h"
 #include "ntgdi.h"

@@ -93,8 +93,11 @@
     SYSCALL_ENTRY( NtUserBuildHwndList ) \
     SYSCALL_ENTRY( NtUserCloseDesktop ) \
     SYSCALL_ENTRY( NtUserCloseWindowStation ) \
+    SYSCALL_ENTRY( NtUserCopyAcceleratorTable ) \
+    SYSCALL_ENTRY( NtUserCreateAcceleratorTable ) \
     SYSCALL_ENTRY( NtUserCreateDesktopEx ) \
     SYSCALL_ENTRY( NtUserCreateWindowStation ) \
+    SYSCALL_ENTRY( NtUserDestroyAcceleratorTable ) \
     SYSCALL_ENTRY( NtUserFindExistingCursorIcon ) \
     SYSCALL_ENTRY( NtUserGetClipboardFormatName ) \
     SYSCALL_ENTRY( NtUserGetClipboardOwner ) \

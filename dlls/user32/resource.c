@@ -23,11 +23,9 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "winerror.h"
-#include "winternl.h"
 #include "winnls.h"
+#include "ntuser.h"
 #include "wine/debug.h"
-#include "user_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(resource);
 WINE_DECLARE_DEBUG_CHANNEL(accel);
@@ -40,14 +38,6 @@ typedef struct
     WORD   cmd;
     WORD   pad;
 } PE_ACCEL;
-
-/* the accelerator user object */
-struct accelerator
-{
-    struct user_object obj;
-    unsigned int       count;
-    ACCEL              table[1];
-};
 
 /**********************************************************************
  *			LoadAcceleratorsW	(USER32.@)
@@ -73,7 +63,7 @@ HACCEL WINAPI LoadAcceleratorsW(HINSTANCE instance, LPCWSTR name)
         table[i].key   = pe_table[i].key;
         table[i].cmd   = pe_table[i].cmd;
     }
-    handle = CreateAcceleratorTableW( table, count );
+    handle = NtUserCreateAcceleratorTable( table, count );
     HeapFree( GetProcessHeap(), 0, table );
     TRACE_(accel)("%p %s returning %p\n", instance, debugstr_w(name), handle );
     return handle;
@@ -106,7 +96,7 @@ HACCEL WINAPI LoadAcceleratorsA(HINSTANCE instance,LPCSTR lpTableName)
 INT WINAPI CopyAcceleratorTableA(HACCEL src, LPACCEL dst, INT count)
 {
     char ch;
-    int i, ret = CopyAcceleratorTableW( src, dst, count );
+    int i, ret = NtUserCopyAcceleratorTable( src, dst, count );
 
     if (ret && dst)
     {
@@ -118,35 +108,6 @@ INT WINAPI CopyAcceleratorTableA(HACCEL src, LPACCEL dst, INT count)
         }
     }
     return ret;
-}
-
-/**********************************************************************
- *             CopyAcceleratorTableW   (USER32.@)
- */
-INT WINAPI CopyAcceleratorTableW(HACCEL src, LPACCEL dst, INT count)
-{
-    struct accelerator *accel;
-    int i;
-
-    if (!(accel = get_user_handle_ptr( src, NTUSER_OBJ_ACCEL ))) return 0;
-    if (accel == OBJ_OTHER_PROCESS)
-    {
-        FIXME( "other process handle %p?\n", src );
-        return 0;
-    }
-    if (dst)
-    {
-        if (count > accel->count) count = accel->count;
-        for (i = 0; i < count; i++)
-        {
-            dst[i].fVirt = accel->table[i].fVirt & 0x7f;
-            dst[i].key   = accel->table[i].key;
-            dst[i].cmd   = accel->table[i].cmd;
-        }
-    }
-    else count = accel->count;
-    release_user_handle_ptr( accel );
-    return count;
 }
 
 /*********************************************************************
@@ -176,58 +137,10 @@ HACCEL WINAPI CreateAcceleratorTableA( ACCEL *accel, INT count )
         }
         else table[i].key = accel[i].key;
     }
-    handle = CreateAcceleratorTableW( table, count );
+    handle = NtUserCreateAcceleratorTable( table, count );
     HeapFree( GetProcessHeap(), 0, table );
     TRACE_(accel)("returning %p\n", handle );
     return handle;
-}
-
-/*********************************************************************
- *                    CreateAcceleratorTableW   (USER32.@)
- */
-HACCEL WINAPI CreateAcceleratorTableW(LPACCEL lpaccel, INT count)
-{
-    struct accelerator *accel;
-    HACCEL handle;
-
-    if (count < 1)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
-    }
-    accel = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET( struct accelerator, table[count] ));
-    if (!accel) return 0;
-    accel->count = count;
-    memcpy( accel->table, lpaccel, count * sizeof(*lpaccel) );
-
-    if (!(handle = alloc_user_handle( &accel->obj, NTUSER_OBJ_ACCEL )))
-        HeapFree( GetProcessHeap(), 0, accel );
-    TRACE_(accel)("returning %p\n", handle );
-    return handle;
-}
-
-/******************************************************************************
- * DestroyAcceleratorTable [USER32.@]
- * Destroys an accelerator table
- *
- * PARAMS
- *    handle [I] Handle to accelerator table
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
- */
-BOOL WINAPI DestroyAcceleratorTable( HACCEL handle )
-{
-    struct accelerator *accel;
-
-    if (!(accel = free_user_handle( handle, NTUSER_OBJ_ACCEL ))) return FALSE;
-    if (accel == OBJ_OTHER_PROCESS)
-    {
-        FIXME( "other process handle %p?\n", accel );
-        return FALSE;
-    }
-    return HeapFree( GetProcessHeap(), 0, accel );
 }
 
 /**********************************************************************

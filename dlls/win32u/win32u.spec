@@ -802,9 +802,9 @@
 @ stub NtUserConfirmResizeCommit
 @ stub NtUserConsoleControl
 @ stub NtUserConvertMemHandle
-@ stub NtUserCopyAcceleratorTable
+@ stdcall -syscall NtUserCopyAcceleratorTable(long ptr long)
 @ stdcall NtUserCountClipboardFormats()
-@ stub NtUserCreateAcceleratorTable
+@ stdcall -syscall NtUserCreateAcceleratorTable(ptr long)
 @ stub NtUserCreateActivationGroup
 @ stub NtUserCreateActivationObject
 @ stub NtUserCreateCaret
@@ -826,7 +826,7 @@
 @ stub NtUserDelegateInput
 @ stub NtUserDeleteMenu
 @ stub NtUserDeleteWindowGroup
-@ stub NtUserDestroyAcceleratorTable
+@ stdcall -syscall NtUserDestroyAcceleratorTable(long)
 @ stub NtUserDestroyActivationGroup
 @ stub NtUserDestroyActivationObject
 @ stdcall NtUserDestroyCursor(long long)

@@ -79,13 +79,13 @@
 @ stdcall CloseWindow(long)
 @ stdcall CloseWindowStation(long) NtUserCloseWindowStation
 @ stdcall CopyAcceleratorTableA(long ptr long)
-@ stdcall CopyAcceleratorTableW(long ptr long)
+@ stdcall CopyAcceleratorTableW(long ptr long) NtUserCopyAcceleratorTable
 @ stdcall CopyIcon(long)
 @ stdcall CopyImage(long long long long long)
 @ stdcall CopyRect(ptr ptr)
 @ stdcall CountClipboardFormats() NtUserCountClipboardFormats
 @ stdcall CreateAcceleratorTableA(ptr long)
-@ stdcall CreateAcceleratorTableW(ptr long)
+@ stdcall CreateAcceleratorTableW(ptr long) NtUserCreateAcceleratorTable
 @ stdcall CreateCaret(long long long long)
 @ stdcall CreateCursor(long long long long long ptr ptr)
 @ stdcall CreateDesktopA(str str ptr long long ptr)
@@ -155,7 +155,7 @@
 @ stdcall DeferWindowPos(long long long long long long long long)
 @ stdcall DeleteMenu(long long long)
 @ stdcall DeregisterShellHookWindow (long)
-@ stdcall DestroyAcceleratorTable(long)
+@ stdcall DestroyAcceleratorTable(long) NtUserDestroyAcceleratorTable
 @ stdcall DestroyCaret()
 @ stdcall DestroyCursor(long)
 @ stdcall DestroyIcon(long)

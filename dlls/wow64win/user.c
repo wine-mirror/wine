@@ -491,3 +491,27 @@ NTSTATUS WINAPI wow64_NtUserGetGUIThreadInfo( UINT *args )
     info32->rcCaret       = info.rcCaret;
     return TRUE;
 }
+
+NTSTATUS WINAPI wow64_NtUserCopyAcceleratorTable( UINT *args )
+{
+    HACCEL src = get_handle( &args );
+    ACCEL *dst = get_ptr( &args );
+    INT count = get_ulong( &args );
+
+    return NtUserCopyAcceleratorTable( src, dst, count );
+}
+
+NTSTATUS WINAPI wow64_NtUserCreateAcceleratorTable( UINT *args )
+{
+    ACCEL *table = get_ptr( &args );
+    INT count = get_ulong( &args );
+
+    return HandleToUlong( NtUserCreateAcceleratorTable( table, count ));
+}
+
+NTSTATUS WINAPI wow64_NtUserDestroyAcceleratorTable( UINT *args )
+{
+    HACCEL handle = get_handle( &args );
+
+    return NtUserDestroyAcceleratorTable( handle );
+}
