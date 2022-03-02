@@ -193,10 +193,6 @@ case $host in
     TARGETFLAGS="$TARGETFLAGS -mfloat-abi=$float_abi"
     ;;
   aarch64*)
-    AC_CACHE_CHECK([whether $CC supports __builtin_ms_va_list],wine_cv_builtin_ms_va_list,
-        [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stdarg.h>]], [[void func(__builtin_ms_va_list *args);]])],
-                      [wine_cv_builtin_ms_va_list=yes],[wine_cv_builtin_ms_va_list=no])])
-    test $wine_cv_builtin_ms_va_list != no || AC_MSG_ERROR([You need clang >= 5.0 to build Wine for arm64.])
     enable_wow64=${enable_wow64:-yes}
     enable_wow64win=${enable_wow64win:-yes}
     ;;
@@ -994,6 +990,10 @@ then
 fi
 WINE_NOTICE_WITH(mingw,[test "x$CROSSTARGET" = "x"],
                  [MinGW compiler not found, cross-compiling PE files won't be supported.])
+
+case $host_cpu in
+  aarch64*) test "x$CROSSTARGET" != x || AC_MSG_ERROR([PE cross-compilation is required for ARM64, please install llvm-mingw.]) ;;
+esac
 
 dnl **** External libraries ****
 

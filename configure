@@ -6360,34 +6360,6 @@ printf "%s\n" "$wine_cv_float_abi" >&6; }
     TARGETFLAGS="$TARGETFLAGS -mfloat-abi=$float_abi"
     ;;
   aarch64*)
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports __builtin_ms_va_list" >&5
-printf %s "checking whether $CC supports __builtin_ms_va_list... " >&6; }
-if test ${wine_cv_builtin_ms_va_list+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <stdarg.h>
-int
-main (void)
-{
-void func(__builtin_ms_va_list *args);
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"
-then :
-  wine_cv_builtin_ms_va_list=yes
-else $as_nop
-  wine_cv_builtin_ms_va_list=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $wine_cv_builtin_ms_va_list" >&5
-printf "%s\n" "$wine_cv_builtin_ms_va_list" >&6; }
-    test $wine_cv_builtin_ms_va_list != no || as_fn_error $? "You need clang >= 5.0 to build Wine for arm64." "$LINENO" 5
     enable_wow64=${enable_wow64:-yes}
     enable_wow64win=${enable_wow64win:-yes}
     ;;
@@ -11793,6 +11765,10 @@ This is an error since --with-mingw was requested." "$LINENO" 5 ;;
 esac
 
 fi
+
+case $host_cpu in
+  aarch64*) test "x$CROSSTARGET" != x || as_fn_error $? "PE cross-compilation is required for ARM64, please install llvm-mingw." "$LINENO" 5 ;;
+esac
 
 
 if test "x$with_system_dllpath" != "x" -a "$CROSSCC" != "false"
