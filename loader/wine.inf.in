@@ -71,6 +71,7 @@ AddReg=\
     Services, \
     SessionMgr,\
     Tapi,\
+    ThemeManager,\
     Timezones,\
     LicenseInformation
 
@@ -95,6 +96,7 @@ AddReg=\
     Services, \
     SessionMgr,\
     Tapi,\
+    ThemeManager,\
     Timezones,\
     VersionInfo,\
     LicenseInformation
@@ -121,6 +123,7 @@ AddReg=\
     Services, \
     SessionMgr,\
     Tapi,\
+    ThemeManager,\
     Timezones,\
     VersionInfo.ntamd64,\
     LicenseInformation
@@ -147,6 +150,7 @@ AddReg=\
     Services, \
     SessionMgr,\
     Tapi,\
+    ThemeManager,\
     Timezones,\
     VersionInfo.ntamd64,\
     LicenseInformation
@@ -5493,6 +5497,12 @@ ServiceBinary="%11%\termsv.exe"
 ServiceType=32
 StartType=3
 ErrorControl=1
+
+[ThemeManager]
+HKCU,"Software\Microsoft\Windows\CurrentVersion\ThemeManager","ThemeActive",2,"1"
+HKCU,"Software\Microsoft\Windows\CurrentVersion\ThemeManager","DllName",2,"%10%\resources\themes\light\light.msstyles"
+HKCU,"Software\Microsoft\Windows\CurrentVersion\ThemeManager","ColorName",2,"Blue"
+HKCU,"Software\Microsoft\Windows\CurrentVersion\ThemeManager","SizeName",2,"NormalSize"
 
 [WinmgmtService]
 Description="Provides access to Windows Management Instrumentation"
