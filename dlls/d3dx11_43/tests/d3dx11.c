@@ -21,7 +21,6 @@
 #include "d3d11.h"
 #include "d3dx11.h"
 #include "wine/test.h"
-#include "wine/heap.h"
 
 #ifndef MAKEFOURCC
 #define MAKEFOURCC(ch0, ch1, ch2, ch3)  \
@@ -503,8 +502,8 @@ static HRESULT WINAPI test_d3dinclude_open(ID3DInclude *iface, D3D_INCLUDE_TYPE 
 
     if (!strcmp(filename, "include1.h"))
     {
-        buffer = heap_alloc(strlen(include1));
-        CopyMemory(buffer, include1, strlen(include1));
+        buffer = malloc(strlen(include1));
+        memcpy(buffer, include1, strlen(include1));
         *bytes = strlen(include1);
         ok(include_type == D3D_INCLUDE_LOCAL, "Unexpected include type %d.\n", include_type);
         ok(!strncmp(include2, parent_data, strlen(include2)),
@@ -512,8 +511,8 @@ static HRESULT WINAPI test_d3dinclude_open(ID3DInclude *iface, D3D_INCLUDE_TYPE 
     }
     else if (!strcmp(filename, "include\\include2.h"))
     {
-        buffer = heap_alloc(strlen(include2));
-        CopyMemory(buffer, include2, strlen(include2));
+        buffer = malloc(strlen(include2));
+        memcpy(buffer, include2, strlen(include2));
         *bytes = strlen(include2);
         ok(!parent_data, "Unexpected parent_data value.\n");
         ok(include_type == D3D_INCLUDE_LOCAL, "Unexpected include type %d.\n", include_type);
@@ -530,7 +529,7 @@ static HRESULT WINAPI test_d3dinclude_open(ID3DInclude *iface, D3D_INCLUDE_TYPE 
 
 static HRESULT WINAPI test_d3dinclude_close(ID3DInclude *iface, const void *data)
 {
-    heap_free((void *)data);
+    free((void *)data);
     return S_OK;
 }
 
