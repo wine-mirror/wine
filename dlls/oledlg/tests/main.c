@@ -51,7 +51,7 @@ static ULONG WINAPI enumverbs_Release(IEnumOLEVERB *iface)
 static int g_enumpos;
 static HRESULT WINAPI enumverbs_Next(IEnumOLEVERB *iface, ULONG count, OLEVERB *verbs, ULONG *fetched)
 {
-    ok(count == 1, "got %u\n", count);
+    ok(count == 1, "got %lu\n", count);
     ok(fetched == NULL, "got %p\n", fetched);
     ok(g_enumpos == 0 || g_enumpos == 1, "got pos %d\n", g_enumpos);
 
@@ -209,7 +209,7 @@ static HRESULT WINAPI oleobject_GetUserClassID(IOleObject *iface, CLSID *clsid)
 static HRESULT WINAPI oleobject_GetUserType(IOleObject *iface, DWORD formoftype,
     LPOLESTR *usertype)
 {
-    ok(formoftype == USERCLASSTYPE_SHORT, "got %d\n", formoftype);
+    ok(formoftype == USERCLASSTYPE_SHORT, "got %ld\n", formoftype);
     *usertype = CoTaskMemAlloc(sizeof(L"test"));
     lstrcpyW(*usertype, L"test");
     return S_OK;
