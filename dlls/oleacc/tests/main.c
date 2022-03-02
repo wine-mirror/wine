@@ -538,7 +538,7 @@ static void test_GetStateText(void)
     ok(!ret, "31) GetStateText succeeded: %d\n", ret);
 }
 
-static int Object_ref = 1;
+static LONG Object_ref = 1;
 static HRESULT WINAPI Object_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
 {
     if(IsEqualIID(riid, &IID_IUnknown)) {
