@@ -1409,6 +1409,47 @@ exit:
         NtSetEvent(stream->event, NULL);
 }
 
+static snd_pcm_uframes_t interp_elapsed_frames(struct alsa_stream *stream)
+{
+    LARGE_INTEGER time_freq, current_time, time_diff;
+
+    NtQueryPerformanceCounter(&current_time, &time_freq);
+    time_diff.QuadPart = current_time.QuadPart - stream->last_period_time.QuadPart;
+    return muldiv(time_diff.QuadPart, stream->fmt->nSamplesPerSec, time_freq.QuadPart);
+}
+
+static int alsa_rewind_best_effort(struct alsa_stream *stream)
+{
+    snd_pcm_uframes_t len, leave;
+
+    /* we can't use snd_pcm_rewindable, some PCM devices crash. so follow
+     * PulseAudio's example and rewind as much data as we believe is in the
+     * buffer, minus 1.33ms for safety. */
+
+    /* amount of data to leave in ALSA buffer */
+    leave = interp_elapsed_frames(stream) + stream->safe_rewind_frames;
+
+    if(stream->held_frames < leave)
+        stream->held_frames = 0;
+    else
+        stream->held_frames -= leave;
+
+    if(stream->data_in_alsa_frames < leave)
+        len = 0;
+    else
+        len = stream->data_in_alsa_frames - leave;
+
+    TRACE("rewinding %lu frames, now held %u\n", len, stream->held_frames);
+
+    if(len)
+        /* snd_pcm_rewind return value is often broken, assume it succeeded */
+        snd_pcm_rewind(stream->pcm_handle, len);
+
+    stream->data_in_alsa_frames = 0;
+
+    return len;
+}
+
 static NTSTATUS start(void *args)
 {
     struct start_params *params = args;
@@ -1451,6 +1492,24 @@ static NTSTATUS start(void *args)
         }
     }
     stream->started = TRUE;
+
+    return alsa_unlock_result(stream, &params->result, S_OK);
+}
+
+static NTSTATUS stop(void *args)
+{
+    struct stop_params *params = args;
+    struct alsa_stream *stream = params->stream;
+
+    alsa_lock(stream);
+
+    if(!stream->started)
+        return alsa_unlock_result(stream, &params->result, S_FALSE);
+
+    if(stream->flow == eRender)
+        alsa_rewind_best_effort(stream);
+
+    stream->started = FALSE;
 
     return alsa_unlock_result(stream, &params->result, S_OK);
 }
@@ -1801,6 +1860,7 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     create_stream,
     release_stream,
     start,
+    stop,
     timer_loop,
     is_format_supported,
     get_mix_format,

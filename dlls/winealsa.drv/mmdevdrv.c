@@ -972,39 +972,6 @@ static snd_pcm_uframes_t interp_elapsed_frames(struct alsa_stream *stream)
     return MulDiv(time_diff.QuadPart, stream->fmt->nSamplesPerSec, time_freq.QuadPart);
 }
 
-static int alsa_rewind_best_effort(ACImpl *This)
-{
-    struct alsa_stream *stream = This->stream;
-    snd_pcm_uframes_t len, leave;
-
-    /* we can't use snd_pcm_rewindable, some PCM devices crash. so follow
-     * PulseAudio's example and rewind as much data as we believe is in the
-     * buffer, minus 1.33ms for safety. */
-
-    /* amount of data to leave in ALSA buffer */
-    leave = interp_elapsed_frames(stream) + stream->safe_rewind_frames;
-
-    if(stream->held_frames < leave)
-        stream->held_frames = 0;
-    else
-        stream->held_frames -= leave;
-
-    if(stream->data_in_alsa_frames < leave)
-        len = 0;
-    else
-        len = stream->data_in_alsa_frames - leave;
-
-    TRACE("rewinding %lu frames, now held %u\n", len, stream->held_frames);
-
-    if(len)
-        /* snd_pcm_rewind return value is often broken, assume it succeeded */
-        snd_pcm_rewind(stream->pcm_handle, len);
-
-    stream->data_in_alsa_frames = 0;
-
-    return len;
-}
-
 static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
@@ -1036,28 +1003,18 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
 static HRESULT WINAPI AudioClient_Stop(IAudioClient3 *iface)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
-    struct alsa_stream *stream = This->stream;
+    struct stop_params params;
 
     TRACE("(%p)\n", This);
 
     if(!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
 
-    alsa_lock(stream);
+    params.stream = This->stream;
 
-    if(!stream->started){
-        alsa_unlock(stream);
-        return S_FALSE;
-    }
+    ALSA_CALL(stop, &params);
 
-    if(stream->flow == eRender)
-        alsa_rewind_best_effort(This);
-
-    stream->started = FALSE;
-
-    alsa_unlock(stream);
-
-    return S_OK;
+    return params.result;
 }
 
 static HRESULT WINAPI AudioClient_Reset(IAudioClient3 *iface)
