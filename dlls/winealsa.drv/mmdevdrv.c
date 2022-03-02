@@ -1020,47 +1020,18 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient3 *iface)
 static HRESULT WINAPI AudioClient_Reset(IAudioClient3 *iface)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
-    struct alsa_stream *stream = This->stream;
+    struct reset_params params;
 
     TRACE("(%p)\n", This);
 
     if(!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
 
-    alsa_lock(stream);
+    params.stream = This->stream;
 
-    if(stream->started){
-        alsa_unlock(stream);
-        return AUDCLNT_E_NOT_STOPPED;
-    }
+    ALSA_CALL(reset, &params);
 
-    if(stream->getbuf_last){
-        alsa_unlock(stream);
-        return AUDCLNT_E_BUFFER_OPERATION_PENDING;
-    }
-
-    if(snd_pcm_drop(stream->pcm_handle) < 0)
-        WARN("snd_pcm_drop failed\n");
-
-    if(snd_pcm_reset(stream->pcm_handle) < 0)
-        WARN("snd_pcm_reset failed\n");
-
-    if(snd_pcm_prepare(stream->pcm_handle) < 0)
-        WARN("snd_pcm_prepare failed\n");
-
-    if(stream->flow == eRender){
-        stream->written_frames = 0;
-        stream->last_pos_frames = 0;
-    }else{
-        stream->written_frames += stream->held_frames;
-    }
-    stream->held_frames = 0;
-    stream->lcl_offs_frames = 0;
-    stream->wri_offs_frames = 0;
-
-    alsa_unlock(stream);
-
-    return S_OK;
+    return params.result;
 }
 
 static HRESULT WINAPI AudioClient_SetEventHandle(IAudioClient3 *iface,

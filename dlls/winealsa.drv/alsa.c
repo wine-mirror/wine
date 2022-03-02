@@ -1514,6 +1514,41 @@ static NTSTATUS stop(void *args)
     return alsa_unlock_result(stream, &params->result, S_OK);
 }
 
+static NTSTATUS reset(void *args)
+{
+    struct reset_params *params = args;
+    struct alsa_stream *stream = params->stream;
+
+    alsa_lock(stream);
+
+    if(stream->started)
+        return alsa_unlock_result(stream, &params->result, AUDCLNT_E_NOT_STOPPED);
+
+    if(stream->getbuf_last)
+        return alsa_unlock_result(stream, &params->result, AUDCLNT_E_BUFFER_OPERATION_PENDING);
+
+    if(snd_pcm_drop(stream->pcm_handle) < 0)
+        WARN("snd_pcm_drop failed\n");
+
+    if(snd_pcm_reset(stream->pcm_handle) < 0)
+        WARN("snd_pcm_reset failed\n");
+
+    if(snd_pcm_prepare(stream->pcm_handle) < 0)
+        WARN("snd_pcm_prepare failed\n");
+
+    if(stream->flow == eRender){
+        stream->written_frames = 0;
+        stream->last_pos_frames = 0;
+    }else{
+        stream->written_frames += stream->held_frames;
+    }
+    stream->held_frames = 0;
+    stream->lcl_offs_frames = 0;
+    stream->wri_offs_frames = 0;
+
+    return alsa_unlock_result(stream, &params->result, S_OK);
+}
+
 static NTSTATUS timer_loop(void *args)
 {
     struct timer_loop_params *params = args;
@@ -1861,6 +1896,7 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     release_stream,
     start,
     stop,
+    reset,
     timer_loop,
     is_format_supported,
     get_mix_format,

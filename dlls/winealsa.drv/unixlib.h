@@ -103,6 +103,12 @@ struct stop_params
     HRESULT result;
 };
 
+struct reset_params
+{
+    struct alsa_stream *stream;
+    HRESULT result;
+};
+
 struct timer_loop_params
 {
     struct alsa_stream *stream;
@@ -154,6 +160,7 @@ enum alsa_funcs
     alsa_release_stream,
     alsa_start,
     alsa_stop,
+    alsa_reset,
     alsa_timer_loop,
     alsa_is_format_supported,
     alsa_get_mix_format,
