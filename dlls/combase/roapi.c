@@ -300,6 +300,15 @@ BOOL WINAPI RoOriginateError(HRESULT error, HSTRING message)
 }
 
 /***********************************************************************
+ *      RoSetErrorReportingFlags (combase.@)
+ */
+HRESULT WINAPI RoSetErrorReportingFlags(UINT32 flags)
+{
+    FIXME("(%08x): stub\n", flags);
+    return S_OK;
+}
+
+/***********************************************************************
  *      CleanupTlsOleState (combase.@)
  */
 void WINAPI CleanupTlsOleState(void *unknown)
