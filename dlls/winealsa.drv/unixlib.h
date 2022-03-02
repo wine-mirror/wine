@@ -37,7 +37,7 @@ struct alsa_stream
     int alsa_channels;
     int alsa_channel_map[32];
 
-    BOOL started;
+    BOOL started, please_quit;
     REFERENCE_TIME mmdev_period_rt;
     UINT64 written_frames, last_pos_frames;
     UINT32 bufsize_frames, held_frames, tmp_buffer_frames, mmdev_period_frames;
@@ -87,7 +87,13 @@ struct create_stream_params
 struct release_stream_params
 {
     struct alsa_stream *stream;
+    HANDLE timer_thread;
     HRESULT result;
+};
+
+struct timer_loop_params
+{
+    struct alsa_stream *stream;
 };
 
 struct is_format_supported_params
@@ -142,6 +148,7 @@ enum alsa_funcs
     alsa_get_endpoint_ids,
     alsa_create_stream,
     alsa_release_stream,
+    alsa_timer_loop,
     alsa_is_format_supported,
     alsa_get_mix_format,
     alsa_get_buffer_size,

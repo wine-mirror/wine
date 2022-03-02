@@ -960,6 +960,12 @@ static NTSTATUS release_stream(void *args)
     struct alsa_stream *stream = params->stream;
     SIZE_T size;
 
+    if(params->timer_thread){
+        stream->please_quit = TRUE;
+        NtWaitForSingleObject(params->timer_thread, FALSE, NULL);
+        NtClose(params->timer_thread);
+    }
+
     snd_pcm_drop(stream->pcm_handle);
     snd_pcm_close(stream->pcm_handle);
     if(stream->local_buffer){
@@ -1212,6 +1218,239 @@ static NTSTATUS write_best_effort(void *args)
 {
     struct write_best_effort_tmp_params *params = args;
     *params->written = alsa_write_best_effort(params->stream, params->buf, params->frames);
+    return STATUS_SUCCESS;
+}
+
+static snd_pcm_sframes_t alsa_write_buffer_wrap(struct alsa_stream *stream, BYTE *buf,
+        snd_pcm_uframes_t buflen, snd_pcm_uframes_t offs,
+        snd_pcm_uframes_t to_write)
+{
+    snd_pcm_sframes_t ret = 0;
+
+    while(to_write){
+        snd_pcm_uframes_t chunk;
+        snd_pcm_sframes_t tmp;
+
+        if(offs + to_write > buflen)
+            chunk = buflen - offs;
+        else
+            chunk = to_write;
+
+        tmp = alsa_write_best_effort(stream, buf + offs * stream->fmt->nBlockAlign, chunk);
+        if(tmp < 0)
+            return ret;
+        if(!tmp)
+            break;
+
+        ret += tmp;
+        to_write -= tmp;
+        offs += tmp;
+        offs %= buflen;
+    }
+
+    return ret;
+}
+
+static UINT buf_ptr_diff(UINT left, UINT right, UINT bufsize)
+{
+    if(left <= right)
+        return right - left;
+    return bufsize - (left - right);
+}
+
+static UINT data_not_in_alsa(struct alsa_stream *stream)
+{
+    UINT32 diff;
+
+    diff = buf_ptr_diff(stream->lcl_offs_frames, stream->wri_offs_frames, stream->bufsize_frames);
+    if(diff)
+        return diff;
+
+    return stream->held_frames - stream->data_in_alsa_frames;
+}
+
+/* Here's the buffer setup:
+ *
+ *  vvvvvvvv sent to HW already
+ *          vvvvvvvv in ALSA buffer but rewindable
+ * [dddddddddddddddd] ALSA buffer
+ *         [dddddddddddddddd--------] mmdevapi buffer
+ *          ^^^^^^^^ data_in_alsa_frames
+ *          ^^^^^^^^^^^^^^^^ held_frames
+ *                  ^ lcl_offs_frames
+ *                          ^ wri_offs_frames
+ *
+ * GetCurrentPadding is held_frames
+ *
+ * During period callback, we decrement held_frames, fill ALSA buffer, and move
+ *   lcl_offs forward
+ *
+ * During Stop, we rewind the ALSA buffer
+ */
+static void alsa_write_data(struct alsa_stream *stream)
+{
+    snd_pcm_sframes_t written;
+    snd_pcm_uframes_t avail, max_copy_frames, data_frames_played;
+    int err;
+
+    /* this call seems to be required to get an accurate snd_pcm_state() */
+    avail = snd_pcm_avail_update(stream->pcm_handle);
+
+    if(snd_pcm_state(stream->pcm_handle) == SND_PCM_STATE_XRUN){
+        TRACE("XRun state, recovering\n");
+
+        avail = stream->alsa_bufsize_frames;
+
+        if((err = snd_pcm_recover(stream->pcm_handle, -EPIPE, 1)) < 0)
+            WARN("snd_pcm_recover failed: %d (%s)\n", err, snd_strerror(err));
+
+        if((err = snd_pcm_reset(stream->pcm_handle)) < 0)
+            WARN("snd_pcm_reset failed: %d (%s)\n", err, snd_strerror(err));
+
+        if((err = snd_pcm_prepare(stream->pcm_handle)) < 0)
+            WARN("snd_pcm_prepare failed: %d (%s)\n", err, snd_strerror(err));
+    }
+
+    TRACE("avail: %ld\n", avail);
+
+    /* Add a lead-in when starting with too few frames to ensure
+     * continuous rendering.  Additional benefit: Force ALSA to start. */
+    if(stream->data_in_alsa_frames == 0 && stream->held_frames < stream->alsa_period_frames)
+    {
+        alsa_write_best_effort(stream, stream->silence_buf,
+                               stream->alsa_period_frames - stream->held_frames);
+        stream->vol_adjusted_frames = 0;
+    }
+
+    if(stream->started)
+        max_copy_frames = data_not_in_alsa(stream);
+    else
+        max_copy_frames = 0;
+
+    data_frames_played = min(stream->data_in_alsa_frames, avail);
+    stream->data_in_alsa_frames -= data_frames_played;
+
+    if(stream->held_frames > data_frames_played){
+        if(stream->started)
+            stream->held_frames -= data_frames_played;
+    }else
+        stream->held_frames = 0;
+
+    while(avail && max_copy_frames){
+        snd_pcm_uframes_t to_write;
+
+        to_write = min(avail, max_copy_frames);
+
+        written = alsa_write_buffer_wrap(stream, stream->local_buffer,
+                stream->bufsize_frames, stream->lcl_offs_frames, to_write);
+        if(written <= 0)
+            break;
+
+        avail -= written;
+        stream->lcl_offs_frames += written;
+        stream->lcl_offs_frames %= stream->bufsize_frames;
+        stream->data_in_alsa_frames += written;
+        max_copy_frames -= written;
+    }
+
+    if(stream->event)
+        NtSetEvent(stream->event, NULL);
+}
+
+static void alsa_read_data(struct alsa_stream *stream)
+{
+    snd_pcm_sframes_t nread;
+    UINT32 pos = stream->wri_offs_frames, limit = stream->held_frames;
+    unsigned int i;
+
+    if(!stream->started)
+        goto exit;
+
+    /* FIXME: Detect overrun and signal DATA_DISCONTINUITY
+     * How to count overrun frames and report them as position increase? */
+    limit = stream->bufsize_frames - max(limit, pos);
+
+    nread = snd_pcm_readi(stream->pcm_handle,
+            stream->local_buffer + pos * stream->fmt->nBlockAlign, limit);
+    TRACE("read %ld from %u limit %u\n", nread, pos, limit);
+    if(nread < 0){
+        int ret;
+
+        if(nread == -EAGAIN) /* no data yet */
+            return;
+
+        WARN("read failed, recovering: %ld (%s)\n", nread, snd_strerror(nread));
+
+        ret = snd_pcm_recover(stream->pcm_handle, nread, 0);
+        if(ret < 0){
+            WARN("Recover failed: %d (%s)\n", ret, snd_strerror(ret));
+            return;
+        }
+
+        nread = snd_pcm_readi(stream->pcm_handle,
+                stream->local_buffer + pos * stream->fmt->nBlockAlign, limit);
+        if(nread < 0){
+            WARN("read failed: %ld (%s)\n", nread, snd_strerror(nread));
+            return;
+        }
+    }
+
+    for(i = 0; i < stream->fmt->nChannels; i++)
+        if(stream->vols[i] != 0.0f)
+            break;
+    if(i == stream->fmt->nChannels){ /* mute */
+        int err;
+        if((err = snd_pcm_format_set_silence(stream->alsa_format,
+                        stream->local_buffer + pos * stream->fmt->nBlockAlign,
+                        nread)) < 0)
+            WARN("Setting buffer to silence failed: %d (%s)\n", err,
+                    snd_strerror(err));
+    }
+
+    stream->wri_offs_frames += nread;
+    stream->wri_offs_frames %= stream->bufsize_frames;
+    stream->held_frames += nread;
+
+exit:
+    if(stream->event)
+        NtSetEvent(stream->event, NULL);
+}
+
+static NTSTATUS timer_loop(void *args)
+{
+    struct timer_loop_params *params = args;
+    struct alsa_stream *stream = params->stream;
+    LARGE_INTEGER delay, next;
+    int adjust;
+
+    alsa_lock(stream);
+
+    delay.QuadPart = -stream->mmdev_period_rt;
+    NtQueryPerformanceCounter(&stream->last_period_time, NULL);
+    next.QuadPart = stream->last_period_time.QuadPart + stream->mmdev_period_rt;
+
+    while(!stream->please_quit){
+        if(stream->flow == eRender)
+            alsa_write_data(stream);
+        else if(stream->flow == eCapture)
+            alsa_read_data(stream);
+        alsa_unlock(stream);
+
+        NtDelayExecution(FALSE, &delay);
+
+        alsa_lock(stream);
+        NtQueryPerformanceCounter(&stream->last_period_time, NULL);
+        adjust = next.QuadPart - stream->last_period_time.QuadPart;
+        if(adjust > stream->mmdev_period_rt / 2)
+            adjust = stream->mmdev_period_rt / 2;
+        else if(adjust < -stream->mmdev_period_rt / 2)
+            adjust = -stream->mmdev_period_rt / 2;
+        delay.QuadPart = -(stream->mmdev_period_rt + adjust);
+        next.QuadPart += stream->mmdev_period_rt;
+    }
+
+    alsa_unlock(stream);
+
     return STATUS_SUCCESS;
 }
 
@@ -1522,6 +1761,7 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     get_endpoint_ids,
     create_stream,
     release_stream,
+    timer_loop,
     is_format_supported,
     get_mix_format,
     get_buffer_size,

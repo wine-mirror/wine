@@ -109,7 +109,7 @@ struct ACImpl {
     UINT32 channel_count;
     struct alsa_stream *stream;
 
-    HANDLE timer;
+    HANDLE timer_thread;
 
     AudioSession *session;
     AudioSessionWrapper *session_wrapper;
@@ -127,8 +127,6 @@ typedef struct _SessionMgr {
 
     IMMDevice *device;
 } SessionMgr;
-
-static HANDLE g_timer_q;
 
 static CRITICAL_SECTION g_sessions_lock;
 static CRITICAL_SECTION_DEBUG g_sessions_lock_debug =
@@ -216,9 +214,6 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
         if(NtQueryVirtualMemory(GetCurrentProcess(), dll, MemoryWineUnixFuncs,
                                 &alsa_handle, sizeof(alsa_handle), NULL))
             return FALSE;
-        g_timer_q = CreateTimerQueue();
-        if(!g_timer_q)
-            return FALSE;
         break;
 
     case DLL_PROCESS_DETACH:
@@ -252,15 +247,28 @@ static void alsa_unlock(struct alsa_stream *stream)
     pthread_mutex_unlock(&stream->lock);
 }
 
-static HRESULT alsa_stream_release(struct alsa_stream *stream)
+static HRESULT alsa_stream_release(struct alsa_stream *stream, HANDLE timer_thread)
 {
     struct release_stream_params params;
 
     params.stream = stream;
+    params.timer_thread = timer_thread;
 
     ALSA_CALL(release_stream, &params);
 
     return params.result;
+}
+
+static DWORD WINAPI alsa_timer_thread(void *user)
+{
+    struct alsa_stream *stream = user;
+    struct timer_loop_params params;
+
+    params.stream = stream;
+
+    ALSA_CALL(timer_loop, &params);
+
+    return 0;
 }
 
 static void set_device_guid(EDataFlow flow, HKEY drv_key, const WCHAR *key_name,
@@ -552,17 +560,6 @@ static ULONG WINAPI AudioClient_Release(IAudioClient3 *iface)
     ref = InterlockedDecrement(&This->ref);
     TRACE("(%p) Refcount now %u\n", This, ref);
     if(!ref){
-        if(This->timer){
-            HANDLE event;
-            DWORD wait;
-            event = CreateEventW(NULL, TRUE, FALSE, NULL);
-            wait = !DeleteTimerQueueTimer(g_timer_q, This->timer, event);
-            wait = wait && GetLastError() == ERROR_IO_PENDING;
-            if(event && wait)
-                WaitForSingleObject(event, INFINITE);
-            CloseHandle(event);
-        }
-
         IAudioClient3_Stop(iface);
         IMMDevice_Release(This->parent);
         IUnknown_Release(This->pUnkFTMarshal);
@@ -573,7 +570,7 @@ static ULONG WINAPI AudioClient_Release(IAudioClient3 *iface)
         }
         HeapFree(GetProcessHeap(), 0, This->vols);
         if (This->stream)
-            alsa_stream_release(This->stream);
+            alsa_stream_release(This->stream, This->timer_thread);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -807,7 +804,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
 
 exit:
     if(FAILED(params.result)){
-        alsa_stream_release(stream);
+        alsa_stream_release(stream, NULL);
         HeapFree(GetProcessHeap(), 0, This->vols);
         This->vols = NULL;
     }else{
@@ -1011,187 +1008,6 @@ static snd_pcm_sframes_t alsa_write_buffer_wrap(struct alsa_stream *stream, BYTE
     return ret;
 }
 
-static UINT buf_ptr_diff(UINT left, UINT right, UINT bufsize)
-{
-    if(left <= right)
-        return right - left;
-    return bufsize - (left - right);
-}
-
-static UINT data_not_in_alsa(struct alsa_stream *stream)
-{
-    UINT32 diff;
-
-    diff = buf_ptr_diff(stream->lcl_offs_frames, stream->wri_offs_frames, stream->bufsize_frames);
-    if(diff)
-        return diff;
-
-    return stream->held_frames - stream->data_in_alsa_frames;
-}
-/* Here's the buffer setup:
- *
- *  vvvvvvvv sent to HW already
- *          vvvvvvvv in ALSA buffer but rewindable
- * [dddddddddddddddd] ALSA buffer
- *         [dddddddddddddddd--------] mmdevapi buffer
- *          ^^^^^^^^ data_in_alsa_frames
- *          ^^^^^^^^^^^^^^^^ held_frames
- *                  ^ lcl_offs_frames
- *                          ^ wri_offs_frames
- *
- * GetCurrentPadding is held_frames
- *
- * During period callback, we decrement held_frames, fill ALSA buffer, and move
- *   lcl_offs forward
- *
- * During Stop, we rewind the ALSA buffer
- */
-static void alsa_write_data(struct alsa_stream *stream)
-{
-    snd_pcm_sframes_t written;
-    snd_pcm_uframes_t avail, max_copy_frames, data_frames_played;
-    int err;
-
-    /* this call seems to be required to get an accurate snd_pcm_state() */
-    avail = snd_pcm_avail_update(stream->pcm_handle);
-
-    if(snd_pcm_state(stream->pcm_handle) == SND_PCM_STATE_XRUN){
-        TRACE("XRun state, recovering\n");
-
-        avail = stream->alsa_bufsize_frames;
-
-        if((err = snd_pcm_recover(stream->pcm_handle, -EPIPE, 1)) < 0)
-            WARN("snd_pcm_recover failed: %d (%s)\n", err, snd_strerror(err));
-
-        if((err = snd_pcm_reset(stream->pcm_handle)) < 0)
-            WARN("snd_pcm_reset failed: %d (%s)\n", err, snd_strerror(err));
-
-        if((err = snd_pcm_prepare(stream->pcm_handle)) < 0)
-            WARN("snd_pcm_prepare failed: %d (%s)\n", err, snd_strerror(err));
-    }
-
-    TRACE("avail: %ld\n", avail);
-
-    /* Add a lead-in when starting with too few frames to ensure
-     * continuous rendering.  Additional benefit: Force ALSA to start. */
-    if(stream->data_in_alsa_frames == 0 && stream->held_frames < stream->alsa_period_frames)
-    {
-        alsa_write_best_effort(stream, stream->silence_buf,
-                               stream->alsa_period_frames - stream->held_frames);
-        stream->vol_adjusted_frames = 0;
-    }
-
-    if(stream->started)
-        max_copy_frames = data_not_in_alsa(stream);
-    else
-        max_copy_frames = 0;
-
-    data_frames_played = min(stream->data_in_alsa_frames, avail);
-    stream->data_in_alsa_frames -= data_frames_played;
-
-    if(stream->held_frames > data_frames_played){
-        if(stream->started)
-            stream->held_frames -= data_frames_played;
-    }else
-        stream->held_frames = 0;
-
-    while(avail && max_copy_frames){
-        snd_pcm_uframes_t to_write;
-
-        to_write = min(avail, max_copy_frames);
-
-        written = alsa_write_buffer_wrap(stream, stream->local_buffer,
-                stream->bufsize_frames, stream->lcl_offs_frames, to_write);
-        if(written <= 0)
-            break;
-
-        avail -= written;
-        stream->lcl_offs_frames += written;
-        stream->lcl_offs_frames %= stream->bufsize_frames;
-        stream->data_in_alsa_frames += written;
-        max_copy_frames -= written;
-    }
-
-    if(stream->event)
-        SetEvent(stream->event);
-}
-
-static void alsa_read_data(struct alsa_stream *stream)
-{
-    snd_pcm_sframes_t nread;
-    UINT32 pos = stream->wri_offs_frames, limit = stream->held_frames;
-    unsigned int i;
-
-    if(!stream->started)
-        goto exit;
-
-    /* FIXME: Detect overrun and signal DATA_DISCONTINUITY
-     * How to count overrun frames and report them as position increase? */
-    limit = stream->bufsize_frames - max(limit, pos);
-
-    nread = snd_pcm_readi(stream->pcm_handle,
-            stream->local_buffer + pos * stream->fmt->nBlockAlign, limit);
-    TRACE("read %ld from %u limit %u\n", nread, pos, limit);
-    if(nread < 0){
-        int ret;
-
-        if(nread == -EAGAIN) /* no data yet */
-            return;
-
-        WARN("read failed, recovering: %ld (%s)\n", nread, snd_strerror(nread));
-
-        ret = snd_pcm_recover(stream->pcm_handle, nread, 0);
-        if(ret < 0){
-            WARN("Recover failed: %d (%s)\n", ret, snd_strerror(ret));
-            return;
-        }
-
-        nread = snd_pcm_readi(stream->pcm_handle,
-                stream->local_buffer + pos * stream->fmt->nBlockAlign, limit);
-        if(nread < 0){
-            WARN("read failed: %ld (%s)\n", nread, snd_strerror(nread));
-            return;
-        }
-    }
-
-    for(i = 0; i < stream->fmt->nChannels; i++)
-        if(stream->vols[i] != 0.0f)
-            break;
-    if(i == stream->fmt->nChannels){ /* mute */
-        int err;
-        if((err = snd_pcm_format_set_silence(stream->alsa_format,
-                        stream->local_buffer + pos * stream->fmt->nBlockAlign,
-                        nread)) < 0)
-            WARN("Setting buffer to silence failed: %d (%s)\n", err,
-                    snd_strerror(err));
-    }
-
-    stream->wri_offs_frames += nread;
-    stream->wri_offs_frames %= stream->bufsize_frames;
-    stream->held_frames += nread;
-
-exit:
-    if(stream->event)
-        SetEvent(stream->event);
-}
-
-static void CALLBACK alsa_push_buffer_data(void *user, BOOLEAN timer)
-{
-    ACImpl *This = user;
-    struct alsa_stream *stream = This->stream;
-
-    alsa_lock(stream);
-
-    QueryPerformanceCounter(&stream->last_period_time);
-
-    if(stream->flow == eRender)
-        alsa_write_data(stream);
-    else if(stream->flow == eCapture)
-        alsa_read_data(stream);
-
-    alsa_unlock(stream);
-}
-
 static snd_pcm_uframes_t interp_elapsed_frames(struct alsa_stream *stream)
 {
     LARGE_INTEGER time_freq, current_time, time_diff;
@@ -1291,14 +1107,9 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
         }
     }
 
-    if(!This->timer){
-        if(!CreateTimerQueueTimer(&This->timer, g_timer_q, alsa_push_buffer_data,
-                This, 0, stream->mmdev_period_rt / 10000, WT_EXECUTEINTIMERTHREAD)){
-            alsa_unlock(stream);
-            LeaveCriticalSection(&g_sessions_lock);
-            WARN("Unable to create timer: %u\n", GetLastError());
-            return E_OUTOFMEMORY;
-        }
+    if(!This->timer_thread){
+        This->timer_thread = CreateThread(NULL, 0, alsa_timer_thread, This->stream, 0, NULL);
+        SetThreadPriority(This->timer_thread, THREAD_PRIORITY_TIME_CRITICAL);
     }
 
     stream->started = TRUE;
