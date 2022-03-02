@@ -796,7 +796,6 @@ static struct
     unsigned int    file_align;
     unsigned int    sec_count;
     unsigned int    exp_count;
-    unsigned int    code_size;
     struct dir_data dir[16];
     struct sec_data sec[8];
     struct exp_data exp[8];
@@ -1031,9 +1030,13 @@ static void output_apiset_section( const struct apiset *apiset )
 static void output_pe_file( DLLSPEC *spec, const char signature[32] )
 {
     const unsigned int lfanew = 0x40 + 32;
-    unsigned int i;
+    unsigned int i, code_size = 0, data_size = 0;
 
     init_output_buffer();
+
+    for (i = 0; i < pe.sec_count; i++)
+        if (pe.sec[i].flags & 0x20) /* CNT_CODE */
+            code_size += pe.sec[i].file_size;
 
     /* .rsrc section */
     if (spec->type == SPEC_WIN32)
@@ -1044,13 +1047,17 @@ static void output_pe_file( DLLSPEC *spec, const char signature[32] )
     }
 
     /* .reloc section */
-    if (pe.code_size)
+    if (code_size)
     {
         put_dword( 0 );  /* VirtualAddress */
         put_dword( 0 );  /* Size */
         flush_output_to_section( ".reloc", 5 /* IMAGE_DIRECTORY_ENTRY_BASERELOC */,
                                  0x42000040 /* CNT_INITIALIZED_DATA|MEM_DISCARDABLE|MEM_READ */ );
     }
+
+    for (i = 0; i < pe.sec_count; i++)
+        if ((pe.sec[i].flags & 0x60) == 0x40) /* CNT_INITIALIZED_DATA */
+            data_size += pe.sec[i].file_size;
 
     put_word( 0x5a4d );       /* e_magic */
     put_word( 0x40 );         /* e_cblp */
@@ -1100,11 +1107,11 @@ static void output_pe_file( DLLSPEC *spec, const char signature[32] )
               IMAGE_NT_OPTIONAL_HDR32_MAGIC );       /* Magic */
     put_byte(  7 );                                  /* MajorLinkerVersion */
     put_byte(  10 );                                 /* MinorLinkerVersion */
-    put_dword( pe.code_size );                       /* SizeOfCode */
-    put_dword( 0 );                                  /* SizeOfInitializedData */
+    put_dword( code_size );                          /* SizeOfCode */
+    put_dword( data_size );                          /* SizeOfInitializedData */
     put_dword( 0 );                                  /* SizeOfUninitializedData */
-    put_dword( pe.code_size ? pe.sec[0].rva : 0 );   /* AddressOfEntryPoint */
-    put_dword( pe.code_size ? pe.sec[0].rva : 0 );   /* BaseOfCode */
+    put_dword( code_size ? pe.sec[0].rva : 0 );      /* AddressOfEntryPoint */
+    put_dword( code_size ? pe.sec[0].rva : 0 );      /* BaseOfCode */
     if (get_ptr_size() == 4) put_dword( 0 );         /* BaseOfData */
     put_pword( 0x10000000 );                         /* ImageBase */
     put_dword( pe.section_align );                   /* SectionAlignment */
@@ -1139,9 +1146,9 @@ static void output_pe_file( DLLSPEC *spec, const char signature[32] )
     for (i = 0; i < pe.sec_count; i++)
     {
         put_data( pe.sec[i].name, 8 );    /* Name */
-        put_dword( pe.sec[i].virt_size ); /* VirtualSize */
+        put_dword( pe.sec[i].size );      /* VirtualSize */
         put_dword( pe.sec[i].rva );       /* VirtualAddress */
-        put_dword( pe.sec[i].size );      /* SizeOfRawData */
+        put_dword( pe.sec[i].file_size ); /* SizeOfRawData */
         put_dword( pe.sec[i].filepos );   /* PointerToRawData */
         put_dword( 0 );                   /* PointerToRelocations */
         put_dword( 0 );                   /* PointerToLinenumbers */
@@ -1149,12 +1156,13 @@ static void output_pe_file( DLLSPEC *spec, const char signature[32] )
         put_word( 0 );                    /* NumberOfLinenumbers */
         put_dword( pe.sec[i].flags );     /* Characteristics  */
     }
+    align_output( pe.file_align );
 
     /* section data */
     for (i = 0; i < pe.sec_count; i++)
     {
-        align_output( pe.file_align );
         put_data( pe.sec[i].ptr, pe.sec[i].size );
+        align_output( pe.file_align );
     }
 
     flush_output_buffer( output_file_name ? output_file_name : spec->file_name );
@@ -1182,7 +1190,6 @@ void output_fake_module( DLLSPEC *spec )
     /* .text section */
     if (spec->characteristics & IMAGE_FILE_DLL) put_data( dll_code_section, sizeof(dll_code_section) );
     else put_data( exe_code_section, sizeof(exe_code_section) );
-    pe.code_size = output_buffer_pos;
     flush_output_to_section( ".text", -1, 0x60000020 /* CNT_CODE|MEM_EXECUTE|MEM_READ */ );
 
     if (spec->type == SPEC_WIN16)
