@@ -1120,8 +1120,13 @@ static void add_monitor( const struct gdi_monitor *monitor, void *param )
 
     if ((subkey = reg_create_key( hkey, device_parametersW, sizeof(device_parametersW), 0, NULL )))
     {
+        static const WCHAR bad_edidW[] = {'B','A','D','_','E','D','I','D',0};
         static const WCHAR edidW[] = {'E','D','I','D',0};
-        set_reg_value( subkey, edidW, REG_BINARY, monitor->edid, monitor->edid_len );
+
+        if (monitor->edid_len)
+            set_reg_value( subkey, edidW, REG_BINARY, monitor->edid, monitor->edid_len );
+        else
+            set_reg_value( subkey, bad_edidW, REG_BINARY, NULL, 0 );
         NtClose( subkey );
     }
 
@@ -1327,7 +1332,6 @@ static BOOL update_display_cache(void)
         ERR( "failed to read display config\n" );
         return FALSE;
     }
-
     return TRUE;
 }
 
