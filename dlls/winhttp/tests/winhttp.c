@@ -97,6 +97,15 @@ static void test_WinHttpQueryOption(void)
     feature = 0xdeadbeef;
     size = sizeof(feature) + 1;
     SetLastError(0xdeadbeef);
+    ret = WinHttpQueryOption(session, WINHTTP_OPTION_WORKER_THREAD_COUNT, &feature, &size);
+    ok(ret, "failed to query option %lu\n", GetLastError());
+    ok(GetLastError() == ERROR_SUCCESS, "got %lu\n", GetLastError());
+    ok(size == sizeof(feature), "WinHttpQueryOption should set the size: %lu\n", size);
+    ok(feature == 0, "got unexpected WINHTTP_OPTION_WORKER_THREAD_COUNT %#lx\n", feature);
+
+    feature = 0xdeadbeef;
+    size = sizeof(feature) + 1;
+    SetLastError(0xdeadbeef);
     ret = WinHttpQueryOption(session, WINHTTP_OPTION_REDIRECT_POLICY, &feature, &size);
     ok(ret, "failed to query option %lu\n", GetLastError());
     ok(GetLastError() == ERROR_SUCCESS || broken(GetLastError() == 0xdeadbeef) /* < win7 */,
@@ -164,6 +173,24 @@ static void test_WinHttpQueryOption(void)
         skip("Network unreachable, skipping the test\n");
         goto done;
     }
+
+    feature = 0xdeadbeef;
+    size = sizeof(feature);
+    SetLastError(0xdeadbeef);
+    ret = WinHttpQueryOption(connection, WINHTTP_OPTION_WORKER_THREAD_COUNT, &feature, &size);
+    ok(ret, "query WINHTTP_OPTION_WORKER_THREAD_COUNT failed for a request\n");
+    ok(GetLastError() == ERROR_SUCCESS, "got unexpected error %lu\n", GetLastError());
+    ok(size == sizeof(feature), "WinHttpQueryOption should set the size: %lu\n", size);
+    ok(feature == 0, "got unexpected WINHTTP_OPTION_WORKER_THREAD_COUNT %#lx\n", feature);
+
+    feature = 0xdeadbeef;
+    size = sizeof(feature);
+    SetLastError(0xdeadbeef);
+    ret = WinHttpQueryOption(request, WINHTTP_OPTION_WORKER_THREAD_COUNT, &feature, &size);
+    ok(ret, "query WINHTTP_OPTION_WORKER_THREAD_COUNT failed for a request\n");
+    ok(GetLastError() == ERROR_SUCCESS, "got unexpected error %lu\n", GetLastError());
+    ok(size == sizeof(feature), "WinHttpQueryOption should set the size: %lu\n", size);
+    ok(feature == 0, "got unexpected WINHTTP_OPTION_WORKER_THREAD_COUNT %#lx\n", feature);
 
     feature = 0xdeadbeef;
     size = sizeof(feature);
