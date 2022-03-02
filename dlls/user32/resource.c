@@ -54,8 +54,8 @@ struct accelerator
  */
 HACCEL WINAPI LoadAcceleratorsW(HINSTANCE instance, LPCWSTR name)
 {
-    struct accelerator *accel;
     const PE_ACCEL *pe_table;
+    ACCEL *table;
     unsigned int i;
     HRSRC rsrc;
     HACCEL handle;
@@ -65,17 +65,16 @@ HACCEL WINAPI LoadAcceleratorsW(HINSTANCE instance, LPCWSTR name)
     pe_table = LoadResource( instance, rsrc );
     count = SizeofResource( instance, rsrc ) / sizeof(*pe_table);
     if (!count) return 0;
-    accel = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET( struct accelerator, table[count] ));
-    if (!accel) return 0;
-    accel->count = count;
+    table = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*table) );
+    if (!table) return 0;
     for (i = 0; i < count; i++)
     {
-        accel->table[i].fVirt = pe_table[i].fVirt;
-        accel->table[i].key   = pe_table[i].key;
-        accel->table[i].cmd   = pe_table[i].cmd;
+        table[i].fVirt = pe_table[i].fVirt;
+        table[i].key   = pe_table[i].key;
+        table[i].cmd   = pe_table[i].cmd;
     }
-    if (!(handle = alloc_user_handle( &accel->obj, NTUSER_OBJ_ACCEL )))
-        HeapFree( GetProcessHeap(), 0, accel );
+    handle = CreateAcceleratorTableW( table, count );
+    HeapFree( GetProcessHeap(), 0, table );
     TRACE_(accel)("%p %s returning %p\n", instance, debugstr_w(name), handle );
     return handle;
 }
