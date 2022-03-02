@@ -3183,7 +3183,7 @@ static void test_generic_composite_moniker(void)
     for (i = 0; i < ARRAY_SIZE(simplify_tests); ++i)
     {
         IMoniker *left, *right, *composite = NULL;
-        unsigned int moniker_type;
+        DWORD moniker_type;
         WCHAR *name;
 
         winetest_push_context("simplify[%u]", i);
