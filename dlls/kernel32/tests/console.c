@@ -18,6 +18,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include <ntstatus.h>
 #define WIN32_NO_STATUS
@@ -100,7 +101,7 @@ static HANDLE create_unbound_handle(BOOL output, BOOL test_status)
                            FILE_WRITE_ATTRIBUTES, &attr, &iosb, NULL, FILE_ATTRIBUTE_NORMAL,
                            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_CREATE,
                            FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
-    if (test_status) ok(!status, "NtCreateFile failed: %#x\n", status);
+    if (test_status) ok(!status, "NtCreateFile failed: %#lx\n", status);
     return status ? NULL : handle;
 }
 
@@ -135,7 +136,7 @@ static void testCursor(HANDLE hCon, COORD sbSize)
 
     c.X = c.Y = 0;
     ok(SetConsoleCursorPosition(0, c) == 0, "No handle\n");
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError: expecting %u got %u\n",
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError: expecting %u got %lu\n",
        ERROR_INVALID_HANDLE, GetLastError());
 
     c.X = c.Y = 0;
@@ -150,25 +151,25 @@ static void testCursor(HANDLE hCon, COORD sbSize)
     c.X = sbSize.X;
     c.Y = sbSize.Y - 1;
     ok(SetConsoleCursorPosition(hCon, c) == 0, "Cursor is outside\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError: expecting %u got %u\n",
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError: expecting %u got %lu\n",
        ERROR_INVALID_PARAMETER, GetLastError());
 
     c.X = sbSize.X - 1;
     c.Y = sbSize.Y;
     ok(SetConsoleCursorPosition(hCon, c) == 0, "Cursor is outside\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError: expecting %u got %u\n",
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError: expecting %u got %lu\n",
        ERROR_INVALID_PARAMETER, GetLastError());
 
     c.X = -1;
     c.Y = 0;
     ok(SetConsoleCursorPosition(hCon, c) == 0, "Cursor is outside\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError: expecting %u got %u\n",
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError: expecting %u got %lu\n",
        ERROR_INVALID_PARAMETER, GetLastError());
 
     c.X = 0;
     c.Y = -1;
     ok(SetConsoleCursorPosition(hCon, c) == 0, "Cursor is outside\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError: expecting %u got %u\n",
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError: expecting %u got %lu\n",
        ERROR_INVALID_PARAMETER, GetLastError());
 }
 
@@ -181,7 +182,7 @@ static void testCursorInfo(HANDLE hCon)
     SetLastError(0xdeadbeef);
     ret = GetConsoleCursorInfo(NULL, NULL);
     ok(!ret, "Expected failure\n");
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError: expecting %u got %u\n",
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError: expecting %u got %lu\n",
        ERROR_INVALID_HANDLE, GetLastError());
 
     SetLastError(0xdeadbeef);
@@ -189,7 +190,7 @@ static void testCursorInfo(HANDLE hCon)
     ret = GetConsoleCursorInfo(NULL, &info);
     ok(!ret, "Expected failure\n");
     ok(info.dwSize == -1, "Expected no change for dwSize\n");
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError: expecting %u got %u\n",
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError: expecting %u got %lu\n",
        ERROR_INVALID_HANDLE, GetLastError());
 
     /* Test the correct call first to distinguish between win9x and the rest */
@@ -198,9 +199,9 @@ static void testCursorInfo(HANDLE hCon)
     ok(ret, "Expected success\n");
     ok(info.dwSize == 25 ||
        info.dwSize == 12 /* win9x */,
-       "Expected 12 or 25, got %d\n", info.dwSize);
+       "Expected 12 or 25, got %ld\n", info.dwSize);
     ok(info.bVisible, "Expected the cursor to be visible\n");
-    ok(GetLastError() == 0xdeadbeef, "GetLastError: expecting %u got %u\n",
+    ok(GetLastError() == 0xdeadbeef, "GetLastError: expecting %u got %lu\n",
        0xdeadbeef, GetLastError());
 
     CreatePipe(&pipe1, &pipe2, NULL, 0);
@@ -208,7 +209,7 @@ static void testCursorInfo(HANDLE hCon)
     ret = GetConsoleCursorInfo(pipe1, &info);
     ok(!ret, "Expected failure\n");
     ok(info.dwSize == -1, "Expected no change for dwSize\n");
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError: %u\n",  GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError: %lu\n",  GetLastError());
     CloseHandle(pipe1);
     CloseHandle(pipe2);
 
@@ -265,8 +266,8 @@ static void simple_write_console(HANDLE console, const char *text)
     ok(SetConsoleCursorPosition(console, c) != 0, "Cursor in upper-left\n");
 
     ret = WriteConsoleA(console, text, strlen(text), &len, NULL);
-    ok(ret, "WriteConsoleA failed: %u\n", GetLastError());
-    ok(len == strlen(text), "unexpected len %u\n", len);
+    ok(ret, "WriteConsoleA failed: %lu\n", GetLastError());
+    ok(len == strlen(text), "unexpected len %lu\n", len);
 }
 
 static void testWriteSimple(HANDLE hCon)
@@ -288,8 +289,8 @@ static void testWriteSimple(HANDLE hCon)
     okCHAR(hCon, c, ' ', DEFAULT_ATTRIB);
 
     ret = WriteFile(hCon, mytest, mylen, &len, NULL);
-    ok(ret, "WriteFile failed: %u\n", GetLastError());
-    ok(len == mylen, "unexpected len = %u\n", len);
+    ok(ret, "WriteFile failed: %lu\n", GetLastError());
+    ok(len == mylen, "unexpected len = %lu\n", len);
 
     for (c.X = 0; c.X < 2 * mylen; c.X++)
     {
@@ -317,7 +318,7 @@ static void testWriteNotWrappedNotProcessed(HANDLE hCon, COORD sbSize)
     ok(SetConsoleCursorPosition(hCon, c) != 0, "Cursor in upper-left-3\n");
 
     ret = WriteConsoleA(hCon, mytest, mylen, &len, NULL);
-    ok(ret != 0 && len == mylen, "Couldn't write, ret = %d, len = %d\n", ret, len);
+    ok(ret != 0 && len == mylen, "Couldn't write, ret = %d, len = %ld\n", ret, len);
     c.Y = 0;
     for (p = mylen - 3; p < mylen; p++)
     {
@@ -668,7 +669,7 @@ static void testScroll(HANDLE hCon, COORD sbSize)
     {
         /* Win9x will fail, Only accept ERROR_NOT_ENOUGH_MEMORY */
         ok(GetLastError() == ERROR_NOT_ENOUGH_MEMORY,
-            "Expected ERROR_NOT_ENOUGH_MEMORY, got %u\n", GetLastError());
+            "Expected ERROR_NOT_ENOUGH_MEMORY, got %lu\n", GetLastError());
     }
 
     /* clipping, src & dst rect do overlap */
@@ -689,7 +690,7 @@ static void testScroll(HANDLE hCon, COORD sbSize)
     clip.Bottom = min(H + H / 2, sbSize.Y - 1);
 
     ret = ScrollConsoleScreenBufferA(hCon, &scroll, &clip, dst, &ci);
-    ok(ret, "ScrollConsoleScreenBufferA failed: %u\n", GetLastError());
+    ok(ret, "ScrollConsoleScreenBufferA failed: %lu\n", GetLastError());
 
     for (c.Y = 0; c.Y < sbSize.Y; c.Y++)
     {
@@ -724,7 +725,7 @@ static BOOL WINAPI mch(DWORD event)
 static void testCtrlHandler(void)
 {
     ok(!SetConsoleCtrlHandler(mch, FALSE), "Shouldn't succeed\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Bad error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Bad error %lu\n", GetLastError());
     ok(SetConsoleCtrlHandler(mch, TRUE), "Couldn't set handler\n");
     /* wine requires the event for the test, as we cannot ensure, so far, that
      * events are processed synchronously in GenerateConsoleCtrlEvent()
@@ -748,7 +749,7 @@ static void testCtrlHandler(void)
     CloseHandle(mch_event);
     ok(SetConsoleCtrlHandler(mch, FALSE), "Couldn't remove handler\n");
     ok(!SetConsoleCtrlHandler(mch, FALSE), "Shouldn't succeed\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Bad error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Bad error %lu\n", GetLastError());
 }
 
 /*
@@ -830,26 +831,26 @@ static void testScreenBuffer(HANDLE hConOut)
     ok(!SetConsoleActiveScreenBuffer(INVALID_HANDLE_VALUE),
        "Shouldn't succeed\n");
     ok(GetLastError() == ERROR_INVALID_HANDLE,
-       "GetLastError: expecting %u got %u\n",
+       "GetLastError: expecting %u got %lu\n",
        ERROR_INVALID_HANDLE, GetLastError());
 
     /* Trying to set non-console handles */
     SetLastError(0);
     ok(!SetConsoleActiveScreenBuffer(hFileOutRW), "Shouldn't succeed\n");
     ok(GetLastError() == ERROR_INVALID_HANDLE,
-       "GetLastError: expecting %u got %u\n",
+       "GetLastError: expecting %u got %lu\n",
        ERROR_INVALID_HANDLE, GetLastError());
 
     SetLastError(0);
     ok(!SetConsoleActiveScreenBuffer(hFileOutRO), "Shouldn't succeed\n");
     ok(GetLastError() == ERROR_INVALID_HANDLE,
-       "GetLastError: expecting %u got %u\n",
+       "GetLastError: expecting %u got %lu\n",
        ERROR_INVALID_HANDLE, GetLastError());
 
     SetLastError(0);
     ok(!SetConsoleActiveScreenBuffer(hFileOutWT), "Shouldn't succeed\n");
     ok(GetLastError() == ERROR_INVALID_HANDLE,
-       "GetLastError: expecting %u got %u\n",
+       "GetLastError: expecting %u got %lu\n",
        ERROR_INVALID_HANDLE, GetLastError());
 
     /* trying to write non-console handle */
@@ -858,21 +859,21 @@ static void testScreenBuffer(HANDLE hConOut)
     error = GetLastError();
     ok(!ret, "Shouldn't succeed\n");
     ok(error == ERROR_INVALID_HANDLE || error == ERROR_INVALID_FUNCTION,
-       "GetLastError: got %u\n", error);
+       "GetLastError: got %lu\n", error);
 
     SetLastError(0xdeadbeef);
     ret = WriteConsoleA(hFileOutRO, test_str1, lstrlenA(test_str1), &len, NULL);
     error = GetLastError();
     ok(!ret, "Shouldn't succeed\n");
     ok(error == ERROR_INVALID_HANDLE || error == ERROR_INVALID_FUNCTION,
-       "GetLastError: got %u\n", error);
+       "GetLastError: got %lu\n", error);
 
     SetLastError(0xdeadbeef);
     ret = WriteConsoleA(hFileOutWT, test_str1, lstrlenA(test_str1), &len, NULL);
     error = GetLastError();
     ok(!ret, "Shouldn't succeed\n");
     ok(error == ERROR_INVALID_HANDLE || error == ERROR_INVALID_FUNCTION,
-       "GetLastError: got %u\n", error);
+       "GetLastError: got %lu\n", error);
 
     CloseHandle(hFileOutRW);
     CloseHandle(hFileOutRO);
@@ -882,7 +883,7 @@ static void testScreenBuffer(HANDLE hConOut)
     SetLastError(0);
     ok(!SetConsoleActiveScreenBuffer(hConOutRO), "Shouldn't succeed\n");
     ok(GetLastError() == ERROR_INVALID_HANDLE || broken(GetLastError() == ERROR_ACCESS_DENIED) /* win10 1809 */,
-       "unexpected last error %u\n", GetLastError());
+       "unexpected last error %lu\n", GetLastError());
 
     ok(SetConsoleActiveScreenBuffer(hConOutWT), "Couldn't set new WriteOnly SB\n");
 
@@ -990,18 +991,18 @@ static void test_new_screen_buffer_properties(HANDLE hConOut)
     cfi.cbSize = cfi2.cbSize = sizeof(CONSOLE_FONT_INFOEX);
 
     ret = GetCurrentConsoleFontEx(hConOut, FALSE, &cfi);
-    ok(ret, "GetCurrentConsoleFontEx failed: error %u\n", GetLastError());
+    ok(ret, "GetCurrentConsoleFontEx failed: error %lu\n", GetLastError());
 
     hConOut2 = CreateConsoleScreenBuffer(GENERIC_READ|GENERIC_WRITE, 0, NULL,
                                          CONSOLE_TEXTMODE_BUFFER, NULL);
-    ok(hConOut2 != INVALID_HANDLE_VALUE, "CreateConsoleScreenBuffer failed: error %u\n", GetLastError());
+    ok(hConOut2 != INVALID_HANDLE_VALUE, "CreateConsoleScreenBuffer failed: error %lu\n", GetLastError());
 
     ret = GetCurrentConsoleFontEx(hConOut2, FALSE, &cfi2);
-    ok(ret, "GetCurrentConsoleFontEx failed: error %u\n", GetLastError());
+    ok(ret, "GetCurrentConsoleFontEx failed: error %lu\n", GetLastError());
     CloseHandle(hConOut2);
 
     ok(cfi2.nFont == cfi.nFont, "Font index should match: "
-       "got %u, expected %u\n", cfi2.nFont, cfi.nFont);
+       "got %lu, expected %lu\n", cfi2.nFont, cfi.nFont);
     ok(cfi2.dwFontSize.X == cfi.dwFontSize.X, "Font width should match: "
       "got %d, expected %d\n", cfi2.dwFontSize.X, cfi.dwFontSize.X);
     ok(cfi2.dwFontSize.Y == cfi.dwFontSize.Y, "Font height should match: "
@@ -1015,14 +1016,14 @@ static void test_new_screen_buffer_properties(HANDLE hConOut)
 
     /* Display window size */
     ret = GetConsoleScreenBufferInfo(hConOut, &csbi);
-    ok(ret, "GetConsoleScreenBufferInfo failed: error %u\n", GetLastError());
+    ok(ret, "GetConsoleScreenBufferInfo failed: error %lu\n", GetLastError());
 
     hConOut2 = CreateConsoleScreenBuffer(GENERIC_READ|GENERIC_WRITE, 0, NULL,
                                          CONSOLE_TEXTMODE_BUFFER, NULL);
-    ok(hConOut2 != INVALID_HANDLE_VALUE, "CreateConsoleScreenBuffer failed: error %u\n", GetLastError());
+    ok(hConOut2 != INVALID_HANDLE_VALUE, "CreateConsoleScreenBuffer failed: error %lu\n", GetLastError());
 
     ret = GetConsoleScreenBufferInfo(hConOut2, &csbi2);
-    ok(ret, "GetConsoleScreenBufferInfo failed: error %u\n", GetLastError());
+    ok(ret, "GetConsoleScreenBufferInfo failed: error %lu\n", GetLastError());
     CloseHandle(hConOut2);
 
     ok(csbi2.srWindow.Left == csbi.srWindow.Left, "Left coordinate should match\n");
@@ -1041,16 +1042,16 @@ static void test_new_screen_buffer_color_attributes(HANDLE hConOut)
     csbi.cbSize = csbi2.cbSize = sizeof(CONSOLE_SCREEN_BUFFER_INFOEX);
 
     ret = GetConsoleScreenBufferInfoEx(hConOut, &csbi);
-    ok(ret, "GetConsoleScreenBufferInfoEx failed: error %u\n", GetLastError());
+    ok(ret, "GetConsoleScreenBufferInfoEx failed: error %lu\n", GetLastError());
     orig_attr = csbi.wAttributes;
     orig_popup = csbi.wPopupAttributes;
 
     hConOut2 = CreateConsoleScreenBuffer(GENERIC_READ|GENERIC_WRITE, 0, NULL,
                                          CONSOLE_TEXTMODE_BUFFER, NULL);
-    ok(hConOut2 != INVALID_HANDLE_VALUE, "CreateConsoleScreenBuffer failed: error %u\n", GetLastError());
+    ok(hConOut2 != INVALID_HANDLE_VALUE, "CreateConsoleScreenBuffer failed: error %lu\n", GetLastError());
 
     ret = GetConsoleScreenBufferInfoEx(hConOut2, &csbi2);
-    ok(ret, "GetConsoleScreenBufferInfoEx failed: error %u\n", GetLastError());
+    ok(ret, "GetConsoleScreenBufferInfoEx failed: error %lu\n", GetLastError());
     CloseHandle(hConOut2);
 
     ok(csbi2.wAttributes == orig_attr, "Character Attributes should have been copied: "
@@ -1061,17 +1062,17 @@ static void test_new_screen_buffer_color_attributes(HANDLE hConOut)
     /* Test different Character Attributes */
     attr = FOREGROUND_BLUE|BACKGROUND_GREEN;
     ret = SetConsoleTextAttribute(hConOut, attr);
-    ok(ret, "SetConsoleTextAttribute failed: error %u\n", GetLastError());
+    ok(ret, "SetConsoleTextAttribute failed: error %lu\n", GetLastError());
 
     hConOut2 = CreateConsoleScreenBuffer(GENERIC_READ|GENERIC_WRITE, 0, NULL,
                                          CONSOLE_TEXTMODE_BUFFER, NULL);
-    ok(hConOut2 != INVALID_HANDLE_VALUE, "CreateConsoleScreenBuffer failed: error %u\n", GetLastError());
+    ok(hConOut2 != INVALID_HANDLE_VALUE, "CreateConsoleScreenBuffer failed: error %lu\n", GetLastError());
 
     memset(&csbi2, 0, sizeof(CONSOLE_SCREEN_BUFFER_INFOEX));
     csbi2.cbSize = sizeof(CONSOLE_SCREEN_BUFFER_INFOEX);
 
     ret = GetConsoleScreenBufferInfoEx(hConOut2, &csbi2);
-    ok(ret, "GetConsoleScreenBufferInfoEx failed: error %u\n", GetLastError());
+    ok(ret, "GetConsoleScreenBufferInfoEx failed: error %lu\n", GetLastError());
     CloseHandle(hConOut2);
 
     ok(csbi2.wAttributes == attr, "Character Attributes should have been copied: "
@@ -1080,22 +1081,22 @@ static void test_new_screen_buffer_color_attributes(HANDLE hConOut)
     ok(csbi2.wPopupAttributes == attr, "Popup Attributes should match Character Attributes\n");
 
     ret = SetConsoleTextAttribute(hConOut, orig_attr);
-    ok(ret, "SetConsoleTextAttribute failed: error %u\n", GetLastError());
+    ok(ret, "SetConsoleTextAttribute failed: error %lu\n", GetLastError());
 
     /* Test inheritance of different Popup Attributes */
     csbi.wPopupAttributes = attr;
     ret = SetConsoleScreenBufferInfoEx(hConOut, &csbi);
-    ok(ret, "SetConsoleScreenBufferInfoEx failed: error %u\n", GetLastError());
+    ok(ret, "SetConsoleScreenBufferInfoEx failed: error %lu\n", GetLastError());
 
     hConOut2 = CreateConsoleScreenBuffer(GENERIC_READ|GENERIC_WRITE, 0, NULL,
                                          CONSOLE_TEXTMODE_BUFFER, NULL);
-    ok(hConOut2 != INVALID_HANDLE_VALUE, "CreateConsoleScreenBuffer failed: error %u\n", GetLastError());
+    ok(hConOut2 != INVALID_HANDLE_VALUE, "CreateConsoleScreenBuffer failed: error %lu\n", GetLastError());
 
     memset(&csbi2, 0, sizeof(CONSOLE_SCREEN_BUFFER_INFOEX));
     csbi2.cbSize = sizeof(CONSOLE_SCREEN_BUFFER_INFOEX);
 
     ret = GetConsoleScreenBufferInfoEx(hConOut2, &csbi2);
-    ok(ret, "GetConsoleScreenBufferInfoEx failed: error %u\n", GetLastError());
+    ok(ret, "GetConsoleScreenBufferInfoEx failed: error %lu\n", GetLastError());
     CloseHandle(hConOut2);
 
     ok(csbi2.wAttributes == orig_attr, "Character Attributes should have been copied: "
@@ -1105,7 +1106,7 @@ static void test_new_screen_buffer_color_attributes(HANDLE hConOut)
 
     csbi.wPopupAttributes = orig_popup;
     ret = SetConsoleScreenBufferInfoEx(hConOut, &csbi);
-    ok(ret, "SetConsoleScreenBufferInfoEx failed: error %u\n", GetLastError());
+    ok(ret, "SetConsoleScreenBufferInfoEx failed: error %lu\n", GetLastError());
 }
 
 static void CALLBACK signaled_function(void *p, BOOLEAN timeout)
@@ -1146,7 +1147,7 @@ static void testWaitForConsoleInput(HANDLE input_handle)
     /* If the callback is still running, this fails with ERROR_IO_PENDING, but
        that's ok and expected. */
     ok(ret != 0 || GetLastError() == ERROR_IO_PENDING,
-        "UnregisterWait failed with error %d\n", GetLastError());
+        "UnregisterWait failed with error %ld\n", GetLastError());
 
     /* Test timeout case */
     FlushConsoleInputBuffer(input_handle);
@@ -1154,7 +1155,7 @@ static void testWaitForConsoleInput(HANDLE input_handle)
     wait_ret = WaitForSingleObject(complete_event, 100);
     ok(wait_ret == WAIT_TIMEOUT, "Expected the wait to time out\n");
     ret = UnregisterWait(wait_handle);
-    ok(ret, "UnregisterWait failed with error %d\n", GetLastError());
+    ok(ret, "UnregisterWait failed with error %ld\n", GetLastError());
 
     /* Clean up */
     CloseHandle(complete_event);
@@ -1179,54 +1180,54 @@ static void test_wait(HANDLE input, HANDLE orig_output)
     output = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE,
                                        FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                                        CONSOLE_TEXTMODE_BUFFER, NULL);
-    ok(output != INVALID_HANDLE_VALUE, "CreateConsoleScreenBuffer failed: %u\n", GetLastError());
+    ok(output != INVALID_HANDLE_VALUE, "CreateConsoleScreenBuffer failed: %lu\n", GetLastError());
 
     ret = SetConsoleActiveScreenBuffer(output);
-    ok(ret, "SetConsoleActiveScreenBuffer failed: %u\n", GetLastError());
+    ok(ret, "SetConsoleActiveScreenBuffer failed: %lu\n", GetLastError());
     FlushConsoleInputBuffer(input);
 
     unbound_output = create_unbound_handle(TRUE, TRUE);
     unbound_input = create_unbound_handle(FALSE, TRUE);
 
     res = WaitForSingleObject(input, 0);
-    ok(res == WAIT_TIMEOUT, "WaitForSingleObject returned %x\n", res);
+    ok(res == WAIT_TIMEOUT, "WaitForSingleObject returned %lx\n", res);
     res = WaitForSingleObject(output, 0);
-    ok(res == WAIT_TIMEOUT, "WaitForSingleObject returned %x\n", res);
+    ok(res == WAIT_TIMEOUT, "WaitForSingleObject returned %lx\n", res);
     res = WaitForSingleObject(orig_output, 0);
-    ok(res == WAIT_TIMEOUT, "WaitForSingleObject returned %x\n", res);
+    ok(res == WAIT_TIMEOUT, "WaitForSingleObject returned %lx\n", res);
     res = WaitForSingleObject(unbound_output, 0);
-    ok(res == WAIT_TIMEOUT, "WaitForSingleObject returned %x\n", res);
+    ok(res == WAIT_TIMEOUT, "WaitForSingleObject returned %lx\n", res);
     res = WaitForSingleObject(unbound_input, 0);
-    ok(res == WAIT_TIMEOUT, "WaitForSingleObject returned %x\n", res);
+    ok(res == WAIT_TIMEOUT, "WaitForSingleObject returned %lx\n", res);
     status = NtWaitForSingleObject(input, FALSE, &zero);
     ok(status == STATUS_TIMEOUT || broken(status == STATUS_ACCESS_DENIED /* win2k8 */),
-       "NtWaitForSingleObject returned %x\n", status);
+       "NtWaitForSingleObject returned %lx\n", status);
     status = NtWaitForSingleObject(output, FALSE, &zero);
     ok(status == STATUS_TIMEOUT || broken(status == STATUS_ACCESS_DENIED /* win2k8 */),
-       "NtWaitForSingleObject returned %x\n", status);
+       "NtWaitForSingleObject returned %lx\n", status);
 
     ret = WriteConsoleInputW(input, &ir, 1, &count);
-    ok(ret, "WriteConsoleInputW failed: %u\n", GetLastError());
+    ok(ret, "WriteConsoleInputW failed: %lu\n", GetLastError());
 
     res = WaitForSingleObject(input, 0);
-    ok(!res, "WaitForSingleObject returned %x\n", res);
+    ok(!res, "WaitForSingleObject returned %lx\n", res);
     res = WaitForSingleObject(output, 0);
-    ok(!res, "WaitForSingleObject returned %x\n", res);
+    ok(!res, "WaitForSingleObject returned %lx\n", res);
     res = WaitForSingleObject(orig_output, 0);
-    ok(!res, "WaitForSingleObject returned %x\n", res);
+    ok(!res, "WaitForSingleObject returned %lx\n", res);
     res = WaitForSingleObject(unbound_output, 0);
-    ok(!res, "WaitForSingleObject returned %x\n", res);
+    ok(!res, "WaitForSingleObject returned %lx\n", res);
     res = WaitForSingleObject(unbound_input, 0);
-    ok(!res, "WaitForSingleObject returned %x\n", res);
+    ok(!res, "WaitForSingleObject returned %lx\n", res);
     status = NtWaitForSingleObject(input, FALSE, &zero);
     ok(!status || broken(status == STATUS_ACCESS_DENIED /* win2k8 */),
-       "NtWaitForSingleObject returned %x\n", status);
+       "NtWaitForSingleObject returned %lx\n", status);
     status = NtWaitForSingleObject(output, FALSE, &zero);
     ok(!status || broken(status == STATUS_ACCESS_DENIED /* win2k8 */),
-       "NtWaitForSingleObject returned %x\n", status);
+       "NtWaitForSingleObject returned %lx\n", status);
 
     ret = SetConsoleActiveScreenBuffer(orig_output);
-    ok(ret, "SetConsoleActiveScreenBuffer failed: %u\n", GetLastError());
+    ok(ret, "SetConsoleActiveScreenBuffer failed: %lu\n", GetLastError());
 
     CloseHandle(unbound_input);
     CloseHandle(unbound_output);
@@ -1244,13 +1245,13 @@ static void test_GetSetConsoleInputExeName(void)
     ret = pGetConsoleInputExeNameA(0, NULL);
     error = GetLastError();
     ok(ret, "GetConsoleInputExeNameA failed\n");
-    ok(error == ERROR_BUFFER_OVERFLOW, "got %u expected ERROR_BUFFER_OVERFLOW\n", error);
+    ok(error == ERROR_BUFFER_OVERFLOW, "got %lu expected ERROR_BUFFER_OVERFLOW\n", error);
 
     SetLastError(0xdeadbeef);
     ret = pGetConsoleInputExeNameA(0, buffer);
     error = GetLastError();
     ok(ret, "GetConsoleInputExeNameA failed\n");
-    ok(error == ERROR_BUFFER_OVERFLOW, "got %u expected ERROR_BUFFER_OVERFLOW\n", error);
+    ok(error == ERROR_BUFFER_OVERFLOW, "got %lu expected ERROR_BUFFER_OVERFLOW\n", error);
 
     GetModuleFileNameA(GetModuleHandleA(NULL), module, sizeof(module));
     p = strrchr(module, '\\') + 1;
@@ -1263,13 +1264,13 @@ static void test_GetSetConsoleInputExeName(void)
     ret = pSetConsoleInputExeNameA(NULL);
     error = GetLastError();
     ok(!ret, "SetConsoleInputExeNameA failed\n");
-    ok(error == ERROR_INVALID_PARAMETER, "got %u expected ERROR_INVALID_PARAMETER\n", error);
+    ok(error == ERROR_INVALID_PARAMETER, "got %lu expected ERROR_INVALID_PARAMETER\n", error);
 
     SetLastError(0xdeadbeef);
     ret = pSetConsoleInputExeNameA("");
     error = GetLastError();
     ok(!ret, "SetConsoleInputExeNameA failed\n");
-    ok(error == ERROR_INVALID_PARAMETER, "got %u expected ERROR_INVALID_PARAMETER\n", error);
+    ok(error == ERROR_INVALID_PARAMETER, "got %lu expected ERROR_INVALID_PARAMETER\n", error);
 
     ret = pSetConsoleInputExeNameA(input_exe);
     ok(ret, "SetConsoleInputExeNameA failed\n");
@@ -1293,14 +1294,14 @@ static void test_GetConsoleProcessList(void)
     ret = pGetConsoleProcessList(NULL, 0);
     ok(ret == 0, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
-       "Expected ERROR_INVALID_PARAMETER, got %d\n",
+       "Expected ERROR_INVALID_PARAMETER, got %ld\n",
        GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pGetConsoleProcessList(NULL, 1);
     ok(ret == 0, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
-       "Expected ERROR_INVALID_PARAMETER, got %d\n",
+       "Expected ERROR_INVALID_PARAMETER, got %ld\n",
        GetLastError());
 
     /* We should only have 1 process but only for these specific unit tests as
@@ -1313,12 +1314,12 @@ static void test_GetConsoleProcessList(void)
     ret = pGetConsoleProcessList(list, 0);
     ok(ret == 0, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
-       "Expected ERROR_INVALID_PARAMETER, got %d\n",
+       "Expected ERROR_INVALID_PARAMETER, got %ld\n",
        GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pGetConsoleProcessList(list, 1);
-    ok(ret == 1, "Expected 1, got %d\n", ret);
+    ok(ret == 1, "Expected 1, got %ld\n", ret);
 
     HeapFree(GetProcessHeap(), 0, list);
 
@@ -1326,12 +1327,12 @@ static void test_GetConsoleProcessList(void)
 
     SetLastError(0xdeadbeef);
     ret = pGetConsoleProcessList(list, ret);
-    ok(ret == 1, "Expected 1, got %d\n", ret);
+    ok(ret == 1, "Expected 1, got %ld\n", ret);
 
     if (ret == 1)
     {
         DWORD pid = GetCurrentProcessId();
-        ok(list[0] == pid, "Expected %d, got %d\n", pid, list[0]);
+        ok(list[0] == pid, "Expected %ld, got %ld\n", pid, list[0]);
     }
 
     HeapFree(GetProcessHeap(), 0, list);
@@ -1349,7 +1350,7 @@ static void test_OpenCON(void)
     {
         h = CreateFileW(conW, GENERIC_WRITE, 0, NULL, accesses[i], 0, NULL);
         ok(h != INVALID_HANDLE_VALUE || broken(accesses[i] == TRUNCATE_EXISTING /* Win8 */),
-           "Expected to open the CON device on write (%x)\n", accesses[i]);
+           "Expected to open the CON device on write (%lx)\n", accesses[i]);
         CloseHandle(h);
 
         h = CreateFileW(conW, GENERIC_READ, 0, NULL, accesses[i], 0, NULL);
@@ -1359,12 +1360,12 @@ static void test_OpenCON(void)
          * So don't test when disposition is TRUNCATE_EXISTING
          */
         ok(h != INVALID_HANDLE_VALUE || broken(accesses[i] == TRUNCATE_EXISTING /* Win7+ */),
-           "Expected to open the CON device on read (%x)\n", accesses[i]);
+           "Expected to open the CON device on read (%lx)\n", accesses[i]);
         CloseHandle(h);
         h = CreateFileW(conW, GENERIC_READ|GENERIC_WRITE, 0, NULL, accesses[i], 0, NULL);
-        ok(h == INVALID_HANDLE_VALUE, "Expected not to open the CON device on read-write (%x)\n", accesses[i]);
+        ok(h == INVALID_HANDLE_VALUE, "Expected not to open the CON device on read-write (%lx)\n", accesses[i]);
         ok(GetLastError() == ERROR_FILE_NOT_FOUND || GetLastError() == ERROR_INVALID_PARAMETER,
-           "Unexpected error %x\n", GetLastError());
+           "Unexpected error %lx\n", GetLastError());
     }
 }
 
@@ -1460,7 +1461,7 @@ static void test_OpenConsoleW(void)
            "Expected OpenConsoleW to return INVALID_HANDLE_VALUE for index %d, got %p\n",
            index, ret);
         ok(gle == invalid_table[index].gle || (gle != 0 && gle == invalid_table[index].gle2),
-           "Expected GetLastError() to return %u/%u for index %d, got %u\n",
+           "Expected GetLastError() to return %lu/%lu for index %d, got %lu\n",
            invalid_table[index].gle, invalid_table[index].gle2, index, gle);
     }
 
@@ -1545,7 +1546,7 @@ static void test_CreateFileW(void)
             ok(cf_table[index].gle,
                "Expected CreateFileW not to return INVALID_HANDLE_VALUE for index %d\n", index);
             ok(GetLastError() == cf_table[index].gle,
-                "Expected GetLastError() to return %u for index %d, got %u\n",
+                "Expected GetLastError() to return %lu for index %d, got %lu\n",
                 cf_table[index].gle, index, GetLastError());
         }
         else
@@ -1568,10 +1569,10 @@ static void test_CreateFileW(void)
                           cf_table[index].creation, FILE_ATTRIBUTE_NORMAL, NULL);
         if (cf_table[index].gle)
             ok(ret == INVALID_HANDLE_VALUE && GetLastError() == cf_table[index].gle,
-               "CreateFileW to returned %p %u for index %d\n", ret, GetLastError(), index);
+               "CreateFileW to returned %p %lu for index %d\n", ret, GetLastError(), index);
         else
             ok(ret != INVALID_HANDLE_VALUE && (!cf_table[index].gle || broken(cf_table[index].is_broken) /* Win7 */),
-               "CreateFileW to returned %p %u for index %d\n", ret, GetLastError(), index);
+               "CreateFileW to returned %p %lu for index %d\n", ret, GetLastError(), index);
         if (ret != INVALID_HANDLE_VALUE) CloseHandle(ret);
 
         if (cf_table[index].gle) continue;
@@ -1582,7 +1583,7 @@ static void test_CreateFileW(void)
         status = NtCreateFile(&ret, cf_table[index].access | SYNCHRONIZE | FILE_READ_ATTRIBUTES, &attr, &iosb, NULL,
                               FILE_ATTRIBUTE_NORMAL, 0, nt_disposition[cf_table[index].creation - CREATE_NEW],
                               FILE_NON_DIRECTORY_FILE, NULL, 0);
-        ok(!status, "NtCreateFile failed %x for %u\n", status, index);
+        ok(!status, "NtCreateFile failed %lx for %u\n", status, index);
         CloseHandle(ret);
 
         RtlInitUnicodeString(&string, cf_table[index].input ? L"\\??\\CONIN$" : L"\\??\\CONOUT$");
@@ -1590,7 +1591,7 @@ static void test_CreateFileW(void)
         status = NtCreateFile(&ret, cf_table[index].access | SYNCHRONIZE | FILE_READ_ATTRIBUTES, &attr, &iosb, NULL,
                               FILE_ATTRIBUTE_NORMAL, 0, nt_disposition[cf_table[index].creation - CREATE_NEW],
                               FILE_NON_DIRECTORY_FILE, NULL, 0);
-        ok(!status, "NtCreateFile failed %x for %u\n", status, index);
+        ok(!status, "NtCreateFile failed %lx for %u\n", status, index);
         CloseHandle(ret);
     }
 }
@@ -1611,28 +1612,28 @@ static void test_VerifyConsoleIoHandle( HANDLE handle )
     ret = pVerifyConsoleIoHandle((HANDLE)0xdeadbee0);
     error = GetLastError();
     ok(!ret, "expected VerifyConsoleIoHandle to fail\n");
-    ok(error == 0xdeadbeef, "wrong GetLastError() %d\n", error);
+    ok(error == 0xdeadbeef, "wrong GetLastError() %ld\n", error);
 
     /* invalid handle + 1 */
     SetLastError(0xdeadbeef);
     ret = pVerifyConsoleIoHandle((HANDLE)0xdeadbee1);
     error = GetLastError();
     ok(!ret, "expected VerifyConsoleIoHandle to fail\n");
-    ok(error == 0xdeadbeef, "wrong GetLastError() %d\n", error);
+    ok(error == 0xdeadbeef, "wrong GetLastError() %ld\n", error);
 
     /* invalid handle + 2 */
     SetLastError(0xdeadbeef);
     ret = pVerifyConsoleIoHandle((HANDLE)0xdeadbee2);
     error = GetLastError();
     ok(!ret, "expected VerifyConsoleIoHandle to fail\n");
-    ok(error == 0xdeadbeef, "wrong GetLastError() %d\n", error);
+    ok(error == 0xdeadbeef, "wrong GetLastError() %ld\n", error);
 
     /* invalid handle + 3 */
     SetLastError(0xdeadbeef);
     ret = pVerifyConsoleIoHandle((HANDLE)0xdeadbee3);
     error = GetLastError();
     ok(!ret, "expected VerifyConsoleIoHandle to fail\n");
-    ok(error == 0xdeadbeef, "wrong GetLastError() %d\n", error);
+    ok(error == 0xdeadbeef, "wrong GetLastError() %ld\n", error);
 
     /* valid handle */
     SetLastError(0xdeadbeef);
@@ -1641,7 +1642,7 @@ static void test_VerifyConsoleIoHandle( HANDLE handle )
     ok(ret ||
        broken(!ret), /* Windows 8 and 10 */
        "expected VerifyConsoleIoHandle to succeed\n");
-    ok(error == 0xdeadbeef, "wrong GetLastError() %d\n", error);
+    ok(error == 0xdeadbeef, "wrong GetLastError() %ld\n", error);
 }
 
 static void test_GetSetStdHandle(void)
@@ -1655,14 +1656,14 @@ static void test_GetSetStdHandle(void)
     handle = GetStdHandle(42);
     error = GetLastError();
     ok(error == ERROR_INVALID_HANDLE || broken(error == ERROR_INVALID_FUNCTION)/* Win9x */,
-       "wrong GetLastError() %d\n", error);
+       "wrong GetLastError() %ld\n", error);
     ok(handle == INVALID_HANDLE_VALUE, "expected INVALID_HANDLE_VALUE\n");
 
     /* get valid */
     SetLastError(0xdeadbeef);
     handle = GetStdHandle(STD_INPUT_HANDLE);
     error = GetLastError();
-    ok(error == 0xdeadbeef, "wrong GetLastError() %d\n", error);
+    ok(error == 0xdeadbeef, "wrong GetLastError() %ld\n", error);
 
     /* set invalid std handle */
     SetLastError(0xdeadbeef);
@@ -1670,14 +1671,14 @@ static void test_GetSetStdHandle(void)
     error = GetLastError();
     ok(!ret, "expected SetStdHandle to fail\n");
     ok(error == ERROR_INVALID_HANDLE || broken(error == ERROR_INVALID_FUNCTION)/* Win9x */,
-       "wrong GetLastError() %d\n", error);
+       "wrong GetLastError() %ld\n", error);
 
     /* set valid (restore old value) */
     SetLastError(0xdeadbeef);
     ret = SetStdHandle(STD_INPUT_HANDLE, handle);
     error = GetLastError();
     ok(ret, "expected SetStdHandle to succeed\n");
-    ok(error == 0xdeadbeef, "wrong GetLastError() %d\n", error);
+    ok(error == 0xdeadbeef, "wrong GetLastError() %ld\n", error);
 }
 
 static void test_DuplicateConsoleHandle(void)
@@ -1691,19 +1692,19 @@ static void test_DuplicateConsoleHandle(void)
 
     /* duplicate an event handle with DuplicateConsoleHandle */
     handle = DuplicateConsoleHandle(event, 0, FALSE, DUPLICATE_SAME_ACCESS);
-    ok(handle != NULL, "DuplicateConsoleHandle failed: %u\n", GetLastError());
+    ok(handle != NULL, "DuplicateConsoleHandle failed: %lu\n", GetLastError());
 
     ret = SetEvent(handle);
-    ok(ret, "SetEvent failed: %u\n", GetLastError());
+    ok(ret, "SetEvent failed: %lu\n", GetLastError());
 
     ret = CloseConsoleHandle(handle);
-    ok(ret, "CloseConsoleHandle failed: %u\n", GetLastError());
+    ok(ret, "CloseConsoleHandle failed: %lu\n", GetLastError());
     ret = CloseConsoleHandle(event);
-    ok(ret, "CloseConsoleHandle failed: %u\n", GetLastError());
+    ok(ret, "CloseConsoleHandle failed: %lu\n", GetLastError());
 
     handle = DuplicateConsoleHandle((HANDLE)0xdeadbeef, 0, FALSE, DUPLICATE_SAME_ACCESS);
-    ok(handle == INVALID_HANDLE_VALUE, "DuplicateConsoleHandle failed: %u\n", GetLastError());
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "last error = %u\n", GetLastError());
+    ok(handle == INVALID_HANDLE_VALUE, "DuplicateConsoleHandle failed: %lu\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "last error = %lu\n", GetLastError());
 }
 
 static void test_GetNumberOfConsoleInputEvents(HANDLE input_handle)
@@ -1735,10 +1736,10 @@ static void test_GetNumberOfConsoleInputEvents(HANDLE input_handle)
         if (invalid_table[i].nrofevents)
         {
             ok(count == 0xdeadbeef,
-               "[%d] Expected output count to be unmodified, got %u\n", i, count);
+               "[%d] Expected output count to be unmodified, got %lu\n", i, count);
         }
         ok(GetLastError() == invalid_table[i].last_error,
-           "[%d] Expected last error to be %u, got %u\n",
+           "[%d] Expected last error to be %lu, got %lu\n",
            i, invalid_table[i].last_error, GetLastError());
     }
 
@@ -1749,7 +1750,7 @@ static void test_GetNumberOfConsoleInputEvents(HANDLE input_handle)
         ret = GetNumberOfConsoleInputEvents(input_handle, NULL);
         ok(!ret, "Expected GetNumberOfConsoleInputEvents to return FALSE, got %d\n", ret);
         ok(GetLastError() == ERROR_INVALID_ACCESS,
-           "Expected last error to be ERROR_INVALID_ACCESS, got %u\n",
+           "Expected last error to be ERROR_INVALID_ACCESS, got %lu\n",
            GetLastError());
     }
 
@@ -1807,7 +1808,7 @@ static void test_WriteConsoleInputA(HANDLE input_handle)
     ok(ret == TRUE, "Expected GetConsoleMode to return TRUE, got %d\n", ret);
     if (!ret)
     {
-        skip("GetConsoleMode failed with last error %u\n", GetLastError());
+        skip("GetConsoleMode failed with last error %lu\n", GetLastError());
         return;
     }
 
@@ -1815,7 +1816,7 @@ static void test_WriteConsoleInputA(HANDLE input_handle)
     ok(ret == TRUE, "Expected SetConsoleMode to return TRUE, got %d\n", ret);
     if (!ret)
     {
-        skip("SetConsoleMode failed with last error %u\n", GetLastError());
+        skip("SetConsoleMode failed with last error %lu\n", GetLastError());
         return;
     }
 
@@ -1840,24 +1841,24 @@ static void test_WriteConsoleInputA(HANDLE input_handle)
         ok(!ret, "[%d] Expected WriteConsoleInputA to return FALSE, got %d\n", i, ret);
         gle = GetLastError();
         ok(gle == invalid_table[i].gle || (gle != 0 && gle == invalid_table[i].gle2),
-           "[%d] Expected last error to be %u or %u, got %u\n",
+           "[%d] Expected last error to be %lu or %lu, got %lu\n",
            i, invalid_table[i].gle, invalid_table[i].gle2, gle);
     }
 
     count = 0xdeadbeef;
     ret = WriteConsoleInputA(input_handle, NULL, 0, &count);
     ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
-    ok(count == 0, "Expected count to be 0, got %u\n", count);
+    ok(count == 0, "Expected count to be 0, got %lu\n", count);
 
     count = 0xdeadbeef;
     ret = WriteConsoleInputA(input_handle, &event, 0, &count);
     ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
-    ok(count == 0, "Expected count to be 0, got %u\n", count);
+    ok(count == 0, "Expected count to be 0, got %lu\n", count);
 
     count = 0xdeadbeef;
     ret = WriteConsoleInputA(input_handle, &event, 1, &count);
     ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     ret = FlushConsoleInputBuffer(input_handle);
     ok(ret == TRUE, "Expected FlushConsoleInputBuffer to return TRUE, got %d\n", ret);
@@ -1868,20 +1869,20 @@ static void test_WriteConsoleInputA(HANDLE input_handle)
 
     ret = WriteConsoleInputA(input_handle, &event, 1, &count);
     ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     ret = GetNumberOfConsoleInputEvents(input_handle, &count);
     ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     ret = WriteConsoleInputA(input_handle, &event, 1, &count);
     ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     ret = GetNumberOfConsoleInputEvents(input_handle, &count);
     ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
     todo_wine
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     ret = FlushConsoleInputBuffer(input_handle);
     ok(ret == TRUE, "Expected FlushConsoleInputBuffer to return TRUE, got %d\n", ret);
@@ -1896,33 +1897,33 @@ static void test_WriteConsoleInputA(HANDLE input_handle)
     ret = WriteConsoleInputA(input_handle, event_list, ARRAY_SIZE(event_list), &count);
     ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
     ok(count == ARRAY_SIZE(event_list),
-       "Expected count to be event list length, got %u\n", count);
+       "Expected count to be event list length, got %lu\n", count);
 
     ret = GetNumberOfConsoleInputEvents(input_handle, &count);
     ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
     ok(count == ARRAY_SIZE(event_list),
-       "Expected count to be event list length, got %u\n", count);
+       "Expected count to be event list length, got %lu\n", count);
 
     ret = WriteConsoleInputA(input_handle, event_list, ARRAY_SIZE(event_list), &count);
     ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
     ok(count == ARRAY_SIZE(event_list),
-       "Expected count to be event list length, got %u\n", count);
+       "Expected count to be event list length, got %lu\n", count);
 
     ret = GetNumberOfConsoleInputEvents(input_handle, &count);
     ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
     ok(count == 2*ARRAY_SIZE(event_list),
-       "Expected count to be twice event list length, got %u\n", count);
+       "Expected count to be twice event list length, got %lu\n", count);
 
     /* Again, writing a single mouse event with adjacent mouse events queued doesn't appear to affect the count. */
     ret = WriteConsoleInputA(input_handle, &event, 1, &count);
     ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     ret = GetNumberOfConsoleInputEvents(input_handle, &count);
     ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
     todo_wine
     ok(count == 2*ARRAY_SIZE(event_list),
-       "Expected count to be twice event list length, got %u\n", count);
+       "Expected count to be twice event list length, got %lu\n", count);
 
     ret = FlushConsoleInputBuffer(input_handle);
     ok(ret == TRUE, "Expected FlushConsoleInputBuffer to return TRUE, got %d\n", ret);
@@ -1940,19 +1941,19 @@ static void test_WriteConsoleInputA(HANDLE input_handle)
     /* Key events don't exhibit the same behavior as mouse events. */
     ret = WriteConsoleInputA(input_handle, &event, 1, &count);
     ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     ret = GetNumberOfConsoleInputEvents(input_handle, &count);
     ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     ret = WriteConsoleInputA(input_handle, &event, 1, &count);
     ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     ret = GetNumberOfConsoleInputEvents(input_handle, &count);
     ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
-    ok(count == 2, "Expected count to be 2, got %u\n", count);
+    ok(count == 2, "Expected count to be 2, got %lu\n", count);
 
     ret = FlushConsoleInputBuffer(input_handle);
     ok(ret == TRUE, "Expected FlushConsoleInputBuffer to return TRUE, got %d\n", ret);
@@ -1963,33 +1964,33 @@ static void test_WriteConsoleInputA(HANDLE input_handle)
 
     ret = WriteConsoleInputA(input_handle, &event, 1, &count);
     ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     ret = GetNumberOfConsoleInputEvents(input_handle, &count);
     ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     event.EventType = KEY_EVENT;
     event.Event.KeyEvent = key_event;
 
     ret = WriteConsoleInputA(input_handle, &event, 1, &count);
     ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     ret = GetNumberOfConsoleInputEvents(input_handle, &count);
     ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
-    ok(count == 2, "Expected count to be 2, got %u\n", count);
+    ok(count == 2, "Expected count to be 2, got %lu\n", count);
 
     event.EventType = MOUSE_EVENT;
     event.Event.MouseEvent = mouse_event;
 
     ret = WriteConsoleInputA(input_handle, &event, 1, &count);
     ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     ret = GetNumberOfConsoleInputEvents(input_handle, &count);
     ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
-    ok(count == 3, "Expected count to be 3, got %u\n", count);
+    ok(count == 3, "Expected count to be 3, got %lu\n", count);
 
     /* Restore the old console mode. */
     ret = SetConsoleMode(input_handle, console_mode);
@@ -2044,7 +2045,7 @@ static void test_WriteConsoleInputW(HANDLE input_handle)
     ok(ret == TRUE, "Expected GetConsoleMode to return TRUE, got %d\n", ret);
     if (!ret)
     {
-        skip("GetConsoleMode failed with last error %u\n", GetLastError());
+        skip("GetConsoleMode failed with last error %lu\n", GetLastError());
         return;
     }
 
@@ -2052,7 +2053,7 @@ static void test_WriteConsoleInputW(HANDLE input_handle)
     ok(ret == TRUE, "Expected SetConsoleMode to return TRUE, got %d\n", ret);
     if (!ret)
     {
-        skip("SetConsoleMode failed with last error %u\n", GetLastError());
+        skip("SetConsoleMode failed with last error %lu\n", GetLastError());
         return;
     }
 
@@ -2077,24 +2078,24 @@ static void test_WriteConsoleInputW(HANDLE input_handle)
         ok(!ret, "[%d] Expected WriteConsoleInputW to return FALSE, got %d\n", i, ret);
         gle = GetLastError();
         ok(gle == invalid_table[i].gle || (gle != 0 && gle == invalid_table[i].gle2),
-           "[%d] Expected last error to be %u or %u, got %u\n",
+           "[%d] Expected last error to be %lu or %lu, got %lu\n",
            i, invalid_table[i].gle, invalid_table[i].gle2, gle);
     }
 
     count = 0xdeadbeef;
     ret = WriteConsoleInputW(input_handle, NULL, 0, &count);
     ok(ret == TRUE, "Expected WriteConsoleInputW to return TRUE, got %d\n", ret);
-    ok(count == 0, "Expected count to be 0, got %u\n", count);
+    ok(count == 0, "Expected count to be 0, got %lu\n", count);
 
     count = 0xdeadbeef;
     ret = WriteConsoleInputW(input_handle, &event, 0, &count);
     ok(ret == TRUE, "Expected WriteConsoleInputW to return TRUE, got %d\n", ret);
-    ok(count == 0, "Expected count to be 0, got %u\n", count);
+    ok(count == 0, "Expected count to be 0, got %lu\n", count);
 
     count = 0xdeadbeef;
     ret = WriteConsoleInputW(input_handle, &event, 1, &count);
     ok(ret == TRUE, "Expected WriteConsoleInputW to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     ret = FlushConsoleInputBuffer(input_handle);
     ok(ret == TRUE, "Expected FlushConsoleInputBuffer to return TRUE, got %d\n", ret);
@@ -2105,20 +2106,20 @@ static void test_WriteConsoleInputW(HANDLE input_handle)
 
     ret = WriteConsoleInputW(input_handle, &event, 1, &count);
     ok(ret == TRUE, "Expected WriteConsoleInputW to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     ret = GetNumberOfConsoleInputEvents(input_handle, &count);
     ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     ret = WriteConsoleInputW(input_handle, &event, 1, &count);
     ok(ret == TRUE, "Expected WriteConsoleInputW to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     ret = GetNumberOfConsoleInputEvents(input_handle, &count);
     ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
     todo_wine
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     ret = FlushConsoleInputBuffer(input_handle);
     ok(ret == TRUE, "Expected FlushConsoleInputBuffer to return TRUE, got %d\n", ret);
@@ -2133,33 +2134,33 @@ static void test_WriteConsoleInputW(HANDLE input_handle)
     ret = WriteConsoleInputW(input_handle, event_list, ARRAY_SIZE(event_list), &count);
     ok(ret == TRUE, "Expected WriteConsoleInputW to return TRUE, got %d\n", ret);
     ok(count == ARRAY_SIZE(event_list),
-       "Expected count to be event list length, got %u\n", count);
+       "Expected count to be event list length, got %lu\n", count);
 
     ret = GetNumberOfConsoleInputEvents(input_handle, &count);
     ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
     ok(count == ARRAY_SIZE(event_list),
-       "Expected count to be event list length, got %u\n", count);
+       "Expected count to be event list length, got %lu\n", count);
 
     ret = WriteConsoleInputW(input_handle, event_list, ARRAY_SIZE(event_list), &count);
     ok(ret == TRUE, "Expected WriteConsoleInputW to return TRUE, got %d\n", ret);
     ok(count == ARRAY_SIZE(event_list),
-       "Expected count to be event list length, got %u\n", count);
+       "Expected count to be event list length, got %lu\n", count);
 
     ret = GetNumberOfConsoleInputEvents(input_handle, &count);
     ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
     ok(count == 2*ARRAY_SIZE(event_list),
-       "Expected count to be twice event list length, got %u\n", count);
+       "Expected count to be twice event list length, got %lu\n", count);
 
     /* Again, writing a single mouse event with adjacent mouse events queued doesn't appear to affect the count. */
     ret = WriteConsoleInputW(input_handle, &event, 1, &count);
     ok(ret == TRUE, "Expected WriteConsoleInputW to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     ret = GetNumberOfConsoleInputEvents(input_handle, &count);
     ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
     todo_wine
     ok(count == 2*ARRAY_SIZE(event_list),
-       "Expected count to be twice event list length, got %u\n", count);
+       "Expected count to be twice event list length, got %lu\n", count);
 
     ret = FlushConsoleInputBuffer(input_handle);
     ok(ret == TRUE, "Expected FlushConsoleInputBuffer to return TRUE, got %d\n", ret);
@@ -2177,19 +2178,19 @@ static void test_WriteConsoleInputW(HANDLE input_handle)
     /* Key events don't exhibit the same behavior as mouse events. */
     ret = WriteConsoleInputW(input_handle, &event, 1, &count);
     ok(ret == TRUE, "Expected WriteConsoleInputW to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     ret = GetNumberOfConsoleInputEvents(input_handle, &count);
     ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     ret = WriteConsoleInputW(input_handle, &event, 1, &count);
     ok(ret == TRUE, "Expected WriteConsoleInputW to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     ret = GetNumberOfConsoleInputEvents(input_handle, &count);
     ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
-    ok(count == 2, "Expected count to be 2, got %u\n", count);
+    ok(count == 2, "Expected count to be 2, got %lu\n", count);
 
     ret = FlushConsoleInputBuffer(input_handle);
     ok(ret == TRUE, "Expected FlushConsoleInputBuffer to return TRUE, got %d\n", ret);
@@ -2200,33 +2201,33 @@ static void test_WriteConsoleInputW(HANDLE input_handle)
 
     ret = WriteConsoleInputW(input_handle, &event, 1, &count);
     ok(ret == TRUE, "Expected WriteConsoleInputW to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     ret = GetNumberOfConsoleInputEvents(input_handle, &count);
     ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     event.EventType = KEY_EVENT;
     event.Event.KeyEvent = key_event;
 
     ret = WriteConsoleInputW(input_handle, &event, 1, &count);
     ok(ret == TRUE, "Expected WriteConsoleInputW to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     ret = GetNumberOfConsoleInputEvents(input_handle, &count);
     ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
-    ok(count == 2, "Expected count to be 2, got %u\n", count);
+    ok(count == 2, "Expected count to be 2, got %lu\n", count);
 
     event.EventType = MOUSE_EVENT;
     event.Event.MouseEvent = mouse_event;
 
     ret = WriteConsoleInputW(input_handle, &event, 1, &count);
     ok(ret == TRUE, "Expected WriteConsoleInputW to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     ret = GetNumberOfConsoleInputEvents(input_handle, &count);
     ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
-    ok(count == 3, "Expected count to be 3, got %u\n", count);
+    ok(count == 3, "Expected count to be 3, got %lu\n", count);
 
     /* Restore the old console mode. */
     ret = SetConsoleMode(input_handle, console_mode);
@@ -2240,11 +2241,11 @@ static void test_FlushConsoleInputBuffer(HANDLE input, HANDLE output)
     BOOL ret;
 
     ret = FlushConsoleInputBuffer(input);
-    ok(ret, "FlushConsoleInputBuffer failed: %u\n", GetLastError());
+    ok(ret, "FlushConsoleInputBuffer failed: %lu\n", GetLastError());
 
     ret = GetNumberOfConsoleInputEvents(input, &count);
-    ok(ret, "GetNumberOfConsoleInputEvents failed: %u\n", GetLastError());
-    ok(count == 0, "Expected count to be 0, got %u\n", count);
+    ok(ret, "GetNumberOfConsoleInputEvents failed: %lu\n", GetLastError());
+    ok(count == 0, "Expected count to be 0, got %lu\n", count);
 
     record.EventType = KEY_EVENT;
     record.Event.KeyEvent.bKeyDown = 1;
@@ -2254,39 +2255,39 @@ static void test_FlushConsoleInputBuffer(HANDLE input, HANDLE output)
     record.Event.KeyEvent.uChar.UnicodeChar = '\r';
     record.Event.KeyEvent.dwControlKeyState = 0;
     ret = WriteConsoleInputW(input, &record, 1, &count);
-    ok(ret, "WriteConsoleInputW failed: %u\n", GetLastError());
+    ok(ret, "WriteConsoleInputW failed: %lu\n", GetLastError());
 
     ret = GetNumberOfConsoleInputEvents(input, &count);
-    ok(ret, "GetNumberOfConsoleInputEvents failed: %u\n", GetLastError());
-    ok(count == 1, "Expected count to be 0, got %u\n", count);
+    ok(ret, "GetNumberOfConsoleInputEvents failed: %lu\n", GetLastError());
+    ok(count == 1, "Expected count to be 0, got %lu\n", count);
 
     ret = FlushConsoleInputBuffer(input);
-    ok(ret, "FlushConsoleInputBuffer failed: %u\n", GetLastError());
+    ok(ret, "FlushConsoleInputBuffer failed: %lu\n", GetLastError());
 
     ret = GetNumberOfConsoleInputEvents(input, &count);
-    ok(ret, "GetNumberOfConsoleInputEvents failed: %u\n", GetLastError());
-    ok(count == 0, "Expected count to be 0, got %u\n", count);
+    ok(ret, "GetNumberOfConsoleInputEvents failed: %lu\n", GetLastError());
+    ok(count == 0, "Expected count to be 0, got %lu\n", count);
 
     ret = WriteConsoleInputW(input, &record, 1, &count);
-    ok(ret, "WriteConsoleInputW failed: %u\n", GetLastError());
+    ok(ret, "WriteConsoleInputW failed: %lu\n", GetLastError());
 
     ret = GetNumberOfConsoleInputEvents(input, &count);
-    ok(ret, "GetNumberOfConsoleInputEvents failed: %u\n", GetLastError());
-    ok(count == 1, "Expected count to be 0, got %u\n", count);
+    ok(ret, "GetNumberOfConsoleInputEvents failed: %lu\n", GetLastError());
+    ok(count == 1, "Expected count to be 0, got %lu\n", count);
 
     ret = FlushFileBuffers(input);
-    ok(ret, "FlushFileBuffers failed: %u\n", GetLastError());
+    ok(ret, "FlushFileBuffers failed: %lu\n", GetLastError());
 
     ret = GetNumberOfConsoleInputEvents(input, &count);
-    ok(ret, "GetNumberOfConsoleInputEvents failed: %u\n", GetLastError());
-    ok(count == 0, "Expected count to be 0, got %u\n", count);
+    ok(ret, "GetNumberOfConsoleInputEvents failed: %lu\n", GetLastError());
+    ok(count == 0, "Expected count to be 0, got %lu\n", count);
 
     ret = FlushConsoleInputBuffer(output);
-    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "FlushConsoleInputBuffer returned: %x(%u)\n",
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "FlushConsoleInputBuffer returned: %x(%lu)\n",
        ret, GetLastError());
 
     ret = FlushFileBuffers(output);
-    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "FlushFileBuffers returned: %x(%u)\n",
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "FlushFileBuffers returned: %x(%lu)\n",
        ret, GetLastError());
 }
 
@@ -2350,34 +2351,34 @@ static void test_WriteConsoleOutputCharacterA(HANDLE output_handle)
         if (invalid_table[i].lpNumCharsWritten)
         {
             ok(count == invalid_table[i].expected_count,
-               "[%d] Expected count to be %u, got %u\n",
+               "[%d] Expected count to be %lu, got %lu\n",
                i, invalid_table[i].expected_count, count);
         }
         ok(GetLastError() == invalid_table[i].last_error,
-           "[%d] Expected last error to be %u, got %u\n",
+           "[%d] Expected last error to be %lu, got %lu\n",
            i, invalid_table[i].last_error, GetLastError());
     }
 
     count = 0xdeadbeef;
     ret = WriteConsoleOutputCharacterA(output_handle, NULL, 0, origin, &count);
     ok(ret == TRUE, "Expected WriteConsoleOutputCharacterA to return TRUE, got %d\n", ret);
-    ok(count == 0, "Expected count to be 0, got %u\n", count);
+    ok(count == 0, "Expected count to be 0, got %lu\n", count);
 
     count = 0xdeadbeef;
     ret = WriteConsoleOutputCharacterA(output_handle, output, 0, origin, &count);
     ok(ret == TRUE, "Expected WriteConsoleOutputCharacterA to return TRUE, got %d\n", ret);
-    ok(count == 0, "Expected count to be 0, got %u\n", count);
+    ok(count == 0, "Expected count to be 0, got %lu\n", count);
 
     count = 0xdeadbeef;
     ret = WriteConsoleOutputCharacterA(output_handle, output, 1, origin, &count);
     ok(ret == TRUE, "Expected WriteConsoleOutputCharacterA to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     count = 0xdeadbeef;
     origin.X = 200;
     ret = WriteConsoleOutputCharacterA(output_handle, output, 0, origin, &count);
     ok(ret == TRUE, "Expected WriteConsoleOutputCharacterA to return TRUE, got %d\n", ret);
-    ok(count == 0, "Expected count to be 0, got %u\n", count);
+    ok(count == 0, "Expected count to be 0, got %lu\n", count);
 }
 
 static void test_WriteConsoleOutputCharacterW(HANDLE output_handle)
@@ -2440,34 +2441,34 @@ static void test_WriteConsoleOutputCharacterW(HANDLE output_handle)
         if (invalid_table[i].lpNumCharsWritten)
         {
             ok(count == invalid_table[i].expected_count,
-               "[%d] Expected count to be %u, got %u\n",
+               "[%d] Expected count to be %lu, got %lu\n",
                i, invalid_table[i].expected_count, count);
         }
         ok(GetLastError() == invalid_table[i].last_error,
-           "[%d] Expected last error to be %u, got %u\n",
+           "[%d] Expected last error to be %lu, got %lu\n",
            i, invalid_table[i].last_error, GetLastError());
     }
 
     count = 0xdeadbeef;
     ret = WriteConsoleOutputCharacterW(output_handle, NULL, 0, origin, &count);
     ok(ret == TRUE, "Expected WriteConsoleOutputCharacterW to return TRUE, got %d\n", ret);
-    ok(count == 0, "Expected count to be 0, got %u\n", count);
+    ok(count == 0, "Expected count to be 0, got %lu\n", count);
 
     count = 0xdeadbeef;
     ret = WriteConsoleOutputCharacterW(output_handle, outputW, 0, origin, &count);
     ok(ret == TRUE, "Expected WriteConsoleOutputCharacterW to return TRUE, got %d\n", ret);
-    ok(count == 0, "Expected count to be 0, got %u\n", count);
+    ok(count == 0, "Expected count to be 0, got %lu\n", count);
 
     count = 0xdeadbeef;
     ret = WriteConsoleOutputCharacterW(output_handle, outputW, 1, origin, &count);
     ok(ret == TRUE, "Expected WriteConsoleOutputCharacterW to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     count = 0xdeadbeef;
     origin.X = 200;
     ret = WriteConsoleOutputCharacterW(output_handle, outputW, 0, origin, &count);
     ok(ret == TRUE, "Expected WriteConsoleOutputCharacterW to return TRUE, got %d\n", ret);
-    ok(count == 0, "Expected count to be 0, got %u\n", count);
+    ok(count == 0, "Expected count to be 0, got %lu\n", count);
 
 }
 
@@ -2530,34 +2531,34 @@ static void test_WriteConsoleOutputAttribute(HANDLE output_handle)
         if (invalid_table[i].lpNumAttrsWritten)
         {
             ok(count == invalid_table[i].expected_count,
-               "[%d] Expected count to be %u, got %u\n",
+               "[%d] Expected count to be %lu, got %lu\n",
                i, invalid_table[i].expected_count, count);
         }
         ok(GetLastError() == invalid_table[i].last_error,
-           "[%d] Expected last error to be %u, got %u\n",
+           "[%d] Expected last error to be %lu, got %lu\n",
            i, invalid_table[i].last_error, GetLastError());
     }
 
     count = 0xdeadbeef;
     ret = WriteConsoleOutputAttribute(output_handle, NULL, 0, origin, &count);
     ok(ret == TRUE, "Expected WriteConsoleOutputAttribute to return TRUE, got %d\n", ret);
-    ok(count == 0, "Expected count to be 0, got %u\n", count);
+    ok(count == 0, "Expected count to be 0, got %lu\n", count);
 
     count = 0xdeadbeef;
     ret = WriteConsoleOutputAttribute(output_handle, &attr, 0, origin, &count);
     ok(ret == TRUE, "Expected WriteConsoleOutputAttribute to return TRUE, got %d\n", ret);
-    ok(count == 0, "Expected count to be 0, got %u\n", count);
+    ok(count == 0, "Expected count to be 0, got %lu\n", count);
 
     count = 0xdeadbeef;
     ret = WriteConsoleOutputAttribute(output_handle, &attr, 1, origin, &count);
     ok(ret == TRUE, "Expected WriteConsoleOutputAttribute to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     count = 0xdeadbeef;
     origin.X = 200;
     ret = WriteConsoleOutputAttribute(output_handle, &attr, 0, origin, &count);
     ok(ret == TRUE, "Expected WriteConsoleOutputAttribute to return TRUE, got %d\n", ret);
-    ok(count == 0, "Expected count to be 0, got %u\n", count);
+    ok(count == 0, "Expected count to be 0, got %lu\n", count);
 }
 
 static void set_region(SMALL_RECT *region, unsigned int left, unsigned int top, unsigned int right, unsigned int bottom)
@@ -2602,7 +2603,7 @@ static void test_WriteConsoleOutput(HANDLE console)
     }
 
     ret = GetConsoleScreenBufferInfo(console, &info);
-    ok(ret, "GetConsoleScreenBufferInfo failed: %u\n", GetLastError());
+    ok(ret, "GetConsoleScreenBufferInfo failed: %lu\n", GetLastError());
 
     size.X = 23;
     size.Y = 17;
@@ -2610,7 +2611,7 @@ static void test_WriteConsoleOutput(HANDLE console)
     coord.Y = 3;
     set_region(&region, 10, 7, 15, 11);
     ret = WriteConsoleOutputW(console, char_info_buf, size, coord, &region);
-    ok(ret, "WriteConsoleOutputW failed: %u\n", GetLastError());
+    ok(ret, "WriteConsoleOutputW failed: %lu\n", GetLastError());
     check_region(&region, 10, 7, 15, 11);
 
     size.X = 23;
@@ -2619,7 +2620,7 @@ static void test_WriteConsoleOutput(HANDLE console)
     coord.Y = 3;
     set_region(&region, 200, 7, 15, 211);
     ret = WriteConsoleOutputW(console, char_info_buf, size, coord, &region);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "WriteConsoleOutputW returned: %x(%u)\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "WriteConsoleOutputW returned: %x(%lu)\n", ret, GetLastError());
     check_region(&region, 200, 7, 15, 211);
 
     size.X = 23;
@@ -2628,7 +2629,7 @@ static void test_WriteConsoleOutput(HANDLE console)
     coord.Y = 3;
     set_region(&region, 200, 7, 211, 8);
     ret = WriteConsoleOutputW(console, char_info_buf, size, coord, &region);
-    ok(ret, "WriteConsoleOutputW failed: %u\n", GetLastError());
+    ok(ret, "WriteConsoleOutputW failed: %lu\n", GetLastError());
     check_region(&region, 200, 7, 211, 8);
 
     size.X = 23;
@@ -2637,7 +2638,7 @@ static void test_WriteConsoleOutput(HANDLE console)
     coord.Y = 3;
     set_region(&region, 10, 7, 9, 11);
     ret = WriteConsoleOutputW(console, char_info_buf, size, coord, &region);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "WriteConsoleOutputW returned: %x(%u)\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "WriteConsoleOutputW returned: %x(%lu)\n", ret, GetLastError());
     check_region(&region, 10, 7, 9, 11);
 
     size.X = 23;
@@ -2646,7 +2647,7 @@ static void test_WriteConsoleOutput(HANDLE console)
     coord.Y = 3;
     set_region(&region, 10, 7, 11, 6);
     ret = WriteConsoleOutputW(console, char_info_buf, size, coord, &region);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "WriteConsoleOutputW returned: %x(%u)\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "WriteConsoleOutputW returned: %x(%lu)\n", ret, GetLastError());
     check_region(&region, 10, 7, 11, 6);
 
     size.X = 2;
@@ -2655,7 +2656,7 @@ static void test_WriteConsoleOutput(HANDLE console)
     coord.Y = 3;
     set_region(&region, 10, 7, 15, 11);
     ret = WriteConsoleOutputW(console, char_info_buf, size, coord, &region);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "WriteConsoleOutputW returned: %x(%u)\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "WriteConsoleOutputW returned: %x(%lu)\n", ret, GetLastError());
     check_region(&region, 10, 7, 15, 11);
 
     size.X = 23;
@@ -2664,7 +2665,7 @@ static void test_WriteConsoleOutput(HANDLE console)
     coord.Y = 3;
     set_region(&region, 10, 7, 15, 11);
     ret = WriteConsoleOutputW(console, char_info_buf, size, coord, &region);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "WriteConsoleOutputW returned: %x(%u)\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "WriteConsoleOutputW returned: %x(%lu)\n", ret, GetLastError());
     check_region(&region, 10, 7, 15, 11);
 
     size.X = 6;
@@ -2673,7 +2674,7 @@ static void test_WriteConsoleOutput(HANDLE console)
     coord.Y = 3;
     set_region(&region, 10, 7, 15, 11);
     ret = WriteConsoleOutputW(console, char_info_buf, size, coord, &region);
-    ok(ret, "WriteConsoleOutputW failed: %u\n", GetLastError());
+    ok(ret, "WriteConsoleOutputW failed: %lu\n", GetLastError());
     check_region(&region, 10, 7, 13, 11);
 
     size.X = 6;
@@ -2682,7 +2683,7 @@ static void test_WriteConsoleOutput(HANDLE console)
     coord.Y = 3;
     set_region(&region, 10, 7, 15, 11);
     ret = WriteConsoleOutputW((HANDLE)0xdeadbeef, char_info_buf, size, coord, &region);
-    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "WriteConsoleOutputW returned: %x(%u)\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "WriteConsoleOutputW returned: %x(%lu)\n", ret, GetLastError());
     if (!skip_nt) check_region(&region, 10, 7, 13, 11);
 
     size.X = 16;
@@ -2691,7 +2692,7 @@ static void test_WriteConsoleOutput(HANDLE console)
     coord.Y = 3;
     set_region(&region, 10, 7, 15, 11);
     ret = WriteConsoleOutputW(console, char_info_buf, size, coord, &region);
-    ok(ret, "WriteConsoleOutputW failed: %u\n", GetLastError());
+    ok(ret, "WriteConsoleOutputW failed: %lu\n", GetLastError());
     check_region(&region, 10, 7, 15, 10);
 
     size.X = 16;
@@ -2700,7 +2701,7 @@ static void test_WriteConsoleOutput(HANDLE console)
     coord.Y = 3;
     set_region(&region, info.dwSize.X - 2, 7, info.dwSize.X + 2, 7);
     ret = WriteConsoleOutputW(console, char_info_buf, size, coord, &region);
-    ok(ret, "WriteConsoleOutputW failed: %u\n", GetLastError());
+    ok(ret, "WriteConsoleOutputW failed: %lu\n", GetLastError());
     check_region(&region, info.dwSize.X - 2, 7, info.dwSize.X - 1, 7);
 }
 
@@ -2748,19 +2749,19 @@ static void test_FillConsoleOutputCharacterA(HANDLE output_handle)
                                           invalid_table[i].lpNumCharsWritten);
         ok(!ret, "[%d] Expected FillConsoleOutputCharacterA to return FALSE, got %d\n", i, ret);
         ok(GetLastError() == invalid_table[i].last_error,
-           "[%d] Expected last error to be %u, got %u\n",
+           "[%d] Expected last error to be %lu, got %lu\n",
            i, invalid_table[i].last_error, GetLastError());
     }
 
     count = 0xdeadbeef;
     ret = FillConsoleOutputCharacterA(output_handle, 'a', 0, origin, &count);
     ok(ret == TRUE, "Expected FillConsoleOutputCharacterA to return TRUE, got %d\n", ret);
-    ok(count == 0, "Expected count to be 0, got %u\n", count);
+    ok(count == 0, "Expected count to be 0, got %lu\n", count);
 
     count = 0xdeadbeef;
     ret = FillConsoleOutputCharacterA(output_handle, 'a', 1, origin, &count);
     ok(ret == TRUE, "Expected FillConsoleOutputCharacterA to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 }
 
 static void test_FillConsoleOutputCharacterW(HANDLE output_handle)
@@ -2807,19 +2808,19 @@ static void test_FillConsoleOutputCharacterW(HANDLE output_handle)
                                           invalid_table[i].lpNumCharsWritten);
         ok(!ret, "[%d] Expected FillConsoleOutputCharacterW to return FALSE, got %d\n", i, ret);
         ok(GetLastError() == invalid_table[i].last_error,
-           "[%d] Expected last error to be %u, got %u\n",
+           "[%d] Expected last error to be %lu, got %lu\n",
            i, invalid_table[i].last_error, GetLastError());
     }
 
     count = 0xdeadbeef;
     ret = FillConsoleOutputCharacterW(output_handle, 'a', 0, origin, &count);
     ok(ret == TRUE, "Expected FillConsoleOutputCharacterW to return TRUE, got %d\n", ret);
-    ok(count == 0, "Expected count to be 0, got %u\n", count);
+    ok(count == 0, "Expected count to be 0, got %lu\n", count);
 
     count = 0xdeadbeef;
     ret = FillConsoleOutputCharacterW(output_handle, 'a', 1, origin, &count);
     ok(ret == TRUE, "Expected FillConsoleOutputCharacterW to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 }
 
 static void test_FillConsoleOutputAttribute(HANDLE output_handle)
@@ -2866,24 +2867,24 @@ static void test_FillConsoleOutputAttribute(HANDLE output_handle)
                                          invalid_table[i].lpNumAttrsWritten);
         ok(!ret, "[%d] Expected FillConsoleOutputAttribute to return FALSE, got %d\n", i, ret);
         ok(GetLastError() == invalid_table[i].last_error,
-           "[%d] Expected last error to be %u, got %u\n",
+           "[%d] Expected last error to be %lu, got %lu\n",
            i, invalid_table[i].last_error, GetLastError());
     }
 
     count = 0xdeadbeef;
     ret = FillConsoleOutputAttribute(output_handle, FOREGROUND_BLUE, 0, origin, &count);
     ok(ret == TRUE, "Expected FillConsoleOutputAttribute to return TRUE, got %d\n", ret);
-    ok(count == 0, "Expected count to be 0, got %u\n", count);
+    ok(count == 0, "Expected count to be 0, got %lu\n", count);
 
     count = 0xdeadbeef;
     ret = FillConsoleOutputAttribute(output_handle, FOREGROUND_BLUE, 1, origin, &count);
     ok(ret == TRUE, "Expected FillConsoleOutputAttribute to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     count = 0xdeadbeef;
     ret = FillConsoleOutputAttribute(output_handle, ~0, 1, origin, &count);
     ok(ret == TRUE, "Expected FillConsoleOutputAttribute to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 }
 
 static void test_ReadConsoleOutputCharacterA(HANDLE output_handle)
@@ -2946,34 +2947,34 @@ static void test_ReadConsoleOutputCharacterA(HANDLE output_handle)
         if (invalid_table[i].read_count)
         {
             ok(count == invalid_table[i].expected_count,
-               "[%d] Expected count to be %u, got %u\n",
+               "[%d] Expected count to be %lu, got %lu\n",
                i, invalid_table[i].expected_count, count);
         }
         ok(GetLastError() == invalid_table[i].last_error,
-           "[%d] Expected last error to be %u, got %u\n",
+           "[%d] Expected last error to be %lu, got %lu\n",
            i, invalid_table[i].last_error, GetLastError());
     }
 
     count = 0xdeadbeef;
     ret = ReadConsoleOutputCharacterA(output_handle, NULL, 0, origin, &count);
     ok(ret == TRUE, "Expected ReadConsoleOutputCharacterA to return TRUE, got %d\n", ret);
-    ok(count == 0, "Expected count to be 0, got %u\n", count);
+    ok(count == 0, "Expected count to be 0, got %lu\n", count);
 
     count = 0xdeadbeef;
     ret = ReadConsoleOutputCharacterA(output_handle, &read, 0, origin, &count);
     ok(ret == TRUE, "Expected ReadConsoleOutputCharacterA to return TRUE, got %d\n", ret);
-    ok(count == 0, "Expected count to be 0, got %u\n", count);
+    ok(count == 0, "Expected count to be 0, got %lu\n", count);
 
     count = 0xdeadbeef;
     ret = ReadConsoleOutputCharacterA(output_handle, &read, 1, origin, &count);
     ok(ret == TRUE, "Expected ReadConsoleOutputCharacterA to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     count = 0xdeadbeef;
     origin.X = 200;
     ret = ReadConsoleOutputCharacterA(output_handle, &read, 1, origin, &count);
     ok(ret == TRUE, "Expected ReadConsoleOutputCharacterA to return TRUE, got %d\n", ret);
-    ok(count == 0, "Expected count to be 0, got %u\n", count);
+    ok(count == 0, "Expected count to be 0, got %lu\n", count);
 }
 
 static void test_ReadConsoleOutputCharacterW(HANDLE output_handle)
@@ -3036,34 +3037,34 @@ static void test_ReadConsoleOutputCharacterW(HANDLE output_handle)
         if (invalid_table[i].read_count)
         {
             ok(count == invalid_table[i].expected_count,
-               "[%d] Expected count to be %u, got %u\n",
+               "[%d] Expected count to be %lu, got %lu\n",
                i, invalid_table[i].expected_count, count);
         }
         ok(GetLastError() == invalid_table[i].last_error,
-           "[%d] Expected last error to be %u, got %u\n",
+           "[%d] Expected last error to be %lu, got %lu\n",
            i, invalid_table[i].last_error, GetLastError());
     }
 
     count = 0xdeadbeef;
     ret = ReadConsoleOutputCharacterW(output_handle, NULL, 0, origin, &count);
     ok(ret == TRUE, "Expected ReadConsoleOutputCharacterW to return TRUE, got %d\n", ret);
-    ok(count == 0, "Expected count to be 0, got %u\n", count);
+    ok(count == 0, "Expected count to be 0, got %lu\n", count);
 
     count = 0xdeadbeef;
     ret = ReadConsoleOutputCharacterW(output_handle, &read, 0, origin, &count);
     ok(ret == TRUE, "Expected ReadConsoleOutputCharacterW to return TRUE, got %d\n", ret);
-    ok(count == 0, "Expected count to be 0, got %u\n", count);
+    ok(count == 0, "Expected count to be 0, got %lu\n", count);
 
     count = 0xdeadbeef;
     ret = ReadConsoleOutputCharacterW(output_handle, &read, 1, origin, &count);
     ok(ret == TRUE, "Expected ReadConsoleOutputCharacterW to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     count = 0xdeadbeef;
     origin.X = 200;
     ret = ReadConsoleOutputCharacterW(output_handle, &read, 1, origin, &count);
     ok(ret == TRUE, "Expected ReadConsoleOutputCharacterW to return TRUE, got %d\n", ret);
-    ok(count == 0, "Expected count to be 0, got %u\n", count);
+    ok(count == 0, "Expected count to be 0, got %lu\n", count);
 }
 
 static void test_ReadConsoleOutputAttribute(HANDLE output_handle)
@@ -3125,34 +3126,34 @@ static void test_ReadConsoleOutputAttribute(HANDLE output_handle)
         if (invalid_table[i].read_count)
         {
             ok(count == invalid_table[i].expected_count,
-               "[%d] Expected count to be %u, got %u\n",
+               "[%d] Expected count to be %lu, got %lu\n",
                i, invalid_table[i].expected_count, count);
         }
         ok(GetLastError() == invalid_table[i].last_error,
-           "[%d] Expected last error to be %u, got %u\n",
+           "[%d] Expected last error to be %lu, got %lu\n",
            i, invalid_table[i].last_error, GetLastError());
     }
 
     count = 0xdeadbeef;
     ret = ReadConsoleOutputAttribute(output_handle, NULL, 0, origin, &count);
     ok(ret == TRUE, "Expected ReadConsoleOutputAttribute to return TRUE, got %d\n", ret);
-    ok(count == 0, "Expected count to be 0, got %u\n", count);
+    ok(count == 0, "Expected count to be 0, got %lu\n", count);
 
     count = 0xdeadbeef;
     ret = ReadConsoleOutputAttribute(output_handle, &attr, 0, origin, &count);
     ok(ret == TRUE, "Expected ReadConsoleOutputAttribute to return TRUE, got %d\n", ret);
-    ok(count == 0, "Expected count to be 0, got %u\n", count);
+    ok(count == 0, "Expected count to be 0, got %lu\n", count);
 
     count = 0xdeadbeef;
     ret = ReadConsoleOutputAttribute(output_handle, &attr, 1, origin, &count);
     ok(ret == TRUE, "Expected ReadConsoleOutputAttribute to return TRUE, got %d\n", ret);
-    ok(count == 1, "Expected count to be 1, got %u\n", count);
+    ok(count == 1, "Expected count to be 1, got %lu\n", count);
 
     count = 0xdeadbeef;
     origin.X = 200;
     ret = ReadConsoleOutputAttribute(output_handle, &attr, 1, origin, &count);
     ok(ret == TRUE, "Expected ReadConsoleOutputAttribute to return TRUE, got %d\n", ret);
-    ok(count == 0, "Expected count to be 1, got %u\n", count);
+    ok(count == 0, "Expected count to be 1, got %lu\n", count);
 }
 
 static void test_ReadConsoleOutput(HANDLE console)
@@ -3168,7 +3169,7 @@ static void test_ReadConsoleOutput(HANDLE console)
     if (skip_nt) return;
 
     ret = GetConsoleScreenBufferInfo(console, &info);
-    ok(ret, "GetConsoleScreenBufferInfo failed: %u\n", GetLastError());
+    ok(ret, "GetConsoleScreenBufferInfo failed: %lu\n", GetLastError());
 
     size.X = 23;
     size.Y = 17;
@@ -3176,7 +3177,7 @@ static void test_ReadConsoleOutput(HANDLE console)
     coord.Y = 3;
     set_region(&region, 10, 7, 15, 11);
     ret = ReadConsoleOutputW(console, char_info_buf, size, coord, &region);
-    ok(ret, "ReadConsoleOutputW failed: %u\n", GetLastError());
+    ok(ret, "ReadConsoleOutputW failed: %lu\n", GetLastError());
     check_region(&region, 10, 7, 15, 11);
 
     size.X = 23;
@@ -3185,7 +3186,7 @@ static void test_ReadConsoleOutput(HANDLE console)
     coord.Y = 3;
     set_region(&region, 200, 7, 15, 211);
     ret = ReadConsoleOutputW(console, char_info_buf, size, coord, &region);
-    ok(!ret, "ReadConsoleOutputW returned: %x(%u)\n", ret, GetLastError());
+    ok(!ret, "ReadConsoleOutputW returned: %x(%lu)\n", ret, GetLastError());
     check_region(&region, 200, 7, -15, 0);
 
     size.X = 23;
@@ -3195,7 +3196,7 @@ static void test_ReadConsoleOutput(HANDLE console)
     set_region(&region, 200, 7, 211, 8);
     ret = ReadConsoleOutputW(console, char_info_buf, size, coord, &region);
     ok((!ret && (GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == ERROR_INVALID_FUNCTION)) || broken(ret /* win8 */),
-       "ReadConsoleOutputW returned: %x %u\n", ret, GetLastError());
+       "ReadConsoleOutputW returned: %x %lu\n", ret, GetLastError());
     if (!ret && GetLastError() == ERROR_INVALID_PARAMETER) check_region(&region, 200, 7, -211, -8);
 
     size.X = 23;
@@ -3205,7 +3206,7 @@ static void test_ReadConsoleOutput(HANDLE console)
     set_region(&region, 10, 7, 9, 11);
     ret = ReadConsoleOutputW(console, char_info_buf, size, coord, &region);
     ok((!ret && (GetLastError() == ERROR_INVALID_FUNCTION || GetLastError() == ERROR_NOT_ENOUGH_MEMORY)) || broken(ret /* win8 */),
-       "ReadConsoleOutputW returned: %x(%u)\n", ret, GetLastError());
+       "ReadConsoleOutputW returned: %x(%lu)\n", ret, GetLastError());
     check_region(&region, 10, 7, 9, -11);
 
     size.X = 23;
@@ -3215,7 +3216,7 @@ static void test_ReadConsoleOutput(HANDLE console)
     set_region(&region, 10, 7, 11, 6);
     ret = ReadConsoleOutputW(console, char_info_buf, size, coord, &region);
     ok((!ret && (GetLastError() == ERROR_INVALID_FUNCTION || GetLastError() == ERROR_NOT_ENOUGH_MEMORY)) || broken(ret /* win8 */),
-       "ReadConsoleOutputW returned: %x(%u)\n", ret, GetLastError());
+       "ReadConsoleOutputW returned: %x(%lu)\n", ret, GetLastError());
     check_region(&region, 10, 7, -11, 6);
 
     size.X = 2;
@@ -3225,7 +3226,7 @@ static void test_ReadConsoleOutput(HANDLE console)
     set_region(&region, 10, 7, 15, 11);
     ret = ReadConsoleOutputW(console, char_info_buf, size, coord, &region);
     ok((!ret && (GetLastError() == ERROR_INVALID_FUNCTION || GetLastError() == ERROR_NOT_ENOUGH_MEMORY)) || broken(ret /* win8 */),
-       "ReadConsoleOutputW returned: %x(%u)\n", ret, GetLastError());
+       "ReadConsoleOutputW returned: %x(%lu)\n", ret, GetLastError());
     check_region(&region, 10, 7, -15, -11);
 
     size.X = 23;
@@ -3235,7 +3236,7 @@ static void test_ReadConsoleOutput(HANDLE console)
     set_region(&region, 10, 7, 15, 11);
     ret = ReadConsoleOutputW(console, char_info_buf, size, coord, &region);
     ok((!ret && (GetLastError() == ERROR_INVALID_FUNCTION || GetLastError() == ERROR_NOT_ENOUGH_MEMORY)) || broken(ret /* win8 */),
-       "ReadConsoleOutputW returned: %x(%u)\n", ret, GetLastError());
+       "ReadConsoleOutputW returned: %x(%lu)\n", ret, GetLastError());
     check_region(&region, 10, 7, -15, 6);
 
     size.X = 6;
@@ -3244,7 +3245,7 @@ static void test_ReadConsoleOutput(HANDLE console)
     coord.Y = 3;
     set_region(&region, 10, 7, 15, 11);
     ret = ReadConsoleOutputW(console, char_info_buf, size, coord, &region);
-    ok(ret, "ReadConsoleOutputW failed: %u\n", GetLastError());
+    ok(ret, "ReadConsoleOutputW failed: %lu\n", GetLastError());
     check_region(&region, 10, 7, 13, 11);
 
     size.X = 6;
@@ -3253,7 +3254,7 @@ static void test_ReadConsoleOutput(HANDLE console)
     coord.Y = 3;
     set_region(&region, 10, 7, 15, 11);
     ret = ReadConsoleOutputW((HANDLE)0xdeadbeef, char_info_buf, size, coord, &region);
-    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "ReadConsoleOutputW returned: %x(%u)\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "ReadConsoleOutputW returned: %x(%lu)\n", ret, GetLastError());
     if (!skip_nt) check_region(&region, 10, 7, 13, 11);
 
     size.X = 16;
@@ -3262,7 +3263,7 @@ static void test_ReadConsoleOutput(HANDLE console)
     coord.Y = 3;
     set_region(&region, 10, 7, 15, 11);
     ret = ReadConsoleOutputW(console, char_info_buf, size, coord, &region);
-    ok(ret, "ReadConsoleOutputW failed: %u\n", GetLastError());
+    ok(ret, "ReadConsoleOutputW failed: %lu\n", GetLastError());
     check_region(&region, 10, 7, 15, 10);
 
     size.X = 16;
@@ -3271,14 +3272,14 @@ static void test_ReadConsoleOutput(HANDLE console)
     coord.Y = 3;
     set_region(&region, info.dwSize.X - 2, 7, info.dwSize.X + 2, 7);
     ret = ReadConsoleOutputW(console, char_info_buf, size, coord, &region);
-    ok(ret || GetLastError() == ERROR_INVALID_PARAMETER, "ReadConsoleOutputW failed: %u\n", GetLastError());
+    ok(ret || GetLastError() == ERROR_INVALID_PARAMETER, "ReadConsoleOutputW failed: %lu\n", GetLastError());
     if (ret) check_region(&region, info.dwSize.X - 2, 7, info.dwSize.X - 1, 7);
 
     coord.X = 2;
     coord.Y = 3;
     ret = WriteConsoleOutputCharacterW(console, L"xyz", 3, coord, &count);
-    ok(ret, "WriteConsoleOutputCharacterW failed: %u\n", GetLastError());
-    ok(count == 3, "count = %u\n", count);
+    ok(ret, "WriteConsoleOutputCharacterW failed: %lu\n", GetLastError());
+    ok(count == 3, "count = %lu\n", count);
 
     memset(char_info_buf, 0xc0, sizeof(char_info_buf));
     size.X = 16;
@@ -3287,7 +3288,7 @@ static void test_ReadConsoleOutput(HANDLE console)
     coord.Y = 6;
     set_region(&region, 2, 3, 5, 3);
     ret = ReadConsoleOutputW(console, char_info_buf, size, coord, &region);
-    ok(ret, "ReadConsoleOutputW failed: %u\n", GetLastError());
+    ok(ret, "ReadConsoleOutputW failed: %lu\n", GetLastError());
     check_region(&region, 2, 3, 5, 3);
     ch = char_info_buf[coord.Y * size.X + coord.X].Char.UnicodeChar;
     ok(ch == 'x', "unexpected char %c/%x\n", ch, ch);
@@ -3305,52 +3306,52 @@ static void test_ReadConsole(HANDLE input)
 
     SetLastError(0xdeadbeef);
     ret = GetFileSize(input, NULL);
-    ok(ret == INVALID_FILE_SIZE, "expected INVALID_FILE_SIZE, got %#x\n", ret);
+    ok(ret == INVALID_FILE_SIZE, "expected INVALID_FILE_SIZE, got %#lx\n", ret);
     ok(GetLastError() == ERROR_INVALID_HANDLE ||
        GetLastError() == ERROR_INVALID_FUNCTION, /* Win 8, 10 */
-       "expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+       "expected ERROR_INVALID_HANDLE, got %ld\n", GetLastError());
 
     bytes = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = ReadFile(input, buf, -128, &bytes, NULL);
-    ok(!ret, "expected 0, got %u\n", ret);
+    ok(!ret, "expected 0, got %lu\n", ret);
     ok(GetLastError() == ERROR_NOT_ENOUGH_MEMORY ||
        GetLastError() == ERROR_NOACCESS, /* Win 8, 10 */
-       "expected ERROR_NOT_ENOUGH_MEMORY, got %d\n", GetLastError());
-    ok(!bytes, "expected 0, got %u\n", bytes);
+       "expected ERROR_NOT_ENOUGH_MEMORY, got %ld\n", GetLastError());
+    ok(!bytes, "expected 0, got %lu\n", bytes);
 
     bytes = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = ReadConsoleA(input, buf, -128, &bytes, NULL);
-    ok(!ret, "expected 0, got %u\n", ret);
+    ok(!ret, "expected 0, got %lu\n", ret);
     ok(GetLastError() == ERROR_NOT_ENOUGH_MEMORY ||
        GetLastError() == ERROR_NOACCESS, /* Win 8, 10 */
-       "expected ERROR_NOT_ENOUGH_MEMORY, got %d\n", GetLastError());
-    ok(bytes == 0xdeadbeef, "expected 0xdeadbeef, got %#x\n", bytes);
+       "expected ERROR_NOT_ENOUGH_MEMORY, got %ld\n", GetLastError());
+    ok(bytes == 0xdeadbeef, "expected 0xdeadbeef, got %#lx\n", bytes);
 
     bytes = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = ReadConsoleW(input, buf, -128, &bytes, NULL);
-    ok(!ret, "expected 0, got %u\n", ret);
+    ok(!ret, "expected 0, got %lu\n", ret);
     ok(GetLastError() == ERROR_NOT_ENOUGH_MEMORY ||
        GetLastError() == ERROR_NOACCESS, /* Win 8, 10 */
-       "expected ERROR_NOT_ENOUGH_MEMORY, got %d\n", GetLastError());
-    ok(bytes == 0xdeadbeef, "expected 0xdeadbeef, got %#x\n", bytes);
+       "expected ERROR_NOT_ENOUGH_MEMORY, got %ld\n", GetLastError());
+    ok(bytes == 0xdeadbeef, "expected 0xdeadbeef, got %#lx\n", bytes);
 
     output = CreateFileA("CONOUT$", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
     ok(output != INVALID_HANDLE_VALUE, "Could not open console\n");
 
     ret = ReadConsoleW(output, buf, sizeof(buf) / sizeof(WCHAR), &bytes, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
-       "ReadConsoleW returned %x(%u)\n", ret, GetLastError());
+       "ReadConsoleW returned %lx(%lu)\n", ret, GetLastError());
 
     ret = ReadConsoleA(output, buf, sizeof(buf), &bytes, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
-       "ReadConsoleA returned %x(%u)\n", ret, GetLastError());
+       "ReadConsoleA returned %lx(%lu)\n", ret, GetLastError());
 
     ret = ReadFile(output, buf, sizeof(buf), &bytes, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
-       "ReadFile returned %x(%u)\n", ret, GetLastError());
+       "ReadFile returned %lx(%lu)\n", ret, GetLastError());
 
     CloseHandle(output);
 }
@@ -3368,7 +3369,7 @@ static void test_GetCurrentConsoleFont(HANDLE std_output)
     SetLastError(0xdeadbeef);
     ret = GetCurrentConsoleFont(NULL, FALSE, &cfi);
     ok(!ret, "got %d, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
     ok(!cfi.dwFontSize.X, "got %d, expected 0\n", cfi.dwFontSize.X);
     ok(!cfi.dwFontSize.Y, "got %d, expected 0\n", cfi.dwFontSize.Y);
 
@@ -3376,7 +3377,7 @@ static void test_GetCurrentConsoleFont(HANDLE std_output)
     SetLastError(0xdeadbeef);
     ret = GetCurrentConsoleFont(NULL, TRUE, &cfi);
     ok(!ret, "got %d, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
     ok(!cfi.dwFontSize.X, "got %d, expected 0\n", cfi.dwFontSize.X);
     ok(!cfi.dwFontSize.Y, "got %d, expected 0\n", cfi.dwFontSize.Y);
 
@@ -3384,7 +3385,7 @@ static void test_GetCurrentConsoleFont(HANDLE std_output)
     SetLastError(0xdeadbeef);
     ret = GetCurrentConsoleFont(GetStdHandle(STD_INPUT_HANDLE), FALSE, &cfi);
     ok(!ret, "got %d, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
     ok(!cfi.dwFontSize.X, "got %d, expected 0\n", cfi.dwFontSize.X);
     ok(!cfi.dwFontSize.Y, "got %d, expected 0\n", cfi.dwFontSize.Y);
 
@@ -3392,7 +3393,7 @@ static void test_GetCurrentConsoleFont(HANDLE std_output)
     SetLastError(0xdeadbeef);
     ret = GetCurrentConsoleFont(GetStdHandle(STD_INPUT_HANDLE), TRUE, &cfi);
     ok(!ret, "got %d, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
     ok(!cfi.dwFontSize.X, "got %d, expected 0\n", cfi.dwFontSize.X);
     ok(!cfi.dwFontSize.Y, "got %d, expected 0\n", cfi.dwFontSize.Y);
 
@@ -3401,7 +3402,7 @@ static void test_GetCurrentConsoleFont(HANDLE std_output)
     SetLastError(0xdeadbeef);
     ret = GetCurrentConsoleFont(pipe1, TRUE, &cfi);
     ok(!ret, "got %d, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
     ok(!cfi.dwFontSize.X, "got %d, expected 0\n", cfi.dwFontSize.X);
     ok(!cfi.dwFontSize.Y, "got %d, expected 0\n", cfi.dwFontSize.Y);
     CloseHandle(pipe1);
@@ -3411,7 +3412,7 @@ static void test_GetCurrentConsoleFont(HANDLE std_output)
     SetLastError(0xdeadbeef);
     ret = GetCurrentConsoleFont(std_output, FALSE, &cfi);
     ok(ret, "got %d, expected non-zero\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "got %lu, expected 0xdeadbeef\n", GetLastError());
     GetConsoleScreenBufferInfo(std_output, &csbi);
     width = csbi.srWindow.Right - csbi.srWindow.Left + 1;
     height = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
@@ -3425,7 +3426,7 @@ static void test_GetCurrentConsoleFont(HANDLE std_output)
     SetLastError(0xdeadbeef);
     ret = GetCurrentConsoleFont(std_output, TRUE, &cfi);
     ok(ret, "got %d, expected non-zero\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "got %lu, expected 0xdeadbeef\n", GetLastError());
     ok(cfi.dwFontSize.X == csbi.dwMaximumWindowSize.X,
        "got %d, expected %d\n", cfi.dwFontSize.X, csbi.dwMaximumWindowSize.X);
     ok(cfi.dwFontSize.Y == csbi.dwMaximumWindowSize.Y,
@@ -3454,82 +3455,82 @@ static void test_GetCurrentConsoleFontEx(HANDLE std_output)
     SetLastError(0xdeadbeef);
     ret = pGetCurrentConsoleFontEx(NULL, FALSE, &cfix);
     ok(!ret, "got %d, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %lu, expected 87\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pGetCurrentConsoleFontEx(NULL, TRUE, &cfix);
     ok(!ret, "got %d, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %lu, expected 87\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pGetCurrentConsoleFontEx(std_input, FALSE, &cfix);
     ok(!ret, "got %d, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %lu, expected 87\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pGetCurrentConsoleFontEx(std_input, TRUE, &cfix);
     ok(!ret, "got %d, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %lu, expected 87\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pGetCurrentConsoleFontEx(std_output, FALSE, &cfix);
     ok(!ret, "got %d, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %lu, expected 87\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pGetCurrentConsoleFontEx(std_output, TRUE, &cfix);
     ok(!ret, "got %d, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %lu, expected 87\n", GetLastError());
 
     cfix.cbSize = sizeof(CONSOLE_FONT_INFOEX);
 
     SetLastError(0xdeadbeef);
     ret = pGetCurrentConsoleFontEx(NULL, FALSE, &cfix);
     ok(!ret, "got %d, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pGetCurrentConsoleFontEx(NULL, TRUE, &cfix);
     ok(!ret, "got %d, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pGetCurrentConsoleFontEx(std_input, FALSE, &cfix);
     ok(!ret, "got %d, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pGetCurrentConsoleFontEx(std_input, TRUE, &cfix);
     ok(!ret, "got %d, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
 
     CreatePipe(&pipe1, &pipe2, NULL, 0);
     memset(&cfi, 0, sizeof(CONSOLE_FONT_INFO));
     SetLastError(0xdeadbeef);
     ret = pGetCurrentConsoleFontEx(pipe1, TRUE, &cfix);
     ok(!ret, "got %d, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
     CloseHandle(pipe1);
     CloseHandle(pipe2);
 
     SetLastError(0xdeadbeef);
     ret = pGetCurrentConsoleFontEx(std_output, FALSE, &cfix);
     ok(ret, "got %d, expected non-zero\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "got %lu, expected 0xdeadbeef\n", GetLastError());
 
     memset(&cfi, 0, sizeof(CONSOLE_FONT_INFO));
     SetLastError(0xdeadbeef);
     ret = GetCurrentConsoleFont(std_output, FALSE, &cfi);
     ok(ret, "got %d, expected non-zero\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "got %lu, expected 0xdeadbeef\n", GetLastError());
 
     ok(cfix.dwFontSize.X == cfi.dwFontSize.X, "expected values to match\n");
     ok(cfix.dwFontSize.Y == cfi.dwFontSize.Y, "expected values to match\n");
 
     SetLastError(0xdeadbeef);
     c = GetConsoleFontSize(std_output, cfix.nFont);
-    ok(c.X && c.Y, "GetConsoleFontSize failed; err = %u\n", GetLastError());
-    ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+    ok(c.X && c.Y, "GetConsoleFontSize failed; err = %lu\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "got %lu, expected 0xdeadbeef\n", GetLastError());
 
     ok(cfix.dwFontSize.X == c.X, "Font width doesn't match; got %u, expected %u\n",
        cfix.dwFontSize.X, c.X);
@@ -3544,13 +3545,13 @@ static void test_GetCurrentConsoleFontEx(HANDLE std_output)
     SetLastError(0xdeadbeef);
     ret = pGetCurrentConsoleFontEx(std_output, TRUE, &cfix);
     ok(ret, "got %d, expected non-zero\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "got %lu, expected 0xdeadbeef\n", GetLastError());
 
     memset(&cfi, 0, sizeof(CONSOLE_FONT_INFO));
     SetLastError(0xdeadbeef);
     ret = GetCurrentConsoleFont(std_output, TRUE, &cfi);
     ok(ret, "got %d, expected non-zero\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "got %lu, expected 0xdeadbeef\n", GetLastError());
 
     ok(cfix.dwFontSize.X == cfi.dwFontSize.X, "expected values to match\n");
     ok(cfix.dwFontSize.Y == cfi.dwFontSize.Y, "expected values to match\n");
@@ -3574,18 +3575,18 @@ static void test_SetCurrentConsoleFontEx(HANDLE std_output)
     SetLastError(0xdeadbeef);
     ret = SetCurrentConsoleFontEx(NULL, FALSE, &cfix);
     ok(!ret, "got %d, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %lu, expected 87\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = SetCurrentConsoleFontEx(NULL, TRUE, &cfix);
     ok(!ret, "got %d, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %lu, expected 87\n", GetLastError());
 
     CreatePipe(&pipe1, &pipe2, NULL, 0);
     SetLastError(0xdeadbeef);
     ret = SetCurrentConsoleFontEx(pipe1, FALSE, &cfix);
     ok(!ret, "got %d, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %lu, expected 87\n", GetLastError());
     CloseHandle(pipe1);
     CloseHandle(pipe2);
 
@@ -3593,47 +3594,47 @@ static void test_SetCurrentConsoleFontEx(HANDLE std_output)
     SetLastError(0xdeadbeef);
     ret = SetCurrentConsoleFontEx(pipe1, TRUE, &cfix);
     ok(!ret, "got %d, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %lu, expected 87\n", GetLastError());
     CloseHandle(pipe1);
     CloseHandle(pipe2);
 
     SetLastError(0xdeadbeef);
     ret = SetCurrentConsoleFontEx(std_input, FALSE, &cfix);
     ok(!ret, "got %d, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %lu, expected 87\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = SetCurrentConsoleFontEx(std_input, TRUE, &cfix);
     ok(!ret, "got %d, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %lu, expected 87\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = SetCurrentConsoleFontEx(std_output, FALSE, &cfix);
     ok(!ret, "got %d, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %lu, expected 87\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = SetCurrentConsoleFontEx(std_output, TRUE, &cfix);
     ok(!ret, "got %d, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %lu, expected 87\n", GetLastError());
 
     cfix = orig_cfix;
 
     SetLastError(0xdeadbeef);
     ret = SetCurrentConsoleFontEx(NULL, FALSE, &cfix);
     ok(!ret, "got %d, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = SetCurrentConsoleFontEx(NULL, TRUE, &cfix);
     ok(!ret, "got %d, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
 
     CreatePipe(&pipe1, &pipe2, NULL, 0);
     SetLastError(0xdeadbeef);
     ret = SetCurrentConsoleFontEx(pipe1, FALSE, &cfix);
     ok(!ret, "got %d, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
     CloseHandle(pipe1);
     CloseHandle(pipe2);
 
@@ -3641,35 +3642,35 @@ static void test_SetCurrentConsoleFontEx(HANDLE std_output)
     SetLastError(0xdeadbeef);
     ret = SetCurrentConsoleFontEx(pipe1, TRUE, &cfix);
     ok(!ret, "got %d, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
     CloseHandle(pipe1);
     CloseHandle(pipe2);
 
     SetLastError(0xdeadbeef);
     ret = SetCurrentConsoleFontEx(std_input, FALSE, &cfix);
     ok(!ret, "got %d, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = SetCurrentConsoleFontEx(std_input, TRUE, &cfix);
     ok(!ret, "got %d, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = SetCurrentConsoleFontEx(std_output, FALSE, &cfix);
     ok(ret, "got %d, expected non-zero\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "got %lu, expected 0xdeadbeef\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = SetCurrentConsoleFontEx(std_output, TRUE, &cfix);
     ok(ret, "got %d, expected non-zero\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "got %lu, expected 0xdeadbeef\n", GetLastError());
 
     /* Restore original console font parameters */
     SetLastError(0xdeadbeef);
     ret = SetCurrentConsoleFontEx(std_output, FALSE, &orig_cfix);
     ok(ret, "got %d, expected non-zero\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "got %lu, expected 0xdeadbeef\n", GetLastError());
 }
 
 static void test_GetConsoleFontSize(HANDLE std_output)
@@ -3687,14 +3688,14 @@ static void test_GetConsoleFontSize(HANDLE std_output)
     memset(&c, 10, sizeof(COORD));
     SetLastError(0xdeadbeef);
     c = GetConsoleFontSize(NULL, index);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
     ok(!c.X, "got %d, expected 0\n", c.X);
     ok(!c.Y, "got %d, expected 0\n", c.Y);
 
     memset(&c, 10, sizeof(COORD));
     SetLastError(0xdeadbeef);
     c = GetConsoleFontSize(GetStdHandle(STD_INPUT_HANDLE), index);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
     ok(!c.X, "got %d, expected 0\n", c.X);
     ok(!c.Y, "got %d, expected 0\n", c.Y);
 
@@ -3702,7 +3703,7 @@ static void test_GetConsoleFontSize(HANDLE std_output)
     memset(&c, 10, sizeof(COORD));
     SetLastError(0xdeadbeef);
     c = GetConsoleFontSize(pipe1, index);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
     ok(!c.X, "got %d, expected 0\n", c.X);
     ok(!c.Y, "got %d, expected 0\n", c.Y);
     CloseHandle(pipe1);
@@ -3712,13 +3713,13 @@ static void test_GetConsoleFontSize(HANDLE std_output)
     memset(&c, 10, sizeof(COORD));
     SetLastError(0xdeadbeef);
     c = GetConsoleFontSize(std_output, cfi.nFont);
-    ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "got %lu, expected 0xdeadbeef\n", GetLastError());
     GetClientRect(GetConsoleWindow(), &r);
     GetConsoleScreenBufferInfo(std_output, &csbi);
     font_width = (r.right - r.left) / (csbi.srWindow.Right - csbi.srWindow.Left + 1);
     font_height = (r.bottom - r.top) / (csbi.srWindow.Bottom - csbi.srWindow.Top + 1);
-    ok(c.X == font_width, "got %d, expected %d\n", c.X, font_width);
-    ok(c.Y == font_height, "got %d, expected %d\n", c.Y, font_height);
+    ok(c.X == font_width, "got %d, expected %ld\n", c.X, font_width);
+    ok(c.Y == font_height, "got %d, expected %ld\n", c.Y, font_height);
 
     hmod = GetModuleHandleA("kernel32.dll");
     pGetNumberOfConsoleFonts = (void *)GetProcAddress(hmod, "GetNumberOfConsoleFonts");
@@ -3733,7 +3734,7 @@ static void test_GetConsoleFontSize(HANDLE std_output)
     SetLastError(0xdeadbeef);
     c = GetConsoleFontSize(std_output, index);
     ok(GetLastError() == ERROR_INVALID_PARAMETER || broken(GetLastError() == 0xdeadbeef) /* win10 1809 */,
-        "unexpected last error %u\n", GetLastError());
+        "unexpected last error %lu\n", GetLastError());
     if (GetLastError() == ERROR_INVALID_PARAMETER)
     {
         ok(!c.X, "got %d, expected 0\n", c.X);
@@ -3758,14 +3759,14 @@ static void test_GetLargestConsoleWindowSize(HANDLE std_output)
     memset(&c, 10, sizeof(COORD));
     SetLastError(0xdeadbeef);
     c = GetLargestConsoleWindowSize(NULL);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
     ok(!c.X, "got %d, expected 0\n", c.X);
     ok(!c.Y, "got %d, expected 0\n", c.Y);
 
     memset(&c, 10, sizeof(COORD));
     SetLastError(0xdeadbeef);
     c = GetLargestConsoleWindowSize(GetStdHandle(STD_INPUT_HANDLE));
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
     ok(!c.X, "got %d, expected 0\n", c.X);
     ok(!c.Y, "got %d, expected 0\n", c.Y);
 
@@ -3773,7 +3774,7 @@ static void test_GetLargestConsoleWindowSize(HANDLE std_output)
     memset(&c, 10, sizeof(COORD));
     SetLastError(0xdeadbeef);
     c = GetLargestConsoleWindowSize(pipe1);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
     ok(!c.X, "got %d, expected 0\n", c.X);
     ok(!c.Y, "got %d, expected 0\n", c.Y);
     CloseHandle(pipe1);
@@ -3806,16 +3807,16 @@ static void test_GetLargestConsoleWindowSize(HANDLE std_output)
         memset(&c, 10, sizeof(COORD));
         SetLastError(0xdeadbeef);
         c = GetLargestConsoleWindowSize(std_output);
-        ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+        ok(GetLastError() == 0xdeadbeef, "got %lu, expected 0xdeadbeef\n", GetLastError());
         GetCurrentConsoleFont(std_output, FALSE, &cfi);
         font = GetConsoleFontSize(std_output, cfi.nFont);
         maxcon_w = workarea_w / font.X;
         maxcon_h = workarea_h / font.Y;
-        ok(c.X == maxcon_w || c.X == maxcon_w - 1 /* Win10 */, "got %d, expected %d\n", c.X, maxcon_w);
-        ok(c.Y == maxcon_h || c.Y == maxcon_h - 1 /* Win10 */, "got %d, expected %d\n", c.Y, maxcon_h);
+        ok(c.X == maxcon_w || c.X == maxcon_w - 1 /* Win10 */, "got %d, expected %ld\n", c.X, maxcon_w);
+        ok(c.Y == maxcon_h || c.Y == maxcon_h - 1 /* Win10 */, "got %d, expected %ld\n", c.Y, maxcon_h);
 
         ret = GetConsoleScreenBufferInfo(std_output, &sbi);
-        ok(ret, "GetConsoleScreenBufferInfo failed %u\n", GetLastError());
+        ok(ret, "GetConsoleScreenBufferInfo failed %lu\n", GetLastError());
         ok(sbi.dwMaximumWindowSize.X == min(c.X, sbi.dwSize.X), "got %d, expected %d\n",
            sbi.dwMaximumWindowSize.X, min(c.X, sbi.dwSize.X));
         ok(sbi.dwMaximumWindowSize.Y == min(c.Y, sbi.dwSize.Y), "got %d, expected %d\n",
@@ -3873,17 +3874,17 @@ static void test_GetConsoleFontInfo(HANDLE std_output)
         HeapFree(GetProcessHeap(), 0, cfi);
         return;
     }
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pGetConsoleFontInfo(GetStdHandle(STD_INPUT_HANDLE), FALSE, 0, cfi);
     ok(!ret, "got %d, expected zero\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pGetConsoleFontInfo(std_output, FALSE, 0, cfi);
     ok(!ret, "got %d, expected zero\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "got %lu, expected 0xdeadbeef\n", GetLastError());
 
     GetConsoleScreenBufferInfo(std_output, &csbi);
     win_width = csbi.srWindow.Right - csbi.srWindow.Left + 1;
@@ -3903,7 +3904,7 @@ static void test_GetConsoleFontInfo(HANDLE std_output)
 
     for (i = 0; i < num_fonts; i++)
     {
-        ok(cfi[i].nFont == i, "element out of order, got nFont %d, expected %d\n", cfi[i].nFont, i);
+        ok(cfi[i].nFont == i, "element out of order, got nFont %ld, expected %ld\n", cfi[i].nFont, i);
         tmp_font = GetConsoleFontSize(std_output, cfi[i].nFont);
         tmp_w = (double)orig_font.X / tmp_font.X * win_width;
         tmp_h = (double)orig_font.Y / tmp_font.Y * win_height;
@@ -3914,17 +3915,17 @@ static void test_GetConsoleFontInfo(HANDLE std_output)
     SetLastError(0xdeadbeef);
     ret = pGetConsoleFontInfo(NULL, TRUE, 0, cfi);
     ok(!ret, "got %d, expected zero\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pGetConsoleFontInfo(GetStdHandle(STD_INPUT_HANDLE), TRUE, 0, cfi);
     ok(!ret, "got %d, expected zero\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pGetConsoleFontInfo(std_output, TRUE, 0, cfi);
     ok(!ret, "got %d, expected zero\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "got %lu, expected 0xdeadbeef\n", GetLastError());
 
     memset(cfi, 0, memsize);
     ret = pGetConsoleFontInfo(std_output, TRUE, num_fonts, cfi);
@@ -3936,7 +3937,7 @@ static void test_GetConsoleFontInfo(HANDLE std_output)
 
     for (i = 0; i < num_fonts; i++)
     {
-        ok(cfi[i].nFont == i, "element out of order, got nFont %d, expected %d\n", cfi[i].nFont, i);
+        ok(cfi[i].nFont == i, "element out of order, got nFont %ld, expected %ld\n", cfi[i].nFont, i);
         tmp_font = GetConsoleFontSize(std_output, cfi[i].nFont);
         tmp_w = (double)orig_font.X / tmp_font.X * csbi.dwMaximumWindowSize.X;
         tmp_h = (double)orig_font.Y / tmp_font.Y * csbi.dwMaximumWindowSize.Y;
@@ -3973,12 +3974,12 @@ static void test_SetConsoleFont(HANDLE std_output)
         skip("SetConsoleFont is not implemented\n");
         return;
     }
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pSetConsoleFont(GetStdHandle(STD_INPUT_HANDLE), 0);
     ok(!ret, "got %d, expected zero\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
 
     pGetNumberOfConsoleFonts = (void *)GetProcAddress(hmod, "GetNumberOfConsoleFonts");
     if (!pGetNumberOfConsoleFonts)
@@ -3992,7 +3993,7 @@ static void test_SetConsoleFont(HANDLE std_output)
     SetLastError(0xdeadbeef);
     ret = pSetConsoleFont(std_output, num_fonts);
     ok(!ret, "got %d, expected zero\n", ret);
-    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %lu, expected 87\n", GetLastError());
 }
 
 static void test_GetConsoleScreenBufferInfoEx(HANDLE std_output)
@@ -4015,42 +4016,42 @@ static void test_GetConsoleScreenBufferInfoEx(HANDLE std_output)
     SetLastError(0xdeadbeef);
     ret = pGetConsoleScreenBufferInfoEx(NULL, &csbix);
     ok(!ret, "got %d, expected zero\n", ret);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %lu, expected 87\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pGetConsoleScreenBufferInfoEx(std_input, &csbix);
     ok(!ret, "got %d, expected zero\n", ret);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %lu, expected 87\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pGetConsoleScreenBufferInfoEx(std_output, &csbix);
     ok(!ret, "got %d, expected zero\n", ret);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %lu, expected 87\n", GetLastError());
 
     csbix.cbSize = sizeof(CONSOLE_SCREEN_BUFFER_INFOEX);
 
     SetLastError(0xdeadbeef);
     ret = pGetConsoleScreenBufferInfoEx(NULL, &csbix);
     ok(!ret, "got %d, expected zero\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pGetConsoleScreenBufferInfoEx(std_input, &csbix);
     ok(!ret, "got %d, expected zero\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
 
     CreatePipe(&pipe1, &pipe2, NULL, 0);
     SetLastError(0xdeadbeef);
     ret = pGetConsoleScreenBufferInfoEx(std_input, &csbix);
     ok(!ret, "got %d, expected zero\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
     CloseHandle(pipe1);
     CloseHandle(pipe2);
 
     SetLastError(0xdeadbeef);
     ret = pGetConsoleScreenBufferInfoEx(std_output, &csbix);
     ok(ret, "got %d, expected non-zero\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "got %lu, expected 0xdeadbeef\n", GetLastError());
 }
 
 static void test_FreeConsole(void)
@@ -4066,7 +4067,7 @@ static void test_FreeConsole(void)
     ok(RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle != NULL, "ConsoleHandle is NULL\n");
     ok(!SetConsoleCtrlHandler(mydummych, FALSE), "dummy ctrl handler shouldn't be set\n");
     ret = SetConsoleCtrlHandler(mydummych, TRUE);
-    ok(ret, "SetConsoleCtrlHandler failed: %u\n", GetLastError());
+    ok(ret, "SetConsoleCtrlHandler failed: %lu\n", GetLastError());
     if (!skip_nt)
     {
         unbound_input  = create_unbound_handle(FALSE, TRUE);
@@ -4074,7 +4075,7 @@ static void test_FreeConsole(void)
     }
 
     ret = FreeConsole();
-    ok(ret, "FreeConsole failed: %u\n", GetLastError());
+    ok(ret, "FreeConsole failed: %lu\n", GetLastError());
 
     ok(RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle == NULL, "ConsoleHandle = %p\n",
        RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle);
@@ -4082,67 +4083,67 @@ static void test_FreeConsole(void)
     handle = CreateFileA("CONOUT$", GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
     ok(handle == INVALID_HANDLE_VALUE &&
        (GetLastError() == ERROR_INVALID_HANDLE || broken(GetLastError() == ERROR_ACCESS_DENIED /* winxp */)),
-       "CreateFileA failed: %u\n", GetLastError());
+       "CreateFileA failed: %lu\n", GetLastError());
 
     handle = CreateFileA("CONIN$", GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
     ok(handle == INVALID_HANDLE_VALUE &&
        (GetLastError() == ERROR_INVALID_HANDLE || broken(GetLastError() == ERROR_ACCESS_DENIED /* winxp */)),
-       "CreateFileA failed: %u\n", GetLastError());
+       "CreateFileA failed: %lu\n", GetLastError());
 
     handle = CreateFileA("CON", GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
     ok(handle == INVALID_HANDLE_VALUE &&
        (GetLastError() == ERROR_INVALID_HANDLE || broken(GetLastError() == ERROR_ACCESS_DENIED /* winxp */)),
-       "CreateFileA failed: %u\n", GetLastError());
+       "CreateFileA failed: %lu\n", GetLastError());
 
     handle = CreateFileA("CON", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
     ok(handle == INVALID_HANDLE_VALUE &&
        (GetLastError() == ERROR_INVALID_HANDLE || broken(GetLastError() == ERROR_FILE_NOT_FOUND /* winxp */)),
-       "CreateFileA failed: %u\n", GetLastError());
+       "CreateFileA failed: %lu\n", GetLastError());
 
     handle = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE,
                                        FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                                        CONSOLE_TEXTMODE_BUFFER, NULL);
     ok(handle == INVALID_HANDLE_VALUE && GetLastError() == ERROR_INVALID_HANDLE,
-       "CreateConsoleScreenBuffer returned: %p (%u)\n", handle, GetLastError());
+       "CreateConsoleScreenBuffer returned: %p (%lu)\n", handle, GetLastError());
 
     SetLastError(0xdeadbeef);
     cp = GetConsoleCP();
     ok(!cp, "cp = %x\n", cp);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "last error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "last error %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     cp = GetConsoleOutputCP();
     ok(!cp, "cp = %x\n", cp);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "last error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "last error %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = SetConsoleCP(GetOEMCP());
-    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "SetConsoleCP returned %x(%u)\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "SetConsoleCP returned %x(%lu)\n", ret, GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = SetConsoleOutputCP(GetOEMCP());
-    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "SetConsoleCP returned %x(%u)\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "SetConsoleCP returned %x(%lu)\n", ret, GetLastError());
 
     if (skip_nt) return;
 
     SetLastError(0xdeadbeef);
     memset( title, 0xc0, sizeof(title) );
     size = GetConsoleTitleW( title, ARRAY_SIZE(title) );
-    ok(!size, "GetConsoleTitleW returned %u\n", size);
+    ok(!size, "GetConsoleTitleW returned %lu\n", size);
     ok(title[0] == 0xc0c0, "title byffer changed\n");
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "last error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "last error %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = SetConsoleTitleW( L"test" );
-    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "SetConsoleTitleW returned %x(%u)\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "SetConsoleTitleW returned %x(%lu)\n", ret, GetLastError());
 
     SetLastError(0xdeadbeef);
     hwnd = GetConsoleWindow();
     ok(!hwnd, "hwnd = %p\n", hwnd);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "last error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "last error %lu\n", GetLastError());
 
     ret = GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0);
-    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "GenerateConsoleCtrlEvent returned %x(%u)\n",
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "GenerateConsoleCtrlEvent returned %x(%lu)\n",
        ret, GetLastError());
 
     SetStdHandle( STD_INPUT_HANDLE, (HANDLE)0xdeadbeef );
@@ -4154,27 +4155,27 @@ static void test_FreeConsole(void)
 
     ret = ReadFile(unbound_input, buf, sizeof(buf), &size, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
-       "ReadFile returned %x %u\n", ret, GetLastError());
+       "ReadFile returned %x %lu\n", ret, GetLastError());
 
     ret = FlushFileBuffers(unbound_input);
     ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
-       "ReadFile returned %x %u\n", ret, GetLastError());
+       "ReadFile returned %x %lu\n", ret, GetLastError());
 
     ret = WriteFile(unbound_input, "test", 4, &size, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
-       "ReadFile returned %x %u\n", ret, GetLastError());
+       "ReadFile returned %x %lu\n", ret, GetLastError());
 
     ret = GetConsoleMode(unbound_input, &mode);
     ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
-       "GetConsoleMode returned %x %u\n", ret, GetLastError());
+       "GetConsoleMode returned %x %lu\n", ret, GetLastError());
     ret = GetConsoleMode(unbound_output, &mode);
     ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
-       "GetConsoleMode returned %x %u\n", ret, GetLastError());
+       "GetConsoleMode returned %x %lu\n", ret, GetLastError());
 
     type = GetFileType(unbound_input);
-    ok(type == FILE_TYPE_CHAR, "GetFileType returned %u\n", type);
+    ok(type == FILE_TYPE_CHAR, "GetFileType returned %lu\n", type);
     type = GetFileType(unbound_output);
-    ok(type == FILE_TYPE_CHAR, "GetFileType returned %u\n", type);
+    ok(type == FILE_TYPE_CHAR, "GetFileType returned %lu\n", type);
 
     todo_wine
     ok(!SetConsoleCtrlHandler(mydummych, FALSE), "FreeConsole() should have reset ctrl handlers' list\n");
@@ -4208,24 +4209,24 @@ static void test_SetConsoleScreenBufferInfoEx(HANDLE std_output)
     SetLastError(0xdeadbeef);
     ret = pSetConsoleScreenBufferInfoEx(NULL, &info);
     ok(!ret, "got %d, expected zero\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %lu, expected 6\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pSetConsoleScreenBufferInfoEx(std_output, &info);
     ok(ret, "got %d, expected one\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "got %lu, expected 0xdeadbeef\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pSetConsoleScreenBufferInfoEx(std_input, &info);
     ok(!ret, "got %d, expected zero\n", ret);
     ok(GetLastError() == ERROR_INVALID_HANDLE || GetLastError() == ERROR_ACCESS_DENIED,
-            "got %u, expected 5 or 6\n", GetLastError());
+            "got %lu, expected 5 or 6\n", GetLastError());
 
     info.cbSize = 0;
     SetLastError(0xdeadbeef);
     ret = pSetConsoleScreenBufferInfoEx(std_output, &info);
     ok(!ret, "got %d, expected zero\n", ret);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %lu, expected 87\n", GetLastError());
 
     CloseHandle(std_input);
 }
@@ -4236,20 +4237,20 @@ static void test_console_title(void)
     BOOL ret;
 
     ret = SetConsoleTitleW(L"test");
-    ok(ret, "SetConsoleTitleW failed: %u\n", GetLastError());
+    ok(ret, "SetConsoleTitleW failed: %lu\n", GetLastError());
 
     ret = GetConsoleTitleW(buf, ARRAY_SIZE(buf));
-    ok(ret, "GetConsoleTitleW failed: %u\n", GetLastError());
+    ok(ret, "GetConsoleTitleW failed: %lu\n", GetLastError());
     ok(!wcscmp(buf, L"test"), "title = %s\n", wine_dbgstr_w(buf));
 
     if (!skip_nt)
     {
         ret = GetConsoleTitleW(buf, 2);
-        ok(ret, "GetConsoleTitleW failed: %u\n", GetLastError());
+        ok(ret, "GetConsoleTitleW failed: %lu\n", GetLastError());
         ok(!wcscmp(buf, L"t"), "title = %s\n", wine_dbgstr_w(buf));
 
         ret = GetConsoleTitleW(buf, 4);
-        ok(ret, "GetConsoleTitleW failed: %u\n", GetLastError());
+        ok(ret, "GetConsoleTitleW failed: %lu\n", GetLastError());
         ok(!wcscmp(buf, L"tes"), "title = %s\n", wine_dbgstr_w(buf));
     }
 }
@@ -4267,35 +4268,35 @@ static void test_file_info(HANDLE input, HANDLE output)
     if (skip_nt) return;
 
     status = NtQueryInformationFile(input, &io, &std_info, sizeof(std_info), FileStandardInformation);
-    ok(status == STATUS_INVALID_DEVICE_REQUEST, "NtQueryInformationFile returned: %#x\n", status);
+    ok(status == STATUS_INVALID_DEVICE_REQUEST, "NtQueryInformationFile returned: %#lx\n", status);
 
     status = NtQueryInformationFile(output, &io, &std_info, sizeof(std_info), FileStandardInformation);
-    ok(status == STATUS_INVALID_DEVICE_REQUEST, "NtQueryInformationFile returned: %#x\n", status);
+    ok(status == STATUS_INVALID_DEVICE_REQUEST, "NtQueryInformationFile returned: %#lx\n", status);
 
     ret = GetFileSizeEx(input, &size);
     ok(!ret && GetLastError() == ERROR_INVALID_FUNCTION,
-       "GetFileSizeEx returned %x(%u)\n", ret, GetLastError());
+       "GetFileSizeEx returned %x(%lu)\n", ret, GetLastError());
 
     ret = GetFileSizeEx(output, &size);
     ok(!ret && GetLastError() == ERROR_INVALID_FUNCTION,
-       "GetFileSizeEx returned %x(%u)\n", ret, GetLastError());
+       "GetFileSizeEx returned %x(%lu)\n", ret, GetLastError());
 
     status = NtQueryVolumeInformationFile(input, &io, &fs_info, sizeof(fs_info), FileFsDeviceInformation);
-    ok(!status, "NtQueryVolumeInformationFile failed: %#x\n", status);
-    ok(fs_info.DeviceType == FILE_DEVICE_CONSOLE, "DeviceType = %u\n", fs_info.DeviceType);
+    ok(!status, "NtQueryVolumeInformationFile failed: %#lx\n", status);
+    ok(fs_info.DeviceType == FILE_DEVICE_CONSOLE, "DeviceType = %lu\n", fs_info.DeviceType);
     ok(fs_info.Characteristics == FILE_DEVICE_ALLOW_APPCONTAINER_TRAVERSAL,
-       "Characteristics = %x\n", fs_info.Characteristics);
+       "Characteristics = %lx\n", fs_info.Characteristics);
 
     status = NtQueryVolumeInformationFile(output, &io, &fs_info, sizeof(fs_info), FileFsDeviceInformation);
-    ok(!status, "NtQueryVolumeInformationFile failed: %#x\n", status);
-    ok(fs_info.DeviceType == FILE_DEVICE_CONSOLE, "DeviceType = %u\n", fs_info.DeviceType);
+    ok(!status, "NtQueryVolumeInformationFile failed: %#lx\n", status);
+    ok(fs_info.DeviceType == FILE_DEVICE_CONSOLE, "DeviceType = %lu\n", fs_info.DeviceType);
     ok(fs_info.Characteristics == FILE_DEVICE_ALLOW_APPCONTAINER_TRAVERSAL,
-       "Characteristics = %x\n", fs_info.Characteristics);
+       "Characteristics = %lx\n", fs_info.Characteristics);
 
     type = GetFileType(input);
-    ok(type == FILE_TYPE_CHAR, "GetFileType returned %u\n", type);
+    ok(type == FILE_TYPE_CHAR, "GetFileType returned %lu\n", type);
     type = GetFileType(output);
-    ok(type == FILE_TYPE_CHAR, "GetFileType returned %u\n", type);
+    ok(type == FILE_TYPE_CHAR, "GetFileType returned %lu\n", type);
 }
 
 static void test_AttachConsole_child(DWORD console_pid)
@@ -4308,15 +4309,15 @@ static void test_AttachConsole_child(DWORD console_pid)
     BOOL res;
 
     res = CreatePipe(&pipe_in, &pipe_out, NULL, 0);
-    ok(res, "CreatePipe failed: %u\n", GetLastError());
+    ok(res, "CreatePipe failed: %lu\n", GetLastError());
 
     res = AttachConsole(console_pid);
     ok(!res && GetLastError() == ERROR_ACCESS_DENIED,
-       "AttachConsole returned: %x(%u)\n", res, GetLastError());
+       "AttachConsole returned: %x(%lu)\n", res, GetLastError());
 
     ok(RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle != NULL, "ConsoleHandle is NULL\n");
     res = FreeConsole();
-    ok(res, "FreeConsole failed: %u\n", GetLastError());
+    ok(res, "FreeConsole failed: %lu\n", GetLastError());
     ok(RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle == NULL, "ConsoleHandle = %p\n",
        RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle);
 
@@ -4324,10 +4325,10 @@ static void test_AttachConsole_child(DWORD console_pid)
 
     ok(!SetConsoleCtrlHandler(mydummych, FALSE), "dummy ctrl handler shouldn't be set\n");
     res = SetConsoleCtrlHandler(mydummych, TRUE);
-    ok(res, "SetConsoleCtrlHandler failed: %u\n", GetLastError());
+    ok(res, "SetConsoleCtrlHandler failed: %lu\n", GetLastError());
 
     res = AttachConsole(console_pid);
-    ok(res, "AttachConsole failed: %u\n", GetLastError());
+    ok(res, "AttachConsole failed: %lu\n", GetLastError());
 
     ok(pipe_out != GetStdHandle(STD_ERROR_HANDLE), "std handle not set to console\n");
     ok(RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle != NULL, "ConsoleHandle is NULL\n");
@@ -4336,21 +4337,21 @@ static void test_AttachConsole_child(DWORD console_pid)
     ok(console != INVALID_HANDLE_VALUE, "Could not open console\n");
 
     res = ReadConsoleOutputCharacterA(console, buf, 6, c, &len);
-    ok(res, "ReadConsoleOutputCharacterA failed: %u\n", GetLastError());
-    ok(len == 6, "len = %u\n", len);
+    ok(res, "ReadConsoleOutputCharacterA failed: %lu\n", GetLastError());
+    ok(len == 6, "len = %lu\n", len);
     ok(!memcmp(buf, "Parent", 6), "Unexpected console output\n");
 
     todo_wine
     ok(!SetConsoleCtrlHandler(mydummych, FALSE), "AttachConsole() should have reset ctrl handlers' list\n");
 
     res = FreeConsole();
-    ok(res, "FreeConsole failed: %u\n", GetLastError());
+    ok(res, "FreeConsole failed: %lu\n", GetLastError());
 
     SetStdHandle(STD_INPUT_HANDLE, pipe_in);
     SetStdHandle(STD_OUTPUT_HANDLE, pipe_out);
 
     res = AttachConsole(ATTACH_PARENT_PROCESS);
-    ok(res, "AttachConsole failed: %u\n", GetLastError());
+    ok(res, "AttachConsole failed: %lu\n", GetLastError());
 
     if (pGetConsoleProcessList)
     {
@@ -4359,14 +4360,14 @@ static void test_AttachConsole_child(DWORD console_pid)
 
         SetLastError(0xdeadbeef);
         len = pGetConsoleProcessList(list, 1);
-        ok(len == 2, "Expected 2 processes, got %d\n", len);
-        ok(list[0] == 0xbabebabe, "Unexpected value in list %u\n", list[0]);
+        ok(len == 2, "Expected 2 processes, got %ld\n", len);
+        ok(list[0] == 0xbabebabe, "Unexpected value in list %lu\n", list[0]);
 
         len = pGetConsoleProcessList(list, 2);
-        ok(len == 2, "Expected 2 processes, got %d\n", len);
+        ok(len == 2, "Expected 2 processes, got %ld\n", len);
         ok(list[0] == console_pid || list[1] == console_pid, "Parent PID not in list\n");
         ok(list[0] == pid || list[1] == pid, "PID not in list\n");
-        ok(GetLastError() == 0xdeadbeef, "Unexpected last error: %u\n", GetLastError());
+        ok(GetLastError() == 0xdeadbeef, "Unexpected last error: %lu\n", GetLastError());
     }
 
     ok(pipe_in != GetStdHandle(STD_INPUT_HANDLE), "std handle not set to console\n");
@@ -4376,15 +4377,15 @@ static void test_AttachConsole_child(DWORD console_pid)
     ok(console != INVALID_HANDLE_VALUE, "Could not open console\n");
 
     res = ReadConsoleOutputCharacterA(console, buf, 6, c, &len);
-    ok(res, "ReadConsoleOutputCharacterA failed: %u\n", GetLastError());
-    ok(len == 6, "len = %u\n", len);
+    ok(res, "ReadConsoleOutputCharacterA failed: %lu\n", GetLastError());
+    ok(len == 6, "len = %lu\n", len);
     ok(!memcmp(buf, "Parent", 6), "Unexpected console output\n");
 
     simple_write_console(console, "Child");
     CloseHandle(console);
 
     res = FreeConsole();
-    ok(res, "FreeConsole failed: %u\n", GetLastError());
+    ok(res, "FreeConsole failed: %lu\n", GetLastError());
 
     res = CloseHandle(pipe_in);
     ok(res, "pipe_in is no longer valid\n");
@@ -4404,17 +4405,17 @@ static void test_AttachConsole(HANDLE console)
     simple_write_console(console, "Parent console");
 
     winetest_get_mainargs(&argv);
-    sprintf(buf, "\"%s\" console attach_console %x", argv[0], GetCurrentProcessId());
+    sprintf(buf, "\"%s\" console attach_console %lx", argv[0], GetCurrentProcessId());
     res = CreateProcessA(NULL, buf, NULL, NULL, TRUE, 0, NULL, NULL, &si, &info);
-    ok(res, "CreateProcess failed: %u\n", GetLastError());
+    ok(res, "CreateProcess failed: %lu\n", GetLastError());
     CloseHandle(info.hThread);
 
     wait_child_process(info.hProcess);
     CloseHandle(info.hProcess);
 
     res = ReadConsoleOutputCharacterA(console, buf, 5, c, &len);
-    ok(res, "ReadConsoleOutputCharacterA failed: %u\n", GetLastError());
-    ok(len == 5, "len = %u\n", len);
+    ok(res, "ReadConsoleOutputCharacterA failed: %lu\n", GetLastError());
+    ok(len == 5, "len = %lu\n", len);
     ok(!memcmp(buf, "Child", 5), "Unexpected console output\n");
 }
 
@@ -4431,16 +4432,16 @@ static void test_AllocConsole_child(void)
     prev_output = GetStdHandle(STD_OUTPUT_HANDLE);
     res = DuplicateHandle(GetCurrentProcess(), prev_output, GetCurrentProcess(), &unbound_output,
                           0, FALSE, DUPLICATE_SAME_ACCESS);
-    ok(res, "DuplicateHandle failed: %u\n", GetLastError());
+    ok(res, "DuplicateHandle failed: %lu\n", GetLastError());
 
     res = GetConsoleMode(unbound_output, &mode);
-    ok(res, "GetConsoleMode failed: %u\n", GetLastError());
+    ok(res, "GetConsoleMode failed: %lu\n", GetLastError());
 
     prev_error = GetStdHandle(STD_ERROR_HANDLE);
     if (si.dwFlags & STARTF_USESTDHANDLES)
     {
         res = GetConsoleMode(prev_error, &mode);
-        ok(!res && GetLastError() == ERROR_INVALID_HANDLE, "GetConsoleMode failed: %u\n", GetLastError());
+        ok(!res && GetLastError() == ERROR_INVALID_HANDLE, "GetConsoleMode failed: %lu\n", GetLastError());
     }
 
     FreeConsole();
@@ -4448,13 +4449,13 @@ static void test_AllocConsole_child(void)
     ok(GetStdHandle(STD_OUTPUT_HANDLE) == prev_output, "GetStdHandle(STD_OUTPUT_HANDLE) = %p\n", GetStdHandle(STD_OUTPUT_HANDLE));
     ok(GetStdHandle(STD_ERROR_HANDLE) == prev_error, "GetStdHandle(STD_ERROR_HANDLE) = %p\n", GetStdHandle(STD_ERROR_HANDLE));
     res = GetConsoleMode(unbound_output, &mode);
-    ok(!res && GetLastError() == ERROR_INVALID_HANDLE, "GetConsoleMode failed: %u\n", GetLastError());
+    ok(!res && GetLastError() == ERROR_INVALID_HANDLE, "GetConsoleMode failed: %lu\n", GetLastError());
 
     ok(!SetConsoleCtrlHandler(mydummych, FALSE), "dummy ctrl handler shouldn't be set\n");
     res = SetConsoleCtrlHandler(mydummych, TRUE);
-    ok(res, "SetConsoleCtrlHandler failed: %u\n", GetLastError());
+    ok(res, "SetConsoleCtrlHandler failed: %lu\n", GetLastError());
     res = AllocConsole();
-    ok(res, "AllocConsole failed: %u\n", GetLastError());
+    ok(res, "AllocConsole failed: %lu\n", GetLastError());
 
     if (si.dwFlags & STARTF_USESTDHANDLES)
     {
@@ -4463,7 +4464,7 @@ static void test_AllocConsole_child(void)
     }
 
     res = GetConsoleMode(unbound_output, &mode);
-    ok(res, "GetConsoleMode failed: %u\n", GetLastError());
+    ok(res, "GetConsoleMode failed: %lu\n", GetLastError());
 
     todo_wine
     ok(!SetConsoleCtrlHandler(mydummych, FALSE), "AllocConsole() should have reset ctrl handlers' list\n");
@@ -4472,20 +4473,20 @@ static void test_AllocConsole_child(void)
     SetStdHandle(STD_OUTPUT_HANDLE, NULL);
     SetStdHandle(STD_ERROR_HANDLE, NULL);
     res = AllocConsole();
-    ok(res, "AllocConsole failed: %u\n", GetLastError());
+    ok(res, "AllocConsole failed: %lu\n", GetLastError());
 
     ok(GetStdHandle(STD_OUTPUT_HANDLE) != NULL, "GetStdHandle(STD_OUTPUT_HANDLE) = %p\n", GetStdHandle(STD_OUTPUT_HANDLE));
     ok(GetStdHandle(STD_ERROR_HANDLE) != NULL, "GetStdHandle(STD_ERROR_HANDLE) = %p\n", GetStdHandle(STD_ERROR_HANDLE));
 
     res = GetConsoleMode(unbound_output, &mode);
-    ok(res, "GetConsoleMode failed: %u\n", GetLastError());
+    ok(res, "GetConsoleMode failed: %lu\n", GetLastError());
     res = GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &mode);
-    ok(res, "GetConsoleMode failed: %u\n", GetLastError());
+    ok(res, "GetConsoleMode failed: %lu\n", GetLastError());
     res = GetConsoleMode(GetStdHandle(STD_ERROR_HANDLE), &mode);
-    ok(res, "GetConsoleMode failed: %u\n", GetLastError());
+    ok(res, "GetConsoleMode failed: %lu\n", GetLastError());
 
     res = CloseHandle(unbound_output);
-    ok(res, "CloseHandle failed: %u\n", GetLastError());
+    ok(res, "CloseHandle failed: %lu\n", GetLastError());
 }
 
 static void test_AllocConsole(void)
@@ -4502,18 +4503,18 @@ static void test_AllocConsole(void)
     winetest_get_mainargs(&argv);
     sprintf(buf, "\"%s\" console alloc_console", argv[0]);
     res = CreateProcessA(NULL, buf, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &info);
-    ok(res, "CreateProcess failed: %u\n", GetLastError());
+    ok(res, "CreateProcess failed: %lu\n", GetLastError());
     CloseHandle(info.hThread);
     wait_child_process(info.hProcess);
     CloseHandle(info.hProcess);
 
     res = CreatePipe(&pipe_read, &pipe_write, &inheritable_attr, 0);
-    ok(res, "CreatePipe failed: %u\n", GetLastError());
+    ok(res, "CreatePipe failed: %lu\n", GetLastError());
 
     si.dwFlags = STARTF_USESTDHANDLES;
     si.hStdError = pipe_write;
     res = CreateProcessA(NULL, buf, NULL, NULL, TRUE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &info);
-    ok(res, "CreateProcess failed: %u\n", GetLastError());
+    ok(res, "CreateProcess failed: %lu\n", GetLastError());
     CloseHandle(info.hThread);
     wait_child_process(info.hProcess);
     CloseHandle(info.hProcess);
@@ -4531,39 +4532,39 @@ static void test_pseudo_console_child(HANDLE input, HANDLE output)
     BOOL ret;
 
     ret = GetConsoleMode(input, &mode);
-    ok(ret, "GetConsoleMode failed: %u\n", GetLastError());
+    ok(ret, "GetConsoleMode failed: %lu\n", GetLastError());
     ok(mode == (ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT | ENABLE_MOUSE_INPUT |
                 ENABLE_INSERT_MODE | ENABLE_QUICK_EDIT_MODE | ENABLE_EXTENDED_FLAGS | ENABLE_AUTO_POSITION),
-       "mode = %x\n", mode);
+       "mode = %lx\n", mode);
 
     ret = SetConsoleMode(input, mode & ~ENABLE_AUTO_POSITION);
-    ok(ret, "SetConsoleMode failed: %u\n", GetLastError());
+    ok(ret, "SetConsoleMode failed: %lu\n", GetLastError());
 
     ret = GetConsoleMode(input, &mode);
-    ok(ret, "GetConsoleMode failed: %u\n", GetLastError());
+    ok(ret, "GetConsoleMode failed: %lu\n", GetLastError());
     ok(mode == (ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT | ENABLE_MOUSE_INPUT |
-                ENABLE_INSERT_MODE | ENABLE_QUICK_EDIT_MODE | ENABLE_EXTENDED_FLAGS), "mode = %x\n", mode);
+                ENABLE_INSERT_MODE | ENABLE_QUICK_EDIT_MODE | ENABLE_EXTENDED_FLAGS), "mode = %lx\n", mode);
 
     ret = SetConsoleMode(input, mode | ENABLE_AUTO_POSITION);
-    ok(ret, "SetConsoleMode failed: %u\n", GetLastError());
+    ok(ret, "SetConsoleMode failed: %lu\n", GetLastError());
 
     ret = GetConsoleMode(output, &mode);
-    ok(ret, "GetConsoleMode failed: %u\n", GetLastError());
+    ok(ret, "GetConsoleMode failed: %lu\n", GetLastError());
     mode &= ~ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-    ok(mode == (ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT), "mode = %x\n", mode);
+    ok(mode == (ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT), "mode = %lx\n", mode);
 
     ret = SetConsoleMode(output, mode & ~ENABLE_WRAP_AT_EOL_OUTPUT);
-    ok(ret, "SetConsoleMode failed: %u\n", GetLastError());
+    ok(ret, "SetConsoleMode failed: %lu\n", GetLastError());
 
     ret = GetConsoleMode(output, &mode);
-    ok(ret, "GetConsoleMode failed: %u\n", GetLastError());
-    ok(mode == ENABLE_PROCESSED_OUTPUT, "mode = %x\n", mode);
+    ok(ret, "GetConsoleMode failed: %lu\n", GetLastError());
+    ok(mode == ENABLE_PROCESSED_OUTPUT, "mode = %lx\n", mode);
 
     ret = SetConsoleMode(output, mode | ENABLE_WRAP_AT_EOL_OUTPUT);
-    ok(ret, "SetConsoleMode failed: %u\n", GetLastError());
+    ok(ret, "SetConsoleMode failed: %lu\n", GetLastError());
 
     ret = GetConsoleScreenBufferInfo(output, &sb_info);
-    ok(ret, "GetConsoleScreenBufferInfo failed: %u\n", GetLastError());
+    ok(ret, "GetConsoleScreenBufferInfo failed: %lu\n", GetLastError());
     ok(sb_info.dwSize.X == 40, "dwSize.X = %u\n", sb_info.dwSize.X);
     ok(sb_info.dwSize.Y == 30, "dwSize.Y = %u\n", sb_info.dwSize.Y);
     ok(sb_info.dwCursorPosition.X == 0, "dwCursorPosition.X = %u\n", sb_info.dwCursorPosition.X);
@@ -4577,8 +4578,8 @@ static void test_pseudo_console_child(HANDLE input, HANDLE output)
     ok(sb_info.dwMaximumWindowSize.Y == 30, "dwMaximumWindowSize.Y = %u\n", sb_info.dwMaximumWindowSize.Y);
 
     ret = GetConsoleCursorInfo(output, &cursor_info);
-    ok(ret, "GetConsoleCursorInfo failed: %u\n", GetLastError());
-    ok(cursor_info.dwSize == 25, "dwSize = %u\n", cursor_info.dwSize);
+    ok(ret, "GetConsoleCursorInfo failed: %lu\n", GetLastError());
+    ok(cursor_info.dwSize == 25, "dwSize = %lu\n", cursor_info.dwSize);
     ok(cursor_info.bVisible == TRUE, "bVisible = %x\n", cursor_info.bVisible);
 
     hwnd = GetConsoleWindow();
@@ -4593,7 +4594,7 @@ static DWORD WINAPI read_pipe_proc( void *handle )
     char buf[64];
     DWORD size;
     while (ReadFile(handle, buf, sizeof(buf), &size, NULL));
-    ok(GetLastError() == ERROR_BROKEN_PIPE, "ReadFile returned %u\n", GetLastError());
+    ok(GetLastError() == ERROR_BROKEN_PIPE, "ReadFile returned %lu\n", GetLastError());
     CloseHandle(handle);
     return 0;
 }
@@ -4618,11 +4619,11 @@ static void test_pseudo_console(void)
 
     console_pipe = CreateNamedPipeW(L"\\\\.\\pipe\\pseudoconsoleconn", PIPE_ACCESS_DUPLEX,
                                     PIPE_WAIT | PIPE_TYPE_BYTE, 1, 4096, 4096, NMPWAIT_USE_DEFAULT_WAIT, NULL);
-    ok(console_pipe != INVALID_HANDLE_VALUE, "CreateNamedPipeW failed: %u\n", GetLastError());
+    ok(console_pipe != INVALID_HANDLE_VALUE, "CreateNamedPipeW failed: %lu\n", GetLastError());
 
     console_pipe2 = CreateFileW(L"\\\\.\\pipe\\pseudoconsoleconn", GENERIC_READ | GENERIC_WRITE, 0, NULL,
                                 OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
-    ok(console_pipe2 != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
+    ok(console_pipe2 != INVALID_HANDLE_VALUE, "CreateFile failed: %lu\n", GetLastError());
 
     thread = CreateThread( NULL, 0, read_pipe_proc, console_pipe, 0, NULL );
     CloseHandle(thread);
@@ -4630,17 +4631,17 @@ static void test_pseudo_console(void)
     size.X = 0;
     size.Y = 30;
     hres = pCreatePseudoConsole(size, console_pipe2, console_pipe2, 0, &pseudo_console);
-    ok(hres == E_INVALIDARG, "CreatePseudoConsole failed: %08x\n", hres);
+    ok(hres == E_INVALIDARG, "CreatePseudoConsole failed: %08lx\n", hres);
 
     size.X = 40;
     size.Y = 0;
     hres = pCreatePseudoConsole(size, console_pipe2, console_pipe2, 0, &pseudo_console);
-    ok(hres == E_INVALIDARG, "CreatePseudoConsole failed: %08x\n", hres);
+    ok(hres == E_INVALIDARG, "CreatePseudoConsole failed: %08lx\n", hres);
 
     size.X = 40;
     size.Y = 30;
     hres = pCreatePseudoConsole(size, console_pipe2, console_pipe2, 0, &pseudo_console);
-    ok(hres == S_OK, "CreatePseudoConsole failed: %08x\n", hres);
+    ok(hres == S_OK, "CreatePseudoConsole failed: %08lx\n", hres);
     CloseHandle(console_pipe2);
 
     InitializeProcThreadAttributeList(NULL, 1, 0, &attr_size);
@@ -4652,7 +4653,7 @@ static void test_pseudo_console(void)
     winetest_get_mainargs(&argv);
     sprintf(cmdline, "\"%s\" %s --pseudo-console", argv[0], argv[1]);
     ret = CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, EXTENDED_STARTUPINFO_PRESENT, NULL, NULL, &startup.StartupInfo, &info);
-    ok(ret, "CreateProcessW failed: %u\n", GetLastError());
+    ok(ret, "CreateProcessW failed: %lu\n", GetLastError());
 
     CloseHandle(info.hThread);
     HeapFree(GetProcessHeap(), 0, startup.lpAttributeList);
@@ -4679,7 +4680,7 @@ START_TEST(console)
     if (argc > 3 && !strcmp(argv[2], "attach_console"))
     {
         DWORD parent_pid;
-        sscanf(argv[3], "%x", &parent_pid);
+        sscanf(argv[3], "%lx", &parent_pid);
         test_AttachConsole_child(parent_pid);
         return;
     }
@@ -4721,18 +4722,18 @@ START_TEST(console)
                 err = RegSetValueExA(console_key, "FaceName", 0, REG_SZ,
                                      (const BYTE *) font_name, sizeof(font_name));
                 if (err != ERROR_SUCCESS)
-                    trace("Unable to change default console font, error %d\n", err);
+                    trace("Unable to change default console font, error %ld\n", err);
             }
             else
             {
-                trace("Unable to query default console font, error %d\n", err);
+                trace("Unable to query default console font, error %ld\n", err);
                 RegCloseKey(console_key);
                 console_key = NULL;
             }
         }
         else
         {
-            trace("Unable to open HKCU\\Console, error %d\n", err);
+            trace("Unable to open HKCU\\Console, error %ld\n", err);
             console_key = NULL;
         }
 
@@ -4748,7 +4749,7 @@ START_TEST(console)
             else
                 err = RegSetValueExA(console_key, "FaceName", 0, REG_SZ,
                                      (const BYTE *) old_font, strlen(old_font) + 1);
-            ok(err == ERROR_SUCCESS, "Unable to restore default console font, error %d\n", err);
+            ok(err == ERROR_SUCCESS, "Unable to restore default console font, error %ld\n", err);
         }
     }
 
@@ -4765,7 +4766,7 @@ START_TEST(console)
         revert_output = CreateFileA("CONOUT$", GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
         sb = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                                        CONSOLE_TEXTMODE_BUFFER, NULL);
-        ok(sb != INVALID_HANDLE_VALUE, "Could not allocate screen buffer: %u\n", GetLastError());
+        ok(sb != INVALID_HANDLE_VALUE, "Could not allocate screen buffer: %lu\n", GetLastError());
         SetConsoleActiveScreenBuffer(sb);
     }
 
@@ -4795,7 +4796,7 @@ START_TEST(console)
     ok(ret, "Setting sb info\n");
     ret = GetConsoleScreenBufferInfo(hConOut, &sbi);
     ok(ret, "Getting sb info\n");
-    ok(sbi.dwSize.Y == size, "Unexpected buffer size: %d instead of %d\n", sbi.dwSize.Y, size);
+    ok(sbi.dwSize.Y == size, "Unexpected buffer size: %d instead of %ld\n", sbi.dwSize.Y, size);
     if (!ret) return;
 
     test_ReadConsole(hConIn);
