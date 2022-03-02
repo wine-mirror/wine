@@ -152,10 +152,10 @@ INT WINAPI CopyAcceleratorTableW(HACCEL src, LPACCEL dst, INT count)
 /*********************************************************************
  *                    CreateAcceleratorTableA   (USER32.@)
  */
-HACCEL WINAPI CreateAcceleratorTableA(LPACCEL lpaccel, INT count)
+HACCEL WINAPI CreateAcceleratorTableA( ACCEL *accel, INT count )
 {
-    struct accelerator *accel;
     HACCEL handle;
+    ACCEL *table;
     int i;
 
     if (count < 1)
@@ -163,22 +163,21 @@ HACCEL WINAPI CreateAcceleratorTableA(LPACCEL lpaccel, INT count)
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
     }
-    accel = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET( struct accelerator, table[count] ));
-    if (!accel) return 0;
-    accel->count = count;
+    table = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*table) );
+    if (!table) return 0;
     for (i = 0; i < count; i++)
     {
-        accel->table[i].fVirt = lpaccel[i].fVirt;
-        accel->table[i].cmd   = lpaccel[i].cmd;
-        if (!(lpaccel[i].fVirt & FVIRTKEY))
+        table[i].fVirt = accel[i].fVirt;
+        table[i].cmd   = accel[i].cmd;
+        if (!(accel[i].fVirt & FVIRTKEY))
         {
-            char ch = lpaccel[i].key;
-            MultiByteToWideChar( CP_ACP, 0, &ch, 1, &accel->table[i].key, 1 );
+            char ch = accel[i].key;
+            MultiByteToWideChar( CP_ACP, 0, &ch, 1, &table[i].key, 1 );
         }
-        else accel->table[i].key = lpaccel[i].key;
+        else table[i].key = accel[i].key;
     }
-    if (!(handle = alloc_user_handle( &accel->obj, NTUSER_OBJ_ACCEL )))
-        HeapFree( GetProcessHeap(), 0, accel );
+    handle = CreateAcceleratorTableW( table, count );
+    HeapFree( GetProcessHeap(), 0, table );
     TRACE_(accel)("returning %p\n", handle );
     return handle;
 }
