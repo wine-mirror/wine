@@ -29,6 +29,7 @@ import "windows.foundation.idl";
 import "windows.devices.haptics.idl";
 import "windows.gaming.input.forcefeedback.idl";
 import "windows.system.idl";
+import "windows.devices.power.idl";
 #endif
 
 namespace Windows.Gaming.Input {
@@ -317,6 +318,15 @@ namespace Windows.Gaming.Input {
         [eventremove] HRESULT RawGameControllerRemoved([in] EventRegistrationToken token);
         [propget] HRESULT RawGameControllers([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Gaming.Input.RawGameController *> **value);
         HRESULT FromGameController([in] Windows.Gaming.Input.IGameController *game_controller, [out, retval] Windows.Gaming.Input.RawGameController **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        uuid(dcecc681-3963-4da6-955d-553f3b6f6161)
+    ]
+    interface IGameControllerBatteryInfo : IInspectable
+    {
+        HRESULT TryGetBatteryReport([out, retval] Windows.Devices.Power.BatteryReport **value);
     }
 
     [
