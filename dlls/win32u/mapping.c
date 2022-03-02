@@ -98,13 +98,13 @@ static void MAPPING_FixIsotropic( DC * dc )
     if (xdim > ydim)
     {
         INT mincx = (dc->attr->vport_ext.cx >= 0) ? 1 : -1;
-        dc->attr->vport_ext.cx = floor(dc->attr->vport_ext.cx * ydim / xdim + 0.5);
+        dc->attr->vport_ext.cx = GDI_ROUND( dc->attr->vport_ext.cx * ydim / xdim );
         if (!dc->attr->vport_ext.cx) dc->attr->vport_ext.cx = mincx;
     }
     else
     {
         INT mincy = (dc->attr->vport_ext.cy >= 0) ? 1 : -1;
-        dc->attr->vport_ext.cy = floor(dc->attr->vport_ext.cy * xdim / ydim + 0.5);
+        dc->attr->vport_ext.cy = GDI_ROUND( dc->attr->vport_ext.cy * xdim / ydim );
         if (!dc->attr->vport_ext.cy) dc->attr->vport_ext.cy = mincy;
     }
 }
@@ -190,12 +190,12 @@ BOOL dp_to_lp( DC *dc, POINT *points, INT count )
         {
             double x = points->x;
             double y = points->y;
-            points->x = floor( x * dc->xformVport2World.eM11 +
-                               y * dc->xformVport2World.eM21 +
-                               dc->xformVport2World.eDx + 0.5 );
-            points->y = floor( x * dc->xformVport2World.eM12 +
-                               y * dc->xformVport2World.eM22 +
-                               dc->xformVport2World.eDy + 0.5 );
+            points->x = GDI_ROUND( x * dc->xformVport2World.eM11 +
+                                   y * dc->xformVport2World.eM21 +
+                                   dc->xformVport2World.eDx );
+            points->y = GDI_ROUND( x * dc->xformVport2World.eM12 +
+                                   y * dc->xformVport2World.eM22 +
+                                   dc->xformVport2World.eDy );
             points++;
         }
     }
@@ -221,12 +221,12 @@ BOOL WINAPI NtGdiTransformPoints( HDC hdc, const POINT *points_in, POINT *points
         {
             double x = points_in[i].x;
             double y = points_in[i].y;
-            points_out[i].x = floor( x * dc->xformWorld2Vport.eM11 +
-                                     y * dc->xformWorld2Vport.eM21 +
-                                     dc->xformWorld2Vport.eDx + 0.5 );
-            points_out[i].y = floor( x * dc->xformWorld2Vport.eM12 +
-                                     y * dc->xformWorld2Vport.eM22 +
-                                     dc->xformWorld2Vport.eDy + 0.5 );
+            points_out[i].x = GDI_ROUND( x * dc->xformWorld2Vport.eM11 +
+                                         y * dc->xformWorld2Vport.eM21 +
+                                         dc->xformWorld2Vport.eDx );
+            points_out[i].y = GDI_ROUND( x * dc->xformWorld2Vport.eM12 +
+                                         y * dc->xformWorld2Vport.eM22 +
+                                         dc->xformWorld2Vport.eDy );
         }
         ret = TRUE;
         break;
@@ -237,12 +237,12 @@ BOOL WINAPI NtGdiTransformPoints( HDC hdc, const POINT *points_in, POINT *points
         {
             double x = points_in[i].x;
             double y = points_in[i].y;
-            points_out[i].x = floor( x * dc->xformVport2World.eM11 +
-                                     y * dc->xformVport2World.eM21 +
-                                     dc->xformVport2World.eDx + 0.5 );
-            points_out[i].y = floor( x * dc->xformVport2World.eM12 +
-                                     y * dc->xformVport2World.eM22 +
-                                     dc->xformVport2World.eDy + 0.5 );
+            points_out[i].x = GDI_ROUND( x * dc->xformVport2World.eM11 +
+                                         y * dc->xformVport2World.eM21 +
+                                         dc->xformVport2World.eDx );
+            points_out[i].y = GDI_ROUND( x * dc->xformVport2World.eM12 +
+                                         y * dc->xformVport2World.eM22 +
+                                         dc->xformVport2World.eDy );
         }
         ret = TRUE;
         break;
@@ -268,12 +268,12 @@ void lp_to_dp( DC *dc, POINT *points, INT count )
     {
         double x = points->x;
         double y = points->y;
-        points->x = floor( x * dc->xformWorld2Vport.eM11 +
-                           y * dc->xformWorld2Vport.eM21 +
-                           dc->xformWorld2Vport.eDx + 0.5 );
-        points->y = floor( x * dc->xformWorld2Vport.eM12 +
-                           y * dc->xformWorld2Vport.eM22 +
-                           dc->xformWorld2Vport.eDy + 0.5 );
+        points->x = GDI_ROUND( x * dc->xformWorld2Vport.eM11 +
+                               y * dc->xformWorld2Vport.eM21 +
+                               dc->xformWorld2Vport.eDx );
+        points->y = GDI_ROUND( x * dc->xformWorld2Vport.eM12 +
+                               y * dc->xformWorld2Vport.eM22 +
+                               dc->xformWorld2Vport.eDy );
         points++;
     }
 }
