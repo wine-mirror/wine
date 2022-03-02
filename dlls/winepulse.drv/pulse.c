@@ -65,7 +65,7 @@ struct pulse_stream
     BYTE *local_buffer, *tmp_buffer, *peek_buffer;
     void *locked_ptr;
     BOOL please_quit, just_started, just_underran;
-    pa_usec_t last_time, mmdev_period_usec;
+    pa_usec_t mmdev_period_usec;
 
     INT64 clock_lastpos, clock_written;
 
@@ -1409,13 +1409,14 @@ static NTSTATUS pulse_timer_loop(void *args)
     struct timer_loop_params *params = args;
     struct pulse_stream *stream = params->stream;
     LARGE_INTEGER delay;
+    pa_usec_t last_time;
     UINT32 adv_bytes;
     int success;
     pa_operation *o;
 
     pulse_lock();
     delay.QuadPart = -stream->mmdev_period_usec * 10;
-    pa_stream_get_time(stream->stream, &stream->last_time);
+    pa_stream_get_time(stream->stream, &last_time);
     pulse_unlock();
 
     while (!stream->please_quit)
@@ -1439,31 +1440,31 @@ static NTSTATUS pulse_timer_loop(void *args)
         err = pa_stream_get_time(stream->stream, &now);
         if (err == 0)
         {
-            TRACE("got now: %s, last time: %s\n", wine_dbgstr_longlong(now), wine_dbgstr_longlong(stream->last_time));
+            TRACE("got now: %s, last time: %s\n", wine_dbgstr_longlong(now), wine_dbgstr_longlong(last_time));
             if (stream->started && (stream->dataflow == eCapture || stream->held_bytes))
             {
                 if(stream->just_underran)
                 {
-                    stream->last_time = now;
+                    last_time = now;
                     stream->just_started = TRUE;
                 }
 
                 if (stream->just_started)
                 {
                     /* let it play out a period to absorb some latency and get accurate timing */
-                    pa_usec_t diff = now - stream->last_time;
+                    pa_usec_t diff = now - last_time;
 
                     if (diff > stream->mmdev_period_usec)
                     {
                         stream->just_started = FALSE;
-                        stream->last_time = now;
+                        last_time = now;
                     }
                 }
                 else
                 {
-                    INT32 adjust = stream->last_time + stream->mmdev_period_usec - now;
+                    INT32 adjust = last_time + stream->mmdev_period_usec - now;
 
-                    adv_usec = now - stream->last_time;
+                    adv_usec = now - last_time;
 
                     if(adjust > ((INT32)(stream->mmdev_period_usec / 2)))
                         adjust = stream->mmdev_period_usec / 2;
@@ -1472,7 +1473,7 @@ static NTSTATUS pulse_timer_loop(void *args)
 
                     delay.QuadPart = -(stream->mmdev_period_usec + adjust) * 10;
 
-                    stream->last_time += stream->mmdev_period_usec;
+                    last_time += stream->mmdev_period_usec;
                 }
 
                 if (stream->dataflow == eRender)
@@ -1492,7 +1493,7 @@ static NTSTATUS pulse_timer_loop(void *args)
             }
             else
             {
-                stream->last_time = now;
+                last_time = now;
                 delay.QuadPart = -stream->mmdev_period_usec * 10;
             }
         }
