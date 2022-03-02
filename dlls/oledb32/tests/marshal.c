@@ -34,7 +34,7 @@
 
 #define RELEASEMARSHALDATA WM_USER
 
-#define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08x\n", hr)
+#define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error %#08lx\n", hr)
 
 struct host_object_data
 {
@@ -118,7 +118,7 @@ static DWORD start_host_object(IStream *stream, REFIID riid, IUnknown *object, M
 static void end_host_object(DWORD tid, HANDLE thread)
 {
     BOOL ret = PostThreadMessageW(tid, WM_QUIT, 0, 0);
-    ok(ret, "PostThreadMessageW failed with error %d\n", GetLastError());
+    ok(ret, "PostThreadMessageW failed with error %ld\n", GetLastError());
     /* be careful of races - don't return until hosting thread has terminated */
     ok( !WaitForSingleObject(thread, 10000), "wait timed out\n" );
     CloseHandle(thread);
@@ -163,8 +163,8 @@ static HRESULT WINAPI Test_DBProperties_GetProperties(
         ULONG *pcPropertySets,
         DBPROPSET **prgPropertySets)
 {
-    ok(cPropertyIDSets == 0, "Expected cPropertyIDSets to be 0 instead of %d\n", cPropertyIDSets);
-    ok(*pcPropertySets == 0, "Expected *pcPropertySets to be 0 instead of %d\n", *pcPropertySets);
+    ok(cPropertyIDSets == 0, "Expected cPropertyIDSets to be 0 instead of %ld\n", cPropertyIDSets);
+    ok(*pcPropertySets == 0, "Expected *pcPropertySets to be 0 instead of %ld\n", *pcPropertySets);
     *pcPropertySets = 1;
     *prgPropertySets = CoTaskMemAlloc(sizeof(DBPROPSET));
     (*prgPropertySets)[0].rgProperties = CoTaskMemAlloc(sizeof(DBPROP));
@@ -241,20 +241,20 @@ static void test_IDBProperties(void)
 
     propset_count = 1;
     hr = IDBProperties_GetProperties(pProxy, 0, NULL, &propset_count, &propsets);
-    ok(hr == S_OK, "IDBProperties_GetProperties failed with error 0x%08x\n", hr);
+    ok(hr == S_OK, "IDBProperties_GetProperties failed with error 0x%08lx\n", hr);
 
-    ok(propset_count == 1, "Expected propset_count of 1 but got %d\n", propset_count);
-    ok(propsets->rgProperties[0].dwPropertyID == TEST_PROPID, "Expected property ID of 0x%x, but got 0x%x\n", TEST_PROPID, propsets->rgProperties[0].dwPropertyID);
-    ok(propsets->rgProperties[0].dwOptions == DBPROPOPTIONS_REQUIRED, "Expected property options of 0x%x, but got 0x%x\n", DBPROPOPTIONS_REQUIRED, propsets->rgProperties[0].dwOptions);
-    ok(propsets->rgProperties[0].dwStatus == S_OK, "Expected property options of 0x%x, but got 0x%x\n", S_OK, propsets->rgProperties[0].dwStatus);
-    ok(propsets->rgProperties[0].colid.eKind == DBKIND_GUID_NAME, "Expected property colid kind of DBKIND_GUID_NAME, but got %d\n", propsets->rgProperties[0].colid.eKind);
+    ok(propset_count == 1, "Expected propset_count of 1 but got %ld\n", propset_count);
+    ok(propsets->rgProperties[0].dwPropertyID == TEST_PROPID, "Expected property ID of 0x%x, but got 0x%lx\n", TEST_PROPID, propsets->rgProperties[0].dwPropertyID);
+    ok(propsets->rgProperties[0].dwOptions == DBPROPOPTIONS_REQUIRED, "Expected property options of 0x%x, but got 0x%lx\n", DBPROPOPTIONS_REQUIRED, propsets->rgProperties[0].dwOptions);
+    ok(propsets->rgProperties[0].dwStatus == S_OK, "Expected property options of 0x%lx, but got 0x%lx\n", S_OK, propsets->rgProperties[0].dwStatus);
+    ok(propsets->rgProperties[0].colid.eKind == DBKIND_GUID_NAME, "Expected property colid kind of DBKIND_GUID_NAME, but got %ld\n", propsets->rgProperties[0].colid.eKind);
     /* colid contents */
     ok(IsEqualGUID(&propsets->rgProperties[0].colid.uGuid.guid, &IID_IDBProperties), "Unexpected property colid guid\n");
     ok(!lstrcmpW(propsets->rgProperties[0].colid.uName.pwszName, wszDBPropertyColumnName), "Unexpected property colid name\n");
     /* vValue contents */
     ok(V_VT(&propsets->rgProperties[0].vValue) == VT_BSTR, "Expected property value vt of VT_BSTR, but got %d\n", V_VT(&propsets->rgProperties[0].vValue));
     ok(!lstrcmpW(V_BSTR(&propsets->rgProperties[0].vValue), wszDBPropertyTestString), "Unexpected property value string\n");
-    ok(propsets->cProperties == 1, "Expected property count of 1 but got %d\n", propsets->cProperties);
+    ok(propsets->cProperties == 1, "Expected property count of 1 but got %ld\n", propsets->cProperties);
     ok(IsEqualGUID(&propsets->guidPropertySet, &IID_IDBProperties), "Unexpected guid for property set\n");
 
     IDBProperties_Release(pProxy);

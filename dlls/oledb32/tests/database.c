@@ -46,7 +46,7 @@ static void _expect_ref(IUnknown* obj, ULONG ref, int line)
     ULONG rc;
     IUnknown_AddRef(obj);
     rc = IUnknown_Release(obj);
-    ok_(__FILE__, line)(rc == ref, "expected refcount %d, got %d\n", ref, rc);
+    ok_(__FILE__, line)(rc == ref, "expected refcount %ld, got %ld\n", ref, rc);
 }
 
 static void test_GetDataSource(WCHAR *initstring)
@@ -58,7 +58,7 @@ static void test_GetDataSource(WCHAR *initstring)
     trace("Data Source: %s\n", wine_dbgstr_w(initstring));
 
     hr = CoCreateInstance(&CLSID_MSDAINITIALIZE, NULL, CLSCTX_INPROC_SERVER, &IID_IDataInitialize,(void**)&datainit);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
 
     EXPECT_REF(datainit, 1);
 
@@ -72,7 +72,7 @@ static void test_GetDataSource(WCHAR *initstring)
         EXPECT_REF(dbinit, 1);
 
         hr = IDBInitialize_QueryInterface(dbinit, &IID_IDBProperties, (void**)&props);
-        ok(hr == S_OK, "got %08x\n", hr);
+        ok(hr == S_OK, "got %08lx\n", hr);
         if(SUCCEEDED(hr))
         {
             ULONG cnt;
@@ -82,13 +82,13 @@ static void test_GetDataSource(WCHAR *initstring)
             EXPECT_REF(dbinit, 2);
             EXPECT_REF(props, 2);
             hr = IDBProperties_GetPropertyInfo(props, 0, NULL, &cnt, &pInfoset, &ary);
-            ok(hr == S_OK, "got %08x\n", hr);
+            ok(hr == S_OK, "got %08lx\n", hr);
             if(hr == S_OK)
             {
                 ULONG i;
                 for(i =0; i < pInfoset->cPropertyInfos; i++)
                 {
-                    trace("(0x%04x) '%s' %d\n", pInfoset->rgPropertyInfos[i].dwPropertyID, wine_dbgstr_w(pInfoset->rgPropertyInfos[i].pwszDescription),
+                    trace("(0x%04lx) '%s' %d\n", pInfoset->rgPropertyInfos[i].dwPropertyID, wine_dbgstr_w(pInfoset->rgPropertyInfos[i].pwszDescription),
                                              pInfoset->rgPropertyInfos[i].vtType);
                 }
 
@@ -147,20 +147,20 @@ static HRESULT WINAPI dbprops_GetPropertyInfo(IDBProperties *iface, ULONG cPrope
 
 static HRESULT WINAPI dbprops_SetProperties(IDBProperties *iface, ULONG set_count, DBPROPSET propsets[])
 {
-    ok(set_count == 1, "got %u\n", set_count);
+    ok(set_count == 1, "got %lu\n", set_count);
 
     ok(IsEqualIID(&propsets->guidPropertySet, &DBPROPSET_DBINIT), "set guid %s\n", wine_dbgstr_guid(&propsets->guidPropertySet));
-    ok(propsets->cProperties == 2, "got propcount %u\n", propsets->cProperties);
+    ok(propsets->cProperties == 2, "got propcount %lu\n", propsets->cProperties);
 
 if (propsets->cProperties == 2) {
-    ok(propsets->rgProperties[0].dwPropertyID == DBPROP_INIT_DATASOURCE, "got propid[0] %u\n", propsets->rgProperties[0].dwPropertyID);
-    ok(propsets->rgProperties[0].dwOptions == DBPROPOPTIONS_REQUIRED, "got options[0] %u\n", propsets->rgProperties[0].dwOptions);
-    ok(propsets->rgProperties[0].dwStatus == 0, "got status[0] %u\n", propsets->rgProperties[0].dwStatus);
+    ok(propsets->rgProperties[0].dwPropertyID == DBPROP_INIT_DATASOURCE, "got propid[0] %lu\n", propsets->rgProperties[0].dwPropertyID);
+    ok(propsets->rgProperties[0].dwOptions == DBPROPOPTIONS_REQUIRED, "got options[0] %lu\n", propsets->rgProperties[0].dwOptions);
+    ok(propsets->rgProperties[0].dwStatus == 0, "got status[0] %lu\n", propsets->rgProperties[0].dwStatus);
     ok(V_VT(&propsets->rgProperties[0].vValue) == VT_BSTR, "got vartype[0] %u\n", V_VT(&propsets->rgProperties[0].vValue));
 
-    ok(propsets->rgProperties[1].dwPropertyID == DBPROP_INIT_PROVIDERSTRING, "got propid[1] %u\n", propsets->rgProperties[1].dwPropertyID);
-    ok(propsets->rgProperties[1].dwOptions == DBPROPOPTIONS_REQUIRED, "got options[1] %u\n", propsets->rgProperties[1].dwOptions);
-    ok(propsets->rgProperties[1].dwStatus == 0, "got status[1] %u\n", propsets->rgProperties[1].dwStatus);
+    ok(propsets->rgProperties[1].dwPropertyID == DBPROP_INIT_PROVIDERSTRING, "got propid[1] %lu\n", propsets->rgProperties[1].dwPropertyID);
+    ok(propsets->rgProperties[1].dwOptions == DBPROPOPTIONS_REQUIRED, "got options[1] %lu\n", propsets->rgProperties[1].dwOptions);
+    ok(propsets->rgProperties[1].dwStatus == 0, "got status[1] %lu\n", propsets->rgProperties[1].dwStatus);
     ok(V_VT(&propsets->rgProperties[1].vValue) == VT_BSTR, "got vartype[1] %u\n", V_VT(&propsets->rgProperties[1].vValue));
 }
     return S_OK;
@@ -275,11 +275,11 @@ static void test_GetDataSource2(WCHAR *initstring)
     HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_MSDAINITIALIZE, NULL, CLSCTX_INPROC_SERVER, &IID_IDataInitialize,(void**)&datainit);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
 
     dbinit = &dbinittest;
     hr = IDataInitialize_GetDataSource(datainit, NULL, CLSCTX_INPROC_SERVER, initstring, &IID_IDBInitialize, (IUnknown**)&dbinit);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
 
     IDataInitialize_Release(datainit);
 }
@@ -345,74 +345,74 @@ static void test_errorinfo(void)
     BSTR str;
 
     hr = CoCreateInstance(&CSLID_MSDAER, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&unk);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
 
     hr = IUnknown_QueryInterface(unk, &IID_IErrorInfo, (void**)&errorinfo);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
 
     hr = IErrorInfo_GetGUID(errorinfo, NULL);
-    ok(hr == E_INVALIDARG, "got %08x\n", hr);
+    ok(hr == E_INVALIDARG, "got %08lx\n", hr);
 
     hr = IErrorInfo_GetSource(errorinfo, NULL);
-    ok(hr == E_INVALIDARG, "got %08x\n", hr);
+    ok(hr == E_INVALIDARG, "got %08lx\n", hr);
 
     hr = IErrorInfo_GetDescription(errorinfo, NULL);
-    ok(hr == E_INVALIDARG, "got %08x\n", hr);
+    ok(hr == E_INVALIDARG, "got %08lx\n", hr);
 
     hr = IErrorInfo_GetHelpFile(errorinfo, NULL);
-    ok(hr == E_INVALIDARG, "got %08x\n", hr);
+    ok(hr == E_INVALIDARG, "got %08lx\n", hr);
 
     hr = IErrorInfo_GetHelpContext(errorinfo, NULL);
-    ok(hr == E_INVALIDARG, "got %08x\n", hr);
+    ok(hr == E_INVALIDARG, "got %08lx\n", hr);
 
     memset(&guid, 0xac, sizeof(guid));
     hr = IErrorInfo_GetGUID(errorinfo, &guid);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
     ok(IsEqualGUID(&guid, &GUID_NULL), "got wrong guid\n");
 
     str = (BSTR)0x1;
     hr = IErrorInfo_GetSource(errorinfo, &str);
-    ok(hr == E_FAIL, "got %08x\n", hr);
+    ok(hr == E_FAIL, "got %08lx\n", hr);
     ok(str == NULL, "got %s\n", wine_dbgstr_w(str));
 
     str = (BSTR)0x1;
     hr = IErrorInfo_GetDescription(errorinfo, &str);
-    ok(hr == E_FAIL, "got %08x\n", hr);
+    ok(hr == E_FAIL, "got %08lx\n", hr);
     ok(str == NULL, "got %s\n", wine_dbgstr_w(str));
 
     str = (BSTR)0x1;
     hr = IErrorInfo_GetHelpFile(errorinfo, &str);
-    ok(hr == E_FAIL, "got %08x\n", hr);
+    ok(hr == E_FAIL, "got %08lx\n", hr);
     ok(str == NULL, "got %s\n", wine_dbgstr_w(str));
 
     context = 1;
     hr = IErrorInfo_GetHelpContext(errorinfo, &context);
-    ok(hr == E_FAIL, "got %08x\n", hr);
-    ok(context == 0, "got %d\n", context);
+    ok(hr == E_FAIL, "got %08lx\n", hr);
+    ok(context == 0, "got %ld\n", context);
 
     IErrorInfo_Release(errorinfo);
 
     hr = IErrorInfo_QueryInterface(errorinfo, &IID_ICreateErrorInfo, (void**)&createerror);
-    ok(hr == E_NOINTERFACE, "got %08x\n", hr);
+    ok(hr == E_NOINTERFACE, "got %08lx\n", hr);
 
     hr = IUnknown_QueryInterface(unk, &IID_IErrorRecords, (void**)&errrecs);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
 
     hr = IErrorRecords_GetRecordCount(errrecs, &cnt);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(cnt == 0, "Got unexpected record count %u\n", cnt);
+    ok(hr == S_OK, "got %08lx\n", hr);
+    ok(cnt == 0, "Got unexpected record count %lu\n", cnt);
 
     hr = IErrorRecords_GetBasicErrorInfo(errrecs, 0, &info3);
-    ok(hr == DB_E_BADRECORDNUM, "got %08x\n", hr);
+    ok(hr == DB_E_BADRECORDNUM, "got %08lx\n", hr);
 
     hr = IErrorRecords_GetCustomErrorObject(errrecs, 0, &IID_IUnknown, &unk2);
-    ok(hr == DB_E_BADRECORDNUM, "got %08x\n", hr);
+    ok(hr == DB_E_BADRECORDNUM, "got %08lx\n", hr);
 
     hr = IErrorRecords_GetErrorInfo(errrecs, 0, 0, &errorinfo2);
-    ok(hr == DB_E_BADRECORDNUM, "got %08x\n", hr);
+    ok(hr == DB_E_BADRECORDNUM, "got %08lx\n", hr);
 
     hr = IErrorRecords_GetErrorParameters(errrecs, 0, &dispparams);
-    ok(hr == DB_E_BADRECORDNUM, "got %08x\n", hr);
+    ok(hr == DB_E_BADRECORDNUM, "got %08lx\n", hr);
 
     memset(&info, 0, sizeof(ERRORINFO));
     info.dwMinor = 1;
@@ -421,44 +421,44 @@ static void test_errorinfo(void)
     memset(&info3, 0, sizeof(ERRORINFO));
 
     hr = IErrorRecords_AddErrorRecord(errrecs, NULL, 268435456, NULL, NULL, 0);
-    ok(hr == E_INVALIDARG, "got %08x\n", hr);
+    ok(hr == E_INVALIDARG, "got %08lx\n", hr);
 
     hr = IErrorRecords_AddErrorRecord(errrecs, &info, 1, NULL, NULL, 0);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
 
     hr = IErrorRecords_GetRecordCount(errrecs, &cnt);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(cnt == 1, "expected 1 got %d\n", cnt);
+    ok(hr == S_OK, "got %08lx\n", hr);
+    ok(cnt == 1, "expected 1 got %ld\n", cnt);
 
     /* Record does not contain custom error object. */
     unk2 = (void*)0xdeadbeef;
     hr = IErrorRecords_GetCustomErrorObject(errrecs, 0, &IID_IUnknown, &unk2);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
     ok(unk2 == NULL, "Got custom object %p.\n", unk2);
 
     hr = IErrorRecords_AddErrorRecord(errrecs, &info2, 2, NULL, NULL, 0);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
 
     hr = IErrorRecords_GetRecordCount(errrecs, &cnt);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(cnt == 2, "expected 2 got %d\n", cnt);
+    ok(hr == S_OK, "got %08lx\n", hr);
+    ok(cnt == 2, "expected 2 got %ld\n", cnt);
 
     hr = IErrorRecords_GetBasicErrorInfo(errrecs, 0, NULL);
-    ok(hr == E_INVALIDARG, "got %08x\n", hr);
+    ok(hr == E_INVALIDARG, "got %08lx\n", hr);
 
     hr = IErrorRecords_GetBasicErrorInfo(errrecs, 100, &info3);
-    ok(hr == DB_E_BADRECORDNUM, "got %08x\n", hr);
+    ok(hr == DB_E_BADRECORDNUM, "got %08lx\n", hr);
 
     hr = IErrorRecords_GetBasicErrorInfo(errrecs, 0, &info3);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(info3.dwMinor == 2, "expected 2 got %d\n", info3.dwMinor);
+    ok(hr == S_OK, "got %08lx\n", hr);
+    ok(info3.dwMinor == 2, "expected 2 got %ld\n", info3.dwMinor);
 
     hr = IErrorRecords_GetErrorParameters(errrecs, 0, NULL);
-    ok(hr == E_INVALIDARG, "got %08x\n", hr);
+    ok(hr == E_INVALIDARG, "got %08lx\n", hr);
 
     memset(&dispparams, 0xcc, sizeof(dispparams));
     hr = IErrorRecords_GetErrorParameters(errrecs, 0, &dispparams);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
     ok(dispparams.rgvarg == NULL, "Got arguments %p\n", dispparams.rgvarg);
     ok(dispparams.rgdispidNamedArgs == NULL, "Got named arguments %p\n", dispparams.rgdispidNamedArgs);
     ok(dispparams.cArgs == 0, "Got argument count %u\n", dispparams.cArgs);
@@ -473,23 +473,23 @@ static void test_errorinfo(void)
     dispparams.rgdispidNamedArgs = &dispid;
     dispparams.cNamedArgs = 1;
     hr = IErrorRecords_AddErrorRecord(errrecs, &info2, 0, &dispparams, NULL, 0);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
 
     memset(&dispparams, 0, sizeof(dispparams));
     hr = IErrorRecords_GetErrorParameters(errrecs, 0, &dispparams);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
 
     ok(V_VT(&dispparams.rgvarg[0]) == VT_BSTR, "Got arg type %d\n", V_VT(&dispparams.rgvarg[0]));
     ok(V_BSTR(&dispparams.rgvarg[0]) != V_BSTR(&arg), "Got arg bstr %d\n", V_VT(&dispparams.rgvarg[0]));
 
-    ok(dispparams.rgdispidNamedArgs[0] == 0x123, "Got named argument %d\n", dispparams.rgdispidNamedArgs[0]);
+    ok(dispparams.rgdispidNamedArgs[0] == 0x123, "Got named argument %ld\n", dispparams.rgdispidNamedArgs[0]);
     ok(dispparams.cArgs == 1, "Got argument count %u\n", dispparams.cArgs);
     ok(dispparams.cNamedArgs == 1, "Got named argument count %u\n", dispparams.cNamedArgs);
 
     EXPECT_REF(errrecs, 2);
     EXPECT_REF(errorinfo, 2);
     hr = IErrorRecords_GetErrorInfo(errrecs, 0, 0, &errorinfo2);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
     ok(errorinfo == errorinfo2, "different object\n");
     EXPECT_REF(errorinfo, 3);
     IErrorInfo_Release(errorinfo2);
@@ -524,7 +524,7 @@ static void test_initializationstring(void)
     WCHAR *initstring = NULL;
 
     hr = CoCreateInstance(&CLSID_MSDAINITIALIZE, NULL, CLSCTX_INPROC_SERVER, &IID_IDataInitialize,(void**)&datainit);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
     if(SUCCEEDED(hr))
     {
         EXPECT_REF(datainit, 1);
@@ -538,7 +538,7 @@ static void test_initializationstring(void)
             EXPECT_REF(dbinit, 1);
 
             hr = IDataInitialize_GetInitializationString(datainit, (IUnknown*)dbinit, 0, &initstring);
-            ok(hr == S_OK, "got %08x\n", hr);
+            ok(hr == S_OK, "got %08lx\n", hr);
             if(hr == S_OK)
             {
                 trace("Init String: %s\n", wine_dbgstr_w(initstring));
@@ -553,24 +553,24 @@ static void test_initializationstring(void)
             dbinit = NULL;
             hr = IDataInitialize_GetDataSource(datainit, NULL, CLSCTX_INPROC_SERVER, (WCHAR*)initstring_msdasql2,
                 &IID_IDBInitialize, (IUnknown**)&dbinit);
-            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(hr == S_OK, "got 0x%08lx\n", hr);
             IDBInitialize_Release(dbinit);
 
             /* Invalid Mode value */
             dbinit = NULL;
             hr = IDataInitialize_GetDataSource(datainit, NULL, CLSCTX_INPROC_SERVER, (WCHAR *)initstring_mode,
                 &IID_IDBInitialize, (IUnknown **)&dbinit);
-            ok(FAILED(hr), "got 0x%08x\n", hr);
+            ok(FAILED(hr), "got 0x%08lx\n", hr);
 
             dbinit = NULL;
             hr = IDataInitialize_GetDataSource(datainit, NULL, CLSCTX_INPROC_SERVER, (WCHAR *)initstring_mode2,
                 &IID_IDBInitialize, (IUnknown **)&dbinit);
-            ok(FAILED(hr), "got 0x%08x\n", hr);
+            ok(FAILED(hr), "got 0x%08lx\n", hr);
 
             dbinit = NULL;
             hr = IDataInitialize_GetDataSource(datainit, NULL, CLSCTX_INPROC_SERVER, (WCHAR *)initstring_mode3,
                 &IID_IDBInitialize, (IUnknown **)&dbinit);
-            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(hr == S_OK, "got 0x%08lx\n", hr);
             IDBInitialize_Release(dbinit);
         }
         else
@@ -590,24 +590,24 @@ static void test_rowposition(void)
     IID iid;
 
     hr = CoCreateInstance(&CLSID_OLEDB_ROWPOSITIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IRowPosition, (void**)&rowpos);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
 
     hr = IRowPosition_QueryInterface(rowpos, &IID_IConnectionPointContainer, (void**)&cpc);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IConnectionPointContainer_EnumConnectionPoints(cpc, &enum_points);
     todo_wine
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 if (hr == S_OK) {
     hr = IEnumConnectionPoints_Next(enum_points, 1, &cp, NULL);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     hr = IConnectionPoint_GetConnectionInterface(cp, &iid);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(IsEqualIID(&iid, &IID_IRowPositionChange), "got %s\n", wine_dbgstr_guid(&iid));
     IConnectionPoint_Release(cp);
 
     hr = IEnumConnectionPoints_Next(enum_points, 1, &cp, NULL);
-    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(hr == S_FALSE, "got 0x%08lx\n", hr);
 
     IEnumConnectionPoints_Release(enum_points);
 }
@@ -654,7 +654,7 @@ static ULONG WINAPI rset_Release(IRowset *iface)
 static HRESULT WINAPI rset_AddRefRows(IRowset *iface, DBCOUNTITEM cRows,
     const HROW rghRows[], DBREFCOUNT rgRefCounts[], DBROWSTATUS rgRowStatus[])
 {
-    trace("AddRefRows: %ld\n", rghRows[0]);
+    trace("AddRefRows: %Id\n", rghRows[0]);
     return S_OK;
 }
 
@@ -739,11 +739,11 @@ static void test_rowpos_initialize(void)
     HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_OLEDB_ROWPOSITIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IRowPosition, (void**)&rowpos);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
 
     init_test_rset();
     hr = IRowPosition_Initialize(rowpos, (IUnknown*)&test_rset.IRowset_iface);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
 
     IRowPosition_Release(rowpos);
 }
@@ -773,7 +773,7 @@ static ULONG WINAPI onchange_Release(IRowPositionChange *iface)
 static HRESULT WINAPI onchange_OnRowPositionChange(IRowPositionChange *iface, DBREASON reason,
     DBEVENTPHASE phase, BOOL cant_deny)
 {
-    trace("%d %d %d\n", reason, phase, cant_deny);
+    trace("%ld %ld %d\n", reason, phase, cant_deny);
     return S_OK;
 }
 
@@ -794,11 +794,11 @@ static void init_onchange_sink(IRowPosition *rowpos)
     HRESULT hr;
 
     hr = IRowPosition_QueryInterface(rowpos, &IID_IConnectionPointContainer, (void**)&cpc);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
     hr = IConnectionPointContainer_FindConnectionPoint(cpc, &IID_IRowPositionChange, &cp);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
     hr = IConnectionPoint_Advise(cp, (IUnknown*)&onchangesink, &cookie);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
     IConnectionPoint_Release(cp);
     IConnectionPointContainer_Release(cpc);
 }
@@ -813,51 +813,51 @@ static void test_rowpos_clearrowposition(void)
     HROW row;
 
     hr = CoCreateInstance(&CLSID_OLEDB_ROWPOSITIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IRowPosition, (void**)&rowpos);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
 
     hr = IRowPosition_ClearRowPosition(rowpos);
-    ok(hr == E_UNEXPECTED, "got %08x\n", hr);
+    ok(hr == E_UNEXPECTED, "got %08lx\n", hr);
 
     hr = IRowPosition_GetRowset(rowpos, &IID_IStream, &unk);
-    ok(hr == E_UNEXPECTED, "got %08x\n", hr);
+    ok(hr == E_UNEXPECTED, "got %08lx\n", hr);
 
     chapter = 1;
     row = 1;
     flags = DBPOSITION_OK;
     hr = IRowPosition_GetRowPosition(rowpos, &chapter, &row, &flags);
-    ok(hr == E_UNEXPECTED, "got %08x\n", hr);
-    ok(chapter == DB_NULL_HCHAPTER, "got %ld\n", chapter);
-    ok(row == DB_NULL_HROW, "got %ld\n", row);
-    ok(flags == DBPOSITION_NOROW, "got %d\n", flags);
+    ok(hr == E_UNEXPECTED, "got %08lx\n", hr);
+    ok(chapter == DB_NULL_HCHAPTER, "got %Id\n", chapter);
+    ok(row == DB_NULL_HROW, "got %Id\n", row);
+    ok(flags == DBPOSITION_NOROW, "got %ld\n", flags);
 
     init_test_rset();
     hr = IRowPosition_Initialize(rowpos, (IUnknown*)&test_rset.IRowset_iface);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
 
     chapter = 1;
     row = 1;
     flags = DBPOSITION_OK;
     hr = IRowPosition_GetRowPosition(rowpos, &chapter, &row, &flags);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(chapter == DB_NULL_HCHAPTER, "got %ld\n", chapter);
-    ok(row == DB_NULL_HROW, "got %ld\n", row);
-    ok(flags == DBPOSITION_NOROW, "got %d\n", flags);
+    ok(hr == S_OK, "got %08lx\n", hr);
+    ok(chapter == DB_NULL_HCHAPTER, "got %Id\n", chapter);
+    ok(row == DB_NULL_HROW, "got %Id\n", row);
+    ok(flags == DBPOSITION_NOROW, "got %ld\n", flags);
 
     hr = IRowPosition_GetRowset(rowpos, &IID_IRowset, &unk);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
 
     init_onchange_sink(rowpos);
     hr = IRowPosition_ClearRowPosition(rowpos);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
 
     chapter = 1;
     row = 1;
     flags = DBPOSITION_OK;
     hr = IRowPosition_GetRowPosition(rowpos, &chapter, &row, &flags);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(chapter == DB_NULL_HCHAPTER, "got %ld\n", chapter);
-    ok(row == DB_NULL_HROW, "got %ld\n", row);
-    ok(flags == DBPOSITION_NOROW, "got %d\n", flags);
+    ok(hr == S_OK, "got %08lx\n", hr);
+    ok(chapter == DB_NULL_HCHAPTER, "got %Id\n", chapter);
+    ok(row == DB_NULL_HROW, "got %Id\n", row);
+    ok(flags == DBPOSITION_NOROW, "got %ld\n", flags);
 
     IRowPosition_Release(rowpos);
 }
@@ -868,18 +868,18 @@ static void test_rowpos_setrowposition(void)
     HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_OLEDB_ROWPOSITIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IRowPosition, (void**)&rowpos);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
 
     init_test_rset();
     hr = IRowPosition_Initialize(rowpos, (IUnknown*)&test_rset.IRowset_iface);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
 
     hr = IRowPosition_ClearRowPosition(rowpos);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
 
     init_onchange_sink(rowpos);
     hr = IRowPosition_SetRowPosition(rowpos, 0x123, 0x456, DBPOSITION_OK);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
 
     IRowPosition_Release(rowpos);
 }
@@ -890,7 +890,7 @@ static void test_dslocator(void)
     HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_DataLinks, NULL, CLSCTX_INPROC_SERVER, &IID_IDataSourceLocator,(void**)&dslocator);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
     if(SUCCEEDED(hr))
     {
         IDataInitialize *datainit, *datainit2;
@@ -904,68 +904,68 @@ static void test_dslocator(void)
             hr = IDataSourceLocator_get_hWnd(dslocator, NULL);
 
         hr = IDataSourceLocator_get_hWnd(dslocator, &hwnd);
-        ok(hr == S_OK, "got %08x\n", hr);
+        ok(hr == S_OK, "got %08lx\n", hr);
         ok(hwnd == 0, "got %p\n", (HWND)hwnd);
 
         hwnd = 0xDEADBEEF;
         hr = IDataSourceLocator_get_hWnd(dslocator, &hwnd);
-        ok(hr == S_OK, "got %08x\n", hr);
+        ok(hr == S_OK, "got %08lx\n", hr);
         ok(hwnd == 0, "got %p\n", (HWND)hwnd);
 
         hwnd = 0xDEADBEEF;
         hr = IDataSourceLocator_put_hWnd(dslocator, hwnd);
-        ok(hr == S_OK, "got %08x\n", hr);
+        ok(hr == S_OK, "got %08lx\n", hr);
 
         hwnd = 0;
         hr = IDataSourceLocator_get_hWnd(dslocator, &hwnd);
-        ok(hr == S_OK, "got %08x\n", hr);
+        ok(hr == S_OK, "got %08lx\n", hr);
         ok(hwnd == 0xDEADBEEF, "got %p\n", (HWND)hwnd);
 
         hwnd = 0;
         hr = IDataSourceLocator_put_hWnd(dslocator, hwnd);
-        ok(hr == S_OK, "got %08x\n", hr);
+        ok(hr == S_OK, "got %08lx\n", hr);
 
         hwnd = 0xDEADBEEF;
         hr = IDataSourceLocator_get_hWnd(dslocator, &hwnd);
-        ok(hr == S_OK, "got %08x\n", hr);
+        ok(hr == S_OK, "got %08lx\n", hr);
         ok(hwnd == 0, "got %p\n", (HWND)hwnd);
 
         hr = IDataSourceLocator_QueryInterface(dslocator, &IID_IDataInitialize, (void **)&datainit);
-        ok(hr == S_OK, "got %08x\n", hr);
+        ok(hr == S_OK, "got %08lx\n", hr);
 
         hr = IDataSourceLocator_QueryInterface(dslocator, &IID_IDataInitialize, (void **)&datainit2);
-        ok(hr == S_OK, "got %08x\n", hr);
+        ok(hr == S_OK, "got %08lx\n", hr);
         ok(datainit == datainit2, "Got %p, previous %p\n", datainit, datainit2);
 
         hr = IDataSourceLocator_QueryInterface(dslocator, &IID_IRunnableObject, (void **)&runable);
-        ok(hr == E_NOINTERFACE, "got %08x\n", hr);
+        ok(hr == E_NOINTERFACE, "got %08lx\n", hr);
 
         hr = IDataSourceLocator_QueryInterface(dslocator, &IID_IMarshal, (void **)&marshal);
-        ok(hr == E_NOINTERFACE, "got %08x\n", hr);
+        ok(hr == E_NOINTERFACE, "got %08lx\n", hr);
 
         hr = IDataSourceLocator_QueryInterface(dslocator, &IID_IProvideClassInfo, (void **)&info);
-        ok(hr == E_NOINTERFACE, "got %08x\n", hr);
+        ok(hr == E_NOINTERFACE, "got %08lx\n", hr);
 
         hr = IDataSourceLocator_QueryInterface(dslocator, &IID_IRpcOptions, (void **)&opts);
-        ok(hr == E_NOINTERFACE, "got %08x\n", hr);
+        ok(hr == E_NOINTERFACE, "got %08lx\n", hr);
 
         if (winetest_interactive)
         {
             IDispatch *disp = NULL;
 
             hr = IDataSourceLocator_PromptNew(dslocator, NULL);
-            ok(hr == E_INVALIDARG, "got %08x\n", hr);
+            ok(hr == E_INVALIDARG, "got %08lx\n", hr);
 
             hr = IDataSourceLocator_PromptNew(dslocator, &disp);
             if (hr == S_OK)
             {
-                ok(disp != NULL, "got %08x\n", hr);
+                ok(disp != NULL, "got %08lx\n", hr);
                 IDispatch_Release(disp);
             }
             else
             {
-                ok(hr == S_FALSE, "got %08x\n", hr);
-                ok(!disp, "got %08x\n", hr);
+                ok(hr == S_FALSE, "got %08lx\n", hr);
+                ok(!disp, "got %08lx\n", hr);
             }
         }
 
@@ -994,7 +994,7 @@ static void test_odbc_provider(void)
     };
 
     hr = CoCreateInstance( &CLSID_MSDASQL, NULL, CLSCTX_ALL, &IID_IDBProperties, (void **)&props);
-    ok(hr == S_OK, "Failed to create object 0x%08x\n", hr);
+    ok(hr == S_OK, "Failed to create object 0x%08lx\n", hr);
     if (FAILED(hr))
     {
         return;
@@ -1006,7 +1006,7 @@ static void test_odbc_provider(void)
 
     infocount = 0;
     hr = IDBProperties_GetPropertyInfo(props, 1, &propidset, &infocount, &propinfoset, &desc);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     if (hr == S_OK)
     {
         ULONG i;
@@ -1016,7 +1016,7 @@ static void test_odbc_provider(void)
 
         ok(IsEqualGUID(&propinfoset->guidPropertySet, &DBPROPSET_DBINIT), "got %s\n",
                 debugstr_guid(&propinfoset->guidPropertySet));
-        ok(propinfoset->cPropertyInfos == 14, "got %d\n", propinfoset->cPropertyInfos);
+        ok(propinfoset->cPropertyInfos == 14, "got %ld\n", propinfoset->cPropertyInfos);
 
         propidlist.guidPropertySet = DBPROPSET_DBINIT;
         propidlist.cPropertyIDs = propinfoset->cPropertyInfos;
@@ -1024,9 +1024,9 @@ static void test_odbc_provider(void)
 
         for (i = 0; i < propinfoset->cPropertyInfos; i++)
         {
-            ok(properties[i] == propinfoset->rgPropertyInfos[i].dwPropertyID, "%d, got %d\n", i,
+            ok(properties[i] == propinfoset->rgPropertyInfos[i].dwPropertyID, "%ld, got %ld\n", i,
                     propinfoset->rgPropertyInfos[i].dwPropertyID);
-            ok(propinfoset->rgPropertyInfos[i].vtType != VT_EMPTY, "%d, got %d\n", i,
+            ok(propinfoset->rgPropertyInfos[i].vtType != VT_EMPTY, "%ld, got %d\n", i,
                     propinfoset->rgPropertyInfos[i].vtType);
 
             propidlist.rgPropertyIDs[i] = propinfoset->rgPropertyInfos[i].dwPropertyID;
@@ -1039,12 +1039,12 @@ static void test_odbc_provider(void)
         CoTaskMemFree(propinfoset);
 
         hr = IDBProperties_GetProperties(props, 1, &propidlist, &propcnt, &propset);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(propidlist.cPropertyIDs == 14, "got %d\n", propinfoset->cPropertyInfos);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
+        ok(propidlist.cPropertyIDs == 14, "got %ld\n", propinfoset->cPropertyInfos);
 
         for (i = 0; i < propidlist.cPropertyIDs; i++)
         {
-            ok(properties[i] == propidlist.rgPropertyIDs[i], "%d, got %d\n", i,
+            ok(properties[i] == propidlist.rgPropertyIDs[i], "%ld, got %ld\n", i,
                     propidlist.rgPropertyIDs[i]);
 
             propidlist.rgPropertyIDs[i] = propinfoset->rgPropertyInfos[i].dwPropertyID;
@@ -1064,26 +1064,26 @@ static void test_odbc_enumerator(void)
     IRowset *rowset;
 
     hr = CoCreateInstance( &CLSID_MSDASQL_ENUMERATOR, NULL, CLSCTX_ALL, &IID_ISourcesRowset, (void **)&source);
-    ok(hr == S_OK, "Failed to create object 0x%08x\n", hr);
+    ok(hr == S_OK, "Failed to create object 0x%08lx\n", hr);
     if (FAILED(hr))
     {
         return;
     }
 
     hr = ISourcesRowset_GetSourcesRowset(source, NULL, &IID_IRowset, 0, 0, (IUnknown**)&rowset);
-    ok(hr == S_OK, "Failed to create object 0x%08x\n", hr);
+    ok(hr == S_OK, "Failed to create object 0x%08lx\n", hr);
     if (hr == S_OK)
     {
         IAccessor *accessor;
         IRowsetInfo *info;
 
         hr = IRowset_QueryInterface(rowset, &IID_IAccessor, (void **)&accessor);
-        ok(hr == S_OK, "got %08x\n", hr);
+        ok(hr == S_OK, "got %08lx\n", hr);
         if (hr == S_OK)
             IAccessor_Release(accessor);
 
         hr = IRowset_QueryInterface(rowset, &IID_IRowsetInfo, (void **)&info);
-        todo_wine ok(hr == S_OK, "got %08x\n", hr);
+        todo_wine ok(hr == S_OK, "got %08lx\n", hr);
         if (hr == S_OK)
             IRowsetInfo_Release(info);
 
