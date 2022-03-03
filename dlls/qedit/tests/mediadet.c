@@ -82,53 +82,53 @@ static void test_aggregation(void)
     detector = (IMediaDet *)0xdeadbeef;
     hr = CoCreateInstance(&CLSID_MediaDet, &test_outer, CLSCTX_INPROC_SERVER,
             &IID_IMediaDet, (void **)&detector);
-    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
     ok(!detector, "Got interface %p.\n", detector);
 
     hr = CoCreateInstance(&CLSID_MediaDet, &test_outer, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void **)&unk);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
     ok(unk != &test_outer, "Returned IUnknown should not be outer IUnknown.\n");
     ref = get_refcount(unk);
-    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
 
     ref = IUnknown_AddRef(unk);
-    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
-    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
 
     ref = IUnknown_Release(unk);
-    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
-    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
 
     hr = IUnknown_QueryInterface(unk, &IID_IUnknown, (void **)&unk2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(unk2 == unk, "Got unexpected IUnknown %p.\n", unk2);
     IUnknown_Release(unk2);
 
     hr = IUnknown_QueryInterface(unk, &IID_IMediaDet, (void **)&detector);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IMediaDet_QueryInterface(detector, &IID_IUnknown, (void **)&unk2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(unk2 == (IUnknown *)0xdeadbeef, "Got unexpected IUnknown %p.\n", unk2);
 
     hr = IMediaDet_QueryInterface(detector, &IID_IMediaDet, (void **)&detector2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(detector2 == (IMediaDet *)0xdeadbeef, "Got unexpected IMediaDet %p.\n", detector2);
 
     hr = IUnknown_QueryInterface(unk, &test_iid, (void **)&unk2);
-    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
     ok(!unk2, "Got unexpected IUnknown %p.\n", unk2);
 
     hr = IMediaDet_QueryInterface(detector, &test_iid, (void **)&unk2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(unk2 == (IUnknown *)0xdeadbeef, "Got unexpected IUnknown %p.\n", unk2);
 
     IMediaDet_Release(detector);
     ref = IUnknown_Release(unk);
-    ok(!ref, "Got unexpected refcount %d.\n", ref);
-    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(!ref, "Got unexpected refcount %ld.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
 }
 
 struct testfilter
@@ -448,15 +448,14 @@ static void test_mediadet(void)
     HRESULT hr;
     FILTER_INFO filter_info;
     AM_MEDIA_TYPE mt, *pmt;
+    LONG index, ref, count;
     IEnumMediaTypes *type;
     IMediaDet *pM = NULL;
     BSTR filename = NULL;
     IBaseFilter *filter;
     IEnumPins *enumpins;
-    LONG nstrms = 0;
     IUnknown *unk;
     IPin *pin;
-    LONG strm;
     GUID guid;
     BSTR bstr;
     double fps;
@@ -466,185 +465,185 @@ static void test_mediadet(void)
     /* test.avi has one video stream.  */
     hr = CoCreateInstance(&CLSID_MediaDet, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMediaDet, (LPVOID*)&pM);
-    ok(hr == S_OK, "CoCreateInstance failed with %x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(pM != NULL, "pM is NULL\n");
 
     filename = NULL;
     hr = IMediaDet_get_Filename(pM, &filename);
     /* Despite what MSDN claims, this returns S_OK.  */
-    ok(hr == S_OK, "IMediaDet_get_Filename failed: %08x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(filename == NULL, "IMediaDet_get_Filename\n");
 
     filename = (BSTR) -1;
     hr = IMediaDet_get_Filename(pM, &filename);
     /* Despite what MSDN claims, this returns S_OK.  */
-    ok(hr == S_OK, "IMediaDet_get_Filename failed: %08x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(filename == NULL, "IMediaDet_get_Filename\n");
 
-    nstrms = -1;
-    hr = IMediaDet_get_OutputStreams(pM, &nstrms);
-    ok(hr == E_INVALIDARG, "IMediaDet_get_OutputStreams failed: %08x\n", hr);
-    ok(nstrms == -1, "IMediaDet_get_OutputStreams: nstrms is %i\n", nstrms);
+    count = -1;
+    hr = IMediaDet_get_OutputStreams(pM, &count);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    ok(count == -1, "Got %ld streams.\n", count);
 
-    strm = -1;
+    index = -1;
     /* The stream defaults to 0, even without a file!  */
-    hr = IMediaDet_get_CurrentStream(pM, &strm);
-    ok(hr == S_OK, "IMediaDet_get_CurrentStream failed: %08x\n", hr);
-    ok(strm == 0, "IMediaDet_get_CurrentStream: strm is %i\n", strm);
+    hr = IMediaDet_get_CurrentStream(pM, &index);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(index == 0, "Got stream index %ld.\n", index);
 
     hr = IMediaDet_get_CurrentStream(pM, NULL);
-    ok(hr == E_POINTER, "IMediaDet_get_CurrentStream failed: %08x\n", hr);
+    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
 
     /* But put_CurrentStream doesn't.  */
     hr = IMediaDet_put_CurrentStream(pM, 0);
-    ok(hr == E_INVALIDARG, "IMediaDet_put_CurrentStream failed: %08x\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     hr = IMediaDet_put_CurrentStream(pM, -1);
-    ok(hr == E_INVALIDARG, "IMediaDet_put_CurrentStream failed: %08x\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     hr = IMediaDet_get_StreamMediaType(pM, &mt);
-    ok(hr == E_INVALIDARG, "IMediaDet_get_StreamMediaType failed: %08x\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     hr = IMediaDet_get_StreamMediaType(pM, NULL);
-    ok(hr == E_POINTER, "IMediaDet_get_StreamMediaType failed: %08x\n", hr);
+    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
 
     hr = IMediaDet_get_StreamType(pM, &guid);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     hr = IMediaDet_get_StreamType(pM, NULL);
-    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
 
     hr = IMediaDet_get_StreamTypeB(pM, &bstr);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     hr = IMediaDet_get_StreamTypeB(pM, NULL);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     hr = IMediaDet_get_Filter(pM, NULL);
-    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
 
     unk = (IUnknown*)0xdeadbeef;
     hr = IMediaDet_get_Filter(pM, &unk);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
     ok(!unk, "Got filter %p.\n", unk);
 
     filename = SysAllocString(test_avi_filename);
     hr = IMediaDet_put_Filename(pM, filename);
-    ok(hr == S_OK, "IMediaDet_put_Filename failed: %08x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     SysFreeString(filename);
 
-    strm = -1;
+    index = -1;
     /* The stream defaults to 0.  */
-    hr = IMediaDet_get_CurrentStream(pM, &strm);
-    ok(hr == S_OK, "IMediaDet_get_CurrentStream failed: %08x\n", hr);
-    ok(strm == 0, "IMediaDet_get_CurrentStream: strm is %i\n", strm);
+    hr = IMediaDet_get_CurrentStream(pM, &index);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(index == 0, "Got stream index %ld.\n", index);
 
     ZeroMemory(&mt, sizeof mt);
     hr = IMediaDet_get_StreamMediaType(pM, &mt);
-    ok(hr == S_OK, "IMediaDet_get_StreamMediaType failed: %08x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     CoTaskMemFree(mt.pbFormat);
 
     hr = IMediaDet_get_StreamType(pM, &guid);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(IsEqualGUID(&guid, &MEDIATYPE_Video), "Got major type %s.\n", debugstr_guid(&guid));
 
     hr = IMediaDet_get_StreamTypeB(pM, &bstr);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!wcscmp(bstr, L"{73646976-0000-0010-8000-00AA00389B71}"),
             "Got major type %s.\n", debugstr_w(bstr));
     SysFreeString(bstr);
 
     /* Even before get_OutputStreams.  */
     hr = IMediaDet_put_CurrentStream(pM, 1);
-    ok(hr == E_INVALIDARG, "IMediaDet_put_CurrentStream failed: %08x\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
-    hr = IMediaDet_get_OutputStreams(pM, &nstrms);
-    ok(hr == S_OK, "IMediaDet_get_OutputStreams failed: %08x\n", hr);
-    ok(nstrms == 1, "IMediaDet_get_OutputStreams: nstrms is %i\n", nstrms);
+    hr = IMediaDet_get_OutputStreams(pM, &count);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(count == 1, "Got %ld streams.\n", count);
 
     filename = NULL;
     hr = IMediaDet_get_Filename(pM, &filename);
-    ok(hr == S_OK, "IMediaDet_get_Filename failed: %08x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!wcscmp(filename, test_avi_filename), "Expected filename %s, got %s.\n",
             debugstr_w(test_avi_filename), debugstr_w(filename));
     SysFreeString(filename);
 
     hr = IMediaDet_get_Filename(pM, NULL);
-    ok(hr == E_POINTER, "IMediaDet_get_Filename failed: %08x\n", hr);
+    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
 
-    strm = -1;
-    hr = IMediaDet_get_CurrentStream(pM, &strm);
-    ok(hr == S_OK, "IMediaDet_get_CurrentStream failed: %08x\n", hr);
-    ok(strm == 0, "IMediaDet_get_CurrentStream: strm is %i\n", strm);
+    index = -1;
+    hr = IMediaDet_get_CurrentStream(pM, &index);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(index == 0, "Got stream index %ld.\n", index);
 
     hr = IMediaDet_get_CurrentStream(pM, NULL);
-    ok(hr == E_POINTER, "IMediaDet_get_CurrentStream failed: %08x\n", hr);
+    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
 
     hr = IMediaDet_put_CurrentStream(pM, -1);
-    ok(hr == E_INVALIDARG, "IMediaDet_put_CurrentStream failed: %08x\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     hr = IMediaDet_put_CurrentStream(pM, 1);
-    ok(hr == E_INVALIDARG, "IMediaDet_put_CurrentStream failed: %08x\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     /* Try again.  */
-    strm = -1;
-    hr = IMediaDet_get_CurrentStream(pM, &strm);
-    ok(hr == S_OK, "IMediaDet_get_CurrentStream failed: %08x\n", hr);
-    ok(strm == 0, "IMediaDet_get_CurrentStream: strm is %i\n", strm);
+    index = -1;
+    hr = IMediaDet_get_CurrentStream(pM, &index);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(index == 0, "Got stream index %ld.\n", index);
 
     hr = IMediaDet_put_CurrentStream(pM, 0);
-    ok(hr == S_OK, "IMediaDet_put_CurrentStream failed: %08x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    strm = -1;
-    hr = IMediaDet_get_CurrentStream(pM, &strm);
-    ok(hr == S_OK, "IMediaDet_get_CurrentStream failed: %08x\n", hr);
-    ok(strm == 0, "IMediaDet_get_CurrentStream: strm is %i\n", strm);
+    index = -1;
+    hr = IMediaDet_get_CurrentStream(pM, &index);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(index == 0, "Got stream index %ld.\n", index);
 
     ZeroMemory(&mt, sizeof mt);
     hr = IMediaDet_get_StreamMediaType(pM, &mt);
-    ok(hr == S_OK, "IMediaDet_get_StreamMediaType failed: %08x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(IsEqualGUID(&mt.majortype, &MEDIATYPE_Video),
                  "IMediaDet_get_StreamMediaType\n");
     CoTaskMemFree(mt.pbFormat);
 
     hr = IMediaDet_get_StreamType(pM, &guid);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(IsEqualGUID(&guid, &MEDIATYPE_Video), "Got major type %s.\n", debugstr_guid(&guid));
 
     hr = IMediaDet_get_StreamTypeB(pM, &bstr);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!wcscmp(bstr, L"{73646976-0000-0010-8000-00AA00389B71}"),
             "Got major type %s.\n", debugstr_w(bstr));
     SysFreeString(bstr);
 
     hr = IMediaDet_get_FrameRate(pM, NULL);
-    ok(hr == E_POINTER, "IMediaDet_get_FrameRate failed: %08x\n", hr);
+    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
 
     hr = IMediaDet_get_FrameRate(pM, &fps);
-    ok(hr == S_OK, "IMediaDet_get_FrameRate failed: %08x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(fps == 10.0, "IMediaDet_get_FrameRate: fps is %f\n", fps);
 
-    hr = IMediaDet_Release(pM);
-    ok(hr == 0, "IMediaDet_Release returned: %x\n", hr);
+    ref = IMediaDet_Release(pM);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
 
     /* test_sound.avi has one video stream and one audio stream.  */
     hr = CoCreateInstance(&CLSID_MediaDet, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMediaDet, (LPVOID*)&pM);
-    ok(hr == S_OK, "CoCreateInstance failed with %x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(pM != NULL, "pM is NULL\n");
 
     filename = SysAllocString(test_sound_avi_filename);
     hr = IMediaDet_put_Filename(pM, filename);
-    ok(hr == S_OK, "IMediaDet_put_Filename failed: %08x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     SysFreeString(filename);
 
-    hr = IMediaDet_get_OutputStreams(pM, &nstrms);
-    ok(hr == S_OK, "IMediaDet_get_OutputStreams failed: %08x\n", hr);
-    ok(nstrms == 2, "IMediaDet_get_OutputStreams: nstrms is %i\n", nstrms);
+    hr = IMediaDet_get_OutputStreams(pM, &count);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(count == 2, "Got %ld streams.\n", count);
 
     filename = NULL;
     hr = IMediaDet_get_Filename(pM, &filename);
-    ok(hr == S_OK, "IMediaDet_get_Filename failed: %08x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!wcscmp(filename, test_sound_avi_filename), "Expected filename %s, got %s.\n",
             debugstr_w(test_sound_avi_filename), debugstr_w(filename));
     SysFreeString(filename);
@@ -656,16 +655,16 @@ static void test_mediadet(void)
     for (i = 0; i < 2; ++i)
     {
         hr = IMediaDet_put_CurrentStream(pM, i);
-        ok(hr == S_OK, "IMediaDet_put_CurrentStream failed: %08x\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-        strm = -1;
-        hr = IMediaDet_get_CurrentStream(pM, &strm);
-        ok(hr == S_OK, "IMediaDet_get_CurrentStream failed: %08x\n", hr);
-        ok(strm == i, "IMediaDet_get_CurrentStream: strm is %i\n", strm);
+        index = -1;
+        hr = IMediaDet_get_CurrentStream(pM, &index);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(index == i, "Got stream index %ld.\n", index);
 
         ZeroMemory(&mt, sizeof mt);
         hr = IMediaDet_get_StreamMediaType(pM, &mt);
-        ok(hr == S_OK, "IMediaDet_get_StreamMediaType failed: %08x\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         flags += (IsEqualGUID(&mt.majortype, &MEDIATYPE_Video)
                   ? 1
                   : (IsEqualGUID(&mt.majortype, &MEDIATYPE_Audio)
@@ -675,17 +674,17 @@ static void test_mediadet(void)
         if (IsEqualGUID(&mt.majortype, &MEDIATYPE_Audio))
         {
             hr = IMediaDet_get_StreamType(pM, &guid);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
             ok(IsEqualGUID(&guid, &MEDIATYPE_Audio), "Got major type %s.\n", debugstr_guid(&guid));
 
             hr = IMediaDet_get_StreamTypeB(pM, &bstr);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
             ok(!wcscmp(bstr, L"{73647561-0000-0010-8000-00AA00389B71}"),
                     "Got major type %s.\n", debugstr_w(bstr));
             SysFreeString(bstr);
 
             hr = IMediaDet_get_FrameRate(pM, &fps);
-            ok(hr == VFW_E_INVALIDMEDIATYPE, "IMediaDet_get_FrameRate failed: %08x\n", hr);
+            ok(hr == VFW_E_INVALIDMEDIATYPE, "Got hr %#lx.\n", hr);
         }
 
         CoTaskMemFree(mt.pbFormat);
@@ -693,29 +692,29 @@ static void test_mediadet(void)
     ok(flags == 3, "IMediaDet_get_StreamMediaType: flags are %i\n", flags);
 
     hr = IMediaDet_put_CurrentStream(pM, 2);
-    ok(hr == E_INVALIDARG, "IMediaDet_put_CurrentStream failed: %08x\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
-    strm = -1;
-    hr = IMediaDet_get_CurrentStream(pM, &strm);
-    ok(hr == S_OK, "IMediaDet_get_CurrentStream failed: %08x\n", hr);
-    ok(strm == 1, "IMediaDet_get_CurrentStream: strm is %i\n", strm);
+    index = -1;
+    hr = IMediaDet_get_CurrentStream(pM, &index);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(index == 1, "Got stream index %ld.\n", index);
 
     unk = NULL;
     hr = IMediaDet_get_Filter(pM, &unk);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!!unk, "Expected a non-NULL filter.\n");
     hr = IUnknown_QueryInterface(unk, &IID_IBaseFilter, (void**)&filter);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     IUnknown_Release(unk);
 
     hr = IBaseFilter_EnumPins(filter, &enumpins);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IEnumPins_Next(enumpins, 1, &pin, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IPin_EnumMediaTypes(pin, &type);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IEnumMediaTypes_Next(type, 1, &pmt, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(IsEqualGUID(&pmt->majortype, &MEDIATYPE_Stream), "Got major type %s.\n",
             debugstr_guid(&pmt->majortype));
     IEnumMediaTypes_Release(type);
@@ -724,17 +723,17 @@ static void test_mediadet(void)
     IPin_Release(pin);
 
     hr = IEnumPins_Next(enumpins, 1, &pin, NULL);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
     IEnumPins_Release(enumpins);
 
     hr = IBaseFilter_QueryFilterInfo(filter, &filter_info);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!wcscmp(filter_info.achName, L"Source"), "Got name %s.\n", debugstr_w(filter_info.achName));
     IFilterGraph_Release(filter_info.pGraph);
     IBaseFilter_Release(filter);
 
-    hr = IMediaDet_Release(pM);
-    ok(hr == 0, "IMediaDet_Release returned: %x\n", hr);
+    ref = IMediaDet_Release(pM);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
 static void test_put_filter(void)
@@ -753,29 +752,29 @@ static void test_put_filter(void)
 
     hr = CoCreateInstance(&CLSID_MediaDet, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMediaDet, (void **)&detector);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IMediaDet_put_Filter(detector, NULL);
-    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
 
     hr = IMediaDet_get_Filter(detector, NULL);
-    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
 
     hr = IMediaDet_get_StreamLength(detector, NULL);
-    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
 
     hr = IMediaDet_get_StreamLength(detector, &duration);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     testfilter_init(&testfilter);
     hr = IMediaDet_put_Filter(detector, &testfilter.filter.IUnknown_inner);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IMediaDet_get_Filter(detector, &unk);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!!unk, "Expected a non-NULL interface.\n");
     hr = IUnknown_QueryInterface(unk, &IID_IBaseFilter, (void **)&filter);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(filter == &testfilter.filter.IBaseFilter_iface, "Expected the same filter.\n");
     IBaseFilter_Release(filter);
     IUnknown_Release(unk);
@@ -787,13 +786,13 @@ static void test_put_filter(void)
 
     testfilter_init(&testfilter2);
     hr = IMediaDet_put_Filter(detector, &testfilter2.filter.IUnknown_inner);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IMediaDet_get_Filter(detector, &unk);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!!unk, "Expected a non-NULL interface.\n");
     hr = IUnknown_QueryInterface(unk, &IID_IBaseFilter, (void **)&filter);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(filter == &testfilter2.filter.IBaseFilter_iface, "Expected the same filter.\n");
     IBaseFilter_Release(filter);
     IUnknown_Release(unk);
@@ -801,70 +800,70 @@ static void test_put_filter(void)
     ok(testfilter2.filter.graph != graph, "Expected a different graph.\n");
 
     ref = IFilterGraph_Release(graph);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
     ref = IBaseFilter_Release(&testfilter.filter.IBaseFilter_iface);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
 
     count = 0xdeadbeef;
     hr = IMediaDet_get_OutputStreams(detector, &count);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(count == 1, "Got %d streams.\n", count);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(count == 1, "Got %ld streams.\n", count);
 
     index = 0xdeadbeef;
     hr = IMediaDet_get_CurrentStream(detector, &index);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(index == 0, "Got stream %d.\n", index);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(index == 0, "Got stream %ld.\n", index);
 
     filename = (BSTR)0xdeadbeef;
     hr = IMediaDet_get_Filename(detector, &filename);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!filename, "Got filename %s.\n", debugstr_w(filename));
 
     hr = IMediaDet_get_StreamLength(detector, &duration);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(duration == 4.2, "Got duration %.16e.\n", duration);
 
     ref = IMediaDet_Release(detector);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
     ref = IBaseFilter_Release(&testfilter2.filter.IBaseFilter_iface);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
 
     hr = CoCreateInstance(&CLSID_MediaDet, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMediaDet, (void **)&detector);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     filename = SysAllocString(test_sound_avi_filename);
     hr = IMediaDet_put_Filename(detector, filename);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     SysFreeString(filename);
 
     hr = IMediaDet_get_StreamMediaType(detector, &mt);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     FreeMediaType(&mt);
 
     hr = IMediaDet_get_Filter(detector, &unk);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IMediaDet_put_Filter(detector, unk);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     IUnknown_Release(unk);
 
     filename = (BSTR)0xdeadbeef;
     hr = IMediaDet_get_Filename(detector, &filename);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!filename, "Got filename %s.\n", debugstr_w(filename));
 
     count = 0xdeadbeef;
     hr = IMediaDet_get_OutputStreams(detector, &count);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(count == 2, "Got %d streams.\n", count);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(count == 2, "Got %ld streams.\n", count);
 
     index = 0xdeadbeef;
     hr = IMediaDet_get_CurrentStream(detector, &index);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(index == 0, "Got stream %d.\n", index);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(index == 0, "Got stream %ld.\n", index);
 
     ref = IMediaDet_Release(detector);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
 static HRESULT WINAPI ms_QueryInterface(IMediaSample *iface, REFIID riid,
@@ -1048,35 +1047,35 @@ static void test_samplegrabber(void)
     /* Invalid RIID */
     hr = CoCreateInstance(&CLSID_SampleGrabber, NULL, CLSCTX_INPROC_SERVER, &IID_IClassFactory,
             (void**)&sg);
-    ok(hr == E_NOINTERFACE, "SampleGrabber create failed: %08x, expected E_NOINTERFACE\n", hr);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
 
     hr = CoCreateInstance(&CLSID_SampleGrabber, NULL, CLSCTX_INPROC_SERVER, &IID_ISampleGrabber,
             (void**)&sg);
-    ok(hr == S_OK, "SampleGrabber create failed: %08x, expected S_OK\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = ISampleGrabber_QueryInterface(sg, &IID_IBaseFilter, (void**)&bf);
-    ok(hr == S_OK, "QueryInterface for IID_IBaseFilter failed: %08x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = ISampleGrabber_SetCallback(sg, &my_sg_cb, 0);
-    ok(hr == S_OK, "SetCallback failed: %08x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IBaseFilter_GetState(bf, 100, &fstate);
-    ok(hr == S_OK, "Failed to get filter state: %08x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(fstate == State_Stopped, "Got wrong filter state: %u\n", fstate);
 
     hr = IBaseFilter_EnumPins(bf, &pins);
-    ok(hr == S_OK, "EnumPins create failed: %08x, expected S_OK\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IEnumPins_Next(pins, 1, &pin, NULL);
-    ok(hr == S_OK, "Next failed: %08x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     IEnumPins_Release(pins);
 
     hr = IPin_QueryInterface(pin, &IID_IMemInputPin, (void**)&inpin);
-    ok(hr == S_OK, "QueryInterface(IMemInputPin) failed: %08x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IMemInputPin_Receive(inpin, &my_sample);
-    ok(hr == S_OK, "Receive failed: %08x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(samplecb_called == TRUE, "SampleCB should have been called\n");
 
     IMemInputPin_Release(inpin);
@@ -1095,22 +1094,22 @@ static void test_COM_sg_enumpins(void)
 
     hr = CoCreateInstance(&CLSID_SampleGrabber, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter,
             (void**)&bf);
-    ok(hr == S_OK, "SampleGrabber create failed: %08x, expected S_OK\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IBaseFilter_EnumPins(bf, &pins);
-    ok(hr == S_OK, "EnumPins create failed: %08x, expected S_OK\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     /* Same refcount for all EnumPins interfaces */
     refcount = IEnumPins_AddRef(pins);
-    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
     hr = IEnumPins_QueryInterface(pins, &IID_IEnumPins, (void**)&pins2);
-    ok(hr == S_OK, "QueryInterface for IID_IEnumPins failed: %08x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(pins == pins2, "QueryInterface for self failed (%p != %p)\n", pins, pins2);
     IEnumPins_Release(pins2);
 
     hr = IEnumPins_QueryInterface(pins, &IID_IUnknown, (void**)&unk);
-    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     refcount = IUnknown_AddRef(unk);
-    ok(refcount == 4, "refcount == %u, expected 4\n", refcount);
+    ok(refcount == 4, "refcount == %lu, expected 4\n", refcount);
     refcount = IUnknown_Release(unk);
 
     while (IEnumPins_Release(pins));
@@ -1135,7 +1134,7 @@ START_TEST(mediadet)
             &IID_IMediaDet, (void **)&detector)))
     {
         /* qedit.dll does not exist on 2003. */
-        win_skip("Failed to create media detector object, hr %#x.\n", hr);
+        win_skip("Failed to create media detector object, hr %#lx.\n", hr);
         return;
     }
     IMediaDet_Release(detector);
@@ -1147,9 +1146,9 @@ START_TEST(mediadet)
     test_COM_sg_enumpins();
 
     ret = DeleteFileW(test_avi_filename);
-    ok(ret, "Failed to delete file, error %u.\n", GetLastError());
+    ok(ret, "Failed to delete file, error %lu.\n", GetLastError());
     ret = DeleteFileW(test_sound_avi_filename);
-    ok(ret, "Failed to delete file, error %u.\n", GetLastError());
+    ok(ret, "Failed to delete file, error %lu.\n", GetLastError());
 
     CoUninitialize();
 }
