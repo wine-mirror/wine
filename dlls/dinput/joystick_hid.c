@@ -1418,10 +1418,12 @@ static BOOL hid_joystick_device_try_open( UINT32 handle, const WCHAR *path, HAND
 {
     BOOL has_accelerator, has_brake, has_clutch, has_z, has_pov;
     PHIDP_PREPARSED_DATA preparsed_data = NULL;
+    HIDP_LINK_COLLECTION_NODE nodes[256];
     DWORD type, button_count = 0;
     HIDP_BUTTON_CAPS buttons[10];
     HIDP_VALUE_CAPS value;
     HANDLE device_file;
+    ULONG node_count;
     NTSTATUS status;
     USHORT count;
 
@@ -1452,6 +1454,16 @@ static BOOL hid_joystick_device_try_open( UINT32 handle, const WCHAR *path, HAND
     instance->guidFFDriver = GUID_NULL;
     instance->wUsagePage = caps->UsagePage;
     instance->wUsage = caps->Usage;
+
+    node_count = ARRAY_SIZE(nodes);
+    status = HidP_GetLinkCollectionNodes( nodes, &node_count, preparsed_data );
+    if (status != HIDP_STATUS_SUCCESS) node_count = 0;
+    while (node_count--)
+    {
+        if (nodes[node_count].LinkUsagePage != HID_USAGE_PAGE_SIMULATION) continue;
+        if (nodes[node_count].LinkUsage == HID_USAGE_SIMULATION_AUTOMOBILE_SIMULATION_DEVICE) type = DI8DEVTYPE_DRIVING;
+        if (nodes[node_count].LinkUsage == HID_USAGE_SIMULATION_FLIGHT_SIMULATION_DEVICE) type = DI8DEVTYPE_FLIGHT;
+    }
 
     count = ARRAY_SIZE(buttons);
     status = HidP_GetSpecificButtonCaps( HidP_Output, HID_USAGE_PAGE_PID, 0,
@@ -1532,6 +1544,9 @@ static BOOL hid_joystick_device_try_open( UINT32 handle, const WCHAR *path, HAND
             type |= (DI8DEVTYPEDRIVING_DUALPEDALS << 8);
         else
             type |= (DI8DEVTYPEDRIVING_LIMITED << 8);
+        break;
+    case DI8DEVTYPE_FLIGHT:
+        type |= (DI8DEVTYPEFLIGHT_STICK << 8);
         break;
     }
 
