@@ -33,7 +33,7 @@ interface IWinTypes
 /******************** BASIC WIN32 TYPES ********************/
 cpp_quote("#if 0 /* winnt.h */") /* don't redefine these */
 
-typedef unsigned char BYTE;
+typedef byte BYTE;
 typedef unsigned short WORD;
 typedef unsigned long DWORD;
 typedef long BOOL;
