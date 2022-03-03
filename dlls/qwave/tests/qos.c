@@ -30,19 +30,19 @@ static void test_QOSCreateHandle(void)
     SetLastError(0xdeadbeef);
     ret = QOSCreateHandle(NULL, NULL);
     ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = QOSCreateHandle(&ver, NULL);
     ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ver.MajorVersion = 0;
     ver.MinorVersion = 0;
     ret = QOSCreateHandle(&ver, &h);
     ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
 
     ver.MajorVersion = 1;
     ver.MinorVersion = 0;
@@ -54,14 +54,14 @@ static void test_QOSCreateHandle(void)
     ver.MinorVersion = 5;
     ret = QOSCreateHandle(&ver, &h);
     ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ver.MajorVersion = 2;
     ver.MinorVersion = 0;
     ret = QOSCreateHandle(&ver, &h);
     ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
 }
 
 START_TEST(qos)
