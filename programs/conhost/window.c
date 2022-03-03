@@ -1206,13 +1206,6 @@ struct dialog_info
     struct console        *console;
     struct console_config  config;
     HWND                   dialog;      /* handle to active propsheet */
-    int                    font_count;  /* number of fonts */
-    struct dialog_font_info
-    {
-        unsigned int  height;
-        unsigned int  weight;
-        WCHAR         faceName[LF_FACESIZE];
-    } *font;  /* array of fonts */
 };
 
 /* dialog proc for the option property sheet */
@@ -1352,12 +1345,10 @@ static LRESULT WINAPI font_preview_proc( HWND hwnd, UINT msg, WPARAM wparam, LPA
             struct dialog_info *di;
             HFONT font, old_font;
             PAINTSTRUCT ps;
-            int size_idx;
 
             di = (struct dialog_info *)GetWindowLongPtrW( GetParent( hwnd ), DWLP_USER );
             BeginPaint( hwnd, &ps );
 
-            size_idx = SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_SIZE, LB_GETCURSEL, 0, 0 );
             font = (HFONT)GetWindowLongPtrW( hwnd, 0 );
             if (font)
             {
@@ -1373,7 +1364,7 @@ static LRESULT WINAPI font_preview_proc( HWND hwnd, UINT msg, WPARAM wparam, LPA
                 SetTextColor( ps.hdc, get_color( di, IDC_FNT_COLOR_FG ));
                 len = LoadStringW( GetModuleHandleW(NULL), IDS_FNT_PREVIEW, buf, ARRAY_SIZE(buf) );
                 if (len) TextOutW( ps.hdc, 0, 0, buf, len );
-                TextOutW( ps.hdc, 0, di->font[size_idx].height, ascii, ARRAY_SIZE(ascii) - 1 );
+                TextOutW( ps.hdc, 0, di->config.cell_height, ascii, ARRAY_SIZE(ascii) - 1 );
                 SelectObject( ps.hdc, old_font );
             }
             EndPaint( hwnd, &ps );
@@ -1461,146 +1452,42 @@ static LRESULT WINAPI color_preview_proc( HWND hwnd, UINT msg, WPARAM wparam, LP
     return 0;
 }
 
-/* enumerates all the font names with at least one valid font */
-static int WINAPI font_enum_size2( const LOGFONTW *lf, const TEXTMETRICW *tm,
-                                   DWORD font_type, LPARAM lparam )
-{
-    struct dialog_info *di = (struct dialog_info *)lparam;
-    TRACE( "%s\n", debugstr_textmetric( tm, font_type ));
-    if (validate_font_metric( di->console, tm, font_type, 0 )) di->font_count++;
-    return 1;
-}
-
-static int WINAPI font_enum( const LOGFONTW *lf, const TEXTMETRICW *tm,
-                             DWORD font_type, LPARAM lparam )
-{
-    struct dialog_info *di = (struct dialog_info *)lparam;
-
-    TRACE( "%s\n", debugstr_logfont( lf, font_type ));
-
-    if (validate_font( di->console, lf, 0 ))
-    {
-        if (font_type & RASTER_FONTTYPE)
-        {
-            di->font_count = 0;
-            EnumFontFamiliesW( di->console->window->mem_dc, lf->lfFaceName,
-                               font_enum_size2, (LPARAM)di );
-        }
-        else
-            di->font_count = 1;
-
-        if (di->font_count)
-            SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_FONT, LB_ADDSTRING,
-                                 0, (LPARAM)lf->lfFaceName );
-    }
-    return 1;
-}
-
-static int WINAPI font_enum_size( const LOGFONTW *lf, const TEXTMETRICW *tm,
-                                  DWORD font_type, LPARAM lparam )
-{
-    struct dialog_info *di = (struct dialog_info *)lparam;
-    WCHAR buf[32];
-
-    TRACE( "%s\n", debugstr_textmetric( tm, font_type ));
-
-    if (di->font_count == 0 && !(font_type & RASTER_FONTTYPE))
-    {
-        static const int sizes[] = {8,9,10,11,12,14,16,18,20,22,24,26,28,36,48,72};
-        int i;
-
-        di->font_count = ARRAY_SIZE(sizes);
-        di->font = malloc( di->font_count * sizeof(di->font[0]) );
-        for (i = 0; i < di->font_count; i++)
-        {
-            /* drop sizes where window size wouldn't fit on screen */
-            if (sizes[i] * di->config.win_height > GetSystemMetrics( SM_CYSCREEN ))
-            {
-                di->font_count = i;
-                break;
-            }
-            di->font[i].height = sizes[i];
-            di->font[i].weight = 400;
-            lstrcpyW( di->font[i].faceName, lf->lfFaceName );
-            wsprintfW( buf, L"%d", sizes[i] );
-            SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_SIZE, LB_INSERTSTRING, i, (LPARAM)buf );
-        }
-        /* don't need to enumerate other */
-        return 0;
-    }
-
-    if (validate_font_metric( di->console, tm, font_type, 0 ))
-    {
-        int idx = 0;
-
-        /* we want the string to be sorted with a numeric order, not a lexicographic...
-         * do the job by hand... get where to insert the new string
-         */
-        while (idx < di->font_count && tm->tmHeight > di->font[idx].height)
-            idx++;
-        while (idx < di->font_count &&
-               tm->tmHeight == di->font[idx].height &&
-               tm->tmWeight > di->font[idx].weight)
-            idx++;
-        if (idx == di->font_count ||
-            tm->tmHeight != di->font[idx].height ||
-            tm->tmWeight < di->font[idx].weight)
-        {
-            /* here we need to add the new entry */
-            wsprintfW( buf, L"%d", tm->tmHeight );
-            SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_SIZE, LB_INSERTSTRING, idx, (LPARAM)buf );
-
-            /* now grow our arrays and insert the values at the same index than in the list box */
-            if (di->font_count)
-            {
-                di->font = realloc( di->font, sizeof(*di->font) * (di->font_count + 1) );
-                if (idx != di->font_count)
-                    memmove( &di->font[idx + 1], &di->font[idx],
-                             (di->font_count - idx) * sizeof(*di->font) );
-            }
-            else
-                di->font = malloc( sizeof(*di->font) );
-            di->font[idx].height = tm->tmHeight;
-            di->font[idx].weight = tm->tmWeight;
-            lstrcpyW( di->font[idx].faceName, lf->lfFaceName );
-            di->font_count++;
-        }
-    }
-    return 1;
-}
-
 static BOOL select_font( struct dialog_info *di )
 {
-    struct console_config config;
     int font_idx, size_idx;
+    WCHAR face_name[LF_FACESIZE], height_buf[4];
+    size_t len;
+    unsigned int font_height;
+    LOGFONTW lf;
     HFONT font, old_font;
     DWORD_PTR args[2];
     WCHAR buf[256];
     WCHAR fmt[128];
-    LOGFONTW lf;
 
     font_idx = SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_FONT, LB_GETCURSEL, 0, 0 );
     size_idx = SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_SIZE, LB_GETCURSEL, 0, 0 );
 
-    if (font_idx < 0 || size_idx < 0 || size_idx >= di->font_count)
+    if (font_idx < 0 || size_idx < 0)
         return FALSE;
 
-    fill_logfont( &lf, di->font[size_idx].faceName,
-                  wcslen(di->font[size_idx].faceName) * sizeof(WCHAR),
-                  di->font[size_idx].height, di->font[size_idx].weight );
-    font = select_font_config( &config, di->console->output_cp, di->console->win, &lf );
+    len = SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_FONT, LB_GETTEXT, font_idx, (LPARAM)&face_name );
+    SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_SIZE, LB_GETTEXT, size_idx, (LPARAM)&height_buf );
+    font_height = _wtoi( height_buf );
+
+    fill_logfont( &lf, face_name, len * sizeof(WCHAR), font_height, FW_NORMAL );
+    font = select_font_config( &di->config, di->console->output_cp, di->console->win, &lf );
     if (!font) return FALSE;
 
-    if (config.cell_height != di->font[size_idx].height)
-        TRACE( "mismatched heights (%u<>%u)\n", config.cell_height, di->font[size_idx].height );
+    if (di->config.cell_height != font_height)
+        TRACE( "mismatched heights (%u<>%u)\n", di->config.cell_height, font_height );
 
     old_font = (HFONT)SendDlgItemMessageW( di->dialog, IDC_FNT_PREVIEW, WM_GETFONT, 0, 0 );
     SendDlgItemMessageW( di->dialog, IDC_FNT_PREVIEW, WM_SETFONT, (WPARAM)font, TRUE );
     if (old_font) DeleteObject( old_font );
 
     LoadStringW( GetModuleHandleW(NULL), IDS_FNT_DISPLAY, fmt, ARRAY_SIZE(fmt) );
-    args[0] = config.cell_width;
-    args[1] = config.cell_height;
+    args[0] = di->config.cell_width;
+    args[1] = di->config.cell_height;
     FormatMessageW( FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
                     fmt, 0, 0, buf, ARRAY_SIZE(buf), (__ms_va_list*)args );
 
@@ -1608,52 +1495,62 @@ static BOOL select_font( struct dialog_info *di )
     return TRUE;
 }
 
-/* fills the size list box according to selected family in font LB */
 static BOOL fill_list_size( struct dialog_info *di, BOOL init )
 {
-    WCHAR face_name[LF_FACESIZE];
-    int idx = 0;
-
-    idx = SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_FONT, LB_GETCURSEL, 0, 0 );
-    if (idx < 0) return FALSE;
-
-    SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_FONT, LB_GETTEXT, idx, (LPARAM)face_name );
-    SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_SIZE, LB_RESETCONTENT, 0, 0 );
-    free( di->font );
-    di->font_count = 0;
-    di->font = NULL;
-
-    EnumFontFamiliesW( di->console->window->mem_dc, face_name, font_enum_size, (LPARAM)di );
-
     if (init)
     {
-        int ref = -1;
-        for (idx = 0; idx < di->font_count; idx++)
+        static const int sizes[] = {8,9,10,11,12,14,16,18,20,22,24,26,28,36,48,72};
+        unsigned int i, idx = 4;
+        WCHAR buf[4];
+
+        for (i = 0; i < ARRAY_SIZE(sizes); i++)
         {
-            if (!lstrcmpW( di->font[idx].faceName, di->config.face_name ) &&
-                di->font[idx].height == di->config.cell_height &&
-                di->font[idx].weight == di->config.font_weight)
-            {
-                if (ref == -1) ref = idx;
-                else TRACE("Several matches found: ref=%d idx=%d\n", ref, idx);
-            }
+            wsprintfW( buf, L"%u", sizes[i] );
+            SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_SIZE, LB_INSERTSTRING, -1, (LPARAM)buf );
+
+            if (di->config.cell_height == sizes[i]) idx = i;
         }
-        idx = (ref == -1) ? 0 : ref;
+
+        SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_SIZE, LB_SETCURSEL, idx, 0 );
     }
 
-    SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_SIZE, LB_SETCURSEL, idx, 0 );
     select_font( di );
+
     return TRUE;
+}
+
+static int CALLBACK enum_list_font_proc( const LOGFONTW *lf, const TEXTMETRICW *tm,
+                                         DWORD font_type, LPARAM lparam )
+{
+    struct dialog_info *di = (struct dialog_info *)lparam;
+
+    if (font_type != TRUETYPE_FONTTYPE) return 1;
+
+    TRACE( "%s\n", debugstr_logfont( lf, font_type ));
+
+    if (validate_font( di->console, lf, 0 ))
+        SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_FONT, LB_ADDSTRING, 0, (LPARAM)lf->lfFaceName );
+
+    return 1;
 }
 
 static BOOL fill_list_font( struct dialog_info *di )
 {
-    SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_FONT, LB_RESETCONTENT, 0, 0 );
-    EnumFontFamiliesW( di->console->window->mem_dc, NULL, font_enum, (LPARAM)di );
+    LOGFONTW lf;
+
+    memset( &lf, 0, sizeof(lf) );
+    lf.lfCharSet = DEFAULT_CHARSET;
+    lf.lfFaceName[0] = 0;
+    lf.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
+
+    EnumFontFamiliesExW( di->console->window->mem_dc, &lf, enum_list_font_proc, (LPARAM)di, 0 );
+
     if (SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_FONT, LB_SELECTSTRING,
                              -1, (LPARAM)di->config.face_name ) == LB_ERR)
         SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_FONT, LB_SETCURSEL, 0, 0 );
+
     fill_list_size( di, TRUE );
+
     return TRUE;
 }
 
@@ -1668,7 +1565,7 @@ static INT_PTR WINAPI font_dialog_proc( HWND dialog, UINT msg, WPARAM wparam, LP
         di = (struct dialog_info *)((PROPSHEETPAGEA*)lparam)->lParam;
         di->dialog = dialog;
         SetWindowLongPtrW( dialog, DWLP_USER, (DWORD_PTR)di );
-        /* remove dialog from this control, font will be reset when listboxes are filled */
+        /* use default system font until user-selected font is applied */
         SendDlgItemMessageW( dialog, IDC_FNT_PREVIEW, WM_SETFONT, 0, 0 );
         fill_list_font( di );
         SetWindowLongW( GetDlgItem( dialog, IDC_FNT_COLOR_BK ), 0, (di->config.attr >> 4) & 0x0F );
@@ -1702,18 +1599,6 @@ static INT_PTR WINAPI font_dialog_proc( HWND dialog, UINT msg, WPARAM wparam, LP
                 di->dialog = dialog;
                 break;
             case PSN_APPLY:
-                val = SendDlgItemMessageW( dialog, IDC_FNT_LIST_SIZE, LB_GETCURSEL, 0, 0 );
-                if (val < di->font_count)
-                {
-                    LOGFONTW lf;
-
-                    fill_logfont( &lf, di->font[val].faceName,
-                                  wcslen(di->font[val].faceName) * sizeof(WCHAR),
-                                  di->font[val].height, di->font[val].weight );
-                    DeleteObject( select_font_config( &di->config, di->console->output_cp,
-                                                      di->console->win, &lf ));
-                }
-
                 val = (GetWindowLongW( GetDlgItem( dialog, IDC_FNT_COLOR_BK ), 0 ) << 4) |
                     GetWindowLongW( GetDlgItem( dialog, IDC_FNT_COLOR_FG ), 0 );
                 di->config.attr = val;
@@ -1978,8 +1863,6 @@ static BOOL config_dialog( struct console *console, BOOL current )
     }
     else current_config( console, &di.config );
     prev_config = di.config;
-    di.font_count = 0;
-    di.font = NULL;
 
     wndclass.style         = 0;
     wndclass.lpfnWndProc   = font_preview_proc;
