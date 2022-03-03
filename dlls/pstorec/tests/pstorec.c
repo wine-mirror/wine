@@ -49,14 +49,14 @@ static void test_PStoreCreateInstance(void)
         win_skip("PStoreCreateInstance is not implemented on this system\n");
         return;
     }
-    ok(hr == S_OK, "Unexpected return value %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected return value %#lx.\n", hr);
 
     hr = IPStore_QueryInterface(store, &IID_IUnknown, (void **)&unk);
-    ok(hr == S_OK, "Unexpected return value %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected return value %#lx.\n", hr);
     IUnknown_Release(unk);
 
     hr = IPStore_QueryInterface(store, &IID_IPStore, (void **)&unk);
-    ok(hr == S_OK, "Unexpected return value %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected return value %#lx.\n", hr);
     IUnknown_Release(unk);
 
     IPStore_Release(store);
