@@ -418,7 +418,7 @@ static void test_packager(void)
     hr = CoCreateInstance(&CLSID_Package, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
             &IID_IOleObject, (void**)&oleobj);
     ok(hr == S_OK ||
-            hr == REGDB_E_CLASSNOTREG, "CoCreateInstance(CLSID_Package) failed: %08x\n", hr);
+            hr == REGDB_E_CLASSNOTREG, "CoCreateInstance(CLSID_Package) failed: %08lx\n", hr);
     if(hr == S_OK){
         IOleObject_Release(oleobj);
         /* older OSes store temporary files in obscure locations, so don't run
@@ -429,28 +429,28 @@ static void test_packager(void)
 
     hr = CoCreateInstance(&CLSID_Package_Alt, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
             &IID_IOleObject, (void**)&oleobj);
-    ok(hr == S_OK, "CoCreateInstance(CLSID_Package_Alt) failed: %08x\n", hr);
+    ok(hr == S_OK, "CoCreateInstance(CLSID_Package_Alt) failed: %08lx\n", hr);
 
     hr = IOleObject_SetClientSite(oleobj, NULL);
-    ok(hr == S_OK, "SetClientSite failed: %08x\n", hr);
+    ok(hr == S_OK, "SetClientSite failed: %08lx\n", hr);
 
     hr = IOleObject_SetClientSite(oleobj, &clientsite);
-    ok(hr == S_OK, "SetClientSite failed: %08x\n", hr);
+    ok(hr == S_OK, "SetClientSite failed: %08lx\n", hr);
 
     hr = IOleObject_GetMiscStatus(oleobj, DVASPECT_CONTENT, NULL);
-    ok(hr == E_INVALIDARG, "GetMiscStatus failed: %08x\n", hr);
+    ok(hr == E_INVALIDARG, "GetMiscStatus failed: %08lx\n", hr);
 
     hr = IOleObject_GetMiscStatus(oleobj, DVASPECT_CONTENT, &status);
-    ok(hr == S_OK, "GetMiscStatus failed: %08x\n", hr);
+    ok(hr == S_OK, "GetMiscStatus failed: %08lx\n", hr);
     ok(status == OLEMISC_ONLYICONIC ||
             status == OLEMISC_CANTLINKINSIDE /* winxp */,
-            "Got wrong DVASPECT_CONTENT status: 0x%x\n", status);
+            "Got wrong DVASPECT_CONTENT status: 0x%lx\n", status);
 
     hr = IOleObject_QueryInterface(oleobj, &IID_IPersistStorage, (void**)&persist);
-    ok(hr == S_OK, "QueryInterface(IPersistStorage) failed: %08x\n", hr);
+    ok(hr == S_OK, "QueryInterface(IPersistStorage) failed: %08lx\n", hr);
 
     hr = IPersistStorage_Load(persist, &stg);
-    ok(hr == S_OK, "Load failed: %08x\n", hr);
+    ok(hr == S_OK, "Load failed: %08lx\n", hr);
 
     if(extended){
         len = GetTempPathW(ARRAY_SIZE(filename), filename);
@@ -458,19 +458,19 @@ static void test_packager(void)
 
         file = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING,
                 FILE_ATTRIBUTE_NORMAL, NULL);
-        ok(file != INVALID_HANDLE_VALUE, "Couldn't find temporary file %s: %u\n",
+        ok(file != INVALID_HANDLE_VALUE, "Couldn't find temporary file %s: %lu\n",
                 wine_dbgstr_w(filename), GetLastError());
 
         br = ReadFile(file, contents, sizeof(contents), &bytes_read, NULL);
         ok(br == TRUE, "ReadFile failed\n");
-        ok(bytes_read == 10, "Got wrong file size: %u\n", bytes_read);
+        ok(bytes_read == 10, "Got wrong file size: %lu\n", bytes_read);
         ok(!memcmp(contents, "some text\n", 10), "Got wrong file contents\n");
 
         CloseHandle(file);
     }
 
     hr = IOleObject_Close(oleobj, OLECLOSE_NOSAVE);
-    ok(hr == S_OK, "Close failed: %08x\n", hr);
+    ok(hr == S_OK, "Close failed: %08lx\n", hr);
 
     if(extended){
         file = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING,
