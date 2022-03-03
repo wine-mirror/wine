@@ -435,9 +435,9 @@ static void test_reflection_desc_vs(void)
     hr = ref11->lpVtbl->GetDesc(ref11, &sdesc11);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-    ok(sdesc11.Version == 65601, "GetDesc failed, got %u, expected %u\n", sdesc11.Version, 65601);
-    ok(strcmp(sdesc11.Creator, (char*) shader_creator) == 0, "GetDesc failed, got \"%s\", expected \"%s\"\n", sdesc11.Creator, (char*)shader_creator);
-    ok(sdesc11.Flags == 256, "GetDesc failed, got %u, expected %u\n", sdesc11.Flags, 256);
+    ok(sdesc11.Version == 0x10041, "Unexpected Version %#x.\n", sdesc11.Version);
+    ok(!strcmp(sdesc11.Creator, (char *)shader_creator), "Unexpected Creator \"%s\".\n", sdesc11.Creator);
+    ok(sdesc11.Flags == 0x100, "Unexpected Flags %#x.\n", sdesc11.Flags);
     ok(sdesc11.ConstantBuffers == 0, "GetDesc failed, got %u, expected %u\n", sdesc11.ConstantBuffers, 0);
     ok(sdesc11.BoundResources == 0, "GetDesc failed, got %u, expected %u\n", sdesc11.BoundResources, 0);
     ok(sdesc11.InputParameters == 15, "GetDesc failed, got %u, expected %u\n", sdesc11.InputParameters, 15);
@@ -786,9 +786,9 @@ static void test_reflection_desc_ps(void)
     hr = ref11->lpVtbl->GetDesc(ref11, &sdesc11);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-    ok(sdesc11.Version == 65, "GetDesc failed, got %u, expected %u\n", sdesc11.Version, 65);
-    ok(strcmp(sdesc11.Creator, (char*) shader_creator) == 0, "GetDesc failed, got \"%s\", expected \"%s\"\n", sdesc11.Creator, (char*)shader_creator);
-    ok(sdesc11.Flags == 256, "GetDesc failed, got %u, expected %u\n", sdesc11.Flags, 256);
+    ok(sdesc11.Version == 0x41, "Unexpected Version %#x.\n", sdesc11.Version);
+    ok(!strcmp(sdesc11.Creator, (char *)shader_creator), "Unexpected Creator \"%s\".\n", sdesc11.Creator);
+    ok(sdesc11.Flags == 0x100, "Unexpected Flags %#x.\n", sdesc11.Flags);
     ok(sdesc11.ConstantBuffers == 0, "GetDesc failed, got %u, expected %u\n", sdesc11.ConstantBuffers, 0);
     ok(sdesc11.BoundResources == 4, "GetDesc failed, got %u, expected %u\n", sdesc11.BoundResources, 4);
     ok(sdesc11.InputParameters == 8, "GetDesc failed, got %u, expected %u\n", sdesc11.InputParameters, 8);
@@ -1652,10 +1652,10 @@ static void test_reflection_constant_buffer(void)
     hr = ref11->lpVtbl->GetDesc(ref11, &sdesc);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-    expected = D3D_COMPILER_VERSION ? 80 : 64;
-    ok(sdesc.Version == expected, "Got unexpected version %u.\n", sdesc.Version);
-    ok(strcmp(sdesc.Creator, (char*) shader_creator) == 0, "GetDesc failed, got \"%s\", expected \"%s\"\n", sdesc.Creator, (char*)shader_creator);
-    ok(sdesc.Flags == 256, "GetDesc failed, got %u, expected %u\n", sdesc.Flags, 256);
+    expected = D3D_COMPILER_VERSION ? 0x50 : 0x40;
+    ok(sdesc.Version == expected, "Unexpected Version %#x.\n", sdesc.Version);
+    ok(!strcmp(sdesc.Creator, (char *)shader_creator), "Unexpected Creator \"%s\".\n", sdesc.Creator);
+    ok(sdesc.Flags == 0x100, "Unexpected Flags %#x.\n", sdesc.Flags);
     ok(sdesc.ConstantBuffers == 2, "GetDesc failed, got %u, expected %u\n", sdesc.ConstantBuffers, 2);
     expected = D3D_COMPILER_VERSION ? 1 : 2;
     ok(sdesc.BoundResources == expected, "Got unexpected BoundResources %u.\n", sdesc.BoundResources);
