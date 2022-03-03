@@ -74,15 +74,14 @@ static BOOL hid_report_descriptor_append_usage(struct hid_report_descriptor *des
     return hid_report_descriptor_append(desc, template, sizeof(template));
 }
 
-BOOL hid_device_begin_report_descriptor(struct unix_device *iface, USAGE usage_page, USAGE usage)
+BOOL hid_device_begin_report_descriptor(struct unix_device *iface, const USAGE_AND_PAGE *device_usage)
 {
     struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
     const BYTE template[] =
     {
-        USAGE_PAGE(2, usage_page),
-        USAGE(2, usage),
+        USAGE_PAGE(2, device_usage->UsagePage),
+        USAGE(2, device_usage->Usage),
         COLLECTION(1, Application),
-            USAGE(1, 0),
     };
 
     memset(desc, 0, sizeof(*desc));
