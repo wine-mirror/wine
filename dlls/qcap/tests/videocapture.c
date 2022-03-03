@@ -84,11 +84,12 @@ static void test_media_types(IPin *pin)
 static void test_stream_config(IPin *pin)
 {
     VIDEOINFOHEADER *video_info, *video_info2;
-    LONG depth, compression, count, size, i;
     IEnumMediaTypes *enum_media_types;
     AM_MEDIA_TYPE *format, *format2;
     IAMStreamConfig *stream_config;
     VIDEO_STREAM_CONFIG_CAPS vscc;
+    LONG depth, compression;
+    int count, size, i;
     HRESULT hr;
 
     hr = IPin_QueryInterface(pin, &IID_IAMStreamConfig, (void **)&stream_config);
