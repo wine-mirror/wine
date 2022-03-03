@@ -411,12 +411,23 @@ static inline void context_init_xstate( CONTEXT *context, void *xstate_buffer )
     xctx->Legacy.Length = sizeof(CONTEXT);
     xctx->Legacy.Offset = -(LONG)sizeof(CONTEXT);
 
-    xctx->XState.Length = sizeof(XSTATE);
-    xctx->XState.Offset = (BYTE *)xstate_buffer - (BYTE *)xctx;
+    if (xstate_buffer)
+    {
+        xctx->XState.Length = sizeof(XSTATE);
+        xctx->XState.Offset = (BYTE *)xstate_buffer - (BYTE *)xctx;
+        context->ContextFlags |= CONTEXT_XSTATE;
 
-    xctx->All.Length = sizeof(CONTEXT) + xctx->XState.Offset + xctx->XState.Length;
+        xctx->All.Length = sizeof(CONTEXT) + xctx->XState.Offset + xctx->XState.Length;
+    }
+    else
+    {
+        xctx->XState.Length = 25;
+        xctx->XState.Offset = 0;
+
+        xctx->All.Length = sizeof(CONTEXT) + 24; /* sizeof(CONTEXT_EX) minus 8 alignment bytes on x64. */
+    }
+
     xctx->All.Offset = -(LONG)sizeof(CONTEXT);
-    context->ContextFlags |= CONTEXT_XSTATE;
 }
 
 static USHORT cs32_sel;  /* selector for %cs in 32-bit mode */
@@ -2194,6 +2205,10 @@ static void setup_raise_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec
             dst_xs->Mask = 4;
             memcpy( &dst_xs->YmmContext, &src_xs->YmmContext, sizeof(dst_xs->YmmContext) );
         }
+    }
+    else
+    {
+        context_init_xstate( &stack->context, NULL );
     }
 
     CS_sig(sigcontext)  = cs64_sel;
