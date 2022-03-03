@@ -2062,7 +2062,7 @@ interface ID3D12GraphicsCommandList : ID3D12CommandList
 
     HRESULT Reset(ID3D12CommandAllocator *allocator, ID3D12PipelineState *initial_state);
 
-    HRESULT ClearState(ID3D12PipelineState *pipeline_state);
+    void ClearState(ID3D12PipelineState *pipeline_state);
 
     void DrawInstanced(UINT vertex_count_per_instance, UINT instance_count,
             UINT start_vertex_location, UINT start_instance_location);
