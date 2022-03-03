@@ -29,7 +29,7 @@ static ICaptureGraphBuilder2 *create_capture_graph(void)
     ICaptureGraphBuilder2 *ret;
     HRESULT hr = CoCreateInstance(&CLSID_CaptureGraphBuilder2, NULL,
             CLSCTX_INPROC_SERVER, &IID_ICaptureGraphBuilder2, (void **)&ret);
-    ok(hr == S_OK, "Failed to create capture graph builder, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     return ret;
 }
 
@@ -149,10 +149,10 @@ static HRESULT WINAPI property_set_Get(IKsPropertySet *iface, REFGUID set, DWORD
     if (winetest_debug > 1) trace("%s->Get()\n", debugstr_w(pin->pin.pin.name));
 
     ok(IsEqualGUID(set, &AMPROPSETID_Pin), "Got set %s.\n", debugstr_guid(set));
-    ok(id == AMPROPERTY_PIN_CATEGORY, "Got id %#x.\n", id);
+    ok(id == AMPROPERTY_PIN_CATEGORY, "Got id %#lx.\n", id);
     ok(!instance_data, "Got instance data %p.\n", instance_data);
-    ok(!instance_size, "Got instance size %u.\n", instance_size);
-    ok(property_size == sizeof(GUID), "Got property size %u.\n", property_size);
+    ok(!instance_size, "Got instance size %lu.\n", instance_size);
+    ok(property_size == sizeof(GUID), "Got property size %lu.\n", property_size);
     ok(!!ret_size, "Expected non-NULL return size.\n");
     memcpy(property_data, &pin->category, sizeof(GUID));
     return S_OK;
@@ -368,7 +368,7 @@ static void test_find_interface(void)
 
     CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IGraphBuilder, (void **)&graph);
     hr = ICaptureGraphBuilder2_SetFiltergraph(capture_graph, graph);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     testfilter_init(&filter1);
     IGraphBuilder_AddFilter(graph, &filter1.filter.IBaseFilter_iface, L"filter1");
@@ -378,21 +378,21 @@ static void test_find_interface(void)
     IGraphBuilder_AddFilter(graph, &filter3.filter.IBaseFilter_iface, L"filter3");
 
     hr = IGraphBuilder_ConnectDirect(graph, &filter1.source1.pin.pin.IPin_iface, &filter2.sink1.pin.pin.IPin_iface, &mt1);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IGraphBuilder_ConnectDirect(graph, &filter2.source1.pin.pin.IPin_iface, &filter3.sink1.pin.pin.IPin_iface, &mt2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     /* Test search order without any restrictions applied. */
 
     hr = ICaptureGraphBuilder2_FindInterface(capture_graph, NULL, &bogus_majortype,
                 NULL, &testiid, (void **)&unk);
-    ok(hr == E_POINTER, "got hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(tests_from_filter2); ++i)
     {
         hr = ICaptureGraphBuilder2_FindInterface(capture_graph, NULL, &bogus_majortype,
                 &filter2.filter.IBaseFilter_iface, &testiid, (void **)&unk);
-        ok(hr == S_OK, "Test %u: got hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: got hr %#lx.\n", i, hr);
         ok(unk == tests_from_filter2[i].iface, "Test %u: got wrong interface %p.\n", i, unk);
         IUnknown_Release(unk);
         *tests_from_filter2[i].expose = FALSE;
@@ -400,7 +400,7 @@ static void test_find_interface(void)
 
     hr = ICaptureGraphBuilder2_FindInterface(capture_graph, NULL, &bogus_majortype,
             &filter2.filter.IBaseFilter_iface, &testiid, (void **)&unk);
-    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
 
     reset_interfaces(&filter1);
     reset_interfaces(&filter2);
@@ -410,7 +410,7 @@ static void test_find_interface(void)
     {
         hr = ICaptureGraphBuilder2_FindInterface(capture_graph, NULL, &bogus_majortype,
                 &filter1.filter.IBaseFilter_iface, &testiid, (void **)&unk);
-        ok(hr == S_OK, "Test %u: got hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: got hr %#lx.\n", i, hr);
         ok(unk == tests_from_filter1[i].iface, "Test %u: got wrong interface %p.\n", i, unk);
         IUnknown_Release(unk);
         *tests_from_filter1[i].expose = FALSE;
@@ -418,7 +418,7 @@ static void test_find_interface(void)
 
     hr = ICaptureGraphBuilder2_FindInterface(capture_graph, NULL, &bogus_majortype,
             &filter1.filter.IBaseFilter_iface, &testiid, (void **)&unk);
-    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
 
     /* Test with upstream/downstream flags. */
 
@@ -430,7 +430,7 @@ static void test_find_interface(void)
     {
         hr = ICaptureGraphBuilder2_FindInterface(capture_graph, &LOOK_UPSTREAM_ONLY, &bogus_majortype,
                 &filter2.filter.IBaseFilter_iface, &testiid, (void **)&unk);
-        ok(hr == S_OK, "Test %u: got hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: got hr %#lx.\n", i, hr);
         ok(unk == look_upstream_tests[i].iface, "Test %u: got wrong interface %p.\n", i, unk);
         IUnknown_Release(unk);
         *look_upstream_tests[i].expose = FALSE;
@@ -438,7 +438,7 @@ static void test_find_interface(void)
 
     hr = ICaptureGraphBuilder2_FindInterface(capture_graph, &LOOK_UPSTREAM_ONLY, &bogus_majortype,
             &filter2.filter.IBaseFilter_iface, &testiid, (void **)&unk);
-    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
 
     reset_interfaces(&filter1);
     reset_interfaces(&filter2);
@@ -448,7 +448,7 @@ static void test_find_interface(void)
     {
         hr = ICaptureGraphBuilder2_FindInterface(capture_graph, &LOOK_DOWNSTREAM_ONLY, &bogus_majortype,
                 &filter2.filter.IBaseFilter_iface, &testiid, (void **)&unk);
-        ok(hr == S_OK, "Test %u: got hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: got hr %#lx.\n", i, hr);
         ok(unk == look_downstream_tests[i].iface, "Test %u: got wrong interface %p.\n", i, unk);
         IUnknown_Release(unk);
         *look_downstream_tests[i].expose = FALSE;
@@ -456,7 +456,7 @@ static void test_find_interface(void)
 
     hr = ICaptureGraphBuilder2_FindInterface(capture_graph, &LOOK_DOWNSTREAM_ONLY, &bogus_majortype,
             &filter2.filter.IBaseFilter_iface, &testiid, (void **)&unk);
-    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
 
     /* Test with a category flag. */
 
@@ -466,20 +466,20 @@ static void test_find_interface(void)
 
     hr = ICaptureGraphBuilder2_FindInterface(capture_graph, &PIN_CATEGORY_CAPTURE, NULL,
             &filter2.filter.IBaseFilter_iface, &testiid, (void **)&unk);
-    ok(hr == S_OK, "Got hr %#x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(unk == (IUnknown *)&filter2.filter.IBaseFilter_iface, "Got wrong interface %p.\n", unk);
     IUnknown_Release(unk);
     filter2.filter_has_iface = FALSE;
 
     hr = ICaptureGraphBuilder2_FindInterface(capture_graph, &PIN_CATEGORY_CAPTURE, NULL,
             &filter2.filter.IBaseFilter_iface, &testiid, (void **)&unk);
-    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
 
     filter2.source1.IKsPropertySet_iface.lpVtbl = &property_set_vtbl;
     filter2.source1.category = PIN_CATEGORY_CAPTURE;
     hr = ICaptureGraphBuilder2_FindInterface(capture_graph, &PIN_CATEGORY_CAPTURE, NULL,
             &filter2.filter.IBaseFilter_iface, &testiid, (void **)&unk);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(unk == (IUnknown *)&filter2.source1.pin.pin.IPin_iface, "Got wrong interface %p.\n", unk);
     IUnknown_Release(unk);
     filter2.source1.has_iface = FALSE;
@@ -492,7 +492,7 @@ static void test_find_interface(void)
     {
         hr = ICaptureGraphBuilder2_FindInterface(capture_graph, &PIN_CATEGORY_CAPTURE, NULL,
                 &filter2.filter.IBaseFilter_iface, &testiid, (void **)&unk);
-        ok(hr == S_OK, "Test %u: got hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: got hr %#lx.\n", i, hr);
         ok(unk == category_tests[i].iface, "Test %u: got wrong interface %p.\n", i, unk);
         IUnknown_Release(unk);
         *category_tests[i].expose = FALSE;
@@ -500,7 +500,7 @@ static void test_find_interface(void)
 
     hr = ICaptureGraphBuilder2_FindInterface(capture_graph, &PIN_CATEGORY_CAPTURE, NULL,
             &filter2.filter.IBaseFilter_iface, &testiid, (void **)&unk);
-    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
 
     /* Test with a media type. */
 
@@ -512,22 +512,22 @@ static void test_find_interface(void)
 
     hr = ICaptureGraphBuilder2_FindInterface(capture_graph, &PIN_CATEGORY_CAPTURE, &bogus_majortype,
             &filter2.filter.IBaseFilter_iface, &testiid, (void **)&unk);
-    ok(hr == S_OK, "Got hr %#x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(unk == (IUnknown *)&filter2.filter.IBaseFilter_iface, "Got wrong interface %p.\n", unk);
     IUnknown_Release(unk);
     filter2.filter_has_iface = FALSE;
 
     hr = ICaptureGraphBuilder2_FindInterface(capture_graph, &PIN_CATEGORY_CAPTURE, &bogus_majortype,
             &filter2.filter.IBaseFilter_iface, &testiid, (void **)&unk);
-    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
 
     hr = ICaptureGraphBuilder2_FindInterface(capture_graph, &PIN_CATEGORY_CAPTURE, &mt2.majortype,
             &filter2.filter.IBaseFilter_iface, &testiid, (void **)&unk);
-    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
 
     hr = ICaptureGraphBuilder2_FindInterface(capture_graph, &PIN_CATEGORY_CAPTURE, &testtype,
             &filter2.filter.IBaseFilter_iface, &testiid, (void **)&unk);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(unk == (IUnknown *)&filter2.source1.pin.pin.IPin_iface, "Got wrong interface %p.\n", unk);
     IUnknown_Release(unk);
     filter2.source1.has_iface = FALSE;
@@ -538,7 +538,7 @@ static void test_find_interface(void)
     {
         hr = ICaptureGraphBuilder2_FindInterface(capture_graph, &PIN_CATEGORY_CAPTURE, NULL,
                 &filter2.filter.IBaseFilter_iface, &testiid, (void **)&unk);
-        ok(hr == S_OK, "Test %u: got hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: got hr %#lx.\n", i, hr);
         ok(unk == category_tests[i].iface, "Test %u: got wrong interface %p.\n", i, unk);
         IUnknown_Release(unk);
         *category_tests[i].expose = FALSE;
@@ -546,18 +546,18 @@ static void test_find_interface(void)
 
     hr = ICaptureGraphBuilder2_FindInterface(capture_graph, &PIN_CATEGORY_CAPTURE, NULL,
             &filter2.filter.IBaseFilter_iface, &testiid, (void **)&unk);
-    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
 
     ref = ICaptureGraphBuilder2_Release(capture_graph);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
     ref = IGraphBuilder_Release(graph);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
     ref = IBaseFilter_Release(&filter1.filter.IBaseFilter_iface);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
     ref = IBaseFilter_Release(&filter2.filter.IBaseFilter_iface);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
     ref = IBaseFilter_Release(&filter3.filter.IBaseFilter_iface);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
 static void test_find_pin(void)
@@ -578,7 +578,7 @@ static void test_find_pin(void)
 
     CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IGraphBuilder, (void **)&graph);
     hr = ICaptureGraphBuilder2_SetFiltergraph(capture_graph, graph);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     testfilter_init(&filter1);
     testfilter_init(&filter2);
@@ -587,51 +587,51 @@ static void test_find_pin(void)
 
     hr = IGraphBuilder_ConnectDirect(graph, &filter1.source1.pin.pin.IPin_iface,
             &filter2.sink1.pin.pin.IPin_iface, &mt);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = ICaptureGraphBuilder2_FindPin(capture_graph, (IUnknown *)&filter1.filter.IBaseFilter_iface,
             PINDIR_INPUT, NULL, NULL, FALSE, 0, &pin);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(pin == &filter1.sink1.pin.pin.IPin_iface, "Got wrong pin.\n");
     IPin_Release(pin);
 
     hr = ICaptureGraphBuilder2_FindPin(capture_graph, (IUnknown *)&filter1.filter.IBaseFilter_iface,
             PINDIR_INPUT, NULL, NULL, FALSE, 1, &pin);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(pin == &filter1.sink2.pin.pin.IPin_iface, "Got wrong pin.\n");
     IPin_Release(pin);
 
     hr = ICaptureGraphBuilder2_FindPin(capture_graph, (IUnknown *)&filter1.filter.IBaseFilter_iface,
             PINDIR_INPUT, NULL, NULL, FALSE, 2, &pin);
-    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
 
     hr = ICaptureGraphBuilder2_FindPin(capture_graph, (IUnknown *)&filter1.filter.IBaseFilter_iface,
             PINDIR_OUTPUT, NULL, NULL, FALSE, 0, &pin);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(pin == &filter1.source1.pin.pin.IPin_iface, "Got wrong pin.\n");
     IPin_Release(pin);
 
     hr = ICaptureGraphBuilder2_FindPin(capture_graph, (IUnknown *)&filter1.filter.IBaseFilter_iface,
             PINDIR_OUTPUT, NULL, NULL, FALSE, 1, &pin);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(pin == &filter1.source2.pin.pin.IPin_iface, "Got wrong pin.\n");
     IPin_Release(pin);
 
     hr = ICaptureGraphBuilder2_FindPin(capture_graph, (IUnknown *)&filter1.filter.IBaseFilter_iface,
             PINDIR_OUTPUT, NULL, NULL, FALSE, 2, &pin);
-    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
 
     /* Test the unconnected flag. */
 
     hr = ICaptureGraphBuilder2_FindPin(capture_graph, (IUnknown *)&filter1.filter.IBaseFilter_iface,
             PINDIR_OUTPUT, NULL, NULL, TRUE, 0, &pin);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(pin == &filter1.source2.pin.pin.IPin_iface, "Got wrong pin.\n");
     IPin_Release(pin);
 
     hr = ICaptureGraphBuilder2_FindPin(capture_graph, (IUnknown *)&filter1.filter.IBaseFilter_iface,
             PINDIR_OUTPUT, NULL, NULL, TRUE, 1, &pin);
-    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
 
     /* Test categories. */
 
@@ -640,31 +640,31 @@ static void test_find_pin(void)
 
     hr = ICaptureGraphBuilder2_FindPin(capture_graph, (IUnknown *)&filter1.filter.IBaseFilter_iface,
             PINDIR_OUTPUT, &PIN_CATEGORY_CAPTURE, NULL, FALSE, 0, &pin);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(pin == &filter1.source1.pin.pin.IPin_iface, "Got wrong pin.\n");
     IPin_Release(pin);
 
     hr = ICaptureGraphBuilder2_FindPin(capture_graph, (IUnknown *)&filter1.filter.IBaseFilter_iface,
             PINDIR_OUTPUT, &PIN_CATEGORY_CAPTURE, NULL, FALSE, 1, &pin);
-    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
 
     ref = ICaptureGraphBuilder2_Release(capture_graph);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
     ref = IGraphBuilder_Release(graph);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
     ref = IBaseFilter_Release(&filter1.filter.IBaseFilter_iface);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
     ref = IBaseFilter_Release(&filter2.filter.IBaseFilter_iface);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
 static void disconnect_pins(IGraphBuilder *graph, struct testsource *pin)
 {
     HRESULT hr;
     hr = IGraphBuilder_Disconnect(graph, pin->pin.pin.peer);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IGraphBuilder_Disconnect(graph, &pin->pin.pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 }
 
 static void check_smart_tee_pin_(int line, IPin *pin, const WCHAR *name)
@@ -694,7 +694,7 @@ static void test_render_stream(void)
 
     CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IGraphBuilder, (void **)&graph);
     hr = ICaptureGraphBuilder2_SetFiltergraph(capture_graph, graph);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     testfilter_init(&source);
     testfilter_init(&transform);
@@ -711,7 +711,7 @@ static void test_render_stream(void)
 
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, NULL, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(source.source1.pin.pin.peer == &transform.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     ok(transform.source1.pin.pin.peer == &sink.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     ok(!source.source2.pin.pin.peer, "Pin should not be connected.\n");
@@ -719,7 +719,7 @@ static void test_render_stream(void)
 
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, NULL, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(source.source1.pin.pin.peer == &transform.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     ok(transform.source1.pin.pin.peer == &sink.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     todo_wine ok(source.source2.pin.pin.peer == &transform.sink2.pin.pin.IPin_iface, "Got wrong connection.\n");
@@ -727,14 +727,14 @@ static void test_render_stream(void)
 
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, NULL, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    todo_wine ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
 
     todo_wine disconnect_pins(graph, &source.source2);
     todo_wine disconnect_pins(graph, &transform.source2);
 
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, NULL, NULL,
             (IUnknown *)&transform.source2.pin.pin.IPin_iface, NULL, &sink.filter.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(source.source1.pin.pin.peer == &transform.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     ok(transform.source1.pin.pin.peer == &sink.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     ok(transform.source2.pin.pin.peer == &sink.sink2.pin.pin.IPin_iface, "Got wrong connection.\n");
@@ -742,20 +742,20 @@ static void test_render_stream(void)
 
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, NULL, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
 
     disconnect_pins(graph, &transform.source2);
 
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, NULL, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &transform.filter.IBaseFilter_iface);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(source.source1.pin.pin.peer == &transform.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     ok(transform.source1.pin.pin.peer == &sink.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     todo_wine ok(source.source2.pin.pin.peer == &transform.sink2.pin.pin.IPin_iface, "Got wrong connection.\n");
 
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, NULL, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(source.source1.pin.pin.peer == &transform.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     ok(transform.source1.pin.pin.peer == &sink.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     todo_wine ok(source.source2.pin.pin.peer == &transform.sink2.pin.pin.IPin_iface, "Got wrong connection.\n");
@@ -766,7 +766,7 @@ static void test_render_stream(void)
     /* Test from a source pin. */
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, NULL, NULL,
             (IUnknown *)&source.source1.pin.pin.IPin_iface, NULL, &sink.filter.IBaseFilter_iface);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(source.source1.pin.pin.peer == &transform.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     ok(transform.source1.pin.pin.peer == &sink.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     todo_wine ok(transform.source2.pin.pin.peer == &sink.sink2.pin.pin.IPin_iface, "Got wrong connection.\n");
@@ -777,7 +777,7 @@ static void test_render_stream(void)
     source.source_type = bad_type;
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, NULL, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#x.\n", hr);
+    ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#lx.\n", hr);
     source.source_type = source_type;
 
     disconnect_pins(graph, &transform.source1);
@@ -791,7 +791,7 @@ static void test_render_stream(void)
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, NULL, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface,
             &identity.filter.IBaseFilter_iface, &sink.filter.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(source.source1.pin.pin.peer == &identity.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     ok(identity.source1.pin.pin.peer == &transform.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     ok(transform.source1.pin.pin.peer == &sink.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
@@ -803,7 +803,7 @@ static void test_render_stream(void)
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, NULL, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface,
             &identity.filter.IBaseFilter_iface, &sink.filter.IBaseFilter_iface);
-    todo_wine ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
     ok(!source.source1.pin.pin.peer, "Pin should not be connected.\n");
     ok(!identity.source1.pin.pin.peer, "Pin should not be connected.\n");
     ok(!transform.source1.pin.pin.peer, "Pin should not be connected.\n");
@@ -813,7 +813,7 @@ static void test_render_stream(void)
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, NULL, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface,
             &identity.filter.IBaseFilter_iface, &sink.filter.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(source.source1.pin.pin.peer == &transform.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     ok(transform.source1.pin.pin.peer == &identity.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     ok(identity.source1.pin.pin.peer == &sink.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
@@ -825,7 +825,7 @@ static void test_render_stream(void)
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, NULL, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface,
             &identity.filter.IBaseFilter_iface, &sink.filter.IBaseFilter_iface);
-    ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#x.\n", hr);
+    ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#lx.\n", hr);
     ok(source.source1.pin.pin.peer == &transform.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     ok(transform.source1.pin.pin.peer == &identity.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     ok(!identity.source1.pin.pin.peer, "Pin should not be connected.\n");
@@ -836,7 +836,7 @@ static void test_render_stream(void)
 
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, NULL, &bad_type,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!source.source1.pin.pin.peer, "Pin should not be connected.\n");
     ok(!source.source2.pin.pin.peer, "Pin should not be connected.\n");
     ok(!sink.sink1.pin.pin.peer, "Pin should not be connected.\n");
@@ -844,7 +844,7 @@ static void test_render_stream(void)
 
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, NULL, &sink1_type,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!source.source1.pin.pin.peer, "Pin should not be connected.\n");
     ok(!source.source2.pin.pin.peer, "Pin should not be connected.\n");
     ok(!sink.sink1.pin.pin.peer, "Pin should not be connected.\n");
@@ -855,7 +855,7 @@ static void test_render_stream(void)
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, NULL, &sink1_type,
             (IUnknown *)&source.filter.IBaseFilter_iface,
             &identity.filter.IBaseFilter_iface, &sink.filter.IBaseFilter_iface);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!source.source1.pin.pin.peer, "Pin should not be connected.\n");
     ok(!source.source2.pin.pin.peer, "Pin should not be connected.\n");
     ok(!sink.sink1.pin.pin.peer, "Pin should not be connected.\n");
@@ -863,7 +863,7 @@ static void test_render_stream(void)
 
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, NULL, &source_type,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(source.source1.pin.pin.peer == &transform.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     ok(transform.source1.pin.pin.peer == &sink.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     ok(!source.source2.pin.pin.peer, "Pin should not be connected.\n");
@@ -871,7 +871,7 @@ static void test_render_stream(void)
 
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, NULL, &sink1_type,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(source.source1.pin.pin.peer == &transform.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     ok(transform.source1.pin.pin.peer == &sink.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     ok(transform.source2.pin.pin.peer == &sink.sink2.pin.pin.IPin_iface, "Got wrong connection.\n");
@@ -885,7 +885,7 @@ static void test_render_stream(void)
 
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_CC, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     ok(!source.source1.pin.pin.peer, "Pin should not be connected.\n");
     ok(!source.source2.pin.pin.peer, "Pin should not be connected.\n");
     ok(!sink.sink1.pin.pin.peer, "Pin should not be connected.\n");
@@ -894,7 +894,7 @@ static void test_render_stream(void)
     source.source1.IKsPropertySet_iface.lpVtbl = &property_set_vtbl;
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_CC, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     ok(!source.source1.pin.pin.peer, "Pin should not be connected.\n");
     ok(!source.source2.pin.pin.peer, "Pin should not be connected.\n");
     ok(!sink.sink1.pin.pin.peer, "Pin should not be connected.\n");
@@ -903,7 +903,7 @@ static void test_render_stream(void)
     source.source1.category = PIN_CATEGORY_CC;
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_CC, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(source.source1.pin.pin.peer == &transform.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     ok(transform.source1.pin.pin.peer == &sink.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     ok(!source.source2.pin.pin.peer, "Pin should not be connected.\n");
@@ -913,7 +913,7 @@ static void test_render_stream(void)
 
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_CC, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     ok(source.source1.pin.pin.peer == &transform.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     ok(!transform.source1.pin.pin.peer, "Pin should not be connected.\n");
 
@@ -921,14 +921,14 @@ static void test_render_stream(void)
     transform.source1.category = PIN_CATEGORY_CC;
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_CC, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     ok(source.source1.pin.pin.peer == &transform.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     todo_wine ok(!transform.source1.pin.pin.peer, "Pin should not be connected.\n");
     todo_wine ok(!sink.sink1.pin.pin.peer, "Pin should not be connected.\n");
 
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_CC, NULL,
             (IUnknown *)&source.source1.pin.pin.IPin_iface, NULL, &sink.filter.IBaseFilter_iface);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     disconnect_pins(graph, &source.source1);
 
@@ -937,53 +937,53 @@ static void test_render_stream(void)
     source.source1.IKsPropertySet_iface.lpVtbl = transform.source1.IKsPropertySet_iface.lpVtbl = NULL;
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_CAPTURE, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_PREVIEW, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     source.source1.IKsPropertySet_iface.lpVtbl = &property_set_vtbl;
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_CAPTURE, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_PREVIEW, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     source.source1.category = PIN_CATEGORY_PREVIEW;
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_CAPTURE, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     ok(!source.source1.pin.pin.peer, "Pin should not be connected.\n");
     todo_wine ok(!sink.sink1.pin.pin.peer, "Pin should not be connected.\n");
 
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_PREVIEW, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
     todo_wine ok(source.source1.pin.pin.peer == &transform.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     ok(transform.source1.pin.pin.peer == &sink.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     disconnect_pins(graph, &transform.source1);
 
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_PREVIEW, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    todo_wine ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
     todo_wine disconnect_pins(graph, &source.source1);
 
     source.source1.category = PIN_CATEGORY_CAPTURE;
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_CAPTURE, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     check_smart_tee_pin(source.source1.pin.pin.peer, L"Input");
     check_smart_tee_pin(transform.sink1.pin.pin.peer, L"Capture");
     ok(transform.source1.pin.pin.peer == &sink.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
 
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_CAPTURE, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_PREVIEW, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    ok(hr == VFW_S_NOPREVIEWPIN, "Got hr %#x.\n", hr);
+    ok(hr == VFW_S_NOPREVIEWPIN, "Got hr %#lx.\n", hr);
     check_smart_tee_pin(source.source1.pin.pin.peer, L"Input");
     check_smart_tee_pin(transform.sink1.pin.pin.peer, L"Capture");
     check_smart_tee_pin(transform.sink2.pin.pin.peer, L"Preview");
@@ -996,18 +996,18 @@ static void test_render_stream(void)
 
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_CC, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_PREVIEW, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    ok(hr == VFW_S_NOPREVIEWPIN, "Got hr %#x.\n", hr);
+    ok(hr == VFW_S_NOPREVIEWPIN, "Got hr %#lx.\n", hr);
     check_smart_tee_pin(source.source1.pin.pin.peer, L"Input");
     check_smart_tee_pin(transform.sink1.pin.pin.peer, L"Preview");
     ok(transform.source1.pin.pin.peer == &sink.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
 
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_PREVIEW, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     disconnect_pins(graph, &source.source1);
     IGraphBuilder_RemoveFilter(graph, &transform.filter.IBaseFilter_iface);
@@ -1018,7 +1018,7 @@ static void test_render_stream(void)
     source.source1.category = PIN_CATEGORY_CAPTURE;
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_CAPTURE, NULL,
             (IUnknown *)&source.source1.pin.pin.IPin_iface, NULL, &sink.filter.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     check_smart_tee_pin(source.source1.pin.pin.peer, L"Input");
     check_smart_tee_pin(transform.sink1.pin.pin.peer, L"Capture");
     ok(transform.source1.pin.pin.peer == &sink.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
@@ -1033,7 +1033,7 @@ static void test_render_stream(void)
 
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_CAPTURE, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(source.source1.pin.pin.peer == &transform.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     ok(transform.source1.pin.pin.peer == &sink.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     disconnect_pins(graph, &source.source1);
@@ -1041,7 +1041,7 @@ static void test_render_stream(void)
 
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_PREVIEW, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(source.source2.pin.pin.peer == &transform.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     ok(transform.source1.pin.pin.peer == &sink.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     disconnect_pins(graph, &source.source2);
@@ -1049,7 +1049,7 @@ static void test_render_stream(void)
 
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_CAPTURE, NULL,
             (IUnknown *)&source.source1.pin.pin.IPin_iface, NULL, &sink.filter.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     check_smart_tee_pin(source.source1.pin.pin.peer, L"Input");
     check_smart_tee_pin(transform.sink1.pin.pin.peer, L"Capture");
     ok(transform.source1.pin.pin.peer == &sink.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
@@ -1057,15 +1057,15 @@ static void test_render_stream(void)
     disconnect_pins(graph, &transform.source1);
 
     ref = ICaptureGraphBuilder2_Release(capture_graph);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
     ref = IGraphBuilder_Release(graph);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
     ref = IBaseFilter_Release(&source.filter.IBaseFilter_iface);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
     ref = IBaseFilter_Release(&transform.filter.IBaseFilter_iface);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
     ref = IBaseFilter_Release(&sink.filter.IBaseFilter_iface);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
 START_TEST(capturegraph)

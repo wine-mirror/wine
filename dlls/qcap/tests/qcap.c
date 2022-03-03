@@ -499,7 +499,7 @@ static HRESULT WINAPI EnumPins_Next(IEnumPins *iface,
     test_filter *This = impl_from_IEnumPins(iface);
     check_calls_list("EnumPins_Next", ENUMPINS_NEXT, This->filter_type);
 
-    ok(cPins == 1, "cPins = %d\n", cPins);
+    ok(cPins == 1, "cPins = %ld\n", cPins);
     ok(ppPins != NULL, "ppPins == NULL\n");
     ok(pcFetched != NULL, "pcFetched == NULL\n");
 
@@ -601,11 +601,11 @@ static HRESULT WINAPI Pin_ReceiveConnection(IPin *iface,
             wine_dbgstr_guid(&pmt->subtype));
     ok(pmt->bFixedSizeSamples, "bFixedSizeSamples = %x\n", pmt->bFixedSizeSamples);
     ok(!pmt->bTemporalCompression, "bTemporalCompression = %x\n", pmt->bTemporalCompression);
-    ok(pmt->lSampleSize == 1, "lSampleSize = %d\n", pmt->lSampleSize);
+    ok(pmt->lSampleSize == 1, "lSampleSize = %ld\n", pmt->lSampleSize);
     ok(IsEqualIID(&pmt->formattype, &GUID_NULL), "formattype = %s\n",
             wine_dbgstr_guid(&pmt->formattype));
     ok(!pmt->pUnk, "pUnk = %p\n", pmt->pUnk);
-    ok(!pmt->cbFormat, "cbFormat = %d\n", pmt->cbFormat);
+    ok(!pmt->cbFormat, "cbFormat = %ld\n", pmt->cbFormat);
     ok(!pmt->pbFormat, "pbFormat = %p\n", pmt->pbFormat);
     return S_OK;
 }
@@ -758,10 +758,10 @@ static HRESULT WINAPI KsPropertySet_Get(IKsPropertySet *iface, REFGUID guidPropS
     check_calls_list("KsPropertySet_Get", KSPROPERTYSET_GET, This->filter_type);
 
     ok(IsEqualIID(guidPropSet, &AMPROPSETID_Pin), "guidPropSet = %s\n", wine_dbgstr_guid(guidPropSet));
-    ok(dwPropID == 0, "dwPropID = %d\n", dwPropID);
+    ok(dwPropID == 0, "dwPropID = %ld\n", dwPropID);
     ok(pInstanceData == NULL, "pInstanceData != NULL\n");
     ok(cbInstanceData == 0, "cbInstanceData != 0\n");
-    ok(cbPropData == sizeof(GUID), "cbPropData = %d\n", cbPropData);
+    ok(cbPropData == sizeof(GUID), "cbPropData = %ld\n", cbPropData);
     *pcbReturned = sizeof(GUID);
     memcpy(pPropData, &PIN_CATEGORY_EDS, sizeof(GUID));
     return S_OK;
@@ -829,11 +829,11 @@ static HRESULT WINAPI MemInputPin_NotifyAllocator(IMemInputPin *iface,
     ok(bReadOnly, "bReadOnly = %x\n", bReadOnly);
 
     hr = IMemAllocator_GetProperties(pAllocator, &ap);
-    ok(hr == S_OK, "GetProperties returned %x\n", hr);
-    ok(ap.cBuffers == 32, "cBuffers = %d\n", ap.cBuffers);
-    ok(ap.cbBuffer == 0, "cbBuffer = %d\n", ap.cbBuffer);
-    ok(ap.cbAlign == 1, "cbAlign = %d\n", ap.cbAlign);
-    ok(ap.cbPrefix == 0, "cbPrefix = %d\n", ap.cbPrefix);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(ap.cBuffers == 32, "cBuffers = %ld\n", ap.cBuffers);
+    ok(ap.cbBuffer == 0, "cbBuffer = %ld\n", ap.cbBuffer);
+    ok(ap.cbAlign == 1, "cbAlign = %ld\n", ap.cbAlign);
+    ok(ap.cbPrefix == 0, "cbPrefix = %ld\n", ap.cbPrefix);
     return S_OK;
 }
 
@@ -852,9 +852,9 @@ static HRESULT WINAPI MemInputPin_Receive(IMemInputPin *iface, IMediaSample *pSa
     HRESULT hr;
 
     hr = IMediaSample_GetTime(pSample, &off, &tmp);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IMediaSample_GetPointer(pSample, &data);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     li.QuadPart = off;
     IStream_Seek(avi_stream, li, STREAM_SEEK_SET, NULL);
     IStream_Write(avi_stream, data, IMediaSample_GetActualDataLength(pSample), NULL);
@@ -1069,7 +1069,7 @@ static HRESULT WINAPI EnumMediaTypes_Next(IEnumMediaTypes *iface, ULONG cMediaTy
     test_filter *This = impl_from_IEnumMediaTypes(iface);
     check_calls_list("EnumMediaTypes_Next", ENUMMEDIATYPES_NEXT, This->filter_type);
 
-    ok(cMediaTypes == 1, "cMediaTypes = %d\n", cMediaTypes);
+    ok(cMediaTypes == 1, "cMediaTypes = %ld\n", cMediaTypes);
     ok(ppMediaTypes != NULL, "ppMediaTypes == NULL\n");
     ok(pcFetched != NULL, "pcFetched == NULL\n");
 
@@ -1381,30 +1381,30 @@ static void test_AviMux(char *arg)
 
     hr = CoCreateInstance(&CLSID_AviDest, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (void**)&avimux);
     ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG),
-            "couldn't create AVI Mux filter, hr = %08x\n", hr);
+            "Got hr %#lx.\n", hr);
     if(hr != S_OK) {
         win_skip("AVI Mux filter is not registered\n");
         return;
     }
 
     hr = IBaseFilter_EnumPins(avimux, &ep);
-    ok(hr == S_OK, "EnumPins returned %x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IEnumPins_Next(ep, 1, &avimux_out, NULL);
-    ok(hr == S_OK, "Next returned %x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IPin_QueryDirection(avimux_out, &dir);
-    ok(hr == S_OK, "QueryDirection returned %x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(dir == PINDIR_OUTPUT, "dir = %d\n", dir);
 
     hr = IEnumPins_Next(ep, 1, &avimux_in, NULL);
-    ok(hr == S_OK, "Next returned %x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IPin_QueryDirection(avimux_in, &dir);
-    ok(hr == S_OK, "QueryDirection returned %x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(dir == PINDIR_INPUT, "dir = %d\n", dir);
     IEnumPins_Release(ep);
 
     hr = IPin_ReceiveConnection(avimux_in, &source_filter.IPin_iface, NULL);
-    ok(hr == E_POINTER, "ReceiveConnection returned %x\n", hr);
+    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
 
     current_calls_list = NULL;
     memset(&source_media_type, 0, sizeof(AM_MEDIA_TYPE));
@@ -1425,100 +1425,100 @@ static void test_AviMux(char *arg)
     videoinfo.bmiHeader.biSizeImage = 40000;
     videoinfo.bmiHeader.biClrImportant = 256;
     hr = IPin_ReceiveConnection(avimux_in, &source_filter.IPin_iface, &source_media_type);
-    ok(hr == S_OK, "ReceiveConnection returned %x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IPin_ConnectedTo(avimux_in, &pin);
-    ok(hr == S_OK, "ConnectedTo returned %x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(pin == &source_filter.IPin_iface, "incorrect pin: %p, expected %p\n",
             pin, &source_filter.IPin_iface);
 
     hr = IPin_Connect(avimux_out, &source_filter.IPin_iface, NULL);
-    ok(hr == VFW_E_INVALID_DIRECTION, "Connect returned %x\n", hr);
+    ok(hr == VFW_E_INVALID_DIRECTION, "Got hr %#lx.\n", hr);
 
     hr = IBaseFilter_JoinFilterGraph(avimux, (IFilterGraph*)&GraphBuilder, NULL);
-    ok(hr == S_OK, "JoinFilterGraph returned %x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     SET_EXPECT(ReceiveConnection);
     SET_EXPECT(GetAllocatorRequirements);
     SET_EXPECT(NotifyAllocator);
     SET_EXPECT(Reconnect);
     hr = IPin_Connect(avimux_out, &sink_filter.IPin_iface, NULL);
-    ok(hr == S_OK, "Connect returned %x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     CHECK_CALLED(ReceiveConnection);
     CHECK_CALLED(GetAllocatorRequirements);
     CHECK_CALLED(NotifyAllocator);
     CHECK_CALLED(Reconnect);
 
     hr = IPin_ConnectedTo(avimux_out, &pin);
-    ok(hr == S_OK, "ConnectedTo returned %x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(pin == &sink_filter.IPin_iface, "incorrect pin: %p, expected %p\n",
             pin, &source_filter.IPin_iface);
 
     hr = IPin_QueryInterface(avimux_in, &IID_IMemInputPin, (void**)&memin);
-    ok(hr == S_OK, "QueryInterface returned %x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     props.cBuffers = 0xdeadbee1;
     props.cbBuffer = 0xdeadbee2;
     props.cbAlign = 0xdeadbee3;
     props.cbPrefix = 0xdeadbee4;
     hr = IMemInputPin_GetAllocatorRequirements(memin, &props);
-    ok(hr==S_OK || broken(hr==E_INVALIDARG), "GetAllocatorRequirements returned %x\n", hr);
+    ok(hr==S_OK || broken(hr==E_INVALIDARG), "Got hr %#lx.\n", hr);
     if(hr == S_OK) {
-        ok(props.cBuffers == 0xdeadbee1, "cBuffers = %d\n", props.cBuffers);
-        ok(props.cbBuffer == 0xdeadbee2, "cbBuffer = %d\n", props.cbBuffer);
-        ok(props.cbAlign == 1, "cbAlign = %d\n", props.cbAlign);
-        ok(props.cbPrefix == 8, "cbPrefix = %d\n", props.cbPrefix);
+        ok(props.cBuffers == 0xdeadbee1, "cBuffers = %ld\n", props.cBuffers);
+        ok(props.cbBuffer == 0xdeadbee2, "cbBuffer = %ld\n", props.cbBuffer);
+        ok(props.cbAlign == 1, "cbAlign = %ld\n", props.cbAlign);
+        ok(props.cbPrefix == 8, "cbPrefix = %ld\n", props.cbPrefix);
     }
 
     hr = IMemInputPin_GetAllocator(memin, &memalloc);
-    ok(hr == S_OK, "GetAllocator returned %x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     props.cBuffers = 0xdeadbee1;
     props.cbBuffer = 0xdeadbee2;
     props.cbAlign = 0xdeadbee3;
     props.cbPrefix = 0xdeadbee4;
     hr = IMemAllocator_GetProperties(memalloc, &props);
-    ok(hr == S_OK, "GetProperties returned %x\n", hr);
-    ok(props.cBuffers == 0, "cBuffers = %d\n", props.cBuffers);
-    ok(props.cbBuffer == 0, "cbBuffer = %d\n", props.cbBuffer);
-    ok(props.cbAlign == 0, "cbAlign = %d\n", props.cbAlign);
-    ok(props.cbPrefix == 0, "cbPrefix = %d\n", props.cbPrefix);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(props.cBuffers == 0, "cBuffers = %ld\n", props.cBuffers);
+    ok(props.cbBuffer == 0, "cbBuffer = %ld\n", props.cbBuffer);
+    ok(props.cbAlign == 0, "cbAlign = %ld\n", props.cbAlign);
+    ok(props.cbPrefix == 0, "cbPrefix = %ld\n", props.cbPrefix);
     IMemAllocator_Release(memalloc);
 
     hr = IBaseFilter_QueryInterface(avimux, &IID_IConfigInterleaving, (void**)&ci);
-    ok(hr == S_OK, "QueryInterface(IID_IConfigInterleaving) returned %x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IConfigInterleaving_put_Mode(ci, 5);
-    ok(hr == E_INVALIDARG, "put_Mode returned %x\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     SET_EXPECT(Reconnect);
     hr = IConfigInterleaving_put_Mode(ci, INTERLEAVE_FULL);
-    ok(hr == S_OK, "put_Mode returned %x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     CHECK_CALLED(Reconnect);
     IConfigInterleaving_Release(ci);
 
     hr = IBaseFilter_GetState(avimux, 0, &state);
-    ok(hr == S_OK, "GetState returned %x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(state == State_Stopped, "state = %d\n", state);
 
     SET_EXPECT(MemAllocator_GetProperties);
     hr = IMemInputPin_NotifyAllocator(memin, &MemAllocator, TRUE);
-    ok(hr == S_OK, "NotifyAllocator returned %x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     CHECK_CALLED(MemAllocator_GetProperties);
 
     hr = IMemInputPin_GetAllocator(memin, &memalloc);
-    ok(hr == S_OK, "GetAllocator returned %x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(memalloc != &MemAllocator, "memalloc == &MemAllocator\n");
     IMemAllocator_Release(memalloc);
 
     hr = CreateStreamOnHGlobal(NULL, TRUE, &avi_stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     SET_EXPECT(MediaSeeking_GetPositions);
     SET_EXPECT(MemInputPin_QueryInterface_IStream);
     hr = IBaseFilter_Run(avimux, 0);
-    ok(hr == S_OK, "Run returned %x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     CHECK_CALLED(MediaSeeking_GetPositions);
 
     hr = IBaseFilter_GetState(avimux, 0, &state);
-    ok(hr == S_OK, "GetState returned %x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(state == State_Running, "state = %d\n", state);
 
     SET_EXPECT(MediaSample_QueryInterface_MediaSample2);
@@ -1533,7 +1533,7 @@ static void test_AviMux(char *arg)
     SET_EXPECT(MediaSample_GetMediaTime);
     start_time = end_time = 0;
     hr = IMemInputPin_Receive(memin, &MediaSample);
-    ok(hr == S_OK, "Receive returned %x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     CHECK_CALLED(MediaSample_QueryInterface_MediaSample2);
     todo_wine CHECK_CALLED(MediaSample_IsDiscontinuity);
     todo_wine CHECK_CALLED(MediaSample_IsPreroll);
@@ -1556,7 +1556,7 @@ static void test_AviMux(char *arg)
     SET_EXPECT(MediaSample_GetSize);
     SET_EXPECT(MediaSample_GetMediaTime);
     hr = IMemInputPin_Receive(memin, &MediaSample);
-    ok(hr == S_OK, "Receive returned %x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     CHECK_CALLED(MediaSample_QueryInterface_MediaSample2);
     todo_wine CHECK_CALLED(MediaSample_IsDiscontinuity);
     todo_wine CHECK_CALLED(MediaSample_IsPreroll);
@@ -1581,7 +1581,7 @@ static void test_AviMux(char *arg)
     start_time = 20000000;
     end_time = 21000000;
     hr = IMemInputPin_Receive(memin, &MediaSample);
-    ok(hr == S_OK, "Receive returned %x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     CHECK_CALLED(MediaSample_QueryInterface_MediaSample2);
     todo_wine CHECK_CALLED(MediaSample_IsDiscontinuity);
     todo_wine CHECK_CALLED(MediaSample_IsPreroll);
@@ -1595,20 +1595,20 @@ static void test_AviMux(char *arg)
     IMemInputPin_Release(memin);
 
     hr = IBaseFilter_Stop(avimux);
-    ok(hr == S_OK, "Stop returned %x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     CHECK_CALLED(MemInputPin_QueryInterface_IStream);
 
     hr = IBaseFilter_GetState(avimux, 0, &state);
-    ok(hr == S_OK, "GetState returned %x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(state == State_Stopped, "state = %d\n", state);
 
     hr = IPin_Disconnect(avimux_out);
-    ok(hr == S_OK, "Disconnect returned %x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     IPin_Release(avimux_in);
     IPin_Release(avimux_out);
     ref = IBaseFilter_Release(avimux);
-    ok(ref == 0, "Avi Mux filter was not destroyed (%d)\n", ref);
+    ok(ref == 0, "Avi Mux filter was not destroyed (%ld)\n", ref);
 
     if(arg && !strcmp(arg, "save")) {
         LARGE_INTEGER li;
@@ -1622,12 +1622,12 @@ static void test_AviMux(char *arg)
 
         li.QuadPart = 0;
         hr = IStream_Seek(avi_stream, li, STREAM_SEEK_SET, NULL);
-        ok(hr == S_OK, "IStream_Seek failed: %x\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         while(1) {
             hr = IStream_Read(avi_stream, buf, sizeof(buf), &read);
             if(FAILED(hr)) {
-                ok(0, "IStream_Read failed: %x\n", hr);
+                ok(0, "Got hr %#lx.\n", hr);
                 break;
             }
             if(!read)
@@ -1640,7 +1640,7 @@ static void test_AviMux(char *arg)
     }
 
     ref = IStream_Release(avi_stream);
-    ok(ref == 0, "IStream was not destroyed (%d)\n", ref);
+    ok(ref == 0, "IStream was not destroyed (%ld)\n", ref);
 }
 
 START_TEST(qcap)

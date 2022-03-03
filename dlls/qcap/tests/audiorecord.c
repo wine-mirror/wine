@@ -39,7 +39,7 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
     expected_hr = supported ? S_OK : E_NOINTERFACE;
 
     hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
-    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#lx, expected %#lx.\n", hr, expected_hr);
     if (SUCCEEDED(hr))
         IUnknown_Release(unk);
 }
@@ -110,53 +110,53 @@ static void test_aggregation(void)
     filter = (IBaseFilter *)0xdeadbeef;
     hr = CoCreateInstance(&CLSID_AudioRecord, &test_outer, CLSCTX_INPROC_SERVER,
             &IID_IBaseFilter, (void **)&filter);
-    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
     ok(!filter, "Got interface %p.\n", filter);
 
     hr = CoCreateInstance(&CLSID_AudioRecord, &test_outer, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void **)&unk);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
     ok(unk != &test_outer, "Returned IUnknown should not be outer IUnknown.\n");
     ref = get_refcount(unk);
-    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
 
     ref = IUnknown_AddRef(unk);
-    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
-    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
 
     ref = IUnknown_Release(unk);
-    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
-    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
 
     hr = IUnknown_QueryInterface(unk, &IID_IUnknown, (void **)&unk2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(unk2 == unk, "Got unexpected IUnknown %p.\n", unk2);
     IUnknown_Release(unk2);
 
     hr = IUnknown_QueryInterface(unk, &IID_IBaseFilter, (void **)&filter);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IBaseFilter_QueryInterface(filter, &IID_IUnknown, (void **)&unk2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(unk2 == (IUnknown *)0xdeadbeef, "Got unexpected IUnknown %p.\n", unk2);
 
     hr = IBaseFilter_QueryInterface(filter, &IID_IBaseFilter, (void **)&filter2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(filter2 == (IBaseFilter *)0xdeadbeef, "Got unexpected IBaseFilter %p.\n", filter2);
 
     hr = IUnknown_QueryInterface(unk, &test_iid, (void **)&unk2);
-    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
     ok(!unk2, "Got unexpected IUnknown %p.\n", unk2);
 
     hr = IBaseFilter_QueryInterface(filter, &test_iid, (void **)&unk2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(unk2 == (IUnknown *)0xdeadbeef, "Got unexpected IUnknown %p.\n", unk2);
 
     IBaseFilter_Release(filter);
     ref = IUnknown_Release(unk);
-    ok(!ref, "Got unexpected refcount %d.\n", ref);
-    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(!ref, "Got unexpected refcount %ld.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
 }
 
 static HRESULT WINAPI property_bag_QueryInterface(IPropertyBag *iface, REFIID iid, void **out)
@@ -216,27 +216,27 @@ static void test_property_bag(IMoniker *mon)
     ULONG ref;
 
     hr = IMoniker_BindToStorage(mon, NULL, NULL, &IID_IPropertyBag, (void **)&devenum_bag);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     VariantInit(&var);
     hr = IPropertyBag_Read(devenum_bag, L"WaveInId", &var, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ppb_id = V_I4(&var);
 
     hr = CoCreateInstance(&CLSID_AudioRecord, NULL, CLSCTX_INPROC_SERVER,
             &IID_IPersistPropertyBag, (void **)&ppb);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IPersistPropertyBag_InitNew(ppb);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     ppb_got_read = 0;
     hr = IPersistPropertyBag_Load(ppb, &property_bag, NULL);
-    ok(hr == S_OK || broken(hr == E_FAIL) /* 8+, intermittent */, "Got hr %#x.\n", hr);
+    ok(hr == S_OK || broken(hr == E_FAIL) /* 8+, intermittent */, "Got hr %#lx.\n", hr);
     ok(ppb_got_read == 1, "Got %u calls to Read().\n", ppb_got_read);
 
     ref = IPersistPropertyBag_Release(ppb);
-    ok(!ref, "Got unexpected refcount %d.\n", ref);
+    ok(!ref, "Got unexpected refcount %ld.\n", ref);
 
     VariantClear(&var);
     IPropertyBag_Release(devenum_bag);
@@ -248,49 +248,49 @@ static void test_unconnected_filter_state(IBaseFilter *filter)
     HRESULT hr;
 
     hr = IBaseFilter_GetState(filter, 0, &state);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(state == State_Stopped, "Got state %u.\n", state);
 
     hr = IBaseFilter_Pause(filter);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IBaseFilter_GetState(filter, 0, &state);
-    todo_wine ok(hr == VFW_S_CANT_CUE, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == VFW_S_CANT_CUE, "Got hr %#lx.\n", hr);
     ok(state == State_Paused, "Got state %u.\n", state);
 
     hr = IBaseFilter_Run(filter, 0);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IBaseFilter_GetState(filter, 0, &state);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(state == State_Running, "Got state %u.\n", state);
 
     hr = IBaseFilter_Pause(filter);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IBaseFilter_GetState(filter, 0, &state);
-    todo_wine ok(hr == VFW_S_CANT_CUE, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == VFW_S_CANT_CUE, "Got hr %#lx.\n", hr);
     ok(state == State_Paused, "Got state %u.\n", state);
 
     hr = IBaseFilter_Stop(filter);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IBaseFilter_GetState(filter, 0, &state);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(state == State_Stopped, "Got state %u.\n", state);
 
     hr = IBaseFilter_Run(filter, 0);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IBaseFilter_GetState(filter, 0, &state);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(state == State_Running, "Got state %u.\n", state);
 
     hr = IBaseFilter_Stop(filter);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IBaseFilter_GetState(filter, 0, &state);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(state == State_Stopped, "Got state %u.\n", state);
 }
 
@@ -308,7 +308,7 @@ START_TEST(audiorecord)
 
     hr = CoCreateInstance(&CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC_SERVER,
             &IID_ICreateDevEnum, (void **)&devenum);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = ICreateDevEnum_CreateClassEnumerator(devenum, &CLSID_AudioInputDeviceCategory, &enummon, 0);
     if (hr == S_FALSE)
     {
@@ -317,27 +317,27 @@ START_TEST(audiorecord)
         CoUninitialize();
         return;
     }
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     test_aggregation();
 
     while (IEnumMoniker_Next(enummon, 1, &mon, NULL) == S_OK)
     {
         hr = IMoniker_GetDisplayName(mon, NULL, NULL, &name);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         trace("Testing device %s.\n", wine_dbgstr_w(name));
         CoTaskMemFree(name);
 
         test_property_bag(mon);
 
         hr = IMoniker_BindToObject(mon, NULL, NULL, &IID_IBaseFilter, (void **)&filter);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         test_interfaces(filter);
         test_unconnected_filter_state(filter);
 
         ref = IBaseFilter_Release(filter);
-        ok(!ref, "Got outstanding refcount %d.\n", ref);
+        ok(!ref, "Got outstanding refcount %ld.\n", ref);
         IMoniker_Release(mon);
     }
 

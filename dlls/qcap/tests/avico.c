@@ -35,7 +35,7 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
     expected_hr = supported ? S_OK : E_NOINTERFACE;
 
     hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
-    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#lx, expected %#lx.\n", hr, expected_hr);
     if (SUCCEEDED(hr))
         IUnknown_Release(unk);
 }
@@ -138,53 +138,53 @@ static void test_aggregation(void)
     filter = (IBaseFilter *)0xdeadbeef;
     hr = CoCreateInstance(&CLSID_AVICo, &test_outer, CLSCTX_INPROC_SERVER,
             &IID_IBaseFilter, (void **)&filter);
-    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
     ok(!filter, "Got interface %p.\n", filter);
 
     hr = CoCreateInstance(&CLSID_AVICo, &test_outer, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void **)&unk);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
     ok(unk != &test_outer, "Returned IUnknown should not be outer IUnknown.\n");
     ref = get_refcount(unk);
-    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
 
     ref = IUnknown_AddRef(unk);
-    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
-    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
 
     ref = IUnknown_Release(unk);
-    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
-    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
 
     hr = IUnknown_QueryInterface(unk, &IID_IUnknown, (void **)&unk2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(unk2 == unk, "Got unexpected IUnknown %p.\n", unk2);
     IUnknown_Release(unk2);
 
     hr = IUnknown_QueryInterface(unk, &IID_IBaseFilter, (void **)&filter);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IBaseFilter_QueryInterface(filter, &IID_IUnknown, (void **)&unk2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(unk2 == (IUnknown *)0xdeadbeef, "Got unexpected IUnknown %p.\n", unk2);
 
     hr = IBaseFilter_QueryInterface(filter, &IID_IBaseFilter, (void **)&filter2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(filter2 == (IBaseFilter *)0xdeadbeef, "Got unexpected IBaseFilter %p.\n", filter2);
 
     hr = IUnknown_QueryInterface(unk, &test_iid, (void **)&unk2);
-    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
     ok(!unk2, "Got unexpected IUnknown %p.\n", unk2);
 
     hr = IBaseFilter_QueryInterface(filter, &test_iid, (void **)&unk2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(unk2 == (IUnknown *)0xdeadbeef, "Got unexpected IUnknown %p.\n", unk2);
 
     IBaseFilter_Release(filter);
     ref = IUnknown_Release(unk);
-    ok(!ref, "Got unexpected refcount %d.\n", ref);
-    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(!ref, "Got unexpected refcount %ld.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
 }
 
 static void test_enum_pins(IBaseFilter *filter)
@@ -195,110 +195,110 @@ static void test_enum_pins(IBaseFilter *filter)
     HRESULT hr;
 
     ref = get_refcount(filter);
-    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
 
     hr = IBaseFilter_EnumPins(filter, NULL);
-    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
 
     hr = IBaseFilter_EnumPins(filter, &enum1);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ref = get_refcount(filter);
-    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
+    ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
     ref = get_refcount(enum1);
-    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
 
     hr = IEnumPins_Next(enum1, 1, NULL, NULL);
-    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
 
     hr = IEnumPins_Next(enum1, 1, pins, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ref = get_refcount(filter);
-    ok(ref == 3, "Got unexpected refcount %d.\n", ref);
+    ok(ref == 3, "Got unexpected refcount %ld.\n", ref);
     ref = get_refcount(pins[0]);
-    ok(ref == 3, "Got unexpected refcount %d.\n", ref);
+    ok(ref == 3, "Got unexpected refcount %ld.\n", ref);
     ref = get_refcount(enum1);
-    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
     IPin_Release(pins[0]);
     ref = get_refcount(filter);
-    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
+    ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
 
     hr = IEnumPins_Next(enum1, 1, pins, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ref = get_refcount(filter);
-    ok(ref == 3, "Got unexpected refcount %d.\n", ref);
+    ok(ref == 3, "Got unexpected refcount %ld.\n", ref);
     ref = get_refcount(pins[0]);
-    ok(ref == 3, "Got unexpected refcount %d.\n", ref);
+    ok(ref == 3, "Got unexpected refcount %ld.\n", ref);
     ref = get_refcount(enum1);
-    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
     IPin_Release(pins[0]);
     ref = get_refcount(filter);
-    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
+    ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
 
     hr = IEnumPins_Next(enum1, 1, pins, NULL);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     hr = IEnumPins_Reset(enum1);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IEnumPins_Next(enum1, 1, pins, &count);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(count == 1, "Got count %u.\n", count);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(count == 1, "Got count %lu.\n", count);
     IPin_Release(pins[0]);
 
     hr = IEnumPins_Next(enum1, 1, pins, &count);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(count == 1, "Got count %u.\n", count);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(count == 1, "Got count %lu.\n", count);
     IPin_Release(pins[0]);
 
     hr = IEnumPins_Next(enum1, 1, pins, &count);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
-    ok(!count, "Got count %u.\n", count);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(!count, "Got count %lu.\n", count);
 
     hr = IEnumPins_Reset(enum1);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IEnumPins_Next(enum1, 2, pins, NULL);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     hr = IEnumPins_Next(enum1, 2, pins, &count);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(count == 2, "Got count %u.\n", count);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(count == 2, "Got count %lu.\n", count);
     IPin_Release(pins[0]);
     IPin_Release(pins[1]);
 
     hr = IEnumPins_Next(enum1, 2, pins, &count);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
-    ok(!count, "Got count %u.\n", count);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(!count, "Got count %lu.\n", count);
 
     hr = IEnumPins_Reset(enum1);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IEnumPins_Next(enum1, 3, pins, &count);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
-    ok(count == 2, "Got count %u.\n", count);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(count == 2, "Got count %lu.\n", count);
     IPin_Release(pins[0]);
     IPin_Release(pins[1]);
 
     hr = IEnumPins_Reset(enum1);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IEnumPins_Clone(enum1, &enum2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IEnumPins_Skip(enum1, 3);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     hr = IEnumPins_Skip(enum1, 2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IEnumPins_Skip(enum1, 1);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     hr = IEnumPins_Next(enum1, 1, pins, NULL);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     hr = IEnumPins_Next(enum2, 1, pins, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     IPin_Release(pins[0]);
 
     IEnumPins_Release(enum2);
@@ -312,28 +312,28 @@ static void test_find_pin(IBaseFilter *filter)
     HRESULT hr;
 
     hr = IBaseFilter_EnumPins(filter, &enum_pins);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IBaseFilter_FindPin(filter, L"In", &pin);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(pin == pin2, "Pins didn't match.\n");
     IPin_Release(pin);
     IPin_Release(pin2);
 
     hr = IBaseFilter_FindPin(filter, L"Out", &pin);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(pin == pin2, "Pins didn't match.\n");
     IPin_Release(pin);
     IPin_Release(pin2);
 
     hr = IBaseFilter_FindPin(filter, L"Input", &pin);
-    ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#lx.\n", hr);
     hr = IBaseFilter_FindPin(filter, L"Output", &pin);
-    ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#lx.\n", hr);
 
     IEnumPins_Release(enum_pins);
 }
@@ -347,42 +347,42 @@ static void test_pin_info(IBaseFilter *filter)
     IPin *pin;
 
     hr = IBaseFilter_FindPin(filter, L"In", &pin);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IPin_QueryPinInfo(pin, &info);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
     ok(info.dir == PINDIR_INPUT, "Got direction %d.\n", info.dir);
     todo_wine ok(!lstrcmpW(info.achName, L"Input"), "Got name %s.\n", wine_dbgstr_w(info.achName));
     IBaseFilter_Release(info.pFilter);
 
     hr = IPin_QueryDirection(pin, &dir);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(dir == PINDIR_INPUT, "Got direction %d.\n", dir);
 
     hr = IPin_QueryId(pin, &id);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!lstrcmpW(id, L"In"), "Got id %s.\n", wine_dbgstr_w(id));
     CoTaskMemFree(id);
 
     IPin_Release(pin);
 
     hr = IBaseFilter_FindPin(filter, L"Out", &pin);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IPin_QueryPinInfo(pin, &info);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
     ok(info.dir == PINDIR_OUTPUT, "Got direction %d.\n", info.dir);
     todo_wine ok(!lstrcmpW(info.achName, L"Output"), "Got name %s.\n", wine_dbgstr_w(info.achName));
     IBaseFilter_Release(info.pFilter);
 
     hr = IPin_QueryDirection(pin, &dir);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(dir == PINDIR_OUTPUT, "Got direction %d.\n", dir);
 
     hr = IPin_QueryId(pin, &id);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!lstrcmpW(id, L"Out"), "Got id %s.\n", wine_dbgstr_w(id));
     CoTaskMemFree(id);
 
@@ -392,7 +392,7 @@ static void test_pin_info(IBaseFilter *filter)
 static LRESULT CALLBACK driver_proc(DWORD_PTR id, HDRVR driver, UINT msg,
         LPARAM lparam1, LPARAM lparam2)
 {
-    if (winetest_debug > 1) trace("msg %#x, lparam1 %#lx, lparam2 %#lx.\n", msg, lparam1, lparam2);
+    if (winetest_debug > 1) trace("msg %#x, lparam1 %#Ix, lparam2 %#Ix.\n", msg, lparam1, lparam2);
 
     switch (msg)
     {
@@ -478,27 +478,27 @@ static void test_property_bag(IMoniker *mon)
     ULONG ref;
 
     hr = IMoniker_BindToStorage(mon, NULL, NULL, &IID_IPropertyBag, (void **)&devenum_bag);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     VariantInit(&var);
     hr = IPropertyBag_Read(devenum_bag, L"FccHandler", &var, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ppb_handler = V_BSTR(&var);
 
     hr = CoCreateInstance(&CLSID_AVICo, NULL, CLSCTX_INPROC_SERVER,
             &IID_IPersistPropertyBag, (void **)&ppb);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IPersistPropertyBag_InitNew(ppb);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     ppb_got_read = 0;
     hr = IPersistPropertyBag_Load(ppb, &property_bag, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(ppb_got_read == 1, "Got %u calls to Read().\n", ppb_got_read);
 
     ref = IPersistPropertyBag_Release(ppb);
-    ok(!ref, "Got unexpected refcount %d.\n", ref);
+    ok(!ref, "Got unexpected refcount %ld.\n", ref);
 
     VariantClear(&var);
     IPropertyBag_Release(devenum_bag);
@@ -520,10 +520,10 @@ static void test_media_types(IBaseFilter *filter)
     IBaseFilter_FindPin(filter, L"In", &pin);
 
     hr = IPin_EnumMediaTypes(pin, &enummt);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     IEnumMediaTypes_Release(enummt);
 
@@ -532,11 +532,11 @@ static void test_media_types(IBaseFilter *filter)
     mt.cbFormat = sizeof(VIDEOINFOHEADER);
     mt.pbFormat = (BYTE *)&vih;
     hr = IPin_QueryAccept(pin, &mt);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     vih.bmiHeader.biBitCount = 32;
     hr = IPin_QueryAccept(pin, &mt);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
     vih.bmiHeader.biBitCount = 16;
 
     mt.bFixedSizeSamples = TRUE;
@@ -544,22 +544,22 @@ static void test_media_types(IBaseFilter *filter)
     mt.lSampleSize = 123;
     mt.subtype = MEDIASUBTYPE_RGB565;
     hr = IPin_QueryAccept(pin, &mt);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     mt.subtype = MEDIASUBTYPE_WAVE;
     hr = IPin_QueryAccept(pin, &mt);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     mt.formattype = GUID_NULL;
     hr = IPin_QueryAccept(pin, &mt);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
     mt.formattype = FORMAT_None;
     hr = IPin_QueryAccept(pin, &mt);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
     mt.formattype = FORMAT_VideoInfo;
 
     mt.majortype = MEDIATYPE_NULL;
     hr = IPin_QueryAccept(pin, &mt);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
     mt.majortype = MEDIATYPE_Video;
 
     IPin_Release(pin);
@@ -567,10 +567,10 @@ static void test_media_types(IBaseFilter *filter)
     IBaseFilter_FindPin(filter, L"Out", &pin);
 
     hr = IPin_EnumMediaTypes(pin, &enummt);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     IEnumMediaTypes_Release(enummt);
     IPin_Release(pin);
@@ -587,29 +587,29 @@ static void test_enum_media_types(IBaseFilter *filter)
     IBaseFilter_FindPin(filter, L"In", &pin);
 
     hr = IPin_EnumMediaTypes(pin, &enum1);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IEnumMediaTypes_Next(enum1, 1, mts, NULL);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     hr = IEnumMediaTypes_Next(enum1, 1, mts, &count);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
-    ok(!count, "Got count %u.\n", count);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(!count, "Got count %lu.\n", count);
 
     hr = IEnumMediaTypes_Reset(enum1);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IEnumMediaTypes_Next(enum1, 1, mts, NULL);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     hr = IEnumMediaTypes_Clone(enum1, &enum2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IEnumMediaTypes_Skip(enum1, 1);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     hr = IEnumMediaTypes_Next(enum2, 1, mts, NULL);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     IEnumMediaTypes_Release(enum1);
     IEnumMediaTypes_Release(enum2);
@@ -618,29 +618,29 @@ static void test_enum_media_types(IBaseFilter *filter)
     IBaseFilter_FindPin(filter, L"Out", &pin);
 
     hr = IPin_EnumMediaTypes(pin, &enum1);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IEnumMediaTypes_Next(enum1, 1, mts, NULL);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     hr = IEnumMediaTypes_Next(enum1, 1, mts, &count);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
-    ok(!count, "Got count %u.\n", count);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(!count, "Got count %lu.\n", count);
 
     hr = IEnumMediaTypes_Reset(enum1);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IEnumMediaTypes_Next(enum1, 1, mts, NULL);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     hr = IEnumMediaTypes_Clone(enum1, &enum2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IEnumMediaTypes_Skip(enum1, 1);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     hr = IEnumMediaTypes_Next(enum2, 1, mts, NULL);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     IEnumMediaTypes_Release(enum1);
     IEnumMediaTypes_Release(enum2);
@@ -653,49 +653,49 @@ static void test_unconnected_filter_state(IBaseFilter *filter)
     HRESULT hr;
 
     hr = IBaseFilter_GetState(filter, 0, &state);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(state == State_Stopped, "Got state %u.\n", state);
 
     hr = IBaseFilter_Pause(filter);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IBaseFilter_GetState(filter, 0, &state);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(state == State_Paused, "Got state %u.\n", state);
 
     hr = IBaseFilter_Run(filter, 0);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IBaseFilter_GetState(filter, 0, &state);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(state == State_Running, "Got state %u.\n", state);
 
     hr = IBaseFilter_Pause(filter);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IBaseFilter_GetState(filter, 0, &state);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(state == State_Paused, "Got state %u.\n", state);
 
     hr = IBaseFilter_Stop(filter);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IBaseFilter_GetState(filter, 0, &state);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(state == State_Stopped, "Got state %u.\n", state);
 
     hr = IBaseFilter_Run(filter, 0);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IBaseFilter_GetState(filter, 0, &state);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(state == State_Running, "Got state %u.\n", state);
 
     hr = IBaseFilter_Stop(filter);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IBaseFilter_GetState(filter, 0, &state);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(state == State_Stopped, "Got state %u.\n", state);
 }
 
@@ -719,18 +719,18 @@ START_TEST(avico)
 
     hr = CoCreateInstance(&CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC_SERVER,
             &IID_ICreateDevEnum, (void **)&devenum);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = ICreateDevEnum_CreateClassEnumerator(devenum, &CLSID_VideoCompressorCategory, &enummon, 0);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     while (IEnumMoniker_Next(enummon, 1, &mon, NULL) == S_OK)
     {
         hr = IMoniker_GetDisplayName(mon, NULL, NULL, &name);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         if (!lstrcmpW(name, test_display_name))
         {
             hr = IMoniker_BindToObject(mon, NULL, NULL, &IID_IBaseFilter, (void **)&filter);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
             test_aggregation();
             test_interfaces(filter);
@@ -742,7 +742,7 @@ START_TEST(avico)
             test_unconnected_filter_state(filter);
 
             ref = IBaseFilter_Release(filter);
-            ok(!ref, "Got outstanding refcount %d.\n", ref);
+            ok(!ref, "Got outstanding refcount %ld.\n", ref);
         }
 
         if (!memcmp(name, test_display_name, 11 * sizeof(WCHAR)))
