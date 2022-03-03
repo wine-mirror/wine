@@ -2,9 +2,7 @@ EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = dxgi.dll
 IMPORTLIB = dxgi
 IMPORTS   = gdi32 dxguid uuid wined3d user32 win32u
-EXTRAINCL = $(VKD3D_CFLAGS)
-
-EXTRADLLFLAGS = -mcygwin
+EXTRAINCL = $(VKD3D_PE_CFLAGS)
 
 C_SRCS = \
 	adapter.c \

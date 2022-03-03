@@ -17,8 +17,6 @@
  *
  */
 
-#include "config.h"
-
 #include "dxgi_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxgi);

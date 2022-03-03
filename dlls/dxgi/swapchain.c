@@ -17,23 +17,8 @@
  *
  */
 
-#include "config.h"
-
 #include "dxgi_private.h"
-
-#ifdef SONAME_LIBVKD3D
-#define VK_NO_PROTOTYPES
-#define VKD3D_NO_PROTOTYPES
-#define VKD3D_NO_VULKAN_H
-#define VKD3D_NO_WIN32_TYPES
-#ifndef USE_WIN32_VULKAN
-#define WINE_VK_HOST
-#include <dlfcn.h>
-#endif
-#include "wine/vulkan.h"
-#include "wine/vulkan_driver.h"
 #include <vkd3d.h>
-#endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxgi);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
@@ -927,78 +912,6 @@ cleanup:
         IWineDXGIDevice_Release(swapchain->device);
     return hr;
 }
-
-#ifdef SONAME_LIBVKD3D
-
-#ifdef USE_WIN32_VULKAN
-
-static void *load_library(const char *name)
-{
-    return LoadLibraryA(name);
-}
-
-static void *get_library_proc(void *handle, const char *name)
-{
-    return (void *)GetProcAddress(handle, name);
-}
-
-static void close_library(void *handle)
-{
-    if (handle)
-        FreeLibrary(handle);
-}
-
-static PFN_vkGetInstanceProcAddr load_vulkan(void **vulkan_handle)
-{
-    *vulkan_handle = LoadLibraryA("vulkan-1.dll");
-    return (void *)GetProcAddress(*vulkan_handle, "vkGetInstanceProcAddr");
-}
-
-#else
-
-static void *load_library(const char *name)
-{
-    return dlopen(name, RTLD_NOW);
-}
-
-static void *get_library_proc(void *handle, const char *name)
-{
-    return dlsym(handle, name);
-}
-
-static void close_library(void *handle)
-{
-    if (handle)
-        dlclose(handle);
-}
-
-static PFN_vkGetInstanceProcAddr load_vulkan(void **vulkan_handle)
-{
-    const struct vulkan_funcs *vk_funcs;
-
-    *vulkan_handle = NULL;
-
-    vk_funcs = __wine_get_vulkan_driver(WINE_VULKAN_DRIVER_VERSION);
-    if (vk_funcs)
-        return (PFN_vkGetInstanceProcAddr)vk_funcs->p_vkGetInstanceProcAddr;
-
-    return NULL;
-}
-
-#endif  /* USE_WIN32_VULKAN */
-
-static PFN_vkd3d_acquire_vk_queue vkd3d_acquire_vk_queue;
-static PFN_vkd3d_create_image_resource vkd3d_create_image_resource;
-static PFN_vkd3d_get_device_parent vkd3d_get_device_parent;
-static PFN_vkd3d_get_vk_device vkd3d_get_vk_device;
-static PFN_vkd3d_get_vk_format vkd3d_get_vk_format;
-static PFN_vkd3d_get_vk_physical_device vkd3d_get_vk_physical_device;
-static PFN_vkd3d_get_vk_queue_family_index vkd3d_get_vk_queue_family_index;
-static PFN_vkd3d_instance_from_device vkd3d_instance_from_device;
-static PFN_vkd3d_instance_get_vk_instance vkd3d_instance_get_vk_instance;
-static PFN_vkd3d_release_vk_queue vkd3d_release_vk_queue;
-static PFN_vkd3d_resource_decref vkd3d_resource_decref;
-static PFN_vkd3d_resource_incref vkd3d_resource_incref;
 
 struct dxgi_vk_funcs
 {
@@ -1938,7 +1851,7 @@ static void d3d12_swapchain_destroy(struct d3d12_swapchain *swapchain)
     if (swapchain->factory)
         IWineDXGIFactory_Release(swapchain->factory);
 
-    close_library(vulkan_module);
+    FreeLibrary(vulkan_module);
 
     wined3d_swapchain_state_destroy(swapchain->state);
 }
@@ -2861,61 +2774,13 @@ static const struct IDXGISwapChain4Vtbl d3d12_swapchain_vtbl =
     d3d12_swapchain_SetHDRMetaData,
 };
 
-static BOOL load_vkd3d_functions(void *vkd3d_handle)
-{
-#define LOAD_FUNCPTR(f) if (!(f = get_library_proc(vkd3d_handle, #f))) return FALSE;
-    LOAD_FUNCPTR(vkd3d_acquire_vk_queue)
-    LOAD_FUNCPTR(vkd3d_create_image_resource)
-    LOAD_FUNCPTR(vkd3d_get_device_parent)
-    LOAD_FUNCPTR(vkd3d_get_vk_device)
-    LOAD_FUNCPTR(vkd3d_get_vk_format)
-    LOAD_FUNCPTR(vkd3d_get_vk_physical_device)
-    LOAD_FUNCPTR(vkd3d_get_vk_queue_family_index)
-    LOAD_FUNCPTR(vkd3d_instance_from_device)
-    LOAD_FUNCPTR(vkd3d_instance_get_vk_instance)
-    LOAD_FUNCPTR(vkd3d_release_vk_queue)
-    LOAD_FUNCPTR(vkd3d_resource_decref)
-    LOAD_FUNCPTR(vkd3d_resource_incref)
-#undef LOAD_FUNCPTR
-
-    return TRUE;
-}
-
-static void *vkd3d_handle;
-
-static BOOL WINAPI init_vkd3d_once(INIT_ONCE *once, void *param, void **context)
-{
-    TRACE("Loading vkd3d %s.\n", SONAME_LIBVKD3D);
-
-    if (!(vkd3d_handle = load_library(SONAME_LIBVKD3D)))
-        return FALSE;
-
-    if (!load_vkd3d_functions(vkd3d_handle))
-    {
-        ERR("Failed to load vkd3d functions.\n");
-        close_library(vkd3d_handle);
-        vkd3d_handle = NULL;
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-static BOOL init_vkd3d(void)
-{
-    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
-    InitOnceExecuteOnce(&init_once, init_vkd3d_once, NULL, NULL);
-    return !!vkd3d_handle;
-}
-
 static BOOL init_vk_funcs(struct dxgi_vk_funcs *dxgi, VkInstance vk_instance, VkDevice vk_device)
 {
     PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr;
     PFN_vkGetDeviceProcAddr vkGetDeviceProcAddr;
 
-    dxgi->vulkan_module = NULL;
-
-    if (!(vkGetInstanceProcAddr = load_vulkan(&dxgi->vulkan_module)))
+    dxgi->vulkan_module = LoadLibraryA("vulkan-1.dll");
+    if (!(vkGetInstanceProcAddr = (void *)GetProcAddress(dxgi->vulkan_module, "vkGetInstanceProcAddr")))
     {
         ERR_(winediag)("Failed to load Vulkan.\n");
         return FALSE;
@@ -2927,7 +2792,7 @@ static BOOL init_vk_funcs(struct dxgi_vk_funcs *dxgi, VkInstance vk_instance, Vk
     if (!(dxgi->p_##name = (void *)vkGetInstanceProcAddr(vk_instance, #name))) \
     { \
         ERR("Failed to get instance proc "#name".\n"); \
-        close_library(dxgi->vulkan_module); \
+        FreeLibrary(dxgi->vulkan_module); \
         return FALSE; \
     }
     LOAD_INSTANCE_PFN(vkCreateWin32SurfaceKHR)
@@ -2944,7 +2809,7 @@ static BOOL init_vk_funcs(struct dxgi_vk_funcs *dxgi, VkInstance vk_instance, Vk
     if (!(dxgi->p_##name = (void *)vkGetDeviceProcAddr(vk_device, #name))) \
     { \
         ERR("Failed to get device proc "#name".\n"); \
-        close_library(dxgi->vulkan_module); \
+        FreeLibrary(dxgi->vulkan_module); \
         return FALSE; \
     }
     LOAD_DEVICE_PFN(vkAcquireNextImageKHR)
@@ -3048,12 +2913,6 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
         default:
             WARN("Invalid swap effect %#x.\n", swapchain_desc->SwapEffect);
             return DXGI_ERROR_INVALID_CALL;
-    }
-
-    if (!init_vkd3d())
-    {
-        ERR_(winediag)("libvkd3d could not be loaded.\n");
-        return DXGI_ERROR_UNSUPPORTED;
     }
 
     if (FAILED(hr = dxgi_get_output_from_window(factory, window, &output)))
@@ -3246,15 +3105,3 @@ HRESULT d3d12_swapchain_create(IWineDXGIFactory *factory, ID3D12CommandQueue *qu
 
     return S_OK;
 }
-
-#else
-
-HRESULT d3d12_swapchain_create(IWineDXGIFactory *factory, ID3D12CommandQueue *queue, HWND window,
-        const DXGI_SWAP_CHAIN_DESC1 *swapchain_desc, const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *fullscreen_desc,
-        IDXGISwapChain1 **swapchain)
-{
-    ERR_(winediag)("Wine was built without Direct3D 12 support.\n");
-    return DXGI_ERROR_UNSUPPORTED;
-}
-
-#endif  /* SONAME_LIBVKD3D */

@@ -17,8 +17,6 @@
  *
  */
 
-#include "config.h"
-
 #define DXGI_INIT_GUID
 #include "dxgi_private.h"
 
