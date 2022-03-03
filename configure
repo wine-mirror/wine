@@ -656,10 +656,6 @@ LDAP_LIBS
 LDAP_CFLAGS
 RT_LIBS
 MSVCRTFLAGS
-VKD3D_SHADER_LIBS
-VKD3D_SHADER_CFLAGS
-VKD3D_LIBS
-VKD3D_CFLAGS
 NETAPI_LIBS
 NETAPI_CFLAGS
 PROCSTAT_LIBS
@@ -916,7 +912,6 @@ with_udev
 with_unwind
 with_usb
 with_v4l2
-with_vkd3d
 with_vulkan
 with_xcomposite
 with_xcursor
@@ -1738,10 +1733,6 @@ GSSAPI_CFLAGS
 GSSAPI_LIBS
 NETAPI_CFLAGS
 NETAPI_LIBS
-VKD3D_CFLAGS
-VKD3D_LIBS
-VKD3D_SHADER_CFLAGS
-VKD3D_SHADER_LIBS
 LDAP_CFLAGS
 LDAP_LIBS'
 
@@ -2418,7 +2409,6 @@ Optional Packages:
                           handling)
   --without-usb           do not use the libusb library
   --without-v4l2          do not use v4l2 (video capture)
-  --without-vkd3d         do not use vkd3d (Direct3D 12 support)
   --without-vulkan        do not use Vulkan
   --without-xcomposite    do not use the Xcomposite extension
   --without-xcursor       do not use the Xcursor extension
@@ -2559,13 +2549,6 @@ Some influential environment variables:
   NETAPI_CFLAGS
               C compiler flags for netapi, overriding pkg-config
   NETAPI_LIBS Linker flags for netapi, overriding pkg-config
-  VKD3D_CFLAGS
-              C compiler flags for libvkd3d, overriding pkg-config
-  VKD3D_LIBS  Linker flags for libvkd3d, overriding pkg-config
-  VKD3D_SHADER_CFLAGS
-              C compiler flags for libvkd3d-shader, overriding pkg-config
-  VKD3D_SHADER_LIBS
-              Linker flags for libvkd3d-shader, overriding pkg-config
   LDAP_CFLAGS C compiler flags for openldap, overriding pkg-config
   LDAP_LIBS   Linker flags for openldap, overriding pkg-config
 
@@ -4372,13 +4355,6 @@ fi
 if test ${with_v4l2+y}
 then :
   withval=$with_v4l2;
-fi
-
-
-# Check whether --with-vkd3d was given.
-if test ${with_vkd3d+y}
-then :
-  withval=$with_vkd3d;
 fi
 
 
@@ -7955,12 +7931,6 @@ ac_fn_c_check_header_compile "$LINENO" "gettext-po.h" "ac_cv_header_gettext_po_h
 if test "x$ac_cv_header_gettext_po_h" = xyes
 then :
   printf "%s\n" "#define HAVE_GETTEXT_PO_H 1" >>confdefs.h
-
-fi
-ac_fn_c_check_header_compile "$LINENO" "ieeefp.h" "ac_cv_header_ieeefp_h" "$ac_includes_default"
-if test "x$ac_cv_header_ieeefp_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_IEEEFP_H 1" >>confdefs.h
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "libproc.h" "ac_cv_header_libproc_h" "$ac_includes_default"
@@ -18161,175 +18131,6 @@ esac
 
 fi
 
-if test "x$with_vkd3d" != "xno"
-then
-    if ${VKD3D_CFLAGS:+false} :
-then :
-  if test ${PKG_CONFIG+y}
-then :
-  VKD3D_CFLAGS=`$PKG_CONFIG --cflags libvkd3d 2>/dev/null`
-fi
-fi
-
-if ${VKD3D_LIBS:+false} :
-then :
-  if test ${PKG_CONFIG+y}
-then :
-  VKD3D_LIBS=`$PKG_CONFIG --libs libvkd3d 2>/dev/null`
-fi
-fi
-
-
-printf "%s\n" "$as_me:${as_lineno-$LINENO}: libvkd3d cflags: $VKD3D_CFLAGS" >&5
-printf "%s\n" "$as_me:${as_lineno-$LINENO}: libvkd3d libs: $VKD3D_LIBS" >&5
-ac_save_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS $VKD3D_CFLAGS"
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lvkd3d" >&5
-printf %s "checking for -lvkd3d... " >&6; }
-if test ${ac_cv_lib_soname_vkd3d+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  ac_check_soname_save_LIBS=$LIBS
-LIBS="-lvkd3d $VKD3D_LIBS $LIBS"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-char vkd3d_serialize_versioned_root_signature ();
-int
-main (void)
-{
-return vkd3d_serialize_versioned_root_signature ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  case "$LIBEXT" in
-    dll) ac_cv_lib_soname_vkd3d=`$ac_cv_path_LDD conftest.exe | grep "vkd3d" | sed -e "s/dll.*/dll/"';2,$d'` ;;
-    dylib) ac_cv_lib_soname_vkd3d=`$OTOOL -L conftest$ac_exeext | grep "libvkd3d\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libvkd3d\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    *) ac_cv_lib_soname_vkd3d=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libvkd3d\\.$LIBEXT" | sed -e "s/^.*\\[\\(libvkd3d\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
-       if ${ac_cv_lib_soname_vkd3d:+false} :
-then :
-  ac_cv_lib_soname_vkd3d=`$LDD conftest$ac_exeext | grep "libvkd3d\\.$LIBEXT" | sed -e "s/^.*\(libvkd3d\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
-fi ;;
-  esac
-else $as_nop
-  ac_cv_lib_soname_vkd3d=
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-  LIBS=$ac_check_soname_save_LIBS
-fi
-if ${ac_cv_lib_soname_vkd3d:+false} :
-then :
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: not found" >&5
-printf "%s\n" "not found" >&6; }
-
-else $as_nop
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_vkd3d" >&5
-printf "%s\n" "$ac_cv_lib_soname_vkd3d" >&6; }
-
-printf "%s\n" "#define SONAME_LIBVKD3D \"$ac_cv_lib_soname_vkd3d\"" >>confdefs.h
-
-
-fi
-CPPFLAGS=$ac_save_CPPFLAGS
-
-    if ${VKD3D_SHADER_CFLAGS:+false} :
-then :
-  if test ${PKG_CONFIG+y}
-then :
-  VKD3D_SHADER_CFLAGS=`$PKG_CONFIG --cflags libvkd3d-shader 2>/dev/null`
-fi
-fi
-
-if ${VKD3D_SHADER_LIBS:+false} :
-then :
-  if test ${PKG_CONFIG+y}
-then :
-  VKD3D_SHADER_LIBS=`$PKG_CONFIG --libs libvkd3d-shader 2>/dev/null`
-fi
-fi
-
-
-printf "%s\n" "$as_me:${as_lineno-$LINENO}: libvkd3d-shader cflags: $VKD3D_SHADER_CFLAGS" >&5
-printf "%s\n" "$as_me:${as_lineno-$LINENO}: libvkd3d-shader libs: $VKD3D_SHADER_LIBS" >&5
-ac_save_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS $VKD3D_SHADER_CFLAGS"
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lvkd3d-shader" >&5
-printf %s "checking for -lvkd3d-shader... " >&6; }
-if test ${ac_cv_lib_soname_vkd3d_shader+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  ac_check_soname_save_LIBS=$LIBS
-LIBS="-lvkd3d-shader $VKD3D_SHADER_LIBS $LIBS"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-char vkd3d_shader_compile ();
-int
-main (void)
-{
-return vkd3d_shader_compile ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  case "$LIBEXT" in
-    dll) ac_cv_lib_soname_vkd3d_shader=`$ac_cv_path_LDD conftest.exe | grep "vkd3d-shader" | sed -e "s/dll.*/dll/"';2,$d'` ;;
-    dylib) ac_cv_lib_soname_vkd3d_shader=`$OTOOL -L conftest$ac_exeext | grep "libvkd3d-shader\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libvkd3d-shader\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    *) ac_cv_lib_soname_vkd3d_shader=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libvkd3d-shader\\.$LIBEXT" | sed -e "s/^.*\\[\\(libvkd3d-shader\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
-       if ${ac_cv_lib_soname_vkd3d_shader:+false} :
-then :
-  ac_cv_lib_soname_vkd3d_shader=`$LDD conftest$ac_exeext | grep "libvkd3d-shader\\.$LIBEXT" | sed -e "s/^.*\(libvkd3d-shader\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
-fi ;;
-  esac
-else $as_nop
-  ac_cv_lib_soname_vkd3d_shader=
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-  LIBS=$ac_check_soname_save_LIBS
-fi
-if ${ac_cv_lib_soname_vkd3d_shader:+false} :
-then :
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: not found" >&5
-printf "%s\n" "not found" >&6; }
-
-else $as_nop
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_vkd3d_shader" >&5
-printf "%s\n" "$ac_cv_lib_soname_vkd3d_shader" >&6; }
-
-printf "%s\n" "#define SONAME_LIBVKD3D_SHADER \"$ac_cv_lib_soname_vkd3d_shader\"" >>confdefs.h
-
-
-fi
-CPPFLAGS=$ac_save_CPPFLAGS
-
-fi
-if test "x$ac_cv_lib_soname_vkd3d" = "x"
-then :
-  case "x$with_vkd3d" in
-  x)   as_fn_append wine_notices "|vkd3d ${notice_platform}development files not found (or too old), Direct3D 12 won't be supported." ;;
-  xno) ;;
-  *)   as_fn_error $? "vkd3d ${notice_platform}development files not found (or too old), Direct3D 12 won't be supported.
-This is an error since --with-vkd3d was requested." "$LINENO" 5 ;;
-esac
-
-fi
-test "x$ac_cv_lib_soname_vkd3d" != "x" || enable_d3d12=${enable_d3d12:-no}
-
 
 if test "x${GCC}" = "xyes"
 then
@@ -20671,113 +20472,6 @@ printf "%s\n" "#define HAVE_STRUCT_SYSINFO_MEM_UNIT 1" >>confdefs.h
 
 fi
 
-
-ac_save_LIBS="$LIBS"
-LIBS="$LIBS -lm"
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for isfinite" >&5
-printf %s "checking for isfinite... " >&6; }
-if test ${ac_cv_have_isfinite+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <math.h>
-int
-main (void)
-{
-float f = 0.0; return isfinite(f)
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_have_isfinite="yes"
-else $as_nop
-  ac_cv_have_isfinite="no"
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_have_isfinite" >&5
-printf "%s\n" "$ac_cv_have_isfinite" >&6; }
-if test "$ac_cv_have_isfinite" = "yes"
-then
-
-printf "%s\n" "#define HAVE_ISFINITE 1" >>confdefs.h
-
-fi
-
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for isinf" >&5
-printf %s "checking for isinf... " >&6; }
-if test ${ac_cv_have_isinf+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <math.h>
-int
-main (void)
-{
-float f = 0.0; return isinf(f)
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_have_isinf="yes"
-else $as_nop
-  ac_cv_have_isinf="no"
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_have_isinf" >&5
-printf "%s\n" "$ac_cv_have_isinf" >&6; }
-if test "$ac_cv_have_isinf" = "yes"
-then
-
-printf "%s\n" "#define HAVE_ISINF 1" >>confdefs.h
-
-fi
-
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for isnan" >&5
-printf %s "checking for isnan... " >&6; }
-if test ${ac_cv_have_isnan+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <math.h>
-int
-main (void)
-{
-float f = 0.0; return isnan(f)
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_have_isnan="yes"
-else $as_nop
-  ac_cv_have_isnan="no"
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_have_isnan" >&5
-printf "%s\n" "$ac_cv_have_isnan" >&6; }
-if test "$ac_cv_have_isnan" = "yes"
-then
-
-printf "%s\n" "#define HAVE_ISNAN 1" >>confdefs.h
-
-fi
 
 LIBS="$ac_save_LIBS"
 
@@ -23237,10 +22931,6 @@ GSSAPI_LIBS = $GSSAPI_LIBS
 PROCSTAT_LIBS = $PROCSTAT_LIBS
 NETAPI_CFLAGS = $NETAPI_CFLAGS
 NETAPI_LIBS = $NETAPI_LIBS
-VKD3D_CFLAGS = $VKD3D_CFLAGS
-VKD3D_LIBS = $VKD3D_LIBS
-VKD3D_SHADER_CFLAGS = $VKD3D_SHADER_CFLAGS
-VKD3D_SHADER_LIBS = $VKD3D_SHADER_LIBS
 MSVCRTFLAGS = $MSVCRTFLAGS
 RT_LIBS = $RT_LIBS
 LDAP_CFLAGS = $LDAP_CFLAGS

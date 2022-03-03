@@ -119,9 +119,6 @@
 /* Define to 1 if you have the <gssapi/gssapi.h> header file. */
 #undef HAVE_GSSAPI_GSSAPI_H
 
-/* Define to 1 if you have the <ieeefp.h> header file. */
-#undef HAVE_IEEEFP_H
-
 /* Define to 1 if you have the <ifaddrs.h> header file. */
 #undef HAVE_IFADDRS_H
 
@@ -136,15 +133,6 @@
 
 /* Define to 1 if you have the <IOKit/IOKitLib.h> header file. */
 #undef HAVE_IOKIT_IOKITLIB_H
-
-/* Define to 1 if you have the `isfinite' function. */
-#undef HAVE_ISFINITE
-
-/* Define to 1 if you have the `isinf' function. */
-#undef HAVE_ISINF
-
-/* Define to 1 if you have the `isnan' function. */
-#undef HAVE_ISNAN
 
 /* Define to 1 if you have the `kqueue' function. */
 #undef HAVE_KQUEUE
@@ -843,12 +831,6 @@
 
 /* Define to the soname of the libv4l2 library. */
 #undef SONAME_LIBV4L2
-
-/* Define to the soname of the libvkd3d library. */
-#undef SONAME_LIBVKD3D
-
-/* Define to the soname of the libvkd3d-shader library. */
-#undef SONAME_LIBVKD3D_SHADER
 
 /* Define to the soname of the libvulkan library. */
 #undef SONAME_LIBVULKAN

@@ -63,7 +63,6 @@ AC_ARG_WITH(udev,      AS_HELP_STRING([--without-udev],[do not use udev (plug an
 AC_ARG_WITH(unwind,    AS_HELP_STRING([--without-unwind],[do not use the libunwind library (exception handling)]))
 AC_ARG_WITH(usb,       AS_HELP_STRING([--without-usb],[do not use the libusb library]))
 AC_ARG_WITH(v4l2,      AS_HELP_STRING([--without-v4l2],[do not use v4l2 (video capture)]))
-AC_ARG_WITH(vkd3d,     AS_HELP_STRING([--without-vkd3d],[do not use vkd3d (Direct3D 12 support)]))
 AC_ARG_WITH(vulkan,    AS_HELP_STRING([--without-vulkan],[do not use Vulkan]))
 AC_ARG_WITH(xcomposite,AS_HELP_STRING([--without-xcomposite],[do not use the Xcomposite extension]),
             [if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_Xcomposite_h=no; fi])
@@ -431,7 +430,6 @@ AC_CHECK_HEADERS(\
 	elf.h \
 	float.h \
 	gettext-po.h \
-	ieeefp.h \
 	libproc.h \
 	link.h \
 	linux/cdrom.h \
@@ -1772,18 +1770,6 @@ fi
 WINE_NOTICE_WITH(vulkan,[test "x$ac_cv_lib_soname_vulkan" = "x" -a "x$ac_cv_lib_soname_MoltenVK" = "x"],
                  [libvulkan and libMoltenVK ${notice_platform}development files not found, Vulkan won't be supported.])
 
-dnl **** Check for vkd3d ****
-if test "x$with_vkd3d" != "xno"
-then
-    WINE_PACKAGE_FLAGS(VKD3D,[libvkd3d],,,,
-        [WINE_CHECK_SONAME(vkd3d,vkd3d_serialize_versioned_root_signature,,,[$VKD3D_LIBS])])
-    WINE_PACKAGE_FLAGS(VKD3D_SHADER,[libvkd3d-shader],,,,
-        [WINE_CHECK_SONAME(vkd3d-shader,vkd3d_shader_compile,,,[$VKD3D_SHADER_LIBS])])
-fi
-WINE_NOTICE_WITH(vkd3d,[test "x$ac_cv_lib_soname_vkd3d" = "x"],
-                 [vkd3d ${notice_platform}development files not found (or too old), Direct3D 12 won't be supported.])
-test "x$ac_cv_lib_soname_vkd3d" != "x" || enable_d3d12=${enable_d3d12:-no}
-
 dnl **** Check for gcc specific options ****
 
 if test "x${GCC}" = "xyes"
@@ -2244,32 +2230,6 @@ AC_CHECK_MEMBERS([struct sysinfo.totalram, struct sysinfo.mem_unit],,,
 [#ifdef HAVE_SYS_SYSINFO_H
 # include <sys/sysinfo.h>
 #endif])
-
-dnl Check for isfinite
-ac_save_LIBS="$LIBS"
-LIBS="$LIBS -lm"
-AC_CACHE_CHECK([for isfinite], ac_cv_have_isfinite,
-               AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <math.h>]], [[float f = 0.0; return isfinite(f)]])],[ac_cv_have_isfinite="yes"],[ac_cv_have_isfinite="no"]))
-if test "$ac_cv_have_isfinite" = "yes"
-then
-    AC_DEFINE(HAVE_ISFINITE, 1, [Define to 1 if you have the `isfinite' function.])
-fi
-
-dnl Check for isinf
-AC_CACHE_CHECK([for isinf], ac_cv_have_isinf,
-               AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <math.h>]], [[float f = 0.0; return isinf(f)]])],[ac_cv_have_isinf="yes"],[ac_cv_have_isinf="no"]))
-if test "$ac_cv_have_isinf" = "yes"
-then
-    AC_DEFINE(HAVE_ISINF, 1, [Define to 1 if you have the `isinf' function.])
-fi
-
-dnl Check for isnan
-AC_CACHE_CHECK([for isnan], ac_cv_have_isnan,
-               AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <math.h>]], [[float f = 0.0; return isnan(f)]])],[ac_cv_have_isnan="yes"],[ac_cv_have_isnan="no"]))
-if test "$ac_cv_have_isnan" = "yes"
-then
-    AC_DEFINE(HAVE_ISNAN, 1, [Define to 1 if you have the `isnan' function.])
-fi
 
 LIBS="$ac_save_LIBS"
 
