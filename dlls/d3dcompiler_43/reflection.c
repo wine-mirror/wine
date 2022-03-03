@@ -1918,8 +1918,7 @@ HRESULT WINAPI D3D10ReflectShader(const void *data, SIZE_T data_size, ID3D10Shad
 
     return S_OK;
 }
-#endif
-
+#else
 HRESULT WINAPI D3DReflect(const void *data, SIZE_T data_size, REFIID riid, void **reflector)
 {
     struct d3dcompiler_shader_reflection *object;
@@ -1978,3 +1977,4 @@ HRESULT WINAPI D3DReflect(const void *data, SIZE_T data_size, REFIID riid, void 
 
     return S_OK;
 }
+#endif
