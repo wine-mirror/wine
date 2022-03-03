@@ -2237,7 +2237,6 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
 
         if (length != sizeof(*info)) return STATUS_INFO_LENGTH_MISMATCH;
         if (!info) return STATUS_ACCESS_VIOLATION;
-        if (info->ThreadName.Length != info->ThreadName.MaximumLength) return STATUS_INVALID_PARAMETER;
         if (info->ThreadName.Length && !info->ThreadName.Buffer) return STATUS_ACCESS_VIOLATION;
 
         SERVER_START_REQ( set_thread_info )

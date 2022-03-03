@@ -2493,13 +2493,11 @@ static void test_thread_description(void)
     RtlInitUnicodeString(&thread_desc->ThreadName, (WCHAR *)(thread_desc + 1));
 
     status = pNtSetInformationThread(GetCurrentThread(), ThreadNameInformation, thread_desc, sizeof(*thread_desc));
-    todo_wine
     ok(status == STATUS_SUCCESS, "Failed to set thread description, status %#x.\n", status);
 
     ptr = NULL;
     hr = pGetThreadDescription(GetCurrentThread(), &ptr);
     ok(hr == HRESULT_FROM_NT(STATUS_SUCCESS), "Failed to get thread description, hr %#x.\n", hr);
-    todo_wine
     ok(!lstrcmpW(ptr, L"desc"), "Unexpected description %s.\n", wine_dbgstr_w(ptr));
     LocalFree(ptr);
 
