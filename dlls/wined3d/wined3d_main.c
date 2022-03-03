@@ -22,8 +22,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include "initguid.h"
 #include "wined3d_private.h"
 
@@ -410,8 +408,6 @@ static BOOL wined3d_dll_destroy(HINSTANCE hInstDLL)
 {
     DWORD wined3d_context_tls_idx = context_get_tls_idx();
     unsigned int i;
-
-    wined3d_spirv_shader_backend_cleanup();
 
     if (!TlsFree(wined3d_context_tls_idx))
     {

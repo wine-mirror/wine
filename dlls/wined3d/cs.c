@@ -16,7 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
@@ -4116,7 +4115,7 @@ static void *wined3d_deferred_context_require_space(struct wined3d_device_contex
         return NULL;
 
     packet = (struct wined3d_cs_packet *)((BYTE *)deferred->data + deferred->data_size);
-    TRACE("size was %zu, adding %zu\n", (size_t)deferred->data_size, packet_size);
+    TRACE("size was %Iu, adding %Iu\n", (size_t)deferred->data_size, packet_size);
     packet->size = packet_size - header_size;
     return &packet->data;
 }

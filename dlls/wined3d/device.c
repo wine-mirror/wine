@@ -24,8 +24,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
@@ -964,7 +962,7 @@ static struct wined3d_allocator_chunk *wined3d_allocator_gl_create_chunk(struct 
     struct wined3d_allocator_chunk_gl *chunk_gl;
     struct wined3d_context_gl *context_gl;
 
-    TRACE("allocator %p, context %p, memory_type %u, chunk_size %zu.\n", allocator, context, memory_type, chunk_size);
+    TRACE("allocator %p, context %p, memory_type %u, chunk_size %Iu.\n", allocator, context, memory_type, chunk_size);
 
     if (!context)
         return NULL;

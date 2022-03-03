@@ -24,8 +24,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
@@ -2752,7 +2750,7 @@ GLuint wined3d_context_gl_allocate_vram_chunk_buffer(struct wined3d_context_gl *
     GLbitfield flags;
     GLuint id = 0;
 
-    TRACE("context_gl %p, pool %u, size %zu.\n", context_gl, pool, size);
+    TRACE("context_gl %p, pool %u, size %Iu.\n", context_gl, pool, size);
 
     GL_EXTCALL(glGenBuffers(1, &id));
     if (!id)
@@ -3043,7 +3041,7 @@ void wined3d_context_gl_flush_bo_address(struct wined3d_context_gl *context_gl,
 {
     struct wined3d_range range;
 
-    TRACE("context_gl %p, data %s, size %zu.\n", context_gl, debug_const_bo_address(data), size);
+    TRACE("context_gl %p, data %s, size %Iu.\n", context_gl, debug_const_bo_address(data), size);
 
     range.offset = (uintptr_t)data->addr;
     range.size = size;

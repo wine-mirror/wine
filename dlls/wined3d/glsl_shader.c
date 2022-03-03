@@ -29,8 +29,6 @@
  * mask for the destination parameter into account.
  */
 
-#include "config.h"
-
 #include <limits.h>
 #include <stdio.h>
 

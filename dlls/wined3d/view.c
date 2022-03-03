@@ -17,8 +17,6 @@
  *
  */
 
-#include "config.h"
-
 #include "wined3d_private.h"
 #include "wined3d_shaders.h"
 

@@ -25,6 +25,9 @@
 #ifndef __WINE_WINED3D_PRIVATE_H
 #define __WINE_WINED3D_PRIVATE_H
 
+#define USE_WIN32_VULKAN
+#define USE_WIN32_OPENGL
+
 #ifdef USE_WIN32_OPENGL
 #define WINE_GLAPI __stdcall
 #else
@@ -37,6 +40,7 @@
 #include <sys/types.h>
 #include <math.h>
 #include <limits.h>
+#include <float.h>
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #define NONAMELESSUNION
@@ -51,9 +55,6 @@
 #include "ddk/d3dkmthk.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
-#ifdef HAVE_FLOAT_H
-# include <float.h>
-#endif
 
 #include "objbase.h"
 #include "wine/wined3d.h"
@@ -352,40 +353,6 @@ static inline GLenum wined3d_gl_min_mip_filter(enum wined3d_texture_filter_type 
     return minMipLookup[min_filter].mip[mip_filter];
 }
 
-#ifdef HAVE_IEEEFP_H
-#include <ieeefp.h>
-#endif
-
-#if !defined(HAVE_ISFINITE) && !defined(isfinite)
-static inline int isfinite(double x) { return finite(x); }
-#endif
-
-#if !defined(HAVE_ISINF) && !defined(isinf)
-static inline int isinf(double x) { return (!(finite(x) || isnand(x))); }
-#endif
-
-#if !defined(HAVE_ISNAN) && !defined(isnan)
-static inline int isnan(double x) { return isnand(x); }
-#endif
-
-#ifndef INFINITY
-static inline float __port_infinity(void)
-{
-    static const unsigned __inf_bytes = 0x7f800000;
-    return *(const float *)&__inf_bytes;
-}
-#define INFINITY __port_infinity()
-#endif
-
-#ifndef NAN
-static inline float __port_nan(void)
-{
-    static const unsigned __nan_bytes = 0x7fc00000;
-    return *(const float *)&__nan_bytes;
-}
-#define NAN __port_nan()
-#endif
-
 /* float_16_to_32() and float_32_to_16() (see implementation in
  * surface_base.c) convert 16 bit floats in the FLOAT16 data type
  * to standard C floats and vice versa. They do not depend on the encoding
@@ -438,7 +405,7 @@ static inline float float_24_to_32(DWORD in)
 
 static inline unsigned int wined3d_popcount(unsigned int x)
 {
-#ifdef HAVE___BUILTIN_POPCOUNT
+#if defined(__GNUC__) && (__GNUC__ >= 4)
     return __builtin_popcount(x);
 #else
     x -= x >> 1 & 0x55555555;
@@ -1548,7 +1515,6 @@ extern const struct wined3d_shader_backend_ops arb_program_shader_backend DECLSP
 extern const struct wined3d_shader_backend_ops none_shader_backend DECLSPEC_HIDDEN;
 
 const struct wined3d_shader_backend_ops *wined3d_spirv_shader_backend_init_vk(void) DECLSPEC_HIDDEN;
-void wined3d_spirv_shader_backend_cleanup(void) DECLSPEC_HIDDEN;
 
 #define GL_EXTCALL(f) (gl_info->gl_ops.ext.p_##f)
 
@@ -3475,7 +3441,7 @@ struct wined3d_output
 HRESULT wined3d_output_get_gamma_ramp(struct wined3d_output *output, struct wined3d_gamma_ramp *ramp) DECLSPEC_HIDDEN;
 
 #ifdef _WIN64
-#define MAX_PERSISTENT_MAPPED_BYTES SSIZE_MAX
+#define MAX_PERSISTENT_MAPPED_BYTES I64_MAX
 #else
 #define MAX_PERSISTENT_MAPPED_BYTES (128 * 1024 * 1024)
 #endif

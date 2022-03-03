@@ -16,7 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
 #include "wined3d_private.h"
 
 #include "wine/vulkan_driver.h"
@@ -1984,9 +1983,14 @@ static const struct wined3d_adapter_ops wined3d_adapter_vk_ops =
 
 static unsigned int wined3d_get_wine_vk_version(void)
 {
-    const char *ptr = PACKAGE_VERSION;
+    const char * (CDECL *wine_get_version)(void) = (void *)GetProcAddress( GetModuleHandleW(L"ntdll.dll"),
+                                                                           "wine_get_version" );
+    const char *ptr;
     int major, minor;
 
+    if (!wine_get_version) return VK_MAKE_VERSION(1, 0, 0);
+
+    ptr = wine_get_version();
     major = atoi(ptr);
 
     while (isdigit(*ptr))
