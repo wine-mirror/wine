@@ -100,6 +100,8 @@ static BOOL (WINAPI *pSetThreadGroupAffinity)(HANDLE,const GROUP_AFFINITY*,GROUP
 static NTSTATUS (WINAPI *pNtSetInformationThread)(HANDLE,THREADINFOCLASS,LPCVOID,ULONG);
 static HRESULT (WINAPI *pSetThreadDescription)(HANDLE,const WCHAR *);
 static HRESULT (WINAPI *pGetThreadDescription)(HANDLE,WCHAR **);
+static PVOID (WINAPI *pRtlAddVectoredExceptionHandler)(ULONG,PVECTORED_EXCEPTION_HANDLER);
+static ULONG (WINAPI *pRtlRemoveVectoredExceptionHandler)(PVOID);
 
 static HANDLE create_target_process(const char *arg)
 {
@@ -2351,6 +2353,23 @@ static void test_thread_info(void)
     CloseHandle(thread);
 }
 
+typedef struct tagTHREADNAME_INFO
+{
+    DWORD   dwType;     /* Must be 0x1000. */
+    LPCSTR  szName;     /* Pointer to name (in user addr space). */
+    DWORD   dwThreadID; /* Thread ID (-1 = caller thread). */
+    DWORD   dwFlags;    /* Reserved for future use, must be zero. */
+} THREADNAME_INFO;
+
+static LONG CALLBACK msvc_threadname_vec_handler(EXCEPTION_POINTERS *ExceptionInfo)
+{
+    if (ExceptionInfo->ExceptionRecord != NULL &&
+        ExceptionInfo->ExceptionRecord->ExceptionCode == EXCEPTION_WINE_NAME_THREAD)
+        return EXCEPTION_CONTINUE_EXECUTION;
+
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+
 static void test_thread_description(void)
 {
     THREAD_NAME_INFORMATION *thread_desc;
@@ -2360,6 +2379,9 @@ static void test_thread_description(void)
     char buff[128];
     WCHAR *ptr;
     HRESULT hr;
+    HANDLE thread;
+    PVOID vectored_handler;
+    THREADNAME_INFO info;
 
     if (!pGetThreadDescription)
     {
@@ -2463,6 +2485,24 @@ static void test_thread_description(void)
     ok(!lstrcmpW(ptr, L""), "Unexpected description %s.\n", wine_dbgstr_w(ptr));
     LocalFree(ptr);
 
+    /* Set with a string from RtlInitUnicodeString. */
+    hr = pSetThreadDescription(GetCurrentThread(), L"123");
+    ok(hr == HRESULT_FROM_NT(STATUS_SUCCESS), "Failed to set thread description, hr %#x.\n", hr);
+
+    lstrcpyW((WCHAR *)(thread_desc + 1), L"desc");
+    RtlInitUnicodeString(&thread_desc->ThreadName, (WCHAR *)(thread_desc + 1));
+
+    status = pNtSetInformationThread(GetCurrentThread(), ThreadNameInformation, thread_desc, sizeof(*thread_desc));
+    todo_wine
+    ok(status == STATUS_SUCCESS, "Failed to set thread description, status %#x.\n", status);
+
+    ptr = NULL;
+    hr = pGetThreadDescription(GetCurrentThread(), &ptr);
+    ok(hr == HRESULT_FROM_NT(STATUS_SUCCESS), "Failed to get thread description, hr %#x.\n", hr);
+    todo_wine
+    ok(!lstrcmpW(ptr, L"desc"), "Unexpected description %s.\n", wine_dbgstr_w(ptr));
+    LocalFree(ptr);
+
     /* Set with 0 length/NULL pointer. */
     hr = pSetThreadDescription(GetCurrentThread(), L"123");
     ok(hr == HRESULT_FROM_NT(STATUS_SUCCESS), "Failed to set thread description, hr %#x.\n", hr);
@@ -2475,6 +2515,59 @@ static void test_thread_description(void)
     hr = pGetThreadDescription(GetCurrentThread(), &ptr);
     ok(hr == HRESULT_FROM_NT(STATUS_SUCCESS), "Failed to get thread description, hr %#x.\n", hr);
     ok(!lstrcmpW(ptr, L""), "Unexpected description %s.\n", wine_dbgstr_w(ptr));
+    LocalFree(ptr);
+
+    /* Get with only THREAD_QUERY_LIMITED_INFORMATION access. */
+    thread = OpenThread(THREAD_QUERY_LIMITED_INFORMATION, FALSE, GetCurrentThreadId());
+
+    ptr = NULL;
+    hr = pGetThreadDescription(thread, &ptr);
+    ok(hr == HRESULT_FROM_NT(STATUS_SUCCESS), "Failed to get thread description, hr %#x.\n", hr);
+    ok(!lstrcmpW(ptr, L""), "Unexpected description %s.\n", wine_dbgstr_w(ptr));
+    LocalFree(ptr);
+
+    len = 0;
+    status = pNtQueryInformationThread(thread, ThreadNameInformation, NULL, 0, &len);
+    ok(status == STATUS_BUFFER_TOO_SMALL, "Unexpected status %#x.\n", status);
+    ok(len == sizeof(*thread_desc), "Unexpected structure length %u.\n", len);
+
+    CloseHandle(thread);
+
+    /* Set with only THREAD_SET_LIMITED_INFORMATION access. */
+    thread = OpenThread(THREAD_SET_LIMITED_INFORMATION, FALSE, GetCurrentThreadId());
+
+    hr = pSetThreadDescription(thread, desc);
+    todo_wine
+    ok(hr == HRESULT_FROM_NT(STATUS_SUCCESS), "Failed to set thread description, hr %#x.\n", hr);
+
+    ptr = NULL;
+    hr = pGetThreadDescription(GetCurrentThread(), &ptr);
+    ok(hr == HRESULT_FROM_NT(STATUS_SUCCESS), "Failed to get thread description, hr %#x.\n", hr);
+    todo_wine
+    ok(!lstrcmpW(ptr, desc), "Unexpected description %s.\n", wine_dbgstr_w(ptr));
+    LocalFree(ptr);
+
+    CloseHandle(thread);
+
+    /* The old exception-based thread name method should not affect GetThreadDescription. */
+    hr = pSetThreadDescription(GetCurrentThread(), desc);
+    ok(hr == HRESULT_FROM_NT(STATUS_SUCCESS), "Failed to set thread description, hr %#x.\n", hr);
+
+    vectored_handler = pRtlAddVectoredExceptionHandler(FALSE, &msvc_threadname_vec_handler);
+    ok(vectored_handler != 0, "RtlAddVectoredExceptionHandler failed\n");
+
+    info.dwType = 0x1000;
+    info.szName = "123";
+    info.dwThreadID = -1;
+    info.dwFlags = 0;
+    RaiseException(EXCEPTION_WINE_NAME_THREAD, 0, sizeof(info) / sizeof(ULONG_PTR), (ULONG_PTR*)&info);
+
+    pRtlRemoveVectoredExceptionHandler(vectored_handler);
+
+    ptr = NULL;
+    hr = pGetThreadDescription(GetCurrentThread(), &ptr);
+    ok(hr == HRESULT_FROM_NT(STATUS_SUCCESS), "Failed to get thread description, hr %#x.\n", hr);
+    ok(!lstrcmpW(ptr, desc), "Unexpected description %s.\n", wine_dbgstr_w(ptr));
     LocalFree(ptr);
 }
 
@@ -2524,6 +2617,8 @@ static void init_funcs(void)
        X(NtQueryInformationThread);
        X(RtlGetThreadErrorMode);
        X(NtSetInformationThread);
+       X(RtlAddVectoredExceptionHandler);
+       X(RtlRemoveVectoredExceptionHandler);
    }
 #undef X
 }
