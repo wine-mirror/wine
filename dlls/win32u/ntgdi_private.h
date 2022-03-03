@@ -89,10 +89,6 @@ typedef struct tagDC
     RECT          bounds;            /* Current bounding rect */
 } DC;
 
-/* Certain functions will do no further processing if the driver returns this.
-   Used by mfdrv for example. */
-#define GDI_NO_MORE_WORK 2
-
 /* Rounds a floating point number to integer. The world-to-viewport
  * transformation process is done in floating point internally. This function
  * is then used to round these coordinates to integer values.
