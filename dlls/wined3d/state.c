@@ -4639,7 +4639,7 @@ static void state_cs_uav_binding(struct wined3d_context *context,
 
 static void state_uav_warn(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    WARN("ARB_image_load_store is not supported by OpenGL implementation.\n");
+    WARN("ARB_shader_image_load_store is not supported by this OpenGL implementation.\n");
 }
 
 static void state_so(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
