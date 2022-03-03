@@ -28,7 +28,7 @@ static IBaseFilter *create_navigator(void)
     IBaseFilter *filter = NULL;
     HRESULT hr = CoCreateInstance(&CLSID_DVDNavigator, NULL,
             CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (void **)&filter);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     return filter;
 }
 
@@ -49,7 +49,7 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
     expected_hr = supported ? S_OK : E_NOINTERFACE;
 
     hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
-    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#lx, expected %#lx.\n", hr, expected_hr);
     if (SUCCEEDED(hr))
         IUnknown_Release(unk);
 }
@@ -131,53 +131,53 @@ static void test_aggregation(void)
     filter = (IBaseFilter *)0xdeadbeef;
     hr = CoCreateInstance(&CLSID_DVDNavigator, &test_outer, CLSCTX_INPROC_SERVER,
             &IID_IBaseFilter, (void **)&filter);
-    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
     ok(!filter, "Got interface %p.\n", filter);
 
     hr = CoCreateInstance(&CLSID_DVDNavigator, &test_outer, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void **)&unk);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
     ok(unk != &test_outer, "Returned IUnknown should not be outer IUnknown.\n");
     ref = get_refcount(unk);
-    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
 
     ref = IUnknown_AddRef(unk);
-    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
-    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
 
     ref = IUnknown_Release(unk);
-    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
-    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
 
     hr = IUnknown_QueryInterface(unk, &IID_IUnknown, (void **)&unk2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(unk2 == unk, "Got unexpected IUnknown %p.\n", unk2);
     IUnknown_Release(unk2);
 
     hr = IUnknown_QueryInterface(unk, &IID_IBaseFilter, (void **)&filter);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IBaseFilter_QueryInterface(filter, &IID_IUnknown, (void **)&unk2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(unk2 == (IUnknown *)0xdeadbeef, "Got unexpected IUnknown %p.\n", unk2);
 
     hr = IBaseFilter_QueryInterface(filter, &IID_IBaseFilter, (void **)&filter2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(filter2 == (IBaseFilter *)0xdeadbeef, "Got unexpected IBaseFilter %p.\n", filter2);
 
     hr = IUnknown_QueryInterface(unk, &test_iid, (void **)&unk2);
-    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
     ok(!unk2, "Got unexpected IUnknown %p.\n", unk2);
 
     hr = IBaseFilter_QueryInterface(filter, &test_iid, (void **)&unk2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(unk2 == (IUnknown *)0xdeadbeef, "Got unexpected IUnknown %p.\n", unk2);
 
     IBaseFilter_Release(filter);
     ref = IUnknown_Release(unk);
-    ok(!ref, "Got unexpected refcount %d.\n", ref);
-    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(!ref, "Got unexpected refcount %ld.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
 }
 
 START_TEST(navigator)
