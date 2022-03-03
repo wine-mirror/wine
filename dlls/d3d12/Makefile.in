@@ -1,11 +1,8 @@
 EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = d3d12.dll
 IMPORTLIB = d3d12
-IMPORTS   = dxgi dxguid gdi32 user32 uuid win32u
-EXTRALIBS = $(VKD3D_LIBS)
-EXTRAINCL = $(VKD3D_CFLAGS)
-
-EXTRADLLFLAGS = -mcygwin
+IMPORTS   = dxgi dxguid wined3d gdi32 user32 uuid win32u
+EXTRAINCL = $(VKD3D_PE_CFLAGS)
 
 C_SRCS = \
 	d3d12_main.c
