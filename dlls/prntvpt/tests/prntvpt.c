@@ -55,27 +55,27 @@ static void test_PTOpenProvider(void)
     struct hprov_data data;
 
     hr = PTOpenProvider(default_name, 1, &hprov);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     data.hprov = hprov;
     hthread = CreateThread(NULL, 0, CloseProvider_proc, &data, 0, &tid);
     WaitForSingleObject(hthread, INFINITE);
     CloseHandle(hthread);
-    ok(data.hr == E_HANDLE || data.hr == E_INVALIDARG /* XP */ || broken(data.hr == S_OK) /* Win8 */, "got %#x\n", data.hr);
+    ok(data.hr == E_HANDLE || data.hr == E_INVALIDARG /* XP */ || broken(data.hr == S_OK) /* Win8 */, "got %#lx\n", data.hr);
 
     if (data.hr != S_OK)
     {
         hr = PTCloseProvider(hprov);
-        ok(hr == S_OK, "got %#x\n", hr);
+        ok(hr == S_OK, "got %#lx\n", hr);
     }
 
     hr = PTOpenProvider(default_name, 0, &hprov);
-    ok(hr == E_INVALIDARG, "got %#x\n", hr);
+    ok(hr == E_INVALIDARG, "got %#lx\n", hr);
 
     for (i = 2; i < 20; i++)
     {
         hr = PTOpenProvider(default_name, i, &hprov);
-        ok(hr == 0x80040001 || hr == E_INVALIDARG /* Wine */, "%u: got %#x\n", i, hr);
+        ok(hr == 0x80040001 || hr == E_INVALIDARG /* Wine */, "%lu: got %#lx\n", i, hr);
     }
 }
 
@@ -88,40 +88,40 @@ static void test_PTOpenProviderEx(void)
     struct hprov_data data;
 
     hr = PTOpenProviderEx(default_name, 1, 1, &hprov, NULL);
-    ok(hr == E_INVALIDARG, "got %#x\n", hr);
+    ok(hr == E_INVALIDARG, "got %#lx\n", hr);
 
     ver = 0xdeadbeef;
     hr = PTOpenProviderEx(default_name, 1, 1, &hprov, &ver);
-    ok(hr == S_OK, "got %#x\n", hr);
-    ok(ver == 1, "got %#x\n", ver);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(ver == 1, "got %#lx\n", ver);
 
     data.hprov = hprov;
     hthread = CreateThread(NULL, 0, CloseProvider_proc, &data, 0, &tid);
     WaitForSingleObject(hthread, INFINITE);
     CloseHandle(hthread);
-    ok(data.hr == E_HANDLE || data.hr == E_INVALIDARG /* XP */ || broken(data.hr == S_OK) /* Win8 */, "got %#x\n", data.hr);
+    ok(data.hr == E_HANDLE || data.hr == E_INVALIDARG /* XP */ || broken(data.hr == S_OK) /* Win8 */, "got %#lx\n", data.hr);
 
     if (data.hr != S_OK)
     {
         hr = PTCloseProvider(hprov);
-        ok(hr == S_OK, "got %#x\n", hr);
+        ok(hr == S_OK, "got %#lx\n", hr);
     }
 
     for (i = 1; i < 20; i++)
     {
         hr = PTOpenProviderEx(default_name, 0, i, &hprov, &ver);
-        ok(hr == E_INVALIDARG, "%u: got %#x\n", i, hr);
+        ok(hr == E_INVALIDARG, "%lu: got %#lx\n", i, hr);
 
         ver = 0xdeadbeef;
         hr = PTOpenProviderEx(default_name, 1, i, &hprov, &ver);
-        ok(hr == S_OK, "%u: got %#x\n", i, hr);
-        ok(ver == 1, "%u: got %#x\n", i, ver);
+        ok(hr == S_OK, "%lu: got %#lx\n", i, hr);
+        ok(ver == 1, "%lu: got %#lx\n", i, ver);
         PTCloseProvider(hprov);
 
         ver = 0xdeadbeef;
         hr = PTOpenProviderEx(default_name, i, i, &hprov, &ver);
-        ok(hr == S_OK, "%u: got %#x\n", i, hr);
-        ok(ver == 1, "%u: got %#x\n", i, ver);
+        ok(hr == S_OK, "%lu: got %#lx\n", i, hr);
+        ok(ver == 1, "%lu: got %#lx\n", i, ver);
         PTCloseProvider(hprov);
     }
 }
