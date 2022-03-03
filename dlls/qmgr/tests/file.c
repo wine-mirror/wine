@@ -147,7 +147,7 @@ static void test_GetRemoteName(void)
     LPWSTR name;
 
     hres = IBackgroundCopyFile_GetRemoteName(test_file, &name);
-    ok(hres == S_OK, "GetRemoteName failed: %08x\n", hres);
+    ok(hres == S_OK, "GetRemoteName failed: %08lx\n", hres);
     ok(lstrcmpW(name, test_remoteUrl) == 0, "Got incorrect remote name\n");
     CoTaskMemFree(name);
 }
@@ -159,7 +159,7 @@ static void test_GetLocalName(void)
     LPWSTR name;
 
     hres = IBackgroundCopyFile_GetLocalName(test_file, &name);
-    ok(hres == S_OK, "GetLocalName failed: %08x\n", hres);
+    ok(hres == S_OK, "GetLocalName failed: %08lx\n", hres);
     ok(lstrcmpW(name, test_localFile) == 0, "Got incorrect local name\n");
     CoTaskMemFree(name);
 }
@@ -171,7 +171,7 @@ static void test_GetProgress_PreTransfer(void)
     BG_FILE_PROGRESS progress;
 
     hres = IBackgroundCopyFile_GetProgress(test_file, &progress);
-    ok(hres == S_OK, "GetProgress failed: %08x\n", hres);
+    ok(hres == S_OK, "GetProgress failed: %08lx\n", hres);
     ok(progress.BytesTotal == BG_SIZE_UNKNOWN, "Got incorrect total size: %s\n",
        wine_dbgstr_longlong(progress.BytesTotal));
     ok(progress.BytesTransferred == 0, "Got incorrect number of transferred bytes: %s\n",

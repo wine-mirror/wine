@@ -80,7 +80,7 @@ static ULONG WINAPI IBackgroundCopyCallback2Impl_AddRef(IBackgroundCopyCallback2
     IBackgroundCopyCallback2Impl *This = impl_from_IBackgroundCopyCallback2(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    trace("IBackgroundCopyCallback2Impl_AddRef called (%p, ref = %d)\n", This, ref);
+    trace("IBackgroundCopyCallback2Impl_AddRef called (%p, ref = %ld)\n", This, ref);
     return ref;
 }
 
@@ -89,7 +89,7 @@ static ULONG WINAPI IBackgroundCopyCallback2Impl_Release(IBackgroundCopyCallback
     IBackgroundCopyCallback2Impl *This = impl_from_IBackgroundCopyCallback2(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    trace("IBackgroundCopyCallback2Impl_Release called (%p, ref = %d)\n", This, ref);
+    trace("IBackgroundCopyCallback2Impl_Release called (%p, ref = %ld)\n", This, ref);
 
     if (ref == 0)
     {
@@ -230,7 +230,7 @@ static BOOL setup(void)
        workaround is only applied on Windows 10, so it's fine if this fails. */
     if (SUCCEEDED(hres)) {
         hres = IBackgroundCopyJob5_SetProperty(test_job_5, BITS_JOB_PROPERTY_ID_COST_FLAGS, prop_val);
-        ok(hres == S_OK, "Failed to set the cost flags: %08x\n", hres);
+        ok(hres == S_OK, "Failed to set the cost flags: %08lx\n", hres);
         IBackgroundCopyJob5_Release(test_job_5);
     }
 
@@ -317,7 +317,7 @@ static void test_GetId(void)
     GUID tmpId;
 
     hres = IBackgroundCopyJob_GetId(test_job, &tmpId);
-    ok(hres == S_OK, "GetId failed: %08x\n", hres);
+    ok(hres == S_OK, "GetId failed: %08lx\n", hres);
     ok(memcmp(&tmpId, &test_jobId, sizeof tmpId) == 0, "Got incorrect GUID\n");
 }
 
@@ -328,7 +328,7 @@ static void test_GetType(void)
     BG_JOB_TYPE type;
 
     hres = IBackgroundCopyJob_GetType(test_job, &type);
-    ok(hres == S_OK, "GetType failed: %08x\n", hres);
+    ok(hres == S_OK, "GetType failed: %08lx\n", hres);
     ok(type == test_type, "Got incorrect type\n");
 }
 
@@ -339,7 +339,7 @@ static void test_GetName(void)
     LPWSTR displayName;
 
     hres = IBackgroundCopyJob_GetDisplayName(test_job, &displayName);
-    ok(hres == S_OK, "GetName failed: %08x\n", hres);
+    ok(hres == S_OK, "GetName failed: %08lx\n", hres);
     ok(lstrcmpW(displayName, L"Test") == 0, "Got incorrect type\n");
     CoTaskMemFree(displayName);
 }
@@ -351,11 +351,11 @@ static void test_AddFile(void)
 
     hres = IBackgroundCopyJob_AddFile(test_job, test_remotePathA,
                                       test_localPathA);
-    ok(hres == S_OK, "First call to AddFile failed: 0x%08x\n", hres);
+    ok(hres == S_OK, "First call to AddFile failed: 0x%08lx\n", hres);
 
     hres = IBackgroundCopyJob_AddFile(test_job, test_remotePathB,
                                       test_localPathB);
-    ok(hres == S_OK, "Second call to AddFile failed: 0x%08x\n", hres);
+    ok(hres == S_OK, "Second call to AddFile failed: 0x%08lx\n", hres);
 }
 
 /* Test adding a set of files */
@@ -368,7 +368,7 @@ static void test_AddFileSet(void)
             {test_remotePathB, test_localPathB}
         };
     hres = IBackgroundCopyJob_AddFileSet(test_job, 2, files);
-    ok(hres == S_OK, "AddFileSet failed: 0x%08x\n", hres);
+    ok(hres == S_OK, "AddFileSet failed: 0x%08lx\n", hres);
 }
 
 /* Test creation of a job enumerator */
@@ -380,13 +380,13 @@ static void test_EnumFiles(void)
 
     hres = IBackgroundCopyJob_AddFile(test_job, test_remotePathA,
                                       test_localPathA);
-    ok(hres == S_OK, "got 0x%08x\n", hres);
+    ok(hres == S_OK, "got 0x%08lx\n", hres);
 
     hres = IBackgroundCopyJob_EnumFiles(test_job, &enumFiles);
-    ok(hres == S_OK, "EnumFiles failed: 0x%08x\n", hres);
+    ok(hres == S_OK, "EnumFiles failed: 0x%08lx\n", hres);
 
     res = IEnumBackgroundCopyFiles_Release(enumFiles);
-    ok(res == 0, "Bad ref count on release: %u\n", res);
+    ok(res == 0, "Bad ref count on release: %lu\n", res);
 }
 
 /* Test getting job progress */
@@ -396,14 +396,14 @@ static void test_GetProgress_preTransfer(void)
     BG_JOB_PROGRESS progress;
 
     hres = IBackgroundCopyJob_GetProgress(test_job, &progress);
-    ok(hres == S_OK, "GetProgress failed: 0x%08x\n", hres);
+    ok(hres == S_OK, "GetProgress failed: 0x%08lx\n", hres);
 
     ok(progress.BytesTotal == 0, "Incorrect BytesTotal: %s\n",
        wine_dbgstr_longlong(progress.BytesTotal));
     ok(progress.BytesTransferred == 0, "Incorrect BytesTransferred: %s\n",
        wine_dbgstr_longlong(progress.BytesTransferred));
-    ok(progress.FilesTotal == 0, "Incorrect FilesTotal: %u\n", progress.FilesTotal);
-    ok(progress.FilesTransferred == 0, "Incorrect FilesTransferred %u\n", progress.FilesTransferred);
+    ok(progress.FilesTotal == 0, "Incorrect FilesTotal: %lu\n", progress.FilesTotal);
+    ok(progress.FilesTransferred == 0, "Incorrect FilesTransferred %lu\n", progress.FilesTransferred);
 }
 
 /* Test getting job state */
@@ -414,7 +414,7 @@ static void test_GetState(void)
 
     state = BG_JOB_STATE_ERROR;
     hres = IBackgroundCopyJob_GetState(test_job, &state);
-    ok(hres == S_OK, "GetState failed: 0x%08x\n", hres);
+    ok(hres == S_OK, "GetState failed: 0x%08lx\n", hres);
     ok(state == BG_JOB_STATE_SUSPENDED, "Incorrect job state: %d\n", state);
 }
 
@@ -425,11 +425,11 @@ static void test_ResumeEmpty(void)
     BG_JOB_STATE state;
 
     hres = IBackgroundCopyJob_Resume(test_job);
-    ok(hres == BG_E_EMPTY, "Resume failed to return BG_E_EMPTY error: 0x%08x\n", hres);
+    ok(hres == BG_E_EMPTY, "Resume failed to return BG_E_EMPTY error: 0x%08lx\n", hres);
 
     state = BG_JOB_STATE_ERROR;
     hres = IBackgroundCopyJob_GetState(test_job, &state);
-    ok(hres == S_OK, "got 0x%08x\n", hres);
+    ok(hres == S_OK, "got 0x%08lx\n", hres);
     ok(state == BG_JOB_STATE_SUSPENDED, "Incorrect job state: %d\n", state);
 }
 
@@ -486,26 +486,26 @@ static void handle_job_err(void)
     if (SUCCEEDED(hres)) {
         hres = IBackgroundCopyError_GetError(err, &errContext, &errCode);
         if (SUCCEEDED(hres)) {
-            ok(0, "Got context: %d code: %d\n", errContext, errCode);
+            ok(0, "Got context: %d code: %ld\n", errContext, errCode);
         } else {
-            ok(0, "Failed to get error info: 0x%08x\n", hres);
+            ok(0, "Failed to get error info: 0x%08lx\n", hres);
         }
 
         hres = IBackgroundCopyError_GetErrorContextDescription(err, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), &contextDesc);
         if (SUCCEEDED(hres)) {
             ok(0, "Got context desc: %s\n", wine_dbgstr_w(contextDesc));
         } else {
-            ok(0, "Failed to get context desc: 0x%08x\n", hres);
+            ok(0, "Failed to get context desc: 0x%08lx\n", hres);
         }
 
         hres = IBackgroundCopyError_GetErrorDescription(err, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), &errDesc);
         if (SUCCEEDED(hres)) {
             ok(0, "Got error desc: %s\n", wine_dbgstr_w(errDesc));
         } else {
-            ok(0, "Failed to get error desc: 0x%08x\n", hres);
+            ok(0, "Failed to get error desc: 0x%08lx\n", hres);
         }
     } else {
-        ok(0, "Failed to get error: 0x%08x\n", hres);
+        ok(0, "Failed to get error: 0x%08lx\n", hres);
     }
 }
 
@@ -524,11 +524,11 @@ static void test_CompleteLocal(void)
 
     hres = IBackgroundCopyJob_AddFile(test_job, test_remotePathA,
                                       test_localPathA);
-    ok(hres == S_OK, "got 0x%08x\n", hres);
+    ok(hres == S_OK, "got 0x%08lx\n", hres);
 
     hres = IBackgroundCopyJob_AddFile(test_job, test_remotePathB,
                                       test_localPathB);
-    ok(hres == S_OK, "got 0x%08x\n", hres);
+    ok(hres == S_OK, "got 0x%08lx\n", hres);
 
     hres = IBackgroundCopyJob_Resume(test_job);
     ok(hres == S_OK, "IBackgroundCopyJob_Resume\n");
@@ -603,10 +603,10 @@ static void test_CompleteLocalURL(void)
     lstrcatW(urlB, test_remotePathB);
 
     hres = IBackgroundCopyJob_AddFile(test_job, urlA, test_localPathA);
-    ok(hres == S_OK, "got 0x%08x\n", hres);
+    ok(hres == S_OK, "got 0x%08lx\n", hres);
 
     hres = IBackgroundCopyJob_AddFile(test_job, urlB, test_localPathB);
-    ok(hres == S_OK, "got 0x%08x\n", hres);
+    ok(hres == S_OK, "got 0x%08lx\n", hres);
 
     hres = IBackgroundCopyJob_Resume(test_job);
     ok(hres == S_OK, "IBackgroundCopyJob_Resume\n");
@@ -661,8 +661,8 @@ static void test_NotifyFlags(void)
     /* check default flags */
     flags = 0;
     hr = IBackgroundCopyJob_GetNotifyFlags(test_job, &flags);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(flags == (BG_NOTIFY_JOB_ERROR | BG_NOTIFY_JOB_TRANSFERRED), "flags 0x%08x\n", flags);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(flags == (BG_NOTIFY_JOB_ERROR | BG_NOTIFY_JOB_TRANSFERRED), "flags 0x%08lx\n", flags);
 }
 
 static void test_NotifyInterface(void)
@@ -672,7 +672,7 @@ static void test_NotifyInterface(void)
 
     unk = (IUnknown*)0xdeadbeef;
     hr = IBackgroundCopyJob_GetNotifyInterface(test_job, &unk);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(unk == NULL, "got %p\n", unk);
 }
 
@@ -683,19 +683,19 @@ static void test_Cancel(void)
 
     state = BG_JOB_STATE_ERROR;
     hr = IBackgroundCopyJob_GetState(test_job, &state);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(state != BG_JOB_STATE_CANCELLED, "got %u\n", state);
 
     hr = IBackgroundCopyJob_Cancel(test_job);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     state = BG_JOB_STATE_ERROR;
     hr = IBackgroundCopyJob_GetState(test_job, &state);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(state == BG_JOB_STATE_CANCELLED, "got %u\n", state);
 
     hr = IBackgroundCopyJob_Cancel(test_job);
-    ok(hr == BG_E_INVALID_STATE, "got 0x%08x\n", hr);
+    ok(hr == BG_E_INVALID_STATE, "got 0x%08lx\n", hr);
 }
 
 static void test_HttpOptions(void)
@@ -715,35 +715,35 @@ static void test_HttpOptions(void)
     ok(create_background_copy_callback2(&copyCallback) == TRUE, "create_background_copy_callback2 failed\n");
 
     hr = IBackgroundCopyCallback2_QueryInterface(copyCallback, &IID_IUnknown, (LPVOID*)&copyCallbackUnknown);
-    ok(hr == S_OK,"IBackgroundCopyCallback_QueryInterface(IID_IUnknown) failed: %08x\n", hr);
+    ok(hr == S_OK,"IBackgroundCopyCallback_QueryInterface(IID_IUnknown) failed: %08lx\n", hr);
 
     hr = IBackgroundCopyJob_SetNotifyInterface(test_job, copyCallbackUnknown);
-    ok(hr == S_OK,"IBackgroundCopyCallback_SetNotifyInterface failed: %08x\n", hr);
+    ok(hr == S_OK,"IBackgroundCopyCallback_SetNotifyInterface failed: %08lx\n", hr);
 
     hr = IBackgroundCopyJob_SetNotifyFlags(test_job, BG_NOTIFY_JOB_TRANSFERRED | BG_NOTIFY_JOB_ERROR | BG_NOTIFY_DISABLE | BG_NOTIFY_JOB_MODIFICATION | BG_NOTIFY_FILE_TRANSFERRED);
-    ok(hr == S_OK,"IBackgroundCopyCallback_SetNotifyFlags failed: %08x\n", hr);
+    ok(hr == S_OK,"IBackgroundCopyCallback_SetNotifyFlags failed: %08lx\n", hr);
 
 
     DeleteFileW(test_localPathA);
     hr = IBackgroundCopyJob_AddFile(test_job, L"http://test.winehq.org/", test_localPathA);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IBackgroundCopyJob_QueryInterface(test_job, &IID_IBackgroundCopyJobHttpOptions, (void **)&options);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     if (options)
     {
         headers = (WCHAR *)0xdeadbeef;
         hr = IBackgroundCopyJobHttpOptions_GetCustomHeaders(options, &headers);
-        ok(hr == S_FALSE, "got 0x%08x\n", hr);
+        ok(hr == S_FALSE, "got 0x%08lx\n", hr);
         ok(headers == NULL, "got %p\n", headers);
 
         hr = IBackgroundCopyJobHttpOptions_SetCustomHeaders(options, winetestW);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
 
         headers = (WCHAR *)0xdeadbeef;
         hr = IBackgroundCopyJobHttpOptions_GetCustomHeaders(options, &headers);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
         if (hr == S_OK)
         {
             ok(!lstrcmpW(headers, winetestW), "got %s\n", wine_dbgstr_w(headers));
@@ -751,34 +751,34 @@ static void test_HttpOptions(void)
         }
 
         hr = IBackgroundCopyJobHttpOptions_SetCustomHeaders(options, NULL);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
 
         headers = (WCHAR *)0xdeadbeef;
         hr = IBackgroundCopyJobHttpOptions_GetCustomHeaders(options, &headers);
-        ok(hr == S_FALSE, "got 0x%08x\n", hr);
+        ok(hr == S_FALSE, "got 0x%08lx\n", hr);
         ok(headers == NULL, "got %p\n", headers);
 
         orig_flags = 0xdeadbeef;
         hr = IBackgroundCopyJobHttpOptions_GetSecurityFlags(options, &orig_flags);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(!orig_flags, "got 0x%08x\n", orig_flags);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
+        ok(!orig_flags, "got 0x%08lx\n", orig_flags);
 
         hr = IBackgroundCopyJobHttpOptions_SetSecurityFlags(options, 0);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
 
         flags = 0xdeadbeef;
         hr = IBackgroundCopyJobHttpOptions_GetSecurityFlags(options, &flags);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(!flags, "got 0x%08x\n", flags);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
+        ok(!flags, "got 0x%08lx\n", flags);
     }
 
     hr = IBackgroundCopyJob_Resume(test_job);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     for (i = 0; i < timeout; i++)
     {
         hr = IBackgroundCopyJob_GetState(test_job, &state);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
 
         ok(state == BG_JOB_STATE_QUEUED ||
            state == BG_JOB_STATE_CONNECTING ||
@@ -803,47 +803,47 @@ static void test_HttpOptions(void)
     if (i < timeout)
     {
         hr = IBackgroundCopyJob_GetError(test_job, &error);
-        ok(hr == BG_E_ERROR_INFORMATION_UNAVAILABLE, "got 0x%08x\n", hr);
+        ok(hr == BG_E_ERROR_INFORMATION_UNAVAILABLE, "got 0x%08lx\n", hr);
     }
 
     if (options)
     {
         headers = (WCHAR *)0xdeadbeef;
         hr = IBackgroundCopyJobHttpOptions_GetCustomHeaders(options, &headers);
-        ok(hr == S_FALSE, "got 0x%08x\n", hr);
+        ok(hr == S_FALSE, "got 0x%08lx\n", hr);
         ok(headers == NULL, "got %p\n", headers);
 
         hr = IBackgroundCopyJobHttpOptions_SetCustomHeaders(options, NULL);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
 
         hr = IBackgroundCopyJobHttpOptions_GetCustomHeaders(options, &headers);
-        ok(hr == S_FALSE, "got 0x%08x\n", hr);
+        ok(hr == S_FALSE, "got 0x%08lx\n", hr);
 
         flags = 0xdeadbeef;
         hr = IBackgroundCopyJobHttpOptions_GetSecurityFlags(options, &flags);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(!flags, "got 0x%08x\n", flags);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
+        ok(!flags, "got 0x%08lx\n", flags);
 
         hr = IBackgroundCopyJobHttpOptions_SetSecurityFlags(options, orig_flags);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
 
         IBackgroundCopyJobHttpOptions_Release(options);
     }
 
     hr = IBackgroundCopyJob_Complete(test_job);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IBackgroundCopyJob_GetState(test_job, &state);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(state == BG_JOB_STATE_ACKNOWLEDGED, "unexpected state: %u\n", state);
 
     hr = IBackgroundCopyJob_Complete(test_job);
-    ok(hr == BG_E_INVALID_STATE, "got 0x%08x\n", hr);
+    ok(hr == BG_E_INVALID_STATE, "got 0x%08lx\n", hr);
 
     DeleteFileW(test_localPathA);
 
     hr = IBackgroundCopyJob_SetNotifyInterface(test_job, NULL);
-    ok(hr == BG_E_INVALID_STATE, "got 0x%08x\n", hr);
+    ok(hr == BG_E_INVALID_STATE, "got 0x%08lx\n", hr);
 
     IUnknown_Release(copyCallbackUnknown);
     IBackgroundCopyCallback2_Release(copyCallback);
@@ -888,7 +888,7 @@ START_TEST(job)
      */
     hres = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
     if (FAILED(hres)) {
-        ok(0, "CoInitializeEx failed: %0x\n", hres);
+        ok(0, "CoInitializeEx failed: %0lx\n", hres);
         return;
     }
 
@@ -897,7 +897,7 @@ START_TEST(job)
                            RPC_C_IMP_LEVEL_IMPERSONATE,
                            NULL, EOAC_NONE, 0);
     if (FAILED(hres)) {
-        ok(0, "CoInitializeSecurity failed: %0x\n", hres);
+        ok(0, "CoInitializeSecurity failed: %0lx\n", hres);
         return;
     }
 
