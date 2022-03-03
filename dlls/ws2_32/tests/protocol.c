@@ -674,6 +674,98 @@ static void test_inet_ntoa(void)
     CloseHandle(thread);
 }
 
+static void test_inet_addr(void)
+{
+    static const struct
+    {
+        const char *input;
+        u_long addr;
+    }
+    tests[] =
+    {
+        {"1.2.3.4",                0x04030201},
+        {"1 2 3 4",                0x01000000},
+        {"1.2.3. 4",               0xffffffff},
+        {"1.2.3 .4",               0x03000201},
+        {"1.2.3 \xfe\xff",         0x03000201},
+        {"3.4.5.6.7",              0xffffffff},
+        {"3.4.5.6. 7",             0xffffffff},
+        {"3.4.5.6  7",             0x06050403},
+        {" 3.4.5.6",               0xffffffff},
+        {"\t3.4.5.6",              0xffffffff},
+        {"3.4.5.6 ",               0x06050403},
+        {"3.4.5.6  ",              0x06050403},
+        {"3. 4.5.6",               0xffffffff},
+        {"3 .4.5.6",               0x03000000},
+        {"1.2.3",                  0x03000201},
+        {".1.2.3",                 0xffffffff},
+        {"0.0.0.0",                0x00000000},
+        {"",                       0xffffffff},
+        {" 0",                     0xffffffff},
+        {"0xa1a2b3b4 ",            0xb4b3a2a1},
+        {".",                      0xffffffff},
+        {" ",                      0x00000000},
+        {"\t",                     0xffffffff},
+        {"  ",                     0xffffffff},
+        {"127.127.127.255",        0xff7f7f7f},
+        {"127.127.127.255:123",    0xffffffff},
+        {"127.127.127.256",        0xffffffff},
+        {"a",                      0xffffffff},
+        {"1.2.3.0xaA",             0xaa030201},
+        {"1.1.1.0x",               0xffffffff},
+        {"1.2.3.010",              0x08030201},
+        {"1.2.3.00",               0x00030201},
+        {"1.2.3.0a",               0xffffffff},
+        {"1.1.1.0o10",             0xffffffff},
+        {"1.1.1.0b10",             0xffffffff},
+        {"1.1.1.-2",               0xffffffff},
+        {"1",                      0x01000000},
+        {"1.2",                    0x02000001},
+        {"1.2.3",                  0x03000201},
+        {"203569230",              0x4e38220c},
+        {"[0.1.2.3]",              0xffffffff},
+        {"0x00010203",             0x03020100},
+        {"0x2134",                 0x34210000},
+        {"1234BEEF",               0xffffffff},
+        {"017700000001",           0x0100007f},
+        {"0777",                   0xff010000},
+        {"2607:f0d0:1002:51::4",   0xffffffff},
+        {"::177.32.45.20",         0xffffffff},
+        {"::1/128",                0xffffffff},
+        {"::1",                    0xffffffff},
+        {":1",                     0xffffffff},
+    };
+    u_long addr, expected;
+    unsigned int i;
+    char str[32];
+
+    WSASetLastError(0xdeadbeef);
+    addr = inet_addr(NULL);
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+    ok(addr == 0xffffffff, "got addr %#08x\n", addr);
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        winetest_push_context( "Address %s, i %u", debugstr_a(tests[i].input), i );
+        WSASetLastError(0xdeadbeef);
+        addr = inet_addr(tests[i].input);
+        ok(WSAGetLastError() == 0xdeadbeef, "got error %u\n", WSAGetLastError());
+        ok(addr == tests[i].addr, "got addr %#08x\n", addr);
+        winetest_pop_context();
+    }
+
+    strcpy(str, "1.2.3");
+    str[6] = 0;
+    for (i = 1; i < 256; ++i)
+    {
+        if (isdigit(i))
+            continue;
+        str[5] = i;
+        expected = isspace(i) ? 0x03000201 : 0xffffffff;
+        addr = inet_addr(str);
+        ok(addr == expected, "got addr %#08x, expected %#08x, i %u\n", addr, expected, i);
+    }
+}
+
 static void test_inet_pton(void)
 {
     static const struct
@@ -942,11 +1034,6 @@ static void test_inet_pton(void)
     ok(ret == -1, "got %d\n", ret);
     ok(WSAGetLastError() == WSAEAFNOSUPPORT, "got error %u\n", WSAGetLastError());
 
-    WSASetLastError(0xdeadbeef);
-    ret = inet_addr(NULL);
-    ok(ret == INADDR_NONE, "got %#x\n", ret);
-    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
-
     for (i = 0; i < ARRAY_SIZE(ipv4_tests); ++i)
     {
         WCHAR inputW[32];
@@ -968,11 +1055,6 @@ static void test_inet_pton(void)
         ok(ret == ipv4_tests[i].ret, "got %d\n", ret);
         ok(WSAGetLastError() == (ret ? 0xdeadbeef : WSAEINVAL), "got error %u\n", WSAGetLastError());
         ok(addr == ipv4_tests[i].addr, "got addr %#08x\n", addr);
-
-        WSASetLastError(0xdeadbeef);
-        addr = inet_addr(ipv4_tests[i].input);
-        ok(addr == ipv4_tests[i].ret ? ipv4_tests[i].addr : INADDR_NONE, "got addr %#08x\n", addr);
-        ok(WSAGetLastError() == 0xdeadbeef, "got error %u\n", WSAGetLastError());
 
         winetest_pop_context();
     }
@@ -2871,6 +2953,7 @@ START_TEST( protocol )
     test_WSALookupService();
 
     test_inet_ntoa();
+    test_inet_addr();
     test_inet_pton();
     test_addr_to_print();
     test_WSAAddressToString();

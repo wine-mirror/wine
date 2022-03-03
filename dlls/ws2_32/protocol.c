@@ -1834,17 +1834,61 @@ int WINAPI WSAAddressToStringW( struct sockaddr *addr, DWORD addr_len,
     return 0;
 }
 
-
 /***********************************************************************
  *      inet_addr   (ws2_32.11)
  */
 u_long WINAPI inet_addr( const char *str )
 {
+    unsigned long a[4] = { 0 };
+    const char *s = str;
+    unsigned char *d;
+    unsigned int i;
     u_long addr;
+    char *z;
 
-    if (inet_pton( AF_INET, str, &addr ) == 1)
-        return addr;
-    return INADDR_NONE;
+    TRACE( "str %s.\n", debugstr_a(str) );
+
+    if (!s)
+    {
+        SetLastError( WSAEFAULT );
+        return INADDR_NONE;
+    }
+
+    d = (unsigned char *)&addr;
+
+    if (s[0] == ' ' && !s[1]) return 0;
+
+    for (i = 0; i < 4; ++i)
+    {
+        a[i] = strtoul( s, &z, 0 );
+        if (z == s || !isdigit( *s )) return INADDR_NONE;
+        if (!*z || isspace(*z)) break;
+        if (*z != '.') return INADDR_NONE;
+        s = z + 1;
+    }
+
+    if (i == 4) return INADDR_NONE;
+
+    switch (i)
+    {
+        case 0:
+            a[1] = a[0] & 0xffffff;
+            a[0] >>= 24;
+            /* fallthrough */
+        case 1:
+            a[2] = a[1] & 0xffff;
+            a[1] >>= 16;
+            /* fallthrough */
+        case 2:
+            a[3] = a[2] & 0xff;
+            a[2] >>= 8;
+    }
+    for (i = 0; i < 4; ++i)
+    {
+        if (a[i] > 255) return INADDR_NONE;
+        d[i] = a[i];
+    }
+    return addr;
 }
 
 
