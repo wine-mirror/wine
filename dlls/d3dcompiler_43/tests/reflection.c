@@ -53,7 +53,6 @@ static DWORD shader_creator[] = {
 0x39207265, 0x2e39322e, 0x2e323539, 0x31313133, 0xababab00,
 };
 
-#if D3D_COMPILER_VERSION
 /*
  * fxc.exe /E VS /Tvs_4_0 /Fx
  */
@@ -81,6 +80,7 @@ static DWORD test_reflection_blob[] = {
 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 };
 
+#if D3D_COMPILER_VERSION
 static void test_reflection_references(void)
 {
     ID3D11ShaderReflection *ref11, *ref11_test;
@@ -211,6 +211,31 @@ static void test_reflection_interfaces(void)
     ok(!count, "Got unexpected ref count %lu.\n", count);
     count = ref11->lpVtbl->Release(ref11);
     ok(!count, "Got unexpected ref count %lu.\n", count);
+}
+#else
+static void test_d3d10_interfaces(void)
+{
+    ID3D10ShaderReflection *ref10;
+    IUnknown *unk;
+    HRESULT hr;
+
+    hr = D3D10ReflectShader(test_reflection_blob, sizeof(test_reflection_blob), &ref10);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = ref10->lpVtbl->QueryInterface(ref10, &IID_ID3D10ShaderReflection, (void **)&unk);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    IUnknown_Release(unk);
+
+    hr = ref10->lpVtbl->QueryInterface(ref10, &IID_ID3D10ShaderReflection1, (void **)&unk);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
+
+    hr = ref10->lpVtbl->QueryInterface(ref10, &IID_ID3D11ShaderReflection, (void **)&unk);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
+
+    hr = ref10->lpVtbl->QueryInterface(ref10, &IID_ID3D12ShaderReflection, (void **)&unk);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
+
+    ref10->lpVtbl->Release(ref10);
 }
 #endif
 
@@ -2125,6 +2150,8 @@ START_TEST(reflection)
 #if D3D_COMPILER_VERSION
     test_reflection_references();
     test_reflection_interfaces();
+#else
+    test_d3d10_interfaces();
 #endif
     test_reflection_desc_vs();
     test_reflection_desc_ps();
