@@ -718,6 +718,8 @@ XSLT_PE_LIBS
 XSLT_PE_CFLAGS
 XML2_PE_LIBS
 XML2_PE_CFLAGS
+VKD3D_PE_LIBS
+VKD3D_PE_CFLAGS
 TIFF_PE_LIBS
 TIFF_PE_CFLAGS
 PNG_PE_LIBS
@@ -1537,6 +1539,7 @@ enable_strmbase
 enable_strmiids
 enable_tiff
 enable_uuid
+enable_vkd3d
 enable_wbemuuid
 enable_wine
 enable_wmcodecdspuuid
@@ -1687,6 +1690,8 @@ PNG_PE_CFLAGS
 PNG_PE_LIBS
 TIFF_PE_CFLAGS
 TIFF_PE_LIBS
+VKD3D_PE_CFLAGS
+VKD3D_PE_LIBS
 XML2_PE_CFLAGS
 XML2_PE_LIBS
 XSLT_PE_CFLAGS
@@ -2477,6 +2482,11 @@ Some influential environment variables:
               C compiler flags for the PE tiff, overriding the bundled version
   TIFF_PE_LIBS
               Linker flags for the PE tiff, overriding the bundled version
+  VKD3D_PE_CFLAGS
+              C compiler flags for the PE vkd3d, overriding the bundled
+              version
+  VKD3D_PE_LIBS
+              Linker flags for the PE vkd3d, overriding the bundled version
   XML2_PE_CFLAGS
               C compiler flags for the PE xml2, overriding the bundled version
   XML2_PE_LIBS
@@ -13063,6 +13073,21 @@ fi
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: tiff cflags: $TIFF_PE_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: tiff libs: $TIFF_PE_LIBS" >&5
 
+if ${VKD3D_PE_LIBS:+false} :
+then :
+  VKD3D_PE_LIBS=vkd3d
+   if ${VKD3D_PE_CFLAGS:+false} :
+then :
+  VKD3D_PE_CFLAGS="-I\$(top_srcdir)/libs/vkd3d/include"
+else $as_nop
+  enable_vkd3d=no
+fi
+else $as_nop
+  enable_vkd3d=no
+fi
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: vkd3d cflags: $VKD3D_PE_CFLAGS" >&5
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: vkd3d libs: $VKD3D_PE_LIBS" >&5
+
 if ${XML2_PE_LIBS:+false} :
 then :
   XML2_PE_LIBS=xml2
@@ -22036,6 +22061,7 @@ wine_fn_config_makefile libs/strmbase enable_strmbase
 wine_fn_config_makefile libs/strmiids enable_strmiids
 wine_fn_config_makefile libs/tiff enable_tiff
 wine_fn_config_makefile libs/uuid enable_uuid
+wine_fn_config_makefile libs/vkd3d enable_vkd3d
 wine_fn_config_makefile libs/wbemuuid enable_wbemuuid
 wine_fn_config_makefile libs/wine enable_wine
 wine_fn_config_makefile libs/wmcodecdspuuid enable_wmcodecdspuuid
@@ -23151,6 +23177,8 @@ PNG_PE_CFLAGS = $PNG_PE_CFLAGS
 PNG_PE_LIBS = $PNG_PE_LIBS
 TIFF_PE_CFLAGS = $TIFF_PE_CFLAGS
 TIFF_PE_LIBS = $TIFF_PE_LIBS
+VKD3D_PE_CFLAGS = $VKD3D_PE_CFLAGS
+VKD3D_PE_LIBS = $VKD3D_PE_LIBS
 XML2_PE_CFLAGS = $XML2_PE_CFLAGS
 XML2_PE_LIBS = $XML2_PE_LIBS
 XSLT_PE_CFLAGS = $XSLT_PE_CFLAGS

@@ -1,0 +1,305 @@
+/*
+ * HLSL parser
+ *
+ * Copyright 2008 Stefan Dösinger
+ * Copyright 2012 Matteo Bruni for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+%{
+#define YY_NO_UNISTD_H
+#include "hlsl.h"
+#include "hlsl.tab.h"
+
+#define YYSTYPE HLSL_YYSTYPE
+#define YYLTYPE HLSL_YYLTYPE
+
+static void update_location(struct hlsl_ctx *ctx, YYLTYPE *loc);
+
+#define YY_USER_ACTION update_location(yyget_extra(yyscanner), yyget_lloc(yyscanner));
+
+%}
+
+%option bison-bridge
+%option bison-locations
+%option extra-type="struct hlsl_ctx *"
+%option never-interactive
+%option noinput
+%option nounput
+%option noyywrap
+%option prefix="hlsl_yy"
+%option reentrant
+
+%x pp pp_line pp_pragma pp_ignore
+
+RESERVED1               auto|case|catch|char|class|const_cast|default|delete|dynamic_cast|enum
+RESERVED2               explicit|friend|goto|long|mutable|new|operator|private|protected|public
+RESERVED3               reinterpret_cast|short|signed|sizeof|static_cast|template|this|throw|try
+RESERVED4               typename|union|unsigned|using|virtual
+
+WS                      [ \t]
+NEWLINE                 (\n)|(\r\n)
+DOUBLESLASHCOMMENT      "//"[^\n]*
+STRING                  \"[^\"]*\"
+IDENTIFIER              [A-Za-z_][A-Za-z0-9_]*
+
+ANY                     (.)
+
+%%
+{RESERVED1}             |
+{RESERVED2}             |
+{RESERVED3}             |
+{RESERVED4}             {
+                            struct hlsl_ctx *ctx = yyget_extra(yyscanner);
+
+                            hlsl_error(ctx, yylloc, VKD3D_SHADER_ERROR_HLSL_INVALID_SYNTAX,
+                                    "Reserved keyword \"%s\" used.", yytext);
+                        }
+
+BlendState              {return KW_BLENDSTATE;          }
+break                   {return KW_BREAK;               }
+Buffer                  {return KW_BUFFER;              }
+cbuffer                 {return KW_CBUFFER;             }
+compile                 {return KW_COMPILE;             }
+const                   {return KW_CONST;               }
+continue                {return KW_CONTINUE;            }
+DepthStencilState       {return KW_DEPTHSTENCILSTATE;   }
+DepthStencilView        {return KW_DEPTHSTENCILVIEW;    }
+discard                 {return KW_DISCARD;             }
+do                      {return KW_DO;                  }
+double                  {return KW_DOUBLE;              }
+else                    {return KW_ELSE;                }
+extern                  {return KW_EXTERN;              }
+false                   {return KW_FALSE;               }
+for                     {return KW_FOR;                 }
+GeometryShader          {return KW_GEOMETRYSHADER;      }
+groupshared             {return KW_GROUPSHARED;         }
+if                      {return KW_IF;                  }
+in                      {return KW_IN;                  }
+inline                  {return KW_INLINE;              }
+inout                   {return KW_INOUT;               }
+matrix                  {return KW_MATRIX;              }
+namespace               {return KW_NAMESPACE;           }
+nointerpolation         {return KW_NOINTERPOLATION;     }
+out                     {return KW_OUT;                 }
+pass                    {return KW_PASS;                }
+PixelShader             {return KW_PIXELSHADER;         }
+precise                 {return KW_PRECISE;             }
+RasterizerState         {return KW_RASTERIZERSTATE;     }
+RenderTargetView        {return KW_RENDERTARGETVIEW;    }
+return                  {return KW_RETURN;              }
+register                {return KW_REGISTER;            }
+sampler                 {return KW_SAMPLER;             }
+sampler1D               {return KW_SAMPLER1D;           }
+sampler2D               {return KW_SAMPLER2D;           }
+sampler3D               {return KW_SAMPLER3D;           }
+samplerCUBE             {return KW_SAMPLERCUBE;         }
+sampler_state           {return KW_SAMPLER_STATE;       }
+SamplerComparisonState  {return KW_SAMPLERCOMPARISONSTATE;}
+SamplerState            {return KW_SAMPLER;             }
+shared                  {return KW_SHARED;              }
+stateblock              {return KW_STATEBLOCK;          }
+stateblock_state        {return KW_STATEBLOCK_STATE;    }
+static                  {return KW_STATIC;              }
+string                  {return KW_STRING;              }
+struct                  {return KW_STRUCT;              }
+switch                  {return KW_SWITCH;              }
+tbuffer                 {return KW_TBUFFER;             }
+technique               {return KW_TECHNIQUE;           }
+technique10             {return KW_TECHNIQUE10;         }
+texture                 {return KW_TEXTURE;             }
+texture1D               {return KW_TEXTURE1D;           }
+Texture1D               {return KW_TEXTURE1D;           }
+Texture1DArray          {return KW_TEXTURE1DARRAY;      }
+texture2D               {return KW_TEXTURE2D;           }
+Texture2D               {return KW_TEXTURE2D;           }
+Texture2DArray          {return KW_TEXTURE2DARRAY;      }
+Texture2DMS             {return KW_TEXTURE2DMS;         }
+Texture2DMSArray        {return KW_TEXTURE2DMSARRAY;    }
+texture3D               {return KW_TEXTURE3D;           }
+Texture3D               {return KW_TEXTURE3D;           }
+textureCUBE             {return KW_TEXTURECUBE;         }
+TextureCube             {return KW_TEXTURECUBE;         }
+TextureCubeArray        {return KW_TEXTURECUBEARRAY;    }
+true                    {return KW_TRUE;                }
+typedef                 {return KW_TYPEDEF;             }
+uniform                 {return KW_UNIFORM;             }
+vector                  {return KW_VECTOR;              }
+VertexShader            {return KW_VERTEXSHADER;        }
+void                    {return KW_VOID;                }
+volatile                {return KW_VOLATILE;            }
+while                   {return KW_WHILE;               }
+
+\+\+                    {return OP_INC;                 }
+\-\-                    {return OP_DEC;                 }
+&&                      {return OP_AND;                 }
+\|\|                    {return OP_OR;                  }
+==                      {return OP_EQ;                  }
+\<\<                    {return OP_LEFTSHIFT;           }
+\<\<=                   {return OP_LEFTSHIFTASSIGN;     }
+\>\>                    {return OP_RIGHTSHIFT;          }
+\>\>=                   {return OP_RIGHTSHIFTASSIGN;    }
+\.\.\.                  {return OP_ELLIPSIS;            }
+\<=                     {return OP_LE;                  }
+\>=                     {return OP_GE;                  }
+!=                      {return OP_NE;                  }
+\+=                     {return OP_ADDASSIGN;           }
+\-=                     {return OP_SUBASSIGN;           }
+\*=                     {return OP_MULASSIGN;           }
+\/=                     {return OP_DIVASSIGN;           }
+%=                      {return OP_MODASSIGN;           }
+&=                      {return OP_ANDASSIGN;           }
+\|=                     {return OP_ORASSIGN;            }
+^=                      {return OP_XORASSIGN;           }
+##                      {return OP_UNKNOWN1;            }
+#@                      {return OP_UNKNOWN2;            }
+::                      {return OP_UNKNOWN3;            }
+\-\>                    {return OP_UNKNOWN4;            }
+
+column_major            {return KW_COLUMN_MAJOR;        }
+row_major               {return KW_ROW_MAJOR;           }
+
+{IDENTIFIER}            {
+                            struct hlsl_ctx *ctx = yyget_extra(yyscanner);
+
+                            yylval->name = hlsl_strdup(ctx, yytext);
+                            if (hlsl_get_var(ctx->cur_scope, yytext) || hlsl_get_function(ctx, yytext))
+                                return VAR_IDENTIFIER;
+                            else if (hlsl_get_type(ctx->cur_scope, yytext, true))
+                                return TYPE_IDENTIFIER;
+                            else
+                                return NEW_IDENTIFIER;
+                        }
+
+[0-9]*\.[0-9]+([eE][+-]?[0-9]+)?[h|H|f|F]? {
+                            yylval->floatval = atof(yytext);
+                            return C_FLOAT;
+                        }
+[0-9]+\.([eE][+-]?[0-9]+)?[h|H|f|F]? {
+                            yylval->floatval = atof(yytext);
+                            return C_FLOAT;
+                        }
+[0-9]+[eE][+-]?[0-9]+[h|H|f|F]? {
+                            yylval->floatval = atof(yytext);
+                            return C_FLOAT;
+                        }
+0x[0-9a-fA-F]+          {
+                            sscanf(yytext, "0x%x", &yylval->intval);
+                            return C_INTEGER;
+                        }
+0[0-7]+                 {
+                            sscanf(yytext, "0%o", &yylval->intval);
+                            return C_INTEGER;
+                        }
+[0-9]+                  {
+                            yylval->intval = (atoi(yytext));
+                            return C_INTEGER;
+                        }
+
+{DOUBLESLASHCOMMENT}    {}
+
+{WS}+                   {}
+{NEWLINE}               {
+                            struct hlsl_ctx *ctx = yyget_extra(yyscanner);
+
+                            ++ctx->location.line;
+                            ctx->location.column = 1;
+                        }
+
+^#                      {
+                            BEGIN(pp);
+                        }
+
+<pp>pragma{WS}+         {
+                            BEGIN(pp_pragma);
+                        }
+<pp_pragma>pack_matrix{WS}*\({WS}*row_major{WS}*\) {
+                            struct hlsl_ctx *ctx = yyget_extra(yyscanner);
+
+                            TRACE("#pragma setting row_major mode.\n");
+                            ctx->matrix_majority = HLSL_ROW_MAJOR;
+                            BEGIN(pp_ignore);
+                        }
+<pp_pragma>pack_matrix{WS}*\({WS}*column_major{WS}*\) {
+                            struct hlsl_ctx *ctx = yyget_extra(yyscanner);
+
+                            TRACE("#pragma setting column_major mode.\n");
+                            ctx->matrix_majority = HLSL_COLUMN_MAJOR;
+                            BEGIN(pp_ignore);
+                        }
+<pp_pragma>{NEWLINE}    {
+                            struct hlsl_ctx *ctx = yyget_extra(yyscanner);
+
+                            FIXME("Unsupported preprocessor #pragma directive at line %u.\n", ctx->location.line);
+                            BEGIN(INITIAL);
+                        }
+<pp_pragma>{ANY}        {}
+<pp>[0-9]+              {
+                            BEGIN(pp_line);
+                            yylval->intval = (atoi(yytext));
+                            return PRE_LINE;
+                        }
+<pp_line>{STRING}       {
+                            struct hlsl_ctx *ctx = yyget_extra(yyscanner);
+                            char *string = hlsl_strdup(ctx, yytext + 1);
+
+                            BEGIN(pp_ignore);
+                            string[strlen(string) - 1] = 0;
+                            yylval->name = string;
+                            return STRING;
+                        }
+<pp_line>{WS}+          {}
+<pp_line>{NEWLINE}      {
+                            FIXME("Malformed preprocessor line directive?\n");
+                            BEGIN(INITIAL);
+                        }
+<pp_ignore>{NEWLINE}    {
+                            BEGIN(INITIAL);
+                        }
+<pp_ignore>{ANY}        {}
+<pp>{NEWLINE}           {
+                            FIXME("Unexpected preprocessor directive.\n");
+                            BEGIN(INITIAL);
+                        }
+<pp>{ANY}               {}
+
+{ANY}                   {
+                            return yytext[0];
+                        }
+
+%%
+
+static void update_location(struct hlsl_ctx *ctx, YYLTYPE *lloc)
+{
+    *lloc = ctx->location;
+    ctx->location.column += yyget_leng(ctx->scanner);
+}
+
+int hlsl_lexer_compile(struct hlsl_ctx *ctx, const struct vkd3d_shader_code *hlsl)
+{
+    YY_BUFFER_STATE buffer;
+    int ret;
+
+    yylex_init_extra(ctx, &ctx->scanner);
+    buffer = yy_scan_bytes(hlsl->code, hlsl->size, ctx->scanner);
+    yy_switch_to_buffer(buffer, ctx->scanner);
+
+    ret = hlsl_yyparse(ctx->scanner, ctx);
+
+    yy_delete_buffer(buffer, ctx->scanner);
+    yylex_destroy(ctx->scanner);
+    return ret;
+}

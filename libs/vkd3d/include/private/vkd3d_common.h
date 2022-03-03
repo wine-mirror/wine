@@ -1,0 +1,245 @@
+/*
+ * Copyright 2016 Józef Kucia for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifndef __VKD3D_COMMON_H
+#define __VKD3D_COMMON_H
+
+#include "config.h"
+#include "windows.h"
+#include "vkd3d_types.h"
+
+#include <ctype.h>
+#include <limits.h>
+#include <stdbool.h>
+#include <stdint.h>
+
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
+
+#ifndef ARRAY_SIZE
+# define ARRAY_SIZE(x) (sizeof(x) / sizeof(*(x)))
+#endif
+
+#define DIV_ROUND_UP(a, b) ((a) % (b) == 0 ? (a) / (b) : (a) / (b) + 1)
+
+#define STATIC_ASSERT(e) extern void __VKD3D_STATIC_ASSERT__(int [(e) ? 1 : -1])
+
+#define MEMBER_SIZE(t, m) sizeof(((t *)0)->m)
+
+#define VKD3D_MAKE_TAG(ch0, ch1, ch2, ch3) \
+        ((uint32_t)(ch0) | ((uint32_t)(ch1) << 8) \
+        | ((uint32_t)(ch2) << 16) | ((uint32_t)(ch3) << 24))
+
+static inline size_t align(size_t addr, size_t alignment)
+{
+    return (addr + (alignment - 1)) & ~(alignment - 1);
+}
+
+#ifdef __GNUC__
+# define VKD3D_NORETURN __attribute__((noreturn))
+# define VKD3D_PRINTF_FUNC(fmt, args) __attribute__((format(printf, fmt, args)))
+# define VKD3D_UNUSED __attribute__((unused))
+#else
+# define VKD3D_NORETURN
+# define VKD3D_PRINTF_FUNC(fmt, args)
+# define VKD3D_UNUSED
+#endif  /* __GNUC__ */
+
+static inline unsigned int vkd3d_popcount(unsigned int v)
+{
+#ifdef _MSC_VER
+    return __popcnt(v);
+#elif defined(__GNUC__) && (__GNUC__ >= 4)
+    return __builtin_popcount(v);
+#else
+    v -= (v >> 1) & 0x55555555;
+    v = (v & 0x33333333) + ((v >> 2) & 0x33333333);
+    return (((v + (v >> 4)) & 0x0f0f0f0f) * 0x01010101) >> 24;
+#endif
+}
+
+static inline bool vkd3d_bitmask_is_contiguous(unsigned int mask)
+{
+    unsigned int i, j;
+
+    for (i = 0, j = 0; i < sizeof(mask) * CHAR_BIT; ++i)
+    {
+        if (mask & (1u << i))
+            ++j;
+        else if (j)
+            break;
+    }
+
+    return vkd3d_popcount(mask) == j;
+}
+
+/* Undefined for x == 0. */
+static inline unsigned int vkd3d_log2i(unsigned int x)
+{
+#ifdef _WIN32
+    /* _BitScanReverse returns the index of the highest set bit,
+     * unlike clz which is 31 - index. */
+    ULONG result;
+    _BitScanReverse(&result, x);
+    return (unsigned int)result;
+#elif defined(HAVE_BUILTIN_CLZ)
+    return __builtin_clz(x) ^ 0x1f;
+#else
+    static const unsigned int l[] =
+    {
+        ~0u, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3,
+          4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+          5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+          5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+          6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+          6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+          6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+          6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+          7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+          7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+          7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+          7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+          7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+          7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+          7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+          7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+    };
+    unsigned int i;
+
+    return (i = x >> 16) ? (x = i >> 8) ? l[x] + 24
+            : l[i] + 16 : (i = x >> 8) ? l[i] + 8 : l[x];
+#endif
+}
+
+static inline void *vkd3d_memmem( const void *haystack, size_t haystack_len, const void *needle, size_t needle_len)
+{
+    const char *str = haystack;
+
+    while (haystack_len >= needle_len)
+    {
+        if (!memcmp(str, needle, needle_len))
+            return (char *)str;
+        ++str;
+        --haystack_len;
+    }
+    return NULL;
+}
+
+static inline bool vkd3d_bound_range(size_t start, size_t count, size_t limit)
+{
+#ifdef HAVE_BUILTIN_ADD_OVERFLOW
+    size_t sum;
+
+    return !__builtin_add_overflow(start, count, &sum) && sum <= limit;
+#else
+    return start <= limit && count <= limit - start;
+#endif
+}
+
+static inline uint16_t vkd3d_make_u16(uint8_t low, uint8_t high)
+{
+    return low | ((uint16_t)high << 8);
+}
+
+static inline uint32_t vkd3d_make_u32(uint16_t low, uint16_t high)
+{
+    return low | ((uint32_t)high << 16);
+}
+
+static inline int vkd3d_u32_compare(uint32_t x, uint32_t y)
+{
+    return (x > y) - (x < y);
+}
+
+static inline int ascii_isupper(int c)
+{
+    return 'A' <= c && c <= 'Z';
+}
+
+static inline int ascii_tolower(int c)
+{
+    return ascii_isupper(c) ? c - 'A' + 'a' : c;
+}
+
+static inline int ascii_strncasecmp(const char *a, const char *b, size_t n)
+{
+    int c_a, c_b;
+
+    while (n--)
+    {
+        c_a = ascii_tolower(*a++);
+        c_b = ascii_tolower(*b++);
+        if (c_a != c_b || !c_a)
+            return c_a - c_b;
+    }
+    return 0;
+}
+
+static inline int ascii_strcasecmp(const char *a, const char *b)
+{
+    int c_a, c_b;
+
+    do
+    {
+        c_a = ascii_tolower(*a++);
+        c_b = ascii_tolower(*b++);
+    } while (c_a == c_b && c_a != '\0');
+
+    return c_a - c_b;
+}
+
+#ifndef _WIN32
+# if HAVE_SYNC_ADD_AND_FETCH
+static inline LONG InterlockedIncrement(LONG volatile *x)
+{
+    return __sync_add_and_fetch(x, 1);
+}
+static inline LONG InterlockedAdd(LONG volatile *x, LONG val)
+{
+    return __sync_add_and_fetch(x, val);
+}
+# else
+#  error "InterlockedIncrement() not implemented for this platform"
+# endif  /* HAVE_SYNC_ADD_AND_FETCH */
+
+# if HAVE_SYNC_SUB_AND_FETCH
+static inline LONG InterlockedDecrement(LONG volatile *x)
+{
+    return __sync_sub_and_fetch(x, 1);
+}
+# else
+#  error "InterlockedDecrement() not implemented for this platform"
+# endif
+#endif  /* _WIN32 */
+
+static inline void vkd3d_parse_version(const char *version, int *major, int *minor)
+{
+    *major = atoi(version);
+
+    while (isdigit(*version))
+        ++version;
+    if (*version == '.')
+        ++version;
+
+    *minor = atoi(version);
+}
+
+HRESULT hresult_from_vkd3d_result(int vkd3d_result);
+
+#endif  /* __VKD3D_COMMON_H */
