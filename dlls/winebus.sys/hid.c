@@ -74,23 +74,21 @@ static BOOL hid_report_descriptor_append_usage(struct hid_report_descriptor *des
     return hid_report_descriptor_append(desc, template, sizeof(template));
 }
 
-BOOL hid_device_begin_report_descriptor(struct unix_device *iface, const USAGE_AND_PAGE *device_usage)
+static BOOL hid_device_begin_collection(struct hid_report_descriptor *desc, const USAGE_AND_PAGE *usage, BYTE type)
 {
-    struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
     const BYTE template[] =
     {
-        USAGE_PAGE(2, device_usage->UsagePage),
-        USAGE(2, device_usage->Usage),
-        COLLECTION(1, Application),
+        USAGE_PAGE(2, usage->UsagePage),
+        USAGE(2, usage->Usage),
+        COLLECTION(1, type),
     };
 
     memset(desc, 0, sizeof(*desc));
     return hid_report_descriptor_append(desc, template, sizeof(template));
 }
 
-BOOL hid_device_end_report_descriptor(struct unix_device *iface)
+static BOOL hid_device_end_collection(struct hid_report_descriptor *desc)
 {
-    struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
     static const BYTE template[] =
     {
         END_COLLECTION,
@@ -99,15 +97,27 @@ BOOL hid_device_end_report_descriptor(struct unix_device *iface)
     return hid_report_descriptor_append(desc, template, sizeof(template));
 }
 
-BOOL hid_device_begin_input_report(struct unix_device *iface)
+BOOL hid_device_begin_report_descriptor(struct unix_device *iface, const USAGE_AND_PAGE *device_usage)
+{
+    struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
+    memset(desc, 0, sizeof(*desc));
+    return hid_device_begin_collection(desc, device_usage, Application);
+}
+
+BOOL hid_device_end_report_descriptor(struct unix_device *iface)
+{
+    struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
+    return hid_device_end_collection(desc);
+}
+
+BOOL hid_device_begin_input_report(struct unix_device *iface, const USAGE_AND_PAGE *physical_usage)
 {
     struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
     struct hid_device_state *state = &iface->hid_device_state;
     const BYTE report_id = ++desc->next_report_id[HidP_Input];
     const BYTE template[] =
     {
-        COLLECTION(1, Report),
-            REPORT_ID(1, report_id),
+        REPORT_ID(1, report_id),
     };
 
     if (state->report_len)
@@ -118,6 +128,10 @@ BOOL hid_device_begin_input_report(struct unix_device *iface)
 
     state->id = report_id;
     state->bit_size += 8;
+
+    if (!hid_device_begin_collection(desc, physical_usage, Physical))
+        return FALSE;
+
     return hid_report_descriptor_append(desc, template, sizeof(template));
 }
 
@@ -125,10 +139,6 @@ BOOL hid_device_end_input_report(struct unix_device *iface)
 {
     struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
     struct hid_device_state *state = &iface->hid_device_state;
-    static const BYTE template[] =
-    {
-        END_COLLECTION,
-    };
 
     state->report_len = (state->bit_size + 7) / 8;
     if (!(state->report_buf = calloc(1, state->report_len))) return FALSE;
@@ -136,7 +146,7 @@ BOOL hid_device_end_input_report(struct unix_device *iface)
 
     state->report_buf[0] = state->id;
     state->last_report_buf[0] = state->id;
-    return hid_report_descriptor_append(desc, template, sizeof(template));
+    return hid_device_end_collection(desc);
 }
 
 static BOOL hid_device_add_button_count(struct unix_device *iface, BYTE count)

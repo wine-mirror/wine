@@ -245,7 +245,7 @@ extern BOOL bus_event_queue_pop(struct list *queue, struct bus_event *event) DEC
 extern BOOL hid_device_begin_report_descriptor(struct unix_device *iface, const USAGE_AND_PAGE *device_usage) DECLSPEC_HIDDEN;
 extern BOOL hid_device_end_report_descriptor(struct unix_device *iface) DECLSPEC_HIDDEN;
 
-extern BOOL hid_device_begin_input_report(struct unix_device *iface) DECLSPEC_HIDDEN;
+extern BOOL hid_device_begin_input_report(struct unix_device *iface, const USAGE_AND_PAGE *physical_usage) DECLSPEC_HIDDEN;
 extern BOOL hid_device_end_input_report(struct unix_device *iface) DECLSPEC_HIDDEN;
 extern BOOL hid_device_add_buttons(struct unix_device *iface, USAGE usage_page,
                                    USAGE usage_min, USAGE usage_max) DECLSPEC_HIDDEN;
