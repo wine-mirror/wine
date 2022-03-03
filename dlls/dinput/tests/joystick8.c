@@ -2805,7 +2805,6 @@ static void test_driving_wheel_axes(void)
     todo_wine
     check_member_guid( devinst, expect_devinst, guidInstance );
     check_member_guid( devinst, expect_devinst, guidProduct );
-    todo_wine
     check_member( devinst, expect_devinst, "%#lx", dwDevType );
     todo_wine
     check_member_wstr( devinst, expect_devinst, tszInstanceName );
@@ -2824,7 +2823,6 @@ static void test_driving_wheel_axes(void)
     ok( hr == DI_OK, "GetCapabilities returned %#lx\n", hr );
     check_member( caps, expect_caps, "%lu", dwSize );
     check_member( caps, expect_caps, "%#lx", dwFlags );
-    todo_wine
     check_member( caps, expect_caps, "%#lx", dwDevType );
     check_member( caps, expect_caps, "%lu", dwAxes );
     check_member( caps, expect_caps, "%lu", dwButtons );
