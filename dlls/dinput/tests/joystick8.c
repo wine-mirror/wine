@@ -2773,20 +2773,11 @@ static void test_driving_wheel_axes(void)
             .wUsage = HID_USAGE_GENERIC_JOYSTICK,
         },
     };
-    struct check_objects_todos object_todos[ARRAY_SIZE(expect_objects)] =
-    {
-        {.name = TRUE},
-        {.name = TRUE},
-        {.name = TRUE},
-        {.name = TRUE},
-        {.name = TRUE},
-    };
     struct check_objects_params check_objects_params =
     {
         .version = DIRECTINPUT_VERSION,
         .expect_count = ARRAY_SIZE(expect_objects),
         .expect_objs = expect_objects,
-        .todo_objs = object_todos,
     };
 
     WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
