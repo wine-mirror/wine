@@ -40,7 +40,7 @@ static IBaseFilter *create_asf_reader(void)
 
     hr = CoCreateInstance(&CLSID_WMAsfReader, NULL, CLSCTX_INPROC_SERVER,
             &IID_IBaseFilter, (void **)&filter);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     return filter;
 }
@@ -62,7 +62,7 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
     expected_hr = supported ? S_OK : E_NOINTERFACE;
 
     hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
-    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#lx, expected %#lx.\n", hr, expected_hr);
     if (SUCCEEDED(hr))
         IUnknown_Release(unk);
 }
@@ -134,53 +134,53 @@ static void test_aggregation(void)
     filter = (IBaseFilter *)0xdeadbeef;
     hr = CoCreateInstance(&CLSID_WMAsfReader, &test_outer, CLSCTX_INPROC_SERVER,
             &IID_IBaseFilter, (void **)&filter);
-    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
     ok(!filter, "Got interface %p.\n", filter);
 
     hr = CoCreateInstance(&CLSID_WMAsfReader, &test_outer, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void **)&unk);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
     ok(unk != &test_outer, "Returned IUnknown should not be outer IUnknown.\n");
     ref = get_refcount(unk);
-    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
 
     ref = IUnknown_AddRef(unk);
-    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
-    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
 
     ref = IUnknown_Release(unk);
-    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
-    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
 
     hr = IUnknown_QueryInterface(unk, &IID_IUnknown, (void **)&unk2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(unk2 == unk, "Got unexpected IUnknown %p.\n", unk2);
     IUnknown_Release(unk2);
 
     hr = IUnknown_QueryInterface(unk, &IID_IBaseFilter, (void **)&filter);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IBaseFilter_QueryInterface(filter, &IID_IUnknown, (void **)&unk2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(unk2 == (IUnknown *)0xdeadbeef, "Got unexpected IUnknown %p.\n", unk2);
 
     hr = IBaseFilter_QueryInterface(filter, &IID_IBaseFilter, (void **)&filter2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(filter2 == (IBaseFilter *)0xdeadbeef, "Got unexpected IBaseFilter %p.\n", filter2);
 
     hr = IUnknown_QueryInterface(unk, &test_iid, (void **)&unk2);
-    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
     ok(!unk2, "Got unexpected IUnknown %p.\n", unk2);
 
     hr = IBaseFilter_QueryInterface(filter, &test_iid, (void **)&unk2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(unk2 == (IUnknown *)0xdeadbeef, "Got unexpected IUnknown %p.\n", unk2);
 
     IBaseFilter_Release(filter);
     ref = IUnknown_Release(unk);
-    ok(!ref, "Got unexpected refcount %d.\n", ref);
-    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(!ref, "Got unexpected refcount %ld.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
 }
 
 static void test_filesourcefilter(void)
@@ -197,21 +197,21 @@ static void test_filesourcefilter(void)
     BYTE *ptr;
 
     ref = get_refcount(filter);
-    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
     hr = IBaseFilter_QueryInterface(filter, &IID_IFileSourceFilter, (void **)&filesource);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ref = get_refcount(filesource);
-    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
+    ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
     ref = get_refcount(filter);
-    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
+    ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
 
     hr = IFileSourceFilter_Load(filesource, NULL, NULL);
-    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
 
     olepath = (void *)0xdeadbeef;
     memset(&type, 0x22, sizeof(type));
     hr = IFileSourceFilter_GetCurFile(filesource, &olepath, &type);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!olepath, "Got %s.\n", wine_dbgstr_w(olepath));
     ok(IsEqualGUID(&type.majortype, &MEDIATYPE_NULL), "Got majortype %s.\n",
             wine_dbgstr_guid(&type.majortype));
@@ -219,25 +219,25 @@ static void test_filesourcefilter(void)
             wine_dbgstr_guid(&type.subtype));
     ok(type.bFixedSizeSamples == 0x22222222, "Got fixed size %d.\n", type.bFixedSizeSamples);
     ok(type.bTemporalCompression == 0x22222222, "Got temporal compression %d.\n", type.bTemporalCompression);
-    ok(!type.lSampleSize, "Got sample size %u.\n", type.lSampleSize);
+    ok(!type.lSampleSize, "Got sample size %lu.\n", type.lSampleSize);
     ok(IsEqualGUID(&type.formattype, &testguid), "Got format type %s.\n", wine_dbgstr_guid(&type.formattype));
     ok(!type.pUnk, "Got pUnk %p.\n", type.pUnk);
-    ok(!type.cbFormat, "Got format size %u.\n", type.cbFormat);
+    ok(!type.cbFormat, "Got format size %lu.\n", type.cbFormat);
     memset(&ptr, 0x22, sizeof(ptr));
     ok(type.pbFormat == ptr, "Got format block %p.\n", type.pbFormat);
 
     hr = IFileSourceFilter_Load(filesource, L"nonexistent.wmv", NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IFileSourceFilter_GetCurFile(filesource, NULL, NULL);
-    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
 
     hr = IFileSourceFilter_Load(filesource, L"nonexistent2.wmv", NULL);
-    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
 
     olepath = (void *)0xdeadbeef;
     memset(&type, 0x22, sizeof(type));
     hr = IFileSourceFilter_GetCurFile(filesource, &olepath, &type);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!wcscmp(olepath, L"nonexistent.wmv"), "Expected path %s, got %s.\n",
             wine_dbgstr_w(L"nonexistent.wmv"), wine_dbgstr_w(olepath));
     ok(IsEqualGUID(&type.majortype, &MEDIATYPE_NULL), "Got majortype %s.\n",
@@ -246,34 +246,34 @@ static void test_filesourcefilter(void)
             wine_dbgstr_guid(&type.subtype));
     ok(type.bFixedSizeSamples == 0x22222222, "Got fixed size %d.\n", type.bFixedSizeSamples);
     ok(type.bTemporalCompression == 0x22222222, "Got temporal compression %d.\n", type.bTemporalCompression);
-    ok(!type.lSampleSize, "Got sample size %u.\n", type.lSampleSize);
+    ok(!type.lSampleSize, "Got sample size %lu.\n", type.lSampleSize);
     ok(IsEqualGUID(&type.formattype, &testguid), "Got format type %s.\n", wine_dbgstr_guid(&type.formattype));
     ok(!type.pUnk, "Got pUnk %p.\n", type.pUnk);
-    ok(!type.cbFormat, "Got format size %u.\n", type.cbFormat);
+    ok(!type.cbFormat, "Got format size %lu.\n", type.cbFormat);
     ok(type.pbFormat == ptr, "Got format block %p.\n", type.pbFormat);
     CoTaskMemFree(olepath);
 
     hr = IBaseFilter_EnumPins(filter, &enumpins);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IEnumPins_Next(enumpins, 1, pins, NULL);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
     IEnumPins_Release(enumpins);
 
     hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,
             &IID_IFilterGraph2, (void **)&graph);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IFilterGraph2_AddFilter(graph, filter, NULL);
     todo_wine ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)
             || broken(hr == HRESULT_FROM_WIN32(ERROR_MOD_NOT_FOUND)) /* win2008 */,
-            "Got hr %#x.\n", hr);
+            "Got hr %#lx.\n", hr);
 
     hr = IFileSourceFilter_Load(filesource, L"nonexistent2.wmv", NULL);
-    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
 
     olepath = (void *)0xdeadbeef;
     memset(&type, 0x22, sizeof(type));
     hr = IFileSourceFilter_GetCurFile(filesource, &olepath, &type);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!wcscmp(olepath, L"nonexistent.wmv"), "Expected path %s, got %s.\n",
             wine_dbgstr_w(L"nonexistent.wmv"), wine_dbgstr_w(olepath));
     ok(IsEqualGUID(&type.majortype, &MEDIATYPE_NULL), "Got majortype %s.\n",
@@ -282,18 +282,18 @@ static void test_filesourcefilter(void)
             wine_dbgstr_guid(&type.subtype));
     ok(type.bFixedSizeSamples == 0x22222222, "Got fixed size %d.\n", type.bFixedSizeSamples);
     ok(type.bTemporalCompression == 0x22222222, "Got temporal compression %d.\n", type.bTemporalCompression);
-    ok(!type.lSampleSize, "Got sample size %u.\n", type.lSampleSize);
+    ok(!type.lSampleSize, "Got sample size %lu.\n", type.lSampleSize);
     ok(IsEqualGUID(&type.formattype, &testguid), "Got format type %s.\n", wine_dbgstr_guid(&type.formattype));
     ok(!type.pUnk, "Got pUnk %p.\n", type.pUnk);
-    ok(!type.cbFormat, "Got format size %u.\n", type.cbFormat);
+    ok(!type.cbFormat, "Got format size %lu.\n", type.cbFormat);
     ok(type.pbFormat == ptr, "Got format block %p.\n", type.pbFormat);
     CoTaskMemFree(olepath);
 
     ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
     IBaseFilter_Release(filter);
     ref = IFileSourceFilter_Release(filesource);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
 START_TEST(asfreader)
