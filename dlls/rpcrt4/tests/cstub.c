@@ -499,13 +499,13 @@ static IPSFactoryBuffer *test_NdrDllGetClassObject(void)
 
     r = NdrDllGetClassObject(&CLSID_Unknown, &IID_IPSFactoryBuffer, (void**)&ppsf, proxy_file_list,
                              &CLSID_psfact, &PSFactoryBuffer);
-    ok(r == CLASS_E_CLASSNOTAVAILABLE, "NdrDllGetClassObject with unknown clsid should have returned CLASS_E_CLASSNOTAVAILABLE instead of 0x%x\n", r);
+    ok(r == CLASS_E_CLASSNOTAVAILABLE, "NdrDllGetClassObject with unknown clsid should have returned CLASS_E_CLASSNOTAVAILABLE instead of 0x%lx\n", r);
     ok(ppsf == NULL, "NdrDllGetClassObject should have set ppsf to NULL on failure\n");
 
     r = NdrDllGetClassObject(&CLSID_psfact, &IID_IPSFactoryBuffer, (void**)&ppsf, proxy_file_list,
                              &CLSID_psfact, &PSFactoryBuffer);
 
-    ok(r == S_OK, "ret %08x\n", r);
+    ok(r == S_OK, "ret %08lx\n", r);
     ok(ppsf != NULL, "ppsf == NULL\n");
 
     proxy_vtbl = PSFactoryBuffer.pProxyFileList[0]->pProxyVtblList;
@@ -622,31 +622,31 @@ static IPSFactoryBuffer *test_NdrDllGetClassObject(void)
         ok( proxy_vtbl[i]->header.piid == interfaces[i],
             "wrong proxy %u iid %p/%p\n", i, proxy_vtbl[i]->header.piid, interfaces[i] );
 
-    ok(PSFactoryBuffer.RefCount == 1, "ref count %d\n", PSFactoryBuffer.RefCount);
+    ok(PSFactoryBuffer.RefCount == 1, "ref count %ld\n", PSFactoryBuffer.RefCount);
     IPSFactoryBuffer_Release(ppsf);
 
     /* One can also search by IID */
     r = NdrDllGetClassObject(&IID_if3, &IID_IPSFactoryBuffer, (void**)&ppsf, proxy_file_list,
                              &CLSID_psfact, &PSFactoryBuffer);
-    ok(r == S_OK, "ret %08x\n", r);
+    ok(r == S_OK, "ret %08lx\n", r);
     ok(ppsf != NULL, "ppsf == NULL\n");
     IPSFactoryBuffer_Release(ppsf);
 
     r = NdrDllGetClassObject(&IID_if3, &IID_IPSFactoryBuffer, (void**)&ppsf, proxy_file_list,
                              NULL, &PSFactoryBuffer);
-    ok(r == S_OK, "ret %08x\n", r);
+    ok(r == S_OK, "ret %08lx\n", r);
     ok(ppsf != NULL, "ppsf == NULL\n");
     IPSFactoryBuffer_Release(ppsf);
 
     /* but only if the PS factory implements it */
     r = NdrDllGetClassObject(&IID_IDispatch, &IID_IPSFactoryBuffer, (void**)&ppsf, proxy_file_list,
                              &CLSID_psfact, &PSFactoryBuffer);
-    ok(r == CLASS_E_CLASSNOTAVAILABLE, "ret %08x\n", r);
+    ok(r == CLASS_E_CLASSNOTAVAILABLE, "ret %08lx\n", r);
 
     /* Create it again to return */
     r = NdrDllGetClassObject(&CLSID_psfact, &IID_IPSFactoryBuffer, (void**)&ppsf, proxy_file_list,
                              &CLSID_psfact, &PSFactoryBuffer);
-    ok(r == S_OK, "ret %08x\n", r);
+    ok(r == S_OK, "ret %08lx\n", r);
     ok(ppsf != NULL, "ppsf == NULL\n");
 
     /* Because this PS factory is not loaded as a dll in the normal way, Windows 8 / 10
@@ -654,13 +654,13 @@ static IPSFactoryBuffer *test_NdrDllGetClassObject(void)
        Registering the ifaces fixes this (in fact calling CoRegisterPSClsid() with any IID / CLSID is enough). */
 
     r = CoRegisterPSClsid(&IID_if1, &CLSID_psfact);
-    ok(r == S_OK, "ret %08x\n", r);
+    ok(r == S_OK, "ret %08lx\n", r);
     r = CoRegisterPSClsid(&IID_if2, &CLSID_psfact);
-    ok(r == S_OK, "ret %08x\n", r);
+    ok(r == S_OK, "ret %08lx\n", r);
     r = CoRegisterPSClsid(&IID_if3, &CLSID_psfact);
-    ok(r == S_OK, "ret %08x\n", r);
+    ok(r == S_OK, "ret %08lx\n", r);
     r = CoRegisterPSClsid(&IID_if4, &CLSID_psfact);
-    ok(r == S_OK, "ret %08x\n", r);
+    ok(r == S_OK, "ret %08lx\n", r);
 
     return ppsf;
 }
@@ -712,7 +712,7 @@ static IRpcStubBuffer *create_stub(IPSFactoryBuffer *ppsf, REFIID iid, IUnknown 
     HRESULT r;
 
     r = IPSFactoryBuffer_CreateStub(ppsf, iid, obj, &pstub);
-    ok(r == expected_result, "CreateStub returned %08x expected %08x\n", r, expected_result);
+    ok(r == expected_result, "CreateStub returned %08lx expected %08lx\n", r, expected_result);
     return pstub;
 }
 
@@ -789,25 +789,25 @@ static void create_proxy_test( IPSFactoryBuffer *ppsf, REFIID iid, const void *e
     ULONG count;
 
     r = IPSFactoryBuffer_CreateProxy(ppsf, NULL, iid, &proxy, (void **)&iface);
-    ok( r == S_OK, "IPSFactoryBuffer_CreateProxy failed %x\n", r );
+    ok( r == S_OK, "IPSFactoryBuffer_CreateProxy failed %lx\n", r );
     ok( *(void **)iface == expected_vtbl, "wrong iface pointer %p/%p\n", *(void **)iface, expected_vtbl );
     count = IUnknown_Release( iface );
-    ok( count == 1, "wrong refcount %u\n", count );
+    ok( count == 1, "wrong refcount %lu\n", count );
     count = IRpcProxyBuffer_Release( proxy );
-    ok( count == 0, "wrong refcount %u\n", count );
+    ok( count == 0, "wrong refcount %lu\n", count );
 
     dummy_unknown.ref = 4;
     r = IPSFactoryBuffer_CreateProxy(ppsf, &dummy_unknown.IUnknown_iface, iid, &proxy,
             (void **)&iface);
-    ok( r == S_OK, "IPSFactoryBuffer_CreateProxy failed %x\n", r );
-    ok( dummy_unknown.ref == 5, "wrong refcount %u\n", dummy_unknown.ref );
+    ok( r == S_OK, "IPSFactoryBuffer_CreateProxy failed %lx\n", r );
+    ok( dummy_unknown.ref == 5, "wrong refcount %lu\n", dummy_unknown.ref );
     ok( *(void **)iface == expected_vtbl, "wrong iface pointer %p/%p\n", *(void **)iface, expected_vtbl );
     count = IUnknown_Release( iface );
-    ok( count == 4, "wrong refcount %u\n", count );
-    ok( dummy_unknown.ref == 4, "wrong refcount %u\n", dummy_unknown.ref );
+    ok( count == 4, "wrong refcount %lu\n", count );
+    ok( dummy_unknown.ref == 4, "wrong refcount %lu\n", dummy_unknown.ref );
     count = IRpcProxyBuffer_Release( proxy );
-    ok( count == 0, "wrong refcount %u\n", count );
-    ok( dummy_unknown.ref == 4, "wrong refcount %u\n", dummy_unknown.ref );
+    ok( count == 0, "wrong refcount %lu\n", count );
+    ok( dummy_unknown.ref == 4, "wrong refcount %lu\n", dummy_unknown.ref );
 }
 
 static void test_CreateProxy( IPSFactoryBuffer *ppsf )
@@ -827,7 +827,7 @@ static void test_CreateStub(IPSFactoryBuffer *ppsf)
     const CInterfaceStubHeader *header = &CONTAINING_RECORD(cstd_stub->lpVtbl, const CInterfaceStubVtbl, Vtbl)->header;
 
     ok(IsEqualIID(header->piid, &IID_if1), "header iid differs\n");
-    ok(cstd_stub->RefCount == 1, "ref count %d\n", cstd_stub->RefCount);
+    ok(cstd_stub->RefCount == 1, "ref count %ld\n", cstd_stub->RefCount);
     /* 0xdeadbeef returned from create_stub_test_QI */
     ok(cstd_stub->pvServerObject == (void*)0xdeadbeef, "pvServerObject %p\n", cstd_stub->pvServerObject);
     ok(cstd_stub->pPSFactory != NULL, "pPSFactory was NULL\n");
@@ -836,7 +836,7 @@ static void test_CreateStub(IPSFactoryBuffer *ppsf)
 
     vtbl = &create_stub_test_fail_vtbl;
     pstub = create_stub(ppsf, &IID_if1, obj, E_NOINTERFACE);
-    ok(pstub == S_OK, "create_stub failed: %u\n", GetLastError());
+    ok(pstub == S_OK, "create_stub failed: %lu\n", GetLastError());
 
 }
 
@@ -926,14 +926,14 @@ static void test_Connect(IPSFactoryBuffer *ppsf)
 
     obj = (IUnknown*)&new_vtbl;
     r = IRpcStubBuffer_Connect(pstub, obj);
-    ok(r == S_OK, "r %08x\n", r);
+    ok(r == S_OK, "r %08lx\n", r);
     ok(connect_test_orig_release_called == 1, "release called %d\n", connect_test_orig_release_called);
     ok(cstd_stub->pvServerObject == (void*)0xcafebabe, "pvServerObject %p\n", cstd_stub->pvServerObject);
 
     cstd_stub->pvServerObject = (IUnknown*)&orig_vtbl;
     obj = (IUnknown*)&new_fail_vtbl;
     r = IRpcStubBuffer_Connect(pstub, obj);
-    ok(r == E_NOINTERFACE, "r %08x\n", r);
+    ok(r == E_NOINTERFACE, "r %08lx\n", r);
     ok(cstd_stub->pvServerObject == (void*)0xdeadbeef, "pvServerObject %p\n", cstd_stub->pvServerObject);
     ok(connect_test_orig_release_called == 2, "release called %d\n", connect_test_orig_release_called);    
 
@@ -954,7 +954,7 @@ static void test_Connect(IPSFactoryBuffer *ppsf)
 
     obj = (IUnknown*)&new_vtbl;
     r = IRpcStubBuffer_Connect(pstub, obj);
-    ok(r == S_OK, "r %08x\n", r);
+    ok(r == S_OK, "r %08lx\n", r);
     ok(connect_test_base_Connect_called == 1, "connect_test_bsae_Connect called %d times\n",
        connect_test_base_Connect_called);
     ok(connect_test_orig_release_called == 3, "release called %d\n", connect_test_orig_release_called);
@@ -1004,21 +1004,21 @@ static void test_Release(IPSFactoryBuffer *ppsf)
     facbuf_refs = PSFactoryBuffer.RefCount;
 
     /* This shows that NdrCStdStubBuffer_Release doesn't call Disconnect */
-    ok(cstd_stub->RefCount == 1, "ref count %d\n", cstd_stub->RefCount);
+    ok(cstd_stub->RefCount == 1, "ref count %ld\n", cstd_stub->RefCount);
     connect_test_orig_release_called = 0;
     IRpcStubBuffer_Release(pstub);
 todo_wine {
     ok(connect_test_orig_release_called == 0, "release called %d\n", connect_test_orig_release_called);
 }
-    ok(PSFactoryBuffer.RefCount == facbuf_refs - 1, "factory buffer refs %d orig %d\n", PSFactoryBuffer.RefCount, facbuf_refs);
+    ok(PSFactoryBuffer.RefCount == facbuf_refs - 1, "factory buffer refs %ld orig %ld\n", PSFactoryBuffer.RefCount, facbuf_refs);
 
     /* This shows that NdrCStdStubBuffer_Release calls Release on its 2nd arg, rather than on This->pPSFactory
        (which are usually the same and indeed it's odd that _Release requires this 2nd arg). */
     pstub = create_stub(ppsf, &IID_if1, obj, S_OK);
-    ok(PSFactoryBuffer.RefCount == facbuf_refs, "factory buffer refs %d orig %d\n", PSFactoryBuffer.RefCount, facbuf_refs);
+    ok(PSFactoryBuffer.RefCount == facbuf_refs, "factory buffer refs %ld orig %ld\n", PSFactoryBuffer.RefCount, facbuf_refs);
     NdrCStdStubBuffer_Release(pstub, (IPSFactoryBuffer*)pretend_psfacbuf);
     ok(release_test_psfacbuf_release_called == 1, "pretend_psfacbuf_release called %d\n", release_test_psfacbuf_release_called);
-    ok(PSFactoryBuffer.RefCount == facbuf_refs, "factory buffer refs %d orig %d\n", PSFactoryBuffer.RefCount, facbuf_refs);
+    ok(PSFactoryBuffer.RefCount == facbuf_refs, "factory buffer refs %ld orig %ld\n", PSFactoryBuffer.RefCount, facbuf_refs);
 }
 
 static HRESULT WINAPI delegating_invoke_test_QI(ITypeLib *pUnk, REFIID iid, void** ppv)
@@ -1142,11 +1142,11 @@ static void test_delegating_Invoke(IPSFactoryBuffer *ppsf)
     msg.dataRepresentation = NDR_LOCAL_DATA_REPRESENTATION;
     msg.iMethod = 3;
     r = IRpcStubBuffer_Invoke(pstub, &msg, pchan);
-    ok(r == S_OK, "ret %08x\n", r);
+    ok(r == S_OK, "ret %08lx\n", r);
     if(r == S_OK)
     {
-        ok(*(DWORD*)msg.Buffer == 0xabcdef, "buf[0] %08x\n", *(DWORD*)msg.Buffer);
-        ok(*((DWORD*)msg.Buffer + 1) == S_OK, "buf[1] %08x\n", *((DWORD*)msg.Buffer + 1));
+        ok(*(DWORD*)msg.Buffer == 0xabcdef, "buf[0] %08lx\n", *(DWORD*)msg.Buffer);
+        ok(*((DWORD*)msg.Buffer + 1) == S_OK, "buf[1] %08lx\n", *((DWORD*)msg.Buffer + 1));
     }
     /* free the buffer allocated by delegating_invoke_chan_get_buffer */
     HeapFree(GetProcessHeap(), 0, msg.Buffer);
@@ -1200,19 +1200,19 @@ static void test_NdrDllRegisterProxy( void )
 
 
     res = NdrDllRegisterProxy(NULL, NULL, NULL);
-    ok(res == E_HANDLE, "Incorrect return code %x\n",res);
+    ok(res == E_HANDLE, "Incorrect return code %lx\n",res);
     pf = NULL;
     res = NdrDllRegisterProxy(hmod, &pf, NULL);
-    ok(res == E_NOINTERFACE, "Incorrect return code %x\n",res);
+    ok(res == E_NOINTERFACE, "Incorrect return code %lx\n",res);
     res = NdrDllRegisterProxy(hmod, proxy_file_list2, NULL);
-    ok(res == E_NOINTERFACE, "Incorrect return code %x\n",res);
+    ok(res == E_NOINTERFACE, "Incorrect return code %lx\n",res);
     /* This fails on Vista and Windows 7 due to permissions */
     res = NdrDllRegisterProxy(hmod, proxy_file_list, NULL);
-    ok(res == S_OK || res == E_ACCESSDENIED, "NdrDllRegisterProxy failed %x\n",res);
+    ok(res == S_OK || res == E_ACCESSDENIED, "NdrDllRegisterProxy failed %lx\n",res);
     if (res == S_OK)
     {
         res = NdrDllUnregisterProxy(hmod,proxy_file_list, NULL);
-        ok(res == S_OK, "NdrDllUnregisterProxy failed %x\n",res);
+        ok(res == S_OK, "NdrDllUnregisterProxy failed %lx\n",res);
     }
 }
 
@@ -1228,7 +1228,7 @@ static HANDLE create_process(const char *arg)
     winetest_get_mainargs(&argv);
     sprintf(cmdline, "\"%s\" %s %s", argv[0], argv[1], arg);
     ret = CreateProcessA(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
-    ok(ret, "CreateProcess failed: %u\n", GetLastError());
+    ok(ret, "CreateProcess failed: %lu\n", GetLastError());
     CloseHandle(pi.hThread);
     return pi.hProcess;
 }
@@ -1340,30 +1340,30 @@ static void local_server_proc(void)
 
     hr = CoRegisterClassObject(&CLSID_test1, (IUnknown *)&test_cf,
         CLSCTX_LOCAL_SERVER, REGCLS_MULTIPLEUSE, &obj_cookie);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     hr = NdrDllGetClassObject(&CLSID_test_ps, &IID_IPSFactoryBuffer, (void **)&ps,
         &aProxyFileList, &CLSID_test_ps, &gPFactory);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     hr = CoRegisterClassObject(&CLSID_test_ps, (IUnknown *)ps,
         CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &ps_cookie);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     hr = CoRegisterPSClsid(&IID_ITest1, &CLSID_test_ps);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     SetEvent(ready_event);
 
     hr = CoWaitForMultipleHandles(0, 1000, 1, &stop_event, &index);
-    ok(hr == S_OK, "got %#x\n", hr);
-    ok(!index, "got %u\n", index);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(!index, "got %lu\n", index);
 
     hr = CoRevokeClassObject(ps_cookie);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     hr = CoRevokeClassObject(obj_cookie);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     CoUninitialize();
     ExitProcess(0);
@@ -1387,23 +1387,23 @@ static void test_delegated_methods(void)
 
     hr = NdrDllGetClassObject(&CLSID_test_ps, &IID_IPSFactoryBuffer, (void **)&ps,
         &aProxyFileList, &CLSID_test_ps, &gPFactory);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     hr = CoRegisterClassObject(&CLSID_test_ps, (IUnknown *)ps,
         CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &ps_cookie);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     hr = CoRegisterPSClsid(&IID_ITest1, &CLSID_test_ps);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     hr = CoCreateInstance(&CLSID_test1, NULL, CLSCTX_LOCAL_SERVER, &IID_ITest1, (void **)&test_obj);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     ret = ITest1_square(test_obj, 3);
     ok(ret == 9, "got %d\n", ret);
 
     hr = ITest1_GetClassID(test_obj, &clsid);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
     ok(IsEqualGUID(&clsid, &CLSID_test1), "got %s\n", wine_dbgstr_guid(&clsid));
 
     ITest1_Release(test_obj);
@@ -1412,7 +1412,7 @@ static void test_delegated_methods(void)
     ok(!WaitForSingleObject(process, 1000), "wait failed\n");
 
     hr = CoRevokeClassObject(ps_cookie);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 }
 
 START_TEST( cstub )

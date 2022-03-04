@@ -242,48 +242,48 @@ static void test_rpc_ncacn_ip_tcp(void)
 
     status = RpcMgmtStopServerListening(NULL);
     ok(status == RPC_S_NOT_LISTENING,
-       "wrong RpcMgmtStopServerListening error (%u)\n", status);
+       "wrong RpcMgmtStopServerListening error (%lu)\n", status);
 
     status = RpcMgmtWaitServerListen();
     ok(status == RPC_S_NOT_LISTENING,
-       "wrong RpcMgmtWaitServerListen error status (%u)\n", status);
+       "wrong RpcMgmtWaitServerListen error status (%lu)\n", status);
 
     status = RpcServerListen(1, 20, FALSE);
     ok(status == RPC_S_NO_PROTSEQS_REGISTERED,
-       "wrong RpcServerListen error (%u)\n", status);
+       "wrong RpcServerListen error (%lu)\n", status);
 
     status = RpcServerUseProtseqEpA(ncacn_ip_tcp, 20, endpoint, NULL);
-    ok(status == RPC_S_OK, "RpcServerUseProtseqEp failed (%u)\n", status);
+    ok(status == RPC_S_OK, "RpcServerUseProtseqEp failed (%lu)\n", status);
 
     status = RpcServerRegisterIf(IFoo_v0_0_s_ifspec, NULL, NULL);
-    ok(status == RPC_S_OK, "RpcServerRegisterIf failed (%u)\n", status);
+    ok(status == RPC_S_OK, "RpcServerRegisterIf failed (%lu)\n", status);
 
     status = RpcServerListen(1, 20, TRUE);
-    ok(status == RPC_S_OK, "RpcServerListen failed (%u)\n", status);
+    ok(status == RPC_S_OK, "RpcServerListen failed (%lu)\n", status);
 
     status = RpcServerListen(1, 20, TRUE);
     ok(status == RPC_S_ALREADY_LISTENING,
-       "wrong RpcServerListen error (%u)\n", status);
+       "wrong RpcServerListen error (%lu)\n", status);
 
     status = RpcStringBindingComposeA(NULL, ncacn_ip_tcp, address,
                                      endpoint, NULL, &binding);
-    ok(status == RPC_S_OK, "RpcStringBindingCompose failed (%u)\n", status);
+    ok(status == RPC_S_OK, "RpcStringBindingCompose failed (%lu)\n", status);
 
     status = RpcBindingFromStringBindingA(binding, &IFoo_IfHandle);
-    ok(status == RPC_S_OK, "RpcBindingFromStringBinding failed (%u)\n",
+    ok(status == RPC_S_OK, "RpcBindingFromStringBinding failed (%lu)\n",
        status);
 
     status = RpcBindingSetAuthInfoA(IFoo_IfHandle, NULL, RPC_C_AUTHN_LEVEL_NONE,
                                    RPC_C_AUTHN_WINNT, NULL, RPC_C_AUTHZ_NAME);
-    ok(status == RPC_S_OK, "RpcBindingSetAuthInfo failed (%u)\n", status);
+    ok(status == RPC_S_OK, "RpcBindingSetAuthInfo failed (%lu)\n", status);
 
     status = RpcBindingInqAuthInfoA(IFoo_IfHandle, NULL, NULL, NULL, NULL, NULL);
-    ok(status == RPC_S_BINDING_HAS_NO_AUTH, "RpcBindingInqAuthInfo failed (%u)\n",
+    ok(status == RPC_S_BINDING_HAS_NO_AUTH, "RpcBindingInqAuthInfo failed (%lu)\n",
        status);
 
     status = RpcBindingSetAuthInfoA(IFoo_IfHandle, spn, RPC_C_AUTHN_LEVEL_PKT_PRIVACY,
                                    RPC_C_AUTHN_WINNT, NULL, RPC_C_AUTHZ_NAME);
-    ok(status == RPC_S_OK, "RpcBindingSetAuthInfo failed (%u)\n", status);
+    ok(status == RPC_S_OK, "RpcBindingSetAuthInfo failed (%lu)\n", status);
 
     level = authnsvc = authzsvc = 0;
     principal = (unsigned char *)0xdeadbeef;
@@ -291,33 +291,33 @@ static void test_rpc_ncacn_ip_tcp(void)
     status = RpcBindingInqAuthInfoA(IFoo_IfHandle, &principal, &level, &authnsvc,
                                    &identity, &authzsvc);
 
-    ok(status == RPC_S_OK, "RpcBindingInqAuthInfo failed (%u)\n", status);
+    ok(status == RPC_S_OK, "RpcBindingInqAuthInfo failed (%lu)\n", status);
     ok(identity == NULL, "expected NULL identity, got %p\n", identity);
     ok(principal != (unsigned char *)0xdeadbeef, "expected valid principal, got %p\n", principal);
-    ok(level == RPC_C_AUTHN_LEVEL_PKT_PRIVACY, "expected RPC_C_AUTHN_LEVEL_PKT_PRIVACY, got %d\n", level);
-    ok(authnsvc == RPC_C_AUTHN_WINNT, "expected RPC_C_AUTHN_WINNT, got %d\n", authnsvc);
-    todo_wine ok(authzsvc == RPC_C_AUTHZ_NAME, "expected RPC_C_AUTHZ_NAME, got %d\n", authzsvc);
+    ok(level == RPC_C_AUTHN_LEVEL_PKT_PRIVACY, "expected RPC_C_AUTHN_LEVEL_PKT_PRIVACY, got %ld\n", level);
+    ok(authnsvc == RPC_C_AUTHN_WINNT, "expected RPC_C_AUTHN_WINNT, got %ld\n", authnsvc);
+    todo_wine ok(authzsvc == RPC_C_AUTHZ_NAME, "expected RPC_C_AUTHZ_NAME, got %ld\n", authzsvc);
     if (status == RPC_S_OK) RpcStringFreeA(&principal);
 
     status = RpcMgmtStopServerListening(NULL);
-    ok(status == RPC_S_OK, "RpcMgmtStopServerListening failed (%u)\n",
+    ok(status == RPC_S_OK, "RpcMgmtStopServerListening failed (%lu)\n",
        status);
 
     status = RpcMgmtStopServerListening(NULL);
-    ok(status == RPC_S_OK, "RpcMgmtStopServerListening failed (%u)\n",
+    ok(status == RPC_S_OK, "RpcMgmtStopServerListening failed (%lu)\n",
        status);
 
     status = RpcServerUnregisterIf(NULL, NULL, FALSE);
-    ok(status == RPC_S_OK, "RpcServerUnregisterIf failed (%u)\n", status);
+    ok(status == RPC_S_OK, "RpcServerUnregisterIf failed (%lu)\n", status);
 
     status = RpcMgmtWaitServerListen();
-    ok(status == RPC_S_OK, "RpcMgmtWaitServerListen failed (%u)\n", status);
+    ok(status == RPC_S_OK, "RpcMgmtWaitServerListen failed (%lu)\n", status);
 
     status = RpcStringFreeA(&binding);
-    ok(status == RPC_S_OK, "RpcStringFree failed (%u)\n", status);
+    ok(status == RPC_S_OK, "RpcStringFree failed (%lu)\n", status);
 
     status = RpcBindingFree(&IFoo_IfHandle);
-    ok(status == RPC_S_OK, "RpcBindingFree failed (%u)\n", status);
+    ok(status == RPC_S_OK, "RpcBindingFree failed (%lu)\n", status);
 }
 
 /* this is what's generated with MS/RPC - it includes an extra 2
@@ -363,7 +363,7 @@ static void test_towers(void)
     ret = TowerConstruct(&mapi_if_id, &ndr_syntax, "ncacn_ip_tcp", "135", "10.0.0.1", &tower);
     ok(ret == RPC_S_OK ||
        broken(ret == RPC_S_INVALID_RPC_PROTSEQ), /* Vista */
-       "TowerConstruct failed with error %d\n", ret);
+       "TowerConstruct failed with error %ld\n", ret);
     if (ret == RPC_S_INVALID_RPC_PROTSEQ)
     {
         /* Windows Vista fails with this error and crashes if we continue */
@@ -396,7 +396,7 @@ static void test_towers(void)
     }
 
     ret = TowerExplode(tower, &object, &syntax, &protseq, &endpoint, &address);
-    ok(ret == RPC_S_OK, "TowerExplode failed with error %d\n", ret);
+    ok(ret == RPC_S_OK, "TowerExplode failed with error %ld\n", ret);
     ok(!memcmp(&object, &mapi_if_id, sizeof(mapi_if_id)), "object id didn't match\n");
     ok(!memcmp(&syntax, &ndr_syntax, sizeof(syntax)), "syntax id didn't match\n");
     ok(!strcmp(protseq, "ncacn_ip_tcp"), "protseq was \"%s\" instead of \"ncacn_ip_tcp\"\n", protseq);
@@ -408,15 +408,15 @@ static void test_towers(void)
     I_RpcFree(address);
 
     ret = TowerExplode(tower, NULL, NULL, NULL, NULL, NULL);
-    ok(ret == RPC_S_OK, "TowerExplode failed with error %d\n", ret);
+    ok(ret == RPC_S_OK, "TowerExplode failed with error %ld\n", ret);
 
     I_RpcFree(tower);
 
     /* test the behaviour for ip_tcp with name instead of dotted IP notation */
     ret = TowerConstruct(&mapi_if_id, &ndr_syntax, "ncacn_ip_tcp", "135", "localhost", &tower);
-    ok(ret == RPC_S_OK, "TowerConstruct failed with error %d\n", ret);
+    ok(ret == RPC_S_OK, "TowerConstruct failed with error %ld\n", ret);
     ret = TowerExplode(tower, NULL, NULL, NULL, NULL, &address);
-    ok(ret == RPC_S_OK, "TowerExplode failed with error %d\n", ret);
+    ok(ret == RPC_S_OK, "TowerExplode failed with error %ld\n", ret);
     ok(!strcmp(address, "0.0.0.0") ||
        broken(!strcmp(address, "255.255.255.255")),
        "address was \"%s\" instead of \"0.0.0.0\"\n", address);
@@ -426,11 +426,11 @@ static void test_towers(void)
 
     /* test the behaviour for np with no address */
     ret = TowerConstruct(&mapi_if_id, &ndr_syntax, "ncacn_np", "\\pipe\\test", NULL, &tower);
-    ok(ret == RPC_S_OK, "TowerConstruct failed with error %d\n", ret);
+    ok(ret == RPC_S_OK, "TowerConstruct failed with error %ld\n", ret);
     ret = TowerExplode(tower, NULL, NULL, NULL, NULL, &address);
     ok(ret == RPC_S_OK ||
        broken(ret != RPC_S_OK), /* win2k, indeterminate */
-       "TowerExplode failed with error %d\n", ret);
+       "TowerExplode failed with error %ld\n", ret);
     /* Windows XP SP3 sets address to NULL */
     ok(!address || !strcmp(address, ""), "address was \"%s\" instead of \"\" or NULL (XP SP3)\n", address);
 
@@ -576,7 +576,7 @@ static void test_I_RpcMapWin32Status(void)
 
         ok(win32status == expected_win32status ||
             broken(missing && win32status == rpc_status),
-            "I_RpcMapWin32Status(%d) should have returned 0x%x instead of 0x%x%s\n",
+            "I_RpcMapWin32Status(%ld) should have returned 0x%lx instead of 0x%lx%s\n",
             rpc_status, expected_win32status, win32status,
             broken(missing) ? " (or have returned with the given status)" : "");
     }
@@ -598,7 +598,7 @@ static void test_RpcStringBindingParseA(void)
 
     /* test all parameters */
     status = RpcStringBindingParseA(valid_binding, &uuid, &protseq, &network_addr, &endpoint, &options);
-    ok(status == RPC_S_OK, "RpcStringBindingParseA failed with error %d\n", status);
+    ok(status == RPC_S_OK, "RpcStringBindingParseA failed with error %ld\n", status);
     ok(!strcmp((char *)uuid, "00000000-0000-0000-c000-000000000046"), "uuid should have been 00000000-0000-0000-C000-000000000046 instead of %s\n", uuid);
     ok(!strcmp((char *)protseq, "ncacn_np"), "protseq should have been ncacn_np instead of %s\n", protseq);
     ok(!strcmp((char *)network_addr, "."), "network_addr should have been . instead of %s\n", network_addr);
@@ -615,7 +615,7 @@ static void test_RpcStringBindingParseA(void)
 
     /* test all parameters with different type of string binding */
     status = RpcStringBindingParseA(valid_binding2, &uuid, &protseq, &network_addr, &endpoint, &options);
-    ok(status == RPC_S_OK, "RpcStringBindingParseA failed with error %d\n", status);
+    ok(status == RPC_S_OK, "RpcStringBindingParseA failed with error %ld\n", status);
     ok(!strcmp((char *)uuid, "00000000-0000-0000-c000-000000000046"), "uuid should have been 00000000-0000-0000-C000-000000000046 instead of %s\n", uuid);
     ok(!strcmp((char *)protseq, "ncacn_np"), "protseq should have been ncacn_np instead of %s\n", protseq);
     ok(!strcmp((char *)network_addr, "."), "network_addr should have been . instead of %s\n", network_addr);
@@ -632,24 +632,24 @@ static void test_RpcStringBindingParseA(void)
 
     /* test with as many parameters NULL as possible */
     status = RpcStringBindingParseA(valid_binding, NULL, &protseq, NULL, NULL, NULL);
-    ok(status == RPC_S_OK, "RpcStringBindingParseA failed with error %d\n", status);
+    ok(status == RPC_S_OK, "RpcStringBindingParseA failed with error %ld\n", status);
     ok(!strcmp((char *)protseq, "ncacn_np"), "protseq should have been ncacn_np instead of %s\n", protseq);
     RpcStringFreeA(&protseq);
 
     /* test with invalid uuid */
     status = RpcStringBindingParseA(invalid_uuid_binding, NULL, &protseq, NULL, NULL, NULL);
-    ok(status == RPC_S_INVALID_STRING_UUID, "RpcStringBindingParseA should have returned RPC_S_INVALID_STRING_UUID instead of %d\n", status);
+    ok(status == RPC_S_INVALID_STRING_UUID, "RpcStringBindingParseA should have returned RPC_S_INVALID_STRING_UUID instead of %ld\n", status);
     ok(protseq == NULL, "protseq was %p instead of NULL\n", protseq);
 
     /* test with invalid endpoint */
     status = RpcStringBindingParseA(invalid_ep_binding, NULL, &protseq, NULL, NULL, NULL);
-    ok(status == RPC_S_OK, "RpcStringBindingParseA failed with error %d\n", status);
+    ok(status == RPC_S_OK, "RpcStringBindingParseA failed with error %ld\n", status);
     RpcStringFreeA(&protseq);
 
     /* test with invalid binding */
     status = RpcStringBindingParseA(invalid_binding, &uuid, &protseq, &network_addr, &endpoint, &options);
     todo_wine
-    ok(status == RPC_S_INVALID_STRING_BINDING, "RpcStringBindingParseA should have returned RPC_S_INVALID_STRING_BINDING instead of %d\n", status);
+    ok(status == RPC_S_INVALID_STRING_BINDING, "RpcStringBindingParseA should have returned RPC_S_INVALID_STRING_BINDING instead of %ld\n", status);
     todo_wine
     ok(uuid == NULL, "uuid was %p instead of NULL\n", uuid);
     if (uuid)
@@ -687,9 +687,9 @@ static void test_RpcExceptionFilter(void)
         case STATUS_INSTRUCTION_MISALIGNMENT:
         case STATUS_STACK_OVERFLOW:
         case STATUS_POSSIBLE_DEADLOCK:
-            ok(retval == EXCEPTION_CONTINUE_SEARCH, "RpcExceptionFilter(0x%x) should have returned %d instead of %d\n",
+            ok(retval == EXCEPTION_CONTINUE_SEARCH, "RpcExceptionFilter(0x%lx) should have returned %d instead of %d\n",
                     exception, EXCEPTION_CONTINUE_SEARCH, retval);
-            ok(retval2 == EXCEPTION_CONTINUE_SEARCH, "I_RpcExceptionFilter(0x%x) should have returned %d instead of %d\n",
+            ok(retval2 == EXCEPTION_CONTINUE_SEARCH, "I_RpcExceptionFilter(0x%lx) should have returned %d instead of %d\n",
                     exception, EXCEPTION_CONTINUE_SEARCH, retval);
             break;
         case STATUS_GUARD_PAGE_VIOLATION:
@@ -702,9 +702,9 @@ static void test_RpcExceptionFilter(void)
         }
             break;
         default:
-            ok(retval == EXCEPTION_EXECUTE_HANDLER, "RpcExceptionFilter(0x%x) should have returned %d instead of %d\n",
+            ok(retval == EXCEPTION_EXECUTE_HANDLER, "RpcExceptionFilter(0x%lx) should have returned %d instead of %d\n",
                    exception, EXCEPTION_EXECUTE_HANDLER, retval);
-            ok(retval2 == EXCEPTION_EXECUTE_HANDLER, "I_RpcExceptionFilter(0x%x) should have returned %d instead of %d\n",
+            ok(retval2 == EXCEPTION_EXECUTE_HANDLER, "I_RpcExceptionFilter(0x%lx) should have returned %d instead of %d\n",
                    exception, EXCEPTION_EXECUTE_HANDLER, retval);
         }
     }
@@ -721,21 +721,21 @@ static void test_RpcStringBindingFromBinding(void)
 
     status = RpcStringBindingComposeA(NULL, ncacn_np, address,
                                      endpoint, NULL, &binding);
-    ok(status == RPC_S_OK, "RpcStringBindingCompose failed (%u)\n", status);
+    ok(status == RPC_S_OK, "RpcStringBindingCompose failed (%lu)\n", status);
 
     status = RpcBindingFromStringBindingA(binding, &handle);
-    ok(status == RPC_S_OK, "RpcBindingFromStringBinding failed (%u)\n", status);
+    ok(status == RPC_S_OK, "RpcBindingFromStringBinding failed (%lu)\n", status);
     RpcStringFreeA(&binding);
 
     status = RpcBindingToStringBindingA(handle, &binding);
-    ok(status == RPC_S_OK, "RpcStringBindingFromBinding failed with error %u\n", status);
+    ok(status == RPC_S_OK, "RpcStringBindingFromBinding failed with error %lu\n", status);
 
     ok(!strcmp((const char *)binding, "ncacn_np:.[\\\\pipe\\\\wine_rpc_test]"),
        "binding string didn't match what was expected: \"%s\"\n", binding);
     RpcStringFreeA(&binding);
 
     status = RpcBindingFree(&handle);
-    ok(status == RPC_S_OK, "RpcBindingFree failed with error %u\n", status);
+    ok(status == RPC_S_OK, "RpcBindingFree failed with error %lu\n", status);
 }
 
 static void test_UuidCreate(void)
@@ -812,7 +812,7 @@ static void test_UuidCreateSequential(void)
 
     ret = pUuidCreateSequential(&guid1);
     ok(!ret || ret == RPC_S_UUID_LOCAL_ONLY,
-       "expected RPC_S_OK or RPC_S_UUID_LOCAL_ONLY, got %08x\n", ret);
+       "expected RPC_S_OK or RPC_S_UUID_LOCAL_ONLY, got %08lx\n", ret);
     version = (guid1.Data3 & 0xf000) >> 12;
     ok(version == 1, "unexpected version %d\n", version);
     if (version == 1)
@@ -842,7 +842,7 @@ static void test_UuidCreateSequential(void)
          */
         ret = pUuidCreateSequential(&guid2);
         ok(!ret || ret == RPC_S_UUID_LOCAL_ONLY,
-           "expected RPC_S_OK or RPC_S_UUID_LOCAL_ONLY, got %08x\n", ret);
+           "expected RPC_S_OK or RPC_S_UUID_LOCAL_ONLY, got %08lx\n", ret);
         version = (guid2.Data3 & 0xf000) >> 12;
         ok(version == 1, "unexpected version %d\n", version);
         ok(!memcmp(guid1.Data4, guid2.Data4, sizeof(guid2.Data4)),
@@ -866,7 +866,7 @@ static void test_RpcBindingFree(void)
 
     status = RpcBindingFree(&binding);
     ok(status == RPC_S_INVALID_BINDING,
-       "RpcBindingFree should have returned RPC_S_INVALID_BINDING instead of %d\n",
+       "RpcBindingFree should have returned RPC_S_INVALID_BINDING instead of %ld\n",
        status);
 }
 
@@ -896,10 +896,10 @@ static void test_RpcIfInqId(void)
     if (0)
     {
         status = pRpcIfInqId(NULL, &if_id);
-        ok(status == RPC_S_INVALID_ARG, "Expected %#x, got %#x.\n", RPC_S_INVALID_ARG, status);
+        ok(status == RPC_S_INVALID_ARG, "Expected %#x, got %#lx.\n", RPC_S_INVALID_ARG, status);
 
         status = pRpcIfInqId((RPC_IF_HANDLE)&server_interface, NULL);
-        ok(status == RPC_S_INVALID_ARG, "Expected %#x, got %#x.\n", RPC_S_INVALID_ARG, status);
+        ok(status == RPC_S_INVALID_ARG, "Expected %#x, got %#lx.\n", RPC_S_INVALID_ARG, status);
     }
 
     test_handles[0] = (RPC_IF_HANDLE)&server_interface;
@@ -909,7 +909,7 @@ static void test_RpcIfInqId(void)
     {
         memset(&if_id, 0, sizeof(if_id));
         status = pRpcIfInqId(test_handles[test_idx], &if_id);
-        ok(status == RPC_S_OK, "Test %u: Expected %#x, got %#x.\n", test_idx, RPC_S_OK, status);
+        ok(status == RPC_S_OK, "Test %u: Expected %#x, got %#lx.\n", test_idx, RPC_S_OK, status);
         ok(!memcmp(&if_id.Uuid, &guid, sizeof(guid)), "Test %u: Expected UUID %s, got %s.\n", test_idx,
                 wine_dbgstr_guid(&guid), wine_dbgstr_guid(&if_id.Uuid));
         ok(if_id.VersMajor == 1, "Test %u: Expected major version 1, got %hu.\n", test_idx,
@@ -931,35 +931,35 @@ static void test_RpcServerInqDefaultPrincName(void)
     GetUserNameExA( NameSamCompatible, username, &len );
 
     ret = RpcServerInqDefaultPrincNameA( 0, NULL );
-    ok( ret == RPC_S_UNKNOWN_AUTHN_SERVICE, "got %u\n", ret );
+    ok( ret == RPC_S_UNKNOWN_AUTHN_SERVICE, "got %lu\n", ret );
 
     ret = RpcServerInqDefaultPrincNameA( RPC_C_AUTHN_DEFAULT, NULL );
-    ok( ret == RPC_S_UNKNOWN_AUTHN_SERVICE, "got %u\n", ret );
+    ok( ret == RPC_S_UNKNOWN_AUTHN_SERVICE, "got %lu\n", ret );
 
     principal = (RPC_CSTR)0xdeadbeef;
     ret = RpcServerInqDefaultPrincNameA( RPC_C_AUTHN_DEFAULT, &principal );
-    ok( ret == RPC_S_UNKNOWN_AUTHN_SERVICE, "got %u\n", ret );
+    ok( ret == RPC_S_UNKNOWN_AUTHN_SERVICE, "got %lu\n", ret );
     ok( principal == (RPC_CSTR)0xdeadbeef, "got unexpected principal\n" );
 
     saved_principal = (RPC_CSTR)0xdeadbeef;
     ret = RpcServerInqDefaultPrincNameA( RPC_C_AUTHN_WINNT, &saved_principal );
-    ok( ret == RPC_S_OK, "got %u\n", ret );
+    ok( ret == RPC_S_OK, "got %lu\n", ret );
     ok( saved_principal != (RPC_CSTR)0xdeadbeef, "expected valid principal\n" );
     ok( !strcmp( (const char *)saved_principal, username ), "got \'%s\'\n", saved_principal );
     trace("%s\n", saved_principal);
 
     ret = RpcServerRegisterAuthInfoA( (RPC_CSTR)"wine\\test", RPC_C_AUTHN_WINNT, NULL, NULL );
-    ok( ret == RPC_S_OK, "got %u\n", ret );
+    ok( ret == RPC_S_OK, "got %lu\n", ret );
 
     principal = (RPC_CSTR)0xdeadbeef;
     ret = RpcServerInqDefaultPrincNameA( RPC_C_AUTHN_WINNT, &principal );
-    ok( ret == RPC_S_OK, "got %u\n", ret );
+    ok( ret == RPC_S_OK, "got %lu\n", ret );
     ok( principal != (RPC_CSTR)0xdeadbeef, "expected valid principal\n" );
     ok( !strcmp( (const char *)principal, username ), "got \'%s\'\n", principal );
     RpcStringFreeA( &principal );
 
     ret = RpcServerRegisterAuthInfoA( saved_principal, RPC_C_AUTHN_WINNT, NULL, NULL );
-    ok( ret == RPC_S_OK, "got %u\n", ret );
+    ok( ret == RPC_S_OK, "got %lu\n", ret );
 
     RpcStringFreeA( &saved_principal );
     HeapFree( GetProcessHeap(), 0, username );
@@ -970,7 +970,7 @@ static void test_RpcServerRegisterAuthInfo(void)
     RPC_STATUS status;
 
     status = RpcServerRegisterAuthInfoW(NULL, 600, NULL, NULL);
-    ok(status == RPC_S_UNKNOWN_AUTHN_SERVICE, "status = %x\n", status);
+    ok(status == RPC_S_UNKNOWN_AUTHN_SERVICE, "status = %lx\n", status);
 }
 
 static void test_RpcServerUseProtseq(void)
@@ -993,12 +993,12 @@ static void test_RpcServerUseProtseq(void)
     else
     {
         binding_count_before = bindings->Count;
-        ok(status == RPC_S_OK, "RpcServerInqBindings failed with status %d\n", status);
+        ok(status == RPC_S_OK, "RpcServerInqBindings failed with status %ld\n", status);
         for (i = 0; i < bindings->Count; i++)
         {
             RPC_CSTR str_bind;
             status = RpcBindingToStringBindingA(bindings->BindingH[i], &str_bind);
-            ok(status == RPC_S_OK, "RpcBindingToStringBinding failed with status %d\n", status);
+            ok(status == RPC_S_OK, "RpcBindingToStringBinding failed with status %ld\n", status);
             if (lstrlenA((const char *)str_bind) > 12 && !memcmp(str_bind, "ncacn_ip_tcp", 12))
                 iptcp_registered = TRUE;
             if (lstrlenA((const char *)str_bind) > 8 && !memcmp(str_bind, "ncacn_np", 8))
@@ -1014,7 +1014,7 @@ static void test_RpcServerUseProtseq(void)
      * RpcServerUseProtseq(...) */
     status = RpcServerUseProtseqEpA(ncalrpc, 0, NULL, NULL);
     ok(status == RPC_S_OK || broken(status == RPC_S_INVALID_ENDPOINT_FORMAT),
-       "RpcServerUseProtseqEp with NULL endpoint failed with status %d\n",
+       "RpcServerUseProtseqEp with NULL endpoint failed with status %ld\n",
        status);
 
     /* register protocol sequences without explicit endpoints */
@@ -1022,28 +1022,28 @@ static void test_RpcServerUseProtseq(void)
     if (status == RPC_S_PROTSEQ_NOT_SUPPORTED)
         win_skip("ncacn_np not supported\n");
     else
-        ok(status == RPC_S_OK, "RpcServerUseProtseq(ncacn_np) failed with status %d\n", status);
+        ok(status == RPC_S_OK, "RpcServerUseProtseq(ncacn_np) failed with status %ld\n", status);
     if (status == RPC_S_OK && !np_registered) endpoints_registered++;
 
     status = RpcServerUseProtseqA(iptcp, 0, NULL);
-    ok(status == RPC_S_OK, "RpcServerUseProtseq(ncacn_ip_tcp) failed with status %d\n", status);
+    ok(status == RPC_S_OK, "RpcServerUseProtseq(ncacn_ip_tcp) failed with status %ld\n", status);
     if (status == RPC_S_OK && !iptcp_registered) endpoints_registered++;
 
     status = RpcServerUseProtseqA(ncalrpc, 0, NULL);
-    ok(status == RPC_S_OK, "RpcServerUseProtseqEp(ncalrpc) failed with status %d\n", status);
+    ok(status == RPC_S_OK, "RpcServerUseProtseqEp(ncalrpc) failed with status %ld\n", status);
     if (status == RPC_S_OK && !ncalrpc_registered) endpoints_registered++;
 
     status = RpcServerInqBindings(&bindings);
-    ok(status == RPC_S_OK, "RpcServerInqBindings failed with status %d\n", status);
+    ok(status == RPC_S_OK, "RpcServerInqBindings failed with status %ld\n", status);
     binding_count_after1 = bindings->Count;
     ok(binding_count_after1 == binding_count_before + endpoints_registered,
-       "wrong binding count - before: %u, after %u, endpoints registered %u\n",
+       "wrong binding count - before: %lu, after %lu, endpoints registered %lu\n",
        binding_count_before, binding_count_after1, endpoints_registered);
     for (i = 0; i < bindings->Count; i++)
     {
         RPC_CSTR str_bind;
         status = RpcBindingToStringBindingA(bindings->BindingH[i], &str_bind);
-        ok(status == RPC_S_OK, "RpcBindingToStringBinding failed with status %d\n", status);
+        ok(status == RPC_S_OK, "RpcBindingToStringBinding failed with status %ld\n", status);
         trace("string binding: %s\n", str_bind);
         RpcStringFreeA(&str_bind);
     }
@@ -1054,19 +1054,19 @@ static void test_RpcServerUseProtseq(void)
     if (status == RPC_S_PROTSEQ_NOT_SUPPORTED)
         win_skip("ncacn_np not supported\n");
     else
-        ok(status == RPC_S_OK, "RpcServerUseProtseq(ncacn_np) failed with status %d\n", status);
+        ok(status == RPC_S_OK, "RpcServerUseProtseq(ncacn_np) failed with status %ld\n", status);
 
     status = RpcServerUseProtseqA(iptcp, 0, NULL);
-    ok(status == RPC_S_OK, "RpcServerUseProtseq(ncacn_ip_tcp) failed with status %d\n", status);
+    ok(status == RPC_S_OK, "RpcServerUseProtseq(ncacn_ip_tcp) failed with status %ld\n", status);
 
     status = RpcServerUseProtseqA(ncalrpc, 0, NULL);
-    ok(status == RPC_S_OK, "RpcServerUseProtseqEp(ncalrpc) failed with status %d\n", status);
+    ok(status == RPC_S_OK, "RpcServerUseProtseqEp(ncalrpc) failed with status %ld\n", status);
 
     status = RpcServerInqBindings(&bindings);
-    ok(status == RPC_S_OK, "RpcServerInqBindings failed with status %d\n", status);
+    ok(status == RPC_S_OK, "RpcServerInqBindings failed with status %ld\n", status);
     binding_count_after2 = bindings->Count;
     ok(binding_count_after2 == binding_count_after1,
-       "bindings should have been re-used - after1: %u after2: %u\n",
+       "bindings should have been re-used - after1: %lu after2: %lu\n",
        binding_count_after1, binding_count_after2);
     RpcBindingVectorFree(&bindings);
 }
@@ -1080,48 +1080,48 @@ static void test_endpoint_mapper(RPC_CSTR protseq, RPC_CSTR address)
     unsigned char *binding;
 
     status = RpcServerRegisterIf(IFoo_v0_0_s_ifspec, NULL, NULL);
-    ok(status == RPC_S_OK, "%s: RpcServerRegisterIf failed (%u)\n", protseq, status);
+    ok(status == RPC_S_OK, "%s: RpcServerRegisterIf failed (%lu)\n", protseq, status);
 
     status = RpcServerInqBindings(&binding_vector);
-    ok(status == RPC_S_OK, "%s: RpcServerInqBindings failed with error %u\n", protseq, status);
+    ok(status == RPC_S_OK, "%s: RpcServerInqBindings failed with error %lu\n", protseq, status);
 
     /* register endpoints created in test_RpcServerUseProtseq */
     status = RpcEpRegisterA(IFoo_v0_0_s_ifspec, binding_vector, NULL, annotation);
-    ok(status == RPC_S_OK, "%s: RpcEpRegisterA failed with error %u\n", protseq, status);
+    ok(status == RPC_S_OK, "%s: RpcEpRegisterA failed with error %lu\n", protseq, status);
     /* reregister the same endpoint with no annotation */
     status = RpcEpRegisterA(IFoo_v0_0_s_ifspec, binding_vector, NULL, NULL);
-    ok(status == RPC_S_OK, "%s: RpcEpRegisterA failed with error %u\n", protseq, status);
+    ok(status == RPC_S_OK, "%s: RpcEpRegisterA failed with error %lu\n", protseq, status);
 
     status = RpcStringBindingComposeA(NULL, protseq, address,
                                      NULL, NULL, &binding);
-    ok(status == RPC_S_OK, "%s: RpcStringBindingCompose failed (%u)\n", protseq, status);
+    ok(status == RPC_S_OK, "%s: RpcStringBindingCompose failed (%lu)\n", protseq, status);
 
     status = RpcBindingFromStringBindingA(binding, &handle);
-    ok(status == RPC_S_OK, "%s: RpcBindingFromStringBinding failed (%u)\n", protseq, status);
+    ok(status == RPC_S_OK, "%s: RpcBindingFromStringBinding failed (%lu)\n", protseq, status);
 
     RpcStringFreeA(&binding);
 
     status = RpcBindingReset(handle);
-    ok(status == RPC_S_OK, "%s: RpcBindingReset failed with error %u\n", protseq, status);
+    ok(status == RPC_S_OK, "%s: RpcBindingReset failed with error %lu\n", protseq, status);
 
     status = RpcEpResolveBinding(handle, IFoo_v0_0_s_ifspec);
     ok(status == RPC_S_OK || broken(status == RPC_S_SERVER_UNAVAILABLE), /* win9x */
-       "%s: RpcEpResolveBinding failed with error %u\n", protseq, status);
+       "%s: RpcEpResolveBinding failed with error %lu\n", protseq, status);
 
     status = RpcBindingReset(handle);
-    ok(status == RPC_S_OK, "%s: RpcBindingReset failed with error %u\n", protseq, status);
+    ok(status == RPC_S_OK, "%s: RpcBindingReset failed with error %lu\n", protseq, status);
 
     status = RpcBindingFree(&handle);
-    ok(status == RPC_S_OK, "%s: RpcBindingFree failed with error %u\n", protseq, status);
+    ok(status == RPC_S_OK, "%s: RpcBindingFree failed with error %lu\n", protseq, status);
 
     status = RpcServerUnregisterIf(NULL, NULL, FALSE);
-    ok(status == RPC_S_OK, "%s: RpcServerUnregisterIf failed (%u)\n", protseq, status);
+    ok(status == RPC_S_OK, "%s: RpcServerUnregisterIf failed (%lu)\n", protseq, status);
 
     status = RpcEpUnregister(IFoo_v0_0_s_ifspec, binding_vector, NULL);
-    ok(status == RPC_S_OK, "%s: RpcEpUnregisterA failed with error %u\n", protseq, status);
+    ok(status == RPC_S_OK, "%s: RpcEpUnregisterA failed with error %lu\n", protseq, status);
 
     status = RpcBindingVectorFree(&binding_vector);
-    ok(status == RPC_S_OK, "%s: RpcBindingVectorFree failed with error %u\n", protseq, status);
+    ok(status == RPC_S_OK, "%s: RpcBindingVectorFree failed with error %lu\n", protseq, status);
 }
 
 static BOOL is_process_elevated(void)
@@ -1152,18 +1152,18 @@ static BOOL is_firewall_enabled(void)
 
     hr = CoCreateInstance( &CLSID_NetFwMgr, NULL, CLSCTX_INPROC_SERVER, &IID_INetFwMgr,
                            (void **)&mgr );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %08lx\n", hr );
     if (hr != S_OK) goto done;
 
     hr = INetFwMgr_get_LocalPolicy( mgr, &policy );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %08lx\n", hr );
     if (hr != S_OK) goto done;
 
     hr = INetFwPolicy_get_CurrentProfile( policy, &profile );
     if (hr != S_OK) goto done;
 
     hr = INetFwProfile_get_FirewallEnabled( profile, &enabled );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %08lx\n", hr );
 
 done:
     if (policy) INetFwPolicy_Release( policy );
@@ -1198,23 +1198,23 @@ static HRESULT set_firewall( enum firewall_op op )
 
     hr = CoCreateInstance( &CLSID_NetFwMgr, NULL, CLSCTX_INPROC_SERVER, &IID_INetFwMgr,
                            (void **)&mgr );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %08lx\n", hr );
     if (hr != S_OK) goto done;
 
     hr = INetFwMgr_get_LocalPolicy( mgr, &policy );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %08lx\n", hr );
     if (hr != S_OK) goto done;
 
     hr = INetFwPolicy_get_CurrentProfile( policy, &profile );
     if (hr != S_OK) goto done;
 
     hr = INetFwProfile_get_AuthorizedApplications( profile, &apps );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %08lx\n", hr );
     if (hr != S_OK) goto done;
 
     hr = CoCreateInstance( &CLSID_NetFwAuthorizedApplication, NULL, CLSCTX_INPROC_SERVER,
                            &IID_INetFwAuthorizedApplication, (void **)&app );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %08lx\n", hr );
     if (hr != S_OK) goto done;
 
     hr = INetFwAuthorizedApplication_put_ProcessImageFileName( app, image );
@@ -1223,7 +1223,7 @@ static HRESULT set_firewall( enum firewall_op op )
     name = SysAllocString( L"rpcrt4_test" );
     hr = INetFwAuthorizedApplication_put_Name( app, name );
     SysFreeString( name );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %08lx\n", hr );
     if (hr != S_OK) goto done;
 
     if (op == APP_ADD)
@@ -1278,7 +1278,7 @@ START_TEST( rpc )
         HRESULT hr = set_firewall(APP_ADD);
         if (hr != S_OK)
         {
-            skip("can't authorize app in firewall %08x\n", hr);
+            skip("can't authorize app in firewall %08lx\n", hr);
             return;
         }
     }
