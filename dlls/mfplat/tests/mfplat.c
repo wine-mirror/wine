@@ -1154,8 +1154,9 @@ static void test_media_type(void)
     IMFMediaType *mediatype, *mediatype2;
     IMFVideoMediaType *video_type;
     IUnknown *unk, *unk2;
-    DWORD count, flags;
     BOOL compressed;
+    DWORD flags;
+    UINT count;
     HRESULT hr;
     GUID guid;
 
@@ -1956,10 +1957,11 @@ static void test_MFCreateMFByteStreamOnStream(void)
     IMFByteStream *bytestream2;
     IStream *stream;
     IMFAttributes *attributes = NULL;
-    DWORD caps, written, count;
+    DWORD caps, written;
     IUnknown *unknown;
     ULONG ref, size;
     HRESULT hr;
+    UINT count;
 
     if(!pMFCreateMFByteStreamOnStream)
     {
@@ -2061,10 +2063,11 @@ static void test_file_stream(void)
     IMFAttributes *attributes = NULL;
     MF_ATTRIBUTE_TYPE item_type;
     WCHAR pathW[MAX_PATH];
-    DWORD caps, count;
     WCHAR *filename;
     HRESULT hr;
     WCHAR *str;
+    DWORD caps;
+    UINT count;
     BOOL eos;
 
     filename = load_resource(L"test.mp4");
@@ -4234,6 +4237,7 @@ image_size_tests[] =
 
 static void test_MFCalculateImageSize(void)
 {
+    DWORD plane_size;
     unsigned int i;
     UINT32 size;
     HRESULT hr;
@@ -4258,11 +4262,11 @@ static void test_MFCalculateImageSize(void)
 
         if (pMFGetPlaneSize)
         {
-            unsigned int plane_size = ptr->plane_size ? ptr->plane_size : ptr->size;
+            unsigned int expected = ptr->plane_size ? ptr->plane_size : ptr->size;
 
-            hr = pMFGetPlaneSize(ptr->subtype->Data1, ptr->width, ptr->height, &size);
+            hr = pMFGetPlaneSize(ptr->subtype->Data1, ptr->width, ptr->height, &plane_size);
             ok(hr == S_OK, "%u: failed to get plane size, hr %#x.\n", i, hr);
-            ok(size == plane_size, "%u: unexpected plane size %u, expected %u.\n", i, size, plane_size);
+            ok(plane_size == expected, "%u: unexpected plane size %u, expected %u.\n", i, plane_size, expected);
         }
     }
 }
@@ -4270,7 +4274,7 @@ static void test_MFCalculateImageSize(void)
 static void test_MFGetPlaneSize(void)
 {
     unsigned int i;
-    UINT32 size;
+    DWORD size;
     HRESULT hr;
 
     if (!pMFGetPlaneSize)
@@ -5685,12 +5689,13 @@ static void test_MFCreate2DMediaBuffer(void)
         { 1, 4, D3DFMT_A8R8G8B8, 16, 64 },
         { 4, 1, D3DFMT_A8R8G8B8, 16, 64 },
     };
-    unsigned int max_length, length, length2;
+    DWORD max_length, length, length2;
     BYTE *buffer_start, *data, *data2;
-    int i, j, k, pitch, pitch2, stride;
+    LONG pitch, pitch2, stride;
     IMF2DBuffer2 *_2dbuffer2;
     IMF2DBuffer *_2dbuffer;
     IMFMediaBuffer *buffer;
+    int i, j, k;
     HRESULT hr;
     BOOL ret;
 
@@ -5986,7 +5991,7 @@ static void test_MFCreateMediaBufferFromMediaType(void)
         { 2,  0,  0,  4, 16, 52 },
     };
     IMFMediaBuffer *buffer;
-    UINT32 length;
+    DWORD length;
     HRESULT hr;
     IMFMediaType *media_type;
     unsigned int i;
@@ -7094,11 +7099,11 @@ static void test_sample_allocator_sysmem(void)
     IMFVideoSampleAllocatorCallback *allocator_cb;
     IMFVideoSampleAllocatorEx *allocatorex;
     IMFVideoSampleAllocator *allocator;
-    unsigned int buffer_count;
     IMFSample *sample, *sample2;
     IMFAttributes *attributes;
     IMFMediaBuffer *buffer;
     LONG refcount, count;
+    DWORD buffer_count;
     IUnknown *unk;
     HRESULT hr;
 
