@@ -296,6 +296,32 @@ static void CLASS_FreeClass( CLASS *classPtr )
     USER_Unlock();
 }
 
+static CLASS *find_class( HINSTANCE instance, const WCHAR *name )
+{
+    ATOM atom = get_int_atom_value( name );
+    CLASS *class;
+
+    USER_Lock();
+    LIST_FOR_EACH_ENTRY( class, &class_list, CLASS, entry )
+    {
+        if (atom)
+        {
+            if (class->atomName != atom) continue;
+        }
+        else
+        {
+            if (wcsicmp( class->name, name )) continue;
+        }
+        if (!class->local || class->hInstance == instance)
+        {
+            TRACE("%s %p -> %p\n", debugstr_w(name), instance, class);
+            return class;
+        }
+    }
+    USER_Unlock();
+    return NULL;
+}
+
 const WCHAR *CLASS_GetVersionedName( const WCHAR *name, UINT *basename_offset, WCHAR *combined, BOOL register_class )
 {
     ACTCTX_SECTION_KEYED_DATA data;
@@ -349,25 +375,9 @@ const WCHAR *CLASS_GetVersionedName( const WCHAR *name, UINT *basename_offset, W
 
     if (register_class && hmod)
     {
-        BOOL found = FALSE;
-        struct list *ptr;
+        CLASS *class;
 
-        USER_Lock();
-
-        LIST_FOR_EACH( ptr, &class_list )
-        {
-            CLASS *class = LIST_ENTRY( ptr, CLASS, entry );
-            if (wcsicmp( class->name, ret )) continue;
-            if (!class->local || class->hInstance == hmod)
-            {
-                found = TRUE;
-                break;
-            }
-        }
-
-        USER_Unlock();
-
-        if (!found)
+        if (!(class = find_class( hmod, ret )))
         {
             BOOL (WINAPI *pRegisterClassNameW)(const WCHAR *class);
 
@@ -375,6 +385,7 @@ const WCHAR *CLASS_GetVersionedName( const WCHAR *name, UINT *basename_offset, W
             if (pRegisterClassNameW)
                 pRegisterClassNameW(name);
         }
+        else release_class_ptr( class );
     }
 
     return ret;
@@ -387,8 +398,7 @@ const WCHAR *CLASS_GetVersionedName( const WCHAR *name, UINT *basename_offset, W
  */
 static CLASS *CLASS_FindClass( LPCWSTR name, HINSTANCE hinstance )
 {
-    struct list *ptr;
-    ATOM atom = get_int_atom_value( name );
+    CLASS *class;
 
     GetDesktopWindow();  /* create the desktop window to trigger builtin class registration */
 
@@ -396,38 +406,17 @@ static CLASS *CLASS_FindClass( LPCWSTR name, HINSTANCE hinstance )
 
     name = CLASS_GetVersionedName( name, NULL, NULL, TRUE );
 
-    for (;;)
+    while (!(class = find_class( hinstance, name )))
     {
-        USER_Lock();
-
-        LIST_FOR_EACH( ptr, &class_list )
-        {
-            CLASS *class = LIST_ENTRY( ptr, CLASS, entry );
-            if (atom)
-            {
-                if (class->atomName != atom) continue;
-            }
-            else
-            {
-                if (wcsicmp( class->name, name )) continue;
-            }
-            if (!class->local || class->hInstance == hinstance)
-            {
-                TRACE("%s %p -> %p\n", debugstr_w(name), hinstance, class);
-                return class;
-            }
-        }
-        USER_Unlock();
-
-        if (atom) break;
+        if (IS_INTRESOURCE( name )) break;
         if (!is_comctl32_class( name )) break;
         if (GetModuleHandleW( L"comctl32.dll" )) break;
         if (!LoadLibraryW( L"comctl32.dll" )) break;
         TRACE( "%s retrying after loading comctl32\n", debugstr_w(name) );
     }
 
-    TRACE("%s %p -> not found\n", debugstr_w(name), hinstance);
-    return NULL;
+    if (!class) TRACE("%s %p -> not found\n", debugstr_w(name), hinstance);
+    return class;
 }
 
 /***********************************************************************
