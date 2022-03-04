@@ -178,27 +178,27 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR name, DWORD 
     if (!wcscmp(name, L"vbAddOne"))
     {
         CHECK_EXPECT(GetDispID_vbAddOne);
-        ok(grfdex == fdexNameCaseInsensitive, "grfdex = %x\n", grfdex);
+        ok(grfdex == fdexNameCaseInsensitive, "grfdex = %lx\n", grfdex);
         return DISP_E_UNKNOWNNAME;
     }
     if (!wcscmp(name, L"wtTest"))
     {
         CHECK_EXPECT(GetDispID_wtTest);
-        ok(!grfdex, "grfdex = %x\n", grfdex);
+        ok(!grfdex, "grfdex = %lx\n", grfdex);
         *pid = DISPID_WTTEST;
         return S_OK;
     }
     if (!wcscmp(name, L"get_gsProp"))
     {
         CHECK_EXPECT(GetDispID_get_gsProp);
-        ok(!grfdex, "grfdex = %x\n", grfdex);
+        ok(!grfdex, "grfdex = %lx\n", grfdex);
         *pid = DISPID_GET_GSPROP;
         return S_OK;
     }
     if (!wcscmp(name, L"put_gsProp"))
     {
         CHECK_EXPECT(GetDispID_put_gsProp);
-        ok(!grfdex, "grfdex = %x\n", grfdex);
+        ok(!grfdex, "grfdex = %lx\n", grfdex);
         *pid = DISPID_PUT_GSPROP;
         return S_OK;
     }
@@ -213,7 +213,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     {
     case DISPID_WTTEST:
         CHECK_EXPECT(InvokeEx);
-        ok(lcid == 0x100, "lcid = %x\n", lcid);
+        ok(lcid == 0x100, "lcid = %lx\n", lcid);
         ok(flags == DISPATCH_METHOD, "flags = %x\n", flags);
         ok(caller == (void*)0xdeadbeef, "called = %p\n", caller);
         V_VT(res) = VT_BOOL;
@@ -236,13 +236,13 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         return S_OK;
     }
 
-    ok(0, "unexpected id %u\n", id);
+    ok(0, "unexpected id %lu\n", id);
     return E_FAIL;
 }
 
 static HRESULT WINAPI DispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR name, DWORD grfdex)
 {
-    ok(0, "unexpected call %s %x\n", wine_dbgstr_w(name), grfdex);
+    ok(0, "unexpected call %s %lx\n", wine_dbgstr_w(name), grfdex);
     return E_NOTIMPL;
 }
 
@@ -339,7 +339,7 @@ static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *ifac
     ok(!item_name, "pstrItemName = %s\n", wine_dbgstr_w(item_name));
     ok(!context, "punkContext = %p\n", context);
     ok(!delimiter, "pstrDelimiter = %s\n", wine_dbgstr_w(delimiter));
-    ok(flags == parse_flags, "dwFlags = %x\n", flags);
+    ok(flags == parse_flags, "dwFlags = %lx\n", flags);
     ok(!result, "pvarResult = NULL\n");
     ok(!excepinfo, "pexcepinfo = %p\n", excepinfo);
     return S_OK;
@@ -401,30 +401,30 @@ static HRESULT WINAPI ActiveScript_SetScriptSite(IActiveScript *iface, IActiveSc
     ok(pass != NULL, "pass == NULL\n");
 
     hres = IActiveScriptSite_QueryInterface(pass, &IID_IActiveScriptSiteInterruptPoll, (void**)&poll);
-    ok(hres == E_NOINTERFACE, "Got IActiveScriptSiteInterruptPoll interface: %08x\n", hres);
+    ok(hres == E_NOINTERFACE, "Got IActiveScriptSiteInterruptPoll interface: %08lx\n", hres);
 
     hres = IActiveScriptSite_GetLCID(pass, &lcid);
-    ok(hres == S_OK, "GetLCID failed: %08x\n", hres);
+    ok(hres == S_OK, "GetLCID failed: %08lx\n", hres);
 
     hres = IActiveScriptSite_OnStateChange(pass, (state = SCRIPTSTATE_INITIALIZED));
-    ok(hres == E_NOTIMPL, "OnStateChange failed: %08x\n", hres);
+    ok(hres == E_NOTIMPL, "OnStateChange failed: %08lx\n", hres);
 
     hres = IActiveScriptSite_QueryInterface(pass, &IID_IActiveScriptSiteDebug, (void**)&debug);
     todo_wine
-    ok(hres == S_OK, "IActiveScriptSiteDebug not supported: %08x\n", hres);
+    ok(hres == S_OK, "IActiveScriptSiteDebug not supported: %08lx\n", hres);
     if (SUCCEEDED(hres))
         IActiveScriptSiteDebug_Release(debug);
 
     hres = IActiveScriptSite_QueryInterface(pass, &IID_ICanHandleException, (void**)&canexception);
-    ok(hres == E_NOINTERFACE, "Got IID_ICanHandleException interface: %08x\n", hres);
+    ok(hres == E_NOINTERFACE, "Got IID_ICanHandleException interface: %08lx\n", hres);
 
     hres = IActiveScriptSite_QueryInterface(pass, &IID_IServiceProvider, (void**)&service);
-    ok(hres == S_OK, "Could not get IServiceProvider interface: %08x\n", hres);
+    ok(hres == S_OK, "Could not get IServiceProvider interface: %08lx\n", hres);
     if (SUCCEEDED(hres))
         IServiceProvider_Release(service);
 
     hres = IActiveScriptSite_QueryInterface(pass, &IID_IActiveScriptSiteWindow, (void**)&window);
-    ok(hres == S_OK, "Could not get IActiveScriptSiteWindow interface: %08x\n", hres);
+    ok(hres == S_OK, "Could not get IActiveScriptSiteWindow interface: %08lx\n", hres);
     if (window)
         IActiveScriptSiteWindow_Release(window);
 
@@ -484,12 +484,12 @@ static HRESULT WINAPI ActiveScript_AddNamedItem(IActiveScript *iface, LPCOLESTR 
     if (!wcscmp(name, L"scriptlet"))
     {
         CHECK_EXPECT(AddNamedItem_scriptlet);
-        ok(flags == (SCRIPTITEM_ISVISIBLE|SCRIPTITEM_GLOBALMEMBERS), "got flags %#x\n", flags);
+        ok(flags == (SCRIPTITEM_ISVISIBLE|SCRIPTITEM_GLOBALMEMBERS), "got flags %#lx\n", flags);
     }
     else if (!wcscmp(name, L"globals"))
     {
         CHECK_EXPECT(AddNamedItem_globals);
-        ok(flags == SCRIPTITEM_ISVISIBLE, "got flags %#x\n", flags);
+        ok(flags == SCRIPTITEM_ISVISIBLE, "got flags %#lx\n", flags);
     }
     else
     {
@@ -685,7 +685,7 @@ static BOOL register_script_engine(BOOL init)
 
     hres = CoRegisterClassObject(&CLSID_TestScript, (IUnknown *)&script_cf,
                                  CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &regid);
-    ok(hres == S_OK, "Could not register script engine: %08x\n", hres);
+    ok(hres == S_OK, "Could not register script engine: %08lx\n", hres);
     return TRUE;
 }
 
@@ -709,10 +709,10 @@ static WCHAR *get_test_file(const char *res_name)
     ok(handle != INVALID_HANDLE_VALUE, "failed to create temp file\n");
 
     res = WriteFile(handle, data, size, &size, NULL);
-    ok(res, "WriteFile failed: %u\n", GetLastError());
+    ok(res, "WriteFile failed: %lu\n", GetLastError());
 
     res = CloseHandle(handle);
-    ok(res, "CloseHandle failed: %u\n", GetLastError());
+    ok(res, "CloseHandle failed: %lu\n", GetLastError());
 
     size = (wcslen(buffer) + 1) * sizeof(WCHAR);
     ret = heap_alloc(size);
@@ -727,7 +727,7 @@ static void test_key_value_(const char *key_name, const char *expect, unsigned l
     LONG size = sizeof(buf);
     LSTATUS status;
     status = RegQueryValueA(HKEY_CLASSES_ROOT, key_name, buf, &size);
-    ok_(__FILE__,line)(!status, "RegQueryValueA failed: %u\n", status);
+    ok_(__FILE__,line)(!status, "RegQueryValueA failed: %lu\n", status);
     if (*expect == '*')
         ok_(__FILE__,line)(size >= strlen(expect) + 1 && !strcmp(buf + size - strlen(expect), expect + 1),
                            "Unexpected value \"%s\", expected \"%s\"\n", buf, expect);
@@ -741,7 +741,7 @@ static void test_key_deleted(const char *key_name)
     HKEY key;
     LSTATUS status;
     status = RegOpenKeyA(HKEY_CLASSES_ROOT, key_name, &key);
-    ok(status == ERROR_FILE_NOT_FOUND, "RegOpenKey(\"%s\") returned %u\n", key_name, status);
+    ok(status == ERROR_FILE_NOT_FOUND, "RegOpenKey(\"%s\") returned %lu\n", key_name, status);
 }
 
 static void register_script_object(BOOL do_register, const WCHAR *file_name)
@@ -765,7 +765,7 @@ static void register_script_object(BOOL do_register, const WCHAR *file_name)
     CHECK_CALLED(ParseScriptText);
     CHECK_CALLED(SetScriptState_UNINITIALIZED);
     CHECK_CALLED(Close);
-    ok(hres == S_OK, "DllInstall failed: %08x\n", hres);
+    ok(hres == S_OK, "DllInstall failed: %08lx\n", hres);
 
     if (do_register)
     {
@@ -802,7 +802,7 @@ static void test_create_object(void)
 
     hres = CoGetClassObject(&CLSID_WineTest, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER, NULL,
                             &IID_IClassFactory, (void**)&cf);
-    ok(hres == S_OK, "Could not get class factory: %08x\n", hres);
+    ok(hres == S_OK, "Could not get class factory: %08lx\n", hres);
 
     parse_flags = SCRIPTTEXT_ISPERSISTENT | SCRIPTTEXT_ISVISIBLE;
 
@@ -820,7 +820,7 @@ static void test_create_object(void)
     SET_EXPECT(SetScriptState_UNINITIALIZED);
     SET_EXPECT(Clone);
     hres = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)&unk);
-    ok(hres == S_OK, "Could not create scriptlet instance: %08x\n", hres);
+    ok(hres == S_OK, "Could not create scriptlet instance: %08lx\n", hres);
     CHECK_CALLED(Clone);
     CHECK_CALLED(CreateInstance);
     CHECK_CALLED(QI_IActiveScriptParse);
@@ -838,47 +838,47 @@ static void test_create_object(void)
     CHECK_CALLED(ParseScriptText);
 
     hres = IUnknown_QueryInterface(unk, &IID_IDispatch, (void**)&disp);
-    ok(hres == S_OK, "Could not get IDispatch iface: %08x\n", hres);
+    ok(hres == S_OK, "Could not get IDispatch iface: %08lx\n", hres);
 
     IDispatch_Release(disp);
 
     hres = IUnknown_QueryInterface(unk, &IID_IDispatchEx, (void**)&dispex);
-    ok(hres == S_OK, "Could not get IDispatch iface: %08x\n", hres);
+    ok(hres == S_OK, "Could not get IDispatch iface: %08lx\n", hres);
 
     str = SysAllocString(L"vbAddOne");
     hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseSensitive, &vb_add_one_id);
-    ok(hres == S_OK, "Could not get vkAddOne id: %08x\n", hres);
+    ok(hres == S_OK, "Could not get vkAddOne id: %08lx\n", hres);
     SysFreeString(str);
 
     str = SysAllocString(L"jsAddTwo");
     hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseSensitive, &js_add_two_id);
-    ok(hres == S_OK, "Could not get jsAddTwo id: %08x\n", hres);
+    ok(hres == S_OK, "Could not get jsAddTwo id: %08lx\n", hres);
     SysFreeString(str);
 
     str = SysAllocString(L"wtTest");
     hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseSensitive, &wt_test_id);
-    ok(hres == S_OK, "Could not get wtTest id: %08x\n", hres);
+    ok(hres == S_OK, "Could not get wtTest id: %08lx\n", hres);
     SysFreeString(str);
 
     str = SysAllocString(L"gsProp");
     hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseSensitive, &wt_gsprop_id);
-    ok(hres == S_OK, "Could not get wtTest id: %08x\n", hres);
+    ok(hres == S_OK, "Could not get wtTest id: %08lx\n", hres);
     SysFreeString(str);
 
     str = SysAllocString(L"vbaddone");
     hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseSensitive, &id);
-    ok(hres == DISP_E_UNKNOWNNAME, "invalid case returned: %08x\n", hres);
+    ok(hres == DISP_E_UNKNOWNNAME, "invalid case returned: %08lx\n", hres);
     SysFreeString(str);
 
     str = SysAllocString(L"vbaddone");
     hres = IDispatchEx_GetDispID(dispex, str, 0, &id);
-    ok(hres == DISP_E_UNKNOWNNAME, "invalid case returned: %08x\n", hres);
+    ok(hres == DISP_E_UNKNOWNNAME, "invalid case returned: %08lx\n", hres);
     SysFreeString(str);
 
     str = SysAllocString(L"vbaddone");
     hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseInsensitive, &id);
-    ok(hres == S_OK, "case insensitive returned: %08x\n", hres);
-    ok(id == vb_add_one_id, "id = %u, expected %u\n", id, vb_add_one_id);
+    ok(hres == S_OK, "case insensitive returned: %08lx\n", hres);
+    ok(id == vb_add_one_id, "id = %lu, expected %lu\n", id, vb_add_one_id);
     SysFreeString(str);
 
     memset(&ei, 0, sizeof(ei));
@@ -889,9 +889,9 @@ static void test_create_object(void)
     dp.cArgs = 1;
     dp.rgvarg = &v;
     hres = IDispatchEx_InvokeEx(dispex, vb_add_one_id, 0, DISPATCH_PROPERTYGET|DISPATCH_METHOD, &dp, &r, &ei, NULL);
-    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
     ok(V_VT(&r) == VT_I4, "V_VT(r) = %d\n", V_VT(&r));
-    ok(V_I4(&r) == 3, "V_I4(r) = %d\n", V_I4(&r));
+    ok(V_I4(&r) == 3, "V_I4(r) = %ld\n", V_I4(&r));
 
     memset(&ei, 0, sizeof(ei));
     memset(&dp, 0, sizeof(dp));
@@ -901,9 +901,9 @@ static void test_create_object(void)
     dp.cArgs = 1;
     dp.rgvarg = &v;
     hres = IDispatchEx_InvokeEx(dispex, js_add_two_id, 0, DISPATCH_PROPERTYGET|DISPATCH_METHOD, &dp, &r, &ei, NULL);
-    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
     ok(V_VT(&r) == VT_I4, "V_VT(r) = %d\n", V_VT(&r));
-    ok(V_I4(&r) == 6, "V_I4(r) = %d\n", V_I4(&r));
+    ok(V_I4(&r) == 6, "V_I4(r) = %ld\n", V_I4(&r));
 
     memset(&ei, 0, sizeof(ei));
     memset(&dp, 0, sizeof(dp));
@@ -914,20 +914,20 @@ static void test_create_object(void)
     dp.rgvarg = &v;
     SET_EXPECT(InvokeEx);
     hres = IDispatchEx_InvokeEx(dispex, wt_test_id, 0x100, DISPATCH_PROPERTYGET|DISPATCH_METHOD, &dp, &r, &ei, (void*)0xdeadbeef);
-    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
     CHECK_CALLED(InvokeEx);
     ok(V_VT(&r) == VT_BOOL, "V_VT(r) = %d\n", V_VT(&r));
-    ok(V_BOOL(&r) == VARIANT_TRUE, "V_I4(r) = %d\n", V_I4(&r));
+    ok(V_BOOL(&r) == VARIANT_TRUE, "V_I4(r) = %ld\n", V_I4(&r));
 
     memset(&ei, 0, sizeof(ei));
     memset(&dp, 0, sizeof(dp));
     V_VT(&r) = VT_ERROR;
     SET_EXPECT(InvokeEx);
     hres = IDispatchEx_InvokeEx(dispex, wt_test_id, 0x100, DISPATCH_METHOD, &dp, &r, &ei, (void*)0xdeadbeef);
-    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
     CHECK_CALLED(InvokeEx);
     ok(V_VT(&r) == VT_BOOL, "V_VT(r) = %d\n", V_VT(&r));
-    ok(V_BOOL(&r) == VARIANT_TRUE, "V_I4(r) = %d\n", V_I4(&r));
+    ok(V_BOOL(&r) == VARIANT_TRUE, "V_I4(r) = %ld\n", V_I4(&r));
 
     memset(&ei, 0, sizeof(ei));
     memset(&dp, 0, sizeof(dp));
@@ -938,10 +938,10 @@ static void test_create_object(void)
     dp.rgvarg = &v;
     SET_EXPECT(InvokeEx_get_gsProp);
     hres = IDispatchEx_InvokeEx(dispex, wt_gsprop_id, 0, DISPATCH_PROPERTYGET|DISPATCH_METHOD, &dp, &r, &ei, NULL);
-    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
     CHECK_CALLED(InvokeEx_get_gsProp);
     ok(V_VT(&r) == VT_BOOL, "V_VT(r) = %d\n", V_VT(&r));
-    ok(V_BOOL(&r) == VARIANT_TRUE, "V_I4(r) = %d\n", V_I4(&r));
+    ok(V_BOOL(&r) == VARIANT_TRUE, "V_I4(r) = %ld\n", V_I4(&r));
 
     memset(&ei, 0, sizeof(ei));
     memset(&dp, 0, sizeof(dp));
@@ -954,19 +954,19 @@ static void test_create_object(void)
     dp.cNamedArgs = 1;
     SET_EXPECT(InvokeEx_put_gsProp);
     hres = IDispatchEx_InvokeEx(dispex, wt_gsprop_id, 0, DISPATCH_PROPERTYPUT, &dp, &r, &ei, NULL);
-    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
     CHECK_CALLED(InvokeEx_put_gsProp);
     ok(V_VT(&r) == VT_BOOL, "V_VT(r) = %d\n", V_VT(&r));
-    ok(V_BOOL(&r) == VARIANT_FALSE, "V_I4(r) = %d\n", V_I4(&r));
+    ok(V_BOOL(&r) == VARIANT_FALSE, "V_I4(r) = %ld\n", V_I4(&r));
 
     hres = IDispatchEx_InvokeEx(dispex, wt_test_id, 0x100, DISPATCH_PROPERTYGET, &dp, &r, &ei, (void*)0xdeadbeef);
-    ok(hres == DISP_E_MEMBERNOTFOUND, "InvokeEx returned: %08x\n", hres);
+    ok(hres == DISP_E_MEMBERNOTFOUND, "InvokeEx returned: %08lx\n", hres);
 
     hres = IDispatchEx_InvokeEx(dispex, 0xdeadbeef, 0, DISPATCH_METHOD, &dp, &r, &ei, (void*)0xdeadbeef);
-    ok(hres == DISP_E_MEMBERNOTFOUND, "InvokeEx returned: %08x\n", hres);
+    ok(hres == DISP_E_MEMBERNOTFOUND, "InvokeEx returned: %08lx\n", hres);
 
     hres = IDispatchEx_InvokeEx(dispex, DISPID_VALUE, 0, DISPATCH_METHOD, &dp, &r, &ei, (void*)0xdeadbeef);
-    ok(hres == DISP_E_MEMBERNOTFOUND, "InvokeEx returned: %08x\n", hres);
+    ok(hres == DISP_E_MEMBERNOTFOUND, "InvokeEx returned: %08lx\n", hres);
 
     IDispatchEx_Release(dispex);
 
@@ -993,7 +993,7 @@ static void test_create_object(void)
     SET_EXPECT(SetScriptState_STARTED);
     SET_EXPECT(ParseScriptText);
     hres = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)&unk);
-    ok(hres == S_OK, "Could not create scriptlet instance: %08x\n", hres);
+    ok(hres == S_OK, "Could not create scriptlet instance: %08lx\n", hres);
     CHECK_CALLED(Clone);
     CHECK_CALLED(CreateInstance);
     CHECK_CALLED(QI_IActiveScriptParse);
@@ -1029,7 +1029,7 @@ static void test_create_object(void)
     SET_EXPECT(GetDispID_put_gsProp);
     SET_EXPECT(SetScriptState_STARTED);
     hres = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)&unk);
-    ok(hres == S_OK, "Could not create scriptlet instance: %08x\n", hres);
+    ok(hres == S_OK, "Could not create scriptlet instance: %08lx\n", hres);
     CHECK_CALLED(Clone);
     CHECK_CALLED(QI_IActiveScriptParse);
     CHECK_CALLED(SetScriptSite);
@@ -1061,7 +1061,7 @@ START_TEST(scrobj)
     HRESULT hres;
 
     hres = CoInitialize(NULL);
-    ok(hres == S_OK, "CoInitialize failed: %08x\n", hres);
+    ok(hres == S_OK, "CoInitialize failed: %08lx\n", hres);
 
     scrobj_module = LoadLibraryA("scrobj.dll");
     ok(scrobj_module != NULL, "Could not load scrobj.dll\n");
