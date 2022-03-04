@@ -122,6 +122,14 @@ struct get_render_buffer_params
     BYTE **data;
 };
 
+struct release_render_buffer_params
+{
+    struct alsa_stream *stream;
+    UINT32 written_frames;
+    UINT flags;
+    HRESULT result;
+};
+
 struct is_format_supported_params
 {
     const char *alsa_name;
@@ -178,6 +186,7 @@ enum alsa_funcs
     alsa_reset,
     alsa_timer_loop,
     alsa_get_render_buffer,
+    alsa_release_render_buffer,
     alsa_is_format_supported,
     alsa_get_mix_format,
     alsa_get_buffer_size,

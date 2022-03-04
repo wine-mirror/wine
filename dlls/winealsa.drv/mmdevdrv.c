@@ -689,18 +689,6 @@ static HRESULT get_audio_session(const GUID *sessionguid,
     return S_OK;
 }
 
-static void silence_buffer(struct alsa_stream *stream, BYTE *buffer, UINT32 frames)
-{
-    WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE*)stream->fmt;
-    if((stream->fmt->wFormatTag == WAVE_FORMAT_PCM ||
-            (stream->fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-             IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))) &&
-            stream->fmt->wBitsPerSample == 8)
-        memset(buffer, 128, frames * stream->fmt->nBlockAlign);
-    else
-        memset(buffer, 0, frames * stream->fmt->nBlockAlign);
-}
-
 static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         AUDCLNT_SHAREMODE mode, DWORD flags, REFERENCE_TIME duration,
         REFERENCE_TIME period, const WAVEFORMATEX *fmt,
@@ -1314,70 +1302,21 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
     return params.result;
 }
 
-static void alsa_wrap_buffer(struct alsa_stream *stream, BYTE *buffer, UINT32 written_frames)
-{
-    snd_pcm_uframes_t write_offs_frames = stream->wri_offs_frames;
-    UINT32 write_offs_bytes = write_offs_frames * stream->fmt->nBlockAlign;
-    snd_pcm_uframes_t chunk_frames = stream->bufsize_frames - write_offs_frames;
-    UINT32 chunk_bytes = chunk_frames * stream->fmt->nBlockAlign;
-    UINT32 written_bytes = written_frames * stream->fmt->nBlockAlign;
-
-    if(written_bytes <= chunk_bytes){
-        memcpy(stream->local_buffer + write_offs_bytes, buffer, written_bytes);
-    }else{
-        memcpy(stream->local_buffer + write_offs_bytes, buffer, chunk_bytes);
-        memcpy(stream->local_buffer, buffer + chunk_bytes,
-                written_bytes - chunk_bytes);
-    }
-}
-
 static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
         IAudioRenderClient *iface, UINT32 written_frames, DWORD flags)
 {
     ACImpl *This = impl_from_IAudioRenderClient(iface);
-    struct alsa_stream *stream = This->stream;
-    BYTE *buffer;
+    struct release_render_buffer_params params;
 
     TRACE("(%p)->(%u, %x)\n", This, written_frames, flags);
 
-    alsa_lock(stream);
+    params.stream = This->stream;
+    params.written_frames = written_frames;
+    params.flags = flags;
 
-    if(!written_frames){
-        stream->getbuf_last = 0;
-        alsa_unlock(stream);
-        return S_OK;
-    }
+    ALSA_CALL(release_render_buffer, &params);
 
-    if(!stream->getbuf_last){
-        alsa_unlock(stream);
-        return AUDCLNT_E_OUT_OF_ORDER;
-    }
-
-    if(written_frames > (stream->getbuf_last >= 0 ? stream->getbuf_last : -stream->getbuf_last)){
-        alsa_unlock(stream);
-        return AUDCLNT_E_INVALID_SIZE;
-    }
-
-    if(stream->getbuf_last >= 0)
-        buffer = stream->local_buffer + stream->wri_offs_frames * stream->fmt->nBlockAlign;
-    else
-        buffer = stream->tmp_buffer;
-
-    if(flags & AUDCLNT_BUFFERFLAGS_SILENT)
-        silence_buffer(stream, buffer, written_frames);
-
-    if(stream->getbuf_last < 0)
-        alsa_wrap_buffer(stream, buffer, written_frames);
-
-    stream->wri_offs_frames += written_frames;
-    stream->wri_offs_frames %= stream->bufsize_frames;
-    stream->held_frames += written_frames;
-    stream->written_frames += written_frames;
-    stream->getbuf_last = 0;
-
-    alsa_unlock(stream);
-
-    return S_OK;
+    return params.result;
 }
 
 static const IAudioRenderClientVtbl AudioRenderClient_Vtbl = {
