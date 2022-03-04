@@ -104,6 +104,67 @@ static void test_window_props(void)
     DestroyWindow( hwnd );
 }
 
+static void test_class(void)
+{
+    UNICODE_STRING name;
+    WCHAR buf[64];
+    WNDCLASSW cls;
+    ATOM class;
+    ULONG ret;
+
+    memset( &cls, 0, sizeof(cls) );
+    cls.style         = CS_HREDRAW | CS_VREDRAW;
+    cls.lpfnWndProc   = DefWindowProcW;
+    cls.hInstance     = GetModuleHandleW( NULL );
+    cls.hbrBackground = GetStockObject( WHITE_BRUSH );
+    cls.lpszMenuName  = 0;
+    cls.lpszClassName = L"test";
+
+    class = RegisterClassW( &cls );
+    ok( class, "RegisterClassW failed: %lu\n", GetLastError() );
+
+    memset( buf, 0xcc, sizeof(buf) );
+    name.Buffer = buf;
+    name.Length = 0xdead;
+    name.MaximumLength = sizeof(buf);
+    ret = NtUserGetAtomName( class, &name );
+    ok( ret == 4, "NtUserGetAtomName returned %lu\n", ret );
+    ok( name.Length == 0xdead, "Length = %u\n", name.Length );
+    ok( name.MaximumLength == sizeof(buf), "MaximumLength = %u\n", name.MaximumLength );
+    ok( !wcscmp( buf, L"test" ), "buf = %s\n", debugstr_w(buf) );
+
+    memset( buf, 0xcc, sizeof(buf) );
+    name.Buffer = buf;
+    name.Length = 0xdead;
+    name.MaximumLength = 8;
+    ret = NtUserGetAtomName( class, &name );
+    ok( ret == 3, "NtUserGetAtomName returned %lu\n", ret );
+    ok( name.Length == 0xdead, "Length = %u\n", name.Length );
+    ok( name.MaximumLength == 8, "MaximumLength = %u\n", name.MaximumLength );
+    ok( !wcscmp( buf, L"tes" ), "buf = %s\n", debugstr_w(buf) );
+
+    memset( buf, 0xcc, sizeof(buf) );
+    name.Buffer = buf;
+    name.MaximumLength = 1;
+    SetLastError( 0xdeadbeef );
+    ret = NtUserGetAtomName( class, &name );
+    ok( !ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+        "NtUserGetAtomName returned %lx %lu\n", ret, GetLastError() );
+
+    ret = UnregisterClassW( L"test", GetModuleHandleW(NULL) );
+    ok( ret, "UnregisterClassW failed: %lu\n", GetLastError() );
+
+    memset( buf, 0xcc, sizeof(buf) );
+    name.Buffer = buf;
+    name.MaximumLength = sizeof(buf);
+    SetLastError( 0xdeadbeef );
+    ret = NtUserGetAtomName( class, &name );
+    ok( !ret && GetLastError() == ERROR_INVALID_HANDLE,
+        "NtUserGetAtomName returned %lx %lu\n", ret, GetLastError() );
+    ok( buf[0] == 0xcccc, "buf = %s\n", debugstr_w(buf) );
+
+}
+
 static BOOL WINAPI count_win( HWND hwnd, LPARAM lparam )
 {
     ULONG *cnt = (ULONG *)lparam;
@@ -293,6 +354,7 @@ START_TEST(win32u)
 
     test_NtUserEnumDisplayDevices();
     test_window_props();
+    test_class();
     test_NtUserBuildHwndList();
     test_cursoricon();
 

@@ -165,3 +165,28 @@ NTSTATUS WINAPI NtUserInitializeClientPfnArrays( const struct user_client_procs 
 
     return STATUS_SUCCESS;
 }
+
+/***********************************************************************
+ *	     NtUserGetAtomName   (win32u.@)
+ */
+ULONG WINAPI NtUserGetAtomName( ATOM atom, UNICODE_STRING *name )
+{
+    char buf[sizeof(ATOM_BASIC_INFORMATION) + MAX_ATOM_LEN * sizeof(WCHAR)];
+    ATOM_BASIC_INFORMATION *abi = (ATOM_BASIC_INFORMATION *)buf;
+    UINT size;
+
+    if (!set_ntstatus( NtQueryInformationAtom( atom, AtomBasicInformation,
+                                               buf, sizeof(buf), NULL )))
+        return 0;
+
+    if (name->MaximumLength < sizeof(WCHAR))
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return 0;
+    }
+
+    size = min( abi->NameLength, name->MaximumLength - sizeof(WCHAR) );
+    if (size) memcpy( name->Buffer, abi->Name, size );
+    name->Buffer[size / sizeof(WCHAR)] = 0;
+    return size / sizeof(WCHAR);
+}

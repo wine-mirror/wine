@@ -167,6 +167,8 @@ typedef struct tagWINDOWPROC
 #define WINPROC_HANDLE (~0u >> 16)
 #define BUILTIN_WINPROC(index) ((WNDPROC)(ULONG_PTR)((index) | (WINPROC_HANDLE << 16)))
 
+#define MAX_ATOM_LEN 255
+
 /* class.c */
 WNDPROC alloc_winproc( WNDPROC func, BOOL ansi ) DECLSPEC_HIDDEN;
 WINDOWPROC *get_winproc_ptr( WNDPROC handle ) DECLSPEC_HIDDEN;

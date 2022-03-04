@@ -256,6 +256,7 @@ BOOL    WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD mode,
 HICON   WINAPI NtUserFindExistingCursorIcon( UNICODE_STRING *module, UNICODE_STRING *res_name,
                                              void *desc );
 SHORT   WINAPI NtUserGetAsyncKeyState( INT key );
+ULONG   WINAPI NtUserGetAtomName( ATOM atom, UNICODE_STRING *name );
 INT     WINAPI NtUserGetClipboardFormatName( UINT format, WCHAR *buffer, INT maxlen );
 HWND    WINAPI NtUserGetClipboardOwner(void);
 DWORD   WINAPI NtUserGetClipboardSequenceNumber(void);

@@ -112,6 +112,7 @@ static void * const syscalls[] =
     NtUserCreateWindowStation,
     NtUserDestroyAcceleratorTable,
     NtUserFindExistingCursorIcon,
+    NtUserGetAtomName,
     NtUserGetClipboardFormatName,
     NtUserGetClipboardOwner,
     NtUserGetClipboardSequenceNumber,

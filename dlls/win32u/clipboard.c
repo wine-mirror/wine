@@ -28,6 +28,7 @@
 #endif
 
 #include "win32u_private.h"
+#include "ntuser_private.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 
@@ -168,7 +169,7 @@ INT WINAPI NtUserGetPriorityClipboardFormat( UINT *list, INT count )
  */
 INT WINAPI NtUserGetClipboardFormatName( UINT format, WCHAR *buffer, INT maxlen )
 {
-    char buf[sizeof(ATOM_BASIC_INFORMATION) + 255 * sizeof(WCHAR)];
+    char buf[sizeof(ATOM_BASIC_INFORMATION) + MAX_ATOM_LEN * sizeof(WCHAR)];
     ATOM_BASIC_INFORMATION *abi = (ATOM_BASIC_INFORMATION *)buf;
     UINT length = 0;
 

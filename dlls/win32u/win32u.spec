@@ -892,7 +892,7 @@
 @ stub NtUserGetAncestor
 @ stub NtUserGetAppImeLevel
 @ stdcall NtUserGetAsyncKeyState(long)
-@ stub NtUserGetAtomName
+@ stdcall -syscall NtUserGetAtomName(long ptr)
 @ stub NtUserGetAutoRotationState
 @ stub NtUserGetCIMSSM
 @ stub NtUserGetCPD
