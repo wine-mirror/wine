@@ -38,11 +38,11 @@ static int test_failures, test_skipped;
 static LONG CALLBACK rpc_exception_filter(EXCEPTION_POINTERS *ptrs)
 {
     if (test_skipped)
-        skip("Can't connect to ATSvc service: %#x\n", ptrs->ExceptionRecord->ExceptionCode);
+        skip("Can't connect to ATSvc service: %#lx\n", ptrs->ExceptionRecord->ExceptionCode);
 
     if (winetest_debug)
     {
-        fprintf(stdout, "%04x:atsvcapi: 1 tests executed (0 marked as todo, %d %s), %d skipped.\n",
+        fprintf(stdout, "%04lx:atsvcapi: 1 tests executed (0 marked as todo, %d %s), %d skipped.\n",
                 GetCurrentProcessId(), test_failures, test_failures != 1 ? "failures" : "failure", test_skipped);
         fflush(stdout);
     }
@@ -65,14 +65,14 @@ START_TEST(atsvcapi)
     total = MAX_COMPUTERNAME_LENGTH + 1;
     SetLastError(0xdeadbeef);
     ret = GetComputerNameW(server_name, &total);
-    ok(ret, "GetComputerName error %u\n", GetLastError());
+    ok(ret, "GetComputerName error %lu\n", GetLastError());
 
     hr = RpcStringBindingComposeA(NULL, ncalrpc, NULL, NULL, NULL, &binding_str);
-    ok(hr == RPC_S_OK, "RpcStringBindingCompose error %#x\n", hr);
+    ok(hr == RPC_S_OK, "RpcStringBindingCompose error %#lx\n", hr);
     hr = RpcBindingFromStringBindingA(binding_str, &atsvc_handle);
-    ok(hr == RPC_S_OK, "RpcBindingFromStringBinding error %#x\n", hr);
+    ok(hr == RPC_S_OK, "RpcBindingFromStringBinding error %#lx\n", hr);
     hr = RpcStringFreeA(&binding_str);
-    ok(hr == RPC_S_OK, "RpcStringFree error %#x\n", hr);
+    ok(hr == RPC_S_OK, "RpcStringFree error %#lx\n", hr);
 
     /* widl generated RpcTryExcept/RpcExcept can't catch raised exceptions */
     old_exception_filter = SetUnhandledExceptionFilter(rpc_exception_filter);
@@ -91,7 +91,7 @@ START_TEST(atsvcapi)
         win_skip("NetrJobAdd: Access denied, skipping the tests\n");
         goto skip_tests;
     }
-    ok(ret == ERROR_SUCCESS || broken(ret == ERROR_NOT_SUPPORTED) /* Win8+ */, "NetrJobAdd error %u\n", ret);
+    ok(ret == ERROR_SUCCESS || broken(ret == ERROR_NOT_SUPPORTED) /* Win8+ */, "NetrJobAdd error %lu\n", ret);
     if (ret == ERROR_NOT_SUPPORTED)
     {
         /* FIXME: use win_skip() when todo_wine above is removed */
@@ -106,10 +106,10 @@ START_TEST(atsvcapi)
 
     info2 = NULL;
     ret = NetrJobGetInfo(server_name, 0xdeadbeef, &info2);
-    ok(ret == APE_AT_ID_NOT_FOUND || broken(1) /* vista and w2008 return rubbish here */, "wrong error %u\n", ret);
+    ok(ret == APE_AT_ID_NOT_FOUND || broken(1) /* vista and w2008 return rubbish here */, "wrong error %lu\n", ret);
 
     ret = NetrJobDel(server_name, 0xdeadbeef, 0xdeadbeef);
-    ok(ret == APE_AT_ID_NOT_FOUND, "wrong error %u\n", ret);
+    ok(ret == APE_AT_ID_NOT_FOUND, "wrong error %lu\n", ret);
 
     try_count = 5;
 
@@ -124,31 +124,31 @@ START_TEST(atsvcapi)
             win_skip("NetrJobEnum: Access denied, skipping the tests\n");
             goto skip_tests_delete;
         }
-        ok(ret == ERROR_SUCCESS, "NetrJobEnum error %u (%#x)\n", ret, ret);
-        ok(total != 0, "total %u\n", total);
-        ok(start_index == 0, "start_index %u\n", start_index);
+        ok(ret == ERROR_SUCCESS, "NetrJobEnum error %lu (%#lx)\n", ret, ret);
+        ok(total != 0, "total %lu\n", total);
+        ok(start_index == 0, "start_index %lu\n", start_index);
         ok(container.Buffer != NULL, "Buffer %p\n", container.Buffer);
-        ok(container.EntriesRead != 0, "EntriesRead %u\n", container.EntriesRead);
+        ok(container.EntriesRead != 0, "EntriesRead %lu\n", container.EntriesRead);
 
         found = FALSE;
 
         for (i = 0; i < container.EntriesRead; i++)
         {
-            trace("%u: jobid %u, command %s\n", i, container.Buffer[i].JobId, wine_dbgstr_w(container.Buffer[i].Command));
+            trace("%lu: jobid %lu, command %s\n", i, container.Buffer[i].JobId, wine_dbgstr_w(container.Buffer[i].Command));
 
             if (container.Buffer[i].JobId == jobid ||
                 !lstrcmpW(container.Buffer[i].Command, task1W))
             {
                 found = TRUE;
-                trace("found %u: jobid %u, command %s\n", i, container.Buffer[i].JobId, wine_dbgstr_w(container.Buffer[i].Command));
+                trace("found %lu: jobid %lu, command %s\n", i, container.Buffer[i].JobId, wine_dbgstr_w(container.Buffer[i].Command));
             }
 
             info2 = NULL;
             ret = NetrJobGetInfo(server_name, container.Buffer[i].JobId, &info2);
-            ok(ret == ERROR_SUCCESS, "NetrJobGetInfo error %u\n", ret);
+            ok(ret == ERROR_SUCCESS, "NetrJobGetInfo error %lu\n", ret);
 
             ok(container.Buffer[i].JobTime == info2->JobTime, "%u != %u\n", (UINT)container.Buffer[i].JobTime, (UINT)info2->JobTime);
-            ok(container.Buffer[i].DaysOfMonth == info2->DaysOfMonth, "%u != %u\n", container.Buffer[i].DaysOfMonth, info2->DaysOfMonth);
+            ok(container.Buffer[i].DaysOfMonth == info2->DaysOfMonth, "%lu != %lu\n", container.Buffer[i].DaysOfMonth, info2->DaysOfMonth);
             ok(container.Buffer[i].DaysOfWeek == info2->DaysOfWeek, "%u != %u\n", container.Buffer[i].DaysOfWeek, info2->DaysOfWeek);
             ok(container.Buffer[i].Flags == info2->Flags, "%#x != %#x\n", container.Buffer[i].Flags, info2->Flags);
             ok(!lstrcmpW(container.Buffer[i].Command, info2->Command), "%s != %s\n", wine_dbgstr_w(container.Buffer[i].Command), wine_dbgstr_w(info2->Command));
@@ -164,17 +164,17 @@ START_TEST(atsvcapi)
 
     MIDL_user_free(container.Buffer);
 
-    ok(found, "just added jobid %u should be found\n", jobid);
+    ok(found, "just added jobid %lu should be found\n", jobid);
 
 skip_tests_delete:
     ret = NetrJobDel(server_name, jobid, jobid);
-    ok(ret == ERROR_SUCCESS, "NetrJobDel error %u\n", ret);
+    ok(ret == ERROR_SUCCESS, "NetrJobDel error %lu\n", ret);
 
 skip_tests:
     SetUnhandledExceptionFilter(old_exception_filter);
 
     hr = RpcBindingFree(&atsvc_handle);
-    ok(hr == RPC_S_OK, "RpcBindingFree error %#x\n", hr);
+    ok(hr == RPC_S_OK, "RpcBindingFree error %#lx\n", hr);
 }
 
 DECLSPEC_HIDDEN handle_t __RPC_USER ATSVC_HANDLE_bind(ATSVC_HANDLE str)
@@ -185,10 +185,10 @@ DECLSPEC_HIDDEN handle_t __RPC_USER ATSVC_HANDLE_bind(ATSVC_HANDLE str)
     HRESULT hr;
 
     hr = RpcStringBindingComposeA(NULL, ncalrpc, NULL, NULL, NULL, &binding_str);
-    ok(hr == RPC_S_OK, "RpcStringBindingCompose error %#x\n", hr);
+    ok(hr == RPC_S_OK, "RpcStringBindingCompose error %#lx\n", hr);
 
     hr = RpcBindingFromStringBindingA(binding_str, &rpc_handle);
-    ok(hr == RPC_S_OK, "RpcBindingFromStringBinding error %#x\n", hr);
+    ok(hr == RPC_S_OK, "RpcBindingFromStringBinding error %#lx\n", hr);
 
     RpcStringFreeA(&binding_str);
     return rpc_handle;
