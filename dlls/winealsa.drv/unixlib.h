@@ -141,6 +141,13 @@ struct get_capture_buffer_params
     UINT64 *qpcpos;
 };
 
+struct release_capture_buffer_params
+{
+    struct alsa_stream *stream;
+    UINT32 done;
+    HRESULT result;
+};
+
 struct is_format_supported_params
 {
     const char *alsa_name;
@@ -199,6 +206,7 @@ enum alsa_funcs
     alsa_get_render_buffer,
     alsa_release_render_buffer,
     alsa_get_capture_buffer,
+    alsa_release_capture_buffer,
     alsa_is_format_supported,
     alsa_get_mix_format,
     alsa_get_buffer_size,

@@ -1398,37 +1398,16 @@ static HRESULT WINAPI AudioCaptureClient_ReleaseBuffer(
         IAudioCaptureClient *iface, UINT32 done)
 {
     ACImpl *This = impl_from_IAudioCaptureClient(iface);
-    struct alsa_stream *stream = This->stream;
+    struct release_capture_buffer_params params;
 
     TRACE("(%p)->(%u)\n", This, done);
 
-    alsa_lock(stream);
+    params.stream = This->stream;
+    params.done = done;
 
-    if(!done){
-        stream->getbuf_last = 0;
-        alsa_unlock(stream);
-        return S_OK;
-    }
+    ALSA_CALL(release_capture_buffer, &params);
 
-    if(!stream->getbuf_last){
-        alsa_unlock(stream);
-        return AUDCLNT_E_OUT_OF_ORDER;
-    }
-
-    if(stream->getbuf_last != done){
-        alsa_unlock(stream);
-        return AUDCLNT_E_INVALID_SIZE;
-    }
-
-    stream->written_frames += done;
-    stream->held_frames -= done;
-    stream->lcl_offs_frames += done;
-    stream->lcl_offs_frames %= stream->bufsize_frames;
-    stream->getbuf_last = 0;
-
-    alsa_unlock(stream);
-
-    return S_OK;
+    return params.result;
 }
 
 static HRESULT WINAPI AudioCaptureClient_GetNextPacketSize(
