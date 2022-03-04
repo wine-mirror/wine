@@ -34,26 +34,26 @@ static void test_interfaces(void)
 
     hr = CoCreateInstance(&CLSID_SpResourceManager, NULL, CLSCTX_INPROC_SERVER,
                           &IID_ISpResourceManager, (void **)&resource_manager);
-    ok(hr == S_OK, "Failed to create ISpeechVoice interface: %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create ISpeechVoice interface: %#lx.\n", hr);
     ok(!!resource_manager, "Expected non-NULL resource manager.\n");
 
     hr = CoCreateInstance(&CLSID_SpResourceManager, NULL, CLSCTX_INPROC_SERVER,
                           &IID_ISpResourceManager, (void **)&resource_manager2);
-    ok(hr == S_OK, "Failed to create ISpeechVoice interface: %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create ISpeechVoice interface: %#lx.\n", hr);
     ok(!!resource_manager2, "Expected non-NULL resource manager.\n");
     todo_wine ok(resource_manager2 == resource_manager, "Expected managers to match.\n");
     ISpResourceManager_Release(resource_manager2);
 
     hr = CoCreateInstance(&CLSID_SpResourceManager, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IUnknown, (void **)&unk);
-    ok(hr == S_OK, "Failed to create IUnknown interface: %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create IUnknown interface: %#lx.\n", hr);
     ok(!!unk, "Expected non-NULL unk.\n");
     todo_wine ok(unk == (IUnknown *)resource_manager, "Expected unk to match existing manager.\n");
     IUnknown_Release(unk);
 
     hr = CoCreateInstance(&CLSID_SpResourceManager, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IDispatch, (void **)&dispatch);
-    ok(hr == E_NOINTERFACE, "Succeeded to create IDispatch interface: %#x.\n", hr);
+    ok(hr == E_NOINTERFACE, "Succeeded to create IDispatch interface: %#lx.\n", hr);
     ok(!dispatch, "Expected NULL dispatch, got %p.", dispatch);
 
     ISpResourceManager_Release(resource_manager);

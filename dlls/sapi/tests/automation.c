@@ -36,26 +36,26 @@ static void test_interfaces(void)
 
     hr = CoCreateInstance(&CLSID_SpFileStream, NULL, CLSCTX_INPROC_SERVER,
                           &IID_ISpeechFileStream, (void **)&filestream);
-    ok(hr == S_OK, "Failed to create ISpeechFileStream interface: %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create ISpeechFileStream interface: %#lx.\n", hr);
 
     hr = CoCreateInstance(&CLSID_SpFileStream, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IUnknown, (void **)&unk);
-    ok(hr == S_OK, "Failed to create IUnknown interface: %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create IUnknown interface: %#lx.\n", hr);
     IUnknown_Release(unk);
 
     hr = CoCreateInstance(&CLSID_SpFileStream, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IDispatch, (void **)&dispatch);
-    ok(hr == S_OK, "Failed to create IDispatch interface: %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create IDispatch interface: %#lx.\n", hr);
     IDispatch_Release(dispatch);
 
     hr = CoCreateInstance(&CLSID_SpFileStream, NULL, CLSCTX_INPROC_SERVER,
                           &IID_ISpeechBaseStream, (void **)&basestream);
-    ok(hr == S_OK, "Failed to create ISpeechBaseStream interface: %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create ISpeechBaseStream interface: %#lx.\n", hr);
     ISpeechBaseStream_Release(basestream);
 
     hr = CoCreateInstance(&CLSID_SpFileStream, NULL, CLSCTX_INPROC_SERVER,
                           &IID_ISpStream, (void **)&spstrem);
-    ok(hr == S_OK, "Failed to create ISpStream interface: %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create ISpStream interface: %#lx.\n", hr);
 
     ISpStream_Release(spstrem);
     ISpeechFileStream_Release(filestream);

@@ -31,7 +31,7 @@ static void _expect_ref(IUnknown *obj, ULONG ref, int line)
     ULONG rc;
     IUnknown_AddRef(obj);
     rc = IUnknown_Release(obj);
-    ok_(__FILE__,line)(rc == ref, "Unexpected refcount %d, expected %d.\n", rc, ref);
+    ok_(__FILE__,line)(rc == ref, "Unexpected refcount %ld, expected %ld.\n", rc, ref);
 }
 
 static void test_interfaces(void)
@@ -43,19 +43,19 @@ static void test_interfaces(void)
 
     hr = CoCreateInstance(&CLSID_SpStream, NULL, CLSCTX_INPROC_SERVER,
                           &IID_ISpStream, (void **)&speech_stream);
-    ok(hr == S_OK, "Failed to create ISpeechVoice interface: %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create ISpeechVoice interface: %#lx.\n", hr);
     EXPECT_REF(speech_stream, 1);
 
     hr = CoCreateInstance(&CLSID_SpStream, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IUnknown, (void **)&unk);
-    ok(hr == S_OK, "Failed to create IUnknown interface: %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create IUnknown interface: %#lx.\n", hr);
     EXPECT_REF(unk, 1);
     EXPECT_REF(speech_stream, 1);
     IUnknown_Release(unk);
 
     hr = CoCreateInstance(&CLSID_SpStream, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IDispatch, (void **)&dispatch);
-    ok(hr == E_NOINTERFACE, "Succeeded to create IDispatch interface: %#x.\n", hr);
+    ok(hr == E_NOINTERFACE, "Succeeded to create IDispatch interface: %#lx.\n", hr);
     ok(!dispatch, "Expected NULL dispatch, got %p.", dispatch);
 
     ISpStream_Release(speech_stream);
