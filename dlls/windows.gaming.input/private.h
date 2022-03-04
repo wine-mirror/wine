@@ -41,6 +41,9 @@ extern IActivationFactory *manager_factory;
 
 extern HRESULT vector_create( REFIID iid, REFIID view_iid, void **out );
 
+extern void provider_create( const WCHAR *device_path );
+extern void provider_remove( const WCHAR *device_path );
+
 #define DEFINE_IINSPECTABLE( pfx, iface_type, impl_type, base_iface )                              \
     static inline impl_type *impl_from_##iface_type( iface_type *iface )                           \
     {                                                                                              \
