@@ -18,6 +18,10 @@
  */
 
 #include "dxgi_private.h"
+
+#define VKD3D_NO_VULKAN_H
+#define VKD3D_NO_WIN32_TYPES
+#include "wine/vulkan.h"
 #include <vkd3d.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxgi);
