@@ -206,11 +206,11 @@ static void test_topology(void)
     IUnknown test_unk = { &test_unk_vtbl };
     IMFTopologyNode *node, *node2, *node3;
     IMFTopology *topology, *topology2;
+    DWORD size, io_count, index;
     MF_TOPOLOGY_TYPE node_type;
-    UINT32 count, index;
     IUnknown *object;
     WORD node_count;
-    DWORD size;
+    UINT32 count;
     HRESULT hr;
     TOPOID id;
 
@@ -526,9 +526,9 @@ static void test_topology(void)
     ok(count == 1, "Unexpected attribute count %u.\n", count);
 
     /* Preferred stream types. */
-    hr = IMFTopologyNode_GetInputCount(node, &count);
+    hr = IMFTopologyNode_GetInputCount(node, &io_count);
     ok(hr == S_OK, "Failed to get input count, hr %#x.\n", hr);
-    ok(count == 0, "Unexpected count %u.\n", count);
+    ok(io_count == 0, "Unexpected count %u.\n", io_count);
 
     hr = IMFTopologyNode_GetInputPrefType(node, 0, &mediatype);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
@@ -557,13 +557,13 @@ static void test_topology(void)
     hr = IMFTopologyNode_SetInputPrefType(node, 1, mediatype);
     ok(hr == S_OK, "Failed to set preferred type, hr %#x.\n", hr);
 
-    hr = IMFTopologyNode_GetInputCount(node, &count);
+    hr = IMFTopologyNode_GetInputCount(node, &io_count);
     ok(hr == S_OK, "Failed to get input count, hr %#x.\n", hr);
-    ok(count == 2, "Unexpected count %u.\n", count);
+    ok(io_count == 2, "Unexpected count %u.\n", io_count);
 
-    hr = IMFTopologyNode_GetOutputCount(node, &count);
+    hr = IMFTopologyNode_GetOutputCount(node, &io_count);
     ok(hr == S_OK, "Failed to get input count, hr %#x.\n", hr);
-    ok(count == 0, "Unexpected count %u.\n", count);
+    ok(io_count == 0, "Unexpected count %u.\n", io_count);
 
     hr = IMFTopologyNode_SetOutputPrefType(node, 0, mediatype);
     ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
@@ -584,9 +584,9 @@ static void test_topology(void)
     ok(hr == E_FAIL, "Failed to get preferred type, hr %#x.\n", hr);
     ok(!mediatype2, "Unexpected mediatype instance.\n");
 
-    hr = IMFTopologyNode_GetOutputCount(node, &count);
+    hr = IMFTopologyNode_GetOutputCount(node, &io_count);
     ok(hr == S_OK, "Failed to get output count, hr %#x.\n", hr);
-    ok(count == 3, "Unexpected count %u.\n", count);
+    ok(io_count == 3, "Unexpected count %u.\n", io_count);
 
     IMFTopologyNode_Release(node);
 
@@ -605,9 +605,9 @@ static void test_topology(void)
     hr = IMFTopologyNode_GetOutputPrefType(node, 0, &mediatype2);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
-    hr = IMFTopologyNode_GetInputCount(node, &count);
+    hr = IMFTopologyNode_GetInputCount(node, &io_count);
     ok(hr == S_OK, "Failed to get output count, hr %#x.\n", hr);
-    ok(count == 0, "Unexpected count %u.\n", count);
+    ok(io_count == 0, "Unexpected count %u.\n", io_count);
 
     hr = IMFTopologyNode_SetInputPrefType(node, 1, mediatype);
     ok(hr == MF_E_INVALIDTYPE, "Unexpected hr %#x.\n", hr);
@@ -635,13 +635,13 @@ static void test_topology(void)
 
     IMFMediaType_Release(mediatype2);
 
-    hr = IMFTopologyNode_GetInputCount(node, &count);
+    hr = IMFTopologyNode_GetInputCount(node, &io_count);
     ok(hr == S_OK, "Failed to get output count, hr %#x.\n", hr);
-    ok(count == 0, "Unexpected count %u.\n", count);
+    ok(io_count == 0, "Unexpected count %u.\n", io_count);
 
-    hr = IMFTopologyNode_GetOutputCount(node, &count);
+    hr = IMFTopologyNode_GetOutputCount(node, &io_count);
     ok(hr == S_OK, "Failed to get output count, hr %#x.\n", hr);
-    ok(count == 5, "Unexpected count %u.\n", count);
+    ok(io_count == 5, "Unexpected count %u.\n", io_count);
 
     IMFTopologyNode_Release(node);
 
@@ -652,20 +652,20 @@ static void test_topology(void)
     hr = IMFTopologyNode_SetInputPrefType(node, 3, mediatype);
     ok(hr == S_OK, "Failed to set preferred type, hr %#x.\n", hr);
 
-    hr = IMFTopologyNode_GetInputCount(node, &count);
+    hr = IMFTopologyNode_GetInputCount(node, &io_count);
     ok(hr == S_OK, "Failed to get input count, hr %#x.\n", hr);
-    ok(count == 4, "Unexpected count %u.\n", count);
+    ok(io_count == 4, "Unexpected count %u.\n", io_count);
 
     hr = IMFTopologyNode_SetOutputPrefType(node, 4, mediatype);
     ok(hr == S_OK, "Failed to set preferred type, hr %#x.\n", hr);
 
-    hr = IMFTopologyNode_GetInputCount(node, &count);
+    hr = IMFTopologyNode_GetInputCount(node, &io_count);
     ok(hr == S_OK, "Failed to get output count, hr %#x.\n", hr);
-    ok(count == 4, "Unexpected count %u.\n", count);
+    ok(io_count == 4, "Unexpected count %u.\n", io_count);
 
-    hr = IMFTopologyNode_GetOutputCount(node, &count);
+    hr = IMFTopologyNode_GetOutputCount(node, &io_count);
     ok(hr == S_OK, "Failed to get output count, hr %#x.\n", hr);
-    ok(count == 5, "Unexpected count %u.\n", count);
+    ok(io_count == 5, "Unexpected count %u.\n", io_count);
 
     IMFTopologyNode_Release(node);
 
@@ -819,16 +819,16 @@ static void test_topology(void)
     hr = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &node2);
     ok(hr == S_OK, "Failed to create topology node, hr %#x.\n", hr);
 
-    hr = IMFTopologyNode_GetOutputCount(node, &count);
+    hr = IMFTopologyNode_GetOutputCount(node, &io_count);
     ok(hr == S_OK, "Failed to get output count, hr %#x.\n", hr);
-    ok(count == 1, "Unexpected output count.\n");
+    ok(io_count == 1, "Unexpected output count.\n");
 
     hr = IMFTopologyNode_CloneFrom(node, node2);
     ok(hr == S_OK || broken(hr == MF_E_ATTRIBUTENOTFOUND) /* Vista */, "Failed to clone a node, hr %#x.\n", hr);
 
-    hr = IMFTopologyNode_GetOutputCount(node, &count);
+    hr = IMFTopologyNode_GetOutputCount(node, &io_count);
     ok(hr == S_OK, "Failed to get output count, hr %#x.\n", hr);
-    ok(count == 1, "Unexpected output count.\n");
+    ok(io_count == 1, "Unexpected output count.\n");
 
     hr = IMFTopologyNode_GetOutputPrefType(node, 0, &mediatype2);
     ok(hr == S_OK, "Failed to get preferred type, hr %#x.\n", hr);
@@ -838,9 +838,9 @@ static void test_topology(void)
     hr = IMFTopologyNode_CloneFrom(node2, node);
     ok(hr == S_OK || broken(hr == MF_E_ATTRIBUTENOTFOUND) /* Vista */, "Failed to clone a node, hr %#x.\n", hr);
 
-    hr = IMFTopologyNode_GetOutputCount(node2, &count);
+    hr = IMFTopologyNode_GetOutputCount(node2, &io_count);
     ok(hr == S_OK, "Failed to get output count, hr %#x.\n", hr);
-    ok(count == 1, "Unexpected output count.\n");
+    ok(io_count == 1, "Unexpected output count.\n");
 
     IMFTopologyNode_Release(node2);
     IMFTopologyNode_Release(node);
@@ -915,7 +915,7 @@ static void test_topology_tee_node(void)
     IMFTopologyNode *src_node, *tee_node;
     IMFMediaType *mediatype, *mediatype2;
     IMFTopology *topology;
-    unsigned int count;
+    DWORD count;
     HRESULT hr;
 
     hr = MFCreateTopology(&topology);
@@ -1227,12 +1227,13 @@ static void test_media_session(void)
     IMFRateSupport *rate_support;
     IMFAttributes *attributes;
     IMFMediaSession *session;
+    MFSHUTDOWN_STATUS status;
     IMFTopology *topology;
     IMFShutdown *shutdown;
     PROPVARIANT propvar;
-    DWORD status, caps;
     IMFGetService *gs;
     IMFClock *clock;
+    DWORD caps;
     HRESULT hr;
 
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
@@ -1920,8 +1921,8 @@ static void test_topology_loader(void)
     IMFTopologyNode *src_node, *sink_node, *src_node2, *sink_node2, *mft_node;
     IMFTopology *topology, *topology2, *full_topology;
     IMFMediaType *media_type, *input_type, *output_type;
-    unsigned int i, count, value, index;
     IMFPresentationDescriptor *pd;
+    unsigned int i, count, value;
     IMFActivate *sink_activate;
     MF_TOPOLOGY_TYPE node_type;
     IMFStreamDescriptor *sd;
@@ -1931,6 +1932,7 @@ static void test_topology_loader(void)
     IUnknown *node_object;
     WORD node_count;
     TOPOID node_id;
+    DWORD index;
     HRESULT hr;
     BOOL ret;
 
@@ -2851,6 +2853,7 @@ static void test_sample_grabber(void)
     DWORD flags, count, id;
     IMFActivate *activate;
     IMFMediaEvent *event;
+    UINT32 attr_count;
     ULONG refcount;
     IUnknown *unk;
     float rate;
@@ -2879,9 +2882,9 @@ static void test_sample_grabber(void)
     ok(hr == S_OK, "Failed to create grabber activate, hr %#x.\n", hr);
     EXPECT_REF(media_type, 2);
 
-    hr = IMFActivate_GetCount(activate, &count);
+    hr = IMFActivate_GetCount(activate, &attr_count);
     ok(hr == S_OK, "Failed to get attribute count, hr %#x.\n", hr);
-    ok(!count, "Unexpected count %u.\n", count);
+    ok(!attr_count, "Unexpected count %u.\n", attr_count);
 
     hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink);
     ok(hr == S_OK, "Failed to activate object, hr %#x.\n", hr);
@@ -3263,7 +3266,7 @@ static void test_sample_grabber(void)
     hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
-    hr = IMFActivate_GetCount(activate, &count);
+    hr = IMFActivate_GetCount(activate, &attr_count);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFActivate_DetachObject(activate);
@@ -3419,7 +3422,7 @@ static BOOL is_supported_video_type(const GUID *guid)
 static void test_video_processor(void)
 {
     DWORD input_count, output_count, input_id, output_id, flags;
-    DWORD input_min, input_max, output_min, output_max, i, count;
+    DWORD input_min, input_max, output_min, output_max, i;
     IMFAttributes *attributes, *attributes2;
     IMFMediaType *media_type, *media_type2;
     MFT_OUTPUT_DATA_BUFFER output_buffer;
@@ -3430,6 +3433,7 @@ static void test_video_processor(void)
     IMFMediaBuffer *buffer;
     IMFMediaEvent *event;
     unsigned int value;
+    UINT32 count;
     HRESULT hr;
     GUID guid;
 
@@ -3967,6 +3971,7 @@ static void test_sar(void)
     IMFAttributes *attributes;
     DWORD i, id, flags, count;
     IMFActivate *activate;
+    UINT32 channel_count;
     MFCLOCK_STATE state;
     IMFClock *clock;
     IUnknown *unk;
@@ -4251,7 +4256,7 @@ if (SUCCEEDED(hr))
     hr = MFGetService((IUnknown *)sink, &MR_STREAM_VOLUME_SERVICE, &IID_IMFAudioStreamVolume, (void **)&stream_volume);
     ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
 
-    hr = IMFAudioStreamVolume_GetChannelCount(stream_volume, &count);
+    hr = IMFAudioStreamVolume_GetChannelCount(stream_volume, &channel_count);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFAudioStreamVolume_GetChannelCount(stream_volume, NULL);
@@ -4392,10 +4397,11 @@ static void test_evr(void)
     IMFPresentationClock *clock;
     IMFMediaSink *sink, *sink2;
     IMFAttributes *attributes;
-    DWORD flags, count, value;
+    UINT32 attr_count, value;
     IMFActivate *activate;
     HWND window, window2;
     IMFRateSupport *rs;
+    DWORD flags, count;
     LONG sample_count;
     IMFSample *sample;
     unsigned int i;
@@ -4466,9 +4472,9 @@ static void test_evr(void)
     hr = MFCreateVideoRendererActivate(NULL, &activate);
     ok(hr == S_OK, "Failed to create activate object, hr %#x.\n", hr);
 
-    hr = IMFActivate_GetCount(activate, &count);
+    hr = IMFActivate_GetCount(activate, &attr_count);
     ok(hr == S_OK, "Failed to get attribute count, hr %#x.\n", hr);
-    ok(count == 1, "Unexpected count %u.\n", count);
+    ok(attr_count == 1, "Unexpected count %u.\n", attr_count);
 
     hr = IMFActivate_GetUINT64(activate, &MF_ACTIVATE_VIDEO_WINDOW, &window3);
     ok(hr == S_OK, "Failed to get attribute, hr %#x.\n", hr);
@@ -4482,9 +4488,9 @@ static void test_evr(void)
     hr = IMFAttributes_QueryInterface(attributes, &IID_IMFMediaSink, (void **)&unk);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     IUnknown_Release(unk);
-    hr = IMFAttributes_GetCount(attributes, &count);
+    hr = IMFAttributes_GetCount(attributes, &attr_count);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    ok(!!count, "Unexpected count %u.\n", count);
+    ok(!!attr_count, "Unexpected count %u.\n", attr_count);
     /* Rendering preferences are not immediately propagated to the presenter. */
     hr = IMFAttributes_SetUINT32(attributes, &EVRConfig_ForceBob, 1);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -4502,9 +4508,9 @@ static void test_evr(void)
 
     hr = IMFStreamSink_QueryInterface(stream_sink, &IID_IMFAttributes, (void **)&attributes);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    hr = IMFAttributes_GetCount(attributes, &count);
+    hr = IMFAttributes_GetCount(attributes, &attr_count);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    ok(count == 2, "Unexpected count %u.\n", count);
+    ok(attr_count == 2, "Unexpected count %u.\n", attr_count);
     value = 0;
     hr = IMFAttributes_GetUINT32(attributes, &MF_SA_REQUIRED_SAMPLE_COUNT, &value);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -5059,9 +5065,9 @@ static void test_sample_copier(void)
     DWORD input_count, output_count;
     MFT_OUTPUT_DATA_BUFFER buffer;
     IMFMediaBuffer *media_buffer;
-    DWORD count, flags, status;
     IMFTransform *copier;
-    UINT32 value;
+    DWORD flags, status;
+    UINT32 value, count;
     HRESULT hr;
 
     if (!pMFCreateSampleCopierMFT)
@@ -5332,9 +5338,8 @@ static void sample_copier_process(IMFTransform *copier, IMFMediaBuffer *input_bu
     static const struct sample_metadata zero_md = { 0, ~0u, ~0u };
     IMFSample *input_sample, *output_sample;
     MFT_OUTPUT_DATA_BUFFER buffer;
-    unsigned int flags;
+    DWORD flags, status;
     LONGLONG time;
-    DWORD status;
     HRESULT hr;
 
     hr = MFCreateSample(&input_sample);
@@ -5618,9 +5623,8 @@ static BOOL create_transform(GUID category, MFT_REGISTER_TYPE_INFO *input_type,
         IMFTransform **transform, GUID *class_id)
 {
     MFT_REGISTER_TYPE_INFO *input_types = NULL, *output_types = NULL;
-    UINT32 input_count = 0, output_count = 0;
+    UINT32 input_count = 0, output_count = 0, count = 0, i;
     GUID *class_ids = NULL;
-    ULONG count = 0, i;
     WCHAR *name;
     HRESULT hr;
 
