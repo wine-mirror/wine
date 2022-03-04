@@ -296,9 +296,10 @@ static void CLASS_FreeClass( CLASS *classPtr )
     USER_Unlock();
 }
 
-static CLASS *find_class( HINSTANCE instance, const WCHAR *name )
+static CLASS *find_class( HINSTANCE module, const WCHAR *name )
 {
     ATOM atom = get_int_atom_value( name );
+    UINT_PTR instance = (UINT_PTR)module;
     CLASS *class;
 
     USER_Lock();
@@ -312,9 +313,9 @@ static CLASS *find_class( HINSTANCE instance, const WCHAR *name )
         {
             if (wcsicmp( class->name, name )) continue;
         }
-        if (!class->local || class->hInstance == instance)
+        if (!class->local || class->instance == instance)
         {
-            TRACE("%s %p -> %p\n", debugstr_w(name), instance, class);
+            TRACE("%s %Ix -> %p\n", debugstr_w(name), instance, class);
             return class;
         }
     }
@@ -477,7 +478,7 @@ static CLASS *CLASS_RegisterClass( LPCWSTR name, UINT basename_offset, HINSTANCE
     classPtr->local       = local;
     classPtr->cbWndExtra  = winExtra;
     classPtr->cbClsExtra  = classExtra;
-    classPtr->hInstance   = hInstance;
+    classPtr->instance    = (UINT_PTR)hInstance;
 
     /* Other non-null values must be set by caller */
 
@@ -953,7 +954,7 @@ static ULONG_PTR CLASS_GetClassLong( HWND hwnd, INT offset, UINT size,
         retvalue = class->cbClsExtra;
         break;
     case GCLP_HMODULE:
-        retvalue = (ULONG_PTR)class->hInstance;
+        retvalue = class->instance;
         break;
     case GCLP_WNDPROC:
         retvalue = (ULONG_PTR)WINPROC_GetProc( class->winproc, unicode );
@@ -1120,8 +1121,8 @@ static ULONG_PTR CLASS_SetClassLong( HWND hwnd, INT offset, LONG_PTR newval,
         break;
     case GCLP_HMODULE:
         if (!set_server_info( hwnd, offset, newval, size )) break;
-        retval = (ULONG_PTR)class->hInstance;
-        class->hInstance = (HINSTANCE)newval;
+        retval = class->instance;
+        class->instance = newval;
         break;
     case GCW_ATOM:
         if (!set_server_info( hwnd, offset, newval, size )) break;

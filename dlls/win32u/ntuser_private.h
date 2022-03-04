@@ -179,7 +179,7 @@ typedef struct tagCLASS
     INT              cbWndExtra;    /* Window extra bytes */
     LPWSTR           menuName;      /* Default menu name (Unicode followed by ASCII) */
     struct dce      *dce;           /* Opaque pointer to class DCE */
-    HINSTANCE        hInstance;     /* Module that created the task */
+    UINT_PTR         instance;      /* Module that created the task */
     HICON            hIcon;         /* Default icon */
     HICON            hIconSm;       /* Default small icon */
     HICON            hIconSmIntern; /* Internal small icon, derived from hIcon */
