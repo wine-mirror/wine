@@ -1105,6 +1105,7 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
     ctx = (CONTEXT *)((ULONG_PTR)context.Sp & ~15) - 1;
     *ctx = context;
     ctx->ContextFlags = CONTEXT_FULL;
+    memset( frame, 0, sizeof(*frame) );
     NtSetContextThread( GetCurrentThread(), ctx );
 
     frame->sp = (DWORD)ctx;
