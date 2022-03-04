@@ -50,6 +50,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
 DEFINE_GUID( GUID_DEVINTERFACE_WINEXINPUT,0x6c53d5fd,0x6480,0x440f,0xb6,0x18,0x47,0x67,0x50,0xc5,0xe1,0xa6 );
 DEFINE_GUID( hid_joystick_guid, 0x9e573edb, 0x7734, 0x11d2, 0x8d, 0x4a, 0x23, 0x90, 0x3f, 0xb6, 0xbd, 0xf7 );
+DEFINE_GUID( device_path_guid, 0x00000000, 0x0000, 0x0000, 0x8d, 0x4a, 0x23, 0x90, 0x3f, 0xb6, 0xbd, 0xf8 );
 DEFINE_DEVPROPKEY( DEVPROPKEY_HID_HANDLE, 0xbc62e415, 0xf4fe, 0x405c, 0x8e, 0xda, 0x63, 0x6f, 0xb5, 0x9f, 0x08, 0x98, 2 );
 
 struct pid_control_report
@@ -2041,7 +2042,12 @@ HRESULT hid_joystick_create_device( struct dinput *dinput, const GUID *guid, IDi
     else if (IsEqualGUID( &hid_joystick_guid, &instance.guidInstance ))
         instance.guidInstance = *guid;
     else
-        return DIERR_DEVICENOTREG;
+    {
+        instance.guidInstance.Data1 = device_path_guid.Data1;
+        instance.guidInstance.Data2 = device_path_guid.Data2;
+        instance.guidInstance.Data3 = device_path_guid.Data3;
+        if (!IsEqualGUID( &device_path_guid, &instance.guidInstance )) return DIERR_DEVICENOTREG;
+    }
 
     hr = dinput_device_alloc( sizeof(struct hid_joystick), &hid_joystick_vtbl, guid, dinput, (void **)&impl );
     if (FAILED(hr)) return hr;
@@ -2050,8 +2056,16 @@ HRESULT hid_joystick_create_device( struct dinput *dinput, const GUID *guid, IDi
     impl->base.read_event = CreateEventW( NULL, TRUE, FALSE, NULL );
     impl->internal_ref = 1;
 
-    hr = hid_joystick_device_open( -1, &instance, impl->device_path, &impl->device, &impl->preparsed,
-                                   &attrs, &impl->caps, dinput->dwVersion );
+    if (!IsEqualGUID( &device_path_guid, &instance.guidInstance ))
+        hr = hid_joystick_device_open( -1, &instance, impl->device_path, &impl->device, &impl->preparsed,
+                                       &attrs, &impl->caps, dinput->dwVersion );
+    else
+    {
+        wcscpy( impl->device_path, *(const WCHAR **)guid );
+        if (!hid_joystick_device_try_open( 0, impl->device_path, &impl->device, &impl->preparsed, &attrs,
+                                           &impl->caps, &instance, dinput->dwVersion ))
+            hr = DIERR_DEVICENOTREG;
+    }
     if (hr != DI_OK) goto failed;
 
     impl->base.instance = instance;
