@@ -110,6 +110,7 @@ static void test_class(void)
     WCHAR buf[64];
     WNDCLASSW cls;
     ATOM class;
+    HWND hwnd;
     ULONG ret;
 
     memset( &cls, 0, sizeof(cls) );
@@ -122,6 +123,9 @@ static void test_class(void)
 
     class = RegisterClassW( &cls );
     ok( class, "RegisterClassW failed: %lu\n", GetLastError() );
+
+    hwnd = CreateWindowW( L"test", L"test name", WS_OVERLAPPEDWINDOW | WS_HSCROLL | WS_VSCROLL,
+                          CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0, 0, NULL, 0 );
 
     memset( buf, 0xcc, sizeof(buf) );
     name.Buffer = buf;
@@ -150,6 +154,36 @@ static void test_class(void)
     ret = NtUserGetAtomName( class, &name );
     ok( !ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
         "NtUserGetAtomName returned %lx %lu\n", ret, GetLastError() );
+
+    memset( buf, 0xcc, sizeof(buf) );
+    name.Buffer = buf;
+    name.Length = 0xdead;
+    name.MaximumLength = sizeof(buf);
+    ret = NtUserGetClassName( hwnd, FALSE, &name );
+    ok( ret == 4, "NtUserGetClassName returned %lu\n", ret );
+    ok( name.Length == 0xdead, "Length = %u\n", name.Length );
+    ok( name.MaximumLength == sizeof(buf), "MaximumLength = %u\n", name.MaximumLength );
+    ok( !wcscmp( buf, L"test" ), "buf = %s\n", debugstr_w(buf) );
+
+    memset( buf, 0xcc, sizeof(buf) );
+    name.Buffer = buf;
+    name.Length = 0xdead;
+    name.MaximumLength = 8;
+    ret = NtUserGetClassName( hwnd, FALSE, &name );
+    ok( ret == 3, "NtUserGetClassName returned %lu\n", ret );
+    ok( name.Length == 0xdead, "Length = %u\n", name.Length );
+    ok( name.MaximumLength == 8, "MaximumLength = %u\n", name.MaximumLength );
+    ok( !wcscmp( buf, L"tes" ), "buf = %s\n", debugstr_w(buf) );
+
+    memset( buf, 0xcc, sizeof(buf) );
+    name.Buffer = buf;
+    name.MaximumLength = 1;
+    SetLastError( 0xdeadbeef );
+    ret = NtUserGetClassName( hwnd, FALSE, &name );
+    ok( !ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+        "NtUserGetClassName returned %lx %lu\n", ret, GetLastError() );
+
+    DestroyWindow( hwnd );
 
     ret = UnregisterClassW( L"test", GetModuleHandleW(NULL) );
     ok( ret, "UnregisterClassW failed: %lu\n", GetLastError() );

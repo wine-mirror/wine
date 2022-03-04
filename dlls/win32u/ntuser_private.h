@@ -169,6 +169,27 @@ typedef struct tagWINDOWPROC
 
 #define MAX_ATOM_LEN 255
 
+typedef struct tagCLASS
+{
+    struct list      entry;         /* Entry in class list */
+    UINT             style;         /* Class style */
+    BOOL             local;         /* Local class? */
+    WNDPROC          winproc;       /* Window procedure */
+    INT              cbClsExtra;    /* Class extra bytes */
+    INT              cbWndExtra;    /* Window extra bytes */
+    LPWSTR           menuName;      /* Default menu name (Unicode followed by ASCII) */
+    struct dce      *dce;           /* Opaque pointer to class DCE */
+    HINSTANCE        hInstance;     /* Module that created the task */
+    HICON            hIcon;         /* Default icon */
+    HICON            hIconSm;       /* Default small icon */
+    HICON            hIconSmIntern; /* Internal small icon, derived from hIcon */
+    HCURSOR          hCursor;       /* Default cursor */
+    HBRUSH           hbrBackground; /* Default background */
+    ATOM             atomName;      /* Name of the class */
+    WCHAR            name[MAX_ATOM_LEN + 1];
+    WCHAR           *basename;      /* Base name for redirected classes, pointer within 'name'. */
+} CLASS;
+
 /* class.c */
 WNDPROC alloc_winproc( WNDPROC func, BOOL ansi ) DECLSPEC_HIDDEN;
 WINDOWPROC *get_winproc_ptr( WNDPROC handle ) DECLSPEC_HIDDEN;
@@ -184,5 +205,8 @@ HANDLE alloc_user_handle( struct user_object *ptr, unsigned int type ) DECLSPEC_
 void *free_user_handle( HANDLE handle, unsigned int type ) DECLSPEC_HIDDEN;
 void *get_user_handle_ptr( HANDLE handle, unsigned int type ) DECLSPEC_HIDDEN;
 void release_user_handle_ptr( void *ptr ) DECLSPEC_HIDDEN;
+
+WND *get_win_ptr( HWND hwnd ) DECLSPEC_HIDDEN;
+BOOL is_window( HWND hwnd ) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_NTUSER_PRIVATE_H */

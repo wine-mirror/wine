@@ -219,7 +219,7 @@ static BOOL is_desktop_window( HWND hwnd )
  * or WND_OTHER_PROCESS if handle may be valid in other process.
  * If ret value is a valid pointer, it must be released with WIN_ReleasePtr.
  */
-static WND *get_win_ptr( HWND hwnd )
+WND *get_win_ptr( HWND hwnd )
 {
     WND *win;
 
@@ -248,7 +248,7 @@ HWND is_current_thread_window( HWND hwnd )
 }
 
 /* see IsWindow */
-static BOOL is_window( HWND hwnd )
+BOOL is_window( HWND hwnd )
 {
     WND *win;
     BOOL ret;

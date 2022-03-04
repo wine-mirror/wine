@@ -40,27 +40,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(class);
 
 #define MAX_ATOM_LEN 255 /* from dlls/kernel32/atom.c */
 
-typedef struct tagCLASS
-{
-    struct list      entry;         /* Entry in class list */
-    UINT             style;         /* Class style */
-    BOOL             local;         /* Local class? */
-    WNDPROC          winproc;       /* Window procedure */
-    INT              cbClsExtra;    /* Class extra bytes */
-    INT              cbWndExtra;    /* Window extra bytes */
-    LPWSTR           menuName;      /* Default menu name (Unicode followed by ASCII) */
-    struct dce      *dce;           /* Opaque pointer to class DCE */
-    HINSTANCE        hInstance;     /* Module that created the task */
-    HICON            hIcon;         /* Default icon */
-    HICON            hIconSm;       /* Default small icon */
-    HICON            hIconSmIntern; /* Internal small icon, derived from hIcon */
-    HCURSOR          hCursor;       /* Default cursor */
-    HBRUSH           hbrBackground; /* Default background */
-    ATOM             atomName;      /* Name of the class */
-    WCHAR            name[MAX_ATOM_LEN + 1];
-    WCHAR           *basename;      /* Base name for redirected classes, pointer within 'name'. */
-} CLASS;
-
 static struct list class_list = LIST_INIT( class_list );
 static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
 
@@ -1212,47 +1191,8 @@ INT WINAPI GetClassNameA( HWND hwnd, LPSTR buffer, INT count )
  */
 INT WINAPI GetClassNameW( HWND hwnd, LPWSTR buffer, INT count )
 {
-    CLASS *class;
-    INT ret;
-
-    TRACE("%p %p %d\n", hwnd, buffer, count);
-
-    if (count <= 0) return 0;
-
-    if (!(class = get_class_ptr( hwnd, FALSE ))) return 0;
-
-    if (class == CLASS_OTHER_PROCESS)
-    {
-        WCHAR tmpbuf[MAX_ATOM_LEN + 1];
-        ATOM atom = 0;
-
-        SERVER_START_REQ( set_class_info )
-        {
-            req->window = wine_server_user_handle( hwnd );
-            req->flags = 0;
-            req->extra_offset = -1;
-            req->extra_size = 0;
-            if (!wine_server_call_err( req ))
-                atom = reply->base_atom;
-        }
-        SERVER_END_REQ;
-
-        ret = GlobalGetAtomNameW( atom, tmpbuf, MAX_ATOM_LEN + 1 );
-        if (ret)
-        {
-            ret = min(count - 1, ret);
-            memcpy(buffer, tmpbuf, ret * sizeof(WCHAR));
-            buffer[ret] = 0;
-        }
-    }
-    else
-    {
-        /* Return original name class was registered with. */
-        lstrcpynW( buffer, class->basename, count );
-        release_class_ptr( class );
-        ret = lstrlenW( buffer );
-    }
-    return ret;
+    UNICODE_STRING name = { .Buffer = buffer, .MaximumLength = count * sizeof(WCHAR) };
+    return NtUserGetClassName( hwnd, FALSE, &name );
 }
 
 

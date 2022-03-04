@@ -29,8 +29,10 @@
 #define WIN32_NO_STATUS
 #include "win32u_private.h"
 #include "ntuser_private.h"
+#include "wine/server.h"
 #include "wine/debug.h"
 
+WINE_DEFAULT_DEBUG_CHANNEL(class);
 WINE_DECLARE_DEBUG_CHANNEL(win);
 
 #define MAX_WINPROCS  4096
@@ -167,6 +169,38 @@ NTSTATUS WINAPI NtUserInitializeClientPfnArrays( const struct user_client_procs 
 }
 
 /***********************************************************************
+ *           get_class_ptr
+ */
+static CLASS *get_class_ptr( HWND hwnd, BOOL write_access )
+{
+    WND *ptr = get_win_ptr( hwnd );
+
+    if (ptr)
+    {
+        if (ptr != WND_OTHER_PROCESS && ptr != WND_DESKTOP) return ptr->class;
+        if (!write_access) return OBJ_OTHER_PROCESS;
+
+        /* modifying classes in other processes is not allowed */
+        if (ptr == WND_DESKTOP || is_window( hwnd ))
+        {
+            SetLastError( ERROR_ACCESS_DENIED );
+            return NULL;
+        }
+    }
+    SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+    return NULL;
+}
+
+
+/***********************************************************************
+ *           release_class_ptr
+ */
+static inline void release_class_ptr( CLASS *ptr )
+{
+    user_unlock();
+}
+
+/***********************************************************************
  *	     NtUserGetAtomName   (win32u.@)
  */
 ULONG WINAPI NtUserGetAtomName( ATOM atom, UNICODE_STRING *name )
@@ -189,4 +223,47 @@ ULONG WINAPI NtUserGetAtomName( ATOM atom, UNICODE_STRING *name )
     if (size) memcpy( name->Buffer, abi->Name, size );
     name->Buffer[size / sizeof(WCHAR)] = 0;
     return size / sizeof(WCHAR);
+}
+
+/***********************************************************************
+ *	     NtUserGetClassName   (win32u.@)
+ */
+INT WINAPI NtUserGetClassName( HWND hwnd, BOOL real, UNICODE_STRING *name )
+{
+    CLASS *class;
+    int ret;
+
+    TRACE( "%p %x %p\n", hwnd, real, name );
+
+    if (name->MaximumLength <= sizeof(WCHAR))
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return 0;
+    }
+
+    if (!(class = get_class_ptr( hwnd, FALSE ))) return 0;
+
+    if (class == OBJ_OTHER_PROCESS)
+    {
+        ATOM atom = 0;
+
+        SERVER_START_REQ( set_class_info )
+        {
+            req->window = wine_server_user_handle( hwnd );
+            req->flags = 0;
+            req->extra_offset = -1;
+            req->extra_size = 0;
+            if (!wine_server_call_err( req ))
+                atom = reply->base_atom;
+        }
+        SERVER_END_REQ;
+
+        return NtUserGetAtomName( atom, name );
+    }
+
+    ret = min( name->MaximumLength / sizeof(WCHAR) - 1, lstrlenW(class->basename) );
+    if (ret) memcpy( name->Buffer, class->basename, ret * sizeof(WCHAR) );
+    name->Buffer[ret] = 0;
+    release_class_ptr( class );
+    return ret;
 }

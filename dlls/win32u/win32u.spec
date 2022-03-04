@@ -899,7 +899,7 @@
 @ stub NtUserGetCaretBlinkTime
 @ stub NtUserGetCaretPos
 @ stub NtUserGetClassInfoEx
-@ stub NtUserGetClassName
+@ stdcall -syscall NtUserGetClassName(long long ptr)
 @ stub NtUserGetClipCursor
 @ stub NtUserGetClipboardAccessToken
 @ stub NtUserGetClipboardData
