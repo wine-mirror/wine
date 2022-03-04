@@ -18,9 +18,15 @@
  */
 
 #define COBJMACROS
+#define VKD3D_NO_VULKAN_H
+#define VKD3D_NO_WIN32_TYPES
+
+#include "windef.h"
+#include "dxgi1_6.h"
+#include "d3d12.h"
+#include "wine/vulkan.h"
 
 #include <vkd3d.h>
-#include "dxgi1_6.h"
 
 #include "initguid.h"
 #include "wine/wined3d.h"
