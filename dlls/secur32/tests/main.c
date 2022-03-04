@@ -98,7 +98,7 @@ static const char* getSecError(SECURITY_STATUS status)
         _SEC_ERR(SEC_E_NO_CREDENTIALS);
         _SEC_ERR(SEC_E_OUT_OF_SEQUENCE);
         default:
-            sprintf(buf, "%08x\n", status);
+            sprintf(buf, "%08lx\n", status);
             return buf;
     }
 #undef _SEC_ERR
@@ -140,27 +140,27 @@ static void testEnumerateSecurityPackages(void)
     sec_status = pEnumerateSecurityPackagesA(&num_packages, &pkg_info);
 
     ok(sec_status == SEC_E_OK, 
-            "EnumerateSecurityPackages() should return %d, not %08x\n",
+            "EnumerateSecurityPackages() should return %ld, not %08lx\n",
             SEC_E_OK, sec_status);
 
     if (num_packages == 0)
     {
         todo_wine
-        ok(num_packages > 0, "Number of sec packages should be > 0 ,but is %d\n",
+        ok(num_packages > 0, "Number of sec packages should be > 0 ,but is %ld\n",
                 num_packages);
         skip("no sec packages to check\n");
         return;
     }
     else
-        ok(num_packages > 0, "Number of sec packages should be > 0 ,but is %d\n",
+        ok(num_packages > 0, "Number of sec packages should be > 0 ,but is %ld\n",
                 num_packages);
 
     ok(pkg_info != NULL, 
             "pkg_info should not be NULL after EnumerateSecurityPackages\n");
     
-    trace("Number of packages: %d\n", num_packages);
+    trace("Number of packages: %ld\n", num_packages);
     for(i = 0; i < num_packages; ++i){
-        trace("%d: Package \"%s\"\n", i, pkg_info[i].Name);
+        trace("%ld: Package \"%s\"\n", i, pkg_info[i].Name);
         trace("Supported flags:\n");
 #define X(flag) \
         if(pkg_info[i].fCapabilities & flag) \

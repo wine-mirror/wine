@@ -120,14 +120,14 @@ static SECURITY_STATUS setup_client( struct sspi_data *data, SEC_CHAR *provider 
     trace( "setting up client\n" );
 
     ret = QuerySecurityPackageInfoA( provider, &info );
-    ok( ret == SEC_E_OK, "QuerySecurityPackageInfo returned %08x\n", ret );
+    ok( ret == SEC_E_OK, "QuerySecurityPackageInfo returned %08lx\n", ret );
 
     setup_buffers( data, info );
     FreeContextBuffer( info );
 
     ret = AcquireCredentialsHandleA( NULL, provider, SECPKG_CRED_OUTBOUND, NULL,
                                      data->id, NULL, NULL, &data->cred, &ttl );
-    ok( ret == SEC_E_OK, "AcquireCredentialsHandleA returned %08x\n", ret );
+    ok( ret == SEC_E_OK, "AcquireCredentialsHandleA returned %08lx\n", ret );
     return ret;
 }
 
@@ -140,14 +140,14 @@ static SECURITY_STATUS setup_server( struct sspi_data *data, SEC_CHAR *provider 
     trace( "setting up server\n" );
 
     ret = QuerySecurityPackageInfoA( provider, &info );
-    ok( ret == SEC_E_OK, "QuerySecurityPackageInfo returned %08x\n", ret );
+    ok( ret == SEC_E_OK, "QuerySecurityPackageInfo returned %08lx\n", ret );
 
     setup_buffers( data, info );
     FreeContextBuffer( info );
 
     ret = AcquireCredentialsHandleA( NULL, provider, SECPKG_CRED_INBOUND, NULL,
                                      NULL, NULL, NULL, &data->cred, &ttl );
-    ok( ret == SEC_E_OK, "AcquireCredentialsHandleA returned %08x\n", ret );
+    ok( ret == SEC_E_OK, "AcquireCredentialsHandleA returned %08lx\n", ret );
     return ret;
 }
 
@@ -174,7 +174,7 @@ static SECURITY_STATUS run_client( struct sspi_data *data, BOOL first )
             ret = SEC_E_OK;
     }
     ok( data->out_buf->pBuffers[0].BufferType == SECBUFFER_TOKEN,
-        "buffer type changed from SECBUFFER_TOKEN to %u\n", data->out_buf->pBuffers[0].BufferType );
+        "buffer type changed from SECBUFFER_TOKEN to %lu\n", data->out_buf->pBuffers[0].BufferType );
     ok( data->out_buf->pBuffers[0].cbBuffer < data->max_token,
         "InitializeSecurityContext didn't change buffer size\n" );
     return ret;
@@ -237,12 +237,12 @@ static void test_authentication(void)
     client.id = &id;
     if ((status = setup_client( &client, (SEC_CHAR *)"Negotiate" )))
     {
-        skip( "setup_client returned %08x, skipping test\n", status );
+        skip( "setup_client returned %08lx, skipping test\n", status );
         return;
     }
     if ((status = setup_server( &server, (SEC_CHAR *)"Negotiate" )))
     {
-        skip( "setup_server returned %08x, skipping test\n", status );
+        skip( "setup_server returned %08lx, skipping test\n", status );
         FreeCredentialsHandle( &client.cred );
         return;
     }
@@ -251,14 +251,14 @@ static void test_authentication(void)
     {
         status_c = run_client( &client, first );
         ok( status_c == SEC_E_OK || status_c == SEC_I_CONTINUE_NEEDED,
-            "client returned %08x, more tests will fail\n", status_c );
+            "client returned %08lx, more tests will fail\n", status_c );
 
         communicate( &client, &server );
 
         status_s = run_server( &server, first );
         ok( status_s == SEC_E_OK || status_s == SEC_I_CONTINUE_NEEDED ||
             status_s == SEC_E_LOGON_DENIED,
-            "server returned %08x, more tests will fail\n", status_s );
+            "server returned %08lx, more tests will fail\n", status_s );
 
         communicate( &server, &client );
         trace( "looping\n");
@@ -275,19 +275,19 @@ static void test_authentication(void)
     sizes.cbSecurityTrailer = 0xdeadbeef;
     sizes.cbBlockSize       = 0xdeadbeef;
     status_c = QueryContextAttributesA( &client.ctxt, SECPKG_ATTR_SIZES, &sizes );
-    ok( status_c == SEC_E_OK, "pQueryContextAttributesA returned %08x\n", status_c );
+    ok( status_c == SEC_E_OK, "pQueryContextAttributesA returned %08lx\n", status_c );
     ok( sizes.cbMaxToken == 2888 || sizes.cbMaxToken == 1904,
-        "expected 2888 or 1904, got %u\n", sizes.cbMaxToken );
-    ok( sizes.cbMaxSignature == 16, "expected 16, got %u\n", sizes.cbMaxSignature );
-    ok( sizes.cbSecurityTrailer == 16, "expected 16, got %u\n", sizes.cbSecurityTrailer );
-    ok( !sizes.cbBlockSize, "expected 0, got %u\n", sizes.cbBlockSize );
+        "expected 2888 or 1904, got %lu\n", sizes.cbMaxToken );
+    ok( sizes.cbMaxSignature == 16, "expected 16, got %lu\n", sizes.cbMaxSignature );
+    ok( sizes.cbSecurityTrailer == 16, "expected 16, got %lu\n", sizes.cbSecurityTrailer );
+    ok( !sizes.cbBlockSize, "expected 0, got %lu\n", sizes.cbBlockSize );
 
     memset( &info, 0, sizeof(info) );
     status_c = QueryContextAttributesA( &client.ctxt, SECPKG_ATTR_NEGOTIATION_INFO, &info );
-    ok( status_c == SEC_E_OK, "QueryContextAttributesA returned %08x\n", status_c );
+    ok( status_c == SEC_E_OK, "QueryContextAttributesA returned %08lx\n", status_c );
 
     pi = info.PackageInfo;
-    ok( info.NegotiationState == SECPKG_NEGOTIATION_COMPLETE, "got %u\n", info.NegotiationState );
+    ok( info.NegotiationState == SECPKG_NEGOTIATION_COMPLETE, "got %lu\n", info.NegotiationState );
     ok( pi != NULL, "expected non-NULL PackageInfo\n" );
     if (pi)
     {
@@ -301,7 +301,7 @@ static void test_authentication(void)
             pi->fCapabilities == (NTLM_BASE_CAPS|SECPKG_FLAG_RESTRICTED_TOKENS|SECPKG_FLAG_APPLY_LOOPBACK) ||
             pi->fCapabilities == (NTLM_BASE_CAPS|SECPKG_FLAG_RESTRICTED_TOKENS|SECPKG_FLAG_APPLY_LOOPBACK|
                                   SECPKG_FLAG_APPCONTAINER_CHECKS),
-            "got %08x\n", pi->fCapabilities );
+            "got %08lx\n", pi->fCapabilities );
         ok( pi->wVersion == 1, "got %u\n", pi->wVersion );
         ok( pi->wRPCID == RPC_C_AUTHN_WINNT, "got %u\n", pi->wRPCID );
         ok( !lstrcmpA( pi->Name, "NTLM" ), "got %s\n", pi->Name );
@@ -314,7 +314,7 @@ static void test_authentication(void)
         ok( pi->Comment + lstrlenA(pi->Comment) < eob, "Comment doesn't fit into allocated block\n" );
 
         status = FreeContextBuffer( pi );
-        ok( status == SEC_E_OK, "FreeContextBuffer error %#x\n", status );
+        ok( status == SEC_E_OK, "FreeContextBuffer error %#lx\n", status );
     }
 
 done:
@@ -324,25 +324,25 @@ done:
     if (client.ctxt.dwLower || client.ctxt.dwUpper)
     {
         status_c = DeleteSecurityContext( &client.ctxt );
-        ok( status_c == SEC_E_OK, "DeleteSecurityContext returned %08x\n", status_c );
+        ok( status_c == SEC_E_OK, "DeleteSecurityContext returned %08lx\n", status_c );
     }
 
     if (server.ctxt.dwLower || server.ctxt.dwUpper)
     {
         status_s = DeleteSecurityContext( &server.ctxt );
-        ok( status_s == SEC_E_OK, "DeleteSecurityContext returned %08x\n", status_s );
+        ok( status_s == SEC_E_OK, "DeleteSecurityContext returned %08lx\n", status_s );
     }
 
     if (client.cred.dwLower || client.cred.dwUpper)
     {
         status_c = FreeCredentialsHandle( &client.cred );
-        ok( status_c == SEC_E_OK, "FreeCredentialsHandle returned %08x\n", status_c );
+        ok( status_c == SEC_E_OK, "FreeCredentialsHandle returned %08lx\n", status_c );
     }
 
     if (server.cred.dwLower || server.cred.dwUpper)
     {
         status_s = FreeCredentialsHandle(&server.cred);
-        ok( status_s == SEC_E_OK, "FreeCredentialsHandle returned %08x\n", status_s );
+        ok( status_s == SEC_E_OK, "FreeCredentialsHandle returned %08lx\n", status_s );
     }
 }
 
@@ -360,7 +360,7 @@ START_TEST(negotiate)
         info->fCapabilities == (NEGOTIATE_BASE_CAPS|SECPKG_FLAG_RESTRICTED_TOKENS) ||
         info->fCapabilities == (NEGOTIATE_BASE_CAPS|SECPKG_FLAG_RESTRICTED_TOKENS|
                                 SECPKG_FLAG_APPCONTAINER_CHECKS),
-        "got %08x\n", info->fCapabilities );
+        "got %08lx\n", info->fCapabilities );
     ok( info->wVersion == 1, "got %u\n", info->wVersion );
     ok( info->wRPCID == RPC_C_AUTHN_GSS_NEGOTIATE, "got %u\n", info->wRPCID );
     ok( !lstrcmpA( info->Name, "Negotiate" ), "got %s\n", info->Name );

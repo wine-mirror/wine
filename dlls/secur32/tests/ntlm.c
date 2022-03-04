@@ -233,7 +233,7 @@ static const char* getSecError(SECURITY_STATUS status)
         _SEC_ERR(SEC_E_OUT_OF_SEQUENCE);
         _SEC_ERR(SEC_E_MESSAGE_ALTERED);
         default:
-            sprintf(buf, "%08x\n", status);
+            sprintf(buf, "%08lx\n", status);
             return buf;
     }
 #undef _SEC_ERR
@@ -476,7 +476,7 @@ static SECURITY_STATUS runClient(SspiData *sspi_data, BOOL first, ULONG data_rep
         ok(ret == SEC_E_BUFFER_TOO_SMALL, "expected SEC_E_BUFFER_TOO_SMALL, got %s\n", getSecError(ret));
 
         ok(out_buf->pBuffers[0].cbBuffer == 0,
-           "InitializeSecurityContext set buffer size to %u\n", out_buf->pBuffers[0].cbBuffer);
+           "InitializeSecurityContext set buffer size to %lu\n", out_buf->pBuffers[0].cbBuffer);
 
         out_buf->pBuffers[0].cbBuffer = sspi_data->max_token;
         out_buf->pBuffers[0].BufferType = SECBUFFER_DATA;
@@ -505,9 +505,9 @@ static SECURITY_STATUS runClient(SspiData *sspi_data, BOOL first, ULONG data_rep
     }
 
     ok(out_buf->pBuffers[0].BufferType == SECBUFFER_TOKEN,
-       "buffer type was changed from SECBUFFER_TOKEN to %d\n", out_buf->pBuffers[0].BufferType);
+       "buffer type was changed from SECBUFFER_TOKEN to %ld\n", out_buf->pBuffers[0].BufferType);
     ok(out_buf->pBuffers[0].cbBuffer < sspi_data->max_token,
-       "InitializeSecurityContext set buffer size to %u\n", out_buf->pBuffers[0].cbBuffer);
+       "InitializeSecurityContext set buffer size to %lu\n", out_buf->pBuffers[0].cbBuffer);
 
     return ret;
 }
@@ -902,24 +902,24 @@ static void testAuth(ULONG data_rep, BOOL fake)
             "pQueryContextAttributesA(SECPKG_ATTR_SIZES) returned %s\n",
             getSecError(sec_status));
     ok((ctxt_sizes.cbMaxToken == 1904) || (ctxt_sizes.cbMaxToken == 2888),
-            "cbMaxToken should be 1904 or 2888 but is %u\n",
+            "cbMaxToken should be 1904 or 2888 but is %lu\n",
             ctxt_sizes.cbMaxToken);
     ok(ctxt_sizes.cbMaxSignature == 16,
-            "cbMaxSignature should be 16 but is %u\n",
+            "cbMaxSignature should be 16 but is %lu\n",
             ctxt_sizes.cbMaxSignature);
     ok(ctxt_sizes.cbSecurityTrailer == 16,
-            "cbSecurityTrailer should be 16 but is  %u\n",
+            "cbSecurityTrailer should be 16 but is  %lu\n",
             ctxt_sizes.cbSecurityTrailer);
     ok(ctxt_sizes.cbBlockSize == 0,
-            "cbBlockSize should be 0 but is %u\n",
+            "cbBlockSize should be 0 but is %lu\n",
             ctxt_sizes.cbBlockSize);
 
     memset(&info, 0, sizeof(info));
     sec_status = QueryContextAttributesA(&client.ctxt, SECPKG_ATTR_NEGOTIATION_INFO, &info);
-    ok(sec_status == SEC_E_OK, "QueryContextAttributesA returned %08x\n", sec_status);
+    ok(sec_status == SEC_E_OK, "QueryContextAttributesA returned %08lx\n", sec_status);
 
     pi = info.PackageInfo;
-    ok(info.NegotiationState == SECPKG_NEGOTIATION_COMPLETE, "got %u\n", info.NegotiationState);
+    ok(info.NegotiationState == SECPKG_NEGOTIATION_COMPLETE, "got %lu\n", info.NegotiationState);
     ok(pi != NULL, "expected non-NULL PackageInfo\n");
     if (pi)
     {
@@ -933,7 +933,7 @@ static void testAuth(ULONG data_rep, BOOL fake)
            pi->fCapabilities == (NTLM_BASE_CAPS|SECPKG_FLAG_RESTRICTED_TOKENS|SECPKG_FLAG_APPLY_LOOPBACK) ||
            pi->fCapabilities == (NTLM_BASE_CAPS|SECPKG_FLAG_RESTRICTED_TOKENS|SECPKG_FLAG_APPLY_LOOPBACK|
                                  SECPKG_FLAG_APPCONTAINER_CHECKS),
-           "got %08x\n", pi->fCapabilities);
+           "got %08lx\n", pi->fCapabilities);
         ok(pi->wVersion == 1, "got %u\n", pi->wVersion);
         ok(pi->wRPCID == RPC_C_AUTHN_WINNT, "got %u\n", pi->wRPCID);
         ok(!lstrcmpA( pi->Name, "NTLM" ), "got %s\n", pi->Name);
@@ -946,7 +946,7 @@ static void testAuth(ULONG data_rep, BOOL fake)
         ok(pi->Comment + lstrlenA(pi->Comment) < eob, "Comment doesn't fit into allocated block\n");
 
         sec_status = FreeContextBuffer(pi);
-        ok(sec_status == SEC_E_OK, "FreeContextBuffer error %#x\n", sec_status);
+        ok(sec_status == SEC_E_OK, "FreeContextBuffer error %#lx\n", sec_status);
     }
 
 tAuthend:
@@ -1108,13 +1108,13 @@ static void testSignSeal(void)
     ok(sec_status == SEC_E_MESSAGE_ALTERED,
             "VerifySignature returned %s, not SEC_E_MESSAGE_ALTERED.\n",
             getSecError(sec_status));
-    ok(qop == 0xdeadbeef, "qop changed to %u\n", qop);
+    ok(qop == 0xdeadbeef, "qop changed to %lu\n", qop);
 
     memcpy(data[0].pvBuffer, message_signature, data[0].cbBuffer);
     sec_status = pVerifySignature(&client.ctxt, &crypt, 0, &qop);
     ok(sec_status == SEC_E_OK, "VerifySignature returned %s, not SEC_E_OK.\n",
             getSecError(sec_status));
-    ok(qop == 0xdeadbeef, "qop changed to %u\n", qop);
+    ok(qop == 0xdeadbeef, "qop changed to %lu\n", qop);
 
     sec_status = pEncryptMessage(&client.ctxt, 0, &crypt, 0);
     if (sec_status == SEC_E_UNSUPPORTED_FUNCTION)
@@ -1161,7 +1161,7 @@ static void testSignSeal(void)
         ok(!memcmp(crypt.pBuffers[1].pvBuffer, message_binary,
                    crypt.pBuffers[1].cbBuffer),
            "Failed to decrypt message correctly.\n");
-        ok(qop == 0xdeadbeef, "qop changed to %u\n", qop);
+        ok(qop == 0xdeadbeef, "qop changed to %lu\n", qop);
     }
     else trace( "A different session key is being used\n" );
 
@@ -1199,7 +1199,7 @@ static void testSignSeal(void)
     sec_status = pVerifySignature(&client.ctxt, &crypt, 0, &qop);
     ok(sec_status == SEC_E_OK, "VerifySignature returned %s, not SEC_E_OK\n",
             getSecError(sec_status));
-    ok(qop == 0xdeadbeef, "qop changed to %u\n", qop);
+    ok(qop == 0xdeadbeef, "qop changed to %lu\n", qop);
 
     sec_status = pEncryptMessage(&client.ctxt, 0, &crypt, 0);
     ok(sec_status == SEC_E_OK, "EncryptMessage returned %s, not SEC_E_OK.\n",
@@ -1231,7 +1231,7 @@ static void testSignSeal(void)
     sec_status = pDecryptMessage(&client.ctxt, &crypt, 0, &qop);
     ok(sec_status == SEC_E_OK, "DecryptMessage returned %s, not SEC_E_OK.\n",
             getSecError(sec_status));
-    ok(qop == 0xdeadbeef, "qop changed to %u\n", qop);
+    ok(qop == 0xdeadbeef, "qop changed to %lu\n", qop);
 
 
 end:
@@ -1444,19 +1444,19 @@ static void test_cred_multiple_use(void)
     ret = pInitializeSecurityContextA(&cred, NULL, NULL, ISC_REQ_CONNECTION,
             0, SECURITY_NETWORK_DREP, NULL, 0, &ctxt1, &buffer_desc,
             &ctxt_attr, &ttl);
-    ok(ret == SEC_I_CONTINUE_NEEDED, "InitializeSecurityContextA failed with error 0x%x\n", ret);
+    ok(ret == SEC_I_CONTINUE_NEEDED, "InitializeSecurityContextA failed with error 0x%lx\n", ret);
 
     ret = pInitializeSecurityContextA(&cred, NULL, NULL, ISC_REQ_CONNECTION,
             0, SECURITY_NETWORK_DREP, NULL, 0, &ctxt2, &buffer_desc,
             &ctxt_attr, &ttl);
-    ok(ret == SEC_I_CONTINUE_NEEDED, "Second InitializeSecurityContextA on cred handle failed with error 0x%x\n", ret);
+    ok(ret == SEC_I_CONTINUE_NEEDED, "Second InitializeSecurityContextA on cred handle failed with error 0x%lx\n", ret);
 
     ret = pDeleteSecurityContext(&ctxt1);
-    ok(ret == SEC_E_OK, "DeleteSecurityContext failed with error 0x%x\n", ret);
+    ok(ret == SEC_E_OK, "DeleteSecurityContext failed with error 0x%lx\n", ret);
     ret = pDeleteSecurityContext(&ctxt2);
-    ok(ret == SEC_E_OK, "DeleteSecurityContext failed with error 0x%x\n", ret);
+    ok(ret == SEC_E_OK, "DeleteSecurityContext failed with error 0x%lx\n", ret);
     ret = pFreeCredentialsHandle(&cred);
-    ok(ret == SEC_E_OK, "FreeCredentialsHandle failed with error 0x%x\n", ret);
+    ok(ret == SEC_E_OK, "FreeCredentialsHandle failed with error 0x%lx\n", ret);
 
     HeapFree(GetProcessHeap(), 0, buffers[0].pvBuffer);
 }
@@ -1494,7 +1494,7 @@ static void test_null_auth_data(void)
 
     size = sizeof(user);
     ret = pGetUserNameExA(NameSamCompatible, user, &size);
-    ok(ret, "GetUserNameExA failed %u\n", GetLastError());
+    ok(ret, "GetUserNameExA failed %lu\n", GetLastError());
 
     status = pInitializeSecurityContextA(&cred, NULL, (SEC_CHAR *)user,
                                          ISC_REQ_CONNECTION, 0, SECURITY_NETWORK_DREP,
