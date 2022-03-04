@@ -1084,6 +1084,27 @@ then
         WINE_NOTICE([libxslt ${notice_platform}MinGW development files not found; using bundled version.])
     fi
 
+    WINE_MINGW_PACKAGE_FLAGS(VKD3D,[libvkd3d libvkd3d-shader],[-lvkd3d -lvkd3d-shader],
+        [WINE_CHECK_MINGW_HEADER(vkd3d.h)
+        WINE_CHECK_MINGW_HEADER(vkd3d_shader.h)
+        if test "$ac_cv_mingw_header_vkd3d_h" = "yes" -a "$ac_cv_mingw_header_vkd3d_shader_h" = "yes"
+        then
+            WINE_CHECK_MINGW_LIB(vkd3d,vkd3d_serialize_versioned_root_signature,[:],[:],[$VKD3D_PE_LIBS])
+            WINE_CHECK_MINGW_LIB(vkd3d-shader,vkd3d_shader_compile,[:],[:],[$VKD3D_PE_LIBS])
+            if test "$ac_cv_mingw_lib_vkd3d" = "no" -o "$ac_cv_mingw_lib_vkd3d_shader" = "no"
+            then
+                VKD3D_PE_CFLAGS=""
+                VKD3D_PE_LIBS=""
+            fi
+        else
+            VKD3D_PE_CFLAGS=""
+            VKD3D_PE_LIBS=""
+        fi])
+    if test "x$VKD3D_PE_LIBS" = "x"
+    then
+        WINE_NOTICE([libvkd3d ${notice_platform}MinGW development files not found; using bundled version.])
+    fi
+
     WINE_MINGW_PACKAGE_FLAGS(ZLIB,[zlib],[-lz],
         [WINE_CHECK_MINGW_HEADER(zlib.h,
             [WINE_CHECK_MINGW_LIB(z,inflate,[:],[ZLIB_PE_CFLAGS=""; ZLIB_PE_LIBS=""],[$ZLIB_PE_LIBS])],

@@ -12812,6 +12812,211 @@ CPPFLAGS=$ac_save_CPPFLAGS
         as_fn_append wine_notices "|libxslt ${notice_platform}MinGW development files not found; using bundled version."
     fi
 
+    if ${VKD3D_PE_CFLAGS:+false} :
+then :
+  if test ${MINGW_PKG_CONFIG+y}
+then :
+  VKD3D_PE_CFLAGS=`$MINGW_PKG_CONFIG --cflags libvkd3d libvkd3d-shader 2>/dev/null`
+fi
+fi
+if ${VKD3D_PE_LIBS:+false} :
+then :
+  if test ${MINGW_PKG_CONFIG+y}
+then :
+  VKD3D_PE_LIBS=`$MINGW_PKG_CONFIG --libs libvkd3d libvkd3d-shader 2>/dev/null`
+fi
+fi
+VKD3D_PE_LIBS=${VKD3D_PE_LIBS:-"-lvkd3d -lvkd3d-shader"}
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $VKD3D_PE_CFLAGS"
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for MinGW vkd3d.h" >&5
+printf %s "checking for MinGW vkd3d.h... " >&6; }
+if test ${ac_cv_mingw_header_vkd3d_h+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_wine_check_headers_saved_cc=$CC
+ac_wine_check_headers_saved_exeext=$ac_exeext
+CC="$CROSSCC"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <vkd3d.h>
+int
+main (void)
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  ac_cv_mingw_header_vkd3d_h=yes
+else $as_nop
+  ac_cv_mingw_header_vkd3d_h=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+CC=$ac_wine_check_headers_saved_cc
+ac_exeext=$ac_wine_check_headers_saved_exeext
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mingw_header_vkd3d_h" >&5
+printf "%s\n" "$ac_cv_mingw_header_vkd3d_h" >&6; }
+if test "x$ac_cv_mingw_header_vkd3d_h" = xyes
+then :
+
+fi
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for MinGW vkd3d_shader.h" >&5
+printf %s "checking for MinGW vkd3d_shader.h... " >&6; }
+if test ${ac_cv_mingw_header_vkd3d_shader_h+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_wine_check_headers_saved_cc=$CC
+ac_wine_check_headers_saved_exeext=$ac_exeext
+CC="$CROSSCC"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <vkd3d_shader.h>
+int
+main (void)
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  ac_cv_mingw_header_vkd3d_shader_h=yes
+else $as_nop
+  ac_cv_mingw_header_vkd3d_shader_h=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+CC=$ac_wine_check_headers_saved_cc
+ac_exeext=$ac_wine_check_headers_saved_exeext
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mingw_header_vkd3d_shader_h" >&5
+printf "%s\n" "$ac_cv_mingw_header_vkd3d_shader_h" >&6; }
+if test "x$ac_cv_mingw_header_vkd3d_shader_h" = xyes
+then :
+
+fi
+        if test "$ac_cv_mingw_header_vkd3d_h" = "yes" -a "$ac_cv_mingw_header_vkd3d_shader_h" = "yes"
+        then
+            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for vkd3d_serialize_versioned_root_signature in MinGW -lvkd3d" >&5
+printf %s "checking for vkd3d_serialize_versioned_root_signature in MinGW -lvkd3d... " >&6; }
+if test ${ac_cv_mingw_lib_vkd3d+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_wine_check_headers_saved_cc=$CC
+ac_wine_check_headers_saved_exeext=$ac_exeext
+ac_wine_check_headers_saved_libs=$LIBS
+CC="$CROSSCC"
+ac_exeext=".exe"
+LIBS="-lvkd3d $VKD3D_PE_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char vkd3d_serialize_versioned_root_signature ();
+int
+main (void)
+{
+return vkd3d_serialize_versioned_root_signature ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_mingw_lib_vkd3d=yes
+else $as_nop
+  ac_cv_mingw_lib_vkd3d=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CC=$ac_wine_check_headers_saved_cc
+ac_exeext=$ac_wine_check_headers_saved_exeext
+LIBS=$ac_wine_check_headers_saved_libs
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mingw_lib_vkd3d" >&5
+printf "%s\n" "$ac_cv_mingw_lib_vkd3d" >&6; }
+if test "x$ac_cv_mingw_lib_vkd3d" = xyes
+then :
+  :
+else $as_nop
+  :
+fi
+            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for vkd3d_shader_compile in MinGW -lvkd3d-shader" >&5
+printf %s "checking for vkd3d_shader_compile in MinGW -lvkd3d-shader... " >&6; }
+if test ${ac_cv_mingw_lib_vkd3d_shader+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_wine_check_headers_saved_cc=$CC
+ac_wine_check_headers_saved_exeext=$ac_exeext
+ac_wine_check_headers_saved_libs=$LIBS
+CC="$CROSSCC"
+ac_exeext=".exe"
+LIBS="-lvkd3d-shader $VKD3D_PE_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char vkd3d_shader_compile ();
+int
+main (void)
+{
+return vkd3d_shader_compile ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_mingw_lib_vkd3d_shader=yes
+else $as_nop
+  ac_cv_mingw_lib_vkd3d_shader=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CC=$ac_wine_check_headers_saved_cc
+ac_exeext=$ac_wine_check_headers_saved_exeext
+LIBS=$ac_wine_check_headers_saved_libs
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mingw_lib_vkd3d_shader" >&5
+printf "%s\n" "$ac_cv_mingw_lib_vkd3d_shader" >&6; }
+if test "x$ac_cv_mingw_lib_vkd3d_shader" = xyes
+then :
+  :
+else $as_nop
+  :
+fi
+            if test "$ac_cv_mingw_lib_vkd3d" = "no" -o "$ac_cv_mingw_lib_vkd3d_shader" = "no"
+            then
+                VKD3D_PE_CFLAGS=""
+                VKD3D_PE_LIBS=""
+            fi
+        else
+            VKD3D_PE_CFLAGS=""
+            VKD3D_PE_LIBS=""
+        fi
+CPPFLAGS=$ac_save_CPPFLAGS
+
+    if test "x$VKD3D_PE_LIBS" = "x"
+    then
+        as_fn_append wine_notices "|libvkd3d ${notice_platform}MinGW development files not found; using bundled version."
+    fi
+
     if ${ZLIB_PE_CFLAGS:+false} :
 then :
   if test ${MINGW_PKG_CONFIG+y}
