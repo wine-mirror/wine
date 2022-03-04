@@ -299,7 +299,7 @@ static void CLASS_FreeClass( CLASS *classPtr )
 static CLASS *find_class( HINSTANCE module, const WCHAR *name )
 {
     ATOM atom = get_int_atom_value( name );
-    UINT_PTR instance = (UINT_PTR)module;
+    UINT_PTR instance = (UINT_PTR)module & ~0xffff;
     CLASS *class;
 
     USER_Lock();
@@ -313,7 +313,7 @@ static CLASS *find_class( HINSTANCE module, const WCHAR *name )
         {
             if (wcsicmp( class->name, name )) continue;
         }
-        if (!class->local || class->instance == instance)
+        if (!class->local || (class->instance & ~0xffff) == instance)
         {
             TRACE("%s %Ix -> %p\n", debugstr_w(name), instance, class);
             return class;

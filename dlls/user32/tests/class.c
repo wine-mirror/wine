@@ -90,12 +90,14 @@ static void ClassTest(HINSTANCE hInstance, BOOL global)
     WNDCLASSW cls, wc;
     static const WCHAR className[] = {'T','e','s','t','C','l','a','s','s',0};
     static const WCHAR winName[]   = {'W','i','n','C','l','a','s','s','T','e','s','t',0};
+    WNDCLASSW info;
     ATOM test_atom;
     HWND hTestWnd;
     LONG i;
     WCHAR str[20];
     ATOM classatom;
     HINSTANCE hInstance2;
+    BOOL ret;
 
     cls.style         = CS_HREDRAW | CS_VREDRAW | (global?CS_GLOBALCLASS:0);
     cls.lpfnWndProc   = ClassTest_WndProc;
@@ -135,6 +137,9 @@ static void ClassTest(HINSTANCE hInstance, BOOL global)
        (HINSTANCE)GetWindowLongPtrA(hTestWnd, GWLP_HINSTANCE), hInstance2);
 
     DestroyWindow(hTestWnd);
+
+    ret = GetClassInfoW(hInstance2, className, &info);
+    ok(ret, "GetClassInfoW failed: %u\n", GetLastError());
 
     hTestWnd = CreateWindowW (className, winName,
        WS_OVERLAPPEDWINDOW + WS_HSCROLL + WS_VSCROLL,
