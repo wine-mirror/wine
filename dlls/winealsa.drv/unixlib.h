@@ -114,6 +114,14 @@ struct timer_loop_params
     struct alsa_stream *stream;
 };
 
+struct get_render_buffer_params
+{
+    struct alsa_stream *stream;
+    UINT32 frames;
+    HRESULT result;
+    BYTE **data;
+};
+
 struct is_format_supported_params
 {
     const char *alsa_name;
@@ -169,6 +177,7 @@ enum alsa_funcs
     alsa_stop,
     alsa_reset,
     alsa_timer_loop,
+    alsa_get_render_buffer,
     alsa_is_format_supported,
     alsa_get_mix_format,
     alsa_get_buffer_size,

@@ -1297,9 +1297,7 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
         UINT32 frames, BYTE **data)
 {
     ACImpl *This = impl_from_IAudioRenderClient(iface);
-    struct alsa_stream *stream = This->stream;
-    UINT32 write_pos;
-    SIZE_T size;
+    struct get_render_buffer_params params;
 
     TRACE("(%p)->(%u, %p)\n", This, frames, data);
 
@@ -1307,53 +1305,13 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
         return E_POINTER;
     *data = NULL;
 
-    alsa_lock(stream);
+    params.stream = This->stream;
+    params.frames = frames;
+    params.data = data;
 
-    if(stream->getbuf_last){
-        alsa_unlock(stream);
-        return AUDCLNT_E_OUT_OF_ORDER;
-    }
+    ALSA_CALL(get_render_buffer, &params);
 
-    if(!frames){
-        alsa_unlock(stream);
-        return S_OK;
-    }
-
-    /* held_frames == GetCurrentPadding_nolock(); */
-    if(stream->held_frames + frames > stream->bufsize_frames){
-        alsa_unlock(stream);
-        return AUDCLNT_E_BUFFER_TOO_LARGE;
-    }
-
-    write_pos = stream->wri_offs_frames;
-    if(write_pos + frames > stream->bufsize_frames){
-        if(stream->tmp_buffer_frames < frames){
-            if(stream->tmp_buffer){
-                size = 0;
-                NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, &size, MEM_RELEASE);
-                stream->tmp_buffer = NULL;
-            }
-            size = frames * stream->fmt->nBlockAlign;
-            if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, 0, &size,
-                                       MEM_COMMIT, PAGE_READWRITE)){
-                stream->tmp_buffer_frames = 0;
-                alsa_unlock(stream);
-                return E_OUTOFMEMORY;
-            }
-            stream->tmp_buffer_frames = frames;
-        }
-        *data = stream->tmp_buffer;
-        stream->getbuf_last = -frames;
-    }else{
-        *data = stream->local_buffer + write_pos * stream->fmt->nBlockAlign;
-        stream->getbuf_last = frames;
-    }
-
-    silence_buffer(stream, *data, frames);
-
-    alsa_unlock(stream);
-
-    return S_OK;
+    return params.result;
 }
 
 static void alsa_wrap_buffer(struct alsa_stream *stream, BYTE *buffer, UINT32 written_frames)
