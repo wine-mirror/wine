@@ -947,7 +947,8 @@ static void test_ITextRange_GetStart_GetEnd(void)
   ITextDocument *txtDoc = NULL;
   ITextRange *txtRge = NULL;
   HRESULT hres;
-  int first, lim, start, end;
+  int first, lim;
+  LONG start, end;
   static const CHAR test_text1[] = "TestSomeText";
 
   create_interfaces(&w, &reOle, &txtDoc, NULL);
@@ -1166,7 +1167,8 @@ static void test_ITextSelection_GetStart_GetEnd(void)
   ITextDocument *txtDoc = NULL;
   ITextSelection *txtSel = NULL;
   HRESULT hres;
-  int first, lim, start, end;
+  int first, lim;
+  LONG start, end;
   static const CHAR test_text1[] = "TestSomeText";
 
   create_interfaces(&w, &reOle, &txtDoc, &txtSel);
