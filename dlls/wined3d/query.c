@@ -1742,6 +1742,8 @@ static void wined3d_query_vk_destroy(struct wined3d_query *query)
     wined3d_query_vk_remove_pending_queries(context_vk, query_vk);
     if (query_vk->pool_idx.pool_vk)
         wined3d_query_pool_vk_mark_complete(query_vk->pool_idx.pool_vk, query_vk->pool_idx.idx, context_vk);
+    if (query_vk->vk_event)
+        wined3d_context_vk_destroy_vk_event(context_vk, query_vk->vk_event, query_vk->command_buffer_id);
     context_release(&context_vk->c);
     heap_free(query_vk->pending);
     heap_free(query_vk);
@@ -1756,50 +1758,67 @@ static const struct wined3d_query_ops wined3d_query_vk_ops =
 
 static BOOL wined3d_query_event_vk_poll(struct wined3d_query *query, uint32_t flags)
 {
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(query->device);
     struct wined3d_query_vk *query_vk = wined3d_query_vk(query);
-    struct wined3d_context_vk *context_vk;
-    BOOL *signalled;
+    const struct wined3d_vk_info *vk_info = &device_vk->vk_info;
+    BOOL signalled;
 
-    context_vk = wined3d_context_vk(context_acquire(query->device, NULL, 0));
-
-    signalled = (BOOL *)query->data;
-    if (flags & WINED3DGETDATA_FLUSH)
-        wined3d_context_vk_submit_command_buffer(context_vk, 0, NULL, NULL, 0, NULL);
-    if (query_vk->command_buffer_id == context_vk->current_command_buffer.id)
-    {
-        context_release(&context_vk->c);
-        return *signalled = FALSE;
-    }
-
-    if (query_vk->command_buffer_id > context_vk->completed_command_buffer_id)
-        wined3d_context_vk_poll_command_buffers(context_vk);
-    *signalled = context_vk->completed_command_buffer_id >= query_vk->command_buffer_id;
-
-    context_release(&context_vk->c);
-
-    return *signalled;
+    signalled = VK_CALL(vkGetEventStatus(device_vk->vk_device, query_vk->vk_event))
+            == VK_EVENT_SET;
+    if (!signalled && (flags & WINED3DGETDATA_FLUSH) && !query->device->cs->queries_flushed)
+        query->device->cs->c.ops->flush(&query->device->cs->c);
+    return *(BOOL *)query->data = signalled;
 }
 
 static BOOL wined3d_query_event_vk_issue(struct wined3d_query *query, uint32_t flags)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(query->device);
+    const struct wined3d_vk_info *vk_info = &device_vk->vk_info;
     struct wined3d_query_vk *query_vk = wined3d_query_vk(query);
     struct wined3d_context_vk *context_vk;
+    VkEventCreateInfo create_info;
+    VkResult vr;
 
     TRACE("query %p, flags %#x.\n", query, flags);
 
     if (flags & WINED3DISSUE_END)
     {
         context_vk = wined3d_context_vk(context_acquire(&device_vk->d, NULL, 0));
+        wined3d_context_vk_end_current_render_pass(context_vk);
+
+        if (query_vk->vk_event)
+        {
+            if (query_vk->command_buffer_id > context_vk->completed_command_buffer_id)
+            {
+                /* Cannot reuse this event, as it may still get signalled by previous usage. */
+                /* Throw it away and create a new one, but if that happens a lot we may want to pool instead. */
+                wined3d_context_vk_destroy_vk_event(context_vk, query_vk->vk_event, query_vk->command_buffer_id);
+                query_vk->vk_event = VK_NULL_HANDLE;
+            }
+            else
+            {
+                VK_CALL(vkResetEvent(device_vk->vk_device, query_vk->vk_event));
+            }
+        }
+
+        if (!query_vk->vk_event)
+        {
+            create_info.sType = VK_STRUCTURE_TYPE_EVENT_CREATE_INFO;
+            create_info.pNext = NULL;
+            create_info.flags = 0;
+
+            vr = VK_CALL(vkCreateEvent(device_vk->vk_device, &create_info, NULL, &query_vk->vk_event));
+            if (vr != VK_SUCCESS)
+            {
+                ERR("Failed to create Vulkan event, vr %s\n", wined3d_debug_vkresult(vr));
+                context_release(&context_vk->c);
+                return FALSE;
+            }
+        }
+
         wined3d_context_vk_reference_query(context_vk, query_vk);
-        /* Because we don't actually submit any commands to the command buffer
-         * for event queries, the context's current command buffer may still
-         * be empty, and we should wait on the preceding command buffer
-         * instead. That's not merely an optimisation; if the command buffer
-         * referenced by the query is still empty by the time the application
-         * waits for it, that wait will never complete. */
-        if (!context_vk->current_command_buffer.vk_command_buffer)
-            --query_vk->command_buffer_id;
+        VK_CALL(vkCmdSetEvent(wined3d_context_vk_get_command_buffer(context_vk), query_vk->vk_event,
+                VK_PIPELINE_STAGE_ALL_COMMANDS_BIT));
         context_release(&context_vk->c);
 
         return TRUE;
@@ -1937,9 +1956,7 @@ HRESULT wined3d_query_vk_create(struct wined3d_device *device, enum wined3d_quer
     data = query_vk + 1;
 
     wined3d_query_init(&query_vk->q, device, type, data, data_size, ops, parent, parent_ops);
-
-    if (type != WINED3D_QUERY_TYPE_EVENT)
-        query_vk->q.poll_in_cs = false;
+    query_vk->q.poll_in_cs = false;
 
     switch (type)
     {

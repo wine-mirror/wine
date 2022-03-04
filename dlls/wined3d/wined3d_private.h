@@ -2086,6 +2086,7 @@ struct wined3d_query_vk
     uint8_t flags;
     uint64_t command_buffer_id;
     uint32_t control_flags;
+    VkEvent vk_event;
     SIZE_T pending_count, pending_size;
     struct wined3d_query_pool_idx_vk *pending;
 };
@@ -2414,6 +2415,7 @@ enum wined3d_retired_object_type_vk
     WINED3D_RETIRED_IMAGE_VIEW_VK,
     WINED3D_RETIRED_SAMPLER_VK,
     WINED3D_RETIRED_QUERY_POOL_VK,
+    WINED3D_RETIRED_EVENT_VK,
 };
 
 struct wined3d_retired_object_vk
@@ -2436,6 +2438,7 @@ struct wined3d_retired_object_vk
         VkBufferView vk_buffer_view;
         VkImageView vk_image_view;
         VkSampler vk_sampler;
+        VkEvent vk_event;
         struct
         {
             struct wined3d_query_pool_vk *pool_vk;
@@ -2659,6 +2662,8 @@ void wined3d_context_vk_destroy_vk_memory(struct wined3d_context_vk *context_vk,
         VkDeviceMemory vk_memory, uint64_t command_buffer_id) DECLSPEC_HIDDEN;
 void wined3d_context_vk_destroy_vk_sampler(struct wined3d_context_vk *context_vk,
         VkSampler vk_sampler, uint64_t command_buffer_id) DECLSPEC_HIDDEN;
+void wined3d_context_vk_destroy_vk_event(struct wined3d_context_vk *context_vk,
+        VkEvent vk_event, uint64_t command_buffer_id) DECLSPEC_HIDDEN;
 void wined3d_context_vk_end_current_render_pass(struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
 VkCommandBuffer wined3d_context_vk_get_command_buffer(struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
 struct wined3d_pipeline_layout_vk *wined3d_context_vk_get_pipeline_layout(struct wined3d_context_vk *context_vk,

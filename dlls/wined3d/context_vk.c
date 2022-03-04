@@ -973,6 +973,31 @@ void wined3d_context_vk_destroy_vk_sampler(struct wined3d_context_vk *context_vk
     o->command_buffer_id = command_buffer_id;
 }
 
+void wined3d_context_vk_destroy_vk_event(struct wined3d_context_vk *context_vk,
+        VkEvent vk_event, uint64_t command_buffer_id)
+{
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
+    const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+    struct wined3d_retired_object_vk *o;
+
+    if (context_vk->completed_command_buffer_id > command_buffer_id)
+    {
+        VK_CALL(vkDestroyEvent(device_vk->vk_device, vk_event, NULL));
+        TRACE("Destroyed event 0x%s.\n", wine_dbgstr_longlong(vk_event));
+        return;
+    }
+
+    if (!(o = wined3d_context_vk_get_retired_object_vk(context_vk)))
+    {
+        ERR("Leaking event 0x%s.\n", wine_dbgstr_longlong(vk_event));
+        return;
+    }
+
+    o->type = WINED3D_RETIRED_EVENT_VK;
+    o->u.vk_event = vk_event;
+    o->command_buffer_id = command_buffer_id;
+}
+
 void wined3d_context_vk_destroy_image(struct wined3d_context_vk *context_vk, struct wined3d_image_vk *image)
 {
     wined3d_context_vk_destroy_vk_image(context_vk, image->vk_image, image->command_buffer_id);
@@ -1132,6 +1157,11 @@ static void wined3d_context_vk_cleanup_resources(struct wined3d_context_vk *cont
             case WINED3D_RETIRED_QUERY_POOL_VK:
                 wined3d_query_pool_vk_mark_free(context_vk, o->u.queries.pool_vk, o->u.queries.start, o->u.queries.count);
                 TRACE("Freed query range %u+%u in pool %p.\n", o->u.queries.start, o->u.queries.count, o->u.queries.pool_vk);
+                break;
+
+            case WINED3D_RETIRED_EVENT_VK:
+                VK_CALL(vkDestroyEvent(device_vk->vk_device, o->u.vk_event, NULL));
+                TRACE("Destroyed event 0x%s.\n", wine_dbgstr_longlong(o->u.vk_event));
                 break;
 
             default:
