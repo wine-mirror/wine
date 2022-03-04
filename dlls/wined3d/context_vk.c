@@ -1577,7 +1577,6 @@ void wined3d_context_vk_cleanup(struct wined3d_context_vk *context_vk)
     wined3d_context_vk_destroy_query_pools(context_vk, &context_vk->free_pipeline_statistics_query_pools);
     wined3d_context_vk_destroy_query_pools(context_vk, &context_vk->free_stream_output_statistics_query_pools);
     wine_rb_destroy(&context_vk->bo_slab_available, wined3d_context_vk_destroy_bo_slab, context_vk);
-    heap_free(context_vk->pending_queries.queries);
     heap_free(context_vk->submitted.buffers);
     heap_free(context_vk->retired.objects);
 
@@ -1587,69 +1586,6 @@ void wined3d_context_vk_cleanup(struct wined3d_context_vk *context_vk)
     wine_rb_destroy(&context_vk->render_passes, wined3d_context_vk_destroy_render_pass, context_vk);
 
     wined3d_context_cleanup(&context_vk->c);
-}
-
-void wined3d_context_vk_remove_pending_queries(struct wined3d_context_vk *context_vk,
-        struct wined3d_query_vk *query_vk)
-{
-    struct wined3d_pending_queries_vk *pending = &context_vk->pending_queries;
-    struct wined3d_pending_query_vk *p;
-    size_t i;
-
-    pending->free_idx = ~(size_t)0;
-    for (i = pending->count; i; --i)
-    {
-        p = &pending->queries[i - 1];
-
-        if (p->query_vk)
-        {
-            if (p->query_vk != query_vk && !wined3d_query_vk_accumulate_data(p->query_vk, context_vk, &p->pool_idx))
-                continue;
-            --p->query_vk->pending_count;
-        }
-
-        if (i == pending->count)
-        {
-            --pending->count;
-            continue;
-        }
-
-        p->query_vk = NULL;
-        p->pool_idx.pool_vk = NULL;
-        p->pool_idx.idx = pending->free_idx;
-        pending->free_idx = i - 1;
-    }
-}
-
-void wined3d_context_vk_accumulate_pending_queries(struct wined3d_context_vk *context_vk)
-{
-    wined3d_context_vk_remove_pending_queries(context_vk, NULL);
-}
-
-void wined3d_context_vk_add_pending_query(struct wined3d_context_vk *context_vk, struct wined3d_query_vk *query_vk)
-{
-    struct wined3d_pending_queries_vk *pending = &context_vk->pending_queries;
-    struct wined3d_pending_query_vk *p;
-
-    if (pending->free_idx != ~(size_t)0)
-    {
-        p = &pending->queries[pending->free_idx];
-        pending->free_idx = p->pool_idx.idx;
-    }
-    else
-    {
-        if (!wined3d_array_reserve((void **)&pending->queries, &pending->size,
-                pending->count + 1, sizeof(*pending->queries)))
-        {
-            ERR("Failed to allocate entry.\n");
-            return;
-        }
-        p = &pending->queries[pending->count++];
-    }
-
-    p->query_vk = query_vk;
-    p->pool_idx = query_vk->pool_idx;
-    ++query_vk->pending_count;
 }
 
 VkCommandBuffer wined3d_context_vk_get_command_buffer(struct wined3d_context_vk *context_vk)
@@ -1701,7 +1637,6 @@ VkCommandBuffer wined3d_context_vk_get_command_buffer(struct wined3d_context_vk 
         return buffer->vk_command_buffer = VK_NULL_HANDLE;
     }
 
-    wined3d_context_vk_accumulate_pending_queries(context_vk);
     LIST_FOR_EACH_ENTRY(query_vk, &context_vk->active_queries, struct wined3d_query_vk, entry)
     {
         if (!wined3d_context_vk_allocate_query(context_vk, query_vk->q.type, &query_vk->pool_idx))

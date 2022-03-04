@@ -2086,7 +2086,8 @@ struct wined3d_query_vk
     uint8_t flags;
     uint64_t command_buffer_id;
     uint32_t control_flags;
-    size_t pending_count;
+    SIZE_T pending_count, pending_size;
+    struct wined3d_query_pool_idx_vk *pending;
 };
 
 static inline struct wined3d_query_vk *wined3d_query_vk(struct wined3d_query *query)
@@ -2550,20 +2551,6 @@ struct wined3d_shader_descriptor_writes_vk
     SIZE_T size, count;
 };
 
-struct wined3d_pending_query_vk
-{
-    struct wined3d_query_vk *query_vk;
-    struct wined3d_query_pool_idx_vk pool_idx;
-};
-
-struct wined3d_pending_queries_vk
-{
-    struct wined3d_pending_query_vk *queries;
-    SIZE_T free_idx;
-    SIZE_T size;
-    SIZE_T count;
-};
-
 struct wined3d_context_vk
 {
     struct wined3d_context c;
@@ -2619,7 +2606,6 @@ struct wined3d_context_vk
 
     struct list render_pass_queries;
     struct list active_queries;
-    struct wined3d_pending_queries_vk pending_queries;
     struct list completed_query_pools;
     struct list free_occlusion_query_pools;
     struct list free_timestamp_query_pools;
@@ -2638,9 +2624,6 @@ static inline struct wined3d_context_vk *wined3d_context_vk(struct wined3d_conte
     return CONTAINING_RECORD(context, struct wined3d_context_vk, c);
 }
 
-void wined3d_context_vk_accumulate_pending_queries(struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
-void wined3d_context_vk_add_pending_query(struct wined3d_context_vk *context_vk,
-        struct wined3d_query_vk *query_vk) DECLSPEC_HIDDEN;
 bool wined3d_context_vk_allocate_query(struct wined3d_context_vk *context_vk,
         enum wined3d_query_type type, struct wined3d_query_pool_idx_vk *pool_idx) DECLSPEC_HIDDEN;
 VkDeviceMemory wined3d_context_vk_allocate_vram_chunk_memory(struct wined3d_context_vk *context_vk,
@@ -2688,8 +2671,6 @@ void wined3d_context_vk_image_barrier(struct wined3d_context_vk *context_vk,
 HRESULT wined3d_context_vk_init(struct wined3d_context_vk *context_vk,
         struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
 void wined3d_context_vk_poll_command_buffers(struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
-void wined3d_context_vk_remove_pending_queries(struct wined3d_context_vk *context_vk,
-        struct wined3d_query_vk *query_vk) DECLSPEC_HIDDEN;
 void wined3d_context_vk_submit_command_buffer(struct wined3d_context_vk *context_vk,
         unsigned int wait_semaphore_count, const VkSemaphore *wait_semaphores, const VkPipelineStageFlags *wait_stages,
         unsigned int signal_semaphore_count, const VkSemaphore *signal_semaphores) DECLSPEC_HIDDEN;
