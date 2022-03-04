@@ -19,6 +19,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include <stdarg.h>
 #include <stdlib.h>
@@ -107,7 +108,7 @@ static void test_heap(void)
         mem = HeapAlloc(GetProcessHeap(), 0, size);
         heap_size = HeapSize(GetProcessHeap(), 0, mem);
         ok(heap_size == size || heap_size == resize_9x(size), 
-            "HeapSize returned %lu instead of %lu or %lu\n", heap_size, size, resize_9x(size));
+            "HeapSize returned %Iu instead of %Iu or %Iu\n", heap_size, size, resize_9x(size));
         HeapFree(GetProcessHeap(), 0, mem);
     }
 
@@ -126,7 +127,7 @@ static void test_heap(void)
     ok(msecond != NULL, "HeapReAlloc(0) should have succeeded\n");
     size = HeapSize(GetProcessHeap(), 0, msecond);
     ok(size == 0 || broken(size == 1) /* some vista and win7 */,
-       "HeapSize should have returned 0 instead of %lu\n", size);
+       "HeapSize should have returned 0 instead of %Iu\n", size);
     HeapFree(GetProcessHeap(), 0, msecond);
 
     /* large blocks must be 16-byte aligned */
@@ -143,16 +144,16 @@ static void test_heap(void)
     gbl = GlobalReAlloc(gbl, 10, GMEM_MOVEABLE);
     ok(gbl != NULL, "Can't realloc global memory\n");
     size = GlobalSize(gbl);
-    ok(size >= 10 && size <= 16, "Memory not resized to size 10, instead size=%ld\n", size);
+    ok(size >= 10 && size <= 16, "Memory not resized to size 10, instead size=%Id\n", size);
 
     gbl = GlobalReAlloc(gbl, 0, GMEM_MOVEABLE);
     ok(gbl != NULL, "GlobalReAlloc should not fail on size 0\n");
 
     size = GlobalSize(gbl);
-    ok(size == 0, "Memory not resized to size 0, instead size=%ld\n", size);
+    ok(size == 0, "Memory not resized to size 0, instead size=%Id\n", size);
     ok(GlobalFree(gbl) == NULL, "Memory not freed\n");
     size = GlobalSize(gbl);
-    ok(size == 0, "Memory should have been freed, size=%ld\n", size);
+    ok(size == 0, "Memory should have been freed, size=%Id\n", size);
 
     gbl = GlobalReAlloc(0, 10, GMEM_MOVEABLE);
     ok(gbl == NULL, "global realloc allocated memory\n");
@@ -162,39 +163,39 @@ static void test_heap(void)
 
     SetLastError(MAGIC_DEAD);
     mem = GlobalLock(gbl);      /* #1 */
-    ok(mem != NULL, "returned %p with %d (expected '!= NULL')\n", mem, GetLastError());
+    ok(mem != NULL, "returned %p with %ld (expected '!= NULL')\n", mem, GetLastError());
     SetLastError(MAGIC_DEAD);
     flags = GlobalFlags(gbl);
-    ok( flags == 1, "returned 0x%04x with %d (expected '0x0001')\n",
+    ok( flags == 1, "returned 0x%04x with %ld (expected '0x0001')\n",
         flags, GetLastError());
 
     SetLastError(MAGIC_DEAD);
     msecond = GlobalLock(gbl);   /* #2 */
-    ok( msecond == mem, "returned %p with %d (expected '%p')\n",
+    ok( msecond == mem, "returned %p with %ld (expected '%p')\n",
         msecond, GetLastError(), mem);
     SetLastError(MAGIC_DEAD);
     flags = GlobalFlags(gbl);
-    ok( flags == 2, "returned 0x%04x with %d (expected '0x0002')\n",
+    ok( flags == 2, "returned 0x%04x with %ld (expected '0x0002')\n",
         flags, GetLastError());
     SetLastError(MAGIC_DEAD);
 
     SetLastError(MAGIC_DEAD);
     res = GlobalUnlock(gbl);    /* #1 */
-    ok(res, "returned %d with %d (expected '!= 0')\n", res, GetLastError());
+    ok(res, "returned %ld with %ld (expected '!= 0')\n", res, GetLastError());
     SetLastError(MAGIC_DEAD);
     flags = GlobalFlags(gbl);
-    ok( flags , "returned 0x%04x with %d (expected '!= 0')\n",
+    ok( flags , "returned 0x%04x with %ld (expected '!= 0')\n",
         flags, GetLastError());
 
     SetLastError(MAGIC_DEAD);
     res = GlobalUnlock(gbl);    /* #0 */
     /* NT: ERROR_SUCCESS (documented on MSDN), 9x: untouched */
     ok(!res && ((GetLastError() == ERROR_SUCCESS) || (GetLastError() == MAGIC_DEAD)),
-        "returned %d with %d (expected '0' with: ERROR_SUCCESS or "
+        "returned %ld with %ld (expected '0' with: ERROR_SUCCESS or "
         "MAGIC_DEAD)\n", res, GetLastError());
     SetLastError(MAGIC_DEAD);
     flags = GlobalFlags(gbl);
-    ok( !flags , "returned 0x%04x with %d (expected '0')\n",
+    ok( !flags , "returned 0x%04x with %ld (expected '0')\n",
         flags, GetLastError());
 
     /* Unlock an already unlocked Handle */
@@ -203,7 +204,7 @@ static void test_heap(void)
     /* NT: ERROR_NOT_LOCKED,  9x: untouched */
     ok( !res &&
         ((GetLastError() == ERROR_NOT_LOCKED) || (GetLastError() == MAGIC_DEAD)),
-        "returned %d with %d (expected '0' with: ERROR_NOT_LOCKED or "
+        "returned %ld with %ld (expected '0' with: ERROR_NOT_LOCKED or "
         "MAGIC_DEAD)\n", res, GetLastError());
 
     GlobalFree(gbl);
@@ -211,35 +212,35 @@ static void test_heap(void)
     SetLastError(MAGIC_DEAD);
     hsecond = GlobalFree(gbl);      /* invalid handle: free memory twice */
     ok( (hsecond == gbl) && (GetLastError() == ERROR_INVALID_HANDLE),
-        "returned %p with 0x%08x (expected %p with ERROR_INVALID_HANDLE)\n",
+        "returned %p with 0x%08lx (expected %p with ERROR_INVALID_HANDLE)\n",
         hsecond, GetLastError(), gbl);
     SetLastError(MAGIC_DEAD);
     hsecond = GlobalFree(LongToHandle(0xdeadbeef)); /* bogus handle */
     ok( (hsecond == LongToHandle(0xdeadbeef)) && (GetLastError() == ERROR_INVALID_HANDLE),
-        "returned %p with 0x%08x (expected %p with ERROR_INVALID_HANDLE)\n",
+        "returned %p with 0x%08lx (expected %p with ERROR_INVALID_HANDLE)\n",
         hsecond, GetLastError(), LongToHandle(0xdeadbeef));
     SetLastError(MAGIC_DEAD);
     hsecond = GlobalFree(LongToHandle(0xdeadbee0)); /* bogus pointer */
     ok( (hsecond == LongToHandle(0xdeadbee0)) &&
         ((GetLastError() == ERROR_INVALID_HANDLE) || broken(GetLastError() == ERROR_NOACCESS) /* wvista+ */),
-        "returned %p with 0x%08x (expected %p with ERROR_NOACCESS)\n",
+        "returned %p with 0x%08lx (expected %p with ERROR_NOACCESS)\n",
         hsecond, GetLastError(), LongToHandle(0xdeadbee0));
 
     SetLastError(MAGIC_DEAD);
     flags = GlobalFlags(gbl);
     ok( (flags == GMEM_INVALID_HANDLE) && (GetLastError() == ERROR_INVALID_HANDLE),
-        "returned 0x%04x with 0x%08x (expected GMEM_INVALID_HANDLE with "
+        "returned 0x%04x with 0x%08lx (expected GMEM_INVALID_HANDLE with "
         "ERROR_INVALID_HANDLE)\n", flags, GetLastError());
     SetLastError(MAGIC_DEAD);
     size = GlobalSize(gbl);
     ok( (size == 0) && (GetLastError() == ERROR_INVALID_HANDLE),
-        "returned %ld with 0x%08x (expected '0' with ERROR_INVALID_HANDLE)\n",
+        "returned %Id with 0x%08lx (expected '0' with ERROR_INVALID_HANDLE)\n",
         size, GetLastError());
 
     SetLastError(MAGIC_DEAD);
     mem = GlobalLock(gbl);
     ok( (mem == NULL) && (GetLastError() == ERROR_INVALID_HANDLE),
-        "returned %p with 0x%08x (expected NULL with ERROR_INVALID_HANDLE)\n",
+        "returned %p with 0x%08lx (expected NULL with ERROR_INVALID_HANDLE)\n",
         mem, GetLastError());
 
     /* documented on MSDN: GlobalUnlock() return FALSE on failure.
@@ -249,7 +250,7 @@ static void test_heap(void)
     SetLastError(MAGIC_DEAD);
     res = GlobalUnlock(gbl);
     ok(GetLastError() == ERROR_INVALID_HANDLE,
-        "returned %d with %d (expected ERROR_INVALID_HANDLE)\n",
+        "returned %ld with %ld (expected ERROR_INVALID_HANDLE)\n",
         res, GetLastError());
 
     gbl = GlobalAlloc(GMEM_DDESHARE, 100);
@@ -267,7 +268,7 @@ static void test_heap(void)
         if (mem == gbl)
             ok(GetLastError() == ERROR_INVALID_HANDLE ||
                GetLastError() == ERROR_INVALID_PARAMETER, /* win9x */
-               "Expected ERROR_INVALID_HANDLE or ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+               "Expected ERROR_INVALID_HANDLE or ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
     }
 
     /* GMEM_FIXED block expands in place only without flags */
@@ -276,7 +277,7 @@ static void test_heap(void)
         SetLastError(MAGIC_DEAD);
         hsecond = GlobalReAlloc(gbl, size + init_size, 0);
         ok(hsecond == gbl || (hsecond == NULL && GetLastError() == ERROR_NOT_ENOUGH_MEMORY),
-           "got %p with %x (expected %p or NULL) @%ld\n", hsecond, GetLastError(), gbl, size);
+           "got %p with %lx (expected %p or NULL) @%Id\n", hsecond, GetLastError(), gbl, size);
         GlobalFree(gbl);
     }
 
@@ -286,9 +287,9 @@ static void test_heap(void)
         SetLastError(MAGIC_DEAD);
         hsecond = GlobalReAlloc(gbl, size + init_size, GMEM_MOVEABLE);
         ok(hsecond != NULL,
-           "got %p with %x (expected non-NULL) @%ld\n", hsecond, GetLastError(), size);
+           "got %p with %lx (expected non-NULL) @%Id\n", hsecond, GetLastError(), size);
         mem = GlobalLock(hsecond);
-        ok(mem == hsecond, "got %p (expected %p) @%ld\n", mem, hsecond, size);
+        ok(mem == hsecond, "got %p (expected %p) @%Id\n", mem, hsecond, size);
         GlobalFree(hsecond);
     }
 
@@ -297,12 +298,12 @@ static void test_heap(void)
     res = GlobalUnlock(gbl);
     ok(res == 1 ||
        broken(res == 0), /* win9x */
-       "Expected 1 or 0, got %d\n", res);
+       "Expected 1 or 0, got %ld\n", res);
 
     res = GlobalUnlock(gbl);
     ok(res == 1 ||
        broken(res == 0), /* win9x */
-       "Expected 1 or 0, got %d\n", res);
+       "Expected 1 or 0, got %ld\n", res);
 
     GlobalFree(gbl);
 
@@ -312,8 +313,8 @@ static void test_heap(void)
     res = GlobalUnlock(gbl);
     ok(res == 1 ||
        broken(res == 0), /* win9x */
-       "Expected 1 or 0, got %d\n", res);
-    ok(GetLastError() == 0xdeadbeef, "got %d\n", GetLastError());
+       "Expected 1 or 0, got %ld\n", res);
+    ok(GetLastError() == 0xdeadbeef, "got %ld\n", GetLastError());
 
     GlobalFree(gbl);
 
@@ -322,16 +323,16 @@ static void test_heap(void)
     {
         SetLastError(MAGIC_DEAD);
         size = GlobalSize((HGLOBAL)0xc042);
-        ok(size == 0, "Expected 0, got %ld\n", size);
+        ok(size == 0, "Expected 0, got %Id\n", size);
         ok(GetLastError() == ERROR_INVALID_HANDLE ||
            GetLastError() == ERROR_INVALID_PARAMETER, /* win9x */
-           "Expected ERROR_INVALID_HANDLE or ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+           "Expected ERROR_INVALID_HANDLE or ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
     }
 
     gbl = GlobalAlloc( GMEM_FIXED, 0 );
     SetLastError(0xdeadbeef);
     size = GlobalSize( gbl );
-    ok( size == 1, "wrong size %lu\n", size );
+    ok( size == 1, "wrong size %Iu\n", size );
     GlobalFree( gbl );
 
     /* ####################################### */
@@ -342,16 +343,16 @@ static void test_heap(void)
     gbl = LocalReAlloc(gbl, 10, LMEM_MOVEABLE);
     ok(gbl != NULL, "Can't realloc local memory\n");
     size = LocalSize(gbl);
-    ok(size >= 10 && size <= 16, "Memory not resized to size 10, instead size=%ld\n", size);
+    ok(size >= 10 && size <= 16, "Memory not resized to size 10, instead size=%Id\n", size);
 
     gbl = LocalReAlloc(gbl, 0, LMEM_MOVEABLE);
     ok(gbl != NULL, "LocalReAlloc should not fail on size 0\n");
 
     size = LocalSize(gbl);
-    ok(size == 0, "Memory not resized to size 0, instead size=%ld\n", size);
+    ok(size == 0, "Memory not resized to size 0, instead size=%Id\n", size);
     ok(LocalFree(gbl) == NULL, "Memory not freed\n");
     size = LocalSize(gbl);
-    ok(size == 0, "Memory should have been freed, size=%ld\n", size);
+    ok(size == 0, "Memory should have been freed, size=%Id\n", size);
 
     gbl = LocalReAlloc(0, 10, LMEM_MOVEABLE);
     ok(gbl == NULL, "local realloc allocated memory\n");
@@ -360,39 +361,39 @@ static void test_heap(void)
     gbl = LocalAlloc(LMEM_MOVEABLE, 256);
     SetLastError(MAGIC_DEAD);
     mem = LocalLock(gbl);      /* #1 */
-    ok(mem != NULL, "returned %p with %d (expected '!= NULL')\n", mem, GetLastError());
+    ok(mem != NULL, "returned %p with %ld (expected '!= NULL')\n", mem, GetLastError());
     SetLastError(MAGIC_DEAD);
     flags = LocalFlags(gbl);
-    ok( flags == 1, "returned 0x%04x with %d (expected '0x0001')\n",
+    ok( flags == 1, "returned 0x%04x with %ld (expected '0x0001')\n",
         flags, GetLastError());
 
     SetLastError(MAGIC_DEAD);
     msecond = LocalLock(gbl);   /* #2 */
-    ok( msecond == mem, "returned %p with %d (expected '%p')\n",
+    ok( msecond == mem, "returned %p with %ld (expected '%p')\n",
         msecond, GetLastError(), mem);
     SetLastError(MAGIC_DEAD);
     flags = LocalFlags(gbl);
-    ok( flags == 2, "returned 0x%04x with %d (expected '0x0002')\n",
+    ok( flags == 2, "returned 0x%04x with %ld (expected '0x0002')\n",
         flags, GetLastError());
     SetLastError(MAGIC_DEAD);
 
     SetLastError(MAGIC_DEAD);
     res = LocalUnlock(gbl);    /* #1 */
-    ok(res, "returned %d with %d (expected '!= 0')\n", res, GetLastError());
+    ok(res, "returned %ld with %ld (expected '!= 0')\n", res, GetLastError());
     SetLastError(MAGIC_DEAD);
     flags = LocalFlags(gbl);
-    ok( flags , "returned 0x%04x with %d (expected '!= 0')\n",
+    ok( flags , "returned 0x%04x with %ld (expected '!= 0')\n",
         flags, GetLastError());
 
     SetLastError(MAGIC_DEAD);
     res = LocalUnlock(gbl);    /* #0 */
     /* NT: ERROR_SUCCESS (documented on MSDN), 9x: untouched */
     ok(!res && ((GetLastError() == ERROR_SUCCESS) || (GetLastError() == MAGIC_DEAD)),
-        "returned %d with %d (expected '0' with: ERROR_SUCCESS or "
+        "returned %ld with %ld (expected '0' with: ERROR_SUCCESS or "
         "MAGIC_DEAD)\n", res, GetLastError());
     SetLastError(MAGIC_DEAD);
     flags = LocalFlags(gbl);
-    ok( !flags , "returned 0x%04x with %d (expected '0')\n",
+    ok( !flags , "returned 0x%04x with %ld (expected '0')\n",
         flags, GetLastError());
 
     /* Unlock an already unlocked Handle */
@@ -401,7 +402,7 @@ static void test_heap(void)
     /* NT: ERROR_NOT_LOCKED,  9x: untouched */
     ok( !res &&
         ((GetLastError() == ERROR_NOT_LOCKED) || (GetLastError() == MAGIC_DEAD)),
-        "returned %d with %d (expected '0' with: ERROR_NOT_LOCKED or "
+        "returned %ld with %ld (expected '0' with: ERROR_NOT_LOCKED or "
         "MAGIC_DEAD)\n", res, GetLastError());
 
     LocalFree(gbl);
@@ -409,30 +410,30 @@ static void test_heap(void)
     SetLastError(MAGIC_DEAD);
     hsecond = LocalFree(gbl);       /* invalid handle: free memory twice */
     ok( (hsecond == gbl) && (GetLastError() == ERROR_INVALID_HANDLE),
-        "returned %p with 0x%08x (expected %p with ERROR_INVALID_HANDLE)\n",
+        "returned %p with 0x%08lx (expected %p with ERROR_INVALID_HANDLE)\n",
         hsecond, GetLastError(), gbl);
     SetLastError(MAGIC_DEAD);
     flags = LocalFlags(gbl);
     ok( (flags == LMEM_INVALID_HANDLE) && (GetLastError() == ERROR_INVALID_HANDLE),
-        "returned 0x%04x with 0x%08x (expected LMEM_INVALID_HANDLE with "
+        "returned 0x%04x with 0x%08lx (expected LMEM_INVALID_HANDLE with "
         "ERROR_INVALID_HANDLE)\n", flags, GetLastError());
     SetLastError(MAGIC_DEAD);
     size = LocalSize(gbl);
     ok( (size == 0) && (GetLastError() == ERROR_INVALID_HANDLE),
-        "returned %ld with 0x%08x (expected '0' with ERROR_INVALID_HANDLE)\n",
+        "returned %Id with 0x%08lx (expected '0' with ERROR_INVALID_HANDLE)\n",
         size, GetLastError());
 
     SetLastError(MAGIC_DEAD);
     mem = LocalLock(gbl);
     ok( (mem == NULL) && (GetLastError() == ERROR_INVALID_HANDLE),
-        "returned %p with 0x%08x (expected NULL with ERROR_INVALID_HANDLE)\n",
+        "returned %p with 0x%08lx (expected NULL with ERROR_INVALID_HANDLE)\n",
         mem, GetLastError());
 
     /* This Test works the same on all Systems (GlobalUnlock() is different) */
     SetLastError(MAGIC_DEAD);
     res = LocalUnlock(gbl);
     ok(!res && (GetLastError() == ERROR_INVALID_HANDLE),
-        "returned %d with %d (expected '0' with ERROR_INVALID_HANDLE)\n",
+        "returned %ld with %ld (expected '0' with ERROR_INVALID_HANDLE)\n",
         res, GetLastError());
 
     /* LMEM_FIXED block expands in place only without flags */
@@ -441,7 +442,7 @@ static void test_heap(void)
         SetLastError(MAGIC_DEAD);
         hsecond = LocalReAlloc(gbl, size + init_size, 0);
         ok(hsecond == gbl || (hsecond == NULL && GetLastError() == ERROR_NOT_ENOUGH_MEMORY),
-           "got %p with %x (expected %p or NULL) @%ld\n", hsecond, GetLastError(), gbl, size);
+           "got %p with %lx (expected %p or NULL) @%Id\n", hsecond, GetLastError(), gbl, size);
         LocalFree(gbl);
     }
 
@@ -451,9 +452,9 @@ static void test_heap(void)
         SetLastError(MAGIC_DEAD);
         hsecond = LocalReAlloc(gbl, size + init_size, LMEM_MOVEABLE);
         ok(hsecond != NULL,
-           "got %p with %x (expected non-NULL) @%ld\n", hsecond, GetLastError(), size);
+           "got %p with %lx (expected non-NULL) @%Id\n", hsecond, GetLastError(), size);
         mem = LocalLock(hsecond);
-        ok(mem == hsecond, "got %p (expected %p) @%ld\n", mem, hsecond, size);
+        ok(mem == hsecond, "got %p (expected %p) @%Id\n", mem, hsecond, size);
         LocalFree(hsecond);
     }
 
@@ -461,16 +462,16 @@ static void test_heap(void)
     gbl = LocalAlloc(LMEM_FIXED, 100);
     SetLastError(0xdeadbeef);
     res = LocalUnlock(gbl);
-    ok(res == 0, "Expected 0, got %d\n", res);
+    ok(res == 0, "Expected 0, got %ld\n", res);
     ok(GetLastError() == ERROR_NOT_LOCKED ||
-       broken(GetLastError() == 0xdeadbeef) /* win9x */, "got %d\n", GetLastError());
+       broken(GetLastError() == 0xdeadbeef) /* win9x */, "got %ld\n", GetLastError());
     LocalFree(gbl);
 
     gbl = LocalAlloc( LMEM_FIXED, 0 );
     SetLastError(0xdeadbeef);
     size = LocalSize( gbl );
     ok( !size || broken(size == 1), /* vistau64 */
-        "wrong size %lu\n", size );
+        "wrong size %Iu\n", size );
     LocalFree( gbl );
 
     /* trying to lock empty memory should give an error */
@@ -481,7 +482,7 @@ static void test_heap(void)
     /* NT: ERROR_DISCARDED,  9x: untouched */
     ok( (mem == NULL) &&
         ((GetLastError() == ERROR_DISCARDED) || (GetLastError() == MAGIC_DEAD)),
-        "returned %p with 0x%x/%d (expected 'NULL' with: ERROR_DISCARDED or "
+        "returned %p with 0x%lx/%ld (expected 'NULL' with: ERROR_DISCARDED or "
         "MAGIC_DEAD)\n", mem, GetLastError(), GetLastError());
 
     GlobalFree(gbl);
@@ -495,8 +496,8 @@ static void test_heap(void)
 
     size = GlobalSize(gbl);
     size2 = GlobalSize(mem);
-    ok(size == 0x123, "got %lu\n", size);
-    ok(size2 == 0x123, "got %lu\n", size2);
+    ok(size == 0x123, "got %Iu\n", size);
+    ok(size2 == 0x123, "got %Iu\n", size2);
 
     GlobalFree(gbl);
 
@@ -508,12 +509,12 @@ static void test_heap(void)
     ok(gbl == mem, "got %p, %p.\n", gbl, mem);
 
     size = GlobalSize(gbl);
-    ok(size == 0x123, "got %lu\n", size);
+    ok(size == 0x123, "got %Iu\n", size);
 
     GlobalFree(gbl);
 
     size = GlobalSize((void *)0xdeadbee0);
-    ok(size == 0, "got %lu\n", size);
+    ok(size == 0, "got %Iu\n", size);
 
 }
 
@@ -646,7 +647,7 @@ static void test_GlobalAlloc(void)
 
     /* Check that a 'zeroing' alloc works */
     mem2=GlobalAlloc(GMEM_ZEROINIT,memchunk);
-    ok(mem2!=NULL,"GlobalAlloc failed: error=%d\n",GetLastError());
+    ok(mem2!=NULL,"GlobalAlloc failed: error=%ld\n",GetLastError());
     if(mem2) {
       ok(GlobalSize(mem2)>=memchunk,"GlobalAlloc should return a big enough memory block\n");
       mem2ptr=GlobalLock(mem2);
@@ -720,18 +721,18 @@ static void test_LocalAlloc(void)
 
     /* Check that a normal alloc works */
     mem1=LocalAlloc(0,memchunk);
-    ok(mem1!=NULL,"LocalAlloc failed: error=%d\n",GetLastError());
+    ok(mem1!=NULL,"LocalAlloc failed: error=%ld\n",GetLastError());
     if(mem1) {
       ok(LocalSize(mem1)>=memchunk, "LocalAlloc should return a big enough memory block\n");
     }
 
     /* Check that a 'zeroing' and lock alloc works */
     mem2=LocalAlloc(LMEM_ZEROINIT|LMEM_MOVEABLE,memchunk);
-    ok(mem2!=NULL,"LocalAlloc failed: error=%d\n",GetLastError());
+    ok(mem2!=NULL,"LocalAlloc failed: error=%ld\n",GetLastError());
     if(mem2) {
       ok(LocalSize(mem2)>=memchunk,"LocalAlloc should return a big enough memory block\n");
       mem2ptr=LocalLock(mem2);
-      ok(mem2ptr!=NULL,"LocalLock: error=%d\n",GetLastError());
+      ok(mem2ptr!=NULL,"LocalLock: error=%ld\n",GetLastError());
       if(mem2ptr) {
         error=FALSE;
         for(i=0;i<memchunk;i++) {
@@ -743,7 +744,7 @@ static void test_LocalAlloc(void)
         SetLastError(0);
         error=LocalUnlock(mem2);
         ok(!error && GetLastError()==NO_ERROR,
-           "LocalUnlock Failed: rc=%d err=%d\n",error,GetLastError());
+           "LocalUnlock Failed: rc=%d err=%ld\n",error,GetLastError());
       }
     }
    mem2a=LocalFree(mem2);
@@ -751,11 +752,11 @@ static void test_LocalAlloc(void)
 
    /* Reallocate mem2 as moveable memory */
    mem2=LocalAlloc(LMEM_MOVEABLE | LMEM_ZEROINIT,memchunk);
-   ok(mem2!=NULL, "LocalAlloc failed to create moveable memory, error=%d\n",GetLastError());
+   ok(mem2!=NULL, "LocalAlloc failed to create moveable memory, error=%ld\n",GetLastError());
 
    /* Check that ReAllocing memory works as expected */
     mem2a=LocalReAlloc(mem2,2*memchunk,LMEM_MOVEABLE | LMEM_ZEROINIT);
-    ok(mem2a!=NULL,"LocalReAlloc failed, error=%d\n",GetLastError());
+    ok(mem2a!=NULL,"LocalReAlloc failed, error=%ld\n",GetLastError());
     if(mem2a) {
       ok(LocalSize(mem2a)>=2*memchunk,"LocalReAlloc failed\n");
       mem2ptr=LocalLock(mem2a);
@@ -830,7 +831,7 @@ static void test_obsolete_flags(void)
 
         ok( resultflags == test_global_flags[i].globalflags ||
             broken(resultflags == (test_global_flags[i].globalflags & ~GMEM_DDESHARE)), /* win9x */
-            "%u: expected 0x%08x, but returned 0x%08x with %d\n",
+            "%u: expected 0x%08x, but returned 0x%08x with %ld\n",
             i, test_global_flags[i].globalflags, resultflags, GetLastError() );
 
         GlobalFree(gbl);
@@ -869,8 +870,8 @@ static void test_HeapQueryInformation(void)
                                 NULL, 0, &size);
     ok(!ret, "HeapQueryInformation should fail\n");
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-       "expected ERROR_INSUFFICIENT_BUFFER got %u\n", GetLastError());
-    ok(size == sizeof(ULONG), "expected 4, got %lu\n", size);
+       "expected ERROR_INSUFFICIENT_BUFFER got %lu\n", GetLastError());
+    ok(size == sizeof(ULONG), "expected 4, got %Iu\n", size);
 
     SetLastError(0xdeadbeef);
     ret = pHeapQueryInformation(GetProcessHeap(),
@@ -878,15 +879,15 @@ static void test_HeapQueryInformation(void)
                                 NULL, 0, NULL);
     ok(!ret, "HeapQueryInformation should fail\n");
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-       "expected ERROR_INSUFFICIENT_BUFFER got %u\n", GetLastError());
+       "expected ERROR_INSUFFICIENT_BUFFER got %lu\n", GetLastError());
 
     info = 0xdeadbeaf;
     SetLastError(0xdeadbeef);
     ret = pHeapQueryInformation(GetProcessHeap(),
                                 HeapCompatibilityInformation,
                                 &info, sizeof(info) + 1, NULL);
-    ok(ret, "HeapQueryInformation error %u\n", GetLastError());
-    ok(info == 0 || info == 1 || info == 2, "expected 0, 1 or 2, got %u\n", info);
+    ok(ret, "HeapQueryInformation error %lu\n", GetLastError());
+    ok(info == 0 || info == 1 || info == 2, "expected 0, 1 or 2, got %lu\n", info);
 }
 
 static void test_heap_checks( DWORD flags )
@@ -896,7 +897,7 @@ static void test_heap_checks( DWORD flags )
     SIZE_T i, size, large_size = 3000 * 1024 + 37;
 
     if (flags & HEAP_PAGE_ALLOCS) return;  /* no tests for that case yet */
-    trace( "testing heap flags %08x\n", flags );
+    trace( "testing heap flags %08lx\n", flags );
 
     p = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 17 );
     ok( p != NULL, "HeapAlloc failed\n" );
@@ -905,7 +906,7 @@ static void test_heap_checks( DWORD flags )
     ok( ret, "HeapValidate failed\n" );
 
     size = HeapSize( GetProcessHeap(), 0, p );
-    ok( size == 17, "Wrong size %lu\n", size );
+    ok( size == 17, "Wrong size %Iu\n", size );
 
     ok( p[14] == 0, "wrong data %x\n", p[14] );
     ok( p[15] == 0, "wrong data %x\n", p[15] );
@@ -952,7 +953,7 @@ static void test_heap_checks( DWORD flags )
         if (flags & HEAP_VALIDATE)
         {
             size = HeapSize( GetProcessHeap(), 0, p );
-            ok( size == ~(SIZE_T)0 || broken(size == ~0u), "Wrong size %lu\n", size );
+            ok( size == ~(SIZE_T)0 || broken(size == ~0u), "Wrong size %Iu\n", size );
 
             p2 = HeapReAlloc( GetProcessHeap(), 0, p, 14 );
             ok( p2 == NULL, "HeapReAlloc succeeded\n" );
@@ -964,7 +965,7 @@ static void test_heap_checks( DWORD flags )
 
         p[17] = old;
         size = HeapSize( GetProcessHeap(), 0, p );
-        ok( size == 17, "Wrong size %lu\n", size );
+        ok( size == 17, "Wrong size %Iu\n", size );
 
         p2 = HeapReAlloc( GetProcessHeap(), 0, p, 14 );
         ok( p2 != NULL, "HeapReAlloc failed\n" );
@@ -1010,7 +1011,7 @@ static void test_heap_checks( DWORD flags )
     ok( ret, "HeapValidate failed\n" );
 
     size = HeapSize( GetProcessHeap(), 0, p );
-    ok( size == large_size, "Wrong size %lu\n", size );
+    ok( size == large_size, "Wrong size %Iu\n", size );
 
     ok( p[large_size - 2] == 0, "wrong data %x\n", p[large_size - 2] );
     ok( p[large_size - 1] == 0, "wrong data %x\n", p[large_size - 1] );
@@ -1031,7 +1032,7 @@ static void test_heap_checks( DWORD flags )
             if (flags & HEAP_VALIDATE)
             {
                 size = HeapSize( GetProcessHeap(), 0, p );
-                ok( size == ~(SIZE_T)0, "Wrong size %lu\n", size );
+                ok( size == ~(SIZE_T)0, "Wrong size %Iu\n", size );
 
                 p2 = HeapReAlloc( GetProcessHeap(), 0, p, large_size - 3 );
                 ok( p2 == NULL, "HeapReAlloc succeeded\n" );
@@ -1053,7 +1054,7 @@ static void test_heap_checks( DWORD flags )
         {
             p = HeapAlloc( GetProcessHeap(), 0, size );
             for (i = 0; i < 32; i++) if (p[size + i] != 0xab) break;
-            ok( i >= 8, "only %lu tail bytes for size %lu\n", i, size );
+            ok( i >= 8, "only %Iu tail bytes for size %Iu\n", i, size );
             HeapFree( GetProcessHeap(), 0, p );
         }
     }
@@ -1083,7 +1084,7 @@ static void test_debug_heap( const char *argv0, DWORD flags )
         skip("Not authorized to change the image file execution options\n");
         return;
     }
-    ok( !err, "failed to create '%s' error %u\n", keyname, err );
+    ok( !err, "failed to create '%s' error %lu\n", keyname, err );
     if (err) return;
 
     if (flags == 0xdeadbeef)  /* magic value for unsetting it */
@@ -1094,9 +1095,9 @@ static void test_debug_heap( const char *argv0, DWORD flags )
     memset( &startup, 0, sizeof(startup) );
     startup.cb = sizeof(startup);
 
-    sprintf( buffer, "%s heap.c 0x%x", argv0, flags );
+    sprintf( buffer, "%s heap.c 0x%lx", argv0, flags );
     ret = CreateProcessA( NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info );
-    ok( ret, "failed to create child process error %u\n", GetLastError() );
+    ok( ret, "failed to create child process error %lu\n", GetLastError() );
     if (ret)
     {
         wait_child_process( info.hProcess );
@@ -1157,13 +1158,13 @@ static void test_child_heap( const char *arg )
     }
 
     ok( pRtlGetNtGlobalFlags() == expected,
-        "%s: got global flags %08x expected %08x\n", arg, pRtlGetNtGlobalFlags(), expected );
+        "%s: got global flags %08lx expected %08lx\n", arg, pRtlGetNtGlobalFlags(), expected );
 
     expect_heap = heap_flags_from_global_flag( expected );
 
     if (!(heap->flags & HEAP_GROWABLE) || heap->pattern == 0xffeeffee)  /* vista layout */
     {
-        ok( (heap->flags & ~HEAP_GROWABLE) == 0, "%s: got heap flags %08x\n", arg, heap->flags );
+        ok( (heap->flags & ~HEAP_GROWABLE) == 0, "%s: got heap flags %08lx\n", arg, heap->flags );
     }
     else if (heap->pattern == 0xeeeeeeee && heap->flags == 0xeeeeeeee)
     {
@@ -1172,9 +1173,9 @@ static void test_child_heap( const char *arg )
     else
     {
         ok( heap->flags == (expect_heap | HEAP_GROWABLE),
-            "%s: got heap flags %08x expected %08x\n", arg, heap->flags, expect_heap );
+            "%s: got heap flags %08lx expected %08lx\n", arg, heap->flags, expect_heap );
         ok( heap->force_flags == (expect_heap & ~0x18000080),
-            "%s: got heap force flags %08x expected %08x\n", arg, heap->force_flags, expect_heap );
+            "%s: got heap force flags %08lx expected %08lx\n", arg, heap->force_flags, expect_heap );
         expect_heap = heap->flags;
     }
 
@@ -1199,11 +1200,11 @@ static void test_GetPhysicallyInstalledSystemMemory(void)
     ret = pGetPhysicallyInstalledSystemMemory(NULL);
     ok(!ret, "GetPhysicallyInstalledSystemMemory should fail\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
-       "expected ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
+       "expected ERROR_INVALID_PARAMETER, got %lu\n", GetLastError());
 
     total_memory = 0;
     ret = pGetPhysicallyInstalledSystemMemory(&total_memory);
-    ok(ret, "GetPhysicallyInstalledSystemMemory unexpectedly failed (%u)\n", GetLastError());
+    ok(ret, "GetPhysicallyInstalledSystemMemory unexpectedly failed (%lu)\n", GetLastError());
     ok(total_memory != 0, "expected total_memory != 0\n");
 
     memstatus.dwLength = sizeof(memstatus);
