@@ -26,7 +26,15 @@
 #include "winbase.h"
 #include "ntuser.h"
 #include "wow64win_private.h"
+#include "wine/debug.h"
 
+WINE_DEFAULT_DEBUG_CHANNEL(wow);
+
+NTSTATUS WINAPI wow64_NtUserInitializeClientPfnArrays( UINT *args )
+{
+    FIXME( "\n" );
+    return STATUS_NOT_SUPPORTED;
+}
 
 NTSTATUS WINAPI wow64_NtUserCreateWindowStation( UINT *args )
 {

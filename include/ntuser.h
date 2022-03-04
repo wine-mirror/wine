@@ -110,6 +110,7 @@ enum
     NtUserCallHooks,
     NtUserFlushWindowSurfaces,
     NtUserGetDeskPattern,
+    NtUserGetWinProcPtr,
     NtUserHandleInternalMessage,
     NtUserIncrementKeyStateCounter,
     NtUserLock,
@@ -128,6 +129,7 @@ enum
     NtUserUnhookWindowsHook,
     /* temporary exports */
     NtUserAllocHandle,
+    NtUserAllocWinProc,
     NtUserFreeHandle,
     NtUserGetHandlePtr,
     NtUserRegisterWindowSurface,
@@ -156,6 +158,25 @@ enum
 #define NTUSER_OBJ_WINPOS   0x04
 #define NTUSER_OBJ_ACCEL    0x08
 #define NTUSER_OBJ_HOOK     0x0f
+
+/* NtUserInitializeClientPfnArrays parameter, not compatible with Windows */
+struct user_client_procs
+{
+    WNDPROC pButtonWndProc;
+    WNDPROC pComboWndProc;
+    WNDPROC pDefWindowProc;
+    WNDPROC pDefDlgProc;
+    WNDPROC pEditWndProc;
+    WNDPROC pListBoxWndProc;
+    WNDPROC pMDIClientWndProc;
+    WNDPROC pScrollBarWndProc;
+    WNDPROC pStaticWndProc;
+    WNDPROC pImeWndProc;
+    WNDPROC pDesktopWndProc;
+    WNDPROC pIconTitleWndProc;
+    WNDPROC pPopupMenuWndProc;
+    WNDPROC pMessageWndProc;
+};
 
 /* NtUserSetCursorIconData parameter, not compatible with Windows */
 struct cursoricon_frame
@@ -272,6 +293,9 @@ DWORD   WINAPI NtUserGetQueueStatus( UINT flags );
 ULONG   WINAPI NtUserGetSystemDpiForProcess( HANDLE process );
 HDESK   WINAPI NtUserGetThreadDesktop( DWORD thread );
 BOOL    WINAPI NtUserGetUpdatedClipboardFormats( UINT *formats, UINT size, UINT *out_size );
+NTSTATUS WINAPI NtUserInitializeClientPfnArrays( const struct user_client_procs *client_procsA,
+                                                 const struct user_client_procs *client_procsW,
+                                                 const void *client_workers, HINSTANCE user_module );
 BOOL    WINAPI NtUserIsClipboardFormatAvailable( UINT format );
 UINT    WINAPI NtUserMapVirtualKeyEx( UINT code, UINT type, HKL layout );
 void    WINAPI NtUserNotifyWinEvent( DWORD event, HWND hwnd, LONG object_id, LONG child_id );

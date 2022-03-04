@@ -35,61 +35,9 @@
 
 WINE_DECLARE_DEBUG_CHANNEL(msg);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
-WINE_DEFAULT_DEBUG_CHANNEL(win);
 
-typedef struct tagWINDOWPROC
-{
-    WNDPROC        procA;    /* ANSI window proc */
-    WNDPROC        procW;    /* Unicode window proc */
-} WINDOWPROC;
-
-#define MAX_WINPROCS  4096
 #define MAX_WINPROC_RECURSION  64
 #define WINPROC_PROC16  ((WINDOWPROC *)1)  /* placeholder for 16-bit window procs */
-
-static LRESULT WINAPI ButtonWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
-static LRESULT WINAPI ButtonWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
-static LRESULT WINAPI ComboWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
-static LRESULT WINAPI ComboWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
-LRESULT WINAPI EditWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
-static LRESULT WINAPI EditWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
-static LRESULT WINAPI ListBoxWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
-static LRESULT WINAPI ListBoxWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
-static LRESULT WINAPI MDIClientWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
-static LRESULT WINAPI MDIClientWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
-static LRESULT WINAPI ScrollBarWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
-static LRESULT WINAPI ScrollBarWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
-static LRESULT WINAPI StaticWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
-static LRESULT WINAPI StaticWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
-
-static WINDOWPROC winproc_array[MAX_WINPROCS] =
-{
-    { ButtonWndProcA, ButtonWndProcW },        /* WINPROC_BUTTON */
-    { ComboWndProcA, ComboWndProcW },          /* WINPROC_COMBO */
-    { DefWindowProcA, DefWindowProcW },        /* WINPROC_DEFWND */
-    { DefDlgProcA, DefDlgProcW },              /* WINPROC_DIALOG */
-    { EditWndProcA, EditWndProcW },            /* WINPROC_EDIT */
-    { ListBoxWndProcA, ListBoxWndProcW },      /* WINPROC_LISTBOX */
-    { MDIClientWndProcA, MDIClientWndProcW },  /* WINPROC_MDICLIENT */
-    { ScrollBarWndProcA, ScrollBarWndProcW },  /* WINPROC_SCROLLBAR */
-    { StaticWndProcA, StaticWndProcW },        /* WINPROC_STATIC */
-    { ImeWndProcA, ImeWndProcW },              /* WINPROC_IME */
-    { NULL, DesktopWndProc },                  /* WINPROC_DESKTOP */
-    { NULL, IconTitleWndProc },                /* WINPROC_ICONTITLE */
-    { NULL, PopupMenuWndProc },                /* WINPROC_MENU */
-    { NULL, MessageWndProc },                  /* WINPROC_MESSAGE */
-};
-
-static UINT winproc_used = NB_BUILTIN_WINPROCS;
-
-static CRITICAL_SECTION winproc_cs;
-static CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &winproc_cs,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": winproc_cs") }
-};
-static CRITICAL_SECTION winproc_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static inline void *get_buffer( void *static_buffer, size_t size, size_t need )
 {
@@ -102,73 +50,11 @@ static inline void free_buffer( void *static_buffer, void *buffer )
     if (buffer != static_buffer) HeapFree( GetProcessHeap(), 0, buffer );
 }
 
-/* find an existing winproc for a given function and type */
-/* FIXME: probably should do something more clever than a linear search */
-static inline WINDOWPROC *find_winproc( WNDPROC func, BOOL unicode )
-{
-    unsigned int i;
-
-    for (i = 0; i < NB_BUILTIN_AW_WINPROCS; i++)
-    {
-        /* match either proc, some apps confuse A and W */
-        if (winproc_array[i].procA != func && winproc_array[i].procW != func) continue;
-        return &winproc_array[i];
-    }
-    for (i = NB_BUILTIN_AW_WINPROCS; i < winproc_used; i++)
-    {
-        if (!unicode && winproc_array[i].procA != func) continue;
-        if (unicode && winproc_array[i].procW != func) continue;
-        return &winproc_array[i];
-    }
-    return NULL;
-}
-
 /* return the window proc for a given handle, or NULL for an invalid handle,
  * or WINPROC_PROC16 for a handle to a 16-bit proc. */
 static inline WINDOWPROC *handle_to_proc( WNDPROC handle )
 {
-    UINT index = LOWORD(handle);
-    if ((ULONG_PTR)handle >> 16 != WINPROC_HANDLE) return NULL;
-    if (index >= MAX_WINPROCS) return WINPROC_PROC16;
-    if (index >= winproc_used) return NULL;
-    return &winproc_array[index];
-}
-
-/* create a handle for a given window proc */
-static inline WNDPROC proc_to_handle( WINDOWPROC *proc )
-{
-    return (WNDPROC)(ULONG_PTR)((proc - winproc_array) | (WINPROC_HANDLE << 16));
-}
-
-/* allocate and initialize a new winproc */
-static inline WINDOWPROC *alloc_winproc( WNDPROC func, BOOL unicode )
-{
-    WINDOWPROC *proc;
-
-    /* check if the function is already a win proc */
-    if (!func) return NULL;
-    if ((proc = handle_to_proc( func ))) return proc;
-
-    EnterCriticalSection( &winproc_cs );
-
-    /* check if we already have a winproc for that function */
-    if (!(proc = find_winproc( func, unicode )))
-    {
-        if (winproc_used < MAX_WINPROCS)
-        {
-            proc = &winproc_array[winproc_used++];
-            if (unicode) proc->procW = func;
-            else proc->procA = func;
-            TRACE( "allocated %p for %c %p (%d/%d used)\n",
-                   proc_to_handle(proc), unicode ? 'W' : 'A', func,
-                   winproc_used, MAX_WINPROCS );
-        }
-        else WARN( "too many winprocs, cannot allocate one for %p\n", func );
-    }
-    else TRACE( "reusing %p for %p\n", proc_to_handle(proc), func );
-
-    LeaveCriticalSection( &winproc_cs );
-    return proc;
+    return (WINDOWPROC *)NtUserCallOneParam( HandleToUlong(handle), NtUserGetWinProcPtr );
 }
 
 #ifdef __i386__
@@ -309,11 +195,7 @@ WNDPROC WINPROC_GetProc( WNDPROC proc, BOOL unicode )
  */
 WNDPROC WINPROC_AllocProc( WNDPROC func, BOOL unicode )
 {
-    WINDOWPROC *proc;
-
-    if (!(proc = alloc_winproc( func, unicode ))) return func;
-    if (proc == WINPROC_PROC16) return func;
-    return proc_to_handle( proc );
+    return (WNDPROC)NtUserCallTwoParam( (UINT_PTR)func, !unicode, NtUserAllocWinProc );
 }
 
 
@@ -1209,3 +1091,40 @@ struct wow_handlers16 wow_handlers =
     NULL,  /* call_dialog_proc */
     NULL,  /* free_icon_param */
 };
+
+static const struct user_client_procs client_procsA =
+{
+    .pButtonWndProc = ButtonWndProcA,
+    .pComboWndProc = ComboWndProcA,
+    .pDefWindowProc = DefWindowProcA,
+    .pDefDlgProc = DefDlgProcA,
+    .pEditWndProc = EditWndProcA,
+    .pListBoxWndProc = ListBoxWndProcA,
+    .pMDIClientWndProc = MDIClientWndProcA,
+    .pScrollBarWndProc = ScrollBarWndProcA,
+    .pStaticWndProc = StaticWndProcA,
+    .pImeWndProc = ImeWndProcA,
+};
+
+static const struct user_client_procs client_procsW =
+{
+    .pButtonWndProc = ButtonWndProcW,
+    .pComboWndProc = ComboWndProcW,
+    .pDefWindowProc = DefWindowProcW,
+    .pDefDlgProc = DefDlgProcW,
+    .pEditWndProc = EditWndProcW,
+    .pListBoxWndProc = ListBoxWndProcW,
+    .pMDIClientWndProc = MDIClientWndProcW,
+    .pScrollBarWndProc = ScrollBarWndProcW,
+    .pStaticWndProc = StaticWndProcW,
+    .pImeWndProc = ImeWndProcW,
+    .pDesktopWndProc = DesktopWndProc,
+    .pIconTitleWndProc = IconTitleWndProc,
+    .pPopupMenuWndProc = PopupMenuWndProc,
+    .pMessageWndProc = MessageWndProc,
+};
+
+void winproc_init(void)
+{
+    NtUserInitializeClientPfnArrays( &client_procsA, &client_procsW, NULL, user32_module );
+}

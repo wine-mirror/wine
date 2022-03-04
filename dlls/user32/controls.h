@@ -22,6 +22,7 @@
 #define __WINE_CONTROLS_H
 
 #include "winuser.h"
+#include "../win32u/ntuser_private.h"
 
 /* Built-in class names (see _Undocumented_Windows_ p.418) */
 #define POPUPMENU_CLASS_ATOM MAKEINTATOM(32768)  /* PopupMenu */
@@ -29,31 +30,6 @@
 #define DIALOG_CLASS_ATOM    MAKEINTATOM(32770)  /* Dialog */
 #define WINSWITCH_CLASS_ATOM MAKEINTATOM(32771)  /* WinSwitch */
 #define ICONTITLE_CLASS_ATOM MAKEINTATOM(32772)  /* IconTitle */
-
-enum builtin_winprocs
-{
-    /* dual A/W procs */
-    WINPROC_BUTTON = 0,
-    WINPROC_COMBO,
-    WINPROC_DEFWND,
-    WINPROC_DIALOG,
-    WINPROC_EDIT,
-    WINPROC_LISTBOX,
-    WINPROC_MDICLIENT,
-    WINPROC_SCROLLBAR,
-    WINPROC_STATIC,
-    WINPROC_IME,
-    /* unicode-only procs */
-    WINPROC_DESKTOP,
-    WINPROC_ICONTITLE,
-    WINPROC_MENU,
-    WINPROC_MESSAGE,
-    NB_BUILTIN_WINPROCS,
-    NB_BUILTIN_AW_WINPROCS = WINPROC_DESKTOP
-};
-
-#define WINPROC_HANDLE (~0u >> 16)
-#define BUILTIN_WINPROC(index) ((WNDPROC)(ULONG_PTR)((index) | (WINPROC_HANDLE << 16)))
 
 /* Built-in class descriptor */
 struct builtin_class_descr

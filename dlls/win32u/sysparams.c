@@ -4594,6 +4594,8 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
         return 0;
     case NtUserGetDeskPattern:
         return get_entry( &entry_DESKPATTERN, 256, (WCHAR *)arg );
+    case NtUserGetWinProcPtr:
+        return (UINT_PTR)get_winproc_ptr( UlongToHandle(arg) );
     case NtUserHandleInternalMessage:
         {
             MSG *msg = (MSG *)arg;
@@ -4640,6 +4642,8 @@ ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code 
     /* temporary exports */
     case NtUserAllocHandle:
         return HandleToUlong( alloc_user_handle( (struct user_object *)arg1, arg2 ));
+    case NtUserAllocWinProc:
+        return (UINT_PTR)alloc_winproc( (WNDPROC)arg1, arg2 );
     case NtUserFreeHandle:
         return (UINT_PTR)free_user_handle( UlongToHandle(arg1), arg2 );
     case NtUserGetHandlePtr:

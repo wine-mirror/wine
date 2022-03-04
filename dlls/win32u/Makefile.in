@@ -12,6 +12,7 @@ C_SRCS = \
 	bitblt.c \
 	bitmap.c \
 	brush.c \
+	class.c \
 	clipboard.c \
 	clipping.c \
 	cursoricon.c \

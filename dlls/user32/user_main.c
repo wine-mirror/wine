@@ -169,6 +169,7 @@ static BOOL process_attach(void)
     NtUserCallOneParam( (UINT_PTR)&user_funcs, NtUserSetCallbacks );
 
     dpiaware_init();
+    winproc_init();
     register_desktop_class();
 
     /* Initialize system colors and metrics */

@@ -1030,7 +1030,7 @@
 @ stub NtUserInheritWindowMonitor
 @ stub NtUserInitTask
 @ stub NtUserInitialize
-@ stub NtUserInitializeClientPfnArrays
+@ stdcall -syscall NtUserInitializeClientPfnArrays(ptr ptr ptr ptr)
 @ stub NtUserInitializeGenericHidInjection
 @ stub NtUserInitializeInputDeviceInjection
 @ stub NtUserInitializePointerDeviceInjection

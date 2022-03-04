@@ -135,6 +135,42 @@ struct hook_extra_info
     LPARAM lparam;
 };
 
+enum builtin_winprocs
+{
+    /* dual A/W procs */
+    WINPROC_BUTTON = 0,
+    WINPROC_COMBO,
+    WINPROC_DEFWND,
+    WINPROC_DIALOG,
+    WINPROC_EDIT,
+    WINPROC_LISTBOX,
+    WINPROC_MDICLIENT,
+    WINPROC_SCROLLBAR,
+    WINPROC_STATIC,
+    WINPROC_IME,
+    /* unicode-only procs */
+    WINPROC_DESKTOP,
+    WINPROC_ICONTITLE,
+    WINPROC_MENU,
+    WINPROC_MESSAGE,
+    NB_BUILTIN_WINPROCS,
+    NB_BUILTIN_AW_WINPROCS = WINPROC_DESKTOP
+};
+
+/* FIXME: make it private to class.c */
+typedef struct tagWINDOWPROC
+{
+    WNDPROC        procA;    /* ANSI window proc */
+    WNDPROC        procW;    /* Unicode window proc */
+} WINDOWPROC;
+
+#define WINPROC_HANDLE (~0u >> 16)
+#define BUILTIN_WINPROC(index) ((WNDPROC)(ULONG_PTR)((index) | (WINPROC_HANDLE << 16)))
+
+/* class.c */
+WNDPROC alloc_winproc( WNDPROC func, BOOL ansi ) DECLSPEC_HIDDEN;
+WINDOWPROC *get_winproc_ptr( WNDPROC handle ) DECLSPEC_HIDDEN;
+
 /* cursoricon.c */
 HICON alloc_cursoricon_handle( BOOL is_icon ) DECLSPEC_HIDDEN;
 
