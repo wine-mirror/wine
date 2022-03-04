@@ -608,6 +608,97 @@ typedef struct _CERT_SIGNED_CONTENT_INFO {
     CRYPT_BIT_BLOB             Signature;
 } CERT_SIGNED_CONTENT_INFO, *PCERT_SIGNED_CONTENT_INFO;
 
+typedef struct _OCSP_SIGNATURE_INFO {
+    CRYPT_ALGORITHM_IDENTIFIER SignatureAlgorithm;
+    CRYPT_BIT_BLOB             Signature;
+    DWORD                      cCertEncoded;
+    PCERT_BLOB                 rgCertEncoded;
+} OCSP_SIGNATURE_INFO, *POCSP_SIGNATURE_INFO;
+
+typedef struct _OCSP_SIGNED_REQUEST_INFO {
+    CRYPT_DER_BLOB       ToBeSigned;
+    POCSP_SIGNATURE_INFO pOptionalSignatureInfo;
+} OCSP_SIGNED_REQUEST_INFO, *POCSP_SIGNED_REQUEST_INFO;
+
+typedef struct _OCSP_CERT_ID {
+    CRYPT_ALGORITHM_IDENTIFIER HashAlgorithm;
+    CRYPT_HASH_BLOB            IssuerNameHash;
+    CRYPT_HASH_BLOB            IssuerKeyHash;
+    CRYPT_INTEGER_BLOB         SerialNumber;
+} OCSP_CERT_ID, *POCSP_CERT_ID;
+
+typedef struct _OCSP_REQUEST_ENTRY {
+    OCSP_CERT_ID    CertId;
+    DWORD           cExtension;
+    PCERT_EXTENSION rgExtension;
+} OCSP_REQUEST_ENTRY, *POCSP_REQUEST_ENTRY;
+
+#define OCSP_REQUEST_V1 0
+
+typedef struct _OCSP_REQUEST_INFO {
+    DWORD                dwVersion;
+    PCERT_ALT_NAME_ENTRY pRequestorName;
+    DWORD                cRequestEntry;
+    POCSP_REQUEST_ENTRY  rgRequestEntry;
+    DWORD                cExtension;
+    PCERT_EXTENSION      rgExtension;
+} OCSP_REQUEST_INFO, *POCSP_REQUEST_INFO;
+
+#define OCSP_SUCCESSFUL_RESPONSE        0
+#define OCSP_MALFORMED_REQUEST_RESPONSE 1
+#define OCSP_INTERNAL_ERROR_RESPONSE    2
+#define OCSP_TRY_LATER_RESPONSE         3
+#define OCSP_SIG_REQUIRED_RESPONSE      5
+#define OCSP_UNAUTHORIZED_RESPONSE      6
+
+#define szOID_PKIX_OCSP_BASIC_SIGNED_RESPONSE   "1.3.6.1.5.5.7.48.1.1"
+
+typedef struct _OCSP_RESPONSE_INFO {
+    DWORD            dwStatus;
+    LPSTR            pszObjId;
+    CRYPT_OBJID_BLOB Value;
+} OCSP_RESPONSE_INFO, *POCSP_RESPONSE_INFO;
+
+typedef struct _OCSP_BASIC_SIGNED_RESPONSE_INFO {
+    CRYPT_DER_BLOB      ToBeSigned;
+    OCSP_SIGNATURE_INFO SignatureInfo;
+} OCSP_BASIC_SIGNED_RESPONSE_INFO, *POCSP_BASIC_SIGNED_RESPONSE_INFO;
+
+typedef struct _OCSP_BASIC_REVOKED_INFO {
+    FILETIME RevocationDate;
+    DWORD    dwCrlReasonCode;
+} OCSP_BASIC_REVOKED_INFO, *POCSP_BASIC_REVOKED_INFO;
+
+typedef struct _OCSP_BASIC_RESPONSE_ENTRY {
+    OCSP_CERT_ID CertId;
+    DWORD        dwCertStatus;
+    union {
+        POCSP_BASIC_REVOKED_INFO pRevokedInfo;
+    } DUMMYUNIONNAME;
+    FILETIME        ThisUpdate;
+    FILETIME        NextUpdate;
+    DWORD           cExtension;
+    PCERT_EXTENSION rgExtension;
+} OCSP_BASIC_RESPONSE_ENTRY, *POCSP_BASIC_RESPONSE_ENTRY;
+
+#define OCSP_BASIC_RESPONSE_V1          0
+#define OCSP_BASIC_BY_NAME_RESPONDER_ID 1
+#define OCSP_BASIC_BY_KEY_RESPONDER_ID  2
+
+typedef struct _OCSP_BASIC_RESPONSE_INFO {
+    DWORD                       dwVersion;
+    DWORD                       dwResponderIdChoice;
+    union {
+        CERT_NAME_BLOB  ByNameResponderId;
+        CRYPT_HASH_BLOB ByKeyResponderId;
+    } DUMMYUNIONNAME;
+    FILETIME                   ProducedAt;
+    DWORD                      cResponseEntry;
+    POCSP_BASIC_RESPONSE_ENTRY rgResponseEntry;
+    DWORD                      cExtension;
+    PCERT_EXTENSION            rgExtension;
+} OCSP_BASIC_RESPONSE_INFO, *POCSP_BASIC_RESPONSE_INFO;
+
 typedef struct _CRL_CONTEXT {
     DWORD      dwCertEncodingType;
     BYTE      *pbCrlEncoded;
@@ -3179,6 +3270,11 @@ typedef struct _CTL_FIND_SUBJECT_PARA
 #define CMC_ADD_EXTENSIONS                   ((LPCSTR)62)
 #define CMC_ADD_ATTRIBUTES                   ((LPCSTR)63)
 #define X509_CERTIFICATE_TEMPLATE            ((LPCSTR)64)
+#define OCSP_SIGNED_REQUEST                  ((LPCSTR)65)
+#define OCSP_REQUEST                         ((LPCSTR)66)
+#define OCSP_RESPONSE                        ((LPCSTR)67)
+#define OCSP_BASIC_SIGNED_RESPONSE           ((LPCSTR)68)
+#define OCSP_BASIC_RESPONSE                  ((LPCSTR)69)
 #define CNG_RSA_PUBLIC_KEY_BLOB              ((LPCSTR)72)
 #define X509_OBJECT_IDENTIFIER               ((LPCSTR)73)
 #define PKCS7_SIGNER_INFO                    ((LPCSTR)500)
