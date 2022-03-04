@@ -39,7 +39,7 @@ static DWORD  (WINAPI *pGetDefaultCommConfigW)(LPCWSTR, LPCOMMCONFIG, LPDWORD);
 
 static const CHAR  com1A[]      = "com1";
 static const CHAR  emptyA[]     = "";
-static const CHAR  fmt_comA[]   = "com%d";
+static const CHAR  fmt_comA[]   = "com%ld";
 static const CHAR  str_colonA[] = ":";
 
 /* ################# */
@@ -102,21 +102,21 @@ static void test_drvCommConfigDialogA(void)
                 SetLastError(0xdeadbeef);
                 res = pCommConfigDialogA(bufferA, NULL, pCC);
                 /* OK: ERROR_SUCCESS,  Cancel: ERROR_CANCELLED */
-                trace("returned %u with %u for '%s'\n", res, GetLastError(), bufferA);
+                trace("returned %lu with %lu for '%s'\n", res, GetLastError(), bufferA);
             }
 
             ZeroMemory(pCC, sizeof(pCC));
             SetLastError(0xdeadbeef);
             res = pCommConfigDialogA(bufferA, NULL, pCC);
             ok( res == ERROR_INSUFFICIENT_BUFFER,
-                "returned %u with %u for '%s' (expected ERROR_INSUFFICIENT_BUFFER)\n",
+                "returned %lu with %lu for '%s' (expected ERROR_INSUFFICIENT_BUFFER)\n",
                 res, GetLastError(), bufferA);
 
 
             SetLastError(0xdeadbeef);
             res = pCommConfigDialogA(bufferA, NULL, NULL);
             ok( res == ERROR_INVALID_PARAMETER,
-                "returned %u with %u for '%s' (expected ERROR_INVALID_PARAMETER)\n",
+                "returned %lu with %lu for '%s' (expected ERROR_INVALID_PARAMETER)\n",
                 res, GetLastError(), bufferA);
         }
     }
@@ -126,7 +126,7 @@ static void test_drvCommConfigDialogA(void)
     SetLastError(0xdeadbeef);
     res = pCommConfigDialogA(emptyA, NULL, pCC);
     ok( res == ERROR_INSUFFICIENT_BUFFER,
-        "returned %u with %u (expected ERROR_INSUFFICIENT_BUFFER)\n",
+        "returned %lu with %lu (expected ERROR_INSUFFICIENT_BUFFER)\n",
         res, GetLastError());
 
 
@@ -134,7 +134,7 @@ static void test_drvCommConfigDialogA(void)
     pCC[0].dwSize = sizeof(COMMCONFIG);
     SetLastError(0xdeadbeef);
     res = pCommConfigDialogA(emptyA, NULL, pCC);
-    ok( res == ERROR_BADKEY, "returned %u with %u (expected ERROR_BADKEY)\n",
+    ok( res == ERROR_BADKEY, "returned %lu with %lu (expected ERROR_BADKEY)\n",
         res, GetLastError());
 
 
@@ -142,7 +142,7 @@ static void test_drvCommConfigDialogA(void)
     SetLastError(0xdeadbeef);
     res = pCommConfigDialogA(NULL, NULL, pCC);
     ok( res == ERROR_INVALID_PARAMETER,
-        "returned %u with %u (expected ERROR_INVALID_PARAMETER)\n",
+        "returned %lu with %lu (expected ERROR_INVALID_PARAMETER)\n",
         res, GetLastError());
 }
 
@@ -177,20 +177,20 @@ static void test_drvCommConfigDialogW(void)
                 SetLastError(0xdeadbeef);
                 res = pCommConfigDialogW(bufferW, NULL, pCC);
                 /* OK: ERROR_SUCCESS,  Cancel: ERROR_CANCELLED */
-                trace("returned %u with %u for '%s'\n", res, GetLastError(), bufferA);
+                trace("returned %lu with %lu for '%s'\n", res, GetLastError(), bufferA);
             }
 
             ZeroMemory(pCC, sizeof(pCC));
             SetLastError(0xdeadbeef);
             res = pCommConfigDialogW(bufferW, NULL, pCC);
             ok( res == ERROR_INSUFFICIENT_BUFFER,
-                "returned %u with %u for '%s' (expected ERROR_INSUFFICIENT_BUFFER)\n",
+                "returned %lu with %lu for '%s' (expected ERROR_INSUFFICIENT_BUFFER)\n",
                 res, GetLastError(), bufferA);
 
             SetLastError(0xdeadbeef);
             res = pCommConfigDialogW(bufferW, NULL, NULL);
             ok( res == ERROR_INVALID_PARAMETER,
-                "returned %u with %u for '%s' (expected ERROR_INVALID_PARAMETER)\n",
+                "returned %lu with %lu for '%s' (expected ERROR_INVALID_PARAMETER)\n",
                 res, GetLastError(), bufferA);
         }
     }
@@ -200,7 +200,7 @@ static void test_drvCommConfigDialogW(void)
     SetLastError(0xdeadbeef);
     res = pCommConfigDialogW(L"", NULL, pCC);
     ok( res == ERROR_INSUFFICIENT_BUFFER,
-        "returned %u with %u (expected ERROR_INSUFFICIENT_BUFFER)\n",
+        "returned %lu with %lu (expected ERROR_INSUFFICIENT_BUFFER)\n",
         res, GetLastError());
 
 
@@ -208,7 +208,7 @@ static void test_drvCommConfigDialogW(void)
     pCC[0].dwSize = sizeof(COMMCONFIG);
     SetLastError(0xdeadbeef);
     res = pCommConfigDialogW(L"", NULL, pCC);
-    ok( res == ERROR_BADKEY, "returned %u with %u (expected ERROR_BADKEY)\n",
+    ok( res == ERROR_BADKEY, "returned %lu with %lu (expected ERROR_BADKEY)\n",
         res, GetLastError());
 
 
@@ -216,7 +216,7 @@ static void test_drvCommConfigDialogW(void)
     SetLastError(0xdeadbeef);
     res = pCommConfigDialogW(NULL, NULL, pCC);
     ok( res == ERROR_INVALID_PARAMETER,
-        "returned %u with %u (expected ERROR_INVALID_PARAMETER)\n",
+        "returned %lu with %lu (expected ERROR_INVALID_PARAMETER)\n",
         res, GetLastError());
 }
 
@@ -244,8 +244,8 @@ static void test_drvGetDefaultCommConfigA(void)
         return;
     }
     ok( (res == ERROR_INSUFFICIENT_BUFFER) && (len >= i),
-        "returned %u with %u and %u (expected "
-        "ERROR_INSUFFICIENT_BUFFER and '>= %u')\n", res, GetLastError(), len, i);
+        "returned %lu with %lu and %lu (expected "
+        "ERROR_INSUFFICIENT_BUFFER and '>= %lu')\n", res, GetLastError(), len, i);
 
     /* test ports "com0" - "com10" */
     for (i = 0; i < 11 ; i++) {
@@ -256,13 +256,13 @@ static void test_drvGetDefaultCommConfigA(void)
         res = pGetDefaultCommConfigA(bufferA, pCC, &len);
         if (i == 0) {
             ok( res == ERROR_BADKEY,
-                "returned %u with %u and %u for %s (expected "
+                "returned %lu with %lu and %lu for %s (expected "
                 "ERROR_BADKEY)\n", res, GetLastError(), len, bufferA);
         }
         else
         {
             ok((res == ERROR_SUCCESS) || (res == ERROR_BADKEY),
-               "returned %u with %u and %u for %s (expected ERROR_SUCCESS or "
+               "returned %lu with %lu and %lu for %s (expected ERROR_SUCCESS or "
                "ERROR_BADKEY)\n", res, GetLastError(), len, bufferA);
         }
 
@@ -273,7 +273,7 @@ static void test_drvGetDefaultCommConfigA(void)
             ZeroMemory(pCC, sizeof(pCC));
             res = pGetDefaultCommConfigA(bufferA, pCC, &len);
             ok( res == ERROR_BADKEY,
-                "returned %u with %u and %u for %s (expected '0' with "
+                "returned %lu with %lu and %lu for %s (expected '0' with "
                 "ERROR_BADKEY)\n", res, GetLastError(), len, bufferA);
         }
     }
@@ -285,7 +285,7 @@ static void test_drvGetDefaultCommConfigA(void)
     SetLastError(0xdeadbeef);
     res = pGetDefaultCommConfigA(emptyA, pCC, &len);
     ok( res == ERROR_BADKEY,
-        "returned %u with %u and %u for %s (expected ERROR_BADKEY)\n",
+        "returned %lu with %lu and %lu for %s (expected ERROR_BADKEY)\n",
         res, GetLastError(), len, emptyA);
 
     /* some NULL checks */
@@ -294,7 +294,7 @@ static void test_drvGetDefaultCommConfigA(void)
     SetLastError(0xdeadbeef);
     res = pGetDefaultCommConfigA(NULL, pCC, &len);
     ok( res == ERROR_INVALID_PARAMETER,
-        "returned %u with %u and %u for NULL (expected ERROR_INVALID_PARAMETER)\n",
+        "returned %lu with %lu and %lu for NULL (expected ERROR_INVALID_PARAMETER)\n",
         res, GetLastError(), len);
 
 
@@ -302,14 +302,14 @@ static void test_drvGetDefaultCommConfigA(void)
     SetLastError(0xdeadbeef);
     res = pGetDefaultCommConfigA(com1A, NULL, &len);
     ok( res == ERROR_INVALID_PARAMETER,
-        "returned %u with %u and %u (expected ERROR_INVALID_PARAMETER)\n",
+        "returned %lu with %lu and %lu (expected ERROR_INVALID_PARAMETER)\n",
         res, GetLastError(), len);
 
 
     SetLastError(0xdeadbeef);
     res = pGetDefaultCommConfigA(com1A, pCC, NULL);
     ok( res == ERROR_INVALID_PARAMETER,
-        "returned %u with %u (expected ERROR_INVALID_PARAMETER)\n",
+        "returned %lu with %lu (expected ERROR_INVALID_PARAMETER)\n",
         res, GetLastError());
 }
 
@@ -336,8 +336,8 @@ static void test_drvGetDefaultCommConfigW(void)
         return;
     }
     ok( (res == ERROR_INSUFFICIENT_BUFFER) && (len >= i),
-        "returned %u with %u and %u (expected "
-        "ERROR_INSUFFICIENT_BUFFER and '>= %u')\n", res, GetLastError(), len, i);
+        "returned %lu with %lu and %lu (expected "
+        "ERROR_INSUFFICIENT_BUFFER and '>= %lu')\n", res, GetLastError(), len, i);
 
     /* test ports "com0" - "com10" */
     for (i = 0; i < 11 ; i++) {
@@ -349,13 +349,13 @@ static void test_drvGetDefaultCommConfigW(void)
         res = pGetDefaultCommConfigW(bufferW, pCC, &len);
         if (i == 0) {
             ok( res == ERROR_BADKEY,
-                "returned %u with %u and %u for %s (expected "
+                "returned %lu with %lu and %lu for %s (expected "
                 "ERROR_BADKEY)\n", res, GetLastError(), len, bufferA);
         }
         else
         {
             ok((res == ERROR_SUCCESS) || (res == ERROR_BADKEY),
-               "returned %u with %u and %u for %s (expected ERROR_SUCCESS or "
+               "returned %lu with %lu and %lu for %s (expected ERROR_SUCCESS or "
                "ERROR_BADKEY)\n", res, GetLastError(), len, bufferA);
         }
 
@@ -367,7 +367,7 @@ static void test_drvGetDefaultCommConfigW(void)
             ZeroMemory(pCC, sizeof(pCC));
             res = pGetDefaultCommConfigW(bufferW, pCC, &len);
             ok( res == ERROR_BADKEY,
-                "returned %u with %u and %u for %s (expected '0' with "
+                "returned %lu with %lu and %lu for %s (expected '0' with "
                 "ERROR_BADKEY)\n", res, GetLastError(), len, bufferA);
         }
     }
@@ -378,7 +378,7 @@ static void test_drvGetDefaultCommConfigW(void)
     SetLastError(0xdeadbeef);
     res = pGetDefaultCommConfigW(L"", pCC, &len);
     ok( res == ERROR_BADKEY,
-        "returned %u with %u and %u for %s (expected ERROR_BADKEY)\n",
+        "returned %lu with %lu and %lu for %s (expected ERROR_BADKEY)\n",
         res, GetLastError(), len, emptyA);
 
     /* some NULL checks */
@@ -387,7 +387,7 @@ static void test_drvGetDefaultCommConfigW(void)
     SetLastError(0xdeadbeef);
     res = pGetDefaultCommConfigW(NULL, pCC, &len);
     ok( res == ERROR_INVALID_PARAMETER,
-        "returned %u with %u and %u for NULL (expected ERROR_INVALID_PARAMETER)\n",
+        "returned %lu with %lu and %lu for NULL (expected ERROR_INVALID_PARAMETER)\n",
         res, GetLastError(), len);
 
 
@@ -395,14 +395,14 @@ static void test_drvGetDefaultCommConfigW(void)
     SetLastError(0xdeadbeef);
     res = pGetDefaultCommConfigW(L"com1", NULL, &len);
     ok( res == ERROR_INVALID_PARAMETER,
-        "returned %u with %u and %u (expected ERROR_INVALID_PARAMETER)\n",
+        "returned %lu with %lu and %lu (expected ERROR_INVALID_PARAMETER)\n",
         res, GetLastError(), len);
 
 
     SetLastError(0xdeadbeef);
     res = pGetDefaultCommConfigW(L"com1", pCC, NULL);
     ok( res == ERROR_INVALID_PARAMETER,
-        "returned %u with %u (expected ERROR_INVALID_PARAMETER)\n",
+        "returned %lu with %lu (expected ERROR_INVALID_PARAMETER)\n",
         res, GetLastError());
 
 }
@@ -415,7 +415,7 @@ START_TEST(confdlg)
 
     ptr = load_functions();
     if (ptr) {
-        win_skip("got NULL with %u for %s\n", GetLastError(), ptr);
+        win_skip("got NULL with %lu for %s\n", GetLastError(), ptr);
         return;
     }
 
