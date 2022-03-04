@@ -143,6 +143,7 @@ static void wined3d_query_init(struct wined3d_query *query, struct wined3d_devic
     query->data = data;
     query->data_size = data_size;
     query->query_ops = query_ops;
+    query->poll_in_cs = !!device->cs->thread;
     list_init(&query->poll_list_entry);
 }
 
@@ -469,22 +470,20 @@ HRESULT CDECL wined3d_query_get_data(struct wined3d_query *query,
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (query->device->cs->thread)
+    if (query->counter_main != query->counter_retrieved
+            || (query->buffer_object && !wined3d_query_buffer_is_valid(query)))
     {
-        if (query->counter_main != query->counter_retrieved
-                || (query->buffer_object && !wined3d_query_buffer_is_valid(query)))
-        {
-            if (flags & WINED3DGETDATA_FLUSH && !query->device->cs->queries_flushed)
-                query->device->cs->c.ops->flush(&query->device->cs->c);
-            return S_FALSE;
-        }
-        if (query->buffer_object)
-            query->data = query->map_ptr;
+        if (flags & WINED3DGETDATA_FLUSH && !query->device->cs->queries_flushed)
+            query->device->cs->c.ops->flush(&query->device->cs->c);
+        return S_FALSE;
     }
-    else if (!query->query_ops->query_poll(query, flags))
+    else if (!query->poll_in_cs && !query->query_ops->query_poll(query, flags))
     {
         return S_FALSE;
     }
+
+    if (query->buffer_object)
+        query->data = query->map_ptr;
 
     if (data)
         memcpy(data, query->data, min(data_size, query->data_size));

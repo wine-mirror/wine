@@ -2312,8 +2312,12 @@ static void wined3d_cs_exec_query_issue(struct wined3d_cs *cs, const void *data)
 
     poll = query->query_ops->query_issue(query, op->flags);
 
-    if (!cs->thread)
+    if (!query->poll_in_cs)
+    {
+        if (op->flags & WINED3DISSUE_END)
+            InterlockedIncrement(&query->counter_retrieved);
         return;
+    }
 
     if (poll && list_empty(&query->poll_list_entry))
     {

@@ -1955,6 +1955,7 @@ struct wined3d_query
 
     GLuint buffer_object;
     UINT64 *map_ptr;
+    bool poll_in_cs;
 };
 
 HRESULT wined3d_query_gl_create(struct wined3d_device *device, enum wined3d_query_type type, void *parent,
