@@ -2095,7 +2095,9 @@ static inline struct wined3d_query_vk *wined3d_query_vk(struct wined3d_query *qu
     return CONTAINING_RECORD(query, struct wined3d_query_vk, q);
 }
 
-bool wined3d_query_vk_accumulate_data(struct wined3d_query_vk *query_vk, struct wined3d_context_vk *context_vk,
+struct wined3d_device_vk;
+
+bool wined3d_query_vk_accumulate_data(struct wined3d_query_vk *query_vk, struct wined3d_device_vk *device_vk,
         const struct wined3d_query_pool_idx_vk *pool_idx) DECLSPEC_HIDDEN;
 HRESULT wined3d_query_vk_create(struct wined3d_device *device, enum wined3d_query_type type, void *parent,
         const struct wined3d_parent_ops *parent_ops, struct wined3d_query **query) DECLSPEC_HIDDEN;

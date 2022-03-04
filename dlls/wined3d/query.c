@@ -1460,11 +1460,10 @@ bool wined3d_query_pool_vk_init(struct wined3d_query_pool_vk *pool_vk,
 }
 
 bool wined3d_query_vk_accumulate_data(struct wined3d_query_vk *query_vk,
-        struct wined3d_context_vk *context_vk, const struct wined3d_query_pool_idx_vk *pool_idx)
+        struct wined3d_device_vk *device_vk, const struct wined3d_query_pool_idx_vk *pool_idx)
 {
-    struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
     const struct wined3d_query_data_pipeline_statistics *ps_tmp;
-    const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+    const struct wined3d_vk_info *vk_info = &device_vk->vk_info;
     struct wined3d_query_data_pipeline_statistics *ps_result;
     VkResult vr;
     union
@@ -1487,9 +1486,6 @@ bool wined3d_query_vk_accumulate_data(struct wined3d_query_vk *query_vk,
             ERR("Failed to get event status, vr %s\n", wined3d_debug_vkresult(vr));
             return false;
         }
-
-        VK_CALL(vkDestroyEvent(device_vk->vk_device, pool_idx->pool_vk->vk_event, NULL));
-        pool_idx->pool_vk->vk_event = VK_NULL_HANDLE;
     }
 
     if ((vr = VK_CALL(vkGetQueryPoolResults(device_vk->vk_device, pool_idx->pool_vk->vk_query_pool,
@@ -1501,8 +1497,6 @@ bool wined3d_query_vk_accumulate_data(struct wined3d_query_vk *query_vk,
 
     if (vr == VK_NOT_READY)
         return false;
-
-    wined3d_query_pool_vk_mark_complete(pool_idx->pool_vk, pool_idx->idx, context_vk);
 
     result = (void *)query_vk->q.data;
     switch (query_vk->q.type)
@@ -1613,35 +1607,27 @@ void wined3d_query_vk_suspend(struct wined3d_query_vk *query_vk, struct wined3d_
 
 static BOOL wined3d_query_vk_poll(struct wined3d_query *query, uint32_t flags)
 {
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(query->device);
     struct wined3d_query_vk *query_vk = wined3d_query_vk(query);
-    struct wined3d_context_vk *context_vk;
+    unsigned int i;
 
-    context_vk = wined3d_context_vk(context_acquire(query->device, NULL, 0));
+    memset((void *)query->data, 0, query->data_size);
 
-    if (flags & WINED3DGETDATA_FLUSH)
-        wined3d_context_vk_submit_command_buffer(context_vk, 0, NULL, NULL, 0, NULL);
-    if (query_vk->command_buffer_id == context_vk->current_command_buffer.id)
+    if (query_vk->pool_idx.pool_vk && !wined3d_query_vk_accumulate_data(query_vk, device_vk, &query_vk->pool_idx))
         goto unavailable;
 
-    while (query_vk->pending_count)
+    for (i = 0; i < query_vk->pending_count; ++i)
     {
-        if (!wined3d_query_vk_accumulate_data(query_vk, context_vk, &query_vk->pending[query_vk->pending_count - 1]))
+        if (!wined3d_query_vk_accumulate_data(query_vk, device_vk, &query_vk->pending[i]))
             goto unavailable;
-        query_vk->pending_count--;
     }
-
-    /* If the query was suspended, and then ended before it was resumed,
-     * there's no data to accumulate here. */
-    if (query_vk->pool_idx.pool_vk && !wined3d_query_vk_accumulate_data(query_vk, context_vk, &query_vk->pool_idx))
-        goto unavailable;
-
-    query_vk->pool_idx.pool_vk = NULL;
-    context_release(&context_vk->c);
 
     return TRUE;
 
 unavailable:
-    context_release(&context_vk->c);
+    if ((flags & WINED3DGETDATA_FLUSH) && !query->device->cs->queries_flushed)
+        query->device->cs->c.ops->flush(&query->device->cs->c);
+
     return FALSE;
 }
 
@@ -1672,7 +1658,6 @@ static BOOL wined3d_query_vk_issue(struct wined3d_query *query, uint32_t flags)
 
         if (query_vk->pending_count)
             wined3d_query_vk_remove_pending_queries(context_vk, query_vk);
-        memset((void *)query->data, 0, query->data_size);
         vk_command_buffer = wined3d_context_vk_get_command_buffer(context_vk);
         if (query_vk->flags & WINED3D_QUERY_VK_FLAG_STARTED)
         {
@@ -1952,6 +1937,9 @@ HRESULT wined3d_query_vk_create(struct wined3d_device *device, enum wined3d_quer
     data = query_vk + 1;
 
     wined3d_query_init(&query_vk->q, device, type, data, data_size, ops, parent, parent_ops);
+
+    if (type != WINED3D_QUERY_TYPE_EVENT)
+        query_vk->q.poll_in_cs = false;
 
     switch (type)
     {
