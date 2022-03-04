@@ -383,20 +383,17 @@ static void test_swizzle(void)
     if (!init_test_context(&test_context))
         return;
 
-    todo_wine ps_code = compile_shader(ps_source, "ps_4_0");
-    if (ps_code)
-    {
-        cb = create_buffer(test_context.device, D3D11_BIND_CONSTANT_BUFFER, sizeof(uniform), &uniform);
-        ID3D11DeviceContext_PSSetConstantBuffers(test_context.immediate_context, 0, 1, &cb);
-        draw_quad(&test_context, ps_code);
+    ps_code = compile_shader(ps_source, "ps_4_0");
+    cb = create_buffer(test_context.device, D3D11_BIND_CONSTANT_BUFFER, sizeof(uniform), &uniform);
+    ID3D11DeviceContext_PSSetConstantBuffers(test_context.immediate_context, 0, 1, &cb);
+    draw_quad(&test_context, ps_code);
 
-        v = get_color_vec4(&test_context, 0, 0);
-        ok(compare_vec4(&v, 0.0101f, 0.0303f, 0.0202f, 0.0404f, 0),
-                "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v.x, v.y, v.z, v.w);
+    v = get_color_vec4(&test_context, 0, 0);
+    ok(compare_vec4(&v, 0.0101f, 0.0303f, 0.0202f, 0.0404f, 0),
+            "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v.x, v.y, v.z, v.w);
 
-        ID3D11Buffer_Release(cb);
-        ID3D10Blob_Release(ps_code);
-    }
+    ID3D11Buffer_Release(cb);
+    ID3D10Blob_Release(ps_code);
     release_test_context(&test_context);
 }
 
@@ -421,20 +418,17 @@ static void test_math(void)
     if (!init_test_context(&test_context))
         return;
 
-    todo_wine ps_code = compile_shader(ps_source, "ps_4_0");
-    if (ps_code)
-    {
-        cb = create_buffer(test_context.device, D3D11_BIND_CONSTANT_BUFFER, sizeof(uniforms), uniforms);
-        ID3D11DeviceContext_PSSetConstantBuffers(test_context.immediate_context, 0, 1, &cb);
-        draw_quad(&test_context, ps_code);
+    ps_code = compile_shader(ps_source, "ps_4_0");
+    cb = create_buffer(test_context.device, D3D11_BIND_CONSTANT_BUFFER, sizeof(uniforms), uniforms);
+    ID3D11DeviceContext_PSSetConstantBuffers(test_context.immediate_context, 0, 1, &cb);
+    draw_quad(&test_context, ps_code);
 
-        v = get_color_vec4(&test_context, 0, 0);
-        ok(compare_vec4(&v, -12.43f, 9.833333f, 1.6f, 35.0f, 1),
-                "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v.x, v.y, v.z, v.w);
+    v = get_color_vec4(&test_context, 0, 0);
+    ok(compare_vec4(&v, -12.43f, 9.833333f, 1.6f, 35.0f, 1),
+            "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v.x, v.y, v.z, v.w);
 
-        ID3D11Buffer_Release(cb);
-        ID3D10Blob_Release(ps_code);
-    }
+    ID3D11Buffer_Release(cb);
+    ID3D10Blob_Release(ps_code);
     release_test_context(&test_context);
 }
 
@@ -458,29 +452,26 @@ static void test_conditionals(void)
     if (!init_test_context(&test_context))
         return;
 
-    todo_wine ps_code = compile_shader(ps_source, "ps_4_0");
-    if (ps_code)
+    ps_code = compile_shader(ps_source, "ps_4_0");
+    draw_quad(&test_context, ps_code);
+    init_readback(&test_context, &rb);
+
+    for (i = 0; i < 200; i += 40)
     {
-        draw_quad(&test_context, ps_code);
-        init_readback(&test_context, &rb);
-
-        for (i = 0; i < 200; i += 40)
-        {
-            v = get_readback_vec4(&rb, i, 0);
-            ok(compare_vec4(v, 0.9f, 0.8f, 0.7f, 0.6f, 0),
-                    "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v->x, v->y, v->z, v->w);
-        }
-
-        for (i = 240; i < 640; i += 40)
-        {
-            v = get_readback_vec4(&rb, i, 0);
-            ok(compare_vec4(v, 0.1f, 0.2f, 0.3f, 0.4f, 0),
-                    "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v->x, v->y, v->z, v->w);
-        }
-
-        release_readback(&test_context, &rb);
-        ID3D10Blob_Release(ps_code);
+        v = get_readback_vec4(&rb, i, 0);
+        ok(compare_vec4(v, 0.9f, 0.8f, 0.7f, 0.6f, 0),
+                "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v->x, v->y, v->z, v->w);
     }
+
+    for (i = 240; i < 640; i += 40)
+    {
+        v = get_readback_vec4(&rb, i, 0);
+        ok(compare_vec4(v, 0.1f, 0.2f, 0.3f, 0.4f, 0),
+                "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v->x, v->y, v->z, v->w);
+    }
+
+    release_readback(&test_context, &rb);
+    ID3D10Blob_Release(ps_code);
     release_test_context(&test_context);
 }
 
@@ -621,7 +612,8 @@ static void test_sampling(void)
         winetest_push_context("Test %u", i);
 
         ID3D11DeviceContext_ClearRenderTargetView(test_context.immediate_context, test_context.rtv, red);
-        todo_wine ps_code = compile_shader_flags(tests[i], "ps_4_0", D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY);
+        todo_wine_if (i < 3)
+            ps_code = compile_shader_flags(tests[i], "ps_4_0", D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY);
         if (ps_code)
         {
             draw_quad(&test_context, ps_code);
@@ -937,10 +929,12 @@ static void test_reflection(void)
 static void check_parameter_desc(const D3D11_SIGNATURE_PARAMETER_DESC *desc,
         const D3D11_SIGNATURE_PARAMETER_DESC *expect)
 {
-    ok(!strcmp(desc->SemanticName, expect->SemanticName), "Got name %s.\n", debugstr_a(desc->SemanticName));
+    todo_wine_if(strcmp(desc->SemanticName, expect->SemanticName))
+        ok(!strcmp(desc->SemanticName, expect->SemanticName), "Got name %s.\n", debugstr_a(desc->SemanticName));
     ok(desc->SemanticIndex == expect->SemanticIndex, "Got index %u.\n", desc->SemanticIndex);
     ok(desc->Register == expect->Register, "Got register %u.\n", desc->Register);
-    ok(desc->SystemValueType == expect->SystemValueType, "Got sysval %u.\n", desc->SystemValueType);
+    todo_wine_if(desc->SystemValueType != expect->SystemValueType)
+        ok(desc->SystemValueType == expect->SystemValueType, "Got sysval %u.\n", desc->SystemValueType);
     ok(desc->ComponentType == expect->ComponentType, "Got data type %u.\n", desc->ComponentType);
     ok(desc->Mask == expect->Mask, "Got mask %#x.\n", desc->Mask);
     todo_wine_if(desc->ReadWriteMask != expect->ReadWriteMask)
@@ -1129,7 +1123,7 @@ static void test_semantic_reflection(void)
     {
         winetest_push_context("Test %u", i);
 
-        todo_wine code = compile_shader_flags(tests[i].source, tests[i].target,
+        todo_wine_if (i > 5) code = compile_shader_flags(tests[i].source, tests[i].target,
                 tests[i].legacy ? D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY : 0);
         if (!code)
         {
@@ -1143,9 +1137,9 @@ static void test_semantic_reflection(void)
 
         hr = reflection->lpVtbl->GetDesc(reflection, &shader_desc);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-        todo_wine ok(shader_desc.InputParameters == tests[i].input_count,
+        ok(shader_desc.InputParameters == tests[i].input_count,
                 "Got %u input parameters.\n", shader_desc.InputParameters);
-        todo_wine ok(shader_desc.OutputParameters == tests[i].output_count,
+        ok(shader_desc.OutputParameters == tests[i].output_count,
                 "Got %u output parameters.\n", shader_desc.OutputParameters);
 
         for (j = 0; j < shader_desc.InputParameters; ++j)
