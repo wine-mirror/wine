@@ -8,4 +8,6 @@ C_SRCS = \
 	manager.c \
 	vector.c
 
-IDL_SRCS = classes.idl
+IDL_SRCS = \
+	classes.idl \
+	provider.idl
