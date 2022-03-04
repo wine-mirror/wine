@@ -10637,42 +10637,61 @@ msgid "Select Source"
 msgstr "Vyberte zdroj"
 
 #: dlls/tzres/tzres.rc:126
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "China Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:127
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "China Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:128
 msgid "(UTC+08:00) Beijing, Chongqing, Hong Kong, Urumqi"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:267
+#, fuzzy
+#| msgid "&Standard bar"
+msgctxt "maximum 31 characters"
 msgid "North Asia Standard Time"
-msgstr ""
+msgstr "&Standardní řádek"
 
 #: dlls/tzres/tzres.rc:268
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "North Asia Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:269
 msgid "(UTC+07:00) Krasnoyarsk"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:168
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Georgian Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:169
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Georgian Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:170
 msgid "(UTC+04:00) Tbilisi"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:393 dlls/tzres/tzres.rc:394
+msgctxt "maximum 31 characters"
 msgid "UTC+12"
 msgstr ""
 
@@ -10681,24 +10700,36 @@ msgid "(UTC+12:00) Coordinated Universal Time+12"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:252
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Nepal Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:253
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Nepal Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:254
 msgid "(UTC+05:45) Kathmandu"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:90
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Cape Verde Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:91
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Cape Verde Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:92
 msgid "(UTC-01:00) Cabo Verde Is."
@@ -10707,12 +10738,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:183
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Haiti Standard Time"
 msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:184
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Haiti Daylight Time"
 msgstr "Datum a čas"
 
@@ -10723,12 +10756,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:111
 #, fuzzy
 #| msgid "Central European"
+msgctxt "maximum 31 characters"
 msgid "Central European Standard Time"
 msgstr "Středoevropské"
 
 #: dlls/tzres/tzres.rc:112
 #, fuzzy
 #| msgid "Central European"
+msgctxt "maximum 31 characters"
 msgid "Central European Daylight Time"
 msgstr "Středoevropské"
 
@@ -10737,18 +10772,25 @@ msgid "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:234
+#, fuzzy
+#| msgid "&Standard bar"
+msgctxt "maximum 31 characters"
 msgid "Morocco Standard Time"
-msgstr ""
+msgstr "&Standardní řádek"
 
 #: dlls/tzres/tzres.rc:235
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Morocco Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:236
 msgid "(UTC+01:00) Casablanca"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:402 dlls/tzres/tzres.rc:403
+msgctxt "maximum 31 characters"
 msgid "UTC-08"
 msgstr ""
 
@@ -10759,12 +10801,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:39
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Altai Standard Time"
 msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:40
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Altai Daylight Time"
 msgstr "Datum a čas"
 
@@ -10775,12 +10819,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:108
 #, fuzzy
 #| msgid "Central European"
+msgctxt "maximum 31 characters"
 msgid "Central Europe Standard Time"
 msgstr "Středoevropské"
 
 #: dlls/tzres/tzres.rc:109
 #, fuzzy
 #| msgid "Central European"
+msgctxt "maximum 31 characters"
 msgid "Central Europe Daylight Time"
 msgstr "Středoevropské"
 
@@ -10789,12 +10835,18 @@ msgid "(UTC+01:00) Belgrade, Bratislava, Budapest, Ljubljana, Prague"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:192
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Iran Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:193
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Iran Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:194
 msgid "(UTC+03:30) Tehran"
@@ -10803,12 +10855,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:318
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Saint Pierre Standard Time"
 msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:319
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Saint Pierre Daylight Time"
 msgstr "Datum a čas"
 
@@ -10821,12 +10875,14 @@ msgstr "Datum a čas"
 #: dlls/tzres/tzres.rc:327
 #, fuzzy
 #| msgid "&Standard bar"
+msgctxt "maximum 31 characters"
 msgid "Sao Tome Standard Time"
 msgstr "&Standardní řádek"
 
 #: dlls/tzres/tzres.rc:328
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Sao Tome Daylight Time"
 msgstr "Datum a čas"
 
@@ -10835,36 +10891,54 @@ msgid "(UTC+00:00) Sao Tome"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:249
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Namibia Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:250
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Namibia Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:251
 msgid "(UTC+02:00) Windhoek"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:369
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Tonga Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:370
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Tonga Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:371
 msgid "(UTC+13:00) Nuku'alofa"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:240
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Mountain Standard Time (Mexico)"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:241
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Mountain Daylight Time (Mexico)"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:242
 msgid "(UTC-07:00) Chihuahua, La Paz, Mazatlan"
@@ -10873,12 +10947,16 @@ msgstr ""
 #: dlls/tzres/tzres.rc:171
 #, fuzzy
 #| msgid "&Standard bar"
+msgctxt "maximum 31 characters"
 msgid "GMT Standard Time"
 msgstr "&Standardní řádek"
 
 #: dlls/tzres/tzres.rc:172
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "GMT Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:173
 msgid "(UTC+00:00) Dublin, Edinburgh, Lisbon, London"
@@ -10887,12 +10965,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:342
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "South Sudan Standard Time"
 msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:343
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "South Sudan Daylight Time"
 msgstr "Datum a čas"
 
@@ -10901,12 +10981,18 @@ msgid "(UTC+02:00) Juba"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:102
+#, fuzzy
+#| msgid "Central European"
+msgctxt "maximum 31 characters"
 msgid "Central Asia Standard Time"
-msgstr ""
+msgstr "Středoevropské"
 
 #: dlls/tzres/tzres.rc:103
+#, fuzzy
+#| msgid "Central European"
+msgctxt "maximum 31 characters"
 msgid "Central Asia Daylight Time"
-msgstr ""
+msgstr "Středoevropské"
 
 #: dlls/tzres/tzres.rc:104
 msgid "(UTC+06:00) Astana"
@@ -10915,12 +11001,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:213
 #, fuzzy
 #| msgid "&Standard bar"
+msgctxt "maximum 31 characters"
 msgid "Lord Howe Standard Time"
 msgstr "&Standardní řádek"
 
 #: dlls/tzres/tzres.rc:214
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Lord Howe Daylight Time"
 msgstr "Datum a čas"
 
@@ -10929,18 +11017,25 @@ msgid "(UTC+10:30) Lord Howe Island"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:48
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Arabic Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:49
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Arabic Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:50
 msgid "(UTC+03:00) Baghdad"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:396 dlls/tzres/tzres.rc:397
+msgctxt "maximum 31 characters"
 msgid "UTC+13"
 msgstr ""
 
@@ -10949,24 +11044,36 @@ msgid "(UTC+13:00) Coordinated Universal Time+13"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:216
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Magadan Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:217
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Magadan Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:218
 msgid "(UTC+11:00) Magadan"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:258
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Newfoundland Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:259
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Newfoundland Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:260
 msgid "(UTC-03:30) Newfoundland"
@@ -10975,12 +11082,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:348
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Sudan Standard Time"
 msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:349
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Sudan Daylight Time"
 msgstr "Datum a čas"
 
@@ -10989,36 +11098,54 @@ msgid "(UTC+02:00) Khartoum"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:438
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "West Pacific Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:439
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "West Pacific Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:440
 msgid "(UTC+10:00) Guam, Port Moresby"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:279
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Pacific Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:280
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Pacific Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:281
 msgid "(UTC-08:00) Pacific Time (US & Canada)"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:69
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Azerbaijan Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:70
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Azerbaijan Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:71
 msgid "(UTC+04:00) Baku"
@@ -11027,12 +11154,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:219
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Magallanes Standard Time"
 msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:220
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Magallanes Daylight Time"
 msgstr "Datum a čas"
 
@@ -11041,72 +11170,108 @@ msgid "(UTC-03:00) Punta Arenas"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:324
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Samoa Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:325
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Samoa Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:326
 msgid "(UTC+13:00) Samoa"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:201
+#, fuzzy
+#| msgid "&Standard bar"
+msgctxt "maximum 31 characters"
 msgid "Kaliningrad Standard Time"
-msgstr ""
+msgstr "&Standardní řádek"
 
 #: dlls/tzres/tzres.rc:202
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Kaliningrad Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:203
 msgid "(UTC+02:00) Kaliningrad"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:282
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Pacific Standard Time (Mexico)"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:283
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Pacific Daylight Time (Mexico)"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:284
 msgid "(UTC-08:00) Baja California"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:228
+#, fuzzy
+#| msgid "&Standard bar"
+msgctxt "maximum 31 characters"
 msgid "Middle East Standard Time"
-msgstr ""
+msgstr "&Standardní řádek"
 
 #: dlls/tzres/tzres.rc:229
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Middle East Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:230
 msgid "(UTC+02:00) Beirut"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:363
+#, fuzzy
+#| msgid "&Standard bar"
+msgctxt "maximum 31 characters"
 msgid "Tokyo Standard Time"
-msgstr ""
+msgstr "&Standardní řádek"
 
 #: dlls/tzres/tzres.rc:364
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Tokyo Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:365
 msgid "(UTC+09:00) Osaka, Sapporo, Tokyo"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:210
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Line Islands Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:211
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Line Islands Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:212
 msgid "(UTC+14:00) Kiritimati Island"
@@ -11115,12 +11280,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:129
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Cuba Standard Time"
 msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:130
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Cuba Daylight Time"
 msgstr "Datum a čas"
 
@@ -11129,30 +11296,43 @@ msgid "(UTC-05:00) Havana"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:198
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Jordan Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:199
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Jordan Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:200
 msgid "(UTC+02:00) Amman"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:117
+#, fuzzy
+#| msgid "Central European"
+msgctxt "maximum 31 characters"
 msgid "Central Standard Time"
-msgstr ""
+msgstr "Středoevropské"
 
 #: dlls/tzres/tzres.rc:118
+#, fuzzy
+#| msgid "Central European"
+msgctxt "maximum 31 characters"
 msgid "Central Daylight Time"
-msgstr ""
+msgstr "Středoevropské"
 
 #: dlls/tzres/tzres.rc:119
 msgid "(UTC-06:00) Central Time (US & Canada)"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:303 dlls/tzres/tzres.rc:304
+msgctxt "maximum 31 characters"
 msgid "Russia Time Zone 3"
 msgstr ""
 
@@ -11163,12 +11343,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:417
 #, fuzzy
 #| msgid "&Standard bar"
+msgctxt "maximum 31 characters"
 msgid "Volgograd Standard Time"
 msgstr "&Standardní řádek"
 
 #: dlls/tzres/tzres.rc:418
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Volgograd Daylight Time"
 msgstr "Datum a čas"
 
@@ -11177,30 +11359,43 @@ msgid "(UTC+04:00) Volgograd"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:72
+#, fuzzy
+#| msgid "&Standard bar"
+msgctxt "maximum 31 characters"
 msgid "Azores Standard Time"
-msgstr ""
+msgstr "&Standardní řádek"
 
 #: dlls/tzres/tzres.rc:73
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Azores Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:74
 msgid "(UTC-01:00) Azores"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:264
+#, fuzzy
+#| msgid "&Standard bar"
+msgctxt "maximum 31 characters"
 msgid "North Asia East Standard Time"
-msgstr ""
+msgstr "&Standardní řádek"
 
 #: dlls/tzres/tzres.rc:265
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "North Asia East Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:266
 msgid "(UTC+08:00) Irkutsk"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:408 dlls/tzres/tzres.rc:409
+msgctxt "maximum 31 characters"
 msgid "UTC-11"
 msgstr ""
 
@@ -11209,12 +11404,18 @@ msgid "(UTC-11:00) Coordinated Universal Time-11"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:51
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Argentina Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:52
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Argentina Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:53
 msgid "(UTC-03:00) City of Buenos Aires"
@@ -11223,12 +11424,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:378
 #, fuzzy
 #| msgid "&Standard bar"
+msgctxt "maximum 31 characters"
 msgid "Turks And Caicos Standard Time"
 msgstr "&Standardní řádek"
 
 #: dlls/tzres/tzres.rc:379
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Turks And Caicos Daylight Time"
 msgstr "Datum a čas"
 
@@ -11239,12 +11442,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:222
 #, fuzzy
 #| msgid "&Standard bar"
+msgctxt "maximum 31 characters"
 msgid "Marquesas Standard Time"
 msgstr "&Standardní řádek"
 
 #: dlls/tzres/tzres.rc:223
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Marquesas Daylight Time"
 msgstr "Datum a čas"
 
@@ -11253,18 +11458,25 @@ msgid "(UTC-09:30) Marquesas Islands"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:243
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Myanmar Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:244
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Myanmar Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:245
 msgid "(UTC+06:30) Yangon (Rangoon)"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:390 dlls/tzres/tzres.rc:391
+msgctxt "maximum 31 characters"
 msgid "Coordinated Universal Time"
 msgstr ""
 
@@ -11273,12 +11485,18 @@ msgid "(UTC) Coordinated Universal Time"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:189
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "India Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:190
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "India Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:191
 msgid "(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi"
@@ -11287,24 +11505,34 @@ msgstr ""
 #: dlls/tzres/tzres.rc:180
 #, fuzzy
 #| msgid "&Standard bar"
+msgctxt "maximum 31 characters"
 msgid "GTB Standard Time"
 msgstr "&Standardní řádek"
 
 #: dlls/tzres/tzres.rc:181
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "GTB Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:182
 msgid "(UTC+02:00) Athens, Bucharest"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:375
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Turkey Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:376
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Turkey Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:377
 msgid "(UTC+03:00) Istanbul"
@@ -11313,12 +11541,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:54
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Astrakhan Standard Time"
 msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:55
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Astrakhan Daylight Time"
 msgstr "Datum a čas"
 
@@ -11327,24 +11557,36 @@ msgid "(UTC+04:00) Astrakhan, Ulyanovsk"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:162
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Fiji Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:163
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Fiji Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:164
 msgid "(UTC+12:00) Fiji"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:87
+#, fuzzy
+#| msgid "Central European"
+msgctxt "maximum 31 characters"
 msgid "Canada Central Standard Time"
-msgstr ""
+msgstr "Středoevropské"
 
 #: dlls/tzres/tzres.rc:88
+#, fuzzy
+#| msgid "Central European"
+msgctxt "maximum 31 characters"
 msgid "Canada Central Daylight Time"
-msgstr ""
+msgstr "Středoevropské"
 
 #: dlls/tzres/tzres.rc:89
 msgid "(UTC-06:00) Saskatchewan"
@@ -11353,12 +11595,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:444
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Yukon Standard Time"
 msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:445
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Yukon Daylight Time"
 msgstr "Datum a čas"
 
@@ -11367,48 +11611,72 @@ msgid "(UTC-07:00) Yukon"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:354
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Taipei Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:355
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Taipei Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:356
 msgid "(UTC+08:00) Taipei"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:426
+#, fuzzy
+#| msgid "Central European"
+msgctxt "maximum 31 characters"
 msgid "W. Europe Standard Time"
-msgstr ""
+msgstr "Středoevropské"
 
 #: dlls/tzres/tzres.rc:427
+#, fuzzy
+#| msgid "Central European"
+msgctxt "maximum 31 characters"
 msgid "W. Europe Daylight Time"
-msgstr ""
+msgstr "Středoevropské"
 
 #: dlls/tzres/tzres.rc:428
 msgid "(UTC+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:231
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Montevideo Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:232
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Montevideo Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:233
 msgid "(UTC-03:00) Montevideo"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:285
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Pakistan Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:286
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Pakistan Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:287
 msgid "(UTC+05:00) Islamabad, Karachi"
@@ -11417,12 +11685,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:366
 #, fuzzy
 #| msgid "&Standard bar"
+msgctxt "maximum 31 characters"
 msgid "Tomsk Standard Time"
 msgstr "&Standardní řádek"
 
 #: dlls/tzres/tzres.rc:367
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Tomsk Daylight Time"
 msgstr "Datum a čas"
 
@@ -11431,48 +11701,72 @@ msgid "(UTC+07:00) Tomsk"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:93
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Caucasus Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:94
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Caucasus Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:95
 msgid "(UTC+04:00) Yerevan"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:66
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "AUS Eastern Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:67
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "AUS Eastern Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:68
 msgid "(UTC+10:00) Canberra, Melbourne, Sydney"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:246
+#, fuzzy
+#| msgid "Central European"
+msgctxt "maximum 31 characters"
 msgid "N. Central Asia Standard Time"
-msgstr ""
+msgstr "Středoevropské"
 
 #: dlls/tzres/tzres.rc:247
+#, fuzzy
+#| msgid "Central European"
+msgctxt "maximum 31 characters"
 msgid "N. Central Asia Daylight Time"
-msgstr ""
+msgstr "Středoevropské"
 
 #: dlls/tzres/tzres.rc:248
 msgid "(UTC+07:00) Novosibirsk"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:150
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Eastern Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:151
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Eastern Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:152
 msgid "(UTC-05:00) Eastern Time (US & Canada)"
@@ -11481,12 +11775,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:372
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Transbaikal Standard Time"
 msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:373
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Transbaikal Daylight Time"
 msgstr "Datum a čas"
 
@@ -11497,12 +11793,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:141
 #, fuzzy
 #| msgid "Central European"
+msgctxt "maximum 31 characters"
 msgid "E. Europe Standard Time"
 msgstr "Středoevropské"
 
 #: dlls/tzres/tzres.rc:142
 #, fuzzy
 #| msgid "Central European"
+msgctxt "maximum 31 characters"
 msgid "E. Europe Daylight Time"
 msgstr "Středoevropské"
 
@@ -11511,12 +11809,18 @@ msgid "(UTC+02:00) Chisinau"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:120
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Central Standard Time (Mexico)"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:121
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Central Daylight Time (Mexico)"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:122
 msgid "(UTC-06:00) Guadalajara, Mexico City, Monterrey"
@@ -11525,12 +11829,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:330
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Saratov Standard Time"
 msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:331
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Saratov Daylight Time"
 msgstr "Datum a čas"
 
@@ -11539,36 +11845,54 @@ msgid "(UTC+04:00) Saratov"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:57
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Atlantic Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:58
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Atlantic Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:59
 msgid "(UTC-04:00) Atlantic Time (Canada)"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:237
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Mountain Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:238
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Mountain Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:239
 msgid "(UTC-07:00) Mountain Time (US & Canada)"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:384
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "US Eastern Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:385
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "US Eastern Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:386
 msgid "(UTC-05:00) Indiana (East)"
@@ -11577,12 +11901,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:321
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Sakhalin Standard Time"
 msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:322
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Sakhalin Daylight Time"
 msgstr "Datum a čas"
 
@@ -11593,12 +11919,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:270
 #, fuzzy
 #| msgid "&Standard bar"
+msgctxt "maximum 31 characters"
 msgid "North Korea Standard Time"
 msgstr "&Standardní řádek"
 
 #: dlls/tzres/tzres.rc:271
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "North Korea Daylight Time"
 msgstr "Datum a čas"
 
@@ -11607,30 +11935,43 @@ msgid "(UTC+09:00) Pyongyang"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:357
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Tasmania Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:358
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Tasmania Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:359
 msgid "(UTC+10:00) Hobart"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:99
+#, fuzzy
+#| msgid "Central European"
+msgctxt "maximum 31 characters"
 msgid "Central America Standard Time"
-msgstr ""
+msgstr "Středoevropské"
 
 #: dlls/tzres/tzres.rc:100
+#, fuzzy
+#| msgid "Central European"
+msgctxt "maximum 31 characters"
 msgid "Central America Daylight Time"
-msgstr ""
+msgstr "Středoevropské"
 
 #: dlls/tzres/tzres.rc:101
 msgid "(UTC-06:00) Central America"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:399 dlls/tzres/tzres.rc:400
+msgctxt "maximum 31 characters"
 msgid "UTC-02"
 msgstr ""
 
@@ -11639,42 +11980,61 @@ msgid "(UTC-02:00) Coordinated Universal Time-02"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:387
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "US Mountain Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:388
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "US Mountain Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:389
 msgid "(UTC-07:00) Arizona"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:339
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "South Africa Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:340
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "South Africa Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:341
 msgid "(UTC+02:00) Harare, Pretoria"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:96
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Cen. Australia Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:97
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Cen. Australia Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:98
 msgid "(UTC+09:30) Adelaide"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:405 dlls/tzres/tzres.rc:406
+msgctxt "maximum 31 characters"
 msgid "UTC-09"
 msgstr ""
 
@@ -11683,72 +12043,108 @@ msgid "(UTC-09:00) Coordinated Universal Time-09"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:345
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Sri Lanka Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:346
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Sri Lanka Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:347
 msgid "(UTC+05:30) Sri Jayawardenepura"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:30
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Afghanistan Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:31
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Afghanistan Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:32
 msgid "(UTC+04:30) Kabul"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:441
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Yakutsk Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:442
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Yakutsk Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:443
 msgid "(UTC+09:00) Yakutsk"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:309
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "SA Eastern Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:310
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "SA Eastern Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:311
 msgid "(UTC-03:00) Cayenne, Fortaleza"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:42
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Arab Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:43
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Arab Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:44
 msgid "(UTC+03:00) Kuwait, Riyadh"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:45
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Arabian Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:46
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Arabian Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:47
 msgid "(UTC+04:00) Abu Dhabi, Muscat"
@@ -11757,12 +12153,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:360
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Tocantins Standard Time"
 msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:361
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Tocantins Daylight Time"
 msgstr "Datum a čas"
 
@@ -11771,12 +12169,18 @@ msgid "(UTC-03:00) Araguaina"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:306
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Russian Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:307
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Russian Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:308
 msgid "(UTC+03:00) Moscow, St. Petersburg"
@@ -11785,12 +12189,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:63
 #, fuzzy
 #| msgid "Central European"
+msgctxt "maximum 31 characters"
 msgid "Aus Central W. Standard Time"
 msgstr "Středoevropské"
 
 #: dlls/tzres/tzres.rc:64
 #, fuzzy
 #| msgid "Central European"
+msgctxt "maximum 31 characters"
 msgid "Aus Central W. Daylight Time"
 msgstr "Středoevropské"
 
@@ -11799,30 +12205,43 @@ msgid "(UTC+08:45) Eucla"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:294
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Romance Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:295
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Romance Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:296
 msgid "(UTC+01:00) Brussels, Copenhagen, Madrid, Paris"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:159
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Ekaterinburg Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:160
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Ekaterinburg Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:161
 msgid "(UTC+05:00) Ekaterinburg"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:300 dlls/tzres/tzres.rc:301
+msgctxt "maximum 31 characters"
 msgid "Russia Time Zone 11"
 msgstr ""
 
@@ -11833,12 +12252,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:435
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "West Bank Standard Time"
 msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:436
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "West Bank Daylight Time"
 msgstr "Datum a čas"
 
@@ -11847,48 +12268,72 @@ msgid "(UTC+02:00) Gaza, Hebron"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:351
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Syria Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:352
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Syria Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:353
 msgid "(UTC+02:00) Damascus"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:60
+#, fuzzy
+#| msgid "Central European"
+msgctxt "maximum 31 characters"
 msgid "AUS Central Standard Time"
-msgstr ""
+msgstr "Středoevropské"
 
 #: dlls/tzres/tzres.rc:61
+#, fuzzy
+#| msgid "Central European"
+msgctxt "maximum 31 characters"
 msgid "AUS Central Daylight Time"
-msgstr ""
+msgstr "Středoevropské"
 
 #: dlls/tzres/tzres.rc:62
 msgid "(UTC+09:30) Darwin"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:177
+#, fuzzy
+#| msgid "&Standard bar"
+msgctxt "maximum 31 characters"
 msgid "Greenwich Standard Time"
-msgstr ""
+msgstr "&Standardní řádek"
 
 #: dlls/tzres/tzres.rc:178
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Greenwich Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:179
 msgid "(UTC+00:00) Monrovia, Reykjavik"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:381
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Ulaanbaatar Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:382
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Ulaanbaatar Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:383
 msgid "(UTC+08:00) Ulaanbaatar"
@@ -11897,12 +12342,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:261
 #, fuzzy
 #| msgid "&Standard bar"
+msgctxt "maximum 31 characters"
 msgid "Norfolk Standard Time"
 msgstr "&Standardní řádek"
 
 #: dlls/tzres/tzres.rc:262
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Norfolk Daylight Time"
 msgstr "Datum a čas"
 
@@ -11911,72 +12358,108 @@ msgid "(UTC+11:00) Norfolk Island"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:195
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Israel Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:196
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Israel Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:197
 msgid "(UTC+02:00) Jerusalem"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:78
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Bangladesh Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:79
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Bangladesh Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:80
 msgid "(UTC+06:00) Dhaka"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:312
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "SA Pacific Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:313
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "SA Pacific Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:314
 msgid "(UTC-05:00) Bogota, Lima, Quito, Rio Branco"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:432
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "West Asia Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:433
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "West Asia Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:434
 msgid "(UTC+05:00) Ashgabat, Tashkent"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:33
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Alaskan Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:34
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Alaskan Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:35
 msgid "(UTC-09:00) Alaska"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:288
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Paraguay Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:289
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Paraguay Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:290
 msgid "(UTC-04:00) Asuncion"
@@ -11985,48 +12468,70 @@ msgstr ""
 #: dlls/tzres/tzres.rc:132
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Dateline Standard Time"
 msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:133
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Dateline Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:134
 msgid "(UTC-12:00) International Date Line West"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:207
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Libya Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:208
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Libya Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:209
 msgid "(UTC+02:00) Tripoli"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:75
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Bahia Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:76
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Bahia Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:77
 msgid "(UTC-03:00) Salvador"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:411
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Venezuela Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:412
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Venezuela Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:413
 msgid "(UTC-04:00) Caracas"
@@ -12035,12 +12540,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:84
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Bougainville Standard Time"
 msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:85
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Bougainville Daylight Time"
 msgstr "Datum a čas"
 
@@ -12049,24 +12556,36 @@ msgid "(UTC+11:00) Bougainville Island"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:186
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Hawaiian Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:187
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Hawaiian Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:188
 msgid "(UTC-10:00) Hawaii"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:333
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "SE Asia Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:334
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "SE Asia Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:335
 msgid "(UTC+07:00) Bangkok, Hanoi, Jakarta"
@@ -12075,12 +12594,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:291
 #, fuzzy
 #| msgid "&Standard bar"
+msgctxt "maximum 31 characters"
 msgid "Qyzylorda Standard Time"
 msgstr "&Standardní řádek"
 
 #: dlls/tzres/tzres.rc:292
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Qyzylorda Daylight Time"
 msgstr "Datum a čas"
 
@@ -12091,12 +12612,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:429
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "W. Mongolia Standard Time"
 msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:430
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "W. Mongolia Daylight Time"
 msgstr "Datum a čas"
 
@@ -12105,12 +12628,18 @@ msgid "(UTC+07:00) Hovd"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:255
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "New Zealand Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:256
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "New Zealand Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:257
 msgid "(UTC+12:00) Auckland, Wellington"
@@ -12119,12 +12648,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:36
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Aleutian Standard Time"
 msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:37
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Aleutian Daylight Time"
 msgstr "Datum a čas"
 
@@ -12135,12 +12666,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:273
 #, fuzzy
 #| msgid "&Standard bar"
+msgctxt "maximum 31 characters"
 msgid "Omsk Standard Time"
 msgstr "&Standardní řádek"
 
 #: dlls/tzres/tzres.rc:274
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Omsk Daylight Time"
 msgstr "Datum a čas"
 
@@ -12149,48 +12682,72 @@ msgid "(UTC+06:00) Omsk"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:105
+#, fuzzy
+#| msgid "Central European"
+msgctxt "maximum 31 characters"
 msgid "Central Brazilian Standard Time"
-msgstr ""
+msgstr "Středoevropské"
 
 #: dlls/tzres/tzres.rc:106
+#, fuzzy
+#| msgid "Central European"
+msgctxt "maximum 31 characters"
 msgid "Central Brazilian Daylight Time"
-msgstr ""
+msgstr "Středoevropské"
 
 #: dlls/tzres/tzres.rc:107
 msgid "(UTC-04:00) Cuiaba"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:81
+#, fuzzy
+#| msgid "&Standard bar"
+msgctxt "maximum 31 characters"
 msgid "Belarus Standard Time"
-msgstr ""
+msgstr "&Standardní řádek"
 
 #: dlls/tzres/tzres.rc:82
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Belarus Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:83
 msgid "(UTC+03:00) Minsk"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:315
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "SA Western Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:316
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "SA Western Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:317
 msgid "(UTC-04:00) Georgetown, La Paz, Manaus, San Juan"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:174
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Greenland Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:175
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Greenland Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:176
 msgid "(UTC-03:00) Greenland"
@@ -12199,12 +12756,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:147
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Easter Island Standard Time"
 msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:148
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Easter Island Daylight Time"
 msgstr "Datum a čas"
 
@@ -12213,6 +12772,7 @@ msgid "(UTC-06:00) Easter Island"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:297 dlls/tzres/tzres.rc:298
+msgctxt "maximum 31 characters"
 msgid "Russia Time Zone 10"
 msgstr ""
 
@@ -12221,12 +12781,18 @@ msgid "(UTC+11:00) Chokurdakh"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:156
+#, fuzzy
+#| msgid "&Standard bar"
+msgctxt "maximum 31 characters"
 msgid "Egypt Standard Time"
-msgstr ""
+msgstr "&Standardní řádek"
 
 #: dlls/tzres/tzres.rc:157
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Egypt Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:158
 msgid "(UTC+02:00) Cairo"
@@ -12235,12 +12801,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:153
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Eastern Standard Time (Mexico)"
 msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:154
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Eastern Daylight Time (Mexico)"
 msgstr "Datum a čas"
 
@@ -12249,48 +12817,72 @@ msgid "(UTC-05:00) Chetumal"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:225
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Mauritius Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:226
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Mauritius Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:227
 msgid "(UTC+04:00) Port Louis"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:414
+#, fuzzy
+#| msgid "&Standard bar"
+msgctxt "maximum 31 characters"
 msgid "Vladivostok Standard Time"
-msgstr ""
+msgstr "&Standardní řádek"
 
 #: dlls/tzres/tzres.rc:415
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Vladivostok Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:416
 msgid "(UTC+10:00) Vladivostok"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:336
+#, fuzzy
+#| msgid "&Standard bar"
+msgctxt "maximum 31 characters"
 msgid "Singapore Standard Time"
-msgstr ""
+msgstr "&Standardní řádek"
 
 #: dlls/tzres/tzres.rc:337
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Singapore Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:338
 msgid "(UTC+08:00) Kuala Lumpur, Singapore"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:204
+#, fuzzy
+#| msgid "&Standard bar"
+msgctxt "maximum 31 characters"
 msgid "Korea Standard Time"
-msgstr ""
+msgstr "&Standardní řádek"
 
 #: dlls/tzres/tzres.rc:205
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Korea Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:206
 msgid "(UTC+09:00) Seoul"
@@ -12299,12 +12891,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:123
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Chatham Islands Standard Time"
 msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:124
 #, fuzzy
 #| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Chatham Islands Daylight Time"
 msgstr "Datum a čas"
 
@@ -12313,12 +12907,18 @@ msgid "(UTC+12:45) Chatham Islands"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:135
+#, fuzzy
+#| msgid "Central European"
+msgctxt "maximum 31 characters"
 msgid "E. Africa Standard Time"
-msgstr ""
+msgstr "Středoevropské"
 
 #: dlls/tzres/tzres.rc:136
+#, fuzzy
+#| msgid "Central European"
+msgctxt "maximum 31 characters"
 msgid "E. Africa Daylight Time"
-msgstr ""
+msgstr "Středoevropské"
 
 #: dlls/tzres/tzres.rc:137
 msgid "(UTC+03:00) Nairobi"
@@ -12327,84 +12927,124 @@ msgstr ""
 #: dlls/tzres/tzres.rc:165
 #, fuzzy
 #| msgid "&Standard bar"
+msgctxt "maximum 31 characters"
 msgid "FLE Standard Time"
 msgstr "&Standardní řádek"
 
 #: dlls/tzres/tzres.rc:166
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "FLE Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:167
 msgid "(UTC+02:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:144
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "E. South America Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:145
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "E. South America Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:146
 msgid "(UTC-03:00) Brasilia"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:114
+#, fuzzy
+#| msgid "Central European"
+msgctxt "maximum 31 characters"
 msgid "Central Pacific Standard Time"
-msgstr ""
+msgstr "Středoevropské"
 
 #: dlls/tzres/tzres.rc:115
+#, fuzzy
+#| msgid "Central European"
+msgctxt "maximum 31 characters"
 msgid "Central Pacific Daylight Time"
-msgstr ""
+msgstr "Středoevropské"
 
 #: dlls/tzres/tzres.rc:116
 msgid "(UTC+11:00) Solomon Is., New Caledonia"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:423
+#, fuzzy
+#| msgid "Central European"
+msgctxt "maximum 31 characters"
 msgid "W. Central Africa Standard Time"
-msgstr ""
+msgstr "Středoevropské"
 
 #: dlls/tzres/tzres.rc:424
+#, fuzzy
+#| msgid "Central European"
+msgctxt "maximum 31 characters"
 msgid "W. Central Africa Daylight Time"
-msgstr ""
+msgstr "Středoevropské"
 
 #: dlls/tzres/tzres.rc:425
 msgid "(UTC+01:00) West Central Africa"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:276
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Pacific SA Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:277
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "Pacific SA Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:278
 msgid "(UTC-04:00) Santiago"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:138
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "E. Australia Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:139
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "E. Australia Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:140
 msgid "(UTC+10:00) Brisbane"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:420
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "W. Australia Standard Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:421
+#, fuzzy
+#| msgid "Date and time"
+msgctxt "maximum 31 characters"
 msgid "W. Australia Daylight Time"
-msgstr ""
+msgstr "Datum a čas"
 
 #: dlls/tzres/tzres.rc:422
 msgid "(UTC+08:00) Perth"

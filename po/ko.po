@@ -10285,10 +10285,12 @@ msgid "Select Source"
 msgstr "원본 선택"
 
 #: dlls/tzres/tzres.rc:126
+msgctxt "maximum 31 characters"
 msgid "China Standard Time"
 msgstr "중국 표준시"
 
 #: dlls/tzres/tzres.rc:127
+msgctxt "maximum 31 characters"
 msgid "China Daylight Time"
 msgstr "중국 일광 절약시"
 
@@ -10297,10 +10299,12 @@ msgid "(UTC+08:00) Beijing, Chongqing, Hong Kong, Urumqi"
 msgstr "(UTC+08:00) 베이징, 충칭, 홍콩 특별 행정구, 우루무치"
 
 #: dlls/tzres/tzres.rc:267
+msgctxt "maximum 31 characters"
 msgid "North Asia Standard Time"
 msgstr "북아시아 표준시"
 
 #: dlls/tzres/tzres.rc:268
+msgctxt "maximum 31 characters"
 msgid "North Asia Daylight Time"
 msgstr "북아시아 일광 절약시"
 
@@ -10309,10 +10313,12 @@ msgid "(UTC+07:00) Krasnoyarsk"
 msgstr "(UTC+07:00) 크라스노야르스크"
 
 #: dlls/tzres/tzres.rc:168
+msgctxt "maximum 31 characters"
 msgid "Georgian Standard Time"
 msgstr "그루지아 표준시"
 
 #: dlls/tzres/tzres.rc:169
+msgctxt "maximum 31 characters"
 msgid "Georgian Daylight Time"
 msgstr "그루지아 일광 절약시"
 
@@ -10321,6 +10327,7 @@ msgid "(UTC+04:00) Tbilisi"
 msgstr "(UTC+04:00) 트빌리시"
 
 #: dlls/tzres/tzres.rc:393 dlls/tzres/tzres.rc:394
+msgctxt "maximum 31 characters"
 msgid "UTC+12"
 msgstr "UTC+12"
 
@@ -10329,10 +10336,12 @@ msgid "(UTC+12:00) Coordinated Universal Time+12"
 msgstr "(UTC+12:00) 협정 세계시+12"
 
 #: dlls/tzres/tzres.rc:252
+msgctxt "maximum 31 characters"
 msgid "Nepal Standard Time"
 msgstr "네팔 표준시"
 
 #: dlls/tzres/tzres.rc:253
+msgctxt "maximum 31 characters"
 msgid "Nepal Daylight Time"
 msgstr "네팔 일광 절약시"
 
@@ -10341,10 +10350,12 @@ msgid "(UTC+05:45) Kathmandu"
 msgstr "(UTC+05:45) 카트만두"
 
 #: dlls/tzres/tzres.rc:90
+msgctxt "maximum 31 characters"
 msgid "Cape Verde Standard Time"
 msgstr "카보베르데 표준시"
 
 #: dlls/tzres/tzres.rc:91
+msgctxt "maximum 31 characters"
 msgid "Cape Verde Daylight Time"
 msgstr "카보베르데 일광 절약시"
 
@@ -10353,10 +10364,12 @@ msgid "(UTC-01:00) Cabo Verde Is."
 msgstr "(UTC-01:00) 카보베르데 제도"
 
 #: dlls/tzres/tzres.rc:183
+msgctxt "maximum 31 characters"
 msgid "Haiti Standard Time"
 msgstr "아이티 표준시"
 
 #: dlls/tzres/tzres.rc:184
+msgctxt "maximum 31 characters"
 msgid "Haiti Daylight Time"
 msgstr "아이티 일광 절약시"
 
@@ -10365,10 +10378,12 @@ msgid "(UTC-05:00) Haiti"
 msgstr "(UTC-05:00) 아이티"
 
 #: dlls/tzres/tzres.rc:111
+msgctxt "maximum 31 characters"
 msgid "Central European Standard Time"
 msgstr "중앙 유럽 표준시"
 
 #: dlls/tzres/tzres.rc:112
+msgctxt "maximum 31 characters"
 msgid "Central European Daylight Time"
 msgstr "중앙 유럽 일관 절약시"
 
@@ -10377,10 +10392,12 @@ msgid "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb"
 msgstr "(UTC+01:00) 사라예보, 스코페, 바르샤바, 자그레브"
 
 #: dlls/tzres/tzres.rc:234
+msgctxt "maximum 31 characters"
 msgid "Morocco Standard Time"
 msgstr "모로코 표준시"
 
 #: dlls/tzres/tzres.rc:235
+msgctxt "maximum 31 characters"
 msgid "Morocco Daylight Time"
 msgstr "모로코 일광 절약시"
 
@@ -10389,6 +10406,7 @@ msgid "(UTC+01:00) Casablanca"
 msgstr "(UTC+01:00) 카사블랑카"
 
 #: dlls/tzres/tzres.rc:402 dlls/tzres/tzres.rc:403
+msgctxt "maximum 31 characters"
 msgid "UTC-08"
 msgstr "UTC-08"
 
@@ -10397,10 +10415,12 @@ msgid "(UTC-08:00) Coordinated Universal Time-08"
 msgstr "(UTC-08:00) 협정 세계시-08"
 
 #: dlls/tzres/tzres.rc:39
+msgctxt "maximum 31 characters"
 msgid "Altai Standard Time"
 msgstr "알타이 표준시"
 
 #: dlls/tzres/tzres.rc:40
+msgctxt "maximum 31 characters"
 msgid "Altai Daylight Time"
 msgstr "알타이 일광 절약시"
 
@@ -10409,10 +10429,12 @@ msgid "(UTC+07:00) Barnaul, Gorno-Altaysk"
 msgstr "(UTC+07:00) 바르나울, 고르노알타이스크"
 
 #: dlls/tzres/tzres.rc:108
+msgctxt "maximum 31 characters"
 msgid "Central Europe Standard Time"
 msgstr "중앙 유럽 표준시"
 
 #: dlls/tzres/tzres.rc:109
+msgctxt "maximum 31 characters"
 msgid "Central Europe Daylight Time"
 msgstr "중앙 유럽 일광 절약시"
 
@@ -10421,10 +10443,12 @@ msgid "(UTC+01:00) Belgrade, Bratislava, Budapest, Ljubljana, Prague"
 msgstr "(UTC+01:00) 베오그라드, 브라티슬라바, 부다페스트, 류블랴나, 프라하"
 
 #: dlls/tzres/tzres.rc:192
+msgctxt "maximum 31 characters"
 msgid "Iran Standard Time"
 msgstr "이란 표준시"
 
 #: dlls/tzres/tzres.rc:193
+msgctxt "maximum 31 characters"
 msgid "Iran Daylight Time"
 msgstr "이란 일광 절약시"
 
@@ -10433,10 +10457,12 @@ msgid "(UTC+03:30) Tehran"
 msgstr "(UTC+03:30) 테헤란"
 
 #: dlls/tzres/tzres.rc:318
+msgctxt "maximum 31 characters"
 msgid "Saint Pierre Standard Time"
 msgstr "생피에르 표준시"
 
 #: dlls/tzres/tzres.rc:319
+msgctxt "maximum 31 characters"
 msgid "Saint Pierre Daylight Time"
 msgstr "생피에르 일광 절약시"
 
@@ -10445,10 +10471,12 @@ msgid "(UTC-03:00) Saint Pierre and Miquelon"
 msgstr "(UTC-03:00) 세인트 피에르 미켈론"
 
 #: dlls/tzres/tzres.rc:327
+msgctxt "maximum 31 characters"
 msgid "Sao Tome Standard Time"
 msgstr "상투메 표준시"
 
 #: dlls/tzres/tzres.rc:328
+msgctxt "maximum 31 characters"
 msgid "Sao Tome Daylight Time"
 msgstr "상투메 일광 절약시"
 
@@ -10457,10 +10485,12 @@ msgid "(UTC+00:00) Sao Tome"
 msgstr "(UTC+00:00) 상투메"
 
 #: dlls/tzres/tzres.rc:249
+msgctxt "maximum 31 characters"
 msgid "Namibia Standard Time"
 msgstr "나미비아 표준시"
 
 #: dlls/tzres/tzres.rc:250
+msgctxt "maximum 31 characters"
 msgid "Namibia Daylight Time"
 msgstr "나미비아 일광 절약시"
 
@@ -10469,10 +10499,12 @@ msgid "(UTC+02:00) Windhoek"
 msgstr "(UTC+02:00) 빈트후크"
 
 #: dlls/tzres/tzres.rc:369
+msgctxt "maximum 31 characters"
 msgid "Tonga Standard Time"
 msgstr "통가 표준시"
 
 #: dlls/tzres/tzres.rc:370
+msgctxt "maximum 31 characters"
 msgid "Tonga Daylight Time"
 msgstr "통가 일괄 절약시"
 
@@ -10481,10 +10513,12 @@ msgid "(UTC+13:00) Nuku'alofa"
 msgstr "(UTC+13:00) 누쿠알로파"
 
 #: dlls/tzres/tzres.rc:240
+msgctxt "maximum 31 characters"
 msgid "Mountain Standard Time (Mexico)"
 msgstr "산지 표준시 (멕시코)"
 
 #: dlls/tzres/tzres.rc:241
+msgctxt "maximum 31 characters"
 msgid "Mountain Daylight Time (Mexico)"
 msgstr "산지 일광 절약시 (멕시코)"
 
@@ -10493,10 +10527,12 @@ msgid "(UTC-07:00) Chihuahua, La Paz, Mazatlan"
 msgstr "(UTC-07:00) 치와와, 라파스, 마사틀란"
 
 #: dlls/tzres/tzres.rc:171
+msgctxt "maximum 31 characters"
 msgid "GMT Standard Time"
 msgstr "GMT 표준시"
 
 #: dlls/tzres/tzres.rc:172
+msgctxt "maximum 31 characters"
 msgid "GMT Daylight Time"
 msgstr "GMT 일광 절약시"
 
@@ -10505,10 +10541,12 @@ msgid "(UTC+00:00) Dublin, Edinburgh, Lisbon, London"
 msgstr "(UTC+00:00) 더블린, 에든버러, 리스본, 런던"
 
 #: dlls/tzres/tzres.rc:342
+msgctxt "maximum 31 characters"
 msgid "South Sudan Standard Time"
 msgstr "남수단 표준시"
 
 #: dlls/tzres/tzres.rc:343
+msgctxt "maximum 31 characters"
 msgid "South Sudan Daylight Time"
 msgstr "남수단 일광 절약시"
 
@@ -10517,10 +10555,12 @@ msgid "(UTC+02:00) Juba"
 msgstr "(UTC+02:00) 주바"
 
 #: dlls/tzres/tzres.rc:102
+msgctxt "maximum 31 characters"
 msgid "Central Asia Standard Time"
 msgstr "중앙 아시아 표준시"
 
 #: dlls/tzres/tzres.rc:103
+msgctxt "maximum 31 characters"
 msgid "Central Asia Daylight Time"
 msgstr "중앙 아시아 일광 절약시"
 
@@ -10529,10 +10569,12 @@ msgid "(UTC+06:00) Astana"
 msgstr "(UTC+06:00) 아스타나"
 
 #: dlls/tzres/tzres.rc:213
+msgctxt "maximum 31 characters"
 msgid "Lord Howe Standard Time"
 msgstr "로드하우 표준시"
 
 #: dlls/tzres/tzres.rc:214
+msgctxt "maximum 31 characters"
 msgid "Lord Howe Daylight Time"
 msgstr "로드하우 일광 절약시"
 
@@ -10541,10 +10583,12 @@ msgid "(UTC+10:30) Lord Howe Island"
 msgstr "(UTC+10:30) 로드하우 섬"
 
 #: dlls/tzres/tzres.rc:48
+msgctxt "maximum 31 characters"
 msgid "Arabic Standard Time"
 msgstr "아랍 표준시"
 
 #: dlls/tzres/tzres.rc:49
+msgctxt "maximum 31 characters"
 msgid "Arabic Daylight Time"
 msgstr "아랍 일광 절약시"
 
@@ -10553,6 +10597,7 @@ msgid "(UTC+03:00) Baghdad"
 msgstr "(UTC+03:00) 바그다드"
 
 #: dlls/tzres/tzres.rc:396 dlls/tzres/tzres.rc:397
+msgctxt "maximum 31 characters"
 msgid "UTC+13"
 msgstr "UTC+13"
 
@@ -10561,10 +10606,12 @@ msgid "(UTC+13:00) Coordinated Universal Time+13"
 msgstr "(UTC+13:00) 협정 세계시+13"
 
 #: dlls/tzres/tzres.rc:216
+msgctxt "maximum 31 characters"
 msgid "Magadan Standard Time"
 msgstr "마가단 표준시"
 
 #: dlls/tzres/tzres.rc:217
+msgctxt "maximum 31 characters"
 msgid "Magadan Daylight Time"
 msgstr "마가단 일광 절약시"
 
@@ -10573,10 +10620,12 @@ msgid "(UTC+11:00) Magadan"
 msgstr "(UTC+11:00) 마가단"
 
 #: dlls/tzres/tzres.rc:258
+msgctxt "maximum 31 characters"
 msgid "Newfoundland Standard Time"
 msgstr "뉴펀들랜드 표준시"
 
 #: dlls/tzres/tzres.rc:259
+msgctxt "maximum 31 characters"
 msgid "Newfoundland Daylight Time"
 msgstr "뉴펀들랜드 일광 절약시"
 
@@ -10585,10 +10634,12 @@ msgid "(UTC-03:30) Newfoundland"
 msgstr "(UTC-03:30) 뉴펀들랜드"
 
 #: dlls/tzres/tzres.rc:348
+msgctxt "maximum 31 characters"
 msgid "Sudan Standard Time"
 msgstr "수단 표준시"
 
 #: dlls/tzres/tzres.rc:349
+msgctxt "maximum 31 characters"
 msgid "Sudan Daylight Time"
 msgstr "수단 일광 절약시"
 
@@ -10597,10 +10648,12 @@ msgid "(UTC+02:00) Khartoum"
 msgstr "(UTC+02:00) 하르툼"
 
 #: dlls/tzres/tzres.rc:438
+msgctxt "maximum 31 characters"
 msgid "West Pacific Standard Time"
 msgstr "서태평양 표준시"
 
 #: dlls/tzres/tzres.rc:439
+msgctxt "maximum 31 characters"
 msgid "West Pacific Daylight Time"
 msgstr "서태평양 일광 절약시"
 
@@ -10609,10 +10662,12 @@ msgid "(UTC+10:00) Guam, Port Moresby"
 msgstr "(UTC+10:00) 괌, 포트모르즈비"
 
 #: dlls/tzres/tzres.rc:279
+msgctxt "maximum 31 characters"
 msgid "Pacific Standard Time"
 msgstr "태평양 표준시"
 
 #: dlls/tzres/tzres.rc:280
+msgctxt "maximum 31 characters"
 msgid "Pacific Daylight Time"
 msgstr "태평양 일광 절약시"
 
@@ -10621,10 +10676,12 @@ msgid "(UTC-08:00) Pacific Time (US & Canada)"
 msgstr "(UTC-08:00) 태평양 표준시(미국과 캐나다)"
 
 #: dlls/tzres/tzres.rc:69
+msgctxt "maximum 31 characters"
 msgid "Azerbaijan Standard Time"
 msgstr "아제르바이잔 표준시"
 
 #: dlls/tzres/tzres.rc:70
+msgctxt "maximum 31 characters"
 msgid "Azerbaijan Daylight Time"
 msgstr "아제르바이잔 일광 절약시"
 
@@ -10633,10 +10690,12 @@ msgid "(UTC+04:00) Baku"
 msgstr "(UTC+04:00) 바쿠"
 
 #: dlls/tzres/tzres.rc:219
+msgctxt "maximum 31 characters"
 msgid "Magallanes Standard Time"
 msgstr "마갈란스 표준시"
 
 #: dlls/tzres/tzres.rc:220
+msgctxt "maximum 31 characters"
 msgid "Magallanes Daylight Time"
 msgstr "마갈란스 일광 절약시"
 
@@ -10645,10 +10704,12 @@ msgid "(UTC-03:00) Punta Arenas"
 msgstr "(UTC-03:00) 푼타 아레나스"
 
 #: dlls/tzres/tzres.rc:324
+msgctxt "maximum 31 characters"
 msgid "Samoa Standard Time"
 msgstr "사모아 표준시"
 
 #: dlls/tzres/tzres.rc:325
+msgctxt "maximum 31 characters"
 msgid "Samoa Daylight Time"
 msgstr "사모아 일광 절약시"
 
@@ -10657,10 +10718,12 @@ msgid "(UTC+13:00) Samoa"
 msgstr "(UTC+13:00) 사모아"
 
 #: dlls/tzres/tzres.rc:201
+msgctxt "maximum 31 characters"
 msgid "Kaliningrad Standard Time"
 msgstr "칼리닌그라드 표준시"
 
 #: dlls/tzres/tzres.rc:202
+msgctxt "maximum 31 characters"
 msgid "Kaliningrad Daylight Time"
 msgstr "칼리닌그라드 일광 절약시"
 
@@ -10669,10 +10732,12 @@ msgid "(UTC+02:00) Kaliningrad"
 msgstr "(UTC+02:00) 칼리닌그라드"
 
 #: dlls/tzres/tzres.rc:282
+msgctxt "maximum 31 characters"
 msgid "Pacific Standard Time (Mexico)"
 msgstr "태평양 표준시 (멕시코)"
 
 #: dlls/tzres/tzres.rc:283
+msgctxt "maximum 31 characters"
 msgid "Pacific Daylight Time (Mexico)"
 msgstr "태평양 일광 절약시 (멕시코)"
 
@@ -10681,10 +10746,12 @@ msgid "(UTC-08:00) Baja California"
 msgstr "(UTC-08:00) 바하 캘리포니아"
 
 #: dlls/tzres/tzres.rc:228
+msgctxt "maximum 31 characters"
 msgid "Middle East Standard Time"
 msgstr "중동 표준시"
 
 #: dlls/tzres/tzres.rc:229
+msgctxt "maximum 31 characters"
 msgid "Middle East Daylight Time"
 msgstr "중동 일광 절약시"
 
@@ -10693,10 +10760,12 @@ msgid "(UTC+02:00) Beirut"
 msgstr "(UTC+02:00) 베이루트"
 
 #: dlls/tzres/tzres.rc:363
+msgctxt "maximum 31 characters"
 msgid "Tokyo Standard Time"
 msgstr "도쿄 표준시"
 
 #: dlls/tzres/tzres.rc:364
+msgctxt "maximum 31 characters"
 msgid "Tokyo Daylight Time"
 msgstr "도쿄 일광 절약시"
 
@@ -10705,10 +10774,12 @@ msgid "(UTC+09:00) Osaka, Sapporo, Tokyo"
 msgstr "(UTC+09:00) 오사카, 삿포로, 도쿄"
 
 #: dlls/tzres/tzres.rc:210
+msgctxt "maximum 31 characters"
 msgid "Line Islands Standard Time"
 msgstr "라인 제도 표준시"
 
 #: dlls/tzres/tzres.rc:211
+msgctxt "maximum 31 characters"
 msgid "Line Islands Daylight Time"
 msgstr "라인 제도 일광 절약시"
 
@@ -10717,10 +10788,12 @@ msgid "(UTC+14:00) Kiritimati Island"
 msgstr "(UTC+14:00) 키리티마티 섬"
 
 #: dlls/tzres/tzres.rc:129
+msgctxt "maximum 31 characters"
 msgid "Cuba Standard Time"
 msgstr "쿠바 표준시"
 
 #: dlls/tzres/tzres.rc:130
+msgctxt "maximum 31 characters"
 msgid "Cuba Daylight Time"
 msgstr "쿠바 일광 절약시"
 
@@ -10729,10 +10802,12 @@ msgid "(UTC-05:00) Havana"
 msgstr "(UTC-05:00) 하바나"
 
 #: dlls/tzres/tzres.rc:198
+msgctxt "maximum 31 characters"
 msgid "Jordan Standard Time"
 msgstr "요르단 표준시"
 
 #: dlls/tzres/tzres.rc:199
+msgctxt "maximum 31 characters"
 msgid "Jordan Daylight Time"
 msgstr "요르단 일광 절약시"
 
@@ -10741,10 +10816,12 @@ msgid "(UTC+02:00) Amman"
 msgstr "(UTC+02:00) 암만"
 
 #: dlls/tzres/tzres.rc:117
+msgctxt "maximum 31 characters"
 msgid "Central Standard Time"
 msgstr "중부 표준시"
 
 #: dlls/tzres/tzres.rc:118
+msgctxt "maximum 31 characters"
 msgid "Central Daylight Time"
 msgstr "중부 일광 절약시"
 
@@ -10753,6 +10830,7 @@ msgid "(UTC-06:00) Central Time (US & Canada)"
 msgstr "(UTC-06:00) 중부 표준시 (미국과 캐나다)"
 
 #: dlls/tzres/tzres.rc:303 dlls/tzres/tzres.rc:304
+msgctxt "maximum 31 characters"
 msgid "Russia Time Zone 3"
 msgstr "러시아 표준 시간대 3"
 
@@ -10761,10 +10839,12 @@ msgid "(UTC+04:00) Izhevsk, Samara"
 msgstr "(UTC+04:00) 이젭스크, 사마라"
 
 #: dlls/tzres/tzres.rc:417
+msgctxt "maximum 31 characters"
 msgid "Volgograd Standard Time"
 msgstr "볼고그라드 표준시"
 
 #: dlls/tzres/tzres.rc:418
+msgctxt "maximum 31 characters"
 msgid "Volgograd Daylight Time"
 msgstr "볼고그라드 일광 절약시"
 
@@ -10773,10 +10853,12 @@ msgid "(UTC+04:00) Volgograd"
 msgstr "(UTC+04:00) 볼고그라드"
 
 #: dlls/tzres/tzres.rc:72
+msgctxt "maximum 31 characters"
 msgid "Azores Standard Time"
 msgstr "아조레스 표준시"
 
 #: dlls/tzres/tzres.rc:73
+msgctxt "maximum 31 characters"
 msgid "Azores Daylight Time"
 msgstr "아조레스 일광 절약시"
 
@@ -10785,10 +10867,12 @@ msgid "(UTC-01:00) Azores"
 msgstr "(UTC-01:00) 아조레스"
 
 #: dlls/tzres/tzres.rc:264
+msgctxt "maximum 31 characters"
 msgid "North Asia East Standard Time"
 msgstr "북아시아 동부 표준시"
 
 #: dlls/tzres/tzres.rc:265
+msgctxt "maximum 31 characters"
 msgid "North Asia East Daylight Time"
 msgstr "북아시아 동부 일광 절약시"
 
@@ -10797,6 +10881,7 @@ msgid "(UTC+08:00) Irkutsk"
 msgstr "(UTC+08:00) 이르쿠츠크"
 
 #: dlls/tzres/tzres.rc:408 dlls/tzres/tzres.rc:409
+msgctxt "maximum 31 characters"
 msgid "UTC-11"
 msgstr "UTC-11"
 
@@ -10805,10 +10890,12 @@ msgid "(UTC-11:00) Coordinated Universal Time-11"
 msgstr "(UTC-11:00) 협정 세계시-11"
 
 #: dlls/tzres/tzres.rc:51
+msgctxt "maximum 31 characters"
 msgid "Argentina Standard Time"
 msgstr "아르헨티나 표준시"
 
 #: dlls/tzres/tzres.rc:52
+msgctxt "maximum 31 characters"
 msgid "Argentina Daylight Time"
 msgstr "아르헨티나 일광 절약시"
 
@@ -10817,10 +10904,12 @@ msgid "(UTC-03:00) City of Buenos Aires"
 msgstr "(UTC-03:00) 부에노스아이레스"
 
 #: dlls/tzres/tzres.rc:378
+msgctxt "maximum 31 characters"
 msgid "Turks And Caicos Standard Time"
 msgstr "터크스 케이커스 표준시"
 
 #: dlls/tzres/tzres.rc:379
+msgctxt "maximum 31 characters"
 msgid "Turks And Caicos Daylight Time"
 msgstr "터크스 케이커스 일광 절약시"
 
@@ -10829,10 +10918,12 @@ msgid "(UTC-05:00) Turks and Caicos"
 msgstr "(UTC-05:00) 터크스 케이커스"
 
 #: dlls/tzres/tzres.rc:222
+msgctxt "maximum 31 characters"
 msgid "Marquesas Standard Time"
 msgstr "마키저스 표준시"
 
 #: dlls/tzres/tzres.rc:223
+msgctxt "maximum 31 characters"
 msgid "Marquesas Daylight Time"
 msgstr "마키저스 일광 절약시"
 
@@ -10841,10 +10932,12 @@ msgid "(UTC-09:30) Marquesas Islands"
 msgstr "(UTC-09:30) 마키저스 제도"
 
 #: dlls/tzres/tzres.rc:243
+msgctxt "maximum 31 characters"
 msgid "Myanmar Standard Time"
 msgstr "미얀마 표준시"
 
 #: dlls/tzres/tzres.rc:244
+msgctxt "maximum 31 characters"
 msgid "Myanmar Daylight Time"
 msgstr "미얀마 일광 절약시"
 
@@ -10853,6 +10946,7 @@ msgid "(UTC+06:30) Yangon (Rangoon)"
 msgstr "(UTC+06:30) 양곤 (랑군)"
 
 #: dlls/tzres/tzres.rc:390 dlls/tzres/tzres.rc:391
+msgctxt "maximum 31 characters"
 msgid "Coordinated Universal Time"
 msgstr "협정 세계시"
 
@@ -10861,10 +10955,12 @@ msgid "(UTC) Coordinated Universal Time"
 msgstr "(UTC) 협정 세계시"
 
 #: dlls/tzres/tzres.rc:189
+msgctxt "maximum 31 characters"
 msgid "India Standard Time"
 msgstr "인도 표준시"
 
 #: dlls/tzres/tzres.rc:190
+msgctxt "maximum 31 characters"
 msgid "India Daylight Time"
 msgstr "인도 일광 절약시"
 
@@ -10873,10 +10969,12 @@ msgid "(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi"
 msgstr "(UTC+05:30) 첸나이, 콜카타, 뭄바이, 뉴델리"
 
 #: dlls/tzres/tzres.rc:180
+msgctxt "maximum 31 characters"
 msgid "GTB Standard Time"
 msgstr "GTB 표준시"
 
 #: dlls/tzres/tzres.rc:181
+msgctxt "maximum 31 characters"
 msgid "GTB Daylight Time"
 msgstr "GTB 일광 절약시"
 
@@ -10885,10 +10983,12 @@ msgid "(UTC+02:00) Athens, Bucharest"
 msgstr "(UTC+02:00) 아테네, 부카레스트"
 
 #: dlls/tzres/tzres.rc:375
+msgctxt "maximum 31 characters"
 msgid "Turkey Standard Time"
 msgstr "터키 표준시"
 
 #: dlls/tzres/tzres.rc:376
+msgctxt "maximum 31 characters"
 msgid "Turkey Daylight Time"
 msgstr "터키 일광 절약시"
 
@@ -10897,10 +10997,12 @@ msgid "(UTC+03:00) Istanbul"
 msgstr "(UTC+03:00) 이스탄불"
 
 #: dlls/tzres/tzres.rc:54
+msgctxt "maximum 31 characters"
 msgid "Astrakhan Standard Time"
 msgstr "아스트라한 표준시"
 
 #: dlls/tzres/tzres.rc:55
+msgctxt "maximum 31 characters"
 msgid "Astrakhan Daylight Time"
 msgstr "아스트라한 일광 절약시"
 
@@ -10909,10 +11011,12 @@ msgid "(UTC+04:00) Astrakhan, Ulyanovsk"
 msgstr "(UTC+04:00) 아스트라한, 울랴노브스크"
 
 #: dlls/tzres/tzres.rc:162
+msgctxt "maximum 31 characters"
 msgid "Fiji Standard Time"
 msgstr "피지 표준시"
 
 #: dlls/tzres/tzres.rc:163
+msgctxt "maximum 31 characters"
 msgid "Fiji Daylight Time"
 msgstr "피지 일광 절약시"
 
@@ -10921,10 +11025,12 @@ msgid "(UTC+12:00) Fiji"
 msgstr "(UTC+12:00) 피지"
 
 #: dlls/tzres/tzres.rc:87
+msgctxt "maximum 31 characters"
 msgid "Canada Central Standard Time"
 msgstr "캐나다 중부 표준시"
 
 #: dlls/tzres/tzres.rc:88
+msgctxt "maximum 31 characters"
 msgid "Canada Central Daylight Time"
 msgstr "캐나다 중부 일광 절약시"
 
@@ -10933,10 +11039,12 @@ msgid "(UTC-06:00) Saskatchewan"
 msgstr "(UTC-06:00) 서스캐처원"
 
 #: dlls/tzres/tzres.rc:444
+msgctxt "maximum 31 characters"
 msgid "Yukon Standard Time"
 msgstr "유콘 표준시"
 
 #: dlls/tzres/tzres.rc:445
+msgctxt "maximum 31 characters"
 msgid "Yukon Daylight Time"
 msgstr "유콘 일광 절약시"
 
@@ -10945,10 +11053,12 @@ msgid "(UTC-07:00) Yukon"
 msgstr "(UTC-07:00) 유콘"
 
 #: dlls/tzres/tzres.rc:354
+msgctxt "maximum 31 characters"
 msgid "Taipei Standard Time"
 msgstr "타이페이 표준시"
 
 #: dlls/tzres/tzres.rc:355
+msgctxt "maximum 31 characters"
 msgid "Taipei Daylight Time"
 msgstr "타이페이 일광 절약시"
 
@@ -10957,10 +11067,12 @@ msgid "(UTC+08:00) Taipei"
 msgstr "(UTC+08:00) 타이페이"
 
 #: dlls/tzres/tzres.rc:426
+msgctxt "maximum 31 characters"
 msgid "W. Europe Standard Time"
 msgstr "서유럽 표준시"
 
 #: dlls/tzres/tzres.rc:427
+msgctxt "maximum 31 characters"
 msgid "W. Europe Daylight Time"
 msgstr "서유럽 일광 절약시"
 
@@ -10969,10 +11081,12 @@ msgid "(UTC+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna"
 msgstr "(UTC+01:00) 암스테르담, 베를린, 베른, 로마, 스톡홀름, 빈"
 
 #: dlls/tzres/tzres.rc:231
+msgctxt "maximum 31 characters"
 msgid "Montevideo Standard Time"
 msgstr "몬테비데오 표준시"
 
 #: dlls/tzres/tzres.rc:232
+msgctxt "maximum 31 characters"
 msgid "Montevideo Daylight Time"
 msgstr "몬테비데오 일광 절약시"
 
@@ -10981,10 +11095,12 @@ msgid "(UTC-03:00) Montevideo"
 msgstr "(UTC-03:00) 몬테비데오"
 
 #: dlls/tzres/tzres.rc:285
+msgctxt "maximum 31 characters"
 msgid "Pakistan Standard Time"
 msgstr "파키스탄 표준시"
 
 #: dlls/tzres/tzres.rc:286
+msgctxt "maximum 31 characters"
 msgid "Pakistan Daylight Time"
 msgstr "파키스탄 일광 절약시"
 
@@ -10993,10 +11109,12 @@ msgid "(UTC+05:00) Islamabad, Karachi"
 msgstr "(UTC+05:00) 이슬라마바드, 카라치, 타슈켄트"
 
 #: dlls/tzres/tzres.rc:366
+msgctxt "maximum 31 characters"
 msgid "Tomsk Standard Time"
 msgstr "톰스크 표준시"
 
 #: dlls/tzres/tzres.rc:367
+msgctxt "maximum 31 characters"
 msgid "Tomsk Daylight Time"
 msgstr "톰스크 일광 절약시"
 
@@ -11005,10 +11123,12 @@ msgid "(UTC+07:00) Tomsk"
 msgstr "(UTC+07:00) 톰스크"
 
 #: dlls/tzres/tzres.rc:93
+msgctxt "maximum 31 characters"
 msgid "Caucasus Standard Time"
 msgstr "코카서스 표준시"
 
 #: dlls/tzres/tzres.rc:94
+msgctxt "maximum 31 characters"
 msgid "Caucasus Daylight Time"
 msgstr "코카서스 일광 절약시"
 
@@ -11017,10 +11137,12 @@ msgid "(UTC+04:00) Yerevan"
 msgstr "(UTC+04:00) 예레반"
 
 #: dlls/tzres/tzres.rc:66
+msgctxt "maximum 31 characters"
 msgid "AUS Eastern Standard Time"
 msgstr "오스트레일리아 동부 표준시"
 
 #: dlls/tzres/tzres.rc:67
+msgctxt "maximum 31 characters"
 msgid "AUS Eastern Daylight Time"
 msgstr "오스트레일리아 동부 일광 절약시"
 
@@ -11029,10 +11151,12 @@ msgid "(UTC+10:00) Canberra, Melbourne, Sydney"
 msgstr "(UTC+10:00) 캔버라, 멜버른, 시드니"
 
 #: dlls/tzres/tzres.rc:246
+msgctxt "maximum 31 characters"
 msgid "N. Central Asia Standard Time"
 msgstr "중앙 아시아 북부 표준시"
 
 #: dlls/tzres/tzres.rc:247
+msgctxt "maximum 31 characters"
 msgid "N. Central Asia Daylight Time"
 msgstr "중앙 아시아 북부 일광 절약시"
 
@@ -11041,10 +11165,12 @@ msgid "(UTC+07:00) Novosibirsk"
 msgstr "(UTC+07:00) 노보시비르스크"
 
 #: dlls/tzres/tzres.rc:150
+msgctxt "maximum 31 characters"
 msgid "Eastern Standard Time"
 msgstr "동부 표준시"
 
 #: dlls/tzres/tzres.rc:151
+msgctxt "maximum 31 characters"
 msgid "Eastern Daylight Time"
 msgstr "동부 일광 절약시"
 
@@ -11053,10 +11179,12 @@ msgid "(UTC-05:00) Eastern Time (US & Canada)"
 msgstr "(UTC-05:00) 동부 표준시 (미국과 캐나다)"
 
 #: dlls/tzres/tzres.rc:372
+msgctxt "maximum 31 characters"
 msgid "Transbaikal Standard Time"
 msgstr "트란스바이칼 표준시"
 
 #: dlls/tzres/tzres.rc:373
+msgctxt "maximum 31 characters"
 msgid "Transbaikal Daylight Time"
 msgstr "트란스바이칼 일광 절약시"
 
@@ -11065,10 +11193,12 @@ msgid "(UTC+09:00) Chita"
 msgstr "(UTC+09:00) 치타"
 
 #: dlls/tzres/tzres.rc:141
+msgctxt "maximum 31 characters"
 msgid "E. Europe Standard Time"
 msgstr "동유럽 표준시"
 
 #: dlls/tzres/tzres.rc:142
+msgctxt "maximum 31 characters"
 msgid "E. Europe Daylight Time"
 msgstr "동유럽 일광 절약시"
 
@@ -11077,10 +11207,12 @@ msgid "(UTC+02:00) Chisinau"
 msgstr "(UTC+02:00) 키시네프"
 
 #: dlls/tzres/tzres.rc:120
+msgctxt "maximum 31 characters"
 msgid "Central Standard Time (Mexico)"
 msgstr "중부 표준시 (멕시코)"
 
 #: dlls/tzres/tzres.rc:121
+msgctxt "maximum 31 characters"
 msgid "Central Daylight Time (Mexico)"
 msgstr "중부 일광 절약시 (멕시코)"
 
@@ -11089,10 +11221,12 @@ msgid "(UTC-06:00) Guadalajara, Mexico City, Monterrey"
 msgstr "(UTC-06:00) 과달라하라, 멕시코시티, 몬테레이"
 
 #: dlls/tzres/tzres.rc:330
+msgctxt "maximum 31 characters"
 msgid "Saratov Standard Time"
 msgstr "사라토브 표준시"
 
 #: dlls/tzres/tzres.rc:331
+msgctxt "maximum 31 characters"
 msgid "Saratov Daylight Time"
 msgstr "사라토브 일광 절약시"
 
@@ -11101,10 +11235,12 @@ msgid "(UTC+04:00) Saratov"
 msgstr "(UTC+04:00) 사라토브"
 
 #: dlls/tzres/tzres.rc:57
+msgctxt "maximum 31 characters"
 msgid "Atlantic Standard Time"
 msgstr "대서양 표준시"
 
 #: dlls/tzres/tzres.rc:58
+msgctxt "maximum 31 characters"
 msgid "Atlantic Daylight Time"
 msgstr "대서양 일광 절약시"
 
@@ -11113,10 +11249,12 @@ msgid "(UTC-04:00) Atlantic Time (Canada)"
 msgstr "(UTC-04:00) 대서양 표준시 (캐나다)"
 
 #: dlls/tzres/tzres.rc:237
+msgctxt "maximum 31 characters"
 msgid "Mountain Standard Time"
 msgstr "산지 표준시"
 
 #: dlls/tzres/tzres.rc:238
+msgctxt "maximum 31 characters"
 msgid "Mountain Daylight Time"
 msgstr "산지 일광 절약시"
 
@@ -11125,10 +11263,12 @@ msgid "(UTC-07:00) Mountain Time (US & Canada)"
 msgstr "(UTC-07:00) 산지 표준시 (미국과 캐나다)"
 
 #: dlls/tzres/tzres.rc:384
+msgctxt "maximum 31 characters"
 msgid "US Eastern Standard Time"
 msgstr "미국 동부 표준시"
 
 #: dlls/tzres/tzres.rc:385
+msgctxt "maximum 31 characters"
 msgid "US Eastern Daylight Time"
 msgstr "미국 동부 일광 절약시"
 
@@ -11137,10 +11277,12 @@ msgid "(UTC-05:00) Indiana (East)"
 msgstr "(UTC-05:00) 인디애나 (동부)"
 
 #: dlls/tzres/tzres.rc:321
+msgctxt "maximum 31 characters"
 msgid "Sakhalin Standard Time"
 msgstr "사할린 표준시"
 
 #: dlls/tzres/tzres.rc:322
+msgctxt "maximum 31 characters"
 msgid "Sakhalin Daylight Time"
 msgstr "사할린 일광 절약시"
 
@@ -11149,10 +11291,12 @@ msgid "(UTC+11:00) Sakhalin"
 msgstr "(UTC+11:00) 사할린"
 
 #: dlls/tzres/tzres.rc:270
+msgctxt "maximum 31 characters"
 msgid "North Korea Standard Time"
 msgstr "북한 표준시"
 
 #: dlls/tzres/tzres.rc:271
+msgctxt "maximum 31 characters"
 msgid "North Korea Daylight Time"
 msgstr "북한 일광 절약시"
 
@@ -11161,10 +11305,12 @@ msgid "(UTC+09:00) Pyongyang"
 msgstr "(UTC+09:00) 평양"
 
 #: dlls/tzres/tzres.rc:357
+msgctxt "maximum 31 characters"
 msgid "Tasmania Standard Time"
 msgstr "태즈매이니아 표준시"
 
 #: dlls/tzres/tzres.rc:358
+msgctxt "maximum 31 characters"
 msgid "Tasmania Daylight Time"
 msgstr "태즈매이니아 일광 절약시"
 
@@ -11173,10 +11319,12 @@ msgid "(UTC+10:00) Hobart"
 msgstr "(UTC+10:00) 호바트"
 
 #: dlls/tzres/tzres.rc:99
+msgctxt "maximum 31 characters"
 msgid "Central America Standard Time"
 msgstr "중앙 아메리카 표준시"
 
 #: dlls/tzres/tzres.rc:100
+msgctxt "maximum 31 characters"
 msgid "Central America Daylight Time"
 msgstr "중앙 아메리카 일광 절약시"
 
@@ -11185,6 +11333,7 @@ msgid "(UTC-06:00) Central America"
 msgstr "(UTC-06:00) 중앙아메리카"
 
 #: dlls/tzres/tzres.rc:399 dlls/tzres/tzres.rc:400
+msgctxt "maximum 31 characters"
 msgid "UTC-02"
 msgstr "UTC-02"
 
@@ -11193,10 +11342,12 @@ msgid "(UTC-02:00) Coordinated Universal Time-02"
 msgstr "(UTC-02:00) 협정 세계시-02"
 
 #: dlls/tzres/tzres.rc:387
+msgctxt "maximum 31 characters"
 msgid "US Mountain Standard Time"
 msgstr "미국 산지 표준시"
 
 #: dlls/tzres/tzres.rc:388
+msgctxt "maximum 31 characters"
 msgid "US Mountain Daylight Time"
 msgstr "미국 산지 일광 절약시"
 
@@ -11205,10 +11356,12 @@ msgid "(UTC-07:00) Arizona"
 msgstr "(UTC-07:00) 아리조나"
 
 #: dlls/tzres/tzres.rc:339
+msgctxt "maximum 31 characters"
 msgid "South Africa Standard Time"
 msgstr "남아프리카 표준시"
 
 #: dlls/tzres/tzres.rc:340
+msgctxt "maximum 31 characters"
 msgid "South Africa Daylight Time"
 msgstr "남아프리카 일광 절약시"
 
@@ -11217,10 +11370,12 @@ msgid "(UTC+02:00) Harare, Pretoria"
 msgstr "(UTC+02:00) 하라레, 프리토리아"
 
 #: dlls/tzres/tzres.rc:96
+msgctxt "maximum 31 characters"
 msgid "Cen. Australia Standard Time"
 msgstr "중부 오스트레일리아 표준시"
 
 #: dlls/tzres/tzres.rc:97
+msgctxt "maximum 31 characters"
 msgid "Cen. Australia Daylight Time"
 msgstr "중부 오스트레일리아 일광 절약시"
 
@@ -11229,6 +11384,7 @@ msgid "(UTC+09:30) Adelaide"
 msgstr "(UTC+09:30) 애들레이드"
 
 #: dlls/tzres/tzres.rc:405 dlls/tzres/tzres.rc:406
+msgctxt "maximum 31 characters"
 msgid "UTC-09"
 msgstr "UTC-09"
 
@@ -11237,10 +11393,12 @@ msgid "(UTC-09:00) Coordinated Universal Time-09"
 msgstr "(UTC-09:00) 협정 세계시-09"
 
 #: dlls/tzres/tzres.rc:345
+msgctxt "maximum 31 characters"
 msgid "Sri Lanka Standard Time"
 msgstr "스리랑카 표준시"
 
 #: dlls/tzres/tzres.rc:346
+msgctxt "maximum 31 characters"
 msgid "Sri Lanka Daylight Time"
 msgstr "스리랑카 일광 절약시"
 
@@ -11249,10 +11407,12 @@ msgid "(UTC+05:30) Sri Jayawardenepura"
 msgstr "(UTC+05:30) 스리자야와르데네푸라"
 
 #: dlls/tzres/tzres.rc:30
+msgctxt "maximum 31 characters"
 msgid "Afghanistan Standard Time"
 msgstr "아프가니스탄 표준시"
 
 #: dlls/tzres/tzres.rc:31
+msgctxt "maximum 31 characters"
 msgid "Afghanistan Daylight Time"
 msgstr "아프가니스탄 일광 절약시"
 
@@ -11261,10 +11421,12 @@ msgid "(UTC+04:30) Kabul"
 msgstr "(UTC+04:30) 카불"
 
 #: dlls/tzres/tzres.rc:441
+msgctxt "maximum 31 characters"
 msgid "Yakutsk Standard Time"
 msgstr "야쿠츠크 표준시"
 
 #: dlls/tzres/tzres.rc:442
+msgctxt "maximum 31 characters"
 msgid "Yakutsk Daylight Time"
 msgstr "야쿠츠크 일광 절약시"
 
@@ -11273,10 +11435,12 @@ msgid "(UTC+09:00) Yakutsk"
 msgstr "(UTC+09:00) 야쿠츠크"
 
 #: dlls/tzres/tzres.rc:309
+msgctxt "maximum 31 characters"
 msgid "SA Eastern Standard Time"
 msgstr "SA 동부 표준시"
 
 #: dlls/tzres/tzres.rc:310
+msgctxt "maximum 31 characters"
 msgid "SA Eastern Daylight Time"
 msgstr "SA 동부 일광 절약시"
 
@@ -11285,10 +11449,12 @@ msgid "(UTC-03:00) Cayenne, Fortaleza"
 msgstr "(UTC-03:00) 카옌, 포르탈레자"
 
 #: dlls/tzres/tzres.rc:42
+msgctxt "maximum 31 characters"
 msgid "Arab Standard Time"
 msgstr "아랍 표준시"
 
 #: dlls/tzres/tzres.rc:43
+msgctxt "maximum 31 characters"
 msgid "Arab Daylight Time"
 msgstr "아랍 일광 절약시"
 
@@ -11297,10 +11463,12 @@ msgid "(UTC+03:00) Kuwait, Riyadh"
 msgstr "(UTC+03:00) 쿠웨이트, 리야드"
 
 #: dlls/tzres/tzres.rc:45
+msgctxt "maximum 31 characters"
 msgid "Arabian Standard Time"
 msgstr "아라비아 표준시"
 
 #: dlls/tzres/tzres.rc:46
+msgctxt "maximum 31 characters"
 msgid "Arabian Daylight Time"
 msgstr "아라비아 일광 절약시"
 
@@ -11309,10 +11477,12 @@ msgid "(UTC+04:00) Abu Dhabi, Muscat"
 msgstr "(UTC+04:00) 아부다비, 무스카트"
 
 #: dlls/tzres/tzres.rc:360
+msgctxt "maximum 31 characters"
 msgid "Tocantins Standard Time"
 msgstr "토칸칭스 표준시"
 
 #: dlls/tzres/tzres.rc:361
+msgctxt "maximum 31 characters"
 msgid "Tocantins Daylight Time"
 msgstr "토칸칭스 일광 절약시"
 
@@ -11321,10 +11491,12 @@ msgid "(UTC-03:00) Araguaina"
 msgstr "(UTC-03:00) 아라구아이나"
 
 #: dlls/tzres/tzres.rc:306
+msgctxt "maximum 31 characters"
 msgid "Russian Standard Time"
 msgstr "러시아 표준시"
 
 #: dlls/tzres/tzres.rc:307
+msgctxt "maximum 31 characters"
 msgid "Russian Daylight Time"
 msgstr "러시아 일광 절약시"
 
@@ -11333,10 +11505,12 @@ msgid "(UTC+03:00) Moscow, St. Petersburg"
 msgstr "(UTC+03:00) 모스크바, 상트페테르부르크"
 
 #: dlls/tzres/tzres.rc:63
+msgctxt "maximum 31 characters"
 msgid "Aus Central W. Standard Time"
 msgstr "오스트레일리아 중부 표준시"
 
 #: dlls/tzres/tzres.rc:64
+msgctxt "maximum 31 characters"
 msgid "Aus Central W. Daylight Time"
 msgstr "오스트레일리아 중부 일광 절약시"
 
@@ -11345,10 +11519,12 @@ msgid "(UTC+08:45) Eucla"
 msgstr "(UTC+08:45) 유클라"
 
 #: dlls/tzres/tzres.rc:294
+msgctxt "maximum 31 characters"
 msgid "Romance Standard Time"
 msgstr "로망스 표준시"
 
 #: dlls/tzres/tzres.rc:295
+msgctxt "maximum 31 characters"
 msgid "Romance Daylight Time"
 msgstr "로망스 일광 절약시"
 
@@ -11357,10 +11533,12 @@ msgid "(UTC+01:00) Brussels, Copenhagen, Madrid, Paris"
 msgstr "(UTC+01:00) 브뤼셀, 코펜하겐, 마드리드, 파리"
 
 #: dlls/tzres/tzres.rc:159
+msgctxt "maximum 31 characters"
 msgid "Ekaterinburg Standard Time"
 msgstr "예카테린부르크 표준시"
 
 #: dlls/tzres/tzres.rc:160
+msgctxt "maximum 31 characters"
 msgid "Ekaterinburg Daylight Time"
 msgstr "예카테린부르크 일광 절약시"
 
@@ -11369,6 +11547,7 @@ msgid "(UTC+05:00) Ekaterinburg"
 msgstr "(UTC+05:00) 예카테린부르크"
 
 #: dlls/tzres/tzres.rc:300 dlls/tzres/tzres.rc:301
+msgctxt "maximum 31 characters"
 msgid "Russia Time Zone 11"
 msgstr "러시아 표준 시간대 11"
 
@@ -11377,10 +11556,12 @@ msgid "(UTC+12:00) Anadyr, Petropavlovsk-Kamchatsky"
 msgstr "(UTC+12:00) 아나디리, 페트로파블로프스크-캄차스키"
 
 #: dlls/tzres/tzres.rc:435
+msgctxt "maximum 31 characters"
 msgid "West Bank Standard Time"
 msgstr "웨스트 뱅크 표준시"
 
 #: dlls/tzres/tzres.rc:436
+msgctxt "maximum 31 characters"
 msgid "West Bank Daylight Time"
 msgstr "웨스트 뱅크 일광 절약시"
 
@@ -11389,10 +11570,12 @@ msgid "(UTC+02:00) Gaza, Hebron"
 msgstr "(UTC+02:00) 가자, 헤브론"
 
 #: dlls/tzres/tzres.rc:351
+msgctxt "maximum 31 characters"
 msgid "Syria Standard Time"
 msgstr "시리아 표준시"
 
 #: dlls/tzres/tzres.rc:352
+msgctxt "maximum 31 characters"
 msgid "Syria Daylight Time"
 msgstr "시리아 일광 절약시"
 
@@ -11401,10 +11584,12 @@ msgid "(UTC+02:00) Damascus"
 msgstr "(UTC+02:00) 다마스커스"
 
 #: dlls/tzres/tzres.rc:60
+msgctxt "maximum 31 characters"
 msgid "AUS Central Standard Time"
 msgstr "오스트레일리아 중부 표준시"
 
 #: dlls/tzres/tzres.rc:61
+msgctxt "maximum 31 characters"
 msgid "AUS Central Daylight Time"
 msgstr "오스트레일리아 중부 일광 절약시"
 
@@ -11413,10 +11598,12 @@ msgid "(UTC+09:30) Darwin"
 msgstr "(UTC+09:30) 다윈"
 
 #: dlls/tzres/tzres.rc:177
+msgctxt "maximum 31 characters"
 msgid "Greenwich Standard Time"
 msgstr "그리니치 표준시"
 
 #: dlls/tzres/tzres.rc:178
+msgctxt "maximum 31 characters"
 msgid "Greenwich Daylight Time"
 msgstr "그리니치 일광 절약시"
 
@@ -11425,10 +11612,12 @@ msgid "(UTC+00:00) Monrovia, Reykjavik"
 msgstr "(UTC+00:00) 몬로비아, 레이캬비크"
 
 #: dlls/tzres/tzres.rc:381
+msgctxt "maximum 31 characters"
 msgid "Ulaanbaatar Standard Time"
 msgstr "울란바토르 표준시"
 
 #: dlls/tzres/tzres.rc:382
+msgctxt "maximum 31 characters"
 msgid "Ulaanbaatar Daylight Time"
 msgstr "울란바토르 일광 절약시"
 
@@ -11437,10 +11626,12 @@ msgid "(UTC+08:00) Ulaanbaatar"
 msgstr "(UTC+08:00) 울란바토르"
 
 #: dlls/tzres/tzres.rc:261
+msgctxt "maximum 31 characters"
 msgid "Norfolk Standard Time"
 msgstr "노퍽 표준시"
 
 #: dlls/tzres/tzres.rc:262
+msgctxt "maximum 31 characters"
 msgid "Norfolk Daylight Time"
 msgstr "노퍽 일광 절약시"
 
@@ -11449,10 +11640,12 @@ msgid "(UTC+11:00) Norfolk Island"
 msgstr "(UTC+11:00) 노퍽 섬"
 
 #: dlls/tzres/tzres.rc:195
+msgctxt "maximum 31 characters"
 msgid "Israel Standard Time"
 msgstr "이스라엘 표준시"
 
 #: dlls/tzres/tzres.rc:196
+msgctxt "maximum 31 characters"
 msgid "Israel Daylight Time"
 msgstr "이스라엘 일광 절약시"
 
@@ -11461,10 +11654,12 @@ msgid "(UTC+02:00) Jerusalem"
 msgstr "(UTC+02:00) 예루살렘"
 
 #: dlls/tzres/tzres.rc:78
+msgctxt "maximum 31 characters"
 msgid "Bangladesh Standard Time"
 msgstr "발글라데시 표준시"
 
 #: dlls/tzres/tzres.rc:79
+msgctxt "maximum 31 characters"
 msgid "Bangladesh Daylight Time"
 msgstr "방글라데시 일광 절약시"
 
@@ -11473,10 +11668,12 @@ msgid "(UTC+06:00) Dhaka"
 msgstr "(UTC+06:00) 다카"
 
 #: dlls/tzres/tzres.rc:312
+msgctxt "maximum 31 characters"
 msgid "SA Pacific Standard Time"
 msgstr "SA 태평양 표준시"
 
 #: dlls/tzres/tzres.rc:313
+msgctxt "maximum 31 characters"
 msgid "SA Pacific Daylight Time"
 msgstr "SA 태평양 일광 절약시"
 
@@ -11485,10 +11682,12 @@ msgid "(UTC-05:00) Bogota, Lima, Quito, Rio Branco"
 msgstr "(UTC-05:00) 보고타, 리마, 키토, 리오 브랑코"
 
 #: dlls/tzres/tzres.rc:432
+msgctxt "maximum 31 characters"
 msgid "West Asia Standard Time"
 msgstr "서아시아 표준시"
 
 #: dlls/tzres/tzres.rc:433
+msgctxt "maximum 31 characters"
 msgid "West Asia Daylight Time"
 msgstr "서아시아 일광 절약시"
 
@@ -11497,10 +11696,12 @@ msgid "(UTC+05:00) Ashgabat, Tashkent"
 msgstr "(UTC+05:00) 아슈하바트, 타슈켄트"
 
 #: dlls/tzres/tzres.rc:33
+msgctxt "maximum 31 characters"
 msgid "Alaskan Standard Time"
 msgstr "알래스카 표준시"
 
 #: dlls/tzres/tzres.rc:34
+msgctxt "maximum 31 characters"
 msgid "Alaskan Daylight Time"
 msgstr "알래스카 일광 절약시"
 
@@ -11509,10 +11710,12 @@ msgid "(UTC-09:00) Alaska"
 msgstr "(UTC-09:00) 알래스카"
 
 #: dlls/tzres/tzres.rc:288
+msgctxt "maximum 31 characters"
 msgid "Paraguay Standard Time"
 msgstr "파라과이 표준시"
 
 #: dlls/tzres/tzres.rc:289
+msgctxt "maximum 31 characters"
 msgid "Paraguay Daylight Time"
 msgstr "파라과이 일광 절약시"
 
@@ -11521,10 +11724,12 @@ msgid "(UTC-04:00) Asuncion"
 msgstr "(UTC-04:00) 아순시온"
 
 #: dlls/tzres/tzres.rc:132
+msgctxt "maximum 31 characters"
 msgid "Dateline Standard Time"
 msgstr "날짜 변경선 표준시"
 
 #: dlls/tzres/tzres.rc:133
+msgctxt "maximum 31 characters"
 msgid "Dateline Daylight Time"
 msgstr "날짜 변경선 일광 절약시"
 
@@ -11533,10 +11738,12 @@ msgid "(UTC-12:00) International Date Line West"
 msgstr "(UTC-12:00) 날짜 변경선 서쪽"
 
 #: dlls/tzres/tzres.rc:207
+msgctxt "maximum 31 characters"
 msgid "Libya Standard Time"
 msgstr "리비아 표준시"
 
 #: dlls/tzres/tzres.rc:208
+msgctxt "maximum 31 characters"
 msgid "Libya Daylight Time"
 msgstr "리비아 일광 절약시"
 
@@ -11545,10 +11752,12 @@ msgid "(UTC+02:00) Tripoli"
 msgstr "(UTC+02:00) 트리폴리"
 
 #: dlls/tzres/tzres.rc:75
+msgctxt "maximum 31 characters"
 msgid "Bahia Standard Time"
 msgstr "바이아 표준시"
 
 #: dlls/tzres/tzres.rc:76
+msgctxt "maximum 31 characters"
 msgid "Bahia Daylight Time"
 msgstr "바이아 일광 절약시"
 
@@ -11557,10 +11766,12 @@ msgid "(UTC-03:00) Salvador"
 msgstr "(UTC-03:00) 살바도르"
 
 #: dlls/tzres/tzres.rc:411
+msgctxt "maximum 31 characters"
 msgid "Venezuela Standard Time"
 msgstr "베네수엘라 표준시"
 
 #: dlls/tzres/tzres.rc:412
+msgctxt "maximum 31 characters"
 msgid "Venezuela Daylight Time"
 msgstr "베네수엘라 일광 절약시"
 
@@ -11569,10 +11780,12 @@ msgid "(UTC-04:00) Caracas"
 msgstr "(UTC-04:00) 카라카스"
 
 #: dlls/tzres/tzres.rc:84
+msgctxt "maximum 31 characters"
 msgid "Bougainville Standard Time"
 msgstr "부건빌 표준시"
 
 #: dlls/tzres/tzres.rc:85
+msgctxt "maximum 31 characters"
 msgid "Bougainville Daylight Time"
 msgstr "부건빌 일광 절약시"
 
@@ -11581,10 +11794,12 @@ msgid "(UTC+11:00) Bougainville Island"
 msgstr "(UTC+11:00) 부건빌 섬"
 
 #: dlls/tzres/tzres.rc:186
+msgctxt "maximum 31 characters"
 msgid "Hawaiian Standard Time"
 msgstr "하와이 표준시"
 
 #: dlls/tzres/tzres.rc:187
+msgctxt "maximum 31 characters"
 msgid "Hawaiian Daylight Time"
 msgstr "하와이 일광 절약시"
 
@@ -11593,10 +11808,12 @@ msgid "(UTC-10:00) Hawaii"
 msgstr "(UTC-10:00) 하와이"
 
 #: dlls/tzres/tzres.rc:333
+msgctxt "maximum 31 characters"
 msgid "SE Asia Standard Time"
 msgstr "동남 아시아 표준시"
 
 #: dlls/tzres/tzres.rc:334
+msgctxt "maximum 31 characters"
 msgid "SE Asia Daylight Time"
 msgstr "동남 아시아 일광 절약시"
 
@@ -11605,10 +11822,12 @@ msgid "(UTC+07:00) Bangkok, Hanoi, Jakarta"
 msgstr "(UTC+07:00) 방콕, 하노이, 자카르타"
 
 #: dlls/tzres/tzres.rc:291
+msgctxt "maximum 31 characters"
 msgid "Qyzylorda Standard Time"
 msgstr "키질로르다 표준시"
 
 #: dlls/tzres/tzres.rc:292
+msgctxt "maximum 31 characters"
 msgid "Qyzylorda Daylight Time"
 msgstr "키질로르다 일광 절약시"
 
@@ -11617,10 +11836,12 @@ msgid "(UTC+05:00) Qyzylorda"
 msgstr "(UTC+05:00) 키질로르다"
 
 #: dlls/tzres/tzres.rc:429
+msgctxt "maximum 31 characters"
 msgid "W. Mongolia Standard Time"
 msgstr "서몽골 표준시"
 
 #: dlls/tzres/tzres.rc:430
+msgctxt "maximum 31 characters"
 msgid "W. Mongolia Daylight Time"
 msgstr "서몽골 일광 절약시"
 
@@ -11629,10 +11850,12 @@ msgid "(UTC+07:00) Hovd"
 msgstr "(UTC+07:00) 호브드"
 
 #: dlls/tzres/tzres.rc:255
+msgctxt "maximum 31 characters"
 msgid "New Zealand Standard Time"
 msgstr "뉴질랜드 표준시"
 
 #: dlls/tzres/tzres.rc:256
+msgctxt "maximum 31 characters"
 msgid "New Zealand Daylight Time"
 msgstr "뉴질랜드 일광 절약시"
 
@@ -11641,10 +11864,12 @@ msgid "(UTC+12:00) Auckland, Wellington"
 msgstr "(UTC+12:00) 오클랜드, 웰링턴"
 
 #: dlls/tzres/tzres.rc:36
+msgctxt "maximum 31 characters"
 msgid "Aleutian Standard Time"
 msgstr "알류샨 표준시"
 
 #: dlls/tzres/tzres.rc:37
+msgctxt "maximum 31 characters"
 msgid "Aleutian Daylight Time"
 msgstr "알류샨 일광 절약시"
 
@@ -11653,10 +11878,12 @@ msgid "(UTC-10:00) Aleutian Islands"
 msgstr "(UTC-10:00) 알류샨 열도"
 
 #: dlls/tzres/tzres.rc:273
+msgctxt "maximum 31 characters"
 msgid "Omsk Standard Time"
 msgstr "옴스크 표준시"
 
 #: dlls/tzres/tzres.rc:274
+msgctxt "maximum 31 characters"
 msgid "Omsk Daylight Time"
 msgstr "옴스크 일광 절약시"
 
@@ -11665,10 +11892,12 @@ msgid "(UTC+06:00) Omsk"
 msgstr "(UTC+06:00) 옴스크"
 
 #: dlls/tzres/tzres.rc:105
+msgctxt "maximum 31 characters"
 msgid "Central Brazilian Standard Time"
 msgstr "브라질 중부 표준시"
 
 #: dlls/tzres/tzres.rc:106
+msgctxt "maximum 31 characters"
 msgid "Central Brazilian Daylight Time"
 msgstr "브라질 중부 일광 절약시"
 
@@ -11677,10 +11906,12 @@ msgid "(UTC-04:00) Cuiaba"
 msgstr "(UTC-04:00) 쿠이아바"
 
 #: dlls/tzres/tzres.rc:81
+msgctxt "maximum 31 characters"
 msgid "Belarus Standard Time"
 msgstr "벨로루시 표준시"
 
 #: dlls/tzres/tzres.rc:82
+msgctxt "maximum 31 characters"
 msgid "Belarus Daylight Time"
 msgstr "벨로루시 표준시"
 
@@ -11689,10 +11920,12 @@ msgid "(UTC+03:00) Minsk"
 msgstr "(UTC+03:00) 민스크"
 
 #: dlls/tzres/tzres.rc:315
+msgctxt "maximum 31 characters"
 msgid "SA Western Standard Time"
 msgstr "SA 서부 표준시"
 
 #: dlls/tzres/tzres.rc:316
+msgctxt "maximum 31 characters"
 msgid "SA Western Daylight Time"
 msgstr "SA 서부 일광 절약시"
 
@@ -11701,10 +11934,12 @@ msgid "(UTC-04:00) Georgetown, La Paz, Manaus, San Juan"
 msgstr "(UTC-04:00) 조지타운, 라파스, 마노스, 산후안"
 
 #: dlls/tzres/tzres.rc:174
+msgctxt "maximum 31 characters"
 msgid "Greenland Standard Time"
 msgstr "그린란드 표준시"
 
 #: dlls/tzres/tzres.rc:175
+msgctxt "maximum 31 characters"
 msgid "Greenland Daylight Time"
 msgstr "그린란드 일광 절약시"
 
@@ -11713,10 +11948,12 @@ msgid "(UTC-03:00) Greenland"
 msgstr "(UTC-03:00) 그린란드"
 
 #: dlls/tzres/tzres.rc:147
+msgctxt "maximum 31 characters"
 msgid "Easter Island Standard Time"
 msgstr "이스터 섬 표준시"
 
 #: dlls/tzres/tzres.rc:148
+msgctxt "maximum 31 characters"
 msgid "Easter Island Daylight Time"
 msgstr "이스터 섬 일광 절약시"
 
@@ -11725,6 +11962,7 @@ msgid "(UTC-06:00) Easter Island"
 msgstr "(UTC-06:00) 이스터 섬"
 
 #: dlls/tzres/tzres.rc:297 dlls/tzres/tzres.rc:298
+msgctxt "maximum 31 characters"
 msgid "Russia Time Zone 10"
 msgstr "러시아 표준 시간대 10"
 
@@ -11733,10 +11971,12 @@ msgid "(UTC+11:00) Chokurdakh"
 msgstr "(UTC+11:00) 초쿠르다흐"
 
 #: dlls/tzres/tzres.rc:156
+msgctxt "maximum 31 characters"
 msgid "Egypt Standard Time"
 msgstr "이집트 표준시"
 
 #: dlls/tzres/tzres.rc:157
+msgctxt "maximum 31 characters"
 msgid "Egypt Daylight Time"
 msgstr "이집트 일광 절약시"
 
@@ -11745,10 +11985,12 @@ msgid "(UTC+02:00) Cairo"
 msgstr "(UTC+02:00) 카이로"
 
 #: dlls/tzres/tzres.rc:153
+msgctxt "maximum 31 characters"
 msgid "Eastern Standard Time (Mexico)"
 msgstr "동부 표준시 (멕시코)"
 
 #: dlls/tzres/tzres.rc:154
+msgctxt "maximum 31 characters"
 msgid "Eastern Daylight Time (Mexico)"
 msgstr "동부 일광 절약시 (멕시코)"
 
@@ -11757,10 +11999,12 @@ msgid "(UTC-05:00) Chetumal"
 msgstr "(UTC-05:00) 체투말"
 
 #: dlls/tzres/tzres.rc:225
+msgctxt "maximum 31 characters"
 msgid "Mauritius Standard Time"
 msgstr "모리셔스 표준시"
 
 #: dlls/tzres/tzres.rc:226
+msgctxt "maximum 31 characters"
 msgid "Mauritius Daylight Time"
 msgstr "모리셔스 일광 절약시"
 
@@ -11769,10 +12013,12 @@ msgid "(UTC+04:00) Port Louis"
 msgstr "(UTC+04:00) 포트루이스"
 
 #: dlls/tzres/tzres.rc:414
+msgctxt "maximum 31 characters"
 msgid "Vladivostok Standard Time"
 msgstr "블라디보스토크 표준시"
 
 #: dlls/tzres/tzres.rc:415
+msgctxt "maximum 31 characters"
 msgid "Vladivostok Daylight Time"
 msgstr "블라디보스토크 일광 절약시"
 
@@ -11781,10 +12027,12 @@ msgid "(UTC+10:00) Vladivostok"
 msgstr "(UTC+10:00) 블라디보스토크"
 
 #: dlls/tzres/tzres.rc:336
+msgctxt "maximum 31 characters"
 msgid "Singapore Standard Time"
 msgstr "싱가포르 표준시"
 
 #: dlls/tzres/tzres.rc:337
+msgctxt "maximum 31 characters"
 msgid "Singapore Daylight Time"
 msgstr "싱가포르 일광 절약시"
 
@@ -11793,10 +12041,12 @@ msgid "(UTC+08:00) Kuala Lumpur, Singapore"
 msgstr "(UTC+08:00) 콸라룸푸르, 싱가포르"
 
 #: dlls/tzres/tzres.rc:204
+msgctxt "maximum 31 characters"
 msgid "Korea Standard Time"
 msgstr "대한민국 표준시"
 
 #: dlls/tzres/tzres.rc:205
+msgctxt "maximum 31 characters"
 msgid "Korea Daylight Time"
 msgstr "대한민국 일광 절약시"
 
@@ -11805,10 +12055,12 @@ msgid "(UTC+09:00) Seoul"
 msgstr "(UTC+09:00) 서울"
 
 #: dlls/tzres/tzres.rc:123
+msgctxt "maximum 31 characters"
 msgid "Chatham Islands Standard Time"
 msgstr "채텀 섬 표준시"
 
 #: dlls/tzres/tzres.rc:124
+msgctxt "maximum 31 characters"
 msgid "Chatham Islands Daylight Time"
 msgstr "채텀 섬 일광 절약시"
 
@@ -11817,10 +12069,12 @@ msgid "(UTC+12:45) Chatham Islands"
 msgstr "(UTC+12:45) 채텀 제도"
 
 #: dlls/tzres/tzres.rc:135
+msgctxt "maximum 31 characters"
 msgid "E. Africa Standard Time"
 msgstr "동아프리카 표준시"
 
 #: dlls/tzres/tzres.rc:136
+msgctxt "maximum 31 characters"
 msgid "E. Africa Daylight Time"
 msgstr "동아프리카 일광 절약시"
 
@@ -11829,10 +12083,12 @@ msgid "(UTC+03:00) Nairobi"
 msgstr "(UTC+03:00) 나이로비"
 
 #: dlls/tzres/tzres.rc:165
+msgctxt "maximum 31 characters"
 msgid "FLE Standard Time"
 msgstr "FLE 표준시"
 
 #: dlls/tzres/tzres.rc:166
+msgctxt "maximum 31 characters"
 msgid "FLE Daylight Time"
 msgstr "FLE 일광 절약시"
 
@@ -11841,10 +12097,12 @@ msgid "(UTC+02:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius"
 msgstr "(UTC+02:00) 헬싱키, 키예프, 리가, 소피아, 탈린, 빌뉴스"
 
 #: dlls/tzres/tzres.rc:144
+msgctxt "maximum 31 characters"
 msgid "E. South America Standard Time"
 msgstr "남아메리카 동부 표준시"
 
 #: dlls/tzres/tzres.rc:145
+msgctxt "maximum 31 characters"
 msgid "E. South America Daylight Time"
 msgstr "남아메리카 동부 일광 절약시"
 
@@ -11853,10 +12111,12 @@ msgid "(UTC-03:00) Brasilia"
 msgstr "(UTC-03:00) 브라질리아"
 
 #: dlls/tzres/tzres.rc:114
+msgctxt "maximum 31 characters"
 msgid "Central Pacific Standard Time"
 msgstr "중앙 태평양 표준시"
 
 #: dlls/tzres/tzres.rc:115
+msgctxt "maximum 31 characters"
 msgid "Central Pacific Daylight Time"
 msgstr "중앙 태평양 일광 절약시"
 
@@ -11865,10 +12125,12 @@ msgid "(UTC+11:00) Solomon Is., New Caledonia"
 msgstr "(UTC+11:00) 마가단, 솔로몬 제도, 뉴칼레도니아"
 
 #: dlls/tzres/tzres.rc:423
+msgctxt "maximum 31 characters"
 msgid "W. Central Africa Standard Time"
 msgstr "중앙아프리카 서부 표준시"
 
 #: dlls/tzres/tzres.rc:424
+msgctxt "maximum 31 characters"
 msgid "W. Central Africa Daylight Time"
 msgstr "중앙아프리카 서부 일광 절약시"
 
@@ -11877,10 +12139,12 @@ msgid "(UTC+01:00) West Central Africa"
 msgstr "(UTC+01:00) 서중앙 아프리카"
 
 #: dlls/tzres/tzres.rc:276
+msgctxt "maximum 31 characters"
 msgid "Pacific SA Standard Time"
 msgstr "태평양 SA 표준시"
 
 #: dlls/tzres/tzres.rc:277
+msgctxt "maximum 31 characters"
 msgid "Pacific SA Daylight Time"
 msgstr "태평양 SA 일광 절약시"
 
@@ -11889,10 +12153,12 @@ msgid "(UTC-04:00) Santiago"
 msgstr "(UTC-04:00) 산티아고"
 
 #: dlls/tzres/tzres.rc:138
+msgctxt "maximum 31 characters"
 msgid "E. Australia Standard Time"
 msgstr "오스트레일리아 동부 표준시"
 
 #: dlls/tzres/tzres.rc:139
+msgctxt "maximum 31 characters"
 msgid "E. Australia Daylight Time"
 msgstr "오스트레일리아 동부 일광 절약시"
 
@@ -11901,10 +12167,12 @@ msgid "(UTC+10:00) Brisbane"
 msgstr "(UTC+10:00) 브리즈번"
 
 #: dlls/tzres/tzres.rc:420
+msgctxt "maximum 31 characters"
 msgid "W. Australia Standard Time"
 msgstr "오스트레일리아 서부 표준시"
 
 #: dlls/tzres/tzres.rc:421
+msgctxt "maximum 31 characters"
 msgid "W. Australia Daylight Time"
 msgstr "오스트레일리아 서부 일광 절약시"
 

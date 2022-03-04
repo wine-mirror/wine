@@ -10486,10 +10486,12 @@ msgid "Select Source"
 msgstr "Виберіть джерело"
 
 #: dlls/tzres/tzres.rc:126
+msgctxt "maximum 31 characters"
 msgid "China Standard Time"
 msgstr "Китайський стандартний час"
 
 #: dlls/tzres/tzres.rc:127
+msgctxt "maximum 31 characters"
 msgid "China Daylight Time"
 msgstr "Китайський літній час"
 
@@ -10498,10 +10500,14 @@ msgid "(UTC+08:00) Beijing, Chongqing, Hong Kong, Urumqi"
 msgstr "(UTC+08:00) Пекін, Чунцин, Гонконг, Урумчі"
 
 #: dlls/tzres/tzres.rc:267
+#, fuzzy
+#| msgid "North Asia Standard Time"
+msgctxt "maximum 31 characters"
 msgid "North Asia Standard Time"
 msgstr "Північноазіатський стандартний час"
 
 #: dlls/tzres/tzres.rc:268
+msgctxt "maximum 31 characters"
 msgid "North Asia Daylight Time"
 msgstr "Північноазіатський літній час"
 
@@ -10510,10 +10516,12 @@ msgid "(UTC+07:00) Krasnoyarsk"
 msgstr "(UTC+07:00) Красноярськ"
 
 #: dlls/tzres/tzres.rc:168
+msgctxt "maximum 31 characters"
 msgid "Georgian Standard Time"
 msgstr "Грузинський стандартний час"
 
 #: dlls/tzres/tzres.rc:169
+msgctxt "maximum 31 characters"
 msgid "Georgian Daylight Time"
 msgstr "Грузинський літній час"
 
@@ -10522,6 +10530,7 @@ msgid "(UTC+04:00) Tbilisi"
 msgstr "(UTC+04:00) Тбілісі"
 
 #: dlls/tzres/tzres.rc:393 dlls/tzres/tzres.rc:394
+msgctxt "maximum 31 characters"
 msgid "UTC+12"
 msgstr "UTC+12"
 
@@ -10530,10 +10539,12 @@ msgid "(UTC+12:00) Coordinated Universal Time+12"
 msgstr "(UTC+12:00) Всесвітній координований час+12"
 
 #: dlls/tzres/tzres.rc:252
+msgctxt "maximum 31 characters"
 msgid "Nepal Standard Time"
 msgstr "Непальський стандартний час"
 
 #: dlls/tzres/tzres.rc:253
+msgctxt "maximum 31 characters"
 msgid "Nepal Daylight Time"
 msgstr "Непальський літній час"
 
@@ -10542,10 +10553,12 @@ msgid "(UTC+05:45) Kathmandu"
 msgstr "(UTC+05:45) Катманду"
 
 #: dlls/tzres/tzres.rc:90
+msgctxt "maximum 31 characters"
 msgid "Cape Verde Standard Time"
 msgstr "Стандартний час Кабо-Верде"
 
 #: dlls/tzres/tzres.rc:91
+msgctxt "maximum 31 characters"
 msgid "Cape Verde Daylight Time"
 msgstr "Літній час Кабо-Верде"
 
@@ -10554,10 +10567,12 @@ msgid "(UTC-01:00) Cabo Verde Is."
 msgstr "(UTC-01:00) Острів Кабо-Верде"
 
 #: dlls/tzres/tzres.rc:183
+msgctxt "maximum 31 characters"
 msgid "Haiti Standard Time"
 msgstr "Стандартний час Гаїті"
 
 #: dlls/tzres/tzres.rc:184
+msgctxt "maximum 31 characters"
 msgid "Haiti Daylight Time"
 msgstr "Літній час Гаїті"
 
@@ -10566,10 +10581,16 @@ msgid "(UTC-05:00) Haiti"
 msgstr "(UTC-05:00) Гаїті"
 
 #: dlls/tzres/tzres.rc:111
+#, fuzzy
+#| msgid "Central European Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Central European Standard Time"
 msgstr "Центральноєвропейський стандартний час"
 
 #: dlls/tzres/tzres.rc:112
+#, fuzzy
+#| msgid "Central European Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Central European Daylight Time"
 msgstr "Центральноєвропейський літній час"
 
@@ -10578,10 +10599,12 @@ msgid "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb"
 msgstr "(UTC+01:00) Сараєво, Скоп’є, Варшава, Загреб"
 
 #: dlls/tzres/tzres.rc:234
+msgctxt "maximum 31 characters"
 msgid "Morocco Standard Time"
 msgstr "Стандартний час Марокко"
 
 #: dlls/tzres/tzres.rc:235
+msgctxt "maximum 31 characters"
 msgid "Morocco Daylight Time"
 msgstr "Літній час Марокко"
 
@@ -10590,6 +10613,7 @@ msgid "(UTC+01:00) Casablanca"
 msgstr "(UTC+01:00) Касабланка"
 
 #: dlls/tzres/tzres.rc:402 dlls/tzres/tzres.rc:403
+msgctxt "maximum 31 characters"
 msgid "UTC-08"
 msgstr "UTC-08"
 
@@ -10598,10 +10622,12 @@ msgid "(UTC-08:00) Coordinated Universal Time-08"
 msgstr "(UTC-08:00) Всесвітній координований час-08"
 
 #: dlls/tzres/tzres.rc:39
+msgctxt "maximum 31 characters"
 msgid "Altai Standard Time"
 msgstr "Алтайський стандартний час"
 
 #: dlls/tzres/tzres.rc:40
+msgctxt "maximum 31 characters"
 msgid "Altai Daylight Time"
 msgstr "Алтайський літній час"
 
@@ -10610,10 +10636,16 @@ msgid "(UTC+07:00) Barnaul, Gorno-Altaysk"
 msgstr "(UTC+07:00) Барнаул, Горно-Алтайськ"
 
 #: dlls/tzres/tzres.rc:108
+#, fuzzy
+#| msgid "Central Europe Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Central Europe Standard Time"
 msgstr "Центральноєвропейський стандартний час"
 
 #: dlls/tzres/tzres.rc:109
+#, fuzzy
+#| msgid "Central Europe Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Central Europe Daylight Time"
 msgstr "Центральноєвропейський літній час"
 
@@ -10622,10 +10654,12 @@ msgid "(UTC+01:00) Belgrade, Bratislava, Budapest, Ljubljana, Prague"
 msgstr "(UTC+01:00) Белград, Братислава, Будапешт, Любляна, Прага"
 
 #: dlls/tzres/tzres.rc:192
+msgctxt "maximum 31 characters"
 msgid "Iran Standard Time"
 msgstr "Іранський стандартний час"
 
 #: dlls/tzres/tzres.rc:193
+msgctxt "maximum 31 characters"
 msgid "Iran Daylight Time"
 msgstr "Іранський літній час"
 
@@ -10634,10 +10668,12 @@ msgid "(UTC+03:30) Tehran"
 msgstr "(UTC+03:30) Тегеран"
 
 #: dlls/tzres/tzres.rc:318
+msgctxt "maximum 31 characters"
 msgid "Saint Pierre Standard Time"
 msgstr "Стандартний час Сен-П'єра"
 
 #: dlls/tzres/tzres.rc:319
+msgctxt "maximum 31 characters"
 msgid "Saint Pierre Daylight Time"
 msgstr "Літній час Сен-П'єра"
 
@@ -10646,10 +10682,12 @@ msgid "(UTC-03:00) Saint Pierre and Miquelon"
 msgstr "(UTC-03:00) Сен-П'єр і Мікелон"
 
 #: dlls/tzres/tzres.rc:327
+msgctxt "maximum 31 characters"
 msgid "Sao Tome Standard Time"
 msgstr "Сан-Томе, стандартний час"
 
 #: dlls/tzres/tzres.rc:328
+msgctxt "maximum 31 characters"
 msgid "Sao Tome Daylight Time"
 msgstr "Сан-Томе, літній час"
 
@@ -10658,10 +10696,12 @@ msgid "(UTC+00:00) Sao Tome"
 msgstr "(UTC+00:00) Сан-Томе"
 
 #: dlls/tzres/tzres.rc:249
+msgctxt "maximum 31 characters"
 msgid "Namibia Standard Time"
 msgstr "Стандартний час Намібії"
 
 #: dlls/tzres/tzres.rc:250
+msgctxt "maximum 31 characters"
 msgid "Namibia Daylight Time"
 msgstr "Літній час Намібії"
 
@@ -10670,10 +10710,14 @@ msgid "(UTC+02:00) Windhoek"
 msgstr "(UTC+02:00) Віндхук"
 
 #: dlls/tzres/tzres.rc:369
+#, fuzzy
+#| msgid "Tonga Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Tonga Standard Time"
 msgstr "Стандартний час Королівства Тонга"
 
 #: dlls/tzres/tzres.rc:370
+msgctxt "maximum 31 characters"
 msgid "Tonga Daylight Time"
 msgstr "Літній час Королівства Тонга"
 
@@ -10682,10 +10726,14 @@ msgid "(UTC+13:00) Nuku'alofa"
 msgstr "(UTC+13:00) Нукуалофа"
 
 #: dlls/tzres/tzres.rc:240
+#, fuzzy
+#| msgid "Mountain Standard Time (Mexico)"
+msgctxt "maximum 31 characters"
 msgid "Mountain Standard Time (Mexico)"
 msgstr "Гірський стандартний час (Мексика)"
 
 #: dlls/tzres/tzres.rc:241
+msgctxt "maximum 31 characters"
 msgid "Mountain Daylight Time (Mexico)"
 msgstr "Гірський літній час (Мексика)"
 
@@ -10694,10 +10742,12 @@ msgid "(UTC-07:00) Chihuahua, La Paz, Mazatlan"
 msgstr "(UTC-07:00) Чихуахуа, Ла-Пас, Мазатлан"
 
 #: dlls/tzres/tzres.rc:171
+msgctxt "maximum 31 characters"
 msgid "GMT Standard Time"
 msgstr "GMT стандартний час"
 
 #: dlls/tzres/tzres.rc:172
+msgctxt "maximum 31 characters"
 msgid "GMT Daylight Time"
 msgstr "GMT літній час"
 
@@ -10706,10 +10756,14 @@ msgid "(UTC+00:00) Dublin, Edinburgh, Lisbon, London"
 msgstr "(UTC+00:00) Дублін, Единбург, Лісабон, Лондон"
 
 #: dlls/tzres/tzres.rc:342
+#, fuzzy
+#| msgid "South Sudan Standard Time"
+msgctxt "maximum 31 characters"
 msgid "South Sudan Standard Time"
 msgstr "Стандартний час Південного Судану"
 
 #: dlls/tzres/tzres.rc:343
+msgctxt "maximum 31 characters"
 msgid "South Sudan Daylight Time"
 msgstr "Літній час Південного Судану"
 
@@ -10718,10 +10772,14 @@ msgid "(UTC+02:00) Juba"
 msgstr "(UTC+02:00) Джуба"
 
 #: dlls/tzres/tzres.rc:102
+#, fuzzy
+#| msgid "Central Asia Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Central Asia Standard Time"
 msgstr "Середньоазіатський стандартний час"
 
 #: dlls/tzres/tzres.rc:103
+msgctxt "maximum 31 characters"
 msgid "Central Asia Daylight Time"
 msgstr "Середньоазіатський літній час"
 
@@ -10730,10 +10788,14 @@ msgid "(UTC+06:00) Astana"
 msgstr "(UTC+06:00) Астана"
 
 #: dlls/tzres/tzres.rc:213
+#, fuzzy
+#| msgid "Lord Howe Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Lord Howe Standard Time"
 msgstr "Стандартний час острова Лорд-Хау"
 
 #: dlls/tzres/tzres.rc:214
+msgctxt "maximum 31 characters"
 msgid "Lord Howe Daylight Time"
 msgstr "Літній час острова Лорд-Хау"
 
@@ -10742,10 +10804,12 @@ msgid "(UTC+10:30) Lord Howe Island"
 msgstr "(UTC+10:30) Острів Лорд-Хау"
 
 #: dlls/tzres/tzres.rc:48
+msgctxt "maximum 31 characters"
 msgid "Arabic Standard Time"
 msgstr "Арабський стандартний час"
 
 #: dlls/tzres/tzres.rc:49
+msgctxt "maximum 31 characters"
 msgid "Arabic Daylight Time"
 msgstr "Арабський літній час"
 
@@ -10754,6 +10818,7 @@ msgid "(UTC+03:00) Baghdad"
 msgstr "(UTC+03:00) Багдад"
 
 #: dlls/tzres/tzres.rc:396 dlls/tzres/tzres.rc:397
+msgctxt "maximum 31 characters"
 msgid "UTC+13"
 msgstr "UTC+13"
 
@@ -10762,10 +10827,12 @@ msgid "(UTC+13:00) Coordinated Universal Time+13"
 msgstr "(UTC+13:00) Всесвітній координований час+13"
 
 #: dlls/tzres/tzres.rc:216
+msgctxt "maximum 31 characters"
 msgid "Magadan Standard Time"
 msgstr "Магаданський стандартний час"
 
 #: dlls/tzres/tzres.rc:217
+msgctxt "maximum 31 characters"
 msgid "Magadan Daylight Time"
 msgstr "Магаданський літній час"
 
@@ -10774,10 +10841,12 @@ msgid "(UTC+11:00) Magadan"
 msgstr "(UTC+11:00) Магадан"
 
 #: dlls/tzres/tzres.rc:258
+msgctxt "maximum 31 characters"
 msgid "Newfoundland Standard Time"
 msgstr "Стандартний час Ньюфаундленда"
 
 #: dlls/tzres/tzres.rc:259
+msgctxt "maximum 31 characters"
 msgid "Newfoundland Daylight Time"
 msgstr "Літній час Ньюфаундленда"
 
@@ -10786,10 +10855,12 @@ msgid "(UTC-03:30) Newfoundland"
 msgstr "(UTC-03:30) Ньюфаундленд"
 
 #: dlls/tzres/tzres.rc:348
+msgctxt "maximum 31 characters"
 msgid "Sudan Standard Time"
 msgstr "Судан, стандартний час"
 
 #: dlls/tzres/tzres.rc:349
+msgctxt "maximum 31 characters"
 msgid "Sudan Daylight Time"
 msgstr "Судан, літній час"
 
@@ -10798,10 +10869,16 @@ msgid "(UTC+02:00) Khartoum"
 msgstr "(UTC+02:00) Хартум"
 
 #: dlls/tzres/tzres.rc:438
+#, fuzzy
+#| msgid "West Pacific Standard Time"
+msgctxt "maximum 31 characters"
 msgid "West Pacific Standard Time"
 msgstr "Західно-Тихоокеанський стандартний час"
 
 #: dlls/tzres/tzres.rc:439
+#, fuzzy
+#| msgid "West Pacific Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "West Pacific Daylight Time"
 msgstr "Західно-Тихоокеанський літній час"
 
@@ -10810,10 +10887,12 @@ msgid "(UTC+10:00) Guam, Port Moresby"
 msgstr "(UTC+10:00) Гуам, Порт-Морсбі"
 
 #: dlls/tzres/tzres.rc:279
+msgctxt "maximum 31 characters"
 msgid "Pacific Standard Time"
 msgstr "Тихоокеанський стандартний час"
 
 #: dlls/tzres/tzres.rc:280
+msgctxt "maximum 31 characters"
 msgid "Pacific Daylight Time"
 msgstr "Тихоокеанський літній час"
 
@@ -10822,10 +10901,14 @@ msgid "(UTC-08:00) Pacific Time (US & Canada)"
 msgstr "(UTC-08:00) Тихоокеанський час (США та Канада)"
 
 #: dlls/tzres/tzres.rc:69
+#, fuzzy
+#| msgid "Azerbaijan Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Azerbaijan Standard Time"
 msgstr "Азербайджанський стандартний час"
 
 #: dlls/tzres/tzres.rc:70
+msgctxt "maximum 31 characters"
 msgid "Azerbaijan Daylight Time"
 msgstr "Азербайджанський літній час"
 
@@ -10834,10 +10917,12 @@ msgid "(UTC+04:00) Baku"
 msgstr "(UTC+04:00) Баку"
 
 #: dlls/tzres/tzres.rc:219
+msgctxt "maximum 31 characters"
 msgid "Magallanes Standard Time"
 msgstr "Стандартний час Магальянеса"
 
 #: dlls/tzres/tzres.rc:220
+msgctxt "maximum 31 characters"
 msgid "Magallanes Daylight Time"
 msgstr "Літній час Магальянеса"
 
@@ -10846,10 +10931,12 @@ msgid "(UTC-03:00) Punta Arenas"
 msgstr "(UTC-03:00) Пунта-Аренас"
 
 #: dlls/tzres/tzres.rc:324
+msgctxt "maximum 31 characters"
 msgid "Samoa Standard Time"
 msgstr "Стандартний час Самоа"
 
 #: dlls/tzres/tzres.rc:325
+msgctxt "maximum 31 characters"
 msgid "Samoa Daylight Time"
 msgstr "Літній час Самоа"
 
@@ -10858,10 +10945,14 @@ msgid "(UTC+13:00) Samoa"
 msgstr "(UTC+13:00) Самоа"
 
 #: dlls/tzres/tzres.rc:201
+#, fuzzy
+#| msgid "Kaliningrad Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Kaliningrad Standard Time"
 msgstr "Калінінградський стандартний час"
 
 #: dlls/tzres/tzres.rc:202
+msgctxt "maximum 31 characters"
 msgid "Kaliningrad Daylight Time"
 msgstr "Калінінградський літній час"
 
@@ -10870,10 +10961,16 @@ msgid "(UTC+02:00) Kaliningrad"
 msgstr "(UTC+02:00) Калінінград"
 
 #: dlls/tzres/tzres.rc:282
+#, fuzzy
+#| msgid "Pacific Standard Time (Mexico)"
+msgctxt "maximum 31 characters"
 msgid "Pacific Standard Time (Mexico)"
 msgstr "Тихоокеанський стандартний час (Мексика)"
 
 #: dlls/tzres/tzres.rc:283
+#, fuzzy
+#| msgid "Pacific Daylight Time (Mexico)"
+msgctxt "maximum 31 characters"
 msgid "Pacific Daylight Time (Mexico)"
 msgstr "Тихоокеанський літній час (Мексика)"
 
@@ -10882,10 +10979,12 @@ msgid "(UTC-08:00) Baja California"
 msgstr "(UTC-08:00) Баха-Каліфорнія"
 
 #: dlls/tzres/tzres.rc:228
+msgctxt "maximum 31 characters"
 msgid "Middle East Standard Time"
 msgstr "Близькосхідний стандартний час"
 
 #: dlls/tzres/tzres.rc:229
+msgctxt "maximum 31 characters"
 msgid "Middle East Daylight Time"
 msgstr "Близькосхідний літній час"
 
@@ -10894,10 +10993,12 @@ msgid "(UTC+02:00) Beirut"
 msgstr "(UTC+02:00) Бейрут"
 
 #: dlls/tzres/tzres.rc:363
+msgctxt "maximum 31 characters"
 msgid "Tokyo Standard Time"
 msgstr "Токійський стандартний час"
 
 #: dlls/tzres/tzres.rc:364
+msgctxt "maximum 31 characters"
 msgid "Tokyo Daylight Time"
 msgstr "Токійський літній час"
 
@@ -10906,10 +11007,12 @@ msgid "(UTC+09:00) Osaka, Sapporo, Tokyo"
 msgstr "(UTC+09:00) Осака, Саппоро, Токіо"
 
 #: dlls/tzres/tzres.rc:210
+msgctxt "maximum 31 characters"
 msgid "Line Islands Standard Time"
 msgstr "Стандартний час островів Лайн"
 
 #: dlls/tzres/tzres.rc:211
+msgctxt "maximum 31 characters"
 msgid "Line Islands Daylight Time"
 msgstr "Літній час островів Лайн"
 
@@ -10918,10 +11021,12 @@ msgid "(UTC+14:00) Kiritimati Island"
 msgstr "(UTC+14:00) Острів Кіритіматі"
 
 #: dlls/tzres/tzres.rc:129
+msgctxt "maximum 31 characters"
 msgid "Cuba Standard Time"
 msgstr "Кубинський стандартний час"
 
 #: dlls/tzres/tzres.rc:130
+msgctxt "maximum 31 characters"
 msgid "Cuba Daylight Time"
 msgstr "Кубинський літній час"
 
@@ -10930,10 +11035,12 @@ msgid "(UTC-05:00) Havana"
 msgstr "(UTC-05:00) Гавана"
 
 #: dlls/tzres/tzres.rc:198
+msgctxt "maximum 31 characters"
 msgid "Jordan Standard Time"
 msgstr "Йорданський стандартний час"
 
 #: dlls/tzres/tzres.rc:199
+msgctxt "maximum 31 characters"
 msgid "Jordan Daylight Time"
 msgstr "Йорданський літній час"
 
@@ -10942,10 +11049,12 @@ msgid "(UTC+02:00) Amman"
 msgstr "(UTC+02:00) Амман"
 
 #: dlls/tzres/tzres.rc:117
+msgctxt "maximum 31 characters"
 msgid "Central Standard Time"
 msgstr "Центральний стандартний час"
 
 #: dlls/tzres/tzres.rc:118
+msgctxt "maximum 31 characters"
 msgid "Central Daylight Time"
 msgstr "Центральний літній час"
 
@@ -10954,6 +11063,7 @@ msgid "(UTC-06:00) Central Time (US & Canada)"
 msgstr "(UTC-06:00) Центральний час (США та Канада)"
 
 #: dlls/tzres/tzres.rc:303 dlls/tzres/tzres.rc:304
+msgctxt "maximum 31 characters"
 msgid "Russia Time Zone 3"
 msgstr ""
 
@@ -10962,10 +11072,12 @@ msgid "(UTC+04:00) Izhevsk, Samara"
 msgstr "(UTC+04:00) Іжевськ, Самара"
 
 #: dlls/tzres/tzres.rc:417
+msgctxt "maximum 31 characters"
 msgid "Volgograd Standard Time"
 msgstr "Волгоград, стандартний час"
 
 #: dlls/tzres/tzres.rc:418
+msgctxt "maximum 31 characters"
 msgid "Volgograd Daylight Time"
 msgstr "Волгоград, літній час"
 
@@ -10974,10 +11086,14 @@ msgid "(UTC+04:00) Volgograd"
 msgstr "(UTC+04:00) Волгоград"
 
 #: dlls/tzres/tzres.rc:72
+#, fuzzy
+#| msgid "Azores Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Azores Standard Time"
 msgstr "Стандартний час Азорських островів"
 
 #: dlls/tzres/tzres.rc:73
+msgctxt "maximum 31 characters"
 msgid "Azores Daylight Time"
 msgstr "Літній час Азорських островів"
 
@@ -10986,10 +11102,16 @@ msgid "(UTC-01:00) Azores"
 msgstr "(UTC-01:00) Азорські острови"
 
 #: dlls/tzres/tzres.rc:264
+#, fuzzy
+#| msgid "North Asia East Standard Time"
+msgctxt "maximum 31 characters"
 msgid "North Asia East Standard Time"
 msgstr "Північноазіатський східний стандартний час"
 
 #: dlls/tzres/tzres.rc:265
+#, fuzzy
+#| msgid "North Asia East Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "North Asia East Daylight Time"
 msgstr "Північноазіатський східний літній час"
 
@@ -10998,6 +11120,7 @@ msgid "(UTC+08:00) Irkutsk"
 msgstr "(UTC+08:00) Іркутськ"
 
 #: dlls/tzres/tzres.rc:408 dlls/tzres/tzres.rc:409
+msgctxt "maximum 31 characters"
 msgid "UTC-11"
 msgstr "UTC-11"
 
@@ -11006,10 +11129,12 @@ msgid "(UTC-11:00) Coordinated Universal Time-11"
 msgstr "(UTC-11:00) Всесвітній координований час-11"
 
 #: dlls/tzres/tzres.rc:51
+msgctxt "maximum 31 characters"
 msgid "Argentina Standard Time"
 msgstr "Аргентинський стандартний час"
 
 #: dlls/tzres/tzres.rc:52
+msgctxt "maximum 31 characters"
 msgid "Argentina Daylight Time"
 msgstr "Аргентинський літній час"
 
@@ -11018,10 +11143,12 @@ msgid "(UTC-03:00) City of Buenos Aires"
 msgstr "(UTC-03:00) Буенос-Айрес"
 
 #: dlls/tzres/tzres.rc:378
+msgctxt "maximum 31 characters"
 msgid "Turks And Caicos Standard Time"
 msgstr "Теркс і Кайкос, стандартний час"
 
 #: dlls/tzres/tzres.rc:379
+msgctxt "maximum 31 characters"
 msgid "Turks And Caicos Daylight Time"
 msgstr "Теркс і Кайкос, літній час"
 
@@ -11030,10 +11157,14 @@ msgid "(UTC-05:00) Turks and Caicos"
 msgstr "(UTC-05:00) Теркс і Кайкос"
 
 #: dlls/tzres/tzres.rc:222
+#, fuzzy
+#| msgid "Marquesas Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Marquesas Standard Time"
 msgstr "Стандартний час Маркізьких островів"
 
 #: dlls/tzres/tzres.rc:223
+msgctxt "maximum 31 characters"
 msgid "Marquesas Daylight Time"
 msgstr "Літній час Маркізьких островів"
 
@@ -11042,10 +11173,12 @@ msgid "(UTC-09:30) Marquesas Islands"
 msgstr "(UTC-09:30) Маркізські острови"
 
 #: dlls/tzres/tzres.rc:243
+msgctxt "maximum 31 characters"
 msgid "Myanmar Standard Time"
 msgstr "Стандартний час М'янми"
 
 #: dlls/tzres/tzres.rc:244
+msgctxt "maximum 31 characters"
 msgid "Myanmar Daylight Time"
 msgstr "Літній час М'янми"
 
@@ -11054,6 +11187,7 @@ msgid "(UTC+06:30) Yangon (Rangoon)"
 msgstr "(UTC+06:30) Янгон (Рангун)"
 
 #: dlls/tzres/tzres.rc:390 dlls/tzres/tzres.rc:391
+msgctxt "maximum 31 characters"
 msgid "Coordinated Universal Time"
 msgstr "Всесвітній координований час"
 
@@ -11062,10 +11196,12 @@ msgid "(UTC) Coordinated Universal Time"
 msgstr "(UTC) Всесвітній координований час"
 
 #: dlls/tzres/tzres.rc:189
+msgctxt "maximum 31 characters"
 msgid "India Standard Time"
 msgstr "Індійський стандартний час"
 
 #: dlls/tzres/tzres.rc:190
+msgctxt "maximum 31 characters"
 msgid "India Daylight Time"
 msgstr "Індійський літній час"
 
@@ -11074,10 +11210,12 @@ msgid "(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi"
 msgstr "(UTC+05:30) Ченнаї, Колката, Мумбаї, Нью-Делі"
 
 #: dlls/tzres/tzres.rc:180
+msgctxt "maximum 31 characters"
 msgid "GTB Standard Time"
 msgstr "GTB стандартний час"
 
 #: dlls/tzres/tzres.rc:181
+msgctxt "maximum 31 characters"
 msgid "GTB Daylight Time"
 msgstr "GTB літній час"
 
@@ -11086,10 +11224,12 @@ msgid "(UTC+02:00) Athens, Bucharest"
 msgstr "(UTC+02:00) Афіни, Бухарест"
 
 #: dlls/tzres/tzres.rc:375
+msgctxt "maximum 31 characters"
 msgid "Turkey Standard Time"
 msgstr "Турецький стандартний час"
 
 #: dlls/tzres/tzres.rc:376
+msgctxt "maximum 31 characters"
 msgid "Turkey Daylight Time"
 msgstr "Турецький літній час"
 
@@ -11098,10 +11238,12 @@ msgid "(UTC+03:00) Istanbul"
 msgstr "(UTC+03:00) Стамбул"
 
 #: dlls/tzres/tzres.rc:54
+msgctxt "maximum 31 characters"
 msgid "Astrakhan Standard Time"
 msgstr "Астраханський стандартний час"
 
 #: dlls/tzres/tzres.rc:55
+msgctxt "maximum 31 characters"
 msgid "Astrakhan Daylight Time"
 msgstr "Астраханський літній час"
 
@@ -11110,10 +11252,12 @@ msgid "(UTC+04:00) Astrakhan, Ulyanovsk"
 msgstr "(UTC+04:00) Астрахань, Ульяновськ"
 
 #: dlls/tzres/tzres.rc:162
+msgctxt "maximum 31 characters"
 msgid "Fiji Standard Time"
 msgstr "Стандартний час Фіджі"
 
 #: dlls/tzres/tzres.rc:163
+msgctxt "maximum 31 characters"
 msgid "Fiji Daylight Time"
 msgstr "Літній час Фіджі"
 
@@ -11122,10 +11266,14 @@ msgid "(UTC+12:00) Fiji"
 msgstr "(UTC+12:00) Фіджі"
 
 #: dlls/tzres/tzres.rc:87
+#, fuzzy
+#| msgid "Canada Central Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Canada Central Standard Time"
 msgstr "Центральний стандартний час Канади"
 
 #: dlls/tzres/tzres.rc:88
+msgctxt "maximum 31 characters"
 msgid "Canada Central Daylight Time"
 msgstr "Центральний літній час Канади"
 
@@ -11134,10 +11282,12 @@ msgid "(UTC-06:00) Saskatchewan"
 msgstr "(UTC-06:00) Саскачеван"
 
 #: dlls/tzres/tzres.rc:444
+msgctxt "maximum 31 characters"
 msgid "Yukon Standard Time"
 msgstr "Юкон, стандартний час"
 
 #: dlls/tzres/tzres.rc:445
+msgctxt "maximum 31 characters"
 msgid "Yukon Daylight Time"
 msgstr "Юкон, літній час"
 
@@ -11146,10 +11296,12 @@ msgid "(UTC-07:00) Yukon"
 msgstr "(UTC-07:00) Юкон"
 
 #: dlls/tzres/tzres.rc:354
+msgctxt "maximum 31 characters"
 msgid "Taipei Standard Time"
 msgstr "Тайбейський стандартний час"
 
 #: dlls/tzres/tzres.rc:355
+msgctxt "maximum 31 characters"
 msgid "Taipei Daylight Time"
 msgstr "Тайбейський літній час"
 
@@ -11158,10 +11310,14 @@ msgid "(UTC+08:00) Taipei"
 msgstr "(UTC+08:00) Тайбей"
 
 #: dlls/tzres/tzres.rc:426
+#, fuzzy
+#| msgid "W. Europe Standard Time"
+msgctxt "maximum 31 characters"
 msgid "W. Europe Standard Time"
 msgstr "Західноєвропейський стандартний час"
 
 #: dlls/tzres/tzres.rc:427
+msgctxt "maximum 31 characters"
 msgid "W. Europe Daylight Time"
 msgstr "Західноєвропейський літній час"
 
@@ -11170,10 +11326,12 @@ msgid "(UTC+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna"
 msgstr "(UTC+01:00) Амстердам, Берлін, Берн, Рим, Стокгольм, Відень"
 
 #: dlls/tzres/tzres.rc:231
+msgctxt "maximum 31 characters"
 msgid "Montevideo Standard Time"
 msgstr "Стандартний час Монтевідео"
 
 #: dlls/tzres/tzres.rc:232
+msgctxt "maximum 31 characters"
 msgid "Montevideo Daylight Time"
 msgstr "Літній час Монтевідео"
 
@@ -11182,10 +11340,12 @@ msgid "(UTC-03:00) Montevideo"
 msgstr "(UTC-03:00) Монтевідео"
 
 #: dlls/tzres/tzres.rc:285
+msgctxt "maximum 31 characters"
 msgid "Pakistan Standard Time"
 msgstr "Пакистанський стандартний час"
 
 #: dlls/tzres/tzres.rc:286
+msgctxt "maximum 31 characters"
 msgid "Pakistan Daylight Time"
 msgstr "Пакистанський літній час"
 
@@ -11194,10 +11354,12 @@ msgid "(UTC+05:00) Islamabad, Karachi"
 msgstr "(UTC+05:00) Ісламабад, Карачі"
 
 #: dlls/tzres/tzres.rc:366
+msgctxt "maximum 31 characters"
 msgid "Tomsk Standard Time"
 msgstr "Томськ, стандартний час"
 
 #: dlls/tzres/tzres.rc:367
+msgctxt "maximum 31 characters"
 msgid "Tomsk Daylight Time"
 msgstr "Томськ, літній час"
 
@@ -11206,10 +11368,12 @@ msgid "(UTC+07:00) Tomsk"
 msgstr "(UTC+07:00) Томськ"
 
 #: dlls/tzres/tzres.rc:93
+msgctxt "maximum 31 characters"
 msgid "Caucasus Standard Time"
 msgstr "Кавказький стандартний час"
 
 #: dlls/tzres/tzres.rc:94
+msgctxt "maximum 31 characters"
 msgid "Caucasus Daylight Time"
 msgstr "Кавказький літній час"
 
@@ -11218,10 +11382,12 @@ msgid "(UTC+04:00) Yerevan"
 msgstr "(UTC+04:00) Єреван"
 
 #: dlls/tzres/tzres.rc:66
+msgctxt "maximum 31 characters"
 msgid "AUS Eastern Standard Time"
 msgstr "AUS східний стандартний час"
 
 #: dlls/tzres/tzres.rc:67
+msgctxt "maximum 31 characters"
 msgid "AUS Eastern Daylight Time"
 msgstr "AUS східний літній час"
 
@@ -11230,10 +11396,16 @@ msgid "(UTC+10:00) Canberra, Melbourne, Sydney"
 msgstr "(UTC+10:00) Канберра, Мельбурн, Сідней"
 
 #: dlls/tzres/tzres.rc:246
+#, fuzzy
+#| msgid "N. Central Asia Standard Time"
+msgctxt "maximum 31 characters"
 msgid "N. Central Asia Standard Time"
 msgstr "Північно-Центральна Азія за стандартним часом"
 
 #: dlls/tzres/tzres.rc:247
+#, fuzzy
+#| msgid "N. Central Asia Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "N. Central Asia Daylight Time"
 msgstr "Північно-Центральна Азія за літнім часом"
 
@@ -11242,10 +11414,12 @@ msgid "(UTC+07:00) Novosibirsk"
 msgstr "(UTC+07:00) Новосибірськ"
 
 #: dlls/tzres/tzres.rc:150
+msgctxt "maximum 31 characters"
 msgid "Eastern Standard Time"
 msgstr "Східний стандартний час"
 
 #: dlls/tzres/tzres.rc:151
+msgctxt "maximum 31 characters"
 msgid "Eastern Daylight Time"
 msgstr "Східний літній час"
 
@@ -11254,10 +11428,12 @@ msgid "(UTC-05:00) Eastern Time (US & Canada)"
 msgstr "(UTC-05:00) Східний час (США та Канада)"
 
 #: dlls/tzres/tzres.rc:372
+msgctxt "maximum 31 characters"
 msgid "Transbaikal Standard Time"
 msgstr "Забайкальський стандартний час"
 
 #: dlls/tzres/tzres.rc:373
+msgctxt "maximum 31 characters"
 msgid "Transbaikal Daylight Time"
 msgstr "Забайкальський літній час"
 
@@ -11266,10 +11442,14 @@ msgid "(UTC+09:00) Chita"
 msgstr "(UTC+09:00) Чита"
 
 #: dlls/tzres/tzres.rc:141
+#, fuzzy
+#| msgid "E. Europe Standard Time"
+msgctxt "maximum 31 characters"
 msgid "E. Europe Standard Time"
 msgstr "Східноєвропейський стандартний час"
 
 #: dlls/tzres/tzres.rc:142
+msgctxt "maximum 31 characters"
 msgid "E. Europe Daylight Time"
 msgstr "Східноєвропейський літній час"
 
@@ -11278,10 +11458,16 @@ msgid "(UTC+02:00) Chisinau"
 msgstr "(UTC+02:00) Кишинів"
 
 #: dlls/tzres/tzres.rc:120
+#, fuzzy
+#| msgid "Central Standard Time (Mexico)"
+msgctxt "maximum 31 characters"
 msgid "Central Standard Time (Mexico)"
 msgstr "Центральний стандартний час (Мексика)"
 
 #: dlls/tzres/tzres.rc:121
+#, fuzzy
+#| msgid "Central Daylight Time (Mexico)"
+msgctxt "maximum 31 characters"
 msgid "Central Daylight Time (Mexico)"
 msgstr "Центральний літній час (Мексика)"
 
@@ -11290,10 +11476,12 @@ msgid "(UTC-06:00) Guadalajara, Mexico City, Monterrey"
 msgstr "(UTC-06:00) Гвадалахара, Мехіко, Монтеррей"
 
 #: dlls/tzres/tzres.rc:330
+msgctxt "maximum 31 characters"
 msgid "Saratov Standard Time"
 msgstr "Саратовський стандартний час"
 
 #: dlls/tzres/tzres.rc:331
+msgctxt "maximum 31 characters"
 msgid "Saratov Daylight Time"
 msgstr "Саратовський літній час"
 
@@ -11302,10 +11490,12 @@ msgid "(UTC+04:00) Saratov"
 msgstr "(UTC+04:00) Саратов"
 
 #: dlls/tzres/tzres.rc:57
+msgctxt "maximum 31 characters"
 msgid "Atlantic Standard Time"
 msgstr "Атлантичний стандартний час"
 
 #: dlls/tzres/tzres.rc:58
+msgctxt "maximum 31 characters"
 msgid "Atlantic Daylight Time"
 msgstr "Атлантичний літній час"
 
@@ -11314,10 +11504,12 @@ msgid "(UTC-04:00) Atlantic Time (Canada)"
 msgstr "(UTC-04:00) Атлантичний час (Канада)"
 
 #: dlls/tzres/tzres.rc:237
+msgctxt "maximum 31 characters"
 msgid "Mountain Standard Time"
 msgstr "Гірський стандартний час"
 
 #: dlls/tzres/tzres.rc:238
+msgctxt "maximum 31 characters"
 msgid "Mountain Daylight Time"
 msgstr "Гірський літній час"
 
@@ -11326,10 +11518,12 @@ msgid "(UTC-07:00) Mountain Time (US & Canada)"
 msgstr "(UTC-07:00) Гірський час (США та Канада)"
 
 #: dlls/tzres/tzres.rc:384
+msgctxt "maximum 31 characters"
 msgid "US Eastern Standard Time"
 msgstr "Східний стандартний час США"
 
 #: dlls/tzres/tzres.rc:385
+msgctxt "maximum 31 characters"
 msgid "US Eastern Daylight Time"
 msgstr "Східний літній час США"
 
@@ -11338,10 +11532,12 @@ msgid "(UTC-05:00) Indiana (East)"
 msgstr "(UTC-05:00) Індіана (Схід)"
 
 #: dlls/tzres/tzres.rc:321
+msgctxt "maximum 31 characters"
 msgid "Sakhalin Standard Time"
 msgstr "Сахалінський стандартний час"
 
 #: dlls/tzres/tzres.rc:322
+msgctxt "maximum 31 characters"
 msgid "Sakhalin Daylight Time"
 msgstr "Сахалінський літній час"
 
@@ -11350,10 +11546,14 @@ msgid "(UTC+11:00) Sakhalin"
 msgstr "(UTC+11:00) Сахалін"
 
 #: dlls/tzres/tzres.rc:270
+#, fuzzy
+#| msgid "North Korea Standard Time"
+msgctxt "maximum 31 characters"
 msgid "North Korea Standard Time"
 msgstr "Північнокорейський стандартний час"
 
 #: dlls/tzres/tzres.rc:271
+msgctxt "maximum 31 characters"
 msgid "North Korea Daylight Time"
 msgstr "Північнокорейський літній час"
 
@@ -11362,10 +11562,12 @@ msgid "(UTC+09:00) Pyongyang"
 msgstr "(UTC+09:00) Пхеньян"
 
 #: dlls/tzres/tzres.rc:357
+msgctxt "maximum 31 characters"
 msgid "Tasmania Standard Time"
 msgstr "Тасманійський стандартний час"
 
 #: dlls/tzres/tzres.rc:358
+msgctxt "maximum 31 characters"
 msgid "Tasmania Daylight Time"
 msgstr "Тасманійський літній час"
 
@@ -11374,10 +11576,16 @@ msgid "(UTC+10:00) Hobart"
 msgstr "(UTC+10:00) Гобарт"
 
 #: dlls/tzres/tzres.rc:99
+#, fuzzy
+#| msgid "Central America Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Central America Standard Time"
 msgstr "Центральна Америка за стандартним часом"
 
 #: dlls/tzres/tzres.rc:100
+#, fuzzy
+#| msgid "Central America Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Central America Daylight Time"
 msgstr "Центральна Америка за літнім часом"
 
@@ -11386,6 +11594,7 @@ msgid "(UTC-06:00) Central America"
 msgstr "(UTC-06:00) Центральна Америка"
 
 #: dlls/tzres/tzres.rc:399 dlls/tzres/tzres.rc:400
+msgctxt "maximum 31 characters"
 msgid "UTC-02"
 msgstr "UTC-02"
 
@@ -11394,10 +11603,16 @@ msgid "(UTC-02:00) Coordinated Universal Time-02"
 msgstr "(UTC-02:00) Всесвітній координований час-02"
 
 #: dlls/tzres/tzres.rc:387
+#, fuzzy
+#| msgid "US Mountain Standard Time"
+msgctxt "maximum 31 characters"
 msgid "US Mountain Standard Time"
 msgstr "Американський гірський стандартний час"
 
 #: dlls/tzres/tzres.rc:388
+#, fuzzy
+#| msgid "US Mountain Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "US Mountain Daylight Time"
 msgstr "Американський гірський літній час"
 
@@ -11406,10 +11621,16 @@ msgid "(UTC-07:00) Arizona"
 msgstr "(UTC-07:00) Арізона"
 
 #: dlls/tzres/tzres.rc:339
+#, fuzzy
+#| msgid "South Africa Standard Time"
+msgctxt "maximum 31 characters"
 msgid "South Africa Standard Time"
 msgstr "Південно-Африканський стандартний час"
 
 #: dlls/tzres/tzres.rc:340
+#, fuzzy
+#| msgid "South Africa Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "South Africa Daylight Time"
 msgstr "Південно-Африканський літній час"
 
@@ -11418,10 +11639,14 @@ msgid "(UTC+02:00) Harare, Pretoria"
 msgstr "(UTC+02:00) Хараре, Преторія"
 
 #: dlls/tzres/tzres.rc:96
+#, fuzzy
+#| msgid "Cen. Australia Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Cen. Australia Standard Time"
 msgstr "Цен. Австралійський стандартний час"
 
 #: dlls/tzres/tzres.rc:97
+msgctxt "maximum 31 characters"
 msgid "Cen. Australia Daylight Time"
 msgstr "Цен. Австралійський літній час"
 
@@ -11430,6 +11655,7 @@ msgid "(UTC+09:30) Adelaide"
 msgstr "(UTC+09:30) Аделаїда"
 
 #: dlls/tzres/tzres.rc:405 dlls/tzres/tzres.rc:406
+msgctxt "maximum 31 characters"
 msgid "UTC-09"
 msgstr "UTC-09"
 
@@ -11438,10 +11664,12 @@ msgid "(UTC-09:00) Coordinated Universal Time-09"
 msgstr "(UTC-09:00) Всесвітній координований час-09"
 
 #: dlls/tzres/tzres.rc:345
+msgctxt "maximum 31 characters"
 msgid "Sri Lanka Standard Time"
 msgstr "Стандартний час Шрі-Ланки"
 
 #: dlls/tzres/tzres.rc:346
+msgctxt "maximum 31 characters"
 msgid "Sri Lanka Daylight Time"
 msgstr "Літній час Шрі-Ланки"
 
@@ -11450,10 +11678,12 @@ msgid "(UTC+05:30) Sri Jayawardenepura"
 msgstr "(UTC+05:30) Шрі-Джаяварденепура"
 
 #: dlls/tzres/tzres.rc:30
+msgctxt "maximum 31 characters"
 msgid "Afghanistan Standard Time"
 msgstr "Стандартний час в Афганістані"
 
 #: dlls/tzres/tzres.rc:31
+msgctxt "maximum 31 characters"
 msgid "Afghanistan Daylight Time"
 msgstr "Літній час в Афганістані"
 
@@ -11462,10 +11692,12 @@ msgid "(UTC+04:30) Kabul"
 msgstr "(UTC+04:30) Кабул"
 
 #: dlls/tzres/tzres.rc:441
+msgctxt "maximum 31 characters"
 msgid "Yakutsk Standard Time"
 msgstr "Якутський стандартний час"
 
 #: dlls/tzres/tzres.rc:442
+msgctxt "maximum 31 characters"
 msgid "Yakutsk Daylight Time"
 msgstr "Якутський літній час"
 
@@ -11474,10 +11706,12 @@ msgid "(UTC+09:00) Yakutsk"
 msgstr "(UTC+09:00) Якутськ"
 
 #: dlls/tzres/tzres.rc:309
+msgctxt "maximum 31 characters"
 msgid "SA Eastern Standard Time"
 msgstr "SA східний стандартний час"
 
 #: dlls/tzres/tzres.rc:310
+msgctxt "maximum 31 characters"
 msgid "SA Eastern Daylight Time"
 msgstr "SA східний літній час"
 
@@ -11486,10 +11720,12 @@ msgid "(UTC-03:00) Cayenne, Fortaleza"
 msgstr "(UTC-03:00) Кайєнна, Форталеза"
 
 #: dlls/tzres/tzres.rc:42
+msgctxt "maximum 31 characters"
 msgid "Arab Standard Time"
 msgstr "Арабський стандартний час"
 
 #: dlls/tzres/tzres.rc:43
+msgctxt "maximum 31 characters"
 msgid "Arab Daylight Time"
 msgstr "Арабський літній час"
 
@@ -11498,10 +11734,12 @@ msgid "(UTC+03:00) Kuwait, Riyadh"
 msgstr "(UTC+03:00) Кувейт, Ер-Ріяд"
 
 #: dlls/tzres/tzres.rc:45
+msgctxt "maximum 31 characters"
 msgid "Arabian Standard Time"
 msgstr "Арабський стандартний час"
 
 #: dlls/tzres/tzres.rc:46
+msgctxt "maximum 31 characters"
 msgid "Arabian Daylight Time"
 msgstr "Арабський літній час"
 
@@ -11510,10 +11748,12 @@ msgid "(UTC+04:00) Abu Dhabi, Muscat"
 msgstr "(UTC+04:00) Абу-Дабі, Маскат"
 
 #: dlls/tzres/tzres.rc:360
+msgctxt "maximum 31 characters"
 msgid "Tocantins Standard Time"
 msgstr "Стандартний час Токантінс"
 
 #: dlls/tzres/tzres.rc:361
+msgctxt "maximum 31 characters"
 msgid "Tocantins Daylight Time"
 msgstr "Літній час Токантінс"
 
@@ -11522,10 +11762,12 @@ msgid "(UTC-03:00) Araguaina"
 msgstr "(UTC-03:00) Арагуаіна"
 
 #: dlls/tzres/tzres.rc:306
+msgctxt "maximum 31 characters"
 msgid "Russian Standard Time"
 msgstr "Російський стандартний час"
 
 #: dlls/tzres/tzres.rc:307
+msgctxt "maximum 31 characters"
 msgid "Russian Daylight Time"
 msgstr "Російський літній час"
 
@@ -11534,10 +11776,12 @@ msgid "(UTC+03:00) Moscow, St. Petersburg"
 msgstr "(UTC+03:00) Москва, Санкт-Петербург"
 
 #: dlls/tzres/tzres.rc:63
+msgctxt "maximum 31 characters"
 msgid "Aus Central W. Standard Time"
 msgstr "Aus Central W. стандартний час"
 
 #: dlls/tzres/tzres.rc:64
+msgctxt "maximum 31 characters"
 msgid "Aus Central W. Daylight Time"
 msgstr "Aus Central W. літній час"
 
@@ -11546,10 +11790,12 @@ msgid "(UTC+08:45) Eucla"
 msgstr "(UTC+08:45) Евкла"
 
 #: dlls/tzres/tzres.rc:294
+msgctxt "maximum 31 characters"
 msgid "Romance Standard Time"
 msgstr "Романський стандартний час"
 
 #: dlls/tzres/tzres.rc:295
+msgctxt "maximum 31 characters"
 msgid "Romance Daylight Time"
 msgstr "Романський літній час"
 
@@ -11558,10 +11804,12 @@ msgid "(UTC+01:00) Brussels, Copenhagen, Madrid, Paris"
 msgstr "(UTC+01:00) Брюссель, Копенгаген, Мадрид, Париж"
 
 #: dlls/tzres/tzres.rc:159
+msgctxt "maximum 31 characters"
 msgid "Ekaterinburg Standard Time"
 msgstr "Стандартний час Єкатеринбурга"
 
 #: dlls/tzres/tzres.rc:160
+msgctxt "maximum 31 characters"
 msgid "Ekaterinburg Daylight Time"
 msgstr "Літній час Єкатеринбурга"
 
@@ -11570,6 +11818,7 @@ msgid "(UTC+05:00) Ekaterinburg"
 msgstr "(UTC+05:00) Єкатеринбург"
 
 #: dlls/tzres/tzres.rc:300 dlls/tzres/tzres.rc:301
+msgctxt "maximum 31 characters"
 msgid "Russia Time Zone 11"
 msgstr ""
 
@@ -11578,10 +11827,16 @@ msgid "(UTC+12:00) Anadyr, Petropavlovsk-Kamchatsky"
 msgstr "(UTC+12:00) Анадир, Петропавловськ-Камчатський"
 
 #: dlls/tzres/tzres.rc:435
+#, fuzzy
+#| msgid "West Bank Standard Time"
+msgctxt "maximum 31 characters"
 msgid "West Bank Standard Time"
 msgstr "Західний берег річки Йордан, стандартний час"
 
 #: dlls/tzres/tzres.rc:436
+#, fuzzy
+#| msgid "West Bank Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "West Bank Daylight Time"
 msgstr "Західний берег річки Йордан, літній час"
 
@@ -11590,10 +11845,12 @@ msgid "(UTC+02:00) Gaza, Hebron"
 msgstr "(UTC+02:00) Газа, Хеврон"
 
 #: dlls/tzres/tzres.rc:351
+msgctxt "maximum 31 characters"
 msgid "Syria Standard Time"
 msgstr "Стандартний час Сирії"
 
 #: dlls/tzres/tzres.rc:352
+msgctxt "maximum 31 characters"
 msgid "Syria Daylight Time"
 msgstr "Літній час Сирії"
 
@@ -11602,10 +11859,12 @@ msgid "(UTC+02:00) Damascus"
 msgstr "(UTC+02:00) Дамаск"
 
 #: dlls/tzres/tzres.rc:60
+msgctxt "maximum 31 characters"
 msgid "AUS Central Standard Time"
 msgstr "Центральний стандартний час AUS"
 
 #: dlls/tzres/tzres.rc:61
+msgctxt "maximum 31 characters"
 msgid "AUS Central Daylight Time"
 msgstr "Центральний літній час AUS"
 
@@ -11614,10 +11873,12 @@ msgid "(UTC+09:30) Darwin"
 msgstr "(UTC+09:30) Дарвін"
 
 #: dlls/tzres/tzres.rc:177
+msgctxt "maximum 31 characters"
 msgid "Greenwich Standard Time"
 msgstr "Стандартний час за Грінвічем"
 
 #: dlls/tzres/tzres.rc:178
+msgctxt "maximum 31 characters"
 msgid "Greenwich Daylight Time"
 msgstr "Літній час за Грінвічем"
 
@@ -11626,10 +11887,12 @@ msgid "(UTC+00:00) Monrovia, Reykjavik"
 msgstr "(UTC+00:00) Монровія, Рейк'явік"
 
 #: dlls/tzres/tzres.rc:381
+msgctxt "maximum 31 characters"
 msgid "Ulaanbaatar Standard Time"
 msgstr "Стандартний час Улан-Батора"
 
 #: dlls/tzres/tzres.rc:382
+msgctxt "maximum 31 characters"
 msgid "Ulaanbaatar Daylight Time"
 msgstr "Літній час Улан-Батора"
 
@@ -11638,10 +11901,12 @@ msgid "(UTC+08:00) Ulaanbaatar"
 msgstr "(UTC+08:00) Улан-Батор"
 
 #: dlls/tzres/tzres.rc:261
+msgctxt "maximum 31 characters"
 msgid "Norfolk Standard Time"
 msgstr "Норфолк, стандартний час"
 
 #: dlls/tzres/tzres.rc:262
+msgctxt "maximum 31 characters"
 msgid "Norfolk Daylight Time"
 msgstr "Норфолк, літній час"
 
@@ -11650,10 +11915,12 @@ msgid "(UTC+11:00) Norfolk Island"
 msgstr "(UTC+11:00) Острів Норфолк"
 
 #: dlls/tzres/tzres.rc:195
+msgctxt "maximum 31 characters"
 msgid "Israel Standard Time"
 msgstr "Стандартний час Ізраїлю"
 
 #: dlls/tzres/tzres.rc:196
+msgctxt "maximum 31 characters"
 msgid "Israel Daylight Time"
 msgstr "Літній час Ізраїлю"
 
@@ -11662,10 +11929,12 @@ msgid "(UTC+02:00) Jerusalem"
 msgstr "(UTC+02:00) Єрусалим"
 
 #: dlls/tzres/tzres.rc:78
+msgctxt "maximum 31 characters"
 msgid "Bangladesh Standard Time"
 msgstr "Стандартний час Бангладеш"
 
 #: dlls/tzres/tzres.rc:79
+msgctxt "maximum 31 characters"
 msgid "Bangladesh Daylight Time"
 msgstr "Літній час Бангладеш"
 
@@ -11674,10 +11943,14 @@ msgid "(UTC+06:00) Dhaka"
 msgstr "(UTC+06:00) Дакка"
 
 #: dlls/tzres/tzres.rc:312
+#, fuzzy
+#| msgid "SA Pacific Standard Time"
+msgctxt "maximum 31 characters"
 msgid "SA Pacific Standard Time"
 msgstr "SA Тихоокеанський стандартний час"
 
 #: dlls/tzres/tzres.rc:313
+msgctxt "maximum 31 characters"
 msgid "SA Pacific Daylight Time"
 msgstr "SA Тихоокеанський літній час"
 
@@ -11686,10 +11959,14 @@ msgid "(UTC-05:00) Bogota, Lima, Quito, Rio Branco"
 msgstr "(UTC-05:00) Богота, Ліма, Кіто, Ріу-Бранку"
 
 #: dlls/tzres/tzres.rc:432
+#, fuzzy
+#| msgid "West Asia Standard Time"
+msgctxt "maximum 31 characters"
 msgid "West Asia Standard Time"
 msgstr "Західноазіатський стандартний час"
 
 #: dlls/tzres/tzres.rc:433
+msgctxt "maximum 31 characters"
 msgid "West Asia Daylight Time"
 msgstr "Західноазіатський літній час"
 
@@ -11698,10 +11975,12 @@ msgid "(UTC+05:00) Ashgabat, Tashkent"
 msgstr "(UTC+05:00) Ашхабад, Ташкент"
 
 #: dlls/tzres/tzres.rc:33
+msgctxt "maximum 31 characters"
 msgid "Alaskan Standard Time"
 msgstr "Аляскинський стандартний час"
 
 #: dlls/tzres/tzres.rc:34
+msgctxt "maximum 31 characters"
 msgid "Alaskan Daylight Time"
 msgstr "Аляскинський літній час"
 
@@ -11710,10 +11989,12 @@ msgid "(UTC-09:00) Alaska"
 msgstr "(UTC-09:00) Аляска"
 
 #: dlls/tzres/tzres.rc:288
+msgctxt "maximum 31 characters"
 msgid "Paraguay Standard Time"
 msgstr "Парагвайський стандартний час"
 
 #: dlls/tzres/tzres.rc:289
+msgctxt "maximum 31 characters"
 msgid "Paraguay Daylight Time"
 msgstr "Парагвайський літній час"
 
@@ -11722,10 +12003,12 @@ msgid "(UTC-04:00) Asuncion"
 msgstr "(UTC-04:00) Асунсьйон"
 
 #: dlls/tzres/tzres.rc:132
+msgctxt "maximum 31 characters"
 msgid "Dateline Standard Time"
 msgstr "Стандартний час у Дателіні"
 
 #: dlls/tzres/tzres.rc:133
+msgctxt "maximum 31 characters"
 msgid "Dateline Daylight Time"
 msgstr "Літній час у Дателіні"
 
@@ -11734,10 +12017,12 @@ msgid "(UTC-12:00) International Date Line West"
 msgstr "(UTC-12:00) Міжнародна лінія дат на захід"
 
 #: dlls/tzres/tzres.rc:207
+msgctxt "maximum 31 characters"
 msgid "Libya Standard Time"
 msgstr "Лівійський стандартний час"
 
 #: dlls/tzres/tzres.rc:208
+msgctxt "maximum 31 characters"
 msgid "Libya Daylight Time"
 msgstr "Лівійський літній час"
 
@@ -11746,10 +12031,12 @@ msgid "(UTC+02:00) Tripoli"
 msgstr "(UTC+02:00) Тріполі"
 
 #: dlls/tzres/tzres.rc:75
+msgctxt "maximum 31 characters"
 msgid "Bahia Standard Time"
 msgstr "Стандартний час Баїя"
 
 #: dlls/tzres/tzres.rc:76
+msgctxt "maximum 31 characters"
 msgid "Bahia Daylight Time"
 msgstr "Літній час Баїя"
 
@@ -11758,10 +12045,12 @@ msgid "(UTC-03:00) Salvador"
 msgstr "(UTC-03:00) Сальвадор"
 
 #: dlls/tzres/tzres.rc:411
+msgctxt "maximum 31 characters"
 msgid "Venezuela Standard Time"
 msgstr "Стандартний час Венесуели"
 
 #: dlls/tzres/tzres.rc:412
+msgctxt "maximum 31 characters"
 msgid "Venezuela Daylight Time"
 msgstr "Літній час Венесуели"
 
@@ -11770,10 +12059,12 @@ msgid "(UTC-04:00) Caracas"
 msgstr "(UTC-04:00) Каракас"
 
 #: dlls/tzres/tzres.rc:84
+msgctxt "maximum 31 characters"
 msgid "Bougainville Standard Time"
 msgstr "Стандартний час Бугенвіля"
 
 #: dlls/tzres/tzres.rc:85
+msgctxt "maximum 31 characters"
 msgid "Bougainville Daylight Time"
 msgstr "Літній час Бугенвіля"
 
@@ -11782,10 +12073,12 @@ msgid "(UTC+11:00) Bougainville Island"
 msgstr "(UTC+11:00) Острів Бугенвіль"
 
 #: dlls/tzres/tzres.rc:186
+msgctxt "maximum 31 characters"
 msgid "Hawaiian Standard Time"
 msgstr "Гавайський стандартний час"
 
 #: dlls/tzres/tzres.rc:187
+msgctxt "maximum 31 characters"
 msgid "Hawaiian Daylight Time"
 msgstr "Гавайський літній час"
 
@@ -11794,10 +12087,16 @@ msgid "(UTC-10:00) Hawaii"
 msgstr "(UTC-10:00) Гаваї"
 
 #: dlls/tzres/tzres.rc:333
+#, fuzzy
+#| msgid "SE Asia Standard Time"
+msgctxt "maximum 31 characters"
 msgid "SE Asia Standard Time"
 msgstr "Південно-Східний Азіатський стандартний час"
 
 #: dlls/tzres/tzres.rc:334
+#, fuzzy
+#| msgid "SE Asia Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "SE Asia Daylight Time"
 msgstr "Південно-Східний Азіатський літній час"
 
@@ -11806,10 +12105,12 @@ msgid "(UTC+07:00) Bangkok, Hanoi, Jakarta"
 msgstr "(UTC+07:00) Бангкок, Ханой, Джакарта"
 
 #: dlls/tzres/tzres.rc:291
+msgctxt "maximum 31 characters"
 msgid "Qyzylorda Standard Time"
 msgstr "Кизилорда, стандартний час"
 
 #: dlls/tzres/tzres.rc:292
+msgctxt "maximum 31 characters"
 msgid "Qyzylorda Daylight Time"
 msgstr "Кизилорда, літній час"
 
@@ -11818,10 +12119,14 @@ msgid "(UTC+05:00) Qyzylorda"
 msgstr "(UTC+05:00) Кизилорда"
 
 #: dlls/tzres/tzres.rc:429
+#, fuzzy
+#| msgid "W. Mongolia Standard Time"
+msgctxt "maximum 31 characters"
 msgid "W. Mongolia Standard Time"
 msgstr "Західна Монголія, стандартний час"
 
 #: dlls/tzres/tzres.rc:430
+msgctxt "maximum 31 characters"
 msgid "W. Mongolia Daylight Time"
 msgstr "Західна Монголія, літній час"
 
@@ -11830,10 +12135,12 @@ msgid "(UTC+07:00) Hovd"
 msgstr "(UTC+07:00) Ховд"
 
 #: dlls/tzres/tzres.rc:255
+msgctxt "maximum 31 characters"
 msgid "New Zealand Standard Time"
 msgstr "Стандартний час Нової Зеландії"
 
 #: dlls/tzres/tzres.rc:256
+msgctxt "maximum 31 characters"
 msgid "New Zealand Daylight Time"
 msgstr "Літній час Нової Зеландії"
 
@@ -11842,10 +12149,12 @@ msgid "(UTC+12:00) Auckland, Wellington"
 msgstr "(UTC+12:00) Окленд, Веллінгтон"
 
 #: dlls/tzres/tzres.rc:36
+msgctxt "maximum 31 characters"
 msgid "Aleutian Standard Time"
 msgstr "Алеутський стандартний час"
 
 #: dlls/tzres/tzres.rc:37
+msgctxt "maximum 31 characters"
 msgid "Aleutian Daylight Time"
 msgstr "Алеутський літній час"
 
@@ -11854,10 +12163,12 @@ msgid "(UTC-10:00) Aleutian Islands"
 msgstr "(UTC-10:00) Алеутські острови"
 
 #: dlls/tzres/tzres.rc:273
+msgctxt "maximum 31 characters"
 msgid "Omsk Standard Time"
 msgstr "Омський стандартний час"
 
 #: dlls/tzres/tzres.rc:274
+msgctxt "maximum 31 characters"
 msgid "Omsk Daylight Time"
 msgstr "Омський літній час"
 
@@ -11866,10 +12177,16 @@ msgid "(UTC+06:00) Omsk"
 msgstr "(UTC+06:00) Омськ"
 
 #: dlls/tzres/tzres.rc:105
+#, fuzzy
+#| msgid "Central Brazilian Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Central Brazilian Standard Time"
 msgstr "Центральний бразильський стандартний час"
 
 #: dlls/tzres/tzres.rc:106
+#, fuzzy
+#| msgid "Central Brazilian Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Central Brazilian Daylight Time"
 msgstr "Центральний бразильський літній час"
 
@@ -11878,10 +12195,12 @@ msgid "(UTC-04:00) Cuiaba"
 msgstr "(UTC-04:00) Куяба"
 
 #: dlls/tzres/tzres.rc:81
+msgctxt "maximum 31 characters"
 msgid "Belarus Standard Time"
 msgstr "Білоруський стандартний час"
 
 #: dlls/tzres/tzres.rc:82
+msgctxt "maximum 31 characters"
 msgid "Belarus Daylight Time"
 msgstr "Білоруський літній час"
 
@@ -11890,10 +12209,12 @@ msgid "(UTC+03:00) Minsk"
 msgstr "(UTC+03:00) Мінськ"
 
 #: dlls/tzres/tzres.rc:315
+msgctxt "maximum 31 characters"
 msgid "SA Western Standard Time"
 msgstr "SA Західний стандартний час"
 
 #: dlls/tzres/tzres.rc:316
+msgctxt "maximum 31 characters"
 msgid "SA Western Daylight Time"
 msgstr "SA Західний літній час"
 
@@ -11902,10 +12223,12 @@ msgid "(UTC-04:00) Georgetown, La Paz, Manaus, San Juan"
 msgstr "(UTC-04:00) Джорджтаун, Ла-Пас, Манаус, Сан-Хуан"
 
 #: dlls/tzres/tzres.rc:174
+msgctxt "maximum 31 characters"
 msgid "Greenland Standard Time"
 msgstr "Стандартний час Гренландії"
 
 #: dlls/tzres/tzres.rc:175
+msgctxt "maximum 31 characters"
 msgid "Greenland Daylight Time"
 msgstr "Літній час Гренландії"
 
@@ -11914,10 +12237,12 @@ msgid "(UTC-03:00) Greenland"
 msgstr "(UTC-03:00) Гренландія"
 
 #: dlls/tzres/tzres.rc:147
+msgctxt "maximum 31 characters"
 msgid "Easter Island Standard Time"
 msgstr "Стандартний час острова Пасхи"
 
 #: dlls/tzres/tzres.rc:148
+msgctxt "maximum 31 characters"
 msgid "Easter Island Daylight Time"
 msgstr "Літній час острова Пасхи"
 
@@ -11926,6 +12251,7 @@ msgid "(UTC-06:00) Easter Island"
 msgstr "(UTC-06:00) Острів Пасхи"
 
 #: dlls/tzres/tzres.rc:297 dlls/tzres/tzres.rc:298
+msgctxt "maximum 31 characters"
 msgid "Russia Time Zone 10"
 msgstr ""
 
@@ -11934,10 +12260,12 @@ msgid "(UTC+11:00) Chokurdakh"
 msgstr "(UTC+11:00) Чокурдах"
 
 #: dlls/tzres/tzres.rc:156
+msgctxt "maximum 31 characters"
 msgid "Egypt Standard Time"
 msgstr "Єгипетський стандартний час"
 
 #: dlls/tzres/tzres.rc:157
+msgctxt "maximum 31 characters"
 msgid "Egypt Daylight Time"
 msgstr "Єгипетський літній час"
 
@@ -11946,10 +12274,14 @@ msgid "(UTC+02:00) Cairo"
 msgstr "(UTC+02:00) Каїр"
 
 #: dlls/tzres/tzres.rc:153
+#, fuzzy
+#| msgid "Eastern Standard Time (Mexico)"
+msgctxt "maximum 31 characters"
 msgid "Eastern Standard Time (Mexico)"
 msgstr "Східний стандартний час (Мексика)"
 
 #: dlls/tzres/tzres.rc:154
+msgctxt "maximum 31 characters"
 msgid "Eastern Daylight Time (Mexico)"
 msgstr "Східний літній час (Мексика)"
 
@@ -11958,10 +12290,12 @@ msgid "(UTC-05:00) Chetumal"
 msgstr "(UTC-05:00) Четумал"
 
 #: dlls/tzres/tzres.rc:225
+msgctxt "maximum 31 characters"
 msgid "Mauritius Standard Time"
 msgstr "Стандартний час Маврикія"
 
 #: dlls/tzres/tzres.rc:226
+msgctxt "maximum 31 characters"
 msgid "Mauritius Daylight Time"
 msgstr "Літній час Маврикія"
 
@@ -11970,10 +12304,12 @@ msgid "(UTC+04:00) Port Louis"
 msgstr "(UTC+04:00) Порт-Луї"
 
 #: dlls/tzres/tzres.rc:414
+msgctxt "maximum 31 characters"
 msgid "Vladivostok Standard Time"
 msgstr "Стандартний час Владивостока"
 
 #: dlls/tzres/tzres.rc:415
+msgctxt "maximum 31 characters"
 msgid "Vladivostok Daylight Time"
 msgstr "Літній час Владивостока"
 
@@ -11982,10 +12318,12 @@ msgid "(UTC+10:00) Vladivostok"
 msgstr "(UTC+10:00) Владивосток"
 
 #: dlls/tzres/tzres.rc:336
+msgctxt "maximum 31 characters"
 msgid "Singapore Standard Time"
 msgstr "Стандартний час Сінгапуру"
 
 #: dlls/tzres/tzres.rc:337
+msgctxt "maximum 31 characters"
 msgid "Singapore Daylight Time"
 msgstr "Літній час Сінгапуру"
 
@@ -11994,10 +12332,12 @@ msgid "(UTC+08:00) Kuala Lumpur, Singapore"
 msgstr "(UTC+08:00) Куала-Лумпур, Сінгапур"
 
 #: dlls/tzres/tzres.rc:204
+msgctxt "maximum 31 characters"
 msgid "Korea Standard Time"
 msgstr "Корейський стандартний час"
 
 #: dlls/tzres/tzres.rc:205
+msgctxt "maximum 31 characters"
 msgid "Korea Daylight Time"
 msgstr "Корейський літній час"
 
@@ -12006,10 +12346,12 @@ msgid "(UTC+09:00) Seoul"
 msgstr "(UTC+09:00) Сеул"
 
 #: dlls/tzres/tzres.rc:123
+msgctxt "maximum 31 characters"
 msgid "Chatham Islands Standard Time"
 msgstr "Стандартний час островів Чатем"
 
 #: dlls/tzres/tzres.rc:124
+msgctxt "maximum 31 characters"
 msgid "Chatham Islands Daylight Time"
 msgstr "Літній час островів Чатем"
 
@@ -12018,10 +12360,12 @@ msgid "(UTC+12:45) Chatham Islands"
 msgstr "(UTC+12:45) Острови Чатем"
 
 #: dlls/tzres/tzres.rc:135
+msgctxt "maximum 31 characters"
 msgid "E. Africa Standard Time"
 msgstr "E. Стандартний час в Африці"
 
 #: dlls/tzres/tzres.rc:136
+msgctxt "maximum 31 characters"
 msgid "E. Africa Daylight Time"
 msgstr "E. Літній час в Африці"
 
@@ -12030,10 +12374,12 @@ msgid "(UTC+03:00) Nairobi"
 msgstr "(UTC+03:00) Найробі"
 
 #: dlls/tzres/tzres.rc:165
+msgctxt "maximum 31 characters"
 msgid "FLE Standard Time"
 msgstr "Стандартний час FLE"
 
 #: dlls/tzres/tzres.rc:166
+msgctxt "maximum 31 characters"
 msgid "FLE Daylight Time"
 msgstr "Літній час FLE"
 
@@ -12042,10 +12388,14 @@ msgid "(UTC+02:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius"
 msgstr "(UTC+02:00) Гельсінкі, Київ, Рига, Софія, Таллінн, Вільнюс"
 
 #: dlls/tzres/tzres.rc:144
+#, fuzzy
+#| msgid "E. South America Standard Time"
+msgctxt "maximum 31 characters"
 msgid "E. South America Standard Time"
 msgstr "E. Стандартний час Південної Америки"
 
 #: dlls/tzres/tzres.rc:145
+msgctxt "maximum 31 characters"
 msgid "E. South America Daylight Time"
 msgstr "E. Літній час Південної Америки"
 
@@ -12054,10 +12404,16 @@ msgid "(UTC-03:00) Brasilia"
 msgstr "(UTC-03:00) Бразиліа"
 
 #: dlls/tzres/tzres.rc:114
+#, fuzzy
+#| msgid "Central Pacific Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Central Pacific Standard Time"
 msgstr "Центральний тихоокеанський стандартний час"
 
 #: dlls/tzres/tzres.rc:115
+#, fuzzy
+#| msgid "Central Pacific Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Central Pacific Daylight Time"
 msgstr "Центральний тихоокеанський літній час"
 
@@ -12066,10 +12422,16 @@ msgid "(UTC+11:00) Solomon Is., New Caledonia"
 msgstr "(UTC+11:00) Соломонові острови, Нова Каледонія"
 
 #: dlls/tzres/tzres.rc:423
+#, fuzzy
+#| msgid "W. Central Africa Standard Time"
+msgctxt "maximum 31 characters"
 msgid "W. Central Africa Standard Time"
 msgstr "В. Стандартний час у Центральній Африці"
 
 #: dlls/tzres/tzres.rc:424
+#, fuzzy
+#| msgid "W. Central Africa Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "W. Central Africa Daylight Time"
 msgstr "В. Літній час у Центральній Африці"
 
@@ -12078,10 +12440,14 @@ msgid "(UTC+01:00) West Central Africa"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:276
+#, fuzzy
+#| msgid "Pacific SA Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Pacific SA Standard Time"
 msgstr "Тихоокеанський стандартний час SA"
 
 #: dlls/tzres/tzres.rc:277
+msgctxt "maximum 31 characters"
 msgid "Pacific SA Daylight Time"
 msgstr "Тихоокеанський літній час SA"
 
@@ -12090,10 +12456,12 @@ msgid "(UTC-04:00) Santiago"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:138
+msgctxt "maximum 31 characters"
 msgid "E. Australia Standard Time"
 msgstr "E. Стандартний час в Австралії"
 
 #: dlls/tzres/tzres.rc:139
+msgctxt "maximum 31 characters"
 msgid "E. Australia Daylight Time"
 msgstr "E. Літній час в Австралії"
 
@@ -12102,10 +12470,12 @@ msgid "(UTC+10:00) Brisbane"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:420
+msgctxt "maximum 31 characters"
 msgid "W. Australia Standard Time"
 msgstr "В. Стандартний час в Австралії"
 
 #: dlls/tzres/tzres.rc:421
+msgctxt "maximum 31 characters"
 msgid "W. Australia Daylight Time"
 msgstr "В. Літній час в Австралії"
 

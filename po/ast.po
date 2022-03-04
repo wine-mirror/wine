@@ -10341,10 +10341,12 @@ msgid "Select Source"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:126
+msgctxt "maximum 31 characters"
 msgid "China Standard Time"
 msgstr "Hora estándar de China"
 
 #: dlls/tzres/tzres.rc:127
+msgctxt "maximum 31 characters"
 msgid "China Daylight Time"
 msgstr "Hora braniega de China"
 
@@ -10353,10 +10355,12 @@ msgid "(UTC+08:00) Beijing, Chongqing, Hong Kong, Urumqi"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:267
+msgctxt "maximum 31 characters"
 msgid "North Asia Standard Time"
 msgstr "Hora estándar d'Asia del Norte"
 
 #: dlls/tzres/tzres.rc:268
+msgctxt "maximum 31 characters"
 msgid "North Asia Daylight Time"
 msgstr "Hora braniega d'Asia del Norte"
 
@@ -10365,18 +10369,27 @@ msgid "(UTC+07:00) Krasnoyarsk"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:168
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Jordan Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Georgian Standard Time"
-msgstr ""
+msgstr "Hora estándar de Xordania"
 
 #: dlls/tzres/tzres.rc:169
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Syria Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Georgian Daylight Time"
-msgstr ""
+msgstr "Hora braniega de Siria"
 
 #: dlls/tzres/tzres.rc:170
 msgid "(UTC+04:00) Tbilisi"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:393 dlls/tzres/tzres.rc:394
+msgctxt "maximum 31 characters"
 msgid "UTC+12"
 msgstr ""
 
@@ -10385,10 +10398,12 @@ msgid "(UTC+12:00) Coordinated Universal Time+12"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:252
+msgctxt "maximum 31 characters"
 msgid "Nepal Standard Time"
 msgstr "Hora estándar de Nepal"
 
 #: dlls/tzres/tzres.rc:253
+msgctxt "maximum 31 characters"
 msgid "Nepal Daylight Time"
 msgstr "Hora braniega de Nepal"
 
@@ -10397,10 +10412,12 @@ msgid "(UTC+05:45) Kathmandu"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:90
+msgctxt "maximum 31 characters"
 msgid "Cape Verde Standard Time"
 msgstr "Hora estándar de Cabu Verde"
 
 #: dlls/tzres/tzres.rc:91
+msgctxt "maximum 31 characters"
 msgid "Cape Verde Daylight Time"
 msgstr "Hora braniega de Cabu Verde"
 
@@ -10411,12 +10428,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:183
 #, fuzzy
 #| msgid "Taipei Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Haiti Standard Time"
 msgstr "Hora estándar de Taipéi"
 
 #: dlls/tzres/tzres.rc:184
 #, fuzzy
 #| msgid "Taipei Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Haiti Daylight Time"
 msgstr "Hora braniega de Taipéi"
 
@@ -10425,22 +10444,32 @@ msgid "(UTC-05:00) Haiti"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:111
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Central Europe Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Central European Standard Time"
-msgstr ""
+msgstr "Hora estándar d'Europa Central"
 
 #: dlls/tzres/tzres.rc:112
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Central Europe Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Central European Daylight Time"
-msgstr ""
+msgstr "Hora braniega d'Europa Central"
 
 #: dlls/tzres/tzres.rc:113
 msgid "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:234
+msgctxt "maximum 31 characters"
 msgid "Morocco Standard Time"
 msgstr "Hora estándar de Marruecos"
 
 #: dlls/tzres/tzres.rc:235
+msgctxt "maximum 31 characters"
 msgid "Morocco Daylight Time"
 msgstr "Hora braniega de Marruecos"
 
@@ -10449,6 +10478,7 @@ msgid "(UTC+01:00) Casablanca"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:402 dlls/tzres/tzres.rc:403
+msgctxt "maximum 31 characters"
 msgid "UTC-08"
 msgstr ""
 
@@ -10459,12 +10489,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:39
 #, fuzzy
 #| msgid "Argentina Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Altai Standard Time"
 msgstr "Hora estándar d'Arxentina"
 
 #: dlls/tzres/tzres.rc:40
 #, fuzzy
 #| msgid "Argentina Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Altai Daylight Time"
 msgstr "Hora braniega d'Arxentina"
 
@@ -10473,10 +10505,12 @@ msgid "(UTC+07:00) Barnaul, Gorno-Altaysk"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:108
+msgctxt "maximum 31 characters"
 msgid "Central Europe Standard Time"
 msgstr "Hora estándar d'Europa Central"
 
 #: dlls/tzres/tzres.rc:109
+msgctxt "maximum 31 characters"
 msgid "Central Europe Daylight Time"
 msgstr "Hora braniega d'Europa Central"
 
@@ -10485,12 +10519,16 @@ msgid "(UTC+01:00) Belgrade, Bratislava, Budapest, Ljubljana, Prague"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:192
+msgctxt "maximum 31 characters"
 msgid "Iran Standard Time"
 msgstr "Hora estándar d'Iran"
 
 #: dlls/tzres/tzres.rc:193
+#, fuzzy
+#| msgid "China Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Iran Daylight Time"
-msgstr ""
+msgstr "Hora braniega de China"
 
 #: dlls/tzres/tzres.rc:194
 msgid "(UTC+03:30) Tehran"
@@ -10499,12 +10537,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:318
 #, fuzzy
 #| msgid "Taipei Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Saint Pierre Standard Time"
 msgstr "Hora estándar de Taipéi"
 
 #: dlls/tzres/tzres.rc:319
 #, fuzzy
 #| msgid "Taipei Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Saint Pierre Daylight Time"
 msgstr "Hora braniega de Taipéi"
 
@@ -10517,12 +10557,14 @@ msgstr "Hora estándar de Taipéi"
 #: dlls/tzres/tzres.rc:327
 #, fuzzy
 #| msgid "Samoa Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Sao Tome Standard Time"
 msgstr "Hora estándar de Samoa"
 
 #: dlls/tzres/tzres.rc:328
 #, fuzzy
 #| msgid "Samoa Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Sao Tome Daylight Time"
 msgstr "Hora braniega de Samoa"
 
@@ -10531,10 +10573,12 @@ msgid "(UTC+00:00) Sao Tome"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:249
+msgctxt "maximum 31 characters"
 msgid "Namibia Standard Time"
 msgstr "Hora estándar de Namibia"
 
 #: dlls/tzres/tzres.rc:250
+msgctxt "maximum 31 characters"
 msgid "Namibia Daylight Time"
 msgstr "Hora braniega de Namibia"
 
@@ -10543,34 +10587,52 @@ msgid "(UTC+02:00) Windhoek"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:369
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "China Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Tonga Standard Time"
-msgstr ""
+msgstr "Hora estándar de China"
 
 #: dlls/tzres/tzres.rc:370
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "China Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Tonga Daylight Time"
-msgstr ""
+msgstr "Hora braniega de China"
 
 #: dlls/tzres/tzres.rc:371
 msgid "(UTC+13:00) Nuku'alofa"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:240
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Central Standard Time (Mexico)"
+msgctxt "maximum 31 characters"
 msgid "Mountain Standard Time (Mexico)"
-msgstr ""
+msgstr "Hora estándar central (Méxicu)"
 
 #: dlls/tzres/tzres.rc:241
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Central Daylight Time (Mexico)"
+msgctxt "maximum 31 characters"
 msgid "Mountain Daylight Time (Mexico)"
-msgstr ""
+msgstr "Hora braniega central (Méxicu)"
 
 #: dlls/tzres/tzres.rc:242
 msgid "(UTC-07:00) Chihuahua, La Paz, Mazatlan"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:171
+msgctxt "maximum 31 characters"
 msgid "GMT Standard Time"
 msgstr "Hora estándar de GMT"
 
 #: dlls/tzres/tzres.rc:172
+msgctxt "maximum 31 characters"
 msgid "GMT Daylight Time"
 msgstr "Hora braniega de GMT"
 
@@ -10581,12 +10643,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:342
 #, fuzzy
 #| msgid "Jordan Standard Time"
+msgctxt "maximum 31 characters"
 msgid "South Sudan Standard Time"
 msgstr "Hora estándar de Xordania"
 
 #: dlls/tzres/tzres.rc:343
 #, fuzzy
 #| msgid "China Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "South Sudan Daylight Time"
 msgstr "Hora braniega de China"
 
@@ -10595,10 +10659,12 @@ msgid "(UTC+02:00) Juba"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:102
+msgctxt "maximum 31 characters"
 msgid "Central Asia Standard Time"
 msgstr "Hora estándar d'Asia Central"
 
 #: dlls/tzres/tzres.rc:103
+msgctxt "maximum 31 characters"
 msgid "Central Asia Daylight Time"
 msgstr "Hora braniega d'Asia Central"
 
@@ -10609,12 +10675,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:213
 #, fuzzy
 #| msgid "Korea Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Lord Howe Standard Time"
 msgstr "Hora estándar de Corea"
 
 #: dlls/tzres/tzres.rc:214
 #, fuzzy
 #| msgid "Korea Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Lord Howe Daylight Time"
 msgstr "Hora braniega de Corea"
 
@@ -10623,18 +10691,25 @@ msgid "(UTC+10:30) Lord Howe Island"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:48
+#, fuzzy
+#| msgid "Argentina Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Arabic Standard Time"
-msgstr ""
+msgstr "Hora estándar d'Arxentina"
 
 #: dlls/tzres/tzres.rc:49
+#, fuzzy
+#| msgid "Argentina Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Arabic Daylight Time"
-msgstr ""
+msgstr "Hora braniega d'Arxentina"
 
 #: dlls/tzres/tzres.rc:50
 msgid "(UTC+03:00) Baghdad"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:396 dlls/tzres/tzres.rc:397
+msgctxt "maximum 31 characters"
 msgid "UTC+13"
 msgstr ""
 
@@ -10643,22 +10718,30 @@ msgid "(UTC+13:00) Coordinated Universal Time+13"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:216
+#, fuzzy
+#| msgid "Bangladesh Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Magadan Standard Time"
-msgstr ""
+msgstr "Hora estándar de Bangladex"
 
 #: dlls/tzres/tzres.rc:217
+#, fuzzy
+#| msgid "Bangladesh Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Magadan Daylight Time"
-msgstr ""
+msgstr "Hora braniega de Bangladex"
 
 #: dlls/tzres/tzres.rc:218
 msgid "(UTC+11:00) Magadan"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:258
+msgctxt "maximum 31 characters"
 msgid "Newfoundland Standard Time"
 msgstr "Hora estándar de Newfoundland"
 
 #: dlls/tzres/tzres.rc:259
+msgctxt "maximum 31 characters"
 msgid "Newfoundland Daylight Time"
 msgstr "Hora braniega de Newfoundland"
 
@@ -10669,12 +10752,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:348
 #, fuzzy
 #| msgid "Jordan Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Sudan Standard Time"
 msgstr "Hora estándar de Xordania"
 
 #: dlls/tzres/tzres.rc:349
 #, fuzzy
 #| msgid "China Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Sudan Daylight Time"
 msgstr "Hora braniega de China"
 
@@ -10683,34 +10768,48 @@ msgid "(UTC+02:00) Khartoum"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:438
+#, fuzzy
+#| msgid "West Asia Standard Time"
+msgctxt "maximum 31 characters"
 msgid "West Pacific Standard Time"
-msgstr ""
+msgstr "Hora estándar d'Asia del Oeste"
 
 #: dlls/tzres/tzres.rc:439
+#, fuzzy
+#| msgid "West Asia Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "West Pacific Daylight Time"
-msgstr ""
+msgstr "Hora braniega d'Asia del Oeste"
 
 #: dlls/tzres/tzres.rc:440
 msgid "(UTC+10:00) Guam, Port Moresby"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:279
+#, fuzzy
+#| msgid "Taipei Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Pacific Standard Time"
-msgstr ""
+msgstr "Hora estándar de Taipéi"
 
 #: dlls/tzres/tzres.rc:280
+#, fuzzy
+#| msgid "Taipei Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Pacific Daylight Time"
-msgstr ""
+msgstr "Hora braniega de Taipéi"
 
 #: dlls/tzres/tzres.rc:281
 msgid "(UTC-08:00) Pacific Time (US & Canada)"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:69
+msgctxt "maximum 31 characters"
 msgid "Azerbaijan Standard Time"
 msgstr "Hora estándar d'Azerbaixán"
 
 #: dlls/tzres/tzres.rc:70
+msgctxt "maximum 31 characters"
 msgid "Azerbaijan Daylight Time"
 msgstr "Hora braniega d'Azerbaixán"
 
@@ -10721,12 +10820,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:219
 #, fuzzy
 #| msgid "Bangladesh Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Magallanes Standard Time"
 msgstr "Hora estándar de Bangladex"
 
 #: dlls/tzres/tzres.rc:220
 #, fuzzy
 #| msgid "Bangladesh Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Magallanes Daylight Time"
 msgstr "Hora braniega de Bangladex"
 
@@ -10735,10 +10836,12 @@ msgid "(UTC-03:00) Punta Arenas"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:324
+msgctxt "maximum 31 characters"
 msgid "Samoa Standard Time"
 msgstr "Hora estándar de Samoa"
 
 #: dlls/tzres/tzres.rc:325
+msgctxt "maximum 31 characters"
 msgid "Samoa Daylight Time"
 msgstr "Hora braniega de Samoa"
 
@@ -10747,10 +10850,12 @@ msgid "(UTC+13:00) Samoa"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:201
+msgctxt "maximum 31 characters"
 msgid "Kaliningrad Standard Time"
 msgstr "Hora estándar de Kaliningráu"
 
 #: dlls/tzres/tzres.rc:202
+msgctxt "maximum 31 characters"
 msgid "Kaliningrad Daylight Time"
 msgstr "Hora braniega de Kaliningráu"
 
@@ -10759,34 +10864,49 @@ msgid "(UTC+02:00) Kaliningrad"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:282
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Central Standard Time (Mexico)"
+msgctxt "maximum 31 characters"
 msgid "Pacific Standard Time (Mexico)"
-msgstr ""
+msgstr "Hora estándar central (Méxicu)"
 
 #: dlls/tzres/tzres.rc:283
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Central Daylight Time (Mexico)"
+msgctxt "maximum 31 characters"
 msgid "Pacific Daylight Time (Mexico)"
-msgstr ""
+msgstr "Hora braniega central (Méxicu)"
 
 #: dlls/tzres/tzres.rc:284
 msgid "(UTC-08:00) Baja California"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:228
+msgctxt "maximum 31 characters"
 msgid "Middle East Standard Time"
 msgstr "Hora estándar d'Oriente Mediu"
 
 #: dlls/tzres/tzres.rc:229
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Eastern Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Middle East Daylight Time"
-msgstr ""
+msgstr "Hora braniega oriental"
 
 #: dlls/tzres/tzres.rc:230
 msgid "(UTC+02:00) Beirut"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:363
+msgctxt "maximum 31 characters"
 msgid "Tokyo Standard Time"
 msgstr "Hora estándar de Tokiu"
 
 #: dlls/tzres/tzres.rc:364
+msgctxt "maximum 31 characters"
 msgid "Tokyo Daylight Time"
 msgstr "Hora braniega de Tokiu"
 
@@ -10795,12 +10915,19 @@ msgid "(UTC+09:00) Osaka, Sapporo, Tokyo"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:210
+#, fuzzy
+#| msgid "Central Asia Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Line Islands Standard Time"
-msgstr ""
+msgstr "Hora estándar d'Asia Central"
 
 #: dlls/tzres/tzres.rc:211
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Easter Island Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Line Islands Daylight Time"
-msgstr ""
+msgstr "Hora braniega d'Islla de Pascua"
 
 #: dlls/tzres/tzres.rc:212
 msgid "(UTC+14:00) Kiritimati Island"
@@ -10809,12 +10936,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:129
 #, fuzzy
 #| msgid "China Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Cuba Standard Time"
 msgstr "Hora estándar de China"
 
 #: dlls/tzres/tzres.rc:130
 #, fuzzy
 #| msgid "China Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Cuba Daylight Time"
 msgstr "Hora braniega de China"
 
@@ -10823,22 +10952,28 @@ msgid "(UTC-05:00) Havana"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:198
+msgctxt "maximum 31 characters"
 msgid "Jordan Standard Time"
 msgstr "Hora estándar de Xordania"
 
 #: dlls/tzres/tzres.rc:199
+#, fuzzy
+#| msgid "China Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Jordan Daylight Time"
-msgstr ""
+msgstr "Hora braniega de China"
 
 #: dlls/tzres/tzres.rc:200
 msgid "(UTC+02:00) Amman"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:117
+msgctxt "maximum 31 characters"
 msgid "Central Standard Time"
 msgstr "Hora estándar central"
 
 #: dlls/tzres/tzres.rc:118
+msgctxt "maximum 31 characters"
 msgid "Central Daylight Time"
 msgstr "Hora braniega central"
 
@@ -10847,6 +10982,7 @@ msgid "(UTC-06:00) Central Time (US & Canada)"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:303 dlls/tzres/tzres.rc:304
+msgctxt "maximum 31 characters"
 msgid "Russia Time Zone 3"
 msgstr ""
 
@@ -10857,12 +10993,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:417
 #, fuzzy
 #| msgid "Korea Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Volgograd Standard Time"
 msgstr "Hora estándar de Corea"
 
 #: dlls/tzres/tzres.rc:418
 #, fuzzy
 #| msgid "Korea Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Volgograd Daylight Time"
 msgstr "Hora braniega de Corea"
 
@@ -10871,22 +11009,37 @@ msgid "(UTC+04:00) Volgograd"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:72
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Korea Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Azores Standard Time"
-msgstr ""
+msgstr "Hora estándar de Corea"
 
 #: dlls/tzres/tzres.rc:73
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Korea Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Azores Daylight Time"
-msgstr ""
+msgstr "Hora braniega de Corea"
 
 #: dlls/tzres/tzres.rc:74
 msgid "(UTC-01:00) Azores"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:264
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "North Asia Standard Time"
+msgctxt "maximum 31 characters"
 msgid "North Asia East Standard Time"
-msgstr ""
+msgstr "Hora estándar d'Asia del Norte"
 
 #: dlls/tzres/tzres.rc:265
+#, fuzzy
+#| msgid "North Asia East Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "North Asia East Daylight Time"
 msgstr "Hora braniega d'Asia del Noreste"
 
@@ -10895,6 +11048,7 @@ msgid "(UTC+08:00) Irkutsk"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:408 dlls/tzres/tzres.rc:409
+msgctxt "maximum 31 characters"
 msgid "UTC-11"
 msgstr ""
 
@@ -10903,10 +11057,12 @@ msgid "(UTC-11:00) Coordinated Universal Time-11"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:51
+msgctxt "maximum 31 characters"
 msgid "Argentina Standard Time"
 msgstr "Hora estándar d'Arxentina"
 
 #: dlls/tzres/tzres.rc:52
+msgctxt "maximum 31 characters"
 msgid "Argentina Daylight Time"
 msgstr "Hora braniega d'Arxentina"
 
@@ -10917,12 +11073,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:378
 #, fuzzy
 #| msgid "Turkey Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Turks And Caicos Standard Time"
 msgstr "Hora estándar de Turquía"
 
 #: dlls/tzres/tzres.rc:379
 #, fuzzy
 #| msgid "Turkey Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Turks And Caicos Daylight Time"
 msgstr "Hora braniega de Turquía"
 
@@ -10933,12 +11091,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:222
 #, fuzzy
 #| msgid "Belarus Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Marquesas Standard Time"
 msgstr "Hora estándar de Bielorrusia"
 
 #: dlls/tzres/tzres.rc:223
 #, fuzzy
 #| msgid "Belarus Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Marquesas Daylight Time"
 msgstr "Hora braniega de Bielorrusia"
 
@@ -10947,18 +11107,27 @@ msgid "(UTC-09:30) Marquesas Islands"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:243
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Samoa Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Myanmar Standard Time"
-msgstr ""
+msgstr "Hora estándar de Samoa"
 
 #: dlls/tzres/tzres.rc:244
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Samoa Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Myanmar Daylight Time"
-msgstr ""
+msgstr "Hora braniega de Samoa"
 
 #: dlls/tzres/tzres.rc:245
 msgid "(UTC+06:30) Yangon (Rangoon)"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:390 dlls/tzres/tzres.rc:391
+msgctxt "maximum 31 characters"
 msgid "Coordinated Universal Time"
 msgstr ""
 
@@ -10967,10 +11136,12 @@ msgid "(UTC) Coordinated Universal Time"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:189
+msgctxt "maximum 31 characters"
 msgid "India Standard Time"
 msgstr "Hora estándar d'Irán"
 
 #: dlls/tzres/tzres.rc:190
+msgctxt "maximum 31 characters"
 msgid "India Daylight Time"
 msgstr "Hora braniega d'India"
 
@@ -10979,10 +11150,12 @@ msgid "(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:180
+msgctxt "maximum 31 characters"
 msgid "GTB Standard Time"
 msgstr "Hora estándar de GTB"
 
 #: dlls/tzres/tzres.rc:181
+msgctxt "maximum 31 characters"
 msgid "GTB Daylight Time"
 msgstr "Hora braniega de GTB"
 
@@ -10991,10 +11164,12 @@ msgid "(UTC+02:00) Athens, Bucharest"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:375
+msgctxt "maximum 31 characters"
 msgid "Turkey Standard Time"
 msgstr "Hora estándar de Turquía"
 
 #: dlls/tzres/tzres.rc:376
+msgctxt "maximum 31 characters"
 msgid "Turkey Daylight Time"
 msgstr "Hora braniega de Turquía"
 
@@ -11005,12 +11180,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:54
 #, fuzzy
 #| msgid "Iran Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Astrakhan Standard Time"
 msgstr "Hora estándar d'Iran"
 
 #: dlls/tzres/tzres.rc:55
 #, fuzzy
 #| msgid "Eastern Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Astrakhan Daylight Time"
 msgstr "Hora braniega oriental"
 
@@ -11019,10 +11196,16 @@ msgid "(UTC+04:00) Astrakhan, Ulyanovsk"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:162
+#, fuzzy
+#| msgid "Fiji Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Fiji Standard Time"
 msgstr "Hora estándar de Les Islles Fixi"
 
 #: dlls/tzres/tzres.rc:163
+#, fuzzy
+#| msgid "Fiji Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Fiji Daylight Time"
 msgstr "Hora braniega de Les Islles Fixi"
 
@@ -11031,10 +11214,12 @@ msgid "(UTC+12:00) Fiji"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:87
+msgctxt "maximum 31 characters"
 msgid "Canada Central Standard Time"
 msgstr "Hora estándar de Canadá Central"
 
 #: dlls/tzres/tzres.rc:88
+msgctxt "maximum 31 characters"
 msgid "Canada Central Daylight Time"
 msgstr "Hora braniega de Canadá Central"
 
@@ -11045,12 +11230,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:444
 #, fuzzy
 #| msgid "Yakutsk Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Yukon Standard Time"
 msgstr "Hora estándar de Yakutsk"
 
 #: dlls/tzres/tzres.rc:445
 #, fuzzy
 #| msgid "Tokyo Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Yukon Daylight Time"
 msgstr "Hora braniega de Tokiu"
 
@@ -11059,10 +11246,12 @@ msgid "(UTC-07:00) Yukon"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:354
+msgctxt "maximum 31 characters"
 msgid "Taipei Standard Time"
 msgstr "Hora estándar de Taipéi"
 
 #: dlls/tzres/tzres.rc:355
+msgctxt "maximum 31 characters"
 msgid "Taipei Daylight Time"
 msgstr "Hora braniega de Taipéi"
 
@@ -11071,10 +11260,16 @@ msgid "(UTC+08:00) Taipei"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:426
+#, fuzzy
+#| msgid "W. Europe Standard Time"
+msgctxt "maximum 31 characters"
 msgid "W. Europe Standard Time"
 msgstr "Hora estándar d'Europa del Oeste"
 
 #: dlls/tzres/tzres.rc:427
+#, fuzzy
+#| msgid "W. Europe Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "W. Europe Daylight Time"
 msgstr "Hora braniega d'Europa del Oeste"
 
@@ -11083,22 +11278,28 @@ msgid "(UTC+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:231
+msgctxt "maximum 31 characters"
 msgid "Montevideo Standard Time"
 msgstr "Hora estándar de Montevidéu"
 
 #: dlls/tzres/tzres.rc:232
+#, fuzzy
+#| msgid "Taipei Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Montevideo Daylight Time"
-msgstr ""
+msgstr "Hora braniega de Taipéi"
 
 #: dlls/tzres/tzres.rc:233
 msgid "(UTC-03:00) Montevideo"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:285
+msgctxt "maximum 31 characters"
 msgid "Pakistan Standard Time"
 msgstr "Hora estándar de Paquistán"
 
 #: dlls/tzres/tzres.rc:286
+msgctxt "maximum 31 characters"
 msgid "Pakistan Daylight Time"
 msgstr "Hora braniega de Paquistán"
 
@@ -11109,12 +11310,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:366
 #, fuzzy
 #| msgid "Tokyo Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Tomsk Standard Time"
 msgstr "Hora estándar de Tokiu"
 
 #: dlls/tzres/tzres.rc:367
 #, fuzzy
 #| msgid "Tokyo Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Tomsk Daylight Time"
 msgstr "Hora braniega de Tokiu"
 
@@ -11123,46 +11326,72 @@ msgid "(UTC+07:00) Tomsk"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:93
+#, fuzzy
+#| msgid "China Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Caucasus Standard Time"
-msgstr ""
+msgstr "Hora estándar de China"
 
 #: dlls/tzres/tzres.rc:94
+#, fuzzy
+#| msgid "China Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Caucasus Daylight Time"
-msgstr ""
+msgstr "Hora braniega de China"
 
 #: dlls/tzres/tzres.rc:95
 msgid "(UTC+04:00) Yerevan"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:66
+#, fuzzy
+#| msgid "Iran Standard Time"
+msgctxt "maximum 31 characters"
 msgid "AUS Eastern Standard Time"
-msgstr ""
+msgstr "Hora estándar d'Iran"
 
 #: dlls/tzres/tzres.rc:67
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Eastern Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "AUS Eastern Daylight Time"
-msgstr ""
+msgstr "Hora braniega oriental"
 
 #: dlls/tzres/tzres.rc:68
 msgid "(UTC+10:00) Canberra, Melbourne, Sydney"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:246
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Central Asia Standard Time"
+msgctxt "maximum 31 characters"
 msgid "N. Central Asia Standard Time"
-msgstr ""
+msgstr "Hora estándar d'Asia Central"
 
 #: dlls/tzres/tzres.rc:247
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Central Asia Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "N. Central Asia Daylight Time"
-msgstr ""
+msgstr "Hora braniega d'Asia Central"
 
 #: dlls/tzres/tzres.rc:248
 msgid "(UTC+07:00) Novosibirsk"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:150
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Pakistan Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Eastern Standard Time"
-msgstr ""
+msgstr "Hora estándar de Paquistán"
 
 #: dlls/tzres/tzres.rc:151
+msgctxt "maximum 31 characters"
 msgid "Eastern Daylight Time"
 msgstr "Hora braniega oriental"
 
@@ -11173,12 +11402,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:372
 #, fuzzy
 #| msgid "Tasmania Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Transbaikal Standard Time"
 msgstr "Hora estándar de Tasmania"
 
 #: dlls/tzres/tzres.rc:373
 #, fuzzy
 #| msgid "Tasmania Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Transbaikal Daylight Time"
 msgstr "Hora braniega de Tasmania"
 
@@ -11189,12 +11420,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:141
 #, fuzzy
 #| msgid "W. Europe Standard Time"
+msgctxt "maximum 31 characters"
 msgid "E. Europe Standard Time"
 msgstr "Hora estándar d'Europa del Oeste"
 
 #: dlls/tzres/tzres.rc:142
 #, fuzzy
 #| msgid "W. Europe Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "E. Europe Daylight Time"
 msgstr "Hora braniega d'Europa del Oeste"
 
@@ -11203,10 +11436,12 @@ msgid "(UTC+02:00) Chisinau"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:120
+msgctxt "maximum 31 characters"
 msgid "Central Standard Time (Mexico)"
 msgstr "Hora estándar central (Méxicu)"
 
 #: dlls/tzres/tzres.rc:121
+msgctxt "maximum 31 characters"
 msgid "Central Daylight Time (Mexico)"
 msgstr "Hora braniega central (Méxicu)"
 
@@ -11217,12 +11452,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:330
 #, fuzzy
 #| msgid "Samoa Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Saratov Standard Time"
 msgstr "Hora estándar de Samoa"
 
 #: dlls/tzres/tzres.rc:331
 #, fuzzy
 #| msgid "Samoa Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Saratov Daylight Time"
 msgstr "Hora braniega de Samoa"
 
@@ -11231,36 +11468,55 @@ msgid "(UTC+04:00) Saratov"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:57
+#, fuzzy
+#| msgid "Argentina Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Atlantic Standard Time"
-msgstr ""
+msgstr "Hora estándar d'Arxentina"
 
 #: dlls/tzres/tzres.rc:58
+#, fuzzy
+#| msgid "Argentina Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Atlantic Daylight Time"
-msgstr ""
+msgstr "Hora braniega d'Arxentina"
 
 #: dlls/tzres/tzres.rc:59
 msgid "(UTC-04:00) Atlantic Time (Canada)"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:237
+#, fuzzy
+#| msgid "Taipei Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Mountain Standard Time"
-msgstr ""
+msgstr "Hora estándar de Taipéi"
 
 #: dlls/tzres/tzres.rc:238
+#, fuzzy
+#| msgid "Taipei Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Mountain Daylight Time"
-msgstr ""
+msgstr "Hora braniega de Taipéi"
 
 #: dlls/tzres/tzres.rc:239
 msgid "(UTC-07:00) Mountain Time (US & Canada)"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:384
+#, fuzzy
+#| msgid "Jordan Standard Time"
+msgctxt "maximum 31 characters"
 msgid "US Eastern Standard Time"
-msgstr ""
+msgstr "Hora estándar de Xordania"
 
 #: dlls/tzres/tzres.rc:385
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Eastern Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "US Eastern Daylight Time"
-msgstr ""
+msgstr "Hora braniega oriental"
 
 #: dlls/tzres/tzres.rc:386
 msgid "(UTC-05:00) Indiana (East)"
@@ -11269,12 +11525,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:321
 #, fuzzy
 #| msgid "China Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Sakhalin Standard Time"
 msgstr "Hora estándar de China"
 
 #: dlls/tzres/tzres.rc:322
 #, fuzzy
 #| msgid "China Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Sakhalin Daylight Time"
 msgstr "Hora braniega de China"
 
@@ -11285,12 +11543,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:270
 #, fuzzy
 #| msgid "Korea Standard Time"
+msgctxt "maximum 31 characters"
 msgid "North Korea Standard Time"
 msgstr "Hora estándar de Corea"
 
 #: dlls/tzres/tzres.rc:271
 #, fuzzy
 #| msgid "Korea Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "North Korea Daylight Time"
 msgstr "Hora braniega de Corea"
 
@@ -11299,10 +11559,12 @@ msgid "(UTC+09:00) Pyongyang"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:357
+msgctxt "maximum 31 characters"
 msgid "Tasmania Standard Time"
 msgstr "Hora estándar de Tasmania"
 
 #: dlls/tzres/tzres.rc:358
+msgctxt "maximum 31 characters"
 msgid "Tasmania Daylight Time"
 msgstr "Hora braniega de Tasmania"
 
@@ -11311,10 +11573,12 @@ msgid "(UTC+10:00) Hobart"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:99
+msgctxt "maximum 31 characters"
 msgid "Central America Standard Time"
 msgstr "Hora estándar d'América Central"
 
 #: dlls/tzres/tzres.rc:100
+msgctxt "maximum 31 characters"
 msgid "Central America Daylight Time"
 msgstr "Hora braniega d'América Central"
 
@@ -11323,6 +11587,7 @@ msgid "(UTC-06:00) Central America"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:399 dlls/tzres/tzres.rc:400
+msgctxt "maximum 31 characters"
 msgid "UTC-02"
 msgstr ""
 
@@ -11331,22 +11596,30 @@ msgid "(UTC-02:00) Coordinated Universal Time-02"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:387
+#, fuzzy
+#| msgid "Jordan Standard Time"
+msgctxt "maximum 31 characters"
 msgid "US Mountain Standard Time"
-msgstr ""
+msgstr "Hora estándar de Xordania"
 
 #: dlls/tzres/tzres.rc:388
+#, fuzzy
+#| msgid "China Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "US Mountain Daylight Time"
-msgstr ""
+msgstr "Hora braniega de China"
 
 #: dlls/tzres/tzres.rc:389
 msgid "(UTC-07:00) Arizona"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:339
+msgctxt "maximum 31 characters"
 msgid "South Africa Standard Time"
 msgstr "Hora estándar de Sudáfrica"
 
 #: dlls/tzres/tzres.rc:340
+msgctxt "maximum 31 characters"
 msgid "South Africa Daylight Time"
 msgstr "Hora braniega de Sudáfrica"
 
@@ -11355,10 +11628,16 @@ msgid "(UTC+02:00) Harare, Pretoria"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:96
+#, fuzzy
+#| msgid "Cen. Australia Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Cen. Australia Standard Time"
 msgstr "Hora estándar d'Australia Central"
 
 #: dlls/tzres/tzres.rc:97
+#, fuzzy
+#| msgid "Cen. Australia Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Cen. Australia Daylight Time"
 msgstr "Hora braniega d'Australia Central"
 
@@ -11367,6 +11646,7 @@ msgid "(UTC+09:30) Adelaide"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:405 dlls/tzres/tzres.rc:406
+msgctxt "maximum 31 characters"
 msgid "UTC-09"
 msgstr ""
 
@@ -11375,10 +11655,12 @@ msgid "(UTC-09:00) Coordinated Universal Time-09"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:345
+msgctxt "maximum 31 characters"
 msgid "Sri Lanka Standard Time"
 msgstr "Hora estándar de Sri Lanka"
 
 #: dlls/tzres/tzres.rc:346
+msgctxt "maximum 31 characters"
 msgid "Sri Lanka Daylight Time"
 msgstr "Hora braniega de Sri Lanka"
 
@@ -11387,10 +11669,12 @@ msgid "(UTC+05:30) Sri Jayawardenepura"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:30
+msgctxt "maximum 31 characters"
 msgid "Afghanistan Standard Time"
 msgstr "Hos estándar d'Afganistán"
 
 #: dlls/tzres/tzres.rc:31
+msgctxt "maximum 31 characters"
 msgid "Afghanistan Daylight Time"
 msgstr "Hora braniega d'Afganistán"
 
@@ -11399,48 +11683,74 @@ msgid "(UTC+04:30) Kabul"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:441
+msgctxt "maximum 31 characters"
 msgid "Yakutsk Standard Time"
 msgstr "Hora estándar de Yakutsk"
 
 #: dlls/tzres/tzres.rc:442
+#, fuzzy
+#| msgid "Tokyo Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Yakutsk Daylight Time"
-msgstr ""
+msgstr "Hora braniega de Tokiu"
 
 #: dlls/tzres/tzres.rc:443
 msgid "(UTC+09:00) Yakutsk"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:309
+#, fuzzy
+#| msgid "Iran Standard Time"
+msgctxt "maximum 31 characters"
 msgid "SA Eastern Standard Time"
-msgstr ""
+msgstr "Hora estándar d'Iran"
 
 #: dlls/tzres/tzres.rc:310
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Eastern Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "SA Eastern Daylight Time"
-msgstr ""
+msgstr "Hora braniega oriental"
 
 #: dlls/tzres/tzres.rc:311
 msgid "(UTC-03:00) Cayenne, Fortaleza"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:42
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Iran Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Arab Standard Time"
-msgstr ""
+msgstr "Hora estándar d'Iran"
 
 #: dlls/tzres/tzres.rc:43
+#, fuzzy
+#| msgid "Argentina Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Arab Daylight Time"
-msgstr ""
+msgstr "Hora braniega d'Arxentina"
 
 #: dlls/tzres/tzres.rc:44
 msgid "(UTC+03:00) Kuwait, Riyadh"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:45
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Azerbaijan Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Arabian Standard Time"
-msgstr ""
+msgstr "Hora estándar d'Azerbaixán"
 
 #: dlls/tzres/tzres.rc:46
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Azerbaijan Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Arabian Daylight Time"
-msgstr ""
+msgstr "Hora braniega d'Azerbaixán"
 
 #: dlls/tzres/tzres.rc:47
 msgid "(UTC+04:00) Abu Dhabi, Muscat"
@@ -11449,12 +11759,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:360
 #, fuzzy
 #| msgid "Taipei Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Tocantins Standard Time"
 msgstr "Hora estándar de Taipéi"
 
 #: dlls/tzres/tzres.rc:361
 #, fuzzy
 #| msgid "Taipei Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Tocantins Daylight Time"
 msgstr "Hora braniega de Taipéi"
 
@@ -11463,10 +11775,12 @@ msgid "(UTC-03:00) Araguaina"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:306
+msgctxt "maximum 31 characters"
 msgid "Russian Standard Time"
 msgstr "Hora estándar de Rusia"
 
 #: dlls/tzres/tzres.rc:307
+msgctxt "maximum 31 characters"
 msgid "Russian Daylight Time"
 msgstr "Hora braniega de Russia"
 
@@ -11477,12 +11791,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:63
 #, fuzzy
 #| msgid "Central Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Aus Central W. Standard Time"
 msgstr "Hora estándar central"
 
 #: dlls/tzres/tzres.rc:64
 #, fuzzy
 #| msgid "Central Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Aus Central W. Daylight Time"
 msgstr "Hora braniega central"
 
@@ -11491,30 +11807,46 @@ msgid "(UTC+08:45) Eucla"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:294
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Jordan Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Romance Standard Time"
-msgstr ""
+msgstr "Hora estándar de Xordania"
 
 #: dlls/tzres/tzres.rc:295
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Russian Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Romance Daylight Time"
-msgstr ""
+msgstr "Hora braniega de Russia"
 
 #: dlls/tzres/tzres.rc:296
 msgid "(UTC+01:00) Brussels, Copenhagen, Madrid, Paris"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:159
+#, fuzzy
+#| msgid "Taipei Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Ekaterinburg Standard Time"
-msgstr ""
+msgstr "Hora estándar de Taipéi"
 
 #: dlls/tzres/tzres.rc:160
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Eastern Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Ekaterinburg Daylight Time"
-msgstr ""
+msgstr "Hora braniega oriental"
 
 #: dlls/tzres/tzres.rc:161
 msgid "(UTC+05:00) Ekaterinburg"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:300 dlls/tzres/tzres.rc:301
+msgctxt "maximum 31 characters"
 msgid "Russia Time Zone 11"
 msgstr ""
 
@@ -11525,12 +11857,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:435
 #, fuzzy
 #| msgid "West Asia Standard Time"
+msgctxt "maximum 31 characters"
 msgid "West Bank Standard Time"
 msgstr "Hora estándar d'Asia del Oeste"
 
 #: dlls/tzres/tzres.rc:436
 #, fuzzy
 #| msgid "West Asia Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "West Bank Daylight Time"
 msgstr "Hora braniega d'Asia del Oeste"
 
@@ -11539,10 +11873,12 @@ msgid "(UTC+02:00) Gaza, Hebron"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:351
+msgctxt "maximum 31 characters"
 msgid "Syria Standard Time"
 msgstr "Hora estándar de Siria"
 
 #: dlls/tzres/tzres.rc:352
+msgctxt "maximum 31 characters"
 msgid "Syria Daylight Time"
 msgstr "Hora braniega de Siria"
 
@@ -11551,34 +11887,52 @@ msgid "(UTC+02:00) Damascus"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:60
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Central Standard Time"
+msgctxt "maximum 31 characters"
 msgid "AUS Central Standard Time"
-msgstr ""
+msgstr "Hora estándar central"
 
 #: dlls/tzres/tzres.rc:61
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Central Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "AUS Central Daylight Time"
-msgstr ""
+msgstr "Hora braniega central"
 
 #: dlls/tzres/tzres.rc:62
 msgid "(UTC+09:30) Darwin"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:177
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Argentina Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Greenwich Standard Time"
-msgstr ""
+msgstr "Hora estándar d'Arxentina"
 
 #: dlls/tzres/tzres.rc:178
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Argentina Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Greenwich Daylight Time"
-msgstr ""
+msgstr "Hora braniega d'Arxentina"
 
 #: dlls/tzres/tzres.rc:179
 msgid "(UTC+00:00) Monrovia, Reykjavik"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:381
+msgctxt "maximum 31 characters"
 msgid "Ulaanbaatar Standard Time"
 msgstr "Hora estándar d'Ulán Bátor"
 
 #: dlls/tzres/tzres.rc:382
+msgctxt "maximum 31 characters"
 msgid "Ulaanbaatar Daylight Time"
 msgstr "Hora braniega d'Ulán Bátor"
 
@@ -11589,12 +11943,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:261
 #, fuzzy
 #| msgid "Morocco Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Norfolk Standard Time"
 msgstr "Hora estándar de Marruecos"
 
 #: dlls/tzres/tzres.rc:262
 #, fuzzy
 #| msgid "Morocco Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Norfolk Daylight Time"
 msgstr "Hora braniega de Marruecos"
 
@@ -11603,22 +11959,29 @@ msgid "(UTC+11:00) Norfolk Island"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:195
+msgctxt "maximum 31 characters"
 msgid "Israel Standard Time"
 msgstr "Hora estándar d'Israel"
 
 #: dlls/tzres/tzres.rc:196
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Central Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Israel Daylight Time"
-msgstr ""
+msgstr "Hora braniega central"
 
 #: dlls/tzres/tzres.rc:197
 msgid "(UTC+02:00) Jerusalem"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:78
+msgctxt "maximum 31 characters"
 msgid "Bangladesh Standard Time"
 msgstr "Hora estándar de Bangladex"
 
 #: dlls/tzres/tzres.rc:79
+msgctxt "maximum 31 characters"
 msgid "Bangladesh Daylight Time"
 msgstr "Hora braniega de Bangladex"
 
@@ -11627,22 +11990,30 @@ msgid "(UTC+06:00) Dhaka"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:312
+#, fuzzy
+#| msgid "Taipei Standard Time"
+msgctxt "maximum 31 characters"
 msgid "SA Pacific Standard Time"
-msgstr ""
+msgstr "Hora estándar de Taipéi"
 
 #: dlls/tzres/tzres.rc:313
+#, fuzzy
+#| msgid "Taipei Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "SA Pacific Daylight Time"
-msgstr ""
+msgstr "Hora braniega de Taipéi"
 
 #: dlls/tzres/tzres.rc:314
 msgid "(UTC-05:00) Bogota, Lima, Quito, Rio Branco"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:432
+msgctxt "maximum 31 characters"
 msgid "West Asia Standard Time"
 msgstr "Hora estándar d'Asia del Oeste"
 
 #: dlls/tzres/tzres.rc:433
+msgctxt "maximum 31 characters"
 msgid "West Asia Daylight Time"
 msgstr "Hora braniega d'Asia del Oeste"
 
@@ -11651,22 +12022,30 @@ msgid "(UTC+05:00) Ashgabat, Tashkent"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:33
+#, fuzzy
+#| msgid "Iran Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Alaskan Standard Time"
-msgstr ""
+msgstr "Hora estándar d'Iran"
 
 #: dlls/tzres/tzres.rc:34
+#, fuzzy
+#| msgid "Eastern Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Alaskan Daylight Time"
-msgstr ""
+msgstr "Hora braniega oriental"
 
 #: dlls/tzres/tzres.rc:35
 msgid "(UTC-09:00) Alaska"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:288
+msgctxt "maximum 31 characters"
 msgid "Paraguay Standard Time"
 msgstr "Hora estándar de Paraguái"
 
 #: dlls/tzres/tzres.rc:289
+msgctxt "maximum 31 characters"
 msgid "Paraguay Daylight Time"
 msgstr "Hora braniega de Paraguái"
 
@@ -11675,22 +12054,31 @@ msgid "(UTC-04:00) Asuncion"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:132
+#, fuzzy
+#| msgid "Taipei Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Dateline Standard Time"
-msgstr ""
+msgstr "Hora estándar de Taipéi"
 
 #: dlls/tzres/tzres.rc:133
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Eastern Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Dateline Daylight Time"
-msgstr ""
+msgstr "Hora braniega oriental"
 
 #: dlls/tzres/tzres.rc:134
 msgid "(UTC-12:00) International Date Line West"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:207
+msgctxt "maximum 31 characters"
 msgid "Libya Standard Time"
 msgstr "Hora estándar de Libia"
 
 #: dlls/tzres/tzres.rc:208
+msgctxt "maximum 31 characters"
 msgid "Libya Daylight Time"
 msgstr "Hora braniega de Libia"
 
@@ -11699,22 +12087,32 @@ msgid "(UTC+02:00) Tripoli"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:75
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "China Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Bahia Standard Time"
-msgstr ""
+msgstr "Hora estándar de China"
 
 #: dlls/tzres/tzres.rc:76
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "China Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Bahia Daylight Time"
-msgstr ""
+msgstr "Hora braniega de China"
 
 #: dlls/tzres/tzres.rc:77
 msgid "(UTC-03:00) Salvador"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:411
+msgctxt "maximum 31 characters"
 msgid "Venezuela Standard Time"
 msgstr "Hora estándar de Venezuela"
 
 #: dlls/tzres/tzres.rc:412
+msgctxt "maximum 31 characters"
 msgid "Venezuela Daylight Time"
 msgstr "Hora braniega de Venezuela"
 
@@ -11725,12 +12123,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:84
 #, fuzzy
 #| msgid "Montevideo Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Bougainville Standard Time"
 msgstr "Hora estándar de Montevidéu"
 
 #: dlls/tzres/tzres.rc:85
 #, fuzzy
 #| msgid "Bangladesh Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Bougainville Daylight Time"
 msgstr "Hora braniega de Bangladex"
 
@@ -11739,24 +12139,38 @@ msgid "(UTC+11:00) Bougainville Island"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:186
+#, fuzzy
+#| msgid "Taipei Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Hawaiian Standard Time"
-msgstr ""
+msgstr "Hora estándar de Taipéi"
 
 #: dlls/tzres/tzres.rc:187
+#, fuzzy
+#| msgid "Taipei Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Hawaiian Daylight Time"
-msgstr ""
+msgstr "Hora braniega de Taipéi"
 
 #: dlls/tzres/tzres.rc:188
 msgid "(UTC-10:00) Hawaii"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:333
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "West Asia Standard Time"
+msgctxt "maximum 31 characters"
 msgid "SE Asia Standard Time"
-msgstr ""
+msgstr "Hora estándar d'Asia del Oeste"
 
 #: dlls/tzres/tzres.rc:334
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "West Asia Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "SE Asia Daylight Time"
-msgstr ""
+msgstr "Hora braniega d'Asia del Oeste"
 
 #: dlls/tzres/tzres.rc:335
 msgid "(UTC+07:00) Bangkok, Hanoi, Jakarta"
@@ -11765,12 +12179,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:291
 #, fuzzy
 #| msgid "Jordan Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Qyzylorda Standard Time"
 msgstr "Hora estándar de Xordania"
 
 #: dlls/tzres/tzres.rc:292
 #, fuzzy
 #| msgid "Syria Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Qyzylorda Daylight Time"
 msgstr "Hora braniega de Siria"
 
@@ -11781,12 +12197,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:429
 #, fuzzy
 #| msgid "W. Australia Standard Time"
+msgctxt "maximum 31 characters"
 msgid "W. Mongolia Standard Time"
 msgstr "Hora estándar d'Australia del Oeste"
 
 #: dlls/tzres/tzres.rc:430
 #, fuzzy
 #| msgid "W. Australia Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "W. Mongolia Daylight Time"
 msgstr "Hora braniega d'Australia del Oeste"
 
@@ -11795,10 +12213,12 @@ msgid "(UTC+07:00) Hovd"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:255
+msgctxt "maximum 31 characters"
 msgid "New Zealand Standard Time"
 msgstr "Hora estándar de Nueva Zelanda"
 
 #: dlls/tzres/tzres.rc:256
+msgctxt "maximum 31 characters"
 msgid "New Zealand Daylight Time"
 msgstr "Hora braniega de Nueva Zelanda"
 
@@ -11809,12 +12229,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:36
 #, fuzzy
 #| msgid "Argentina Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Aleutian Standard Time"
 msgstr "Hora estándar d'Arxentina"
 
 #: dlls/tzres/tzres.rc:37
 #, fuzzy
 #| msgid "Argentina Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Aleutian Daylight Time"
 msgstr "Hora braniega d'Arxentina"
 
@@ -11825,12 +12247,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:273
 #, fuzzy
 #| msgid "Yakutsk Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Omsk Standard Time"
 msgstr "Hora estándar de Yakutsk"
 
 #: dlls/tzres/tzres.rc:274
 #, fuzzy
 #| msgid "Samoa Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Omsk Daylight Time"
 msgstr "Hora braniega de Samoa"
 
@@ -11839,22 +12263,32 @@ msgid "(UTC+06:00) Omsk"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:105
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Central Asia Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Central Brazilian Standard Time"
-msgstr ""
+msgstr "Hora estándar d'Asia Central"
 
 #: dlls/tzres/tzres.rc:106
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Central Asia Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Central Brazilian Daylight Time"
-msgstr ""
+msgstr "Hora braniega d'Asia Central"
 
 #: dlls/tzres/tzres.rc:107
 msgid "(UTC-04:00) Cuiaba"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:81
+msgctxt "maximum 31 characters"
 msgid "Belarus Standard Time"
 msgstr "Hora estándar de Bielorrusia"
 
 #: dlls/tzres/tzres.rc:82
+msgctxt "maximum 31 characters"
 msgid "Belarus Daylight Time"
 msgstr "Hora braniega de Bielorrusia"
 
@@ -11863,34 +12297,53 @@ msgid "(UTC+03:00) Minsk"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:315
+#, fuzzy
+#| msgid "Iran Standard Time"
+msgctxt "maximum 31 characters"
 msgid "SA Western Standard Time"
-msgstr ""
+msgstr "Hora estándar d'Iran"
 
 #: dlls/tzres/tzres.rc:316
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Eastern Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "SA Western Daylight Time"
-msgstr ""
+msgstr "Hora braniega oriental"
 
 #: dlls/tzres/tzres.rc:317
 msgid "(UTC-04:00) Georgetown, La Paz, Manaus, San Juan"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:174
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "New Zealand Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Greenland Standard Time"
-msgstr ""
+msgstr "Hora estándar de Nueva Zelanda"
 
 #: dlls/tzres/tzres.rc:175
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "New Zealand Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Greenland Daylight Time"
-msgstr ""
+msgstr "Hora braniega de Nueva Zelanda"
 
 #: dlls/tzres/tzres.rc:176
 msgid "(UTC-03:00) Greenland"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:147
+#, fuzzy
+#| msgid "Central Asia Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Easter Island Standard Time"
-msgstr ""
+msgstr "Hora estándar d'Asia Central"
 
 #: dlls/tzres/tzres.rc:148
+msgctxt "maximum 31 characters"
 msgid "Easter Island Daylight Time"
 msgstr "Hora braniega d'Islla de Pascua"
 
@@ -11899,6 +12352,7 @@ msgid "(UTC-06:00) Easter Island"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:297 dlls/tzres/tzres.rc:298
+msgctxt "maximum 31 characters"
 msgid "Russia Time Zone 10"
 msgstr ""
 
@@ -11907,10 +12361,12 @@ msgid "(UTC+11:00) Chokurdakh"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:156
+msgctxt "maximum 31 characters"
 msgid "Egypt Standard Time"
 msgstr "Hora estándar d'Exiptu"
 
 #: dlls/tzres/tzres.rc:157
+msgctxt "maximum 31 characters"
 msgid "Egypt Daylight Time"
 msgstr "Hora braniega d'Exiptu"
 
@@ -11921,12 +12377,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:153
 #, fuzzy
 #| msgid "Central Standard Time (Mexico)"
+msgctxt "maximum 31 characters"
 msgid "Eastern Standard Time (Mexico)"
 msgstr "Hora estándar central (Méxicu)"
 
 #: dlls/tzres/tzres.rc:154
 #, fuzzy
 #| msgid "Central Daylight Time (Mexico)"
+msgctxt "maximum 31 characters"
 msgid "Eastern Daylight Time (Mexico)"
 msgstr "Hora braniega central (Méxicu)"
 
@@ -11935,22 +12393,30 @@ msgid "(UTC-05:00) Chetumal"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:225
+#, fuzzy
+#| msgid "Taipei Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Mauritius Standard Time"
-msgstr ""
+msgstr "Hora estándar de Taipéi"
 
 #: dlls/tzres/tzres.rc:226
+#, fuzzy
+#| msgid "Taipei Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Mauritius Daylight Time"
-msgstr ""
+msgstr "Hora braniega de Taipéi"
 
 #: dlls/tzres/tzres.rc:227
 msgid "(UTC+04:00) Port Louis"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:414
+msgctxt "maximum 31 characters"
 msgid "Vladivostok Standard Time"
 msgstr "Hora estándar de Vladivostok"
 
 #: dlls/tzres/tzres.rc:415
+msgctxt "maximum 31 characters"
 msgid "Vladivostok Daylight Time"
 msgstr "Hora braniega de Vladivostok"
 
@@ -11959,10 +12425,12 @@ msgid "(UTC+10:00) Vladivostok"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:336
+msgctxt "maximum 31 characters"
 msgid "Singapore Standard Time"
 msgstr "Hora estándar de Singapur"
 
 #: dlls/tzres/tzres.rc:337
+msgctxt "maximum 31 characters"
 msgid "Singapore Daylight Time"
 msgstr "Hora braniega de Singapur"
 
@@ -11971,10 +12439,12 @@ msgid "(UTC+08:00) Kuala Lumpur, Singapore"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:204
+msgctxt "maximum 31 characters"
 msgid "Korea Standard Time"
 msgstr "Hora estándar de Corea"
 
 #: dlls/tzres/tzres.rc:205
+msgctxt "maximum 31 characters"
 msgid "Korea Daylight Time"
 msgstr "Hora braniega de Corea"
 
@@ -11985,12 +12455,14 @@ msgstr ""
 #: dlls/tzres/tzres.rc:123
 #, fuzzy
 #| msgid "Central Asia Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Chatham Islands Standard Time"
 msgstr "Hora estándar d'Asia Central"
 
 #: dlls/tzres/tzres.rc:124
 #, fuzzy
 #| msgid "Easter Island Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Chatham Islands Daylight Time"
 msgstr "Hora braniega d'Islla de Pascua"
 
@@ -11999,10 +12471,15 @@ msgid "(UTC+12:45) Chatham Islands"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:135
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "South Africa Standard Time"
+msgctxt "maximum 31 characters"
 msgid "E. Africa Standard Time"
-msgstr ""
+msgstr "Hora estándar de Sudáfrica"
 
 #: dlls/tzres/tzres.rc:136
+msgctxt "maximum 31 characters"
 msgid "E. Africa Daylight Time"
 msgstr "Hora braniega d'África del Este"
 
@@ -12011,22 +12488,35 @@ msgid "(UTC+03:00) Nairobi"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:165
+#, fuzzy
+#| msgid "Fiji Standard Time"
+msgctxt "maximum 31 characters"
 msgid "FLE Standard Time"
-msgstr ""
+msgstr "Hora estándar de Les Islles Fixi"
 
 #: dlls/tzres/tzres.rc:166
+#, fuzzy
+#| msgid "Fiji Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "FLE Daylight Time"
-msgstr ""
+msgstr "Hora braniega de Les Islles Fixi"
 
 #: dlls/tzres/tzres.rc:167
 msgid "(UTC+02:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:144
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "South Africa Standard Time"
+msgctxt "maximum 31 characters"
 msgid "E. South America Standard Time"
-msgstr ""
+msgstr "Hora estándar de Sudáfrica"
 
 #: dlls/tzres/tzres.rc:145
+#, fuzzy
+#| msgid "E. South America Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "E. South America Daylight Time"
 msgstr "Hora braniega de Suramérica del Este"
 
@@ -12035,22 +12525,36 @@ msgid "(UTC-03:00) Brasilia"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:114
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Central Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Central Pacific Standard Time"
-msgstr ""
+msgstr "Hora estándar central"
 
 #: dlls/tzres/tzres.rc:115
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "Central Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Central Pacific Daylight Time"
-msgstr ""
+msgstr "Hora braniega central"
 
 #: dlls/tzres/tzres.rc:116
 msgid "(UTC+11:00) Solomon Is., New Caledonia"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:423
+#, fuzzy
+#| msgid "W. Central Africa Standard Time"
+msgctxt "maximum 31 characters"
 msgid "W. Central Africa Standard Time"
 msgstr "Hora estándar d'África del Oeste Central"
 
 #: dlls/tzres/tzres.rc:424
+#, fuzzy
+#| msgid "W. Central Africa Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "W. Central Africa Daylight Time"
 msgstr "Hora braniega d'África del Oeste Central"
 
@@ -12059,22 +12563,34 @@ msgid "(UTC+01:00) West Central Africa"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:276
+#, fuzzy
+#| msgid "Taipei Standard Time"
+msgctxt "maximum 31 characters"
 msgid "Pacific SA Standard Time"
-msgstr ""
+msgstr "Hora estándar de Taipéi"
 
 #: dlls/tzres/tzres.rc:277
+#, fuzzy
+#| msgid "Taipei Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "Pacific SA Daylight Time"
-msgstr ""
+msgstr "Hora braniega de Taipéi"
 
 #: dlls/tzres/tzres.rc:278
 msgid "(UTC-04:00) Santiago"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:138
+#, fuzzy
+#| msgid "W. Australia Standard Time"
+msgctxt "maximum 31 characters"
 msgid "E. Australia Standard Time"
-msgstr ""
+msgstr "Hora estándar d'Australia del Oeste"
 
 #: dlls/tzres/tzres.rc:139
+#, fuzzy
+#| msgid "E. Australia Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "E. Australia Daylight Time"
 msgstr "Hora braniega d'Austrália del Este"
 
@@ -12083,10 +12599,16 @@ msgid "(UTC+10:00) Brisbane"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:420
+#, fuzzy
+#| msgid "W. Australia Standard Time"
+msgctxt "maximum 31 characters"
 msgid "W. Australia Standard Time"
 msgstr "Hora estándar d'Australia del Oeste"
 
 #: dlls/tzres/tzres.rc:421
+#, fuzzy
+#| msgid "W. Australia Daylight Time"
+msgctxt "maximum 31 characters"
 msgid "W. Australia Daylight Time"
 msgstr "Hora braniega d'Australia del Oeste"
 
