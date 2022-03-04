@@ -1775,6 +1775,34 @@ NTSTATUS WINAPI BCryptImportKeyPair( BCRYPT_ALG_HANDLE algorithm, BCRYPT_KEY_HAN
         return STATUS_NOT_IMPLEMENTED;
     }
 
+    if (!wcscmp( type, BCRYPT_PUBLIC_KEY_BLOB ))
+    {
+        BCRYPT_KEY_BLOB *key_blob = (BCRYPT_KEY_BLOB *)input;
+
+        if (input_len < sizeof(*key_blob)) return STATUS_INVALID_PARAMETER;
+
+        switch (key_blob->Magic)
+        {
+        case BCRYPT_ECDH_PUBLIC_P256_MAGIC:
+        case BCRYPT_ECDSA_PUBLIC_P256_MAGIC:
+        case BCRYPT_ECDSA_PUBLIC_P384_MAGIC:
+            type = BCRYPT_ECCPUBLIC_BLOB;
+            break;
+
+        case BCRYPT_RSAPUBLIC_MAGIC:
+            type = BCRYPT_RSAPUBLIC_BLOB;
+            break;
+
+        case BCRYPT_DSA_PUBLIC_MAGIC:
+            type = BCRYPT_DSA_PUBLIC_BLOB;
+            break;
+
+        default:
+            FIXME( "unsupported key magic %#lx\n", key_blob->Magic );
+            return STATUS_NOT_SUPPORTED;
+        }
+    }
+
     return key_import_pair( alg, type, ret_key, input, input_len );
 }
 

@@ -1845,6 +1845,10 @@ static void test_ECDSA(void)
 
     ecckey->dwMagic = BCRYPT_ECDSA_PUBLIC_P256_MAGIC;
     ecckey->cbKey = 32;
+    status = BCryptImportKeyPair(alg, NULL, BCRYPT_PUBLIC_KEY_BLOB, &key, buffer, size, 0);
+    ok(!status, "BCryptImportKeyPair failed: %#lx\n", status);
+    BCryptDestroyKey(key);
+
     status = BCryptImportKeyPair(alg, NULL, BCRYPT_ECCPUBLIC_BLOB, &key, buffer, size, 0);
     ok(!status, "BCryptImportKeyPair failed: %#lx\n", status);
 
@@ -2014,6 +2018,10 @@ static void test_RSA(void)
     ok(!ret, "got %#lx\n", ret);
     ok(schemes, "schemes not set\n");
     ok(size == sizeof(schemes), "got %lu\n", size);
+
+    ret = BCryptImportKeyPair(alg, NULL, BCRYPT_PUBLIC_KEY_BLOB, &key, rsaPublicBlob, sizeof(rsaPublicBlob), 0);
+    ok(!ret, "BCryptImportKeyPair failed: %#lx\n", ret);
+    BCryptDestroyKey(key);
 
     ret = BCryptImportKeyPair(alg, NULL, BCRYPT_RSAPUBLIC_BLOB, &key, rsaPublicBlob, sizeof(rsaPublicBlob), 0);
     ok(!ret, "BCryptImportKeyPair failed: %#lx\n", ret);
@@ -2340,6 +2348,10 @@ static void test_ECDH(void)
     ok(ecckey->dwMagic == BCRYPT_ECDH_PUBLIC_P256_MAGIC, "got %#lx\n", ecckey->dwMagic);
     ok(ecckey->cbKey == 32, "got %lu\n", ecckey->cbKey);
     ok(size == sizeof(*ecckey) + ecckey->cbKey * 2, "got %lu\n", size);
+
+    status = BCryptImportKeyPair(alg, NULL, BCRYPT_PUBLIC_KEY_BLOB, &pubkey, buf, size, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    BCryptDestroyKey(pubkey);
 
     status = BCryptImportKeyPair(alg, NULL, BCRYPT_ECCPUBLIC_BLOB, &pubkey, buf, size, 0);
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
@@ -2841,6 +2853,10 @@ static void test_DSA(void)
 
     ret = BCryptGetProperty(alg, L"PaddingSchemes", (UCHAR *)&schemes, sizeof(schemes), &size, 0);
     ok(ret == STATUS_NOT_SUPPORTED, "got %#lx\n", ret);
+
+    ret = BCryptImportKeyPair(alg, NULL, BCRYPT_PUBLIC_KEY_BLOB, &key, dsaPublicBlob, sizeof(dsaPublicBlob), 0);
+    ok(!ret, "got %#lx\n", ret);
+    BCryptDestroyKey(key);
 
     ret = BCryptImportKeyPair(alg, NULL, BCRYPT_DSA_PUBLIC_BLOB, &key, dsaPublicBlob, sizeof(dsaPublicBlob), 0);
     ok(!ret, "got %#lx\n", ret);
