@@ -35,6 +35,7 @@
 #define WIDL_using_Windows_Gaming_Input_Custom
 #include "windows.gaming.input.custom.h"
 
+extern HINSTANCE windows_gaming_input;
 extern IActivationFactory *controller_factory;
 extern IActivationFactory *gamepad_factory;
 extern IActivationFactory *manager_factory;
@@ -43,6 +44,9 @@ extern HRESULT vector_create( REFIID iid, REFIID view_iid, void **out );
 
 extern void provider_create( const WCHAR *device_path );
 extern void provider_remove( const WCHAR *device_path );
+
+extern void manager_on_provider_created( IGameControllerProvider *provider );
+extern void manager_on_provider_removed( IGameControllerProvider *provider );
 
 #define DEFINE_IINSPECTABLE( pfx, iface_type, impl_type, base_iface )                              \
     static inline impl_type *impl_from_##iface_type( iface_type *iface )                           \

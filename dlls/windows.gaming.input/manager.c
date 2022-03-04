@@ -199,3 +199,13 @@ static struct manager_statics manager_statics =
 };
 
 IActivationFactory *manager_factory = &manager_statics.IActivationFactory_iface;
+
+void manager_on_provider_created( IGameControllerProvider *provider )
+{
+    FIXME( "provider %p stub!\n", provider );
+}
+
+void manager_on_provider_removed( IGameControllerProvider *provider )
+{
+    FIXME( "provider %p stub!\n", provider );
+}

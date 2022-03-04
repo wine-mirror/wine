@@ -1,5 +1,5 @@
 MODULE = windows.gaming.input.dll
-IMPORTS = combase uuid user32 setupapi hid
+IMPORTS = combase uuid user32 dinput8 setupapi hid
 
 C_SRCS = \
 	controller.c \
