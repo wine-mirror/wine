@@ -57,19 +57,19 @@ static void test_parse_for_entire_network(void)
     DWORD expected_attr;
 
     hr = SHGetDesktopFolder(&psfDesktop);
-    ok(hr == S_OK, "SHGetDesktopFolder failed with error 0x%x\n", hr);
+    ok(hr == S_OK, "SHGetDesktopFolder failed with error 0x%lx\n", hr);
 
     hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, my_network_places_path, &eaten, &pidl, &attr);
-    ok(hr == S_OK, "IShellFolder_ParseDisplayName failed with error 0x%x\n", hr);
+    ok(hr == S_OK, "IShellFolder_ParseDisplayName failed with error 0x%lx\n", hr);
     todo_wine
-    ok(eaten == 0xdeadbeef, "eaten should not have been set to %u\n", eaten);
+    ok(eaten == 0xdeadbeef, "eaten should not have been set to %lu\n", eaten);
     expected_attr = SFGAO_HASSUBFOLDER|SFGAO_FOLDER|SFGAO_FILESYSANCESTOR|SFGAO_DROPTARGET|SFGAO_HASPROPSHEET|SFGAO_CANRENAME|SFGAO_CANLINK;
     todo_wine
     ok((attr == expected_attr) || /* Win9x, NT4 */
        (attr == (expected_attr | SFGAO_STREAM)) || /* W2K */
        (attr == (expected_attr | SFGAO_CANDELETE)) || /* XP, W2K3 */
        (attr == (expected_attr | SFGAO_CANDELETE | SFGAO_NONENUMERATED)), /* Vista */
-       "Unexpected attributes : %08x\n", attr);
+       "Unexpected attributes : %08lx\n", attr);
 
     ILFree(pidl);
 
@@ -86,15 +86,15 @@ static void test_parse_for_entire_network(void)
         win_skip("'EntireNetwork' is not available on Win9x, NT4 and Vista\n");
         return;
     }
-    ok(hr == S_OK, "IShellFolder_ParseDisplayName failed with error 0x%x\n", hr);
+    ok(hr == S_OK, "IShellFolder_ParseDisplayName failed with error 0x%lx\n", hr);
     todo_wine
-    ok(eaten == 0xdeadbeef, "eaten should not have been set to %u\n", eaten);
+    ok(eaten == 0xdeadbeef, "eaten should not have been set to %lu\n", eaten);
     expected_attr = SFGAO_HASSUBFOLDER|SFGAO_FOLDER|SFGAO_FILESYSANCESTOR|SFGAO_HASPROPSHEET|SFGAO_CANLINK;
     todo_wine
     ok(attr == expected_attr || /* winme, nt4 */
        attr == (expected_attr | SFGAO_STREAM) || /* win2k */
        attr == (expected_attr | SFGAO_STORAGEANCESTOR),  /* others */
-       "attr should be 0x%x, not 0x%x\n", expected_attr, attr);
+       "attr should be 0x%lx, not 0x%lx\n", expected_attr, attr);
 
     ILFree(pidl);
 }
@@ -113,18 +113,18 @@ static void test_parse_for_control_panel(void)
     DWORD attr = ~0;
 
     hr = SHGetDesktopFolder(&psfDesktop);
-    ok(hr == S_OK, "SHGetDesktopFolder failed with error 0x%x\n", hr);
+    ok(hr == S_OK, "SHGetDesktopFolder failed with error 0x%lx\n", hr);
 
     hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, control_panel_path, &eaten, &pidl, &attr);
-    ok(hr == S_OK, "IShellFolder_ParseDisplayName failed with error 0x%x\n", hr);
-    todo_wine ok(eaten == 0xdeadbeef, "eaten should not have been set to %u\n", eaten);
+    ok(hr == S_OK, "IShellFolder_ParseDisplayName failed with error 0x%lx\n", hr);
+    todo_wine ok(eaten == 0xdeadbeef, "eaten should not have been set to %lu\n", eaten);
     todo_wine
     ok((attr == (SFGAO_CANLINK | SFGAO_FOLDER)) || /* Win9x, NT4 */
        (attr == (SFGAO_CANLINK | SFGAO_FOLDER | SFGAO_HASSUBFOLDER | SFGAO_STREAM)) || /* W2K */
        (attr == (SFGAO_CANLINK | SFGAO_FOLDER | SFGAO_HASSUBFOLDER)) || /* W2K, XP, W2K3 */
        (attr == (SFGAO_CANLINK | SFGAO_NONENUMERATED)) || /* Vista */
        (attr == SFGAO_CANLINK), /* Vista, W2K8 */
-       "Unexpected attributes : %08x\n", attr);
+       "Unexpected attributes : %08lx\n", attr);
 
     ILFree(pidl);
     IShellFolder_Release(psfDesktop);
@@ -160,14 +160,14 @@ if (0)
 
     /* 5 columns defined */
     hr = IShellFolder2_GetDetailsOf(folder, NULL, 6, &details);
-    ok(hr == E_NOTIMPL, "got 0x%08x\n", hr);
+    ok(hr == E_NOTIMPL, "got 0x%08lx\n", hr);
 
     hr = IShellFolder2_GetDefaultColumnState(folder, 6, &state);
-    ok(broken(hr == E_NOTIMPL) || hr == E_INVALIDARG /* Win7 */, "got 0x%08x\n", hr);
+    ok(broken(hr == E_NOTIMPL) || hr == E_INVALIDARG /* Win7 */, "got 0x%08lx\n", hr);
 
     details.str.u.pOleStr = NULL;
     hr = IShellFolder2_GetDetailsOf(folder, NULL, 0, &details);
-    ok(hr == S_OK || broken(hr == E_NOTIMPL) /* W2K */, "got 0x%08x\n", hr);
+    ok(hr == S_OK || broken(hr == E_NOTIMPL) /* W2K */, "got 0x%08lx\n", hr);
     if (SHELL_OsIsUnicode()) SHFree(details.str.u.pOleStr);
 
     /* test every column if method is implemented */
@@ -178,7 +178,7 @@ if (0)
         for(i = 0; i < 6; i++)
         {
             hr = IShellFolder2_GetDetailsOf(folder, NULL, i, &details);
-            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(hr == S_OK, "got 0x%08lx\n", hr);
 
             /* all columns are left-aligned */
             ok(details.fmt == LVCFMT_LEFT, "got 0x%x\n", details.fmt);
@@ -187,33 +187,33 @@ if (0)
             if (SHELL_OsIsUnicode()) SHFree(details.str.u.pOleStr);
 
             hr = IShellFolder2_GetDefaultColumnState(folder, i, &state);
-            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(hr == S_OK, "got 0x%08lx\n", hr);
             /* all columns are string except document count */
             if (i == 1)
-                ok(state == (SHCOLSTATE_TYPE_INT | SHCOLSTATE_ONBYDEFAULT), "got 0x%x\n", state);
+                ok(state == (SHCOLSTATE_TYPE_INT | SHCOLSTATE_ONBYDEFAULT), "got 0x%lx\n", state);
             else
-                ok(state == (SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT), "got 0x%x\n", state);
+                ok(state == (SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT), "got 0x%lx\n", state);
         }
     }
 
     /* default pidl */
     hr = IShellFolder2_QueryInterface(folder, &IID_IPersistFolder2, (void**)&pf);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     /* not initialized */
     pidl1 = (void*)0xdeadbeef;
     hr = IPersistFolder2_GetCurFolder(pf, &pidl1);
-    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(hr == S_FALSE, "got 0x%08lx\n", hr);
     ok(pidl1 == NULL, "got %p\n", pidl1);
 
     hr = SHGetSpecialFolderLocation(NULL, CSIDL_PRINTERS, &pidl2);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IPersistFolder2_Initialize(pf, pidl2);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IPersistFolder2_GetCurFolder(pf, &pidl1);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     ok(ILIsEqual(pidl1, pidl2), "expected same PIDL\n");
     IPersistFolder2_Release(pf);
@@ -231,10 +231,10 @@ static void test_desktop_folder(void)
     HRESULT hr;
 
     hr = SHGetDesktopFolder(&psf);
-    ok(hr == S_OK, "Got %x\n", hr);
+    ok(hr == S_OK, "Got %lx\n", hr);
 
     hr = IShellFolder_QueryInterface(psf, &IID_IShellFolder, NULL);
-    ok(hr == E_POINTER, "Got %x\n", hr);
+    ok(hr == E_POINTER, "Got %lx\n", hr);
 
     IShellFolder_Release(psf);
 }
@@ -255,7 +255,7 @@ static void test_desktop_displaynameof(void)
     UINT i;
 
     hr = SHGetDesktopFolder(&desktop);
-    ok(hr == S_OK, "SHGetDesktopFolder failed with error 0x%08x\n", hr);
+    ok(hr == S_OK, "SHGetDesktopFolder failed with error 0x%08lx\n", hr);
     if (FAILED(hr)) return;
 
     for (i = 0; i < ARRAY_SIZE(folders); i++)
@@ -263,26 +263,26 @@ static void test_desktop_displaynameof(void)
         WCHAR name1[MAX_PATH], name2[MAX_PATH];
 
         hr = IShellFolder_ParseDisplayName(desktop, NULL, NULL, folders[i], &eaten, &pidl, NULL);
-        ok(hr == S_OK, "IShellFolder::ParseDisplayName failed with error 0x%08x\n", hr);
+        ok(hr == S_OK, "IShellFolder::ParseDisplayName failed with error 0x%08lx\n", hr);
         if (FAILED(hr)) continue;
 
         hr = IShellFolder_GetDisplayNameOf(desktop, pidl, SHGDN_INFOLDER, &strret);
-        ok(hr == S_OK, "IShellFolder::GetDisplayNameOf failed with error 0x%08x\n", hr);
+        ok(hr == S_OK, "IShellFolder::GetDisplayNameOf failed with error 0x%08lx\n", hr);
         hr = StrRetToBufW(&strret, pidl, name1, ARRAY_SIZE(name1));
-        ok(hr == S_OK, "StrRetToBuf failed with error 0x%08x\n", hr);
+        ok(hr == S_OK, "StrRetToBuf failed with error 0x%08lx\n", hr);
 
         hr = IShellFolder_GetDisplayNameOf(desktop, pidl, SHGDN_INFOLDER | SHGDN_FORPARSING | SHGDN_FORADDRESSBAR, &strret);
-        ok(hr == S_OK, "IShellFolder::GetDisplayNameOf failed with error 0x%08x\n", hr);
+        ok(hr == S_OK, "IShellFolder::GetDisplayNameOf failed with error 0x%08lx\n", hr);
         hr = StrRetToBufW(&strret, pidl, name2, ARRAY_SIZE(name2));
-        ok(hr == S_OK, "StrRetToBuf failed with error 0x%08x\n", hr);
+        ok(hr == S_OK, "StrRetToBuf failed with error 0x%08lx\n", hr);
 
         ok(!lstrcmpW(name1, name2), "the display names are not equal: %s vs %s\n", wine_dbgstr_w(name1), wine_dbgstr_w(name2));
         ok(name1[0] != ':' || name1[1] != ':', "display name is a GUID: %s\n", wine_dbgstr_w(name1));
 
         hr = IShellFolder_GetDisplayNameOf(desktop, pidl, SHGDN_INFOLDER | SHGDN_FORPARSING, &strret);
-        ok(hr == S_OK, "IShellFolder::GetDisplayNameOf failed with error 0x%08x\n", hr);
+        ok(hr == S_OK, "IShellFolder::GetDisplayNameOf failed with error 0x%08lx\n", hr);
         hr = StrRetToBufW(&strret, pidl, name1, ARRAY_SIZE(name1));
-        ok(hr == S_OK, "StrRetToBuf failed with error 0x%08x\n", hr);
+        ok(hr == S_OK, "StrRetToBuf failed with error 0x%08lx\n", hr);
 
         ok(lstrcmpW(name1, name2), "the display names are equal: %s\n", wine_dbgstr_w(name1));
         ok(name1[0] == ':' && name1[1] == ':', "display name is not a GUID: %s\n", wine_dbgstr_w(name1));

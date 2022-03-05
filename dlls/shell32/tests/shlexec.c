@@ -157,7 +157,7 @@ static HDDEDATA CALLBACK ddeCb(UINT uType, UINT uFmt, HCONV hConv,
     DWORD size = 0;
 
     if (winetest_debug > 2)
-        trace("dde_cb: %04x, %04x, %p, %p, %p, %p, %08lx, %08lx\n",
+        trace("dde_cb: %04x, %04x, %p, %p, %p, %p, %08Ix, %08Ix\n",
               uType, uFmt, hConv, hsz1, hsz2, hData, dwData1, dwData2);
 
     switch (uType)
@@ -166,7 +166,7 @@ static HDDEDATA CALLBACK ddeCb(UINT uType, UINT uFmt, HCONV hConv,
             if (!DdeCmpStringHandles(hsz1, hszTopic))
             {
                 size = DdeQueryStringA(ddeInst, hsz2, ddeApplication, MAX_PATH, CP_WINANSI);
-                ok(size < MAX_PATH, "got size %d\n", size);
+                ok(size < MAX_PATH, "got size %ld\n", size);
                 assert(size < MAX_PATH);
                 return (HDDEDATA)TRUE;
             }
@@ -174,7 +174,7 @@ static HDDEDATA CALLBACK ddeCb(UINT uType, UINT uFmt, HCONV hConv,
 
         case XTYP_EXECUTE:
             size = DdeGetData(hData, (LPBYTE)ddeExec, MAX_PATH, 0);
-            ok(size < MAX_PATH, "got size %d\n", size);
+            ok(size < MAX_PATH, "got size %ld\n", size);
             assert(size < MAX_PATH);
             DdeFreeDataHandle(hData);
             if (post_quit_on_execute)
@@ -239,7 +239,7 @@ static void doChild(int argc, char** argv)
     *buffer = '\0';
     SetLastError(0);
     GetEnvironmentVariableA("ShlexecVar", buffer, sizeof(buffer));
-    childPrintf(hFile, "ShlexecVarLE=%d\r\n", GetLastError());
+    childPrintf(hFile, "ShlexecVarLE=%ld\r\n", GetLastError());
     childPrintf(hFile, "ShlexecVar=%s\r\n", encodeA(buffer));
 
     map = OpenFileMappingA(FILE_MAP_READ, FALSE, "winetest_shlexec_dde_map");
@@ -266,7 +266,7 @@ static void doChild(int argc, char** argv)
             hszTopic = DdeCreateStringHandleA(ddeInst, shared_block, CP_WINANSI);
             ok(hszTopic != NULL, "DdeCreateStringHandleA(%s) = NULL\n", shared_block);
             hdde = DdeNameService(ddeInst, hszApplication, 0, DNS_REGISTER | DNS_FILTEROFF);
-            ok(hdde != NULL, "DdeNameService() failed le=%u\n", GetLastError());
+            ok(hdde != NULL, "DdeNameService() failed le=%lu\n", GetLastError());
 
             timer = SetTimer(NULL, 0, CHILD_DDE_TIMEOUT, childTimeout);
 
@@ -277,14 +277,14 @@ static void doChild(int argc, char** argv)
             while (GetMessageA(&msg, NULL, 0, 0))
             {
                 if (winetest_debug > 2)
-                    trace("msg %d lParam=%ld wParam=%lu\n", msg.message, msg.lParam, msg.wParam);
+                    trace("msg %d lParam=%Id wParam=%Iu\n", msg.message, msg.lParam, msg.wParam);
                 DispatchMessageA(&msg);
             }
 
             Sleep(500);
             KillTimer(NULL, timer);
             hdde = DdeNameService(ddeInst, hszApplication, 0, DNS_UNREGISTER);
-            ok(hdde != NULL, "DdeNameService() failed le=%u\n", GetLastError());
+            ok(hdde != NULL, "DdeNameService() failed le=%lu\n", GetLastError());
             ok(DdeFreeStringHandle(ddeInst, hszTopic), "DdeFreeStringHandle(topic)\n");
             ok(DdeFreeStringHandle(ddeInst, hszApplication), "DdeFreeStringHandle(application)\n");
             ok(DdeUninitialize(ddeInst), "DdeUninitialize() failed\n");
@@ -301,7 +301,7 @@ static void doChild(int argc, char** argv)
         childPrintf(hFile, "ddeExec=%s\r\n", encodeA(ddeExec));
     }
 
-    childPrintf(hFile, "Failures=%d\r\n", winetest_get_failures());
+    childPrintf(hFile, "Failures=%ld\r\n", winetest_get_failures());
     CloseHandle(hFile);
 
     init_event(filename);
@@ -561,7 +561,7 @@ static INT_PTR shell_execute_(const char* file, int line, LPCSTR verb, LPCSTR fi
             bad_shellexecute = 1;
         okShell_(file, line)(rc == rcEmpty ||
                              broken(rc != rcEmpty && rcEmpty == SE_ERR_NOASSOC) /* NT4 */,
-                             "Got different return value with empty string: %lu %lu\n", rc, rcEmpty);
+                             "Got different return value with empty string: %Iu %Iu\n", rc, rcEmpty);
     }
 
     return rc;
@@ -583,7 +583,7 @@ static INT_PTR shell_execute_ex_(const char* file, int line,
     mask |= SEE_MASK_NOCLOSEPROCESS | SEE_MASK_NO_CONSOLE;
 
     strcpy(shell_call, "ShellExecuteEx(");
-    sprintf(smask, "0x%x", mask);
+    sprintf(smask, "0x%lx", mask);
     strcat_param(shell_call, "mask", smask);
     strcat_param(shell_call, "verb", verb);
     strcat_param(shell_call, "file", filename);
@@ -616,7 +616,7 @@ static INT_PTR shell_execute_ex_(const char* file, int line,
     success=ShellExecuteExA(&sei);
     rc=(INT_PTR)sei.hInstApp;
     okShell_(file, line)((success && rc > 32) || (!success && rc <= 32),
-                         "rc=%d and hInstApp=%ld is not allowed\n",
+                         "rc=%d and hInstApp=%Id is not allowed\n",
                          success, rc);
 
     if (rc > 32)
@@ -626,18 +626,18 @@ static INT_PTR shell_execute_ex_(const char* file, int line,
         {
             wait_rc=WaitForSingleObject(sei.hProcess, 5000);
             okShell_(file, line)(wait_rc==WAIT_OBJECT_0,
-                                 "WaitForSingleObject(hProcess) returned %d\n",
+                                 "WaitForSingleObject(hProcess) returned %ld\n",
                                  wait_rc);
             wait_rc = GetExitCodeProcess(sei.hProcess, &rc);
-            okShell_(file, line)(wait_rc, "GetExitCodeProcess() failed le=%u\n", GetLastError());
+            okShell_(file, line)(wait_rc, "GetExitCodeProcess() failed le=%lu\n", GetLastError());
             todo_wine_if(_todo_wait)
-                okShell_(file, line)(rc == 0, "child returned %u\n", rc);
+                okShell_(file, line)(rc == 0, "child returned %lu\n", rc);
             CloseHandle(sei.hProcess);
         }
         wait_rc=WaitForSingleObject(hEvent, 5000);
         todo_wine_if(_todo_wait)
             okShell_(file, line)(wait_rc==WAIT_OBJECT_0,
-                                 "WaitForSingleObject returned %d\n", wait_rc);
+                                 "WaitForSingleObject returned %ld\n", wait_rc);
     }
     else
         okShell_(file, line)(sei.hProcess==NULL,
@@ -690,19 +690,19 @@ static BOOL create_test_class(const char* class, BOOL protocol)
                          KEY_CREATE_SUB_KEY | KEY_SET_VALUE, NULL,
                          &hkey, NULL);
     ok(rc == ERROR_SUCCESS || rc == ERROR_ACCESS_DENIED,
-       "could not create class %s (rc=%d)\n", class, rc);
+       "could not create class %s (rc=%ld)\n", class, rc);
     if (rc != ERROR_SUCCESS)
         return FALSE;
 
     if (protocol)
     {
         rc = RegSetValueExA(hkey, "URL Protocol", 0, REG_SZ, (LPBYTE)"", 1);
-        ok(rc == ERROR_SUCCESS, "RegSetValueEx '%s' failed, expected ERROR_SUCCESS, got %d\n", class, rc);
+        ok(rc == ERROR_SUCCESS, "RegSetValueEx '%s' failed, expected ERROR_SUCCESS, got %ld\n", class, rc);
     }
 
     rc = RegCreateKeyExA(hkey, "shell", 0, NULL, 0,
                          KEY_CREATE_SUB_KEY, NULL, &hkey_shell, NULL);
-    ok(rc == ERROR_SUCCESS, "RegCreateKeyEx 'shell' failed, expected ERROR_SUCCESS, got %d\n", rc);
+    ok(rc == ERROR_SUCCESS, "RegCreateKeyEx 'shell' failed, expected ERROR_SUCCESS, got %ld\n", rc);
 
     CloseHandle(hkey);
     CloseHandle(hkey_shell);
@@ -719,12 +719,12 @@ static BOOL create_test_association(const char* extension)
     rc=RegCreateKeyExA(HKEY_CLASSES_ROOT, extension, 0, NULL, 0, KEY_SET_VALUE,
                        NULL, &hkey, NULL);
     ok(rc == ERROR_SUCCESS || rc == ERROR_ACCESS_DENIED,
-       "could not create association %s (rc=%d)\n", class, rc);
+       "could not create association %s (rc=%ld)\n", class, rc);
     if (rc != ERROR_SUCCESS)
         return FALSE;
 
     rc=RegSetValueExA(hkey, NULL, 0, REG_SZ, (LPBYTE) class, strlen(class)+1);
-    ok(rc==ERROR_SUCCESS, "RegSetValueEx '%s' failed, expected ERROR_SUCCESS, got %d\n", class, rc);
+    ok(rc==ERROR_SUCCESS, "RegSetValueEx '%s' failed, expected ERROR_SUCCESS, got %ld\n", class, rc);
     CloseHandle(hkey);
 
     return create_test_class(class, FALSE);
@@ -835,15 +835,15 @@ static void create_test_verb_dde(const char* classname, const char* verb,
     sprintf(shell, "%s\\shell", classname);
     rc=RegOpenKeyExA(HKEY_CLASSES_ROOT, shell, 0,
                      KEY_CREATE_SUB_KEY, &hkey_shell);
-    ok(rc == ERROR_SUCCESS, "%s key creation failed with %d\n", shell, rc);
+    ok(rc == ERROR_SUCCESS, "%s key creation failed with %ld\n", shell, rc);
 
     rc=RegCreateKeyExA(hkey_shell, verb, 0, NULL, 0, KEY_CREATE_SUB_KEY,
                        NULL, &hkey_verb, NULL);
-    ok(rc == ERROR_SUCCESS, "%s verb key creation failed with %d\n", verb, rc);
+    ok(rc == ERROR_SUCCESS, "%s verb key creation failed with %ld\n", verb, rc);
 
     rc=RegCreateKeyExA(hkey_verb, "command", 0, NULL, 0, KEY_SET_VALUE,
                        NULL, &hkey_cmd, NULL);
-    ok(rc == ERROR_SUCCESS, "\'command\' key creation failed with %d\n", rc);
+    ok(rc == ERROR_SUCCESS, "\'command\' key creation failed with %ld\n", rc);
 
     if (rawcmd)
     {
@@ -854,7 +854,7 @@ static void create_test_verb_dde(const char* classname, const char* verb,
         cmd = heap_alloc(strlen(argv0) + 10 + strlen(child_file) + 2 + strlen(cmdtail) + 1);
         sprintf(cmd,"%s shlexec \"%s\" %s", argv0, child_file, cmdtail);
         rc=RegSetValueExA(hkey_cmd, NULL, 0, REG_SZ, (LPBYTE)cmd, strlen(cmd)+1);
-        ok(rc == ERROR_SUCCESS, "setting command failed with %d\n", rc);
+        ok(rc == ERROR_SUCCESS, "setting command failed with %ld\n", rc);
         heap_free(cmd);
     }
 
@@ -864,40 +864,40 @@ static void create_test_verb_dde(const char* classname, const char* verb,
 
         rc=RegCreateKeyExA(hkey_verb, "ddeexec", 0, NULL, 0, KEY_SET_VALUE |
                            KEY_CREATE_SUB_KEY, NULL, &hkey_ddeexec, NULL);
-        ok(rc == ERROR_SUCCESS, "\'ddeexec\' key creation failed with %d\n", rc);
+        ok(rc == ERROR_SUCCESS, "\'ddeexec\' key creation failed with %ld\n", rc);
         rc=RegSetValueExA(hkey_ddeexec, NULL, 0, REG_SZ, (LPBYTE)ddeexec,
                           strlen(ddeexec)+1);
-        ok(rc == ERROR_SUCCESS, "set value failed with %d\n", rc);
+        ok(rc == ERROR_SUCCESS, "set value failed with %ld\n", rc);
 
         if (application)
         {
             rc=RegCreateKeyExA(hkey_ddeexec, "application", 0, NULL, 0, KEY_SET_VALUE,
                                NULL, &hkey_application, NULL);
-            ok(rc == ERROR_SUCCESS, "\'application\' key creation failed with %d\n", rc);
+            ok(rc == ERROR_SUCCESS, "\'application\' key creation failed with %ld\n", rc);
 
             rc=RegSetValueExA(hkey_application, NULL, 0, REG_SZ, (LPBYTE)application,
                               strlen(application)+1);
-            ok(rc == ERROR_SUCCESS, "set value failed with %d\n", rc);
+            ok(rc == ERROR_SUCCESS, "set value failed with %ld\n", rc);
             CloseHandle(hkey_application);
         }
         if (topic)
         {
             rc=RegCreateKeyExA(hkey_ddeexec, "topic", 0, NULL, 0, KEY_SET_VALUE,
                                NULL, &hkey_topic, NULL);
-            ok(rc == ERROR_SUCCESS, "\'topic\' key creation failed with %d\n", rc);
+            ok(rc == ERROR_SUCCESS, "\'topic\' key creation failed with %ld\n", rc);
             rc=RegSetValueExA(hkey_topic, NULL, 0, REG_SZ, (LPBYTE)topic,
                               strlen(topic)+1);
-            ok(rc == ERROR_SUCCESS, "set value failed with %d\n", rc);
+            ok(rc == ERROR_SUCCESS, "set value failed with %ld\n", rc);
             CloseHandle(hkey_topic);
         }
         if (ifexec)
         {
             rc=RegCreateKeyExA(hkey_ddeexec, "ifexec", 0, NULL, 0, KEY_SET_VALUE,
                                NULL, &hkey_ifexec, NULL);
-            ok(rc == ERROR_SUCCESS, "\'ifexec\' key creation failed with %d\n", rc);
+            ok(rc == ERROR_SUCCESS, "\'ifexec\' key creation failed with %ld\n", rc);
             rc=RegSetValueExA(hkey_ifexec, NULL, 0, REG_SZ, (LPBYTE)ifexec,
                               strlen(ifexec)+1);
-            ok(rc == ERROR_SUCCESS, "set value failed with %d\n", rc);
+            ok(rc == ERROR_SUCCESS, "set value failed with %ld\n", rc);
             CloseHandle(hkey_ifexec);
         }
         CloseHandle(hkey_ddeexec);
@@ -1103,48 +1103,48 @@ static void test_lpFile_parsed(void)
     /* existing "drawback_file.noassoc" prevents finding "drawback_file.noassoc foo.shlexec" on Wine */
     sprintf(fileA, "%s\\drawback_file.noassoc foo.shlexec", tmpdir);
     rc=shell_execute(NULL, fileA, NULL, NULL);
-    okShell(rc > 32, "failed: rc=%lu\n", rc);
+    okShell(rc > 32, "failed: rc=%Iu\n", rc);
 
     /* if quoted, existing "drawback_file.noassoc" does not prevent finding "drawback_file.noassoc foo.shlexec" on Wine */
     sprintf(fileA, "\"%s\\drawback_file.noassoc foo.shlexec\"", tmpdir);
     rc=shell_execute(NULL, fileA, NULL, NULL);
     okShell(rc > 32 || broken(rc == SE_ERR_FNF) /* Win95/NT4 */,
-            "failed: rc=%lu\n", rc);
+            "failed: rc=%Iu\n", rc);
 
     /* error should be SE_ERR_FNF, not SE_ERR_NOASSOC */
     sprintf(fileA, "\"%s\\drawback_file.noassoc\" foo.shlexec", tmpdir);
     rc=shell_execute(NULL, fileA, NULL, NULL);
-    okShell(rc == SE_ERR_FNF, "returned %lu\n", rc);
+    okShell(rc == SE_ERR_FNF, "returned %Iu\n", rc);
 
     /* ""command"" not works on wine (and real win9x and w2k) */
     sprintf(fileA, "\"\"%s\\simple.shlexec\"\"", tmpdir);
     rc=shell_execute(NULL, fileA, NULL, NULL);
     todo_wine okShell(rc > 32 || broken(rc == SE_ERR_FNF) /* Win9x/2000 */,
-                      "failed: rc=%lu\n", rc);
+                      "failed: rc=%Iu\n", rc);
 
     /* nonexistent "drawback_nonexist.noassoc" does not prevent finding "drawback_nonexist.noassoc foo.shlexec" on Wine */
     sprintf(fileA, "%s\\drawback_nonexist.noassoc foo.shlexec", tmpdir);
     rc=shell_execute(NULL, fileA, NULL, NULL);
-    okShell(rc > 32, "failed: rc=%lu\n", rc);
+    okShell(rc > 32, "failed: rc=%Iu\n", rc);
 
     /* is SEE_MASK_DOENVSUBST default flag? Should only be when XP emulates 9x (XP bug or real 95 or ME behavior ?) */
     rc=shell_execute(NULL, "%TMPDIR%\\simple.shlexec", NULL, NULL);
-    todo_wine okShell(rc == SE_ERR_FNF, "returned %lu\n", rc);
+    todo_wine okShell(rc == SE_ERR_FNF, "returned %Iu\n", rc);
 
     /* quoted */
     rc=shell_execute(NULL, "\"%TMPDIR%\\simple.shlexec\"", NULL, NULL);
-    todo_wine okShell(rc == SE_ERR_FNF, "returned %lu\n", rc);
+    todo_wine okShell(rc == SE_ERR_FNF, "returned %Iu\n", rc);
 
     /* test SEE_MASK_DOENVSUBST works */
     rc=shell_execute_ex(SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI,
                         NULL, "%TMPDIR%\\simple.shlexec", NULL, NULL, NULL);
-    okShell(rc > 32, "failed: rc=%lu\n", rc);
+    okShell(rc > 32, "failed: rc=%Iu\n", rc);
 
     /* quoted lpFile does not work on real win95 and nt4 */
     rc=shell_execute_ex(SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI,
                         NULL, "\"%TMPDIR%\\simple.shlexec\"", NULL, NULL, NULL);
     okShell(rc > 32 || broken(rc == SE_ERR_FNF) /* Win95/NT4 */,
-            "failed: rc=%lu\n", rc);
+            "failed: rc=%Iu\n", rc);
 }
 
 typedef struct
@@ -1376,12 +1376,12 @@ static void test_commandline2argv(void)
     SetLastError(0xdeadbeef);
     args = CommandLineToArgvW(exeW, NULL);
     le = GetLastError();
-    ok(args == NULL && le == ERROR_INVALID_PARAMETER, "expected NULL with ERROR_INVALID_PARAMETER got %p with %u\n", args, le);
+    ok(args == NULL && le == ERROR_INVALID_PARAMETER, "expected NULL with ERROR_INVALID_PARAMETER got %p with %lu\n", args, le);
 
     SetLastError(0xdeadbeef);
     args = CommandLineToArgvW(NULL, NULL);
     le = GetLastError();
-    ok(args == NULL && le == ERROR_INVALID_PARAMETER, "expected NULL with ERROR_INVALID_PARAMETER got %p with %u\n", args, le);
+    ok(args == NULL && le == ERROR_INVALID_PARAMETER, "expected NULL with ERROR_INVALID_PARAMETER got %p with %lu\n", args, le);
 
     *strW = 0;
     args = CommandLineToArgvW(strW, &numargs);
@@ -1558,7 +1558,7 @@ static void test_argify(void)
 
     /* We need NOZONECHECKS on Win2003 to block a dialog */
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, argv0, params, NULL, NULL);
-    okShell(rc > 32, "failed: rc=%lu\n", rc);
+    okShell(rc > 32, "failed: rc=%Iu\n", rc);
     okChildInt("argcA", 4);
     okChildPath("argvA3", fileA);
 
@@ -1584,7 +1584,7 @@ static void test_argify(void)
         bad = test->broken ? test->broken : test->cmd;
 
         rc = shell_execute_ex(SEE_MASK_DOENVSUBST, test->verb, fileA, test->params, NULL, NULL);
-        okShell(rc > 32, "failed: rc=%lu\n", rc);
+        okShell(rc > 32, "failed: rc=%Iu\n", rc);
 
         cmd = getChildString("Child", "cmdlineA");
         /* Our commands are such that the verb immediately precedes the
@@ -1652,7 +1652,7 @@ static void test_filename(void)
             rc=33;
         okShell(rc==test->rc ||
                 broken(quotedfile && rc == SE_ERR_FNF), /* NT4 */
-                "failed: rc=%ld err=%u\n", rc, GetLastError());
+                "failed: rc=%Id err=%lu\n", rc, GetLastError());
         if (rc == 33)
         {
             const char* verb;
@@ -1675,7 +1675,7 @@ static void test_filename(void)
         if (rc > 32)
             rc=33;
         todo_wine_if(test->todo & 0x1)
-            okShell(rc==test->rc, "failed: rc=%ld err=%u\n", rc, GetLastError());
+            okShell(rc==test->rc, "failed: rc=%Id err=%lu\n", rc, GetLastError());
         if (rc==0)
         {
             int count;
@@ -1719,7 +1719,7 @@ static void test_filename(void)
          */
         sprintf(filename, "\"%s\\test file.shlexec\"", tmpdir);
         rc=shell_execute(NULL, filename, NULL, NULL);
-        okShell(rc > 32, "failed: rc=%ld err=%u\n", rc, GetLastError());
+        okShell(rc > 32, "failed: rc=%Id err=%lu\n", rc, GetLastError());
         okChildInt("argcA", 5);
         okChildString("argvA3", "Open");
         sprintf(filename, "%s\\test file.shlexec", tmpdir);
@@ -1728,7 +1728,7 @@ static void test_filename(void)
 
     sprintf(filename, "\"%s\\test file.sha\"", tmpdir);
     rc=shell_execute(NULL, filename, NULL, NULL);
-    todo_wine okShell(rc > 32, "failed: rc=%ld err=%u\n", rc, GetLastError());
+    todo_wine okShell(rc > 32, "failed: rc=%Id err=%lu\n", rc, GetLastError());
     okChildInt("argcA", 5);
     todo_wine okChildString("argvA3", "averb");
     sprintf(filename, "%s\\test file.sha", tmpdir);
@@ -1827,7 +1827,7 @@ static void test_fileurls(void)
 
         /* Test it first with FindExecutable() */
         rc = (INT_PTR)FindExecutableA(fileurl, NULL, command);
-        ok(rc == SE_ERR_FNF, "FindExecutable(%s) failed: bad rc=%lu\n", fileurl, rc);
+        ok(rc == SE_ERR_FNF, "FindExecutable(%s) failed: bad rc=%Iu\n", fileurl, rc);
 
         /* Then ShellExecute() */
         if ((test->todo & 0x10) == 0)
@@ -1842,14 +1842,14 @@ static void test_fileurls(void)
         if (test->flags & URL_SUCCESS)
         {
             todo_wine_if(test->todo & 0x1)
-                okShell(rc > 32, "failed: bad rc=%lu\n", rc);
+                okShell(rc > 32, "failed: bad rc=%Iu\n", rc);
         }
         else
         {
             todo_wine_if(test->todo & 0x1)
                 okShell(rc == SE_ERR_FNF || rc == SE_ERR_PNF ||
                         broken(rc == SE_ERR_ACCESSDENIED) /* win2000 */,
-                        "failed: bad rc=%lu\n", rc);
+                        "failed: bad rc=%Iu\n", rc);
         }
         if (rc == 33)
         {
@@ -1884,15 +1884,15 @@ static void test_urls(void)
     /* Protocols must be properly declared */
     rc = shell_execute(NULL, "notaproto://foo", NULL, NULL);
     ok(rc == SE_ERR_NOASSOC || broken(rc == SE_ERR_ACCESSDENIED),
-       "%s returned %lu\n", shell_call, rc);
+       "%s returned %Iu\n", shell_call, rc);
 
     rc = shell_execute(NULL, "fakeproto://foo/bar", NULL, NULL);
     todo_wine ok(rc == SE_ERR_NOASSOC || broken(rc == SE_ERR_ACCESSDENIED),
-                 "%s returned %lu\n", shell_call, rc);
+                 "%s returned %Iu\n", shell_call, rc);
 
     /* Here's a real live one */
     rc = shell_execute(NULL, "shlproto://foo/bar", NULL, NULL);
-    ok(rc > 32, "%s failed: rc=%lu\n", shell_call, rc);
+    ok(rc > 32, "%s failed: rc=%Iu\n", shell_call, rc);
     okChildInt("argcA", 5);
     okChildString("argvA3", "URL");
     okChildString("argvA4", "shlproto://foo/bar");
@@ -1901,7 +1901,7 @@ static void test_urls(void)
     rc = shell_execute(NULL, "shlpaverb://foo/bar", NULL, NULL);
     todo_wine ok(rc > 32 || /* XP+IE7 - Win10 */
                  broken(rc == SE_ERR_NOASSOC), /* XP+IE6 */
-                 "%s failed: rc=%lu\n", shell_call, rc);
+                 "%s failed: rc=%Iu\n", shell_call, rc);
     if (rc > 32)
     {
         okChildInt("argcA", 5);
@@ -1913,7 +1913,7 @@ static void test_urls(void)
     rc = shell_execute("averb", "shlproto://foo/bar", NULL, NULL);
     ok(rc > 32 || /* Win8 - Win10 */
        broken(rc == SE_ERR_ACCESSDENIED), /* XP - Win7 */
-       "%s failed: rc=%lu\n", shell_call, rc);
+       "%s failed: rc=%Iu\n", shell_call, rc);
     if (rc > 32)
     {
         okChildString("argvA3", "AVerb");
@@ -1922,21 +1922,21 @@ static void test_urls(void)
 
     /* A .lnk ending does not turn a URL into a shortcut */
     rc = shell_execute(NULL, "shlproto://foo/bar.lnk", NULL, NULL);
-    ok(rc > 32, "%s failed: rc=%lu\n", shell_call, rc);
+    ok(rc > 32, "%s failed: rc=%Iu\n", shell_call, rc);
     okChildInt("argcA", 5);
     okChildString("argvA3", "URL");
     okChildString("argvA4", "shlproto://foo/bar.lnk");
 
     /* Neither does a .exe extension */
     rc = shell_execute(NULL, "shlproto://foo/bar.exe", NULL, NULL);
-    ok(rc > 32, "%s failed: rc=%lu\n", shell_call, rc);
+    ok(rc > 32, "%s failed: rc=%Iu\n", shell_call, rc);
     okChildInt("argcA", 5);
     okChildString("argvA3", "URL");
     okChildString("argvA4", "shlproto://foo/bar.exe");
 
     /* But a class name overrides it */
     rc = shell_execute(NULL, "shlproto://foo/bar", "shlexec.shlexec", NULL);
-    ok(rc > 32, "%s failed: rc=%lu\n", shell_call, rc);
+    ok(rc > 32, "%s failed: rc=%Iu\n", shell_call, rc);
     okChildInt("argcA", 5);
     okChildString("argvA3", "URL");
     okChildString("argvA4", "shlproto://foo/bar");
@@ -1944,7 +1944,7 @@ static void test_urls(void)
     /* Environment variables are expanded in URLs (but not in file URLs!) */
     rc = shell_execute_ex(SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI,
                           NULL, "shlproto://%TMPDIR%/bar", NULL, NULL, NULL);
-    okShell(rc > 32, "failed: rc=%lu\n", rc);
+    okShell(rc > 32, "failed: rc=%Iu\n", rc);
     okChildInt("argcA", 5);
     sprintf(url, "shlproto://%s/bar", tmpdir);
     okChildString("argvA3", "URL");
@@ -1953,7 +1953,7 @@ static void test_urls(void)
     /* But only after the path has been identified as a URL */
     SetEnvironmentVariableA("urlprefix", "shlproto:///");
     rc = shell_execute(NULL, "%urlprefix%foo", NULL, NULL);
-    todo_wine ok(rc == SE_ERR_FNF, "%s returned %lu\n", shell_call, rc);
+    todo_wine ok(rc == SE_ERR_FNF, "%s returned %Iu\n", shell_call, rc);
     SetEnvironmentVariableA("urlprefix", NULL);
 
     delete_test_class("fakeproto");
@@ -1981,7 +1981,7 @@ static void test_find_executable(void)
     if (0) /* Can crash on Vista! */
     {
     rc=(INT_PTR)FindExecutableA(NULL, NULL, command);
-    ok(rc == SE_ERR_FNF || rc > 32 /* nt4 */, "FindExecutable(NULL) returned %ld\n", rc);
+    ok(rc == SE_ERR_FNF || rc > 32 /* nt4 */, "FindExecutable(NULL) returned %Id\n", rc);
     ok(strcmp(command, "your word") != 0, "FindExecutable(NULL) returned command=[%s]\n", command);
     }
 
@@ -1991,30 +1991,30 @@ static void test_find_executable(void)
     /* Search for something that should be in the system-wide search path (no default directory) */
     strcpy(command, "your word");
     rc=(INT_PTR)FindExecutableA("notepad.exe", NULL, command);
-    ok(rc > 32, "FindExecutable(%s) returned %ld\n", "notepad.exe", rc);
+    ok(rc > 32, "FindExecutable(%s) returned %Id\n", "notepad.exe", rc);
     ok(strcasecmp(command, notepad_path) == 0, "FindExecutable(%s) returned command=[%s]\n", "notepad.exe", command);
 
     /* Search for something that should be in the system-wide search path (with default directory) */
     strcpy(command, "your word");
     rc=(INT_PTR)FindExecutableA("notepad.exe", tmpdir, command);
-    ok(rc > 32, "FindExecutable(%s) returned %ld\n", "notepad.exe", rc);
+    ok(rc > 32, "FindExecutable(%s) returned %Id\n", "notepad.exe", rc);
     ok(strcasecmp(command, notepad_path) == 0, "FindExecutable(%s) returned command=[%s]\n", "notepad.exe", command);
 
     strcpy(command, "your word");
     rc=(INT_PTR)FindExecutableA(tmpdir, NULL, command);
-    ok(rc == SE_ERR_NOASSOC /* >= win2000 */ || rc > 32 /* win98, nt4 */, "FindExecutable(NULL) returned %ld\n", rc);
+    ok(rc == SE_ERR_NOASSOC /* >= win2000 */ || rc > 32 /* win98, nt4 */, "FindExecutable(NULL) returned %Id\n", rc);
     ok(strcmp(command, "your word") != 0, "FindExecutable(NULL) returned command=[%s]\n", command);
 
     sprintf(filename, "%s\\test file.sfe", tmpdir);
     rc=(INT_PTR)FindExecutableA(filename, NULL, command);
-    ok(rc > 32, "FindExecutable(%s) returned %ld\n", filename, rc);
+    ok(rc > 32, "FindExecutable(%s) returned %Id\n", filename, rc);
     /* Depending on the platform, command could be '%1' or 'test file.sfe' */
 
     rc=(INT_PTR)FindExecutableA("test file.sfe", tmpdir, command);
-    ok(rc > 32, "FindExecutable(%s) returned %ld\n", filename, rc);
+    ok(rc > 32, "FindExecutable(%s) returned %Id\n", filename, rc);
 
     rc=(INT_PTR)FindExecutableA("test file.sfe", NULL, command);
-    ok(rc == SE_ERR_FNF, "FindExecutable(%s) returned %ld\n", filename, rc);
+    ok(rc == SE_ERR_FNF, "FindExecutable(%s) returned %Id\n", filename, rc);
 
     delete_test_association(".sfe");
 
@@ -2027,7 +2027,7 @@ static void test_find_executable(void)
 
     sprintf(filename, "%s\\test file.shl", tmpdir);
     rc=(INT_PTR)FindExecutableA(filename, NULL, command);
-    ok(rc == SE_ERR_FNF /* NT4 */ || rc > 32, "FindExecutable(%s) returned %ld\n", filename, rc);
+    ok(rc == SE_ERR_FNF /* NT4 */ || rc > 32, "FindExecutable(%s) returned %Id\n", filename, rc);
 
     sprintf(filename, "%s\\test file.shlfoo", tmpdir);
     rc=(INT_PTR)FindExecutableA(filename, NULL, command);
@@ -2075,7 +2075,7 @@ static void test_find_executable(void)
         if (rc > 32)
             rc=33;
         todo_wine_if(test->todo & 0x10)
-            ok(rc==test->rc, "FindExecutable(%s) failed: rc=%ld\n", filename, rc);
+            ok(rc==test->rc, "FindExecutable(%s) failed: rc=%Id\n", filename, rc);
         if (rc > 32)
         {
             BOOL equal;
@@ -2121,7 +2121,7 @@ static void test_lnks(void)
         /* Should open through our association */
         sprintf(filename, "%s\\test_shortcut_shlexec.lnk", tmpdir);
         rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL, NULL);
-        okShell(rc > 32, "failed: rc=%lu err=%u\n", rc, GetLastError());
+        okShell(rc > 32, "failed: rc=%Iu err=%lu\n", rc, GetLastError());
         okChildInt("argcA", 5);
         okChildString("argvA3", "Open");
         sprintf(params, "%s\\test file.shlexec", tmpdir);
@@ -2129,7 +2129,7 @@ static void test_lnks(void)
         okChildPath("argvA4", filename);
 
         rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_DOENVSUBST, NULL, "%TMPDIR%\\test_shortcut_shlexec.lnk", NULL, NULL, NULL);
-        okShell(rc > 32, "failed: rc=%lu err=%u\n", rc, GetLastError());
+        okShell(rc > 32, "failed: rc=%Iu err=%lu\n", rc, GetLastError());
         okChildInt("argcA", 5);
         okChildString("argvA3", "Open");
         sprintf(params, "%s\\test file.shlexec", tmpdir);
@@ -2140,7 +2140,7 @@ static void test_lnks(void)
     /* Should just run our executable */
     sprintf(filename, "%s\\test_shortcut_exe.lnk", tmpdir);
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL, NULL);
-    okShell(rc > 32, "failed: rc=%lu err=%u\n", rc, GetLastError());
+    okShell(rc > 32, "failed: rc=%Iu err=%lu\n", rc, GetLastError());
     okChildInt("argcA", 4);
     okChildString("argvA3", "Lnk");
 
@@ -2148,7 +2148,7 @@ static void test_lnks(void)
     {
         /* An explicit class overrides lnk's ContextMenuHandler */
         rc=shell_execute_ex(SEE_MASK_CLASSNAME | SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL, "shlexec.shlexec");
-        okShell(rc > 32, "failed: rc=%lu err=%u\n", rc, GetLastError());
+        okShell(rc > 32, "failed: rc=%Iu err=%lu\n", rc, GetLastError());
         okChildInt("argcA", 5);
         okChildString("argvA3", "Open");
         okChildPath("argvA4", filename);
@@ -2169,7 +2169,7 @@ static void test_lnks(void)
             c++;
         }
         rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL, NULL);
-        okShell(rc > 32, "failed: rc=%lu err=%u\n", rc, GetLastError());
+        okShell(rc > 32, "failed: rc=%Iu err=%lu\n", rc, GetLastError());
         okChildInt("argcA", 4);
         okChildString("argvA3", "Lnk");
     }
@@ -2186,7 +2186,7 @@ static void test_lnks(void)
         if (rc > 32)
             rc=33;
         todo_wine_if(test->todo & 0x1)
-            okShell(rc==test->rc, "failed: rc=%lu err=%u\n", rc, GetLastError());
+            okShell(rc==test->rc, "failed: rc=%Iu err=%lu\n", rc, GetLastError());
         if (rc==0)
         {
             todo_wine_if(test->todo & 0x2)
@@ -2212,7 +2212,7 @@ static void test_exes(void)
     /* We need NOZONECHECKS on Win2003 to block a dialog */
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, argv0, params,
                         NULL, NULL);
-    okShell(rc > 32, "returned %lu\n", rc);
+    okShell(rc > 32, "returned %Iu\n", rc);
     okChildInt("argcA", 4);
     okChildString("argvA3", "Exec");
 
@@ -2223,7 +2223,7 @@ static void test_exes(void)
         {
             rc=shell_execute(NULL, filename, params, NULL);
             todo_wine {
-                okShell(rc==SE_ERR_NOASSOC, "returned %lu\n", rc);
+                okShell(rc==SE_ERR_NOASSOC, "returned %Iu\n", rc);
             }
         }
     }
@@ -2235,16 +2235,16 @@ static void test_exes(void)
     /* test combining executable and parameters */
     sprintf(filename, "%s shlexec \"%s\" Exec", argv0, child_file);
     rc = shell_execute(NULL, filename, NULL, NULL);
-    okShell(rc == SE_ERR_FNF, "returned %lu\n", rc);
+    okShell(rc == SE_ERR_FNF, "returned %Iu\n", rc);
 
     sprintf(filename, "\"%s\" shlexec \"%s\" Exec", argv0, child_file);
     rc = shell_execute(NULL, filename, NULL, NULL);
-    okShell(rc == SE_ERR_FNF, "returned %lu\n", rc);
+    okShell(rc == SE_ERR_FNF, "returned %Iu\n", rc);
 
     /* A verb, even if invalid, overrides the normal handling of executables */
     todo_wait rc = shell_execute_ex(SEE_MASK_FLAG_NO_UI,
                                     "notaverb", argv0, NULL, NULL, NULL);
-    todo_wine okShell(rc == SE_ERR_NOASSOC, "returned %lu\n", rc);
+    todo_wine okShell(rc == SE_ERR_NOASSOC, "returned %Iu\n", rc);
 
     if (!skip_shlexec_tests)
     {
@@ -2252,7 +2252,7 @@ static void test_exes(void)
         /* FIXME SEE_MASK_FLAG_NO_UI is only needed due to Wine's bug */
         rc = shell_execute_ex(SEE_MASK_CLASSNAME | SEE_MASK_FLAG_NO_UI,
                               NULL, argv0, NULL, NULL, ".shlexec");
-        todo_wine okShell(rc > 32, "returned %lu\n", rc);
+        todo_wine okShell(rc > 32, "returned %Iu\n", rc);
         okChildInt("argcA", 5);
         todo_wine okChildString("argvA3", "Open");
         todo_wine okChildPath("argvA4", argv0);
@@ -2304,7 +2304,7 @@ static DWORD WINAPI hooked_WaitForInputIdle(HANDLE process, DWORD timeout)
 {
     waitforinputidle_count++;
     if (winetest_debug > 1)
-        trace("WaitForInputIdle() waiting for dde event timeout=min(%u,5s)\n", timeout);
+        trace("WaitForInputIdle() waiting for dde event timeout=min(%lu,5s)\n", timeout);
     timeout = timeout < 5000 ? timeout : 5000;
     return WaitForSingleObject(dde_ready_event, timeout);
 }
@@ -2444,7 +2444,7 @@ static void test_dde(void)
             Sleep(CHILD_DDE_TIMEOUT);
             continue;
         }
-        okShell(32 < rc, "failed: rc=%lu err=%u\n", rc, GetLastError());
+        okShell(32 < rc, "failed: rc=%Iu err=%lu\n", rc, GetLastError());
         if (test->ddeexec)
             okShell(waitforinputidle_count == 1 ||
                     broken(waitforinputidle_count == 0) /* Win10 race */,
@@ -2564,7 +2564,7 @@ static void test_dde_default_app(void)
     ddeInst = 0;
     rc = DdeInitializeA(&ddeInst, ddeCb, CBF_SKIP_ALLNOTIFICATIONS | CBF_FAIL_ADVISES |
                         CBF_FAIL_POKES | CBF_FAIL_REQUESTS, 0);
-    ok(rc == DMLERR_NO_ERROR, "got %lx\n", rc);
+    ok(rc == DMLERR_NO_ERROR, "got %Ix\n", rc);
 
     sprintf(filename, "%s\\test file.sde", tmpdir);
 
@@ -2621,7 +2621,7 @@ static void test_dde_default_app(void)
         }
 
         todo_wine_if(test->todo & 0x1)
-            okShell(rc==test->rc[which], "failed: rc=%lu err=%u\n",
+            okShell(rc==test->rc[which], "failed: rc=%Iu err=%lu\n",
                     rc, GetLastError());
         if (rc == 33)
         {
@@ -2664,7 +2664,7 @@ static void init_test(void)
     {
         dllver.cbSize=sizeof(dllver);
         pDllGetVersion(&dllver);
-        trace("major=%d minor=%d build=%d platform=%d\n",
+        trace("major=%ld minor=%ld build=%ld platform=%ld\n",
               dllver.dwMajorVersion, dllver.dwMinorVersion,
               dllver.dwBuildNumber, dllver.dwPlatformID);
     }
@@ -2674,12 +2674,12 @@ static void init_test(void)
     }
 
     r = CoInitialize(NULL);
-    ok(r == S_OK, "CoInitialize failed (0x%08x)\n", r);
+    ok(r == S_OK, "CoInitialize failed (0x%08lx)\n", r);
     if (FAILED(r))
         exit(1);
 
     rc=GetModuleFileNameA(NULL, argv0, sizeof(argv0));
-    ok(rc != 0 && rc < sizeof(argv0), "got %d\n", rc);
+    ok(rc != 0 && rc < sizeof(argv0), "got %ld\n", rc);
     if (GetFileAttributesA(argv0)==INVALID_FILE_ATTRIBUTES)
     {
         strcat(argv0, ".so");
@@ -2703,7 +2703,7 @@ static void init_test(void)
     DeleteFileA( tmpdir );
     rc = CreateDirectoryA( tmpdir, NULL );
     ok( rc || GetLastError() == ERROR_ALREADY_EXISTS,
-        "failed to create %s err %u\n", tmpdir, GetLastError() );
+        "failed to create %s err %lu\n", tmpdir, GetLastError() );
     /* Set %TMPDIR% for the tests */
     SetEnvironmentVariableA("TMPDIR", tmpdir);
 
@@ -2722,7 +2722,7 @@ static void init_test(void)
                      FILE_ATTRIBUTE_NORMAL, NULL);
         if (hfile==INVALID_HANDLE_VALUE)
         {
-            trace("unable to create '%s': err=%u\n", filename, GetLastError());
+            trace("unable to create '%s': err=%lu\n", filename, GetLastError());
             assert(0);
         }
         CloseHandle(hfile);
@@ -2828,7 +2828,7 @@ static void test_directory(void)
     SetCurrentDirectoryA(tmpdir);
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
                         NULL, "test2.exe", params, NULL, NULL);
-    okShell(rc > 32, "returned %lu\n", rc);
+    okShell(rc > 32, "returned %Iu\n", rc);
     okChildInt("argcA", 4);
     todo_wine okChildString("argvA0", path);
     okChildString("argvA3", "Exec");
@@ -2837,12 +2837,12 @@ static void test_directory(void)
 
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
                         NULL, "test2.exe", params, NULL, NULL);
-    okShell(rc == SE_ERR_FNF, "returned %lu\n", rc);
+    okShell(rc == SE_ERR_FNF, "returned %Iu\n", rc);
 
     /* Explicitly specify the directory to use */
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
                         NULL, "test2.exe", params, tmpdir, NULL);
-    okShell(rc > 32, "returned %lu\n", rc);
+    okShell(rc > 32, "returned %Iu\n", rc);
     okChildInt("argcA", 4);
     okChildString("argvA0", path);
     okChildString("argvA3", "Exec");
@@ -2851,11 +2851,11 @@ static void test_directory(void)
     /* Specify it through an environment variable */
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
                         NULL, "test2.exe", params, "%TMPDIR%", NULL);
-    todo_wine okShell(rc == SE_ERR_FNF, "returned %lu\n", rc);
+    todo_wine okShell(rc == SE_ERR_FNF, "returned %Iu\n", rc);
 
     rc=shell_execute_ex(SEE_MASK_DOENVSUBST|SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
                         NULL, "test2.exe", params, "%TMPDIR%", NULL);
-    okShell(rc > 32, "returned %lu\n", rc);
+    okShell(rc > 32, "returned %Iu\n", rc);
     okChildInt("argcA", 4);
     okChildString("argvA0", path);
     okChildString("argvA3", "Exec");
@@ -2865,14 +2865,14 @@ static void test_directory(void)
     sprintf(dirpath, "%s:%s", curdir, tmpdir);
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
                         NULL, "test2.exe", params, dirpath, NULL);
-    okShell(rc == SE_ERR_FNF, "returned %lu\n", rc);
+    okShell(rc == SE_ERR_FNF, "returned %Iu\n", rc);
 
     /* Same-named executable in different directory */
     snprintf(path, ARRAY_SIZE(path), "%s%s", tmpdir, strrchr(argv0, '\\'));
     CopyFileA(argv0, path, FALSE);
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
                         NULL, strrchr(argv0, '\\') + 1, params, tmpdir, NULL);
-    okShell(rc > 32, "returned %lu\n", rc);
+    okShell(rc > 32, "returned %Iu\n", rc);
     okChildInt("argcA", 4);
     okChildString("argvA0", path);
     okChildString("argvA3", "Exec");
@@ -2880,10 +2880,10 @@ static void test_directory(void)
 
     SetCurrentDirectoryA(tmpdir);
     ret = CreateDirectoryA( "tmp", NULL );
-    ok(ret || GetLastError() == ERROR_ALREADY_EXISTS, "Failed to create 'tmp' err %u\n", GetLastError());
+    ok(ret || GetLastError() == ERROR_ALREADY_EXISTS, "Failed to create 'tmp' err %lu\n", GetLastError());
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
                         NULL, path, params, "tmp", NULL);
-    okShell(rc > 32, "returned %lu\n", rc);
+    okShell(rc > 32, "returned %Iu\n", rc);
 
     DeleteFileA(path);
 

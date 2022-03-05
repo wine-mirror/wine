@@ -177,14 +177,14 @@ static void test_click_make_new_folder_button(void)
     resCoInit = CoInitialize(NULL);
     if(!(resCoInit == S_OK || resCoInit == S_FALSE))
     {
-        skip("COM could not be initialized %u\n", GetLastError());
+        skip("COM could not be initialized %lu\n", GetLastError());
         return;
     }
 
     /* Leave room for concatenating title, two backslashes, and an extra NULL. */
     if (!GetCurrentDirectoryA(MAX_PATH-strlen(title)-3, test_folder_path))
     {
-        skip("GetCurrentDirectoryA failed %u\n", GetLastError());
+        skip("GetCurrentDirectoryA failed %lu\n", GetLastError());
     }
     strcat(test_folder_path, "\\");
     strcat(test_folder_path, title);
@@ -193,7 +193,7 @@ static void test_click_make_new_folder_button(void)
     /* Avoid conflicts by creating a test folder. */
     if (!CreateDirectoryA(title, NULL))
     {
-        skip("CreateDirectoryA failed %u\n", GetLastError());
+        skip("CreateDirectoryA failed %lu\n", GetLastError());
         return;
     }
 
@@ -207,7 +207,7 @@ static void test_click_make_new_folder_button(void)
     MultiByteToWideChar(CP_UTF8, 0, test_folder_path, -1,
         test_folder_pathW, MAX_PATH);
     hr = SHGetDesktopFolder(&test_folder_object);
-    ok (SUCCEEDED(hr), "SHGetDesktopFolder failed with hr 0x%08x\n", hr);
+    ok (SUCCEEDED(hr), "SHGetDesktopFolder failed with hr 0x%08lx\n", hr);
     if (FAILED(hr)) {
         skip("SHGetDesktopFolder failed - skipping\n");
         return;
@@ -268,34 +268,34 @@ static int CALLBACK selection_callback(HWND hwnd, UINT uMsg, LPARAM lParam, LPAR
     case BFFM_INITIALIZED:
         /* test with zero values */
         ret = SendMessageA(hwnd, BFFM_SETSELECTIONA, 0, 0);
-        ok(!ret, "SendMessage returned: %u\n", ret);
+        ok(!ret, "SendMessage returned: %lu\n", ret);
         ret = SendMessageA(hwnd, BFFM_SETSELECTIONW, 0, 0);
-        ok(!ret, "SendMessage returned: %u\n", ret);
+        ok(!ret, "SendMessage returned: %lu\n", ret);
 
         ret = SendMessageA(hwnd, BFFM_SETSELECTIONA, 1, 0);
-        ok(!ret, "SendMessage returned: %u\n", ret);
+        ok(!ret, "SendMessage returned: %lu\n", ret);
 
         if(0)
         {
             /* Crashes on NT4 */
             ret = SendMessageA(hwnd, BFFM_SETSELECTIONW, 1, 0);
-            ok(!ret, "SendMessage returned: %u\n", ret);
+            ok(!ret, "SendMessage returned: %lu\n", ret);
         }
 
         ret = SendMessageA(hwnd, BFFM_SETSELECTIONA, 0, (LPARAM)selected_folder_pidl);
-        ok(!ret, "SendMessage returned: %u\n", ret);
+        ok(!ret, "SendMessage returned: %lu\n", ret);
         ret = SendMessageW(hwnd, BFFM_SETSELECTIONW, 0, (LPARAM)selected_folder_pidl);
-        ok(!ret, "SendMessage returned: %u\n", ret);
+        ok(!ret, "SendMessage returned: %lu\n", ret);
 
         ret = SendMessageA(hwnd, BFFM_SETSELECTIONA, 1, (LPARAM)selected_folder_pidl);
-        ok(!ret, "SendMessage returned: %u\n", ret);
+        ok(!ret, "SendMessage returned: %lu\n", ret);
         ret = SendMessageW(hwnd, BFFM_SETSELECTIONW, 1, (LPARAM)selected_folder_pidl);
-        ok(!ret, "SendMessage returned: %u\n", ret);
+        ok(!ret, "SendMessage returned: %lu\n", ret);
 
         ret = SendMessageA(hwnd, BFFM_SETSELECTIONA, 1, (LPARAM)new_folder_name);
-        ok(!ret, "SendMessage returned: %u\n", ret);
+        ok(!ret, "SendMessage returned: %lu\n", ret);
         ret = SendMessageW(hwnd, BFFM_SETSELECTIONW, 1, (LPARAM)new_folder_name);
-        ok(!ret, "SendMessage returned: %u\n", ret);
+        ok(!ret, "SendMessage returned: %lu\n", ret);
 
         SendMessageA(hwnd, WM_COMMAND, IDOK, 0);
         return 1;
@@ -316,13 +316,13 @@ static void test_selection(void)
     resCoInit = CoInitialize(NULL);
     if(!(resCoInit == S_OK || resCoInit == S_FALSE))
     {
-        skip("COM could not be initialized %u\n", GetLastError());
+        skip("COM could not be initialized %lu\n", GetLastError());
         return;
     }
 
     if (!GetCurrentDirectoryW(MAX_PATH, selected_folderW))
     {
-        skip("GetCurrentDirectoryW failed %u\n", GetLastError());
+        skip("GetCurrentDirectoryW failed %lu\n", GetLastError());
     }
 
     /* Initialize browse info struct for SHBrowseForFolder */
@@ -332,7 +332,7 @@ static void test_selection(void)
     bi.lpfn = selection_callback;
 
     hr = SHGetDesktopFolder(&desktop_object);
-    ok (SUCCEEDED(hr), "SHGetDesktopFolder failed with hr 0x%08x\n", hr);
+    ok (SUCCEEDED(hr), "SHGetDesktopFolder failed with hr 0x%08lx\n", hr);
     if (FAILED(hr)) {
         skip("SHGetDesktopFolder failed - skipping\n");
         return;

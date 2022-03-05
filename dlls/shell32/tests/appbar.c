@@ -78,19 +78,19 @@ static void testwindow_setpos(HWND hwnd)
     switch (info->edge)
     {
         case ABE_BOTTOM:
-            ok(info->desired_rect.top == abd.rc.top, "ABM_QUERYPOS changed top of rect from %i to %i\n", info->desired_rect.top, abd.rc.top);
+            ok(info->desired_rect.top == abd.rc.top, "ABM_QUERYPOS changed top of rect from %li to %li\n", info->desired_rect.top, abd.rc.top);
             abd.rc.top = abd.rc.bottom - (info->desired_rect.bottom - info->desired_rect.top);
             break;
         case ABE_LEFT:
-            ok(info->desired_rect.right == abd.rc.right, "ABM_QUERYPOS changed right of rect from %i to %i\n", info->desired_rect.right, abd.rc.right);
+            ok(info->desired_rect.right == abd.rc.right, "ABM_QUERYPOS changed right of rect from %li to %li\n", info->desired_rect.right, abd.rc.right);
             abd.rc.right = abd.rc.left + (info->desired_rect.right - info->desired_rect.left);
             break;
         case ABE_RIGHT:
-            ok(info->desired_rect.left == abd.rc.left, "ABM_QUERYPOS changed left of rect from %i to %i\n", info->desired_rect.left, abd.rc.left);
+            ok(info->desired_rect.left == abd.rc.left, "ABM_QUERYPOS changed left of rect from %li to %li\n", info->desired_rect.left, abd.rc.left);
             abd.rc.left = abd.rc.right - (info->desired_rect.right - info->desired_rect.left);
             break;
         case ABE_TOP:
-            ok(info->desired_rect.bottom == abd.rc.bottom, "ABM_QUERYPOS changed bottom of rect from %i to %i\n", info->desired_rect.bottom, abd.rc.bottom);
+            ok(info->desired_rect.bottom == abd.rc.bottom, "ABM_QUERYPOS changed bottom of rect from %li to %li\n", info->desired_rect.bottom, abd.rc.bottom);
             abd.rc.bottom = abd.rc.top + (info->desired_rect.bottom - info->desired_rect.top);
             break;
     }
@@ -339,7 +339,7 @@ static void test_setpos(void)
         win_skip("Some broken Vista boxes don't move the higher appbar down\n");
     else
         ok(windows[1].allocated_rect.bottom == expected_bottom,
-            "windows[1]'s bottom is %i, expected %i\n",
+            "windows[1]'s bottom is %li, expected %i\n",
             windows[1].allocated_rect.bottom, expected_bottom);
 
     test_window_rects(1, 2);
@@ -432,7 +432,7 @@ static void test_GetCurrentProcessExplicitAppUserModelID(void)
     appid = (void*)0xdeadbeef;
     hr = pGetCurrentProcessExplicitAppUserModelID(&appid);
     todo_wine
-    ok(hr == E_FAIL, "got 0x%08x\n", hr);
+    ok(hr == E_FAIL, "got 0x%08lx\n", hr);
     ok(appid == NULL, "got %p\n", appid);
 }
 
@@ -450,14 +450,14 @@ static void test_SHGetPropertyStoreForWindow(void)
 
     unk = (IUnknown *)0xdeadbeef;
     hr = pSHGetPropertyStoreForWindow(GetDesktopWindow(), &IID_IDispatch, (void **)&unk);
-    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+    ok(hr == E_NOINTERFACE, "got 0x%08lx\n", hr);
     ok(unk == NULL, "got %p\n", unk);
 
     hr = pSHGetPropertyStoreForWindow(GetDesktopWindow(), &IID_IUnknown, (void **)&unk);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IUnknown_QueryInterface(unk, &IID_IPropertyStore, (void **)&store);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     if (store) IPropertyStore_Release(store);
     if (unk) IUnknown_Release(unk);

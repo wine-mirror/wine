@@ -116,15 +116,15 @@ static HRESULT WINAPI PropertyStorage_ReadMultiple(IPropertyStorage *This, ULONG
         ok(rgpspec != NULL, "rgpspec = NULL\n");
         ok(rgpropvar != NULL, "rgpropvar = NULL\n");
 
-        ok(rgpspec[0].ulKind == PRSPEC_PROPID, "rgpspec[0].ulKind = %d\n", rgpspec[0].ulKind);
-        ok(rgpspec[0].u.propid == PID_CODEPAGE, "rgpspec[0].propid = %d\n", rgpspec[0].u.propid);
+        ok(rgpspec[0].ulKind == PRSPEC_PROPID, "rgpspec[0].ulKind = %ld\n", rgpspec[0].ulKind);
+        ok(rgpspec[0].u.propid == PID_CODEPAGE, "rgpspec[0].propid = %ld\n", rgpspec[0].u.propid);
 
         rgpropvar[0].vt = VT_I2;
         rgpropvar[0].iVal = 1234;
     } else {
         CHECK_EXPECT(ReadMultiple);
 
-        ok(cpspec == 10, "cpspec = %u\n", cpspec);
+        ok(cpspec == 10, "cpspec = %lu\n", cpspec);
         ok(rgpspec == (void*)0xdeadbeef, "rgpspec = %p\n", rgpspec);
         ok(rgpropvar != NULL, "rgpropvar = NULL\n");
 
@@ -149,10 +149,10 @@ static HRESULT WINAPI PropertyStorage_WriteMultiple(IPropertyStorage *This, ULON
 {
     CHECK_EXPECT(WriteMultiple);
 
-    ok(cpspec == 20, "cpspec = %d\n", cpspec);
+    ok(cpspec == 20, "cpspec = %ld\n", cpspec);
     ok(rgpspec == (void*)0xdeadbeef, "rgpspec = %p\n", rgpspec);
     ok(rgpropvar == (void*)0xdeadbeef, "rgpropvar = %p\n", rgpspec);
-    ok(propidNameFirst == PID_FIRST_USABLE, "propidNameFirst = %d\n", propidNameFirst);
+    ok(propidNameFirst == PID_FIRST_USABLE, "propidNameFirst = %ld\n", propidNameFirst);
     return S_OK;
 }
 
@@ -272,8 +272,8 @@ static HRESULT WINAPI PropertySetStorage_Create(IPropertySetStorage *This,
     ok(IsEqualGUID(rfmtid, &FMTID_Test) || IsEqualGUID(rfmtid, &FMTID_NotExisting),
             "Incorrect rfmtid value\n");
     ok(pclsid == NULL, "pclsid != NULL\n");
-    ok(grfFlags == PROPSETFLAG_ANSI, "grfFlags = %x\n", grfFlags);
-    ok(grfMode == STGM_READ, "grfMode = %x\n", grfMode);
+    ok(grfFlags == PROPSETFLAG_ANSI, "grfFlags = %lx\n", grfFlags);
+    ok(grfMode == STGM_READ, "grfMode = %lx\n", grfMode);
 
     *ppprstg = &PropertyStorage;
     return S_OK;
@@ -285,7 +285,7 @@ static HRESULT WINAPI PropertySetStorage_Open(IPropertySetStorage *This,
     CHECK_EXPECT(Open);
 
     if(IsEqualGUID(rfmtid, &FMTID_Test)) {
-        ok(grfMode == STGM_READ, "grfMode = %x\n", grfMode);
+        ok(grfMode == STGM_READ, "grfMode = %lx\n", grfMode);
 
         *ppprstg = &PropertyStorage;
         return S_OK;
@@ -348,14 +348,14 @@ static void test_SHPropStg_functions(void)
     hres = pSHPropStgCreate(&PropertySetStorage, &FMTID_Test, NULL, PROPSETFLAG_DEFAULT,
             STGM_READ, OPEN_EXISTING, &property_storage, &codepage);
     ok(codepage == 1234, "codepage = %d\n", codepage);
-    ok(hres == S_OK, "hres = %x\n", hres);
+    ok(hres == S_OK, "hres = %lx\n", hres);
     CHECK_CALLED(Open);
     CHECK_CALLED(ReadMultipleCodePage);
 
     SET_EXPECT(Open);
     hres = pSHPropStgCreate(&PropertySetStorage, &FMTID_NotExisting, NULL,
             PROPSETFLAG_DEFAULT, STGM_READ, OPEN_EXISTING, &property_storage, &codepage);
-    ok(hres == STG_E_FILENOTFOUND, "hres = %x\n", hres);
+    ok(hres == STG_E_FILENOTFOUND, "hres = %lx\n", hres);
     CHECK_CALLED(Open);
 
     SET_EXPECT(Open);
@@ -366,7 +366,7 @@ static void test_SHPropStg_functions(void)
     hres = pSHPropStgCreate(&PropertySetStorage, &FMTID_Test, NULL, PROPSETFLAG_ANSI,
             STGM_READ, CREATE_ALWAYS, &property_storage, &codepage);
     ok(codepage == 1234, "codepage = %d\n", codepage);
-    ok(hres == S_OK, "hres = %x\n", hres);
+    ok(hres == S_OK, "hres = %lx\n", hres);
     CHECK_CALLED(Open);
     CHECK_CALLED(Release);
     CHECK_CALLED(Delete);
@@ -379,7 +379,7 @@ static void test_SHPropStg_functions(void)
     hres = pSHPropStgCreate(&PropertySetStorage, &FMTID_NotExisting, NULL, PROPSETFLAG_ANSI,
             STGM_READ, CREATE_ALWAYS, &property_storage, &codepage);
     ok(codepage == 1234, "codepage = %d\n", codepage);
-    ok(hres == S_OK, "hres = %x\n", hres);
+    ok(hres == S_OK, "hres = %lx\n", hres);
     CHECK_CALLED(Open);
     CHECK_CALLED(Create);
     CHECK_CALLED(ReadMultipleCodePage);
@@ -387,7 +387,7 @@ static void test_SHPropStg_functions(void)
     SET_EXPECT(Open);
     hres = pSHPropStgCreate(&PropertySetStorage, &FMTID_Test, &FMTID_NotExisting,
             PROPSETFLAG_DEFAULT, STGM_READ, OPEN_EXISTING, &property_storage, NULL);
-    ok(hres == S_OK, "hres = %x\n", hres);
+    ok(hres == S_OK, "hres = %lx\n", hres);
     CHECK_CALLED(Open);
 
     SET_EXPECT(Stat);
@@ -395,7 +395,7 @@ static void test_SHPropStg_functions(void)
     SET_EXPECT(WriteMultiple);
     codepage = 0;
     hres = pSHPropStgWriteMultiple(property_storage, &codepage, 20, (void*)0xdeadbeef, (void*)0xdeadbeef, PID_FIRST_USABLE);
-    ok(hres == S_OK, "hres = %x\n", hres);
+    ok(hres == S_OK, "hres = %lx\n", hres);
     ok(codepage == 1234, "codepage = %d\n", codepage);
     CHECK_CALLED(Stat);
     CHECK_CALLED(ReadMultipleCodePage);
@@ -405,7 +405,7 @@ static void test_SHPropStg_functions(void)
     SET_EXPECT(ReadMultipleCodePage);
     SET_EXPECT(WriteMultiple);
     hres = pSHPropStgWriteMultiple(property_storage, NULL, 20, (void*)0xdeadbeef, (void*)0xdeadbeef, PID_FIRST_USABLE);
-    ok(hres == S_OK, "hres = %x\n", hres);
+    ok(hres == S_OK, "hres = %lx\n", hres);
     CHECK_CALLED(Stat);
     CHECK_CALLED(ReadMultipleCodePage);
     CHECK_CALLED(WriteMultiple);
@@ -414,7 +414,7 @@ static void test_SHPropStg_functions(void)
     SET_EXPECT(WriteMultiple);
     codepage = 1000;
     hres = pSHPropStgWriteMultiple(property_storage, &codepage, 20, (void*)0xdeadbeef, (void*)0xdeadbeef, PID_FIRST_USABLE);
-    ok(hres == S_OK, "hres = %x\n", hres);
+    ok(hres == S_OK, "hres = %lx\n", hres);
     ok(codepage == 1000, "codepage = %d\n", codepage);
     CHECK_CALLED(Stat);
     CHECK_CALLED(WriteMultiple);
@@ -425,7 +425,7 @@ static void test_SHPropStg_functions(void)
     SET_EXPECT(ReadMultipleCodePage);
     SET_EXPECT(Stat);
     hres = pSHPropStgReadMultiple(property_storage, 0, 10, (void*)0xdeadbeef, read);
-    ok(hres == S_OK, "hres = %x\n", hres);
+    ok(hres == S_OK, "hres = %lx\n", hres);
     CHECK_CALLED(ReadMultiple);
     CHECK_CALLED(ReadMultipleCodePage);
     CHECK_CALLED(Stat);
@@ -433,7 +433,7 @@ static void test_SHPropStg_functions(void)
     SET_EXPECT(ReadMultiple);
     SET_EXPECT(Stat);
     hres = pSHPropStgReadMultiple(property_storage, 1251, 10, (void*)0xdeadbeef, read);
-    ok(hres == S_OK, "hres = %x\n", hres);
+    ok(hres == S_OK, "hres = %lx\n", hres);
     CHECK_CALLED(ReadMultiple);
     CHECK_CALLED(Stat);
 }
@@ -715,19 +715,19 @@ static void test_SHCreateQueryCancelAutoPlayMoniker(void)
     }
 
     hr = pSHCreateQueryCancelAutoPlayMoniker(NULL);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(hr == E_INVALIDARG, "got 0x%08lx\n", hr);
 
     hr = pSHCreateQueryCancelAutoPlayMoniker(&mon);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     sys = -1;
     hr = IMoniker_IsSystemMoniker(mon, &sys);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(sys == MKSYS_CLASSMONIKER, "got %d\n", sys);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(sys == MKSYS_CLASSMONIKER, "got %ld\n", sys);
 
     memset(&clsid, 0, sizeof(clsid));
     hr = IMoniker_GetClassID(mon, &clsid);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(IsEqualGUID(&clsid, &CLSID_ClassMoniker), "got %s\n", wine_dbgstr_guid(&clsid));
 
     /* extract used CLSID that implements this hook */
@@ -736,7 +736,7 @@ static void test_SHCreateQueryCancelAutoPlayMoniker(void)
 
     CreateBindCtx(0, &ctxt);
     hr = IMoniker_BindToObject(mon, ctxt, &test_moniker, &IID_IQueryCancelAutoPlay, (void**)&unk);
-    ok(hr == E_NOTIMPL, "got 0x%08x\n", hr);
+    ok(hr == E_NOTIMPL, "got 0x%08lx\n", hr);
     IBindCtx_Release(ctxt);
 
     CHECK_CALLED(autoplay_BindToObject);
@@ -778,8 +778,8 @@ static LRESULT WINAPI drop_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARA
         ok(!strcmp(filename, DROPTEST_FILENAME), "got %s\n", filename);
         r = DragQueryPoint(hDrop, &pt);
         ok(r == expected, "expected %d, got %d\n", expected, r);
-        ok(pt.x == 10, "expected 10, got %d\n", pt.x);
-        ok(pt.y == 20, "expected 20, got %d\n", pt.y);
+        ok(pt.x == 10, "expected 10, got %ld\n", pt.x);
+        ok(pt.y == 20, "expected 20, got %ld\n", pt.y);
         DragFinish(hDrop);
         return 0;
     }
@@ -803,13 +803,13 @@ static DWORD WINAPI drop_window_therad(void *arg)
 
     param->hwnd = CreateWindowA("drop test", NULL, 0, 0, 0, 0, 0,
                                 NULL, 0, NULL, 0);
-    ok(param->hwnd != NULL, "CreateWindow failed: %d\n", GetLastError());
+    ok(param->hwnd != NULL, "CreateWindow failed: %ld\n", GetLastError());
 
     memset(&info, 0, sizeof(info));
     info.cbSize = sizeof(info);
     r = GetWindowInfo(param->hwnd, &info);
     ok(r, "got %d\n", r);
-    ok(!(info.dwExStyle & WS_EX_ACCEPTFILES), "got %08x\n", info.dwExStyle);
+    ok(!(info.dwExStyle & WS_EX_ACCEPTFILES), "got %08lx\n", info.dwExStyle);
 
     DragAcceptFiles(param->hwnd, TRUE);
 
@@ -817,7 +817,7 @@ static DWORD WINAPI drop_window_therad(void *arg)
     info.cbSize = sizeof(info);
     r = GetWindowInfo(param->hwnd, &info);
     ok(r, "got %d\n", r);
-    ok((info.dwExStyle & WS_EX_ACCEPTFILES), "got %08x\n", info.dwExStyle);
+    ok((info.dwExStyle & WS_EX_ACCEPTFILES), "got %08lx\n", info.dwExStyle);
 
     SetEvent(param->ready);
 
@@ -849,7 +849,7 @@ static void test_DragQueryFile(BOOL non_client_flag)
     hThread = CreateThread(NULL, 0, drop_window_therad, &param, 0, NULL);
 
     rc = WaitForSingleObject(param.ready, 5000);
-    ok(rc == WAIT_OBJECT_0, "got %u\n", rc);
+    ok(rc == WAIT_OBJECT_0, "got %lu\n", rc);
 
     hDrop = GlobalAlloc(GHND, sizeof(DROPFILES) + (strlen(DROPTEST_FILENAME) + 2) * sizeof(WCHAR));
     pDrop = GlobalLock(hDrop);
@@ -873,7 +873,7 @@ static void test_DragQueryFile(BOOL non_client_flag)
     ok(r, "got %d\n", r);
 
     rc = WaitForSingleObject(hThread, 5000);
-    ok(rc == WAIT_OBJECT_0, "got %d\n", rc);
+    ok(rc == WAIT_OBJECT_0, "got %ld\n", rc);
 
     CloseHandle(param.ready);
     CloseHandle(hThread);
@@ -904,14 +904,14 @@ static void test_SHCreateSessionKey(void)
 
     hkey = (HKEY)0xdeadbeef;
     hr = pSHCreateSessionKey(0, &hkey);
-    ok(hr == E_ACCESSDENIED, "got 0x%08x\n", hr);
+    ok(hr == E_ACCESSDENIED, "got 0x%08lx\n", hr);
     ok(hkey == NULL, "got %p\n", hkey);
 
     hr = pSHCreateSessionKey(KEY_READ, &hkey);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = pSHCreateSessionKey(KEY_READ, &hkey2);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(hkey != hkey2, "got %p, %p\n", hkey, hkey2);
 
     RegCloseKey(hkey);
@@ -935,10 +935,10 @@ static void test_dragdrophelper(void)
     HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_DragDropHelper, NULL, CLSCTX_INPROC_SERVER, &IID_IDropTargetHelper, (void **)&target);
-    ok(hr == S_OK, "Failed to create IDropTargetHelper, %#x\n", hr);
+    ok(hr == S_OK, "Failed to create IDropTargetHelper, %#lx\n", hr);
 
     hr = IDropTargetHelper_QueryInterface(target, &IID_IDragSourceHelper, (void **)&dragsource);
-    ok(hr == S_OK, "QI failed, %#x\n", hr);
+    ok(hr == S_OK, "QI failed, %#lx\n", hr);
     IDragSourceHelper_Release(dragsource);
 
     IDropTargetHelper_Release(target);
@@ -951,7 +951,7 @@ START_TEST(shellole)
     init();
 
     hr = CoInitialize(NULL);
-    ok(hr == S_OK, "CoInitialize failed (0x%08x)\n", hr);
+    ok(hr == S_OK, "CoInitialize failed (0x%08lx)\n", hr);
     if (hr != S_OK)
         return;
 

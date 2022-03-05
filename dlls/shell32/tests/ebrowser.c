@@ -207,7 +207,7 @@ static HRESULT WINAPI IExplorerPaneVisibility_fnGetPaneState(IExplorerPaneVisibi
 
     ok(ep != NULL, "ep is NULL.\n");
     ok(peps != NULL, "peps is NULL.\n");
-    ok(*peps == 0, "got %d\n", *peps);
+    ok(*peps == 0, "got %ld\n", *peps);
 
     *peps = EPS_FORCE;
     if(IsEqualGUID(&EP_NavPane, ep))                 This->np++;
@@ -505,12 +505,12 @@ static void test_QueryInterface(void)
     LONG lres;
 
     hr = ebrowser_instantiate(&peb);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
 
 #define test_qinterface(iid, exp)                                       \
     do {                                                                \
         hr = IExplorerBrowser_QueryInterface(peb, &iid, (void**)&punk); \
-        ok(hr == exp, "(%s:)Expected (0x%08x), got (0x%08x)\n",         \
+        ok(hr == exp, "(%s:)Expected (0x%08lx), got (0x%08lx)\n",         \
            #iid, exp, hr);                                              \
         if(SUCCEEDED(hr)) IUnknown_Release(punk);                       \
     } while(0)
@@ -536,7 +536,7 @@ static void test_QueryInterface(void)
 #undef test_qinterface
 
     lres = IExplorerBrowser_Release(peb);
-    ok(lres == 0, "Got %d\n", lres);
+    ok(lres == 0, "Got %ld\n", lres);
 }
 
 static void test_SB_misc(void)
@@ -551,7 +551,7 @@ static void test_SB_misc(void)
 
     ebrowser_instantiate(&peb);
     hr = IExplorerBrowser_QueryInterface(peb, &IID_IShellBrowser, (void**)&psb);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
     if(FAILED(hr))
     {
         skip("Failed to get IShellBrowser interface.\n");
@@ -561,42 +561,42 @@ static void test_SB_misc(void)
     /* Some unimplemented methods */
     retHwnd = (HWND)0xdeadbeef;
     hr = IShellBrowser_GetControlWindow(psb, FCW_TOOLBAR, &retHwnd);
-    ok(hr == E_NOTIMPL, "got (0x%08x)\n", hr);
+    ok(hr == E_NOTIMPL, "got (0x%08lx)\n", hr);
     ok(retHwnd == NULL || broken(retHwnd == (HWND)0xdeadbeef), "got %p\n", retHwnd);
 
     retHwnd = (HWND)0xdeadbeef;
     hr = IShellBrowser_GetControlWindow(psb, FCW_STATUS, &retHwnd);
-    ok(hr == E_NOTIMPL, "got (0x%08x)\n", hr);
+    ok(hr == E_NOTIMPL, "got (0x%08lx)\n", hr);
     ok(retHwnd == NULL || broken(retHwnd == (HWND)0xdeadbeef), "got %p\n", retHwnd);
 
     retHwnd = (HWND)0xdeadbeef;
     hr = IShellBrowser_GetControlWindow(psb, FCW_TREE, &retHwnd);
-    ok(hr == E_NOTIMPL, "got (0x%08x)\n", hr);
+    ok(hr == E_NOTIMPL, "got (0x%08lx)\n", hr);
     ok(retHwnd == NULL || broken(retHwnd == (HWND)0xdeadbeef), "got %p\n", retHwnd);
 
     retHwnd = (HWND)0xdeadbeef;
     hr = IShellBrowser_GetControlWindow(psb, FCW_PROGRESS, &retHwnd);
-    ok(hr == E_NOTIMPL, "got (0x%08x)\n", hr);
+    ok(hr == E_NOTIMPL, "got (0x%08lx)\n", hr);
     ok(retHwnd == NULL || broken(retHwnd == (HWND)0xdeadbeef), "got %p\n", retHwnd);
 
     /* ::InsertMenuSB */
     hr = IShellBrowser_InsertMenusSB(psb, NULL, NULL);
-    ok(hr == E_NOTIMPL, "got (0x%08x)\n", hr);
+    ok(hr == E_NOTIMPL, "got (0x%08lx)\n", hr);
 
     /* ::RemoveMenusSB */
     hr = IShellBrowser_RemoveMenusSB(psb, NULL);
-    ok(hr == E_NOTIMPL, "got (0x%08x)\n", hr);
+    ok(hr == E_NOTIMPL, "got (0x%08lx)\n", hr);
 
     /* ::SetMenuSB */
     hr = IShellBrowser_SetMenuSB(psb, NULL, NULL, NULL);
-    ok(hr == E_NOTIMPL, "got (0x%08x)\n", hr);
+    ok(hr == E_NOTIMPL, "got (0x%08lx)\n", hr);
 
     /***** Before EB::Initialize *****/
 
     /* ::GetWindow */
     retHwnd = (HWND)0xDEADBEEF;
     hr = IShellBrowser_GetWindow(psb, &retHwnd);
-    ok(hr == E_FAIL, "got (0x%08x)\n", hr);
+    ok(hr == E_FAIL, "got (0x%08lx)\n", hr);
     ok(retHwnd == (HWND)0xDEADBEEF, "HWND overwritten\n");
 
     todo_wine
@@ -605,28 +605,28 @@ static void test_SB_misc(void)
         /* ::SendControlMsg */
         lres = 0xDEADBEEF;
         hr = IShellBrowser_SendControlMsg(psb, FCW_STATUS, 0, 0, 0, &lres);
-        ok(hr == S_OK, "got (0x%08x)\n", hr);
-        ok(lres == 0, "lres was %ld\n", lres);
+        ok(hr == S_OK, "got (0x%08lx)\n", hr);
+        ok(lres == 0, "lres was %Id\n", lres);
 
         lres = 0xDEADBEEF;
         hr = IShellBrowser_SendControlMsg(psb, FCW_TOOLBAR, TB_CHECKBUTTON,
                                           FCIDM_TB_SMALLICON, TRUE, &lres);
-        ok(hr == S_OK, "got (0x%08x)\n", hr);
-        ok(lres == 0, "lres was %ld\n", lres);
+        ok(hr == S_OK, "got (0x%08lx)\n", hr);
+        ok(lres == 0, "lres was %Id\n", lres);
 
         hr = IShellBrowser_SendControlMsg(psb, FCW_STATUS, 0, 0, 0, NULL);
-        ok(hr == S_OK, "got (0x%08x)\n", hr);
+        ok(hr == S_OK, "got (0x%08lx)\n", hr);
 
         hr = IShellBrowser_SendControlMsg(psb, FCW_TREE, 0, 0, 0, NULL);
-        ok(hr == S_OK, "got (0x%08x)\n", hr);
+        ok(hr == S_OK, "got (0x%08lx)\n", hr);
 
         hr = IShellBrowser_SendControlMsg(psb, FCW_PROGRESS, 0, 0, 0, NULL);
-        ok(hr == S_OK, "got (0x%08x)\n", hr);
+        ok(hr == S_OK, "got (0x%08lx)\n", hr);
     }
 
     /* ::QueryActiveShellView */
     hr = IShellBrowser_QueryActiveShellView(psb, (IShellView**)&punk);
-    ok(hr == E_FAIL, "got (0x%08x)\n", hr);
+    ok(hr == E_FAIL, "got (0x%08lx)\n", hr);
 
     /* Initialize ExplorerBrowser */
     ebrowser_initialize(peb);
@@ -635,46 +635,46 @@ static void test_SB_misc(void)
 
     /* ::GetWindow */
     hr = IShellBrowser_GetWindow(psb, &retHwnd);
-    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(hr == S_OK, "got (0x%08lx)\n", hr);
     ok(GetParent(retHwnd) == hwnd, "The HWND returned is not our child.\n");
 
     todo_wine
     {
         /* ::SendControlMsg */
         hr = IShellBrowser_SendControlMsg(psb, FCW_STATUS, 0, 0, 0, NULL);
-        ok(hr == S_OK, "got (0x%08x)\n", hr);
+        ok(hr == S_OK, "got (0x%08lx)\n", hr);
 
         lres = 0xDEADBEEF;
         hr = IShellBrowser_SendControlMsg(psb, FCW_TOOLBAR, 0, 0, 0, &lres);
-        ok(hr == S_OK, "got (0x%08x)\n", hr);
-        ok(lres == 0, "lres was %ld\n", lres);
+        ok(hr == S_OK, "got (0x%08lx)\n", hr);
+        ok(lres == 0, "lres was %Id\n", lres);
 
         lres = 0xDEADBEEF;
         hr = IShellBrowser_SendControlMsg(psb, FCW_STATUS, 0, 0, 0, &lres);
-        ok(hr == S_OK, "got (0x%08x)\n", hr);
-        ok(lres == 0, "lres was %ld\n", lres);
+        ok(hr == S_OK, "got (0x%08lx)\n", hr);
+        ok(lres == 0, "lres was %Id\n", lres);
 
         lres = 0xDEADBEEF;
         hr = IShellBrowser_SendControlMsg(psb, 1234, 0, 0, 0, &lres);
-        ok(hr == S_OK, "got (0x%08x)\n", hr);
-        ok(lres == 0, "lres was %ld\n", lres);
+        ok(hr == S_OK, "got (0x%08lx)\n", hr);
+        ok(lres == 0, "lres was %Id\n", lres);
 
         /* Returns S_OK */
         hr = IShellBrowser_SetStatusTextSB(psb, NULL);
-        ok(hr == S_OK, "got (0x%08x)\n", hr);
+        ok(hr == S_OK, "got (0x%08lx)\n", hr);
 
         hr = IShellBrowser_ContextSensitiveHelp(psb, FALSE);
-        ok(hr == S_OK, "got (0x%08x)\n", hr);
+        ok(hr == S_OK, "got (0x%08lx)\n", hr);
 
         hr = IShellBrowser_EnableModelessSB(psb, TRUE);
-        ok(hr == S_OK, "got (0x%08x)\n", hr);
+        ok(hr == S_OK, "got (0x%08lx)\n", hr);
 
         hr = IShellBrowser_SetToolbarItems(psb, NULL, 1, 1);
-        ok(hr == S_OK, "got (0x%08x)\n", hr);
+        ok(hr == S_OK, "got (0x%08lx)\n", hr);
     }
 
     hr = IShellBrowser_QueryActiveShellView(psb, (IShellView**)&punk);
-    ok(hr == E_FAIL, "got (0x%08x)\n", hr);
+    ok(hr == E_FAIL, "got (0x%08lx)\n", hr);
 
     IShellBrowser_Release(psb);
     IExplorerBrowser_Destroy(peb);
@@ -687,19 +687,19 @@ static void test_SB_misc(void)
 
     process_msgs();
     hr = ebrowser_browse_to_desktop(peb);
-    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(hr == S_OK, "got (0x%08lx)\n", hr);
     process_msgs();
 
     /****** After Browsing *****/
 
     hr = IShellBrowser_QueryActiveShellView(psb, (IShellView**)&punk);
-    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(hr == S_OK, "got (0x%08lx)\n", hr);
     if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
     IShellBrowser_Release(psb);
     IExplorerBrowser_Destroy(peb);
     ref = IExplorerBrowser_Release(peb);
-    ok(ref == 0, "Got %d\n", ref);
+    ok(ref == 0, "Got %ld\n", ref);
 }
 
 static void test_initialization(void)
@@ -724,36 +724,36 @@ static void test_initialization(void)
     ZeroMemory(&rc, sizeof(RECT));
 
     hr = IExplorerBrowser_Initialize(peb, NULL, &rc, NULL);
-    ok(hr == E_INVALIDARG, "got (0x%08x)\n", hr);
+    ok(hr == E_INVALIDARG, "got (0x%08lx)\n", hr);
 
     hr = IExplorerBrowser_Initialize(peb, hwnd, &rc, NULL);
-    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(hr == S_OK, "got (0x%08lx)\n", hr);
 
     /* Initialize twice */
     hr = IExplorerBrowser_Initialize(peb, hwnd, &rc, NULL);
-    ok(hr == E_UNEXPECTED, "got (0x%08x)\n", hr);
+    ok(hr == E_UNEXPECTED, "got (0x%08lx)\n", hr);
 
     hr = IExplorerBrowser_Destroy(peb);
-    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(hr == S_OK, "got (0x%08lx)\n", hr);
 
     /* Initialize again */
     hr = IExplorerBrowser_Initialize(peb, hwnd, &rc, NULL);
-    ok(hr == E_UNEXPECTED, "got (0x%08x)\n", hr);
+    ok(hr == E_UNEXPECTED, "got (0x%08lx)\n", hr);
 
     /* Destroy again */
     hr = IExplorerBrowser_Destroy(peb);
-    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(hr == S_OK, "got (0x%08lx)\n", hr);
     lres = IExplorerBrowser_Release(peb);
-    ok(lres == 0, "Got %d\n", lres);
+    ok(lres == 0, "Got %ld\n", lres);
 
     /* Initialize with a few different rectangles */
     peb = NULL;
     ebrowser_instantiate(&peb);
     SetRect(&rc, 50, 20, 100, 80);
     hr = IExplorerBrowser_Initialize(peb, hwnd, &rc, NULL);
-    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(hr == S_OK, "got (0x%08lx)\n", hr);
     hr = IExplorerBrowser_QueryInterface(peb, &IID_IShellBrowser, (void**)&psb);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
     if(SUCCEEDED(hr))
     {
         RECT eb_rc;
@@ -762,14 +762,14 @@ static void test_initialization(void)
         static const RECT exp_rc = {0, 0, 48, 58};
 
         hr = IShellBrowser_GetWindow(psb, &eb_hwnd);
-        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        ok(hr == S_OK, "Got 0x%08lx\n", hr);
 
         GetClientRect(eb_hwnd, &eb_rc);
         ok(EqualRect(&eb_rc, &exp_rc), "Got client rect %s\n", wine_dbgstr_rect(&eb_rc));
 
         GetWindowRect(eb_hwnd, &eb_rc);
-        ok(eb_rc.right - eb_rc.left == 50, "Got window width %d\n", eb_rc.right - eb_rc.left);
-        ok(eb_rc.bottom - eb_rc.top == 60, "Got window height %d\n", eb_rc.bottom - eb_rc.top);
+        ok(eb_rc.right - eb_rc.left == 50, "Got window width %ld\n", eb_rc.right - eb_rc.left);
+        ok(eb_rc.bottom - eb_rc.top == 60, "Got window height %ld\n", eb_rc.bottom - eb_rc.top);
 
         buf[0] = '\0';
         GetClassNameA(eb_hwnd, buf, 1024);
@@ -777,11 +777,11 @@ static void test_initialization(void)
 
         expected_style = WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_BORDER;
         style = GetWindowLongPtrW(eb_hwnd, GWL_STYLE);
-        todo_wine ok(style == expected_style, "Got style 0x%08x, expected 0x%08x\n", style, expected_style);
+        todo_wine ok(style == expected_style, "Got style 0x%08lx, expected 0x%08lx\n", style, expected_style);
 
         expected_style = WS_EX_CONTROLPARENT;
         style = GetWindowLongPtrW(eb_hwnd, GWL_EXSTYLE);
-        ok(style == expected_style, "Got exstyle 0x%08x, expected 0x%08x\n", style, expected_style);
+        ok(style == expected_style, "Got exstyle 0x%08lx, expected 0x%08lx\n", style, expected_style);
 
         ok(GetParent(eb_hwnd) == hwnd, "GetParent returns %p\n", GetParent(eb_hwnd));
 
@@ -792,7 +792,7 @@ static void test_initialization(void)
 
         IShellBrowser_Release(psb);
         lres = IExplorerBrowser_Release(peb);
-        ok(lres == 0, "Got refcount %d\n", lres);
+        ok(lres == 0, "Got refcount %ld\n", lres);
     }
     else
     {
@@ -800,26 +800,26 @@ static void test_initialization(void)
 
         IExplorerBrowser_Destroy(peb);
         lres = IExplorerBrowser_Release(peb);
-        ok(lres == 0, "Got refcount %d\n", lres);
+        ok(lres == 0, "Got refcount %ld\n", lres);
     }
 
     /* check window style with EBO_NOBORDER */
     ebrowser_instantiate(&peb);
     hr = IExplorerBrowser_SetOptions(peb, EBO_NOBORDER);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     SetRect(&rc, 50, 20, 100, 80);
 
     hr = IExplorerBrowser_Initialize(peb, hwnd, &rc, NULL);
-    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(hr == S_OK, "got (0x%08lx)\n", hr);
 
     hr = IExplorerBrowser_QueryInterface(peb, &IID_IShellBrowser, (void**)&psb);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
 
     hr = IShellBrowser_GetWindow(psb, &eb_hwnd);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
 
     style = GetWindowLongPtrW(eb_hwnd, GWL_STYLE);
-    ok(!(style & WS_BORDER) || broken(style & WS_BORDER) /* before win8 */, "got style 0x%08x\n", style);
+    ok(!(style & WS_BORDER) || broken(style & WS_BORDER) /* before win8 */, "got style 0x%08lx\n", style);
 
     IShellBrowser_Release(psb);
     IExplorerBrowser_Destroy(peb);
@@ -829,34 +829,34 @@ static void test_initialization(void)
     ebrowser_instantiate(&peb);
     SetRectEmpty(&rc);
     hr = IExplorerBrowser_Initialize(peb, hwnd, &rc, NULL);
-    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(hr == S_OK, "got (0x%08lx)\n", hr);
     IExplorerBrowser_Destroy(peb);
     lres = IExplorerBrowser_Release(peb);
-    ok(lres == 0, "Got refcount %d\n", lres);
+    ok(lres == 0, "Got refcount %ld\n", lres);
 
     ebrowser_instantiate(&peb);
     SetRect(&rc, -1, -1, 1, 1);
     hr = IExplorerBrowser_Initialize(peb, hwnd, &rc, NULL);
-    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(hr == S_OK, "got (0x%08lx)\n", hr);
     IExplorerBrowser_Destroy(peb);
     lres = IExplorerBrowser_Release(peb);
-    ok(lres == 0, "Got refcount %d\n", lres);
+    ok(lres == 0, "Got refcount %ld\n", lres);
 
     ebrowser_instantiate(&peb);
     SetRect(&rc, 10, 10, 5, 5);
     hr = IExplorerBrowser_Initialize(peb, hwnd, &rc, NULL);
-    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(hr == S_OK, "got (0x%08lx)\n", hr);
     IExplorerBrowser_Destroy(peb);
     lres = IExplorerBrowser_Release(peb);
-    ok(lres == 0, "Got refcount %d\n", lres);
+    ok(lres == 0, "Got refcount %ld\n", lres);
 
     ebrowser_instantiate(&peb);
     SetRect(&rc, 10, 10, 5, 5);
     hr = IExplorerBrowser_Initialize(peb, hwnd, &rc, NULL);
-    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(hr == S_OK, "got (0x%08lx)\n", hr);
     IExplorerBrowser_Destroy(peb);
     lres = IExplorerBrowser_Release(peb);
-    ok(lres == 0, "Got refcount %d\n", lres);
+    ok(lres == 0, "Got refcount %ld\n", lres);
 }
 
 static void test_SetSite(void)
@@ -883,13 +883,13 @@ static void test_SetSite(void)
     IExplorerBrowser_SetOptions(peb, EBO_SHOWFRAMES);
 
     hr = IExplorerBrowser_QueryInterface(peb, &IID_IObjectWithSite, (void**)&pow);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
     if(SUCCEEDED(hr))
     {
         spimpl->interfaces = expected;
 
         hr = IObjectWithSite_SetSite(pow, (IUnknown*)&spimpl->IServiceProvider_iface);
-        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        ok(hr == S_OK, "Got 0x%08lx\n", hr);
 
         if(FAILED(hr))
             IObjectWithSite_Release(pow);
@@ -904,7 +904,7 @@ static void test_SetSite(void)
         IExplorerPaneVisibility_Release(&epvimpl->IExplorerPaneVisibility_iface);
         IExplorerBrowser_Destroy(peb);
         ref = IExplorerBrowser_Release(peb);
-        ok(ref == 0, "Got ref %d\n", ref);
+        ok(ref == 0, "Got ref %ld\n", ref);
 
         return;
     }
@@ -932,52 +932,52 @@ static void test_SetSite(void)
     todo_wine ok(cdbimpl->OnPreviewCreated, "Got %d\n", cdbimpl->OnPreviewCreated);
 
     /* IExplorerPaneVisibility */
-    ok(epvimpl->np, "Got %d\n", epvimpl->np);
-    todo_wine ok(epvimpl->cp, "Got %d\n", epvimpl->cp);
-    todo_wine ok(epvimpl->cp_o, "Got %d\n", epvimpl->cp_o);
-    todo_wine ok(epvimpl->cp_v, "Got %d\n", epvimpl->cp_v);
-    todo_wine ok(epvimpl->dp, "Got %d\n", epvimpl->dp);
-    todo_wine ok(epvimpl->pp, "Got %d\n", epvimpl->pp);
-    ok(!epvimpl->qp, "Got %d\n", epvimpl->qp);
-    ok(!epvimpl->aqp, "Got %d\n", epvimpl->aqp);
-    ok(!epvimpl->unk, "Got %d\n", epvimpl->unk);
+    ok(epvimpl->np, "Got %ld\n", epvimpl->np);
+    todo_wine ok(epvimpl->cp, "Got %ld\n", epvimpl->cp);
+    todo_wine ok(epvimpl->cp_o, "Got %ld\n", epvimpl->cp_o);
+    todo_wine ok(epvimpl->cp_v, "Got %ld\n", epvimpl->cp_v);
+    todo_wine ok(epvimpl->dp, "Got %ld\n", epvimpl->dp);
+    todo_wine ok(epvimpl->pp, "Got %ld\n", epvimpl->pp);
+    ok(!epvimpl->qp, "Got %ld\n", epvimpl->qp);
+    ok(!epvimpl->aqp, "Got %ld\n", epvimpl->aqp);
+    ok(!epvimpl->unk, "Got %ld\n", epvimpl->unk);
 
     /* Test when IServiceProvider is released. */
     IServiceProvider_AddRef(&spimpl->IServiceProvider_iface);
     ref = IServiceProvider_Release(&spimpl->IServiceProvider_iface);
-    ok(ref == 2, "Got ref %d\n", ref);
+    ok(ref == 2, "Got ref %ld\n", ref);
 
     hr = IObjectWithSite_SetSite(pow, NULL);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
 
     IServiceProvider_AddRef(&spimpl->IServiceProvider_iface);
     ref = IServiceProvider_Release(&spimpl->IServiceProvider_iface);
-    ok(ref == 1, "Got ref %d\n", ref);
+    ok(ref == 1, "Got ref %ld\n", ref);
 
     hr = IObjectWithSite_SetSite(pow, (IUnknown*)&spimpl->IServiceProvider_iface);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
 
     IServiceProvider_AddRef(&spimpl->IServiceProvider_iface);
     ref = IServiceProvider_Release(&spimpl->IServiceProvider_iface);
-    ok(ref == 2, "Got ref %d\n", ref);
+    ok(ref == 2, "Got ref %ld\n", ref);
 
     IExplorerBrowser_Destroy(peb);
 
     IServiceProvider_AddRef(&spimpl->IServiceProvider_iface);
     ref = IServiceProvider_Release(&spimpl->IServiceProvider_iface);
-    ok(ref == 2, "Got ref %d\n", ref);
+    ok(ref == 2, "Got ref %ld\n", ref);
 
     IObjectWithSite_Release(pow);
     ref = IExplorerBrowser_Release(peb);
-    ok(ref == 0, "Got ref %d\n", ref);
+    ok(ref == 0, "Got ref %ld\n", ref);
 
     ref = IServiceProvider_Release(&spimpl->IServiceProvider_iface);
-    ok(ref == 0, "Got ref %d\n", ref);
+    ok(ref == 0, "Got ref %ld\n", ref);
 
     ref = ICommDlgBrowser3_Release(&cdbimpl->ICommDlgBrowser3_iface);
-    ok(ref == 0, "Got ref %d\n", ref);
+    ok(ref == 0, "Got ref %ld\n", ref);
     ref = IExplorerPaneVisibility_Release(&epvimpl->IExplorerPaneVisibility_iface);
-    ok(ref == 0, "Got ref %d\n", ref);
+    ok(ref == 0, "Got ref %ld\n", ref);
 }
 
 static void test_basics(void)
@@ -998,23 +998,23 @@ static void test_basics(void)
     /* SetRect */
     SetRectEmpty(&rc);
     hr = IExplorerBrowser_SetRect(peb, NULL, rc);
-    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(hr == S_OK, "got (0x%08lx)\n", hr);
 
     SetRect(&rc, 100, 100, 10, 10);
     hr = IExplorerBrowser_SetRect(peb, NULL, rc);
-    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(hr == S_OK, "got (0x%08lx)\n", hr);
 
     /* SetRect with DeferWindowPos */
     SetRect(&rc, 0, 0, 10, 10);
     hdwp = BeginDeferWindowPos(1);
     hr = IExplorerBrowser_SetRect(peb, &hdwp, rc);
-    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(hr == S_OK, "got (0x%08lx)\n", hr);
     lres = EndDeferWindowPos(hdwp);
     ok(lres, "EndDeferWindowPos failed.\n");
 
     hdwp = NULL;
     hr = IExplorerBrowser_SetRect(peb, &hdwp, rc);
-    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(hr == S_OK, "got (0x%08lx)\n", hr);
     ok(hdwp == NULL, "got %p\n", hdwp);
     lres = EndDeferWindowPos(hdwp);
     ok(!lres, "EndDeferWindowPos succeeded unexpectedly.\n");
@@ -1022,9 +1022,9 @@ static void test_basics(void)
     /* Test positioning */
     SetRect(&rc, 10, 20, 50, 50);
     hr = IExplorerBrowser_SetRect(peb, NULL, rc);
-    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(hr == S_OK, "got (0x%08lx)\n", hr);
     hr = IExplorerBrowser_QueryInterface(peb, &IID_IShellBrowser, (void**)&psb);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
     if(SUCCEEDED(hr))
     {
         HWND eb_hwnd;
@@ -1033,7 +1033,7 @@ static void test_basics(void)
         static const RECT exp_rc2 = {11, 21, 49, 24};
 
         hr = IShellBrowser_GetWindow(psb, &eb_hwnd);
-        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        ok(hr == S_OK, "Got 0x%08lx\n", hr);
 
         GetClientRect(eb_hwnd, &eb_rc);
         MapWindowPoints(eb_hwnd, hwnd, (POINT*)&eb_rc, 2);
@@ -1043,14 +1043,14 @@ static void test_basics(void)
         rc.bottom = 25;
         hdwp = (HDWP)0xdeadbeef;
         hr = IExplorerBrowser_SetRect(peb, &hdwp, rc);
-        ok(hr == E_FAIL, "Got 0x%08x\n", hr);
+        ok(hr == E_FAIL, "Got 0x%08lx\n", hr);
         GetClientRect(eb_hwnd, &eb_rc);
         MapWindowPoints(eb_hwnd, hwnd, (POINT*)&eb_rc, 2);
         ok(EqualRect(&eb_rc, &exp_rc), "Got rect %s\n", wine_dbgstr_rect(&eb_rc));
 
         hdwp = NULL;
         hr = IExplorerBrowser_SetRect(peb, &hdwp, rc);
-        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        ok(hr == S_OK, "Got 0x%08lx\n", hr);
         GetClientRect(eb_hwnd, &eb_rc);
         MapWindowPoints(eb_hwnd, hwnd, (POINT*)&eb_rc, 2);
         ok(EqualRect(&eb_rc, &exp_rc2), "Got rect %s\n", wine_dbgstr_rect(&eb_rc));
@@ -1070,18 +1070,18 @@ static void test_basics(void)
     }
 
     hr = IExplorerBrowser_GetOptions(peb, &flags);
-    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(hr == S_OK, "got (0x%08lx)\n", hr);
     ok(flags == 0, "got (0x%08x)\n", flags);
 
     /* Settings preserved through Initialize. */
     hr = IExplorerBrowser_SetOptions(peb, 0xDEADBEEF);
-    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(hr == S_OK, "got (0x%08lx)\n", hr);
 
     ebrowser_initialize(peb);
 
     hr = IExplorerBrowser_GetOptions(peb, &flags);
     ok(flags == 0xDEADBEEF, "got (0x%08x)\n", flags);
-    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(hr == S_OK, "got (0x%08lx)\n", hr);
 
     IExplorerBrowser_Destroy(peb);
     IExplorerBrowser_Release(peb);
@@ -1091,22 +1091,22 @@ static void test_basics(void)
 
     /* SetFolderSettings */
     hr = IExplorerBrowser_SetFolderSettings(peb, NULL);
-    ok(hr == E_INVALIDARG, "got (0x%08x)\n", hr);
+    ok(hr == E_INVALIDARG, "got (0x%08lx)\n", hr);
     fs.ViewMode = 0; fs.fFlags = 0;
     hr = IExplorerBrowser_SetFolderSettings(peb, &fs);
-    todo_wine ok(hr == E_INVALIDARG, "got (0x%08x)\n", hr);
+    todo_wine ok(hr == E_INVALIDARG, "got (0x%08lx)\n", hr);
 
     /* SetPropertyBag */
     hr = IExplorerBrowser_SetPropertyBag(peb, NULL);
-    ok(hr == E_INVALIDARG, "Got 0x%08x\n", hr);
+    ok(hr == E_INVALIDARG, "Got 0x%08lx\n", hr);
     hr = IExplorerBrowser_SetPropertyBag(peb, winetest);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
 
     /* TODO: Test after browsing somewhere. */
 
     IExplorerBrowser_Destroy(peb);
     lres = IExplorerBrowser_Release(peb);
-    ok(lres == 0, "Got %d\n", lres);
+    ok(lres == 0, "Got %ld\n", lres);
 }
 
 static void test_Advise(void)
@@ -1133,13 +1133,13 @@ static void test_Advise(void)
     /* Using Unadvise with a cookie that has yet to be given out
      * results in E_INVALIDARG */
     hr = IExplorerBrowser_Unadvise(peb, 11);
-    ok(hr == E_INVALIDARG, "got (0x%08x)\n", hr);
+    ok(hr == E_INVALIDARG, "got (0x%08lx)\n", hr);
 
     /* Add some before initialization */
     for(i = 0; i < 5; i++)
     {
         hr = IExplorerBrowser_Advise(peb, pebe, &cookies[i]);
-        ok(hr == S_OK, "got (0x%08x)\n", hr);
+        ok(hr == S_OK, "got (0x%08lx)\n", hr);
     }
 
     ebrowser_initialize(peb);
@@ -1148,10 +1148,10 @@ static void test_Advise(void)
     for(i = 5; i < 10; i++)
     {
         hr = IExplorerBrowser_Advise(peb, pebe, &cookies[i]);
-        ok(hr == S_OK, "got (0x%08x)\n", hr);
+        ok(hr == S_OK, "got (0x%08lx)\n", hr);
     }
 
-    ok(ebev.ref == 10, "Got %d\n", ebev.ref);
+    ok(ebev.ref == 10, "Got %ld\n", ebev.ref);
 
     ebev.completed = 0;
     ebrowser_browse_to_desktop(peb);
@@ -1162,7 +1162,7 @@ static void test_Advise(void)
     for(i = 4; i < 8; i++)
     {
         hr = IExplorerBrowser_Unadvise(peb, cookies[i]);
-        ok(hr == S_OK, "got (0x%08x)\n", hr);
+        ok(hr == S_OK, "got (0x%08lx)\n", hr);
     }
 
     ebev.completed = 0;
@@ -1183,11 +1183,11 @@ static void test_Advise(void)
         if(i<4||i>7)
         {
             hr = IExplorerBrowser_Unadvise(peb, cookies[i]);
-            ok(hr == S_OK, "%d: got (0x%08x)\n", i, hr);
+            ok(hr == S_OK, "%d: got (0x%08lx)\n", i, hr);
         }
     }
 
-    ok(ebev.ref == 0, "Got %d\n", ebev.ref);
+    ok(ebev.ref == 0, "Got %ld\n", ebev.ref);
 
     ebev.completed = 0;
     ebrowser_browse_to_desktop(peb);
@@ -1196,12 +1196,12 @@ static void test_Advise(void)
 
     /* ::Destroy implies ::Unadvise. */
     hr = IExplorerBrowser_Advise(peb, pebe, &cookies[0]);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
-    ok(ebev.ref == 1, "Got %d\n", ebev.ref);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
+    ok(ebev.ref == 1, "Got %ld\n", ebev.ref);
 
     hr = IExplorerBrowser_Destroy(peb);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
-    ok(ebev.ref == 0, "Got %d\n", ebev.ref);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
+    ok(ebev.ref == 0, "Got %ld\n", ebev.ref);
 
     ref = IExplorerBrowser_Release(peb);
     ok(!ref, "Got %d\n", ref);
@@ -1236,7 +1236,7 @@ static void test_browse_pidl_(IExplorerBrowser *peb, IExplorerBrowserEventsImpl 
     ebev->completed = ebev->created = ebev->pending = ebev->failed = 0;
 
     hr = IExplorerBrowser_BrowseToIDList(peb, pidl, uFlags);
-    ok_(file, line) (hr == hr_exp, "BrowseToIDList returned 0x%08x\n", hr);
+    ok_(file, line) (hr == hr_exp, "BrowseToIDList returned 0x%08lx\n", hr);
     process_msgs();
 
     ok_(file, line)
@@ -1257,13 +1257,13 @@ static void test_browse_pidl_sb_(IExplorerBrowser *peb, IExplorerBrowserEventsIm
     HRESULT hr;
 
     hr = IExplorerBrowser_QueryInterface(peb, &IID_IShellBrowser, (void**)&psb);
-    ok_(file, line) (hr == S_OK, "QueryInterface returned 0x%08x\n", hr);
+    ok_(file, line) (hr == S_OK, "QueryInterface returned 0x%08lx\n", hr);
     if(SUCCEEDED(hr))
     {
         ebev->completed = ebev->created = ebev->pending = ebev->failed = 0;
 
         hr = IShellBrowser_BrowseObject(psb, pidl, uFlags);
-        ok_(file, line) (hr == hr_exp, "BrowseObject returned 0x%08x\n", hr);
+        ok_(file, line) (hr == hr_exp, "BrowseObject returned 0x%08lx\n", hr);
         process_msgs();
 
         ok_(file, line)
@@ -1309,9 +1309,9 @@ static void test_navigation(void)
     CreateDirectoryW(child_path, NULL);
 
     hr = SHParseDisplayName(current_path, NULL, &pidl_current, 0, NULL);
-    ok(hr == S_OK, "Failed to parse a path, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to parse a path, hr %#lx.\n", hr);
     hr = SHParseDisplayName(child_path, NULL, &pidl_child, 0, NULL);
-    ok(hr == S_OK, "Failed to parse a path, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to parse a path, hr %#lx.\n", hr);
 
     ebrowser_instantiate(&peb);
     ebrowser_initialize(peb);
@@ -1364,16 +1364,16 @@ static void test_navigation(void)
     test_browse_pidl_sb(peb2, &ebev, pidl_current, SBSP_ABSOLUTE, S_OK, 1, 0, 0, 1);
 
     hr = IExplorerBrowser_GetCurrentView(peb, &IID_IFolderView, (void**)&pfv);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
     if(SUCCEEDED(hr))
     {
         LPITEMIDLIST pidl_relative;
 
         hr = IFolderView_GetFolder(pfv, &IID_IShellFolder, (void**)&psf);
-        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        ok(hr == S_OK, "Got 0x%08lx\n", hr);
         hr = IShellFolder_ParseDisplayName(psf, NULL, NULL, (LPWSTR)testfolderW,
                                            NULL, &pidl_relative, NULL);
-        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        ok(hr == S_OK, "Got 0x%08lx\n", hr);
 
         /* Browsing to another location here before using the
          * pidl_relative would make ExplorerBrowser in Windows 7 show a
@@ -1414,11 +1414,11 @@ static void test_navigation(void)
     }
 
     hr = IExplorerBrowser_Unadvise(peb, cookie);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
     IExplorerBrowser_Destroy(peb);
     process_msgs();
     hr = IExplorerBrowser_Unadvise(peb2, cookie2);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
     IExplorerBrowser_Destroy(peb2);
     process_msgs();
 
@@ -1427,42 +1427,42 @@ static void test_navigation(void)
     test_browse_pidl_sb(peb2, &ebev, pidl_child, SBSP_ABSOLUTE, HRESULT_FROM_WIN32(ERROR_BUSY), 0, 0, 0, 0);
 
     lres = IExplorerBrowser_Release(peb);
-    ok(lres == 0, "Got lres %d\n", lres);
+    ok(lres == 0, "Got lres %ld\n", lres);
     lres = IExplorerBrowser_Release(peb2);
-    ok(lres == 0, "Got lres %d\n", lres);
+    ok(lres == 0, "Got lres %ld\n", lres);
 
     /******************************************/
     /* Test some options that affect browsing */
 
     ebrowser_instantiate(&peb);
     hr = IExplorerBrowser_Advise(peb, &ebev.IExplorerBrowserEvents_iface, &cookie);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
     hr = IExplorerBrowser_SetOptions(peb, EBO_NAVIGATEONCE);
-    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(hr == S_OK, "got (0x%08lx)\n", hr);
     ebrowser_initialize(peb);
 
     test_browse_pidl(peb, &ebev, pidl_current, 0, S_OK, 1, 1, 0, 1);
     test_browse_pidl(peb, &ebev, pidl_current, 0, E_FAIL, 0, 0, 0, 0);
 
     hr = IExplorerBrowser_SetOptions(peb, 0);
-    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(hr == S_OK, "got (0x%08lx)\n", hr);
 
     test_browse_pidl(peb, &ebev, pidl_current, 0, S_OK, 1, 0, 0, 1);
     test_browse_pidl(peb, &ebev, pidl_current, 0, S_OK, 1, 0, 0, 1);
 
     /* Difference in behavior lies where? */
     hr = IExplorerBrowser_SetOptions(peb, EBO_ALWAYSNAVIGATE);
-    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(hr == S_OK, "got (0x%08lx)\n", hr);
 
     test_browse_pidl(peb, &ebev, pidl_current, 0, S_OK, 1, 0, 0, 1);
     test_browse_pidl(peb, &ebev, pidl_current, 0, S_OK, 1, 0, 0, 1);
 
     hr = IExplorerBrowser_Unadvise(peb, cookie);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
 
     IExplorerBrowser_Destroy(peb);
     lres = IExplorerBrowser_Release(peb);
-    ok(lres == 0, "Got lres %d\n", lres);
+    ok(lres == 0, "Got lres %ld\n", lres);
 
     /* BrowseToObject tests */
     ebrowser_instantiate(&peb);
@@ -1470,11 +1470,11 @@ static void test_navigation(void)
 
     /* Browse to the desktop by passing an IShellFolder */
     hr = SHGetDesktopFolder(&psf);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
     if(SUCCEEDED(hr))
     {
         hr = IExplorerBrowser_BrowseToObject(peb, (IUnknown*)psf, SBSP_DEFBROWSER);
-        ok(hr == S_OK, "got (0x%08x)\n", hr);
+        ok(hr == S_OK, "got (0x%08lx)\n", hr);
         if(hr == S_OK) process_msgs();
 
         IShellFolder_Release(psf);
@@ -1482,11 +1482,11 @@ static void test_navigation(void)
 
     /* Browse to the current directory by passing a ShellItem */
     hr = pSHCreateShellItem(NULL, NULL, pidl_current, &psi);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
     if(SUCCEEDED(hr))
     {
         hr = IExplorerBrowser_BrowseToObject(peb, (IUnknown*)psi, SBSP_DEFBROWSER);
-        ok(hr == S_OK, "got (0x%08x)\n", hr);
+        ok(hr == S_OK, "got (0x%08lx)\n", hr);
         process_msgs();
 
         IShellItem_Release(psi);
@@ -1494,7 +1494,7 @@ static void test_navigation(void)
 
     IExplorerBrowser_Destroy(peb);
     lres = IExplorerBrowser_Release(peb);
-    ok(lres == 0, "Got lres %d\n", lres);
+    ok(lres == 0, "Got lres %ld\n", lres);
 
     /* Cleanup */
     RemoveDirectoryW(child_path);
@@ -1517,12 +1517,12 @@ static void test_GetCurrentView(void)
         IExplorerBrowser_GetCurrentView(peb, NULL, NULL);
     }
     hr = IExplorerBrowser_GetCurrentView(peb, NULL, (void**)&punk);
-    ok(hr == E_FAIL, "Got 0x%08x\n", hr);
+    ok(hr == E_FAIL, "Got 0x%08lx\n", hr);
 
 #define test_gcv(iid, exp)                                              \
     do {                                                                \
         hr = IExplorerBrowser_GetCurrentView(peb, &iid, (void**)&punk); \
-        ok(hr == exp, "(%s:)Expected (0x%08x), got: (0x%08x)\n",        \
+        ok(hr == exp, "(%s:)Expected (0x%08lx), got: (0x%08lx)\n",        \
            #iid ,exp, hr);                                              \
         if(SUCCEEDED(hr)) IUnknown_Release(punk);                       \
     } while(0)
@@ -1585,7 +1585,7 @@ static void test_InputObject(void)
 
     ebrowser_instantiate(&peb);
     hr = IExplorerBrowser_QueryInterface(peb, &IID_IInputObject, (void**)&pio);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
     if(FAILED(hr))
     {
         win_skip("IInputObject not supported.\n");
@@ -1594,47 +1594,47 @@ static void test_InputObject(void)
 
     /* Before initializing */
     hr = IInputObject_TranslateAcceleratorIO(pio, &msg_a);
-    todo_wine ok(hr == E_FAIL, "Got 0x%08x\n", hr);
+    todo_wine ok(hr == E_FAIL, "Got 0x%08lx\n", hr);
 
     hr = IInputObject_HasFocusIO(pio);
-    todo_wine ok(hr == E_FAIL, "Got 0x%08x\n", hr);
+    todo_wine ok(hr == E_FAIL, "Got 0x%08lx\n", hr);
 
     hr = IInputObject_UIActivateIO(pio, TRUE, &msg_a);
-    todo_wine ok(hr == S_OK, "Got 0x%08x\n", hr);
+    todo_wine ok(hr == S_OK, "Got 0x%08lx\n", hr);
 
     hr = IInputObject_HasFocusIO(pio);
-    todo_wine ok(hr == E_FAIL, "Got 0x%08x\n", hr);
+    todo_wine ok(hr == E_FAIL, "Got 0x%08lx\n", hr);
 
     hr = IInputObject_TranslateAcceleratorIO(pio, &msg_a);
-    todo_wine ok(hr == E_FAIL, "Got 0x%08x\n", hr);
+    todo_wine ok(hr == E_FAIL, "Got 0x%08lx\n", hr);
 
     SetRect(&rc, 0, 0, 100, 100);
     hr = IExplorerBrowser_Initialize(peb, hwnd, &rc, NULL);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
 
     hr = IInputObject_HasFocusIO(pio);
-    todo_wine ok(hr == E_FAIL, "Got 0x%08x\n", hr);
+    todo_wine ok(hr == E_FAIL, "Got 0x%08lx\n", hr);
 
     hr = IInputObject_TranslateAcceleratorIO(pio, &msg_a);
-    todo_wine ok(hr == E_FAIL, "Got 0x%08x\n", hr);
+    todo_wine ok(hr == E_FAIL, "Got 0x%08lx\n", hr);
 
     /* Browse to the desktop */
     SHGetDesktopFolder(&psf);
     hr = IExplorerBrowser_BrowseToObject(peb, (IUnknown*)psf, SBSP_DEFBROWSER);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK, "Got 0x%08lx\n", hr);
     IShellFolder_Release(psf);
 
     hr = IInputObject_UIActivateIO(pio, TRUE, &msg_a);
-    todo_wine ok(hr == S_OK, "Got 0x%08x\n", hr);
+    todo_wine ok(hr == S_OK, "Got 0x%08lx\n", hr);
 
     hr = IInputObject_HasFocusIO(pio);
-    todo_wine ok(hr == S_OK, "Got 0x%08x\n", hr);
+    todo_wine ok(hr == S_OK, "Got 0x%08lx\n", hr);
 
     hr = IInputObject_UIActivateIO(pio, FALSE, &msg_a);
-    todo_wine ok(hr == S_OK, "Got 0x%08x\n", hr);
+    todo_wine ok(hr == S_OK, "Got 0x%08lx\n", hr);
 
     hr = IInputObject_HasFocusIO(pio);
-    todo_wine ok(hr == S_OK, "Got 0x%08x\n", hr);
+    todo_wine ok(hr == S_OK, "Got 0x%08lx\n", hr);
 
     hr = IInputObject_TranslateAcceleratorIO(pio, &msg_a);
     if(hr == S_OK)
@@ -1656,7 +1656,7 @@ static void test_InputObject(void)
         msg_a.wParam = i;
         process_msgs();
         hr = IInputObject_TranslateAcceleratorIO(pio, &msg_a);
-        todo_wine ok(hr == (found ? S_OK : S_FALSE), "Got 0x%08x (%04x)\n", hr, i);
+        todo_wine ok(hr == (found ? S_OK : S_FALSE), "Got 0x%08lx (%04x)\n", hr, i);
         if(i == VK_F5)
             Sleep(1000); /* Needed for w2k8 (64bit) */
     }
@@ -1674,7 +1674,7 @@ static BOOL test_instantiate_control(void)
     HRESULT hr;
 
     hr = ebrowser_instantiate(&peb);
-    ok(hr == S_OK || hr == REGDB_E_CLASSNOTREG, "Got (0x%08x)\n", hr);
+    ok(hr == S_OK || hr == REGDB_E_CLASSNOTREG, "Got (0x%08lx)\n", hr);
     if(FAILED(hr))
         return FALSE;
 
