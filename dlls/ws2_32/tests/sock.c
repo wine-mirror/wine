@@ -1155,15 +1155,38 @@ static const LINGER linger_testvals[] = {
 
 static void test_set_getsockopt(void)
 {
+    static struct
+    {
+        int af;
+        int type;
+        int level;
+        int optname;
+        BOOL accepts_short_len;
+        unsigned int sizes[3];
+        DWORD values[3];
+    }
+    test_optsize[] =
+    {
+        {AF_INET, SOCK_STREAM, SOL_SOCKET, SO_RCVTIMEO, FALSE, {1, 2, 4}},
+        {AF_INET, SOCK_STREAM, SOL_SOCKET, SO_SNDTIMEO, FALSE, {1, 2, 4}},
+        {AF_INET, SOCK_DGRAM, IPPROTO_IP, IP_MULTICAST_LOOP, TRUE, {1, 1, 4}},
+        {AF_INET, SOCK_DGRAM, IPPROTO_IP, IP_MULTICAST_TTL, TRUE, {1, 1, 4}},
+        {AF_INET, SOCK_DGRAM, IPPROTO_IP, IP_TOS, TRUE, {1, 1, 4}},
+        {AF_INET, SOCK_DGRAM, IPPROTO_IP, IP_TTL, TRUE, {1, 1, 4}},
+    };
     SOCKET s, s2;
-    int i, err, lasterr;
+    int i, j, err, lasterr;
     int timeout;
     LINGER lingval;
     int size;
     WSAPROTOCOL_INFOA infoA;
     WSAPROTOCOL_INFOW infoW;
     char providername[WSAPROTOCOL_LEN + 1];
-    DWORD value;
+    DWORD expected_last_error, expected_value;
+    int expected_err, expected_size;
+    DWORD value, save_value;
+    UINT64 value64;
+
     struct _prottest
     {
         int family, type, proto;
@@ -1375,6 +1398,117 @@ static void test_set_getsockopt(void)
         err, WSAGetLastError());
 
     closesocket(s);
+
+    /* Test option length. */
+    for (i = 0; i < ARRAY_SIZE(test_optsize); ++i)
+    {
+        winetest_push_context("i %u, level %d, optname %d",
+                i, test_optsize[i].level, test_optsize[i].optname);
+
+        s2 = socket( test_optsize[i].af, test_optsize[i].type, 0 );
+        ok(s2 != INVALID_SOCKET, "socket() failed error %d\n", WSAGetLastError());
+
+        size = sizeof(save_value);
+        err = getsockopt(s2, test_optsize[i].level, test_optsize[i].optname, (char*)&save_value, &size);
+        ok(!err, "Unexpected getsockopt result %d.\n", err);
+
+        value64 = 0xffffffff00000001;
+        err = setsockopt(s2, test_optsize[i].level, test_optsize[i].optname, (char *)&value64, sizeof(value64));
+        ok(!err, "Unexpected setsockopt result %d.\n", err);
+        ok(!WSAGetLastError(), "Unexpected WSAGetLastError() %u.\n", WSAGetLastError());
+
+        size = sizeof(value64);
+        err = getsockopt(s2, test_optsize[i].level, test_optsize[i].optname, (char*)&value64, &size);
+        ok(!err, "Unexpected getsockopt result %d.\n", err);
+        ok(size == test_optsize[i].sizes[2], "Got unexpected size %d.\n", size);
+        /* The behaviour regarding filling the high dword is different between options without the obvious
+         * pattern, it is either left untouched (more often) or zeroed. Wine doesn't touch the high dword. */
+
+        if (test_optsize[i].sizes[2] == 1 || test_optsize[i].level != SOL_SOCKET)
+        {
+            expected_err = -1;
+            expected_last_error = WSAENOBUFS;
+        }
+        else
+        {
+            expected_err = 0;
+            expected_last_error = 0;
+        }
+
+        value = 1;
+        err = setsockopt(s2, test_optsize[i].level, test_optsize[i].optname, (char *)&value, -1);
+        ok(err == expected_err, "Unexpected setsockopt result %d.\n", err);
+        /* Broken between Win7 and Win10 21H1. */
+        ok(WSAGetLastError() == expected_last_error || broken(expected_last_error && WSAGetLastError() == WSAEFAULT),
+                "Unexpected WSAGetLastError() %u.\n", WSAGetLastError());
+
+        size = -1;
+        value = 0xdeadbeef;
+        err = getsockopt(s2, test_optsize[i].level, test_optsize[i].optname, (char*)&value, &size);
+        if (test_optsize[i].optname == SO_OPENTYPE)
+        {
+            ok(!err, "Unexpected getsockopt result %d.\n", err);
+            ok(!WSAGetLastError(), "Unexpected WSAGetLastError() %u.\n", WSAGetLastError());
+        }
+        else
+        {
+            ok(err == -1, "Unexpected getsockopt result %d.\n", err);
+            ok(WSAGetLastError() == WSAEFAULT, "Unexpected WSAGetLastError() %u.\n", WSAGetLastError());
+        }
+        ok(size == (test_optsize[i].optname == SO_OPENTYPE ? 4 : -1), "Got unexpected size %d.\n", size);
+
+        winetest_pop_context();
+
+        for (j = 0; j < ARRAY_SIZE(test_optsize[i].sizes); ++j)
+        {
+            size = 1 << j;
+            winetest_push_context("i %u, level %d, optname %d, len %u",
+                    i, test_optsize[i].level, test_optsize[i].optname, size);
+
+            value = 1;
+            if (test_optsize[i].values[j])
+                expected_value = test_optsize[i].values[j];
+            else
+                expected_value = 0xdeadbeef;
+
+            if (test_optsize[i].accepts_short_len || size == 4)
+            {
+                expected_err = 0;
+                expected_last_error = 0;
+                expected_size = test_optsize[i].sizes[j];
+
+                if (!test_optsize[i].values[j])
+                    memcpy(&expected_value, &value, expected_size);
+            }
+            else
+            {
+                expected_err = -1;
+                expected_last_error = WSAEFAULT;
+                expected_size = test_optsize[i].sizes[j];
+            }
+
+            SetLastError(0xdeadbeef);
+            err = setsockopt(s2, test_optsize[i].level, test_optsize[i].optname, (char*)&value, size);
+            ok(err == expected_err, "Unexpected setsockopt result %d.\n", err);
+            ok(WSAGetLastError() == expected_last_error, "Unexpected WSAGetLastError() %u.\n", WSAGetLastError());
+
+            value = 0xdeadbeef;
+            SetLastError(0xdeadbeef);
+            err = getsockopt(s2, test_optsize[i].level, test_optsize[i].optname, (char*)&value, &size);
+            ok(err == expected_err, "Unexpected getsockopt result %d.\n", err);
+            ok(WSAGetLastError() == expected_last_error, "Unexpected WSAGetLastError() %u.\n", WSAGetLastError());
+            ok(value == expected_value, "Got unexpected value %#x, expected %#x.\n", value, expected_value);
+            ok(size == expected_size, "Got unexpected size %d, expected %d.\n", size, expected_size);
+
+            winetest_pop_context();
+        }
+
+        err = setsockopt(s2, test_optsize[i].level, test_optsize[i].optname,
+                (char*)&save_value, sizeof(save_value));
+        ok(!err, "Unexpected getsockopt result %d.\n", err);
+        closesocket(s2);
+    }
+
     /* Test with the closed socket */
     SetLastError(0xdeadbeef);
     size = sizeof(i);
