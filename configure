@@ -17609,7 +17609,7 @@ fi
 CPPFLAGS=$ac_save_CPPFLAGS
 
 fi
-if test "x$ac_cv_lib_capi20_capi20_register" = "x"
+if test "x$ac_cv_lib_capi20_capi20_register" != xyes
 then :
   case "x$with_capi" in
   x)   as_fn_append wine_notices "|libcapi20 ${notice_platform}development files not found, ISDN won't be supported." ;;
