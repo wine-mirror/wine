@@ -41,12 +41,12 @@ static void test_UIAnimationManager(void)
     }
 
     hr = IUIAnimationManager_CreateAnimationVariable(manager, 1.0f, &variable);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     if (hr == S_OK)
         IUIAnimationVariable_Release(variable);
 
     hr = IUIAnimationManager_CreateStoryboard(manager, &storyboard);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
     if (hr == S_OK)
         IUIAnimationStoryboard_Release(storyboard);
 
@@ -66,25 +66,25 @@ static void test_IUIAnimationTimer(void)
     }
 
     hr = IUIAnimationTimer_IsEnabled(timer);
-    todo_wine ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    todo_wine ok(hr == S_FALSE, "got 0x%08lx\n", hr);
 
     hr = IUIAnimationTimer_Enable(timer);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IUIAnimationTimer_Enable(timer);
-    todo_wine ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    todo_wine ok(hr == S_FALSE, "got 0x%08lx\n", hr);
 
     hr = IUIAnimationTimer_IsEnabled(timer);
-    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IUIAnimationTimer_Disable(timer);
-    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IUIAnimationTimer_Disable(timer);
-    todo_wine ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    todo_wine ok(hr == S_FALSE, "got 0x%08lx\n", hr);
 
     hr = IUIAnimationTimer_IsEnabled(timer);
-    todo_wine ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    todo_wine ok(hr == S_FALSE, "got 0x%08lx\n", hr);
 
     IUIAnimationTimer_Release(timer);
 }
@@ -104,7 +104,7 @@ static void test_IUIAnimationTransitionFactory(void)
     }
 
     hr = IUIAnimationTransitionFactory_CreateTransition(factory, NULL, &transition);
-    todo_wine ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    todo_wine ok(hr == E_POINTER, "got 0x%08lx\n", hr);
 
     IUIAnimationTransitionFactory_Release(factory);
 }
@@ -124,17 +124,17 @@ static void test_IUIAnimationTransitionLibrary(void)
     }
 
     hr = IUIAnimationTransitionLibrary_CreateInstantaneousTransition(library, 100.0, &instantaneous);
-    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(hr == S_OK, "got 0x%08lx\n", hr);
     if  (hr == S_OK)
         IUIAnimationTransition_Release(instantaneous);
 
     hr = IUIAnimationTransitionLibrary_CreateLinearTransition(library, 500.0, 100.0, &linear);
-    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(hr == S_OK, "got 0x%08lx\n", hr);
     if  (hr == S_OK)
         IUIAnimationTransition_Release(linear);
 
     hr = IUIAnimationTransitionLibrary_CreateSmoothStopTransition(library, 500.0, 100.0, &smooth);
-    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(hr == S_OK, "got 0x%08lx\n", hr);
     if  (hr == S_OK)
         IUIAnimationTransition_Release(smooth);
 
