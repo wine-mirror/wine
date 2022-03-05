@@ -47,7 +47,7 @@ static BOOL dsm_RegisterWindowClasses(void)
     cls.lpszClassName = "TWAIN_dsm_class";
 
     rc = RegisterClassA(&cls);
-    ok(rc, "RegisterClassA failed: le=%u\n", GetLastError());
+    ok(rc, "RegisterClassA failed: le=%lu\n", GetLastError());
     return rc;
 }
 
@@ -114,9 +114,9 @@ static void check_get(TW_CAPABILITY *pCapability, TW_INT32 actual_support,
         if (pCapability->ConType == TWON_ONEVALUE)
         {
             TW_ONEVALUE *onev = p;
-            ok(onev->Item == orig_value || !(actual_support & TWQC_GETCURRENT), "MSG_GET of 0x%x returned 0x%x, expecting 0x%x\n",
+            ok(onev->Item == orig_value || !(actual_support & TWQC_GETCURRENT), "MSG_GET of 0x%x returned 0x%lx, expecting 0x%lx\n",
                 pCapability->Cap, onev->Item, orig_value);
-            trace("MSG_GET of 0x%x returned val 0x%x, type %d\n", pCapability->Cap, onev->Item, onev->ItemType);
+            trace("MSG_GET of 0x%x returned val 0x%lx, type %d\n", pCapability->Cap, onev->Item, onev->ItemType);
             if (suggested_set_value)
                 *suggested_set_value = onev->Item;
         }
@@ -130,7 +130,7 @@ static void check_get(TW_CAPABILITY *pCapability, TW_INT32 actual_support,
             p8 = enumv->ItemList;
             p16 = (TW_UINT16 *) p8;
             p32 = (TW_UINT32 *) p8;
-            trace("MSG_GET of 0x%x returned %d items:\n", pCapability->Cap, enumv->NumItems);
+            trace("MSG_GET of 0x%x returned %ld items:\n", pCapability->Cap, enumv->NumItems);
             for (i = 0; i < enumv->NumItems; i++)
             {
                 if (enumv->ItemType == TWTY_UINT8 || enumv->ItemType == TWTY_INT8)
@@ -138,15 +138,15 @@ static void check_get(TW_CAPABILITY *pCapability, TW_INT32 actual_support,
                 if (enumv->ItemType == TWTY_UINT16 || enumv->ItemType == TWTY_INT16)
                     trace("  %d: 0x%x\n", i, p16[i]);
                 if (enumv->ItemType == TWTY_UINT32 || enumv->ItemType == TWTY_INT32)
-                    trace("  %d: 0x%x\n", i, p32[i]);
+                    trace("  %d: 0x%lx\n", i, p32[i]);
             }
             if (enumv->ItemType == TWTY_UINT16 || enumv->ItemType == TWTY_INT16)
             {
                 ok(p16[enumv->CurrentIndex] == orig_value,
-                    "Type 0x%x, values from MSG_GET (0x%x) and MSG_GETCURRENT (0x%x) do not match.\n",
+                    "Type 0x%x, values from MSG_GET (0x%x) and MSG_GETCURRENT (0x%lx) do not match.\n",
                     pCapability->Cap, p16[enumv->CurrentIndex], orig_value);
                 ok(p16[enumv->DefaultIndex] == default_value,
-                    "Type 0x%x, values from MSG_GET (0x%x) and MSG_GETDEFAULT (0x%x) do not match.\n",
+                    "Type 0x%x, values from MSG_GET (0x%x) and MSG_GETDEFAULT (0x%lx) do not match.\n",
                     pCapability->Cap, p16[enumv->DefaultIndex], default_value);
                 if (suggested_set_value)
                     *suggested_set_value = p16[(enumv->CurrentIndex + 1) % enumv->NumItems];
@@ -154,10 +154,10 @@ static void check_get(TW_CAPABILITY *pCapability, TW_INT32 actual_support,
             if (enumv->ItemType == TWTY_UINT32 || enumv->ItemType == TWTY_INT32)
             {
                 ok(p32[enumv->CurrentIndex] == orig_value,
-                    "Type 0x%x, values from MSG_GET (0x%x) and MSG_GETCURRENT (0x%x) do not match.\n",
+                    "Type 0x%x, values from MSG_GET (0x%lx) and MSG_GETCURRENT (0x%lx) do not match.\n",
                     pCapability->Cap, p32[enumv->CurrentIndex], orig_value);
                 ok(p32[enumv->DefaultIndex] == default_value,
-                    "Type 0x%x, values from MSG_GET (0x%x) and MSG_GETDEFAULT (0x%x) do not match.\n",
+                    "Type 0x%x, values from MSG_GET (0x%lx) and MSG_GETDEFAULT (0x%lx) do not match.\n",
                     pCapability->Cap, p32[enumv->DefaultIndex], default_value);
                 if (suggested_set_value)
                     *suggested_set_value = p32[(enumv->CurrentIndex + 1) % enumv->NumItems];
@@ -192,7 +192,7 @@ static void test_onevalue_cap(TW_IDENTITY *appid, TW_IDENTITY *source, TW_UINT16
         return;
     ok(get_onevalue(cap.hContainer, (TW_UINT32 *) &actual_support, NULL), "Returned cap.hContainer invalid for QuerySupport on type 0x%x\n", captype);
     ok((actual_support & minimum_support) == minimum_support,
-            "Error:  minimum support 0x%x for type 0x%x, got 0x%x\n", minimum_support,
+            "Error:  minimum support 0x%lx for type 0x%x, got 0x%lx\n", minimum_support,
             captype, actual_support);
 
 
@@ -301,7 +301,7 @@ static void test_resolution(TW_IDENTITY *appid, TW_IDENTITY *source, TW_UINT16 c
         return;
     ok(get_onevalue(cap.hContainer, (TW_UINT32 *) &actual_support, NULL), "Returned cap.hContainer invalid for QuerySupport on type 0x%x\n", captype);
     ok((actual_support & minimum_support) == minimum_support,
-            "Error:  minimum support 0x%x for type 0x%x, got 0x%x\n", minimum_support,
+            "Error:  minimum support 0x%lx for type 0x%x, got 0x%lx\n", minimum_support,
             captype, actual_support);
 
 
@@ -358,7 +358,7 @@ static void test_resolution(TW_IDENTITY *appid, TW_IDENTITY *source, TW_UINT16 c
             TW_RANGE *range;
             ok(cap.ConType == TWON_RANGE, "MSG_GET for ICAP_[XY]RESOLUTION did not return TWON_RANGE, but %d\n", cap.ConType);
             range = GlobalLock(cap.hContainer);
-            trace("MSG_GET of 0x%x returned [ItemType %d|MinValue %d|MaxValue %d|StepSize %d|DefaultValue %d|CurrentValue %d]:\n",
+            trace("MSG_GET of 0x%x returned [ItemType %d|MinValue %ld|MaxValue %ld|StepSize %ld|DefaultValue %ld|CurrentValue %ld]:\n",
                     cap.Cap, range->ItemType, range->MinValue, range->MaxValue, range->StepSize,
                     range->DefaultValue, range->CurrentValue);
             for (new_value = range->MinValue; new_value < range->MaxValue; new_value += range->StepSize)
@@ -420,7 +420,7 @@ static void test_physical(TW_IDENTITY *appid, TW_IDENTITY *source, TW_UINT16 cap
         return;
     ok(get_onevalue(cap.hContainer, (TW_UINT32 *) &actual_support, NULL), "Returned cap.hContainer invalid for QuerySupport on type 0x%x\n", captype);
     ok((actual_support & minimum_support) == minimum_support,
-            "Error:  minimum support 0x%x for type 0x%x, got 0x%x\n", minimum_support,
+            "Error:  minimum support 0x%lx for type 0x%x, got 0x%lx\n", minimum_support,
             captype, actual_support);
 
 
@@ -474,7 +474,7 @@ static void test_physical(TW_IDENTITY *appid, TW_IDENTITY *source, TW_UINT16 cap
         {
             get_onevalue(cap.hContainer, &val, &type);
             ok(type == TWTY_FIX32, "GET for PHYSICALXXX is not type FIX32, is type %d\n", type);
-            trace("GET for Physical type 0x%x returns 0x%x\n", captype, val);
+            trace("GET for Physical type 0x%x returns 0x%lx\n", captype, val);
             GlobalFree(cap.hContainer);
         }
     }
@@ -506,7 +506,7 @@ static void test_supported_sizes(TW_IDENTITY *appid, TW_IDENTITY *source, TW_INT
         return;
     ok(get_onevalue(cap.hContainer, (TW_UINT32 *) &actual_support, NULL), "Returned cap.hContainer invalid for QuerySupport on ICAP_SUPPORTEDSIZES\n");
     ok((actual_support & minimum_support) == minimum_support,
-            "Error:  minimum support 0x%x for ICAP_SUPPORTEDSIZES, got 0x%x\n", minimum_support, actual_support);
+            "Error:  minimum support 0x%lx for ICAP_SUPPORTEDSIZES, got 0x%lx\n", minimum_support, actual_support);
 
     if (actual_support & TWQC_GETCURRENT)
     {
@@ -522,7 +522,7 @@ static void test_supported_sizes(TW_IDENTITY *appid, TW_IDENTITY *source, TW_INT
         {
             get_onevalue(cap.hContainer, &val, &type);
             ok(type == TWTY_UINT16, "GETCURRENT for ICAP_SUPPORTEDSIZES is not type UINT16, is type %d\n", type);
-            trace("Current size is %d\n", val);
+            trace("Current size is %ld\n", val);
             GlobalFree(cap.hContainer);
             orig_value = val;
         }
@@ -542,7 +542,7 @@ static void test_supported_sizes(TW_IDENTITY *appid, TW_IDENTITY *source, TW_INT
         {
             get_onevalue(cap.hContainer, &val, &type);
             ok(type == TWTY_UINT16, "GETDEFAULT for PHYSICALXXX is not type TWTY_UINT16, is type %d\n", type);
-            trace("Default size is %d\n", val);
+            trace("Default size is %ld\n", val);
             GlobalFree(cap.hContainer);
             default_value = val;
         }
@@ -603,7 +603,7 @@ static void test_imagelayout(TW_IDENTITY *appid, TW_IDENTITY *source)
             "Error [rc %d|cc %d] doing MSG_GET for DG_IMAGE/DAT_IMAGELAYOUT\n", rc, status.ConditionCode);
     if (rc != TWRC_SUCCESS)
         return;
-    trace("ImageLayout [Left %x.%x|Top %x.%x|Right %x.%x|Bottom %x.%x|Document %d|Page %d|Frame %d]\n",
+    trace("ImageLayout [Left %x.%x|Top %x.%x|Right %x.%x|Bottom %x.%x|Document %ld|Page %ld|Frame %ld]\n",
             layout.Frame.Left.Whole, layout.Frame.Left.Frac,
             layout.Frame.Top.Whole, layout.Frame.Top.Frac,
             layout.Frame.Right.Whole, layout.Frame.Right.Frac,
@@ -628,7 +628,7 @@ static void test_imagelayout(TW_IDENTITY *appid, TW_IDENTITY *source)
             "Error [rc %d|cc %d] doing MSG_GET for DG_IMAGE/DAT_IMAGELAYOUT\n", rc, status.ConditionCode);
     if (rc != TWRC_SUCCESS)
         return;
-    trace("ImageLayout after set [Left %x.%x|Top %x.%x|Right %x.%x|Bottom %x.%x|Document %d|Page %d|Frame %d]\n",
+    trace("ImageLayout after set [Left %x.%x|Top %x.%x|Right %x.%x|Bottom %x.%x|Document %ld|Page %ld|Frame %ld]\n",
             layout.Frame.Left.Whole, layout.Frame.Left.Frac,
             layout.Frame.Top.Whole, layout.Frame.Top.Frac,
             layout.Frame.Right.Whole, layout.Frame.Right.Frac,
@@ -664,7 +664,7 @@ static void test_single_source(TW_IDENTITY *appid, TW_IDENTITY *source)
             {
                 int i;
                 UINT16 *u = (UINT16 *) a->ItemList;
-                trace("%d Capabilities:\n", a->NumItems);
+                trace("%ld Capabilities:\n", a->NumItems);
                 for (i = 0; i < a->NumItems; i++)
                     if (u[i] < ARRAY_SIZE(capabilities))
                     {
@@ -776,7 +776,7 @@ static void test_sources(TW_IDENTITY *appid)
     while (rc == TWRC_SUCCESS)
     {
         scannercount++;
-        trace("[Scanner %d|Version %d.%d(%s)|Protocol %d.%d|SupportedGroups 0x%x|Manufacturer %s|Family %s|ProductName %s]\n",
+        trace("[Scanner %d|Version %d.%d(%s)|Protocol %d.%d|SupportedGroups 0x%lx|Manufacturer %s|Family %s|ProductName %s]\n",
             scannercount,
             source.Version.MajorNum, source.Version.MinorNum, source.Version.Info,
             source.ProtocolMajor, source.ProtocolMinor, source.SupportedGroups,
