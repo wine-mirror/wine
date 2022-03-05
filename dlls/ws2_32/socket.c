@@ -2776,6 +2776,8 @@ static int server_setsockopt( SOCKET s, ULONG code, const char *optval, int optl
  */
 int WINAPI setsockopt( SOCKET s, int level, int optname, const char *optval, int optlen )
 {
+    DWORD value = 0;
+
     TRACE( "socket %#Ix, %s, optval %s, optlen %d\n",
            s, debugstr_sockopt(level, optname), debugstr_optval(optval, optlen), optlen );
 
@@ -2997,6 +2999,17 @@ int WINAPI setsockopt( SOCKET s, int level, int optname, const char *optval, int
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_RECVTTL, optval, optlen );
 
         case IP_TOS:
+            if (!optlen || !optval)
+            {
+                SetLastError(WSAEFAULT);
+                return SOCKET_ERROR;
+            }
+            memcpy( &value, optval, min( optlen, sizeof(value) ));
+            if (value > 0xff)
+            {
+                SetLastError(WSAEINVAL);
+                return SOCKET_ERROR;
+            }
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_TOS, optval, optlen );
 
         case IP_TTL:
