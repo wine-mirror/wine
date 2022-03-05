@@ -19,6 +19,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include <assert.h>
 #include <stdarg.h>
@@ -47,7 +48,7 @@
     do { \
       int value = (actual); \
       ok((expected) == value, "Expected " #actual " to be %d (" #expected ") is %d\n", \
-          (expected), value); \
+         (int)(expected), value); \
     } while (0)
 #define expect_eq_s(expected, actual) \
     do { \
@@ -343,11 +344,11 @@ static void     doChild(const char* file, const char* option)
     /* output of startup info (Ansi) */
     GetStartupInfoA(&siA);
     childPrintf(hFile,
-                "[StartupInfoA]\ncb=%08u\nlpDesktop=%s\nlpTitle=%s\n"
-                "dwX=%u\ndwY=%u\ndwXSize=%u\ndwYSize=%u\n"
-                "dwXCountChars=%u\ndwYCountChars=%u\ndwFillAttribute=%u\n"
-                "dwFlags=%u\nwShowWindow=%u\n"
-                "hStdInput=%lu\nhStdOutput=%lu\nhStdError=%lu\n\n",
+                "[StartupInfoA]\ncb=%08lu\nlpDesktop=%s\nlpTitle=%s\n"
+                "dwX=%lu\ndwY=%lu\ndwXSize=%lu\ndwYSize=%lu\n"
+                "dwXCountChars=%lu\ndwYCountChars=%lu\ndwFillAttribute=%lu\n"
+                "dwFlags=%lu\nwShowWindow=%u\n"
+                "hStdInput=%Iu\nhStdOutput=%Iu\nhStdError=%Iu\n\n",
                 siA.cb, encodeA(siA.lpDesktop), encodeA(siA.lpTitle),
                 siA.dwX, siA.dwY, siA.dwXSize, siA.dwYSize,
                 siA.dwXCountChars, siA.dwYCountChars, siA.dwFillAttribute,
@@ -355,7 +356,7 @@ static void     doChild(const char* file, const char* option)
                 (DWORD_PTR)siA.hStdInput, (DWORD_PTR)siA.hStdOutput, (DWORD_PTR)siA.hStdError);
 
     /* check the console handles in the TEB */
-    childPrintf(hFile, "[TEB]\nhStdInput=%lu\nhStdOutput=%lu\nhStdError=%lu\n\n",
+    childPrintf(hFile, "[TEB]\nhStdInput=%Iu\nhStdOutput=%Iu\nhStdError=%Iu\n\n",
                 (DWORD_PTR)params->hStdInput, (DWORD_PTR)params->hStdOutput,
                 (DWORD_PTR)params->hStdError);
 
@@ -365,11 +366,11 @@ static void     doChild(const char* file, const char* option)
     memset(&siW, 0, sizeof(siW));
     GetStartupInfoW(&siW);
     childPrintf(hFile,
-                "[StartupInfoW]\ncb=%08u\nlpDesktop=%s\nlpTitle=%s\n"
-                "dwX=%u\ndwY=%u\ndwXSize=%u\ndwYSize=%u\n"
-                "dwXCountChars=%u\ndwYCountChars=%u\ndwFillAttribute=%u\n"
-                "dwFlags=%u\nwShowWindow=%u\n"
-                "hStdInput=%lu\nhStdOutput=%lu\nhStdError=%lu\n\n",
+                "[StartupInfoW]\ncb=%08lu\nlpDesktop=%s\nlpTitle=%s\n"
+                "dwX=%lu\ndwY=%lu\ndwXSize=%lu\ndwYSize=%lu\n"
+                "dwXCountChars=%lu\ndwYCountChars=%lu\ndwFillAttribute=%lu\n"
+                "dwFlags=%lu\nwShowWindow=%u\n"
+                "hStdInput=%Iu\nhStdOutput=%Iu\nhStdError=%Iu\n\n",
                 siW.cb, encodeW(siW.lpDesktop), encodeW(siW.lpTitle),
                 siW.dwX, siW.dwY, siW.dwXSize, siW.dwYSize,
                 siW.dwXCountChars, siW.dwYCountChars, siW.dwFillAttribute,
@@ -387,7 +388,7 @@ static void     doChild(const char* file, const char* option)
 
     /* output toolhelp information */
     snapshot = pCreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    ok(snapshot != INVALID_HANDLE_VALUE, "CreateToolhelp32Snapshot failed %u\n", GetLastError());
+    ok(snapshot != INVALID_HANDLE_VALUE, "CreateToolhelp32Snapshot failed %lu\n", GetLastError());
     memset(&pe, 0, sizeof(pe));
     pe.dwSize = sizeof(pe);
     if (pProcess32First(snapshot, &pe))
@@ -398,9 +399,9 @@ static void     doChild(const char* file, const char* option)
     CloseHandle(snapshot);
     ok(pe.th32ProcessID == GetCurrentProcessId(), "failed to find current process in snapshot\n");
     childPrintf(hFile,
-                "[Toolhelp]\ncntUsage=%u\nth32DefaultHeapID=%lu\n"
-                "th32ModuleID=%u\ncntThreads=%u\nth32ParentProcessID=%u\n"
-                "pcPriClassBase=%u\ndwFlags=%u\nszExeFile=%s\n\n",
+                "[Toolhelp]\ncntUsage=%lu\nth32DefaultHeapID=%Iu\n"
+                "th32ModuleID=%lu\ncntThreads=%lu\nth32ParentProcessID=%lu\n"
+                "pcPriClassBase=%lu\ndwFlags=%lu\nszExeFile=%s\n\n",
                 pe.cntUsage, pe.th32DefaultHeapID, pe.th32ModuleID,
                 pe.cntThreads, pe.th32ParentProcessID, pe.pcPriClassBase,
                 pe.dwFlags, encodeA(pe.szExeFile));
@@ -471,9 +472,9 @@ static void     doChild(const char* file, const char* option)
         childPrintf(hFile, "InputCP=%d\nOutputCP=%d\n",
                     GetConsoleCP(), GetConsoleOutputCP());
         if (GetConsoleMode(hConIn, &modeIn))
-            childPrintf(hFile, "InputMode=%u\n", modeIn);
+            childPrintf(hFile, "InputMode=%lu\n", modeIn);
         if (GetConsoleMode(hConOut, &modeOut))
-            childPrintf(hFile, "OutputMode=%u\n", modeOut);
+            childPrintf(hFile, "OutputMode=%lu\n", modeOut);
 
         /* now that we have written all relevant information, let's change it */
         SetLastError(0xdeadbeef);
@@ -489,13 +490,13 @@ static void     doChild(const char* file, const char* option)
         }
 
         ret = SetConsoleMode(hConIn, modeIn ^ 1);
-        ok( ret, "Setting mode (%d)\n", GetLastError());
+        ok( ret, "Setting mode (%ld)\n", GetLastError());
         ret = SetConsoleMode(hConOut, modeOut ^ 1);
-        ok( ret, "Setting mode (%d)\n", GetLastError());
+        ok( ret, "Setting mode (%ld)\n", GetLastError());
         sbi.dwCursorPosition.X ^= 1;
         sbi.dwCursorPosition.Y ^= 1;
         ret = SetConsoleCursorPosition(hConOut, sbi.dwCursorPosition);
-        ok( ret, "Setting cursor position (%d)\n", GetLastError());
+        ok( ret, "Setting cursor position (%ld)\n", GetLastError());
     }
     if (option && strcmp(option, "stdhandle") == 0)
     {
@@ -896,25 +897,25 @@ static void test_CommandLine(void)
     memset(&info, 0xa, sizeof(info));
     ok(!CreateProcessA(buffer, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess unexpectedly succeeded\n");
     /* Check that the effective STARTUPINFOA parameters are not modified */
-    ok(startup.cb == sizeof(startup), "unexpected cb %d\n", startup.cb);
+    ok(startup.cb == sizeof(startup), "unexpected cb %ld\n", startup.cb);
     ok(startup.lpDesktop == NULL, "lpDesktop is not NULL\n");
     ok(startup.lpTitle == NULL, "lpTitle is not NULL\n");
-    ok(startup.dwFlags == STARTF_USESHOWWINDOW, "unexpected dwFlags %04x\n", startup.dwFlags);
+    ok(startup.dwFlags == STARTF_USESHOWWINDOW, "unexpected dwFlags %04lx\n", startup.dwFlags);
     ok(startup.wShowWindow == SW_SHOWNORMAL, "unexpected wShowWindow %d\n", startup.wShowWindow);
     ok(!info.hProcess, "unexpected hProcess %p\n", info.hProcess);
     ok(!info.hThread, "unexpected hThread %p\n", info.hThread);
-    ok(!info.dwProcessId, "unexpected dwProcessId %04x\n", info.dwProcessId);
-    ok(!info.dwThreadId, "unexpected dwThreadId %04x\n", info.dwThreadId);
+    ok(!info.dwProcessId, "unexpected dwProcessId %04lx\n", info.dwProcessId);
+    ok(!info.dwThreadId, "unexpected dwThreadId %04lx\n", info.dwThreadId);
 
     /* the basics; not getting confused by the leading and trailing " */
     get_file_name(resfile);
     sprintf(buffer, "\"%s\" process dump \"%s\" \"C:\\Program Files\\my nice app.exe\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
     /* Check that the effective STARTUPINFOA parameters are not modified */
-    ok(startup.cb == sizeof(startup), "unexpected cb %d\n", startup.cb);
+    ok(startup.cb == sizeof(startup), "unexpected cb %ld\n", startup.cb);
     ok(startup.lpDesktop == NULL, "lpDesktop is not NULL\n");
     ok(startup.lpTitle == NULL, "lpTitle is not NULL\n");
-    ok(startup.dwFlags == STARTF_USESHOWWINDOW, "unexpected dwFlags %04x\n", startup.dwFlags);
+    ok(startup.dwFlags == STARTF_USESHOWWINDOW, "unexpected dwFlags %04lx\n", startup.dwFlags);
     ok(startup.wShowWindow == SW_SHOWNORMAL, "unexpected wShowWindow %d\n", startup.wShowWindow);
     wait_and_close_child_process(&info);
 
@@ -955,7 +956,7 @@ static void test_CommandLine(void)
     sprintf(buffer, "./%s process dump \"%s\" \"\"\"\"", exename, resfile);
     SetLastError(0xdeadbeef);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
-    ok(ret, "CreateProcess (%s) failed : %d\n", buffer, GetLastError());
+    ok(ret, "CreateProcess (%s) failed : %ld\n", buffer, GetLastError());
     wait_and_close_child_process(&info);
 
     reload_child_info(resfile);
@@ -972,7 +973,7 @@ static void test_CommandLine(void)
     sprintf(buffer, ".\\%s process dump \"%s\"", exename, resfile);
     SetLastError(0xdeadbeef);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
-    ok(ret, "CreateProcess (%s) failed : %d\n", buffer, GetLastError());
+    ok(ret, "CreateProcess (%s) failed : %ld\n", buffer, GetLastError());
     wait_and_close_child_process(&info);
 
     reload_child_info(resfile);
@@ -988,7 +989,7 @@ static void test_CommandLine(void)
     else sprintf(buffer, "./%s process dump \"%s\"", exename, resfile);
     SetLastError(0xdeadbeef);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
-    ok(ret, "CreateProcess (%s) failed : %d\n", buffer, GetLastError());
+    ok(ret, "CreateProcess (%s) failed : %ld\n", buffer, GetLastError());
     wait_and_close_child_process(&info);
 
     reload_child_info(resfile);
@@ -1010,7 +1011,7 @@ static void test_CommandLine(void)
     sprintf(buffer2, "dummy process dump \"%s\"", resfile);
     SetLastError(0xdeadbeef);
     ret = CreateProcessA(buffer, buffer2, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
-    ok(ret, "CreateProcess (%s) failed : %d\n", buffer, GetLastError());
+    ok(ret, "CreateProcess (%s) failed : %ld\n", buffer, GetLastError());
     wait_and_close_child_process(&info);
 
     reload_child_info(resfile);
@@ -1028,7 +1029,7 @@ static void test_CommandLine(void)
         ret = CreateProcessA(NULL, NULL, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
         ok(!ret, "CreateProcessA unexpectedly succeeded\n");
         ok(GetLastError() == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+           "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
     }
 
     buffer[0] = '\0';
@@ -1040,7 +1041,7 @@ static void test_CommandLine(void)
     ok(GetLastError() == ERROR_PATH_NOT_FOUND ||
        broken(GetLastError() == ERROR_FILE_NOT_FOUND) /* Win9x/WinME */ ||
        broken(GetLastError() == ERROR_ACCESS_DENIED) /* Win98 */,
-       "Expected ERROR_PATH_NOT_FOUND, got %d\n", GetLastError());
+       "Expected ERROR_PATH_NOT_FOUND, got %ld\n", GetLastError());
 
     buffer2[0] = '\0';
 
@@ -1051,7 +1052,7 @@ static void test_CommandLine(void)
     ok(GetLastError() == ERROR_PATH_NOT_FOUND ||
        broken(GetLastError() == ERROR_FILE_NOT_FOUND) /* Win9x/WinME */ ||
        broken(GetLastError() == ERROR_ACCESS_DENIED) /* Win98 */,
-       "Expected ERROR_PATH_NOT_FOUND, got %d\n", GetLastError());
+       "Expected ERROR_PATH_NOT_FOUND, got %ld\n", GetLastError());
 
     /* Test empty command line parameter. */
     SetLastError(0xdeadbeef);
@@ -1061,7 +1062,7 @@ static void test_CommandLine(void)
        GetLastError() == ERROR_PATH_NOT_FOUND /* NT4 */ ||
        GetLastError() == ERROR_BAD_PATHNAME /* Win98 */ ||
        GetLastError() == ERROR_INVALID_PARAMETER /* Win7 */,
-       "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+       "Expected ERROR_FILE_NOT_FOUND, got %ld\n", GetLastError());
 
     strcpy(buffer, "doesnotexist.exe");
     strcpy(buffer2, "does not exist.exe");
@@ -1070,23 +1071,23 @@ static void test_CommandLine(void)
     SetLastError(0xdeadbeef);
     ret = CreateProcessA(buffer, NULL, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
     ok(!ret, "CreateProcessA unexpectedly succeeded\n");
-    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = CreateProcessA(buffer2, NULL, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
     ok(!ret, "CreateProcessA unexpectedly succeeded\n");
-    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %ld\n", GetLastError());
 
     /* Test nonexistent command line parameter. */
     SetLastError(0xdeadbeef);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
     ok(!ret, "CreateProcessA unexpectedly succeeded\n");
-    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = CreateProcessA(NULL, buffer2, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
     ok(!ret, "CreateProcessA unexpectedly succeeded\n");
-    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %ld\n", GetLastError());
 
     /* Test whether GetCommandLineW reads directly from TEB or from a cached address */
     cmdline = GetCommandLineW();
@@ -1135,7 +1136,7 @@ static void test_Directory(void)
     memset(&info, 0, sizeof(info));
     ok(!CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0L,
                        NULL, "non\\existent\\directory", &startup, &info), "CreateProcess\n");
-    ok(GetLastError() == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %ld\n", GetLastError());
     ok(!TerminateProcess(info.hProcess, 0), "Child process should not exist\n");
 }
 
@@ -1178,7 +1179,7 @@ static void test_Toolhelp(void)
     wait_child_process(info.hProcess);
 
     process = OpenProcess(PROCESS_ALL_ACCESS_NT4, FALSE, info.dwProcessId);
-    ok(process != NULL, "OpenProcess failed %u\n", GetLastError());
+    ok(process != NULL, "OpenProcess failed %lu\n", GetLastError());
     CloseHandle(process);
 
     CloseHandle(info.hProcess);
@@ -1188,7 +1189,7 @@ static void test_Toolhelp(void)
     {
         SetLastError(0xdeadbeef);
         process = OpenProcess(PROCESS_ALL_ACCESS_NT4, FALSE, info.dwProcessId);
-        ok(process || GetLastError() == ERROR_INVALID_PARAMETER, "OpenProcess failed %u\n", GetLastError());
+        ok(process || GetLastError() == ERROR_INVALID_PARAMETER, "OpenProcess failed %lu\n", GetLastError());
         if (!process) break;
         CloseHandle(process);
         Sleep(100);
@@ -1202,7 +1203,7 @@ static void test_Toolhelp(void)
     DeleteFileA(resfile);
 
     snapshot = pCreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    ok(snapshot != INVALID_HANDLE_VALUE, "CreateToolhelp32Snapshot failed %u\n", GetLastError());
+    ok(snapshot != INVALID_HANDLE_VALUE, "CreateToolhelp32Snapshot failed %lu\n", GetLastError());
     memset(&pe, 0, sizeof(pe));
     pe.dwSize = sizeof(pe);
     if (pProcess32First(snapshot, &pe))
@@ -1212,14 +1213,14 @@ static void test_Toolhelp(void)
     }
     CloseHandle(snapshot);
     ok(pe.th32ProcessID == nested_pid, "failed to find nested child process\n");
-    ok(pe.th32ParentProcessID == info.dwProcessId, "nested child process has parent %u instead of %u\n", pe.th32ParentProcessID, info.dwProcessId);
+    ok(pe.th32ParentProcessID == info.dwProcessId, "nested child process has parent %lu instead of %lu\n", pe.th32ParentProcessID, info.dwProcessId);
     ok(stricmp(pe.szExeFile, exename) == 0, "nested executable is %s instead of %s\n", pe.szExeFile, exename);
 
     process = OpenProcess(PROCESS_ALL_ACCESS_NT4, FALSE, pe.th32ProcessID);
-    ok(process != NULL, "OpenProcess failed %u\n", GetLastError());
+    ok(process != NULL, "OpenProcess failed %lu\n", GetLastError());
 
     snapshot = pCreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
-    ok(snapshot != INVALID_HANDLE_VALUE, "CreateToolhelp32Snapshot failed %u\n", GetLastError());
+    ok(snapshot != INVALID_HANDLE_VALUE, "CreateToolhelp32Snapshot failed %lu\n", GetLastError());
     memset(&te, 0, sizeof(te));
     te.dwSize = sizeof(te);
     if (pThread32First(snapshot, &te))
@@ -1231,9 +1232,9 @@ static void test_Toolhelp(void)
     ok(te.th32OwnerProcessID == pe.th32ProcessID, "failed to find suspended thread\n");
 
     thread = OpenThread(THREAD_ALL_ACCESS_NT4, FALSE, te.th32ThreadID);
-    ok(thread != NULL, "OpenThread failed %u\n", GetLastError());
+    ok(thread != NULL, "OpenThread failed %lu\n", GetLastError());
     ret = ResumeThread(thread);
-    ok(ret == 1, "expected 1, got %u\n", ret);
+    ok(ret == 1, "expected 1, got %lu\n", ret);
     CloseHandle(thread);
 
     wait_child_process(process);
@@ -1475,7 +1476,7 @@ static  void    test_DebuggingFlag(void)
         if (!dbg)
         {
             ok(de.dwDebugEventCode == CREATE_PROCESS_DEBUG_EVENT,
-               "first event: %d\n", de.dwDebugEventCode);
+               "first event: %ld\n", de.dwDebugEventCode);
             processbase = de.u.CreateProcessInfo.lpBaseOfImage;
         }
         if (de.dwDebugEventCode != EXCEPTION_DEBUG_EVENT) dbg++;
@@ -1581,7 +1582,7 @@ static void test_Console(void)
     ok(!SetConsoleCP(0), "Shouldn't succeed\n");
     ok(GetLastError()==ERROR_INVALID_PARAMETER ||
        broken(GetLastError() == ERROR_CALL_NOT_IMPLEMENTED), /* win9x */
-       "GetLastError: expecting %u got %u\n",
+       "GetLastError: expecting %u got %lu\n",
        ERROR_INVALID_PARAMETER, GetLastError());
     if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
         run_tests = FALSE;
@@ -1591,7 +1592,7 @@ static void test_Console(void)
     ok(!SetConsoleOutputCP(0), "Shouldn't succeed\n");
     ok(GetLastError()==ERROR_INVALID_PARAMETER ||
        broken(GetLastError() == ERROR_CALL_NOT_IMPLEMENTED), /* win9x */
-       "GetLastError: expecting %u got %u\n",
+       "GetLastError: expecting %u got %lu\n",
        ERROR_INVALID_PARAMETER, GetLastError());
 
     SetConsoleCP(cpIn);
@@ -1636,8 +1637,8 @@ static void test_Console(void)
 
     if (run_tests)
     {
-        ok(cpInC == 1252, "Wrong console CP (expected 1252 got %d/%d)\n", cpInC, cpIn);
-        ok(cpOutC == 1252, "Wrong console-SB CP (expected 1252 got %d/%d)\n", cpOutC, cpOut);
+        ok(cpInC == 1252, "Wrong console CP (expected 1252 got %ld/%ld)\n", cpInC, cpIn);
+        ok(cpOutC == 1252, "Wrong console-SB CP (expected 1252 got %ld/%ld)\n", cpOutC, cpOut);
     }
     else
         win_skip("Setting the codepage is not implemented\n");
@@ -1676,7 +1677,7 @@ static void test_Console(void)
 
     msg_len = strlen(msg) + 1;
     ok(WriteFile(hParentOut, msg, msg_len, &w, NULL), "Writing to child\n");
-    ok(w == msg_len, "Should have written %u bytes, actually wrote %u\n", msg_len, w);
+    ok(w == msg_len, "Should have written %u bytes, actually wrote %lu\n", msg_len, w);
     memset(buffer, 0, sizeof(buffer));
     ok(ReadFile(hParentIn, buffer, sizeof(buffer), &w, NULL), "Reading from child\n");
     ok(strcmp(buffer, msg) == 0, "Should have received '%s'\n", msg);
@@ -1731,7 +1732,7 @@ static void test_OpenProcess(void)
 
     /* without PROCESS_VM_OPERATION */
     hproc = OpenProcess(PROCESS_ALL_ACCESS_NT4 & ~PROCESS_VM_OPERATION, FALSE, GetCurrentProcessId());
-    ok(hproc != NULL, "OpenProcess error %d\n", GetLastError());
+    ok(hproc != NULL, "OpenProcess error %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     addr1 = VirtualAllocEx(hproc, 0, 0xFFFC, MEM_RESERVE, PAGE_NOACCESS);
@@ -1742,35 +1743,35 @@ static void test_OpenProcess(void)
         win_skip("VirtualAllocEx not implemented\n");
         return;
     }
-    ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %d\n", GetLastError());
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %ld\n", GetLastError());
 
     read_bytes = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = ReadProcessMemory(hproc, test_OpenProcess, &dummy, sizeof(dummy), &read_bytes);
-    ok(ret, "ReadProcessMemory error %d\n", GetLastError());
-    ok(read_bytes == sizeof(dummy), "wrong read bytes %ld\n", read_bytes);
+    ok(ret, "ReadProcessMemory error %ld\n", GetLastError());
+    ok(read_bytes == sizeof(dummy), "wrong read bytes %Id\n", read_bytes);
 
     CloseHandle(hproc);
 
     hproc = OpenProcess(PROCESS_VM_OPERATION, FALSE, GetCurrentProcessId());
-    ok(hproc != NULL, "OpenProcess error %d\n", GetLastError());
+    ok(hproc != NULL, "OpenProcess error %ld\n", GetLastError());
 
     addr1 = VirtualAllocEx(hproc, 0, 0xFFFC, MEM_RESERVE, PAGE_NOACCESS);
-    ok(addr1 != NULL, "VirtualAllocEx error %d\n", GetLastError());
+    ok(addr1 != NULL, "VirtualAllocEx error %ld\n", GetLastError());
 
     /* without PROCESS_QUERY_INFORMATION */
     SetLastError(0xdeadbeef);
     ok(!VirtualQueryEx(hproc, addr1, &info, sizeof(info)),
        "VirtualQueryEx without PROCESS_QUERY_INFORMATION rights should fail\n");
-    ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %d\n", GetLastError());
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %ld\n", GetLastError());
 
     /* without PROCESS_VM_READ */
     read_bytes = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ok(!ReadProcessMemory(hproc, addr1, &dummy, sizeof(dummy), &read_bytes),
        "ReadProcessMemory without PROCESS_VM_READ rights should fail\n");
-    ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %d\n", GetLastError());
-    ok(read_bytes == 0, "wrong read bytes %ld\n", read_bytes);
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %ld\n", GetLastError());
+    ok(read_bytes == 0, "wrong read bytes %Id\n", read_bytes);
 
     CloseHandle(hproc);
 
@@ -1778,23 +1779,23 @@ static void test_OpenProcess(void)
 
     memset(&info, 0xcc, sizeof(info));
     read_bytes = VirtualQueryEx(hproc, addr1, &info, sizeof(info));
-    ok(read_bytes == sizeof(info), "VirtualQueryEx error %d\n", GetLastError());
+    ok(read_bytes == sizeof(info), "VirtualQueryEx error %ld\n", GetLastError());
 
     ok(info.BaseAddress == addr1, "%p != %p\n", info.BaseAddress, addr1);
     ok(info.AllocationBase == addr1, "%p != %p\n", info.AllocationBase, addr1);
-    ok(info.AllocationProtect == PAGE_NOACCESS, "%x != PAGE_NOACCESS\n", info.AllocationProtect);
-    ok(info.RegionSize == 0x10000, "%lx != 0x10000\n", info.RegionSize);
-    ok(info.State == MEM_RESERVE, "%x != MEM_RESERVE\n", info.State);
+    ok(info.AllocationProtect == PAGE_NOACCESS, "%lx != PAGE_NOACCESS\n", info.AllocationProtect);
+    ok(info.RegionSize == 0x10000, "%Ix != 0x10000\n", info.RegionSize);
+    ok(info.State == MEM_RESERVE, "%lx != MEM_RESERVE\n", info.State);
     /* NT reports Protect == 0 for a not committed memory block */
     ok(info.Protect == 0 /* NT */ ||
        info.Protect == PAGE_NOACCESS, /* Win9x */
-        "%x != PAGE_NOACCESS\n", info.Protect);
-    ok(info.Type == MEM_PRIVATE, "%x != MEM_PRIVATE\n", info.Type);
+        "%lx != PAGE_NOACCESS\n", info.Protect);
+    ok(info.Type == MEM_PRIVATE, "%lx != MEM_PRIVATE\n", info.Type);
 
     SetLastError(0xdeadbeef);
     ok(!VirtualFreeEx(hproc, addr1, 0, MEM_RELEASE),
        "VirtualFreeEx without PROCESS_VM_OPERATION rights should fail\n");
-    ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %d\n", GetLastError());
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %ld\n", GetLastError());
 
     CloseHandle(hproc);
 
@@ -1806,22 +1807,22 @@ static void test_OpenProcess(void)
         read_bytes = VirtualQueryEx(hproc, addr1, &info, sizeof(info));
         if (read_bytes) /* win8 */
         {
-            ok(read_bytes == sizeof(info), "VirtualQueryEx error %d\n", GetLastError());
+            ok(read_bytes == sizeof(info), "VirtualQueryEx error %ld\n", GetLastError());
             ok(info.BaseAddress == addr1, "%p != %p\n", info.BaseAddress, addr1);
             ok(info.AllocationBase == addr1, "%p != %p\n", info.AllocationBase, addr1);
-            ok(info.AllocationProtect == PAGE_NOACCESS, "%x != PAGE_NOACCESS\n", info.AllocationProtect);
-            ok(info.RegionSize == 0x10000, "%lx != 0x10000\n", info.RegionSize);
-            ok(info.State == MEM_RESERVE, "%x != MEM_RESERVE\n", info.State);
-            ok(info.Protect == 0, "%x != PAGE_NOACCESS\n", info.Protect);
-            ok(info.Type == MEM_PRIVATE, "%x != MEM_PRIVATE\n", info.Type);
+            ok(info.AllocationProtect == PAGE_NOACCESS, "%lx != PAGE_NOACCESS\n", info.AllocationProtect);
+            ok(info.RegionSize == 0x10000, "%Ix != 0x10000\n", info.RegionSize);
+            ok(info.State == MEM_RESERVE, "%lx != MEM_RESERVE\n", info.State);
+            ok(info.Protect == 0, "%lx != PAGE_NOACCESS\n", info.Protect);
+            ok(info.Type == MEM_PRIVATE, "%lx != MEM_PRIVATE\n", info.Type);
         }
         else /* before win8 */
-            ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %d\n", GetLastError());
+            ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %ld\n", GetLastError());
 
         SetLastError(0xdeadbeef);
         ok(!VirtualFreeEx(hproc, addr1, 0, MEM_RELEASE),
            "VirtualFreeEx without PROCESS_VM_OPERATION rights should fail\n");
-        ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %d\n", GetLastError());
+        ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %ld\n", GetLastError());
 
         CloseHandle(hproc);
     }
@@ -1838,11 +1839,11 @@ static void test_GetProcessVersion(void)
 
     SetLastError(0xdeadbeef);
     ret = GetProcessVersion(0);
-    ok(ret, "GetProcessVersion error %u\n", GetLastError());
+    ok(ret, "GetProcessVersion error %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = GetProcessVersion(GetCurrentProcessId());
-    ok(ret, "GetProcessVersion error %u\n", GetLastError());
+    ok(ret, "GetProcessVersion error %lu\n", GetLastError());
 
     memset(&si, 0, sizeof(si));
     si.cb = sizeof(si);
@@ -1850,15 +1851,15 @@ static void test_GetProcessVersion(void)
     si.wShowWindow = SW_HIDE;
     SetLastError(0xdeadbeef);
     ret = CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
-    ok(ret, "CreateProcess error %u\n", GetLastError());
+    ok(ret, "CreateProcess error %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = GetProcessVersion(pi.dwProcessId);
-    ok(ret, "GetProcessVersion error %u\n", GetLastError());
+    ok(ret, "GetProcessVersion error %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = TerminateProcess(pi.hProcess, 0);
-    ok(ret, "TerminateProcess error %u\n", GetLastError());
+    ok(ret, "TerminateProcess error %lu\n", GetLastError());
 
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
@@ -1880,7 +1881,7 @@ static void test_GetProcessImageFileNameA(void)
     SetLastError(0xdeadbeef);
     rc = pK32GetProcessImageFileNameA(GetCurrentProcess(), NULL, 0);
     ok(!rc && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-       "K32GetProcessImageFileNameA(no buffer): returned %u, le=%u\n", rc, GetLastError());
+       "K32GetProcessImageFileNameA(no buffer): returned %lu, le=%lu\n", rc, GetLastError());
 
     *process = '\0';
     rc = pK32GetProcessImageFileNameA(GetCurrentProcess(), process, sizeof(process));
@@ -1920,7 +1921,7 @@ static void test_QueryFullProcessImageNameA(void)
     *module = '\0';
     SetLastError(0); /* old Windows don't reset it on success */
     size = GetModuleFileNameA(NULL, module, sizeof(module));
-    ok(size && GetLastError() != ERROR_INSUFFICIENT_BUFFER, "GetModuleFileName failed: %u le=%u\n", size, GetLastError());
+    ok(size && GetLastError() != ERROR_INSUFFICIENT_BUFFER, "GetModuleFileName failed: %lu le=%lu\n", size, GetLastError());
 
     /* get the buffer length without \0 terminator */
     length = sizeof(buf);
@@ -2059,9 +2060,9 @@ static void test_QueryFullProcessImageNameW(void)
     module_name[2] = '\0';
     *device = '\0';
     size = QueryDosDeviceW(module_name, device, ARRAY_SIZE(device));
-    ok(size, "QueryDosDeviceW failed: le=%u\n", GetLastError());
+    ok(size, "QueryDosDeviceW failed: le=%lu\n", GetLastError());
     len = lstrlenW(device);
-    ok(size >= len+2, "expected %d to be greater than %d+2 = strlen(%s)\n", size, len, wine_dbgstr_w(device));
+    ok(size >= len+2, "expected %ld to be greater than %ld+2 = strlen(%s)\n", size, len, wine_dbgstr_w(device));
 
     if (size >= lstrlenW(buf))
     {
@@ -2089,25 +2090,25 @@ static void test_Handles(void)
         handle == (HANDLE)(ULONG_PTR)0x7fffffff /* win9x */,
         "invalid current process handle %p\n", handle );
     ret = GetExitCodeProcess( handle, &code );
-    ok( ret, "GetExitCodeProcess failed err %u\n", GetLastError() );
+    ok( ret, "GetExitCodeProcess failed err %lu\n", GetLastError() );
 #ifdef _WIN64
     /* truncated handle */
     SetLastError( 0xdeadbeef );
     handle = (HANDLE)((ULONG_PTR)handle & ~0u);
     ret = GetExitCodeProcess( handle, &code );
     ok( !ret, "GetExitCodeProcess succeeded for %p\n", handle );
-    ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %lu\n", GetLastError() );
     /* sign-extended handle */
     SetLastError( 0xdeadbeef );
     handle = (HANDLE)((LONG_PTR)(int)(ULONG_PTR)handle);
     ret = GetExitCodeProcess( handle, &code );
-    ok( ret, "GetExitCodeProcess failed err %u\n", GetLastError() );
+    ok( ret, "GetExitCodeProcess failed err %lu\n", GetLastError() );
     /* invalid high-word */
     SetLastError( 0xdeadbeef );
     handle = (HANDLE)(((ULONG_PTR)handle & ~0u) + ((ULONG_PTR)1 << 32));
     ret = GetExitCodeProcess( handle, &code );
     ok( !ret, "GetExitCodeProcess succeeded for %p\n", handle );
-    ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %lu\n", GetLastError() );
 #endif
 
     handle = GetStdHandle( STD_ERROR_HANDLE );
@@ -2215,7 +2216,7 @@ static void test_IsWow64Process2(void)
         SetLastError(0xdeadbeef);
         machine = native_machine = 0xdead;
         ret = pIsWow64Process2(pi.hProcess, &machine, &native_machine);
-        ok(ret, "IsWow64Process2 error %u\n", GetLastError());
+        ok(ret, "IsWow64Process2 error %lu\n", GetLastError());
 
 #if defined(__i386__) || defined(__x86_64__)
         ok(machine == IMAGE_FILE_MACHINE_I386, "got %#x\n", machine);
@@ -2236,16 +2237,16 @@ static void test_IsWow64Process2(void)
     si.cb = sizeof(si);
     SetLastError(0xdeadbeef);
     ret = CreateProcessA(cmdline, NULL, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi);
-    ok(ret, "CreateProcess error %u\n", GetLastError());
+    ok(ret, "CreateProcess error %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pIsWow64Process(pi.hProcess, &is_wow64);
-    ok(ret, "IsWow64Process error %u\n", GetLastError());
+    ok(ret, "IsWow64Process error %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     machine = native_machine = 0xdead;
     ret = pIsWow64Process2(pi.hProcess, &machine, &native_machine);
-    ok(ret, "IsWow64Process2 error %u\n", GetLastError());
+    ok(ret, "IsWow64Process2 error %lu\n", GetLastError());
 
     ok(machine == IMAGE_FILE_MACHINE_UNKNOWN, "got %#x\n", machine);
     ok(native_machine == expect_native, "got %#x\n", native_machine);
@@ -2253,7 +2254,7 @@ static void test_IsWow64Process2(void)
     SetLastError(0xdeadbeef);
     machine = 0xdead;
     ret = pIsWow64Process2(pi.hProcess, &machine, NULL);
-    ok(ret, "IsWow64Process2 error %u\n", GetLastError());
+    ok(ret, "IsWow64Process2 error %lu\n", GetLastError());
     ok(machine == IMAGE_FILE_MACHINE_UNKNOWN, "got %#x\n", machine);
 
     ret = TerminateProcess(pi.hProcess, 0);
@@ -2264,12 +2265,12 @@ static void test_IsWow64Process2(void)
 
     SetLastError(0xdeadbeef);
     ret = pIsWow64Process(GetCurrentProcess(), &is_wow64);
-    ok(ret, "IsWow64Process error %u\n", GetLastError());
+    ok(ret, "IsWow64Process error %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     machine = native_machine = 0xdead;
     ret = pIsWow64Process2(GetCurrentProcess(), &machine, &native_machine);
-    ok(ret, "IsWow64Process2 error %u\n", GetLastError());
+    ok(ret, "IsWow64Process2 error %lu\n", GetLastError());
 
     if (is_wow64)
     {
@@ -2285,7 +2286,7 @@ static void test_IsWow64Process2(void)
     SetLastError(0xdeadbeef);
     machine = 0xdead;
     ret = pIsWow64Process2(GetCurrentProcess(), &machine, NULL);
-    ok(ret, "IsWow64Process2 error %u\n", GetLastError());
+    ok(ret, "IsWow64Process2 error %lu\n", GetLastError());
     if (is_wow64)
         ok(machine == IMAGE_FILE_MACHINE_I386, "got %#x\n", machine);
     else
@@ -2315,7 +2316,7 @@ static void test_SystemInfo(void)
                "Expected PROCESSOR_ARCHITECTURE_AMD64, got %d\n",
                S(U(nsi)).wProcessorArchitecture);
             ok(nsi.dwProcessorType == PROCESSOR_AMD_X8664,
-               "Expected PROCESSOR_AMD_X8664, got %d\n",
+               "Expected PROCESSOR_AMD_X8664, got %ld\n",
                nsi.dwProcessorType);
         }
     }
@@ -2325,7 +2326,7 @@ static void test_SystemInfo(void)
            "Expected no difference for wProcessorArchitecture, got %d and %d\n",
            S(U(si)).wProcessorArchitecture, S(U(nsi)).wProcessorArchitecture);
         ok(si.dwProcessorType == nsi.dwProcessorType,
-           "Expected no difference for dwProcessorType, got %d and %d\n",
+           "Expected no difference for dwProcessorType, got %ld and %ld\n",
            si.dwProcessorType, nsi.dwProcessorType);
     }
 }
@@ -2343,7 +2344,7 @@ static void test_ProcessorCount(void)
     active = pGetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
     maximum = pGetMaximumProcessorCount(ALL_PROCESSOR_GROUPS);
     ok(active <= maximum,
-       "Number of active processors %i is greater than maximum number of processors %i\n",
+       "Number of active processors %li is greater than maximum number of processors %li\n",
        active, maximum);
 }
 
@@ -2387,26 +2388,26 @@ static void test_TerminateProcess(void)
     si.cb = sizeof(si);
     SetLastError(0xdeadbeef);
     ret = CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi);
-    ok(ret, "CreateProcess error %u\n", GetLastError());
+    ok(ret, "CreateProcess error %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     thread = CreateRemoteThread(pi.hProcess, NULL, 0, (void *)0xdeadbeef, NULL, CREATE_SUSPENDED, &ret);
-    ok(thread != 0, "CreateRemoteThread error %d\n", GetLastError());
+    ok(thread != 0, "CreateRemoteThread error %ld\n", GetLastError());
 
     /* create a not closed thread handle duplicate in the target process */
     SetLastError(0xdeadbeef);
     ret = DuplicateHandle(GetCurrentProcess(), thread, pi.hProcess, &dummy,
                           0, FALSE, DUPLICATE_SAME_ACCESS);
-    ok(ret, "DuplicateHandle error %u\n", GetLastError());
+    ok(ret, "DuplicateHandle error %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = TerminateThread(thread, 0);
-    ok(ret, "TerminateThread error %u\n", GetLastError());
+    ok(ret, "TerminateThread error %lu\n", GetLastError());
     CloseHandle(thread);
 
     SetLastError(0xdeadbeef);
     ret = TerminateProcess(pi.hProcess, 0);
-    ok(ret, "TerminateProcess error %u\n", GetLastError());
+    ok(ret, "TerminateProcess error %lu\n", GetLastError());
 
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
@@ -2422,20 +2423,20 @@ static void test_DuplicateHandle(void)
     r = DuplicateHandle(GetCurrentProcess(), GetCurrentProcess(),
             GetCurrentProcess(), &out, 0, FALSE,
             DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE);
-    ok(r, "DuplicateHandle error %u\n", GetLastError());
+    ok(r, "DuplicateHandle error %lu\n", GetLastError());
     r = GetHandleInformation(out, &info);
-    ok(r, "GetHandleInformation error %u\n", GetLastError());
-    ok(info == 0, "info = %x\n", info);
+    ok(r, "GetHandleInformation error %lu\n", GetLastError());
+    ok(info == 0, "info = %lx\n", info);
     ok(out != GetCurrentProcess(), "out = GetCurrentProcess()\n");
     CloseHandle(out);
 
     r = DuplicateHandle(GetCurrentProcess(), GetCurrentProcess(),
             GetCurrentProcess(), &out, 0, TRUE,
             DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE);
-    ok(r, "DuplicateHandle error %u\n", GetLastError());
+    ok(r, "DuplicateHandle error %lu\n", GetLastError());
     r = GetHandleInformation(out, &info);
-    ok(r, "GetHandleInformation error %u\n", GetLastError());
-    ok(info == HANDLE_FLAG_INHERIT, "info = %x\n", info);
+    ok(r, "GetHandleInformation error %lu\n", GetLastError());
+    ok(info == HANDLE_FLAG_INHERIT, "info = %lx\n", info);
     ok(out != GetCurrentProcess(), "out = GetCurrentProcess()\n");
     CloseHandle(out);
 
@@ -2450,31 +2451,31 @@ static void test_DuplicateHandle(void)
 
     r = DuplicateHandle(GetCurrentProcess(), f, GetCurrentProcess(), &out,
             0, FALSE, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE);
-    ok(r, "DuplicateHandle error %u\n", GetLastError());
+    ok(r, "DuplicateHandle error %lu\n", GetLastError());
     ok(f == out, "f != out\n");
     r = GetHandleInformation(out, &info);
-    ok(r, "GetHandleInformation error %u\n", GetLastError());
-    ok(info == 0, "info = %x\n", info);
+    ok(r, "GetHandleInformation error %lu\n", GetLastError());
+    ok(info == 0, "info = %lx\n", info);
 
     r = DuplicateHandle(GetCurrentProcess(), f, GetCurrentProcess(), &out,
             0, TRUE, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE);
-    ok(r, "DuplicateHandle error %u\n", GetLastError());
+    ok(r, "DuplicateHandle error %lu\n", GetLastError());
     ok(f == out, "f != out\n");
     r = GetHandleInformation(out, &info);
-    ok(r, "GetHandleInformation error %u\n", GetLastError());
-    ok(info == HANDLE_FLAG_INHERIT, "info = %x\n", info);
+    ok(r, "GetHandleInformation error %lu\n", GetLastError());
+    ok(info == HANDLE_FLAG_INHERIT, "info = %lx\n", info);
 
     r = SetHandleInformation(f, HANDLE_FLAG_PROTECT_FROM_CLOSE, HANDLE_FLAG_PROTECT_FROM_CLOSE);
-    ok(r, "SetHandleInformation error %u\n", GetLastError());
+    ok(r, "SetHandleInformation error %lu\n", GetLastError());
     r = DuplicateHandle(GetCurrentProcess(), f, GetCurrentProcess(), &out,
                 0, TRUE, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE);
-    ok(r, "DuplicateHandle error %u\n", GetLastError());
+    ok(r, "DuplicateHandle error %lu\n", GetLastError());
     ok(f != out, "f == out\n");
     r = GetHandleInformation(out, &info);
-    ok(r, "GetHandleInformation error %u\n", GetLastError());
-    ok(info == HANDLE_FLAG_INHERIT, "info = %x\n", info);
+    ok(r, "GetHandleInformation error %lu\n", GetLastError());
+    ok(info == HANDLE_FLAG_INHERIT, "info = %lx\n", info);
     r = SetHandleInformation(f, HANDLE_FLAG_PROTECT_FROM_CLOSE, 0);
-    ok(r, "SetHandleInformation error %u\n", GetLastError());
+    ok(r, "SetHandleInformation error %lu\n", GetLastError());
 
     /* Test if DuplicateHandle allocates first free handle */
     if (f > out)
@@ -2489,7 +2490,7 @@ static void test_DuplicateHandle(void)
     CloseHandle(fmin);
     r = DuplicateHandle(GetCurrentProcess(), f, GetCurrentProcess(), &out,
             0, TRUE, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE);
-    ok(r, "DuplicateHandle error %u\n", GetLastError());
+    ok(r, "DuplicateHandle error %lu\n", GetLastError());
     ok(f == out, "f != out\n");
     CloseHandle(out);
     DeleteFileA(file_name);
@@ -2504,7 +2505,7 @@ static void test_DuplicateHandle(void)
 
     r = DuplicateHandle(GetCurrentProcess(), f, GetCurrentProcess(), &out,
             0, FALSE, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE);
-    ok(r, "DuplicateHandle error %u\n", GetLastError());
+    ok(r, "DuplicateHandle error %lu\n", GetLastError());
     todo_wine ok(f != out, "f == out\n");
     CloseHandle(out);
 }
@@ -2519,10 +2520,10 @@ static void _test_completion(int line, HANDLE port, DWORD ekey, ULONG_PTR evalue
 
     ret = GetQueuedCompletionStatus(port, &key, &value, &overlapped, wait);
 
-    ok_(__FILE__, line)(ret, "GetQueuedCompletionStatus: %x\n", GetLastError());
+    ok_(__FILE__, line)(ret, "GetQueuedCompletionStatus: %lx\n", GetLastError());
     if (ret)
     {
-        ok_(__FILE__, line)(key == ekey, "unexpected key %x\n", key);
+        ok_(__FILE__, line)(key == ekey, "unexpected key %lx\n", key);
         ok_(__FILE__, line)(value == evalue, "unexpected value %p\n", (void *)value);
         ok_(__FILE__, line)(overlapped == (LPOVERLAPPED)eoverlapped, "unexpected overlapped %p\n", overlapped);
     }
@@ -2538,7 +2539,7 @@ static void _create_process(int line, const char *command, LPPROCESS_INFORMATION
     sprintf(buffer, "\"%s\" process %s", selfname, command);
 
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, pi);
-    ok_(__FILE__, line)(ret, "CreateProcess error %u\n", GetLastError());
+    ok_(__FILE__, line)(ret, "CreateProcess error %lu\n", GetLastError());
 }
 
 
@@ -2555,39 +2556,39 @@ static void test_IsProcessInJob(void)
     }
 
     job = pCreateJobObjectW(NULL, NULL);
-    ok(job != NULL, "CreateJobObject error %u\n", GetLastError());
+    ok(job != NULL, "CreateJobObject error %lu\n", GetLastError());
 
     job2 = pCreateJobObjectW(NULL, NULL);
-    ok(job2 != NULL, "CreateJobObject error %u\n", GetLastError());
+    ok(job2 != NULL, "CreateJobObject error %lu\n", GetLastError());
 
     create_process("wait", &pi);
 
     out = TRUE;
     ret = pIsProcessInJob(pi.hProcess, job, &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(!out, "IsProcessInJob returned out=%u\n", out);
 
     out = TRUE;
     ret = pIsProcessInJob(pi.hProcess, job2, &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(!out, "IsProcessInJob returned out=%u\n", out);
 
     ret = pAssignProcessToJobObject(job, pi.hProcess);
-    ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+    ok(ret, "AssignProcessToJobObject error %lu\n", GetLastError());
 
     out = FALSE;
     ret = pIsProcessInJob(pi.hProcess, job, &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(out, "IsProcessInJob returned out=%u\n", out);
 
     out = TRUE;
     ret = pIsProcessInJob(pi.hProcess, job2, &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(!out, "IsProcessInJob returned out=%u\n", out);
 
     out = FALSE;
     ret = pIsProcessInJob(pi.hProcess, NULL, &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(out, "IsProcessInJob returned out=%u\n", out);
 
     TerminateProcess(pi.hProcess, 0);
@@ -2595,7 +2596,7 @@ static void test_IsProcessInJob(void)
 
     out = FALSE;
     ret = pIsProcessInJob(pi.hProcess, job, &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(out, "IsProcessInJob returned out=%u\n", out);
 
     CloseHandle(pi.hProcess);
@@ -2612,25 +2613,25 @@ static void test_TerminateJobObject(void)
     DWORD dwret;
 
     job = pCreateJobObjectW(NULL, NULL);
-    ok(job != NULL, "CreateJobObject error %u\n", GetLastError());
+    ok(job != NULL, "CreateJobObject error %lu\n", GetLastError());
 
     create_process("wait", &pi);
 
     ret = pAssignProcessToJobObject(job, pi.hProcess);
-    ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+    ok(ret, "AssignProcessToJobObject error %lu\n", GetLastError());
 
     ret = pTerminateJobObject(job, 123);
-    ok(ret, "TerminateJobObject error %u\n", GetLastError());
+    ok(ret, "TerminateJobObject error %lu\n", GetLastError());
 
     /* not wait_child_process() because of the exit code */
     dwret = WaitForSingleObject(pi.hProcess, 1000);
-    ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", dwret);
+    ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %lu\n", dwret);
     if (dwret == WAIT_TIMEOUT) TerminateProcess(pi.hProcess, 0);
 
     ret = GetExitCodeProcess(pi.hProcess, &dwret);
-    ok(ret, "GetExitCodeProcess error %u\n", GetLastError());
+    ok(ret, "GetExitCodeProcess error %lu\n", GetLastError());
     ok(dwret == 123 || broken(dwret == 0) /* randomly fails on Win 2000 / XP */,
-       "wrong exitcode %u\n", dwret);
+       "wrong exitcode %lu\n", dwret);
 
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
@@ -2664,27 +2665,27 @@ static void test_QueryInformationJobObject(void)
     BOOL ret;
 
     job = pCreateJobObjectW(NULL, NULL);
-    ok(job != NULL, "CreateJobObject error %u\n", GetLastError());
+    ok(job != NULL, "CreateJobObject error %lu\n", GetLastError());
 
     /* Only active processes are returned */
-    sprintf(buffer, "sync kernel32-process-%x", GetCurrentProcessId());
+    sprintf(buffer, "sync kernel32-process-%lx", GetCurrentProcessId());
     sem = CreateSemaphoreA(NULL, 0, 1, buffer + 5);
-    ok(sem != NULL, "CreateSemaphoreA failed le=%u\n", GetLastError());
+    ok(sem != NULL, "CreateSemaphoreA failed le=%lu\n", GetLastError());
     create_process(buffer, &pi[0]);
 
     ret = pAssignProcessToJobObject(job, pi[0].hProcess);
-    ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+    ok(ret, "AssignProcessToJobObject error %lu\n", GetLastError());
 
     ReleaseSemaphore(sem, 1, NULL);
     wait_and_close_child_process(&pi[0]);
 
     create_process("wait", &pi[0]);
     ret = pAssignProcessToJobObject(job, pi[0].hProcess);
-    ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+    ok(ret, "AssignProcessToJobObject error %lu\n", GetLastError());
 
     create_process("wait", &pi[1]);
     ret = pAssignProcessToJobObject(job, pi[1].hProcess);
-    ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+    ok(ret, "AssignProcessToJobObject error %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = QueryInformationJobObject(job, JobObjectBasicProcessIdList, pid_list,
@@ -2708,7 +2709,7 @@ static void test_QueryInformationJobObject(void)
 
     memset(buf, 0, sizeof(buf));
     ret = pQueryInformationJobObject(job, JobObjectBasicProcessIdList, pid_list, sizeof(buf), &ret_len);
-    ok(ret, "QueryInformationJobObject error %u\n", GetLastError());
+    ok(ret, "QueryInformationJobObject error %lu\n", GetLastError());
     if(ret)
     {
         if (pid_list->NumberOfAssignedProcesses == 3) /* Win 8 */
@@ -2718,7 +2719,7 @@ static void test_QueryInformationJobObject(void)
             ULONG_PTR *list = pid_list->ProcessIdList;
 
             ok(ret_len == FIELD_OFFSET(JOBOBJECT_BASIC_PROCESS_ID_LIST, ProcessIdList[2]),
-               "QueryInformationJobObject returned ret_len=%u\n", ret_len);
+               "QueryInformationJobObject returned ret_len=%lu\n", ret_len);
 
             expect_eq_d(2, pid_list->NumberOfAssignedProcesses);
             expect_eq_d(2, pid_list->NumberOfProcessIdsInList);
@@ -2737,8 +2738,8 @@ static void test_QueryInformationJobObject(void)
     memset(basic_limit_info, 0x11, sizeof(*basic_limit_info));
     ret = pQueryInformationJobObject(job, JobObjectBasicLimitInformation, basic_limit_info,
                                      sizeof(*basic_limit_info), &ret_len);
-    ok(ret, "QueryInformationJobObject error %u\n", GetLastError());
-    ok(ret_len == sizeof(*basic_limit_info), "QueryInformationJobObject returned ret_len=%u\n", ret_len);
+    ok(ret, "QueryInformationJobObject error %lu\n", GetLastError());
+    ok(ret_len == sizeof(*basic_limit_info), "QueryInformationJobObject returned ret_len=%lu\n", ret_len);
     expect_eq_d(0, basic_limit_info->LimitFlags);
 
     /* test JobObjectExtendedLimitInformation */
@@ -2751,15 +2752,15 @@ static void test_QueryInformationJobObject(void)
     memset(&ext_limit_info, 0x11, sizeof(ext_limit_info));
     ret = pQueryInformationJobObject(job, JobObjectExtendedLimitInformation, &ext_limit_info,
                                      sizeof(ext_limit_info), &ret_len);
-    ok(ret, "QueryInformationJobObject error %u\n", GetLastError());
-    ok(ret_len == sizeof(ext_limit_info), "QueryInformationJobObject returned ret_len=%u\n", ret_len);
+    ok(ret, "QueryInformationJobObject error %lu\n", GetLastError());
+    ok(ret_len == sizeof(ext_limit_info), "QueryInformationJobObject returned ret_len=%lu\n", ret_len);
     expect_eq_d(0, basic_limit_info->LimitFlags);
 
     /* test JobObjectBasicAccountingInformation */
     ret = pQueryInformationJobObject(job, JobObjectBasicAccountingInformation, &basic_accounting_info,
                                      sizeof(basic_accounting_info), &ret_len);
-    ok(ret, "QueryInformationJobObject error %u\n", GetLastError());
-    ok(ret_len == sizeof(basic_accounting_info), "QueryInformationJobObject returned ret_len=%u\n", ret_len);
+    ok(ret, "QueryInformationJobObject error %lu\n", GetLastError());
+    ok(ret_len == sizeof(basic_accounting_info), "QueryInformationJobObject returned ret_len=%lu\n", ret_len);
     expect_eq_d(3, basic_accounting_info.TotalProcesses);
     expect_eq_d(2, basic_accounting_info.ActiveProcesses);
 
@@ -2782,24 +2783,24 @@ static void test_CompletionPort(void)
     BOOL ret;
 
     job = pCreateJobObjectW(NULL, NULL);
-    ok(job != NULL, "CreateJobObject error %u\n", GetLastError());
+    ok(job != NULL, "CreateJobObject error %lu\n", GetLastError());
 
     create_process("wait", &pi2);
     ret = pAssignProcessToJobObject(job, pi2.hProcess);
-    ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+    ok(ret, "AssignProcessToJobObject error %lu\n", GetLastError());
 
     port = pCreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 1);
-    ok(port != NULL, "CreateIoCompletionPort error %u\n", GetLastError());
+    ok(port != NULL, "CreateIoCompletionPort error %lu\n", GetLastError());
 
     port_info.CompletionKey = job;
     port_info.CompletionPort = port;
     ret = pSetInformationJobObject(job, JobObjectAssociateCompletionPortInformation, &port_info, sizeof(port_info));
-    ok(ret, "SetInformationJobObject error %u\n", GetLastError());
+    ok(ret, "SetInformationJobObject error %lu\n", GetLastError());
 
     create_process("wait", &pi);
 
     ret = pAssignProcessToJobObject(job, pi.hProcess);
-    ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+    ok(ret, "AssignProcessToJobObject error %lu\n", GetLastError());
 
     test_completion(port, JOB_OBJECT_MSG_NEW_PROCESS, (DWORD_PTR)job, pi2.dwProcessId, 0);
     test_completion(port, JOB_OBJECT_MSG_NEW_PROCESS, (DWORD_PTR)job, pi.dwProcessId, 0);
@@ -2831,7 +2832,7 @@ static void test_KillOnJobClose(void)
     BOOL ret;
 
     job = pCreateJobObjectW(NULL, NULL);
-    ok(job != NULL, "CreateJobObject error %u\n", GetLastError());
+    ok(job != NULL, "CreateJobObject error %lu\n", GetLastError());
 
     limit_info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
     ret = pSetInformationJobObject(job, JobObjectExtendedLimitInformation, &limit_info, sizeof(limit_info));
@@ -2840,18 +2841,18 @@ static void test_KillOnJobClose(void)
         win_skip("Kill on job close limit not available\n");
         return;
     }
-    ok(ret, "SetInformationJobObject error %u\n", GetLastError());
+    ok(ret, "SetInformationJobObject error %lu\n", GetLastError());
 
     create_process("wait", &pi);
 
     ret = pAssignProcessToJobObject(job, pi.hProcess);
-    ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+    ok(ret, "AssignProcessToJobObject error %lu\n", GetLastError());
 
     CloseHandle(job);
 
     /* not wait_child_process() for the kill */
     dwret = WaitForSingleObject(pi.hProcess, 1000);
-    ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", dwret);
+    ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %lu\n", dwret);
     if (dwret == WAIT_TIMEOUT) TerminateProcess(pi.hProcess, 0);
 
     CloseHandle(pi.hProcess);
@@ -2868,25 +2869,25 @@ static void test_WaitForJobObject(void)
 
     /* test waiting for a job object when the process is killed */
     job = pCreateJobObjectW(NULL, NULL);
-    ok(job != NULL, "CreateJobObject error %u\n", GetLastError());
+    ok(job != NULL, "CreateJobObject error %lu\n", GetLastError());
 
     dwret = WaitForSingleObject(job, 100);
-    ok(dwret == WAIT_TIMEOUT, "WaitForSingleObject returned %u\n", dwret);
+    ok(dwret == WAIT_TIMEOUT, "WaitForSingleObject returned %lu\n", dwret);
 
     create_process("wait", &pi);
 
     ret = pAssignProcessToJobObject(job, pi.hProcess);
-    ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+    ok(ret, "AssignProcessToJobObject error %lu\n", GetLastError());
 
     dwret = WaitForSingleObject(job, 100);
-    ok(dwret == WAIT_TIMEOUT, "WaitForSingleObject returned %u\n", dwret);
+    ok(dwret == WAIT_TIMEOUT, "WaitForSingleObject returned %lu\n", dwret);
 
     ret = pTerminateJobObject(job, 123);
-    ok(ret, "TerminateJobObject error %u\n", GetLastError());
+    ok(ret, "TerminateJobObject error %lu\n", GetLastError());
 
     dwret = WaitForSingleObject(job, 500);
     ok(dwret == WAIT_OBJECT_0 || broken(dwret == WAIT_TIMEOUT),
-       "WaitForSingleObject returned %u\n", dwret);
+       "WaitForSingleObject returned %lu\n", dwret);
 
     if (dwret == WAIT_TIMEOUT) /* Win 2000/XP */
     {
@@ -2899,7 +2900,7 @@ static void test_WaitForJobObject(void)
 
     /* the object is not reset immediately */
     dwret = WaitForSingleObject(job, 100);
-    ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", dwret);
+    ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %lu\n", dwret);
 
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
@@ -2908,13 +2909,13 @@ static void test_WaitForJobObject(void)
     create_process("wait", &pi);
 
     ret = pAssignProcessToJobObject(job, pi.hProcess);
-    ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+    ok(ret, "AssignProcessToJobObject error %lu\n", GetLastError());
 
     dwret = WaitForSingleObject(job, 100);
-    ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", dwret);
+    ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %lu\n", dwret);
 
     ret = pTerminateJobObject(job, 123);
-    ok(ret, "TerminateJobObject error %u\n", GetLastError());
+    ok(ret, "TerminateJobObject error %lu\n", GetLastError());
 
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
@@ -2923,22 +2924,22 @@ static void test_WaitForJobObject(void)
 
     /* repeat the test, but this time the process terminates properly */
     job = pCreateJobObjectW(NULL, NULL);
-    ok(job != NULL, "CreateJobObject error %u\n", GetLastError());
+    ok(job != NULL, "CreateJobObject error %lu\n", GetLastError());
 
     dwret = WaitForSingleObject(job, 100);
-    ok(dwret == WAIT_TIMEOUT, "WaitForSingleObject returned %u\n", dwret);
+    ok(dwret == WAIT_TIMEOUT, "WaitForSingleObject returned %lu\n", dwret);
 
-    sprintf(buffer, "sync kernel32-process-%x", GetCurrentProcessId());
+    sprintf(buffer, "sync kernel32-process-%lx", GetCurrentProcessId());
     sem = CreateSemaphoreA(NULL, 0, 1, buffer + 5);
-    ok(sem != NULL, "CreateSemaphoreA failed le=%u\n", GetLastError());
+    ok(sem != NULL, "CreateSemaphoreA failed le=%lu\n", GetLastError());
     create_process(buffer, &pi);
 
     ret = pAssignProcessToJobObject(job, pi.hProcess);
-    ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+    ok(ret, "AssignProcessToJobObject error %lu\n", GetLastError());
     ReleaseSemaphore(sem, 1, NULL);
 
     dwret = WaitForSingleObject(job, 100);
-    ok(dwret == WAIT_TIMEOUT, "WaitForSingleObject returned %u\n", dwret);
+    ok(dwret == WAIT_TIMEOUT, "WaitForSingleObject returned %lu\n", dwret);
 
     wait_and_close_child_process(&pi);
     CloseHandle(job);
@@ -2951,10 +2952,10 @@ static HANDLE test_AddSelfToJob(void)
     BOOL ret;
 
     job = pCreateJobObjectW(NULL, NULL);
-    ok(job != NULL, "CreateJobObject error %u\n", GetLastError());
+    ok(job != NULL, "CreateJobObject error %lu\n", GetLastError());
 
     ret = pAssignProcessToJobObject(job, GetCurrentProcess());
-    ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+    ok(ret, "AssignProcessToJobObject error %lu\n", GetLastError());
 
     return job;
 }
@@ -2974,7 +2975,7 @@ static void test_jobInheritance(HANDLE job)
 
     out = FALSE;
     ret = pIsProcessInJob(pi.hProcess, job, &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(out, "IsProcessInJob returned out=%u\n", out);
 
     wait_and_close_child_process(&pi);
@@ -2996,11 +2997,11 @@ static void test_BreakawayOk(HANDLE parent_job)
     }
 
     job = pCreateJobObjectW(NULL, NULL);
-    ok(!!job, "CreateJobObjectW error %u\n", GetLastError());
+    ok(!!job, "CreateJobObjectW error %lu\n", GetLastError());
 
     ret = pAssignProcessToJobObject(job, GetCurrentProcess());
     ok(ret || broken(!ret && GetLastError() == ERROR_ACCESS_DENIED) /* before Win 8. */,
-            "AssignProcessToJobObject error %u\n", GetLastError());
+            "AssignProcessToJobObject error %lu\n", GetLastError());
     nested_jobs = ret;
     if (!ret)
         win_skip("Nested jobs are not supported.\n");
@@ -3020,18 +3021,18 @@ static void test_BreakawayOk(HANDLE parent_job)
     {
         limit_info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_BREAKAWAY_OK;
         ret = pSetInformationJobObject(job, JobObjectExtendedLimitInformation, &limit_info, sizeof(limit_info));
-        ok(ret, "SetInformationJobObject error %u\n", GetLastError());
+        ok(ret, "SetInformationJobObject error %lu\n", GetLastError());
 
         sprintf(buffer, "\"%s\" process exit", selfname);
         ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, CREATE_BREAKAWAY_FROM_JOB, NULL, NULL, &si, &pi);
-        ok(ret, "CreateProcessA error %u\n", GetLastError());
+        ok(ret, "CreateProcessA error %lu\n", GetLastError());
 
         ret = pIsProcessInJob(pi.hProcess, job, &out);
-        ok(ret, "IsProcessInJob error %u\n", GetLastError());
+        ok(ret, "IsProcessInJob error %lu\n", GetLastError());
         ok(!out, "IsProcessInJob returned out=%u\n", out);
 
         ret = pIsProcessInJob(pi.hProcess, parent_job, &out);
-        ok(ret, "IsProcessInJob error %u\n", GetLastError());
+        ok(ret, "IsProcessInJob error %lu\n", GetLastError());
         ok(out, "IsProcessInJob returned out=%u\n", out);
 
         TerminateProcess(pi.hProcess, 0);
@@ -3040,30 +3041,30 @@ static void test_BreakawayOk(HANDLE parent_job)
 
     limit_info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_BREAKAWAY_OK;
     ret = pSetInformationJobObject(parent_job, JobObjectExtendedLimitInformation, &limit_info, sizeof(limit_info));
-    ok(ret, "SetInformationJobObject error %u\n", GetLastError());
+    ok(ret, "SetInformationJobObject error %lu\n", GetLastError());
 
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, CREATE_BREAKAWAY_FROM_JOB, NULL, NULL, &si, &pi);
-    ok(ret, "CreateProcessA error %u\n", GetLastError());
+    ok(ret, "CreateProcessA error %lu\n", GetLastError());
 
     ret = pIsProcessInJob(pi.hProcess, job, &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(!out, "IsProcessInJob returned out=%u\n", out);
 
     ret = pIsProcessInJob(pi.hProcess, parent_job, &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(!out, "IsProcessInJob returned out=%u\n", out);
 
     wait_and_close_child_process(&pi);
 
     limit_info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK;
     ret = pSetInformationJobObject(job, JobObjectExtendedLimitInformation, &limit_info, sizeof(limit_info));
-    ok(ret, "SetInformationJobObject error %u\n", GetLastError());
+    ok(ret, "SetInformationJobObject error %lu\n", GetLastError());
 
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
-    ok(ret, "CreateProcess error %u\n", GetLastError());
+    ok(ret, "CreateProcess error %lu\n", GetLastError());
 
     ret = pIsProcessInJob(pi.hProcess, job, &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(!out, "IsProcessInJob returned out=%u\n", out);
 
     wait_and_close_child_process(&pi);
@@ -3071,7 +3072,7 @@ static void test_BreakawayOk(HANDLE parent_job)
     /* unset breakaway ok */
     limit_info.BasicLimitInformation.LimitFlags = 0;
     ret = pSetInformationJobObject(job, JobObjectExtendedLimitInformation, &limit_info, sizeof(limit_info));
-    ok(ret, "SetInformationJobObject error %u\n", GetLastError());
+    ok(ret, "SetInformationJobObject error %lu\n", GetLastError());
 }
 
 static void test_StartupNoConsole(void)
@@ -3202,7 +3203,7 @@ static BOOL are_imports_resolved(HANDLE process_handle, PVOID module_base, IMAGE
     ret = ReadProcessMemory(process_handle,
                             (char *)module_base + nt_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress,
                             &iid, sizeof(iid), NULL);
-    ok(ret, "Failed to read remote module IID (%d)\n", GetLastError());
+    ok(ret, "Failed to read remote module IID (%ld)\n", GetLastError());
 
     /* Validate the IID is present and not a bound import, and that we have
        an OriginalFirstThunk to compare with */
@@ -3214,13 +3215,13 @@ static BOOL are_imports_resolved(HANDLE process_handle, PVOID module_base, IMAGE
     /* Read a single IAT entry from the FirstThunk */
     ret = ReadProcessMemory(process_handle, (char *)module_base + iid.FirstThunk,
                             &iat_entry_value, sizeof(iat_entry_value), NULL);
-    ok(ret, "Failed to read IAT entry from FirstThunk (%d)\n", GetLastError());
+    ok(ret, "Failed to read IAT entry from FirstThunk (%ld)\n", GetLastError());
     ok(iat_entry_value, "IAT entry in FirstThunk is NULL\n");
 
     /* Read a single IAT entry from the OriginalFirstThunk */
     ret = ReadProcessMemory(process_handle, (char *)module_base + iid.OriginalFirstThunk,
                             &orig_iat_entry_value, sizeof(orig_iat_entry_value), NULL);
-    ok(ret, "Failed to read IAT entry from OriginalFirstThunk (%d)\n", GetLastError());
+    ok(ret, "Failed to read IAT entry from OriginalFirstThunk (%ld)\n", GetLastError());
     ok(orig_iat_entry_value, "IAT entry in OriginalFirstThunk is NULL\n");
 
     return iat_entry_value != orig_iat_entry_value;
@@ -3242,7 +3243,7 @@ static void test_SuspendProcessNewThread(void)
 
     si.cb = sizeof(si);
     ret = CreateProcessA(NULL, selfname, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi);
-    ok(ret, "Failed to create process (%d)\n", GetLastError());
+    ok(ret, "Failed to create process (%ld)\n", GetLastError());
 
     exe_base = get_process_exe(pi.hProcess, &nt_header);
     ok(exe_base != NULL, "Could not find EXE in remote process\n");
@@ -3253,58 +3254,58 @@ static void test_SuspendProcessNewThread(void)
     thread_handle = CreateRemoteThread(pi.hProcess, NULL, 0,
                                        (LPTHREAD_START_ROUTINE)exit_thread_ptr,
                                        (PVOID)(ULONG_PTR)0x1234, CREATE_SUSPENDED, NULL);
-    ok(thread_handle != NULL, "Could not create remote thread (%d)\n", GetLastError());
+    ok(thread_handle != NULL, "Could not create remote thread (%ld)\n", GetLastError());
 
     ret = are_imports_resolved(pi.hProcess, exe_base, &nt_header);
     ok(!ret, "IAT entry resolved prematurely\n");
 
     ctx.ContextFlags = CONTEXT_ALL;
     ret = GetThreadContext( thread_handle, &ctx );
-    ok( ret, "Failed retrieving remote thread context (%d)\n", GetLastError() );
-    ok( ctx.ContextFlags == CONTEXT_ALL, "wrong flags %x\n", ctx.ContextFlags );
+    ok( ret, "Failed retrieving remote thread context (%ld)\n", GetLastError() );
+    ok( ctx.ContextFlags == CONTEXT_ALL, "wrong flags %lx\n", ctx.ContextFlags );
 #ifdef __x86_64__
-    ok( !ctx.Rax, "rax is not zero %lx\n", ctx.Rax );
-    ok( !ctx.Rbx, "rbx is not zero %lx\n", ctx.Rbx );
-    ok( ctx.Rcx == (ULONG_PTR)exit_thread_ptr, "wrong rcx %lx/%p\n", ctx.Rcx, exit_thread_ptr );
-    ok( ctx.Rdx == 0x1234, "wrong rdx %lx\n", ctx.Rdx );
-    ok( !ctx.Rsi, "rsi is not zero %lx\n", ctx.Rsi );
-    ok( !ctx.Rdi, "rdi is not zero %lx\n", ctx.Rdi );
-    ok( !ctx.Rbp, "rbp is not zero %lx\n", ctx.Rbp );
-    ok( !ctx.R8, "r8 is not zero %lx\n", ctx.R8 );
-    ok( !ctx.R9, "r9 is not zero %lx\n", ctx.R9 );
-    ok( !ctx.R10, "r10 is not zero %lx\n", ctx.R10 );
-    ok( !ctx.R11, "r11 is not zero %lx\n", ctx.R11 );
-    ok( !ctx.R12, "r12 is not zero %lx\n", ctx.R12 );
-    ok( !ctx.R13, "r13 is not zero %lx\n", ctx.R13 );
-    ok( !ctx.R14, "r14 is not zero %lx\n", ctx.R14 );
-    ok( !ctx.R15, "r15 is not zero %lx\n", ctx.R15 );
-    ok( !((ctx.Rsp + 0x28) & 0xfff), "rsp is not at top of stack page %lx\n", ctx.Rsp );
-    ok( ctx.EFlags == 0x200, "wrong flags %08x\n", ctx.EFlags );
-    ok( ctx.MxCsr == 0x1f80, "wrong mxcsr %08x\n", ctx.MxCsr );
+    ok( !ctx.Rax, "rax is not zero %Ix\n", ctx.Rax );
+    ok( !ctx.Rbx, "rbx is not zero %Ix\n", ctx.Rbx );
+    ok( ctx.Rcx == (ULONG_PTR)exit_thread_ptr, "wrong rcx %Ix/%p\n", ctx.Rcx, exit_thread_ptr );
+    ok( ctx.Rdx == 0x1234, "wrong rdx %Ix\n", ctx.Rdx );
+    ok( !ctx.Rsi, "rsi is not zero %Ix\n", ctx.Rsi );
+    ok( !ctx.Rdi, "rdi is not zero %Ix\n", ctx.Rdi );
+    ok( !ctx.Rbp, "rbp is not zero %Ix\n", ctx.Rbp );
+    ok( !ctx.R8, "r8 is not zero %Ix\n", ctx.R8 );
+    ok( !ctx.R9, "r9 is not zero %Ix\n", ctx.R9 );
+    ok( !ctx.R10, "r10 is not zero %Ix\n", ctx.R10 );
+    ok( !ctx.R11, "r11 is not zero %Ix\n", ctx.R11 );
+    ok( !ctx.R12, "r12 is not zero %Ix\n", ctx.R12 );
+    ok( !ctx.R13, "r13 is not zero %Ix\n", ctx.R13 );
+    ok( !ctx.R14, "r14 is not zero %Ix\n", ctx.R14 );
+    ok( !ctx.R15, "r15 is not zero %Ix\n", ctx.R15 );
+    ok( !((ctx.Rsp + 0x28) & 0xfff), "rsp is not at top of stack page %Ix\n", ctx.Rsp );
+    ok( ctx.EFlags == 0x200, "wrong flags %08lx\n", ctx.EFlags );
+    ok( ctx.MxCsr == 0x1f80, "wrong mxcsr %08lx\n", ctx.MxCsr );
     ok( ctx.FltSave.ControlWord == 0x27f, "wrong control %08x\n", ctx.FltSave.ControlWord );
 #else
-    ok( !ctx.Ebp || broken(ctx.Ebp), /* winxp */ "ebp is not zero %08x\n", ctx.Ebp );
+    ok( !ctx.Ebp || broken(ctx.Ebp), /* winxp */ "ebp is not zero %08lx\n", ctx.Ebp );
     if (!ctx.Ebp)  /* winxp is completely different */
     {
-        ok( !ctx.Ecx, "ecx is not zero %08x\n", ctx.Ecx );
-        ok( !ctx.Edx, "edx is not zero %08x\n", ctx.Edx );
-        ok( !ctx.Esi, "esi is not zero %08x\n", ctx.Esi );
-        ok( !ctx.Edi, "edi is not zero %08x\n", ctx.Edi );
+        ok( !ctx.Ecx, "ecx is not zero %08lx\n", ctx.Ecx );
+        ok( !ctx.Edx, "edx is not zero %08lx\n", ctx.Edx );
+        ok( !ctx.Esi, "esi is not zero %08lx\n", ctx.Esi );
+        ok( !ctx.Edi, "edi is not zero %08lx\n", ctx.Edi );
     }
-    ok( ctx.Eax == (ULONG_PTR)exit_thread_ptr, "wrong eax %08x/%p\n", ctx.Eax, exit_thread_ptr );
-    ok( ctx.Ebx == 0x1234, "wrong ebx %08x\n", ctx.Ebx );
+    ok( ctx.Eax == (ULONG_PTR)exit_thread_ptr, "wrong eax %08lx/%p\n", ctx.Eax, exit_thread_ptr );
+    ok( ctx.Ebx == 0x1234, "wrong ebx %08lx\n", ctx.Ebx );
     ok( !((ctx.Esp + 0x10) & 0xfff) || broken( !((ctx.Esp + 4) & 0xfff) ), /* winxp, w2k3 */
-        "esp is not at top of stack page or properly aligned: %08x\n", ctx.Esp );
-    ok( (ctx.EFlags & ~2) == 0x200, "wrong flags %08x\n", ctx.EFlags );
-    ok( (WORD)ctx.FloatSave.ControlWord == 0x27f, "wrong control %08x\n", ctx.FloatSave.ControlWord );
+        "esp is not at top of stack page or properly aligned: %08lx\n", ctx.Esp );
+    ok( (ctx.EFlags & ~2) == 0x200, "wrong flags %08lx\n", ctx.EFlags );
+    ok( (WORD)ctx.FloatSave.ControlWord == 0x27f, "wrong control %08lx\n", ctx.FloatSave.ControlWord );
     ok( *(WORD *)ctx.ExtendedRegisters == 0x27f, "wrong control %08x\n", *(WORD *)ctx.ExtendedRegisters );
 #endif
 
     ResumeThread( thread_handle );
     dret = WaitForSingleObject(thread_handle, 60000);
-    ok(dret == WAIT_OBJECT_0, "Waiting for remote thread failed (%d)\n", GetLastError());
+    ok(dret == WAIT_OBJECT_0, "Waiting for remote thread failed (%ld)\n", GetLastError());
     ret = GetExitCodeThread(thread_handle, &exit_code);
-    ok(ret, "Failed to retrieve remote thread exit code (%d)\n", GetLastError());
+    ok(ret, "Failed to retrieve remote thread exit code (%ld)\n", GetLastError());
     ok(exit_code == 0x1234, "Invalid remote thread exit code\n");
 
     ret = are_imports_resolved(pi.hProcess, exe_base, &nt_header);
@@ -3383,7 +3384,7 @@ static void test_SuspendProcessState(void)
 
     si.cb = sizeof(si);
     ret = CreateProcessA(NULL, selfname, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi);
-    ok(ret, "Failed to create process (%d)\n", GetLastError());
+    ok(ret, "Failed to create process (%ld)\n", GetLastError());
 
     exe_base = get_process_exe(pi.hProcess, &nt_header);
     /* Make sure we found the EXE in the new process */
@@ -3395,16 +3396,16 @@ static void test_SuspendProcessState(void)
     server_pipe_handle = CreateNamedPipeA(pipe_name, PIPE_ACCESS_DUPLEX | FILE_FLAG_WRITE_THROUGH,
                                         PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE, 1, 0x20000, 0x20000,
                                         0, NULL);
-    ok(server_pipe_handle != INVALID_HANDLE_VALUE, "Failed to create communication pipe (%d)\n", GetLastError());
+    ok(server_pipe_handle != INVALID_HANDLE_VALUE, "Failed to create communication pipe (%ld)\n", GetLastError());
 
     /* Set up the remote process environment */
     ctx.ContextFlags = CONTEXT_ALL;
     ret = GetThreadContext(pi.hThread, &ctx);
-    ok(ret, "Failed retrieving remote thread context (%d)\n", GetLastError());
-    ok( ctx.ContextFlags == CONTEXT_ALL, "wrong flags %x\n", ctx.ContextFlags );
+    ok(ret, "Failed retrieving remote thread context (%ld)\n", GetLastError());
+    ok( ctx.ContextFlags == CONTEXT_ALL, "wrong flags %lx\n", ctx.ContextFlags );
 
     remote_pipe_params = VirtualAllocEx(pi.hProcess, NULL, sizeof(pipe_params), MEM_COMMIT, PAGE_READWRITE);
-    ok(remote_pipe_params != NULL, "Failed allocating memory in remote process (%d)\n", GetLastError());
+    ok(remote_pipe_params != NULL, "Failed allocating memory in remote process (%ld)\n", GetLastError());
 
     pipe_params.pipe_write_buf = pipe_write_magic;
     pipe_params.pipe_read_buf = 0;
@@ -3413,25 +3414,25 @@ static void test_SuspendProcessState(void)
 
     ret = WriteProcessMemory(pi.hProcess, remote_pipe_params,
                              &pipe_params, sizeof(pipe_params), NULL);
-    ok(ret, "Failed to write to remote process memory (%d)\n", GetLastError());
+    ok(ret, "Failed to write to remote process memory (%ld)\n", GetLastError());
 
 #ifdef __x86_64__
-    ok( !ctx.Rax, "rax is not zero %lx\n", ctx.Rax );
-    ok( !ctx.Rbx, "rbx is not zero %lx\n", ctx.Rbx );
-    ok( !ctx.Rsi, "rsi is not zero %lx\n", ctx.Rsi );
-    ok( !ctx.Rdi, "rdi is not zero %lx\n", ctx.Rdi );
-    ok( !ctx.Rbp, "rbp is not zero %lx\n", ctx.Rbp );
-    ok( !ctx.R8, "r8 is not zero %lx\n", ctx.R8 );
-    ok( !ctx.R9, "r9 is not zero %lx\n", ctx.R9 );
-    ok( !ctx.R10, "r10 is not zero %lx\n", ctx.R10 );
-    ok( !ctx.R11, "r11 is not zero %lx\n", ctx.R11 );
-    ok( !ctx.R12, "r12 is not zero %lx\n", ctx.R12 );
-    ok( !ctx.R13, "r13 is not zero %lx\n", ctx.R13 );
-    ok( !ctx.R14, "r14 is not zero %lx\n", ctx.R14 );
-    ok( !ctx.R15, "r15 is not zero %lx\n", ctx.R15 );
-    ok( !((ctx.Rsp + 0x28) & 0xfff), "rsp is not at top of stack page %lx\n", ctx.Rsp );
-    ok( ctx.EFlags == 0x200, "wrong flags %08x\n", ctx.EFlags );
-    ok( ctx.MxCsr == 0x1f80, "wrong mxcsr %08x\n", ctx.MxCsr );
+    ok( !ctx.Rax, "rax is not zero %Ix\n", ctx.Rax );
+    ok( !ctx.Rbx, "rbx is not zero %Ix\n", ctx.Rbx );
+    ok( !ctx.Rsi, "rsi is not zero %Ix\n", ctx.Rsi );
+    ok( !ctx.Rdi, "rdi is not zero %Ix\n", ctx.Rdi );
+    ok( !ctx.Rbp, "rbp is not zero %Ix\n", ctx.Rbp );
+    ok( !ctx.R8, "r8 is not zero %Ix\n", ctx.R8 );
+    ok( !ctx.R9, "r9 is not zero %Ix\n", ctx.R9 );
+    ok( !ctx.R10, "r10 is not zero %Ix\n", ctx.R10 );
+    ok( !ctx.R11, "r11 is not zero %Ix\n", ctx.R11 );
+    ok( !ctx.R12, "r12 is not zero %Ix\n", ctx.R12 );
+    ok( !ctx.R13, "r13 is not zero %Ix\n", ctx.R13 );
+    ok( !ctx.R14, "r14 is not zero %Ix\n", ctx.R14 );
+    ok( !ctx.R15, "r15 is not zero %Ix\n", ctx.R15 );
+    ok( !((ctx.Rsp + 0x28) & 0xfff), "rsp is not at top of stack page %Ix\n", ctx.Rsp );
+    ok( ctx.EFlags == 0x200, "wrong flags %08lx\n", ctx.EFlags );
+    ok( ctx.MxCsr == 0x1f80, "wrong mxcsr %08lx\n", ctx.MxCsr );
     ok( ctx.FltSave.ControlWord == 0x27f, "wrong control %08x\n", ctx.FltSave.ControlWord );
     start_ptr = (void *)ctx.Rip;
     entry_ptr = (void *)ctx.Rcx;
@@ -3449,20 +3450,20 @@ static void test_SuspendProcessState(void)
     ctx.Rip = (ULONG_PTR)call_named_pipe_a;
     ctx.Rsp -= sizeof(rop_chain);
     ret = WriteProcessMemory(pi.hProcess, (void *)ctx.Rsp, &rop_chain, sizeof(rop_chain), NULL);
-    ok(ret, "Failed to write to remote process thread stack (%d)\n", GetLastError());
+    ok(ret, "Failed to write to remote process thread stack (%ld)\n", GetLastError());
 #else
-    ok( !ctx.Ebp || broken(ctx.Ebp), /* winxp */ "ebp is not zero %08x\n", ctx.Ebp );
+    ok( !ctx.Ebp || broken(ctx.Ebp), /* winxp */ "ebp is not zero %08lx\n", ctx.Ebp );
     if (!ctx.Ebp)  /* winxp is completely different */
     {
-        ok( !ctx.Ecx, "ecx is not zero %08x\n", ctx.Ecx );
-        ok( !ctx.Edx, "edx is not zero %08x\n", ctx.Edx );
-        ok( !ctx.Esi, "esi is not zero %08x\n", ctx.Esi );
-        ok( !ctx.Edi, "edi is not zero %08x\n", ctx.Edi );
+        ok( !ctx.Ecx, "ecx is not zero %08lx\n", ctx.Ecx );
+        ok( !ctx.Edx, "edx is not zero %08lx\n", ctx.Edx );
+        ok( !ctx.Esi, "esi is not zero %08lx\n", ctx.Esi );
+        ok( !ctx.Edi, "edi is not zero %08lx\n", ctx.Edi );
     }
     ok( !((ctx.Esp + 0x10) & 0xfff) || broken( !((ctx.Esp + 4) & 0xfff) ), /* winxp, w2k3 */
-        "esp is not at top of stack page or properly aligned: %08x\n", ctx.Esp );
-    ok( (ctx.EFlags & ~2) == 0x200, "wrong flags %08x\n", ctx.EFlags );
-    ok( (WORD)ctx.FloatSave.ControlWord == 0x27f, "wrong control %08x\n", ctx.FloatSave.ControlWord );
+        "esp is not at top of stack page or properly aligned: %08lx\n", ctx.Esp );
+    ok( (ctx.EFlags & ~2) == 0x200, "wrong flags %08lx\n", ctx.EFlags );
+    ok( (WORD)ctx.FloatSave.ControlWord == 0x27f, "wrong control %08lx\n", ctx.FloatSave.ControlWord );
     ok( *(WORD *)ctx.ExtendedRegisters == 0x27f, "wrong control %08x\n", *(WORD *)ctx.ExtendedRegisters );
     start_ptr = (void *)ctx.Eip;
     entry_ptr = (void *)ctx.Eax;
@@ -3481,11 +3482,11 @@ static void test_SuspendProcessState(void)
     ctx.Eip = (ULONG_PTR)call_named_pipe_a;
     ctx.Esp -= sizeof(rop_chain);
     ret = WriteProcessMemory(pi.hProcess, (void *)ctx.Esp, &rop_chain, sizeof(rop_chain), NULL);
-    ok(ret, "Failed to write to remote process thread stack (%d)\n", GetLastError());
+    ok(ret, "Failed to write to remote process thread stack (%ld)\n", GetLastError());
 #endif
 
     ret = ReadProcessMemory( pi.hProcess, peb_ptr, &child_peb, sizeof(child_peb), NULL );
-    ok( ret, "Failed to read PEB (%u)\n", GetLastError() );
+    ok( ret, "Failed to read PEB (%lu)\n", GetLastError() );
     ok( child_peb.ImageBaseAddress == exe_base, "wrong base %p/%p\n",
         child_peb.ImageBaseAddress, exe_base );
     user_thread_start = GetProcAddress( GetModuleHandleA("ntdll.dll"), "RtlUserThreadStart" );
@@ -3504,19 +3505,19 @@ static void test_SuspendProcessState(void)
     ok( !child_peb.ProcessHeap, "ProcessHeap set %p\n", child_peb.ProcessHeap );
     ok( !child_peb.CSDVersion.Buffer, "CSDVersion set %s\n", debugstr_w(child_peb.CSDVersion.Buffer) );
 
-    ok( child_peb.OSMajorVersion == peb->OSMajorVersion, "OSMajorVersion not set %u\n", child_peb.OSMajorVersion );
-    ok( child_peb.OSPlatformId == peb->OSPlatformId, "OSPlatformId not set %u\n", child_peb.OSPlatformId );
-    ok( child_peb.SessionId == peb->SessionId, "SessionId not set %u\n", child_peb.SessionId );
+    ok( child_peb.OSMajorVersion == peb->OSMajorVersion, "OSMajorVersion not set %lu\n", child_peb.OSMajorVersion );
+    ok( child_peb.OSPlatformId == peb->OSPlatformId, "OSPlatformId not set %lu\n", child_peb.OSPlatformId );
+    ok( child_peb.SessionId == peb->SessionId, "SessionId not set %lu\n", child_peb.SessionId );
     ok( child_peb.CriticalSectionTimeout.QuadPart, "CriticalSectionTimeout not set %s\n",
         wine_dbgstr_longlong(child_peb.CriticalSectionTimeout.QuadPart) );
     ok( child_peb.HeapSegmentReserve == peb->HeapSegmentReserve,
-        "HeapSegmentReserve not set %lu\n", child_peb.HeapSegmentReserve );
+        "HeapSegmentReserve not set %Iu\n", child_peb.HeapSegmentReserve );
     ok( child_peb.HeapSegmentCommit == peb->HeapSegmentCommit,
-        "HeapSegmentCommit not set %lu\n", child_peb.HeapSegmentCommit );
+        "HeapSegmentCommit not set %Iu\n", child_peb.HeapSegmentCommit );
     ok( child_peb.HeapDeCommitTotalFreeThreshold == peb->HeapDeCommitTotalFreeThreshold,
-        "HeapDeCommitTotalFreeThreshold not set %lu\n", child_peb.HeapDeCommitTotalFreeThreshold );
+        "HeapDeCommitTotalFreeThreshold not set %Iu\n", child_peb.HeapDeCommitTotalFreeThreshold );
     ok( child_peb.HeapDeCommitFreeBlockThreshold == peb->HeapDeCommitFreeBlockThreshold,
-        "HeapDeCommitFreeBlockThreshold not set %lu\n", child_peb.HeapDeCommitFreeBlockThreshold );
+        "HeapDeCommitFreeBlockThreshold not set %Iu\n", child_peb.HeapDeCommitFreeBlockThreshold );
 
     if (pNtQueryInformationThread)
     {
@@ -3524,25 +3525,25 @@ static void test_SuspendProcessState(void)
         THREAD_BASIC_INFORMATION info;
         NTSTATUS status = pNtQueryInformationThread( pi.hThread, ThreadBasicInformation,
                                                      &info, sizeof(info), NULL );
-        ok( !status, "NtQueryInformationProcess failed %x\n", status );
+        ok( !status, "NtQueryInformationProcess failed %lx\n", status );
         ret = ReadProcessMemory( pi.hProcess, info.TebBaseAddress, &child_teb, sizeof(child_teb), NULL );
-        ok( ret, "Failed to read TEB (%u)\n", GetLastError() );
+        ok( ret, "Failed to read TEB (%lu)\n", GetLastError() );
 
         ok( child_teb.Peb == peb_ptr, "wrong Peb %p / %p\n", child_teb.Peb, peb_ptr );
-        ok( PtrToUlong(child_teb.ClientId.UniqueProcess) == pi.dwProcessId, "wrong pid %x / %x\n",
+        ok( PtrToUlong(child_teb.ClientId.UniqueProcess) == pi.dwProcessId, "wrong pid %lx / %lx\n",
             PtrToUlong(child_teb.ClientId.UniqueProcess), pi.dwProcessId );
-        ok( PtrToUlong(child_teb.ClientId.UniqueThread) == pi.dwThreadId, "wrong tid %x / %x\n",
+        ok( PtrToUlong(child_teb.ClientId.UniqueThread) == pi.dwThreadId, "wrong tid %lx / %lx\n",
             PtrToUlong(child_teb.ClientId.UniqueThread), pi.dwThreadId );
-        ok( PtrToUlong(child_teb.RealClientId.UniqueProcess) == pi.dwProcessId, "wrong real pid %x / %x\n",
+        ok( PtrToUlong(child_teb.RealClientId.UniqueProcess) == pi.dwProcessId, "wrong real pid %lx / %lx\n",
             PtrToUlong(child_teb.RealClientId.UniqueProcess), pi.dwProcessId );
-        ok( PtrToUlong(child_teb.RealClientId.UniqueThread) == pi.dwThreadId, "wrong real tid %x / %x\n",
+        ok( PtrToUlong(child_teb.RealClientId.UniqueThread) == pi.dwThreadId, "wrong real tid %lx / %lx\n",
             PtrToUlong(child_teb.RealClientId.UniqueThread), pi.dwThreadId );
         ok( child_teb.StaticUnicodeString.MaximumLength == sizeof(child_teb.StaticUnicodeBuffer),
             "StaticUnicodeString.MaximumLength wrong %x\n", child_teb.StaticUnicodeString.MaximumLength );
         ok( (char *)child_teb.StaticUnicodeString.Buffer == (char *)info.TebBaseAddress + offsetof(TEB, StaticUnicodeBuffer),
             "StaticUnicodeString.Buffer wrong %p\n", child_teb.StaticUnicodeString.Buffer );
 
-        ok( !child_teb.CurrentLocale, "CurrentLocale set %x\n", child_teb.CurrentLocale );
+        ok( !child_teb.CurrentLocale, "CurrentLocale set %lx\n", child_teb.CurrentLocale );
         ok( !child_teb.TlsLinks.Flink, "TlsLinks.Flink set %p\n", child_teb.TlsLinks.Flink );
         ok( !child_teb.TlsLinks.Blink, "TlsLinks.Blink set %p\n", child_teb.TlsLinks.Blink );
         ok( !child_teb.TlsExpansionSlots, "TlsExpansionSlots set %p\n", child_teb.TlsExpansionSlots );
@@ -3550,7 +3551,7 @@ static void test_SuspendProcessState(void)
     }
 
     ret = SetThreadContext(pi.hThread, &ctx);
-    ok(ret, "Failed to set remote thread context (%d)\n", GetLastError());
+    ok(ret, "Failed to set remote thread context (%ld)\n", GetLastError());
 
     ResumeThread(pi.hThread);
 
@@ -3558,7 +3559,7 @@ static void test_SuspendProcessState(void)
     ok(pipe_connected, "Pipe did not connect\n");
 
     ret = ReadFile(server_pipe_handle, &pipe_magic, sizeof(pipe_magic), &numb, NULL);
-    ok(ret, "Failed to read buffer from pipe (%d)\n", GetLastError());
+    ok(ret, "Failed to read buffer from pipe (%ld)\n", GetLastError());
 
     ok(pipe_magic == pipe_write_magic, "Did not get the correct magic from the remote process\n");
 
@@ -3570,7 +3571,7 @@ static void test_SuspendProcessState(void)
     ok(ret, "EXE IAT is not resolved\n");
 
     ret = WriteFile(server_pipe_handle, &pipe_magic, sizeof(pipe_magic), &numb, NULL);
-    ok(ret, "Failed to write the magic back to the pipe (%d)\n", GetLastError());
+    ok(ret, "Failed to write the magic back to the pipe (%ld)\n", GetLastError());
     CloseHandle(server_pipe_handle);
 
     /* Avoid wait_child_process() because the exit code results from a race
@@ -3672,7 +3673,7 @@ static void test_GetNumaProcessorNode(void)
         {
             ok(!ret, "GetNumaProcessorNode returned TRUE for processor %d\n", i);
             ok(node == 0xFF || broken(node == 0xAA) /* WinXP */, "expected node 0xFF, got %x\n", node);
-            ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+            ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
         }
     }
 }
@@ -3683,11 +3684,11 @@ static void test_session_info(void)
     BOOL r;
 
     r = ProcessIdToSessionId(GetCurrentProcessId(), &session_id);
-    ok(r, "ProcessIdToSessionId failed: %u\n", GetLastError());
-    trace("session_id = %x\n", session_id);
+    ok(r, "ProcessIdToSessionId failed: %lu\n", GetLastError());
+    trace("session_id = %lx\n", session_id);
 
     active_session = pWTSGetActiveConsoleSessionId();
-    trace("active_session = %x\n", active_session);
+    trace("active_session = %lx\n", active_session);
 }
 
 static void test_process_info(HANDLE hproc)
@@ -3805,46 +3806,46 @@ static void test_process_info(HANDLE hproc)
         case ProcessImageInformation:
         case ProcessPagePriority:
         case ProcessImageFileNameWin32:
-            ok(status == STATUS_SUCCESS, "for info %u expected STATUS_SUCCESS, got %08x (ret_len %u)\n", i, status, ret_len);
+            ok(status == STATUS_SUCCESS, "for info %lu expected STATUS_SUCCESS, got %08lx (ret_len %lu)\n", i, status, ret_len);
             break;
 
         case ProcessAffinityMask:
         case ProcessBreakOnTermination:
             ok(status == STATUS_ACCESS_DENIED /* before win8 */ || status == STATUS_SUCCESS /* win8 is less strict */,
-               "for info %u expected STATUS_SUCCESS, got %08x (ret_len %u)\n", i, status, ret_len);
+               "for info %lu expected STATUS_SUCCESS, got %08lx (ret_len %lu)\n", i, status, ret_len);
             break;
 
         case ProcessDebugObjectHandle:
             ok(status == STATUS_ACCESS_DENIED || status == STATUS_PORT_NOT_SET,
-               "for info %u expected STATUS_ACCESS_DENIED, got %08x (ret_len %u)\n", i, status, ret_len);
+               "for info %lu expected STATUS_ACCESS_DENIED, got %08lx (ret_len %lu)\n", i, status, ret_len);
             break;
         case ProcessCookie:
             if (is_current)
                 ok(status == STATUS_SUCCESS || status == STATUS_INVALID_PARAMETER /* before win8 */,
-                   "for info %u got %08x (ret_len %u)\n", i, status, ret_len);
+                   "for info %lu got %08lx (ret_len %lu)\n", i, status, ret_len);
             else
                 ok(status == STATUS_INVALID_PARAMETER /* before win8 */ || status == STATUS_ACCESS_DENIED,
-                   "for info %u got %08x (ret_len %u)\n", i, status, ret_len);
+                   "for info %lu got %08lx (ret_len %lu)\n", i, status, ret_len);
             break;
         case ProcessExecuteFlags:
         case ProcessDebugPort:
         case ProcessDebugFlags:
             if (is_current)
                 ok(status == STATUS_SUCCESS || status == STATUS_INVALID_PARAMETER,
-                    "for info %u, got %08x (ret_len %u)\n", i, status, ret_len);
+                    "for info %lu, got %08lx (ret_len %lu)\n", i, status, ret_len);
             else
                 todo_wine
                 ok(status == STATUS_ACCESS_DENIED,
-                    "for info %u expected STATUS_ACCESS_DENIED, got %08x (ret_len %u)\n", i, status, ret_len);
+                    "for info %lu expected STATUS_ACCESS_DENIED, got %08lx (ret_len %lu)\n", i, status, ret_len);
             break;
 
         default:
             if (is_current)
                 ok(status == STATUS_SUCCESS || status == STATUS_UNSUCCESSFUL || status == STATUS_INVALID_PARAMETER,
-                    "for info %u, got %08x (ret_len %u)\n", i, status, ret_len);
+                    "for info %lu, got %08lx (ret_len %lu)\n", i, status, ret_len);
             else
                 ok(status == STATUS_ACCESS_DENIED,
-                    "for info %u expected STATUS_ACCESS_DENIED, got %08x (ret_len %u)\n", i, status, ret_len);
+                    "for info %lu expected STATUS_ACCESS_DENIED, got %08lx (ret_len %lu)\n", i, status, ret_len);
             break;
         }
     }
@@ -3863,22 +3864,22 @@ static void test_GetLogicalProcessorInformationEx(void)
     }
 
     ret = pGetLogicalProcessorInformationEx(RelationAll, NULL, NULL);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "got %d, error %d\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "got %d, error %ld\n", ret, GetLastError());
 
     len = 0;
     ret = pGetLogicalProcessorInformationEx(RelationProcessorCore, NULL, &len);
-    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %d, error %d\n", ret, GetLastError());
-    ok(len > 0, "got %u\n", len);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %d, error %ld\n", ret, GetLastError());
+    ok(len > 0, "got %lu\n", len);
 
     len = 0;
     ret = pGetLogicalProcessorInformationEx(RelationAll, NULL, &len);
-    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %d, error %d\n", ret, GetLastError());
-    ok(len > 0, "got %u\n", len);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %d, error %ld\n", ret, GetLastError());
+    ok(len > 0, "got %lu\n", len);
 
     info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
     ret = pGetLogicalProcessorInformationEx(RelationAll, info, &len);
-    ok(ret, "got %d, error %d\n", ret, GetLastError());
-    ok(info->Size > 0, "got %u\n", info->Size);
+    ok(ret, "got %d, error %ld\n", ret, GetLastError());
+    ok(info->Size > 0, "got %lu\n", info->Size);
     HeapFree(GetProcessHeap(), 0, info);
 }
 
@@ -3910,32 +3911,32 @@ static void test_GetSystemCpuSetInformation(void)
     size = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = pGetSystemCpuSetInformation(NULL, size, &size, process, 0);
-    ok(!ret && GetLastError() == ERROR_NOACCESS, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
-    ok(!size, "Got unexpected size %u.\n", size);
+    ok(!ret && GetLastError() == ERROR_NOACCESS, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
+    ok(!size, "Got unexpected size %lu.\n", size);
 
     size = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = pGetSystemCpuSetInformation(NULL, 0, &size, (HANDLE)0xdeadbeef, 0);
-    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
-    ok(!size, "Got unexpected size %u.\n", size);
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
+    ok(!size, "Got unexpected size %lu.\n", size);
 
     size = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = pGetSystemCpuSetInformation(NULL, 0, &size, process, 0);
-    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
-    ok(size == expected_size, "Got unexpected size %u.\n", size);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
+    ok(size == expected_size, "Got unexpected size %lu.\n", size);
 
     info = heap_alloc(size);
     info_nt = heap_alloc(size);
 
     status = pNtQuerySystemInformationEx(SystemCpuSetInformation, &process, sizeof(process), info_nt, expected_size, NULL);
-    ok(!status, "Got unexpected status %#x.\n", status);
+    ok(!status, "Got unexpected status %#lx.\n", status);
 
     size = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = pGetSystemCpuSetInformation(info, expected_size, &size, process, 0);
-    ok(ret && GetLastError() == 0xdeadbeef, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
-    ok(size == expected_size, "Got unexpected size %u.\n", size);
+    ok(ret && GetLastError() == 0xdeadbeef, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
+    ok(size == expected_size, "Got unexpected size %lu.\n", size);
 
     ok(!memcmp(info, info_nt, expected_size), "Info does not match NtQuerySystemInformationEx().\n");
 
@@ -3953,7 +3954,7 @@ static void test_largepages(void)
     }
     size = pGetLargePageMinimum();
 
-    ok((size == 0) || (size == 2*1024*1024) || (size == 4*1024*1024), "GetLargePageMinimum reports %ld size\n", size);
+    ok((size == 0) || (size == 2*1024*1024) || (size == 4*1024*1024), "GetLargePageMinimum reports %Id size\n", size);
 }
 
 struct proc_thread_attr
@@ -3994,16 +3995,16 @@ static void test_ProcThreadAttributeList(void)
         ok(!ret, "got %d\n", ret);
         if(i >= 4 && GetLastError() == ERROR_INVALID_PARAMETER) /* Vista only allows a maximium of 3 slots */
             break;
-        ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %d\n", GetLastError());
-        ok(size == needed, "%d: got %ld expect %ld\n", i, size, needed);
+        ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %ld\n", GetLastError());
+        ok(size == needed, "%d: got %Id expect %Id\n", i, size, needed);
 
         memset(&list, 0xcc, sizeof(list));
         ret = pInitializeProcThreadAttributeList(&list, i, 0, &size);
         ok(ret, "got %d\n", ret);
-        ok(list.mask == 0, "%d: got %08x\n", i, list.mask);
-        ok(list.size == i, "%d: got %08x\n", i, list.size);
-        ok(list.count == 0, "%d: got %08x\n", i, list.count);
-        ok(list.unk == 0, "%d: got %08lx\n", i, list.unk);
+        ok(list.mask == 0, "%d: got %08lx\n", i, list.mask);
+        ok(list.size == i, "%d: got %08lx\n", i, list.size);
+        ok(list.count == 0, "%d: got %08lx\n", i, list.count);
+        ok(list.unk == 0, "%d: got %08Ix\n", i, list.unk);
     }
 
     memset(handles, 0, sizeof(handles));
@@ -4015,15 +4016,15 @@ static void test_ProcThreadAttributeList(void)
 
     ret = pUpdateProcThreadAttribute(&list, 0, 0xcafe, handles, sizeof(PROCESSOR_NUMBER), NULL, NULL);
     ok(!ret, "got %d\n", ret);
-    ok(GetLastError() == ERROR_NOT_SUPPORTED, "got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_NOT_SUPPORTED, "got %ld\n", GetLastError());
 
     ret = pUpdateProcThreadAttribute(&list, 0, PROC_THREAD_ATTRIBUTE_PARENT_PROCESS, handles, sizeof(handles[0]) / 2, NULL, NULL);
     ok(!ret, "got %d\n", ret);
-    ok(GetLastError() == ERROR_BAD_LENGTH, "got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_BAD_LENGTH, "got %ld\n", GetLastError());
 
     ret = pUpdateProcThreadAttribute(&list, 0, PROC_THREAD_ATTRIBUTE_PARENT_PROCESS, handles, sizeof(handles[0]) * 2, NULL, NULL);
     ok(!ret, "got %d\n", ret);
-    ok(GetLastError() == ERROR_BAD_LENGTH, "got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_BAD_LENGTH, "got %ld\n", GetLastError());
 
     ret = pUpdateProcThreadAttribute(&list, 0, PROC_THREAD_ATTRIBUTE_PARENT_PROCESS, handles, sizeof(handles[0]), NULL, NULL);
     ok(ret, "got %d\n", ret);
@@ -4036,11 +4037,11 @@ static void test_ProcThreadAttributeList(void)
 
     ret = pUpdateProcThreadAttribute(&list, 0, PROC_THREAD_ATTRIBUTE_PARENT_PROCESS, handles, sizeof(handles[0]), NULL, NULL);
     ok(!ret, "got %d\n", ret);
-    ok(GetLastError() == ERROR_OBJECT_NAME_EXISTS, "got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_OBJECT_NAME_EXISTS, "got %ld\n", GetLastError());
 
     ret = pUpdateProcThreadAttribute(&list, 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST, handles, sizeof(handles) - 1, NULL, NULL);
     ok(!ret, "got %d\n", ret);
-    ok(GetLastError() == ERROR_BAD_LENGTH, "got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_BAD_LENGTH, "got %ld\n", GetLastError());
 
     ret = pUpdateProcThreadAttribute(&list, 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST, handles, sizeof(handles), NULL, NULL);
     ok(ret, "got %d\n", ret);
@@ -4053,10 +4054,10 @@ static void test_ProcThreadAttributeList(void)
 
     ret = pUpdateProcThreadAttribute(&list, 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST, handles, sizeof(handles), NULL, NULL);
     ok(!ret, "got %d\n", ret);
-    ok(GetLastError() == ERROR_OBJECT_NAME_EXISTS, "got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_OBJECT_NAME_EXISTS, "got %ld\n", GetLastError());
 
     ret = pUpdateProcThreadAttribute(&list, 0, PROC_THREAD_ATTRIBUTE_IDEAL_PROCESSOR, handles, sizeof(PROCESSOR_NUMBER), NULL, NULL);
-    ok(ret || GetLastError() == ERROR_NOT_SUPPORTED, "got %d gle %d\n", ret, GetLastError());
+    ok(ret || GetLastError() == ERROR_NOT_SUPPORTED, "got %d gle %ld\n", ret, GetLastError());
 
     if (ret)
     {
@@ -4068,7 +4069,7 @@ static void test_ProcThreadAttributeList(void)
     }
 
     ret = pUpdateProcThreadAttribute(&list, 0, PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE, handles, sizeof(handles[0]), NULL, NULL);
-    ok(ret || broken(GetLastError() == ERROR_NOT_SUPPORTED), "got %d gle %d\n", ret, GetLastError());
+    ok(ret || broken(GetLastError() == ERROR_NOT_SUPPORTED), "got %d gle %ld\n", ret, GetLastError());
 
     if (ret)
     {
@@ -4127,7 +4128,7 @@ static void test_parent_process_attribute(unsigned int level, HANDLE read_pipe)
     if (!level)
     {
         ret = CreatePipe(&read_pipe, &write_pipe, &sa, 0);
-        ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+        ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
 
         parent_data.parent = OpenProcess(PROCESS_CREATE_PROCESS | PROCESS_QUERY_INFORMATION, TRUE, GetCurrentProcessId());
         parent_data.parent_id = GetCurrentProcessId();
@@ -4135,19 +4136,19 @@ static void test_parent_process_attribute(unsigned int level, HANDLE read_pipe)
     else
     {
         status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessBasicInformation, &pbi, sizeof(pbi), &pbi_size);
-        ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
+        ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
         parent_id = pbi.InheritedFromUniqueProcessId;
 
         memset(&parent_data, 0, sizeof(parent_data));
         ret = ReadFile(read_pipe, &parent_data, sizeof(parent_data), &size, NULL);
         ok((level == 2 && ret) || (level == 1 && !ret && GetLastError() == ERROR_INVALID_HANDLE),
-                "Got unexpected ret %#x, level %u, GetLastError() %u.\n",
+                "Got unexpected ret %#x, level %u, GetLastError() %lu.\n",
                 ret, level, GetLastError());
     }
 
     if (level == 2)
     {
-        ok(parent_id == parent_data.parent_id, "Got parent id %u, parent_data.parent_id %u.\n",
+        ok(parent_id == parent_data.parent_id, "Got parent id %lu, parent_data.parent_id %lu.\n",
                 parent_id, parent_data.parent_id);
         return;
     }
@@ -4162,7 +4163,7 @@ static void test_parent_process_attribute(unsigned int level, HANDLE read_pipe)
 
         ret = pInitializeProcThreadAttributeList(NULL, 1, 0, &size);
         ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-                "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+                "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
 
         sprintf(buffer, "\"%s\" process parent %u %p", selfname, 255, read_pipe);
 
@@ -4175,14 +4176,14 @@ static void test_parent_process_attribute(unsigned int level, HANDLE read_pipe)
 #endif
         si.lpAttributeList = heap_alloc(size);
         ret = pInitializeProcThreadAttributeList(si.lpAttributeList, 1, 0, &size);
-        ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+        ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
         handle = OpenProcess(PROCESS_CREATE_PROCESS, TRUE, GetCurrentProcessId());
         ret = pUpdateProcThreadAttribute(si.lpAttributeList, 0, PROC_THREAD_ATTRIBUTE_PARENT_PROCESS,
                 &handle, sizeof(handle), NULL, NULL);
-        ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+        ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
         ret = CreateProcessA(NULL, buffer, NULL, NULL, TRUE, EXTENDED_STARTUPINFO_PRESENT,
                 NULL, NULL, (STARTUPINFOA *)&si, &info);
-        ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+        ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
         wait_and_close_child_process(&info);
         CloseHandle(handle);
         pDeleteProcThreadAttributeList(si.lpAttributeList);
@@ -4190,44 +4191,44 @@ static void test_parent_process_attribute(unsigned int level, HANDLE read_pipe)
 
         si.lpAttributeList = heap_alloc(size);
         ret = pInitializeProcThreadAttributeList(si.lpAttributeList, 1, 0, &size);
-        ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+        ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
         handle = (HANDLE)0xdeadbeef;
         ret = pUpdateProcThreadAttribute(si.lpAttributeList, 0, PROC_THREAD_ATTRIBUTE_PARENT_PROCESS,
                 &handle, sizeof(handle), NULL, NULL);
-        ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+        ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
         ret = CreateProcessA(NULL, buffer, NULL, NULL, TRUE, EXTENDED_STARTUPINFO_PRESENT,
                 NULL, NULL, (STARTUPINFOA *)&si, &info);
-        ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected ret %#x, GetLastError() %u.\n",
+        ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected ret %#x, GetLastError() %lu.\n",
                 ret, GetLastError());
         pDeleteProcThreadAttributeList(si.lpAttributeList);
         heap_free(si.lpAttributeList);
 
         si.lpAttributeList = heap_alloc(size);
         ret = pInitializeProcThreadAttributeList(si.lpAttributeList, 1, 0, &size);
-        ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+        ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
         handle = NULL;
         ret = pUpdateProcThreadAttribute(si.lpAttributeList, 0, PROC_THREAD_ATTRIBUTE_PARENT_PROCESS,
                 &handle, sizeof(handle), NULL, NULL);
-        ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+        ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
         ret = CreateProcessA(NULL, buffer, NULL, NULL, TRUE, EXTENDED_STARTUPINFO_PRESENT,
                 NULL, NULL, (STARTUPINFOA *)&si, &info);
-        ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected ret %#x, GetLastError() %u.\n",
+        ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected ret %#x, GetLastError() %lu.\n",
                 ret, GetLastError());
         pDeleteProcThreadAttributeList(si.lpAttributeList);
         heap_free(si.lpAttributeList);
 
         si.lpAttributeList = heap_alloc(size);
         ret = pInitializeProcThreadAttributeList(si.lpAttributeList, 1, 0, &size);
-        ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+        ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
         handle = GetCurrentProcess();
         ret = pUpdateProcThreadAttribute(si.lpAttributeList, 0, PROC_THREAD_ATTRIBUTE_PARENT_PROCESS,
                 &handle, sizeof(handle), NULL, NULL);
-        ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+        ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
         ret = CreateProcessA(NULL, buffer, NULL, NULL, TRUE, EXTENDED_STARTUPINFO_PRESENT,
                 NULL, NULL, (STARTUPINFOA *)&si, &info);
         /* Broken on Vista / w7 / w10. */
         ok(ret || broken(!ret && GetLastError() == ERROR_INVALID_HANDLE),
-                "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+                "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
         if (ret)
             wait_and_close_child_process(&info);
         pDeleteProcThreadAttributeList(si.lpAttributeList);
@@ -4235,19 +4236,19 @@ static void test_parent_process_attribute(unsigned int level, HANDLE read_pipe)
 
         si.lpAttributeList = heap_alloc(size);
         ret = pInitializeProcThreadAttributeList(si.lpAttributeList, 1, 0, &size);
-        ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+        ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
 
         parent = OpenProcess(PROCESS_CREATE_PROCESS, FALSE, parent_id);
 
         ret = pUpdateProcThreadAttribute(si.lpAttributeList, 0, PROC_THREAD_ATTRIBUTE_PARENT_PROCESS,
                 &parent, sizeof(parent), NULL, NULL);
-        ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+        ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
     }
 
     sprintf(buffer, "\"%s\" process parent %u %p", selfname, level + 1, read_pipe);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, level == 1, level == 1 ? EXTENDED_STARTUPINFO_PRESENT : 0,
             NULL, NULL, (STARTUPINFOA *)&si, &info);
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
 
     if (level)
     {
@@ -4286,25 +4287,25 @@ static void test_handle_list_attribute(BOOL child, HANDLE handle1, HANDLE handle
 
         flags = 0;
         ret = GetHandleInformation(handle1, &flags);
-        ok(ret, "Failed to get handle info, error %d.\n", GetLastError());
-        ok(flags == HANDLE_FLAG_INHERIT, "Unexpected flags %#x.\n", flags);
+        ok(ret, "Failed to get handle info, error %ld.\n", GetLastError());
+        ok(flags == HANDLE_FLAG_INHERIT, "Unexpected flags %#lx.\n", flags);
         CloseHandle(handle1);
 
         ret = GetHandleInformation(handle2, &flags);
-        ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "Unexpected return value, error %d.\n", GetLastError());
+        ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "Unexpected return value, error %ld.\n", GetLastError());
 
         return;
     }
 
     ret = pInitializeProcThreadAttributeList(NULL, 1, 0, &size);
     ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-            "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+            "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
 
     memset(&si, 0, sizeof(si));
     si.StartupInfo.cb = sizeof(si);
     si.lpAttributeList = heap_alloc(size);
     ret = pInitializeProcThreadAttributeList(si.lpAttributeList, 1, 0, &size);
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
 
     memset(&sa, 0, sizeof(sa));
     sa.nLength = sizeof(sa);
@@ -4315,12 +4316,12 @@ static void test_handle_list_attribute(BOOL child, HANDLE handle1, HANDLE handle
 
     ret = pUpdateProcThreadAttribute(si.lpAttributeList, 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST, &pipe[0],
             sizeof(pipe[0]), NULL, NULL);
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
 
     sprintf(buffer, "\"%s\" process handlelist %p %p", selfname, pipe[0], pipe[1]);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, TRUE, EXTENDED_STARTUPINFO_PRESENT, NULL, NULL,
             (STARTUPINFOA *)&si, &info);
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
 
     wait_and_close_child_process(&info);
 
@@ -4348,23 +4349,23 @@ static void test_dead_process(void)
 
     memset( data, 0, sizeof(data) );
     status = NtQueryInformationProcess( pi.hProcess, ProcessImageFileName, data, sizeof(data), NULL);
-    ok( !status, "ProcessImageFileName failed %x\n", status );
+    ok( !status, "ProcessImageFileName failed %lx\n", status );
     ok( ((UNICODE_STRING *)data)->Length, "ProcessImageFileName not set\n" );
     ok( ((UNICODE_STRING *)data)->Buffer[0] == '\\', "ProcessImageFileName not set\n" );
 
     memset( prio, 0xcc, sizeof(*prio) );
     status = NtQueryInformationProcess( pi.hProcess, ProcessPriorityClass, prio, sizeof(*prio), NULL);
-    ok( !status, "ProcessPriorityClass failed %x\n", status );
+    ok( !status, "ProcessPriorityClass failed %lx\n", status );
     ok( prio->PriorityClass != 0xcc, "ProcessPriorityClass not set\n" );
 
     memset( &basic, 0xcc, sizeof(basic) );
     status = NtQueryInformationProcess( pi.hProcess, ProcessBasicInformation, &basic, sizeof(basic), NULL);
-    ok( !status, "ProcessBasicInformation failed %x\n", status );
+    ok( !status, "ProcessBasicInformation failed %lx\n", status );
     ok( basic.ExitStatus == 0, "ProcessBasicInformation info modified\n" );
 
     memset( &image, 0xcc, sizeof(image) );
     status = NtQueryInformationProcess( pi.hProcess, ProcessImageInformation, &image, sizeof(image), NULL);
-    ok( status == STATUS_PROCESS_IS_TERMINATING, "ProcessImageInformation wrong error %x\n", status );
+    ok( status == STATUS_PROCESS_IS_TERMINATING, "ProcessImageInformation wrong error %lx\n", status );
     ok( image.Machine == 0xcccc, "ProcessImageInformation info modified\n" );
 
     while ((status = NtQuerySystemInformation(SystemProcessInformation, buffer, size, &size)) == STATUS_INFO_LENGTH_MISMATCH)
@@ -4372,7 +4373,7 @@ static void test_dead_process(void)
         free(buffer);
         buffer = malloc(size);
     }
-    ok(status == STATUS_SUCCESS, "got %#x\n", status);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
     found = FALSE;
     do
     {
@@ -4404,54 +4405,54 @@ static void test_nested_jobs_child(unsigned int index)
     sprintf(job_name, "test_nested_jobs_%u", index);
     job = pOpenJobObjectA(JOB_OBJECT_ASSIGN_PROCESS | JOB_OBJECT_SET_ATTRIBUTES | JOB_OBJECT_QUERY
             | JOB_OBJECT_TERMINATE, FALSE, job_name);
-    ok(!!job, "OpenJobObjectA error %u\n", GetLastError());
+    ok(!!job, "OpenJobObjectA error %lu\n", GetLastError());
 
     sprintf(job_name, "test_nested_jobs_%u", !index);
     job_other = pOpenJobObjectA(JOB_OBJECT_ASSIGN_PROCESS | JOB_OBJECT_SET_ATTRIBUTES | JOB_OBJECT_QUERY
             | JOB_OBJECT_TERMINATE, FALSE, job_name);
-    ok(!!job_other, "OpenJobObjectA error %u\n", GetLastError());
+    ok(!!job_other, "OpenJobObjectA error %lu\n", GetLastError());
 
     job_parent = pCreateJobObjectW(NULL, NULL);
-    ok(!!job_parent, "CreateJobObjectA error %u\n", GetLastError());
+    ok(!!job_parent, "CreateJobObjectA error %lu\n", GetLastError());
 
     ret = pAssignProcessToJobObject(job_parent, GetCurrentProcess());
-    ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+    ok(ret, "AssignProcessToJobObject error %lu\n", GetLastError());
 
     create_process("wait", &pi);
 
     ret = pAssignProcessToJobObject(job_parent, pi.hProcess);
     ok(ret || broken(!ret && GetLastError() == ERROR_ACCESS_DENIED) /* Supported since Windows 8. */,
-            "AssignProcessToJobObject error %u\n", GetLastError());
+            "AssignProcessToJobObject error %lu\n", GetLastError());
     if (!ret)
     {
         win_skip("Nested jobs are not supported.\n");
         goto done;
     }
     ret = pAssignProcessToJobObject(job, pi.hProcess);
-    ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+    ok(ret, "AssignProcessToJobObject error %lu\n", GetLastError());
 
     out = FALSE;
     ret = pIsProcessInJob(pi.hProcess, NULL, &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(out, "IsProcessInJob returned out=%u\n", out);
 
     out = FALSE;
     ret = pIsProcessInJob(pi.hProcess, job, &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(out, "IsProcessInJob returned out=%u\n", out);
 
     out = TRUE;
     ret = pIsProcessInJob(GetCurrentProcess(), job, &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(!out, "IsProcessInJob returned out=%u\n", out);
 
     out = FALSE;
     ret = pIsProcessInJob(pi.hProcess, job, &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(out, "IsProcessInJob returned out=%u\n", out);
 
     ret = pAssignProcessToJobObject(job, GetCurrentProcess());
-    ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+    ok(ret, "AssignProcessToJobObject error %lu\n", GetLastError());
 
     TerminateProcess(pi.hProcess, 0);
     wait_child_process(pi.hProcess);
@@ -4461,26 +4462,26 @@ static void test_nested_jobs_child(unsigned int index)
     dead_pid = pi.dwProcessId;
 
     port = pCreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 1);
-    ok(!!port, "CreateIoCompletionPort error %u\n", GetLastError());
+    ok(!!port, "CreateIoCompletionPort error %lu\n", GetLastError());
 
     port_info.CompletionPort = port;
     port_info.CompletionKey = job;
     ret = pSetInformationJobObject(job, JobObjectAssociateCompletionPortInformation, &port_info, sizeof(port_info));
-    ok(ret, "SetInformationJobObject error %u\n", GetLastError());
+    ok(ret, "SetInformationJobObject error %lu\n", GetLastError());
     port_info.CompletionKey = job_parent;
     ret = pSetInformationJobObject(job_parent, JobObjectAssociateCompletionPortInformation,
             &port_info, sizeof(port_info));
-    ok(ret, "SetInformationJobObject error %u\n", GetLastError());
+    ok(ret, "SetInformationJobObject error %lu\n", GetLastError());
 
     create_process("wait", &pi);
     out = FALSE;
     ret = pIsProcessInJob(pi.hProcess, job, &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(out, "IsProcessInJob returned out=%u\n", out);
 
     out = FALSE;
     ret = pIsProcessInJob(pi.hProcess, job_parent, &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(out, "IsProcessInJob returned out=%u\n", out);
 
     /* The first already dead child process still shows up randomly. */
@@ -4489,20 +4490,20 @@ static void test_nested_jobs_child(unsigned int index)
         ret = GetQueuedCompletionStatus(port, &key, &value, &overlapped, 0);
     } while (ret && (ULONG_PTR)overlapped == dead_pid);
 
-    ok(ret, "GetQueuedCompletionStatus: %x\n", GetLastError());
-    ok(key == JOB_OBJECT_MSG_NEW_PROCESS, "unexpected key %x\n", key);
+    ok(ret, "GetQueuedCompletionStatus: %lx\n", GetLastError());
+    ok(key == JOB_OBJECT_MSG_NEW_PROCESS, "unexpected key %lx\n", key);
     ok((HANDLE)value == job, "unexpected value %p\n", (void *)value);
-    ok((ULONG_PTR)overlapped == GetCurrentProcessId(), "unexpected pid %#x\n", (DWORD)(DWORD_PTR)overlapped);
+    ok((ULONG_PTR)overlapped == GetCurrentProcessId(), "unexpected pid %#lx\n", (DWORD)(DWORD_PTR)overlapped);
 
     do
     {
         ret = GetQueuedCompletionStatus(port, &key, &value, &overlapped, 0);
     } while (ret && (ULONG_PTR)overlapped == dead_pid);
 
-    ok(ret, "GetQueuedCompletionStatus: %x\n", GetLastError());
-    ok(key == JOB_OBJECT_MSG_NEW_PROCESS, "unexpected key %x\n", key);
+    ok(ret, "GetQueuedCompletionStatus: %lx\n", GetLastError());
+    ok(key == JOB_OBJECT_MSG_NEW_PROCESS, "unexpected key %lx\n", key);
     ok((HANDLE)value == job_parent, "unexpected value %p\n", (void *)value);
-    ok((ULONG_PTR)overlapped == GetCurrentProcessId(), "unexpected pid %#x\n", (DWORD)(DWORD_PTR)overlapped);
+    ok((ULONG_PTR)overlapped == GetCurrentProcessId(), "unexpected pid %#lx\n", (DWORD)(DWORD_PTR)overlapped);
 
     test_completion(port, JOB_OBJECT_MSG_NEW_PROCESS, (DWORD_PTR)job, pi.dwProcessId, 0);
     test_completion(port, JOB_OBJECT_MSG_NEW_PROCESS, (DWORD_PTR)job_parent, pi.dwProcessId, 0);
@@ -4514,7 +4515,7 @@ static void test_nested_jobs_child(unsigned int index)
     {
         ret = pAssignProcessToJobObject(job_other, GetCurrentProcess());
         ok(!ret, "AssignProcessToJobObject succeeded\n");
-        ok(GetLastError() == ERROR_ACCESS_DENIED, "Got unexpected error %u.\n", GetLastError());
+        ok(GetLastError() == ERROR_ACCESS_DENIED, "Got unexpected error %lu.\n", GetLastError());
     }
 
     CloseHandle(port);
@@ -4546,9 +4547,9 @@ static void test_nested_jobs(void)
     }
 
     job1 = pCreateJobObjectW(NULL, NULL);
-    ok(!!job1, "CreateJobObjectW failed, error %u.\n", GetLastError());
+    ok(!!job1, "CreateJobObjectW failed, error %lu.\n", GetLastError());
     job2 = pCreateJobObjectW(NULL, NULL);
-    ok(!!job2, "CreateJobObjectW failed, error %u.\n", GetLastError());
+    ok(!!job2, "CreateJobObjectW failed, error %lu.\n", GetLastError());
 
     create_succeeded = TRUE;
     sprintf(buffer, "\"%s\" process wait", selfname);
@@ -4560,25 +4561,25 @@ static void test_nested_jobs(void)
             create_succeeded = FALSE;
             break;
         }
-        ok(ret, "CreateProcessA error %u\n", GetLastError());
+        ok(ret, "CreateProcessA error %lu\n", GetLastError());
     }
 
     if (create_succeeded)
     {
         ret = pIsProcessInJob(info[0].hProcess, NULL, &already_in_job);
-        ok(ret, "IsProcessInJob error %u\n", GetLastError());
+        ok(ret, "IsProcessInJob error %lu\n", GetLastError());
 
         if (!already_in_job)
         {
             ret = pAssignProcessToJobObject(job2, info[1].hProcess);
-            ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+            ok(ret, "AssignProcessToJobObject error %lu\n", GetLastError());
 
             ret = pAssignProcessToJobObject(job1, info[0].hProcess);
-            ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+            ok(ret, "AssignProcessToJobObject error %lu\n", GetLastError());
 
             ret = pAssignProcessToJobObject(job2, info[0].hProcess);
             ok(!ret, "AssignProcessToJobObject succeeded\n");
-            ok(GetLastError() == ERROR_ACCESS_DENIED, "Got unexpected error %u.\n", GetLastError());
+            ok(GetLastError() == ERROR_ACCESS_DENIED, "Got unexpected error %lu.\n", GetLastError());
 
             TerminateProcess(info[1].hProcess, 0);
             wait_child_process(info[1].hProcess);
@@ -4587,7 +4588,7 @@ static void test_nested_jobs(void)
 
             ret = pAssignProcessToJobObject(job2, info[0].hProcess);
             ok(!ret, "AssignProcessToJobObject succeeded\n");
-            ok(GetLastError() == ERROR_ACCESS_DENIED, "Got unexpected error %u.\n", GetLastError());
+            ok(GetLastError() == ERROR_ACCESS_DENIED, "Got unexpected error %lu.\n", GetLastError());
         }
 
         TerminateProcess(info[0].hProcess, 0);
@@ -4605,9 +4606,9 @@ static void test_nested_jobs(void)
     CloseHandle(job2);
 
     job1 = pCreateJobObjectW(NULL, L"test_nested_jobs_0");
-    ok(!!job1, "CreateJobObjectW failed, error %u.\n", GetLastError());
+    ok(!!job1, "CreateJobObjectW failed, error %lu.\n", GetLastError());
     job2 = pCreateJobObjectW(NULL, L"test_nested_jobs_1");
-    ok(!!job2, "CreateJobObjectW failed, error %u.\n", GetLastError());
+    ok(!!job2, "CreateJobObjectW failed, error %lu.\n", GetLastError());
 
     sprintf(buffer, "\"%s\" process nested_jobs 0", selfname);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &info[0]),
@@ -4652,7 +4653,7 @@ static void test_job_list_attribute(HANDLE parent_job)
 
     ret = pInitializeProcThreadAttributeList(NULL, 1, 0, &size);
     ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-            "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+            "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
     attrs = heap_alloc(size);
 
 
@@ -4660,7 +4661,7 @@ static void test_job_list_attribute(HANDLE parent_job)
     jobs[1] = NULL;
 
     ret = pInitializeProcThreadAttributeList(attrs, 1, 0, &size);
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
     ret = pUpdateProcThreadAttribute(attrs, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST, jobs,
             sizeof(*jobs), NULL, NULL);
     if (!ret && GetLastError() == ERROR_NOT_SUPPORTED)
@@ -4671,23 +4672,23 @@ static void test_job_list_attribute(HANDLE parent_job)
         heap_free(attrs);
         return;
     }
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
 
     ret = pInitializeProcThreadAttributeList(attrs, 1, 0, &size);
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
     ret = pUpdateProcThreadAttribute(attrs, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST, jobs,
             3, NULL, NULL);
-    ok(!ret && GetLastError() == ERROR_BAD_LENGTH, "Got unexpected ret %#x, GetLastError() %u.\n",
+    ok(!ret && GetLastError() == ERROR_BAD_LENGTH, "Got unexpected ret %#x, GetLastError() %lu.\n",
             ret, GetLastError());
 
     ret = pInitializeProcThreadAttributeList(attrs, 1, 0, &size);
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
     ret = pUpdateProcThreadAttribute(attrs, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST, jobs,
             sizeof(*jobs) * 2, NULL, NULL);
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
 
     ret = pInitializeProcThreadAttributeList(attrs, 1, 0, &size);
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
     ret = pUpdateProcThreadAttribute(attrs, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST, jobs,
             sizeof(*jobs), NULL, NULL);
 
@@ -4698,65 +4699,65 @@ static void test_job_list_attribute(HANDLE parent_job)
 
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, EXTENDED_STARTUPINFO_PRESENT, NULL, NULL,
             (STARTUPINFOA *)&si, &pi);
-    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected ret %#x, GetLastError() %u.\n",
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected ret %#x, GetLastError() %lu.\n",
             ret, GetLastError());
 
     ret = pInitializeProcThreadAttributeList(attrs, 1, 0, &size);
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
     ret = pUpdateProcThreadAttribute(attrs, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST, jobs + 1,
             sizeof(*jobs), NULL, NULL);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, EXTENDED_STARTUPINFO_PRESENT, NULL, NULL,
             (STARTUPINFOA *)&si, &pi);
-    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected ret %#x, GetLastError() %u.\n",
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected ret %#x, GetLastError() %lu.\n",
             ret, GetLastError());
 
     ret = pInitializeProcThreadAttributeList(attrs, 1, 0, &size);
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
     ret = pUpdateProcThreadAttribute(attrs, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST, &parent_job,
             sizeof(parent_job), NULL, NULL);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, EXTENDED_STARTUPINFO_PRESENT, NULL, NULL,
             (STARTUPINFOA *)&si, &pi);
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
 
     ret = pIsProcessInJob(pi.hProcess, parent_job, &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(out, "IsProcessInJob returned out=%u\n", out);
 
     TerminateProcess(pi.hProcess, 0);
     wait_and_close_child_process(&pi);
 
     jobs[0] = pCreateJobObjectW(NULL, NULL);
-    ok(!!jobs[0], "CreateJobObjectA error %u\n", GetLastError());
+    ok(!!jobs[0], "CreateJobObjectA error %lu\n", GetLastError());
     jobs[1] = pCreateJobObjectW(NULL, NULL);
-    ok(!!jobs[1], "CreateJobObjectA error %u\n", GetLastError());
+    ok(!!jobs[1], "CreateJobObjectA error %lu\n", GetLastError());
 
     /* Breakaway works for the inherited job only. */
     limit_info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_BREAKAWAY_OK;
     ret = pSetInformationJobObject(parent_job, JobObjectExtendedLimitInformation, &limit_info, sizeof(limit_info));
-    ok(ret, "SetInformationJobObject error %u\n", GetLastError());
+    ok(ret, "SetInformationJobObject error %lu\n", GetLastError());
     limit_info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_BREAKAWAY_OK
             | JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK;
     ret = pSetInformationJobObject(jobs[1], JobObjectExtendedLimitInformation, &limit_info, sizeof(limit_info));
-    ok(ret, "SetInformationJobObject error %u\n", GetLastError());
+    ok(ret, "SetInformationJobObject error %lu\n", GetLastError());
 
     ret = pInitializeProcThreadAttributeList(attrs, 1, 0, &size);
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
     ret = pUpdateProcThreadAttribute(attrs, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST, jobs + 1,
             sizeof(*jobs), NULL, NULL);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, EXTENDED_STARTUPINFO_PRESENT
             | CREATE_BREAKAWAY_FROM_JOB, NULL, NULL, (STARTUPINFOA *)&si, &pi);
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
 
     ret = pIsProcessInJob(pi.hProcess, parent_job, &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(!out, "IsProcessInJob returned out=%u\n", out);
 
     ret = pIsProcessInJob(pi.hProcess, jobs[1], &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(out, "IsProcessInJob returned out=%u\n", out);
 
     ret = pIsProcessInJob(pi.hProcess, jobs[0], &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(!out, "IsProcessInJob returned out=%u\n", out);
 
     TerminateProcess(pi.hProcess, 0);
@@ -4764,26 +4765,26 @@ static void test_job_list_attribute(HANDLE parent_job)
 
     CloseHandle(jobs[1]);
     jobs[1] = pCreateJobObjectW(NULL, NULL);
-    ok(!!jobs[1], "CreateJobObjectA error %u\n", GetLastError());
+    ok(!!jobs[1], "CreateJobObjectA error %lu\n", GetLastError());
 
     ret = pInitializeProcThreadAttributeList(attrs, 1, 0, &size);
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
     ret = pUpdateProcThreadAttribute(attrs, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST, jobs + 1,
             sizeof(*jobs), NULL, NULL);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, EXTENDED_STARTUPINFO_PRESENT,
             NULL, NULL, (STARTUPINFOA *)&si, &pi);
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
 
     ret = pIsProcessInJob(pi.hProcess, parent_job, &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(out, "IsProcessInJob returned out=%u\n", out);
 
     ret = pIsProcessInJob(pi.hProcess, jobs[1], &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(out, "IsProcessInJob returned out=%u\n", out);
 
     ret = pIsProcessInJob(pi.hProcess, jobs[0], &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(!out, "IsProcessInJob returned out=%u\n", out);
 
     TerminateProcess(pi.hProcess, 0);
@@ -4791,54 +4792,54 @@ static void test_job_list_attribute(HANDLE parent_job)
 
     ret = pQueryInformationJobObject(jobs[0], JobObjectBasicAccountingInformation, &job_info,
             sizeof(job_info), NULL);
-    ok(ret, "QueryInformationJobObject error %u\n", GetLastError());
-    ok(!job_info.TotalProcesses, "Got unexpected TotalProcesses %u.\n", job_info.TotalProcesses);
-    ok(!job_info.ActiveProcesses, "Got unexpected ActiveProcesses %u.\n", job_info.ActiveProcesses);
+    ok(ret, "QueryInformationJobObject error %lu\n", GetLastError());
+    ok(!job_info.TotalProcesses, "Got unexpected TotalProcesses %lu.\n", job_info.TotalProcesses);
+    ok(!job_info.ActiveProcesses, "Got unexpected ActiveProcesses %lu.\n", job_info.ActiveProcesses);
 
     ret = pQueryInformationJobObject(jobs[1], JobObjectBasicAccountingInformation, &job_info,
             sizeof(job_info), NULL);
-    ok(ret, "QueryInformationJobObject error %u\n", GetLastError());
-    ok(job_info.TotalProcesses == 1, "Got unexpected TotalProcesses %u.\n", job_info.TotalProcesses);
-    ok(!job_info.ActiveProcesses || job_info.ActiveProcesses == 1, "Got unexpected ActiveProcesses %u.\n",
+    ok(ret, "QueryInformationJobObject error %lu\n", GetLastError());
+    ok(job_info.TotalProcesses == 1, "Got unexpected TotalProcesses %lu.\n", job_info.TotalProcesses);
+    ok(!job_info.ActiveProcesses || job_info.ActiveProcesses == 1, "Got unexpected ActiveProcesses %lu.\n",
             job_info.ActiveProcesses);
 
     /* Fails due to the second job already has the parent other than the first job in the list. */
     ret = pInitializeProcThreadAttributeList(attrs, 1, 0, &size);
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
     ret = pUpdateProcThreadAttribute(attrs, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST, jobs,
             2 * sizeof(*jobs), NULL, NULL);
 
     port = pCreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 1);
-    ok(!!port, "CreateIoCompletionPort error %u\n", GetLastError());
+    ok(!!port, "CreateIoCompletionPort error %lu\n", GetLastError());
 
     port_info.CompletionPort = port;
     port_info.CompletionKey = jobs[0];
     ret = pSetInformationJobObject(jobs[0], JobObjectAssociateCompletionPortInformation, &port_info, sizeof(port_info));
-    ok(ret, "SetInformationJobObject error %u\n", GetLastError());
+    ok(ret, "SetInformationJobObject error %lu\n", GetLastError());
 
     ret = GetQueuedCompletionStatus(port, &key, &value, &overlapped, 0);
     ok(!ret, "GetQueuedCompletionStatus succeeded.\n");
 
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, EXTENDED_STARTUPINFO_PRESENT, NULL, NULL,
             (STARTUPINFOA *)&si, &pi);
-    ok(!ret && GetLastError() == ERROR_ACCESS_DENIED, "Got unexpected ret %#x, GetLastError() %u.\n",
+    ok(!ret && GetLastError() == ERROR_ACCESS_DENIED, "Got unexpected ret %#x, GetLastError() %lu.\n",
             ret, GetLastError());
 
     ret = GetQueuedCompletionStatus(port, &key, &value, &overlapped, 100);
-    ok(ret, "GetQueuedCompletionStatus: %x\n", GetLastError());
-    ok(key == JOB_OBJECT_MSG_NEW_PROCESS, "unexpected key %x\n", key);
+    ok(ret, "GetQueuedCompletionStatus: %lx\n", GetLastError());
+    ok(key == JOB_OBJECT_MSG_NEW_PROCESS, "unexpected key %lx\n", key);
     ok((HANDLE)value == jobs[0], "unexpected value %p\n", (void *)value);
     ok(!!overlapped, "Got zero pid.\n");
 
     ret = GetQueuedCompletionStatus(port, &key, &value, &overlapped, 100);
-    ok(ret, "GetQueuedCompletionStatus: %x\n", GetLastError());
-    ok(key == JOB_OBJECT_MSG_EXIT_PROCESS, "unexpected key %x\n", key);
+    ok(ret, "GetQueuedCompletionStatus: %lx\n", GetLastError());
+    ok(key == JOB_OBJECT_MSG_EXIT_PROCESS, "unexpected key %lx\n", key);
     ok((HANDLE)value == jobs[0], "unexpected value %p\n", (void *)value);
     ok(!!overlapped, "Got zero pid.\n");
 
     ret = GetQueuedCompletionStatus(port, &key, &value, &overlapped, 100);
-    ok(ret, "GetQueuedCompletionStatus: %x\n", GetLastError());
-    ok(key == JOB_OBJECT_MSG_ACTIVE_PROCESS_ZERO, "unexpected key %x\n", key);
+    ok(ret, "GetQueuedCompletionStatus: %lx\n", GetLastError());
+    ok(key == JOB_OBJECT_MSG_ACTIVE_PROCESS_ZERO, "unexpected key %lx\n", key);
     ok((HANDLE)value == jobs[0], "unexpected value %p\n", (void *)value);
     ok(!overlapped, "Got unexpected overlapped %p.\n", overlapped);
 
@@ -4850,31 +4851,31 @@ static void test_job_list_attribute(HANDLE parent_job)
     /* The first job got updated even though the process creation failed. */
     ret = pQueryInformationJobObject(jobs[0], JobObjectBasicAccountingInformation, &job_info,
             sizeof(job_info), NULL);
-    ok(ret, "QueryInformationJobObject error %u\n", GetLastError());
-    ok(job_info.TotalProcesses == 1, "Got unexpected TotalProcesses %u.\n", job_info.TotalProcesses);
-    ok(!job_info.ActiveProcesses, "Got unexpected ActiveProcesses %u.\n", job_info.ActiveProcesses);
+    ok(ret, "QueryInformationJobObject error %lu\n", GetLastError());
+    ok(job_info.TotalProcesses == 1, "Got unexpected TotalProcesses %lu.\n", job_info.TotalProcesses);
+    ok(!job_info.ActiveProcesses, "Got unexpected ActiveProcesses %lu.\n", job_info.ActiveProcesses);
 
     ret = pQueryInformationJobObject(jobs[1], JobObjectBasicAccountingInformation, &job_info,
             sizeof(job_info), NULL);
-    ok(ret, "QueryInformationJobObject error %u\n", GetLastError());
-    ok(job_info.TotalProcesses == 1, "Got unexpected TotalProcesses %u.\n", job_info.TotalProcesses);
-    ok(!job_info.ActiveProcesses, "Got unexpected ActiveProcesses %u.\n", job_info.ActiveProcesses);
+    ok(ret, "QueryInformationJobObject error %lu\n", GetLastError());
+    ok(job_info.TotalProcesses == 1, "Got unexpected TotalProcesses %lu.\n", job_info.TotalProcesses);
+    ok(!job_info.ActiveProcesses, "Got unexpected ActiveProcesses %lu.\n", job_info.ActiveProcesses);
 
     /* Check that the first job actually got the job_parent as parent. */
     ret = pInitializeProcThreadAttributeList(attrs, 1, 0, &size);
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
     ret = pUpdateProcThreadAttribute(attrs, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST, jobs,
             sizeof(*jobs), NULL, NULL);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, EXTENDED_STARTUPINFO_PRESENT
             | CREATE_BREAKAWAY_FROM_JOB, NULL, NULL, (STARTUPINFOA *)&si, &pi);
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
 
     ret = pIsProcessInJob(pi.hProcess, parent_job, &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(out, "IsProcessInJob returned out=%u\n", out);
 
     ret = pIsProcessInJob(pi.hProcess, jobs[0], &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(out, "IsProcessInJob returned out=%u\n", out);
 
     TerminateProcess(pi.hProcess, 0);
@@ -4885,64 +4886,64 @@ static void test_job_list_attribute(HANDLE parent_job)
     jobs[1] = tmp;
 
     ret = pInitializeProcThreadAttributeList(attrs, 1, 0, &size);
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
     ret = pUpdateProcThreadAttribute(attrs, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST, jobs,
             2 * sizeof(*jobs), NULL, NULL);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, EXTENDED_STARTUPINFO_PRESENT, NULL, NULL,
             (STARTUPINFOA *)&si, &pi);
-    ok(!ret && GetLastError() == ERROR_ACCESS_DENIED, "Got unexpected ret %#x, GetLastError() %u.\n",
+    ok(!ret && GetLastError() == ERROR_ACCESS_DENIED, "Got unexpected ret %#x, GetLastError() %lu.\n",
             ret, GetLastError());
 
     CloseHandle(jobs[0]);
     CloseHandle(jobs[1]);
 
     jobs[0] = pCreateJobObjectW(NULL, NULL);
-    ok(!!jobs[0], "CreateJobObjectA error %u\n", GetLastError());
+    ok(!!jobs[0], "CreateJobObjectA error %lu\n", GetLastError());
     jobs[1] = pCreateJobObjectW(NULL, NULL);
-    ok(!!jobs[1], "CreateJobObjectA error %u\n", GetLastError());
+    ok(!!jobs[1], "CreateJobObjectA error %lu\n", GetLastError());
 
     /* Create the job chain successfully and check the job chain. */
     ret = pInitializeProcThreadAttributeList(attrs, 1, 0, &size);
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
     ret = pUpdateProcThreadAttribute(attrs, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST, jobs,
             2 * sizeof(*jobs), NULL, NULL);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, EXTENDED_STARTUPINFO_PRESENT,
             NULL, NULL, (STARTUPINFOA *)&si, &pi);
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
 
     ret = pIsProcessInJob(pi.hProcess, parent_job, &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(out, "IsProcessInJob returned out=%u\n", out);
 
     ret = pIsProcessInJob(pi.hProcess, jobs[0], &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(out, "IsProcessInJob returned out=%u\n", out);
 
     ret = pIsProcessInJob(pi.hProcess, jobs[1], &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(out, "IsProcessInJob returned out=%u\n", out);
 
     TerminateProcess(pi.hProcess, 0);
     wait_and_close_child_process(&pi);
 
     ret = pInitializeProcThreadAttributeList(attrs, 1, 0, &size);
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
     ret = pUpdateProcThreadAttribute(attrs, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST, jobs + 1,
             sizeof(*jobs), NULL, NULL);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, EXTENDED_STARTUPINFO_PRESENT
             | CREATE_BREAKAWAY_FROM_JOB, NULL, NULL, (STARTUPINFOA *)&si, &pi);
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
 
     ret = pIsProcessInJob(pi.hProcess, parent_job, &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(out, "IsProcessInJob returned out=%u\n", out);
 
     ret = pIsProcessInJob(pi.hProcess, jobs[0], &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(out, "IsProcessInJob returned out=%u\n", out);
 
     ret = pIsProcessInJob(pi.hProcess, jobs[1], &out);
-    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(out, "IsProcessInJob returned out=%u\n", out);
 
     TerminateProcess(pi.hProcess, 0);
@@ -4956,7 +4957,7 @@ static void test_job_list_attribute(HANDLE parent_job)
 
     limit_info.BasicLimitInformation.LimitFlags = 0;
     ret = pSetInformationJobObject(parent_job, JobObjectExtendedLimitInformation, &limit_info, sizeof(limit_info));
-    ok(ret, "SetInformationJobObject error %u\n", GetLastError());
+    ok(ret, "SetInformationJobObject error %lu\n", GetLastError());
 }
 
 START_TEST(process)
@@ -4982,11 +4983,11 @@ START_TEST(process)
         else if (!strcmp(myARGV[2], "sync") && myARGC >= 4)
         {
             HANDLE sem = OpenSemaphoreA(SYNCHRONIZE, FALSE, myARGV[3]);
-            ok(sem != 0, "OpenSemaphoreA(%s) failed le=%u\n", myARGV[3], GetLastError());
+            ok(sem != 0, "OpenSemaphoreA(%s) failed le=%lu\n", myARGV[3], GetLastError());
             if (sem)
             {
                 DWORD ret = WaitForSingleObject(sem, 30000);
-                ok(ret == WAIT_OBJECT_0, "WaitForSingleObject(%s) returned %u\n", myARGV[3], ret);
+                ok(ret == WAIT_OBJECT_0, "WaitForSingleObject(%s) returned %lu\n", myARGV[3], ret);
                 CloseHandle(sem);
             }
             return;
@@ -5017,7 +5018,7 @@ START_TEST(process)
              * nested process.
              */
             hFile = CreateFileA(myARGV[3], GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
-            childPrintf(hFile, "[Nested]\nPid=%08u\n", info.dwProcessId);
+            childPrintf(hFile, "[Nested]\nPid=%08lu\n", info.dwProcessId);
             CloseHandle(hFile);
             return;
         }
