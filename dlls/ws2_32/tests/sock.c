@@ -1164,15 +1164,17 @@ static void test_set_getsockopt(void)
         BOOL accepts_short_len;
         unsigned int sizes[3];
         DWORD values[3];
+        BOOL accepts_large_value;
+        BOOL bool_value;
     }
     test_optsize[] =
     {
-        {AF_INET, SOCK_STREAM, SOL_SOCKET, SO_RCVTIMEO, FALSE, {1, 2, 4}},
-        {AF_INET, SOCK_STREAM, SOL_SOCKET, SO_SNDTIMEO, FALSE, {1, 2, 4}},
-        {AF_INET, SOCK_DGRAM, IPPROTO_IP, IP_MULTICAST_LOOP, TRUE, {1, 1, 4}},
-        {AF_INET, SOCK_DGRAM, IPPROTO_IP, IP_MULTICAST_TTL, TRUE, {1, 1, 4}},
-        {AF_INET, SOCK_DGRAM, IPPROTO_IP, IP_TOS, TRUE, {1, 1, 4}},
-        {AF_INET, SOCK_DGRAM, IPPROTO_IP, IP_TTL, TRUE, {1, 1, 4}},
+        {AF_INET, SOCK_STREAM, SOL_SOCKET, SO_RCVTIMEO, FALSE, {1, 2, 4}, {0}, TRUE},
+        {AF_INET, SOCK_STREAM, SOL_SOCKET, SO_SNDTIMEO, FALSE, {1, 2, 4}, {0}, TRUE},
+        {AF_INET, SOCK_DGRAM, IPPROTO_IP, IP_MULTICAST_LOOP, TRUE, {1, 1, 4}, {0}, TRUE, TRUE},
+        {AF_INET, SOCK_DGRAM, IPPROTO_IP, IP_MULTICAST_TTL, TRUE, {1, 1, 4}, {0}, FALSE},
+        {AF_INET, SOCK_DGRAM, IPPROTO_IP, IP_TOS, TRUE, {1, 1, 4}, {0}, FALSE},
+        {AF_INET, SOCK_DGRAM, IPPROTO_IP, IP_TTL, TRUE, {1, 1, 4}, {0}, FALSE},
     };
     SOCKET s, s2;
     int i, j, err, lasterr;
@@ -1456,6 +1458,41 @@ static void test_set_getsockopt(void)
             ok(WSAGetLastError() == WSAEFAULT, "Unexpected WSAGetLastError() %u.\n", WSAGetLastError());
         }
         ok(size == (test_optsize[i].optname == SO_OPENTYPE ? 4 : -1), "Got unexpected size %d.\n", size);
+
+        expected_size = test_optsize[i].sizes[2];
+        if (expected_size == 1)
+            expected_value = 0xdeadbe00;
+        else
+            expected_value = test_optsize[i].bool_value ? 0x1 : 0x100;
+        if (test_optsize[i].accepts_large_value)
+        {
+            expected_err = 0;
+            expected_last_error = 0;
+        }
+        else
+        {
+            expected_err = -1;
+            expected_last_error = WSAEINVAL;
+        }
+
+        value = 0x100;
+        SetLastError(0xdeadbeef);
+        err = setsockopt(s2, test_optsize[i].level, test_optsize[i].optname, (char*)&value, 4);
+        ok(err == expected_err, "Unexpected setsockopt result %d.\n", err);
+        ok(WSAGetLastError() == expected_last_error, "Unexpected WSAGetLastError() %u.\n", WSAGetLastError());
+
+        if (test_optsize[i].accepts_large_value)
+        {
+            value = 0xdeadbeef;
+            SetLastError(0xdeadbeef);
+            size = 4;
+            err = getsockopt(s2, test_optsize[i].level, test_optsize[i].optname, (char*)&value, &size);
+            ok(err == expected_err, "Unexpected getsockopt result %d.\n", err);
+            ok(WSAGetLastError() == expected_last_error, "Unexpected WSAGetLastError() %u.\n", WSAGetLastError());
+            todo_wine_if(test_optsize[i].optname == SO_DONTROUTE || test_optsize[i].optname == SO_LINGER)
+            ok(value == expected_value, "Got unexpected value %#x, expected %#x.\n", value, expected_value);
+            ok(size == expected_size, "Got unexpected size %u, expected %u.\n", size, expected_size);
+        }
 
         winetest_pop_context();
 
