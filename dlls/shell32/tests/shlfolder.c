@@ -3311,7 +3311,8 @@ static void test_SHCreateShellItemArray(void)
     if(SUCCEEDED(hr))
     {
         LPITEMIDLIST apidl[5];
-        UINT done, numitems, i;
+        UINT done;
+        DWORD numitems, i;
 
         for(done = 0; done < 5; done++)
             if(IEnumIDList_Next(peidl, 1, &apidl[done], NULL) != S_OK)
@@ -3387,7 +3388,7 @@ static void test_SHCreateShellItemArray(void)
             if(SUCCEEDED(hr))
             {
                 IShellItem *psi2;
-                UINT count;
+                DWORD count;
                 hr = IShellItemArray_GetCount(psia, &count);
                 ok(hr == S_OK, "Got 0x%08x\n", hr);
                 ok(count == 1, "Got count %d\n", count);
@@ -3464,7 +3465,7 @@ static void test_SHCreateShellItemArray(void)
                         ok(hr == S_OK, "Got 0x%08x\n", hr);
                         if(SUCCEEDED(hr))
                         {
-                            UINT count_sia, i;
+                            DWORD count_sia, i;
                             hr = IShellItemArray_GetCount(psia, &count_sia);
                             ok(hr == S_OK, "Got 0x%08x\n", hr);
                             ok(count_sia == count, "Counts differ (%d, %d)\n", count, count_sia);
@@ -3544,7 +3545,7 @@ static void test_SHCreateShellItemArray(void)
         if(SUCCEEDED(hr))
         {
             IShellItem *psi;
-            UINT count = 0;
+            DWORD count = 0;
 
             hr = IShellItemArray_GetCount(psia, &count);
             ok(hr == S_OK, "Got 0x%08x\n", hr);
@@ -3597,7 +3598,7 @@ static void test_SHCreateShellItemArray(void)
         if(SUCCEEDED(hr))
         {
             IShellItem *psi;
-            UINT count = 0;
+            DWORD count = 0;
 
             hr = IShellItemArray_GetCount(psia, &count);
             ok(hr == S_OK, "Got 0x%08x\n", hr);
@@ -3639,7 +3640,7 @@ static void test_SHCreateShellItemArray(void)
             if(SUCCEEDED(hr))
             {
                 IShellItem *psi;
-                UINT count = 0;
+                DWORD count = 0;
 
                 hr = IShellItemArray_GetCount(psia, &count);
                 ok(hr == S_OK, "Got 0x%08x\n", hr);
@@ -3731,7 +3732,8 @@ static void test_ShellItemArrayEnumItems(void)
     {
         IShellItemArray *psia;
         LPITEMIDLIST apidl[5];
-        UINT done, numitems, i;
+        UINT done;
+        DWORD numitems, i;
 
         for(done = 0; done < 5; done++)
             if(IEnumIDList_Next(peidl, 1, &apidl[done], NULL) != S_OK)

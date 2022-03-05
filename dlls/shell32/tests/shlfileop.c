@@ -290,7 +290,8 @@ static void check_icon_size( HICON icon, DWORD flags )
 {
     ICONINFO info;
     BITMAP bm;
-    SIZE list_size, metrics_size;
+    SIZE metrics_size;
+    int list_cx, list_cy;
     IImageList *list;
 
     GetIconInfo( icon, &info );
@@ -298,7 +299,7 @@ static void check_icon_size( HICON icon, DWORD flags )
 
     SHGetImageList( (flags & SHGFI_SMALLICON) ? SHIL_SMALL : SHIL_LARGE,
                     &IID_IImageList, (void **)&list );
-    IImageList_GetIconSize( list, &list_size.cx, &list_size.cy );
+    IImageList_GetIconSize( list, &list_cx, &list_cy );
     IImageList_Release( list );
 
     metrics_size.cx = GetSystemMetrics( (flags & SHGFI_SMALLICON) ? SM_CXSMICON : SM_CXICON );
@@ -307,8 +308,8 @@ static void check_icon_size( HICON icon, DWORD flags )
 
     if (flags & SHGFI_SHELLICONSIZE)
     {
-        ok( bm.bmWidth == list_size.cx, "got %d expected %d\n", bm.bmWidth, list_size.cx );
-        ok( bm.bmHeight == list_size.cy, "got %d expected %d\n", bm.bmHeight, list_size.cy );
+        ok( bm.bmWidth == list_cx, "got %d expected %d\n", bm.bmWidth, list_cx );
+        ok( bm.bmHeight == list_cy, "got %d expected %d\n", bm.bmHeight, list_cy );
     }
     else
     {

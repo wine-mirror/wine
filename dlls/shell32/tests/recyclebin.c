@@ -39,7 +39,7 @@ static void test_query_recyclebin(void)
 {
     SHQUERYRBINFO info1={sizeof(info1),0xdeadbeef,0xdeadbeef};
     SHQUERYRBINFO info2={sizeof(info2),0xdeadbeef,0xdeadbeef};
-    UINT written;
+    DWORD written;
     HRESULT hr;
     HANDLE file;
     SHFILEOPSTRUCTA shfo;
