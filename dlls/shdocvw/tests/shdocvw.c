@@ -96,7 +96,7 @@ static void test_URLSubRegQueryA(void)
     buffer[sizeof(buffer)-1] = '\0';
     /* called by inetcpl.cpl */
     hr = pURLSubRegQueryA(regpath_iemain, default_page_url, REG_SZ, buffer, INTERNET_MAX_URL_LENGTH, -1);
-    ok(hr == E_FAIL || hr == S_OK, "got 0x%x (expected E_FAIL or S_OK)\n", hr);
+    ok(hr == E_FAIL || hr == S_OK, "got 0x%lx (expected E_FAIL or S_OK)\n", hr);
 
     memset(buffer, '#', sizeof(buffer)-1);
     buffer[sizeof(buffer)-1] = '\0';
@@ -104,7 +104,7 @@ static void test_URLSubRegQueryA(void)
     hr = pURLSubRegQueryA(regpath_iemain, start_page, REG_SZ, buffer, INTERNET_MAX_URL_LENGTH, -1);
     len = lstrlenA(buffer);
     /* respect privacy: do not dump the url */
-    ok(hr == S_OK, "got 0x%x and %d (expected S_OK)\n", hr, len);
+    ok(hr == S_OK, "got 0x%lx and %ld (expected S_OK)\n", hr, len);
 
     /* test buffer length: just large enough */
     memset(buffer, '#', sizeof(buffer)-1);
@@ -113,7 +113,7 @@ static void test_URLSubRegQueryA(void)
     used = lstrlenA(buffer);
     /* respect privacy: do not dump the url */
     ok((hr == S_OK) && (used == len),
-        "got 0x%x and %d (expected S_OK and %d)\n", hr, used, len);
+        "got 0x%lx and %ld (expected S_OK and %ld)\n", hr, used, len);
 
     /* no space for terminating 0: result is truncated */
     memset(buffer, '#', sizeof(buffer)-1);
@@ -121,7 +121,7 @@ static void test_URLSubRegQueryA(void)
     hr = pURLSubRegQueryA(regpath_iemain, start_page, REG_SZ, buffer, len, -1);
     used = lstrlenA(buffer);
     ok((hr == S_OK) && (used == len - 1),
-        "got 0x%x and %d (expected S_OK and %d)\n", hr, used, len - 1);
+        "got 0x%lx and %ld (expected S_OK and %ld)\n", hr, used, len - 1);
 
     /* no space for the complete result: truncate another char */
     if (len > 1) {
@@ -130,7 +130,7 @@ static void test_URLSubRegQueryA(void)
         hr = pURLSubRegQueryA(regpath_iemain, start_page, REG_SZ, buffer, len-1, -1);
         used = lstrlenA(buffer);
         ok((hr == S_OK) && (used == (len - 2)),
-            "got 0x%x and %d (expected S_OK and %d)\n", hr, used, len - 2);
+            "got 0x%lx and %ld (expected S_OK and %ld)\n", hr, used, len - 2);
     }
 
     /* only space for the terminating 0: function still succeeded */
@@ -139,7 +139,7 @@ static void test_URLSubRegQueryA(void)
     hr = pURLSubRegQueryA(regpath_iemain, start_page, REG_SZ, buffer, 1, -1);
     used = lstrlenA(buffer);
     ok((hr == S_OK) && !used,
-        "got 0x%x and %d (expected S_OK and 0)\n", hr, used);
+        "got 0x%lx and %ld (expected S_OK and 0)\n", hr, used);
 
     /* size of buffer is 0, but the function still succeed.
        buffer[0] is cleared in IE 5.01 and IE 5.5 (Buffer Overflow) */
@@ -149,23 +149,23 @@ static void test_URLSubRegQueryA(void)
     used = lstrlenA(buffer);
     ok( (hr == S_OK) &&
         ((used == INTERNET_MAX_URL_LENGTH - 1) || broken(used == 0)) ,
-        "got 0x%x and %d (expected S_OK and INTERNET_MAX_URL_LENGTH - 1)\n",
+        "got 0x%lx and %ld (expected S_OK and INTERNET_MAX_URL_LENGTH - 1)\n",
         hr, used);
 
     /* still succeed without a buffer for the result */
     hr = pURLSubRegQueryA(regpath_iemain, start_page, REG_SZ, NULL, 0, -1);
-    ok(hr == S_OK, "got 0x%x (expected S_OK)\n", hr);
+    ok(hr == S_OK, "got 0x%lx (expected S_OK)\n", hr);
 
     /* still succeed, when a length is given without a buffer */
     hr = pURLSubRegQueryA(regpath_iemain, start_page, REG_SZ, NULL, INTERNET_MAX_URL_LENGTH, -1);
-    ok(hr == S_OK, "got 0x%x (expected S_OK)\n", hr);
+    ok(hr == S_OK, "got 0x%lx (expected S_OK)\n", hr);
 
     /* this value does not exist */
     memset(buffer, '#', sizeof(buffer)-1);
     buffer[sizeof(buffer)-1] = '\0';
     hr = pURLSubRegQueryA(regpath_iemain, does_not_exist, REG_SZ, buffer, INTERNET_MAX_URL_LENGTH, -1);
     /* random bytes are copied to the buffer */
-    ok((hr == E_FAIL), "got 0x%x (expected E_FAIL)\n", hr);
+    ok((hr == E_FAIL), "got 0x%lx (expected E_FAIL)\n", hr);
 
     /* the third parameter is ignored. Is it really a type? (data is REG_SZ) */
     memset(buffer, '#', sizeof(buffer)-1);
@@ -173,20 +173,20 @@ static void test_URLSubRegQueryA(void)
     hr = pURLSubRegQueryA(regpath_iemain, start_page, REG_DWORD, buffer, INTERNET_MAX_URL_LENGTH, -1);
     used = lstrlenA(buffer);
     ok((hr == S_OK) && (used == len),
-        "got 0x%x and %d (expected S_OK and %d)\n", hr, used, len);
+        "got 0x%lx and %ld (expected S_OK and %ld)\n", hr, used, len);
 
     /* the function works for HKCU and HKLM */
     memset(buffer, '#', sizeof(buffer)-1);
     buffer[sizeof(buffer)-1] = '\0';
     hr = pURLSubRegQueryA(regpath_shellfolders, appdata, REG_SZ, buffer, INTERNET_MAX_URL_LENGTH, -1);
     used = lstrlenA(buffer);
-    ok(hr == S_OK, "got 0x%x and %d (expected S_OK)\n", hr, used);
+    ok(hr == S_OK, "got 0x%lx and %ld (expected S_OK)\n", hr, used);
 
     memset(buffer, '#', sizeof(buffer)-1);
     buffer[sizeof(buffer)-1] = '\0';
     hr = pURLSubRegQueryA(regpath_shellfolders, common_appdata, REG_SZ, buffer, INTERNET_MAX_URL_LENGTH, -1);
     used = lstrlenA(buffer);
-    ok(hr == S_OK, "got 0x%x and %d (expected S_OK)\n", hr, used);
+    ok(hr == S_OK, "got 0x%lx and %ld (expected S_OK)\n", hr, used);
 
     /* todo: what does the last parameter mean? */
 }
@@ -217,7 +217,7 @@ static void test_ParseURLFromOutsideSourceA(void)
         /* len does not include the terminating 0, when buffer is large enough */
         ok( res != 0 && len == ParseURL_table[i].len &&
             !lstrcmpA(buffer, ParseURL_table[i].newurl),
-            "#%d: got %d and %d with '%s' (expected '!=0' and %d with '%s')\n",
+            "#%d: got %ld and %ld with '%s' (expected '!=0' and %ld with '%s')\n",
             i, res, len, buffer, ParseURL_table[i].len, ParseURL_table[i].newurl);
 
 
@@ -233,7 +233,7 @@ static void test_ParseURLFromOutsideSourceA(void)
         res = pParseURLFromOutsideSourceA(ParseURL_table[i].url, buffer, &len, &dummy);
         ok( res != 0 && len == ParseURL_table[i].len &&
             !lstrcmpA(buffer, ParseURL_table[i].newurl),
-            "#%d (+1): got %d and %d with '%s' (expected '!=0' and %d with '%s')\n",
+            "#%d (+1): got %ld and %ld with '%s' (expected '!=0' and %ld with '%s')\n",
             i, res, len, buffer, ParseURL_table[i].len, ParseURL_table[i].newurl);
 
         memset(buffer, '#', sizeof(buffer)-1);
@@ -243,7 +243,7 @@ static void test_ParseURLFromOutsideSourceA(void)
         res = pParseURLFromOutsideSourceA(ParseURL_table[i].url, buffer, &len, &dummy);
         /* len includes the terminating 0, when the buffer is too small */
         ok( res == 0 && len == ParseURL_table[i].len + 1,
-            "#%d (==): got %d and %d (expected '0' and %d)\n",
+            "#%d (==): got %ld and %ld (expected '0' and %ld)\n",
             i, res, len, ParseURL_table[i].len + 1);
 
         memset(buffer, '#', sizeof(buffer)-1);
@@ -253,7 +253,7 @@ static void test_ParseURLFromOutsideSourceA(void)
         res = pParseURLFromOutsideSourceA(ParseURL_table[i].url, buffer, &len, &dummy);
         /* len includes the terminating 0 on XP SP1 and before, when the buffer is too small */
         ok( res == 0 && (len == ParseURL_table[i].len || len == ParseURL_table[i].len + 1),
-            "#%d (-1): got %d and %d (expected '0' and %d or %d)\n",
+            "#%d (-1): got %ld and %ld (expected '0' and %ld or %ld)\n",
             i, res, len, ParseURL_table[i].len, ParseURL_table[i].len + 1);
 
         memset(buffer, '#', sizeof(buffer)-1);
@@ -263,7 +263,7 @@ static void test_ParseURLFromOutsideSourceA(void)
         res = pParseURLFromOutsideSourceA(ParseURL_table[i].url, NULL, &len, &dummy);
         /* len does not include the terminating 0, when buffer is NULL */
         ok( res == 0 && len == ParseURL_table[i].len,
-            "#%d (buffer): got %d and %d (expected '0' and %d)\n",
+            "#%d (buffer): got %ld and %ld (expected '0' and %ld)\n",
             i, res, len, ParseURL_table[i].len);
 
         if (0) {
@@ -278,7 +278,7 @@ static void test_ParseURLFromOutsideSourceA(void)
         res = pParseURLFromOutsideSourceA(ParseURL_table[i].url, buffer, &len, NULL);
         ok( res != 0 && len == ParseURL_table[i].len &&
             !lstrcmpA(buffer, ParseURL_table[i].newurl),
-            "#%d (unknown): got %d and %d with '%s' (expected '!=0' and %d with '%s')\n",
+            "#%d (unknown): got %ld and %ld with '%s' (expected '!=0' and %ld with '%s')\n",
             i, res, len, buffer, ParseURL_table[i].len, ParseURL_table[i].newurl);
     }
 }
@@ -312,7 +312,7 @@ static void test_ParseURLFromOutsideSourceW(void)
     WideCharToMultiByte(CP_ACP, 0, bufferW, -1, bufferA, sizeof(bufferA), NULL, NULL);
     ok( res != 0 && len == ParseURL_table[0].len &&
         !lstrcmpA(bufferA, ParseURL_table[0].newurl),
-        "got %d and %d with '%s' (expected '!=0' and %d with '%s')\n",
+        "got %ld and %ld with '%s' (expected '!=0' and %ld with '%s')\n",
         res, len, bufferA, ParseURL_table[0].len, ParseURL_table[0].newurl);
 
 
@@ -328,7 +328,7 @@ static void test_ParseURLFromOutsideSourceW(void)
     /* len does not include the terminating 0, when buffer is large enough */
     ok( res != 0 && len == ParseURL_table[0].len &&
         !lstrcmpA(bufferA, ParseURL_table[0].newurl),
-        "+1: got %d and %d with '%s' (expected '!=0' and %d with '%s')\n",
+        "+1: got %ld and %ld with '%s' (expected '!=0' and %ld with '%s')\n",
         res, len, bufferA, ParseURL_table[0].len, ParseURL_table[0].newurl);
 
     len = maxlen;
@@ -336,7 +336,7 @@ static void test_ParseURLFromOutsideSourceW(void)
     res = pParseURLFromOutsideSourceW(urlW, bufferW, &len, &dummy);
     /* len includes the terminating 0, when the buffer is too small */
     ok( res == 0 && len == ParseURL_table[0].len + 1,
-        "==: got %d and %d (expected '0' and %d)\n",
+        "==: got %ld and %ld (expected '0' and %ld)\n",
         res, len, ParseURL_table[0].len + 1);
 
     len = maxlen - 1;
@@ -344,7 +344,7 @@ static void test_ParseURLFromOutsideSourceW(void)
     res = pParseURLFromOutsideSourceW(urlW, bufferW, &len, &dummy);
     /* len includes the terminating 0 on XP SP1 and before, when the buffer is too small */
     ok( res == 0 && (len == ParseURL_table[0].len || len == ParseURL_table[0].len + 1),
-        "-1: got %d and %d (expected '0' and %d or %d)\n",
+        "-1: got %ld and %ld (expected '0' and %ld or %ld)\n",
         res, len, ParseURL_table[0].len, ParseURL_table[0].len + 1);
 
 }
