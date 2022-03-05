@@ -89,32 +89,32 @@ static void test_QueryAssemblyInfo( void )
     const WCHAR *comctlW;
 
     hr = CreateAssemblyCache( &cache, 0 );
-    ok( hr == S_OK, "got %08x\n", hr );
-    ok( cache != NULL, "got %08x\n", hr );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( cache != NULL, "got %08lx\n", hr );
 
     hr = IAssemblyCache_QueryAssemblyInfo( cache, 0, NULL, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %08lx\n", hr );
 
     hr = IAssemblyCache_QueryAssemblyInfo( cache, 0, emptyW, NULL );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( hr == E_INVALIDARG, "got %08lx\n", hr );
 
     hr = IAssemblyCache_QueryAssemblyInfo( cache, 0, wine1W, NULL );
     ok( hr == HRESULT_FROM_WIN32( ERROR_SXS_MISSING_ASSEMBLY_IDENTITY_ATTRIBUTE ) ||
-        broken(hr == E_INVALIDARG) /* winxp */, "got %08x\n", hr );
+        broken(hr == E_INVALIDARG) /* winxp */, "got %08lx\n", hr );
 
     hr = IAssemblyCache_QueryAssemblyInfo( cache, 0, wine2W, NULL );
     ok( hr == HRESULT_FROM_WIN32( ERROR_SXS_MISSING_ASSEMBLY_IDENTITY_ATTRIBUTE ) ||
-        broken(hr == HRESULT_FROM_WIN32( ERROR_NOT_FOUND )) /* winxp */, "got %08x\n", hr );
+        broken(hr == HRESULT_FROM_WIN32( ERROR_NOT_FOUND )) /* winxp */, "got %08lx\n", hr );
 
     hr = IAssemblyCache_QueryAssemblyInfo( cache, 0, wine3W, NULL );
     ok( hr == HRESULT_FROM_WIN32( ERROR_SXS_MISSING_ASSEMBLY_IDENTITY_ATTRIBUTE ) ||
-        broken(hr == HRESULT_FROM_WIN32( ERROR_NOT_FOUND )) /* winxp */, "got %08x\n", hr );
+        broken(hr == HRESULT_FROM_WIN32( ERROR_NOT_FOUND )) /* winxp */, "got %08lx\n", hr );
 
     hr = IAssemblyCache_QueryAssemblyInfo( cache, 0, wine4W, NULL );
-    todo_wine ok( hr == HRESULT_FROM_WIN32( ERROR_NOT_FOUND ), "got %08x\n", hr );
+    todo_wine ok( hr == HRESULT_FROM_WIN32( ERROR_NOT_FOUND ), "got %08lx\n", hr );
 
     hr = IAssemblyCache_QueryAssemblyInfo( cache, 0, wine5W, NULL );
-    todo_wine ok( hr == HRESULT_FROM_WIN32( ERROR_NOT_FOUND ), "got %08x\n", hr );
+    todo_wine ok( hr == HRESULT_FROM_WIN32( ERROR_NOT_FOUND ), "got %08lx\n", hr );
 
     GetWindowsDirectoryA( comctl_path1, MAX_PATH );
     lstrcatA( comctl_path1, "\\winsxs\\x86_microsoft.windows.common-controls_6595b64144ccf1df_6.0.2600.2982_none_deadbeef" );
@@ -136,31 +136,31 @@ static void test_QueryAssemblyInfo( void )
     }
 
     hr = IAssemblyCache_QueryAssemblyInfo( cache, 0, comctlW, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %08lx\n", hr );
 
     memset( &info, 0, sizeof(info) );
     info.cbAssemblyInfo = sizeof(info);
     hr = IAssemblyCache_QueryAssemblyInfo( cache, 0, wine5W, &info );
-    todo_wine ok( hr == HRESULT_FROM_WIN32( ERROR_NOT_FOUND ), "got %08x\n", hr );
+    todo_wine ok( hr == HRESULT_FROM_WIN32( ERROR_NOT_FOUND ), "got %08lx\n", hr );
 
     memset( &info, 0, sizeof(info) );
     info.cbAssemblyInfo = sizeof(info);
     hr = IAssemblyCache_QueryAssemblyInfo( cache, 0, comctlW, &info );
-    ok( hr == S_OK, "got %08x\n", hr );
-    ok( info.dwAssemblyFlags == 1, "got %08x\n", info.dwAssemblyFlags );
-    ok( !info.uliAssemblySizeInKB.u.LowPart, "got %u\n", info.uliAssemblySizeInKB.u.LowPart );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( info.dwAssemblyFlags == 1, "got %08lx\n", info.dwAssemblyFlags );
+    ok( !info.uliAssemblySizeInKB.u.LowPart, "got %lu\n", info.uliAssemblySizeInKB.u.LowPart );
     ok( info.pszCurrentAssemblyPathBuf == NULL, "got %p\n", info.pszCurrentAssemblyPathBuf );
-    ok( !info.cchBuf, "got %u\n", info.cchBuf );
+    ok( !info.cchBuf, "got %lu\n", info.cchBuf );
 
     memset( &info, 0, sizeof(info) );
     info.cbAssemblyInfo = sizeof(info);
     info.pszCurrentAssemblyPathBuf = path;
     info.cchBuf = ARRAY_SIZE( path );
     hr = IAssemblyCache_QueryAssemblyInfo( cache, 0, comctlW, &info );
-    ok( hr == S_OK, "got %08x\n", hr );
-    ok( info.dwAssemblyFlags == 1, "got %08x\n", info.dwAssemblyFlags );
-    ok( !info.uliAssemblySizeInKB.u.LowPart, "got %u\n", info.uliAssemblySizeInKB.u.LowPart );
-    ok( info.cchBuf == ARRAY_SIZE( path ), "got %u\n", info.cchBuf );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( info.dwAssemblyFlags == 1, "got %08lx\n", info.dwAssemblyFlags );
+    ok( !info.uliAssemblySizeInKB.u.LowPart, "got %lu\n", info.uliAssemblySizeInKB.u.LowPart );
+    ok( info.cchBuf == ARRAY_SIZE( path ), "got %lu\n", info.cchBuf );
     ok( path[0], "empty path\n" );
     lstrcatW( path, L"comctl32.dll" );
     ok( GetFileAttributesW( path ) != INVALID_FILE_ATTRIBUTES, "%s should exist\n", wine_dbgstr_w( path ));
@@ -169,28 +169,28 @@ static void test_QueryAssemblyInfo( void )
     info.cbAssemblyInfo = sizeof(info);
     info.pszCurrentAssemblyPathBuf = path;
     hr = IAssemblyCache_QueryAssemblyInfo( cache, 0, comctlW, &info );
-    ok( hr == HRESULT_FROM_WIN32( ERROR_INSUFFICIENT_BUFFER ), "got %08x\n", hr );
-    ok( info.dwAssemblyFlags == 1, "got %08x\n", info.dwAssemblyFlags );
-    ok( !info.uliAssemblySizeInKB.u.LowPart, "got %u\n", info.uliAssemblySizeInKB.u.LowPart );
-    ok( info.cchBuf, "got %u\n", info.cchBuf );
+    ok( hr == HRESULT_FROM_WIN32( ERROR_INSUFFICIENT_BUFFER ), "got %08lx\n", hr );
+    ok( info.dwAssemblyFlags == 1, "got %08lx\n", info.dwAssemblyFlags );
+    ok( !info.uliAssemblySizeInKB.u.LowPart, "got %lu\n", info.uliAssemblySizeInKB.u.LowPart );
+    ok( info.cchBuf, "got %lu\n", info.cchBuf );
 
     memset( &info, 0, sizeof(info) );
     info.cbAssemblyInfo = sizeof(info);
     hr = IAssemblyCache_QueryAssemblyInfo( cache, 1, comctlW, &info );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
-    ok( !info.dwAssemblyFlags, "got %08x\n", info.dwAssemblyFlags );
-    ok( !info.uliAssemblySizeInKB.u.LowPart, "got %u\n", info.uliAssemblySizeInKB.u.LowPart );
+    ok( hr == E_INVALIDARG, "got %08lx\n", hr );
+    ok( !info.dwAssemblyFlags, "got %08lx\n", info.dwAssemblyFlags );
+    ok( !info.uliAssemblySizeInKB.u.LowPart, "got %lu\n", info.uliAssemblySizeInKB.u.LowPart );
     ok( info.pszCurrentAssemblyPathBuf == NULL, "got %p\n", info.pszCurrentAssemblyPathBuf );
-    ok( !info.cchBuf, "got %u\n", info.cchBuf );
+    ok( !info.cchBuf, "got %lu\n", info.cchBuf );
 
     memset( &info, 0, sizeof(info) );
     info.cbAssemblyInfo = sizeof(info);
     hr = IAssemblyCache_QueryAssemblyInfo( cache, 2, comctlW, &info );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
-    ok( !info.dwAssemblyFlags, "got %08x\n", info.dwAssemblyFlags );
-    ok( !info.uliAssemblySizeInKB.u.LowPart, "got %u\n", info.uliAssemblySizeInKB.u.LowPart );
+    ok( hr == E_INVALIDARG, "got %08lx\n", hr );
+    ok( !info.dwAssemblyFlags, "got %08lx\n", info.dwAssemblyFlags );
+    ok( !info.uliAssemblySizeInKB.u.LowPart, "got %lu\n", info.uliAssemblySizeInKB.u.LowPart );
     ok( info.pszCurrentAssemblyPathBuf == NULL, "got %p\n", info.pszCurrentAssemblyPathBuf );
-    ok( !info.cchBuf, "got %u\n", info.cchBuf );
+    ok( !info.cchBuf, "got %lu\n", info.cchBuf );
 
     memset( &info, 0, sizeof(info) );
     info.cbAssemblyInfo = sizeof(info);
@@ -198,10 +198,10 @@ static void test_QueryAssemblyInfo( void )
     info.cchBuf = ARRAY_SIZE( path );
     path[0] = 0;
     hr = IAssemblyCache_QueryAssemblyInfo( cache, 2, comctlW, &info );
-    ok( hr == E_INVALIDARG, "got %08x\n", hr );
-    ok( !info.dwAssemblyFlags, "got %08x\n", info.dwAssemblyFlags );
-    ok( !info.uliAssemblySizeInKB.u.LowPart, "got %u\n", info.uliAssemblySizeInKB.u.LowPart );
-    ok( info.cchBuf == ARRAY_SIZE( path ), "got %u\n", info.cchBuf );
+    ok( hr == E_INVALIDARG, "got %08lx\n", hr );
+    ok( !info.dwAssemblyFlags, "got %08lx\n", info.dwAssemblyFlags );
+    ok( !info.uliAssemblySizeInKB.u.LowPart, "got %lu\n", info.uliAssemblySizeInKB.u.LowPart );
+    ok( info.cchBuf == ARRAY_SIZE( path ), "got %lu\n", info.cchBuf );
     ok( !path[0], "got %s\n", wine_dbgstr_w(path) );
 
     IAssemblyCache_Release( cache );
