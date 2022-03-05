@@ -23,8 +23,8 @@
 #include "shlwapi.h"
 #include "shlguid.h"
 
-#define expect(expected, got) ok ( expected == got, "Expected %d, got %d\n", expected, got)
-#define expect_hr(expected, got) ok ( expected == got, "Expected %08x, got %08x\n", expected, got)
+#define expect(expected, got) ok ( expected == got, "Expected %ld, got %ld\n", expected, got)
+#define expect_hr(expected, got) ok ( expected == got, "Expected %08lx, got %08lx\n", expected, got)
 
 static HRESULT (WINAPI *pAssocQueryStringA)(ASSOCF,ASSOCSTR,LPCSTR,LPCSTR,LPSTR,LPDWORD) = NULL;
 static HRESULT (WINAPI *pAssocQueryStringW)(ASSOCF,ASSOCSTR,LPCWSTR,LPCWSTR,LPWSTR,LPDWORD) = NULL;
@@ -53,24 +53,24 @@ static void test_getstring_bad(void)
     len = 0xdeadbeef;
     hr = pAssocQueryStringW(0, ASSOCSTR_EXECUTABLE, NULL, open, NULL, &len);
     expect_hr(E_INVALIDARG, hr);
-    ok(len == 0xdeadbeef, "got %u\n", len);
+    ok(len == 0xdeadbeef, "got %lu\n", len);
 
     len = 0xdeadbeef;
     hr = pAssocQueryStringW(0, ASSOCSTR_EXECUTABLE, badBad, open, NULL, &len);
     ok(hr == E_FAIL ||
        hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION), /* Win9x/WinMe/NT4/W2K/Vista/W2K8 */
-       "Unexpected result : %08x\n", hr);
-    ok(len == 0xdeadbeef, "got %u\n", len);
+       "Unexpected result : %08lx\n", hr);
+    ok(len == 0xdeadbeef, "got %lu\n", len);
 
     len = ARRAY_SIZE(buf);
     hr = pAssocQueryStringW(0, ASSOCSTR_EXECUTABLE, dotBad, open, buf, &len);
     ok(hr == E_FAIL ||
        hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION) /* Win9x/WinMe/NT4/W2K/Vista/W2K8 */ ||
        hr == S_OK /* Win8 */,
-       "Unexpected result : %08x\n", hr);
+       "Unexpected result : %08lx\n", hr);
     if (hr == S_OK)
     {
-        ok(len < ARRAY_SIZE(buf), "got %u\n", len);
+        ok(len < ARRAY_SIZE(buf), "got %lu\n", len);
         ok(!lstrcmpiW(buf + len - ARRAY_SIZE(openwith), openwith), "wrong data\n");
     }
 
@@ -78,25 +78,25 @@ static void test_getstring_bad(void)
     hr = pAssocQueryStringW(0, ASSOCSTR_EXECUTABLE, dotHtml, invalid, NULL, &len);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) ||
        hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION), /* Win9x/WinMe/NT4/W2K/Vista/W2K8 */
-       "Unexpected result : %08x\n", hr);
-    ok(len == 0xdeadbeef, "got %u\n", len);
+       "Unexpected result : %08lx\n", hr);
+    ok(len == 0xdeadbeef, "got %lu\n", len);
 
     hr = pAssocQueryStringW(0, ASSOCSTR_EXECUTABLE, dotHtml, open, NULL, NULL);
     ok(hr == E_UNEXPECTED ||
        hr == E_INVALIDARG, /* Win9x/WinMe/NT4/W2K/Vista/W2K8 */
-       "Unexpected result : %08x\n", hr);
+       "Unexpected result : %08lx\n", hr);
 
     len = 0xdeadbeef;
     hr = pAssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, NULL, open, NULL, &len);
     expect_hr(E_INVALIDARG, hr);
-    ok(len == 0xdeadbeef, "got %u\n", len);
+    ok(len == 0xdeadbeef, "got %lu\n", len);
 
     len = 0xdeadbeef;
     hr = pAssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, badBad, open, NULL, &len);
     ok(hr == E_FAIL ||
        hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION), /* Win9x/WinMe/NT4/W2K/Vista/W2K8 */
-       "Unexpected result : %08x\n", hr);
-    ok(len == 0xdeadbeef, "got %u\n", len);
+       "Unexpected result : %08lx\n", hr);
+    ok(len == 0xdeadbeef, "got %lu\n", len);
 
     len = 0xdeadbeef;
     hr = pAssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotBad, open, NULL, &len);
@@ -104,22 +104,22 @@ static void test_getstring_bad(void)
        hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION) /* Win9x/WinMe/NT4/W2K/Vista/W2K8 */ ||
        hr == HRESULT_FROM_WIN32(ERROR_NOT_FOUND) /* Win8 */ ||
        hr == S_FALSE, /* Win10 */
-       "Unexpected result : %08x\n", hr);
+       "Unexpected result : %08lx\n", hr);
     ok((hr == S_FALSE && len < ARRAY_SIZE(buf)) || len == 0xdeadbeef,
-       "got hr=%08x and len=%u\n", hr, len);
+       "got hr=%08lx and len=%lu\n", hr, len);
 
     len = 0xdeadbeef;
     hr = pAssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotHtml, invalid, NULL, &len);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) ||
        hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION) || /* W2K/Vista/W2K8 */
        hr == E_FAIL, /* Win9x/WinMe/NT4 */
-       "Unexpected result : %08x\n", hr);
-    ok(len == 0xdeadbeef, "got %u\n", len);
+       "Unexpected result : %08lx\n", hr);
+    ok(len == 0xdeadbeef, "got %lu\n", len);
 
     hr = pAssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotHtml, open, NULL, NULL);
     ok(hr == E_UNEXPECTED ||
        hr == E_INVALIDARG, /* Win9x/WinMe/NT4/W2K/Vista/W2K8 */
-       "Unexpected result : %08x\n", hr);
+       "Unexpected result : %08lx\n", hr);
 }
 
 static void test_getstring_basic(void)
@@ -164,7 +164,7 @@ static void test_getstring_basic(void)
     ok(hr == S_FALSE ||
        hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) /* Win9x/NT4 */ ||
        hr == HRESULT_FROM_WIN32(ERROR_NOT_FOUND), /* Win8 */
-       "Unexpected result : %08x\n", hr);
+       "Unexpected result : %08lx\n", hr);
     if (hr != S_FALSE)
     {
         HeapFree(GetProcessHeap(), 0, executableName);
@@ -255,7 +255,7 @@ static void test_getstring_no_extra(void)
     hr = pAssocQueryStringA(0, ASSOCSTR_EXECUTABLE, dotWinetest, NULL, buf, &len);
     ok(hr == S_OK ||
        hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), /* XP and W2K3 */
-       "Unexpected result : %08x\n", hr);
+       "Unexpected result : %08lx\n", hr);
     hr = pAssocQueryStringA(0, ASSOCSTR_EXECUTABLE, dotWinetest, "foo", buf, &len);
     expect_hr(S_OK, hr);
     ok(strstr(buf, action) != NULL,
@@ -279,19 +279,19 @@ static void test_assoc_create(void)
     }
 
     hr = pAssocCreate(IID_NULL, &IID_NULL, NULL);
-    ok(hr == E_INVALIDARG, "Unexpected result : %08x\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected result : %08lx\n", hr);
 
     hr = pAssocCreate(CLSID_QueryAssociations, &IID_NULL, (LPVOID*)&pqa);
     ok(hr == CLASS_E_CLASSNOTAVAILABLE || hr == E_NOTIMPL || hr == E_NOINTERFACE
-        , "Unexpected result : %08x\n", hr);
+        , "Unexpected result : %08lx\n", hr);
 
     hr = pAssocCreate(IID_NULL, &IID_IQueryAssociations, (LPVOID*)&pqa);
     ok(hr == CLASS_E_CLASSNOTAVAILABLE || hr == E_NOTIMPL || hr == E_INVALIDARG
-        , "Unexpected result : %08x\n", hr);
+        , "Unexpected result : %08lx\n", hr);
 
     hr = pAssocCreate(CLSID_QueryAssociations, &IID_IQueryAssociations, (LPVOID*)&pqa);
     ok(hr == S_OK  || hr == E_NOTIMPL /* win98 */
-        , "Unexpected result : %08x\n", hr);
+        , "Unexpected result : %08lx\n", hr);
     if(hr == S_OK)
     {
         IQueryAssociations_Release(pqa);
@@ -299,7 +299,7 @@ static void test_assoc_create(void)
 
     hr = pAssocCreate(CLSID_QueryAssociations, &IID_IUnknown, (LPVOID*)&pqa);
     ok(hr == S_OK  || hr == E_NOTIMPL /* win98 */
-        , "Unexpected result : %08x\n", hr);
+        , "Unexpected result : %08lx\n", hr);
     if(hr == S_OK)
     {
         IQueryAssociations_Release(pqa);

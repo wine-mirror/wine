@@ -197,7 +197,7 @@ static void test_GetAcceptLanguagesA(void)
     /* Get the original Value */
     lres = RegOpenKeyA(HKEY_CURRENT_USER, ie_international, &hroot);
     if (lres) {
-        skip("RegOpenKey(%s) failed: %d\n", ie_international, lres);
+        skip("RegOpenKey(%s) failed: %ld\n", ie_international, lres);
         return;
     }
     len = sizeof(original);
@@ -230,7 +230,7 @@ static void test_GetAcceptLanguagesA(void)
     hr = pGetAcceptLanguagesA( buffer, &len);
 
     if (hr != S_OK) {
-        win_skip("GetAcceptLanguagesA failed with 0x%x\n", hr);
+        win_skip("GetAcceptLanguagesA failed with 0x%lx\n", hr);
         goto restore_original;
     }
 
@@ -238,7 +238,7 @@ static void test_GetAcceptLanguagesA(void)
         /* some windows versions use "lang" or "lang-country" as default */
         language[0] = 0;
         hr = LcidToRfc1766A(lcid, language, sizeof(language));
-        ok(hr == S_OK, "LcidToRfc1766A returned 0x%x and %s\n", hr, language);
+        ok(hr == S_OK, "LcidToRfc1766A returned 0x%lx and %s\n", hr, language);
     }
 
     ok(!lstrcmpA(buffer, language),
@@ -255,7 +255,7 @@ static void test_GetAcceptLanguagesA(void)
         exactsize = lstrlenA(entry);
 
         lres = RegSetValueExA(hroot, acceptlanguage, 0, REG_SZ, (const BYTE *) entry, exactsize + 1);
-        ok(!lres, "got %d for RegSetValueExA: %s\n", lres, entry);
+        ok(!lres, "got %ld for RegSetValueExA: %s\n", lres, entry);
 
         /* len includes space for the terminating 0 before vista/w2k8 */
         len = exactsize + 2;
@@ -266,7 +266,7 @@ static void test_GetAcceptLanguagesA(void)
             (SUCCEEDED(hr) &&
             ((len == exactsize) || (len == exactsize+1)) &&
             !lstrcmpA(buffer, entry)),
-            "+2_#%d: got 0x%x with %d and %s\n", i, hr, len, buffer);
+            "+2_#%d: got 0x%lx with %ld and %s\n", i, hr, len, buffer);
 
         len = exactsize + 1;
         memset(buffer, '#', maxlen);
@@ -276,7 +276,7 @@ static void test_GetAcceptLanguagesA(void)
             (SUCCEEDED(hr) &&
             ((len == exactsize) || (len == exactsize+1)) &&
             !lstrcmpA(buffer, entry)),
-            "+1_#%d: got 0x%x with %d and %s\n", i, hr, len, buffer);
+            "+1_#%d: got 0x%lx with %ld and %s\n", i, hr, len, buffer);
 
         len = exactsize;
         memset(buffer, '#', maxlen);
@@ -296,7 +296,7 @@ static void test_GetAcceptLanguagesA(void)
             ((hr == S_OK) && !memcmp(buffer, language, len)) ||
             ((hr == E_NOT_SUFFICIENT_BUFFER) && !len) ||
             ((hr == __HRESULT_FROM_WIN32(ERROR_MORE_DATA)) && len == exactsize)),
-            "==_#%d: got 0x%x with %d and %s\n", i, hr, len, buffer);
+            "==_#%d: got 0x%lx with %ld and %s\n", i, hr, len, buffer);
 
         if (exactsize > 1) {
             len = exactsize - 1;
@@ -308,7 +308,7 @@ static void test_GetAcceptLanguagesA(void)
                 ((hr == S_OK) && !memcmp(buffer, language, len)) ||
                 ((hr == E_NOT_SUFFICIENT_BUFFER) && !len) ||
                 ((hr == __HRESULT_FROM_WIN32(ERROR_MORE_DATA)) && len == exactsize - 1)),
-                "-1_#%d: got 0x%x with %d and %s\n", i, hr, len, buffer);
+                "-1_#%d: got 0x%lx with %ld and %s\n", i, hr, len, buffer);
         }
 
         len = 1;
@@ -320,7 +320,7 @@ static void test_GetAcceptLanguagesA(void)
             ((hr == S_OK) && !memcmp(buffer, language, len)) ||
             ((hr == E_NOT_SUFFICIENT_BUFFER) && !len) ||
             ((hr == __HRESULT_FROM_WIN32(ERROR_MORE_DATA)) && len == 1)),
-            "=1_#%d: got 0x%x with %d and %s\n", i, hr, len, buffer);
+            "=1_#%d: got 0x%lx with %ld and %s\n", i, hr, len, buffer);
 
         len = maxlen;
         hr = pGetAcceptLanguagesA( NULL, &len);
@@ -329,7 +329,7 @@ static void test_GetAcceptLanguagesA(void)
            since w2k8: S_OK and needed size (excluding 0), win8 S_OK and size including 0. */
         ok( ((hr == S_OK) && ((len == exactsize) || (len == exactsize + 1))) ||
             ((hr == E_FAIL) && (len == maxlen)),
-            "NULL,max #%d: got 0x%x with %d and %s\n", i, hr, len, buffer);
+            "NULL,max #%d: got 0x%lx with %ld and %s\n", i, hr, len, buffer);
 
         i++;
     }
@@ -342,7 +342,7 @@ static void test_GetAcceptLanguagesA(void)
     buffer[maxlen] = 0;
     hr = pGetAcceptLanguagesA( buffer, &len);
     ok( ((hr == S_OK) && (len == lstrlenA(language))),
-        "max: got 0x%x with %d and %s (expected S_OK with %d and '%s'\n",
+        "max: got 0x%lx with %ld and %s (expected S_OK with %d and '%s'\n",
         hr, len, buffer, lstrlenA(language), language);
 
     len = 2;
@@ -352,7 +352,7 @@ static void test_GetAcceptLanguagesA(void)
     ok( (((hr == S_OK) || (hr == E_INVALIDARG)) && !memcmp(buffer, language, len)) ||
         ((hr == E_NOT_SUFFICIENT_BUFFER) && !len) ||
         ((hr == __HRESULT_FROM_WIN32(ERROR_CANNOT_COPY)) && !len),
-        "=2: got 0x%x with %d and %s\n", hr, len, buffer);
+        "=2: got 0x%lx with %ld and %s\n", hr, len, buffer);
 
     len = 1;
     memset(buffer, '#', maxlen);
@@ -365,7 +365,7 @@ static void test_GetAcceptLanguagesA(void)
     ok( (((hr == S_OK) || (hr == E_INVALIDARG)) && !memcmp(buffer, language, len)) ||
         ((hr == E_NOT_SUFFICIENT_BUFFER) && !len) ||
         ((hr == __HRESULT_FROM_WIN32(ERROR_CANNOT_COPY)) && !len),
-        "=1: got 0x%x with %d and %s\n", hr, len, buffer);
+        "=1: got 0x%lx with %ld and %s\n", hr, len, buffer);
 
     len = 0;
     memset(buffer, '#', maxlen);
@@ -373,26 +373,26 @@ static void test_GetAcceptLanguagesA(void)
     hr = pGetAcceptLanguagesA( buffer, &len);
     /* w2k3 and below: E_FAIL, since w2k8: E_INVALIDARG, win8 ERROR_CANNOT_COPY */
     ok((hr == E_FAIL) || (hr == E_INVALIDARG) || (hr == __HRESULT_FROM_WIN32(ERROR_CANNOT_COPY)),
-        "got 0x%x\n", hr);
+        "got 0x%lx\n", hr);
 
     memset(buffer, '#', maxlen);
     buffer[maxlen] = 0;
     hr = pGetAcceptLanguagesA( buffer, NULL);
     /* w2k3 and below: E_FAIL, since w2k8: E_INVALIDARG */
     ok((hr == E_FAIL) || (hr == E_INVALIDARG),
-        "got 0x%x (expected E_FAIL or E_INVALIDARG)\n", hr);
+        "got 0x%lx (expected E_FAIL or E_INVALIDARG)\n", hr);
 
 
     hr = pGetAcceptLanguagesA( NULL, NULL);
     /* w2k3 and below: E_FAIL, since w2k8: E_INVALIDARG */
     ok((hr == E_FAIL) || (hr == E_INVALIDARG),
-        "got 0x%x (expected E_FAIL or E_INVALIDARG)\n", hr);
+        "got 0x%lx (expected E_FAIL or E_INVALIDARG)\n", hr);
 
 restore_original:
     if (!res_query) {
         len = lstrlenA(original);
         lres = RegSetValueExA(hroot, acceptlanguage, 0, REG_SZ, (const BYTE *) original, len ? len + 1: 0);
-        ok(!lres, "RegSetValueEx(%s) failed: %d\n", original, lres);
+        ok(!lres, "RegSetValueEx(%s) failed: %ld\n", original, lres);
     }
     else
     {
@@ -460,25 +460,25 @@ static void test_alloc_shared(int argc, char **argv)
 
     procid=GetCurrentProcessId();
     hmem=pSHAllocShared(NULL,10,procid);
-    ok(hmem!=NULL,"SHAllocShared(NULL...) failed: %u\n", GetLastError());
+    ok(hmem!=NULL,"SHAllocShared(NULL...) failed: %lu\n", GetLastError());
     ret = pSHFreeShared(hmem, procid);
-    ok( ret, "SHFreeShared failed: %u\n", GetLastError());
+    ok( ret, "SHFreeShared failed: %lu\n", GetLastError());
 
     val.value = 0x12345678;
     val.handle = 0;
     hmem = pSHAllocShared(&val, sizeof(val), procid);
-    ok(hmem!=NULL,"SHAllocShared(NULL...) failed: %u\n", GetLastError());
+    ok(hmem!=NULL,"SHAllocShared(NULL...) failed: %lu\n", GetLastError());
 
     p=pSHLockShared(hmem,procid);
-    ok(p!=NULL,"SHLockShared failed: %u\n", GetLastError());
+    ok(p!=NULL,"SHLockShared failed: %lu\n", GetLastError());
     if (p!=NULL)
-        ok(p->value == 0x12345678, "Wrong value in shared memory: %d instead of %d\n", p->value, 0x12345678);
+        ok(p->value == 0x12345678, "Wrong value in shared memory: %ld instead of %d\n", p->value, 0x12345678);
     ret = pSHUnlockShared(p);
-    ok( ret, "SHUnlockShared failed: %u\n", GetLastError());
+    ok( ret, "SHUnlockShared failed: %lu\n", GetLastError());
 
-    sprintf(cmdline, "%s %s %d %p", argv[0], argv[1], procid, hmem);
+    sprintf(cmdline, "%s %s %ld %p", argv[0], argv[1], procid, hmem);
     ret = CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
-    ok(ret, "could not create child process error: %u\n", GetLastError());
+    ok(ret, "could not create child process error: %lu\n", GetLastError());
     if (ret)
     {
         wait_child_process(pi.hProcess);
@@ -486,37 +486,37 @@ static void test_alloc_shared(int argc, char **argv)
         CloseHandle(pi.hProcess);
 
         p = pSHLockShared(hmem, procid);
-        ok(p != NULL,"SHLockShared failed: %u\n", GetLastError());
+        ok(p != NULL,"SHLockShared failed: %lu\n", GetLastError());
         if (p != NULL && p->value != 0x12345678)
         {
-            ok(p->value == 0x12345679, "Wrong value in shared memory: %d instead of %d\n", p->value, 0x12345679);
+            ok(p->value == 0x12345679, "Wrong value in shared memory: %ld instead of %d\n", p->value, 0x12345679);
             hmem2 = p->handle;
             ok(hmem2 != NULL, "Expected handle in shared memory\n");
         }
         ret = pSHUnlockShared(p);
-        ok(ret, "SHUnlockShared failed: %u\n", GetLastError());
+        ok(ret, "SHUnlockShared failed: %lu\n", GetLastError());
     }
 
     ret = pSHFreeShared(hmem, procid);
-    ok( ret, "SHFreeShared failed: %u\n", GetLastError());
+    ok( ret, "SHFreeShared failed: %lu\n", GetLastError());
 
     if (hmem2)
     {
         p = pSHLockShared(hmem2, procid);
-        ok(p != NULL,"SHLockShared failed: %u\n", GetLastError());
+        ok(p != NULL,"SHLockShared failed: %lu\n", GetLastError());
         if (p != NULL)
-            ok(p->value == 0xDEADBEEF, "Wrong value in shared memory: %d instead of %d\n", p->value, 0xDEADBEEF);
+            ok(p->value == 0xDEADBEEF, "Wrong value in shared memory: %ld instead of %d\n", p->value, 0xDEADBEEF);
         ret = pSHUnlockShared(p);
-        ok(ret, "SHUnlockShared failed: %u\n", GetLastError());
+        ok(ret, "SHUnlockShared failed: %lu\n", GetLastError());
 
         ret = pSHFreeShared(hmem2, procid);
-        ok(ret, "SHFreeShared failed: %u\n", GetLastError());
+        ok(ret, "SHFreeShared failed: %lu\n", GetLastError());
     }
 
     SetLastError(0xdeadbeef);
     ret = pSHFreeShared(NULL, procid);
-    ok(ret, "SHFreeShared failed: %u\n", GetLastError());
-    ok(GetLastError() == 0xdeadbeef, "last error should not have changed, got %u\n", GetLastError());
+    ok(ret, "SHFreeShared failed: %lu\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "last error should not have changed, got %lu\n", GetLastError());
 }
 
 static void test_alloc_shared_remote(DWORD procid, HANDLE hmem)
@@ -527,36 +527,36 @@ static void test_alloc_shared_remote(DWORD procid, HANDLE hmem)
 
     /* test directly accessing shared memory of a remote process */
     p = pSHLockShared(hmem, procid);
-    ok(p != NULL || broken(p == NULL) /* Windows 7/8 */, "SHLockShared failed: %u\n", GetLastError());
+    ok(p != NULL || broken(p == NULL) /* Windows 7/8 */, "SHLockShared failed: %lu\n", GetLastError());
     if (p == NULL)
     {
         win_skip("Subprocess failed to modify shared memory, skipping test\n");
         return;
     }
 
-    ok(p->value == 0x12345678, "Wrong value in shared memory: %d instead of %d\n", p->value, 0x12345678);
+    ok(p->value == 0x12345678, "Wrong value in shared memory: %ld instead of %d\n", p->value, 0x12345678);
     p->value++;
 
     val.value = 0xDEADBEEF;
     val.handle = 0;
     p->handle = pSHAllocShared(&val, sizeof(val), procid);
-    ok(p->handle != NULL, "SHAllocShared failed: %u\n", GetLastError());
+    ok(p->handle != NULL, "SHAllocShared failed: %lu\n", GetLastError());
 
     ret = pSHUnlockShared(p);
-    ok(ret, "SHUnlockShared failed: %u\n", GetLastError());
+    ok(ret, "SHUnlockShared failed: %lu\n", GetLastError());
 
     /* test SHMapHandle */
     SetLastError(0xdeadbeef);
     hmem2 = pSHMapHandle(NULL, procid, GetCurrentProcessId(), 0, 0);
     ok(hmem2 == NULL, "expected NULL, got new handle\n");
-    ok(GetLastError() == 0xdeadbeef, "last error should not have changed, got %u\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "last error should not have changed, got %lu\n", GetLastError());
 
     hmem2 = pSHMapHandle(hmem, procid, GetCurrentProcessId(), 0, 0);
 
     /* It seems like Windows Vista/2008 uses a different internal implementation
      * for shared memory, and calling SHMapHandle fails. */
     ok(hmem2 != NULL || broken(hmem2 == NULL),
-       "SHMapHandle failed: %u\n", GetLastError());
+       "SHMapHandle failed: %lu\n", GetLastError());
     if (hmem2 == NULL)
     {
         win_skip("Subprocess failed to map shared memory, skipping test\n");
@@ -564,16 +564,16 @@ static void test_alloc_shared_remote(DWORD procid, HANDLE hmem)
     }
 
     p = pSHLockShared(hmem2, GetCurrentProcessId());
-    ok(p != NULL, "SHLockShared failed: %u\n", GetLastError());
+    ok(p != NULL, "SHLockShared failed: %lu\n", GetLastError());
 
     if (p != NULL)
-        ok(p->value == 0x12345679, "Wrong value in shared memory: %d instead of %d\n", p->value, 0x12345679);
+        ok(p->value == 0x12345679, "Wrong value in shared memory: %ld instead of %d\n", p->value, 0x12345679);
 
     ret = pSHUnlockShared(p);
-    ok(ret, "SHUnlockShared failed: %u\n", GetLastError());
+    ok(ret, "SHUnlockShared failed: %lu\n", GetLastError());
 
     ret = pSHFreeShared(hmem2, GetCurrentProcessId());
-    ok(ret, "SHFreeShared failed: %u\n", GetLastError());
+    ok(ret, "SHFreeShared failed: %lu\n", GetLastError());
 }
 
 static void test_fdsa(void)
@@ -608,52 +608,52 @@ static void test_fdsa(void)
     memset(&info, 0, sizeof(info));
 
     ok(pFDSA_Initialize(block_size, inc, &info, mem, init_blocks), "FDSA_Initialize rets FALSE\n");
-    ok(info.num_items == 0, "num_items = %d\n", info.num_items);
+    ok(info.num_items == 0, "num_items = %ld\n", info.num_items);
     ok(info.mem == mem, "mem = %p\n", info.mem);
-    ok(info.blocks_alloced == init_blocks, "blocks_alloced = %d\n", info.blocks_alloced);
+    ok(info.blocks_alloced == init_blocks, "blocks_alloced = %ld\n", info.blocks_alloced);
     ok(info.inc == inc, "inc = %d\n", info.inc);
     ok(info.block_size == block_size, "block_size = %d\n", info.block_size);
     ok(info.flags == 0, "flags = %d\n", info.flags);
 
     ret = pFDSA_InsertItem(&info, 1234, "1234567890");
-    ok(ret == 0, "ret = %d\n", ret);
-    ok(info.num_items == 1, "num_items = %d\n", info.num_items);
+    ok(ret == 0, "ret = %ld\n", ret);
+    ok(info.num_items == 1, "num_items = %ld\n", info.num_items);
     ok(info.mem == mem, "mem = %p\n", info.mem);
-    ok(info.blocks_alloced == init_blocks, "blocks_alloced = %d\n", info.blocks_alloced);
+    ok(info.blocks_alloced == init_blocks, "blocks_alloced = %ld\n", info.blocks_alloced);
     ok(info.inc == inc, "inc = %d\n", info.inc);
     ok(info.block_size == block_size, "block_size = %d\n", info.block_size);
     ok(info.flags == 0, "flags = %d\n", info.flags);
 
     ret = pFDSA_InsertItem(&info, 1234, "abcdefghij");
-    ok(ret == 1, "ret = %d\n", ret);
+    ok(ret == 1, "ret = %ld\n", ret);
 
     ret = pFDSA_InsertItem(&info, 1, "klmnopqrst");
-    ok(ret == 1, "ret = %d\n", ret);
+    ok(ret == 1, "ret = %ld\n", ret);
 
     ret = pFDSA_InsertItem(&info, 0, "uvwxyzABCD");
-    ok(ret == 0, "ret = %d\n", ret);
+    ok(ret == 0, "ret = %ld\n", ret);
     ok(info.mem == mem, "mem = %p\n", info.mem);
     ok(info.flags == 0, "flags = %d\n", info.flags);
 
     /* This next InsertItem will cause shlwapi to allocate its own mem buffer */
     ret = pFDSA_InsertItem(&info, 0, "EFGHIJKLMN");
-    ok(ret == 0, "ret = %d\n", ret);
+    ok(ret == 0, "ret = %ld\n", ret);
     ok(info.mem != mem, "mem = %p\n", info.mem);
-    ok(info.blocks_alloced == init_blocks + inc, "blocks_alloced = %d\n", info.blocks_alloced);
+    ok(info.blocks_alloced == init_blocks + inc, "blocks_alloced = %ld\n", info.blocks_alloced);
     ok(info.flags == 0x1, "flags = %d\n", info.flags);
 
     ok(!memcmp(info.mem, "EFGHIJKLMNuvwxyzABCD1234567890klmnopqrstabcdefghij", 50), "mem %s\n", (char*)info.mem);
 
     ok(pFDSA_DeleteItem(&info, 2), "rets FALSE\n");
     ok(info.mem != mem, "mem = %p\n", info.mem);
-    ok(info.blocks_alloced == init_blocks + inc, "blocks_alloced = %d\n", info.blocks_alloced);
+    ok(info.blocks_alloced == init_blocks + inc, "blocks_alloced = %ld\n", info.blocks_alloced);
     ok(info.flags == 0x1, "flags = %d\n", info.flags);
 
     ok(!memcmp(info.mem, "EFGHIJKLMNuvwxyzABCDklmnopqrstabcdefghij", 40), "mem %s\n", (char*)info.mem);
 
     ok(pFDSA_DeleteItem(&info, 3), "rets FALSE\n");
     ok(info.mem != mem, "mem = %p\n", info.mem);
-    ok(info.blocks_alloced == init_blocks + inc, "blocks_alloced = %d\n", info.blocks_alloced);
+    ok(info.blocks_alloced == init_blocks + inc, "blocks_alloced = %ld\n", info.blocks_alloced);
     ok(info.flags == 0x1, "flags = %d\n", info.flags);
 
     ok(!memcmp(info.mem, "EFGHIJKLMNuvwxyzABCDklmnopqrst", 30), "mem %s\n", (char*)info.mem);
@@ -716,11 +716,11 @@ static void test_GetShellSecurityDescriptor(void)
         ok(IsValidSecurityDescriptor(psd), "returned value is not valid SD\n");
 
         ret = GetSecurityDescriptorControl(psd, &control, &dwRev);
-        ok(ret, "GetSecurityDescriptorControl failed with error %u\n", GetLastError());
+        ok(ret, "GetSecurityDescriptorControl failed with error %lu\n", GetLastError());
         ok(0 == (control & SE_SELF_RELATIVE), "SD should be absolute\n");
 
         ret = GetSecurityDescriptorDacl(psd, &bHasDacl, &pAcl, &bDefaulted);
-        ok(ret, "GetSecurityDescriptorDacl failed with error %u\n", GetLastError());
+        ok(ret, "GetSecurityDescriptorDacl failed with error %lu\n", GetLastError());
 
         ok(bHasDacl, "SD has no DACL\n");
         if (bHasDacl)
@@ -735,36 +735,36 @@ static void test_GetShellSecurityDescriptor(void)
                 ok(IsValidAcl(pAcl), "DACL is not valid\n");
 
                 ret = GetAclInformation(pAcl, &asiSize, sizeof(asiSize), AclSizeInformation);
-                ok(ret, "GetAclInformation failed with error %u\n", GetLastError());
+                ok(ret, "GetAclInformation failed with error %lu\n", GetLastError());
 
-                ok(asiSize.AceCount == 3, "Incorrect number of ACEs: %d entries\n", asiSize.AceCount);
+                ok(asiSize.AceCount == 3, "Incorrect number of ACEs: %ld entries\n", asiSize.AceCount);
                 if (asiSize.AceCount == 3)
                 {
                     ACCESS_ALLOWED_ACE *paaa; /* will use for DENIED too */
 
                     ret = GetAce(pAcl, 0, (LPVOID*)&paaa);
-                    ok(ret, "GetAce failed with error %u\n", GetLastError());
+                    ok(ret, "GetAce failed with error %lu\n", GetLastError());
                     ok(paaa->Header.AceType == ACCESS_ALLOWED_ACE_TYPE, 
                             "Invalid ACE type %d\n", paaa->Header.AceType); 
                     ok(paaa->Header.AceFlags == 0, "Invalid ACE flags %x\n", paaa->Header.AceFlags);
-                    ok(paaa->Mask == GENERIC_ALL, "Invalid ACE mask %x\n", paaa->Mask);
+                    ok(paaa->Mask == GENERIC_ALL, "Invalid ACE mask %lx\n", paaa->Mask);
 
                     ret = GetAce(pAcl, 1, (LPVOID*)&paaa);
-                    ok(ret, "GetAce failed with error %u\n", GetLastError());
+                    ok(ret, "GetAce failed with error %lu\n", GetLastError());
                     ok(paaa->Header.AceType == ACCESS_DENIED_ACE_TYPE, 
                             "Invalid ACE type %d\n", paaa->Header.AceType); 
                     /* first one of two ACEs generated from inheritable entry - without inheritance */
                     ok(paaa->Header.AceFlags == 0, "Invalid ACE flags %x\n", paaa->Header.AceFlags);
-                    ok(paaa->Mask == GENERIC_WRITE, "Invalid ACE mask %x\n", paaa->Mask);
+                    ok(paaa->Mask == GENERIC_WRITE, "Invalid ACE mask %lx\n", paaa->Mask);
 
                     ret = GetAce(pAcl, 2, (LPVOID*)&paaa);
-                    ok(ret, "GetAce failed with error %u\n", GetLastError());
+                    ok(ret, "GetAce failed with error %lu\n", GetLastError());
                     ok(paaa->Header.AceType == ACCESS_DENIED_ACE_TYPE, 
                             "Invalid ACE type %d\n", paaa->Header.AceType); 
                     /* second ACE - with inheritance */
                     ok(paaa->Header.AceFlags == MY_INHERITANCE,
                             "Invalid ACE flags %x\n", paaa->Header.AceFlags);
-                    ok(paaa->Mask == GENERIC_READ, "Invalid ACE mask %x\n", paaa->Mask);
+                    ok(paaa->Mask == GENERIC_READ, "Invalid ACE mask %lx\n", paaa->Mask);
                 }
             }
         }
@@ -782,17 +782,17 @@ static void test_SHPackDispParams(void)
     memset(&params, 0xc0, sizeof(params));
     memset(vars, 0xc0, sizeof(vars));
     hres = pSHPackDispParams(&params, vars, 1, VT_I4, 0xdeadbeef);
-    ok(hres == S_OK, "SHPackDispParams failed: %08x\n", hres);
+    ok(hres == S_OK, "SHPackDispParams failed: %08lx\n", hres);
     ok(params.cArgs == 1, "params.cArgs = %d\n", params.cArgs);
     ok(params.cNamedArgs == 0, "params.cNamedArgs = %d\n", params.cArgs);
     ok(params.rgdispidNamedArgs == NULL, "params.rgdispidNamedArgs = %p\n", params.rgdispidNamedArgs);
     ok(params.rgvarg == vars, "params.rgvarg = %p\n", params.rgvarg);
     ok(V_VT(vars) == VT_I4, "V_VT(var) = %d\n", V_VT(vars));
-    ok(V_I4(vars) == 0xdeadbeef, "failed %x\n", V_I4(vars));
+    ok(V_I4(vars) == 0xdeadbeef, "failed %lx\n", V_I4(vars));
 
     memset(&params, 0xc0, sizeof(params));
     hres = pSHPackDispParams(&params, NULL, 0, 0);
-    ok(hres == S_OK, "SHPackDispParams failed: %08x\n", hres);
+    ok(hres == S_OK, "SHPackDispParams failed: %08lx\n", hres);
     ok(params.cArgs == 0, "params.cArgs = %d\n", params.cArgs);
     ok(params.cNamedArgs == 0, "params.cNamedArgs = %d\n", params.cArgs);
     ok(params.rgdispidNamedArgs == NULL, "params.rgdispidNamedArgs = %p\n", params.rgdispidNamedArgs);
@@ -802,17 +802,17 @@ static void test_SHPackDispParams(void)
     memset(&params, 0xc0, sizeof(params));
     hres = pSHPackDispParams(&params, vars, 4, VT_BSTR, (void*)0xdeadbeef, VT_EMPTY, 10,
             VT_I4, 100, VT_DISPATCH, (void*)0xdeadbeef);
-    ok(hres == S_OK, "SHPackDispParams failed: %08x\n", hres);
+    ok(hres == S_OK, "SHPackDispParams failed: %08lx\n", hres);
     ok(params.cArgs == 4, "params.cArgs = %d\n", params.cArgs);
     ok(params.cNamedArgs == 0, "params.cNamedArgs = %d\n", params.cArgs);
     ok(params.rgdispidNamedArgs == NULL, "params.rgdispidNamedArgs = %p\n", params.rgdispidNamedArgs);
     ok(params.rgvarg == vars, "params.rgvarg = %p\n", params.rgvarg);
     ok(V_VT(vars) == VT_DISPATCH, "V_VT(vars[0]) = %x\n", V_VT(vars));
-    ok(V_I4(vars) == 0xdeadbeef, "V_I4(vars[0]) = %x\n", V_I4(vars));
+    ok(V_I4(vars) == 0xdeadbeef, "V_I4(vars[0]) = %lx\n", V_I4(vars));
     ok(V_VT(vars+1) == VT_I4, "V_VT(vars[1]) = %d\n", V_VT(vars+1));
-    ok(V_I4(vars+1) == 100, "V_I4(vars[1]) = %x\n", V_I4(vars+1));
+    ok(V_I4(vars+1) == 100, "V_I4(vars[1]) = %lx\n", V_I4(vars+1));
     ok(V_VT(vars+2) == VT_I4, "V_VT(vars[2]) = %d\n", V_VT(vars+2));
-    ok(V_I4(vars+2) == 10, "V_I4(vars[2]) = %x\n", V_I4(vars+2));
+    ok(V_I4(vars+2) == 10, "V_I4(vars[2]) = %lx\n", V_I4(vars+2));
     ok(V_VT(vars+3) == VT_BSTR, "V_VT(vars[3]) = %d\n", V_VT(vars+3));
     ok(V_BSTR(vars+3) == (void*)0xdeadbeef, "V_BSTR(vars[3]) = %p\n", V_BSTR(vars+3));
 }
@@ -964,13 +964,13 @@ static HRESULT WINAPI Disp_Invoke(
         EXCEPINFO *pExcepInfo,
         UINT *puArgErr)
 {
-    trace("%p %x %s %x %x %p %p %p %p\n", This, dispIdMember, wine_dbgstr_guid(riid), lcid, wFlags,
+    trace("%p %lx %s %lx %x %p %p %p %p\n", This, dispIdMember, wine_dbgstr_guid(riid), lcid, wFlags,
           pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     ok(dispIdMember == 0xa0 || dispIdMember == 0xa1, "Unknown dispIdMember\n");
     ok(pDispParams != NULL, "Invoked with NULL pDispParams\n");
     ok(wFlags == DISPATCH_METHOD, "Wrong flags %x\n",wFlags);
-    ok(lcid == 0,"Wrong lcid %x\n",lcid);
+    ok(lcid == 0,"Wrong lcid %lx\n",lcid);
     if (dispIdMember == 0xa0)
     {
         ok(pDispParams->cArgs == 0, "params.cArgs = %d\n", pDispParams->cArgs);
@@ -986,7 +986,7 @@ static HRESULT WINAPI Disp_Invoke(
         ok(V_VT(pDispParams->rgvarg) == VT_BSTR, "V_VT(var) = %d\n", V_VT(pDispParams->rgvarg));
         ok(V_I4(pDispParams->rgvarg) == 0xdeadcafe , "failed %p\n", V_BSTR(pDispParams->rgvarg));
         ok(V_VT(pDispParams->rgvarg+1) == VT_I4, "V_VT(var) = %d\n", V_VT(pDispParams->rgvarg+1));
-        ok(V_I4(pDispParams->rgvarg+1) == 0xdeadbeef, "failed %x\n", V_I4(pDispParams->rgvarg+1));
+        ok(V_I4(pDispParams->rgvarg+1) == 0xdeadbeef, "failed %lx\n", V_I4(pDispParams->rgvarg+1));
     }
 
     return ERROR_SUCCESS;
@@ -1461,32 +1461,32 @@ static void test_IConnectionPoint(void)
 
     rc = pConnectToConnectionPoint((IUnknown*)&dispatch->IDispatch_iface, &IID_NULL, TRUE,
                                    (IUnknown*)&container->IConnectionPointContainer_iface, &cookie, &point);
-    ok(rc == S_OK, "pConnectToConnectionPoint failed with %x\n",rc);
+    ok(rc == S_OK, "pConnectToConnectionPoint failed with %lx\n",rc);
     ok(point != NULL, "returned ConnectionPoint is NULL\n");
     ok(cookie != 0xffffffff, "invalid cookie returned\n");
 
     rc = pIConnectionPoint_SimpleInvoke(point,0xa0,NULL);
-    ok(rc == S_OK, "pConnectToConnectionPoint failed with %x\n",rc);
+    ok(rc == S_OK, "pConnectToConnectionPoint failed with %lx\n",rc);
 
     memset(&params, 0xc0, sizeof(params));
     memset(vars, 0xc0, sizeof(vars));
     rc = pSHPackDispParams(&params, vars, 2, VT_I4, 0xdeadbeef, VT_BSTR, 0xdeadcafe);
-    ok(rc == S_OK, "SHPackDispParams failed: %08x\n", rc);
+    ok(rc == S_OK, "SHPackDispParams failed: %08lx\n", rc);
 
     rc = pIConnectionPoint_SimpleInvoke(point,0xa1,&params);
-    ok(rc == S_OK, "pConnectToConnectionPoint failed with %x\n",rc);
+    ok(rc == S_OK, "pConnectToConnectionPoint failed with %lx\n",rc);
 
     rc = pConnectToConnectionPoint(NULL, &IID_NULL, FALSE,
                                    (IUnknown*)&container->IConnectionPointContainer_iface, &cookie, NULL);
-    ok(rc == S_OK, "pConnectToConnectionPoint failed with %x\n",rc);
+    ok(rc == S_OK, "pConnectToConnectionPoint failed with %lx\n",rc);
 
 /* MSDN says this should be required but it crashes on XP
     IUnknown_Release(point);
 */
     ref = IConnectionPointContainer_Release(&container->IConnectionPointContainer_iface);
-    ok(ref == 0, "leftover IConnectionPointContainer reference %i\n",ref);
+    ok(ref == 0, "leftover IConnectionPointContainer reference %li\n",ref);
     ref = IDispatch_Release(&dispatch->IDispatch_iface);
-    ok(ref == 0, "leftover IDispatch reference %i\n",ref);
+    ok(ref == 0, "leftover IDispatch reference %li\n",ref);
 }
 
 typedef struct _propbag
@@ -1585,16 +1585,16 @@ static void test_SHPropertyBag_ReadLONG(void)
 
     out = 0xfeedface;
     rc = pSHPropertyBag_ReadLONG(NULL, szName1, &out);
-    ok(rc == E_INVALIDARG || broken(rc == S_OK), "incorrect return %x\n",rc);
+    ok(rc == E_INVALIDARG || broken(rc == S_OK), "incorrect return %lx\n",rc);
     ok(out == 0xfeedface, "value should not have changed\n");
     rc = pSHPropertyBag_ReadLONG(&pb->IPropertyBag_iface, NULL, &out);
-    ok(rc == E_INVALIDARG || broken(rc == S_OK) || broken(rc == S_FALSE), "incorrect return %x\n",rc);
+    ok(rc == E_INVALIDARG || broken(rc == S_OK) || broken(rc == S_FALSE), "incorrect return %lx\n",rc);
     ok(out == 0xfeedface, "value should not have changed\n");
     rc = pSHPropertyBag_ReadLONG(&pb->IPropertyBag_iface, szName1, NULL);
-    ok(rc == E_INVALIDARG || broken(rc == S_OK) || broken(rc == S_FALSE), "incorrect return %x\n",rc);
+    ok(rc == E_INVALIDARG || broken(rc == S_OK) || broken(rc == S_FALSE), "incorrect return %lx\n",rc);
     rc = pSHPropertyBag_ReadLONG(&pb->IPropertyBag_iface, szName1, &out);
-    ok(rc == DISP_E_BADVARTYPE || broken(rc == S_OK) || broken(rc == S_FALSE), "incorrect return %x\n",rc);
-    ok(out == 0xfeedface  || broken(out == 0xfeedfa00), "value should not have changed %x\n",out);
+    ok(rc == DISP_E_BADVARTYPE || broken(rc == S_OK) || broken(rc == S_FALSE), "incorrect return %lx\n",rc);
+    ok(out == 0xfeedface  || broken(out == 0xfeedfa00), "value should not have changed %lx\n",out);
     IPropertyBag_Release(&pb->IPropertyBag_iface);
 }
 
@@ -1623,9 +1623,9 @@ static void test_SHSetWindowBits(void)
     /* null window */
     SetLastError(0xdeadbeef);
     style = pSHSetWindowBits(NULL, GWL_STYLE, 0, 0);
-    ok(style == 0, "expected 0 retval, got %d\n", style);
+    ok(style == 0, "expected 0 retval, got %ld\n", style);
     ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE,
-        "expected ERROR_INVALID_WINDOW_HANDLE, got %d\n", GetLastError());
+        "expected ERROR_INVALID_WINDOW_HANDLE, got %ld\n", GetLastError());
 
     /* zero mask, zero flags */
     styleold = GetWindowLongA(hwnd, GWL_STYLE);
@@ -1638,19 +1638,19 @@ static void test_SHSetWindowBits(void)
     ok(styleold & WS_VISIBLE, "expected WS_VISIBLE\n");
     style = pSHSetWindowBits(hwnd, GWL_STYLE, WS_VISIBLE, 0);
 
-    ok(style == styleold, "expected previous style, got %x\n", style);
+    ok(style == styleold, "expected previous style, got %lx\n", style);
     ok((GetWindowLongA(hwnd, GWL_STYLE) & WS_VISIBLE) == 0, "expected updated style\n");
 
     /* test mask, unset style bit used */
     styleold = GetWindowLongA(hwnd, GWL_STYLE);
     style = pSHSetWindowBits(hwnd, GWL_STYLE, WS_VISIBLE, 0);
-    ok(style == styleold, "expected previous style, got %x\n", style);
+    ok(style == styleold, "expected previous style, got %lx\n", style);
     ok(styleold == GetWindowLongA(hwnd, GWL_STYLE), "expected to keep old style\n");
 
     /* set back with flags */
     styleold = GetWindowLongA(hwnd, GWL_STYLE);
     style = pSHSetWindowBits(hwnd, GWL_STYLE, WS_VISIBLE, WS_VISIBLE);
-    ok(style == styleold, "expected previous style, got %x\n", style);
+    ok(style == styleold, "expected previous style, got %lx\n", style);
     ok(GetWindowLongA(hwnd, GWL_STYLE) & WS_VISIBLE, "expected updated style\n");
 
     /* reset and try to set without a mask */
@@ -1658,7 +1658,7 @@ static void test_SHSetWindowBits(void)
     ok((GetWindowLongA(hwnd, GWL_STYLE) & WS_VISIBLE) == 0, "expected updated style\n");
     styleold = GetWindowLongA(hwnd, GWL_STYLE);
     style = pSHSetWindowBits(hwnd, GWL_STYLE, 0, WS_VISIBLE);
-    ok(style == styleold, "expected previous style, got %x\n", style);
+    ok(style == styleold, "expected previous style, got %lx\n", style);
     ok((GetWindowLongA(hwnd, GWL_STYLE) & WS_VISIBLE) == 0, "expected updated style\n");
 
     DestroyWindow(hwnd);
@@ -1687,7 +1687,7 @@ static void test_SHFormatDateTimeA(void)
     buff[0] = 'a'; buff[1] = 0;
     ret = pSHFormatDateTimeA(&filetime, NULL, buff, 0);
     ok(ret == 0, "got %d\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %ld\n", GetLastError());
     ok(buff[0] == 'a', "expected same string, got %s\n", buff);
 
     /* flags needs to have FDTF_NOAUTOREADINGORDER for these tests to succeed on Vista+ */
@@ -1697,20 +1697,20 @@ static void test_SHFormatDateTimeA(void)
     SetLastError(0xdeadbeef);
     ret = pSHFormatDateTimeA(&filetime, &flags, buff, sizeof(buff));
     ok(ret == lstrlenA(buff)+1, "got %d\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %ld\n", GetLastError());
 
     flags = FDTF_NOAUTOREADINGORDER | FDTF_SHORTDATE | FDTF_LONGDATE;
     SetLastError(0xdeadbeef);
     ret = pSHFormatDateTimeA(&filetime, &flags, buff, sizeof(buff));
     ok(ret == lstrlenA(buff)+1, "got %d\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %ld\n", GetLastError());
 
     flags =  FDTF_SHORTDATE | FDTF_LTRDATE | FDTF_RTLDATE;
     SetLastError(0xdeadbeef);
     ret = pSHFormatDateTimeA(&filetime, &flags, buff, sizeof(buff));
     ok(ret == lstrlenA(buff)+1, "got %d\n", ret);
     ok(GetLastError() == 0xdeadbeef,
-        "expected 0xdeadbeef, got %d\n", GetLastError());
+        "expected 0xdeadbeef, got %ld\n", GetLastError());
 
     flags = FDTF_DEFAULT;
     ret = pSHFormatDateTimeA(&filetime, &flags, buff, sizeof(buff));
@@ -1850,13 +1850,13 @@ if (0)
     SetLastError(0xdeadbeef);
     ret = pSHFormatDateTimeW(&filetime, NULL, NULL, 0);
     ok(ret == 0, "expected 0, got %d\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     buff[0] = 'a'; buff[1] = 0;
     ret = pSHFormatDateTimeW(&filetime, NULL, buff, 0);
     ok(ret == 0, "expected 0, got %d\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %ld\n", GetLastError());
     ok(buff[0] == 'a', "expected same string\n");
 
     /* all combinations documented as invalid succeeded */
@@ -1865,14 +1865,14 @@ if (0)
     ret = pSHFormatDateTimeW(&filetime, &flags, buff, ARRAY_SIZE(buff));
     ok(ret == lstrlenW(buff)+1 || ret == lstrlenW(buff),
        "expected %d or %d, got %d\n", lstrlenW(buff)+1, lstrlenW(buff), ret);
-    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %ld\n", GetLastError());
 
     flags = FDTF_SHORTDATE | FDTF_LONGDATE;
     SetLastError(0xdeadbeef);
     ret = pSHFormatDateTimeW(&filetime, &flags, buff, ARRAY_SIZE(buff));
     ok(ret == lstrlenW(buff)+1 || ret == lstrlenW(buff),
        "expected %d or %d, got %d\n", lstrlenW(buff)+1, lstrlenW(buff), ret);
-    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %ld\n", GetLastError());
 
     flags = FDTF_SHORTDATE | FDTF_LTRDATE | FDTF_RTLDATE;
     SetLastError(0xdeadbeef);
@@ -1881,7 +1881,7 @@ if (0)
     ok(ret == lstrlenW(buff)+1 || ret == lstrlenW(buff),
        "expected %d or %d, got %d\n", lstrlenW(buff)+1, lstrlenW(buff), ret);
     ok(GetLastError() == 0xdeadbeef,
-        "expected 0xdeadbeef, got %d\n", GetLastError());
+        "expected 0xdeadbeef, got %ld\n", GetLastError());
 
     /* now check returned strings */
     flags = FDTF_SHORTTIME;
@@ -2044,7 +2044,7 @@ static void test_SHGetObjectCompatFlags(void)
 
     /* null args */
     ret = pSHGetObjectCompatFlags(NULL, NULL);
-    ok(ret == 0, "got %d\n", ret);
+    ok(ret == 0, "got %ld\n", ret);
 
     ret = RegOpenKeyA(HKEY_LOCAL_MACHINE, compat_path, &root);
     if (ret != ERROR_SUCCESS)
@@ -2080,7 +2080,7 @@ static void test_SHGetObjectCompatFlags(void)
 
             pGUIDFromStringA(keyA, &clsid);
             got = pSHGetObjectCompatFlags(NULL, &clsid);
-            ok(got == expected, "got 0x%08x, expected 0x%08x. Key %s\n", got, expected, keyA);
+            ok(got == expected, "got 0x%08lx, expected 0x%08lx. Key %s\n", got, expected, keyA);
 
             RegCloseKey(clsid_key);
         }
@@ -2304,7 +2304,7 @@ static void test_IUnknown_QueryServiceExec(void)
     hr = pIUnknown_QueryServiceExec(NULL, &dummy_serviceid, &dummy_groupid, 0, 0, 0, 0);
     ok(hr == E_FAIL ||
        hr == E_NOTIMPL, /* win 8 */
-       "got 0x%08x\n", hr);
+       "got 0x%08lx\n", hr);
 
     /* expected trace:
        IUnknown_QueryServiceExec( ptr1, serviceid, groupid, arg1, arg2, arg3, arg4);
@@ -2320,7 +2320,7 @@ static void test_IUnknown_QueryServiceExec(void)
 
     init_call_trace(&trace_got);
     hr = pIUnknown_QueryServiceExec((IUnknown*)provider, &dummy_serviceid, &dummy_groupid, 0x1, 0x2, (void*)0x3, (void*)0x4);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     ok_trace(&trace_expected, &trace_got);
 
@@ -2414,7 +2414,7 @@ static void test_IUnknown_ProfferService(void)
     hr = pIUnknown_ProfferService(NULL, &dummy_serviceid, 0, 0);
     ok(hr == E_FAIL ||
        hr == E_NOTIMPL, /* win 8 */
-       "got 0x%08x\n", hr);
+       "got 0x%08lx\n", hr);
 
     /* expected trace:
        IUnknown_ProfferService( ptr1, serviceid, arg1, arg2);
@@ -2435,8 +2435,8 @@ static void test_IUnknown_ProfferService(void)
     init_call_trace(&trace_got);
     cookie = 0;
     hr = pIUnknown_ProfferService((IUnknown*)proff, &dummy_serviceid, provider, &cookie);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(cookie == 0xdeadbeef, "got %x\n", cookie);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(cookie == 0xdeadbeef, "got %lx\n", cookie);
 
     ok_trace(&trace_expected, &trace_got);
     free_call_trace(&trace_got);
@@ -2450,10 +2450,10 @@ static void test_IUnknown_ProfferService(void)
     add_call(&trace_expected, 4, (void*)(DWORD_PTR)cookie, 0, 0, 0, 0);
 
     init_call_trace(&trace_got);
-    ok(cookie != 0, "got %x\n", cookie);
+    ok(cookie != 0, "got %lx\n", cookie);
     hr = pIUnknown_ProfferService((IUnknown*)proff, &dummy_serviceid, 0, &cookie);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(cookie == 0, "got %x\n", cookie);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(cookie == 0, "got %lx\n", cookie);
     ok_trace(&trace_expected, &trace_got);
     free_call_trace(&trace_got);
     free_call_trace(&trace_expected);
@@ -2477,7 +2477,7 @@ static void test_SHCreateWorkerWindowA(void)
     ok(lstrcmpA(classA, "WorkerA") == 0, "expected WorkerA class, got %s\n", classA);
 
     ret = GetWindowLongPtrA(hwnd, 0);
-    ok(ret == 0, "got %ld\n", ret);
+    ok(ret == 0, "got %Id\n", ret);
 
     /* class info */
     memset(&cliA, 0, sizeof(cliA));
@@ -2498,19 +2498,19 @@ static void test_SHCreateWorkerWindowA(void)
     ok(lstrcmpA(classA, "WorkerA") == 0, "expected WorkerA class, got %s\n", classA);
 
     ret = GetWindowLongPtrA(hwnd, 0);
-    ok(ret == 0xdeadbeef, "got %ld\n", ret);
+    ok(ret == 0xdeadbeef, "got %Id\n", ret);
 
     /* test exstyle */
     ret = GetWindowLongA(hwnd, GWL_EXSTYLE);
     ok(ret == WS_EX_WINDOWEDGE ||
-       ret == (WS_EX_WINDOWEDGE|WS_EX_LAYOUTRTL) /* systems with RTL locale */, "0x%08lx\n", ret);
+       ret == (WS_EX_WINDOWEDGE|WS_EX_LAYOUTRTL) /* systems with RTL locale */, "0x%08Ix\n", ret);
 
     DestroyWindow(hwnd);
 
     hwnd = pSHCreateWorkerWindowA(0, NULL, WS_EX_TOOLWINDOW, 0, 0, 0);
     ret = GetWindowLongA(hwnd, GWL_EXSTYLE);
     ok(ret == (WS_EX_WINDOWEDGE|WS_EX_TOOLWINDOW) ||
-       ret == (WS_EX_WINDOWEDGE|WS_EX_TOOLWINDOW|WS_EX_LAYOUTRTL) /* systems with RTL locale */, "0x%08lx\n", ret);
+       ret == (WS_EX_WINDOWEDGE|WS_EX_TOOLWINDOW|WS_EX_LAYOUTRTL) /* systems with RTL locale */, "0x%08Ix\n", ret);
     DestroyWindow(hwnd);
 }
 
@@ -2643,16 +2643,16 @@ static void test_SHIShellFolder_EnumObjects(void)
     /* SHIShellFolder_EnumObjects doesn't QI the object for IShellFolder */
     enm = (IEnumIDList*)0xdeadbeef;
     hres = pSHIShellFolder_EnumObjects(&ShellFolder, NULL, 0, &enm);
-    ok(hres == S_OK, "SHIShellFolder_EnumObjects failed: 0x%08x\n", hres);
+    ok(hres == S_OK, "SHIShellFolder_EnumObjects failed: 0x%08lx\n", hres);
     ok(enm == (IEnumIDList*)0xcafebabe, "Didn't get expected enumerator location, instead: %p\n", enm);
 
     /* SHIShellFolder_EnumObjects isn't strict about the IShellFolder object */
     hres = SHGetDesktopFolder(&folder);
-    ok(hres == S_OK, "SHGetDesktopFolder failed: 0x%08x\n", hres);
+    ok(hres == S_OK, "SHGetDesktopFolder failed: 0x%08lx\n", hres);
 
     enm = NULL;
     hres = pSHIShellFolder_EnumObjects(folder, NULL, 0, &enm);
-    ok(hres == S_OK, "SHIShellFolder_EnumObjects failed: 0x%08x\n", hres);
+    ok(hres == S_OK, "SHIShellFolder_EnumObjects failed: 0x%08lx\n", hres);
     ok(enm != NULL, "Didn't get an enumerator\n");
     if(enm)
         IEnumIDList_Release(enm);
@@ -2729,27 +2729,27 @@ static void test_SHGetIniString(void)
     }
 
     ret = pSHGetIniStringW(TestAppW, AKeyW, out, 0, pathW);
-    ok(ret == 0, "SHGetIniStringW should have given 0, instead: %d\n", ret);
+    ok(ret == 0, "SHGetIniStringW should have given 0, instead: %ld\n", ret);
 
     /* valid arguments */
     out[0] = 0;
     SetLastError(0xdeadbeef);
     ret = pSHGetIniStringW(TestAppW, NULL, out, ARRAY_SIZE(out), pathW);
-    ok(ret == 4, "SHGetIniStringW should have given 4, instead: %d\n", ret);
-    ok(!lstrcmpW(out, AKeyW), "Expected %s, got: %s, %d\n",
+    ok(ret == 4, "SHGetIniStringW should have given 4, instead: %ld\n", ret);
+    ok(!lstrcmpW(out, AKeyW), "Expected %s, got: %s, %ld\n",
                 wine_dbgstr_w(AKeyW), wine_dbgstr_w(out), GetLastError());
 
     ret = pSHGetIniStringW(TestAppW, AKeyW, out, ARRAY_SIZE(out), pathW);
-    ok(ret == 1, "SHGetIniStringW should have given 1, instead: %d\n", ret);
+    ok(ret == 1, "SHGetIniStringW should have given 1, instead: %ld\n", ret);
     ok(!lstrcmpW(out, L"1"), "Expected L\"1\", got: %s\n", wine_dbgstr_w(out));
 
     ret = pSHGetIniStringW(TestAppW, AnotherKeyW, out, ARRAY_SIZE(out), pathW);
-    ok(ret == 4, "SHGetIniStringW should have given 4, instead: %d\n", ret);
+    ok(ret == 4, "SHGetIniStringW should have given 4, instead: %ld\n", ret);
     ok(!lstrcmpW(out, L"asdf"), "Expected L\"asdf\", got: %s\n", wine_dbgstr_w(out));
 
     out[0] = 1;
     ret = pSHGetIniStringW(TestAppW, JunkKeyW, out, ARRAY_SIZE(out), pathW);
-    ok(ret == 0, "SHGetIniStringW should have given 0, instead: %d\n", ret);
+    ok(ret == 0, "SHGetIniStringW should have given 0, instead: %ld\n", ret);
     ok(*out == 0, "Expected L\"\", got: %s\n", wine_dbgstr_w(out));
 
     DeleteFileW(pathW);
@@ -2854,40 +2854,40 @@ static void test_SHGetShellKey(void)
 
     size = sizeof(data);
     hres = pSKGetValueW(SHKEY_Root_HKLM, WineTestW, NULL, NULL, &data, &size);
-    ok(hres == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "hres = %x\n", hres);
+    ok(hres == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "hres = %lx\n", hres);
 
     data = 1234;
     hres = pSKSetValueW(SHKEY_Root_HKLM, WineTestW, NULL, REG_DWORD, &data, sizeof(DWORD));
-    ok(hres == S_OK, "hres = %x\n", hres);
+    ok(hres == S_OK, "hres = %lx\n", hres);
 
     size = 1;
     hres = pSKGetValueW(SHKEY_Root_HKLM, WineTestW, NULL, NULL, NULL, &size);
-    ok(hres == S_OK, "hres = %x\n", hres);
-    ok(size == sizeof(DWORD), "size = %d\n", size);
+    ok(hres == S_OK, "hres = %lx\n", hres);
+    ok(size == sizeof(DWORD), "size = %ld\n", size);
 
     data = 0xdeadbeef;
     hres = pSKGetValueW(SHKEY_Root_HKLM, WineTestW, NULL, NULL, &data, &size);
-    ok(hres == S_OK, "hres = %x\n", hres);
-    ok(size == sizeof(DWORD), "size = %d\n", size);
-    ok(data == 1234, "data = %d\n", data);
+    ok(hres == S_OK, "hres = %lx\n", hres);
+    ok(size == sizeof(DWORD), "size = %ld\n", size);
+    ok(data == 1234, "data = %ld\n", data);
 
     hres = pSKAllocValueW(SHKEY_Root_HKLM, WineTestW, NULL, NULL, (void**)&alloc_data, &size);
-    ok(hres == S_OK, "hres= %x\n", hres);
-    ok(size == sizeof(DWORD), "size = %d\n", size);
+    ok(hres == S_OK, "hres= %lx\n", hres);
+    ok(size == sizeof(DWORD), "size = %ld\n", size);
     if (SUCCEEDED(hres))
     {
-        ok(*alloc_data == 1234, "*alloc_data = %d\n", *alloc_data);
+        ok(*alloc_data == 1234, "*alloc_data = %ld\n", *alloc_data);
         LocalFree(alloc_data);
     }
 
     hres = pSKDeleteValueW(SHKEY_Root_HKLM, WineTestW, NULL);
-    ok(hres == S_OK, "hres = %x\n", hres);
+    ok(hres == S_OK, "hres = %lx\n", hres);
 
     hres = pSKDeleteValueW(SHKEY_Root_HKLM, WineTestW, NULL);
-    ok(hres == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "hres = %x\n", hres);
+    ok(hres == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "hres = %lx\n", hres);
 
     hres = pSKGetValueW(SHKEY_Root_HKLM, WineTestW, NULL, NULL, &data, &size);
-    ok(hres == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "hres = %x\n", hres);
+    ok(hres == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "hres = %lx\n", hres);
 
     hkey = pSHGetShellKey(SHKEY_Root_HKLM, NULL, FALSE);
     ok(hkey != NULL, "Can't create key\n");
@@ -2953,21 +2953,21 @@ static void test_SHSetParentHwnd(void)
     ret = GetParent(hwnd);
     ok(ret == NULL, "got %p\n", ret);
     style = GetWindowLongA(hwnd, GWL_STYLE);
-    ok((style & (WS_POPUP|WS_CHILD)) == 0, "got style 0x%08x\n", style);
+    ok((style & (WS_POPUP|WS_CHILD)) == 0, "got style 0x%08lx\n", style);
     ret = pSHSetParentHwnd(hwnd, NULL);
     ok(ret == NULL, "got %p\n", ret);
     style = GetWindowLongA(hwnd, GWL_STYLE);
-    ok((style & (WS_POPUP|WS_CHILD)) == 0, "got style 0x%08x\n", style);
+    ok((style & (WS_POPUP|WS_CHILD)) == 0, "got style 0x%08lx\n", style);
 
     /* reset to null parent from not null */
     ret = GetParent(hwnd2);
     ok(ret == hwnd, "got %p\n", ret);
     style = GetWindowLongA(hwnd2, GWL_STYLE);
-    ok((style & (WS_POPUP|WS_CHILD)) == WS_CHILD, "got style 0x%08x\n", style);
+    ok((style & (WS_POPUP|WS_CHILD)) == WS_CHILD, "got style 0x%08lx\n", style);
     ret = pSHSetParentHwnd(hwnd2, NULL);
     ok(ret == NULL, "got %p\n", ret);
     style = GetWindowLongA(hwnd2, GWL_STYLE);
-    ok((style & (WS_POPUP|WS_CHILD)) == WS_POPUP, "got style 0x%08x\n", style);
+    ok((style & (WS_POPUP|WS_CHILD)) == WS_POPUP, "got style 0x%08lx\n", style);
     ret = GetParent(hwnd2);
     ok(ret == NULL, "got %p\n", ret);
 
@@ -2975,13 +2975,13 @@ static void test_SHSetParentHwnd(void)
     style = GetWindowLongA(hwnd2, GWL_STYLE);
     SetWindowLongA(hwnd2, GWL_STYLE, style & ~(WS_CHILD|WS_POPUP));
     style = GetWindowLongA(hwnd2, GWL_STYLE);
-    ok((style & (WS_CHILD|WS_POPUP)) == 0, "got 0x%08x\n", style);
+    ok((style & (WS_CHILD|WS_POPUP)) == 0, "got 0x%08lx\n", style);
 
     ret = pSHSetParentHwnd(hwnd2, hwnd);
     todo_wine ok(ret == NULL, "got %p\n", ret);
 
     style = GetWindowLongA(hwnd2, GWL_STYLE);
-    ok((style & (WS_POPUP|WS_CHILD)) == WS_CHILD, "got style 0x%08x\n", style);
+    ok((style & (WS_POPUP|WS_CHILD)) == WS_CHILD, "got style 0x%08lx\n", style);
     ret = GetParent(hwnd2);
     ok(ret == hwnd, "got %p\n", ret);
 
@@ -2992,7 +2992,7 @@ static void test_SHSetParentHwnd(void)
     ret = pSHSetParentHwnd(hwnd2, hwnd);
     todo_wine ok(ret == NULL, "got %p\n", ret);
     style = GetWindowLongA(hwnd2, GWL_STYLE);
-    ok((style & (WS_CHILD|WS_POPUP)) == WS_CHILD, "got 0x%08x\n", style);
+    ok((style & (WS_CHILD|WS_POPUP)) == WS_CHILD, "got 0x%08lx\n", style);
     ret = GetParent(hwnd2);
     ok(ret == hwnd, "got %p\n", ret);
 
@@ -3002,7 +3002,7 @@ static void test_SHSetParentHwnd(void)
     ret = pSHSetParentHwnd(hwnd2, hwnd);
     todo_wine ok(ret == hwnd, "got %p\n", ret);
     style = GetWindowLongA(hwnd2, GWL_STYLE);
-    ok((style & (WS_CHILD|WS_POPUP)) == WS_CHILD, "got 0x%08x\n", style);
+    ok((style & (WS_CHILD|WS_POPUP)) == WS_CHILD, "got 0x%08lx\n", style);
     ret = GetParent(hwnd2);
     ok(ret == hwnd, "got %p\n", ret);
 
@@ -3078,14 +3078,14 @@ static void test_IUnknown_GetClassID(void)
     memset(&clsid, 0xcc, sizeof(clsid));
     memset(&clsid3, 0xcc, sizeof(clsid3));
     hr = pIUnknown_GetClassID(NULL, &clsid);
-    ok(hr == E_FAIL, "got 0x%08x\n", hr);
+    ok(hr == E_FAIL, "got 0x%08lx\n", hr);
     ok(IsEqualCLSID(&clsid, &CLSID_NULL) || broken(IsEqualCLSID(&clsid, &clsid3)) /* win2k, winxp, win2k3 */,
         "got wrong clsid %s\n", wine_dbgstr_guid(&clsid));
 
     memset(&clsid, 0xcc, sizeof(clsid));
     memset(&clsid2, 0xab, sizeof(clsid2));
     hr = pIUnknown_GetClassID((IUnknown*)&testpersist, &clsid);
-    ok(hr == 0x8fff2222, "got 0x%08x\n", hr);
+    ok(hr == 0x8fff2222, "got 0x%08lx\n", hr);
     ok(IsEqualCLSID(&clsid, &clsid2) || broken(IsEqualCLSID(&clsid, &clsid3)) /* win2k3 */,
         "got wrong clsid %s\n", wine_dbgstr_guid(&clsid));
 
@@ -3094,7 +3094,7 @@ static void test_IUnknown_GetClassID(void)
     memset(&clsid2, 0xab, sizeof(clsid2));
     memset(&clsid3, 0xcc, sizeof(clsid3));
     hr = pIUnknown_GetClassID((IUnknown*)&testpersist2, &clsid);
-    ok(hr == 0x8fff2222, "got 0x%08x\n", hr);
+    ok(hr == 0x8fff2222, "got 0x%08lx\n", hr);
     ok(IsEqualCLSID(&clsid, &clsid2) || broken(IsEqualCLSID(&clsid, &clsid3)) /* win2k3 */,
         "got wrong clsid %s\n", wine_dbgstr_guid(&clsid));
 }
@@ -3104,7 +3104,7 @@ static void test_DllGetVersion(void)
     HRESULT hr;
 
     hr = pDllGetVersion(NULL);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(hr == E_INVALIDARG, "got 0x%08lx\n", hr);
 }
 
 START_TEST(ordinal)
@@ -3121,7 +3121,7 @@ START_TEST(ordinal)
     {
         DWORD procid;
         HANDLE hmem;
-        sscanf(argv[2], "%d", &procid);
+        sscanf(argv[2], "%ld", &procid);
         sscanf(argv[3], "%p", &hmem);
         test_alloc_shared_remote(procid, hmem);
         return;

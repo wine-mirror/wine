@@ -328,7 +328,7 @@ static void test_CList(void)
       else if (inserted)
       {
         ok(inserted->cbSize == item->cbSize + sizeof(DATABLOCK_HEADER),
-           "id %d wrong size %d\n", inserted->dwSignature, inserted->cbSize);
+           "id %ld wrong size %ld\n", inserted->dwSignature, inserted->cbSize);
       }
       if (inserted)
       {
@@ -449,7 +449,7 @@ static void test_CList(void)
       else if (inserted)
       {
         ok(inserted->cbSize == item->cbSize + sizeof(DATABLOCK_HEADER),
-           "id %d wrong size %d\n", inserted->dwSignature, inserted->cbSize);
+           "id %ld wrong size %ld\n", inserted->dwSignature, inserted->cbSize);
       }
       ok(!inserted || inserted->dwSignature == item->dwSignature, "find got wrong item\n");
       if (inserted)
