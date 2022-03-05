@@ -166,7 +166,7 @@ static void test_BuildOtherNamesFromMachineName(void)
 
     todo_wine
     ok( res && (buffers != NULL) && (numentries >= 3) && (buffers[0] != NULL) && (buffers[0][0] == '\0'),
-        "got %u with %u and %p,%u (%p:%d)\n", res, GetLastError(), buffers, numentries,
+        "got %lu with %lu and %p,%lu (%p:%d)\n", res, GetLastError(), buffers, numentries,
         ((numentries > 0) && buffers) ? buffers[0] : NULL,
         ((numentries > 0) && buffers && buffers[0]) ? lstrlenW(buffers[0]) : -1);
 
@@ -183,7 +183,7 @@ static void test_SplInitializeWinSpoolDrv(VOID)
     memset(fn_spl, 0xff, sizeof(fn_spl));
     SetLastError(0xdeadbeef);
     res = pSplInitializeWinSpoolDrv(fn_spl);
-    ok(res, "got %u with %u (expected '!= 0')\n", res, GetLastError());
+    ok(res, "got %lu with %lu (expected '!= 0')\n", res, GetLastError());
 
     /* functions 0 to 5 are the same in "spoolss.dll" from w2k and above */
     if (fn_spl[6] == fn_w2k[6]) {
@@ -196,7 +196,7 @@ static void test_SplInitializeWinSpoolDrv(VOID)
     id = 0;
     while (id < WINSPOOL_TABLESIZE) {
         ok( fn_spl[id] == fn_ref[id],
-            "(#%02u) spoolss: %p (vista: %p,  xp: %p,  w2k: %p)\n",
+            "(#%02lu) spoolss: %p (vista: %p,  xp: %p,  w2k: %p)\n",
             id, fn_spl[id], fn_v[id], fn_xp[id], fn_w2k[id]);
         id++;
     }
