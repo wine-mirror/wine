@@ -99,7 +99,7 @@ static void test_version_flag_versus_aw(void)
             IUnknown_Release((IUnknown*)pStiW);
         }
         else
-            ok(0, "could not create StillImageA, hr = 0x%X\n", hr);
+            ok(0, "could not create StillImageA, hr = 0x%lX\n", hr);
         hr = pStiCreateInstance(GetModuleHandleA(NULL), STI_VERSION_REAL | STI_VERSION_FLAG_UNICODE, &pStiW, NULL);
         if (SUCCEEDED(hr))
         {
@@ -113,7 +113,7 @@ static void test_version_flag_versus_aw(void)
             IUnknown_Release((IUnknown*)pStiW);
         }
         else
-            ok(0, "could not create StillImageW, hr = 0x%X\n", hr);
+            ok(0, "could not create StillImageW, hr = 0x%lX\n", hr);
     }
     else
         skip("No StiCreateInstance function\n");
@@ -134,7 +134,7 @@ static void test_version_flag_versus_aw(void)
             IUnknown_Release((IUnknown*)pStiA);
         }
         else
-            todo_wine ok(0, "could not create StillImageA, hr = 0x%X\n", hr);
+            todo_wine ok(0, "could not create StillImageA, hr = 0x%lX\n", hr);
     }
     else
         skip("No StiCreateInstanceA function\n");
@@ -155,7 +155,7 @@ static void test_version_flag_versus_aw(void)
             IUnknown_Release((IUnknown*)pStiW);
         }
         else
-            ok(0, "could not create StillImageW, hr = 0x%X\n", hr);
+            ok(0, "could not create StillImageW, hr = 0x%lX\n", hr);
     }
     else
         skip("No StiCreateInstanceW function\n");
@@ -204,12 +204,12 @@ static void test_stillimage_aggregation(void)
                 IStillImage_Release(pStiW2);
             }
             else
-                ok(0, "could not query for IID_IStillImageW, hr = 0x%x\n", hr);
+                ok(0, "could not query for IID_IStillImageW, hr = 0x%lx\n", hr);
 
             IStillImage_Release(pStiW);
         }
         else
-            ok(0, "could not create StillImageW, hr = 0x%X\n", hr);
+            ok(0, "could not create StillImageW, hr = 0x%lX\n", hr);
 
         /* Now do the above tests prove that STI.DLL isn't picky about querying for IUnknown
            in CoCreateInterface when aggregating? */
@@ -220,7 +220,7 @@ static void test_stillimage_aggregation(void)
         hr = CoCreateInstance(&CLSID_Sti, &aggregator, CLSCTX_ALL, &IID_IUnknown, (void**)&pUnknown);
         ok(SUCCEEDED(hr) ||
             broken(hr == CLASS_E_NOAGGREGATION), /* Win 2000 */
-                "CoCreateInstance unexpectedly failed when querying for IUnknown during aggregation, hr = 0x%x\n", hr);
+                "CoCreateInstance unexpectedly failed when querying for IUnknown during aggregation, hr = 0x%lx\n", hr);
         if (SUCCEEDED(hr))
             IUnknown_Release(pUnknown);
     }
@@ -249,14 +249,14 @@ static void test_launch_app_registry(void)
         else if (SUCCEEDED(hr))
         {
             hr = IStillImage_UnregisterLaunchApplication(pStiW, appName);
-            ok(SUCCEEDED(hr), "could not unregister launch application, error 0x%X\n", hr);
+            ok(SUCCEEDED(hr), "could not unregister launch application, error 0x%lX\n", hr);
         }
         else
-            ok(0, "could not register launch application, error 0x%X\n", hr);
+            ok(0, "could not register launch application, error 0x%lX\n", hr);
         IStillImage_Release(pStiW);
     }
     else
-        ok(0, "could not create StillImageW, hr = 0x%X\n", hr);
+        ok(0, "could not create StillImageW, hr = 0x%lX\n", hr);
 }
 
 START_TEST(sti)
