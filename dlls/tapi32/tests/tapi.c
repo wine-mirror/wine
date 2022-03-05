@@ -35,25 +35,25 @@ static void test_lineInitialize(void)
     HLINEAPP lnApp;
 
     ret = lineInitialize(NULL, NULL, NULL, NULL, NULL);
-    todo_wine ok(ret == LINEERR_INVALPOINTER, "Expected return value LINEERR_INVALPOINTER, got %x.\n", ret);
+    todo_wine ok(ret == LINEERR_INVALPOINTER, "Expected return value LINEERR_INVALPOINTER, got %lx.\n", ret);
 
     ret = lineInitialize(&lnApp, NULL, NULL, NULL, NULL);
-    todo_wine ok(ret == LINEERR_INVALPOINTER, "Expected return value LINEERR_INVALPOINTER, got %x.\n", ret);
+    todo_wine ok(ret == LINEERR_INVALPOINTER, "Expected return value LINEERR_INVALPOINTER, got %lx.\n", ret);
 
     ret = lineInitialize(&lnApp, GetModuleHandleA(NULL), NULL, NULL, NULL);
-    todo_wine ok(ret == LINEERR_INVALPOINTER, "Expected return value LINEERR_INVALPOINTER, got %x.\n", ret);
+    todo_wine ok(ret == LINEERR_INVALPOINTER, "Expected return value LINEERR_INVALPOINTER, got %lx.\n", ret);
 
     ret = lineInitialize(&lnApp, GetModuleHandleA(NULL), line_callback, NULL, NULL);
-    todo_wine ok(ret == LINEERR_INVALPOINTER, "Expected return value LINEERR_INVALPOINTER, got %x.\n", ret);
+    todo_wine ok(ret == LINEERR_INVALPOINTER, "Expected return value LINEERR_INVALPOINTER, got %lx.\n", ret);
 
     ret = lineInitialize(&lnApp, GetModuleHandleA(NULL), line_callback, NULL, &dev);
-    ok(!ret, "unexpected return value, got %u.\n", ret);
+    ok(!ret, "unexpected return value, got %lu.\n", ret);
 
     ret = lineShutdown(NULL);
-    todo_wine ok(ret == LINEERR_INVALAPPHANDLE, "Expected return value LINEERR_INVALAPPHANDLE, got %x.\n", ret);
+    todo_wine ok(ret == LINEERR_INVALAPPHANDLE, "Expected return value LINEERR_INVALAPPHANDLE, got %lx.\n", ret);
 
     ret = lineShutdown(lnApp);
-    ok(!ret, "unexpected return value, got %u.\n", ret);
+    ok(!ret, "unexpected return value, got %lu.\n", ret);
 }
 
 START_TEST(tapi)
