@@ -45,7 +45,7 @@ TIFFSetErrorHandlerExt(TIFFErrorHandlerExt handler)
 	return (prev);
 }
 
-void WINAPIV
+void
 TIFFError(const char* module, const char* fmt, ...)
 {
 	va_list ap;
@@ -61,7 +61,7 @@ TIFFError(const char* module, const char* fmt, ...)
 	}
 }
 
-void WINAPIV
+void
 TIFFErrorExt(thandle_t fd, const char* module, const char* fmt, ...)
 {
 	va_list ap;

@@ -45,7 +45,7 @@ TIFFSetWarningHandlerExt(TIFFErrorHandlerExt handler)
 	return (prev);
 }
 
-void WINAPIV
+void
 TIFFWarning(const char* module, const char* fmt, ...)
 {
 	va_list ap;
@@ -61,7 +61,7 @@ TIFFWarning(const char* module, const char* fmt, ...)
 	}
 }
 
-void WINAPIV
+void
 TIFFWarningExt(thandle_t fd, const char* module, const char* fmt, ...)
 {
 	va_list ap;

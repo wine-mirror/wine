@@ -824,7 +824,7 @@ OkToChangeTag(TIFF* tif, uint32_t tag)
  * when/if the directory structure is
  * updated.
  */
-int WINAPIV
+int
 TIFFSetField(TIFF* tif, uint32_t tag, ...)
 {
 	va_list ap;
@@ -1266,7 +1266,7 @@ _TIFFVGetField(TIFF* tif, uint32_t tag, va_list ap)
  * Return the value of a field in the
  * internal directory structure.
  */
-int WINAPIV
+int
 TIFFGetField(TIFF* tif, uint32_t tag, ...)
 {
 	int status;

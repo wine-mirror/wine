@@ -340,7 +340,7 @@ TIFFVGetFieldDefaulted(TIFF* tif, uint32_t tag, va_list ap)
  * Like TIFFGetField, but return any default
  * value if the tag is not present in the directory.
  */
-int WINAPIV
+int
 TIFFGetFieldDefaulted(TIFF* tif, uint32_t tag, ...)
 {
 	int ok;

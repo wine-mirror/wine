@@ -436,7 +436,7 @@ _TIFFSetupFields(TIFF* tif, const TIFFFieldArray* fieldarray)
 	}
 }
 
-static int  __cdecl
+static int
 tagCompare(const void* a, const void* b)
 {
 	const TIFFField* ta = *(const TIFFField**) a;
