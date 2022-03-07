@@ -11747,7 +11747,7 @@ esac
 fi
 
 case $host_cpu in
-  aarch64*) test "x$CROSSTARGET" != x || as_fn_error $? "PE cross-compilation is required for ARM64, please install llvm-mingw." "$LINENO" 5 ;;
+  aarch64*) test "x$CROSSTARGET" != x || as_fn_error $? "PE cross-compilation is required for ARM64, please install clang/llvm-dlltool/lld, or llvm-mingw." "$LINENO" 5 ;;
 esac
 
 

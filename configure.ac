@@ -990,7 +990,7 @@ WINE_NOTICE_WITH(mingw,[test "x$CROSSTARGET" = "x"],
                  [MinGW compiler not found, cross-compiling PE files won't be supported.])
 
 case $host_cpu in
-  aarch64*) test "x$CROSSTARGET" != x || AC_MSG_ERROR([PE cross-compilation is required for ARM64, please install llvm-mingw.]) ;;
+  aarch64*) test "x$CROSSTARGET" != x || AC_MSG_ERROR([PE cross-compilation is required for ARM64, please install clang/llvm-dlltool/lld, or llvm-mingw.]) ;;
 esac
 
 dnl **** External libraries ****
