@@ -9908,6 +9908,7 @@ static void test_effect(BOOL d3d11)
         {&CLSID_D2D13DPerspectiveTransform,  1, 1, 1},
         {&CLSID_D2D1Composite,               2, 1, 0xffffffff},
         {&CLSID_D2D1Crop,                    1, 1, 1},
+        {&CLSID_D2D1Shadow,                  1, 1, 1},
     };
 
     if (!init_test_context(&ctx, d3d11))

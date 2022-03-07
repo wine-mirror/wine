@@ -26,6 +26,7 @@ static const struct d2d_effect_info builtin_effects[] =
     {&CLSID_D2D13DPerspectiveTransform, 1, 1, 1},
     {&CLSID_D2D1Composite,              2, 1, 0xffffffff},
     {&CLSID_D2D1Crop,                   1, 1, 1},
+    {&CLSID_D2D1Shadow,                 1, 1, 1},
 };
 
 static inline struct d2d_effect *impl_from_ID2D1Effect(ID2D1Effect *iface)
