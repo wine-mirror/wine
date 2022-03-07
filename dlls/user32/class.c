@@ -402,36 +402,6 @@ static const WCHAR *CLASS_GetVersionedName( const WCHAR *name, UINT *basename_of
 }
 
 /***********************************************************************
- *           CLASS_FindClass
- *
- * Return a pointer to the class.
- */
-static CLASS *CLASS_FindClass( LPCWSTR name, HINSTANCE hinstance, UNICODE_STRING *name_str )
-{
-    CLASS *class;
-
-    if (name != (LPCWSTR)DESKTOP_CLASS_ATOM && (IS_INTRESOURCE(name) || wcsicmp( name, L"Message" )))
-        GetDesktopWindow();  /* create the desktop window to trigger builtin class registration */
-
-    if (!name) return NULL;
-
-    name = CLASS_GetVersionedName( name, NULL, NULL, TRUE );
-
-    while (!(class = find_class( hinstance, name )))
-    {
-        if (IS_INTRESOURCE( name )) break;
-        if (!is_comctl32_class( name )) break;
-        if (GetModuleHandleW( L"comctl32.dll" )) break;
-        if (!LoadLibraryW( L"comctl32.dll" )) break;
-        TRACE( "%s retrying after loading comctl32\n", debugstr_w(name) );
-    }
-
-    if (!class) TRACE("%s %p -> not found\n", debugstr_w(name), hinstance);
-    else if (name_str) init_class_name( name_str, name );
-    return class;
-}
-
-/***********************************************************************
  *           CLASS_RegisterClass
  *
  * The real RegisterClass() functionality.
@@ -1264,17 +1234,52 @@ BOOL WINAPI GetClassInfoW( HINSTANCE hInstance, LPCWSTR name, WNDCLASSW *wc )
     return ret;
 }
 
-ATOM get_class_info( HINSTANCE instance, const WCHAR *name, UNICODE_STRING *name_str )
+ATOM get_class_info( HINSTANCE instance, const WCHAR *name, WNDCLASSEXW *info,
+                     UNICODE_STRING *name_str, BOOL ansi )
 {
     CLASS *class;
     ATOM atom;
 
-    if (!(class = CLASS_FindClass( name, instance, name_str )))
+    if (!name_str && !instance) instance = user32_module;
+
+    if (name != (LPCWSTR)DESKTOP_CLASS_ATOM && (IS_INTRESOURCE(name) || wcsicmp( name, L"Message" )))
+        GetDesktopWindow();  /* create the desktop window to trigger builtin class registration */
+
+    name = CLASS_GetVersionedName( name, NULL, NULL, TRUE );
+
+    while (name && !(class = find_class( instance, name )))
     {
-        SetLastError( ERROR_CLASS_DOES_NOT_EXIST );
-        return FALSE;
+        if (IS_INTRESOURCE( name )) break;
+        if (!is_comctl32_class( name )) break;
+        if (GetModuleHandleW( L"comctl32.dll" )) break;
+        if (!LoadLibraryW( L"comctl32.dll" )) break;
+        TRACE( "%s retrying after loading comctl32\n", debugstr_w(name) );
     }
 
+    if (!class)
+    {
+        TRACE("%s %p -> not found\n", debugstr_w(name), instance);
+        SetLastError( ERROR_CLASS_DOES_NOT_EXIST );
+        return 0;
+    }
+
+    if (info)
+    {
+        info->style         = class->style;
+        info->lpfnWndProc   = WINPROC_GetProc( class->winproc, !ansi );
+        info->cbClsExtra    = class->cbClsExtra;
+        info->cbWndExtra    = class->cbWndExtra;
+        info->hInstance     = (instance == user32_module) ? 0 : instance;
+        info->hIcon         = class->hIcon;
+        info->hIconSm       = class->hIconSm ? class->hIconSm : class->hIconSmIntern;
+        info->hCursor       = class->hCursor;
+        info->hbrBackground = class->hbrBackground;
+        info->lpszMenuName  = ansi ? (const WCHAR *)CLASS_GetMenuNameA( class )
+                                   : CLASS_GetMenuNameW( class );
+        info->lpszClassName = name;
+    }
+
+    if (name_str) init_class_name( name_str, name );
     atom = class->atomName;
     release_class_ptr( class );
     return atom;
@@ -1286,7 +1291,6 @@ ATOM get_class_info( HINSTANCE instance, const WCHAR *name, UNICODE_STRING *name
 BOOL WINAPI GetClassInfoExA( HINSTANCE hInstance, LPCSTR name, WNDCLASSEXA *wc )
 {
     ATOM atom;
-    CLASS *classPtr;
 
     TRACE("%p %s %p\n", hInstance, debugstr_a(name), wc);
 
@@ -1296,35 +1300,15 @@ BOOL WINAPI GetClassInfoExA( HINSTANCE hInstance, LPCSTR name, WNDCLASSEXA *wc )
         return FALSE;
     }
 
-    if (!hInstance) hInstance = user32_module;
-
     if (!IS_INTRESOURCE(name))
     {
         WCHAR nameW[MAX_ATOM_LEN + 1];
         if (!MultiByteToWideChar( CP_ACP, 0, name, -1, nameW, ARRAY_SIZE( nameW )))
             return FALSE;
-        classPtr = CLASS_FindClass( nameW, hInstance, NULL );
+        atom = get_class_info( hInstance, nameW, (WNDCLASSEXW *)wc, NULL, TRUE );
     }
-    else classPtr = CLASS_FindClass( (LPCWSTR)name, hInstance, NULL );
-
-    if (!classPtr)
-    {
-        SetLastError( ERROR_CLASS_DOES_NOT_EXIST );
-        return FALSE;
-    }
-    wc->style         = classPtr->style;
-    wc->lpfnWndProc   = WINPROC_GetProc( classPtr->winproc, FALSE );
-    wc->cbClsExtra    = classPtr->cbClsExtra;
-    wc->cbWndExtra    = classPtr->cbWndExtra;
-    wc->hInstance     = (hInstance == user32_module) ? 0 : hInstance;
-    wc->hIcon         = classPtr->hIcon;
-    wc->hIconSm       = classPtr->hIconSm ? classPtr->hIconSm : classPtr->hIconSmIntern;
-    wc->hCursor       = classPtr->hCursor;
-    wc->hbrBackground = classPtr->hbrBackground;
-    wc->lpszMenuName  = CLASS_GetMenuNameA( classPtr );
-    wc->lpszClassName = name;
-    atom = classPtr->atomName;
-    release_class_ptr( classPtr );
+    else atom = get_class_info( hInstance, (const WCHAR *)name, (WNDCLASSEXW *)wc, NULL, TRUE );
+    if (atom) wc->lpszClassName = name;
 
     /* We must return the atom of the class here instead of just TRUE. */
     return atom;
@@ -1336,9 +1320,6 @@ BOOL WINAPI GetClassInfoExA( HINSTANCE hInstance, LPCSTR name, WNDCLASSEXA *wc )
  */
 BOOL WINAPI GetClassInfoExW( HINSTANCE hInstance, LPCWSTR name, WNDCLASSEXW *wc )
 {
-    ATOM atom;
-    CLASS *classPtr;
-
     TRACE("%p %s %p\n", hInstance, debugstr_w(name), wc);
 
     if (!wc)
@@ -1347,29 +1328,7 @@ BOOL WINAPI GetClassInfoExW( HINSTANCE hInstance, LPCWSTR name, WNDCLASSEXW *wc 
         return FALSE;
     }
 
-    if (!hInstance) hInstance = user32_module;
-
-    if (!(classPtr = CLASS_FindClass( name, hInstance, NULL )))
-    {
-        SetLastError( ERROR_CLASS_DOES_NOT_EXIST );
-        return FALSE;
-    }
-    wc->style         = classPtr->style;
-    wc->lpfnWndProc   = WINPROC_GetProc( classPtr->winproc, TRUE );
-    wc->cbClsExtra    = classPtr->cbClsExtra;
-    wc->cbWndExtra    = classPtr->cbWndExtra;
-    wc->hInstance     = (hInstance == user32_module) ? 0 : hInstance;
-    wc->hIcon         = classPtr->hIcon;
-    wc->hIconSm       = classPtr->hIconSm ? classPtr->hIconSm : classPtr->hIconSmIntern;
-    wc->hCursor       = classPtr->hCursor;
-    wc->hbrBackground = classPtr->hbrBackground;
-    wc->lpszMenuName  = CLASS_GetMenuNameW( classPtr );
-    wc->lpszClassName = name;
-    atom = classPtr->atomName;
-    release_class_ptr( classPtr );
-
-    /* We must return the atom of the class here instead of just TRUE. */
-    return atom;
+    return get_class_info( hInstance, name, wc, NULL, FALSE );
 }
 
 

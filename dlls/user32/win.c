@@ -1402,7 +1402,7 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
     CBT_CREATEWNDW cbtc;
     CREATESTRUCTW cbcs;
 
-    if (!get_class_info( module, className, &class )) return FALSE;
+    if (!get_class_info( module, className, NULL, &class, FALSE )) return FALSE;
 
     TRACE("%s %s%s%s ex=%08x style=%08x %d,%d %dx%d parent=%p menu=%p inst=%p params=%p\n",
           unicode ? debugstr_w(cs->lpszName) : debugstr_a((LPCSTR)cs->lpszName),
