@@ -459,6 +459,6 @@ HRESULT vector_create( REFIID iid, REFIID view_iid, void **out )
     impl->ref = 1;
 
     *out = &impl->IVector_IInspectable_iface;
-    TRACE( "created %p", *out );
+    TRACE( "created %p\n", *out );
     return S_OK;
 }
