@@ -83,7 +83,6 @@ static BOOL hid_device_begin_collection(struct hid_report_descriptor *desc, cons
         COLLECTION(1, type),
     };
 
-    memset(desc, 0, sizeof(*desc));
     return hid_report_descriptor_append(desc, template, sizeof(template));
 }
 
