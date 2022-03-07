@@ -146,7 +146,7 @@ static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name,
         req->awareness = awareness;
         req->style    = style;
         req->ex_style = ex_style;
-        if (!(req->atom = get_int_atom_value( name->Buffer )) && name->Length)
+        if (!(req->atom = get_int_atom_value( name )) && name->Length)
             wine_server_add_data( req, name->Buffer, name->Length );
         if (!wine_server_call_err( req ))
         {
@@ -245,14 +245,14 @@ static void free_window_handle( HWND hwnd )
  * Build an array of the children of a given window. The array must be
  * freed with HeapFree. Returns NULL when no windows are found.
  */
-static HWND *list_window_children( HDESK desktop, HWND hwnd, LPCWSTR class, DWORD tid )
+static HWND *list_window_children( HDESK desktop, HWND hwnd, UNICODE_STRING *class, DWORD tid )
 {
     HWND *list;
     int i, size = 128;
-    ATOM atom = get_int_atom_value( class );
+    ATOM atom = class ? get_int_atom_value( class ) : 0;
 
     /* empty class is not the same as NULL class */
-    if (!atom && class && !class[0]) return NULL;
+    if (!atom && class && !class->Length) return NULL;
 
     for (;;)
     {
@@ -266,7 +266,7 @@ static HWND *list_window_children( HDESK desktop, HWND hwnd, LPCWSTR class, DWOR
             req->parent = wine_server_user_handle( hwnd );
             req->tid = tid;
             req->atom = atom;
-            if (!atom && class) wine_server_add_data( req, class, lstrlenW(class)*sizeof(WCHAR) );
+            if (!atom && class) wine_server_add_data( req, class->Buffer, class->Length );
             wine_server_set_reply( req, list, (size-1) * sizeof(user_handle_t) );
             if (!wine_server_call( req )) count = reply->count;
         }
@@ -2011,7 +2011,19 @@ HWND WINAPI FindWindowExW( HWND parent, HWND child, LPCWSTR className, LPCWSTR t
         if (!(buffer = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) ))) return 0;
     }
 
-    if (!(list = list_window_children( 0, parent, className, 0 ))) goto done;
+    if (className)
+    {
+        UNICODE_STRING str;
+        if (IS_INTRESOURCE(className))
+        {
+            str.Buffer = (WCHAR *)className;
+            str.Length = str.MaximumLength = 0;
+        }
+        else RtlInitUnicodeString( &str, className );
+        list = list_window_children( 0, parent, &str, 0 );
+    }
+    else list = list_window_children( 0, parent, NULL, 0 );
+    if (!list) goto done;
 
     if (child)
     {

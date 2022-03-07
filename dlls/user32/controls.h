@@ -118,7 +118,7 @@ extern ULONG_PTR set_icon_param( HICON handle, ULONG_PTR param ) DECLSPEC_HIDDEN
 /* Class functions */
 struct tagCLASS;  /* opaque structure */
 struct tagWND;
-extern ATOM get_int_atom_value( LPCWSTR name ) DECLSPEC_HIDDEN;
+extern ATOM get_int_atom_value( UNICODE_STRING *name ) DECLSPEC_HIDDEN;
 extern void register_builtin_classes(void) DECLSPEC_HIDDEN;
 extern void register_desktop_class(void) DECLSPEC_HIDDEN;
 extern WNDPROC get_class_winproc( struct tagCLASS *class ) DECLSPEC_HIDDEN;

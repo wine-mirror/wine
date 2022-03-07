@@ -45,6 +45,12 @@ static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
 
 #define CLASS_OTHER_PROCESS ((CLASS *)1)
 
+static inline const char *debugstr_us( const UNICODE_STRING *us )
+{
+    if (!us) return "<null>";
+    return debugstr_wn( us->Buffer, us->Length / sizeof(WCHAR) );
+}
+
 /***********************************************************************
  *           get_class_ptr
  */
@@ -81,16 +87,19 @@ static inline void release_class_ptr( CLASS *ptr )
 /***********************************************************************
  *           get_int_atom_value
  */
-ATOM get_int_atom_value( LPCWSTR name )
+ATOM get_int_atom_value( UNICODE_STRING *name )
 {
+    const WCHAR *ptr = name->Buffer;
+    const WCHAR *end = ptr + name->Length / sizeof(WCHAR);
     UINT ret = 0;
 
-    if (IS_INTRESOURCE(name)) return LOWORD(name);
-    if (*name++ != '#') return 0;
-    while (*name)
+    if (IS_INTRESOURCE(ptr)) return LOWORD(ptr);
+
+    if (*ptr++ != '#') return 0;
+    while (ptr < end)
     {
-        if (*name < '0' || *name > '9') return 0;
-        ret = ret * 10 + *name++ - '0';
+        if (*ptr < '0' || *ptr > '9') return 0;
+        ret = ret * 10 + *ptr++ - '0';
         if (ret > 0xffff) return 0;
     }
     return ret;
@@ -305,7 +314,7 @@ static void CLASS_FreeClass( CLASS *classPtr )
     USER_Unlock();
 }
 
-static CLASS *find_class( HINSTANCE module, const WCHAR *name )
+static CLASS *find_class( HINSTANCE module, UNICODE_STRING *name )
 {
     ATOM atom = get_int_atom_value( name );
     UINT_PTR instance = (UINT_PTR)module & ~0xffff;
@@ -320,11 +329,11 @@ static CLASS *find_class( HINSTANCE module, const WCHAR *name )
         }
         else
         {
-            if (wcsicmp( class->name, name )) continue;
+            if (wcsnicmp( class->name, name->Buffer, name->Length / sizeof(WCHAR) )) continue;
         }
         if (!class->local || !module || (class->instance & ~0xffff) == instance)
         {
-            TRACE("%s %Ix -> %p\n", debugstr_w(name), instance, class);
+            TRACE( "%s %Ix -> %p\n", debugstr_us(name), instance, class );
             return class;
         }
     }
@@ -332,8 +341,7 @@ static CLASS *find_class( HINSTANCE module, const WCHAR *name )
     return NULL;
 }
 
-static const WCHAR *CLASS_GetVersionedName( const WCHAR *name, UINT *basename_offset, WCHAR *combined,
-                                            HMODULE *reg_module )
+static void get_versioned_name( const WCHAR *name, UNICODE_STRING *ret, UNICODE_STRING *version, HMODULE *reg_module )
 {
     ACTCTX_SECTION_KEYED_DATA data;
     struct wndclass_redirect_data
@@ -345,31 +353,31 @@ static const WCHAR *CLASS_GetVersionedName( const WCHAR *name, UINT *basename_of
         ULONG module_len;
         ULONG module_offset;
     } *wndclass;
-    const WCHAR *module, *ret;
+    const WCHAR *module, *ptr;
     UNICODE_STRING name_us;
     HMODULE hmod;
-    UINT offset;
+    UINT offset = 0;
 
     if (reg_module) *reg_module = 0;
-    if (!basename_offset)
-        basename_offset = &offset;
+    if (version) version->Length = 0;
 
-    *basename_offset = 0;
-
-    if (IS_INTRESOURCE( name ))
-        return name;
-
-    if (is_comctl32_class( name ) || is_builtin_class( name ))
-        return name;
+    if (IS_INTRESOURCE( name ) || is_comctl32_class( name ) || is_builtin_class( name ))
+    {
+        init_class_name( ret, name );
+        return;
+    }
 
     data.cbSize = sizeof(data);
     RtlInitUnicodeString(&name_us, name);
-    if (RtlFindActivationContextSectionString(0, NULL, ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION,
-            &name_us, &data))
-        return name;
+    if (RtlFindActivationContextSectionString( 0, NULL, ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION,
+                                               &name_us, &data ))
+    {
+        init_class_name( ret, name );
+        return;
+    }
 
     wndclass = (struct wndclass_redirect_data *)data.lpData;
-    *basename_offset = wndclass->name_len / sizeof(WCHAR) - lstrlenW(name);
+    offset = wndclass->name_len / sizeof(WCHAR) - lstrlenW(name);
 
     module = (const WCHAR *)((BYTE *)data.lpSectionBase + wndclass->module_offset);
     if (!(hmod = GetModuleHandleW( module )))
@@ -377,16 +385,18 @@ static const WCHAR *CLASS_GetVersionedName( const WCHAR *name, UINT *basename_of
 
     /* Combined name is used to register versioned class name. Base name part will match exactly
        original class name and won't be reused from context data. */
-    ret = (const WCHAR *)((BYTE *)wndclass + wndclass->name_offset);
-    if (combined)
+    ptr = (const WCHAR *)((BYTE *)wndclass + wndclass->name_offset);
+    if (version)
     {
-        memcpy(combined, ret, *basename_offset * sizeof(WCHAR));
-        lstrcpyW(&combined[*basename_offset], name);
-        ret = combined;
+        WCHAR *combined = version->Buffer;
+        memcpy( combined, ptr, offset * sizeof(WCHAR) );
+        lstrcpyW( &combined[offset], name );
+        version->Length = offset * sizeof(WCHAR);
+        ptr = combined;
     }
 
     if (reg_module) *reg_module = hmod;
-    return ret;
+    init_class_name( ret, ptr );
 }
 
 /***********************************************************************
@@ -394,14 +404,14 @@ static const WCHAR *CLASS_GetVersionedName( const WCHAR *name, UINT *basename_of
  *
  * The real RegisterClass() functionality.
  */
-static CLASS *CLASS_RegisterClass( LPCWSTR name, UINT basename_offset, HINSTANCE hInstance, BOOL local,
-                                   DWORD style, INT classExtra, INT winExtra )
+static CLASS *CLASS_RegisterClass( UNICODE_STRING *name, UINT basename_offset, HINSTANCE hInstance,
+                                   BOOL local, DWORD style, INT classExtra, INT winExtra )
 {
     CLASS *classPtr;
     BOOL ret;
 
     TRACE("name=%s hinst=%p style=0x%x clExtr=0x%x winExtr=0x%x\n",
-          debugstr_w(name), hInstance, style, classExtra, winExtra );
+          debugstr_us(name), hInstance, style, classExtra, winExtra );
 
     /* Fix the extra bytes value */
 
@@ -417,7 +427,8 @@ static CLASS *CLASS_RegisterClass( LPCWSTR name, UINT basename_offset, HINSTANCE
     classPtr->basename = classPtr->name;
     if (!classPtr->atomName && name)
     {
-        lstrcpyW( classPtr->name, name );
+        memcpy( classPtr->name, name->Buffer, name->Length );
+        classPtr->name[name->Length / sizeof(WCHAR)] = 0;
         classPtr->basename += basename_offset;
     }
     else GlobalGetAtomNameW( classPtr->atomName, classPtr->name, ARRAY_SIZE( classPtr->name ));
@@ -432,7 +443,7 @@ static CLASS *CLASS_RegisterClass( LPCWSTR name, UINT basename_offset, HINSTANCE
         req->client_ptr = wine_server_client_ptr( classPtr );
         req->atom       = classPtr->atomName;
         req->name_offset = basename_offset;
-        if (!req->atom && name) wine_server_add_data( req, name, lstrlenW(name) * sizeof(WCHAR) );
+        if (!req->atom && name) wine_server_add_data( req, name->Buffer, name->Length );
         ret = !wine_server_call_err( req );
         classPtr->atomName = reply->atom;
     }
@@ -466,12 +477,14 @@ static CLASS *CLASS_RegisterClass( LPCWSTR name, UINT basename_offset, HINSTANCE
  */
 static void register_builtin( const struct builtin_class_descr *descr )
 {
+    UNICODE_STRING name;
     CLASS *classPtr;
     HCURSOR cursor = 0;
 
     if (descr->cursor) cursor = LoadCursorA( 0, (LPSTR)descr->cursor );
 
-    if (!(classPtr = CLASS_RegisterClass( descr->name, 0, user32_module, FALSE,
+    init_class_name( &name, descr->name );
+    if (!(classPtr = CLASS_RegisterClass( &name, 0, user32_module, FALSE,
                                           descr->style, 0, descr->extra )))
     {
         if (cursor) DestroyCursor( cursor );
@@ -629,8 +642,8 @@ ATOM WINAPI RegisterClassW( const WNDCLASSW* wc )
  */
 ATOM WINAPI RegisterClassExA( const WNDCLASSEXA* wc )
 {
-    WCHAR name[MAX_ATOM_LEN + 1], combined[MAX_ATOM_LEN + 1];
-    const WCHAR *classname = NULL;
+    WCHAR nameW[MAX_ATOM_LEN + 1], combined[MAX_ATOM_LEN + 1];
+    UNICODE_STRING name, version;
     ATOM atom;
     CLASS *classPtr;
     HINSTANCE instance;
@@ -645,26 +658,27 @@ ATOM WINAPI RegisterClassExA( const WNDCLASSEXA* wc )
     }
     if (!(instance = wc->hInstance)) instance = GetModuleHandleW( NULL );
 
+    version.Buffer = combined;
+    version.MaximumLength = sizeof(combined);
     if (!IS_INTRESOURCE(wc->lpszClassName))
     {
-        UINT basename_offset;
-        if (!MultiByteToWideChar( CP_ACP, 0, wc->lpszClassName, -1, name, MAX_ATOM_LEN + 1 )) return 0;
-        classname = CLASS_GetVersionedName( name, &basename_offset, combined, FALSE );
-        classPtr = CLASS_RegisterClass( classname, basename_offset, instance, !(wc->style & CS_GLOBALCLASS),
-                                        wc->style, wc->cbClsExtra, wc->cbWndExtra );
+        if (!MultiByteToWideChar( CP_ACP, 0, wc->lpszClassName, -1, nameW, MAX_ATOM_LEN + 1 )) return 0;
+        get_versioned_name( nameW, &name, &version, FALSE );
     }
     else
     {
-        classPtr = CLASS_RegisterClass( (LPCWSTR)wc->lpszClassName, 0, instance,
-                                        !(wc->style & CS_GLOBALCLASS), wc->style,
-                                        wc->cbClsExtra, wc->cbWndExtra );
+        init_class_name( &name, (const WCHAR *)wc->lpszClassName );
+        version.Length = 0;
     }
+
+    classPtr = CLASS_RegisterClass( &name, version.Length / sizeof(WCHAR), instance, !(wc->style & CS_GLOBALCLASS),
+                                    wc->style, wc->cbClsExtra, wc->cbWndExtra );
     if (!classPtr) return 0;
     atom = classPtr->atomName;
 
-    TRACE("name=%s%s%s atom=%04x wndproc=%p hinst=%p bg=%p style=%08x clsExt=%d winExt=%d class=%p\n",
-          debugstr_a(wc->lpszClassName), classname != name ? "->" : "", classname != name ? debugstr_w(classname) : "",
-          atom, wc->lpfnWndProc, instance, wc->hbrBackground, wc->style, wc->cbClsExtra, wc->cbWndExtra, classPtr );
+    TRACE( "name=%s->%s atom=%04x wndproc=%p hinst=%p bg=%p style=%08x clsExt=%d winExt=%d class=%p\n",
+           debugstr_a(wc->lpszClassName), debugstr_us(&name), atom, wc->lpfnWndProc,
+           instance, wc->hbrBackground,  wc->style, wc->cbClsExtra, wc->cbWndExtra, classPtr );
 
     classPtr->hIcon         = wc->hIcon;
     classPtr->hIconSm       = wc->hIconSm;
@@ -687,9 +701,8 @@ ATOM WINAPI RegisterClassExA( const WNDCLASSEXA* wc )
  */
 ATOM WINAPI RegisterClassExW( const WNDCLASSEXW* wc )
 {
-    WCHAR name[MAX_ATOM_LEN + 1];
-    const WCHAR *classname;
-    UINT basename_offset;
+    WCHAR combined[MAX_ATOM_LEN + 1];
+    UNICODE_STRING name, version;
     ATOM atom;
     CLASS *classPtr;
     HINSTANCE instance;
@@ -704,17 +717,19 @@ ATOM WINAPI RegisterClassExW( const WNDCLASSEXW* wc )
     }
     if (!(instance = wc->hInstance)) instance = GetModuleHandleW( NULL );
 
-    classname = CLASS_GetVersionedName( wc->lpszClassName, &basename_offset, name, FALSE );
-    if (!(classPtr = CLASS_RegisterClass( classname, basename_offset, instance, !(wc->style & CS_GLOBALCLASS),
+    version.Buffer = combined;
+    version.MaximumLength = sizeof(combined);
+    get_versioned_name( wc->lpszClassName, &name, &version, FALSE );
+    if (!(classPtr = CLASS_RegisterClass( &name, version.Length / sizeof(WCHAR), instance,
+                                          !(wc->style & CS_GLOBALCLASS),
                                           wc->style, wc->cbClsExtra, wc->cbWndExtra )))
         return 0;
 
     atom = classPtr->atomName;
 
-    TRACE("name=%s%s%s atom=%04x wndproc=%p hinst=%p bg=%p style=%08x clsExt=%d winExt=%d class=%p\n",
-          debugstr_w(wc->lpszClassName), classname != wc->lpszClassName ? "->" : "",
-          classname != wc->lpszClassName ? debugstr_w(classname) : "", atom, wc->lpfnWndProc, instance,
-          wc->hbrBackground, wc->style, wc->cbClsExtra, wc->cbWndExtra, classPtr );
+    TRACE( "name=%s->%s atom=%04x wndproc=%p hinst=%p bg=%p style=%08x clsExt=%d winExt=%d class=%p\n",
+           debugstr_w(wc->lpszClassName), debugstr_us(&name), atom, wc->lpfnWndProc, instance,
+           wc->hbrBackground, wc->style, wc->cbClsExtra, wc->cbWndExtra, classPtr );
 
     classPtr->hIcon         = wc->hIcon;
     classPtr->hIconSm       = wc->hIconSm;
@@ -754,15 +769,16 @@ BOOL WINAPI UnregisterClassA( LPCSTR className, HINSTANCE hInstance )
 BOOL WINAPI UnregisterClassW( LPCWSTR className, HINSTANCE hInstance )
 {
     CLASS *classPtr = NULL;
+    UNICODE_STRING name;
 
     GetDesktopWindow();  /* create the desktop window to trigger builtin class registration */
 
-    className = CLASS_GetVersionedName( className, NULL, NULL, FALSE );
+    get_versioned_name( className, &name, NULL, FALSE );
     SERVER_START_REQ( destroy_class )
     {
         req->instance = wine_server_client_ptr( hInstance );
-        if (!(req->atom = get_int_atom_value(className)) && className)
-            wine_server_add_data( req, className, lstrlenW(className) * sizeof(WCHAR) );
+        if (!(req->atom = get_int_atom_value(&name)) && name.Length)
+            wine_server_add_data( req, name.Buffer, name.Length );
         if (!wine_server_call_err( req )) classPtr = wine_server_get_ptr( reply->client_ptr );
     }
     SERVER_END_REQ;
@@ -1222,22 +1238,24 @@ BOOL WINAPI GetClassInfoW( HINSTANCE hInstance, LPCWSTR name, WNDCLASSW *wc )
     return ret;
 }
 
-ATOM get_class_info( HINSTANCE instance, const WCHAR *name, WNDCLASSEXW *info,
+ATOM get_class_info( HINSTANCE instance, const WCHAR *class_name, WNDCLASSEXW *info,
                      UNICODE_STRING *name_str, BOOL ansi )
 {
-    const WCHAR *class_name;
+    UNICODE_STRING name;
     HMODULE module;
     CLASS *class;
     ATOM atom;
 
-    class_name = CLASS_GetVersionedName( name, NULL, NULL, &module );
+    get_versioned_name( class_name, &name, NULL, &module );
 
     if (!name_str && !instance) instance = user32_module;
 
-    if (name != (LPCWSTR)DESKTOP_CLASS_ATOM && (IS_INTRESOURCE(name) || wcsicmp( name, L"Message" )))
+    if (name.Buffer != (LPCWSTR)DESKTOP_CLASS_ATOM &&
+        (IS_INTRESOURCE(name.Buffer) || name.Length != sizeof(L"Message") ||
+         wcsnicmp( name.Buffer, L"Message", ARRAYSIZE(L"Message") )))
         GetDesktopWindow();  /* create the desktop window to trigger builtin class registration */
 
-    while (class_name && !(class = find_class( instance, class_name )))
+    while (class_name && !(class = find_class( instance, &name )))
     {
         if (module)
         {
@@ -1246,8 +1264,8 @@ ATOM get_class_info( HINSTANCE instance, const WCHAR *name, WNDCLASSEXW *info,
             module = NULL;
             if (pRegisterClassNameW)
             {
-                TRACE( "registering %s\n", debugstr_w(name) );
-                pRegisterClassNameW( name );
+                TRACE( "registering %s\n", debugstr_us(&name) );
+                pRegisterClassNameW( class_name );
                 continue;
             }
         }
@@ -1278,10 +1296,10 @@ ATOM get_class_info( HINSTANCE instance, const WCHAR *name, WNDCLASSEXW *info,
         info->hbrBackground = class->hbrBackground;
         info->lpszMenuName  = ansi ? (const WCHAR *)CLASS_GetMenuNameA( class )
                                    : CLASS_GetMenuNameW( class );
-        info->lpszClassName = name;
+        info->lpszClassName = class_name;
     }
 
-    if (name_str) init_class_name( name_str, class_name );
+    if (name_str) *name_str = name;
     atom = class->atomName;
     release_class_ptr( class );
     return atom;
