@@ -40,7 +40,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(class);
 
 #define MAX_ATOM_LEN 255 /* from dlls/kernel32/atom.c */
 
-static struct list class_list = LIST_INIT( class_list );
 static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
 
 #define CLASS_OTHER_PROCESS ((CLASS *)1)
@@ -301,54 +300,6 @@ static void CLASS_SetMenuNameW( CLASS *classPtr, LPCWSTR name )
 }
 
 
-/***********************************************************************
- *           CLASS_FreeClass
- *
- * Free a class structure.
- */
-static void CLASS_FreeClass( CLASS *classPtr )
-{
-    TRACE("%p\n", classPtr);
-
-    USER_Lock();
-
-    if (classPtr->dce) free_dce( classPtr->dce, 0 );
-    list_remove( &classPtr->entry );
-    if (classPtr->hbrBackground > (HBRUSH)(COLOR_GRADIENTINACTIVECAPTION + 1))
-        DeleteObject( classPtr->hbrBackground );
-    DestroyIcon( classPtr->hIconSmIntern );
-    free_menu_name( &classPtr->menu_name );
-    HeapFree( GetProcessHeap(), 0, classPtr );
-    USER_Unlock();
-}
-
-static CLASS *find_class( HINSTANCE module, UNICODE_STRING *name )
-{
-    ATOM atom = get_int_atom_value( name );
-    UINT_PTR instance = (UINT_PTR)module & ~0xffff;
-    CLASS *class;
-
-    USER_Lock();
-    LIST_FOR_EACH_ENTRY( class, &class_list, CLASS, entry )
-    {
-        if (atom)
-        {
-            if (class->atomName != atom) continue;
-        }
-        else
-        {
-            if (wcsnicmp( class->name, name->Buffer, name->Length / sizeof(WCHAR) )) continue;
-        }
-        if (!class->local || !module || (class->instance & ~0xffff) == instance)
-        {
-            TRACE( "%s %Ix -> %p\n", debugstr_us(name), instance, class );
-            return class;
-        }
-    }
-    USER_Unlock();
-    return NULL;
-}
-
 static void get_versioned_name( const WCHAR *name, UNICODE_STRING *ret, UNICODE_STRING *version, HMODULE *reg_module )
 {
     ACTCTX_SECTION_KEYED_DATA data;
@@ -407,75 +358,6 @@ static void get_versioned_name( const WCHAR *name, UNICODE_STRING *ret, UNICODE_
     init_class_name( ret, ptr );
 }
 
-/***********************************************************************
- *           CLASS_RegisterClass
- *
- * The real RegisterClass() functionality.
- */
-static CLASS *CLASS_RegisterClass( UNICODE_STRING *name, UINT basename_offset, HINSTANCE hInstance,
-                                   BOOL local, DWORD style, INT classExtra, INT winExtra )
-{
-    CLASS *classPtr;
-    BOOL ret;
-
-    TRACE("name=%s hinst=%p style=0x%x clExtr=0x%x winExtr=0x%x\n",
-          debugstr_us(name), hInstance, style, classExtra, winExtra );
-
-    /* Fix the extra bytes value */
-
-    if (classExtra > 40)  /* Extra bytes are limited to 40 in Win32 */
-        WARN("Class extra bytes %d is > 40\n", classExtra);
-    if (winExtra > 40)    /* Extra bytes are limited to 40 in Win32 */
-        WARN("Win extra bytes %d is > 40\n", winExtra );
-
-    classPtr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CLASS) + classExtra );
-    if (!classPtr) return NULL;
-
-    classPtr->atomName = get_int_atom_value( name );
-    classPtr->basename = classPtr->name;
-    if (!classPtr->atomName && name)
-    {
-        memcpy( classPtr->name, name->Buffer, name->Length );
-        classPtr->name[name->Length / sizeof(WCHAR)] = 0;
-        classPtr->basename += basename_offset;
-    }
-    else GlobalGetAtomNameW( classPtr->atomName, classPtr->name, ARRAY_SIZE( classPtr->name ));
-
-    SERVER_START_REQ( create_class )
-    {
-        req->local      = local;
-        req->style      = style;
-        req->instance   = wine_server_client_ptr( hInstance );
-        req->extra      = classExtra;
-        req->win_extra  = winExtra;
-        req->client_ptr = wine_server_client_ptr( classPtr );
-        req->atom       = classPtr->atomName;
-        req->name_offset = basename_offset;
-        if (!req->atom && name) wine_server_add_data( req, name->Buffer, name->Length );
-        ret = !wine_server_call_err( req );
-        classPtr->atomName = reply->atom;
-    }
-    SERVER_END_REQ;
-    if (!ret)
-    {
-        HeapFree( GetProcessHeap(), 0, classPtr );
-        return NULL;
-    }
-
-    classPtr->style       = style;
-    classPtr->local       = local;
-    classPtr->cbWndExtra  = winExtra;
-    classPtr->cbClsExtra  = classExtra;
-    classPtr->instance    = (UINT_PTR)hInstance;
-
-    /* Other non-null values must be set by caller */
-
-    USER_Lock();
-    if (local) list_add_head( &class_list, &classPtr->entry );
-    else list_add_tail( &class_list, &classPtr->entry );
-    return classPtr;
-}
-
 
 /***********************************************************************
  *           register_builtin
@@ -485,24 +367,22 @@ static CLASS *CLASS_RegisterClass( UNICODE_STRING *name, UINT basename_offset, H
  */
 static void register_builtin( const struct builtin_class_descr *descr )
 {
-    UNICODE_STRING name;
-    CLASS *classPtr;
-    HCURSOR cursor = 0;
+    UNICODE_STRING name, version = { .Length = 0 };
+    struct client_menu_name menu_name = { 0 };
+    WNDCLASSEXW class = {
+        .cbSize = sizeof(class),
+        .hInstance = user32_module,
+        .style = descr->style,
+        .cbWndExtra = descr->extra,
+        .hbrBackground = descr->brush,
+        .lpfnWndProc = BUILTIN_WINPROC( descr->proc ),
+    };
 
-    if (descr->cursor) cursor = LoadCursorA( 0, (LPSTR)descr->cursor );
+    if (descr->cursor) class.hCursor = LoadCursorA( 0, (LPSTR)descr->cursor );
 
     init_class_name( &name, descr->name );
-    if (!(classPtr = CLASS_RegisterClass( &name, 0, user32_module, FALSE,
-                                          descr->style, 0, descr->extra )))
-    {
-        if (cursor) DestroyCursor( cursor );
-        return;
-    }
-
-    classPtr->hCursor       = cursor;
-    classPtr->hbrBackground = descr->brush;
-    classPtr->winproc       = BUILTIN_WINPROC( descr->proc );
-    release_class_ptr( classPtr );
+    if (!NtUserRegisterClassExWOW( &class, &name, &version, &menu_name, 1, 0, NULL ) && class.hCursor)
+        DestroyCursor( class.hCursor );
 }
 
 static void load_uxtheme(void)
@@ -654,18 +534,6 @@ ATOM WINAPI RegisterClassExA( const WNDCLASSEXA* wc )
     struct client_menu_name menu_name;
     UNICODE_STRING name, version;
     ATOM atom;
-    CLASS *classPtr;
-    HINSTANCE instance;
-
-    GetDesktopWindow();  /* create the desktop window to trigger builtin class registration */
-
-    if (wc->cbSize != sizeof(*wc) || wc->cbClsExtra < 0 || wc->cbWndExtra < 0 ||
-        wc->hInstance == user32_module)  /* we can't register a class for user32 */
-    {
-         SetLastError( ERROR_INVALID_PARAMETER );
-         return 0;
-    }
-    if (!(instance = wc->hInstance)) instance = GetModuleHandleW( NULL );
 
     version.Buffer = combined;
     version.MaximumLength = sizeof(combined);
@@ -682,27 +550,8 @@ ATOM WINAPI RegisterClassExA( const WNDCLASSEXA* wc )
 
     if (!alloc_menu_nameA( &menu_name, wc->lpszMenuName )) return 0;
 
-    classPtr = CLASS_RegisterClass( &name, version.Length / sizeof(WCHAR), instance, !(wc->style & CS_GLOBALCLASS),
-                                    wc->style, wc->cbClsExtra, wc->cbWndExtra );
-    if (!classPtr) return 0;
-    atom = classPtr->atomName;
-
-    TRACE( "name=%s->%s atom=%04x wndproc=%p hinst=%p bg=%p style=%08x clsExt=%d winExt=%d class=%p\n",
-           debugstr_a(wc->lpszClassName), debugstr_us(&name), atom, wc->lpfnWndProc,
-           instance, wc->hbrBackground,  wc->style, wc->cbClsExtra, wc->cbWndExtra, classPtr );
-
-    classPtr->hIcon         = wc->hIcon;
-    classPtr->hIconSm       = wc->hIconSm;
-    classPtr->hIconSmIntern = wc->hIcon && !wc->hIconSm ?
-                                            CopyImage( wc->hIcon, IMAGE_ICON,
-                                                GetSystemMetrics( SM_CXSMICON ),
-                                                GetSystemMetrics( SM_CYSMICON ),
-                                                LR_COPYFROMRESOURCE ) : NULL;
-    classPtr->hCursor       = wc->hCursor;
-    classPtr->hbrBackground = wc->hbrBackground;
-    classPtr->winproc       = WINPROC_AllocProc( wc->lpfnWndProc, FALSE );
-    classPtr->menu_name     = menu_name;
-    release_class_ptr( classPtr );
+    atom = NtUserRegisterClassExWOW( (WNDCLASSEXW *)wc, &name, &version, &menu_name, 0, 1, NULL );
+    if (!atom) free_menu_name( &menu_name );
     return atom;
 }
 
@@ -716,50 +565,15 @@ ATOM WINAPI RegisterClassExW( const WNDCLASSEXW* wc )
     struct client_menu_name menu_name;
     UNICODE_STRING name, version;
     ATOM atom;
-    CLASS *classPtr;
-    HINSTANCE instance;
-
-    GetDesktopWindow();  /* create the desktop window to trigger builtin class registration */
-
-    if (wc->cbSize != sizeof(*wc) || wc->cbClsExtra < 0 || wc->cbWndExtra < 0 ||
-        wc->hInstance == user32_module)  /* we can't register a class for user32 */
-    {
-         SetLastError( ERROR_INVALID_PARAMETER );
-         return 0;
-    }
-    if (!(instance = wc->hInstance)) instance = GetModuleHandleW( NULL );
-
-    if (!alloc_menu_nameW( &menu_name, wc->lpszMenuName )) return 0;
 
     version.Buffer = combined;
     version.MaximumLength = sizeof(combined);
     get_versioned_name( wc->lpszClassName, &name, &version, FALSE );
-    if (!(classPtr = CLASS_RegisterClass( &name, version.Length / sizeof(WCHAR), instance,
-                                          !(wc->style & CS_GLOBALCLASS),
-                                          wc->style, wc->cbClsExtra, wc->cbWndExtra )))
-    {
-        free_menu_name( &menu_name );
-        return 0;
-    }
 
-    atom = classPtr->atomName;
+    if (!alloc_menu_nameW( &menu_name, wc->lpszMenuName )) return 0;
 
-    TRACE( "name=%s->%s atom=%04x wndproc=%p hinst=%p bg=%p style=%08x clsExt=%d winExt=%d class=%p\n",
-           debugstr_w(wc->lpszClassName), debugstr_us(&name), atom, wc->lpfnWndProc, instance,
-           wc->hbrBackground, wc->style, wc->cbClsExtra, wc->cbWndExtra, classPtr );
-
-    classPtr->hIcon         = wc->hIcon;
-    classPtr->hIconSm       = wc->hIconSm;
-    classPtr->hIconSmIntern = wc->hIcon && !wc->hIconSm ?
-                                            CopyImage( wc->hIcon, IMAGE_ICON,
-                                                GetSystemMetrics( SM_CXSMICON ),
-                                                GetSystemMetrics( SM_CYSMICON ),
-                                                LR_COPYFROMRESOURCE ) : NULL;
-    classPtr->hCursor       = wc->hCursor;
-    classPtr->hbrBackground = wc->hbrBackground;
-    classPtr->winproc       = WINPROC_AllocProc( wc->lpfnWndProc, TRUE );
-    CLASS_SetMenuNameW( classPtr, wc->lpszMenuName );
-    release_class_ptr( classPtr );
+    atom = NtUserRegisterClassExWOW( wc, &name, &version, &menu_name, 0, 0, NULL );
+    if (!atom) free_menu_name( &menu_name );
     return atom;
 }
 
@@ -785,23 +599,14 @@ BOOL WINAPI UnregisterClassA( LPCSTR className, HINSTANCE hInstance )
  */
 BOOL WINAPI UnregisterClassW( LPCWSTR className, HINSTANCE hInstance )
 {
-    CLASS *classPtr = NULL;
+    struct client_menu_name menu_name;
     UNICODE_STRING name;
-
-    GetDesktopWindow();  /* create the desktop window to trigger builtin class registration */
+    BOOL ret;
 
     get_versioned_name( className, &name, NULL, FALSE );
-    SERVER_START_REQ( destroy_class )
-    {
-        req->instance = wine_server_client_ptr( hInstance );
-        if (!(req->atom = get_int_atom_value(&name)) && name.Length)
-            wine_server_add_data( req, name.Buffer, name.Length );
-        if (!wine_server_call_err( req )) classPtr = wine_server_get_ptr( reply->client_ptr );
-    }
-    SERVER_END_REQ;
-
-    if (classPtr) CLASS_FreeClass( classPtr );
-    return (classPtr != NULL);
+    ret = NtUserUnregisterClass( &name, hInstance, &menu_name );
+    if (ret) free_menu_name( &menu_name );
+    return ret;
 }
 
 
@@ -1259,19 +1064,13 @@ ATOM get_class_info( HINSTANCE instance, const WCHAR *class_name, WNDCLASSEXW *i
 {
     UNICODE_STRING name;
     HMODULE module;
-    CLASS *class;
     ATOM atom;
 
     get_versioned_name( class_name, &name, NULL, &module );
 
     if (!name_str && !instance) instance = user32_module;
 
-    if (name.Buffer != (LPCWSTR)DESKTOP_CLASS_ATOM &&
-        (IS_INTRESOURCE(name.Buffer) || name.Length != sizeof(L"Message") ||
-         wcsnicmp( name.Buffer, L"Message", ARRAYSIZE(L"Message") )))
-        GetDesktopWindow();  /* create the desktop window to trigger builtin class registration */
-
-    while (class_name && !(class = find_class( instance, &name )))
+    while (!(atom = NtUserGetClassInfoEx( instance, &name, info, NULL, ansi )))
     {
         if (module)
         {
@@ -1292,31 +1091,14 @@ ATOM get_class_info( HINSTANCE instance, const WCHAR *class_name, WNDCLASSEXW *i
         TRACE( "%s retrying after loading comctl32\n", debugstr_w(class_name) );
     }
 
-    if (!class)
+    if (!atom)
     {
-        TRACE("%s %p -> not found\n", debugstr_w(class_name), instance);
+        TRACE( "%s %p -> not found\n", debugstr_w(class_name), instance );
         SetLastError( ERROR_CLASS_DOES_NOT_EXIST );
         return 0;
     }
 
-    if (info)
-    {
-        info->style         = class->style;
-        info->lpfnWndProc   = WINPROC_GetProc( class->winproc, !ansi );
-        info->cbClsExtra    = class->cbClsExtra;
-        info->cbWndExtra    = class->cbWndExtra;
-        info->hInstance     = (instance == user32_module) ? 0 : instance;
-        info->hIcon         = class->hIcon;
-        info->hIconSm       = class->hIconSm ? class->hIconSm : class->hIconSmIntern;
-        info->hCursor       = class->hCursor;
-        info->hbrBackground = class->hbrBackground;
-        info->lpszMenuName  = ansi ? (const WCHAR *)class->menu_name.nameA : class->menu_name.nameW;
-        info->lpszClassName = class_name;
-    }
-
     if (name_str) *name_str = name;
-    atom = class->atomName;
-    release_class_ptr( class );
     return atom;
 }
 
@@ -1355,6 +1137,8 @@ BOOL WINAPI GetClassInfoExA( HINSTANCE hInstance, LPCSTR name, WNDCLASSEXA *wc )
  */
 BOOL WINAPI GetClassInfoExW( HINSTANCE hInstance, LPCWSTR name, WNDCLASSEXW *wc )
 {
+    ATOM atom;
+
     TRACE("%p %s %p\n", hInstance, debugstr_w(name), wc);
 
     if (!wc)
@@ -1363,7 +1147,11 @@ BOOL WINAPI GetClassInfoExW( HINSTANCE hInstance, LPCWSTR name, WNDCLASSEXW *wc 
         return FALSE;
     }
 
-    return get_class_info( hInstance, name, wc, NULL, FALSE );
+    atom = get_class_info( hInstance, name, wc, NULL, FALSE );
+    if (atom) wc->lpszClassName = name;
+
+    /* We must return the atom of the class here instead of just TRUE. */
+    return atom;
 }
 
 

@@ -264,6 +264,8 @@ HICON   WINAPI NtUserFindExistingCursorIcon( UNICODE_STRING *module, UNICODE_STR
                                              void *desc );
 SHORT   WINAPI NtUserGetAsyncKeyState( INT key );
 ULONG   WINAPI NtUserGetAtomName( ATOM atom, UNICODE_STRING *name );
+ATOM    WINAPI NtUserGetClassInfoEx( HINSTANCE instance, UNICODE_STRING *name, WNDCLASSEXW *wc,
+                                     struct client_menu_name *menu_name, BOOL ansi );
 INT     WINAPI NtUserGetClassName( HWND hwnd, BOOL real, UNICODE_STRING *name );
 INT     WINAPI NtUserGetClipboardFormatName( UINT format, WCHAR *buffer, INT maxlen );
 HWND    WINAPI NtUserGetClipboardOwner(void);
@@ -312,6 +314,9 @@ HWINSTA WINAPI NtUserOpenWindowStation( OBJECT_ATTRIBUTES *attr, ACCESS_MASK acc
 BOOL    WINAPI NtUserSetObjectInformation( HANDLE handle, INT index, void *info, DWORD len );
 HDESK   WINAPI NtUserOpenDesktop( OBJECT_ATTRIBUTES *attr, DWORD flags, ACCESS_MASK access );
 HDESK   WINAPI NtUserOpenInputDesktop( DWORD flags, BOOL inherit, ACCESS_MASK access );
+ATOM    WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *name, UNICODE_STRING *version,
+                                         struct client_menu_name *client_menu_name, DWORD fnid, DWORD flags,
+                                         DWORD *wow );
 BOOL    WINAPI NtUserRegisterHotKey( HWND hwnd, INT id, UINT modifiers, UINT vk );
 BOOL    WINAPI NtUserRemoveClipboardFormatListener( HWND hwnd );
 HANDLE  WINAPI NtUserRemoveProp( HWND hwnd, const WCHAR *str );
@@ -340,6 +345,8 @@ INT     WINAPI NtUserToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
                                   WCHAR *str, int size, UINT flags, HKL layout );
 BOOL    WINAPI NtUserUnhookWinEvent( HWINEVENTHOOK hEventHook );
 BOOL    WINAPI NtUserUnhookWindowsHookEx( HHOOK handle );
+BOOL    WINAPI NtUserUnregisterClass( UNICODE_STRING *name, HINSTANCE instance,
+                                      struct client_menu_name *client_menu_name );
 BOOL    WINAPI NtUserUnregisterHotKey( HWND hwnd, INT id );
 WORD    WINAPI NtUserVkKeyScanEx( WCHAR chr, HKL layout );
 

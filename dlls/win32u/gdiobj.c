@@ -1165,6 +1165,7 @@ static struct unix_funcs unix_funcs =
     NtUserEnumDisplayMonitors,
     NtUserEnumDisplaySettings,
     NtUserGetAsyncKeyState,
+    NtUserGetClassInfoEx,
     NtUserGetCursorInfo,
     NtUserGetDisplayConfigBufferSizes,
     NtUserGetIconInfo,
@@ -1175,6 +1176,7 @@ static struct unix_funcs unix_funcs =
     NtUserGetUpdatedClipboardFormats,
     NtUserIsClipboardFormatAvailable,
     NtUserMapVirtualKeyEx,
+    NtUserRegisterClassExWOW,
     NtUserRegisterHotKey,
     NtUserScrollDC,
     NtUserSelectPalette,
@@ -1186,6 +1188,7 @@ static struct unix_funcs unix_funcs =
     NtUserSystemParametersInfo,
     NtUserSystemParametersInfoForDpi,
     NtUserToUnicodeEx,
+    NtUserUnregisterClass,
     NtUserUnregisterHotKey,
     NtUserVkKeyScanEx,
 

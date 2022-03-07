@@ -328,7 +328,7 @@ static struct dce *get_window_dce( HWND hwnd )
  *
  * Free a class or window DCE.
  */
-void free_dce( struct dce *dce, HWND hwnd )
+void WINAPI free_dce( struct dce *dce, HWND hwnd )
 {
     struct dce *dce_to_free = NULL;
 

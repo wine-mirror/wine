@@ -203,6 +203,8 @@ struct unix_funcs
     BOOL     (WINAPI *pNtUserEnumDisplaySettings)( UNICODE_STRING *device, DWORD mode,
                                                    DEVMODEW *dev_mode, DWORD flags );
     SHORT    (WINAPI *pNtUserGetAsyncKeyState)( INT key );
+    ATOM     (WINAPI *pNtUserGetClassInfoEx)( HINSTANCE instance, UNICODE_STRING *name, WNDCLASSEXW *wc,
+                                              struct client_menu_name *menu_name, BOOL ansi );
     BOOL     (WINAPI *pNtUserGetCursorInfo)( CURSORINFO *info );
     LONG     (WINAPI *pNtUserGetDisplayConfigBufferSizes)( UINT32 flags, UINT32 *num_path_info,
                                                            UINT32 *num_mode_info );
@@ -215,6 +217,10 @@ struct unix_funcs
     BOOL     (WINAPI *pNtUserGetUpdatedClipboardFormats)( UINT *formats, UINT size, UINT *out_size );
     BOOL     (WINAPI *pNtUserIsClipboardFormatAvailable)( UINT format );
     UINT     (WINAPI *pNtUserMapVirtualKeyEx)( UINT code, UINT type, HKL layout );
+    ATOM     (WINAPI *pNtUserRegisterClassExWOW)( const WNDCLASSEXW *wc, UNICODE_STRING *name,
+                                                  UNICODE_STRING *version,
+                                                  struct client_menu_name *client_menu_name,
+                                                  DWORD fnid, DWORD flags, DWORD *wow );
     BOOL     (WINAPI *pNtUserRegisterHotKey)( HWND hwnd, INT id, UINT modifiers, UINT vk );
     BOOL     (WINAPI *pNtUserScrollDC)( HDC hdc, INT dx, INT dy, const RECT *scroll, const RECT *clip,
                                         HRGN ret_update_rgn, RECT *update_rect );
@@ -230,6 +236,8 @@ struct unix_funcs
                                                          UINT winini, UINT dpi );
     INT      (WINAPI *pNtUserToUnicodeEx)( UINT virt, UINT scan, const BYTE *state,
                                            WCHAR *str, int size, UINT flags, HKL layout );
+    BOOL     (WINAPI *pNtUserUnregisterClass)( UNICODE_STRING *name, HINSTANCE instance,
+                                               struct client_menu_name *client_menu_name );
     BOOL     (WINAPI *pNtUserUnregisterHotKey)( HWND hwnd, INT id );
     WORD     (WINAPI *pNtUserVkKeyScanEx)( WCHAR chr, HKL layout );
 

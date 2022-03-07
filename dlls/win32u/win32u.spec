@@ -898,7 +898,7 @@
 @ stub NtUserGetCPD
 @ stub NtUserGetCaretBlinkTime
 @ stub NtUserGetCaretPos
-@ stub NtUserGetClassInfoEx
+@ stdcall NtUserGetClassInfoEx(ptr ptr ptr ptr long)
 @ stdcall -syscall NtUserGetClassName(long long ptr)
 @ stub NtUserGetClipCursor
 @ stub NtUserGetClipboardAccessToken
@@ -1122,7 +1122,7 @@
 @ stub NtUserRealWaitMessageEx
 @ stub NtUserRedrawWindow
 @ stub NtUserRegisterBSDRWindow
-@ stub NtUserRegisterClassExWOW
+@ stdcall NtUserRegisterClassExWOW(ptr ptr ptr ptr long long long)
 @ stub NtUserRegisterDManipHook
 @ stub NtUserRegisterEdgy
 @ stub NtUserRegisterErrorReportingDialog
@@ -1288,7 +1288,7 @@
 @ stdcall -syscall NtUserUnhookWindowsHookEx(long)
 @ stub NtUserUnloadKeyboardLayout
 @ stub NtUserUnlockWindowStation
-@ stub NtUserUnregisterClass
+@ stdcall NtUserUnregisterClass(ptr ptr ptr)
 @ stdcall NtUserUnregisterHotKey(long long)
 @ stub NtUserUnregisterSessionPort
 @ stub NtUserUnregisterUserApiHook

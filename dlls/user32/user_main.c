@@ -135,12 +135,14 @@ static void dpiaware_init(void)
 
 static const struct user_callbacks user_funcs =
 {
+    CopyImage,
     GetDesktopWindow,
     GetWindowRect,
     IsChild,
     RedrawWindow,
     SendMessageTimeoutW,
     WindowFromDC,
+    free_dce,
     MSG_SendInternalMessageTimeout,
 };
 

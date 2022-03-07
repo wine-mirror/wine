@@ -795,6 +795,13 @@ SHORT WINAPI NtUserGetAsyncKeyState( INT key )
     return unix_funcs->pNtUserGetAsyncKeyState( key );
 }
 
+ATOM WINAPI NtUserGetClassInfoEx( HINSTANCE instance, UNICODE_STRING *name, WNDCLASSEXW *wc,
+                                  struct client_menu_name *menu_name, BOOL ansi )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserGetClassInfoEx( instance, name, wc, menu_name, ansi );
+}
+
 BOOL WINAPI NtUserGetCursorInfo( CURSORINFO *info )
 {
     if (!unix_funcs) return FALSE;
@@ -855,6 +862,14 @@ UINT WINAPI NtUserMapVirtualKeyEx( UINT code, UINT type, HKL layout )
 {
     if (!unix_funcs) return -1;
     return unix_funcs->pNtUserMapVirtualKeyEx( code, type, layout );
+}
+
+ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *name, UNICODE_STRING *version,
+                                      struct client_menu_name *client_menu_name, DWORD fnid, DWORD flags,
+                                      DWORD *wow )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserRegisterClassExWOW( wc, name, version, client_menu_name, fnid, flags, wow );
 }
 
 BOOL WINAPI NtUserRegisterHotKey( HWND hwnd, INT id, UINT modifiers, UINT vk )
@@ -924,6 +939,13 @@ INT WINAPI NtUserToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
 {
     if (!unix_funcs) return 0;
     return unix_funcs->pNtUserToUnicodeEx( virt, scan, state, str, size, flags, layout );
+}
+
+BOOL WINAPI NtUserUnregisterClass( UNICODE_STRING *name, HINSTANCE instance,
+                                   struct client_menu_name *client_menu_name )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserUnregisterClass( name, instance, client_menu_name );
 }
 
 BOOL WINAPI NtUserUnregisterHotKey( HWND hwnd, INT id )

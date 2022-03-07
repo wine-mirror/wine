@@ -25,14 +25,18 @@
 #include "ntuser.h"
 #include "wine/list.h"
 
+struct dce;
+
 struct user_callbacks
 {
+    HANDLE (WINAPI *pCopyImage)( HANDLE, UINT, INT, INT, UINT );
     HWND (WINAPI *pGetDesktopWindow)(void);
     BOOL (WINAPI *pGetWindowRect)( HWND hwnd, LPRECT rect );
     BOOL (WINAPI *pIsChild)( HWND, HWND );
     BOOL (WINAPI *pRedrawWindow)( HWND, const RECT*, HRGN, UINT );
     LRESULT (WINAPI *pSendMessageTimeoutW)( HWND, UINT, WPARAM, LPARAM, UINT, UINT, PDWORD_PTR );
     HWND (WINAPI *pWindowFromDC)( HDC );
+    void (WINAPI *free_dce)( struct dce *dce, HWND hwnd );
     LRESULT (WINAPI *send_ll_message)( DWORD, DWORD, UINT, WPARAM, LPARAM, UINT, UINT, PDWORD_PTR );
 };
 
@@ -168,6 +172,13 @@ typedef struct tagWINDOWPROC
 #define BUILTIN_WINPROC(index) ((WNDPROC)(ULONG_PTR)((index) | (WINPROC_HANDLE << 16)))
 
 #define MAX_ATOM_LEN 255
+
+/* Built-in class names (see _Undocumented_Windows_ p.418) */
+#define POPUPMENU_CLASS_ATOM MAKEINTATOM(32768)  /* PopupMenu */
+#define DESKTOP_CLASS_ATOM   MAKEINTATOM(32769)  /* Desktop */
+#define DIALOG_CLASS_ATOM    MAKEINTATOM(32770)  /* Dialog */
+#define WINSWITCH_CLASS_ATOM MAKEINTATOM(32771)  /* WinSwitch */
+#define ICONTITLE_CLASS_ATOM MAKEINTATOM(32772)  /* IconTitle */
 
 typedef struct tagCLASS
 {
