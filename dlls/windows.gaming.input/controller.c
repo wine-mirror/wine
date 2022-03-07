@@ -46,15 +46,13 @@ static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID 
         IsEqualGUID( iid, &IID_IAgileObject ) ||
         IsEqualGUID( iid, &IID_IActivationFactory ))
     {
-        IUnknown_AddRef( iface );
-        *out = iface;
+        IInspectable_AddRef( (*out = &impl->IActivationFactory_iface) );
         return S_OK;
     }
 
     if (IsEqualGUID( iid, &IID_IRawGameControllerStatics ))
     {
-        IUnknown_AddRef( iface );
-        *out = &impl->IRawGameControllerStatics_iface;
+        IInspectable_AddRef( (*out = &impl->IRawGameControllerStatics_iface) );
         return S_OK;
     }
 
