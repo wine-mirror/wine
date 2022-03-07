@@ -73,6 +73,15 @@ cpp_quote("#endif")
         ]
         delegate HRESULT TypedEventHandler<TSender, TArgs>([in] TSender sender, [in] TArgs args);
 
+        [
+            contract(Windows.Foundation.FoundationContract, 1.0),
+            uuid(61c17706-2d65-11e0-9ae8-d48564015472)
+        ]
+        interface IReference<T> : IInspectable
+        {
+            [propget] HRESULT Value([out, retval] T *value);
+        }
+
         namespace Collections
         {
             [
