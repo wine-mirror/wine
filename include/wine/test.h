@@ -79,24 +79,16 @@ extern void winetest_wait_child_process( HANDLE process );
 #define START_TEST(name) void func_##name(void)
 #endif
 
-#if (defined(__x86_64__) || (defined(__aarch64__) && __has_attribute(ms_abi))) && defined(__GNUC__) && defined(__WINE_USE_MSVCRT)
-#define __winetest_cdecl __cdecl
-#define __winetest_va_list __builtin_ms_va_list
-#else
-#define __winetest_cdecl
-#define __winetest_va_list va_list
-#endif
-
 extern int broken( int condition );
-extern int winetest_vok( int condition, const char *msg, __winetest_va_list ap );
-extern void winetest_vskip( const char *msg, __winetest_va_list ap );
+extern int winetest_vok( int condition, const char *msg, va_list ap );
+extern void winetest_vskip( const char *msg, va_list ap );
 
-extern void __winetest_cdecl winetest_ok( int condition, const char *msg, ... ) __WINE_PRINTF_ATTR(2,3);
-extern void __winetest_cdecl winetest_skip( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
-extern void __winetest_cdecl winetest_win_skip( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
-extern void __winetest_cdecl winetest_trace( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
+extern void winetest_ok( int condition, const char *msg, ... ) __WINE_PRINTF_ATTR(2,3);
+extern void winetest_skip( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
+extern void winetest_win_skip( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
+extern void winetest_trace( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
 
-extern void __winetest_cdecl winetest_push_context( const char *fmt, ... ) __WINE_PRINTF_ATTR(1, 2);
+extern void winetest_push_context( const char *fmt, ... ) __WINE_PRINTF_ATTR(1, 2);
 extern void winetest_pop_context(void);
 
 #ifdef WINETEST_NO_LINE_NUMBERS
@@ -186,14 +178,6 @@ extern void winetest_pop_context(void);
 
 #include <stdio.h>
 #include <excpt.h>
-
-#if (defined(__x86_64__) || defined(__aarch64__)) && defined(__GNUC__) && defined(__WINE_USE_MSVCRT)
-# define __winetest_va_start(list,arg) __builtin_ms_va_start(list,arg)
-# define __winetest_va_end(list) __builtin_ms_va_end(list)
-#else
-# define __winetest_va_start(list,arg) va_start(list,arg)
-# define __winetest_va_end(list) va_end(list)
-#endif
 
 struct test
 {
@@ -300,18 +284,18 @@ const char *winetest_elapsed(void)
     return wine_dbg_sprintf( "%.3f", (now - winetest_start_time) / 1000.0);
 }
 
-static void __winetest_cdecl winetest_printf( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
-static void __winetest_cdecl winetest_printf( const char *msg, ... )
+static void winetest_printf( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
+static void winetest_printf( const char *msg, ... )
 {
     struct tls_data *data = get_tls_data();
-    __winetest_va_list valist;
+    va_list valist;
 
     printf( "%s:%d:%s ", data->current_file, data->current_line, winetest_elapsed() );
-    __winetest_va_start( valist, msg );
+    va_start( valist, msg );
     vprintf( msg, valist );
-    __winetest_va_end( valist );
+    va_end( valist );
 }
-static void __winetest_cdecl winetest_print_context( const char *msgtype )
+static void winetest_print_context( const char *msgtype )
 {
     struct tls_data *data = get_tls_data();
     unsigned int i;
@@ -363,7 +347,7 @@ static LONG winetest_add_line( void )
  * Return:
  *   0 if condition does not have the expected value, 1 otherwise
  */
-int winetest_vok( int condition, const char *msg, __winetest_va_list args )
+int winetest_vok( int condition, const char *msg, va_list args )
 {
     struct tls_data *data = get_tls_data();
 
@@ -415,33 +399,33 @@ int winetest_vok( int condition, const char *msg, __winetest_va_list args )
     }
 }
 
-void __winetest_cdecl winetest_ok( int condition, const char *msg, ... )
+void winetest_ok( int condition, const char *msg, ... )
 {
-    __winetest_va_list valist;
+    va_list valist;
 
-    __winetest_va_start(valist, msg);
+    va_start(valist, msg);
     winetest_vok(condition, msg, valist);
-    __winetest_va_end(valist);
+    va_end(valist);
 }
 
-void __winetest_cdecl winetest_trace( const char *msg, ... )
+void winetest_trace( const char *msg, ... )
 {
-    __winetest_va_list valist;
+    va_list valist;
 
     if (!winetest_debug)
         return;
     if (winetest_add_line() < winetest_mute_threshold)
     {
         winetest_print_context( "" );
-        __winetest_va_start(valist, msg);
+        va_start(valist, msg);
         vprintf( msg, valist );
-        __winetest_va_end(valist);
+        va_end(valist);
     }
     else
         InterlockedIncrement(&muted_traces);
 }
 
-void winetest_vskip( const char *msg, __winetest_va_list args )
+void winetest_vskip( const char *msg, va_list args )
 {
     if (winetest_add_line() < winetest_mute_threshold)
     {
@@ -453,23 +437,23 @@ void winetest_vskip( const char *msg, __winetest_va_list args )
         InterlockedIncrement(&muted_skipped);
 }
 
-void __winetest_cdecl winetest_skip( const char *msg, ... )
+void winetest_skip( const char *msg, ... )
 {
-    __winetest_va_list valist;
-    __winetest_va_start(valist, msg);
+    va_list valist;
+    va_start(valist, msg);
     winetest_vskip(msg, valist);
-    __winetest_va_end(valist);
+    va_end(valist);
 }
 
-void __winetest_cdecl winetest_win_skip( const char *msg, ... )
+void winetest_win_skip( const char *msg, ... )
 {
-    __winetest_va_list valist;
-    __winetest_va_start(valist, msg);
+    va_list valist;
+    va_start(valist, msg);
     if (strcmp(winetest_platform, "windows") == 0)
         winetest_vskip(msg, valist);
     else
         winetest_vok(0, msg, valist);
-    __winetest_va_end(valist);
+    va_end(valist);
 }
 
 void winetest_start_todo( int is_todo )
@@ -493,16 +477,16 @@ void winetest_end_todo(void)
     data->todo_level >>= 1;
 }
 
-void __winetest_cdecl winetest_push_context( const char *fmt, ... )
+void winetest_push_context( const char *fmt, ... )
 {
     struct tls_data *data = get_tls_data();
-    __winetest_va_list valist;
+    va_list valist;
 
     if (data->context_count < ARRAY_SIZE(data->context))
     {
-        __winetest_va_start(valist, fmt);
+        va_start(valist, fmt);
         vsnprintf( data->context[data->context_count], sizeof(data->context[data->context_count]), fmt, valist );
-        __winetest_va_end(valist);
+        va_end(valist);
         data->context[data->context_count][sizeof(data->context[data->context_count]) - 1] = 0;
     }
     ++data->context_count;
