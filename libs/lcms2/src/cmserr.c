@@ -506,7 +506,7 @@ void CMSEXPORT cmsSetLogErrorHandler(cmsLogErrorHandlerFunction Fn)
 
 // Log an error
 // ErrorText is a text holding an english description of error.
-void WINAPIV cmsSignalError(cmsContext ContextID, cmsUInt32Number ErrorCode, const char *ErrorText, ...)
+void CMSEXPORT cmsSignalError(cmsContext ContextID, cmsUInt32Number ErrorCode, const char *ErrorText, ...)
 {
     va_list args;
     char Buffer[MAX_ERROR_MESSAGE_LEN];

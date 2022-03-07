@@ -492,7 +492,7 @@ cmsBool CMSEXPORT _cmsWriteAlignment(cmsIOHANDLER* io)
 
 
 // To deal with text streams. 2K at most
-cmsBool WINAPIV _cmsIOPrintf(cmsIOHANDLER* io, const char* frm, ...)
+cmsBool CMSEXPORT _cmsIOPrintf(cmsIOHANDLER* io, const char* frm, ...)
 {
     va_list args;
     int len;

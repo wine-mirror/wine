@@ -107,7 +107,7 @@ void From16ToFloat(const cmsUInt16Number In[], cmsFloat32Number Out[], cmsUInt32
 // the function founds a match with current pipeline, it fills the pointers and returns TRUE
 // if not, returns FALSE without touching anything. Setting pointers to NULL does bypass
 // the storage process.
-cmsBool  WINAPIV cmsPipelineCheckAndRetreiveStages(const cmsPipeline* Lut, cmsUInt32Number n, ...)
+cmsBool  CMSEXPORT cmsPipelineCheckAndRetreiveStages(const cmsPipeline* Lut, cmsUInt32Number n, ...)
 {
     va_list args;
     cmsUInt32Number i;

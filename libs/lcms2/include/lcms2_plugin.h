@@ -102,7 +102,7 @@ CMSAPI void               CMSEXPORT cmsMD5finish(cmsProfileID* ProfileID, cmsHAN
 
 // Error logging  -------------------------------------------------------------------------------------
 
-CMSAPI void               WINAPIV  cmsSignalError(cmsContext ContextID, cmsUInt32Number ErrorCode, const char *ErrorText, ...);
+CMSAPI void               CMSEXPORT  cmsSignalError(cmsContext ContextID, cmsUInt32Number ErrorCode, const char *ErrorText, ...);
 
 // Memory management ----------------------------------------------------------------------------------
 
@@ -174,7 +174,7 @@ CMSAPI cmsBool             CMSEXPORT _cmsReadAlignment(cmsIOHANDLER* io);
 CMSAPI cmsBool             CMSEXPORT _cmsWriteAlignment(cmsIOHANDLER* io);
 
 // To deal with text streams. 2K at most
-CMSAPI cmsBool             WINAPIV _cmsIOPrintf(cmsIOHANDLER* io, const char* frm, ...);
+CMSAPI cmsBool             CMSEXPORT _cmsIOPrintf(cmsIOHANDLER* io, const char* frm, ...);
 
 // Fixed point helper functions
 CMSAPI cmsFloat64Number    CMSEXPORT _cms8Fixed8toDouble(cmsUInt16Number fixed8);

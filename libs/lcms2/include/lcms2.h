@@ -1234,7 +1234,7 @@ CMSAPI void              CMSEXPORT cmsPipelineUnlinkStage(cmsPipeline* lut, cmsS
 // then a list of expected types followed with a list of double pointers to Stage elements. If
 // the function founds a match with current pipeline, it fills the pointers and returns TRUE
 // if not, returns FALSE without touching anything.
-CMSAPI cmsBool           WINAPIV cmsPipelineCheckAndRetreiveStages(const cmsPipeline* Lut, cmsUInt32Number n, ...);
+CMSAPI cmsBool           CMSEXPORT cmsPipelineCheckAndRetreiveStages(const cmsPipeline* Lut, cmsUInt32Number n, ...);
 
 // Matrix has double precision and CLUT has only float precision. That is because an ICC profile can encode
 // matrices with far more precision that CLUTS
