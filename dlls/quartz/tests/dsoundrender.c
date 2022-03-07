@@ -449,10 +449,11 @@ static void test_basic_audio(void)
     IBaseFilter *filter = create_dsound_render();
     LONG balance, volume;
     ITypeInfo *typeinfo;
+    unsigned int count;
     IBasicAudio *audio;
     TYPEATTR *typeattr;
-    ULONG ref, count;
     HRESULT hr;
+    ULONG ref;
 
     hr = IBaseFilter_QueryInterface(filter, &IID_IBasicAudio, (void **)&audio);
     ok(hr == S_OK, "Got hr %#x.\n", hr);

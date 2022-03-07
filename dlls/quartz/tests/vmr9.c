@@ -3975,11 +3975,11 @@ static void test_windowless_size(void)
     IVMRAspectRatioControl9 *aspect_ratio_control;
     IVMRWindowlessControl9 *windowless_control;
     IFilterGraph2 *graph = create_graph();
-    VMR9AspectRatioMode aspect_mode;
     struct testfilter source;
     IMemAllocator *allocator;
     RECT src, dst, expect;
     IMemInputPin *input;
+    DWORD aspect_mode;
     HWND window;
     HRESULT hr;
     ULONG ref;

@@ -2827,8 +2827,8 @@ static void test_control_delegation(void)
     IVideoWindow *window;
     IBasicVideo2 *video;
     ITypeInfo *typeinfo;
+    unsigned int count;
     TYPEATTR *typeattr;
-    ULONG count;
     HRESULT hr;
     LONG val;
 
