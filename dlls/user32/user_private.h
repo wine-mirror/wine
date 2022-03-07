@@ -160,8 +160,7 @@ extern BOOL WINPROC_call_window( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
                                  LRESULT *result, BOOL unicode, enum wm_char_mapping mapping ) DECLSPEC_HIDDEN;
 extern void winproc_init(void) DECLSPEC_HIDDEN;
 
-extern const WCHAR *CLASS_GetVersionedName(const WCHAR *classname, UINT *basename_offset,
-        WCHAR *combined, BOOL register_class) DECLSPEC_HIDDEN;
+extern ATOM get_class_info( HINSTANCE instance, const WCHAR *name, UNICODE_STRING *name_str ) DECLSPEC_HIDDEN;
 
 /* kernel callbacks */
 

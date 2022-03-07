@@ -126,7 +126,7 @@ void *free_user_handle( HANDLE handle, unsigned int type )
  *
  * Create a window handle with the server.
  */
-static WND *create_window_handle( HWND parent, HWND owner, LPCWSTR name,
+static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name,
                                   HINSTANCE instance, BOOL unicode,
                                   DWORD style, DWORD ex_style )
 {
@@ -146,8 +146,8 @@ static WND *create_window_handle( HWND parent, HWND owner, LPCWSTR name,
         req->awareness = awareness;
         req->style    = style;
         req->ex_style = ex_style;
-        if (!(req->atom = get_int_atom_value( name )) && name)
-            wine_server_add_data( req, name, lstrlenW(name)*sizeof(WCHAR) );
+        if (!(req->atom = get_int_atom_value( name->Buffer )) && name->Length)
+            wine_server_add_data( req, name->Buffer, name->Length );
         if (!wine_server_call_err( req ))
         {
             handle      = wine_server_ptr_handle( reply->handle );
@@ -184,7 +184,7 @@ static WND *create_window_handle( HWND parent, HWND owner, LPCWSTR name,
     {
         struct user_thread_info *thread_info = get_user_thread_info();
 
-        if (name == (LPCWSTR)DESKTOP_CLASS_ATOM)
+        if (name->Buffer == (LPCWSTR)DESKTOP_CLASS_ATOM)
         {
             if (!thread_info->top_window) thread_info->top_window = full_parent ? full_parent : handle;
             else assert( full_parent == thread_info->top_window );
@@ -1395,18 +1395,19 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
     RECT rect;
     WND *wndPtr;
     HWND hwnd, parent, owner, top_child = 0;
-    const WCHAR *p = className;
     UINT win_dpi, thread_dpi = get_thread_dpi();
     DPI_AWARENESS_CONTEXT context;
     MDICREATESTRUCTW mdi_cs;
+    UNICODE_STRING class;
     CBT_CREATEWNDW cbtc;
     CREATESTRUCTW cbcs;
 
-    className = CLASS_GetVersionedName(className, NULL, NULL, TRUE);
+    if (!get_class_info( module, className, &class )) return FALSE;
 
     TRACE("%s %s%s%s ex=%08x style=%08x %d,%d %dx%d parent=%p menu=%p inst=%p params=%p\n",
           unicode ? debugstr_w(cs->lpszName) : debugstr_a((LPCSTR)cs->lpszName),
-          debugstr_w(p), p != className ? "->" : "", p != className ? debugstr_w(className) : "",
+          debugstr_w(className), class.Buffer != className ? "->" : "",
+          class.Buffer != className ? debugstr_wn(class.Buffer, class.Length / sizeof(WCHAR)) : "",
           cs->dwExStyle, cs->style, cs->x, cs->y, cs->cx, cs->cy,
           cs->hwndParent, cs->hMenu, cs->hInstance, cs->lpCreateParams );
     if(TRACE_ON(win)) dump_window_styles( cs->style, cs->dwExStyle );
@@ -1524,17 +1525,9 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
 
     style = cs->style & ~WS_VISIBLE;
     ex_style = cs->dwExStyle & ~WS_EX_LAYERED;
-    if (!(wndPtr = create_window_handle( parent, owner, className, module,
-                    unicode, style, ex_style )))
-    {
-        WNDCLASSW wc;
-        /* if it's a comctl32 class, GetClassInfo will load it, then we can retry */
-        if (GetLastError() != ERROR_INVALID_HANDLE ||
-            !GetClassInfoW( 0, className, &wc ) ||
-            !(wndPtr = create_window_handle( parent, owner, className, module,
-                    unicode, style, ex_style )))
-            return 0;
-    }
+    if (!(wndPtr = create_window_handle( parent, owner, &class, module,
+                                         unicode, style, ex_style )))
+        return 0;
     hwnd = wndPtr->obj.handle;
 
     /* Fill the window structure */

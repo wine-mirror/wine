@@ -211,6 +211,16 @@ static BOOL set_server_info( HWND hwnd, INT offset, LONG_PTR newval, UINT size )
 }
 
 
+static void init_class_name( UNICODE_STRING *str, const WCHAR *name )
+{
+    if (IS_INTRESOURCE( name ))
+    {
+        str->Buffer = (WCHAR *)name;
+        str->Length = str->MaximumLength = 0;
+    }
+    else RtlInitUnicodeString( str, name );
+}
+
 /***********************************************************************
  *           CLASS_GetMenuNameA
  *
@@ -252,7 +262,6 @@ static void CLASS_SetMenuNameA( CLASS *classPtr, LPCSTR name )
     }
     else classPtr->menuName = (LPWSTR)name;
 }
-
 
 /***********************************************************************
  *           CLASS_SetMenuNameW
@@ -313,7 +322,7 @@ static CLASS *find_class( HINSTANCE module, const WCHAR *name )
         {
             if (wcsicmp( class->name, name )) continue;
         }
-        if (!class->local || (class->instance & ~0xffff) == instance)
+        if (!class->local || !module || (class->instance & ~0xffff) == instance)
         {
             TRACE("%s %Ix -> %p\n", debugstr_w(name), instance, class);
             return class;
@@ -323,7 +332,7 @@ static CLASS *find_class( HINSTANCE module, const WCHAR *name )
     return NULL;
 }
 
-const WCHAR *CLASS_GetVersionedName( const WCHAR *name, UINT *basename_offset, WCHAR *combined, BOOL register_class )
+static const WCHAR *CLASS_GetVersionedName( const WCHAR *name, UINT *basename_offset, WCHAR *combined, BOOL register_class )
 {
     ACTCTX_SECTION_KEYED_DATA data;
     struct wndclass_redirect_data
@@ -397,11 +406,12 @@ const WCHAR *CLASS_GetVersionedName( const WCHAR *name, UINT *basename_offset, W
  *
  * Return a pointer to the class.
  */
-static CLASS *CLASS_FindClass( LPCWSTR name, HINSTANCE hinstance )
+static CLASS *CLASS_FindClass( LPCWSTR name, HINSTANCE hinstance, UNICODE_STRING *name_str )
 {
     CLASS *class;
 
-    GetDesktopWindow();  /* create the desktop window to trigger builtin class registration */
+    if (name != (LPCWSTR)DESKTOP_CLASS_ATOM && (IS_INTRESOURCE(name) || wcsicmp( name, L"Message" )))
+        GetDesktopWindow();  /* create the desktop window to trigger builtin class registration */
 
     if (!name) return NULL;
 
@@ -417,6 +427,7 @@ static CLASS *CLASS_FindClass( LPCWSTR name, HINSTANCE hinstance )
     }
 
     if (!class) TRACE("%s %p -> not found\n", debugstr_w(name), hinstance);
+    else if (name_str) init_class_name( name_str, name );
     return class;
 }
 
@@ -1253,6 +1264,21 @@ BOOL WINAPI GetClassInfoW( HINSTANCE hInstance, LPCWSTR name, WNDCLASSW *wc )
     return ret;
 }
 
+ATOM get_class_info( HINSTANCE instance, const WCHAR *name, UNICODE_STRING *name_str )
+{
+    CLASS *class;
+    ATOM atom;
+
+    if (!(class = CLASS_FindClass( name, instance, name_str )))
+    {
+        SetLastError( ERROR_CLASS_DOES_NOT_EXIST );
+        return FALSE;
+    }
+
+    atom = class->atomName;
+    release_class_ptr( class );
+    return atom;
+}
 
 /***********************************************************************
  *		GetClassInfoExA (USER32.@)
@@ -1277,9 +1303,9 @@ BOOL WINAPI GetClassInfoExA( HINSTANCE hInstance, LPCSTR name, WNDCLASSEXA *wc )
         WCHAR nameW[MAX_ATOM_LEN + 1];
         if (!MultiByteToWideChar( CP_ACP, 0, name, -1, nameW, ARRAY_SIZE( nameW )))
             return FALSE;
-        classPtr = CLASS_FindClass( nameW, hInstance );
+        classPtr = CLASS_FindClass( nameW, hInstance, NULL );
     }
-    else classPtr = CLASS_FindClass( (LPCWSTR)name, hInstance );
+    else classPtr = CLASS_FindClass( (LPCWSTR)name, hInstance, NULL );
 
     if (!classPtr)
     {
@@ -1323,7 +1349,7 @@ BOOL WINAPI GetClassInfoExW( HINSTANCE hInstance, LPCWSTR name, WNDCLASSEXW *wc 
 
     if (!hInstance) hInstance = user32_module;
 
-    if (!(classPtr = CLASS_FindClass( name, hInstance )))
+    if (!(classPtr = CLASS_FindClass( name, hInstance, NULL )))
     {
         SetLastError( ERROR_CLASS_DOES_NOT_EXIST );
         return FALSE;
