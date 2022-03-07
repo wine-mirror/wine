@@ -26,7 +26,7 @@
 #else
   #define XMLCALL __cdecl
 #endif
-#define XMLCDECL WINAPIV
+#define XMLCDECL __cdecl
 
 /** DOC_ENABLE */
 #else /* not Windows */

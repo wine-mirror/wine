@@ -1416,7 +1416,7 @@ void
 htmlInitAutoClose(void) {
 }
 
-static int  __cdecl
+static int
 htmlCompareTags(const void *key, const void *member) {
     const xmlChar *tag = (const xmlChar *) key;
     const htmlElemDesc *desc = (const htmlElemDesc *) member;
@@ -1460,7 +1460,7 @@ htmlGetEndPriority (const xmlChar *name) {
 }
 
 
-static int  __cdecl
+static int
 htmlCompareStartClose(const void *vkey, const void *member) {
     const htmlStartCloseEntry *key = (const htmlStartCloseEntry *) vkey;
     const htmlStartCloseEntry *entry = (const htmlStartCloseEntry *) member;
