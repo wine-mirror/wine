@@ -781,7 +781,7 @@ case $host_os in
         LIBS="$ac_save_LIBS"
     fi
 
-    UNIXLDFLAGS="-dynamiclib -install_name @loader_path/\$(UNIXLIB)"
+    UNIXLDFLAGS="-dynamiclib -install_name @rpath/\$(UNIXLIB) -Wl,-rpath,@loader_path\/"
     AC_SUBST(LIBWINE_SHAREDLIB,"libwine.$libwine_version.dylib")
     AC_SUBST(LIBWINE_LDFLAGS,["-dynamiclib -install_name @rpath/libwine.$libwine_soversion.dylib -Wl,-rpath,@loader_path/ -compatibility_version $libwine_soversion -current_version $libwine_version"])
     AC_SUBST(WINELOADER_DEPENDS,"wine_info.plist")

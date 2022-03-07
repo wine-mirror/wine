@@ -10380,7 +10380,7 @@ fi
         LIBS="$ac_save_LIBS"
     fi
 
-    UNIXLDFLAGS="-dynamiclib -install_name @loader_path/\$(UNIXLIB)"
+    UNIXLDFLAGS="-dynamiclib -install_name @rpath/\$(UNIXLIB) -Wl,-rpath,@loader_path\/"
     LIBWINE_SHAREDLIB="libwine.$libwine_version.dylib"
 
     LIBWINE_LDFLAGS="-dynamiclib -install_name @rpath/libwine.$libwine_soversion.dylib -Wl,-rpath,@loader_path/ -compatibility_version $libwine_soversion -current_version $libwine_version"
