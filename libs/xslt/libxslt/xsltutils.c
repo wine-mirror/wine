@@ -511,7 +511,7 @@ xsltMessage(xsltTransformContextPtr ctxt, xmlNodePtr node, xmlNodePtr inst) {
  *
  * Default handler for out of context error messages.
  */
-static void WINAPIV LIBXSLT_ATTR_FORMAT(2,3)
+static void LIBXSLT_ATTR_FORMAT(2,3)
 xsltGenericErrorDefaultFunc(void *ctx ATTRIBUTE_UNUSED, const char *msg, ...) {
     va_list args;
 
@@ -557,7 +557,7 @@ xsltSetGenericErrorFunc(void *ctx, xmlGenericErrorFunc handler) {
  *
  * Default handler for out of context error messages.
  */
-static void WINAPIV LIBXSLT_ATTR_FORMAT(2,3)
+static void LIBXSLT_ATTR_FORMAT(2,3)
 xsltGenericDebugDefaultFunc(void *ctx ATTRIBUTE_UNUSED, const char *msg, ...) {
     va_list args;
 
@@ -698,7 +698,7 @@ xsltSetTransformErrorFunc(xsltTransformContextPtr ctxt,
  * Display and format an error messages, gives file, line, position and
  * extra parameters, will use the specific transformation context if available
  */
-void WINAPIV
+void
 xsltTransformError(xsltTransformContextPtr ctxt,
 		   xsltStylesheetPtr style,
 		   xmlNodePtr node,

@@ -160,7 +160,7 @@ XSLTPUBFUN void XSLTCALL
 		xsltSetTransformErrorFunc	(xsltTransformContextPtr ctxt,
 						 void *ctx,
 						 xmlGenericErrorFunc handler);
-XSLTPUBFUN void WINAPIV
+XSLTPUBFUN void XSLTCALL
 		xsltTransformError		(xsltTransformContextPtr ctxt,
 						 xsltStylesheetPtr style,
 						 xmlNodePtr node,
