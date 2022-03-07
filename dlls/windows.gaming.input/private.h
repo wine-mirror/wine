@@ -37,7 +37,7 @@
 
 extern HINSTANCE windows_gaming_input;
 extern ICustomGameControllerFactory *controller_factory;
-extern IActivationFactory *gamepad_factory;
+extern ICustomGameControllerFactory *gamepad_factory;
 extern IActivationFactory *manager_factory;
 
 extern HRESULT vector_create( REFIID iid, REFIID view_iid, void **out );

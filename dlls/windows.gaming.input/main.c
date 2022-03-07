@@ -180,7 +180,7 @@ HRESULT WINAPI DllGetActivationFactory( HSTRING class_str, IActivationFactory **
     if (!wcscmp( buffer, RuntimeClass_Windows_Gaming_Input_RawGameController ))
         hr = ICustomGameControllerFactory_QueryInterface( controller_factory, &IID_IActivationFactory, (void **)factory );
     if (!wcscmp( buffer, RuntimeClass_Windows_Gaming_Input_Gamepad ))
-        IActivationFactory_AddRef( (*factory = gamepad_factory) );
+        hr = ICustomGameControllerFactory_QueryInterface( gamepad_factory, &IID_IActivationFactory, (void **)factory );
     if (!wcscmp( buffer, RuntimeClass_Windows_Gaming_Input_Custom_GameControllerFactoryManager ))
         IActivationFactory_AddRef( (*factory = manager_factory) );
 
