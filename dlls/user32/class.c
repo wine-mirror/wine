@@ -50,38 +50,6 @@ static inline const char *debugstr_us( const UNICODE_STRING *us )
     return debugstr_wn( us->Buffer, us->Length / sizeof(WCHAR) );
 }
 
-/***********************************************************************
- *           get_class_ptr
- */
-static CLASS *get_class_ptr( HWND hwnd, BOOL write_access )
-{
-    WND *ptr = WIN_GetPtr( hwnd );
-
-    if (ptr)
-    {
-        if (ptr != WND_OTHER_PROCESS && ptr != WND_DESKTOP) return ptr->class;
-        if (!write_access) return CLASS_OTHER_PROCESS;
-
-        /* modifying classes in other processes is not allowed */
-        if (ptr == WND_DESKTOP || IsWindow( hwnd ))
-        {
-            SetLastError( ERROR_ACCESS_DENIED );
-            return NULL;
-        }
-    }
-    SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-    return NULL;
-}
-
-
-/***********************************************************************
- *           release_class_ptr
- */
-static inline void release_class_ptr( CLASS *ptr )
-{
-    USER_Unlock();
-}
-
 
 /***********************************************************************
  *           get_int_atom_value
@@ -555,172 +523,7 @@ BOOL WINAPI UnregisterClassW( LPCWSTR className, HINSTANCE hInstance )
  */
 WORD WINAPI GetClassWord( HWND hwnd, INT offset )
 {
-    CLASS *class;
-    WORD retvalue = 0;
-
-    if (offset < 0) return GetClassLongA( hwnd, offset );
-
-    if (!(class = get_class_ptr( hwnd, FALSE ))) return 0;
-
-    if (class == CLASS_OTHER_PROCESS)
-    {
-        SERVER_START_REQ( set_class_info )
-        {
-            req->window = wine_server_user_handle( hwnd );
-            req->flags = 0;
-            req->extra_offset = offset;
-            req->extra_size = sizeof(retvalue);
-            if (!wine_server_call_err( req ))
-                memcpy( &retvalue, &reply->old_extra_value, sizeof(retvalue) );
-        }
-        SERVER_END_REQ;
-        return retvalue;
-    }
-
-    if (offset <= class->cbClsExtra - sizeof(WORD))
-        memcpy( &retvalue, (char *)(class + 1) + offset, sizeof(retvalue) );
-    else
-        SetLastError( ERROR_INVALID_INDEX );
-    release_class_ptr( class );
-    return retvalue;
-}
-
-
-/***********************************************************************
- *             CLASS_GetClassLong
- *
- * Implementation of GetClassLong(Ptr)A/W
- */
-static ULONG_PTR CLASS_GetClassLong( HWND hwnd, INT offset, UINT size,
-                                     BOOL unicode )
-{
-    CLASS *class;
-    ULONG_PTR retvalue = 0;
-
-    if (!(class = get_class_ptr( hwnd, FALSE ))) return 0;
-
-    if (class == CLASS_OTHER_PROCESS)
-    {
-        SERVER_START_REQ( set_class_info )
-        {
-            req->window = wine_server_user_handle( hwnd );
-            req->flags = 0;
-            req->extra_offset = (offset >= 0) ? offset : -1;
-            req->extra_size = (offset >= 0) ? size : 0;
-            if (!wine_server_call_err( req ))
-            {
-                switch(offset)
-                {
-                case GCLP_HBRBACKGROUND:
-                case GCLP_HCURSOR:
-                case GCLP_HICON:
-                case GCLP_HICONSM:
-                case GCLP_WNDPROC:
-                case GCLP_MENUNAME:
-                    FIXME( "offset %d (%s) not supported on other process window %p\n",
-			   offset, SPY_GetClassLongOffsetName(offset), hwnd );
-                    SetLastError( ERROR_INVALID_HANDLE );
-                    break;
-                case GCL_STYLE:
-                    retvalue = reply->old_style;
-                    break;
-                case GCL_CBWNDEXTRA:
-                    retvalue = reply->old_win_extra;
-                    break;
-                case GCL_CBCLSEXTRA:
-                    retvalue = reply->old_extra;
-                    break;
-                case GCLP_HMODULE:
-                    retvalue = (ULONG_PTR)wine_server_get_ptr( reply->old_instance );
-                    break;
-                case GCW_ATOM:
-                    retvalue = reply->old_atom;
-                    break;
-                default:
-                    if (offset >= 0)
-                    {
-                        if (size == sizeof(DWORD))
-                        {
-                            DWORD retdword;
-                            memcpy( &retdword, &reply->old_extra_value, sizeof(DWORD) );
-                            retvalue = retdword;
-                        }
-                        else
-                            memcpy( &retvalue, &reply->old_extra_value,
-                                    sizeof(ULONG_PTR) );
-                    }
-                    else SetLastError( ERROR_INVALID_INDEX );
-                    break;
-                }
-            }
-        }
-        SERVER_END_REQ;
-        return retvalue;
-    }
-
-    if (offset >= 0)
-    {
-        if (offset <= class->cbClsExtra - size)
-        {
-            if (size == sizeof(DWORD))
-            {
-                DWORD retdword;
-                memcpy( &retdword, (char *)(class + 1) + offset, sizeof(DWORD) );
-                retvalue = retdword;
-            }
-            else
-                memcpy( &retvalue, (char *)(class + 1) + offset, sizeof(ULONG_PTR) );
-        }
-        else
-            SetLastError( ERROR_INVALID_INDEX );
-        release_class_ptr( class );
-        return retvalue;
-    }
-
-    switch(offset)
-    {
-    case GCLP_HBRBACKGROUND:
-        retvalue = (ULONG_PTR)class->hbrBackground;
-        break;
-    case GCLP_HCURSOR:
-        retvalue = (ULONG_PTR)class->hCursor;
-        break;
-    case GCLP_HICON:
-        retvalue = (ULONG_PTR)class->hIcon;
-        break;
-    case GCLP_HICONSM:
-        retvalue = (ULONG_PTR)(class->hIconSm ? class->hIconSm : class->hIconSmIntern);
-        break;
-    case GCL_STYLE:
-        retvalue = class->style;
-        break;
-    case GCL_CBWNDEXTRA:
-        retvalue = class->cbWndExtra;
-        break;
-    case GCL_CBCLSEXTRA:
-        retvalue = class->cbClsExtra;
-        break;
-    case GCLP_HMODULE:
-        retvalue = class->instance;
-        break;
-    case GCLP_WNDPROC:
-        retvalue = (ULONG_PTR)WINPROC_GetProc( class->winproc, unicode );
-        break;
-    case GCLP_MENUNAME:
-        if (unicode)
-            retvalue = (ULONG_PTR)class->menu_name.nameW;
-        else
-            retvalue = (ULONG_PTR)class->menu_name.nameA;
-        break;
-    case GCW_ATOM:
-        retvalue = class->atomName;
-        break;
-    default:
-        SetLastError( ERROR_INVALID_INDEX );
-        break;
-    }
-    release_class_ptr( class );
-    return retvalue;
+    return NtUserCallHwndParam( hwnd, offset, NtUserGetClassWord );
 }
 
 
@@ -729,7 +532,7 @@ static ULONG_PTR CLASS_GetClassLong( HWND hwnd, INT offset, UINT size,
  */
 DWORD WINAPI GetClassLongW( HWND hwnd, INT offset )
 {
-    return CLASS_GetClassLong( hwnd, offset, sizeof(DWORD), TRUE );
+    return NtUserCallHwndParam( hwnd, offset, NtUserGetClassLongW );
 }
 
 
@@ -739,7 +542,7 @@ DWORD WINAPI GetClassLongW( HWND hwnd, INT offset )
  */
 DWORD WINAPI GetClassLongA( HWND hwnd, INT offset )
 {
-    return CLASS_GetClassLong( hwnd, offset, sizeof(DWORD), FALSE );
+    return NtUserCallHwndParam( hwnd, offset, NtUserGetClassLongA );
 }
 
 
@@ -1013,7 +816,7 @@ BOOL16 WINAPI ClassNext16( CLASSENTRY *pClassEntry )
  */
 ULONG_PTR WINAPI GetClassLongPtrA( HWND hwnd, INT offset )
 {
-    return CLASS_GetClassLong( hwnd, offset, sizeof(ULONG_PTR), FALSE );
+    return NtUserCallHwndParam( hwnd, offset, NtUserGetClassLongPtrA );
 }
 
 /***********************************************************************
@@ -1021,7 +824,7 @@ ULONG_PTR WINAPI GetClassLongPtrA( HWND hwnd, INT offset )
  */
 ULONG_PTR WINAPI GetClassLongPtrW( HWND hwnd, INT offset )
 {
-    return CLASS_GetClassLong( hwnd, offset, sizeof(ULONG_PTR), TRUE );
+    return NtUserCallHwndParam( hwnd, offset, NtUserGetClassLongPtrW );
 }
 
 /***********************************************************************

@@ -145,6 +145,11 @@ enum
 /* NtUserCallHwndParam codes, not compatible with Windows */
 enum
 {
+    NtUserGetClassLongA,
+    NtUserGetClassLongW,
+    NtUserGetClassLongPtrA,
+    NtUserGetClassLongPtrW,
+    NtUserGetClassWord,
     NtUserGetWindowThread,
 };
 
@@ -233,7 +238,7 @@ BOOL    WINAPI NtUserAttachThreadInput( DWORD from, DWORD to, BOOL attach );
 NTSTATUS WINAPI NtUserBuildHwndList( HDESK desktop, ULONG unk2, ULONG unk3, ULONG unk4,
                                      ULONG thread_id, ULONG count, HWND *buffer, ULONG *size );
 DWORD   WINAPI NtUserCallHwnd( HWND hwnd, DWORD code );
-DWORD   WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code );
+ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code );
 LRESULT WINAPI NtUserCallNextHookEx( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam );
 ULONG_PTR WINAPI NtUserCallNoParam( ULONG code );
 ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code );

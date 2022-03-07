@@ -204,6 +204,9 @@ typedef struct tagCLASS
 /* class.c */
 WNDPROC alloc_winproc( WNDPROC func, BOOL ansi ) DECLSPEC_HIDDEN;
 WINDOWPROC *get_winproc_ptr( WNDPROC handle ) DECLSPEC_HIDDEN;
+DWORD get_class_long( HWND hwnd, INT offset, BOOL ansi ) DECLSPEC_HIDDEN;
+ULONG_PTR get_class_long_ptr( HWND hwnd, INT offset, BOOL ansi ) DECLSPEC_HIDDEN;
+WORD get_class_word( HWND hwnd, INT offset ) DECLSPEC_HIDDEN;
 
 /* cursoricon.c */
 HICON alloc_cursoricon_handle( BOOL is_icon ) DECLSPEC_HIDDEN;

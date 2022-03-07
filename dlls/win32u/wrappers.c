@@ -731,7 +731,7 @@ DWORD WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
     return unix_funcs->pNtUserCallHwnd( hwnd, code );
 }
 
-DWORD WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
+ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
 {
     if (!unix_funcs) return 0;
     return unix_funcs->pNtUserCallHwndParam( hwnd, param, code );

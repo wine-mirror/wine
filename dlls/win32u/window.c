@@ -443,10 +443,20 @@ DWORD WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
 /*****************************************************************************
  *           NtUserCallHwndParam (win32u.@)
  */
-DWORD WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
+ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
 {
     switch (code)
     {
+    case NtUserGetClassLongA:
+        return get_class_long( hwnd, param, TRUE );
+    case NtUserGetClassLongW:
+        return get_class_long( hwnd, param, FALSE );
+    case NtUserGetClassLongPtrA:
+        return get_class_long_ptr( hwnd, param, TRUE );
+    case NtUserGetClassLongPtrW:
+        return get_class_long_ptr( hwnd, param, FALSE );
+    case NtUserGetClassWord:
+        return get_class_word( hwnd, param );
     case NtUserGetWindowThread:
         return get_window_thread( hwnd, (DWORD *)param );
     default:
