@@ -416,7 +416,8 @@ static struct strarray get_link_args( struct options *opts, const char *output_n
         if (opts->unix_lib)
         {
             strarray_add( &flags, "-install_name" );
-            strarray_add( &flags, strmake( "@loader_path/%s.so", output_name ) );
+            strarray_add( &flags, strmake( "@rpath/%s.so", output_name ) );
+            strarray_add( &flags, "-Wl,-rpath,@loader_path/" );
         }
         strarray_addall( &link_args, flags );
         return link_args;
