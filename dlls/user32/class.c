@@ -230,28 +230,49 @@ static void init_class_name( UNICODE_STRING *str, const WCHAR *name )
     else RtlInitUnicodeString( str, name );
 }
 
-/***********************************************************************
- *           CLASS_GetMenuNameA
- *
- * Get the menu name as an ANSI string.
- */
-static inline LPSTR CLASS_GetMenuNameA( CLASS *classPtr )
+static BOOL alloc_menu_nameA( struct client_menu_name *ret, const char *menu_name )
 {
-    if (IS_INTRESOURCE(classPtr->menuName)) return (LPSTR)classPtr->menuName;
-    return (LPSTR)(classPtr->menuName + lstrlenW(classPtr->menuName) + 1);
+    if (!IS_INTRESOURCE(menu_name))
+    {
+        DWORD lenA = strlen( menu_name ) + 1;
+        DWORD lenW = MultiByteToWideChar( CP_ACP, 0, menu_name, lenA, NULL, 0 );
+        ret->nameW = HeapAlloc( GetProcessHeap(), 0, lenA + lenW * sizeof(WCHAR) );
+        if (!ret->nameW) return FALSE;
+        ret->nameA = (char *)(ret->nameW + lenW);
+        MultiByteToWideChar( CP_ACP, 0, menu_name, lenA, ret->nameW, lenW );
+        memcpy( ret->nameA, menu_name, lenA );
+    }
+    else
+    {
+        ret->nameW = (WCHAR *)menu_name;
+        ret->nameA = (char *)menu_name;
+    }
+    return TRUE;
 }
 
-
-/***********************************************************************
- *           CLASS_GetMenuNameW
- *
- * Get the menu name as a Unicode string.
- */
-static inline LPWSTR CLASS_GetMenuNameW( CLASS *classPtr )
+static BOOL alloc_menu_nameW( struct client_menu_name *ret, const WCHAR *menu_name )
 {
-    return classPtr->menuName;
+    if (!IS_INTRESOURCE(menu_name))
+    {
+        DWORD lenW = lstrlenW( menu_name ) + 1;
+        DWORD lenA = WideCharToMultiByte( CP_ACP, 0, menu_name, lenW, NULL, 0, NULL, NULL );
+        ret->nameW = HeapAlloc( GetProcessHeap(), 0, lenA + lenW * sizeof(WCHAR) );
+        if (!ret->nameW) return FALSE;
+        memcpy( ret->nameW, menu_name, lenW * sizeof(WCHAR) );
+        WideCharToMultiByte( CP_ACP, 0, menu_name, lenW, ret->nameA, lenA, NULL, NULL );
+    }
+    else
+    {
+        ret->nameW = (WCHAR *)menu_name;
+        ret->nameA = (char *)menu_name;
+    }
+    return TRUE;
 }
 
+static void free_menu_name( struct client_menu_name *name )
+{
+    if (!IS_INTRESOURCE(name->nameW)) HeapFree( GetProcessHeap(), 0, name->nameW );
+}
 
 /***********************************************************************
  *           CLASS_SetMenuNameA
@@ -260,16 +281,10 @@ static inline LPWSTR CLASS_GetMenuNameW( CLASS *classPtr )
  */
 static void CLASS_SetMenuNameA( CLASS *classPtr, LPCSTR name )
 {
-    if (!IS_INTRESOURCE(classPtr->menuName)) HeapFree( GetProcessHeap(), 0, classPtr->menuName );
-    if (!IS_INTRESOURCE(name))
-    {
-        DWORD lenA = strlen(name) + 1;
-        DWORD lenW = MultiByteToWideChar( CP_ACP, 0, name, lenA, NULL, 0 );
-        classPtr->menuName = HeapAlloc( GetProcessHeap(), 0, lenA + lenW*sizeof(WCHAR) );
-        MultiByteToWideChar( CP_ACP, 0, name, lenA, classPtr->menuName, lenW );
-        memcpy( classPtr->menuName + lenW, name, lenA );
-    }
-    else classPtr->menuName = (LPWSTR)name;
+    struct client_menu_name menu_name;
+    if (!alloc_menu_nameA( &menu_name, name )) return;
+    free_menu_name( &classPtr->menu_name );
+    classPtr->menu_name = menu_name;
 }
 
 /***********************************************************************
@@ -279,17 +294,10 @@ static void CLASS_SetMenuNameA( CLASS *classPtr, LPCSTR name )
  */
 static void CLASS_SetMenuNameW( CLASS *classPtr, LPCWSTR name )
 {
-    if (!IS_INTRESOURCE(classPtr->menuName)) HeapFree( GetProcessHeap(), 0, classPtr->menuName );
-    if (!IS_INTRESOURCE(name))
-    {
-        DWORD lenW = lstrlenW(name) + 1;
-        DWORD lenA = WideCharToMultiByte( CP_ACP, 0, name, lenW, NULL, 0, NULL, NULL );
-        classPtr->menuName = HeapAlloc( GetProcessHeap(), 0, lenA + lenW*sizeof(WCHAR) );
-        memcpy( classPtr->menuName, name, lenW*sizeof(WCHAR) );
-        WideCharToMultiByte( CP_ACP, 0, name, lenW,
-                             (char *)(classPtr->menuName + lenW), lenA, NULL, NULL );
-    }
-    else classPtr->menuName = (LPWSTR)name;
+    struct client_menu_name menu_name;
+    if (!alloc_menu_nameW( &menu_name, name )) return;
+    free_menu_name( &classPtr->menu_name );
+    classPtr->menu_name = menu_name;
 }
 
 
@@ -309,7 +317,7 @@ static void CLASS_FreeClass( CLASS *classPtr )
     if (classPtr->hbrBackground > (HBRUSH)(COLOR_GRADIENTINACTIVECAPTION + 1))
         DeleteObject( classPtr->hbrBackground );
     DestroyIcon( classPtr->hIconSmIntern );
-    HeapFree( GetProcessHeap(), 0, classPtr->menuName );
+    free_menu_name( &classPtr->menu_name );
     HeapFree( GetProcessHeap(), 0, classPtr );
     USER_Unlock();
 }
@@ -643,6 +651,7 @@ ATOM WINAPI RegisterClassW( const WNDCLASSW* wc )
 ATOM WINAPI RegisterClassExA( const WNDCLASSEXA* wc )
 {
     WCHAR nameW[MAX_ATOM_LEN + 1], combined[MAX_ATOM_LEN + 1];
+    struct client_menu_name menu_name;
     UNICODE_STRING name, version;
     ATOM atom;
     CLASS *classPtr;
@@ -671,6 +680,8 @@ ATOM WINAPI RegisterClassExA( const WNDCLASSEXA* wc )
         version.Length = 0;
     }
 
+    if (!alloc_menu_nameA( &menu_name, wc->lpszMenuName )) return 0;
+
     classPtr = CLASS_RegisterClass( &name, version.Length / sizeof(WCHAR), instance, !(wc->style & CS_GLOBALCLASS),
                                     wc->style, wc->cbClsExtra, wc->cbWndExtra );
     if (!classPtr) return 0;
@@ -690,7 +701,7 @@ ATOM WINAPI RegisterClassExA( const WNDCLASSEXA* wc )
     classPtr->hCursor       = wc->hCursor;
     classPtr->hbrBackground = wc->hbrBackground;
     classPtr->winproc       = WINPROC_AllocProc( wc->lpfnWndProc, FALSE );
-    CLASS_SetMenuNameA( classPtr, wc->lpszMenuName );
+    classPtr->menu_name     = menu_name;
     release_class_ptr( classPtr );
     return atom;
 }
@@ -702,6 +713,7 @@ ATOM WINAPI RegisterClassExA( const WNDCLASSEXA* wc )
 ATOM WINAPI RegisterClassExW( const WNDCLASSEXW* wc )
 {
     WCHAR combined[MAX_ATOM_LEN + 1];
+    struct client_menu_name menu_name;
     UNICODE_STRING name, version;
     ATOM atom;
     CLASS *classPtr;
@@ -717,13 +729,18 @@ ATOM WINAPI RegisterClassExW( const WNDCLASSEXW* wc )
     }
     if (!(instance = wc->hInstance)) instance = GetModuleHandleW( NULL );
 
+    if (!alloc_menu_nameW( &menu_name, wc->lpszMenuName )) return 0;
+
     version.Buffer = combined;
     version.MaximumLength = sizeof(combined);
     get_versioned_name( wc->lpszClassName, &name, &version, FALSE );
     if (!(classPtr = CLASS_RegisterClass( &name, version.Length / sizeof(WCHAR), instance,
                                           !(wc->style & CS_GLOBALCLASS),
                                           wc->style, wc->cbClsExtra, wc->cbWndExtra )))
+    {
+        free_menu_name( &menu_name );
         return 0;
+    }
 
     atom = classPtr->atomName;
 
@@ -945,11 +962,10 @@ static ULONG_PTR CLASS_GetClassLong( HWND hwnd, INT offset, UINT size,
         retvalue = (ULONG_PTR)WINPROC_GetProc( class->winproc, unicode );
         break;
     case GCLP_MENUNAME:
-        retvalue = (ULONG_PTR)CLASS_GetMenuNameW( class );
         if (unicode)
-            retvalue = (ULONG_PTR)CLASS_GetMenuNameW( class );
+            retvalue = (ULONG_PTR)class->menu_name.nameW;
         else
-            retvalue = (ULONG_PTR)CLASS_GetMenuNameA( class );
+            retvalue = (ULONG_PTR)class->menu_name.nameA;
         break;
     case GCW_ATOM:
         retvalue = class->atomName;
@@ -1294,8 +1310,7 @@ ATOM get_class_info( HINSTANCE instance, const WCHAR *class_name, WNDCLASSEXW *i
         info->hIconSm       = class->hIconSm ? class->hIconSm : class->hIconSmIntern;
         info->hCursor       = class->hCursor;
         info->hbrBackground = class->hbrBackground;
-        info->lpszMenuName  = ansi ? (const WCHAR *)CLASS_GetMenuNameA( class )
-                                   : CLASS_GetMenuNameW( class );
+        info->lpszMenuName  = ansi ? (const WCHAR *)class->menu_name.nameA : class->menu_name.nameW;
         info->lpszClassName = class_name;
     }
 

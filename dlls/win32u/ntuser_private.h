@@ -177,7 +177,7 @@ typedef struct tagCLASS
     WNDPROC          winproc;       /* Window procedure */
     INT              cbClsExtra;    /* Class extra bytes */
     INT              cbWndExtra;    /* Window extra bytes */
-    LPWSTR           menuName;      /* Default menu name (Unicode followed by ASCII) */
+    struct client_menu_name menu_name; /* Default menu name */
     struct dce      *dce;           /* Opaque pointer to class DCE */
     UINT_PTR         instance;      /* Module that created the task */
     HICON            hIcon;         /* Default icon */

@@ -201,6 +201,13 @@ struct cursoricon_desc
     HRSRC rsrc;
 };
 
+struct client_menu_name
+{
+    char  *nameA;
+    WCHAR *nameW;
+    UNICODE_STRING *nameUS;
+};
+
 /* internal messages codes */
 enum wine_internal_message
 {
