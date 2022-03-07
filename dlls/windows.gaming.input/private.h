@@ -36,7 +36,7 @@
 #include "windows.gaming.input.custom.h"
 
 extern HINSTANCE windows_gaming_input;
-extern IActivationFactory *controller_factory;
+extern ICustomGameControllerFactory *controller_factory;
 extern IActivationFactory *gamepad_factory;
 extern IActivationFactory *manager_factory;
 

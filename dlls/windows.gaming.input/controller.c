@@ -27,6 +27,7 @@ struct controller_statics
 {
     IActivationFactory IActivationFactory_iface;
     IRawGameControllerStatics IRawGameControllerStatics_iface;
+    ICustomGameControllerFactory ICustomGameControllerFactory_iface;
     LONG ref;
 };
 
@@ -53,6 +54,12 @@ static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID 
     if (IsEqualGUID( iid, &IID_IRawGameControllerStatics ))
     {
         IInspectable_AddRef( (*out = &impl->IRawGameControllerStatics_iface) );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_ICustomGameControllerFactory ))
+    {
+        IInspectable_AddRef( (*out = &impl->ICustomGameControllerFactory_iface) );
         return S_OK;
     }
 
@@ -189,11 +196,48 @@ static const struct IRawGameControllerStaticsVtbl statics_vtbl =
     statics_FromGameController,
 };
 
+DEFINE_IINSPECTABLE( controller_factory, ICustomGameControllerFactory, struct controller_statics, IActivationFactory_iface )
+
+static HRESULT WINAPI controller_factory_CreateGameController( ICustomGameControllerFactory *iface, IGameControllerProvider *provider,
+                                                               IInspectable **value )
+{
+    FIXME( "iface %p, provider %p, value %p stub!\n", iface, provider, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI controller_factory_OnGameControllerAdded( ICustomGameControllerFactory *iface, IGameController *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI controller_factory_OnGameControllerRemoved( ICustomGameControllerFactory *iface, IGameController *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static const struct ICustomGameControllerFactoryVtbl controller_factory_vtbl =
+{
+    controller_factory_QueryInterface,
+    controller_factory_AddRef,
+    controller_factory_Release,
+    /* IInspectable methods */
+    controller_factory_GetIids,
+    controller_factory_GetRuntimeClassName,
+    controller_factory_GetTrustLevel,
+    /* ICustomGameControllerFactory methods */
+    controller_factory_CreateGameController,
+    controller_factory_OnGameControllerAdded,
+    controller_factory_OnGameControllerRemoved,
+};
+
 static struct controller_statics controller_statics =
 {
     {&factory_vtbl},
     {&statics_vtbl},
+    {&controller_factory_vtbl},
     1,
 };
 
-IActivationFactory *controller_factory = &controller_statics.IActivationFactory_iface;
+ICustomGameControllerFactory *controller_factory = &controller_statics.ICustomGameControllerFactory_iface;

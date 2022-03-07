@@ -169,6 +169,7 @@ HRESULT WINAPI DllGetActivationFactory( HSTRING class_str, IActivationFactory **
 {
     static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
     const WCHAR *buffer = WindowsGetStringRawBuffer( class_str, NULL );
+    HRESULT hr = S_OK;
 
     TRACE( "class %s, factory %p.\n", debugstr_w(buffer), factory );
 
@@ -177,13 +178,13 @@ HRESULT WINAPI DllGetActivationFactory( HSTRING class_str, IActivationFactory **
     *factory = NULL;
 
     if (!wcscmp( buffer, RuntimeClass_Windows_Gaming_Input_RawGameController ))
-        IActivationFactory_AddRef( (*factory = controller_factory) );
+        hr = ICustomGameControllerFactory_QueryInterface( controller_factory, &IID_IActivationFactory, (void **)factory );
     if (!wcscmp( buffer, RuntimeClass_Windows_Gaming_Input_Gamepad ))
         IActivationFactory_AddRef( (*factory = gamepad_factory) );
     if (!wcscmp( buffer, RuntimeClass_Windows_Gaming_Input_Custom_GameControllerFactoryManager ))
         IActivationFactory_AddRef( (*factory = manager_factory) );
 
-    if (*factory) return S_OK;
+    if (SUCCEEDED(hr) && *factory) return S_OK;
     return REGDB_E_CLASSNOTREG;
 }
 
