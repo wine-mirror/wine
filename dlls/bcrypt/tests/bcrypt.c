@@ -2122,11 +2122,9 @@ static void test_RSA(void)
     ret = BCryptDestroyKey(key);
     ok(!ret, "got %#lx\n", ret);
 
-    todo_wine
-    {
-    ret = BCryptImportKeyPair(alg, NULL, BCRYPT_RSAPUBLIC_BLOB, &key, rsaPublicBlobWithInvalidPublicExpSize, sizeof(rsaPublicBlobWithInvalidPublicExpSize), 0);
+    ret = BCryptImportKeyPair(alg, NULL, BCRYPT_RSAPUBLIC_BLOB, &key, rsaPublicBlobWithInvalidPublicExpSize,
+                              sizeof(rsaPublicBlobWithInvalidPublicExpSize), 0);
     ok(ret == NTE_BAD_DATA, "got %#lx\n", ret);
-    }
 
     ret = BCryptImportKeyPair(alg, NULL, BCRYPT_RSAPUBLIC_BLOB, &key, buf, size, 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
