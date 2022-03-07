@@ -27,7 +27,7 @@
 #include "FAudio_internal.h"
 
 #ifndef FAUDIO_DISABLE_DEBUGCONFIGURATION
-void WINAPIV FAudio_INTERNAL_debug(
+void FAudio_INTERNAL_debug(
 	FAudio *audio,
 	const char *file,
 	uint32_t line,

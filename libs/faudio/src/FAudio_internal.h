@@ -569,7 +569,7 @@ extern const float FAUDIO_INTERNAL_MATRIX_DEFAULTS[8][8][64];
 
 #if defined(_MSC_VER)
 /* VC doesn't support __attribute__ at all, and there's no replacement for format. */
-void WINAPIV FAudio_INTERNAL_debug(
+void FAudio_INTERNAL_debug(
 	FAudio *audio,
 	const char *file,
 	uint32_t line,
@@ -581,7 +581,7 @@ void WINAPIV FAudio_INTERNAL_debug(
 #define __func__ __FUNCTION__
 #endif
 #else
-void WINAPIV FAudio_INTERNAL_debug(
+void FAudio_INTERNAL_debug(
 	FAudio *audio,
 	const char *file,
 	uint32_t line,
