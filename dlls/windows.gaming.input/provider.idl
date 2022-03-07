@@ -35,6 +35,16 @@ namespace Windows.Gaming.Input.Custom {
     runtimeclass WineGameControllerProvider;
 
     [
+        uuid(06e58977-7684-4dc5-bad1-cda52a4aa06d)
+    ]
+    interface IGameControllerImpl : IInspectable
+        requires Windows.Gaming.Input.Custom.IGameControllerInputSink
+    {
+        HRESULT Initialize([in] Windows.Gaming.Input.IGameController *outer,
+                           [in] Windows.Gaming.Input.Custom.IGameControllerProvider *provider);
+    }
+
+    [
         exclusiveto(Windows.Gaming.Input.Custom.WineGameControllerProvider),
         uuid(8967b6ef-a4de-4b9a-984a-9f920b4d1b26)
     ]
