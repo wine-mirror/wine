@@ -225,6 +225,9 @@ struct unix_funcs
     BOOL     (WINAPI *pNtUserScrollDC)( HDC hdc, INT dx, INT dy, const RECT *scroll, const RECT *clip,
                                         HRGN ret_update_rgn, RECT *update_rect );
     HPALETTE (WINAPI *pNtUserSelectPalette)( HDC hdc, HPALETTE hpal, WORD bkg );
+    DWORD    (WINAPI *pNtUserSetClassLong)( HWND hwnd, INT offset, LONG newval, BOOL ansi );
+    ULONG_PTR (WINAPI *pNtUserSetClassLongPtr)( HWND hwnd, INT offset, LONG_PTR newval, BOOL ansi );
+    WORD     (WINAPI *pNtUserSetClassWord)( HWND hwnd, INT offset, WORD newval );
     HCURSOR  (WINAPI *pNtUserSetCursor)( HCURSOR cursor );
     BOOL     (WINAPI *pNtUserSetCursorIconData)( HCURSOR cursor, UNICODE_STRING *module,
                                                  UNICODE_STRING *res_name, struct cursoricon_desc *desc );

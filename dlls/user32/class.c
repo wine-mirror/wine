@@ -167,57 +167,6 @@ static BOOL is_builtin_class( const WCHAR *name )
     return FALSE;
 }
 
-/***********************************************************************
- *           set_server_info
- *
- * Set class info with the wine server.
- */
-static BOOL set_server_info( HWND hwnd, INT offset, LONG_PTR newval, UINT size )
-{
-    BOOL ret;
-
-    SERVER_START_REQ( set_class_info )
-    {
-        req->window = wine_server_user_handle( hwnd );
-        req->extra_offset = -1;
-        switch(offset)
-        {
-        case GCW_ATOM:
-            req->flags = SET_CLASS_ATOM;
-            req->atom = LOWORD(newval);
-            break;
-        case GCL_STYLE:
-            req->flags = SET_CLASS_STYLE;
-            req->style = newval;
-            break;
-        case GCL_CBWNDEXTRA:
-            req->flags = SET_CLASS_WINEXTRA;
-            req->win_extra = newval;
-            break;
-        case GCLP_HMODULE:
-            req->flags = SET_CLASS_INSTANCE;
-            req->instance = wine_server_client_ptr( (void *)newval );
-            break;
-        default:
-            assert( offset >= 0 );
-            req->flags = SET_CLASS_EXTRA;
-            req->extra_offset = offset;
-            req->extra_size = size;
-            if ( size == sizeof(LONG) )
-            {
-                LONG newlong = newval;
-                memcpy( &req->extra_value, &newlong, sizeof(LONG) );
-            }
-            else
-                memcpy( &req->extra_value, &newval, sizeof(LONG_PTR) );
-            break;
-        }
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
 
 static void init_class_name( UNICODE_STRING *str, const WCHAR *name )
 {
@@ -273,32 +222,23 @@ static void free_menu_name( struct client_menu_name *name )
     if (!IS_INTRESOURCE(name->nameW)) HeapFree( GetProcessHeap(), 0, name->nameW );
 }
 
-/***********************************************************************
- *           CLASS_SetMenuNameA
- *
- * Set the menu name in a class structure by copying the string.
- */
-static void CLASS_SetMenuNameA( CLASS *classPtr, LPCSTR name )
+static ULONG_PTR set_menu_nameW( HWND hwnd, INT offset, ULONG_PTR newval )
 {
     struct client_menu_name menu_name;
-    if (!alloc_menu_nameA( &menu_name, name )) return;
-    free_menu_name( &classPtr->menu_name );
-    classPtr->menu_name = menu_name;
+    if (!alloc_menu_nameW( &menu_name, (const WCHAR *)newval )) return 0;
+    NtUserSetClassLongPtr( hwnd, offset, (ULONG_PTR)&menu_name, FALSE );
+    free_menu_name( &menu_name );
+    return 0;
 }
 
-/***********************************************************************
- *           CLASS_SetMenuNameW
- *
- * Set the menu name in a class structure by copying the string.
- */
-static void CLASS_SetMenuNameW( CLASS *classPtr, LPCWSTR name )
+static ULONG_PTR set_menu_nameA( HWND hwnd, INT offset, ULONG_PTR newval )
 {
     struct client_menu_name menu_name;
-    if (!alloc_menu_nameW( &menu_name, name )) return;
-    free_menu_name( &classPtr->menu_name );
-    classPtr->menu_name = menu_name;
+    if (!alloc_menu_nameA( &menu_name, (const char *)newval )) return 0;
+    NtUserSetClassLongPtr( hwnd, offset, (ULONG_PTR)&menu_name, TRUE );
+    free_menu_name( &menu_name );
+    return 0;
 }
-
 
 static void get_versioned_name( const WCHAR *name, UNICODE_STRING *ret, UNICODE_STRING *version, HMODULE *reg_module )
 {
@@ -804,156 +744,12 @@ DWORD WINAPI GetClassLongA( HWND hwnd, INT offset )
 
 
 /***********************************************************************
- *		SetClassWord (USER32.@)
- */
-WORD WINAPI SetClassWord( HWND hwnd, INT offset, WORD newval )
-{
-    CLASS *class;
-    WORD retval = 0;
-
-    if (offset < 0) return SetClassLongA( hwnd, offset, (DWORD)newval );
-
-    if (!(class = get_class_ptr( hwnd, TRUE ))) return 0;
-
-    SERVER_START_REQ( set_class_info )
-    {
-        req->window = wine_server_user_handle( hwnd );
-        req->flags = SET_CLASS_EXTRA;
-        req->extra_offset = offset;
-        req->extra_size = sizeof(newval);
-        memcpy( &req->extra_value, &newval, sizeof(newval) );
-        if (!wine_server_call_err( req ))
-        {
-            void *ptr = (char *)(class + 1) + offset;
-            memcpy( &retval, ptr, sizeof(retval) );
-            memcpy( ptr, &newval, sizeof(newval) );
-        }
-    }
-    SERVER_END_REQ;
-    release_class_ptr( class );
-    return retval;
-}
-
-
-/***********************************************************************
- *             CLASS_SetClassLong
- *
- * Implementation of SetClassLong(Ptr)A/W
- */
-static ULONG_PTR CLASS_SetClassLong( HWND hwnd, INT offset, LONG_PTR newval,
-                                     UINT size, BOOL unicode )
-{
-    CLASS *class;
-    ULONG_PTR retval = 0;
-
-    if (!(class = get_class_ptr( hwnd, TRUE ))) return 0;
-
-    if (offset >= 0)
-    {
-        if (set_server_info( hwnd, offset, newval, size ))
-        {
-            void *ptr = (char *)(class + 1) + offset;
-            if ( size == sizeof(LONG) )
-            {
-                DWORD retdword;
-                LONG newlong = newval;
-                memcpy( &retdword, ptr, sizeof(DWORD) );
-                memcpy( ptr, &newlong, sizeof(LONG) );
-                retval = retdword;
-            }
-            else
-            {
-                memcpy( &retval, ptr, sizeof(ULONG_PTR) );
-                memcpy( ptr, &newval, sizeof(LONG_PTR) );
-            }
-        }
-    }
-    else switch(offset)
-    {
-    case GCLP_MENUNAME:
-        if ( unicode )
-            CLASS_SetMenuNameW( class, (LPCWSTR)newval );
-        else
-            CLASS_SetMenuNameA( class, (LPCSTR)newval );
-        retval = 0;  /* Old value is now meaningless anyway */
-        break;
-    case GCLP_WNDPROC:
-        retval = (ULONG_PTR)WINPROC_GetProc( class->winproc, unicode );
-        class->winproc = WINPROC_AllocProc( (WNDPROC)newval, unicode );
-        break;
-    case GCLP_HBRBACKGROUND:
-        retval = (ULONG_PTR)class->hbrBackground;
-        class->hbrBackground = (HBRUSH)newval;
-        break;
-    case GCLP_HCURSOR:
-        retval = (ULONG_PTR)class->hCursor;
-        class->hCursor = (HCURSOR)newval;
-        break;
-    case GCLP_HICON:
-        retval = (ULONG_PTR)class->hIcon;
-        if (class->hIconSmIntern)
-        {
-            DestroyIcon(class->hIconSmIntern);
-            class->hIconSmIntern = NULL;
-        }
-        if (newval && !class->hIconSm)
-            class->hIconSmIntern = CopyImage( (HICON)newval, IMAGE_ICON,
-                      GetSystemMetrics( SM_CXSMICON ), GetSystemMetrics( SM_CYSMICON ),
-                      LR_COPYFROMRESOURCE );
-        class->hIcon = (HICON)newval;
-        break;
-    case GCLP_HICONSM:
-        retval = (ULONG_PTR)class->hIconSm;
-        if (retval && !newval && class->hIcon)
-            class->hIconSmIntern = CopyImage( class->hIcon, IMAGE_ICON,
-                      GetSystemMetrics( SM_CXSMICON ), GetSystemMetrics( SM_CYSMICON ),
-                      LR_COPYFROMRESOURCE );
-        else if (newval && class->hIconSmIntern)
-        {
-            DestroyIcon(class->hIconSmIntern);
-            class->hIconSmIntern = NULL;
-        }
-        class->hIconSm = (HICON)newval;
-        break;
-    case GCL_STYLE:
-        if (!set_server_info( hwnd, offset, newval, size )) break;
-        retval = class->style;
-        class->style = newval;
-        break;
-    case GCL_CBWNDEXTRA:
-        if (!set_server_info( hwnd, offset, newval, size )) break;
-        retval = class->cbWndExtra;
-        class->cbWndExtra = newval;
-        break;
-    case GCLP_HMODULE:
-        if (!set_server_info( hwnd, offset, newval, size )) break;
-        retval = class->instance;
-        class->instance = newval;
-        break;
-    case GCW_ATOM:
-        if (!set_server_info( hwnd, offset, newval, size )) break;
-        retval = class->atomName;
-        class->atomName = newval;
-        GlobalGetAtomNameW( newval, class->name, ARRAY_SIZE( class->name ));
-        break;
-    case GCL_CBCLSEXTRA:  /* cannot change this one */
-        SetLastError( ERROR_INVALID_PARAMETER );
-        break;
-    default:
-        SetLastError( ERROR_INVALID_INDEX );
-        break;
-    }
-    release_class_ptr( class );
-    return retval;
-}
-
-
-/***********************************************************************
  *		SetClassLongW (USER32.@)
  */
 DWORD WINAPI SetClassLongW( HWND hwnd, INT offset, LONG newval )
 {
-    return CLASS_SetClassLong( hwnd, offset, newval, sizeof(LONG), TRUE );
+    if (offset == GCLP_MENUNAME) return set_menu_nameW( hwnd, offset, newval );
+    return NtUserSetClassLong( hwnd, offset, newval, FALSE );
 }
 
 
@@ -962,7 +758,8 @@ DWORD WINAPI SetClassLongW( HWND hwnd, INT offset, LONG newval )
  */
 DWORD WINAPI SetClassLongA( HWND hwnd, INT offset, LONG newval )
 {
-    return CLASS_SetClassLong( hwnd, offset, newval, sizeof(LONG), FALSE );
+    if (offset == GCLP_MENUNAME) return set_menu_nameA( hwnd, offset, newval );
+    return NtUserSetClassLong( hwnd, offset, newval, TRUE );
 }
 
 
@@ -1232,7 +1029,8 @@ ULONG_PTR WINAPI GetClassLongPtrW( HWND hwnd, INT offset )
  */
 ULONG_PTR WINAPI SetClassLongPtrW( HWND hwnd, INT offset, LONG_PTR newval )
 {
-    return CLASS_SetClassLong( hwnd, offset, newval, sizeof(LONG_PTR), TRUE );
+    if (offset == GCLP_MENUNAME) return set_menu_nameW( hwnd, offset, newval );
+    return NtUserSetClassLongPtr( hwnd, offset, newval, FALSE );
 }
 
 /***********************************************************************
@@ -1240,5 +1038,6 @@ ULONG_PTR WINAPI SetClassLongPtrW( HWND hwnd, INT offset, LONG_PTR newval )
  */
 ULONG_PTR WINAPI SetClassLongPtrA( HWND hwnd, INT offset, LONG_PTR newval )
 {
-    return CLASS_SetClassLong( hwnd, offset, newval, sizeof(LONG_PTR), FALSE );
+    if (offset == GCLP_MENUNAME) return set_menu_nameA( hwnd, offset, newval );
+    return NtUserSetClassLongPtr( hwnd, offset, newval, TRUE );
 }

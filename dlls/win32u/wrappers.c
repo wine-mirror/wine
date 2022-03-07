@@ -897,6 +897,24 @@ HCURSOR WINAPI NtUserSetCursor( HCURSOR cursor )
     return unix_funcs->pNtUserSetCursor( cursor );
 }
 
+DWORD WINAPI NtUserSetClassLong( HWND hwnd, INT offset, LONG newval, BOOL ansi )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserSetClassLong( hwnd, offset, newval, ansi );
+}
+
+ULONG_PTR WINAPI NtUserSetClassLongPtr( HWND hwnd, INT offset, LONG_PTR newval, BOOL ansi )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserSetClassLongPtr( hwnd, offset, newval, ansi );
+}
+
+WORD WINAPI NtUserSetClassWord( HWND hwnd, INT offset, WORD newval )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserSetClassWord( hwnd, offset, newval );
+}
+
 BOOL WINAPI NtUserSetCursorIconData( HCURSOR cursor, UNICODE_STRING *module, UNICODE_STRING *res_name,
                                      struct cursoricon_desc *desc )
 {

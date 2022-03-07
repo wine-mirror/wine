@@ -1171,9 +1171,9 @@
 @ stub NtUserSetCalibrationData
 @ stub NtUserSetCapture
 @ stub NtUserSetChildWindowNoActivate
-@ stub NtUserSetClassLong
-@ stub NtUserSetClassLongPtr
-@ stub NtUserSetClassWord
+@ stdcall NtUserSetClassLong(long long long long)
+@ stdcall NtUserSetClassLongPtr(long long long long)
+@ stdcall NtUserSetClassWord(long long long)
 @ stub NtUserSetClipboardData
 @ stub NtUserSetClipboardViewer
 @ stub NtUserSetCoreWindow

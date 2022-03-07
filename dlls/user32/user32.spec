@@ -652,7 +652,7 @@
 @ stdcall -arch=win64 SetClassLongPtrA(long long long)
 @ stdcall -arch=win64 SetClassLongPtrW(long long long)
 @ stdcall SetClassLongW(long long long)
-@ stdcall SetClassWord(long long long)
+@ stdcall SetClassWord(long long long) NtUserSetClassWord
 @ stdcall SetClipboardData(long long)
 @ stdcall SetClipboardViewer(long)
 @ stdcall SetCoalescableTimer(long long long ptr long)
