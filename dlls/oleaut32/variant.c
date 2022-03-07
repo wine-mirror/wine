@@ -1633,7 +1633,7 @@ HRESULT WINAPI VarParseNumFromStr(const OLECHAR *lpszStr, LCID lcid, ULONG dwFla
       /* If we have no digits so far, skip leading zeros */
       if (!pNumprs->cDig)
       {
-        while (lpszStr[1] == '0')
+        while (*lpszStr == '0')
         {
           dwState |= B_LEADING_ZERO;
           cchUsed++;
