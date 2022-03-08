@@ -672,6 +672,7 @@ static void test_BCryptGenerateSymmetricKey(void)
     BCRYPT_KEY_LENGTHS_STRUCT key_lengths;
     ULONG size, len, i;
     NTSTATUS ret;
+    DWORD keylen;
 
     ret = BCryptOpenAlgorithmProvider(&aes, BCRYPT_AES_ALGORITHM, NULL, 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
@@ -705,6 +706,13 @@ static void test_BCryptGenerateSymmetricKey(void)
     ret = BCryptSetProperty(aes, BCRYPT_CHAINING_MODE, (UCHAR *)BCRYPT_CHAIN_MODE_CBC,
                             sizeof(BCRYPT_CHAIN_MODE_CBC), 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+
+    todo_wine
+    {
+    keylen = 512;
+    ret = BCryptSetProperty(aes, BCRYPT_KEY_LENGTH, (UCHAR *)&keylen, sizeof(keylen), 0);
+    ok(ret == STATUS_NOT_SUPPORTED, "got %#lx\n", ret);
+    }
 
     size = 0;
     memset(mode, 0, sizeof(mode));
@@ -2005,6 +2013,7 @@ static void test_RSA(void)
     ULONG len, size, size2, schemes;
     NTSTATUS ret;
     BYTE *buf;
+    DWORD keylen;
 
     ret = BCryptOpenAlgorithmProvider(&alg, BCRYPT_RSA_ALGORITHM, NULL, 0);
     if (ret)
@@ -2052,10 +2061,19 @@ static void test_RSA(void)
     ok(!ret, "BCryptDestroyKey failed: %#lx\n", ret);
 
     /* sign/verify with export/import round-trip */
-    ret = BCryptGenerateKeyPair(alg, &key, 512, 0);
+    ret = BCryptGenerateKeyPair(alg, &key, 1024, 0);
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+
+    keylen = 512;
+    ret = BCryptSetProperty(key, BCRYPT_KEY_LENGTH, (UCHAR *)&keylen, 2, 0);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %#lx\n", ret);
+    ret = BCryptSetProperty(key, BCRYPT_KEY_LENGTH, (UCHAR *)&keylen, sizeof(keylen), 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
 
     ret = BCryptFinalizeKeyPair(key, 0);
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+
+    ret = BCryptSetProperty(key, BCRYPT_KEY_LENGTH, (UCHAR *)&keylen, sizeof(keylen), 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
 
     pad.pszAlgId = BCRYPT_SHA1_ALGORITHM;

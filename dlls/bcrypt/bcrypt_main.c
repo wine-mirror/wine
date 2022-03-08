@@ -701,6 +701,12 @@ static NTSTATUS set_key_property( struct key *key, const WCHAR *prop, UCHAR *val
             return STATUS_NOT_IMPLEMENTED;
         }
     }
+    else if (!wcscmp( prop, BCRYPT_KEY_LENGTH ))
+    {
+        if (size < sizeof(DWORD)) return STATUS_INVALID_PARAMETER;
+        key->u.a.bitlen = *(DWORD*)value;
+        return STATUS_SUCCESS;
+    }
 
     FIXME( "unsupported key property %s\n", debugstr_w(prop) );
     return STATUS_NOT_IMPLEMENTED;
