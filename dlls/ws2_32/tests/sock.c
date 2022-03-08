@@ -1459,6 +1459,27 @@ static void test_set_getsockopt(void)
         }
         ok(size == (test_optsize[i].optname == SO_OPENTYPE ? 4 : -1), "Got unexpected size %d.\n", size);
 
+        if (test_optsize[i].level == SOL_SOCKET && test_optsize[i].bool_value)
+        {
+            expected_err = 0;
+            expected_last_error = 0;
+        }
+        else
+        {
+            expected_err = -1;
+            expected_last_error = WSAEFAULT;
+        }
+        value = 1;
+        SetLastError(0xdeadbeef);
+        err = setsockopt(s2, test_optsize[i].level, test_optsize[i].optname, (char*)&value, 0);
+        ok(err == expected_err, "Unexpected setsockopt result %d.\n", err);
+        ok(WSAGetLastError() == expected_last_error, "Unexpected WSAGetLastError() %u.\n", WSAGetLastError());
+
+        size = 0;
+        err = getsockopt(s2, test_optsize[i].level, test_optsize[i].optname, (char*)&value, &size);
+        ok(err == -1, "Unexpected getsockopt result %d.\n", err);
+        ok(WSAGetLastError() == WSAEFAULT, "Unexpected WSAGetLastError() %u.\n", WSAGetLastError());
+
         expected_size = test_optsize[i].sizes[2];
         if (expected_size == 1)
             expected_value = 0xdeadbe00;
