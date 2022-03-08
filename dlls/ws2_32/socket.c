@@ -1511,13 +1511,14 @@ int WINAPI getsockopt( SOCKET s, int level, int optname, char *optval, int *optl
         /* As mentioned in setsockopt, Windows ignores this, so we
          * always return true here */
         case SO_DONTROUTE:
-            if (*optlen < sizeof(BOOL) || !optval)
+            if (*optlen < 1 || !optval)
             {
-                SetLastError(WSAEFAULT);
+                SetLastError( WSAEFAULT );
                 return SOCKET_ERROR;
             }
-            *(BOOL *)optval = TRUE;
-            *optlen = sizeof(BOOL);
+            *optval = TRUE;
+            *optlen = 1;
+            SetLastError( ERROR_SUCCESS );
             return 0;
 
         case SO_ERROR:
@@ -2859,7 +2860,13 @@ int WINAPI setsockopt( SOCKET s, int level, int optname, const char *optval, int
         /* For some reason the game GrandPrixLegends does set SO_DONTROUTE on its
          * socket. According to MSDN, this option is silently ignored.*/
         case SO_DONTROUTE:
-            TRACE("Ignoring SO_DONTROUTE\n");
+            TRACE( "Ignoring SO_DONTROUTE.\n" );
+            if (optlen <= 0)
+            {
+                SetLastError( optlen ? WSAENOBUFS : WSAEFAULT );
+                return -1;
+            }
+            SetLastError( ERROR_SUCCESS );
             return 0;
 
         /* Stops two sockets from being bound to the same port. Always happens
