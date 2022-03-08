@@ -370,8 +370,29 @@ statics2_TryGetFactoryControllerFromGameController( IGameControllerFactoryManage
                                                     ICustomGameControllerFactory *factory,
                                                     IGameController *controller, IGameController **value )
 {
-    FIXME( "iface %p, factory %p, controller %p, value %p stub!\n", iface, factory, controller, value );
-    return E_NOTIMPL;
+    struct controller *entry, *other;
+    BOOL found = FALSE;
+
+    TRACE( "iface %p, factory %p, controller %p, value %p.\n", iface, factory, controller, value );
+
+    EnterCriticalSection( &manager_cs );
+
+    LIST_FOR_EACH_ENTRY( entry, &controller_list, struct controller, entry )
+        if ((found = &entry->IGameController_iface == controller)) break;
+
+    if (!found) WARN( "Failed to find controller %p\n", controller );
+    else
+    {
+        LIST_FOR_EACH_ENTRY( other, &controller_list, struct controller, entry )
+            if ((found = entry->provider == other->provider && other->factory == factory)) break;
+        if (!found) WARN( "Failed to find controller %p, factory %p\n", controller, factory );
+        else IGameController_AddRef( (*value = &other->IGameController_iface) );
+    }
+
+    LeaveCriticalSection( &manager_cs );
+
+    if (!found) return E_FAIL;
+    return S_OK;
 }
 
 static const struct IGameControllerFactoryManagerStatics2Vtbl statics2_vtbl =
@@ -395,7 +416,7 @@ static struct manager_statics manager_statics =
     1,
 };
 
-IActivationFactory *manager_factory = &manager_statics.IActivationFactory_iface;
+IGameControllerFactoryManagerStatics2 *manager_factory = &manager_statics.IGameControllerFactoryManagerStatics2_iface;
 
 static HRESULT controller_create( ICustomGameControllerFactory *factory, IGameControllerProvider *provider,
                                   struct controller **out )

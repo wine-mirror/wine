@@ -174,8 +174,20 @@ static HRESULT WINAPI statics_get_RawGameControllers( IRawGameControllerStatics 
 static HRESULT WINAPI statics_FromGameController( IRawGameControllerStatics *iface, IGameController *game_controller,
                                                   IRawGameController **value )
 {
-    FIXME( "iface %p, game_controller %p, value %p stub!\n", iface, game_controller, value );
-    return E_NOTIMPL;
+    struct controller_statics *impl = impl_from_IRawGameControllerStatics( iface );
+    IGameController *controller;
+    HRESULT hr;
+
+    TRACE( "iface %p, game_controller %p, value %p.\n", iface, game_controller, value );
+
+    hr = IGameControllerFactoryManagerStatics2_TryGetFactoryControllerFromGameController( manager_factory, &impl->ICustomGameControllerFactory_iface,
+                                                                                          game_controller, &controller );
+    if (FAILED(hr)) return hr;
+
+    hr = IGameController_QueryInterface( controller, &IID_IRawGameController, (void **)value );
+    IGameController_Release( controller );
+
+    return hr;
 }
 
 static const struct IRawGameControllerStaticsVtbl statics_vtbl =
