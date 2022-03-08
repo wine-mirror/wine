@@ -361,6 +361,44 @@ static DWORD get_window_thread( HWND hwnd, DWORD *process )
     return tid;
 }
 
+/* see GetParent */
+static HWND get_parent( HWND hwnd )
+{
+    HWND retval = 0;
+    WND *win;
+
+    if (!(win = get_win_ptr( hwnd )))
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+    if (win == WND_DESKTOP) return 0;
+    if (win == WND_OTHER_PROCESS)
+    {
+        LONG style = get_window_long( hwnd, GWL_STYLE );
+        if (style & (WS_POPUP | WS_CHILD))
+        {
+            SERVER_START_REQ( get_window_tree )
+            {
+                req->handle = wine_server_user_handle( hwnd );
+                if (!wine_server_call_err( req ))
+                {
+                    if (style & WS_POPUP) retval = wine_server_ptr_handle( reply->owner );
+                    else if (style & WS_CHILD) retval = wine_server_ptr_handle( reply->parent );
+                }
+            }
+            SERVER_END_REQ;
+        }
+    }
+    else
+    {
+        if (win->dwStyle & WS_POPUP) retval = win->owner;
+        else if (win->dwStyle & WS_CHILD) retval = win->parent;
+        release_win_ptr( win );
+    }
+    return retval;
+}
+
 /* see GetWindow */
 static HWND get_window_relative( HWND hwnd, UINT rel )
 {
@@ -557,7 +595,7 @@ static LONG_PTR get_window_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
 }
 
 /* see GetWindowLongW */
-static DWORD get_window_long( HWND hwnd, INT offset )
+DWORD get_window_long( HWND hwnd, INT offset )
 {
     return get_window_long_size( hwnd, offset, sizeof(LONG), FALSE );
 }
@@ -757,6 +795,8 @@ DWORD WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
 {
     switch (code)
     {
+    case NtUserGetParent:
+        return HandleToUlong( get_parent( hwnd ));
     case NtUserGetWindowTextLength:
         return get_server_window_text( hwnd, NULL, 0 );
     case NtUserIsWindow:

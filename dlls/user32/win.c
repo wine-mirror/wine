@@ -2908,39 +2908,7 @@ DWORD WINAPI GetWindowThreadProcessId( HWND hwnd, LPDWORD process )
  */
 HWND WINAPI GetParent( HWND hwnd )
 {
-    WND *wndPtr;
-    HWND retvalue = 0;
-
-    if (!(wndPtr = WIN_GetPtr( hwnd )))
-    {
-        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-        return 0;
-    }
-    if (wndPtr == WND_DESKTOP) return 0;
-    if (wndPtr == WND_OTHER_PROCESS)
-    {
-        LONG style = GetWindowLongW( hwnd, GWL_STYLE );
-        if (style & (WS_POPUP | WS_CHILD))
-        {
-            SERVER_START_REQ( get_window_tree )
-            {
-                req->handle = wine_server_user_handle( hwnd );
-                if (!wine_server_call_err( req ))
-                {
-                    if (style & WS_POPUP) retvalue = wine_server_ptr_handle( reply->owner );
-                    else if (style & WS_CHILD) retvalue = wine_server_ptr_handle( reply->parent );
-                }
-            }
-            SERVER_END_REQ;
-        }
-    }
-    else
-    {
-        if (wndPtr->dwStyle & WS_POPUP) retvalue = wndPtr->owner;
-        else if (wndPtr->dwStyle & WS_CHILD) retvalue = wndPtr->parent;
-        WIN_ReleasePtr( wndPtr );
-    }
-    return retvalue;
+    return UlongToHandle( NtUserCallHwnd( hwnd, NtUserGetParent ));
 }
 
 
