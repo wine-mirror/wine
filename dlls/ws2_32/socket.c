@@ -3023,6 +3023,11 @@ int WINAPI setsockopt( SOCKET s, int level, int optname, const char *optval, int
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_TOS, optval, optlen );
 
         case IP_TTL:
+            if (!optlen)
+            {
+                SetLastError( WSAEFAULT );
+                return -1;
+            }
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_TTL, optval, optlen );
 
         case IP_UNBLOCK_SOURCE:
