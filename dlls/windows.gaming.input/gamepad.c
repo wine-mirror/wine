@@ -27,6 +27,7 @@ struct gamepad_statics
 {
     IActivationFactory IActivationFactory_iface;
     IGamepadStatics IGamepadStatics_iface;
+    IGamepadStatics2 IGamepadStatics2_iface;
     ICustomGameControllerFactory ICustomGameControllerFactory_iface;
     LONG ref;
 };
@@ -54,6 +55,12 @@ static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID 
     if (IsEqualGUID( iid, &IID_IGamepadStatics ))
     {
         IInspectable_AddRef( (*out = &impl->IGamepadStatics_iface) );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IGamepadStatics2 ))
+    {
+        IInspectable_AddRef( (*out = &impl->IGamepadStatics2_iface) );
         return S_OK;
     }
 
@@ -188,6 +195,38 @@ static const struct IGamepadStaticsVtbl statics_vtbl =
     statics_get_Gamepads,
 };
 
+DEFINE_IINSPECTABLE( statics2, IGamepadStatics2, struct gamepad_statics, IActivationFactory_iface )
+
+static HRESULT WINAPI statics2_FromGameController( IGamepadStatics2 *iface, IGameController *game_controller, IGamepad **value )
+{
+    struct gamepad_statics *impl = impl_from_IGamepadStatics2( iface );
+    IGameController *controller;
+    HRESULT hr;
+
+    TRACE( "iface %p, game_controller %p, value %p.\n", iface, game_controller, value );
+
+    hr = IGameControllerFactoryManagerStatics2_TryGetFactoryControllerFromGameController( manager_factory, &impl->ICustomGameControllerFactory_iface,
+                                                                                          game_controller, &controller );
+    if (FAILED(hr)) return hr;
+
+    hr = IGameController_QueryInterface( controller, &IID_IGamepad, (void **)value );
+    IGameController_Release( controller );
+    return hr;
+}
+
+static const struct IGamepadStatics2Vtbl statics2_vtbl =
+{
+    statics2_QueryInterface,
+    statics2_AddRef,
+    statics2_Release,
+    /* IInspectable methods */
+    statics2_GetIids,
+    statics2_GetRuntimeClassName,
+    statics2_GetTrustLevel,
+    /* IGamepadStatics2 methods */
+    statics2_FromGameController,
+};
+
 DEFINE_IINSPECTABLE( controller_factory, ICustomGameControllerFactory, struct gamepad_statics, IActivationFactory_iface )
 
 static HRESULT WINAPI controller_factory_CreateGameController( ICustomGameControllerFactory *iface, IGameControllerProvider *provider,
@@ -228,6 +267,7 @@ static struct gamepad_statics gamepad_statics =
 {
     {&factory_vtbl},
     {&statics_vtbl},
+    {&statics2_vtbl},
     {&controller_factory_vtbl},
     1,
 };
