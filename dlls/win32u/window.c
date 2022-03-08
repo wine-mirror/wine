@@ -606,6 +606,25 @@ BOOL is_child( HWND parent, HWND child )
     return ret;
 }
 
+/* see IsWindowVisible */
+static BOOL is_window_visible( HWND hwnd )
+{
+    HWND *list;
+    BOOL retval = TRUE;
+    int i;
+
+    if (!(get_window_long( hwnd, GWL_STYLE ) & WS_VISIBLE)) return FALSE;
+    if (!(list = list_window_parents( hwnd ))) return TRUE;
+    if (list[0])
+    {
+        for (i = 0; list[i+1]; i++)
+            if (!(get_window_long( list[i], GWL_STYLE ) & WS_VISIBLE)) break;
+        retval = !list[i+1] && (list[i] == user_callbacks->pGetDesktopWindow());  /* top message window isn't visible */
+    }
+    free( list );
+    return retval;
+}
+
 static LONG_PTR get_win_data( const void *ptr, UINT size )
 {
     if (size == sizeof(WORD))
@@ -955,6 +974,8 @@ DWORD WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
         return get_server_window_text( hwnd, NULL, 0 );
     case NtUserIsWindow:
         return is_window( hwnd );
+    case NtUserIsWindowVisible:
+        return is_window_visible( hwnd );
     default:
         FIXME( "invalid code %u\n", code );
         return 0;

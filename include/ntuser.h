@@ -142,6 +142,7 @@ enum
     NtUserGetParent,
     NtUserGetWindowTextLength,
     NtUserIsWindow,
+    NtUserIsWindowVisible,
 };
 
 /* NtUserCallHwndParam codes, not compatible with Windows */

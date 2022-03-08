@@ -3016,20 +3016,7 @@ BOOL WINAPI IsChild( HWND parent, HWND child )
  */
 BOOL WINAPI IsWindowVisible( HWND hwnd )
 {
-    HWND *list;
-    BOOL retval = TRUE;
-    int i;
-
-    if (!(GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE)) return FALSE;
-    if (!(list = list_window_parents( hwnd ))) return TRUE;
-    if (list[0])
-    {
-        for (i = 0; list[i+1]; i++)
-            if (!(GetWindowLongW( list[i], GWL_STYLE ) & WS_VISIBLE)) break;
-        retval = !list[i+1] && (list[i] == GetDesktopWindow());  /* top message window isn't visible */
-    }
-    HeapFree( GetProcessHeap(), 0, list );
-    return retval;
+    return NtUserCallHwnd( hwnd, NtUserIsWindowVisible );
 }
 
 
