@@ -155,7 +155,7 @@ static HRESULT WINAPI ObjectWithSite_SetSite(IObjectWithSite *iface, IUnknown *p
     ok(pUnkSite != NULL, "pUnkSite == NULL\n");
 
     hres = IUnknown_QueryInterface(pUnkSite, &IID_IServiceProvider, (void**)&sp);
-    ok(hres == S_OK, "Could not get IServiceProvider iface: %08x\n", hres);
+    ok(hres == S_OK, "Could not get IServiceProvider iface: %08lx\n", hres);
     IServiceProvider_Release(sp);
 
     return SetSite_hres;
@@ -241,7 +241,7 @@ static HRESULT WINAPI DispatchEx_Invoke(IDispatchEx *iface, DISPID dispIdMember,
 
 static HRESULT WINAPI DispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
 {
-    ok(0, "unexpected call %s %x\n", wine_dbgstr_w(bstrName), grfdex);
+    ok(0, "unexpected call %s %lx\n", wine_dbgstr_w(bstrName), grfdex);
     return E_NOTIMPL;
 }
 
@@ -278,7 +278,7 @@ static HRESULT WINAPI DispatchEx_GetNameSpaceParent(IDispatchEx *iface, IUnknown
 static HRESULT WINAPI Test_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
     if(!lstrcmpW(bstrName, L"reportSuccess")) {
-        ok(grfdex == fdexNameCaseInsensitive, "grfdex = %x\n", grfdex);
+        ok(grfdex == fdexNameCaseInsensitive, "grfdex = %lx\n", grfdex);
         *pid = DISPID_TEST_REPORTSUCCESS;
         return S_OK;
     }
@@ -334,7 +334,7 @@ static IDispatchEx testObj = { &testObjVtbl };
 static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
     if(!lstrcmpW(bstrName, L"ok")) {
-        ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
+        ok(grfdex == fdexNameCaseSensitive, "grfdex = %lx\n", grfdex);
         *pid = DISPID_GLOBAL_OK;
         return S_OK;
     }
@@ -467,14 +467,14 @@ static HRESULT WINAPI InternetHostSecurityManager_ProcessUrlAction(IInternetHost
 {
     CHECK_EXPECT(ProcessUrlAction);
 
-    ok(dwAction == URLACTION_ACTIVEX_RUN, "dwAction = %x\n", dwAction);
+    ok(dwAction == URLACTION_ACTIVEX_RUN, "dwAction = %lx\n", dwAction);
     ok(pPolicy != NULL, "pPolicy == NULL\n");
-    ok(cbPolicy == sizeof(DWORD), "cbPolicy = %d\n", cbPolicy);
+    ok(cbPolicy == sizeof(DWORD), "cbPolicy = %ld\n", cbPolicy);
     ok(pContext != NULL, "pContext == NULL\n");
-    ok(cbContext == sizeof(GUID), "cbContext = %d\n", cbContext);
+    ok(cbContext == sizeof(GUID), "cbContext = %ld\n", cbContext);
     ok(IsEqualGUID(pContext, &CLSID_TestObj), "pContext = %s\n", wine_dbgstr_guid((const IID*)pContext));
-    ok(!dwFlags, "dwFlags = %x\n", dwFlags);
-    ok(!dwReserved, "dwReserved = %x\n", dwReserved);
+    ok(!dwFlags, "dwFlags = %lx\n", dwFlags);
+    ok(!dwReserved, "dwReserved = %lx\n", dwReserved);
 
     if(SUCCEEDED(ProcessUrlAction_hres))
         *(DWORD*)pPolicy = ProcessUrlAction_policy;
@@ -494,12 +494,12 @@ static HRESULT WINAPI InternetHostSecurityManager_QueryCustomPolicy(IInternetHos
     ok(ppPolicy != NULL, "ppPolicy == NULL\n");
     ok(pcbPolicy != NULL, "pcbPolicy == NULL\n");
     ok(pContext != NULL, "pContext == NULL\n");
-    ok(cbContext == sizeof(struct CONFIRMSAFETY), "cbContext = %d\n", cbContext);
-    ok(!dwReserved, "dwReserved = %x\n", dwReserved);
+    ok(cbContext == sizeof(struct CONFIRMSAFETY), "cbContext = %ld\n", cbContext);
+    ok(!dwReserved, "dwReserved = %lx\n", dwReserved);
 
     /* TODO: CLSID */
     ok(cs->pUnk != NULL, "cs->pUnk == NULL\n");
-    ok(!cs->dwFlags, "dwFlags = %x\n", cs->dwFlags);
+    ok(!cs->dwFlags, "dwFlags = %lx\n", cs->dwFlags);
 
     if(FAILED(QueryCustomPolicy_hres))
         return QueryCustomPolicy_hres;
@@ -609,7 +609,7 @@ static HRESULT WINAPI ActiveScriptSite_GetLCID(IActiveScriptSite *iface, LCID *p
 static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface, LPCOLESTR pstrName,
         DWORD dwReturnMask, IUnknown **ppiunkItem, ITypeInfo **ppti)
 {
-    ok(dwReturnMask == SCRIPTINFO_IUNKNOWN, "unexpected dwReturnMask %x\n", dwReturnMask);
+    ok(dwReturnMask == SCRIPTINFO_IUNKNOWN, "unexpected dwReturnMask %lx\n", dwReturnMask);
     ok(!ppti, "ppti != NULL\n");
     ok(!lstrcmpW(pstrName, L"test"), "pstrName = %s\n", wine_dbgstr_w(pstrName));
 
@@ -671,7 +671,7 @@ static void set_safety_options(IUnknown *unk, BOOL use_sec_mgr)
     HRESULT hres;
 
     hres = IUnknown_QueryInterface(unk, &IID_IObjectSafety, (void**)&safety);
-    ok(hres == S_OK, "Could not get IObjectSafety: %08x\n", hres);
+    ok(hres == S_OK, "Could not get IObjectSafety: %08lx\n", hres);
     if(FAILED(hres))
         return;
 
@@ -682,13 +682,13 @@ static void set_safety_options(IUnknown *unk, BOOL use_sec_mgr)
         options_set = INTERFACE_USES_DISPEX;
 
     hres = IObjectSafety_SetInterfaceSafetyOptions(safety, &IID_IActiveScriptParse, options_all, options_set);
-    ok(hres == S_OK, "SetInterfaceSafetyOptions failed: %08x\n", hres);
+    ok(hres == S_OK, "SetInterfaceSafetyOptions failed: %08lx\n", hres);
 
     supported = enabled = 0xdeadbeef;
     hres = IObjectSafety_GetInterfaceSafetyOptions(safety, &IID_IActiveScriptParse, &supported, &enabled);
-    ok(hres == S_OK, "GetInterfaceSafetyOptions failed: %08x\n", hres);
-    ok(supported == options_all, "supported=%x, expected %x\n", supported, options_all);
-    ok(enabled == options_set, "enabled=%x, expected %x\n", enabled, options_set);
+    ok(hres == S_OK, "GetInterfaceSafetyOptions failed: %08lx\n", hres);
+    ok(supported == options_all, "supported=%lx, expected %lx\n", supported, options_all);
+    ok(enabled == options_set, "enabled=%lx, expected %lx\n", enabled, options_set);
 
     IObjectSafety_Release(safety);
 }
@@ -702,7 +702,7 @@ static void _parse_script_a(unsigned line, IActiveScriptParse *parser, const cha
     str = a2bstr(script);
     hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
     SysFreeString(str);
-    ok_(__FILE__,line)(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    ok_(__FILE__,line)(hres == S_OK, "ParseScriptText failed: %08lx\n", hres);
 }
 
 static HRESULT parse_script_ae(IActiveScriptParse *parser, const char *script)
@@ -736,27 +736,27 @@ static IActiveScriptParse *create_script(BOOL use_sec_mgr)
 
     hres = CoCreateInstance(&CLSID_VBScript, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IActiveScript, (void**)&script);
-    ok(hres == S_OK, "CoCreateInstance failed: %08x\n", hres);
+    ok(hres == S_OK, "CoCreateInstance failed: %08lx\n", hres);
     if(FAILED(hres))
         return NULL;
 
     set_safety_options((IUnknown*)script, use_sec_mgr);
 
     hres = IActiveScript_QueryInterface(script, &IID_IActiveScriptParse, (void**)&parser);
-    ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
+    ok(hres == S_OK, "Could not get IActiveScriptParse: %08lx\n", hres);
 
     hres = IActiveScriptParse_InitNew(parser);
-    ok(hres == S_OK, "InitNew failed: %08x\n", hres);
+    ok(hres == S_OK, "InitNew failed: %08lx\n", hres);
 
     hres = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
-    ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
+    ok(hres == S_OK, "SetScriptSite failed: %08lx\n", hres);
 
     hres = IActiveScript_AddNamedItem(script, L"test",
             SCRIPTITEM_ISVISIBLE|SCRIPTITEM_ISSOURCE|SCRIPTITEM_GLOBALMEMBERS);
-    ok(hres == S_OK, "AddNamedItem failed: %08x\n", hres);
+    ok(hres == S_OK, "AddNamedItem failed: %08lx\n", hres);
 
     hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_STARTED);
-    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_STARTED) failed: %08x\n", hres);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_STARTED) failed: %08lx\n", hres);
 
     IActiveScript_Release(script);
 
@@ -789,7 +789,7 @@ static void test_CreateObject(void)
     parser = create_script(TRUE);
 
     hres = parse_script_ae(parser, "Call CreateObject(\"Wine.TestABC\")");
-    ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08x\n", hres);
+    ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08lx\n", hres);
 
     IActiveScriptParse_Release(parser);
 
@@ -798,7 +798,7 @@ static void test_CreateObject(void)
 
     SET_EXPECT(Host_QS_SecMgr);
     hres = parse_script_ae(parser, "Call CreateObject(\"Wine.Test\")");
-    ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08x\n", hres);
+    ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08lx\n", hres);
     CHECK_CALLED(Host_QS_SecMgr);
 
     IActiveScriptParse_Release(parser);
@@ -809,7 +809,7 @@ static void test_CreateObject(void)
     SET_EXPECT(Host_QS_SecMgr);
     SET_EXPECT(ProcessUrlAction);
     hres = parse_script_ae(parser, "Call CreateObject(\"Wine.Test\")");
-    ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08x\n", hres);
+    ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08lx\n", hres);
     CHECK_CALLED(Host_QS_SecMgr);
     CHECK_CALLED(ProcessUrlAction);
 
@@ -821,7 +821,7 @@ static void test_CreateObject(void)
     SET_EXPECT(Host_QS_SecMgr);
     SET_EXPECT(ProcessUrlAction);
     hres = parse_script_ae(parser, "Call CreateObject(\"Wine.Test\")");
-    ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08x\n", hres);
+    ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08lx\n", hres);
     CHECK_CALLED(Host_QS_SecMgr);
     CHECK_CALLED(ProcessUrlAction);
 
@@ -834,7 +834,7 @@ static void test_CreateObject(void)
     SET_EXPECT(ProcessUrlAction);
     SET_EXPECT(CreateInstance);
     hres = parse_script_ae(parser, "Call CreateObject(\"Wine.Test\")");
-    ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08x\n", hres);
+    ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08lx\n", hres);
     CHECK_CALLED(Host_QS_SecMgr);
     CHECK_CALLED(ProcessUrlAction);
     CHECK_CALLED(CreateInstance);
@@ -849,7 +849,7 @@ static void test_CreateObject(void)
     SET_EXPECT(CreateInstance);
     SET_EXPECT(QueryCustomPolicy);
     hres = parse_script_ae(parser, "Call CreateObject(\"Wine.Test\")");
-    ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08x\n", hres);
+    ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08lx\n", hres);
     CHECK_CALLED(Host_QS_SecMgr);
     CHECK_CALLED(ProcessUrlAction);
     CHECK_CALLED(CreateInstance);
@@ -884,7 +884,7 @@ static void test_CreateObject(void)
     SET_EXPECT(CreateInstance);
     SET_EXPECT(QueryCustomPolicy);
     hres = parse_script_ae(parser, "Call CreateObject(\"Wine.Test\")");
-    ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08x\n", hres);
+    ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08lx\n", hres);
     CHECK_CALLED(Host_QS_SecMgr);
     CHECK_CALLED(ProcessUrlAction);
     CHECK_CALLED(CreateInstance);
@@ -896,7 +896,7 @@ static void test_CreateObject(void)
     SET_EXPECT(CreateInstance);
     SET_EXPECT(QueryCustomPolicy);
     hres = parse_script_ae(parser, "Call CreateObject(\"Wine.Test\")");
-    ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08x\n", hres);
+    ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08lx\n", hres);
     CHECK_CALLED(ProcessUrlAction);
     CHECK_CALLED(CreateInstance);
     CHECK_CALLED(QueryCustomPolicy);
@@ -908,7 +908,7 @@ static void test_CreateObject(void)
     SET_EXPECT(CreateInstance);
     SET_EXPECT(QueryCustomPolicy);
     hres = parse_script_ae(parser, "Call CreateObject(\"Wine.Test\")");
-    ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08x\n", hres);
+    ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08lx\n", hres);
     CHECK_CALLED(ProcessUrlAction);
     CHECK_CALLED(CreateInstance);
     CHECK_CALLED(QueryCustomPolicy);
@@ -953,7 +953,7 @@ static void test_CreateObject(void)
     SET_EXPECT(QI_IObjectWithSite);
     SET_EXPECT(SetSite);
     hres = parse_script_ae(parser, "Call CreateObject(\"Wine.Test\")");
-    ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08x\n", hres);
+    ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08lx\n", hres);
     CHECK_CALLED(ProcessUrlAction);
     CHECK_CALLED(CreateInstance);
     CHECK_CALLED(QueryCustomPolicy);
@@ -971,7 +971,7 @@ static void test_GetObject(void)
     /* Never allowed with security manager */
     parser = create_script(TRUE);
     hres = parse_script_ae(parser, "Call GetObject(\"clsid:" TESTOBJINST_CLSID "\").reportSuccess()");
-    ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08x\n", hres);
+    ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08lx\n", hres);
     IActiveScriptParse_Release(parser);
 
     parser = create_script(FALSE);
@@ -983,14 +983,14 @@ static void test_GetObject(void)
     if(broken(hres == VB_E_ACCESS_DENIED)) /* 64-bit win8 fails on the first try */
         hres = parse_script_ae(parser, "Call GetObject(\"clsid:" TESTOBJINST_CLSID "\").reportSuccess()");
     if(hres == HRESULT_FROM_WIN32(ERROR_MOD_NOT_FOUND)) { /* Workaround for broken win2k */
-        win_skip("got unexpected error %08x\n", hres);
+        win_skip("got unexpected error %08lx\n", hres);
         CLEAR_CALLED(QI_IObjectWithSite);
         CLEAR_CALLED(SetSite);
         CLEAR_CALLED(reportSuccess);
         IActiveScriptParse_Release(parser);
         return;
     }
-    ok(hres == S_OK, "hres = %08x\n", hres);
+    ok(hres == S_OK, "hres = %08lx\n", hres);
     CHECK_CALLED(QI_IObjectWithSite);
     CHECK_CALLED(SetSite);
     CHECK_CALLED(reportSuccess);
@@ -999,7 +999,7 @@ static void test_GetObject(void)
     SET_EXPECT(QI_IObjectWithSite);
     SET_EXPECT(SetSite);
     hres = parse_script_ae(parser, "Call GetObject(\"clsid:" TESTOBJINST_CLSID "\").reportSuccess()");
-    ok(hres == E_FAIL, "hres = %08x\n", hres);
+    ok(hres == E_FAIL, "hres = %08lx\n", hres);
     CHECK_CALLED(QI_IObjectWithSite);
     CHECK_CALLED(SetSite);
 
@@ -1015,7 +1015,7 @@ static void test_GetObject(void)
     /* Invalid moniker */
     parser = create_script(FALSE);
     hres = parse_script_ae(parser, "Call GetObject(\"nonexistent:test\").reportSuccess()");
-    ok(hres == MK_E_SYNTAX, "hres = %08x\n", hres);
+    ok(hres == MK_E_SYNTAX, "hres = %08lx\n", hres);
     IActiveScriptParse_Release(parser);
 }
 
@@ -1058,11 +1058,11 @@ static BOOL register_activex(void)
 
     hres = CoRegisterClassObject(&CLSID_TestObj, (IUnknown *)&activex_cf,
                                  CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &regid);
-    ok(hres == S_OK, "Could not register script engine: %08x\n", hres);
+    ok(hres == S_OK, "Could not register script engine: %08lx\n", hres);
 
     hres = CoRegisterClassObject(&CLSID_TestObjInst, (IUnknown *)&testObj,
                                  CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &regid);
-    ok(hres == S_OK, "Could not register script engine: %08x\n", hres);
+    ok(hres == S_OK, "Could not register script engine: %08lx\n", hres);
 
     return TRUE;
 }
