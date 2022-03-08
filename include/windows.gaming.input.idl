@@ -294,6 +294,18 @@ namespace Windows.Gaming.Input {
     }
 
     [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.Gaming.Input.Gamepad),
+        uuid(42676dc5-0856-47c4-9213-b395504c3a3c)
+    ]
+    interface IGamepadStatics2 : IInspectable
+        requires Windows.Gaming.Input.IGamepadStatics
+    {
+        HRESULT FromGameController([in] Windows.Gaming.Input.IGameController *controller,
+                                   [out, retval] Windows.Gaming.Input.Gamepad **value);
+    }
+
+    [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         exclusiveto(Windows.Gaming.Input.Headset),
         uuid(3fd156ef-6925-3fa8-9181-029c5223ae3b)
