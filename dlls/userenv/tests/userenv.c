@@ -33,7 +33,7 @@
 
 #define expect(EXPECTED,GOT) ok((GOT)==(EXPECTED), "Expected %d, got %d\n", (EXPECTED), (GOT))
 #define expect_env(EXPECTED,GOT,VAR) ok((GOT)==(EXPECTED), "Expected %d, got %d for %s (%d)\n", (EXPECTED), (GOT), (VAR), j)
-#define expect_gle(EXPECTED) ok(GetLastError() == (EXPECTED), "Expected %d, got %d\n", (EXPECTED), GetLastError())
+#define expect_gle(EXPECTED) ok(GetLastError() == (EXPECTED), "Expected %d, got %ld\n", (EXPECTED), GetLastError())
 
 static BOOL (WINAPI *pIsWow64Process)(HANDLE,PBOOL);
 
@@ -115,13 +115,13 @@ static void test_create_env(void)
     expect(TRUE, r);
 
     r = GetEnvironmentVariableA("SystemRoot", systemroot, sizeof(systemroot));
-    ok(r != 0, "GetEnvironmentVariable failed (%d)\n", GetLastError());
+    ok(r != 0, "GetEnvironmentVariable failed (%ld)\n", GetLastError());
 
     r = SetEnvironmentVariableA("SystemRoot", "overwrite");
     expect(TRUE, r);
 
     r = GetEnvironmentVariableA("ProgramData", programdata, sizeof(programdata));
-    ok(r != 0, "GetEnvironmentVariable failed (%d)\n", GetLastError());
+    ok(r != 0, "GetEnvironmentVariable failed (%ld)\n", GetLastError());
 
     r = SetEnvironmentVariableA("ProgramData", "overwrite");
     expect(TRUE, r);
@@ -250,7 +250,7 @@ static void test_get_profiles_dir(void)
     char *profiles_dir, *buf, small_buf[1];
 
     l = RegOpenKeyExA(HKEY_LOCAL_MACHINE, ProfileListA, 0, KEY_READ, &key);
-    ok(!l, "RegOpenKeyExA failed: %d\n", GetLastError());
+    ok(!l, "RegOpenKeyExA failed: %ld\n", GetLastError());
 
     l = RegQueryValueExA(key, ProfilesDirectory, NULL, NULL, NULL, &cch);
     if (l)
@@ -282,7 +282,7 @@ static void test_get_profiles_dir(void)
     /* MSDN claims the returned character count includes the NULL terminator
      * when the buffer is too small, but that's not in fact what gets returned.
      */
-    ok(cch == profiles_len - 1, "expected %d, got %d\n", profiles_len - 1, cch);
+    ok(cch == profiles_len - 1, "expected %ld, got %ld\n", profiles_len - 1, cch);
     /* Allocate one more character than the return value to prevent a buffer
      * overrun.
      */
@@ -291,7 +291,7 @@ static void test_get_profiles_dir(void)
     /* Rather than a BOOL, the return value is also the number of characters
      * stored in the buffer.
      */
-    expect(profiles_len - 1, r);
+    ok(profiles_len - 1 == r, "expected %ld, got %d\n", profiles_len - 1, r);
     ok(!strcmp(buf, profiles_dir), "expected %s, got %s\n", profiles_dir, buf);
 
     HeapFree(GetProcessHeap(), 0, buf);
@@ -330,26 +330,26 @@ static void test_get_user_profile_dir(void)
     }
 
     ret = OpenProcessToken( GetCurrentProcess(), TOKEN_QUERY, &token );
-    ok(ret, "expected success %u\n", GetLastError());
+    ok(ret, "expected success %lu\n", GetLastError());
 
     SetLastError( 0xdeadbeef );
     ret = GetUserProfileDirectoryA( NULL, NULL, NULL );
     error = GetLastError();
     ok(!ret, "expected failure\n");
-    ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", error);
+    ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %lu\n", error);
 
     SetLastError( 0xdeadbeef );
     ret = GetUserProfileDirectoryA( token, NULL, NULL );
     error = GetLastError();
     ok(!ret, "expected failure\n");
-    ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", error);
+    ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %lu\n", error);
 
     dirA = HeapAlloc( GetProcessHeap(), 0, 32 );
     SetLastError( 0xdeadbeef );
     ret = GetUserProfileDirectoryA( token, dirA, NULL );
     error = GetLastError();
     ok(!ret, "expected failure\n");
-    ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", error);
+    ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %lu\n", error);
     HeapFree( GetProcessHeap(), 0, dirA );
 
     len = 0;
@@ -357,8 +357,8 @@ static void test_get_user_profile_dir(void)
     ret = GetUserProfileDirectoryA( token, NULL, &len );
     error = GetLastError();
     ok(!ret, "expected failure\n");
-    ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", error);
-    ok(!len, "expected 0, got %u\n", len);
+    ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %lu\n", error);
+    ok(!len, "expected 0, got %lu\n", len);
 
     len = 0;
     dirA = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 32 );
@@ -374,34 +374,34 @@ static void test_get_user_profile_dir(void)
         dirA = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, len );
         SetLastError( 0xdeadbeef );
         ret = GetUserProfileDirectoryA( token, dirA, &len );
-        ok(ret, "expected success %u\n", GetLastError());
+        ok(ret, "expected success %lu\n", GetLastError());
         ok(len, "expected len > 0\n");
-        ok(lstrlenA( dirA ) == len - 1, "length mismatch %d != %d - 1\n", lstrlenA( dirA ), len );
+        ok(lstrlenA( dirA ) == len - 1, "length mismatch %d != %ld - 1\n", lstrlenA( dirA ), len );
         trace("%s\n", dirA);
         HeapFree( GetProcessHeap(), 0, dirA );
     }
     else
         ok(broken(error == ERROR_INVALID_PARAMETER) /* win10 1809+ */,
-           "unexpected error %u\n", error);
+           "unexpected error %lu\n", error);
 
     SetLastError( 0xdeadbeef );
     ret = GetUserProfileDirectoryW( NULL, NULL, NULL );
     error = GetLastError();
     ok(!ret, "expected failure\n");
-    todo_wine ok(error == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %u\n", error);
+    todo_wine ok(error == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %lu\n", error);
 
     SetLastError( 0xdeadbeef );
     ret = GetUserProfileDirectoryW( token, NULL, NULL );
     error = GetLastError();
     ok(!ret, "expected failure\n");
-    ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", error);
+    ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %lu\n", error);
 
     dirW = HeapAlloc( GetProcessHeap(), 0, 32 );
     SetLastError( 0xdeadbeef );
     ret = GetUserProfileDirectoryW( token, dirW, NULL );
     error = GetLastError();
     ok(!ret, "expected failure\n");
-    ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", error);
+    ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %lu\n", error);
     HeapFree( GetProcessHeap(), 0, dirW );
 
     len = 0;
@@ -409,15 +409,15 @@ static void test_get_user_profile_dir(void)
     ret = GetUserProfileDirectoryW( token, NULL, &len );
     error = GetLastError();
     ok(!ret, "expected failure\n");
-    ok(error == ERROR_INSUFFICIENT_BUFFER, "expected ERROR_INSUFFICIENT_BUFFER, got %u\n", error);
+    ok(error == ERROR_INSUFFICIENT_BUFFER, "expected ERROR_INSUFFICIENT_BUFFER, got %lu\n", error);
     ok(len, "expected len > 0\n");
 
     dirW = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, len * sizeof(WCHAR) );
     SetLastError( 0xdeadbeef );
     ret = GetUserProfileDirectoryW( token, dirW, &len );
-    ok(ret, "expected success %u\n", GetLastError());
+    ok(ret, "expected success %lu\n", GetLastError());
     ok(len, "expected len > 0\n");
-    ok(lstrlenW( dirW ) == len - 1, "length mismatch %d != %d - 1\n", lstrlenW( dirW ), len );
+    ok(lstrlenW( dirW ) == len - 1, "length mismatch %d != %ld - 1\n", lstrlenW( dirW ), len );
     HeapFree( GetProcessHeap(), 0, dirW );
 
     len2 = 0;
@@ -428,10 +428,10 @@ static void test_get_user_profile_dir(void)
     ok(!ret, "expected failure\n");
     HeapFree( GetProcessHeap(), 0, dirW );
     if (error == ERROR_INSUFFICIENT_BUFFER)
-        ok(len2 == len, "expected %d, got %d\n", len, len2);
+        ok(len2 == len, "expected %ld, got %ld\n", len, len2);
     else
         ok(broken(error == ERROR_INVALID_PARAMETER) /* win10 1809+ */,
-           "unexpected error %u\n", error);
+           "unexpected error %lu\n", error);
 
     CloseHandle( token );
 }
