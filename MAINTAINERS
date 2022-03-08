@@ -233,6 +233,7 @@ F:	dlls/combase/
 F:	dlls/ole32/compobj.c
 F:	dlls/ole32/marshal.c
 F:	dlls/ole32/usrmarshal.c
+F:	programs/dllhost/
 
 OLE Storage
 M:	Esme Povirk <esme@codeweavers.com>
