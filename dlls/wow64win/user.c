@@ -189,6 +189,14 @@ NTSTATUS WINAPI wow64_NtUserRemoveProp( UINT *args )
     return HandleToUlong( NtUserRemoveProp( hwnd, str ));
 }
 
+NTSTATUS WINAPI wow64_NtUserGetAncestor( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    UINT type = get_ulong( &args );
+
+    return HandleToUlong( NtUserGetAncestor( hwnd, type ));
+}
+
 NTSTATUS WINAPI wow64_NtUserBuildHwndList( UINT *args )
 {
     HDESK desktop = get_handle( &args );

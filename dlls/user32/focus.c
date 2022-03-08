@@ -165,7 +165,7 @@ static BOOL set_active_window( HWND hwnd, HWND *prev, BOOL mouse, BOOL focus )
         SendMessageW( hwnd, WM_ACTIVATE,
                       MAKEWPARAM( mouse ? WA_CLICKACTIVE : WA_ACTIVE, IsIconic(hwnd) ),
                       (LPARAM)previous );
-        if (GetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow())
+        if (NtUserGetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow())
             PostMessageW( GetDesktopWindow(), WM_PARENTNOTIFY, WM_NCACTIVATE, (LPARAM)hwnd );
     }
 
@@ -179,7 +179,7 @@ static BOOL set_active_window( HWND hwnd, HWND *prev, BOOL mouse, BOOL focus )
         /* Do not change focus if the window is no more active */
         if (hwnd == info.hwndActive)
         {
-            if (!info.hwndFocus || !hwnd || GetAncestor( info.hwndFocus, GA_ROOT ) != hwnd)
+            if (!info.hwndFocus || !hwnd || NtUserGetAncestor( info.hwndFocus, GA_ROOT ) != hwnd)
                 set_focus_window( hwnd );
         }
     }
@@ -291,7 +291,7 @@ HWND WINAPI SetFocus( HWND hwnd )
             LONG style = GetWindowLongW( hwndTop, GWL_STYLE );
             if (style & (WS_MINIMIZE | WS_DISABLED)) return 0;
             if (!(style & WS_CHILD)) break;
-            parent = GetAncestor( hwndTop, GA_PARENT );
+            parent = NtUserGetAncestor( hwndTop, GA_PARENT );
             if (!parent || parent == GetDesktopWindow())
             {
                 if ((style & (WS_POPUP|WS_CHILD)) == WS_CHILD) return 0;

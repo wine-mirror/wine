@@ -1083,7 +1083,7 @@ static void  NC_DoNCPaint( HWND  hwnd, HRGN  clip )
  */
 LRESULT NC_HandleNCPaint( HWND hwnd , HRGN clip)
 {
-    HWND parent = GetAncestor( hwnd, GA_PARENT );
+    HWND parent = NtUserGetAncestor( hwnd, GA_PARENT );
     DWORD dwStyle = GetWindowLongW( hwnd, GWL_STYLE );
 
     if( dwStyle & WS_VISIBLE )
@@ -1119,7 +1119,7 @@ LRESULT NC_HandleNCActivate( HWND hwnd, WPARAM wParam, LPARAM lParam )
     {
         NC_DoNCPaint( hwnd, (HRGN)1 );
 
-        if (GetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow())
+        if (NtUserGetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow())
             PostMessageW( GetDesktopWindow(), WM_PARENTNOTIFY, WM_NCACTIVATE, (LPARAM)hwnd );
     }
 
@@ -1379,7 +1379,7 @@ LRESULT NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
             {
                 if ((GetWindowLongW( top, GWL_STYLE ) & (WS_POPUP|WS_CHILD)) != WS_CHILD)
                     break;
-                parent = GetAncestor( top, GA_PARENT );
+                parent = NtUserGetAncestor( top, GA_PARENT );
                 if (!parent || parent == GetDesktopWindow()) break;
                 top = parent;
             }

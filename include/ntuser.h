@@ -275,6 +275,7 @@ BOOL    WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD mode,
                                           DEVMODEW *dev_mode, DWORD flags );
 HICON   WINAPI NtUserFindExistingCursorIcon( UNICODE_STRING *module, UNICODE_STRING *res_name,
                                              void *desc );
+HWND    WINAPI NtUserGetAncestor( HWND hwnd, UINT type );
 SHORT   WINAPI NtUserGetAsyncKeyState( INT key );
 ULONG   WINAPI NtUserGetAtomName( ATOM atom, UNICODE_STRING *name );
 ATOM    WINAPI NtUserGetClassInfoEx( HINSTANCE instance, UNICODE_STRING *name, WNDCLASSEXW *wc,

@@ -131,7 +131,7 @@ static void CDECL nulldrv_UpdateClipboard(void)
 static BOOL CDECL nodrv_CreateWindow( HWND hwnd )
 {
     static int warned;
-    HWND parent = GetAncestor( hwnd, GA_PARENT );
+    HWND parent = NtUserGetAncestor( hwnd, GA_PARENT );
 
     /* HWND_MESSAGE windows don't need a graphics driver */
     if (!parent || parent == get_user_thread_info()->msg_window) return TRUE;

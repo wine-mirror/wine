@@ -889,7 +889,7 @@
 @ stub NtUserFunctionalizeDisplayConfig
 @ stub NtUserGetActiveProcessesDpis
 @ stub NtUserGetAltTabInfo
-@ stub NtUserGetAncestor
+@ stdcall -syscall NtUserGetAncestor(long long)
 @ stub NtUserGetAppImeLevel
 @ stdcall NtUserGetAsyncKeyState(long)
 @ stdcall -syscall NtUserGetAtomName(long ptr)

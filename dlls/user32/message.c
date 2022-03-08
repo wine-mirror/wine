@@ -2552,7 +2552,7 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
 
         if (msg->hwnd != info.hwndActive)
         {
-            HWND hwndTop = GetAncestor( msg->hwnd, GA_ROOT );
+            HWND hwndTop = NtUserGetAncestor( msg->hwnd, GA_ROOT );
 
             if ((GetWindowLongW( hwndTop, GWL_STYLE ) & (WS_POPUP|WS_CHILD)) != WS_CHILD)
             {

@@ -454,6 +454,135 @@ static HWND get_window_relative( HWND hwnd, UINT rel )
     return retval;
 }
 
+/*******************************************************************
+ *           list_window_parents
+ *
+ * Build an array of all parents of a given window, starting with
+ * the immediate parent. The array must be freed with free().
+ */
+static HWND *list_window_parents( HWND hwnd )
+{
+    WND *win;
+    HWND current, *list;
+    int i, pos = 0, size = 16, count;
+
+    if (!(list = malloc( size * sizeof(HWND) ))) return NULL;
+
+    current = hwnd;
+    for (;;)
+    {
+        if (!(win = get_win_ptr( current ))) goto empty;
+        if (win == WND_OTHER_PROCESS) break;  /* need to do it the hard way */
+        if (win == WND_DESKTOP)
+        {
+            if (!pos) goto empty;
+            list[pos] = 0;
+            return list;
+        }
+        list[pos] = current = win->parent;
+        release_win_ptr( win );
+        if (!current) return list;
+        if (++pos == size - 1)
+        {
+            /* need to grow the list */
+            HWND *new_list = realloc( list, (size + 16) * sizeof(HWND) );
+            if (!new_list) goto empty;
+            list = new_list;
+            size += 16;
+        }
+    }
+
+    /* at least one parent belongs to another process, have to query the server */
+
+    for (;;)
+    {
+        count = 0;
+        SERVER_START_REQ( get_window_parents )
+        {
+            req->handle = wine_server_user_handle( hwnd );
+            wine_server_set_reply( req, list, (size-1) * sizeof(user_handle_t) );
+            if (!wine_server_call( req )) count = reply->count;
+        }
+        SERVER_END_REQ;
+        if (!count) goto empty;
+        if (size > count)
+        {
+            /* start from the end since HWND is potentially larger than user_handle_t */
+            for (i = count - 1; i >= 0; i--)
+                list[i] = wine_server_ptr_handle( ((user_handle_t *)list)[i] );
+            list[count] = 0;
+            return list;
+        }
+        free( list );
+        size = count + 1;
+        if (!(list = malloc( size * sizeof(HWND) ))) return NULL;
+    }
+
+empty:
+    free( list );
+    return NULL;
+}
+
+/*****************************************************************
+ *           NtUserGetAncestor (win32u.@)
+ */
+HWND WINAPI NtUserGetAncestor( HWND hwnd, UINT type )
+{
+    HWND *list, ret = 0;
+    WND *win;
+
+    switch(type)
+    {
+    case GA_PARENT:
+        if (!(win = get_win_ptr( hwnd )))
+        {
+            SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+            return 0;
+        }
+        if (win == WND_DESKTOP) return 0;
+        if (win != WND_OTHER_PROCESS)
+        {
+            ret = win->parent;
+            release_win_ptr( win );
+        }
+        else /* need to query the server */
+        {
+            SERVER_START_REQ( get_window_tree )
+            {
+                req->handle = wine_server_user_handle( hwnd );
+                if (!wine_server_call_err( req )) ret = wine_server_ptr_handle( reply->parent );
+            }
+            SERVER_END_REQ;
+        }
+        break;
+
+    case GA_ROOT:
+        if (!(list = list_window_parents( hwnd ))) return 0;
+
+        if (!list[0] || !list[1]) ret = get_full_window_handle( hwnd );  /* top-level window */
+        else
+        {
+            int count = 2;
+            while (list[count]) count++;
+            ret = list[count - 2];  /* get the one before the desktop */
+        }
+        free( list );
+        break;
+
+    case GA_ROOTOWNER:
+        if (is_desktop_window( hwnd )) return 0;
+        ret = get_full_window_handle( hwnd );
+        for (;;)
+        {
+            HWND parent = get_parent( ret );
+            if (!parent) break;
+            ret = parent;
+        }
+        break;
+    }
+    return ret;
+}
+
 static LONG_PTR get_win_data( const void *ptr, UINT size )
 {
     if (size == sizeof(WORD))

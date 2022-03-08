@@ -3436,7 +3436,7 @@ void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam, WCHAR wChar)
     /* find window that has a menu */
 
     while (is_win_menu_disallowed(hwnd))
-        if (!(hwnd = GetAncestor( hwnd, GA_PARENT ))) return;
+        if (!(hwnd = NtUserGetAncestor( hwnd, GA_PARENT ))) return;
 
     /* check if we have to track a system menu */
 

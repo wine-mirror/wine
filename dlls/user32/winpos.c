@@ -727,7 +727,7 @@ MINMAXINFO WINPOS_GetMinMaxInfo( HWND hwnd )
     else
         adjustedStyle = style;
 
-    GetClientRect(GetAncestor(hwnd,GA_PARENT), &rc);
+    GetClientRect(NtUserGetAncestor(hwnd,GA_PARENT), &rc);
     AdjustWindowRectEx(&rc, adjustedStyle, ((style & WS_POPUP) && GetMenu(hwnd)), exstyle);
 
     xinc = -rc.left;
@@ -870,7 +870,7 @@ static POINT get_minimized_pos( HWND hwnd, POINT pt )
     MINIMIZEDMETRICS metrics;
     int width, height;
 
-    parent = GetAncestor( hwnd, GA_PARENT );
+    parent = NtUserGetAncestor( hwnd, GA_PARENT );
     if (parent == GetDesktopWindow())
     {
         MONITORINFO mon_info;
@@ -974,7 +974,7 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
         if (GetFocus() == hwnd)
         {
             if (GetWindowLongW(hwnd, GWL_STYLE) & WS_CHILD)
-                SetFocus(GetAncestor(hwnd, GA_PARENT));
+                SetFocus(NtUserGetAncestor(hwnd, GA_PARENT));
             else
                 SetFocus(0);
         }
@@ -1139,7 +1139,7 @@ static BOOL show_window( HWND hwnd, INT cmd )
     }
     swp = new_swp;
 
-    parent = GetAncestor( hwnd, GA_PARENT );
+    parent = NtUserGetAncestor( hwnd, GA_PARENT );
     if (parent && !IsWindowVisible( parent ) && !(swp & SWP_STATECHANGED))
     {
         /* if parent is not visible simply toggle WS_VISIBLE and return */
@@ -1166,7 +1166,7 @@ static BOOL show_window( HWND hwnd, INT cmd )
         hFocus = GetFocus();
         if (hwnd == hFocus)
         {
-            HWND parent = GetAncestor(hwnd, GA_PARENT);
+            HWND parent = NtUserGetAncestor(hwnd, GA_PARENT);
             if (parent == GetDesktopWindow()) parent = 0;
             SetFocus(parent);
         }
@@ -1203,7 +1203,7 @@ static BOOL show_window( HWND hwnd, INT cmd )
     {
         SetFocus( hwnd );
         /* Send a WM_ACTIVATE message for a top level window, even if the window is already active */
-        if (GetAncestor( hwnd, GA_ROOT ) == hwnd && !(swp & SWP_NOACTIVATE))
+        if (NtUserGetAncestor( hwnd, GA_ROOT ) == hwnd && !(swp & SWP_NOACTIVATE))
             SendMessageW( hwnd, WM_ACTIVATE, WA_ACTIVE, 0 );
     }
 
@@ -1616,7 +1616,7 @@ void WINPOS_ActivateOtherWindow(HWND hwnd)
 
     if ((GetWindowLongW( hwnd, GWL_STYLE ) & WS_POPUP) && (hwndTo = GetWindow( hwnd, GW_OWNER )))
     {
-        hwndTo = GetAncestor( hwndTo, GA_ROOT );
+        hwndTo = NtUserGetAncestor( hwndTo, GA_ROOT );
         if (can_activate_window( hwndTo )) goto done;
     }
 
@@ -2037,7 +2037,7 @@ static BOOL fixup_flags( WINDOWPOS *winpos, const RECT *old_window_rect, int par
     if (winpos->cy < 0) winpos->cy = 0;
     else if (winpos->cy > 32767) winpos->cy = 32767;
 
-    parent = GetAncestor( winpos->hwnd, GA_PARENT );
+    parent = NtUserGetAncestor( winpos->hwnd, GA_PARENT );
     if (!IsWindowVisible( parent )) winpos->flags |= SWP_NOREDRAW;
 
     if (wndPtr->dwStyle & WS_VISIBLE) winpos->flags &= ~SWP_SHOWWINDOW;
@@ -2160,7 +2160,7 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
                      const RECT *window_rect, const RECT *client_rect, const RECT *valid_rects )
 {
     WND *win;
-    HWND surface_win = 0, parent = GetAncestor( hwnd, GA_PARENT );
+    HWND surface_win = 0, parent = NtUserGetAncestor( hwnd, GA_PARENT );
     BOOL ret, needs_update = FALSE;
     RECT visible_rect, old_visible_rect, old_window_rect, old_client_rect, extra_rects[3];
     struct window_surface *old_surface, *new_surface = NULL;
@@ -2352,8 +2352,8 @@ BOOL USER_SetWindowPos( WINDOWPOS * winpos, int parent_x, int parent_y )
               winpos->hwndInsertAfter == HWND_TOPMOST ||
               winpos->hwndInsertAfter == HWND_NOTOPMOST))
         {
-            HWND parent = GetAncestor( winpos->hwnd, GA_PARENT );
-            HWND insertafter_parent = GetAncestor( winpos->hwndInsertAfter, GA_PARENT );
+            HWND parent = NtUserGetAncestor( winpos->hwnd, GA_PARENT );
+            HWND insertafter_parent = NtUserGetAncestor( winpos->hwndInsertAfter, GA_PARENT );
 
             /* hwndInsertAfter must be a sibling of the window */
             if (!insertafter_parent) return FALSE;
@@ -2387,7 +2387,7 @@ BOOL USER_SetWindowPos( WINDOWPOS * winpos, int parent_x, int parent_y )
 
     if((winpos->flags & (SWP_NOZORDER | SWP_HIDEWINDOW | SWP_SHOWWINDOW)) != SWP_NOZORDER)
     {
-        if (GetAncestor( winpos->hwnd, GA_PARENT ) == GetDesktopWindow())
+        if (NtUserGetAncestor( winpos->hwnd, GA_PARENT ) == GetDesktopWindow())
             winpos->hwndInsertAfter = SWP_DoOwnedPopups( winpos->hwnd, winpos->hwndInsertAfter );
     }
 
@@ -2422,7 +2422,7 @@ BOOL USER_SetWindowPos( WINDOWPOS * winpos, int parent_x, int parent_y )
          (!(orig_flags & SWP_SHOWWINDOW) &&
           (winpos->flags & SWP_AGG_STATUSFLAGS) != SWP_AGG_NOGEOMETRYCHANGE))
         {
-            HWND parent = GetAncestor( winpos->hwnd, GA_PARENT );
+            HWND parent = NtUserGetAncestor( winpos->hwnd, GA_PARENT );
             if (!parent || parent == GetDesktopWindow()) parent = winpos->hwnd;
             erase_now( parent, 0 );
         }

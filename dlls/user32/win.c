@@ -2558,7 +2558,7 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
 /* FIXME: move to win32u */
 static ULONG_PTR get_hwnd_parent( HWND hwnd )
 {
-    HWND parent = GetAncestor( hwnd, GA_PARENT );
+    HWND parent = NtUserGetAncestor( hwnd, GA_PARENT );
     if (parent == GetDesktopWindow()) parent = GetWindow( hwnd, GW_OWNER );
     return (ULONG_PTR)parent;
 }
@@ -2909,67 +2909,6 @@ DWORD WINAPI GetWindowThreadProcessId( HWND hwnd, LPDWORD process )
 HWND WINAPI GetParent( HWND hwnd )
 {
     return UlongToHandle( NtUserCallHwnd( hwnd, NtUserGetParent ));
-}
-
-
-/*****************************************************************
- *		GetAncestor (USER32.@)
- */
-HWND WINAPI GetAncestor( HWND hwnd, UINT type )
-{
-    WND *win;
-    HWND *list, ret = 0;
-
-    switch(type)
-    {
-    case GA_PARENT:
-        if (!(win = WIN_GetPtr( hwnd )))
-        {
-            SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-            return 0;
-        }
-        if (win == WND_DESKTOP) return 0;
-        if (win != WND_OTHER_PROCESS)
-        {
-            ret = win->parent;
-            WIN_ReleasePtr( win );
-        }
-        else /* need to query the server */
-        {
-            SERVER_START_REQ( get_window_tree )
-            {
-                req->handle = wine_server_user_handle( hwnd );
-                if (!wine_server_call_err( req )) ret = wine_server_ptr_handle( reply->parent );
-            }
-            SERVER_END_REQ;
-        }
-        break;
-
-    case GA_ROOT:
-        if (!(list = list_window_parents( hwnd ))) return 0;
-
-        if (!list[0] || !list[1]) ret = WIN_GetFullHandle( hwnd );  /* top-level window */
-        else
-        {
-            int count = 2;
-            while (list[count]) count++;
-            ret = list[count - 2];  /* get the one before the desktop */
-        }
-        HeapFree( GetProcessHeap(), 0, list );
-        break;
-
-    case GA_ROOTOWNER:
-        if (is_desktop_window( hwnd )) return 0;
-        ret = WIN_GetFullHandle( hwnd );
-        for (;;)
-        {
-            HWND parent = GetParent( ret );
-            if (!parent) break;
-            ret = parent;
-        }
-        break;
-    }
-    return ret;
 }
 
 

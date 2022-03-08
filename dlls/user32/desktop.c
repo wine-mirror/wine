@@ -104,7 +104,7 @@ LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
             ATOM atom;
             WCHAR buffer[37];
 
-            if (GetAncestor( hwnd, GA_PARENT )) return FALSE;  /* refuse to create non-desktop window */
+            if (NtUserGetAncestor( hwnd, GA_PARENT )) return FALSE;  /* refuse to create non-desktop window */
 
             swprintf( buffer, ARRAY_SIZE(buffer), L"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
                       guid->Data1, guid->Data2, guid->Data3,
