@@ -4021,7 +4021,7 @@ NTSTATUS WINAPI NtQueryAttributesFile( const OBJECT_ATTRIBUTES *attr, FILE_BASIC
  *              NtQueryInformationFile   (NTDLL.@)
  */
 NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
-                                        void *ptr, LONG len, FILE_INFORMATION_CLASS class )
+                                        void *ptr, ULONG len, FILE_INFORMATION_CLASS class )
 {
     static const size_t info_sizes[] =
     {
