@@ -138,7 +138,6 @@ static const struct user_callbacks user_funcs =
     CopyImage,
     GetDesktopWindow,
     GetWindowRect,
-    IsChild,
     RedrawWindow,
     SendMessageTimeoutW,
     WindowFromDC,

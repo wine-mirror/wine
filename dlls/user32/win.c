@@ -3007,24 +3007,7 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
  */
 BOOL WINAPI IsChild( HWND parent, HWND child )
 {
-    HWND *list;
-    int i;
-    BOOL ret = FALSE;
-
-    if (!(GetWindowLongW( child, GWL_STYLE ) & WS_CHILD)) return FALSE;
-    if (!(list = list_window_parents( child ))) return FALSE;
-    parent = WIN_GetFullHandle( parent );
-    for (i = 0; list[i]; i++)
-    {
-        if (list[i] == parent)
-        {
-            ret = list[i] && list[i+1];
-            break;
-        }
-        if (!(GetWindowLongW( list[i], GWL_STYLE ) & WS_CHILD)) break;
-    }
-    HeapFree( GetProcessHeap(), 0, list );
-    return ret;
+    return NtUserCallHwndParam( parent, HandleToUlong(child), NtUserIsChild );
 }
 
 

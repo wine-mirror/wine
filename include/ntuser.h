@@ -159,6 +159,7 @@ enum
     NtUserGetWindowRelative,
     NtUserGetWindowThread,
     NtUserGetWindowWord,
+    NtUserIsChild,
 };
 
 /* color index used to retrieve system 55aa brush */

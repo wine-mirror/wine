@@ -521,7 +521,7 @@ HPALETTE WINAPI NtUserSelectPalette( HDC hdc, HPALETTE hpal, WORD bkg )
         {
             /* set primary palette if it's related to current active */
             HWND foreground = NtUserGetForegroundWindow();
-            is_primary = foreground == hwnd || user_callbacks->pIsChild( foreground, hwnd );
+            is_primary = foreground == hwnd || is_child( foreground, hwnd );
         }
     }
 

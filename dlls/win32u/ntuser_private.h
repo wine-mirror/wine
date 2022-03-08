@@ -32,7 +32,6 @@ struct user_callbacks
     HANDLE (WINAPI *pCopyImage)( HANDLE, UINT, INT, INT, UINT );
     HWND (WINAPI *pGetDesktopWindow)(void);
     BOOL (WINAPI *pGetWindowRect)( HWND hwnd, LPRECT rect );
-    BOOL (WINAPI *pIsChild)( HWND, HWND );
     BOOL (WINAPI *pRedrawWindow)( HWND, const RECT*, HRGN, UINT );
     LRESULT (WINAPI *pSendMessageTimeoutW)( HWND, UINT, WPARAM, LPARAM, UINT, UINT, PDWORD_PTR );
     HWND (WINAPI *pWindowFromDC)( HDC );
@@ -232,6 +231,7 @@ void *get_user_handle_ptr( HANDLE handle, unsigned int type ) DECLSPEC_HIDDEN;
 void release_user_handle_ptr( void *ptr ) DECLSPEC_HIDDEN;
 
 WND *get_win_ptr( HWND hwnd ) DECLSPEC_HIDDEN;
+BOOL is_child( HWND parent, HWND child );
 BOOL is_window( HWND hwnd ) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_NTUSER_PRIVATE_H */

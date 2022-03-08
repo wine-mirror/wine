@@ -583,6 +583,29 @@ HWND WINAPI NtUserGetAncestor( HWND hwnd, UINT type )
     return ret;
 }
 
+/* see IsChild */
+BOOL is_child( HWND parent, HWND child )
+{
+    HWND *list;
+    int i;
+    BOOL ret = FALSE;
+
+    if (!(get_window_long( child, GWL_STYLE ) & WS_CHILD)) return FALSE;
+    if (!(list = list_window_parents( child ))) return FALSE;
+    parent = get_full_window_handle( parent );
+    for (i = 0; list[i]; i++)
+    {
+        if (list[i] == parent)
+        {
+            ret = list[i] && list[i+1];
+            break;
+        }
+        if (!(get_window_long( list[i], GWL_STYLE ) & WS_CHILD)) break;
+    }
+    free( list );
+    return ret;
+}
+
 static LONG_PTR get_win_data( const void *ptr, UINT size )
 {
     if (size == sizeof(WORD))
@@ -969,6 +992,8 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
         return get_window_thread( hwnd, (DWORD *)param );
     case NtUserGetWindowWord:
         return get_window_word( hwnd, param );
+    case NtUserIsChild:
+        return is_child( hwnd, UlongToHandle(param) );
     default:
         FIXME( "invalid code %u\n", code );
         return 0;
