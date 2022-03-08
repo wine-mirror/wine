@@ -135,7 +135,7 @@ WNDPROC alloc_winproc( WNDPROC func, BOOL ansi )
 }
 
 /* Get a window procedure pointer that can be passed to the Windows program. */
-static WNDPROC get_winproc( WNDPROC proc, BOOL ansi )
+WNDPROC get_winproc( WNDPROC proc, BOOL ansi )
 {
     WINDOWPROC *ptr = get_winproc_ptr( proc );
 

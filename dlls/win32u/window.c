@@ -155,6 +155,60 @@ WND *next_thread_window_ptr( HWND *hwnd )
 }
 
 /*******************************************************************
+ *           get_hwnd_message_parent
+ *
+ * Return the parent for HWND_MESSAGE windows.
+ */
+static HWND get_hwnd_message_parent(void)
+{
+    struct user_thread_info *thread_info = get_user_thread_info();
+
+    if (!thread_info->msg_window && user_callbacks)
+        user_callbacks->pGetDesktopWindow();  /* trigger creation */
+    return thread_info->msg_window;
+}
+
+/***********************************************************************
+ *           get_full_window_handle
+ *
+ * Convert a possibly truncated window handle to a full 32-bit handle.
+ */
+static HWND get_full_window_handle( HWND hwnd )
+{
+    WND *win;
+
+    if (!hwnd || (ULONG_PTR)hwnd >> 16) return hwnd;
+    if (LOWORD(hwnd) <= 1 || LOWORD(hwnd) == 0xffff) return hwnd;
+    /* do sign extension for -2 and -3 */
+    if (LOWORD(hwnd) >= (WORD)-3) return (HWND)(LONG_PTR)(INT16)LOWORD(hwnd);
+
+    if (!(win = get_win_ptr( hwnd ))) return hwnd;
+
+    if (win == WND_DESKTOP)
+    {
+        if (user_callbacks && LOWORD(hwnd) == LOWORD(user_callbacks->pGetDesktopWindow()))
+            return user_callbacks->pGetDesktopWindow();
+        else return get_hwnd_message_parent();
+    }
+
+    if (win != WND_OTHER_PROCESS)
+    {
+        hwnd = win->obj.handle;
+        release_win_ptr( win );
+    }
+    else  /* may belong to another process */
+    {
+        SERVER_START_REQ( get_window_info )
+        {
+            req->handle = wine_server_user_handle( hwnd );
+            if (!wine_server_call_err( req )) hwnd = wine_server_ptr_handle( reply->full_handle );
+        }
+        SERVER_END_REQ;
+    }
+    return hwnd;
+}
+
+/*******************************************************************
  *           register_window_surface
  *
  * Register a window surface in the global list, possibly replacing another one.
@@ -305,6 +359,179 @@ static DWORD get_window_thread( HWND hwnd, DWORD *process )
     }
     SERVER_END_REQ;
     return tid;
+}
+
+static LONG_PTR get_win_data( const void *ptr, UINT size )
+{
+    if (size == sizeof(WORD))
+    {
+        WORD ret;
+        memcpy( &ret, ptr, sizeof(ret) );
+        return ret;
+    }
+    else if (size == sizeof(DWORD))
+    {
+        DWORD ret;
+        memcpy( &ret, ptr, sizeof(ret) );
+        return ret;
+    }
+    else
+    {
+        LONG_PTR ret;
+        memcpy( &ret, ptr, sizeof(ret) );
+        return ret;
+    }
+}
+
+static LONG_PTR get_window_long_size( HWND hwnd, INT offset, UINT size, BOOL ansi )
+{
+    LONG_PTR retval = 0;
+    WND *win;
+
+    if (offset == GWLP_HWNDPARENT)
+    {
+        FIXME( "GWLP_HWNDPARENT not supported\n" );
+        return 0;
+    }
+
+    if (!(win = get_win_ptr( hwnd )))
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+
+    if (win == WND_DESKTOP)
+    {
+        switch (offset)
+        {
+        case GWL_STYLE:
+            retval = WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN; /* message parent is not visible */
+            if (user_callbacks && get_full_window_handle( hwnd ) == user_callbacks->pGetDesktopWindow())
+                retval |= WS_VISIBLE;
+            return retval;
+        case GWL_EXSTYLE:
+        case GWLP_USERDATA:
+        case GWLP_ID:
+        case GWLP_HINSTANCE:
+            return 0;
+        case GWLP_WNDPROC:
+            SetLastError( ERROR_ACCESS_DENIED );
+            return 0;
+        }
+        SetLastError( ERROR_INVALID_INDEX );
+        return 0;
+    }
+
+    if (win == WND_OTHER_PROCESS)
+    {
+        if (offset == GWLP_WNDPROC)
+        {
+            SetLastError( ERROR_ACCESS_DENIED );
+            return 0;
+        }
+        SERVER_START_REQ( set_window_info )
+        {
+            req->handle = wine_server_user_handle( hwnd );
+            req->flags  = 0;  /* don't set anything, just retrieve */
+            req->extra_offset = (offset >= 0) ? offset : -1;
+            req->extra_size = (offset >= 0) ? size : 0;
+            if (!wine_server_call_err( req ))
+            {
+                switch(offset)
+                {
+                case GWL_STYLE:      retval = reply->old_style; break;
+                case GWL_EXSTYLE:    retval = reply->old_ex_style; break;
+                case GWLP_ID:        retval = reply->old_id; break;
+                case GWLP_HINSTANCE: retval = (ULONG_PTR)wine_server_get_ptr( reply->old_instance ); break;
+                case GWLP_USERDATA:  retval = reply->old_user_data; break;
+                default:
+                    if (offset >= 0) retval = get_win_data( &reply->old_extra_value, size );
+                    else SetLastError( ERROR_INVALID_INDEX );
+                    break;
+                }
+            }
+        }
+        SERVER_END_REQ;
+        return retval;
+    }
+
+    /* now we have a valid win */
+
+    if (offset >= 0)
+    {
+        if (offset > (int)(win->cbWndExtra - size))
+        {
+            WARN("Invalid offset %d\n", offset );
+            release_win_ptr( win );
+            SetLastError( ERROR_INVALID_INDEX );
+            return 0;
+        }
+        retval = get_win_data( (char *)win->wExtra + offset, size );
+
+        /* Special case for dialog window procedure */
+        if ((offset == DWLP_DLGPROC) && (size == sizeof(LONG_PTR)) && win->dlgInfo)
+            retval = (LONG_PTR)get_winproc( (WNDPROC)retval, ansi );
+        release_win_ptr( win );
+        return retval;
+    }
+
+    switch(offset)
+    {
+    case GWLP_USERDATA:  retval = win->userdata; break;
+    case GWL_STYLE:      retval = win->dwStyle; break;
+    case GWL_EXSTYLE:    retval = win->dwExStyle; break;
+    case GWLP_ID:        retval = win->wIDmenu; break;
+    case GWLP_HINSTANCE: retval = (ULONG_PTR)win->hInstance; break;
+    case GWLP_WNDPROC:
+        /* This looks like a hack only for the edit control (see tests). This makes these controls
+         * more tolerant to A/W mismatches. The lack of W->A->W conversion for such a mismatch suggests
+         * that the hack is in GetWindowLongPtr[AW], not in winprocs.
+         */
+        if (win->winproc == BUILTIN_WINPROC(WINPROC_EDIT) && (!!ansi != !(win->flags & WIN_ISUNICODE)))
+            retval = (ULONG_PTR)win->winproc;
+        else
+            retval = (ULONG_PTR)get_winproc( win->winproc, ansi );
+        break;
+    default:
+        WARN("Unknown offset %d\n", offset );
+        SetLastError( ERROR_INVALID_INDEX );
+        break;
+    }
+    release_win_ptr( win );
+    return retval;
+}
+
+/* see GetWindowLongW */
+static DWORD get_window_long( HWND hwnd, INT offset )
+{
+    return get_window_long_size( hwnd, offset, sizeof(LONG), FALSE );
+}
+
+/* see GetWindowLongPtr */
+static ULONG_PTR get_window_long_ptr( HWND hwnd, INT offset, BOOL ansi )
+{
+    return get_window_long_size( hwnd, offset, sizeof(LONG_PTR), ansi );
+}
+
+/* see GetWindowWord */
+static WORD get_window_word( HWND hwnd, INT offset )
+{
+    switch(offset)
+    {
+    case GWLP_ID:
+    case GWLP_HINSTANCE:
+    case GWLP_HWNDPARENT:
+        break;
+    default:
+        if (offset < 0)
+        {
+            WARN("Invalid offset %d\n", offset );
+            SetLastError( ERROR_INVALID_INDEX );
+            return 0;
+        }
+        break;
+    }
+    return get_window_long_size( hwnd, offset, sizeof(WORD), TRUE );
 }
 
 /***********************************************************************
@@ -502,8 +729,18 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
         return get_class_long_ptr( hwnd, param, FALSE );
     case NtUserGetClassWord:
         return get_class_word( hwnd, param );
+    case NtUserGetWindowLongA:
+        return get_window_long_size( hwnd, param, sizeof(LONG), TRUE );
+    case NtUserGetWindowLongW:
+        return get_window_long( hwnd, param );
+    case NtUserGetWindowLongPtrA:
+        return get_window_long_ptr( hwnd, param, TRUE );
+    case NtUserGetWindowLongPtrW:
+        return get_window_long_ptr( hwnd, param, FALSE );
     case NtUserGetWindowThread:
         return get_window_thread( hwnd, (DWORD *)param );
+    case NtUserGetWindowWord:
+        return get_window_word( hwnd, param );
     default:
         FIXME( "invalid code %u\n", code );
         return 0;

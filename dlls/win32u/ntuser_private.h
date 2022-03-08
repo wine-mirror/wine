@@ -91,6 +91,16 @@ typedef struct tagWND
     DWORD              wExtra[1];     /* Window extra bytes */
 } WND;
 
+/* WND flags values */
+#define WIN_RESTORE_MAX           0x0001 /* Maximize when restoring */
+#define WIN_NEED_SIZE             0x0002 /* Internal WM_SIZE is needed */
+#define WIN_NCACTIVATED           0x0004 /* last WM_NCACTIVATE was positive */
+#define WIN_ISMDICLIENT           0x0008 /* Window is an MDIClient */
+#define WIN_ISUNICODE             0x0010 /* Window is Unicode */
+#define WIN_NEEDS_SHOW_OWNEDPOPUP 0x0020 /* WM_SHOWWINDOW:SC_SHOW must be sent in the next ShowOwnedPopup call */
+#define WIN_CHILDREN_MOVED        0x0040 /* children may have moved, ignore stored positions */
+#define WIN_HAS_IME_WIN           0x0080 /* the window has been registered with imm32 */
+
 #define WND_OTHER_PROCESS ((WND *)1)  /* returned by WIN_GetPtr on unknown window handles */
 #define WND_DESKTOP       ((WND *)2)  /* returned by WIN_GetPtr on the desktop window */
 
@@ -207,6 +217,7 @@ WINDOWPROC *get_winproc_ptr( WNDPROC handle ) DECLSPEC_HIDDEN;
 DWORD get_class_long( HWND hwnd, INT offset, BOOL ansi ) DECLSPEC_HIDDEN;
 ULONG_PTR get_class_long_ptr( HWND hwnd, INT offset, BOOL ansi ) DECLSPEC_HIDDEN;
 WORD get_class_word( HWND hwnd, INT offset ) DECLSPEC_HIDDEN;
+WNDPROC get_winproc( WNDPROC proc, BOOL ansi ) DECLSPEC_HIDDEN;
 
 /* cursoricon.c */
 HICON alloc_cursoricon_handle( BOOL is_icon ) DECLSPEC_HIDDEN;

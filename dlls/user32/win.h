@@ -33,16 +33,6 @@
 struct tagCLASS;
 struct tagDIALOGINFO;
 
-  /* WND flags values */
-#define WIN_RESTORE_MAX           0x0001 /* Maximize when restoring */
-#define WIN_NEED_SIZE             0x0002 /* Internal WM_SIZE is needed */
-#define WIN_NCACTIVATED           0x0004 /* last WM_NCACTIVATE was positive */
-#define WIN_ISMDICLIENT           0x0008 /* Window is an MDIClient */
-#define WIN_ISUNICODE             0x0010 /* Window is Unicode */
-#define WIN_NEEDS_SHOW_OWNEDPOPUP 0x0020 /* WM_SHOWWINDOW:SC_SHOW must be sent in the next ShowOwnedPopup call */
-#define WIN_CHILDREN_MOVED        0x0040 /* children may have moved, ignore stored positions */
-#define WIN_HAS_IME_WIN           0x0080 /* the window has been registered with imm32 */
-
   /* Window functions */
 extern HWND get_hwnd_message_parent(void) DECLSPEC_HIDDEN;
 extern BOOL is_desktop_window( HWND hwnd ) DECLSPEC_HIDDEN;

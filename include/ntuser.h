@@ -151,7 +151,12 @@ enum
     NtUserGetClassLongPtrA,
     NtUserGetClassLongPtrW,
     NtUserGetClassWord,
+    NtUserGetWindowLongA,
+    NtUserGetWindowLongW,
+    NtUserGetWindowLongPtrA,
+    NtUserGetWindowLongPtrW,
     NtUserGetWindowThread,
+    NtUserGetWindowWord,
 };
 
 /* color index used to retrieve system 55aa brush */
