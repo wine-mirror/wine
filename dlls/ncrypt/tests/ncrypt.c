@@ -291,6 +291,13 @@ static void test_create_persisted_key(void)
 
     NCryptFinalizeKey(key, 0);
     NCryptFreeObject(key);
+
+    key = 0;
+    ret = NCryptCreatePersistedKey(prov, &key, BCRYPT_AES_ALGORITHM, NULL, 0, 0);
+    ok(ret == ERROR_SUCCESS || broken(ret == NTE_NOT_SUPPORTED) /* win 7 */, "got %#lx\n", ret);
+    if (ret == NTE_NOT_SUPPORTED) win_skip("broken, symmetric keys not supported.\n");
+    else ok(key, "got null handle\n");
+
     NCryptFreeObject(prov);
     }
 }
