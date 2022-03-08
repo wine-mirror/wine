@@ -31,6 +31,7 @@
 #define WIDL_using_Windows_Foundation
 #define WIDL_using_Windows_Foundation_Collections
 #include "windows.foundation.h"
+#define WIDL_using_Windows_Devices_Power
 #define WIDL_using_Windows_Gaming_Input
 #define WIDL_using_Windows_Gaming_Input_Custom
 #include "windows.gaming.input.custom.h"
