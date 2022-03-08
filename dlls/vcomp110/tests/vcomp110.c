@@ -271,14 +271,14 @@ static void test_C2VectParallel(void)
         pC2VectParallel(test->start, test->end, test->step, test->end_included, test->thread_count,
                 FALSE, test_C2VectParallel_payload, 6, (void *)0xdeadbeef, test, i, FALSE);
         ok(test_C2VectParallel_call_count == test->expected_call_count,
-                "Got unexpected call count %u, expected %u, test %u.\n",
+                "Got unexpected call count %lu, expected %u, test %u.\n",
                 test_C2VectParallel_call_count, test->expected_call_count, i);
 
         test_C2VectParallel_call_count = 0;
         pC2VectParallel(test->start, test->end, test->step, test->end_included, test->thread_count,
                 ~0u, test_C2VectParallel_payload, 6, (void *)0xdeadbeef, test, i, TRUE);
         ok(test_C2VectParallel_call_count == test->expected_dynamic_call_count,
-                "Got unexpected call count %u, expected %u, test %u.\n",
+                "Got unexpected call count %lu, expected %u, test %u.\n",
                 test_C2VectParallel_call_count, test->expected_dynamic_call_count, i);
     }
 }
