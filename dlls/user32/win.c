@@ -2927,7 +2927,7 @@ INT WINAPI GetWindowTextA( HWND hwnd, LPSTR lpString, INT nMaxCount )
         else if ((buffer = HeapAlloc( GetProcessHeap(), 0, nMaxCount * sizeof(WCHAR) )))
         {
             /* when window belongs to other process, don't send a message */
-            get_server_window_text( hwnd, buffer, nMaxCount );
+            NtUserInternalGetWindowText( hwnd, buffer, nMaxCount );
             if (!WideCharToMultiByte( CP_ACP, 0, buffer, -1, lpString, nMaxCount, NULL, NULL ))
                 lpString[nMaxCount-1] = 0;
             HeapFree( GetProcessHeap(), 0, buffer );
@@ -2964,8 +2964,7 @@ INT WINAPI GetWindowTextW( HWND hwnd, LPWSTR lpString, INT nMaxCount )
         else
         {
             /* when window belongs to other process, don't send a message */
-            get_server_window_text( hwnd, lpString, nMaxCount );
-            ret = lstrlenW(lpString);
+            ret = NtUserInternalGetWindowText( hwnd, lpString, nMaxCount );
         }
     }
     __EXCEPT_PAGE_FAULT
