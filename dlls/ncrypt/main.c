@@ -88,21 +88,9 @@ SECURITY_STATUS WINAPI NCryptFreeBuffer(PVOID buf)
 
 static SECURITY_STATUS free_key_object(struct key *key)
 {
-    switch (key->alg)
-    {
-    case RSA:
-    {
-        free(key->rsa.modulus);
-        free(key->rsa.public_exp);
-        free(key->rsa.prime1);
-        free(key->rsa.prime2);
-        break;
-    }
-    default:
-        WARN("invalid key %p\n", key);
-        return NTE_INVALID_HANDLE;
-    }
-    return ERROR_SUCCESS;
+    NTSTATUS ret = BCryptDestroyKey(key->bcrypt_key);
+    if (BCryptCloseAlgorithmProvider(key->bcrypt_alg, 0)) return NTE_INVALID_HANDLE;
+    return ret ? NTE_INVALID_HANDLE : ERROR_SUCCESS;
 }
 
 SECURITY_STATUS WINAPI NCryptFreeObject(NCRYPT_HANDLE handle)
@@ -246,8 +234,9 @@ SECURITY_STATUS WINAPI NCryptImportKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_H
                                        BYTE *data, DWORD datasize, DWORD flags)
 {
     BCRYPT_KEY_BLOB *header = (BCRYPT_KEY_BLOB *)data;
+    struct object *object;
 
-    TRACE("(%#Ix, %#Ix, %s, %p, %p, %p, %lu, %#lx): stub\n", provider, decrypt_key, wine_dbgstr_w(type),
+    TRACE("(%#Ix, %#Ix, %s, %p, %p, %p, %lu, %#lx)\n", provider, decrypt_key, wine_dbgstr_w(type),
           params, handle, data, datasize, flags);
 
     if (decrypt_key)
@@ -270,70 +259,48 @@ SECURITY_STATUS WINAPI NCryptImportKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_H
         return NTE_BAD_FLAGS;
     }
 
-    switch (header->Magic)
+    if (!(object = allocate_object(KEY)))
     {
+        ERR("Error allocating memory\n");
+        return NTE_NO_MEMORY;
+    }
+
+    switch(header->Magic)
+    {
+    case BCRYPT_RSAFULLPRIVATE_MAGIC:
+    case BCRYPT_RSAPRIVATE_MAGIC:
     case BCRYPT_RSAPUBLIC_MAGIC:
     {
-        DWORD expected_size;
-        struct object *object;
-        struct key *key;
-        BYTE *public_exp, *modulus;
-        BCRYPT_RSAKEY_BLOB *rsaheader = (BCRYPT_RSAKEY_BLOB *)data;
-
-        if (datasize < sizeof(*rsaheader))
+        NTSTATUS ret;
+        BCRYPT_RSAKEY_BLOB *rsablob = (BCRYPT_RSAKEY_BLOB *)data;
+        ret = BCryptOpenAlgorithmProvider(&object->key.bcrypt_alg, BCRYPT_RSA_ALGORITHM, NULL, 0);
+        if (ret != ERROR_SUCCESS)
         {
-            ERR("Invalid buffer size.\n");
+            ERR("Error opening algorithm provider\n");
+            free(object);
+            return NTE_INTERNAL_ERROR;
+        }
+        ret = BCryptImportKeyPair(object->key.bcrypt_alg, NULL, type, &object->key.bcrypt_key, data, datasize, 0);
+        if (ret != ERROR_SUCCESS)
+        {
+            WARN("Error importing key pair with bcrypt %#lx\n", ret);
+            BCryptCloseAlgorithmProvider(object->key.bcrypt_alg, 0);
+            free(object);
             return NTE_BAD_DATA;
         }
 
-        expected_size = sizeof(*rsaheader) + rsaheader->cbPublicExp + rsaheader->cbModulus;
-        if (datasize != expected_size)
-        {
-            ERR("Invalid buffer size.\n");
-            return NTE_BAD_DATA;
-        }
-
-        if (!(object = allocate_object(KEY)))
-        {
-            ERR("Error allocating memory.\n");
-            return NTE_NO_MEMORY;
-        }
-
-        key = &object->key;
-        key->alg = RSA;
-        key->rsa.bit_length = rsaheader->BitLength;
-        key->rsa.public_exp_size = rsaheader->cbPublicExp;
-        key->rsa.modulus_size = rsaheader->cbModulus;
-        if (!(key->rsa.public_exp = malloc(rsaheader->cbPublicExp)))
-        {
-            ERR("Error allocating memory.\n");
-            free(object);
-            return NTE_NO_MEMORY;
-        }
-        if (!(key->rsa.modulus = malloc(rsaheader->cbModulus)))
-        {
-            ERR("Error allocating memory.\n");
-            free(key->rsa.public_exp);
-            free(object);
-            return NTE_NO_MEMORY;
-        }
-
-        public_exp = &data[sizeof(*rsaheader)]; /* The public exp is after the header. */
-        modulus = &public_exp[rsaheader->cbPublicExp]; /* The modulus is after the public exponent. */
-        memcpy(key->rsa.public_exp, public_exp, rsaheader->cbPublicExp);
-        memcpy(key->rsa.modulus, modulus, rsaheader->cbModulus);
-
-        set_object_property(object, NCRYPT_ALGORITHM_GROUP_PROPERTY, (BYTE *)L"RSA", sizeof(L"RSA"));
-        set_object_property(object, NCRYPT_LENGTH_PROPERTY, (BYTE *)&key->rsa.bit_length, sizeof(key->rsa.bit_length));
         set_object_property(object, NCRYPT_PROVIDER_HANDLE_PROPERTY, (BYTE *)&provider, sizeof(provider));
-        *handle = (NCRYPT_KEY_HANDLE)object;
+        set_object_property(object, NCRYPT_ALGORITHM_GROUP_PROPERTY, (BYTE *)BCRYPT_RSA_ALGORITHM, sizeof(BCRYPT_RSA_ALGORITHM));
+        set_object_property(object, NCRYPT_LENGTH_PROPERTY, (BYTE *)&rsablob->BitLength, sizeof(rsablob->BitLength));
         break;
     }
     default:
-        FIXME("Unhandled key magic %#lx.\n", header->Magic);
+        FIXME("Unhandled key magic %#lx\n", header->Magic);
+        free(object);
         return NTE_INVALID_PARAMETER;
     }
 
+    *handle = (NCRYPT_KEY_HANDLE)object;
     return ERROR_SUCCESS;
 }
 
