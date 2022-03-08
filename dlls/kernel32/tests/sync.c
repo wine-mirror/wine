@@ -17,6 +17,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include <stdarg.h>
 #include <stdlib.h>
@@ -194,35 +195,35 @@ static void test_mutex(void)
     SetLastError(0xdeadbeef);
     hOpened = OpenMutexA(0, FALSE, "WineTestMutex");
     ok(hOpened == NULL, "OpenMutex succeeded\n");
-    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     hCreated = CreateMutexA(NULL, FALSE, "WineTestMutex");
-    ok(hCreated != NULL, "CreateMutex failed with error %d\n", GetLastError());
+    ok(hCreated != NULL, "CreateMutex failed with error %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     hOpened = OpenMutexA(0, FALSE, "WineTestMutex");
     todo_wine
     ok(hOpened == NULL, "OpenMutex succeeded\n");
     todo_wine
-    ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     hOpened = OpenMutexA(GENERIC_EXECUTE, FALSE, "WineTestMutex");
-    ok(hOpened != NULL, "OpenMutex failed with error %d\n", GetLastError());
+    ok(hOpened != NULL, "OpenMutex failed with error %ld\n", GetLastError());
     wait_ret = WaitForSingleObject(hOpened, INFINITE);
-    ok(wait_ret == WAIT_OBJECT_0, "WaitForSingleObject failed with error %d\n", GetLastError());
+    ok(wait_ret == WAIT_OBJECT_0, "WaitForSingleObject failed with error %ld\n", GetLastError());
     CloseHandle(hOpened);
 
     for(i=0; i < 31; i++)
     {
         wait_ret = WaitForSingleObject(hCreated, INFINITE);
-        ok(wait_ret == WAIT_OBJECT_0, "WaitForSingleObject failed with error 0x%08x\n", wait_ret);
+        ok(wait_ret == WAIT_OBJECT_0, "WaitForSingleObject failed with error 0x%08lx\n", wait_ret);
     }
 
     SetLastError(0xdeadbeef);
     hOpened = OpenMutexA(GENERIC_READ | GENERIC_WRITE, FALSE, "WineTestMutex");
-    ok(hOpened != NULL, "OpenMutex failed with error %d\n", GetLastError());
+    ok(hOpened != NULL, "OpenMutex failed with error %ld\n", GetLastError());
     wait_ret = WaitForSingleObject(hOpened, INFINITE);
     ok(wait_ret == WAIT_FAILED, "WaitForSingleObject succeeded\n");
     CloseHandle(hOpened);
@@ -235,60 +236,60 @@ static void test_mutex(void)
         {
             SetLastError(0xdeadbeef);
             ret = ReleaseMutex(hOpened);
-            ok(ret, "ReleaseMutex failed with error %d, access %x\n", GetLastError(), 1 << i);
+            ok(ret, "ReleaseMutex failed with error %ld, access %x\n", GetLastError(), 1 << i);
             CloseHandle(hOpened);
         }
         else
         {
             if ((1 << i) == ACCESS_SYSTEM_SECURITY)
-                todo_wine ok(GetLastError() == ERROR_PRIVILEGE_NOT_HELD, "wrong error %u, access %x\n", GetLastError(), 1 << i);
+                todo_wine ok(GetLastError() == ERROR_PRIVILEGE_NOT_HELD, "wrong error %lu, access %x\n", GetLastError(), 1 << i);
             else
-                todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %u, , access %x\n", GetLastError(), 1 << i);
+                todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %lu, , access %x\n", GetLastError(), 1 << i);
             ReleaseMutex(hCreated);
             failed |=0x1 << i;
         }
     }
 
     todo_wine
-    ok( failed == 0x0de0fffe, "open succeeded when it shouldn't: %x\n", failed);
+    ok( failed == 0x0de0fffe, "open succeeded when it shouldn't: %lx\n", failed);
 
     SetLastError(0xdeadbeef);
     ret = ReleaseMutex(hCreated);
     ok(!ret && (GetLastError() == ERROR_NOT_OWNER),
-        "ReleaseMutex should have failed with ERROR_NOT_OWNER instead of %d\n", GetLastError());
+        "ReleaseMutex should have failed with ERROR_NOT_OWNER instead of %ld\n", GetLastError());
 
     /* test case sensitivity */
 
     SetLastError(0xdeadbeef);
     hOpened = OpenMutexA(READ_CONTROL, FALSE, "WINETESTMUTEX");
     ok(!hOpened, "OpenMutex succeeded\n");
-    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     hOpened = OpenMutexA(READ_CONTROL, FALSE, "winetestmutex");
     ok(!hOpened, "OpenMutex succeeded\n");
-    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     hOpened = OpenMutexA(READ_CONTROL, FALSE, NULL);
     ok(!hOpened, "OpenMutex succeeded\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     hOpened = OpenMutexW(READ_CONTROL, FALSE, NULL);
     ok(!hOpened, "OpenMutex succeeded\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     hOpened = CreateMutexA(NULL, FALSE, "WineTestMutex");
-    ok(hOpened != NULL, "CreateMutex failed with error %d\n", GetLastError());
-    ok(GetLastError() == ERROR_ALREADY_EXISTS, "wrong error %u\n", GetLastError());
+    ok(hOpened != NULL, "CreateMutex failed with error %ld\n", GetLastError());
+    ok(GetLastError() == ERROR_ALREADY_EXISTS, "wrong error %lu\n", GetLastError());
     CloseHandle(hOpened);
 
     SetLastError(0xdeadbeef);
     hOpened = CreateMutexA(NULL, FALSE, "WINETESTMUTEX");
-    ok(hOpened != NULL, "CreateMutex failed with error %d\n", GetLastError());
-    ok(GetLastError() == 0, "wrong error %u\n", GetLastError());
+    ok(hOpened != NULL, "CreateMutex failed with error %ld\n", GetLastError());
+    ok(GetLastError() == 0, "wrong error %lu\n", GetLastError());
     CloseHandle(hOpened);
 
     CloseHandle(hCreated);
@@ -476,7 +477,7 @@ static void test_event(void)
 
     /* no sd */
     handle = CreateEventA(NULL, FALSE, FALSE, __FILE__ ": Test Event");
-    ok(handle != NULL, "CreateEventW with blank sd failed with error %d\n", GetLastError());
+    ok(handle != NULL, "CreateEventW with blank sd failed with error %ld\n", GetLastError());
     CloseHandle(handle);
 
     sa.nLength = sizeof(sa);
@@ -487,60 +488,60 @@ static void test_event(void)
 
     /* blank sd */
     handle = CreateEventA(&sa, FALSE, FALSE, __FILE__ ": Test Event");
-    ok(handle != NULL, "CreateEventW with blank sd failed with error %d\n", GetLastError());
+    ok(handle != NULL, "CreateEventW with blank sd failed with error %ld\n", GetLastError());
     CloseHandle(handle);
 
     /* sd with NULL dacl */
     SetSecurityDescriptorDacl(&sd, TRUE, NULL, FALSE);
     handle = CreateEventA(&sa, FALSE, FALSE, __FILE__ ": Test Event");
-    ok(handle != NULL, "CreateEventW with blank sd failed with error %d\n", GetLastError());
+    ok(handle != NULL, "CreateEventW with blank sd failed with error %ld\n", GetLastError());
     CloseHandle(handle);
 
     /* sd with empty dacl */
     InitializeAcl(&acl, sizeof(acl), ACL_REVISION);
     SetSecurityDescriptorDacl(&sd, TRUE, &acl, FALSE);
     handle = CreateEventA(&sa, FALSE, FALSE, __FILE__ ": Test Event");
-    ok(handle != NULL, "CreateEventW with blank sd failed with error %d\n", GetLastError());
+    ok(handle != NULL, "CreateEventW with blank sd failed with error %ld\n", GetLastError());
     CloseHandle(handle);
 
     /* test case sensitivity */
 
     SetLastError(0xdeadbeef);
     handle = CreateEventA(NULL, FALSE, FALSE, __FILE__ ": Test Event");
-    ok( handle != NULL, "CreateEvent failed with error %u\n", GetLastError());
-    ok( GetLastError() == 0, "wrong error %u\n", GetLastError());
+    ok( handle != NULL, "CreateEvent failed with error %lu\n", GetLastError());
+    ok( GetLastError() == 0, "wrong error %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     handle2 = CreateEventA(NULL, FALSE, FALSE, __FILE__ ": Test Event");
-    ok( handle2 != NULL, "CreateEvent failed with error %d\n", GetLastError());
-    ok( GetLastError() == ERROR_ALREADY_EXISTS, "wrong error %u\n", GetLastError());
+    ok( handle2 != NULL, "CreateEvent failed with error %ld\n", GetLastError());
+    ok( GetLastError() == ERROR_ALREADY_EXISTS, "wrong error %lu\n", GetLastError());
     CloseHandle( handle2 );
 
     SetLastError(0xdeadbeef);
     handle2 = CreateEventA(NULL, FALSE, FALSE, __FILE__ ": TEST EVENT");
-    ok( handle2 != NULL, "CreateEvent failed with error %d\n", GetLastError());
-    ok( GetLastError() == 0, "wrong error %u\n", GetLastError());
+    ok( handle2 != NULL, "CreateEvent failed with error %ld\n", GetLastError());
+    ok( GetLastError() == 0, "wrong error %lu\n", GetLastError());
     CloseHandle( handle2 );
 
     SetLastError(0xdeadbeef);
     handle2 = OpenEventA( EVENT_ALL_ACCESS, FALSE, __FILE__ ": Test Event");
-    ok( handle2 != NULL, "OpenEvent failed with error %d\n", GetLastError());
+    ok( handle2 != NULL, "OpenEvent failed with error %ld\n", GetLastError());
     CloseHandle( handle2 );
 
     SetLastError(0xdeadbeef);
     handle2 = OpenEventA( EVENT_ALL_ACCESS, FALSE, __FILE__ ": TEST EVENT");
     ok( !handle2, "OpenEvent succeeded\n");
-    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
+    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     handle2 = OpenEventA( EVENT_ALL_ACCESS, FALSE, NULL );
     ok( !handle2, "OpenEvent succeeded\n");
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError());
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     handle2 = OpenEventW( EVENT_ALL_ACCESS, FALSE, NULL );
     ok( !handle2, "OpenEvent succeeded\n");
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError());
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %lu\n", GetLastError());
 
     CloseHandle( handle );
 
@@ -553,27 +554,27 @@ static void test_event(void)
     }
     handle = pCreateMemoryResourceNotification( HighMemoryResourceNotification + 1 );
     ok( !handle, "CreateMemoryResourceNotification succeeded\n" );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %lu\n", GetLastError() );
     ret = pQueryMemoryResourceNotification( handle, &val );
     ok( !ret, "QueryMemoryResourceNotification succeeded\n" );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %lu\n", GetLastError() );
 
     handle = pCreateMemoryResourceNotification( LowMemoryResourceNotification );
-    ok( handle != 0, "CreateMemoryResourceNotification failed err %u\n", GetLastError() );
+    ok( handle != 0, "CreateMemoryResourceNotification failed err %lu\n", GetLastError() );
     ret = WaitForSingleObject( handle, 10 );
-    ok( ret == WAIT_OBJECT_0 || ret == WAIT_TIMEOUT, "WaitForSingleObject wrong ret %u\n", ret );
+    ok( ret == WAIT_OBJECT_0 || ret == WAIT_TIMEOUT, "WaitForSingleObject wrong ret %lu\n", ret );
 
     val = ~0;
     ret = pQueryMemoryResourceNotification( handle, &val );
-    ok( ret, "QueryMemoryResourceNotification failed err %u\n", GetLastError() );
+    ok( ret, "QueryMemoryResourceNotification failed err %lu\n", GetLastError() );
     ok( val == FALSE || val == TRUE, "wrong value %u\n", val );
     ret = CloseHandle( handle );
-    ok( ret, "CloseHandle failed err %u\n", GetLastError() );
+    ok( ret, "CloseHandle failed err %lu\n", GetLastError() );
 
     handle = CreateEventA(NULL, FALSE, FALSE, __FILE__ ": Test Event");
     val = ~0;
     ret = pQueryMemoryResourceNotification( handle, &val );
-    ok( ret, "QueryMemoryResourceNotification failed err %u\n", GetLastError() );
+    ok( ret, "QueryMemoryResourceNotification failed err %lu\n", GetLastError() );
     ok( val == FALSE || val == TRUE, "wrong value %u\n", val );
     CloseHandle( handle );
 }
@@ -586,40 +587,40 @@ static void test_semaphore(void)
 
     SetLastError(0xdeadbeef);
     handle = CreateSemaphoreA(NULL, 0, 1, __FILE__ ": Test Semaphore");
-    ok(handle != NULL, "CreateSemaphore failed with error %u\n", GetLastError());
-    ok(GetLastError() == 0, "wrong error %u\n", GetLastError());
+    ok(handle != NULL, "CreateSemaphore failed with error %lu\n", GetLastError());
+    ok(GetLastError() == 0, "wrong error %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     handle2 = CreateSemaphoreA(NULL, 0, 1, __FILE__ ": Test Semaphore");
-    ok( handle2 != NULL, "CreateSemaphore failed with error %d\n", GetLastError());
-    ok( GetLastError() == ERROR_ALREADY_EXISTS, "wrong error %u\n", GetLastError());
+    ok( handle2 != NULL, "CreateSemaphore failed with error %ld\n", GetLastError());
+    ok( GetLastError() == ERROR_ALREADY_EXISTS, "wrong error %lu\n", GetLastError());
     CloseHandle( handle2 );
 
     SetLastError(0xdeadbeef);
     handle2 = CreateSemaphoreA(NULL, 0, 1, __FILE__ ": TEST SEMAPHORE");
-    ok( handle2 != NULL, "CreateSemaphore failed with error %d\n", GetLastError());
-    ok( GetLastError() == 0, "wrong error %u\n", GetLastError());
+    ok( handle2 != NULL, "CreateSemaphore failed with error %ld\n", GetLastError());
+    ok( GetLastError() == 0, "wrong error %lu\n", GetLastError());
     CloseHandle( handle2 );
 
     SetLastError(0xdeadbeef);
     handle2 = OpenSemaphoreA( SEMAPHORE_ALL_ACCESS, FALSE, __FILE__ ": Test Semaphore");
-    ok( handle2 != NULL, "OpenSemaphore failed with error %d\n", GetLastError());
+    ok( handle2 != NULL, "OpenSemaphore failed with error %ld\n", GetLastError());
     CloseHandle( handle2 );
 
     SetLastError(0xdeadbeef);
     handle2 = OpenSemaphoreA( SEMAPHORE_ALL_ACCESS, FALSE, __FILE__ ": TEST SEMAPHORE");
     ok( !handle2, "OpenSemaphore succeeded\n");
-    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
+    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     handle2 = OpenSemaphoreA( SEMAPHORE_ALL_ACCESS, FALSE, NULL );
     ok( !handle2, "OpenSemaphore succeeded\n");
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError());
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     handle2 = OpenSemaphoreW( SEMAPHORE_ALL_ACCESS, FALSE, NULL );
     ok( !handle2, "OpenSemaphore succeeded\n");
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError());
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %lu\n", GetLastError());
 
     CloseHandle( handle );
 }
@@ -632,40 +633,40 @@ static void test_waitable_timer(void)
 
     SetLastError(0xdeadbeef);
     handle = CreateWaitableTimerA(NULL, FALSE, __FILE__ ": Test WaitableTimer");
-    ok(handle != NULL, "CreateWaitableTimer failed with error %u\n", GetLastError());
-    ok(GetLastError() == 0, "wrong error %u\n", GetLastError());
+    ok(handle != NULL, "CreateWaitableTimer failed with error %lu\n", GetLastError());
+    ok(GetLastError() == 0, "wrong error %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     handle2 = CreateWaitableTimerA(NULL, FALSE, __FILE__ ": Test WaitableTimer");
-    ok( handle2 != NULL, "CreateWaitableTimer failed with error %d\n", GetLastError());
-    ok( GetLastError() == ERROR_ALREADY_EXISTS, "wrong error %u\n", GetLastError());
+    ok( handle2 != NULL, "CreateWaitableTimer failed with error %ld\n", GetLastError());
+    ok( GetLastError() == ERROR_ALREADY_EXISTS, "wrong error %lu\n", GetLastError());
     CloseHandle( handle2 );
 
     SetLastError(0xdeadbeef);
     handle2 = CreateWaitableTimerA(NULL, FALSE, __FILE__ ": TEST WAITABLETIMER");
-    ok( handle2 != NULL, "CreateWaitableTimer failed with error %d\n", GetLastError());
-    ok( GetLastError() == 0, "wrong error %u\n", GetLastError());
+    ok( handle2 != NULL, "CreateWaitableTimer failed with error %ld\n", GetLastError());
+    ok( GetLastError() == 0, "wrong error %lu\n", GetLastError());
     CloseHandle( handle2 );
 
     SetLastError(0xdeadbeef);
     handle2 = OpenWaitableTimerA( TIMER_ALL_ACCESS, FALSE, __FILE__ ": Test WaitableTimer");
-    ok( handle2 != NULL, "OpenWaitableTimer failed with error %d\n", GetLastError());
+    ok( handle2 != NULL, "OpenWaitableTimer failed with error %ld\n", GetLastError());
     CloseHandle( handle2 );
 
     SetLastError(0xdeadbeef);
     handle2 = OpenWaitableTimerA( TIMER_ALL_ACCESS, FALSE, __FILE__ ": TEST WAITABLETIMER");
     ok( !handle2, "OpenWaitableTimer succeeded\n");
-    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
+    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     handle2 = OpenWaitableTimerA( TIMER_ALL_ACCESS, FALSE, NULL );
-    ok( !handle2, "OpenWaitableTimer failed with error %d\n", GetLastError());
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError());
+    ok( !handle2, "OpenWaitableTimer failed with error %ld\n", GetLastError());
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     handle2 = OpenWaitableTimerW( TIMER_ALL_ACCESS, FALSE, NULL );
-    ok( !handle2, "OpenWaitableTimer failed with error %d\n", GetLastError());
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError());
+    ok( !handle2, "OpenWaitableTimer failed with error %ld\n", GetLastError());
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %lu\n", GetLastError());
 
     CloseHandle( handle );
 }
@@ -702,35 +703,35 @@ static void test_iocp_callback(void)
     ok(sem != INVALID_HANDLE_VALUE, "Creating a semaphore failed\n");
 
     ret = GetTempPathA(MAX_PATH, temp_path);
-    ok(ret != 0, "GetTempPathA error %d\n", GetLastError());
+    ok(ret != 0, "GetTempPathA error %ld\n", GetLastError());
     ok(ret < MAX_PATH, "temp path should fit into MAX_PATH\n");
 
     ret = GetTempFileNameA(temp_path, prefix, 0, filename);
-    ok(ret != 0, "GetTempFileNameA error %d\n", GetLastError());
+    ok(ret != 0, "GetTempFileNameA error %ld\n", GetLastError());
 
     hFile = CreateFileA(filename, GENERIC_READ | GENERIC_WRITE, 0, NULL,
                         CREATE_ALWAYS, FILE_FLAG_RANDOM_ACCESS, 0);
-    ok(hFile != INVALID_HANDLE_VALUE, "CreateFileA: error %d\n", GetLastError());
+    ok(hFile != INVALID_HANDLE_VALUE, "CreateFileA: error %ld\n", GetLastError());
 
     retb = p_BindIoCompletionCallback(hFile, iocp_callback, 0);
     ok(retb == FALSE, "BindIoCompletionCallback succeeded on a file that wasn't created with FILE_FLAG_OVERLAPPED\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Last error is %d\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Last error is %ld\n", GetLastError());
 
     ret = CloseHandle(hFile);
-    ok( ret, "CloseHandle: error %d\n", GetLastError());
+    ok( ret, "CloseHandle: error %ld\n", GetLastError());
     ret = DeleteFileA(filename);
-    ok( ret, "DeleteFileA: error %d\n", GetLastError());
+    ok( ret, "DeleteFileA: error %ld\n", GetLastError());
 
     hFile = CreateFileA(filename, GENERIC_READ | GENERIC_WRITE, 0, NULL,
                         CREATE_ALWAYS, FILE_FLAG_RANDOM_ACCESS | FILE_FLAG_OVERLAPPED, 0);
-    ok(hFile != INVALID_HANDLE_VALUE, "CreateFileA: error %d\n", GetLastError());
+    ok(hFile != INVALID_HANDLE_VALUE, "CreateFileA: error %ld\n", GetLastError());
 
     retb = p_BindIoCompletionCallback(hFile, iocp_callback, 0);
     ok(retb == TRUE, "BindIoCompletionCallback failed\n");
 
     memset(&overlapped, 0, sizeof(overlapped));
     retb = WriteFile(hFile, buffer, 4, &bytesWritten, &overlapped);
-    ok(retb == TRUE || GetLastError() == ERROR_IO_PENDING, "WriteFile failed, lastError = %d\n", GetLastError());
+    ok(retb == TRUE || GetLastError() == ERROR_IO_PENDING, "WriteFile failed, lastError = %ld\n", GetLastError());
 
     ret = WaitForSingleObject(sem, 5000);
     ok(ret == WAIT_OBJECT_0, "Wait for the IO completion callback failed\n");
@@ -738,37 +739,37 @@ static void test_iocp_callback(void)
 
     retb = p_BindIoCompletionCallback(hFile, iocp_callback, 0);
     ok(retb == FALSE, "BindIoCompletionCallback succeeded when setting the same callback on the file again\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Last error is %d\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Last error is %ld\n", GetLastError());
     retb = p_BindIoCompletionCallback(hFile, NULL, 0);
     ok(retb == FALSE, "BindIoCompletionCallback succeeded when setting the callback to NULL\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Last error is %d\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Last error is %ld\n", GetLastError());
 
     ret = CloseHandle(hFile);
-    ok( ret, "CloseHandle: error %d\n", GetLastError());
+    ok( ret, "CloseHandle: error %ld\n", GetLastError());
     ret = DeleteFileA(filename);
-    ok( ret, "DeleteFileA: error %d\n", GetLastError());
+    ok( ret, "DeleteFileA: error %ld\n", GetLastError());
 
     /* win2k3 requires the Flags parameter to be zero */
     SetLastError(0xdeadbeef);
     hFile = CreateFileA(filename, GENERIC_READ | GENERIC_WRITE, 0, NULL,
                         CREATE_ALWAYS, FILE_FLAG_RANDOM_ACCESS | FILE_FLAG_OVERLAPPED, 0);
-    ok(hFile != INVALID_HANDLE_VALUE, "CreateFileA: error %d\n", GetLastError());
+    ok(hFile != INVALID_HANDLE_VALUE, "CreateFileA: error %ld\n", GetLastError());
     retb = p_BindIoCompletionCallback(hFile, iocp_callback, 12345);
     if (!retb)
         ok(GetLastError() == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+           "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
     else
         ok(retb == TRUE, "BindIoCompletionCallback failed with Flags != 0\n");
     ret = CloseHandle(hFile);
-    ok( ret, "CloseHandle: error %d\n", GetLastError());
+    ok( ret, "CloseHandle: error %ld\n", GetLastError());
     ret = DeleteFileA(filename);
-    ok( ret, "DeleteFileA: error %d\n", GetLastError());
+    ok( ret, "DeleteFileA: error %ld\n", GetLastError());
 
     retb = p_BindIoCompletionCallback(NULL, iocp_callback, 0);
     ok(retb == FALSE, "BindIoCompletionCallback succeeded on a NULL file\n");
     ok(GetLastError() == ERROR_INVALID_HANDLE ||
        GetLastError() == ERROR_INVALID_PARAMETER, /* vista */
-       "Last error is %d\n", GetLastError());
+       "Last error is %ld\n", GetLastError());
 }
 
 static void CALLBACK timer_queue_cb1(PVOID p, BOOLEAN timedOut)
@@ -888,7 +889,7 @@ static void test_timer_queue(void)
     SetLastError(0xdeadbeef);
     ret = DeleteTimerQueueEx(q, NULL);
     ok(ret /* vista */ || GetLastError() == ERROR_IO_PENDING,
-       "DeleteTimerQueueEx, GetLastError: expected ERROR_IO_PENDING, got %d\n",
+       "DeleteTimerQueueEx, GetLastError: expected ERROR_IO_PENDING, got %ld\n",
        GetLastError());
 
     /* Test synchronous deletion of the queue and running timers. */
@@ -904,7 +905,7 @@ static void test_timer_queue(void)
     ret0 = DeleteTimerQueueTimer(q, t0, NULL);
     ok((!ret0 && GetLastError() == ERROR_IO_PENDING) ||
        broken(ret0), /* Win 2000 & XP & 2003 */
-       "DeleteTimerQueueTimer ret=%d le=%u\n", ret0, GetLastError());
+       "DeleteTimerQueueTimer ret=%d le=%lu\n", ret0, GetLastError());
 
     /* Called once.  */
     t1 = NULL;
@@ -1006,21 +1007,21 @@ static void test_timer_queue(void)
     SetLastError(0xdeadbeef);
     ret = DeleteTimerQueueTimer(q, t1, NULL);
     ok(ret /* vista */ || GetLastError() == ERROR_IO_PENDING,
-       "DeleteTimerQueueTimer, GetLastError: expected ERROR_IO_PENDING, got %d\n",
+       "DeleteTimerQueueTimer, GetLastError: expected ERROR_IO_PENDING, got %ld\n",
        GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = DeleteTimerQueueTimer(q, t2, NULL);
     ok(!ret, "DeleteTimerQueueTimer call was expected to fail\n");
     ok(GetLastError() == ERROR_IO_PENDING,
-       "DeleteTimerQueueTimer, GetLastError: expected ERROR_IO_PENDING, got %d\n",
+       "DeleteTimerQueueTimer, GetLastError: expected ERROR_IO_PENDING, got %ld\n",
        GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = DeleteTimerQueueTimer(q, t3, et1);
     ok(ret, "DeleteTimerQueueTimer call was expected to fail\n");
     ok(GetLastError() == 0xdeadbeef,
-       "DeleteTimerQueueTimer, GetLastError: expected 0xdeadbeef, got %d\n",
+       "DeleteTimerQueueTimer, GetLastError: expected 0xdeadbeef, got %ld\n",
        GetLastError());
     ok(WaitForSingleObject(et1, 250) == WAIT_OBJECT_0,
        "Timer destruction event not triggered\n");
@@ -1029,7 +1030,7 @@ static void test_timer_queue(void)
     ret = DeleteTimerQueueTimer(q, t4, et2);
     ok(!ret, "DeleteTimerQueueTimer call was expected to fail\n");
     ok(GetLastError() == ERROR_IO_PENDING,
-       "DeleteTimerQueueTimer, GetLastError: expected ERROR_IO_PENDING, got %d\n",
+       "DeleteTimerQueueTimer, GetLastError: expected ERROR_IO_PENDING, got %ld\n",
        GetLastError());
     ok(WaitForSingleObject(et2, 1000) == WAIT_OBJECT_0,
        "Timer destruction event not triggered\n");
@@ -1037,7 +1038,7 @@ static void test_timer_queue(void)
     SetLastError(0xdeadbeef);
     ret = DeleteTimerQueueEx(q, e);
     ok(ret /* vista */ || GetLastError() == ERROR_IO_PENDING,
-       "DeleteTimerQueueEx, GetLastError: expected ERROR_IO_PENDING, got %d\n",
+       "DeleteTimerQueueEx, GetLastError: expected ERROR_IO_PENDING, got %ld\n",
        GetLastError());
     ok(WaitForSingleObject(e, 250) == WAIT_OBJECT_0,
        "Queue destruction event not triggered\n");
@@ -1109,7 +1110,7 @@ static void test_timer_queue(void)
     SetLastError(0xdeadbeef);
     ret = DeleteTimerQueueEx(q, NULL);
     ok(ret /* vista */ || GetLastError() == ERROR_IO_PENDING,
-       "DeleteTimerQueueEx, GetLastError: expected ERROR_IO_PENDING, got %d\n",
+       "DeleteTimerQueueEx, GetLastError: expected ERROR_IO_PENDING, got %ld\n",
        GetLastError());
     ok(d1.num_calls == 1, "DeleteTimerQueueTimer\n");
 
@@ -1159,13 +1160,13 @@ static void test_timer_queue(void)
     ret = DeleteTimerQueueEx(NULL, NULL);
     ok(!ret, "DeleteTimerQueueEx call was expected to fail\n");
     ok(GetLastError() == ERROR_INVALID_HANDLE,
-       "DeleteTimerQueueEx, GetLastError: expected ERROR_INVALID_HANDLE, got %d\n",
+       "DeleteTimerQueueEx, GetLastError: expected ERROR_INVALID_HANDLE, got %ld\n",
        GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = DeleteTimerQueueEx(q, NULL);
     ok(ret /* vista */ || GetLastError() == ERROR_IO_PENDING,
-       "DeleteTimerQueueEx, GetLastError: expected ERROR_IO_PENDING, got %d\n",
+       "DeleteTimerQueueEx, GetLastError: expected ERROR_IO_PENDING, got %ld\n",
        GetLastError());
 }
 
@@ -1190,80 +1191,80 @@ static void test_WaitForSingleObject(void)
     /* invalid handle with different values for lower 2 bits */
     SetLastError(0xdeadbeef);
     ret = WaitForSingleObject(invalid, 0);
-    ok(ret == WAIT_FAILED, "expected WAIT_FAILED, got %d\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+    ok(ret == WAIT_FAILED, "expected WAIT_FAILED, got %ld\n", ret);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = WaitForSingleObject(modify_handle(invalid, 1), 0);
-    ok(ret == WAIT_FAILED, "expected WAIT_FAILED, got %d\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+    ok(ret == WAIT_FAILED, "expected WAIT_FAILED, got %ld\n", ret);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = WaitForSingleObject(modify_handle(invalid, 2), 0);
-    ok(ret == WAIT_FAILED, "expected WAIT_FAILED, got %d\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+    ok(ret == WAIT_FAILED, "expected WAIT_FAILED, got %ld\n", ret);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = WaitForSingleObject(modify_handle(invalid, 3), 0);
-    ok(ret == WAIT_FAILED, "expected WAIT_FAILED, got %d\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+    ok(ret == WAIT_FAILED, "expected WAIT_FAILED, got %ld\n", ret);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %ld\n", GetLastError());
 
     /* valid handle with different values for lower 2 bits */
     SetLastError(0xdeadbeef);
     ret = WaitForSingleObject(nonsignaled, 0);
-    ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %d\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %ld\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = WaitForSingleObject(modify_handle(nonsignaled, 1), 0);
-    ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %d\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %ld\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = WaitForSingleObject(modify_handle(nonsignaled, 2), 0);
-    ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %d\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %ld\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = WaitForSingleObject(modify_handle(nonsignaled, 3), 0);
-    ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %d\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %ld\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %ld\n", GetLastError());
 
     /* valid handle with different values for lower 2 bits */
     SetLastError(0xdeadbeef);
     ret = WaitForSingleObject(signaled, 0);
-    ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %d\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %ld\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = WaitForSingleObject(modify_handle(signaled, 1), 0);
-    ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %d\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %ld\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = WaitForSingleObject(modify_handle(signaled, 2), 0);
-    ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %d\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %ld\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = WaitForSingleObject(modify_handle(signaled, 3), 0);
-    ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %d\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %ld\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %ld\n", GetLastError());
 
     /* pseudo handles are allowed in WaitForSingleObject and NtWaitForSingleObject */
     ret = WaitForSingleObject(GetCurrentProcess(), 100);
-    ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %u\n", ret);
+    ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %lu\n", ret);
 
     ret = WaitForSingleObject(GetCurrentThread(), 100);
-    ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %u\n", ret);
+    ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %lu\n", ret);
 
     timeout.QuadPart = -1000000;
     status = pNtWaitForSingleObject(GetCurrentProcess(), FALSE, &timeout);
-    ok(status == STATUS_TIMEOUT, "expected STATUS_TIMEOUT, got %08x\n", status);
+    ok(status == STATUS_TIMEOUT, "expected STATUS_TIMEOUT, got %08lx\n", status);
 
     timeout.QuadPart = -1000000;
     status = pNtWaitForSingleObject(GetCurrentThread(), FALSE, &timeout);
-    ok(status == STATUS_TIMEOUT, "expected STATUS_TIMEOUT, got %08x\n", status);
+    ok(status == STATUS_TIMEOUT, "expected STATUS_TIMEOUT, got %08lx\n", status);
 
     CloseHandle(signaled);
     CloseHandle(nonsignaled);
@@ -1287,15 +1288,15 @@ static void test_WaitForMultipleObjects(void)
 
     /* a manual-reset event remains signaled, an auto-reset event is cleared */
     r = WaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, FALSE, 0);
-    ok( r == WAIT_OBJECT_0, "should signal lowest handle first, got %d\n", r);
+    ok( r == WAIT_OBJECT_0, "should signal lowest handle first, got %ld\n", r);
     r = WaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, FALSE, 0);
-    ok( r == WAIT_OBJECT_0, "should signal handle #0 first, got %d\n", r);
+    ok( r == WAIT_OBJECT_0, "should signal handle #0 first, got %ld\n", r);
     ok(ResetEvent(maxevents[0]), "ResetEvent\n");
     for (i=1; i<MAXIMUM_WAIT_OBJECTS; i++)
     {
         /* the lowest index is checked first and remaining events are untouched */
         r = WaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, FALSE, 0);
-        ok( r == WAIT_OBJECT_0+i, "should signal handle #%d first, got %d\n", i, r);
+        ok( r == WAIT_OBJECT_0+i, "should signal handle #%d first, got %ld\n", i, r);
     }
 
     /* run same test with Nt* call */
@@ -1304,15 +1305,15 @@ static void test_WaitForMultipleObjects(void)
 
     /* a manual-reset event remains signaled, an auto-reset event is cleared */
     status = pNtWaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, TRUE, FALSE, NULL);
-    ok(status == STATUS_WAIT_0, "should signal lowest handle first, got %08x\n", status);
+    ok(status == STATUS_WAIT_0, "should signal lowest handle first, got %08lx\n", status);
     status = pNtWaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, TRUE, FALSE, NULL);
-    ok(status == STATUS_WAIT_0, "should signal handle #0 first, got %08x\n", status);
+    ok(status == STATUS_WAIT_0, "should signal handle #0 first, got %08lx\n", status);
     ok(ResetEvent(maxevents[0]), "ResetEvent\n");
     for (i=1; i<MAXIMUM_WAIT_OBJECTS; i++)
     {
         /* the lowest index is checked first and remaining events are untouched */
         status = pNtWaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, TRUE, FALSE, NULL);
-        ok(status == STATUS_WAIT_0 + i, "should signal handle #%d first, got %08x\n", i, status);
+        ok(status == STATUS_WAIT_0 + i, "should signal handle #%d first, got %08lx\n", i, status);
     }
 
     for (i=0; i<MAXIMUM_WAIT_OBJECTS; i++)
@@ -1323,26 +1324,26 @@ static void test_WaitForMultipleObjects(void)
     maxevents[0] = GetCurrentProcess();
     SetLastError(0xdeadbeef);
     r = WaitForMultipleObjects(1, maxevents, FALSE, 100);
-    todo_wine ok(r == WAIT_FAILED, "expected WAIT_FAILED, got %u\n", r);
+    todo_wine ok(r == WAIT_FAILED, "expected WAIT_FAILED, got %lu\n", r);
     todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE,
-                 "expected ERROR_INVALID_HANDLE, got %u\n", GetLastError());
+                 "expected ERROR_INVALID_HANDLE, got %lu\n", GetLastError());
 
     maxevents[0] = GetCurrentThread();
     SetLastError(0xdeadbeef);
     r = WaitForMultipleObjects(1, maxevents, FALSE, 100);
-    todo_wine ok(r == WAIT_FAILED, "expected WAIT_FAILED, got %u\n", r);
+    todo_wine ok(r == WAIT_FAILED, "expected WAIT_FAILED, got %lu\n", r);
     todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE,
-                 "expected ERROR_INVALID_HANDLE, got %u\n", GetLastError());
+                 "expected ERROR_INVALID_HANDLE, got %lu\n", GetLastError());
 
     timeout.QuadPart = -1000000;
     maxevents[0] = GetCurrentProcess();
     status = pNtWaitForMultipleObjects(1, maxevents, TRUE, FALSE, &timeout);
-    todo_wine ok(status == STATUS_INVALID_HANDLE, "expected STATUS_INVALID_HANDLE, got %08x\n", status);
+    todo_wine ok(status == STATUS_INVALID_HANDLE, "expected STATUS_INVALID_HANDLE, got %08lx\n", status);
 
     timeout.QuadPart = -1000000;
     maxevents[0] = GetCurrentThread();
     status = pNtWaitForMultipleObjects(1, maxevents, TRUE, FALSE, &timeout);
-    todo_wine ok(status == STATUS_INVALID_HANDLE, "expected STATUS_INVALID_HANDLE, got %08x\n", status);
+    todo_wine ok(status == STATUS_INVALID_HANDLE, "expected STATUS_INVALID_HANDLE, got %08lx\n", status);
 }
 
 static BOOL g_initcallback_ret, g_initcallback_called;
@@ -1378,7 +1379,7 @@ static void test_initonce(void)
     g_initcallback_ret = TRUE;
     g_initctxt = NULL;
     ret = pInitOnceExecuteOnce(&initonce, initonce_callback, (void*)0xdeadbeef, &g_initctxt);
-    ok(ret, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(ret, "wrong ret %d err %lu\n", ret, GetLastError());
     ok(initonce.Ptr == (void*)0x2, "got %p\n", initonce.Ptr);
     ok(g_initctxt == NULL, "got %p\n", g_initctxt);
     ok(g_initcallback_called, "got %d\n", g_initcallback_called);
@@ -1387,7 +1388,7 @@ static void test_initonce(void)
     g_initctxt = NULL;
     g_initcallback_called = FALSE;
     ret = pInitOnceExecuteOnce(&initonce, initonce_callback, (void*)0xdeadbeef, &g_initctxt);
-    ok(ret, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(ret, "wrong ret %d err %lu\n", ret, GetLastError());
     ok(initonce.Ptr == (void*)0x2, "got %p\n", initonce.Ptr);
     ok(g_initctxt == NULL, "got %p\n", g_initctxt);
     ok(!g_initcallback_called, "got %d\n", g_initcallback_called);
@@ -1397,7 +1398,7 @@ static void test_initonce(void)
     /* 2 lower order bits should never be used, you'll get a crash in result */
     g_initctxt = (void*)0xFFFFFFF0;
     ret = pInitOnceExecuteOnce(&initonce, initonce_callback, (void*)0xdeadbeef, &g_initctxt);
-    ok(ret, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(ret, "wrong ret %d err %lu\n", ret, GetLastError());
     ok(initonce.Ptr == (void*)0xFFFFFFF2, "got %p\n", initonce.Ptr);
     ok(g_initctxt == (void*)0xFFFFFFF0, "got %p\n", g_initctxt);
     ok(g_initcallback_called, "got %d\n", g_initcallback_called);
@@ -1409,7 +1410,7 @@ static void test_initonce(void)
     pInitOnceInitialize(&initonce);
     SetLastError( 0xdeadbeef );
     ret = pInitOnceExecuteOnce(&initonce, initonce_callback, (void*)0xdeadbeef, &g_initctxt);
-    ok(!ret && GetLastError() == 0xdeadbeef, "got wrong ret value %d err %u\n", ret, GetLastError());
+    ok(!ret && GetLastError() == 0xdeadbeef, "got wrong ret value %d err %lu\n", ret, GetLastError());
     ok(initonce.Ptr == NULL, "got %p\n", initonce.Ptr);
     ok(g_initctxt == NULL, "got %p\n", g_initctxt);
     ok(g_initcallback_called, "got %d\n", g_initcallback_called);
@@ -1419,7 +1420,7 @@ static void test_initonce(void)
     g_initctxt = NULL;
     pending = FALSE;
     ret = pInitOnceBeginInitialize(&initonce, 0, &pending, &g_initctxt);
-    ok(ret, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(ret, "wrong ret %d err %lu\n", ret, GetLastError());
     ok(pending, "got %d\n", pending);
     ok(initonce.Ptr == (void*)1, "got %p\n", initonce.Ptr);
     ok(g_initctxt == NULL, "got %p\n", g_initctxt);
@@ -1429,7 +1430,7 @@ static void test_initonce(void)
     pending = 0xf;
     SetLastError( 0xdeadbeef );
     ret = pInitOnceBeginInitialize(&initonce, INIT_ONCE_CHECK_ONLY, &pending, &g_initctxt);
-    ok(!ret && GetLastError() == ERROR_GEN_FAILURE, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_GEN_FAILURE, "wrong ret %d err %lu\n", ret, GetLastError());
     ok(pending == 0xf, "got %d\n", pending);
     ok(initonce.Ptr == (void*)1, "got %p\n", initonce.Ptr);
     ok(g_initctxt == NULL, "got %p\n", g_initctxt);
@@ -1437,91 +1438,91 @@ static void test_initonce(void)
     g_initctxt = (void*)0xdeadbee0;
     SetLastError( 0xdeadbeef );
     ret = pInitOnceComplete(&initonce, INIT_ONCE_INIT_FAILED, g_initctxt);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %lu\n", ret, GetLastError());
     ok(initonce.Ptr == (void*)1, "got %p\n", initonce.Ptr);
 
     /* once failed already */
     g_initctxt = (void*)0xdeadbee0;
     ret = pInitOnceComplete(&initonce, 0, g_initctxt);
-    ok(ret, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(ret, "wrong ret %d err %lu\n", ret, GetLastError());
     ok(initonce.Ptr == (void*)0xdeadbee2, "got %p\n", initonce.Ptr);
 
     pInitOnceInitialize(&initonce);
     SetLastError( 0xdeadbeef );
     ret = pInitOnceComplete(&initonce, INIT_ONCE_INIT_FAILED, NULL);
-    ok(!ret && GetLastError() == ERROR_GEN_FAILURE, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_GEN_FAILURE, "wrong ret %d err %lu\n", ret, GetLastError());
     ok(initonce.Ptr == NULL, "got %p\n", initonce.Ptr);
 
     SetLastError( 0xdeadbeef );
     ret = pInitOnceComplete(&initonce, INIT_ONCE_INIT_FAILED | INIT_ONCE_ASYNC, NULL);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %lu\n", ret, GetLastError());
     ok(initonce.Ptr == NULL, "got %p\n", initonce.Ptr);
 
     ret = pInitOnceBeginInitialize(&initonce, 0, &pending, &g_initctxt);
-    ok(ret, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(ret, "wrong ret %d err %lu\n", ret, GetLastError());
     ok(pending, "got %d\n", pending);
     ok(initonce.Ptr == (void*)1, "got %p\n", initonce.Ptr);
 
     SetLastError( 0xdeadbeef );
     ret = pInitOnceBeginInitialize(&initonce, INIT_ONCE_ASYNC, &pending, &g_initctxt);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %lu\n", ret, GetLastError());
 
     SetLastError( 0xdeadbeef );
     ret = pInitOnceComplete(&initonce, INIT_ONCE_INIT_FAILED | INIT_ONCE_ASYNC, NULL);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %lu\n", ret, GetLastError());
     ok(initonce.Ptr == (void*)1, "got %p\n", initonce.Ptr);
 
     SetLastError( 0xdeadbeef );
     ret = pInitOnceComplete(&initonce, 0, (void *)0xdeadbeef);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %lu\n", ret, GetLastError());
     ok(initonce.Ptr == (void*)1, "got %p\n", initonce.Ptr);
 
     ret = pInitOnceComplete(&initonce, INIT_ONCE_INIT_FAILED, NULL);
-    ok(ret, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(ret, "wrong ret %d err %lu\n", ret, GetLastError());
     ok(initonce.Ptr == NULL, "got %p\n", initonce.Ptr);
 
     pInitOnceInitialize(&initonce);
     ret = pInitOnceBeginInitialize(&initonce, INIT_ONCE_ASYNC, &pending, &g_initctxt);
-    ok(ret, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(ret, "wrong ret %d err %lu\n", ret, GetLastError());
     ok(pending, "got %d\n", pending);
     ok(initonce.Ptr == (void*)3, "got %p\n", initonce.Ptr);
 
     SetLastError( 0xdeadbeef );
     ret = pInitOnceBeginInitialize(&initonce, 0, &pending, &g_initctxt);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %lu\n", ret, GetLastError());
 
     ret = pInitOnceBeginInitialize(&initonce, INIT_ONCE_ASYNC, &pending, &g_initctxt);
-    ok(ret, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(ret, "wrong ret %d err %lu\n", ret, GetLastError());
     ok(pending, "got %d\n", pending);
     ok(initonce.Ptr == (void*)3, "got %p\n", initonce.Ptr);
 
     SetLastError( 0xdeadbeef );
     ret = pInitOnceComplete(&initonce, INIT_ONCE_INIT_FAILED, NULL);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %lu\n", ret, GetLastError());
     ok(initonce.Ptr == (void*)3, "got %p\n", initonce.Ptr);
 
     SetLastError( 0xdeadbeef );
     ret = pInitOnceComplete(&initonce, INIT_ONCE_INIT_FAILED | INIT_ONCE_ASYNC, NULL);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %lu\n", ret, GetLastError());
     ok(initonce.Ptr == (void*)3, "got %p\n", initonce.Ptr);
 
     SetLastError( 0xdeadbeef );
     ret = pInitOnceComplete(&initonce, INIT_ONCE_ASYNC, (void *)0xdeadbeef);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %lu\n", ret, GetLastError());
     ok(initonce.Ptr == (void*)3, "got %p\n", initonce.Ptr);
 
     ret = pInitOnceComplete(&initonce, INIT_ONCE_ASYNC, (void *)0xdeadbee0);
-    ok(ret, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(ret, "wrong ret %d err %lu\n", ret, GetLastError());
     ok(initonce.Ptr == (void*)0xdeadbee2, "got %p\n", initonce.Ptr);
 
     SetLastError( 0xdeadbeef );
     ret = pInitOnceComplete(&initonce, INIT_ONCE_INIT_FAILED | INIT_ONCE_ASYNC, NULL);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %lu\n", ret, GetLastError());
     ok(initonce.Ptr == (void*)0xdeadbee2, "got %p\n", initonce.Ptr);
 
     pInitOnceInitialize(&initonce);
     ret = pInitOnceBeginInitialize(&initonce, 0, &pending, &g_initctxt);
-    ok(ret, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(ret, "wrong ret %d err %lu\n", ret, GetLastError());
     ok(pending, "got %d\n", pending);
     ok(initonce.Ptr == (void*)1, "got %p\n", initonce.Ptr);
 
@@ -1530,63 +1531,63 @@ static void test_initonce(void)
     pInitOnceInitialize(&initonce);
     SetLastError( 0xdeadbeef );
     ret = pInitOnceBeginInitialize(&initonce, INIT_ONCE_CHECK_ONLY, &pending, &g_initctxt);
-    ok(!ret && GetLastError() == ERROR_GEN_FAILURE, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_GEN_FAILURE, "wrong ret %d err %lu\n", ret, GetLastError());
     SetLastError( 0xdeadbeef );
     ret = pInitOnceBeginInitialize(&initonce, INIT_ONCE_CHECK_ONLY|INIT_ONCE_ASYNC, &pending, &g_initctxt);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %lu\n", ret, GetLastError());
 
     ret = pInitOnceBeginInitialize(&initonce, 0, &pending, &g_initctxt);
-    ok(ret, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(ret, "wrong ret %d err %lu\n", ret, GetLastError());
     ok(pending, "got %d\n", pending);
     ok(initonce.Ptr == (void*)1, "got %p\n", initonce.Ptr);
 
     SetLastError( 0xdeadbeef );
     ret = pInitOnceBeginInitialize(&initonce, INIT_ONCE_CHECK_ONLY, &pending, &g_initctxt);
-    ok(!ret && GetLastError() == ERROR_GEN_FAILURE, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_GEN_FAILURE, "wrong ret %d err %lu\n", ret, GetLastError());
     SetLastError( 0xdeadbeef );
     ret = pInitOnceBeginInitialize(&initonce, INIT_ONCE_CHECK_ONLY|INIT_ONCE_ASYNC, &pending, &g_initctxt);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %lu\n", ret, GetLastError());
 
     ret = pInitOnceComplete(&initonce, 0, (void *)0xdeadbee0);
-    ok(ret, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(ret, "wrong ret %d err %lu\n", ret, GetLastError());
     ok(initonce.Ptr == (void*)0xdeadbee2, "got %p\n", initonce.Ptr);
 
     ret = pInitOnceBeginInitialize(&initonce, INIT_ONCE_CHECK_ONLY, &pending, &g_initctxt);
-    ok(ret, "got wrong ret value %d err %u\n", ret, GetLastError());
+    ok(ret, "got wrong ret value %d err %lu\n", ret, GetLastError());
     ok(!pending, "got %d\n", pending);
     ok(initonce.Ptr == (void*)0xdeadbee2, "got %p\n", initonce.Ptr);
     ok(g_initctxt == (void*)0xdeadbee0, "got %p\n", initonce.Ptr);
 
     SetLastError( 0xdeadbeef );
     ret = pInitOnceBeginInitialize(&initonce, INIT_ONCE_CHECK_ONLY|INIT_ONCE_ASYNC, &pending, &g_initctxt);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %lu\n", ret, GetLastError());
 
     pInitOnceInitialize(&initonce);
     ret = pInitOnceBeginInitialize(&initonce, INIT_ONCE_ASYNC, &pending, &g_initctxt);
-    ok(ret, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(ret, "wrong ret %d err %lu\n", ret, GetLastError());
     ok(pending, "got %d\n", pending);
     ok(initonce.Ptr == (void*)3, "got %p\n", initonce.Ptr);
 
     SetLastError( 0xdeadbeef );
     ret = pInitOnceBeginInitialize(&initonce, INIT_ONCE_CHECK_ONLY, &pending, &g_initctxt);
-    ok(!ret && GetLastError() == ERROR_GEN_FAILURE, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_GEN_FAILURE, "wrong ret %d err %lu\n", ret, GetLastError());
     SetLastError( 0xdeadbeef );
     ret = pInitOnceBeginInitialize(&initonce, INIT_ONCE_CHECK_ONLY|INIT_ONCE_ASYNC, &pending, &g_initctxt);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %lu\n", ret, GetLastError());
 
     ret = pInitOnceComplete(&initonce, INIT_ONCE_ASYNC, (void *)0xdeadbee0);
-    ok(ret, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(ret, "wrong ret %d err %lu\n", ret, GetLastError());
     ok(initonce.Ptr == (void*)0xdeadbee2, "got %p\n", initonce.Ptr);
 
     ret = pInitOnceBeginInitialize(&initonce, INIT_ONCE_CHECK_ONLY, &pending, &g_initctxt);
-    ok(ret, "got wrong ret value %d err %u\n", ret, GetLastError());
+    ok(ret, "got wrong ret value %d err %lu\n", ret, GetLastError());
     ok(!pending, "got %d\n", pending);
     ok(initonce.Ptr == (void*)0xdeadbee2, "got %p\n", initonce.Ptr);
     ok(g_initctxt == (void*)0xdeadbee0, "got %p\n", initonce.Ptr);
 
     SetLastError( 0xdeadbeef );
     ret = pInitOnceBeginInitialize(&initonce, INIT_ONCE_CHECK_ONLY|INIT_ONCE_ASYNC, &pending, &g_initctxt);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %lu\n", ret, GetLastError());
 }
 
 static CONDITION_VARIABLE buffernotempty = CONDITION_VARIABLE_INIT;
@@ -1708,16 +1709,16 @@ static void test_condvars_consumer_producer(void)
     WaitForSingleObject(hc3, 1000);
 
     ok(totalconsumed == totalproduced,
-       "consumed %d != produced %d\n", totalconsumed, totalproduced);
+       "consumed %ld != produced %ld\n", totalconsumed, totalproduced);
     ok (!condvar_sleeperr, "error occurred during SleepConditionVariableCS\n");
 
     /* Checking cnt1 - cnt2 for non-0 would be not good, the case where
      * one consumer does not get anything to do is possible. */
-    trace("produced %d, c1 %d, c2 %d, c3 %d\n", totalproduced, cnt1, cnt2, cnt3);
+    trace("produced %ld, c1 %ld, c2 %ld, c3 %ld\n", totalproduced, cnt1, cnt2, cnt3);
     /* The sleeps of the producer or consumer should not go above 100* produced count,
      * otherwise the implementation does not sleep correctly. But yet again, this is
      * not hard defined. */
-    trace("producer sleep %d, consumer sleep %d\n", condvar_producer_sleepcnt, condvar_consumer_sleepcnt);
+    trace("producer sleep %ld, consumer sleep %ld\n", condvar_producer_sleepcnt, condvar_consumer_sleepcnt);
 }
 
 /* Sample test for some sequence of events happening, sequenced using "condvar_seq" */
@@ -1821,7 +1822,7 @@ static DWORD WINAPI condvar_base_consumer(void *arg)
     ret = pSleepConditionVariableCS(cv, &condvar_crit, 10);
     LeaveCriticalSection (&condvar_crit);
     ok (!ret, "SleepConditionVariableCS should return FALSE on out of band wake\n");
-    ok (GetLastError() == ERROR_TIMEOUT, "SleepConditionVariableCS should return ERROR_TIMEOUT on out of band wake, not %d\n", GetLastError());
+    ok (GetLastError() == ERROR_TIMEOUT, "SleepConditionVariableCS should return ERROR_TIMEOUT on out of band wake, not %ld\n", GetLastError());
 
     condvar_seq = 3;
     while (condvar_seq < 4) Sleep(1);
@@ -1831,7 +1832,7 @@ static DWORD WINAPI condvar_base_consumer(void *arg)
     ret = pSleepConditionVariableCS(cv, &condvar_crit, 10);
     LeaveCriticalSection (&condvar_crit);
     ok (!ret, "SleepConditionVariableCS should return FALSE on out of band wake\n");
-    ok (GetLastError() == ERROR_TIMEOUT, "SleepConditionVariableCS should return ERROR_TIMEOUT on out of band wake, not %d\n", GetLastError());
+    ok (GetLastError() == ERROR_TIMEOUT, "SleepConditionVariableCS should return ERROR_TIMEOUT on out of band wake, not %ld\n", GetLastError());
 
     EnterCriticalSection (&condvar_crit);
     condvar_seq = 5;
@@ -1850,7 +1851,7 @@ static DWORD WINAPI condvar_base_consumer(void *arg)
     ret = pSleepConditionVariableCS(cv, &condvar_crit, 10);
     LeaveCriticalSection (&condvar_crit);
     ok (!ret, "SleepConditionVariableCS should return FALSE on out of band wake\n");
-    ok (GetLastError() == ERROR_TIMEOUT, "SleepConditionVariableCS should return ERROR_TIMEOUT on out of band wake, not %d\n", GetLastError());
+    ok (GetLastError() == ERROR_TIMEOUT, "SleepConditionVariableCS should return ERROR_TIMEOUT on out of band wake, not %ld\n", GetLastError());
 
     EnterCriticalSection (&condvar_crit);
     condvar_seq = 8;
@@ -1916,7 +1917,7 @@ static void test_condvars_base(RTL_CONDITION_VARIABLE *cv)
     LeaveCriticalSection (&condvar_crit);
 
     ok (!ret, "SleepConditionVariableCS should return FALSE on untriggered condvar\n");
-    ok (GetLastError() == ERROR_TIMEOUT, "SleepConditionVariableCS should return ERROR_TIMEOUT on untriggered condvar, not %d\n", GetLastError());
+    ok (GetLastError() == ERROR_TIMEOUT, "SleepConditionVariableCS should return ERROR_TIMEOUT on untriggered condvar, not %ld\n", GetLastError());
 
     if (pInitializeSRWLock)
     {
@@ -1925,14 +1926,14 @@ static void test_condvars_base(RTL_CONDITION_VARIABLE *cv)
         pReleaseSRWLockExclusive(&condvar_srwlock);
 
         ok(!ret, "SleepConditionVariableSRW should return FALSE on untriggered condvar\n");
-        ok(GetLastError() == ERROR_TIMEOUT, "SleepConditionVariableSRW should return ERROR_TIMEOUT on untriggered condvar, not %d\n", GetLastError());
+        ok(GetLastError() == ERROR_TIMEOUT, "SleepConditionVariableSRW should return ERROR_TIMEOUT on untriggered condvar, not %ld\n", GetLastError());
 
         pAcquireSRWLockShared(&condvar_srwlock);
         ret = pSleepConditionVariableSRW(cv, &condvar_srwlock, 10, CONDITION_VARIABLE_LOCKMODE_SHARED);
         pReleaseSRWLockShared(&condvar_srwlock);
 
         ok(!ret, "SleepConditionVariableSRW should return FALSE on untriggered condvar\n");
-        ok(GetLastError() == ERROR_TIMEOUT, "SleepConditionVariableSRW should return ERROR_TIMEOUT on untriggered condvar, not %d\n", GetLastError());
+        ok(GetLastError() == ERROR_TIMEOUT, "SleepConditionVariableSRW should return ERROR_TIMEOUT on untriggered condvar, not %ld\n", GetLastError());
     }
 
     condvar_seq = 0;
@@ -2373,35 +2374,35 @@ static void test_srwlock_base(SRWLOCK *lock)
     WaitForSingleObject(h3, 100);
 
     ok(!srwlock_base_errors.wrong_execution_order,
-            "thread commands were executed in the wrong order (occurred %d times).\n",
+            "thread commands were executed in the wrong order (occurred %ld times).\n",
             srwlock_base_errors.wrong_execution_order);
 
     ok(!srwlock_base_errors.samethread_excl_excl,
-            "AcquireSRWLockExclusive didn't block when called multiple times from the same thread (occurred %d times).\n",
+            "AcquireSRWLockExclusive didn't block when called multiple times from the same thread (occurred %ld times).\n",
             srwlock_base_errors.samethread_excl_excl);
 
     ok(!srwlock_base_errors.samethread_excl_shared,
-            "AcquireSRWLockShared didn't block when the same thread holds an exclusive lock (occurred %d times).\n",
+            "AcquireSRWLockShared didn't block when the same thread holds an exclusive lock (occurred %ld times).\n",
             srwlock_base_errors.samethread_excl_shared);
 
     ok(!srwlock_base_errors.samethread_shared_excl,
-            "AcquireSRWLockExclusive didn't block when the same thread holds a shared lock (occurred %d times).\n",
+            "AcquireSRWLockExclusive didn't block when the same thread holds a shared lock (occurred %ld times).\n",
             srwlock_base_errors.samethread_shared_excl);
 
     ok(!srwlock_base_errors.multithread_excl_excl,
-            "AcquireSRWLockExclusive didn't block when a second thread holds the exclusive lock (occurred %d times).\n",
+            "AcquireSRWLockExclusive didn't block when a second thread holds the exclusive lock (occurred %ld times).\n",
             srwlock_base_errors.multithread_excl_excl);
 
     ok(!srwlock_base_errors.excl_not_preferred,
-            "thread waiting for exclusive access to the SHMLock was not preferred (occurred %d times).\n",
+            "thread waiting for exclusive access to the SHMLock was not preferred (occurred %ld times).\n",
             srwlock_base_errors.excl_not_preferred);
 
     ok(!srwlock_base_errors.trylock_excl,
-            "TryAcquireSRWLockExclusive didn't behave as expected (occurred %d times).\n",
+            "TryAcquireSRWLockExclusive didn't behave as expected (occurred %ld times).\n",
             srwlock_base_errors.trylock_excl);
 
     ok(!srwlock_base_errors.trylock_shared,
-            "TryAcquireSRWLockShared didn't behave as expected (occurred %d times).\n",
+            "TryAcquireSRWLockShared didn't behave as expected (occurred %ld times).\n",
             srwlock_base_errors.trylock_shared);
 
 }
@@ -2480,12 +2481,12 @@ static void test_srwlock_example(void)
     WaitForSingleObject(h2, 1000);
     WaitForSingleObject(h3, 1000);
 
-    ok(!srwlock_inside, "threads didn't terminate properly, srwlock_inside is %d.\n", srwlock_inside);
-    ok(!srwlock_example_errors, "errors occurred while running SRWLock example test (number of errors: %d)\n",
+    ok(!srwlock_inside, "threads didn't terminate properly, srwlock_inside is %ld.\n", srwlock_inside);
+    ok(!srwlock_example_errors, "errors occurred while running SRWLock example test (number of errors: %ld)\n",
             srwlock_example_errors);
 
-    trace("number of shared accesses per thread are c1 %d, c2 %d, c3 %d\n", cnt1, cnt2, cnt3);
-    trace("number of total exclusive accesses is %d\n", srwlock_protected_value);
+    trace("number of shared accesses per thread are c1 %ld, c2 %ld, c3 %ld\n", cnt1, cnt2, cnt3);
+    trace("number of total exclusive accesses is %ld\n", srwlock_protected_value);
 }
 
 static DWORD WINAPI alertable_wait_thread(void *param)
@@ -2497,24 +2498,24 @@ static DWORD WINAPI alertable_wait_thread(void *param)
 
     ReleaseSemaphore(semaphores[0], 1, NULL);
     result = WaitForMultipleObjectsEx(1, &semaphores[1], TRUE, 1000, TRUE);
-    ok(result == WAIT_IO_COMPLETION, "expected WAIT_IO_COMPLETION, got %u\n", result);
+    ok(result == WAIT_IO_COMPLETION, "expected WAIT_IO_COMPLETION, got %lu\n", result);
     result = WaitForMultipleObjectsEx(1, &semaphores[1], TRUE, 200, TRUE);
-    ok(result == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", result);
+    ok(result == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %lu\n", result);
 
     ReleaseSemaphore(semaphores[0], 1, NULL);
     timeout.QuadPart = -10000000;
     status = pNtWaitForMultipleObjects(1, &semaphores[1], FALSE, TRUE, &timeout);
-    ok(status == STATUS_USER_APC, "expected STATUS_USER_APC, got %08x\n", status);
+    ok(status == STATUS_USER_APC, "expected STATUS_USER_APC, got %08lx\n", status);
     timeout.QuadPart = -2000000;
     status = pNtWaitForMultipleObjects(1, &semaphores[1], FALSE, TRUE, &timeout);
-    ok(status == STATUS_WAIT_0, "expected STATUS_WAIT_0, got %08x\n", status);
+    ok(status == STATUS_WAIT_0, "expected STATUS_WAIT_0, got %08lx\n", status);
 
     ReleaseSemaphore(semaphores[0], 1, NULL);
     timeout.QuadPart = -10000000;
     status = pNtWaitForMultipleObjects(1, &semaphores[1], FALSE, TRUE, &timeout);
-    ok(status == STATUS_USER_APC, "expected STATUS_USER_APC, got %08x\n", status);
+    ok(status == STATUS_USER_APC, "expected STATUS_USER_APC, got %08lx\n", status);
     result = WaitForSingleObject(semaphores[0], 0);
-    ok(result == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %u\n", result);
+    ok(result == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %lu\n", result);
 
     return 0;
 }
@@ -2531,7 +2532,7 @@ static void CALLBACK alertable_wait_apc2(ULONG_PTR userdata)
     DWORD result;
 
     result = WaitForSingleObject(semaphores[0], 1000);
-    ok(result == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", result);
+    ok(result == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %lu\n", result);
 }
 
 static void test_alertable_wait(void)
@@ -2540,35 +2541,35 @@ static void test_alertable_wait(void)
     DWORD result;
 
     semaphores[0] = CreateSemaphoreW(NULL, 0, 2, NULL);
-    ok(semaphores[0] != NULL, "CreateSemaphore failed with %u\n", GetLastError());
+    ok(semaphores[0] != NULL, "CreateSemaphore failed with %lu\n", GetLastError());
     semaphores[1] = CreateSemaphoreW(NULL, 0, 1, NULL);
-    ok(semaphores[1] != NULL, "CreateSemaphore failed with %u\n", GetLastError());
+    ok(semaphores[1] != NULL, "CreateSemaphore failed with %lu\n", GetLastError());
     thread = CreateThread(NULL, 0, alertable_wait_thread, semaphores, 0, NULL);
-    ok(thread != NULL, "CreateThread failed with %u\n", GetLastError());
+    ok(thread != NULL, "CreateThread failed with %lu\n", GetLastError());
 
     result = WaitForSingleObject(semaphores[0], 1000);
-    ok(result == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", result);
+    ok(result == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %lu\n", result);
     Sleep(100); /* ensure the thread is blocking in WaitForMultipleObjectsEx */
     result = QueueUserAPC(alertable_wait_apc, thread, (ULONG_PTR)semaphores);
-    ok(result != 0, "QueueUserAPC failed with %u\n", GetLastError());
+    ok(result != 0, "QueueUserAPC failed with %lu\n", GetLastError());
 
     result = WaitForSingleObject(semaphores[0], 1000);
-    ok(result == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", result);
+    ok(result == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %lu\n", result);
     Sleep(100); /* ensure the thread is blocking in NtWaitForMultipleObjects */
     result = QueueUserAPC(alertable_wait_apc, thread, (ULONG_PTR)semaphores);
-    ok(result != 0, "QueueUserAPC failed with %u\n", GetLastError());
+    ok(result != 0, "QueueUserAPC failed with %lu\n", GetLastError());
 
     result = WaitForSingleObject(semaphores[0], 1000);
-    ok(result == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", result);
+    ok(result == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %lu\n", result);
     Sleep(100); /* ensure the thread is blocking in NtWaitForMultipleObjects */
     result = QueueUserAPC(alertable_wait_apc2, thread, (ULONG_PTR)semaphores);
-    ok(result != 0, "QueueUserAPC failed with %u\n", GetLastError());
+    ok(result != 0, "QueueUserAPC failed with %lu\n", GetLastError());
     result = QueueUserAPC(alertable_wait_apc2, thread, (ULONG_PTR)semaphores);
-    ok(result != 0, "QueueUserAPC failed with %u\n", GetLastError());
+    ok(result != 0, "QueueUserAPC failed with %lu\n", GetLastError());
     ReleaseSemaphore(semaphores[0], 2, NULL);
 
     result = WaitForSingleObject(thread, 1000);
-    ok(result == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", result);
+    ok(result == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %lu\n", result);
     CloseHandle(thread);
     CloseHandle(semaphores[0]);
     CloseHandle(semaphores[1]);
@@ -2595,13 +2596,13 @@ static DWORD WINAPI apc_deadlock_thread(void *param)
         size = 0x1000;
         status = pNtAllocateVirtualMemory(pi->hProcess, &base, 0, &size,
                                           MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-        ok(!status, "expected STATUS_SUCCESS, got %08x\n", status);
+        ok(!status, "expected STATUS_SUCCESS, got %08lx\n", status);
         ok(base != NULL, "expected base != NULL, got %p\n", base);
         SetEvent(info->event);
 
         size = 0;
         status = pNtFreeVirtualMemory(pi->hProcess, &base, &size, MEM_RELEASE);
-        ok(!status, "expected STATUS_SUCCESS, got %08x\n", status);
+        ok(!status, "expected STATUS_SUCCESS, got %08lx\n", status);
         SetEvent(info->event);
     }
 
@@ -2623,44 +2624,44 @@ static void test_apc_deadlock(void)
     winetest_get_mainargs(&argv);
     sprintf(cmdline, "\"%s\" sync apc_deadlock", argv[0]);
     success = CreateProcessA(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
-    ok(success, "CreateProcess failed with %u\n", GetLastError());
+    ok(success, "CreateProcess failed with %lu\n", GetLastError());
 
     event = CreateEventA(NULL, FALSE, FALSE, NULL);
-    ok(event != NULL, "CreateEvent failed with %u\n", GetLastError());
+    ok(event != NULL, "CreateEvent failed with %lu\n", GetLastError());
 
     info.pi = &pi;
     info.event = event;
     info.running = TRUE;
 
     thread = CreateThread(NULL, 0, apc_deadlock_thread, &info, 0, NULL);
-    ok(thread != NULL, "CreateThread failed with %u\n", GetLastError());
+    ok(thread != NULL, "CreateThread failed with %lu\n", GetLastError());
     result = WaitForSingleObject(event, 1000);
-    ok(result == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", result);
+    ok(result == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %lu\n", result);
 
     for (i = 0; i < 1000 && info.running; i++)
     {
         result = SuspendThread(pi.hThread);
-        ok(result == 0, "expected 0, got %u\n", result);
+        ok(result == 0, "expected 0, got %lu\n", result);
 
         WaitForSingleObject(event, 0); /* reset event */
         result = WaitForSingleObject(event, 1000);
         if (result == WAIT_TIMEOUT)
         {
             todo_wine
-            ok(result == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", result);
+            ok(result == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %lu\n", result);
             info.running = FALSE;
         }
         else
-            ok(result == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", result);
+            ok(result == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %lu\n", result);
 
         result = ResumeThread(pi.hThread);
-        ok(result == 1, "expected 1, got %u\n", result);
+        ok(result == 1, "expected 1, got %lu\n", result);
         Sleep(1);
     }
 
     info.running = FALSE;
     result = WaitForSingleObject(thread, 1000);
-    ok(result == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", result);
+    ok(result == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %lu\n", result);
     CloseHandle(thread);
     CloseHandle(event);
 
@@ -2733,48 +2734,48 @@ static void test_QueueUserAPC(void)
     NTSTATUS status;
 
     thread = CreateThread(NULL, 0, thread_proc, NULL, CREATE_SUSPENDED, &tid);
-    ok(thread != NULL, "CreateThread error %u\n", GetLastError());
+    ok(thread != NULL, "CreateThread error %lu\n", GetLastError());
 
     ret = TerminateThread(thread, 0xdeadbeef);
-    ok(ret, "TerminateThread error %u\n", GetLastError());
+    ok(ret, "TerminateThread error %lu\n", GetLastError());
 
     ret = WaitForSingleObject(thread, 1000);
-    ok(ret == WAIT_OBJECT_0, "got %u\n", ret);
+    ok(ret == WAIT_OBJECT_0, "got %lu\n", ret);
 
     ret = pNtQueueApcThread(thread, call_user_apc, (ULONG_PTR)user_apc, 0, 0);
-    ok(ret == STATUS_UNSUCCESSFUL, "got %#x\n", ret);
+    ok(ret == STATUS_UNSUCCESSFUL, "got %#lx\n", ret);
     ret = pNtQueueApcThread(thread, NULL, 0, 0, 0);
-    ok(ret == STATUS_UNSUCCESSFUL, "got %#x\n", ret);
+    ok(ret == STATUS_UNSUCCESSFUL, "got %#lx\n", ret);
 
     SetLastError(0xdeadbeef);
     ret = QueueUserAPC(user_apc, thread, 0);
     ok(!ret, "QueueUserAPC should fail\n");
-    ok(GetLastError() == ERROR_GEN_FAILURE, "got %u\n", GetLastError());
+    ok(GetLastError() == ERROR_GEN_FAILURE, "got %lu\n", GetLastError());
 
     CloseHandle(thread);
 
     apc_count = 0;
     ret = QueueUserAPC(user_apc, GetCurrentThread(), 0);
-    ok(ret, "QueueUserAPC failed err %u\n", GetLastError());
+    ok(ret, "QueueUserAPC failed err %lu\n", GetLastError());
     ok(!apc_count, "APC count %u\n", apc_count);
     ret = SleepEx( 100, TRUE );
-    ok( ret == WAIT_IO_COMPLETION, "SleepEx returned %u\n", ret);
+    ok( ret == WAIT_IO_COMPLETION, "SleepEx returned %lu\n", ret);
     ok(apc_count == 1, "APC count %u\n", apc_count);
 
     ret = pNtQueueApcThread( GetCurrentThread(), NULL, 0, 0, 0 );
-    ok( !ret, "got %#x\n", ret);
+    ok( !ret, "got %#lx\n", ret);
     ret = SleepEx( 100, TRUE );
-    ok( ret == WAIT_OBJECT_0, "SleepEx returned %u\n", ret);
+    ok( ret == WAIT_OBJECT_0, "SleepEx returned %lu\n", ret);
 
     apc_count = 0;
     ret = QueueUserAPC(user_apc, GetCurrentThread(), 0);
-    ok(ret, "QueueUserAPC failed err %u\n", GetLastError());
+    ok(ret, "QueueUserAPC failed err %lu\n", GetLastError());
     ok(!apc_count, "APC count %u\n", apc_count);
     status = pNtTestAlert();
-    ok(!status, "got %x\n", status);
+    ok(!status, "got %lx\n", status);
     ok(apc_count == 1, "APC count %u\n", apc_count);
     status = pNtTestAlert();
-    ok(!status, "got %x\n", status);
+    ok(!status, "got %lx\n", status);
     ok(apc_count == 1, "APC count %u\n", apc_count);
 }
 
