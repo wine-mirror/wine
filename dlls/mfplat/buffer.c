@@ -18,6 +18,8 @@
 
 #define COBJMACROS
 
+#include <malloc.h>
+
 #include "mfplat_private.h"
 #include "rtworkq.h"
 
@@ -171,7 +173,7 @@ static ULONG WINAPI memory_buffer_Release(IMFMediaBuffer *iface)
         }
         DeleteCriticalSection(&buffer->cs);
         free(buffer->_2d.linear_buffer);
-        free(buffer->data);
+        _aligned_free(buffer->data);
         free(buffer);
     }
 
@@ -1254,8 +1256,26 @@ static const IMFDXGIBufferVtbl dxgi_buffer_vtbl =
 static HRESULT memory_buffer_init(struct buffer *buffer, DWORD max_length, DWORD alignment,
         const IMFMediaBufferVtbl *vtbl)
 {
-    if (!(buffer->data = calloc(1, ALIGN_SIZE(max_length, alignment))))
+    size_t size;
+
+    if (!alignment) alignment = MF_64_BYTE_ALIGNMENT;
+    alignment++;
+
+    if (alignment & (alignment - 1))
+    {
+        alignment--;
+        alignment |= alignment >> 1;
+        alignment |= alignment >> 2;
+        alignment |= alignment >> 4;
+        alignment |= alignment >> 8;
+        alignment |= alignment >> 16;
+        alignment++;
+    }
+
+    size = ALIGN_SIZE(max_length, alignment - 1);
+    if (!(buffer->data = _aligned_malloc(size, alignment)))
         return E_OUTOFMEMORY;
+    memset(buffer->data, 0, size);
 
     buffer->IMFMediaBuffer_iface.lpVtbl = vtbl;
     buffer->refcount = 1;
