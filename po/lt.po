@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-12-21 23:32+0200\n"
+"PO-Revision-Date: 2022-03-08 09:46+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -10378,11 +10378,9 @@ msgid "(UTC+05:45) Kathmandu"
 msgstr "(UTC+05:45) Katmandu"
 
 #: dlls/tzres/tzres.rc:90
-#, fuzzy
-#| msgid "Cape Verde Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Cape Verde Standard Time"
-msgstr "Žaliojo Kyšulio juostinis laikas"
+msgstr "Žaliojo Kyšulio juost. laikas"
 
 #: dlls/tzres/tzres.rc:91
 msgctxt "maximum 31 characters"
@@ -10408,11 +10406,9 @@ msgid "(UTC-05:00) Haiti"
 msgstr "(UTC-05:00) Haitis"
 
 #: dlls/tzres/tzres.rc:111
-#, fuzzy
-#| msgid "Central European Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Central European Standard Time"
-msgstr "Vidurio Europos juostinis laikas"
+msgstr "Vidurio Europos juost. laikas"
 
 #: dlls/tzres/tzres.rc:112
 msgctxt "maximum 31 characters"
@@ -10461,11 +10457,9 @@ msgid "(UTC+07:00) Barnaul, Gorno-Altaysk"
 msgstr "(UTC+07:00) Barnaulas, Gorno Altaiskas"
 
 #: dlls/tzres/tzres.rc:108
-#, fuzzy
-#| msgid "Central Europe Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Central Europe Standard Time"
-msgstr "Vidurio Europos juostinis laikas"
+msgstr "Vidurio Europos juost. laikas"
 
 #: dlls/tzres/tzres.rc:109
 msgctxt "maximum 31 characters"
@@ -10547,11 +10541,9 @@ msgid "(UTC+13:00) Nuku'alofa"
 msgstr "(UTC+13:00) Nukualofa"
 
 #: dlls/tzres/tzres.rc:240
-#, fuzzy
-#| msgid "Mountain Standard Time (Mexico)"
 msgctxt "maximum 31 characters"
 msgid "Mountain Standard Time (Mexico)"
-msgstr "Kalnų juostinis laikas (Meksika)"
+msgstr "Kalnų juost. laikas (Meksika)"
 
 #: dlls/tzres/tzres.rc:241
 msgctxt "maximum 31 characters"
@@ -10684,36 +10676,28 @@ msgid "(UTC+02:00) Khartoum"
 msgstr "(UTC+02:00) Chartumas"
 
 #: dlls/tzres/tzres.rc:438
-#, fuzzy
-#| msgid "West Pacific Standard Time"
 msgctxt "maximum 31 characters"
 msgid "West Pacific Standard Time"
-msgstr "Vakarų Ramiojo vandenyno juostinis laikas"
+msgstr "V. R. vandenyno juost. laikas"
 
 #: dlls/tzres/tzres.rc:439
-#, fuzzy
-#| msgid "West Pacific Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "West Pacific Daylight Time"
-msgstr "Vakarų Ramiojo vandenyno vasaros laikas"
+msgstr "V. R. vandenyno vasaros laikas"
 
 #: dlls/tzres/tzres.rc:440
 msgid "(UTC+10:00) Guam, Port Moresby"
 msgstr "(UTC+10:00) Guam, Port Morsbis"
 
 #: dlls/tzres/tzres.rc:279
-#, fuzzy
-#| msgid "Pacific Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Pacific Standard Time"
-msgstr "Ramiojo vandenyno juostinis laikas"
+msgstr "R. vandenyno juostinis laikas"
 
 #: dlls/tzres/tzres.rc:280
-#, fuzzy
-#| msgid "Pacific Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Pacific Daylight Time"
-msgstr "Ramiojo vandenyno vasaros laikas"
+msgstr "R. vandenyno vasaros laikas"
 
 #: dlls/tzres/tzres.rc:281
 msgid "(UTC-08:00) Pacific Time (US & Canada)"
@@ -10776,18 +10760,14 @@ msgid "(UTC+02:00) Kaliningrad"
 msgstr "(UTC+02:00) Karaliaučius"
 
 #: dlls/tzres/tzres.rc:282
-#, fuzzy
-#| msgid "Pacific Standard Time (Mexico)"
 msgctxt "maximum 31 characters"
 msgid "Pacific Standard Time (Mexico)"
-msgstr "Ramiojo vandenyno juostinis laikas (Meksika)"
+msgstr "R. vand. juost. l. (Meksika)"
 
 #: dlls/tzres/tzres.rc:283
-#, fuzzy
-#| msgid "Pacific Daylight Time (Mexico)"
 msgctxt "maximum 31 characters"
 msgid "Pacific Daylight Time (Mexico)"
-msgstr "Ramiojo vandenyno vasaros laikas (Meksika)"
+msgstr "R. vand. vas. laikas (Meksika)"
 
 #: dlls/tzres/tzres.rc:284
 msgid "(UTC-08:00) Baja California"
@@ -10915,18 +10895,14 @@ msgid "(UTC-01:00) Azores"
 msgstr "(UTC-01:00) Azorai"
 
 #: dlls/tzres/tzres.rc:264
-#, fuzzy
-#| msgid "North Asia East Standard Time"
 msgctxt "maximum 31 characters"
 msgid "North Asia East Standard Time"
-msgstr "Šiaurės Azijos rytų juostinis laikas"
+msgstr "Š. Azijos rytų juostinis laikas"
 
 #: dlls/tzres/tzres.rc:265
-#, fuzzy
-#| msgid "North Asia East Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "North Asia East Daylight Time"
-msgstr "Šiaurės Azijos rytų vasaros laikas"
+msgstr "Š. Azijos rytų vasaros laikas"
 
 #: dlls/tzres/tzres.rc:266
 msgid "(UTC+08:00) Irkutsk"
@@ -10956,18 +10932,14 @@ msgid "(UTC-03:00) City of Buenos Aires"
 msgstr "(UTC-03:00) Buenos Airės"
 
 #: dlls/tzres/tzres.rc:378
-#, fuzzy
-#| msgid "Turks And Caicos Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Turks And Caicos Standard Time"
-msgstr "Terkso ir Kaikoso juostinis laikas"
+msgstr "Terkso ir Kaikoso juost. laikas"
 
 #: dlls/tzres/tzres.rc:379
-#, fuzzy
-#| msgid "Turks And Caicos Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Turks And Caicos Daylight Time"
-msgstr "Terkso ir Kaikoso vasaros laikas"
+msgstr "Terkso ir Kaikoso vas. laikas"
 
 #: dlls/tzres/tzres.rc:380
 msgid "(UTC-05:00) Turks and Caicos"
@@ -11002,11 +10974,9 @@ msgid "(UTC+06:30) Yangon (Rangoon)"
 msgstr "(UTC+06:30) Jangonas"
 
 #: dlls/tzres/tzres.rc:390 dlls/tzres/tzres.rc:391
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgctxt "maximum 31 characters"
 msgid "Coordinated Universal Time"
-msgstr "Pasaulinis koordinuotasis laikas"
+msgstr "Pasaulinis koord. laikas"
 
 #: dlls/tzres/tzres.rc:392
 msgid "(UTC) Coordinated Universal Time"
@@ -11083,18 +11053,14 @@ msgid "(UTC+12:00) Fiji"
 msgstr "(UTC+12:00) Fidžis"
 
 #: dlls/tzres/tzres.rc:87
-#, fuzzy
-#| msgid "Canada Central Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Canada Central Standard Time"
-msgstr "Kanados centrinis juostinis laikas"
+msgstr "Kanados centrinis juost. laikas"
 
 #: dlls/tzres/tzres.rc:88
-#, fuzzy
-#| msgid "Canada Central Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Canada Central Daylight Time"
-msgstr "Kanados centrinis vasaros laikas"
+msgstr "Kanados centrinis vas. laikas"
 
 #: dlls/tzres/tzres.rc:89
 msgid "(UTC-06:00) Saskatchewan"
@@ -11129,18 +11095,14 @@ msgid "(UTC+08:00) Taipei"
 msgstr "(UTC+08:00) Taipėjus"
 
 #: dlls/tzres/tzres.rc:426
-#, fuzzy
-#| msgid "W. Europe Standard Time"
 msgctxt "maximum 31 characters"
 msgid "W. Europe Standard Time"
-msgstr "Vakarinės Europos juostinis laikas"
+msgstr "V. Europos juostinis laikas"
 
 #: dlls/tzres/tzres.rc:427
-#, fuzzy
-#| msgid "W. Europe Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "W. Europe Daylight Time"
-msgstr "Vakarinės Europos vasaros laikas"
+msgstr "V. Europos vasaros laikas"
 
 #: dlls/tzres/tzres.rc:428
 msgid "(UTC+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna"
@@ -11217,18 +11179,14 @@ msgid "(UTC+10:00) Canberra, Melbourne, Sydney"
 msgstr "(UTC+10:00) Kanbera, Melburnas, Sidnėjus"
 
 #: dlls/tzres/tzres.rc:246
-#, fuzzy
-#| msgid "N. Central Asia Standard Time"
 msgctxt "maximum 31 characters"
 msgid "N. Central Asia Standard Time"
-msgstr "Š. Vidurio Azijos juostinis laikas"
+msgstr "Š. Vid. Azijos juostinis laikas"
 
 #: dlls/tzres/tzres.rc:247
-#, fuzzy
-#| msgid "N. Central Asia Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "N. Central Asia Daylight Time"
-msgstr "Š. Vidurio Azijos vasaros laikas"
+msgstr "Š. Vid. Azijos vasaros laikas"
 
 #: dlls/tzres/tzres.rc:248
 msgid "(UTC+07:00) Novosibirsk"
@@ -11277,18 +11235,14 @@ msgid "(UTC+02:00) Chisinau"
 msgstr "(UTC+02:00) Kišiniovas"
 
 #: dlls/tzres/tzres.rc:120
-#, fuzzy
-#| msgid "Central Standard Time (Mexico)"
 msgctxt "maximum 31 characters"
 msgid "Central Standard Time (Mexico)"
-msgstr "Centrinis juostinis laikas (Meksika)"
+msgstr "C. juostinis laikas (Meksika)"
 
 #: dlls/tzres/tzres.rc:121
-#, fuzzy
-#| msgid "Central Daylight Time (Mexico)"
 msgctxt "maximum 31 characters"
 msgid "Central Daylight Time (Mexico)"
-msgstr "Centrinis vasaros laikas (Meksika)"
+msgstr "C. vasaros laikas (Meksika)"
 
 #: dlls/tzres/tzres.rc:122
 msgid "(UTC-06:00) Guadalajara, Mexico City, Monterrey"
@@ -11309,18 +11263,14 @@ msgid "(UTC+04:00) Saratov"
 msgstr "(UTC+04:00) Saratovas"
 
 #: dlls/tzres/tzres.rc:57
-#, fuzzy
-#| msgid "Atlantic Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Atlantic Standard Time"
-msgstr "Atlanto vandenyno juostinis laikas"
+msgstr "Atlanto vandenyno juost. laikas"
 
 #: dlls/tzres/tzres.rc:58
-#, fuzzy
-#| msgid "Atlantic Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Atlantic Daylight Time"
-msgstr "Atlanto vandenyno vasaros laikas"
+msgstr "Atlanto vandenyno vas. laikas"
 
 #: dlls/tzres/tzres.rc:59
 msgid "(UTC-04:00) Atlantic Time (Canada)"
@@ -11369,16 +11319,14 @@ msgid "(UTC+11:00) Sakhalin"
 msgstr "(UTC+11:00) Sachalinas"
 
 #: dlls/tzres/tzres.rc:270
-#, fuzzy
-#| msgid "North Korea Standard Time"
 msgctxt "maximum 31 characters"
 msgid "North Korea Standard Time"
-msgstr "Šiaurės Korėjos juostinis laikas"
+msgstr "Š. Korėjos juostinis laikas"
 
 #: dlls/tzres/tzres.rc:271
 msgctxt "maximum 31 characters"
 msgid "North Korea Daylight Time"
-msgstr "Šiaurės Korėjos vasaros laikas"
+msgstr "Š. Korėjos vasaros laikas"
 
 #: dlls/tzres/tzres.rc:272
 msgid "(UTC+09:00) Pyongyang"
@@ -11399,18 +11347,14 @@ msgid "(UTC+10:00) Hobart"
 msgstr "(UTC+10:00) Hobartas"
 
 #: dlls/tzres/tzres.rc:99
-#, fuzzy
-#| msgid "Central America Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Central America Standard Time"
-msgstr "Centrinės Amerikos juostinis laikas"
+msgstr "C. Amerikos juostinis laikas"
 
 #: dlls/tzres/tzres.rc:100
-#, fuzzy
-#| msgid "Central America Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Central America Daylight Time"
-msgstr "Centrinės Amerikos vasaros laikas"
+msgstr "C. Amerikos vasaros laikas"
 
 #: dlls/tzres/tzres.rc:101
 msgid "(UTC-06:00) Central America"
@@ -11454,11 +11398,9 @@ msgid "(UTC+02:00) Harare, Pretoria"
 msgstr "(UTC+02:00) Hararė, Pretorija"
 
 #: dlls/tzres/tzres.rc:96
-#, fuzzy
-#| msgid "Cen. Australia Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Cen. Australia Standard Time"
-msgstr "Vid. Australijos juostinis laikas"
+msgstr "Vid. Australijos juost. laikas"
 
 #: dlls/tzres/tzres.rc:97
 msgctxt "maximum 31 characters"
@@ -11591,11 +11533,9 @@ msgid "(UTC+03:00) Moscow, St. Petersburg"
 msgstr "(UTC+03:00) Maskva, Sankt Peterburgas"
 
 #: dlls/tzres/tzres.rc:63
-#, fuzzy
-#| msgid "Aus Central W. Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Aus Central W. Standard Time"
-msgstr "AUS Centrinis v. juostinis laikas"
+msgstr "AUS Centrinis v. juost. laikas"
 
 #: dlls/tzres/tzres.rc:64
 msgctxt "maximum 31 characters"
@@ -11756,18 +11696,14 @@ msgid "(UTC+06:00) Dhaka"
 msgstr "(UTC+06:00) Daka"
 
 #: dlls/tzres/tzres.rc:312
-#, fuzzy
-#| msgid "SA Pacific Standard Time"
 msgctxt "maximum 31 characters"
 msgid "SA Pacific Standard Time"
-msgstr "PA Ramiojo vandenyno juostinis laikas"
+msgstr "PA R. vandenyno juost. laikas"
 
 #: dlls/tzres/tzres.rc:313
-#, fuzzy
-#| msgid "SA Pacific Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "SA Pacific Daylight Time"
-msgstr "PA Ramiojo vandenyno vasaros laikas"
+msgstr "PA R. vandenyno vasaros laikas"
 
 #: dlls/tzres/tzres.rc:314
 msgid "(UTC-05:00) Bogota, Lima, Quito, Rio Branco"
@@ -11816,18 +11752,14 @@ msgid "(UTC-04:00) Asuncion"
 msgstr "(UTC-04:00) Asunsjonas"
 
 #: dlls/tzres/tzres.rc:132
-#, fuzzy
-#| msgid "Dateline Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Dateline Standard Time"
-msgstr "Datos keitimosi linijos juostinis laikas"
+msgstr "Datos k. linijos juost. laikas"
 
 #: dlls/tzres/tzres.rc:133
-#, fuzzy
-#| msgid "Dateline Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Dateline Daylight Time"
-msgstr "Datos keitimosi linijos vasaros laikas"
+msgstr "Datos k. linijos vasaros laikas"
 
 #: dlls/tzres/tzres.rc:134
 msgid "(UTC-12:00) International Date Line West"
@@ -11904,11 +11836,9 @@ msgid "(UTC-10:00) Hawaii"
 msgstr "(UTC-10:00) Havajai"
 
 #: dlls/tzres/tzres.rc:333
-#, fuzzy
-#| msgid "SE Asia Standard Time"
 msgctxt "maximum 31 characters"
 msgid "SE Asia Standard Time"
-msgstr "Pietryčių Azijos juostinis laikas"
+msgstr "Pietryčių Azijos juost. laikas"
 
 #: dlls/tzres/tzres.rc:334
 msgctxt "maximum 31 characters"
@@ -11948,18 +11878,14 @@ msgid "(UTC+07:00) Hovd"
 msgstr "(UTC+07:00) Chovdas"
 
 #: dlls/tzres/tzres.rc:255
-#, fuzzy
-#| msgid "New Zealand Standard Time"
 msgctxt "maximum 31 characters"
 msgid "New Zealand Standard Time"
-msgstr "Naujosios Zelandijos juostinis laikas"
+msgstr "N. Zelandijos juostinis laikas"
 
 #: dlls/tzres/tzres.rc:256
-#, fuzzy
-#| msgid "New Zealand Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "New Zealand Daylight Time"
-msgstr "Naujosios Zelandijos vasaros laikas"
+msgstr "N. Zelandijos vasaros laikas"
 
 #: dlls/tzres/tzres.rc:257
 msgid "(UTC+12:00) Auckland, Wellington"
@@ -11994,18 +11920,14 @@ msgid "(UTC+06:00) Omsk"
 msgstr "(UTC+06:00) Omskas"
 
 #: dlls/tzres/tzres.rc:105
-#, fuzzy
-#| msgid "Central Brazilian Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Central Brazilian Standard Time"
-msgstr "Centrinės Brazilijos juostinis laikas"
+msgstr "C. Brazilijos juostinis laikas"
 
 #: dlls/tzres/tzres.rc:106
-#, fuzzy
-#| msgid "Central Brazilian Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Central Brazilian Daylight Time"
-msgstr "Centrinės Brazilijos vasaros laikas"
+msgstr "C. Brazilijos vasaros laikas"
 
 #: dlls/tzres/tzres.rc:107
 msgid "(UTC-04:00) Cuiaba"
@@ -12091,18 +12013,14 @@ msgid "(UTC+02:00) Cairo"
 msgstr "(UTC+02:00) Kairas"
 
 #: dlls/tzres/tzres.rc:153
-#, fuzzy
-#| msgid "Eastern Standard Time (Mexico)"
 msgctxt "maximum 31 characters"
 msgid "Eastern Standard Time (Mexico)"
-msgstr "Rytinis juostinis laikas (Meksika)"
+msgstr "Rytinis juost. laikas (Meksika)"
 
 #: dlls/tzres/tzres.rc:154
-#, fuzzy
-#| msgid "Eastern Daylight Time (Mexico)"
 msgctxt "maximum 31 characters"
 msgid "Eastern Daylight Time (Mexico)"
-msgstr "Rytinis vasaros laikas (Meksika)"
+msgstr "Rytinis vas. laikas (Meksika)"
 
 #: dlls/tzres/tzres.rc:155
 msgid "(UTC-05:00) Chetumal"
@@ -12207,72 +12125,56 @@ msgid "(UTC+02:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius"
 msgstr "(UTC+02:00) Helsinkis, Kijevas, Ryga, Sofija, Talinas, Vilnius"
 
 #: dlls/tzres/tzres.rc:144
-#, fuzzy
-#| msgid "E. South America Standard Time"
 msgctxt "maximum 31 characters"
 msgid "E. South America Standard Time"
-msgstr "R. Pietų Amerikos juostinis laikas"
+msgstr "R. P. Amerikos juostinis laikas"
 
 #: dlls/tzres/tzres.rc:145
-#, fuzzy
-#| msgid "E. South America Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "E. South America Daylight Time"
-msgstr "R. Pietų Amerikos vasaros laikas"
+msgstr "R. P. Amerikos vasaros laikas"
 
 #: dlls/tzres/tzres.rc:146
 msgid "(UTC-03:00) Brasilia"
 msgstr "(UTC-03:00) Brazilija"
 
 #: dlls/tzres/tzres.rc:114
-#, fuzzy
-#| msgid "Central Pacific Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Central Pacific Standard Time"
-msgstr "Vidurio Ramiojo vandenyno juostinis laikas"
+msgstr "Vid. R. vandenyno juost. laikas"
 
 #: dlls/tzres/tzres.rc:115
-#, fuzzy
-#| msgid "Central Pacific Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Central Pacific Daylight Time"
-msgstr "Vidurio Ramiojo vandenyno vasaros laikas"
+msgstr "Vid. R. vandenyno vas. laikas"
 
 #: dlls/tzres/tzres.rc:116
 msgid "(UTC+11:00) Solomon Is., New Caledonia"
 msgstr "(UTC+11:00) Saliamono Salos, Naujoji Kaledonija"
 
 #: dlls/tzres/tzres.rc:423
-#, fuzzy
-#| msgid "W. Central Africa Standard Time"
 msgctxt "maximum 31 characters"
 msgid "W. Central Africa Standard Time"
-msgstr "V. Vidurio Afrikos juostinis laikas"
+msgstr "V. Vid. Afrikos juost. laikas"
 
 #: dlls/tzres/tzres.rc:424
-#, fuzzy
-#| msgid "W. Central Africa Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "W. Central Africa Daylight Time"
-msgstr "V. Vidurio Afrikos vasaros laikas"
+msgstr "V. Vid. Afrikos vasaros laikas"
 
 #: dlls/tzres/tzres.rc:425
 msgid "(UTC+01:00) West Central Africa"
 msgstr "(UTC+01:00) Vakarų vidurio Afrika"
 
 #: dlls/tzres/tzres.rc:276
-#, fuzzy
-#| msgid "Pacific SA Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Pacific SA Standard Time"
-msgstr "Ramiojo vandenyno PA juostinis laikas"
+msgstr "R. vandenyno PA juost. laikas"
 
 #: dlls/tzres/tzres.rc:277
-#, fuzzy
-#| msgid "Pacific SA Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Pacific SA Daylight Time"
-msgstr "Ramiojo vandenyno PA vasaros laikas"
+msgstr "R. vandenyno PA vasaros laikas"
 
 #: dlls/tzres/tzres.rc:278
 msgid "(UTC-04:00) Santiago"
