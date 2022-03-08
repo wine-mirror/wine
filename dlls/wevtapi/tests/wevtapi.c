@@ -42,24 +42,24 @@ static void test_EvtGetChannelConfigProperty(void)
         skip("Not enough privileges to modify HKLM\n");
         return;
     }
-    ok(ret == ERROR_SUCCESS, "RegCreateKey error %u\n", ret);
+    ok(ret == ERROR_SUCCESS, "RegCreateKey error %lu\n", ret);
 
     config = EvtOpenChannelConfig(NULL, L"Winetest", 0);
-    ok(config != NULL, "EvtOpenChannelConfig error %u\n", GetLastError());
+    ok(config != NULL, "EvtOpenChannelConfig error %lu\n", GetLastError());
 
     ret = EvtGetChannelConfigProperty(config, EvtChannelLoggingConfigLogFilePath, 0, 0, NULL, &size);
     ok(!ret, "EvtGetChannelConfigProperty should fail\n");
-    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %u\n", GetLastError());
-    ok(size < sizeof(path), "got %u\n", size);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %lu\n", GetLastError());
+    ok(size < sizeof(path), "got %lu\n", size);
 
     memset(&path, 0, sizeof(path));
     path.var.Count = 0xdeadbeef;
     path.var.Type = 0xdeadbeef;
     ret = EvtGetChannelConfigProperty(config, EvtChannelLoggingConfigLogFilePath, 0, size, (EVT_VARIANT *)&path, &size);
-    ok(ret, "EvtGetChannelConfigProperty error %u\n", GetLastError());
-    ok(path.var.Count == 0xdeadbeef, "got %u\n", path.var.Count);
-    ok(path.var.Type == EvtVarTypeString, "got %u\n", path.var.Type);
-    ok(size == sizeof(EVT_VARIANT) + (wcslen(path.var.u.StringVal) + 1) * sizeof(WCHAR), "got %u\n", size);
+    ok(ret, "EvtGetChannelConfigProperty error %lu\n", GetLastError());
+    ok(path.var.Count == 0xdeadbeef, "got %lu\n", path.var.Count);
+    ok(path.var.Type == EvtVarTypeString, "got %lu\n", path.var.Type);
+    ok(size == sizeof(EVT_VARIANT) + (wcslen(path.var.u.StringVal) + 1) * sizeof(WCHAR), "got %lu\n", size);
     ok(path.var.u.StringVal == path.buf, "path.var.u.StringVal = %p, path.buf = %p\n", path.var.u.StringVal, path.buf);
 
     EvtClose(config);
