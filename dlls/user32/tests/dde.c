@@ -816,6 +816,7 @@ static void test_ddeml_server(void)
     HANDLE client;
     MSG msg;
     UINT res;
+    DWORD exit_code;
     BOOL ret;
     HSZ server;
     HDDEDATA hdata;
@@ -839,8 +840,8 @@ static void test_ddeml_server(void)
     }
     ret = DdeUninitialize(server_pid);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
-    GetExitCodeProcess(client, &res);
-    ok( !res, "client failed with %u error(s)\n", res );
+    GetExitCodeProcess(client, &exit_code);
+    ok( !res, "client failed with %u error(s)\n", exit_code );
     CloseHandle(client);
 }
 
