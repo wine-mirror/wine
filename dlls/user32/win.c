@@ -288,76 +288,6 @@ static HWND *list_window_children( HDESK desktop, HWND hwnd, UNICODE_STRING *cla
 
 
 /*******************************************************************
- *           list_window_parents
- *
- * Build an array of all parents of a given window, starting with
- * the immediate parent. The array must be freed with HeapFree.
- */
-static HWND *list_window_parents( HWND hwnd )
-{
-    WND *win;
-    HWND current, *list;
-    int i, pos = 0, size = 16, count;
-
-    if (!(list = HeapAlloc( GetProcessHeap(), 0, size * sizeof(HWND) ))) return NULL;
-
-    current = hwnd;
-    for (;;)
-    {
-        if (!(win = WIN_GetPtr( current ))) goto empty;
-        if (win == WND_OTHER_PROCESS) break;  /* need to do it the hard way */
-        if (win == WND_DESKTOP)
-        {
-            if (!pos) goto empty;
-            list[pos] = 0;
-            return list;
-        }
-        list[pos] = current = win->parent;
-        WIN_ReleasePtr( win );
-        if (!current) return list;
-        if (++pos == size - 1)
-        {
-            /* need to grow the list */
-            HWND *new_list = HeapReAlloc( GetProcessHeap(), 0, list, (size+16) * sizeof(HWND) );
-            if (!new_list) goto empty;
-            list = new_list;
-            size += 16;
-        }
-    }
-
-    /* at least one parent belongs to another process, have to query the server */
-
-    for (;;)
-    {
-        count = 0;
-        SERVER_START_REQ( get_window_parents )
-        {
-            req->handle = wine_server_user_handle( hwnd );
-            wine_server_set_reply( req, list, (size-1) * sizeof(user_handle_t) );
-            if (!wine_server_call( req )) count = reply->count;
-        }
-        SERVER_END_REQ;
-        if (!count) goto empty;
-        if (size > count)
-        {
-            /* start from the end since HWND is potentially larger than user_handle_t */
-            for (i = count - 1; i >= 0; i--)
-                list[i] = wine_server_ptr_handle( ((user_handle_t *)list)[i] );
-            list[count] = 0;
-            return list;
-        }
-        HeapFree( GetProcessHeap(), 0, list );
-        size = count + 1;
-        if (!(list = HeapAlloc( GetProcessHeap(), 0, size * sizeof(HWND) ))) return NULL;
-    }
-
- empty:
-    HeapFree( GetProcessHeap(), 0, list );
-    return NULL;
-}
-
-
-/*******************************************************************
  *           send_parent_notify
  */
 static void send_parent_notify( HWND hwnd, UINT msg )
@@ -3029,24 +2959,8 @@ BOOL WINAPI IsWindowVisible( HWND hwnd )
  */
 BOOL WIN_IsWindowDrawable( HWND hwnd, BOOL icon )
 {
-    HWND *list;
-    BOOL retval = TRUE;
-    int i;
-    LONG style = GetWindowLongW( hwnd, GWL_STYLE );
-
-    if (!(style & WS_VISIBLE)) return FALSE;
-    if ((style & WS_MINIMIZE) && icon && GetClassLongPtrW( hwnd, GCLP_HICON ))  return FALSE;
-
-    if (!(list = list_window_parents( hwnd ))) return TRUE;
-    if (list[0])
-    {
-        for (i = 0; list[i+1]; i++)
-            if ((GetWindowLongW( list[i], GWL_STYLE ) & (WS_VISIBLE|WS_MINIMIZE)) != WS_VISIBLE)
-                break;
-        retval = !list[i+1] && (list[i] == GetDesktopWindow());  /* top message window isn't visible */
-    }
-    HeapFree( GetProcessHeap(), 0, list );
-    return retval;
+    /* FIXME: move callers to win32u */
+    return NtUserCallHwndParam( hwnd, icon, NtUserIsWindowDrawable );
 }
 
 

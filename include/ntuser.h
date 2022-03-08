@@ -161,6 +161,8 @@ enum
     NtUserGetWindowThread,
     NtUserGetWindowWord,
     NtUserIsChild,
+    /* temporary exports */
+    NtUserIsWindowDrawable,
 };
 
 /* color index used to retrieve system 55aa brush */

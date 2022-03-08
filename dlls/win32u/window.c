@@ -625,6 +625,35 @@ static BOOL is_window_visible( HWND hwnd )
     return retval;
 }
 
+/***********************************************************************
+ *           is_window_drawable
+ *
+ * hwnd is drawable when it is visible, all parents are not
+ * minimized, and it is itself not minimized unless we are
+ * trying to draw its default class icon.
+ */
+static BOOL is_window_drawable( HWND hwnd, BOOL icon )
+{
+    HWND *list;
+    BOOL retval = TRUE;
+    int i;
+    LONG style = get_window_long( hwnd, GWL_STYLE );
+
+    if (!(style & WS_VISIBLE)) return FALSE;
+    if ((style & WS_MINIMIZE) && icon && get_class_long_ptr( hwnd, GCLP_HICON, FALSE ))  return FALSE;
+
+    if (!(list = list_window_parents( hwnd ))) return TRUE;
+    if (list[0])
+    {
+        for (i = 0; list[i+1]; i++)
+            if ((get_window_long( list[i], GWL_STYLE ) & (WS_VISIBLE|WS_MINIMIZE)) != WS_VISIBLE)
+                break;
+        retval = !list[i+1] && (list[i] == user_callbacks->pGetDesktopWindow());  /* top message window isn't visible */
+    }
+    free( list );
+    return retval;
+}
+
 static LONG_PTR get_win_data( const void *ptr, UINT size )
 {
     if (size == sizeof(WORD))
@@ -1015,6 +1044,9 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
         return get_window_word( hwnd, param );
     case NtUserIsChild:
         return is_child( hwnd, UlongToHandle(param) );
+    /* temporary exports */
+    case NtUserIsWindowDrawable:
+        return is_window_drawable( hwnd, param );
     default:
         FIXME( "invalid code %u\n", code );
         return 0;
