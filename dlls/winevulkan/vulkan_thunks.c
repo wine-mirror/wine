@@ -1807,6 +1807,18 @@ static inline void convert_VkMemoryRequirements2_host_to_win(const VkMemoryRequi
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkDescriptorSetBindingReferenceVALVE_win_to_host(const VkDescriptorSetBindingReferenceVALVE *in, VkDescriptorSetBindingReferenceVALVE_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->descriptorSetLayout = in->descriptorSetLayout;
+    out->binding = in->binding;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkBufferCreateInfo_host *convert_VkBufferCreateInfo_array_win_to_host(const VkBufferCreateInfo *in, uint32_t count)
 {
     VkBufferCreateInfo_host *out;
@@ -4740,6 +4752,22 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             out->sType = in->sType;
             out->pNext = NULL;
             out->linearColorAttachment = in->linearColorAttachment;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_SET_HOST_MAPPING_FEATURES_VALVE:
+        {
+            const VkPhysicalDeviceDescriptorSetHostMappingFeaturesVALVE *in = (const VkPhysicalDeviceDescriptorSetHostMappingFeaturesVALVE *)in_header;
+            VkPhysicalDeviceDescriptorSetHostMappingFeaturesVALVE *out;
+
+            if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->descriptorSetHostMapping = in->descriptorSetHostMapping;
 
             out_header->pNext = (VkBaseOutStructure *)out;
             out_header = out_header->pNext;
@@ -8091,6 +8119,32 @@ static NTSTATUS wine_vkGetDeferredOperationResultKHR(void *args)
     return params->device->funcs.p_vkGetDeferredOperationResultKHR(params->device->device, params->operation);
 }
 
+static NTSTATUS wine_vkGetDescriptorSetHostMappingVALVE(void *args)
+{
+    struct vkGetDescriptorSetHostMappingVALVE_params *params = args;
+    TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->descriptorSet), params->ppData);
+    params->device->funcs.p_vkGetDescriptorSetHostMappingVALVE(params->device->device, params->descriptorSet, params->ppData);
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wine_vkGetDescriptorSetLayoutHostMappingInfoVALVE(void *args)
+{
+    struct vkGetDescriptorSetLayoutHostMappingInfoVALVE_params *params = args;
+#if defined(USE_STRUCT_CONVERSION)
+    VkDescriptorSetBindingReferenceVALVE_host pBindingReference_host;
+    TRACE("%p, %p, %p\n", params->device, params->pBindingReference, params->pHostMapping);
+
+    convert_VkDescriptorSetBindingReferenceVALVE_win_to_host(params->pBindingReference, &pBindingReference_host);
+    params->device->funcs.p_vkGetDescriptorSetLayoutHostMappingInfoVALVE(params->device->device, &pBindingReference_host, params->pHostMapping);
+
+    return STATUS_SUCCESS;
+#else
+    TRACE("%p, %p, %p\n", params->device, params->pBindingReference, params->pHostMapping);
+    params->device->funcs.p_vkGetDescriptorSetLayoutHostMappingInfoVALVE(params->device->device, params->pBindingReference, params->pHostMapping);
+    return STATUS_SUCCESS;
+#endif
+}
+
 static NTSTATUS wine_vkGetDescriptorSetLayoutSupport(void *args)
 {
     struct vkGetDescriptorSetLayoutSupport_params *params = args;
@@ -9749,6 +9803,7 @@ static const char * const vk_device_extensions[] =
     "VK_QCOM_render_pass_store_ops",
     "VK_QCOM_render_pass_transform",
     "VK_QCOM_rotated_copy_commands",
+    "VK_VALVE_descriptor_set_host_mapping",
     "VK_VALVE_mutable_descriptor_type",
 };
 
@@ -10143,6 +10198,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     wine_vkGetCalibratedTimestampsEXT,
     wine_vkGetDeferredOperationMaxConcurrencyKHR,
     wine_vkGetDeferredOperationResultKHR,
+    wine_vkGetDescriptorSetHostMappingVALVE,
+    wine_vkGetDescriptorSetLayoutHostMappingInfoVALVE,
     wine_vkGetDescriptorSetLayoutSupport,
     wine_vkGetDescriptorSetLayoutSupportKHR,
     wine_vkGetDeviceAccelerationStructureCompatibilityKHR,

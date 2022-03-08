@@ -491,6 +491,8 @@
 #define VK_EXT_PAGEABLE_DEVICE_LOCAL_MEMORY_EXTENSION_NAME "VK_EXT_pageable_device_local_memory"
 #define VK_KHR_MAINTENANCE_4_SPEC_VERSION 2
 #define VK_KHR_MAINTENANCE_4_EXTENSION_NAME "VK_KHR_maintenance4"
+#define VK_VALVE_DESCRIPTOR_SET_HOST_MAPPING_SPEC_VERSION 1
+#define VK_VALVE_DESCRIPTOR_SET_HOST_MAPPING_EXTENSION_NAME "VK_VALVE_descriptor_set_host_mapping"
 #define VK_QCOM_FRAGMENT_DENSITY_MAP_OFFSET_SPEC_VERSION 1
 #define VK_QCOM_FRAGMENT_DENSITY_MAP_OFFSET_EXTENSION_NAME "VK_QCOM_fragment_density_map_offset"
 #define VK_NV_LINEAR_COLOR_ATTACHMENT_SPEC_VERSION 1
@@ -517,7 +519,7 @@
 #define VK_API_VERSION_1_1 VK_MAKE_API_VERSION(0, 1, 1, 0)
 #define VK_API_VERSION_1_2 VK_MAKE_API_VERSION(0, 1, 2, 0)
 #define VK_API_VERSION_1_3 VK_MAKE_API_VERSION(0, 1, 3, 0)
-#define VK_HEADER_VERSION 204
+#define VK_HEADER_VERSION 207
 #define VK_HEADER_VERSION_COMPLETE VK_MAKE_API_VERSION(0, 1, 3, VK_HEADER_VERSION)
 #define VK_DEFINE_HANDLE(object) typedef struct object##_T* object;
 #define VK_USE_64_BIT_PTR_DEFINES 0
@@ -766,10 +768,12 @@ typedef VkFlags VkVideoCodecOperationFlagsKHR;
 typedef VkFlags VkVideoCodingControlFlagsKHR;
 typedef VkFlags VkVideoCodingQualityPresetFlagsKHR;
 typedef VkFlags VkVideoComponentBitDepthFlagsKHR;
+typedef VkFlags VkVideoDecodeCapabilityFlagsKHR;
 typedef VkFlags VkVideoDecodeFlagsKHR;
 typedef VkFlags VkVideoDecodeH264CreateFlagsEXT;
 typedef VkFlags VkVideoDecodeH264PictureLayoutFlagsEXT;
 typedef VkFlags VkVideoDecodeH265CreateFlagsEXT;
+typedef VkFlags VkVideoEncodeCapabilityFlagsKHR;
 typedef VkFlags VkVideoEncodeFlagsKHR;
 typedef VkFlags VkVideoEncodeH264CapabilityFlagsEXT;
 typedef VkFlags VkVideoEncodeH264CreateFlagsEXT;
@@ -782,6 +786,7 @@ typedef VkFlags VkVideoEncodeH265CtbSizeFlagsEXT;
 typedef VkFlags VkVideoEncodeH265InputModeFlagsEXT;
 typedef VkFlags VkVideoEncodeH265OutputModeFlagsEXT;
 typedef VkFlags VkVideoEncodeH265RateControlStructureFlagsEXT;
+typedef VkFlags VkVideoEncodeH265TransformBlockSizeFlagsEXT;
 typedef VkFlags VkVideoEncodeRateControlFlagsKHR;
 typedef VkFlags VkVideoEncodeRateControlModeFlagsKHR;
 typedef VkFlags VkVideoEndCodingFlagsKHR;
@@ -2202,7 +2207,7 @@ typedef VkGeometryTypeKHR VkGeometryTypeNV;
 
 typedef enum VkImageAspectFlagBits
 {
-    VK_IMAGE_ASPECT_NONE_KHR = 0,
+    VK_IMAGE_ASPECT_NONE = 0,
     VK_IMAGE_ASPECT_COLOR_BIT = 0x00000001,
     VK_IMAGE_ASPECT_DEPTH_BIT = 0x00000002,
     VK_IMAGE_ASPECT_STENCIL_BIT = 0x00000004,
@@ -2213,6 +2218,7 @@ typedef enum VkImageAspectFlagBits
     VK_IMAGE_ASPECT_PLANE_0_BIT_KHR = VK_IMAGE_ASPECT_PLANE_0_BIT,
     VK_IMAGE_ASPECT_PLANE_1_BIT_KHR = VK_IMAGE_ASPECT_PLANE_1_BIT,
     VK_IMAGE_ASPECT_PLANE_2_BIT_KHR = VK_IMAGE_ASPECT_PLANE_2_BIT,
+    VK_IMAGE_ASPECT_NONE_KHR = VK_IMAGE_ASPECT_NONE,
     VK_IMAGE_ASPECT_FLAG_BITS_MAX_ENUM = 0x7fffffff,
 } VkImageAspectFlagBits;
 
@@ -2846,12 +2852,6 @@ typedef enum VkPrimitiveTopology
     VK_PRIMITIVE_TOPOLOGY_PATCH_LIST = 10,
     VK_PRIMITIVE_TOPOLOGY_MAX_ENUM = 0x7fffffff,
 } VkPrimitiveTopology;
-
-typedef enum VkPrivateDataSlotCreateFlagBits
-{
-    VK_PRIVATE_DATA_SLOT_CREATE_FLAG_BITS_MAX_ENUM = 0x7fffffff,
-} VkPrivateDataSlotCreateFlagBits;
-typedef VkPrivateDataSlotCreateFlagBits VkPrivateDataSlotCreateFlagBitsEXT;
 
 typedef enum VkProvokingVertexModeEXT
 {
@@ -3741,6 +3741,9 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_PROPERTIES = 1000413001,
     VK_STRUCTURE_TYPE_DEVICE_BUFFER_MEMORY_REQUIREMENTS = 1000413002,
     VK_STRUCTURE_TYPE_DEVICE_IMAGE_MEMORY_REQUIREMENTS = 1000413003,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_SET_HOST_MAPPING_FEATURES_VALVE = 1000420000,
+    VK_STRUCTURE_TYPE_DESCRIPTOR_SET_BINDING_REFERENCE_VALVE = 1000420001,
+    VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_HOST_MAPPING_INFO_VALVE = 1000420002,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_OFFSET_FEATURES_QCOM = 1000425000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_OFFSET_PROPERTIES_QCOM = 1000425001,
     VK_STRUCTURE_TYPE_SUBPASS_FRAGMENT_DENSITY_MAP_OFFSET_END_INFO_QCOM = 1000425002,
@@ -4867,6 +4870,14 @@ typedef struct VkDescriptorSetAllocateInfo
     const VkDescriptorSetLayout *pSetLayouts;
 } VkDescriptorSetAllocateInfo;
 
+typedef struct VkDescriptorSetBindingReferenceVALVE
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkDescriptorSetLayout WINE_VK_ALIGN(8) descriptorSetLayout;
+    uint32_t binding;
+} VkDescriptorSetBindingReferenceVALVE;
+
 typedef struct VkDescriptorSetLayoutBinding
 {
     uint32_t binding;
@@ -4893,6 +4904,14 @@ typedef struct VkDescriptorSetLayoutCreateInfo
     uint32_t bindingCount;
     const VkDescriptorSetLayoutBinding *pBindings;
 } VkDescriptorSetLayoutCreateInfo;
+
+typedef struct VkDescriptorSetLayoutHostMappingInfoVALVE
+{
+    VkStructureType sType;
+    void *pNext;
+    size_t descriptorOffset;
+    uint32_t descriptorSize;
+} VkDescriptorSetLayoutHostMappingInfoVALVE;
 
 typedef struct VkDescriptorSetLayoutSupport
 {
@@ -6113,6 +6132,13 @@ typedef struct VkPhysicalDeviceDescriptorIndexingProperties
 } VkPhysicalDeviceDescriptorIndexingProperties;
 typedef VkPhysicalDeviceDescriptorIndexingProperties VkPhysicalDeviceDescriptorIndexingPropertiesEXT;
 
+typedef struct VkPhysicalDeviceDescriptorSetHostMappingFeaturesVALVE
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 descriptorSetHostMapping;
+} VkPhysicalDeviceDescriptorSetHostMappingFeaturesVALVE;
+
 typedef struct VkPhysicalDeviceDeviceGeneratedCommandsFeaturesNV
 {
     VkStructureType sType;
@@ -6957,7 +6983,7 @@ typedef struct VkPhysicalDeviceRGBA10X6FormatsFeaturesEXT
 typedef struct VkPhysicalDeviceRasterizationOrderAttachmentAccessFeaturesARM
 {
     VkStructureType sType;
-    const void *pNext;
+    void *pNext;
     VkBool32 rasterizationOrderColorAttachmentAccess;
     VkBool32 rasterizationOrderDepthAttachmentAccess;
     VkBool32 rasterizationOrderStencilAttachmentAccess;
@@ -10211,6 +10237,8 @@ typedef uint64_t (VKAPI_PTR *PFN_vkGetBufferOpaqueCaptureAddressKHR)(VkDevice, c
 typedef VkResult (VKAPI_PTR *PFN_vkGetCalibratedTimestampsEXT)(VkDevice, uint32_t, const VkCalibratedTimestampInfoEXT *, uint64_t *, uint64_t *);
 typedef uint32_t (VKAPI_PTR *PFN_vkGetDeferredOperationMaxConcurrencyKHR)(VkDevice, VkDeferredOperationKHR);
 typedef VkResult (VKAPI_PTR *PFN_vkGetDeferredOperationResultKHR)(VkDevice, VkDeferredOperationKHR);
+typedef void (VKAPI_PTR *PFN_vkGetDescriptorSetHostMappingVALVE)(VkDevice, VkDescriptorSet, void **);
+typedef void (VKAPI_PTR *PFN_vkGetDescriptorSetLayoutHostMappingInfoVALVE)(VkDevice, const VkDescriptorSetBindingReferenceVALVE *, VkDescriptorSetLayoutHostMappingInfoVALVE *);
 typedef void (VKAPI_PTR *PFN_vkGetDescriptorSetLayoutSupport)(VkDevice, const VkDescriptorSetLayoutCreateInfo *, VkDescriptorSetLayoutSupport *);
 typedef void (VKAPI_PTR *PFN_vkGetDescriptorSetLayoutSupportKHR)(VkDevice, const VkDescriptorSetLayoutCreateInfo *, VkDescriptorSetLayoutSupport *);
 typedef void (VKAPI_PTR *PFN_vkGetDeviceAccelerationStructureCompatibilityKHR)(VkDevice, const VkAccelerationStructureVersionInfoKHR *, VkAccelerationStructureCompatibilityKHR *);
@@ -10666,6 +10694,8 @@ uint64_t VKAPI_CALL vkGetBufferOpaqueCaptureAddressKHR(VkDevice device, const Vk
 VkResult VKAPI_CALL vkGetCalibratedTimestampsEXT(VkDevice device, uint32_t timestampCount, const VkCalibratedTimestampInfoEXT *pTimestampInfos, uint64_t *pTimestamps, uint64_t *pMaxDeviation);
 uint32_t VKAPI_CALL vkGetDeferredOperationMaxConcurrencyKHR(VkDevice device, VkDeferredOperationKHR operation);
 VkResult VKAPI_CALL vkGetDeferredOperationResultKHR(VkDevice device, VkDeferredOperationKHR operation);
+void VKAPI_CALL vkGetDescriptorSetHostMappingVALVE(VkDevice device, VkDescriptorSet descriptorSet, void **ppData);
+void VKAPI_CALL vkGetDescriptorSetLayoutHostMappingInfoVALVE(VkDevice device, const VkDescriptorSetBindingReferenceVALVE *pBindingReference, VkDescriptorSetLayoutHostMappingInfoVALVE *pHostMapping);
 void VKAPI_CALL vkGetDescriptorSetLayoutSupport(VkDevice device, const VkDescriptorSetLayoutCreateInfo *pCreateInfo, VkDescriptorSetLayoutSupport *pSupport);
 void VKAPI_CALL vkGetDescriptorSetLayoutSupportKHR(VkDevice device, const VkDescriptorSetLayoutCreateInfo *pCreateInfo, VkDescriptorSetLayoutSupport *pSupport);
 void VKAPI_CALL vkGetDeviceAccelerationStructureCompatibilityKHR(VkDevice device, const VkAccelerationStructureVersionInfoKHR *pVersionInfo, VkAccelerationStructureCompatibilityKHR *pCompatibility);

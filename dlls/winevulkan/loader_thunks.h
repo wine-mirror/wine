@@ -323,6 +323,8 @@ enum unix_call
     unix_vkGetCalibratedTimestampsEXT,
     unix_vkGetDeferredOperationMaxConcurrencyKHR,
     unix_vkGetDeferredOperationResultKHR,
+    unix_vkGetDescriptorSetHostMappingVALVE,
+    unix_vkGetDescriptorSetLayoutHostMappingInfoVALVE,
     unix_vkGetDescriptorSetLayoutSupport,
     unix_vkGetDescriptorSetLayoutSupportKHR,
     unix_vkGetDeviceAccelerationStructureCompatibilityKHR,
@@ -2813,6 +2815,20 @@ struct vkGetDeferredOperationResultKHR_params
 {
     VkDevice device;
     VkDeferredOperationKHR operation;
+};
+
+struct vkGetDescriptorSetHostMappingVALVE_params
+{
+    VkDevice device;
+    VkDescriptorSet descriptorSet;
+    void **ppData;
+};
+
+struct vkGetDescriptorSetLayoutHostMappingInfoVALVE_params
+{
+    VkDevice device;
+    const VkDescriptorSetBindingReferenceVALVE *pBindingReference;
+    VkDescriptorSetLayoutHostMappingInfoVALVE *pHostMapping;
 };
 
 struct vkGetDescriptorSetLayoutSupport_params

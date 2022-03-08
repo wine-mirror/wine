@@ -2951,6 +2951,24 @@ VkResult WINAPI vkGetDeferredOperationResultKHR(VkDevice device, VkDeferredOpera
     return vk_unix_call(unix_vkGetDeferredOperationResultKHR, &params);
 }
 
+void WINAPI vkGetDescriptorSetHostMappingVALVE(VkDevice device, VkDescriptorSet descriptorSet, void **ppData)
+{
+    struct vkGetDescriptorSetHostMappingVALVE_params params;
+    params.device = device;
+    params.descriptorSet = descriptorSet;
+    params.ppData = ppData;
+    vk_unix_call(unix_vkGetDescriptorSetHostMappingVALVE, &params);
+}
+
+void WINAPI vkGetDescriptorSetLayoutHostMappingInfoVALVE(VkDevice device, const VkDescriptorSetBindingReferenceVALVE *pBindingReference, VkDescriptorSetLayoutHostMappingInfoVALVE *pHostMapping)
+{
+    struct vkGetDescriptorSetLayoutHostMappingInfoVALVE_params params;
+    params.device = device;
+    params.pBindingReference = pBindingReference;
+    params.pHostMapping = pHostMapping;
+    vk_unix_call(unix_vkGetDescriptorSetLayoutHostMappingInfoVALVE, &params);
+}
+
 void WINAPI vkGetDescriptorSetLayoutSupport(VkDevice device, const VkDescriptorSetLayoutCreateInfo *pCreateInfo, VkDescriptorSetLayoutSupport *pSupport)
 {
     struct vkGetDescriptorSetLayoutSupport_params params;
@@ -4534,6 +4552,8 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetCalibratedTimestampsEXT", vkGetCalibratedTimestampsEXT},
     {"vkGetDeferredOperationMaxConcurrencyKHR", vkGetDeferredOperationMaxConcurrencyKHR},
     {"vkGetDeferredOperationResultKHR", vkGetDeferredOperationResultKHR},
+    {"vkGetDescriptorSetHostMappingVALVE", vkGetDescriptorSetHostMappingVALVE},
+    {"vkGetDescriptorSetLayoutHostMappingInfoVALVE", vkGetDescriptorSetLayoutHostMappingInfoVALVE},
     {"vkGetDescriptorSetLayoutSupport", vkGetDescriptorSetLayoutSupport},
     {"vkGetDescriptorSetLayoutSupportKHR", vkGetDescriptorSetLayoutSupportKHR},
     {"vkGetDeviceAccelerationStructureCompatibilityKHR", vkGetDeviceAccelerationStructureCompatibilityKHR},
