@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-12-22 10:00+0100\n"
+"PO-Revision-Date: 2022-03-08 13:40+0100\n"
 "Last-Translator: Floris Renaud <jkfloris@dds.nl>\n"
 "Language-Team: Dutch\n"
 "Language: nl\n"
@@ -10562,11 +10562,9 @@ msgid "(UTC+13:00) Nuku'alofa"
 msgstr "(UTC+13:00) Nuku'alofa"
 
 #: dlls/tzres/tzres.rc:240
-#, fuzzy
-#| msgid "Mountain Standard Time (Mexico)"
 msgctxt "maximum 31 characters"
 msgid "Mountain Standard Time (Mexico)"
-msgstr "Mountain Standaard Tijd (Mexico)"
+msgstr "Mountain St. Tijd (Mexico)"
 
 #: dlls/tzres/tzres.rc:241
 msgctxt "maximum 31 characters"
@@ -10634,16 +10632,14 @@ msgid "(UTC+10:30) Lord Howe Island"
 msgstr "(UTC+10:30) Lord Howe-eiland"
 
 #: dlls/tzres/tzres.rc:48
-#, fuzzy
-#| msgid "Arabic Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Arabic Standard Time"
-msgstr "Arabisch Schiereiland Standaard Tijd"
+msgstr "Arab. Schiereiland St. Tijd"
 
 #: dlls/tzres/tzres.rc:49
 msgctxt "maximum 31 characters"
 msgid "Arabic Daylight Time"
-msgstr "Arabisch Schiereiland Zomertijd"
+msgstr "Arab. Schiereiland Zomertijd"
 
 #: dlls/tzres/tzres.rc:50
 msgid "(UTC+03:00) Baghdad"
@@ -10957,18 +10953,14 @@ msgid "(UTC-03:00) City of Buenos Aires"
 msgstr "(UTC-03:00) Buenos Aires (stad)"
 
 #: dlls/tzres/tzres.rc:378
-#, fuzzy
-#| msgid "Turks And Caicos Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Turks And Caicos Standard Time"
-msgstr "Turks- en Caicoseilanden Standaard Tijd"
+msgstr "Turks en Caicos Standaard Tijd"
 
 #: dlls/tzres/tzres.rc:379
-#, fuzzy
-#| msgid "Turks And Caicos Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Turks And Caicos Daylight Time"
-msgstr "Turks- en Caicoseilanden Zomertijd"
+msgstr "Turks en Caicos Zomertijd"
 
 #: dlls/tzres/tzres.rc:380
 msgid "(UTC-05:00) Turks and Caicos"
@@ -11208,11 +11200,9 @@ msgid "(UTC+10:00) Canberra, Melbourne, Sydney"
 msgstr "(UTC+10:00) Canberra, Melbourne, Sydney"
 
 #: dlls/tzres/tzres.rc:246
-#, fuzzy
-#| msgid "N. Central Asia Standard Time"
 msgctxt "maximum 31 characters"
 msgid "N. Central Asia Standard Time"
-msgstr "Noordcentraal-Azië Standaard Tijd"
+msgstr "Noordcentraal-Azië St. Tijd"
 
 #: dlls/tzres/tzres.rc:247
 msgctxt "maximum 31 characters"
@@ -11429,11 +11419,9 @@ msgid "(UTC+02:00) Harare, Pretoria"
 msgstr "(UTC+02:00) Harare, Pretoria"
 
 #: dlls/tzres/tzres.rc:96
-#, fuzzy
-#| msgid "Cen. Australia Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Cen. Australia Standard Time"
-msgstr "Centraal Australië Standaard Tijd"
+msgstr "Centraal Australië St. Tijd"
 
 #: dlls/tzres/tzres.rc:97
 msgctxt "maximum 31 characters"
@@ -11496,11 +11484,9 @@ msgid "(UTC+09:00) Yakutsk"
 msgstr "(UTC+09:00) Yakutsk"
 
 #: dlls/tzres/tzres.rc:309
-#, fuzzy
-#| msgid "SA Eastern Standard Time"
 msgctxt "maximum 31 characters"
 msgid "SA Eastern Standard Time"
-msgstr "Zuid-Amerika Oost Standaard Tijd"
+msgstr "Zuid-Amerika Oost St. Tijd"
 
 #: dlls/tzres/tzres.rc:310
 msgctxt "maximum 31 characters"
@@ -11568,11 +11554,9 @@ msgid "(UTC+03:00) Moscow, St. Petersburg"
 msgstr "(UTC+03:00) Moskou, Sint-Petersburg"
 
 #: dlls/tzres/tzres.rc:63
-#, fuzzy
-#| msgid "Aus Central W. Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Aus Central W. Standard Time"
-msgstr "W-Centraal Australië Standaard Tijd"
+msgstr "W-Centraal Australië St. Tijd"
 
 #: dlls/tzres/tzres.rc:64
 msgctxt "maximum 31 characters"
@@ -11621,18 +11605,14 @@ msgid "(UTC+12:00) Anadyr, Petropavlovsk-Kamchatsky"
 msgstr "(UTC+12:00) Anadyr, Petropavlovsk-Kamtsjatski"
 
 #: dlls/tzres/tzres.rc:435
-#, fuzzy
-#| msgid "West Bank Standard Time"
 msgctxt "maximum 31 characters"
 msgid "West Bank Standard Time"
-msgstr "Westelijke Jordaanoever Standaard Tijd"
+msgstr "W. Jordaanoever Standaard Tijd"
 
 #: dlls/tzres/tzres.rc:436
-#, fuzzy
-#| msgid "West Bank Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "West Bank Daylight Time"
-msgstr "Westelijke Jordaanoever Zomertijd"
+msgstr "W. Jordaanoever Zomertijd"
 
 #: dlls/tzres/tzres.rc:437
 msgid "(UTC+02:00) Gaza, Hebron"
@@ -11653,11 +11633,9 @@ msgid "(UTC+02:00) Damascus"
 msgstr "(UTC+02:00) Damascus"
 
 #: dlls/tzres/tzres.rc:60
-#, fuzzy
-#| msgid "AUS Central Standard Time"
 msgctxt "maximum 31 characters"
 msgid "AUS Central Standard Time"
-msgstr "Centraal-Australië Standaard Tijd"
+msgstr "Centraal-Australië St. Tijd"
 
 #: dlls/tzres/tzres.rc:61
 msgctxt "maximum 31 characters"
@@ -11739,11 +11717,9 @@ msgid "(UTC+06:00) Dhaka"
 msgstr "(UTC+06:00) Dhaka"
 
 #: dlls/tzres/tzres.rc:312
-#, fuzzy
-#| msgid "SA Pacific Standard Time"
 msgctxt "maximum 31 characters"
 msgid "SA Pacific Standard Time"
-msgstr "Zuid-Amerika West Standaard Tijd"
+msgstr "Zuid-Amerika West St. Tijd"
 
 #: dlls/tzres/tzres.rc:313
 msgctxt "maximum 31 characters"
@@ -11965,11 +11941,9 @@ msgid "(UTC+06:00) Omsk"
 msgstr "(UTC+06:00) Omsk"
 
 #: dlls/tzres/tzres.rc:105
-#, fuzzy
-#| msgid "Central Brazilian Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Central Brazilian Standard Time"
-msgstr "Centraal Brazilië Standaard Tijd"
+msgstr "Centraal Brazilië St. Tijd"
 
 #: dlls/tzres/tzres.rc:106
 msgctxt "maximum 31 characters"
@@ -11995,11 +11969,9 @@ msgid "(UTC+03:00) Minsk"
 msgstr "(UTC+03:00) Minsk"
 
 #: dlls/tzres/tzres.rc:315
-#, fuzzy
-#| msgid "SA Western Standard Time"
 msgctxt "maximum 31 characters"
 msgid "SA Western Standard Time"
-msgstr "Zuid-Amerika West Standaard Tijd"
+msgstr "Zuid-Amerika West St. Tijd"
 
 #: dlls/tzres/tzres.rc:316
 msgctxt "maximum 31 characters"
@@ -12174,11 +12146,9 @@ msgid "(UTC+02:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius"
 msgstr "(UTC+02:00) Helsinki, Kiev, Riga, Sofia, Tallinn, Vilnius"
 
 #: dlls/tzres/tzres.rc:144
-#, fuzzy
-#| msgid "E. South America Standard Time"
 msgctxt "maximum 31 characters"
 msgid "E. South America Standard Time"
-msgstr "Oost Zuid-Amerika Standaard Tijd"
+msgstr "Oost Zuid-Amerika St. Tijd"
 
 #: dlls/tzres/tzres.rc:145
 msgctxt "maximum 31 characters"
@@ -12204,11 +12174,9 @@ msgid "(UTC+11:00) Solomon Is., New Caledonia"
 msgstr "(UTC+11:00) Salomonseilanden, Nieuw-Caledonië"
 
 #: dlls/tzres/tzres.rc:423
-#, fuzzy
-#| msgid "W. Central Africa Standard Time"
 msgctxt "maximum 31 characters"
 msgid "W. Central Africa Standard Time"
-msgstr "West Centraal-Afrika Standaard Tijd"
+msgstr "West Centraal-Afrika St. Tijd"
 
 #: dlls/tzres/tzres.rc:424
 msgctxt "maximum 31 characters"
@@ -12220,11 +12188,9 @@ msgid "(UTC+01:00) West Central Africa"
 msgstr "(UTC+01:00) West Centraal-Afrika"
 
 #: dlls/tzres/tzres.rc:276
-#, fuzzy
-#| msgid "Pacific SA Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Pacific SA Standard Time"
-msgstr "Pacific Zuid-Amerika Stand. Tijd"
+msgstr "Pacific Zuid-Amerika St. Tijd"
 
 #: dlls/tzres/tzres.rc:277
 msgctxt "maximum 31 characters"
