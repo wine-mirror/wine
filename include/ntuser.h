@@ -139,6 +139,7 @@ enum
 /* NtUserCallHwnd codes, not compatible with Windows */
 enum
 {
+    NtUserGetWindowTextLength,
     NtUserIsWindow,
 };
 

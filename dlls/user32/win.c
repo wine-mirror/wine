@@ -400,31 +400,6 @@ void update_window_state( HWND hwnd )
 
 
 /*******************************************************************
- *		get_server_window_text
- *
- * Retrieve the window text from the server.
- */
-static data_size_t get_server_window_text( HWND hwnd, WCHAR *text, data_size_t count )
-{
-    data_size_t len = 0, needed = 0;
-
-    SERVER_START_REQ( get_window_text )
-    {
-        req->handle = wine_server_user_handle( hwnd );
-        if (count) wine_server_set_reply( req, text, (count - 1) * sizeof(WCHAR) );
-        if (!wine_server_call_err( req ))
-        {
-            needed = reply->length;
-            len = wine_server_reply_size(reply);
-        }
-    }
-    SERVER_END_REQ;
-    if (text) text[len / sizeof(WCHAR)] = 0;
-    return needed;
-}
-
-
-/*******************************************************************
  *           get_hwnd_message_parent
  *
  * Return the parent for HWND_MESSAGE windows.
@@ -3023,7 +2998,7 @@ INT WINAPI GetWindowTextLengthA( HWND hwnd )
 
     /* when window belongs to other process, don't send a message */
     GetCPInfo( CP_ACP, &info );
-    return get_server_window_text( hwnd, NULL, 0 ) * info.MaxCharSize;
+    return NtUserCallHwnd( hwnd, NtUserGetWindowTextLength ) * info.MaxCharSize;
 }
 
 /*******************************************************************
@@ -3034,7 +3009,7 @@ INT WINAPI GetWindowTextLengthW( HWND hwnd )
     if (WIN_IsCurrentProcess( hwnd )) return SendMessageW( hwnd, WM_GETTEXTLENGTH, 0, 0 );
 
     /* when window belongs to other process, don't send a message */
-    return get_server_window_text( hwnd, NULL, 0 );
+    return NtUserCallHwnd( hwnd, NtUserGetWindowTextLength );
 }
 
 

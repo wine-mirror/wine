@@ -475,6 +475,8 @@ DWORD WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
 {
     switch (code)
     {
+    case NtUserGetWindowTextLength:
+        return get_server_window_text( hwnd, NULL, 0 );
     case NtUserIsWindow:
         return is_window( hwnd );
     default:
