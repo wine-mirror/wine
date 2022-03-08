@@ -2186,7 +2186,7 @@ static void SPY_GetWndName( SPY_INSTANCE *sp_e )
 
     SPY_GetClassName( sp_e );
 
-    len = InternalGetWindowText(sp_e->msg_hwnd, sp_e->wnd_name, ARRAY_SIZE(sp_e->wnd_name));
+    len = NtUserInternalGetWindowText( sp_e->msg_hwnd, sp_e->wnd_name, ARRAY_SIZE(sp_e->wnd_name) );
     if(!len) /* get class name */
     {
         LPWSTR dst = sp_e->wnd_name;

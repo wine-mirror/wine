@@ -173,7 +173,7 @@ static inline WCHAR *get_button_text( HWND hwnd )
 {
     static const INT len = 512;
     WCHAR *buffer = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) );
-    if (buffer) InternalGetWindowText( hwnd, buffer, len + 1 );
+    if (buffer) NtUserInternalGetWindowText( hwnd, buffer, len + 1 );
     return buffer;
 }
 

@@ -214,6 +214,15 @@ NTSTATUS WINAPI wow64_NtUserBuildHwndList( UINT *args )
     return status;
 }
 
+NTSTATUS WINAPI wow64_NtUserInternalGetWindowText( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    WCHAR *text = get_ptr( &args );
+    INT count = get_ulong( &args );
+
+    return NtUserInternalGetWindowText( hwnd, text, count );
+}
+
 NTSTATUS WINAPI wow64_NtUserGetLayeredWindowAttributes( UINT *args )
 {
     HWND hwnd = get_handle( &args );

@@ -425,6 +425,49 @@ NTSTATUS WINAPI NtUserBuildHwndList( HDESK desktop, ULONG unk2, ULONG unk3, ULON
     return STATUS_SUCCESS;
 }
 
+/* Retrieve the window text from the server. */
+static data_size_t get_server_window_text( HWND hwnd, WCHAR *text, data_size_t count )
+{
+    data_size_t len = 0, needed = 0;
+
+    SERVER_START_REQ( get_window_text )
+    {
+        req->handle = wine_server_user_handle( hwnd );
+        if (count) wine_server_set_reply( req, text, (count - 1) * sizeof(WCHAR) );
+        if (!wine_server_call_err( req ))
+        {
+            needed = reply->length;
+            len = wine_server_reply_size(reply);
+        }
+    }
+    SERVER_END_REQ;
+    if (text) text[len / sizeof(WCHAR)] = 0;
+    return needed;
+}
+
+/*******************************************************************
+ *           NtUserInternalGetWindowText (win32u.@)
+ */
+INT WINAPI NtUserInternalGetWindowText( HWND hwnd, WCHAR *text, INT count )
+{
+    WND *win;
+
+    if (count <= 0) return 0;
+    if (!(win = get_win_ptr( hwnd ))) return 0;
+    if (win == WND_DESKTOP) text[0] = 0;
+    else if (win != WND_OTHER_PROCESS)
+    {
+        if (win->text) lstrcpynW( text, win->text, count );
+        else text[0] = 0;
+        release_win_ptr( win );
+    }
+    else
+    {
+        get_server_window_text( hwnd, text, count );
+    }
+    return lstrlenW(text);
+}
+
 /*****************************************************************************
  *           NtUserCallHwnd (win32u.@)
  */

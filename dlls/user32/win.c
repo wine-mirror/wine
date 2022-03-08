@@ -2037,7 +2037,7 @@ HWND WINAPI FindWindowExW( HWND parent, HWND child, LPCWSTR className, LPCWSTR t
     {
         while (list[i])
         {
-            if (InternalGetWindowText( list[i], buffer, len + 1 ))
+            if (NtUserInternalGetWindowText( list[i], buffer, len + 1 ))
             {
                 if (!wcsicmp( buffer, title )) break;
             }
@@ -2941,30 +2941,6 @@ INT WINAPI GetWindowTextA( HWND hwnd, LPSTR lpString, INT nMaxCount )
     __ENDTRY
 
     return ret;
-}
-
-
-/*******************************************************************
- *		InternalGetWindowText (USER32.@)
- */
-INT WINAPI InternalGetWindowText(HWND hwnd,LPWSTR lpString,INT nMaxCount )
-{
-    WND *win;
-
-    if (nMaxCount <= 0) return 0;
-    if (!(win = WIN_GetPtr( hwnd ))) return 0;
-    if (win == WND_DESKTOP) lpString[0] = 0;
-    else if (win != WND_OTHER_PROCESS)
-    {
-        if (win->text) lstrcpynW( lpString, win->text, nMaxCount );
-        else lpString[0] = 0;
-        WIN_ReleasePtr( win );
-    }
-    else
-    {
-        get_server_window_text( hwnd, lpString, nMaxCount );
-    }
-    return lstrlenW(lpString);
 }
 
 

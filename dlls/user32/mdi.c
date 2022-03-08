@@ -452,7 +452,7 @@ static LRESULT MDI_RefreshMenu(MDICLIENTINFO *ci)
             buf[0] = '&';
             buf[1] = '0' + visible;
             buf[2] = ' ';
-            InternalGetWindowText(ci->child[i], buf + 3, ARRAY_SIZE(buf) - 3);
+            NtUserInternalGetWindowText(ci->child[i], buf + 3, ARRAY_SIZE(buf) - 3);
             TRACE("Adding %p, id %u %s\n", ci->child[i], id, debugstr_w(buf));
             AppendMenuW(ci->hWindowMenu, MF_STRING, id, buf);
 
@@ -1911,7 +1911,7 @@ static INT_PTR WINAPI MDI_MoreWindowsDlgProc (HWND hDlg, UINT iMsg, WPARAM wPara
            {
                WCHAR buffer[MDI_MAXTITLELENGTH];
 
-               if (!InternalGetWindowText(ci->child[i], buffer, ARRAY_SIZE(buffer)))
+               if (!NtUserInternalGetWindowText(ci->child[i], buffer, ARRAY_SIZE(buffer)))
                    continue;
                SendMessageW(hListBox, LB_ADDSTRING, 0, (LPARAM)buffer );
                SendMessageW(hListBox, LB_SETITEMDATA, i, (LPARAM)ci->child[i] );

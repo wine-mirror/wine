@@ -312,6 +312,7 @@ BOOL    WINAPI NtUserGetUpdatedClipboardFormats( UINT *formats, UINT size, UINT 
 NTSTATUS WINAPI NtUserInitializeClientPfnArrays( const struct user_client_procs *client_procsA,
                                                  const struct user_client_procs *client_procsW,
                                                  const void *client_workers, HINSTANCE user_module );
+INT     WINAPI NtUserInternalGetWindowText( HWND hwnd, WCHAR *text, INT count );
 BOOL    WINAPI NtUserIsClipboardFormatAvailable( UINT format );
 UINT    WINAPI NtUserMapVirtualKeyEx( UINT code, UINT type, HKL layout );
 void    WINAPI NtUserNotifyWinEvent( DWORD event, HWND hwnd, LONG object_id, LONG child_id );

@@ -8308,6 +8308,11 @@ static void test_gettext(void)
     ok( !strcmp(buf, "blah"), "got %s\n", buf );
     ok( num_gettext_msgs == 0, "got %u WM_GETTEXT messages\n", num_gettext_msgs );
 
+    bufW[0] = 0xcc;
+    buf_len = InternalGetWindowText( hwnd, bufW, ARRAYSIZE(bufW) );
+    ok( buf_len == ARRAYSIZE("caption") - 1, "expected a nonempty window text\n" );
+    ok( !lstrcmpW( bufW, L"caption" ), "got %s\n", debugstr_w(bufW) );
+
     g_wm_gettext_override.enabled = FALSE;
 
     /* same for W window */

@@ -124,6 +124,7 @@
     SYSCALL_ENTRY( NtUserGetSystemDpiForProcess ) \
     SYSCALL_ENTRY( NtUserGetThreadDesktop ) \
     SYSCALL_ENTRY( NtUserInitializeClientPfnArrays ) \
+    SYSCALL_ENTRY( NtUserInternalGetWindowText ) \
     SYSCALL_ENTRY( NtUserNotifyWinEvent ) \
     SYSCALL_ENTRY( NtUserOpenDesktop ) \
     SYSCALL_ENTRY( NtUserOpenInputDesktop ) \

@@ -635,7 +635,7 @@ static void STATIC_PaintTextfn( HWND hwnd, HDC hdc, HBRUSH hbrush, DWORD style )
     if (!(text = HeapAlloc( GetProcessHeap(), 0, buf_size * sizeof(WCHAR) )))
         goto no_TextOut;
 
-    while ((len = InternalGetWindowText( hwnd, text, buf_size )) == buf_size - 1)
+    while ((len = NtUserInternalGetWindowText( hwnd, text, buf_size )) == buf_size - 1)
     {
         buf_size *= 2;
         if (!(text = HeapReAlloc( GetProcessHeap(), 0, text, buf_size * sizeof(WCHAR) )))
