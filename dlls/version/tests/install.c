@@ -62,7 +62,7 @@ static void test_find_file(void)
            "got %d(%s) expected MAX_PATH\n", dwOut, outBuf);
         break;
     default:
-        ok(0, "Got unexpected return value %x\n", ret);
+        ok(0, "Got unexpected return value %lx\n", ret);
     }
 
     if(!GetWindowsDirectoryA(windir, MAX_PATH))
@@ -91,7 +91,7 @@ static void test_find_file(void)
                    "got %d(%s) expected MAX_PATH\n", dwOut, outBuf);
                 break;
             default:
-                ok(0, "Got unexpected return value %x\n", ret);
+                ok(0, "Got unexpected return value %lx\n", ret);
             }
 
             dwCur=MAX_PATH;
@@ -113,7 +113,7 @@ static void test_find_file(void)
                    "got %d(%s) expected MAX_PATH\n", dwOut, outBuf);
                 break;
             default:
-                ok(0, "Got unexpected return value %x\n", ret);
+                ok(0, "Got unexpected return value %lx\n", ret);
             }
         }
     }
@@ -145,7 +145,7 @@ static void test_find_file(void)
                "got %d(%s) expected MAX_PATH\n", dwOut, outBuf);
             break;
         default:
-            todo_wine ok(0, "Got unexpected return value %x\n", ret);
+            todo_wine ok(0, "Got unexpected return value %lx\n", ret);
         }
 
         dwCur=MAX_PATH;
@@ -153,7 +153,7 @@ static void test_find_file(void)
         memset(outBuf, 0, MAX_PATH);
         memset(curdir, 0, MAX_PATH);
         ret = VerFindFileA(VFFF_ISSHAREDFILE, filename, NULL, appdir, curdir, &dwCur, outBuf, &dwOut);
-        ok(VFF_CURNEDEST == ret, "Wrong return value got %x expected VFF_CURNEDEST\n", ret);
+        ok(VFF_CURNEDEST == ret, "Wrong return value got %lx expected VFF_CURNEDEST\n", ret);
         ok(dwOut == 1 + strlen(windir), "Wrong length of buffer for current location: "
            "got %d(%s) expected %d\n", dwOut, outBuf, lstrlenA(windir)+1);
 
@@ -162,7 +162,7 @@ static void test_find_file(void)
         memset(outBuf, 0, MAX_PATH);
         memset(curdir, 0, MAX_PATH);
         ret = VerFindFileA(0, filename, NULL, appdir, curdir, &dwCur, outBuf, &dwOut);
-        ok(VFF_CURNEDEST == ret, "Wrong return value got %x expected VFF_CURNEDEST\n", ret);
+        ok(VFF_CURNEDEST == ret, "Wrong return value got %lx expected VFF_CURNEDEST\n", ret);
         ok(dwOut == 1 + strlen(appdir), "Wrong length of buffer for current location: "
            "got %d(%s) expected %d\n", dwOut, outBuf, lstrlenA(appdir)+1);
 
@@ -170,135 +170,135 @@ static void test_find_file(void)
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
         ret = VerFindFileA(0, filename, NULL, NULL, curdir, &dwCur, outBuf, &dwOut);
-        ok(ret & VFF_CURNEDEST, "Wrong return value got %x expected VFF_CURNEDEST set\n", ret);
+        ok(ret & VFF_CURNEDEST, "Wrong return value got %lx expected VFF_CURNEDEST set\n", ret);
 
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
         ret = VerFindFileA(0, filename, NULL, empty, curdir, &dwCur, outBuf, &dwOut);
-        ok(ret & VFF_CURNEDEST, "Wrong return value got %x expected VFF_CURNEDEST set\n", ret);
+        ok(ret & VFF_CURNEDEST, "Wrong return value got %lx expected VFF_CURNEDEST set\n", ret);
 
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
         ret = VerFindFileA(0, filename, NULL, appdir, curdir, &dwCur, outBuf, &dwOut);
-        ok(ret & VFF_CURNEDEST, "Wrong return value got %x expected VFF_CURNEDEST set\n", ret);
+        ok(ret & VFF_CURNEDEST, "Wrong return value got %lx expected VFF_CURNEDEST set\n", ret);
 
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
         ret = VerFindFileA(VFFF_ISSHAREDFILE, filename, NULL, NULL, curdir, &dwCur, outBuf, &dwOut);
-        ok(ret & VFF_CURNEDEST, "Wrong return value got %x expected VFF_CURNEDEST set\n", ret);
+        ok(ret & VFF_CURNEDEST, "Wrong return value got %lx expected VFF_CURNEDEST set\n", ret);
 
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
         ret = VerFindFileA(VFFF_ISSHAREDFILE, filename, NULL, empty, curdir, &dwCur, outBuf, &dwOut);
-        ok(ret & VFF_CURNEDEST, "Wrong return value got %x expected VFF_CURNEDEST set\n", ret);
+        ok(ret & VFF_CURNEDEST, "Wrong return value got %lx expected VFF_CURNEDEST set\n", ret);
 
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
         ret = VerFindFileA(VFFF_ISSHAREDFILE, filename, NULL, appdir, curdir, &dwCur, outBuf, &dwOut);
-        ok(ret & VFF_CURNEDEST, "Wrong return value got %x expected VFF_CURNEDEST set\n", ret);
+        ok(ret & VFF_CURNEDEST, "Wrong return value got %lx expected VFF_CURNEDEST set\n", ret);
 
         /* search for regedit */
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
         ret = VerFindFileA(0, "regedit", NULL, NULL, curdir, &dwCur, outBuf, &dwOut);
-        ok(!ret, "Wrong return value got %x expected 0\n", ret);
+        ok(!ret, "Wrong return value got %lx expected 0\n", ret);
 
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
         ret = VerFindFileA(0, "regedit", NULL, empty, curdir, &dwCur, outBuf, &dwOut);
-        ok(!ret, "Wrong return value got %x expected 0\n", ret);
+        ok(!ret, "Wrong return value got %lx expected 0\n", ret);
 
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
         ret = VerFindFileA(0, "regedit", NULL, appdir, curdir, &dwCur, outBuf, &dwOut);
-        ok(ret & VFF_CURNEDEST, "Wrong return value got %x expected VFF_CURNEDEST set\n", ret);
+        ok(ret & VFF_CURNEDEST, "Wrong return value got %lx expected VFF_CURNEDEST set\n", ret);
 
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
         ret = VerFindFileA(VFFF_ISSHAREDFILE, "regedit", NULL, NULL, curdir, &dwCur, outBuf, &dwOut);
-        ok(ret & VFF_CURNEDEST, "Wrong return value got %x expected VFF_CURNEDEST set\n", ret);
+        ok(ret & VFF_CURNEDEST, "Wrong return value got %lx expected VFF_CURNEDEST set\n", ret);
 
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
         ret = VerFindFileA(VFFF_ISSHAREDFILE, "regedit", NULL, empty, curdir, &dwCur, outBuf, &dwOut);
-        ok(ret & VFF_CURNEDEST, "Wrong return value got %x expected VFF_CURNEDEST set\n", ret);
+        ok(ret & VFF_CURNEDEST, "Wrong return value got %lx expected VFF_CURNEDEST set\n", ret);
 
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
         ret = VerFindFileA(VFFF_ISSHAREDFILE, "regedit", NULL, appdir, curdir, &dwCur, outBuf, &dwOut);
-        ok(ret & VFF_CURNEDEST, "Wrong return value got %x expected VFF_CURNEDEST set\n", ret);
+        ok(ret & VFF_CURNEDEST, "Wrong return value got %lx expected VFF_CURNEDEST set\n", ret);
 
         /* search for regedit.exe */
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
         ret = VerFindFileA(0, "regedit.exe", NULL, NULL, curdir, &dwCur, outBuf, &dwOut);
-        ok(ret & VFF_CURNEDEST, "Wrong return value got %x expected VFF_CURNEDEST set\n", ret);
+        ok(ret & VFF_CURNEDEST, "Wrong return value got %lx expected VFF_CURNEDEST set\n", ret);
 
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
         ret = VerFindFileA(0, "regedit.exe", NULL, empty, curdir, &dwCur, outBuf, &dwOut);
-        ok(ret & VFF_CURNEDEST, "Wrong return value got %x expected VFF_CURNEDEST set\n", ret);
+        ok(ret & VFF_CURNEDEST, "Wrong return value got %lx expected VFF_CURNEDEST set\n", ret);
 
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
         ret = VerFindFileA(0, "regedit.exe", NULL, appdir, curdir, &dwCur, outBuf, &dwOut);
-        ok(ret & VFF_CURNEDEST, "Wrong return value got %x expected VFF_CURNEDEST set\n", ret);
+        ok(ret & VFF_CURNEDEST, "Wrong return value got %lx expected VFF_CURNEDEST set\n", ret);
 
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
         ret = VerFindFileA(VFFF_ISSHAREDFILE, "regedit.exe", NULL, NULL, curdir, &dwCur, outBuf, &dwOut);
-        ok(ret & VFF_CURNEDEST, "Wrong return value got %x expected VFF_CURNEDEST set\n", ret);
+        ok(ret & VFF_CURNEDEST, "Wrong return value got %lx expected VFF_CURNEDEST set\n", ret);
 
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
         ret = VerFindFileA(VFFF_ISSHAREDFILE, "regedit.exe", NULL, empty, curdir, &dwCur, outBuf, &dwOut);
-        ok(ret & VFF_CURNEDEST, "Wrong return value got %x expected VFF_CURNEDEST set\n", ret);
+        ok(ret & VFF_CURNEDEST, "Wrong return value got %lx expected VFF_CURNEDEST set\n", ret);
 
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
         ret = VerFindFileA(VFFF_ISSHAREDFILE, "regedit.exe", NULL, appdir, curdir, &dwCur, outBuf, &dwOut);
-        ok(ret & VFF_CURNEDEST, "Wrong return value got %x expected VFF_CURNEDEST set\n", ret);
+        ok(ret & VFF_CURNEDEST, "Wrong return value got %lx expected VFF_CURNEDEST set\n", ret);
 
         /* nonexistent filename */
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
         ret = VerFindFileA(0, "doesnotexist.exe", NULL, NULL, curdir, &dwCur, outBuf, &dwOut);
-        ok(!ret, "Wrong return value got %x expected 0\n", ret);
+        ok(!ret, "Wrong return value got %lx expected 0\n", ret);
 
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
         ret = VerFindFileA(0, "doesnotexist.exe", NULL, empty, curdir, &dwCur, outBuf, &dwOut);
-        ok(!ret, "Wrong return value got %x expected 0\n", ret);
+        ok(!ret, "Wrong return value got %lx expected 0\n", ret);
 
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
         ret = VerFindFileA(0, "doesnotexist.exe", NULL, appdir, curdir, &dwCur, outBuf, &dwOut);
-        ok(ret & VFF_CURNEDEST, "Wrong return value got %x expected VFF_CURNEDEST set\n", ret);
+        ok(ret & VFF_CURNEDEST, "Wrong return value got %lx expected VFF_CURNEDEST set\n", ret);
 
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
         ret = VerFindFileA(0, "doesnotexist.exe", NULL, "C:\\random_path_does_not_exist", curdir, &dwCur, outBuf, &dwOut);
-        ok(ret & VFF_CURNEDEST, "Wrong return value got %x expected VFF_CURNEDEST set\n", ret);
+        ok(ret & VFF_CURNEDEST, "Wrong return value got %lx expected VFF_CURNEDEST set\n", ret);
 
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
         ret = VerFindFileA(VFFF_ISSHAREDFILE, "doesnotexist.exe", NULL, NULL, curdir, &dwCur, outBuf, &dwOut);
-        ok(ret & VFF_CURNEDEST, "Wrong return value got %x expected VFF_CURNEDEST set\n", ret);
+        ok(ret & VFF_CURNEDEST, "Wrong return value got %lx expected VFF_CURNEDEST set\n", ret);
 
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
         ret = VerFindFileA(VFFF_ISSHAREDFILE, "doesnotexist.exe", NULL, empty, curdir, &dwCur, outBuf, &dwOut);
-        ok(ret & VFF_CURNEDEST, "Wrong return value got %x expected VFF_CURNEDEST set\n", ret);
+        ok(ret & VFF_CURNEDEST, "Wrong return value got %lx expected VFF_CURNEDEST set\n", ret);
 
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
         ret = VerFindFileA(VFFF_ISSHAREDFILE, "doesnotexist.exe", NULL, appdir, curdir, &dwCur, outBuf, &dwOut);
-        ok(ret & VFF_CURNEDEST, "Wrong return value got %x expected VFF_CURNEDEST set\n", ret);
+        ok(ret & VFF_CURNEDEST, "Wrong return value got %lx expected VFF_CURNEDEST set\n", ret);
 
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
         ret = VerFindFileA(VFFF_ISSHAREDFILE, "doesnotexist.exe", NULL, "C:\\random_path_does_not_exist", curdir, &dwCur, outBuf, &dwOut);
-        ok(ret & VFF_CURNEDEST, "Wrong return value got %x expected VFF_CURNEDEST set\n", ret);
+        ok(ret & VFF_CURNEDEST, "Wrong return value got %lx expected VFF_CURNEDEST set\n", ret);
 
         DeleteFileA(filename);
     }
@@ -318,30 +318,30 @@ static void test_install_file(void)
     /* testing Invalid Parameters */
     memset(tmpname,0,sizeof(tmpname));
     rc = VerInstallFileA(0x0, NULL, NULL, NULL, NULL, NULL, tmpname, &size);
-    ok (rc == 0x10000 && tmpname[0]==0," expected return 0x10000 and no tempname, got %08x/\'%s\'\n",rc,tmpname);
+    ok (rc == 0x10000 && tmpname[0]==0," expected return 0x10000 and no tempname, got %08lx/\'%s\'\n",rc,tmpname);
     memset(tmpname,0,sizeof(tmpname));
     size = MAX_PATH;
     rc = VerInstallFileA(0x0, szSrcFileName, NULL, NULL, NULL, NULL, tmpname, &size);
-    ok (rc == 0x10000 && tmpname[0]==0," expected return 0x10000 and no tempname, got %08x/\'%s\'\n",rc,tmpname);
+    ok (rc == 0x10000 && tmpname[0]==0," expected return 0x10000 and no tempname, got %08lx/\'%s\'\n",rc,tmpname);
     memset(tmpname,0,sizeof(tmpname));
     size = MAX_PATH;
     rc = VerInstallFileA(0x0, szSrcFileName, szDestFileName, NULL, NULL, NULL, tmpname, &size);
-    ok (rc == 0x10000 && tmpname[0]==0," expected return 0x10000 and no tempname, got %08x/\'%s\'\n",rc,tmpname);
+    ok (rc == 0x10000 && tmpname[0]==0," expected return 0x10000 and no tempname, got %08lx/\'%s\'\n",rc,tmpname);
     memset(tmpname,0,sizeof(tmpname));
     size = MAX_PATH;
     rc = VerInstallFileA(0x0, szSrcFileName, szDestFileName, szSrcDir, NULL, NULL, tmpname, &size);
-    ok (rc == 0x10000 && tmpname[0]==0," expected return 0x10000 and no tempname, got %08x/\'%s\'\n",rc,tmpname);
+    ok (rc == 0x10000 && tmpname[0]==0," expected return 0x10000 and no tempname, got %08lx/\'%s\'\n",rc,tmpname);
 
     /* Source file does not exist*/
 
     memset(tmpname,0,sizeof(tmpname));
     size = MAX_PATH;
     rc = VerInstallFileA(0x0, szSrcFileName, szDestFileName, szSrcDir, szDestDir, NULL, tmpname, &size);
-    ok (rc == 0x10000 && tmpname[0]==0," expected return 0x10000 and no tempname, got %08x/\'%s\'\n",rc,tmpname);
+    ok (rc == 0x10000 && tmpname[0]==0," expected return 0x10000 and no tempname, got %08lx/\'%s\'\n",rc,tmpname);
     memset(tmpname,0,sizeof(tmpname));
     size = MAX_PATH;
     rc = VerInstallFileA(0x0, szSrcFileName, szDestFileName,  szSrcDir, szDestDir, szCurDir, tmpname, &size);
-    ok (rc == 0x10000 && tmpname[0]==0," expected return 0x10000 and no tempname, got %08x/\'%s\'\n",rc,tmpname);
+    ok (rc == 0x10000 && tmpname[0]==0," expected return 0x10000 and no tempname, got %08lx/\'%s\'\n",rc,tmpname);
 }
 
 START_TEST(install)
