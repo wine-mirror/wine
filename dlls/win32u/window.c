@@ -361,6 +361,61 @@ static DWORD get_window_thread( HWND hwnd, DWORD *process )
     return tid;
 }
 
+/* see GetWindow */
+static HWND get_window_relative( HWND hwnd, UINT rel )
+{
+    HWND retval = 0;
+
+    if (rel == GW_OWNER)  /* this one may be available locally */
+    {
+        WND *win = get_win_ptr( hwnd );
+        if (!win)
+        {
+            SetLastError( ERROR_INVALID_HANDLE );
+            return 0;
+        }
+        if (win == WND_DESKTOP) return 0;
+        if (win != WND_OTHER_PROCESS)
+        {
+            retval = win->owner;
+            release_win_ptr( win );
+            return retval;
+        }
+        /* else fall through to server call */
+    }
+
+    SERVER_START_REQ( get_window_tree )
+    {
+        req->handle = wine_server_user_handle( hwnd );
+        if (!wine_server_call_err( req ))
+        {
+            switch(rel)
+            {
+            case GW_HWNDFIRST:
+                retval = wine_server_ptr_handle( reply->first_sibling );
+                break;
+            case GW_HWNDLAST:
+                retval = wine_server_ptr_handle( reply->last_sibling );
+                break;
+            case GW_HWNDNEXT:
+                retval = wine_server_ptr_handle( reply->next_sibling );
+                break;
+            case GW_HWNDPREV:
+                retval = wine_server_ptr_handle( reply->prev_sibling );
+                break;
+            case GW_OWNER:
+                retval = wine_server_ptr_handle( reply->owner );
+                break;
+            case GW_CHILD:
+                retval = wine_server_ptr_handle( reply->first_child );
+                break;
+            }
+        }
+    }
+    SERVER_END_REQ;
+    return retval;
+}
+
 static LONG_PTR get_win_data( const void *ptr, UINT size )
 {
     if (size == sizeof(WORD))
@@ -737,6 +792,8 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
         return get_window_long_ptr( hwnd, param, TRUE );
     case NtUserGetWindowLongPtrW:
         return get_window_long_ptr( hwnd, param, FALSE );
+    case NtUserGetWindowRelative:
+        return HandleToUlong( get_window_relative( hwnd, param ));
     case NtUserGetWindowThread:
         return get_window_thread( hwnd, (DWORD *)param );
     case NtUserGetWindowWord:
