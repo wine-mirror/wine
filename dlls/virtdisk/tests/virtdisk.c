@@ -40,10 +40,10 @@ static void test_GetStorageDependencyInformation(void)
     info = heap_alloc(size);
 
     ret = pGetStorageDependencyInformation(handle, GET_STORAGE_DEPENDENCY_FLAG_DISK_HANDLE, 0, info, 0);
-    ok(ret == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", ret);
+    ok(ret == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %ld\n", ret);
 
     ret = pGetStorageDependencyInformation(handle, GET_STORAGE_DEPENDENCY_FLAG_DISK_HANDLE, size, NULL, 0);
-    ok(ret == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", ret);
+    ok(ret == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %ld\n", ret);
 
     heap_free(info);
     CloseHandle(handle);
@@ -58,27 +58,27 @@ static void test_OpenVirtualDisk(void)
     static const WCHAR vdisk[] = L"test.vhd";
 
     ret = pOpenVirtualDisk(NULL, NULL, VIRTUAL_DISK_ACCESS_NONE, OPEN_VIRTUAL_DISK_FLAG_NO_PARENTS, NULL, &handle);
-    ok(ret == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", ret);
+    ok(ret == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %ld\n", ret);
 
     stgtype.DeviceId = VIRTUAL_STORAGE_TYPE_DEVICE_UNKNOWN;
     stgtype.VendorId = VIRTUAL_STORAGE_TYPE_VENDOR_UNKNOWN;
     ret = pOpenVirtualDisk(&stgtype, NULL, VIRTUAL_DISK_ACCESS_NONE, OPEN_VIRTUAL_DISK_FLAG_NO_PARENTS, NULL, &handle);
-    ok(ret == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", ret);
+    ok(ret == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %ld\n", ret);
 
     param.Version = OPEN_VIRTUAL_DISK_VERSION_3;
     ret = pOpenVirtualDisk(&stgtype, vdisk, VIRTUAL_DISK_ACCESS_NONE, OPEN_VIRTUAL_DISK_FLAG_NO_PARENTS, &param, &handle);
-    ok((ret == ERROR_INVALID_PARAMETER) || (ret == ERROR_FILE_NOT_FOUND), "Expected ERROR_INVALID_PARAMETER or ERROR_FILE_NOT_FOUND (>= Win 10), got %d\n", ret);
+    ok((ret == ERROR_INVALID_PARAMETER) || (ret == ERROR_FILE_NOT_FOUND), "Expected ERROR_INVALID_PARAMETER or ERROR_FILE_NOT_FOUND (>= Win 10), got %ld\n", ret);
 
     param.Version = OPEN_VIRTUAL_DISK_VERSION_2;
     ret = pOpenVirtualDisk(&stgtype, vdisk, VIRTUAL_DISK_ACCESS_NONE, OPEN_VIRTUAL_DISK_FLAG_NO_PARENTS, &param, &handle);
-    ok((ret == ERROR_INVALID_PARAMETER) || (ret == ERROR_FILE_NOT_FOUND), "Expected ERROR_INVALID_PARAMETER or ERROR_FILE_NOT_FOUND (>= Win 8), got %d\n", ret);
+    ok((ret == ERROR_INVALID_PARAMETER) || (ret == ERROR_FILE_NOT_FOUND), "Expected ERROR_INVALID_PARAMETER or ERROR_FILE_NOT_FOUND (>= Win 8), got %ld\n", ret);
 
     param.Version = OPEN_VIRTUAL_DISK_VERSION_1;
     ret = pOpenVirtualDisk(&stgtype, vdisk, 0xffffff, OPEN_VIRTUAL_DISK_FLAG_NO_PARENTS, &param, &handle);
-    ok(ret == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", ret);
+    ok(ret == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %ld\n", ret);
 
     ret = pOpenVirtualDisk(&stgtype, vdisk, VIRTUAL_DISK_ACCESS_NONE, OPEN_VIRTUAL_DISK_FLAG_NONE, &param, &handle);
-    todo_wine ok(ret == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", ret);
+    todo_wine ok(ret == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %ld\n", ret);
 }
 
 START_TEST(virtdisk)
