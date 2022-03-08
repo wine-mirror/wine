@@ -190,7 +190,7 @@ static BOOL set_primary_monitor_effective_dpi(unsigned int primary_dpi)
     error = pDisplayConfigGetDeviceInfo(&get_scale_req.header);
     if (error != NO_ERROR)
     {
-        skip("DisplayConfigGetDeviceInfo failed, returned %d.\n", error);
+        skip("DisplayConfigGetDeviceInfo failed, returned %ld.\n", error);
         goto failed;
     }
 
@@ -317,7 +317,7 @@ static void test_IsThemePartDefined(void)
 
     is_theme_active = IsThemeActive();
     hwnd = CreateWindowA(WC_STATICA, "", WS_POPUP, 0, 0, 1, 1, 0, 0, 0, NULL);
-    ok(hwnd != NULL, "CreateWindowA failed, error %#x.\n", GetLastError());
+    ok(hwnd != NULL, "CreateWindowA failed, error %#lx.\n", GetLastError());
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
@@ -330,14 +330,14 @@ static void test_IsThemePartDefined(void)
         if (tests[i].class_name)
         {
             theme = OpenThemeData(hwnd, tests[i].class_name);
-            ok(theme != NULL, "OpenThemeData failed, error %#x.\n", GetLastError());
+            ok(theme != NULL, "OpenThemeData failed, error %#lx.\n", GetLastError());
         }
 
         SetLastError(0xdeadbeef);
         ret = IsThemePartDefined(theme, tests[i].part, tests[i].state);
         error = GetLastError();
         ok(ret == tests[i].defined, "Expected %d.\n", tests[i].defined);
-        ok(error == tests[i].error, "Expected %#x, got %#x.\n", tests[i].error, error);
+        ok(error == tests[i].error, "Expected %#lx, got %#lx.\n", tests[i].error, error);
 
         if (theme)
         {
@@ -358,7 +358,7 @@ static void test_GetWindowTheme(void)
     SetLastError(0xdeadbeef);
     hTheme = GetWindowTheme(NULL);
     ok( hTheme == NULL, "Expected a NULL return, got %p\n", hTheme);
-    ok( GetLastError() == E_HANDLE, "Expected E_HANDLE, got 0x%08x\n", GetLastError() );
+    ok( GetLastError() == E_HANDLE, "Expected E_HANDLE, got 0x%08lx\n", GetLastError() );
 
     /* Only do the bare minimum to get a valid hwnd */
     hWnd = CreateWindowExA(0, "static", "", WS_POPUP, 0,0,100,100,0, 0, 0, NULL);
@@ -368,7 +368,7 @@ static void test_GetWindowTheme(void)
     hTheme = GetWindowTheme(hWnd);
     ok( hTheme == NULL, "Expected a NULL return, got %p\n", hTheme);
     ok( GetLastError() == 0xdeadbeef,
-        "Expected 0xdeadbeef, got 0x%08x\n",
+        "Expected 0xdeadbeef, got 0x%08lx\n",
         GetLastError());
 
     DestroyWindow(hWnd);
@@ -394,7 +394,7 @@ static void test_SetWindowTheme(void)
     MSG msg;
 
     hRes = SetWindowTheme(NULL, NULL, NULL);
-    ok( hRes == E_HANDLE, "Expected E_HANDLE, got 0x%08x\n", hRes);
+    ok( hRes == E_HANDLE, "Expected E_HANDLE, got 0x%08lx\n", hRes);
 
     /* Test that WM_THEMECHANGED is sent and not posted to windows */
     cls.hInstance = GetModuleHandleA(0);
@@ -418,7 +418,7 @@ static void test_SetWindowTheme(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     hRes = SetWindowTheme(hWnd, NULL, NULL);
-    ok(hRes == S_OK, "Expected %#x, got %#x.\n", S_OK, hRes);
+    ok(hRes == S_OK, "Expected %#lx, got %#lx.\n", S_OK, hRes);
     while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
     {
         struct message recv_msg = {0};
@@ -444,7 +444,7 @@ static void test_SetWindowTheme(void)
     ok(hWnd != NULL, "Failed to create a test window.\n");
 
     hRes = SetWindowTheme(hWnd, NULL, NULL);
-    ok( hRes == S_OK, "Expected S_OK, got 0x%08x\n", hRes);
+    ok( hRes == S_OK, "Expected S_OK, got 0x%08lx\n", hRes);
 
     if (IsThemeActive())
     {
@@ -453,7 +453,7 @@ static void test_SetWindowTheme(void)
         CloseThemeData(hTheme);
 
         hRes = SetWindowTheme(hWnd, L"deadbeef", NULL);
-        ok(hRes == S_OK, "Expected S_OK, got 0x%08x.\n", hRes);
+        ok(hRes == S_OK, "Expected S_OK, got 0x%08lx.\n", hRes);
 
         hTheme = OpenThemeData(hWnd, L"Button");
         ok(!!hTheme, "OpenThemeData failed.\n");
@@ -487,14 +487,14 @@ static void test_OpenThemeData(void)
     hTheme = OpenThemeData(NULL, NULL);
     ok( hTheme == NULL, "Expected a NULL return, got %p\n", hTheme);
     ok( GetLastError() == E_POINTER,
-            "Expected GLE() to be E_POINTER, got 0x%08x\n",
+            "Expected GLE() to be E_POINTER, got 0x%08lx\n",
             GetLastError());
 
     /* A NULL hWnd and an invalid classlist */
     SetLastError(0xdeadbeef);
     hTheme = OpenThemeData(NULL, szInvalidClassList);
     ok( hTheme == NULL, "Expected a NULL return, got %p\n", hTheme);
-    ok( GetLastError() == E_PROP_ID_UNSUPPORTED, "Expected 0x%08x, got 0x%08x\n",
+    ok( GetLastError() == E_PROP_ID_UNSUPPORTED, "Expected 0x%08lx, got 0x%08lx\n",
         E_PROP_ID_UNSUPPORTED, GetLastError() );
 
     SetLastError(0xdeadbeef);
@@ -502,12 +502,12 @@ static void test_OpenThemeData(void)
     if (bThemeActive)
     {
         ok( hTheme != NULL, "got NULL, expected a HTHEME handle\n");
-        ok( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08x\n", GetLastError() );
+        ok( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08lx\n", GetLastError() );
     }
     else
     {
         ok( hTheme == NULL, "Expected a NULL return, got %p\n", hTheme);
-        ok( GetLastError() == E_PROP_ID_UNSUPPORTED, "Expected 0x%08x, got 0x%08x\n",
+        ok( GetLastError() == E_PROP_ID_UNSUPPORTED, "Expected 0x%08lx, got 0x%08lx\n",
             E_PROP_ID_UNSUPPORTED, GetLastError() );
     }
 
@@ -519,13 +519,13 @@ static void test_OpenThemeData(void)
     hTheme = OpenThemeData(hWnd, NULL);
     ok( hTheme == NULL, "Expected a NULL return, got %p\n", hTheme);
     ok( GetLastError() == E_POINTER,
-            "Expected GLE() to be E_POINTER, got 0x%08x\n",
+            "Expected GLE() to be E_POINTER, got 0x%08lx\n",
             GetLastError());
 
     SetLastError(0xdeadbeef);
     hTheme = OpenThemeData(hWnd, szInvalidClassList);
     ok( hTheme == NULL, "Expected a NULL return, got %p\n", hTheme);
-    ok( GetLastError() == E_PROP_ID_UNSUPPORTED, "Expected 0x%08x, got 0x%08x\n",
+    ok( GetLastError() == E_PROP_ID_UNSUPPORTED, "Expected 0x%08lx, got 0x%08lx\n",
         E_PROP_ID_UNSUPPORTED, GetLastError() );
 
     if (!bThemeActive)
@@ -533,7 +533,7 @@ static void test_OpenThemeData(void)
         SetLastError(0xdeadbeef);
         hTheme = OpenThemeData(hWnd, szButtonClassList);
         ok( hTheme == NULL, "Expected a NULL return, got %p\n", hTheme);
-        ok( GetLastError() == E_PROP_ID_UNSUPPORTED, "Expected 0x%08x, got 0x%08x\n",
+        ok( GetLastError() == E_PROP_ID_UNSUPPORTED, "Expected 0x%08lx, got 0x%08lx\n",
             E_PROP_ID_UNSUPPORTED, GetLastError() );
         skip("No active theme, skipping rest of OpenThemeData tests\n");
         return;
@@ -544,18 +544,18 @@ static void test_OpenThemeData(void)
     SetLastError(0xdeadbeef);
     hTheme = OpenThemeData(hWnd, szButtonClassList);
     ok( hTheme != NULL, "got NULL, expected a HTHEME handle\n");
-    ok( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08x\n", GetLastError() );
+    ok( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08lx\n", GetLastError() );
 
     /* Test with bUtToN instead of Button */
     SetLastError(0xdeadbeef);
     hTheme = OpenThemeData(hWnd, szButtonClassList2);
     ok( hTheme != NULL, "got NULL, expected a HTHEME handle\n");
-    ok( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08x\n", GetLastError() );
+    ok( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08lx\n", GetLastError() );
 
     SetLastError(0xdeadbeef);
     hTheme = OpenThemeData(hWnd, szClassList);
     ok( hTheme != NULL, "got NULL, expected a HTHEME handle\n");
-    ok( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08x\n", GetLastError() );
+    ok( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08lx\n", GetLastError() );
 
     /* GetWindowTheme should return the last handle opened by OpenThemeData */
     SetLastError(0xdeadbeef);
@@ -563,15 +563,15 @@ static void test_OpenThemeData(void)
     ok( hTheme == hTheme2, "Expected the same HTHEME handle (%p<->%p)\n",
         hTheme, hTheme2);
     ok( GetLastError() == 0xdeadbeef,
-        "Expected 0xdeadbeef, got 0x%08x\n",
+        "Expected 0xdeadbeef, got 0x%08lx\n",
         GetLastError());
 
     hRes = CloseThemeData(hTheme);
-    ok( hRes == S_OK, "Expected S_OK, got 0x%08x\n", hRes);
+    ok( hRes == S_OK, "Expected S_OK, got 0x%08lx\n", hRes);
 
     /* Close a second time */
     hRes = CloseThemeData(hTheme);
-    ok( hRes == S_OK, "Expected S_OK, got 0x%08x\n", hRes);
+    ok( hRes == S_OK, "Expected S_OK, got 0x%08lx\n", hRes);
 
     /* See if closing makes a difference for GetWindowTheme */
     SetLastError(0xdeadbeef);
@@ -580,14 +580,14 @@ static void test_OpenThemeData(void)
     ok( hTheme == hTheme2, "Expected the same HTHEME handle (%p<->%p)\n",
         hTheme, hTheme2);
     ok( GetLastError() == 0xdeadbeef,
-        "Expected 0xdeadbeef, got 0x%08x\n",
+        "Expected 0xdeadbeef, got 0x%08lx\n",
         GetLastError());
 
     SetLastError(0xdeadbeef);
     bTPDefined = IsThemePartDefined(hTheme, 0 , 0);
     todo_wine
     ok( bTPDefined == FALSE, "Expected FALSE\n" );
-    ok( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08x\n", GetLastError() );
+    ok( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08lx\n", GetLastError() );
 
     DestroyWindow(hWnd);
 }
@@ -616,14 +616,14 @@ static void test_OpenThemeDataEx(void)
     hTheme = pOpenThemeDataEx(NULL, NULL, 0);
     ok( hTheme == NULL, "Expected a NULL return, got %p\n", hTheme);
     ok( GetLastError() == E_POINTER,
-            "Expected GLE() to be E_POINTER, got 0x%08x\n",
+            "Expected GLE() to be E_POINTER, got 0x%08lx\n",
             GetLastError());
 
     /* A NULL hWnd and an invalid classlist without flags */
     SetLastError(0xdeadbeef);
     hTheme = pOpenThemeDataEx(NULL, szInvalidClassList, 0);
     ok( hTheme == NULL, "Expected a NULL return, got %p\n", hTheme);
-    ok( GetLastError() == E_PROP_ID_UNSUPPORTED, "Expected 0x%08x, got 0x%08x\n",
+    ok( GetLastError() == E_PROP_ID_UNSUPPORTED, "Expected 0x%08lx, got 0x%08lx\n",
         E_PROP_ID_UNSUPPORTED, GetLastError() );
 
     SetLastError(0xdeadbeef);
@@ -631,12 +631,12 @@ static void test_OpenThemeDataEx(void)
     if (bThemeActive)
     {
         ok( hTheme != NULL, "got NULL, expected a HTHEME handle\n");
-        ok( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08x\n", GetLastError() );
+        ok( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08lx\n", GetLastError() );
     }
     else
     {
         ok( hTheme == NULL, "Expected a NULL return, got %p\n", hTheme);
-        ok( GetLastError() == E_PROP_ID_UNSUPPORTED, "Expected 0x%08x, got 0x%08x\n",
+        ok( GetLastError() == E_PROP_ID_UNSUPPORTED, "Expected 0x%08lx, got 0x%08lx\n",
             E_PROP_ID_UNSUPPORTED, GetLastError() );
     }
 
@@ -648,13 +648,13 @@ static void test_OpenThemeDataEx(void)
     hTheme = pOpenThemeDataEx(hWnd, NULL, 0);
     ok( hTheme == NULL, "Expected a NULL return, got %p\n", hTheme);
     ok( GetLastError() == E_POINTER,
-            "Expected GLE() to be E_POINTER, got 0x%08x\n",
+            "Expected GLE() to be E_POINTER, got 0x%08lx\n",
             GetLastError());
 
     SetLastError(0xdeadbeef);
     hTheme = pOpenThemeDataEx(hWnd, szInvalidClassList, 0);
     ok( hTheme == NULL, "Expected a NULL return, got %p\n", hTheme);
-    ok( GetLastError() == E_PROP_ID_UNSUPPORTED, "Expected 0x%08x, got 0x%08x\n",
+    ok( GetLastError() == E_PROP_ID_UNSUPPORTED, "Expected 0x%08lx, got 0x%08lx\n",
         E_PROP_ID_UNSUPPORTED, GetLastError() );
 
     if (!bThemeActive)
@@ -662,7 +662,7 @@ static void test_OpenThemeDataEx(void)
         SetLastError(0xdeadbeef);
         hTheme = pOpenThemeDataEx(hWnd, szButtonClassList, 0);
         ok( hTheme == NULL, "Expected a NULL return, got %p\n", hTheme);
-        ok( GetLastError() == E_PROP_ID_UNSUPPORTED, "Expected 0x%08x, got 0x%08x\n",
+        ok( GetLastError() == E_PROP_ID_UNSUPPORTED, "Expected 0x%08lx, got 0x%08lx\n",
             E_PROP_ID_UNSUPPORTED, GetLastError() );
         skip("No active theme, skipping rest of OpenThemeDataEx tests\n");
         return;
@@ -673,33 +673,33 @@ static void test_OpenThemeDataEx(void)
     SetLastError(0xdeadbeef);
     hTheme = pOpenThemeDataEx(hWnd, szButtonClassList, 0);
     ok( hTheme != NULL, "got NULL, expected a HTHEME handle\n");
-    ok( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08x\n", GetLastError() );
+    ok( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08lx\n", GetLastError() );
 
     SetLastError(0xdeadbeef);
     hTheme = pOpenThemeDataEx(hWnd, szButtonClassList, OTD_FORCE_RECT_SIZING);
     ok( hTheme != NULL, "got NULL, expected a HTHEME handle\n");
-    ok( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08x\n", GetLastError() );
+    ok( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08lx\n", GetLastError() );
 
     SetLastError(0xdeadbeef);
     hTheme = pOpenThemeDataEx(hWnd, szButtonClassList, OTD_NONCLIENT);
     ok( hTheme != NULL, "got NULL, expected a HTHEME handle\n");
-    ok( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08x\n", GetLastError() );
+    ok( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08lx\n", GetLastError() );
 
     SetLastError(0xdeadbeef);
     hTheme = pOpenThemeDataEx(hWnd, szButtonClassList, 0x3);
     ok( hTheme != NULL, "got NULL, expected a HTHEME handle\n");
-    ok( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08x\n", GetLastError() );
+    ok( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08lx\n", GetLastError() );
 
     /* Test with bUtToN instead of Button */
     SetLastError(0xdeadbeef);
     hTheme = pOpenThemeDataEx(hWnd, szButtonClassList2, 0);
     ok( hTheme != NULL, "got NULL, expected a HTHEME handle\n");
-    ok( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08x\n", GetLastError() );
+    ok( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08lx\n", GetLastError() );
 
     SetLastError(0xdeadbeef);
     hTheme = pOpenThemeDataEx(hWnd, szClassList, 0);
     ok( hTheme != NULL, "got NULL, expected a HTHEME handle\n");
-    ok( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08x\n", GetLastError() );
+    ok( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08lx\n", GetLastError() );
 
     DestroyWindow(hWnd);
 }
@@ -721,13 +721,13 @@ static void test_OpenThemeDataForDpi(void)
     if (is_theme_active)
     {
         ok(!!htheme, "Got a NULL handle.\n");
-        ok(GetLastError() == NO_ERROR, "Expected error %u, got %u.\n", NO_ERROR, GetLastError());
+        ok(GetLastError() == NO_ERROR, "Expected error %u, got %lu.\n", NO_ERROR, GetLastError());
         CloseThemeData(htheme);
     }
     else
     {
         ok(!htheme, "Got a non-NULL handle.\n");
-        ok(GetLastError() == E_PROP_ID_UNSUPPORTED, "Expected error %u, got %u.\n",
+        ok(GetLastError() == E_PROP_ID_UNSUPPORTED, "Expected error %lu, got %lu.\n",
            E_PROP_ID_UNSUPPORTED, GetLastError());
     }
 }
@@ -745,25 +745,25 @@ static void test_GetCurrentThemeName(void)
     /* All NULLs */
     hRes = GetCurrentThemeName(NULL, 0, NULL, 0, NULL, 0);
     if (bThemeActive)
-        ok( hRes == S_OK, "Expected S_OK, got 0x%08x\n", hRes);
+        ok( hRes == S_OK, "Expected S_OK, got 0x%08lx\n", hRes);
     else
-        ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08x\n", hRes);
+        ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08lx\n", hRes);
 
     /* Number of characters given is 0 */
     hRes = GetCurrentThemeName(currentTheme, 0, NULL, 0, NULL, 0);
     if (bThemeActive)
-        ok( hRes == S_OK || broken(hRes == E_FAIL /* WinXP SP1 */), "Expected S_OK, got 0x%08x\n", hRes);
+        ok( hRes == S_OK || broken(hRes == E_FAIL /* WinXP SP1 */), "Expected S_OK, got 0x%08lx\n", hRes);
     else
-        ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08x\n", hRes);
+        ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08lx\n", hRes);
 
     hRes = GetCurrentThemeName(currentTheme, 2, NULL, 0, NULL, 0);
     if (bThemeActive)
         todo_wine
             ok(hRes == E_NOT_SUFFICIENT_BUFFER ||
                broken(hRes == E_FAIL /* WinXP SP1 */),
-               "Expected E_NOT_SUFFICIENT_BUFFER, got 0x%08x\n", hRes);
+               "Expected E_NOT_SUFFICIENT_BUFFER, got 0x%08lx\n", hRes);
     else
-        ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08x\n", hRes);
+        ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08lx\n", hRes);
 
     /* The same is true if the number of characters is too small for Color and/or Size */
     hRes = GetCurrentThemeName(currentTheme, ARRAY_SIZE(currentTheme), currentColor, 2,
@@ -772,48 +772,48 @@ static void test_GetCurrentThemeName(void)
         todo_wine
             ok(hRes == E_NOT_SUFFICIENT_BUFFER ||
                broken(hRes == E_FAIL /* WinXP SP1 */),
-               "Expected E_NOT_SUFFICIENT_BUFFER, got 0x%08x\n", hRes);
+               "Expected E_NOT_SUFFICIENT_BUFFER, got 0x%08lx\n", hRes);
     else
-        ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08x\n", hRes);
+        ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08lx\n", hRes);
 
     /* Given number of characters is correct */
     hRes = GetCurrentThemeName(currentTheme, ARRAY_SIZE(currentTheme), NULL, 0, NULL, 0);
     if (bThemeActive)
-        ok( hRes == S_OK, "Expected S_OK, got 0x%08x\n", hRes);
+        ok( hRes == S_OK, "Expected S_OK, got 0x%08lx\n", hRes);
     else
-        ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08x\n", hRes);
+        ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08lx\n", hRes);
 
     /* Given number of characters for the theme name is too large */
     hRes = GetCurrentThemeName(currentTheme, sizeof(currentTheme), NULL, 0, NULL, 0);
     if (bThemeActive)
-        ok( hRes == E_POINTER || hRes == S_OK, "Expected E_POINTER or S_OK, got 0x%08x\n", hRes);
+        ok( hRes == E_POINTER || hRes == S_OK, "Expected E_POINTER or S_OK, got 0x%08lx\n", hRes);
     else
         ok( hRes == E_PROP_ID_UNSUPPORTED ||
             hRes == E_POINTER, /* win2k3 */
-            "Expected E_PROP_ID_UNSUPPORTED, got 0x%08x\n", hRes);
+            "Expected E_PROP_ID_UNSUPPORTED, got 0x%08lx\n", hRes);
  
     /* The too large case is only for the theme name, not for color name or size name */
     hRes = GetCurrentThemeName(currentTheme, ARRAY_SIZE(currentTheme), currentColor,
                                sizeof(currentTheme), currentSize,  ARRAY_SIZE(currentSize));
     if (bThemeActive)
-        ok( hRes == S_OK, "Expected S_OK, got 0x%08x\n", hRes);
+        ok( hRes == S_OK, "Expected S_OK, got 0x%08lx\n", hRes);
     else
-        ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08x\n", hRes);
+        ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08lx\n", hRes);
 
     hRes = GetCurrentThemeName(currentTheme, ARRAY_SIZE(currentTheme), currentColor,
                                ARRAY_SIZE(currentTheme), currentSize,  sizeof(currentSize));
     if (bThemeActive)
-        ok( hRes == S_OK, "Expected S_OK, got 0x%08x\n", hRes);
+        ok( hRes == S_OK, "Expected S_OK, got 0x%08lx\n", hRes);
     else
-        ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08x\n", hRes);
+        ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08lx\n", hRes);
 
     /* Correct call */
     hRes = GetCurrentThemeName(currentTheme, ARRAY_SIZE(currentTheme), currentColor,
                                ARRAY_SIZE(currentColor), currentSize,  ARRAY_SIZE(currentSize));
     if (bThemeActive)
-        ok( hRes == S_OK, "Expected S_OK, got 0x%08x\n", hRes);
+        ok( hRes == S_OK, "Expected S_OK, got 0x%08lx\n", hRes);
     else
-        ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08x\n", hRes);
+        ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08lx\n", hRes);
 }
 
 static void test_CloseThemeData(void)
@@ -821,9 +821,9 @@ static void test_CloseThemeData(void)
     HRESULT hRes;
 
     hRes = CloseThemeData(NULL);
-    ok( hRes == E_HANDLE, "Expected E_HANDLE, got 0x%08x\n", hRes);
+    ok( hRes == E_HANDLE, "Expected E_HANDLE, got 0x%08lx\n", hRes);
     hRes = CloseThemeData(INVALID_HANDLE_VALUE);
-    ok( hRes == E_HANDLE, "Expected E_HANDLE, got 0x%08x\n", hRes);
+    ok( hRes == E_HANDLE, "Expected E_HANDLE, got 0x%08lx\n", hRes);
 }
 
 static void test_buffer_dc_props(HDC hdc, const RECT *rect)
@@ -929,7 +929,7 @@ static void test_buffered_paint(void)
     ok(buffer != NULL, "Unexpected buffer %p\n", buffer);
     ok(src != NULL, "Expected buffered dc\n");
     hr = pEndBufferedPaint(buffer, FALSE);
-    ok(hr == S_OK, "Unexpected return code %#x\n", hr);
+    ok(hr == S_OK, "Unexpected return code %#lx\n", hr);
 
     SetRect(&rect, 0, 0, 5, 5);
     buffer = pBeginBufferedPaint(target, &rect, BPBF_COMPATIBLEBITMAP,
@@ -939,11 +939,11 @@ static void test_buffered_paint(void)
     /* clearing */
     hr = pBufferedPaintClear(NULL, NULL);
     todo_wine
-    ok(hr == E_FAIL, "Unexpected return code %#x\n", hr);
+    ok(hr == E_FAIL, "Unexpected return code %#lx\n", hr);
 
     hr = pBufferedPaintClear(buffer, NULL);
     todo_wine
-    ok(hr == S_OK, "Unexpected return code %#x\n", hr);
+    ok(hr == S_OK, "Unexpected return code %#lx\n", hr);
 
     /* access buffer attributes */
     hdc = pGetBufferedPaintDC(buffer);
@@ -953,25 +953,25 @@ static void test_buffered_paint(void)
     ok(hdc == target, "Unexpected target hdc %p, original %p\n", hdc, target);
 
     hr = pGetBufferedPaintTargetRect(NULL, NULL);
-    ok(hr == E_POINTER, "Unexpected return code %#x\n", hr);
+    ok(hr == E_POINTER, "Unexpected return code %#lx\n", hr);
 
     hr = pGetBufferedPaintTargetRect(buffer, NULL);
-    ok(hr == E_POINTER, "Unexpected return code %#x\n", hr);
+    ok(hr == E_POINTER, "Unexpected return code %#lx\n", hr);
 
     hr = pGetBufferedPaintTargetRect(NULL, &rect2);
-    ok(hr == E_FAIL, "Unexpected return code %#x\n", hr);
+    ok(hr == E_FAIL, "Unexpected return code %#lx\n", hr);
 
     SetRectEmpty(&rect2);
     hr = pGetBufferedPaintTargetRect(buffer, &rect2);
-    ok(hr == S_OK, "Unexpected return code %#x\n", hr);
+    ok(hr == S_OK, "Unexpected return code %#lx\n", hr);
     ok(EqualRect(&rect, &rect2), "Wrong target rect\n");
 
     hr = pEndBufferedPaint(buffer, FALSE);
-    ok(hr == S_OK, "Unexpected return code %#x\n", hr);
+    ok(hr == S_OK, "Unexpected return code %#lx\n", hr);
 
     /* invalid buffer handle */
     hr = pEndBufferedPaint(NULL, FALSE);
-    ok(hr == E_INVALIDARG, "Unexpected return code %#x\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected return code %#lx\n", hr);
 
     hdc = pGetBufferedPaintDC(NULL);
     ok(hdc == NULL, "Unexpected hdc %p\n", hdc);
@@ -980,26 +980,26 @@ static void test_buffered_paint(void)
     ok(hdc == NULL, "Unexpected target hdc %p\n", hdc);
 
     hr = pGetBufferedPaintTargetRect(NULL, &rect2);
-    ok(hr == E_FAIL, "Unexpected return code %#x\n", hr);
+    ok(hr == E_FAIL, "Unexpected return code %#lx\n", hr);
 
     hr = pGetBufferedPaintTargetRect(NULL, NULL);
-    ok(hr == E_POINTER, "Unexpected return code %#x\n", hr);
+    ok(hr == E_POINTER, "Unexpected return code %#lx\n", hr);
 
     bits = (void *)0xdeadbeef;
     row = 10;
     hr = pGetBufferedPaintBits(NULL, &bits, &row);
-    ok(hr == E_FAIL, "Unexpected return code %#x\n", hr);
+    ok(hr == E_FAIL, "Unexpected return code %#lx\n", hr);
     ok(row == 10, "Unexpected row count %d\n", row);
     ok(bits == (void *)0xdeadbeef, "Unexpected data pointer %p\n", bits);
 
     hr = pGetBufferedPaintBits(NULL, NULL, NULL);
-    ok(hr == E_POINTER, "Unexpected return code %#x\n", hr);
+    ok(hr == E_POINTER, "Unexpected return code %#lx\n", hr);
 
     hr = pGetBufferedPaintBits(NULL, &bits, NULL);
-    ok(hr == E_POINTER, "Unexpected return code %#x\n", hr);
+    ok(hr == E_POINTER, "Unexpected return code %#lx\n", hr);
 
     hr = pGetBufferedPaintBits(NULL, NULL, &row);
-    ok(hr == E_POINTER, "Unexpected return code %#x\n", hr);
+    ok(hr == E_POINTER, "Unexpected return code %#lx\n", hr);
 
     screen_dc = GetDC(0);
 
@@ -1016,7 +1016,7 @@ static void test_buffered_paint(void)
     buffer = pBeginBufferedPaint(hdc, &rect, BPBF_COMPATIBLEBITMAP, NULL, &src);
     test_buffer_dc_props(src, &rect);
     hr = pEndBufferedPaint(buffer, FALSE);
-    ok(hr == S_OK, "Unexpected return code %#x\n", hr);
+    ok(hr == S_OK, "Unexpected return code %#lx\n", hr);
 
     DeleteObject(hbm);
     DeleteDC(hdc);
@@ -1024,7 +1024,7 @@ static void test_buffered_paint(void)
     buffer = pBeginBufferedPaint(target, &rect, BPBF_COMPATIBLEBITMAP, NULL, &src);
     test_buffer_dc_props(src, &rect);
     hr = pEndBufferedPaint(buffer, FALSE);
-    ok(hr == S_OK, "Unexpected return code %#x\n", hr);
+    ok(hr == S_OK, "Unexpected return code %#lx\n", hr);
 
     /* access buffer bits */
     for (format = BPBF_COMPATIBLEBITMAP; format <= BPBF_TOPDOWNMONODIB; format++)
@@ -1036,16 +1036,16 @@ static void test_buffered_paint(void)
         row = 0;
         hr = pGetBufferedPaintBits(buffer, &bits, &row);
         if (format == BPBF_COMPATIBLEBITMAP)
-            ok(hr == E_FAIL, "Unexpected return code %#x\n", hr);
+            ok(hr == E_FAIL, "Unexpected return code %#lx\n", hr);
         else
         {
-            ok(hr == S_OK, "Unexpected return code %#x\n", hr);
+            ok(hr == S_OK, "Unexpected return code %#lx\n", hr);
             ok(bits != NULL, "Bitmap bits %p\n", bits);
             ok(row >= (rect.right - rect.left), "format %d: bitmap width %d\n", format, row);
         }
 
         hr = pEndBufferedPaint(buffer, FALSE);
-        ok(hr == S_OK, "Unexpected return code %#x\n", hr);
+        ok(hr == S_OK, "Unexpected return code %#lx\n", hr);
     }
 
     DeleteDC(target);
@@ -1095,10 +1095,10 @@ static void test_GetThemePartSize(void)
 
     hdc = GetDC(hwnd);
     hr = GetThemePartSize(htheme, hdc, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size);
-    ok(hr == S_OK, "GetThemePartSize failed, hr %#x.\n", hr);
+    ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
     hr = GetThemePartSize(htheme, NULL, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size2);
-    ok(hr == S_OK, "GetThemePartSize failed, hr %#x.\n", hr);
-    ok(size2.cx == size.cx && size2.cy == size.cy, "Expected size %dx%d, got %dx%d.\n",
+    ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
+    ok(size2.cx == size.cx && size2.cy == size.cy, "Expected size %ldx%ld, got %ldx%ld.\n",
        size.cx, size.cy, size2.cx, size2.cy);
     ReleaseDC(hwnd, hdc);
 
@@ -1111,12 +1111,12 @@ static void test_GetThemePartSize(void)
 
     hdc = GetDC(hwnd);
     hr = GetThemePartSize(htheme, hdc, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size2);
-    ok(hr == S_OK, "GetThemePartSize failed, hr %#x.\n", hr);
-    ok(size2.cx == size.cx && size2.cy == size.cy, "Expected size %dx%d, got %dx%d.\n", size.cx,
+    ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
+    ok(size2.cx == size.cx && size2.cy == size.cy, "Expected size %ldx%ld, got %ldx%ld.\n", size.cx,
        size.cy, size2.cx, size2.cy);
     hr = GetThemePartSize(htheme, NULL, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size2);
-    ok(hr == S_OK, "GetThemePartSize failed, hr %#x.\n", hr);
-    ok(size2.cx == size.cx && size2.cy == size.cy, "Expected size %dx%d, got %dx%d.\n", size.cx,
+    ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
+    ok(size2.cx == size.cx && size2.cy == size.cy, "Expected size %ldx%ld, got %ldx%ld.\n", size.cx,
        size.cy, size2.cx, size2.cy);
 
     /* Test that theme part size changes after DPI is changed and theme handle is reopened.
@@ -1126,12 +1126,12 @@ static void test_GetThemePartSize(void)
     htheme = OpenThemeData(hwnd, WC_BUTTONW);
 
     hr = GetThemePartSize(htheme, hdc, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size2);
-    ok(hr == S_OK, "GetThemePartSize failed, hr %#x.\n", hr);
-    ok(size2.cx != size.cx || size2.cy != size.cy, "Expected size not equal to %dx%d.\n", size.cx,
+    ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
+    ok(size2.cx != size.cx || size2.cy != size.cy, "Expected size not equal to %ldx%ld.\n", size.cx,
        size.cy);
     hr = GetThemePartSize(htheme, NULL, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size2);
-    ok(hr == S_OK, "GetThemePartSize failed, hr %#x.\n", hr);
-    ok(size2.cx != size.cx || size2.cy != size.cy, "Expected size not equal to %dx%d.\n", size.cx,
+    ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
+    ok(size2.cx != size.cx || size2.cy != size.cy, "Expected size not equal to %ldx%ld.\n", size.cx,
        size.cy);
     ReleaseDC(hwnd, hdc);
 
@@ -1148,12 +1148,12 @@ static void test_GetThemePartSize(void)
 
     hdc = GetDC(hwnd);
     hr = GetThemePartSize(htheme, hdc, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size2);
-    ok(hr == S_OK, "GetThemePartSize failed, hr %#x.\n", hr);
-    ok(size2.cx == size.cx && size2.cy == size.cy, "Expected size %dx%d, got %dx%d.\n", size.cx,
+    ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
+    ok(size2.cx == size.cx && size2.cy == size.cy, "Expected size %ldx%ld, got %ldx%ld.\n", size.cx,
        size.cy, size2.cx, size2.cy);
     hr = GetThemePartSize(htheme, NULL, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size2);
-    ok(hr == S_OK, "GetThemePartSize failed, hr %#x.\n", hr);
-    ok(size2.cx == size.cx && size2.cy == size.cy, "Expected size %dx%d, got %dx%d.\n", size.cx,
+    ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
+    ok(size2.cx == size.cx && size2.cy == size.cy, "Expected size %ldx%ld, got %ldx%ld.\n", size.cx,
        size.cy, size2.cx, size2.cy);
     ReleaseDC(hwnd, hdc);
 
@@ -1190,7 +1190,7 @@ static void test_EnableTheming(void)
     if (IsThemeActive())
     {
         hr = EnableTheming(TRUE);
-        ok(hr == S_OK, "EnableTheming failed, hr %#x.\n", hr);
+        ok(hr == S_OK, "EnableTheming failed, hr %#lx.\n", hr);
         ok(IsThemeActive(), "Expected theming active.\n");
 
         /* Only run in interactive mode because once theming is disabled, it can't be turned back on
@@ -1215,15 +1215,15 @@ static void test_EnableTheming(void)
             memset(&old_ncm, 0, sizeof(old_ncm));
             old_ncm.cbSize = FIELD_OFFSET(NONCLIENTMETRICSW, iPaddedBorderWidth);
             ret = SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(old_ncm), &old_ncm, 0);
-            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+            ok(ret, "SystemParametersInfoW failed, error %lu.\n", GetLastError());
 
             memset(&old_logfont, 0, sizeof(old_logfont));
             ret = SystemParametersInfoW(SPI_GETICONTITLELOGFONT, sizeof(old_logfont), &old_logfont, 0);
-            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+            ok(ret, "SystemParametersInfoW failed, error %lu.\n", GetLastError());
             ret = SystemParametersInfoW(SPI_GETFLATMENU, 0, &old_flat_menu, 0);
-            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+            ok(ret, "SystemParametersInfoW failed, error %lu.\n", GetLastError());
             ret = SystemParametersInfoW(SPI_GETGRADIENTCAPTIONS, 0, &old_gradient_caption, 0);
-            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+            ok(ret, "SystemParametersInfoW failed, error %lu.\n", GetLastError());
 
             /* Write new system metrics to the registry */
             new_color = ~old_color;
@@ -1236,30 +1236,30 @@ static void test_EnableTheming(void)
 
             ls = RegOpenKeyExW(HKEY_CURRENT_USER, L"Control Panel\\Colors", 0, KEY_ALL_ACCESS,
                                &hkey);
-            ok(!ls, "RegOpenKeyExW failed, ls %#x.\n", ls);
+            ok(!ls, "RegOpenKeyExW failed, ls %#lx.\n", ls);
 
             length = swprintf(new_color_string, ARRAY_SIZE(new_color_string), L"%d %d %d",
                               GetRValue(new_color), GetGValue(new_color), GetBValue(new_color));
             ls = RegSetValueExW(hkey, L"Scrollbar", 0, REG_SZ, (BYTE *)new_color_string,
                                 (length + 1) * sizeof(WCHAR));
-            ok(!ls, "RegSetValueExW failed, ls %#x.\n", ls);
+            ok(!ls, "RegSetValueExW failed, ls %#lx.\n", ls);
 
             ret = SystemParametersInfoW(SPI_SETNONCLIENTMETRICS, sizeof(new_ncm), &new_ncm,
                                         SPIF_UPDATEINIFILE);
-            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+            ok(ret, "SystemParametersInfoW failed, error %lu.\n", GetLastError());
             ret = SystemParametersInfoW(SPI_SETICONTITLELOGFONT, sizeof(new_logfont), &new_logfont,
                                         SPIF_UPDATEINIFILE);
-            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+            ok(ret, "SystemParametersInfoW failed, error %lu.\n", GetLastError());
             ret = SystemParametersInfoW(SPI_SETFLATMENU, 0, (void *)(INT_PTR)new_flat_menu,
                                         SPIF_UPDATEINIFILE);
-            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+            ok(ret, "SystemParametersInfoW failed, error %lu.\n", GetLastError());
             ret = SystemParametersInfoW(SPI_SETGRADIENTCAPTIONS, 0,
                                         (void *)(INT_PTR)new_gradient_caption, SPIF_UPDATEINIFILE);
-            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+            ok(ret, "SystemParametersInfoW failed, error %lu.\n", GetLastError());
 
             /* Change theming state */
             hr = EnableTheming(FALSE);
-            ok(hr == S_OK, "EnableTheming failed, hr %#x.\n", hr);
+            ok(hr == S_OK, "EnableTheming failed, hr %#lx.\n", hr);
             is_theme_active = IsThemeActive();
             ok(!is_theme_active || broken(is_theme_active), /* Win8+ can no longer disable theming */
                "Expected theming inactive.\n");
@@ -1267,33 +1267,33 @@ static void test_EnableTheming(void)
             /* Test that system metrics are unchanged */
             size = sizeof(color_string);
             ls = RegQueryValueExW(hkey, L"Scrollbar", NULL, NULL, (BYTE *)color_string, &size);
-            ok(!ls, "RegQueryValueExW failed, ls %#x.\n", ls);
+            ok(!ls, "RegQueryValueExW failed, ls %#lx.\n", ls);
             ok(!lstrcmpW(color_string, new_color_string), "Expected %s, got %s.\n",
                wine_dbgstr_w(new_color_string), wine_dbgstr_w(color_string));
 
             ret = SystemParametersInfoW(SPI_GETFLATMENU, 0, &flat_menu, 0);
-            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+            ok(ret, "SystemParametersInfoW failed, error %lu.\n", GetLastError());
             ok(flat_menu == new_flat_menu, "Expected %d, got %d.\n", new_flat_menu, flat_menu);
             ret = SystemParametersInfoW(SPI_GETGRADIENTCAPTIONS, 0, &gradient_caption, 0);
-            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+            ok(ret, "SystemParametersInfoW failed, error %lu.\n", GetLastError());
             ok(gradient_caption == new_gradient_caption, "Expected %d, got %d.\n",
                new_gradient_caption, gradient_caption);
 
             memset(&ncm, 0, sizeof(ncm));
             ncm.cbSize = FIELD_OFFSET(NONCLIENTMETRICSW, iPaddedBorderWidth);
             ret = SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(ncm), &ncm, 0);
-            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+            ok(ret, "SystemParametersInfoW failed, error %lu.\n", GetLastError());
             ok(!memcmp(&ncm, &new_ncm, sizeof(ncm)), "Expected non-client metrics unchanged.\n");
 
             memset(&logfont, 0, sizeof(logfont));
             ret = SystemParametersInfoW(SPI_GETICONTITLELOGFONT, sizeof(logfont), &logfont, 0);
-            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+            ok(ret, "SystemParametersInfoW failed, error %lu.\n", GetLastError());
             ok(!memcmp(&logfont, &new_logfont, sizeof(logfont)),
                "Expected icon title font unchanged.\n");
 
             /* Test that theming cannot be turned on via EnableTheming() */
             hr = EnableTheming(TRUE);
-            ok(hr == S_OK, "EnableTheming failed, hr %#x.\n", hr);
+            ok(hr == S_OK, "EnableTheming failed, hr %#lx.\n", hr);
             is_theme_active = IsThemeActive();
             ok(!is_theme_active || broken(is_theme_active), /* Win8+ can no longer disable theming */
                "Expected theming inactive.\n");
@@ -1301,19 +1301,19 @@ static void test_EnableTheming(void)
             /* Restore system metrics */
             ls = RegSetValueExW(hkey, L"Scrollbar", 0, REG_SZ, (BYTE *)old_color_string,
                                 (lstrlenW(old_color_string) + 1) * sizeof(WCHAR));
-            ok(!ls, "RegSetValueExW failed, ls %#x.\n", ls);
+            ok(!ls, "RegSetValueExW failed, ls %#lx.\n", ls);
             ret = SystemParametersInfoW(SPI_SETFLATMENU, 0, (void *)(INT_PTR)old_flat_menu,
                                         SPIF_UPDATEINIFILE);
-            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+            ok(ret, "SystemParametersInfoW failed, error %lu.\n", GetLastError());
             ret = SystemParametersInfoW(SPI_SETGRADIENTCAPTIONS, 0,
                                         (void *)(INT_PTR)old_gradient_caption, SPIF_UPDATEINIFILE);
-            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+            ok(ret, "SystemParametersInfoW failed, error %lu.\n", GetLastError());
             ret = SystemParametersInfoW(SPI_SETNONCLIENTMETRICS, sizeof(old_ncm), &old_ncm,
                                         SPIF_UPDATEINIFILE);
-            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+            ok(ret, "SystemParametersInfoW failed, error %lu.\n", GetLastError());
             ret = SystemParametersInfoW(SPI_SETICONTITLELOGFONT, sizeof(old_logfont), &old_logfont,
                                         SPIF_UPDATEINIFILE);
-            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+            ok(ret, "SystemParametersInfoW failed, error %lu.\n", GetLastError());
 
             RegCloseKey(hkey);
             if (pSetThreadDpiAwarenessContext)
@@ -1323,15 +1323,15 @@ static void test_EnableTheming(void)
     else
     {
         hr = EnableTheming(FALSE);
-        ok(hr == S_OK, "EnableTheming failed, hr %#x.\n", hr);
+        ok(hr == S_OK, "EnableTheming failed, hr %#lx.\n", hr);
         ok(!IsThemeActive(), "Expected theming inactive.\n");
 
         hr = EnableTheming(TRUE);
-        ok(hr == S_OK, "EnableTheming failed, hr %#x.\n", hr);
+        ok(hr == S_OK, "EnableTheming failed, hr %#lx.\n", hr);
         ok(!IsThemeActive(), "Expected theming inactive.\n");
 
         hr = EnableTheming(FALSE);
-        ok(hr == S_OK, "EnableTheming failed, hr %#x.\n", hr);
+        ok(hr == S_OK, "EnableTheming failed, hr %#lx.\n", hr);
         ok(!IsThemeActive(), "Expected theming inactive.\n");
     }
 }
@@ -1362,9 +1362,9 @@ static void test_GetThemeIntList(void)
     /* TMT_TRANSITIONDURATIONS is a vista+ property */
     hr = pGetThemeIntList(theme, BP_PUSHBUTTON, PBS_NORMAL, TMT_TRANSITIONDURATIONS, &intlist);
     if (LOBYTE(LOWORD(GetVersion())) < 6)
-        ok(hr == E_PROP_ID_UNSUPPORTED, "Expected %#x, got %#x.\n", E_PROP_ID_UNSUPPORTED, hr);
+        ok(hr == E_PROP_ID_UNSUPPORTED, "Expected %#lx, got %#lx.\n", E_PROP_ID_UNSUPPORTED, hr);
     else
-        ok(hr == S_OK, "GetThemeIntList failed, hr %#x.\n", hr);
+        ok(hr == S_OK, "GetThemeIntList failed, hr %#lx.\n", hr);
 
     CloseThemeData(theme);
     DestroyWindow(hwnd);
@@ -1398,8 +1398,8 @@ static void test_GetThemeTransitionDuration(void)
     duration = 0xdeadbeef;
     hr = pGetThemeTransitionDuration(NULL, BP_PUSHBUTTON, PBS_NORMAL, PBS_DEFAULTED_ANIMATING,
                                      TMT_TRANSITIONDURATIONS, &duration);
-    ok(hr == E_HANDLE, "GetThemeTransitionDuration failed, hr %#x.\n", hr);
-    ok(duration == 0xdeadbeef, "Expected duration %#x, got %#x.\n", 0xdeadbeef, duration);
+    ok(hr == E_HANDLE, "GetThemeTransitionDuration failed, hr %#lx.\n", hr);
+    ok(duration == 0xdeadbeef, "Expected duration %#x, got %#lx.\n", 0xdeadbeef, duration);
 
     /* Crash on Wine. HTHEME is not a pointer that can be directly referenced. */
     if (strcmp(winetest_platform, "wine"))
@@ -1408,72 +1408,72 @@ static void test_GetThemeTransitionDuration(void)
     hr = pGetThemeTransitionDuration((HTHEME)0xdeadbeef, BP_PUSHBUTTON, PBS_NORMAL,
                                      PBS_DEFAULTED_ANIMATING, TMT_TRANSITIONDURATIONS, &duration);
     todo_wine
-    ok(hr == E_HANDLE, "GetThemeTransitionDuration failed, hr %#x.\n", hr);
-    ok(duration == 0xdeadbeef, "Expected duration %#x, got %#x.\n", 0xdeadbeef, duration);
+    ok(hr == E_HANDLE, "GetThemeTransitionDuration failed, hr %#lx.\n", hr);
+    ok(duration == 0xdeadbeef, "Expected duration %#x, got %#lx.\n", 0xdeadbeef, duration);
     }
 
     duration = 0xdeadbeef;
     hr = pGetThemeTransitionDuration(theme, 0xdeadbeef, PBS_NORMAL, PBS_DEFAULTED_ANIMATING,
                                      TMT_TRANSITIONDURATIONS, &duration);
-    ok(hr == E_PROP_ID_UNSUPPORTED, "GetThemeTransitionDuration failed, hr %#x.\n", hr);
-    ok(duration == 0, "Expected duration %#x, got %#x.\n", 0, duration);
+    ok(hr == E_PROP_ID_UNSUPPORTED, "GetThemeTransitionDuration failed, hr %#lx.\n", hr);
+    ok(duration == 0, "Expected duration %#x, got %#lx.\n", 0, duration);
 
     duration = 0xdeadbeef;
     hr = pGetThemeTransitionDuration(theme, BP_PUSHBUTTON, PBS_NORMAL - 1, PBS_DEFAULTED_ANIMATING,
                                      TMT_TRANSITIONDURATIONS, &duration);
-    ok(hr == E_INVALIDARG, "GetThemeTransitionDuration failed, hr %#x.\n", hr);
-    ok(duration == 0xdeadbeef, "Expected duration %#x, got %#x.\n", 0xdeadbeef, duration);
+    ok(hr == E_INVALIDARG, "GetThemeTransitionDuration failed, hr %#lx.\n", hr);
+    ok(duration == 0xdeadbeef, "Expected duration %#x, got %#lx.\n", 0xdeadbeef, duration);
 
     duration = 0xdeadbeef;
     hr = pGetThemeTransitionDuration(theme, BP_PUSHBUTTON, PBS_DEFAULTED_ANIMATING + 1,
                                      PBS_DEFAULTED_ANIMATING, TMT_TRANSITIONDURATIONS, &duration);
-    ok(hr == E_INVALIDARG, "GetThemeTransitionDuration failed, hr %#x.\n", hr);
-    ok(duration == 0, "Expected duration %#x, got %#x.\n", 0, duration);
+    ok(hr == E_INVALIDARG, "GetThemeTransitionDuration failed, hr %#lx.\n", hr);
+    ok(duration == 0, "Expected duration %#x, got %#lx.\n", 0, duration);
 
     duration = 0xdeadbeef;
     hr = pGetThemeTransitionDuration(theme, BP_PUSHBUTTON, PBS_NORMAL, PBS_NORMAL - 1,
                                      TMT_TRANSITIONDURATIONS, &duration);
-    ok(hr == E_INVALIDARG, "GetThemeTransitionDuration failed, hr %#x.\n", hr);
-    ok(duration == 0xdeadbeef, "Expected duration %#x, got %#x.\n", 0xdeadbeef, duration);
+    ok(hr == E_INVALIDARG, "GetThemeTransitionDuration failed, hr %#lx.\n", hr);
+    ok(duration == 0xdeadbeef, "Expected duration %#x, got %#lx.\n", 0xdeadbeef, duration);
 
     duration = 0xdeadbeef;
     hr = pGetThemeTransitionDuration(theme, BP_PUSHBUTTON, PBS_NORMAL, PBS_DEFAULTED_ANIMATING + 1,
                                      TMT_TRANSITIONDURATIONS, &duration);
-    ok(hr == E_INVALIDARG, "GetThemeTransitionDuration failed, hr %#x.\n", hr);
-    ok(duration == 0, "Expected duration %#x, got %#x.\n", 0, duration);
+    ok(hr == E_INVALIDARG, "GetThemeTransitionDuration failed, hr %#lx.\n", hr);
+    ok(duration == 0, "Expected duration %#x, got %#lx.\n", 0, duration);
 
     duration = 0xdeadbeef;
     hr = pGetThemeTransitionDuration(theme, BP_PUSHBUTTON, PBS_NORMAL, PBS_DEFAULTED_ANIMATING,
                                      TMT_BACKGROUND, &duration);
-    ok(hr == E_PROP_ID_UNSUPPORTED, "GetThemeTransitionDuration failed, hr %#x.\n", hr);
-    ok(duration == 0, "Expected duration %#x, got %#x.\n", 0, duration);
+    ok(hr == E_PROP_ID_UNSUPPORTED, "GetThemeTransitionDuration failed, hr %#lx.\n", hr);
+    ok(duration == 0, "Expected duration %#x, got %#lx.\n", 0, duration);
 
     duration = 0xdeadbeef;
     hr = pGetThemeTransitionDuration(theme, BP_PUSHBUTTON, PBS_NORMAL, PBS_DEFAULTED_ANIMATING,
                                      0xdeadbeef, &duration);
-    ok(hr == E_PROP_ID_UNSUPPORTED, "GetThemeTransitionDuration failed, hr %#x.\n", hr);
-    ok(duration == 0, "Expected duration %#x, got %#x.\n", 0, duration);
+    ok(hr == E_PROP_ID_UNSUPPORTED, "GetThemeTransitionDuration failed, hr %#lx.\n", hr);
+    ok(duration == 0, "Expected duration %#x, got %#lx.\n", 0, duration);
 
     hr = pGetThemeTransitionDuration(theme, BP_PUSHBUTTON, PBS_NORMAL, PBS_DEFAULTED_ANIMATING,
                                      TMT_TRANSITIONDURATIONS, NULL);
-    ok(hr == E_INVALIDARG, "GetThemeTransitionDuration failed, hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "GetThemeTransitionDuration failed, hr %#lx.\n", hr);
 
     /* Parts that don't have TMT_TRANSITIONDURATIONS */
     hr = GetThemeIntList(theme, BP_GROUPBOX, GBS_NORMAL, TMT_TRANSITIONDURATIONS, &intlist);
-    ok(hr == E_PROP_ID_UNSUPPORTED, "GetThemeIntList failed, hr %#x.\n", hr);
+    ok(hr == E_PROP_ID_UNSUPPORTED, "GetThemeIntList failed, hr %#lx.\n", hr);
 
     duration = 0xdeadbeef;
     hr = pGetThemeTransitionDuration(theme, BP_GROUPBOX, GBS_NORMAL, GBS_DISABLED,
                                      TMT_TRANSITIONDURATIONS, &duration);
-    ok(hr == E_PROP_ID_UNSUPPORTED, "GetThemeTransitionDuration failed, hr %#x.\n", hr);
-    ok(duration == 0, "Expected duration %#x, got %#x.\n", 0, duration);
+    ok(hr == E_PROP_ID_UNSUPPORTED, "GetThemeTransitionDuration failed, hr %#lx.\n", hr);
+    ok(duration == 0, "Expected duration %#x, got %#lx.\n", 0, duration);
 
     /* Test parsing TMT_TRANSITIONDURATIONS property. TMT_TRANSITIONDURATIONS is a vista+ property */
     if (LOBYTE(LOWORD(GetVersion())) < 6)
         goto done;
 
     hr = pGetThemeIntList(theme, BP_PUSHBUTTON, PBS_NORMAL, TMT_TRANSITIONDURATIONS, &intlist);
-    ok(hr == S_OK, "GetThemeIntList failed, hr %#x.\n", hr);
+    ok(hr == S_OK, "GetThemeIntList failed, hr %#lx.\n", hr);
     /* The first value is the theme part state count. The following are the values from every state
      * to every state. So the total value count should be 1 + state ^ 2 */
     expected = PBS_DEFAULTED_ANIMATING - PBS_NORMAL + 1;
@@ -1493,9 +1493,9 @@ static void test_GetThemeTransitionDuration(void)
                 duration = 0xdeadbeef;
                 hr = pGetThemeTransitionDuration(theme, BP_PUSHBUTTON, from_state, to_state,
                                                  TMT_TRANSITIONDURATIONS, &duration);
-                ok(hr == S_OK, "GetThemeTransitionDuration failed, hr %#x.\n", hr);
+                ok(hr == S_OK, "GetThemeTransitionDuration failed, hr %#lx.\n", hr);
                 expected = intlist.iValues[1 + intlist.iValues[0] * (from_state - 1) + (to_state - 1)];
-                ok(duration == expected, "Expected duration %d, got %d.\n", expected, duration);
+                ok(duration == expected, "Expected duration %d, got %ld.\n", expected, duration);
 
                 winetest_pop_context();
             }
@@ -1529,7 +1529,7 @@ static LRESULT WINAPI test_DrawThemeParentBackground_proc(HWND hwnd, UINT messag
     case WM_ERASEBKGND:
     case WM_PRINTCLIENT:
         ret = GetBrushOrgEx((HDC)wp, &org);
-        ok(ret, "GetBrushOrgEx failed, error %d.\n", GetLastError());
+        ok(ret, "GetBrushOrgEx failed, error %ld.\n", GetLastError());
         ok(org.x == 0 && org.y == 0, "Expected (0,0), got %s.\n", wine_dbgstr_point(&org));
         break;
 
@@ -1571,27 +1571,27 @@ static void test_DrawThemeParentBackground(void)
 
     parent = CreateWindowA("TestDrawThemeParentBackgroundClass", "parent", WS_POPUP | WS_VISIBLE, 0,
                            0, 100, 100, 0, 0, 0, 0);
-    ok(parent != NULL, "CreateWindowA failed, error %d.\n", GetLastError());
+    ok(parent != NULL, "CreateWindowA failed, error %ld.\n", GetLastError());
     child = CreateWindowA(WC_STATICA, "child", WS_CHILD | WS_VISIBLE, 1, 2, 50, 50, parent, 0, 0,
                           NULL);
-    ok(child != NULL, "CreateWindowA failed, error %d.\n", GetLastError());
+    ok(child != NULL, "CreateWindowA failed, error %ld.\n", GetLastError());
     flush_events();
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     hdc = GetDC(child);
     ret = GetBrushOrgEx(hdc, &org);
-    ok(ret, "GetBrushOrgEx failed, error %d.\n", GetLastError());
+    ok(ret, "GetBrushOrgEx failed, error %ld.\n", GetLastError());
     ok(org.x == 0 && org.y == 0, "Expected (0,0), got %s.\n", wine_dbgstr_point(&org));
 
     hr = DrawThemeParentBackground(child, hdc, NULL);
-    ok(SUCCEEDED(hr), "DrawThemeParentBackground failed, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "DrawThemeParentBackground failed, hr %#lx.\n", hr);
     ok_sequence(sequences, PARENT_SEQ_INDEX, DrawThemeParentBackground_seq,
                 "DrawThemeParentBackground parent", FALSE);
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     GetClientRect(child, &rect);
     hr = DrawThemeParentBackground(child, hdc, &rect);
-    ok(SUCCEEDED(hr), "DrawThemeParentBackground failed, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "DrawThemeParentBackground failed, hr %#lx.\n", hr);
     ok_sequence(sequences, PARENT_SEQ_INDEX, DrawThemeParentBackground_seq,
                 "DrawThemeParentBackground parent", FALSE);
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
@@ -1634,7 +1634,7 @@ static INT_PTR CALLBACK test_EnableThemeDialogTexture_proc(HWND hwnd, UINT msg, 
         dialog_child = CreateWindowA(param->class_name, "child",
                                      param->style | WS_CHILD | WS_VISIBLE, 1, 2, 50, 50, hwnd,
                                      (HMENU)100, 0, NULL);
-        ok(dialog_child != NULL, "CreateWindowA failed, error %d.\n", GetLastError());
+        ok(dialog_child != NULL, "CreateWindowA failed, error %ld.\n", GetLastError());
         if (dialog_init_flag)
             EnableThemeDialogTexture(hwnd, dialog_init_flag);
         return TRUE;
@@ -1788,14 +1788,14 @@ static void test_EnableThemeDialogTexture(void)
     param.style = 0;
     dialog = CreateDialogIndirectParamA(NULL, &temp.template, GetDesktopWindow(),
                                         test_EnableThemeDialogTexture_proc, (LPARAM)&param);
-    ok(dialog != NULL, "CreateDialogIndirectParamA failed, error %d.\n", GetLastError());
+    ok(dialog != NULL, "CreateDialogIndirectParamA failed, error %ld.\n", GetLastError());
     child = GetDlgItem(dialog, 100);
-    ok(child != NULL, "Failed to get child control, error %d.\n", GetLastError());
+    ok(child != NULL, "Failed to get child control, error %ld.\n", GetLastError());
     child_hdc = GetDC(child);
 
     /* Test that dialog procedure is unchanged */
     proc = GetWindowLongPtrA(dialog, DWLP_DLGPROC);
-    ok(proc == (ULONG_PTR)test_EnableThemeDialogTexture_proc, "Unexpected proc %#lx.\n", proc);
+    ok(proc == (ULONG_PTR)test_EnableThemeDialogTexture_proc, "Unexpected proc %#Ix.\n", proc);
 
     /* Test dialog texture is disabled by default. EnableThemeDialogTexture() needs to be called */
     ret = IsThemeDialogTextureEnabled(dialog);
@@ -1804,7 +1804,7 @@ static void test_EnableThemeDialogTexture(void)
 
     /* Test ETDT_ENABLE | ETDT_USETABTEXTURE doesn't take effect immediately */
     hr = EnableThemeDialogTexture(dialog, ETDT_ENABLE | ETDT_USETABTEXTURE);
-    ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
+    ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#lx.\n", hr);
     ret = IsThemeDialogTextureEnabled(dialog);
     ok(ret, "Expected theme dialog texture enabled.\n");
 
@@ -1812,7 +1812,7 @@ static void test_EnableThemeDialogTexture(void)
     ok(brush == GetSysColorBrush(COLOR_BTNFACE), "Expected brush %p, got %p.\n",
        GetSysColorBrush(COLOR_BTNFACE), brush);
     ret = GetBrushOrgEx(child_hdc, &org);
-    ok(ret, "GetBrushOrgEx failed, error %u.\n", GetLastError());
+    ok(ret, "GetBrushOrgEx failed, error %lu.\n", GetLastError());
     ok(org.x == 0 && org.y == 0, "Expected (0,0), got %s.\n", wine_dbgstr_point(&org));
 
     /* Test WM_THEMECHANGED doesn't make ETDT_ENABLE | ETDT_USETABTEXTURE take effect */
@@ -1831,7 +1831,7 @@ static void test_EnableThemeDialogTexture(void)
     /* Test disabling theme dialog texture should change the brush immediately */
     brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
     hr = EnableThemeDialogTexture(dialog, ETDT_DISABLE);
-    ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
+    ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#lx.\n", hr);
     brush2 = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
     ok(brush2 != brush, "Expected a different brush.\n");
     ok(brush2 == GetSysColorBrush(COLOR_BTNFACE), "Expected brush %p, got %p.\n",
@@ -1840,7 +1840,7 @@ static void test_EnableThemeDialogTexture(void)
     /* Test re-enabling theme dialog texture with ETDT_ENABLE doesn't change the brush */
     brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
     hr = EnableThemeDialogTexture(dialog, ETDT_ENABLE);
-    ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
+    ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#lx.\n", hr);
     brush2 = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
     ok(brush2 == brush, "Expected the same brush.\n");
     ok(brush2 == GetSysColorBrush(COLOR_BTNFACE), "Expected brush %p, got %p.\n",
@@ -1849,14 +1849,14 @@ static void test_EnableThemeDialogTexture(void)
     /* Test adding ETDT_USETABTEXTURE should change the brush immediately */
     brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
     hr = EnableThemeDialogTexture(dialog, ETDT_USETABTEXTURE);
-    ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
+    ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#lx.\n", hr);
     brush2 = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
     ok(brush2 != brush, "Expected a different brush.\n");
 
     /* Test ETDT_ENABLE | ETDT_USEAEROWIZARDTABTEXTURE should change the brush immediately */
     brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
     hr = EnableThemeDialogTexture(dialog, ETDT_ENABLE | ETDT_USEAEROWIZARDTABTEXTURE);
-    ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
+    ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#lx.\n", hr);
     brush2 = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
     /* ETDT_USEAEROWIZARDTABTEXTURE is supported only on Vista+ */
     if (LOBYTE(LOWORD(GetVersion())) < 6)
@@ -1865,9 +1865,9 @@ static void test_EnableThemeDialogTexture(void)
         ok(brush2 != brush, "Expected a different brush.\n");
 
     hr = EnableThemeDialogTexture(dialog, ETDT_DISABLE);
-    ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
+    ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#lx.\n", hr);
     hr = EnableThemeDialogTexture(dialog, ETDT_ENABLE | ETDT_USETABTEXTURE);
-    ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
+    ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#lx.\n", hr);
 
     /* Test that the dialog procedure should take precedence over DefDlgProc() for WM_CTLCOLORSTATIC */
     handle_WM_CTLCOLORSTATIC = TRUE;
@@ -1884,7 +1884,7 @@ static void test_EnableThemeDialogTexture(void)
     size.cx = 0;
     size.cy = 0;
     hr = GetThemePartSize(theme, NULL, TABP_BODY, 0, NULL, TS_TRUE, &size);
-    ok(hr == S_OK, "GetThemePartSize failed, hr %#x.\n", hr);
+    ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
     CloseThemeData(theme);
 
     /* Test which WM_CTLCOLOR* message uses tab background as dialog texture */
@@ -1894,10 +1894,10 @@ static void test_EnableThemeDialogTexture(void)
 
         /* Test that some WM_CTLCOLOR* messages change brush origin when dialog texture is on */
         ret = SetBrushOrgEx(child_hdc, 0, 0, NULL);
-        ok(ret, "SetBrushOrgEx failed, error %u.\n", GetLastError());
+        ok(ret, "SetBrushOrgEx failed, error %lu.\n", GetLastError());
         SendMessageW(dialog, msg, (WPARAM)child_hdc, (LPARAM)child);
         ret = GetBrushOrgEx(child_hdc, &org);
-        ok(ret, "GetBrushOrgEx failed, error %u.\n", GetLastError());
+        ok(ret, "GetBrushOrgEx failed, error %lu.\n", GetLastError());
         /* WM_CTLCOLOREDIT, WM_CTLCOLORLISTBOX and WM_CTLCOLORSCROLLBAR don't use tab background */
         if (msg == WM_CTLCOLOREDIT || msg == WM_CTLCOLORLISTBOX || msg == WM_CTLCOLORSCROLLBAR)
         {
@@ -1922,23 +1922,23 @@ static void test_EnableThemeDialogTexture(void)
         ok(old_color != CLR_INVALID, "SetBkColor failed.\n");
         SendMessageW(dialog, msg, (WPARAM)child_hdc, (LPARAM)child);
         color = SetBkColor(child_hdc, old_color);
-        ok(color == GetSysColor(COLOR_BTNFACE), "Expected background color %#x, got %#x.\n",
+        ok(color == GetSysColor(COLOR_BTNFACE), "Expected background color %#lx, got %#lx.\n",
            GetSysColor(COLOR_BTNFACE), color);
 
         /* Test that the returned brush is a pattern brush created from the tab body */
         brush = (HBRUSH)SendMessageW(dialog, msg, (WPARAM)child_hdc, (LPARAM)child);
         memset(&log_brush, 0, sizeof(log_brush));
         count = GetObjectA(brush, sizeof(log_brush), &log_brush);
-        ok(count == sizeof(log_brush), "GetObjectA failed, error %u.\n", GetLastError());
-        ok(log_brush.lbColor == 0, "Expected brush color %#x, got %#x.\n", 0, log_brush.lbColor);
+        ok(count == sizeof(log_brush), "GetObjectA failed, error %lu.\n", GetLastError());
+        ok(log_brush.lbColor == 0, "Expected brush color %#x, got %#lx.\n", 0, log_brush.lbColor);
         ok(log_brush.lbStyle == BS_PATTERN, "Expected brush style %#x, got %#x.\n", BS_PATTERN,
            log_brush.lbStyle);
 
         memset(&bmp, 0, sizeof(bmp));
         count = GetObjectA((HBITMAP)log_brush.lbHatch, sizeof(bmp), &bmp);
-        ok(count == sizeof(bmp), "GetObjectA failed, error %u.\n", GetLastError());
-        ok(bmp.bmWidth == size.cx, "Expected width %d, got %d.\n", size.cx, bmp.bmWidth);
-        ok(bmp.bmHeight == size.cy, "Expected height %d, got %d.\n", size.cy, bmp.bmHeight);
+        ok(count == sizeof(bmp), "GetObjectA failed, error %lu.\n", GetLastError());
+        ok(bmp.bmWidth == size.cx, "Expected width %ld, got %d.\n", size.cx, bmp.bmWidth);
+        ok(bmp.bmHeight == size.cy, "Expected height %ld, got %d.\n", size.cy, bmp.bmHeight);
 
         /* Test that DefDlgProcA/W() are hooked for some WM_CTLCOLOR* messages */
         brush = (HBRUSH)SendMessageW(dialog, msg, (WPARAM)child_hdc, (LPARAM)child);
@@ -1984,11 +1984,11 @@ static void test_EnableThemeDialogTexture(void)
      * WM_CTLCOLORSTATIC */
     hwnd = CreateWindowA(cls.lpszClassName, "parent", WS_POPUP | WS_VISIBLE, 0, 0, 100, 100, 0, 0,
                          0, NULL);
-    ok(hwnd != NULL, "CreateWindowA failed, error %d.\n", GetLastError());
+    ok(hwnd != NULL, "CreateWindowA failed, error %ld.\n", GetLastError());
     hwnd2 = CreateWindowA(WC_STATICA, "child", WS_CHILD | WS_VISIBLE, 10, 10, 20, 20, hwnd, NULL, 0,
                           NULL);
     hr = EnableThemeDialogTexture(hwnd, ETDT_ENABLETAB);
-    ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
+    ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#lx.\n", hr);
     ret = IsThemeDialogTextureEnabled(hwnd);
     ok(ret, "Wrong dialog texture status.\n");
     flush_events();
@@ -1996,13 +1996,13 @@ static void test_EnableThemeDialogTexture(void)
     hdc = GetDC(hwnd);
     color = GetPixel(hdc, 0, 0);
     ok(color == 0x808080 || broken(color == 0xffffffff), /* Win 7 may report 0xffffffff */
-       "Expected color %#x, got %#x.\n", 0x808080, color);
+       "Expected color %#x, got %#lx.\n", 0x808080, color);
     color = GetPixel(hdc, 50, 50);
     ok(color == 0x808080 || broken(color == 0xffffffff), /* Win 7 may report 0xffffffff */
-       "Expected color %#x, got %#x.\n", 0x808080, color);
+       "Expected color %#x, got %#lx.\n", 0x808080, color);
     color = GetPixel(hdc, 99, 99);
     ok(color == 0x808080 || broken(color == 0xffffffff), /* Win 7 may report 0xffffffff */
-       "Expected color %#x, got %#x.\n", 0x808080, color);
+       "Expected color %#x, got %#lx.\n", 0x808080, color);
     ReleaseDC(hwnd, hdc);
 
     /* Test EnableThemeDialogTexture() doesn't work for non-dialog windows */
@@ -2016,14 +2016,14 @@ static void test_EnableThemeDialogTexture(void)
     /* Test that the brush is not a system object and has only one reference and shouldn't be freed */
     brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
     ret = DeleteObject(brush);
-    ok(ret, "DeleteObject failed, error %u.\n", GetLastError());
+    ok(ret, "DeleteObject failed, error %lu.\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = GetObjectA(brush, sizeof(log_brush), &log_brush);
     error = GetLastError();
     ok(!ret || broken(ret) /* XP */, "GetObjectA succeeded.\n");
     todo_wine
     ok(error == ERROR_INVALID_PARAMETER || broken(error == 0xdeadbeef) /* XP */,
-       "Expected error %u, got %u.\n", ERROR_INVALID_PARAMETER, error);
+       "Expected error %u, got %lu.\n", ERROR_INVALID_PARAMETER, error);
     ret = DeleteObject(brush);
     ok(!ret || broken(ret) /* XP */, "DeleteObject succeeded.\n");
 
@@ -2046,13 +2046,13 @@ static void test_EnableThemeDialogTexture(void)
     /* Test invalid flags */
     for (i = 0; i < ARRAY_SIZE(invalid_flag_tests); ++i)
     {
-        winetest_push_context("%d flag %#x", i, invalid_flag_tests[i].flag);
+        winetest_push_context("%d flag %#lx", i, invalid_flag_tests[i].flag);
 
         dialog = CreateDialogIndirectParamA(NULL, &temp.template, GetDesktopWindow(),
                                             test_EnableThemeDialogTexture_proc, (LPARAM)&param);
-        ok(dialog != NULL, "CreateDialogIndirectParamA failed, error %d.\n", GetLastError());
+        ok(dialog != NULL, "CreateDialogIndirectParamA failed, error %ld.\n", GetLastError());
         hr = EnableThemeDialogTexture(dialog, invalid_flag_tests[i].flag);
-        ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
+        ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#lx.\n", hr);
         ret = IsThemeDialogTextureEnabled(dialog);
         ok(ret == invalid_flag_tests[i].enabled, "Wrong dialog texture status.\n");
         EndDialog(dialog, 0);
@@ -2070,16 +2070,16 @@ static void test_EnableThemeDialogTexture(void)
                 && ((flags[i] | flags[j]) & ETDT_USEAEROWIZARDTABTEXTURE))
                 continue;
 
-            winetest_push_context("%#x to %#x", flags[i], flags[j]);
+            winetest_push_context("%#lx to %#lx", flags[i], flags[j]);
 
             dialog = CreateDialogIndirectParamA(NULL, &temp.template, GetDesktopWindow(),
                                                 test_EnableThemeDialogTexture_proc, (LPARAM)&param);
-            ok(dialog != NULL, "CreateDialogIndirectParamA failed, error %d.\n", GetLastError());
+            ok(dialog != NULL, "CreateDialogIndirectParamA failed, error %ld.\n", GetLastError());
             flush_events();
             flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
             hr = EnableThemeDialogTexture(dialog, flags[i]);
-            ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
+            ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#lx.\n", hr);
             ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq,
                         "EnableThemeDialogTexture first flag", FALSE);
             ret = IsThemeDialogTextureEnabled(dialog);
@@ -2087,7 +2087,7 @@ static void test_EnableThemeDialogTexture(void)
             ok(ret == (!(flags[i] & ETDT_DISABLE) && flags[i]), "Wrong dialog texture status.\n");
 
             child = GetDlgItem(dialog, 100);
-            ok(child != NULL, "Failed to get child control, error %d.\n", GetLastError());
+            ok(child != NULL, "Failed to get child control, error %ld.\n", GetLastError());
             child_hdc = GetDC(child);
             lr = SendMessageA(dialog, WM_ERASEBKGND, (WPARAM)child_hdc, 0);
             ok(lr != 0, "WM_ERASEBKGND failed.\n");
@@ -2099,7 +2099,7 @@ static void test_EnableThemeDialogTexture(void)
             flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
             hr = EnableThemeDialogTexture(dialog, flags[j]);
-            ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
+            ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#lx.\n", hr);
             ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq,
                         "EnableThemeDialogTexture second flag", FALSE);
             ret = IsThemeDialogTextureEnabled(dialog);
@@ -2134,16 +2134,16 @@ static void test_EnableThemeDialogTexture(void)
      * find out which comctl32 class should set ETDT_ENABLE to turn on dialog texture */
     for (i = 0; i < ARRAY_SIZE(class_tests); ++i)
     {
-        winetest_push_context("%s %#x", wine_dbgstr_a(class_tests[i].param.class_name),
+        winetest_push_context("%s %#lx", wine_dbgstr_a(class_tests[i].param.class_name),
                               class_tests[i].param.style);
 
         dialog = CreateDialogIndirectParamA(NULL, &temp.template, GetDesktopWindow(),
                                             test_EnableThemeDialogTexture_proc,
                                             (LPARAM)&class_tests[i].param);
-        ok(dialog != NULL, "CreateDialogIndirectParamA failed, error %d.\n", GetLastError());
+        ok(dialog != NULL, "CreateDialogIndirectParamA failed, error %ld.\n", GetLastError());
         /* GetDlgItem() fails to get the child control if the child is a tooltip */
         child = dialog_child;
-        ok(child != NULL, "Failed to get child control, error %d.\n", GetLastError());
+        ok(child != NULL, "Failed to get child control, error %ld.\n", GetLastError());
         child_hdc = GetDC(child);
 
         brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
@@ -2156,9 +2156,9 @@ static void test_EnableThemeDialogTexture(void)
         dialog = CreateDialogIndirectParamA(NULL, &temp.template, GetDesktopWindow(),
                                             test_EnableThemeDialogTexture_proc,
                                             (LPARAM)&class_tests[i].param);
-        ok(dialog != NULL, "CreateDialogIndirectParamA failed, error %d.\n", GetLastError());
+        ok(dialog != NULL, "CreateDialogIndirectParamA failed, error %ld.\n", GetLastError());
         child = dialog_child;
-        ok(child != NULL, "Failed to get child control, error %d.\n", GetLastError());
+        ok(child != NULL, "Failed to get child control, error %ld.\n", GetLastError());
         child_hdc = GetDC(child);
 
         brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
@@ -2171,9 +2171,9 @@ static void test_EnableThemeDialogTexture(void)
         dialog = CreateDialogIndirectParamA(NULL, &temp.template, GetDesktopWindow(),
                                             test_EnableThemeDialogTexture_proc,
                                             (LPARAM)&class_tests[i].param);
-        ok(dialog != NULL, "CreateDialogIndirectParamA failed, error %d.\n", GetLastError());
+        ok(dialog != NULL, "CreateDialogIndirectParamA failed, error %ld.\n", GetLastError());
         child = dialog_child;
-        ok(child != NULL, "Failed to get child control, error %d.\n", GetLastError());
+        ok(child != NULL, "Failed to get child control, error %ld.\n", GetLastError());
         child_hdc = GetDC(child);
         brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
         if (class_tests[i].texture_enabled)
@@ -2194,9 +2194,9 @@ static void test_EnableThemeDialogTexture(void)
         dialog = CreateDialogIndirectParamA(NULL, &temp.template, GetDesktopWindow(),
                                             test_EnableThemeDialogTexture_proc,
                                             (LPARAM)&class_tests[i].param);
-        ok(dialog != NULL, "CreateDialogIndirectParamA failed, error %d.\n", GetLastError());
+        ok(dialog != NULL, "CreateDialogIndirectParamA failed, error %ld.\n", GetLastError());
         child = dialog_child;
-        ok(child != NULL, "Failed to get child control, error %d.\n", GetLastError());
+        ok(child != NULL, "Failed to get child control, error %ld.\n", GetLastError());
         child_hdc = GetDC(child);
         brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
         if (class_tests[i].texture_enabled)
@@ -2213,12 +2213,12 @@ static void test_EnableThemeDialogTexture(void)
     /* Test that EnableThemeDialogTexture() is called from child controls for its parent */
     hwnd = CreateWindowA(cls.lpszClassName, "parent", WS_POPUP | WS_VISIBLE, 100, 100, 200, 200, 0,
                          0, 0, NULL);
-    ok(hwnd != NULL, "CreateWindowA failed, error %d.\n", GetLastError());
+    ok(hwnd != NULL, "CreateWindowA failed, error %ld.\n", GetLastError());
     ret = IsThemeDialogTextureEnabled(hwnd);
     ok(!ret, "Wrong dialog texture status.\n");
     child = CreateWindowA(WC_STATICA, "child", WS_CHILD | WS_VISIBLE, 0, 0, 50, 50, hwnd, 0, 0,
                           NULL);
-    ok(child != NULL, "CreateWindowA failed, error %d.\n", GetLastError());
+    ok(child != NULL, "CreateWindowA failed, error %ld.\n", GetLastError());
     ret = IsThemeDialogTextureEnabled(hwnd);
     ok(ret, "Wrong dialog texture status.\n");
 
@@ -2226,7 +2226,7 @@ static void test_EnableThemeDialogTexture(void)
      * the new parent */
     hwnd2 = CreateWindowA(cls.lpszClassName, "parent", WS_POPUP | WS_VISIBLE, 100, 100, 200, 200, 0,
                           0, 0, NULL);
-    ok(hwnd2 != NULL, "CreateWindowA failed, error %d.\n", GetLastError());
+    ok(hwnd2 != NULL, "CreateWindowA failed, error %ld.\n", GetLastError());
     ret = IsThemeDialogTextureEnabled(hwnd2);
     ok(!ret, "Wrong dialog texture status.\n");
 
