@@ -150,17 +150,67 @@ struct wined3d * CDECL wined3d_create(DWORD flags)
     return object;
 }
 
-static DWORD get_config_key(HKEY defkey, HKEY appkey, const char *name, char *buffer, DWORD size)
+static bool is_option_separator(char c)
 {
+    return c == ',' || c == ';' || c == '\0';
+}
+
+static const char *config_list_get_value(const char *string, const char *key, size_t *len)
+{
+    const char *p, *end;
+    char prev_char;
+
+    p = string;
+    while (p)
+    {
+        if ((p = strstr(p, key)))
+        {
+            prev_char = p > string ? p[-1] : 0;
+            p += strlen(key);
+
+            if (is_option_separator(prev_char) && *p == '=')
+            {
+                if ((end = strpbrk(p + 1, ",;")))
+                    *len = end - p + 1;
+                else
+                    *len = strlen(p + 1);
+                return p + 1;
+            }
+        }
+    }
+
+    return NULL;
+}
+
+static DWORD get_config_key(HKEY defkey, HKEY appkey, const char *env, const char *name, char *buffer, DWORD size)
+{
+    const char *env_value;
+    size_t env_len;
+
+    if ((env_value = config_list_get_value(env, name, &env_len)) && env_len < size)
+    {
+        memcpy(buffer, env_value, env_len);
+        buffer[env_len] = 0;
+        return 0;
+    }
     if (appkey && !RegQueryValueExA(appkey, name, 0, NULL, (BYTE *)buffer, &size)) return 0;
     if (defkey && !RegQueryValueExA(defkey, name, 0, NULL, (BYTE *)buffer, &size)) return 0;
     return ERROR_FILE_NOT_FOUND;
 }
 
-static DWORD get_config_key_dword(HKEY defkey, HKEY appkey, const char *name, DWORD *value)
+static DWORD get_config_key_dword(HKEY defkey, HKEY appkey, const char *env, const char *name, DWORD *value)
 {
     DWORD type, data, size;
+    const char *env_value;
+    size_t env_len;
+    char *end;
 
+    if ((env_value = config_list_get_value(env, name, &env_len)))
+    {
+        *value = strtoul(env_value, &end, 0);
+        if (end != env_value)
+            return 0;
+    }
     size = sizeof(data);
     if (appkey && !RegQueryValueExA(appkey, name, 0, &type, (BYTE *)&data, &size) && type == REG_DWORD) goto success;
     size = sizeof(data);
@@ -202,6 +252,7 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
     DWORD wined3d_context_tls_idx;
     char buffer[MAX_PATH+10];
     DWORD size = sizeof(buffer);
+    const char *env;
     HKEY hkey = 0;
     HKEY appkey = 0;
     DWORD tmpvalue;
@@ -259,17 +310,24 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
         }
     }
 
-    if (hkey || appkey)
+    /* Allow modifying settings using the WINE_D3D_CONFIG environment variable,
+     * which takes precedence over registry keys. An example is as follows:
+     *
+     *     WINE_D3D_CONFIG=csmt=0x1,shader_backend=glsl
+     */
+    env = getenv("WINE_D3D_CONFIG");
+
+    if (hkey || appkey || env)
     {
-        if (!get_config_key_dword(hkey, appkey, "csmt", &wined3d_settings.cs_multithreaded))
+        if (!get_config_key_dword(hkey, appkey, env, "csmt", &wined3d_settings.cs_multithreaded))
             ERR_(winediag)("Setting multithreaded command stream to %#x.\n", wined3d_settings.cs_multithreaded);
-        if (!get_config_key_dword(hkey, appkey, "MaxVersionGL", &tmpvalue))
+        if (!get_config_key_dword(hkey, appkey, env, "MaxVersionGL", &tmpvalue))
         {
             ERR_(winediag)("Setting maximum allowed wined3d GL version to %u.%u.\n",
                     tmpvalue >> 16, tmpvalue & 0xffff);
             wined3d_settings.max_gl_version = tmpvalue;
         }
-        if (!get_config_key(hkey, appkey, "shader_backend", buffer, size))
+        if (!get_config_key(hkey, appkey, env, "shader_backend", buffer, size))
         {
             if (!_strnicmp(buffer, "glsl", -1))
             {
@@ -293,10 +351,10 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
             ERR_(winediag)("The GLSL shader backend has been disabled. You get to keep all the pieces if it breaks.\n");
             TRACE("Use of GL Shading Language disabled.\n");
         }
-        if (!get_config_key(hkey, appkey, "OffscreenRenderingMode", buffer, size)
+        if (!get_config_key(hkey, appkey, env, "OffscreenRenderingMode", buffer, size)
                 && !strcmp(buffer,"backbuffer"))
             wined3d_settings.offscreen_rendering_mode = ORM_BACKBUFFER;
-        if ( !get_config_key_dword( hkey, appkey, "VideoPciDeviceID", &tmpvalue) )
+        if (!get_config_key_dword(hkey, appkey, env, "VideoPciDeviceID", &tmpvalue))
         {
             int pci_device_id = tmpvalue;
 
@@ -311,7 +369,7 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
                 wined3d_settings.pci_device_id = pci_device_id;
             }
         }
-        if ( !get_config_key_dword( hkey, appkey, "VideoPciVendorID", &tmpvalue) )
+        if (!get_config_key_dword(hkey, appkey, env, "VideoPciVendorID", &tmpvalue))
         {
             int pci_vendor_id = tmpvalue;
 
@@ -326,7 +384,7 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
                 wined3d_settings.pci_vendor_id = pci_vendor_id;
             }
         }
-        if ( !get_config_key( hkey, appkey, "VideoMemorySize", buffer, size) )
+        if (!get_config_key(hkey, appkey, env, "VideoMemorySize", buffer, size))
         {
             int TmpVideoMemorySize = atoi(buffer);
             if(TmpVideoMemorySize > 0)
@@ -339,7 +397,7 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
             else
                 ERR("VideoMemorySize is %i but must be >0\n", TmpVideoMemorySize);
         }
-        if ( !get_config_key( hkey, appkey, "WineLogo", buffer, size) )
+        if (!get_config_key(hkey, appkey, env, "WineLogo", buffer, size))
         {
             size_t len = strlen(buffer) + 1;
 
@@ -348,32 +406,32 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
             else
                 memcpy(wined3d_settings.logo, buffer, len);
         }
-        if (!get_config_key_dword(hkey, appkey, "MultisampleTextures", &wined3d_settings.multisample_textures))
+        if (!get_config_key_dword(hkey, appkey, env, "MultisampleTextures", &wined3d_settings.multisample_textures))
             ERR_(winediag)("Setting multisample textures to %#x.\n", wined3d_settings.multisample_textures);
-        if (!get_config_key_dword(hkey, appkey, "SampleCount", &wined3d_settings.sample_count))
+        if (!get_config_key_dword(hkey, appkey, env, "SampleCount", &wined3d_settings.sample_count))
             ERR_(winediag)("Forcing sample count to %u. This may not be compatible with all applications.\n",
                     wined3d_settings.sample_count);
-        if (!get_config_key(hkey, appkey, "CheckFloatConstants", buffer, size)
+        if (!get_config_key(hkey, appkey, env, "CheckFloatConstants", buffer, size)
                 && !strcmp(buffer, "enabled"))
         {
             TRACE("Checking relative addressing indices in float constants.\n");
             wined3d_settings.check_float_constants = TRUE;
         }
-        if (!get_config_key_dword(hkey, appkey, "strict_shader_math", &wined3d_settings.strict_shader_math))
+        if (!get_config_key_dword(hkey, appkey, env, "strict_shader_math", &wined3d_settings.strict_shader_math))
             ERR_(winediag)("Setting strict shader math to %#x.\n", wined3d_settings.strict_shader_math);
-        if (!get_config_key_dword(hkey, appkey, "MaxShaderModelVS", &wined3d_settings.max_sm_vs))
+        if (!get_config_key_dword(hkey, appkey, env, "MaxShaderModelVS", &wined3d_settings.max_sm_vs))
             TRACE("Limiting VS shader model to %u.\n", wined3d_settings.max_sm_vs);
-        if (!get_config_key_dword(hkey, appkey, "MaxShaderModelHS", &wined3d_settings.max_sm_hs))
+        if (!get_config_key_dword(hkey, appkey, env, "MaxShaderModelHS", &wined3d_settings.max_sm_hs))
             TRACE("Limiting HS shader model to %u.\n", wined3d_settings.max_sm_hs);
-        if (!get_config_key_dword(hkey, appkey, "MaxShaderModelDS", &wined3d_settings.max_sm_ds))
+        if (!get_config_key_dword(hkey, appkey, env, "MaxShaderModelDS", &wined3d_settings.max_sm_ds))
             TRACE("Limiting DS shader model to %u.\n", wined3d_settings.max_sm_ds);
-        if (!get_config_key_dword(hkey, appkey, "MaxShaderModelGS", &wined3d_settings.max_sm_gs))
+        if (!get_config_key_dword(hkey, appkey, env, "MaxShaderModelGS", &wined3d_settings.max_sm_gs))
             TRACE("Limiting GS shader model to %u.\n", wined3d_settings.max_sm_gs);
-        if (!get_config_key_dword(hkey, appkey, "MaxShaderModelPS", &wined3d_settings.max_sm_ps))
+        if (!get_config_key_dword(hkey, appkey, env, "MaxShaderModelPS", &wined3d_settings.max_sm_ps))
             TRACE("Limiting PS shader model to %u.\n", wined3d_settings.max_sm_ps);
-        if (!get_config_key_dword(hkey, appkey, "MaxShaderModelCS", &wined3d_settings.max_sm_cs))
+        if (!get_config_key_dword(hkey, appkey, env, "MaxShaderModelCS", &wined3d_settings.max_sm_cs))
             TRACE("Limiting CS shader model to %u.\n", wined3d_settings.max_sm_cs);
-        if (!get_config_key(hkey, appkey, "renderer", buffer, size))
+        if (!get_config_key(hkey, appkey, env, "renderer", buffer, size))
         {
             if (!strcmp(buffer, "vulkan"))
             {
@@ -391,7 +449,7 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
                 wined3d_settings.renderer = WINED3D_RENDERER_NO3D;
             }
         }
-        if (!get_config_key_dword(hkey, appkey, "cb_access_map_w", &tmpvalue) && tmpvalue)
+        if (!get_config_key_dword(hkey, appkey, env, "cb_access_map_w", &tmpvalue) && tmpvalue)
         {
             TRACE("Forcing all constant buffers to be write-mappable.\n");
             wined3d_settings.cb_access_map_w = TRUE;
