@@ -2981,6 +2981,11 @@ int WINAPI setsockopt( SOCKET s, int level, int optname, const char *optval, int
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_MULTICAST_IF, optval, optlen );
 
         case IP_MULTICAST_LOOP:
+            if (!optlen)
+            {
+                SetLastError( WSAEFAULT );
+                return -1;
+            }
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_MULTICAST_LOOP, optval, optlen );
 
         case IP_MULTICAST_TTL:
