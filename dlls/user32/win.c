@@ -2555,21 +2555,11 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
 }
 
 
-/* FIXME: move to win32u */
-static ULONG_PTR get_hwnd_parent( HWND hwnd )
-{
-    HWND parent = NtUserGetAncestor( hwnd, GA_PARENT );
-    if (parent == GetDesktopWindow()) parent = GetWindow( hwnd, GW_OWNER );
-    return (ULONG_PTR)parent;
-}
-
-
 /**********************************************************************
  *		GetWindowWord (USER32.@)
  */
 WORD WINAPI GetWindowWord( HWND hwnd, INT offset )
 {
-    if (offset == GWLP_HWNDPARENT) return get_hwnd_parent( hwnd );
     return NtUserCallHwndParam( hwnd, offset, NtUserGetWindowWord );
 }
 
@@ -2590,7 +2580,6 @@ LONG WINAPI GetWindowLongA( HWND hwnd, INT offset )
         return 0;
 #endif
     default:
-        if (offset == GWLP_HWNDPARENT) return get_hwnd_parent( hwnd );
         return NtUserCallHwndParam( hwnd, offset, NtUserGetWindowLongA );
     }
 }
@@ -2612,7 +2601,6 @@ LONG WINAPI GetWindowLongW( HWND hwnd, INT offset )
         return 0;
 #endif
     default:
-        if (offset == GWLP_HWNDPARENT) return get_hwnd_parent( hwnd );
         return NtUserCallHwndParam( hwnd, offset, NtUserGetWindowLongW );
     }
 }
@@ -3805,7 +3793,6 @@ BOOL WINAPI SetProcessDefaultLayout( DWORD layout )
  */
 LONG_PTR WINAPI GetWindowLongPtrW( HWND hwnd, INT offset )
 {
-    if (offset == GWLP_HWNDPARENT) return get_hwnd_parent( hwnd );
     return NtUserCallHwndParam( hwnd, offset, NtUserGetWindowLongPtrW );
 }
 
@@ -3814,7 +3801,6 @@ LONG_PTR WINAPI GetWindowLongPtrW( HWND hwnd, INT offset )
  */
 LONG_PTR WINAPI GetWindowLongPtrA( HWND hwnd, INT offset )
 {
-    if (offset == GWLP_HWNDPARENT) return get_hwnd_parent( hwnd );
     return NtUserCallHwndParam( hwnd, offset, NtUserGetWindowLongPtrA );
 }
 

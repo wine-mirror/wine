@@ -612,8 +612,10 @@ static LONG_PTR get_window_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
 
     if (offset == GWLP_HWNDPARENT)
     {
-        FIXME( "GWLP_HWNDPARENT not supported\n" );
-        return 0;
+        HWND parent = NtUserGetAncestor( hwnd, GA_PARENT );
+        if (user_callbacks && parent == user_callbacks->pGetDesktopWindow())
+            parent = get_window_relative( hwnd, GW_OWNER );
+        return (ULONG_PTR)parent;
     }
 
     if (!(win = get_win_ptr( hwnd )))
