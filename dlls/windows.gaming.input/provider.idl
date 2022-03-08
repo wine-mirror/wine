@@ -31,8 +31,15 @@ import "windows.gaming.input.idl";
 import "windows.gaming.input.custom.idl";
 
 namespace Windows.Gaming.Input.Custom {
+    typedef enum WineGameControllerType WineGameControllerType;
     interface IWineGameControllerProvider;
     runtimeclass WineGameControllerProvider;
+
+    enum WineGameControllerType
+    {
+        Joystick = 0,
+        Gamepad = 1,
+    };
 
     [
         uuid(06e58977-7684-4dc5-bad1-cda52a4aa06d)
@@ -51,6 +58,7 @@ namespace Windows.Gaming.Input.Custom {
     interface IWineGameControllerProvider : IInspectable
         requires Windows.Gaming.Input.Custom.IGameControllerProvider
     {
+        [propget] HRESULT Type([out, retval] WineGameControllerType *value);
     }
 
     [

@@ -125,6 +125,25 @@ static HRESULT WINAPI wine_provider_GetTrustLevel( IWineGameControllerProvider *
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI wine_provider_get_Type( IWineGameControllerProvider *iface, WineGameControllerType *value )
+{
+    struct provider *impl = impl_from_IWineGameControllerProvider( iface );
+    DIDEVICEINSTANCEW instance = {.dwSize = sizeof(DIDEVICEINSTANCEW)};
+    HRESULT hr;
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    if (FAILED(hr = IDirectInputDevice8_GetDeviceInfo( impl->dinput_device, &instance ))) return hr;
+
+    switch (GET_DIDEVICE_TYPE( instance.dwDevType ))
+    {
+    case DI8DEVTYPE_GAMEPAD: *value = WineGameControllerType_Gamepad; break;
+    default: *value = WineGameControllerType_Joystick; break;
+    }
+
+    return S_OK;
+}
+
 static const struct IWineGameControllerProviderVtbl wine_provider_vtbl =
 {
     wine_provider_QueryInterface,
@@ -134,6 +153,8 @@ static const struct IWineGameControllerProviderVtbl wine_provider_vtbl =
     wine_provider_GetIids,
     wine_provider_GetRuntimeClassName,
     wine_provider_GetTrustLevel,
+    /* IWineGameControllerProvider methods */
+    wine_provider_get_Type,
 };
 
 DEFINE_IINSPECTABLE( game_provider, IGameControllerProvider, struct provider, IWineGameControllerProvider_iface )
