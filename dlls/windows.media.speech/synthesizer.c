@@ -294,7 +294,7 @@ static HRESULT STDMETHODCALLTYPE closable_QueryInterface(
 {
     struct speech_synthesizer *impl = impl_from_IClosable(iface);
 
-    return speech_synthesizer_QueryInterface(&impl->ISpeechSynthesizer_iface, iid, out);
+    return ISpeechSynthesizer_QueryInterface(&impl->ISpeechSynthesizer_iface, iid, out);
 }
 
 static ULONG STDMETHODCALLTYPE closable_AddRef(
@@ -490,21 +490,21 @@ static HRESULT STDMETHODCALLTYPE installed_voices_static_QueryInterface(
         IInstalledVoicesStatic *iface, REFIID iid, void **out)
 {
     struct windows_media_speech *impl = impl_from_IInstalledVoicesStatic(iface);
-    return windows_media_speech_QueryInterface(&impl->IActivationFactory_iface, iid, out);
+    return IActivationFactory_QueryInterface(&impl->IActivationFactory_iface, iid, out);
 }
 
 static ULONG STDMETHODCALLTYPE installed_voices_static_AddRef(
         IInstalledVoicesStatic *iface)
 {
     struct windows_media_speech *impl = impl_from_IInstalledVoicesStatic(iface);
-    return windows_media_speech_AddRef(&impl->IActivationFactory_iface);
+    return IActivationFactory_AddRef(&impl->IActivationFactory_iface);
 }
 
 static ULONG STDMETHODCALLTYPE installed_voices_static_Release(
         IInstalledVoicesStatic *iface)
 {
     struct windows_media_speech *impl = impl_from_IInstalledVoicesStatic(iface);
-    return windows_media_speech_Release(&impl->IActivationFactory_iface);
+    return IActivationFactory_Release(&impl->IActivationFactory_iface);
 }
 
 static HRESULT STDMETHODCALLTYPE installed_voices_static_GetIids(
