@@ -368,27 +368,27 @@ static const struct IClosableVtbl closable_vtbl =
     closable_Close,
 };
 
-struct windows_media_speech
+struct synthesizer_statics
 {
     IActivationFactory IActivationFactory_iface;
     IInstalledVoicesStatic IInstalledVoicesStatic_iface;
     LONG ref;
 };
 
-static inline struct windows_media_speech *impl_from_IActivationFactory(IActivationFactory *iface)
+static inline struct synthesizer_statics *impl_from_IActivationFactory(IActivationFactory *iface)
 {
-    return CONTAINING_RECORD(iface, struct windows_media_speech, IActivationFactory_iface);
+    return CONTAINING_RECORD(iface, struct synthesizer_statics, IActivationFactory_iface);
 }
 
-static inline struct windows_media_speech *impl_from_IInstalledVoicesStatic(IInstalledVoicesStatic *iface)
+static inline struct synthesizer_statics *impl_from_IInstalledVoicesStatic(IInstalledVoicesStatic *iface)
 {
-    return CONTAINING_RECORD(iface, struct windows_media_speech, IInstalledVoicesStatic_iface);
+    return CONTAINING_RECORD(iface, struct synthesizer_statics, IInstalledVoicesStatic_iface);
 }
 
-static HRESULT STDMETHODCALLTYPE windows_media_speech_QueryInterface(
+static HRESULT STDMETHODCALLTYPE factory_QueryInterface(
         IActivationFactory *iface, REFIID iid, void **out)
 {
-    struct windows_media_speech *impl = impl_from_IActivationFactory(iface);
+    struct synthesizer_statics *impl = impl_from_IActivationFactory(iface);
 
     TRACE("iface %p, iid %s, out %p stub!\n", iface, debugstr_guid(iid), out);
 
@@ -414,46 +414,46 @@ static HRESULT STDMETHODCALLTYPE windows_media_speech_QueryInterface(
     return E_NOINTERFACE;
 }
 
-static ULONG STDMETHODCALLTYPE windows_media_speech_AddRef(
+static ULONG STDMETHODCALLTYPE factory_AddRef(
         IActivationFactory *iface)
 {
-    struct windows_media_speech *impl = impl_from_IActivationFactory(iface);
+    struct synthesizer_statics *impl = impl_from_IActivationFactory(iface);
     ULONG ref = InterlockedIncrement(&impl->ref);
     TRACE("iface %p, ref %lu.\n", iface, ref);
     return ref;
 }
 
-static ULONG STDMETHODCALLTYPE windows_media_speech_Release(
+static ULONG STDMETHODCALLTYPE factory_Release(
         IActivationFactory *iface)
 {
-    struct windows_media_speech *impl = impl_from_IActivationFactory(iface);
+    struct synthesizer_statics *impl = impl_from_IActivationFactory(iface);
     ULONG ref = InterlockedDecrement(&impl->ref);
     TRACE("iface %p, ref %lu.\n", iface, ref);
     return ref;
 }
 
-static HRESULT STDMETHODCALLTYPE windows_media_speech_GetIids(
+static HRESULT STDMETHODCALLTYPE factory_GetIids(
         IActivationFactory *iface, ULONG *iid_count, IID **iids)
 {
     FIXME("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE windows_media_speech_GetRuntimeClassName(
+static HRESULT STDMETHODCALLTYPE factory_GetRuntimeClassName(
         IActivationFactory *iface, HSTRING *class_name)
 {
     FIXME("iface %p, class_name %p stub!\n", iface, class_name);
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE windows_media_speech_GetTrustLevel(
+static HRESULT STDMETHODCALLTYPE factory_GetTrustLevel(
         IActivationFactory *iface, TrustLevel *trust_level)
 {
     FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE windows_media_speech_ActivateInstance(
+static HRESULT STDMETHODCALLTYPE factory_ActivateInstance(
         IActivationFactory *iface, IInspectable **instance)
 {
     struct speech_synthesizer *obj;
@@ -473,37 +473,37 @@ static HRESULT STDMETHODCALLTYPE windows_media_speech_ActivateInstance(
     return S_OK;
 }
 
-static const struct IActivationFactoryVtbl activation_factory_vtbl =
+static const struct IActivationFactoryVtbl factory_vtbl =
 {
-    windows_media_speech_QueryInterface,
-    windows_media_speech_AddRef,
-    windows_media_speech_Release,
+    factory_QueryInterface,
+    factory_AddRef,
+    factory_Release,
     /* IInspectable methods */
-    windows_media_speech_GetIids,
-    windows_media_speech_GetRuntimeClassName,
-    windows_media_speech_GetTrustLevel,
+    factory_GetIids,
+    factory_GetRuntimeClassName,
+    factory_GetTrustLevel,
     /* IActivationFactory methods */
-    windows_media_speech_ActivateInstance,
+    factory_ActivateInstance,
 };
 
 static HRESULT STDMETHODCALLTYPE installed_voices_static_QueryInterface(
         IInstalledVoicesStatic *iface, REFIID iid, void **out)
 {
-    struct windows_media_speech *impl = impl_from_IInstalledVoicesStatic(iface);
+    struct synthesizer_statics *impl = impl_from_IInstalledVoicesStatic(iface);
     return IActivationFactory_QueryInterface(&impl->IActivationFactory_iface, iid, out);
 }
 
 static ULONG STDMETHODCALLTYPE installed_voices_static_AddRef(
         IInstalledVoicesStatic *iface)
 {
-    struct windows_media_speech *impl = impl_from_IInstalledVoicesStatic(iface);
+    struct synthesizer_statics *impl = impl_from_IInstalledVoicesStatic(iface);
     return IActivationFactory_AddRef(&impl->IActivationFactory_iface);
 }
 
 static ULONG STDMETHODCALLTYPE installed_voices_static_Release(
         IInstalledVoicesStatic *iface)
 {
-    struct windows_media_speech *impl = impl_from_IInstalledVoicesStatic(iface);
+    struct synthesizer_statics *impl = impl_from_IInstalledVoicesStatic(iface);
     return IActivationFactory_Release(&impl->IActivationFactory_iface);
 }
 
@@ -558,11 +558,11 @@ static const struct IInstalledVoicesStaticVtbl installed_voices_static_vtbl =
     installed_voices_static_get_DefaultVoice,
 };
 
-static struct windows_media_speech windows_media_speech =
+static struct synthesizer_statics synthesizer_statics =
 {
-    {&activation_factory_vtbl},
-    {&installed_voices_static_vtbl},
-    1
+    .IActivationFactory_iface = {&factory_vtbl},
+    .IInstalledVoicesStatic_iface = {&installed_voices_static_vtbl},
+    .ref = 1
 };
 
-IActivationFactory *synthesizer_factory = &windows_media_speech.IActivationFactory_iface;
+IActivationFactory *synthesizer_factory = &synthesizer_statics.IActivationFactory_iface;
