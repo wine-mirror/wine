@@ -9609,6 +9609,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_pageable_device_local_memory",
     "VK_EXT_pci_bus_info",
     "VK_EXT_pipeline_creation_cache_control",
+    "VK_EXT_pipeline_creation_feedback",
     "VK_EXT_post_depth_coverage",
     "VK_EXT_primitive_topology_list_restart",
     "VK_EXT_private_data",
