@@ -225,7 +225,7 @@ int WINAPI SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL bRedraw )
  */
 BOOL WINAPI GetClientRect( HWND hwnd, LPRECT rect )
 {
-    return WIN_GetRectangles( hwnd, COORDS_CLIENT, NULL, rect );
+    return NtUserCallHwndParam( hwnd, (UINT_PTR)rect, NtUserGetClientRect );
 }
 
 

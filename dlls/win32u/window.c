@@ -1139,6 +1139,12 @@ BOOL get_window_rect( HWND hwnd, RECT *rect )
     return get_window_rects( hwnd, COORDS_SCREEN, rect, NULL, get_thread_dpi() );
 }
 
+/* see GetClientRect */
+static BOOL get_client_rect( HWND hwnd, RECT *rect )
+{
+    return get_window_rects( hwnd, COORDS_CLIENT, NULL, rect, get_thread_dpi() );
+}
+
 /* see GetWindowInfo */
 static BOOL get_window_info( HWND hwnd, WINDOWINFO *info )
 {
@@ -1357,6 +1363,8 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
         return get_class_long_ptr( hwnd, param, FALSE );
     case NtUserGetClassWord:
         return get_class_word( hwnd, param );
+    case NtUserGetClientRect:
+        return get_client_rect( hwnd, (RECT *)param );
     case NtUserGetWindowInfo:
         return get_window_info( hwnd, (WINDOWINFO *)param );
     case NtUserGetWindowLongA:
