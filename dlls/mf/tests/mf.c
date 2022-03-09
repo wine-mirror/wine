@@ -6636,6 +6636,7 @@ static void test_h264_decoder(void)
     MFT_OUTPUT_DATA_BUFFER output;
     const BYTE *h264_encoded_data;
     ULONG h264_encoded_data_len;
+    IMFAttributes *attributes;
     IMFMediaType *media_type;
     IMFTransform *transform;
     ULONG i, ret, flags;
@@ -6652,6 +6653,14 @@ static void test_h264_decoder(void)
             transform_inputs, ARRAY_SIZE(transform_inputs), transform_outputs, ARRAY_SIZE(transform_outputs),
             &transform, &class_id))
         goto failed;
+
+    hr = IMFTransform_GetAttributes(transform, &attributes);
+    todo_wine
+    ok(hr == S_OK, "GetAttributes returned %#lx\n", hr);
+    if (hr != S_OK) MFCreateAttributes(&attributes, 0);
+    hr = IMFAttributes_SetUINT32(attributes, &MF_LOW_LATENCY, 1);
+    ok(hr == S_OK, "SetUINT32 returned %#lx\n", hr);
+    IMFAttributes_Release(attributes);
 
     /* no output type is available before an input type is set */
 
@@ -6847,6 +6856,7 @@ static void test_h264_decoder(void)
     ok(!output.pEvents, "got pEvents %p\n", output.pEvents);
     ok(status == 0, "got status %#lx\n", status);
 
+    i = 0;
     sample = next_h264_sample(&h264_encoded_data, &h264_encoded_data_len);
     while (1)
     {
@@ -6865,18 +6875,29 @@ static void test_h264_decoder(void)
         ret = IMFSample_Release(output.pSample);
         ok(ret == 0, "Release returned %lu\n", ret);
 
-        while (h264_encoded_data_len > 4)
-        {
-            hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
-            if (FAILED(hr)) break;
-            ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
-            ret = IMFSample_Release(sample);
-            ok(ret <= 1, "Release returned %lu\n", ret);
-            sample = next_h264_sample(&h264_encoded_data, &h264_encoded_data_len);
-        }
-        ok(hr == MF_E_NOTACCEPTING, "ProcessInput returned %#lx\n", hr);
-        EXPECT_REF(sample, 1);
+        hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+        todo_wine
+        ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
+        ret = IMFSample_Release(sample);
+        ok(ret <= 1, "Release returned %lu\n", ret);
+        sample = next_h264_sample(&h264_encoded_data, &h264_encoded_data_len);
+
+        hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+        todo_wine
+        ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
+        ret = IMFSample_Release(sample);
+        ok(ret <= 1, "Release returned %lu\n", ret);
+        sample = next_h264_sample(&h264_encoded_data, &h264_encoded_data_len);
+        i++;
+
+        hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_COMMAND_DRAIN, 0);
+        todo_wine
+        ok(hr == S_OK, "ProcessMessage returned %#lx\n", hr);
     }
+    todo_wine
+    ok(i == 2, "got %lu iterations\n", i);
+    todo_wine
+    ok(h264_encoded_data_len == 44959, "got h264_encoded_data_len %lu\n", h264_encoded_data_len);
     todo_wine
     ok(hr == MF_E_TRANSFORM_STREAM_CHANGE, "ProcessOutput returned %#lx\n", hr);
     ok(output.dwStreamID == 0, "got dwStreamID %lu\n", output.dwStreamID);
