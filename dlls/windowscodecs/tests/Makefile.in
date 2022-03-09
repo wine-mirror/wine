@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = windowscodecs.dll
 IMPORTS   = windowscodecs propsys oleaut32 ole32 user32 gdi32 shlwapi uuid
 

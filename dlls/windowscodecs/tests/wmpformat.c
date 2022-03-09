@@ -95,7 +95,7 @@ static void test_decode(void)
 
     hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IWICImagingFactory, (void **)&factory);
-    ok(SUCCEEDED(hr), "CoCreateInstance failed, hr=%x\n", hr);
+    ok(SUCCEEDED(hr), "CoCreateInstance failed, hr=%lx\n", hr);
 
     hwmpdata = GlobalAlloc(GMEM_MOVEABLE, sizeof(wmp_imagedata));
     ok(hwmpdata != 0, "GlobalAlloc failed\n");
@@ -105,38 +105,38 @@ static void test_decode(void)
     GlobalUnlock(hwmpdata);
 
     hr = CreateStreamOnHGlobal(hwmpdata, FALSE, &wmpstream);
-    ok(SUCCEEDED(hr), "CreateStreamOnHGlobal failed, hr=%x\n", hr);
+    ok(SUCCEEDED(hr), "CreateStreamOnHGlobal failed, hr=%lx\n", hr);
 
     hr = IWICBitmapDecoder_Initialize(decoder, wmpstream, WICDecodeMetadataCacheOnLoad);
-    ok(hr == S_OK, "Initialize failed, hr=%x\n", hr);
+    ok(hr == S_OK, "Initialize failed, hr=%lx\n", hr);
 
     hr = IWICBitmapDecoder_Initialize(decoder, wmpstream, WICDecodeMetadataCacheOnLoad);
-    ok(hr == WINCODEC_ERR_WRONGSTATE, "Initialize returned %x\n", hr);
+    ok(hr == WINCODEC_ERR_WRONGSTATE, "Initialize returned %lx\n", hr);
 
     hr = IWICBitmapDecoder_GetContainerFormat(decoder, &format);
-    ok(SUCCEEDED(hr), "GetContainerFormat failed, hr=%x\n", hr);
+    ok(SUCCEEDED(hr), "GetContainerFormat failed, hr=%lx\n", hr);
     ok(IsEqualGUID(&format, &GUID_ContainerFormatWmp),
        "unexpected container format\n");
 
     hr = IWICBitmapDecoder_GetFrameCount(decoder, &count);
-    ok(SUCCEEDED(hr), "GetFrameCount failed, hr=%x\n", hr);
+    ok(SUCCEEDED(hr), "GetFrameCount failed, hr=%lx\n", hr);
     ok(count == 1, "unexpected count %u\n", count);
 
     hr = IWICBitmapDecoder_GetFrame(decoder, 0, NULL);
-    ok(hr == E_INVALIDARG, "GetFrame(NULL) returned hr=%x\n", hr);
+    ok(hr == E_INVALIDARG, "GetFrame(NULL) returned hr=%lx\n", hr);
 
     for (j = 2; j > 0; --j)
     {
         hr = IWICBitmapDecoder_GetFrame(decoder, 0, &framedecode);
-        ok(SUCCEEDED(hr), "GetFrame failed, hr=%x\n", hr);
+        ok(SUCCEEDED(hr), "GetFrame failed, hr=%lx\n", hr);
 
         hr = IWICBitmapFrameDecode_GetSize(framedecode, &width, &height);
-        ok(SUCCEEDED(hr), "GetSize failed, hr=%x\n", hr);
+        ok(SUCCEEDED(hr), "GetSize failed, hr=%lx\n", hr);
         ok(width == 1, "expected width=1, got %u\n", width);
         ok(height == 5, "expected height=5, got %u\n", height);
 
         hr = IWICBitmapFrameDecode_GetPixelFormat(framedecode, &format);
-        ok(SUCCEEDED(hr), "GetPixelFormat failed, hr=%x\n", hr);
+        ok(SUCCEEDED(hr), "GetPixelFormat failed, hr=%lx\n", hr);
         ok(IsEqualGUID(&format, &GUID_WICPixelFormat32bppBGRA),
            "unexpected pixel format: %s\n", wine_dbgstr_guid(&format));
 
@@ -145,20 +145,20 @@ static void test_decode(void)
             memset(imagedata, 0, sizeof(imagedata));
             hr = IWICBitmapFrameDecode_CopyPixels(
                 framedecode, NULL, 4, sizeof(imagedata), imagedata);
-            ok(SUCCEEDED(hr), "CopyPixels failed, hr=%x\n", hr);
+            ok(SUCCEEDED(hr), "CopyPixels failed, hr=%lx\n", hr);
             ok(!memcmp(imagedata, expected_imagedata, sizeof(imagedata)) ||
                broken(!memcmp(imagedata, broken_imagedata, sizeof(imagedata)) /* w2008s64 */),
                "unexpected image data\n");
         }
 
         hr = IWICImagingFactory_CreatePalette(factory, &palette);
-        ok(SUCCEEDED(hr), "CreatePalette failed, hr=%x\n", hr);
+        ok(SUCCEEDED(hr), "CreatePalette failed, hr=%lx\n", hr);
 
         hr = IWICBitmapDecoder_CopyPalette(decoder, palette);
-        ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "Unexpected hr %#x.\n", hr);
+        ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "Unexpected hr %#lx.\n", hr);
 
         hr = IWICBitmapFrameDecode_CopyPalette(framedecode, palette);
-        ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "Unexpected hr %#x.\n", hr);
+        ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "Unexpected hr %#lx.\n", hr);
 
         IWICPalette_Release(palette);
 

@@ -32,7 +32,7 @@ static void _expect_ref(IUnknown* obj, ULONG ref, int line)
     ULONG rc;
     IUnknown_AddRef(obj);
     rc = IUnknown_Release(obj);
-    ok_(__FILE__,line)(rc == ref, "expected refcount %d, got %d\n", ref, rc);
+    ok_(__FILE__,line)(rc == ref, "expected refcount %ld, got %ld\n", ref, rc);
 }
 
 #define IFD_BYTE 1
@@ -363,7 +363,7 @@ static IStream *create_stream(const void *data, int data_size)
     GlobalUnlock(hdata);
 
     hr = CreateStreamOnHGlobal(hdata, TRUE, &stream);
-    ok(hr == S_OK, "CreateStreamOnHGlobal failed, hr=%x\n", hr);
+    ok(hr == S_OK, "CreateStreamOnHGlobal failed, hr=%lx\n", hr);
 
     return stream;
 }
@@ -385,13 +385,13 @@ static HRESULT create_decoder(const void *image_data, UINT image_size, IWICBitma
     GlobalUnlock(hmem);
 
     hr = CreateStreamOnHGlobal(hmem, TRUE, &stream);
-    ok(hr == S_OK, "CreateStreamOnHGlobal error %#x\n", hr);
+    ok(hr == S_OK, "CreateStreamOnHGlobal error %#lx\n", hr);
 
     hr = IWICImagingFactory_CreateDecoderFromStream(factory, stream, NULL, 0, decoder);
     if (hr == S_OK)
     {
         hr = IWICBitmapDecoder_GetContainerFormat(*decoder, &format);
-        ok(hr == S_OK, "GetContainerFormat error %#x\n", hr);
+        ok(hr == S_OK, "GetContainerFormat error %#lx\n", hr);
         ok(IsEqualGUID(&format, &GUID_ContainerFormatTiff),
            "wrong container format %s\n", wine_dbgstr_guid(&format));
 
@@ -409,23 +409,23 @@ static HRESULT get_pixelformat_info(const GUID *format, UINT *bpp, UINT *channel
     IWICPixelFormatInfo2 *formatinfo;
 
     hr = IWICImagingFactory_CreateComponentInfo(factory, format, &info);
-    ok(hr == S_OK, "CreateComponentInfo(%s) error %#x\n", wine_dbgstr_guid(format), hr);
+    ok(hr == S_OK, "CreateComponentInfo(%s) error %#lx\n", wine_dbgstr_guid(format), hr);
     if (hr == S_OK)
     {
         hr = IWICComponentInfo_QueryInterface(info, &IID_IWICPixelFormatInfo2, (void **)&formatinfo);
         if (hr == S_OK)
         {
             hr = IWICPixelFormatInfo2_SupportsTransparency(formatinfo, transparency);
-            ok(hr == S_OK, "SupportsTransparency error %#x\n", hr);
+            ok(hr == S_OK, "SupportsTransparency error %#lx\n", hr);
             IWICPixelFormatInfo2_Release(formatinfo);
         }
         hr = IWICComponentInfo_QueryInterface(info, &IID_IWICPixelFormatInfo, (void **)&formatinfo);
         if (hr == S_OK)
         {
             hr = IWICPixelFormatInfo2_GetBitsPerPixel(formatinfo, bpp);
-            ok(hr == S_OK, "GetBitsPerPixel error %#x\n", hr);
+            ok(hr == S_OK, "GetBitsPerPixel error %#lx\n", hr);
             hr = IWICPixelFormatInfo2_GetChannelCount(formatinfo, channels);
-            ok(hr == S_OK, "GetChannelCount error %#x\n", hr);
+            ok(hr == S_OK, "GetChannelCount error %#lx\n", hr);
             IWICPixelFormatInfo2_Release(formatinfo);
         }
         IWICComponentInfo_Release(info);
@@ -445,7 +445,7 @@ static void dump_tiff(void *buf)
 
     for (i = 0; i < count; i++)
     {
-        printf("tag %u: id %04x, type %04x, count %u, value %d",
+        printf("tag %u: id %04x, type %04x, count %lu, value %ld",
                 i, tag[i].id, tag[i].type, tag[i].count, tag[i].value);
         if (tag[i].id == 0x102 && tag[i].count > 2)
         {
@@ -466,22 +466,22 @@ static void test_tiff_1bpp_palette(void)
     GUID format;
 
     hr = create_decoder(&tiff_1bpp_data, sizeof(tiff_1bpp_data), &decoder);
-    ok(hr == S_OK, "Failed to load TIFF image data %#x\n", hr);
+    ok(hr == S_OK, "Failed to load TIFF image data %#lx\n", hr);
     if (hr != S_OK) return;
 
     hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
-    ok(hr == S_OK, "GetFrame error %#x\n", hr);
+    ok(hr == S_OK, "GetFrame error %#lx\n", hr);
 
     hr = IWICBitmapFrameDecode_GetPixelFormat(frame, &format);
-    ok(hr == S_OK, "GetPixelFormat error %#x\n", hr);
+    ok(hr == S_OK, "GetPixelFormat error %#lx\n", hr);
     ok(IsEqualGUID(&format, &GUID_WICPixelFormatBlackWhite),
        "got wrong format %s\n", wine_dbgstr_guid(&format));
 
     hr = IWICImagingFactory_CreatePalette(factory, &palette);
-    ok(hr == S_OK, "CreatePalette error %#x\n", hr);
+    ok(hr == S_OK, "CreatePalette error %#lx\n", hr);
     hr = IWICBitmapFrameDecode_CopyPalette(frame, palette);
     ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE,
-       "expected WINCODEC_ERR_PALETTEUNAVAILABLE, got %#x\n", hr);
+       "expected WINCODEC_ERR_PALETTEUNAVAILABLE, got %#lx\n", hr);
 
     IWICPalette_Release(palette);
     IWICBitmapFrameDecode_Release(frame);
@@ -507,77 +507,77 @@ static void test_QueryCapability(void)
     if (!stream) return;
 
     hr = IWICImagingFactory_CreateDecoder(factory, &GUID_ContainerFormatTiff, NULL, &decoder);
-    ok(hr == S_OK, "CreateDecoder error %#x\n", hr);
+    ok(hr == S_OK, "CreateDecoder error %#lx\n", hr);
     if (FAILED(hr)) return;
 
     frame_count = 0xdeadbeef;
     hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
-    ok(hr == S_OK || broken(hr == E_POINTER) /* XP */, "GetFrameCount error %#x\n", hr);
+    ok(hr == S_OK || broken(hr == E_POINTER) /* XP */, "GetFrameCount error %#lx\n", hr);
     ok(frame_count == 0, "expected 0, got %u\n", frame_count);
 
     hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
-    ok(hr == WINCODEC_ERR_FRAMEMISSING || broken(hr == E_POINTER) /* XP */, "expected WINCODEC_ERR_FRAMEMISSING, got %#x\n", hr);
+    ok(hr == WINCODEC_ERR_FRAMEMISSING || broken(hr == E_POINTER) /* XP */, "expected WINCODEC_ERR_FRAMEMISSING, got %#lx\n", hr);
 
     pos.QuadPart = 4;
     hr = IStream_Seek(stream, pos, SEEK_SET, NULL);
-    ok(hr == S_OK, "IStream_Seek error %#x\n", hr);
+    ok(hr == S_OK, "IStream_Seek error %#lx\n", hr);
 
     capability = 0xdeadbeef;
     hr = IWICBitmapDecoder_QueryCapability(decoder, stream, &capability);
-    ok(hr == S_OK, "QueryCapability error %#x\n", hr);
+    ok(hr == S_OK, "QueryCapability error %#lx\n", hr);
     ok(capability == exp_caps || capability == exp_caps_xp,
-       "expected %#x, got %#x\n", exp_caps, capability);
+       "expected %#lx, got %#lx\n", exp_caps, capability);
 
     frame_count = 0xdeadbeef;
     hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
-    ok(hr == S_OK, "GetFrameCount error %#x\n", hr);
+    ok(hr == S_OK, "GetFrameCount error %#lx\n", hr);
     ok(frame_count == 1, "expected 1, got %u\n", frame_count);
 
     hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
-    ok(hr == S_OK, "GetFrame error %#x\n", hr);
+    ok(hr == S_OK, "GetFrame error %#lx\n", hr);
     IWICBitmapFrameDecode_Release(frame);
 
     pos.QuadPart = 5;
     hr = IStream_Seek(stream, pos, SEEK_SET, NULL);
-    ok(hr == S_OK, "IStream_Seek error %#x\n", hr);
+    ok(hr == S_OK, "IStream_Seek error %#lx\n", hr);
 
     hr = IWICBitmapDecoder_QueryCapability(decoder, stream, &capability);
-    ok(hr == WINCODEC_ERR_WRONGSTATE, "expected WINCODEC_ERR_WRONGSTATE, got %#x\n", hr);
+    ok(hr == WINCODEC_ERR_WRONGSTATE, "expected WINCODEC_ERR_WRONGSTATE, got %#lx\n", hr);
 
     hr = IWICBitmapDecoder_Initialize(decoder, stream, WICDecodeMetadataCacheOnDemand);
-    ok(hr == WINCODEC_ERR_WRONGSTATE, "expected WINCODEC_ERR_WRONGSTATE, got %#x\n", hr);
+    ok(hr == WINCODEC_ERR_WRONGSTATE, "expected WINCODEC_ERR_WRONGSTATE, got %#lx\n", hr);
 
     IWICBitmapDecoder_Release(decoder);
 
     /* CreateDecoderFromStream fails if seeked past the start */
     hr = IWICImagingFactory_CreateDecoderFromStream(factory, stream, NULL, 0, &decoder);
     todo_wine
-    ok(hr == WINCODEC_ERR_COMPONENTNOTFOUND, "expected WINCODEC_ERR_COMPONENTNOTFOUND, got %#x\n", hr);
+    ok(hr == WINCODEC_ERR_COMPONENTNOTFOUND, "expected WINCODEC_ERR_COMPONENTNOTFOUND, got %#lx\n", hr);
 
     if (SUCCEEDED(hr))
         IWICBitmapDecoder_Release(decoder);
 
     pos.QuadPart = 0;
     hr = IStream_Seek(stream, pos, SEEK_SET, NULL);
-    ok(hr == S_OK, "IStream_Seek error %#x\n", hr);
+    ok(hr == S_OK, "IStream_Seek error %#lx\n", hr);
 
     hr = IWICImagingFactory_CreateDecoderFromStream(factory, stream, NULL, 0, &decoder);
-    ok(hr == S_OK, "CreateDecoderFromStream error %#x\n", hr);
+    ok(hr == S_OK, "CreateDecoderFromStream error %#lx\n", hr);
 
     frame_count = 0xdeadbeef;
     hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
-    ok(hr == S_OK, "GetFrameCount error %#x\n", hr);
+    ok(hr == S_OK, "GetFrameCount error %#lx\n", hr);
     ok(frame_count == 1, "expected 1, got %u\n", frame_count);
 
     hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
-    ok(hr == S_OK, "GetFrame error %#x\n", hr);
+    ok(hr == S_OK, "GetFrame error %#lx\n", hr);
     IWICBitmapFrameDecode_Release(frame);
 
     hr = IWICBitmapDecoder_Initialize(decoder, stream, WICDecodeMetadataCacheOnDemand);
-    ok(hr == WINCODEC_ERR_WRONGSTATE, "expected WINCODEC_ERR_WRONGSTATE, got %#x\n", hr);
+    ok(hr == WINCODEC_ERR_WRONGSTATE, "expected WINCODEC_ERR_WRONGSTATE, got %#lx\n", hr);
 
     hr = IWICBitmapDecoder_QueryCapability(decoder, stream, &capability);
-    ok(hr == WINCODEC_ERR_WRONGSTATE, "expected WINCODEC_ERR_WRONGSTATE, got %#x\n", hr);
+    ok(hr == WINCODEC_ERR_WRONGSTATE, "expected WINCODEC_ERR_WRONGSTATE, got %#lx\n", hr);
 
     IWICBitmapDecoder_Release(decoder);
     IStream_Release(stream);
@@ -598,39 +598,39 @@ static void test_tiff_8bpp_alpha(void)
                                             0x55,0x55,0x55,0x66,0x77,0x77,0x77,0x88 };
 
     hr = create_decoder(&tiff_8bpp_alpha, sizeof(tiff_8bpp_alpha), &decoder);
-    ok(hr == S_OK, "Failed to load TIFF image data %#x\n", hr);
+    ok(hr == S_OK, "Failed to load TIFF image data %#lx\n", hr);
     if (hr != S_OK) return;
 
     hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
-    ok(hr == S_OK, "GetFrameCount error %#x\n", hr);
+    ok(hr == S_OK, "GetFrameCount error %#lx\n", hr);
     ok(frame_count == 1, "expected 1, got %u\n", frame_count);
 
     EXPECT_REF(decoder, 1);
     hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
-    ok(hr == S_OK, "GetFrame error %#x\n", hr);
+    ok(hr == S_OK, "GetFrame error %#lx\n", hr);
     EXPECT_REF(decoder, 2);
     IWICBitmapDecoder_Release(decoder);
 
     hr = IWICBitmapFrameDecode_GetSize(frame, &width, &height);
-    ok(hr == S_OK, "GetSize error %#x\n", hr);
+    ok(hr == S_OK, "GetSize error %#lx\n", hr);
     ok(width == 2, "expected 2, got %u\n", width);
     ok(height == 2, "expected 2, got %u\n", height);
 
     hr = IWICBitmapFrameDecode_GetResolution(frame, &dpi_x, &dpi_y);
-    ok(hr == S_OK, "GetResolution error %#x\n", hr);
+    ok(hr == S_OK, "GetResolution error %#lx\n", hr);
     ok(dpi_x == 96.0, "expected 96.0, got %f\n", dpi_x);
     ok(dpi_y == 96.0, "expected 96.0, got %f\n", dpi_y);
 
     hr = IWICBitmapFrameDecode_GetPixelFormat(frame, &format);
-    ok(hr == S_OK, "GetPixelFormat error %#x\n", hr);
+    ok(hr == S_OK, "GetPixelFormat error %#lx\n", hr);
     ok(IsEqualGUID(&format, &GUID_WICPixelFormat32bppPBGRA),
        "got wrong format %s\n", wine_dbgstr_guid(&format));
 
     hr = IWICImagingFactory_CreatePalette(factory, &palette);
-    ok(hr == S_OK, "CreatePalette error %#x\n", hr);
+    ok(hr == S_OK, "CreatePalette error %#lx\n", hr);
     hr = IWICBitmapFrameDecode_CopyPalette(frame, palette);
     ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE,
-       "expected WINCODEC_ERR_PALETTEUNAVAILABLE, got %#x\n", hr);
+       "expected WINCODEC_ERR_PALETTEUNAVAILABLE, got %#lx\n", hr);
     IWICPalette_Release(palette);
 
     rc.X = 0;
@@ -638,7 +638,7 @@ static void test_tiff_8bpp_alpha(void)
     rc.Width = 2;
     rc.Height = 2;
     hr = IWICBitmapFrameDecode_CopyPixels(frame, &rc, 8, sizeof(data), data);
-    ok(hr == S_OK, "CopyPixels error %#x\n", hr);
+    ok(hr == S_OK, "CopyPixels error %#lx\n", hr);
 
     for (i = 0; i < sizeof(data); i++)
         ok(data[i] == expected_data[i], "%u: expected %02x, got %02x\n", i, expected_data[i], data[i]);
@@ -691,28 +691,28 @@ static void test_tiff_8bpp_palette(void)
     generate_tiff_palette(buf + FIELD_OFFSET(struct tiff_8bpp_data, palette_data), 256);
 
     hr = create_decoder(buf, sizeof(buf), &decoder);
-    ok(hr == S_OK, "Failed to load TIFF image data %#x\n", hr);
+    ok(hr == S_OK, "Failed to load TIFF image data %#lx\n", hr);
     if (hr != S_OK) return;
 
     hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
-    ok(hr == S_OK, "GetFrame error %#x\n", hr);
+    ok(hr == S_OK, "GetFrame error %#lx\n", hr);
 
     hr = IWICBitmapFrameDecode_GetPixelFormat(frame, &format);
-    ok(hr == S_OK, "GetPixelFormat error %#x\n", hr);
+    ok(hr == S_OK, "GetPixelFormat error %#lx\n", hr);
     ok(IsEqualGUID(&format, &GUID_WICPixelFormat8bppIndexed),
        "expected GUID_WICPixelFormat8bppIndexed, got %s\n", wine_dbgstr_guid(&format));
 
     hr = IWICImagingFactory_CreatePalette(factory, &palette);
-    ok(hr == S_OK, "CreatePalette error %#x\n", hr);
+    ok(hr == S_OK, "CreatePalette error %#lx\n", hr);
     hr = IWICBitmapFrameDecode_CopyPalette(frame, palette);
-    ok(hr == S_OK, "CopyPalette error %#x\n", hr);
+    ok(hr == S_OK, "CopyPalette error %#lx\n", hr);
 
     hr = IWICPalette_GetColorCount(palette, &count);
-    ok(hr == S_OK, "GetColorCount error %#x\n", hr);
+    ok(hr == S_OK, "GetColorCount error %#lx\n", hr);
     ok(count == 256, "expected 256, got %u\n", count);
 
     hr = IWICPalette_GetColors(palette, 256, color, &ret);
-    ok(hr == S_OK, "GetColors error %#x\n", hr);
+    ok(hr == S_OK, "GetColors error %#lx\n", hr);
     ok(ret == count, "expected %u, got %u\n", count, ret);
     ok(color[0] == 0xff112233, "got %#x\n", color[0]);
     ok(color[1] == 0xff445566, "got %#x\n", color[1]);
@@ -740,14 +740,14 @@ static void test_tiff_resolution(void)
         tiff_resolution_image_data.entry[12].value = test_data->resolution_unit;
 
         hr = create_decoder(&tiff_resolution_image_data, sizeof(tiff_resolution_image_data), &decoder);
-        ok(hr == S_OK, "Failed to load TIFF image data %#x\n", hr);
+        ok(hr == S_OK, "Failed to load TIFF image data %#lx\n", hr);
         if (hr != S_OK) return;
 
         hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
-        ok(hr == S_OK, "%d: GetFrame error %#x\n", i, hr);
+        ok(hr == S_OK, "%d: GetFrame error %#lx\n", i, hr);
 
         hr = IWICBitmapFrameDecode_GetResolution(frame, &dpi_x, &dpi_y);
-        ok(hr == S_OK, "%d: GetResolution error %#x\n", i, hr);
+        ok(hr == S_OK, "%d: GetResolution error %#lx\n", i, hr);
 
         if (test_data->broken_dpi_x != 0)
         {
@@ -789,29 +789,29 @@ static void test_tiff_24bpp(void)
     static const BYTE expected_data[] = { 0x33,0x22,0x11 };
 
     hr = create_decoder(&tiff_24bpp_data, sizeof(tiff_24bpp_data), &decoder);
-    ok(hr == S_OK, "Failed to load TIFF image data %#x\n", hr);
+    ok(hr == S_OK, "Failed to load TIFF image data %#lx\n", hr);
     if (hr != S_OK) return;
     ok(decoder != NULL, "Failed to load TIFF image data\n");
 
     hr = IWICBitmapDecoder_GetFrameCount(decoder, &count);
-    ok(hr == S_OK, "GetFrameCount error %#x\n", hr);
+    ok(hr == S_OK, "GetFrameCount error %#lx\n", hr);
     ok(count == 1, "got %u\n", count);
 
     hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
-    ok(hr == S_OK, "GetFrame error %#x\n", hr);
+    ok(hr == S_OK, "GetFrame error %#lx\n", hr);
 
     hr = IWICBitmapFrameDecode_GetSize(frame, &width, &height);
-    ok(hr == S_OK, "GetSize error %#x\n", hr);
+    ok(hr == S_OK, "GetSize error %#lx\n", hr);
     ok(width == 1, "got %u\n", width);
     ok(height == 1, "got %u\n", height);
 
     hr = IWICBitmapFrameDecode_GetResolution(frame, &dpi_x, &dpi_y);
-    ok(hr == S_OK, "GetResolution error %#x\n", hr);
+    ok(hr == S_OK, "GetResolution error %#lx\n", hr);
     ok(dpi_x == 300.0, "got %f\n", dpi_x);
     ok(dpi_y == 300.0, "got %f\n", dpi_y);
 
     hr = IWICBitmapFrameDecode_GetPixelFormat(frame, &format);
-    ok(hr == S_OK, "GetPixelFormat error %#x\n", hr);
+    ok(hr == S_OK, "GetPixelFormat error %#lx\n", hr);
     ok(IsEqualGUID(&format, &GUID_WICPixelFormat24bppBGR),
        "got wrong format %s\n", wine_dbgstr_guid(&format));
 
@@ -824,10 +824,10 @@ static void test_tiff_24bpp(void)
         rc.Height = 1;
         hr = IWICBitmapFrameDecode_CopyPixels(frame, &rc, stride, sizeof(data), data);
         if (stride < 3)
-            ok(hr == E_INVALIDARG, "CopyPixels(%u) should fail: %#x\n", stride, hr);
+            ok(hr == E_INVALIDARG, "CopyPixels(%u) should fail: %#lx\n", stride, hr);
         else
         {
-            ok(hr == S_OK, "CopyPixels(%u) error %#x\n", stride, hr);
+            ok(hr == S_OK, "CopyPixels(%u) error %#lx\n", stride, hr);
 
             for (i = 0; i < sizeof(data); i++)
                 ok(data[i] == expected_data[i], "%u: expected %02x, got %02x\n", i, expected_data[i], data[i]);
@@ -1205,7 +1205,7 @@ static void test_color_formats(void)
         if (!td[i].data)
         {
             ok(hr == WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT || hr == WINCODEC_ERR_COMPONENTNOTFOUND /* win8+ */ || hr == WINCODEC_ERR_BADIMAGE /* XP */,
-               "%u: (%d,%d,%d,%d) wrong error %#x\n", i, td[i].photometric, td[i].samples, td[i].extra_samples, td[i].bps, hr);
+               "%u: (%d,%d,%d,%d) wrong error %#lx\n", i, td[i].photometric, td[i].samples, td[i].extra_samples, td[i].bps, hr);
             if (hr == S_OK)
             {
                 IWICBitmapDecoder_Release(decoder);
@@ -1215,15 +1215,15 @@ static void test_color_formats(void)
         }
         else
             ok(hr == S_OK || broken(hr == WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT || hr == WINCODEC_ERR_BADIMAGE) /* XP */,
-               "%u: failed to load TIFF image data (%d,%d,%d,%d) %#x\n",
+               "%u: failed to load TIFF image data (%d,%d,%d,%d) %#lx\n",
                i, td[i].photometric, td[i].samples, td[i].extra_samples, td[i].bps, hr);
         if (hr != S_OK) continue;
 
         hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
-        ok(hr == S_OK, "%u: GetFrame error %#x\n", i, hr);
+        ok(hr == S_OK, "%u: GetFrame error %#lx\n", i, hr);
 
         hr = IWICBitmapFrameDecode_GetPixelFormat(frame, &format);
-        ok(hr == S_OK, "%u: GetPixelFormat error %#x\n", i, hr);
+        ok(hr == S_OK, "%u: GetPixelFormat error %#lx\n", i, hr);
         if (IsEqualGUID(td[i].data->format, &GUID_WICPixelFormat96bppRGBFloat) && IsEqualGUID(&format, &GUID_WICPixelFormat128bppRGBFloat))
         {
             win_skip("Windows Server 2008 misinterprets 96bppRGBFloat as 128bppRGBFloat, skipping the tests\n");
@@ -1238,14 +1238,14 @@ static void test_color_formats(void)
 
         transparency = (td[i].photometric == 2 && td[i].samples == 4); /* for XP */
         hr = get_pixelformat_info(&format, &bpp, &channels, &transparency);
-        ok(hr == S_OK, "%u: get_pixelformat_bpp error %#x\n", i, hr);
+        ok(hr == S_OK, "%u: get_pixelformat_bpp error %#lx\n", i, hr);
         ok(bpp == td[i].data->bpp, "%u: expected %u, got %u\n", i, td[i].data->bpp, bpp);
         ok(channels == td[i].samples, "%u: expected %u, got %u\n", i, td[i].samples, channels);
         ok(transparency == (td[i].photometric == 2 && td[i].samples == 4), "%u: got %u\n", i, transparency);
 
         memset(pixels, 0, sizeof(pixels));
         hr = IWICBitmapFrameDecode_CopyPixels(frame, NULL, width_bytes(td[i].data->width, bpp), sizeof(pixels), pixels);
-        ok(hr == S_OK, "%u: CopyPixels error %#x\n", i, hr);
+        ok(hr == S_OK, "%u: CopyPixels error %#lx\n", i, hr);
         ret = memcmp(pixels, td[i].data->bits, width_bytes(td[i].data->width, bpp));
         if (ret && td[i].alt_data)
             ret = memcmp(pixels, td[i].alt_data->bits, width_bytes(td[i].data->width, bpp));
@@ -1277,36 +1277,36 @@ static void test_tiff_4bps_bgra(void)
                                             0,0xff,0,0, 0xff,0xff,0,0xff, 0xff,0xff,0xff,0 };
 
     hr = create_decoder(&tiff_4bps_bgra, sizeof(tiff_4bps_bgra), &decoder);
-    ok(hr == S_OK, "Failed to load TIFF image data %#x\n", hr);
+    ok(hr == S_OK, "Failed to load TIFF image data %#lx\n", hr);
     if (hr != S_OK) return;
 
     hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
-    ok(hr == S_OK, "GetFrameCount error %#x\n", hr);
+    ok(hr == S_OK, "GetFrameCount error %#lx\n", hr);
     ok(frame_count == 1, "expected 1, got %u\n", frame_count);
 
     hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
-    ok(hr == S_OK, "GetFrame error %#x\n", hr);
+    ok(hr == S_OK, "GetFrame error %#lx\n", hr);
 
     hr = IWICBitmapFrameDecode_GetSize(frame, &width, &height);
-    ok(hr == S_OK, "GetSize error %#x\n", hr);
+    ok(hr == S_OK, "GetSize error %#lx\n", hr);
     ok(width == 3, "got %u\n", width);
     ok(height == 2, "got %u\n", height);
 
     hr = IWICBitmapFrameDecode_GetResolution(frame, &dpi_x, &dpi_y);
-    ok(hr == S_OK, "GetResolution error %#x\n", hr);
+    ok(hr == S_OK, "GetResolution error %#lx\n", hr);
     ok(dpi_x == 96.0, "expected 96.0, got %f\n", dpi_x);
     ok(dpi_y == 96.0, "expected 96.0, got %f\n", dpi_y);
 
     hr = IWICBitmapFrameDecode_GetPixelFormat(frame, &format);
-    ok(hr == S_OK, "GetPixelFormat error %#x\n", hr);
+    ok(hr == S_OK, "GetPixelFormat error %#lx\n", hr);
     ok(IsEqualGUID(&format, &GUID_WICPixelFormat32bppBGRA),
        "got wrong format %s\n", wine_dbgstr_guid(&format));
 
     hr = IWICImagingFactory_CreatePalette(factory, &palette);
-    ok(hr == S_OK, "CreatePalette error %#x\n", hr);
+    ok(hr == S_OK, "CreatePalette error %#lx\n", hr);
     hr = IWICBitmapFrameDecode_CopyPalette(frame, palette);
     ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE,
-       "expected WINCODEC_ERR_PALETTEUNAVAILABLE, got %#x\n", hr);
+       "expected WINCODEC_ERR_PALETTEUNAVAILABLE, got %#lx\n", hr);
     IWICPalette_Release(palette);
 
     memset(data, 0xaa, sizeof(data));
@@ -1315,7 +1315,7 @@ static void test_tiff_4bps_bgra(void)
     rc.Width = 3;
     rc.Height = 2;
     hr = IWICBitmapFrameDecode_CopyPixels(frame, &rc, 12, sizeof(data), data);
-    ok(hr == S_OK, "CopyPixels error %#x\n", hr);
+    ok(hr == S_OK, "CopyPixels error %#lx\n", hr);
 
     for (i = 0; i < sizeof(data); i++)
         ok(data[i] == expected_data[i], "%u: expected %02x, got %02x\n", i, expected_data[i], data[i]);
@@ -1332,7 +1332,7 @@ START_TEST(tiffformat)
 
     hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IWICImagingFactory, (void **)&factory);
-    ok(hr == S_OK, "CoCreateInstance error %#x\n", hr);
+    ok(hr == S_OK, "CoCreateInstance error %#lx\n", hr);
     if (FAILED(hr)) return;
 
     test_tiff_4bps_bgra();
