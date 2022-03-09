@@ -285,6 +285,7 @@ static void test_FiberLocalStorage(void)
     PEB *peb = teb->Peb;
     NTSTATUS status;
     HANDLE hthread;
+    ULONG index2;
     SIZE_T size;
     void* val;
     BOOL ret;
@@ -407,13 +408,13 @@ static void test_FiberLocalStorage(void)
                     g_fls_data->fls_callback_chunks[j]->callbacks[index].callback);
 
             fls_data->fls_data_chunks[j][index + 1] = (void *)(ULONG_PTR)0x28;
-            status = pRtlFlsAlloc(test_fls_callback, &i);
+            status = pRtlFlsAlloc(test_fls_callback, &index2);
             ok(!status, "Got unexpected status %#x.\n", status);
-            ok(i == fls_indices[0x10], "Got unexpected index %u.\n", i);
+            ok(index2 == fls_indices[0x10], "Got unexpected index %u.\n", index2);
             ok(fls_data->fls_data_chunks[j][index + 1] == (void *)(ULONG_PTR)0x28, "Got unexpected data %p.\n",
                     fls_data->fls_data_chunks[j][index + 1]);
 
-            status = pRtlFlsSetValue(i, (void *)(ULONG_PTR)0x11);
+            status = pRtlFlsSetValue(index2, (void *)(ULONG_PTR)0x11);
             ok(!status, "Got unexpected status %#x.\n", status);
 
             teb->FlsSlots = NULL;
