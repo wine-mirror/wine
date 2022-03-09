@@ -40,6 +40,7 @@ struct controller
 {
     IGameController IGameController_iface;
     IGameControllerBatteryInfo IGameControllerBatteryInfo_iface;
+    IInspectable *IInspectable_inner;
     LONG ref;
 
     struct list entry;
@@ -73,9 +74,7 @@ static HRESULT WINAPI controller_QueryInterface( IGameController *iface, REFIID 
         return S_OK;
     }
 
-    FIXME( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
-    *out = NULL;
-    return E_NOINTERFACE;
+    return IInspectable_QueryInterface( impl->IInspectable_inner, iid, out );
 }
 
 static ULONG WINAPI controller_AddRef( IGameController *iface )
@@ -95,6 +94,9 @@ static ULONG WINAPI controller_Release( IGameController *iface )
 
     if (!ref)
     {
+        /* guard against re-entry if inner releases an outer iface */
+        InterlockedIncrement( &impl->ref );
+        IInspectable_Release( impl->IInspectable_inner );
         ICustomGameControllerFactory_Release( impl->factory );
         IGameControllerProvider_Release( impl->provider );
         free( impl );
@@ -111,14 +113,14 @@ static HRESULT WINAPI controller_GetIids( IGameController *iface, ULONG *iid_cou
 
 static HRESULT WINAPI controller_GetRuntimeClassName( IGameController *iface, HSTRING *class_name )
 {
-    FIXME( "iface %p, class_name %p stub!\n", iface, class_name );
-    return E_NOTIMPL;
+    struct controller *impl = impl_from_IGameController( iface );
+    return IInspectable_GetRuntimeClassName( impl->IInspectable_inner, class_name );
 }
 
 static HRESULT WINAPI controller_GetTrustLevel( IGameController *iface, TrustLevel *trust_level )
 {
-    FIXME( "iface %p, trust_level %p stub!\n", iface, trust_level );
-    return E_NOTIMPL;
+    struct controller *impl = impl_from_IGameController( iface );
+    return IInspectable_GetTrustLevel( impl->IInspectable_inner, trust_level );
 }
 
 static HRESULT WINAPI controller_add_HeadsetConnected( IGameController *iface, ITypedEventHandler_IGameController_Headset *handler,
@@ -421,12 +423,32 @@ IGameControllerFactoryManagerStatics2 *manager_factory = &manager_statics.IGameC
 static HRESULT controller_create( ICustomGameControllerFactory *factory, IGameControllerProvider *provider,
                                   struct controller **out )
 {
+    IGameControllerImpl *inner_impl;
     struct controller *impl;
+    HRESULT hr;
 
     if (!(impl = malloc(sizeof(*impl)))) return E_OUTOFMEMORY;
     impl->IGameController_iface.lpVtbl = &controller_vtbl;
     impl->IGameControllerBatteryInfo_iface.lpVtbl = &battery_vtbl;
     impl->ref = 1;
+
+    if (FAILED(hr = ICustomGameControllerFactory_CreateGameController( factory, provider, &impl->IInspectable_inner )))
+        WARN( "Failed to create game controller, hr %#lx\n", hr );
+    else if (FAILED(hr = IInspectable_QueryInterface( impl->IInspectable_inner, &IID_IGameControllerImpl, (void **)&inner_impl )))
+        WARN( "Failed to find IGameControllerImpl iface, hr %#lx\n", hr );
+    else
+    {
+        if (FAILED(hr = IGameControllerImpl_Initialize( inner_impl, &impl->IGameController_iface, provider )))
+            WARN( "Failed to initialize game controller, hr %#lx\n", hr );
+        IGameControllerImpl_Release( inner_impl );
+    }
+
+    if (FAILED(hr))
+    {
+        if (impl->IInspectable_inner) IInspectable_Release( impl->IInspectable_inner );
+        free( impl );
+        return hr;
+    }
 
     ICustomGameControllerFactory_AddRef( (impl->factory = factory) );
     IGameControllerProvider_AddRef( (impl->provider = provider) );

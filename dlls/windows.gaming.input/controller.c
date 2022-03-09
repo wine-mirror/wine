@@ -18,10 +18,236 @@
  */
 
 #include "private.h"
+#include "provider.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(input);
+
+struct controller
+{
+    IGameControllerImpl IGameControllerImpl_iface;
+    IGameControllerInputSink IGameControllerInputSink_iface;
+    IRawGameController IRawGameController_iface;
+    IGameController *IGameController_outer;
+    LONG ref;
+
+    IGameControllerProvider *provider;
+};
+
+static inline struct controller *impl_from_IGameControllerImpl( IGameControllerImpl *iface )
+{
+    return CONTAINING_RECORD( iface, struct controller, IGameControllerImpl_iface );
+}
+
+static HRESULT WINAPI controller_QueryInterface( IGameControllerImpl *iface, REFIID iid, void **out )
+{
+    struct controller *impl = impl_from_IGameControllerImpl( iface );
+
+    TRACE( "iface %p, iid %s, out %p.\n", iface, debugstr_guid( iid ), out );
+
+    if (IsEqualGUID( iid, &IID_IUnknown ) ||
+        IsEqualGUID( iid, &IID_IInspectable ) ||
+        IsEqualGUID( iid, &IID_IGameControllerImpl ))
+    {
+        IInspectable_AddRef( (*out = &impl->IGameControllerImpl_iface) );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IGameControllerInputSink ))
+    {
+        IInspectable_AddRef( (*out = &impl->IGameControllerInputSink_iface) );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IRawGameController ))
+    {
+        IInspectable_AddRef( (*out = &impl->IRawGameController_iface) );
+        return S_OK;
+    }
+
+    WARN( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI controller_AddRef( IGameControllerImpl *iface )
+{
+    struct controller *impl = impl_from_IGameControllerImpl( iface );
+    ULONG ref = InterlockedIncrement( &impl->ref );
+    TRACE( "iface %p increasing refcount to %lu.\n", iface, ref );
+    return ref;
+}
+
+static ULONG WINAPI controller_Release( IGameControllerImpl *iface )
+{
+    struct controller *impl = impl_from_IGameControllerImpl( iface );
+    ULONG ref = InterlockedDecrement( &impl->ref );
+
+    TRACE( "iface %p decreasing refcount to %lu.\n", iface, ref );
+
+    if (!ref)
+    {
+        IGameControllerProvider_Release( impl->provider );
+        free( impl );
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI controller_GetIids( IGameControllerImpl *iface, ULONG *iid_count, IID **iids )
+{
+    FIXME( "iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI controller_GetRuntimeClassName( IGameControllerImpl *iface, HSTRING *class_name )
+{
+    return WindowsCreateString( RuntimeClass_Windows_Gaming_Input_RawGameController,
+                                ARRAY_SIZE(RuntimeClass_Windows_Gaming_Input_RawGameController),
+                                class_name );
+}
+
+static HRESULT WINAPI controller_GetTrustLevel( IGameControllerImpl *iface, TrustLevel *trust_level )
+{
+    FIXME( "iface %p, trust_level %p stub!\n", iface, trust_level );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI controller_Initialize( IGameControllerImpl *iface, IGameController *outer,
+                                             IGameControllerProvider *provider )
+{
+    struct controller *impl = impl_from_IGameControllerImpl( iface );
+
+    TRACE( "iface %p, outer %p, provider %p.\n", iface, outer, provider );
+
+    impl->IGameController_outer = outer;
+    IGameControllerProvider_AddRef( (impl->provider = provider) );
+
+    return S_OK;
+}
+
+static const struct IGameControllerImplVtbl controller_vtbl =
+{
+    controller_QueryInterface,
+    controller_AddRef,
+    controller_Release,
+    /* IInspectable methods */
+    controller_GetIids,
+    controller_GetRuntimeClassName,
+    controller_GetTrustLevel,
+    /* IGameControllerImpl methods */
+    controller_Initialize,
+};
+
+DEFINE_IINSPECTABLE_OUTER( input_sink, IGameControllerInputSink, struct controller, IGameController_outer )
+
+static HRESULT WINAPI input_sink_OnInputResumed( IGameControllerInputSink *iface, UINT64 timestamp )
+{
+    FIXME( "iface %p, timestamp %I64u stub!\n", iface, timestamp );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI input_sink_OnInputSuspended( IGameControllerInputSink *iface, UINT64 timestamp )
+{
+    FIXME( "iface %p, timestamp %I64u stub!\n", iface, timestamp );
+    return E_NOTIMPL;
+}
+
+static const struct IGameControllerInputSinkVtbl input_sink_vtbl =
+{
+    input_sink_QueryInterface,
+    input_sink_AddRef,
+    input_sink_Release,
+    /* IInspectable methods */
+    input_sink_GetIids,
+    input_sink_GetRuntimeClassName,
+    input_sink_GetTrustLevel,
+    /* IGameControllerInputSink methods */
+    input_sink_OnInputResumed,
+    input_sink_OnInputSuspended,
+};
+
+DEFINE_IINSPECTABLE_OUTER( raw_controller, IRawGameController, struct controller, IGameController_outer )
+
+static HRESULT WINAPI raw_controller_get_AxisCount( IRawGameController *iface, INT32 *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI raw_controller_get_ButtonCount( IRawGameController *iface, INT32 *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI raw_controller_get_ForceFeedbackMotors( IRawGameController *iface, IVectorView_ForceFeedbackMotor **value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI raw_controller_get_HardwareProductId( IRawGameController *iface, UINT16 *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI raw_controller_get_HardwareVendorId( IRawGameController *iface, UINT16 *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI raw_controller_get_SwitchCount( IRawGameController *iface, INT32 *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI raw_controller_GetButtonLabel( IRawGameController *iface, INT32 index,
+                                                     enum GameControllerButtonLabel *value )
+{
+    FIXME( "iface %p, index %d, value %p stub!\n", iface, index, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI raw_controller_GetCurrentReading( IRawGameController *iface, UINT32 buttons_size, BOOLEAN *buttons,
+                                                        UINT32 switches_size, enum GameControllerSwitchPosition *switches,
+                                                        UINT32 axes_size, DOUBLE *axes, UINT64 *timestamp )
+{
+    FIXME( "iface %p, buttons_size %u, buttons %p, switches_size %u, switches %p, axes_size %u, axes %p, timestamp %p stub!\n",
+           iface, buttons_size, buttons, switches_size, switches, axes_size, axes, timestamp );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI raw_controller_GetSwitchKind( IRawGameController *iface, INT32 index, enum GameControllerSwitchKind *value )
+{
+    FIXME( "iface %p, index %d, value %p stub!\n", iface, index, value );
+    return E_NOTIMPL;
+}
+
+static const struct IRawGameControllerVtbl raw_controller_vtbl =
+{
+    raw_controller_QueryInterface,
+    raw_controller_AddRef,
+    raw_controller_Release,
+    /* IInspectable methods */
+    raw_controller_GetIids,
+    raw_controller_GetRuntimeClassName,
+    raw_controller_GetTrustLevel,
+    /* IRawGameController methods */
+    raw_controller_get_AxisCount,
+    raw_controller_get_ButtonCount,
+    raw_controller_get_ForceFeedbackMotors,
+    raw_controller_get_HardwareProductId,
+    raw_controller_get_HardwareVendorId,
+    raw_controller_get_SwitchCount,
+    raw_controller_GetButtonLabel,
+    raw_controller_GetCurrentReading,
+    raw_controller_GetSwitchKind,
+};
 
 struct controller_statics
 {
@@ -213,8 +439,20 @@ DEFINE_IINSPECTABLE( controller_factory, ICustomGameControllerFactory, struct co
 static HRESULT WINAPI controller_factory_CreateGameController( ICustomGameControllerFactory *iface, IGameControllerProvider *provider,
                                                                IInspectable **value )
 {
-    FIXME( "iface %p, provider %p, value %p stub!\n", iface, provider, value );
-    return E_NOTIMPL;
+    struct controller *impl;
+
+    TRACE( "iface %p, provider %p, value %p.\n", iface, provider, value );
+
+    if (!(impl = calloc( 1, sizeof(*impl) ))) return E_OUTOFMEMORY;
+    impl->IGameControllerImpl_iface.lpVtbl = &controller_vtbl;
+    impl->IGameControllerInputSink_iface.lpVtbl = &input_sink_vtbl;
+    impl->IRawGameController_iface.lpVtbl = &raw_controller_vtbl;
+    impl->ref = 1;
+
+    TRACE( "created RawGameController %p\n", impl );
+
+    *value = (IInspectable *)&impl->IGameControllerImpl_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI controller_factory_OnGameControllerAdded( ICustomGameControllerFactory *iface, IGameController *value )
