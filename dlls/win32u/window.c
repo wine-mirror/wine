@@ -652,6 +652,33 @@ static BOOL is_window_drawable( HWND hwnd, BOOL icon )
     return retval;
 }
 
+/* see IsWindowUnicode */
+static BOOL is_window_unicode( HWND hwnd )
+{
+    WND *win;
+    BOOL ret = FALSE;
+
+    if (!(win = get_win_ptr(hwnd))) return FALSE;
+
+    if (win == WND_DESKTOP) return TRUE;
+
+    if (win != WND_OTHER_PROCESS)
+    {
+        ret = (win->flags & WIN_ISUNICODE) != 0;
+        release_win_ptr( win );
+    }
+    else
+    {
+        SERVER_START_REQ( get_window_info )
+        {
+            req->handle = wine_server_user_handle( hwnd );
+            if (!wine_server_call_err( req )) ret = reply->is_unicode;
+        }
+        SERVER_END_REQ;
+    }
+    return ret;
+}
+
 static LONG_PTR get_win_data( const void *ptr, UINT size )
 {
     if (size == sizeof(WORD))
@@ -1065,6 +1092,8 @@ DWORD WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
         return get_server_window_text( hwnd, NULL, 0 );
     case NtUserIsWindow:
         return is_window( hwnd );
+    case NtUserIsWindowUnicode:
+        return is_window_unicode( hwnd );
     case NtUserIsWindowVisible:
         return is_window_visible( hwnd );
     /* temporary exports */

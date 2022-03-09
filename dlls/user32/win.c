@@ -2081,28 +2081,7 @@ BOOL WINAPI IsWindowEnabled(HWND hWnd)
  */
 BOOL WINAPI IsWindowUnicode( HWND hwnd )
 {
-    WND * wndPtr;
-    BOOL retvalue = FALSE;
-
-    if (!(wndPtr = WIN_GetPtr(hwnd))) return FALSE;
-
-    if (wndPtr == WND_DESKTOP) return TRUE;
-
-    if (wndPtr != WND_OTHER_PROCESS)
-    {
-        retvalue = (wndPtr->flags & WIN_ISUNICODE) != 0;
-        WIN_ReleasePtr( wndPtr );
-    }
-    else
-    {
-        SERVER_START_REQ( get_window_info )
-        {
-            req->handle = wine_server_user_handle( hwnd );
-            if (!wine_server_call_err( req )) retvalue = reply->is_unicode;
-        }
-        SERVER_END_REQ;
-    }
-    return retvalue;
+    return NtUserCallHwnd( hwnd, NtUserIsWindowUnicode );
 }
 
 

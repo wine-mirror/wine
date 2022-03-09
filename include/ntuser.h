@@ -144,6 +144,7 @@ enum
     NtUserGetParent,
     NtUserGetWindowTextLength,
     NtUserIsWindow,
+    NtUserIsWindowUnicode,
     NtUserIsWindowVisible,
     /* temporary exports */
     NtUserCreateDesktopWindow,
