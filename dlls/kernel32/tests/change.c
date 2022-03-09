@@ -18,6 +18,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 /* TODO: - security attribute changes
  *       - compound filter and multiple notifications
@@ -51,7 +52,7 @@ static DWORD CALLBACK NotificationThread(LPVOID arg)
     }
 
     ret = FindCloseChangeNotification(change);
-    ok( ret, "FindCloseChangeNotification error: %d\n",
+    ok( ret, "FindCloseChangeNotification error: %ld\n",
        GetLastError());
 
     ExitThread((DWORD)notified);
@@ -63,10 +64,10 @@ static HANDLE StartNotificationThread(LPCSTR path, BOOL subtree, DWORD flags)
     DWORD threadId;
 
     change = FindFirstChangeNotificationA(path, subtree, flags);
-    ok(change != INVALID_HANDLE_VALUE, "FindFirstChangeNotification error: %d\n", GetLastError());
+    ok(change != INVALID_HANDLE_VALUE, "FindFirstChangeNotification error: %ld\n", GetLastError());
 
     thread = CreateThread(NULL, 0, NotificationThread, change, 0, &threadId);
-    ok(thread != NULL, "CreateThread error: %d\n", GetLastError());
+    ok(thread != NULL, "CreateThread error: %ld\n", GetLastError());
 
     return thread;
 }
@@ -76,7 +77,7 @@ static DWORD FinishNotificationThread(HANDLE thread)
     DWORD status, exitcode;
 
     status = WaitForSingleObject(thread, 5000);
-    ok(status == WAIT_OBJECT_0, "WaitForSingleObject status %d error %d\n", status, GetLastError());
+    ok(status == WAIT_OBJECT_0, "WaitForSingleObject status %ld error %ld\n", status, GetLastError());
 
     ok(GetExitCodeThread(thread, &exitcode), "Could not retrieve thread exit code\n");
     CloseHandle(thread);
@@ -100,46 +101,46 @@ static void test_FindFirstChangeNotification(void)
     change = FindFirstChangeNotificationA("not-a-file", FALSE, FILE_NOTIFY_CHANGE_FILE_NAME);
     ok(change == INVALID_HANDLE_VALUE, "Expected INVALID_HANDLE_VALUE, got %p\n", change);
     ok(GetLastError() == ERROR_FILE_NOT_FOUND,
-       "FindFirstChangeNotification error: %d\n", GetLastError());
+       "FindFirstChangeNotification error: %ld\n", GetLastError());
 
     change = FindFirstChangeNotificationA(NULL, FALSE, FILE_NOTIFY_CHANGE_FILE_NAME);
     ok(change == INVALID_HANDLE_VALUE || broken(change == NULL) /* < win7 */,
        "Expected INVALID_HANDLE_VALUE, got %p\n", change);
     ok(GetLastError() == ERROR_PATH_NOT_FOUND,
-       "FindFirstChangeNotification error: %u\n", GetLastError());
+       "FindFirstChangeNotification error: %lu\n", GetLastError());
 
     ret = FindNextChangeNotification(NULL);
-    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "FindNextChangeNotification error: %d\n",
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "FindNextChangeNotification error: %ld\n",
        GetLastError());
 
     ret = FindCloseChangeNotification(NULL);
-    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "FindCloseChangeNotification error: %d\n",
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "FindCloseChangeNotification error: %ld\n",
        GetLastError());
 
     ret = GetTempPathA(MAX_PATH, dirname1);
-    ok(ret, "GetTempPathA error: %d\n", GetLastError());
+    ok(ret, "GetTempPathA error: %ld\n", GetLastError());
 
     ret = GetTempFileNameA(dirname1, "ffc", 0, workdir);
-    ok(ret, "GetTempFileNameA error: %d\n", GetLastError());
+    ok(ret, "GetTempFileNameA error: %ld\n", GetLastError());
     DeleteFileA( workdir );
 
     ret = CreateDirectoryA(workdir, NULL);
-    ok(ret, "CreateDirectoryA error: %d\n", GetLastError());
+    ok(ret, "CreateDirectoryA error: %ld\n", GetLastError());
 
     ret = GetTempFileNameA(workdir, prefix, 0, filename1);
-    ok(ret, "GetTempFileNameA error: %d\n", GetLastError());
+    ok(ret, "GetTempFileNameA error: %ld\n", GetLastError());
 
     file = CreateFileA(filename1, GENERIC_WRITE|GENERIC_READ, 0, NULL, CREATE_ALWAYS,
                        FILE_ATTRIBUTE_NORMAL, 0);
-    ok(file != INVALID_HANDLE_VALUE, "CreateFileA error: %d\n", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "CreateFileA error: %ld\n", GetLastError());
     ret = CloseHandle(file);
-    ok( ret, "CloseHandle error: %d\n", GetLastError());
+    ok( ret, "CloseHandle error: %ld\n", GetLastError());
 
     /* Try to register notification for a file */
     change = FindFirstChangeNotificationA(filename1, FALSE, FILE_NOTIFY_CHANGE_FILE_NAME);
     ok(change == INVALID_HANDLE_VALUE, "Expected INVALID_HANDLE_VALUE, got %p\n", change);
     ok(GetLastError() == ERROR_DIRECTORY,
-       "FindFirstChangeNotification error: %d\n", GetLastError());
+       "FindFirstChangeNotification error: %ld\n", GetLastError());
 
     lstrcpyA(dirname1, filename1);
     lstrcatA(dirname1, "dir");
@@ -148,18 +149,18 @@ static void test_FindFirstChangeNotification(void)
     lstrcatA(dirname2, "new");
 
     ret = CreateDirectoryA(dirname1, NULL);
-    ok(ret, "CreateDirectoryA error: %d\n", GetLastError());
+    ok(ret, "CreateDirectoryA error: %ld\n", GetLastError());
 
     /* What if we move the directory we registered notification for? */
     thread = StartNotificationThread(dirname1, FALSE, FILE_NOTIFY_CHANGE_DIR_NAME);
     ret = MoveFileA(dirname1, dirname2);
-    ok(ret, "MoveFileA error: %d\n", GetLastError());
+    ok(ret, "MoveFileA error: %ld\n", GetLastError());
     ok(!FinishNotificationThread(thread), "Got notification\n");
 
     /* What if we remove the directory we registered notification for? */
     thread = StartNotificationThread(dirname2, FALSE, FILE_NOTIFY_CHANGE_DIR_NAME);
     ret = RemoveDirectoryA(dirname2);
-    ok(ret, "RemoveDirectoryA error: %d\n", GetLastError());
+    ok(ret, "RemoveDirectoryA error: %ld\n", GetLastError());
     ret = FinishNotificationThread(thread);
     todo_wine ok(ret, "Missed notification\n");
 
@@ -168,19 +169,19 @@ static void test_FindFirstChangeNotification(void)
     /* Create a directory */
     thread = StartNotificationThread(workdir, FALSE, FILE_NOTIFY_CHANGE_DIR_NAME);
     ret = CreateDirectoryA(dirname1, NULL);
-    ok(ret, "CreateDirectoryA error: %d\n", GetLastError());
+    ok(ret, "CreateDirectoryA error: %ld\n", GetLastError());
     ok(FinishNotificationThread(thread), "Missed notification\n");
 
     /* Rename a directory */
     thread = StartNotificationThread(workdir, FALSE, FILE_NOTIFY_CHANGE_DIR_NAME);
     ret = MoveFileA(dirname1, dirname2);
-    ok(ret, "MoveFileA error: %d\n", GetLastError());
+    ok(ret, "MoveFileA error: %ld\n", GetLastError());
     ok(FinishNotificationThread(thread), "Missed notification\n");
 
     /* Delete a directory */
     thread = StartNotificationThread(workdir, FALSE, FILE_NOTIFY_CHANGE_DIR_NAME);
     ret = RemoveDirectoryA(dirname2);
-    ok(ret, "RemoveDirectoryA error: %d\n", GetLastError());
+    ok(ret, "RemoveDirectoryA error: %ld\n", GetLastError());
     ok(FinishNotificationThread(thread), "Missed notification\n");
 
     lstrcpyA(filename2, filename1);
@@ -189,64 +190,64 @@ static void test_FindFirstChangeNotification(void)
     /* Rename a file */
     thread = StartNotificationThread(workdir, FALSE, FILE_NOTIFY_CHANGE_FILE_NAME);
     ret = MoveFileA(filename1, filename2);
-    ok(ret, "MoveFileA error: %d\n", GetLastError());
+    ok(ret, "MoveFileA error: %ld\n", GetLastError());
     ok(FinishNotificationThread(thread), "Missed notification\n");
 
     /* Delete a file */
     thread = StartNotificationThread(workdir, FALSE, FILE_NOTIFY_CHANGE_FILE_NAME);
     ret = DeleteFileA(filename2);
-    ok(ret, "DeleteFileA error: %d\n", GetLastError());
+    ok(ret, "DeleteFileA error: %ld\n", GetLastError());
     ok(FinishNotificationThread(thread), "Missed notification\n");
 
     /* Create a file */
     thread = StartNotificationThread(workdir, FALSE, FILE_NOTIFY_CHANGE_FILE_NAME);
     file = CreateFileA(filename2, GENERIC_WRITE|GENERIC_READ, 0, NULL, CREATE_ALWAYS, 
                        FILE_ATTRIBUTE_NORMAL, 0);
-    ok(file != INVALID_HANDLE_VALUE, "CreateFileA error: %d\n", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "CreateFileA error: %ld\n", GetLastError());
     ret = CloseHandle(file);
-    ok( ret, "CloseHandle error: %d\n", GetLastError());
+    ok( ret, "CloseHandle error: %ld\n", GetLastError());
     ok(FinishNotificationThread(thread), "Missed notification\n");
 
     attributes = GetFileAttributesA(filename2);
-    ok(attributes != INVALID_FILE_ATTRIBUTES, "GetFileAttributesA error: %d\n", GetLastError());
+    ok(attributes != INVALID_FILE_ATTRIBUTES, "GetFileAttributesA error: %ld\n", GetLastError());
     attributes &= FILE_ATTRIBUTE_READONLY;
 
     /* Change file attributes */
     thread = StartNotificationThread(workdir, FALSE, FILE_NOTIFY_CHANGE_ATTRIBUTES);
     ret = SetFileAttributesA(filename2, attributes);
-    ok(ret, "SetFileAttributesA error: %d\n", GetLastError());
+    ok(ret, "SetFileAttributesA error: %ld\n", GetLastError());
     ok(FinishNotificationThread(thread), "Missed notification\n");
 
     /* Change last write time by writing to a file */
     thread = StartNotificationThread(workdir, FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE);
     file = CreateFileA(filename2, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 
                        FILE_ATTRIBUTE_NORMAL, 0);
-    ok(file != INVALID_HANDLE_VALUE, "CreateFileA error: %d\n", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "CreateFileA error: %ld\n", GetLastError());
     memset(buffer, 0, sizeof(buffer));
     ret = WriteFile(file, buffer, sizeof(buffer), &count, NULL);
-    ok(ret && count == sizeof(buffer), "WriteFile error: %d\n", GetLastError());
+    ok(ret && count == sizeof(buffer), "WriteFile error: %ld\n", GetLastError());
     ret = CloseHandle(file);
-    ok( ret, "CloseHandle error: %d\n", GetLastError());
+    ok( ret, "CloseHandle error: %ld\n", GetLastError());
     ok(FinishNotificationThread(thread), "Missed notification\n");
 
     /* Change file size by truncating a file */
     thread = StartNotificationThread(workdir, FALSE, FILE_NOTIFY_CHANGE_SIZE);
     file = CreateFileA(filename2, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 
                        FILE_ATTRIBUTE_NORMAL, 0);
-    ok(file != INVALID_HANDLE_VALUE, "CreateFileA error: %d\n", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "CreateFileA error: %ld\n", GetLastError());
     ret = WriteFile(file, buffer, sizeof(buffer) / 2, &count, NULL);
-    ok(ret && count == sizeof(buffer) / 2, "WriteFileA error: %d\n", GetLastError());
+    ok(ret && count == sizeof(buffer) / 2, "WriteFileA error: %ld\n", GetLastError());
     ret = CloseHandle(file);
-    ok( ret, "CloseHandle error: %d\n", GetLastError());
+    ok( ret, "CloseHandle error: %ld\n", GetLastError());
     ok(FinishNotificationThread(thread), "Missed notification\n");
 
     /* clean up */
     
     ret = DeleteFileA(filename2);
-    ok(ret, "DeleteFileA error: %d\n", GetLastError());
+    ok(ret, "DeleteFileA error: %ld\n", GetLastError());
 
     ret = RemoveDirectoryA(workdir);
-    ok(ret, "RemoveDirectoryA error: %d\n", GetLastError());
+    ok(ret, "RemoveDirectoryA error: %ld\n", GetLastError());
 }
 
 /* this test concentrates more on the wait behaviour of the handle */
@@ -287,7 +288,7 @@ static void test_ffcn(void)
 
     file = CreateFileW( filename, GENERIC_READ | GENERIC_WRITE, 0, NULL,
                         CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0 );
-    ok( file != INVALID_HANDLE_VALUE, "CreateFile error %u\n", GetLastError() );
+    ok( file != INVALID_HANDLE_VALUE, "CreateFile error %lu\n", GetLastError() );
     CloseHandle(file);
 
     r = WaitForSingleObject( handle, 0 );
@@ -364,20 +365,20 @@ static void test_ffcnMultipleThreads(void)
     char tmp[MAX_PATH], path[MAX_PATH];
 
     r = GetTempPathA(MAX_PATH, tmp);
-    ok(r, "GetTempPathA error: %d\n", GetLastError());
+    ok(r, "GetTempPathA error: %ld\n", GetLastError());
 
     r = GetTempFileNameA(tmp, "ffc", 0, path);
-    ok(r, "GetTempFileNameA error: %d\n", GetLastError());
+    ok(r, "GetTempFileNameA error: %ld\n", GetLastError());
     DeleteFileA( path );
 
     r = CreateDirectoryA(path, NULL);
-    ok(r, "CreateDirectoryA error: %d\n", GetLastError());
+    ok(r, "CreateDirectoryA error: %ld\n", GetLastError());
 
     filter = FILE_NOTIFY_CHANGE_FILE_NAME;
     filter |= FILE_NOTIFY_CHANGE_DIR_NAME;
 
     handles[0] = FindFirstChangeNotificationA(path, FALSE, filter);
-    ok(handles[0] != INVALID_HANDLE_VALUE, "FindFirstChangeNotification error: %d\n", GetLastError());
+    ok(handles[0] != INVALID_HANDLE_VALUE, "FindFirstChangeNotification error: %ld\n", GetLastError());
 
     /* Test behavior if a waiting thread holds the last reference to a change
      * directory object with an empty wine user APC queue for this thread (bug #7286) */
@@ -385,10 +386,10 @@ static void test_ffcnMultipleThreads(void)
     /* Create our notification thread */
     handles[1] = CreateThread(NULL, 0, NotificationThread, handles[0], 0,
                               &threadId);
-    ok(handles[1] != NULL, "CreateThread error: %d\n", GetLastError());
+    ok(handles[1] != NULL, "CreateThread error: %ld\n", GetLastError());
 
     status = WaitForMultipleObjects(2, handles, FALSE, 5000);
-    ok(status == WAIT_OBJECT_0 || status == WAIT_OBJECT_0+1, "WaitForMultipleObjects status %d error %d\n", status, GetLastError());
+    ok(status == WAIT_OBJECT_0 || status == WAIT_OBJECT_0+1, "WaitForMultipleObjects status %ld error %ld\n", status, GetLastError());
     ok(GetExitCodeThread(handles[1], &exitcode), "Could not retrieve thread exit code\n");
 
     /* Clean up */
@@ -614,18 +615,18 @@ static void test_readdirectorychanges(void)
     /* we may get a notification for the parent dir too */
     if (pfni->Action == FILE_ACTION_MODIFIED && pfni->NextEntryOffset)
     {
-        ok( pfni->FileNameLength == 3*sizeof(WCHAR), "len wrong %u\n", pfni->FileNameLength );
+        ok( pfni->FileNameLength == 3*sizeof(WCHAR), "len wrong %lu\n", pfni->FileNameLength );
         ok( !memcmp(pfni->FileName,&szGa[1],3*sizeof(WCHAR)), "name wrong\n" );
         pfni = (PFILE_NOTIFY_INFORMATION)((char *)pfni + pfni->NextEntryOffset);
     }
-    ok( pfni->NextEntryOffset == 0, "offset wrong %u\n", pfni->NextEntryOffset );
-    ok( pfni->Action == FILE_ACTION_REMOVED, "action wrong %u\n", pfni->Action );
-    ok( pfni->FileNameLength == 6*sizeof(WCHAR), "len wrong %u\n", pfni->FileNameLength );
+    ok( pfni->NextEntryOffset == 0, "offset wrong %lu\n", pfni->NextEntryOffset );
+    ok( pfni->Action == FILE_ACTION_REMOVED, "action wrong %lu\n", pfni->Action );
+    ok( pfni->FileNameLength == 6*sizeof(WCHAR), "len wrong %lu\n", pfni->FileNameLength );
     ok( !memcmp(pfni->FileName,&szGa[1],6*sizeof(WCHAR)), "name wrong\n" );
 
     ok( (NTSTATUS)ov.Internal == STATUS_SUCCESS, "ov.Internal wrong\n");
     dwCount = (char *)&pfni->FileName[pfni->FileNameLength/sizeof(WCHAR)] - buffer;
-    ok( ov.InternalHigh == dwCount, "ov.InternalHigh wrong %lu/%u\n",ov.InternalHigh, dwCount );
+    ok( ov.InternalHigh == dwCount, "ov.InternalHigh wrong %Iu/%lu\n",ov.InternalHigh, dwCount );
 
     CloseHandle(hdir);
 
@@ -799,7 +800,7 @@ static void test_readdirectorychanges_filedir(void)
 
 static void CALLBACK readdirectorychanges_cr(DWORD error, DWORD len, LPOVERLAPPED ov)
 {
-    ok(error == 0, "ReadDirectoryChangesW error %d\n", error);
+    ok(error == 0, "ReadDirectoryChangesW error %ld\n", error);
     ok(ov->hEvent == (void*)0xdeadbeef, "hEvent should not have changed\n");
 }
 
@@ -853,9 +854,9 @@ static void test_readdirectorychanges_cr(void)
     r = SleepEx(1000, TRUE);
     ok(r != 0, "failed to receive file creation event\n");
     ok(fni->NextEntryOffset == 0, "there should be no more events in buffer\n");
-    ok(fni->Action == FILE_ACTION_ADDED, "Action = %d\n", fni->Action);
+    ok(fni->Action == FILE_ACTION_ADDED, "Action = %ld\n", fni->Action);
     ok(fni->FileNameLength == lstrlenW(szFile)*sizeof(WCHAR),
-            "FileNameLength = %d\n", fni->FileNameLength);
+            "FileNameLength = %ld\n", fni->FileNameLength);
     ok(!memcmp(fni->FileName, szFile, lstrlenW(szFile)*sizeof(WCHAR)),
             "FileName = %s\n", wine_dbgstr_wn(fni->FileName, fni->FileNameLength/sizeof(WCHAR)));
 
@@ -873,9 +874,9 @@ static void test_readdirectorychanges_cr(void)
     r = SleepEx(1000, TRUE);
     ok(r != 0, "failed to receive file move event\n");
     ok(fni->NextEntryOffset == 0, "there should be no more events in buffer\n");
-    ok(fni->Action == FILE_ACTION_REMOVED, "Action = %d\n", fni->Action);
+    ok(fni->Action == FILE_ACTION_REMOVED, "Action = %ld\n", fni->Action);
     ok(fni->FileNameLength == lstrlenW(szFile)*sizeof(WCHAR),
-            "FileNameLength = %d\n", fni->FileNameLength);
+            "FileNameLength = %ld\n", fni->FileNameLength);
     ok(!memcmp(fni->FileName, szFile, lstrlenW(szFile)*sizeof(WCHAR)),
             "FileName = %s\n", wine_dbgstr_wn(fni->FileName, fni->FileNameLength/sizeof(WCHAR)));
 
@@ -889,9 +890,9 @@ static void test_readdirectorychanges_cr(void)
     r = SleepEx(1000, TRUE);
     ok(r != 0, "failed to receive file move event\n");
     ok(fni->NextEntryOffset == 0, "there should be no more events in buffer\n");
-    ok(fni->Action == FILE_ACTION_ADDED, "Action = %d\n", fni->Action);
+    ok(fni->Action == FILE_ACTION_ADDED, "Action = %ld\n", fni->Action);
     ok(fni->FileNameLength == lstrlenW(szFile)*sizeof(WCHAR),
-            "FileNameLength = %d\n", fni->FileNameLength);
+            "FileNameLength = %ld\n", fni->FileNameLength);
     ok(!memcmp(fni->FileName, szFile, lstrlenW(szFile)*sizeof(WCHAR)),
             "FileName = %s\n", wine_dbgstr_wn(fni->FileName, fni->FileNameLength/sizeof(WCHAR)));
 
@@ -905,9 +906,9 @@ static void test_readdirectorychanges_cr(void)
     r = SleepEx(1000, TRUE);
     ok(r != 0, "failed to receive file removal event\n");
     ok(fni->NextEntryOffset == 0, "there should be no more events in buffer\n");
-    ok(fni->Action == FILE_ACTION_REMOVED, "Action = %d\n", fni->Action);
+    ok(fni->Action == FILE_ACTION_REMOVED, "Action = %ld\n", fni->Action);
     ok(fni->FileNameLength == lstrlenW(szFile)*sizeof(WCHAR),
-            "FileNameLength = %d\n", fni->FileNameLength);
+            "FileNameLength = %ld\n", fni->FileNameLength);
     ok(!memcmp(fni->FileName, szFile, lstrlenW(szFile)*sizeof(WCHAR)),
             "FileName = %s\n", wine_dbgstr_wn(fni->FileName, fni->FileNameLength/sizeof(WCHAR)));
 
@@ -929,17 +930,17 @@ static void test_readdirectorychanges_cr(void)
     ok(r != 0, "failed to receive directory move event\n");
     if (fni->Action == FILE_ACTION_RENAMED_OLD_NAME)
     {
-        ok(fni->Action == FILE_ACTION_RENAMED_OLD_NAME, "Action = %d\n", fni->Action);
+        ok(fni->Action == FILE_ACTION_RENAMED_OLD_NAME, "Action = %ld\n", fni->Action);
         ok(fni->FileNameLength == lstrlenW(szDir)*sizeof(WCHAR),
-                "FileNameLength = %d\n", fni->FileNameLength);
+                "FileNameLength = %ld\n", fni->FileNameLength);
         ok(!memcmp(fni->FileName, szDir, lstrlenW(szDir)*sizeof(WCHAR)),
                 "FileName = %s\n", wine_dbgstr_wn(fni->FileName, fni->FileNameLength/sizeof(WCHAR)));
         ok(fni->NextEntryOffset != 0, "no next entry in movement event\n");
         fni_next = (FILE_NOTIFY_INFORMATION*)((char*)fni+fni->NextEntryOffset);
         ok(fni_next->NextEntryOffset == 0, "there should be no more events in buffer\n");
-        ok(fni_next->Action == FILE_ACTION_RENAMED_NEW_NAME, "Action = %d\n", fni_next->Action);
+        ok(fni_next->Action == FILE_ACTION_RENAMED_NEW_NAME, "Action = %ld\n", fni_next->Action);
         ok(fni_next->FileNameLength == lstrlenW(szFile)*sizeof(WCHAR),
-                "FileNameLength = %d\n", fni_next->FileNameLength);
+                "FileNameLength = %ld\n", fni_next->FileNameLength);
         ok(!memcmp(fni_next->FileName, szFile, lstrlenW(szFile)*sizeof(WCHAR)),
                 "FileName = %s\n", wine_dbgstr_wn(fni_next->FileName, fni_next->FileNameLength/sizeof(WCHAR)));
     }
@@ -970,9 +971,9 @@ static void test_readdirectorychanges_cr(void)
 
     r = SleepEx(1000, TRUE);
     ok(r != 0, "failed to receive directory creation event\n");
-    ok(fni->Action == FILE_ACTION_ADDED, "Action = %d\n", fni->Action);
+    ok(fni->Action == FILE_ACTION_ADDED, "Action = %ld\n", fni->Action);
     ok(fni->FileNameLength == lstrlenW(szDir)*sizeof(WCHAR),
-            "FileNameLength = %d\n", fni->FileNameLength);
+            "FileNameLength = %ld\n", fni->FileNameLength);
     ok(!memcmp(fni->FileName, szDir, lstrlenW(szDir)*sizeof(WCHAR)),
             "FileName = %s\n", wine_dbgstr_wn(fni->FileName, fni->FileNameLength/sizeof(WCHAR)));
     if (fni->NextEntryOffset)
@@ -988,9 +989,9 @@ static void test_readdirectorychanges_cr(void)
         fni_next = fni;
     }
     ok(fni_next->NextEntryOffset == 0, "there should be no more events in buffer\n");
-    ok(fni_next->Action == FILE_ACTION_REMOVED, "Action = %d\n", fni_next->Action);
+    ok(fni_next->Action == FILE_ACTION_REMOVED, "Action = %ld\n", fni_next->Action);
     ok(fni_next->FileNameLength == lstrlenW(szDir)*sizeof(WCHAR),
-            "FileNameLength = %d\n", fni_next->FileNameLength);
+            "FileNameLength = %ld\n", fni_next->FileNameLength);
     ok(!memcmp(fni_next->FileName, szDir, lstrlenW(szDir)*sizeof(WCHAR)),
             "FileName = %s\n", wine_dbgstr_wn(fni_next->FileName, fni_next->FileNameLength/sizeof(WCHAR)));
 
@@ -1010,21 +1011,21 @@ static void test_ffcn_directory_overlap(void)
     /* Setup directory hierarchy */
     ret = GetTempPathA(MAX_PATH, workdir);
     ok((ret > 0) && (ret <= MAX_PATH),
-       "GetTempPathA error: %d\n", GetLastError());
+       "GetTempPathA error: %ld\n", GetLastError());
 
     ret = GetTempFileNameA(workdir, "fcn", 0, tempfile);
-    ok(ret, "GetTempFileNameA error: %d\n", GetLastError());
+    ok(ret, "GetTempFileNameA error: %ld\n", GetLastError());
     ret = DeleteFileA(tempfile);
-    ok(ret, "DeleteFileA error: %d\n", GetLastError());
+    ok(ret, "DeleteFileA error: %ld\n", GetLastError());
 
     lstrcpyA(parentdir, tempfile);
     ret = CreateDirectoryA(parentdir, NULL);
-    ok(ret, "CreateDirectoryA error: %d\n", GetLastError());
+    ok(ret, "CreateDirectoryA error: %ld\n", GetLastError());
 
     lstrcpyA(childdir, parentdir);
     lstrcatA(childdir, "\\c");
     ret = CreateDirectoryA(childdir, NULL);
-    ok(ret, "CreateDirectoryA error: %d\n", GetLastError());
+    ok(ret, "CreateDirectoryA error: %ld\n", GetLastError());
 
 
     /* When recursively watching overlapping directories, changes in child
@@ -1036,7 +1037,7 @@ static void test_ffcn_directory_overlap(void)
 
     /* Create a file in child */
     ret = GetTempFileNameA(childdir, "fcn", 0, tempfile);
-    ok(ret, "GetTempFileNameA error: %d\n", GetLastError());
+    ok(ret, "GetTempFileNameA error: %ld\n", GetLastError());
 
     /* Both watches should trigger */
     ret = FinishNotificationThread(parent_thread);
@@ -1045,7 +1046,7 @@ static void test_ffcn_directory_overlap(void)
     ok(ret, "Missed child notification\n");
 
     ret = DeleteFileA(tempfile);
-    ok(ret, "DeleteFileA error: %d\n", GetLastError());
+    ok(ret, "DeleteFileA error: %ld\n", GetLastError());
 
 
     /* Removing a recursive parent watch should not affect child watches. Doing
@@ -1053,22 +1054,22 @@ static void test_ffcn_directory_overlap(void)
     parent_watch = FindFirstChangeNotificationA(parentdir, TRUE,
                                                 FILE_NOTIFY_CHANGE_FILE_NAME);
     ok(parent_watch != INVALID_HANDLE_VALUE,
-       "FindFirstChangeNotification error: %d\n", GetLastError());
+       "FindFirstChangeNotification error: %ld\n", GetLastError());
     child_watch = FindFirstChangeNotificationA(childdir, TRUE,
                                                FILE_NOTIFY_CHANGE_FILE_NAME);
     ok(child_watch != INVALID_HANDLE_VALUE,
-       "FindFirstChangeNotification error: %d\n", GetLastError());
+       "FindFirstChangeNotification error: %ld\n", GetLastError());
 
     ret = FindCloseChangeNotification(parent_watch);
-    ok(ret, "FindCloseChangeNotification error: %d\n", GetLastError());
+    ok(ret, "FindCloseChangeNotification error: %ld\n", GetLastError());
 
     child_thread = CreateThread(NULL, 0, NotificationThread, child_watch, 0,
                                 &threadId);
-    ok(child_thread != NULL, "CreateThread error: %d\n", GetLastError());
+    ok(child_thread != NULL, "CreateThread error: %ld\n", GetLastError());
 
     /* Create a file in child */
     ret = GetTempFileNameA(childdir, "fcn", 0, tempfile);
-    ok(ret, "GetTempFileNameA error: %d\n", GetLastError());
+    ok(ret, "GetTempFileNameA error: %ld\n", GetLastError());
 
     /* Child watch should trigger */
     ret = FinishNotificationThread(child_thread);
@@ -1076,13 +1077,13 @@ static void test_ffcn_directory_overlap(void)
 
     /* clean up */
     ret = DeleteFileA(tempfile);
-    ok(ret, "DeleteFileA error: %d\n", GetLastError());
+    ok(ret, "DeleteFileA error: %ld\n", GetLastError());
 
     ret = RemoveDirectoryA(childdir);
-    ok(ret, "RemoveDirectoryA error: %d\n", GetLastError());
+    ok(ret, "RemoveDirectoryA error: %ld\n", GetLastError());
 
     ret = RemoveDirectoryA(parentdir);
-    ok(ret, "RemoveDirectoryA error: %d\n", GetLastError());
+    ok(ret, "RemoveDirectoryA error: %ld\n", GetLastError());
 }
 
 START_TEST(change)
