@@ -64,6 +64,15 @@ LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     }
 }
 
+/***********************************************************************
+ *           NtUserWaitForInputIdle (win32u.@)
+ */
+DWORD WINAPI NtUserWaitForInputIdle( HANDLE process, DWORD timeout, BOOL wow )
+{
+    if (!user_callbacks) return 0;
+    return user_callbacks->pWaitForInputIdle( process, timeout );
+}
+
 /**********************************************************************
  *	     NtUserGetGUIThreadInfo  (win32u.@)
  */

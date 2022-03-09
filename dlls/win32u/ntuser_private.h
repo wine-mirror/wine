@@ -30,13 +30,14 @@ struct dce;
 struct user_callbacks
 {
     HANDLE (WINAPI *pCopyImage)( HANDLE, UINT, INT, INT, UINT );
-    HWND (WINAPI *pGetDesktopWindow)(void);
     BOOL (WINAPI *pGetWindowRect)( HWND hwnd, LPRECT rect );
     BOOL (WINAPI *pRedrawWindow)( HWND, const RECT*, HRGN, UINT );
     LRESULT (WINAPI *pSendMessageTimeoutW)( HWND, UINT, WPARAM, LPARAM, UINT, UINT, PDWORD_PTR );
     LRESULT (WINAPI *pSendMessageW)( HWND, UINT, WPARAM, LPARAM );
+    DWORD (WINAPI *pWaitForInputIdle)( HANDLE, DWORD );
     HWND (WINAPI *pWindowFromDC)( HDC );
     void (WINAPI *free_dce)( struct dce *dce, HWND hwnd );
+    void (CDECL *register_builtin_classes)(void);
     LRESULT (WINAPI *send_ll_message)( DWORD, DWORD, UINT, WPARAM, LPARAM, UINT, UINT, PDWORD_PTR );
     void (CDECL *set_user_driver)( void *, UINT );
 };
