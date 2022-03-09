@@ -363,7 +363,7 @@ static void _test_http_version(unsigned line, HINTERNET req)
     ok_(__FILE__,line)(v.dwMinorVersion == 1, "dwMinorVersion = %d\n", v.dwMinorVersion);
 }
 
-static int close_handle_cnt;
+static LONG close_handle_cnt;
 
 static VOID WINAPI callback(
      HINTERNET hInternet,
