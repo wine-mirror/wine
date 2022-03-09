@@ -1078,3 +1078,11 @@ HWND WINAPI NtUserGetForegroundWindow(void)
     SERVER_END_REQ;
     return ret;
 }
+
+/* see GetActiveWindow */
+HWND get_active_window(void)
+{
+    GUITHREADINFO info;
+    info.cbSize = sizeof(info);
+    return NtUserGetGUIThreadInfo( GetCurrentThreadId(), &info ) ? info.hwndActive : 0;
+}

@@ -1139,6 +1139,24 @@ BOOL get_window_rect( HWND hwnd, RECT *rect )
     return get_window_rects( hwnd, COORDS_SCREEN, rect, NULL, get_thread_dpi() );
 }
 
+/* see GetWindowInfo */
+static BOOL get_window_info( HWND hwnd, WINDOWINFO *info )
+{
+
+    if (!info || !get_window_rects( hwnd, COORDS_SCREEN, &info->rcWindow,
+                                    &info->rcClient, get_thread_dpi() ))
+        return FALSE;
+
+    info->dwStyle         = get_window_long( hwnd, GWL_STYLE );
+    info->dwExStyle       = get_window_long( hwnd, GWL_EXSTYLE );
+    info->dwWindowStatus  = get_active_window() == hwnd ? WS_ACTIVECAPTION : 0;
+    info->cxWindowBorders = info->rcClient.left - info->rcWindow.left;
+    info->cyWindowBorders = info->rcWindow.bottom - info->rcClient.bottom;
+    info->atomWindowType  = get_class_long( hwnd, GCW_ATOM, FALSE );
+    info->wCreatorVersion = 0x0400;
+    return TRUE;
+}
+
 /*****************************************************************************
  *           NtUserGetLayeredWindowAttributes (win32u.@)
  */
@@ -1339,6 +1357,8 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
         return get_class_long_ptr( hwnd, param, FALSE );
     case NtUserGetClassWord:
         return get_class_word( hwnd, param );
+    case NtUserGetWindowInfo:
+        return get_window_info( hwnd, (WINDOWINFO *)param );
     case NtUserGetWindowLongA:
         return get_window_long_size( hwnd, param, sizeof(LONG), TRUE );
     case NtUserGetWindowLongW:

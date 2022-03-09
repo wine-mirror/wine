@@ -275,6 +275,7 @@ extern BOOL unhook_windows_hook( INT id, HOOKPROC proc ) DECLSPEC_HIDDEN;
 
 /* input.c */
 extern LONG global_key_state_counter DECLSPEC_HIDDEN;
+extern HWND get_active_window(void) DECLSPEC_HIDDEN;
 extern BOOL get_cursor_pos( POINT *pt ) DECLSPEC_HIDDEN;
 extern DWORD get_input_state(void) DECLSPEC_HIDDEN;
 

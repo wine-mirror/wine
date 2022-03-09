@@ -160,6 +160,7 @@ enum
     NtUserGetClassLongPtrA,
     NtUserGetClassLongPtrW,
     NtUserGetClassWord,
+    NtUserGetWindowInfo,
     NtUserGetWindowLongA,
     NtUserGetWindowLongW,
     NtUserGetWindowLongPtrA,

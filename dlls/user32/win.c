@@ -3214,26 +3214,9 @@ UINT WINAPI GetWindowModuleFileNameW( HWND hwnd, LPWSTR module, UINT size )
  *
  * Note: tests show that Windows doesn't check cbSize of the structure.
  */
-BOOL WINAPI DECLSPEC_HOTPATCH GetWindowInfo( HWND hwnd, PWINDOWINFO pwi)
+BOOL WINAPI DECLSPEC_HOTPATCH GetWindowInfo( HWND hwnd, WINDOWINFO *info )
 {
-    RECT rcWindow, rcClient;
-
-    if (!WIN_GetRectangles( hwnd, COORDS_SCREEN, &rcWindow, &rcClient )) return FALSE;
-    if (!pwi) return FALSE;
-
-    pwi->rcWindow = rcWindow;
-    pwi->rcClient = rcClient;
-    pwi->dwStyle = GetWindowLongW(hwnd, GWL_STYLE);
-    pwi->dwExStyle = GetWindowLongW(hwnd, GWL_EXSTYLE);
-    pwi->dwWindowStatus = ((GetActiveWindow() == hwnd) ? WS_ACTIVECAPTION : 0);
-
-    pwi->cxWindowBorders = pwi->rcClient.left - pwi->rcWindow.left;
-    pwi->cyWindowBorders = pwi->rcWindow.bottom - pwi->rcClient.bottom;
-
-    pwi->atomWindowType = GetClassLongW( hwnd, GCW_ATOM );
-    pwi->wCreatorVersion = 0x0400;
-
-    return TRUE;
+    return NtUserCallHwndParam( hwnd, (UINT_PTR)info, NtUserGetWindowInfo );
 }
 
 /******************************************************************************
