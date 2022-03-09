@@ -352,7 +352,8 @@ int WINAPI wWinMain(HINSTANCE hinst, HINSTANCE previnst, LPWSTR cmdline, int sho
             goto cleanup;
         }
 
-        WaitForSingleObject(surrogate.event, INFINITE);
+        while (WaitForSingleObject(surrogate.event, 30000) != WAIT_OBJECT_0)
+            CoFreeUnusedLibraries();
     }
 
 cleanup:
