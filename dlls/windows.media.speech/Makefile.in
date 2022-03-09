@@ -2,6 +2,7 @@ MODULE = windows.media.speech.dll
 IMPORTS = combase uuid
 
 C_SRCS = \
-	main.c
+	main.c \
+	synthesizer.c
 
 IDL_SRCS = classes.idl

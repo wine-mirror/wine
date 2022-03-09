@@ -38,4 +38,12 @@
 #define WIDL_using_Windows_Media_SpeechSynthesis
 #include "windows.media.speechsynthesis.h"
 
+/*
+ *
+ * Windows.Media.SpeechSynthesis
+ *
+ */
+
+extern IActivationFactory *synthesizer_factory;
+
 #endif
