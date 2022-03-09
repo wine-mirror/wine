@@ -1626,6 +1626,12 @@ int WINAPI getsockopt( SOCKET s, int level, int optname, char *optval, int *optl
             return ret;
 
         case SO_SNDBUF:
+            if (*optlen < sizeof(DWORD) || !optval)
+            {
+                if (optval) memset( optval, 0, *optlen );
+                SetLastError( WSAEFAULT );
+                return SOCKET_ERROR;
+            }
             return server_getsockopt( s, IOCTL_AFD_WINE_GET_SO_SNDBUF, optval, optlen );
 
         case SO_SNDTIMEO:
@@ -2888,6 +2894,7 @@ int WINAPI setsockopt( SOCKET s, int level, int optname, const char *optval, int
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_SO_REUSEADDR, (char *)&value, sizeof(value) );
 
         case SO_SNDBUF:
+            if (optlen < 0) optlen = 4;
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_SO_SNDBUF, optval, optlen );
 
         case SO_SNDTIMEO:
