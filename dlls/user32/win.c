@@ -188,7 +188,7 @@ static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name,
         {
             if (!thread_info->top_window) thread_info->top_window = full_parent ? full_parent : handle;
             else assert( full_parent == thread_info->top_window );
-            if (full_parent && !USER_Driver->pCreateDesktopWindow( thread_info->top_window ))
+            if (full_parent && !NtUserCallHwnd( thread_info->top_window, NtUserCreateDesktopWindow ))
                 ERR( "failed to create desktop window\n" );
             register_builtin_classes();
         }
@@ -2098,7 +2098,7 @@ HWND WINAPI GetDesktopWindow(void)
         SERVER_END_REQ;
     }
 
-    if (!thread_info->top_window || !USER_Driver->pCreateDesktopWindow( thread_info->top_window ))
+    if (!thread_info->top_window || !NtUserCallHwnd( thread_info->top_window, NtUserCreateDesktopWindow ))
         ERR( "failed to create desktop window\n" );
 
     register_builtin_classes();

@@ -38,6 +38,7 @@ struct user_callbacks
     HWND (WINAPI *pWindowFromDC)( HDC );
     void (WINAPI *free_dce)( struct dce *dce, HWND hwnd );
     LRESULT (WINAPI *send_ll_message)( DWORD, DWORD, UINT, WPARAM, LPARAM, UINT, UINT, PDWORD_PTR );
+    void (CDECL *set_user_driver)( void *, UINT );
 };
 
 struct user_object

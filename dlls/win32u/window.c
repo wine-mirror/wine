@@ -1067,6 +1067,9 @@ DWORD WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
         return is_window( hwnd );
     case NtUserIsWindowVisible:
         return is_window_visible( hwnd );
+    /* temporary exports */
+    case NtUserCreateDesktopWindow:
+        return user_driver->pCreateDesktopWindow( hwnd );
     default:
         FIXME( "invalid code %u\n", code );
         return 0;

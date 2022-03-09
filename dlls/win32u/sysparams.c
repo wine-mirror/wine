@@ -4537,6 +4537,8 @@ ULONG_PTR WINAPI NtUserCallNoParam( ULONG code )
 {
     switch(code)
     {
+    case NtUserGetDesktopWindow:
+        return HandleToUlong( get_desktop_window() );
     case NtUserGetInputState:
         return get_input_state();
     /* temporary exports */

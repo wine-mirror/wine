@@ -30,6 +30,7 @@ enum
     NtUserCallEnumDisplayMonitor,
     NtUserCallWinEventHook,
     NtUserCallWindowsHook,
+    NtUserLoadDriver,
     /* win16 hooks */
     NtUserCallFreeIcon,
     /* Vulkan support */
@@ -86,6 +87,7 @@ struct win_hook_params
 /* NtUserCallNoParam codes, not compatible with Windows */
 enum
 {
+    NtUserGetDesktopWindow,
     NtUserGetInputState,
     /* temporary exports */
     NtUserThreadDetach,
@@ -143,6 +145,8 @@ enum
     NtUserGetWindowTextLength,
     NtUserIsWindow,
     NtUserIsWindowVisible,
+    /* temporary exports */
+    NtUserCreateDesktopWindow,
 };
 
 /* NtUserCallHwndParam codes, not compatible with Windows */

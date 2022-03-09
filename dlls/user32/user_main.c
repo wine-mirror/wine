@@ -144,6 +144,7 @@ static const struct user_callbacks user_funcs =
     WindowFromDC,
     free_dce,
     MSG_SendInternalMessageTimeout,
+    (void *)__wine_set_user_driver,
 };
 
 static void WINAPI User32CallFreeIcon( ULONG *param, ULONG size )
@@ -151,11 +152,17 @@ static void WINAPI User32CallFreeIcon( ULONG *param, ULONG size )
     wow_handlers.free_icon_param( *param );
 }
 
+static BOOL WINAPI User32LoadDriver( const WCHAR *path, ULONG size )
+{
+    return LoadLibraryW( path ) != NULL;
+}
+
 static const void *kernel_callback_table[NtUserCallCount] =
 {
     User32CallEnumDisplayMonitor,
     User32CallWinEventHook,
     User32CallWindowsHook,
+    User32LoadDriver,
     User32CallFreeIcon,
 };
 
