@@ -624,7 +624,7 @@ static const char *debug_cs_op(enum wined3d_cs_op op)
 
 static struct wined3d_cs_packet *wined3d_next_cs_packet(const uint8_t *data, SIZE_T *offset)
 {
-    struct wined3d_cs_packet *packet = (struct wined3d_cs_packet *)&data[*offset];
+    struct wined3d_cs_packet *packet = (struct wined3d_cs_packet *)&data[WINED3D_CS_QUEUE_MASK(*offset)];
 
     *offset += offsetof(struct wined3d_cs_packet, data[packet->size]);
 
@@ -3263,7 +3263,7 @@ static const struct wined3d_device_context_ops wined3d_cs_st_ops =
 static BOOL wined3d_cs_queue_is_empty(const struct wined3d_cs *cs, const struct wined3d_cs_queue *queue)
 {
     wined3d_from_cs(cs);
-    return *(volatile LONG *)&queue->head == queue->tail;
+    return *(volatile ULONG *)&queue->head == queue->tail;
 }
 
 static void wined3d_cs_queue_submit(struct wined3d_cs_queue *queue, struct wined3d_cs *cs)
@@ -3271,10 +3271,10 @@ static void wined3d_cs_queue_submit(struct wined3d_cs_queue *queue, struct wined
     struct wined3d_cs_packet *packet;
     size_t packet_size;
 
-    packet = (struct wined3d_cs_packet *)&queue->data[queue->head];
+    packet = (struct wined3d_cs_packet *)&queue->data[WINED3D_CS_QUEUE_MASK(queue->head)];
     TRACE("Queuing op %s at %p.\n", debug_cs_op(*(const enum wined3d_cs_op *)packet->data), packet);
     packet_size = FIELD_OFFSET(struct wined3d_cs_packet, data[packet->size]);
-    InterlockedExchange(&queue->head, (queue->head + packet_size) & (WINED3D_CS_QUEUE_SIZE - 1));
+    InterlockedExchange((LONG *)&queue->head, queue->head + packet_size);
 
     if (InterlockedCompareExchange(&cs->waiting_for_event, FALSE, TRUE))
         SetEvent(cs->event);
@@ -3295,6 +3295,7 @@ static void *wined3d_cs_queue_require_space(struct wined3d_cs_queue *queue, size
     size_t queue_size = ARRAY_SIZE(queue->data);
     size_t header_size, packet_size, remaining;
     struct wined3d_cs_packet *packet;
+    ULONG head = WINED3D_CS_QUEUE_MASK(queue->head);
 
     header_size = FIELD_OFFSET(struct wined3d_cs_packet, data[0]);
     packet_size = FIELD_OFFSET(struct wined3d_cs_packet, data[size]);
@@ -3307,7 +3308,7 @@ static void *wined3d_cs_queue_require_space(struct wined3d_cs_queue *queue, size
         return NULL;
     }
 
-    remaining = queue_size - queue->head;
+    remaining = queue_size - head;
     if (remaining < packet_size)
     {
         size_t nop_size = remaining - header_size;
@@ -3321,19 +3322,19 @@ static void *wined3d_cs_queue_require_space(struct wined3d_cs_queue *queue, size
             nop->opcode = WINED3D_CS_OP_NOP;
 
         wined3d_cs_queue_submit(queue, cs);
-        assert(!queue->head);
+        head = WINED3D_CS_QUEUE_MASK(queue->head);
+        assert(!head);
     }
 
     for (;;)
     {
-        LONG tail = *(volatile LONG *)&queue->tail;
-        LONG head = queue->head;
-        LONG new_pos;
+        ULONG tail = WINED3D_CS_QUEUE_MASK(*(volatile ULONG *)&queue->tail);
+        ULONG new_pos;
 
         /* Empty. */
         if (head == tail)
             break;
-        new_pos = (head + packet_size) & (WINED3D_CS_QUEUE_SIZE - 1);
+        new_pos = WINED3D_CS_QUEUE_MASK(head + packet_size);
         /* Head ahead of tail. We checked the remaining size above, so we only
          * need to make sure we don't make head equal to tail. */
         if (head > tail && (new_pos != tail))
@@ -3347,7 +3348,7 @@ static void *wined3d_cs_queue_require_space(struct wined3d_cs_queue *queue, size
                 head, tail, (unsigned long)packet_size);
     }
 
-    packet = (struct wined3d_cs_packet *)&queue->data[queue->head];
+    packet = (struct wined3d_cs_packet *)&queue->data[head];
     packet->size = size;
     return packet->data;
 }
@@ -3370,7 +3371,7 @@ static void wined3d_cs_mt_finish(struct wined3d_device_context *context, enum wi
     if (cs->thread_id == GetCurrentThreadId())
         return wined3d_cs_st_finish(context, queue_id);
 
-    while (cs->queue[queue_id].head != *(volatile LONG *)&cs->queue[queue_id].tail)
+    while (cs->queue[queue_id].head != *(volatile ULONG *)&cs->queue[queue_id].tail)
         YieldProcessor();
 }
 
@@ -3496,8 +3497,7 @@ static DWORD WINAPI wined3d_cs_run(void *ctx)
             TRACE("%s at %p executed.\n", debug_cs_op(opcode), packet);
         }
 
-        tail &= (WINED3D_CS_QUEUE_SIZE - 1);
-        InterlockedExchange(&queue->tail, tail);
+        InterlockedExchange((LONG *)&queue->tail, tail);
     }
 
     cs->queue[WINED3D_CS_QUEUE_MAP].tail = cs->queue[WINED3D_CS_QUEUE_MAP].head;
