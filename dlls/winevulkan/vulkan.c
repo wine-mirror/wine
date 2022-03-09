@@ -1758,6 +1758,113 @@ NTSTATUS wine_vkDestroyDebugReportCallbackEXT(void *args)
     return STATUS_SUCCESS;
 }
 
+static void fixup_pipeline_feedback(VkPipelineCreationFeedback *feedback, uint32_t count)
+{
+#if defined(USE_STRUCT_CONVERSION)
+    struct host_pipeline_feedback
+    {
+        VkPipelineCreationFeedbackFlags flags;
+        uint64_t duration;
+    } *host_feedback;
+    int64_t i;
+
+    host_feedback = (void *) feedback;
+
+    for (i = count - 1; i >= 0; i--)
+    {
+        memmove(&feedback[i].duration, &host_feedback[i].duration, sizeof(uint64_t));
+        feedback[i].flags = host_feedback[i].flags;
+    }
+#endif
+}
+
+static void fixup_pipeline_feedback_info(const void *pipeline_info)
+{
+    VkPipelineCreationFeedbackCreateInfo *feedback;
+
+    feedback = wine_vk_find_struct(pipeline_info, PIPELINE_CREATION_FEEDBACK_CREATE_INFO);
+
+    if (!feedback)
+        return;
+
+    fixup_pipeline_feedback(feedback->pPipelineCreationFeedback, 1);
+    fixup_pipeline_feedback(feedback->pPipelineStageCreationFeedbacks,
+        feedback->pipelineStageCreationFeedbackCount);
+}
+
+NTSTATUS wine_vkCreateComputePipelines(void *args)
+{
+    struct vkCreateComputePipelines_params *params = args;
+    VkResult res;
+    uint32_t i;
+
+    TRACE("%p, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache),
+        params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
+
+    res = thunk_vkCreateComputePipelines(params->device, params->pipelineCache,
+        params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
+
+    for (i = 0; i < params->createInfoCount; i++)
+        fixup_pipeline_feedback_info(&params->pCreateInfos[i]);
+
+    return res;
+}
+
+NTSTATUS wine_vkCreateGraphicsPipelines(void *args)
+{
+    struct vkCreateGraphicsPipelines_params *params = args;
+    VkResult res;
+    uint32_t i;
+
+    TRACE("%p, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache),
+        params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
+
+    res = thunk_vkCreateGraphicsPipelines(params->device, params->pipelineCache,
+        params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
+
+    for (i = 0; i < params->createInfoCount; i++)
+        fixup_pipeline_feedback_info(&params->pCreateInfos[i]);
+
+    return res;
+}
+
+NTSTATUS wine_vkCreateRayTracingPipelinesKHR(void *args)
+{
+    struct vkCreateRayTracingPipelinesKHR_params *params = args;
+    VkResult res;
+    uint32_t i;
+
+    TRACE("%p, 0x%s, 0x%s, %u, %p, %p, %p\n", params->device,
+        wine_dbgstr_longlong(params->deferredOperation), wine_dbgstr_longlong(params->pipelineCache),
+        params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
+
+    res = thunk_vkCreateRayTracingPipelinesKHR(params->device, params->deferredOperation, params->pipelineCache,
+        params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
+
+    for (i = 0; i < params->createInfoCount; i++)
+        fixup_pipeline_feedback_info(&params->pCreateInfos[i]);
+
+    return res;
+}
+
+NTSTATUS wine_vkCreateRayTracingPipelinesNV(void *args)
+{
+    struct vkCreateRayTracingPipelinesNV_params *params = args;
+    VkResult res;
+    uint32_t i;
+
+    TRACE("%p, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache),
+        params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
+
+    res = thunk_vkCreateRayTracingPipelinesNV(params->device, params->pipelineCache,
+        params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
+
+    for (i = 0; i < params->createInfoCount; i++)
+        fixup_pipeline_feedback_info(&params->pCreateInfos[i]);
+
+    return res;
+}
+
 BOOL WINAPI wine_vk_is_available_instance_function(VkInstance instance, const char *name)
 {
     return !!vk_funcs->p_vkGetInstanceProcAddr(instance->instance, name);

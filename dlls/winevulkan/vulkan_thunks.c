@@ -7155,22 +7155,18 @@ static NTSTATUS wine_vkCreateBufferView(void *args)
 #endif
 }
 
-static NTSTATUS wine_vkCreateComputePipelines(void *args)
+VkResult thunk_vkCreateComputePipelines(VkDevice device, VkPipelineCache pipelineCache, uint32_t createInfoCount, const VkComputePipelineCreateInfo *pCreateInfos, const VkAllocationCallbacks *pAllocator, VkPipeline *pPipelines)
 {
-    struct vkCreateComputePipelines_params *params = args;
 #if defined(USE_STRUCT_CONVERSION)
     VkResult result;
     VkComputePipelineCreateInfo_host *pCreateInfos_host;
-    TRACE("%p, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
+    pCreateInfos_host = convert_VkComputePipelineCreateInfo_array_win_to_host(pCreateInfos, createInfoCount);
+    result = device->funcs.p_vkCreateComputePipelines(device->device, pipelineCache, createInfoCount, pCreateInfos_host, NULL, pPipelines);
 
-    pCreateInfos_host = convert_VkComputePipelineCreateInfo_array_win_to_host(params->pCreateInfos, params->createInfoCount);
-    result = params->device->funcs.p_vkCreateComputePipelines(params->device->device, params->pipelineCache, params->createInfoCount, pCreateInfos_host, NULL, params->pPipelines);
-
-    free_VkComputePipelineCreateInfo_array(pCreateInfos_host, params->createInfoCount);
+    free_VkComputePipelineCreateInfo_array(pCreateInfos_host, createInfoCount);
     return result;
 #else
-    TRACE("%p, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
-    return params->device->funcs.p_vkCreateComputePipelines(params->device->device, params->pipelineCache, params->createInfoCount, params->pCreateInfos, NULL, params->pPipelines);
+    return device->funcs.p_vkCreateComputePipelines(device->device, pipelineCache, createInfoCount, pCreateInfos, NULL, pPipelines);
 #endif
 }
 
@@ -7288,22 +7284,18 @@ static NTSTATUS wine_vkCreateFramebuffer(void *args)
 #endif
 }
 
-static NTSTATUS wine_vkCreateGraphicsPipelines(void *args)
+VkResult thunk_vkCreateGraphicsPipelines(VkDevice device, VkPipelineCache pipelineCache, uint32_t createInfoCount, const VkGraphicsPipelineCreateInfo *pCreateInfos, const VkAllocationCallbacks *pAllocator, VkPipeline *pPipelines)
 {
-    struct vkCreateGraphicsPipelines_params *params = args;
 #if defined(USE_STRUCT_CONVERSION)
     VkResult result;
     VkGraphicsPipelineCreateInfo_host *pCreateInfos_host;
-    TRACE("%p, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
+    pCreateInfos_host = convert_VkGraphicsPipelineCreateInfo_array_win_to_host(pCreateInfos, createInfoCount);
+    result = device->funcs.p_vkCreateGraphicsPipelines(device->device, pipelineCache, createInfoCount, pCreateInfos_host, NULL, pPipelines);
 
-    pCreateInfos_host = convert_VkGraphicsPipelineCreateInfo_array_win_to_host(params->pCreateInfos, params->createInfoCount);
-    result = params->device->funcs.p_vkCreateGraphicsPipelines(params->device->device, params->pipelineCache, params->createInfoCount, pCreateInfos_host, NULL, params->pPipelines);
-
-    free_VkGraphicsPipelineCreateInfo_array(pCreateInfos_host, params->createInfoCount);
+    free_VkGraphicsPipelineCreateInfo_array(pCreateInfos_host, createInfoCount);
     return result;
 #else
-    TRACE("%p, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
-    return params->device->funcs.p_vkCreateGraphicsPipelines(params->device->device, params->pipelineCache, params->createInfoCount, params->pCreateInfos, NULL, params->pPipelines);
+    return device->funcs.p_vkCreateGraphicsPipelines(device->device, pipelineCache, createInfoCount, pCreateInfos, NULL, pPipelines);
 #endif
 }
 
@@ -7386,41 +7378,33 @@ static NTSTATUS wine_vkCreateQueryPool(void *args)
     return params->device->funcs.p_vkCreateQueryPool(params->device->device, params->pCreateInfo, NULL, params->pQueryPool);
 }
 
-static NTSTATUS wine_vkCreateRayTracingPipelinesKHR(void *args)
+VkResult thunk_vkCreateRayTracingPipelinesKHR(VkDevice device, VkDeferredOperationKHR deferredOperation, VkPipelineCache pipelineCache, uint32_t createInfoCount, const VkRayTracingPipelineCreateInfoKHR *pCreateInfos, const VkAllocationCallbacks *pAllocator, VkPipeline *pPipelines)
 {
-    struct vkCreateRayTracingPipelinesKHR_params *params = args;
 #if defined(USE_STRUCT_CONVERSION)
     VkResult result;
     VkRayTracingPipelineCreateInfoKHR_host *pCreateInfos_host;
-    TRACE("%p, 0x%s, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->deferredOperation), wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
+    pCreateInfos_host = convert_VkRayTracingPipelineCreateInfoKHR_array_win_to_host(pCreateInfos, createInfoCount);
+    result = device->funcs.p_vkCreateRayTracingPipelinesKHR(device->device, deferredOperation, pipelineCache, createInfoCount, pCreateInfos_host, NULL, pPipelines);
 
-    pCreateInfos_host = convert_VkRayTracingPipelineCreateInfoKHR_array_win_to_host(params->pCreateInfos, params->createInfoCount);
-    result = params->device->funcs.p_vkCreateRayTracingPipelinesKHR(params->device->device, params->deferredOperation, params->pipelineCache, params->createInfoCount, pCreateInfos_host, NULL, params->pPipelines);
-
-    free_VkRayTracingPipelineCreateInfoKHR_array(pCreateInfos_host, params->createInfoCount);
+    free_VkRayTracingPipelineCreateInfoKHR_array(pCreateInfos_host, createInfoCount);
     return result;
 #else
-    TRACE("%p, 0x%s, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->deferredOperation), wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
-    return params->device->funcs.p_vkCreateRayTracingPipelinesKHR(params->device->device, params->deferredOperation, params->pipelineCache, params->createInfoCount, params->pCreateInfos, NULL, params->pPipelines);
+    return device->funcs.p_vkCreateRayTracingPipelinesKHR(device->device, deferredOperation, pipelineCache, createInfoCount, pCreateInfos, NULL, pPipelines);
 #endif
 }
 
-static NTSTATUS wine_vkCreateRayTracingPipelinesNV(void *args)
+VkResult thunk_vkCreateRayTracingPipelinesNV(VkDevice device, VkPipelineCache pipelineCache, uint32_t createInfoCount, const VkRayTracingPipelineCreateInfoNV *pCreateInfos, const VkAllocationCallbacks *pAllocator, VkPipeline *pPipelines)
 {
-    struct vkCreateRayTracingPipelinesNV_params *params = args;
 #if defined(USE_STRUCT_CONVERSION)
     VkResult result;
     VkRayTracingPipelineCreateInfoNV_host *pCreateInfos_host;
-    TRACE("%p, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
+    pCreateInfos_host = convert_VkRayTracingPipelineCreateInfoNV_array_win_to_host(pCreateInfos, createInfoCount);
+    result = device->funcs.p_vkCreateRayTracingPipelinesNV(device->device, pipelineCache, createInfoCount, pCreateInfos_host, NULL, pPipelines);
 
-    pCreateInfos_host = convert_VkRayTracingPipelineCreateInfoNV_array_win_to_host(params->pCreateInfos, params->createInfoCount);
-    result = params->device->funcs.p_vkCreateRayTracingPipelinesNV(params->device->device, params->pipelineCache, params->createInfoCount, pCreateInfos_host, NULL, params->pPipelines);
-
-    free_VkRayTracingPipelineCreateInfoNV_array(pCreateInfos_host, params->createInfoCount);
+    free_VkRayTracingPipelineCreateInfoNV_array(pCreateInfos_host, createInfoCount);
     return result;
 #else
-    TRACE("%p, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
-    return params->device->funcs.p_vkCreateRayTracingPipelinesNV(params->device->device, params->pipelineCache, params->createInfoCount, params->pCreateInfos, NULL, params->pPipelines);
+    return device->funcs.p_vkCreateRayTracingPipelinesNV(device->device, pipelineCache, createInfoCount, pCreateInfos, NULL, pPipelines);
 #endif
 }
 
