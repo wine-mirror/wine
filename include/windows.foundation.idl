@@ -159,7 +159,9 @@ namespace Windows {
     namespace Foundation {
         declare {
             interface Windows.Foundation.Collections.IIterable<HSTRING>;
+            interface Windows.Foundation.Collections.IIterable<IInspectable *>;
             interface Windows.Foundation.Collections.IIterator<HSTRING>;
+            interface Windows.Foundation.Collections.IIterator<IInspectable *>;
             interface Windows.Foundation.Collections.IVectorView<HSTRING>;
             interface Windows.Foundation.Collections.IVectorView<IInspectable *>;
             interface Windows.Foundation.Collections.IVector<HSTRING>;

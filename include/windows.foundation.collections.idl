@@ -93,7 +93,7 @@ cpp_quote("#endif")
                 [propget] HRESULT Current([out, retval] T *value);
                 [propget] HRESULT HasCurrent([out, retval] BOOL *value);
                 HRESULT MoveNext([out, retval] BOOL *value);
-                HRESULT GetMany([in] UINT32 count, [in] UINT32 items_size, [out] T *items, [out, retval] UINT32 *value);
+                HRESULT GetMany([in] UINT32 items_size, [out] T *items, [out, retval] UINT32 *value);
             }
 
             [
@@ -134,6 +134,7 @@ cpp_quote("#endif")
                 uuid(bbe1fa4c-b0e3-4583-baef-1f1b2e483e56)
             ]
             interface IVectorView<T> : IInspectable
+                requires Windows.Foundation.Collections.IIterable<T>
             {
                 HRESULT GetAt([in] UINT32 index, [out, retval] T *value);
                 [propget] HRESULT Size([out, retval] UINT32 *value);
@@ -146,6 +147,7 @@ cpp_quote("#endif")
                 uuid(913337e9-11a1-4345-a3a2-4e7f956e222d)
             ]
             interface IVector<T> : IInspectable
+                requires Windows.Foundation.Collections.IIterable<T>
             {
                 HRESULT GetAt([in, optional] UINT32 index, [out, retval] T *value);
                 [propget] HRESULT Size([out, retval] UINT32 *value);
