@@ -103,7 +103,7 @@ static HRESULT WINAPI async_activate_ActivateCompleted(
     hr = IActivateAudioInterfaceAsyncOperation_GetActivateResult(op,
             &async_activate_test.result_hr, &async_activate_test.result_iface);
     ok(hr == S_OK,
-            "%s: GetActivateResult failed: %08x\n",
+            "%s: GetActivateResult failed: %08lx\n",
             async_activate_test.msg_pfx, hr);
 
     return S_OK;
@@ -135,29 +135,29 @@ static void test_MediaDeviceStatics(void)
     DWORD dr;
 
     hr = WindowsCreateString(media_device_statics_name, wcslen(media_device_statics_name), &str);
-    ok(hr == S_OK, "WindowsCreateString failed, hr %#x\n", hr);
+    ok(hr == S_OK, "WindowsCreateString failed, hr %#lx\n", hr);
 
     hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
-    ok(hr == S_OK, "RoGetActivationFactory failed, hr %#x\n", hr);
+    ok(hr == S_OK, "RoGetActivationFactory failed, hr %#lx\n", hr);
     WindowsDeleteString(str);
 
     /* interface tests */
     hr = IActivationFactory_QueryInterface(factory, &IID_IInspectable, (void **)&inspectable);
-    ok(hr == S_OK, "IActivationFactory_QueryInterface IID_IInspectable failed, hr %#x\n", hr);
+    ok(hr == S_OK, "IActivationFactory_QueryInterface IID_IInspectable failed, hr %#lx\n", hr);
 
     hr = IActivationFactory_QueryInterface(factory, &IID_IAgileObject, (void **)&agile_object);
-    ok(hr == S_OK, "IActivationFactory_QueryInterface IID_IAgileObject failed, hr %#x\n", hr);
+    ok(hr == S_OK, "IActivationFactory_QueryInterface IID_IAgileObject failed, hr %#lx\n", hr);
 
     hr = IActivationFactory_QueryInterface(factory, &IID_IMediaDeviceStatics, (void **)&media_device_statics);
-    ok(hr == S_OK, "IActivationFactory_QueryInterface IID_IMediaDeviceStatics failed, hr %#x\n", hr);
+    ok(hr == S_OK, "IActivationFactory_QueryInterface IID_IMediaDeviceStatics failed, hr %#lx\n", hr);
 
     hr = IMediaDeviceStatics_QueryInterface(media_device_statics, &IID_IInspectable, (void **)&tmp_inspectable);
-    ok(hr == S_OK, "IMediaDeviceStatics_QueryInterface IID_IInspectable failed, hr %#x\n", hr);
+    ok(hr == S_OK, "IMediaDeviceStatics_QueryInterface IID_IInspectable failed, hr %#lx\n", hr);
     ok(tmp_inspectable == inspectable, "IMediaDeviceStatics_QueryInterface IID_IInspectable returned %p, expected %p\n", tmp_inspectable, inspectable);
     IInspectable_Release(tmp_inspectable);
 
     hr = IMediaDeviceStatics_QueryInterface(media_device_statics, &IID_IAgileObject, (void **)&tmp_agile_object);
-    ok(hr == S_OK, "IMediaDeviceStatics_QueryInterface IID_IAgileObject failed, hr %#x\n", hr);
+    ok(hr == S_OK, "IMediaDeviceStatics_QueryInterface IID_IAgileObject failed, hr %#lx\n", hr);
     ok(tmp_agile_object == agile_object, "IMediaDeviceStatics_QueryInterface IID_IAgileObject returned %p, expected %p\n", tmp_agile_object, agile_object);
     IAgileObject_Release(tmp_agile_object);
 
@@ -169,7 +169,7 @@ static void test_MediaDeviceStatics(void)
 
     /* test default capture device creation */
     hr = IMediaDeviceStatics_GetDefaultAudioCaptureId(media_device_statics, AudioDeviceRole_Default, &str);
-    ok(hr == S_OK, "GetDefaultAudioCaptureId failed: %08x\n", hr);
+    ok(hr == S_OK, "GetDefaultAudioCaptureId failed: %08lx\n", hr);
     ok((!!g_default_capture_id) == (!!str),
             "Presence of default capture device doesn't match expected state\n");
 
@@ -181,7 +181,7 @@ static void test_MediaDeviceStatics(void)
 
         /* returned id does not work in GetDevice... */
         hr = IMMDeviceEnumerator_GetDevice(g_mmdevenum, WindowsGetStringRawBuffer(str, NULL), &mmdev);
-        ok(hr == E_INVALIDARG, "GetDevice gave wrong error: %08x\n", hr);
+        ok(hr == E_INVALIDARG, "GetDevice gave wrong error: %08lx\n", hr);
 
         /* ...but does work in ActivateAudioInterfaceAsync */
         async_activate_test.ref = 1;
@@ -194,14 +194,14 @@ static void test_MediaDeviceStatics(void)
         EnterCriticalSection(&async_activate_test.lock);
         hr = pActivateAudioInterfaceAsync(WindowsGetStringRawBuffer(str, NULL),
                 &IID_IAudioClient2, NULL, &async_activate_done, &async_activate_test.op);
-        ok(hr == S_OK, "ActivateAudioInterfaceAsync failed: %08x\n", hr);
+        ok(hr == S_OK, "ActivateAudioInterfaceAsync failed: %08lx\n", hr);
         LeaveCriticalSection(&async_activate_test.lock);
 
         IActivateAudioInterfaceAsyncOperation_Release(async_activate_test.op);
 
         dr = WaitForSingleObject(async_activate_test.evt, 1000); /* wait for all refs other than our own to be released */
         ok(dr == WAIT_OBJECT_0, "Timed out waiting for async activate to complete\n");
-        ok(async_activate_test.result_hr == S_OK, "Got unexpected activation result: %08x\n", async_activate_test.result_hr);
+        ok(async_activate_test.result_hr == S_OK, "Got unexpected activation result: %08lx\n", async_activate_test.result_hr);
         ok(async_activate_test.result_iface != NULL, "Expected to get WASAPI interface, but got NULL\n");
         IUnknown_Release(async_activate_test.result_iface);
 
@@ -210,7 +210,7 @@ static void test_MediaDeviceStatics(void)
 
     /* test default render device creation */
     hr = IMediaDeviceStatics_GetDefaultAudioRenderId(media_device_statics, AudioDeviceRole_Default, &str);
-    ok(hr == S_OK, "GetDefaultAudioRenderId failed: %08x\n", hr);
+    ok(hr == S_OK, "GetDefaultAudioRenderId failed: %08lx\n", hr);
     ok((!!g_default_render_id) == (!!str),
             "Presence of default render device doesn't match expected state\n");
 
@@ -222,7 +222,7 @@ static void test_MediaDeviceStatics(void)
 
         /* returned id does not work in GetDevice... */
         hr = IMMDeviceEnumerator_GetDevice(g_mmdevenum, WindowsGetStringRawBuffer(str, NULL), &mmdev);
-        ok(hr == E_INVALIDARG, "GetDevice gave wrong error: %08x\n", hr);
+        ok(hr == E_INVALIDARG, "GetDevice gave wrong error: %08lx\n", hr);
 
         /* ...but does work in ActivateAudioInterfaceAsync */
         async_activate_test.ref = 1;
@@ -235,14 +235,14 @@ static void test_MediaDeviceStatics(void)
         EnterCriticalSection(&async_activate_test.lock);
         hr = pActivateAudioInterfaceAsync(WindowsGetStringRawBuffer(str, NULL),
                 &IID_IAudioClient2, NULL, &async_activate_done, &async_activate_test.op);
-        ok(hr == S_OK, "ActivateAudioInterfaceAsync failed: %08x\n", hr);
+        ok(hr == S_OK, "ActivateAudioInterfaceAsync failed: %08lx\n", hr);
         LeaveCriticalSection(&async_activate_test.lock);
 
         IActivateAudioInterfaceAsyncOperation_Release(async_activate_test.op);
 
         dr = WaitForSingleObject(async_activate_test.evt, 1000); /* wait for all refs other than our own to be released */
         ok(dr == WAIT_OBJECT_0, "Timed out waiting for async activate to complete\n");
-        ok(async_activate_test.result_hr == S_OK, "Got unexpected activation result: %08x\n", async_activate_test.result_hr);
+        ok(async_activate_test.result_hr == S_OK, "Got unexpected activation result: %08lx\n", async_activate_test.result_hr);
         ok(async_activate_test.result_iface != NULL, "Expected to get WASAPI interface, but got NULL\n");
         IUnknown_Release(async_activate_test.result_iface);
 
@@ -278,17 +278,17 @@ START_TEST(devices)
 #undef LOAD_FUNCPTR
 
     hr = RoInitialize(RO_INIT_MULTITHREADED);
-    ok(hr == S_OK, "RoInitialize failed, hr %#x\n", hr);
+    ok(hr == S_OK, "RoInitialize failed, hr %#lx\n", hr);
 
     hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL,
             CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&g_mmdevenum);
-    ok(hr == S_OK, "Couldn't make MMDeviceEnumerator: %08x\n", hr);
+    ok(hr == S_OK, "Couldn't make MMDeviceEnumerator: %08lx\n", hr);
 
     hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(g_mmdevenum, eCapture, eMultimedia, &mmdev);
     if (hr == S_OK)
     {
         hr = IMMDevice_GetId(mmdev, &g_default_capture_id);
-        ok(hr == S_OK, "IMMDevice::GetId(capture) failed: %08x\n", hr);
+        ok(hr == S_OK, "IMMDevice::GetId(capture) failed: %08lx\n", hr);
 
         IMMDevice_Release(mmdev);
     }
@@ -299,7 +299,7 @@ START_TEST(devices)
     if (hr == S_OK)
     {
         hr = IMMDevice_GetId(mmdev, &g_default_render_id);
-        ok(hr == S_OK, "IMMDevice::GetId(render) failed: %08x\n", hr);
+        ok(hr == S_OK, "IMMDevice::GetId(render) failed: %08lx\n", hr);
 
         IMMDevice_Release(mmdev);
     }
