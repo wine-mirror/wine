@@ -165,40 +165,40 @@ static void test_WTInfoA(void)
 
     ret = pWTInfoA( WTI_DEVICES, DVC_X, &value );
     ok(ret == sizeof( AXIS ), "Wrong DVC_X size %d\n", ret);
-    trace("DVC_X %d, %d, %d\n", value.axMin, value.axMax, value.axUnits);
+    trace("DVC_X %ld, %ld, %d\n", value.axMin, value.axMax, value.axUnits);
 
     ret = pWTInfoA( WTI_DEVICES, DVC_Y, &value );
     ok(ret == sizeof( AXIS ), "Wrong DVC_Y size %d\n", ret);
-    trace("DVC_Y %d, %d, %d\n", value.axMin, value.axMax, value.axUnits);
+    trace("DVC_Y %ld, %ld, %d\n", value.axMin, value.axMax, value.axUnits);
 
     ret = pWTInfoA( WTI_DEVICES, DVC_Z, &value );
     if(ret)
-        trace("DVC_Z %d, %d, %d\n", value.axMin, value.axMax, value.axUnits);
+        trace("DVC_Z %ld, %ld, %d\n", value.axMin, value.axMax, value.axUnits);
     else
         trace("DVC_Z not supported\n");
 
     ret = pWTInfoA( WTI_DEVICES, DVC_NPRESSURE, &value );
     ok(ret == sizeof( AXIS ), "Wrong DVC_NPRESSURE, size %d\n", ret);
-    trace("DVC_NPRESSURE %d, %d, %d\n", value.axMin, value.axMax, value.axUnits);
+    trace("DVC_NPRESSURE %ld, %ld, %d\n", value.axMin, value.axMax, value.axUnits);
 
     ret = pWTInfoA( WTI_DEVICES, DVC_TPRESSURE, &value );
     if(ret)
-        trace("DVC_TPRESSURE %d, %d, %d\n", value.axMin, value.axMax, value.axUnits);
+        trace("DVC_TPRESSURE %ld, %ld, %d\n", value.axMin, value.axMax, value.axUnits);
     else
         trace("DVC_TPRESSURE not supported\n");
 
     ret = pWTInfoA( WTI_DEVICES, DVC_ORIENTATION, &orientation );
     ok(ret == sizeof( AXIS )*3, "Wrong DVC_ORIENTATION, size %d\n", ret);
-    trace("DVC_ORIENTATION0 %d, %d, %d\n", orientation[0].axMin, orientation[0].axMax, orientation[0].axUnits);
-    trace("DVC_ORIENTATION1 %d, %d, %d\n", orientation[1].axMin, orientation[1].axMax, orientation[1].axUnits);
-    trace("DVC_ORIENTATION2 %d, %d, %d\n", orientation[2].axMin, orientation[2].axMax, orientation[2].axUnits);
+    trace("DVC_ORIENTATION0 %ld, %ld, %d\n", orientation[0].axMin, orientation[0].axMax, orientation[0].axUnits);
+    trace("DVC_ORIENTATION1 %ld, %ld, %d\n", orientation[1].axMin, orientation[1].axMax, orientation[1].axUnits);
+    trace("DVC_ORIENTATION2 %ld, %ld, %d\n", orientation[2].axMin, orientation[2].axMax, orientation[2].axUnits);
 
     ret = pWTInfoA( WTI_DEVICES, DVC_ROTATION, &orientation );
     if(ret)
     {
-        trace("DVC_ROTATION0 %d, %d, %d\n", orientation[0].axMin, orientation[0].axMax, orientation[0].axUnits);
-        trace("DVC_ROTATION1 %d, %d, %d\n", orientation[1].axMin, orientation[1].axMax, orientation[1].axUnits);
-        trace("DVC_ROTATION2 %d, %d, %d\n", orientation[2].axMin, orientation[2].axMax, orientation[2].axUnits);
+        trace("DVC_ROTATION0 %ld, %ld, %d\n", orientation[0].axMin, orientation[0].axMax, orientation[0].axUnits);
+        trace("DVC_ROTATION1 %ld, %ld, %d\n", orientation[1].axMin, orientation[1].axMax, orientation[1].axUnits);
+        trace("DVC_ROTATION2 %ld, %ld, %d\n", orientation[2].axMin, orientation[2].axMax, orientation[2].axUnits);
     }
     else
         trace("DVC_ROTATION not supported\n");
