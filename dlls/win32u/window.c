@@ -708,6 +708,40 @@ static DPI_AWARENESS_CONTEXT get_window_dpi_awareness_context( HWND hwnd )
     return ret;
 }
 
+/* see GetDpiForWindow */
+static UINT get_dpi_for_window( HWND hwnd )
+{
+    WND *win;
+    UINT ret = 0;
+
+    if (!(win = get_win_ptr( hwnd )))
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+    if (win == WND_DESKTOP)
+    {
+        POINT pt = { 0, 0 };
+        return get_monitor_dpi( monitor_from_point( pt, MONITOR_DEFAULTTOPRIMARY, 0 ));
+    }
+    if (win != WND_OTHER_PROCESS)
+    {
+        ret = win->dpi;
+        if (!ret) ret = get_win_monitor_dpi( hwnd );
+        release_win_ptr( win );
+    }
+    else
+    {
+        SERVER_START_REQ( get_window_info )
+        {
+            req->handle = wine_server_user_handle( hwnd );
+            if (!wine_server_call_err( req )) ret = reply->dpi;
+        }
+        SERVER_END_REQ;
+    }
+    return ret;
+}
+
 static LONG_PTR get_win_data( const void *ptr, UINT size )
 {
     if (size == sizeof(WORD))
@@ -1115,6 +1149,8 @@ ULONG_PTR WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
 {
     switch (code)
     {
+    case NtUserGetDpiForWindow:
+        return get_dpi_for_window( hwnd );
     case NtUserGetParent:
         return HandleToUlong( get_parent( hwnd ));
     case NtUserGetWindowDpiAwarenessContext:

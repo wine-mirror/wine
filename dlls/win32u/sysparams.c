@@ -1380,6 +1380,15 @@ UINT get_monitor_dpi( HMONITOR monitor )
 }
 
 /**********************************************************************
+ *              get_win_monitor_dpi
+ */
+UINT get_win_monitor_dpi( HWND hwnd )
+{
+    /* FIXME: use the monitor DPI instead */
+    return system_dpi;
+}
+
+/**********************************************************************
  *           get_thread_dpi_awareness
  */
 static DPI_AWARENESS get_thread_dpi_awareness(void)

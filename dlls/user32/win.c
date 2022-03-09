@@ -2099,35 +2099,7 @@ DPI_AWARENESS_CONTEXT WINAPI GetWindowDpiAwarenessContext( HWND hwnd )
  */
 UINT WINAPI GetDpiForWindow( HWND hwnd )
 {
-    WND *win;
-    UINT ret = 0;
-
-    if (!(win = WIN_GetPtr( hwnd )))
-    {
-        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-        return 0;
-    }
-    if (win == WND_DESKTOP)
-    {
-        POINT pt = { 0, 0 };
-        return get_monitor_dpi( MonitorFromPoint( pt, MONITOR_DEFAULTTOPRIMARY ));
-    }
-    if (win != WND_OTHER_PROCESS)
-    {
-        ret = win->dpi;
-        if (!ret) ret = get_win_monitor_dpi( hwnd );
-        WIN_ReleasePtr( win );
-    }
-    else
-    {
-        SERVER_START_REQ( get_window_info )
-        {
-            req->handle = wine_server_user_handle( hwnd );
-            if (!wine_server_call_err( req )) ret = reply->dpi;
-        }
-        SERVER_END_REQ;
-    }
-    return ret;
+    return NtUserCallHwnd( hwnd, NtUserGetDpiForWindow );
 }
 
 

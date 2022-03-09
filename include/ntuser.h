@@ -141,6 +141,7 @@ enum
 /* NtUserCallHwnd codes, not compatible with Windows */
 enum
 {
+    NtUserGetDpiForWindow,
     NtUserGetParent,
     NtUserGetWindowDpiAwarenessContext,
     NtUserGetWindowTextLength,
