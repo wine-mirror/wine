@@ -388,6 +388,15 @@ BOOL WINAPI NtUserSetObjectInformation( HANDLE handle, INT index, void *info, DW
     return ret;
 }
 
+HWND get_desktop_window(void)
+{
+    struct user_thread_info *thread_info = get_user_thread_info();
+
+    if (thread_info->top_window) return thread_info->top_window;
+    if (!user_callbacks) return 0;
+    return user_callbacks->pGetDesktopWindow();
+}
+
 static HANDLE get_winstations_dir_handle(void)
 {
     char bufferA[64];

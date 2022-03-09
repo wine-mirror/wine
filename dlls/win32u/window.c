@@ -163,8 +163,7 @@ static HWND get_hwnd_message_parent(void)
 {
     struct user_thread_info *thread_info = get_user_thread_info();
 
-    if (!thread_info->msg_window && user_callbacks)
-        user_callbacks->pGetDesktopWindow();  /* trigger creation */
+    if (!thread_info->msg_window) get_desktop_window(); /* trigger creation */
     return thread_info->msg_window;
 }
 
@@ -186,8 +185,7 @@ static HWND get_full_window_handle( HWND hwnd )
 
     if (win == WND_DESKTOP)
     {
-        if (user_callbacks && LOWORD(hwnd) == LOWORD(user_callbacks->pGetDesktopWindow()))
-            return user_callbacks->pGetDesktopWindow();
+        if (LOWORD(hwnd) == LOWORD(get_desktop_window())) return get_desktop_window();
         else return get_hwnd_message_parent();
     }
 
@@ -619,7 +617,7 @@ static BOOL is_window_visible( HWND hwnd )
     {
         for (i = 0; list[i+1]; i++)
             if (!(get_window_long( list[i], GWL_STYLE ) & WS_VISIBLE)) break;
-        retval = !list[i+1] && (list[i] == user_callbacks->pGetDesktopWindow());  /* top message window isn't visible */
+        retval = !list[i+1] && (list[i] == get_desktop_window());  /* top message window isn't visible */
     }
     free( list );
     return retval;
@@ -648,7 +646,7 @@ static BOOL is_window_drawable( HWND hwnd, BOOL icon )
         for (i = 0; list[i+1]; i++)
             if ((get_window_long( list[i], GWL_STYLE ) & (WS_VISIBLE|WS_MINIMIZE)) != WS_VISIBLE)
                 break;
-        retval = !list[i+1] && (list[i] == user_callbacks->pGetDesktopWindow());  /* top message window isn't visible */
+        retval = !list[i+1] && (list[i] == get_desktop_window());  /* top message window isn't visible */
     }
     free( list );
     return retval;
@@ -689,7 +687,7 @@ static LONG_PTR get_window_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
     if (offset == GWLP_HWNDPARENT)
     {
         HWND parent = NtUserGetAncestor( hwnd, GA_PARENT );
-        if (user_callbacks && parent == user_callbacks->pGetDesktopWindow())
+        if (parent == get_desktop_window())
             parent = get_window_relative( hwnd, GW_OWNER );
         return (ULONG_PTR)parent;
     }
@@ -706,7 +704,7 @@ static LONG_PTR get_window_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
         {
         case GWL_STYLE:
             retval = WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN; /* message parent is not visible */
-            if (user_callbacks && get_full_window_handle( hwnd ) == user_callbacks->pGetDesktopWindow())
+            if (get_full_window_handle( hwnd ) == get_desktop_window())
                 retval |= WS_VISIBLE;
             return retval;
         case GWL_EXSTYLE:

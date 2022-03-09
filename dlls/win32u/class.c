@@ -285,7 +285,7 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
     BOOL ret;
 
     /* create the desktop window to trigger builtin class registration */
-    if (!is_builtin && user_callbacks) user_callbacks->pGetDesktopWindow();
+    if (!is_builtin) get_desktop_window();
 
     if (wc->cbSize != sizeof(*wc) || wc->cbClsExtra < 0 || wc->cbWndExtra < 0 ||
         (!is_builtin && wc->hInstance == user32_module))  /* we can't register a class for user32 */
@@ -383,8 +383,8 @@ BOOL WINAPI NtUserUnregisterClass( UNICODE_STRING *name, HINSTANCE instance,
 {
     CLASS *class = NULL;
 
-    if (user_callbacks) /* create the desktop window to trigger builtin class registration */
-        user_callbacks->pGetDesktopWindow();
+    /* create the desktop window to trigger builtin class registration */
+    get_desktop_window();
 
     SERVER_START_REQ( destroy_class )
     {
@@ -423,7 +423,7 @@ ATOM WINAPI NtUserGetClassInfoEx( HINSTANCE instance, UNICODE_STRING *name, WNDC
     if (name->Buffer != (const WCHAR *)DESKTOP_CLASS_ATOM &&
         (IS_INTRESOURCE(name->Buffer) || name->Length != sizeof(messageW) ||
          wcsnicmp( name->Buffer, messageW, ARRAYSIZE(messageW) )))
-        user_callbacks->pGetDesktopWindow();
+        get_desktop_window();
 
     if (!(class = find_class( instance, name ))) return 0;
 

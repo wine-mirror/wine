@@ -64,8 +64,7 @@ const struct gdi_dc_funcs *get_display_driver(void)
 {
     if (user_driver == &lazy_load_driver)
     {
-        if (!user_callbacks || !user_callbacks->pGetDesktopWindow() ||
-            user_driver == &lazy_load_driver)
+        if (!get_desktop_window() || user_driver == &lazy_load_driver)
         {
             static struct user_driver_funcs empty_funcs;
             WARN( "failed to load the display driver, falling back to null driver\n" );
