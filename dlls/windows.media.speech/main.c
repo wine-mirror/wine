@@ -24,15 +24,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(speech);
 
-static const char *debugstr_hstring(HSTRING hstr)
-{
-    const WCHAR *str;
-    UINT32 len;
-    if (hstr && !((ULONG_PTR)hstr >> 16)) return "(invalid)";
-    str = WindowsGetStringRawBuffer(hstr, &len);
-    return wine_dbgstr_wn(str, len);
-}
-
 struct voice_information_vector
 {
     IVectorView_VoiceInformation IVectorView_VoiceInformation_iface;
@@ -583,15 +574,15 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID riid, void **out)
 
 HRESULT WINAPI DllGetActivationFactory(HSTRING classid, IActivationFactory **factory)
 {
-    TRACE("classid %s, factory %p.\n", debugstr_hstring(classid), factory);
+    const WCHAR *buffer = WindowsGetStringRawBuffer(classid, NULL);
 
-    if (wcscmp(WindowsGetStringRawBuffer(classid, NULL), L"Windows.Media.SpeechSynthesis.SpeechSynthesizer"))
-    {
-        ERR("Unknown classid %s.\n", debugstr_hstring(classid));
-        return CLASS_E_CLASSNOTAVAILABLE;
-    }
+    TRACE("classid %s, factory %p.\n", debugstr_w(buffer), factory);
 
-    *factory = &windows_media_speech.IActivationFactory_iface;
-    IUnknown_AddRef(*factory);
-    return S_OK;
+    *factory = NULL;
+
+    if (!wcscmp(buffer, L"Windows.Media.SpeechSynthesis.SpeechSynthesizer"))
+        IActivationFactory_AddRef((*factory = &windows_media_speech.IActivationFactory_iface));
+
+    if (*factory) return S_OK;
+    return CLASS_E_CLASSNOTAVAILABLE;
 }
