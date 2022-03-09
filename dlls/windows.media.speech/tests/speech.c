@@ -29,12 +29,139 @@
 #define WIDL_using_Windows_Foundation
 #define WIDL_using_Windows_Foundation_Collections
 #include "windows.foundation.h"
+#define WIDL_using_Windows_Media_SpeechRecognition
+#include "windows.media.speechrecognition.h"
 #define WIDL_using_Windows_Media_SpeechSynthesis
 #include "windows.media.speechsynthesis.h"
 
 #include "wine/test.h"
 
 HRESULT WINAPI (*pDllGetActivationFactory)(HSTRING, IActivationFactory **);
+
+static inline LONG get_ref(IUnknown *obj)
+{
+    IUnknown_AddRef(obj);
+    return IUnknown_Release(obj);
+}
+
+#define check_refcount(obj, exp) check_refcount_(__LINE__, obj, exp)
+static inline void check_refcount_(unsigned int line, void *obj, LONG exp)
+{
+    LONG ref = get_ref(obj);
+    ok_(__FILE__, line)(exp == ref, "Unexpected refcount %u, expected %u\n", ref, exp);
+}
+
+#define check_interface(obj, iid, exp) check_interface_(__LINE__, obj, iid, exp)
+static void check_interface_(unsigned int line, void *obj, const IID *iid, BOOL supported)
+{
+    IUnknown *iface = obj;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
+static void test_ActivationFactory(void)
+{
+    static const WCHAR *synthesizer_name = L"Windows.Media.SpeechSynthesis.SpeechSynthesizer";
+    static const WCHAR *recognizer_name = L"Windows.Media.SpeechRecognition.SpeechRecognizer";
+    static const WCHAR *garbage_name = L"Some.Garbage.Class";
+    IActivationFactory *factory = NULL, *factory2 = NULL, *factory3 = NULL, *factory4 = NULL;
+    ISpeechRecognizerStatics2 *recognizer_statics2 = NULL;
+    HSTRING str, str2, str3;
+    HMODULE hdll;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = RoInitialize(RO_INIT_MULTITHREADED);
+    ok(hr == S_OK, "RoInitialize failed, hr %#x.\n", hr);
+
+    hr = WindowsCreateString(synthesizer_name, wcslen(synthesizer_name), &str);
+    ok(hr == S_OK, "WindowsCreateString failed, hr %#x.\n", hr);
+
+    hr = WindowsCreateString(recognizer_name, wcslen(recognizer_name), &str2);
+    ok(hr == S_OK, "WindowsCreateString failed, hr %#x.\n", hr);
+
+    hr = WindowsCreateString(garbage_name, wcslen(garbage_name), &str3);
+    ok(hr == S_OK, "WindowsCreateString failed, hr %#x.\n", hr);
+
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    ok(hr == S_OK, "RoGetActivationFactory failed, hr %#x.\n", hr);
+
+    check_refcount(factory, 2);
+
+    check_interface(factory, &IID_IInspectable, TRUE);
+    check_interface(factory, &IID_IAgileObject, TRUE);
+    check_interface(factory, &IID_IInstalledVoicesStatic, TRUE);
+    check_interface(factory, &IID_ISpeechRecognizerFactory, FALSE);
+    check_interface(factory, &IID_ISpeechRecognizerStatics, FALSE);
+    check_interface(factory, &IID_ISpeechRecognizerStatics2, FALSE);
+
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory2);
+    ok(hr == S_OK, "RoGetActivationFactory failed, hr %#x.\n", hr);
+    ok(factory == factory2, "Factories pointed at factory %p factory2 %p.\n", factory, factory2);
+    check_refcount(factory2, 3);
+
+    hr = RoGetActivationFactory(str2, &IID_IActivationFactory, (void **)&factory3);
+    todo_wine ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG), "Got unexpected hr %#x.\n", hr);
+
+    if (hr == S_OK) /* Win10+ only */
+    {
+        check_refcount(factory3, 2);
+        ok(factory != factory3, "Factories pointed at factory %p factory3 %p.\n", factory, factory3);
+
+        check_interface(factory3, &IID_IInspectable, TRUE);
+        check_interface(factory3, &IID_IAgileObject, TRUE);
+        check_interface(factory3, &IID_ISpeechRecognizerFactory, TRUE);
+        check_interface(factory3, &IID_ISpeechRecognizerStatics, TRUE);
+
+        hr = IActivationFactory_QueryInterface(factory3, &IID_ISpeechRecognizerStatics2, (void **)&recognizer_statics2);
+        ok(hr == S_OK || broken(hr == E_NOINTERFACE), "IActivationFactory_QueryInterface failed, hr %#x.\n", hr);
+
+        if (hr == S_OK) /* ISpeechRecognizerStatics2 not available in Win10 1507 */
+        {
+            ref = ISpeechRecognizerStatics2_Release(recognizer_statics2);
+            ok(ref == 2, "Got unexpected refcount: %u.\n", ref);
+        }
+
+        check_interface(factory3, &IID_IInstalledVoicesStatic, FALSE);
+
+        ref = IActivationFactory_Release(factory3);
+        ok(ref == 1, "Got unexpected refcount: %u.\n", ref);
+    }
+
+    hdll = LoadLibraryW(L"windows.media.speech.dll");
+
+    if(hdll)
+    {
+        pDllGetActivationFactory = (void *)GetProcAddress(hdll, "DllGetActivationFactory");
+        ok(!!pDllGetActivationFactory, "DllGetActivationFactory not found.\n");
+
+        hr = pDllGetActivationFactory(str3, &factory4);
+        ok((hr == CLASS_E_CLASSNOTAVAILABLE), "Got unexpected hr %#x.\n", hr);
+        FreeLibrary(hdll);
+    }
+
+    hr = RoGetActivationFactory(str3, &IID_IActivationFactory, (void **)&factory4);
+    ok((hr == REGDB_E_CLASSNOTREG), "RoGetActivationFactory failed, hr %#x.\n", hr);
+
+    ref = IActivationFactory_Release(factory2);
+    ok(ref == 2, "Got unexpected refcount: %u.\n", ref);
+
+    ref = IActivationFactory_Release(factory);
+    ok(ref == 1, "Got unexpected refcount: %u.\n", ref);
+
+    WindowsDeleteString(str);
+    WindowsDeleteString(str2);
+    WindowsDeleteString(str3);
+
+    RoUninitialize();
+}
 
 static void test_SpeechSynthesizer(void)
 {
@@ -203,6 +330,7 @@ static void test_VoiceInformation(void)
 
 START_TEST(speech)
 {
+    test_ActivationFactory();
     test_SpeechSynthesizer();
     test_VoiceInformation();
 }
