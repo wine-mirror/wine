@@ -28,7 +28,7 @@
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
-#include "win32u_private.h"
+#include "ntgdi_private.h"
 #include "ntuser_private.h"
 #include "wine/server.h"
 #include "wine/debug.h"
@@ -988,6 +988,156 @@ HANDLE WINAPI NtUserRemoveProp( HWND hwnd, const WCHAR *str )
     return (HANDLE)ret;
 }
 
+static void mirror_rect( const RECT *window_rect, RECT *rect )
+{
+    int width = window_rect->right - window_rect->left;
+    int tmp = rect->left;
+    rect->left = width - rect->right;
+    rect->right = width - tmp;
+}
+
+/***********************************************************************
+ *           get_window_rects
+ *
+ * Get the window and client rectangles.
+ */
+static BOOL get_window_rects( HWND hwnd, enum coords_relative relative, RECT *window_rect,
+                              RECT *client_rect, UINT dpi )
+{
+    WND *win = get_win_ptr( hwnd );
+    BOOL ret = TRUE;
+
+    if (!win)
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return FALSE;
+    }
+    if (win == WND_DESKTOP)
+    {
+        RECT rect;
+        rect.left = rect.top = 0;
+        if (hwnd == get_hwnd_message_parent())
+        {
+            rect.right  = 100;
+            rect.bottom = 100;
+            rect = map_dpi_rect( rect, get_dpi_for_window( hwnd ), dpi );
+        }
+        else
+        {
+            rect = get_primary_monitor_rect( dpi );
+        }
+        if (window_rect) *window_rect = rect;
+        if (client_rect) *client_rect = rect;
+        return TRUE;
+    }
+    if (win != WND_OTHER_PROCESS)
+    {
+        UINT window_dpi = get_dpi_for_window( hwnd );
+        RECT window = win->window_rect;
+        RECT client = win->client_rect;
+
+        switch (relative)
+        {
+        case COORDS_CLIENT:
+            OffsetRect( &window, -win->client_rect.left, -win->client_rect.top );
+            OffsetRect( &client, -win->client_rect.left, -win->client_rect.top );
+            if (win->dwExStyle & WS_EX_LAYOUTRTL)
+                mirror_rect( &win->client_rect, &window );
+            break;
+        case COORDS_WINDOW:
+            OffsetRect( &window, -win->window_rect.left, -win->window_rect.top );
+            OffsetRect( &client, -win->window_rect.left, -win->window_rect.top );
+            if (win->dwExStyle & WS_EX_LAYOUTRTL)
+                mirror_rect( &win->window_rect, &client );
+            break;
+        case COORDS_PARENT:
+            if (win->parent)
+            {
+                WND *parent = get_win_ptr( win->parent );
+                if (parent == WND_DESKTOP) break;
+                if (!parent || parent == WND_OTHER_PROCESS)
+                {
+                    release_win_ptr( win );
+                    goto other_process;
+                }
+                if (parent->flags & WIN_CHILDREN_MOVED)
+                {
+                    release_win_ptr( parent );
+                    release_win_ptr( win );
+                    goto other_process;
+                }
+                if (parent->dwExStyle & WS_EX_LAYOUTRTL)
+                {
+                    mirror_rect( &parent->client_rect, &window );
+                    mirror_rect( &parent->client_rect, &client );
+                }
+                release_win_ptr( parent );
+            }
+            break;
+        case COORDS_SCREEN:
+            while (win->parent)
+            {
+                WND *parent = get_win_ptr( win->parent );
+                if (parent == WND_DESKTOP) break;
+                if (!parent || parent == WND_OTHER_PROCESS)
+                {
+                    release_win_ptr( win );
+                    goto other_process;
+                }
+                release_win_ptr( win );
+                if (parent->flags & WIN_CHILDREN_MOVED)
+                {
+                    release_win_ptr( parent );
+                    goto other_process;
+                }
+                win = parent;
+                if (win->parent)
+                {
+                    offset_rect( &window, win->client_rect.left, win->client_rect.top );
+                    offset_rect( &client, win->client_rect.left, win->client_rect.top );
+                }
+            }
+            break;
+        }
+        if (window_rect) *window_rect = map_dpi_rect( window, window_dpi, dpi );
+        if (client_rect) *client_rect = map_dpi_rect( client, window_dpi, dpi );
+        release_win_ptr( win );
+        return TRUE;
+    }
+
+other_process:
+    SERVER_START_REQ( get_window_rectangles )
+    {
+        req->handle = wine_server_user_handle( hwnd );
+        req->relative = relative;
+        req->dpi = dpi;
+        if ((ret = !wine_server_call_err( req )))
+        {
+            if (window_rect)
+            {
+                window_rect->left   = reply->window.left;
+                window_rect->top    = reply->window.top;
+                window_rect->right  = reply->window.right;
+                window_rect->bottom = reply->window.bottom;
+            }
+            if (client_rect)
+            {
+                client_rect->left   = reply->client.left;
+                client_rect->top    = reply->client.top;
+                client_rect->right  = reply->client.right;
+                client_rect->bottom = reply->client.bottom;
+            }
+        }
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+/* see GetWindowRect */
+BOOL get_window_rect( HWND hwnd, RECT *rect )
+{
+    return get_window_rects( hwnd, COORDS_SCREEN, rect, NULL, get_thread_dpi() );
+}
 
 /*****************************************************************************
  *           NtUserGetLayeredWindowAttributes (win32u.@)
@@ -1197,6 +1347,8 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
         return get_window_long_ptr( hwnd, param, TRUE );
     case NtUserGetWindowLongPtrW:
         return get_window_long_ptr( hwnd, param, FALSE );
+    case NtUserGetWindowRect:
+        return get_window_rect( hwnd, (RECT *)param );
     case NtUserGetWindowRelative:
         return HandleToUlong( get_window_relative( hwnd, param ));
     case NtUserGetWindowThread:

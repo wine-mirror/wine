@@ -30,7 +30,6 @@ struct dce;
 struct user_callbacks
 {
     HANDLE (WINAPI *pCopyImage)( HANDLE, UINT, INT, INT, UINT );
-    BOOL (WINAPI *pGetWindowRect)( HWND hwnd, LPRECT rect );
     BOOL (WINAPI *pRedrawWindow)( HWND, const RECT*, HRGN, UINT );
     LRESULT (WINAPI *pSendMessageTimeoutW)( HWND, UINT, WPARAM, LPARAM, UINT, UINT, PDWORD_PTR );
     LRESULT (WINAPI *pSendMessageW)( HWND, UINT, WPARAM, LPARAM );

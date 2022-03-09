@@ -1376,8 +1376,7 @@ BOOL mirror_window_region( HWND hwnd, HRGN hrgn )
 {
     RECT rect;
 
-    if (!user_callbacks) return FALSE;
-    user_callbacks->pGetWindowRect( hwnd, &rect );
+    if (!get_window_rect( hwnd, &rect )) return FALSE;
     return mirror_region( hrgn, hrgn, rect.right - rect.left ) != ERROR;
 }
 

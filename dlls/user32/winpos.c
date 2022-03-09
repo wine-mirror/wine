@@ -88,7 +88,7 @@ void WINAPI SwitchToThisWindow( HWND hwnd, BOOL alt_tab )
  */
 BOOL WINAPI GetWindowRect( HWND hwnd, LPRECT rect )
 {
-    BOOL ret = WIN_GetRectangles( hwnd, COORDS_SCREEN, rect, NULL );
+    BOOL ret = NtUserCallHwndParam( hwnd, (UINT_PTR)rect, NtUserGetWindowRect );
     if (ret) TRACE( "hwnd %p %s\n", hwnd, wine_dbgstr_rect(rect) );
     return ret;
 }

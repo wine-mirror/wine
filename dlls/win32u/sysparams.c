@@ -1513,7 +1513,7 @@ RECT get_display_rect( const WCHAR *display )
     return map_dpi_rect( rect, system_dpi, get_thread_dpi() );
 }
 
-static RECT get_primary_monitor_rect( UINT dpi )
+RECT get_primary_monitor_rect( UINT dpi )
 {
     struct monitor *monitor;
     RECT rect = {0};

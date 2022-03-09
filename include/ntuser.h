@@ -164,6 +164,7 @@ enum
     NtUserGetWindowLongW,
     NtUserGetWindowLongPtrA,
     NtUserGetWindowLongPtrW,
+    NtUserGetWindowRect,
     NtUserGetWindowRelative,
     NtUserGetWindowThread,
     NtUserGetWindowWord,
