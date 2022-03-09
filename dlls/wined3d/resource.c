@@ -235,7 +235,6 @@ static void wined3d_resource_destroy_object(void *object)
 
     wined3d_resource_free_sysmem(resource);
     context_resource_released(resource->device, resource);
-    wined3d_resource_release(resource);
 }
 
 void resource_cleanup(struct wined3d_resource *resource)

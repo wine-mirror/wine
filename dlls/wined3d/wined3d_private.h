@@ -5086,10 +5086,6 @@ static inline void wined3d_resource_acquire(struct wined3d_resource *resource)
     resource->access_time = cs->queue[WINED3D_CS_QUEUE_DEFAULT].head;
 }
 
-static inline void wined3d_resource_release(struct wined3d_resource *resource)
-{
-}
-
 static inline void wined3d_resource_wait_idle(const struct wined3d_resource *resource)
 {
     const struct wined3d_cs *cs = resource->device->cs;
