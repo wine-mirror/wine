@@ -321,7 +321,8 @@ static void test_metadata_tEXt(void)
     IWICMetadataReader *reader;
     IWICEnumMetadataItem *enumerator;
     PROPVARIANT schema, id, value;
-    ULONG items_returned, count;
+    ULONG items_returned;
+    UINT count;
     GUID format;
 
     PropVariantInit(&schema);
@@ -438,7 +439,7 @@ static void test_metadata_gAMA(void)
     HRESULT hr;
     IWICMetadataReader *reader;
     PROPVARIANT schema, id, value;
-    ULONG count;
+    UINT count;
     GUID format;
     static const WCHAR ImageGamma[] = {'I','m','a','g','e','G','a','m','m','a',0};
 
@@ -483,7 +484,7 @@ static void test_metadata_cHRM(void)
     HRESULT hr;
     IWICMetadataReader *reader;
     PROPVARIANT schema, id, value;
-    ULONG count;
+    UINT count;
     GUID format;
     int i;
     static const WCHAR expected_names[8][12] = {
@@ -799,7 +800,7 @@ static void test_metadata_IFD(void)
     IWICMetadataReader *reader;
     IWICMetadataBlockReader *blockreader;
     PROPVARIANT schema, id, value;
-    ULONG count;
+    UINT count;
     GUID format;
     char *IFD_data_swapped;
 #ifdef WORDS_BIGENDIAN

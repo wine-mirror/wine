@@ -205,7 +205,7 @@ static void test_custom_palette(void)
     }
 }
 
-static void generate_gray16_palette(DWORD *entries, UINT count)
+static void generate_gray16_palette(WICColor *entries, UINT count)
 {
     UINT i;
 
@@ -218,7 +218,7 @@ static void generate_gray16_palette(DWORD *entries, UINT count)
     }
 }
 
-static void generate_gray256_palette(DWORD *entries, UINT count)
+static void generate_gray256_palette(WICColor *entries, UINT count)
 {
     UINT i;
 
@@ -231,7 +231,7 @@ static void generate_gray256_palette(DWORD *entries, UINT count)
     }
 }
 
-static void generate_halftone8_palette(DWORD *entries, UINT count, BOOL add_transparent)
+static void generate_halftone8_palette(WICColor *entries, UINT count, BOOL add_transparent)
 {
     UINT i;
 
@@ -260,7 +260,7 @@ static void generate_halftone8_palette(DWORD *entries, UINT count, BOOL add_tran
         entries[i] = 0;
 }
 
-static void generate_halftone27_palette(DWORD *entries, UINT count, BOOL add_transparent)
+static void generate_halftone27_palette(WICColor *entries, UINT count, BOOL add_transparent)
 {
     static const BYTE halftone_values[4] = { 0x00,0x80,0xff };
     UINT i;
@@ -283,7 +283,7 @@ static void generate_halftone27_palette(DWORD *entries, UINT count, BOOL add_tra
         entries[i] = 0;
 }
 
-static void generate_halftone64_palette(DWORD *entries, UINT count, BOOL add_transparent)
+static void generate_halftone64_palette(WICColor *entries, UINT count, BOOL add_transparent)
 {
     static const BYTE halftone_values[4] = { 0x00,0x55,0xaa,0xff };
     UINT i;
@@ -313,7 +313,7 @@ static void generate_halftone64_palette(DWORD *entries, UINT count, BOOL add_tra
         entries[i] = 0;
 }
 
-static void generate_halftone125_palette(DWORD *entries, UINT count, BOOL add_transparent)
+static void generate_halftone125_palette(WICColor *entries, UINT count, BOOL add_transparent)
 {
     static const BYTE halftone_values[5] = { 0x00, 0x40, 0x80, 0xbf, 0xff };
     UINT i;
@@ -336,7 +336,7 @@ static void generate_halftone125_palette(DWORD *entries, UINT count, BOOL add_tr
         entries[i] = 0;
 }
 
-static void generate_halftone216_palette(DWORD *entries, UINT count, BOOL add_transparent)
+static void generate_halftone216_palette(WICColor *entries, UINT count, BOOL add_transparent)
 {
     static const BYTE halftone_values[6] = { 0x00,0x33,0x66,0x99,0xcc,0xff };
     UINT i;
@@ -366,7 +366,7 @@ static void generate_halftone216_palette(DWORD *entries, UINT count, BOOL add_tr
         entries[i] = 0;
 }
 
-static void generate_halftone252_palette(DWORD *entries, UINT count, BOOL add_transparent)
+static void generate_halftone252_palette(WICColor *entries, UINT count, BOOL add_transparent)
 {
     static const BYTE halftone_values_rb[6] = { 0x00,0x33,0x66,0x99,0xcc,0xff };
     static const BYTE halftone_values_g[7] = { 0x00,0x2b,0x55,0x80,0xaa,0xd5,0xff };
@@ -389,7 +389,7 @@ static void generate_halftone252_palette(DWORD *entries, UINT count, BOOL add_tr
         entries[i] = 0;
 }
 
-static void generate_halftone256_palette(DWORD *entries, UINT count, BOOL add_transparent)
+static void generate_halftone256_palette(WICColor *entries, UINT count, BOOL add_transparent)
 {
     static const BYTE halftone_values_b[4] = { 0x00,0x55,0xaa,0xff };
     static const BYTE halftone_values_gr[8] = { 0x00,0x24,0x49,0x6d,0x92,0xb6,0xdb,0xff };

@@ -114,7 +114,7 @@ static void test_decoder_info(void)
     IWICBitmapDecoderInfo *decoder_info, *decoder_info2;
     IWICComponentInfo *info;
     HRESULT hr;
-    ULONG len;
+    UINT len;
     WCHAR value[256];
     CLSID clsid;
     GUID pixelformats[32];
@@ -292,7 +292,7 @@ static void test_pixelformat_info(void)
     IWICPixelFormatInfo *pixelformat_info;
     IWICPixelFormatInfo2 *pixelformat_info2;
     HRESULT hr;
-    ULONG len, known_len;
+    UINT len, known_len;
     WCHAR value[256];
     GUID guid;
     WICComponentType componenttype;
@@ -499,7 +499,8 @@ static void test_reader_info(void)
     HRESULT hr;
     CLSID clsid;
     GUID container_formats[10];
-    UINT count, size, tid;
+    UINT count, size;
+    DWORD tid;
     HANDLE thread;
     WICMetadataPattern *patterns;
 
