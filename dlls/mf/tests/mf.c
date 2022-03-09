@@ -6631,19 +6631,23 @@ static void test_h264_decoder(void)
 
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Video, MFVideoFormat_H264};
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Video, MFVideoFormat_NV12};
+    const BYTE *h264_encoded_data, *nv12_frame_data;
+    ULONG h264_encoded_data_len, nv12_frame_len;
     MFT_OUTPUT_STREAM_INFO output_info;
     MFT_INPUT_STREAM_INFO input_info;
     MFT_OUTPUT_DATA_BUFFER output;
-    const BYTE *h264_encoded_data;
-    ULONG h264_encoded_data_len;
+    IMFMediaBuffer *media_buffer;
+    WCHAR output_path[MAX_PATH];
     IMFAttributes *attributes;
     IMFMediaType *media_type;
     IMFTransform *transform;
+    DWORD status, length;
     ULONG i, ret, flags;
+    HANDLE output_file;
     IMFSample *sample;
     HRSRC resource;
     GUID class_id;
-    DWORD status;
+    BYTE *data;
     HRESULT hr;
 
     hr = CoInitialize(NULL);
@@ -6939,6 +6943,62 @@ static void test_h264_decoder(void)
     ok(hr == MF_E_NO_MORE_TYPES, "GetOutputAvailableType returned %#lx\n", hr);
     todo_wine
     ok(i == 5, "%lu output media types\n", i);
+
+    /* and generate a new one as well in a temporary directory */
+    GetTempPathW(ARRAY_SIZE(output_path), output_path);
+    lstrcatW(output_path, L"nv12frame.bin");
+    output_file = CreateFileW(output_path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(output_file != INVALID_HANDLE_VALUE, "CreateFileW failed, error %lu\n", GetLastError());
+
+    resource = FindResourceW(NULL, L"nv12frame.bin", (const WCHAR *)RT_RCDATA);
+    ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
+    nv12_frame_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
+    nv12_frame_len = SizeofResource(GetModuleHandleW(NULL), resource);
+    ok(nv12_frame_len == 9600, "got frame length %lu\n", nv12_frame_len);
+
+    status = 0;
+    memset(&output, 0, sizeof(output));
+    output.pSample = create_sample(NULL, 0x3200);
+    hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
+    todo_wine
+    ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
+    ok(output.dwStreamID == 0, "got dwStreamID %lu\n", output.dwStreamID);
+    ok(!!output.pSample, "got pSample %p\n", output.pSample);
+    ok(output.dwStatus == 0, "got dwStatus %#lx\n", output.dwStatus);
+    ok(!output.pEvents, "got pEvents %p\n", output.pEvents);
+    ok(status == 0, "got status %#lx\n", status);
+    if (hr == S_OK)
+    {
+        /* Win8 and before pad the data with garbage instead of original
+         * buffer data, make sure it's consistent.  */
+        hr = IMFSample_ConvertToContiguousBuffer(output.pSample, &media_buffer);
+        ok(hr == S_OK, "ConvertToContiguousBuffer returned %#lx\n", hr);
+        hr = IMFMediaBuffer_Lock(media_buffer, &data, NULL, &length);
+        ok(hr == S_OK, "Lock returned %#lx\n", hr);
+        todo_wine
+        ok(length == nv12_frame_len, "got length %lu\n", length);
+        if (length == nv12_frame_len)
+        {
+            for (i = 0; i < 74; ++i)
+            {
+                memset(data + 80 * i + 78, 0xcd, 2);
+                memset(data + 80 * (80 + i) + 78, 0xcd, 2);
+            }
+            memset(data + 80 * 74, 0xcd, 6 * 80);
+            memset(data + 80 * 117, 0xcd, 3 * 80);
+        }
+        hr = IMFMediaBuffer_Unlock(media_buffer);
+        ok(hr == S_OK, "Unlock returned %#lx\n", hr);
+        IMFMediaBuffer_Release(media_buffer);
+
+        if (length == nv12_frame_len)
+            check_sample(output.pSample, nv12_frame_data, nv12_frame_len, output_file);
+    }
+    ret = IMFSample_Release(output.pSample);
+    ok(ret == 0, "Release returned %lu\n", ret);
+
+    trace("created %s\n", debugstr_w(output_path));
+    CloseHandle(output_file);
 
     ret = IMFTransform_Release(transform);
     ok(ret == 0, "Release returned %lu\n", ret);
