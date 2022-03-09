@@ -204,6 +204,7 @@ struct surrogate
     ISurrogate ISurrogate_iface;
     IClassFactory *factory;
     DWORD cookie;
+    HANDLE event;
     LONG ref;
 };
 
@@ -267,15 +268,35 @@ static HRESULT WINAPI surrogate_LoadDllServer(ISurrogate *iface, const CLSID *cl
     if (hr != S_OK)
         IClassFactory_Release(&factory->IClassFactory_iface);
     else
+    {
         surrogate->factory = &factory->IClassFactory_iface;
+        surrogate->event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    }
 
     return hr;
 }
 
 static HRESULT WINAPI surrogate_FreeSurrogate(ISurrogate *iface)
 {
-    FIXME("(%p): stub\n", iface);
-    return E_NOTIMPL;
+    struct surrogate *surrogate = impl_from_ISurrogate(iface);
+
+    TRACE("(%p)\n", iface);
+
+    if (surrogate->cookie)
+    {
+        CoRevokeClassObject(surrogate->cookie);
+        surrogate->cookie = 0;
+    }
+
+    if (surrogate->factory)
+    {
+        IClassFactory_Release(surrogate->factory);
+        surrogate->factory = NULL;
+    }
+
+    SetEvent(surrogate->event);
+
+    return S_OK;
 }
 
 static const ISurrogateVtbl Surrogate_Vtbl =
@@ -301,6 +322,7 @@ int WINAPI wWinMain(HINSTANCE hinst, HINSTANCE previnst, LPWSTR cmdline, int sho
     surrogate.ISurrogate_iface.lpVtbl = &Surrogate_Vtbl;
     surrogate.factory = NULL;
     surrogate.cookie = 0;
+    surrogate.event = NULL;
     surrogate.ref = 1;
 
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -317,8 +339,7 @@ int WINAPI wWinMain(HINSTANCE hinst, HINSTANCE previnst, LPWSTR cmdline, int sho
             goto cleanup;
         }
 
-        /* FIXME: wait for FreeSurrogate being called */
-        Sleep(INFINITE);
+        WaitForSingleObject(surrogate.event, INFINITE);
     }
 
 cleanup:
