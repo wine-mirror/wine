@@ -4270,7 +4270,7 @@ struct wined3d_resource
     LONG ref;
     LONG bind_count;
     LONG map_count;
-    LONG access_count;
+    ULONG access_time;
     struct wined3d_device *device;
     enum wined3d_resource_type type;
     enum wined3d_gl_resource_type gl_type;
@@ -4312,17 +4312,6 @@ static inline ULONG wined3d_resource_incref(struct wined3d_resource *resource)
 static inline ULONG wined3d_resource_decref(struct wined3d_resource *resource)
 {
     return resource->resource_ops->resource_decref(resource);
-}
-
-static inline void wined3d_resource_acquire(struct wined3d_resource *resource)
-{
-    InterlockedIncrement(&resource->access_count);
-}
-
-static inline void wined3d_resource_release(struct wined3d_resource *resource)
-{
-    LONG refcount = InterlockedDecrement(&resource->access_count);
-    assert(refcount >= 0);
 }
 
 static inline HRESULT wined3d_resource_get_sub_resource_desc(struct wined3d_resource *resource,
@@ -5091,16 +5080,64 @@ void wined3d_device_context_emit_update_sub_resource(struct wined3d_device_conte
 HRESULT wined3d_device_context_emit_unmap(struct wined3d_device_context *context,
         struct wined3d_resource *resource, unsigned int sub_resource_idx) DECLSPEC_HIDDEN;
 
-static inline void wined3d_resource_wait_idle(struct wined3d_resource *resource)
+static inline void wined3d_resource_acquire(struct wined3d_resource *resource)
 {
     const struct wined3d_cs *cs = resource->device->cs;
+    resource->access_time = cs->queue[WINED3D_CS_QUEUE_DEFAULT].head;
+}
+
+static inline void wined3d_resource_release(struct wined3d_resource *resource)
+{
+}
+
+static inline void wined3d_resource_wait_idle(const struct wined3d_resource *resource)
+{
+    const struct wined3d_cs *cs = resource->device->cs;
+    ULONG access_time, tail, head;
 
     if (!cs->thread || cs->thread_id == GetCurrentThreadId())
         return;
 
-    while (InterlockedCompareExchange(&resource->access_count, 0, 0))
+    access_time = resource->access_time;
+    head = cs->queue[WINED3D_CS_QUEUE_DEFAULT].head;
+
+    /* The basic idea is that a resource is busy if tail < access_time <= head.
+     * But we have to be careful about wrap-around of the head and tail. The
+     * GE_WRAP macro below considers x >= y if x - y is smaller than half the
+     * UINT range. Head is at most WINED3D_CS_QUEUE_SIZE ahead of tail, because
+     * otherwise the queue memory is considered full and queue_require_space
+     * stalls. Thus GE_WRAP(head, tail) is always true. The C_ASSERT below ensures
+     * this in case we decide to grow the queue size in the future.
+     *
+     * It is possible that a resource has not been used for a long time and is idle, but the head and
+     * tail wrapped around in such a way that the previously set access time falls between head and tail.
+     * In this case we will incorrectly wait for the resource. Because we use the entire 32 bits of the
+     * counters and not just the bits needed to address the actual queue memory, this should happen rarely.
+     * If it turns out to be a problem we can switch to 64 bit counters or attempt to somehow mark the
+     * access time of resources invalid. CS packets are at least 4 byte aligned, so we could use the lower
+     * 2 bits in access_time for such a marker.
+     *
+     * Note that the access time is set before the command is submitted, so we have to wait until the
+     * tail is bigger than access_time, not equal. */
+
+#define GE_WRAP(x, y) (((x)-(y)) < (UINT_MAX / 2))
+    if (!GE_WRAP(head, access_time))
+        return;
+
+    while (1)
+    {
+        tail = *(volatile ULONG *)&cs->queue[WINED3D_CS_QUEUE_DEFAULT].tail;
+        if (head == tail) /* Queue empty. */
+            break;
+
+        if (!GE_WRAP(access_time, tail) && access_time != tail)
+            break;
+
         YieldProcessor();
+    }
+#undef GE_WRAP
 }
+C_ASSERT(WINED3D_CS_QUEUE_SIZE < UINT_MAX / 4);
 
 /* TODO: Add tests and support for FLOAT16_4 POSITIONT, D3DCOLOR position, other
  * fixed function semantics as D3DCOLOR or FLOAT16 */

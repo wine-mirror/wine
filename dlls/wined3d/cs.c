@@ -2755,8 +2755,6 @@ static void wined3d_cs_exec_update_sub_resource(struct wined3d_cs *cs, const voi
 
     context_release(context);
 
-    wined3d_resource_release(resource);
-
     if (op->bo.flags & UPLOAD_BO_FREE_ON_UNMAP)
     {
         if (op->bo.addr.buffer_object)
@@ -2802,8 +2800,6 @@ void wined3d_device_context_emit_update_sub_resource(struct wined3d_device_conte
     op->bo.flags = 0;
     op->row_pitch = row_pitch;
     op->slice_pitch = slice_pitch;
-
-    wined3d_device_context_acquire_resource(context, resource);
 
     wined3d_device_context_submit(context, WINED3D_CS_QUEUE_MAP);
     /* The data pointer may go away, so we need to wait until it is read.
