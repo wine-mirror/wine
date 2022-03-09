@@ -147,9 +147,11 @@ static ULONG WINAPI marshal_Release(IMarshal *iface)
 static HRESULT WINAPI marshal_GetUnmarshalClass(IMarshal *iface, REFIID iid, void *pv,
         DWORD dwDestContext, void *pvDestContext, DWORD mshlflags, CLSID *clsid)
 {
-    FIXME("(%p,%s,%p,%08lx,%p,%08lx,%p): stub\n", iface, wine_dbgstr_guid(iid), pv,
+    TRACE("(%p,%s,%p,%08lx,%p,%08lx,%p)\n", iface, wine_dbgstr_guid(iid), pv,
           dwDestContext, pvDestContext, mshlflags, clsid);
-    return E_NOTIMPL;
+
+    *clsid = CLSID_StdMarshal;
+    return S_OK;
 }
 
 static HRESULT WINAPI marshal_GetMarshalSizeMax(IMarshal *iface, REFIID iid, void *pv,
@@ -163,8 +165,19 @@ static HRESULT WINAPI marshal_GetMarshalSizeMax(IMarshal *iface, REFIID iid, voi
 static HRESULT WINAPI marshal_MarshalInterface(IMarshal *iface, IStream *stream, REFIID iid,
         void *pv, DWORD dwDestContext, void *pvDestContext, DWORD mshlflags)
 {
-    FIXME("(%p,%s,%p,%08lx,%p,%08lx): stub\n", stream, wine_dbgstr_guid(iid), pv, dwDestContext, pvDestContext, mshlflags);
-    return E_NOTIMPL;
+    struct factory *factory = impl_from_IMarshal(iface);
+    IUnknown *object;
+    HRESULT hr;
+
+    TRACE("(%p,%s,%p,%08lx,%p,%08lx)\n", stream, wine_dbgstr_guid(iid), pv, dwDestContext, pvDestContext, mshlflags);
+
+    hr = CoGetClassObject(&factory->clsid, CLSCTX_INPROC_SERVER, NULL, iid, (void **)&object);
+    if (hr == S_OK)
+    {
+        hr = CoMarshalInterface(stream, iid, object, dwDestContext, pvDestContext, mshlflags);
+        IUnknown_Release(object);
+    }
+    return hr;
 }
 
 static HRESULT WINAPI marshal_UnmarshalInterface(IMarshal *iface, IStream *stream,
