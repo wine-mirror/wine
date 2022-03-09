@@ -676,6 +676,11 @@ static LONG_PTR get_win_data( const void *ptr, UINT size )
     }
 }
 
+static BOOL is_iconic( HWND hwnd )
+{
+    return (get_window_long( hwnd, GWL_STYLE ) & WS_MINIMIZE) != 0;
+}
+
 static LONG_PTR get_window_long_size( HWND hwnd, INT offset, UINT size, BOOL ansi )
 {
     LONG_PTR retval = 0;
@@ -988,6 +993,65 @@ INT WINAPI NtUserInternalGetWindowText( HWND hwnd, WCHAR *text, INT count )
         get_server_window_text( hwnd, text, count );
     }
     return lstrlenW(text);
+}
+
+/*******************************************************************
+ *           NtUserFlashWindowEx (win32u.@)
+ */
+BOOL WINAPI NtUserFlashWindowEx( FLASHWINFO *info )
+{
+    WND *win;
+
+    TRACE( "%p\n", info );
+
+    if (!info)
+    {
+        SetLastError( ERROR_NOACCESS );
+        return FALSE;
+    }
+
+    if (!info->hwnd || info->cbSize != sizeof(FLASHWINFO) || !is_window( info->hwnd ))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    FIXME( "%p - semi-stub\n", info );
+
+    if (is_iconic( info->hwnd ))
+    {
+        user_callbacks->pRedrawWindow( info->hwnd, 0, 0, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_FRAME );
+
+        win = get_win_ptr( info->hwnd );
+        if (!win || win == WND_OTHER_PROCESS || win == WND_DESKTOP) return FALSE;
+        if (info->dwFlags && !(win->flags & WIN_NCACTIVATED))
+        {
+            win->flags |= WIN_NCACTIVATED;
+        }
+        else
+        {
+            win->flags &= ~WIN_NCACTIVATED;
+        }
+        release_win_ptr( win );
+        user_driver->pFlashWindowEx( info );
+        return TRUE;
+    }
+    else
+    {
+        WPARAM wparam;
+        HWND hwnd = info->hwnd;
+
+        win = get_win_ptr( hwnd );
+        if (!win || win == WND_OTHER_PROCESS || win == WND_DESKTOP) return FALSE;
+        hwnd = win->obj.handle;  /* make it a full handle */
+
+        if (info->dwFlags) wparam = !(win->flags & WIN_NCACTIVATED);
+        else wparam = (hwnd == NtUserGetForegroundWindow());
+
+        release_win_ptr( win );
+        send_message( hwnd, WM_NCACTIVATE, wparam, 0 );
+        user_driver->pFlashWindowEx( info );
+        return wparam;
+    }
 }
 
 /*****************************************************************************

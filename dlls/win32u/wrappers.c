@@ -789,6 +789,12 @@ BOOL WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD mode,
     return unix_funcs->pNtUserEnumDisplaySettings( device, mode, dev_mode, flags );
 }
 
+BOOL WINAPI NtUserFlashWindowEx( FLASHWINFO *info )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserFlashWindowEx( info );
+}
+
 SHORT WINAPI NtUserGetAsyncKeyState( INT key )
 {
     if (!unix_funcs) return 0;

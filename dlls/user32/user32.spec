@@ -245,7 +245,7 @@
 @ stdcall FindWindowExW(long long wstr wstr)
 @ stdcall FindWindowW(wstr wstr)
 @ stdcall FlashWindow(long long)
-@ stdcall FlashWindowEx(ptr)
+@ stdcall FlashWindowEx(ptr) NtUserFlashWindowEx
 @ stdcall FrameRect(long ptr long)
 @ stdcall FreeDDElParam(long long)
 @ stdcall GetActiveWindow()

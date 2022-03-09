@@ -883,7 +883,7 @@
 @ stub NtUserFillWindow
 @ stdcall -syscall NtUserFindExistingCursorIcon(ptr ptr ptr)
 @ stub NtUserFindWindowEx
-@ stub NtUserFlashWindowEx
+@ stdcall NtUserFlashWindowEx(ptr)
 @ stub NtUserForceWindowToDpiForTest
 @ stub NtUserFrostCrashedWindow
 @ stub NtUserFunctionalizeDisplayConfig

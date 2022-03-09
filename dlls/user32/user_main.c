@@ -140,6 +140,7 @@ static const struct user_callbacks user_funcs =
     GetWindowRect,
     RedrawWindow,
     SendMessageTimeoutW,
+    SendMessageW,
     WindowFromDC,
     free_dce,
     MSG_SendInternalMessageTimeout,

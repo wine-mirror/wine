@@ -101,3 +101,11 @@ BOOL WINAPI NtUserGetGUIThreadInfo( DWORD id, GUITHREADINFO *info )
     SERVER_END_REQ;
     return ret;
 }
+
+/* see SendMessageW */
+LRESULT send_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    /* FIXME: move implementation from user32 */
+    if (!user_callbacks) return 0;
+    return user_callbacks->pSendMessageW( hwnd, msg, wparam, lparam );
+}

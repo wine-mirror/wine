@@ -1032,6 +1032,11 @@ static void CDECL loaderdrv_UpdateDisplayDevices( const struct gdi_device_manage
     load_driver()->pUpdateDisplayDevices( manager, force, param );
 }
 
+static void CDECL loaderdrv_FlashWindowEx( FLASHWINFO *info )
+{
+    load_driver()->pFlashWindowEx( info );
+}
+
 static const struct vulkan_funcs * CDECL loaderdrv_wine_get_vulkan_driver( UINT version )
 {
     return load_driver()->pwine_get_vulkan_driver( version );
@@ -1062,6 +1067,7 @@ static const struct user_driver_funcs lazy_load_driver =
     .pEnumDisplaySettingsEx = loaderdrv_EnumDisplaySettingsEx,
     .pUpdateDisplayDevices = loaderdrv_UpdateDisplayDevices,
     /* windowing functions */
+    .pFlashWindowEx = loaderdrv_FlashWindowEx,
     .pMsgWaitForMultipleObjectsEx = nulldrv_MsgWaitForMultipleObjectsEx,
     .pScrollDC = nulldrv_ScrollDC,
     .pWindowMessage = nulldrv_WindowMessage,

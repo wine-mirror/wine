@@ -3230,67 +3230,9 @@ BOOL WINAPI FlashWindow( HWND hWnd, BOOL bInvert )
     finfo.uCount = 1;
     finfo.dwTimeout = 0;
     finfo.hwnd = hWnd;
-    return FlashWindowEx( &finfo );
+    return NtUserFlashWindowEx( &finfo );
 }
 
-/*******************************************************************
- *		FlashWindowEx (USER32.@)
- */
-BOOL WINAPI FlashWindowEx( PFLASHWINFO pfinfo )
-{
-    WND *wndPtr;
-
-    TRACE( "%p\n", pfinfo );
-
-    if (!pfinfo)
-    {
-        SetLastError( ERROR_NOACCESS );
-        return FALSE;
-    }
-
-    if (!pfinfo->hwnd || pfinfo->cbSize != sizeof(FLASHWINFO) || !IsWindow( pfinfo->hwnd ))
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
-    FIXME( "%p - semi-stub\n", pfinfo );
-
-    if (IsIconic( pfinfo->hwnd ))
-    {
-        RedrawWindow( pfinfo->hwnd, 0, 0, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_FRAME );
-
-        wndPtr = WIN_GetPtr( pfinfo->hwnd );
-        if (!wndPtr || wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return FALSE;
-        if (pfinfo->dwFlags && !(wndPtr->flags & WIN_NCACTIVATED))
-        {
-            wndPtr->flags |= WIN_NCACTIVATED;
-        }
-        else
-        {
-            wndPtr->flags &= ~WIN_NCACTIVATED;
-        }
-        WIN_ReleasePtr( wndPtr );
-        USER_Driver->pFlashWindowEx( pfinfo );
-        return TRUE;
-    }
-    else
-    {
-        WPARAM wparam;
-        HWND hwnd = pfinfo->hwnd;
-
-        wndPtr = WIN_GetPtr( hwnd );
-        if (!wndPtr || wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return FALSE;
-        hwnd = wndPtr->obj.handle;  /* make it a full handle */
-
-        if (pfinfo->dwFlags) wparam = !(wndPtr->flags & WIN_NCACTIVATED);
-        else wparam = (hwnd == NtUserGetForegroundWindow());
-
-        WIN_ReleasePtr( wndPtr );
-        SendMessageW( hwnd, WM_NCACTIVATE, wparam, 0 );
-        USER_Driver->pFlashWindowEx( pfinfo );
-        return wparam;
-    }
-}
 
 /*******************************************************************
  *		GetWindowContextHelpId (USER32.@)

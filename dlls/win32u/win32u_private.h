@@ -202,6 +202,7 @@ struct unix_funcs
     BOOL     (WINAPI *pNtUserEnumDisplayMonitors)( HDC hdc, RECT *rect, MONITORENUMPROC proc, LPARAM lp );
     BOOL     (WINAPI *pNtUserEnumDisplaySettings)( UNICODE_STRING *device, DWORD mode,
                                                    DEVMODEW *dev_mode, DWORD flags );
+    BOOL     (WINAPI *pNtUserFlashWindowEx)( FLASHWINFO *info );
     SHORT    (WINAPI *pNtUserGetAsyncKeyState)( INT key );
     ATOM     (WINAPI *pNtUserGetClassInfoEx)( HINSTANCE instance, UNICODE_STRING *name, WNDCLASSEXW *wc,
                                               struct client_menu_name *menu_name, BOOL ansi );
@@ -276,6 +277,9 @@ extern BOOL unhook_windows_hook( INT id, HOOKPROC proc ) DECLSPEC_HIDDEN;
 extern LONG global_key_state_counter DECLSPEC_HIDDEN;
 extern BOOL get_cursor_pos( POINT *pt ) DECLSPEC_HIDDEN;
 extern DWORD get_input_state(void) DECLSPEC_HIDDEN;
+
+/* message.c */
+extern LRESULT send_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam ) DECLSPEC_HIDDEN;
 
 /* sysparams.c */
 extern RECT get_display_rect( const WCHAR *display ) DECLSPEC_HIDDEN;
