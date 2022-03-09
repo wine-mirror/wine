@@ -79,7 +79,7 @@ static inline VkCommandBufferInheritanceInfo_host *convert_VkCommandBufferInheri
     VkCommandBufferInheritanceInfo_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -132,7 +132,7 @@ static inline VkBindAccelerationStructureMemoryInfoNV_host *convert_VkBindAccele
     VkBindAccelerationStructureMemoryInfoNV_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -165,7 +165,7 @@ static inline VkBindBufferMemoryInfo_host *convert_VkBindBufferMemoryInfo_array_
     VkBindBufferMemoryInfo_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -196,7 +196,7 @@ static inline VkBindImageMemoryInfo_host *convert_VkBindImageMemoryInfo_array_wi
     VkBindImageMemoryInfo_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -227,7 +227,7 @@ static inline VkAccelerationStructureBuildGeometryInfoKHR_host *convert_VkAccele
     VkAccelerationStructureBuildGeometryInfoKHR_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -292,7 +292,7 @@ static inline VkRenderingAttachmentInfo_host *convert_VkRenderingAttachmentInfo_
     VkRenderingAttachmentInfo_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -417,7 +417,7 @@ static inline VkGeometryNV_host *convert_VkGeometryNV_array_win_to_host(const Vk
     VkGeometryNV_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -496,7 +496,7 @@ static inline VkBufferCopy_host *convert_VkBufferCopy_array_win_to_host(const Vk
     VkBufferCopy_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -525,7 +525,7 @@ static inline VkBufferCopy2_host *convert_VkBufferCopy2_array_win_to_host(const 
     VkBufferCopy2_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -577,7 +577,7 @@ static inline VkBufferImageCopy_host *convert_VkBufferImageCopy_array_win_to_hos
     VkBufferImageCopy_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -609,7 +609,7 @@ static inline VkBufferImageCopy2_host *convert_VkBufferImageCopy2_array_win_to_h
     VkBufferImageCopy2_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -737,7 +737,7 @@ static inline VkCommandBuffer *convert_VkCommandBuffer_array_win_to_host(const V
     VkCommandBuffer *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -761,7 +761,7 @@ static inline VkIndirectCommandsStreamNV_host *convert_VkIndirectCommandsStreamN
     VkIndirectCommandsStreamNV_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -819,7 +819,7 @@ static inline VkBufferMemoryBarrier_host *convert_VkBufferMemoryBarrier_array_wi
     VkBufferMemoryBarrier_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -854,7 +854,7 @@ static inline VkImageMemoryBarrier_host *convert_VkImageMemoryBarrier_array_win_
     VkImageMemoryBarrier_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -890,7 +890,7 @@ static inline VkBufferMemoryBarrier2_host *convert_VkBufferMemoryBarrier2_array_
     VkBufferMemoryBarrier2_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -927,7 +927,7 @@ static inline VkImageMemoryBarrier2_host *convert_VkImageMemoryBarrier2_array_wi
     VkImageMemoryBarrier2_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -990,7 +990,7 @@ static inline VkDescriptorImageInfo_host *convert_VkDescriptorImageInfo_array_wi
     VkDescriptorImageInfo_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -1019,7 +1019,7 @@ static inline VkDescriptorBufferInfo_host *convert_VkDescriptorBufferInfo_array_
     VkDescriptorBufferInfo_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -1048,7 +1048,7 @@ static inline VkWriteDescriptorSet_host *convert_VkWriteDescriptorSet_array_win_
     VkWriteDescriptorSet_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -1142,7 +1142,7 @@ static inline VkDependencyInfo_host *convert_VkDependencyInfo_array_win_to_host(
     VkDependencyInfo_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -1258,7 +1258,7 @@ static inline VkComputePipelineCreateInfo_host *convert_VkComputePipelineCreateI
     VkComputePipelineCreateInfo_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -1338,7 +1338,7 @@ static inline VkPipelineShaderStageCreateInfo_host *convert_VkPipelineShaderStag
     VkPipelineShaderStageCreateInfo_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -1371,7 +1371,7 @@ static inline VkGraphicsPipelineCreateInfo_host *convert_VkGraphicsPipelineCreat
     VkGraphicsPipelineCreateInfo_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -1438,7 +1438,7 @@ static inline VkIndirectCommandsLayoutTokenNV_host *convert_VkIndirectCommandsLa
     VkIndirectCommandsLayoutTokenNV_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -1502,7 +1502,7 @@ static inline VkRayTracingPipelineCreateInfoKHR_host *convert_VkRayTracingPipeli
     VkRayTracingPipelineCreateInfoKHR_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -1548,7 +1548,7 @@ static inline VkRayTracingPipelineCreateInfoNV_host *convert_VkRayTracingPipelin
     VkRayTracingPipelineCreateInfoNV_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -1651,7 +1651,7 @@ static inline VkMappedMemoryRange_host *convert_VkMappedMemoryRange_array_win_to
     VkMappedMemoryRange_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -1812,7 +1812,7 @@ static inline VkBufferCreateInfo_host *convert_VkBufferCreateInfo_array_win_to_h
     VkBufferCreateInfo_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -2241,7 +2241,7 @@ static inline VkSparseMemoryBind_host *convert_VkSparseMemoryBind_array_win_to_h
     VkSparseMemoryBind_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -2272,7 +2272,7 @@ static inline VkSparseBufferMemoryBindInfo_host *convert_VkSparseBufferMemoryBin
     VkSparseBufferMemoryBindInfo_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -2307,7 +2307,7 @@ static inline VkSparseImageOpaqueMemoryBindInfo_host *convert_VkSparseImageOpaqu
     VkSparseImageOpaqueMemoryBindInfo_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -2342,7 +2342,7 @@ static inline VkSparseImageMemoryBind_host *convert_VkSparseImageMemoryBind_arra
     VkSparseImageMemoryBind_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -2374,7 +2374,7 @@ static inline VkSparseImageMemoryBindInfo_host *convert_VkSparseImageMemoryBindI
     VkSparseImageMemoryBindInfo_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -2409,7 +2409,7 @@ static inline VkBindSparseInfo_host *convert_VkBindSparseInfo_array_win_to_host(
     VkBindSparseInfo_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -2454,7 +2454,7 @@ static inline VkSubmitInfo *convert_VkSubmitInfo_array_win_to_host(const VkSubmi
     VkSubmitInfo *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -2492,7 +2492,7 @@ static inline VkSemaphoreSubmitInfo_host *convert_VkSemaphoreSubmitInfo_array_wi
     VkSemaphoreSubmitInfo_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -2523,7 +2523,7 @@ static inline VkCommandBufferSubmitInfo *convert_VkCommandBufferSubmitInfo_array
     VkCommandBufferSubmitInfo *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -2555,7 +2555,7 @@ static inline VkSubmitInfo2 *convert_VkSubmitInfo2_array_win_to_host(const VkSub
 #endif /* USE_STRUCT_CONVERSION */
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -2660,7 +2660,7 @@ static inline VkDebugUtilsObjectNameInfoEXT *convert_VkDebugUtilsObjectNameInfoE
 #endif /* USE_STRUCT_CONVERSION */
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -2727,7 +2727,7 @@ static inline VkCopyDescriptorSet_host *convert_VkCopyDescriptorSet_array_win_to
     VkCopyDescriptorSet_host *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
@@ -2761,7 +2761,7 @@ static inline VkPhysicalDevice *convert_VkPhysicalDevice_array_win_to_host(const
     VkPhysicalDevice *out;
     unsigned int i;
 
-    if (!in) return NULL;
+    if (!in || !count) return NULL;
 
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)

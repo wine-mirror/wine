@@ -2150,7 +2150,7 @@ class ConversionFunction(object):
                 body += "#endif /* USE_STRUCT_CONVERSION */\n"
 
         body += "    unsigned int i;\n\n"
-        body += "    if (!in) return NULL;\n\n"
+        body += "    if (!in || !count) return NULL;\n\n"
 
         body += "    out = malloc(count * sizeof(*out));\n"
 
