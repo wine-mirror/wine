@@ -6631,6 +6631,7 @@ static void test_h264_decoder(void)
 
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Video, MFVideoFormat_H264};
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Video, MFVideoFormat_NV12};
+    DWORD input_id, output_id, input_count, output_count;
     const BYTE *h264_encoded_data, *nv12_frame_data;
     ULONG h264_encoded_data_len, nv12_frame_len;
     MFT_OUTPUT_STREAM_INFO output_info;
@@ -6840,6 +6841,17 @@ static void test_h264_decoder(void)
             "got cbSize %#lx\n", output_info.cbSize);
     todo_wine
     ok(output_info.cbAlignment == 0, "got cbAlignment %#lx\n", output_info.cbAlignment);
+
+    input_count = output_count = 0xdeadbeef;
+    hr = IMFTransform_GetStreamCount(transform, &input_count, &output_count);
+    todo_wine
+    ok(hr == S_OK, "GetStreamCount returned %#lx\n", hr);
+    todo_wine
+    ok(input_count == 1, "got input_count %lu\n", input_count);
+    todo_wine
+    ok(output_count == 1, "got output_count %lu\n", output_count);
+    hr = IMFTransform_GetStreamIDs(transform, 1, &input_id, 1, &output_id);
+    ok(hr == E_NOTIMPL, "GetStreamIDs returned %#lx\n", hr);
 
     resource = FindResourceW(NULL, L"h264data.bin", (const WCHAR *)RT_RCDATA);
     ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
