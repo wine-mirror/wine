@@ -138,8 +138,8 @@ static void test_utils(SAFE_PROVIDER_FUNCTIONS *funcs)
     if (store)
     {
         ret = funcs->pfnAddStore2Chain(&data, store);
-        ok(ret, "pfnAddStore2Chain failed: %08x\n", GetLastError());
-        ok(data.chStores == 1, "Expected 1 store, got %d\n", data.chStores);
+        ok(ret, "pfnAddStore2Chain failed: %08lx\n", GetLastError());
+        ok(data.chStores == 1, "Expected 1 store, got %ld\n", data.chStores);
         ok(data.pahStores != NULL, "Expected pahStores to be allocated\n");
         if (data.pahStores)
         {
@@ -153,15 +153,15 @@ static void test_utils(SAFE_PROVIDER_FUNCTIONS *funcs)
         }
     }
     else
-        skip("CertOpenStore failed: %08x\n", GetLastError());
+        skip("CertOpenStore failed: %08lx\n", GetLastError());
 
     /* Crash
     ret = funcs->pfnAddSgnr2Chain(NULL, FALSE, 0, NULL);
     ret = funcs->pfnAddSgnr2Chain(&data, FALSE, 0, NULL);
      */
     ret = funcs->pfnAddSgnr2Chain(&data, FALSE, 0, &sgnr);
-    ok(ret, "pfnAddSgnr2Chain failed: %08x\n", GetLastError());
-    ok(data.csSigners == 1, "Expected 1 signer, got %d\n", data.csSigners);
+    ok(ret, "pfnAddSgnr2Chain failed: %08lx\n", GetLastError());
+    ok(data.csSigners == 1, "Expected 1 signer, got %ld\n", data.csSigners);
     ok(data.pasSigners != NULL, "Expected pasSigners to be allocated\n");
     if (data.pasSigners)
     {
@@ -173,15 +173,15 @@ static void test_utils(SAFE_PROVIDER_FUNCTIONS *funcs)
         sgnr.cbStruct = sizeof(CRYPT_PROVIDER_SGNR);
         sgnr.sftVerifyAsOf.dwLowDateTime = 0xdeadbeef;
         ret = funcs->pfnAddSgnr2Chain(&data, FALSE, 1, &sgnr);
-        ok(ret, "pfnAddSgnr2Chain failed: %08x\n", GetLastError());
-        ok(data.csSigners == 2, "Expected 2 signers, got %d\n", data.csSigners);
+        ok(ret, "pfnAddSgnr2Chain failed: %08lx\n", GetLastError());
+        ok(data.csSigners == 2, "Expected 2 signers, got %ld\n", data.csSigners);
         ok(!memcmp(&data.pasSigners[1], &sgnr, sizeof(sgnr)),
          "Unexpected data in signer\n");
         /* This also adds, but the index is ignored */
         sgnr.cbStruct = sizeof(DWORD);
         ret = funcs->pfnAddSgnr2Chain(&data, FALSE, 0, &sgnr);
-        ok(ret, "pfnAddSgnr2Chain failed: %08x\n", GetLastError());
-        ok(data.csSigners == 3, "Expected 3 signers, got %d\n", data.csSigners);
+        ok(ret, "pfnAddSgnr2Chain failed: %08lx\n", GetLastError());
+        ok(data.csSigners == 3, "Expected 3 signers, got %ld\n", data.csSigners);
         sgnr.sftVerifyAsOf.dwLowDateTime = 0;
         todo_wine
         ok(!memcmp(&data.pasSigners[2], &sgnr, sizeof(sgnr)),
@@ -191,7 +191,7 @@ static void test_utils(SAFE_PROVIDER_FUNCTIONS *funcs)
         SetLastError(0xdeadbeef);
         ret = funcs->pfnAddSgnr2Chain(&data, FALSE, 0, &sgnr);
         ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-         "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+         "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
 
         /* Crash
         ret = funcs->pfnAddCert2Chain(NULL, 0, FALSE, 0, NULL);
@@ -206,8 +206,8 @@ static void test_utils(SAFE_PROVIDER_FUNCTIONS *funcs)
              * 2. An invalid signer index isn't checked.
              */
             ret = funcs->pfnAddCert2Chain(&data, 0, FALSE, 0, cert);
-            ok(ret, "pfnAddCert2Chain failed: %08x\n", GetLastError());
-            ok(data.pasSigners[0].csCertChain == 1, "Expected 1 cert, got %d\n",
+            ok(ret, "pfnAddCert2Chain failed: %08lx\n", GetLastError());
+            ok(data.pasSigners[0].csCertChain == 1, "Expected 1 cert, got %ld\n",
              data.pasSigners[0].csCertChain);
             ok(data.pasSigners[0].pasCertChain != NULL,
              "Expected pasCertChain to be allocated\n");
@@ -221,7 +221,7 @@ static void test_utils(SAFE_PROVIDER_FUNCTIONS *funcs)
             CertFreeCertificateContext(cert);
         }
         else
-            skip("CertCreateCertificateContext failed: %08x\n", GetLastError());
+            skip("CertCreateCertificateContext failed: %08lx\n", GetLastError());
         funcs->pfnFree(data.pasSigners);
     }
 }
@@ -243,7 +243,7 @@ static void testInitialize(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
      */
     memset(&data, 0, sizeof(data));
     ret = funcs->pfnInitialize(&data);
-    ok(ret == S_FALSE, "Expected S_FALSE, got %08x\n", ret);
+    ok(ret == S_FALSE, "Expected S_FALSE, got %08lx\n", ret);
     data.padwTrustStepErrors =
      funcs->pfnAlloc(TRUSTERROR_MAX_STEPS * sizeof(DWORD));
     /* Without wintrust data set, crashes when padwTrustStepErrors is set */
@@ -254,17 +254,17 @@ static void testInitialize(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
         memset(data.padwTrustStepErrors, 0,
          TRUSTERROR_MAX_STEPS * sizeof(DWORD));
         ret = funcs->pfnInitialize(&data);
-        ok(ret == S_OK, "Expected S_OK, got %08x\n", ret);
+        ok(ret == S_OK, "Expected S_OK, got %08lx\n", ret);
         data.cdwTrustStepErrors = 1;
         ret = funcs->pfnInitialize(&data);
-        ok(ret == S_OK, "Expected S_OK, got %08x\n", ret);
+        ok(ret == S_OK, "Expected S_OK, got %08lx\n", ret);
         memset(data.padwTrustStepErrors, 0xba,
          TRUSTERROR_MAX_STEPS * sizeof(DWORD));
         ret = funcs->pfnInitialize(&data);
-        ok(ret == S_FALSE, "Expected S_FALSE, got %08x\n", ret);
+        ok(ret == S_FALSE, "Expected S_FALSE, got %08lx\n", ret);
         data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_WVTINIT] = 0;
         ret = funcs->pfnInitialize(&data);
-        ok(ret == S_OK, "Expected S_OK, got %08x\n", ret);
+        ok(ret == S_OK, "Expected S_OK, got %08lx\n", ret);
         funcs->pfnFree(data.padwTrustStepErrors);
     }
 }
@@ -333,28 +333,28 @@ static void testObjTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
          0x00,0x00,0x00,0x00,0x00 } };
 
         ret = funcs->pfnObjectTrust(&data);
-        ok(ret == S_FALSE, "Expected S_FALSE, got %08x\n", ret);
+        ok(ret == S_FALSE, "Expected S_FALSE, got %08lx\n", ret);
         ok(data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] ==
          ERROR_INVALID_PARAMETER,
-         "Expected ERROR_INVALID_PARAMETER, got %08x\n",
+         "Expected ERROR_INVALID_PARAMETER, got %08lx\n",
          data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV]);
         U(wintrust_data).pCert = &certInfo;
         wintrust_data.dwUnionChoice = WTD_CHOICE_CERT;
         ret = funcs->pfnObjectTrust(&data);
-        ok(ret == S_OK, "Expected S_OK, got %08x\n", ret);
+        ok(ret == S_OK, "Expected S_OK, got %08lx\n", ret);
         certInfo.psCertContext = (PCERT_CONTEXT)CertCreateCertificateContext(
          X509_ASN_ENCODING, v1CertWithPubKey, sizeof(v1CertWithPubKey));
         ret = funcs->pfnObjectTrust(&data);
-        ok(ret == S_OK, "Expected S_OK, got %08x\n", ret);
+        ok(ret == S_OK, "Expected S_OK, got %08lx\n", ret);
         CertFreeCertificateContext(certInfo.psCertContext);
         certInfo.psCertContext = NULL;
         wintrust_data.dwUnionChoice = WTD_CHOICE_FILE;
         U(wintrust_data).pFile = NULL;
         ret = funcs->pfnObjectTrust(&data);
-        ok(ret == S_FALSE, "Expected S_FALSE, got %08x\n", ret);
+        ok(ret == S_FALSE, "Expected S_FALSE, got %08lx\n", ret);
         ok(data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] ==
          ERROR_INVALID_PARAMETER,
-         "Expected ERROR_INVALID_PARAMETER, got %08x\n",
+         "Expected ERROR_INVALID_PARAMETER, got %08lx\n",
          data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV]);
         U(wintrust_data).pFile = &fileInfo;
         /* Crashes
@@ -366,19 +366,19 @@ static void testObjTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
         U(data).pPDSip = &provDataSIP;
         data.psPfns = (CRYPT_PROVIDER_FUNCTIONS *)funcs;
         ret = funcs->pfnObjectTrust(&data);
-        ok(ret == S_FALSE, "Expected S_FALSE, got %08x\n", ret);
+        ok(ret == S_FALSE, "Expected S_FALSE, got %08lx\n", ret);
         ok(data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] ==
          TRUST_E_SUBJECT_FORM_UNKNOWN,
-         "expected TRUST_E_SUBJECT_FORM_UNKNOWN, got %08x\n",
+         "expected TRUST_E_SUBJECT_FORM_UNKNOWN, got %08lx\n",
          data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV]);
         CloseHandle(fileInfo.hFile);
         fileInfo.hFile = NULL;
         fileInfo.pcwszFilePath = pathW;
         ret = funcs->pfnObjectTrust(&data);
-        ok(ret == S_FALSE, "Expected S_FALSE, got %08x\n", ret);
+        ok(ret == S_FALSE, "Expected S_FALSE, got %08lx\n", ret);
         ok(data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] ==
          TRUST_E_SUBJECT_FORM_UNKNOWN,
-         "expected TRUST_E_SUBJECT_FORM_UNKNOWN, got %08x\n",
+         "expected TRUST_E_SUBJECT_FORM_UNKNOWN, got %08lx\n",
          data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV]);
         DeleteFileW(pathW);
         /* Test again with a file we expect to exist, and to contain no
@@ -386,12 +386,12 @@ static void testObjTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
          */
         getNotepadPath(pathW, MAX_PATH);
         ret = funcs->pfnObjectTrust(&data);
-        ok(ret == S_FALSE, "Expected S_FALSE, got %08x\n", ret);
+        ok(ret == S_FALSE, "Expected S_FALSE, got %08lx\n", ret);
         ok(data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] ==
          TRUST_E_NOSIGNATURE ||
          data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] ==
          TRUST_E_SUBJECT_FORM_UNKNOWN,
-         "Expected TRUST_E_NOSIGNATURE or TRUST_E_SUBJECT_FORM_UNKNOWN, got %08x\n",
+         "Expected TRUST_E_NOSIGNATURE or TRUST_E_SUBJECT_FORM_UNKNOWN, got %08lx\n",
          data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV]);
         if (data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] ==
          TRUST_E_NOSIGNATURE)
@@ -405,14 +405,14 @@ static void testObjTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
         /* Specifying the GUID results in that GUID being the subject GUID */
         fileInfo.pgKnownSubject = &bogusGuid;
         ret = funcs->pfnObjectTrust(&data);
-        ok(ret == S_FALSE, "Expected S_FALSE, got %08x\n", ret);
+        ok(ret == S_FALSE, "Expected S_FALSE, got %08lx\n", ret);
         ok(data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] ==
          TRUST_E_NOSIGNATURE ||
          data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] ==
          TRUST_E_SUBJECT_FORM_UNKNOWN ||
          data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] ==
          TRUST_E_PROVIDER_UNKNOWN,
-         "Expected TRUST_E_NOSIGNATURE or TRUST_E_SUBJECT_FORM_UNKNOWN or TRUST_E_PROVIDER_UNKNOWN, got %08x\n",
+         "Expected TRUST_E_NOSIGNATURE or TRUST_E_SUBJECT_FORM_UNKNOWN or TRUST_E_PROVIDER_UNKNOWN, got %08lx\n",
          data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV]);
         if (data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] ==
          TRUST_E_NOSIGNATURE)
@@ -425,7 +425,7 @@ static void testObjTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
         {
             fileInfo.pgKnownSubject = (GUID *)0xdeadbeef;
             ret = funcs->pfnObjectTrust(&data);
-            ok(ret == S_FALSE, "Expected S_FALSE, got %08x\n", ret);
+            ok(ret == S_FALSE, "Expected S_FALSE, got %08lx\n", ret);
         }
         funcs->pfnFree(data.padwTrustStepErrors);
     }
@@ -568,9 +568,9 @@ static void testCertTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
         return;
     }
     ret = funcs->pfnCertificateTrust(&data);
-    ok(ret == S_FALSE, "Expected S_FALSE, got %08x\n", ret);
+    ok(ret == S_FALSE, "Expected S_FALSE, got %08lx\n", ret);
     ok(data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_CERTPROV] ==
-     TRUST_E_NOSIGNATURE, "Expected TRUST_E_NOSIGNATURE, got %08x\n",
+     TRUST_E_NOSIGNATURE, "Expected TRUST_E_NOSIGNATURE, got %08lx\n",
      data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_CERTPROV]);
     b = funcs->pfnAddSgnr2Chain(&data, FALSE, 0, &sgnr);
     if (b)
@@ -579,7 +579,7 @@ static void testCertTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
 
         /* An empty signer "succeeds," even though there's no cert */
         ret = funcs->pfnCertificateTrust(&data);
-        ok(ret == S_OK, "Expected S_OK, got %08x\n", ret);
+        ok(ret == S_OK, "Expected S_OK, got %08lx\n", ret);
         cert = CertCreateCertificateContext(X509_ASN_ENCODING, selfSignedCert,
          sizeof(selfSignedCert));
         if (cert)
@@ -598,13 +598,13 @@ static void testCertTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
              */
             data.psPfns = (CRYPT_PROVIDER_FUNCTIONS *)funcs;
             ret = funcs->pfnCertificateTrust(&data);
-            ok(ret == S_OK, "Expected S_OK, got %08x\n", ret);
-            ok(data.csSigners == 1, "Unexpected number of signers %d\n",
+            ok(ret == S_OK, "Expected S_OK, got %08lx\n", ret);
+            ok(data.csSigners == 1, "Unexpected number of signers %ld\n",
              data.csSigners);
             ok(data.pasSigners[0].pChainContext != NULL,
              "Expected a certificate chain\n");
             ok(data.pasSigners[0].csCertChain == 1,
-             "Unexpected number of chain elements %d\n",
+             "Unexpected number of chain elements %ld\n",
              data.pasSigners[0].csCertChain);
             /* pasSigners and pasSigners[0].pasCertChain are guaranteed to be
              * initialized, see tests for pfnAddSgnr2Chain and pfnAddCert2Chain
@@ -615,7 +615,7 @@ static void testCertTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
              "Expected cert to be self-signed\n");
             ok(data.pasSigners[0].pasCertChain[0].dwConfidence ==
              (CERT_CONFIDENCE_SIG | CERT_CONFIDENCE_TIMENEST),
-             "Expected CERT_CONFIDENCE_SIG | CERT_CONFIDENCE_TIMENEST, got %08x\n",
+             "Expected CERT_CONFIDENCE_SIG | CERT_CONFIDENCE_TIMENEST, got %08lx\n",
              data.pasSigners[0].pasCertChain[0].dwConfidence);
             CertFreeCertificateContext(
              data.pasSigners[0].pasCertChain[0].pCert);
@@ -756,16 +756,16 @@ static void test_sip_create_indirect_data(void)
     SetLastError(0xdeadbeef);
     ret = CryptSIPCreateIndirectData_p(NULL, NULL, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-       "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+       "expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CryptSIPCreateIndirectData_p(&subjinfo, NULL, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-       "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+       "expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
     subjinfo.cbSize = sizeof(subjinfo);
     SetLastError(0xdeadbeef);
     ret = CryptSIPCreateIndirectData_p(&subjinfo, NULL, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-       "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+       "expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
     file = create_temp_file(temp_file);
     if (file == INVALID_HANDLE_VALUE)
     {
@@ -779,17 +779,17 @@ static void test_sip_create_indirect_data(void)
     SetLastError(0xdeadbeef);
     ret = CryptSIPCreateIndirectData_p(&subjinfo, NULL, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-       "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+       "expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
     subjinfo.pgSubjectType = &unknown;
     SetLastError(0xdeadbeef);
     ret = CryptSIPCreateIndirectData_p(&subjinfo, NULL, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-       "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+       "expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
     subjinfo.DigestAlgorithm.pszObjId = oid_sha1;
     count = 0xdeadbeef;
     ret = CryptSIPCreateIndirectData_p(&subjinfo, &count, NULL);
     todo_wine
-    ok(ret, "CryptSIPCreateIndirectData failed: %d\n", GetLastError());
+    ok(ret, "CryptSIPCreateIndirectData failed: %ld\n", GetLastError());
     ok(count, "expected a positive count\n");
     if (ret)
     {
@@ -797,16 +797,16 @@ static void test_sip_create_indirect_data(void)
 
         count = 256;
         ret = CryptSIPCreateIndirectData_p(&subjinfo, &count, indirect);
-        ok(ret, "CryptSIPCreateIndirectData failed: %d\n", GetLastError());
+        ok(ret, "CryptSIPCreateIndirectData failed: %ld\n", GetLastError());
         /* If the count is larger than needed, it's unmodified */
-        ok(count == 256, "unexpected count %d\n", count);
+        ok(count == 256, "unexpected count %ld\n", count);
         ok(!strcmp(indirect->Data.pszObjId, SPC_PE_IMAGE_DATA_OBJID),
            "unexpected data oid %s\n",
            indirect->Data.pszObjId);
         ok(!strcmp(indirect->DigestAlgorithm.pszObjId, oid_sha1),
            "unexpected digest algorithm oid %s\n",
            indirect->DigestAlgorithm.pszObjId);
-        ok(indirect->Digest.cbData == 20, "unexpected hash size %d\n",
+        ok(indirect->Digest.cbData == 20, "unexpected hash size %ld\n",
            indirect->Digest.cbData);
         if (indirect->Digest.cbData == 20)
         {
@@ -847,9 +847,9 @@ static void test_wintrust(void)
     file.hFile = create_temp_file(pathW);
     SetLastError(0xdeadbeef);
     r = WinVerifyTrust(INVALID_HANDLE_VALUE, &generic_action_v2, &wtd);
-    ok(r == GetLastError(), "expected %08x, got %08x\n", GetLastError(), r);
+    ok(r == GetLastError(), "expected %08lx, got %08lx\n", GetLastError(), r);
     ok(r == TRUST_E_SUBJECT_FORM_UNKNOWN,
-     "expected TRUST_E_SUBJECT_FORM_UNKNOWN, got %08x\n", r);
+     "expected TRUST_E_SUBJECT_FORM_UNKNOWN, got %08lx\n", r);
     CloseHandle(file.hFile);
     DeleteFileW(pathW);
     file.hFile = NULL;
@@ -857,25 +857,25 @@ static void test_wintrust(void)
     getNotepadPath(pathW, MAX_PATH);
     SetLastError(0xdeadbeef);
     r = WinVerifyTrust(INVALID_HANDLE_VALUE, &generic_action_v2, &wtd);
-    ok(r == GetLastError(), "expected %08x, got %08x\n", GetLastError(), r);
+    ok(r == GetLastError(), "expected %08lx, got %08lx\n", GetLastError(), r);
     ok(r == TRUST_E_NOSIGNATURE || r == CRYPT_E_FILE_ERROR,
-     "expected TRUST_E_NOSIGNATURE or CRYPT_E_FILE_ERROR, got %08x\n", r);
+     "expected TRUST_E_NOSIGNATURE or CRYPT_E_FILE_ERROR, got %08lx\n", r);
     wtd.dwStateAction = WTD_STATEACTION_CLOSE;
     SetLastError(0xdeadbeef);
     r = WinVerifyTrust(INVALID_HANDLE_VALUE, &generic_action_v2, &wtd);
-    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %08x\n", GetLastError());
-    ok(r == S_OK, "WinVerifyTrust failed: %08x\n", r);
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %08lx\n", GetLastError());
+    ok(r == S_OK, "WinVerifyTrust failed: %08lx\n", r);
     wtd.dwStateAction = WTD_STATEACTION_VERIFY;
     SetLastError(0xdeadbeef);
     hr = WinVerifyTrustEx(INVALID_HANDLE_VALUE, &generic_action_v2, &wtd);
-    ok(hr == GetLastError(), "expected %08x, got %08x\n", GetLastError(), hr);
+    ok(hr == GetLastError(), "expected %08lx, got %08lx\n", GetLastError(), hr);
     ok(hr == TRUST_E_NOSIGNATURE || hr == CRYPT_E_FILE_ERROR,
-     "expected TRUST_E_NOSIGNATURE or CRYPT_E_FILE_ERROR, got %08x\n", hr);
+     "expected TRUST_E_NOSIGNATURE or CRYPT_E_FILE_ERROR, got %08lx\n", hr);
     wtd.dwStateAction = WTD_STATEACTION_CLOSE;
     SetLastError(0xdeadbeef);
     r = WinVerifyTrust(INVALID_HANDLE_VALUE, &generic_action_v2, &wtd);
-    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %08x\n", GetLastError());
-    ok(r == S_OK, "WinVerifyTrust failed: %08x\n", r);
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %08lx\n", GetLastError());
+    ok(r == S_OK, "WinVerifyTrust failed: %08lx\n", r);
 }
 
 /* Self-signed .exe, built with tcc, signed with signtool
@@ -1142,7 +1142,7 @@ static void call_winverify(WCHAR *pathW, LONG *status, BOOL hash_only)
 
     data.dwStateAction = WTD_STATEACTION_CLOSE;
     ret = WinVerifyTrust(NULL, &WVTPolicyGUID, &data);
-    ok(ret == S_OK, "WinVerifyTrust failed: %08x\n", ret);
+    ok(ret == S_OK, "WinVerifyTrust failed: %08lx\n", ret);
 }
 
 static void test_wintrust_digest(void)
@@ -1231,18 +1231,18 @@ static void test_wintrust_digest(void)
         for (j = 0; tests[i].blocks[j].data; j++)
         {
             ret = WriteFile(file, tests[i].blocks[j].data, tests[i].blocks[j].length, &written, NULL);
-            ok(ret && written == tests[i].blocks[j].length, "WriteFile failed with %u\n", GetLastError());
+            ok(ret && written == tests[i].blocks[j].length, "WriteFile failed with %lu\n", GetLastError());
         }
 
         CloseHandle(file);
 
         call_winverify(pathW, &status, FALSE);
         todo_wine_if(tests[i].t1.todo)
-        ok(status == tests[i].t1.status, "test %d/1: expected %08x, got %08x\n", i, tests[i].t1.status, status);
+        ok(status == tests[i].t1.status, "test %d/1: expected %08lx, got %08lx\n", i, tests[i].t1.status, status);
 
         call_winverify(pathW, &status, TRUE);
         todo_wine_if(tests[i].t2.todo)
-        ok(status == tests[i].t2.status, "test %d/2: expected %08x, got %08x\n", i, tests[i].t2.status, status);
+        ok(status == tests[i].t2.status, "test %d/2: expected %08lx, got %08lx\n", i, tests[i].t2.status, status);
 
         DeleteFileW(pathW);
     }
@@ -1261,22 +1261,22 @@ static void test_get_known_usages(void)
     SetLastError(0xdeadbeef);
     ret = pWTHelperGetKnownUsages(0, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-     "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+     "expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = pWTHelperGetKnownUsages(1, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-     "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+     "expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = pWTHelperGetKnownUsages(0, &usages);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-     "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+     "expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
     /* A value of 1 for the first parameter seems to imply the value is
      * allocated
      */
     SetLastError(0xdeadbeef);
     usages = NULL;
     ret = pWTHelperGetKnownUsages(1, &usages);
-    ok(ret, "WTHelperGetKnownUsages failed: %d\n", GetLastError());
+    ok(ret, "WTHelperGetKnownUsages failed: %ld\n", GetLastError());
     ok(usages != NULL, "expected a pointer\n");
     if (ret && usages)
     {
@@ -1289,10 +1289,10 @@ static void test_get_known_usages(void)
         {
             ok((*ptr)->cbSize == sizeof(CRYPT_OID_INFO) ||
              (*ptr)->cbSize == (sizeof(CRYPT_OID_INFO) + 2 * sizeof(LPCWSTR)), /* Vista */
-             "unexpected size %d\n", (*ptr)->cbSize);
+             "unexpected size %ld\n", (*ptr)->cbSize);
             /* Each returned usage is in the CRYPT_ENHKEY_USAGE_OID_GROUP_ID group */
             ok((*ptr)->dwGroupId == CRYPT_ENHKEY_USAGE_OID_GROUP_ID,
-             "expected group CRYPT_ENHKEY_USAGE_OID_GROUP_ID, got %d\n",
+             "expected group CRYPT_ENHKEY_USAGE_OID_GROUP_ID, got %ld\n",
              (*ptr)->dwGroupId);
         }
     }
@@ -1300,16 +1300,16 @@ static void test_get_known_usages(void)
      */
     SetLastError(0xdeadbeef);
     ret = pWTHelperGetKnownUsages(2, &usages);
-    ok(ret, "WTHelperGetKnownUsages failed: %d\n", GetLastError());
+    ok(ret, "WTHelperGetKnownUsages failed: %ld\n", GetLastError());
     ok(usages == NULL, "expected pointer to be cleared\n");
     SetLastError(0xdeadbeef);
     usages = NULL;
     ret = pWTHelperGetKnownUsages(2, &usages);
-    ok(ret, "WTHelperGetKnownUsages failed: %d\n", GetLastError());
+    ok(ret, "WTHelperGetKnownUsages failed: %ld\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = pWTHelperGetKnownUsages(2, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-     "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+     "expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
 }
 
 START_TEST(softpub)
