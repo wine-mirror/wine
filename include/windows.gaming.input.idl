@@ -56,8 +56,12 @@ namespace Windows.Gaming.Input {
         interface Windows.Foundation.EventHandler<Windows.Gaming.Input.RawGameController *>;
         interface Windows.Foundation.TypedEventHandler<Windows.Gaming.Input.IGameController *, Windows.Gaming.Input.Headset *>;
         interface Windows.Foundation.TypedEventHandler<Windows.Gaming.Input.IGameController *, Windows.System.UserChangedEventArgs *>;
-        interface Windows.Foundation.Collections.IVectorView<Gamepad *>;
-        interface Windows.Foundation.Collections.IVector<Gamepad *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.Gaming.Input.Gamepad *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Gaming.Input.Gamepad *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Gaming.Input.Gamepad *>;
+        interface Windows.Foundation.Collections.IVector<Windows.Gaming.Input.Gamepad *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.Gaming.Input.RawGameController *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Gaming.Input.RawGameController *>;
         interface Windows.Foundation.Collections.IVectorView<Windows.Gaming.Input.RawGameController *>;
         interface Windows.Foundation.Collections.IVector<Windows.Gaming.Input.RawGameController *>;
     }

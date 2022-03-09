@@ -341,14 +341,19 @@ static HRESULT WINAPI statics_remove_GamepadRemoved( IGamepadStatics *iface, Eve
 
 static HRESULT WINAPI statics_get_Gamepads( IGamepadStatics *iface, IVectorView_Gamepad **value )
 {
-    static const GUID *view_iid = &IID_IVectorView_Gamepad;
-    static const GUID *iid = &IID_IVector_Gamepad;
+    static const struct vector_iids iids =
+    {
+        .vector = &IID_IVector_Gamepad,
+        .view = &IID_IVectorView_Gamepad,
+        .iterable = &IID_IIterable_Gamepad,
+        .iterator = &IID_IIterator_Gamepad,
+    };
     IVector_Gamepad *gamepads;
     HRESULT hr;
 
     TRACE( "iface %p, value %p.\n", iface, value );
 
-    if (SUCCEEDED(hr = vector_create( iid, view_iid, (void **)&gamepads )))
+    if (SUCCEEDED(hr = vector_create( &iids, (void **)&gamepads )))
     {
         hr = IVector_Gamepad_GetView( gamepads, value );
         IVector_Gamepad_Release( gamepads );

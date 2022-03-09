@@ -381,14 +381,19 @@ static HRESULT WINAPI statics_remove_RawGameControllerRemoved( IRawGameControlle
 
 static HRESULT WINAPI statics_get_RawGameControllers( IRawGameControllerStatics *iface, IVectorView_RawGameController **value )
 {
-    static const GUID *view_iid = &IID_IVectorView_RawGameController;
-    static const GUID *iid = &IID_IVector_RawGameController;
+    static const struct vector_iids iids =
+    {
+        .vector = &IID_IVector_RawGameController,
+        .view = &IID_IVectorView_RawGameController,
+        .iterable = &IID_IIterable_RawGameController,
+        .iterator = &IID_IIterator_RawGameController,
+    };
     IVector_RawGameController *controllers;
     HRESULT hr;
 
     TRACE( "iface %p, value %p.\n", iface, value );
 
-    if (SUCCEEDED(hr = vector_create( iid, view_iid, (void **)&controllers )))
+    if (SUCCEEDED(hr = vector_create( &iids, (void **)&controllers )))
     {
         hr = IVector_RawGameController_GetView( controllers, value );
         IVector_RawGameController_Release( controllers );
