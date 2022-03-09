@@ -222,7 +222,7 @@ static void mixer_test_controlA(HMIXEROBJ mix, MIXERCONTROLA *control)
             MIXERCONTROLDETAILS new_details;
             MIXERCONTROLDETAILS_UNSIGNED new_value;
 
-            trace("            Value=%d\n",value.dwValue);
+            trace("            Value=%ld\n",value.dwValue);
 
             if (value.dwValue + control->Metrics.cSteps < S1(control->Bounds).dwMaximum)
                 new_value.dwValue = value.dwValue + control->Metrics.cSteps;
@@ -260,7 +260,7 @@ static void mixer_test_controlA(HMIXEROBJ mix, MIXERCONTROLA *control)
                 if (rc==MMSYSERR_NOERROR) {
                     /* result may not match exactly because of rounding */
                     ok(compare_uint(ret_value.dwValue, new_value.dwValue, 1),
-                       "Couldn't change value from %d to %d, returned %d\n",
+                       "Couldn't change value from %ld to %ld, returned %ld\n",
                        value.dwValue,new_value.dwValue,ret_value.dwValue);
 
                     if (compare_uint(ret_value.dwValue, new_value.dwValue, 1)) {
@@ -301,7 +301,7 @@ static void mixer_test_controlA(HMIXEROBJ mix, MIXERCONTROLA *control)
             MIXERCONTROLDETAILS new_details;
             MIXERCONTROLDETAILS_BOOLEAN new_value;
 
-            trace("            Value=%d\n",value.fValue);
+            trace("            Value=%ld\n",value.fValue);
 
             if (value.fValue == FALSE)
                 new_value.fValue = TRUE;
@@ -339,7 +339,7 @@ static void mixer_test_controlA(HMIXEROBJ mix, MIXERCONTROLA *control)
                 if (rc==MMSYSERR_NOERROR) {
                     /* result may not match exactly because of rounding */
                     ok(ret_value.fValue==new_value.fValue,
-                       "Couldn't change value from %d to %d, returned %d\n",
+                       "Couldn't change value from %ld to %ld, returned %ld\n",
                        value.fValue,new_value.fValue,ret_value.fValue);
 
                     if (ret_value.fValue==new_value.fValue) {
@@ -387,7 +387,7 @@ static void mixer_test_deviceA(int device)
        mmsys_error(rc));
 
     if (winetest_interactive) {
-        trace("  %d: \"%s\" %d.%d (%d:%d) destinations=%d\n", device,
+        trace("  %d: \"%s\" %d.%d (%d:%d) destinations=%ld\n", device,
               capsA.szPname, capsA.vDriverVersion >> 8,
               capsA.vDriverVersion & 0xff,capsA.wMid,capsA.wPid,
               capsA.cDestinations);
@@ -455,20 +455,20 @@ static void mixer_test_deviceA(int device)
                 trace("  No Driver\n");
             else if (rc==MMSYSERR_NOERROR) {
 	      if (winetest_interactive) {
-                trace("    %d: \"%s\" (%s) Destination=%d Source=%d\n",
+                trace("    %ld: \"%s\" (%s) Destination=%ld Source=%ld\n",
                       d,mixerlineA.szShortName, mixerlineA.szName,
                       mixerlineA.dwDestination,mixerlineA.dwSource);
-                trace("        LineID=%08x Channels=%d "
-                      "Connections=%d Controls=%d\n",
+                trace("        LineID=%08lx Channels=%ld "
+                      "Connections=%ld Controls=%ld\n",
                       mixerlineA.dwLineID,mixerlineA.cChannels,
                       mixerlineA.cConnections,mixerlineA.cControls);
-                trace("        State=0x%08x(%s)\n",
+                trace("        State=0x%08lx(%s)\n",
                       mixerlineA.fdwLine,line_flags(mixerlineA.fdwLine));
                 trace("        ComponentType=%s\n",
                       component_type(mixerlineA.dwComponentType));
                 trace("        Type=%s\n",
                       target_type(mixerlineA.Target.dwType));
-                trace("        Device=%d (%s) %d.%d (%d:%d)\n",
+                trace("        Device=%ld (%s) %d.%d (%d:%d)\n",
                       mixerlineA.Target.dwDeviceID,
                       mixerlineA.Target.szPname,
                       mixerlineA.Target.vDriverVersion >> 8,
@@ -491,20 +491,20 @@ static void mixer_test_deviceA(int device)
                     LPMIXERCONTROLA    array;
                     MIXERLINECONTROLSA controls;
                     if (winetest_interactive) {
-                        trace("      %d: \"%s\" (%s) Destination=%d Source=%d\n",
+                        trace("      %ld: \"%s\" (%s) Destination=%ld Source=%ld\n",
                               s,mixerlineA.szShortName, mixerlineA.szName,
                               mixerlineA.dwDestination,mixerlineA.dwSource);
-                        trace("          LineID=%08x Channels=%d "
-                              "Connections=%d Controls=%d\n",
+                        trace("          LineID=%08lx Channels=%ld "
+                              "Connections=%ld Controls=%ld\n",
                               mixerlineA.dwLineID,mixerlineA.cChannels,
                               mixerlineA.cConnections,mixerlineA.cControls);
-                        trace("          State=0x%08x(%s)\n",
+                        trace("          State=0x%08lx(%s)\n",
                               mixerlineA.fdwLine,line_flags(mixerlineA.fdwLine));
                         trace("          ComponentType=%s\n",
                               component_type(mixerlineA.dwComponentType));
                         trace("          Type=%s\n",
                               target_type(mixerlineA.Target.dwType));
-                        trace("          Device=%d (%s) %d.%d (%d:%d)\n",
+                        trace("          Device=%ld (%s) %d.%d (%d:%d)\n",
                               mixerlineA.Target.dwDeviceID,
                               mixerlineA.Target.szPname,
                               mixerlineA.Target.vDriverVersion >> 8,
@@ -546,15 +546,15 @@ static void mixer_test_deviceA(int device)
                             if (rc==MMSYSERR_NOERROR) {
                                 for(nc=0;nc<mixerlineA.cControls;nc++) {
                                     if (winetest_interactive) {
-                                        trace("        %d: \"%s\" (%s) ControlID=%d\n", nc,
+                                        trace("        %ld: \"%s\" (%s) ControlID=%ld\n", nc,
                                               array[nc].szShortName,
                                               array[nc].szName, array[nc].dwControlID);
                                         trace("            ControlType=%s\n",
                                                control_type(array[nc].dwControlType));
-                                        trace("            Control=0x%08x(%s)\n",
+                                        trace("            Control=0x%08lx(%s)\n",
                                               array[nc].fdwControl,
                                               control_flags(array[nc].fdwControl));
-                                        trace("            Items=%d Min=%d Max=%d Step=%d\n",
+                                        trace("            Items=%ld Min=%ld Max=%ld Step=%ld\n",
                                               array[nc].cMultipleItems,
                                               S1(array[nc].Bounds).dwMinimum,
                                               S1(array[nc].Bounds).dwMaximum,
@@ -601,7 +601,7 @@ static void mixer_test_controlW(HMIXEROBJ mix, MIXERCONTROLW *control)
             MIXERCONTROLDETAILS new_details;
             MIXERCONTROLDETAILS_UNSIGNED new_value;
 
-            trace("            Value=%d\n",value.dwValue);
+            trace("            Value=%ld\n",value.dwValue);
 
             if (value.dwValue + control->Metrics.cSteps < S1(control->Bounds).dwMaximum)
                 new_value.dwValue = value.dwValue + control->Metrics.cSteps;
@@ -639,7 +639,7 @@ static void mixer_test_controlW(HMIXEROBJ mix, MIXERCONTROLW *control)
                 if (rc==MMSYSERR_NOERROR) {
                     /* result may not match exactly because of rounding */
                     ok(compare_uint(ret_value.dwValue, new_value.dwValue, 1),
-                       "Couldn't change value from %d to %d, returned %d\n",
+                       "Couldn't change value from %ld to %ld, returned %ld\n",
                        value.dwValue,new_value.dwValue,ret_value.dwValue);
 
                     if (compare_uint(ret_value.dwValue, new_value.dwValue, 1)) {
@@ -680,7 +680,7 @@ static void mixer_test_controlW(HMIXEROBJ mix, MIXERCONTROLW *control)
             MIXERCONTROLDETAILS new_details;
             MIXERCONTROLDETAILS_BOOLEAN new_value;
 
-            trace("            Value=%d\n",value.fValue);
+            trace("            Value=%ld\n",value.fValue);
 
             if (value.fValue == FALSE)
                 new_value.fValue = TRUE;
@@ -718,7 +718,7 @@ static void mixer_test_controlW(HMIXEROBJ mix, MIXERCONTROLW *control)
                 if (rc==MMSYSERR_NOERROR) {
                     /* result may not match exactly because of rounding */
                     ok(ret_value.fValue==new_value.fValue,
-                       "Couldn't change value from %d to %d, returned %d\n",
+                       "Couldn't change value from %ld to %ld, returned %ld\n",
                        value.fValue,new_value.fValue,ret_value.fValue);
 
                     if (ret_value.fValue==new_value.fValue) {
@@ -772,7 +772,7 @@ static void mixer_test_deviceW(int device)
     WideCharToMultiByte(CP_ACP,0,capsW.szPname, MAXPNAMELEN,szPname,
                         MAXPNAMELEN,NULL,NULL);
     if (winetest_interactive) {
-        trace("  %d: \"%s\" %d.%d (%d:%d) destinations=%d\n", device,
+        trace("  %d: \"%s\" %d.%d (%d:%d) destinations=%ld\n", device,
               szPname, capsW.vDriverVersion >> 8,
               capsW.vDriverVersion & 0xff,capsW.wMid,capsW.wPid,
               capsW.cDestinations);
@@ -849,20 +849,20 @@ static void mixer_test_deviceW(int device)
                 WideCharToMultiByte(CP_ACP,0,mixerlineW.Target.szPname,
                     MAXPNAMELEN,szPname,
                     MAXPNAMELEN,NULL, NULL);
-                trace("    %d: \"%s\" (%s) Destination=%d Source=%d\n",
+                trace("    %ld: \"%s\" (%s) Destination=%ld Source=%ld\n",
                       d,szShortName,szName,
                       mixerlineW.dwDestination,mixerlineW.dwSource);
-                trace("        LineID=%08x Channels=%d "
-                      "Connections=%d Controls=%d\n",
+                trace("        LineID=%08lx Channels=%ld "
+                      "Connections=%ld Controls=%ld\n",
                       mixerlineW.dwLineID,mixerlineW.cChannels,
                       mixerlineW.cConnections,mixerlineW.cControls);
-                trace("        State=0x%08x(%s)\n",
+                trace("        State=0x%08lx(%s)\n",
                       mixerlineW.fdwLine,line_flags(mixerlineW.fdwLine));
                 trace("        ComponentType=%s\n",
                       component_type(mixerlineW.dwComponentType));
                 trace("        Type=%s\n",
                       target_type(mixerlineW.Target.dwType));
-                trace("        Device=%d (%s) %d.%d (%d:%d)\n",
+                trace("        Device=%ld (%s) %d.%d (%d:%d)\n",
                       mixerlineW.Target.dwDeviceID,szPname,
                       mixerlineW.Target.vDriverVersion >> 8,
                       mixerlineW.Target.vDriverVersion & 0xff,
@@ -893,20 +893,20 @@ static void mixer_test_deviceW(int device)
                         WideCharToMultiByte(CP_ACP,0,mixerlineW.Target.szPname,
                             MAXPNAMELEN,szPname,
                             MAXPNAMELEN,NULL, NULL);
-                        trace("      %d: \"%s\" (%s) Destination=%d Source=%d\n",
+                        trace("      %ld: \"%s\" (%s) Destination=%ld Source=%ld\n",
                               s,szShortName,szName,
                               mixerlineW.dwDestination,mixerlineW.dwSource);
-                        trace("          LineID=%08x Channels=%d "
-                              "Connections=%d Controls=%d\n",
+                        trace("          LineID=%08lx Channels=%ld "
+                              "Connections=%ld Controls=%ld\n",
                               mixerlineW.dwLineID,mixerlineW.cChannels,
                               mixerlineW.cConnections,mixerlineW.cControls);
-                        trace("          State=0x%08x(%s)\n",
+                        trace("          State=0x%08lx(%s)\n",
                               mixerlineW.fdwLine,line_flags(mixerlineW.fdwLine));
                         trace("          ComponentType=%s\n",
                               component_type(mixerlineW.dwComponentType));
                         trace("          Type=%s\n",
                               target_type(mixerlineW.Target.dwType));
-                        trace("          Device=%d (%s) %d.%d (%d:%d)\n",
+                        trace("          Device=%ld (%s) %d.%d (%d:%d)\n",
                               mixerlineW.Target.dwDeviceID,szPname,
                               mixerlineW.Target.vDriverVersion >> 8,
                               mixerlineW.Target.vDriverVersion & 0xff,
@@ -950,14 +950,14 @@ static void mixer_test_deviceW(int device)
                                         WideCharToMultiByte(CP_ACP,0,array[nc].szName,
                                             MIXER_LONG_NAME_CHARS,szName,
                                             MIXER_LONG_NAME_CHARS,NULL,NULL);
-                                        trace("        %d: \"%s\" (%s) ControlID=%d\n", nc,
+                                        trace("        %ld: \"%s\" (%s) ControlID=%ld\n", nc,
                                               szShortName, szName, array[nc].dwControlID);
                                         trace("            ControlType=%s\n",
                                                control_type(array[nc].dwControlType));
-                                        trace("            Control=0x%08x(%s)\n",
+                                        trace("            Control=0x%08lx(%s)\n",
                                               array[nc].fdwControl,
                                               control_flags(array[nc].fdwControl));
-                                        trace("            Items=%d Min=%d Max=%d Step=%d\n",
+                                        trace("            Items=%ld Min=%ld Max=%ld Step=%ld\n",
                                               array[nc].cMultipleItems,
                                               S1(array[nc].Bounds).dwMinimum,
                                               S1(array[nc].Bounds).dwMaximum,

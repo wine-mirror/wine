@@ -119,14 +119,14 @@ static void test_timer(UINT period, UINT resolution)
         if (i == 0)
         {
             if (winetest_debug > 1)
-                trace("time[%d] = %u\n", i, times[i]);
+                trace("time[%d] = %lu\n", i, times[i]);
         }
         else
         {
             delta = times[i] - times[i - 1];
 
             if (winetest_debug > 1)
-                trace("time[%d] = %u delta = %d\n", i, times[i], delta);
+                trace("time[%d] = %lu delta = %d\n", i, times[i], delta);
 
             sum += delta;
             deviation += ((delta - period) * (delta - period));
@@ -139,7 +139,7 @@ static void test_timer(UINT period, UINT resolution)
         }
     }
 
-    trace("min = %u, max = %u, average = %f, standard deviation = %f\n",
+    trace("min = %lu, max = %lu, average = %f, standard deviation = %f\n",
           dwMin, dwMax, sum / (count - 1), sqrt(deviation / (count - 2)));
 }
 
@@ -167,7 +167,7 @@ static void CALLBACK priorityTimeProc(UINT uID, UINT uMsg, DWORD_PTR dwUser,
                                       DWORD_PTR dw1, DWORD_PTR dw2)
 {
     priority = GetThreadPriority(GetCurrentThread());
-    ok(priority!=THREAD_PRIORITY_ERROR_RETURN, "GetThreadPriority() failed, GetLastError() = %u\n", GetLastError());
+    ok(priority!=THREAD_PRIORITY_ERROR_RETURN, "GetThreadPriority() failed, GetLastError() = %lu\n", GetLastError());
     fired = TRUE;
 }
 

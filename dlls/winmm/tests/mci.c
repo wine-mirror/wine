@@ -123,7 +123,7 @@ const char* dbg_mcierr(MCIERROR err)
 #undef X
      default: {
          static char name[20]; /* Not to be called twice in a parameter list! */
-         sprintf(name, "MMSYSERR %u", err);
+         sprintf(name, "MMSYSERR %lu", err);
          return name;
          }
      }
@@ -155,12 +155,12 @@ static void test_notification_dbg(HWND hwnd, const char* command, WPARAM type, i
       seen = PeekMessageA(&msg, hwnd, MM_MCINOTIFY, MM_MCINOTIFY, PM_REMOVE);
     }
     if(!seen)
-      ok_(__FILE__,line)(type==0, "Expect message %04lx from %s\n", type, command);
+      ok_(__FILE__,line)(type==0, "Expect message %04Ix from %s\n", type, command);
     else if(msg.hwnd != hwnd)
         ok_(__FILE__,line)(msg.hwnd == hwnd, "Didn't get the handle to our test window\n");
     else if(msg.message != MM_MCINOTIFY)
         ok_(__FILE__,line)(msg.message == MM_MCINOTIFY, "got %04x instead of MM_MCINOTIFY from command %s\n", msg.message, command);
-    else ok_(__FILE__,line)(msg.wParam == type, "got %04lx instead of MCI_NOTIFY_xyz %04lx from command %s\n", msg.wParam, type, command);
+    else ok_(__FILE__,line)(msg.wParam == type, "got %04Ix instead of MCI_NOTIFY_xyz %04Ix from command %s\n", msg.wParam, type, command);
 }
 
 static void test_mciParser(HWND hwnd)
@@ -316,13 +316,13 @@ static void test_mciParser(HWND hwnd)
     parm.status.dwReturn = 0xFEEDABAD;
     err = mciSendCommandA(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
     ok(!err,"mciCommand status time format: %s\n", dbg_mcierr(err));
-    if(!err) ok(MCI_FORMAT_MILLISECONDS==parm.status.dwReturn,"status time format: %ld\n",parm.status.dwReturn);
+    if(!err) ok(MCI_FORMAT_MILLISECONDS==parm.status.dwReturn,"status time format: %Id\n",parm.status.dwReturn);
 
     parm.status.dwItem = MCI_STATUS_MODE;
     parm.status.dwReturn = 0xFEEDABAD;
     err = mciSendCommandA(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
     ok(!err,"mciCommand status mode: %s\n", dbg_mcierr(err));
-    if(!err) ok(MCI_MODE_STOP==parm.status.dwReturn,"STATUS mode: %ld\n",parm.status.dwReturn);
+    if(!err) ok(MCI_MODE_STOP==parm.status.dwReturn,"STATUS mode: %Id\n",parm.status.dwReturn);
 
     err = mciSendStringA("status x mode", buf, sizeof(buf), hwnd);
     ok(!err,"status mode: %s\n", dbg_mcierr(err));
@@ -332,19 +332,19 @@ static void test_mciParser(HWND hwnd)
     parm.caps.dwReturn = 0xFEEDABAD;
     err = mciSendCommandA(wDeviceID, MCI_GETDEVCAPS, MCI_GETDEVCAPS_ITEM, (DWORD_PTR)&parm);
     ok(!err,"mciCommand getdevcaps files: %s\n", dbg_mcierr(err));
-    if(!err) ok(1==parm.caps.dwReturn,"getdevcaps files: %d\n",parm.caps.dwReturn);
+    if(!err) ok(1==parm.caps.dwReturn,"getdevcaps files: %ld\n",parm.caps.dwReturn);
 
     parm.caps.dwItem = MCI_GETDEVCAPS_HAS_VIDEO;
     parm.caps.dwReturn = 0xFEEDABAD;
     err = mciSendCommandA(wDeviceID, MCI_GETDEVCAPS, MCI_GETDEVCAPS_ITEM, (DWORD_PTR)&parm);
     ok(!err,"mciCommand getdevcaps video: %s\n", dbg_mcierr(err));
-    if(!err) ok(0==parm.caps.dwReturn,"getdevcaps video: %d\n",parm.caps.dwReturn);
+    if(!err) ok(0==parm.caps.dwReturn,"getdevcaps video: %ld\n",parm.caps.dwReturn);
 
     parm.caps.dwItem = MCI_GETDEVCAPS_DEVICE_TYPE;
     parm.caps.dwReturn = 0xFEEDABAD;
     err = mciSendCommandA(wDeviceID, MCI_GETDEVCAPS, MCI_GETDEVCAPS_ITEM, (DWORD_PTR)&parm);
     ok(!err,"mciCommand getdevcaps video: %s\n", dbg_mcierr(err));
-    if(!err) ok(MCI_DEVTYPE_WAVEFORM_AUDIO==parm.caps.dwReturn,"getdevcaps device type: %d\n",parm.caps.dwReturn);
+    if(!err) ok(MCI_DEVTYPE_WAVEFORM_AUDIO==parm.caps.dwReturn,"getdevcaps device type: %ld\n",parm.caps.dwReturn);
 
     err = mciSendStringA("capability x uses files", buf, sizeof(buf), hwnd);
     ok(!err,"capability files: %s\n", dbg_mcierr(err));
@@ -410,7 +410,7 @@ static void test_openCloseWAVE(HWND hwnd)
     }
 
     err = mciGetDeviceIDA("waveaudio");
-    ok(!err, "mciGetDeviceIDA waveaudio returned %u, expected 0\n", err);
+    ok(!err, "mciGetDeviceIDA waveaudio returned %lu, expected 0\n", err);
 
     err = mciSendStringA(command_open, buf, sizeof(buf), hwnd);
     ok(!err,"mci %s returned %s\n", command_open, dbg_mcierr(err));
@@ -525,7 +525,7 @@ static void test_openCloseWAVE(HWND hwnd)
     ok(!strcmp(buf,"K"), "info output buffer %s\n", buf);
 
     err = mciGetDeviceIDA("all");
-    ok(err == MCI_ALL_DEVICE_ID, "mciGetDeviceIDA all returned %u, expected MCI_ALL_DEVICE_ID\n", err);
+    ok(err == MCI_ALL_DEVICE_ID, "mciGetDeviceIDA all returned %lu, expected MCI_ALL_DEVICE_ID\n", err);
 
     err = mciSendStringA(command_close_my, NULL, 0, hwnd);
     ok(!err,"mci %s returned %s\n", command_close_my, dbg_mcierr(err));
@@ -588,13 +588,13 @@ static void test_openCloseWAVE(HWND hwnd)
         parm.caps.dwItem = MCI_GETDEVCAPS_DEVICE_TYPE;
         err = mciSendCommandA(wDeviceID, MCI_GETDEVCAPS, MCI_GETDEVCAPS_ITEM, (DWORD_PTR)&parm);
         ok(!err,"mciCommand MCI_GETDEVCAPS device type: %s\n", dbg_mcierr(err));
-        ok(MCI_DEVTYPE_WAVEFORM_AUDIO==parm.caps.dwReturn,"mciCommand GETDEVCAPS says %u, expected %u\n", parm.caps.dwReturn, MCI_DEVTYPE_WAVEFORM_AUDIO);
+        ok(MCI_DEVTYPE_WAVEFORM_AUDIO==parm.caps.dwReturn,"mciCommand GETDEVCAPS says %lu, expected %u\n", parm.caps.dwReturn, MCI_DEVTYPE_WAVEFORM_AUDIO);
     }
 
     ok(0xDEADF00D==intbuf[0] && 0xABADCAFE==intbuf[2],"DWORD buffer corruption\n");
 
     err = mciGetDeviceIDA("waveaudio");
-    ok(err == 1, "mciGetDeviceIDA waveaudio returned %u, expected 1\n", err);
+    ok(err == 1, "mciGetDeviceIDA waveaudio returned %lu, expected 1\n", err);
 
     err = mciSendStringA("open no-such-file.wav alias waveaudio", buf, sizeof(buf), NULL);
     ok(err==MCIERR_DUPLICATE_ALIAS, "mci open alias waveaudio returned %s\n", dbg_mcierr(err));
@@ -636,11 +636,11 @@ static void test_recordWAVE(HWND hwnd)
     wDeviceID = parm.open.wDeviceID;
 
     err = mciGetDeviceIDA("x");
-    ok(err == wDeviceID, "mciGetDeviceIDA x returned %u, expected %u\n", err, wDeviceID);
+    ok(err == wDeviceID, "mciGetDeviceIDA x returned %lu, expected %u\n", err, wDeviceID);
 
     /* Only the alias is looked up. */
     err = mciGetDeviceIDA("waveaudio");
-    ok(!err, "mciGetDeviceIDA waveaudio returned %u, expected 0\n", err);
+    ok(!err, "mciGetDeviceIDA waveaudio returned %lu, expected 0\n", err);
 
     test_notification(hwnd, "open new", MCI_NOTIFY_SUCCESSFUL);
     test_notification(hwnd, "open new no #2", 0);
@@ -649,7 +649,7 @@ static void test_recordWAVE(HWND hwnd)
     parm.status.dwItem = MCI_STATUS_TIME_FORMAT;
     err = mciSendCommandA(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
     ok(!err,"mciCommand status time format: %s\n", dbg_mcierr(err));
-    ok(parm.status.dwReturn==MCI_FORMAT_MILLISECONDS,"status time format: %ld\n",parm.status.dwReturn);
+    ok(parm.status.dwReturn==MCI_FORMAT_MILLISECONDS,"status time format: %Id\n",parm.status.dwReturn);
 
     /* Info file fails until named in Open or Save. */
     err = mciSendStringA("info x file", buf, sizeof(buf), NULL);
@@ -707,7 +707,7 @@ static void test_recordWAVE(HWND hwnd)
     err = mciSendCommandA(wDeviceID, MCI_GETDEVCAPS, MCI_GETDEVCAPS_ITEM | MCI_NOTIFY,
             (DWORD_PTR)&parm);
     ok(!err,"mciCommand MCI_GETDEVCAPS inputs: %s\n", dbg_mcierr(err));
-    ok(parm.caps.dwReturn==ndevs,"mciCommand GETDEVCAPS claims %u inputs, expected %u\n", parm.caps.dwReturn, ndevs);
+    ok(parm.caps.dwReturn==ndevs,"mciCommand GETDEVCAPS claims %lu inputs, expected %u\n", parm.caps.dwReturn, ndevs);
     ok(!ok_pcm || !parm.caps.dwReturn,"No input device accepts PCM!?\n");
     test_notification(hwnd, "GETDEVCAPS inputs", MCI_NOTIFY_SUCCESSFUL);
 
@@ -739,7 +739,7 @@ static void test_recordWAVE(HWND hwnd)
     err = mciSendCommandA(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
     ok(!err,"mciCommand status position: %s\n", dbg_mcierr(err));
     expect = 2 * nsamp * nch * nbits/8;
-    if(!err) todo_wine ok(parm.status.dwReturn==expect,"recorded %lu bytes, expected %u\n",parm.status.dwReturn,expect);
+    if(!err) todo_wine ok(parm.status.dwReturn==expect,"recorded %Iu bytes, expected %lu\n",parm.status.dwReturn,expect);
 
     parm.set.dwTimeFormat = MCI_FORMAT_SAMPLES;
     err = mciSendCommandA(wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD_PTR)&parm);
@@ -749,7 +749,7 @@ static void test_recordWAVE(HWND hwnd)
     err = mciSendCommandA(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
     ok(!err,"mciCommand status position: %s\n", dbg_mcierr(err));
     expect = 2 * nsamp;
-    if(!err) todo_wine ok(parm.status.dwReturn==expect,"recorded %lu samples, expected %u\n",parm.status.dwReturn,expect);
+    if(!err) todo_wine ok(parm.status.dwReturn==expect,"recorded %Iu samples, expected %lu\n",parm.status.dwReturn,expect);
 
     err = mciSendStringA("set x time format milliseconds", NULL, 0, NULL);
     ok(!err,"mci set time format milliseconds returned %s\n", dbg_mcierr(err));
@@ -763,7 +763,7 @@ static void test_recordWAVE(HWND hwnd)
 
     /* Save must not rename the original file. */
     if (!DeleteFileA("tempfile1.wav"))
-        todo_wine ok(FALSE, "Save must not rename the original file; DeleteFileA returned %d\n",
+        todo_wine ok(FALSE, "Save must not rename the original file; DeleteFileA returned %ld\n",
                 GetLastError());
 
     err = mciSendStringA("set x channels 2", NULL, 0, NULL);
@@ -800,13 +800,13 @@ static void test_playWAVE(HWND hwnd)
     }
 
     err = mciGetDeviceIDA("mysound");
-    ok(err == 1, "mciGetDeviceIDA mysound returned %u, expected 1\n", err);
+    ok(err == 1, "mciGetDeviceIDA mysound returned %lu, expected 1\n", err);
 
     err = mciGetDeviceIDA("tempfile.wav");
-    ok(!err, "mciGetDeviceIDA tempfile.wav returned %u, expected 0\n", err);
+    ok(!err, "mciGetDeviceIDA tempfile.wav returned %lu, expected 0\n", err);
 
     err = mciGetDeviceIDA("waveaudio");
-    ok(!err, "mciGetDeviceIDA waveaudio returned %u, expected 0\n", err);
+    ok(!err, "mciGetDeviceIDA waveaudio returned %lu, expected 0\n", err);
 
     err = mciSendStringA("status mysound length", buf, sizeof(buf), NULL);
     ok(!err,"mci status length returned %s\n", dbg_mcierr(err));
@@ -964,7 +964,7 @@ static void test_asyncWAVE(HWND hwnd)
     parm.status.dwItem = MCI_STATUS_TIME_FORMAT;
     err = mciSendCommandA(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
     ok(!err,"mciCommand status time format: %s\n", dbg_mcierr(err));
-    if(!err) ok(parm.status.dwReturn==MCI_FORMAT_MILLISECONDS,"status time format: %ld\n",parm.status.dwReturn);
+    if(!err) ok(parm.status.dwReturn==MCI_FORMAT_MILLISECONDS,"status time format: %Id\n",parm.status.dwReturn);
 
     parm.set.dwTimeFormat = MCI_FORMAT_MILLISECONDS;
     err = mciSendCommandA(wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD_PTR)&parm);
@@ -1188,7 +1188,7 @@ static void test_AutoOpenWAVE(HWND hwnd)
     test_notification(hwnd, "sysinfo name notify\n", MCI_NOTIFY_SUCCESSFUL);
 
     err = mciGetDeviceIDA("tempfile.wav");
-    ok(err == 1, "mciGetDeviceIDA tempfile.wav returned %u, expected 1\n", err);
+    ok(err == 1, "mciGetDeviceIDA tempfile.wav returned %lu, expected 1\n", err);
 
     /* Save the full pathname to the file. */
     err = mciSendStringA("info tempfile.wav file", path, sizeof(path), NULL);
@@ -1318,7 +1318,7 @@ static void test_playWaveTypeMpegvideo(void)
                           (DWORD_PTR)&status_parm);
     ok(!err,"mciCommand status mode returned %s\n", dbg_mcierr(err));
     ok(status_parm.dwReturn == MCI_MODE_PLAY,
-       "mciCommand status mode: %u\n", (DWORD)status_parm.dwReturn);
+       "mciCommand status mode: %lu\n", (DWORD)status_parm.dwReturn);
 
     err = mciSendStringA("setaudio mysound volume to 1000", NULL, 0, NULL);
     ok(!err,"mci setaudio volume to 1000 returned %s\n", dbg_mcierr(err));
@@ -1392,10 +1392,10 @@ static DWORD CALLBACK thread_cb(void *p)
     MCIERROR mr;
 
     mr = mciSendStringA("play x", NULL, 0, NULL);
-    ok(mr == MCIERR_INVALID_DEVICE_NAME, "play gave: 0x%x\n", mr);
+    ok(mr == MCIERR_INVALID_DEVICE_NAME, "play gave: 0x%lx\n", mr);
 
     mr = mciSendStringA("close x", NULL, 0, NULL);
-    ok(mr == MCIERR_INVALID_DEVICE_NAME, "close gave: 0x%x\n", mr);
+    ok(mr == MCIERR_INVALID_DEVICE_NAME, "close gave: 0x%lx\n", mr);
 
     SetEvent(evt);
 
@@ -1408,7 +1408,7 @@ static void test_threads(void)
     HANDLE evt;
 
     mr = mciSendStringA("open tempfile.wav alias x", NULL, 0, NULL);
-    ok(mr == 0 || mr == ok_saved, "open gave: 0x%x\n", mr);
+    ok(mr == 0 || mr == ok_saved, "open gave: 0x%lx\n", mr);
     if(mr){
         skip("Cannot open tempfile.wav for playing (%s), skipping\n", dbg_mcierr(mr));
         return;
@@ -1423,7 +1423,7 @@ static void test_threads(void)
     CloseHandle(evt);
 
     mr = mciSendStringA("close x", NULL, 0, NULL);
-    ok(mr == 0, "close gave: 0x%x\n", mr);
+    ok(mr == 0, "close gave: 0x%lx\n", mr);
 }
 
 START_TEST(mci)

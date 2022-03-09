@@ -46,7 +46,7 @@ static void create_window(void)
     window = CreateWindowExA(0, name, name, WS_OVERLAPPEDWINDOW,
                              CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
                              NULL, NULL, NULL, NULL);
-    ok(window != NULL, "Expected CreateWindowEx to work, error %d\n", GetLastError());
+    ok(window != NULL, "Expected CreateWindowEx to work, error %ld\n", GetLastError());
 }
 
 static void destroy_window(void)
@@ -211,11 +211,11 @@ static void test_api(void)
             ret = joyGetPosEx(joyid, &infoex.ex);
             if (ret == JOYERR_NOERROR)
             {
-                trace("X: %5d, Y: %5d, Z: %5d, POV: %5d\n",
+                trace("X: %5ld, Y: %5ld, Z: %5ld, POV: %5ld\n",
                        infoex.ex.dwXpos, infoex.ex.dwYpos, infoex.ex.dwZpos, infoex.ex.dwPOV);
-                trace("R: %5d, U: %5d, V: %5d\n",
+                trace("R: %5ld, U: %5ld, V: %5ld\n",
                        infoex.ex.dwRpos, infoex.ex.dwUpos, infoex.ex.dwVpos);
-                trace("BUTTONS: 0x%04X, BUTTON_COUNT: %2d, REMAINING: %d ms\n\n",
+                trace("BUTTONS: 0x%04lX, BUTTON_COUNT: %2ld, REMAINING: %ld ms\n\n",
                        infoex.ex.dwButtons, infoex.ex.dwButtonNumber, MAX_TIME - spent);
             }
             Sleep(500);
