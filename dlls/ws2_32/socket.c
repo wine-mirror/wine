@@ -1578,12 +1578,13 @@ int WINAPI getsockopt( SOCKET s, int level, int optname, char *optval, int *optl
         case SO_OPENTYPE:
             if (!optlen || *optlen < sizeof(int) || !optval)
             {
-                SetLastError(WSAEFAULT);
+                SetLastError( WSAEFAULT );
                 return SOCKET_ERROR;
             }
             *(int *)optval = get_per_thread_data()->opentype;
             *optlen = sizeof(int);
             TRACE("getting global SO_OPENTYPE = 0x%x\n", *((int*)optval) );
+            SetLastError( ERROR_SUCCESS );
             return 0;
 
         case SO_PROTOCOL_INFOA:
@@ -2917,11 +2918,12 @@ int WINAPI setsockopt( SOCKET s, int level, int optname, const char *optval, int
         case SO_OPENTYPE:
             if (!optlen || optlen < sizeof(int) || !optval)
             {
-                SetLastError(WSAEFAULT);
+                SetLastError( WSAEFAULT );
                 return SOCKET_ERROR;
             }
             get_per_thread_data()->opentype = *(const int *)optval;
             TRACE("setting global SO_OPENTYPE = 0x%x\n", *((const int*)optval) );
+            SetLastError( ERROR_SUCCESS );
             return 0;
 
         case SO_RANDOMIZE_PORT:
