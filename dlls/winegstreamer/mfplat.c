@@ -408,6 +408,7 @@ class_objects[] =
     { &CLSID_VideoProcessorMFT, &video_processor_create },
     { &CLSID_GStreamerByteStreamHandler, &winegstreamer_stream_handler_create },
     { &CLSID_WINEAudioConverter, &audio_converter_create },
+    { &CLSID_MSH264DecoderMFT, &h264_decoder_create },
 };
 
 HRESULT mfplat_get_class_object(REFCLSID rclsid, REFIID riid, void **obj)
@@ -457,6 +458,21 @@ static const GUID *const wma_decoder_output_types[] =
     &MFAudioFormat_Float,
 };
 
+static WCHAR h264_decoderW[] = L"Microsoft H264 Video Decoder MFT";
+static const GUID *const h264_decoder_input_types[] =
+{
+    &MFVideoFormat_H264,
+    &MFVideoFormat_H264_ES,
+};
+static const GUID *const h264_decoder_output_types[] =
+{
+    &MFVideoFormat_NV12,
+    &MFVideoFormat_YV12,
+    &MFVideoFormat_IYUV,
+    &MFVideoFormat_I420,
+    &MFVideoFormat_YUY2,
+};
+
 static const struct mft
 {
     const GUID *clsid;
@@ -493,13 +509,24 @@ mfts[] =
         ARRAY_SIZE(wma_decoder_output_types),
         wma_decoder_output_types,
     },
+    {
+        &CLSID_MSH264DecoderMFT,
+        &MFT_CATEGORY_VIDEO_DECODER,
+        h264_decoderW,
+        MFT_ENUM_FLAG_SYNCMFT,
+        &MFMediaType_Video,
+        ARRAY_SIZE(h264_decoder_input_types),
+        h264_decoder_input_types,
+        ARRAY_SIZE(h264_decoder_output_types),
+        h264_decoder_output_types,
+    },
 };
 
 HRESULT mfplat_DllRegisterServer(void)
 {
     unsigned int i, j;
     HRESULT hr;
-    MFT_REGISTER_TYPE_INFO input_types[4], output_types[2];
+    MFT_REGISTER_TYPE_INFO input_types[4], output_types[5];
 
     for (i = 0; i < ARRAY_SIZE(mfts); i++)
     {

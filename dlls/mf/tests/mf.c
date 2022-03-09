@@ -6878,7 +6878,7 @@ static void test_h264_decoder(void)
     {
         status = 0;
         memset(&output, 0, sizeof(output));
-        output.pSample = create_sample(NULL, output_info.cbSize);
+        output.pSample = create_sample(NULL, 0x3fc000);
         hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
         if (hr != MF_E_TRANSFORM_NEED_MORE_INPUT) break;
         ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
