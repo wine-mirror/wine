@@ -2090,30 +2090,7 @@ BOOL WINAPI IsWindowUnicode( HWND hwnd )
  */
 DPI_AWARENESS_CONTEXT WINAPI GetWindowDpiAwarenessContext( HWND hwnd )
 {
-    WND *win;
-    DPI_AWARENESS_CONTEXT ret = 0;
-
-    if (!(win = WIN_GetPtr( hwnd )))
-    {
-        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-        return 0;
-    }
-    if (win == WND_DESKTOP) return DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE;
-    if (win != WND_OTHER_PROCESS)
-    {
-        ret = ULongToHandle( win->dpi_awareness | 0x10 );
-        WIN_ReleasePtr( win );
-    }
-    else
-    {
-        SERVER_START_REQ( get_window_info )
-        {
-            req->handle = wine_server_user_handle( hwnd );
-            if (!wine_server_call_err( req )) ret = ULongToHandle( reply->awareness | 0x10 );
-        }
-        SERVER_END_REQ;
-    }
-    return ret;
+    return (DPI_AWARENESS_CONTEXT)NtUserCallHwnd( hwnd, NtUserGetWindowDpiAwarenessContext );
 }
 
 

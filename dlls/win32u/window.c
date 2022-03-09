@@ -679,6 +679,35 @@ static BOOL is_window_unicode( HWND hwnd )
     return ret;
 }
 
+/* see GetWindowDpiAwarenessContext */
+static DPI_AWARENESS_CONTEXT get_window_dpi_awareness_context( HWND hwnd )
+{
+    DPI_AWARENESS_CONTEXT ret = 0;
+    WND *win;
+
+    if (!(win = get_win_ptr( hwnd )))
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+    if (win == WND_DESKTOP) return DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE;
+    if (win != WND_OTHER_PROCESS)
+    {
+        ret = ULongToHandle( win->dpi_awareness | 0x10 );
+        release_win_ptr( win );
+    }
+    else
+    {
+        SERVER_START_REQ( get_window_info )
+        {
+            req->handle = wine_server_user_handle( hwnd );
+            if (!wine_server_call_err( req )) ret = ULongToHandle( reply->awareness | 0x10 );
+        }
+        SERVER_END_REQ;
+    }
+    return ret;
+}
+
 static LONG_PTR get_win_data( const void *ptr, UINT size )
 {
     if (size == sizeof(WORD))
@@ -1082,12 +1111,14 @@ BOOL WINAPI NtUserFlashWindowEx( FLASHWINFO *info )
 /*****************************************************************************
  *           NtUserCallHwnd (win32u.@)
  */
-DWORD WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
+ULONG_PTR WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
 {
     switch (code)
     {
     case NtUserGetParent:
         return HandleToUlong( get_parent( hwnd ));
+    case NtUserGetWindowDpiAwarenessContext:
+        return (ULONG_PTR)get_window_dpi_awareness_context( hwnd );
     case NtUserGetWindowTextLength:
         return get_server_window_text( hwnd, NULL, 0 );
     case NtUserIsWindow:
