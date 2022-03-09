@@ -39,19 +39,19 @@ static void test_EnumDeviceInfo(void)
     ULONG count;
 
     hr = IWiaDevMgr_EnumDeviceInfo(devmanager, WIA_DEVINFO_ENUM_LOCAL, NULL);
-    ok(FAILED(hr), "got 0x%08x\n", hr);
+    ok(FAILED(hr), "got 0x%08lx\n", hr);
 
     hr = IWiaDevMgr_EnumDeviceInfo(devmanager, WIA_DEVINFO_ENUM_LOCAL, &devenum);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IEnumWIA_DEV_INFO_GetCount(devenum, NULL);
-    ok(FAILED(hr), "got 0x%08x\n", hr);
+    ok(FAILED(hr), "got 0x%08lx\n", hr);
 
     count = 1000;
     hr = IEnumWIA_DEV_INFO_GetCount(devenum, &count);
     todo_wine
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(count != 1000, "got %u\n", count);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(count != 1000, "got %lu\n", count);
 
     IEnumWIA_DEV_INFO_Release(devenum);
 }
@@ -62,11 +62,11 @@ static void test_SelectDeviceDlg(void)
     IWiaItem *root;
     hr = IWiaDevMgr_SelectDeviceDlg(devmanager, NULL, StiDeviceTypeDefault, 0, NULL, NULL);
     todo_wine
-    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "got 0x%08lx\n", hr);
 
     hr = IWiaDevMgr_SelectDeviceDlg(devmanager, NULL, StiDeviceTypeDefault, 0, NULL, &root);
     todo_wine
-    ok(hr == S_OK || hr == WIA_S_NO_DEVICE_AVAILABLE, "got 0x%08x\n", hr);
+    ok(hr == S_OK || hr == WIA_S_NO_DEVICE_AVAILABLE, "got 0x%08lx\n", hr);
 }
 
 START_TEST(wia)
@@ -77,7 +77,7 @@ START_TEST(wia)
 
     hr = CoCreateInstance(&CLSID_WiaDevMgr, NULL, CLSCTX_LOCAL_SERVER, &IID_IWiaDevMgr, (void**)&devmanager);
     if (FAILED(hr)) {
-        win_skip("Failed to create WiaDevMgr instance, 0x%08x\n", hr);
+        win_skip("Failed to create WiaDevMgr instance, 0x%08lx\n", hr);
         CoUninitialize();
         return;
     }
