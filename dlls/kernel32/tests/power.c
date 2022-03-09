@@ -17,6 +17,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include "wine/test.h"
 
@@ -53,14 +54,14 @@ void test_GetSystemPowerStatus(void)
            "expected %u%%-charged battery to have capacity flags 0x%02x, got 0x%02x\n",
            ps.BatteryLifePercent, expected_capacity_flags, capacity_flags);
         ok(ps.BatteryLifeTime <= ps.BatteryFullLifeTime,
-           "expected BatteryLifeTime %u to be less than or equal to BatteryFullLifeTime %u\n",
+           "expected BatteryLifeTime %lu to be less than or equal to BatteryFullLifeTime %lu\n",
            ps.BatteryLifeTime, ps.BatteryFullLifeTime);
         if (ps.BatteryFlag & BATTERY_FLAG_CHARGING)
         {
             ok(ps.BatteryLifeTime == BATTERY_LIFE_UNKNOWN,
-               "expected BatteryLifeTime to be -1 when charging, got %u\n", ps.BatteryLifeTime);
+               "expected BatteryLifeTime to be -1 when charging, got %lu\n", ps.BatteryLifeTime);
             ok(ps.BatteryFullLifeTime == BATTERY_LIFE_UNKNOWN,
-               "expected BatteryFullLifeTime to be -1 when charging, got %u\n", ps.BatteryFullLifeTime);
+               "expected BatteryFullLifeTime to be -1 when charging, got %lu\n", ps.BatteryFullLifeTime);
         }
     }
     else
@@ -71,9 +72,9 @@ void test_GetSystemPowerStatus(void)
         ok(ps.BatteryLifePercent == BATTERY_PERCENTAGE_UNKNOWN,
            "expected BatteryLifePercent to be -1, got %u\n", ps.BatteryLifePercent);
         ok(ps.BatteryLifeTime == BATTERY_LIFE_UNKNOWN,
-           "expected BatteryLifeTime to be -1, got %u\n", ps.BatteryLifeTime);
+           "expected BatteryLifeTime to be -1, got %lu\n", ps.BatteryLifeTime);
         ok(ps.BatteryFullLifeTime == BATTERY_LIFE_UNKNOWN,
-           "expected BatteryFullLifeTime to be -1, got %u\n", ps.BatteryFullLifeTime);
+           "expected BatteryFullLifeTime to be -1, got %lu\n", ps.BatteryFullLifeTime);
     }
 }
 

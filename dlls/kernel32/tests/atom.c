@@ -17,6 +17,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -115,20 +116,20 @@ static void test_add_atom(void)
     {
         SetLastError( 0xdeadbeef );
         ok( GlobalAddAtomA((LPCSTR)i) == i && GetLastError() == 0xdeadbeef,
-            "failed to add atom %lx\n", i );
+            "failed to add atom %Ix\n", i );
         if (unicode_OS)
         {
             SetLastError( 0xdeadbeef );
             ok( GlobalAddAtomW((LPCWSTR)i) == i && GetLastError() == 0xdeadbeef,
-                "failed to add atom %lx\n", i );
+                "failed to add atom %Ix\n", i );
         }
     }
 
     for (i = 0xc000; i <= 0xffff; i++)
     {
-        ok( !GlobalAddAtomA((LPCSTR)i), "succeeded adding %lx\n", i );
+        ok( !GlobalAddAtomA((LPCSTR)i), "succeeded adding %Ix\n", i );
         if (unicode_OS)
-            ok( !GlobalAddAtomW((LPCWSTR)i), "succeeded adding %lx\n", i );
+            ok( !GlobalAddAtomW((LPCWSTR)i), "succeeded adding %Ix\n", i );
     }
 }
 
@@ -196,7 +197,7 @@ static void test_get_atom_name(void)
         len = GlobalGetAtomNameA( (ATOM)i, buf, 2);
         ok(!len, "bad length %d\n", len);
 	ok(GetLastError() == ERROR_MORE_DATA || GetLastError() == ERROR_INVALID_PARAMETER,
-            "wrong error conditions %u for %u\n", GetLastError(), i);
+            "wrong error conditions %lu for %u\n", GetLastError(), i);
     }
 
     memset( buf, '.', sizeof(buf) );
@@ -229,7 +230,7 @@ static void test_get_atom_name(void)
     SetLastError(0xdeadbeef);
     len = GlobalGetAtomNameA(atom, out, 10);
     ok(!len, "bad length %d\n", len);
-    ok(GetLastError() == ERROR_MORE_DATA, "wrong error code (%u instead of %u)\n", GetLastError(), ERROR_MORE_DATA);
+    ok(GetLastError() == ERROR_MORE_DATA, "wrong error code (%lu instead of %u)\n", GetLastError(), ERROR_MORE_DATA);
     for (i = 0; i < 9; i++)
     {
         ok(out[i] == "abcdefghij"[i % 10], "wrong string at %i (%c instead of %c)\n", i, out[i], "abcdefghij"[i % 10]);
@@ -266,7 +267,7 @@ static void test_get_atom_name(void)
             {
                 /* len == 0 with ERROR_MORE_DATA is on NT3.51 */
                 ok(len == 1 || (len == 0 && GetLastError() == ERROR_MORE_DATA),
-                         "0x%04x: got %u with %d (expected '1' or '0' with "
+                         "0x%04x: got %u with %ld (expected '1' or '0' with "
                          "ERROR_MORE_DATA)\n", i, len, GetLastError());
                 ok(outW[1] == DOUBLE('.'), "buffer overwrite\n");
             }
@@ -373,20 +374,20 @@ static void test_local_add_atom(void)
     {
         SetLastError( 0xdeadbeef );
         ok( AddAtomA((LPCSTR)i) == i && GetLastError() == 0xdeadbeef,
-            "failed to add atom %lx\n", i );
+            "failed to add atom %Ix\n", i );
         if (unicode_OS)
         {
             SetLastError( 0xdeadbeef );
             ok( AddAtomW((LPCWSTR)i) == i && GetLastError() == 0xdeadbeef,
-                "failed to add atom %lx\n", i );
+                "failed to add atom %Ix\n", i );
         }
     }
 
     for (i = 0xc000; i <= 0xffff; i++)
     {
-        ok( !AddAtomA((LPCSTR)i), "succeeded adding %lx\n", i );
+        ok( !AddAtomA((LPCSTR)i), "succeeded adding %Ix\n", i );
         if (unicode_OS)
-            ok( !AddAtomW((LPCWSTR)i), "succeeded adding %lx\n", i );
+            ok( !AddAtomW((LPCWSTR)i), "succeeded adding %Ix\n", i );
     }
 }
 
@@ -472,11 +473,11 @@ static void test_local_get_atom_name(void)
         if (i)
             ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER ||
                GetLastError() == ERROR_MORE_DATA,
-               "wrong error conditions %u for %u\n", GetLastError(), i);
+               "wrong error conditions %lu for %u\n", GetLastError(), i);
         else
             ok(GetLastError() == ERROR_INVALID_PARAMETER ||
                GetLastError() == ERROR_MORE_DATA,
-               "wrong error conditions %u for %u\n", GetLastError(), i);
+               "wrong error conditions %lu for %u\n", GetLastError(), i);
     }
     /* test string limits & overflow */
     do_initA(in, "abcdefghij", 255);
@@ -505,7 +506,7 @@ static void test_local_get_atom_name(void)
     /* ERROR_MORE_DATA is on nt3.51 sp5 */
     ok(GetLastError() == ERROR_INVALID_PARAMETER ||
        GetLastError() == ERROR_MORE_DATA,
-       "wrong error code (%u)\n", GetLastError());
+       "wrong error code (%lu)\n", GetLastError());
 
     if (unicode_OS)
     {
@@ -532,7 +533,7 @@ static void test_local_get_atom_name(void)
             /* ERROR_MORE_DATA is on nt3.51 sp5 */
             ok(GetLastError() == ERROR_MORE_DATA ||
                GetLastError() == (i ? ERROR_INSUFFICIENT_BUFFER : ERROR_INVALID_PARAMETER),
-               "wrong error conditions %u for %u\n", GetLastError(), i);
+               "wrong error conditions %lu for %u\n", GetLastError(), i);
         }
         do_initW(inW, "abcdefghij", 255);
         atom = AddAtomW(inW);
@@ -560,7 +561,7 @@ static void test_local_get_atom_name(void)
         /* ERROR_MORE_DATA is on nt3.51 sp5 */
         ok(GetLastError() == ERROR_INVALID_PARAMETER ||
            GetLastError() == ERROR_MORE_DATA,
-           "wrong error code (%u)\n", GetLastError());
+           "wrong error code (%lu)\n", GetLastError());
     }
 }
 

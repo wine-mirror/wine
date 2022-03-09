@@ -17,6 +17,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include <stdarg.h>
 
@@ -35,7 +36,7 @@ static void test_GetDriveTypeA(void)
     UINT type;
 
     logical_drives = GetLogicalDrives();
-    ok(logical_drives != 0, "GetLogicalDrives error %d\n", GetLastError());
+    ok(logical_drives != 0, "GetLogicalDrives error %ld\n", GetLastError());
 
     for (drive[0] = 'A'; drive[0] <= 'Z'; drive[0]++)
     {
@@ -88,7 +89,7 @@ static void test_GetDriveTypeW(void)
     UINT type;
 
     logical_drives = GetLogicalDrives();
-    ok(logical_drives != 0, "GetLogicalDrives error %d\n", GetLastError());
+    ok(logical_drives != 0, "GetLogicalDrives error %ld\n", GetLastError());
 
     for (drive[0] = 'A'; drive[0] <= 'Z'; drive[0]++)
     {
@@ -142,21 +143,21 @@ static void test_GetDiskFreeSpaceA(void)
     DWORD logical_drives;
 
     ret = GetDiskFreeSpaceA(NULL, &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters);
-    ok(ret, "GetDiskFreeSpaceA error %d\n", GetLastError());
+    ok(ret, "GetDiskFreeSpaceA error %ld\n", GetLastError());
 
     ret = GetDiskFreeSpaceA("", &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters);
     ok(!ret && (GetLastError() == ERROR_PATH_NOT_FOUND || GetLastError() == ERROR_INVALID_NAME),
-       "GetDiskFreeSpaceA(\"\"): ret=%d GetLastError=%d\n",
+       "GetDiskFreeSpaceA(\"\"): ret=%d GetLastError=%ld\n",
        ret, GetLastError());
 
     ret = GetDiskFreeSpaceA("\\", &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters);
-    ok(ret, "GetDiskFreeSpaceA error %d\n", GetLastError());
+    ok(ret, "GetDiskFreeSpaceA error %ld\n", GetLastError());
 
     ret = GetDiskFreeSpaceA("/", &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters);
-    ok(ret, "GetDiskFreeSpaceA error %d\n", GetLastError());
+    ok(ret, "GetDiskFreeSpaceA error %ld\n", GetLastError());
 
     logical_drives = GetLogicalDrives();
-    ok(logical_drives != 0, "GetLogicalDrives error %d\n", GetLastError());
+    ok(logical_drives != 0, "GetLogicalDrives error %ld\n", GetLastError());
 
     for (drive[0] = 'A'; drive[0] <= 'Z'; drive[0]++)
     {
@@ -169,7 +170,7 @@ static void test_GetDiskFreeSpaceA(void)
             ret = GetDiskFreeSpaceA(drive, &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters);
             if (!(logical_drives & 1))
                 ok(!ret && (GetLastError() == ERROR_PATH_NOT_FOUND || GetLastError() == ERROR_INVALID_DRIVE),
-                   "GetDiskFreeSpaceA(%s): ret=%d GetLastError=%d\n",
+                   "GetDiskFreeSpaceA(%s): ret=%d GetLastError=%ld\n",
                    drive, ret, GetLastError());
             else
             {
@@ -177,12 +178,12 @@ static void test_GetDiskFreeSpaceA(void)
                 if (!ret)
                     /* GetDiskFreeSpaceA() should succeed, but it can fail with too many
                        different GetLastError() results to be usable for an ok() */
-                    trace("GetDiskFreeSpaceA(%s) failed with %d\n", drive, GetLastError());
+                    trace("GetDiskFreeSpaceA(%s) failed with %ld\n", drive, GetLastError());
 
                 if( GetVersion() & 0x80000000)
                     /* win3.0 through winME */
                     ok( total_clusters <= 65535,
-                            "total clusters is %d > 65535\n", total_clusters);
+                            "total clusters is %ld > 65535\n", total_clusters);
                 else if (pGetDiskFreeSpaceExA) {
                     /* NT, 2k, XP : GetDiskFreeSpace should be accurate */
                     ULARGE_INTEGER totEx, tot, d;
@@ -194,7 +195,7 @@ static void test_GetDiskFreeSpaceA(void)
                     if (!ret)
                         /* GetDiskFreeSpaceExA() should succeed, but it can fail with too many
                            different GetLastError() results to be usable for an ok() */
-                        trace("GetDiskFreeSpaceExA(%s) failed with %d\n", drive, GetLastError());
+                        trace("GetDiskFreeSpaceExA(%s) failed with %ld\n", drive, GetLastError());
 
                     ok( bytes_per_sector == 0 || /* empty cd rom drive */
                         totEx.QuadPart <= tot.QuadPart,
@@ -222,21 +223,21 @@ static void test_GetDiskFreeSpaceW(void)
         win_skip("GetDiskFreeSpaceW is not available\n");
         return;
     }
-    ok(ret, "GetDiskFreeSpaceW error %d\n", GetLastError());
+    ok(ret, "GetDiskFreeSpaceW error %ld\n", GetLastError());
 
     ret = GetDiskFreeSpaceW(empty_pathW, &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters);
     ok(!ret && GetLastError() == ERROR_PATH_NOT_FOUND,
-       "GetDiskFreeSpaceW(\"\"): ret=%d GetLastError=%d\n",
+       "GetDiskFreeSpaceW(\"\"): ret=%d GetLastError=%ld\n",
        ret, GetLastError());
 
     ret = GetDiskFreeSpaceW(root_pathW, &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters);
-    ok(ret, "GetDiskFreeSpaceW(\"\") error %d\n", GetLastError());
+    ok(ret, "GetDiskFreeSpaceW(\"\") error %ld\n", GetLastError());
 
     ret = GetDiskFreeSpaceW(unix_style_root_pathW, &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters);
-    ok(ret, "GetDiskFreeSpaceW error %d\n", GetLastError());
+    ok(ret, "GetDiskFreeSpaceW error %ld\n", GetLastError());
 
     logical_drives = GetLogicalDrives();
-    ok(logical_drives != 0, "GetLogicalDrives error %d\n", GetLastError());
+    ok(logical_drives != 0, "GetLogicalDrives error %ld\n", GetLastError());
 
     for (drive[0] = 'A'; drive[0] <= 'Z'; drive[0]++)
     {
@@ -247,12 +248,12 @@ static void test_GetDiskFreeSpaceW(void)
             ret = GetDiskFreeSpaceW(drive, &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters);
             if (!(logical_drives & 1))
                 ok(!ret && GetLastError() == ERROR_PATH_NOT_FOUND,
-                   "GetDiskFreeSpaceW(%c): ret=%d GetLastError=%d\n",
+                   "GetDiskFreeSpaceW(%c): ret=%d GetLastError=%ld\n",
                    drive[0], ret, GetLastError());
             else if (!ret)
                 /* GetDiskFreeSpaceW() should succeed, but it can fail with too many
                    different GetLastError() results to be usable for an ok() */
-                trace("GetDiskFreeSpaceW(%c) failed with %d\n", drive[0], GetLastError());
+                trace("GetDiskFreeSpaceW(%c) failed with %ld\n", drive[0], GetLastError());
         }
         logical_drives >>= 1;
     }

@@ -17,6 +17,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include <windows.h>
 #include <stdio.h>
@@ -332,10 +333,10 @@ static void update_resources_version( void )
                         MAKEINTRESOURCEA(0x4567),
                         0xabcd,
                         foo, sizeof foo );
-    ok( r == TRUE, "UpdateResource failed: %d\n", GetLastError());
+    ok( r == TRUE, "UpdateResource failed: %ld\n", GetLastError());
 
     r = EndUpdateResourceA( res, FALSE );
-    ok( r, "EndUpdateResource failed: %d\n", GetLastError());
+    ok( r, "EndUpdateResource failed: %ld\n", GetLastError());
 }
 
 static void update_resources_bigdata( void )
@@ -352,7 +353,7 @@ static void update_resources_bigdata( void )
                         MAKEINTRESOURCEA(0x5647),
                         0xcdba,
                         foo, sizeof foo );
-    ok( r == TRUE, "UpdateResource failed: %d\n", GetLastError());
+    ok( r == TRUE, "UpdateResource failed: %ld\n", GetLastError());
 
     r = EndUpdateResourceA( res, FALSE );
     ok( r, "EndUpdateResource failed\n");
@@ -367,27 +368,27 @@ static void update_resources_name( void )
     BOOL ret;
 
     res = BeginUpdateResourceA( filename, TRUE );
-    ok( res != NULL, "BeginUpdateResource failed: %u\n", GetLastError() );
+    ok( res != NULL, "BeginUpdateResource failed: %lu\n", GetLastError() );
     if ( !res ) return;
 
     ret = UpdateResourceA( res, res_type, res_name, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), foo, sizeof(foo) );
-    ok( ret == TRUE, "UpdateResource failed: %u\n", GetLastError() );
+    ok( ret == TRUE, "UpdateResource failed: %lu\n", GetLastError() );
 
     ret = EndUpdateResourceA( res, FALSE );
-    ok( ret, "EndUpdateResource failed: %u\n", GetLastError() );
+    ok( ret, "EndUpdateResource failed: %lu\n", GetLastError() );
     if ( !ret ) return;
 
     module = LoadLibraryExA( filename, NULL, LOAD_LIBRARY_AS_DATAFILE );
-    ok( module != NULL, "LoadLibraryEx failed: %u\n", GetLastError() );
+    ok( module != NULL, "LoadLibraryEx failed: %lu\n", GetLastError() );
     if ( !module ) return;
 
     rsrc = FindResourceA( module, res_name, res_type );
     ok( rsrc != NULL ||
         broken( GetLastError() == ERROR_RESOURCE_TYPE_NOT_FOUND ) /* win2008 */,
-        "FindResource failed: %u\n", GetLastError() );
+        "FindResource failed: %lu\n", GetLastError() );
 
     ret = FreeLibrary(module);
-    ok( ret, "FreeLibrary failed: %u\n", GetLastError() );
+    ok( ret, "FreeLibrary failed: %lu\n", GetLastError() );
 }
 
 static void check_exe( const sec_verify *verify )
@@ -402,7 +403,7 @@ static void check_exe( const sec_verify *verify )
     DWORD length, sec_count = 0;
 
     file = CreateFileA(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
-    ok (file != INVALID_HANDLE_VALUE, "failed to create file (%d)\n", GetLastError());
+    ok (file != INVALID_HANDLE_VALUE, "failed to create file (%ld)\n", GetLastError());
 
     length = GetFileSize( file, NULL );
     ok( length >= verify->length, "file size wrong\n");
@@ -423,11 +424,11 @@ static void check_exe( const sec_verify *verify )
     for(i = 0; i < max_sections; i++)
         if (verify->sect_out[i])
         {
-            ok( !memcmp(&verify->sect_out[i]->Name, &sec[sec_count].Name, 8), "section %d name wrong\n", sec_count);
-            ok( verify->sect_out[i]->VirtualAddress == sec[sec_count].VirtualAddress, "section %d vaddr wrong\n", sec_count);
-            ok( verify->sect_out[i]->SizeOfRawData <= sec[sec_count].SizeOfRawData, "section %d SizeOfRawData wrong (%d vs %d)\n", sec_count, verify->sect_out[i]->SizeOfRawData ,sec[sec_count].SizeOfRawData);
-            ok( verify->sect_out[i]->PointerToRawData == sec[sec_count].PointerToRawData, "section %d PointerToRawData wrong\n", sec_count);
-            ok( verify->sect_out[i]->Characteristics == sec[sec_count].Characteristics , "section %d characteristics wrong\n", sec_count);
+            ok( !memcmp(&verify->sect_out[i]->Name, &sec[sec_count].Name, 8), "section %ld name wrong\n", sec_count);
+            ok( verify->sect_out[i]->VirtualAddress == sec[sec_count].VirtualAddress, "section %ld vaddr wrong\n", sec_count);
+            ok( verify->sect_out[i]->SizeOfRawData <= sec[sec_count].SizeOfRawData, "section %ld SizeOfRawData wrong (%ld vs %ld)\n", sec_count, verify->sect_out[i]->SizeOfRawData ,sec[sec_count].SizeOfRawData);
+            ok( verify->sect_out[i]->PointerToRawData == sec[sec_count].PointerToRawData, "section %ld PointerToRawData wrong\n", sec_count);
+            ok( verify->sect_out[i]->Characteristics == sec[sec_count].Characteristics , "section %ld characteristics wrong\n", sec_count);
             sec_count++;
         }
 
@@ -438,17 +439,17 @@ static void check_exe( const sec_verify *verify )
         dir = (void*) ((BYTE*) dos + sec[verify->rsrc_section].VirtualAddress);
 
         ok( dir->Characteristics == 0, "Characteristics wrong\n");
-        ok( dir->TimeDateStamp == 0, "TimeDateStamp wrong %u\n", dir->TimeDateStamp);
+        ok( dir->TimeDateStamp == 0, "TimeDateStamp wrong %lu\n", dir->TimeDateStamp);
         ok( dir->MajorVersion == 4, "MajorVersion wrong\n");
         ok( dir->MinorVersion == 0, "MinorVersion wrong\n");
 
-        ok( dir->NumberOfNamedEntries == verify->NumberOfNamedEntries, "NumberOfNamedEntries should be %d instead of %d\n",
+        ok( dir->NumberOfNamedEntries == verify->NumberOfNamedEntries, "NumberOfNamedEntries should be %ld instead of %d\n",
                 verify->NumberOfNamedEntries, dir->NumberOfNamedEntries);
-        ok( dir->NumberOfIdEntries == verify->NumberOfIdEntries, "NumberOfIdEntries should be %d instead of %d\n",
+        ok( dir->NumberOfIdEntries == verify->NumberOfIdEntries, "NumberOfIdEntries should be %ld instead of %d\n",
                 verify->NumberOfIdEntries, dir->NumberOfIdEntries);
 
         ok(opt->DataDirectory[IMAGE_FILE_RESOURCE_DIRECTORY].VirtualAddress == sec[verify->rsrc_section].VirtualAddress,
-                "VirtualAddress in optional header should be %d instead of %d\n",
+                "VirtualAddress in optional header should be %ld instead of %ld\n",
                 sec[verify->rsrc_section].VirtualAddress, opt->DataDirectory[IMAGE_FILE_RESOURCE_DIRECTORY].VirtualAddress);
     }
 
@@ -476,24 +477,24 @@ static void test_find_resource(void)
     SetLastError( 0xdeadbeef );
     rsrc = FindResourceW( GetModuleHandleW(NULL), MAKEINTRESOURCEW(1), (LPCWSTR)RT_DIALOG );
     ok( !rsrc, "resource found\n" );
-    ok( GetLastError() == ERROR_RESOURCE_TYPE_NOT_FOUND, "wrong error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_RESOURCE_TYPE_NOT_FOUND, "wrong error %lu\n", GetLastError() );
 
     SetLastError( 0xdeadbeef );
     rsrc = FindResourceW( GetModuleHandleW(NULL), MAKEINTRESOURCEW(2), (LPCWSTR)RT_MENU );
     ok( !rsrc, "resource found\n" );
-    ok( GetLastError() == ERROR_RESOURCE_NAME_NOT_FOUND, "wrong error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_RESOURCE_NAME_NOT_FOUND, "wrong error %lu\n", GetLastError() );
 
     SetLastError( 0xdeadbeef );
     rsrc = FindResourceExW( GetModuleHandleW(NULL), (LPCWSTR)RT_MENU, MAKEINTRESOURCEW(1),
                             MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT ) );
     ok( !rsrc, "resource found\n" );
-    ok( GetLastError() == ERROR_RESOURCE_LANG_NOT_FOUND, "wrong error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_RESOURCE_LANG_NOT_FOUND, "wrong error %lu\n", GetLastError() );
 
     SetLastError( 0xdeadbeef );
     rsrc = FindResourceExW( GetModuleHandleW(NULL), (LPCWSTR)RT_MENU, MAKEINTRESOURCEW(1),
                             MAKELANGID( LANG_FRENCH, SUBLANG_DEFAULT ) );
     ok( !rsrc, "resource found\n" );
-    ok( GetLastError() == ERROR_RESOURCE_LANG_NOT_FOUND, "wrong error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_RESOURCE_LANG_NOT_FOUND, "wrong error %lu\n", GetLastError() );
 }
 
 typedef struct
