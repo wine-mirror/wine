@@ -1311,7 +1311,7 @@
 @ stub NtUserWaitMessage
 @ stub NtUserWindowFromDC
 @ stub NtUserWindowFromPhysicalPoint
-@ stub NtUserWindowFromPoint
+@ stdcall NtUserWindowFromPoint(long long)
 @ stub NtUserYieldTask
 @ stub NtValidateCompositionSurfaceHandle
 @ stub NtVisualCaptureBits

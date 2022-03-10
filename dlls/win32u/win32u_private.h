@@ -247,6 +247,7 @@ struct unix_funcs
                                                struct client_menu_name *client_menu_name );
     BOOL     (WINAPI *pNtUserUnregisterHotKey)( HWND hwnd, INT id );
     WORD     (WINAPI *pNtUserVkKeyScanEx)( WCHAR chr, HKL layout );
+    HWND     (WINAPI *pNtUserWindowFromPoint)( LONG x, LONG y );
 
     /* Wine-specific functions */
     DWORD_PTR (WINAPI *pGetDCHook)( HDC hdc, DCHOOKPROC *proc );

@@ -1257,8 +1257,8 @@ int WINAPI NtUserSetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
 
     if (ret)
     {
-        UINT swp_flags = SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE|SWP_FRAMECHANGED|
-            SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE;
+        UINT swp_flags = SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED |
+            SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE;
         if (!redraw) swp_flags |= SWP_NOREDRAW;
         user_driver->pSetWindowRgn( hwnd, hrgn, redraw );
         NtUserSetWindowPos( hwnd, 0, 0, 0, 0, 0, swp_flags );
@@ -1307,6 +1307,109 @@ BOOL WINAPI NtUserGetLayeredWindowAttributes( HWND hwnd, COLORREF *key, BYTE *al
     SERVER_END_REQ;
 
     return ret;
+}
+
+/***********************************************************************
+ *           list_children_from_point
+ *
+ * Get the list of children that can contain point from the server.
+ * Point is in screen coordinates.
+ * Returned list must be freed by caller.
+ */
+static HWND *list_children_from_point( HWND hwnd, POINT pt )
+{
+    int i, size = 128;
+    HWND *list;
+
+    for (;;)
+    {
+        int count = 0;
+
+        if (!(list = malloc( size * sizeof(HWND) ))) break;
+
+        SERVER_START_REQ( get_window_children_from_point )
+        {
+            req->parent = wine_server_user_handle( hwnd );
+            req->x = pt.x;
+            req->y = pt.y;
+            req->dpi = get_thread_dpi();
+            wine_server_set_reply( req, list, (size-1) * sizeof(user_handle_t) );
+            if (!wine_server_call( req )) count = reply->count;
+        }
+        SERVER_END_REQ;
+        if (count && count < size)
+        {
+            /* start from the end since HWND is potentially larger than user_handle_t */
+            for (i = count - 1; i >= 0; i--)
+                list[i] = wine_server_ptr_handle( ((user_handle_t *)list)[i] );
+            list[count] = 0;
+            return list;
+        }
+        free( list );
+        if (!count) break;
+        size = count + 1;  /* restart with a large enough buffer */
+    }
+    return NULL;
+}
+
+/***********************************************************************
+ *           window_from_point
+ *
+ * Find the window and hittest for a given point.
+ */
+static HWND window_from_point( HWND hwnd, POINT pt, INT *hittest )
+{
+    int i, res;
+    HWND ret, *list;
+    POINT win_pt;
+
+    if (!hwnd) hwnd = get_desktop_window();
+
+    *hittest = HTNOWHERE;
+
+    if (!(list = list_children_from_point( hwnd, pt ))) return 0;
+
+    /* now determine the hittest */
+
+    for (i = 0; list[i]; i++)
+    {
+        LONG style = get_window_long( list[i], GWL_STYLE );
+
+        /* If window is minimized or disabled, return at once */
+        if (style & WS_DISABLED)
+        {
+            *hittest = HTERROR;
+            break;
+        }
+        /* Send WM_NCCHITTEST (if same thread) */
+        if (!is_current_thread_window( list[i] ))
+        {
+            *hittest = HTCLIENT;
+            break;
+        }
+        win_pt = map_dpi_point( pt, get_thread_dpi(), get_dpi_for_window( list[i] ));
+        res = send_message( list[i], WM_NCHITTEST, 0, MAKELPARAM( win_pt.x, win_pt.y ));
+        if (res != HTTRANSPARENT)
+        {
+            *hittest = res;  /* Found the window */
+            break;
+        }
+        /* continue search with next window in z-order */
+    }
+    ret = list[i];
+    free( list );
+    TRACE( "scope %p (%d,%d) returning %p\n", hwnd, pt.x, pt.y, ret );
+    return ret;
+}
+
+/*******************************************************************
+ *           NtUserWindowFromPoint (win32u.@)
+ */
+HWND WINAPI NtUserWindowFromPoint( LONG x, LONG y )
+{
+    POINT pt = { .x = x, .y = y };
+    INT hittest;
+    return window_from_point( 0, pt, &hittest );
 }
 
 /*****************************************************************************

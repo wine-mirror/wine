@@ -1002,6 +1002,12 @@ WORD WINAPI NtUserVkKeyScanEx( WCHAR chr, HKL layout )
     return unix_funcs->pNtUserVkKeyScanEx( chr, layout );
 }
 
+HWND WINAPI NtUserWindowFromPoint( LONG x, LONG y )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserWindowFromPoint( x, y );
+}
+
 DWORD_PTR WINAPI GetDCHook( HDC hdc, DCHOOKPROC *proc )
 {
     if (!unix_funcs) return 0;

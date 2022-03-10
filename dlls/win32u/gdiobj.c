@@ -1198,6 +1198,7 @@ static struct unix_funcs unix_funcs =
     NtUserUnregisterClass,
     NtUserUnregisterHotKey,
     NtUserVkKeyScanEx,
+    NtUserWindowFromPoint,
 
     GetDCHook,
     SetDCHook,

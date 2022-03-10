@@ -389,5 +389,6 @@ BOOL    WINAPI NtUserUnregisterClass( UNICODE_STRING *name, HINSTANCE instance,
 BOOL    WINAPI NtUserUnregisterHotKey( HWND hwnd, INT id );
 WORD    WINAPI NtUserVkKeyScanEx( WCHAR chr, HKL layout );
 DWORD   WINAPI NtUserWaitForInputIdle( HANDLE process, DWORD timeout, BOOL wow );
+HWND    WINAPI NtUserWindowFromPoint( LONG x, LONG y );
 
 #endif /* _NTUSER_ */

@@ -233,8 +233,7 @@ HWND WINPOS_WindowFromPoint( HWND hwndScope, POINT pt, INT *hittest )
  */
 HWND WINAPI WindowFromPoint( POINT pt )
 {
-    INT hittest;
-    return WINPOS_WindowFromPoint( 0, pt, &hittest );
+    return NtUserWindowFromPoint( pt.x, pt.y );
 }
 
 
