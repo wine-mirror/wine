@@ -730,7 +730,7 @@ static void STDMETHODCALLTYPE d3d11_device_context_PSSetShader(ID3D11DeviceConte
     TRACE("iface %p, shader %p, class_instances %p, class_instance_count %u.\n",
             iface, shader, class_instances, class_instance_count);
 
-    if (class_instances)
+    if (class_instance_count)
         FIXME("Dynamic linking is not implemented yet.\n");
 
     wined3d_device_context_set_shader(context->wined3d_context, WINED3D_SHADER_TYPE_PIXEL,
@@ -755,7 +755,7 @@ static void STDMETHODCALLTYPE d3d11_device_context_VSSetShader(ID3D11DeviceConte
     TRACE("iface %p, shader %p, class_instances %p, class_instance_count %u.\n",
             iface, shader, class_instances, class_instance_count);
 
-    if (class_instances)
+    if (class_instance_count)
         FIXME("Dynamic linking is not implemented yet.\n");
 
     wined3d_device_context_set_shader(context->wined3d_context, WINED3D_SHADER_TYPE_VERTEX,
@@ -941,7 +941,7 @@ static void STDMETHODCALLTYPE d3d11_device_context_GSSetShader(ID3D11DeviceConte
     TRACE("iface %p, shader %p, class_instances %p, class_instance_count %u.\n",
             iface, shader, class_instances, class_instance_count);
 
-    if (class_instances)
+    if (class_instance_count)
         FIXME("Dynamic linking is not implemented yet.\n");
 
     wined3d_device_context_set_shader(context->wined3d_context, WINED3D_SHADER_TYPE_GEOMETRY,
@@ -1544,7 +1544,7 @@ static void STDMETHODCALLTYPE d3d11_device_context_HSSetShader(ID3D11DeviceConte
     TRACE("iface %p, shader %p, class_instances %p, class_instance_count %u.\n",
             iface, shader, class_instances, class_instance_count);
 
-    if (class_instances)
+    if (class_instance_count)
         FIXME("Dynamic linking is not implemented yet.\n");
 
     wined3d_device_context_set_shader(context->wined3d_context, WINED3D_SHADER_TYPE_HULL,
@@ -1588,7 +1588,7 @@ static void STDMETHODCALLTYPE d3d11_device_context_DSSetShader(ID3D11DeviceConte
     TRACE("iface %p, shader %p, class_instances %p, class_instance_count %u.\n",
             iface, shader, class_instances, class_instance_count);
 
-    if (class_instances)
+    if (class_instance_count)
         FIXME("Dynamic linking is not implemented yet.\n");
 
     wined3d_device_context_set_shader(context->wined3d_context, WINED3D_SHADER_TYPE_DOMAIN,
@@ -1659,7 +1659,7 @@ static void STDMETHODCALLTYPE d3d11_device_context_CSSetShader(ID3D11DeviceConte
     TRACE("iface %p, shader %p, class_instances %p, class_instance_count %u.\n",
             iface, shader, class_instances, class_instance_count);
 
-    if (class_instances)
+    if (class_instance_count)
         FIXME("Dynamic linking is not implemented yet.\n");
 
     wined3d_device_context_set_shader(context->wined3d_context, WINED3D_SHADER_TYPE_COMPUTE,
