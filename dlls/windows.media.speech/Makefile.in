@@ -3,6 +3,7 @@ IMPORTS = combase uuid
 
 C_SRCS = \
 	main.c \
+	recognizer.c \
 	synthesizer.c
 
 IDL_SRCS = classes.idl

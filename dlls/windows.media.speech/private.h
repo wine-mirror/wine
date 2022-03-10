@@ -37,6 +37,16 @@
 #include "windows.globalization.h"
 #define WIDL_using_Windows_Media_SpeechSynthesis
 #include "windows.media.speechsynthesis.h"
+#define WIDL_using_Windows_Media_SpeechRecognition
+#include "windows.media.speechrecognition.h"
+
+/*
+ *
+ * Windows.Media.SpeechRecognition
+ *
+ */
+
+extern IActivationFactory *recognizer_factory;
 
 /*
  *

@@ -108,7 +108,7 @@ static void test_ActivationFactory(void)
     check_refcount(factory2, 3);
 
     hr = RoGetActivationFactory(str2, &IID_IActivationFactory, (void **)&factory3);
-    todo_wine ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG), "Got unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG), "Got unexpected hr %#lx.\n", hr);
 
     if (hr == S_OK) /* Win10+ only */
     {

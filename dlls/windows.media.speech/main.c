@@ -38,6 +38,8 @@ HRESULT WINAPI DllGetActivationFactory(HSTRING classid, IActivationFactory **fac
 
     *factory = NULL;
 
+    if (!wcscmp(buffer, L"Windows.Media.SpeechRecognition.SpeechRecognizer"))
+        IActivationFactory_AddRef((*factory = recognizer_factory));
     if (!wcscmp(buffer, L"Windows.Media.SpeechSynthesis.SpeechSynthesizer"))
         IActivationFactory_AddRef((*factory = synthesizer_factory));
 
