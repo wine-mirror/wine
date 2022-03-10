@@ -1186,6 +1186,7 @@ static void test_set_getsockopt(void)
         {AF_INET, SOCK_DGRAM, IPPROTO_IP, IP_MULTICAST_TTL, TRUE, {1, 1, 4}, {0}, FALSE},
         {AF_INET, SOCK_DGRAM, IPPROTO_IP, IP_PKTINFO, FALSE, {0, 0, 4}, {0}, TRUE, TRUE},
         {AF_INET, SOCK_DGRAM, IPPROTO_IP, IP_RECVTOS, FALSE, {0, 0, 4}, {0}, TRUE, TRUE},
+        {AF_INET, SOCK_DGRAM, IPPROTO_IP, IP_RECVTTL, FALSE, {0, 0, 4}, {0}, TRUE, TRUE},
         {AF_INET, SOCK_DGRAM, IPPROTO_IP, IP_TOS, TRUE, {1, 1, 4}, {0}, FALSE},
         {AF_INET, SOCK_DGRAM, IPPROTO_IP, IP_TTL, TRUE, {1, 1, 4}, {0}, FALSE},
     };
