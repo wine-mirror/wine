@@ -166,11 +166,13 @@ enum
     NtUserGetWindowLongW,
     NtUserGetWindowLongPtrA,
     NtUserGetWindowLongPtrW,
+    NtUserGetWindowPlacement,
     NtUserGetWindowRect,
     NtUserGetWindowRelative,
     NtUserGetWindowThread,
     NtUserGetWindowWord,
     NtUserIsChild,
+    NtUserMonitorFromWindow,
     /* temporary exports */
     NtUserIsWindowDrawable,
 };

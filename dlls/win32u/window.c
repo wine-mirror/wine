@@ -764,7 +764,7 @@ static LONG_PTR get_win_data( const void *ptr, UINT size )
     }
 }
 
-static BOOL is_iconic( HWND hwnd )
+BOOL is_iconic( HWND hwnd )
 {
     return (get_window_long( hwnd, GWL_STYLE ) & WS_MINIMIZE) != 0;
 }
@@ -1001,8 +1001,8 @@ static void mirror_rect( const RECT *window_rect, RECT *rect )
  *
  * Get the window and client rectangles.
  */
-static BOOL get_window_rects( HWND hwnd, enum coords_relative relative, RECT *window_rect,
-                              RECT *client_rect, UINT dpi )
+BOOL get_window_rects( HWND hwnd, enum coords_relative relative, RECT *window_rect,
+                       RECT *client_rect, UINT dpi )
 {
     WND *win = get_win_ptr( hwnd );
     BOOL ret = TRUE;
@@ -1134,9 +1134,9 @@ other_process:
 }
 
 /* see GetWindowRect */
-BOOL get_window_rect( HWND hwnd, RECT *rect )
+BOOL get_window_rect( HWND hwnd, RECT *rect, UINT dpi )
 {
-    return get_window_rects( hwnd, COORDS_SCREEN, rect, NULL, get_thread_dpi() );
+    return get_window_rects( hwnd, COORDS_SCREEN, rect, NULL, dpi );
 }
 
 /* see GetClientRect */
@@ -1412,6 +1412,164 @@ HWND WINAPI NtUserWindowFromPoint( LONG x, LONG y )
     return window_from_point( 0, pt, &hittest );
 }
 
+/*******************************************************************
+ *           get_work_rect
+ *
+ * Get the work area that a maximized window can cover, depending on style.
+ */
+static BOOL get_work_rect( HWND hwnd, RECT *rect )
+{
+    HMONITOR monitor = monitor_from_window( hwnd, MONITOR_DEFAULTTOPRIMARY, get_thread_dpi() );
+    MONITORINFO mon_info;
+    DWORD style;
+
+    if (!monitor) return FALSE;
+
+    mon_info.cbSize = sizeof(mon_info);
+    get_monitor_info( monitor, &mon_info );
+    *rect = mon_info.rcMonitor;
+
+    style = get_window_long( hwnd, GWL_STYLE );
+    if (style & WS_MAXIMIZEBOX)
+    {
+        if ((style & WS_CAPTION) == WS_CAPTION || !(style & (WS_CHILD | WS_POPUP)))
+            *rect = mon_info.rcWork;
+    }
+    return TRUE;
+}
+
+static RECT get_maximized_work_rect( HWND hwnd )
+{
+    RECT work_rect = { 0 };
+
+    if ((get_window_long( hwnd, GWL_STYLE ) & (WS_MINIMIZE | WS_MAXIMIZE)) == WS_MAXIMIZE)
+    {
+        if (!get_work_rect( hwnd, &work_rect ))
+            work_rect = get_primary_monitor_rect( get_thread_dpi() );
+    }
+    return work_rect;
+}
+
+/*******************************************************************
+ *           update_maximized_pos
+ *
+ * For top level windows covering the work area, we might have to
+ * "forget" the maximized position. Windows presumably does this
+ * to avoid situations where the border style changes, which would
+ * lead the window to be outside the screen, or the window gets
+ * reloaded on a different screen, and the "saved" position no
+ * longer applies to it (despite being maximized).
+ *
+ * Some applications (e.g. Imperiums: Greek Wars) depend on this.
+ */
+static void update_maximized_pos( WND *wnd, RECT *work_rect )
+{
+    if (wnd->parent && wnd->parent != get_desktop_window())
+        return;
+
+    if (wnd->dwStyle & WS_MAXIMIZE)
+    {
+        if (wnd->window_rect.left  <= work_rect->left  && wnd->window_rect.top    <= work_rect->top &&
+            wnd->window_rect.right >= work_rect->right && wnd->window_rect.bottom >= work_rect->bottom)
+            wnd->max_pos.x = wnd->max_pos.y = -1;
+    }
+    else
+        wnd->max_pos.x = wnd->max_pos.y = -1;
+}
+
+static BOOL empty_point( POINT pt )
+{
+    return pt.x == -1 && pt.y == -1;
+}
+
+/* see GetWindowPlacement */
+BOOL get_window_placement( HWND hwnd, WINDOWPLACEMENT *placement )
+{
+    RECT work_rect = get_maximized_work_rect( hwnd );
+    WND *win = get_win_ptr( hwnd );
+    UINT win_dpi;
+
+    if (!win) return FALSE;
+
+    if (win == WND_DESKTOP)
+    {
+        placement->length  = sizeof(*placement);
+        placement->showCmd = SW_SHOWNORMAL;
+        placement->flags = 0;
+        placement->ptMinPosition.x = -1;
+        placement->ptMinPosition.y = -1;
+        placement->ptMaxPosition.x = -1;
+        placement->ptMaxPosition.y = -1;
+        get_window_rect( hwnd, &placement->rcNormalPosition, get_thread_dpi() );
+        return TRUE;
+    }
+    if (win == WND_OTHER_PROCESS)
+    {
+        RECT normal_position;
+        DWORD style;
+
+        if (!get_window_rect( hwnd, &normal_position, get_thread_dpi() ))
+            return FALSE;
+
+        FIXME("not fully supported on other process window %p.\n", hwnd);
+
+        placement->length  = sizeof(*placement);
+        style = get_window_long( hwnd, GWL_STYLE );
+        if (style & WS_MINIMIZE)
+            placement->showCmd = SW_SHOWMINIMIZED;
+        else
+            placement->showCmd = (style & WS_MAXIMIZE) ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL;
+        /* provide some dummy information */
+        placement->flags = 0;
+        placement->ptMinPosition.x = -1;
+        placement->ptMinPosition.y = -1;
+        placement->ptMaxPosition.x = -1;
+        placement->ptMaxPosition.y = -1;
+        placement->rcNormalPosition = normal_position;
+        return TRUE;
+    }
+
+    /* update the placement according to the current style */
+    if (win->dwStyle & WS_MINIMIZE)
+    {
+        win->min_pos.x = win->window_rect.left;
+        win->min_pos.y = win->window_rect.top;
+    }
+    else if (win->dwStyle & WS_MAXIMIZE)
+    {
+        win->max_pos.x = win->window_rect.left;
+        win->max_pos.y = win->window_rect.top;
+    }
+    else
+    {
+        win->normal_rect = win->window_rect;
+    }
+    update_maximized_pos( win, &work_rect );
+
+    placement->length  = sizeof(*placement);
+    if (win->dwStyle & WS_MINIMIZE)
+        placement->showCmd = SW_SHOWMINIMIZED;
+    else
+        placement->showCmd = ( win->dwStyle & WS_MAXIMIZE ) ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL ;
+    if (win->flags & WIN_RESTORE_MAX)
+        placement->flags = WPF_RESTORETOMAXIMIZED;
+    else
+        placement->flags = 0;
+    win_dpi = get_dpi_for_window( hwnd );
+    placement->ptMinPosition = empty_point(win->min_pos) ? win->min_pos
+        : map_dpi_point( win->min_pos, win_dpi, get_thread_dpi() );
+    placement->ptMaxPosition = empty_point(win->max_pos) ? win->max_pos
+        : map_dpi_point( win->max_pos, win_dpi, get_thread_dpi() );
+    placement->rcNormalPosition = map_dpi_rect( win->normal_rect, win_dpi, get_thread_dpi() );
+    release_win_ptr( win );
+
+    TRACE( "%p: returning min %d,%d max %d,%d normal %s\n",
+           hwnd, placement->ptMinPosition.x, placement->ptMinPosition.y,
+           placement->ptMaxPosition.x, placement->ptMaxPosition.y,
+           wine_dbgstr_rect(&placement->rcNormalPosition) );
+    return TRUE;
+}
+
 /*****************************************************************************
  *           NtUserBuildHwndList (win32u.@)
  */
@@ -1602,8 +1760,10 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
         return get_window_long_ptr( hwnd, param, TRUE );
     case NtUserGetWindowLongPtrW:
         return get_window_long_ptr( hwnd, param, FALSE );
+    case NtUserGetWindowPlacement:
+        return get_window_placement( hwnd, (WINDOWPLACEMENT *)param );
     case NtUserGetWindowRect:
-        return get_window_rect( hwnd, (RECT *)param );
+        return get_window_rect( hwnd, (RECT *)param, get_thread_dpi() );
     case NtUserGetWindowRelative:
         return HandleToUlong( get_window_relative( hwnd, param ));
     case NtUserGetWindowThread:
@@ -1612,6 +1772,8 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
         return get_window_word( hwnd, param );
     case NtUserIsChild:
         return is_child( hwnd, UlongToHandle(param) );
+    case NtUserMonitorFromWindow:
+        return HandleToUlong( monitor_from_window( hwnd, param, NtUserMonitorFromWindow ));
     /* temporary exports */
     case NtUserIsWindowDrawable:
         return is_window_drawable( hwnd, param );

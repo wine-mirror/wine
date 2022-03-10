@@ -1945,7 +1945,7 @@ BOOL WINAPI NtUserEnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc
     return ret;
 }
 
-static BOOL get_monitor_info( HMONITOR handle, MONITORINFO *info )
+BOOL get_monitor_info( HMONITOR handle, MONITORINFO *info )
 {
     struct monitor *monitor;
     UINT dpi_from, dpi_to;
@@ -2059,6 +2059,27 @@ HMONITOR monitor_from_point( POINT pt, DWORD flags, UINT dpi )
 {
     RECT rect;
     SetRect( &rect, pt.x, pt.y, pt.x + 1, pt.y + 1 );
+    return monitor_from_rect( &rect, flags, dpi );
+}
+
+/* see MonitorFromWindow */
+HMONITOR monitor_from_window( HWND hwnd, DWORD flags, UINT dpi )
+{
+    RECT rect;
+    WINDOWPLACEMENT wp;
+
+    TRACE( "(%p, 0x%08x)\n", hwnd, flags );
+
+    wp.length = sizeof(wp);
+    if (is_iconic( hwnd ) && get_window_placement( hwnd, &wp ))
+        return monitor_from_rect( &wp.rcNormalPosition, flags, dpi );
+
+    if (get_window_rect( hwnd, &rect, dpi ))
+        return monitor_from_rect( &rect, flags, dpi );
+
+    if (!(flags & (MONITOR_DEFAULTTOPRIMARY|MONITOR_DEFAULTTONEAREST))) return 0;
+    /* retrieve the primary */
+    SetRect( &rect, 0, 0, 1, 1 );
     return monitor_from_rect( &rect, flags, dpi );
 }
 

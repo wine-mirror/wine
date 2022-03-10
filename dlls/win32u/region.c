@@ -1376,7 +1376,7 @@ BOOL mirror_window_region( HWND hwnd, HRGN hrgn )
 {
     RECT rect;
 
-    if (!get_window_rect( hwnd, &rect )) return FALSE;
+    if (!get_window_rect( hwnd, &rect, get_thread_dpi() )) return FALSE;
     return mirror_region( hrgn, hrgn, rect.right - rect.left ) != ERROR;
 }
 

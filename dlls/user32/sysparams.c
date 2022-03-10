@@ -1011,24 +1011,9 @@ HMONITOR WINAPI MonitorFromPoint( POINT pt, DWORD flags )
 /***********************************************************************
  *		MonitorFromWindow (USER32.@)
  */
-HMONITOR WINAPI MonitorFromWindow(HWND hWnd, DWORD dwFlags)
+HMONITOR WINAPI MonitorFromWindow( HWND hwnd, DWORD flags )
 {
-    RECT rect;
-    WINDOWPLACEMENT wp;
-
-    TRACE("(%p, 0x%08x)\n", hWnd, dwFlags);
-
-    wp.length = sizeof(wp);
-    if (IsIconic(hWnd) && GetWindowPlacement(hWnd, &wp))
-        return MonitorFromRect( &wp.rcNormalPosition, dwFlags );
-
-    if (GetWindowRect( hWnd, &rect ))
-        return MonitorFromRect( &rect, dwFlags );
-
-    if (!(dwFlags & (MONITOR_DEFAULTTOPRIMARY|MONITOR_DEFAULTTONEAREST))) return 0;
-    /* retrieve the primary */
-    SetRect( &rect, 0, 0, 1, 1 );
-    return MonitorFromRect( &rect, dwFlags );
+    return UlongToHandle( NtUserCallHwndParam(  hwnd, flags, NtUserMonitorFromWindow ));
 }
 
 /***********************************************************************
