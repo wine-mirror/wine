@@ -4632,18 +4632,21 @@ static BOOL WINAPI CRYPT_AsnEncodeOCSPRequest(DWORD dwCertEncodingType,
             {
                 struct AsnConstructedItem name;
                 struct AsnEncodeSequenceItem items[2];
-                DWORD count = 1;
+                DWORD count = 0;
 
-                name.tag = 1;
-                name.pvStructInfo = info->pRequestorName;
-                name.encodeFunc = CRYPT_AsnEncodeAltNameEntry;
-                items[0].pvStructInfo = &name;
-                items[0].encodeFunc = CRYPT_AsnEncodeConstructed;
-
+                if (info->pRequestorName)
+                {
+                    name.tag = 1;
+                    name.pvStructInfo = info->pRequestorName;
+                    name.encodeFunc = CRYPT_AsnEncodeAltNameEntry;
+                    items[count].pvStructInfo = &name;
+                    items[count].encodeFunc = CRYPT_AsnEncodeConstructed;
+                    count++;
+                }
                 if (info->cRequestEntry)
                 {
-                    items[1].pvStructInfo = &info->cRequestEntry;
-                    items[1].encodeFunc = CRYPT_AsnEncodeOCSPRequestEntries;
+                    items[count].pvStructInfo = &info->cRequestEntry;
+                    items[count].encodeFunc = CRYPT_AsnEncodeOCSPRequestEntries;
                     count++;
                 }
 
