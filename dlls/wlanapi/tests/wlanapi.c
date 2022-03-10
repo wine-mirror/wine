@@ -35,73 +35,73 @@ static void test_WlanOpenHandle(void)
     is_xp = ret == ERROR_SUCCESS;
     if (!is_xp) /* the results in XP differ completely from all other versions */
     {
-        ok(ret == ERROR_NOT_SUPPORTED, "Expected 50, got %d\n", ret);
+        ok(ret == ERROR_NOT_SUPPORTED, "Expected 50, got %ld\n", ret);
         ok(neg_version == 0xdeadbeef, "neg_version changed\n");
         ok(handle == bad_handle, "handle changed\n");
         ret = WlanOpenHandle(10, NULL, &neg_version, &handle);
-        ok(ret == ERROR_NOT_SUPPORTED, "Expected 50, got %d\n", ret);
+        ok(ret == ERROR_NOT_SUPPORTED, "Expected 50, got %ld\n", ret);
         ok(neg_version == 0xdeadbeef, "neg_version changed\n");
         ok(handle == bad_handle, "handle changed\n");
 
         /* reserved parameter must not be used */
         ret = WlanOpenHandle(1, &reserved, &neg_version, &handle);
-        ok(ret == ERROR_INVALID_PARAMETER, "Expected 87, got %d\n", ret);
+        ok(ret == ERROR_INVALID_PARAMETER, "Expected 87, got %ld\n", ret);
         ok(neg_version == 0xdeadbeef, "neg_version changed\n");
         ok(handle == bad_handle, "handle changed\n");
 
         /* invalid parameters */
         ret = WlanOpenHandle(1, NULL, NULL, &handle);
-        ok(ret == ERROR_INVALID_PARAMETER, "Expected 87, got %d\n", ret);
+        ok(ret == ERROR_INVALID_PARAMETER, "Expected 87, got %ld\n", ret);
         ok(handle == bad_handle, "bad handle\n");
         ret = WlanOpenHandle(1, NULL, &neg_version, NULL);
-        ok(ret == ERROR_INVALID_PARAMETER, "Expected 87, got %d\n", ret);
+        ok(ret == ERROR_INVALID_PARAMETER, "Expected 87, got %ld\n", ret);
         ok(neg_version == 0xdeadbeef, "neg_version changed\n");
     }
     else
     {
-        ok(neg_version == 1, "Expected 1, got %d\n", neg_version);
+        ok(neg_version == 1, "Expected 1, got %ld\n", neg_version);
         ok(handle != bad_handle && handle, "handle changed\n");
         ret = WlanCloseHandle(handle, NULL);
-        ok(ret == 0, "Expected 0, got %d\n", ret);
+        ok(ret == 0, "Expected 0, got %ld\n", ret);
     }
 
     /* good tests */
     ret = WlanOpenHandle(1, NULL, &neg_version, &handle);
-    ok(ret == ERROR_SUCCESS, "Expected 0, got %d\n", ret);
-    ok(neg_version == 1, "Expected 1, got %d\n", neg_version);
+    ok(ret == ERROR_SUCCESS, "Expected 0, got %ld\n", ret);
+    ok(neg_version == 1, "Expected 1, got %ld\n", neg_version);
     ok(handle != bad_handle && handle, "handle changed\n");
     ret = WlanCloseHandle(handle, NULL);
-    ok(ret == 0, "Expected 0, got %d\n", ret);
+    ok(ret == 0, "Expected 0, got %ld\n", ret);
 
     ret = WlanOpenHandle(2, NULL, &neg_version, &handle);
-    ok(ret == ERROR_SUCCESS, "Expected 0, got %d\n", ret);
+    ok(ret == ERROR_SUCCESS, "Expected 0, got %ld\n", ret);
     if (!is_xp) /* XP does not support client version 2 */
-      ok(neg_version == 2, "Expected 2, got %d\n", neg_version);
+      ok(neg_version == 2, "Expected 2, got %ld\n", neg_version);
     else
-      ok(neg_version == 1, "Expected 1, got %d\n", neg_version);
+      ok(neg_version == 1, "Expected 1, got %ld\n", neg_version);
     ok(handle != bad_handle && handle, "bad handle\n");
     ret = WlanCloseHandle(handle, NULL);
-    ok(ret == 0, "Expected 0, got %d\n", ret);
+    ok(ret == 0, "Expected 0, got %ld\n", ret);
 
     /* open twice */
     ret = WlanOpenHandle(1, NULL, &neg_version, &handle);
-    ok(ret == ERROR_SUCCESS, "Expected 0, got %d\n", ret);
+    ok(ret == ERROR_SUCCESS, "Expected 0, got %ld\n", ret);
     ret = WlanOpenHandle(1, NULL, &neg_version, &handle2);
-    ok(ret == ERROR_SUCCESS, "Expected 0, got %d\n", ret);
+    ok(ret == ERROR_SUCCESS, "Expected 0, got %ld\n", ret);
 
     ret = WlanCloseHandle(handle, &reserved);
-    ok(ret == ERROR_INVALID_PARAMETER, "Expected 87, got %d\n", ret);
+    ok(ret == ERROR_INVALID_PARAMETER, "Expected 87, got %ld\n", ret);
 
     ret = WlanCloseHandle(handle, NULL);
-    ok(ret == ERROR_SUCCESS, "Expected 0, got %d\n", ret);
+    ok(ret == ERROR_SUCCESS, "Expected 0, got %ld\n", ret);
     ret = WlanCloseHandle(handle2, NULL);
-    ok(ret == ERROR_SUCCESS, "Expected 0, got %d\n", ret);
+    ok(ret == ERROR_SUCCESS, "Expected 0, got %ld\n", ret);
 
     ret = WlanCloseHandle(bad_handle, NULL);
-    ok(ret == ERROR_INVALID_HANDLE, "Expected 6, got %d\n", ret);
+    ok(ret == ERROR_INVALID_HANDLE, "Expected 6, got %ld\n", ret);
 
     ret = WlanCloseHandle(NULL, NULL);
-    ok(ret == ERROR_INVALID_PARAMETER, "Expected 87, got %d\n", ret);
+    ok(ret == ERROR_INVALID_PARAMETER, "Expected 87, got %ld\n", ret);
 }
 
 static void test_WlanAllocateFreeMemory(void)
@@ -111,7 +111,7 @@ static void test_WlanAllocateFreeMemory(void)
     SetLastError(0xdeadbeef);
     ptr = WlanAllocateMemory(0);
     ok(ptr == NULL, "Expected NULL, got %p\n", ptr);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected 87, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected 87, got %ld\n", GetLastError());
 
     ptr = WlanAllocateMemory(1024);
     ok(ptr != NULL, "Expected non-NULL\n");
@@ -130,23 +130,23 @@ static void test_WlanEnumInterfaces(void)
     WLAN_INTERFACE_INFO *info;
 
     ret = WlanOpenHandle(1, NULL, &neg_version, &handle);
-    ok(ret == 0, "Expected 0, got %d\n", ret);
+    ok(ret == 0, "Expected 0, got %ld\n", ret);
 
     /* invalid parameters */
     ret = WlanEnumInterfaces(NULL, NULL, &list);
-    ok(ret == ERROR_INVALID_PARAMETER, "Expected 87, got %d\n", ret);
+    ok(ret == ERROR_INVALID_PARAMETER, "Expected 87, got %ld\n", ret);
     ok(list == bad_list, "list changed\n");
     ret = WlanEnumInterfaces(handle, &reserved, &list);
-    ok(ret == ERROR_INVALID_PARAMETER, "Expected 87, got %d\n", ret);
+    ok(ret == ERROR_INVALID_PARAMETER, "Expected 87, got %ld\n", ret);
     ok(list == bad_list, "list changed\n");
     ret = WlanEnumInterfaces(handle, NULL, NULL);
-    ok(ret == ERROR_INVALID_PARAMETER, "Expected 87, got %d\n", ret);
+    ok(ret == ERROR_INVALID_PARAMETER, "Expected 87, got %ld\n", ret);
     ok(list == bad_list, "list changed\n");
 
     /* good tests */
     list = NULL;
     ret = WlanEnumInterfaces(handle, NULL, &list);
-    ok(ret == ERROR_SUCCESS, "Expected 0, got %d\n", ret);
+    ok(ret == ERROR_SUCCESS, "Expected 0, got %ld\n", ret);
     ok(list != NULL, "bad interface list\n");
     if (!list || !list->dwNumberOfItems)
     {
@@ -156,11 +156,11 @@ static void test_WlanEnumInterfaces(void)
         return;
     }
 
-    trace("Wireless interfaces: %d\n", list->dwNumberOfItems);
+    trace("Wireless interfaces: %ld\n", list->dwNumberOfItems);
     for (i = 0; i < list->dwNumberOfItems;i ++)
     {
         info = &list->InterfaceInfo[i];
-        trace("  Index[%d] GUID: %s\n", i, wine_dbgstr_guid(&info->InterfaceGuid));
+        trace("  Index[%ld] GUID: %s\n", i, wine_dbgstr_guid(&info->InterfaceGuid));
         switch (info->isState)
         {
             case wlan_interface_state_disconnected:
@@ -179,7 +179,7 @@ static void test_WlanEnumInterfaces(void)
     WlanFreeMemory(list);
 
     ret = WlanCloseHandle(handle, NULL);
-    ok(ret == 0, "Expected 0, got %d\n", ret);
+    ok(ret == 0, "Expected 0, got %ld\n", ret);
 }
 
 START_TEST(wlanapi)
