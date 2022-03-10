@@ -3252,35 +3252,6 @@ BOOL CDECL __wine_set_pixel_format( HWND hwnd, int format )
 
 
 /*****************************************************************************
- *              SetLayeredWindowAttributes (USER32.@)
- */
-BOOL WINAPI SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags )
-{
-    BOOL ret;
-
-    TRACE("(%p,%08x,%d,%x)\n", hwnd, key, alpha, flags);
-
-    SERVER_START_REQ( set_window_layered_info )
-    {
-        req->handle = wine_server_user_handle( hwnd );
-        req->color_key = key;
-        req->alpha = alpha;
-        req->flags = flags;
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-
-    if (ret)
-    {
-        USER_Driver->pSetLayeredWindowAttributes( hwnd, key, alpha, flags );
-        update_window_state( hwnd );
-    }
-
-    return ret;
-}
-
-
-/*****************************************************************************
  *              UpdateLayeredWindowIndirect  (USER32.@)
  */
 BOOL WINAPI UpdateLayeredWindowIndirect( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info )

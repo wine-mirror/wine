@@ -108,10 +108,6 @@ static void CDECL nulldrv_SetFocus( HWND hwnd )
 {
 }
 
-static void CDECL nulldrv_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags )
-{
-}
-
 static void CDECL nulldrv_SetParent( HWND hwnd, HWND parent, HWND old_parent )
 {
 }
@@ -187,11 +183,6 @@ static void CDECL loaderdrv_GetDC( HDC hdc, HWND hwnd, HWND top_win, const RECT 
     load_driver()->pGetDC( hdc, hwnd, top_win, win_rect, top_rect, flags );
 }
 
-static void CDECL loaderdrv_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags )
-{
-    load_driver()->pSetLayeredWindowAttributes( hwnd, key, alpha, flags );
-}
-
 static BOOL CDECL loaderdrv_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
                                                  const RECT *window_rect )
 {
@@ -234,7 +225,7 @@ static struct user_driver_funcs lazy_load_driver =
     NULL,
     nulldrv_SetCapture,
     nulldrv_SetFocus,
-    loaderdrv_SetLayeredWindowAttributes,
+    NULL,
     nulldrv_SetParent,
     NULL,
     nulldrv_SetWindowIcon,
@@ -281,7 +272,6 @@ void CDECL __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT v
     SET_USER_FUNC(ReleaseDC);
     SET_USER_FUNC(SetCapture);
     SET_USER_FUNC(SetFocus);
-    SET_USER_FUNC(SetLayeredWindowAttributes);
     SET_USER_FUNC(SetParent);
     SET_USER_FUNC(SetWindowIcon);
     SET_USER_FUNC(SetWindowStyle);

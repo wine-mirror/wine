@@ -675,7 +675,7 @@
 @ stdcall SetInternalWindowPos(long long ptr ptr)
 @ stdcall SetKeyboardState(ptr) NtUserSetKeyboardState
 @ stdcall SetLastErrorEx(long long)
-@ stdcall SetLayeredWindowAttributes(ptr long long long)
+@ stdcall SetLayeredWindowAttributes(ptr long long long) NtUserSetLayeredWindowAttributes
 @ stdcall SetLogonNotifyWindow(long long)
 @ stdcall SetMenu(long long)
 @ stdcall SetMenuContextHelpId(long long)

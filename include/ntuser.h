@@ -367,6 +367,7 @@ BOOL    WINAPI NtUserSetCursorIconData( HCURSOR cursor, UNICODE_STRING *module, 
                                         struct cursoricon_desc *desc );
 BOOL    WINAPI NtUserSetCursorPos( INT x, INT y );
 BOOL    WINAPI NtUserSetKeyboardState( BYTE *state );
+BOOL    WINAPI NtUserSetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags );
 BOOL    WINAPI NtUserSetProcessDpiAwarenessContext( ULONG awareness, ULONG unknown );
 BOOL    WINAPI NtUserSetProcessWindowStation( HWINSTA handle );
 BOOL    WINAPI NtUserSetProp( HWND hwnd, const WCHAR *str, HANDLE handle );

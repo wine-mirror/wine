@@ -1309,6 +1309,34 @@ BOOL WINAPI NtUserGetLayeredWindowAttributes( HWND hwnd, COLORREF *key, BYTE *al
     return ret;
 }
 
+/*****************************************************************************
+ *           NtUserSetLayeredWindowAttributes (win32u.@)
+ */
+BOOL WINAPI NtUserSetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags )
+{
+    BOOL ret;
+
+    TRACE( "(%p,%08x,%d,%x)\n", hwnd, key, alpha, flags );
+
+    SERVER_START_REQ( set_window_layered_info )
+    {
+        req->handle = wine_server_user_handle( hwnd );
+        req->color_key = key;
+        req->alpha = alpha;
+        req->flags = flags;
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+
+    if (ret)
+    {
+        user_driver->pSetLayeredWindowAttributes( hwnd, key, alpha, flags );
+        update_window_state( hwnd );
+    }
+
+    return ret;
+}
+
 /***********************************************************************
  *           list_children_from_point
  *

@@ -234,6 +234,7 @@ struct unix_funcs
     BOOL     (WINAPI *pNtUserSetCursorIconData)( HCURSOR cursor, UNICODE_STRING *module,
                                                  UNICODE_STRING *res_name, struct cursoricon_desc *desc );
     BOOL     (WINAPI *pNtUserSetCursorPos)( INT x, INT y );
+    BOOL     (WINAPI *pNtUserSetLayeredWindowAttributes)( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags );
     BOOL     (WINAPI *pNtUserSetSysColors)( INT count, const INT *colors, const COLORREF *values );
     BOOL     (WINAPI *pNtUserSetWindowPos)( HWND hwnd, HWND after, INT x, INT y, INT cx, INT cy, UINT flags );
     int      (WINAPI *pNtUserSetWindowRgn)( HWND hwnd, HRGN hrgn, BOOL redraw );
