@@ -2639,6 +2639,7 @@ static void test_visual(void)
     SendMessageA(toolbar, TB_BUTTONSTRUCTSIZE, sizeof(tbbutton), 0);
     ret = SendMessageA(toolbar, TB_ADDBUTTONSA, 1, (LPARAM)&tbbutton);
     ok(ret, "TB_ADDBUTTONSA failed.\n");
+    flush_events();
 
     theme = pGetWindowTheme(toolbar);
     ok(!theme, "Expected theme not opened by window.\n");
@@ -2650,7 +2651,6 @@ static void test_visual(void)
 
     ret = RedrawWindow(toolbar, NULL, NULL, RDW_FRAME | RDW_INVALIDATE | RDW_ERASE | RDW_ERASENOW | RDW_UPDATENOW);
     ok(ret, "RedrawWindow failed.\n");
-    flush_events();
 
     mem_dc1 = CreateCompatibleDC(toolbar_dc);
     mem_bitmap1 = CreateCompatibleBitmap(toolbar_dc, width, height);
