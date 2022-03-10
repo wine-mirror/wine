@@ -1725,6 +1725,12 @@ int WINAPI getsockopt( SOCKET s, int level, int optname, char *optval, int *optl
         switch(optname)
         {
         case TCP_NODELAY:
+            if (*optlen < 1 || !optval)
+            {
+                SetLastError( WSAEFAULT );
+                return SOCKET_ERROR;
+            }
+            *optlen = 1;
             return server_getsockopt( s, IOCTL_AFD_WINE_GET_TCP_NODELAY, optval, optlen );
 
         default:
@@ -2998,14 +3004,14 @@ int WINAPI setsockopt( SOCKET s, int level, int optname, const char *optval, int
         switch(optname)
         {
         case TCP_NODELAY:
-        {
-            INT nodelay = *optval;
-            if (optlen <= 0) {
-                SetLastError(WSAEFAULT);
+            if (optlen <= 0 || !optval)
+            {
+                SetLastError( optlen && optval ? WSAENOBUFS : WSAEFAULT );
                 return SOCKET_ERROR;
             }
-            return server_setsockopt( s, IOCTL_AFD_WINE_SET_TCP_NODELAY, (char*)&nodelay, sizeof(nodelay) );
-        }
+            value = *optval;
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_TCP_NODELAY, (char*)&value, sizeof(value) );
+
         default:
             FIXME("Unknown IPPROTO_TCP optname 0x%08x\n", optname);
             SetLastError(WSAENOPROTOOPT);
