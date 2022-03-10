@@ -1734,8 +1734,6 @@ static void STDMETHODCALLTYPE d3d11_device_context_PSGetShader(ID3D11DeviceConte
     TRACE("iface %p, shader %p, class_instances %p, class_instance_count %p.\n",
             iface, shader, class_instances, class_instance_count);
 
-    if (class_instances || class_instance_count)
-        FIXME("Dynamic linking not implemented yet.\n");
     if (class_instance_count)
         *class_instance_count = 0;
 
@@ -1792,8 +1790,6 @@ static void STDMETHODCALLTYPE d3d11_device_context_VSGetShader(ID3D11DeviceConte
     TRACE("iface %p, shader %p, class_instances %p, class_instance_count %p.\n",
             iface, shader, class_instances, class_instance_count);
 
-    if (class_instances || class_instance_count)
-        FIXME("Dynamic linking not implemented yet.\n");
     if (class_instance_count)
         *class_instance_count = 0;
 
@@ -1926,8 +1922,6 @@ static void STDMETHODCALLTYPE d3d11_device_context_GSGetShader(ID3D11DeviceConte
     TRACE("iface %p, shader %p, class_instances %p, class_instance_count %p.\n",
             iface, shader, class_instances, class_instance_count);
 
-    if (class_instances || class_instance_count)
-        FIXME("Dynamic linking not implemented yet.\n");
     if (class_instance_count)
         *class_instance_count = 0;
 
@@ -2393,8 +2387,6 @@ static void STDMETHODCALLTYPE d3d11_device_context_HSGetShader(ID3D11DeviceConte
     TRACE("iface %p, shader %p, class_instances %p, class_instance_count %p.\n",
             iface, shader, class_instances, class_instance_count);
 
-    if (class_instances || class_instance_count)
-        FIXME("Dynamic linking not implemented yet.\n");
     if (class_instance_count)
         *class_instance_count = 0;
 
@@ -2487,8 +2479,6 @@ static void STDMETHODCALLTYPE d3d11_device_context_DSGetShader(ID3D11DeviceConte
     TRACE("iface %p, shader %p, class_instances %p, class_instance_count %p.\n",
             iface, shader, class_instances, class_instance_count);
 
-    if (class_instances || class_instance_count)
-        FIXME("Dynamic linking not implemented yet.\n");
     if (class_instance_count)
         *class_instance_count = 0;
 
@@ -2607,8 +2597,6 @@ static void STDMETHODCALLTYPE d3d11_device_context_CSGetShader(ID3D11DeviceConte
     TRACE("iface %p, shader %p, class_instances %p, class_instance_count %p.\n",
             iface, shader, class_instances, class_instance_count);
 
-    if (class_instances || class_instance_count)
-        FIXME("Dynamic linking not implemented yet.\n");
     if (class_instance_count)
         *class_instance_count = 0;
 
