@@ -24,6 +24,36 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(input);
 
+static CRITICAL_SECTION gamepad_cs;
+static CRITICAL_SECTION_DEBUG gamepad_cs_debug =
+{
+    0, 0, &gamepad_cs,
+    { &gamepad_cs_debug.ProcessLocksList, &gamepad_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": gamepad_cs") }
+};
+static CRITICAL_SECTION gamepad_cs = { &gamepad_cs_debug, -1, 0, 0, 0, 0 };
+
+static IVector_Gamepad *gamepads;
+
+static HRESULT init_gamepads(void)
+{
+    static const struct vector_iids iids =
+    {
+        .vector = &IID_IVector_Gamepad,
+        .view = &IID_IVectorView_Gamepad,
+        .iterable = &IID_IIterable_Gamepad,
+        .iterator = &IID_IIterator_Gamepad,
+    };
+    HRESULT hr;
+
+    EnterCriticalSection( &gamepad_cs );
+    if (gamepads) hr = S_OK;
+    else hr = vector_create( &iids, (void **)&gamepads );
+    LeaveCriticalSection( &gamepad_cs );
+
+    return hr;
+}
+
 struct gamepad
 {
     IGameControllerImpl IGameControllerImpl_iface;
@@ -118,13 +148,19 @@ static HRESULT WINAPI controller_Initialize( IGameControllerImpl *iface, IGameCo
                                              IGameControllerProvider *provider )
 {
     struct gamepad *impl = impl_from_IGameControllerImpl( iface );
+    HRESULT hr;
 
     TRACE( "iface %p, outer %p, provider %p.\n", iface, outer, provider );
 
     impl->IGameController_outer = outer;
     IGameControllerProvider_AddRef( (impl->provider = provider) );
 
-    return S_OK;
+    EnterCriticalSection( &gamepad_cs );
+    if (SUCCEEDED(hr = init_gamepads()))
+        hr = IVector_Gamepad_Append( gamepads, &impl->IGamepad_iface );
+    LeaveCriticalSection( &gamepad_cs );
+
+    return hr;
 }
 
 static const struct IGameControllerImplVtbl controller_vtbl =
@@ -341,23 +377,14 @@ static HRESULT WINAPI statics_remove_GamepadRemoved( IGamepadStatics *iface, Eve
 
 static HRESULT WINAPI statics_get_Gamepads( IGamepadStatics *iface, IVectorView_Gamepad **value )
 {
-    static const struct vector_iids iids =
-    {
-        .vector = &IID_IVector_Gamepad,
-        .view = &IID_IVectorView_Gamepad,
-        .iterable = &IID_IIterable_Gamepad,
-        .iterator = &IID_IIterator_Gamepad,
-    };
-    IVector_Gamepad *gamepads;
     HRESULT hr;
 
     TRACE( "iface %p, value %p.\n", iface, value );
 
-    if (SUCCEEDED(hr = vector_create( &iids, (void **)&gamepads )))
-    {
+    EnterCriticalSection( &gamepad_cs );
+    if (SUCCEEDED(hr = init_gamepads()))
         hr = IVector_Gamepad_GetView( gamepads, value );
-        IVector_Gamepad_Release( gamepads );
-    }
+    LeaveCriticalSection( &gamepad_cs );
 
     return hr;
 }
@@ -440,8 +467,33 @@ static HRESULT WINAPI controller_factory_OnGameControllerAdded( ICustomGameContr
 
 static HRESULT WINAPI controller_factory_OnGameControllerRemoved( ICustomGameControllerFactory *iface, IGameController *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    IGamepad *gamepad;
+    BOOLEAN found;
+    UINT32 index;
+    HRESULT hr;
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    if (FAILED(hr = IGameController_QueryInterface( value, &IID_IGamepad, (void **)&gamepad )))
+        return hr;
+
+    EnterCriticalSection( &gamepad_cs );
+    if (SUCCEEDED(hr = init_gamepads()))
+    {
+        if (FAILED(hr = IVector_Gamepad_IndexOf( gamepads, gamepad, &index, &found )) || !found)
+            WARN( "Could not find gamepad %p, hr %#lx!\n", gamepad, hr );
+        else
+            hr = IVector_Gamepad_RemoveAt( gamepads, index );
+    }
+    LeaveCriticalSection( &gamepad_cs );
+
+    if (FAILED(hr))
+        WARN( "Failed to remove gamepad %p, hr %#lx!\n", gamepad, hr );
+    else if (found)
+        TRACE( "Removed gamepad %p.\n", gamepad );
+    IGamepad_Release( gamepad );
+
+    return S_OK;
 }
 
 static const struct ICustomGameControllerFactoryVtbl controller_factory_vtbl =
