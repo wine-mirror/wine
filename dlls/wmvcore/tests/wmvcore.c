@@ -60,11 +60,11 @@ static WCHAR *load_resource(const WCHAR *name)
     wcscat(pathW, name);
 
     file = CreateFileW(pathW, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
-    ok(file != INVALID_HANDLE_VALUE, "Failed to create file %s, error %u.\n",
+    ok(file != INVALID_HANDLE_VALUE, "Failed to create file %s, error %lu.\n",
             wine_dbgstr_w(pathW), GetLastError());
 
     res = FindResourceW(NULL, name, (LPCWSTR)RT_RCDATA);
-    ok(!!res, "Failed to load resource, error %u.\n", GetLastError());
+    ok(!!res, "Failed to load resource, error %lu.\n", GetLastError());
     ptr = LockResource(LoadResource(GetModuleHandleA(NULL), res));
     WriteFile(file, ptr, SizeofResource( GetModuleHandleA(NULL), res), &written, NULL);
     ok(written == SizeofResource(GetModuleHandleA(NULL), res), "Failed to write resource.\n");
@@ -82,7 +82,7 @@ static HRESULT check_interface_(unsigned int line, void *iface, REFIID riid, BOO
     expected_hr = supported ? S_OK : E_NOINTERFACE;
 
     hr = IUnknown_QueryInterface(unknown, riid, (void **)&out);
-    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#lx, expected %#lx.\n", hr, expected_hr);
     if (SUCCEEDED(hr))
         IUnknown_Release(out);
     return hr;
@@ -94,7 +94,7 @@ static void test_wmwriter_interfaces(void)
     IWMWriter *writer;
 
     hr = WMCreateWriter( NULL, &writer );
-    ok(hr == S_OK, "WMCreateWriter failed 0x%08x\n", hr);
+    ok(hr == S_OK, "WMCreateWriter failed 0x%08lx\n", hr);
     if(FAILED(hr))
     {
         win_skip("Failed to create IWMWriter\n");
@@ -121,7 +121,7 @@ static void test_wmreader_interfaces(void)
     IWMReader *reader;
 
     hr = WMCreateReader( NULL, 0, &reader );
-    ok(hr == S_OK, "WMCreateReader failed 0x%08x\n", hr);
+    ok(hr == S_OK, "WMCreateReader failed 0x%08lx\n", hr);
     if(FAILED(hr))
     {
         win_skip("Failed to create IWMReader\n");
@@ -168,7 +168,7 @@ static void test_wmsyncreader_interfaces(void)
     IWMSyncReader *reader;
 
     hr = WMCreateSyncReader( NULL, 0, &reader );
-    ok(hr == S_OK, "WMCreateSyncReader failed 0x%08x\n", hr);
+    ok(hr == S_OK, "WMCreateSyncReader failed 0x%08lx\n", hr);
     if(FAILED(hr))
     {
         win_skip("Failed to create IWMSyncReader\n");
@@ -216,7 +216,7 @@ static void test_profile_manager_interfaces(void)
     IWMProfileManager  *profile;
 
     hr = WMCreateProfileManager(&profile);
-    ok(hr == S_OK, "WMCreateProfileManager failed 0x%08x\n", hr);
+    ok(hr == S_OK, "WMCreateProfileManager failed 0x%08lx\n", hr);
     if(FAILED(hr))
     {
         win_skip("Failed to create IWMProfileManager\n");
@@ -232,10 +232,10 @@ static void test_WMCreateWriterPriv(void)
     HRESULT hr;
 
     hr = WMCreateWriterPriv(&writer);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = IWMWriter_QueryInterface(writer, &IID_IWMWriter, (void**)&writer2);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     IWMWriter_Release(writer);
     IWMWriter_Release(writer2);
@@ -246,15 +246,15 @@ static void test_urlextension(void)
     HRESULT hr;
 
     hr = WMCheckURLExtension(NULL);
-    ok(hr == E_INVALIDARG, "WMCheckURLExtension failed 0x%08x\n", hr);
+    ok(hr == E_INVALIDARG, "WMCheckURLExtension failed 0x%08lx\n", hr);
     hr = WMCheckURLExtension(L"test.mkv");
-    ok(hr == NS_E_INVALID_NAME, "WMCheckURLExtension failed 0x%08x\n", hr);
+    ok(hr == NS_E_INVALID_NAME, "WMCheckURLExtension failed 0x%08lx\n", hr);
     hr = WMCheckURLExtension(L"test.mp3");
-    todo_wine ok(hr == S_OK, "WMCheckURLExtension failed 0x%08x\n", hr);
+    todo_wine ok(hr == S_OK, "WMCheckURLExtension failed 0x%08lx\n", hr);
     hr = WMCheckURLExtension(L"abcd://test/test.wmv");
-    todo_wine ok(hr == S_OK, "WMCheckURLExtension failed 0x%08x\n", hr);
+    todo_wine ok(hr == S_OK, "WMCheckURLExtension failed 0x%08lx\n", hr);
     hr = WMCheckURLExtension(L"http://test/t.asf?alt=t.mkv");
-    todo_wine ok(hr == S_OK, "WMCheckURLExtension failed 0x%08x\n", hr);
+    todo_wine ok(hr == S_OK, "WMCheckURLExtension failed 0x%08lx\n", hr);
 }
 
 static void test_iscontentprotected(void)
@@ -263,13 +263,13 @@ static void test_iscontentprotected(void)
     BOOL drm;
 
     hr = WMIsContentProtected(NULL, NULL);
-    ok(hr == E_INVALIDARG, "WMIsContentProtected failed 0x%08x\n", hr);
+    ok(hr == E_INVALIDARG, "WMIsContentProtected failed 0x%08lx\n", hr);
     hr = WMIsContentProtected(NULL, &drm);
-    ok(hr == E_INVALIDARG, "WMIsContentProtected failed 0x%08x\n", hr);
+    ok(hr == E_INVALIDARG, "WMIsContentProtected failed 0x%08lx\n", hr);
     hr = WMIsContentProtected(L"test.mp3", NULL);
-    ok(hr == E_INVALIDARG, "WMIsContentProtected failed 0x%08x\n", hr);
+    ok(hr == E_INVALIDARG, "WMIsContentProtected failed 0x%08lx\n", hr);
     hr = WMIsContentProtected(L"test.mp3", &drm);
-    ok(hr == S_FALSE, "WMIsContentProtected failed 0x%08x\n", hr);
+    ok(hr == S_FALSE, "WMIsContentProtected failed 0x%08lx\n", hr);
     ok(drm == FALSE, "got %0dx\n", drm);
 }
 
@@ -292,7 +292,7 @@ static inline struct buffer *impl_from_INSSBuffer(INSSBuffer *iface)
 static HRESULT WINAPI buffer_QueryInterface(INSSBuffer *iface, REFIID iid, void **out)
 {
     if (winetest_debug > 1)
-        trace("%04x: INSSBuffer::QueryInterface(%s)\n", GetCurrentThreadId(), debugstr_guid(iid));
+        trace("%04lx: INSSBuffer::QueryInterface(%s)\n", GetCurrentThreadId(), debugstr_guid(iid));
 
     if (!IsEqualGUID(iid, &IID_INSSBuffer3) && !IsEqualGUID(iid, &IID_IMediaBuffer))
         ok(0, "Unexpected IID %s.\n", debugstr_guid(iid));
@@ -324,7 +324,7 @@ static HRESULT WINAPI buffer_GetLength(INSSBuffer *iface, DWORD *size)
     struct buffer *buffer = impl_from_INSSBuffer(iface);
 
     if (winetest_debug > 1)
-        trace("%04x: INSSBuffer::GetLength()\n", GetCurrentThreadId());
+        trace("%04lx: INSSBuffer::GetLength()\n", GetCurrentThreadId());
 
     *size = buffer->size;
     return S_OK;
@@ -335,9 +335,9 @@ static HRESULT WINAPI buffer_SetLength(INSSBuffer *iface, DWORD size)
     struct buffer *buffer = impl_from_INSSBuffer(iface);
 
     if (winetest_debug > 1)
-        trace("%04x: INSSBuffer::SetLength(%u)\n", GetCurrentThreadId(), size);
+        trace("%04lx: INSSBuffer::SetLength(%lu)\n", GetCurrentThreadId(), size);
 
-    ok(size <= buffer->capacity, "Got size %u, buffer capacity %u.\n", size, buffer->capacity);
+    ok(size <= buffer->capacity, "Got size %lu, buffer capacity %lu.\n", size, buffer->capacity);
 
     buffer->size = size;
     return S_OK;
@@ -348,7 +348,7 @@ static HRESULT WINAPI buffer_GetMaxLength(INSSBuffer *iface, DWORD *size)
     struct buffer *buffer = impl_from_INSSBuffer(iface);
 
     if (winetest_debug > 1)
-        trace("%04x: INSSBuffer::GetMaxLength()\n", GetCurrentThreadId());
+        trace("%04lx: INSSBuffer::GetMaxLength()\n", GetCurrentThreadId());
 
     *size = buffer->capacity;
     return S_OK;
@@ -359,7 +359,7 @@ static HRESULT WINAPI buffer_GetBuffer(INSSBuffer *iface, BYTE **data)
     struct buffer *buffer = impl_from_INSSBuffer(iface);
 
     if (winetest_debug > 1)
-        trace("%04x: INSSBuffer::GetBuffer()\n", GetCurrentThreadId());
+        trace("%04lx: INSSBuffer::GetBuffer()\n", GetCurrentThreadId());
 
     *data = buffer->data;
     return S_OK;
@@ -370,7 +370,7 @@ static HRESULT WINAPI buffer_GetBufferAndLength(INSSBuffer *iface, BYTE **data, 
     struct buffer *buffer = impl_from_INSSBuffer(iface);
 
     if (winetest_debug > 1)
-        trace("%04x: INSSBuffer::GetBufferAndLength()\n", GetCurrentThreadId());
+        trace("%04lx: INSSBuffer::GetBufferAndLength()\n", GetCurrentThreadId());
 
     *size = buffer->size;
     *data = buffer->data;
@@ -404,7 +404,7 @@ static struct teststream *impl_from_IStream(IStream *iface)
 static HRESULT WINAPI stream_QueryInterface(IStream *iface, REFIID iid, void **out)
 {
     if (winetest_debug > 1)
-        trace("%04x: IStream::QueryInterface(%s)\n", GetCurrentThreadId(), debugstr_guid(iid));
+        trace("%04lx: IStream::QueryInterface(%s)\n", GetCurrentThreadId(), debugstr_guid(iid));
 
     if (!IsEqualGUID(iid, &IID_IWMGetSecureChannel) && !IsEqualGUID(iid, &IID_IWMIStreamProps))
         ok(0, "Unexpected IID %s.\n", debugstr_guid(iid));
@@ -431,7 +431,7 @@ static HRESULT WINAPI stream_Read(IStream *iface, void *data, ULONG size, ULONG 
     struct teststream *stream = impl_from_IStream(iface);
 
     if (winetest_debug > 2)
-        trace("%04x: IStream::Read(size %u)\n", GetCurrentThreadId(), size);
+        trace("%04lx: IStream::Read(size %lu)\n", GetCurrentThreadId(), size);
 
     ok(size > 0, "Got zero size.\n");
     ok(!!ret_size, "Got NULL ret_size pointer.\n");
@@ -452,13 +452,13 @@ static HRESULT WINAPI stream_Seek(IStream *iface, LARGE_INTEGER offset, DWORD me
     LARGE_INTEGER size;
 
     if (winetest_debug > 2)
-        trace("%04x: IStream::Seek(offset %I64u, method %#x)\n", GetCurrentThreadId(), offset.QuadPart, method);
+        trace("%04lx: IStream::Seek(offset %I64u, method %#lx)\n", GetCurrentThreadId(), offset.QuadPart, method);
 
     GetFileSizeEx(stream->file, &size);
     ok(offset.QuadPart < size.QuadPart, "Expected offset less than size %I64u, got %I64u.\n",
             size.QuadPart, offset.QuadPart);
 
-    ok(method == STREAM_SEEK_SET, "Got method %#x.\n", method);
+    ok(method == STREAM_SEEK_SET, "Got method %#lx.\n", method);
     ok(!ret_offset, "Got unexpected ret_offset pointer %p\n", ret_offset);
 
     if (!SetFilePointerEx(stream->file, offset, &offset, method))
@@ -509,9 +509,9 @@ static HRESULT WINAPI stream_Stat(IStream *iface, STATSTG *stat, DWORD flags)
     LARGE_INTEGER size;
 
     if (winetest_debug > 1)
-        trace("%04x: IStream::Stat(flags %#x)\n", GetCurrentThreadId(), flags);
+        trace("%04lx: IStream::Stat(flags %#lx)\n", GetCurrentThreadId(), flags);
 
-    ok(flags == STATFLAG_NONAME, "Got flags %#x.\n", flags);
+    ok(flags == STATFLAG_NONAME, "Got flags %#lx.\n", flags);
 
     stat->type = 0xdeadbeef;
     GetFileSizeEx(stream->file, &size);
@@ -568,15 +568,15 @@ static void test_reader_attributes(IWMProfile *profile)
     IWMProfile_QueryInterface(profile, &IID_IWMHeaderInfo, (void **)&header_info);
 
     hr = IWMProfile_GetStreamCount(profile, &count);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(count == 2, "Got count %u.\n", count);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(count == 2, "Got count %lu.\n", count);
 
     for (i = 0; i < count; ++i)
     {
         hr = IWMProfile_GetStream(profile, i, &config);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         hr = IWMStreamConfig_GetStreamNumber(config, &stream_number);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         ret_stream_number = stream_number;
 
         size = sizeof(DWORD);
@@ -584,10 +584,10 @@ static void test_reader_attributes(IWMProfile *profile)
         dword = 0xdeadbeef;
         hr = IWMHeaderInfo_GetAttributeByName(header_info, &ret_stream_number,
                 L"WM/VideoFrameRate", &type, (BYTE *)&dword, &size);
-        ok(hr == ASF_E_NOTFOUND, "Got hr %#x.\n", hr);
+        ok(hr == ASF_E_NOTFOUND, "Got hr %#lx.\n", hr);
         ok(type == 0xdeadbeef, "Got type %#x.\n", type);
         ok(size == sizeof(DWORD), "Got size %u.\n", size);
-        ok(dword == 0xdeadbeef, "Got frame rate %u.\n", dword);
+        ok(dword == 0xdeadbeef, "Got frame rate %lu.\n", dword);
         ok(ret_stream_number == stream_number, "Expected stream number %u, got %u.\n",
                 stream_number, ret_stream_number);
 
@@ -596,7 +596,7 @@ static void test_reader_attributes(IWMProfile *profile)
         duration = 0xdeadbeef;
         hr = IWMHeaderInfo_GetAttributeByName(header_info, &ret_stream_number,
                 L"Duration", &type, (BYTE *)&duration, &size);
-        ok(hr == ASF_E_NOTFOUND, "Got hr %#x.\n", hr);
+        ok(hr == ASF_E_NOTFOUND, "Got hr %#lx.\n", hr);
         ok(type == 0xdeadbeef, "Got type %#x.\n", type);
         ok(size == sizeof(QWORD), "Got size %u.\n", size);
         ok(ret_stream_number == stream_number, "Expected stream number %u, got %u.\n",
@@ -607,7 +607,7 @@ static void test_reader_attributes(IWMProfile *profile)
         dword = 0xdeadbeef;
         hr = IWMHeaderInfo_GetAttributeByName(header_info, &ret_stream_number,
                 L"Seekable", &type, (BYTE *)&dword, &size);
-        ok(hr == ASF_E_NOTFOUND, "Got hr %#x.\n", hr);
+        ok(hr == ASF_E_NOTFOUND, "Got hr %#lx.\n", hr);
         ok(type == 0xdeadbeef, "Got type %#x.\n", type);
         ok(size == sizeof(DWORD), "Got size %u.\n", size);
         ok(ret_stream_number == stream_number, "Expected stream number %u, got %u.\n",
@@ -623,10 +623,10 @@ static void test_reader_attributes(IWMProfile *profile)
     dword = 0xdeadbeef;
     hr = IWMHeaderInfo_GetAttributeByName(header_info, NULL,
             L"WM/VideoFrameRate", &type, (BYTE *)&dword, &size);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     ok(type == 0xdeadbeef, "Got type %#x.\n", type);
     ok(size == sizeof(DWORD), "Got size %u.\n", size);
-    ok(dword == 0xdeadbeef, "Got frame rate %u.\n", dword);
+    ok(dword == 0xdeadbeef, "Got frame rate %lu.\n", dword);
 
     /* And with a zero stream number. */
 
@@ -636,10 +636,10 @@ static void test_reader_attributes(IWMProfile *profile)
     dword = 0xdeadbeef;
     hr = IWMHeaderInfo_GetAttributeByName(header_info, &stream_number,
             L"WM/VideoFrameRate", &type, (BYTE *)&dword, &size);
-    ok(hr == ASF_E_NOTFOUND, "Got hr %#x.\n", hr);
+    ok(hr == ASF_E_NOTFOUND, "Got hr %#lx.\n", hr);
     ok(type == 0xdeadbeef, "Got type %#x.\n", type);
     ok(size == sizeof(DWORD), "Got size %u.\n", size);
-    ok(dword == 0xdeadbeef, "Got frame rate %u.\n", dword);
+    ok(dword == 0xdeadbeef, "Got frame rate %lu.\n", dword);
     ok(stream_number == 0, "Got stream number %u.\n", stream_number);
 
     /* Duration with a NULL stream number. */
@@ -649,7 +649,7 @@ static void test_reader_attributes(IWMProfile *profile)
     duration = 0xdeadbeef;
     hr = IWMHeaderInfo_GetAttributeByName(header_info, NULL,
             L"Duration", &type, (BYTE *)&duration, &size);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     ok(type == 0xdeadbeef, "Got type %#x.\n", type);
     ok(size == sizeof(QWORD), "Got size %u.\n", size);
     ok(duration == 0xdeadbeef, "Got duration %I64u.\n", duration);
@@ -661,7 +661,7 @@ static void test_reader_attributes(IWMProfile *profile)
     duration = 0xdeadbeef;
     hr = IWMHeaderInfo_GetAttributeByName(header_info, &stream_number,
             L"Duration", &type, (BYTE *)&duration, &size);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(type == WMT_TYPE_QWORD, "Got type %#x.\n", type);
     ok(size == sizeof(QWORD), "Got size %u.\n", size);
     ok(duration == 20460000, "Got duration %I64u.\n", duration);
@@ -674,7 +674,7 @@ static void test_reader_attributes(IWMProfile *profile)
     duration = 0xdeadbeef;
     hr = IWMHeaderInfo_GetAttributeByName(header_info, &stream_number,
             L"Duration", &type, (BYTE *)&duration, &size);
-    ok(hr == ASF_E_BUFFERTOOSMALL, "Got hr %#x.\n", hr);
+    ok(hr == ASF_E_BUFFERTOOSMALL, "Got hr %#lx.\n", hr);
     ok(type == 0xdeadbeef, "Got type %#x.\n", type);
     ok(size == sizeof(QWORD), "Got size %u.\n", size);
     ok(duration == 0xdeadbeef, "Got duration %I64u.\n", duration);
@@ -686,7 +686,7 @@ static void test_reader_attributes(IWMProfile *profile)
     type = 0xdeadbeef;
     hr = IWMHeaderInfo_GetAttributeByName(header_info, &stream_number,
             L"Duration", &type, NULL, &size);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(type == WMT_TYPE_QWORD, "Got type %#x.\n", type);
     ok(size == sizeof(QWORD), "Got size %u.\n", size);
     ok(stream_number == 0, "Got stream number %u.\n", stream_number);
@@ -696,7 +696,7 @@ static void test_reader_attributes(IWMProfile *profile)
     dword = 0xdeadbeef;
     hr = IWMHeaderInfo_GetAttributeByName(header_info, &stream_number,
             L"Seekable", &type, (BYTE *)&dword, &size);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(type == WMT_TYPE_BOOL, "Got type %#x.\n", type);
     ok(size == sizeof(DWORD), "Got size %u.\n", size);
     ok(dword == TRUE, "Got duration %I64u.\n", duration);
@@ -716,58 +716,58 @@ static void test_sync_reader_selection(IWMSyncReader *reader)
 
     selections[0] = 0xdeadbeef;
     hr = IWMSyncReader_GetStreamSelected(reader, 0, &selections[0]);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     ok(selections[0] == 0xdeadbeef, "Got selection %#x.\n", selections[0]);
 
     selections[0] = 0xdeadbeef;
     hr = IWMSyncReader_GetStreamSelected(reader, 1, &selections[0]);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(selections[0] == WMT_ON, "Got selection %#x.\n", selections[0]);
 
     selections[0] = 0xdeadbeef;
     hr = IWMSyncReader_GetStreamSelected(reader, 2, &selections[0]);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(selections[0] == WMT_ON, "Got selection %#x.\n", selections[0]);
 
     selections[0] = 0xdeadbeef;
     hr = IWMSyncReader_GetStreamSelected(reader, 3, &selections[0]);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     ok(selections[0] == 0xdeadbeef, "Got selection %#x.\n", selections[0]);
 
     hr = IWMSyncReader_SetStreamsSelected(reader, 0, NULL, NULL);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     stream_numbers[0] = 1;
     stream_numbers[1] = 0;
     selections[0] = selections[1] = WMT_OFF;
     hr = IWMSyncReader_SetStreamsSelected(reader, 2, stream_numbers, selections);
-    ok(hr == NS_E_INVALID_REQUEST, "Got hr %#x.\n", hr);
+    ok(hr == NS_E_INVALID_REQUEST, "Got hr %#lx.\n", hr);
 
     selections[0] = 0xdeadbeef;
     hr = IWMSyncReader_GetStreamSelected(reader, 1, &selections[0]);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(selections[0] == WMT_ON, "Got selection %#x.\n", selections[0]);
 
     stream_numbers[0] = stream_numbers[1] = 1;
     selections[0] = selections[1] = WMT_OFF;
     hr = IWMSyncReader_SetStreamsSelected(reader, 2, stream_numbers, selections);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     selections[0] = 0xdeadbeef;
     hr = IWMSyncReader_GetStreamSelected(reader, 1, &selections[0]);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(selections[0] == WMT_OFF, "Got selection %#x.\n", selections[0]);
 
     selections[0] = 0xdeadbeef;
     hr = IWMSyncReader_GetStreamSelected(reader, 2, &selections[0]);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(selections[0] == WMT_ON, "Got selection %#x.\n", selections[0]);
 
     hr = IWMSyncReader_GetNextSample(reader, 1, &sample, &pts, &duration, &flags, NULL, NULL);
-    ok(hr == NS_E_INVALID_REQUEST, "Got hr %#x.\n", hr);
+    ok(hr == NS_E_INVALID_REQUEST, "Got hr %#lx.\n", hr);
 
     hr = IWMSyncReader_GetNextSample(reader, 2, &sample, &pts, &duration, &flags, NULL, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     INSSBuffer_Release(sample);
 
     for (;;)
@@ -775,19 +775,19 @@ static void test_sync_reader_selection(IWMSyncReader *reader)
         hr = IWMSyncReader_GetNextSample(reader, 2, &sample, &pts, &duration, &flags, NULL, NULL);
         if (hr == NS_E_NO_MORE_SAMPLES)
             break;
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         INSSBuffer_Release(sample);
     }
 
     hr = IWMSyncReader_GetNextSample(reader, 1, &sample, &pts, &duration, &flags, NULL, NULL);
-    ok(hr == NS_E_INVALID_REQUEST, "Got hr %#x.\n", hr);
+    ok(hr == NS_E_INVALID_REQUEST, "Got hr %#lx.\n", hr);
 
     hr = IWMSyncReader_SetRange(reader, 0, 0);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IWMSyncReader_GetNextSample(reader, 0, &sample, &pts, &duration,
             &flags, NULL, &stream_numbers[0]);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(stream_numbers[0] == 2, "Got stream number %u.\n", stream_numbers[0]);
     INSSBuffer_Release(sample);
 
@@ -797,7 +797,7 @@ static void test_sync_reader_selection(IWMSyncReader *reader)
                 &flags, NULL, &stream_numbers[0]);
         if (hr == NS_E_NO_MORE_SAMPLES)
             break;
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         ok(stream_numbers[0] == 2, "Got stream number %u.\n", stream_numbers[0]);
         INSSBuffer_Release(sample);
     }
@@ -805,20 +805,20 @@ static void test_sync_reader_selection(IWMSyncReader *reader)
     stream_numbers[0] = stream_numbers[1] = 2;
     selections[0] = selections[1] = WMT_OFF;
     hr = IWMSyncReader_SetStreamsSelected(reader, 2, stream_numbers, selections);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IWMSyncReader_SetRange(reader, 0, 0);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IWMSyncReader_GetNextSample(reader, 0, &sample, &pts, &duration,
             &flags, NULL, &stream_numbers[0]);
-    ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#x.\n", hr);
+    ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#lx.\n", hr);
 
     stream_numbers[0] = 1;
     stream_numbers[1] = 2;
     selections[0] = selections[1] = WMT_ON;
     hr = IWMSyncReader_SetStreamsSelected(reader, 2, stream_numbers, selections);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 }
 
 static void test_sync_reader_compressed(IWMSyncReader *reader)
@@ -830,19 +830,19 @@ static void test_sync_reader_compressed(IWMSyncReader *reader)
     HRESULT hr;
 
     hr = IWMSyncReader_SetReadStreamSamples(reader, 0, TRUE);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     hr = IWMSyncReader_SetReadStreamSamples(reader, 1, TRUE);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IWMSyncReader_SetReadStreamSamples(reader, 2, TRUE);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IWMSyncReader_SetReadStreamSamples(reader, 3, TRUE);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     hr = IWMSyncReader_SetRange(reader, 0, 0);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IWMSyncReader_GetNextSample(reader, 0, &sample, &pts, &duration, &flags, NULL, &stream_number);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     INSSBuffer_Release(sample);
 
     for (;;)
@@ -850,14 +850,14 @@ static void test_sync_reader_compressed(IWMSyncReader *reader)
         hr = IWMSyncReader_GetNextSample(reader, 0, &sample, &pts, &duration, &flags, NULL, &stream_number);
         if (hr == NS_E_NO_MORE_SAMPLES)
             break;
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         INSSBuffer_Release(sample);
     }
 
     hr = IWMSyncReader_SetReadStreamSamples(reader, 1, FALSE);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IWMSyncReader_SetReadStreamSamples(reader, 2, FALSE);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 }
 
 static void test_sync_reader_streaming(void)
@@ -879,53 +879,53 @@ static void test_sync_reader_streaming(void)
     BOOL ret;
 
     file = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
-    ok(file != INVALID_HANDLE_VALUE, "Failed to open %s, error %u.\n", debugstr_w(file), GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "Failed to open %s, error %lu.\n", debugstr_w(file), GetLastError());
 
     teststream_init(&stream, file);
 
     hr = WMCreateSyncReader(NULL, 0, &reader);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     IWMSyncReader_QueryInterface(reader, &IID_IWMProfile, (void **)&profile);
 
     hr = IWMSyncReader_OpenStream(reader, &stream.IStream_iface);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(stream.refcount > 1, "Got refcount %d.\n", stream.refcount);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(stream.refcount > 1, "Got refcount %ld.\n", stream.refcount);
 
     hr = IWMProfile_GetStreamCount(profile, NULL);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     count = 0xdeadbeef;
     hr = IWMProfile_GetStreamCount(profile, &count);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(count == 2, "Got count %u.\n", count);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(count == 2, "Got count %lu.\n", count);
 
     count = 0xdeadbeef;
     hr = IWMSyncReader_GetOutputCount(reader, &count);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(count == 2, "Got count %u.\n", count);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(count == 2, "Got count %lu.\n", count);
 
     for (i = 0; i < 2; ++i)
     {
         hr = IWMProfile_GetStream(profile, i, &config);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         hr = IWMProfile_GetStream(profile, i, &config2);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         ok(config2 != config, "Expected different objects.\n");
         ref = IWMStreamConfig_Release(config2);
-        ok(!ref, "Got outstanding refcount %d.\n", ref);
+        ok(!ref, "Got outstanding refcount %ld.\n", ref);
 
         stream_numbers[i] = 0xdead;
         hr = IWMStreamConfig_GetStreamNumber(config, &stream_numbers[i]);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         ok(stream_numbers[i] == i + 1, "Got stream number %u.\n", stream_numbers[i]);
 
         ref = IWMStreamConfig_Release(config);
-        ok(!ref, "Got outstanding refcount %d.\n", ref);
+        ok(!ref, "Got outstanding refcount %ld.\n", ref);
     }
 
     hr = IWMProfile_GetStream(profile, 2, &config);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     while (!eos[0] || !eos[1])
     {
@@ -935,50 +935,50 @@ static void test_sync_reader_streaming(void)
             hr = IWMSyncReader_GetNextSample(reader, stream_numbers[j], &sample,
                     &pts, &duration, &flags, &output_number, &stream_number);
             if (first)
-                ok(hr == S_OK, "Expected at least one valid sample; got hr %#x.\n", hr);
+                ok(hr == S_OK, "Expected at least one valid sample; got hr %#lx.\n", hr);
             else if (eos[j])
-                ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#x.\n", hr);
+                ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#lx.\n", hr);
             else
-                ok(hr == S_OK || hr == NS_E_NO_MORE_SAMPLES, "Got hr %#x.\n", hr);
+                ok(hr == S_OK || hr == NS_E_NO_MORE_SAMPLES, "Got hr %#lx.\n", hr);
 
             if (hr == S_OK)
             {
                 hr = INSSBuffer_GetBufferAndLength(sample, &data, &size);
-                ok(hr == S_OK, "Got hr %#x.\n", hr);
+                ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
                 hr = INSSBuffer_GetBuffer(sample, &data2);
-                ok(hr == S_OK, "Got hr %#x.\n", hr);
+                ok(hr == S_OK, "Got hr %#lx.\n", hr);
                 ok(data2 == data, "Data pointers didn't match.\n");
 
                 hr = INSSBuffer_GetMaxLength(sample, &capacity);
-                ok(hr == S_OK, "Got hr %#x.\n", hr);
-                ok(size <= capacity, "Size %u exceeds capacity %u.\n", size, capacity);
+                ok(hr == S_OK, "Got hr %#lx.\n", hr);
+                ok(size <= capacity, "Size %lu exceeds capacity %lu.\n", size, capacity);
 
                 hr = INSSBuffer_SetLength(sample, capacity + 1);
-                ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+                ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
                 hr = INSSBuffer_SetLength(sample, capacity - 1);
-                ok(hr == S_OK, "Got hr %#x.\n", hr);
+                ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
                 hr = INSSBuffer_GetBufferAndLength(sample, &data2, &size);
-                ok(hr == S_OK, "Got hr %#x.\n", hr);
+                ok(hr == S_OK, "Got hr %#lx.\n", hr);
                 ok(data2 == data, "Data pointers didn't match.\n");
-                ok(size == capacity - 1, "Expected size %u, got %u.\n", capacity - 1, size);
+                ok(size == capacity - 1, "Expected size %lu, got %lu.\n", capacity - 1, size);
 
                 ref = INSSBuffer_Release(sample);
-                ok(!ref, "Got outstanding refcount %d.\n", ref);
+                ok(!ref, "Got outstanding refcount %ld.\n", ref);
 
                 hr = IWMSyncReader_GetOutputNumberForStream(reader, stream_number, &expect_output_number);
-                ok(hr == S_OK, "Got hr %#x.\n", hr);
-                ok(output_number == expect_output_number, "Expected output number %u, got %u.\n",
+                ok(hr == S_OK, "Got hr %#lx.\n", hr);
+                ok(output_number == expect_output_number, "Expected output number %lu, got %lu.\n",
                         expect_output_number, output_number);
             }
             else
             {
                 ok(pts == 0xdeadbeef, "Got PTS %I64u.\n", pts);
                 ok(duration == 0xdeadbeef, "Got duration %I64u.\n", duration);
-                ok(flags == 0xdeadbeef, "Got flags %#x.\n", flags);
-                ok(output_number == 0xdeadbeef, "Got output number %u.\n", output_number);
+                ok(flags == 0xdeadbeef, "Got flags %#lx.\n", flags);
+                ok(output_number == 0xdeadbeef, "Got output number %lu.\n", output_number);
                 eos[j] = true;
             }
 
@@ -990,28 +990,28 @@ static void test_sync_reader_streaming(void)
 
     hr = IWMSyncReader_GetNextSample(reader, stream_numbers[0], &sample,
             &pts, &duration, &flags, NULL, NULL);
-    ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#x.\n", hr);
+    ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#lx.\n", hr);
 
     hr = IWMSyncReader_GetNextSample(reader, stream_numbers[1], &sample,
             &pts, &duration, &flags, NULL, NULL);
-    ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#x.\n", hr);
+    ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#lx.\n", hr);
 
     hr = IWMSyncReader_SetRange(reader, 0, 0);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IWMSyncReader_GetNextSample(reader, stream_numbers[0], &sample, &pts, &duration, &flags, NULL, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     INSSBuffer_Release(sample);
 
     hr = IWMSyncReader_GetNextSample(reader, 0, &sample, &pts, &duration, &flags, NULL, NULL);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     hr = IWMSyncReader_GetNextSample(reader, 0, &sample, &pts, &duration, &flags, &output_number, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     INSSBuffer_Release(sample);
 
     hr = IWMSyncReader_GetNextSample(reader, 0, &sample, &pts, &duration, &flags, NULL, &stream_number);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     INSSBuffer_Release(sample);
 
     for (;;)
@@ -1019,30 +1019,30 @@ static void test_sync_reader_streaming(void)
         stream_number = pts = duration = flags = output_number = 0xdeadbeef;
         hr = IWMSyncReader_GetNextSample(reader, 0, &sample,
                 &pts, &duration, &flags, &output_number, &stream_number);
-        ok(hr == S_OK || hr == NS_E_NO_MORE_SAMPLES, "Got hr %#x.\n", hr);
+        ok(hr == S_OK || hr == NS_E_NO_MORE_SAMPLES, "Got hr %#lx.\n", hr);
 
         if (hr == S_OK)
         {
             hr = INSSBuffer_GetBufferAndLength(sample, &data, &size);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
             hr = INSSBuffer_GetBuffer(sample, &data2);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
             ok(data2 == data, "Data pointers didn't match.\n");
 
             hr = INSSBuffer_GetMaxLength(sample, &capacity);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
-            ok(size <= capacity, "Size %u exceeds capacity %u.\n", size, capacity);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            ok(size <= capacity, "Size %lu exceeds capacity %lu.\n", size, capacity);
 
             ref = INSSBuffer_Release(sample);
-            ok(!ref, "Got outstanding refcount %d.\n", ref);
+            ok(!ref, "Got outstanding refcount %ld.\n", ref);
         }
         else
         {
             ok(pts == 0xdeadbeef, "Got PTS %I64u.\n", pts);
             ok(duration == 0xdeadbeef, "Got duration %I64u.\n", duration);
-            ok(flags == 0xdeadbeef, "Got flags %#x.\n", flags);
-            ok(output_number == 0xdeadbeef, "Got output number %u.\n", output_number);
+            ok(flags == 0xdeadbeef, "Got flags %#lx.\n", flags);
+            ok(output_number == 0xdeadbeef, "Got output number %lu.\n", output_number);
             ok(stream_number == 0xbeef, "Got stream number %u.\n", stream_number);
             break;
         }
@@ -1050,18 +1050,18 @@ static void test_sync_reader_streaming(void)
 
     hr = IWMSyncReader_GetNextSample(reader, 0, &sample,
             &pts, &duration, &flags, NULL, &stream_number);
-    ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#x.\n", hr);
+    ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#lx.\n", hr);
 
     hr = IWMSyncReader_GetNextSample(reader, stream_numbers[0], &sample,
             &pts, &duration, &flags, NULL, NULL);
-    ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#x.\n", hr);
+    ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#lx.\n", hr);
 
     hr = IWMSyncReader_GetNextSample(reader, stream_numbers[1], &sample,
             &pts, &duration, &flags, NULL, NULL);
-    ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#x.\n", hr);
+    ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#lx.\n", hr);
 
     hr = IWMSyncReader_SetRange(reader, 0, 0);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     test_sync_reader_selection(reader);
     test_sync_reader_compressed(reader);
@@ -1069,26 +1069,26 @@ static void test_sync_reader_streaming(void)
     test_reader_attributes(profile);
 
     hr = IWMSyncReader_Close(reader);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IWMSyncReader_Close(reader);
-    ok(hr == NS_E_INVALID_REQUEST, "Got hr %#x.\n", hr);
+    ok(hr == NS_E_INVALID_REQUEST, "Got hr %#lx.\n", hr);
 
-    ok(stream.refcount == 1, "Got outstanding refcount %d.\n", stream.refcount);
+    ok(stream.refcount == 1, "Got outstanding refcount %ld.\n", stream.refcount);
 
     SetFilePointer(stream.file, 0, NULL, FILE_BEGIN);
     hr = IWMSyncReader_OpenStream(reader, &stream.IStream_iface);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(stream.refcount > 1, "Got refcount %d.\n", stream.refcount);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(stream.refcount > 1, "Got refcount %ld.\n", stream.refcount);
 
     IWMProfile_Release(profile);
     ref = IWMSyncReader_Release(reader);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
 
-    ok(stream.refcount == 1, "Got outstanding refcount %d.\n", stream.refcount);
+    ok(stream.refcount == 1, "Got outstanding refcount %ld.\n", stream.refcount);
     CloseHandle(stream.file);
     ret = DeleteFileW(filename);
-    ok(ret, "Failed to delete %s, error %u.\n", debugstr_w(filename), GetLastError());
+    ok(ret, "Failed to delete %s, error %lu.\n", debugstr_w(filename), GetLastError());
 }
 
 static void check_video_type(const WM_MEDIA_TYPE *mt)
@@ -1103,12 +1103,12 @@ static void check_video_type(const WM_MEDIA_TYPE *mt)
 
     ok(EqualRect(&video_info->rcSource, &rect), "Got source rect %s.\n", wine_dbgstr_rect(&rect));
     ok(EqualRect(&video_info->rcTarget, &rect), "Got target rect %s.\n", wine_dbgstr_rect(&rect));
-    ok(!video_info->dwBitRate, "Got bit rate %u.\n", video_info->dwBitRate);
-    ok(!video_info->dwBitErrorRate, "Got bit error rate %u.\n", video_info->dwBitErrorRate);
+    ok(!video_info->dwBitRate, "Got bit rate %lu.\n", video_info->dwBitRate);
+    ok(!video_info->dwBitErrorRate, "Got bit error rate %lu.\n", video_info->dwBitErrorRate);
     ok(video_info->bmiHeader.biSize == sizeof(video_info->bmiHeader),
-            "Got size %u.\n", video_info->bmiHeader.biSize);
-    ok(video_info->bmiHeader.biWidth == 64, "Got width %d.\n", video_info->bmiHeader.biWidth);
-    ok(video_info->bmiHeader.biHeight == 48, "Got height %d.\n", video_info->bmiHeader.biHeight);
+            "Got size %lu.\n", video_info->bmiHeader.biSize);
+    ok(video_info->bmiHeader.biWidth == 64, "Got width %ld.\n", video_info->bmiHeader.biWidth);
+    ok(video_info->bmiHeader.biHeight == 48, "Got height %ld.\n", video_info->bmiHeader.biHeight);
     ok(video_info->bmiHeader.biPlanes == 1, "Got planes %d.\n", video_info->bmiHeader.biPlanes);
 }
 
@@ -1134,24 +1134,24 @@ static void test_stream_media_props(IWMStreamConfig *config, const GUID *majorty
     HRESULT hr;
 
     hr = IWMStreamConfig_QueryInterface(config, &IID_IWMMediaProps, (void **)&props);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     size = 0xdeadbeef;
     hr = IWMMediaProps_GetMediaType(props, NULL, &size);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(size != 0xdeadbeef && size >= sizeof(WM_MEDIA_TYPE), "Got size %u.\n", size);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(size != 0xdeadbeef && size >= sizeof(WM_MEDIA_TYPE), "Got size %lu.\n", size);
 
     ret_size = size - 1;
     hr = IWMMediaProps_GetMediaType(props, mt, &ret_size);
-    ok(hr == ASF_E_BUFFERTOOSMALL, "Got hr %#x.\n", hr);
-    ok(ret_size == size, "Expected size %u, got %u.\n", size, ret_size);
+    ok(hr == ASF_E_BUFFERTOOSMALL, "Got hr %#lx.\n", hr);
+    ok(ret_size == size, "Expected size %lu, got %lu.\n", size, ret_size);
 
     ret_size = sizeof(mt_buffer);
     memset(mt_buffer, 0xcc, sizeof(mt_buffer));
     hr = IWMMediaProps_GetMediaType(props, mt, &ret_size);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(ret_size == size, "Expected size %u, got %u.\n", size, ret_size);
-    ok(size == sizeof(WM_MEDIA_TYPE) + mt->cbFormat, "Expected size %u, got %u.\n",
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(ret_size == size, "Expected size %lu, got %lu.\n", size, ret_size);
+    ok(size == sizeof(WM_MEDIA_TYPE) + mt->cbFormat, "Expected size %Iu, got %lu.\n",
             sizeof(WM_MEDIA_TYPE) + mt->cbFormat, size);
     ok(IsEqualGUID(&mt->majortype, majortype), "Expected major type %s, got %s.\n",
             debugstr_guid(majortype), debugstr_guid(&mt->majortype));
@@ -1180,32 +1180,32 @@ static void test_sync_reader_types(void)
     BOOL ret;
 
     file = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
-    ok(file != INVALID_HANDLE_VALUE, "Failed to open %s, error %u.\n", debugstr_w(file), GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "Failed to open %s, error %lu.\n", debugstr_w(file), GetLastError());
 
     teststream_init(&stream, file);
 
     hr = WMCreateSyncReader(NULL, 0, &reader);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     IWMSyncReader_QueryInterface(reader, &IID_IWMProfile, (void **)&profile);
 
     hr = IWMSyncReader_OpenStream(reader, &stream.IStream_iface);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(stream.refcount > 1, "Got refcount %d.\n", stream.refcount);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(stream.refcount > 1, "Got refcount %ld.\n", stream.refcount);
 
     for (i = 0; i < 2; ++i)
     {
-        winetest_push_context("Stream %u", i);
+        winetest_push_context("Stream %lu", i);
 
         hr = IWMProfile_GetStream(profile, i, &config);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         stream_number = 0xdead;
         hr = IWMStreamConfig_GetStreamNumber(config, &stream_number);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         ok(stream_number == i + 1, "Got stream number %u.\n", stream_number);
 
         hr = IWMStreamConfig_GetStreamType(config, &majortype);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         if (!i)
             ok(IsEqualGUID(&majortype, &MEDIATYPE_Video), "Got major type %s.\n", debugstr_guid(&majortype));
         else
@@ -1214,33 +1214,33 @@ static void test_sync_reader_types(void)
         test_stream_media_props(config, &majortype);
 
         ref = IWMStreamConfig_Release(config);
-        ok(!ref, "Got outstanding refcount %d.\n", ref);
+        ok(!ref, "Got outstanding refcount %ld.\n", ref);
 
         output_number = 0xdeadbeef;
         hr = IWMSyncReader_GetOutputNumberForStream(reader, stream_number, &output_number);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
-        todo_wine ok(output_number == 1 - i, "Got output number %u.\n", output_number);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        todo_wine ok(output_number == 1 - i, "Got output number %lu.\n", output_number);
 
         stream_number2 = 0xdead;
         hr = IWMSyncReader_GetStreamNumberForOutput(reader, output_number, &stream_number2);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         ok(stream_number2 == stream_number, "Expected stream number %u, got %u.\n", stream_number, stream_number2);
 
         hr = IWMSyncReader_GetOutputProps(reader, output_number, &output_props);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         ret_size = sizeof(mt_buffer);
         hr = IWMOutputMediaProps_GetMediaType(output_props, mt, &ret_size);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         memset(&majortype2, 0xcc, sizeof(majortype2));
         hr = IWMOutputMediaProps_GetType(output_props, &majortype2);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         ok(IsEqualGUID(&majortype2, &majortype), "Expected major type %s, got %s.\n",
                 debugstr_guid(&majortype), debugstr_guid(&majortype2));
 
         ref = IWMOutputMediaProps_Release(output_props);
-        ok(!ref, "Got outstanding refcount %d.\n", ref);
+        ok(!ref, "Got outstanding refcount %ld.\n", ref);
 
         if (IsEqualGUID(&majortype, &MEDIATYPE_Audio))
         {
@@ -1256,38 +1256,38 @@ static void test_sync_reader_types(void)
 
         count = 0;
         hr = IWMSyncReader_GetOutputFormatCount(reader, output_number, &count);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
-        ok(count > 0, "Got count %u.\n", count);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(count > 0, "Got count %lu.\n", count);
 
         for (j = 0; j < count; ++j)
         {
-            winetest_push_context("Format %u", j);
+            winetest_push_context("Format %lu", j);
 
             hr = IWMSyncReader_GetOutputFormat(reader, output_number, j, &output_props);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
             hr = IWMSyncReader_GetOutputFormat(reader, output_number, j, &output_props2);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
             ok(output_props2 != output_props, "Expected different objects.\n");
             ref = IWMOutputMediaProps_Release(output_props2);
-            ok(!ref, "Got outstanding refcount %d.\n", ref);
+            ok(!ref, "Got outstanding refcount %ld.\n", ref);
 
             size = 0xdeadbeef;
             hr = IWMOutputMediaProps_GetMediaType(output_props, NULL, &size);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
-            ok(size != 0xdeadbeef && size >= sizeof(WM_MEDIA_TYPE), "Got size %u.\n", size);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            ok(size != 0xdeadbeef && size >= sizeof(WM_MEDIA_TYPE), "Got size %lu.\n", size);
 
             ret_size = size - 1;
             hr = IWMOutputMediaProps_GetMediaType(output_props, mt, &ret_size);
-            ok(hr == ASF_E_BUFFERTOOSMALL, "Got hr %#x.\n", hr);
-            ok(ret_size == size, "Expected size %u, got %u.\n", size, ret_size);
+            ok(hr == ASF_E_BUFFERTOOSMALL, "Got hr %#lx.\n", hr);
+            ok(ret_size == size, "Expected size %lu, got %lu.\n", size, ret_size);
 
             ret_size = sizeof(mt_buffer);
             memset(mt_buffer, 0xcc, sizeof(mt_buffer));
             hr = IWMOutputMediaProps_GetMediaType(output_props, mt, &ret_size);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
-            ok(ret_size == size, "Expected size %u, got %u.\n", size, ret_size);
-            ok(size == sizeof(WM_MEDIA_TYPE) + mt->cbFormat, "Expected size %u, got %u.\n",
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            ok(ret_size == size, "Expected size %lu, got %lu.\n", size, ret_size);
+            ok(size == sizeof(WM_MEDIA_TYPE) + mt->cbFormat, "Expected size %Iu, got %lu.\n",
                     sizeof(WM_MEDIA_TYPE) + mt->cbFormat, size);
 
             ok(IsEqualGUID(&mt->majortype, &majortype), "Got major type %s.\n", debugstr_guid(&mt->majortype));
@@ -1299,52 +1299,52 @@ static void test_sync_reader_types(void)
 
             memset(&majortype2, 0xcc, sizeof(majortype2));
             hr = IWMOutputMediaProps_GetType(output_props, &majortype2);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
             ok(IsEqualGUID(&majortype2, &majortype), "Expected major type %s, got %s.\n",
                     debugstr_guid(&majortype), debugstr_guid(&majortype2));
 
             hr = IWMSyncReader_SetOutputProps(reader, output_number, output_props);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
             hr = IWMSyncReader_SetOutputProps(reader, 1 - output_number, output_props);
             if (!i)
-                todo_wine ok(hr == ASF_E_BADMEDIATYPE, "Got hr %#x.\n", hr);
+                todo_wine ok(hr == ASF_E_BADMEDIATYPE, "Got hr %#lx.\n", hr);
             else
                 ok(hr == NS_E_INCOMPATIBLE_FORMAT
-                        || hr == NS_E_INVALID_OUTPUT_FORMAT /* win10 */, "Got hr %#x.\n", hr);
+                        || hr == NS_E_INVALID_OUTPUT_FORMAT /* win10 */, "Got hr %#lx.\n", hr);
             hr = IWMSyncReader_SetOutputProps(reader, 2, output_props);
-            ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+            ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
             hr = IWMSyncReader_GetOutputProps(reader, output_number, &output_props2);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
             ok(output_props2 != output_props, "Expected different objects.\n");
 
             ret_size = sizeof(mt2_buffer);
             hr = IWMOutputMediaProps_GetMediaType(output_props2, mt2, &ret_size);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
             ok(compare_media_types(mt, mt2), "Media types didn't match.\n");
 
             ref = IWMOutputMediaProps_Release(output_props2);
-            ok(!ref, "Got outstanding refcount %d.\n", ref);
+            ok(!ref, "Got outstanding refcount %ld.\n", ref);
             ref = IWMOutputMediaProps_Release(output_props);
-            ok(!ref, "Got outstanding refcount %d.\n", ref);
+            ok(!ref, "Got outstanding refcount %ld.\n", ref);
 
             winetest_pop_context();
         }
 
         hr = IWMSyncReader_GetOutputFormat(reader, output_number, count, &output_props);
-        ok(hr == NS_E_INVALID_OUTPUT_FORMAT, "Got hr %#x.\n", hr);
+        ok(hr == NS_E_INVALID_OUTPUT_FORMAT, "Got hr %#lx.\n", hr);
 
         hr = IWMSyncReader_GetOutputProps(reader, output_number, &output_props);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         hr = IWMSyncReader_GetOutputProps(reader, output_number, &output_props2);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         ok(output_props2 != output_props, "Expected different objects.\n");
 
         ref = IWMOutputMediaProps_Release(output_props2);
-        ok(!ref, "Got outstanding refcount %d.\n", ref);
+        ok(!ref, "Got outstanding refcount %ld.\n", ref);
         ref = IWMOutputMediaProps_Release(output_props);
-        ok(!ref, "Got outstanding refcount %d.\n", ref);
+        ok(!ref, "Got outstanding refcount %ld.\n", ref);
 
         winetest_pop_context();
     }
@@ -1354,27 +1354,27 @@ static void test_sync_reader_types(void)
 
     count = 0xdeadbeef;
     hr = IWMSyncReader_GetOutputFormatCount(reader, 2, &count);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
-    ok(count == 0xdeadbeef, "Got count %#x.\n", count);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    ok(count == 0xdeadbeef, "Got count %#lx.\n", count);
 
     output_props = (void *)0xdeadbeef;
     hr = IWMSyncReader_GetOutputProps(reader, 2, &output_props);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     ok(output_props == (void *)0xdeadbeef, "Got output props %p.\n", output_props);
 
     output_props = (void *)0xdeadbeef;
     hr = IWMSyncReader_GetOutputFormat(reader, 2, 0, &output_props);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     ok(output_props == (void *)0xdeadbeef, "Got output props %p.\n", output_props);
 
     IWMProfile_Release(profile);
     ref = IWMSyncReader_Release(reader);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
 
-    ok(stream.refcount == 1, "Got outstanding refcount %d.\n", stream.refcount);
+    ok(stream.refcount == 1, "Got outstanding refcount %ld.\n", stream.refcount);
     CloseHandle(stream.file);
     ret = DeleteFileW(filename);
-    ok(ret, "Failed to delete %s, error %u.\n", debugstr_w(filename), GetLastError());
+    ok(ret, "Failed to delete %s, error %lu.\n", debugstr_w(filename), GetLastError());
 }
 
 static void test_sync_reader_file(void)
@@ -1388,32 +1388,32 @@ static void test_sync_reader_file(void)
     BOOL ret;
 
     hr = WMCreateSyncReader(NULL, 0, &reader);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     IWMSyncReader_QueryInterface(reader, &IID_IWMProfile, (void **)&profile);
 
     hr = IWMSyncReader_Open(reader, filename);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     count = 0xdeadbeef;
     hr = IWMSyncReader_GetOutputCount(reader, &count);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(count == 2, "Got count %u.\n", count);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(count == 2, "Got count %lu.\n", count);
 
     hr = IWMSyncReader_Close(reader);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IWMSyncReader_Close(reader);
-    ok(hr == NS_E_INVALID_REQUEST, "Got hr %#x.\n", hr);
+    ok(hr == NS_E_INVALID_REQUEST, "Got hr %#lx.\n", hr);
 
     hr = IWMSyncReader_Open(reader, filename);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     IWMProfile_Release(profile);
     ref = IWMSyncReader_Release(reader);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
 
     ret = DeleteFileW(filename);
-    ok(ret, "Failed to delete %s, error %u.\n", debugstr_w(filename), GetLastError());
+    ok(ret, "Failed to delete %s, error %lu.\n", debugstr_w(filename), GetLastError());
 }
 
 struct callback
@@ -1444,7 +1444,7 @@ static HRESULT WINAPI callback_QueryInterface(IWMReaderCallback *iface, REFIID i
     struct callback *callback = impl_from_IWMReaderCallback(iface);
 
     if (winetest_debug > 1)
-        trace("%04x: IWMReaderCallback::QueryInterface(%s)\n", GetCurrentThreadId(), debugstr_guid(iid));
+        trace("%04lx: IWMReaderCallback::QueryInterface(%s)\n", GetCurrentThreadId(), debugstr_guid(iid));
 
     if (IsEqualGUID(iid, &IID_IWMReaderAllocatorEx))
         *out = &callback->IWMReaderAllocatorEx_iface;
@@ -1482,21 +1482,21 @@ static HRESULT WINAPI callback_OnStatus(IWMReaderCallback *iface, WMT_STATUS sta
     struct callback *callback = impl_from_IWMReaderCallback(iface);
 
     if (winetest_debug > 1)
-        trace("%u: %04x: IWMReaderCallback::OnStatus(status %u, hr %#x, type %#x, value %p)\n",
+        trace("%lu: %04lx: IWMReaderCallback::OnStatus(status %u, hr %#lx, type %#x, value %p)\n",
                 GetTickCount(), GetCurrentThreadId(), status, hr, type, value);
 
     switch (status)
     {
         case WMT_OPENED:
             ok(type == WMT_TYPE_DWORD, "Got type %#x.\n", type);
-            ok(!*(DWORD *)value, "Got value %#x.\n", *(DWORD *)value);
+            ok(!*(DWORD *)value, "Got value %#lx.\n", *(DWORD *)value);
             ok(context == (void *)0xdeadbeef, "Got unexpected context %p.\n", context);
             SetEvent(callback->got_opened);
             break;
 
         case WMT_STARTED:
             ok(type == WMT_TYPE_DWORD, "Got type %#x.\n", type);
-            ok(!*(DWORD *)value, "Got value %#x.\n", *(DWORD *)value);
+            ok(!*(DWORD *)value, "Got value %#lx.\n", *(DWORD *)value);
             ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
             callback->got_end_of_streaming = callback->got_eof = callback->got_sample = 0;
             ++callback->got_started;
@@ -1504,21 +1504,21 @@ static HRESULT WINAPI callback_OnStatus(IWMReaderCallback *iface, WMT_STATUS sta
 
         case WMT_STOPPED:
             ok(type == WMT_TYPE_DWORD, "Got type %#x.\n", type);
-            ok(!*(DWORD *)value, "Got value %#x.\n", *(DWORD *)value);
+            ok(!*(DWORD *)value, "Got value %#lx.\n", *(DWORD *)value);
             ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
             SetEvent(callback->got_stopped);
             break;
 
         case WMT_CLOSED:
             ok(type == WMT_TYPE_DWORD, "Got type %#x.\n", type);
-            ok(!*(DWORD *)value, "Got value %#x.\n", *(DWORD *)value);
+            ok(!*(DWORD *)value, "Got value %#lx.\n", *(DWORD *)value);
             ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
             ++callback->got_closed;
             break;
 
         case WMT_END_OF_STREAMING:
             ok(type == WMT_TYPE_DWORD, "Got type %#x.\n", type);
-            ok(!*(DWORD *)value, "Got value %#x.\n", *(DWORD *)value);
+            ok(!*(DWORD *)value, "Got value %#lx.\n", *(DWORD *)value);
             ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
             ok(!callback->got_eof, "Got %u WMT_EOF callbacks.\n", callback->got_eof);
             ++callback->got_end_of_streaming;
@@ -1526,7 +1526,7 @@ static HRESULT WINAPI callback_OnStatus(IWMReaderCallback *iface, WMT_STATUS sta
 
         case WMT_EOF:
             ok(type == WMT_TYPE_DWORD, "Got type %#x.\n", type);
-            ok(!*(DWORD *)value, "Got value %#x.\n", *(DWORD *)value);
+            ok(!*(DWORD *)value, "Got value %#lx.\n", *(DWORD *)value);
             ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
             if (callback->all_streams_off)
                 ok(callback->got_sample == 0, "Got %u samples.\n", callback->got_sample);
@@ -1541,7 +1541,7 @@ static HRESULT WINAPI callback_OnStatus(IWMReaderCallback *iface, WMT_STATUS sta
         /* Not sent when not using IWMReaderAdvanced::DeliverTime(). */
         case WMT_END_OF_SEGMENT:
             ok(type == WMT_TYPE_QWORD, "Got type %#x.\n", type);
-            ok(*(QWORD *)value == 3000, "Got value %#x.\n", *(DWORD *)value);
+            ok(*(QWORD *)value == 3000, "Got value %#lx.\n", *(DWORD *)value);
             ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
             if (callback->all_streams_off)
                 ok(callback->got_sample == 0, "Got %u samples.\n", callback->got_sample);
@@ -1554,7 +1554,7 @@ static HRESULT WINAPI callback_OnStatus(IWMReaderCallback *iface, WMT_STATUS sta
             ok(0, "Unexpected status %#x.\n", status);
     }
 
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     return S_OK;
 }
 
@@ -1569,33 +1569,33 @@ static void check_async_sample(struct callback *callback, INSSBuffer *sample)
         struct buffer *buffer = impl_from_INSSBuffer(sample);
 
         ok(sample->lpVtbl == &buffer_vtbl, "Buffer vtbl didn't match.\n");
-        ok(buffer->size > 0 && buffer->size <= buffer->capacity, "Got size %d.\n", buffer->size);
+        ok(buffer->size > 0 && buffer->size <= buffer->capacity, "Got size %ld.\n", buffer->size);
     }
     else
     {
         ok(sample->lpVtbl != &buffer_vtbl, "Buffer vtbl shouldn't match.\n");
 
         hr = INSSBuffer_GetBufferAndLength(sample, &data, &size);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         hr = INSSBuffer_GetBuffer(sample, &data2);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         ok(data2 == data, "Data pointers didn't match.\n");
 
         hr = INSSBuffer_GetMaxLength(sample, &capacity);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
-        ok(size <= capacity, "Size %u exceeds capacity %u.\n", size, capacity);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(size <= capacity, "Size %lu exceeds capacity %lu.\n", size, capacity);
 
         hr = INSSBuffer_SetLength(sample, capacity + 1);
-        ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+        ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
         hr = INSSBuffer_SetLength(sample, capacity - 1);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         hr = INSSBuffer_GetBufferAndLength(sample, &data2, &size);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         ok(data2 == data, "Data pointers didn't match.\n");
-        ok(size == capacity - 1, "Expected size %u, got %u.\n", capacity - 1, size);
+        ok(size == capacity - 1, "Expected size %lu, got %lu.\n", capacity - 1, size);
     }
 }
 
@@ -1605,7 +1605,7 @@ static HRESULT WINAPI callback_OnSample(IWMReaderCallback *iface, DWORD output,
     struct callback *callback = impl_from_IWMReaderCallback(iface);
 
     if (winetest_debug > 1)
-        trace("%u: %04x: IWMReaderCallback::OnSample(output %u, time %I64u, duration %I64u, flags %#x)\n",
+        trace("%lu: %04lx: IWMReaderCallback::OnSample(output %lu, time %I64u, duration %I64u, flags %#lx)\n",
                 GetTickCount(), GetCurrentThreadId(), output, time, duration, flags);
 
     ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
@@ -1658,7 +1658,7 @@ static HRESULT WINAPI callback_advanced_OnStreamSample(IWMReaderCallbackAdvanced
     struct callback *callback = impl_from_IWMReaderCallbackAdvanced(iface);
 
     if (winetest_debug > 1)
-        trace("%u: %04x: IWMReaderCallbackAdvanced::OnStreamSample(stream %u, pts %I64u, duration %I64u, flags %#x)\n",
+        trace("%lu: %04lx: IWMReaderCallbackAdvanced::OnStreamSample(stream %u, pts %I64u, duration %I64u, flags %#lx)\n",
                 GetTickCount(), GetCurrentThreadId(), stream_number, pts, duration, flags);
 
     ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
@@ -1678,7 +1678,7 @@ static HRESULT WINAPI callback_advanced_OnTime(IWMReaderCallbackAdvanced *iface,
     struct callback *callback = impl_from_IWMReaderCallbackAdvanced(iface);
 
     if (winetest_debug > 1)
-        trace("%u: %04x: IWMReaderCallbackAdvanced::OnTime(time %I64u)\n",
+        trace("%lu: %04lx: IWMReaderCallbackAdvanced::OnTime(time %I64u)\n",
                 GetTickCount(), GetCurrentThreadId(), time);
 
     ok(time == callback->expect_ontime, "Got time %I64u.\n", time);
@@ -1709,13 +1709,13 @@ static HRESULT WINAPI callback_advanced_AllocateForStream(IWMReaderCallbackAdvan
     struct buffer *object;
 
     if (winetest_debug > 1)
-        trace("%u: %04x: IWMReaderCallbackAdvanced::AllocateForStream(output %u, size %u)\n",
+        trace("%lu: %04lx: IWMReaderCallbackAdvanced::AllocateForStream(output %u, size %lu)\n",
                 GetTickCount(), GetCurrentThreadId(), stream_number, size);
 
     ok(callback->read_compressed, "AllocateForStream() should only be called when reading compressed samples.\n");
     ok(callback->allocated_samples, "AllocateForStream() should only be called when using a custom allocator.\n");
 
-    ok(size <= max_size, "Got size %u, max stream sample size %u.\n", size, max_size);
+    ok(size <= max_size, "Got size %lu, max stream sample size %lu.\n", size, max_size);
 
     if (!(object = malloc(offsetof(struct buffer, data[size]))))
         return E_OUTOFMEMORY;
@@ -1742,7 +1742,7 @@ static HRESULT WINAPI callback_advanced_AllocateForOutput(IWMReaderCallbackAdvan
     struct buffer *object;
 
     if (winetest_debug > 1)
-        trace("%u: %04x: IWMReaderCallbackAdvanced::AllocateForOutput(output %u, size %u)\n",
+        trace("%lu: %04lx: IWMReaderCallbackAdvanced::AllocateForOutput(output %lu, size %lu)\n",
                 GetTickCount(), GetCurrentThreadId(), output, size);
 
     if (!callback->read_compressed)
@@ -1866,23 +1866,23 @@ static void run_async_reader(IWMReader *reader, IWMReaderAdvanced2 *advanced, st
     callback->got_eof = 0;
 
     hr = IWMReader_Start(reader, 0, 0, 1.0f, (void *)0xfacade);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IWMReaderAdvanced2_SetUserProvidedClock(advanced, TRUE);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IWMReaderAdvanced2_DeliverTime(advanced, 3000 * 10000);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     ret = WaitForSingleObject(callback->eof_event, 1000);
     ok(!ret, "Wait timed out.\n");
     ok(callback->got_eof == 1, "Got %u WMT_EOF callbacks.\n", callback->got_eof);
 
     hr = IWMReader_Stop(reader);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ret = WaitForSingleObject(callback->got_stopped, 1000);
     ok(!ret, "Wait timed out.\n");
 
-    ok(!outstanding_buffers, "Got %d outstanding buffers.\n", outstanding_buffers);
+    ok(!outstanding_buffers, "Got %ld outstanding buffers.\n", outstanding_buffers);
 }
 
 static void test_async_reader_allocate(IWMReader *reader,
@@ -1894,51 +1894,51 @@ static void test_async_reader_allocate(IWMReader *reader,
     callback->allocated_samples = true;
 
     hr = IWMReaderAdvanced2_GetAllocateForOutput(advanced, 0, &allocate);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (hr == S_OK)
         ok(!allocate, "Got allocate %d.\n", allocate);
     hr = IWMReaderAdvanced2_GetAllocateForOutput(advanced, 1, &allocate);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (hr == S_OK)
         ok(!allocate, "Got allocate %d.\n", allocate);
     hr = IWMReaderAdvanced2_GetAllocateForOutput(advanced, 2, &allocate);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     hr = IWMReaderAdvanced2_GetAllocateForStream(advanced, 0, &allocate);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     hr = IWMReaderAdvanced2_GetAllocateForStream(advanced, 1, &allocate);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (hr == S_OK)
         ok(!allocate, "Got allocate %d.\n", allocate);
     hr = IWMReaderAdvanced2_GetAllocateForStream(advanced, 2, &allocate);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (hr == S_OK)
         ok(!allocate, "Got allocate %d.\n", allocate);
     hr = IWMReaderAdvanced2_GetAllocateForStream(advanced, 3, &allocate);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     hr = IWMReaderAdvanced2_SetAllocateForOutput(advanced, 0, TRUE);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IWMReaderAdvanced2_SetAllocateForOutput(advanced, 1, TRUE);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IWMReaderAdvanced2_SetAllocateForOutput(advanced, 2, TRUE);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     hr = IWMReaderAdvanced2_GetAllocateForOutput(advanced, 0, &allocate);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (hr == S_OK)
         ok(allocate == TRUE, "Got allocate %d.\n", allocate);
     hr = IWMReaderAdvanced2_GetAllocateForOutput(advanced, 1, &allocate);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (hr == S_OK)
         ok(allocate == TRUE, "Got allocate %d.\n", allocate);
 
     hr = IWMReaderAdvanced2_GetAllocateForStream(advanced, 1, &allocate);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (hr == S_OK)
         ok(!allocate, "Got allocate %d.\n", allocate);
     hr = IWMReaderAdvanced2_GetAllocateForStream(advanced, 2, &allocate);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (hr == S_OK)
         ok(!allocate, "Got allocate %d.\n", allocate);
 
@@ -1947,43 +1947,43 @@ static void test_async_reader_allocate(IWMReader *reader,
     callback->allocated_samples = false;
 
     hr = IWMReaderAdvanced2_SetAllocateForOutput(advanced, 0, FALSE);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IWMReaderAdvanced2_SetAllocateForOutput(advanced, 1, FALSE);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 0, TRUE);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 1, TRUE);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 2, TRUE);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 3, TRUE);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     hr = IWMReaderAdvanced2_GetAllocateForOutput(advanced, 0, &allocate);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (hr == S_OK)
         ok(!allocate, "Got allocate %d.\n", allocate);
     hr = IWMReaderAdvanced2_GetAllocateForOutput(advanced, 1, &allocate);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (hr == S_OK)
         ok(!allocate, "Got allocate %d.\n", allocate);
 
     hr = IWMReaderAdvanced2_GetAllocateForStream(advanced, 1, &allocate);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (hr == S_OK)
         ok(allocate == TRUE, "Got allocate %d.\n", allocate);
     hr = IWMReaderAdvanced2_GetAllocateForStream(advanced, 2, &allocate);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (hr == S_OK)
         ok(allocate == TRUE, "Got allocate %d.\n", allocate);
 
     run_async_reader(reader, advanced, callback);
 
     hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 1, FALSE);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 2, FALSE);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 }
 
 static void test_async_reader_selection(IWMReader *reader,
@@ -1995,51 +1995,51 @@ static void test_async_reader_selection(IWMReader *reader,
 
     selections[0] = 0xdeadbeef;
     hr = IWMReaderAdvanced2_GetStreamSelected(advanced, 0, &selections[0]);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     ok(selections[0] == 0xdeadbeef, "Got selection %#x.\n", selections[0]);
 
     selections[0] = 0xdeadbeef;
     hr = IWMReaderAdvanced2_GetStreamSelected(advanced, 1, &selections[0]);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(selections[0] == WMT_ON, "Got selection %#x.\n", selections[0]);
 
     selections[0] = 0xdeadbeef;
     hr = IWMReaderAdvanced2_GetStreamSelected(advanced, 2, &selections[0]);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(selections[0] == WMT_ON, "Got selection %#x.\n", selections[0]);
 
     selections[0] = 0xdeadbeef;
     hr = IWMReaderAdvanced2_GetStreamSelected(advanced, 3, &selections[0]);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     ok(selections[0] == 0xdeadbeef, "Got selection %#x.\n", selections[0]);
 
     hr = IWMReaderAdvanced2_SetStreamsSelected(advanced, 0, NULL, NULL);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     stream_numbers[0] = 1;
     stream_numbers[1] = 0;
     selections[0] = selections[1] = WMT_OFF;
     hr = IWMReaderAdvanced2_SetStreamsSelected(advanced, 2, stream_numbers, selections);
-    ok(hr == NS_E_INVALID_REQUEST, "Got hr %#x.\n", hr);
+    ok(hr == NS_E_INVALID_REQUEST, "Got hr %#lx.\n", hr);
 
     selections[0] = 0xdeadbeef;
     hr = IWMReaderAdvanced2_GetStreamSelected(advanced, 1, &selections[0]);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(selections[0] == WMT_ON, "Got selection %#x.\n", selections[0]);
 
     stream_numbers[0] = stream_numbers[1] = 1;
     selections[0] = selections[1] = WMT_OFF;
     hr = IWMReaderAdvanced2_SetStreamsSelected(advanced, 2, stream_numbers, selections);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     selections[0] = 0xdeadbeef;
     hr = IWMReaderAdvanced2_GetStreamSelected(advanced, 1, &selections[0]);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(selections[0] == WMT_OFF, "Got selection %#x.\n", selections[0]);
 
     selections[0] = 0xdeadbeef;
     hr = IWMReaderAdvanced2_GetStreamSelected(advanced, 2, &selections[0]);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(selections[0] == WMT_ON, "Got selection %#x.\n", selections[0]);
 
     run_async_reader(reader, advanced, callback);
@@ -2047,7 +2047,7 @@ static void test_async_reader_selection(IWMReader *reader,
     stream_numbers[0] = stream_numbers[1] = 2;
     selections[0] = selections[1] = WMT_OFF;
     hr = IWMReaderAdvanced2_SetStreamsSelected(advanced, 2, stream_numbers, selections);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     callback->all_streams_off = true;
     run_async_reader(reader, advanced, callback);
@@ -2057,7 +2057,7 @@ static void test_async_reader_selection(IWMReader *reader,
     stream_numbers[1] = 2;
     selections[0] = selections[1] = WMT_ON;
     hr = IWMReaderAdvanced2_SetStreamsSelected(advanced, 2, stream_numbers, selections);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 }
 
 static void test_async_reader_compressed(IWMReader *reader,
@@ -2066,33 +2066,33 @@ static void test_async_reader_compressed(IWMReader *reader,
     HRESULT hr;
 
     hr = IWMReaderAdvanced2_GetMaxStreamSampleSize(advanced, 0, &callback->max_stream_sample_size[0]);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     hr = IWMReaderAdvanced2_GetMaxStreamSampleSize(advanced, 3, &callback->max_stream_sample_size[0]);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     hr = IWMReaderAdvanced2_GetMaxStreamSampleSize(advanced, 1, &callback->max_stream_sample_size[0]);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(callback->max_stream_sample_size[0] > 0, "Expected nonzero size.\n");
     hr = IWMReaderAdvanced2_GetMaxStreamSampleSize(advanced, 2, &callback->max_stream_sample_size[1]);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(callback->max_stream_sample_size[1] > 0, "Expected nonzero size.\n");
 
     hr = IWMReaderAdvanced2_SetReceiveStreamSamples(advanced, 0, TRUE);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     hr = IWMReaderAdvanced2_SetReceiveStreamSamples(advanced, 3, TRUE);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     hr = IWMReaderAdvanced2_SetReceiveStreamSamples(advanced, 1, TRUE);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IWMReaderAdvanced2_SetReceiveStreamSamples(advanced, 2, TRUE);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     callback->read_compressed = true;
     run_async_reader(reader, advanced, callback);
     callback->read_compressed = false;
 
     hr = IWMReaderAdvanced2_SetReceiveStreamSamples(advanced, 1, FALSE);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IWMReaderAdvanced2_SetReceiveStreamSamples(advanced, 2, FALSE);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 }
 
 static void test_async_reader_allocate_compressed(IWMReader *reader,
@@ -2103,42 +2103,42 @@ static void test_async_reader_allocate_compressed(IWMReader *reader,
     callback->read_compressed = true;
 
     hr = IWMReaderAdvanced2_SetReceiveStreamSamples(advanced, 1, TRUE);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IWMReaderAdvanced2_SetReceiveStreamSamples(advanced, 2, TRUE);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     callback->allocated_samples = true;
 
     hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 1, TRUE);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 2, TRUE);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     run_async_reader(reader, advanced, callback);
 
     hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 1, FALSE);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 2, FALSE);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IWMReaderAdvanced2_SetAllocateForOutput(advanced, 0, TRUE);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IWMReaderAdvanced2_SetAllocateForOutput(advanced, 1, TRUE);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     callback->allocated_samples = false;
 
     run_async_reader(reader, advanced, callback);
 
     hr = IWMReaderAdvanced2_SetAllocateForOutput(advanced, 0, FALSE);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IWMReaderAdvanced2_SetAllocateForOutput(advanced, 1, FALSE);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IWMReaderAdvanced2_SetReceiveStreamSamples(advanced, 1, FALSE);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IWMReaderAdvanced2_SetReceiveStreamSamples(advanced, 2, FALSE);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     callback->read_compressed = false;
 }
@@ -2159,68 +2159,68 @@ static void test_async_reader_streaming(void)
     BOOL ret;
 
     file = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
-    ok(file != INVALID_HANDLE_VALUE, "Failed to open %s, error %u.\n", debugstr_w(file), GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "Failed to open %s, error %lu.\n", debugstr_w(file), GetLastError());
 
     teststream_init(&stream, file);
     callback_init(&callback);
 
     hr = WMCreateReader(NULL, 0, &reader);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     IWMReader_QueryInterface(reader, &IID_IWMProfile, (void **)&profile);
     IWMReader_QueryInterface(reader, &IID_IWMReaderAdvanced2, (void **)&advanced);
 
     hr = IWMReader_Stop(reader);
-    ok(hr == E_UNEXPECTED, "Got hr %#x.\n", hr);
+    ok(hr == E_UNEXPECTED, "Got hr %#lx.\n", hr);
 
     hr = IWMReaderAdvanced2_OpenStream(advanced, &stream.IStream_iface, &callback.IWMReaderCallback_iface, (void **)0xdeadbeef);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(stream.refcount > 1, "Got refcount %d.\n", stream.refcount);
-    ok(callback.refcount > 1, "Got refcount %d.\n", callback.refcount);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(stream.refcount > 1, "Got refcount %ld.\n", stream.refcount);
+    ok(callback.refcount > 1, "Got refcount %ld.\n", callback.refcount);
     ret = WaitForSingleObject(callback.got_opened, 1000);
     ok(!ret, "Wait timed out.\n");
 
     count = 0xdeadbeef;
     hr = IWMReader_GetOutputCount(reader, &count);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(count == 2, "Got count %u.\n", count);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(count == 2, "Got count %lu.\n", count);
 
     for (i = 0; i < 2; ++i)
     {
         hr = IWMProfile_GetStream(profile, i, &config);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         stream_numbers[i] = 0xdead;
         hr = IWMStreamConfig_GetStreamNumber(config, &stream_numbers[i]);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         ok(stream_numbers[i] == i + 1, "Got stream number %u.\n", stream_numbers[i]);
 
         ref = IWMStreamConfig_Release(config);
-        ok(!ref, "Got outstanding refcount %d.\n", ref);
+        ok(!ref, "Got outstanding refcount %ld.\n", ref);
     }
 
     hr = IWMReader_Start(reader, 0, 0, 1.0f, (void *)0xfacade);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     /* By default the reader will time itself, and attempt to deliver samples
      * according to their presentation time. Call DeliverTime with the file
      * duration in order to request all samples as fast as possible. */
     hr = IWMReaderAdvanced2_DeliverTime(advanced, 3000 * 10000);
-    ok(hr == E_UNEXPECTED, "Got hr %#x.\n", hr);
+    ok(hr == E_UNEXPECTED, "Got hr %#lx.\n", hr);
     hr = IWMReaderAdvanced2_SetUserProvidedClock(advanced, TRUE);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     callback.expect_ontime = 0;
     hr = IWMReaderAdvanced2_DeliverTime(advanced, 0);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ret = WaitForSingleObject(callback.ontime_event, 1000);
     ok(!ret, "Wait timed out.\n");
     callback.expect_ontime = 1000 * 10000;
     hr = IWMReaderAdvanced2_DeliverTime(advanced, 1000 * 10000);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ret = WaitForSingleObject(callback.ontime_event, 1000);
     ok(!ret, "Wait timed out.\n");
     callback.expect_ontime = 3000 * 10000;
     hr = IWMReaderAdvanced2_DeliverTime(advanced, 3000 * 10000);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ret = WaitForSingleObject(callback.ontime_event, 1000);
     ok(!ret, "Wait timed out.\n");
 
@@ -2229,22 +2229,22 @@ static void test_async_reader_streaming(void)
     ok(callback.got_eof == 1, "Got %u WMT_EOF callbacks.\n", callback.got_eof);
 
     hr = IWMReader_Start(reader, 0, 0, 1.0f, (void *)0xfacade);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IWMReaderAdvanced2_DeliverTime(advanced, 3000 * 10000);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     ret = WaitForSingleObject(callback.eof_event, 1000);
     ok(!ret, "Wait timed out.\n");
     ok(callback.got_eof == 1, "Got %u WMT_EOF callbacks.\n", callback.got_eof);
 
     hr = IWMReader_Stop(reader);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ret = WaitForSingleObject(callback.got_stopped, 1000);
     ok(!ret, "Wait timed out.\n");
 
     hr = IWMReader_Stop(reader);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ret = WaitForSingleObject(callback.got_stopped, 1000);
     ok(!ret, "Wait timed out.\n");
 
@@ -2255,26 +2255,26 @@ static void test_async_reader_streaming(void)
     test_async_reader_allocate_compressed(reader, advanced, &callback);
 
     hr = IWMReader_Close(reader);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(callback.got_closed == 1, "Got %u WMT_CLOSED callbacks.\n", callback.got_closed);
-    ok(callback.refcount == 1, "Got outstanding refcount %d.\n", callback.refcount);
+    ok(callback.refcount == 1, "Got outstanding refcount %ld.\n", callback.refcount);
     callback_cleanup(&callback);
 
     hr = IWMReader_Stop(reader);
-    ok(hr == E_UNEXPECTED, "Got hr %#x.\n", hr);
+    ok(hr == E_UNEXPECTED, "Got hr %#lx.\n", hr);
 
-    ok(stream.refcount == 1, "Got outstanding refcount %d.\n", stream.refcount);
+    ok(stream.refcount == 1, "Got outstanding refcount %ld.\n", stream.refcount);
     CloseHandle(stream.file);
     ret = DeleteFileW(filename);
-    ok(ret, "Failed to delete %s, error %u.\n", debugstr_w(filename), GetLastError());
+    ok(ret, "Failed to delete %s, error %lu.\n", debugstr_w(filename), GetLastError());
 
     hr = IWMReader_Close(reader);
-    ok(hr == NS_E_INVALID_REQUEST, "Got hr %#x.\n", hr);
+    ok(hr == NS_E_INVALID_REQUEST, "Got hr %#lx.\n", hr);
 
     IWMReaderAdvanced2_Release(advanced);
     IWMProfile_Release(profile);
     ref = IWMReader_Release(reader);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
 static void test_async_reader_types(void)
@@ -2299,32 +2299,32 @@ static void test_async_reader_types(void)
     BOOL ret;
 
     file = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
-    ok(file != INVALID_HANDLE_VALUE, "Failed to open %s, error %u.\n", debugstr_w(file), GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "Failed to open %s, error %lu.\n", debugstr_w(file), GetLastError());
 
     teststream_init(&stream, file);
     callback_init(&callback);
 
     hr = WMCreateReader(NULL, 0, &reader);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     IWMReader_QueryInterface(reader, &IID_IWMProfile, (void **)&profile);
     IWMReader_QueryInterface(reader, &IID_IWMReaderAdvanced2, (void **)&advanced);
 
     hr = IWMReaderAdvanced2_OpenStream(advanced, &stream.IStream_iface, &callback.IWMReaderCallback_iface, (void **)0xdeadbeef);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(stream.refcount > 1, "Got refcount %d.\n", stream.refcount);
-    ok(callback.refcount > 1, "Got refcount %d.\n", callback.refcount);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(stream.refcount > 1, "Got refcount %ld.\n", stream.refcount);
+    ok(callback.refcount > 1, "Got refcount %ld.\n", callback.refcount);
     ret = WaitForSingleObject(callback.got_opened, 1000);
     ok(!ret, "Wait timed out.\n");
 
     for (i = 0; i < 2; ++i)
     {
-        winetest_push_context("Stream %u", i);
+        winetest_push_context("Stream %lu", i);
 
         hr = IWMProfile_GetStream(profile, i, &config);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         hr = IWMStreamConfig_GetStreamType(config, &majortype);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         if (!i)
             ok(IsEqualGUID(&majortype, &MEDIATYPE_Video), "Got major type %s.\n", debugstr_guid(&majortype));
         else
@@ -2333,32 +2333,32 @@ static void test_async_reader_types(void)
         test_stream_media_props(config, &majortype);
 
         ref = IWMStreamConfig_Release(config);
-        ok(!ref, "Got outstanding refcount %d.\n", ref);
+        ok(!ref, "Got outstanding refcount %ld.\n", ref);
 
         winetest_pop_context();
     }
 
     for (i = 0; i < 2; ++i)
     {
-        winetest_push_context("Output %u", i);
+        winetest_push_context("Output %lu", i);
         output_number = i;
 
         hr = IWMReader_GetOutputProps(reader, output_number, &output_props);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         ret_size = sizeof(mt_buffer);
         hr = IWMOutputMediaProps_GetMediaType(output_props, mt, &ret_size);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         majortype = mt->majortype;
 
         memset(&majortype2, 0xcc, sizeof(majortype2));
         hr = IWMOutputMediaProps_GetType(output_props, &majortype2);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         ok(IsEqualGUID(&majortype2, &majortype), "Expected major type %s, got %s.\n",
                 debugstr_guid(&majortype), debugstr_guid(&majortype2));
 
         ref = IWMOutputMediaProps_Release(output_props);
-        ok(!ref, "Got outstanding refcount %d.\n", ref);
+        ok(!ref, "Got outstanding refcount %ld.\n", ref);
 
         if (IsEqualGUID(&majortype, &MEDIATYPE_Audio))
         {
@@ -2372,14 +2372,14 @@ static void test_async_reader_types(void)
              * with. In particular it has to be PCM. */
 
             hr = IWMReader_GetOutputFormat(reader, output_number, 0, &output_props);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
             ret_size = sizeof(mt2_buffer);
             hr = IWMOutputMediaProps_GetMediaType(output_props, mt2, &ret_size);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
             ref = IWMOutputMediaProps_Release(output_props);
-            ok(!ref, "Got outstanding refcount %d.\n", ref);
+            ok(!ref, "Got outstanding refcount %ld.\n", ref);
 
             /* The sample size might differ. */
             mt2->lSampleSize = mt->lSampleSize;
@@ -2396,38 +2396,38 @@ static void test_async_reader_types(void)
 
         count = 0;
         hr = IWMReader_GetOutputFormatCount(reader, output_number, &count);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
-        ok(count > 0, "Got count %u.\n", count);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(count > 0, "Got count %lu.\n", count);
 
         for (j = 0; j < count; ++j)
         {
-            winetest_push_context("Format %u", j);
+            winetest_push_context("Format %lu", j);
 
             hr = IWMReader_GetOutputFormat(reader, output_number, j, &output_props);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
             hr = IWMReader_GetOutputFormat(reader, output_number, j, &output_props2);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
             ok(output_props2 != output_props, "Expected different objects.\n");
             ref = IWMOutputMediaProps_Release(output_props2);
-            ok(!ref, "Got outstanding refcount %d.\n", ref);
+            ok(!ref, "Got outstanding refcount %ld.\n", ref);
 
             size = 0xdeadbeef;
             hr = IWMOutputMediaProps_GetMediaType(output_props, NULL, &size);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
-            ok(size != 0xdeadbeef && size >= sizeof(WM_MEDIA_TYPE), "Got size %u.\n", size);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            ok(size != 0xdeadbeef && size >= sizeof(WM_MEDIA_TYPE), "Got size %lu.\n", size);
 
             ret_size = size - 1;
             hr = IWMOutputMediaProps_GetMediaType(output_props, mt, &ret_size);
-            ok(hr == ASF_E_BUFFERTOOSMALL, "Got hr %#x.\n", hr);
-            ok(ret_size == size, "Expected size %u, got %u.\n", size, ret_size);
+            ok(hr == ASF_E_BUFFERTOOSMALL, "Got hr %#lx.\n", hr);
+            ok(ret_size == size, "Expected size %lu, got %lu.\n", size, ret_size);
 
             ret_size = sizeof(mt_buffer);
             memset(mt_buffer, 0xcc, sizeof(mt_buffer));
             hr = IWMOutputMediaProps_GetMediaType(output_props, mt, &ret_size);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
-            ok(ret_size == size, "Expected size %u, got %u.\n", size, ret_size);
-            ok(size == sizeof(WM_MEDIA_TYPE) + mt->cbFormat, "Expected size %u, got %u.\n",
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            ok(ret_size == size, "Expected size %lu, got %lu.\n", size, ret_size);
+            ok(size == sizeof(WM_MEDIA_TYPE) + mt->cbFormat, "Expected size %Iu, got %lu.\n",
                     sizeof(WM_MEDIA_TYPE) + mt->cbFormat, size);
 
             ok(IsEqualGUID(&mt->majortype, &majortype), "Got major type %s.\n", debugstr_guid(&mt->majortype));
@@ -2439,52 +2439,52 @@ static void test_async_reader_types(void)
 
             memset(&majortype2, 0xcc, sizeof(majortype2));
             hr = IWMOutputMediaProps_GetType(output_props, &majortype2);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
             ok(IsEqualGUID(&majortype2, &majortype), "Expected major type %s, got %s.\n",
                     debugstr_guid(&majortype), debugstr_guid(&majortype2));
 
             hr = IWMReader_SetOutputProps(reader, output_number, output_props);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
             hr = IWMReader_SetOutputProps(reader, 1 - output_number, output_props);
             if (!i)
                 ok(hr == NS_E_INCOMPATIBLE_FORMAT /* win < 8, win10 1507-1809 */
-                        || hr == ASF_E_BADMEDIATYPE /* win8, win10 1909+ */, "Got hr %#x.\n", hr);
+                        || hr == ASF_E_BADMEDIATYPE /* win8, win10 1909+ */, "Got hr %#lx.\n", hr);
             else
-                todo_wine ok(hr == NS_E_INVALID_REQUEST, "Got hr %#x.\n", hr);
+                todo_wine ok(hr == NS_E_INVALID_REQUEST, "Got hr %#lx.\n", hr);
             hr = IWMReader_SetOutputProps(reader, 2, output_props);
-            ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+            ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
             hr = IWMReader_GetOutputProps(reader, output_number, &output_props2);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
             ok(output_props2 != output_props, "Expected different objects.\n");
 
             ret_size = sizeof(mt2_buffer);
             hr = IWMOutputMediaProps_GetMediaType(output_props2, mt2, &ret_size);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
             ok(compare_media_types(mt, mt2), "Media types didn't match.\n");
 
             ref = IWMOutputMediaProps_Release(output_props2);
-            ok(!ref, "Got outstanding refcount %d.\n", ref);
+            ok(!ref, "Got outstanding refcount %ld.\n", ref);
             ref = IWMOutputMediaProps_Release(output_props);
-            ok(!ref, "Got outstanding refcount %d.\n", ref);
+            ok(!ref, "Got outstanding refcount %ld.\n", ref);
 
             winetest_pop_context();
         }
 
         hr = IWMReader_GetOutputFormat(reader, output_number, count, &output_props);
-        ok(hr == NS_E_INVALID_OUTPUT_FORMAT, "Got hr %#x.\n", hr);
+        ok(hr == NS_E_INVALID_OUTPUT_FORMAT, "Got hr %#lx.\n", hr);
 
         hr = IWMReader_GetOutputProps(reader, output_number, &output_props);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         hr = IWMReader_GetOutputProps(reader, output_number, &output_props2);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         ok(output_props2 != output_props, "Expected different objects.\n");
 
         ref = IWMOutputMediaProps_Release(output_props2);
-        ok(!ref, "Got outstanding refcount %d.\n", ref);
+        ok(!ref, "Got outstanding refcount %ld.\n", ref);
         ref = IWMOutputMediaProps_Release(output_props);
-        ok(!ref, "Got outstanding refcount %d.\n", ref);
+        ok(!ref, "Got outstanding refcount %ld.\n", ref);
 
         winetest_pop_context();
     }
@@ -2494,28 +2494,28 @@ static void test_async_reader_types(void)
 
     count = 0xdeadbeef;
     hr = IWMReader_GetOutputFormatCount(reader, 2, &count);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
-    ok(count == 0xdeadbeef, "Got count %#x.\n", count);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    ok(count == 0xdeadbeef, "Got count %#lx.\n", count);
 
     output_props = (void *)0xdeadbeef;
     hr = IWMReader_GetOutputProps(reader, 2, &output_props);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     ok(output_props == (void *)0xdeadbeef, "Got output props %p.\n", output_props);
 
     output_props = (void *)0xdeadbeef;
     hr = IWMReader_GetOutputFormat(reader, 2, 0, &output_props);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     ok(output_props == (void *)0xdeadbeef, "Got output props %p.\n", output_props);
 
     IWMReaderAdvanced2_Release(advanced);
     IWMProfile_Release(profile);
     ref = IWMReader_Release(reader);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
 
-    ok(stream.refcount == 1, "Got outstanding refcount %d.\n", stream.refcount);
+    ok(stream.refcount == 1, "Got outstanding refcount %ld.\n", stream.refcount);
     CloseHandle(stream.file);
     ret = DeleteFileW(filename);
-    ok(ret, "Failed to delete %s, error %u.\n", debugstr_w(filename), GetLastError());
+    ok(ret, "Failed to delete %s, error %lu.\n", debugstr_w(filename), GetLastError());
 }
 
 static void test_async_reader_file(void)
@@ -2531,39 +2531,39 @@ static void test_async_reader_file(void)
     callback_init(&callback);
 
     hr = WMCreateReader(NULL, 0, &reader);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IWMReader_Open(reader, filename, &callback.IWMReaderCallback_iface, (void **)0xdeadbeef);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(callback.refcount > 1, "Got refcount %d.\n", callback.refcount);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(callback.refcount > 1, "Got refcount %ld.\n", callback.refcount);
     ret = WaitForSingleObject(callback.got_opened, 1000);
     ok(!ret, "Wait timed out.\n");
 
     count = 0xdeadbeef;
     hr = IWMReader_GetOutputCount(reader, &count);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(count == 2, "Got count %u.\n", count);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(count == 2, "Got count %lu.\n", count);
 
     hr = IWMReader_Start(reader, 0, 0, 1.0f, (void *)0xfacade);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IWMReader_Close(reader);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(callback.got_closed == 1, "Got %u WMT_CLOSED callbacks.\n", callback.got_closed);
-    ok(callback.refcount == 1, "Got outstanding refcount %d.\n", callback.refcount);
+    ok(callback.refcount == 1, "Got outstanding refcount %ld.\n", callback.refcount);
     callback_cleanup(&callback);
 
     hr = IWMReader_Close(reader);
-    ok(hr == NS_E_INVALID_REQUEST, "Got hr %#x.\n", hr);
+    ok(hr == NS_E_INVALID_REQUEST, "Got hr %#lx.\n", hr);
 
     ref = IWMReader_Release(reader);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
     ok(callback.got_closed == 1, "Got %u WMT_CLOSED callbacks.\n", callback.got_closed);
-    ok(callback.refcount == 1, "Got outstanding refcount %d.\n", callback.refcount);
+    ok(callback.refcount == 1, "Got outstanding refcount %ld.\n", callback.refcount);
     callback_cleanup(&callback);
 
     ret = DeleteFileW(filename);
-    ok(ret, "Failed to delete %s, error %u.\n", debugstr_w(filename), GetLastError());
+    ok(ret, "Failed to delete %s, error %lu.\n", debugstr_w(filename), GetLastError());
 }
 
 START_TEST(wmvcore)
