@@ -201,6 +201,14 @@ struct get_frequency_params
     UINT64 *freq;
 };
 
+struct get_position_params
+{
+    struct alsa_stream *stream;
+    HRESULT result;
+    UINT64 *pos;
+    UINT64 *qpctime;
+};
+
 struct set_event_handle_params
 {
     struct alsa_stream *stream;
@@ -228,6 +236,7 @@ enum alsa_funcs
     alsa_get_current_padding,
     alsa_get_next_packet_size,
     alsa_get_frequency,
+    alsa_get_position,
     alsa_set_event_handle,
 };
 

@@ -2110,6 +2110,58 @@ static NTSTATUS get_frequency(void *args)
     return alsa_unlock_result(stream, &params->result, S_OK);
 }
 
+static NTSTATUS get_position(void *args)
+{
+    struct get_position_params *params = args;
+    struct alsa_stream *stream = params->stream;
+    UINT64 position;
+    snd_pcm_state_t alsa_state;
+
+    alsa_lock(stream);
+
+    /* avail_update required to get accurate snd_pcm_state() */
+    snd_pcm_avail_update(stream->pcm_handle);
+    alsa_state = snd_pcm_state(stream->pcm_handle);
+
+    if(stream->flow == eRender){
+        position = stream->written_frames - stream->held_frames;
+
+        if(stream->started && alsa_state == SND_PCM_STATE_RUNNING && stream->held_frames)
+            /* we should be using snd_pcm_delay here, but it is broken
+             * especially during ALSA device underrun. instead, let's just
+             * interpolate between periods with the system timer. */
+            position += interp_elapsed_frames(stream);
+
+        position = min(position, stream->written_frames - stream->held_frames + stream->mmdev_period_frames);
+
+        position = min(position, stream->written_frames);
+    }else
+        position = stream->written_frames + stream->held_frames;
+
+    /* ensure monotic growth */
+    if(position < stream->last_pos_frames)
+        position = stream->last_pos_frames;
+    else
+        stream->last_pos_frames = position;
+
+    TRACE("frames written: %u, held: %u, state: 0x%x, position: %u\n",
+            (UINT32)(stream->written_frames%1000000000), stream->held_frames,
+            alsa_state, (UINT32)(position%1000000000));
+
+    if(stream->share == AUDCLNT_SHAREMODE_SHARED)
+        *params->pos = position * stream->fmt->nBlockAlign;
+    else
+        *params->pos = position;
+
+    if(params->qpctime){
+        LARGE_INTEGER stamp, freq;
+        NtQueryPerformanceCounter(&stamp, &freq);
+        *params->qpctime = (stamp.QuadPart * (INT64)10000000) / freq.QuadPart;
+    }
+
+    return alsa_unlock_result(stream, &params->result, S_OK);
+}
+
 static NTSTATUS set_event_handle(void *args)
 {
     struct set_event_handle_params *params = args;
@@ -2150,5 +2202,6 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     get_current_padding,
     get_next_packet_size,
     get_frequency,
+    get_position,
     set_event_handle,
 };

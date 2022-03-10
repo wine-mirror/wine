@@ -951,15 +951,6 @@ static HRESULT WINAPI AudioClient_GetDevicePeriod(IAudioClient3 *iface,
     return S_OK;
 }
 
-static snd_pcm_uframes_t interp_elapsed_frames(struct alsa_stream *stream)
-{
-    LARGE_INTEGER time_freq, current_time, time_diff;
-    QueryPerformanceFrequency(&time_freq);
-    QueryPerformanceCounter(&current_time);
-    time_diff.QuadPart = current_time.QuadPart - stream->last_period_time.QuadPart;
-    return MulDiv(time_diff.QuadPart, stream->fmt->nSamplesPerSec, time_freq.QuadPart);
-}
-
 static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
@@ -1494,61 +1485,20 @@ static HRESULT WINAPI AudioClock_GetPosition(IAudioClock *iface, UINT64 *pos,
         UINT64 *qpctime)
 {
     ACImpl *This = impl_from_IAudioClock(iface);
-    struct alsa_stream *stream = This->stream;
-    UINT64 position;
-    snd_pcm_state_t alsa_state;
+    struct get_position_params params;
 
     TRACE("(%p)->(%p, %p)\n", This, pos, qpctime);
 
     if(!pos)
         return E_POINTER;
 
-    alsa_lock(stream);
+    params.stream = This->stream;
+    params.pos = pos;
+    params.qpctime = qpctime;
 
-    /* avail_update required to get accurate snd_pcm_state() */
-    snd_pcm_avail_update(stream->pcm_handle);
-    alsa_state = snd_pcm_state(stream->pcm_handle);
+    ALSA_CALL(get_position, &params);
 
-    if(stream->flow == eRender){
-        position = stream->written_frames - stream->held_frames;
-
-        if(stream->started && alsa_state == SND_PCM_STATE_RUNNING && stream->held_frames)
-            /* we should be using snd_pcm_delay here, but it is broken
-             * especially during ALSA device underrun. instead, let's just
-             * interpolate between periods with the system timer. */
-            position += interp_elapsed_frames(stream);
-
-        position = min(position, stream->written_frames - stream->held_frames + stream->mmdev_period_frames);
-
-        position = min(position, stream->written_frames);
-    }else
-        position = stream->written_frames + stream->held_frames;
-
-    /* ensure monotic growth */
-    if(position < stream->last_pos_frames)
-        position = stream->last_pos_frames;
-    else
-        stream->last_pos_frames = position;
-
-    TRACE("frames written: %u, held: %u, state: 0x%x, position: %u\n",
-            (UINT32)(stream->written_frames%1000000000), stream->held_frames,
-            alsa_state, (UINT32)(position%1000000000));
-
-    alsa_unlock(stream);
-
-    if(stream->share == AUDCLNT_SHAREMODE_SHARED)
-        *pos = position * stream->fmt->nBlockAlign;
-    else
-        *pos = position;
-
-    if(qpctime){
-        LARGE_INTEGER stamp, freq;
-        QueryPerformanceCounter(&stamp);
-        QueryPerformanceFrequency(&freq);
-        *qpctime = (stamp.QuadPart * (INT64)10000000) / freq.QuadPart;
-    }
-
-    return S_OK;
+    return params.result;
 }
 
 static HRESULT WINAPI AudioClock_GetCharacteristics(IAudioClock *iface,
