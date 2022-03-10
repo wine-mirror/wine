@@ -1190,6 +1190,7 @@ static void test_set_getsockopt(void)
         {AF_INET, SOCK_DGRAM, IPPROTO_IP, IP_TOS, TRUE, {1, 1, 4}, {0}, FALSE},
         {AF_INET, SOCK_DGRAM, IPPROTO_IP, IP_TTL, TRUE, {1, 1, 4}, {0}, FALSE},
         {AF_INET6, SOCK_STREAM, IPPROTO_IPV6, IPV6_DONTFRAG, TRUE, {1, 1, 4}, {0}, TRUE, TRUE},
+        {AF_INET6, SOCK_DGRAM, IPPROTO_IPV6, IPV6_HOPLIMIT, FALSE, {0, 0, 4}, {0}, TRUE, TRUE},
     };
     SOCKET s, s2;
     int i, j, err, lasterr;
