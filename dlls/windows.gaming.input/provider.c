@@ -182,6 +182,69 @@ static HRESULT WINAPI wine_provider_get_SwitchCount( IWineGameControllerProvider
     return hr;
 }
 
+static HRESULT WINAPI wine_provider_get_State( IWineGameControllerProvider *iface, struct WineGameControllerState *out )
+{
+    struct provider *impl = impl_from_IWineGameControllerProvider( iface );
+    DIJOYSTATE2 state = {0};
+    UINT32 i = 0;
+    HRESULT hr;
+
+    TRACE( "iface %p, out %p.\n", iface, out );
+
+    if (FAILED(hr = IDirectInputDevice8_GetDeviceState( impl->dinput_device, sizeof(state), &state )))
+    {
+        WARN( "Failed to read device state, hr %#lx\n", hr );
+        return hr;
+    }
+
+    i = ARRAY_SIZE(state.rgbButtons);
+    while (i--) out->buttons[i] = (state.rgbButtons[i] != 0);
+
+    i = ARRAY_SIZE(state.rgdwPOV);
+    while (i--)
+    {
+        if (state.rgdwPOV[i] == ~0) out->switches[i] = GameControllerSwitchPosition_Center;
+        else out->switches[i] = state.rgdwPOV[i] * 8 / 36000 + 1;
+    }
+
+    i = 0;
+    out->axes[i++] = state.lX / 65535.;
+    out->axes[i++] = state.lY / 65535.;
+    out->axes[i++] = state.lZ / 65535.;
+    out->axes[i++] = state.lRx / 65535.;
+    out->axes[i++] = state.lRy / 65535.;
+    out->axes[i++] = state.lRz / 65535.;
+    out->axes[i++] = state.rglSlider[0] / 65535.;
+    out->axes[i++] = state.rglSlider[1] / 65535.;
+    out->axes[i++] = state.lVX / 65535.;
+    out->axes[i++] = state.lVY / 65535.;
+    out->axes[i++] = state.lVZ / 65535.;
+    out->axes[i++] = state.lVRx / 65535.;
+    out->axes[i++] = state.lVRy / 65535.;
+    out->axes[i++] = state.lVRz / 65535.;
+    out->axes[i++] = state.rglVSlider[0] / 65535.;
+    out->axes[i++] = state.rglVSlider[1] / 65535.;
+    out->axes[i++] = state.lAX / 65535.;
+    out->axes[i++] = state.lAY / 65535.;
+    out->axes[i++] = state.lAZ / 65535.;
+    out->axes[i++] = state.lARx / 65535.;
+    out->axes[i++] = state.lARy / 65535.;
+    out->axes[i++] = state.lARz / 65535.;
+    out->axes[i++] = state.rglASlider[0] / 65535.;
+    out->axes[i++] = state.rglASlider[1] / 65535.;
+    out->axes[i++] = state.lFX / 65535.;
+    out->axes[i++] = state.lFY / 65535.;
+    out->axes[i++] = state.lFZ / 65535.;
+    out->axes[i++] = state.lFRx / 65535.;
+    out->axes[i++] = state.lFRy / 65535.;
+    out->axes[i++] = state.lFRz / 65535.;
+    out->axes[i++] = state.rglFSlider[0] / 65535.;
+    out->axes[i++] = state.rglFSlider[1] / 65535.;
+    out->timestamp = GetTickCount64();
+
+    return S_OK;
+}
+
 static const struct IWineGameControllerProviderVtbl wine_provider_vtbl =
 {
     wine_provider_QueryInterface,
@@ -196,6 +259,7 @@ static const struct IWineGameControllerProviderVtbl wine_provider_vtbl =
     wine_provider_get_AxisCount,
     wine_provider_get_ButtonCount,
     wine_provider_get_SwitchCount,
+    wine_provider_get_State,
 };
 
 DEFINE_IINSPECTABLE( game_provider, IGameControllerProvider, struct provider, IWineGameControllerProvider_iface )
@@ -283,6 +347,10 @@ void provider_create( const WCHAR *device_path )
     hr = IDirectInput8_CreateDevice( dinput, &guid, &dinput_device, NULL );
     IDirectInput8_Release( dinput );
     if (FAILED(hr)) return;
+
+    if (FAILED(hr = IDirectInputDevice8_SetCooperativeLevel( dinput_device, 0, DISCL_BACKGROUND | DISCL_NONEXCLUSIVE ))) goto done;
+    if (FAILED(hr = IDirectInputDevice8_SetDataFormat( dinput_device, &c_dfDIJoystick2 ))) goto done;
+    if (FAILED(hr = IDirectInputDevice8_Acquire( dinput_device ))) goto done;
 
     if (!(impl = calloc( 1, sizeof(*impl) ))) goto done;
     impl->IWineGameControllerProvider_iface.lpVtbl = &wine_provider_vtbl;

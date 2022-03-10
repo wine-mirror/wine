@@ -262,9 +262,21 @@ static HRESULT WINAPI raw_controller_GetCurrentReading( IRawGameController *ifac
                                                         UINT32 switches_size, enum GameControllerSwitchPosition *switches,
                                                         UINT32 axes_size, DOUBLE *axes, UINT64 *timestamp )
 {
-    FIXME( "iface %p, buttons_size %u, buttons %p, switches_size %u, switches %p, axes_size %u, axes %p, timestamp %p stub!\n",
+    struct controller *impl = impl_from_IRawGameController( iface );
+    WineGameControllerState state;
+    HRESULT hr;
+
+    TRACE( "iface %p, buttons_size %u, buttons %p, switches_size %u, switches %p, axes_size %u, axes %p, timestamp %p.\n",
            iface, buttons_size, buttons, switches_size, switches, axes_size, axes, timestamp );
-    return E_NOTIMPL;
+
+    if (FAILED(hr = IWineGameControllerProvider_get_State( impl->wine_provider, &state ))) return hr;
+
+    memcpy( axes, state.axes, axes_size * sizeof(*axes) );
+    memcpy( buttons, state.buttons, buttons_size * sizeof(*buttons) );
+    memcpy( switches, state.switches, switches_size * sizeof(*switches) );
+    *timestamp = state.timestamp;
+
+    return hr;
 }
 
 static HRESULT WINAPI raw_controller_GetSwitchKind( IRawGameController *iface, INT32 index, enum GameControllerSwitchKind *value )
