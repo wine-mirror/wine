@@ -37,6 +37,7 @@ static SECURITY_STATUS map_ntstatus(NTSTATUS status)
     switch (status)
     {
     case STATUS_INVALID_HANDLE: return NTE_INVALID_HANDLE;
+    case NTE_BAD_DATA:          return NTE_BAD_DATA;
     default:
         FIXME("unhandled status %#lx\n", status);
         return NTE_INTERNAL_ERROR;
@@ -123,7 +124,7 @@ static SECURITY_STATUS set_object_property(struct object *object, const WCHAR *n
 static struct object *create_key_object(enum algid algid, NCRYPT_PROV_HANDLE provider)
 {
     struct object *object;
-    NTSTATUS ret;
+    NTSTATUS status;
 
     if (!(object = allocate_object(KEY)))
     {
@@ -135,10 +136,10 @@ static struct object *create_key_object(enum algid algid, NCRYPT_PROV_HANDLE pro
     {
     case RSA:
     {
-        ret = BCryptOpenAlgorithmProvider(&object->key.bcrypt_alg, BCRYPT_RSA_ALGORITHM, NULL, 0);
-        if (ret != ERROR_SUCCESS)
+        status = BCryptOpenAlgorithmProvider(&object->key.bcrypt_alg, BCRYPT_RSA_ALGORITHM, NULL, 0);
+        if (status != STATUS_SUCCESS)
         {
-            ERR("Error opening algorithm provider\n");
+            ERR("Error opening algorithm provider %#lx\n", status);
             free(object);
             return NULL;
         }
@@ -174,7 +175,7 @@ SECURITY_STATUS WINAPI NCryptCreatePersistedKey(NCRYPT_PROV_HANDLE provider, NCR
 
     if (!lstrcmpiW(algid, BCRYPT_RSA_ALGORITHM))
     {
-        NTSTATUS ret;
+        NTSTATUS status;
         DWORD default_bitlen = 1024;
 
         if (!(object = create_key_object(RSA, provider)))
@@ -183,13 +184,13 @@ SECURITY_STATUS WINAPI NCryptCreatePersistedKey(NCRYPT_PROV_HANDLE provider, NCR
             return NTE_NO_MEMORY;
         }
 
-        ret = BCryptGenerateKeyPair(object->key.bcrypt_alg, &object->key.bcrypt_key, default_bitlen, 0);
-        if (ret != ERROR_SUCCESS)
+        status = BCryptGenerateKeyPair(object->key.bcrypt_alg, &object->key.bcrypt_key, default_bitlen, 0);
+        if (status != STATUS_SUCCESS)
         {
-            ERR("Error generating key pair\n");
+            ERR("Error generating key pair %#lx\n", status);
             BCryptCloseAlgorithmProvider(object->key.bcrypt_alg, 0);
             free(object);
-            return NTE_INTERNAL_ERROR;
+            return map_ntstatus(status);
         }
 
         set_object_property(object, NCRYPT_LENGTH_PROPERTY, (BYTE *)&default_bitlen, sizeof(default_bitlen));
@@ -278,15 +279,16 @@ SECURITY_STATUS WINAPI NCryptFreeBuffer(PVOID buf)
 
 static SECURITY_STATUS free_key_object(struct key *key)
 {
-    NTSTATUS ret = BCryptDestroyKey(key->bcrypt_key);
-    if (BCryptCloseAlgorithmProvider(key->bcrypt_alg, 0)) return NTE_INVALID_HANDLE;
-    return ret ? NTE_INVALID_HANDLE : ERROR_SUCCESS;
+    NTSTATUS status, status2;
+    status = BCryptDestroyKey(key->bcrypt_key);
+    if ((status2 = BCryptCloseAlgorithmProvider(key->bcrypt_alg, 0))) return map_ntstatus(status2);
+    return status ? map_ntstatus(status) : ERROR_SUCCESS;
 }
 
 SECURITY_STATUS WINAPI NCryptFreeObject(NCRYPT_HANDLE handle)
 {
     struct object *object = (struct object *)handle;
-    SECURITY_STATUS ret = ERROR_SUCCESS;
+    SECURITY_STATUS ret = STATUS_SUCCESS;
     unsigned int i;
 
     TRACE("(%#Ix)\n", handle);
@@ -378,7 +380,7 @@ SECURITY_STATUS WINAPI NCryptImportKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_H
     case BCRYPT_RSAPRIVATE_MAGIC:
     case BCRYPT_RSAPUBLIC_MAGIC:
     {
-        NTSTATUS ret;
+        NTSTATUS status;
         BCRYPT_RSAKEY_BLOB *rsablob = (BCRYPT_RSAKEY_BLOB *)data;
 
         if (!(object = create_key_object(RSA, provider)))
@@ -387,13 +389,13 @@ SECURITY_STATUS WINAPI NCryptImportKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_H
             return NTE_NO_MEMORY;
         }
 
-        ret = BCryptImportKeyPair(object->key.bcrypt_alg, NULL, type, &object->key.bcrypt_key, data, datasize, 0);
-        if (ret != ERROR_SUCCESS)
+        status = BCryptImportKeyPair(object->key.bcrypt_alg, NULL, type, &object->key.bcrypt_key, data, datasize, 0);
+        if (status != STATUS_SUCCESS)
         {
-            WARN("Error importing key pair with bcrypt %#lx\n", ret);
+            WARN("Error importing key pair %#lx\n", status);
             BCryptCloseAlgorithmProvider(object->key.bcrypt_alg, 0);
             free(object);
-            return NTE_BAD_DATA;
+            return map_ntstatus(status);
         }
 
         set_object_property(object, NCRYPT_LENGTH_PROPERTY, (BYTE *)&rsablob->BitLength, sizeof(rsablob->BitLength));
