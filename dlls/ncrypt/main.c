@@ -21,6 +21,8 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "ncrypt.h"
@@ -29,6 +31,17 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ncrypt);
+
+static SECURITY_STATUS map_ntstatus(NTSTATUS status)
+{
+    switch (status)
+    {
+    case STATUS_INVALID_HANDLE: return NTE_INVALID_HANDLE;
+    default:
+        FIXME("unhandled status %#lx\n", status);
+        return NTE_INTERNAL_ERROR;
+    }
+}
 
 static struct object *allocate_object(enum object_type type)
 {
@@ -227,10 +240,34 @@ SECURITY_STATUS WINAPI NCryptEnumKeys(NCRYPT_PROV_HANDLE provider, const WCHAR *
     return NTE_NOT_SUPPORTED;
 }
 
-SECURITY_STATUS WINAPI NCryptFinalizeKey(NCRYPT_KEY_HANDLE key, DWORD flags)
+SECURITY_STATUS WINAPI NCryptFinalizeKey(NCRYPT_KEY_HANDLE handle, DWORD flags)
 {
-    FIXME("(%#Ix, %#lx): stub\n", key, flags);
-    return NTE_NOT_SUPPORTED;
+    struct object *object = (struct object *)handle;
+    DWORD key_length;
+    struct object_property *prop;
+    NTSTATUS status;
+
+    TRACE("(%#Ix, %#lx)\n", handle, flags);
+
+    if (!object || object->type != KEY) return NTE_INVALID_HANDLE;
+
+    if (!(prop = get_object_property(object, NCRYPT_LENGTH_PROPERTY))) return NTE_INVALID_HANDLE;
+    key_length = *(DWORD *)prop->value;
+    status = BCryptSetProperty(object->key.bcrypt_key, BCRYPT_KEY_LENGTH, (UCHAR *)&key_length, sizeof(key_length), 0);
+    if (status != STATUS_SUCCESS)
+    {
+        ERR("Error setting key length property\n");
+        return map_ntstatus(status);
+    }
+
+    status = BCryptFinalizeKeyPair(object->key.bcrypt_key, 0);
+    if (status != STATUS_SUCCESS)
+    {
+        ERR("Error finalizing key pair\n");
+        return map_ntstatus(status);
+    }
+
+    return ERROR_SUCCESS;
 }
 
 SECURITY_STATUS WINAPI NCryptFreeBuffer(PVOID buf)

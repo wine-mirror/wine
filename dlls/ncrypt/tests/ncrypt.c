@@ -306,6 +306,30 @@ static void test_create_persisted_key(void)
     NCryptFreeObject(prov);
 }
 
+static void test_finalize_key(void)
+{
+    NCRYPT_PROV_HANDLE prov;
+    NCRYPT_KEY_HANDLE key;
+    SECURITY_STATUS ret;
+
+    ret = NCryptOpenStorageProvider(&prov, NULL, 0);
+    ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
+
+    ret = NCryptCreatePersistedKey(prov, &key, BCRYPT_RSA_ALGORITHM, NULL, 0, 0);
+    ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
+
+    ret = NCryptFinalizeKey(key, 0);
+    ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
+
+    ret = NCryptFinalizeKey(key, 0);
+    ok(ret == NTE_INVALID_HANDLE, "got %#lx\n", ret);
+
+    ret = NCryptFinalizeKey(0, 0);
+    ok(ret == NTE_INVALID_HANDLE, "got %#lx\n", ret);
+
+    NCryptFreeObject(key);
+}
+
 START_TEST(ncrypt)
 {
     test_key_import_rsa();
@@ -313,4 +337,5 @@ START_TEST(ncrypt)
     test_get_property();
     test_set_property();
     test_create_persisted_key();
+    test_finalize_key();
 }
