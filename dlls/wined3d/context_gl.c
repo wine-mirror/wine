@@ -2713,6 +2713,7 @@ void wined3d_context_gl_submit_command_fence(struct wined3d_context_gl *context_
         device_gl->completed_fence_id = 0;
         device_gl->current_fence_id = 1;
     }
+    device_gl->retired_bo_size = 0;
     wined3d_context_gl_cleanup_resources(context_gl);
 }
 
@@ -3123,15 +3124,26 @@ void wined3d_context_gl_copy_bo_address(struct wined3d_context_gl *context_gl,
 
 void wined3d_context_gl_destroy_bo(struct wined3d_context_gl *context_gl, struct wined3d_bo_gl *bo)
 {
+    struct wined3d_device_gl *device_gl = wined3d_device_gl(context_gl->c.device);
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
 
     TRACE("context_gl %p, bo %p.\n", context_gl, bo);
 
     if (bo->memory)
     {
+        unsigned int order = bo->memory->order;
+
         if (bo->b.map_ptr)
             wined3d_allocator_chunk_gl_unmap(wined3d_allocator_chunk_gl(bo->memory->chunk), context_gl);
         wined3d_context_gl_destroy_allocator_block(context_gl, bo->memory, bo->command_fence_id);
+
+        if (bo->command_fence_id == device_gl->current_fence_id)
+        {
+            device_gl->retired_bo_size += WINED3D_ALLOCATOR_CHUNK_SIZE >> order;
+            if (device_gl->retired_bo_size > WINED3D_RETIRED_BO_SIZE_THRESHOLD)
+                wined3d_context_gl_submit_command_fence(context_gl);
+        }
+
         bo->id = 0;
         return;
     }

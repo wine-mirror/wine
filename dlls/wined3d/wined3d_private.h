@@ -4154,6 +4154,7 @@ struct wined3d_device_gl
     struct wined3d_allocator allocator;
     uint64_t completed_fence_id;
     uint64_t current_fence_id;
+    uint64_t retired_bo_size;
 
     struct wined3d_retired_block_gl
     {
