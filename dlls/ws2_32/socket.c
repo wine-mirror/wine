@@ -3149,6 +3149,12 @@ int WINAPI setsockopt( SOCKET s, int level, int optname, const char *optval, int
         break;
 
     case IPPROTO_IPV6:
+        if (optlen < 0)
+        {
+            SetLastError( WSAENOBUFS );
+            return SOCKET_ERROR;
+        }
+
         switch(optname)
         {
         case IPV6_ADD_MEMBERSHIP:
