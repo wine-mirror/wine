@@ -2633,7 +2633,7 @@ static void test_WSASocket(void)
     int wsaproviders[] = {IPPROTO_TCP, IPPROTO_IP};
     int autoprotocols[] = {IPPROTO_TCP, IPPROTO_UDP};
     int items, err, size, socktype, i, j;
-    UINT pi_size;
+    DWORD pi_size;
 
     static const struct
     {
