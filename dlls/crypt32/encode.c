@@ -4664,6 +4664,33 @@ static BOOL WINAPI CRYPT_AsnEncodeOCSPRequest(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL WINAPI CRYPT_AsnEncodeOCSPSignedRequest(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
+ PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
+{
+    BOOL ret;
+
+    __TRY
+    {
+        const OCSP_SIGNED_REQUEST_INFO *info = pvStructInfo;
+        struct AsnEncodeSequenceItem items[] = {
+         { &info->ToBeSigned, CRYPT_CopyEncodedBlob, 0 },
+        };
+
+        if (info->pOptionalSignatureInfo) FIXME("pOptionalSignatureInfo not supported\n");
+
+        ret = CRYPT_AsnEncodeSequence(dwCertEncodingType, items,
+         ARRAY_SIZE(items), dwFlags, pEncodePara, pbEncoded, pcbEncoded);
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+        ret = FALSE;
+    }
+    __ENDTRY
+    return ret;
+}
+
 static CryptEncodeObjectExFunc CRYPT_GetBuiltinEncoder(DWORD dwCertEncodingType,
  LPCSTR lpszStructType)
 {
@@ -4806,6 +4833,9 @@ static CryptEncodeObjectExFunc CRYPT_GetBuiltinEncoder(DWORD dwCertEncodingType,
             break;
         case LOWORD(OCSP_REQUEST):
             encodeFunc = CRYPT_AsnEncodeOCSPRequest;
+            break;
+        case LOWORD(OCSP_SIGNED_REQUEST):
+            encodeFunc = CRYPT_AsnEncodeOCSPSignedRequest;
             break;
         default:
             FIXME("Unimplemented encoder for lpszStructType OID %d\n", LOWORD(lpszStructType));
