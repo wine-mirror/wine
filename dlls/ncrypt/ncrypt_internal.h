@@ -18,8 +18,19 @@
 
 #include <bcrypt.h>
 
+enum algid
+{
+    /* symmetric */
+    AES,
+    /* asymmetric */
+    RSA,
+    DSA,
+    ECDSA,
+};
+
 struct key
 {
+    enum algid algid;
     BCRYPT_ALG_HANDLE bcrypt_alg;
     BCRYPT_KEY_HANDLE bcrypt_key;
 };

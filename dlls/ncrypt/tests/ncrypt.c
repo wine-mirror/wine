@@ -229,6 +229,7 @@ static void test_set_property(void)
     {
     ret = NCryptSetProperty(key, NCRYPT_NAME_PROPERTY, (BYTE *)L"Key name", sizeof(L"Key name"), 0);
     ok(ret == NTE_NOT_SUPPORTED, "got %#lx\n", ret);
+    }
     NCryptFreeObject(key);
 
     key = 0;
@@ -240,6 +241,8 @@ static void test_set_property(void)
     ret = NCryptSetProperty(key, NCRYPT_LENGTH_PROPERTY, (BYTE *)&keylength, sizeof(keylength), 0);
     ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
 
+    todo_wine
+    {
     ret = NCryptSetProperty(key, NCRYPT_NAME_PROPERTY, (BYTE *)L"Key name", sizeof(L"Key name"), 0);
     ok(ret == NTE_NOT_SUPPORTED, "got %#lx\n", ret);
 
@@ -261,7 +264,6 @@ static void test_create_persisted_key(void)
     ret = NCryptOpenStorageProvider(&prov, NULL, 0);
     ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
 
-    todo_wine {
     key = 0;
     ret = NCryptCreatePersistedKey(0, &key, BCRYPT_RSA_ALGORITHM, NULL, 0, 0);
     ok(ret == NTE_INVALID_HANDLE, "got %#lx\n", ret);
@@ -292,14 +294,16 @@ static void test_create_persisted_key(void)
     NCryptFinalizeKey(key, 0);
     NCryptFreeObject(key);
 
+    todo_wine
+    {
     key = 0;
     ret = NCryptCreatePersistedKey(prov, &key, BCRYPT_AES_ALGORITHM, NULL, 0, 0);
     ok(ret == ERROR_SUCCESS || broken(ret == NTE_NOT_SUPPORTED) /* win 7 */, "got %#lx\n", ret);
     if (ret == NTE_NOT_SUPPORTED) win_skip("broken, symmetric keys not supported.\n");
     else ok(key, "got null handle\n");
+    }
 
     NCryptFreeObject(prov);
-    }
 }
 
 START_TEST(ncrypt)

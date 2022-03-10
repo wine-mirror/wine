@@ -30,12 +30,165 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ncrypt);
 
+static struct object *allocate_object(enum object_type type)
+{
+    struct object *ret;
+    if (!(ret = calloc(1, sizeof(*ret)))) return NULL;
+    ret->type = type;
+    return ret;
+}
+
+static struct object_property *get_object_property(struct object *object, const WCHAR *name)
+{
+    unsigned int i;
+    for (i = 0; i < object->num_properties; i++)
+    {
+        struct object_property *property = &object->properties[i];
+        if (!lstrcmpW(property->key, name)) return property;
+    }
+    return NULL;
+}
+
+struct object_property *add_object_property(struct object *object, const WCHAR *name)
+{
+    struct object_property *property;
+
+    if (!object->num_properties)
+    {
+        if (!(object->properties = malloc(sizeof(*property))))
+        {
+            ERR("Error allocating memory.\n");
+            return NULL;
+        }
+        property = &object->properties[object->num_properties++];
+    }
+    else
+    {
+        struct object_property *tmp;
+        if (!(tmp = realloc(object->properties, sizeof(*property) * (object->num_properties + 1))))
+        {
+            ERR("Error allocating memory.\n");
+            return NULL;
+        }
+        object->properties = tmp;
+        property = &object->properties[object->num_properties++];
+    }
+
+    memset(property, 0, sizeof(*property));
+    if (!(property->key = malloc((lstrlenW(name) + 1) * sizeof(WCHAR))))
+    {
+        ERR("Error allocating memory.\n");
+        return NULL;
+    }
+
+    lstrcpyW(property->key, name);
+    return property;
+}
+
+static SECURITY_STATUS set_object_property(struct object *object, const WCHAR *name, BYTE *value, DWORD value_size)
+{
+    struct object_property *property = get_object_property(object, name);
+    void *tmp;
+
+    if (!property && !(property = add_object_property(object, name))) return NTE_NO_MEMORY;
+
+    property->value_size = value_size;
+    if (!(tmp = realloc(property->value, value_size)))
+    {
+        ERR("Error allocating memory.\n");
+        free(property->key);
+        property->key = NULL;
+        return NTE_NO_MEMORY;
+    }
+
+    property->value = tmp;
+    memcpy(property->value, value, value_size);
+
+    return ERROR_SUCCESS;
+}
+
+static struct object *create_key_object(enum algid algid, NCRYPT_PROV_HANDLE provider)
+{
+    struct object *object;
+    NTSTATUS ret;
+
+    if (!(object = allocate_object(KEY)))
+    {
+        ERR("Error allocating memory\n");
+        return NULL;
+    }
+
+    switch (algid)
+    {
+    case RSA:
+    {
+        ret = BCryptOpenAlgorithmProvider(&object->key.bcrypt_alg, BCRYPT_RSA_ALGORITHM, NULL, 0);
+        if (ret != ERROR_SUCCESS)
+        {
+            ERR("Error opening algorithm provider\n");
+            free(object);
+            return NULL;
+        }
+
+        object->key.algid = RSA;
+        set_object_property(object, NCRYPT_ALGORITHM_GROUP_PROPERTY, (BYTE *)BCRYPT_RSA_ALGORITHM,
+                            sizeof(BCRYPT_RSA_ALGORITHM));
+        break;
+    }
+    default:
+    {
+        ERR("Invalid algid %#x\n", algid);
+        free(object);
+        return NULL;
+    }
+    }
+
+    set_object_property(object, NCRYPT_PROVIDER_HANDLE_PROPERTY, (BYTE *)&provider, sizeof(provider));
+    return object;
+}
+
 SECURITY_STATUS WINAPI NCryptCreatePersistedKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_HANDLE *key,
                                                 const WCHAR *algid, const WCHAR *name, DWORD keyspec, DWORD flags)
 {
-    FIXME("(%#Ix, %p, %s, %s, %#lx, %#lx): stub\n", provider, key, wine_dbgstr_w(algid),
+    struct object *object;
+
+    TRACE("(%#Ix, %p, %s, %s, %#lx, %#lx)\n", provider, key, wine_dbgstr_w(algid),
           wine_dbgstr_w(name), keyspec, flags);
-    return NTE_NOT_SUPPORTED;
+
+    if (!provider) return NTE_INVALID_HANDLE;
+    if (!algid) return HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER);
+    if (name) FIXME("Persistant keys not supported\n");
+
+    if (!lstrcmpiW(algid, BCRYPT_RSA_ALGORITHM))
+    {
+        NTSTATUS ret;
+        DWORD default_bitlen = 1024;
+
+        if (!(object = create_key_object(RSA, provider)))
+        {
+            ERR("Error allocating memory\n");
+            return NTE_NO_MEMORY;
+        }
+
+        ret = BCryptGenerateKeyPair(object->key.bcrypt_alg, &object->key.bcrypt_key, default_bitlen, 0);
+        if (ret != ERROR_SUCCESS)
+        {
+            ERR("Error generating key pair\n");
+            BCryptCloseAlgorithmProvider(object->key.bcrypt_alg, 0);
+            free(object);
+            return NTE_INTERNAL_ERROR;
+        }
+
+        set_object_property(object, NCRYPT_LENGTH_PROPERTY, (BYTE *)&default_bitlen, sizeof(default_bitlen));
+    }
+    else
+    {
+        FIXME("Algorithm not handled %s\n", wine_dbgstr_w(algid));
+        return NTE_NOT_SUPPORTED;
+    }
+
+    *key = (NCRYPT_KEY_HANDLE)object;
+    return ERROR_SUCCESS;
 }
 
 SECURITY_STATUS WINAPI NCryptDecrypt(NCRYPT_KEY_HANDLE key, BYTE *input, DWORD insize, void *padding,
@@ -132,17 +285,6 @@ SECURITY_STATUS WINAPI NCryptFreeObject(NCRYPT_HANDLE handle)
     return ret;
 }
 
-static struct object_property *get_object_property(struct object *object, const WCHAR *name)
-{
-    unsigned int i;
-    for (i = 0; i < object->num_properties; i++)
-    {
-        struct object_property *property = &object->properties[i];
-        if (!lstrcmpW(property->key, name)) return property;
-    }
-    return NULL;
-}
-
 SECURITY_STATUS WINAPI NCryptGetProperty(NCRYPT_HANDLE handle, const WCHAR *name, BYTE *output,
                                          DWORD outsize, DWORD *result, DWORD flags)
 {
@@ -160,72 +302,6 @@ SECURITY_STATUS WINAPI NCryptGetProperty(NCRYPT_HANDLE handle, const WCHAR *name
     if (outsize < property->value_size) return NTE_BUFFER_TOO_SMALL;
 
     memcpy(output, property->value, property->value_size);
-    return ERROR_SUCCESS;
-}
-
-static struct object *allocate_object(enum object_type type)
-{
-    struct object *ret;
-    if (!(ret = calloc(1, sizeof(*ret)))) return NULL;
-    ret->type = type;
-    return ret;
-}
-
-struct object_property *add_object_property(struct object *object, const WCHAR *name)
-{
-    struct object_property *property;
-
-    if (!object->num_properties)
-    {
-        if (!(object->properties = malloc(sizeof(*property))))
-        {
-            ERR("Error allocating memory.\n");
-            return NULL;
-        }
-        property = &object->properties[object->num_properties++];
-    }
-    else
-    {
-        struct object_property *tmp;
-        if (!(tmp = realloc(object->properties, sizeof(*property) * (object->num_properties + 1))))
-        {
-            ERR("Error allocating memory.\n");
-            return NULL;
-        }
-        object->properties = tmp;
-        property = &object->properties[object->num_properties++];
-    }
-
-    memset(property, 0, sizeof(*property));
-    if (!(property->key = malloc((lstrlenW(name) + 1) * sizeof(WCHAR))))
-    {
-        ERR("Error allocating memory.\n");
-        return NULL;
-    }
-
-    lstrcpyW(property->key, name);
-    return property;
-}
-
-static SECURITY_STATUS set_object_property(struct object *object, const WCHAR *name, BYTE *value, DWORD value_size)
-{
-    struct object_property *property = get_object_property(object, name);
-    void *tmp;
-
-    if (!property && !(property = add_object_property(object, name))) return NTE_NO_MEMORY;
-
-    property->value_size = value_size;
-    if (!(tmp = realloc(property->value, value_size)))
-    {
-        ERR("Error allocating memory.\n");
-        free(property->key);
-        property->key = NULL;
-        return NTE_NO_MEMORY;
-    }
-
-    property->value = tmp;
-    memcpy(property->value, value, value_size);
-
     return ERROR_SUCCESS;
 }
 
@@ -259,12 +335,6 @@ SECURITY_STATUS WINAPI NCryptImportKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_H
         return NTE_BAD_FLAGS;
     }
 
-    if (!(object = allocate_object(KEY)))
-    {
-        ERR("Error allocating memory\n");
-        return NTE_NO_MEMORY;
-    }
-
     switch(header->Magic)
     {
     case BCRYPT_RSAFULLPRIVATE_MAGIC:
@@ -273,13 +343,13 @@ SECURITY_STATUS WINAPI NCryptImportKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_H
     {
         NTSTATUS ret;
         BCRYPT_RSAKEY_BLOB *rsablob = (BCRYPT_RSAKEY_BLOB *)data;
-        ret = BCryptOpenAlgorithmProvider(&object->key.bcrypt_alg, BCRYPT_RSA_ALGORITHM, NULL, 0);
-        if (ret != ERROR_SUCCESS)
+
+        if (!(object = create_key_object(RSA, provider)))
         {
-            ERR("Error opening algorithm provider\n");
-            free(object);
-            return NTE_INTERNAL_ERROR;
+            ERR("Error allocating memory\n");
+            return NTE_NO_MEMORY;
         }
+
         ret = BCryptImportKeyPair(object->key.bcrypt_alg, NULL, type, &object->key.bcrypt_key, data, datasize, 0);
         if (ret != ERROR_SUCCESS)
         {
@@ -289,14 +359,11 @@ SECURITY_STATUS WINAPI NCryptImportKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_H
             return NTE_BAD_DATA;
         }
 
-        set_object_property(object, NCRYPT_PROVIDER_HANDLE_PROPERTY, (BYTE *)&provider, sizeof(provider));
-        set_object_property(object, NCRYPT_ALGORITHM_GROUP_PROPERTY, (BYTE *)BCRYPT_RSA_ALGORITHM, sizeof(BCRYPT_RSA_ALGORITHM));
         set_object_property(object, NCRYPT_LENGTH_PROPERTY, (BYTE *)&rsablob->BitLength, sizeof(rsablob->BitLength));
         break;
     }
     default:
         FIXME("Unhandled key magic %#lx\n", header->Magic);
-        free(object);
         return NTE_INVALID_PARAMETER;
     }
 
