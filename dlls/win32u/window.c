@@ -1276,6 +1276,17 @@ BOOL WINAPI NtUserSetWindowPos( HWND hwnd, HWND after, INT x, INT y, INT cx, INT
     return user_callbacks && user_callbacks->pSetWindowPos( hwnd, after, x, y, cx, cy, flags );
 }
 
+/***********************************************************************
+ *           NtUserMoveWindow (win32u.@)
+ */
+BOOL WINAPI NtUserMoveWindow( HWND hwnd, INT x, INT y, INT cx, INT cy, BOOL repaint )
+{
+    int flags = SWP_NOZORDER | SWP_NOACTIVATE;
+    if (!repaint) flags |= SWP_NOREDRAW;
+    TRACE( "%p %d,%d %dx%d %d\n", hwnd, x, y, cx, cy, repaint );
+    return NtUserSetWindowPos( hwnd, 0, x, y, cx, cy, flags );
+}
+
 /*****************************************************************************
  *           NtUserGetLayeredWindowAttributes (win32u.@)
  */

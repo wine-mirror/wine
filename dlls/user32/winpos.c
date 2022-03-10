@@ -561,19 +561,6 @@ BOOL WINAPI BringWindowToTop( HWND hwnd )
 }
 
 
-/***********************************************************************
- *		MoveWindow (USER32.@)
- */
-BOOL WINAPI MoveWindow( HWND hwnd, INT x, INT y, INT cx, INT cy,
-                            BOOL repaint )
-{
-    int flags = SWP_NOZORDER | SWP_NOACTIVATE;
-    if (!repaint) flags |= SWP_NOREDRAW;
-    TRACE("%p %d,%d %dx%d %d\n", hwnd, x, y, cx, cy, repaint );
-    return SetWindowPos( hwnd, 0, x, y, cx, cy, flags );
-}
-
-
 /*******************************************************************
  *           get_work_rect
  *

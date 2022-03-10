@@ -1084,7 +1084,7 @@
 @ stub NtUserMinMaximize
 @ stub NtUserModifyUserStartupInfoFlags
 @ stub NtUserModifyWindowTouchCapability
-@ stub NtUserMoveWindow
+@ stdcall NtUserMoveWindow(long long long long long long)
 @ stub NtUserMsgWaitForMultipleObjectsEx
 @ stub NtUserNavigateFocus
 @ stub NtUserNotifyIMEStatus

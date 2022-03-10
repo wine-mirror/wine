@@ -840,6 +840,12 @@ INT WINAPI NtUserGetKeyNameText( LONG lparam, WCHAR *buffer, INT size )
     return unix_funcs->pNtUserGetKeyNameText( lparam, buffer, size );
 }
 
+BOOL WINAPI NtUserMoveWindow( HWND hwnd, INT x, INT y, INT cx, INT cy, BOOL repaint )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserMoveWindow( hwnd, x, y, cx, cy, repaint );
+}
+
 INT WINAPI NtUserGetPriorityClipboardFormat( UINT *list, INT count )
 {
     if (!unix_funcs) return 0;

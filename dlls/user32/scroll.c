@@ -1173,35 +1173,35 @@ static void SCROLL_CreateScrollBar(HWND hwnd, LPCREATESTRUCTW lpCreate)
     if (lpCreate->style & (SBS_SIZEGRIP | SBS_SIZEBOX))
     {
         if (lpCreate->style & SBS_SIZEBOXTOPLEFTALIGN)
-            MoveWindow( hwnd, lpCreate->x, lpCreate->y, GetSystemMetrics(SM_CXVSCROLL)+1,
-                        GetSystemMetrics(SM_CYHSCROLL)+1, FALSE );
+            NtUserMoveWindow( hwnd, lpCreate->x, lpCreate->y, GetSystemMetrics(SM_CXVSCROLL)+1,
+                              GetSystemMetrics(SM_CYHSCROLL)+1, FALSE );
         else if(lpCreate->style & SBS_SIZEBOXBOTTOMRIGHTALIGN)
-            MoveWindow( hwnd, lpCreate->x+lpCreate->cx-GetSystemMetrics(SM_CXVSCROLL)-1, 
-                        lpCreate->y+lpCreate->cy-GetSystemMetrics(SM_CYHSCROLL)-1,
-                        GetSystemMetrics(SM_CXVSCROLL)+1,
-                        GetSystemMetrics(SM_CYHSCROLL)+1, FALSE );
+            NtUserMoveWindow( hwnd, lpCreate->x+lpCreate->cx-GetSystemMetrics(SM_CXVSCROLL)-1,
+                              lpCreate->y+lpCreate->cy-GetSystemMetrics(SM_CYHSCROLL)-1,
+                              GetSystemMetrics(SM_CXVSCROLL)+1,
+                              GetSystemMetrics(SM_CYHSCROLL)+1, FALSE );
     }
     else if (lpCreate->style & SBS_VERT)
     {
         if (lpCreate->style & SBS_LEFTALIGN)
-            MoveWindow( hwnd, lpCreate->x, lpCreate->y,
-                        GetSystemMetrics(SM_CXVSCROLL)+1, lpCreate->cy, FALSE );
+            NtUserMoveWindow( hwnd, lpCreate->x, lpCreate->y,
+                              GetSystemMetrics(SM_CXVSCROLL)+1, lpCreate->cy, FALSE );
         else if (lpCreate->style & SBS_RIGHTALIGN)
-            MoveWindow( hwnd,
-                        lpCreate->x+lpCreate->cx-GetSystemMetrics(SM_CXVSCROLL)-1,
-                        lpCreate->y,
-                        GetSystemMetrics(SM_CXVSCROLL)+1, lpCreate->cy, FALSE );
+            NtUserMoveWindow( hwnd,
+                              lpCreate->x+lpCreate->cx-GetSystemMetrics(SM_CXVSCROLL)-1,
+                              lpCreate->y,
+                              GetSystemMetrics(SM_CXVSCROLL)+1, lpCreate->cy, FALSE );
     }
     else  /* SBS_HORZ */
     {
         if (lpCreate->style & SBS_TOPALIGN)
-            MoveWindow( hwnd, lpCreate->x, lpCreate->y,
-                        lpCreate->cx, GetSystemMetrics(SM_CYHSCROLL)+1, FALSE );
+            NtUserMoveWindow( hwnd, lpCreate->x, lpCreate->y,
+                              lpCreate->cx, GetSystemMetrics(SM_CYHSCROLL)+1, FALSE );
         else if (lpCreate->style & SBS_BOTTOMALIGN)
-            MoveWindow( hwnd,
-                        lpCreate->x,
-                        lpCreate->y+lpCreate->cy-GetSystemMetrics(SM_CYHSCROLL)-1,
-                        lpCreate->cx, GetSystemMetrics(SM_CYHSCROLL)+1, FALSE );
+            NtUserMoveWindow( hwnd,
+                              lpCreate->x,
+                              lpCreate->y+lpCreate->cy-GetSystemMetrics(SM_CYHSCROLL)-1,
+                              lpCreate->cx, GetSystemMetrics(SM_CYHSCROLL)+1, FALSE );
     }
 }
 

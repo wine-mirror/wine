@@ -542,7 +542,7 @@
 @ stdcall MonitorFromPoint(int64 long)
 @ stdcall MonitorFromRect(ptr long)
 @ stdcall MonitorFromWindow(long long)
-@ stdcall MoveWindow(long long long long long long)
+@ stdcall MoveWindow(long long long long long long) NtUserMoveWindow
 @ stdcall MsgWaitForMultipleObjects(long ptr long long long)
 @ stdcall MsgWaitForMultipleObjectsEx(long ptr long long long)
 @ stdcall NotifyWinEvent(long long long long) NtUserNotifyWinEvent

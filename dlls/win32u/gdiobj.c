@@ -1177,6 +1177,7 @@ static struct unix_funcs unix_funcs =
     NtUserGetUpdatedClipboardFormats,
     NtUserIsClipboardFormatAvailable,
     NtUserMapVirtualKeyEx,
+    NtUserMoveWindow,
     NtUserRegisterClassExWOW,
     NtUserRegisterHotKey,
     NtUserScrollDC,

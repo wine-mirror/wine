@@ -1229,8 +1229,8 @@ LRESULT MDIClientWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             SetRect(&rect, 0, 0, LOWORD(lParam), HIWORD(lParam));
 	    AdjustWindowRectEx(&rect, GetWindowLongA(ci->hwndActiveChild, GWL_STYLE),
                                0, GetWindowLongA(ci->hwndActiveChild, GWL_EXSTYLE) );
-	    MoveWindow(ci->hwndActiveChild, rect.left, rect.top,
-			 rect.right - rect.left, rect.bottom - rect.top, 1);
+	    NtUserMoveWindow( ci->hwndActiveChild, rect.left, rect.top,
+                              rect.right - rect.left, rect.bottom - rect.top, 1 );
 	}
 	else
             MDI_PostUpdate(hwnd, ci, SB_BOTH+1);
@@ -1348,7 +1348,7 @@ LRESULT WINAPI DefFrameProcW( HWND hwnd, HWND hwndMDIClient,
 	    break;
 
         case WM_SIZE:
-            MoveWindow(hwndMDIClient, 0, 0, LOWORD(lParam), HIWORD(lParam), TRUE);
+            NtUserMoveWindow( hwndMDIClient, 0, 0, LOWORD(lParam), HIWORD(lParam), TRUE );
             break;
 
         case WM_NEXTMENU:
