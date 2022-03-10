@@ -1295,7 +1295,7 @@
 @ stub NtUserUpdateDefaultDesktopThumbnail
 @ stub NtUserUpdateInputContext
 @ stub NtUserUpdateInstance
-@ stub NtUserUpdateLayeredWindow
+@ stdcall NtUserUpdateLayeredWindow(long long ptr ptr long ptr long ptr long ptr)
 @ stub NtUserUpdatePerUserSystemParameters
 @ stub NtUserUpdateWindowInputSinkHints
 @ stub NtUserUpdateWindowTrackingInfo

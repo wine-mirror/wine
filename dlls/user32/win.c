@@ -3256,56 +3256,15 @@ BOOL CDECL __wine_set_pixel_format( HWND hwnd, int format )
  */
 BOOL WINAPI UpdateLayeredWindowIndirect( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info )
 {
-    DWORD flags = SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW;
-    RECT window_rect, client_rect;
-    SIZE offset;
-
-    if (!info ||
-        info->cbSize != sizeof(*info) ||
-        info->dwFlags & ~(ULW_COLORKEY | ULW_ALPHA | ULW_OPAQUE | ULW_EX_NORESIZE) ||
-        !(GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED) ||
-        NtUserGetLayeredWindowAttributes( hwnd, NULL, NULL, NULL ))
+    if (!info || info->cbSize != sizeof(*info))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 
-    WIN_GetRectangles( hwnd, COORDS_PARENT, &window_rect, &client_rect );
-
-    if (info->pptDst)
-    {
-        offset.cx = info->pptDst->x - window_rect.left;
-        offset.cy = info->pptDst->y - window_rect.top;
-        OffsetRect( &client_rect, offset.cx, offset.cy );
-        OffsetRect( &window_rect, offset.cx, offset.cy );
-        flags &= ~SWP_NOMOVE;
-    }
-    if (info->psize)
-    {
-        offset.cx = info->psize->cx - (window_rect.right - window_rect.left);
-        offset.cy = info->psize->cy - (window_rect.bottom - window_rect.top);
-        if (info->psize->cx <= 0 || info->psize->cy <= 0)
-        {
-            SetLastError( ERROR_INVALID_PARAMETER );
-            return FALSE;
-        }
-        if ((info->dwFlags & ULW_EX_NORESIZE) && (offset.cx || offset.cy))
-        {
-            SetLastError( ERROR_INCORRECT_SIZE );
-            return FALSE;
-        }
-        client_rect.right  += offset.cx;
-        client_rect.bottom += offset.cy;
-        window_rect.right  += offset.cx;
-        window_rect.bottom += offset.cy;
-        flags &= ~SWP_NOSIZE;
-    }
-
-    TRACE( "window %p win %s client %s\n", hwnd,
-           wine_dbgstr_rect(&window_rect), wine_dbgstr_rect(&client_rect) );
-
-    set_window_pos( hwnd, 0, flags, &window_rect, &client_rect, NULL );
-    return USER_Driver->pUpdateLayeredWindow( hwnd, info, &window_rect );
+    return NtUserUpdateLayeredWindow( hwnd, info->hdcDst, info->pptDst, info->psize,
+                                      info->hdcSrc, info->pptSrc, info->crKey,
+                                      info->pblend, info->dwFlags, info->prcDirty );
 }
 
 

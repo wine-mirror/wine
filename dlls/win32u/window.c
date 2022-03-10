@@ -1337,6 +1337,76 @@ BOOL WINAPI NtUserSetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alph
     return ret;
 }
 
+/*****************************************************************************
+ *           UpdateLayeredWindow (win32u.@)
+ */
+BOOL WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_dst, const SIZE *size,
+                                       HDC hdc_src, const POINT *pts_src, COLORREF key,
+                                       const BLENDFUNCTION *blend, DWORD flags, const RECT *dirty )
+{
+    DWORD swp_flags = SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW;
+    RECT window_rect, client_rect;
+    UPDATELAYEREDWINDOWINFO info;
+    SIZE offset;
+
+    if (flags & ~(ULW_COLORKEY | ULW_ALPHA | ULW_OPAQUE | ULW_EX_NORESIZE) ||
+        !(get_window_long( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED) ||
+        NtUserGetLayeredWindowAttributes( hwnd, NULL, NULL, NULL ))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    get_window_rects( hwnd, COORDS_PARENT, &window_rect, &client_rect, get_thread_dpi() );
+
+    if (pts_dst)
+    {
+        offset.cx = pts_dst->x - window_rect.left;
+        offset.cy = pts_dst->y - window_rect.top;
+        OffsetRect( &client_rect, offset.cx, offset.cy );
+        OffsetRect( &window_rect, offset.cx, offset.cy );
+        swp_flags &= ~SWP_NOMOVE;
+    }
+    if (size)
+    {
+        offset.cx = size->cx - (window_rect.right - window_rect.left);
+        offset.cy = size->cy - (window_rect.bottom - window_rect.top);
+        if (size->cx <= 0 || size->cy <= 0)
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return FALSE;
+        }
+        if ((flags & ULW_EX_NORESIZE) && (offset.cx || offset.cy))
+        {
+            SetLastError( ERROR_INCORRECT_SIZE );
+            return FALSE;
+        }
+        client_rect.right  += offset.cx;
+        client_rect.bottom += offset.cy;
+        window_rect.right  += offset.cx;
+        window_rect.bottom += offset.cy;
+        swp_flags &= ~SWP_NOSIZE;
+    }
+
+    TRACE( "window %p win %s client %s\n", hwnd,
+           wine_dbgstr_rect(&window_rect), wine_dbgstr_rect(&client_rect) );
+
+    if (user_callbacks)
+        user_callbacks->set_window_pos( hwnd, 0, swp_flags, &window_rect, &client_rect, NULL );
+
+    info.cbSize   = sizeof(info);
+    info.hdcDst   = hdc_dst;
+    info.pptDst   = pts_dst;
+    info.psize    = size;
+    info.hdcSrc   = hdc_src;
+    info.pptSrc   = pts_src;
+    info.crKey    = key;
+    info.pblend   = blend;
+    info.dwFlags  = flags;
+    info.prcDirty = dirty;
+    return user_driver->pUpdateLayeredWindow( hwnd, &info, &window_rect );
+}
+
 /***********************************************************************
  *           list_children_from_point
  *

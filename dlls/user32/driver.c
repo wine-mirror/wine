@@ -134,12 +134,6 @@ static LRESULT CDECL nulldrv_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam
     return -1;
 }
 
-static BOOL CDECL nulldrv_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
-                                               const RECT *window_rect )
-{
-    return TRUE;
-}
-
 static BOOL CDECL nulldrv_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
                                              const RECT *window_rect, const RECT *client_rect,
                                              RECT *visible_rect, struct window_surface **surface )
@@ -181,12 +175,6 @@ static void CDECL loaderdrv_GetDC( HDC hdc, HWND hwnd, HWND top_win, const RECT 
                                    const RECT *top_rect, DWORD flags )
 {
     load_driver()->pGetDC( hdc, hwnd, top_win, win_rect, top_rect, flags );
-}
-
-static BOOL CDECL loaderdrv_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
-                                                 const RECT *window_rect )
-{
-    return load_driver()->pUpdateLayeredWindow( hwnd, info, window_rect );
 }
 
 static struct user_driver_funcs lazy_load_driver =
@@ -233,7 +221,7 @@ static struct user_driver_funcs lazy_load_driver =
     nulldrv_SetWindowText,
     nulldrv_ShowWindow,
     nulldrv_SysCommand,
-    loaderdrv_UpdateLayeredWindow,
+    NULL,
     NULL,
     nulldrv_WindowPosChanging,
     nulldrv_WindowPosChanged,
@@ -278,7 +266,6 @@ void CDECL __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT v
     SET_USER_FUNC(SetWindowText);
     SET_USER_FUNC(ShowWindow);
     SET_USER_FUNC(SysCommand);
-    SET_USER_FUNC(UpdateLayeredWindow);
     SET_USER_FUNC(WindowPosChanging);
     SET_USER_FUNC(WindowPosChanged);
 #undef SET_USER_FUNC

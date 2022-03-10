@@ -1147,6 +1147,12 @@ static void CDECL loaderdrv_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
     load_driver()->pSetWindowRgn( hwnd, hrgn, redraw );
 }
 
+static BOOL CDECL loaderdrv_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
+                                                 const RECT *window_rect )
+{
+    return load_driver()->pUpdateLayeredWindow( hwnd, info, window_rect );
+}
+
 static const struct vulkan_funcs * CDECL loaderdrv_wine_get_vulkan_driver( UINT version )
 {
     return load_driver()->pwine_get_vulkan_driver( version );
@@ -1183,6 +1189,7 @@ static const struct user_driver_funcs lazy_load_driver =
     .pSetWindowRgn = loaderdrv_SetWindowRgn,
     .pMsgWaitForMultipleObjectsEx = nulldrv_MsgWaitForMultipleObjectsEx,
     .pScrollDC = nulldrv_ScrollDC,
+    .pUpdateLayeredWindow = loaderdrv_UpdateLayeredWindow,
     .pWindowMessage = nulldrv_WindowMessage,
     /* system parameters */
     .pSystemParametersInfo = nulldrv_SystemParametersInfo,

@@ -1002,6 +1002,15 @@ BOOL WINAPI NtUserUnregisterHotKey( HWND hwnd, INT id )
     return unix_funcs->pNtUserUnregisterHotKey( hwnd, id );
 }
 
+BOOL WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_dst, const SIZE *size,
+                                       HDC hdc_src, const POINT *pts_src, COLORREF key,
+                                       const BLENDFUNCTION *blend, DWORD flags, const RECT *dirty )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserUpdateLayeredWindow( hwnd, hdc_dst, pts_dst, size, hdc_src, pts_src,
+                                                   key, blend, flags, dirty );
+}
+
 WORD WINAPI NtUserVkKeyScanEx( WCHAR chr, HKL layout )
 {
     if (!unix_funcs) return 0;

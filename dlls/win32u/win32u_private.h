@@ -247,6 +247,10 @@ struct unix_funcs
     BOOL     (WINAPI *pNtUserUnregisterClass)( UNICODE_STRING *name, HINSTANCE instance,
                                                struct client_menu_name *client_menu_name );
     BOOL     (WINAPI *pNtUserUnregisterHotKey)( HWND hwnd, INT id );
+    BOOL     (WINAPI *pNtUserUpdateLayeredWindow)( HWND hwnd, HDC hdc_dst, const POINT *pts_dst,
+                                                   const SIZE *size, HDC hdc_src, const POINT *pts_src,
+                                                   COLORREF key, const BLENDFUNCTION *blend,
+                                                   DWORD flags, const RECT *dirty );
     WORD     (WINAPI *pNtUserVkKeyScanEx)( WCHAR chr, HKL layout );
     HWND     (WINAPI *pNtUserWindowFromPoint)( LONG x, LONG y );
 
