@@ -36,7 +36,7 @@
 
 #define CHECK_EXPECT(kind, index) \
     do { \
-        ok(expect_ ##kind & (1 << index), "unexpected event for  " #kind ", index:%d\n", index); \
+        ok(expect_ ##kind & (1 << index), "unexpected event for  " #kind ", index:%ld\n", index); \
         called_ ## kind |= (1 << index); \
     }while(0)
 
@@ -81,7 +81,7 @@ static inline WCHAR *load_resource(const WCHAR *name)
     lstrcatW(pathW, name);
 
     file = CreateFileW(pathW, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
-    ok(file != INVALID_HANDLE_VALUE, "file creation failed, at %s, error %d\n", wine_dbgstr_w(pathW),
+    ok(file != INVALID_HANDLE_VALUE, "file creation failed, at %s, error %ld\n", wine_dbgstr_w(pathW),
         GetLastError());
 
     res = FindResourceW(NULL, name, (LPCWSTR)RT_RCDATA);
@@ -146,7 +146,7 @@ static HRESULT WINAPI WMPOCXEvents_Invoke(IDispatch *iface, DISPID dispIdMember,
         case DISPID_WMPCOREEVENT_OPENSTATECHANGE:
             CHECK_EXPECT(OPENSTATE, V_UI4(pDispParams->rgvarg));
             if (winetest_debug > 1)
-                trace("DISPID_WMPCOREEVENT_OPENSTATECHANGE, %d\n", V_UI4(pDispParams->rgvarg));
+                trace("DISPID_WMPCOREEVENT_OPENSTATECHANGE, %ld\n", V_UI4(pDispParams->rgvarg));
             break;
         case DISPID_WMPCOREEVENT_PLAYSTATECHANGE:
             CHECK_EXPECT(PLAYSTATE, V_UI4(pDispParams->rgvarg));
@@ -156,7 +156,7 @@ static HRESULT WINAPI WMPOCXEvents_Invoke(IDispatch *iface, DISPID dispIdMember,
                 SetEvent(completed_event);
             }
             if (winetest_debug > 1)
-                trace("DISPID_WMPCOREEVENT_PLAYSTATECHANGE, %d\n", V_UI4(pDispParams->rgvarg));
+                trace("DISPID_WMPCOREEVENT_PLAYSTATECHANGE, %ld\n", V_UI4(pDispParams->rgvarg));
             break;
         case DISPID_WMPCOREEVENT_MEDIACHANGE:
             if (winetest_debug > 1)
@@ -172,7 +172,7 @@ static HRESULT WINAPI WMPOCXEvents_Invoke(IDispatch *iface, DISPID dispIdMember,
             break;
         default:
             if (winetest_debug > 1)
-                trace("event: %d\n", dispIdMember);
+                trace("event: %ld\n", dispIdMember);
             break;
     }
 
@@ -227,22 +227,22 @@ static void test_completion_event(void)
         win_skip("CLSID_WindowsMediaPlayer not registered\n");
         return;
     }
-    ok(hres == S_OK, "Could not create CLSID_WindowsMediaPlayer instance: %08x\n", hres);
+    ok(hres == S_OK, "Could not create CLSID_WindowsMediaPlayer instance: %08lx\n", hres);
 
     hres = IOleObject_QueryInterface(oleobj, &IID_IConnectionPointContainer, (void**)&container);
-    ok(hres == S_OK, "QueryInterface(IID_IConnectionPointContainer) failed: %08x\n", hres);
+    ok(hres == S_OK, "QueryInterface(IID_IConnectionPointContainer) failed: %08lx\n", hres);
     if(FAILED(hres))
         return;
 
     hres = IConnectionPointContainer_FindConnectionPoint(container, &IID__WMPOCXEvents, &point);
     IConnectionPointContainer_Release(container);
-    ok(hres == S_OK, "FindConnectionPoint failed: %08x\n", hres);
+    ok(hres == S_OK, "FindConnectionPoint failed: %08lx\n", hres);
 
     hres = IConnectionPoint_Advise(point, (IUnknown*)&WMPOCXEvents, &dw);
-    ok(hres == S_OK, "Advise failed: %08x\n", hres);
+    ok(hres == S_OK, "Advise failed: %08lx\n", hres);
 
     hres = IOleObject_QueryInterface(oleobj, &IID_IWMPPlayer4, (void**)&player4);
-    ok(hres == S_OK, "Could not get IWMPPlayer4 iface: %08x\n", hres);
+    ok(hres == S_OK, "Could not get IWMPPlayer4 iface: %08lx\n", hres);
 
     filename = SysAllocString(load_resource(mp3file1s));
 
@@ -260,7 +260,7 @@ static void test_completion_event(void)
     SET_EXPECT(OPENSTATE, wmposMediaChanging);
     SET_EXPECT(PLAYSTATE, wmppsReady);
     hres = IWMPPlayer4_put_URL(player4, filename);
-    ok(hres == S_OK, "IWMPPlayer4_put_URL failed: %08x\n", hres);
+    ok(hres == S_OK, "IWMPPlayer4_put_URL failed: %08lx\n", hres);
     res = pump_messages(3000, 1, &completed_event);
     ok(res == WAIT_OBJECT_0, "Timed out while waiting for media to complete\n");
 
@@ -281,7 +281,7 @@ static void test_completion_event(void)
     CLEAR_CALLED(OPENSTATE, wmposMediaOpening);
 
     hres = IConnectionPoint_Unadvise(point, dw);
-    ok(hres == S_OK, "Unadvise failed: %08x\n", hres);
+    ok(hres == S_OK, "Unadvise failed: %08lx\n", hres);
 
     IConnectionPoint_Release(point);
     IWMPPlayer4_Release(player4);
@@ -315,47 +315,47 @@ static BOOL test_wmp(void)
         win_skip("CLSID_WindowsMediaPlayer not registered\n");
         return FALSE;
     }
-    ok(hres == S_OK, "Could not create CLSID_WindowsMediaPlayer instance: %08x\n", hres);
+    ok(hres == S_OK, "Could not create CLSID_WindowsMediaPlayer instance: %08lx\n", hres);
 
     hres = IOleObject_QueryInterface(oleobj, &IID_IConnectionPointContainer, (void**)&container);
-    ok(hres == S_OK, "QueryInterface(IID_IConnectionPointContainer) failed: %08x\n", hres);
+    ok(hres == S_OK, "QueryInterface(IID_IConnectionPointContainer) failed: %08lx\n", hres);
 
     hres = IConnectionPointContainer_FindConnectionPoint(container, &IID__WMPOCXEvents, &point);
     IConnectionPointContainer_Release(container);
-    ok(hres == S_OK, "FindConnectionPoint failed: %08x\n", hres);
+    ok(hres == S_OK, "FindConnectionPoint failed: %08lx\n", hres);
 
     hres = IConnectionPoint_Advise(point, (IUnknown*)&WMPOCXEvents, &dw);
-    ok(hres == S_OK, "Advise failed: %08x\n", hres);
+    ok(hres == S_OK, "Advise failed: %08lx\n", hres);
 
     hres = IOleObject_QueryInterface(oleobj, &IID_IWMPPlayer4, (void**)&player4);
-    ok(hres == S_OK, "Could not get IWMPPlayer4 iface: %08x\n", hres);
+    ok(hres == S_OK, "Could not get IWMPPlayer4 iface: %08lx\n", hres);
 
     settings = NULL;
     hres = IWMPPlayer4_get_settings(player4, &settings);
-    ok(hres == S_OK, "get_settings failed: %08x\n", hres);
+    ok(hres == S_OK, "get_settings failed: %08lx\n", hres);
     ok(settings != NULL, "settings = NULL\n");
 
     hres = IWMPSettings_put_autoStart(settings, VARIANT_FALSE);
-    ok(hres == S_OK, "Could not put autoStart in IWMPSettings: %08x\n", hres);
+    ok(hres == S_OK, "Could not put autoStart in IWMPSettings: %08lx\n", hres);
 
     controls = NULL;
     hres = IWMPPlayer4_get_controls(player4, &controls);
-    ok(hres == S_OK, "get_controls failed: %08x\n", hres);
+    ok(hres == S_OK, "get_controls failed: %08lx\n", hres);
     ok(controls != NULL, "controls = NULL\n");
 
     bstrcurrentPosition = SysAllocString(L"currentPosition");
     hres = IWMPControls_get_isAvailable(controls, bstrcurrentPosition, &vbool);
-    ok(hres == S_OK, "IWMPControls_get_isAvailable failed: %08x\n", hres);
+    ok(hres == S_OK, "IWMPControls_get_isAvailable failed: %08lx\n", hres);
     ok(vbool == VARIANT_FALSE, "unexpected value\n");
 
     hres = IWMPControls_play(controls);
-    ok(hres == NS_S_WMPCORE_COMMAND_NOT_AVAILABLE, "IWMPControls_play is available: %08x\n", hres);
+    ok(hres == NS_S_WMPCORE_COMMAND_NOT_AVAILABLE, "IWMPControls_play is available: %08lx\n", hres);
 
     hres = IWMPSettings_put_volume(settings, 36);
-    ok(hres == S_OK, "IWMPSettings_put_volume failed: %08x\n", hres);
+    ok(hres == S_OK, "IWMPSettings_put_volume failed: %08lx\n", hres);
     hres = IWMPSettings_get_volume(settings, &progress);
-    ok(hres == S_OK, "IWMPSettings_get_volume failed: %08x\n", hres);
-    ok(progress == 36, "unexpected value: %d\n", progress);
+    ok(hres == S_OK, "IWMPSettings_get_volume failed: %08lx\n", hres);
+    ok(progress == 36, "unexpected value: %ld\n", progress);
 
     filename = SysAllocString(load_resource(mp3file));
 
@@ -365,7 +365,7 @@ static BOOL test_wmp(void)
     SET_EXPECT(PLAYSTATE, wmppsTransitioning);
     SET_EXPECT(PLAYSTATE, wmppsReady);
     hres = IWMPPlayer4_put_URL(player4, filename);
-    ok(hres == S_OK, "IWMPPlayer4_put_URL failed: %08x\n", hres);
+    ok(hres == S_OK, "IWMPPlayer4_put_URL failed: %08lx\n", hres);
     CHECK_CALLED(OPENSTATE, wmposPlaylistChanging);
     CHECK_CALLED(OPENSTATE, wmposPlaylistChanged);
     CHECK_CALLED(OPENSTATE, wmposPlaylistOpenNoMedia);
@@ -379,7 +379,7 @@ static BOOL test_wmp(void)
     /* MediaOpening happens only on xp, 2003 */
     SET_EXPECT(OPENSTATE, wmposMediaOpening);
     hres = IWMPControls_play(controls);
-    ok(hres == S_OK, "IWMPControls_play failed: %08x\n", hres);
+    ok(hres == S_OK, "IWMPControls_play failed: %08lx\n", hres);
     res = pump_messages(1000, 1, &playing_event);
     ok(res == WAIT_OBJECT_0 || broken(res == WAIT_TIMEOUT), "Timed out while waiting for media to become ready\n");
     if (res == WAIT_TIMEOUT) {
@@ -397,55 +397,55 @@ static BOOL test_wmp(void)
     CLEAR_CALLED(OPENSTATE, wmposMediaOpening);
 
     hres = IWMPControls_get_isAvailable(controls, bstrcurrentPosition, &vbool);
-    ok(hres == S_OK, "IWMPControls_get_isAvailable failed: %08x\n", hres);
+    ok(hres == S_OK, "IWMPControls_get_isAvailable failed: %08lx\n", hres);
     ok(vbool == VARIANT_TRUE, "unexpected value\n");
 
     duration = 0.0;
     hres = IWMPControls_get_currentPosition(controls, &duration);
-    ok(hres == S_OK, "IWMPControls_get_currentPosition failed: %08x\n", hres);
+    ok(hres == S_OK, "IWMPControls_get_currentPosition failed: %08lx\n", hres);
     ok((int)duration == 0, "unexpected value %f\n", duration);
 
     duration = 1.1;
     hres = IWMPControls_put_currentPosition(controls, duration);
-    ok(hres == S_OK, "IWMPControls_put_currentPosition failed: %08x\n", hres);
+    ok(hres == S_OK, "IWMPControls_put_currentPosition failed: %08lx\n", hres);
 
     duration = 0.0;
     hres = IWMPControls_get_currentPosition(controls, &duration);
-    ok(hres == S_OK, "IWMPControls_get_currentPosition failed: %08x\n", hres);
+    ok(hres == S_OK, "IWMPControls_get_currentPosition failed: %08lx\n", hres);
     ok(duration >= 1.05 /* save some fp errors */, "unexpected value %f\n", duration);
 
     hres = IWMPPlayer4_get_currentMedia(player4, &media);
-    ok(hres == S_OK, "IWMPPlayer4_get_currentMedia failed: %08x\n", hres);
+    ok(hres == S_OK, "IWMPPlayer4_get_currentMedia failed: %08lx\n", hres);
     hres = IWMPMedia_get_duration(media, &duration);
-    ok(hres == S_OK, "IWMPMedia_get_duration failed: %08x\n", hres);
+    ok(hres == S_OK, "IWMPMedia_get_duration failed: %08lx\n", hres);
     ok(floor(duration + 0.5) == 3, "unexpected value: %f\n", duration);
     IWMPMedia_Release(media);
 
     network = NULL;
     hres = IWMPPlayer4_get_network(player4, &network);
-    ok(hres == S_OK, "get_network failed: %08x\n", hres);
+    ok(hres == S_OK, "get_network failed: %08lx\n", hres);
     ok(network != NULL, "network = NULL\n");
     progress = 0;
     hres = IWMPNetwork_get_bufferingProgress(network, &progress);
-    ok(hres == S_OK || broken(hres == S_FALSE), "IWMPNetwork_get_bufferingProgress failed: %08x\n", hres);
-    ok(progress == 100, "unexpected value: %d\n", progress);
+    ok(hres == S_OK || broken(hres == S_FALSE), "IWMPNetwork_get_bufferingProgress failed: %08lx\n", hres);
+    ok(progress == 100, "unexpected value: %ld\n", progress);
     progress = 0;
     hres = IWMPNetwork_get_downloadProgress(network, &progress);
-    ok(hres == S_OK, "IWMPNetwork_get_downloadProgress failed: %08x\n", hres);
-    ok(progress == 100, "unexpected value: %d\n", progress);
+    ok(hres == S_OK, "IWMPNetwork_get_downloadProgress failed: %08lx\n", hres);
+    ok(progress == 100, "unexpected value: %ld\n", progress);
     IWMPNetwork_Release(network);
 
     SET_EXPECT(PLAYSTATE, wmppsStopped);
     /* The following happens on wine only since we close media on stop */
     SET_EXPECT(OPENSTATE, wmposPlaylistOpenNoMedia);
     hres = IWMPControls_stop(controls);
-    ok(hres == S_OK, "IWMPControls_stop failed: %08x\n", hres);
+    ok(hres == S_OK, "IWMPControls_stop failed: %08lx\n", hres);
     CHECK_CALLED(PLAYSTATE, wmppsStopped);
     todo_wine CHECK_NOT_CALLED(OPENSTATE, wmposPlaylistOpenNoMedia);
 
     /* Already Stopped */
     hres = IWMPControls_stop(controls);
-    ok(hres == NS_S_WMPCORE_COMMAND_NOT_AVAILABLE, "IWMPControls_stop is available: %08x\n", hres);
+    ok(hres == NS_S_WMPCORE_COMMAND_NOT_AVAILABLE, "IWMPControls_stop is available: %08lx\n", hres);
 
     SET_EXPECT(PLAYSTATE, wmppsPlaying);
     /* The following happens on wine only since we close media on stop */
@@ -453,7 +453,7 @@ static BOOL test_wmp(void)
     SET_EXPECT(OPENSTATE, wmposMediaOpen);
     SET_EXPECT(PLAYSTATE, wmppsTransitioning);
     hres = IWMPControls_play(controls);
-    ok(hres == S_OK, "IWMPControls_play failed: %08x\n", hres);
+    ok(hres == S_OK, "IWMPControls_play failed: %08lx\n", hres);
     CHECK_CALLED(PLAYSTATE, wmppsPlaying);
     todo_wine CHECK_NOT_CALLED(OPENSTATE, wmposOpeningUnknownURL);
     todo_wine CHECK_NOT_CALLED(OPENSTATE, wmposMediaOpen);
@@ -461,16 +461,16 @@ static BOOL test_wmp(void)
 
 playback_skip:
     hres = IConnectionPoint_Unadvise(point, dw);
-    ok(hres == S_OK, "Unadvise failed: %08x\n", hres);
+    ok(hres == S_OK, "Unadvise failed: %08lx\n", hres);
 
     hres = IWMPSettings_get_volume(settings, &progress);
-    ok(hres == S_OK, "IWMPSettings_get_volume failed: %08x\n", hres);
-    ok(progress == 36, "unexpected value: %d\n", progress);
+    ok(hres == S_OK, "IWMPSettings_get_volume failed: %08lx\n", hres);
+    ok(progress == 36, "unexpected value: %ld\n", progress);
     hres = IWMPSettings_put_volume(settings, 99);
-    ok(hres == S_OK, "IWMPSettings_put_volume failed: %08x\n", hres);
+    ok(hres == S_OK, "IWMPSettings_put_volume failed: %08lx\n", hres);
     hres = IWMPSettings_get_volume(settings, &progress);
-    ok(hres == S_OK, "IWMPSettings_get_volume failed: %08x\n", hres);
-    ok(progress == 99, "unexpected value: %d\n", progress);
+    ok(hres == S_OK, "IWMPSettings_get_volume failed: %08lx\n", hres);
+    ok(progress == 99, "unexpected value: %ld\n", progress);
 
     IConnectionPoint_Release(point);
     IWMPSettings_Release(settings);
@@ -517,27 +517,27 @@ static void test_media_item(void)
         win_skip("CLSID_WindowsMediaPlayer is not registered.\n");
         return;
     }
-    ok(hr == S_OK, "Failed to create media player instance, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create media player instance, hr %#lx.\n", hr);
 
     hr = IWMPPlayer4_newMedia(player, NULL, &media);
-    ok(hr == S_OK, "Failed to create a media item, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create a media item, hr %#lx.\n", hr);
     hr = IWMPMedia_get_name(media, NULL);
-    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
     hr = IWMPMedia_get_name(media, &str);
-    ok(hr == S_OK, "Failed to get item name, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get item name, hr %#lx.\n", hr);
     ok(*str == 0, "Unexpected name %s.\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     media2 = (void *)0xdeadbeef;
     hr = IWMPPlayer4_get_currentMedia(player, &media2);
-    ok(hr == S_FALSE, "Failed to get current media, hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Failed to get current media, hr %#lx.\n", hr);
     ok(media2 == NULL, "Unexpected media instance.\n");
 
     hr = IWMPPlayer4_put_currentMedia(player, media);
-    ok(hr == S_OK, "Failed to set current media, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to set current media, hr %#lx.\n", hr);
 
     hr = IWMPPlayer4_get_currentMedia(player, &media2);
-    ok(hr == S_OK, "Failed to get current media, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get current media, hr %#lx.\n", hr);
     ok(media2 != NULL && media != media2, "Unexpected media instance.\n");
     IWMPMedia_Release(media2);
 
@@ -545,38 +545,38 @@ static void test_media_item(void)
 
     str = SysAllocStringLen(NULL, 0);
     hr = IWMPPlayer4_newMedia(player, str, &media);
-    ok(hr == S_OK, "Failed to create a media item, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create a media item, hr %#lx.\n", hr);
     SysFreeString(str);
     hr = IWMPMedia_get_name(media, &str);
-    ok(hr == S_OK, "Failed to get item name, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get item name, hr %#lx.\n", hr);
     ok(*str == 0, "Unexpected name %s.\n", wine_dbgstr_w(str));
     SysFreeString(str);
     IWMPMedia_Release(media);
 
     str = SysAllocString(mp3file);
     hr = IWMPPlayer4_newMedia(player, str, &media);
-    ok(hr == S_OK, "Failed to create a media item, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create a media item, hr %#lx.\n", hr);
     SysFreeString(str);
     hr = IWMPMedia_get_name(media, &str);
-    ok(hr == S_OK, "Failed to get item name, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get item name, hr %#lx.\n", hr);
     ok(!lstrcmpW(str, L"test"), "Expected %s, got %s\n", wine_dbgstr_w(L"test"), wine_dbgstr_w(str));
     SysFreeString(str);
     hr = IWMPMedia_put_name(media, NULL);
-    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
     hr = IWMPMedia_get_name(media, &str);
-    ok(hr == S_OK, "Failed to get item name, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get item name, hr %#lx.\n", hr);
     ok(!lstrcmpW(str, L"test"), "Expected %s, got %s\n", wine_dbgstr_w(L"test"), wine_dbgstr_w(str));
     SysFreeString(str);
 
     hr = IWMPPlayer4_put_currentMedia(player, media);
-    ok(hr == S_OK, "Failed to set current media, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to set current media, hr %#lx.\n", hr);
     IWMPMedia_Release(media);
 
     hr = IWMPPlayer4_get_currentMedia(player, &media2);
-    ok(hr == S_OK, "Failed to get current media, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get current media, hr %#lx.\n", hr);
     ok(media2 != NULL, "Unexpected media instance.\n");
     hr = IWMPMedia_get_name(media2, &str);
-    ok(hr == S_OK, "Failed to get item name, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get item name, hr %#lx.\n", hr);
     ok(!lstrcmpW(str, L"test"), "Expected %s, got %s\n", wine_dbgstr_w(L"test"), wine_dbgstr_w(str));
     SysFreeString(str);
     IWMPMedia_Release(media2);
@@ -593,10 +593,10 @@ static void test_media_item(void)
 
         str = SysAllocString(pathW);
         hr = IWMPPlayer4_newMedia(player, str, &media);
-        ok(hr == S_OK, "Failed to create a media item, hr %#x.\n", hr);
+        ok(hr == S_OK, "Failed to create a media item, hr %#lx.\n", hr);
         SysFreeString(str);
         hr = IWMPMedia_get_name(media, &str);
-        ok(hr == S_OK, "Failed to get item name, hr %#x.\n", hr);
+        ok(hr == S_OK, "Failed to get item name, hr %#lx.\n", hr);
         ok(!lstrcmpW(str, tests[i].expected), "Expected %s, got %s\n", wine_dbgstr_w(tests[i].expected), wine_dbgstr_w(str));
         SysFreeString(str);
         IWMPMedia_Release(media);
@@ -617,35 +617,35 @@ static void test_player_url(void)
         win_skip("CLSID_WindowsMediaPlayer is not registered.\n");
         return;
     }
-    ok(hr == S_OK, "Failed to create media player instance, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create media player instance, hr %#lx.\n", hr);
 
     hr = IWMPPlayer4_get_URL(player, &str);
-    ok(hr == S_OK, "Failed to get url, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get url, hr %#lx.\n", hr);
     ok(*str == 0, "Unexpected url %s.\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     str2 = SysAllocString(mp3file);
     hr = IWMPPlayer4_put_URL(player, str2);
-    ok(hr == S_OK, "Failed to set url, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to set url, hr %#lx.\n", hr);
 
     hr = IWMPPlayer4_put_URL(player, NULL);
-    ok(hr == S_OK, "Failed to set url, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to set url, hr %#lx.\n", hr);
     hr = IWMPPlayer4_get_URL(player, &str);
-    ok(hr == S_OK, "Failed to set url, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to set url, hr %#lx.\n", hr);
     ok(*str == 0, "Unexpected url, %s.\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     /* Empty url */
     hr = IWMPPlayer4_put_URL(player, str2);
-    ok(hr == S_OK, "Failed to set url, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to set url, hr %#lx.\n", hr);
 
     str = SysAllocStringLen(NULL, 0);
     hr = IWMPPlayer4_put_URL(player, str);
-    ok(hr == S_OK, "Failed to set url, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to set url, hr %#lx.\n", hr);
     SysFreeString(str);
 
     hr = IWMPPlayer4_get_URL(player, &str);
-    ok(hr == S_OK, "Failed to set url, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to set url, hr %#lx.\n", hr);
     ok(*str == 0, "Unexpected url, %s.\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
@@ -668,38 +668,38 @@ static void test_playlist(void)
         win_skip("CLSID_WindowsMediaPlayer is not registered.\n");
         return;
     }
-    ok(hr == S_OK, "Failed to create media player instance, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create media player instance, hr %#lx.\n", hr);
 
     playlist = NULL;
     hr = IWMPPlayer4_get_currentPlaylist(player, &playlist);
-    ok(hr == S_OK, "IWMPPlayer4_get_currentPlaylist failed: %08x\n", hr);
+    ok(hr == S_OK, "IWMPPlayer4_get_currentPlaylist failed: %08lx\n", hr);
     ok(playlist != NULL, "playlist == NULL\n");
 
     if (0) /* fails on non-English locales */
     {
         hr = IWMPPlaylist_get_name(playlist, &str);
-        ok(hr == S_OK, "Failed to get playlist name, hr %#x.\n", hr);
+        ok(hr == S_OK, "Failed to get playlist name, hr %#lx.\n", hr);
         ok(!lstrcmpW(str, nameW), "Expected %s, got %s\n", wine_dbgstr_w(nameW), wine_dbgstr_w(str));
         SysFreeString(str);
     }
 
     hr = IWMPPlaylist_get_count(playlist, NULL);
-    ok(hr == E_POINTER, "Failed to get count, hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Failed to get count, hr %#lx.\n", hr);
 
     count = -1;
     hr = IWMPPlaylist_get_count(playlist, &count);
-    ok(hr == S_OK, "Failed to get count, hr %#x.\n", hr);
-    ok(count == 0, "Expected 0, got %d\n", count);
+    ok(hr == S_OK, "Failed to get count, hr %#lx.\n", hr);
+    ok(count == 0, "Expected 0, got %ld\n", count);
 
     IWMPPlaylist_Release(playlist);
 
     /* newPlaylist doesn't change current playlist */
     hr = IWMPPlayer4_newPlaylist(player, NULL, NULL, &playlist);
-    ok(hr == S_OK, "Failed to create a playlist, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create a playlist, hr %#lx.\n", hr);
 
     playlist2 = NULL;
     hr = IWMPPlayer4_get_currentPlaylist(player, &playlist2);
-    ok(hr == S_OK, "IWMPPlayer4_get_currentPlaylist failed: %08x\n", hr);
+    ok(hr == S_OK, "IWMPPlayer4_get_currentPlaylist failed: %08lx\n", hr);
     ok(playlist2 != NULL && playlist2 != playlist, "Unexpected playlist instance\n");
 
     IWMPPlaylist_Release(playlist2);
@@ -707,13 +707,13 @@ static void test_playlist(void)
     /* different playlists can have the same name */
     str = SysAllocString(nameW);
     hr = IWMPPlaylist_put_name(playlist, str);
-    ok(hr == S_OK, "Failed to get playlist name, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get playlist name, hr %#lx.\n", hr);
 
     playlist2 = NULL;
     hr = IWMPPlayer4_newPlaylist(player, str, NULL, &playlist2);
-    ok(hr == S_OK, "Failed to create a playlist, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create a playlist, hr %#lx.\n", hr);
     hr = IWMPPlaylist_get_name(playlist2, &str2);
-    ok(hr == S_OK, "Failed to get playlist name, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get playlist name, hr %#lx.\n", hr);
     ok(playlist != playlist2, "Expected playlists to be different");
     ok(!lstrcmpW(str, str2), "Expected names to be the same\n");
     SysFreeString(str);
