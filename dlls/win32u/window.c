@@ -1211,6 +1211,71 @@ int WINAPI NtUserGetWindowRgnEx( HWND hwnd, HRGN hrgn, UINT unk )
     return ret;
 }
 
+/***********************************************************************
+ *           NtUserSetWindowRgn (win32u.@)
+ */
+int WINAPI NtUserSetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
+{
+    static const RECT empty_rect;
+    BOOL ret;
+
+    if (hrgn)
+    {
+        RGNDATA *data;
+        DWORD size;
+
+        if (!(size = NtGdiGetRegionData( hrgn, 0, NULL ))) return FALSE;
+        if (!(data = malloc( size ))) return FALSE;
+        if (!NtGdiGetRegionData( hrgn, size, data ))
+        {
+            free( data );
+            return FALSE;
+        }
+        SERVER_START_REQ( set_window_region )
+        {
+            req->window = wine_server_user_handle( hwnd );
+            req->redraw = redraw != 0;
+            if (data->rdh.nCount)
+                wine_server_add_data( req, data->Buffer, data->rdh.nCount * sizeof(RECT) );
+            else
+                wine_server_add_data( req, &empty_rect, sizeof(empty_rect) );
+            ret = !wine_server_call_err( req );
+        }
+        SERVER_END_REQ;
+        free( data );
+    }
+    else  /* clear existing region */
+    {
+        SERVER_START_REQ( set_window_region )
+        {
+            req->window = wine_server_user_handle( hwnd );
+            req->redraw = redraw != 0;
+            ret = !wine_server_call_err( req );
+        }
+        SERVER_END_REQ;
+    }
+
+    if (ret)
+    {
+        UINT swp_flags = SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE|SWP_FRAMECHANGED|
+            SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE;
+        if (!redraw) swp_flags |= SWP_NOREDRAW;
+        user_driver->pSetWindowRgn( hwnd, hrgn, redraw );
+        NtUserSetWindowPos( hwnd, 0, 0, 0, 0, 0, swp_flags );
+        if (hrgn) NtGdiDeleteObjectApp( hrgn );
+    }
+    return ret;
+}
+
+/*******************************************************************
+ *           NtUserSetWindowPos (win32u.@)
+ */
+BOOL WINAPI NtUserSetWindowPos( HWND hwnd, HWND after, INT x, INT y, INT cx, INT cy, UINT flags )
+{
+    /* FIXME: move implementation from user32 */
+    return user_callbacks && user_callbacks->pSetWindowPos( hwnd, after, x, y, cx, cy, flags );
+}
+
 /*****************************************************************************
  *           NtUserGetLayeredWindowAttributes (win32u.@)
  */

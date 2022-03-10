@@ -1249,8 +1249,8 @@
 @ stub NtUserSetWindowLong
 @ stub NtUserSetWindowLongPtr
 @ stub NtUserSetWindowPlacement
-@ stub NtUserSetWindowPos
-@ stub NtUserSetWindowRgn
+@ stdcall NtUserSetWindowPos(long long long long long long long)
+@ stdcall NtUserSetWindowRgn(long long long)
 @ stub NtUserSetWindowRgnEx
 @ stub NtUserSetWindowShowState
 @ stub NtUserSetWindowStationUser

@@ -940,6 +940,18 @@ BOOL WINAPI NtUserSetSysColors( INT count, const INT *colors, const COLORREF *va
     return unix_funcs->pNtUserSetSysColors( count, colors, values );
 }
 
+BOOL WINAPI NtUserSetWindowPos( HWND hwnd, HWND after, INT x, INT y, INT cx, INT cy, UINT flags )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserSetWindowPos( hwnd, after, x, y, cx, cy, flags );
+}
+
+int WINAPI NtUserSetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserSetWindowRgn( hwnd, hrgn, redraw );
+}
+
 INT WINAPI NtUserShowCursor( BOOL show )
 {
     if (!unix_funcs) return 0;

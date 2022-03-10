@@ -1137,6 +1137,11 @@ static void CDECL loaderdrv_FlashWindowEx( FLASHWINFO *info )
     load_driver()->pFlashWindowEx( info );
 }
 
+static void CDECL loaderdrv_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
+{
+    load_driver()->pSetWindowRgn( hwnd, hrgn, redraw );
+}
+
 static const struct vulkan_funcs * CDECL loaderdrv_wine_get_vulkan_driver( UINT version )
 {
     return load_driver()->pwine_get_vulkan_driver( version );
@@ -1169,6 +1174,7 @@ static const struct user_driver_funcs lazy_load_driver =
     /* windowing functions */
     .pCreateDesktopWindow = loaderdrv_CreateDesktopWindow,
     .pFlashWindowEx = loaderdrv_FlashWindowEx,
+    .pSetWindowRgn = loaderdrv_SetWindowRgn,
     .pMsgWaitForMultipleObjectsEx = nulldrv_MsgWaitForMultipleObjectsEx,
     .pScrollDC = nulldrv_ScrollDC,
     .pWindowMessage = nulldrv_WindowMessage,
