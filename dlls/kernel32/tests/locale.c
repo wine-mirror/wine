@@ -24,7 +24,6 @@
  *  even when the user has overridden their default i8n settings (e.g. in
  *  the control panel i8n page), we will still get the expected results.
  */
-#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #define _CRT_NON_CONFORMING_WCSTOK
 

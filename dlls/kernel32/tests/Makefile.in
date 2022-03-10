@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = kernel32.dll
 IMPORTS   = user32 advapi32
 

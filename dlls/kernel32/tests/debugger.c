@@ -17,7 +17,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include <stdio.h>
 #include <assert.h>
@@ -1830,20 +1829,20 @@ static void test_debugger(const char *argv0)
         ok(ctx.main_thread->ctx.Esi == 105, "Esi = %lx\n", ctx.main_thread->ctx.Esi);
         ok(ctx.main_thread->ctx.Edi == 106, "Edi = %lx\n", ctx.main_thread->ctx.Edi);
 #elif defined(__x86_64__)
-        ok(ctx.main_thread->ctx.Rax == 101, "Rax = %llx\n", ctx.main_thread->ctx.Rax);
-        ok(ctx.main_thread->ctx.Rbx == 102, "Rbx = %llx\n", ctx.main_thread->ctx.Rbx);
-        ok(ctx.main_thread->ctx.Rcx == 103, "Rcx = %llx\n", ctx.main_thread->ctx.Rcx);
-        ok(ctx.main_thread->ctx.Rdx == 104, "Rdx = %llx\n", ctx.main_thread->ctx.Rdx);
-        ok(ctx.main_thread->ctx.Rsi == 105, "Rsi = %llx\n", ctx.main_thread->ctx.Rsi);
-        ok(ctx.main_thread->ctx.Rdi == 106, "Rdi = %llx\n", ctx.main_thread->ctx.Rdi);
-        ok(ctx.main_thread->ctx.R8  == 107, "R8 = %llx\n",  ctx.main_thread->ctx.R8);
-        ok(ctx.main_thread->ctx.R9  == 108, "R9 = %llx\n",  ctx.main_thread->ctx.R9);
-        ok(ctx.main_thread->ctx.R10 == 109, "R10 = %llx\n", ctx.main_thread->ctx.R10);
-        ok(ctx.main_thread->ctx.R11 == 110, "R11 = %llx\n", ctx.main_thread->ctx.R11);
-        ok(ctx.main_thread->ctx.R12 == 111, "R12 = %llx\n", ctx.main_thread->ctx.R12);
-        ok(ctx.main_thread->ctx.R13 == 112, "R13 = %llx\n", ctx.main_thread->ctx.R13);
-        ok(ctx.main_thread->ctx.R14 == 113, "R14 = %llx\n", ctx.main_thread->ctx.R14);
-        ok(ctx.main_thread->ctx.R15 == 114, "R15 = %llx\n", ctx.main_thread->ctx.R15);
+        ok(ctx.main_thread->ctx.Rax == 101, "Rax = %I64x\n", ctx.main_thread->ctx.Rax);
+        ok(ctx.main_thread->ctx.Rbx == 102, "Rbx = %I64x\n", ctx.main_thread->ctx.Rbx);
+        ok(ctx.main_thread->ctx.Rcx == 103, "Rcx = %I64x\n", ctx.main_thread->ctx.Rcx);
+        ok(ctx.main_thread->ctx.Rdx == 104, "Rdx = %I64x\n", ctx.main_thread->ctx.Rdx);
+        ok(ctx.main_thread->ctx.Rsi == 105, "Rsi = %I64x\n", ctx.main_thread->ctx.Rsi);
+        ok(ctx.main_thread->ctx.Rdi == 106, "Rdi = %I64x\n", ctx.main_thread->ctx.Rdi);
+        ok(ctx.main_thread->ctx.R8  == 107, "R8 = %I64x\n",  ctx.main_thread->ctx.R8);
+        ok(ctx.main_thread->ctx.R9  == 108, "R9 = %I64x\n",  ctx.main_thread->ctx.R9);
+        ok(ctx.main_thread->ctx.R10 == 109, "R10 = %I64x\n", ctx.main_thread->ctx.R10);
+        ok(ctx.main_thread->ctx.R11 == 110, "R11 = %I64x\n", ctx.main_thread->ctx.R11);
+        ok(ctx.main_thread->ctx.R12 == 111, "R12 = %I64x\n", ctx.main_thread->ctx.R12);
+        ok(ctx.main_thread->ctx.R13 == 112, "R13 = %I64x\n", ctx.main_thread->ctx.R13);
+        ok(ctx.main_thread->ctx.R14 == 113, "R14 = %I64x\n", ctx.main_thread->ctx.R14);
+        ok(ctx.main_thread->ctx.R15 == 114, "R15 = %I64x\n", ctx.main_thread->ctx.R15);
 #endif
 
         byte = OP_BP;
@@ -1871,20 +1870,20 @@ static void test_debugger(const char *argv0)
         ok(ctx.main_thread->ctx.Esi == 105, "Esi = %lx\n", ctx.main_thread->ctx.Esi);
         ok(ctx.main_thread->ctx.Edi == 106, "Edi = %lx\n", ctx.main_thread->ctx.Edi);
 #elif defined(__x86_64__)
-        ok(ctx.main_thread->ctx.Rax == 0,   "Rax = %llx\n", ctx.main_thread->ctx.Rax);
-        ok(ctx.main_thread->ctx.Rbx == 102, "Rbx = %llx\n", ctx.main_thread->ctx.Rbx);
-        ok(ctx.main_thread->ctx.Rcx != 103, "Rcx = %llx\n", ctx.main_thread->ctx.Rcx);
-        ok(ctx.main_thread->ctx.Rdx != 104, "Rdx = %llx\n", ctx.main_thread->ctx.Rdx);
-        ok(ctx.main_thread->ctx.Rsi == 105, "Rsi = %llx\n", ctx.main_thread->ctx.Rsi);
-        ok(ctx.main_thread->ctx.Rdi == 106, "Rdi = %llx\n", ctx.main_thread->ctx.Rdi);
-        ok(ctx.main_thread->ctx.R8  != 107, "R8 = %llx\n",  ctx.main_thread->ctx.R8);
-        ok(ctx.main_thread->ctx.R9  != 108, "R9 = %llx\n",  ctx.main_thread->ctx.R9);
-        ok(ctx.main_thread->ctx.R10 != 109, "R10 = %llx\n", ctx.main_thread->ctx.R10);
-        ok(ctx.main_thread->ctx.R11 != 110, "R11 = %llx\n", ctx.main_thread->ctx.R11);
-        ok(ctx.main_thread->ctx.R12 == 111, "R12 = %llx\n", ctx.main_thread->ctx.R12);
-        ok(ctx.main_thread->ctx.R13 == 112, "R13 = %llx\n", ctx.main_thread->ctx.R13);
-        ok(ctx.main_thread->ctx.R14 == 113, "R14 = %llx\n", ctx.main_thread->ctx.R14);
-        ok(ctx.main_thread->ctx.R15 == 114, "R15 = %llx\n", ctx.main_thread->ctx.R15);
+        ok(ctx.main_thread->ctx.Rax == 0,   "Rax = %I64x\n", ctx.main_thread->ctx.Rax);
+        ok(ctx.main_thread->ctx.Rbx == 102, "Rbx = %I64x\n", ctx.main_thread->ctx.Rbx);
+        ok(ctx.main_thread->ctx.Rcx != 103, "Rcx = %I64x\n", ctx.main_thread->ctx.Rcx);
+        ok(ctx.main_thread->ctx.Rdx != 104, "Rdx = %I64x\n", ctx.main_thread->ctx.Rdx);
+        ok(ctx.main_thread->ctx.Rsi == 105, "Rsi = %I64x\n", ctx.main_thread->ctx.Rsi);
+        ok(ctx.main_thread->ctx.Rdi == 106, "Rdi = %I64x\n", ctx.main_thread->ctx.Rdi);
+        ok(ctx.main_thread->ctx.R8  != 107, "R8 = %I64x\n",  ctx.main_thread->ctx.R8);
+        ok(ctx.main_thread->ctx.R9  != 108, "R9 = %I64x\n",  ctx.main_thread->ctx.R9);
+        ok(ctx.main_thread->ctx.R10 != 109, "R10 = %I64x\n", ctx.main_thread->ctx.R10);
+        ok(ctx.main_thread->ctx.R11 != 110, "R11 = %I64x\n", ctx.main_thread->ctx.R11);
+        ok(ctx.main_thread->ctx.R12 == 111, "R12 = %I64x\n", ctx.main_thread->ctx.R12);
+        ok(ctx.main_thread->ctx.R13 == 112, "R13 = %I64x\n", ctx.main_thread->ctx.R13);
+        ok(ctx.main_thread->ctx.R14 == 113, "R14 = %I64x\n", ctx.main_thread->ctx.R14);
+        ok(ctx.main_thread->ctx.R15 == 114, "R15 = %I64x\n", ctx.main_thread->ctx.R15);
 #endif
 
         ctx.main_thread->ctx = orig_context;
