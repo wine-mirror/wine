@@ -37,33 +37,33 @@ static void CreateUdpMessageParameters_tests(void)
     ULONG ref;
 
     rc = WSDCreateUdpMessageParameters(NULL);
-    ok((rc == E_POINTER) || (rc == E_INVALIDARG), "WSDCreateUdpMessageParameters(NULL) failed: %08x\n", rc);
+    ok((rc == E_POINTER) || (rc == E_INVALIDARG), "WSDCreateUdpMessageParameters(NULL) failed: %08lx\n", rc);
 
     rc = WSDCreateUdpMessageParameters(&udpMessageParams);
-    ok(rc == S_OK, "WSDCreateUdpMessageParameters(NULL, &udpMessageParams) failed: %08x\n", rc);
+    ok(rc == S_OK, "WSDCreateUdpMessageParameters(NULL, &udpMessageParams) failed: %08lx\n", rc);
     ok(udpMessageParams != NULL, "WSDCreateUdpMessageParameters(NULL, &udpMessageParams) failed: udpMessageParams == NULL\n");
 
     /* Try to query for objects */
     rc = IWSDUdpMessageParameters_QueryInterface(udpMessageParams, &IID_IWSDUdpMessageParameters, (LPVOID*)&udpMessageParams2);
-    ok(rc == S_OK, "IWSDUdpMessageParams_QueryInterface(IID_IWSDUdpMessageParameters) failed: %08x\n", rc);
+    ok(rc == S_OK, "IWSDUdpMessageParams_QueryInterface(IID_IWSDUdpMessageParameters) failed: %08lx\n", rc);
 
     if (rc == S_OK)
         IWSDUdpMessageParameters_Release(udpMessageParams2);
 
     rc = IWSDUdpMessageParameters_QueryInterface(udpMessageParams, &IID_IWSDMessageParameters, (LPVOID*)&messageParams);
-    ok(rc == S_OK, "IWSDUdpMessageParams_QueryInterface(IID_WSDMessageParameters) failed: %08x\n", rc);
+    ok(rc == S_OK, "IWSDUdpMessageParams_QueryInterface(IID_WSDMessageParameters) failed: %08lx\n", rc);
 
     if (rc == S_OK)
         IWSDMessageParameters_Release(messageParams);
 
     rc = IWSDUdpMessageParameters_QueryInterface(udpMessageParams, &IID_IUnknown, (LPVOID*)&unknown);
-    ok(rc == S_OK, "IWSDUdpMessageParams_QueryInterface(IID_IUnknown) failed: %08x\n", rc);
+    ok(rc == S_OK, "IWSDUdpMessageParams_QueryInterface(IID_IUnknown) failed: %08lx\n", rc);
 
     if (rc == S_OK)
         IUnknown_Release(unknown);
 
     ref = IWSDUdpMessageParameters_Release(udpMessageParams);
-    ok(ref == 0, "IWSDUdpMessageParameters_Release() has %d references, should have 0\n", ref);
+    ok(ref == 0, "IWSDUdpMessageParameters_Release() has %ld references, should have 0\n", ref);
 }
 
 static void LocalAddress_tests(void)
@@ -79,29 +79,29 @@ static void LocalAddress_tests(void)
     ok(ret == 0, "WSAStartup failed: %d\n", ret);
 
     rc = WSDCreateUdpMessageParameters(&udpMessageParams);
-    ok(rc == S_OK, "WSDCreateUdpMessageParameters(NULL, &udpMessageParams) failed: %08x\n", rc);
+    ok(rc == S_OK, "WSDCreateUdpMessageParameters(NULL, &udpMessageParams) failed: %08lx\n", rc);
     ok(udpMessageParams != NULL, "WSDCreateUdpMessageParameters(NULL, &udpMessageParams) failed: udpMessageParams == NULL\n");
 
     rc = IWSDUdpMessageParameters_GetLocalAddress(udpMessageParams, NULL);
-    ok(rc == E_POINTER, "GetLocalAddress failed: %08x\n", rc);
+    ok(rc == E_POINTER, "GetLocalAddress failed: %08lx\n", rc);
     ok(returnedAddress == NULL, "GetLocalAddress returned %p\n", returnedAddress);
 
     rc = IWSDUdpMessageParameters_GetLocalAddress(udpMessageParams, &returnedAddress);
-    ok(rc == E_ABORT, "GetLocalAddress failed: %08x\n", rc);
+    ok(rc == E_ABORT, "GetLocalAddress failed: %08lx\n", rc);
     ok(returnedAddress == NULL, "GetLocalAddress returned %p\n", returnedAddress);
 
     rc = WSDCreateUdpAddress(&origUdpAddress);
-    ok(rc == S_OK, "WSDCreateUdpAddress(NULL, &origUdpAddress) failed: %08x\n", rc);
+    ok(rc == S_OK, "WSDCreateUdpAddress(NULL, &origUdpAddress) failed: %08lx\n", rc);
     ok(origUdpAddress != NULL, "WSDCreateUdpMessageParameters(NULL, &origUdpAddress) failed: origUdpAddress == NULL\n");
 
     rc = IWSDUdpAddress_SetTransportAddress(origUdpAddress, L"1.2.3.4");
-    ok(rc == S_OK, "SetTransportAddress failed: %08x\n", rc);
+    ok(rc == S_OK, "SetTransportAddress failed: %08lx\n", rc);
 
     rc = IWSDUdpMessageParameters_SetLocalAddress(udpMessageParams, (IWSDAddress *)origUdpAddress);
-    ok(rc == S_OK, "SetLocalAddress failed: %08x\n", rc);
+    ok(rc == S_OK, "SetLocalAddress failed: %08lx\n", rc);
 
     rc = IWSDUdpMessageParameters_GetLocalAddress(udpMessageParams, &returnedAddress);
-    ok(rc == S_OK, "GetLocalAddress failed: %08x\n", rc);
+    ok(rc == S_OK, "GetLocalAddress failed: %08lx\n", rc);
     ok(returnedAddress != NULL, "GetLocalAddress returned NULL\n");
 
     /* Check if GetLocalAddress returns the same object */
@@ -136,29 +136,29 @@ static void RemoteAddress_tests(void)
     ok(ret == 0, "WSAStartup failed: %d\n", ret);
 
     rc = WSDCreateUdpMessageParameters(&udpMessageParams);
-    ok(rc == S_OK, "WSDCreateUdpMessageParameters(NULL, &udpMessageParams) failed: %08x\n", rc);
+    ok(rc == S_OK, "WSDCreateUdpMessageParameters(NULL, &udpMessageParams) failed: %08lx\n", rc);
     ok(udpMessageParams != NULL, "WSDCreateUdpMessageParameters(NULL, &udpMessageParams) failed: udpMessageParams == NULL\n");
 
     rc = IWSDUdpMessageParameters_GetRemoteAddress(udpMessageParams, NULL);
-    ok(rc == E_POINTER, "GetRemoteAddress failed: %08x\n", rc);
+    ok(rc == E_POINTER, "GetRemoteAddress failed: %08lx\n", rc);
     ok(returnedAddress == NULL, "GetRemoteAddress returned %p\n", returnedAddress);
 
     rc = IWSDUdpMessageParameters_GetRemoteAddress(udpMessageParams, &returnedAddress);
-    ok(rc == E_ABORT, "GetRemoteAddress failed: %08x\n", rc);
+    ok(rc == E_ABORT, "GetRemoteAddress failed: %08lx\n", rc);
     ok(returnedAddress == NULL, "GetRemoteAddress returned %p\n", returnedAddress);
 
     rc = WSDCreateUdpAddress(&origUdpAddress);
-    ok(rc == S_OK, "WSDCreateUdpAddress(NULL, &origUdpAddress) failed: %08x\n", rc);
+    ok(rc == S_OK, "WSDCreateUdpAddress(NULL, &origUdpAddress) failed: %08lx\n", rc);
     ok(origUdpAddress != NULL, "WSDCreateUdpMessageParameters(NULL, &origUdpAddress) failed: origUdpAddress == NULL\n");
 
     rc = IWSDUdpAddress_SetTransportAddress(origUdpAddress, L"1.2.3.4");
-    ok(rc == S_OK, "SetTransportAddress failed: %08x\n", rc);
+    ok(rc == S_OK, "SetTransportAddress failed: %08lx\n", rc);
 
     rc = IWSDUdpMessageParameters_SetRemoteAddress(udpMessageParams, (IWSDAddress *)origUdpAddress);
-    ok(rc == S_OK, "SetRemoteAddress failed: %08x\n", rc);
+    ok(rc == S_OK, "SetRemoteAddress failed: %08lx\n", rc);
 
     rc = IWSDUdpMessageParameters_GetRemoteAddress(udpMessageParams, &returnedAddress);
-    ok(rc == S_OK, "GetRemoteAddress failed: %08x\n", rc);
+    ok(rc == S_OK, "GetRemoteAddress failed: %08lx\n", rc);
     ok(returnedAddress != NULL, "GetLocalAddress returned NULL\n");
 
     /* Check if GetRemoteAddress returns the same object */
@@ -191,21 +191,21 @@ static void RetransmitParams_tests(void)
     ZeroMemory(&returnedParams, sizeof(WSDUdpRetransmitParams));
 
     rc = WSDCreateUdpMessageParameters(&udpMessageParams);
-    ok(rc == S_OK, "WSDCreateUdpMessageParameters(NULL, &udpMessageParams) failed: %08x\n", rc);
+    ok(rc == S_OK, "WSDCreateUdpMessageParameters(NULL, &udpMessageParams) failed: %08lx\n", rc);
     ok(udpMessageParams != NULL, "WSDCreateUdpMessageParameters(NULL, &udpMessageParams) failed: udpMessageParams == NULL\n");
 
     rc = IWSDUdpMessageParameters_GetRetransmitParams(udpMessageParams, NULL);
-    ok(rc == E_POINTER, "GetRetransmitParams returned unexpected result: %08x\n", rc);
+    ok(rc == E_POINTER, "GetRetransmitParams returned unexpected result: %08lx\n", rc);
 
     /* Check if the default values are returned */
     rc = IWSDUdpMessageParameters_GetRetransmitParams(udpMessageParams, &returnedParams);
-    ok(rc == S_OK, "GetRetransmitParams failed: %08x\n", rc);
+    ok(rc == S_OK, "GetRetransmitParams failed: %08lx\n", rc);
 
-    ok(returnedParams.ulSendDelay == 0, "ulSendDelay = %d\n", returnedParams.ulSendDelay);
-    ok(returnedParams.ulRepeat == 1, "ulRepeat = %d\n", returnedParams.ulRepeat);
-    ok(returnedParams.ulRepeatMinDelay == 50, "ulRepeatMinDelay = %d\n", returnedParams.ulRepeatMinDelay);
-    ok(returnedParams.ulRepeatMaxDelay == 250, "ulRepeatMaxDelay = %d\n", returnedParams.ulRepeatMaxDelay);
-    ok(returnedParams.ulRepeatUpperDelay == 450, "ulRepeatUpperDelay = %d\n", returnedParams.ulRepeatUpperDelay);
+    ok(returnedParams.ulSendDelay == 0, "ulSendDelay = %ld\n", returnedParams.ulSendDelay);
+    ok(returnedParams.ulRepeat == 1, "ulRepeat = %ld\n", returnedParams.ulRepeat);
+    ok(returnedParams.ulRepeatMinDelay == 50, "ulRepeatMinDelay = %ld\n", returnedParams.ulRepeatMinDelay);
+    ok(returnedParams.ulRepeatMaxDelay == 250, "ulRepeatMaxDelay = %ld\n", returnedParams.ulRepeatMaxDelay);
+    ok(returnedParams.ulRepeatUpperDelay == 450, "ulRepeatUpperDelay = %ld\n", returnedParams.ulRepeatUpperDelay);
 
     /* Now try setting some custom parameters */
     origParams.ulSendDelay = 100;
@@ -215,22 +215,22 @@ static void RetransmitParams_tests(void)
     origParams.ulRepeatUpperDelay = 500;
 
     rc = IWSDUdpMessageParameters_SetRetransmitParams(udpMessageParams, &origParams);
-    ok(rc == S_OK, "SetRetransmitParams failed: %08x\n", rc);
+    ok(rc == S_OK, "SetRetransmitParams failed: %08lx\n", rc);
 
     ZeroMemory(&returnedParams, sizeof(WSDUdpRetransmitParams));
 
     rc = IWSDUdpMessageParameters_GetRetransmitParams(udpMessageParams, &returnedParams);
-    ok(rc == S_OK, "GetRetransmitParams failed: %08x\n", rc);
+    ok(rc == S_OK, "GetRetransmitParams failed: %08lx\n", rc);
 
-    ok(origParams.ulSendDelay == returnedParams.ulSendDelay, "ulSendDelay = %d\n", returnedParams.ulSendDelay);
-    ok(origParams.ulRepeat == returnedParams.ulRepeat, "ulRepeat = %d\n", returnedParams.ulRepeat);
-    ok(origParams.ulRepeatMinDelay == returnedParams.ulRepeatMinDelay, "ulRepeatMinDelay = %d\n", returnedParams.ulRepeatMinDelay);
-    ok(origParams.ulRepeatMaxDelay == returnedParams.ulRepeatMaxDelay, "ulRepeatMaxDelay = %d\n", returnedParams.ulRepeatMaxDelay);
-    ok(origParams.ulRepeatUpperDelay == returnedParams.ulRepeatUpperDelay, "ulRepeatUpperDelay = %d\n", returnedParams.ulRepeatUpperDelay);
+    ok(origParams.ulSendDelay == returnedParams.ulSendDelay, "ulSendDelay = %ld\n", returnedParams.ulSendDelay);
+    ok(origParams.ulRepeat == returnedParams.ulRepeat, "ulRepeat = %ld\n", returnedParams.ulRepeat);
+    ok(origParams.ulRepeatMinDelay == returnedParams.ulRepeatMinDelay, "ulRepeatMinDelay = %ld\n", returnedParams.ulRepeatMinDelay);
+    ok(origParams.ulRepeatMaxDelay == returnedParams.ulRepeatMaxDelay, "ulRepeatMaxDelay = %ld\n", returnedParams.ulRepeatMaxDelay);
+    ok(origParams.ulRepeatUpperDelay == returnedParams.ulRepeatUpperDelay, "ulRepeatUpperDelay = %ld\n", returnedParams.ulRepeatUpperDelay);
 
     /* Try setting a null parameter */
     rc = IWSDUdpMessageParameters_SetRetransmitParams(udpMessageParams, NULL);
-    ok(rc == E_INVALIDARG, "SetRetransmitParams returned unexpected result: %08x\n", rc);
+    ok(rc == E_INVALIDARG, "SetRetransmitParams returned unexpected result: %08lx\n", rc);
 
     /* Now attempt to set some invalid parameters - these appear to be accepted */
     origParams.ulSendDelay = INFINITE;
@@ -240,18 +240,18 @@ static void RetransmitParams_tests(void)
     origParams.ulRepeatUpperDelay = 100;
 
     rc = IWSDUdpMessageParameters_SetRetransmitParams(udpMessageParams, &origParams);
-    ok(rc == S_OK, "SetRetransmitParams failed: %08x\n", rc);
+    ok(rc == S_OK, "SetRetransmitParams failed: %08lx\n", rc);
 
     ZeroMemory(&returnedParams, sizeof(WSDUdpRetransmitParams));
 
     rc = IWSDUdpMessageParameters_GetRetransmitParams(udpMessageParams, &returnedParams);
-    ok(rc == S_OK, "GetRetransmitParams failed: %08x\n", rc);
+    ok(rc == S_OK, "GetRetransmitParams failed: %08lx\n", rc);
 
-    ok(origParams.ulSendDelay == returnedParams.ulSendDelay, "ulSendDelay = %d\n", returnedParams.ulSendDelay);
-    ok(origParams.ulRepeat == returnedParams.ulRepeat, "ulRepeat = %d\n", returnedParams.ulRepeat);
-    ok(origParams.ulRepeatMinDelay == returnedParams.ulRepeatMinDelay, "ulRepeatMinDelay = %d\n", returnedParams.ulRepeatMinDelay);
-    ok(origParams.ulRepeatMaxDelay == returnedParams.ulRepeatMaxDelay, "ulRepeatMaxDelay = %d\n", returnedParams.ulRepeatMaxDelay);
-    ok(origParams.ulRepeatUpperDelay == returnedParams.ulRepeatUpperDelay, "ulRepeatUpperDelay = %d\n", returnedParams.ulRepeatUpperDelay);
+    ok(origParams.ulSendDelay == returnedParams.ulSendDelay, "ulSendDelay = %ld\n", returnedParams.ulSendDelay);
+    ok(origParams.ulRepeat == returnedParams.ulRepeat, "ulRepeat = %ld\n", returnedParams.ulRepeat);
+    ok(origParams.ulRepeatMinDelay == returnedParams.ulRepeatMinDelay, "ulRepeatMinDelay = %ld\n", returnedParams.ulRepeatMinDelay);
+    ok(origParams.ulRepeatMaxDelay == returnedParams.ulRepeatMaxDelay, "ulRepeatMaxDelay = %ld\n", returnedParams.ulRepeatMaxDelay);
+    ok(origParams.ulRepeatUpperDelay == returnedParams.ulRepeatUpperDelay, "ulRepeatUpperDelay = %ld\n", returnedParams.ulRepeatUpperDelay);
 
     ret = IWSDUdpMessageParameters_Release(udpMessageParams);
     ok(ret == 0, "IWSDUdpMessageParameters_Release() has %d references, should have 0\n", ret);

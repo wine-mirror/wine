@@ -39,39 +39,39 @@ static void CreateUdpAddress_tests(void)
     ULONG ref;
 
     rc = WSDCreateUdpAddress(NULL);
-    ok((rc == E_POINTER) || (rc == E_INVALIDARG), "WSDCreateUDPAddress(NULL) failed: %08x\n", rc);
+    ok((rc == E_POINTER) || (rc == E_INVALIDARG), "WSDCreateUDPAddress(NULL) failed: %08lx\n", rc);
 
     rc = WSDCreateUdpAddress(&udpAddress);
-    ok(rc == S_OK, "WSDCreateUDPAddress(NULL, &udpAddress) failed: %08x\n", rc);
+    ok(rc == S_OK, "WSDCreateUDPAddress(NULL, &udpAddress) failed: %08lx\n", rc);
     ok(udpAddress != NULL, "WSDCreateUDPAddress(NULL, &udpAddress) failed: udpAddress == NULL\n");
 
     /* Try to query for objects */
     rc = IWSDUdpAddress_QueryInterface(udpAddress, &IID_IWSDUdpAddress, (LPVOID*)&udpAddress2);
-    ok(rc == S_OK, "IWSDUdpAddress_QueryInterface(IWSDUdpAddress) failed: %08x\n", rc);
+    ok(rc == S_OK, "IWSDUdpAddress_QueryInterface(IWSDUdpAddress) failed: %08lx\n", rc);
 
     if (rc == S_OK)
         IWSDUdpAddress_Release(udpAddress2);
 
     rc = IWSDUdpAddress_QueryInterface(udpAddress, &IID_IWSDTransportAddress, (LPVOID*)&transportAddress);
-    ok(rc == S_OK, "IWSDUdpAddress_QueryInterface(IID_WSDTransportAddress) failed: %08x\n", rc);
+    ok(rc == S_OK, "IWSDUdpAddress_QueryInterface(IID_WSDTransportAddress) failed: %08lx\n", rc);
 
     if (rc == S_OK)
         IWSDTransportAddress_Release(transportAddress);
 
     rc = IWSDUdpAddress_QueryInterface(udpAddress, &IID_IWSDAddress, (LPVOID*)&address);
-    ok(rc == S_OK, "IWSDUdpAddress_QueryInterface(IWSDAddress) failed: %08x\n", rc);
+    ok(rc == S_OK, "IWSDUdpAddress_QueryInterface(IWSDAddress) failed: %08lx\n", rc);
 
     if (rc == S_OK)
         IWSDAddress_Release(address);
 
     rc = IWSDUdpAddress_QueryInterface(udpAddress, &IID_IUnknown, (LPVOID*)&unknown);
-    ok(rc == S_OK, "IWSDUdpAddress_QueryInterface(IID_IUnknown) failed: %08x\n", rc);
+    ok(rc == S_OK, "IWSDUdpAddress_QueryInterface(IID_IUnknown) failed: %08lx\n", rc);
 
     if (rc == S_OK)
         IUnknown_Release(unknown);
 
     ref = IWSDUdpAddress_Release(udpAddress);
-    ok(ref == 0, "IWSDUdpAddress_Release() has %d references, should have 0\n", ref);
+    ok(ref == 0, "IWSDUdpAddress_Release() has %ld references, should have 0\n", ref);
 }
 
 static void GetSetTransportAddress_udp_tests(void)
@@ -89,52 +89,52 @@ static void GetSetTransportAddress_udp_tests(void)
     ok(ret == 0, "WSAStartup failed: %d\n", ret);
 
     rc = WSDCreateUdpAddress(&udpAddress);
-    ok(rc == S_OK, "WSDCreateUdpAddress(NULL, &udpAddress) failed: %08x\n", rc);
+    ok(rc == S_OK, "WSDCreateUdpAddress(NULL, &udpAddress) failed: %08lx\n", rc);
     ok(udpAddress != NULL, "WSDCreateUdpAddress(NULL, &udpAddress) failed: udpAddress == NULL\n");
 
     rc = IWSDUdpAddress_GetTransportAddress(udpAddress, &returnedAddress);
-    ok(rc == S_OK, "GetTransportAddress returned unexpected result: %08x\n", rc);
-    ok(returnedAddress == NULL, "GetTransportAddress returned unexpected address: %08x\n", rc);
+    ok(rc == S_OK, "GetTransportAddress returned unexpected result: %08lx\n", rc);
+    ok(returnedAddress == NULL, "GetTransportAddress returned unexpected address: %08lx\n", rc);
 
     /* Try setting a null address */
     rc = IWSDUdpAddress_SetTransportAddress(udpAddress, NULL);
-    ok(rc == E_INVALIDARG, "SetTransportAddress(NULL) returned unexpected result: %08x\n", rc);
+    ok(rc == E_INVALIDARG, "SetTransportAddress(NULL) returned unexpected result: %08lx\n", rc);
 
     /* Try setting an invalid address */
     rc = IWSDUdpAddress_SetTransportAddress(udpAddress, L"not/valid");
-    ok(rc == HRESULT_FROM_WIN32(WSAHOST_NOT_FOUND), "SetTransportAddress(invalidAddress) returned unexpected result: %08x\n", rc);
+    ok(rc == HRESULT_FROM_WIN32(WSAHOST_NOT_FOUND), "SetTransportAddress(invalidAddress) returned unexpected result: %08lx\n", rc);
 
     /* Try setting an IPv4 address */
     rc = IWSDUdpAddress_SetTransportAddress(udpAddress, ipv4Address);
-    ok(rc == S_OK, "SetTransportAddress(ipv4Address) failed: %08x\n", rc);
+    ok(rc == S_OK, "SetTransportAddress(ipv4Address) failed: %08lx\n", rc);
 
     rc = IWSDUdpAddress_GetTransportAddress(udpAddress, NULL);
-    ok(rc == E_POINTER, "GetTransportAddress(NULL) returned unexpected result: %08x\n", rc);
+    ok(rc == E_POINTER, "GetTransportAddress(NULL) returned unexpected result: %08lx\n", rc);
 
     rc = IWSDUdpAddress_GetTransportAddress(udpAddress, &returnedAddress);
-    ok(rc == S_OK, "GetTransportAddress returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "GetTransportAddress returned unexpected result: %08lx\n", rc);
     ok(returnedAddress != NULL, "GetTransportAddress returned unexpected address: '%s'\n", wine_dbgstr_w(returnedAddress));
     ok(lstrcmpW(returnedAddress, ipv4Address) == 0, "Returned address != ipv4Address (%s)\n", wine_dbgstr_w(returnedAddress));
 
     /* Try setting an IPv4 address with a port number */
     rc = IWSDUdpAddress_SetTransportAddress(udpAddress, L"10.20.30.40:124");
-    ok(rc == HRESULT_FROM_WIN32(WSAHOST_NOT_FOUND), "SetTransportAddress(ipv4Address) failed: %08x\n", rc);
+    ok(rc == HRESULT_FROM_WIN32(WSAHOST_NOT_FOUND), "SetTransportAddress(ipv4Address) failed: %08lx\n", rc);
 
     /* Try setting an IPv6 address */
     rc = IWSDUdpAddress_SetTransportAddress(udpAddress, ipv6Address);
-    ok(rc == S_OK, "SetTransportAddress(ipv6Address) failed: %08x\n", rc);
+    ok(rc == S_OK, "SetTransportAddress(ipv6Address) failed: %08lx\n", rc);
 
     rc = IWSDUdpAddress_GetTransportAddress(udpAddress, &returnedAddress);
-    ok(rc == S_OK, "GetTransportAddress returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "GetTransportAddress returned unexpected result: %08lx\n", rc);
     ok(returnedAddress != NULL, "GetTransportAddress returned unexpected address: '%s'\n", wine_dbgstr_w(returnedAddress));
     ok(lstrcmpW(returnedAddress, ipv6Address) == 0, "Returned address != ipv6Address (%s)\n", wine_dbgstr_w(returnedAddress));
 
     /* Try setting an IPv6 address with a port number */
     rc = IWSDUdpAddress_SetTransportAddress(udpAddress, ipv6AddressWithPort);
-    ok(rc == S_OK, "SetTransportAddress(ipv6AddressWithPort) failed: %08x\n", rc);
+    ok(rc == S_OK, "SetTransportAddress(ipv6AddressWithPort) failed: %08lx\n", rc);
 
     rc = IWSDUdpAddress_GetTransportAddress(udpAddress, &returnedAddress);
-    ok(rc == S_OK, "GetTransportAddress returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "GetTransportAddress returned unexpected result: %08lx\n", rc);
     ok(returnedAddress != NULL, "GetTransportAddress returned unexpected address: '%s'\n", wine_dbgstr_w(returnedAddress));
     todo_wine ok(lstrcmpW(returnedAddress, ipv6AddressWithPort) == 0, "Returned address != ipv6AddressWithPort (%s)\n", wine_dbgstr_w(returnedAddress));
 
@@ -156,37 +156,37 @@ static void GetSetPort_udp_tests(void)
     int ret;
 
     rc = WSDCreateUdpAddress(&udpAddress);
-    ok(rc == S_OK, "WSDCreateUdpAddress(NULL, &udpAddress) failed: %08x\n", rc);
+    ok(rc == S_OK, "WSDCreateUdpAddress(NULL, &udpAddress) failed: %08lx\n", rc);
     ok(udpAddress != NULL, "WSDCreateUdpAddress(NULL, &udpAddress) failed: udpAddress == NULL\n");
 
     /* No test for GetPort(NULL) as this causes an access violation exception on Windows */
 
     rc = IWSDUdpAddress_GetPort(udpAddress, &actualPort);
-    ok(rc == S_OK, "GetPort returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "GetPort returned unexpected result: %08lx\n", rc);
     ok(actualPort == 0, "GetPort returned unexpected port: %d\n", actualPort);
 
     /* Try setting a zero port */
     rc = IWSDUdpAddress_SetPort(udpAddress, 0);
-    ok(rc == S_OK, "SetPort returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "SetPort returned unexpected result: %08lx\n", rc);
 
     rc = IWSDUdpAddress_GetPort(udpAddress, &actualPort);
-    ok(rc == S_OK, "GetPort returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "GetPort returned unexpected result: %08lx\n", rc);
     ok(actualPort == 0, "GetPort returned unexpected port: %d\n", actualPort);
 
     /* Set a real port */
     rc = IWSDUdpAddress_SetPort(udpAddress, expectedPort1);
-    ok(rc == S_OK, "SetPort returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "SetPort returned unexpected result: %08lx\n", rc);
 
     rc = IWSDUdpAddress_GetPort(udpAddress, &actualPort);
-    ok(rc == S_OK, "GetPort returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "GetPort returned unexpected result: %08lx\n", rc);
     ok(actualPort == expectedPort1, "GetPort returned unexpected port: %d\n", actualPort);
 
     /* Now set a different port */
     rc = IWSDUdpAddress_SetPort(udpAddress, expectedPort2);
-    ok(rc == S_OK, "SetPort returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "SetPort returned unexpected result: %08lx\n", rc);
 
     rc = IWSDUdpAddress_GetPort(udpAddress, &actualPort);
-    ok(rc == S_OK, "GetPort returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "GetPort returned unexpected result: %08lx\n", rc);
     ok(actualPort == expectedPort2, "GetPort returned unexpected port: %d\n", actualPort);
 
     /* Release the object */
@@ -204,30 +204,30 @@ static void GetSetMessageType_udp_tests(void)
     int ret;
 
     rc = WSDCreateUdpAddress(&udpAddress);
-    ok(rc == S_OK, "WSDCreateUdpAddress(NULL, &udpAddress) failed: %08x\n", rc);
+    ok(rc == S_OK, "WSDCreateUdpAddress(NULL, &udpAddress) failed: %08lx\n", rc);
     ok(udpAddress != NULL, "WSDCreateUdpAddress(NULL, &udpAddress) failed: udpAddress == NULL\n");
 
     rc = IWSDUdpAddress_GetMessageType(udpAddress, NULL);
-    ok(rc == E_POINTER, "GetMessageType returned unexpected result: %08x\n", rc);
+    ok(rc == E_POINTER, "GetMessageType returned unexpected result: %08lx\n", rc);
 
     rc = IWSDUdpAddress_GetMessageType(udpAddress, &actualMessageType);
-    ok(rc == S_OK, "GetMessageType returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "GetMessageType returned unexpected result: %08lx\n", rc);
     ok(actualMessageType == 0, "GetMessageType returned unexpected message type: %d\n", actualMessageType);
 
     /* Try setting a message type */
     rc = IWSDUdpAddress_SetMessageType(udpAddress, expectedMessageType1);
-    ok(rc == S_OK, "SetMessageType returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "SetMessageType returned unexpected result: %08lx\n", rc);
 
     rc = IWSDUdpAddress_GetMessageType(udpAddress, &actualMessageType);
-    ok(rc == S_OK, "GetMessageType returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "GetMessageType returned unexpected result: %08lx\n", rc);
     ok(actualMessageType == expectedMessageType1, "GetMessageType returned unexpected message type: %d\n", actualMessageType);
 
     /* Set another one */
     rc = IWSDUdpAddress_SetMessageType(udpAddress, expectedMessageType2);
-    ok(rc == S_OK, "SetMessageType returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "SetMessageType returned unexpected result: %08lx\n", rc);
 
     rc = IWSDUdpAddress_GetMessageType(udpAddress, &actualMessageType);
-    ok(rc == S_OK, "GetMessageType returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "GetMessageType returned unexpected result: %08lx\n", rc);
     ok(actualMessageType == expectedMessageType2, "GetMessageType returned unexpected message type: %d\n", actualMessageType);
 
     /* Release the object */
@@ -265,22 +265,22 @@ static void GetSetSockaddr_udp_tests(void)
     ok(ret == 0, "WSAStartup failed: %d\n", ret);
 
     rc = WSDCreateUdpAddress(&udpAddress);
-    ok(rc == S_OK, "WSDCreateUdpAddress(NULL, &udpAddress) failed: %08x\n", rc);
+    ok(rc == S_OK, "WSDCreateUdpAddress(NULL, &udpAddress) failed: %08lx\n", rc);
     ok(udpAddress != NULL, "WSDCreateUdpAddress(NULL, &udpAddress) failed: udpAddress == NULL\n");
 
     rc = IWSDUdpAddress_GetSockaddr(udpAddress, NULL);
-    ok(rc == E_POINTER, "GetSockaddr returned unexpected result: %08x\n", rc);
+    ok(rc == E_POINTER, "GetSockaddr returned unexpected result: %08lx\n", rc);
 
     rc = IWSDUdpAddress_GetSockaddr(udpAddress, &returnedStorage);
-    ok(rc == E_FAIL, "GetSockaddr returned unexpected result: %08x\n", rc);
+    ok(rc == E_FAIL, "GetSockaddr returned unexpected result: %08lx\n", rc);
 
     /* Try setting a transport address */
     rc = IWSDUdpAddress_SetTransportAddress(udpAddress, expectedIpv6TransportAddr);
-    ok(rc == S_OK, "SetTransportAddress failed: %08x\n", rc);
+    ok(rc == S_OK, "SetTransportAddress failed: %08lx\n", rc);
 
     /* A socket address should be returned */
     rc = IWSDUdpAddress_GetSockaddr(udpAddress, &returnedStorage);
-    ok(rc == S_OK, "GetSockaddr returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "GetSockaddr returned unexpected result: %08lx\n", rc);
     ok(returnedStorage.ss_family == AF_INET6, "returnedStorage.ss_family != AF_INET6 (%d)\n", returnedStorage.ss_family);
 
     sockAddr6Ptr = (struct sockaddr_in6 *) &returnedStorage;
@@ -297,7 +297,7 @@ static void GetSetSockaddr_udp_tests(void)
     ok(ret == 0, "IWSDUdpAddress_Release() has %d references, should have 0\n", ret);
 
     rc = WSDCreateUdpAddress(&udpAddress);
-    ok(rc == S_OK, "WSDCreateUdpAddress(NULL, &udpAddress) failed: %08x\n", rc);
+    ok(rc == S_OK, "WSDCreateUdpAddress(NULL, &udpAddress) failed: %08lx\n", rc);
     ok(udpAddress != NULL, "WSDCreateUdpAddress(NULL, &udpAddress) failed: udpAddress == NULL\n");
 
     /* Try setting an IPv4 address */
@@ -309,34 +309,34 @@ static void GetSetSockaddr_udp_tests(void)
     ok(ret == 1, "inet_pton(ipv4) failed: %d\n", WSAGetLastError());
 
     rc = IWSDUdpAddress_SetSockaddr(udpAddress, &storage1);
-    ok(rc == S_OK, "SetSockaddr returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "SetSockaddr returned unexpected result: %08lx\n", rc);
 
     rc = IWSDUdpAddress_GetSockaddr(udpAddress, &returnedStorage);
-    ok(rc == S_OK, "GetSockaddr returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "GetSockaddr returned unexpected result: %08lx\n", rc);
 
     ok(returnedStorage.ss_family == storage1.ss_family, "returnedStorage.ss_family != storage1.ss_family (%d)\n", returnedStorage.ss_family);
     ok(memcmp(&returnedStorage, &storage1, sizeof(struct sockaddr_in)) == 0, "returnedStorage != storage1\n");
 
     /* Check that GetTransportAddress returns the address set via the socket */
     rc = IWSDUdpAddress_GetTransportAddress(udpAddress, &returnedAddress);
-    ok(rc == S_OK, "GetTransportAddress failed: %08x\n", rc);
+    ok(rc == S_OK, "GetTransportAddress failed: %08lx\n", rc);
     ok(returnedAddress != NULL, "GetTransportAddress returned unexpected address: %p\n", returnedAddress);
     ok(lstrcmpW(returnedAddress, L"1.2.3.4:1234") == 0, "GetTransportAddress returned unexpected address: %s\n", wine_dbgstr_w(returnedAddress));
 
     /* Check that GetPort doesn't return the port set via the socket */
     rc = IWSDUdpAddress_GetPort(udpAddress, &port);
-    ok(rc == S_OK, "GetPort returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "GetPort returned unexpected result: %08lx\n", rc);
     ok(port == 0, "GetPort returned unexpected port: %d\n", port);
 
     /* Try setting an IPv4 address without a port */
     sockAddrPtr->sin_port = 0;
 
     rc = IWSDUdpAddress_SetSockaddr(udpAddress, &storage1);
-    ok(rc == S_OK, "SetSockaddr returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "SetSockaddr returned unexpected result: %08lx\n", rc);
 
     /* Check that GetTransportAddress returns the address set via the socket */
     rc = IWSDUdpAddress_GetTransportAddress(udpAddress, &returnedAddress);
-    ok(rc == S_OK, "GetTransportAddress failed: %08x\n", rc);
+    ok(rc == S_OK, "GetTransportAddress failed: %08lx\n", rc);
     ok(returnedAddress != NULL, "GetTransportAddress returned unexpected address: %p\n", returnedAddress);
     ok(lstrcmpW(returnedAddress, L"1.2.3.4") == 0, "GetTransportAddress returned unexpected address: %s\n", wine_dbgstr_w(returnedAddress));
 
@@ -349,39 +349,39 @@ static void GetSetSockaddr_udp_tests(void)
     ok(ret == 1, "inet_pton(ipv6) failed: %d\n", WSAGetLastError());
 
     rc = IWSDUdpAddress_SetSockaddr(udpAddress, &storage2);
-    ok(rc == S_OK, "SetSockaddr returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "SetSockaddr returned unexpected result: %08lx\n", rc);
 
     rc = IWSDUdpAddress_GetSockaddr(udpAddress, &returnedStorage);
-    ok(rc == S_OK, "GetSockaddr returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "GetSockaddr returned unexpected result: %08lx\n", rc);
 
     ok(returnedStorage.ss_family == storage2.ss_family, "returnedStorage.ss_family != storage2.ss_family (%d)\n", returnedStorage.ss_family);
     ok(memcmp(&returnedStorage, &storage2, sizeof(struct sockaddr_in6)) == 0, "returnedStorage != storage2\n");
 
     /* Check that GetTransportAddress returns the address set via the socket */
     rc = IWSDUdpAddress_GetTransportAddress(udpAddress, &returnedAddress);
-    ok(rc == S_OK, "GetTransportAddress failed: %08x\n", rc);
+    ok(rc == S_OK, "GetTransportAddress failed: %08lx\n", rc);
     ok(returnedAddress != NULL, "GetTransportAddress returned unexpected address: %p\n", returnedAddress);
     ok(lstrcmpW(returnedAddress, expectedIpv6TransportAddr) == 0, "GetTransportAddress returned unexpected address: %s\n", wine_dbgstr_w(returnedAddress));
 
     /* Check that GetPort doesn't return the port set via the socket */
     rc = IWSDUdpAddress_GetPort(udpAddress, &port);
-    ok(rc == S_OK, "GetPort returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "GetPort returned unexpected result: %08lx\n", rc);
     ok(port == 0, "GetPort returned unexpected port: %d\n", port);
 
     /* Try setting an IPv6 address without a port */
     sockAddr6Ptr->sin6_port = 0;
 
     rc = IWSDUdpAddress_SetSockaddr(udpAddress, &storage2);
-    ok(rc == S_OK, "SetSockaddr returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "SetSockaddr returned unexpected result: %08lx\n", rc);
 
     /* Check that GetTransportAddress returns the address set via the socket */
     rc = IWSDUdpAddress_GetTransportAddress(udpAddress, &returnedAddress);
-    ok(rc == S_OK, "GetTransportAddress failed: %08x\n", rc);
+    ok(rc == S_OK, "GetTransportAddress failed: %08lx\n", rc);
     ok(returnedAddress != NULL, "GetTransportAddress returned unexpected address: %p\n", returnedAddress);
     ok(lstrcmpW(returnedAddress, L"2a00:1234:5678:dead:beef::aaaa") == 0, "GetTransportAddress returned unexpected address: %s\n", wine_dbgstr_w(returnedAddress));
 
     rc = IWSDUdpAddress_SetSockaddr(udpAddress, &storage2);
-    ok(rc == S_OK, "SetSockaddr returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "SetSockaddr returned unexpected result: %08lx\n", rc);
 
     /* Release the object */
     ret = IWSDUdpAddress_Release(udpAddress);
