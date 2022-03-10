@@ -2182,6 +2182,16 @@ static NTSTATUS set_event_handle(void *args)
     return alsa_unlock_result(stream, &params->result, S_OK);
 }
 
+static NTSTATUS is_started(void *args)
+{
+    struct is_started_params *params = args;
+    struct alsa_stream *stream = params->stream;
+
+    alsa_lock(stream);
+
+    return alsa_unlock_result(stream, &params->result, stream->started ? S_OK : S_FALSE);
+}
+
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     get_endpoint_ids,
@@ -2204,4 +2214,5 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     get_frequency,
     get_position,
     set_event_handle,
+    is_started,
 };

@@ -25,7 +25,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <math.h>
-#include <pthread.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -235,16 +234,6 @@ enum DriverPriority {
 int WINAPI AUDDRV_GetPriority(void)
 {
     return Priority_Neutral;
-}
-
-static void alsa_lock(struct alsa_stream *stream)
-{
-    pthread_mutex_lock(&stream->lock);
-}
-
-static void alsa_unlock(struct alsa_stream *stream)
-{
-    pthread_mutex_unlock(&stream->lock);
 }
 
 static HRESULT alsa_stream_release(struct alsa_stream *stream, HANDLE timer_thread)
@@ -1640,6 +1629,7 @@ static HRESULT WINAPI AudioSessionControl_GetState(IAudioSessionControl2 *iface,
         AudioSessionState *state)
 {
     AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
+    struct is_started_params params;
     ACImpl *client;
 
     TRACE("(%p)->(%p)\n", This, state);
@@ -1656,14 +1646,13 @@ static HRESULT WINAPI AudioSessionControl_GetState(IAudioSessionControl2 *iface,
     }
 
     LIST_FOR_EACH_ENTRY(client, &This->session->clients, ACImpl, entry){
-        alsa_lock(client->stream);
-        if(client->stream->started){
+        params.stream = client->stream;
+        ALSA_CALL(is_started, &params);
+        if(params.result == S_OK){
             *state = AudioSessionStateActive;
-            alsa_unlock(client->stream);
             LeaveCriticalSection(&g_sessions_lock);
             return S_OK;
         }
-        alsa_unlock(client->stream);
     }
 
     LeaveCriticalSection(&g_sessions_lock);

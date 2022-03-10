@@ -216,6 +216,12 @@ struct set_event_handle_params
     HRESULT result;
 };
 
+struct is_started_params
+{
+    struct alsa_stream *stream;
+    HRESULT result;
+};
+
 enum alsa_funcs
 {
     alsa_get_endpoint_ids,
@@ -238,6 +244,7 @@ enum alsa_funcs
     alsa_get_frequency,
     alsa_get_position,
     alsa_set_event_handle,
+    alsa_is_started,
 };
 
 extern unixlib_handle_t alsa_handle;
