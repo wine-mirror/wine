@@ -25,8 +25,6 @@ struct sync_reader
     struct wm_reader reader;
 
     IWMSyncReader2 IWMSyncReader2_iface;
-
-    WORD last_read_stream;
 };
 
 static struct sync_reader *impl_from_IWMSyncReader2(IWMSyncReader2 *iface)
@@ -84,60 +82,21 @@ static HRESULT WINAPI WMSyncReader_GetNextSample(IWMSyncReader2 *iface,
 {
     struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
     HRESULT hr = NS_E_NO_MORE_SAMPLES;
-    struct wm_stream *stream;
-    WORD i;
 
     TRACE("reader %p, stream_number %u, sample %p, pts %p, duration %p,"
             " flags %p, output_number %p, ret_stream_number %p.\n",
             reader, stream_number, sample, pts, duration, flags, output_number, ret_stream_number);
 
+    if (!stream_number && !output_number && !ret_stream_number)
+        return E_INVALIDARG;
+
     EnterCriticalSection(&reader->reader.cs);
 
-    if (!stream_number)
-    {
-        if (!output_number && !ret_stream_number)
-        {
-            LeaveCriticalSection(&reader->reader.cs);
-            return E_INVALIDARG;
-        }
-
-        for (i = 0; i < reader->reader.stream_count; ++i)
-        {
-            WORD index = (i + reader->last_read_stream + 1) % reader->reader.stream_count;
-            struct wm_stream *stream = &reader->reader.streams[index];
-
-            if (stream->selection == WMT_OFF)
-                continue;
-
-            hr = wm_reader_get_stream_sample(stream, sample, pts, duration, flags);
-            if (hr == S_OK)
-            {
-                if (output_number)
-                    *output_number = index;
-                if (ret_stream_number)
-                    *ret_stream_number = index + 1;
-            }
-            if (hr != NS_E_NO_MORE_SAMPLES)
-            {
-                reader->last_read_stream = index;
-                break;
-            }
-        }
-    }
-    else
-    {
-        if (!(stream = wm_reader_get_stream_by_stream_number(&reader->reader, stream_number)))
-        {
-            LeaveCriticalSection(&reader->reader.cs);
-            return E_INVALIDARG;
-        }
-
-        hr = wm_reader_get_stream_sample(stream, sample, pts, duration, flags);
-        if (hr == S_OK && output_number)
-            *output_number = stream->index;
-        if (ret_stream_number)
-            *ret_stream_number = stream->index + 1;
-    }
+    hr = wm_reader_get_stream_sample(&reader->reader, stream_number, sample, pts, duration, flags, &stream_number);
+    if (output_number && hr == S_OK)
+        *output_number = stream_number - 1;
+    if (ret_stream_number && (hr == S_OK || stream_number))
+        *ret_stream_number = stream_number;
 
     LeaveCriticalSection(&reader->reader.cs);
     return hr;

@@ -72,11 +72,11 @@ static void open_stream(struct async_reader *reader, IWMReaderCallback *callback
 static DWORD WINAPI stream_thread(void *arg)
 {
     struct async_reader *reader = arg;
-    WORD i, stream_count = reader->reader.stream_count;
     IWMReaderCallback *callback = reader->callback;
     REFERENCE_TIME start_time;
     static const DWORD zero;
     QWORD pts, duration;
+    WORD stream_number;
     INSSBuffer *sample;
     DWORD flags;
     HRESULT hr;
@@ -87,71 +87,56 @@ static DWORD WINAPI stream_thread(void *arg)
 
     while (reader->running)
     {
-        bool all_eos = true;
+        hr = wm_reader_get_stream_sample(&reader->reader, 0, &sample, &pts, &duration, &flags, &stream_number);
 
-        for (i = 0; i < stream_count; ++i)
+        if (hr == S_OK)
         {
-            struct wm_stream *stream = &reader->reader.streams[i];
+            struct wm_stream *stream = wm_reader_get_stream_by_stream_number(&reader->reader, stream_number);
 
-            if (stream->selection == WMT_OFF)
-                continue;
-
-            hr = wm_reader_get_stream_sample(stream, &sample, &pts, &duration, &flags);
-            if (hr == S_OK)
+            if (reader->user_clock)
             {
-                if (reader->user_clock)
-                {
-                    QWORD user_time = reader->user_time;
+                QWORD user_time = reader->user_time;
 
-                    if (pts > user_time && reader->reader.callback_advanced)
-                        IWMReaderCallbackAdvanced_OnTime(reader->reader.callback_advanced, user_time, reader->context);
-                    while (pts > reader->user_time && reader->running)
-                        SleepConditionVariableCS(&reader->stream_cv, &reader->stream_cs, INFINITE);
+                if (pts > user_time && reader->reader.callback_advanced)
+                    IWMReaderCallbackAdvanced_OnTime(reader->reader.callback_advanced, user_time, reader->context);
+                while (pts > reader->user_time && reader->running)
+                    SleepConditionVariableCS(&reader->stream_cv, &reader->stream_cs, INFINITE);
+                if (!reader->running)
+                {
+                    INSSBuffer_Release(sample);
+                    goto out;
+                }
+            }
+            else
+            {
+                for (;;)
+                {
+                    REFERENCE_TIME current_time = get_current_time(reader);
+
+                    if (pts <= current_time - start_time)
+                        break;
+
+                    SleepConditionVariableCS(&reader->stream_cv, &reader->stream_cs,
+                            (pts - (current_time - start_time)) / 10000);
+
                     if (!reader->running)
                     {
                         INSSBuffer_Release(sample);
                         goto out;
                     }
                 }
-                else
-                {
-                    for (;;)
-                    {
-                        REFERENCE_TIME current_time = get_current_time(reader);
-
-                        if (pts <= current_time - start_time)
-                            break;
-
-                        SleepConditionVariableCS(&reader->stream_cv, &reader->stream_cs,
-                                (pts - (current_time - start_time)) / 10000);
-
-                        if (!reader->running)
-                        {
-                            INSSBuffer_Release(sample);
-                            goto out;
-                        }
-                    }
-                }
-
-                if (stream->read_compressed)
-                    hr = IWMReaderCallbackAdvanced_OnStreamSample(reader->reader.callback_advanced,
-                            i + 1, pts, duration, flags, sample, reader->context);
-                else
-                    hr = IWMReaderCallback_OnSample(callback, i, pts, duration,
-                            flags, sample, reader->context);
-                TRACE("Callback returned %#lx.\n", hr);
-                INSSBuffer_Release(sample);
-                all_eos = false;
             }
-            else if (hr != NS_E_NO_MORE_SAMPLES)
-            {
-                ERR("Failed to get sample, hr %#lx.\n", hr);
-                LeaveCriticalSection(&reader->stream_cs);
-                return 0;
-            }
+
+            if (stream->read_compressed)
+                hr = IWMReaderCallbackAdvanced_OnStreamSample(reader->reader.callback_advanced,
+                        stream_number, pts, duration, flags, sample, reader->context);
+            else
+                hr = IWMReaderCallback_OnSample(callback, stream_number - 1, pts, duration,
+                        flags, sample, reader->context);
+            TRACE("Callback returned %#lx.\n", hr);
+            INSSBuffer_Release(sample);
         }
-
-        if (all_eos)
+        else if (hr == NS_E_NO_MORE_SAMPLES)
         {
             IWMReaderCallback_OnStatus(callback, WMT_END_OF_STREAMING, S_OK,
                     WMT_TYPE_DWORD, (BYTE *)&zero, reader->context);
@@ -168,6 +153,12 @@ static DWORD WINAPI stream_thread(void *arg)
             }
 
             TRACE("Reached end of stream; exiting.\n");
+            LeaveCriticalSection(&reader->stream_cs);
+            return 0;
+        }
+        else
+        {
+            ERR("Failed to get sample, hr %#lx.\n", hr);
             LeaveCriticalSection(&reader->stream_cs);
             return 0;
         }

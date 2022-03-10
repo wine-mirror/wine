@@ -1820,30 +1820,98 @@ static const char *get_major_type_string(enum wg_major_type type)
     return NULL;
 }
 
-HRESULT wm_reader_get_stream_sample(struct wm_stream *stream,
-        INSSBuffer **ret_sample, QWORD *pts, QWORD *duration, DWORD *flags)
+/* Find the earliest buffer by PTS.
+ *
+ * Native seems to behave similarly to this with the async reader, although our
+ * unit tests show that it's not entirely consistent—some frames are received
+ * slightly out of order. It's possible that one stream is being manually offset
+ * to account for decoding latency.
+ *
+ * The behaviour with the synchronous reader, when stream 0 is requested, seems
+ * consistent with this hypothesis, but with a much larger offset—the video
+ * stream seems to be "behind" by about 150 ms.
+ *
+ * The main reason for doing this is that the video and audio stream probably
+ * don't have quite the same "frame rate", and we don't want to force one stream
+ * to decode faster just to keep up with the other. Delivering samples in PTS
+ * order should avoid that problem. */
+static WORD get_earliest_buffer(struct wm_reader *reader, struct wg_parser_buffer *ret_buffer)
 {
-    IWMReaderCallbackAdvanced *callback_advanced = stream->reader->callback_advanced;
-    struct wg_parser_stream *wg_stream = stream->wg_stream;
+    struct wg_parser_buffer buffer;
+    QWORD earliest_pts = UI64_MAX;
+    WORD stream_number = 0;
+    WORD i;
+
+    for (i = 0; i < reader->stream_count; ++i)
+    {
+        struct wm_stream *stream = &reader->streams[i];
+
+        if (stream->selection == WMT_OFF)
+            continue;
+
+        if (!wg_parser_stream_get_buffer(stream->wg_stream, &buffer))
+            continue;
+
+        if (buffer.has_pts && buffer.pts < earliest_pts)
+        {
+            stream_number = i + 1;
+            earliest_pts = buffer.pts;
+            *ret_buffer = buffer;
+        }
+    }
+
+    return stream_number;
+}
+
+HRESULT wm_reader_get_stream_sample(struct wm_reader *reader, WORD stream_number,
+        INSSBuffer **ret_sample, QWORD *pts, QWORD *duration, DWORD *flags, WORD *ret_stream_number)
+{
+    IWMReaderCallbackAdvanced *callback_advanced = reader->callback_advanced;
+    struct wg_parser_stream *wg_stream;
     struct wg_parser_buffer wg_buffer;
+    struct wm_stream *stream;
     DWORD size, capacity;
     INSSBuffer *sample;
     HRESULT hr;
     BYTE *data;
 
-    if (stream->selection == WMT_OFF)
-        return NS_E_INVALID_REQUEST;
-
-    if (stream->eos)
-        return NS_E_NO_MORE_SAMPLES;
-
     for (;;)
     {
-        if (!wg_parser_stream_get_buffer(wg_stream, &wg_buffer))
+        if (!stream_number)
         {
-            stream->eos = true;
-            TRACE("End of stream.\n");
-            return NS_E_NO_MORE_SAMPLES;
+            if (!(stream_number = get_earliest_buffer(reader, &wg_buffer)))
+            {
+                /* All streams are disabled or EOS. */
+                return NS_E_NO_MORE_SAMPLES;
+            }
+
+            stream = wm_reader_get_stream_by_stream_number(reader, stream_number);
+            wg_stream = stream->wg_stream;
+        }
+        else
+        {
+            if (!(stream = wm_reader_get_stream_by_stream_number(reader, stream_number)))
+            {
+                WARN("Invalid stream number %u; returning E_INVALIDARG.\n", stream_number);
+                return E_INVALIDARG;
+            }
+            wg_stream = stream->wg_stream;
+
+            if (stream->selection == WMT_OFF)
+            {
+                WARN("Stream %u is deselected; returning NS_E_INVALID_REQUEST.\n", stream_number);
+                return NS_E_INVALID_REQUEST;
+            }
+
+            if (stream->eos)
+                return NS_E_NO_MORE_SAMPLES;
+
+            if (!wg_parser_stream_get_buffer(wg_stream, &wg_buffer))
+            {
+                stream->eos = true;
+                TRACE("End of stream.\n");
+                return NS_E_NO_MORE_SAMPLES;
+            }
         }
 
         TRACE("Got buffer for '%s' stream %p.\n", get_major_type_string(stream->format.major_type), stream);
@@ -1920,6 +1988,7 @@ HRESULT wm_reader_get_stream_sample(struct wm_stream *stream,
             *flags |= WM_SF_CLEANPOINT;
 
         *ret_sample = sample;
+        *ret_stream_number = stream_number;
         return S_OK;
     }
 }

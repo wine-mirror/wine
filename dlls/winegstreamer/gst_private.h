@@ -180,8 +180,8 @@ HRESULT wm_reader_get_output_props(struct wm_reader *reader, DWORD output,
         IWMOutputMediaProps **props);
 struct wm_stream *wm_reader_get_stream_by_stream_number(struct wm_reader *reader,
         WORD stream_number);
-HRESULT wm_reader_get_stream_sample(struct wm_stream *stream,
-        INSSBuffer **sample, QWORD *pts, QWORD *duration, DWORD *flags);
+HRESULT wm_reader_get_stream_sample(struct wm_reader *reader, WORD stream_number,
+        INSSBuffer **ret_sample, QWORD *pts, QWORD *duration, DWORD *flags, WORD *ret_stream_number);
 HRESULT wm_reader_get_stream_selection(struct wm_reader *reader,
         WORD stream_number, WMT_STREAM_SELECTION *selection);
 void wm_reader_init(struct wm_reader *reader, const struct wm_reader_ops *ops);
