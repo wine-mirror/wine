@@ -2157,6 +2157,9 @@ static void test_RSA(void)
     ret = BCryptImportKeyPair(alg, NULL, BCRYPT_RSAPRIVATE_BLOB, &key, rsaPrivateBlob, sizeof(rsaPrivateBlob), 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
 
+    ret = BCryptFinalizeKeyPair(key, 0);
+    ok(ret == STATUS_INVALID_HANDLE, "got %#lx\n", ret);
+
     size = 0;
     buf = HeapAlloc(GetProcessHeap(), 0, sizeof(rsaPrivateBlob));
     ret = BCryptExportKey(key, NULL, BCRYPT_RSAPRIVATE_BLOB, buf, sizeof(rsaPrivateBlob), &size, 0);
@@ -2564,6 +2567,9 @@ static void test_BCryptSignHash(void)
 
     ret = BCryptFinalizeKeyPair(key, 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+
+    ret = BCryptFinalizeKeyPair(key, 0);
+    ok(ret == STATUS_INVALID_HANDLE, "got %#lx\n", ret);
 
     len = 0;
     memset(sig, 0, sizeof(sig));

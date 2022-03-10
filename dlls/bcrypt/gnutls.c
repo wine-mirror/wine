@@ -846,6 +846,7 @@ static NTSTATUS key_asymmetric_generate( void *args )
     int ret;
 
     if (!libgnutls_handle) return STATUS_INTERNAL_ERROR;
+    if (key_data(key)->privkey) return STATUS_INVALID_HANDLE;
 
     switch (key->alg_id)
     {
