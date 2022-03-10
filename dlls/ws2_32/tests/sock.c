@@ -279,7 +279,7 @@ static int do_synchronous_send ( SOCKET s, char *buf, int buflen, int flags, int
         n = send ( s, p, min ( sendlen, last - p ), flags );
         if (n > 0) p += n;
     }
-    wsa_ok ( n, 0 <=, "do_synchronous_send (%x): error %d\n" );
+    wsa_ok ( n, 0 <=, "do_synchronous_send (%lx): error %d\n" );
     return p - buf;
 }
 
@@ -292,7 +292,7 @@ static int do_synchronous_recv ( SOCKET s, char *buf, int buflen, int flags, int
         n = recv ( s, p, min ( recvlen, last - p ), flags );
         if (n > 0) p += n;
     }
-    wsa_ok ( n, 0 <=, "do_synchronous_recv (%x): error %d:\n" );
+    wsa_ok ( n, 0 <=, "do_synchronous_recv (%lx): error %d:\n" );
     return p - buf;
 }
 
@@ -305,7 +305,7 @@ static int do_synchronous_recvfrom ( SOCKET s, char *buf, int buflen, int flags,
         n = recvfrom ( s, p, min ( recvlen, last - p ), flags, from, fromlen );
         if (n > 0) p += n;
     }
-    wsa_ok ( n, 0 <=, "do_synchronous_recv (%x): error %d:\n" );
+    wsa_ok ( n, 0 <=, "do_synchronous_recv (%lx): error %d:\n" );
     return p - buf;
 }
 
@@ -417,7 +417,7 @@ static void client_start ( client_params *par )
 static void client_stop (void)
 {
     client_memory *mem = TlsGetValue ( tls );
-    wsa_ok ( closesocket ( mem->s ), 0 ==, "closesocket error (%x): %d\n" );
+    wsa_ok ( closesocket ( mem->s ), 0 ==, "closesocket error (%lx): %d\n" );
     LocalFree ( mem->send_buf );
     LocalFree ( mem );
     ExitThread(0);
@@ -439,8 +439,8 @@ static VOID WINAPI simple_server ( server_params *par )
     server_start ( par );
     mem = TlsGetValue ( tls );
 
-    wsa_ok ( set_blocking ( mem->s, TRUE ), 0 ==, "simple_server (%x): failed to set blocking mode: %d\n");
-    wsa_ok ( listen ( mem->s, SOMAXCONN ), 0 ==, "simple_server (%x): listen failed: %d\n");
+    wsa_ok ( set_blocking ( mem->s, TRUE ), 0 ==, "simple_server (%lx): failed to set blocking mode: %d\n");
+    wsa_ok ( listen ( mem->s, SOMAXCONN ), 0 ==, "simple_server (%lx): listen failed: %d\n");
 
     SetEvent ( server_ready ); /* notify clients */
 
@@ -449,7 +449,7 @@ static VOID WINAPI simple_server ( server_params *par )
         /* accept a single connection */
         tmp = sizeof ( mem->sock[0].peer );
         mem->sock[0].s = accept ( mem->s, (struct sockaddr*) &mem->sock[0].peer, &tmp );
-        wsa_ok ( mem->sock[0].s, INVALID_SOCKET !=, "simple_server (%x): accept failed: %d\n" );
+        wsa_ok ( mem->sock[0].s, INVALID_SOCKET !=, "simple_server (%lx): accept failed: %d\n" );
 
         ok ( mem->sock[0].peer.sin_addr.s_addr == inet_addr ( gen->inet_addr ),
              "simple_server (%x): strange peer address\n", id );
@@ -468,7 +468,7 @@ static VOID WINAPI simple_server ( server_params *par )
 
         /* cleanup */
         read_zero_bytes ( mem->sock[0].s );
-        wsa_ok ( closesocket ( mem->sock[0].s ),  0 ==, "simple_server (%x): closesocket error: %d\n" );
+        wsa_ok ( closesocket ( mem->sock[0].s ),  0 ==, "simple_server (%lx): closesocket error: %d\n" );
         mem->sock[0].s = INVALID_SOCKET;
     }
 
@@ -490,22 +490,22 @@ static VOID WINAPI oob_server ( server_params *par )
     server_start ( par );
     mem = TlsGetValue ( tls );
 
-    wsa_ok ( set_blocking ( mem->s, TRUE ), 0 ==, "oob_server (%x): failed to set blocking mode: %d\n");
-    wsa_ok ( listen ( mem->s, SOMAXCONN ), 0 ==, "oob_server (%x): listen failed: %d\n");
+    wsa_ok ( set_blocking ( mem->s, TRUE ), 0 ==, "oob_server (%lx): failed to set blocking mode: %d\n");
+    wsa_ok ( listen ( mem->s, SOMAXCONN ), 0 ==, "oob_server (%lx): listen failed: %d\n");
 
     SetEvent ( server_ready ); /* notify clients */
 
     /* accept a single connection */
     tmp = sizeof ( mem->sock[0].peer );
     mem->sock[0].s = accept ( mem->s, (struct sockaddr*) &mem->sock[0].peer, &tmp );
-    wsa_ok ( mem->sock[0].s, INVALID_SOCKET !=, "oob_server (%x): accept failed: %d\n" );
+    wsa_ok ( mem->sock[0].s, INVALID_SOCKET !=, "oob_server (%lx): accept failed: %d\n" );
 
     ok ( mem->sock[0].peer.sin_addr.s_addr == inet_addr ( gen->inet_addr ),
          "oob_server (%x): strange peer address\n", id );
 
     /* check initial atmark state */
     ioctlsocket ( mem->sock[0].s, SIOCATMARK, &atmark );
-    ok ( atmark == 1, "oob_server (%x): unexpectedly at the OOB mark: %i\n", id, atmark );
+    ok ( atmark == 1, "oob_server (%x): unexpectedly at the OOB mark: %li\n", id, atmark );
 
     /* Receive normal data */
     n_recvd = do_synchronous_recv ( mem->sock[0].s, mem->sock[0].buf, n_expected, 0, par->buflen );
@@ -516,7 +516,7 @@ static VOID WINAPI oob_server ( server_params *par )
 
     /* check atmark state */
     ioctlsocket ( mem->sock[0].s, SIOCATMARK, &atmark );
-    ok ( atmark == 1, "oob_server (%x): unexpectedly at the OOB mark: %i\n", id, atmark );
+    ok ( atmark == 1, "oob_server (%x): unexpectedly at the OOB mark: %li\n", id, atmark );
 
     /* Echo data back */
     n_sent = do_synchronous_send ( mem->sock[0].s, mem->sock[0].buf, n_expected, 0, par->buflen );
@@ -535,10 +535,10 @@ static VOID WINAPI oob_server ( server_params *par )
     do_synchronous_recv ( mem->sock[0].s, mem->sock[0].buf, n_expected, 0, par->buflen );
 
     ioctlsocket ( mem->sock[0].s, SIOCATMARK, &atmark );
-    todo_wine ok ( atmark == 0, "oob_server (%x): not at the OOB mark: %i\n", id, atmark );
+    todo_wine ok ( atmark == 0, "oob_server (%x): not at the OOB mark: %li\n", id, atmark );
 
     /* cleanup */
-    wsa_ok ( closesocket ( mem->sock[0].s ),  0 ==, "oob_server (%x): closesocket error: %d\n" );
+    wsa_ok ( closesocket ( mem->sock[0].s ),  0 ==, "oob_server (%lx): closesocket error: %d\n" );
     mem->sock[0].s = INVALID_SOCKET;
 
     server_stop ();
@@ -561,8 +561,8 @@ static VOID WINAPI select_server ( server_params *par )
     server_start ( par );
     mem = TlsGetValue ( tls );
 
-    wsa_ok ( set_blocking ( mem->s, FALSE ), 0 ==, "select_server (%x): failed to set blocking mode: %d\n");
-    wsa_ok ( listen ( mem->s, SOMAXCONN ), 0 ==, "select_server (%x): listen failed: %d\n");
+    wsa_ok ( set_blocking ( mem->s, FALSE ), 0 ==, "select_server (%lx): failed to set blocking mode: %d\n");
+    wsa_ok ( listen ( mem->s, SOMAXCONN ), 0 ==, "select_server (%lx): listen failed: %d\n");
 
     SetEvent ( server_ready ); /* notify clients */
 
@@ -581,7 +581,7 @@ static VOID WINAPI select_server ( server_params *par )
         n_set = 0;
 
         wsa_ok ( ( n_ready = select ( 0, &fds_recv, &fds_send, NULL, &timeout ) ), SOCKET_ERROR !=, 
-            "select_server (%x): select() failed: %d\n" );
+            "select_server (%lx): select() failed: %d\n" );
 
         /* check for incoming requests */
         if ( FD_ISSET ( mem->s, &fds_recv ) ) {
@@ -590,7 +590,7 @@ static VOID WINAPI select_server ( server_params *par )
             /* accept a single connection */
             tmp = sizeof ( mem->sock[n_connections].peer );
             mem->sock[n_connections].s = accept ( mem->s, (struct sockaddr*) &mem->sock[n_connections].peer, &tmp );
-            wsa_ok ( mem->sock[n_connections].s, INVALID_SOCKET !=, "select_server (%x): accept() failed: %d\n" );
+            wsa_ok ( mem->sock[n_connections].s, INVALID_SOCKET !=, "select_server (%lx): accept() failed: %d\n" );
 
             ok ( mem->sock[n_connections].peer.sin_addr.s_addr == inet_addr ( gen->inet_addr ),
                 "select_server (%x): strange peer address\n", id );
@@ -661,7 +661,7 @@ static VOID WINAPI select_server ( server_params *par )
     {
         /* cleanup */
         read_zero_bytes ( mem->sock[i].s );
-        wsa_ok ( closesocket ( mem->sock[i].s ),  0 ==, "select_server (%x): closesocket error: %d\n" );
+        wsa_ok ( closesocket ( mem->sock[i].s ),  0 ==, "select_server (%lx): closesocket error: %d\n" );
         mem->sock[i].s = INVALID_SOCKET;
     }
 
@@ -690,7 +690,7 @@ static VOID WINAPI simple_client ( client_params *par )
 
     /* Connect */
     wsa_ok ( connect ( mem->s, (struct sockaddr*) &mem->addr, sizeof ( mem->addr ) ),
-             0 ==, "simple_client (%x): connect error: %d\n" );
+             0 ==, "simple_client (%lx): connect error: %d\n" );
     ok ( set_blocking ( mem->s, TRUE ) == 0,
          "simple_client (%x): failed to set blocking mode\n", id );
 
@@ -700,7 +700,7 @@ static VOID WINAPI simple_client ( client_params *par )
          "simple_client (%x): sent less data than expected: %d of %d\n", id, n_sent, n_expected );
 
     /* shutdown send direction */
-    wsa_ok ( shutdown ( mem->s, SD_SEND ), 0 ==, "simple_client (%x): shutdown failed: %d\n" );
+    wsa_ok ( shutdown ( mem->s, SD_SEND ), 0 ==, "simple_client (%lx): shutdown failed: %d\n" );
 
     /* Receive data echoed back & check it */
     n_recvd = do_synchronous_recv ( mem->s, mem->recv_buf, n_expected, 0, par->buflen );
@@ -736,7 +736,7 @@ static VOID WINAPI oob_client ( client_params *par )
 
     /* Connect */
     wsa_ok ( connect ( mem->s, (struct sockaddr*) &mem->addr, sizeof ( mem->addr ) ),
-             0 ==, "oob_client (%x): connect error: %d\n" );
+             0 ==, "oob_client (%lx): connect error: %d\n" );
     ok ( set_blocking ( mem->s, TRUE ) == 0,
          "oob_client (%x): failed to set blocking mode\n", id );
 
@@ -758,7 +758,7 @@ static VOID WINAPI oob_client ( client_params *par )
          "oob_client (%x): sent less data than expected: %d of %d\n", id, n_sent, n_expected );
 
     /* shutdown send direction */
-    wsa_ok ( shutdown ( mem->s, SD_SEND ), 0 ==, "simple_client (%x): shutdown failed: %d\n" );
+    wsa_ok ( shutdown ( mem->s, SD_SEND ), 0 ==, "simple_client (%lx): shutdown failed: %d\n" );
 
     /* cleanup */
     read_zero_bytes ( mem->s );
@@ -787,7 +787,7 @@ static VOID WINAPI simple_mixed_client ( client_params *par )
 
     /* Connect */
     wsa_ok ( connect ( mem->s, (struct sockaddr*) &mem->addr, sizeof ( mem->addr ) ),
-             0 ==, "simple_client (%x): connect error: %d\n" );
+             0 ==, "simple_client (%lx): connect error: %d\n" );
     ok ( set_blocking ( mem->s, TRUE ) == 0,
          "simple_client (%x): failed to set blocking mode\n", id );
 
@@ -797,7 +797,7 @@ static VOID WINAPI simple_mixed_client ( client_params *par )
          "simple_client (%x): sent less data than expected: %d of %d\n", id, n_sent, n_expected );
 
     /* shutdown send direction */
-    wsa_ok ( shutdown ( mem->s, SD_SEND ), 0 ==, "simple_client (%x): shutdown failed: %d\n" );
+    wsa_ok ( shutdown ( mem->s, SD_SEND ), 0 ==, "simple_client (%lx): shutdown failed: %d\n" );
 
     /* this shouldn't change, since lpFrom, is not updated on
        connection oriented sockets - exposed by bug 11640
@@ -913,7 +913,7 @@ static void WINAPI event_client ( client_params *par )
             
             /* First read must succeed */
             n = recv ( mem->s, recv_p, min ( recv_last - recv_p, par->buflen ), 0 );
-            wsa_ok ( n, 0 <=, "event_client (%x): recv error: %d\n" );
+            wsa_ok ( n, 0 <=, "event_client (%lx): recv error: %d\n" );
 
             while ( n >= 0 ) {
                 recv_p += n;
@@ -959,12 +959,12 @@ static void test_WithoutWSAStartup(void)
     WSASetLastError(0xdeadbeef);
     ok(WSASocketA(0, 0, 0, NULL, 0, 0) == INVALID_SOCKET, "WSASocketA should have failed\n");
     err = WSAGetLastError();
-    ok(err == WSANOTINITIALISED, "Expected 10093, received %d\n", err);
+    ok(err == WSANOTINITIALISED, "Expected 10093, received %ld\n", err);
 
     WSASetLastError(0xdeadbeef);
     ok(gethostbyname("localhost") == NULL, "gethostbyname() succeeded unexpectedly\n");
     err = WSAGetLastError();
-    ok(err == WSANOTINITIALISED, "Expected 10093, received %d\n", err);
+    ok(err == WSANOTINITIALISED, "Expected 10093, received %ld\n", err);
 }
 
 static void test_WithWSAStartup(void)
@@ -1018,13 +1018,13 @@ static void test_WithWSAStartup(void)
     res = send(pairs[0].src, "TEST", 4, 0);
     error = WSAGetLastError();
     ok(res == SOCKET_ERROR, "send should have failed\n");
-    ok(error == WSAENOTSOCK, "expected 10038, got %d\n", error);
+    ok(error == WSAENOTSOCK, "expected 10038, got %ld\n", error);
 
     SetLastError(0xdeadbeef);
     res = send(pairs[0].dst, "TEST", 4, 0);
     error = WSAGetLastError();
     ok(res == SOCKET_ERROR, "send should have failed\n");
-    ok(error == WSAENOTSOCK, "expected 10038, got %d\n", error);
+    ok(error == WSAENOTSOCK, "expected 10038, got %ld\n", error);
 
     /* Check that all sockets were destroyed */
     for (i = 0; i < socks; i++)
@@ -1046,7 +1046,7 @@ static void test_WithWSAStartup(void)
             error = WSAGetLastError();
             ok(res == SOCKET_ERROR, "Test[%d]: getsockname should have failed\n", i);
             if (res == SOCKET_ERROR)
-                ok(error == WSAENOTSOCK, "Test[%d]: expected 10038, got %d\n", i, error);
+                ok(error == WSAENOTSOCK, "Test[%d]: expected 10038, got %ld\n", i, error);
         }
     }
 
@@ -1065,7 +1065,7 @@ static void test_WithWSAStartup(void)
     res = WSACleanup();
     error = WSAGetLastError();
     ok ( res == SOCKET_ERROR && error ==  WSANOTINITIALISED,
-            "WSACleanup returned %d WSAGetLastError is %d\n", res, error);
+            "WSACleanup returned %d WSAGetLastError is %ld\n", res, error);
 }
 
 /**************** Main program utility functions ***************/
@@ -1132,7 +1132,7 @@ static void do_test( test_setup *test )
     WaitForSingleObject ( server_ready, INFINITE );
 
     wait = WaitForMultipleObjects ( 1 + n, thread, TRUE, 1000 * TEST_TIMEOUT );
-    ok(!wait, "wait failed, error %u\n", wait);
+    ok(!wait, "wait failed, error %lu\n", wait);
 
     CloseHandle ( server_ready );
     for (i = 0; i <= n; i++)
@@ -1251,7 +1251,7 @@ static void test_set_getsockopt(void)
     value = 0xdeadbeef;
     err = getsockopt(s, SOL_SOCKET, SO_SNDBUF, (char *)&value, &size);
     ok( !err, "getsockopt(SO_SNDBUF) failed error: %u\n", WSAGetLastError() );
-    ok( value == 4096, "expected 4096, got %u\n", value );
+    ok( value == 4096, "expected 4096, got %lu\n", value );
 
     /* SO_RCVBUF */
     value = 4096;
@@ -1261,7 +1261,7 @@ static void test_set_getsockopt(void)
     value = 0xdeadbeef;
     err = getsockopt(s, SOL_SOCKET, SO_RCVBUF, (char *)&value, &size);
     ok( !err, "getsockopt(SO_RCVBUF) failed error: %u\n", WSAGetLastError() );
-    ok( value == 4096, "expected 4096, got %u\n", value );
+    ok( value == 4096, "expected 4096, got %lu\n", value );
 
     /* SO_LINGER */
     for( i = 0; i < ARRAY_SIZE(linger_testvals);i++) {
@@ -1521,7 +1521,7 @@ static void test_set_getsockopt(void)
             ok(err == expected_err, "Unexpected getsockopt result %d.\n", err);
             ok(WSAGetLastError() == expected_last_error, "Unexpected WSAGetLastError() %u.\n", WSAGetLastError());
             todo_wine_if(test_optsize[i].optname == SO_DONTROUTE || test_optsize[i].optname == SO_LINGER)
-            ok(value == expected_value, "Got unexpected value %#x, expected %#x.\n", value, expected_value);
+            ok(value == expected_value, "Got unexpected value %#lx, expected %#lx.\n", value, expected_value);
             ok(size == expected_size, "Got unexpected size %u, expected %u.\n", size, expected_size);
         }
 
@@ -1565,7 +1565,7 @@ static void test_set_getsockopt(void)
             err = getsockopt(s2, test_optsize[i].level, test_optsize[i].optname, (char*)&value, &size);
             ok(err == expected_err, "Unexpected getsockopt result %d.\n", err);
             ok(WSAGetLastError() == expected_last_error, "Unexpected WSAGetLastError() %u.\n", WSAGetLastError());
-            ok(value == expected_value, "Got unexpected value %#x, expected %#x.\n", value, expected_value);
+            ok(value == expected_value, "Got unexpected value %#lx, expected %#lx.\n", value, expected_value);
             ok(size == expected_size, "Got unexpected size %d, expected %d.\n", size, expected_size);
 
             winetest_pop_context();
@@ -1698,12 +1698,12 @@ static void test_set_getsockopt(void)
         err = setsockopt(s, IPPROTO_IP, IP_HDRINCL, (char *) &k, size);
         if (err == -1) /* >= Vista */
         {
-            ok(GetLastError() == WSAEINVAL, "Expected 10022, got %d\n", GetLastError());
+            ok(GetLastError() == WSAEINVAL, "Expected 10022, got %ld\n", GetLastError());
             k = 99;
             SetLastError(0xdeadbeef);
             err = getsockopt(s, IPPROTO_IP, IP_HDRINCL, (char *) &k, &size);
             ok(err == -1, "Expected -1, got %d\n", err);
-            ok(GetLastError() == WSAEINVAL, "Expected 10022, got %d\n", GetLastError());
+            ok(GetLastError() == WSAEINVAL, "Expected 10022, got %ld\n", GetLastError());
             ok(k == 99, "Expected 99, got %d\n", k);
 
             size = sizeof(k);
@@ -1711,12 +1711,12 @@ static void test_set_getsockopt(void)
             SetLastError(0xdeadbeef);
             err = setsockopt(s, IPPROTO_IP, IP_HDRINCL, (char *) &k, size);
             ok(err == -1, "Expected -1, got %d\n", err);
-            ok(GetLastError() == WSAEINVAL, "Expected 10022, got %d\n", GetLastError());
+            ok(GetLastError() == WSAEINVAL, "Expected 10022, got %ld\n", GetLastError());
             k = 99;
             SetLastError(0xdeadbeef);
             err = getsockopt(s, IPPROTO_IP, IP_HDRINCL, (char *) &k, &size);
             ok(err == -1, "Expected -1, got %d\n", err);
-            ok(GetLastError() == WSAEINVAL, "Expected 10022, got %d\n", GetLastError());
+            ok(GetLastError() == WSAEINVAL, "Expected 10022, got %ld\n", GetLastError());
             ok(k == 99, "Expected 99, got %d\n", k);
         }
         else /* <= 2003 the tests differ between TCP and UDP, UDP silently accepts */
@@ -1733,7 +1733,7 @@ static void test_set_getsockopt(void)
             {
                 /* contratry to what we could expect the function returns error but k is changed */
                 ok(err == -1, "Expected -1, got %d\n", err);
-                ok(GetLastError() == WSAENOPROTOOPT, "Expected 10042, got %d\n", GetLastError());
+                ok(GetLastError() == WSAENOPROTOOPT, "Expected 10042, got %ld\n", GetLastError());
                 ok(k == 0, "Expected 0, got %d\n", k);
             }
 
@@ -1752,7 +1752,7 @@ static void test_set_getsockopt(void)
             {
                 /* contratry to what we could expect the function returns error but k is changed */
                 ok(err == -1, "Expected -1, got %d\n", err);
-                ok(GetLastError() == WSAENOPROTOOPT, "Expected 10042, got %d\n", GetLastError());
+                ok(GetLastError() == WSAENOPROTOOPT, "Expected 10042, got %ld\n", GetLastError());
                 ok(k == 0, "Expected 0, got %d\n", k);
             }
         }
@@ -1852,7 +1852,7 @@ static void test_set_getsockopt(void)
         err = getsockopt(s, SOL_SOCKET, SO_BSP_STATE, (char *) &csinfoA, &size);
         ok(err, "Expected non-zero\n");
         ok(size == sizeof(CSADDR_INFO), "Got %d\n", size);
-        ok(GetLastError() == WSAEFAULT, "Expected 10014, got %d\n", GetLastError());
+        ok(GetLastError() == WSAEFAULT, "Expected 10014, got %ld\n", GetLastError());
 
         /* At least for IPv4 the size is exactly 56 bytes */
         size = sizeof(*csinfoA.cs.LocalAddr.lpSockaddr) * 2 + sizeof(csinfoA.cs);
@@ -1862,10 +1862,10 @@ static void test_set_getsockopt(void)
         SetLastError(0xdeadbeef);
         err = getsockopt(s, SOL_SOCKET, SO_BSP_STATE, (char *) &csinfoA, &size);
         ok(err, "Expected non-zero\n");
-        ok(GetLastError() == WSAEFAULT, "Expected 10014, got %d\n", GetLastError());
+        ok(GetLastError() == WSAEFAULT, "Expected 10014, got %ld\n", GetLastError());
     }
     else
-        ok(GetLastError() == WSAENOPROTOOPT, "Expected 10042, got %d\n", GetLastError());
+        ok(GetLastError() == WSAENOPROTOOPT, "Expected 10042, got %ld\n", GetLastError());
 
     closesocket(s);
     closesocket(s2);
@@ -1891,53 +1891,53 @@ static void test_set_getsockopt(void)
             skip("IPv6 is not supported\n");
             break;
         }
-        ok(s != INVALID_SOCKET, "socket failed with error %d\n", GetLastError());
+        ok(s != INVALID_SOCKET, "socket failed with error %ld\n", GetLastError());
 
         size = sizeof(value);
         value = 0xdead;
         err = getsockopt(s, level, IP_DONTFRAGMENT, (char *) &value, &size);
-        ok(!err, "Expected 0, got %d with error %d\n", err, GetLastError());
-        ok(value == 0, "Expected 0, got %d\n", value);
+        ok(!err, "Expected 0, got %d with error %ld\n", err, GetLastError());
+        ok(value == 0, "Expected 0, got %ld\n", value);
 
         size = sizeof(value);
         value = 1;
         err = setsockopt(s, level, IP_DONTFRAGMENT, (char *) &value, size);
-        ok(!err, "Expected 0, got %d with error %d\n", err, GetLastError());
+        ok(!err, "Expected 0, got %d with error %ld\n", err, GetLastError());
 
         value = 0xdead;
         err = getsockopt(s, level, IP_DONTFRAGMENT, (char *) &value, &size);
-        ok(!err, "Expected 0, got %d with error %d\n", err, GetLastError());
-        ok(value == 1, "Expected 1, got %d\n", value);
+        ok(!err, "Expected 0, got %d with error %ld\n", err, GetLastError());
+        ok(value == 1, "Expected 1, got %ld\n", value);
 
         size = sizeof(value);
         value = 0xdead;
         err = setsockopt(s, level, IP_DONTFRAGMENT, (char *) &value, size);
-        ok(!err, "Expected 0, got %d with error %d\n", err, GetLastError());
+        ok(!err, "Expected 0, got %d with error %ld\n", err, GetLastError());
 
         err = getsockopt(s, level, IP_DONTFRAGMENT, (char *) &value, &size);
-        ok(!err, "Expected 0, got %d with error %d\n", err, GetLastError());
-        ok(value == 1, "Expected 1, got %d\n", value);
+        ok(!err, "Expected 0, got %d with error %ld\n", err, GetLastError());
+        ok(value == 1, "Expected 1, got %ld\n", value);
 
         closesocket(s);
 
         s = socket(family, SOCK_STREAM, 0);
-        ok(s != INVALID_SOCKET, "socket failed with error %d\n", GetLastError());
+        ok(s != INVALID_SOCKET, "socket failed with error %ld\n", GetLastError());
 
         size = sizeof(value);
         value = 0xdead;
         err = getsockopt(s, level, IP_DONTFRAGMENT, (char *) &value, &size);
-        ok(!err, "Expected 0, got %d with error %d\n", err, GetLastError());
-        ok(value == 1 || broken(value == 0) /* < vista */, "Expected 1, got %d\n", value);
+        ok(!err, "Expected 0, got %d with error %ld\n", err, GetLastError());
+        ok(value == 1 || broken(value == 0) /* < vista */, "Expected 1, got %ld\n", value);
 
         size = sizeof(value);
         value = 0;
         err = setsockopt(s, level, IP_DONTFRAGMENT, (char *) &value, size);
-        ok(!err, "Expected 0, got %d with error %d\n", err, GetLastError());
+        ok(!err, "Expected 0, got %d with error %ld\n", err, GetLastError());
 
         value = 0xdead;
         err = getsockopt(s, level, IP_DONTFRAGMENT, (char *) &value, &size);
-        ok(!err, "Expected 0, got %d with error %d\n", err, GetLastError());
-        ok(value == 0, "Expected 0, got %d\n", value);
+        ok(!err, "Expected 0, got %d with error %ld\n", err, GetLastError());
+        ok(value == 0, "Expected 0, got %ld\n", value);
 
         closesocket(s);
 
@@ -1948,23 +1948,23 @@ static void test_set_getsockopt(void)
             else if (i) skip("IPv6 is not supported\n");
             break;
         }
-        ok(s != INVALID_SOCKET, "socket failed with error %d\n", GetLastError());
+        ok(s != INVALID_SOCKET, "socket failed with error %ld\n", GetLastError());
 
         size = sizeof(value);
         value = 0xdead;
         err = getsockopt(s, level, IP_DONTFRAGMENT, (char *) &value, &size);
-        ok(!err, "Expected 0, got %d with error %d\n", err, GetLastError());
-        ok(value == 0, "Expected 0, got %d\n", value);
+        ok(!err, "Expected 0, got %d with error %ld\n", err, GetLastError());
+        ok(value == 0, "Expected 0, got %ld\n", value);
 
         size = sizeof(value);
         value = 1;
         err = setsockopt(s, level, IP_DONTFRAGMENT, (char *) &value, size);
-        ok(!err, "Expected 0, got %d with error %d\n", err, GetLastError());
+        ok(!err, "Expected 0, got %d with error %ld\n", err, GetLastError());
 
         value = 0xdead;
         err = getsockopt(s, level, IP_DONTFRAGMENT, (char *) &value, &size);
-        ok(!err, "Expected 0, got %d with error %d\n", err, GetLastError());
-        ok(value == 1, "Expected 1, got %d\n", value);
+        ok(!err, "Expected 0, got %d with error %ld\n", err, GetLastError());
+        ok(value == 1, "Expected 1, got %ld\n", value);
 
         closesocket(s);
     }
@@ -2035,7 +2035,7 @@ static void test_so_reuseaddr(void)
     else
     {
         err = WSAGetLastError();
-        ok(err==WSAEACCES, "expected 10013, got %d\n", err);
+        ok(err==WSAEACCES, "expected 10013, got %ld\n", err);
 
         closesocket(s1);
         rc = bind(s2, (struct sockaddr*)&saddr, sizeof(saddr));
@@ -2051,9 +2051,9 @@ static unsigned int got_ip_pktinfo_apc;
 
 static void WINAPI ip_pktinfo_apc(DWORD error, DWORD size, OVERLAPPED *overlapped, DWORD flags)
 {
-    ok(error == WSAEMSGSIZE, "got error %u\n", error);
-    ok(size == 6, "got size %u\n", size);
-    ok(!flags, "got flags %#x\n", flags);
+    ok(error == WSAEMSGSIZE, "got error %lu\n", error);
+    ok(size == 6, "got size %lu\n", size);
+    ok(!flags, "got flags %#lx\n", flags);
     ++got_ip_pktinfo_apc;
 }
 
@@ -2125,7 +2125,7 @@ static void test_ip_pktinfo(void)
         SetLastError(0xdeadbeef);
         rc=sendto(s2, msg, sizeof(msg), 0, (struct sockaddr*)&s2addr, sizeof(s2addr));
         ok(rc == sizeof(msg), "sendto() failed error: %d\n", WSAGetLastError());
-        ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
+        ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %ld\n", GetLastError());
         hdr.Control.buf = NULL;
         hdr.Control.len = 0;
         rc=pWSARecvMsg(s1, &hdr, &dwSize, NULL, NULL);
@@ -2143,14 +2143,14 @@ static void test_ip_pktinfo(void)
         SetLastError(0xdeadbeef);
         rc=sendto(s2, msg, sizeof(msg), 0, (struct sockaddr*)&s2addr, sizeof(s2addr));
         ok(rc == sizeof(msg), "sendto() failed error: %d\n", WSAGetLastError());
-        ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
+        ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %ld\n", GetLastError());
         hdr.Control.len = 1;
         dwSize = 0xdeadbeef;
         rc = pWSARecvMsg(s1, &hdr, &dwSize, NULL, NULL);
         ok(rc == -1, "expected failure\n");
         ok(WSAGetLastError() == WSAEMSGSIZE, "got error %u\n", WSAGetLastError());
-        todo_wine ok(dwSize == sizeof(msg), "got size %u\n", dwSize);
-        ok(hdr.dwFlags == MSG_CTRUNC, "got flags %#x\n", hdr.dwFlags);
+        todo_wine ok(dwSize == sizeof(msg), "got size %lu\n", dwSize);
+        ok(hdr.dwFlags == MSG_CTRUNC, "got flags %#lx\n", hdr.dwFlags);
         hdr.dwFlags = 0; /* Reset flags */
 
         /* Perform another short control header test, this time with an overlapped receive */
@@ -2165,20 +2165,20 @@ static void test_ip_pktinfo(void)
         SetLastError(0xdeadbeef);
         rc=sendto(s2, msg, sizeof(msg), 0, (struct sockaddr*)&s2addr, sizeof(s2addr));
         ok(rc == sizeof(msg), "sendto() failed error: %d\n", WSAGetLastError());
-        ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
+        ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %ld\n", GetLastError());
         ok(!WaitForSingleObject(ov.hEvent, 100), "wait failed\n");
-        ok((NTSTATUS)ov.Internal == STATUS_BUFFER_OVERFLOW, "got status %#x\n", (NTSTATUS)ov.Internal);
+        ok((NTSTATUS)ov.Internal == STATUS_BUFFER_OVERFLOW, "got status %#lx\n", (NTSTATUS)ov.Internal);
         ok(ov.InternalHigh == sizeof(msg), "got size %Iu\n", ov.InternalHigh);
-        ok(ov.Offset == 0xdead3, "got Offset %Iu\n", ov.Offset);
-        ok(ov.OffsetHigh == 0xdead4, "got OffsetHigh %Iu\n", ov.OffsetHigh);
+        ok(ov.Offset == 0xdead3, "got Offset %lu\n", ov.Offset);
+        ok(ov.OffsetHigh == 0xdead4, "got OffsetHigh %lu\n", ov.OffsetHigh);
         dwFlags = 0xdeadbeef;
         rc = WSAGetOverlappedResult(s1, &ov, &dwSize, FALSE, &dwFlags);
         ok(!rc, "expected failure\n");
         ok(WSAGetLastError() == WSAEMSGSIZE, "got error %u\n", WSAGetLastError());
-        ok(dwSize == sizeof(msg), "got size %u\n", dwSize);
-        todo_wine ok(dwFlags == 0xdeadbeef, "got flags %#x\n", dwFlags);
+        ok(dwSize == sizeof(msg), "got size %lu\n", dwSize);
+        todo_wine ok(dwFlags == 0xdeadbeef, "got flags %#lx\n", dwFlags);
         ok(hdr.dwFlags == MSG_CTRUNC,
-           "WSARecvMsg() overlapped operation set unexpected flags %d.\n", hdr.dwFlags);
+           "WSARecvMsg() overlapped operation set unexpected flags %ld.\n", hdr.dwFlags);
         hdr.dwFlags = 0; /* Reset flags */
 
         /* And with an APC. */
@@ -2186,7 +2186,7 @@ static void test_ip_pktinfo(void)
         SetLastError(0xdeadbeef);
         rc = sendto(s2, msg, sizeof(msg), 0, (struct sockaddr *)&s2addr, sizeof(s2addr));
         ok(rc == sizeof(msg), "sendto() failed error: %d\n", WSAGetLastError());
-        ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
+        ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %ld\n", GetLastError());
         hdr.Control.len = 1;
 
         ov.Internal = 0xdead1;
@@ -2201,7 +2201,7 @@ static void test_ip_pktinfo(void)
         rc = SleepEx(1000, TRUE);
         ok(rc == WAIT_IO_COMPLETION, "got %d\n", rc);
         ok(got_ip_pktinfo_apc == 1, "apc was called %u times\n", got_ip_pktinfo_apc);
-        ok(hdr.dwFlags == MSG_CTRUNC, "got flags %#x\n", hdr.dwFlags);
+        ok(hdr.dwFlags == MSG_CTRUNC, "got flags %#lx\n", hdr.dwFlags);
         got_ip_pktinfo_apc = 0;
 
         hdr.dwFlags = 0; /* Reset flags */
@@ -2215,7 +2215,7 @@ static void test_ip_pktinfo(void)
         err=WSAGetLastError();
         ok(rc != 0 && err == WSA_IO_PENDING, "WSARecvMsg() failed error: %d\n", err);
         ok(hdr.Control.len == sizeof(pktbuf),
-           "WSARecvMsg() control length mismatch (%d != sizeof pktbuf).\n", hdr.Control.len);
+           "WSARecvMsg() control length mismatch (%ld != sizeof pktbuf).\n", hdr.Control.len);
         rc=sendto(s2, msg, sizeof(msg), 0, (struct sockaddr*)&s2addr, sizeof(s2addr));
         ok(rc == sizeof(msg), "sendto() failed error: %d\n", WSAGetLastError());
         ok(!WaitForSingleObject(ov.hEvent, 100), "wait failed\n");
@@ -2226,7 +2226,7 @@ static void test_ip_pktinfo(void)
         ok(strncmp(iovec[0].buf, msg, sizeof(msg)) == 0,
            "WSARecvMsg() buffer does not match transmitted data!\n");
         ok(hdr.Control.len == IP_PKTINFO_LEN,
-           "WSARecvMsg() control length mismatch (%d).\n", hdr.Control.len);
+           "WSARecvMsg() control length mismatch (%ld).\n", hdr.Control.len);
 
         /* Test for the expected IP_PKTINFO return information. */
         foundhdr = FALSE;
@@ -2292,12 +2292,12 @@ static void test_ipv4_cmsg(void)
     count = sizeof(state);
     rc = getsockopt(server, IPPROTO_IP, IP_RECVTTL, (char *)&state, (INT *)&count);
     ok(!rc, "failed to get IP_RECVTTL, error %u\n", WSAGetLastError());
-    ok(state == 1, "expected 1, got %u\n", state);
+    ok(state == 1, "expected 1, got %lu\n", state);
     rc = send(client, payload, sizeof(payload), 0);
     ok(rc == sizeof(payload), "send failed, error %u\n", WSAGetLastError());
     rc = pWSARecvMsg(server, &msg, &count, NULL, NULL);
     ok(!rc, "WSARecvMsg failed, error %u\n", WSAGetLastError());
-    ok(count == sizeof(payload), "expected length %Iu, got %u\n", sizeof(payload), count);
+    ok(count == sizeof(payload), "expected length %Iu, got %lu\n", sizeof(payload), count);
     ok(header->cmsg_level == IPPROTO_IP, "expected IPPROTO_IP, got %i\n", header->cmsg_level);
     ok(header->cmsg_type == IP_TTL || broken(header->cmsg_type == IP_HOPLIMIT) /* <= win10 v1607 */,
        "expected IP_TTL, got %i\n", header->cmsg_type);
@@ -2315,12 +2315,12 @@ static void test_ipv4_cmsg(void)
     count = sizeof(state);
     rc = getsockopt(server, IPPROTO_IP, IP_PKTINFO, (char *)&state, (INT *)&count);
     ok(!rc, "failed to get IP_PKTINFO, error %u\n", WSAGetLastError());
-    ok(state == 1, "expected 1, got %u\n", state);
+    ok(state == 1, "expected 1, got %lu\n", state);
     rc = send(client, payload, sizeof(payload), 0);
     ok(rc == sizeof(payload), "send failed, error %u\n", WSAGetLastError());
     rc = pWSARecvMsg(server, &msg, &count, NULL, NULL);
     ok(!rc, "WSARecvMsg failed, error %u\n", WSAGetLastError());
-    ok(count == sizeof(payload), "expected length %Iu, got %u\n", sizeof(payload), count);
+    ok(count == sizeof(payload), "expected length %Iu, got %lu\n", sizeof(payload), count);
     ok(header->cmsg_level == IPPROTO_IP, "expected IPPROTO_IP, got %i\n", header->cmsg_level);
     ok(header->cmsg_type == IP_PKTINFO, "expected IP_PKTINFO, got %i\n", header->cmsg_type);
     ok(header->cmsg_len == sizeof(*header) + sizeof(IN_PKTINFO),
@@ -2337,12 +2337,12 @@ static void test_ipv4_cmsg(void)
     count = sizeof(state);
     rc = getsockopt(server, IPPROTO_IP, IP_RECVTOS, (char *)&state, (INT *)&count);
     ok(!rc, "failed to get IP_RECVTOS, error %u\n", WSAGetLastError());
-    ok(state == 1, "expected 1, got %u\n", state);
+    ok(state == 1, "expected 1, got %lu\n", state);
     rc = send(client, payload, sizeof(payload), 0);
     ok(rc == sizeof(payload), "send failed, error %u\n", WSAGetLastError());
     rc = pWSARecvMsg(server, &msg, &count, NULL, NULL);
     ok(!rc, "WSARecvMsg failed, error %u\n", WSAGetLastError());
-    ok(count == sizeof(payload), "expected length %Iu, got %u\n", sizeof(payload), count);
+    ok(count == sizeof(payload), "expected length %Iu, got %lu\n", sizeof(payload), count);
     ok(header->cmsg_level == IPPROTO_IP, "expected IPPROTO_IP, got %i\n", header->cmsg_level);
     ok(header->cmsg_type == IP_TOS || broken(header->cmsg_type == IP_TCLASS) /* <= win10 v1607 */,
        "expected IP_TOS, got %i\n", header->cmsg_type);
@@ -2399,12 +2399,12 @@ static void test_ipv6_cmsg(void)
     count = sizeof(state);
     rc = getsockopt(server, IPPROTO_IPV6, IPV6_HOPLIMIT, (char *)&state, (INT *)&count);
     ok(!rc, "failed to get IPV6_HOPLIMIT, error %u\n", WSAGetLastError());
-    ok(state == 1, "expected 1, got %u\n", state);
+    ok(state == 1, "expected 1, got %lu\n", state);
     rc = send(client, payload, sizeof(payload), 0);
     ok(rc == sizeof(payload), "send failed, error %u\n", WSAGetLastError());
     rc = pWSARecvMsg(server, &msg, &count, NULL, NULL);
     ok(!rc, "WSARecvMsg failed, error %u\n", WSAGetLastError());
-    ok(count == sizeof(payload), "expected length %Iu, got %u\n", sizeof(payload), count);
+    ok(count == sizeof(payload), "expected length %Iu, got %lu\n", sizeof(payload), count);
     ok(header->cmsg_level == IPPROTO_IPV6, "expected IPPROTO_IPV6, got %i\n", header->cmsg_level);
     ok(header->cmsg_type == IPV6_HOPLIMIT, "expected IPV6_HOPLIMIT, got %i\n", header->cmsg_type);
     ok(header->cmsg_len == sizeof(*header) + sizeof(INT),
@@ -2421,12 +2421,12 @@ static void test_ipv6_cmsg(void)
     count = sizeof(state);
     rc = getsockopt(server, IPPROTO_IPV6, IPV6_PKTINFO, (char *)&state, (INT *)&count);
     ok(!rc, "failed to get IPV6_PKTINFO, error %u\n", WSAGetLastError());
-    ok(state == 1, "expected 1, got %u\n", state);
+    ok(state == 1, "expected 1, got %lu\n", state);
     rc = send(client, payload, sizeof(payload), 0);
     ok(rc == sizeof(payload), "send failed, error %u\n", WSAGetLastError());
     rc = pWSARecvMsg(server, &msg, &count, NULL, NULL);
     ok(!rc, "WSARecvMsg failed, error %u\n", WSAGetLastError());
-    ok(count == sizeof(payload), "expected length %Iu, got %u\n", sizeof(payload), count);
+    ok(count == sizeof(payload), "expected length %Iu, got %lu\n", sizeof(payload), count);
     ok(header->cmsg_level == IPPROTO_IPV6, "expected IPPROTO_IPV6, got %i\n", header->cmsg_level);
     ok(header->cmsg_type == IPV6_PKTINFO, "expected IPV6_PKTINFO, got %i\n", header->cmsg_type);
     ok(header->cmsg_len == sizeof(*header) + sizeof(IN6_PKTINFO),
@@ -2443,12 +2443,12 @@ static void test_ipv6_cmsg(void)
     count = sizeof(state);
     rc = getsockopt(server, IPPROTO_IPV6, IPV6_RECVTCLASS, (char *)&state, (INT *)&count);
     ok(!rc, "failed to get IPV6_RECVTCLASS, error %u\n", WSAGetLastError());
-    ok(state == 1, "expected 1, got %u\n", state);
+    ok(state == 1, "expected 1, got %lu\n", state);
     rc = send(client, payload, sizeof(payload), 0);
     ok(rc == sizeof(payload), "send failed, error %u\n", WSAGetLastError());
     rc = pWSARecvMsg(server, &msg, &count, NULL, NULL);
     ok(!rc, "WSARecvMsg failed, error %u\n", WSAGetLastError());
-    ok(count == sizeof(payload), "expected length %Iu, got %u\n", sizeof(payload), count);
+    ok(count == sizeof(payload), "expected length %Iu, got %lu\n", sizeof(payload), count);
     ok(header->cmsg_level == IPPROTO_IPV6, "expected IPPROTO_IPV6, got %i\n", header->cmsg_level);
     ok(header->cmsg_type == IPV6_TCLASS, "expected IPV6_TCLASS, got %i\n", header->cmsg_type);
     ok(header->cmsg_len == sizeof(*header) + sizeof(INT),
@@ -3014,31 +3014,31 @@ static void test_WSADuplicateSocket(void)
     SetLastError(0xdeadbeef);
     ok(WSADuplicateSocketA(0, 0, NULL), "WSADuplicateSocketA should have failed\n");
     err = WSAGetLastError();
-    ok(err == WSAENOTSOCK, "expected 10038, received %d\n", err);
+    ok(err == WSAENOTSOCK, "expected 10038, received %ld\n", err);
 
     SetLastError(0xdeadbeef);
     ok(WSADuplicateSocketA(source, 0, NULL),
        "WSADuplicateSocketA should have failed\n");
     err = WSAGetLastError();
-    ok(err == WSAEINVAL, "expected 10022, received %d\n", err);
+    ok(err == WSAEINVAL, "expected 10022, received %ld\n", err);
 
     SetLastError(0xdeadbeef);
     ok(WSADuplicateSocketA(source, ~0, &info),
        "WSADuplicateSocketA should have failed\n");
     err = WSAGetLastError();
-    ok(err == WSAEINVAL, "expected 10022, received %d\n", err);
+    ok(err == WSAEINVAL, "expected 10022, received %ld\n", err);
 
     SetLastError(0xdeadbeef);
     ok(WSADuplicateSocketA(0, GetCurrentProcessId(), &info),
        "WSADuplicateSocketA should have failed\n");
     err = WSAGetLastError();
-    ok(err == WSAENOTSOCK, "expected 10038, received %d\n", err);
+    ok(err == WSAENOTSOCK, "expected 10038, received %ld\n", err);
 
     SetLastError(0xdeadbeef);
     ok(WSADuplicateSocketA(source, GetCurrentProcessId(), NULL),
        "WSADuplicateSocketA should have failed\n");
     err = WSAGetLastError();
-    ok(err == WSAEFAULT, "expected 10014, received %d\n", err);
+    ok(err == WSAEFAULT, "expected 10014, received %ld\n", err);
 
     /* test returned structure */
     memset(&info, 0, sizeof(info));
@@ -3152,7 +3152,7 @@ static void test_WSADuplicateSocket(void)
     ok(recvfrom(dupsock, buffer, sizeof(teststr), 0, (struct sockaddr *) &addr, &addrsize) == -1,
        "recvfrom should have failed\n");
     err = WSAGetLastError();
-    ok(err == WSAEINVAL, "expected 10022, received %d\n", err);
+    ok(err == WSAEINVAL, "expected 10022, received %ld\n", err);
     }
 
     closesocket(dupsock);
@@ -3200,12 +3200,12 @@ static void test_WSAEnumNetworkEvents(void)
                     "Test[%d]: WSAEnumNetworkEvents failed\n", i);
                 if (i >= 1 && j == 0) /* FD_WRITE is SET on first try for UDP and connected TCP */
                 {
-                    ok (net_events.lNetworkEvents == FD_WRITE, "Test[%d]: expected 2, got %d\n",
+                    ok (net_events.lNetworkEvents == FD_WRITE, "Test[%d]: expected 2, got %ld\n",
                         i, net_events.lNetworkEvents);
                 }
                 else
                 {
-                    ok (net_events.lNetworkEvents == 0, "Test[%d]: expected 0, got %d\n",
+                    ok (net_events.lNetworkEvents == 0, "Test[%d]: expected 0, got %ld\n",
                         i, net_events.lNetworkEvents);
                 }
                 for (k = 0; k < FD_MAX_EVENTS; k++)
@@ -3247,7 +3247,7 @@ static DWORD WINAPI SelectReadThread(void *param)
     addr.sin_port = htons(SERVERPORT);
 
     do_bind(par->s, (struct sockaddr *)&addr, sizeof(addr));
-    wsa_ok(listen(par->s, SOMAXCONN ), 0 ==, "SelectReadThread (%x): listen failed: %d\n");
+    wsa_ok(listen(par->s, SOMAXCONN ), 0 ==, "SelectReadThread (%lx): listen failed: %d\n");
 
     SetEvent(server_ready);
     ret = select(par->s+1, &readfds, NULL, NULL, &select_timeout);
@@ -3447,7 +3447,7 @@ static void test_select(void)
     ret = select(maxfd+1, &readfds, &writefds, &exceptfds, &select_timeout);
     ticks = GetTickCount() - ticks;
     ok(ret == 0, "select should not return any socket handles\n");
-    ok(ticks < 100, "select was blocking for %u ms\n", ticks);
+    ok(ticks < 100, "select was blocking for %lu ms\n", ticks);
     ok(!FD_ISSET(fdRead, &readfds), "FD should not be set\n");
     ok(!FD_ISSET(fdWrite, &writefds), "FD should not be set\n");
     ok(!FD_ISSET(fdRead, &exceptfds), "FD should not be set\n");
@@ -3474,7 +3474,7 @@ static void test_select(void)
     thread_params.ReadKilled = FALSE;
     server_ready = CreateEventA(NULL, TRUE, FALSE, NULL);
     thread_handle = CreateThread (NULL, 0, SelectReadThread, &thread_params, 0, &id );
-    ok ( (thread_handle != NULL), "CreateThread failed unexpectedly: %d\n", GetLastError());
+    ok ( (thread_handle != NULL), "CreateThread failed unexpectedly: %ld\n", GetLastError());
 
     WaitForSingleObject (server_ready, INFINITE);
     Sleep(200);
@@ -3676,7 +3676,7 @@ static void test_select(void)
     id = 0xdeadbeef;
     ret = getsockopt(fdWrite, SOL_SOCKET, SO_ERROR, (char*)&id, &len);
     ok(!ret, "getsockopt failed with %d\n", WSAGetLastError());
-    ok(id == 0, "expected 0, got %d\n", id);
+    ok(id == 0, "expected 0, got %ld\n", id);
 
     /* When data is received the receiver gets the read descriptor */
     ret = send(fdWrite, "1234", 4, 0);
@@ -3732,7 +3732,7 @@ static void test_select(void)
     SetLastError(0xdeadbeef);
     ret = recv(fdRead, tmp_buf, sizeof(tmp_buf), MSG_OOB);
     ok(ret == SOCKET_ERROR, "expected SOCKET_ERROR, got %d\n", ret);
-    ok(GetLastError() == WSAEINVAL, "expected 10022, got %d\n", GetLastError());
+    ok(GetLastError() == WSAEINVAL, "expected 10022, got %ld\n", GetLastError());
     ret = recv(fdRead, tmp_buf, sizeof(tmp_buf), 0);
     ok(ret == 1, "expected 1, got %d\n", ret);
     ok(tmp_buf[0] == 'A', "expected 'A', got 0x%02X\n", tmp_buf[0]);
@@ -3782,13 +3782,13 @@ static void test_select(void)
         id = 0xdeadbeef;
         ret = getsockopt(fdWrite, SOL_SOCKET, SO_ERROR, (char *)&id, &len);
         ok(!ret, "getsockopt failed with %d\n", WSAGetLastError());
-        ok(id == WSAECONNREFUSED, "got error %u\n", id);
+        ok(id == WSAECONNREFUSED, "got error %lu\n", id);
 
         len = sizeof(id);
         id = 0xdeadbeef;
         ret = getsockopt(fdWrite, SOL_SOCKET, SO_ERROR, (char *)&id, &len);
         ok(!ret, "getsockopt failed with %d\n", WSAGetLastError());
-        ok(id == WSAECONNREFUSED, "got error %u\n", id);
+        ok(id == WSAECONNREFUSED, "got error %lu\n", id);
 
         FD_ZERO_ALL();
         FD_SET(fdWrite, &readfds);
@@ -3818,7 +3818,7 @@ static void test_select(void)
         id = 0xdeadbeef;
         ret = getsockopt(fdWrite, SOL_SOCKET, SO_ERROR, (char *)&id, &len);
         ok(!ret, "getsockopt failed with %d\n", WSAGetLastError());
-        ok(id == WSAECONNREFUSED, "got error %u\n", id);
+        ok(id == WSAECONNREFUSED, "got error %lu\n", id);
 
         FD_ZERO_ALL();
         FD_SET(fdWrite, &readfds);
@@ -3855,7 +3855,7 @@ static void test_select(void)
         id = 0xdeadbeef;
         ret = getsockopt(fdWrite, SOL_SOCKET, SO_ERROR, (char *)&id, &len);
         ok(!ret, "getsockopt failed with %d\n", WSAGetLastError());
-        ok(!id, "got error %u\n", id);
+        ok(!id, "got error %lu\n", id);
 
         closesocket(fdWrite);
 
@@ -3880,7 +3880,7 @@ static void test_select(void)
         id = 0xdeadbeef;
         ret = getsockopt(fdWrite, SOL_SOCKET, SO_ERROR, (char *)&id, &len);
         ok(!ret, "getsockopt failed with %d\n", WSAGetLastError());
-        todo_wine ok(!id, "got error %u\n", id);
+        todo_wine ok(!id, "got error %lu\n", id);
 
         closesocket(fdWrite);
     }
@@ -3900,7 +3900,7 @@ static void test_select(void)
     SetLastError(0xdeadbeef);
     ret = select(0, &readfds, NULL, &exceptfds, &select_timeout);
     ok(ret == SOCKET_ERROR, "expected -1, got %d\n", ret);
-    ok(GetLastError() == WSAENOTSOCK, "got %d\n", GetLastError());
+    ok(GetLastError() == WSAENOTSOCK, "got %ld\n", GetLastError());
     /* descriptor sets are unchanged */
     ok(readfds.fd_count == 2, "expected 2, got %d\n", readfds.fd_count);
     ok(exceptfds.fd_count == 2, "expected 2, got %d\n", exceptfds.fd_count);
@@ -3909,7 +3909,7 @@ static void test_select(void)
     /* Close the socket currently being selected in a thread - bug 38399 */
     tcp_socketpair(&fdRead, &fdWrite);
     thread_handle = CreateThread(NULL, 0, SelectCloseThread, &fdWrite, 0, &id);
-    ok(thread_handle != NULL, "CreateThread failed unexpectedly: %d\n", GetLastError());
+    ok(thread_handle != NULL, "CreateThread failed unexpectedly: %ld\n", GetLastError());
     FD_ZERO_ALL();
     FD_SET_ALL(fdWrite);
     ret = select(0, &readfds, NULL, &exceptfds, &select_timeout);
@@ -3920,13 +3920,13 @@ static void test_select(void)
     /* test again with only the except descriptor */
     tcp_socketpair(&fdRead, &fdWrite);
     thread_handle = CreateThread(NULL, 0, SelectCloseThread, &fdWrite, 0, &id);
-    ok(thread_handle != NULL, "CreateThread failed unexpectedly: %d\n", GetLastError());
+    ok(thread_handle != NULL, "CreateThread failed unexpectedly: %ld\n", GetLastError());
     FD_ZERO_ALL();
     FD_SET(fdWrite, &exceptfds);
     SetLastError(0xdeadbeef);
     ret = select(0, NULL, NULL, &exceptfds, &select_timeout);
     ok(ret == SOCKET_ERROR, "expected -1, got %d\n", ret);
-    ok(GetLastError() == WSAENOTSOCK, "got %d\n", GetLastError());
+    ok(GetLastError() == WSAENOTSOCK, "got %ld\n", GetLastError());
     ok(!FD_ISSET(fdWrite, &exceptfds), "fdWrite socket is in the set\n");
     WaitForSingleObject (thread_handle, 1000);
     closesocket(fdRead);
@@ -4294,7 +4294,7 @@ static void test_getsockname(void)
     ok(!WSAGetLastError() || WSAGetLastError() == 0xdeadbeef /* < 7 */, "got error %u\n", WSAGetLastError());
     ok(sa_get.sin_family == AF_INET, "got family %#x\n", sa_get.sin_family);
     ok(sa_get.sin_port != 0, "got zero port\n");
-    ok(sa_get.sin_addr.s_addr == INADDR_ANY, "got addr %08x\n", sa_get.sin_addr.s_addr);
+    ok(sa_get.sin_addr.s_addr == INADDR_ANY, "got addr %08lx\n", sa_get.sin_addr.s_addr);
 
     ret = memcmp(sa_get.sin_zero, null_padding, 8);
     ok(ret == 0, "getsockname did not zero the sockaddr_in structure\n");
@@ -4319,17 +4319,17 @@ static void test_getsockname(void)
             ip.s_addr = *(ULONG *) h->h_addr_list[i];
 
             sock = socket(AF_INET, SOCK_DGRAM, 0);
-            ok(sock != INVALID_SOCKET, "socket failed with %d\n", GetLastError());
+            ok(sock != INVALID_SOCKET, "socket failed with %ld\n", GetLastError());
 
             memset(&sa_set, 0, sizeof(sa_set));
             sa_set.sin_family = AF_INET;
             sa_set.sin_addr.s_addr = ip.s_addr;
             /* The same address we bind must be the same address we get */
             ret = bind(sock, (struct sockaddr*)&sa_set, sizeof(sa_set));
-            ok(ret == 0, "bind failed with %d\n", GetLastError());
+            ok(ret == 0, "bind failed with %ld\n", GetLastError());
             sa_get_len = sizeof(sa_get);
             ret = getsockname(sock, (struct sockaddr*)&sa_get, &sa_get_len);
-            ok(ret == 0, "getsockname failed with %d\n", GetLastError());
+            ok(ret == 0, "getsockname failed with %ld\n", GetLastError());
             strcpy(ipstr, inet_ntoa(sa_get.sin_addr));
             ok(sa_get.sin_addr.s_addr == sa_set.sin_addr.s_addr,
                "address does not match: %s != %s\n", ipstr, inet_ntoa(sa_set.sin_addr));
@@ -4347,7 +4347,7 @@ static unsigned int apc_count;
 
 static void WINAPI socket_apc(DWORD error, DWORD size, OVERLAPPED *overlapped, DWORD flags)
 {
-    ok(!flags, "got flags %#x\n", flags);
+    ok(!flags, "got flags %#lx\n", flags);
     ++apc_count;
     apc_error = error;
     apc_size = size;
@@ -4413,7 +4413,7 @@ static void test_fionread_siocatmark(void)
     ret = WSAIoctl(client, FIONREAD, NULL, 0, &value, sizeof(value) - 1, &size, NULL, NULL);
     ok(ret == -1, "expected failure\n");
     ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
-    ok(size == 0xdeadbeef, "got size %u\n", size);
+    ok(size == 0xdeadbeef, "got size %lu\n", size);
 
     WSASetLastError(0xdeadbeef);
     ret = WSAIoctl(client, SIOCATMARK, NULL, 0, &value, sizeof(value), NULL, NULL, NULL);
@@ -4425,7 +4425,7 @@ static void test_fionread_siocatmark(void)
     ret = WSAIoctl(client, SIOCATMARK, NULL, 0, &value, sizeof(value) - 1, &size, NULL, NULL);
     ok(ret == -1, "expected failure\n");
     ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
-    ok(size == 0xdeadbeef, "got size %u\n", size);
+    ok(size == 0xdeadbeef, "got size %lu\n", size);
 
     check_fionread_siocatmark(client, 0, TRUE);
 
@@ -4448,13 +4448,13 @@ static void test_fionread_siocatmark(void)
     ok(!ret, "expected success\n");
     ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
     ok(!value, "got %u\n", value);
-    ok(size == sizeof(value), "got size %u\n", size);
-    ok(!overlapped.Internal, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    ok(size == sizeof(value), "got size %lu\n", size);
+    ok(!overlapped.Internal, "got status %#lx\n", (NTSTATUS)overlapped.Internal);
     ok(!overlapped.InternalHigh, "got size %Iu\n", overlapped.InternalHigh);
 
     ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
-    ok(ret, "got error %u\n", GetLastError());
-    ok(!size, "got size %u\n", size);
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(!size, "got size %lu\n", size);
     ok(key == 123, "got key %Iu\n", key);
     ok(overlapped_ptr == &overlapped, "got overlapped %p\n", overlapped_ptr);
 
@@ -4467,13 +4467,13 @@ static void test_fionread_siocatmark(void)
     ok(!ret, "expected success\n");
     ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
     ok(value == TRUE, "got %u\n", value);
-    ok(size == sizeof(value), "got size %u\n", size);
-    ok(!overlapped.Internal, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    ok(size == sizeof(value), "got size %lu\n", size);
+    ok(!overlapped.Internal, "got status %#lx\n", (NTSTATUS)overlapped.Internal);
     ok(!overlapped.InternalHigh, "got size %Iu\n", overlapped.InternalHigh);
 
     ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
-    ok(ret, "got error %u\n", GetLastError());
-    ok(!size, "got size %u\n", size);
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(!size, "got size %lu\n", size);
     ok(key == 123, "got key %Iu\n", key);
     ok(overlapped_ptr == &overlapped, "got overlapped %p\n", overlapped_ptr);
 
@@ -4577,26 +4577,26 @@ static void test_fionread_siocatmark(void)
     size = 0xdeadbeef;
     ret = WSAIoctl(server, FIONREAD, NULL, 0, &value, sizeof(value), &size, &overlapped, socket_apc);
     ok(!ret, "expected success\n");
-    ok(size == sizeof(value), "got size %u\n", size);
+    ok(size == sizeof(value), "got size %lu\n", size);
 
     ret = SleepEx(0, TRUE);
     ok(ret == WAIT_IO_COMPLETION, "got %d\n", ret);
     ok(apc_count == 1, "APC was called %u times\n", apc_count);
-    ok(!apc_error, "got APC error %u\n", apc_error);
-    ok(!apc_size, "got APC size %u\n", apc_size);
+    ok(!apc_error, "got APC error %lu\n", apc_error);
+    ok(!apc_size, "got APC size %lu\n", apc_size);
     ok(apc_overlapped == &overlapped, "got APC overlapped %p\n", apc_overlapped);
 
     apc_count = 0;
     size = 0xdeadbeef;
     ret = WSAIoctl(server, SIOCATMARK, NULL, 0, &value, sizeof(value), &size, &overlapped, socket_apc);
     ok(!ret, "expected success\n");
-    ok(size == sizeof(value), "got size %u\n", size);
+    ok(size == sizeof(value), "got size %lu\n", size);
 
     ret = SleepEx(0, TRUE);
     ok(ret == WAIT_IO_COMPLETION, "got %d\n", ret);
     ok(apc_count == 1, "APC was called %u times\n", apc_count);
-    ok(!apc_error, "got APC error %u\n", apc_error);
-    ok(!apc_size, "got APC size %u\n", apc_size);
+    ok(!apc_error, "got APC error %lu\n", apc_error);
+    ok(!apc_size, "got APC size %lu\n", apc_size);
     ok(apc_overlapped == &overlapped, "got APC overlapped %p\n", apc_overlapped);
 
     closesocket(server);
@@ -4636,7 +4636,7 @@ static void test_fionbio(void)
     ret = WSAIoctl(s, FIONBIO, &one, sizeof(one), NULL, 0, &size, NULL, NULL);
     ok(!ret, "expected success\n");
     ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
-    ok(!size, "got size %u\n", size);
+    ok(!size, "got size %lu\n", size);
 
     ret = WSAIoctl(s, FIONBIO, &one, sizeof(one) + 1, NULL, 0, &size, NULL, NULL);
     ok(!ret, "got error %u\n", WSAGetLastError());
@@ -4651,13 +4651,13 @@ static void test_fionbio(void)
     size = 0xdeadbeef;
     ret = WSAIoctl(s, FIONBIO, &one, sizeof(one), NULL, 0, &size, &overlapped, NULL);
     ok(!ret, "expected success\n");
-    ok(!size, "got size %u\n", size);
+    ok(!size, "got size %lu\n", size);
 
     ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
-    ok(ret, "got error %u\n", GetLastError());
-    ok(!size, "got size %u\n", size);
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(!size, "got size %lu\n", size);
     ok(overlapped_ptr == &overlapped, "got overlapped %p\n", overlapped_ptr);
-    ok(!overlapped.Internal, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    ok(!overlapped.Internal, "got status %#lx\n", (NTSTATUS)overlapped.Internal);
     ok(!overlapped.InternalHigh, "got size %Iu\n", overlapped.InternalHigh);
 
     ret = WSAIoctl(s, FIONBIO, &one, sizeof(one), NULL, 0, NULL, &overlapped, NULL);
@@ -4674,7 +4674,7 @@ static void test_fionbio(void)
     ret = WSAIoctl(s, FIONBIO, &zero, sizeof(zero), NULL, 0, &size, NULL, NULL);
     ok(ret == -1, "expected failure\n");
     ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
-    todo_wine ok(!size, "got size %u\n", size);
+    todo_wine ok(!size, "got size %lu\n", size);
 
     CloseHandle(port);
     closesocket(s);
@@ -4690,13 +4690,13 @@ static void test_fionbio(void)
     size = 0xdeadbeef;
     ret = WSAIoctl(s, FIONBIO, &one, sizeof(one), NULL, 0, &size, &overlapped, socket_apc);
     ok(!ret, "expected success\n");
-    ok(!size, "got size %u\n", size);
+    ok(!size, "got size %lu\n", size);
 
     ret = SleepEx(0, TRUE);
     ok(ret == WAIT_IO_COMPLETION, "got %d\n", ret);
     ok(apc_count == 1, "APC was called %u times\n", apc_count);
-    ok(!apc_error, "got APC error %u\n", apc_error);
-    ok(!apc_size, "got APC size %u\n", apc_size);
+    ok(!apc_error, "got APC error %lu\n", apc_error);
+    ok(!apc_size, "got APC size %lu\n", apc_size);
     ok(apc_overlapped == &overlapped, "got APC overlapped %p\n", apc_overlapped);
 
     closesocket(s);
@@ -4721,14 +4721,14 @@ static void test_keepalive_vals(void)
     ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, 0, NULL, 0, &size, NULL, NULL);
     ok(ret == SOCKET_ERROR, "WSAIoctl succeeded unexpectedly\n");
     ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
-    ok(!size, "got size %u\n", size);
+    ok(!size, "got size %lu\n", size);
 
     WSASetLastError(0xdeadbeef);
     size = 0xdeadbeef;
     ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, NULL, sizeof(kalive), NULL, 0, &size, NULL, NULL);
     ok(ret == SOCKET_ERROR, "WSAIoctl succeeded unexpectedly\n");
     ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
-    ok(!size, "got size %u\n", size);
+    ok(!size, "got size %lu\n", size);
 
     WSASetLastError(0xdeadbeef);
     size = 0xdeadbeef;
@@ -4736,7 +4736,7 @@ static void test_keepalive_vals(void)
     ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(kalive), NULL, 0, &size, NULL, NULL);
     ok(ret == 0, "WSAIoctl failed unexpectedly\n");
     ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
-    ok(!size, "got size %u\n", size);
+    ok(!size, "got size %lu\n", size);
 
     ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(kalive), NULL, 0, NULL, NULL, NULL);
     ok(ret == SOCKET_ERROR, "WSAIoctl succeeded unexpectedly\n");
@@ -4753,8 +4753,8 @@ static void test_keepalive_vals(void)
     ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(kalive) - 1, NULL, 0, &size, &overlapped, NULL);
     ok(ret == SOCKET_ERROR, "WSAIoctl succeeded unexpectedly\n");
     ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
-    ok(size == 0xdeadbeef, "got size %u\n", size);
-    todo_wine ok(overlapped.Internal == STATUS_PENDING, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    ok(size == 0xdeadbeef, "got size %lu\n", size);
+    todo_wine ok(overlapped.Internal == STATUS_PENDING, "got status %#lx\n", (NTSTATUS)overlapped.Internal);
     ok(overlapped.InternalHigh == 0xdeadbeef, "got size %Iu\n", overlapped.InternalHigh);
 
     WSASetLastError(0xdeadbeef);
@@ -4764,13 +4764,13 @@ static void test_keepalive_vals(void)
     ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(kalive), NULL, 0, &size, &overlapped, NULL);
     ok(ret == 0, "WSAIoctl failed unexpectedly\n");
     ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
-    todo_wine ok(size == 0xdeadbeef, "got size %u\n", size);
+    todo_wine ok(size == 0xdeadbeef, "got size %lu\n", size);
 
     ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
-    ok(ret, "got error %u\n", GetLastError());
-    ok(!size, "got size %u\n", size);
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(!size, "got size %lu\n", size);
     ok(overlapped_ptr == &overlapped, "got overlapped %p\n", overlapped_ptr);
-    ok(!overlapped.Internal, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    ok(!overlapped.Internal, "got status %#lx\n", (NTSTATUS)overlapped.Internal);
     ok(!overlapped.InternalHigh, "got size %Iu\n", overlapped.InternalHigh);
 
     make_keepalive(kalive, 1, 0, 0);
@@ -4806,13 +4806,13 @@ static void test_keepalive_vals(void)
     size = 0xdeadbeef;
     ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(kalive), NULL, 0, &size, &overlapped, socket_apc);
     ok(!ret, "expected success\n");
-    ok(!size, "got size %u\n", size);
+    ok(!size, "got size %lu\n", size);
 
     ret = SleepEx(0, TRUE);
     ok(ret == WAIT_IO_COMPLETION, "got %d\n", ret);
     ok(apc_count == 1, "APC was called %u times\n", apc_count);
-    ok(!apc_error, "got APC error %u\n", apc_error);
-    ok(!apc_size, "got APC size %u\n", apc_size);
+    ok(!apc_error, "got APC error %lu\n", apc_error);
+    ok(!apc_size, "got APC size %lu\n", apc_size);
     ok(apc_overlapped == &overlapped, "got APC overlapped %p\n", apc_overlapped);
 
     closesocket(sock);
@@ -4832,7 +4832,7 @@ static void test_unsupported_ioctls(void)
 
     for (i = 0; i < ARRAY_SIZE(codes); ++i)
     {
-        winetest_push_context("ioctl %#x", codes[i]);
+        winetest_push_context("ioctl %#lx", codes[i]);
         s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
         port = CreateIoCompletionPort((HANDLE)s, NULL, 123, 0);
 
@@ -4846,7 +4846,7 @@ static void test_unsupported_ioctls(void)
         ret = WSAIoctl(s, codes[i], NULL, 0, NULL, 0, &size, NULL, NULL);
         ok(ret == -1, "expected failure\n");
         ok(WSAGetLastError() == WSAEOPNOTSUPP, "got error %u\n", WSAGetLastError());
-        ok(!size, "got size %u\n", size);
+        ok(!size, "got size %lu\n", size);
 
         WSASetLastError(0xdeadbeef);
         size = 0xdeadbeef;
@@ -4855,16 +4855,16 @@ static void test_unsupported_ioctls(void)
         ret = WSAIoctl(s, codes[i], NULL, 0, NULL, 0, &size, &overlapped, NULL);
         ok(ret == -1, "expected failure\n");
         ok(WSAGetLastError() == ERROR_IO_PENDING, "got error %u\n", WSAGetLastError());
-        ok(size == 0xdeadbeef, "got size %u\n", size);
+        ok(size == 0xdeadbeef, "got size %lu\n", size);
 
         ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
         ok(!ret, "expected failure\n");
-        ok(GetLastError() == ERROR_NOT_SUPPORTED, "got error %u\n", GetLastError());
-        ok(!size, "got size %u\n", size);
+        ok(GetLastError() == ERROR_NOT_SUPPORTED, "got error %lu\n", GetLastError());
+        ok(!size, "got size %lu\n", size);
         ok(key == 123, "got key %Iu\n", key);
         ok(overlapped_ptr == &overlapped, "got overlapped %p\n", overlapped_ptr);
         ok((NTSTATUS)overlapped.Internal == STATUS_NOT_SUPPORTED,
-                "got status %#x\n", (NTSTATUS)overlapped.Internal);
+                "got status %#lx\n", (NTSTATUS)overlapped.Internal);
         ok(!overlapped.InternalHigh, "got size %Iu\n", overlapped.InternalHigh);
 
         CloseHandle(port);
@@ -4881,13 +4881,13 @@ static void test_unsupported_ioctls(void)
         ret = WSAIoctl(s, codes[i], NULL, 0, NULL, 0, &size, &overlapped, socket_apc);
         ok(ret == -1, "expected failure\n");
         ok(WSAGetLastError() == ERROR_IO_PENDING, "got error %u\n", WSAGetLastError());
-        ok(size == 0xdeadbeef, "got size %u\n", size);
+        ok(size == 0xdeadbeef, "got size %lu\n", size);
 
         ret = SleepEx(0, TRUE);
         ok(ret == WAIT_IO_COMPLETION, "got %d\n", ret);
         ok(apc_count == 1, "APC was called %u times\n", apc_count);
-        ok(apc_error == WSAEOPNOTSUPP, "got APC error %u\n", apc_error);
-        ok(!apc_size, "got APC size %u\n", apc_size);
+        ok(apc_error == WSAEOPNOTSUPP, "got APC error %lu\n", apc_error);
+        ok(!apc_size, "got APC size %lu\n", apc_size);
         ok(apc_overlapped == &overlapped, "got APC overlapped %p\n", apc_overlapped);
 
         closesocket(s);
@@ -4922,7 +4922,7 @@ static void test_get_extension_func(void)
             &func, sizeof(func), &size, NULL, NULL);
     ok(!ret, "expected success\n");
     ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
-    ok(size == sizeof(func), "got size %u\n", size);
+    ok(size == sizeof(func), "got size %lu\n", size);
 
     WSASetLastError(0xdeadbeef);
     size = 0xdeadbeef;
@@ -4932,14 +4932,14 @@ static void test_get_extension_func(void)
             &func, sizeof(func), &size, &overlapped, NULL);
     ok(!ret, "expected success\n");
     ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
-    ok(size == sizeof(func), "got size %u\n", size);
+    ok(size == sizeof(func), "got size %lu\n", size);
 
     ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
-    ok(ret, "got error %u\n", GetLastError());
-    ok(!size, "got size %u\n", size);
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(!size, "got size %lu\n", size);
     ok(key == 123, "got key %Iu\n", key);
     ok(overlapped_ptr == &overlapped, "got overlapped %p\n", overlapped_ptr);
-    ok(!overlapped.Internal, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    ok(!overlapped.Internal, "got status %#lx\n", (NTSTATUS)overlapped.Internal);
     ok(!overlapped.InternalHigh, "got size %Iu\n", overlapped.InternalHigh);
 
     size = 0xdeadbeef;
@@ -4949,8 +4949,8 @@ static void test_get_extension_func(void)
             &func, sizeof(func), &size, &overlapped, NULL);
     ok(ret == -1, "expected failure\n");
     ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
-    ok(size == 0xdeadbeef, "got size %u\n", size);
-    ok(overlapped.Internal == 0xdeadbeef, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    ok(size == 0xdeadbeef, "got size %lu\n", size);
+    ok(overlapped.Internal == 0xdeadbeef, "got status %#lx\n", (NTSTATUS)overlapped.Internal);
     ok(overlapped.InternalHigh == 0xdeadbeef, "got size %Iu\n", overlapped.InternalHigh);
 
     ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
@@ -4972,13 +4972,13 @@ static void test_get_extension_func(void)
     ret = WSAIoctl(s, SIO_GET_EXTENSION_FUNCTION_POINTER, &acceptex_guid, sizeof(GUID),
             &func, sizeof(func), &size, &overlapped, socket_apc);
     ok(!ret, "got error %u\n", WSAGetLastError());
-    ok(size == sizeof(func), "got size %u\n", size);
+    ok(size == sizeof(func), "got size %lu\n", size);
 
     ret = SleepEx(0, TRUE);
     ok(ret == WAIT_IO_COMPLETION, "got %d\n", ret);
     ok(apc_count == 1, "APC was called %u times\n", apc_count);
-    ok(!apc_error, "got APC error %u\n", apc_error);
-    ok(!apc_size, "got APC size %u\n", apc_size);
+    ok(!apc_error, "got APC error %lu\n", apc_error);
+    ok(!apc_size, "got APC size %lu\n", apc_size);
     ok(apc_overlapped == &overlapped, "got APC overlapped %p\n", apc_overlapped);
 
     closesocket(s);
@@ -5023,7 +5023,7 @@ static void test_base_handle(void)
         ret = WSAIoctl(s, SIO_BASE_HANDLE, NULL, 0, &base, sizeof(base), &size, NULL, NULL);
         ok(!ret, "expected success\n");
         ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
-        ok(size == sizeof(base), "got size %u\n", size);
+        ok(size == sizeof(base), "got size %lu\n", size);
         ok(base == s, "expected %#Ix, got %#Ix\n", s, base);
 
         WSASetLastError(0xdeadbeef);
@@ -5034,15 +5034,15 @@ static void test_base_handle(void)
         ret = WSAIoctl(s, SIO_BASE_HANDLE, NULL, 0, &base, sizeof(base), &size, &overlapped, NULL);
         ok(ret == -1, "expected failure\n");
         ok(WSAGetLastError() == ERROR_IO_PENDING, "got error %u\n", WSAGetLastError());
-        ok(size == 0xdeadbeef, "got size %u\n", size);
+        ok(size == 0xdeadbeef, "got size %lu\n", size);
 
         ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
         ok(!ret, "expected failure\n");
-        ok(GetLastError() == ERROR_NOT_SUPPORTED, "got error %u\n", GetLastError());
-        ok(!size, "got size %u\n", size);
+        ok(GetLastError() == ERROR_NOT_SUPPORTED, "got error %lu\n", GetLastError());
+        ok(!size, "got size %lu\n", size);
         ok(key == 123, "got key %Iu\n", key);
         ok(overlapped_ptr == &overlapped, "got overlapped %p\n", overlapped_ptr);
-        ok((NTSTATUS)overlapped.Internal == STATUS_NOT_SUPPORTED, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+        ok((NTSTATUS)overlapped.Internal == STATUS_NOT_SUPPORTED, "got status %#lx\n", (NTSTATUS)overlapped.Internal);
         ok(!overlapped.InternalHigh, "got size %Iu\n", overlapped.InternalHigh);
         ok(base == 0xdeadbeef, "expected %#Ix, got %#Ix\n", s, base);
 
@@ -5061,13 +5061,13 @@ static void test_base_handle(void)
         ret = WSAIoctl(s, SIO_BASE_HANDLE, NULL, 0, &base, sizeof(base), &size, &overlapped, socket_apc);
         ok(ret == -1, "expected failure\n");
         ok(WSAGetLastError() == ERROR_IO_PENDING, "got error %u\n", WSAGetLastError());
-        ok(size == 0xdeadbeef, "got size %u\n", size);
+        ok(size == 0xdeadbeef, "got size %lu\n", size);
 
         ret = SleepEx(0, TRUE);
         ok(ret == WAIT_IO_COMPLETION, "got %d\n", ret);
         ok(apc_count == 1, "APC was called %u times\n", apc_count);
-        ok(apc_error == WSAEOPNOTSUPP, "got APC error %u\n", apc_error);
-        ok(!apc_size, "got APC size %u\n", apc_size);
+        ok(apc_error == WSAEOPNOTSUPP, "got APC error %lu\n", apc_error);
+        ok(!apc_size, "got APC size %lu\n", apc_size);
         ok(apc_overlapped == &overlapped, "got APC overlapped %p\n", apc_overlapped);
         ok(base == 0xdeadbeef, "expected %#Ix, got %#Ix\n", s, base);
 
@@ -5122,7 +5122,7 @@ static void test_send(void)
     set_blocking(dst, FALSE);
     /* force disable buffering so we can get a pending overlapped request */
     ret = setsockopt(dst, SOL_SOCKET, SO_SNDBUF, (char *) &zero, sizeof(zero));
-    ok(!ret, "setsockopt SO_SNDBUF failed: %d - %d\n", ret, GetLastError());
+    ok(!ret, "setsockopt SO_SNDBUF failed: %d - %ld\n", ret, GetLastError());
 
     hThread = CreateThread(NULL, 0, drain_socket_thread, &dst, 0, &id);
 
@@ -5141,7 +5141,7 @@ static void test_send(void)
     buf.len = buflen;
 
     ov.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
-    ok(ov.hEvent != NULL, "could not create event object, errno = %d\n", GetLastError());
+    ok(ov.hEvent != NULL, "could not create event object, errno = %ld\n", GetLastError());
     if (!ov.hEvent)
         goto end;
 
@@ -5165,7 +5165,7 @@ static void test_send(void)
             ret = recv(src, buffer, 1, 0);
         }
 
-        ok(ret == 1, "Failed to receive data %d - %d (got %d/%d)\n", ret, GetLastError(), i, buflen);
+        ok(ret == 1, "Failed to receive data %d - %ld (got %d/%d)\n", ret, GetLastError(), i, buflen);
         if (ret != 1)
             break;
 
@@ -5173,12 +5173,12 @@ static void test_send(void)
     }
 
     dwRet = WaitForSingleObject(ov.hEvent, 1000);
-    ok(dwRet == WAIT_OBJECT_0, "Failed to wait for recv message: %d - %d\n", dwRet, GetLastError());
+    ok(dwRet == WAIT_OBJECT_0, "Failed to wait for recv message: %ld - %ld\n", dwRet, GetLastError());
     if (dwRet == WAIT_OBJECT_0)
     {
         bret = GetOverlappedResult((HANDLE)dst, &ov, &bytes_sent, FALSE);
         ok(bret && bytes_sent == buflen,
-           "Got %d instead of %d (%d - %d)\n", bytes_sent, buflen, bret, GetLastError());
+           "Got %ld instead of %d (%d - %ld)\n", bytes_sent, buflen, bret, GetLastError());
     }
 
     WSASetLastError(12345);
@@ -5199,7 +5199,7 @@ end:
     if (hThread != NULL)
     {
         dwRet = WaitForSingleObject(hThread, 500);
-        ok(dwRet == WAIT_OBJECT_0, "failed to wait for thread termination: %d\n", GetLastError());
+        ok(dwRet == WAIT_OBJECT_0, "failed to wait for thread termination: %ld\n", GetLastError());
         CloseHandle(hThread);
     }
     if (ov.hEvent)
@@ -5288,7 +5288,7 @@ static void check_events_(int line, struct event_test_ctx *ctx,
         ret = WSAEnumNetworkEvents(ctx->socket, ctx->event, &events);
         ok_(__FILE__, line)(!ret, "failed to get events, error %u\n", WSAGetLastError());
         todo_wine_if (todo_event)
-            ok_(__FILE__, line)(events.lNetworkEvents == (flag1 | flag2), "got events %#x\n", events.lNetworkEvents);
+            ok_(__FILE__, line)(events.lNetworkEvents == (flag1 | flag2), "got events %#lx\n", events.lNetworkEvents);
     }
 }
 
@@ -6185,25 +6185,25 @@ static void test_WSASendMsg(void)
     ret = pWSASendMsg(INVALID_SOCKET, &msg, 0, NULL, NULL, NULL);
     ok(ret == SOCKET_ERROR, "WSASendMsg should have failed\n");
     err = WSAGetLastError();
-    ok(err == WSAENOTSOCK, "expected 10038, got %d instead\n", err);
+    ok(err == WSAENOTSOCK, "expected 10038, got %ld instead\n", err);
 
     WSASetLastError(0xdeadbeef);
     ret = pWSASendMsg(sock, NULL, 0, NULL, NULL, NULL);
     ok(ret == SOCKET_ERROR, "WSASendMsg should have failed\n");
     err = WSAGetLastError();
-    ok(err == WSAEFAULT, "expected 10014, got %d instead\n", err);
+    ok(err == WSAEFAULT, "expected 10014, got %ld instead\n", err);
 
     WSASetLastError(0xdeadbeef);
     ret = pWSASendMsg(sock, NULL, 0, &bytesSent, NULL, NULL);
     ok(ret == SOCKET_ERROR, "WSASendMsg should have failed\n");
     err = WSAGetLastError();
-    ok(err == WSAEFAULT, "expected 10014, got %d instead\n", err);
+    ok(err == WSAEFAULT, "expected 10014, got %ld instead\n", err);
 
     WSASetLastError(0xdeadbeef);
     ret = pWSASendMsg(sock, &msg, 0, NULL, NULL, NULL);
     ok(ret == SOCKET_ERROR, "WSASendMsg should have failed\n");
     err = WSAGetLastError();
-    ok(err == WSAEFAULT, "expected 10014, got %d instead\n", err);
+    ok(err == WSAEFAULT, "expected 10014, got %ld instead\n", err);
 
     closesocket(sock);
 
@@ -6232,7 +6232,7 @@ static void test_WSASendMsg(void)
     ret = getsockname(sock, (struct sockaddr*)&sockaddr, &addrlen);
     ok(ret == SOCKET_ERROR, "getsockname should have failed\n");
     err = WSAGetLastError();
-    ok(err == WSAEINVAL, "expected 10022, got %d instead\n", err);
+    ok(err == WSAEINVAL, "expected 10022, got %ld instead\n", err);
 
     set_blocking(sock, TRUE);
 
@@ -6241,8 +6241,8 @@ static void test_WSASendMsg(void)
     ret = pWSASendMsg(sock, &msg, 0, &bytesSent, NULL, NULL);
     ok(!ret, "WSASendMsg should have worked\n");
     ok(GetLastError() == 0 || broken(GetLastError() == 0xdeadbeef) /* Win <= 2008 */,
-       "Expected 0, got %d\n", GetLastError());
-    ok(bytesSent == iovec[0].len, "incorrect bytes sent, expected %d, sent %d\n",
+       "Expected 0, got %ld\n", GetLastError());
+    ok(bytesSent == iovec[0].len, "incorrect bytes sent, expected %ld, sent %ld\n",
        iovec[0].len, bytesSent);
 
     /* receive data */
@@ -6250,9 +6250,9 @@ static void test_WSASendMsg(void)
     memset(buffer, 0, sizeof(buffer));
     SetLastError(0xdeadbeef);
     ret = recvfrom(dst, buffer, sizeof(buffer), 0, (struct sockaddr *) &sockaddr, &addrlen);
-    ok(ret == bytesSent, "got %d, expected %d\n",
+    ok(ret == bytesSent, "got %d, expected %ld\n",
        ret, bytesSent);
-    ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %ld\n", GetLastError());
 
     /* A successful call to WSASendMsg must have bound the socket */
     addrlen = sizeof(sockaddr);
@@ -6270,19 +6270,19 @@ static void test_WSASendMsg(void)
     SetLastError(0xdeadbeef);
     ret = pWSASendMsg(sock, &msg, 0, &bytesSent, NULL, NULL);
     ok(!ret, "WSASendMsg should have worked\n");
-    ok(bytesSent == iovec[0].len + iovec[1].len, "incorrect bytes sent, expected %d, sent %d\n",
+    ok(bytesSent == iovec[0].len + iovec[1].len, "incorrect bytes sent, expected %ld, sent %ld\n",
        iovec[0].len + iovec[1].len, bytesSent);
     ok(GetLastError() == 0 || broken(GetLastError() == 0xdeadbeef) /* Win <= 2008 */,
-       "Expected 0, got %d\n", GetLastError());
+       "Expected 0, got %ld\n", GetLastError());
 
     /* receive data */
     addrlen = sizeof(sockaddr);
     memset(buffer, 0, sizeof(buffer));
     SetLastError(0xdeadbeef);
     ret = recvfrom(dst, buffer, sizeof(buffer), 0, (struct sockaddr *) &sockaddr, &addrlen);
-    ok(ret == bytesSent, "got %d, expected %d\n",
+    ok(ret == bytesSent, "got %d, expected %ld\n",
        ret, bytesSent);
-    ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %ld\n", GetLastError());
 
     closesocket(sock);
     closesocket(dst);
@@ -6308,7 +6308,7 @@ todo_wine {
     ok(pWSASendMsg(sock, NULL, 0, NULL, NULL, NULL) == SOCKET_ERROR, "WSASendMsg should have failed\n");
     ok(getsockname(sock, (struct sockaddr*)&sockaddr, &addrlen), "getsockname should have failed\n");
     err = WSAGetLastError();
-    ok(err == WSAEINVAL, "expected 10022, got %d instead\n", err);
+    ok(err == WSAEINVAL, "expected 10022, got %ld instead\n", err);
     closesocket(sock);
 
     /* SOCK_STREAM sockets are not supported */
@@ -6320,7 +6320,7 @@ todo_wine {
     ok(ret == SOCKET_ERROR, "WSASendMsg should have failed\n");
     err = WSAGetLastError();
     todo_wine
-    ok(err == WSAEINVAL, "expected 10014, got %d instead\n", err);
+    ok(err == WSAEINVAL, "expected 10014, got %ld instead\n", err);
     closesocket(sock);
 }
 
@@ -6419,31 +6419,31 @@ static void test_WSARecv(void)
     SetLastError(0xdeadbeef);
     iret = send(src, "test", 4, 0);
     ok(iret == 4, "Expected 4, got %d\n", iret);
-    ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %ld\n", GetLastError());
     SetLastError(0xdeadbeef);
     bytesReturned = 0xdeadbeef;
     iret = WSARecv(dest, bufs, 1, &bytesReturned, &flags, NULL, NULL);
     ok(!iret, "Expected 0, got %d\n", iret);
-    ok(bytesReturned == 2, "Expected 2, got %d\n", bytesReturned);
-    ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
+    ok(bytesReturned == 2, "Expected 2, got %ld\n", bytesReturned);
+    ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %ld\n", GetLastError());
     SetLastError(0xdeadbeef);
     bytesReturned = 0xdeadbeef;
     iret = WSARecv(dest, bufs, 1, &bytesReturned, &flags, NULL, NULL);
     ok(!iret, "Expected 0, got %d\n", iret);
-    ok(bytesReturned == 2, "Expected 2, got %d\n", bytesReturned);
-    ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
+    ok(bytesReturned == 2, "Expected 2, got %ld\n", bytesReturned);
+    ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %ld\n", GetLastError());
 
     bufs[0].len = 4;
     SetLastError(0xdeadbeef);
     iret = send(src, "test", 4, 0);
     ok(iret == 4, "Expected 4, got %d\n", iret);
-    ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %ld\n", GetLastError());
     SetLastError(0xdeadbeef);
     bytesReturned = 0xdeadbeef;
     iret = WSARecv(dest, bufs, 1, &bytesReturned, &flags, NULL, NULL);
     ok(!iret, "Expected 0, got %d\n", iret);
-    ok(bytesReturned == 4, "Expected 4, got %d\n", bytesReturned);
-    ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
+    ok(bytesReturned == 4, "Expected 4, got %ld\n", bytesReturned);
+    ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %ld\n", GetLastError());
 
     /* Test 2 buffers */
     bufs[0].len = 4;
@@ -6452,45 +6452,45 @@ static void test_WSARecv(void)
     SetLastError(0xdeadbeef);
     iret = send(src, "deadbeefs", 9, 0);
     ok(iret == 9, "Expected 9, got %d\n", iret);
-    ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %ld\n", GetLastError());
     SetLastError(0xdeadbeef);
     bytesReturned = 0xdeadbeef;
     iret = WSARecv(dest, bufs, 2, &bytesReturned, &flags, NULL, NULL);
     ok(!iret, "Expected 0, got %d\n", iret);
-    ok(bytesReturned == 9, "Expected 9, got %d\n", bytesReturned);
+    ok(bytesReturned == 9, "Expected 9, got %ld\n", bytesReturned);
     bufs[0].buf[4] = '\0';
     bufs[1].buf[5] = '\0';
     ok(!strcmp(bufs[0].buf, "dead"), "buf[0] doesn't match: %s != dead\n", bufs[0].buf);
     ok(!strcmp(bufs[1].buf, "beefs"), "buf[1] doesn't match: %s != beefs\n", bufs[1].buf);
-    ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %ld\n", GetLastError());
 
     bufs[0].len = sizeof(buf);
     ov.hEvent = event = CreateEventA(NULL, FALSE, FALSE, NULL);
-    ok(ov.hEvent != NULL, "could not create event object, errno = %d\n", GetLastError());
+    ok(ov.hEvent != NULL, "could not create event object, errno = %ld\n", GetLastError());
     if (!event)
         goto end;
 
     ling.l_onoff = 1;
     ling.l_linger = 0;
     iret = setsockopt (src, SOL_SOCKET, SO_LINGER, (char *) &ling, sizeof(ling));
-    ok(!iret, "Failed to set linger %d\n", GetLastError());
+    ok(!iret, "Failed to set linger %ld\n", GetLastError());
 
     iret = WSARecv(dest, bufs, 1, NULL, &flags, &ov, NULL);
-    ok(iret == SOCKET_ERROR && GetLastError() == ERROR_IO_PENDING, "WSARecv failed - %d error %d\n", iret, GetLastError());
+    ok(iret == SOCKET_ERROR && GetLastError() == ERROR_IO_PENDING, "WSARecv failed - %d error %ld\n", iret, GetLastError());
 
     iret = WSARecv(dest, bufs, 1, &bytesReturned, &flags, &ov, NULL);
-    ok(iret == SOCKET_ERROR && GetLastError() == ERROR_IO_PENDING, "WSARecv failed - %d error %d\n", iret, GetLastError());
+    ok(iret == SOCKET_ERROR && GetLastError() == ERROR_IO_PENDING, "WSARecv failed - %d error %ld\n", iret, GetLastError());
 
     closesocket(src);
     src = INVALID_SOCKET;
 
     dwret = WaitForSingleObject(ov.hEvent, 1000);
-    ok(dwret == WAIT_OBJECT_0, "Waiting for disconnect event failed with %d + errno %d\n", dwret, GetLastError());
+    ok(dwret == WAIT_OBJECT_0, "Waiting for disconnect event failed with %ld + errno %ld\n", dwret, GetLastError());
 
     bret = GetOverlappedResult((HANDLE)dest, &ov, &bytesReturned, FALSE);
     todo_wine ok(!bret, "expected failure\n");
-    todo_wine ok(GetLastError() == ERROR_NETNAME_DELETED, "got error %u\n", GetLastError());
-    ok(bytesReturned == 0, "Bytes received is %d\n", bytesReturned);
+    todo_wine ok(GetLastError() == ERROR_NETNAME_DELETED, "got error %lu\n", GetLastError());
+    ok(bytesReturned == 0, "Bytes received is %ld\n", bytesReturned);
     closesocket(dest);
     dest = INVALID_SOCKET;
 
@@ -6532,25 +6532,25 @@ static void test_WSARecv(void)
     ov.hEvent = event;
     ResetEvent(event);
     iret = WSARecv(dest, bufs, 1, NULL, &flags, &ov, io_completion);
-    ok(iret == SOCKET_ERROR && GetLastError() == ERROR_IO_PENDING, "WSARecv failed - %d error %d\n", iret, GetLastError());
+    ok(iret == SOCKET_ERROR && GetLastError() == ERROR_IO_PENDING, "WSARecv failed - %d error %ld\n", iret, GetLastError());
     send(src, "test message", sizeof("test message"), 0);
 
     completion_called = 0;
     dwret = SleepEx(1000, TRUE);
-    ok(dwret == WAIT_IO_COMPLETION, "got %u\n", dwret);
+    ok(dwret == WAIT_IO_COMPLETION, "got %lu\n", dwret);
     ok(completion_called == 1, "completion not called\n");
 
     dwret = WaitForSingleObject(event, 1);
-    ok(dwret == WAIT_TIMEOUT, "got %u\n", dwret);
+    ok(dwret == WAIT_TIMEOUT, "got %lu\n", dwret);
 
     io_port = CreateIoCompletionPort( (HANDLE)dest, NULL, 0, 0 );
-    ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
+    ok(io_port != NULL, "failed to create completion port %lu\n", GetLastError());
 
     /* Using completion function on socket associated with completion port is not allowed. */
     memset(&ov, 0, sizeof(ov));
     completion_called = 0;
     iret = WSARecv(dest, bufs, 1, NULL, &flags, &ov, io_completion);
-    ok(iret == SOCKET_ERROR && GetLastError() == WSAEINVAL, "WSARecv failed - %d error %d\n", iret, GetLastError());
+    ok(iret == SOCKET_ERROR && GetLastError() == WSAEINVAL, "WSARecv failed - %d error %ld\n", iret, GetLastError());
     ok(!completion_called, "completion called\n");
 
     CloseHandle(io_port);
@@ -6599,16 +6599,16 @@ static DWORD CALLBACK write_watch_thread( void *arg )
         buf[0].len = args->size;
         buf[0].buf = args->base;
         ret = WSARecv( args->dest, buf, 1, &bytes, &flags, NULL, NULL );
-        ok( !ret, "WSARecv failed %u\n", GetLastError() );
-        ok( bytes == strlen(args->expect) + 1, "wrong len %d\n", bytes );
+        ok( !ret, "WSARecv failed %lu\n", GetLastError() );
+        ok( bytes == strlen(args->expect) + 1, "wrong len %ld\n", bytes );
         ok( !strcmp( args->base, args->expect ), "wrong data\n" );
         break;
     case 3:
         buf[0].len = args->size;
         buf[0].buf = args->base;
         ret = WSARecvFrom( args->dest, buf, 1, &bytes, &flags, &addr, &addr_len, NULL, NULL );
-        ok( !ret, "WSARecvFrom failed %u\n", GetLastError() );
-        ok( bytes == strlen(args->expect) + 1, "wrong len %d\n", bytes );
+        ok( !ret, "WSARecvFrom failed %lu\n", GetLastError() );
+        ok( bytes == strlen(args->expect) + 1, "wrong len %ld\n", bytes );
         ok( !strcmp( args->base, args->expect ), "wrong data\n" );
         break;
     }
@@ -6642,19 +6642,19 @@ static void test_write_watch(void)
 
     memset(&ov, 0, sizeof(ov));
     ov.hEvent = event = CreateEventA(NULL, FALSE, FALSE, NULL);
-    ok(ov.hEvent != NULL, "could not create event object, errno = %d\n", GetLastError());
+    ok(ov.hEvent != NULL, "could not create event object, errno = %ld\n", GetLastError());
 
     flags = 0;
 
     size = 0x10000;
     base = VirtualAlloc( 0, size, MEM_RESERVE | MEM_COMMIT | MEM_WRITE_WATCH, PAGE_READWRITE );
-    ok( base != NULL, "VirtualAlloc failed %u\n", GetLastError() );
+    ok( base != NULL, "VirtualAlloc failed %lu\n", GetLastError() );
 
     memset( base, 0, size );
     count = 64;
     ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
-    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
-    ok( count == 16, "wrong count %lu\n", count );
+    ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
+    ok( count == 16, "wrong count %Iu\n", count );
 
     bufs[0].len = 5;
     bufs[0].buf = base;
@@ -6663,63 +6663,63 @@ static void test_write_watch(void)
 
     ret = WSARecv( dest, bufs, 2, NULL, &flags, &ov, NULL);
     ok(ret == SOCKET_ERROR && GetLastError() == ERROR_IO_PENDING,
-       "WSARecv failed - %d error %d\n", ret, GetLastError());
+       "WSARecv failed - %d error %ld\n", ret, GetLastError());
 
     count = 64;
     ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
-    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
-    ok( count == 9, "wrong count %lu\n", count );
+    ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
+    ok( count == 9, "wrong count %Iu\n", count );
     ok( !base[0], "data set\n" );
 
     send(src, "test message", sizeof("test message"), 0);
 
     ret = GetOverlappedResult( (HANDLE)dest, &ov, &bytesReturned, TRUE );
-    ok( ret, "GetOverlappedResult failed %u\n", GetLastError() );
-    ok( bytesReturned == sizeof("test message"), "wrong size %u\n", bytesReturned );
+    ok( ret, "GetOverlappedResult failed %lu\n", GetLastError() );
+    ok( bytesReturned == sizeof("test message"), "wrong size %lu\n", bytesReturned );
     ok( !memcmp( base, "test ", 5 ), "wrong data %s\n", base );
     ok( !memcmp( base + 0x4000, "message", 8 ), "wrong data %s\n", base + 0x4000 );
 
     count = 64;
     ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
-    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
-    ok( count == 0, "wrong count %lu\n", count );
+    ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
+    ok( count == 0, "wrong count %Iu\n", count );
 
     memset( base, 0, size );
     count = 64;
     ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
-    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
-    ok( count == 16, "wrong count %lu\n", count );
+    ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
+    ok( count == 16, "wrong count %Iu\n", count );
 
     bufs[1].len = 0x4000;
     bufs[1].buf = base + 0x2000;
     ret = WSARecvFrom( dest, bufs, 2, NULL, &flags, &addr, &addr_len, &ov, NULL);
     ok(ret == SOCKET_ERROR && GetLastError() == ERROR_IO_PENDING,
-       "WSARecv failed - %d error %d\n", ret, GetLastError());
+       "WSARecv failed - %d error %ld\n", ret, GetLastError());
 
     count = 64;
     ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
-    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
-    ok( count == 5, "wrong count %lu\n", count );
+    ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
+    ok( count == 5, "wrong count %Iu\n", count );
     ok( !base[0], "data set\n" );
 
     send(src, "test message", sizeof("test message"), 0);
 
     ret = GetOverlappedResult( (HANDLE)dest, &ov, &bytesReturned, TRUE );
-    ok( ret, "GetOverlappedResult failed %u\n", GetLastError() );
-    ok( bytesReturned == sizeof("test message"), "wrong size %u\n", bytesReturned );
+    ok( ret, "GetOverlappedResult failed %lu\n", GetLastError() );
+    ok( bytesReturned == sizeof("test message"), "wrong size %lu\n", bytesReturned );
     ok( !memcmp( base, "test ", 5 ), "wrong data %s\n", base );
     ok( !memcmp( base + 0x2000, "message", 8 ), "wrong data %s\n", base + 0x2000 );
 
     count = 64;
     ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
-    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
-    ok( count == 0, "wrong count %lu\n", count );
+    ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
+    ok( count == 0, "wrong count %Iu\n", count );
 
     memset( base, 0, size );
     count = 64;
     ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
-    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
-    ok( count == 16, "wrong count %lu\n", count );
+    ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
+    ok( count == 16, "wrong count %Iu\n", count );
 
     args.dest = dest;
     args.base = base;
@@ -6732,8 +6732,8 @@ static void test_write_watch(void)
 
         count = 64;
         ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
-        ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
-        ok( count == 8, "wrong count %lu\n", count );
+        ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
+        ok( count == 8, "wrong count %Iu\n", count );
 
         send(src, "test message", sizeof("test message"), 0);
         WaitForSingleObject( thread, 10000 );
@@ -6741,8 +6741,8 @@ static void test_write_watch(void)
 
         count = 64;
         ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
-        ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
-        ok( count == 0, "wrong count %lu\n", count );
+        ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
+        ok( count == 0, "wrong count %Iu\n", count );
     }
     WSACloseEvent( event );
     closesocket( dest );
@@ -7208,7 +7208,7 @@ static void test_connect(void)
         &pConnectEx, sizeof(pConnectEx), &bytesReturned, NULL, NULL);
     ok(!iret, "failed to get ConnectEx, error %u\n", WSAGetLastError());
 
-    ok(bytesReturned == sizeof(pConnectEx), "expected sizeof(pConnectEx), got %u\n", bytesReturned);
+    ok(bytesReturned == sizeof(pConnectEx), "expected sizeof(pConnectEx), got %lu\n", bytesReturned);
 
     WSASetLastError(0xdeadbeef);
     iret = connect(listener, (struct sockaddr *)&address, sizeof(address));
@@ -7221,7 +7221,7 @@ static void test_connect(void)
     iret = pConnectEx(listener, (struct sockaddr *)&address, sizeof(address), NULL, 0, &bytesReturned, &overlapped);
     ok(!iret, "got %d\n", iret);
     ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
-    ok(overlapped.Internal == STATUS_PENDING, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    ok(overlapped.Internal == STATUS_PENDING, "got status %#lx\n", (NTSTATUS)overlapped.Internal);
     todo_wine ok(overlapped.InternalHigh == 0xdeadbeef, "got size %Iu\n", overlapped.InternalHigh);
 
     bret = pConnectEx(INVALID_SOCKET, (struct sockaddr*)&address, addrlen, NULL, 0, &bytesReturned, &overlapped);
@@ -7249,11 +7249,11 @@ static void test_connect(void)
     ok(bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING, "ConnectEx failed: "
         "returned %d + errno %d\n", bret, WSAGetLastError());
     dwret = WaitForSingleObject(overlapped.hEvent, 15000);
-    ok(dwret == WAIT_OBJECT_0, "Waiting for connect event failed with %d + errno %d\n", dwret, GetLastError());
+    ok(dwret == WAIT_OBJECT_0, "Waiting for connect event failed with %ld + errno %ld\n", dwret, GetLastError());
 
     bret = GetOverlappedResult((HANDLE)connector, &overlapped, &bytesReturned, FALSE);
-    ok(bret, "Connecting failed, error %d\n", GetLastError());
-    ok(bytesReturned == 0, "Bytes sent is %d\n", bytesReturned);
+    ok(bret, "Connecting failed, error %ld\n", GetLastError());
+    ok(bytesReturned == 0, "Bytes sent is %ld\n", bytesReturned);
 
     closesocket(connector);
     connector = socket(AF_INET, SOCK_STREAM, 0);
@@ -7276,18 +7276,18 @@ static void test_connect(void)
     ok(bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING, "ConnectEx failed: "
         "returned %d + errno %d\n", bret, WSAGetLastError());
     dwret = WaitForSingleObject(overlapped.hEvent, 15000);
-    ok(dwret == WAIT_OBJECT_0, "Waiting for connect event failed with %d + errno %d\n", dwret, GetLastError());
+    ok(dwret == WAIT_OBJECT_0, "Waiting for connect event failed with %ld + errno %ld\n", dwret, GetLastError());
 
     bret = GetOverlappedResult((HANDLE)connector, &overlapped, &bytesReturned, FALSE);
-    ok(bret, "Connecting failed, error %d\n", GetLastError());
-    ok(bytesReturned == 3, "Bytes sent is %d\n", bytesReturned);
+    ok(bret, "Connecting failed, error %ld\n", GetLastError());
+    ok(bytesReturned == 3, "Bytes sent is %ld\n", bytesReturned);
 
     acceptor = accept(listener, NULL, NULL);
     ok(acceptor != INVALID_SOCKET, "could not accept socket error %d\n", WSAGetLastError());
 
     bytesReturned = recv(acceptor, buffer, 3, 0);
     buffer[4] = 0;
-    ok(bytesReturned == 3, "Didn't get all sent data, got only %d\n", bytesReturned);
+    ok(bytesReturned == 3, "Didn't get all sent data, got only %ld\n", bytesReturned);
     ok(buffer[0] == '1' && buffer[1] == '2' && buffer[2] == '3',
        "Failed to get the right data, expected '123', got '%s'\n", buffer);
 
@@ -7307,7 +7307,7 @@ static void test_connect(void)
     bret = pConnectEx(connector, (struct sockaddr *)&address, sizeof(address), NULL, 0, &bytesReturned, &overlapped);
     ok(!bret, "got %d\n", bret);
     ok(WSAGetLastError() == WSAEISCONN, "got error %u\n", WSAGetLastError());
-    ok(overlapped.Internal == STATUS_PENDING, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    ok(overlapped.Internal == STATUS_PENDING, "got status %#lx\n", (NTSTATUS)overlapped.Internal);
     todo_wine ok(overlapped.InternalHigh == 0xdeadbeef, "got size %Iu\n", overlapped.InternalHigh);
 
     WSASetLastError(0xdeadbeef);
@@ -7316,7 +7316,7 @@ static void test_connect(void)
     bret = pConnectEx(acceptor, (struct sockaddr *)&address, sizeof(address), NULL, 0, &bytesReturned, &overlapped);
     ok(!bret, "got %d\n", bret);
     ok(WSAGetLastError() == WSAEISCONN, "got error %u\n", WSAGetLastError());
-    ok(overlapped.Internal == STATUS_PENDING, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    ok(overlapped.Internal == STATUS_PENDING, "got status %#lx\n", (NTSTATUS)overlapped.Internal);
     todo_wine ok(overlapped.InternalHigh == 0xdeadbeef, "got size %Iu\n", overlapped.InternalHigh);
 
     closesocket(connector);
@@ -7341,7 +7341,7 @@ static void test_connect(void)
     bret = pConnectEx(connector, (struct sockaddr *)&address, sizeof(address), NULL, 0, &bytesReturned, &overlapped);
     ok(!bret, "got %d\n", bret);
     ok(WSAGetLastError() == WSAEISCONN, "got error %u\n", WSAGetLastError());
-    ok(overlapped.Internal == STATUS_PENDING, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    ok(overlapped.Internal == STATUS_PENDING, "got status %#lx\n", (NTSTATUS)overlapped.Internal);
     todo_wine ok(overlapped.InternalHigh == 0xdeadbeef, "got size %Iu\n", overlapped.InternalHigh);
 
     WSASetLastError(0xdeadbeef);
@@ -7350,7 +7350,7 @@ static void test_connect(void)
     bret = pConnectEx(acceptor, (struct sockaddr *)&address, sizeof(address), NULL, 0, &bytesReturned, &overlapped);
     ok(!bret, "got %d\n", bret);
     ok(WSAGetLastError() == WSAEISCONN, "got error %u\n", WSAGetLastError());
-    ok(overlapped.Internal == STATUS_PENDING, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    ok(overlapped.Internal == STATUS_PENDING, "got status %#lx\n", (NTSTATUS)overlapped.Internal);
     todo_wine ok(overlapped.InternalHigh == 0xdeadbeef, "got size %Iu\n", overlapped.InternalHigh);
 
     closesocket(connector);
@@ -7371,9 +7371,9 @@ static void test_connect(void)
 
     bret = pConnectEx(connector, (struct sockaddr*)&address, addrlen, NULL, 0, &bytesReturned, &overlapped);
     ok(bret == FALSE && GetLastError() == ERROR_IO_PENDING, "ConnectEx to bad destination failed: "
-        "returned %d + errno %d\n", bret, GetLastError());
+        "returned %d + errno %ld\n", bret, GetLastError());
     dwret = WaitForSingleObject(overlapped.hEvent, 15000);
-    ok(dwret == WAIT_OBJECT_0, "Waiting for connect event failed with %d + errno %d\n", dwret, GetLastError());
+    ok(dwret == WAIT_OBJECT_0, "Waiting for connect event failed with %ld + errno %ld\n", dwret, GetLastError());
 
     bret = GetOverlappedResult((HANDLE)connector, &overlapped, &bytesReturned, FALSE);
     ok(bret == FALSE && GetLastError() == ERROR_CONNECTION_REFUSED,
@@ -7443,7 +7443,7 @@ static void test_AcceptEx(void)
         &bytesReturned, &overlapped);
     ok(bret == FALSE && WSAGetLastError() == WSAENOTSOCK, "AcceptEx on invalid listening socket "
         "returned %d + errno %d\n", bret, WSAGetLastError());
-    ok(overlapped.Internal == STATUS_PENDING, "got %08x\n", (ULONG)overlapped.Internal);
+    ok(overlapped.Internal == STATUS_PENDING, "got %08lx\n", (ULONG)overlapped.Internal);
 
     overlapped.Internal = 0xdeadbeef;
     bret = pAcceptEx(listener, acceptor, buffer, sizeof(buffer) - 2*(sizeof(struct sockaddr_in) + 16),
@@ -7452,12 +7452,12 @@ static void test_AcceptEx(void)
     todo_wine
     ok(bret == FALSE && WSAGetLastError() == WSAEINVAL, "AcceptEx on a non-listening socket "
         "returned %d + errno %d\n", bret, WSAGetLastError());
-    ok(overlapped.Internal == STATUS_PENDING, "got %08x\n", (ULONG)overlapped.Internal);
+    ok(overlapped.Internal == STATUS_PENDING, "got %08lx\n", (ULONG)overlapped.Internal);
     if (!bret && WSAGetLastError() == ERROR_IO_PENDING)
         CancelIo((HANDLE)listener);
 
     iret = listen(listener, 5);
-    ok(!iret, "failed to listen, error %u\n", GetLastError());
+    ok(!iret, "failed to listen, error %lu\n", GetLastError());
 
     overlapped.Internal = 0xdeadbeef;
     bret = pAcceptEx(listener, INVALID_SOCKET, buffer, sizeof(buffer) - 2*(sizeof(struct sockaddr_in) + 16),
@@ -7465,7 +7465,7 @@ static void test_AcceptEx(void)
         &bytesReturned, &overlapped);
     ok(bret == FALSE && WSAGetLastError() == WSAENOTSOCK, "AcceptEx on invalid accepting socket "
         "returned %d + errno %d\n", bret, WSAGetLastError());
-    ok(overlapped.Internal == STATUS_PENDING, "got %08x\n", (ULONG)overlapped.Internal);
+    ok(overlapped.Internal == STATUS_PENDING, "got %08lx\n", (ULONG)overlapped.Internal);
 
     overlapped.Internal = 0xdeadbeef;
     bret = pAcceptEx(listener, acceptor, NULL, sizeof(buffer) - 2*(sizeof(struct sockaddr_in) + 16),
@@ -7473,7 +7473,7 @@ static void test_AcceptEx(void)
         &bytesReturned, &overlapped);
     todo_wine ok(bret == FALSE && WSAGetLastError() == WSAEFAULT,
         "AcceptEx on NULL buffer returned %d + errno %d\n", bret, WSAGetLastError());
-    ok(overlapped.Internal == STATUS_PENDING, "got %08x\n", (ULONG)overlapped.Internal);
+    ok(overlapped.Internal == STATUS_PENDING, "got %08lx\n", (ULONG)overlapped.Internal);
 
     overlapped.Internal = 0xdeadbeef;
     bret = pAcceptEx(listener, acceptor, buffer, 0, 0, sizeof(struct sockaddr_in) + 16,
@@ -7481,7 +7481,7 @@ static void test_AcceptEx(void)
     ok(bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING,
         "AcceptEx on too small local address size returned %d + errno %d\n",
         bret, WSAGetLastError());
-    ok(overlapped.Internal == STATUS_PENDING, "got %08x\n", (ULONG)overlapped.Internal);
+    ok(overlapped.Internal == STATUS_PENDING, "got %08lx\n", (ULONG)overlapped.Internal);
 
     connector = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     ok(connector != -1, "failed to create socket, error %u\n", WSAGetLastError());
@@ -7493,9 +7493,9 @@ static void test_AcceptEx(void)
     dwret = WaitForSingleObject(overlapped.hEvent, 1000);
     ok(!dwret, "wait failed\n");
     bret = GetOverlappedResult((HANDLE)listener, &overlapped, &bytesReturned, FALSE);
-    ok(bret, "got error %u\n", GetLastError());
-    ok(!(NTSTATUS)overlapped.Internal, "got %#lx\n", overlapped.Internal);
-    ok(!bytesReturned, "got size %u\n", bytesReturned);
+    ok(bret, "got error %lu\n", GetLastError());
+    ok(!(NTSTATUS)overlapped.Internal, "got %#Ix\n", overlapped.Internal);
+    ok(!bytesReturned, "got size %lu\n", bytesReturned);
 
     readBindAddress = readRemoteAddress = (struct sockaddr_in *)0xdeadbeef;
     localSize = remoteSize = 0xdeadbeef;
@@ -7517,7 +7517,7 @@ static void test_AcceptEx(void)
     bret = pAcceptEx(listener, acceptor, buffer, 0, 0, sizeof(struct sockaddr_in) + 16, &bytesReturned, &overlapped);
     ok(!bret, "expected failure\n");
     todo_wine ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
-    ok(overlapped.Internal == STATUS_PENDING, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    ok(overlapped.Internal == STATUS_PENDING, "got status %#lx\n", (NTSTATUS)overlapped.Internal);
     if (WSAGetLastError() == ERROR_IO_PENDING)
         CancelIo((HANDLE)listener);
 
@@ -7533,7 +7533,7 @@ static void test_AcceptEx(void)
     bret = pAcceptEx(listener, acceptor, buffer, 0, 0, sizeof(struct sockaddr_in) + 16, &bytesReturned, &overlapped);
     ok(!bret, "expected failure\n");
     todo_wine ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
-    ok(overlapped.Internal == STATUS_PENDING, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    ok(overlapped.Internal == STATUS_PENDING, "got status %#lx\n", (NTSTATUS)overlapped.Internal);
     if (WSAGetLastError() == ERROR_IO_PENDING)
         CancelIo((HANDLE)listener);
 
@@ -7547,7 +7547,7 @@ static void test_AcceptEx(void)
     bret = pAcceptEx(listener, acceptor, buffer, 0, 0, sizeof(struct sockaddr_in) + 16, &bytesReturned, &overlapped);
     ok(!bret, "expected failure\n");
     todo_wine ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
-    ok(overlapped.Internal == STATUS_PENDING, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    ok(overlapped.Internal == STATUS_PENDING, "got status %#lx\n", (NTSTATUS)overlapped.Internal);
     if (WSAGetLastError() == ERROR_IO_PENDING)
         CancelIo((HANDLE)listener);
 
@@ -7555,7 +7555,7 @@ static void test_AcceptEx(void)
     bret = pAcceptEx(listener, acceptor2, buffer, 0, 0, sizeof(struct sockaddr_in) + 16, &bytesReturned, &overlapped);
     ok(!bret, "expected failure\n");
     todo_wine ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
-    ok(overlapped.Internal == STATUS_PENDING, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    ok(overlapped.Internal == STATUS_PENDING, "got status %#lx\n", (NTSTATUS)overlapped.Internal);
     if (WSAGetLastError() == ERROR_IO_PENDING)
         CancelIo((HANDLE)listener);
 
@@ -7571,7 +7571,7 @@ static void test_AcceptEx(void)
     bret = pAcceptEx(listener, acceptor, buffer, 0, 3,
             sizeof(struct sockaddr_in) + 16, &bytesReturned, &overlapped);
     ok(!bret && WSAGetLastError() == ERROR_IO_PENDING, "got %d, error %u\n", bret, WSAGetLastError());
-    ok((NTSTATUS)overlapped.Internal == STATUS_PENDING, "got %#lx\n", overlapped.Internal);
+    ok((NTSTATUS)overlapped.Internal == STATUS_PENDING, "got %#Ix\n", overlapped.Internal);
 
     connector = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     ok(connector != -1, "failed to create socket, error %u\n", WSAGetLastError());
@@ -7584,9 +7584,9 @@ static void test_AcceptEx(void)
     SetLastError(0xdeadbeef);
     bret = GetOverlappedResult((HANDLE)listener, &overlapped, &bytesReturned, FALSE);
     ok(!bret, "expected failure\n");
-    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %u\n", GetLastError());
-    ok((NTSTATUS)overlapped.Internal == STATUS_BUFFER_TOO_SMALL, "got %#lx\n", overlapped.Internal);
-    ok(!bytesReturned, "got size %u\n", bytesReturned);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %lu\n", GetLastError());
+    ok((NTSTATUS)overlapped.Internal == STATUS_BUFFER_TOO_SMALL, "got %#Ix\n", overlapped.Internal);
+    ok(!bytesReturned, "got size %lu\n", bytesReturned);
 
     closesocket(acceptor);
 
@@ -7604,7 +7604,7 @@ static void test_AcceptEx(void)
     bret = pAcceptEx(listener, acceptor, buffer, 0, sizeof(struct sockaddr_in) + 4,
             sizeof(struct sockaddr_in) + 16, &bytesReturned, &overlapped);
     ok(!bret && WSAGetLastError() == ERROR_IO_PENDING, "got %d, error %u\n", bret, WSAGetLastError());
-    ok((NTSTATUS)overlapped.Internal == STATUS_PENDING, "got %#lx\n", overlapped.Internal);
+    ok((NTSTATUS)overlapped.Internal == STATUS_PENDING, "got %#Ix\n", overlapped.Internal);
 
     connector = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     ok(connector != -1, "failed to create socket, error %u\n", WSAGetLastError());
@@ -7617,9 +7617,9 @@ static void test_AcceptEx(void)
     SetLastError(0xdeadbeef);
     bret = GetOverlappedResult((HANDLE)listener, &overlapped, &bytesReturned, FALSE);
     todo_wine ok(!bret, "expected failure\n");
-    todo_wine ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %u\n", GetLastError());
-    todo_wine ok((NTSTATUS)overlapped.Internal == STATUS_BUFFER_TOO_SMALL, "got %#lx\n", overlapped.Internal);
-    ok(!bytesReturned, "got size %u\n", bytesReturned);
+    todo_wine ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %lu\n", GetLastError());
+    todo_wine ok((NTSTATUS)overlapped.Internal == STATUS_BUFFER_TOO_SMALL, "got %#Ix\n", overlapped.Internal);
+    ok(!bytesReturned, "got size %lu\n", bytesReturned);
 
     closesocket(acceptor);
 
@@ -7639,7 +7639,7 @@ static void test_AcceptEx(void)
     ok(bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING, "AcceptEx on too small local address "
         "size returned %d + errno %d\n",
         bret, WSAGetLastError());
-    ok(overlapped.Internal == STATUS_PENDING, "got %08x\n", (ULONG)overlapped.Internal);
+    ok(overlapped.Internal == STATUS_PENDING, "got %08lx\n", (ULONG)overlapped.Internal);
     bret = CancelIo((HANDLE) listener);
     ok(bret, "Failed to cancel pending accept socket\n");
 
@@ -7648,14 +7648,14 @@ static void test_AcceptEx(void)
         &bytesReturned, &overlapped);
     ok(bret == FALSE && WSAGetLastError() == WSAEFAULT,
         "AcceptEx on too small remote address size returned %d + errno %d\n", bret, WSAGetLastError());
-    ok(overlapped.Internal == STATUS_PENDING, "got %08x\n", (ULONG)overlapped.Internal);
+    ok(overlapped.Internal == STATUS_PENDING, "got %08lx\n", (ULONG)overlapped.Internal);
 
     overlapped.Internal = 0xdeadbeef;
     bret = pAcceptEx(listener, acceptor, buffer, 0, sizeof(struct sockaddr_in) + 16,
         sizeof(struct sockaddr_in) + 15, &bytesReturned, &overlapped);
     ok(bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING,
         "AcceptEx on too small remote address size returned %d + errno %d\n", bret, WSAGetLastError());
-    ok(overlapped.Internal == STATUS_PENDING, "got %08x\n", (ULONG)overlapped.Internal);
+    ok(overlapped.Internal == STATUS_PENDING, "got %08lx\n", (ULONG)overlapped.Internal);
     bret = CancelIo((HANDLE) listener);
     ok(bret, "Failed to cancel pending accept socket\n");
 
@@ -7674,7 +7674,7 @@ static void test_AcceptEx(void)
         sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
         &bytesReturned, &overlapped);
     ok(bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING, "AcceptEx returned %d + errno %d\n", bret, WSAGetLastError());
-    ok(overlapped.Internal == STATUS_PENDING, "got %08x\n", (ULONG)overlapped.Internal);
+    ok(overlapped.Internal == STATUS_PENDING, "got %08lx\n", (ULONG)overlapped.Internal);
 
     /* try to accept into the same socket twice */
     overlapped.Internal = 0xdeadbeef;
@@ -7683,7 +7683,7 @@ static void test_AcceptEx(void)
         &bytesReturned, &overlapped);
     ok(bret == FALSE && WSAGetLastError() == WSAEINVAL,
        "AcceptEx on already pending socket returned %d + errno %d\n", bret, WSAGetLastError());
-    ok(overlapped.Internal == STATUS_PENDING, "got %08x\n", (ULONG)overlapped.Internal);
+    ok(overlapped.Internal == STATUS_PENDING, "got %08lx\n", (ULONG)overlapped.Internal);
 
     /* try to connect a socket that's being accepted into */
     iret = connect(acceptor,  (struct sockaddr*)&bindAddress, sizeof(bindAddress));
@@ -7702,12 +7702,12 @@ static void test_AcceptEx(void)
     ok(iret == 0, "connecting to accepting socket failed, error %d\n", WSAGetLastError());
 
     dwret = WaitForSingleObject(overlapped.hEvent, INFINITE);
-    ok(dwret == WAIT_OBJECT_0, "Waiting for accept event failed with %d + errno %d\n", dwret, GetLastError());
-    ok(overlapped.Internal == STATUS_SUCCESS, "got %08x\n", (ULONG)overlapped.Internal);
+    ok(dwret == WAIT_OBJECT_0, "Waiting for accept event failed with %ld + errno %ld\n", dwret, GetLastError());
+    ok(overlapped.Internal == STATUS_SUCCESS, "got %08lx\n", (ULONG)overlapped.Internal);
 
     bret = GetOverlappedResult((HANDLE)listener, &overlapped, &bytesReturned, FALSE);
-    ok(bret, "GetOverlappedResult failed, error %d\n", GetLastError());
-    ok(bytesReturned == 0, "bytesReturned isn't supposed to be %d\n", bytesReturned);
+    ok(bret, "GetOverlappedResult failed, error %ld\n", GetLastError());
+    ok(bytesReturned == 0, "bytesReturned isn't supposed to be %ld\n", bytesReturned);
 
     closesocket(connector);
     connector = INVALID_SOCKET;
@@ -7716,21 +7716,21 @@ static void test_AcceptEx(void)
     /* Test short reads */
 
     acceptor = socket(AF_INET, SOCK_STREAM, 0);
-    ok(acceptor != INVALID_SOCKET, "failed to create socket, error %u\n", GetLastError());
+    ok(acceptor != INVALID_SOCKET, "failed to create socket, error %lu\n", GetLastError());
     connector = socket(AF_INET, SOCK_STREAM, 0);
-    ok(connector != INVALID_SOCKET, "failed to create socket, error %u\n", GetLastError());
+    ok(connector != INVALID_SOCKET, "failed to create socket, error %lu\n", GetLastError());
     overlapped.Internal = 0xdeadbeef;
     bret = pAcceptEx(listener, acceptor, buffer, 2,
         sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
         &bytesReturned, &overlapped);
     ok(bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING, "AcceptEx returned %d + errno %d\n", bret, WSAGetLastError());
-    ok(overlapped.Internal == STATUS_PENDING, "got %08x\n", (ULONG)overlapped.Internal);
+    ok(overlapped.Internal == STATUS_PENDING, "got %08lx\n", (ULONG)overlapped.Internal);
 
     connect_time = 0xdeadbeef;
     optlen = sizeof(connect_time);
     iret = getsockopt(connector, SOL_SOCKET, SO_CONNECT_TIME, (char *)&connect_time, &optlen);
     ok(!iret, "getsockopt failed %d\n", WSAGetLastError());
-    ok(connect_time == ~0u, "unexpected connect time %u\n", connect_time);
+    ok(connect_time == ~0u, "unexpected connect time %lu\n", connect_time);
 
     /* AcceptEx() still won't complete until we send data */
     iret = connect(connector, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
@@ -7740,11 +7740,11 @@ static void test_AcceptEx(void)
     optlen = sizeof(connect_time);
     iret = getsockopt(connector, SOL_SOCKET, SO_CONNECT_TIME, (char *)&connect_time, &optlen);
     ok(!iret, "getsockopt failed %d\n", WSAGetLastError());
-    ok(connect_time < 0xdeadbeef, "unexpected connect time %u\n", connect_time);
+    ok(connect_time < 0xdeadbeef, "unexpected connect time %lu\n", connect_time);
 
     dwret = WaitForSingleObject(overlapped.hEvent, 0);
-    ok(dwret == WAIT_TIMEOUT, "Waiting for accept event timeout failed with %d + errno %d\n", dwret, GetLastError());
-    ok(overlapped.Internal == STATUS_PENDING, "got %08x\n", (ULONG)overlapped.Internal);
+    ok(dwret == WAIT_TIMEOUT, "Waiting for accept event timeout failed with %ld + errno %ld\n", dwret, GetLastError());
+    ok(overlapped.Internal == STATUS_PENDING, "got %08lx\n", (ULONG)overlapped.Internal);
 
     iret = getsockname( connector, (struct sockaddr *)&peerAddress, &remoteSize);
     ok( !iret, "getsockname failed.\n");
@@ -7754,8 +7754,8 @@ static void test_AcceptEx(void)
     ok(iret == 1, "could not send 1 byte: send %d errno %d\n", iret, WSAGetLastError());
 
     dwret = WaitForSingleObject(overlapped.hEvent, 1000);
-    ok(dwret == WAIT_OBJECT_0, "Waiting for accept event failed with %d + errno %d\n", dwret, GetLastError());
-    ok(overlapped.Internal == STATUS_SUCCESS, "got %08x\n", (ULONG)overlapped.Internal);
+    ok(dwret == WAIT_OBJECT_0, "Waiting for accept event failed with %ld + errno %ld\n", dwret, GetLastError());
+    ok(overlapped.Internal == STATUS_SUCCESS, "got %08lx\n", (ULONG)overlapped.Internal);
 
     /* Check if the buffer from AcceptEx is decoded correctly */
     pGetAcceptExSockaddrs(buffer, 2, sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
@@ -7777,8 +7777,8 @@ static void test_AcceptEx(void)
             readRemoteAddress->sin_port, peerAddress.sin_port);
 
     bret = GetOverlappedResult((HANDLE)listener, &overlapped, &bytesReturned, FALSE);
-    ok(bret, "GetOverlappedResult failed, error %d\n", GetLastError());
-    ok(bytesReturned == 1, "bytesReturned isn't supposed to be %d\n", bytesReturned);
+    ok(bret, "GetOverlappedResult failed, error %ld\n", GetLastError());
+    ok(bytesReturned == 1, "bytesReturned isn't supposed to be %ld\n", bytesReturned);
 
     closesocket(connector);
     connector = INVALID_SOCKET;
@@ -7787,16 +7787,16 @@ static void test_AcceptEx(void)
     /* Test CF_DEFER & AcceptEx interaction */
 
     acceptor = socket(AF_INET, SOCK_STREAM, 0);
-    ok(acceptor != INVALID_SOCKET, "failed to create socket, error %u\n", GetLastError());
+    ok(acceptor != INVALID_SOCKET, "failed to create socket, error %lu\n", GetLastError());
     connector = socket(AF_INET, SOCK_STREAM, 0);
-    ok(connector != INVALID_SOCKET, "failed to create socket, error %u\n", GetLastError());
+    ok(connector != INVALID_SOCKET, "failed to create socket, error %lu\n", GetLastError());
     connector2 = socket(AF_INET, SOCK_STREAM, 0);
-    ok(connector2 != INVALID_SOCKET, "failed to create socket, error %u\n", GetLastError());
+    ok(connector2 != INVALID_SOCKET, "failed to create socket, error %lu\n", GetLastError());
 
     iret = set_blocking(connector, FALSE);
-    ok(!iret, "failed to set nonblocking, error %u\n", GetLastError());
+    ok(!iret, "failed to set nonblocking, error %lu\n", GetLastError());
     iret = set_blocking(connector2, FALSE);
-    ok(!iret, "failed to set nonblocking, error %u\n", GetLastError());
+    ok(!iret, "failed to set nonblocking, error %lu\n", GetLastError());
 
     /* Connect socket #1 */
     iret = connect(connector, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
@@ -7845,11 +7845,11 @@ static void test_AcceptEx(void)
     ok(iret == 1, "got ret %d, error %u\n", iret, WSAGetLastError());
 
     dwret = WaitForSingleObject(overlapped.hEvent, 0);
-    ok(dwret == WAIT_OBJECT_0, "Waiting for accept event failed with %d + errno %d\n", dwret, GetLastError());
+    ok(dwret == WAIT_OBJECT_0, "Waiting for accept event failed with %ld + errno %ld\n", dwret, GetLastError());
 
     bret = GetOverlappedResult((HANDLE)listener, &overlapped, &bytesReturned, FALSE);
-    ok(bret, "GetOverlappedResult failed, error %d\n", GetLastError());
-    ok(bytesReturned == 0, "bytesReturned isn't supposed to be %d\n", bytesReturned);
+    ok(bret, "GetOverlappedResult failed, error %ld\n", GetLastError());
+    ok(bytesReturned == 0, "bytesReturned isn't supposed to be %ld\n", bytesReturned);
 
     set_blocking(acceptor, TRUE);
     iret = recv( acceptor, buffer, 2, 0);
@@ -7867,9 +7867,9 @@ static void test_AcceptEx(void)
     /* Disconnect during receive? */
 
     acceptor = socket(AF_INET, SOCK_STREAM, 0);
-    ok(acceptor != INVALID_SOCKET, "failed to create socket, error %u\n", GetLastError());
+    ok(acceptor != INVALID_SOCKET, "failed to create socket, error %lu\n", GetLastError());
     connector = socket(AF_INET, SOCK_STREAM, 0);
-    ok(connector != INVALID_SOCKET, "failed to create socket, error %u\n", GetLastError());
+    ok(connector != INVALID_SOCKET, "failed to create socket, error %lu\n", GetLastError());
     bret = pAcceptEx(listener, acceptor, buffer, sizeof(buffer) - 2*(sizeof(struct sockaddr_in) + 16),
         sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
         &bytesReturned, &overlapped);
@@ -7882,19 +7882,19 @@ static void test_AcceptEx(void)
     connector = INVALID_SOCKET;
 
     dwret = WaitForSingleObject(overlapped.hEvent, 1000);
-    ok(dwret == WAIT_OBJECT_0, "Waiting for accept event failed with %d + errno %d\n", dwret, GetLastError());
+    ok(dwret == WAIT_OBJECT_0, "Waiting for accept event failed with %ld + errno %ld\n", dwret, GetLastError());
 
     bytesReturned = 123456;
     bret = GetOverlappedResult((HANDLE)listener, &overlapped, &bytesReturned, FALSE);
-    ok(bret, "GetOverlappedResult failed, error %d\n", GetLastError());
-    ok(bytesReturned == 0, "bytesReturned isn't supposed to be %d\n", bytesReturned);
+    ok(bret, "GetOverlappedResult failed, error %ld\n", GetLastError());
+    ok(bytesReturned == 0, "bytesReturned isn't supposed to be %ld\n", bytesReturned);
 
     closesocket(acceptor);
 
     /* Test closing with pending requests */
 
     acceptor = socket(AF_INET, SOCK_STREAM, 0);
-    ok(acceptor != INVALID_SOCKET, "failed to create socket, error %u\n", GetLastError());
+    ok(acceptor != INVALID_SOCKET, "failed to create socket, error %lu\n", GetLastError());
     bret = pAcceptEx(listener, acceptor, buffer, sizeof(buffer) - 2*(sizeof(struct sockaddr_in) + 16),
         sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
         &bytesReturned, &overlapped);
@@ -7904,12 +7904,12 @@ static void test_AcceptEx(void)
 
     dwret = WaitForSingleObject(overlapped.hEvent, 1000);
     ok(dwret == WAIT_OBJECT_0,
-       "Waiting for accept event failed with %d + errno %d\n", dwret, GetLastError());
+       "Waiting for accept event failed with %ld + errno %ld\n", dwret, GetLastError());
     bret = GetOverlappedResult((HANDLE)listener, &overlapped, &bytesReturned, FALSE);
-    ok(!bret && GetLastError() == ERROR_OPERATION_ABORTED, "GetOverlappedResult failed, error %d\n", GetLastError());
+    ok(!bret && GetLastError() == ERROR_OPERATION_ABORTED, "GetOverlappedResult failed, error %ld\n", GetLastError());
 
     acceptor = socket(AF_INET, SOCK_STREAM, 0);
-    ok(acceptor != INVALID_SOCKET, "failed to create socket, error %u\n", GetLastError());
+    ok(acceptor != INVALID_SOCKET, "failed to create socket, error %lu\n", GetLastError());
     bret = pAcceptEx(listener, acceptor, buffer, sizeof(buffer) - 2*(sizeof(struct sockaddr_in) + 16),
         sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
         &bytesReturned, &overlapped);
@@ -7918,12 +7918,12 @@ static void test_AcceptEx(void)
     CancelIo((HANDLE) acceptor);
 
     dwret = WaitForSingleObject(overlapped.hEvent, 1000);
-    ok(dwret == WAIT_TIMEOUT, "Waiting for timeout failed with %d + errno %d\n", dwret, GetLastError());
+    ok(dwret == WAIT_TIMEOUT, "Waiting for timeout failed with %ld + errno %ld\n", dwret, GetLastError());
 
     closesocket(acceptor);
 
     acceptor = socket(AF_INET, SOCK_STREAM, 0);
-    ok(acceptor != INVALID_SOCKET, "failed to create socket, error %u\n", GetLastError());
+    ok(acceptor != INVALID_SOCKET, "failed to create socket, error %lu\n", GetLastError());
     bret = pAcceptEx(listener, acceptor, buffer, sizeof(buffer) - 2*(sizeof(struct sockaddr_in) + 16),
         sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
         &bytesReturned, &overlapped);
@@ -7932,10 +7932,10 @@ static void test_AcceptEx(void)
     closesocket(listener);
 
     dwret = WaitForSingleObject(overlapped.hEvent, 1000);
-    ok(dwret == WAIT_OBJECT_0, "Waiting for accept event failed with %d + errno %d\n", dwret, GetLastError());
+    ok(dwret == WAIT_OBJECT_0, "Waiting for accept event failed with %ld + errno %ld\n", dwret, GetLastError());
 
     bret = GetOverlappedResult((HANDLE)listener, &overlapped, &bytesReturned, FALSE);
-    ok(!bret && GetLastError() == ERROR_OPERATION_ABORTED, "GetOverlappedResult failed, error %d\n", GetLastError());
+    ok(!bret && GetLastError() == ERROR_OPERATION_ABORTED, "GetOverlappedResult failed, error %ld\n", GetLastError());
 
     CloseHandle(overlapped.hEvent);
     CloseHandle(overlapped2.hEvent);
@@ -8166,8 +8166,8 @@ static void test_shutdown(void)
     ok(!ret, "wait timed out\n");
     size = 0xdeadbeef;
     ret = GetOverlappedResult((HANDLE)client, &overlapped, &size, FALSE);
-    ok(ret, "got error %u\n", GetLastError());
-    ok(size == 5, "got size %u\n", size);
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(size == 5, "got size %lu\n", size);
     ok(!strcmp(buffer, "test"), "got %s\n", debugstr_an(buffer, size));
 
     WSASetLastError(0xdeadbeef);
@@ -8187,8 +8187,8 @@ static void test_shutdown(void)
     ok(!ret, "wait timed out\n");
     size = 0xdeadbeef;
     ret = GetOverlappedResult((HANDLE)client, &overlapped, &size, FALSE);
-    ok(ret, "got error %u\n", GetLastError());
-    ok(!size, "got size %u\n", size);
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(!size, "got size %lu\n", size);
 
     closesocket(client);
     closesocket(server);
@@ -8318,8 +8318,8 @@ static void test_DisconnectEx(void)
     ok(!ret, "wait timed out\n");
     size = 0xdeadbeef;
     ret = GetOverlappedResult((HANDLE)client, &overlapped, &size, FALSE);
-    ok(ret, "got error %u\n", GetLastError());
-    ok(!size, "got size %u\n", size);
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(!size, "got size %lu\n", size);
 
     ret = connect(client, (struct sockaddr *)&server_addr, sizeof(server_addr));
     ok(ret == -1, "expected failure\n");
@@ -8434,7 +8434,7 @@ static void compare_file2(HANDLE handle, SOCKET sock, int offset, const char *fi
         else if(!success)
             return;
         n2 = recv(sock, buf2, n1, 0);
-        ok_(file,line)(n1 == n2, "Block %d size mismatch (%d != %d)\n", i, n1, n2);
+        ok_(file,line)(n1 == n2, "Block %d size mismatch (%ld != %ld)\n", i, n1, n2);
         ok_(file,line)(memcmp(buf1, buf2, n2) == 0, "Block %d failed\n", i);
         i++;
     }
@@ -8461,29 +8461,29 @@ static void test_TransmitFile(void)
 
     /* Setup sockets for testing TransmitFile */
     client = socket(AF_INET, SOCK_STREAM, 0);
-    ok(client != INVALID_SOCKET, "failed to create socket, error %u\n", GetLastError());
+    ok(client != INVALID_SOCKET, "failed to create socket, error %lu\n", GetLastError());
     server = socket(AF_INET, SOCK_STREAM, 0);
-    ok(server != INVALID_SOCKET, "failed to create socket, error %u\n", GetLastError());
+    ok(server != INVALID_SOCKET, "failed to create socket, error %lu\n", GetLastError());
     iret = WSAIoctl(client, SIO_GET_EXTENSION_FUNCTION_POINTER, &transmitFileGuid, sizeof(transmitFileGuid),
                     &pTransmitFile, sizeof(pTransmitFile), &num_bytes, NULL, NULL);
-    ok(!iret, "failed to get TransmitFile, error %u\n", GetLastError());
+    ok(!iret, "failed to get TransmitFile, error %lu\n", GetLastError());
     GetSystemWindowsDirectoryA(system_ini_path, MAX_PATH );
     strcat(system_ini_path, "\\system.ini");
     file = CreateFileA(system_ini_path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_ALWAYS, 0x0, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "failed to open file, error %u\n", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "failed to open file, error %lu\n", GetLastError());
     file_size = GetFileSize(file, NULL);
 
     /* Test TransmitFile with an invalid socket */
     bret = pTransmitFile(INVALID_SOCKET, file, 0, 0, NULL, NULL, 0);
     err = WSAGetLastError();
     ok(!bret, "TransmitFile succeeded unexpectedly.\n");
-    ok(err == WSAENOTSOCK, "TransmitFile triggered unexpected errno (%d != %d)\n", err, WSAENOTSOCK);
+    ok(err == WSAENOTSOCK, "TransmitFile triggered unexpected errno (%ld != %d)\n", err, WSAENOTSOCK);
 
     /* Test a bogus TransmitFile without a connected socket */
     bret = pTransmitFile(client, NULL, 0, 0, NULL, NULL, TF_REUSE_SOCKET);
     err = WSAGetLastError();
     ok(!bret, "TransmitFile succeeded unexpectedly.\n");
-    ok(err == WSAENOTCONN, "TransmitFile triggered unexpected errno (%d != %d)\n", err, WSAENOTCONN);
+    ok(err == WSAENOTCONN, "TransmitFile triggered unexpected errno (%ld != %d)\n", err, WSAENOTCONN);
 
     /* Setup a properly connected socket for transfers */
     memset(&bindAddress, 0, sizeof(bindAddress));
@@ -8491,16 +8491,16 @@ static void test_TransmitFile(void)
     bindAddress.sin_port = htons(SERVERPORT+1);
     bindAddress.sin_addr.s_addr = inet_addr("127.0.0.1");
     iret = bind(server, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
-    ok(!iret, "failed to bind socket, error %u\n", GetLastError());
+    ok(!iret, "failed to bind socket, error %lu\n", GetLastError());
     iret = listen(server, 1);
-    ok(!iret, "failed to listen, error %u\n", GetLastError());
+    ok(!iret, "failed to listen, error %lu\n", GetLastError());
     iret = connect(client, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
-    ok(!iret, "failed to connect, error %u\n", GetLastError());
+    ok(!iret, "failed to connect, error %lu\n", GetLastError());
     len = sizeof(bindAddress);
     dest = accept(server, (struct sockaddr*)&bindAddress, &len);
-    ok(dest != INVALID_SOCKET, "failed to accept, error %u\n", GetLastError());
+    ok(dest != INVALID_SOCKET, "failed to accept, error %lu\n", GetLastError());
     iret = set_blocking(dest, FALSE);
-    ok(!iret, "failed to set nonblocking, error %u\n", GetLastError());
+    ok(!iret, "failed to set nonblocking, error %lu\n", GetLastError());
 
     /* Test TransmitFile with no possible buffer */
     bret = pTransmitFile(client, NULL, 0, 0, NULL, NULL, 0);
@@ -8550,13 +8550,13 @@ static void test_TransmitFile(void)
     bret = pTransmitFile(client, file, 0, 0, &ov, NULL, 0);
     err = WSAGetLastError();
     ok(!bret, "TransmitFile succeeded unexpectedly.\n");
-    ok(err == ERROR_IO_PENDING, "TransmitFile triggered unexpected errno (%d != %d)\n",
+    ok(err == ERROR_IO_PENDING, "TransmitFile triggered unexpected errno (%ld != %d)\n",
        err, ERROR_IO_PENDING);
     iret = WaitForSingleObject(ov.hEvent, 2000);
     ok(iret == WAIT_OBJECT_0, "Overlapped TransmitFile failed.\n");
     WSAGetOverlappedResult(client, &ov, &total_sent, FALSE, NULL);
     ok(total_sent == file_size,
-       "Overlapped TransmitFile sent an unexpected number of bytes (%d != %d).\n",
+       "Overlapped TransmitFile sent an unexpected number of bytes (%ld != %ld).\n",
        total_sent, file_size);
     compare_file(file, dest, 0);
 
@@ -8567,12 +8567,12 @@ static void test_TransmitFile(void)
     bret = pTransmitFile(client, file, 0, 0, &ov, NULL, 0);
     err = WSAGetLastError();
     ok(!bret, "TransmitFile succeeded unexpectedly.\n");
-    ok(err == ERROR_IO_PENDING, "TransmitFile triggered unexpected errno (%d != %d)\n", err, ERROR_IO_PENDING);
+    ok(err == ERROR_IO_PENDING, "TransmitFile triggered unexpected errno (%ld != %d)\n", err, ERROR_IO_PENDING);
     iret = WaitForSingleObject(ov.hEvent, 2000);
     ok(iret == WAIT_OBJECT_0, "Overlapped TransmitFile failed.\n");
     WSAGetOverlappedResult(client, &ov, &total_sent, FALSE, NULL);
     ok(total_sent == (file_size - ov.Offset),
-       "Overlapped TransmitFile sent an unexpected number of bytes (%d != %d).\n",
+       "Overlapped TransmitFile sent an unexpected number of bytes (%ld != %ld).\n",
        total_sent, file_size - ov.Offset);
     compare_file(file, dest, ov.Offset);
 
@@ -8587,12 +8587,12 @@ static void test_TransmitFile(void)
     bret = pTransmitFile(client, file, 0, 0, &ov, &buffers, 0);
     err = WSAGetLastError();
     ok(!bret, "TransmitFile succeeded unexpectedly.\n");
-    ok(err == ERROR_IO_PENDING, "TransmitFile triggered unexpected errno (%d != %d)\n", err, ERROR_IO_PENDING);
+    ok(err == ERROR_IO_PENDING, "TransmitFile triggered unexpected errno (%ld != %d)\n", err, ERROR_IO_PENDING);
     iret = WaitForSingleObject(ov.hEvent, 2000);
     ok(iret == WAIT_OBJECT_0, "Overlapped TransmitFile failed.\n");
     WSAGetOverlappedResult(client, &ov, &total_sent, FALSE, NULL);
     ok(total_sent == (file_size + buffers.HeadLength + buffers.TailLength),
-       "Overlapped TransmitFile sent an unexpected number of bytes (%d != %d).\n",
+       "Overlapped TransmitFile sent an unexpected number of bytes (%ld != %ld).\n",
        total_sent, file_size  + buffers.HeadLength + buffers.TailLength);
     iret = recv(dest, buf, sizeof(header_msg), 0);
     ok(memcmp(buf, &header_msg[0], sizeof(header_msg)) == 0,
@@ -8608,7 +8608,7 @@ static void test_TransmitFile(void)
     bret = pTransmitFile(client, NULL, 0, 0, NULL, NULL, 0);
     err = WSAGetLastError();
     ok(!bret, "TransmitFile succeeded unexpectedly.\n");
-    ok(err == WSAENOTCONN, "TransmitFile triggered unexpected errno (%d != %d)\n", err, WSAENOTCONN);
+    ok(err == WSAENOTCONN, "TransmitFile triggered unexpected errno (%ld != %d)\n", err, WSAENOTCONN);
 
     CloseHandle(file);
     CloseHandle(ov.hEvent);
@@ -8724,26 +8724,26 @@ static void test_sioRoutingInterfaceQuery(void)
     ret = WSAIoctl(sock, SIO_ROUTING_INTERFACE_QUERY, &in, sizeof(in) - 1, &out, sizeof(out), &size, NULL, NULL);
     ok(ret == -1, "expected failure\n");
     todo_wine ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
-    ok(size == 0xdeadbeef, "got size %u\n", size);
+    ok(size == 0xdeadbeef, "got size %lu\n", size);
 
     size = 0xdeadbeef;
     ret = WSAIoctl(sock, SIO_ROUTING_INTERFACE_QUERY, NULL, sizeof(in), &out, sizeof(out), &size, NULL, NULL);
     ok(ret == -1, "expected failure\n");
     todo_wine ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
-    ok(size == 0xdeadbeef, "got size %u\n", size);
+    ok(size == 0xdeadbeef, "got size %lu\n", size);
 
     size = 0xdeadbeef;
     ret = WSAIoctl(sock, SIO_ROUTING_INTERFACE_QUERY, &in, sizeof(in), &out, sizeof(out), &size, NULL, NULL);
     ok(ret == -1, "expected failure\n");
     ok(WSAGetLastError() == WSAEAFNOSUPPORT, "got error %u\n", WSAGetLastError());
-    ok(size == 0xdeadbeef, "got size %u\n", size);
+    ok(size == 0xdeadbeef, "got size %lu\n", size);
 
     in.sin_family = AF_INET;
     size = 0xdeadbeef;
     ret = WSAIoctl(sock, SIO_ROUTING_INTERFACE_QUERY, &in, sizeof(in), &out, sizeof(out), &size, NULL, NULL);
     todo_wine ok(ret == -1, "expected failure\n");
     todo_wine ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
-    todo_wine ok(size == 0xdeadbeef, "got size %u\n", size);
+    todo_wine ok(size == 0xdeadbeef, "got size %lu\n", size);
 
     in.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
     WSASetLastError(0xdeadbeef);
@@ -8751,7 +8751,7 @@ static void test_sioRoutingInterfaceQuery(void)
     ret = WSAIoctl(sock, SIO_ROUTING_INTERFACE_QUERY, &in, sizeof(in), &out, sizeof(out), &size, NULL, NULL);
     ok(!ret, "expected failure\n");
     ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
-    ok(size == sizeof(out), "got size %u\n", size);
+    ok(size == sizeof(out), "got size %lu\n", size);
     /* We expect the source address to be INADDR_LOOPBACK as well, but
      * there's no guarantee that a route to the loopback address exists,
      * so rather than introduce spurious test failures we do not test the
@@ -8762,18 +8762,18 @@ static void test_sioRoutingInterfaceQuery(void)
     ret = WSAIoctl(sock, SIO_ROUTING_INTERFACE_QUERY, &in, sizeof(in), &out, sizeof(out) - 1, &size, NULL, NULL);
     ok(ret == -1, "expected failure\n");
     ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
-    todo_wine ok(size == sizeof(out), "got size %u\n", size);
+    todo_wine ok(size == sizeof(out), "got size %lu\n", size);
 
     size = 0xdeadbeef;
     ret = WSAIoctl(sock, SIO_ROUTING_INTERFACE_QUERY, &in, sizeof(in), NULL, sizeof(out), &size, NULL, NULL);
     ok(ret == -1, "expected failure\n");
     ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
-    ok(size == 0xdeadbeef, "got size %u\n", size);
+    ok(size == 0xdeadbeef, "got size %lu\n", size);
 
     ret = WSAIoctl(sock, SIO_ROUTING_INTERFACE_QUERY, &in, sizeof(in), &out, sizeof(out), NULL, &overlapped, NULL);
     ok(ret == -1, "expected failure\n");
     ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
-    ok(size == 0xdeadbeef, "got size %u\n", size);
+    ok(size == 0xdeadbeef, "got size %lu\n", size);
 
     WSASetLastError(0xdeadbeef);
     size = 0xdeadbeef;
@@ -8782,13 +8782,13 @@ static void test_sioRoutingInterfaceQuery(void)
     ret = WSAIoctl(sock, SIO_ROUTING_INTERFACE_QUERY, &in, sizeof(in), &out, sizeof(out), &size, &overlapped, NULL);
     ok(!ret, "expected failure\n");
     ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
-    ok(size == sizeof(out), "got size %u\n", size);
+    ok(size == sizeof(out), "got size %lu\n", size);
 
     ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
-    ok(ret, "got error %u\n", GetLastError());
-    ok(!size, "got size %u\n", size);
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(!size, "got size %lu\n", size);
     ok(overlapped_ptr == &overlapped, "got overlapped %p\n", overlapped_ptr);
-    ok(!overlapped.Internal, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    ok(!overlapped.Internal, "got status %#lx\n", (NTSTATUS)overlapped.Internal);
     ok(!overlapped.InternalHigh, "got size %Iu\n", overlapped.InternalHigh);
 
     CloseHandle(port);
@@ -8806,13 +8806,13 @@ static void test_sioRoutingInterfaceQuery(void)
     ret = WSAIoctl(sock, SIO_ROUTING_INTERFACE_QUERY, &in, sizeof(in),
             &out, sizeof(out), &size, &overlapped, socket_apc);
     ok(!ret, "expected success\n");
-    ok(size == sizeof(out), "got size %u\n", size);
+    ok(size == sizeof(out), "got size %lu\n", size);
 
     ret = SleepEx(0, TRUE);
     ok(ret == WAIT_IO_COMPLETION, "got %d\n", ret);
     ok(apc_count == 1, "APC was called %u times\n", apc_count);
-    ok(!apc_error, "got APC error %u\n", apc_error);
-    ok(!apc_size, "got APC size %u\n", apc_size);
+    ok(!apc_error, "got APC error %lu\n", apc_error);
+    ok(!apc_size, "got APC size %lu\n", apc_size);
     ok(apc_overlapped == &overlapped, "got APC overlapped %p\n", apc_overlapped);
 
     closesocket(sock);
@@ -8853,7 +8853,7 @@ static void test_sioAddressListChange(void)
     bindAddress.sin_addr.s_addr = net_address.s_addr;
     SetLastError(0xdeadbeef);
     ret = bind(sock, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
-    ok (!ret, "bind() failed with error %d\n", GetLastError());
+    ok (!ret, "bind() failed with error %ld\n", GetLastError());
     set_blocking(sock, FALSE);
 
     memset(&overlapped, 0, sizeof(overlapped));
@@ -8861,8 +8861,8 @@ static void test_sioAddressListChange(void)
     SetLastError(0xdeadbeef);
     ret = WSAIoctl(sock, SIO_ADDRESS_LIST_CHANGE, NULL, 0, NULL, 0, &num_bytes, &overlapped, NULL);
     error = GetLastError();
-    ok (ret == SOCKET_ERROR, "WSAIoctl(SIO_ADDRESS_LIST_CHANGE) failed with error %d\n", error);
-    ok (error == ERROR_IO_PENDING, "expected 0x3e5, got 0x%x\n", error);
+    ok (ret == SOCKET_ERROR, "WSAIoctl(SIO_ADDRESS_LIST_CHANGE) failed with error %ld\n", error);
+    ok (error == ERROR_IO_PENDING, "expected 0x3e5, got 0x%lx\n", error);
 
     CloseHandle(overlapped.hEvent);
     closesocket(sock);
@@ -8872,7 +8872,7 @@ static void test_sioAddressListChange(void)
 
     SetLastError(0xdeadbeef);
     ret = bind(sock, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
-    ok (!ret, "bind() failed with error %d\n", GetLastError());
+    ok (!ret, "bind() failed with error %ld\n", GetLastError());
     set_blocking(sock, TRUE);
 
     memset(&overlapped, 0, sizeof(overlapped));
@@ -8880,8 +8880,8 @@ static void test_sioAddressListChange(void)
     SetLastError(0xdeadbeef);
     ret = WSAIoctl(sock, SIO_ADDRESS_LIST_CHANGE, NULL, 0, NULL, 0, &num_bytes, &overlapped, NULL);
     error = GetLastError();
-    ok (ret == SOCKET_ERROR, "WSAIoctl(SIO_ADDRESS_LIST_CHANGE) failed with error %d\n", error);
-    ok (error == ERROR_IO_PENDING, "expected 0x3e5, got 0x%x\n", error);
+    ok (ret == SOCKET_ERROR, "WSAIoctl(SIO_ADDRESS_LIST_CHANGE) failed with error %ld\n", error);
+    ok (error == ERROR_IO_PENDING, "expected 0x3e5, got 0x%lx\n", error);
 
     CloseHandle(overlapped.hEvent);
     closesocket(sock);
@@ -8891,7 +8891,7 @@ static void test_sioAddressListChange(void)
 
     SetLastError(0xdeadbeef);
     ret = bind(sock, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
-    ok (!ret, "bind() failed with error %d\n", GetLastError());
+    ok (!ret, "bind() failed with error %ld\n", GetLastError());
     set_blocking(sock, FALSE);
 
     memset(&overlapped, 0, sizeof(overlapped));
@@ -8899,8 +8899,8 @@ static void test_sioAddressListChange(void)
     SetLastError(0xdeadbeef);
     ret = WSAIoctl(sock, SIO_ADDRESS_LIST_CHANGE, NULL, 0, NULL, 0, &num_bytes, &overlapped, NULL);
     error = GetLastError();
-    ok (ret == SOCKET_ERROR, "WSAIoctl(SIO_ADDRESS_LIST_CHANGE) failed with error %d\n", error);
-    ok (error == ERROR_IO_PENDING, "expected 0x3e5, got 0x%x\n", error);
+    ok (ret == SOCKET_ERROR, "WSAIoctl(SIO_ADDRESS_LIST_CHANGE) failed with error %ld\n", error);
+    ok (error == ERROR_IO_PENDING, "expected 0x3e5, got 0x%lx\n", error);
 
     CloseHandle(overlapped.hEvent);
     closesocket(sock);
@@ -8910,7 +8910,7 @@ static void test_sioAddressListChange(void)
 
     SetLastError(0xdeadbeef);
     ret = bind(sock, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
-    ok (!ret, "bind() failed with error %d\n", GetLastError());
+    ok (!ret, "bind() failed with error %ld\n", GetLastError());
     set_blocking(sock, TRUE);
 
     memset(&overlapped, 0, sizeof(overlapped));
@@ -8918,8 +8918,8 @@ static void test_sioAddressListChange(void)
     SetLastError(0xdeadbeef);
     ret = WSAIoctl(sock, SIO_ADDRESS_LIST_CHANGE, NULL, 0, NULL, 0, &num_bytes, &overlapped, NULL);
     error = GetLastError();
-    ok (ret == SOCKET_ERROR, "WSAIoctl(SIO_ADDRESS_LIST_CHANGE) failed with error %d\n", error);
-    ok (error == ERROR_IO_PENDING, "expected 0x3e5, got 0x%x\n", error);
+    ok (ret == SOCKET_ERROR, "WSAIoctl(SIO_ADDRESS_LIST_CHANGE) failed with error %ld\n", error);
+    ok (error == ERROR_IO_PENDING, "expected 0x3e5, got 0x%lx\n", error);
 
     CloseHandle(overlapped.hEvent);
     closesocket(sock);
@@ -8931,30 +8931,30 @@ static void test_sioAddressListChange(void)
 
     SetLastError(0xdeadbeef);
     ret = bind(sock, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
-    ok (!ret, "bind() failed with error %d\n", GetLastError());
+    ok (!ret, "bind() failed with error %ld\n", GetLastError());
     set_blocking(sock, FALSE);
 
     SetLastError(0xdeadbeef);
     ret = WSAIoctl(sock, SIO_ADDRESS_LIST_CHANGE, NULL, 0, NULL, 0, &num_bytes, NULL, NULL);
     error = GetLastError();
-    ok (ret == SOCKET_ERROR, "WSAIoctl(SIO_ADDRESS_LIST_CHANGE) failed with error %d\n", error);
-    ok (error == WSAEWOULDBLOCK, "expected 10035, got %d\n", error);
+    ok (ret == SOCKET_ERROR, "WSAIoctl(SIO_ADDRESS_LIST_CHANGE) failed with error %ld\n", error);
+    ok (error == WSAEWOULDBLOCK, "expected 10035, got %ld\n", error);
 
     io_port = CreateIoCompletionPort( (HANDLE)sock, NULL, 0, 0 );
-    ok (io_port != NULL, "failed to create completion port %u\n", GetLastError());
+    ok (io_port != NULL, "failed to create completion port %lu\n", GetLastError());
 
     set_blocking(sock, FALSE);
     memset(&overlapped, 0, sizeof(overlapped));
     SetLastError(0xdeadbeef);
     ret = WSAIoctl(sock, SIO_ADDRESS_LIST_CHANGE, NULL, 0, NULL, 0, &num_bytes, &overlapped, NULL);
     error = GetLastError();
-    ok (ret == SOCKET_ERROR, "WSAIoctl(SIO_ADDRESS_LIST_CHANGE) failed with error %u\n", error);
-    ok (error == ERROR_IO_PENDING, "expected ERROR_IO_PENDING got %u\n", error);
+    ok (ret == SOCKET_ERROR, "WSAIoctl(SIO_ADDRESS_LIST_CHANGE) failed with error %lu\n", error);
+    ok (error == ERROR_IO_PENDING, "expected ERROR_IO_PENDING got %lu\n", error);
 
     olp = (WSAOVERLAPPED *)0xdeadbeef;
     bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 0 );
     ok(!bret, "failed to get completion status %u\n", bret);
-    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %d\n", GetLastError());
+    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %ld\n", GetLastError());
     ok(!olp, "Overlapped structure is at %p\n", olp);
 
     closesocket(sock);
@@ -8962,7 +8962,7 @@ static void test_sioAddressListChange(void)
     olp = (WSAOVERLAPPED *)0xdeadbeef;
     bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 0 );
     ok(!bret, "failed to get completion status %u\n", bret);
-    ok(GetLastError() == ERROR_OPERATION_ABORTED, "Last error was %u\n", GetLastError());
+    ok(GetLastError() == ERROR_OPERATION_ABORTED, "Last error was %lu\n", GetLastError());
     ok(olp == &overlapped, "Overlapped structure is at %p\n", olp);
 
     CloseHandle(io_port);
@@ -9039,7 +9039,7 @@ static void test_sioAddressListChange(void)
     ret = WaitForSingleObject(event3, 500);
     ok(ret == WAIT_TIMEOUT, "unexpected change event\n");
 
-    trace("Spent %d ms waiting.\n", GetTickCount() - tick);
+    trace("Spent %ld ms waiting.\n", GetTickCount() - tick);
 
     WSACloseEvent(event2);
     WSACloseEvent(event3);
@@ -9099,7 +9099,7 @@ static void test_completion_port(void)
 
     memset(buf, 0, sizeof(buf));
     io_port = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
-    ok( io_port != NULL, "Failed to create completion port %u\n", GetLastError());
+    ok( io_port != NULL, "Failed to create completion port %lu\n", GetLastError());
 
     memset(&ov, 0, sizeof(ov));
 
@@ -9112,16 +9112,16 @@ static void test_completion_port(void)
     ling.l_onoff = 1;
     ling.l_linger = 0;
     iret = setsockopt (src, SOL_SOCKET, SO_LINGER, (char *) &ling, sizeof(ling));
-    ok(!iret, "Failed to set linger %d\n", GetLastError());
+    ok(!iret, "Failed to set linger %ld\n", GetLastError());
 
     io_port = CreateIoCompletionPort( (HANDLE)dest, io_port, 125, 0 );
-    ok(io_port != NULL, "Failed to create completion port %u\n", GetLastError());
+    ok(io_port != NULL, "Failed to create completion port %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
 
     iret = WSARecv(dest, &bufs, 1, &num_bytes, &flags, &ov, NULL);
     ok(iret == SOCKET_ERROR, "WSARecv returned %d\n", iret);
-    ok(GetLastError() == ERROR_IO_PENDING, "Last error was %d\n", GetLastError());
+    ok(GetLastError() == ERROR_IO_PENDING, "Last error was %ld\n", GetLastError());
 
     Sleep(100);
 
@@ -9135,9 +9135,9 @@ static void test_completion_port(void)
 
     bret = GetQueuedCompletionStatus(io_port, &num_bytes, &key, &olp, 100);
     todo_wine ok(bret == FALSE, "GetQueuedCompletionStatus returned %d\n", bret);
-    todo_wine ok(GetLastError() == ERROR_NETNAME_DELETED, "Last error was %d\n", GetLastError());
-    ok(key == 125, "Key is %lu\n", key);
-    ok(num_bytes == 0, "Number of bytes received is %u\n", num_bytes);
+    todo_wine ok(GetLastError() == ERROR_NETNAME_DELETED, "Last error was %ld\n", GetLastError());
+    ok(key == 125, "Key is %Iu\n", key);
+    ok(num_bytes == 0, "Number of bytes received is %lu\n", num_bytes);
     ok(olp == &ov, "Overlapped structure is at %p\n", olp);
 
     SetLastError(0xdeadbeef);
@@ -9147,9 +9147,9 @@ static void test_completion_port(void)
 
     bret = GetQueuedCompletionStatus(io_port, &num_bytes, &key, &olp, 100);
     ok(bret == FALSE, "GetQueuedCompletionStatus returned %d\n", bret );
-    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %d\n", GetLastError());
-    ok(key == 0xdeadbeef, "Key is %lu\n", key);
-    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %u\n", num_bytes);
+    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %ld\n", GetLastError());
+    ok(key == 0xdeadbeef, "Key is %Iu\n", key);
+    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %lu\n", num_bytes);
     ok(!olp, "Overlapped structure is at %p\n", olp);
 
     if (dest != INVALID_SOCKET)
@@ -9166,10 +9166,10 @@ static void test_completion_port(void)
     ling.l_onoff = 1;
     ling.l_linger = 0;
     iret = setsockopt (src, SOL_SOCKET, SO_LINGER, (char *) &ling, sizeof(ling));
-    ok(!iret, "Failed to set linger %d\n", GetLastError());
+    ok(!iret, "Failed to set linger %ld\n", GetLastError());
 
     io_port = CreateIoCompletionPort((HANDLE)dest, io_port, 125, 0);
-    ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
+    ok(io_port != NULL, "failed to create completion port %lu\n", GetLastError());
 
     set_blocking(dest, FALSE);
 
@@ -9183,8 +9183,8 @@ static void test_completion_port(void)
 
     iret = WSASend(dest, &bufs, 1, &num_bytes, 0, &ov, NULL);
     ok(iret == SOCKET_ERROR, "WSASend failed - %d\n", iret);
-    ok(GetLastError() == WSAECONNRESET, "Last error was %d\n", GetLastError());
-    ok(num_bytes == 0xdeadbeef, "Managed to send %d\n", num_bytes);
+    ok(GetLastError() == WSAECONNRESET, "Last error was %ld\n", GetLastError());
+    ok(num_bytes == 0xdeadbeef, "Managed to send %ld\n", num_bytes);
 
     SetLastError(0xdeadbeef);
     key = 0xdeadbeef;
@@ -9193,9 +9193,9 @@ static void test_completion_port(void)
 
     bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 200 );
     ok(bret == FALSE, "GetQueuedCompletionStatus returned %u\n", bret );
-    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %d\n", GetLastError());
-    ok(key == 0xdeadbeef, "Key is %lu\n", key);
-    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %u\n", num_bytes);
+    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %ld\n", GetLastError());
+    ok(key == 0xdeadbeef, "Key is %Iu\n", key);
+    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %lu\n", num_bytes);
     ok(!olp, "Overlapped structure is at %p\n", olp);
 
     if (dest != INVALID_SOCKET)
@@ -9210,11 +9210,11 @@ static void test_completion_port(void)
     SetLastError(0xdeadbeef);
 
     iret = WSASend(src, &bufs, 1, &num_bytes, 0, &ov, NULL);
-    ok(!iret, "WSASend failed - %d, last error %u\n", iret, GetLastError());
-    ok(num_bytes == sizeof(buf), "Managed to send %d\n", num_bytes);
+    ok(!iret, "WSASend failed - %d, last error %lu\n", iret, GetLastError());
+    ok(num_bytes == sizeof(buf), "Managed to send %ld\n", num_bytes);
 
     io_port = CreateIoCompletionPort((HANDLE)dest, io_port, 125, 0);
-    ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
+    ok(io_port != NULL, "failed to create completion port %lu\n", GetLastError());
     set_blocking(dest, FALSE);
 
     FD_ZERO(&fds_recv);
@@ -9225,8 +9225,8 @@ static void test_completion_port(void)
     flags = 0;
 
     iret = WSARecv(dest, &bufs, 1, &num_bytes, &flags, &ov, NULL);
-    ok(!iret, "WSARecv failed - %d, last error %u\n", iret, GetLastError());
-    ok(num_bytes == sizeof(buf), "Managed to read %d\n", num_bytes);
+    ok(!iret, "WSARecv failed - %d, last error %lu\n", iret, GetLastError());
+    ok(num_bytes == sizeof(buf), "Managed to read %ld\n", num_bytes);
 
     SetLastError(0xdeadbeef);
     key = 0xdeadbeef;
@@ -9235,9 +9235,9 @@ static void test_completion_port(void)
 
     bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 200 );
     ok(bret == TRUE, "failed to get completion status %u\n", bret);
-    ok(GetLastError() == 0xdeadbeef, "Last error was %d\n", GetLastError());
-    ok(key == 125, "Key is %lu\n", key);
-    ok(num_bytes == sizeof(buf), "Number of bytes transferred is %u\n", num_bytes);
+    ok(GetLastError() == 0xdeadbeef, "Last error was %ld\n", GetLastError());
+    ok(key == 125, "Key is %Iu\n", key);
+    ok(num_bytes == sizeof(buf), "Number of bytes transferred is %lu\n", num_bytes);
     ok(olp == &ov, "Overlapped structure is at %p\n", olp);
 
     /* Test IOCP response on graceful shutdown. */
@@ -9252,8 +9252,8 @@ static void test_completion_port(void)
     memset(&ov, 0, sizeof(ov));
 
     iret = WSARecv(dest, &bufs, 1, &num_bytes, &flags, &ov, NULL);
-    ok(!iret, "WSARecv failed - %d, last error %u\n", iret, GetLastError());
-    ok(!num_bytes, "Managed to read %d\n", num_bytes);
+    ok(!iret, "WSARecv failed - %d, last error %lu\n", iret, GetLastError());
+    ok(!num_bytes, "Managed to read %ld\n", num_bytes);
 
     SetLastError(0xdeadbeef);
     key = 0xdeadbeef;
@@ -9262,9 +9262,9 @@ static void test_completion_port(void)
 
     bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 200 );
     ok(bret == TRUE, "failed to get completion status %u\n", bret);
-    ok(GetLastError() == 0xdeadbeef, "Last error was %d\n", GetLastError());
-    ok(key == 125, "Key is %lu\n", key);
-    ok(!num_bytes, "Number of bytes transferred is %u\n", num_bytes);
+    ok(GetLastError() == 0xdeadbeef, "Last error was %ld\n", GetLastError());
+    ok(key == 125, "Key is %Iu\n", key);
+    ok(!num_bytes, "Number of bytes transferred is %lu\n", num_bytes);
     ok(olp == &ov, "Overlapped structure is at %p\n", olp);
 
     closesocket(src);
@@ -9284,10 +9284,10 @@ static void test_completion_port(void)
     ling.l_onoff = 1;
     ling.l_linger = 0;
     iret = setsockopt (src, SOL_SOCKET, SO_LINGER, (char *) &ling, sizeof(ling));
-    ok(!iret, "Failed to set linger %d\n", GetLastError());
+    ok(!iret, "Failed to set linger %ld\n", GetLastError());
 
     io_port = CreateIoCompletionPort((HANDLE)dest, io_port, 125, 0);
-    ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
+    ok(io_port != NULL, "failed to create completion port %lu\n", GetLastError());
     set_blocking(dest, FALSE);
 
     closesocket(src);
@@ -9303,8 +9303,8 @@ static void test_completion_port(void)
     /* Somehow a hard shutdown doesn't work on my Linux box. It seems SO_LINGER is ignored. */
     iret = WSARecv(dest, &bufs, 1, &num_bytes, &flags, &ov, NULL);
     todo_wine ok(iret == SOCKET_ERROR, "WSARecv failed - %d\n", iret);
-    todo_wine ok(GetLastError() == WSAECONNRESET, "Last error was %d\n", GetLastError());
-    todo_wine ok(num_bytes == 0xdeadbeef, "Managed to read %d\n", num_bytes);
+    todo_wine ok(GetLastError() == WSAECONNRESET, "Last error was %ld\n", GetLastError());
+    todo_wine ok(num_bytes == 0xdeadbeef, "Managed to read %ld\n", num_bytes);
 
     SetLastError(0xdeadbeef);
     key = 0xdeadbeef;
@@ -9313,9 +9313,9 @@ static void test_completion_port(void)
 
     bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 200 );
     todo_wine ok(bret == FALSE, "GetQueuedCompletionStatus returned %u\n", bret );
-    todo_wine ok(GetLastError() == WAIT_TIMEOUT, "Last error was %d\n", GetLastError());
-    todo_wine ok(key == 0xdeadbeef, "Key is %lu\n", key);
-    todo_wine ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %u\n", num_bytes);
+    todo_wine ok(GetLastError() == WAIT_TIMEOUT, "Last error was %ld\n", GetLastError());
+    todo_wine ok(key == 0xdeadbeef, "Key is %Iu\n", key);
+    todo_wine ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %lu\n", num_bytes);
     todo_wine ok(!olp, "Overlapped structure is at %p\n", olp);
 
     closesocket(dest);
@@ -9325,7 +9325,7 @@ static void test_completion_port(void)
     ok(dest != INVALID_SOCKET, "socket() failed\n");
 
     io_port = CreateIoCompletionPort((HANDLE)dest, io_port, 125, 0);
-    ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
+    ok(io_port != NULL, "failed to create completion port %lu\n", GetLastError());
     set_blocking(dest, FALSE);
 
     num_bytes = 0xdeadbeef;
@@ -9334,8 +9334,8 @@ static void test_completion_port(void)
 
     iret = WSARecv(dest, &bufs, 1, &num_bytes, &flags, &ov, NULL);
     ok(iret == SOCKET_ERROR, "WSARecv failed - %d\n", iret);
-    ok(GetLastError() == WSAENOTCONN, "Last error was %d\n", GetLastError());
-    ok(num_bytes == 0xdeadbeef, "Managed to read %d\n", num_bytes);
+    ok(GetLastError() == WSAENOTCONN, "Last error was %ld\n", GetLastError());
+    ok(num_bytes == 0xdeadbeef, "Managed to read %ld\n", num_bytes);
 
     SetLastError(0xdeadbeef);
     key = 0xdeadbeef;
@@ -9344,9 +9344,9 @@ static void test_completion_port(void)
 
     bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 200 );
     ok(bret == FALSE, "GetQueuedCompletionStatus returned %u\n", bret );
-    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %d\n", GetLastError());
-    ok(key == 0xdeadbeef, "Key is %lu\n", key);
-    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %u\n", num_bytes);
+    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %ld\n", GetLastError());
+    ok(key == 0xdeadbeef, "Key is %Iu\n", key);
+    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %lu\n", num_bytes);
     ok(!olp, "Overlapped structure is at %p\n", olp);
 
     num_bytes = 0xdeadbeef;
@@ -9369,10 +9369,10 @@ static void test_completion_port(void)
             sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
             &num_bytes, &ov);
     ok(bret == FALSE, "AcceptEx returned %d\n", bret);
-    ok(GetLastError() == ERROR_IO_PENDING, "Last error was %d\n", GetLastError());
+    ok(GetLastError() == ERROR_IO_PENDING, "Last error was %ld\n", GetLastError());
 
     io_port = CreateIoCompletionPort((HANDLE)src, io_port, 125, 0);
-    ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
+    ok(io_port != NULL, "failed to create completion port %lu\n", GetLastError());
 
     closesocket(src);
     src = INVALID_SOCKET;
@@ -9384,11 +9384,11 @@ static void test_completion_port(void)
 
     bret = GetQueuedCompletionStatus(io_port, &num_bytes, &key, &olp, 100);
     ok(bret == FALSE, "failed to get completion status %u\n", bret);
-    ok(GetLastError() == ERROR_OPERATION_ABORTED, "Last error was %d\n", GetLastError());
-    ok(key == 125, "Key is %lu\n", key);
-    ok(num_bytes == 0, "Number of bytes transferred is %u\n", num_bytes);
+    ok(GetLastError() == ERROR_OPERATION_ABORTED, "Last error was %ld\n", GetLastError());
+    ok(key == 125, "Key is %Iu\n", key);
+    ok(num_bytes == 0, "Number of bytes transferred is %lu\n", num_bytes);
     ok(olp == &ov, "Overlapped structure is at %p\n", olp);
-    ok(olp && (olp->Internal == (ULONG)STATUS_CANCELLED), "Internal status is %lx\n", olp ? olp->Internal : 0);
+    ok(olp && (olp->Internal == (ULONG)STATUS_CANCELLED), "Internal status is %Ix\n", olp ? olp->Internal : 0);
 
     SetLastError(0xdeadbeef);
     key = 0xdeadbeef;
@@ -9396,9 +9396,9 @@ static void test_completion_port(void)
     olp = (WSAOVERLAPPED *)0xdeadbeef;
     bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 200 );
     ok(bret == FALSE, "failed to get completion status %u\n", bret);
-    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %d\n", GetLastError());
-    ok(key == 0xdeadbeef, "Key is %lu\n", key);
-    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %u\n", num_bytes);
+    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %ld\n", GetLastError());
+    ok(key == 0xdeadbeef, "Key is %Iu\n", key);
+    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %lu\n", num_bytes);
     ok(!olp, "Overlapped structure is at %p\n", olp);
 
     /* Test IOCP response on socket close (IOCP created before AcceptEx) */
@@ -9408,13 +9408,13 @@ static void test_completion_port(void)
     SetLastError(0xdeadbeef);
 
     io_port = CreateIoCompletionPort((HANDLE)src, io_port, 125, 0);
-    ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
+    ok(io_port != NULL, "failed to create completion port %lu\n", GetLastError());
 
     bret = pAcceptEx(src, dest, buf, sizeof(buf) - 2*(sizeof(struct sockaddr_in) + 16),
             sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
             &num_bytes, &ov);
     ok(bret == FALSE, "AcceptEx returned %d\n", bret);
-    ok(GetLastError() == ERROR_IO_PENDING, "Last error was %d\n", GetLastError());
+    ok(GetLastError() == ERROR_IO_PENDING, "Last error was %ld\n", GetLastError());
 
     closesocket(src);
     src = INVALID_SOCKET;
@@ -9426,11 +9426,11 @@ static void test_completion_port(void)
 
     bret = GetQueuedCompletionStatus(io_port, &num_bytes, &key, &olp, 100);
     ok(bret == FALSE, "failed to get completion status %u\n", bret);
-    ok(GetLastError() == ERROR_OPERATION_ABORTED, "Last error was %d\n", GetLastError());
-    ok(key == 125, "Key is %lu\n", key);
-    ok(num_bytes == 0, "Number of bytes transferred is %u\n", num_bytes);
+    ok(GetLastError() == ERROR_OPERATION_ABORTED, "Last error was %ld\n", GetLastError());
+    ok(key == 125, "Key is %Iu\n", key);
+    ok(num_bytes == 0, "Number of bytes transferred is %lu\n", num_bytes);
     ok(olp == &ov, "Overlapped structure is at %p\n", olp);
-    ok(olp && (olp->Internal == (ULONG)STATUS_CANCELLED), "Internal status is %lx\n", olp ? olp->Internal : 0);
+    ok(olp && (olp->Internal == (ULONG)STATUS_CANCELLED), "Internal status is %Ix\n", olp ? olp->Internal : 0);
 
     SetLastError(0xdeadbeef);
     key = 0xdeadbeef;
@@ -9438,9 +9438,9 @@ static void test_completion_port(void)
     olp = (WSAOVERLAPPED *)0xdeadbeef;
     bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 200 );
     ok(bret == FALSE, "failed to get completion status %u\n", bret);
-    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %d\n", GetLastError());
-    ok(key == 0xdeadbeef, "Key is %lu\n", key);
-    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %u\n", num_bytes);
+    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %ld\n", GetLastError());
+    ok(key == 0xdeadbeef, "Key is %Iu\n", key);
+    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %lu\n", num_bytes);
     ok(!olp, "Overlapped structure is at %p\n", olp);
 
     /* Test IOCP with duplicated handle */
@@ -9450,7 +9450,7 @@ static void test_completion_port(void)
     SetLastError(0xdeadbeef);
 
     io_port = CreateIoCompletionPort((HANDLE)src, io_port, 125, 0);
-    ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
+    ok(io_port != NULL, "failed to create completion port %lu\n", GetLastError());
 
     WSADuplicateSocketA( src, GetCurrentProcessId(), &info );
     dup = WSASocketA(AF_INET, SOCK_STREAM, 0, &info, 0, WSA_FLAG_OVERLAPPED);
@@ -9460,7 +9460,7 @@ static void test_completion_port(void)
             sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
             &num_bytes, &ov);
     ok(bret == FALSE, "AcceptEx returned %d\n", bret);
-    ok(GetLastError() == ERROR_IO_PENDING, "Last error was %d\n", GetLastError());
+    ok(GetLastError() == ERROR_IO_PENDING, "Last error was %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     key = 0xdeadbeef;
@@ -9468,9 +9468,9 @@ static void test_completion_port(void)
     olp = (WSAOVERLAPPED *)0xdeadbeef;
     bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 200 );
     ok(bret == FALSE, "failed to get completion status %u\n", bret);
-    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %d\n", GetLastError());
-    ok(key == 0xdeadbeef, "Key is %lu\n", key);
-    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %u\n", num_bytes);
+    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %ld\n", GetLastError());
+    ok(key == 0xdeadbeef, "Key is %Iu\n", key);
+    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %lu\n", num_bytes);
     ok(!olp, "Overlapped structure is at %p\n", olp);
 
     closesocket(src);
@@ -9484,11 +9484,11 @@ static void test_completion_port(void)
     olp = (WSAOVERLAPPED *)0xdeadbeef;
     bret = GetQueuedCompletionStatus(io_port, &num_bytes, &key, &olp, 100);
     ok(bret == FALSE, "failed to get completion status %u\n", bret);
-    ok(GetLastError() == ERROR_OPERATION_ABORTED, "Last error was %d\n", GetLastError());
-    ok(key == 125, "Key is %lu\n", key);
-    ok(num_bytes == 0, "Number of bytes transferred is %u\n", num_bytes);
+    ok(GetLastError() == ERROR_OPERATION_ABORTED, "Last error was %ld\n", GetLastError());
+    ok(key == 125, "Key is %Iu\n", key);
+    ok(num_bytes == 0, "Number of bytes transferred is %lu\n", num_bytes);
     ok(olp == &ov, "Overlapped structure is at %p\n", olp);
-    ok(olp && olp->Internal == (ULONG)STATUS_CANCELLED, "Internal status is %lx\n", olp ? olp->Internal : 0);
+    ok(olp && olp->Internal == (ULONG)STATUS_CANCELLED, "Internal status is %Ix\n", olp ? olp->Internal : 0);
 
     SetLastError(0xdeadbeef);
     key = 0xdeadbeef;
@@ -9496,9 +9496,9 @@ static void test_completion_port(void)
     olp = (WSAOVERLAPPED *)0xdeadbeef;
     bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 200 );
     ok(bret == FALSE, "failed to get completion status %u\n", bret);
-    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %d\n", GetLastError());
-    ok(key == 0xdeadbeef, "Key is %lu\n", key);
-    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %u\n", num_bytes);
+    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %ld\n", GetLastError());
+    ok(key == 0xdeadbeef, "Key is %Iu\n", key);
+    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %lu\n", num_bytes);
     ok(!olp, "Overlapped structure is at %p\n", olp);
 
     /* Test IOCP with duplicated handle (closing duplicated handle) */
@@ -9508,7 +9508,7 @@ static void test_completion_port(void)
     SetLastError(0xdeadbeef);
 
     io_port = CreateIoCompletionPort((HANDLE)src, io_port, 125, 0);
-    ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
+    ok(io_port != NULL, "failed to create completion port %lu\n", GetLastError());
 
     WSADuplicateSocketA( src, GetCurrentProcessId(), &info );
     dup = WSASocketA(AF_INET, SOCK_STREAM, 0, &info, 0, WSA_FLAG_OVERLAPPED);
@@ -9518,7 +9518,7 @@ static void test_completion_port(void)
             sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
             &num_bytes, &ov);
     ok(bret == FALSE, "AcceptEx returned %d\n", bret);
-    ok(GetLastError() == ERROR_IO_PENDING, "Last error was %d\n", GetLastError());
+    ok(GetLastError() == ERROR_IO_PENDING, "Last error was %ld\n", GetLastError());
 
     closesocket(dup);
     dup = INVALID_SOCKET;
@@ -9529,9 +9529,9 @@ static void test_completion_port(void)
     olp = (WSAOVERLAPPED *)0xdeadbeef;
     bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 200 );
     ok(bret == FALSE, "failed to get completion status %u\n", bret);
-    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %d\n", GetLastError());
-    ok(key == 0xdeadbeef, "Key is %lu\n", key);
-    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %u\n", num_bytes);
+    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %ld\n", GetLastError());
+    ok(key == 0xdeadbeef, "Key is %Iu\n", key);
+    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %lu\n", num_bytes);
     ok(!olp, "Overlapped structure is at %p\n", olp);
 
     SetLastError(0xdeadbeef);
@@ -9540,9 +9540,9 @@ static void test_completion_port(void)
     olp = (WSAOVERLAPPED *)0xdeadbeef;
     bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 200 );
     ok(bret == FALSE, "failed to get completion status %u\n", bret);
-    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %d\n", GetLastError());
-    ok(key == 0xdeadbeef, "Key is %lu\n", key);
-    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %u\n", num_bytes);
+    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %ld\n", GetLastError());
+    ok(key == 0xdeadbeef, "Key is %Iu\n", key);
+    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %lu\n", num_bytes);
     ok(!olp, "Overlapped structure is at %p\n", olp);
 
     closesocket(src);
@@ -9550,11 +9550,11 @@ static void test_completion_port(void)
 
     bret = GetQueuedCompletionStatus(io_port, &num_bytes, &key, &olp, 100);
     ok(bret == FALSE, "failed to get completion status %u\n", bret);
-    ok(GetLastError() == ERROR_OPERATION_ABORTED, "Last error was %d\n", GetLastError());
-    ok(key == 125, "Key is %lu\n", key);
-    ok(num_bytes == 0, "Number of bytes transferred is %u\n", num_bytes);
+    ok(GetLastError() == ERROR_OPERATION_ABORTED, "Last error was %ld\n", GetLastError());
+    ok(key == 125, "Key is %Iu\n", key);
+    ok(num_bytes == 0, "Number of bytes transferred is %lu\n", num_bytes);
     ok(olp == &ov, "Overlapped structure is at %p\n", olp);
-    ok(olp && (olp->Internal == (ULONG)STATUS_CANCELLED), "Internal status is %lx\n", olp ? olp->Internal : 0);
+    ok(olp && (olp->Internal == (ULONG)STATUS_CANCELLED), "Internal status is %Ix\n", olp ? olp->Internal : 0);
 
     SetLastError(0xdeadbeef);
     key = 0xdeadbeef;
@@ -9562,9 +9562,9 @@ static void test_completion_port(void)
     olp = (WSAOVERLAPPED *)0xdeadbeef;
     bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 200 );
     ok(bret == FALSE, "failed to get completion status %u\n", bret);
-    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %d\n", GetLastError());
-    ok(key == 0xdeadbeef, "Key is %lu\n", key);
-    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %u\n", num_bytes);
+    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %ld\n", GetLastError());
+    ok(key == 0xdeadbeef, "Key is %Iu\n", key);
+    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %lu\n", num_bytes);
     ok(!olp, "Overlapped structure is at %p\n", olp);
 
     /* Test IOCP with duplicated handle (closing original handle) */
@@ -9574,7 +9574,7 @@ static void test_completion_port(void)
     SetLastError(0xdeadbeef);
 
     io_port = CreateIoCompletionPort((HANDLE)src, io_port, 125, 0);
-    ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
+    ok(io_port != NULL, "failed to create completion port %lu\n", GetLastError());
 
     WSADuplicateSocketA( src, GetCurrentProcessId(), &info );
     dup = WSASocketA(AF_INET, SOCK_STREAM, 0, &info, 0, WSA_FLAG_OVERLAPPED);
@@ -9584,7 +9584,7 @@ static void test_completion_port(void)
             sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
             &num_bytes, &ov);
     ok(bret == FALSE, "AcceptEx returned %d\n", bret);
-    ok(GetLastError() == ERROR_IO_PENDING, "Last error was %d\n", GetLastError());
+    ok(GetLastError() == ERROR_IO_PENDING, "Last error was %ld\n", GetLastError());
 
     closesocket(src);
     src = INVALID_SOCKET;
@@ -9595,9 +9595,9 @@ static void test_completion_port(void)
     olp = (WSAOVERLAPPED *)0xdeadbeef;
     bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 200 );
     ok(bret == FALSE, "failed to get completion status %u\n", bret);
-    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %d\n", GetLastError());
-    ok(key == 0xdeadbeef, "Key is %lu\n", key);
-    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %u\n", num_bytes);
+    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %ld\n", GetLastError());
+    ok(key == 0xdeadbeef, "Key is %Iu\n", key);
+    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %lu\n", num_bytes);
     ok(!olp, "Overlapped structure is at %p\n", olp);
 
     closesocket(dup);
@@ -9605,11 +9605,11 @@ static void test_completion_port(void)
 
     bret = GetQueuedCompletionStatus(io_port, &num_bytes, &key, &olp, 100);
     ok(bret == FALSE, "failed to get completion status %u\n", bret);
-    ok(GetLastError() == ERROR_OPERATION_ABORTED, "Last error was %d\n", GetLastError());
-    ok(key == 125, "Key is %lu\n", key);
-    ok(num_bytes == 0, "Number of bytes transferred is %u\n", num_bytes);
+    ok(GetLastError() == ERROR_OPERATION_ABORTED, "Last error was %ld\n", GetLastError());
+    ok(key == 125, "Key is %Iu\n", key);
+    ok(num_bytes == 0, "Number of bytes transferred is %lu\n", num_bytes);
     ok(olp == &ov, "Overlapped structure is at %p\n", olp);
-    ok(olp && (olp->Internal == (ULONG)STATUS_CANCELLED), "Internal status is %lx\n", olp ? olp->Internal : 0);
+    ok(olp && (olp->Internal == (ULONG)STATUS_CANCELLED), "Internal status is %Ix\n", olp ? olp->Internal : 0);
 
     SetLastError(0xdeadbeef);
     key = 0xdeadbeef;
@@ -9617,9 +9617,9 @@ static void test_completion_port(void)
     olp = (WSAOVERLAPPED *)0xdeadbeef;
     bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 200 );
     ok(bret == FALSE, "failed to get completion status %u\n", bret);
-    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %d\n", GetLastError());
-    ok(key == 0xdeadbeef, "Key is %lu\n", key);
-    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %u\n", num_bytes);
+    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %ld\n", GetLastError());
+    ok(key == 0xdeadbeef, "Key is %Iu\n", key);
+    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %lu\n", num_bytes);
     ok(!olp, "Overlapped structure is at %p\n", olp);
 
     /* Test IOCP without AcceptEx */
@@ -9629,7 +9629,7 @@ static void test_completion_port(void)
     SetLastError(0xdeadbeef);
 
     io_port = CreateIoCompletionPort((HANDLE)src, io_port, 125, 0);
-    ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
+    ok(io_port != NULL, "failed to create completion port %lu\n", GetLastError());
 
     closesocket(src);
     src = INVALID_SOCKET;
@@ -9640,9 +9640,9 @@ static void test_completion_port(void)
     olp = (WSAOVERLAPPED *)0xdeadbeef;
     bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 200 );
     ok(bret == FALSE, "failed to get completion status %u\n", bret);
-    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %d\n", GetLastError());
-    ok(key == 0xdeadbeef, "Key is %lu\n", key);
-    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %u\n", num_bytes);
+    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %ld\n", GetLastError());
+    ok(key == 0xdeadbeef, "Key is %Iu\n", key);
+    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %lu\n", num_bytes);
     ok(!olp, "Overlapped structure is at %p\n", olp);
 
     /* */
@@ -9653,19 +9653,19 @@ static void test_completion_port(void)
     ok(connector != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
 
     io_port = CreateIoCompletionPort((HANDLE)src, io_port, 125, 0);
-    ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
+    ok(io_port != NULL, "failed to create completion port %lu\n", GetLastError());
 
     io_port = CreateIoCompletionPort((HANDLE)dest, io_port, 236, 0);
-    ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
+    ok(io_port != NULL, "failed to create completion port %lu\n", GetLastError());
 
     bret = pAcceptEx(src, dest, buf, sizeof(buf) - 2*(sizeof(struct sockaddr_in) + 16),
             sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
             &num_bytes, &ov);
     ok(bret == FALSE, "AcceptEx returned %d\n", bret);
-    ok(GetLastError() == ERROR_IO_PENDING, "Last error was %d\n", GetLastError());
+    ok(GetLastError() == ERROR_IO_PENDING, "Last error was %ld\n", GetLastError());
 
     iret = connect(connector, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
-    ok(iret == 0, "connecting to accepting socket failed, error %d\n", GetLastError());
+    ok(iret == 0, "connecting to accepting socket failed, error %ld\n", GetLastError());
 
     closesocket(connector);
     connector = INVALID_SOCKET;
@@ -9677,11 +9677,11 @@ static void test_completion_port(void)
 
     bret = GetQueuedCompletionStatus(io_port, &num_bytes, &key, &olp, 100);
     ok(bret == TRUE, "failed to get completion status %u\n", bret);
-    ok(GetLastError() == 0xdeadbeef, "Last error was %d\n", GetLastError());
-    ok(key == 125, "Key is %lu\n", key);
-    ok(num_bytes == 0, "Number of bytes transferred is %u\n", num_bytes);
+    ok(GetLastError() == 0xdeadbeef, "Last error was %ld\n", GetLastError());
+    ok(key == 125, "Key is %Iu\n", key);
+    ok(num_bytes == 0, "Number of bytes transferred is %lu\n", num_bytes);
     ok(olp == &ov, "Overlapped structure is at %p\n", olp);
-    ok(olp && (olp->Internal == (ULONG)STATUS_SUCCESS), "Internal status is %lx\n", olp ? olp->Internal : 0);
+    ok(olp && (olp->Internal == (ULONG)STATUS_SUCCESS), "Internal status is %Ix\n", olp ? olp->Internal : 0);
 
     SetLastError(0xdeadbeef);
     key = 0xdeadbeef;
@@ -9689,9 +9689,9 @@ static void test_completion_port(void)
     olp = (WSAOVERLAPPED *)0xdeadbeef;
     bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 200 );
     ok(bret == FALSE, "failed to get completion status %u\n", bret);
-    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %d\n", GetLastError());
-    ok(key == 0xdeadbeef, "Key is %lu\n", key);
-    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %u\n", num_bytes);
+    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %ld\n", GetLastError());
+    ok(key == 0xdeadbeef, "Key is %Iu\n", key);
+    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %lu\n", num_bytes);
     ok(!olp, "Overlapped structure is at %p\n", olp);
 
     if (dest != INVALID_SOCKET)
@@ -9710,19 +9710,19 @@ static void test_completion_port(void)
     ok(connector != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
 
     io_port = CreateIoCompletionPort((HANDLE)src, io_port, 125, 0);
-    ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
+    ok(io_port != NULL, "failed to create completion port %lu\n", GetLastError());
 
     io_port = CreateIoCompletionPort((HANDLE)dest, io_port, 236, 0);
-    ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
+    ok(io_port != NULL, "failed to create completion port %lu\n", GetLastError());
 
     bret = pAcceptEx(src, dest, buf, sizeof(buf) - 2*(sizeof(struct sockaddr_in) + 16),
             sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
             &num_bytes, &ov);
     ok(bret == FALSE, "AcceptEx returned %d\n", bret);
-    ok(GetLastError() == ERROR_IO_PENDING, "Last error was %d\n", GetLastError());
+    ok(GetLastError() == ERROR_IO_PENDING, "Last error was %ld\n", GetLastError());
 
     iret = connect(connector, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
-    ok(iret == 0, "connecting to accepting socket failed, error %d\n", GetLastError());
+    ok(iret == 0, "connecting to accepting socket failed, error %ld\n", GetLastError());
 
     iret = send(connector, buf, 1, 0);
     ok(iret == 1, "could not send 1 byte: send %d errno %d\n", iret, WSAGetLastError());
@@ -9739,11 +9739,11 @@ static void test_completion_port(void)
 
     bret = GetQueuedCompletionStatus(io_port, &num_bytes, &key, &olp, 100);
     ok(bret == TRUE, "failed to get completion status %u\n", bret);
-    ok(GetLastError() == 0xdeadbeef, "Last error was %d\n", GetLastError());
-    ok(key == 125, "Key is %lu\n", key);
-    ok(num_bytes == 1, "Number of bytes transferred is %u\n", num_bytes);
+    ok(GetLastError() == 0xdeadbeef, "Last error was %ld\n", GetLastError());
+    ok(key == 125, "Key is %Iu\n", key);
+    ok(num_bytes == 1, "Number of bytes transferred is %lu\n", num_bytes);
     ok(olp == &ov, "Overlapped structure is at %p\n", olp);
-    ok(olp && (olp->Internal == (ULONG)STATUS_SUCCESS), "Internal status is %lx\n", olp ? olp->Internal : 0);
+    ok(olp && (olp->Internal == (ULONG)STATUS_SUCCESS), "Internal status is %Ix\n", olp ? olp->Internal : 0);
 
     SetLastError(0xdeadbeef);
     key = 0xdeadbeef;
@@ -9751,9 +9751,9 @@ static void test_completion_port(void)
     olp = (WSAOVERLAPPED *)0xdeadbeef;
     bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 200 );
     ok(bret == FALSE, "failed to get completion status %u\n", bret);
-    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %d\n", GetLastError());
-    ok(key == 0xdeadbeef, "Key is %lu\n", key);
-    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %u\n", num_bytes);
+    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %ld\n", GetLastError());
+    ok(key == 0xdeadbeef, "Key is %Iu\n", key);
+    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %lu\n", num_bytes);
     ok(!olp, "Overlapped structure is at %p\n", olp);
 
     if (src != INVALID_SOCKET)
@@ -9772,19 +9772,19 @@ static void test_completion_port(void)
     ok(connector != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
 
     io_port = CreateIoCompletionPort((HANDLE)src, io_port, 125, 0);
-    ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
+    ok(io_port != NULL, "failed to create completion port %lu\n", GetLastError());
 
     io_port = CreateIoCompletionPort((HANDLE)dest, io_port, 236, 0);
-    ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
+    ok(io_port != NULL, "failed to create completion port %lu\n", GetLastError());
 
     bret = pAcceptEx(src, dest, buf, sizeof(buf) - 2*(sizeof(struct sockaddr_in) + 16),
             sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
             &num_bytes, &ov);
     ok(bret == FALSE, "AcceptEx returned %d\n", bret);
-    ok(GetLastError() == ERROR_IO_PENDING, "Last error was %d\n", GetLastError());
+    ok(GetLastError() == ERROR_IO_PENDING, "Last error was %ld\n", GetLastError());
 
     iret = connect(connector, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
-    ok(iret == 0, "connecting to accepting socket failed, error %d\n", GetLastError());
+    ok(iret == 0, "connecting to accepting socket failed, error %ld\n", GetLastError());
 
     closesocket(dest);
 
@@ -9796,12 +9796,12 @@ static void test_completion_port(void)
     bret = GetQueuedCompletionStatus(io_port, &num_bytes, &key, &olp, 100);
     ok(bret == FALSE, "failed to get completion status %u\n", bret);
     ok(GetLastError() == ERROR_OPERATION_ABORTED
-            || GetLastError() == ERROR_CONNECTION_ABORTED, "got error %u\n", GetLastError());
-    ok(key == 125, "Key is %lu\n", key);
-    ok(num_bytes == 0, "Number of bytes transferred is %u\n", num_bytes);
+            || GetLastError() == ERROR_CONNECTION_ABORTED, "got error %lu\n", GetLastError());
+    ok(key == 125, "Key is %Iu\n", key);
+    ok(num_bytes == 0, "Number of bytes transferred is %lu\n", num_bytes);
     ok(olp == &ov, "Overlapped structure is at %p\n", olp);
     ok((NTSTATUS)olp->Internal == STATUS_CANCELLED
-            || (NTSTATUS)olp->Internal == STATUS_CONNECTION_ABORTED, "got status %#lx\n", olp->Internal);
+            || (NTSTATUS)olp->Internal == STATUS_CONNECTION_ABORTED, "got status %#Ix\n", olp->Internal);
 
     SetLastError(0xdeadbeef);
     key = 0xdeadbeef;
@@ -9809,9 +9809,9 @@ static void test_completion_port(void)
     olp = (WSAOVERLAPPED *)0xdeadbeef;
     bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 200 );
     ok(bret == FALSE, "failed to get completion status %u\n", bret);
-    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %d\n", GetLastError());
-    ok(key == 0xdeadbeef, "Key is %lu\n", key);
-    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %u\n", num_bytes);
+    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %ld\n", GetLastError());
+    ok(key == 0xdeadbeef, "Key is %Iu\n", key);
+    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %lu\n", num_bytes);
     ok(!olp, "Overlapped structure is at %p\n", olp);
 
     closesocket(src);
@@ -9858,7 +9858,7 @@ static void test_connect_completion_port(void)
     /* connect() does not queue completion. */
 
     port = CreateIoCompletionPort((HANDLE)connector, NULL, 0, 0);
-    ok(!!port, "failed to create port, error %u\n", GetLastError());
+    ok(!!port, "failed to create port, error %lu\n", GetLastError());
 
     ret = connect(connector, (struct sockaddr *)&destaddr, sizeof(destaddr));
     ok(!ret, "failed to connect, error %u\n", WSAGetLastError());
@@ -9868,7 +9868,7 @@ static void test_connect_completion_port(void)
 
     ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == WAIT_TIMEOUT, "got error %u\n", GetLastError());
+    ok(GetLastError() == WAIT_TIMEOUT, "got error %lu\n", GetLastError());
 
     closesocket(connector);
     CloseHandle(port);
@@ -9876,7 +9876,7 @@ static void test_connect_completion_port(void)
     connector = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     ok(connector != -1, "failed to create socket, error %u\n", WSAGetLastError());
     port = CreateIoCompletionPort((HANDLE)connector, NULL, 0, 0);
-    ok(!!port, "failed to create port, error %u\n", GetLastError());
+    ok(!!port, "failed to create port, error %lu\n", GetLastError());
     set_blocking(connector, FALSE);
 
     ret = connect(connector, (struct sockaddr *)&destaddr, sizeof(destaddr));
@@ -9888,7 +9888,7 @@ static void test_connect_completion_port(void)
 
     ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == WAIT_TIMEOUT, "got error %u\n", GetLastError());
+    ok(GetLastError() == WAIT_TIMEOUT, "got error %lu\n", GetLastError());
 
     closesocket(connector);
     CloseHandle(port);
@@ -9898,19 +9898,19 @@ static void test_connect_completion_port(void)
     connector = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     ok(connector != -1, "failed to create socket, error %u\n", WSAGetLastError());
     port = CreateIoCompletionPort((HANDLE)connector, NULL, 0, 0);
-    ok(!!port, "failed to create port, error %u\n", GetLastError());
+    ok(!!port, "failed to create port, error %lu\n", GetLastError());
     ret = bind(connector, (struct sockaddr *)&addr, sizeof(addr));
     ok(!ret, "failed to bind, error %u\n", WSAGetLastError());
 
     ret = pConnectEx(connector, (struct sockaddr *)&destaddr, sizeof(destaddr),
             NULL, 0, &size, &overlapped);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == ERROR_IO_PENDING, "got error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_IO_PENDING, "got error %lu\n", GetLastError());
     ret = WaitForSingleObject(overlapped.hEvent, 1000);
     ok(!ret, "wait failed\n");
     ret = GetOverlappedResult((HANDLE)connector, &overlapped, &size, FALSE);
-    ok(ret, "got error %u\n", GetLastError());
-    ok(!size, "got %u bytes\n", size);
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(!size, "got %lu bytes\n", size);
     acceptor = accept(listener, NULL, NULL);
     ok(acceptor != -1, "failed to accept, error %u\n", WSAGetLastError());
     closesocket(acceptor);
@@ -9919,9 +9919,9 @@ static void test_connect_completion_port(void)
     key = 0xdeadbeef;
     overlapped_ptr = NULL;
     ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
-    ok(ret, "got error %u\n", GetLastError());
+    ok(ret, "got error %lu\n", GetLastError());
     ok(!key, "got key %#Ix\n", key);
-    ok(!size, "got %u bytes\n", size);
+    ok(!size, "got %lu bytes\n", size);
     ok(overlapped_ptr == &overlapped, "got overlapped %p\n", overlapped_ptr);
 
     closesocket(connector);
@@ -9932,19 +9932,19 @@ static void test_connect_completion_port(void)
     connector = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     ok(connector != -1, "failed to create socket, error %u\n", WSAGetLastError());
     port = CreateIoCompletionPort((HANDLE)connector, NULL, 0, 0);
-    ok(!!port, "failed to create port, error %u\n", GetLastError());
+    ok(!!port, "failed to create port, error %lu\n", GetLastError());
     ret = bind(connector, (struct sockaddr *)&addr, sizeof(addr));
     ok(!ret, "failed to bind, error %u\n", WSAGetLastError());
 
     ret = pConnectEx(connector, (struct sockaddr *)&destaddr, sizeof(destaddr),
             (void *)"one", 3, &size, &overlapped);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == ERROR_IO_PENDING, "got error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_IO_PENDING, "got error %lu\n", GetLastError());
     ret = WaitForSingleObject(overlapped.hEvent, 1000);
     ok(!ret, "wait failed\n");
     ret = GetOverlappedResult((HANDLE)connector, &overlapped, &size, FALSE);
-    ok(ret, "got error %u\n", GetLastError());
-    ok(size == 3, "got %u bytes\n", size);
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(size == 3, "got %lu bytes\n", size);
     acceptor = accept(listener, NULL, NULL);
     ok(acceptor != -1, "failed to accept, error %u\n", WSAGetLastError());
     closesocket(acceptor);
@@ -9953,9 +9953,9 @@ static void test_connect_completion_port(void)
     key = 0xdeadbeef;
     overlapped_ptr = NULL;
     ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
-    ok(ret, "got error %u\n", GetLastError());
+    ok(ret, "got error %lu\n", GetLastError());
     ok(!key, "got key %#Ix\n", key);
-    ok(size == 3, "got %u bytes\n", size);
+    ok(size == 3, "got %lu bytes\n", size);
     ok(overlapped_ptr == &overlapped, "got overlapped %p\n", overlapped_ptr);
 
     closesocket(connector);
@@ -9966,7 +9966,7 @@ static void test_connect_completion_port(void)
     connector = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     ok(connector != -1, "failed to create socket, error %u\n", WSAGetLastError());
     port = CreateIoCompletionPort((HANDLE)connector, NULL, 0, 0);
-    ok(!!port, "failed to create port, error %u\n", GetLastError());
+    ok(!!port, "failed to create port, error %lu\n", GetLastError());
     ret = bind(connector, (struct sockaddr *)&addr, sizeof(addr));
     ok(!ret, "failed to bind, error %u\n", WSAGetLastError());
 
@@ -9975,19 +9975,19 @@ static void test_connect_completion_port(void)
     ret = pConnectEx(connector, (struct sockaddr *)&destaddr, sizeof(destaddr),
             NULL, 0, &size, &overlapped);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == ERROR_IO_PENDING, "got error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_IO_PENDING, "got error %lu\n", GetLastError());
     ret = WaitForSingleObject(overlapped.hEvent, 1000);
     ok(!ret, "wait failed\n");
     ret = GetOverlappedResult((HANDLE)connector, &overlapped, &size, FALSE);
-    ok(ret, "got error %u\n", GetLastError());
-    ok(!size, "got %u bytes\n", size);
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(!size, "got %lu bytes\n", size);
     acceptor = accept(listener, NULL, NULL);
     ok(acceptor != -1, "failed to accept, error %u\n", WSAGetLastError());
     closesocket(acceptor);
 
     ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == WAIT_TIMEOUT, "got error %u\n", GetLastError());
+    ok(GetLastError() == WAIT_TIMEOUT, "got error %lu\n", GetLastError());
 
     closesocket(connector);
     CloseHandle(port);
@@ -9999,21 +9999,21 @@ static void test_connect_completion_port(void)
     connector = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     ok(connector != -1, "failed to create socket, error %u\n", WSAGetLastError());
     port = CreateIoCompletionPort((HANDLE)connector, NULL, 0, 0);
-    ok(!!port, "failed to create port, error %u\n", GetLastError());
+    ok(!!port, "failed to create port, error %lu\n", GetLastError());
     ret = SetFileCompletionNotificationModes((HANDLE)connector, FILE_SKIP_COMPLETION_PORT_ON_SUCCESS);
-    ok(ret, "got error %u\n", GetLastError());
+    ok(ret, "got error %lu\n", GetLastError());
     ret = bind(connector, (struct sockaddr *)&addr, sizeof(addr));
     ok(!ret, "failed to bind, error %u\n", WSAGetLastError());
 
     ret = pConnectEx(connector, (struct sockaddr *)&destaddr, sizeof(destaddr),
             NULL, 0, &size, &overlapped);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == ERROR_IO_PENDING, "got error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_IO_PENDING, "got error %lu\n", GetLastError());
     ret = WaitForSingleObject(overlapped.hEvent, 1000);
     ok(!ret, "wait failed\n");
     ret = GetOverlappedResult((HANDLE)connector, &overlapped, &size, FALSE);
-    ok(ret, "got error %u\n", GetLastError());
-    ok(!size, "got %u bytes\n", size);
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(!size, "got %lu bytes\n", size);
     acceptor = accept(listener, NULL, NULL);
     ok(acceptor != -1, "failed to accept, error %u\n", WSAGetLastError());
     closesocket(acceptor);
@@ -10022,9 +10022,9 @@ static void test_connect_completion_port(void)
     key = 0xdeadbeef;
     overlapped_ptr = NULL;
     ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
-    ok(ret, "got error %u\n", GetLastError());
+    ok(ret, "got error %lu\n", GetLastError());
     ok(!key, "got key %#Ix\n", key);
-    ok(!size, "got %u bytes\n", size);
+    ok(!size, "got %lu bytes\n", size);
     ok(overlapped_ptr == &overlapped, "got overlapped %p\n", overlapped_ptr);
 
     closesocket(connector);
@@ -10037,31 +10037,31 @@ static void test_connect_completion_port(void)
     connector = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     ok(connector != -1, "failed to create socket, error %u\n", WSAGetLastError());
     port = CreateIoCompletionPort((HANDLE)connector, NULL, 0, 0);
-    ok(!!port, "failed to create port, error %u\n", GetLastError());
+    ok(!!port, "failed to create port, error %lu\n", GetLastError());
     ret = SetFileCompletionNotificationModes((HANDLE)connector, FILE_SKIP_COMPLETION_PORT_ON_SUCCESS);
-    ok(ret, "got error %u\n", GetLastError());
+    ok(ret, "got error %lu\n", GetLastError());
     ret = bind(connector, (struct sockaddr *)&addr, sizeof(addr));
     ok(!ret, "failed to bind, error %u\n", WSAGetLastError());
 
     ret = pConnectEx(connector, (struct sockaddr *)&destaddr, sizeof(destaddr),
             NULL, 0, &size, &overlapped);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == ERROR_IO_PENDING, "got error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_IO_PENDING, "got error %lu\n", GetLastError());
     ret = WaitForSingleObject(overlapped.hEvent, 15000);
     ok(!ret, "wait failed\n");
     ret = GetOverlappedResult((HANDLE)connector, &overlapped, &size, FALSE);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == ERROR_CONNECTION_REFUSED, "got error %u\n", GetLastError());
-    ok(!size, "got %u bytes\n", size);
+    ok(GetLastError() == ERROR_CONNECTION_REFUSED, "got error %lu\n", GetLastError());
+    ok(!size, "got %lu bytes\n", size);
 
     size = 0xdeadbeef;
     key = 0xdeadbeef;
     overlapped_ptr = NULL;
     ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == ERROR_CONNECTION_REFUSED, "got error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_CONNECTION_REFUSED, "got error %lu\n", GetLastError());
     ok(!key, "got key %#Ix\n", key);
-    ok(!size, "got %u bytes\n", size);
+    ok(!size, "got %lu bytes\n", size);
     ok(overlapped_ptr == &overlapped, "got overlapped %p\n", overlapped_ptr);
 
     closesocket(connector);
@@ -10107,7 +10107,7 @@ static void test_shutdown_completion_port(void)
     /* shutdown() does not queue completion. */
 
     port = CreateIoCompletionPort((HANDLE)client, NULL, 0, 0);
-    ok(!!port, "failed to create port, error %u\n", GetLastError());
+    ok(!!port, "failed to create port, error %lu\n", GetLastError());
     ret = connect(client, (struct sockaddr *)&destaddr, sizeof(destaddr));
     ok(!ret, "failed to connect, error %u\n", WSAGetLastError());
     server = accept(listener, NULL, NULL);
@@ -10118,7 +10118,7 @@ static void test_shutdown_completion_port(void)
 
     ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == WAIT_TIMEOUT, "got error %u\n", GetLastError());
+    ok(GetLastError() == WAIT_TIMEOUT, "got error %lu\n", GetLastError());
 
     closesocket(server);
     closesocket(client);
@@ -10129,7 +10129,7 @@ static void test_shutdown_completion_port(void)
     client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     ok(client != -1, "failed to create socket, error %u\n", WSAGetLastError());
     port = CreateIoCompletionPort((HANDLE)client, NULL, 0, 0);
-    ok(!!port, "failed to create port, error %u\n", GetLastError());
+    ok(!!port, "failed to create port, error %lu\n", GetLastError());
     ret = connect(client, (struct sockaddr *)&destaddr, sizeof(destaddr));
     ok(!ret, "failed to connect, error %u\n", WSAGetLastError());
     server = accept(listener, NULL, NULL);
@@ -10143,7 +10143,7 @@ static void test_shutdown_completion_port(void)
 
     ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == WAIT_TIMEOUT, "got error %u\n", GetLastError());
+    ok(GetLastError() == WAIT_TIMEOUT, "got error %lu\n", GetLastError());
 
     closesocket(server);
     closesocket(client);
@@ -10154,9 +10154,9 @@ static void test_shutdown_completion_port(void)
     client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     ok(client != -1, "failed to create socket, error %u\n", WSAGetLastError());
     port = CreateIoCompletionPort((HANDLE)client, NULL, 0, 0);
-    ok(!!port, "failed to create port, error %u\n", GetLastError());
+    ok(!!port, "failed to create port, error %lu\n", GetLastError());
     ret = SetFileCompletionNotificationModes((HANDLE)client, FILE_SKIP_COMPLETION_PORT_ON_SUCCESS);
-    ok(ret, "got error %u\n", GetLastError());
+    ok(ret, "got error %lu\n", GetLastError());
     ret = connect(client, (struct sockaddr *)&destaddr, sizeof(destaddr));
     ok(!ret, "failed to connect, error %u\n", WSAGetLastError());
     server = accept(listener, NULL, NULL);
@@ -10165,23 +10165,23 @@ static void test_shutdown_completion_port(void)
     SetLastError(0xdeadbeef);
     ret = pDisconnectEx(client, &overlapped, 0, 0);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == ERROR_IO_PENDING, "got error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_IO_PENDING, "got error %lu\n", GetLastError());
 
     ret = WaitForSingleObject(overlapped.hEvent, 1000);
     ok(!ret, "wait failed\n");
 
     size = 0xdeadbeef;
     ret = GetOverlappedResult((HANDLE)client, &overlapped, &size, TRUE);
-    ok(ret, "got error %u\n", GetLastError());
-    ok(!size, "got %u bytes\n", size);
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(!size, "got %lu bytes\n", size);
 
     size = 0xdeadbeef;
     key = 0xdeadbeef;
     overlapped_ptr = NULL;
     ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
-    todo_wine ok(ret, "got error %u\n", GetLastError());
+    todo_wine ok(ret, "got error %lu\n", GetLastError());
     todo_wine ok(!key, "got key %#Ix\n", key);
-    todo_wine ok(!size, "got %u bytes\n", size);
+    todo_wine ok(!size, "got %lu bytes\n", size);
     todo_wine ok(overlapped_ptr == &overlapped, "got overlapped %p\n", overlapped_ptr);
 
     closesocket(server);
@@ -10193,7 +10193,7 @@ static void test_shutdown_completion_port(void)
     client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     ok(client != -1, "failed to create socket, error %u\n", WSAGetLastError());
     port = CreateIoCompletionPort((HANDLE)client, NULL, 0, 0);
-    ok(!!port, "failed to create port, error %u\n", GetLastError());
+    ok(!!port, "failed to create port, error %lu\n", GetLastError());
     ret = connect(client, (struct sockaddr *)&destaddr, sizeof(destaddr));
     ok(!ret, "failed to connect, error %u\n", WSAGetLastError());
     server = accept(listener, NULL, NULL);
@@ -10202,11 +10202,11 @@ static void test_shutdown_completion_port(void)
     SetLastError(0xdeadbeef);
     ret = pDisconnectEx(client, NULL, 0, 0);
     ok(ret, "expected success\n");
-    ok(!GetLastError() || GetLastError() == 0xdeadbeef /* < 7 */, "got error %u\n", GetLastError());
+    ok(!GetLastError() || GetLastError() == 0xdeadbeef /* < 7 */, "got error %lu\n", GetLastError());
 
     ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == WAIT_TIMEOUT, "got error %u\n", GetLastError());
+    ok(GetLastError() == WAIT_TIMEOUT, "got error %lu\n", GetLastError());
 
     closesocket(server);
     closesocket(client);
@@ -10217,7 +10217,7 @@ static void test_shutdown_completion_port(void)
     client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     ok(client != -1, "failed to create socket, error %u\n", WSAGetLastError());
     port = CreateIoCompletionPort((HANDLE)client, NULL, 0, 0);
-    ok(!!port, "failed to create port, error %u\n", GetLastError());
+    ok(!!port, "failed to create port, error %lu\n", GetLastError());
     ret = connect(client, (struct sockaddr *)&destaddr, sizeof(destaddr));
     ok(!ret, "failed to connect, error %u\n", WSAGetLastError());
     server = accept(listener, NULL, NULL);
@@ -10228,19 +10228,19 @@ static void test_shutdown_completion_port(void)
     SetLastError(0xdeadbeef);
     ret = pDisconnectEx(client, &overlapped, 0, 0);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == ERROR_IO_PENDING, "got error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_IO_PENDING, "got error %lu\n", GetLastError());
 
     ret = WaitForSingleObject(overlapped.hEvent, 1000);
     ok(!ret, "wait failed\n");
 
     size = 0xdeadbeef;
     ret = GetOverlappedResult((HANDLE)client, &overlapped, &size, TRUE);
-    ok(ret, "got error %u\n", GetLastError());
-    ok(!size, "got %u bytes\n", size);
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(!size, "got %lu bytes\n", size);
 
     ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
     ok(!ret, "expected failure\n");
-    ok(GetLastError() == WAIT_TIMEOUT, "got error %u\n", GetLastError());
+    ok(GetLastError() == WAIT_TIMEOUT, "got error %lu\n", GetLastError());
 
     closesocket(server);
     closesocket(client);
@@ -10271,21 +10271,21 @@ static void test_address_list_query(void)
     ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, NULL, 0, &size, NULL, NULL);
     ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
     ok(WSAGetLastError() == WSAEFAULT, "Got unexpected error %d.\n", WSAGetLastError());
-    ok(size >= FIELD_OFFSET(SOCKET_ADDRESS_LIST, Address[0]), "Got unexpected size %u.\n", size);
+    ok(size >= FIELD_OFFSET(SOCKET_ADDRESS_LIST, Address[0]), "Got unexpected size %lu.\n", size);
     expect_size = size;
 
     size = 0;
     ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, buffer, sizeof(buffer), &size, NULL, NULL);
     ok(!ret, "Got unexpected ret %d.\n", ret);
     ok(!WSAGetLastError(), "Got unexpected error %d.\n", WSAGetLastError());
-    ok(size == expect_size, "Expected size %u, got %u.\n", expect_size, size);
+    ok(size == expect_size, "Expected size %lu, got %lu.\n", expect_size, size);
 
     expect_size = FIELD_OFFSET(SOCKET_ADDRESS_LIST, Address[address_list->iAddressCount]);
     for (i = 0; i < address_list->iAddressCount; ++i)
     {
         expect_size += address_list->Address[i].iSockaddrLength;
     }
-    ok(size == expect_size, "Expected size %u, got %u.\n", expect_size, size);
+    ok(size == expect_size, "Expected size %lu, got %lu.\n", expect_size, size);
 
     ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, buffer, sizeof(buffer), NULL, NULL, NULL);
     ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
@@ -10295,19 +10295,19 @@ static void test_address_list_query(void)
     ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, NULL, sizeof(buffer), &size, NULL, NULL);
     ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
     ok(WSAGetLastError() == WSAEFAULT, "Got unexpected error %d.\n", WSAGetLastError());
-    ok(size == expect_size, "Expected size %u, got %u.\n", expect_size, size);
+    ok(size == expect_size, "Expected size %lu, got %lu.\n", expect_size, size);
 
     size = 0xdeadbeef;
     ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, buffer, 0, &size, NULL, NULL);
     ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
     ok(WSAGetLastError() == WSAEFAULT, "Got unexpected error %d.\n", WSAGetLastError());
-    ok(size == expect_size, "Expected size %u, got %u.\n", expect_size, size);
+    ok(size == expect_size, "Expected size %lu, got %lu.\n", expect_size, size);
 
     size = 0xdeadbeef;
     ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, buffer, 1, &size, NULL, NULL);
     ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
     ok(WSAGetLastError() == WSAEINVAL, "Got unexpected error %d.\n", WSAGetLastError());
-    ok(!size, "Got size %u.\n", size);
+    ok(!size, "Got size %lu.\n", size);
 
     size = 0xdeadbeef;
     memset(buffer, 0xcc, sizeof(buffer));
@@ -10315,7 +10315,7 @@ static void test_address_list_query(void)
             FIELD_OFFSET(SOCKET_ADDRESS_LIST, Address[0]), &size, NULL, NULL);
     ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
     ok(WSAGetLastError() == WSAEFAULT, "Got unexpected error %d.\n", WSAGetLastError());
-    ok(size == expect_size, "Expected size %u, got %u.\n", expect_size, size);
+    ok(size == expect_size, "Expected size %lu, got %lu.\n", expect_size, size);
     ok(address_list->iAddressCount == 0xcccccccc, "Got %u addresses.\n", address_list->iAddressCount);
 
     WSASetLastError(0xdeadbeef);
@@ -10325,8 +10325,8 @@ static void test_address_list_query(void)
     ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, buffer, 0, &size, &overlapped, NULL);
     ok(ret == -1, "Got unexpected ret %d.\n", ret);
     ok(WSAGetLastError() == WSAEFAULT, "Got unexpected error %d.\n", WSAGetLastError());
-    ok(size == expect_size, "Expected size %u, got %u.\n", expect_size, size);
-    ok(overlapped.Internal == 0xdeadbeef, "Got status %#x.\n", (NTSTATUS)overlapped.Internal);
+    ok(size == expect_size, "Expected size %lu, got %lu.\n", expect_size, size);
+    ok(overlapped.Internal == 0xdeadbeef, "Got status %#lx.\n", (NTSTATUS)overlapped.Internal);
     ok(overlapped.InternalHigh == 0xdeadbeef, "Got size %Iu.\n", overlapped.InternalHigh);
 
     overlapped.Internal = 0xdeadbeef;
@@ -10335,8 +10335,8 @@ static void test_address_list_query(void)
     ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, buffer, 1, &size, &overlapped, NULL);
     ok(ret == -1, "Got unexpected ret %d.\n", ret);
     ok(WSAGetLastError() == WSAEINVAL, "Got unexpected error %d.\n", WSAGetLastError());
-    ok(!size, "Expected size %u, got %u.\n", expect_size, size);
-    ok(overlapped.Internal == 0xdeadbeef, "Got status %#x.\n", (NTSTATUS)overlapped.Internal);
+    ok(!size, "Expected size %lu, got %lu.\n", expect_size, size);
+    ok(overlapped.Internal == 0xdeadbeef, "Got status %#lx.\n", (NTSTATUS)overlapped.Internal);
     ok(overlapped.InternalHigh == 0xdeadbeef, "Got size %Iu.\n", overlapped.InternalHigh);
 
     overlapped.Internal = 0xdeadbeef;
@@ -10346,8 +10346,8 @@ static void test_address_list_query(void)
             FIELD_OFFSET(SOCKET_ADDRESS_LIST, Address[0]), &size, &overlapped, NULL);
     ok(ret == -1, "Got unexpected ret %d.\n", ret);
     ok(WSAGetLastError() == WSAEFAULT, "Got unexpected error %d.\n", WSAGetLastError());
-    ok(size == expect_size, "Expected size %u, got %u.\n", expect_size, size);
-    ok(overlapped.Internal == 0xdeadbeef, "Got status %#x.\n", (NTSTATUS)overlapped.Internal);
+    ok(size == expect_size, "Expected size %lu, got %lu.\n", expect_size, size);
+    ok(overlapped.Internal == 0xdeadbeef, "Got status %#lx.\n", (NTSTATUS)overlapped.Internal);
     ok(overlapped.InternalHigh == 0xdeadbeef, "Got size %Iu.\n", overlapped.InternalHigh);
     ok(address_list->iAddressCount == 0xcccccccc, "Got %u addresses.\n", address_list->iAddressCount);
 
@@ -10357,18 +10357,18 @@ static void test_address_list_query(void)
     ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, buffer, sizeof(buffer), &size, &overlapped, NULL);
     ok(!ret, "Got unexpected ret %d.\n", ret);
     ok(!WSAGetLastError(), "Got unexpected error %d.\n", WSAGetLastError());
-    ok(size == expect_size, "Expected size %u, got %u.\n", expect_size, size);
+    ok(size == expect_size, "Expected size %lu, got %lu.\n", expect_size, size);
 
     ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
-    ok(ret, "Got error %u.\n", GetLastError());
-    ok(!size, "Got size %u.\n", size);
+    ok(ret, "Got error %lu.\n", GetLastError());
+    ok(!size, "Got size %lu.\n", size);
     ok(overlapped_ptr == &overlapped, "Got overlapped %p.\n", overlapped_ptr);
-    ok(!overlapped.Internal, "Got status %#x.\n", (NTSTATUS)overlapped.Internal);
+    ok(!overlapped.Internal, "Got status %#lx.\n", (NTSTATUS)overlapped.Internal);
     ok(!overlapped.InternalHigh, "Got size %Iu.\n", overlapped.InternalHigh);
 
     ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
     ok(!ret, "Expected failure.\n");
-    ok(GetLastError() == WAIT_TIMEOUT, "Got error %u.\n", GetLastError());
+    ok(GetLastError() == WAIT_TIMEOUT, "Got error %lu.\n", GetLastError());
 
     closesocket(s);
     CloseHandle(port);
@@ -10385,13 +10385,13 @@ static void test_address_list_query(void)
     size = 0xdeadbeef;
     ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, buffer, sizeof(buffer), &size, &overlapped, socket_apc);
     ok(!ret, "expected success\n");
-    ok(size == expect_size, "got size %u\n", size);
+    ok(size == expect_size, "got size %lu\n", size);
 
     ret = SleepEx(0, TRUE);
     ok(ret == WAIT_IO_COMPLETION, "got %d\n", ret);
     ok(apc_count == 1, "APC was called %u times\n", apc_count);
-    ok(!apc_error, "got APC error %u\n", apc_error);
-    ok(!apc_size, "got APC size %u\n", apc_size);
+    ok(!apc_error, "got APC error %lu\n", apc_error);
+    ok(!apc_size, "got APC size %lu\n", apc_size);
     ok(apc_overlapped == &overlapped, "got APC overlapped %p\n", apc_overlapped);
 
     closesocket(s);
@@ -10425,7 +10425,7 @@ static void iocp_async_read(SOCKET src, SOCKET dst)
     memset(&ovl, 0, sizeof(ovl));
 
     port = CreateIoCompletionPort((HANDLE)src, 0, 0x12345678, 0);
-    ok(port != 0, "CreateIoCompletionPort error %u\n", GetLastError());
+    ok(port != 0, "CreateIoCompletionPort error %lu\n", GetLastError());
 
     buf.len = sizeof(data);
     buf.buf = data;
@@ -10434,8 +10434,8 @@ static void iocp_async_read(SOCKET src, SOCKET dst)
     SetLastError(0xdeadbeef);
     ret = WSARecv(src, &buf, 1, &bytes, &flags, &ovl, NULL);
     ok(ret == SOCKET_ERROR, "got %d\n", ret);
-    ok(GetLastError() == ERROR_IO_PENDING, "got %u\n", GetLastError());
-    ok(bytes == 0xdeadbeef, "got bytes %u\n", bytes);
+    ok(GetLastError() == ERROR_IO_PENDING, "got %lu\n", GetLastError());
+    ok(bytes == 0xdeadbeef, "got bytes %lu\n", bytes);
 
     bytes = 0xdeadbeef;
     key = 0xdeadbeef;
@@ -10443,9 +10443,9 @@ static void iocp_async_read(SOCKET src, SOCKET dst)
     SetLastError(0xdeadbeef);
     ret = GetQueuedCompletionStatus(port, &bytes, &key, &ovl_iocp, 100);
     ok(!ret, "got %d\n", ret);
-    ok(GetLastError() == WAIT_TIMEOUT, "got %u\n", GetLastError());
-    ok(bytes == 0xdeadbeef, "got bytes %u\n", bytes);
-    ok(key == 0xdeadbeef, "got key %#lx\n", key);
+    ok(GetLastError() == WAIT_TIMEOUT, "got %lu\n", GetLastError());
+    ok(bytes == 0xdeadbeef, "got bytes %lu\n", bytes);
+    ok(key == 0xdeadbeef, "got key %#Ix\n", key);
     ok(!ovl_iocp, "got ovl %p\n", ovl_iocp);
 
     ret = send(dst, "Hello World!", 12, 0);
@@ -10457,14 +10457,14 @@ static void iocp_async_read(SOCKET src, SOCKET dst)
     SetLastError(0xdeadbeef);
     ret = GetQueuedCompletionStatus(port, &bytes, &key, &ovl_iocp, 100);
     ok(ret, "got %d\n", ret);
-    ok(bytes == 12, "got bytes %u\n", bytes);
-    ok(key == 0x12345678, "got key %#lx\n", key);
+    ok(bytes == 12, "got bytes %lu\n", bytes);
+    ok(key == 0x12345678, "got key %#Ix\n", key);
     ok(ovl_iocp == &ovl, "got ovl %p\n", ovl_iocp);
     if (ovl_iocp)
     {
-        ok(ovl_iocp->InternalHigh == 12, "got %#lx\n", ovl_iocp->InternalHigh);
-        ok(!ovl_iocp->Internal , "got %#lx\n", ovl_iocp->Internal);
-        ok(!memcmp(data, "Hello World!", 12), "got %u bytes (%*s)\n", bytes, bytes, data);
+        ok(ovl_iocp->InternalHigh == 12, "got %#Ix\n", ovl_iocp->InternalHigh);
+        ok(!ovl_iocp->Internal , "got %#Ix\n", ovl_iocp->Internal);
+        ok(!memcmp(data, "Hello World!", 12), "got %lu bytes (%*s)\n", bytes, (int)bytes, data);
     }
 
     bytes = 0xdeadbeef;
@@ -10473,9 +10473,9 @@ static void iocp_async_read(SOCKET src, SOCKET dst)
     SetLastError(0xdeadbeef);
     ret = GetQueuedCompletionStatus(port, &bytes, &key, &ovl_iocp, 100);
     ok(!ret, "got %d\n", ret);
-    ok(GetLastError() == WAIT_TIMEOUT, "got %u\n", GetLastError());
-    ok(bytes == 0xdeadbeef, "got bytes %u\n", bytes);
-    ok(key == 0xdeadbeef, "got key %#lx\n", key);
+    ok(GetLastError() == WAIT_TIMEOUT, "got %lu\n", GetLastError());
+    ok(bytes == 0xdeadbeef, "got bytes %lu\n", bytes);
+    ok(key == 0xdeadbeef, "got key %#Ix\n", key);
     ok(!ovl_iocp, "got ovl %p\n", ovl_iocp);
 
     CloseHandle(port);
@@ -10506,18 +10506,18 @@ static void iocp_async_read_closesocket(SOCKET src, int how_to_close)
     ok(ret, "got %d\n", ret);
     ok(msg.hwnd == hwnd, "got %p\n", msg.hwnd);
     ok(msg.message == WM_SOCKET, "got %04x\n", msg.message);
-    ok(msg.wParam == src, "got %08lx\n", msg.wParam);
-    ok(msg.lParam == 2, "got %08lx\n", msg.lParam);
+    ok(msg.wParam == src, "got %08Ix\n", msg.wParam);
+    ok(msg.lParam == 2, "got %08Ix\n", msg.lParam);
 
     memset(data, 0, sizeof(data));
     memset(&ovl, 0, sizeof(ovl));
 
     port = CreateIoCompletionPort((HANDLE)src, 0, 0x12345678, 0);
-    ok(port != 0, "CreateIoCompletionPort error %u\n", GetLastError());
+    ok(port != 0, "CreateIoCompletionPort error %lu\n", GetLastError());
 
     Sleep(100);
     ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
-    ok(!ret, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
+    ok(!ret, "got %04x,%08Ix,%08Ix\n", msg.message, msg.wParam, msg.lParam);
 
     buf.len = sizeof(data);
     buf.buf = data;
@@ -10526,12 +10526,12 @@ static void iocp_async_read_closesocket(SOCKET src, int how_to_close)
     SetLastError(0xdeadbeef);
     ret = WSARecv(src, &buf, 1, &bytes, &flags, &ovl, NULL);
     ok(ret == SOCKET_ERROR, "got %d\n", ret);
-    ok(GetLastError() == ERROR_IO_PENDING, "got %u\n", GetLastError());
-    ok(bytes == 0xdeadbeef, "got bytes %u\n", bytes);
+    ok(GetLastError() == ERROR_IO_PENDING, "got %lu\n", GetLastError());
+    ok(bytes == 0xdeadbeef, "got bytes %lu\n", bytes);
 
     Sleep(100);
     ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
-    ok(!ret, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
+    ok(!ret, "got %04x,%08Ix,%08Ix\n", msg.message, msg.wParam, msg.lParam);
 
     bytes = 0xdeadbeef;
     key = 0xdeadbeef;
@@ -10539,14 +10539,14 @@ static void iocp_async_read_closesocket(SOCKET src, int how_to_close)
     SetLastError(0xdeadbeef);
     ret = GetQueuedCompletionStatus(port, &bytes, &key, &ovl_iocp, 100);
     ok(!ret, "got %d\n", ret);
-    ok(GetLastError() == WAIT_TIMEOUT, "got %u\n", GetLastError());
-    ok(bytes == 0xdeadbeef, "got bytes %u\n", bytes);
-    ok(key == 0xdeadbeef, "got key %#lx\n", key);
+    ok(GetLastError() == WAIT_TIMEOUT, "got %lu\n", GetLastError());
+    ok(bytes == 0xdeadbeef, "got bytes %lu\n", bytes);
+    ok(key == 0xdeadbeef, "got key %#Ix\n", key);
     ok(!ovl_iocp, "got ovl %p\n", ovl_iocp);
 
     Sleep(100);
     ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
-    ok(!ret, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
+    ok(!ret, "got %04x,%08Ix,%08Ix\n", msg.message, msg.wParam, msg.lParam);
 
     switch (how_to_close)
     {
@@ -10570,7 +10570,7 @@ static void iocp_async_read_closesocket(SOCKET src, int how_to_close)
     switch (how_to_close)
     {
     case 0:
-        ok(!ret, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
+        ok(!ret, "got %04x,%08Ix,%08Ix\n", msg.message, msg.wParam, msg.lParam);
         break;
     case 1:
     case 2:
@@ -10579,8 +10579,8 @@ todo_wine
         ok(ret, "got %d\n", ret);
         ok(msg.hwnd == hwnd, "got %p\n", msg.hwnd);
         ok(msg.message == WM_SOCKET, "got %04x\n", msg.message);
-        ok(msg.wParam == src, "got %08lx\n", msg.wParam);
-        ok(msg.lParam == 0x20, "got %08lx\n", msg.lParam);
+        ok(msg.wParam == src, "got %08Ix\n", msg.wParam);
+        ok(msg.lParam == 0x20, "got %08Ix\n", msg.lParam);
 }
         break;
     default:
@@ -10595,15 +10595,15 @@ todo_wine
     ret = GetQueuedCompletionStatus(port, &bytes, &key, &ovl_iocp, 100);
     ok(!ret, "got %d\n", ret);
     todo_wine
-    ok(GetLastError() == ERROR_CONNECTION_ABORTED || GetLastError() == ERROR_NETNAME_DELETED /* XP */, "got %u\n", GetLastError());
-    ok(!bytes, "got bytes %u\n", bytes);
-    ok(key == 0x12345678, "got key %#lx\n", key);
+    ok(GetLastError() == ERROR_CONNECTION_ABORTED || GetLastError() == ERROR_NETNAME_DELETED /* XP */, "got %lu\n", GetLastError());
+    ok(!bytes, "got bytes %lu\n", bytes);
+    ok(key == 0x12345678, "got key %#Ix\n", key);
     ok(ovl_iocp == &ovl, "got ovl %p\n", ovl_iocp);
     if (ovl_iocp)
     {
-        ok(!ovl_iocp->InternalHigh, "got %#lx\n", ovl_iocp->InternalHigh);
+        ok(!ovl_iocp->InternalHigh, "got %#Ix\n", ovl_iocp->InternalHigh);
     todo_wine
-        ok(ovl_iocp->Internal == (ULONG)STATUS_CONNECTION_ABORTED || ovl_iocp->Internal == (ULONG)STATUS_LOCAL_DISCONNECT /* XP */, "got %#lx\n", ovl_iocp->Internal);
+        ok(ovl_iocp->Internal == (ULONG)STATUS_CONNECTION_ABORTED || ovl_iocp->Internal == (ULONG)STATUS_LOCAL_DISCONNECT /* XP */, "got %#Ix\n", ovl_iocp->Internal);
     }
 
     bytes = 0xdeadbeef;
@@ -10612,9 +10612,9 @@ todo_wine
     SetLastError(0xdeadbeef);
     ret = GetQueuedCompletionStatus(port, &bytes, &key, &ovl_iocp, 100);
     ok(!ret, "got %d\n", ret);
-    ok(GetLastError() == WAIT_TIMEOUT, "got %u\n", GetLastError());
-    ok(bytes == 0xdeadbeef, "got bytes %u\n", bytes);
-    ok(key == 0xdeadbeef, "got key %#lx\n", key);
+    ok(GetLastError() == WAIT_TIMEOUT, "got %lu\n", GetLastError());
+    ok(bytes == 0xdeadbeef, "got bytes %lu\n", bytes);
+    ok(key == 0xdeadbeef, "got key %#Ix\n", key);
     ok(!ovl_iocp, "got ovl %p\n", ovl_iocp);
 
     CloseHandle(port);
@@ -10645,15 +10645,15 @@ static void iocp_async_closesocket(SOCKET src)
     ok(ret, "got %d\n", ret);
     ok(msg.hwnd == hwnd, "got %p\n", msg.hwnd);
     ok(msg.message == WM_SOCKET, "got %04x\n", msg.message);
-    ok(msg.wParam == src, "got %08lx\n", msg.wParam);
-    ok(msg.lParam == 2, "got %08lx\n", msg.lParam);
+    ok(msg.wParam == src, "got %08Ix\n", msg.wParam);
+    ok(msg.lParam == 2, "got %08Ix\n", msg.lParam);
 
     port = CreateIoCompletionPort((HANDLE)src, 0, 0x12345678, 0);
-    ok(port != 0, "CreateIoCompletionPort error %u\n", GetLastError());
+    ok(port != 0, "CreateIoCompletionPort error %lu\n", GetLastError());
 
     Sleep(100);
     ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
-    ok(!ret, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
+    ok(!ret, "got %04x,%08Ix,%08Ix\n", msg.message, msg.wParam, msg.lParam);
 
     bytes = 0xdeadbeef;
     key = 0xdeadbeef;
@@ -10661,21 +10661,21 @@ static void iocp_async_closesocket(SOCKET src)
     SetLastError(0xdeadbeef);
     ret = GetQueuedCompletionStatus(port, &bytes, &key, &ovl_iocp, 100);
     ok(!ret, "got %d\n", ret);
-    ok(GetLastError() == WAIT_TIMEOUT, "got %u\n", GetLastError());
-    ok(bytes == 0xdeadbeef, "got bytes %u\n", bytes);
-    ok(key == 0xdeadbeef, "got key %lu\n", key);
+    ok(GetLastError() == WAIT_TIMEOUT, "got %lu\n", GetLastError());
+    ok(bytes == 0xdeadbeef, "got bytes %lu\n", bytes);
+    ok(key == 0xdeadbeef, "got key %Iu\n", key);
     ok(!ovl_iocp, "got ovl %p\n", ovl_iocp);
 
     Sleep(100);
     ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
-    ok(!ret, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
+    ok(!ret, "got %04x,%08Ix,%08Ix\n", msg.message, msg.wParam, msg.lParam);
 
     closesocket(src);
 
     Sleep(100);
     memset(&msg, 0, sizeof(msg));
     ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
-    ok(!ret, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
+    ok(!ret, "got %04x,%08Ix,%08Ix\n", msg.message, msg.wParam, msg.lParam);
 
     bytes = 0xdeadbeef;
     key = 0xdeadbeef;
@@ -10683,9 +10683,9 @@ static void iocp_async_closesocket(SOCKET src)
     SetLastError(0xdeadbeef);
     ret = GetQueuedCompletionStatus(port, &bytes, &key, &ovl_iocp, 100);
     ok(!ret, "got %d\n", ret);
-    ok(GetLastError() == WAIT_TIMEOUT, "got %u\n", GetLastError());
-    ok(bytes == 0xdeadbeef, "got bytes %u\n", bytes);
-    ok(key == 0xdeadbeef, "got key %lu\n", key);
+    ok(GetLastError() == WAIT_TIMEOUT, "got %lu\n", GetLastError());
+    ok(bytes == 0xdeadbeef, "got bytes %lu\n", bytes);
+    ok(key == 0xdeadbeef, "got key %Iu\n", key);
     ok(!ovl_iocp, "got ovl %p\n", ovl_iocp);
 
     CloseHandle(port);
@@ -10728,8 +10728,8 @@ static DWORD WINAPI wsa_recv_thread(void *param)
     SetLastError(0xdeadbeef);
     ret = WSARecv(info->sock, &info->wsa_buf, 1, &bytes, &flags, &info->ovl, NULL);
     ok(ret == SOCKET_ERROR, "got %d\n", ret);
-    ok(GetLastError() == ERROR_IO_PENDING, "got %u\n", GetLastError());
-    ok(bytes == 0xdeadbeef, "got bytes %u\n", bytes);
+    ok(GetLastError() == ERROR_IO_PENDING, "got %lu\n", GetLastError());
+    ok(bytes == 0xdeadbeef, "got bytes %lu\n", bytes);
 
     return 0;
 }
@@ -10754,7 +10754,7 @@ static void iocp_async_read_thread_closesocket(SOCKET src)
     select_info.sock = src;
     select_info.hwnd = hwnd;
     thread = CreateThread(NULL, 0, wsa_async_select_thread, &select_info, 0, &tid);
-    ok(thread != 0, "CreateThread error %u\n", GetLastError());
+    ok(thread != 0, "CreateThread error %lu\n", GetLastError());
     ret = WaitForSingleObject(thread, 10000);
     ok(ret == WAIT_OBJECT_0, "thread failed to terminate\n");
 
@@ -10764,15 +10764,15 @@ static void iocp_async_read_thread_closesocket(SOCKET src)
     ok(ret, "got %d\n", ret);
     ok(msg.hwnd == hwnd, "got %p\n", msg.hwnd);
     ok(msg.message == WM_SOCKET, "got %04x\n", msg.message);
-    ok(msg.wParam == src, "got %08lx\n", msg.wParam);
-    ok(msg.lParam == 2, "got %08lx\n", msg.lParam);
+    ok(msg.wParam == src, "got %08Ix\n", msg.wParam);
+    ok(msg.lParam == 2, "got %08Ix\n", msg.lParam);
 
     port = CreateIoCompletionPort((HANDLE)src, 0, 0x12345678, 0);
-    ok(port != 0, "CreateIoCompletionPort error %u\n", GetLastError());
+    ok(port != 0, "CreateIoCompletionPort error %lu\n", GetLastError());
 
     Sleep(100);
     ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
-    ok(!ret, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
+    ok(!ret, "got %04x,%08Ix,%08Ix\n", msg.message, msg.wParam, msg.lParam);
 
     memset(data, 0, sizeof(data));
     memset(&recv_info.ovl, 0, sizeof(recv_info.ovl));
@@ -10780,13 +10780,13 @@ static void iocp_async_read_thread_closesocket(SOCKET src)
     recv_info.wsa_buf.len = sizeof(data);
     recv_info.wsa_buf.buf = data;
     thread = CreateThread(NULL, 0, wsa_recv_thread, &recv_info, 0, &tid);
-    ok(thread != 0, "CreateThread error %u\n", GetLastError());
+    ok(thread != 0, "CreateThread error %lu\n", GetLastError());
     ret = WaitForSingleObject(thread, 10000);
     ok(ret == WAIT_OBJECT_0, "thread failed to terminate\n");
 
     Sleep(100);
     ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
-    ok(!ret, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
+    ok(!ret, "got %04x,%08Ix,%08Ix\n", msg.message, msg.wParam, msg.lParam);
 
     bytes = 0xdeadbeef;
     key = 0xdeadbeef;
@@ -10795,22 +10795,22 @@ static void iocp_async_read_thread_closesocket(SOCKET src)
     ret = GetQueuedCompletionStatus(port, &bytes, &key, &ovl_iocp, 100);
     ok(!ret, "got %d\n", ret);
     ok(GetLastError() == WAIT_TIMEOUT || broken(GetLastError() == ERROR_OPERATION_ABORTED) /* XP */,
-       "got %u\n", GetLastError());
+       "got %lu\n", GetLastError());
     if (GetLastError() == WAIT_TIMEOUT)
     {
-        ok(bytes == 0xdeadbeef, "got bytes %u\n", bytes);
-        ok(key == 0xdeadbeef, "got key %lx\n", key);
+        ok(bytes == 0xdeadbeef, "got bytes %lu\n", bytes);
+        ok(key == 0xdeadbeef, "got key %Ix\n", key);
         ok(!ovl_iocp, "got ovl %p\n", ovl_iocp);
     }
     else /* document XP behaviour */
     {
-        ok(!bytes, "got bytes %u\n", bytes);
-        ok(key == 0x12345678, "got key %#lx\n", key);
+        ok(!bytes, "got bytes %lu\n", bytes);
+        ok(key == 0x12345678, "got key %#Ix\n", key);
         ok(ovl_iocp == &recv_info.ovl, "got ovl %p\n", ovl_iocp);
         if (ovl_iocp)
         {
-            ok(!ovl_iocp->InternalHigh, "got %#lx\n", ovl_iocp->InternalHigh);
-            ok(ovl_iocp->Internal == STATUS_CANCELLED, "got %#lx\n", ovl_iocp->Internal);
+            ok(!ovl_iocp->InternalHigh, "got %#Ix\n", ovl_iocp->InternalHigh);
+            ok(ovl_iocp->Internal == STATUS_CANCELLED, "got %#Ix\n", ovl_iocp->Internal);
         }
 
         closesocket(src);
@@ -10819,13 +10819,13 @@ static void iocp_async_read_thread_closesocket(SOCKET src)
 
     Sleep(100);
     ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
-    ok(!ret, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
+    ok(!ret, "got %04x,%08Ix,%08Ix\n", msg.message, msg.wParam, msg.lParam);
 
     closesocket(src);
 
     Sleep(100);
     ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
-    ok(!ret, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
+    ok(!ret, "got %04x,%08Ix,%08Ix\n", msg.message, msg.wParam, msg.lParam);
 
     bytes = 0xdeadbeef;
     key = 0xdeadbeef;
@@ -10834,15 +10834,15 @@ static void iocp_async_read_thread_closesocket(SOCKET src)
     ret = GetQueuedCompletionStatus(port, &bytes, &key, &ovl_iocp, 100);
     ok(!ret, "got %d\n", ret);
     todo_wine
-    ok(GetLastError() == ERROR_CONNECTION_ABORTED || GetLastError() == ERROR_NETNAME_DELETED /* XP */, "got %u\n", GetLastError());
-    ok(!bytes, "got bytes %u\n", bytes);
-    ok(key == 0x12345678, "got key %#lx\n", key);
+    ok(GetLastError() == ERROR_CONNECTION_ABORTED || GetLastError() == ERROR_NETNAME_DELETED /* XP */, "got %lu\n", GetLastError());
+    ok(!bytes, "got bytes %lu\n", bytes);
+    ok(key == 0x12345678, "got key %#Ix\n", key);
     ok(ovl_iocp == &recv_info.ovl, "got ovl %p\n", ovl_iocp);
     if (ovl_iocp)
     {
-        ok(!ovl_iocp->InternalHigh, "got %#lx\n", ovl_iocp->InternalHigh);
+        ok(!ovl_iocp->InternalHigh, "got %#Ix\n", ovl_iocp->InternalHigh);
     todo_wine
-        ok(ovl_iocp->Internal == (ULONG)STATUS_CONNECTION_ABORTED || ovl_iocp->Internal == (ULONG)STATUS_LOCAL_DISCONNECT /* XP */, "got %#lx\n", ovl_iocp->Internal);
+        ok(ovl_iocp->Internal == (ULONG)STATUS_CONNECTION_ABORTED || ovl_iocp->Internal == (ULONG)STATUS_LOCAL_DISCONNECT /* XP */, "got %#Ix\n", ovl_iocp->Internal);
     }
 
 xp_is_broken:
@@ -10852,9 +10852,9 @@ xp_is_broken:
     SetLastError(0xdeadbeef);
     ret = GetQueuedCompletionStatus(port, &bytes, &key, &ovl_iocp, 100);
     ok(!ret, "got %d\n", ret);
-    ok(GetLastError() == WAIT_TIMEOUT, "got %u\n", GetLastError());
-    ok(bytes == 0xdeadbeef, "got bytes %u\n", bytes);
-    ok(key == 0xdeadbeef, "got key %lu\n", key);
+    ok(GetLastError() == WAIT_TIMEOUT, "got %lu\n", GetLastError());
+    ok(bytes == 0xdeadbeef, "got bytes %lu\n", bytes);
+    ok(key == 0xdeadbeef, "got key %Iu\n", key);
     ok(!ovl_iocp, "got ovl %p\n", ovl_iocp);
 
     CloseHandle(port);
@@ -10882,7 +10882,7 @@ static void iocp_async_read_thread(SOCKET src, SOCKET dst)
     select_info.sock = src;
     select_info.hwnd = hwnd;
     thread = CreateThread(NULL, 0, wsa_async_select_thread, &select_info, 0, &tid);
-    ok(thread != 0, "CreateThread error %u\n", GetLastError());
+    ok(thread != 0, "CreateThread error %lu\n", GetLastError());
     ret = WaitForSingleObject(thread, 10000);
     ok(ret == WAIT_OBJECT_0, "thread failed to terminate\n");
 
@@ -10892,15 +10892,15 @@ static void iocp_async_read_thread(SOCKET src, SOCKET dst)
     ok(ret, "got %d\n", ret);
     ok(msg.hwnd == hwnd, "got %p\n", msg.hwnd);
     ok(msg.message == WM_SOCKET, "got %04x\n", msg.message);
-    ok(msg.wParam == src, "got %08lx\n", msg.wParam);
-    ok(msg.lParam == 2, "got %08lx\n", msg.lParam);
+    ok(msg.wParam == src, "got %08Ix\n", msg.wParam);
+    ok(msg.lParam == 2, "got %08Ix\n", msg.lParam);
 
     port = CreateIoCompletionPort((HANDLE)src, 0, 0x12345678, 0);
-    ok(port != 0, "CreateIoCompletionPort error %u\n", GetLastError());
+    ok(port != 0, "CreateIoCompletionPort error %lu\n", GetLastError());
 
     Sleep(100);
     ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
-    ok(!ret, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
+    ok(!ret, "got %04x,%08Ix,%08Ix\n", msg.message, msg.wParam, msg.lParam);
 
     memset(data, 0, sizeof(data));
     memset(&recv_info.ovl, 0, sizeof(recv_info.ovl));
@@ -10908,13 +10908,13 @@ static void iocp_async_read_thread(SOCKET src, SOCKET dst)
     recv_info.wsa_buf.len = sizeof(data);
     recv_info.wsa_buf.buf = data;
     thread = CreateThread(NULL, 0, wsa_recv_thread, &recv_info, 0, &tid);
-    ok(thread != 0, "CreateThread error %u\n", GetLastError());
+    ok(thread != 0, "CreateThread error %lu\n", GetLastError());
     ret = WaitForSingleObject(thread, 10000);
     ok(ret == WAIT_OBJECT_0, "thread failed to terminate\n");
 
     Sleep(100);
     ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
-    ok(!ret, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
+    ok(!ret, "got %04x,%08Ix,%08Ix\n", msg.message, msg.wParam, msg.lParam);
 
     bytes = 0xdeadbeef;
     key = 0xdeadbeef;
@@ -10922,34 +10922,34 @@ static void iocp_async_read_thread(SOCKET src, SOCKET dst)
     SetLastError(0xdeadbeef);
     ret = GetQueuedCompletionStatus(port, &bytes, &key, &ovl_iocp, 100);
     ok(!ret, "got %d\n", ret);
-    ok(GetLastError() == WAIT_TIMEOUT || broken(GetLastError() == ERROR_OPERATION_ABORTED) /* XP */, "got %u\n", GetLastError());
+    ok(GetLastError() == WAIT_TIMEOUT || broken(GetLastError() == ERROR_OPERATION_ABORTED) /* XP */, "got %lu\n", GetLastError());
     if (GetLastError() == WAIT_TIMEOUT)
     {
-        ok(bytes == 0xdeadbeef, "got bytes %u\n", bytes);
-        ok(key == 0xdeadbeef, "got key %lu\n", key);
+        ok(bytes == 0xdeadbeef, "got bytes %lu\n", bytes);
+        ok(key == 0xdeadbeef, "got key %Iu\n", key);
         ok(!ovl_iocp, "got ovl %p\n", ovl_iocp);
     }
     else /* document XP behaviour */
     {
-        ok(bytes == 0, "got bytes %u\n", bytes);
-        ok(key == 0x12345678, "got key %#lx\n", key);
+        ok(bytes == 0, "got bytes %lu\n", bytes);
+        ok(key == 0x12345678, "got key %#Ix\n", key);
         ok(ovl_iocp == &recv_info.ovl, "got ovl %p\n", ovl_iocp);
         if (ovl_iocp)
         {
-            ok(!ovl_iocp->InternalHigh, "got %#lx\n", ovl_iocp->InternalHigh);
-            ok(ovl_iocp->Internal == STATUS_CANCELLED, "got %#lx\n", ovl_iocp->Internal);
+            ok(!ovl_iocp->InternalHigh, "got %#Ix\n", ovl_iocp->InternalHigh);
+            ok(ovl_iocp->Internal == STATUS_CANCELLED, "got %#Ix\n", ovl_iocp->Internal);
         }
     }
 
     Sleep(100);
     memset(&msg, 0, sizeof(msg));
     ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
-    ok(!ret || broken(msg.hwnd == hwnd) /* XP */, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
+    ok(!ret || broken(msg.hwnd == hwnd) /* XP */, "got %04x,%08Ix,%08Ix\n", msg.message, msg.wParam, msg.lParam);
     if (ret) /* document XP behaviour */
     {
         ok(msg.message == WM_SOCKET, "got %04x\n", msg.message);
-        ok(msg.wParam == src, "got %08lx\n", msg.wParam);
-        ok(msg.lParam == 1, "got %08lx\n", msg.lParam);
+        ok(msg.wParam == src, "got %08Ix\n", msg.wParam);
+        ok(msg.lParam == 1, "got %08Ix\n", msg.lParam);
     }
 
     ret = send(dst, "Hello World!", 12, 0);
@@ -10958,13 +10958,13 @@ static void iocp_async_read_thread(SOCKET src, SOCKET dst)
     Sleep(100);
     memset(&msg, 0, sizeof(msg));
     ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
-    ok(!ret || broken(msg.hwnd == hwnd) /* XP */, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
+    ok(!ret || broken(msg.hwnd == hwnd) /* XP */, "got %04x,%08Ix,%08Ix\n", msg.message, msg.wParam, msg.lParam);
     if (ret) /* document XP behaviour */
     {
         ok(msg.hwnd == hwnd, "got %p\n", msg.hwnd);
         ok(msg.message == WM_SOCKET, "got %04x\n", msg.message);
-        ok(msg.wParam == src, "got %08lx\n", msg.wParam);
-        ok(msg.lParam == 1, "got %08lx\n", msg.lParam);
+        ok(msg.wParam == src, "got %08Ix\n", msg.wParam);
+        ok(msg.lParam == 1, "got %08Ix\n", msg.lParam);
     }
 
     bytes = 0xdeadbeef;
@@ -10972,23 +10972,23 @@ static void iocp_async_read_thread(SOCKET src, SOCKET dst)
     ovl_iocp = (void *)0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = GetQueuedCompletionStatus(port, &bytes, &key, &ovl_iocp, 100);
-    ok(ret || broken(GetLastError() == WAIT_TIMEOUT) /* XP */, "got %u\n", GetLastError());
+    ok(ret || broken(GetLastError() == WAIT_TIMEOUT) /* XP */, "got %lu\n", GetLastError());
     if (ret)
     {
-        ok(bytes == 12, "got bytes %u\n", bytes);
-        ok(key == 0x12345678, "got key %#lx\n", key);
+        ok(bytes == 12, "got bytes %lu\n", bytes);
+        ok(key == 0x12345678, "got key %#Ix\n", key);
         ok(ovl_iocp == &recv_info.ovl, "got ovl %p\n", ovl_iocp);
         if (ovl_iocp)
         {
-            ok(ovl_iocp->InternalHigh == 12, "got %#lx\n", ovl_iocp->InternalHigh);
-            ok(!ovl_iocp->Internal , "got %#lx\n", ovl_iocp->Internal);
-            ok(!memcmp(data, "Hello World!", 12), "got %u bytes (%*s)\n", bytes, bytes, data);
+            ok(ovl_iocp->InternalHigh == 12, "got %#Ix\n", ovl_iocp->InternalHigh);
+            ok(!ovl_iocp->Internal , "got %#Ix\n", ovl_iocp->Internal);
+            ok(!memcmp(data, "Hello World!", 12), "got %lu bytes (%*s)\n", bytes, (int)bytes, data);
         }
     }
     else /* document XP behaviour */
     {
-        ok(bytes == 0xdeadbeef, "got bytes %u\n", bytes);
-        ok(key == 0xdeadbeef, "got key %lu\n", key);
+        ok(bytes == 0xdeadbeef, "got bytes %lu\n", bytes);
+        ok(key == 0xdeadbeef, "got key %Iu\n", key);
         ok(!ovl_iocp, "got ovl %p\n", ovl_iocp);
     }
 
@@ -11051,7 +11051,7 @@ static void test_get_interface_list(void)
     ret = WSAIoctl(s, SIO_GET_INTERFACE_LIST, NULL, 0, buffer, sizeof(buffer), &size, NULL, NULL);
     ok(!ret, "Got unexpected ret %d.\n", ret);
     ok(!WSAGetLastError(), "Got error %u.\n", WSAGetLastError());
-    ok(size && size != 0xdeadbeef && !(size % sizeof(INTERFACE_INFO)), "Got unexpected size %u.\n", size);
+    ok(size && size != 0xdeadbeef && !(size % sizeof(INTERFACE_INFO)), "Got unexpected size %lu.\n", size);
     expect_size = size;
 
     size = 0xdeadbeef;
@@ -11060,15 +11060,15 @@ static void test_get_interface_list(void)
     ret = WSAIoctl(s, SIO_GET_INTERFACE_LIST, NULL, 0, buffer, sizeof(buffer), &size, &overlapped, NULL);
     ok(ret == -1, "Got unexpected ret %d.\n", ret);
     ok(WSAGetLastError() == ERROR_IO_PENDING, "Got error %u.\n", WSAGetLastError());
-    ok(size == 0xdeadbeef, "Got size %u.\n", size);
+    ok(size == 0xdeadbeef, "Got size %lu.\n", size);
 
     ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 100);
-    ok(ret, "Got error %u.\n", GetLastError());
-    ok(size == expect_size, "Expected size %u, got %u.\n", expect_size, size);
+    ok(ret, "Got error %lu.\n", GetLastError());
+    ok(size == expect_size, "Expected size %lu, got %lu.\n", expect_size, size);
     ok(key == 123, "Got key %Iu.\n", key);
     ok(overlapped_ptr == &overlapped, "Got overlapped %p.\n", overlapped_ptr);
-    ok(!overlapped.Internal, "Got status %#x.\n", (NTSTATUS)overlapped.Internal);
-    ok(overlapped.InternalHigh == expect_size, "Expected size %u, got %Iu.\n", expect_size, overlapped.InternalHigh);
+    ok(!overlapped.Internal, "Got status %#lx.\n", (NTSTATUS)overlapped.Internal);
+    ok(overlapped.InternalHigh == expect_size, "Expected size %lu, got %Iu.\n", expect_size, overlapped.InternalHigh);
 
     info = (INTERFACE_INFO *)buffer;
     count = size / sizeof(INTERFACE_INFO);
@@ -11098,7 +11098,7 @@ static void test_get_interface_list(void)
     ret = WSAIoctl(s, SIO_GET_INTERFACE_LIST, NULL, 0, buffer, sizeof(INTERFACE_INFO) - 1, &size, NULL, NULL);
     ok(ret == -1, "Got unexpected ret %d.\n", ret);
     ok(WSAGetLastError() == WSAEFAULT, "Got unexpected error %d.\n", WSAGetLastError());
-    ok(!size, "Got unexpected size %u.\n", size);
+    ok(!size, "Got unexpected size %lu.\n", size);
 
     size = 0xdeadbeef;
     overlapped.Internal = 0xdeadbeef;
@@ -11106,15 +11106,15 @@ static void test_get_interface_list(void)
     ret = WSAIoctl(s, SIO_GET_INTERFACE_LIST, NULL, 0, buffer, sizeof(INTERFACE_INFO) - 1, &size, &overlapped, NULL);
     ok(ret == -1, "Got unexpected ret %d.\n", ret);
     ok(WSAGetLastError() == ERROR_IO_PENDING, "Got error %u.\n", WSAGetLastError());
-    ok(size == 0xdeadbeef, "Got size %u.\n", size);
+    ok(size == 0xdeadbeef, "Got size %lu.\n", size);
 
     ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 100);
     ok(!ret, "Expected failure.\n");
-    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Got error %u.\n", GetLastError());
-    ok(!size, "Got size %u.\n", size);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Got error %lu.\n", GetLastError());
+    ok(!size, "Got size %lu.\n", size);
     ok(key == 123, "Got key %Iu.\n", key);
     ok(overlapped_ptr == &overlapped, "Got overlapped %p.\n", overlapped_ptr);
-    ok((NTSTATUS)overlapped.Internal == STATUS_BUFFER_TOO_SMALL, "Got status %#x.\n", (NTSTATUS)overlapped.Internal);
+    ok((NTSTATUS)overlapped.Internal == STATUS_BUFFER_TOO_SMALL, "Got status %#lx.\n", (NTSTATUS)overlapped.Internal);
     ok(!overlapped.InternalHigh, "Got size %Iu.\n", overlapped.InternalHigh);
 
     ret = WSAIoctl(s, SIO_GET_INTERFACE_LIST, NULL, 0, buffer, sizeof(buffer), NULL, NULL, NULL);
@@ -11135,13 +11135,13 @@ static void test_get_interface_list(void)
             sizeof(INTERFACE_INFO) - 1, &size, &overlapped, socket_apc);
     ok(ret == -1, "Got unexpected ret %d.\n", ret);
     ok(WSAGetLastError() == ERROR_IO_PENDING, "Got error %u.\n", WSAGetLastError());
-    ok(size == 0xdeadbeef, "Got size %u.\n", size);
+    ok(size == 0xdeadbeef, "Got size %lu.\n", size);
 
     ret = SleepEx(100, TRUE);
     ok(ret == WAIT_IO_COMPLETION, "got %d\n", ret);
     ok(apc_count == 1, "APC was called %u times\n", apc_count);
-    ok(apc_error == WSAEFAULT, "got APC error %u\n", apc_error);
-    ok(!apc_size, "got APC size %u\n", apc_size);
+    ok(apc_error == WSAEFAULT, "got APC error %lu\n", apc_error);
+    ok(!apc_size, "got APC size %lu\n", apc_size);
     ok(apc_overlapped == &overlapped, "got APC overlapped %p\n", apc_overlapped);
 
     closesocket(s);
@@ -11289,7 +11289,7 @@ static void test_bind(void)
                 ok(ret_addr6.sin6_family == AF_INET6, "got family %u\n", ret_addr6.sin6_family);
                 ok(ret_addr6.sin6_port != 0, "expected nonzero port\n");
                 ok(!memcmp(&ret_addr6.sin6_addr, &addr6.sin6_addr, sizeof(addr6.sin6_addr)), "address didn't match\n");
-                ok(ret_addr6.sin6_scope_id == addr6.sin6_scope_id, "got scope %u\n", ret_addr6.sin6_scope_id);
+                ok(ret_addr6.sin6_scope_id == addr6.sin6_scope_id, "got scope %lu\n", ret_addr6.sin6_scope_id);
 
                 closesocket(s);
             }
@@ -11344,7 +11344,7 @@ static void test_connecting_socket(void)
     ret = pConnectEx(client, (struct sockaddr *)&invalid_addr, sizeof(invalid_addr), NULL, 0, &size, &overlapped);
     ok(!ret, "got %d\n", ret);
     ok(WSAGetLastError() == WSAEINVAL, "got %u\n", WSAGetLastError());
-    ok((NTSTATUS)overlapped.Internal == STATUS_PENDING, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    ok((NTSTATUS)overlapped.Internal == STATUS_PENDING, "got status %#lx\n", (NTSTATUS)overlapped.Internal);
     todo_wine ok(overlapped.InternalHigh == 0xdeadbeef, "got size %Iu\n", overlapped.InternalHigh);
 
     len = sizeof(addr);
@@ -11359,7 +11359,7 @@ static void test_connecting_socket(void)
     if (!ret)
     {
         ok(addr.sin_family == AF_INET, "got family %u\n", addr.sin_family);
-        ok(addr.sin_addr.s_addr == inet_addr("192.0.2.0"), "got address %#08x\n", addr.sin_addr.s_addr);
+        ok(addr.sin_addr.s_addr == inet_addr("192.0.2.0"), "got address %#08lx\n", addr.sin_addr.s_addr);
         ok(addr.sin_port == 255, "expected nonzero port\n");
     }
 
@@ -11396,7 +11396,7 @@ static void test_connecting_socket(void)
     ret = pConnectEx(client, (struct sockaddr *)&invalid_addr, sizeof(invalid_addr), NULL, 0, &size, &overlapped);
     ok(!ret, "got %d\n", ret);
     ok(WSAGetLastError() == WSAEINVAL, "got %u\n", WSAGetLastError());
-    ok((NTSTATUS)overlapped.Internal == STATUS_PENDING, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    ok((NTSTATUS)overlapped.Internal == STATUS_PENDING, "got status %#lx\n", (NTSTATUS)overlapped.Internal);
     todo_wine ok(overlapped.InternalHigh == 0xdeadbeef, "got size %Iu\n", overlapped.InternalHigh);
 
     len = sizeof(addr);
@@ -11538,19 +11538,19 @@ static void test_WSAGetOverlappedResult(void)
             overlapped.Internal = status;
             WSASetLastError(0xdeadbeef);
             ret = WSAGetOverlappedResult(s, &overlapped, &size, FALSE, &flags);
-            ok(ret == expect_ret, "status %#x: expected %d, got %d\n", status, expect_ret, ret);
+            ok(ret == expect_ret, "status %#lx: expected %d, got %d\n", status, expect_ret, ret);
             if (ret)
             {
                 ok(WSAGetLastError() == expect /* >= win10 1809 */
                         || !WSAGetLastError() /* < win10 1809 */
                         || WSAGetLastError() == 0xdeadbeef, /* < win7 */
-                        "status %#x: expected error %u, got %u\n", status, expect, WSAGetLastError());
+                        "status %#lx: expected error %lu, got %u\n", status, expect, WSAGetLastError());
             }
             else
             {
                 ok(WSAGetLastError() == expect
                         || (status == (0xc0070000 | ERROR_IO_INCOMPLETE) && WSAGetLastError() == WSAEINVAL), /* < win8 */
-                        "status %#x: expected error %u, got %u\n", status, expect, WSAGetLastError());
+                        "status %#lx: expected error %lu, got %u\n", status, expect, WSAGetLastError());
             }
         }
     }
@@ -11580,8 +11580,8 @@ static DWORD CALLBACK nonblocking_async_recv_thread(void *arg)
     ret = WSARecv(params->client, &wsabuf, 1, NULL, &flags, &overlapped, NULL);
     ok(!ret, "got %d\n", ret);
     ret = GetOverlappedResult((HANDLE)params->client, &overlapped, &size, FALSE);
-    ok(ret, "got error %u\n", GetLastError());
-    ok(size == 4, "got size %u\n", size);
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(size == 4, "got size %lu\n", size);
     ok(!strcmp(buffer, "data"), "got %s\n", debugstr_an(buffer, size));
 
     return 0;
@@ -11616,7 +11616,7 @@ static void test_nonblocking_async_recv(void)
     ret = WSARecv(client, &wsabuf, 1, &size, &flags, NULL, NULL);
     ok(ret == -1, "got %d\n", ret);
     ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
-    ok(overlapped.Internal == 0xdeadbeef, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    ok(overlapped.Internal == 0xdeadbeef, "got status %#lx\n", (NTSTATUS)overlapped.Internal);
 
     /* Overlapped, with a NULL event. */
 
@@ -11636,8 +11636,8 @@ static void test_nonblocking_async_recv(void)
     ret = WaitForSingleObject((HANDLE)client, 1000);
     ok(!ret, "wait timed out\n");
     ret = GetOverlappedResult((HANDLE)client, &overlapped, &size, FALSE);
-    ok(ret, "got error %u\n", GetLastError());
-    ok(size == 4, "got size %u\n", size);
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(size == 4, "got size %lu\n", size);
     ok(!strcmp(buffer, "data"), "got %s\n", debugstr_an(buffer, size));
 
     /* Overlapped, with a non-NULL event. */
@@ -11658,8 +11658,8 @@ static void test_nonblocking_async_recv(void)
     ret = WaitForSingleObject(event, 1000);
     ok(!ret, "wait timed out\n");
     ret = GetOverlappedResult((HANDLE)client, &overlapped, &size, FALSE);
-    ok(ret, "got error %u\n", GetLastError());
-    ok(size == 4, "got size %u\n", size);
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(size == 4, "got size %lu\n", size);
     ok(!strcmp(buffer, "data"), "got %s\n", debugstr_an(buffer, size));
 
     /* With data already in the pipe; usually this does return 0 (but not
@@ -11674,8 +11674,8 @@ static void test_nonblocking_async_recv(void)
     ret = WaitForSingleObject(event, 1000);
     ok(!ret, "wait timed out\n");
     ret = GetOverlappedResult((HANDLE)client, &overlapped, &size, FALSE);
-    ok(ret, "got error %u\n", GetLastError());
-    ok(size == 4, "got size %u\n", size);
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(size == 4, "got size %lu\n", size);
     ok(!strcmp(buffer, "data"), "got %s\n", debugstr_an(buffer, size));
 
     closesocket(client);
@@ -11698,7 +11698,7 @@ static void test_nonblocking_async_recv(void)
     ret = WSARecv(client, &wsabuf, 1, &size, &flags, NULL, NULL);
     ok(ret == -1, "got %d\n", ret);
     ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
-    ok(overlapped.Internal == 0xdeadbeef, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    ok(overlapped.Internal == 0xdeadbeef, "got status %#lx\n", (NTSTATUS)overlapped.Internal);
 
     /* Overlapped, with a NULL event. */
 
@@ -11741,8 +11741,8 @@ static void test_nonblocking_async_recv(void)
     ret = WSARecv(client, &wsabuf, 1, NULL, &flags, &overlapped, NULL);
     ok(!ret, "got %d\n", ret);
     ret = GetOverlappedResult((HANDLE)client, &overlapped, &size, FALSE);
-    ok(ret, "got error %u\n", GetLastError());
-    ok(size == 4, "got size %u\n", size);
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(size == 4, "got size %lu\n", size);
     ok(!strcmp(buffer, "data"), "got %s\n", debugstr_an(buffer, size));
 
     closesocket(client);
@@ -11791,8 +11791,8 @@ static void test_simultaneous_async_recv(void)
 
         size = 0;
         ret = GetOverlappedResult((HANDLE)client, &overlappeds[i], &size, FALSE);
-        ok(ret, "got error %u\n", GetLastError());
-        ok(size == stride, "got size %u\n", size);
+        ok(ret, "got error %lu\n", GetLastError());
+        ok(size == stride, "got size %lu\n", size);
         ok(!memcmp(expect, actual, stride), "expected %s, got %s\n", debugstr_an(expect, stride), debugstr_an(actual, stride));
     }
 
@@ -11837,13 +11837,13 @@ static void test_empty_recv(void)
     ret = WaitForSingleObject(overlapped.hEvent, 1000);
     ok(!ret, "wait failed\n");
     ret = GetOverlappedResult((HANDLE)client, &overlapped, &size, FALSE);
-    ok(ret, "got error %u\n", GetLastError());
-    ok(!size, "got size %u\n", size);
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(!size, "got size %lu\n", size);
 
     WSASetLastError(0xdeadbeef);
     ret = WSARecv(client, &wsabuf, 1, &size, &flags, &overlapped, NULL);
     ok(!ret, "got error %u\n", WSAGetLastError());
-    ok(!size, "got size %u\n", size);
+    ok(!size, "got size %lu\n", size);
 
     ret = recv(client, NULL, 0, 0);
     ok(!ret, "got %d\n", ret);
@@ -11876,7 +11876,7 @@ static void test_timeout(void)
     ok(!ret, "expected success\n");
     ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
     ok(len == sizeof(timeout), "got size %u\n", len);
-    ok(!timeout, "got timeout %u\n", timeout);
+    ok(!timeout, "got timeout %lu\n", timeout);
 
     timeout = 100;
     WSASetLastError(0xdeadbeef);
@@ -11890,7 +11890,7 @@ static void test_timeout(void)
     ret = getsockopt(client, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, &len);
     ok(!ret, "expected success\n");
     ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
-    ok(timeout == 100, "got timeout %u\n", timeout);
+    ok(timeout == 100, "got timeout %lu\n", timeout);
 
     WSASetLastError(0xdeadbeef);
     ret = recv(client, &buffer, 1, 0);
@@ -11904,7 +11904,7 @@ static void test_timeout(void)
     ret = WSARecv(client, &wsabuf, 1, &size, &flags, NULL, NULL);
     ok(ret == -1, "got %d\n", ret);
     ok(WSAGetLastError() == WSAETIMEDOUT, "got error %u\n", WSAGetLastError());
-    ok(size == 0xdeadbeef, "got size %u\n", size);
+    ok(size == 0xdeadbeef, "got size %lu\n", size);
 
     wsabuf.buf = &buffer;
     wsabuf.len = 1;
@@ -11923,8 +11923,8 @@ static void test_timeout(void)
     ret = WaitForSingleObject(overlapped.hEvent, 200);
     ok(!ret, "got %d\n", ret);
     ret = GetOverlappedResult((HANDLE)client, &overlapped, &size, FALSE);
-    ok(ret, "got error %u\n", GetLastError());
-    ok(size == 1, "got size %u\n", size);
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(size == 1, "got size %lu\n", size);
 
     closesocket(client);
     closesocket(server);
@@ -11946,7 +11946,7 @@ static void test_so_debug(void)
     ok(!ret, "got %d\n", ret);
     ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
     ok(len == sizeof(debug), "got len %u\n", len);
-    ok(!debug, "got debug %u\n", debug);
+    ok(!debug, "got debug %lu\n", debug);
 
     WSASetLastError(0xdeadbeef);
     debug = 2;
@@ -11961,7 +11961,7 @@ static void test_so_debug(void)
     ok(!ret, "got %d\n", ret);
     ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
     ok(len == sizeof(debug), "got len %u\n", len);
-    todo_wine ok(debug == 1, "got debug %u\n", debug);
+    todo_wine ok(debug == 1, "got debug %lu\n", debug);
 
     closesocket(s);
 }

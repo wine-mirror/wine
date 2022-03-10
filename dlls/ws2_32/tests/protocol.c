@@ -72,7 +72,7 @@ static void test_service_flags(int family, int version, int socktype, int protoc
         /* QOS may or may not be installed */
         testflags &= ~XP1_QOS_SUPPORTED;
         ok(expectedflags == testflags,
-           "Incorrect flags, expected 0x%x, received 0x%x\n",
+           "Incorrect flags, expected 0x%lx, received 0x%lx\n",
            expectedflags, testflags);
     }
 }
@@ -87,14 +87,14 @@ static void test_WSAEnumProtocolsA(void)
     ret = WSAEnumProtocolsA( NULL, NULL, &len );
     ok( ret == SOCKET_ERROR, "WSAEnumProtocolsA() succeeded unexpectedly\n");
     error = WSAGetLastError();
-    ok( error == WSAENOBUFS, "Expected 10055, received %d\n", error);
+    ok( error == WSAENOBUFS, "Expected 10055, received %ld\n", error);
 
     len = 0;
 
     ret = WSAEnumProtocolsA( NULL, &info, &len );
     ok( ret == SOCKET_ERROR, "WSAEnumProtocolsA() succeeded unexpectedly\n");
     error = WSAGetLastError();
-    ok( error == WSAENOBUFS, "Expected 10055, received %d\n", error);
+    ok( error == WSAENOBUFS, "Expected 10055, received %ld\n", error);
 
     buffer = HeapAlloc( GetProcessHeap(), 0, len );
 
@@ -120,7 +120,7 @@ static void test_WSAEnumProtocolsA(void)
     ok( ret == SOCKET_ERROR, "WSAEnumProtocolsA() succeeded unexpectedly\n");
     error = WSAGetLastError();
     ok( error == WSAENOBUFS || broken(error == WSAEFAULT) /* NT4 */,
-       "Expected 10055, received %d\n", error);
+       "Expected 10055, received %ld\n", error);
 
     buffer = HeapAlloc( GetProcessHeap(), 0, len );
 
@@ -154,14 +154,14 @@ static void test_WSAEnumProtocolsW(void)
     ret = WSAEnumProtocolsW( NULL, NULL, &len );
     ok( ret == SOCKET_ERROR, "WSAEnumProtocolsW() succeeded unexpectedly\n");
     error = WSAGetLastError();
-    ok( error == WSAENOBUFS, "Expected 10055, received %d\n", error);
+    ok( error == WSAENOBUFS, "Expected 10055, received %ld\n", error);
 
     len = 0;
 
     ret = WSAEnumProtocolsW( NULL, &info, &len );
     ok( ret == SOCKET_ERROR, "WSAEnumProtocolsW() succeeded unexpectedly\n");
     error = WSAGetLastError();
-    ok( error == WSAENOBUFS, "Expected 10055, received %d\n", error);
+    ok( error == WSAENOBUFS, "Expected 10055, received %ld\n", error);
 
     buffer = HeapAlloc( GetProcessHeap(), 0, len );
 
@@ -187,7 +187,7 @@ static void test_WSAEnumProtocolsW(void)
     ok( ret == SOCKET_ERROR, "WSAEnumProtocolsW() succeeded unexpectedly\n");
     error = WSAGetLastError();
     ok( error == WSAENOBUFS || broken(error == WSAEFAULT) /* NT4 */,
-       "Expected 10055, received %d\n", error);
+       "Expected 10055, received %ld\n", error);
 
     buffer = HeapAlloc( GetProcessHeap(), 0, len );
 
@@ -394,13 +394,13 @@ static void test_WSALookupService(void)
     error = WSAGetLastError();
     ok(ret == SOCKET_ERROR, "WSALookupServiceBeginW should have failed\n");
     todo_wine
-    ok(error == WSAEFAULT, "expected 10014, got %d\n", error);
+    ok(error == WSAEFAULT, "expected 10014, got %ld\n", error);
 
     ret = WSALookupServiceBeginW(qs, 0, NULL);
     error = WSAGetLastError();
     ok(ret == SOCKET_ERROR, "WSALookupServiceBeginW should have failed\n");
     todo_wine
-    ok(error == WSAEFAULT, "expected 10014, got %d\n", error);
+    ok(error == WSAEFAULT, "expected 10014, got %ld\n", error);
 
     ret = WSALookupServiceBeginW(qs, 0, &handle);
     ok(ret == SOCKET_ERROR, "WSALookupServiceBeginW should have failed\n");
@@ -413,7 +413,7 @@ static void test_WSALookupService(void)
     todo_wine
     ok(ret == SOCKET_ERROR, "WSALookupServiceEnd should have failed\n");
     todo_wine
-    ok(error == ERROR_INVALID_HANDLE, "expected 6, got %d\n", error);
+    ok(error == ERROR_INVALID_HANDLE, "expected 6, got %ld\n", error);
 
     /* standard network list query */
     qs->dwSize = sizeof(*qs);
@@ -427,7 +427,7 @@ static void test_WSALookupService(void)
     }
 
     todo_wine
-    ok(!ret, "WSALookupServiceBeginW failed unexpectedly with error %d\n", error);
+    ok(!ret, "WSALookupServiceBeginW failed unexpectedly with error %ld\n", error);
     todo_wine
     ok(handle != (HANDLE)0xdeadbeef, "Handle was not filled\n");
 
@@ -463,8 +463,8 @@ static void test_WSALookupService(void)
                         break;
                     case NLA_INTERFACE:
                         trace("\tNLA Data Type: NLA_INTERFACE\n");
-                        trace("\t\tType: %d\n", netdata->data.interfaceData.dwType);
-                        trace("\t\tSpeed: %d\n", netdata->data.interfaceData.dwSpeed);
+                        trace("\t\tType: %ld\n", netdata->data.interfaceData.dwType);
+                        trace("\t\tSpeed: %ld\n", netdata->data.interfaceData.dwSpeed);
                         trace("\t\tAdapter Name: %s\n", netdata->data.interfaceData.adapterName);
                         break;
                     case NLA_802_1X_LOCATION:
@@ -501,11 +501,11 @@ static void test_WSALookupService(void)
                         break;
                     case NLA_ICS:
                         trace("\tNLA Data Type: NLA_ICS\n");
-                        trace("\t\tSpeed: %d\n",
+                        trace("\t\tSpeed: %ld\n",
                                netdata->data.ICS.remote.speed);
-                        trace("\t\tType: %d\n",
+                        trace("\t\tType: %ld\n",
                                netdata->data.ICS.remote.type);
-                        trace("\t\tState: %d\n",
+                        trace("\t\tState: %ld\n",
                                netdata->data.ICS.remote.state);
                         WideCharToMultiByte(CP_ACP, 0, netdata->data.ICS.remote.machineName, -1,
                             strbuff, sizeof(strbuff), NULL, NULL);
@@ -571,7 +571,7 @@ static void wait_for_async_message(HWND hwnd, HANDLE handle)
     }
 
     ok(ret, "did not expect WM_QUIT message\n");
-    ok(msg.wParam == (WPARAM)handle, "expected wParam = %p, got %lx\n", handle, msg.wParam);
+    ok(msg.wParam == (WPARAM)handle, "expected wParam = %p, got %Ix\n", handle, msg.wParam);
 }
 
 static void test_WSAAsyncGetServByPort(void)
@@ -636,7 +636,7 @@ static DWORD WINAPI inet_ntoa_thread_proc(void *param)
     HANDLE *event = param;
 
     addr = inet_addr("4.3.2.1");
-    ok(addr == htonl(0x04030201), "expected 0x04030201, got %08x\n", addr);
+    ok(addr == htonl(0x04030201), "expected 0x04030201, got %08lx\n", addr);
     str = inet_ntoa(*(struct in_addr *)&addr);
     ok(!strcmp(str, "4.3.2.1"), "expected 4.3.2.1, got %s\n", str);
 
@@ -654,7 +654,7 @@ static void test_inet_ntoa(void)
     DWORD tid;
 
     addr = inet_addr("1.2.3.4");
-    ok(addr == htonl(0x01020304), "expected 0x01020304, got %08x\n", addr);
+    ok(addr == htonl(0x01020304), "expected 0x01020304, got %08lx\n", addr);
     str = inet_ntoa(*(struct in_addr *)&addr);
     ok(!strcmp(str, "1.2.3.4"), "expected 1.2.3.4, got %s\n", str);
 
@@ -742,14 +742,14 @@ static void test_inet_addr(void)
     WSASetLastError(0xdeadbeef);
     addr = inet_addr(NULL);
     ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
-    ok(addr == 0xffffffff, "got addr %#08x\n", addr);
+    ok(addr == 0xffffffff, "got addr %#08lx\n", addr);
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         winetest_push_context( "Address %s, i %u", debugstr_a(tests[i].input), i );
         WSASetLastError(0xdeadbeef);
         addr = inet_addr(tests[i].input);
         ok(WSAGetLastError() == 0xdeadbeef, "got error %u\n", WSAGetLastError());
-        ok(addr == tests[i].addr, "got addr %#08x\n", addr);
+        ok(addr == tests[i].addr, "got addr %#08lx\n", addr);
         winetest_pop_context();
     }
 
@@ -762,7 +762,7 @@ static void test_inet_addr(void)
         str[5] = i;
         expected = isspace(i) ? 0x03000201 : 0xffffffff;
         addr = inet_addr(str);
-        ok(addr == expected, "got addr %#08x, expected %#08x, i %u\n", addr, expected, i);
+        ok(addr == expected, "got addr %#08lx, expected %#08lx, i %u\n", addr, expected, i);
     }
 }
 
@@ -1046,7 +1046,7 @@ static void test_inet_pton(void)
         ret = p_inet_pton(AF_INET, ipv4_tests[i].input, &addr);
         ok(ret == ipv4_tests[i].ret, "got %d\n", ret);
         ok(WSAGetLastError() == 0xdeadbeef, "got error %u\n", WSAGetLastError());
-        ok(addr == ipv4_tests[i].addr, "got addr %#08x\n", addr);
+        ok(addr == ipv4_tests[i].addr, "got addr %#08lx\n", addr);
 
         MultiByteToWideChar(CP_ACP, 0, ipv4_tests[i].input, -1, inputW, ARRAY_SIZE(inputW));
         WSASetLastError(0xdeadbeef);
@@ -1054,7 +1054,12 @@ static void test_inet_pton(void)
         ret = pInetPtonW(AF_INET, inputW, &addr);
         ok(ret == ipv4_tests[i].ret, "got %d\n", ret);
         ok(WSAGetLastError() == (ret ? 0xdeadbeef : WSAEINVAL), "got error %u\n", WSAGetLastError());
-        ok(addr == ipv4_tests[i].addr, "got addr %#08x\n", addr);
+        ok(addr == ipv4_tests[i].addr, "got addr %#08lx\n", addr);
+
+        WSASetLastError(0xdeadbeef);
+        addr = inet_addr(ipv4_tests[i].input);
+        ok(addr == ipv4_tests[i].ret ? ipv4_tests[i].addr : INADDR_NONE, "got addr %#08lx\n", addr);
+        ok(WSAGetLastError() == 0xdeadbeef, "got error %u\n", WSAGetLastError());
 
         winetest_pop_context();
     }
@@ -1264,7 +1269,7 @@ static void test_WSAAddressToString(void)
     ret = WSAAddressToStringA( (SOCKADDR *)&sockaddr, sizeof(sockaddr), NULL, output, &len );
     ok( ret == SOCKET_ERROR, "WSAAddressToStringA() returned %d, expected SOCKET_ERROR\n", ret );
     ok( WSAGetLastError() == WSAEFAULT, "WSAAddressToStringA() gave error %d, expected WSAEFAULT\n", WSAGetLastError() );
-    ok( len == 8, "WSAAddressToStringA() gave length %d, expected 8\n", len );
+    ok( len == 8, "WSAAddressToStringA() gave length %ld, expected 8\n", len );
 
     len = 0;
     sockaddr.sin_family = AF_INET;
@@ -1274,13 +1279,13 @@ static void test_WSAAddressToString(void)
     ret = WSAAddressToStringW( (SOCKADDR *)&sockaddr, sizeof(sockaddr), NULL, NULL, &len );
     ok( ret == SOCKET_ERROR, "got %d\n", ret );
     ok( WSAGetLastError() == WSAEFAULT, "got %08x\n", WSAGetLastError() );
-    ok( len == 8, "got %u\n", len );
+    ok( len == 8, "got %lu\n", len );
 
     len = ARRAY_SIZE(outputW);
     memset( outputW, 0, sizeof(outputW) );
     ret = WSAAddressToStringW( (SOCKADDR *)&sockaddr, sizeof(sockaddr), NULL, outputW, &len );
     ok( !ret, "WSAAddressToStringW() returned %d\n", ret );
-    ok( len == 8, "got %u\n", len );
+    ok( len == 8, "got %lu\n", len );
     ok( !wcscmp(outputW, L"0.0.0.0"), "got %s\n", wine_dbgstr_w(outputW) );
 
     for (i = 0; i < ARRAY_SIZE(ipv4_tests); ++i)
@@ -1296,7 +1301,7 @@ static void test_WSAAddressToString(void)
         ret = WSAAddressToStringA( (SOCKADDR *)&sockaddr, sizeof(sockaddr), NULL, output, &len );
         ok( !ret, "got error %d\n", WSAGetLastError() );
         ok( !strcmp( output, ipv4_tests[i].output ), "got string %s\n", debugstr_a(output) );
-        ok( len == strlen(ipv4_tests[i].output) + 1, "got len %u\n", len );
+        ok( len == strlen(ipv4_tests[i].output) + 1, "got len %lu\n", len );
 
         len = sizeof(outputW);
         memset( outputW, 0, len );
@@ -1305,7 +1310,7 @@ static void test_WSAAddressToString(void)
                              expected_outputW, ARRAY_SIZE(expected_outputW) );
         ok( !ret, "got error %d\n", WSAGetLastError() );
         ok( !wcscmp( outputW, expected_outputW ), "got string %s\n", debugstr_w(outputW) );
-        ok( len == wcslen(expected_outputW) + 1, "got len %u\n", len );
+        ok( len == wcslen(expected_outputW) + 1, "got len %lu\n", len );
 
         winetest_pop_context();
     }
@@ -1331,7 +1336,7 @@ static void test_WSAAddressToString(void)
         ret = WSAAddressToStringA( (SOCKADDR *)&sockaddr6, sizeof(sockaddr6), NULL, output, &len );
         ok( !ret, "got error %d\n", WSAGetLastError() );
         ok( !strcmp( output, ipv6_tests[i].output ), "got string %s\n", debugstr_a(output) );
-        ok( len == strlen(ipv6_tests[i].output) + 1, "got len %u\n", len );
+        ok( len == strlen(ipv6_tests[i].output) + 1, "got len %lu\n", len );
 
         len = sizeof(outputW);
         ret = WSAAddressToStringW( (SOCKADDR *)&sockaddr6, sizeof(sockaddr6), NULL, outputW, &len );
@@ -1339,7 +1344,7 @@ static void test_WSAAddressToString(void)
                              expected_outputW, ARRAY_SIZE(expected_outputW) );
         ok( !ret, "got error %d\n", WSAGetLastError() );
         ok( !wcscmp( outputW, expected_outputW ), "got string %s\n", debugstr_w(outputW) );
-        ok( len == wcslen(expected_outputW) + 1, "got len %u\n", len );
+        ok( len == wcslen(expected_outputW) + 1, "got len %lu\n", len );
 
         winetest_pop_context();
     }
@@ -1475,7 +1480,7 @@ static void test_WSAStringToAddress(void)
     ok( ret == SOCKET_ERROR, "WSAStringToAddressA() returned %d, expected SOCKET_ERROR\n", ret );
     ok( WSAGetLastError() == WSAEFAULT, "WSAStringToAddress() gave error %d, expected WSAEFAULT\n", WSAGetLastError() );
     ok( len >= sizeof(sockaddr) || broken(len == 0) /* xp */,
-        "WSAStringToAddress() gave length %d, expected at least %d\n", len, sizeof(sockaddr) );
+        "WSAStringToAddress() gave length %d, expected at least %Id\n", len, sizeof(sockaddr) );
 
     for (i = 0; i < 2; i++)
     {
@@ -1504,7 +1509,7 @@ static void test_WSAStringToAddress(void)
             ok( sockaddr.sin_family == (ipv4_tests[j].error ? 0 : AF_INET),
                 "got family %#x\n", sockaddr.sin_family );
             ok( sockaddr.sin_addr.s_addr == htonl( ipv4_tests[j].address ),
-                "got addr %08x\n", sockaddr.sin_addr.s_addr );
+                "got addr %08lx\n", sockaddr.sin_addr.s_addr );
             ok( sockaddr.sin_port == htons( ipv4_tests[j].port ), "got port %u\n", sockaddr.sin_port );
             ok( len == expected_len, "got len %d\n", len );
 
@@ -1545,9 +1550,9 @@ static void test_WSAStringToAddress(void)
                 sockaddr6.sin6_addr.s6_words[2], sockaddr6.sin6_addr.s6_words[3],
                 sockaddr6.sin6_addr.s6_words[4], sockaddr6.sin6_addr.s6_words[5],
                 sockaddr6.sin6_addr.s6_words[6], sockaddr6.sin6_addr.s6_words[7] );
-            ok( !sockaddr6.sin6_scope_id, "got scope id %u\n", sockaddr6.sin6_scope_id );
+            ok( !sockaddr6.sin6_scope_id, "got scope id %lu\n", sockaddr6.sin6_scope_id );
             ok( sockaddr6.sin6_port == ipv6_tests[j].port, "got port %u\n", sockaddr6.sin6_port );
-            ok( !sockaddr6.sin6_flowinfo, "got flowinfo %u\n", sockaddr6.sin6_flowinfo );
+            ok( !sockaddr6.sin6_flowinfo, "got flowinfo %lu\n", sockaddr6.sin6_flowinfo );
             ok( len == expected_len, "got len %d\n", len );
 
             winetest_pop_context();
@@ -1612,7 +1617,7 @@ static void compare_addrinfow(ADDRINFOW *a, ADDRINFOW *b)
         ok(a->ai_protocol == b->ai_protocol,
            "Wrong protocol %d != %d\n", a->ai_protocol, b->ai_protocol);
         ok(a->ai_addrlen == b->ai_addrlen,
-           "Wrong addrlen %lu != %lu\n", a->ai_addrlen, b->ai_addrlen);
+           "Wrong addrlen %Iu != %Iu\n", a->ai_addrlen, b->ai_addrlen);
         ok(!memcmp(a->ai_addr, b->ai_addr, min(a->ai_addrlen, b->ai_addrlen)),
            "Wrong address data\n");
         if (a->ai_canonname && b->ai_canonname)
@@ -1894,10 +1899,10 @@ static void CALLBACK completion_routine(DWORD error, DWORD byte_count, WSAOVERLA
 {
     struct completion_routine_test *test = &completion_routine_test;
 
-    ok(error == test->error, "got %u\n", error);
-    ok(!byte_count, "got %u\n", byte_count);
+    ok(error == test->error, "got %lu\n", error);
+    ok(!byte_count, "got %lu\n", byte_count);
     ok(overlapped == test->overlapped, "got %p\n", overlapped);
-    ok(overlapped->Internal == test->error, "got %lu\n", overlapped->Internal);
+    ok(overlapped->Internal == test->error, "got %Iu\n", overlapped->Internal);
     ok(overlapped->Pointer == test->result, "got %p\n", overlapped->Pointer);
     ok(overlapped->hEvent == NULL, "got %p\n", overlapped->hEvent);
 
@@ -1975,7 +1980,7 @@ static void test_GetAddrInfoExW(void)
     ret = pGetAddrInfoExOverlappedResult(&overlapped);
     ok(!ret, "overlapped result is %d\n", ret);
     ok(overlapped.hEvent == event, "hEvent changed %p\n", overlapped.hEvent);
-    ok(overlapped.Internal == ERROR_SUCCESS, "overlapped.Internal = %lx\n", overlapped.Internal);
+    ok(overlapped.Internal == ERROR_SUCCESS, "overlapped.Internal = %Ix\n", overlapped.Internal);
     ok(overlapped.Pointer == &result, "overlapped.Pointer != &result\n");
     ok(result != NULL, "result == NULL\n");
     ok(!result->ai_blob, "ai_blob != NULL\n");
@@ -2043,9 +2048,9 @@ static void test_GetAddrInfoExW(void)
     ret = pGetAddrInfoExOverlappedResult(&overlapped);
     ok(!ret, "overlapped result is %d\n", ret);
     ok(overlapped.hEvent == NULL, "hEvent changed %p\n", overlapped.hEvent);
-    ok(overlapped.Internal == ERROR_SUCCESS, "overlapped.Internal = %lx\n", overlapped.Internal);
+    ok(overlapped.Internal == ERROR_SUCCESS, "overlapped.Internal = %Ix\n", overlapped.Internal);
     ok(overlapped.Pointer == &result, "overlapped.Pointer != &result\n");
-    ok(completion_routine_test.called == 1, "got %u\n", completion_routine_test.called);
+    ok(completion_routine_test.called == 1, "got %lu\n", completion_routine_test.called);
     pFreeAddrInfoExW(result);
 
     /* completion routine, non-existing domain */
@@ -2061,9 +2066,9 @@ static void test_GetAddrInfoExW(void)
     ret = pGetAddrInfoExOverlappedResult(&overlapped);
     ok(ret == WSAHOST_NOT_FOUND, "overlapped result is %d\n", ret);
     ok(overlapped.hEvent == NULL, "hEvent changed %p\n", overlapped.hEvent);
-    ok(overlapped.Internal == WSAHOST_NOT_FOUND, "overlapped.Internal = %lx\n", overlapped.Internal);
+    ok(overlapped.Internal == WSAHOST_NOT_FOUND, "overlapped.Internal = %Ix\n", overlapped.Internal);
     ok(overlapped.Pointer == &result, "overlapped.Pointer != &result\n");
-    ok(completion_routine_test.called == 1, "got %u\n", completion_routine_test.called);
+    ok(completion_routine_test.called == 1, "got %lu\n", completion_routine_test.called);
     ok(result == NULL, "got %p\n", result);
 
     WSACloseEvent(event);
@@ -2102,7 +2107,7 @@ static void compare_addrinfo(ADDRINFO *a, ADDRINFO *b)
         ok(a->ai_protocol == b->ai_protocol,
            "Wrong protocol %d != %d\n", a->ai_protocol, b->ai_protocol);
         ok(a->ai_addrlen == b->ai_addrlen,
-           "Wrong addrlen %lu != %lu\n", a->ai_addrlen, b->ai_addrlen);
+           "Wrong addrlen %Iu != %Iu\n", a->ai_addrlen, b->ai_addrlen);
         ok(!memcmp(a->ai_addr, b->ai_addr, min(a->ai_addrlen, b->ai_addrlen)),
            "Wrong address data\n");
         if (a->ai_canonname && b->ai_canonname)
@@ -2651,34 +2656,34 @@ static void test_WSAEnumNameSpaceProvidersA(void)
     ret = WSAEnumNameSpaceProvidersA(&len, name);
     error = WSAGetLastError();
     todo_wine
-    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
+    ok(ret == SOCKET_ERROR, "Expected failure, got %lu\n", ret);
     todo_wine
-    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
+    ok(error == WSAEFAULT, "Expected 10014, got %lu\n", error);
 
     /* Invalid parameter tests */
     SetLastError(0xdeadbeef);
     ret = WSAEnumNameSpaceProvidersA(NULL, name);
     error = WSAGetLastError();
     todo_wine
-    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
+    ok(ret == SOCKET_ERROR, "Expected failure, got %lu\n", ret);
     todo_wine
-    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
+    ok(error == WSAEFAULT, "Expected 10014, got %lu\n", error);
 
     SetLastError(0xdeadbeef);
     ret = WSAEnumNameSpaceProvidersA(NULL, NULL);
     error = WSAGetLastError();
     todo_wine
-    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
+    ok(ret == SOCKET_ERROR, "Expected failure, got %lu\n", ret);
     todo_wine
-    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
+    ok(error == WSAEFAULT, "Expected 10014, got %lu\n", error);
 
     SetLastError(0xdeadbeef);
     ret = WSAEnumNameSpaceProvidersA(&len, NULL);
     error = WSAGetLastError();
     todo_wine
-    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
+    ok(ret == SOCKET_ERROR, "Expected failure, got %lu\n", ret);
     todo_wine
-    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
+    ok(error == WSAEFAULT, "Expected 10014, got %lu\n", error);
 
     name = HeapAlloc(GetProcessHeap(), 0, len);
 
@@ -2698,34 +2703,34 @@ static void test_WSAEnumNameSpaceProvidersW(void)
     ret = WSAEnumNameSpaceProvidersW(&len, name);
     error = WSAGetLastError();
     todo_wine
-    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
+    ok(ret == SOCKET_ERROR, "Expected failure, got %lu\n", ret);
     todo_wine
-    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
+    ok(error == WSAEFAULT, "Expected 10014, got %lu\n", error);
 
     /* Invalid parameter tests */
     SetLastError(0xdeadbeef);
     ret = WSAEnumNameSpaceProvidersW(NULL, name);
     error = WSAGetLastError();
     todo_wine
-    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
+    ok(ret == SOCKET_ERROR, "Expected failure, got %lu\n", ret);
     todo_wine
-    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
+    ok(error == WSAEFAULT, "Expected 10014, got %lu\n", error);
 
     SetLastError(0xdeadbeef);
     ret = WSAEnumNameSpaceProvidersW(NULL, NULL);
     error = WSAGetLastError();
     todo_wine
-    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
+    ok(ret == SOCKET_ERROR, "Expected failure, got %lu\n", ret);
     todo_wine
-    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
+    ok(error == WSAEFAULT, "Expected 10014, got %lu\n", error);
 
     SetLastError(0xdeadbeef);
     ret = WSAEnumNameSpaceProvidersW(&len, NULL);
     error = WSAGetLastError();
     todo_wine
-    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
+    ok(ret == SOCKET_ERROR, "Expected failure, got %lu\n", ret);
     todo_wine
-    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
+    ok(error == WSAEFAULT, "Expected 10014, got %lu\n", error);
 
     name = HeapAlloc(GetProcessHeap(), 0, len);
 
@@ -2742,17 +2747,17 @@ static void test_WSAEnumNameSpaceProvidersW(void)
             switch (name[i].dwNameSpace)
             {
                 case NS_DNS:
-                    trace("\tName space ID: NS_DNS (%u)\n", name[i].dwNameSpace);
+                    trace("\tName space ID: NS_DNS (%lu)\n", name[i].dwNameSpace);
                     break;
                 case NS_NLA:
-                    trace("\tName space ID: NS_NLA (%u)\n", name[i].dwNameSpace);
+                    trace("\tName space ID: NS_NLA (%lu)\n", name[i].dwNameSpace);
                     break;
                 default:
-                    trace("\tName space ID: Unknown (%u)\n", name[i].dwNameSpace);
+                    trace("\tName space ID: Unknown (%lu)\n", name[i].dwNameSpace);
                     break;
             }
             trace("\tActive:  %d\n", name[i].fActive);
-            trace("\tVersion: %d\n", name[i].dwVersion);
+            trace("\tVersion: %ld\n", name[i].dwVersion);
         }
     }
 
