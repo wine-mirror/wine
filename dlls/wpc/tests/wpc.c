@@ -32,7 +32,7 @@ static void test_wpc(void)
     if(hres == REGDB_E_CLASSNOTREG)
         win_skip("CLSID_WindowsParentalControls not registered\n");
     else
-        ok(hres == S_OK, "Could not create CLSID_WindowsParentalControls instance: %08x\n", hres);
+        ok(hres == S_OK, "Could not create CLSID_WindowsParentalControls instance: %08lx\n", hres);
     if(FAILED(hres))
         return;
 
