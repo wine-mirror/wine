@@ -65,6 +65,7 @@ struct controller
     LONG ref;
 
     IGameControllerProvider *provider;
+    IWineGameControllerProvider *wine_provider;
 };
 
 static inline struct controller *impl_from_IGameControllerImpl( IGameControllerImpl *iface )
@@ -120,6 +121,8 @@ static ULONG WINAPI controller_Release( IGameControllerImpl *iface )
 
     if (!ref)
     {
+        if (impl->wine_provider)
+            IWineGameControllerProvider_Release( impl->wine_provider );
         IGameControllerProvider_Release( impl->provider );
         free( impl );
     }
@@ -156,6 +159,10 @@ static HRESULT WINAPI controller_Initialize( IGameControllerImpl *iface, IGameCo
 
     impl->IGameController_outer = outer;
     IGameControllerProvider_AddRef( (impl->provider = provider) );
+
+    hr = IGameControllerProvider_QueryInterface( provider, &IID_IWineGameControllerProvider,
+                                                 (void **)&impl->wine_provider );
+    if (FAILED(hr)) return hr;
 
     EnterCriticalSection( &controller_cs );
     if (SUCCEEDED(hr = init_controllers()))
@@ -210,14 +217,14 @@ DEFINE_IINSPECTABLE_OUTER( raw_controller, IRawGameController, struct controller
 
 static HRESULT WINAPI raw_controller_get_AxisCount( IRawGameController *iface, INT32 *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct controller *impl = impl_from_IRawGameController( iface );
+    return IWineGameControllerProvider_get_AxisCount( impl->wine_provider, value );
 }
 
 static HRESULT WINAPI raw_controller_get_ButtonCount( IRawGameController *iface, INT32 *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct controller *impl = impl_from_IRawGameController( iface );
+    return IWineGameControllerProvider_get_ButtonCount( impl->wine_provider, value );
 }
 
 static HRESULT WINAPI raw_controller_get_ForceFeedbackMotors( IRawGameController *iface, IVectorView_ForceFeedbackMotor **value )
@@ -228,20 +235,20 @@ static HRESULT WINAPI raw_controller_get_ForceFeedbackMotors( IRawGameController
 
 static HRESULT WINAPI raw_controller_get_HardwareProductId( IRawGameController *iface, UINT16 *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct controller *impl = impl_from_IRawGameController( iface );
+    return IGameControllerProvider_get_HardwareProductId( impl->provider, value );
 }
 
 static HRESULT WINAPI raw_controller_get_HardwareVendorId( IRawGameController *iface, UINT16 *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct controller *impl = impl_from_IRawGameController( iface );
+    return IGameControllerProvider_get_HardwareVendorId( impl->provider, value );
 }
 
 static HRESULT WINAPI raw_controller_get_SwitchCount( IRawGameController *iface, INT32 *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct controller *impl = impl_from_IRawGameController( iface );
+    return IWineGameControllerProvider_get_SwitchCount( impl->wine_provider, value );
 }
 
 static HRESULT WINAPI raw_controller_GetButtonLabel( IRawGameController *iface, INT32 index,

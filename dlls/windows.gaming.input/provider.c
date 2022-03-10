@@ -143,6 +143,45 @@ static HRESULT WINAPI wine_provider_get_Type( IWineGameControllerProvider *iface
     return S_OK;
 }
 
+static HRESULT WINAPI wine_provider_get_AxisCount( IWineGameControllerProvider *iface, INT32 *value )
+{
+    struct provider *impl = impl_from_IWineGameControllerProvider( iface );
+    DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
+    HRESULT hr;
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    if (SUCCEEDED(hr = IDirectInputDevice8_GetCapabilities( impl->dinput_device, &caps )))
+        *value = caps.dwAxes;
+    return hr;
+}
+
+static HRESULT WINAPI wine_provider_get_ButtonCount( IWineGameControllerProvider *iface, INT32 *value )
+{
+    struct provider *impl = impl_from_IWineGameControllerProvider( iface );
+    DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
+    HRESULT hr;
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    if (SUCCEEDED(hr = IDirectInputDevice8_GetCapabilities( impl->dinput_device, &caps )))
+        *value = caps.dwButtons;
+    return hr;
+}
+
+static HRESULT WINAPI wine_provider_get_SwitchCount( IWineGameControllerProvider *iface, INT32 *value )
+{
+    struct provider *impl = impl_from_IWineGameControllerProvider( iface );
+    DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
+    HRESULT hr;
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    if (SUCCEEDED(hr = IDirectInputDevice8_GetCapabilities( impl->dinput_device, &caps )))
+        *value = caps.dwPOVs;
+    return hr;
+}
+
 static const struct IWineGameControllerProviderVtbl wine_provider_vtbl =
 {
     wine_provider_QueryInterface,
@@ -154,6 +193,9 @@ static const struct IWineGameControllerProviderVtbl wine_provider_vtbl =
     wine_provider_GetTrustLevel,
     /* IWineGameControllerProvider methods */
     wine_provider_get_Type,
+    wine_provider_get_AxisCount,
+    wine_provider_get_ButtonCount,
+    wine_provider_get_SwitchCount,
 };
 
 DEFINE_IINSPECTABLE( game_provider, IGameControllerProvider, struct provider, IWineGameControllerProvider_iface )
@@ -166,14 +208,28 @@ static HRESULT WINAPI game_provider_get_FirmwareVersionInfo( IGameControllerProv
 
 static HRESULT WINAPI game_provider_get_HardwareProductId( IGameControllerProvider *iface, UINT16 *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    DIPROPDWORD vid_pid = {.diph = {.dwHeaderSize = sizeof(DIPROPHEADER), .dwSize = sizeof(DIPROPDWORD)}};
+    struct provider *impl = impl_from_IGameControllerProvider( iface );
+    HRESULT hr;
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    if (SUCCEEDED(hr = IDirectInputDevice8_GetProperty( impl->dinput_device, DIPROP_VIDPID, &vid_pid.diph )))
+        *value = HIWORD(vid_pid.dwData);
+    return hr;
 }
 
 static HRESULT WINAPI game_provider_get_HardwareVendorId( IGameControllerProvider *iface, UINT16 *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    DIPROPDWORD vid_pid = {.diph = {.dwHeaderSize = sizeof(DIPROPHEADER), .dwSize = sizeof(DIPROPDWORD)}};
+    struct provider *impl = impl_from_IGameControllerProvider( iface );
+    HRESULT hr;
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    if (SUCCEEDED(hr = IDirectInputDevice8_GetProperty( impl->dinput_device, DIPROP_VIDPID, &vid_pid.diph )))
+        *value = LOWORD(vid_pid.dwData);
+    return hr;
 }
 
 static HRESULT WINAPI game_provider_get_HardwareVersionInfo( IGameControllerProvider *iface, GameControllerVersionInfo *value )
