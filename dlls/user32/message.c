@@ -1878,9 +1878,6 @@ LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     case WM_WINE_SETACTIVEWINDOW:
         if (!wparam && NtUserGetForegroundWindow() == hwnd) return 0;
         return (LRESULT)SetActiveWindow( (HWND)wparam );
-    case WM_WINE_UPDATEWINDOWSTATE:
-        update_window_state( hwnd );
-        return 0;
     default:
         {
             MSG m;

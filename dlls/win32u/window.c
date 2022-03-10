@@ -1643,6 +1643,32 @@ INT WINAPI NtUserInternalGetWindowText( HWND hwnd, WCHAR *text, INT count )
 }
 
 /*******************************************************************
+ *           update_window_state
+ *
+ * Trigger an update of the window's driver state and surface.
+ */
+void update_window_state( HWND hwnd )
+{
+    DPI_AWARENESS_CONTEXT context;
+    RECT window_rect, client_rect, valid_rects[2];
+
+    if (!is_current_thread_window( hwnd ))
+    {
+        post_message( hwnd, WM_WINE_UPDATEWINDOWSTATE, 0, 0 );
+        return;
+    }
+
+    context = set_thread_dpi_awareness_context( get_window_dpi_awareness_context( hwnd ));
+    get_window_rects( hwnd, COORDS_PARENT, &window_rect, &client_rect, get_thread_dpi() );
+    valid_rects[0] = valid_rects[1] = client_rect;
+    if (user_callbacks)
+        user_callbacks->set_window_pos( hwnd, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE |
+                                        SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW,
+                                        &window_rect, &client_rect, valid_rects );
+    set_thread_dpi_awareness_context( context );
+}
+
+/*******************************************************************
  *           NtUserFlashWindowEx (win32u.@)
  */
 BOOL WINAPI NtUserFlashWindowEx( FLASHWINFO *info )

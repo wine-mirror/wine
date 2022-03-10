@@ -56,6 +56,9 @@ LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
             return user_driver->pClipCursor( &rect );
         }
         return user_driver->pClipCursor( NULL );
+    case WM_WINE_UPDATEWINDOWSTATE:
+        update_window_state( hwnd );
+        return 0;
     default:
         if (msg >= WM_WINE_FIRST_DRIVER_MSG && msg <= WM_WINE_LAST_DRIVER_MSG)
             return user_driver->pWindowMessage( hwnd, msg, wparam, lparam );
@@ -117,4 +120,12 @@ LRESULT send_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
     /* FIXME: move implementation from user32 */
     if (!user_callbacks) return 0;
     return user_callbacks->pSendMessageW( hwnd, msg, wparam, lparam );
+}
+
+/* see PostMessageW */
+LRESULT post_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    /* FIXME: move implementation from user32 */
+    if (!user_callbacks) return 0;
+    return user_callbacks->pPostMessageW( hwnd, msg, wparam, lparam );
 }

@@ -308,7 +308,7 @@ static void send_parent_notify( HWND hwnd, UINT msg )
  *
  * Trigger an update of the window's driver state and surface.
  */
-void update_window_state( HWND hwnd )
+static void update_window_state( HWND hwnd )
 {
     DPI_AWARENESS_CONTEXT context;
     RECT window_rect, client_rect, valid_rects[2];

@@ -124,7 +124,6 @@ extern void move_window_bits( HWND hwnd, struct window_surface *old_surface,
                               const RECT *window_rect, const RECT *valid_rects ) DECLSPEC_HIDDEN;
 extern void move_window_bits_parent( HWND hwnd, HWND parent, const RECT *window_rect,
                                      const RECT *valid_rects ) DECLSPEC_HIDDEN;
-extern void update_window_state( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void wait_graphics_driver_ready(void) DECLSPEC_HIDDEN;
 extern void *get_hook_proc( void *proc, const WCHAR *module, HMODULE *free_module ) DECLSPEC_HIDDEN;
 extern RECT get_virtual_screen_rect(void) DECLSPEC_HIDDEN;

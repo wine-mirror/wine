@@ -284,6 +284,7 @@ extern BOOL get_cursor_pos( POINT *pt ) DECLSPEC_HIDDEN;
 extern DWORD get_input_state(void) DECLSPEC_HIDDEN;
 
 /* message.c */
+extern LRESULT post_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam ) DECLSPEC_HIDDEN;
 extern LRESULT send_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam ) DECLSPEC_HIDDEN;
 
 /* sysparams.c */
@@ -301,6 +302,7 @@ extern RECT map_dpi_rect( RECT rect, UINT dpi_from, UINT dpi_to ) DECLSPEC_HIDDE
 extern HMONITOR monitor_from_point( POINT pt, DWORD flags, UINT dpi ) DECLSPEC_HIDDEN;
 extern HMONITOR monitor_from_rect( const RECT *rect, DWORD flags, UINT dpi ) DECLSPEC_HIDDEN;
 extern HMONITOR monitor_from_window( HWND hwnd, DWORD flags, UINT dpi ) DECLSPEC_HIDDEN;
+extern DPI_AWARENESS_CONTEXT set_thread_dpi_awareness_context( DPI_AWARENESS_CONTEXT context ) DECLSPEC_HIDDEN;
 extern void user_lock(void) DECLSPEC_HIDDEN;
 extern void user_unlock(void) DECLSPEC_HIDDEN;
 extern void user_check_not_lock(void) DECLSPEC_HIDDEN;
@@ -316,6 +318,7 @@ extern DWORD get_window_long( HWND hwnd, INT offset ) DECLSPEC_HIDDEN;
 extern BOOL get_window_rect( HWND hwnd, RECT *rect, UINT dpi ) DECLSPEC_HIDDEN;
 extern void register_window_surface( struct window_surface *old,
                                      struct window_surface *new ) DECLSPEC_HIDDEN;
+extern void update_window_state( HWND hwnd ) DECLSPEC_HIDDEN;
 
 /* to release pointers retrieved by win_get_ptr */
 static inline void release_win_ptr( struct tagWND *ptr )

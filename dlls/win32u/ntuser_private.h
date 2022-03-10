@@ -30,6 +30,7 @@ struct dce;
 struct user_callbacks
 {
     HANDLE (WINAPI *pCopyImage)( HANDLE, UINT, INT, INT, UINT );
+    BOOL (WINAPI *pPostMessageW)( HWND, UINT, WPARAM, LPARAM );
     BOOL (WINAPI *pRedrawWindow)( HWND, const RECT*, HRGN, UINT );
     LRESULT (WINAPI *pSendMessageTimeoutW)( HWND, UINT, WPARAM, LPARAM, UINT, UINT, PDWORD_PTR );
     LRESULT (WINAPI *pSendMessageW)( HWND, UINT, WPARAM, LPARAM );
@@ -40,6 +41,9 @@ struct user_callbacks
     void (CDECL *register_builtin_classes)(void);
     LRESULT (WINAPI *send_ll_message)( DWORD, DWORD, UINT, WPARAM, LPARAM, UINT, UINT, PDWORD_PTR );
     void (CDECL *set_user_driver)( void *, UINT );
+    BOOL (CDECL *set_window_pos)( HWND hwnd, HWND insert_after, UINT swp_flags,
+                                  const RECT *window_rect, const RECT *client_rect,
+                                  const RECT *valid_rects );
 };
 
 struct user_object

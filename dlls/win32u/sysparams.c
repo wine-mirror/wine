@@ -1436,6 +1436,48 @@ UINT get_system_dpi(void)
     return system_dpi;
 }
 
+/* see GetAwarenessFromDpiAwarenessContext */
+static DPI_AWARENESS get_awareness_from_dpi_awareness_context( DPI_AWARENESS_CONTEXT context )
+{
+    switch ((ULONG_PTR)context)
+    {
+    case 0x10:
+    case 0x11:
+    case 0x12:
+    case 0x80000010:
+    case 0x80000011:
+    case 0x80000012:
+        return (ULONG_PTR)context & 3;
+    case (ULONG_PTR)DPI_AWARENESS_CONTEXT_UNAWARE:
+    case (ULONG_PTR)DPI_AWARENESS_CONTEXT_SYSTEM_AWARE:
+    case (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE:
+        return ~(ULONG_PTR)context;
+    default:
+        return DPI_AWARENESS_INVALID;
+    }
+}
+
+/* see SetThreadDpiAwarenessContext */
+DPI_AWARENESS_CONTEXT set_thread_dpi_awareness_context( DPI_AWARENESS_CONTEXT context )
+{
+    struct user_thread_info *info = get_user_thread_info();
+    DPI_AWARENESS prev, val = get_awareness_from_dpi_awareness_context( context );
+
+    if (val == DPI_AWARENESS_INVALID)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    if (!(prev = info->dpi_awareness))
+    {
+        prev = NtUserGetProcessDpiAwarenessContext( GetCurrentProcess() ) & 3;
+        prev |= 0x80000010;  /* restore to process default */
+    }
+    if (((ULONG_PTR)context & ~(ULONG_PTR)0x13) == 0x80000000) info->dpi_awareness = 0;
+    else info->dpi_awareness = val | 0x10;
+    return ULongToHandle( prev );
+}
+
 /**********************************************************************
  *              map_dpi_rect
  */

@@ -136,6 +136,7 @@ static void dpiaware_init(void)
 static const struct user_callbacks user_funcs =
 {
     CopyImage,
+    PostMessageW,
     RedrawWindow,
     SendMessageTimeoutW,
     SendMessageW,
@@ -146,6 +147,7 @@ static const struct user_callbacks user_funcs =
     register_builtin_classes,
     MSG_SendInternalMessageTimeout,
     (void *)__wine_set_user_driver,
+    set_window_pos,
 };
 
 static void WINAPI User32CallFreeIcon( ULONG *param, ULONG size )
