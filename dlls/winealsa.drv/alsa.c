@@ -2082,6 +2082,18 @@ static NTSTATUS get_current_padding(void *args)
     return alsa_unlock_result(stream, &params->result, S_OK);
 }
 
+static NTSTATUS get_next_packet_size(void *args)
+{
+    struct get_next_packet_size_params *params = args;
+    struct alsa_stream *stream = params->stream;
+
+    alsa_lock(stream);
+
+    *params->frames = stream->held_frames < stream->mmdev_period_frames ? 0 : stream->mmdev_period_frames;
+
+    return alsa_unlock_result(stream, &params->result, S_OK);
+}
+
 static NTSTATUS set_event_handle(void *args)
 {
     struct set_event_handle_params *params = args;
@@ -2120,5 +2132,6 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     get_buffer_size,
     get_latency,
     get_current_padding,
+    get_next_packet_size,
     set_event_handle,
 };

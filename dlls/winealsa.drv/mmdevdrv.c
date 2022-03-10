@@ -1414,20 +1414,19 @@ static HRESULT WINAPI AudioCaptureClient_GetNextPacketSize(
         IAudioCaptureClient *iface, UINT32 *frames)
 {
     ACImpl *This = impl_from_IAudioCaptureClient(iface);
-    struct alsa_stream *stream = This->stream;
+    struct get_next_packet_size_params params;
 
     TRACE("(%p)->(%p)\n", This, frames);
 
     if(!frames)
         return E_POINTER;
 
-    alsa_lock(stream);
+    params.stream = This->stream;
+    params.frames = frames;
 
-    *frames = stream->held_frames < stream->mmdev_period_frames ? 0 : stream->mmdev_period_frames;
+    ALSA_CALL(get_next_packet_size, &params);
 
-    alsa_unlock(stream);
-
-    return S_OK;
+    return params.result;
 }
 
 static const IAudioCaptureClientVtbl AudioCaptureClient_Vtbl =

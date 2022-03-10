@@ -187,6 +187,13 @@ struct get_current_padding_params
     UINT32 *padding;
 };
 
+struct get_next_packet_size_params
+{
+    struct alsa_stream *stream;
+    HRESULT result;
+    UINT32 *frames;
+};
+
 struct set_event_handle_params
 {
     struct alsa_stream *stream;
@@ -212,6 +219,7 @@ enum alsa_funcs
     alsa_get_buffer_size,
     alsa_get_latency,
     alsa_get_current_padding,
+    alsa_get_next_packet_size,
     alsa_set_event_handle,
 };
 
