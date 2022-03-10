@@ -18,42 +18,7 @@
 
 #include "audioclient.h"
 
-struct alsa_stream
-{
-    snd_pcm_t *pcm_handle;
-    snd_pcm_uframes_t alsa_bufsize_frames, alsa_period_frames, safe_rewind_frames;
-    snd_pcm_hw_params_t *hw_params; /* does not hold state between calls */
-    snd_pcm_format_t alsa_format;
-
-    LARGE_INTEGER last_period_time;
-
-    WAVEFORMATEX *fmt;
-    DWORD flags;
-    AUDCLNT_SHAREMODE share;
-    EDataFlow flow;
-    HANDLE event;
-
-    BOOL need_remapping;
-    int alsa_channels;
-    int alsa_channel_map[32];
-
-    BOOL started, please_quit;
-    REFERENCE_TIME mmdev_period_rt;
-    UINT64 written_frames, last_pos_frames;
-    UINT32 bufsize_frames, held_frames, tmp_buffer_frames, mmdev_period_frames;
-    snd_pcm_uframes_t remapping_buf_frames;
-    UINT32 lcl_offs_frames; /* offs into local_buffer where valid data starts */
-    UINT32 wri_offs_frames; /* where to write fresh data in local_buffer */
-    UINT32 hidden_frames;   /* ALSA reserve to ensure continuous rendering */
-    UINT32 vol_adjusted_frames; /* Frames we've already adjusted the volume of but didn't write yet */
-    UINT32 data_in_alsa_frames;
-
-    BYTE *local_buffer, *tmp_buffer, *remapping_buf, *silence_buf;
-    LONG32 getbuf_last; /* <0 when using tmp_buffer */
-    float *vols;
-
-    pthread_mutex_t lock;
-};
+struct alsa_stream;
 
 struct endpoint
 {
@@ -209,6 +174,14 @@ struct get_position_params
     UINT64 *qpctime;
 };
 
+struct set_volumes_params
+{
+    struct alsa_stream *stream;
+    float master_volume;
+    const float *volumes;
+    const float *session_volumes;
+};
+
 struct set_event_handle_params
 {
     struct alsa_stream *stream;
@@ -243,6 +216,7 @@ enum alsa_funcs
     alsa_get_next_packet_size,
     alsa_get_frequency,
     alsa_get_position,
+    alsa_set_volumes,
     alsa_set_event_handle,
     alsa_is_started,
 };

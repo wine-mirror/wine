@@ -334,12 +334,14 @@ static void get_device_guid(EDataFlow flow, const char *device, GUID *guid)
 
 static void set_stream_volumes(ACImpl *This)
 {
-    struct alsa_stream *stream = This->stream;
-    unsigned int i;
+    struct set_volumes_params params;
 
-    for(i = 0; i < stream->fmt->nChannels; i++)
-        stream->vols[i] = This->session->mute ? 0.0f :
-            This->vols[i] * This->session->channel_vols[i] * This->session->master_vol;
+    params.stream = This->stream;
+    params.master_volume = (This->session->mute ? 0.0f : This->session->master_vol);
+    params.volumes = This->vols;
+    params.session_volumes = This->session->channel_vols;
+
+    ALSA_CALL(set_volumes, &params);
 }
 
 HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids_out, GUID **guids_out,
