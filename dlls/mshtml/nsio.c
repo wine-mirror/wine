@@ -1501,10 +1501,16 @@ static nsresult NSAPI nsChannel_IsNoStoreResponse(nsIHttpChannel *iface, cpp_boo
 static nsresult NSAPI nsChannel_IsNoCacheResponse(nsIHttpChannel *iface, cpp_bool *_retval)
 {
     nsChannel *This = impl_from_nsIHttpChannel(iface);
+    http_header_t *header;
 
-    FIXME("(%p)->(%p)\n", This, _retval);
+    static const WCHAR cache_controlW[] = {'C','a','c','h','e','-','C','o','n','t','r','o','l'};
 
-    return NS_ERROR_NOT_IMPLEMENTED;
+    TRACE("(%p)->(%p)\n", This, _retval);
+
+    header = find_http_header(&This->response_headers, cache_controlW, ARRAY_SIZE(cache_controlW));
+    *_retval = header && !wcsicmp(header->data, L"no-cache");
+    /* FIXME: Gecko also checks if max-age is in the past */
+    return NS_OK;
 }
 
 static nsresult NSAPI nsChannel_IsPrivateResponse(nsIHttpChannel *iface, cpp_bool *_retval)
