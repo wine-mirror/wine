@@ -36,6 +36,8 @@
 #define WIDL_using_Windows_Gaming_Input_Custom
 #include "windows.gaming.input.custom.h"
 
+#include "wine/list.h"
+
 extern HINSTANCE windows_gaming_input;
 extern ICustomGameControllerFactory *controller_factory;
 extern ICustomGameControllerFactory *gamepad_factory;
@@ -55,6 +57,10 @@ extern void provider_remove( const WCHAR *device_path );
 
 extern void manager_on_provider_created( IGameControllerProvider *provider );
 extern void manager_on_provider_removed( IGameControllerProvider *provider );
+
+extern HRESULT event_handlers_append( struct list *list, IEventHandler_IInspectable *handler, EventRegistrationToken *token );
+extern HRESULT event_handlers_remove( struct list *list, EventRegistrationToken *token );
+extern void event_handlers_notify( struct list *list, IInspectable *element );
 
 #define DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from, iface_mem, expr )             \
     static inline impl_type *impl_from( iface_type *iface )                                        \

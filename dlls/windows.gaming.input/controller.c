@@ -34,6 +34,8 @@ static CRITICAL_SECTION_DEBUG controller_cs_debug =
 static CRITICAL_SECTION controller_cs = { &controller_cs_debug, -1, 0, 0, 0, 0 };
 
 static IVector_RawGameController *controllers;
+static struct list controller_added_handlers = LIST_INIT( controller_added_handlers );
+static struct list controller_removed_handlers = LIST_INIT( controller_removed_handlers );
 
 static HRESULT init_controllers(void)
 {
@@ -385,34 +387,34 @@ static const struct IActivationFactoryVtbl factory_vtbl =
 
 DEFINE_IINSPECTABLE( statics, IRawGameControllerStatics, struct controller_statics, IActivationFactory_iface )
 
-static HRESULT WINAPI statics_add_RawGameControllerAdded( IRawGameControllerStatics *iface, IEventHandler_RawGameController *value,
+static HRESULT WINAPI statics_add_RawGameControllerAdded( IRawGameControllerStatics *iface,
+                                                          IEventHandler_RawGameController *handler,
                                                           EventRegistrationToken *token )
 {
-    FIXME( "iface %p, value %p, token %p stub!\n", iface, value, token );
-    if (!value) return E_INVALIDARG;
-    token->value = 0;
-    return S_OK;
+    TRACE( "iface %p, handler %p, token %p.\n", iface, handler, token );
+    if (!handler) return E_INVALIDARG;
+    return event_handlers_append( &controller_added_handlers, (IEventHandler_IInspectable *)handler, token );
 }
 
 static HRESULT WINAPI statics_remove_RawGameControllerAdded( IRawGameControllerStatics *iface, EventRegistrationToken token )
 {
-    FIXME( "iface %p, token %#I64x stub!\n", iface, token.value );
-    return S_OK;
+    TRACE( "iface %p, token %#I64x.\n", iface, token.value );
+    return event_handlers_remove( &controller_added_handlers, &token );
 }
 
-static HRESULT WINAPI statics_add_RawGameControllerRemoved( IRawGameControllerStatics *iface, IEventHandler_RawGameController *value,
+static HRESULT WINAPI statics_add_RawGameControllerRemoved( IRawGameControllerStatics *iface,
+                                                            IEventHandler_RawGameController *handler,
                                                             EventRegistrationToken *token )
 {
-    FIXME( "iface %p, value %p, token %p stub!\n", iface, value, token );
-    if (!value) return E_INVALIDARG;
-    token->value = 0;
-    return S_OK;
+    TRACE( "iface %p, handler %p, token %p.\n", iface, handler, token );
+    if (!handler) return E_INVALIDARG;
+    return event_handlers_append( &controller_removed_handlers, (IEventHandler_IInspectable *)handler, token );
 }
 
 static HRESULT WINAPI statics_remove_RawGameControllerRemoved( IRawGameControllerStatics *iface, EventRegistrationToken token )
 {
-    FIXME( "iface %p, token %#I64x stub!\n", iface, token.value );
-    return S_OK;
+    TRACE( "iface %p, token %#I64x.\n", iface, token.value );
+    return event_handlers_remove( &controller_removed_handlers, &token );
 }
 
 static HRESULT WINAPI statics_get_RawGameControllers( IRawGameControllerStatics *iface, IVectorView_RawGameController **value )
@@ -489,8 +491,17 @@ static HRESULT WINAPI controller_factory_CreateGameController( ICustomGameContro
 
 static HRESULT WINAPI controller_factory_OnGameControllerAdded( ICustomGameControllerFactory *iface, IGameController *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    IRawGameController *controller;
+    HRESULT hr;
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    if (FAILED(hr = IGameController_QueryInterface( value, &IID_IRawGameController, (void **)&controller )))
+        return hr;
+    event_handlers_notify( &controller_added_handlers, (IInspectable *)controller );
+    IRawGameController_Release( controller );
+
+    return S_OK;
 }
 
 static HRESULT WINAPI controller_factory_OnGameControllerRemoved( ICustomGameControllerFactory *iface, IGameController *value )
@@ -518,7 +529,10 @@ static HRESULT WINAPI controller_factory_OnGameControllerRemoved( ICustomGameCon
     if (FAILED(hr))
         WARN( "Failed to remove controller %p, hr %#lx!\n", controller, hr );
     else if (found)
+    {
         TRACE( "Removed controller %p.\n", controller );
+        event_handlers_notify( &controller_removed_handlers, (IInspectable *)controller );
+    }
     IRawGameController_Release( controller );
 
     return S_OK;

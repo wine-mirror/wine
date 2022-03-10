@@ -927,6 +927,7 @@ static LRESULT CALLBACK windows_gaming_input_wndproc( HWND hwnd, UINT msg, WPARA
         else
         {
             ok( wparam == DBT_DEVICEARRIVAL, "got wparam %#Ix\n", wparam );
+            todo_wine /* Wine currently listens to WINEXINPUT device arrival, which is received earlier than HID */
             ok( !controller_added.invoked, "controller added handler not invoked\n" );
             ok( !controller_removed.invoked, "controller removed handler invoked\n" );
         }
@@ -967,6 +968,7 @@ static void test_windows_gaming_input(void)
     HSTRING str;
     UINT32 size;
     HRESULT hr;
+    DWORD ret;
     MSG msg;
 
     if (!load_combase_functions()) return;
@@ -1007,9 +1009,7 @@ static void test_windows_gaming_input(void)
     hr = IRawGameControllerStatics_add_RawGameControllerAdded( statics, &controller_added.IEventHandler_RawGameController_iface,
                                                                &controller_added_token );
     ok( hr == S_OK, "add_RawGameControllerAdded returned %#lx\n", hr );
-    todo_wine
     ok( controller_added_token.value, "got token %I64u\n", controller_added_token.value );
-    if (!controller_added_token.value) return;
 
     hr = IRawGameControllerStatics_add_RawGameControllerRemoved( statics, &controller_removed.IEventHandler_RawGameController_iface,
                                                                  &controller_removed_token );
@@ -1038,6 +1038,7 @@ static void test_windows_gaming_input(void)
 
     ok( controller_added.invoked, "controller added handler not invoked\n" );
     ok( !controller_removed.invoked, "controller removed handler invoked\n" );
+    todo_wine
     ok( custom_factory.create_controller_called, "CreateGameController not called\n" );
 
     hr = IVectorView_RawGameController_get_Size( controller_view, &size );
@@ -1058,6 +1059,7 @@ static void test_windows_gaming_input(void)
 
     hr = IGameControllerFactoryManagerStatics2_TryGetFactoryControllerFromGameController( manager_statics2,
             &custom_factory.ICustomGameControllerFactory_iface, game_controller, &tmp_game_controller );
+    todo_wine
     ok( hr == S_OK, "TryGetFactoryControllerFromGameController returned %#lx\n", hr );
     ok( !tmp_game_controller, "got controller %p\n", tmp_game_controller );
 
@@ -1111,7 +1113,9 @@ static void test_windows_gaming_input(void)
     thread = CreateThread( NULL, 0, dinput_test_device_thread, stop_event, 0, NULL );
     ok( !!thread, "CreateThread failed, error %lu\n", GetLastError() );
     wait_for_events( 1, &controller_added.event, INFINITE );
-    wait_for_events( 1, &custom_factory.added_event, INFINITE );
+    ret = wait_for_events( 1, &custom_factory.added_event, 500 );
+    todo_wine
+    ok( !ret, "wait_for_events returned %#lx\n", ret );
     hr = IRawGameControllerStatics_get_RawGameControllers( statics, &controller_view );
     ok( hr == S_OK, "get_RawGameControllers returned %#lx\n", hr );
     hr = IVectorView_RawGameController_GetAt( controller_view, 0, &raw_controller );
@@ -1122,8 +1126,10 @@ static void test_windows_gaming_input(void)
 
     hr = IGameControllerFactoryManagerStatics2_TryGetFactoryControllerFromGameController( manager_statics2,
             &custom_factory.ICustomGameControllerFactory_iface, game_controller, &tmp_game_controller );
+    todo_wine
     ok( hr == S_OK, "TryGetFactoryControllerFromGameController returned %#lx\n", hr );
     ok( tmp_game_controller == custom_controller.IGameController_outer, "got controller %p\n", tmp_game_controller );
+    if (hr != S_OK) goto next;
     hr = IGameController_QueryInterface( tmp_game_controller, &IID_IInspectable, (void **)&tmp_inspectable );
     ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
     ok( tmp_inspectable == (void *)tmp_game_controller, "got inspectable %p\n", tmp_inspectable );
@@ -1145,15 +1151,20 @@ static void test_windows_gaming_input(void)
 
     IGameController_Release( tmp_game_controller );
 
+next:
     hr = IRawGameControllerStatics_FromGameController( statics, custom_controller.IGameController_outer, &tmp_raw_controller );
+    todo_wine
     ok( hr == S_OK, "FromGameController returned %#lx\n", hr );
+    todo_wine
     ok( tmp_raw_controller == raw_controller, "got controller %p\n", tmp_raw_controller );
-    IRawGameController_Release( tmp_raw_controller );
+    if (hr == S_OK) IRawGameController_Release( tmp_raw_controller );
 
     IGameController_Release( game_controller );
     IRawGameController_Release( raw_controller );
     SetEvent( stop_event );
-    wait_for_events( 1, &custom_factory.removed_event, INFINITE );
+    ret = wait_for_events( 1, &custom_factory.removed_event, 500 );
+    todo_wine
+    ok( !ret, "wait_for_events returned %#lx\n", ret );
     wait_for_events( 1, &controller_removed.event, INFINITE );
 
     hr = IRawGameControllerStatics_remove_RawGameControllerAdded( statics, controller_added_token );
