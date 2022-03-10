@@ -21,7 +21,6 @@
 #include "wine/vulkan_driver.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
-WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 
 static const struct wined3d_state_entry_template misc_state_template_vk[] =
 {
@@ -1287,9 +1286,6 @@ static bool adapter_vk_alloc_bo(struct wined3d_device *device, struct wined3d_re
 
     if (!bo_vk->b.map_ptr)
     {
-        WARN_(d3d_perf)("BO %p (chunk %p, slab %p) is not mapped.\n",
-                bo_vk, bo_vk->memory ? bo_vk->memory->chunk : NULL, bo_vk->slab);
-
         if (!wined3d_bo_vk_map(bo_vk, context_vk))
             ERR("Failed to map bo.\n");
     }
