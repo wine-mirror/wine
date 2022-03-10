@@ -97,50 +97,9 @@ BOOL WINAPI GetWindowRect( HWND hwnd, LPRECT rect )
 /***********************************************************************
  *		GetWindowRgn (USER32.@)
  */
-int WINAPI GetWindowRgn ( HWND hwnd, HRGN hrgn )
+int WINAPI GetWindowRgn( HWND hwnd, HRGN hrgn )
 {
-    int nRet = ERROR;
-    NTSTATUS status;
-    HRGN win_rgn = 0;
-    RGNDATA *data;
-    size_t size = 256;
-
-    do
-    {
-        if (!(data = HeapAlloc( GetProcessHeap(), 0, sizeof(*data) + size - 1 )))
-        {
-            SetLastError( ERROR_OUTOFMEMORY );
-            return ERROR;
-        }
-        SERVER_START_REQ( get_window_region )
-        {
-            req->window = wine_server_user_handle( hwnd );
-            wine_server_set_reply( req, data->Buffer, size );
-            if (!(status = wine_server_call( req )))
-            {
-                size_t reply_size = wine_server_reply_size( reply );
-                if (reply_size)
-                {
-                    data->rdh.dwSize   = sizeof(data->rdh);
-                    data->rdh.iType    = RDH_RECTANGLES;
-                    data->rdh.nCount   = reply_size / sizeof(RECT);
-                    data->rdh.nRgnSize = reply_size;
-                    win_rgn = ExtCreateRegion( NULL, data->rdh.dwSize + data->rdh.nRgnSize, data );
-                }
-            }
-            else size = reply->total_size;
-        }
-        SERVER_END_REQ;
-        HeapFree( GetProcessHeap(), 0, data );
-    } while (status == STATUS_BUFFER_OVERFLOW);
-
-    if (status) SetLastError( RtlNtStatusToDosError(status) );
-    else if (win_rgn)
-    {
-        nRet = CombineRgn( hrgn, win_rgn, 0, RGN_COPY );
-        DeleteObject( win_rgn );
-    }
-    return nRet;
+    return NtUserGetWindowRgnEx( hwnd, hrgn, 0 );
 }
 
 /***********************************************************************

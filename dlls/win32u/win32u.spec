@@ -1016,7 +1016,7 @@
 @ stub NtUserGetWindowMinimizeRect
 @ stub NtUserGetWindowPlacement
 @ stub NtUserGetWindowProcessHandle
-@ stub NtUserGetWindowRgnEx
+@ stdcall -syscall NtUserGetWindowRgnEx(long long long)
 @ stub NtUserGhostWindowFromHungWindow
 @ stub NtUserHandleDelegatedInput
 @ stub NtUserHardErrorControl

@@ -333,6 +333,7 @@ DWORD   WINAPI NtUserGetQueueStatus( UINT flags );
 ULONG   WINAPI NtUserGetSystemDpiForProcess( HANDLE process );
 HDESK   WINAPI NtUserGetThreadDesktop( DWORD thread );
 BOOL    WINAPI NtUserGetUpdatedClipboardFormats( UINT *formats, UINT size, UINT *out_size );
+int     WINAPI NtUserGetWindowRgnEx( HWND hwnd, HRGN hrgn, UINT unk );
 NTSTATUS WINAPI NtUserInitializeClientPfnArrays( const struct user_client_procs *client_procsA,
                                                  const struct user_client_procs *client_procsW,
                                                  const void *client_workers, HINSTANCE user_module );
