@@ -25,6 +25,285 @@ WINE_DEFAULT_DEBUG_CHANNEL(speech);
 
 /*
  *
+ * SpeechRecognizer
+ *
+ */
+
+struct recognizer
+{
+    ISpeechRecognizer ISpeechRecognizer_iface;
+    IClosable IClosable_iface;
+    ISpeechRecognizer2 ISpeechRecognizer2_iface;
+    LONG ref;
+};
+
+/*
+ *
+ * ISpeechRecognizer
+ *
+ */
+
+static inline struct recognizer *impl_from_ISpeechRecognizer( ISpeechRecognizer *iface )
+{
+    return CONTAINING_RECORD(iface, struct recognizer, ISpeechRecognizer_iface);
+}
+
+static HRESULT WINAPI recognizer_QueryInterface( ISpeechRecognizer *iface, REFIID iid, void **out )
+{
+    struct recognizer *impl = impl_from_ISpeechRecognizer(iface);
+
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) ||
+        IsEqualGUID(iid, &IID_IInspectable) ||
+        IsEqualGUID(iid, &IID_ISpeechRecognizer))
+    {
+        IInspectable_AddRef((*out = &impl->ISpeechRecognizer_iface));
+        return S_OK;
+    }
+
+    if(IsEqualGUID(iid, &IID_IClosable))
+    {
+        IInspectable_AddRef((*out = &impl->IClosable_iface));
+        return S_OK;
+    }
+
+    if(IsEqualGUID(iid, &IID_ISpeechRecognizer2))
+    {
+        IInspectable_AddRef((*out = &impl->ISpeechRecognizer2_iface));
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI recognizer_AddRef( ISpeechRecognizer *iface )
+{
+    struct recognizer *impl = impl_from_ISpeechRecognizer(iface);
+    ULONG ref = InterlockedIncrement(&impl->ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
+    return ref;
+}
+
+static ULONG WINAPI recognizer_Release( ISpeechRecognizer *iface )
+{
+    struct recognizer *impl = impl_from_ISpeechRecognizer(iface);
+
+    ULONG ref = InterlockedDecrement(&impl->ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
+
+    if(!ref)
+        free(impl);
+
+    return ref;
+}
+
+static HRESULT WINAPI recognizer_GetIids( ISpeechRecognizer *iface, ULONG *iid_count, IID **iids )
+{
+    FIXME("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI recognizer_GetRuntimeClassName( ISpeechRecognizer *iface, HSTRING *class_name )
+{
+    FIXME("iface %p, class_name %p stub!\n", iface, class_name);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI recognizer_GetTrustLevel( ISpeechRecognizer *iface, TrustLevel *trust_level )
+{
+    FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI recognizer_get_Constraints( ISpeechRecognizer *iface, IVector_ISpeechRecognitionConstraint **vector )
+{
+    FIXME("iface %p, operation %p stub!\n", iface, vector);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI recognizer_get_CurrentLanguage( ISpeechRecognizer *iface, ILanguage **language )
+{
+    FIXME("iface %p, operation %p stub!\n", iface, language);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI recognizer_get_Timeouts( ISpeechRecognizer *iface, ISpeechRecognizerTimeouts **timeouts )
+{
+    FIXME("iface %p, operation %p stub!\n", iface, timeouts);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI recognizer_get_UIOptions( ISpeechRecognizer *iface, ISpeechRecognizerUIOptions **options )
+{
+    FIXME("iface %p, operation %p stub!\n", iface, options);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI recognizer_CompileConstraintsAsync( ISpeechRecognizer *iface,
+                                                          IAsyncOperation_SpeechRecognitionCompilationResult **operation )
+{
+    FIXME("iface %p, operation %p stub!\n", iface, operation);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI recognizer_RecognizeAsync( ISpeechRecognizer *iface,
+                                                 IAsyncOperation_SpeechRecognitionResult **operation )
+{
+    FIXME("iface %p, operation %p stub!\n", iface, operation);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI recognizer_RecognizeWithUIAsync( ISpeechRecognizer *iface,
+                                                       IAsyncOperation_SpeechRecognitionResult **operation )
+{
+    FIXME("iface %p, operation %p stub!\n", iface, operation);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI recognizer_add_RecognitionQualityDegrading( ISpeechRecognizer *iface,
+                                                                  ITypedEventHandler_SpeechRecognizer_SpeechRecognitionQualityDegradingEventArgs *handler,
+                                                                  EventRegistrationToken *token )
+{
+    FIXME("iface %p, operation %p, token %p, stub!\n", iface, handler, token);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI recognizer_remove_RecognitionQualityDegrading( ISpeechRecognizer *iface, EventRegistrationToken token )
+{
+    FIXME("iface %p, token.value %#I64x, stub!\n", iface, token.value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI recognizer_add_StateChanged( ISpeechRecognizer *iface,
+                                                   ITypedEventHandler_SpeechRecognizer_SpeechRecognizerStateChangedEventArgs *handler,
+                                                   EventRegistrationToken *token )
+{
+    FIXME("iface %p, operation %p, token %p, stub!\n", iface, handler, token);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI recognizer_remove_StateChanged( ISpeechRecognizer *iface, EventRegistrationToken token )
+{
+    FIXME("iface %p, token.value %#I64x, stub!\n", iface, token.value);
+    return E_NOTIMPL;
+}
+
+static const struct ISpeechRecognizerVtbl speech_recognizer_vtbl =
+{
+    /* IUnknown methods */
+    recognizer_QueryInterface,
+    recognizer_AddRef,
+    recognizer_Release,
+    /* IInspectable methods */
+    recognizer_GetIids,
+    recognizer_GetRuntimeClassName,
+    recognizer_GetTrustLevel,
+    /* ISpeechRecognizer methods */
+    recognizer_get_CurrentLanguage,
+    recognizer_get_Constraints,
+    recognizer_get_Timeouts,
+    recognizer_get_UIOptions,
+    recognizer_CompileConstraintsAsync,
+    recognizer_RecognizeAsync,
+    recognizer_RecognizeWithUIAsync,
+    recognizer_add_RecognitionQualityDegrading,
+    recognizer_remove_RecognitionQualityDegrading,
+    recognizer_add_StateChanged,
+    recognizer_remove_StateChanged,
+};
+
+/*
+ *
+ * IClosable
+ *
+ */
+
+DEFINE_IINSPECTABLE(closable, IClosable, struct recognizer, ISpeechRecognizer_iface)
+
+static HRESULT WINAPI closable_Close( IClosable *iface )
+{
+    FIXME("iface %p stub.\n", iface);
+    return E_NOTIMPL;
+}
+
+static const struct IClosableVtbl closable_vtbl =
+{
+    /* IUnknown methods */
+    closable_QueryInterface,
+    closable_AddRef,
+    closable_Release,
+    /* IInspectable methods */
+    closable_GetIids,
+    closable_GetRuntimeClassName,
+    closable_GetTrustLevel,
+    /* IClosable methods */
+    closable_Close,
+};
+
+/*
+ *
+ * ISpeechRecognizer2
+ *
+ */
+
+DEFINE_IINSPECTABLE(recognizer2, ISpeechRecognizer2, struct recognizer, ISpeechRecognizer_iface)
+
+static HRESULT WINAPI recognizer2_get_ContinuousRecognitionSession( ISpeechRecognizer2 *iface,
+                                                                    ISpeechContinuousRecognitionSession **session )
+{
+    FIXME("iface %p, session %p stub!\n", iface, session);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI recognizer2_get_State( ISpeechRecognizer2 *iface, SpeechRecognizerState *state )
+{
+    FIXME("iface %p, state %p stub!\n", iface, state);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI recognizer2_StopRecognitionAsync( ISpeechRecognizer2 *iface, IAsyncAction **action )
+{
+    FIXME("iface %p, action %p stub!\n", iface, action);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI recognizer2_add_HypothesisGenerated( ISpeechRecognizer2 *iface,
+                                                           ITypedEventHandler_SpeechRecognizer_SpeechRecognitionHypothesisGeneratedEventArgs *handler,
+                                                           EventRegistrationToken *token )
+{
+    FIXME("iface %p, operation %p, token %p, stub!\n", iface, handler, token);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI recognizer2_remove_HypothesisGenerated( ISpeechRecognizer2 *iface, EventRegistrationToken token )
+{
+    FIXME("iface %p, token.value %#I64x, stub!\n", iface, token.value);
+    return E_NOTIMPL;
+}
+
+static const struct ISpeechRecognizer2Vtbl speech_recognizer2_vtbl =
+{
+    /* IUnknown methods */
+    recognizer2_QueryInterface,
+    recognizer2_AddRef,
+    recognizer2_Release,
+    /* IInspectable methods */
+    recognizer2_GetIids,
+    recognizer2_GetRuntimeClassName,
+    recognizer2_GetTrustLevel,
+    /* ISpeechRecognizer2 methods */
+    recognizer2_get_ContinuousRecognitionSession,
+    recognizer2_get_State,
+    recognizer2_StopRecognitionAsync,
+    recognizer2_add_HypothesisGenerated,
+    recognizer2_remove_HypothesisGenerated,
+};
+
+/*
+ *
  * Statics for SpeechRecognizer
  *
  */
@@ -123,8 +402,9 @@ static HRESULT WINAPI activation_factory_GetTrustLevel( IActivationFactory *ifac
 
 static HRESULT WINAPI activation_factory_ActivateInstance( IActivationFactory *iface, IInspectable **instance )
 {
+    struct recognizer_statics *impl = impl_from_IActivationFactory(iface);
     TRACE("iface %p, instance %p\n", iface, instance);
-    return E_NOTIMPL;
+    return ISpeechRecognizerFactory_Create(&impl->ISpeechRecognizerFactory_iface, NULL, (ISpeechRecognizer **)instance);
 }
 
 static const struct IActivationFactoryVtbl activation_factory_vtbl =
@@ -151,8 +431,28 @@ DEFINE_IINSPECTABLE(recognizer_factory, ISpeechRecognizerFactory, struct recogni
 
 static HRESULT WINAPI recognizer_factory_Create( ISpeechRecognizerFactory *iface, ILanguage *language, ISpeechRecognizer **speechrecognizer )
 {
+    struct recognizer *impl;
+
     TRACE("iface %p, language %p, speechrecognizer %p.\n", iface, language, speechrecognizer);
-    return E_NOTIMPL;
+
+    if (!(impl = calloc(1, sizeof(*impl))))
+    {
+        *speechrecognizer = NULL;
+        return E_OUTOFMEMORY;
+    }
+
+    if(language)
+        FIXME("ILanguage parameter unused. Stub!\n");
+
+    impl->ISpeechRecognizer_iface.lpVtbl = &speech_recognizer_vtbl;
+    impl->IClosable_iface.lpVtbl = &closable_vtbl;
+    impl->ISpeechRecognizer2_iface.lpVtbl = &speech_recognizer2_vtbl;
+    impl->ref = 1;
+
+    TRACE("created SpeechRecognizer %p\n", impl);
+
+    *speechrecognizer = &impl->ISpeechRecognizer_iface;
+    return S_OK;
 }
 
 static const struct ISpeechRecognizerFactoryVtbl speech_recognizer_factory_vtbl =
