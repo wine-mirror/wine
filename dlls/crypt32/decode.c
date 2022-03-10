@@ -6147,6 +6147,96 @@ static BOOL WINAPI CRYPT_AsnDecodeEccSignature(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL CRYPT_AsnDecodeOCSPResponseStatus(const BYTE *pbEncoded,
+ DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
+ DWORD *pcbDecoded)
+{
+    if (!cbEncoded)
+    {
+        SetLastError(CRYPT_E_ASN1_EOD);
+        return FALSE;
+    }
+    if (pbEncoded[0] != ASN_ENUMERATED)
+    {
+        SetLastError(CRYPT_E_ASN1_BADTAG);
+        return FALSE;
+    }
+
+    return CRYPT_AsnDecodeIntInternal(pbEncoded, cbEncoded, dwFlags, pvStructInfo,
+     pcbStructInfo, pcbDecoded);
+}
+
+static BOOL CRYPT_AsnDecodeOCSPResponseBytes(const BYTE *pbEncoded,
+ DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
+ DWORD *pcbDecoded)
+{
+    DWORD dataLen;
+    BOOL ret;
+
+    if (!cbEncoded)
+    {
+        SetLastError(CRYPT_E_ASN1_EOD);
+        return FALSE;
+    }
+    if (pbEncoded[0] != (ASN_CONTEXT | ASN_CONSTRUCTOR))
+    {
+        SetLastError(CRYPT_E_ASN1_BADTAG);
+        return FALSE;
+    }
+
+    if ((ret = CRYPT_GetLen(pbEncoded, cbEncoded, &dataLen)))
+    {
+        struct AsnDecodeSequenceItem items[] = {
+         { ASN_OBJECTIDENTIFIER, 0,
+           CRYPT_AsnDecodeOidIgnoreTag, sizeof(LPSTR), FALSE, TRUE,
+           0, 0 },
+         { ASN_OCTETSTRING, sizeof(LPSTR),
+           CRYPT_AsnDecodeOctets, sizeof(CRYPT_OBJID_BLOB), FALSE, TRUE,
+           sizeof(LPSTR) + offsetof(CRYPT_OBJID_BLOB, pbData), 0 },
+         };
+         BYTE lenBytes = GET_LEN_BYTES(pbEncoded[1]);
+         DWORD bytesNeeded;
+
+         if (dataLen)
+         {
+            ret = CRYPT_AsnDecodeSequence(items, ARRAY_SIZE(items),
+             pbEncoded + 1 + lenBytes, cbEncoded - 1 - lenBytes, dwFlags, NULL,
+             pvStructInfo, pcbStructInfo, &bytesNeeded, NULL);
+            if (ret) *pcbDecoded = bytesNeeded + lenBytes + 1;
+         }
+    }
+    return ret;
+}
+
+static BOOL WINAPI CRYPT_AsnDecodeOCSPResponse(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
+ CRYPT_DECODE_PARA *pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
+{
+    BOOL ret;
+    struct AsnDecodeSequenceItem items[] = {
+     { ASN_ENUMERATED, offsetof(OCSP_RESPONSE_INFO, dwStatus),
+       CRYPT_AsnDecodeOCSPResponseStatus, sizeof(DWORD), FALSE, FALSE,
+       0, 0 },
+     { ASN_CONTEXT | ASN_CONSTRUCTOR, offsetof(OCSP_RESPONSE_INFO, pszObjId),
+       CRYPT_AsnDecodeOCSPResponseBytes, sizeof(LPSTR) + sizeof(CRYPT_OBJID_BLOB), TRUE, TRUE,
+       offsetof(OCSP_RESPONSE_INFO, pszObjId), 0 },
+    };
+
+    __TRY
+    {
+        ret = CRYPT_AsnDecodeSequence(items, ARRAY_SIZE(items),
+         pbEncoded, cbEncoded, dwFlags, pDecodePara, pvStructInfo,
+         pcbStructInfo, NULL, NULL);
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+        ret = FALSE;
+    }
+    __ENDTRY
+    return ret;
+}
+
 static CryptDecodeObjectExFunc CRYPT_GetBuiltinDecoder(DWORD dwCertEncodingType,
  LPCSTR lpszStructType)
 {
@@ -6294,6 +6384,9 @@ static CryptDecodeObjectExFunc CRYPT_GetBuiltinDecoder(DWORD dwCertEncodingType,
             break;
         case LOWORD(CNG_RSA_PUBLIC_KEY_BLOB):
             decodeFunc = CRYPT_AsnDecodeRsaPubKey_Bcrypt;
+            break;
+        case LOWORD(OCSP_RESPONSE):
+            decodeFunc = CRYPT_AsnDecodeOCSPResponse;
             break;
         default:
             FIXME("Unimplemented decoder for lpszStructType OID %d\n", LOWORD(lpszStructType));
