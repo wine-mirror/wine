@@ -16,6 +16,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include <limits.h>
 #include <stdarg.h>
@@ -78,7 +79,7 @@ static void test_setitemheight(DWORD style)
     HFONT hFont;
     RECT r;
 
-    trace("Style %x\n", style);
+    trace("Style %lx\n", style);
     GetClientRect(hCombo, &r);
     expect_rect(r, 0, 0, 100, get_font_height(GetStockObject(SYSTEM_FONT)) + 8);
     SendMessageA(hCombo, CB_GETDROPPEDCONTROLRECT, 0, (LPARAM)&r);
@@ -124,7 +125,7 @@ static void test_setfont(DWORD style)
         return;
     }
 
-    trace("Style %x\n", style);
+    trace("Style %lx\n", style);
 
     hCombo = build_combo(style);
     hFont1 = CreateFontA(10, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, SYMBOL_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH|FF_DONTCARE, "Marlett");
@@ -334,7 +335,7 @@ static void test_WM_LBUTTONDOWN(void)
     cbInfo.cbSize = sizeof(COMBOBOXINFO);
     SetLastError(0xdeadbeef);
     ret = GetComboBoxInfo(hCombo, &cbInfo);
-    ok(ret, "Failed to get combobox info structure. LastError=%d\n",
+    ok(ret, "Failed to get combobox info structure. LastError=%ld\n",
        GetLastError());
     hEdit = cbInfo.hwndItem;
     hList = cbInfo.hwndList;
@@ -346,7 +347,7 @@ static void test_WM_LBUTTONDOWN(void)
     x = cbInfo.rcButton.left + (cbInfo.rcButton.right-cbInfo.rcButton.left)/2;
     y = cbInfo.rcButton.top + (cbInfo.rcButton.bottom-cbInfo.rcButton.top)/2;
     result = SendMessageA(hCombo, WM_LBUTTONDOWN, 0, MAKELPARAM(x, y));
-    ok(result, "WM_LBUTTONDOWN was not processed. LastError=%d\n",
+    ok(result, "WM_LBUTTONDOWN was not processed. LastError=%ld\n",
        GetLastError());
     ok(SendMessageA(hCombo, CB_GETDROPPEDSTATE, 0, 0),
        "The dropdown list should have appeared after clicking the button.\n");
@@ -354,7 +355,7 @@ static void test_WM_LBUTTONDOWN(void)
     ok(GetFocus() == hEdit,
        "Focus not on ComboBox's Edit Control, instead on %p\n", GetFocus());
     result = SendMessageA(hCombo, WM_LBUTTONUP, 0, MAKELPARAM(x, y));
-    ok(result, "WM_LBUTTONUP was not processed. LastError=%d\n",
+    ok(result, "WM_LBUTTONUP was not processed. LastError=%ld\n",
        GetLastError());
     ok(GetFocus() == hEdit,
        "Focus not on ComboBox's Edit Control, instead on %p\n", GetFocus());
@@ -365,13 +366,13 @@ static void test_WM_LBUTTONDOWN(void)
     x = rect.left + (rect.right-rect.left)/2;
     y = item_height/2 + item_height*4;
     result = SendMessageA(hList, WM_LBUTTONDOWN, 0, MAKELPARAM(x, y));
-    ok(!result, "WM_LBUTTONDOWN was not processed. LastError=%d\n",
+    ok(!result, "WM_LBUTTONDOWN was not processed. LastError=%ld\n",
        GetLastError());
     ok(GetFocus() == hEdit,
        "Focus not on ComboBox's Edit Control, instead on %p\n", GetFocus());
 
     result = SendMessageA(hList, WM_MOUSEMOVE, 0, MAKELPARAM(x, y));
-    ok(!result, "WM_MOUSEMOVE was not processed. LastError=%d\n",
+    ok(!result, "WM_MOUSEMOVE was not processed. LastError=%ld\n",
        GetLastError());
     ok(GetFocus() == hEdit,
        "Focus not on ComboBox's Edit Control, instead on %p\n", GetFocus());
@@ -379,7 +380,7 @@ static void test_WM_LBUTTONDOWN(void)
        "The dropdown list should still be visible.\n");
 
     result = SendMessageA(hList, WM_LBUTTONUP, 0, MAKELPARAM(x, y));
-    ok(!result, "WM_LBUTTONUP was not processed. LastError=%d\n",
+    ok(!result, "WM_LBUTTONUP was not processed. LastError=%ld\n",
        GetLastError());
     ok(GetFocus() == hEdit,
        "Focus not on ComboBox's Edit Control, instead on %p\n", GetFocus());
@@ -407,29 +408,29 @@ static void test_changesize( DWORD style)
     /* first make it slightly smaller */
     MoveWindow( hCombo, 10, 10, clwidth - 2, clheight - 2, TRUE);
     GetClientRect( hCombo, &rc);
-    ok( rc.right - rc.left == clwidth - 2, "clientrect width is %d vs %d\n",
+    ok( rc.right - rc.left == clwidth - 2, "clientrect width is %ld vs %d\n",
             rc.right - rc.left, clwidth - 2);
-    ok( rc.bottom - rc.top == clheight, "clientrect height is %d vs %d\n",
+    ok( rc.bottom - rc.top == clheight, "clientrect height is %ld vs %d\n",
                 rc.bottom - rc.top, clheight);
     SendMessageA(hCombo, CB_GETDROPPEDCONTROLRECT, 0, (LPARAM)&rc);
-    ok( rc.right - rc.left == clwidth - 2, "drop-down rect width is %d vs %d\n",
+    ok( rc.right - rc.left == clwidth - 2, "drop-down rect width is %ld vs %d\n",
             rc.right - rc.left, clwidth - 2);
-    ok( rc.bottom - rc.top == ddheight, "drop-down rect height is %d vs %d\n",
+    ok( rc.bottom - rc.top == ddheight, "drop-down rect height is %ld vs %d\n",
             rc.bottom - rc.top, ddheight);
-    ok( rc.right - rc.left == ddwidth -2, "drop-down rect width is %d vs %d\n",
+    ok( rc.right - rc.left == ddwidth -2, "drop-down rect width is %ld vs %d\n",
             rc.right - rc.left, ddwidth - 2);
     /* new cx, cy is slightly bigger than the initial values */
     MoveWindow( hCombo, 10, 10, clwidth + 2, clheight + 2, TRUE);
     GetClientRect( hCombo, &rc);
-    ok( rc.right - rc.left == clwidth + 2, "clientrect width is %d vs %d\n",
+    ok( rc.right - rc.left == clwidth + 2, "clientrect width is %ld vs %d\n",
             rc.right - rc.left, clwidth + 2);
-    ok( rc.bottom - rc.top == clheight, "clientrect height is %d vs %d\n",
+    ok( rc.bottom - rc.top == clheight, "clientrect height is %ld vs %d\n",
             rc.bottom - rc.top, clheight);
     SendMessageA(hCombo, CB_GETDROPPEDCONTROLRECT, 0, (LPARAM)&rc);
-    ok( rc.right - rc.left == clwidth + 2, "drop-down rect width is %d vs %d\n",
+    ok( rc.right - rc.left == clwidth + 2, "drop-down rect width is %ld vs %d\n",
             rc.right - rc.left, clwidth + 2);
     todo_wine {
-        ok( rc.bottom - rc.top == clheight + 2, "drop-down rect height is %d vs %d\n",
+        ok( rc.bottom - rc.top == clheight + 2, "drop-down rect height is %ld vs %d\n",
                 rc.bottom - rc.top, clheight + 2);
     }
 
@@ -481,7 +482,7 @@ static void test_editselection(void)
     cbInfo.cbSize = sizeof(COMBOBOXINFO);
     SetLastError(0xdeadbeef);
     ret = GetComboBoxInfo(hCombo, &cbInfo);
-    ok(ret, "Failed to get combobox info structure. LastError=%d\n",
+    ok(ret, "Failed to get combobox info structure. LastError=%ld\n",
        GetLastError());
     hEdit = cbInfo.hwndItem;
 
@@ -535,7 +536,7 @@ static void test_editselection(void)
     cbInfo.cbSize = sizeof(COMBOBOXINFO);
     SetLastError(0xdeadbeef);
     ret = GetComboBoxInfo(hCombo, &cbInfo);
-    ok(ret, "Failed to get combobox info structure. LastError=%d\n",
+    ok(ret, "Failed to get combobox info structure. LastError=%ld\n",
        GetLastError());
     hEdit = cbInfo.hwndItem;
 
@@ -614,7 +615,7 @@ static void test_editselection_focus(DWORD style)
     cbInfo.cbSize = sizeof(COMBOBOXINFO);
     SetLastError(0xdeadbeef);
     ret = GetComboBoxInfo(hCombo, &cbInfo);
-    ok(ret, "Failed to get COMBOBOXINFO structure; LastError: %u\n", GetLastError());
+    ok(ret, "Failed to get COMBOBOXINFO structure; LastError: %lu\n", GetLastError());
     hEdit = cbInfo.hwndItem;
 
     hButton = CreateWindowA("Button", "OK", WS_VISIBLE|WS_CHILD|BS_DEFPUSHBUTTON,
@@ -685,8 +686,8 @@ static void test_listbox_styles(DWORD cb_style)
 
     style = GetWindowLongW( info.hwndList, GWL_STYLE );
     exstyle = GetWindowLongW( info.hwndList, GWL_EXSTYLE );
-    ok(style == expect_style, "%08x: got %08x\n", cb_style, style);
-    ok(exstyle == expect_exstyle, "%08x: got %08x\n", cb_style, exstyle);
+    ok(style == expect_style, "%08lx: got %08lx\n", cb_style, style);
+    ok(exstyle == expect_exstyle, "%08lx: got %08lx\n", cb_style, exstyle);
 
     if (cb_style != CBS_SIMPLE)
         expect_exstyle |= WS_EX_TOPMOST;
@@ -694,14 +695,14 @@ static void test_listbox_styles(DWORD cb_style)
     SendMessageW(combo, CB_SHOWDROPDOWN, TRUE, 0 );
     style = GetWindowLongW( info.hwndList, GWL_STYLE );
     exstyle = GetWindowLongW( info.hwndList, GWL_EXSTYLE );
-    ok(style == (expect_style | WS_VISIBLE), "%08x: got %08x\n", cb_style, style);
-    ok(exstyle == expect_exstyle, "%08x: got %08x\n", cb_style, exstyle);
+    ok(style == (expect_style | WS_VISIBLE), "%08lx: got %08lx\n", cb_style, style);
+    ok(exstyle == expect_exstyle, "%08lx: got %08lx\n", cb_style, exstyle);
 
     SendMessageW(combo, CB_SHOWDROPDOWN, FALSE, 0 );
     style = GetWindowLongW( info.hwndList, GWL_STYLE );
     exstyle = GetWindowLongW( info.hwndList, GWL_EXSTYLE );
-    ok(style == expect_style, "%08x: got %08x\n", cb_style, style);
-    ok(exstyle == expect_exstyle, "%08x: got %08x\n", cb_style, exstyle);
+    ok(style == expect_style, "%08lx: got %08lx\n", cb_style, style);
+    ok(exstyle == expect_exstyle, "%08lx: got %08lx\n", cb_style, exstyle);
 
     DestroyWindow(combo);
 }
@@ -759,7 +760,7 @@ static void test_listbox_size(DWORD style)
         cbInfo.cbSize = sizeof(COMBOBOXINFO);
         SetLastError(0xdeadbeef);
         ret = GetComboBoxInfo(hCombo, &cbInfo);
-        ok(ret, "Failed to get COMBOBOXINFO structure; LastError: %u\n", GetLastError());
+        ok(ret, "Failed to get COMBOBOXINFO structure; LastError: %lu\n", GetLastError());
 
         hList = cbInfo.hwndList;
         for (i = 0; i < info_test->num_items; i++)
@@ -769,7 +770,7 @@ static void test_listbox_size(DWORD style)
         x = cbInfo.rcButton.left + (cbInfo.rcButton.right-cbInfo.rcButton.left)/2;
         y = cbInfo.rcButton.top + (cbInfo.rcButton.bottom-cbInfo.rcButton.top)/2;
         ret = SendMessageA(hCombo, WM_LBUTTONDOWN, 0, MAKELPARAM(x, y));
-        ok(ret, "WM_LBUTTONDOWN was not processed. LastError=%d\n",
+        ok(ret, "WM_LBUTTONDOWN was not processed. LastError=%ld\n",
            GetLastError());
         ok(SendMessageA(hCombo, CB_GETDROPPEDSTATE, 0, 0),
            "The dropdown list should have appeared after clicking the button.\n");
@@ -815,7 +816,7 @@ static void test_WS_VSCROLL(void)
 
     SetLastError(0xdeadbeef);
     ret = GetComboBoxInfo(hCombo, &info);
-    ok(ret, "Failed to get COMBOBOXINFO structure; LastError: %u\n", GetLastError());
+    ok(ret, "Failed to get COMBOBOXINFO structure; LastError: %lu\n", GetLastError());
     hList = info.hwndList;
 
     for(i = 0; i < 3; i++)

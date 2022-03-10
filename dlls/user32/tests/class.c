@@ -17,6 +17,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include <stdlib.h>
 #include <stdarg.h>
@@ -139,7 +140,7 @@ static void ClassTest(HINSTANCE hInstance, BOOL global)
     DestroyWindow(hTestWnd);
 
     ret = GetClassInfoW(hInstance2, className, &info);
-    ok(ret, "GetClassInfoW failed: %u\n", GetLastError());
+    ok(ret, "GetClassInfoW failed: %lu\n", GetLastError());
 
     hTestWnd = CreateWindowW (className, winName,
        WS_OVERLAPPEDWINDOW + WS_HSCROLL + WS_VSCROLL,
@@ -183,9 +184,9 @@ static void ClassTest(HINSTANCE hInstance, BOOL global)
     {
         SetLastError(0);
         ok(!SetClassLongW(hTestWnd,i*sizeof(DWORD),i+1),
-            "GetClassLongW(%d) initial value nonzero!\n",i);
+            "GetClassLongW(%ld) initial value nonzero!\n",i);
         ok(!GetLastError(),
-            "SetClassLongW(%d) failed!\n",i);
+            "SetClassLongW(%ld) failed!\n",i);
     }
 
     /* test values of valid classwords that we set */
@@ -339,7 +340,7 @@ static void check_instance_( int line, const char *name, HINSTANCE inst,
     ok_(__FILE__,line)(!UnregisterClassA(name, inst),
                        "UnregisterClassA should fail while exists a class window\n");
     ok_(__FILE__,line)(GetLastError() == ERROR_CLASS_HAS_WINDOWS,
-                       "GetLastError() should be set to ERROR_CLASS_HAS_WINDOWS not %d\n", GetLastError());
+                       "GetLastError() should be set to ERROR_CLASS_HAS_WINDOWS not %ld\n", GetLastError());
     DestroyWindow(hwnd);
 }
 #define check_instance(name,inst,info_inst,gcl_inst) check_instance_(__LINE__,name,inst,info_inst,gcl_inst)
@@ -371,7 +372,7 @@ static void check_thread_instance( const char *name, HINSTANCE inst, HINSTANCE i
     class_info.gcl_inst = gcl_inst;
 
     hThread = CreateThread(NULL, 0, thread_proc, &class_info, 0, &tid);
-    ok(hThread != NULL, "CreateThread failed, error %d\n", GetLastError());
+    ok(hThread != NULL, "CreateThread failed, error %ld\n", GetLastError());
     ok(WaitForSingleObject(hThread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
     CloseHandle(hThread);
 }
@@ -458,7 +459,7 @@ static void test_instances(void)
 
     /* setting global flag doesn't change status of class */
     hwnd = CreateWindowExA( 0, name, "test", 0, 0, 0, 0, 0, 0, 0, main_module, 0 );
-    ok( hwnd != 0, "CreateWindow failed error %u\n", GetLastError());
+    ok( hwnd != 0, "CreateWindow failed error %lu\n", GetLastError());
     SetClassLongA( hwnd, GCL_STYLE, CS_GLOBALCLASS );
     cls.lpszMenuName  = "kernel32";
     cls.hInstance = kernel32;
@@ -525,7 +526,7 @@ static void test_instances(void)
     DestroyWindow( hwnd2 );
 
     r = GetClassNameA( hwnd, buffer, 4 );
-    ok( r == 3, "expected 3, got %d\n", r );
+    ok( r == 3, "expected 3, got %ld\n", r );
     ok( !strcmp( buffer, "__t"), "name wrong: %s\n", buffer );
 
     ok( UnregisterClassA( name, kernel32 ), "Unregister failed for kernel32\n" );
@@ -542,7 +543,7 @@ static void test_instances(void)
     cls.lpszMenuName  = "null";
     cls.hInstance = 0;
     ok( !RegisterClassA( &cls ), "Succeeded registering local class for null instance\n" );
-    ok( GetLastError() == ERROR_CLASS_ALREADY_EXISTS, "Wrong error code %d\n", GetLastError() );
+    ok( GetLastError() == ERROR_CLASS_ALREADY_EXISTS, "Wrong error code %ld\n", GetLastError() );
     ok( UnregisterClassA( name, main_module ), "Unregister failed for main module\n" );
 
     ok( RegisterClassA( &cls ), "Failed to register local class for null instance\n" );
@@ -551,17 +552,17 @@ static void test_instances(void)
     check_instance( name, main_module, main_module, main_module );
     check_thread_instance( name, main_module, main_module, main_module );
     ok( !GetClassInfoA( 0, name, &wc ), "Class found with null instance\n" );
-    ok( GetLastError() == ERROR_CLASS_DOES_NOT_EXIST, "Wrong error code %d\n", GetLastError() );
+    ok( GetLastError() == ERROR_CLASS_DOES_NOT_EXIST, "Wrong error code %ld\n", GetLastError() );
     ok( UnregisterClassA( name, 0 ), "Unregister failed for null instance\n" );
 
     /* registering for user32 always fails */
     cls.lpszMenuName = "user32";
     cls.hInstance = user32;
     ok( !RegisterClassA( &cls ), "Succeeded registering local class for user32\n" );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "Wrong error code %d\n", GetLastError() );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "Wrong error code %ld\n", GetLastError() );
     cls.style |= CS_GLOBALCLASS;
     ok( !RegisterClassA( &cls ), "Succeeded registering global class for user32\n" );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "Wrong error code %d\n", GetLastError() );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "Wrong error code %ld\n", GetLastError() );
 
     /* unregister is OK though */
     cls.hInstance = main_module;
@@ -576,12 +577,12 @@ static void test_instances(void)
     cls.lpszMenuName  = "kernel32";
     cls.hInstance = kernel32;
     ok( !RegisterClassA( &cls ), "Succeeded registering local class for kernel32\n" );
-    ok( GetLastError() == ERROR_CLASS_ALREADY_EXISTS, "Wrong error code %d\n", GetLastError() );
+    ok( GetLastError() == ERROR_CLASS_ALREADY_EXISTS, "Wrong error code %ld\n", GetLastError() );
     /* even if global flag is cleared */
     hwnd = CreateWindowExA( 0, name, "test", 0, 0, 0, 0, 0, 0, 0, main_module, 0 );
     SetClassLongA( hwnd, GCL_STYLE, 0 );
     ok( !RegisterClassA( &cls ), "Succeeded registering local class for kernel32\n" );
-    ok( GetLastError() == ERROR_CLASS_ALREADY_EXISTS, "Wrong error code %d\n", GetLastError() );
+    ok( GetLastError() == ERROR_CLASS_ALREADY_EXISTS, "Wrong error code %ld\n", GetLastError() );
 
     check_class( main_module, name, "main_module" );
     check_class( kernel32, name, "main_module" );
@@ -602,7 +603,7 @@ static void test_instances(void)
     DestroyWindow( hwnd );
     ok( UnregisterClassA( name, (HINSTANCE)0x87654321 ), "Unregister failed for main module global\n" );
     ok( !UnregisterClassA( name, (HINSTANCE)0x87654321 ), "Unregister succeeded the second time\n" );
-    ok( GetLastError() == ERROR_CLASS_DOES_NOT_EXIST, "Wrong error code %d\n", GetLastError() );
+    ok( GetLastError() == ERROR_CLASS_DOES_NOT_EXIST, "Wrong error code %ld\n", GetLastError() );
 
     cls.hInstance = (HINSTANCE)0x12345678;
     ok( RegisterClassA( &cls ), "Failed to register global class for dummy instance\n" );
@@ -620,10 +621,10 @@ static void test_instances(void)
     cls.lpszClassName = "BUTTON";
     cls.hInstance = main_module;
     ok( !RegisterClassA( &cls ), "Succeeded registering global button class for main module\n" );
-    ok( GetLastError() == ERROR_CLASS_ALREADY_EXISTS, "Wrong error code %d\n", GetLastError() );
+    ok( GetLastError() == ERROR_CLASS_ALREADY_EXISTS, "Wrong error code %ld\n", GetLastError() );
     cls.hInstance = kernel32;
     ok( !RegisterClassA( &cls ), "Succeeded registering global button class for kernel32\n" );
-    ok( GetLastError() == ERROR_CLASS_ALREADY_EXISTS, "Wrong error code %d\n", GetLastError() );
+    ok( GetLastError() == ERROR_CLASS_ALREADY_EXISTS, "Wrong error code %ld\n", GetLastError() );
 
     /* local class is OK however */
     cls.style &= ~CS_GLOBALCLASS;
@@ -651,7 +652,7 @@ static void test_instances(void)
     ok( GetClassInfoA( kernel32, "BUTTON", &wc ), "Button class not found with kernel32\n" );
     ok( UnregisterClassA( "BUTTON", (HINSTANCE)0x12345678 ), "Failed to unregister button\n" );
     ok( !UnregisterClassA( "BUTTON", (HINSTANCE)0x87654321 ), "Unregistered button a second time\n" );
-    ok( GetLastError() == ERROR_CLASS_DOES_NOT_EXIST, "Wrong error code %d\n", GetLastError() );
+    ok( GetLastError() == ERROR_CLASS_DOES_NOT_EXIST, "Wrong error code %ld\n", GetLastError() );
     ok( !GetClassInfoA( 0, "BUTTON", &wc ), "Button still exists\n" );
     /* last error not set reliably */
 
@@ -723,7 +724,7 @@ static void test_builtinproc(void)
                 cls.lpszClassName = (LPCSTR)classW;
                 atom = RegisterClassExW((WNDCLASSEXW *)&cls);
             }
-            ok(atom != 0, "Couldn't register class, i=%d, %d\n", i, GetLastError());
+            ok(atom != 0, "Couldn't register class, i=%d, %ld\n", i, GetLastError());
 
             hwnd = CreateWindowA(classA, NULL, 0, 0, 0, 100, 100, NULL, NULL, GetModuleHandleA(NULL), NULL);
             ok(hwnd != NULL, "Couldn't create window i=%d\n", i);
@@ -992,29 +993,29 @@ static void test_GetClassInfo(void)
 
     SetLastError(0xdeadbeef);
     ret = GetClassInfoA(0, "static", &wc);
-    ok(ret, "GetClassInfoA() error %d\n", GetLastError());
+    ok(ret, "GetClassInfoA() error %ld\n", GetLastError());
 
 if (0) { /* crashes under XP */
     SetLastError(0xdeadbeef);
     ret = GetClassInfoA(0, "static", NULL);
-    ok(ret, "GetClassInfoA() error %d\n", GetLastError());
+    ok(ret, "GetClassInfoA() error %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = GetClassInfoW(0, staticW, NULL);
-    ok(ret, "GetClassInfoW() error %d\n", GetLastError());
+    ok(ret, "GetClassInfoW() error %ld\n", GetLastError());
 }
 
     wcx.cbSize = sizeof(wcx);
     SetLastError(0xdeadbeef);
     ret = GetClassInfoExA(0, "static", &wcx);
-    ok(ret, "GetClassInfoExA() error %d\n", GetLastError());
+    ok(ret, "GetClassInfoExA() error %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = GetClassInfoExA(0, "static", NULL);
     ok(!ret, "GetClassInfoExA() should fail\n");
     ok(GetLastError() == ERROR_NOACCESS ||
        broken(GetLastError() == 0xdeadbeef), /* win9x */
-       "expected ERROR_NOACCESS, got %d\n", GetLastError());
+       "expected ERROR_NOACCESS, got %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = GetClassInfoExW(0, staticW, NULL);
@@ -1022,14 +1023,14 @@ if (0) { /* crashes under XP */
     ok(GetLastError() == ERROR_NOACCESS ||
        broken(GetLastError() == 0xdeadbeef) /* NT4 */ ||
        broken(GetLastError() == ERROR_CALL_NOT_IMPLEMENTED), /* win9x */
-       "expected ERROR_NOACCESS, got %d\n", GetLastError());
+       "expected ERROR_NOACCESS, got %ld\n", GetLastError());
 
     wcx.cbSize = 0;
     wcx.lpfnWndProc = NULL;
     SetLastError(0xdeadbeef);
     ret = GetClassInfoExA(0, "static", &wcx);
-    ok(ret, "GetClassInfoExA() error %d\n", GetLastError());
-    ok(GetLastError() == 0xdeadbeef, "Unexpected error code %d\n", GetLastError());
+    ok(ret, "GetClassInfoExA() error %ld\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "Unexpected error code %ld\n", GetLastError());
     ok(wcx.cbSize == 0, "expected 0, got %u\n", wcx.cbSize);
     ok(wcx.lpfnWndProc != NULL, "got null proc\n");
 
@@ -1037,7 +1038,7 @@ if (0) { /* crashes under XP */
     wcx.lpfnWndProc = NULL;
     SetLastError(0xdeadbeef);
     ret = GetClassInfoExA(0, "static", &wcx);
-    ok(ret, "GetClassInfoExA() error %d\n", GetLastError());
+    ok(ret, "GetClassInfoExA() error %ld\n", GetLastError());
     ok(wcx.cbSize == sizeof(wcx) - 1, "expected sizeof(wcx)-1, got %u\n", wcx.cbSize);
     ok(wcx.lpfnWndProc != NULL, "got null proc\n");
 
@@ -1045,7 +1046,7 @@ if (0) { /* crashes under XP */
     wcx.lpfnWndProc = NULL;
     SetLastError(0xdeadbeef);
     ret = GetClassInfoExA(0, "static", &wcx);
-    ok(ret, "GetClassInfoExA() error %d\n", GetLastError());
+    ok(ret, "GetClassInfoExA() error %ld\n", GetLastError());
     ok(wcx.cbSize == sizeof(wcx) + 1, "expected sizeof(wcx)+1, got %u\n", wcx.cbSize);
     ok(wcx.lpfnWndProc != NULL, "got null proc\n");
 }
@@ -1117,7 +1118,7 @@ static void create_manifest_file(const char *filename, const char *manifest)
 
     MultiByteToWideChar( CP_ACP, 0, filename, -1, path, MAX_PATH );
     file = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed: %lu\n", GetLastError());
     WriteFile(file, manifest, strlen(manifest), &size, NULL);
     CloseHandle(file);
 }
@@ -1134,10 +1135,10 @@ static HANDLE create_test_actctx(const char *file)
     actctx.lpSource = path;
 
     handle = CreateActCtxW(&actctx);
-    ok(handle != INVALID_HANDLE_VALUE, "failed to create context, error %u\n", GetLastError());
+    ok(handle != INVALID_HANDLE_VALUE, "failed to create context, error %lu\n", GetLastError());
 
-    ok(actctx.cbSize == sizeof(actctx), "cbSize=%d\n", actctx.cbSize);
-    ok(actctx.dwFlags == 0, "dwFlags=%d\n", actctx.dwFlags);
+    ok(actctx.cbSize == sizeof(actctx), "cbSize=%ld\n", actctx.cbSize);
+    ok(actctx.dwFlags == 0, "dwFlags=%ld\n", actctx.dwFlags);
     ok(actctx.lpSource == path, "lpSource=%p\n", actctx.lpSource);
     ok(actctx.wProcessorArchitecture == 0, "wProcessorArchitecture=%d\n", actctx.wProcessorArchitecture);
     ok(actctx.wLangId == 0, "wLangId=%d\n", actctx.wLangId);
@@ -1171,7 +1172,7 @@ static void test_comctl32_class( const char *name )
         create_manifest_file(path, comctl32_manifest);
         context = create_test_actctx(path);
         ret = DeleteFileA(path);
-        ok(ret, "Failed to delete manifest file, error %d.\n", GetLastError());
+        ok(ret, "Failed to delete manifest file, error %ld.\n", GetLastError());
 
         module = GetModuleHandleA( "comctl32" );
         ok( !module, "comctl32 already loaded\n" );
@@ -1308,10 +1309,10 @@ static void test_IME(void)
     ok(GetModuleHandleA("imm32") != 0, "imm32.dll is not loaded\n");
 
     ret = GetClassInfoA(NULL, "IME", &wnd_class);
-    ok(ret, "GetClassInfo failed: %d\n", GetLastError());
+    ok(ret, "GetClassInfo failed: %ld\n", GetLastError());
 
     size = VirtualQuery(wnd_class.lpfnWndProc, &mbi, sizeof(mbi));
-    ok(size == sizeof(mbi), "VirtualQuery returned %ld\n", size);
+    ok(size == sizeof(mbi), "VirtualQuery returned %Id\n", size);
     if (size == sizeof(mbi)) {
         size = GetModuleFileNameA(mbi.AllocationBase, module_name, sizeof(module_name));
         ok(size, "GetModuleFileName failed\n");
@@ -1322,10 +1323,10 @@ static void test_IME(void)
     }
 
     ret = GetClassInfoW(NULL, ime_classW, &wnd_classw);
-    ok(ret, "GetClassInfo failed: %d\n", GetLastError());
+    ok(ret, "GetClassInfo failed: %ld\n", GetLastError());
 
     size = VirtualQuery(wnd_classw.lpfnWndProc, &mbi, sizeof(mbi));
-    ok(size == sizeof(mbi), "VirtualQuery returned %ld\n", size);
+    ok(size == sizeof(mbi), "VirtualQuery returned %Id\n", size);
     size = GetModuleFileNameA(mbi.AllocationBase, module_name, sizeof(module_name));
     ok(size, "GetModuleFileName failed\n");
     for (ptr = module_name+size-1; ptr > module_name; ptr--)
@@ -1360,7 +1361,7 @@ static void test_actctx_classes(void)
     create_manifest_file(path, main_manifest);
     context = create_test_actctx(path);
     ret = DeleteFileA(path);
-    ok(ret, "Failed to delete manifest file, error %d.\n", GetLastError());
+    ok(ret, "Failed to delete manifest file, error %ld.\n", GetLastError());
 
     ret = ActivateActCtx(context, &cookie);
     ok(ret, "Failed to activate context.\n");
@@ -1511,7 +1512,7 @@ static void test_uxtheme(void)
     class.hInstance = GetModuleHandleA(NULL);
     class.lpszClassName = class_name;
     atom = RegisterClassExA(&class);
-    ok(atom, "RegisterClassExA failed, error %u.\n", GetLastError());
+    ok(atom, "RegisterClassExA failed, error %lu.\n", GetLastError());
 
     dll_loaded = !!GetModuleHandleA("comctl32.dll");
     ok(!dll_loaded, "Expected comctl32.dll not loaded.\n");
@@ -1522,7 +1523,7 @@ static void test_uxtheme(void)
     /* Creating a window triggers uxtheme load when theming is active */
     hwnd = CreateWindowA(class_name, "Test", WS_POPUP, 0, 0, 1, 1, NULL, NULL,
                          GetModuleHandleA(NULL), NULL);
-    ok(!!hwnd, "Failed to create a test window, error %u.\n", GetLastError());
+    ok(!!hwnd, "Failed to create a test window, error %lu.\n", GetLastError());
 
     dll_loaded = !!GetModuleHandleA("comctl32.dll");
     ok(!dll_loaded, "Expected comctl32.dll not loaded.\n");
@@ -1531,9 +1532,9 @@ static void test_uxtheme(void)
     dll_loaded = !!GetModuleHandleA("uxtheme.dll");
 
     uxtheme = LoadLibraryA("uxtheme.dll");
-    ok(!!uxtheme, "Failed to load uxtheme.dll, error %u.\n", GetLastError());
+    ok(!!uxtheme, "Failed to load uxtheme.dll, error %lu.\n", GetLastError());
     pIsThemeActive = (void *)GetProcAddress(uxtheme, "IsThemeActive");
-    ok(!!pIsThemeActive, "Failed to load IsThemeActive, error %u.\n", GetLastError());
+    ok(!!pIsThemeActive, "Failed to load IsThemeActive, error %lu.\n", GetLastError());
     is_theme_active = pIsThemeActive();
     FreeLibrary(uxtheme);
 

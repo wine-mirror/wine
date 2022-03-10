@@ -17,6 +17,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include <stdlib.h>
 #include <stdarg.h>
@@ -513,10 +514,10 @@ static void test_begin_paint(void)
     EndPaint( hwnd_parentdc, &ps );
     GetClientRect( hwnd_parent, &parent_rect );
 
-    ok( rect.left == parent_rect.left, "rect.left = %d, expected %d\n", rect.left, parent_rect.left );
-    ok( rect.top == parent_rect.top, "rect.top = %d, expected %d\n", rect.top, parent_rect.top );
-    todo_wine ok( rect.right == parent_rect.right, "rect.right = %d, expected %d\n", rect.right, parent_rect.right );
-    todo_wine ok( rect.bottom == parent_rect.bottom, "rect.bottom = %d, expected %d\n", rect.bottom, parent_rect.bottom );
+    ok( rect.left == parent_rect.left, "rect.left = %ld, expected %ld\n", rect.left, parent_rect.left );
+    ok( rect.top == parent_rect.top, "rect.top = %ld, expected %ld\n", rect.top, parent_rect.top );
+    todo_wine ok( rect.right == parent_rect.right, "rect.right = %ld, expected %ld\n", rect.right, parent_rect.right );
+    todo_wine ok( rect.bottom == parent_rect.bottom, "rect.bottom = %ld, expected %ld\n", rect.bottom, parent_rect.bottom );
 
     hdc = GetDC( hwnd_parent );
     todo_wine ok( GetPixel( hdc, 10, 10 ) == cr, "error drawing outside of window client area\n" );
@@ -617,41 +618,41 @@ static void test_dc_layout(void)
     hdc = GetDC( hwnd_cache_rtl );
     layout = GetLayout( hdc );
 
-    ok( layout == LAYOUT_RTL, "wrong layout %x\n", layout );
+    ok( layout == LAYOUT_RTL, "wrong layout %lx\n", layout );
     SetLayout( hdc, 0 );
     ReleaseDC( hwnd_cache_rtl, hdc );
     hdc = GetDC( hwnd_owndc_rtl );
     layout = GetLayout( hdc );
-    ok( layout == LAYOUT_RTL, "wrong layout %x\n", layout );
+    ok( layout == LAYOUT_RTL, "wrong layout %lx\n", layout );
     ReleaseDC( hwnd_cache_rtl, hdc );
 
     hdc = GetDC( hwnd_cache );
     layout = GetLayout( hdc );
-    ok( layout == 0, "wrong layout %x\n", layout );
+    ok( layout == 0, "wrong layout %lx\n", layout );
     ReleaseDC( hwnd_cache, hdc );
 
     hdc = GetDC( hwnd_owndc_rtl );
     layout = GetLayout( hdc );
-    ok( layout == LAYOUT_RTL, "wrong layout %x\n", layout );
+    ok( layout == LAYOUT_RTL, "wrong layout %lx\n", layout );
     SetLayout( hdc, 0 );
     ReleaseDC( hwnd_owndc_rtl, hdc );
     hdc = GetDC( hwnd_owndc_rtl );
     layout = GetLayout( hdc );
-    ok( layout == LAYOUT_RTL, "wrong layout %x\n", layout );
+    ok( layout == LAYOUT_RTL, "wrong layout %lx\n", layout );
     ReleaseDC( hwnd_owndc_rtl, hdc );
 
     hdc = GetDC( hwnd_classdc_rtl );
     layout = GetLayout( hdc );
-    ok( layout == LAYOUT_RTL, "wrong layout %x\n", layout );
+    ok( layout == LAYOUT_RTL, "wrong layout %lx\n", layout );
     SetLayout( hdc, 0 );
     ReleaseDC( hwnd_classdc_rtl, hdc );
     hdc = GetDC( hwnd_classdc2_rtl );
     layout = GetLayout( hdc );
-    ok( layout == LAYOUT_RTL, "wrong layout %x\n", layout );
+    ok( layout == LAYOUT_RTL, "wrong layout %lx\n", layout );
     ReleaseDC( hwnd_classdc2_rtl, hdc );
     hdc = GetDC( hwnd_classdc );
     layout = GetLayout( hdc );
-    ok( layout == LAYOUT_RTL, "wrong layout %x\n", layout );
+    ok( layout == LAYOUT_RTL, "wrong layout %lx\n", layout );
     ReleaseDC( hwnd_classdc_rtl, hdc );
 
     DestroyWindow(hwnd_classdc2_rtl);
