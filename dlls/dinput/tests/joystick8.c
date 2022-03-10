@@ -3340,17 +3340,10 @@ static void test_windows_gaming_input(void)
     ok( hr == S_OK, "get_RawGameControllers returned %#lx\n", hr );
     hr = IVectorView_RawGameController_get_Size( controllers_view, &size );
     ok( hr == S_OK, "get_Size returned %#lx\n", hr );
-    todo_wine
     ok( size == 1, "got size %u\n", size );
     hr = IVectorView_RawGameController_GetAt( controllers_view, 0, &raw_controller );
-    todo_wine
     ok( hr == S_OK, "GetAt returned %#lx\n", hr );
     IVectorView_RawGameController_Release( controllers_view );
-    if (hr != S_OK)
-    {
-        IRawGameControllerStatics_Release( controller_statics );
-        goto done;
-    }
 
     /* HID gamepads aren't exposed as WGI gamepads on Windows */
 
@@ -3372,6 +3365,7 @@ static void test_windows_gaming_input(void)
     check_interface( raw_controller, &IID_IInspectable, TRUE );
     check_interface( raw_controller, &IID_IAgileObject, TRUE );
     check_interface( raw_controller, &IID_IRawGameController, TRUE );
+    todo_wine
     check_interface( raw_controller, &IID_IRawGameController2, TRUE );
     check_interface( raw_controller, &IID_IGameController, TRUE );
     check_interface( raw_controller, &IID_IGamepad, FALSE );
@@ -3384,6 +3378,7 @@ static void test_windows_gaming_input(void)
     check_interface( game_controller, &IID_IInspectable, TRUE );
     check_interface( game_controller, &IID_IAgileObject, TRUE );
     check_interface( game_controller, &IID_IRawGameController, TRUE );
+    todo_wine
     check_interface( game_controller, &IID_IRawGameController2, TRUE );
     check_interface( game_controller, &IID_IGameController, TRUE );
     check_interface( game_controller, &IID_IGamepad, FALSE );

@@ -502,11 +502,7 @@ void manager_on_provider_created( IGameControllerProvider *provider )
         controller = LIST_ENTRY( entry, struct controller, entry );
         hr = ICustomGameControllerFactory_OnGameControllerAdded( controller->factory,
                                                                  &controller->IGameController_iface );
-        if (FAILED(hr))
-        {
-            list_remove( &controller->entry );
-            IGameController_Release( &controller->IGameController_iface );
-        }
+        if (FAILED(hr)) WARN( "OnGameControllerAdded failed, hr %#lx\n", hr );
         if (next == &controller_list) break;
     }
 

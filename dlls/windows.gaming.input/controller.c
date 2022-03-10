@@ -24,6 +24,36 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(input);
 
+static CRITICAL_SECTION controller_cs;
+static CRITICAL_SECTION_DEBUG controller_cs_debug =
+{
+    0, 0, &controller_cs,
+    { &controller_cs_debug.ProcessLocksList, &controller_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": controller_cs") }
+};
+static CRITICAL_SECTION controller_cs = { &controller_cs_debug, -1, 0, 0, 0, 0 };
+
+static IVector_RawGameController *controllers;
+
+static HRESULT init_controllers(void)
+{
+    static const struct vector_iids iids =
+    {
+        .vector = &IID_IVector_RawGameController,
+        .view = &IID_IVectorView_RawGameController,
+        .iterable = &IID_IIterable_RawGameController,
+        .iterator = &IID_IIterator_RawGameController,
+    };
+    HRESULT hr;
+
+    EnterCriticalSection( &controller_cs );
+    if (controllers) hr = S_OK;
+    else hr = vector_create( &iids, (void **)&controllers );
+    LeaveCriticalSection( &controller_cs );
+
+    return hr;
+}
+
 struct controller
 {
     IGameControllerImpl IGameControllerImpl_iface;
@@ -118,13 +148,19 @@ static HRESULT WINAPI controller_Initialize( IGameControllerImpl *iface, IGameCo
                                              IGameControllerProvider *provider )
 {
     struct controller *impl = impl_from_IGameControllerImpl( iface );
+    HRESULT hr;
 
     TRACE( "iface %p, outer %p, provider %p.\n", iface, outer, provider );
 
     impl->IGameController_outer = outer;
     IGameControllerProvider_AddRef( (impl->provider = provider) );
 
-    return S_OK;
+    EnterCriticalSection( &controller_cs );
+    if (SUCCEEDED(hr = init_controllers()))
+        hr = IVector_RawGameController_Append( controllers, &impl->IRawGameController_iface );
+    LeaveCriticalSection( &controller_cs );
+
+    return hr;
 }
 
 static const struct IGameControllerImplVtbl controller_vtbl =
@@ -381,23 +417,14 @@ static HRESULT WINAPI statics_remove_RawGameControllerRemoved( IRawGameControlle
 
 static HRESULT WINAPI statics_get_RawGameControllers( IRawGameControllerStatics *iface, IVectorView_RawGameController **value )
 {
-    static const struct vector_iids iids =
-    {
-        .vector = &IID_IVector_RawGameController,
-        .view = &IID_IVectorView_RawGameController,
-        .iterable = &IID_IIterable_RawGameController,
-        .iterator = &IID_IIterator_RawGameController,
-    };
-    IVector_RawGameController *controllers;
     HRESULT hr;
 
     TRACE( "iface %p, value %p.\n", iface, value );
 
-    if (SUCCEEDED(hr = vector_create( &iids, (void **)&controllers )))
-    {
+    EnterCriticalSection( &controller_cs );
+    if (SUCCEEDED(hr = init_controllers()))
         hr = IVector_RawGameController_GetView( controllers, value );
-        IVector_RawGameController_Release( controllers );
-    }
+    LeaveCriticalSection( &controller_cs );
 
     return hr;
 }
@@ -468,8 +495,33 @@ static HRESULT WINAPI controller_factory_OnGameControllerAdded( ICustomGameContr
 
 static HRESULT WINAPI controller_factory_OnGameControllerRemoved( ICustomGameControllerFactory *iface, IGameController *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    IRawGameController *controller;
+    BOOLEAN found;
+    UINT32 index;
+    HRESULT hr;
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    if (FAILED(hr = IGameController_QueryInterface( value, &IID_IRawGameController, (void **)&controller )))
+        return hr;
+
+    EnterCriticalSection( &controller_cs );
+    if (SUCCEEDED(hr = init_controllers()))
+    {
+        if (FAILED(hr = IVector_RawGameController_IndexOf( controllers, controller, &index, &found )) || !found)
+            WARN( "Could not find controller %p, hr %#lx!\n", controller, hr );
+        else
+            hr = IVector_RawGameController_RemoveAt( controllers, index );
+    }
+    LeaveCriticalSection( &controller_cs );
+
+    if (FAILED(hr))
+        WARN( "Failed to remove controller %p, hr %#lx!\n", controller, hr );
+    else if (found)
+        TRACE( "Removed controller %p.\n", controller );
+    IRawGameController_Release( controller );
+
+    return S_OK;
 }
 
 static const struct ICustomGameControllerFactoryVtbl controller_factory_vtbl =
