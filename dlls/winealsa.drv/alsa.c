@@ -2094,6 +2094,22 @@ static NTSTATUS get_next_packet_size(void *args)
     return alsa_unlock_result(stream, &params->result, S_OK);
 }
 
+static NTSTATUS get_frequency(void *args)
+{
+    struct get_frequency_params *params = args;
+    struct alsa_stream *stream = params->stream;
+    UINT64 *freq = params->freq;
+
+    alsa_lock(stream);
+
+    if(stream->share == AUDCLNT_SHAREMODE_SHARED)
+        *freq = (UINT64)stream->fmt->nSamplesPerSec * stream->fmt->nBlockAlign;
+    else
+        *freq = stream->fmt->nSamplesPerSec;
+
+    return alsa_unlock_result(stream, &params->result, S_OK);
+}
+
 static NTSTATUS set_event_handle(void *args)
 {
     struct set_event_handle_params *params = args;
@@ -2133,5 +2149,6 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     get_latency,
     get_current_padding,
     get_next_packet_size,
+    get_frequency,
     set_event_handle,
 };

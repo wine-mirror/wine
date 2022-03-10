@@ -194,6 +194,13 @@ struct get_next_packet_size_params
     UINT32 *frames;
 };
 
+struct get_frequency_params
+{
+    struct alsa_stream *stream;
+    HRESULT result;
+    UINT64 *freq;
+};
+
 struct set_event_handle_params
 {
     struct alsa_stream *stream;
@@ -220,6 +227,7 @@ enum alsa_funcs
     alsa_get_latency,
     alsa_get_current_padding,
     alsa_get_next_packet_size,
+    alsa_get_frequency,
     alsa_set_event_handle,
 };
 
