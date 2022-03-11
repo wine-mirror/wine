@@ -4162,6 +4162,26 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFeatureSupport(ID3D11Device2 
             return S_OK;
         }
 
+        case D3D11_FEATURE_D3D11_OPTIONS2:
+        {
+            D3D11_FEATURE_DATA_D3D11_OPTIONS2 *options = feature_support_data;
+            if (feature_support_data_size != sizeof(*options))
+            {
+                WARN("Invalid data size.\n");
+                return E_INVALIDARG;
+            }
+
+            options->PSSpecifiedStencilRefSupported = FALSE;
+            options->TypedUAVLoadAdditionalFormats = FALSE;
+            options->ROVsSupported = FALSE;
+            options->ConservativeRasterizationTier = D3D11_CONSERVATIVE_RASTERIZATION_NOT_SUPPORTED;
+            options->TiledResourcesTier = D3D11_TILED_RESOURCES_NOT_SUPPORTED;
+            options->MapOnDefaultTextures = FALSE;
+            options->StandardSwizzle = FALSE;
+            options->UnifiedMemoryArchitecture = FALSE;
+            return S_OK;
+        }
+
         case D3D11_FEATURE_D3D11_OPTIONS3:
         {
             D3D11_FEATURE_DATA_D3D11_OPTIONS3 *options = feature_support_data;
