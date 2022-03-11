@@ -219,7 +219,8 @@ static BOOL wined3d_load_vulkan(struct wined3d_vk_info *vk_info)
 {
     struct vulkan_ops *vk_ops = &vk_info->vk_ops;
 
-    if (!(vk_info->vulkan_lib = LoadLibraryA("vulkan-1.dll")))
+    if (!(vk_info->vulkan_lib = LoadLibraryA("winevulkan.dll"))
+            && !(vk_info->vulkan_lib = LoadLibraryA("vulkan-1.dll")))
     {
         WARN("Failed to load vulkan-1.dll.\n");
         return FALSE;
