@@ -169,7 +169,6 @@ HRESULT WINAPI DllGetActivationFactory( HSTRING class_str, IActivationFactory **
 {
     static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
     const WCHAR *buffer = WindowsGetStringRawBuffer( class_str, NULL );
-    HRESULT hr = REGDB_E_CLASSNOTREG;
 
     TRACE( "class %s, factory %p.\n", debugstr_w(buffer), factory );
 
@@ -178,13 +177,14 @@ HRESULT WINAPI DllGetActivationFactory( HSTRING class_str, IActivationFactory **
     *factory = NULL;
 
     if (!wcscmp( buffer, RuntimeClass_Windows_Gaming_Input_RawGameController ))
-        hr = ICustomGameControllerFactory_QueryInterface( controller_factory, &IID_IActivationFactory, (void **)factory );
+        ICustomGameControllerFactory_QueryInterface( controller_factory, &IID_IActivationFactory, (void **)factory );
     if (!wcscmp( buffer, RuntimeClass_Windows_Gaming_Input_Gamepad ))
-        hr = ICustomGameControllerFactory_QueryInterface( gamepad_factory, &IID_IActivationFactory, (void **)factory );
+        ICustomGameControllerFactory_QueryInterface( gamepad_factory, &IID_IActivationFactory, (void **)factory );
     if (!wcscmp( buffer, RuntimeClass_Windows_Gaming_Input_Custom_GameControllerFactoryManager ))
-        hr = IGameControllerFactoryManagerStatics2_QueryInterface( manager_factory, &IID_IActivationFactory, (void **)factory );
+        IGameControllerFactoryManagerStatics2_QueryInterface( manager_factory, &IID_IActivationFactory, (void **)factory );
 
-    return hr;
+    if (*factory) return S_OK;
+    return CLASS_E_CLASSNOTAVAILABLE;
 }
 
 BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
