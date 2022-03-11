@@ -1875,11 +1875,6 @@ static void test_VarUI4ChangeTypeEx(void)
       (ULONG)((LONG64)(x) >> 32), (ULONG)((x) & 0xffffffff), \
       (ULONG)(out >> 32), (ULONG)(out & 0xffffffff), hres)
 
-#define EXPECTI864(x,y) \
-  ok(hres == S_OK && (out >> 32) == (CONV_TYPE)(x) && (out & 0xffffffff) == (CONV_TYPE)(y), \
-     "expected " #x "(%u,%u), got (%u,%u); hres=0x%08x\n", \
-      (ULONG)(x), (ULONG)(y), \
-      (ULONG)(out >> 32), (ULONG)(out & 0xffffffff), hres)
 
 static void test_VarI8FromI1(void)
 {
@@ -2011,7 +2006,7 @@ static void test_VarI8FromUI8(void)
 
   CONVERT(VarI8FromUI8, 0); EXPECTI8(0);
   CONVERT(VarI8FromUI8, 1); EXPECTI8(1);
-  CONVERT_I8(VarI8FromUI8, 0x7fffffff, 0xffffffff); EXPECTI864(0x7fffffff, 0xffffffff);
+  CONVERT_I8(VarI8FromUI8, 0x7fffffff, 0xffffffff); EXPECTI8(0x7fffffffffffffffull);
   CONVERT_I8(VarI8FromUI8, 0x80000000, 0);          EXPECT_OVERFLOW;
 }
 
@@ -2313,8 +2308,8 @@ static void test_VarUI8FromStr(void)
   CONVERT_STR(VarUI8FromStr,"0",0);                     EXPECTI8(0);
   CONVERT_STR(VarUI8FromStr,"-1",0);                    EXPECT_OVERFLOW;
   CONVERT_STR(VarUI8FromStr,"2147483647",0);            EXPECTI8(2147483647);
-  CONVERT_STR(VarUI8FromStr,"18446744073709551614",0);  EXPECTI864(0xFFFFFFFF,0xFFFFFFFE);
-  CONVERT_STR(VarUI8FromStr,"18446744073709551615",0);  EXPECTI864(0xFFFFFFFF,0xFFFFFFFF);
+  CONVERT_STR(VarUI8FromStr,"18446744073709551614",0);  EXPECTI8(0xFFFFFFFFFFFFFFFEull);
+  CONVERT_STR(VarUI8FromStr,"18446744073709551615",0);  EXPECTI8(0xFFFFFFFFFFFFFFFFull);
   CONVERT_STR(VarUI8FromStr,"18446744073709551616",0);  EXPECT_OVERFLOW;
 
   CONVERT_STR(VarUI8FromStr,"-1.5",LOCALE_NOUSEROVERRIDE); EXPECT_OVERFLOW;
