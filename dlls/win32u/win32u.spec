@@ -1169,7 +1169,7 @@
 @ stub NtUserSetBridgeWindowChild
 @ stub NtUserSetBrokeredForeground
 @ stub NtUserSetCalibrationData
-@ stub NtUserSetCapture
+@ stdcall NtUserSetCapture(long)
 @ stub NtUserSetChildWindowNoActivate
 @ stdcall NtUserSetClassLong(long long long long)
 @ stdcall NtUserSetClassLongPtr(long long long long)

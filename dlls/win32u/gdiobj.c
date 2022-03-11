@@ -1183,6 +1183,7 @@ static struct unix_funcs unix_funcs =
     NtUserScrollDC,
     NtUserSelectPalette,
     NtUserSetActiveWindow,
+    NtUserSetCapture,
     NtUserSetClassLong,
     NtUserSetClassLongPtr,
     NtUserSetClassWord,

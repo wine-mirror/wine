@@ -89,6 +89,7 @@ enum
 {
     NtUserGetDesktopWindow,
     NtUserGetInputState,
+    NtUserReleaseCapture,
     /* temporary exports */
     NtUserThreadDetach,
 };
@@ -173,6 +174,7 @@ enum
     NtUserGetWindowWord,
     NtUserIsChild,
     NtUserMonitorFromWindow,
+    NtUserSetCaptureWindow,
     NtUserSetForegroundWindow,
     /* temporary exports */
     NtUserIsWindowDrawable,
@@ -367,6 +369,7 @@ BOOL    WINAPI NtUserScrollDC( HDC hdc, INT dx, INT dy, const RECT *scroll, cons
                                HRGN ret_update_rgn, RECT *update_rect );
 HPALETTE WINAPI NtUserSelectPalette( HDC hdc, HPALETTE palette, WORD force_background );
 HWND     WINAPI NtUserSetActiveWindow( HWND hwnd );
+HWND     WINAPI NtUserSetCapture( HWND hwnd );
 DWORD    WINAPI NtUserSetClassLong( HWND hwnd, INT offset, LONG newval, BOOL ansi );
 ULONG_PTR WINAPI NtUserSetClassLongPtr( HWND hwnd, INT offset, LONG_PTR newval, BOOL ansi );
 WORD    WINAPI NtUserSetClassWord( HWND hwnd, INT offset, WORD newval );

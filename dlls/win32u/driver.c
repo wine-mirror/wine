@@ -1185,6 +1185,7 @@ static const struct user_driver_funcs lazy_load_driver =
     /* windowing functions */
     .pCreateDesktopWindow = loaderdrv_CreateDesktopWindow,
     .pFlashWindowEx = loaderdrv_FlashWindowEx,
+    .pSetCapture = nulldrv_SetCapture,
     .pSetLayeredWindowAttributes = loaderdrv_SetLayeredWindowAttributes,
     .pSetWindowRgn = loaderdrv_SetWindowRgn,
     .pMsgWaitForMultipleObjectsEx = nulldrv_MsgWaitForMultipleObjectsEx,

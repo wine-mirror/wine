@@ -2145,7 +2145,7 @@ static LRESULT LISTBOX_HandleLButtonDown( LB_DESCR *descr, DWORD keys, INT x, IN
     }
 
     descr->captured = TRUE;
-    SetCapture( descr->self );
+    NtUserSetCapture( descr->self );
 
     if (descr->style & (LBS_EXTENDEDSEL | LBS_MULTIPLESEL))
     {
@@ -2294,7 +2294,7 @@ static LRESULT LISTBOX_HandleLButtonDownCombo( LB_DESCR *descr, UINT msg, DWORD 
             /* Resume the Capture after scrolling is complete
              */
             if(hWndOldCapture != 0)
-                SetCapture(hWndOldCapture);
+                NtUserSetCapture(hWndOldCapture);
         }
     }
     return 0;

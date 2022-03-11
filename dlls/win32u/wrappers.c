@@ -909,6 +909,12 @@ HWND WINAPI NtUserSetActiveWindow( HWND hwnd )
     return unix_funcs->pNtUserSetActiveWindow( hwnd );
 }
 
+HWND WINAPI NtUserSetCapture( HWND hwnd )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserSetCapture( hwnd );
+}
+
 HCURSOR WINAPI NtUserSetCursor( HCURSOR cursor )
 {
     if (!unix_funcs) return 0;

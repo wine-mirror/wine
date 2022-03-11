@@ -66,6 +66,15 @@ BOOL WINAPI NtUserAttachThreadInput( DWORD from, DWORD to, BOOL attach )
 }
 
 /***********************************************************************
+ *           NtUserSendInput  (win32u.@)
+ */
+UINT WINAPI NtUserSendInput( UINT count, INPUT *inputs, int size )
+{
+    if (!user_callbacks) return 0;
+    return user_callbacks->pSendInput( count, inputs, size );
+}
+
+/***********************************************************************
  *	     NtUserSetCursorPos (win32u.@)
  */
 BOOL WINAPI NtUserSetCursorPos( INT x, INT y )
@@ -1061,6 +1070,71 @@ int WINAPI NtUserGetMouseMovePointsEx( UINT size, MOUSEMOVEPOINT *ptin, MOUSEMOV
     }
 
     return copied;
+}
+
+/**********************************************************************
+ *		set_capture_window
+ */
+BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret )
+{
+    HWND previous = 0;
+    UINT flags = 0;
+    BOOL ret;
+
+    if (gui_flags & GUI_INMENUMODE) flags |= CAPTURE_MENU;
+    if (gui_flags & GUI_INMOVESIZE) flags |= CAPTURE_MOVESIZE;
+
+    SERVER_START_REQ( set_capture_window )
+    {
+        req->handle = wine_server_user_handle( hwnd );
+        req->flags  = flags;
+        if ((ret = !wine_server_call_err( req )))
+        {
+            previous = wine_server_ptr_handle( reply->previous );
+            hwnd = wine_server_ptr_handle( reply->full_handle );
+        }
+    }
+    SERVER_END_REQ;
+
+    if (ret)
+    {
+        user_driver->pSetCapture( hwnd, gui_flags );
+
+        if (previous)
+            send_message( previous, WM_CAPTURECHANGED, 0, (LPARAM)hwnd );
+
+        if (prev_ret) *prev_ret = previous;
+    }
+    return ret;
+}
+
+/**********************************************************************
+ *           NtUserSetCapture (win32u.@)
+ */
+HWND WINAPI NtUserSetCapture( HWND hwnd )
+{
+    HWND previous = 0;
+
+    set_capture_window( hwnd, 0, &previous );
+    return previous;
+}
+
+/**********************************************************************
+ *           release_capture
+ */
+BOOL WINAPI release_capture(void)
+{
+    BOOL ret = set_capture_window( 0, 0, NULL );
+
+    /* Somebody may have missed some mouse movements */
+    if (ret)
+    {
+        INPUT input = { .type = INPUT_MOUSE };
+        input.mi.dwFlags = MOUSEEVENTF_MOVE;
+        NtUserSendInput( 1, &input, sizeof(input) );
+    }
+
+    return ret;
 }
 
 /*******************************************************************

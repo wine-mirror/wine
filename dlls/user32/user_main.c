@@ -145,6 +145,7 @@ static const struct user_callbacks user_funcs =
     CopyImage,
     PostMessageW,
     RedrawWindow,
+    SendInput,
     SendMessageTimeoutW,
     SendMessageW,
     SendNotifyMessageW,

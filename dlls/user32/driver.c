@@ -100,10 +100,6 @@ static void CDECL nulldrv_ReleaseDC( HWND hwnd, HDC hdc )
 {
 }
 
-static void CDECL nulldrv_SetCapture( HWND hwnd, UINT flags )
-{
-}
-
 static void CDECL nulldrv_SetParent( HWND hwnd, HWND parent, HWND old_parent )
 {
 }
@@ -207,7 +203,7 @@ static struct user_driver_funcs lazy_load_driver =
     nulldrv_MsgWaitForMultipleObjectsEx,
     nulldrv_ReleaseDC,
     NULL,
-    nulldrv_SetCapture,
+    NULL,
     NULL,
     NULL,
     nulldrv_SetParent,
@@ -254,7 +250,6 @@ void CDECL __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT v
     SET_USER_FUNC(GetDC);
     SET_USER_FUNC(MsgWaitForMultipleObjectsEx);
     SET_USER_FUNC(ReleaseDC);
-    SET_USER_FUNC(SetCapture);
     SET_USER_FUNC(SetParent);
     SET_USER_FUNC(SetWindowIcon);
     SET_USER_FUNC(SetWindowStyle);

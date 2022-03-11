@@ -262,7 +262,7 @@ LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 	{
 	    SendMessageW( hWnd, BM_SETSTATE, TRUE, 0 );
             set_button_state( hWnd, get_button_state( hWnd ) | BUTTON_BTNPRESSED );
-            SetCapture( hWnd );
+            NtUserSetCapture( hWnd );
 	}
 	break;
 
@@ -277,7 +277,7 @@ LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
         }
         /* fall through */
     case WM_LBUTTONDOWN:
-        SetCapture( hWnd );
+        NtUserSetCapture( hWnd );
         NtUserSetFocus( hWnd );
         set_button_state( hWnd, get_button_state( hWnd ) | BUTTON_BTNPRESSED );
         SendMessageW( hWnd, BM_SETSTATE, TRUE, 0 );

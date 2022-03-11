@@ -1007,7 +1007,7 @@ static void CBDropDown( LPHEADCOMBO lphc )
 
    EnableWindow( lphc->hWndLBox, TRUE );
    if (GetCapture() != lphc->self)
-      SetCapture(lphc->hWndLBox);
+      NtUserSetCapture(lphc->hWndLBox);
 }
 
 /***********************************************************************
@@ -1605,7 +1605,7 @@ static void COMBO_LButtonDown( LPHEADCOMBO lphc, LPARAM lParam )
 	   /* drop down the listbox and start tracking */
 
            lphc->wState |= CBF_CAPTURE;
-           SetCapture( hWnd );
+           NtUserSetCapture( hWnd );
            CBDropDown( lphc );
        }
        if( bButton ) CBRepaintButton( lphc );
@@ -1634,7 +1634,7 @@ static void COMBO_LButtonUp( LPHEADCOMBO lphc )
 	   }
        }
        ReleaseCapture();
-       SetCapture(lphc->hWndLBox);
+       NtUserSetCapture(lphc->hWndLBox);
    }
 
    if( lphc->wState & CBF_BUTTONDOWN )

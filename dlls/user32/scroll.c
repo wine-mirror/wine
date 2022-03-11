@@ -816,7 +816,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt )
         {
             case WM_LBUTTONDOWN:  /* Initialise mouse tracking */
                 HideCaret(hwnd);  /* hide caret while holding down LBUTTON */
-                SetCapture( hwnd );
+                NtUserSetCapture( hwnd );
                 prevPt = pt;
                 g_tracking_info.hit_test = hittest = SCROLL_THUMB;
                 break;
@@ -853,7 +853,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt )
           trackThumbPos = thumbPos;
           prevPt = pt;
           if (nBar == SB_CTL && (GetWindowLongW(hwnd, GWL_STYLE) & WS_TABSTOP)) NtUserSetFocus( hwnd );
-          SetCapture( hwnd );
+          NtUserSetCapture( hwnd );
           break;
 
       case WM_MOUSEMOVE:

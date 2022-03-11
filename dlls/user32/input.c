@@ -117,35 +117,8 @@ static HKL get_locale_kbd_layout(void)
  */
 BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret )
 {
-    HWND previous = 0;
-    UINT flags = 0;
-    BOOL ret;
-
-    if (gui_flags & GUI_INMENUMODE) flags |= CAPTURE_MENU;
-    if (gui_flags & GUI_INMOVESIZE) flags |= CAPTURE_MOVESIZE;
-
-    SERVER_START_REQ( set_capture_window )
-    {
-        req->handle = wine_server_user_handle( hwnd );
-        req->flags  = flags;
-        if ((ret = !wine_server_call_err( req )))
-        {
-            previous = wine_server_ptr_handle( reply->previous );
-            hwnd = wine_server_ptr_handle( reply->full_handle );
-        }
-    }
-    SERVER_END_REQ;
-
-    if (ret)
-    {
-        USER_Driver->pSetCapture( hwnd, gui_flags );
-
-        if (previous)
-            SendMessageW( previous, WM_CAPTURECHANGED, 0, (LPARAM)hwnd );
-
-        if (prev_ret) *prev_ret = previous;
-    }
-    return ret;
+    /* FIXME: move callers to win32u or use NtUserSetCapture */
+    return NtUserCallHwndParam( hwnd, gui_flags, NtUserSetCaptureWindow );
 }
 
 
@@ -308,28 +281,11 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetCursorPos( POINT *pt )
 
 
 /**********************************************************************
- *		SetCapture (USER32.@)
- */
-HWND WINAPI DECLSPEC_HOTPATCH SetCapture( HWND hwnd )
-{
-    HWND previous = 0;
-
-    set_capture_window( hwnd, 0, &previous );
-    return previous;
-}
-
-
-/**********************************************************************
  *		ReleaseCapture (USER32.@)
  */
 BOOL WINAPI DECLSPEC_HOTPATCH ReleaseCapture(void)
 {
-    BOOL ret = set_capture_window( 0, 0, NULL );
-
-    /* Somebody may have missed some mouse movements */
-    if (ret) mouse_event( MOUSEEVENTF_MOVE, 0, 0, 0, 0 );
-
-    return ret;
+    return NtUserCallNoParam( NtUserReleaseCapture );
 }
 
 
