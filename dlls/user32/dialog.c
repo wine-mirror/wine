@@ -687,12 +687,12 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
                 {
                     if (SendMessageW( focus, WM_GETDLGCODE, 0, 0 ) & DLGC_HASSETSEL)
                         SendMessageW( focus, EM_SETSEL, 0, MAXLONG );
-                    SetFocus( focus );
+                    NtUserSetFocus( focus );
                 }
                 else
                 {
                     if (!(template.style & WS_CHILD))
-                        SetFocus( hwnd );
+                        NtUserSetFocus( hwnd );
                 }
             }
         }
@@ -926,7 +926,7 @@ BOOL WINAPI EndDialog( HWND hwnd, INT_PTR retval )
     /* Windows sets the focus to the dialog itself in EndDialog */
 
     if (IsChild(hwnd, GetFocus()))
-       SetFocus( hwnd );
+       NtUserSetFocus( hwnd );
 
     /* Don't have to send a ShowWindow(SW_HIDE), just do
        SetWindowPos with SWP_HIDEWINDOW as done in Windows */
@@ -1226,7 +1226,7 @@ BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
                                 SendMessageW (hwndNext, EM_SETSEL, 0, length);
                             }
                         }
-                        SetFocus (hwndNext);
+                        NtUserSetFocus( hwndNext );
                         DIALOG_FixChildrenOnChangeFocus (hwndDlg, hwndNext);
                     }
                     else
@@ -1246,7 +1246,7 @@ BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
                 HWND hwndNext = GetNextDlgGroupItem( hwndDlg, msg->hwnd, fPrevious );
                 if (hwndNext && SendMessageW( hwndNext, WM_GETDLGCODE, msg->wParam, (LPARAM)msg ) == (DLGC_BUTTON | DLGC_RADIOBUTTON))
                 {
-                    SetFocus( hwndNext );
+                    NtUserSetFocus( hwndNext );
                     if ((GetWindowLongW( hwndNext, GWL_STYLE ) & BS_TYPEMASK) == BS_AUTORADIOBUTTON &&
                         SendMessageW( hwndNext, BM_GETCHECK, 0, 0 ) != BST_CHECKED)
                         SendMessageW( hwndNext, BM_CLICK, 1, 0 );

@@ -946,6 +946,12 @@ BOOL WINAPI NtUserSetCursorPos( INT x, INT y )
     return unix_funcs->pNtUserSetCursorPos( x, y );
 }
 
+HWND WINAPI NtUserSetFocus( HWND hwnd )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserSetFocus( hwnd );
+}
+
 BOOL WINAPI NtUserSetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags )
 {
     if (!unix_funcs) return FALSE;

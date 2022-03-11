@@ -864,9 +864,9 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
         if (GetFocus() == hwnd)
         {
             if (GetWindowLongW(hwnd, GWL_STYLE) & WS_CHILD)
-                SetFocus(NtUserGetAncestor(hwnd, GA_PARENT));
+                NtUserSetFocus( NtUserGetAncestor( hwnd, GA_PARENT ));
             else
-                SetFocus(0);
+                NtUserSetFocus( 0 );
         }
 
         old_style = WIN_SetStyle( hwnd, WS_MINIMIZE, WS_MAXIMIZE );
@@ -1058,7 +1058,7 @@ static BOOL show_window( HWND hwnd, INT cmd )
         {
             HWND parent = NtUserGetAncestor(hwnd, GA_PARENT);
             if (parent == GetDesktopWindow()) parent = 0;
-            SetFocus(parent);
+            NtUserSetFocus( parent );
         }
         goto done;
     }
@@ -1091,7 +1091,7 @@ static BOOL show_window( HWND hwnd, INT cmd )
     /* if previous state was minimized Windows sets focus to the window */
     if (style & WS_MINIMIZE)
     {
-        SetFocus( hwnd );
+        NtUserSetFocus( hwnd );
         /* Send a WM_ACTIVATE message for a top level window, even if the window is already active */
         if (NtUserGetAncestor( hwnd, GA_ROOT ) == hwnd && !(swp & SWP_NOACTIVATE))
             SendMessageW( hwnd, WM_ACTIVATE, WA_ACTIVE, 0 );

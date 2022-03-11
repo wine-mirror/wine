@@ -2054,7 +2054,7 @@ BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
         if (!retvalue)
         {
             if (hwnd == GetFocus())
-                SetFocus( 0 ); /* A disabled window can't have the focus */
+                NtUserSetFocus( 0 ); /* A disabled window can't have the focus */
 
             SendMessageW( hwnd, WM_ENABLE, FALSE, 0 );
         }

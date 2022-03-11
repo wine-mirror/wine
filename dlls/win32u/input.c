@@ -1270,3 +1270,62 @@ HWND WINAPI NtUserSetActiveWindow( HWND hwnd )
     if (!set_active_window( hwnd, &prev, FALSE, TRUE )) return 0;
     return prev;
 }
+
+/*****************************************************************
+ *           NtUserSetFocus  (win32u.@)
+ */
+HWND WINAPI NtUserSetFocus( HWND hwnd )
+{
+    HWND hwndTop = hwnd;
+    HWND previous = get_focus();
+
+    TRACE( "%p prev %p\n", hwnd, previous );
+
+    if (hwnd)
+    {
+        /* Check if we can set the focus to this window */
+        hwnd = get_full_window_handle( hwnd );
+        if (!is_window( hwnd ))
+        {
+            SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+            return 0;
+        }
+        if (hwnd == previous) return previous;  /* nothing to do */
+        for (;;)
+        {
+            HWND parent;
+            LONG style = get_window_long( hwndTop, GWL_STYLE );
+            if (style & (WS_MINIMIZE | WS_DISABLED)) return 0;
+            if (!(style & WS_CHILD)) break;
+            parent = NtUserGetAncestor( hwndTop, GA_PARENT );
+            if (!parent || parent == get_desktop_window())
+            {
+                if ((style & (WS_POPUP|WS_CHILD)) == WS_CHILD) return 0;
+                break;
+            }
+            if (parent == get_hwnd_message_parent()) return 0;
+            hwndTop = parent;
+        }
+
+        /* call hooks */
+        if (call_hooks( WH_CBT, HCBT_SETFOCUS, (WPARAM)hwnd, (LPARAM)previous, TRUE )) return 0;
+
+        /* activate hwndTop if needed. */
+        if (hwndTop != get_active_window())
+        {
+            if (!set_active_window( hwndTop, NULL, FALSE, FALSE )) return 0;
+            if (!is_window( hwnd )) return 0;  /* Abort if window destroyed */
+
+            /* Do not change focus if the window is no longer active */
+            if (hwndTop != get_active_window()) return 0;
+        }
+    }
+    else /* NULL hwnd passed in */
+    {
+        if (!previous) return 0;  /* nothing to do */
+        if (call_hooks( WH_CBT, HCBT_SETFOCUS, 0, (LPARAM)previous, TRUE )) return 0;
+    }
+
+    /* change focus and send messages */
+    return set_focus_window( hwnd );
+}

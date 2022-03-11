@@ -300,7 +300,7 @@ static void MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
 	hItem = GetDlgItem(hwnd, buttonOrder[i]);
 	if (GetWindowLongW(hItem, GWL_STYLE) & WS_VISIBLE) {
 	    if (buttons++ == ((lpmb->dwStyle & MB_DEFMASK) >> 8)) {
-		SetFocus(hItem);
+		NtUserSetFocus(hItem);
 		SendMessageW( hItem, BM_SETSTYLE, BS_DEFPUSHBUTTON, TRUE );
 	    }
 	    SetWindowPos(hItem, 0, bpos, tiheight, bw, bh,

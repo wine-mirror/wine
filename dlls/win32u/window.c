@@ -159,7 +159,7 @@ WND *next_thread_window_ptr( HWND *hwnd )
  *
  * Return the parent for HWND_MESSAGE windows.
  */
-static HWND get_hwnd_message_parent(void)
+HWND get_hwnd_message_parent(void)
 {
     struct user_thread_info *thread_info = get_user_thread_info();
 

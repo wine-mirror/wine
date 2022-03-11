@@ -417,7 +417,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         /* The default action in Windows is to set the keyboard focus to
          * the window, if it's being activated and not minimized */
         if (LOWORD(wParam) != WA_INACTIVE) {
-            if (!IsIconic(hwnd)) SetFocus(hwnd);
+            if (!IsIconic(hwnd)) NtUserSetFocus( hwnd );
         }
         break;
 
