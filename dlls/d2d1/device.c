@@ -2051,6 +2051,7 @@ static void STDMETHODCALLTYPE d2d_device_context_SetTarget(ID2D1DeviceContext *i
 
     if (!(bitmap_impl->options & D2D1_BITMAP_OPTIONS_TARGET))
     {
+        ID2D1Bitmap_Release(bitmap);
         d2d_device_context_set_error(context, D2DERR_INVALID_TARGET);
         return;
     }
