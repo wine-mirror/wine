@@ -17,6 +17,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include <assert.h>
 #include <windows.h>
@@ -51,10 +52,10 @@ static void test_LoadStringW(void)
         return;
     }
     length2 = LoadStringW(hInst, 2, returnedstringw, ARRAY_SIZE(returnedstringw)); /* get resource string */
-    ok(length2 > 0, "LoadStringW failed to load resource 2, ret %d, err %d\n", length2, GetLastError());
+    ok(length2 > 0, "LoadStringW failed to load resource 2, ret %d, err %ld\n", length2, GetLastError());
     ok(length1 == length2, "LoadStringW returned different values dependent on buflen. ret1 %d, ret2 %d\n",
         length1, length2);
-    ok(length1 > 0 && resourcepointer != NULL, "LoadStringW failed to get pointer to resource 2, ret %d, err %d\n",
+    ok(length1 > 0 && resourcepointer != NULL, "LoadStringW failed to get pointer to resource 2, ret %d, err %ld\n",
         length1, GetLastError());
 
     /* Copy the resource since it is not '\0' terminated, and add '\0' to the end */
@@ -109,22 +110,22 @@ static void test_LoadStringA (void)
     }
 
     ret = LoadStringA(hInst, 1, buf, sizeof(buf) );
-    ok( ret > 0, "LoadString failed: ret %d err %d\n", ret, GetLastError());
+    ok( ret > 0, "LoadString failed: ret %d err %ld\n", ret, GetLastError());
     ret2 = LoadStringA( hInst, MAKELONG( 1, 0x8000 ), buf, sizeof(buf));
-    ok( ret2 == ret, "LoadString failed: ret %d err %d\n", ret, GetLastError());
+    ok( ret2 == ret, "LoadString failed: ret %d err %ld\n", ret, GetLastError());
     ret2 = LoadStringA( hInst, MAKELONG( 1, 0xffff ), buf, sizeof(buf));
-    ok( ret2 == ret, "LoadString failed: ret %d err %d\n", ret, GetLastError());
+    ok( ret2 == ret, "LoadString failed: ret %d err %ld\n", ret, GetLastError());
 
     ret = LoadStringA(hInst, 65534, buf, sizeof(buf) );
-    ok( ret > 0, "LoadString failed: ret %d err %d\n", ret, GetLastError());
+    ok( ret > 0, "LoadString failed: ret %d err %ld\n", ret, GetLastError());
     ret2 = LoadStringA( hInst, MAKELONG( 65534, 0x8000 ), buf, sizeof(buf));
-    ok( ret2 == ret, "LoadString failed: ret %d err %d\n", ret, GetLastError());
+    ok( ret2 == ret, "LoadString failed: ret %d err %ld\n", ret, GetLastError());
     ret2 = LoadStringA( hInst, MAKELONG( 65534, 0xffff ), buf, sizeof(buf));
-    ok( ret2 == ret, "LoadString failed: ret %d err %d\n", ret, GetLastError());
+    ok( ret2 == ret, "LoadString failed: ret %d err %ld\n", ret, GetLastError());
 
     ret = LoadStringA(hInst, 0, buf, 0);
     ok( ret == -1 || broken(ret == 0),
-        "LoadStringA did not return -1 when called with buflen = 0, got %d, err %d\n",
+        "LoadStringA did not return -1 when called with buflen = 0, got %d, err %ld\n",
         ret, GetLastError());
 
     SetLastError(0xdeadbeef);
@@ -132,7 +133,7 @@ static void test_LoadStringA (void)
     ret = LoadStringA(hInst, 1, buf, 1);
     ok( !ret, "LoadString returned %d\n", ret);
     ok( buf[0] == 0, "buf[0] = %c (%x)\n", buf[0], buf[0]);
-    ok( GetLastError() == 0xdeadbeef, "GetLastError() = %d\n", GetLastError());
+    ok( GetLastError() == 0xdeadbeef, "GetLastError() = %ld\n", GetLastError());
 }
 
 static void test_accel1(void)
