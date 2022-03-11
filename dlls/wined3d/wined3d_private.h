@@ -5126,7 +5126,7 @@ static inline void wined3d_resource_wait_idle(const struct wined3d_resource *res
     if (!wined3d_ge_wrap(head, access_time))
         return;
 
-    while (1)
+    for (;;)
     {
         tail = *(volatile ULONG *)&cs->queue[WINED3D_CS_QUEUE_DEFAULT].tail;
         if (head == tail) /* Queue empty. */
