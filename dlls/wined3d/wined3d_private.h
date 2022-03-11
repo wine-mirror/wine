@@ -5087,6 +5087,12 @@ static inline void wined3d_resource_reference(struct wined3d_resource *resource)
     resource->access_time = cs->queue[WINED3D_CS_QUEUE_DEFAULT].head;
 }
 
+static inline BOOL wined3d_ge_wrap(ULONG x, ULONG y)
+{
+    return (x - y) < UINT_MAX / 2;
+}
+C_ASSERT(WINED3D_CS_QUEUE_SIZE < UINT_MAX / 4);
+
 static inline void wined3d_resource_wait_idle(const struct wined3d_resource *resource)
 {
     const struct wined3d_cs *cs = resource->device->cs;
@@ -5100,11 +5106,11 @@ static inline void wined3d_resource_wait_idle(const struct wined3d_resource *res
 
     /* The basic idea is that a resource is busy if tail < access_time <= head.
      * But we have to be careful about wrap-around of the head and tail. The
-     * GE_WRAP macro below considers x >= y if x - y is smaller than half the
+     * wined3d_ge_wrap function considers x >= y if x - y is smaller than half the
      * UINT range. Head is at most WINED3D_CS_QUEUE_SIZE ahead of tail, because
      * otherwise the queue memory is considered full and queue_require_space
-     * stalls. Thus GE_WRAP(head, tail) is always true. The C_ASSERT below ensures
-     * this in case we decide to grow the queue size in the future.
+     * stalls. Thus wined3d_ge_wrap(head, tail) is always true. The C_ASSERT above
+     * ensures this in case we decide to grow the queue size in the future.
      *
      * It is possible that a resource has not been used for a long time and is idle, but the head and
      * tail wrapped around in such a way that the previously set access time falls between head and tail.
@@ -5117,8 +5123,7 @@ static inline void wined3d_resource_wait_idle(const struct wined3d_resource *res
      * Note that the access time is set before the command is submitted, so we have to wait until the
      * tail is bigger than access_time, not equal. */
 
-#define GE_WRAP(x, y) (((x)-(y)) < (UINT_MAX / 2))
-    if (!GE_WRAP(head, access_time))
+    if (!wined3d_ge_wrap(head, access_time))
         return;
 
     while (1)
@@ -5127,14 +5132,12 @@ static inline void wined3d_resource_wait_idle(const struct wined3d_resource *res
         if (head == tail) /* Queue empty. */
             break;
 
-        if (!GE_WRAP(access_time, tail) && access_time != tail)
+        if (!wined3d_ge_wrap(access_time, tail) && access_time != tail)
             break;
 
         YieldProcessor();
     }
-#undef GE_WRAP
 }
-C_ASSERT(WINED3D_CS_QUEUE_SIZE < UINT_MAX / 4);
 
 /* TODO: Add tests and support for FLOAT16_4 POSITIONT, D3DCOLOR position, other
  * fixed function semantics as D3DCOLOR or FLOAT16 */
