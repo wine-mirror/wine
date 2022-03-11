@@ -459,9 +459,10 @@ static HRESULT WINAPI statics_FromGameController( IRawGameControllerStatics *ifa
 
     TRACE( "iface %p, game_controller %p, value %p.\n", iface, game_controller, value );
 
+    *value = NULL;
     hr = IGameControllerFactoryManagerStatics2_TryGetFactoryControllerFromGameController( manager_factory, &impl->ICustomGameControllerFactory_iface,
                                                                                           game_controller, &controller );
-    if (FAILED(hr)) return hr;
+    if (FAILED(hr) || !controller) return hr;
 
     hr = IGameController_QueryInterface( controller, &IID_IRawGameController, (void **)value );
     IGameController_Release( controller );

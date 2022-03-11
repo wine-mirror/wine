@@ -392,7 +392,7 @@ statics2_TryGetFactoryControllerFromGameController( IGameControllerFactoryManage
 
     LeaveCriticalSection( &manager_cs );
 
-    if (!found) return E_FAIL;
+    if (!found) *value = NULL;
     return S_OK;
 }
 
