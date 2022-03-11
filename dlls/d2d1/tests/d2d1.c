@@ -10372,7 +10372,6 @@ static void test_stroke_contains_point(BOOL d3d11)
         float stroke_width;
         BOOL matrix;
         BOOL contains;
-        BOOL todo;
     }
     rectangle_tests[] =
     {
@@ -10535,19 +10534,19 @@ static void test_stroke_contains_point(BOOL d3d11)
     {
         /* 0. Stroked area hittesting. Edge. Tolerance is 0.0f */
         {{{{0.0f}}}, {0.74f,  2.5f},  0.0f,   1.0f, FALSE, TRUE},
-        {{{{0.0f}}}, {0.75f,  2.5f},  0.0f,   1.0f, FALSE, FALSE, TRUE},
+        {{{{0.0f}}}, {0.75f,  2.5f},  0.0f,   1.0f, FALSE, FALSE},
 
         /* 2. Stroked area hittesting. Edge. Tolerance is negative */
         {{{{0.0f}}}, {0.74f,  2.5f}, -1.0f,   1.0f, FALSE, TRUE},
-        {{{{0.0f}}}, {0.75f,  2.5f}, -1.0f,   1.0f, FALSE, FALSE, TRUE},
+        {{{{0.0f}}}, {0.75f,  2.5f}, -1.0f,   1.0f, FALSE, FALSE},
 
         /* 4. Stroked area hittesting. Edge. Tolerance is close to zero */
         {{{{0.0f}}}, {0.501f, 2.5f},  0.001f, 1.0f, FALSE, TRUE},
-        {{{{0.0f}}}, {0.502f, 2.5f},  0.001f, 1.0f, FALSE, FALSE, TRUE},
+        {{{{0.0f}}}, {0.502f, 2.5f},  0.001f, 1.0f, FALSE, FALSE},
 
         /* 6. Stroked area hittesting. Edge. Tolerance is D2D1_DEFAULT_FLATTENING_TOLERANCE */
         {{{{0.0f}}}, {0.74f,  2.5f},  0.25f,  1.0f, FALSE, TRUE},
-        {{{{0.0f}}}, {0.75f,  2.5f},  0.25f,  1.0f, FALSE, FALSE, TRUE},
+        {{{{0.0f}}}, {0.75f,  2.5f},  0.25f,  1.0f, FALSE, FALSE},
     };
 
     hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
@@ -10657,7 +10656,6 @@ static void test_stroke_contains_point(BOOL d3d11)
                 test->stroke_width, NULL, test->matrix ? &test->transform : NULL, test->tolerance,
                 &contains);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-        todo_wine_if(test->todo)
         ok(contains == test->contains, "Got unexpected result %#x.\n", contains);
 
         winetest_pop_context();

@@ -5036,8 +5036,12 @@ static HRESULT STDMETHODCALLTYPE d2d_transformed_geometry_StrokeContainsPoint(ID
             iface, debug_d2d_point_2f(&point), stroke_width, stroke_style, transform, tolerance, contains);
 
     g = geometry->transform;
+    stroke_width /= g.m11;
     if (transform)
         d2d_matrix_multiply(&g, transform);
+
+    if (tolerance <= 0.0f)
+        tolerance = D2D1_DEFAULT_FLATTENING_TOLERANCE;
 
     return ID2D1Geometry_StrokeContainsPoint(geometry->u.transformed.src_geometry, point, stroke_width, stroke_style,
             &g, tolerance, contains);
