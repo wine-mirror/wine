@@ -959,7 +959,6 @@ DECL_HANDLER(get_next_device_request)
             if (req->prev)
             {
                 set_irp_result( irp, req->iosb_status, get_req_data(), get_req_data_size(), req->result );
-                close_handle( current->process, req->prev );  /* avoid an extra round-trip for close */
             }
             else
             {
@@ -976,6 +975,9 @@ DECL_HANDLER(get_next_device_request)
         {
             set_irp_result( irp, req->status, NULL, 0, 0 );
         }
+
+        if (req->prev)
+            close_handle( current->process, req->prev );  /* avoid an extra round-trip for close */
 
         free_irp_params( irp );
         release_object( irp );
