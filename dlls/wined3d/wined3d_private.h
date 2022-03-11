@@ -4916,8 +4916,8 @@ struct wined3d_device_context_ops
             unsigned int sub_resource_idx, struct wined3d_box *box, struct upload_bo *upload_bo);
     void (*issue_query)(struct wined3d_device_context *context, struct wined3d_query *query, unsigned int flags);
     void (*flush)(struct wined3d_device_context *context);
-    void (*acquire_resource)(struct wined3d_device_context *context, struct wined3d_resource *resource);
-    void (*acquire_command_list)(struct wined3d_device_context *context, struct wined3d_command_list *list);
+    void (*reference_resource)(struct wined3d_device_context *context, struct wined3d_resource *resource);
+    void (*reference_command_list)(struct wined3d_device_context *context, struct wined3d_command_list *list);
 };
 
 struct wined3d_device_context
@@ -5081,7 +5081,7 @@ void wined3d_device_context_emit_update_sub_resource(struct wined3d_device_conte
 HRESULT wined3d_device_context_emit_unmap(struct wined3d_device_context *context,
         struct wined3d_resource *resource, unsigned int sub_resource_idx) DECLSPEC_HIDDEN;
 
-static inline void wined3d_resource_acquire(struct wined3d_resource *resource)
+static inline void wined3d_resource_reference(struct wined3d_resource *resource)
 {
     const struct wined3d_cs *cs = resource->device->cs;
     resource->access_time = cs->queue[WINED3D_CS_QUEUE_DEFAULT].head;
