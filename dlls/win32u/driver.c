@@ -1189,6 +1189,7 @@ static const struct user_driver_funcs lazy_load_driver =
     .pSetWindowRgn = loaderdrv_SetWindowRgn,
     .pMsgWaitForMultipleObjectsEx = nulldrv_MsgWaitForMultipleObjectsEx,
     .pScrollDC = nulldrv_ScrollDC,
+    .pSetFocus = nulldrv_SetFocus,
     .pUpdateLayeredWindow = loaderdrv_UpdateLayeredWindow,
     .pWindowMessage = nulldrv_WindowMessage,
     /* system parameters */

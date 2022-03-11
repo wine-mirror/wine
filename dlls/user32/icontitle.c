@@ -184,7 +184,7 @@ LRESULT WINAPI IconTitleWndProc( HWND hWnd, UINT msg,
 	case WM_NCLBUTTONDBLCLK:
 	     return SendMessageW( owner, msg, wParam, lParam );
 	case WM_ACTIVATE:
-	     if( wParam ) SetActiveWindow( owner );
+	     if (wParam) NtUserSetActiveWindow( owner );
              return 0;
 	case WM_CLOSE:
 	     return 0;

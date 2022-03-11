@@ -1458,7 +1458,7 @@ void WINPOS_ActivateOtherWindow(HWND hwnd)
     {
         if (SetForegroundWindow( hwndTo )) return;
     }
-    if (!SetActiveWindow( hwndTo )) SetActiveWindow(0);
+    if (!NtUserSetActiveWindow( hwndTo )) NtUserSetActiveWindow( 0 );
 }
 
 

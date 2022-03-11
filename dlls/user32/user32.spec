@@ -644,7 +644,7 @@
 @ stdcall SendNotifyMessageA(long long long long)
 @ stdcall SendNotifyMessageW(long long long long)
 @ stub ServerSetFunctionPointers
-@ stdcall SetActiveWindow(long)
+@ stdcall SetActiveWindow(long) NtUserSetActiveWindow
 @ stdcall SetCapture(long)
 @ stdcall SetCaretBlinkTime(long)
 @ stdcall SetCaretPos(long long)

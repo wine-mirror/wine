@@ -38,6 +38,7 @@ struct user_callbacks
     DWORD (WINAPI *pWaitForInputIdle)( HANDLE, DWORD );
     HWND (WINAPI *pWindowFromDC)( HDC );
     void (WINAPI *free_dce)( struct dce *dce, HWND hwnd );
+    void (CDECL *notify_ime)( HWND hwnd, UINT param );
     void (CDECL *register_builtin_classes)(void);
     LRESULT (WINAPI *send_ll_message)( DWORD, DWORD, UINT, WPARAM, LPARAM, UINT, UINT, PDWORD_PTR );
     void (CDECL *set_user_driver)( void *, UINT );
@@ -111,6 +112,10 @@ typedef struct tagWND
 #define WND_DESKTOP       ((WND *)2)  /* returned by WIN_GetPtr on the desktop window */
 
 WND *next_thread_window_ptr( HWND *hwnd );
+
+#define WM_IME_INTERNAL 0x287
+#define IME_INTERNAL_ACTIVATE 0x17
+#define IME_INTERNAL_DEACTIVATE 0x18
 
 /* this is the structure stored in TEB->Win32ClientInfo */
 /* no attempt is made to keep the layout compatible with the Windows one */
@@ -223,6 +228,7 @@ WINDOWPROC *get_winproc_ptr( WNDPROC handle ) DECLSPEC_HIDDEN;
 DWORD get_class_long( HWND hwnd, INT offset, BOOL ansi ) DECLSPEC_HIDDEN;
 ULONG_PTR get_class_long_ptr( HWND hwnd, INT offset, BOOL ansi ) DECLSPEC_HIDDEN;
 WORD get_class_word( HWND hwnd, INT offset ) DECLSPEC_HIDDEN;
+ATOM get_int_atom_value( UNICODE_STRING *name ) DECLSPEC_HIDDEN;
 WNDPROC get_winproc( WNDPROC proc, BOOL ansi ) DECLSPEC_HIDDEN;
 
 /* cursoricon.c */

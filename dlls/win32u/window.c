@@ -172,7 +172,7 @@ static HWND get_hwnd_message_parent(void)
  *
  * Convert a possibly truncated window handle to a full 32-bit handle.
  */
-static HWND get_full_window_handle( HWND hwnd )
+HWND get_full_window_handle( HWND hwnd )
 {
     WND *win;
 
@@ -325,7 +325,7 @@ BOOL is_window( HWND hwnd )
 }
 
 /* see GetWindowThreadProcessId */
-static DWORD get_window_thread( HWND hwnd, DWORD *process )
+DWORD get_window_thread( HWND hwnd, DWORD *process )
 {
     WND *ptr;
     DWORD tid = 0;
@@ -518,6 +518,53 @@ static HWND *list_window_parents( HWND hwnd )
 
 empty:
     free( list );
+    return NULL;
+}
+
+/*******************************************************************
+ *           list_window_children
+ *
+ * Build an array of the children of a given window. The array must be
+ * freed with HeapFree. Returns NULL when no windows are found.
+ */
+HWND *list_window_children( HDESK desktop, HWND hwnd, UNICODE_STRING *class, DWORD tid )
+{
+    HWND *list;
+    int i, size = 128;
+    ATOM atom = class ? get_int_atom_value( class ) : 0;
+
+    /* empty class is not the same as NULL class */
+    if (!atom && class && !class->Length) return NULL;
+
+    for (;;)
+    {
+        int count = 0;
+
+        if (!(list = malloc( size * sizeof(HWND) ))) break;
+
+        SERVER_START_REQ( get_window_children )
+        {
+            req->desktop = wine_server_obj_handle( desktop );
+            req->parent = wine_server_user_handle( hwnd );
+            req->tid = tid;
+            req->atom = atom;
+            if (!atom && class) wine_server_add_data( req, class->Buffer, class->Length );
+            wine_server_set_reply( req, list, (size-1) * sizeof(user_handle_t) );
+            if (!wine_server_call( req )) count = reply->count;
+        }
+        SERVER_END_REQ;
+        if (count && count < size)
+        {
+            /* start from the end since HWND is potentially larger than user_handle_t */
+            for (i = count - 1; i >= 0; i--)
+                list[i] = wine_server_ptr_handle( ((user_handle_t *)list)[i] );
+            list[count] = 0;
+            return list;
+        }
+        free( list );
+        if (!count) break;
+        size = count + 1;  /* restart with a large enough buffer */
+    }
     return NULL;
 }
 

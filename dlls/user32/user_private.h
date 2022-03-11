@@ -82,9 +82,6 @@ struct rawinput_thread_data
 
 extern BOOL (WINAPI *imm_register_window)(HWND) DECLSPEC_HIDDEN;
 extern void (WINAPI *imm_unregister_window)(HWND) DECLSPEC_HIDDEN;
-#define WM_IME_INTERNAL 0x287
-#define IME_INTERNAL_ACTIVATE 0x17
-#define IME_INTERNAL_DEACTIVATE 0x18
 
 static inline struct user_thread_info *get_user_thread_info(void)
 {

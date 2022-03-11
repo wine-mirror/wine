@@ -41,6 +41,9 @@ LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
 {
     switch(msg)
     {
+    case WM_WINE_SETACTIVEWINDOW:
+        if (!wparam && NtUserGetForegroundWindow() == hwnd) return 0;
+        return (LRESULT)NtUserSetActiveWindow( (HWND)wparam );
     case WM_WINE_KEYBOARD_LL_HOOK:
     case WM_WINE_MOUSE_LL_HOOK:
     {

@@ -25,6 +25,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "imm.h"
 
 #include "controls.h"
 #include "user_private.h"
@@ -133,6 +134,12 @@ static void dpiaware_init(void)
     }
 }
 
+static void CDECL notify_ime( HWND hwnd, UINT param )
+{
+    HWND ime_default = ImmGetDefaultIMEWnd( hwnd );
+    if (ime_default) SendMessageW( ime_default, WM_IME_INTERNAL, param, HandleToUlong(hwnd) );
+}
+
 static const struct user_callbacks user_funcs =
 {
     CopyImage,
@@ -144,6 +151,7 @@ static const struct user_callbacks user_funcs =
     WaitForInputIdle,
     WindowFromDC,
     free_dce,
+    notify_ime,
     register_builtin_classes,
     MSG_SendInternalMessageTimeout,
     (void *)__wine_set_user_driver,

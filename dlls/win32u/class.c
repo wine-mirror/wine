@@ -195,7 +195,7 @@ NTSTATUS WINAPI NtUserInitializeClientPfnArrays( const struct user_client_procs 
 /***********************************************************************
  *           get_int_atom_value
  */
-static ATOM get_int_atom_value( UNICODE_STRING *name )
+ATOM get_int_atom_value( UNICODE_STRING *name )
 {
     const WCHAR *ptr = name->Buffer;
     const WCHAR *end = ptr + name->Length / sizeof(WCHAR);
