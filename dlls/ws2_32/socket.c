@@ -1840,6 +1840,12 @@ int WINAPI getsockopt( SOCKET s, int level, int optname, char *optval, int *optl
             return server_getsockopt( s, IOCTL_AFD_WINE_GET_IPV6_MULTICAST_IF, optval, optlen );
 
         case IPV6_MULTICAST_LOOP:
+            if (*optlen < 1 || !optval)
+            {
+                SetLastError( WSAEFAULT );
+                return SOCKET_ERROR;
+            }
+            if (*optlen < sizeof(DWORD)) *optlen = 1;
             return server_getsockopt( s, IOCTL_AFD_WINE_GET_IPV6_MULTICAST_LOOP, optval, optlen );
 
         case IPV6_PROTECTION_LEVEL:
@@ -3211,7 +3217,14 @@ int WINAPI setsockopt( SOCKET s, int level, int optname, const char *optval, int
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_IPV6_MULTICAST_IF, optval, optlen );
 
         case IPV6_MULTICAST_LOOP:
-            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IPV6_MULTICAST_LOOP, optval, optlen );
+            if (!optlen || !optval)
+            {
+                SetLastError( WSAEFAULT );
+                return SOCKET_ERROR;
+            }
+            memcpy( &value, optval, min( optlen, sizeof(value) ));
+            value = !!value;
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IPV6_MULTICAST_LOOP, (char *)&value, sizeof(value) );
 
         case IPV6_PKTINFO:
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_IPV6_RECVPKTINFO, optval, optlen );
