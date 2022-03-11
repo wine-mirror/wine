@@ -2069,16 +2069,8 @@ static void STDMETHODCALLTYPE d2d_device_context_SetTarget(ID2D1DeviceContext *i
     blend_desc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
     blend_desc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
     blend_desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-    if (context->desc.pixelFormat.alphaMode == D2D1_ALPHA_MODE_IGNORE)
-    {
-        blend_desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ZERO;
-        blend_desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
-    }
-    else
-    {
-        blend_desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
-        blend_desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
-    }
+    blend_desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+    blend_desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
     blend_desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
     blend_desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
     if (FAILED(hr = ID3D11Device1_CreateBlendState(context->d3d_device, &blend_desc, &context->bs)))

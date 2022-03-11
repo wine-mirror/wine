@@ -4585,7 +4585,6 @@ static void test_alpha_mode(BOOL d3d11)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     match = compare_surface(&ctx, "e7ee77e89745fa5d195fd78bd398738330cfcde8");
     match2 = compare_surface(&ctx, "4855c7c082c8ede364cf6e2dcde83f95b88aecbe");
-    todo_wine
     ok(match || broken(match2) /* Win7 TestBots */, "Surface does not match.\n");
     IDXGISurface_Release(ctx.surface);
     ctx.surface = surface;
