@@ -338,15 +338,9 @@ BOOL WINAPI DECLSPEC_HOTPATCH ReleaseCapture(void)
  */
 HWND WINAPI GetCapture(void)
 {
-    HWND ret = 0;
-
-    SERVER_START_REQ( get_thread_input )
-    {
-        req->tid = GetCurrentThreadId();
-        if (!wine_server_call_err( req )) ret = wine_server_ptr_handle( reply->capture );
-    }
-    SERVER_END_REQ;
-    return ret;
+    GUITHREADINFO info;
+    info.cbSize = sizeof(info);
+    return NtUserGetGUIThreadInfo( GetCurrentThreadId(), &info ) ? info.hwndCapture : 0;
 }
 
 
