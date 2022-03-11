@@ -147,6 +147,7 @@ static const struct user_callbacks user_funcs =
     RedrawWindow,
     SendMessageTimeoutW,
     SendMessageW,
+    SendNotifyMessageW,
     SetWindowPos,
     WaitForInputIdle,
     WindowFromDC,

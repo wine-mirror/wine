@@ -289,6 +289,7 @@ extern LONG global_key_state_counter DECLSPEC_HIDDEN;
 extern HWND get_active_window(void) DECLSPEC_HIDDEN;
 extern BOOL get_cursor_pos( POINT *pt ) DECLSPEC_HIDDEN;
 extern DWORD get_input_state(void) DECLSPEC_HIDDEN;
+extern BOOL set_foreground_window( HWND hwnd, BOOL mouse ) DECLSPEC_HIDDEN;
 
 /* message.c */
 extern LRESULT post_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam ) DECLSPEC_HIDDEN;

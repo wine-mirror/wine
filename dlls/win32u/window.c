@@ -1945,6 +1945,8 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
         return is_child( hwnd, UlongToHandle(param) );
     case NtUserMonitorFromWindow:
         return HandleToUlong( monitor_from_window( hwnd, param, NtUserMonitorFromWindow ));
+    case NtUserSetForegroundWindow:
+        return set_foreground_window( hwnd, param );
     /* temporary exports */
     case NtUserIsWindowDrawable:
         return is_window_drawable( hwnd, param );

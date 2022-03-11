@@ -173,8 +173,15 @@ enum
     NtUserGetWindowWord,
     NtUserIsChild,
     NtUserMonitorFromWindow,
+    NtUserSetForegroundWindow,
     /* temporary exports */
     NtUserIsWindowDrawable,
+};
+
+/* NtUserMessageCall codes */
+enum
+{
+    FNID_SENDNOTIFYMESSAGE  = 0x02b7,
 };
 
 /* color index used to retrieve system 55aa brush */

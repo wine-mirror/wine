@@ -1329,3 +1329,42 @@ HWND WINAPI NtUserSetFocus( HWND hwnd )
     /* change focus and send messages */
     return set_focus_window( hwnd );
 }
+
+/*******************************************************************
+ *		set_foreground_window
+ */
+BOOL set_foreground_window( HWND hwnd, BOOL mouse )
+{
+    BOOL ret, send_msg_old = FALSE, send_msg_new = FALSE;
+    HWND previous = 0;
+
+    if (mouse) hwnd = get_full_window_handle( hwnd );
+
+    SERVER_START_REQ( set_foreground_window )
+    {
+        req->handle = wine_server_user_handle( hwnd );
+        if ((ret = !wine_server_call_err( req )))
+        {
+            previous = wine_server_ptr_handle( reply->previous );
+            send_msg_old = reply->send_msg_old;
+            send_msg_new = reply->send_msg_new;
+        }
+    }
+    SERVER_END_REQ;
+
+    if (ret && previous != hwnd)
+    {
+        if (send_msg_old)  /* old window belongs to other thread */
+            NtUserMessageCall( previous, WM_WINE_SETACTIVEWINDOW, 0, 0,
+                               0, FNID_SENDNOTIFYMESSAGE, FALSE );
+        else if (send_msg_new)  /* old window belongs to us but new one to other thread */
+            ret = set_active_window( 0, NULL, mouse, TRUE );
+
+        if (send_msg_new)  /* new window belongs to other thread */
+            NtUserMessageCall( hwnd, WM_WINE_SETACTIVEWINDOW, (WPARAM)hwnd, 0,
+                               0, FNID_SENDNOTIFYMESSAGE, FALSE );
+        else  /* new window belongs to us */
+            ret = set_active_window( hwnd, NULL, mouse, TRUE );
+    }
+    return ret;
+}

@@ -34,6 +34,7 @@ struct user_callbacks
     BOOL (WINAPI *pRedrawWindow)( HWND, const RECT*, HRGN, UINT );
     LRESULT (WINAPI *pSendMessageTimeoutW)( HWND, UINT, WPARAM, LPARAM, UINT, UINT, PDWORD_PTR );
     LRESULT (WINAPI *pSendMessageW)( HWND, UINT, WPARAM, LPARAM );
+    BOOL (WINAPI *pSendNotifyMessageW)( HWND, UINT, WPARAM, LPARAM );
     BOOL (WINAPI *pSetWindowPos)( HWND, HWND, INT, INT, INT, INT, UINT );
     DWORD (WINAPI *pWaitForInputIdle)( HANDLE, DWORD );
     HWND (WINAPI *pWindowFromDC)( HDC );

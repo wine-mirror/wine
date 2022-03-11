@@ -125,10 +125,29 @@ LRESULT send_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
     return user_callbacks->pSendMessageW( hwnd, msg, wparam, lparam );
 }
 
+/* see SendNotifyMessageW */
+static BOOL send_notify_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL ansi )
+{
+    return user_callbacks && user_callbacks->pSendNotifyMessageW( hwnd, msg, wparam, lparam );
+}
+
 /* see PostMessageW */
 LRESULT post_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     /* FIXME: move implementation from user32 */
     if (!user_callbacks) return 0;
     return user_callbacks->pPostMessageW( hwnd, msg, wparam, lparam );
+}
+
+BOOL WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
+                               ULONG_PTR result_info, DWORD type, BOOL ansi )
+{
+    switch (type)
+    {
+    case FNID_SENDNOTIFYMESSAGE:
+        return send_notify_message( hwnd, msg, wparam, lparam, ansi );
+    default:
+        FIXME( "%p %x %lx %lx %lx %x %x\n", hwnd, msg, wparam, lparam, result_info, type, ansi );
+    }
+    return 0;
 }
