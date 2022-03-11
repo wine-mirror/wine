@@ -709,6 +709,7 @@ static NTSTATUS recv_msg( struct icmp_data *data, struct icmp_listen_params *par
     TRACE( "recvmsg() rets %d errno %d addr_len %d iovlen %d msg_flags %x\n",
            recvd, errno, msg.msg_namelen, (int)iov[0].iov_len, msg.msg_flags );
 
+    if (recvd < 0) goto skip;
     if (!data->ops->parse_ip_hdr( &msg, recvd, &ip_hdr_len, &ctx )) goto skip;
     if (recvd < ip_hdr_len + sizeof(*icmp_hdr)) goto skip;
 
