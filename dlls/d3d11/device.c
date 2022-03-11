@@ -4090,7 +4090,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFeatureSupport(ID3D11Device2 
             options->ConstantBufferPartialUpdate = FALSE;
             options->ConstantBufferOffsetting = TRUE;
             options->MapNoOverwriteOnDynamicConstantBuffer = FALSE;
-            options->MapNoOverwriteOnDynamicBufferSRV = FALSE;
+            options->MapNoOverwriteOnDynamicBufferSRV = TRUE;
             options->MultisampleRTVWithForcedSampleCountOne = FALSE;
             options->SAD4ShaderInstructions = FALSE;
             options->ExtendedDoublesShaderInstructions = FALSE;
