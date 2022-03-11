@@ -1196,6 +1196,7 @@ static void test_set_getsockopt(void)
         {AF_INET6, SOCK_DGRAM, IPPROTO_IPV6, IPV6_PKTINFO, FALSE, {0, 0, 4}, {0}, TRUE, TRUE},
         {AF_INET6, SOCK_DGRAM, IPPROTO_IPV6, IPV6_RECVTCLASS, FALSE, {0, 0, 4}, {0}, TRUE, TRUE},
         {AF_INET6, SOCK_DGRAM, IPPROTO_IPV6, IPV6_UNICAST_HOPS, TRUE, {1, 1, 4}, {0}, FALSE},
+        {AF_INET6, SOCK_DGRAM, IPPROTO_IPV6, IPV6_V6ONLY, TRUE, {1, 1, 1}, {0}, TRUE},
     };
     SOCKET s, s2;
     int i, j, err, lasterr;
