@@ -10352,7 +10352,9 @@ static void test_effect_crop(BOOL d3d11)
 
 static void test_stroke_contains_point(BOOL d3d11)
 {
+    ID2D1TransformedGeometry *transformed_geometry;
     ID2D1RectangleGeometry *rectangle;
+    D2D1_MATRIX_3X2_F matrix;
     ID2D1GeometrySink *sink;
     ID2D1PathGeometry *path;
     ID2D1Factory *factory;
@@ -10370,6 +10372,7 @@ static void test_stroke_contains_point(BOOL d3d11)
         float stroke_width;
         BOOL matrix;
         BOOL contains;
+        BOOL todo;
     }
     rectangle_tests[] =
     {
@@ -10527,6 +10530,24 @@ static void test_stroke_contains_point(BOOL d3d11)
         {{{{1.0f, 0.0f, 1.0f, 1.0f}}}, {1425.0f, 827.6f}, 0.1f, 5.0f, TRUE, FALSE},
         {{{{1.0f, 0.0f, 1.0f, 1.0f}}}, {1620.1f, 800.0f}, 0.1f, 5.0f, TRUE, FALSE},
         {{{{1.0f, 0.0f, 1.0f, 1.0f}}}, {1620.4f, 800.0f}, 0.1f, 5.0f, TRUE, TRUE},
+    },
+    transformed_tests[] =
+    {
+        /* 0. Stroked area hittesting. Edge. Tolerance is 0.0f */
+        {{{{0.0f}}}, {0.74f,  2.5f},  0.0f,   1.0f, FALSE, TRUE},
+        {{{{0.0f}}}, {0.75f,  2.5f},  0.0f,   1.0f, FALSE, FALSE, TRUE},
+
+        /* 2. Stroked area hittesting. Edge. Tolerance is negative */
+        {{{{0.0f}}}, {0.74f,  2.5f}, -1.0f,   1.0f, FALSE, TRUE},
+        {{{{0.0f}}}, {0.75f,  2.5f}, -1.0f,   1.0f, FALSE, FALSE, TRUE},
+
+        /* 4. Stroked area hittesting. Edge. Tolerance is close to zero */
+        {{{{0.0f}}}, {0.501f, 2.5f},  0.001f, 1.0f, FALSE, TRUE},
+        {{{{0.0f}}}, {0.502f, 2.5f},  0.001f, 1.0f, FALSE, FALSE, TRUE},
+
+        /* 6. Stroked area hittesting. Edge. Tolerance is D2D1_DEFAULT_FLATTENING_TOLERANCE */
+        {{{{0.0f}}}, {0.74f,  2.5f},  0.25f,  1.0f, FALSE, TRUE},
+        {{{{0.0f}}}, {0.75f,  2.5f},  0.25f,  1.0f, FALSE, FALSE, TRUE},
     };
 
     hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
@@ -10615,6 +10636,34 @@ static void test_stroke_contains_point(BOOL d3d11)
     }
 
     ID2D1PathGeometry_Release(path);
+
+    set_rect(&rect, 0.0f, 0.0f, 5.0f, 5.0f);
+    hr = ID2D1Factory_CreateRectangleGeometry(factory, &rect, &rectangle);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    set_matrix_identity(&matrix);
+    scale_matrix(&matrix, 2.0f, 4.0f);
+    hr = ID2D1Factory_CreateTransformedGeometry(factory, (ID2D1Geometry *)rectangle, &matrix,
+                &transformed_geometry);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(transformed_tests); ++i)
+    {
+        const struct contains_point_test *test = &transformed_tests[i];
+
+        winetest_push_context("Test %u", i);
+
+        contains = !test->contains;
+        hr = ID2D1TransformedGeometry_StrokeContainsPoint(transformed_geometry, test->point,
+                test->stroke_width, NULL, test->matrix ? &test->transform : NULL, test->tolerance,
+                &contains);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        todo_wine_if(test->todo)
+        ok(contains == test->contains, "Got unexpected result %#x.\n", contains);
+
+        winetest_pop_context();
+    }
+    ID2D1TransformedGeometry_Release(transformed_geometry);
+    ID2D1RectangleGeometry_Release(rectangle);
 
     ID2D1Factory_Release(factory);
 }
