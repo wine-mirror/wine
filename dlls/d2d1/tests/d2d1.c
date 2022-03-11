@@ -4163,7 +4163,7 @@ static void test_rectangle_geometry(BOOL d3d11)
     hr = ID2D1Factory_CreateTransformedGeometry(factory, (ID2D1Geometry *)geometry, &matrix, &transformed_geometry);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-    ID2D1TransformedGeometry_GetBounds(transformed_geometry, NULL, &rect);
+    hr = ID2D1TransformedGeometry_GetBounds(transformed_geometry, NULL, &rect);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     match = compare_rect(&rect, -7.85640717e+01f, 1.79903809e+02f, 1.07179594e+01f, 2.73205078e+02f, 1);
     ok(match, "Got unexpected bounds {%.8e, %.8e, %.8e, %.8e}.\n",
@@ -4184,7 +4184,7 @@ static void test_rectangle_geometry(BOOL d3d11)
     set_matrix_identity(&matrix);
     rotate_matrix(&matrix, M_PI / -3.0f);
     scale_matrix(&matrix, 0.25f, 0.2f);
-    ID2D1TransformedGeometry_GetBounds(transformed_geometry, &matrix, &rect);
+    hr = ID2D1TransformedGeometry_GetBounds(transformed_geometry, &matrix, &rect);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     match = compare_rect(&rect, 30.0f, 20.0f, 40.0f, 40.0f, 2);
     ok(match, "Got unexpected bounds {%.8e, %.8e, %.8e, %.8e}.\n",
@@ -4198,7 +4198,7 @@ static void test_rectangle_geometry(BOOL d3d11)
 
     set_matrix_identity(&matrix);
     scale_matrix(&matrix, 2.0f, 0.0f);
-    ID2D1TransformedGeometry_GetBounds(transformed_geometry, &matrix, &rect);
+    hr = ID2D1TransformedGeometry_GetBounds(transformed_geometry, &matrix, &rect);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     match = compare_rect(&rect, -1.57128143e+02f, 0.00000000e+00f, 2.14359188e+01f, 0.00000000e+00f, 1);
     ok(match, "Got unexpected bounds {%.8e, %.8e, %.8e, %.8e}.\n",
@@ -4212,7 +4212,7 @@ static void test_rectangle_geometry(BOOL d3d11)
 
     set_matrix_identity(&matrix);
     scale_matrix(&matrix, 0.0f, 0.5f);
-    ID2D1TransformedGeometry_GetBounds(transformed_geometry, &matrix, &rect);
+    hr = ID2D1TransformedGeometry_GetBounds(transformed_geometry, &matrix, &rect);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     match = compare_rect(&rect, 0.00000000e+00f, 8.99519043e+01f, 0.00000000e+00, 1.36602539e+02f, 1);
     ok(match, "Got unexpected bounds {%.8e, %.8e, %.8e, %.8e}.\n",
