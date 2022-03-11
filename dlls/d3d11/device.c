@@ -4087,7 +4087,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFeatureSupport(ID3D11Device2 
             options->FlagsForUpdateAndCopySeenByDriver = FALSE;
             options->ClearView = FALSE;
             options->CopyWithOverlap = FALSE;
-            options->ConstantBufferPartialUpdate = FALSE;
+            options->ConstantBufferPartialUpdate = TRUE;
             options->ConstantBufferOffsetting = TRUE;
             options->MapNoOverwriteOnDynamicConstantBuffer = TRUE;
             options->MapNoOverwriteOnDynamicBufferSRV = TRUE;
