@@ -518,6 +518,13 @@ BOOL WINAPI CopyFileExW( const WCHAR *source, const WCHAR *dest, LPPROGRESS_ROUT
 
     TRACE("%s -> %s, %lx\n", debugstr_w(source), debugstr_w(dest), flags);
 
+    if (flags & COPY_FILE_RESTARTABLE)
+        FIXME("COPY_FILE_RESTARTABLE is not supported\n");
+    if (flags & COPY_FILE_COPY_SYMLINK)
+        FIXME("COPY_FILE_COPY_SYMLINK is not supported\n");
+    if (flags & COPY_FILE_OPEN_SOURCE_FOR_WRITE)
+        FIXME("COPY_FILE_OPEN_SOURCE_FOR_WRITE is not supported\n");
+
     if ((h1 = CreateFileW( source, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                            NULL, OPEN_EXISTING, 0, 0 )) == INVALID_HANDLE_VALUE)
     {
