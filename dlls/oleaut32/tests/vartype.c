@@ -2265,33 +2265,13 @@ static void test_VarUI8FromStr(void)
 
 static void test_VarUI8Copy(void)
 {
-  HRESULT hres;
-  VARIANTARG vSrc, vDst;
-  ULONGLONG in = 1;
-
   if (!has_i8)
   {
     win_skip("I8 and UI8 data types are not available\n");
     return;
   }
 
-  VariantInit(&vSrc);
-  VariantInit(&vDst);
-  V_VT(&vSrc) = VT_UI8;
-  V_UI8(&vSrc) = in;
-  hres = VariantCopy(&vDst, &vSrc);
-  ok(hres == S_OK && V_VT(&vDst) == VT_UI8 && V_UI8(&vDst) == in,
-     "copy hres 0x%X, type %d, value (%x%08x) %x%08x\n",
-     hres, V_VT(&vDst), (UINT)(in >> 32), (UINT)in, (UINT)(V_UI8(&vDst) >> 32), (UINT)V_UI8(&vDst) );
-  V_VT(&vSrc) = VT_UI8|VT_BYREF;
-  V_UI8REF(&vSrc) = &in;
-  hres = VariantCopy(&vDst, &vSrc);
-  ok(hres == S_OK && V_VT(&vDst) == (VT_UI8|VT_BYREF) && V_UI8REF(&vDst) == &in,
-     "ref hres 0x%X, type %d, ref (%p) %p\n", hres, V_VT(&vDst), &in, V_UI8REF(&vDst));
-  hres = VariantCopyInd(&vDst, &vSrc);
-  ok(hres == S_OK && V_VT(&vDst) == VT_UI8 && V_UI8(&vDst) == in,
-     "copy hres 0x%X, type %d, value (%x%08x) %x%08x\n",
-     hres, V_VT(&vDst), (UINT)(in >> 32), (UINT)in, (UINT)(V_UI8(&vDst) >> 32), (UINT)V_UI8(&vDst) );
+  COPYTEST(1ull, VT_UI8, V_UI8(&vSrc), V_UI8(&vDst), V_UI8REF(&vSrc), V_UI8REF(&vDst), "%I64u");
 }
 
 static void test_VarUI8ChangeTypeEx(void)
