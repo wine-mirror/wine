@@ -370,7 +370,7 @@
 @ stdcall -import GetSidSubAuthorityCount(ptr)
 @ stub GetSiteSidFromToken
 # @ stub GetStringConditionFromBinary
-# @ stub GetThreadWaitChain
+@ stdcall GetThreadWaitChain(ptr ptr long long ptr ptr ptr)
 @ stdcall -import GetTokenInformation(long long ptr long ptr)
 @ stdcall GetTraceEnableFlags(int64) ntdll.EtwGetTraceEnableFlags
 @ stdcall GetTraceEnableLevel(int64) ntdll.EtwGetTraceEnableLevel
