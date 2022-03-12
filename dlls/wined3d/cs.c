@@ -3322,6 +3322,12 @@ static void poll_queries(struct wined3d_cs *cs)
 
 static void wined3d_cs_wait_event(struct wined3d_cs *cs)
 {
+    static const LARGE_INTEGER query_timeout = {.QuadPart = WINED3D_CS_COMMAND_WAIT_WITH_QUERIES_TIMEOUT * -10};
+    const LARGE_INTEGER *timeout = NULL;
+
+    if (!list_empty(&cs->query_poll_list))
+        timeout = &query_timeout;
+
     InterlockedExchange(&cs->waiting_for_event, TRUE);
 
     /* The main thread might have enqueued a command and blocked on it after
@@ -3337,9 +3343,9 @@ static void wined3d_cs_wait_event(struct wined3d_cs *cs)
         return;
 
     if (pNtWaitForAlertByThreadId)
-        pNtWaitForAlertByThreadId(NULL, NULL);
+        pNtWaitForAlertByThreadId(NULL, timeout);
     else
-        WaitForSingleObject(cs->event, INFINITE);
+        NtWaitForSingleObject(cs->event, FALSE, timeout);
 }
 
 static void wined3d_cs_command_lock(const struct wined3d_cs *cs)
@@ -3451,10 +3457,10 @@ static DWORD WINAPI wined3d_cs_run(void *ctx)
                 YieldProcessor();
                 if (++spin_count >= WINED3D_CS_SPIN_COUNT)
                 {
-                    if (list_empty(&cs->query_poll_list))
-                        wined3d_cs_wait_event(cs);
+                    if (poll)
+                        poll = WINED3D_CS_QUERY_POLL_INTERVAL - 1;
                     else
-                        Sleep(0);
+                        wined3d_cs_wait_event(cs);
                 }
                 continue;
             }

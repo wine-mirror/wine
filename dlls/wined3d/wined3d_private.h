@@ -3564,6 +3564,8 @@ enum wined3d_cs_queue_id
 #define WINED3D_CS_QUEUE_SIZE           0x400000u
 #endif
 #define WINED3D_CS_SPIN_COUNT           2000u
+/* How long to wait for commands when there are active queries, in µs. */
+#define WINED3D_CS_COMMAND_WAIT_WITH_QUERIES_TIMEOUT 100
 #define WINED3D_CS_QUEUE_MASK           (WINED3D_CS_QUEUE_SIZE - 1)
 
 C_ASSERT(!(WINED3D_CS_QUEUE_SIZE & (WINED3D_CS_QUEUE_SIZE - 1)));
