@@ -859,7 +859,7 @@ INT WINAPI DPA_Search (HDPA hdpa, LPVOID pFind, INT nStart,
         r = hdpa->nItemCount - 1;
         lpPtr = hdpa->ptrs;
         while (r >= l) {
-            x = (l + r) / 2;
+            x = l + (r - l) / 2;
             n = (pfnCompare)(pFind, lpPtr[x], lParam);
             if (n == 0)
                 return x;
