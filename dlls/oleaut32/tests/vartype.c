@@ -1871,13 +1871,6 @@ static void test_VarUI4ChangeTypeEx(void)
 #undef EXPECTRES
 #define EXPECTRES(res, x) _EXPECTRES(res, x, "%I64d")
 
-#define EXPECTI8(x) \
-  ok((hres == S_OK && out == (CONV_TYPE)(x)), \
-     "expected " #x "(%u,%u), got (%u,%u); hres=0x%08x\n", \
-      (ULONG)((LONG64)(x) >> 32), (ULONG)((x) & 0xffffffff), \
-      (ULONG)(out >> 32), (ULONG)(out & 0xffffffff), hres)
-
-
 static void test_VarI8FromI1(void)
 {
   CONVVARS(signed char);
@@ -2087,20 +2080,16 @@ static void test_VarI8ChangeTypeEx(void)
 /* Adapt the test macros to UI8 */
 #undef CONV_TYPE
 #define CONV_TYPE ULONG64
+#undef EXPECTRES
+#define EXPECTRES(res, x) _EXPECTRES(res, x, "%I64u")
 
 static void test_VarUI8FromI1(void)
 {
   CONVVARS(signed char);
   int i;
 
-  for (i = -128; i < 128; i++)
-  {
-    CONVERT(VarUI8FromI1,i);
-    if (i < 0)
-      EXPECT_OVERFLOW;
-    else
-      EXPECTI8(i);
-  }
+  OVERFLOWRANGE(VarUI8FromI1, -128, 0);
+  CONVERTRANGE(VarUI8FromI1, 0, 128);
 }
 
 static void test_VarUI8FromUI1(void)
@@ -2108,10 +2097,7 @@ static void test_VarUI8FromUI1(void)
   CONVVARS(BYTE);
   int i;
 
-  for (i = 0; i < 256; i++)
-  {
-    CONVERT(VarUI8FromUI1,i); EXPECTI8(i);
-  }
+  CONVERTRANGE(VarUI8FromUI1, 0, 256);
 }
 
 static void test_VarUI8FromI2(void)
@@ -2119,14 +2105,8 @@ static void test_VarUI8FromI2(void)
   CONVVARS(SHORT);
   int i;
 
-  for (i = -32768; i < 32768; i++)
-  {
-    CONVERT(VarUI8FromI2,i);
-    if (i < 0)
-      EXPECT_OVERFLOW;
-    else
-      EXPECTI8(i);
-  }
+  OVERFLOWRANGE(VarUI8FromI2, -32768, 0);
+  CONVERTRANGE(VarUI8FromI2, 0, 32768);
 }
 
 static void test_VarUI8FromUI2(void)
@@ -2134,18 +2114,15 @@ static void test_VarUI8FromUI2(void)
   CONVVARS(USHORT);
   int i;
 
-  for (i = 0; i < 65535; i++)
-  {
-    CONVERT(VarUI8FromUI2,i); EXPECTI8(i);
-  }
+  CONVERTRANGE(VarUI8FromUI2, 0, 65535);
 }
 
 static void test_VarUI8FromUI4(void)
 {
   CONVVARS(ULONG);
 
-  CONVERT(VarUI8FromUI4, 0); EXPECTI8(0);
-  CONVERT(VarUI8FromUI4, 0xffffffff); EXPECTI8(0xffffffff);
+  CONVERT(VarUI8FromUI4, 0); EXPECT(0);
+  CONVERT(VarUI8FromUI4, 0xffffffff); EXPECT(0xffffffff);
 }
 
 static void test_VarUI8FromR4(void)
@@ -2153,18 +2130,18 @@ static void test_VarUI8FromR4(void)
   CONVVARS(FLOAT);
 
   CONVERT(VarUI8FromR4, -1.0f);  EXPECT_OVERFLOW;
-  CONVERT(VarUI8FromR4, 0.0f);   EXPECTI8(0);
-  CONVERT(VarUI8FromR4, 1.0f);   EXPECTI8(1);
-  CONVERT(VarUI8FromR4, 255.0f); EXPECTI8(255);
+  CONVERT(VarUI8FromR4, 0.0f);   EXPECT(0);
+  CONVERT(VarUI8FromR4, 1.0f);   EXPECT(1);
+  CONVERT(VarUI8FromR4, 255.0f); EXPECT(255);
 
   CONVERT(VarUI8FromR4, -1.5f); EXPECT_OVERFLOW;
   CONVERT(VarUI8FromR4, -0.6f); EXPECT_OVERFLOW;
-  CONVERT(VarUI8FromR4, -0.5f); EXPECTI8(0);
-  CONVERT(VarUI8FromR4, -0.4f); EXPECTI8(0);
-  CONVERT(VarUI8FromR4, 0.4f);  EXPECTI8(0);
-  CONVERT(VarUI8FromR4, 0.5f);  EXPECTI8(0);
-  CONVERT(VarUI8FromR4, 0.6f);  EXPECTI8(1);
-  CONVERT(VarUI8FromR4, 1.5f);  EXPECTI8(2);
+  CONVERT(VarUI8FromR4, -0.5f); EXPECT(0);
+  CONVERT(VarUI8FromR4, -0.4f); EXPECT(0);
+  CONVERT(VarUI8FromR4, 0.4f);  EXPECT(0);
+  CONVERT(VarUI8FromR4, 0.5f);  EXPECT(0);
+  CONVERT(VarUI8FromR4, 0.6f);  EXPECT(1);
+  CONVERT(VarUI8FromR4, 1.5f);  EXPECT(2);
 }
 
 static void test_VarUI8FromR8(void)
@@ -2172,18 +2149,18 @@ static void test_VarUI8FromR8(void)
   CONVVARS(DOUBLE);
 
   CONVERT(VarUI8FromR8, -1.0);  EXPECT_OVERFLOW;
-  CONVERT(VarUI8FromR8, 0.0);   EXPECTI8(0);
-  CONVERT(VarUI8FromR8, 1.0);   EXPECTI8(1);
-  CONVERT(VarUI8FromR8, 255.0); EXPECTI8(255);
+  CONVERT(VarUI8FromR8, 0.0);   EXPECT(0);
+  CONVERT(VarUI8FromR8, 1.0);   EXPECT(1);
+  CONVERT(VarUI8FromR8, 255.0); EXPECT(255);
 
   CONVERT(VarUI8FromR8, -1.5); EXPECT_OVERFLOW;
   CONVERT(VarUI8FromR8, -0.6); EXPECT_OVERFLOW;
-  CONVERT(VarUI8FromR8, -0.5); EXPECTI8(0);
-  CONVERT(VarUI8FromR8, -0.4); EXPECTI8(0);
-  CONVERT(VarUI8FromR8, 0.4);  EXPECTI8(0);
-  CONVERT(VarUI8FromR8, 0.5);  EXPECTI8(0);
-  CONVERT(VarUI8FromR8, 0.6);  EXPECTI8(1);
-  CONVERT(VarUI8FromR8, 1.5);  EXPECTI8(2);
+  CONVERT(VarUI8FromR8, -0.5); EXPECT(0);
+  CONVERT(VarUI8FromR8, -0.4); EXPECT(0);
+  CONVERT(VarUI8FromR8, 0.4);  EXPECT(0);
+  CONVERT(VarUI8FromR8, 0.5);  EXPECT(0);
+  CONVERT(VarUI8FromR8, 0.6);  EXPECT(1);
+  CONVERT(VarUI8FromR8, 1.5);  EXPECT(2);
 }
 
 static void test_VarUI8FromDate(void)
@@ -2191,18 +2168,18 @@ static void test_VarUI8FromDate(void)
   CONVVARS(DATE);
 
   CONVERT(VarUI8FromDate, -1.0);  EXPECT_OVERFLOW;
-  CONVERT(VarUI8FromDate, 0.0);   EXPECTI8(0);
-  CONVERT(VarUI8FromDate, 1.0);   EXPECTI8(1);
-  CONVERT(VarUI8FromDate, 255.0); EXPECTI8(255);
+  CONVERT(VarUI8FromDate, 0.0);   EXPECT(0);
+  CONVERT(VarUI8FromDate, 1.0);   EXPECT(1);
+  CONVERT(VarUI8FromDate, 255.0); EXPECT(255);
 
   CONVERT(VarUI8FromDate, -1.5); EXPECT_OVERFLOW;
   CONVERT(VarUI8FromDate, -0.6); EXPECT_OVERFLOW;
-  CONVERT(VarUI8FromDate, -0.5); EXPECTI8(0);
-  CONVERT(VarUI8FromDate, -0.4); EXPECTI8(0);
-  CONVERT(VarUI8FromDate, 0.4);  EXPECTI8(0);
-  CONVERT(VarUI8FromDate, 0.5);  EXPECTI8(0);
-  CONVERT(VarUI8FromDate, 0.6);  EXPECTI8(1);
-  CONVERT(VarUI8FromDate, 1.5);  EXPECTI8(2);
+  CONVERT(VarUI8FromDate, -0.5); EXPECT(0);
+  CONVERT(VarUI8FromDate, -0.4); EXPECT(0);
+  CONVERT(VarUI8FromDate, 0.4);  EXPECT(0);
+  CONVERT(VarUI8FromDate, 0.5);  EXPECT(0);
+  CONVERT(VarUI8FromDate, 0.6);  EXPECT(1);
+  CONVERT(VarUI8FromDate, 1.5);  EXPECT(2);
 }
 
 static void test_VarUI8FromBool(void)
@@ -2210,10 +2187,7 @@ static void test_VarUI8FromBool(void)
   CONVVARS(VARIANT_BOOL);
   int i;
 
-  for (i = -32768; i < 32768; i++)
-  {
-    CONVERT(VarUI8FromBool, i); EXPECTI8(i);
-  }
+  CONVERTRANGE(VarUI8FromBool, -32768, 32768);
 }
 
 static void test_VarUI8FromI8(void)
@@ -2221,8 +2195,8 @@ static void test_VarUI8FromI8(void)
   CONVVARS(LONG64);
 
   CONVERT(VarUI8FromI8, -1); EXPECT_OVERFLOW;
-  CONVERT(VarUI8FromI8, 0);  EXPECTI8(0);
-  CONVERT(VarUI8FromI8, 1);  EXPECTI8(1);
+  CONVERT(VarUI8FromI8, 0);  EXPECT(0);
+  CONVERT(VarUI8FromI8, 1);  EXPECT(1);
 }
 
 static void test_VarUI8FromCy(void)
@@ -2230,18 +2204,18 @@ static void test_VarUI8FromCy(void)
   CONVVARS(CY);
 
   CONVERT_CY(VarUI8FromCy,-1);  EXPECT_OVERFLOW;
-  CONVERT_CY(VarUI8FromCy,0);   EXPECTI8(0);
-  CONVERT_CY(VarUI8FromCy,1);   EXPECTI8(1);
-  CONVERT_CY(VarUI8FromCy,255); EXPECTI8(255);
+  CONVERT_CY(VarUI8FromCy,0);   EXPECT(0);
+  CONVERT_CY(VarUI8FromCy,1);   EXPECT(1);
+  CONVERT_CY(VarUI8FromCy,255); EXPECT(255);
 
   CONVERT_CY(VarUI8FromCy,-1.5); EXPECT_OVERFLOW;
   CONVERT_CY(VarUI8FromCy,-0.6); EXPECT_OVERFLOW;
-  CONVERT_CY(VarUI8FromCy,-0.5); EXPECTI8(0);
-  CONVERT_CY(VarUI8FromCy,-0.4); EXPECTI8(0);
-  CONVERT_CY(VarUI8FromCy,0.4);  EXPECTI8(0);
-  CONVERT_CY(VarUI8FromCy,0.5);  EXPECTI8(0);
-  CONVERT_CY(VarUI8FromCy,0.6);  EXPECTI8(1);
-  CONVERT_CY(VarUI8FromCy,1.5);  EXPECTI8(2);
+  CONVERT_CY(VarUI8FromCy,-0.5); EXPECT(0);
+  CONVERT_CY(VarUI8FromCy,-0.4); EXPECT(0);
+  CONVERT_CY(VarUI8FromCy,0.4);  EXPECT(0);
+  CONVERT_CY(VarUI8FromCy,0.5);  EXPECT(0);
+  CONVERT_CY(VarUI8FromCy,0.6);  EXPECT(1);
+  CONVERT_CY(VarUI8FromCy,1.5);  EXPECT(2);
 }
 
 static void test_VarUI8FromDec(void)
@@ -2256,12 +2230,12 @@ static void test_VarUI8FromDec(void)
       CONVERT_DEC(VarUI8FromDec,0,0x80,0,1);
   }
 
-  CONVERT_DEC(VarUI8FromDec,0,0,0,0);   EXPECTI8(0);
-  CONVERT_DEC(VarUI8FromDec,0,0,0,1);   EXPECTI8(1);
-  CONVERT_DEC(VarUI8FromDec,0,0,0,255); EXPECTI8(255);
+  CONVERT_DEC(VarUI8FromDec,0,0,0,0);   EXPECT(0);
+  CONVERT_DEC(VarUI8FromDec,0,0,0,1);   EXPECT(1);
+  CONVERT_DEC(VarUI8FromDec,0,0,0,255); EXPECT(255);
 
   CONVERT_DEC(VarUI8FromDec,2,0x80,0,100); EXPECT_OVERFLOW;
-  CONVERT_DEC(VarUI8FromDec,2,0,0,25500);  EXPECTI8(255);
+  CONVERT_DEC(VarUI8FromDec,2,0,0,25500);  EXPECT(255);
 }
 
 static void test_VarUI8FromStr(void)
@@ -2272,21 +2246,21 @@ static void test_VarUI8FromStr(void)
   in = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
 
   CONVERT_STR(VarUI8FromStr,NULL,0);                    EXPECT_MISMATCH;
-  CONVERT_STR(VarUI8FromStr,"0",0);                     EXPECTI8(0);
+  CONVERT_STR(VarUI8FromStr,"0",0);                     EXPECT(0);
   CONVERT_STR(VarUI8FromStr,"-1",0);                    EXPECT_OVERFLOW;
-  CONVERT_STR(VarUI8FromStr,"2147483647",0);            EXPECTI8(2147483647);
-  CONVERT_STR(VarUI8FromStr,"18446744073709551614",0);  EXPECTI8(0xFFFFFFFFFFFFFFFEull);
-  CONVERT_STR(VarUI8FromStr,"18446744073709551615",0);  EXPECTI8(0xFFFFFFFFFFFFFFFFull);
+  CONVERT_STR(VarUI8FromStr,"2147483647",0);            EXPECT(2147483647);
+  CONVERT_STR(VarUI8FromStr,"18446744073709551614",0);  EXPECT(0xFFFFFFFFFFFFFFFEull);
+  CONVERT_STR(VarUI8FromStr,"18446744073709551615",0);  EXPECT(0xFFFFFFFFFFFFFFFFull);
   CONVERT_STR(VarUI8FromStr,"18446744073709551616",0);  EXPECT_OVERFLOW;
 
   CONVERT_STR(VarUI8FromStr,"-1.5",LOCALE_NOUSEROVERRIDE); EXPECT_OVERFLOW;
   CONVERT_STR(VarUI8FromStr,"-0.6",LOCALE_NOUSEROVERRIDE); EXPECT_OVERFLOW;
-  CONVERT_STR(VarUI8FromStr,"-0.5",LOCALE_NOUSEROVERRIDE); EXPECTI8(0);
-  CONVERT_STR(VarUI8FromStr,"-0.4",LOCALE_NOUSEROVERRIDE); EXPECTI8(0);
-  CONVERT_STR(VarUI8FromStr,"0.4",LOCALE_NOUSEROVERRIDE);  EXPECTI8(0);
-  CONVERT_STR(VarUI8FromStr,"0.5",LOCALE_NOUSEROVERRIDE);  EXPECTI8(0);
-  CONVERT_STR(VarUI8FromStr,"0.6",LOCALE_NOUSEROVERRIDE);  EXPECTI8(1);
-  CONVERT_STR(VarUI8FromStr,"1.5",LOCALE_NOUSEROVERRIDE);  EXPECTI8(2);
+  CONVERT_STR(VarUI8FromStr,"-0.5",LOCALE_NOUSEROVERRIDE); EXPECT(0);
+  CONVERT_STR(VarUI8FromStr,"-0.4",LOCALE_NOUSEROVERRIDE); EXPECT(0);
+  CONVERT_STR(VarUI8FromStr,"0.4",LOCALE_NOUSEROVERRIDE);  EXPECT(0);
+  CONVERT_STR(VarUI8FromStr,"0.5",LOCALE_NOUSEROVERRIDE);  EXPECT(0);
+  CONVERT_STR(VarUI8FromStr,"0.6",LOCALE_NOUSEROVERRIDE);  EXPECT(1);
+  CONVERT_STR(VarUI8FromStr,"1.5",LOCALE_NOUSEROVERRIDE);  EXPECT(2);
 }
 
 static void test_VarUI8Copy(void)
