@@ -548,7 +548,7 @@
 @ stdcall -import OpenServiceA(long str long)
 @ stdcall -import OpenServiceW(long wstr long)
 @ stdcall -import OpenThreadToken(long long long ptr)
-# @ stub OpenThreadWaitChainSession
+@ stdcall OpenThreadWaitChainSession(long ptr)
 @ stdcall -ret64 OpenTraceA(ptr)
 @ stdcall -ret64 -import OpenTraceW(ptr)
 # @ stub OperationEnd
