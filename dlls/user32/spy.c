@@ -1764,6 +1764,7 @@ static const CONTROL_CLASS cc_array[] = {
     {TOOLTIPS_CLASSW,   tooltips_array, ARRAY_SIZE(tooltips_array)},
     {UPDOWN_CLASSW,     updown_array,   ARRAY_SIZE(updown_array)},
     {RICHEDIT_CLASS20W, richedit_array, ARRAY_SIZE(richedit_array)},
+    {MSFTEDIT_CLASS,    richedit_array, ARRAY_SIZE(richedit_array)},
     {0, 0, 0}
 };
 
