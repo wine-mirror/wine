@@ -667,3 +667,12 @@ CONFIGRET WINAPI CM_Request_Device_EjectW(DEVINST dev, PPNP_VETO_TYPE type, LPWS
     FIXME("(0x%08lx, %p, %p, %lu, 0x%08lx) stub\n", dev, type, name, length, flags);
     return CR_SUCCESS;
 }
+
+BOOL WINAPI SetupDiGetClassRegistryPropertyW(const GUID *class, DWORD prop, DWORD *datatype, BYTE *buff, DWORD size,
+    DWORD *req_size, const WCHAR *name, VOID *reserved)
+{
+    FIXME("class %s, prop %ld, datatype %p, buff %p, size %ld, req_size %p, name %s, reserved %p stub!\n",
+        debugstr_guid(class), prop, datatype, buff, size, req_size, debugstr_w(name), reserved);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
