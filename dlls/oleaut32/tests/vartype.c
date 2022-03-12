@@ -648,6 +648,8 @@ static void test_VarI1ChangeTypeEx(void)
 
 #undef CONV_TYPE
 #define CONV_TYPE BYTE
+#undef EXPECTRES
+#define EXPECTRES(res, x) _EXPECTRES(res, x, "%u")
 
 static void test_VarUI1FromI1(void)
 {
@@ -942,6 +944,8 @@ static void test_VarUI1ChangeTypeEx(void)
 
 #undef CONV_TYPE
 #define CONV_TYPE SHORT
+#undef EXPECTRES
+#define EXPECTRES(res, x) _EXPECTRES(res, x, "%d")
 
 static void test_VarI2FromI1(void)
 {
@@ -1178,6 +1182,8 @@ static void test_VarI2ChangeTypeEx(void)
 
 #undef CONV_TYPE
 #define CONV_TYPE USHORT
+#undef EXPECTRES
+#define EXPECTRES(res, x) _EXPECTRES(res, x, "%u")
 
 static void test_VarUI2FromI1(void)
 {
@@ -1411,6 +1417,8 @@ static void test_VarUI2ChangeTypeEx(void)
 
 #undef CONV_TYPE
 #define CONV_TYPE LONG
+#undef EXPECTRES
+#define EXPECTRES(res, x) _EXPECTRES(res, x, "%d")
 
 static void test_VarI4FromI1(void)
 {
