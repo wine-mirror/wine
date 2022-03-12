@@ -24,6 +24,9 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_sync);
 WINE_DECLARE_DEBUG_CHANNEL(fps);
 
+static NTSTATUS (WINAPI *pNtAlertThreadByThreadId)(HANDLE tid);
+static NTSTATUS (WINAPI *pNtWaitForAlertByThreadId)(void *addr, const LARGE_INTEGER *timeout);
+
 #define WINED3D_INITIAL_CS_SIZE 4096
 
 struct wined3d_deferred_upload
@@ -3188,7 +3191,12 @@ static void wined3d_cs_queue_submit(struct wined3d_cs_queue *queue, struct wined
     InterlockedExchange((LONG *)&queue->head, queue->head + packet_size);
 
     if (InterlockedCompareExchange(&cs->waiting_for_event, FALSE, TRUE))
-        SetEvent(cs->event);
+    {
+        if (pNtAlertThreadByThreadId)
+            pNtAlertThreadByThreadId((HANDLE)(ULONG_PTR)cs->thread_id);
+        else
+            SetEvent(cs->event);
+    }
 }
 
 static void wined3d_cs_mt_submit(struct wined3d_device_context *context, enum wined3d_cs_queue_id queue_id)
@@ -3328,7 +3336,10 @@ static void wined3d_cs_wait_event(struct wined3d_cs *cs)
             && InterlockedCompareExchange(&cs->waiting_for_event, FALSE, TRUE))
         return;
 
-    WaitForSingleObject(cs->event, INFINITE);
+    if (pNtWaitForAlertByThreadId)
+        pNtWaitForAlertByThreadId(NULL, NULL);
+    else
+        WaitForSingleObject(cs->event, INFINITE);
 }
 
 static void wined3d_cs_command_lock(const struct wined3d_cs *cs)
@@ -3529,7 +3540,15 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device,
     {
         cs->c.ops = &wined3d_cs_mt_ops;
 
-        if (!(cs->event = CreateEventW(NULL, FALSE, FALSE, NULL)))
+        if (!pNtAlertThreadByThreadId)
+        {
+            HANDLE ntdll = GetModuleHandleW(L"ntdll.dll");
+
+            pNtAlertThreadByThreadId = (void *)GetProcAddress(ntdll, "NtAlertThreadByThreadId");
+            pNtWaitForAlertByThreadId = (void *)GetProcAddress(ntdll, "NtWaitForAlertByThreadId");
+        }
+
+        if (!pNtAlertThreadByThreadId && !(cs->event = CreateEventW(NULL, FALSE, FALSE, NULL)))
         {
             ERR("Failed to create command stream event.\n");
             heap_free(cs->data);
@@ -3547,7 +3566,8 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device,
         {
             ERR("Failed to get wined3d module handle.\n");
             CloseHandle(cs->present_event);
-            CloseHandle(cs->event);
+            if (cs->event)
+                CloseHandle(cs->event);
             heap_free(cs->data);
             goto fail;
         }
@@ -3557,7 +3577,8 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device,
             ERR("Failed to create wined3d command stream thread.\n");
             FreeLibrary(cs->wined3d_module);
             CloseHandle(cs->present_event);
-            CloseHandle(cs->event);
+            if (cs->event)
+                CloseHandle(cs->event);
             heap_free(cs->data);
             goto fail;
         }
@@ -3581,7 +3602,7 @@ void wined3d_cs_destroy(struct wined3d_cs *cs)
         CloseHandle(cs->thread);
         if (!CloseHandle(cs->present_event))
             ERR("Closing present event failed.\n");
-        if (!CloseHandle(cs->event))
+        if (cs->event && !CloseHandle(cs->event))
             ERR("Closing event failed.\n");
     }
 
