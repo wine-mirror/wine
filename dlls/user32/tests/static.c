@@ -16,6 +16,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -85,19 +86,19 @@ static void test_updates(int style)
 
     exstyle = GetWindowLongW(hStatic, GWL_EXSTYLE);
     if (style == SS_ETCHEDHORZ || style == SS_ETCHEDVERT || style == SS_SUNKEN)
-        ok(exstyle == WS_EX_STATICEDGE, "expected WS_EX_STATICEDGE, got %d\n", exstyle);
+        ok(exstyle == WS_EX_STATICEDGE, "expected WS_EX_STATICEDGE, got %ld\n", exstyle);
     else
-        ok(exstyle == 0, "expected 0, got %d\n", exstyle);
+        ok(exstyle == 0, "expected 0, got %ld\n", exstyle);
 
     GetClientRect(hStatic, &rcClient);
     if (style == SS_ETCHEDVERT)
-        ok(rcClient.right == 0, "expected zero width, got %d\n", rcClient.right);
+        ok(rcClient.right == 0, "expected zero width, got %ld\n", rcClient.right);
     else
-        ok(rcClient.right > 0, "expected non-zero width, got %d\n", rcClient.right);
+        ok(rcClient.right > 0, "expected non-zero width, got %ld\n", rcClient.right);
     if (style == SS_ETCHEDHORZ)
-        ok(rcClient.bottom == 0, "expected zero height, got %d\n", rcClient.bottom);
+        ok(rcClient.bottom == 0, "expected zero height, got %ld\n", rcClient.bottom);
     else
-        ok(rcClient.bottom > 0, "expected non-zero height, got %d\n", rcClient.bottom);
+        ok(rcClient.bottom > 0, "expected non-zero height, got %ld\n", rcClient.bottom);
 
     g_nReceivedColorStatic = 0;
     /* during each update parent WndProc will test the WM_CTLCOLORSTATIC message */
@@ -217,10 +218,10 @@ static void test_STM_SETIMAGE(void)
 
     for (type = SS_LEFT; type < SS_ETCHEDFRAME; type++)
     {
-        winetest_push_context("%u", type);
+        winetest_push_context("%lu", type);
 
         hwnd = build_static(type);
-        ok(hwnd != 0, "failed to create static type %#x\n", type);
+        ok(hwnd != 0, "failed to create static type %#lx\n", type);
 
         /* set icon */
         g_nReceivedColorStatic = 0;
