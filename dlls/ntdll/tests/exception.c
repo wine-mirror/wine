@@ -2425,7 +2425,8 @@ static void test_restore_context(void)
     EXCEPTION_RECORD rec;
     _JUMP_BUFFER buf;
     CONTEXT ctx;
-    int i, pass;
+    int i;
+    LONG pass;
 
     if (!pRtlUnwindEx || !pRtlRestoreContext || !pRtlCaptureContext || !p_setjmp)
     {
@@ -4900,7 +4901,7 @@ static void CALLBACK test_unwind_apc(ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR a
 static void test_unwind_from_apc(void)
 {
     NTSTATUS status;
-    int pass;
+    LONG pass;
 
     if (!pNtQueueApcThread)
     {
@@ -8648,7 +8649,7 @@ static void test_user_apc(void)
 {
     NTSTATUS status;
     CONTEXT context;
-    int pass;
+    LONG pass;
 
     if (!pNtQueueApcThread)
     {
@@ -8818,7 +8819,7 @@ static void suspend_process_proc(void)
 {
     HANDLE event = OpenEventA(SYNCHRONIZE, FALSE, suspend_process_event_name);
     HANDLE event2 = OpenEventA(SYNCHRONIZE | EVENT_MODIFY_STATE, FALSE, suspend_process_event2_name);
-    unsigned int count;
+    DWORD count;
     NTSTATUS status;
     HANDLE thread;
 
