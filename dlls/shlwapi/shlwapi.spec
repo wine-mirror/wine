@@ -642,6 +642,8 @@
 @ stdcall PathMakeSystemFolderA(str)
 @ stdcall PathMakeSystemFolderW(wstr)
 @ stdcall -import PathMatchSpecA(str str)
+@ stdcall -import PathMatchSpecExA(str str long)
+@ stdcall -import PathMatchSpecExW(wstr wstr long)
 @ stdcall -import PathMatchSpecW(wstr wstr)
 @ stdcall -import PathParseIconLocationA(str)
 @ stdcall -import PathParseIconLocationW(wstr)

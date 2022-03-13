@@ -482,6 +482,14 @@ BOOL WINAPI PathMatchSpecA(LPCSTR,LPCSTR);
 BOOL WINAPI PathMatchSpecW(LPCWSTR,LPCWSTR);
 #define PathMatchSpec WINELIB_NAME_AW(PathMatchSpec)
 
+#define PMSF_NORMAL             0x00000000
+#define PMSF_MULTIPLE           0x00000001
+#define PMSF_DONT_STRIP_SPACES  0x00010000
+
+HRESULT WINAPI PathMatchSpecExA(LPCSTR,LPCSTR,DWORD);
+HRESULT WINAPI PathMatchSpecExW(LPCWSTR,LPCWSTR,DWORD);
+#define PathMatchSpecEx WINELIB_NAME_AW(PathMatchSpecEx)
+
 int WINAPI PathParseIconLocationA(LPSTR);
 int WINAPI PathParseIconLocationW(LPWSTR);
 #define PathParseIconLocation WINELIB_NAME_AW(PathParseIconLocation)

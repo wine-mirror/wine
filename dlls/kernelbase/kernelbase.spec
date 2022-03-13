@@ -1124,8 +1124,8 @@
 @ stdcall PathIsValidCharA(long long)
 @ stdcall PathIsValidCharW(long long)
 @ stdcall PathMatchSpecA(str str)
-# @ stub PathMatchSpecExA
-# @ stub PathMatchSpecExW
+@ stdcall PathMatchSpecExA(str str long)
+@ stdcall PathMatchSpecExW(wstr wstr long)
 @ stdcall PathMatchSpecW(wstr wstr)
 @ stdcall PathParseIconLocationA(str)
 @ stdcall PathParseIconLocationW(wstr)

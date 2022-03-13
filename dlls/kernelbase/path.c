@@ -2425,22 +2425,30 @@ BOOL WINAPI PathRelativePathToW(WCHAR *path, const WCHAR *from, DWORD attributes
     return TRUE;
 }
 
-BOOL WINAPI PathMatchSpecA(const char *path, const char *mask)
+HRESULT WINAPI PathMatchSpecExA(const char *path, const char *mask, DWORD flags)
 {
     WCHAR *pathW, *maskW;
-    BOOL ret;
+    HRESULT ret;
 
     TRACE("%s, %s\n", wine_dbgstr_a(path), wine_dbgstr_a(mask));
 
+    if (flags)
+        FIXME("Ignoring flags %#lx.", flags);
+
     if (!lstrcmpA(mask, "*.*"))
-        return TRUE; /* Matches every path */
+        return S_OK; /* Matches every path */
 
     pathW = heap_strdupAtoW( path );
     maskW = heap_strdupAtoW( mask );
-    ret = PathMatchSpecW( pathW, maskW );
+    ret = PathMatchSpecExW( pathW, maskW, flags );
     heap_free( pathW );
     heap_free( maskW );
     return ret;
+}
+
+BOOL WINAPI PathMatchSpecA(const char *path, const char *mask)
+{
+    return PathMatchSpecExA(path, mask, 0) == S_OK;
 }
 
 static BOOL path_match_maskW(const WCHAR *name, const WCHAR *mask)
@@ -2475,12 +2483,15 @@ static BOOL path_match_maskW(const WCHAR *name, const WCHAR *mask)
     return FALSE;
 }
 
-BOOL WINAPI PathMatchSpecW(const WCHAR *path, const WCHAR *mask)
+HRESULT WINAPI PathMatchSpecExW(const WCHAR *path, const WCHAR *mask, DWORD flags)
 {
     TRACE("%s, %s\n", wine_dbgstr_w(path), wine_dbgstr_w(mask));
 
+    if (flags)
+        FIXME("Ignoring flags %#lx.", flags);
+
     if (!lstrcmpW(mask, L"*.*"))
-        return TRUE; /* Matches every path */
+        return S_OK; /* Matches every path */
 
     while (*mask)
     {
@@ -2488,7 +2499,7 @@ BOOL WINAPI PathMatchSpecW(const WCHAR *path, const WCHAR *mask)
             mask++; /* Eat leading spaces */
 
         if (path_match_maskW(path, mask))
-            return TRUE; /* Matches the current path */
+            return S_OK; /* Matches the current path */
 
         while (*mask && *mask != ';')
             mask++; /* masks separated by ';' */
@@ -2497,7 +2508,12 @@ BOOL WINAPI PathMatchSpecW(const WCHAR *path, const WCHAR *mask)
             mask++;
     }
 
-    return FALSE;
+    return S_FALSE;
+}
+
+BOOL WINAPI PathMatchSpecW(const WCHAR *path, const WCHAR *mask)
+{
+    return PathMatchSpecExW(path, mask, 0) == S_OK;
 }
 
 void WINAPI PathQuoteSpacesA(char *path)
