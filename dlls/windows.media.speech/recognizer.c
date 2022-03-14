@@ -56,19 +56,20 @@ static HRESULT WINAPI recognizer_QueryInterface( ISpeechRecognizer *iface, REFII
 
     if (IsEqualGUID(iid, &IID_IUnknown) ||
         IsEqualGUID(iid, &IID_IInspectable) ||
+        IsEqualGUID(iid, &IID_IAgileObject) ||
         IsEqualGUID(iid, &IID_ISpeechRecognizer))
     {
         IInspectable_AddRef((*out = &impl->ISpeechRecognizer_iface));
         return S_OK;
     }
 
-    if(IsEqualGUID(iid, &IID_IClosable))
+    if (IsEqualGUID(iid, &IID_IClosable))
     {
         IInspectable_AddRef((*out = &impl->IClosable_iface));
         return S_OK;
     }
 
-    if(IsEqualGUID(iid, &IID_ISpeechRecognizer2))
+    if (IsEqualGUID(iid, &IID_ISpeechRecognizer2))
     {
         IInspectable_AddRef((*out = &impl->ISpeechRecognizer2_iface));
         return S_OK;
@@ -94,7 +95,7 @@ static ULONG WINAPI recognizer_Release( ISpeechRecognizer *iface )
     ULONG ref = InterlockedDecrement(&impl->ref);
     TRACE("iface %p, ref %lu.\n", iface, ref);
 
-    if(!ref)
+    if (!ref)
         free(impl);
 
     return ref;
@@ -403,7 +404,7 @@ static HRESULT WINAPI activation_factory_GetTrustLevel( IActivationFactory *ifac
 static HRESULT WINAPI activation_factory_ActivateInstance( IActivationFactory *iface, IInspectable **instance )
 {
     struct recognizer_statics *impl = impl_from_IActivationFactory(iface);
-    TRACE("iface %p, instance %p\n", iface, instance);
+    TRACE("iface %p, instance %p.\n", iface, instance);
     return ISpeechRecognizerFactory_Create(&impl->ISpeechRecognizerFactory_iface, NULL, (ISpeechRecognizer **)instance);
 }
 
@@ -441,15 +442,15 @@ static HRESULT WINAPI recognizer_factory_Create( ISpeechRecognizerFactory *iface
         return E_OUTOFMEMORY;
     }
 
-    if(language)
-        FIXME("ILanguage parameter unused. Stub!\n");
+    if (language)
+        FIXME("language parameter unused. Stub!\n");
 
     impl->ISpeechRecognizer_iface.lpVtbl = &speech_recognizer_vtbl;
     impl->IClosable_iface.lpVtbl = &closable_vtbl;
     impl->ISpeechRecognizer2_iface.lpVtbl = &speech_recognizer2_vtbl;
     impl->ref = 1;
 
-    TRACE("created SpeechRecognizer %p\n", impl);
+    TRACE("created SpeechRecognizer %p.\n", impl);
 
     *speechrecognizer = &impl->ISpeechRecognizer_iface;
     return S_OK;

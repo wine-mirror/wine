@@ -38,6 +38,8 @@
 
 #include "wine/test.h"
 
+#define SPERR_WINRT_INTERNAL_ERROR 0x800455a0
+
 HRESULT WINAPI (*pDllGetActivationFactory)(HSTRING, IActivationFactory **);
 
 static inline LONG get_ref(IUnknown *obj)
@@ -148,7 +150,7 @@ static void test_ActivationFactory(void)
 
     hdll = LoadLibraryW(L"windows.media.speech.dll");
 
-    if(hdll)
+    if (hdll)
     {
         pDllGetActivationFactory = (void *)GetProcAddress(hdll, "DllGetActivationFactory");
         ok(!!pDllGetActivationFactory, "DllGetActivationFactory not found.\n");
@@ -364,7 +366,7 @@ static void test_SpeechRecognizer(void)
     hr = RoGetActivationFactory(hstr, &IID_IActivationFactory, (void **)&factory);
     ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG), "RoGetActivationFactory failed, hr %#lx.\n", hr);
 
-    if(hr == REGDB_E_CLASSNOTREG) /* Win 8 and 8.1 */
+    if (hr == REGDB_E_CLASSNOTREG) /* Win 8 and 8.1 */
     {
         win_skip("SpeechRecognizer activation factory not available!\n");
         goto done;
@@ -379,7 +381,7 @@ static void test_SpeechRecognizer(void)
     hr = ISpeechRecognizerStatics_get_SystemSpeechLanguage(sr_statics, &language);
     todo_wine ok(hr == S_OK, "ISpeechRecognizerStatics_SystemSpeechLanguage failed, hr %#lx.\n", hr);
 
-    if(hr == S_OK)
+    if (hr == S_OK)
     {
         hr = ILanguage_get_LanguageTag(language, &hstr_lang);
         ok(hr == S_OK, "ILanguage_get_LanguageTag failed, hr %#lx.\n", hr);
@@ -395,7 +397,7 @@ static void test_SpeechRecognizer(void)
     hr = IActivationFactory_QueryInterface(factory, &IID_ISpeechRecognizerStatics2, (void **)&sr_statics2);
     ok(hr == S_OK || broken(hr == E_NOINTERFACE), "IActivationFactory_QueryInterface IID_ISpeechRecognizerStatics2 failed, hr %#lx.\n", hr);
 
-    if(hr == S_OK) /* SpeechRecognizerStatics2 not implemented on Win10 1507 */
+    if (hr == S_OK) /* SpeechRecognizerStatics2 not implemented on Win10 1507 */
     {
         ref = ISpeechRecognizerStatics2_Release(sr_statics2);
         ok(ref == 3, "Got unexpected ref %lu.\n", ref);
@@ -408,10 +410,13 @@ static void test_SpeechRecognizer(void)
     ok(ref == 1, "Got unexpected ref %lu.\n", ref);
 
     hr = RoActivateInstance(hstr, &inspectable);
-    ok(hr == S_OK || broken(hr == 0x800455a0), "Got unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK || broken(hr == SPERR_WINRT_INTERNAL_ERROR), "Got unexpected hr %#lx.\n", hr);
 
-    if(hr == S_OK)
+    if (hr == S_OK)
     {
+        check_refcount(inspectable, 1);
+        check_interface(factory, &IID_IAgileObject, TRUE);
+
         hr = IInspectable_QueryInterface(inspectable, &IID_ISpeechRecognizer, (void **)&recognizer);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
@@ -433,7 +438,7 @@ static void test_SpeechRecognizer(void)
         ref = IInspectable_Release(inspectable);
         ok(!ref, "Got unexpected ref %lu.\n", ref);
     }
-    else if(hr == 0x800455a0) /* Not sure what this hr is... Probably if a language pack is not installed. */
+    else if (hr == SPERR_WINRT_INTERNAL_ERROR) /* Not sure when this triggers. Probably if a language pack is not installed. */
     {
         win_skip("Could not init SpeechRecognizer with default language!\n");
     }
