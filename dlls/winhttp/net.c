@@ -229,7 +229,7 @@ DWORD netconn_create( struct hostdata *host, const struct sockaddr_storage *sock
         if (ret == WSAEWOULDBLOCK || ret == WSAEINPROGRESS)
         {
             FD_SET set;
-            TIMEVAL timeval = { 0, timeout * 1000 };
+            TIMEVAL timeval = { timeout / 1000, (timeout % 1000) * 1000 };
             int res;
 
             FD_ZERO( &set );
