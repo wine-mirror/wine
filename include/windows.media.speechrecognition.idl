@@ -46,6 +46,8 @@ namespace Windows {
             interface ISpeechRecognitionConstraint;
             interface ISpeechRecognitionHypothesis;
             interface ISpeechRecognitionHypothesisGeneratedEventArgs;
+            interface ISpeechRecognitionListConstraint;
+            interface ISpeechRecognitionListConstraintFactory;
             interface ISpeechRecognitionQualityDegradingEventArgs;
             interface ISpeechRecognitionResult;
             interface ISpeechRecognitionResult2;
@@ -64,6 +66,7 @@ namespace Windows {
             runtimeclass SpeechRecognitionCompilationResult;
             runtimeclass SpeechRecognitionHypothesis;
             runtimeclass SpeechRecognitionHypothesisGeneratedEventArgs;
+            runtimeclass SpeechRecognitionListConstraint;
             runtimeclass SpeechRecognitionQualityDegradingEventArgs;
             runtimeclass SpeechRecognitionResult;
             runtimeclass SpeechRecognitionSemanticInterpretation;
@@ -271,6 +274,35 @@ namespace Windows {
             interface ISpeechRecognitionHypothesisGeneratedEventArgs : IInspectable
             {
                 [propget] HRESULT Hypothesis([out, retval] Windows.Media.SpeechRecognition.SpeechRecognitionHypothesis **value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognitionListConstraint),
+                uuid(09c487e9-e4ad-4526-81f2-4946fb481d98)
+            ]
+            interface ISpeechRecognitionListConstraint : IInspectable
+                requires
+                    Windows.Media.SpeechRecognition.ISpeechRecognitionConstraint
+            {
+                [propget] HRESULT Commands([out, retval] Windows.Foundation.Collections.IVector<HSTRING> **value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognitionListConstraint),
+                uuid(40f3cdc7-562a-426a-9f3b-3b4e282be1d5)
+            ]
+            interface ISpeechRecognitionListConstraintFactory : IInspectable
+            {
+                HRESULT Create(
+                    [in] Windows.Foundation.Collections.IIterable<HSTRING> *commands,
+                    [out, retval] Windows.Media.SpeechRecognition.SpeechRecognitionListConstraint **listconstraint);
+
+                HRESULT CreateWithTag(
+                    [in] Windows.Foundation.Collections.IIterable<HSTRING> *commands,
+                    [in] HSTRING tag,
+                    [out, retval] Windows.Media.SpeechRecognition.SpeechRecognitionListConstraint **listconstraint);
             }
 
             [
@@ -496,6 +528,17 @@ namespace Windows {
             runtimeclass SpeechRecognitionHypothesisGeneratedEventArgs
             {
                 [default] interface Windows.Media.SpeechRecognition.ISpeechRecognitionHypothesisGeneratedEventArgs;
+            }
+
+            [
+                activatable(Windows.Media.SpeechRecognition.ISpeechRecognitionListConstraintFactory, Windows.Foundation.UniversalApiContract, 1.0),
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile)
+            ]
+            runtimeclass SpeechRecognitionListConstraint
+            {
+                [default] interface Windows.Media.SpeechRecognition.ISpeechRecognitionListConstraint;
+                interface Windows.Media.SpeechRecognition.ISpeechRecognitionConstraint;
             }
 
             [
