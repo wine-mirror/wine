@@ -35,7 +35,7 @@
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "winternl.h"
-#include "dshow.h"
+#include "mferror.h"
 
 #include "unix_private.h"
 
@@ -48,15 +48,24 @@ struct wg_transform
     GstPad *my_src, *my_sink;
     GstPad *their_sink, *their_src;
     GstSegment segment;
+    GstBuffer *input;
+
+    pthread_mutex_t mutex;
+    GstBuffer *output;
 };
 
 static GstFlowReturn transform_sink_chain_cb(GstPad *pad, GstObject *parent, GstBuffer *buffer)
 {
     struct wg_transform *transform = gst_pad_get_element_private(pad);
 
-    GST_INFO("transform %p, buffer %p.", transform, buffer);
+    GST_LOG("transform %p, buffer %p.", transform, buffer);
 
-    gst_buffer_unref(buffer);
+    pthread_mutex_lock(&transform->mutex);
+    if (transform->output)
+        transform->output = gst_buffer_append(transform->output, buffer);
+    else
+        transform->output = buffer;
+    pthread_mutex_unlock(&transform->mutex);
 
     return GST_FLOW_OK;
 }
@@ -65,12 +74,18 @@ NTSTATUS wg_transform_destroy(void *args)
 {
     struct wg_transform *transform = args;
 
+    if (transform->input)
+        gst_buffer_unref(transform->input);
+    if (transform->output)
+        gst_buffer_unref(transform->output);
+
     gst_element_set_state(transform->container, GST_STATE_NULL);
     g_object_unref(transform->their_sink);
     g_object_unref(transform->their_src);
     g_object_unref(transform->container);
     g_object_unref(transform->my_sink);
     g_object_unref(transform->my_src);
+    pthread_mutex_destroy(&transform->mutex);
     free(transform);
 
     return STATUS_SUCCESS;
@@ -278,6 +293,8 @@ NTSTATUS wg_transform_create(void *args)
     gst_caps_unref(sink_caps);
     gst_caps_unref(src_caps);
 
+    pthread_mutex_init(&transform->mutex, NULL);
+
     GST_INFO("Created winegstreamer transform %p.", transform);
     params->transform = transform;
     return STATUS_SUCCESS;
@@ -302,5 +319,101 @@ out:
     }
     free(transform);
     GST_ERROR("Failed to create winegstreamer transform.");
+    return status;
+}
+
+NTSTATUS wg_transform_push_data(void *args)
+{
+    struct wg_transform_push_data_params *params = args;
+    struct wg_transform *transform = params->transform;
+    struct wg_sample *sample = params->sample;
+    GstBuffer *buffer;
+
+    if (transform->input)
+    {
+        GST_INFO("Refusing %u bytes, a buffer is already queued", sample->size);
+        params->result = MF_E_NOTACCEPTING;
+        return STATUS_SUCCESS;
+    }
+
+    if (!(buffer = gst_buffer_new_and_alloc(sample->size)))
+    {
+        GST_ERROR("Failed to allocate input buffer");
+        return STATUS_NO_MEMORY;
+    }
+    gst_buffer_fill(buffer, 0, sample->data, sample->size);
+    transform->input = buffer;
+
+    GST_INFO("Copied %u bytes from sample %p to input buffer", sample->size, sample);
+    params->result = S_OK;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS read_transform_output_data(struct wg_transform *transform,
+        struct wg_sample *sample)
+{
+    GstBuffer *buffer = transform->output;
+    GstMapInfo info;
+
+    if (!gst_buffer_map(buffer, &info, GST_MAP_READ))
+    {
+        GST_ERROR("Failed to map buffer %p", buffer);
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    if (sample->max_size >= info.size)
+        sample->size = info.size;
+    else
+    {
+        sample->flags |= WG_SAMPLE_FLAG_INCOMPLETE;
+        sample->size = sample->max_size;
+    }
+
+    memcpy(sample->data, info.data, sample->size);
+    gst_buffer_unmap(buffer, &info);
+    gst_buffer_resize(buffer, sample->size, -1);
+
+    if (info.size <= sample->size)
+    {
+        gst_buffer_unref(transform->output);
+        transform->output = NULL;
+    }
+
+    GST_INFO("Copied %u bytes, sample %p, flags %#x", sample->size, sample, sample->flags);
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS wg_transform_read_data(void *args)
+{
+    struct wg_transform_read_data_params *params = args;
+    struct wg_transform *transform = params->transform;
+    struct wg_sample *sample = params->sample;
+    GstFlowReturn ret;
+    NTSTATUS status;
+
+    if (!transform->input)
+        GST_DEBUG("Not input buffer queued");
+    else if ((ret = gst_pad_push(transform->my_src, transform->input)))
+    {
+        GST_ERROR("Failed to push transform input, error %d", ret);
+        return STATUS_UNSUCCESSFUL;
+    }
+    transform->input = NULL;
+
+    sample->size = 0;
+    pthread_mutex_lock(&transform->mutex);
+    if (transform->output)
+    {
+        params->result = S_OK;
+        status = read_transform_output_data(transform, sample);
+    }
+    else
+    {
+        params->result = MF_E_TRANSFORM_NEED_MORE_INPUT;
+        status = STATUS_SUCCESS;
+        GST_INFO("Cannot read %u bytes, no output available", sample->max_size);
+    }
+    pthread_mutex_unlock(&transform->mutex);
+
     return status;
 }

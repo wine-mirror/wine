@@ -854,3 +854,52 @@ void mf_media_type_to_wg_format(IMFMediaType *type, struct wg_format *format)
     else
         FIXME("Unrecognized major type %s.\n", debugstr_guid(&major_type));
 }
+
+struct mf_sample
+{
+    IMFSample *sample;
+    IMFMediaBuffer *media_buffer;
+    struct wg_sample wg_sample;
+};
+
+HRESULT mf_create_wg_sample(IMFSample *sample, struct wg_sample **out)
+{
+    DWORD current_length, max_length;
+    struct mf_sample *mf_sample;
+    BYTE *buffer;
+    HRESULT hr;
+
+    if (!(mf_sample = calloc(1, sizeof(*mf_sample))))
+        return E_OUTOFMEMORY;
+    if (FAILED(hr = IMFSample_ConvertToContiguousBuffer(sample, &mf_sample->media_buffer)))
+        goto out;
+    if (FAILED(hr = IMFMediaBuffer_Lock(mf_sample->media_buffer, &buffer, &max_length, &current_length)))
+        goto out;
+
+    IMFSample_AddRef((mf_sample->sample = sample));
+    mf_sample->wg_sample.data = buffer;
+    mf_sample->wg_sample.size = current_length;
+    mf_sample->wg_sample.max_size = max_length;
+
+    TRACE("Created mf_sample %p for sample %p.\n", mf_sample, sample);
+    *out = &mf_sample->wg_sample;
+    return S_OK;
+
+out:
+    if (mf_sample->media_buffer)
+        IMFMediaBuffer_Release(mf_sample->media_buffer);
+    free(mf_sample);
+    return hr;
+}
+
+void mf_destroy_wg_sample(struct wg_sample *wg_sample)
+{
+    struct mf_sample *mf_sample = CONTAINING_RECORD(wg_sample, struct mf_sample, wg_sample);
+
+    IMFMediaBuffer_Unlock(mf_sample->media_buffer);
+    IMFMediaBuffer_SetCurrentLength(mf_sample->media_buffer, wg_sample->size);
+    IMFMediaBuffer_Release(mf_sample->media_buffer);
+
+    IMFSample_Release(mf_sample->sample);
+    free(mf_sample);
+}

@@ -34,5 +34,7 @@ extern GstCaps *wg_format_to_caps(const struct wg_format *format) DECLSPEC_HIDDE
 
 extern NTSTATUS wg_transform_create(void *args) DECLSPEC_HIDDEN;
 extern NTSTATUS wg_transform_destroy(void *args) DECLSPEC_HIDDEN;
+extern NTSTATUS wg_transform_push_data(void *args) DECLSPEC_HIDDEN;
+extern NTSTATUS wg_transform_read_data(void *args) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_WINEGSTREAMER_UNIX_PRIVATE_H */

@@ -103,6 +103,19 @@ struct wg_format
     } u;
 };
 
+enum wg_sample_flag
+{
+    WG_SAMPLE_FLAG_INCOMPLETE = 1,
+};
+
+struct wg_sample
+{
+    UINT32 flags;
+    UINT32 max_size;
+    UINT32 size;
+    BYTE *data;
+};
+
 struct wg_parser_buffer
 {
     /* pts and duration are in 100-nanosecond units. */
@@ -216,6 +229,20 @@ struct wg_transform_create_params
     const struct wg_format *output_format;
 };
 
+struct wg_transform_push_data_params
+{
+    struct wg_transform *transform;
+    struct wg_sample *sample;
+    HRESULT result;
+};
+
+struct wg_transform_read_data_params
+{
+    struct wg_transform *transform;
+    struct wg_sample *sample;
+    HRESULT result;
+};
+
 enum unix_funcs
 {
     unix_wg_parser_create,
@@ -244,6 +271,9 @@ enum unix_funcs
 
     unix_wg_transform_create,
     unix_wg_transform_destroy,
+
+    unix_wg_transform_push_data,
+    unix_wg_transform_read_data,
 };
 
 #endif /* __WINE_WINEGSTREAMER_UNIXLIB_H */

@@ -6213,22 +6213,18 @@ static void test_wma_decoder(void)
 
     sample = create_sample(wma_encoded_data, wma_block_size / 2);
     hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
-    todo_wine
     ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
     ret = IMFSample_Release(sample);
     ok(ret == 0, "Release returned %lu\n", ret);
     sample = create_sample(wma_encoded_data, wma_block_size + 1);
     hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
-    todo_wine
     ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
     ret = IMFSample_Release(sample);
     ok(ret == 0, "Release returned %lu\n", ret);
     sample = create_sample(wma_encoded_data, wma_block_size);
     hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
-    todo_wine
     ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
     hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
-    todo_wine
     ok(hr == MF_E_NOTACCEPTING, "ProcessInput returned %#lx\n", hr);
     ret = IMFSample_Release(sample);
     todo_wine
@@ -6251,7 +6247,6 @@ static void test_wma_decoder(void)
 
     sample = create_sample(wma_encoded_data, wma_block_size);
     hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
-    todo_wine
     ok(hr == MF_E_NOTACCEPTING, "ProcessInput returned %#lx\n", hr);
     ret = IMFSample_Release(sample);
     ok(ret == 0, "Release returned %lu\n", ret);
@@ -6278,38 +6273,12 @@ static void test_wma_decoder(void)
     IMFSample_Release(outputs[0].pSample);
     IMFSample_Release(outputs[1].pSample);
 
-    i = 1;
     status = 0xdeadbeef;
     output_info.cbSize = sizeof(wma_decoded_data);
     sample = create_sample(NULL, output_info.cbSize);
     memset(&output, 0, sizeof(output));
     output.pSample = sample;
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
-    while (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
-    {
-        ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
-        ok(output.pSample == sample, "got pSample %p\n", output.pSample);
-        ok(output.dwStatus == 0, "got dwStatus %#lx\n", output.dwStatus);
-        ok(status == 0, "got status %#lx\n", status);
-        check_sample(sample, NULL, 0, NULL);
-        ret = IMFSample_Release(sample);
-        ok(ret == 0, "Release returned %lu\n", ret);
-
-        sample = create_sample(wma_encoded_data + i * wma_block_size, wma_block_size);
-        hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
-        ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
-        ret = IMFSample_Release(sample);
-        ok(ret == 1, "Release returned %lu\n", ret);
-        i++;
-
-        status = 0xdeadbeef;
-        sample = create_sample(NULL, output_info.cbSize);
-        memset(&output, 0, sizeof(output));
-        output.pSample = sample;
-        hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
-    }
-
-    todo_wine
     ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
     ok(output.pSample == sample, "got pSample %p\n", output.pSample);
 
@@ -6329,8 +6298,20 @@ static void test_wma_decoder(void)
         }
         else
         {
-            check_sample(sample, wma_decoded_data, sizeof(wma_decoded_data) / 2, NULL);
-            i += sizeof(wma_decoded_data) / 2;
+            DWORD length;
+
+            /* FFmpeg doesn't seem to decode WMA buffers in the same way as native */
+
+            hr = IMFSample_GetTotalLength(sample, &length);
+            ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
+            todo_wine
+            ok(length == sizeof(wma_decoded_data) / 2, "got length %lu\n", length);
+
+            if (length == sizeof(wma_decoded_data) / 2)
+            {
+                check_sample(sample, wma_decoded_data, sizeof(wma_decoded_data) / 2, NULL);
+                i += sizeof(wma_decoded_data) / 2;
+            }
         }
         ret = IMFSample_Release(sample);
         ok(ret == 0, "Release returned %lu\n", ret);
@@ -6344,7 +6325,6 @@ static void test_wma_decoder(void)
     todo_wine
     ok(i == 0xe000, "ProcessOutput produced %#lx bytes\n", i);
 
-    todo_wine
     ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
     ok(output.pSample == sample, "got pSample %p\n", output.pSample);
     ok(output.dwStatus == 0, "got dwStatus %#lx\n", output.dwStatus);
@@ -6357,7 +6337,6 @@ static void test_wma_decoder(void)
     memset(&output, 0, sizeof(output));
     output.pSample = sample;
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
-    todo_wine
     ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
     ok(output.pSample == sample, "got pSample %p\n", output.pSample);
     ok(output.dwStatus == 0 ||
@@ -6370,7 +6349,6 @@ static void test_wma_decoder(void)
 
     sample = create_sample(wma_encoded_data, wma_block_size);
     hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
-    todo_wine
     ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
 
     ret = IMFTransform_Release(transform);

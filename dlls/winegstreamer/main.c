@@ -263,6 +263,36 @@ void wg_transform_destroy(struct wg_transform *transform)
     __wine_unix_call(unix_handle, unix_wg_transform_destroy, transform);
 }
 
+HRESULT wg_transform_push_data(struct wg_transform *transform, struct wg_sample *sample)
+{
+    struct wg_transform_push_data_params params =
+    {
+        .transform = transform,
+        .sample = sample,
+    };
+    NTSTATUS status;
+
+    if ((status = __wine_unix_call(unix_handle, unix_wg_transform_push_data, &params)))
+        return HRESULT_FROM_NT(status);
+
+    return params.result;
+}
+
+HRESULT wg_transform_read_data(struct wg_transform *transform, struct wg_sample *sample)
+{
+    struct wg_transform_read_data_params params =
+    {
+        .transform = transform,
+        .sample = sample,
+    };
+    NTSTATUS status;
+
+    if ((status = __wine_unix_call(unix_handle, unix_wg_transform_read_data, &params)))
+        return HRESULT_FROM_NT(status);
+
+    return params.result;
+}
+
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
 {
     if (reason == DLL_PROCESS_ATTACH)

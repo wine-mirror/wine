@@ -96,6 +96,8 @@ void wg_parser_stream_seek(struct wg_parser_stream *stream, double rate,
 struct wg_transform *wg_transform_create(const struct wg_format *input_format,
         const struct wg_format *output_format);
 void wg_transform_destroy(struct wg_transform *transform);
+HRESULT wg_transform_push_data(struct wg_transform *transform, struct wg_sample *sample);
+HRESULT wg_transform_read_data(struct wg_transform *transform, struct wg_sample *sample);
 
 unsigned int wg_format_get_max_size(const struct wg_format *format);
 
@@ -115,6 +117,9 @@ extern HRESULT mfplat_DllRegisterServer(void);
 
 IMFMediaType *mf_media_type_from_wg_format(const struct wg_format *format);
 void mf_media_type_to_wg_format(IMFMediaType *type, struct wg_format *format);
+
+HRESULT mf_create_wg_sample(IMFSample *sample, struct wg_sample **out);
+void mf_destroy_wg_sample(struct wg_sample *wg_sample);
 
 HRESULT winegstreamer_stream_handler_create(REFIID riid, void **obj);
 
