@@ -25,6 +25,185 @@ WINE_DEFAULT_DEBUG_CHANNEL(speech);
 
 /*
  *
+ * SpeechRecognitionListConstraint
+ *
+ */
+
+struct list_constraint
+{
+    ISpeechRecognitionListConstraint ISpeechRecognitionListConstraint_iface;
+    ISpeechRecognitionConstraint ISpeechRecognitionConstraint_iface;
+    LONG ref;
+};
+
+/*
+ *
+ * ISpeechRecognitionListConstraint
+ *
+ */
+
+static inline struct list_constraint *impl_from_ISpeechRecognitionListConstraint( ISpeechRecognitionListConstraint *iface )
+{
+    return CONTAINING_RECORD(iface, struct list_constraint, ISpeechRecognitionListConstraint_iface);
+}
+
+static HRESULT WINAPI list_constraint_QueryInterface( ISpeechRecognitionListConstraint *iface, REFIID iid, void **out )
+{
+    struct list_constraint *impl = impl_from_ISpeechRecognitionListConstraint(iface);
+
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) ||
+        IsEqualGUID(iid, &IID_IInspectable) ||
+        IsEqualGUID(iid, &IID_IAgileObject) ||
+        IsEqualGUID(iid, &IID_ISpeechRecognitionListConstraint))
+    {
+        IInspectable_AddRef((*out = &impl->ISpeechRecognitionListConstraint_iface));
+        return S_OK;
+    }
+
+    if (IsEqualGUID(iid, &IID_ISpeechRecognitionConstraint))
+    {
+        IInspectable_AddRef((*out = &impl->ISpeechRecognitionConstraint_iface));
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI list_constraint_AddRef( ISpeechRecognitionListConstraint *iface )
+{
+    struct list_constraint *impl = impl_from_ISpeechRecognitionListConstraint(iface);
+    ULONG ref = InterlockedIncrement(&impl->ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
+    return ref;
+}
+
+static ULONG WINAPI list_constraint_Release( ISpeechRecognitionListConstraint *iface )
+{
+    struct list_constraint *impl = impl_from_ISpeechRecognitionListConstraint(iface);
+
+    ULONG ref = InterlockedDecrement(&impl->ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
+
+    if (!ref)
+        free(impl);
+
+    return ref;
+}
+
+static HRESULT WINAPI list_constraint_GetIids( ISpeechRecognitionListConstraint *iface, ULONG *iid_count, IID **iids )
+{
+    FIXME("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI list_constraint_GetRuntimeClassName( ISpeechRecognitionListConstraint *iface, HSTRING *class_name )
+{
+    FIXME("iface %p, class_name %p stub!\n", iface, class_name);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI list_constraint_GetTrustLevel( ISpeechRecognitionListConstraint *iface, TrustLevel *trust_level )
+{
+    FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI list_constraint_get_Commands(  ISpeechRecognitionListConstraint *iface, IVector_HSTRING **value )
+{
+    FIXME("iface %p, value %p stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static const struct ISpeechRecognitionListConstraintVtbl speech_recognition_list_constraint_vtbl =
+{
+    /* IUnknown methods */
+    list_constraint_QueryInterface,
+    list_constraint_AddRef,
+    list_constraint_Release,
+    /* IInspectable methods */
+    list_constraint_GetIids,
+    list_constraint_GetRuntimeClassName,
+    list_constraint_GetTrustLevel,
+    /* ISpeechRecognitionListConstraint methods */
+    list_constraint_get_Commands
+};
+
+/*
+ *
+ * ISpeechRecognitionConstraint
+ *
+ */
+
+DEFINE_IINSPECTABLE(constraint, ISpeechRecognitionConstraint, struct list_constraint, ISpeechRecognitionListConstraint_iface)
+
+static HRESULT WINAPI constraint_get_IsEnabled( ISpeechRecognitionConstraint *iface, BOOLEAN *value )
+{
+    FIXME("iface %p, value %p stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI constraint_put_IsEnabled( ISpeechRecognitionConstraint *iface, BOOLEAN value )
+{
+    FIXME("iface %p, value %u stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI constraint_get_Tag( ISpeechRecognitionConstraint *iface, HSTRING *value )
+{
+    FIXME("iface %p, value %p stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI constraint_put_Tag( ISpeechRecognitionConstraint *iface, HSTRING value )
+{
+    FIXME("iface %p, value %p stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI constraint_get_Type( ISpeechRecognitionConstraint *iface, SpeechRecognitionConstraintType *value )
+{
+    FIXME("iface %p, value %p stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI constraint_get_Probability( ISpeechRecognitionConstraint *iface, SpeechRecognitionConstraintProbability *value )
+{
+    FIXME("iface %p, value %p stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI constraint_put_Probability( ISpeechRecognitionConstraint *iface, SpeechRecognitionConstraintProbability value )
+{
+    FIXME("iface %p, value %u stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static const struct ISpeechRecognitionConstraintVtbl speech_recognition_constraint_vtbl =
+{
+    /* IUnknown methods */
+    constraint_QueryInterface,
+    constraint_AddRef,
+    constraint_Release,
+    /* IInspectable methods */
+    constraint_GetIids,
+    constraint_GetRuntimeClassName,
+    constraint_GetTrustLevel,
+    /* ISpeechRecognitionConstraint methods */
+    constraint_get_IsEnabled,
+    constraint_put_IsEnabled,
+    constraint_get_Tag,
+    constraint_put_Tag,
+    constraint_get_Type,
+    constraint_get_Probability,
+    constraint_put_Probability
+};
+
+/*
+ *
  * Statics for SpeechRecognitionListConstraint
  *
  */
@@ -140,7 +319,7 @@ static HRESULT WINAPI constraint_factory_Create( ISpeechRecognitionListConstrain
                                                  ISpeechRecognitionListConstraint** listconstraint )
 {
     TRACE("iface %p, commands %p, listconstraint %p.\n", iface, commands, listconstraint);
-    return E_NOTIMPL;
+    return ISpeechRecognitionListConstraintFactory_CreateWithTag(iface, commands, NULL, listconstraint);
 }
 
 static HRESULT WINAPI constraint_factory_CreateWithTag( ISpeechRecognitionListConstraintFactory *iface,
@@ -148,8 +327,27 @@ static HRESULT WINAPI constraint_factory_CreateWithTag( ISpeechRecognitionListCo
                                                         HSTRING tag,
                                                         ISpeechRecognitionListConstraint** listconstraint )
 {
+    struct list_constraint *impl;
+
     TRACE("iface %p, commands %p, tag %p, listconstraint %p.\n", iface, commands, tag, listconstraint);
-    return E_NOTIMPL;
+
+    if (!commands)
+        return E_POINTER;
+
+    if (!(impl = calloc(1, sizeof(*impl))))
+    {
+        *listconstraint = NULL;
+        return E_OUTOFMEMORY;
+    }
+
+    impl->ISpeechRecognitionListConstraint_iface.lpVtbl = &speech_recognition_list_constraint_vtbl;
+    impl->ISpeechRecognitionConstraint_iface.lpVtbl = &speech_recognition_constraint_vtbl;
+    impl->ref = 1;
+
+    TRACE("created SpeechRecognitionListConstraint %p.\n", impl);
+
+    *listconstraint = &impl->ISpeechRecognitionListConstraint_iface;
+    return S_OK;
 }
 
 static const struct ISpeechRecognitionListConstraintFactoryVtbl speech_recognition_list_constraint_factory_vtbl =

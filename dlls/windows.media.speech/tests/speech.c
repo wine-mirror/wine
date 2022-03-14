@@ -729,10 +729,10 @@ static void test_SpeechRecognitionListConstraint(void)
     ok(hr == S_OK, "IActivationFactory_QueryInterface IID_ISpeechRecognitionListConstraintFactory failed, hr %#lx.\n", hr);
 
     hr = ISpeechRecognitionListConstraintFactory_Create(listconstraint_factory, NULL, &listconstraint);
-    todo_wine ok(hr == E_POINTER, "ISpeechRecognitionListConstraintFactory_Create failed, hr %#lx.\n", hr);
+    ok(hr == E_POINTER, "ISpeechRecognitionListConstraintFactory_Create failed, hr %#lx.\n", hr);
 
     hr = ISpeechRecognitionListConstraintFactory_CreateWithTag(listconstraint_factory, NULL, NULL, &listconstraint);
-    todo_wine ok(hr == E_POINTER, "ISpeechRecognitionListConstraintFactory_Create failed, hr %#lx.\n", hr);
+    ok(hr == E_POINTER, "ISpeechRecognitionListConstraintFactory_Create failed, hr %#lx.\n", hr);
 
     /* The create functions on Win10 1507 x32 break when handling the given iterator. Seems like a Windows bug. Skipping these tests. */
     if (broken(is_win10_1507 && (sizeof(void*) == 4)))
@@ -745,29 +745,29 @@ static void test_SpeechRecognitionListConstraint(void)
     iterable_hstring_create_static(&iterable_hstring, &iterator_hstring);
 
     hr = ISpeechRecognitionListConstraintFactory_CreateWithTag(listconstraint_factory, &iterable_hstring.IIterable_HSTRING_iface, NULL, &listconstraint);
-    todo_wine ok(hr == S_OK, "ISpeechRecognitionListConstraintFactory_Create failed, hr %#lx.\n", hr);
-
-    if (!SUCCEEDED(hr))
-        goto skip_create;
+    ok(hr == S_OK, "ISpeechRecognitionListConstraintFactory_Create failed, hr %#lx.\n", hr);
 
     ref = ISpeechRecognitionListConstraint_Release(listconstraint);
-    todo_wine ok(ref == 0, "Got unexpected ref %lu.\n", ref);
+    ok(ref == 0, "Got unexpected ref %lu.\n", ref);
 
     iterator_hstring_create_static(&iterator_hstring, commands, ARRAY_SIZE(commands));
     iterable_hstring_create_static(&iterable_hstring, &iterator_hstring);
 
     hr = ISpeechRecognitionListConstraintFactory_CreateWithTag(listconstraint_factory, &iterable_hstring.IIterable_HSTRING_iface, tag, &listconstraint);
-    todo_wine ok(hr == S_OK, "ISpeechRecognitionListConstraintFactory_CreateWithTag failed, hr %#lx.\n", hr);
+    ok(hr == S_OK, "ISpeechRecognitionListConstraintFactory_CreateWithTag failed, hr %#lx.\n", hr);
 
-    todo_wine check_refcount(listconstraint, 1);
-    todo_wine check_interface(listconstraint, &IID_IInspectable, TRUE);
-    todo_wine check_interface(listconstraint, &IID_IAgileObject, TRUE);
+    check_refcount(listconstraint, 1);
+    check_interface(listconstraint, &IID_IInspectable, TRUE);
+    check_interface(listconstraint, &IID_IAgileObject, TRUE);
 
     hr = ISpeechRecognitionListConstraint_QueryInterface(listconstraint, &IID_ISpeechRecognitionConstraint, (void **)&constraint);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ISpeechRecognitionListConstraint_get_Commands(listconstraint, &hstring_vector);
     todo_wine ok(hr == S_OK, "ISpeechRecognitionListConstraint_Commands failed, hr %#lx.\n", hr);
+
+    if (!SUCCEEDED(hr))
+        goto skip_tests;
 
     hr = IVector_HSTRING_get_Size(hstring_vector, &vector_size);
     todo_wine ok(hr == S_OK, "IVector_HSTRING_get_Size failed, hr %#lx.\n", hr);
@@ -803,11 +803,12 @@ static void test_SpeechRecognitionListConstraint(void)
     todo_wine ok(hr == S_OK, "ISpeechRecognitionConstraint_get_IsEnabled failed, hr %#lx.\n", hr);
     todo_wine ok(enabled, "ListConstraint didn't get enabled.\n");
 
+skip_tests:
     ref = ISpeechRecognitionConstraint_Release(constraint);
-    todo_wine ok(ref == 1, "Got unexpected ref %lu.\n", ref);
+    ok(ref == 1, "Got unexpected ref %lu.\n", ref);
 
     ref = ISpeechRecognitionListConstraint_Release(listconstraint);
-    todo_wine ok(ref == 0, "Got unexpected ref %lu.\n", ref);
+    ok(ref == 0, "Got unexpected ref %lu.\n", ref);
 
 skip_create:
     ref = ISpeechRecognitionListConstraintFactory_Release(listconstraint_factory);
