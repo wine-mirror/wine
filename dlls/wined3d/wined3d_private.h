@@ -405,7 +405,7 @@ static inline float float_24_to_32(DWORD in)
 
 static inline unsigned int wined3d_popcount(unsigned int x)
 {
-#if defined(__GNUC__) && (__GNUC__ >= 4)
+#if defined(__MINGW32__)
     return __builtin_popcount(x);
 #else
     x -= x >> 1 & 0x55555555;
