@@ -3581,7 +3581,7 @@ LRESULT WINAPI PopupMenuWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM 
     case WM_PAINT:
 	{
 	    PAINTSTRUCT ps;
-	    BeginPaint( hwnd, &ps );
+	    NtUserBeginPaint( hwnd, &ps );
 	    MENU_DrawPopupMenu( hwnd, ps.hdc,
                                 (HMENU)GetWindowLongPtrW( hwnd, 0 ) );
 	    EndPaint( hwnd, &ps );

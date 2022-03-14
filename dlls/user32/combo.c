@@ -28,8 +28,7 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
+#include "ntuser.h"
 #include "user_private.h"
 #include "win.h"
 #include "controls.h"
@@ -792,8 +791,7 @@ static LRESULT COMBO_Paint(LPHEADCOMBO lphc, HDC hParamDC)
   PAINTSTRUCT ps;
   HDC 	hDC;
 
-  hDC = (hParamDC) ? hParamDC
-		   : BeginPaint( lphc->self, &ps);
+  hDC = hParamDC ? hParamDC : NtUserBeginPaint( lphc->self, &ps );
 
   TRACE("hdc=%p\n", hDC);
 

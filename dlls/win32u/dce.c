@@ -742,3 +742,187 @@ HWND WINAPI NtUserWindowFromDC( HDC hdc )
     user_unlock();
     return hwnd;
 }
+
+/***********************************************************************
+ *           get_update_region
+ *
+ * Return update region (in screen coordinates) for a window.
+ */
+static HRGN get_update_region( HWND hwnd, UINT *flags, HWND *child )
+{
+    HRGN hrgn = 0;
+    NTSTATUS status;
+    RGNDATA *data;
+    size_t size = 256;
+
+    do
+    {
+        if (!(data = malloc( sizeof(*data) + size - 1 )))
+        {
+            SetLastError( ERROR_OUTOFMEMORY );
+            return 0;
+        }
+
+        SERVER_START_REQ( get_update_region )
+        {
+            req->window     = wine_server_user_handle( hwnd );
+            req->from_child = wine_server_user_handle( child ? *child : 0 );
+            req->flags      = *flags;
+            wine_server_set_reply( req, data->Buffer, size );
+            if (!(status = wine_server_call( req )))
+            {
+                size_t reply_size = wine_server_reply_size( reply );
+                data->rdh.dwSize   = sizeof(data->rdh);
+                data->rdh.iType    = RDH_RECTANGLES;
+                data->rdh.nCount   = reply_size / sizeof(RECT);
+                data->rdh.nRgnSize = reply_size;
+                hrgn = NtGdiExtCreateRegion( NULL, data->rdh.dwSize + data->rdh.nRgnSize, data );
+                if (child) *child = wine_server_ptr_handle( reply->child );
+                *flags = reply->flags;
+            }
+            else size = reply->total_size;
+        }
+        SERVER_END_REQ;
+        free( data );
+    } while (status == STATUS_BUFFER_OVERFLOW);
+
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return hrgn;
+}
+
+/***********************************************************************
+ *           send_ncpaint
+ *
+ * Send a WM_NCPAINT message if needed, and return the resulting update region (in screen coords).
+ * Helper for erase_now and BeginPaint.
+ */
+static HRGN send_ncpaint( HWND hwnd, HWND *child, UINT *flags )
+{
+    HRGN whole_rgn = get_update_region( hwnd, flags, child );
+    HRGN client_rgn = 0;
+    DWORD style;
+
+    if (child) hwnd = *child;
+
+    if (hwnd == get_desktop_window()) return whole_rgn;
+
+    if (whole_rgn)
+    {
+        DPI_AWARENESS_CONTEXT context;
+        RECT client, window, update;
+        INT type;
+
+        context = set_thread_dpi_awareness_context( get_window_dpi_awareness_context( hwnd ));
+
+        /* check if update rgn overlaps with nonclient area */
+        type = NtGdiGetRgnBox( whole_rgn, &update );
+        get_window_rects( hwnd, COORDS_SCREEN, &window, &client, get_thread_dpi() );
+
+        if ((*flags & UPDATE_NONCLIENT) ||
+            update.left < client.left || update.top < client.top ||
+            update.right > client.right || update.bottom > client.bottom)
+        {
+            client_rgn = NtGdiCreateRectRgn( client.left, client.top, client.right, client.bottom );
+            NtGdiCombineRgn( client_rgn, client_rgn, whole_rgn, RGN_AND );
+
+            /* check if update rgn contains complete nonclient area */
+            if (type == SIMPLEREGION && EqualRect( &window, &update ))
+            {
+                NtGdiDeleteObjectApp( whole_rgn );
+                whole_rgn = (HRGN)1;
+            }
+        }
+        else
+        {
+            client_rgn = whole_rgn;
+            whole_rgn = 0;
+        }
+
+        if (whole_rgn) /* NOTE: WM_NCPAINT allows wParam to be 1 */
+        {
+            if ((*flags & UPDATE_NONCLIENT) && user_callbacks)
+            {
+                /* Mark standard scroll bars as not painted before sending WM_NCPAINT */
+                style = get_window_long( hwnd, GWL_STYLE );
+                if (style & WS_HSCROLL)
+                    user_callbacks->set_standard_scroll_painted( hwnd, SB_HORZ, FALSE );
+                if (style & WS_VSCROLL)
+                    user_callbacks->set_standard_scroll_painted( hwnd, SB_VERT, FALSE );
+
+                send_message( hwnd, WM_NCPAINT, (WPARAM)whole_rgn, 0 );
+            }
+            if (whole_rgn > (HRGN)1) NtGdiDeleteObjectApp( whole_rgn );
+        }
+        set_thread_dpi_awareness_context( context );
+    }
+    return client_rgn;
+}
+
+/***********************************************************************
+ *           send_erase
+ *
+ * Send a WM_ERASEBKGND message if needed, and optionally return the DC for painting.
+ * If a DC is requested, the region is selected into it. In all cases the region is deleted.
+ * Helper for erase_now and BeginPaint.
+ */
+static BOOL send_erase( HWND hwnd, UINT flags, HRGN client_rgn,
+                        RECT *clip_rect, HDC *hdc_ret )
+{
+    BOOL need_erase = (flags & UPDATE_DELAYED_ERASE) != 0;
+    HDC hdc = 0;
+    RECT dummy;
+
+    if (!clip_rect) clip_rect = &dummy;
+    if (hdc_ret || (flags & UPDATE_ERASE))
+    {
+        UINT dcx_flags = DCX_INTERSECTRGN | DCX_USESTYLE;
+        if (is_iconic(hwnd)) dcx_flags |= DCX_WINDOW;
+
+        if ((hdc = NtUserGetDCEx( hwnd, client_rgn, dcx_flags )))
+        {
+            INT type = NtGdiGetAppClipBox( hdc, clip_rect );
+
+            if (flags & UPDATE_ERASE)
+            {
+                /* don't erase if the clip box is empty */
+                if (type != NULLREGION)
+                    need_erase = !send_message( hwnd, WM_ERASEBKGND, (WPARAM)hdc, 0 );
+            }
+            if (!hdc_ret) release_dc( hwnd, hdc, TRUE );
+        }
+
+        if (hdc_ret) *hdc_ret = hdc;
+    }
+    if (!hdc) NtGdiDeleteObjectApp( client_rgn );
+    return need_erase;
+}
+
+/***********************************************************************
+ *           NtUserBeginPaint (win32u.@)
+ */
+HDC WINAPI NtUserBeginPaint( HWND hwnd, PAINTSTRUCT *ps )
+{
+    HRGN hrgn;
+    HDC hdc;
+    BOOL erase;
+    RECT rect;
+    UINT flags = UPDATE_NONCLIENT | UPDATE_ERASE | UPDATE_PAINT | UPDATE_INTERNALPAINT | UPDATE_NOCHILDREN;
+
+    if (user_callbacks) user_callbacks->pHideCaret( hwnd );
+
+    if (!(hrgn = send_ncpaint( hwnd, NULL, &flags ))) return 0;
+
+    erase = send_erase( hwnd, flags, hrgn, &rect, &hdc );
+
+    TRACE( "hdc = %p box = (%s), fErase = %d\n", hdc, wine_dbgstr_rect(&rect), erase );
+
+    if (!ps)
+    {
+        release_dc( hwnd, hdc, TRUE );
+        return 0;
+    }
+    ps->fErase = erase;
+    ps->rcPaint = rect;
+    ps->hdc = hdc;
+    return hdc;
+}

@@ -143,6 +143,7 @@ static void CDECL notify_ime( HWND hwnd, UINT param )
 static const struct user_callbacks user_funcs =
 {
     CopyImage,
+    HideCaret,
     PostMessageW,
     RedrawWindow,
     SendInput,
@@ -154,6 +155,7 @@ static const struct user_callbacks user_funcs =
     notify_ime,
     register_builtin_classes,
     MSG_SendInternalMessageTimeout,
+    SCROLL_SetStandardScrollPainted,
     (void *)__wine_set_user_driver,
     set_window_pos,
 };

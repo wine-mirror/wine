@@ -246,7 +246,7 @@ LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
     case WM_PAINT:
     {
         PAINTSTRUCT ps;
-        HDC hdc = wParam ? (HDC)wParam : BeginPaint( hWnd, &ps );
+        HDC hdc = wParam ? (HDC)wParam : NtUserBeginPaint( hWnd, &ps );
         if (btnPaintFunc[btn_type])
         {
             int nOldMode = SetBkMode( hdc, OPAQUE );

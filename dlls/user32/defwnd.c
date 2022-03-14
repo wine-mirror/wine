@@ -365,7 +365,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     case WM_PAINT:
         {
             PAINTSTRUCT ps;
-            HDC hdc = BeginPaint( hwnd, &ps );
+            HDC hdc = NtUserBeginPaint( hwnd, &ps );
             if( hdc )
             {
               HICON hIcon;

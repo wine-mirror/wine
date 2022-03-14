@@ -551,37 +551,6 @@ static HWND fix_caret(HWND hWnd, const RECT *scroll_rect, INT dx, INT dy,
 
 
 /***********************************************************************
- *		BeginPaint (USER32.@)
- */
-HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
-{
-    HRGN hrgn;
-    HDC hdc;
-    BOOL erase;
-    RECT rect;
-    UINT flags = UPDATE_NONCLIENT | UPDATE_ERASE | UPDATE_PAINT | UPDATE_INTERNALPAINT | UPDATE_NOCHILDREN;
-
-    HideCaret( hwnd );
-
-    if (!(hrgn = send_ncpaint( hwnd, NULL, &flags ))) return 0;
-
-    erase = send_erase( hwnd, flags, hrgn, &rect, &hdc );
-
-    TRACE("hdc = %p box = (%s), fErase = %d\n", hdc, wine_dbgstr_rect(&rect), erase);
-
-    if (!lps)
-    {
-        release_dc( hwnd, hdc, TRUE );
-        return 0;
-    }
-    lps->fErase = erase;
-    lps->rcPaint = rect;
-    lps->hdc = hdc;
-    return hdc;
-}
-
-
-/***********************************************************************
  *		EndPaint (USER32.@)
  */
 BOOL WINAPI EndPaint( HWND hwnd, const PAINTSTRUCT *lps )

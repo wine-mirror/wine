@@ -374,7 +374,7 @@ LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
         {
             PAINTSTRUCT ps;
             RECT rect;
-            HDC hdc = wParam ? (HDC)wParam : BeginPaint(hwnd, &ps);
+            HDC hdc = wParam ? (HDC)wParam : NtUserBeginPaint( hwnd, &ps );
             HRGN hrgn;
             HBRUSH hbrush;
 
