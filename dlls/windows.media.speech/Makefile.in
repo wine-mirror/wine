@@ -2,6 +2,7 @@ MODULE = windows.media.speech.dll
 IMPORTS = combase uuid
 
 C_SRCS = \
+	listconstraint.c \
 	main.c \
 	recognizer.c \
 	synthesizer.c

@@ -46,6 +46,7 @@
  *
  */
 
+extern IActivationFactory *listconstraint_factory;
 extern IActivationFactory *recognizer_factory;
 
 /*

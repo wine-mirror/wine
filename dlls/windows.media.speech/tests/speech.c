@@ -710,21 +710,20 @@ static void test_SpeechRecognitionListConstraint(void)
     }
 
     hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
-    todo_wine ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG), "RoGetActivationFactory failed, hr %#lx.\n", hr);
+    ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG), "RoGetActivationFactory failed, hr %#lx.\n", hr);
 
     if (hr == REGDB_E_CLASSNOTREG) /* Win 8 and 8.1 */
     {
         win_skip("SpeechRecognitionListConstraint activation factory not available!\n");
         goto done;
     }
-    else if (!SUCCEEDED(hr)) goto done;
 
     hr = IActivationFactory_ActivateInstance(factory, &inspectable);
-    todo_wine ok(hr == E_NOTIMPL, "IActivationFactory_ActivateInstance failed, hr %#lx.\n", hr);
+    ok(hr == E_NOTIMPL, "IActivationFactory_ActivateInstance failed, hr %#lx.\n", hr);
 
-    todo_wine check_refcount(factory, 2);
-    todo_wine check_interface(factory, &IID_IInspectable, TRUE);
-    todo_wine check_interface(factory, &IID_IAgileObject, TRUE);
+    check_refcount(factory, 2);
+    check_interface(factory, &IID_IInspectable, TRUE);
+    check_interface(factory, &IID_IAgileObject, TRUE);
 
     hr = IActivationFactory_QueryInterface(factory, &IID_ISpeechRecognitionListConstraintFactory, (void **)&listconstraint_factory);
     ok(hr == S_OK, "IActivationFactory_QueryInterface IID_ISpeechRecognitionListConstraintFactory failed, hr %#lx.\n", hr);
@@ -747,6 +746,9 @@ static void test_SpeechRecognitionListConstraint(void)
 
     hr = ISpeechRecognitionListConstraintFactory_CreateWithTag(listconstraint_factory, &iterable_hstring.IIterable_HSTRING_iface, NULL, &listconstraint);
     todo_wine ok(hr == S_OK, "ISpeechRecognitionListConstraintFactory_Create failed, hr %#lx.\n", hr);
+
+    if (!SUCCEEDED(hr))
+        goto skip_create;
 
     ref = ISpeechRecognitionListConstraint_Release(listconstraint);
     todo_wine ok(ref == 0, "Got unexpected ref %lu.\n", ref);
@@ -809,10 +811,10 @@ static void test_SpeechRecognitionListConstraint(void)
 
 skip_create:
     ref = ISpeechRecognitionListConstraintFactory_Release(listconstraint_factory);
-    todo_wine ok(ref == 2, "Got unexpected ref %lu.\n", ref);
+    ok(ref == 2, "Got unexpected ref %lu.\n", ref);
 
     ref = IActivationFactory_Release(factory);
-    todo_wine ok(ref == 1, "Got unexpected ref %lu.\n", ref);
+    ok(ref == 1, "Got unexpected ref %lu.\n", ref);
 
 done:
     WindowsDeleteString(str);
