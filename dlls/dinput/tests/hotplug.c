@@ -1095,7 +1095,6 @@ static void test_windows_gaming_input(void)
     ok( ret == TRUE, "got HasCurrent %u\n", ret );
     hr = IIterator_RawGameController_MoveNext( iterator, &ret );
     ok( hr == S_OK, "First returned %#lx\n", hr );
-    todo_wine
     ok( ret == FALSE, "got MoveNext %u\n", ret );
     hr = IIterator_RawGameController_get_HasCurrent( iterator, &ret );
     ok( hr == S_OK, "First returned %#lx\n", hr );

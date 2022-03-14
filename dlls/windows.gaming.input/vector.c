@@ -126,8 +126,8 @@ static HRESULT WINAPI iterator_MoveNext( IIterator_IInspectable *iface, BOOL *va
 
     FIXME("\n");
 
-    if ((*value = impl->index < impl->size)) impl->index++;
-    return S_OK;
+    if (impl->index < impl->size) impl->index++;
+    return IIterator_IInspectable_get_HasCurrent( iface, value );
 }
 
 static HRESULT WINAPI iterator_GetMany( IIterator_IInspectable *iface, UINT32 items_size,
