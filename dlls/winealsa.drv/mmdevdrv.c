@@ -49,8 +49,6 @@
 #include "audioclient.h"
 #include "audiopolicy.h"
 
-#include <alsa/asoundlib.h>
-
 #include "unixlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(alsa);
@@ -2444,58 +2442,12 @@ HRESULT WINAPI AUDDRV_GetAudioSessionManager(IMMDevice *device,
     return S_OK;
 }
 
-static unsigned int alsa_probe_num_speakers(char *name) {
-    snd_pcm_t *handle;
-    snd_pcm_hw_params_t *params;
-    int err;
-    unsigned int max_channels = 0;
-
-    if ((err = snd_pcm_open(&handle, name, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK)) < 0) {
-        WARN("The device \"%s\" failed to open: %d (%s).\n",
-                name, err, snd_strerror(err));
-        return 0;
-    }
-
-    params = HeapAlloc(GetProcessHeap(), 0, snd_pcm_hw_params_sizeof());
-    if (!params) {
-        WARN("Out of memory.\n");
-        snd_pcm_close(handle);
-        return 0;
-    }
-
-    if ((err = snd_pcm_hw_params_any(handle, params)) < 0) {
-        WARN("snd_pcm_hw_params_any failed for \"%s\": %d (%s).\n",
-                name, err, snd_strerror(err));
-        goto exit;
-    }
-
-    if ((err = snd_pcm_hw_params_get_channels_max(params,
-                    &max_channels)) < 0){
-        WARN("Unable to get max channels: %d (%s)\n", err, snd_strerror(err));
-        goto exit;
-    }
-
-exit:
-    HeapFree(GetProcessHeap(), 0, params);
-    snd_pcm_close(handle);
-
-    return max_channels;
-}
-
-enum AudioDeviceConnectionType {
-    AudioDeviceConnectionType_Unknown = 0,
-    AudioDeviceConnectionType_PCI,
-    AudioDeviceConnectionType_USB
-};
-
 HRESULT WINAPI AUDDRV_GetPropValue(GUID *guid, const PROPERTYKEY *prop, PROPVARIANT *out)
 {
+    struct get_prop_value_params params;
     char name[256];
     EDataFlow flow;
-
-    static const PROPERTYKEY devicepath_key = { /* undocumented? - {b3f8fa53-0004-438e-9003-51a46e139bfc},2 */
-        {0xb3f8fa53, 0x0004, 0x438e, {0x90, 0x03, 0x51, 0xa4, 0x6e, 0x13, 0x9b, 0xfc}}, 2
-    };
+    unsigned int size = 0;
 
     TRACE("%s, (%s,%u), %p\n", wine_dbgstr_guid(guid), wine_dbgstr_guid(&prop->fmtid), prop->pid, out);
 
@@ -2505,116 +2457,27 @@ HRESULT WINAPI AUDDRV_GetPropValue(GUID *guid, const PROPERTYKEY *prop, PROPVARI
         return E_NOINTERFACE;
     }
 
-    if(IsEqualPropertyKey(*prop, devicepath_key))
-    {
-        char uevent[MAX_PATH];
-        FILE *fuevent;
-        int card, device;
+    params.alsa_name = name;
+    params.flow = flow;
+    params.guid = guid;
+    params.prop = prop;
+    params.value = out;
+    params.buffer = NULL;
+    params.buffer_size = &size;
 
-        /* only implemented for identifiable devices, i.e. not "default" */
-        if(!sscanf(name, "plughw:%u,%u", &card, &device))
-            return E_NOTIMPL;
+    while(1) {
+        ALSA_CALL(get_prop_value, &params);
 
-        sprintf(uevent, "/sys/class/sound/card%u/device/uevent", card);
-        fuevent = fopen(uevent, "r");
+        if(params.result != E_NOT_SUFFICIENT_BUFFER)
+            break;
 
-        if(fuevent){
-            enum AudioDeviceConnectionType connection = AudioDeviceConnectionType_Unknown;
-            USHORT vendor_id = 0, product_id = 0;
-            char line[256];
-
-            while (fgets(line, sizeof(line), fuevent)) {
-                char *val;
-                size_t val_len;
-
-                if((val = strchr(line, '='))) {
-                    val[0] = 0;
-                    val++;
-
-                    val_len = strlen(val);
-                    if(val_len > 0 && val[val_len - 1] == '\n') { val[val_len - 1] = 0; }
-
-                    if(!strcmp(line, "PCI_ID")){
-                        connection = AudioDeviceConnectionType_PCI;
-                        if(sscanf(val, "%hX:%hX", &vendor_id, &product_id)<2){
-                            WARN("Unexpected input when reading PCI_ID in uevent file.\n");
-                            connection = AudioDeviceConnectionType_Unknown;
-                            break;
-                        }
-                    }else if(!strcmp(line, "DEVTYPE") && !strcmp(val,"usb_interface"))
-                        connection = AudioDeviceConnectionType_USB;
-                    else if(!strcmp(line, "PRODUCT"))
-                        if(sscanf(val, "%hx/%hx/", &vendor_id, &product_id)<2){
-                            WARN("Unexpected input when reading PRODUCT in uevent file.\n");
-                            connection = AudioDeviceConnectionType_Unknown;
-                            break;
-                        }
-                }
-            }
-
-            fclose(fuevent);
-
-            if(connection == AudioDeviceConnectionType_USB || connection == AudioDeviceConnectionType_PCI){
-                static const WCHAR usbformatW[] = { '{','1','}','.','U','S','B','\\','V','I','D','_',
-                    '%','0','4','X','&','P','I','D','_','%','0','4','X','\\',
-                    '%','u','&','%','0','8','X',0 }; /* "{1}.USB\VID_%04X&PID_%04X\%u&%08X" */
-                static const WCHAR pciformatW[] = { '{','1','}','.','H','D','A','U','D','I','O','\\','F','U','N','C','_','0','1','&',
-                    'V','E','N','_','%','0','4','X','&','D','E','V','_',
-                    '%','0','4','X','\\','%','u','&','%','0','8','X',0 }; /* "{1}.HDAUDIO\FUNC_01&VEN_%04X&DEV_%04X\%u&%08X" */
-                UINT serial_number;
-
-                /* As hardly any audio devices have serial numbers, Windows instead
-                appears to use a persistent random number. We emulate this here
-                by instead using the last 8 hex digits of the GUID. */
-                serial_number = (guid->Data4[4] << 24) | (guid->Data4[5] << 16) | (guid->Data4[6] << 8) | guid->Data4[7];
-
-                out->vt = VT_LPWSTR;
-                out->pwszVal = CoTaskMemAlloc(128 * sizeof(WCHAR));
-
-                if(!out->pwszVal)
-                    return E_OUTOFMEMORY;
-
-                if(connection == AudioDeviceConnectionType_USB)
-                    sprintfW( out->pwszVal, usbformatW, vendor_id, product_id, device, serial_number);
-                else if(connection == AudioDeviceConnectionType_PCI)
-                    sprintfW( out->pwszVal, pciformatW, vendor_id, product_id, device, serial_number);
-
-                return S_OK;
-            }
-        }else{
-            WARN("Could not open %s for reading\n", uevent);
-            return E_NOTIMPL;
-        }
-    } else if (flow != eCapture && IsEqualPropertyKey(*prop, PKEY_AudioEndpoint_PhysicalSpeakers)) {
-        unsigned int num_speakers, card, device;
-        char hwname[255];
-
-        if (sscanf(name, "plughw:%u,%u", &card, &device))
-            sprintf(hwname, "hw:%u,%u", card, device); /* must be hw rather than plughw to work */
-        else
-            strcpy(hwname, name);
-
-        num_speakers = alsa_probe_num_speakers(hwname);
-        if (num_speakers == 0)
-            return E_FAIL;
-
-        out->vt = VT_UI4;
-
-        if (num_speakers > 6)
-            out->ulVal = KSAUDIO_SPEAKER_STEREO;
-        else if (num_speakers == 6)
-            out->ulVal = KSAUDIO_SPEAKER_5POINT1;
-        else if (num_speakers >= 4)
-            out->ulVal = KSAUDIO_SPEAKER_QUAD;
-        else if (num_speakers >= 2)
-            out->ulVal = KSAUDIO_SPEAKER_STEREO;
-        else if (num_speakers == 1)
-            out->ulVal = KSAUDIO_SPEAKER_MONO;
-
-        return S_OK;
+        CoTaskMemFree(params.buffer);
+        params.buffer = CoTaskMemAlloc(*params.buffer_size);
+        if(!params.buffer)
+            return E_OUTOFMEMORY;
     }
+    if(FAILED(params.result))
+        CoTaskMemFree(params.buffer);
 
-    TRACE("Unimplemented property %s,%u\n", wine_dbgstr_guid(&prop->fmtid), prop->pid);
-
-    return E_NOTIMPL;
+    return params.result;
 }

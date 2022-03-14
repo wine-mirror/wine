@@ -195,6 +195,18 @@ struct is_started_params
     HRESULT result;
 };
 
+struct get_prop_value_params
+{
+    const char *alsa_name;
+    EDataFlow flow;
+    const GUID *guid;
+    const PROPERTYKEY *prop;
+    HRESULT result;
+    PROPVARIANT *value;
+    void *buffer; /* caller allocated buffer to hold value's strings */
+    unsigned int *buffer_size;
+};
+
 enum alsa_funcs
 {
     alsa_get_endpoint_ids,
@@ -219,6 +231,7 @@ enum alsa_funcs
     alsa_set_volumes,
     alsa_set_event_handle,
     alsa_is_started,
+    alsa_get_prop_value,
 };
 
 extern unixlib_handle_t alsa_handle;
