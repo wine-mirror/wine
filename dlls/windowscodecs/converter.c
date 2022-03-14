@@ -984,9 +984,9 @@ static HRESULT copypixels_to_32bppPBGRA(struct FormatConverter *This, const WICR
                     BYTE alpha = pbBuffer[cbStride*y+4*x+3];
                     if (alpha != 255)
                     {
-                        pbBuffer[cbStride*y+4*x] = pbBuffer[cbStride*y+4*x] * alpha / 255;
-                        pbBuffer[cbStride*y+4*x+1] = pbBuffer[cbStride*y+4*x+1] * alpha / 255;
-                        pbBuffer[cbStride*y+4*x+2] = pbBuffer[cbStride*y+4*x+2] * alpha / 255;
+                        pbBuffer[cbStride*y+4*x] = (pbBuffer[cbStride*y+4*x] * alpha + 127) / 255;
+                        pbBuffer[cbStride*y+4*x+1] = (pbBuffer[cbStride*y+4*x+1] * alpha + 127) / 255;
+                        pbBuffer[cbStride*y+4*x+2] = (pbBuffer[cbStride*y+4*x+2] * alpha + 127) / 255;
                     }
                 }
         }
@@ -1017,9 +1017,9 @@ static HRESULT copypixels_to_32bppPRGBA(struct FormatConverter *This, const WICR
                     BYTE alpha = pbBuffer[cbStride*y+4*x+3];
                     if (alpha != 255)
                     {
-                        pbBuffer[cbStride*y+4*x] = pbBuffer[cbStride*y+4*x] * alpha / 255;
-                        pbBuffer[cbStride*y+4*x+1] = pbBuffer[cbStride*y+4*x+1] * alpha / 255;
-                        pbBuffer[cbStride*y+4*x+2] = pbBuffer[cbStride*y+4*x+2] * alpha / 255;
+                        pbBuffer[cbStride*y+4*x] = (pbBuffer[cbStride*y+4*x] * alpha + 127) / 255;
+                        pbBuffer[cbStride*y+4*x+1] = (pbBuffer[cbStride*y+4*x+1] * alpha + 127) / 255;
+                        pbBuffer[cbStride*y+4*x+2] = (pbBuffer[cbStride*y+4*x+2] * alpha + 127) / 255;
                     }
                 }
         }
