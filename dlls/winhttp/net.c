@@ -246,7 +246,7 @@ DWORD netconn_create( struct hostdata *host, const struct sockaddr_storage *sock
         WARN( "unable to connect to host (%lu)\n", ret );
         closesocket( conn->socket );
         free( conn );
-        return ret;
+        return ret == ERROR_WINHTTP_TIMEOUT ? ERROR_WINHTTP_TIMEOUT : ERROR_WINHTTP_CANNOT_CONNECT;
     }
 
     *ret_conn = conn;
