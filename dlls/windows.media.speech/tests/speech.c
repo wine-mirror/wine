@@ -41,6 +41,7 @@
 #define SPERR_WINRT_INTERNAL_ERROR 0x800455a0
 
 HRESULT WINAPI (*pDllGetActivationFactory)(HSTRING, IActivationFactory **);
+static BOOL is_win10_1507 = FALSE;
 
 static inline LONG get_ref(IUnknown *obj)
 {
@@ -77,6 +78,229 @@ static const char *debugstr_hstring(HSTRING hstr)
     if (hstr && !((ULONG_PTR)hstr >> 16)) return "(invalid)";
     str = WindowsGetStringRawBuffer(hstr, &len);
     return wine_dbgstr_wn(str, len);
+}
+
+struct iterator_hstring
+{
+    IIterator_HSTRING IIterator_HSTRING_iface;
+    LONG ref;
+
+    UINT32 index;
+    UINT32 size;
+    HSTRING *values;
+};
+
+static inline struct iterator_hstring *impl_from_IIterator_HSTRING( IIterator_HSTRING *iface )
+{
+    return CONTAINING_RECORD(iface, struct iterator_hstring, IIterator_HSTRING_iface);
+}
+
+static HRESULT WINAPI iterator_hstring_QueryInterface( IIterator_HSTRING *iface, REFIID iid, void **out )
+{
+    struct iterator_hstring *impl = impl_from_IIterator_HSTRING(iface);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) ||
+        IsEqualGUID(iid, &IID_IInspectable) ||
+        IsEqualGUID(iid, &IID_IAgileObject) ||
+        IsEqualGUID(iid, &IID_IIterator_HSTRING))
+    {
+        IInspectable_AddRef((*out = &impl->IIterator_HSTRING_iface));
+        return S_OK;
+    }
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI iterator_hstring_AddRef( IIterator_HSTRING *iface )
+{
+    struct iterator_hstring *impl = impl_from_IIterator_HSTRING(iface);
+    ULONG ref = InterlockedIncrement(&impl->ref);
+    return ref;
+}
+
+static ULONG WINAPI iterator_hstring_Release( IIterator_HSTRING *iface )
+{
+    struct iterator_hstring *impl = impl_from_IIterator_HSTRING(iface);
+    ULONG ref = InterlockedDecrement(&impl->ref);
+    return ref;
+}
+
+static HRESULT WINAPI iterator_hstring_GetIids( IIterator_HSTRING *iface, ULONG *iid_count, IID **iids )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI iterator_hstring_GetRuntimeClassName( IIterator_HSTRING *iface, HSTRING *class_name )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI iterator_hstring_GetTrustLevel( IIterator_HSTRING *iface, TrustLevel *trust_level )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI iterator_hstring_get_Current( IIterator_HSTRING *iface, HSTRING *value )
+{
+    struct iterator_hstring *impl = impl_from_IIterator_HSTRING(iface);
+    HRESULT hr;
+
+    *value = NULL;
+    if (impl->index >= impl->size) return E_BOUNDS;
+
+    hr = WindowsDuplicateString(impl->values[impl->index], value);
+    return hr;
+}
+
+static HRESULT WINAPI iterator_hstring_get_HasCurrent( IIterator_HSTRING *iface, BOOL *value )
+{
+    struct iterator_hstring *impl = impl_from_IIterator_HSTRING(iface);
+
+    *value = impl->index < impl->size;
+    return S_OK;
+}
+
+static HRESULT WINAPI iterator_hstring_MoveNext( IIterator_HSTRING *iface, BOOL *value )
+{
+    struct iterator_hstring *impl = impl_from_IIterator_HSTRING(iface);
+
+    if (impl->index < impl->size) impl->index++;
+    return IIterator_HSTRING_get_HasCurrent(iface, value);
+}
+
+static HRESULT WINAPI iterator_hstring_GetMany( IIterator_HSTRING *iface, UINT32 items_size,
+                                                HSTRING *items, UINT *count )
+{
+    return E_NOTIMPL;
+}
+
+static const struct IIterator_HSTRINGVtbl iterator_hstring_vtbl =
+{
+    /* IUnknown methods */
+    iterator_hstring_QueryInterface,
+    iterator_hstring_AddRef,
+    iterator_hstring_Release,
+    /* IInspectable methods */
+    iterator_hstring_GetIids,
+    iterator_hstring_GetRuntimeClassName,
+    iterator_hstring_GetTrustLevel,
+    /* IIterator<HSTRING> methods */
+    iterator_hstring_get_Current,
+    iterator_hstring_get_HasCurrent,
+    iterator_hstring_MoveNext,
+    iterator_hstring_GetMany
+};
+
+static HRESULT WINAPI iterator_hstring_create_static(struct iterator_hstring *impl, HSTRING *strings, UINT32 size)
+{
+    impl->IIterator_HSTRING_iface.lpVtbl = &iterator_hstring_vtbl;
+    impl->ref = 1;
+    impl->index = 0;
+    impl->size = size;
+    impl->values = strings;
+
+    return S_OK;
+}
+
+struct iterable_hstring
+{
+    IIterable_HSTRING IIterable_HSTRING_iface;
+    LONG ref;
+
+    IIterator_HSTRING *iterator;
+};
+
+static inline struct iterable_hstring *impl_from_Iterable_HSTRING( IIterable_HSTRING *iface )
+{
+    return CONTAINING_RECORD(iface, struct iterable_hstring, IIterable_HSTRING_iface);
+}
+
+static HRESULT WINAPI iterable_hstring_QueryInterface( IIterable_HSTRING *iface, REFIID iid, void **out )
+{
+    struct iterable_hstring *impl = impl_from_Iterable_HSTRING(iface);
+
+    trace("iface %p, iid %s, out %p stub!\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) ||
+        IsEqualGUID(iid, &IID_IInspectable) ||
+        IsEqualGUID(iid, &IID_IAgileObject) ||
+        IsEqualGUID(iid, &IID_IIterable_HSTRING))
+    {
+        IInspectable_AddRef((*out = &impl->IIterable_HSTRING_iface));
+        return S_OK;
+    }
+
+    trace("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI iterable_hstring_AddRef( IIterable_HSTRING *iface )
+{
+    struct iterable_hstring *impl = impl_from_Iterable_HSTRING(iface);
+    ULONG ref = InterlockedIncrement(&impl->ref);
+    trace("iface %p, ref %lu.\n", iface, ref);
+    return ref;
+}
+
+static ULONG WINAPI iterable_hstring_Release( IIterable_HSTRING *iface )
+{
+    struct iterable_hstring *impl = impl_from_Iterable_HSTRING(iface);
+    ULONG ref = InterlockedDecrement(&impl->ref);
+    trace("iface %p, ref %lu.\n", iface, ref);
+    return ref;
+}
+
+static HRESULT WINAPI iterable_hstring_GetIids( IIterable_HSTRING *iface, ULONG *iid_count, IID **iids )
+{
+    trace("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI iterable_hstring_GetRuntimeClassName( IIterable_HSTRING *iface, HSTRING *class_name )
+{
+    trace("iface %p, class_name %p stub!\n", iface, class_name);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI iterable_hstring_GetTrustLevel( IIterable_HSTRING *iface, TrustLevel *trust_level )
+{
+    trace("iface %p, trust_level %p stub!\n", iface, trust_level);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI iterable_hstring_First( IIterable_HSTRING *iface, IIterator_HSTRING **value )
+{
+    struct iterable_hstring *impl = impl_from_Iterable_HSTRING(iface);
+
+    trace("iface %p, value %p.\n", iface, value);
+
+    IIterator_HSTRING_AddRef((*value = impl->iterator));
+    return S_OK;
+}
+
+static const struct IIterable_HSTRINGVtbl iterable_hstring_vtbl =
+{
+    /* IUnknown methods */
+    iterable_hstring_QueryInterface,
+    iterable_hstring_AddRef,
+    iterable_hstring_Release,
+    /* IInspectable methods */
+    iterable_hstring_GetIids,
+    iterable_hstring_GetRuntimeClassName,
+    iterable_hstring_GetTrustLevel,
+    /* IIterable<HSTRING> methods */
+    iterable_hstring_First
+};
+
+static HRESULT WINAPI iterable_hstring_create_static(struct iterable_hstring *impl, struct iterator_hstring *iterator)
+{
+    impl->IIterable_HSTRING_iface.lpVtbl = &iterable_hstring_vtbl;
+    impl->ref = 1;
+    impl->iterator = &iterator->IIterator_HSTRING_iface;
+
+    return S_OK;
 }
 
 static void test_ActivationFactory(void)
@@ -141,6 +365,7 @@ static void test_ActivationFactory(void)
             ref = ISpeechRecognizerStatics2_Release(recognizer_statics2);
             ok(ref == 2, "Got unexpected refcount: %lu.\n", ref);
         }
+        else is_win10_1507 = TRUE;
 
         check_interface(factory3, &IID_IInstalledVoicesStatic, FALSE);
 
@@ -449,10 +674,160 @@ done:
     RoUninitialize();
 }
 
+static void test_SpeechRecognitionListConstraint(void)
+{
+    static const WCHAR *speech_recognition_list_constraint_name = L"Windows.Media.SpeechRecognition.SpeechRecognitionListConstraint";
+    static const WCHAR *speech_constraints[] = { L"This is a test.", L"Number 5!", L"What time is it?" };
+    static const WCHAR *speech_constraint_tag = L"test_message";
+    ISpeechRecognitionListConstraintFactory *listconstraint_factory = NULL;
+    ISpeechRecognitionListConstraint *listconstraint = NULL;
+    ISpeechRecognitionConstraint *constraint = NULL;
+    IVector_HSTRING *hstring_vector = NULL;
+    IActivationFactory *factory = NULL;
+    IInspectable *inspectable = NULL;
+    struct iterator_hstring iterator_hstring;
+    struct iterable_hstring iterable_hstring;
+    HSTRING commands[3], str, tag, tag_out;
+    UINT32 i, vector_size = 0;
+    BOOLEAN enabled;
+    INT32 str_cmp;
+    HRESULT hr;
+    LONG ref;
+
+    hr = RoInitialize(RO_INIT_MULTITHREADED);
+    ok(hr == S_OK, "RoInitialize failed, hr %#lx.\n", hr);
+
+    hr = WindowsCreateString(speech_recognition_list_constraint_name, wcslen(speech_recognition_list_constraint_name), &str);
+    ok(hr == S_OK, "WindowsCreateString failed, hr %#lx.\n", hr);
+
+    hr = WindowsCreateString(speech_constraint_tag, wcslen(speech_constraint_tag), &tag);
+    ok(hr == S_OK, "WindowsCreateString failed, hr %#lx.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(commands); i++)
+    {
+        hr = WindowsCreateString(speech_constraints[i], wcslen(speech_constraints[i]), &commands[i]);
+        ok(hr == S_OK, "WindowsCreateString failed, hr %#lx.\n", hr);
+    }
+
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    todo_wine ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG), "RoGetActivationFactory failed, hr %#lx.\n", hr);
+
+    if (hr == REGDB_E_CLASSNOTREG) /* Win 8 and 8.1 */
+    {
+        win_skip("SpeechRecognitionListConstraint activation factory not available!\n");
+        goto done;
+    }
+    else if (!SUCCEEDED(hr)) goto done;
+
+    hr = IActivationFactory_ActivateInstance(factory, &inspectable);
+    todo_wine ok(hr == E_NOTIMPL, "IActivationFactory_ActivateInstance failed, hr %#lx.\n", hr);
+
+    todo_wine check_refcount(factory, 2);
+    todo_wine check_interface(factory, &IID_IInspectable, TRUE);
+    todo_wine check_interface(factory, &IID_IAgileObject, TRUE);
+
+    hr = IActivationFactory_QueryInterface(factory, &IID_ISpeechRecognitionListConstraintFactory, (void **)&listconstraint_factory);
+    ok(hr == S_OK, "IActivationFactory_QueryInterface IID_ISpeechRecognitionListConstraintFactory failed, hr %#lx.\n", hr);
+
+    hr = ISpeechRecognitionListConstraintFactory_Create(listconstraint_factory, NULL, &listconstraint);
+    todo_wine ok(hr == E_POINTER, "ISpeechRecognitionListConstraintFactory_Create failed, hr %#lx.\n", hr);
+
+    hr = ISpeechRecognitionListConstraintFactory_CreateWithTag(listconstraint_factory, NULL, NULL, &listconstraint);
+    todo_wine ok(hr == E_POINTER, "ISpeechRecognitionListConstraintFactory_Create failed, hr %#lx.\n", hr);
+
+    /* The create functions on Win10 1507 x32 break when handling the given iterator. Seems like a Windows bug. Skipping these tests. */
+    if (broken(is_win10_1507 && (sizeof(void*) == 4)))
+    {
+        win_skip("SpeechRecognitionListConstraint object creation broken on Win10 1507 x32!\n");
+        goto skip_create;
+    }
+
+    iterator_hstring_create_static(&iterator_hstring, commands, ARRAY_SIZE(commands));
+    iterable_hstring_create_static(&iterable_hstring, &iterator_hstring);
+
+    hr = ISpeechRecognitionListConstraintFactory_CreateWithTag(listconstraint_factory, &iterable_hstring.IIterable_HSTRING_iface, NULL, &listconstraint);
+    todo_wine ok(hr == S_OK, "ISpeechRecognitionListConstraintFactory_Create failed, hr %#lx.\n", hr);
+
+    ref = ISpeechRecognitionListConstraint_Release(listconstraint);
+    todo_wine ok(ref == 0, "Got unexpected ref %lu.\n", ref);
+
+    iterator_hstring_create_static(&iterator_hstring, commands, ARRAY_SIZE(commands));
+    iterable_hstring_create_static(&iterable_hstring, &iterator_hstring);
+
+    hr = ISpeechRecognitionListConstraintFactory_CreateWithTag(listconstraint_factory, &iterable_hstring.IIterable_HSTRING_iface, tag, &listconstraint);
+    todo_wine ok(hr == S_OK, "ISpeechRecognitionListConstraintFactory_CreateWithTag failed, hr %#lx.\n", hr);
+
+    todo_wine check_refcount(listconstraint, 1);
+    todo_wine check_interface(listconstraint, &IID_IInspectable, TRUE);
+    todo_wine check_interface(listconstraint, &IID_IAgileObject, TRUE);
+
+    hr = ISpeechRecognitionListConstraint_QueryInterface(listconstraint, &IID_ISpeechRecognitionConstraint, (void **)&constraint);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ISpeechRecognitionListConstraint_get_Commands(listconstraint, &hstring_vector);
+    todo_wine ok(hr == S_OK, "ISpeechRecognitionListConstraint_Commands failed, hr %#lx.\n", hr);
+
+    hr = IVector_HSTRING_get_Size(hstring_vector, &vector_size);
+    todo_wine ok(hr == S_OK, "IVector_HSTRING_get_Size failed, hr %#lx.\n", hr);
+    todo_wine ok(vector_size == ARRAY_SIZE(commands), "Got unexpected vector_size %u.\n", vector_size);
+
+    for (i = 0; i < vector_size; i++)
+    {
+        HSTRING str;
+
+        hr = IVector_HSTRING_GetAt(hstring_vector, i, &str);
+        todo_wine ok(hr == S_OK, "IVector_HSTRING_GetAt failed, hr %#lx.\n", hr);
+        hr = WindowsCompareStringOrdinal(commands[i], str, &str_cmp);
+        todo_wine ok(hr == S_OK, "WindowsCompareStringOrdinal failed, hr %#lx.\n", hr);
+        todo_wine ok(!str_cmp, "Strings not equal.\n");
+
+        WindowsDeleteString(str);
+    }
+
+    ref = IVector_HSTRING_Release(hstring_vector);
+    todo_wine ok(ref == 0, "Got unexpected ref %lu.\n", ref);
+
+    hr = ISpeechRecognitionConstraint_get_Tag(constraint, &tag_out);
+    todo_wine ok(hr == S_OK, "ISpeechRecognitionConstraint_get_Tag failed, hr %#lx.\n", hr);
+    hr = WindowsCompareStringOrdinal(tag, tag_out, &str_cmp);
+    todo_wine ok(hr == S_OK, "WindowsCompareStringOrdinal failed, hr %#lx.\n", hr);
+    todo_wine ok(!str_cmp, "Strings not equal.\n");
+    hr = WindowsDeleteString(tag_out);
+    todo_wine ok(hr == S_OK, "WindowsDeleteString failed, hr %#lx.\n", hr);
+
+    hr = ISpeechRecognitionConstraint_put_IsEnabled(constraint, TRUE);
+    todo_wine ok(hr == S_OK, "ISpeechRecognitionConstraint_put_IsEnabled failed, hr %#lx.\n", hr);
+    hr = ISpeechRecognitionConstraint_get_IsEnabled(constraint, &enabled);
+    todo_wine ok(hr == S_OK, "ISpeechRecognitionConstraint_get_IsEnabled failed, hr %#lx.\n", hr);
+    todo_wine ok(enabled, "ListConstraint didn't get enabled.\n");
+
+    ref = ISpeechRecognitionConstraint_Release(constraint);
+    todo_wine ok(ref == 1, "Got unexpected ref %lu.\n", ref);
+
+    ref = ISpeechRecognitionListConstraint_Release(listconstraint);
+    todo_wine ok(ref == 0, "Got unexpected ref %lu.\n", ref);
+
+skip_create:
+    ref = ISpeechRecognitionListConstraintFactory_Release(listconstraint_factory);
+    todo_wine ok(ref == 2, "Got unexpected ref %lu.\n", ref);
+
+    ref = IActivationFactory_Release(factory);
+    todo_wine ok(ref == 1, "Got unexpected ref %lu.\n", ref);
+
+done:
+    WindowsDeleteString(str);
+    WindowsDeleteString(tag);
+    for (i = 0; i < ARRAY_SIZE(commands); i++)
+        WindowsDeleteString(commands[i]);
+
+    RoUninitialize();
+}
+
 START_TEST(speech)
 {
     test_ActivationFactory();
     test_SpeechSynthesizer();
     test_VoiceInformation();
     test_SpeechRecognizer();
+    test_SpeechRecognitionListConstraint();
 }
