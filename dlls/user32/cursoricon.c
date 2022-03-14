@@ -775,9 +775,9 @@ static HBITMAP create_alpha_bitmap( HBITMAP color, const BITMAPINFO *src_info, c
     for (i = 0, ptr = bits; i < bm.bmWidth * bm.bmHeight; i++, ptr += 4)
     {
         unsigned int alpha = ptr[3];
-        ptr[0] = ptr[0] * alpha / 255;
-        ptr[1] = ptr[1] * alpha / 255;
-        ptr[2] = ptr[2] * alpha / 255;
+        ptr[0] = (ptr[0] * alpha + 127) / 255;
+        ptr[1] = (ptr[1] * alpha + 127) / 255;
+        ptr[2] = (ptr[2] * alpha + 127) / 255;
     }
 
 done:
