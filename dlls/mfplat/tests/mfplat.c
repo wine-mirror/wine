@@ -6005,6 +6005,28 @@ static void test_MFCreate2DMediaBuffer(void)
 
         IMFMediaBuffer_Release(buffer);
     }
+
+    /* Alignment tests */
+    for (i = 0; i < ARRAY_SIZE(_2d_buffer_tests); ++i)
+    {
+        const struct _2d_buffer_test *ptr = &_2d_buffer_tests[i];
+
+        hr = pMFCreate2DMediaBuffer(ptr->width, ptr->height, ptr->fourcc, FALSE, &buffer);
+        ok(hr == S_OK, "Failed to create a buffer, hr %#lx.\n", hr);
+
+        hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer, (void **)&_2dbuffer);
+        ok(hr == S_OK, "Failed to get interface, hr %#lx.\n", hr);
+
+        hr = IMF2DBuffer_Lock2D(_2dbuffer, &data, &pitch);
+        ok(hr == S_OK, "Failed to lock buffer, hr %#lx.\n", hr);
+        ok(((uintptr_t)data & MF_64_BYTE_ALIGNMENT) == 0, "Misaligned data at %p.\n", data);
+
+        hr = IMF2DBuffer_Unlock2D(_2dbuffer);
+        ok(hr == S_OK, "Failed to unlock buffer, hr %#lx.\n", hr);
+
+        IMF2DBuffer_Release(_2dbuffer);
+        IMFMediaBuffer_Release(buffer);
+    }
 }
 
 static void test_MFCreateMediaBufferFromMediaType(void)
