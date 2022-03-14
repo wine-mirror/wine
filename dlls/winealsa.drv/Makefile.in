@@ -9,5 +9,6 @@ EXTRADLLFLAGS = -mcygwin
 
 C_SRCS = \
 	alsa.c \
+	alsamidi.c \
 	midi.c \
 	mmdevdrv.c

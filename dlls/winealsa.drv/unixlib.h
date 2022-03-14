@@ -232,7 +232,11 @@ enum alsa_funcs
     alsa_set_event_handle,
     alsa_is_started,
     alsa_get_prop_value,
+
+    alsa_midi_seq_lock, /* temporary */
 };
+
+NTSTATUS midi_seq_lock(void *args) DECLSPEC_HIDDEN;
 
 extern unixlib_handle_t alsa_handle;
 

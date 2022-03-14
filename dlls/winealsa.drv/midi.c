@@ -1,17 +1,11 @@
-/* -*- tab-width: 8; c-basic-offset: 4 -*- */
-
 /*
- * Sample MIDI Wine Driver for ALSA (basically Linux)
+ * MIDI driver for ALSA (PE-side)
  *
- * Copyright 1994 	Martin Ayotte
- * Copyright 1998 	Luiz Otavio L. Zorzella (init procedures)
- * Copyright 1998/1999	Eric POUECH :
- * 		98/7 	changes for making this MIDI driver work on OSS
- * 			current support is limited to MIDI ports of OSS systems
- * 		98/9	rewriting MCI code for MIDI
- * 		98/11 	split in midi.c and mcimidi.c
- * Copyright 2003      Christian Costa :
- *                     ALSA port
+ * Copyright 1994       Martin Ayotte
+ * Copyright 1998       Luiz Otavio L. Zorzella
+ * Copyright 1998, 1999 Eric POUECH
+ * Copyright 2003       Christian Costa
+ * Copyright 2022       Huw Davies
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,9 +20,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
- *
- * TODO: Finish midi record
- *
  */
 
 #include "config.h"
@@ -40,17 +31,21 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "winuser.h"
-#include "winnls.h"
+#include "winternl.h"
 #include "mmddk.h"
-#include "mmreg.h"
-#include "dsound.h"
+#include "mmdeviceapi.h"
+
 #include "wine/debug.h"
+#include "wine/unixlib.h"
 
 #include <alsa/asoundlib.h>
+
+#include "unixlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(midi);
 
@@ -81,14 +76,6 @@ static	int 		MODM_NumDevs = 0;
 /* this is the total number of MIDI out devices found */
 static	int 		MIDM_NumDevs = 0;
 
-static CRITICAL_SECTION midiSeqLock;
-static CRITICAL_SECTION_DEBUG midiSeqLockDebug =
-{
-    0, 0, &midiSeqLock,
-    { &midiSeqLockDebug.ProcessLocksList, &midiSeqLockDebug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": midiSeqLock") }
-};
-static CRITICAL_SECTION midiSeqLock = { &midiSeqLockDebug, -1, 0, 0, 0, 0 };
 static	snd_seq_t*      midiSeq = NULL;
 static	int		numOpenMidiSeq = 0;
 static	int		numStartedMidiIn = 0;
@@ -106,6 +93,16 @@ static CRITICAL_SECTION crit_sect = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static int end_thread;
 static HANDLE hThread;
+
+static void seq_lock(void)
+{
+    ALSA_CALL(midi_seq_lock, (void *)(UINT_PTR)1);
+}
+
+static void seq_unlock(void)
+{
+    ALSA_CALL(midi_seq_lock, (void *)(UINT_PTR)0);
+}
 
 /*======================================================================*
  *                  Low level MIDI implementation			*
@@ -215,7 +212,7 @@ static BOOL midi_warn = TRUE;
  */
 static int midiOpenSeq(BOOL create_client)
 {
-    EnterCriticalSection(&midiSeqLock);
+    seq_lock();
     if (numOpenMidiSeq == 0) {
 	if (snd_seq_open(&midiSeq, "default", SND_SEQ_OPEN_DUPLEX, 0) < 0)
         {
@@ -224,7 +221,7 @@ static int midiOpenSeq(BOOL create_client)
 		WARN("Error opening ALSA sequencer.\n");
 	    }
             midi_warn = FALSE;
-            LeaveCriticalSection(&midiSeqLock);
+            seq_unlock();
 	    return -1;
 	}
 
@@ -242,7 +239,7 @@ static int midiOpenSeq(BOOL create_client)
         }
     }
     numOpenMidiSeq++;
-    LeaveCriticalSection(&midiSeqLock);
+    seq_unlock();
     return 0;
 }
 
@@ -251,13 +248,13 @@ static int midiOpenSeq(BOOL create_client)
  */
 static int midiCloseSeq(void)
 {
-    EnterCriticalSection(&midiSeqLock);
+    seq_lock();
     if (--numOpenMidiSeq == 0) {
 	snd_seq_delete_simple_port(midiSeq, port_in);
 	snd_seq_close(midiSeq);
 	midiSeq = NULL;
     }
-    LeaveCriticalSection(&midiSeqLock);
+    seq_unlock();
     return 0;
 }
 
@@ -381,11 +378,11 @@ static DWORD WINAPI midRecThread(LPVOID arg)
 
     while(!end_thread) {
 	TRACE("Thread loop\n");
-        EnterCriticalSection(&midiSeqLock);
+        seq_lock();
 	npfd = snd_seq_poll_descriptors_count(midiSeq, POLLIN);
 	pfd = HeapAlloc(GetProcessHeap(), 0, npfd * sizeof(struct pollfd));
 	snd_seq_poll_descriptors(midiSeq, pfd, npfd, POLLIN);
-        LeaveCriticalSection(&midiSeqLock);
+        seq_unlock();
 
 	/* Check if an event is present */
 	if (poll(pfd, npfd, 250) <= 0) {
@@ -404,18 +401,18 @@ static DWORD WINAPI midRecThread(LPVOID arg)
 	do {
             snd_seq_event_t *ev;
 
-            EnterCriticalSection(&midiSeqLock);
+            seq_lock();
             snd_seq_event_input(midiSeq, &ev);
-            LeaveCriticalSection(&midiSeqLock);
+            seq_unlock();
 
             if (ev) {
                 handle_midi_event(ev);
                 snd_seq_free_event(ev);
             }
 
-            EnterCriticalSection(&midiSeqLock);
+            seq_lock();
             ret = snd_seq_event_input_pending(midiSeq, 0);
-            LeaveCriticalSection(&midiSeqLock);
+            seq_unlock();
 	} while(ret > 0);
 	
 	HeapFree(GetProcessHeap(), 0, pfd);
@@ -489,10 +486,10 @@ static DWORD midOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
     MidiInDev[wDevID].startTime = 0;
 
     /* Connect our app port to the device port */
-    EnterCriticalSection(&midiSeqLock);
+    seq_lock();
     ret = snd_seq_connect_from(midiSeq, port_in, MidiInDev[wDevID].addr.client,
                                MidiInDev[wDevID].addr.port);
-    LeaveCriticalSection(&midiSeqLock);
+    seq_unlock();
     if (ret < 0)
 	return MMSYSERR_NOTENABLED;
 
@@ -550,9 +547,9 @@ static DWORD midClose(WORD wDevID)
     	TRACE("Stopped thread for midi-in\n");
     }
 
-    EnterCriticalSection(&midiSeqLock);
+    seq_lock();
     snd_seq_disconnect_from(midiSeq, port_in, MidiInDev[wDevID].addr.client, MidiInDev[wDevID].addr.port);
-    LeaveCriticalSection(&midiSeqLock);
+    seq_unlock();
     midiCloseSeq();
 
     MIDI_NotifyClient(wDevID, MIM_CLOSE, 0L, 0L);
@@ -752,7 +749,7 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
     MidiOutDev[wDevID].wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
     MidiOutDev[wDevID].midiDesc = *lpDesc;
 
-    EnterCriticalSection(&midiSeqLock);
+    seq_lock();
     /* Create a port dedicated to a specific device */
     /* Keep the old name without a number for the first port */
     if (wDevID)
@@ -780,7 +777,7 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 		 wDevID, MidiOutDev[wDevID].addr.client,
 		 MidiOutDev[wDevID].addr.port, snd_strerror(ret));
     }
-    LeaveCriticalSection(&midiSeqLock);
+    seq_unlock();
 
     if (port_out < 0)
 	return MMSYSERR_NOTENABLED;
@@ -817,11 +814,11 @@ static DWORD modClose(WORD wDevID)
     case MOD_FMSYNTH:
     case MOD_MIDIPORT:
     case MOD_SYNTH:
-        EnterCriticalSection(&midiSeqLock);
+        seq_lock();
         TRACE("Deleting port :%d, connected to %d:%d\n", MidiOutDev[wDevID].port_out, MidiOutDev[wDevID].addr.client, MidiOutDev[wDevID].addr.port);
         snd_seq_delete_simple_port(midiSeq, MidiOutDev[wDevID].port_out);
         MidiOutDev[wDevID].port_out = -1;
-        LeaveCriticalSection(&midiSeqLock);
+        seq_unlock();
 	midiCloseSeq();
 	break;
     default:
@@ -942,9 +939,9 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 		break;
 	    }
 	    if (handled) {
-                EnterCriticalSection(&midiSeqLock);
+                seq_lock();
                 snd_seq_event_output_direct(midiSeq, &event);
-                LeaveCriticalSection(&midiSeqLock);
+                seq_unlock();
             }
 	}
 	break;
@@ -1033,9 +1030,9 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 	snd_seq_ev_set_source(&event, MidiOutDev[wDevID].port_out);
 	snd_seq_ev_set_subs(&event);
 	snd_seq_ev_set_sysex(&event, lpMidiHdr->dwBufferLength + len_add, lpNewData ? lpNewData : lpData);
-        EnterCriticalSection(&midiSeqLock);
+        seq_lock();
 	snd_seq_event_output_direct(midiSeq, &event);
-        LeaveCriticalSection(&midiSeqLock);
+        seq_unlock();
         HeapFree(GetProcessHeap(), 0, lpNewData);
         break;
     default:
