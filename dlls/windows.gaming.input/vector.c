@@ -104,9 +104,7 @@ static HRESULT WINAPI iterator_GetTrustLevel( IIterator_IInspectable *iface, Tru
 static HRESULT WINAPI iterator_get_Current( IIterator_IInspectable *iface, IInspectable **value )
 {
     struct iterator *impl = impl_from_IIterator_IInspectable( iface );
-
-    FIXME("\n");
-
+    TRACE( "iface %p, value %p.\n", iface, value );
     return IVectorView_IInspectable_GetAt( impl->view, impl->index, value );
 }
 
@@ -114,7 +112,7 @@ static HRESULT WINAPI iterator_get_HasCurrent( IIterator_IInspectable *iface, BO
 {
     struct iterator *impl = impl_from_IIterator_IInspectable( iface );
 
-    FIXME("\n");
+    TRACE( "iface %p, value %p.\n", iface, value );
 
     *value = impl->index < impl->size;
     return S_OK;
@@ -124,7 +122,7 @@ static HRESULT WINAPI iterator_MoveNext( IIterator_IInspectable *iface, BOOL *va
 {
     struct iterator *impl = impl_from_IIterator_IInspectable( iface );
 
-    FIXME("\n");
+    TRACE( "iface %p, value %p.\n", iface, value );
 
     if (impl->index < impl->size) impl->index++;
     return IIterator_IInspectable_get_HasCurrent( iface, value );
@@ -134,9 +132,7 @@ static HRESULT WINAPI iterator_GetMany( IIterator_IInspectable *iface, UINT32 it
                                         IInspectable **items, UINT *count )
 {
     struct iterator *impl = impl_from_IIterator_IInspectable( iface );
-
-    FIXME("\n");
-
+    TRACE( "iface %p, items_size %u, items %p, count %p.\n", iface, items_size, items, count );
     return IVectorView_IInspectable_GetMany( impl->view, impl->index, items_size, items, count );
 }
 
@@ -635,7 +631,7 @@ static HRESULT WINAPI iterable_First( IIterable_IInspectable *iface, IIterator_I
     IVectorView_IInspectable *view;
     HRESULT hr;
 
-    TRACE("\n");
+    TRACE( "iface %p, value %p.\n", iface, value );
 
     if (FAILED(hr = IVector_IInspectable_GetView( &impl->IVector_IInspectable_iface, &view ))) return hr;
 
