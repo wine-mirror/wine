@@ -520,14 +520,47 @@ static HRESULT WINAPI transform_ProcessMessage(IMFTransform *iface, MFT_MESSAGE_
 
 static HRESULT WINAPI transform_ProcessInput(IMFTransform *iface, DWORD id, IMFSample *sample, DWORD flags)
 {
+    struct wma_decoder *decoder = impl_from_IMFTransform(iface);
+    MFT_INPUT_STREAM_INFO info;
+    HRESULT hr;
+
     FIXME("iface %p, id %lu, sample %p, flags %#lx stub!\n", iface, id, sample, flags);
+
+    if (!decoder->wg_transform)
+        return MF_E_TRANSFORM_TYPE_NOT_SET;
+
+    if (FAILED(hr = IMFTransform_GetInputStreamInfo(iface, 0, &info)))
+        return hr;
+
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, DWORD count,
         MFT_OUTPUT_DATA_BUFFER *samples, DWORD *status)
 {
+    struct wma_decoder *decoder = impl_from_IMFTransform(iface);
+    MFT_OUTPUT_STREAM_INFO info;
+    HRESULT hr;
+
     FIXME("iface %p, flags %#lx, count %lu, samples %p, status %p stub!\n", iface, flags, count, samples, status);
+
+    if (count > 1)
+        return E_INVALIDARG;
+
+    if (!decoder->wg_transform)
+        return MF_E_TRANSFORM_TYPE_NOT_SET;
+
+    if (FAILED(hr = IMFTransform_GetOutputStreamInfo(iface, 0, &info)))
+        return hr;
+
+    *status = 0;
+    samples[0].dwStatus = 0;
+    if (!samples[0].pSample)
+    {
+        samples[0].dwStatus = MFT_OUTPUT_DATA_BUFFER_NO_SAMPLE;
+        return MF_E_TRANSFORM_NEED_MORE_INPUT;
+    }
+
     return E_NOTIMPL;
 }
 

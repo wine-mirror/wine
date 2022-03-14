@@ -6035,6 +6035,7 @@ static void test_wma_decoder(void)
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Audio, MFAudioFormat_WMAudioV8};
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Audio, MFAudioFormat_Float};
     MFT_OUTPUT_STREAM_INFO output_info;
+    MFT_OUTPUT_DATA_BUFFER outputs[2];
     MFT_INPUT_STREAM_INFO input_info;
     MFT_OUTPUT_DATA_BUFFER output;
     const BYTE *wma_encoded_data;
@@ -6212,7 +6213,7 @@ static void test_wma_decoder(void)
     ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
     ret = IMFSample_Release(sample);
     ok(ret == 0, "Release returned %lu\n", ret);
-    sample = create_sample(wma_encoded_data + wma_block_size, wma_block_size - wma_block_size / 2);
+    sample = create_sample(wma_encoded_data, wma_block_size + 1);
     hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
     todo_wine
     ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
@@ -6235,16 +6236,13 @@ static void test_wma_decoder(void)
     status = 0xdeadbeef;
     memset(&output, 0, sizeof(output));
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
-    todo_wine
     ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
     ok(output.dwStreamID == 0, "got dwStreamID %lu\n", output.dwStreamID);
     ok(!output.pSample, "got pSample %p\n", output.pSample);
-    todo_wine
     ok(output.dwStatus == MFT_OUTPUT_DATA_BUFFER_NO_SAMPLE ||
             broken(output.dwStatus == (MFT_OUTPUT_DATA_BUFFER_INCOMPLETE|MFT_OUTPUT_DATA_BUFFER_NO_SAMPLE)) /* Win7 */,
             "got dwStatus %#lx\n", output.dwStatus);
     ok(!output.pEvents, "got pEvents %p\n", output.pEvents);
-    todo_wine
     ok(status == 0, "got status %#lx\n", status);
 
     sample = create_sample(wma_encoded_data, wma_block_size);
@@ -6257,15 +6255,24 @@ static void test_wma_decoder(void)
     status = 0xdeadbeef;
     memset(&output, 0, sizeof(output));
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
-    todo_wine
     ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
     ok(!output.pSample, "got pSample %p\n", output.pSample);
-    todo_wine
     ok(output.dwStatus == MFT_OUTPUT_DATA_BUFFER_NO_SAMPLE ||
             broken(output.dwStatus == (MFT_OUTPUT_DATA_BUFFER_INCOMPLETE|MFT_OUTPUT_DATA_BUFFER_NO_SAMPLE)) /* Win7 */,
             "got dwStatus %#lx\n", output.dwStatus);
-    todo_wine
     ok(status == 0, "got status %#lx\n", status);
+
+    status = 0xdeadbeef;
+    memset(&output, 0, sizeof(output));
+    output_info.cbSize = sizeof(wma_decoded_data);
+    sample = create_sample(NULL, output_info.cbSize);
+    outputs[0].pSample = sample;
+    sample = create_sample(NULL, output_info.cbSize);
+    outputs[1].pSample = sample;
+    hr = IMFTransform_ProcessOutput(transform, 0, 2, outputs, &status);
+    ok(hr == E_INVALIDARG, "ProcessOutput returned %#lx\n", hr);
+    IMFSample_Release(outputs[0].pSample);
+    IMFSample_Release(outputs[1].pSample);
 
     i = 1;
     status = 0xdeadbeef;
@@ -6337,7 +6344,6 @@ static void test_wma_decoder(void)
     ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
     ok(output.pSample == sample, "got pSample %p\n", output.pSample);
     ok(output.dwStatus == 0, "got dwStatus %#lx\n", output.dwStatus);
-    todo_wine
     ok(status == 0, "got status %#lx\n", status);
     ret = IMFSample_Release(sample);
     ok(ret == 0, "Release returned %lu\n", ret);
@@ -6353,7 +6359,6 @@ static void test_wma_decoder(void)
     ok(output.dwStatus == 0 ||
             broken(output.dwStatus == (MFT_OUTPUT_DATA_BUFFER_INCOMPLETE|7)) /* Win7 */,
             "got dwStatus %#lx\n", output.dwStatus);
-    todo_wine
     ok(status == 0, "got status %#lx\n", status);
     check_sample(sample, NULL, 0, NULL);
     ret = IMFSample_Release(sample);
