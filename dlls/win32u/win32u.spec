@@ -1139,7 +1139,7 @@
 @ stub NtUserRegisterTouchPadCapable
 @ stub NtUserRegisterUserApiHook
 @ stub NtUserRegisterWindowMessage
-@ stub NtUserReleaseDC
+@ stdcall NtUserReleaseDC(long long)
 @ stub NtUserReleaseDwmHitTestWaiters
 @ stub NtUserRemoteConnect
 @ stub NtUserRemoteRedrawRectangle

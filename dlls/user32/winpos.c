@@ -2847,7 +2847,7 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     }
 
     set_capture_window( 0, GUI_INMOVESIZE, NULL );
-    ReleaseDC( parent, hdc );
+    NtUserReleaseDC( parent, hdc );
     if (parent) MapWindowPoints( 0, parent, (POINT *)&sizingRect, 2 );
 
     if (HOOK_CallHooks( WH_CBT, HCBT_MOVESIZE, (WPARAM)hwnd, (LPARAM)&sizingRect, TRUE ))

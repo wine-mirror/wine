@@ -1258,7 +1258,7 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop, UINT max_height )
         lppop->bScrolling = FALSE;
     }
 
-    ReleaseDC( 0, hdc );
+    NtUserReleaseDC( 0, hdc );
 }
 
 
@@ -2082,7 +2082,7 @@ static void MENU_SelectItem( HWND hwndOwner, HMENU hmenu, UINT wIndex,
             }
         }
     }
-    ReleaseDC( lppop->hWnd, hdc );
+    NtUserReleaseDC( lppop->hWnd, hdc );
 }
 
 
@@ -2388,7 +2388,7 @@ static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu,
 
         item->fState |= MF_HILITE;
         MENU_DrawMenuItem( menu->hWnd, menu, hwndOwner, hdc, item, !(menu->wFlags & MF_POPUP), ODA_DRAWENTIRE );
-        ReleaseDC( menu->hWnd, hdc );
+        NtUserReleaseDC( menu->hWnd, hdc );
     }
     if (!item->rect.top && !item->rect.left && !item->rect.bottom && !item->rect.right)
         item->rect = rect;
@@ -3646,7 +3646,7 @@ UINT MENU_GetMenuBarHeight( HWND hwnd, UINT menubarWidth,
     SelectObject( hdc, get_menu_font(FALSE));
     SetRect(&rectBar, orgX, orgY, orgX+menubarWidth, orgY+GetSystemMetrics(SM_CYMENU));
     MENU_MenuBarCalcSize( hdc, &rectBar, lppop, hwnd );
-    ReleaseDC( hwnd, hdc );
+    NtUserReleaseDC( hwnd, hdc );
     return lppop->Height;
 }
 

@@ -461,7 +461,7 @@ static HANDLE render_synthesized_bitmap( HANDLE data, UINT from )
                               bmi, DIB_RGB_COLORS );
         GlobalUnlock( data );
     }
-    ReleaseDC( 0, hdc );
+    NtUserReleaseDC( 0, hdc );
     return ret;
 }
 
@@ -518,7 +518,7 @@ static HANDLE render_synthesized_dib( HANDLE data, UINT format, UINT from )
     }
 
 done:
-    ReleaseDC( 0, hdc );
+    NtUserReleaseDC( 0, hdc );
     return ret;
 }
 
@@ -549,7 +549,7 @@ static HANDLE render_synthesized_metafile( HANDLE data )
         }
         HeapFree( GetProcessHeap(), 0, bits );
     }
-    ReleaseDC( 0, hdc );
+    NtUserReleaseDC( 0, hdc );
     return ret;
 }
 

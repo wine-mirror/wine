@@ -786,7 +786,7 @@ static void LISTBOX_RepaintItem( LB_DESCR *descr, INT index, UINT action )
     LISTBOX_PaintItem( descr, hdc, &rect, index, action, TRUE );
     if (oldFont) SelectObject( hdc, oldFont );
     if (oldBrush) SelectObject( hdc, oldBrush );
-    ReleaseDC( descr->self, hdc );
+    NtUserReleaseDC( descr->self, hdc );
 }
 
 
@@ -813,7 +813,7 @@ static void LISTBOX_DrawFocusRect( LB_DESCR *descr, BOOL on )
     SetWindowOrgEx( hdc, descr->horz_pos, 0, NULL );
     LISTBOX_PaintItem( descr, hdc, &rect, descr->focus_item, ODA_FOCUS, !on );
     if (oldFont) SelectObject( hdc, oldFont );
-    ReleaseDC( descr->self, hdc );
+    NtUserReleaseDC( descr->self, hdc );
 }
 
 
@@ -1416,7 +1416,7 @@ static INT LISTBOX_SetFont( LB_DESCR *descr, HFONT font )
     if (font) oldFont = SelectObject( hdc, font );
     GetTextExtentPointA( hdc, alphabet, 52, &sz);
     if (oldFont) SelectObject( hdc, oldFont );
-    ReleaseDC( descr->self, hdc );
+    NtUserReleaseDC( descr->self, hdc );
 
     descr->avg_char_width = (sz.cx / 26 + 1) / 2;
     if (!IS_OWNERDRAW(descr))

@@ -405,7 +405,7 @@ static void copy_bits_from_surface( HWND hwnd, struct window_surface *surface,
                        0, surface->rect.bottom - surface->rect.top,
                        bits, info, DIB_RGB_COLORS );
     surface->funcs->unlock( surface );
-    ReleaseDC( hwnd, hdc );
+    NtUserReleaseDC( hwnd, hdc );
 }
 
 
@@ -616,21 +616,6 @@ HDC WINAPI GetDC( HWND hwnd )
 HDC WINAPI GetWindowDC( HWND hwnd )
 {
     return NtUserGetDCEx( hwnd, 0, DCX_USESTYLE | DCX_WINDOW );
-}
-
-
-/***********************************************************************
- *		ReleaseDC (USER32.@)
- *
- * Release a device context.
- *
- * RETURNS
- *	Success: Non-zero. Resources used by hdc are released.
- *	Failure: 0.
- */
-INT WINAPI ReleaseDC( HWND hwnd, HDC hdc )
-{
-    return release_dc( hwnd, hdc, FALSE );
 }
 
 
@@ -878,7 +863,7 @@ BOOL WINAPI GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
             *rect = rect_win_to_thread_dpi( hwnd, *rect );
             DPtoLP( hdc, (LPPOINT)rect, 2 );
             SetLayout( hdc, layout );
-            ReleaseDC( hwnd, hdc );
+            NtUserReleaseDC( hwnd, hdc );
         }
     }
     need_erase = send_erase( hwnd, flags, update_rgn, NULL, NULL );
@@ -973,7 +958,7 @@ static INT scroll_window( HWND hwnd, INT dx, INT dy, const RECT *rect, const REC
         {
             NtUserScrollDC( hDC, dx, dy, &rc, &cliprc, hrgnUpdate, rcUpdate );
 
-            ReleaseDC( hwnd, hDC );
+            NtUserReleaseDC( hwnd, hDC );
 
             if (!bUpdate)
                 RedrawWindow( hwnd, NULL, hrgnUpdate, rdw_flags);

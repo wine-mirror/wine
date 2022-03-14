@@ -196,7 +196,7 @@ static INT combo_get_text_height(const HEADCOMBO *combo)
     if (prev_font)
         SelectObject(hdc, prev_font);
 
-    ReleaseDC(combo->self, hdc);
+    NtUserReleaseDC( combo->self, hdc );
 
     return tm.tmHeight + 4;
 }
@@ -756,8 +756,8 @@ static void CBPaintText(
     if( hPrevBrush )
         SelectObject( hdc, hPrevBrush );
 
-     if( !hdc_paint )
-       ReleaseDC( lphc->self, hdc );
+     if (!hdc_paint)
+       NtUserReleaseDC( lphc->self, hdc );
    }
    HeapFree( GetProcessHeap(), 0, pText );
 }

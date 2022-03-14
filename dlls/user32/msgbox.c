@@ -267,7 +267,7 @@ static void MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
     theight = rect.bottom;
 
     SelectObject(hdc, hPrevFont);
-    ReleaseDC(hwnd, hdc);
+    NtUserReleaseDC( hwnd, hdc );
 
     tiheight = 16 + max(iheight, theight);
     wwidth  = tleft + twidth + ileft + borwidth;

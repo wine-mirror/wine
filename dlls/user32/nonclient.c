@@ -1070,7 +1070,7 @@ static void  NC_DoNCPaint( HWND  hwnd, HRGN  clip )
         FillRect( hdc, &r, GetSysColorBrush( COLOR_BTNFACE ) );
     }
 
-    ReleaseDC( hwnd, hdc );
+    NtUserReleaseDC( hwnd, hdc );
 }
 
 
@@ -1266,7 +1266,7 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
         (*paintButton)(hwnd, hdc, FALSE, FALSE);
 
     ReleaseCapture();
-    ReleaseDC( hwnd, hdc );
+    NtUserReleaseDC( hwnd, hdc );
 
     /* If the minimize or maximize items of the sysmenu are not there */
     /* or if the style is not present, do nothing */
@@ -1331,7 +1331,7 @@ static void NC_TrackCloseButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
         NC_DrawCloseButton (hwnd, hdc, FALSE, FALSE);
 
     ReleaseCapture();
-    ReleaseDC( hwnd, hdc );
+    NtUserReleaseDC( hwnd, hdc );
     if (!pressed) return;
 
     SendMessageW( hwnd, WM_SYSCOMMAND, SC_CLOSE, lParam );
@@ -1394,7 +1394,7 @@ LRESULT NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
         {
             HDC hDC = GetWindowDC( hwnd );
             NC_DrawSysButton( hwnd, hDC, TRUE );
-            ReleaseDC( hwnd, hDC );
+            NtUserReleaseDC( hwnd, hDC );
             SendMessageW( hwnd, WM_SYSCOMMAND, SC_MOUSEMENU + HTSYSMENU, lParam );
         }
         break;

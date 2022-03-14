@@ -296,7 +296,7 @@ static VOID STATIC_TryPaintFcn(HWND hwnd, LONG full_style)
             (staticPaintFunc[style])( hwnd, hdc, hbrush, full_style );
         SelectClipRgn( hdc, hrgn );
         if (hrgn) DeleteObject( hrgn );
-        ReleaseDC( hwnd, hdc );
+        NtUserReleaseDC( hwnd, hdc );
     }
 }
 

@@ -616,7 +616,7 @@
 @ stdcall RegisterWindowMessageA(str)
 @ stdcall RegisterWindowMessageW(wstr)
 @ stdcall ReleaseCapture()
-@ stdcall ReleaseDC(long long)
+@ stdcall ReleaseDC(long long) NtUserReleaseDC
 @ stdcall RemoveClipboardFormatListener(long) NtUserRemoveClipboardFormatListener
 @ stdcall RemoveMenu(long long long)
 @ stdcall RemovePropA(long str)

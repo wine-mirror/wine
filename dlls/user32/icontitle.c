@@ -80,7 +80,7 @@ static BOOL ICONTITLE_SetTitlePos( HWND hwnd, HWND owner )
                (( bMultiLineTitle ) ? 0 : DT_SINGLELINE) );
 
     SelectObject( hDC, hPrevFont );
-    ReleaseDC( hwnd, hDC );
+    NtUserReleaseDC( hwnd, hDC );
 
     cx = rect.right - rect.left +  4 * GetSystemMetrics(SM_CXBORDER);
     cy = rect.bottom - rect.top;

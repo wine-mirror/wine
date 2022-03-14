@@ -225,6 +225,7 @@ struct unix_funcs
                                                   struct client_menu_name *client_menu_name,
                                                   DWORD fnid, DWORD flags, DWORD *wow );
     BOOL     (WINAPI *pNtUserRegisterHotKey)( HWND hwnd, INT id, UINT modifiers, UINT vk );
+    INT      (WINAPI *pNtUserReleaseDC)( HWND hwnd, HDC hdc );
     BOOL     (WINAPI *pNtUserScrollDC)( HDC hdc, INT dx, INT dy, const RECT *scroll, const RECT *clip,
                                         HRGN ret_update_rgn, RECT *update_rect );
     HPALETTE (WINAPI *pNtUserSelectPalette)( HDC hdc, HPALETTE hpal, WORD bkg );

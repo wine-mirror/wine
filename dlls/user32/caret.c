@@ -63,7 +63,7 @@ static void CARET_DisplayCaret( HWND hwnd, const RECT *r )
 	SelectObject(hCompDC, hPrevBmp);
 	DeleteDC(hCompDC);
     }
-    ReleaseDC( hwnd, hdc );
+    NtUserReleaseDC( hwnd, hdc );
 }
 
 
@@ -156,7 +156,7 @@ BOOL WINAPI CreateCaret( HWND hwnd, HBITMAP bitmap, INT width, INT height )
 		}
 		DeleteDC(hMemDC);
 	    }
-	    ReleaseDC(hwnd, hdc);
+	    NtUserReleaseDC(hwnd, hdc);
 	}
     }
     if (!hBmp) return FALSE;

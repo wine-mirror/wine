@@ -896,6 +896,12 @@ BOOL WINAPI NtUserRegisterHotKey( HWND hwnd, INT id, UINT modifiers, UINT vk )
     return unix_funcs->pNtUserRegisterHotKey( hwnd, id, modifiers, vk );
 }
 
+INT WINAPI NtUserReleaseDC( HWND hwnd, HDC hdc )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserReleaseDC( hwnd, hdc );
+}
+
 BOOL WINAPI NtUserScrollDC( HDC hdc, INT dx, INT dy, const RECT *scroll, const RECT *clip,
                             HRGN ret_update_rgn, RECT *update_rect )
 {

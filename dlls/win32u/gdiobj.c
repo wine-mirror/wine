@@ -1181,6 +1181,7 @@ static struct unix_funcs unix_funcs =
     NtUserMoveWindow,
     NtUserRegisterClassExWOW,
     NtUserRegisterHotKey,
+    NtUserReleaseDC,
     NtUserScrollDC,
     NtUserSelectPalette,
     NtUserSetActiveWindow,

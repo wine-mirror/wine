@@ -878,7 +878,7 @@ static BOOL MDI_AugmentFrameMenu( HWND frame, HWND hChild )
         NtUserDrawIconEx(hMemDC, 0, 0, hIcon, cx, cy, 0, GetSysColorBrush(COLOR_MENU), DI_NORMAL);
         SelectObject (hMemDC, hOldBitmap);
         DeleteDC(hMemDC);
-        ReleaseDC(hChild, hdc);
+        NtUserReleaseDC( hChild, hdc );
         hSysMenuBitmap = hBitmap;
       }
     }

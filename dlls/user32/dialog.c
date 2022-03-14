@@ -508,7 +508,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
             }
             SelectObject( dc, hOldFont );
         }
-        ReleaseDC(0, dc);
+        NtUserReleaseDC( 0, dc );
         TRACE("units = %d,%d\n", xBaseUnit, yBaseUnit );
     }
 
@@ -1528,7 +1528,7 @@ DWORD WINAPI GetDialogBaseUnits(void)
         if ((hdc = GetDC(0)))
         {
             cx = GdiGetCharDimensions( hdc, NULL, &cy );
-            ReleaseDC( 0, hdc );
+            NtUserReleaseDC( 0, hdc );
         }
         TRACE( "base units = %d,%d\n", cx, cy );
     }

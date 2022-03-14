@@ -548,6 +548,33 @@ void invalidate_dce( WND *win, const RECT *extra_rect )
 }
 
 /***********************************************************************
+ *           release_dc
+ */
+static INT release_dc( HWND hwnd, HDC hdc, BOOL end_paint )
+{
+    struct dce *dce;
+    BOOL ret = FALSE;
+
+    TRACE( "%p %p\n", hwnd, hdc );
+
+    user_lock();
+    dce = (struct dce *)GetDCHook( hdc, NULL );
+    if (dce && dce->count && dce->hwnd)
+    {
+        if (!(dce->flags & DCX_NORESETATTRS)) SetHookFlags( dce->hdc, DCHF_RESETDC );
+        if (end_paint || (dce->flags & DCX_CACHE)) delete_clip_rgn( dce );
+        if (dce->flags & DCX_CACHE)
+        {
+            dce->count = 0;
+            SetHookFlags( dce->hdc, DCHF_DISABLEDC );
+        }
+        ret = TRUE;
+    }
+    user_unlock();
+    return ret;
+}
+
+/***********************************************************************
  *           NtUserGetDCEx (win32u.@)
  */
 HDC WINAPI NtUserGetDCEx( HWND hwnd, HRGN clip_rgn, DWORD flags )
@@ -691,6 +718,14 @@ HDC WINAPI NtUserGetDCEx( HWND hwnd, HRGN clip_rgn, DWORD flags )
     TRACE( "(%p,%p,0x%x): returning %p%s\n", hwnd, clip_rgn, flags, dce->hdc,
            update_vis_rgn ? " (updated)" : "" );
     return dce->hdc;
+}
+
+/***********************************************************************
+ *           NtUserReleaseDC (win32u.@)
+ */
+INT WINAPI NtUserReleaseDC( HWND hwnd, HDC hdc )
+{
+    return release_dc( hwnd, hdc, FALSE );
 }
 
 /**********************************************************************
