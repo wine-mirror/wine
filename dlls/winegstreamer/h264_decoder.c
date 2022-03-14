@@ -258,8 +258,27 @@ static HRESULT WINAPI transform_AddInputStreams(IMFTransform *iface, DWORD strea
 static HRESULT WINAPI transform_GetInputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
         IMFMediaType **type)
 {
-    FIXME("iface %p, id %#lx, index %#lx, type %p stub!\n", iface, id, index, type);
-    return E_NOTIMPL;
+    IMFMediaType *media_type;
+    const GUID *subtype;
+    HRESULT hr;
+
+    TRACE("iface %p, id %#lx, index %#lx, type %p.\n", iface, id, index, type);
+
+    *type = NULL;
+
+    if (index >= ARRAY_SIZE(h264_decoder_input_types))
+        return MF_E_NO_MORE_TYPES;
+    subtype = h264_decoder_input_types[index];
+
+    if (FAILED(hr = MFCreateMediaType(&media_type)))
+        return hr;
+
+    if (SUCCEEDED(hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video)) &&
+            SUCCEEDED(hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, subtype)))
+        IMFMediaType_AddRef((*type = media_type));
+
+    IMFMediaType_Release(media_type);
+    return hr;
 }
 
 static HRESULT WINAPI transform_GetOutputAvailableType(IMFTransform *iface, DWORD id,

@@ -6730,9 +6730,7 @@ static void test_h264_decoder(void)
         ok(ret == 0, "Release returned %lu\n", ret);
         winetest_pop_context();
     }
-    todo_wine
     ok(hr == MF_E_NO_MORE_TYPES, "GetInputAvailableType returned %#lx\n", hr);
-    todo_wine
     ok(i == 2 || broken(i == 1) /* Win7 */, "%lu input media types\n", i);
 
     /* check required input media type attributes */
