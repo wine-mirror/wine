@@ -203,6 +203,17 @@ static HBITMAP create_alpha_bitmap( HBITMAP hbitmap )
             DeleteObject( alpha );
             alpha = 0;
         }
+        else
+        {
+            /* pre-multiply by alpha */
+            for (i = 0, ptr = bits; i < bm.bmWidth * bm.bmHeight; i++, ptr += 4)
+            {
+                unsigned int alpha = ptr[3];
+                ptr[0] = (ptr[0] * alpha + 127) / 255;
+                ptr[1] = (ptr[1] * alpha + 127) / 255;
+                ptr[2] = (ptr[2] * alpha + 127) / 255;
+            }
+        }
     }
 
     DeleteDC( hdc );
