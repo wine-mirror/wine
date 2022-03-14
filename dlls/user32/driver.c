@@ -83,21 +83,12 @@ static void CDECL nulldrv_DestroyWindow( HWND hwnd )
 {
 }
 
-static void CDECL nulldrv_GetDC( HDC hdc, HWND hwnd, HWND top_win, const RECT *win_rect,
-                                 const RECT *top_rect, DWORD flags )
-{
-}
-
 static DWORD CDECL nulldrv_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles, DWORD timeout,
                                                         DWORD mask, DWORD flags )
 {
     if (!count && !timeout) return WAIT_TIMEOUT;
     return WaitForMultipleObjectsEx( count, handles, flags & MWMO_WAITALL,
                                      timeout, flags & MWMO_ALERTABLE );
-}
-
-static void CDECL nulldrv_ReleaseDC( HWND hwnd, HDC hdc )
-{
 }
 
 static void CDECL nulldrv_SetParent( HWND hwnd, HWND parent, HWND old_parent )
@@ -163,12 +154,6 @@ static BOOL CDECL loaderdrv_CreateWindow( HWND hwnd )
     return load_driver()->pCreateWindow( hwnd );
 }
 
-static void CDECL loaderdrv_GetDC( HDC hdc, HWND hwnd, HWND top_win, const RECT *win_rect,
-                                   const RECT *top_rect, DWORD flags )
-{
-    load_driver()->pGetDC( hdc, hwnd, top_win, win_rect, top_rect, flags );
-}
-
 static struct user_driver_funcs lazy_load_driver =
 {
     { NULL },
@@ -199,9 +184,9 @@ static struct user_driver_funcs lazy_load_driver =
     loaderdrv_CreateWindow,
     nulldrv_DestroyWindow,
     NULL,
-    loaderdrv_GetDC,
+    NULL,
     nulldrv_MsgWaitForMultipleObjectsEx,
-    nulldrv_ReleaseDC,
+    NULL,
     NULL,
     NULL,
     NULL,
@@ -247,9 +232,7 @@ void CDECL __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT v
     SET_USER_FUNC(UpdateClipboard);
     SET_USER_FUNC(CreateWindow);
     SET_USER_FUNC(DestroyWindow);
-    SET_USER_FUNC(GetDC);
     SET_USER_FUNC(MsgWaitForMultipleObjectsEx);
-    SET_USER_FUNC(ReleaseDC);
     SET_USER_FUNC(SetParent);
     SET_USER_FUNC(SetWindowIcon);
     SET_USER_FUNC(SetWindowStyle);

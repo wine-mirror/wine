@@ -998,11 +998,11 @@ static void  NC_DoNCPaint( HWND  hwnd, HRGN  clip )
     if (clip > (HRGN)1)
     {
         CombineRgn( hrgn, clip, hrgn, RGN_DIFF );
-        hdc = GetDCEx( hwnd, hrgn, DCX_USESTYLE | DCX_WINDOW | DCX_INTERSECTRGN );
+        hdc = NtUserGetDCEx( hwnd, hrgn, DCX_USESTYLE | DCX_WINDOW | DCX_INTERSECTRGN );
     }
     else
     {
-        hdc = GetDCEx( hwnd, hrgn, DCX_USESTYLE | DCX_WINDOW | DCX_EXCLUDERGN );
+        hdc = NtUserGetDCEx( hwnd, hrgn, DCX_USESTYLE | DCX_WINDOW | DCX_EXCLUDERGN );
     }
 
     if (!hdc)

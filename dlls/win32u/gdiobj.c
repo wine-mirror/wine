@@ -1168,6 +1168,7 @@ static struct unix_funcs unix_funcs =
     NtUserGetAsyncKeyState,
     NtUserGetClassInfoEx,
     NtUserGetCursorInfo,
+    NtUserGetDCEx,
     NtUserGetDisplayConfigBufferSizes,
     NtUserGetIconInfo,
     NtUserGetKeyNameText,
@@ -1206,7 +1207,6 @@ static struct unix_funcs unix_funcs =
     NtUserWindowFromPoint,
 
     GetDCHook,
-    SetDCHook,
     SetDIBits,
     SetHookFlags,
     __wine_get_brush_bitmap_info,

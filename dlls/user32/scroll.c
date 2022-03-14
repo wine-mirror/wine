@@ -732,8 +732,7 @@ void SCROLL_DrawNCScrollBar( HWND hwnd, HDC hdc, BOOL draw_horizontal, BOOL draw
 static void SCROLL_RefreshScrollBar( HWND hwnd, INT nBar,
 				     BOOL arrows, BOOL interior )
 {
-    HDC hdc = GetDCEx( hwnd, 0,
-                           DCX_CACHE | ((nBar == SB_CTL) ? 0 : DCX_WINDOW) );
+    HDC hdc = NtUserGetDCEx( hwnd, 0, DCX_CACHE | ((nBar == SB_CTL) ? 0 : DCX_WINDOW) );
     if (!hdc) return;
 
     SCROLL_DrawScrollBar( hwnd, hdc, nBar, g_tracking_info.hit_test, &g_tracking_info, arrows, interior );
@@ -836,7 +835,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt )
         return;
     }
 
-    hdc = GetDCEx( hwnd, 0, DCX_CACHE | ((nBar == SB_CTL) ? 0 : DCX_WINDOW));
+    hdc = NtUserGetDCEx( hwnd, 0, DCX_CACHE | ((nBar == SB_CTL) ? 0 : DCX_WINDOW));
     vertical = SCROLL_GetScrollBarRect( hwnd, nBar, &rect,
                                         &arrowSize, &thumbSize, &thumbPos );
     hwndOwner = (nBar == SB_CTL) ? GetParent(hwnd) : hwnd;

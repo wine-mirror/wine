@@ -2729,7 +2729,7 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     }
 
     /* Retrieve a default cache DC (without using the window style) */
-    hdc = GetDCEx( parent, 0, DCX_CACHE );
+    hdc = NtUserGetDCEx( parent, 0, DCX_CACHE );
 
     /* we only allow disabling the full window drag for child windows */
     if (parent) SystemParametersInfoW( SPI_GETDRAGFULLWINDOWS, 0, &DragFullWindows, 0 );

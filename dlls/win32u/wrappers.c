@@ -814,6 +814,12 @@ BOOL WINAPI NtUserGetCursorInfo( CURSORINFO *info )
     return unix_funcs->pNtUserGetCursorInfo( info );
 }
 
+HDC WINAPI NtUserGetDCEx( HWND hwnd, HRGN clip_rgn, DWORD flags )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserGetDCEx( hwnd, clip_rgn, flags );
+}
+
 LONG WINAPI NtUserGetDisplayConfigBufferSizes( UINT32 flags, UINT32 *num_path_info,
                                                UINT32 *num_mode_info )
 {
@@ -1045,12 +1051,6 @@ DWORD_PTR WINAPI GetDCHook( HDC hdc, DCHOOKPROC *proc )
 {
     if (!unix_funcs) return 0;
     return unix_funcs->pGetDCHook( hdc, proc );
-}
-
-BOOL WINAPI SetDCHook( HDC hdc, DCHOOKPROC proc, DWORD_PTR data )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pSetDCHook( hdc, proc, data );
 }
 
 INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,

@@ -4720,10 +4720,16 @@ ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code 
         return HandleToUlong( alloc_user_handle( (struct user_object *)arg1, arg2 ));
     case NtUserAllocWinProc:
         return (UINT_PTR)alloc_winproc( (WNDPROC)arg1, arg2 );
+    case NtUserFreeDCE:
+        free_dce( (struct dce *)arg1, UlongToHandle(arg2) );
+        return 0;
     case NtUserFreeHandle:
         return (UINT_PTR)free_user_handle( UlongToHandle(arg1), arg2 );
     case NtUserGetHandlePtr:
         return (UINT_PTR)get_user_handle_ptr( UlongToHandle(arg1), arg2 );
+    case NtUserInvalidateDCE:
+        invalidate_dce( (void *)arg1, (const RECT *)arg2 );
+        return 0;
     case NtUserRegisterWindowSurface:
         register_window_surface( (struct window_surface *)arg1, (struct window_surface *)arg2 );
         return 0;

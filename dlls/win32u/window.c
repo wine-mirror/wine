@@ -258,6 +258,22 @@ HWND is_current_thread_window( HWND hwnd )
     return ret;
 }
 
+/***********************************************************************
+ *           is_current_process_window
+ *
+ * Check whether a given window belongs to the current process (and return the full handle).
+ */
+HWND is_current_process_window( HWND hwnd )
+{
+    WND *ptr;
+    HWND ret;
+
+    if (!(ptr = get_win_ptr( hwnd )) || ptr == WND_OTHER_PROCESS || ptr == WND_DESKTOP) return 0;
+    ret = ptr->obj.handle;
+    release_win_ptr( ptr );
+    return ret;
+}
+
 /* see IsWindow */
 BOOL is_window( HWND hwnd )
 {
@@ -686,7 +702,7 @@ static BOOL is_window_unicode( HWND hwnd )
 }
 
 /* see GetWindowDpiAwarenessContext */
-static DPI_AWARENESS_CONTEXT get_window_dpi_awareness_context( HWND hwnd )
+DPI_AWARENESS_CONTEXT get_window_dpi_awareness_context( HWND hwnd )
 {
     DPI_AWARENESS_CONTEXT ret = 0;
     WND *win;

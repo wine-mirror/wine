@@ -2035,7 +2035,7 @@ static void MENU_SelectItem( HWND hwndOwner, HMENU hmenu, UINT wIndex,
 
     if (lppop->FocusedItem == wIndex) return;
     if (lppop->wFlags & MF_POPUP) hdc = GetDC( lppop->hWnd );
-    else hdc = GetDCEx( lppop->hWnd, 0, DCX_CACHE | DCX_WINDOW);
+    else hdc = NtUserGetDCEx( lppop->hWnd, 0, DCX_CACHE | DCX_WINDOW);
     if (!top_popup) {
         top_popup = lppop->hWnd;
         top_popup_hmenu = hmenu;
@@ -2382,7 +2382,7 @@ static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu,
     if (!(item->fState & MF_HILITE))
     {
         if (menu->wFlags & MF_POPUP) hdc = GetDC( menu->hWnd );
-        else hdc = GetDCEx( menu->hWnd, 0, DCX_CACHE | DCX_WINDOW);
+        else hdc = NtUserGetDCEx( menu->hWnd, 0, DCX_CACHE | DCX_WINDOW);
 
         SelectObject( hdc, get_menu_font(FALSE));
 
@@ -3642,7 +3642,7 @@ UINT MENU_GetMenuBarHeight( HWND hwnd, UINT menubarWidth,
 
     if (!(lppop = MENU_GetMenu( GetMenu(hwnd) ))) return 0;
 
-    hdc = GetDCEx( hwnd, 0, DCX_CACHE | DCX_WINDOW );
+    hdc = NtUserGetDCEx( hwnd, 0, DCX_CACHE | DCX_WINDOW );
     SelectObject( hdc, get_menu_font(FALSE));
     SetRect(&rectBar, orgX, orgY, orgX+menubarWidth, orgY+GetSystemMetrics(SM_CYMENU));
     MENU_MenuBarCalcSize( hdc, &rectBar, lppop, hwnd );

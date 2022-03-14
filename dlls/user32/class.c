@@ -361,26 +361,6 @@ WNDPROC get_class_winproc( CLASS *class )
 
 
 /***********************************************************************
- *           get_class_dce
- */
-struct dce *get_class_dce( CLASS *class )
-{
-    return class->dce;
-}
-
-
-/***********************************************************************
- *           set_class_dce
- */
-struct dce *set_class_dce( CLASS *class, struct dce *dce )
-{
-    if (class->dce) return class->dce;  /* already set, don't change it */
-    class->dce = dce;
-    return dce;
-}
-
-
-/***********************************************************************
  *		RegisterClassA (USER32.@)
  *
  * Register a window class.

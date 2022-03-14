@@ -38,7 +38,6 @@ struct user_callbacks
     BOOL (WINAPI *pSendNotifyMessageW)( HWND, UINT, WPARAM, LPARAM );
     BOOL (WINAPI *pSetWindowPos)( HWND, HWND, INT, INT, INT, INT, UINT );
     DWORD (WINAPI *pWaitForInputIdle)( HANDLE, DWORD );
-    void (WINAPI *free_dce)( struct dce *dce, HWND hwnd );
     void (CDECL *notify_ime)( HWND hwnd, UINT param );
     void (CDECL *register_builtin_classes)(void);
     LRESULT (WINAPI *send_ll_message)( DWORD, DWORD, UINT, WPARAM, LPARAM, UINT, UINT, PDWORD_PTR );
@@ -243,9 +242,15 @@ ULONG_PTR get_class_long_ptr( HWND hwnd, INT offset, BOOL ansi ) DECLSPEC_HIDDEN
 WORD get_class_word( HWND hwnd, INT offset ) DECLSPEC_HIDDEN;
 ATOM get_int_atom_value( UNICODE_STRING *name ) DECLSPEC_HIDDEN;
 WNDPROC get_winproc( WNDPROC proc, BOOL ansi ) DECLSPEC_HIDDEN;
+struct dce *get_class_dce( struct tagCLASS *class ) DECLSPEC_HIDDEN;
+struct dce *set_class_dce( struct tagCLASS *class, struct dce *dce ) DECLSPEC_HIDDEN;
 
 /* cursoricon.c */
 HICON alloc_cursoricon_handle( BOOL is_icon ) DECLSPEC_HIDDEN;
+
+/* dce.c */
+extern void free_dce( struct dce *dce, HWND hwnd ) DECLSPEC_HIDDEN;
+extern void invalidate_dce( WND *win, const RECT *extra_rect ) DECLSPEC_HIDDEN;
 
 /* message.c */
 LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam ) DECLSPEC_HIDDEN;

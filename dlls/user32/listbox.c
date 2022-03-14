@@ -775,7 +775,7 @@ static void LISTBOX_RepaintItem( LB_DESCR *descr, INT index, UINT action )
         return;
     }
     if (LISTBOX_GetItemRect( descr, index, &rect ) != 1) return;
-    if (!(hdc = GetDCEx( descr->self, 0, DCX_CACHE ))) return;
+    if (!(hdc = NtUserGetDCEx( descr->self, 0, DCX_CACHE ))) return;
     if (descr->font) oldFont = SelectObject( hdc, descr->font );
     hbrush = (HBRUSH)SendMessageW( descr->owner, WM_CTLCOLORLISTBOX,
 				   (WPARAM)hdc, (LPARAM)descr->self );
@@ -806,7 +806,7 @@ static void LISTBOX_DrawFocusRect( LB_DESCR *descr, BOOL on )
     if (!descr->caret_on || !descr->in_focus) return;
 
     if (LISTBOX_GetItemRect( descr, descr->focus_item, &rect ) != 1) return;
-    if (!(hdc = GetDCEx( descr->self, 0, DCX_CACHE ))) return;
+    if (!(hdc = NtUserGetDCEx( descr->self, 0, DCX_CACHE ))) return;
     if (descr->font) oldFont = SelectObject( hdc, descr->font );
     if (!IsWindowEnabled(descr->self))
         SetTextColor( hdc, GetSysColor( COLOR_GRAYTEXT ) );
@@ -1408,7 +1408,7 @@ static INT LISTBOX_SetFont( LB_DESCR *descr, HFONT font )
 
     descr->font = font;
 
-    if (!(hdc = GetDCEx( descr->self, 0, DCX_CACHE )))
+    if (!(hdc = NtUserGetDCEx( descr->self, 0, DCX_CACHE )))
     {
         ERR("unable to get DC.\n" );
         return 16;

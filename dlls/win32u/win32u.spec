@@ -916,7 +916,7 @@
 @ stdcall -syscall NtUserGetCursorFrameInfo(long long ptr ptr)
 @ stdcall NtUserGetCursorInfo(ptr)
 @ stub NtUserGetDC
-@ stub NtUserGetDCEx
+@ stdcall NtUserGetDCEx(long long long)
 @ stub NtUserGetDManipHookInitFunction
 @ stub NtUserGetDesktopID
 @ stub NtUserGetDisplayAutoRotationPreferences
@@ -1322,7 +1322,6 @@
 
 # user32
 @ stdcall GetDCHook(long ptr)
-@ stdcall SetDCHook(long ptr long)
 @ stdcall SetHookFlags(long long)
 @ cdecl __wine_set_visible_region(long long ptr ptr ptr)
 

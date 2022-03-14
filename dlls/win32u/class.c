@@ -272,6 +272,24 @@ static CLASS *find_class( HINSTANCE module, UNICODE_STRING *name )
 }
 
 /***********************************************************************
+ *           get_class_dce
+ */
+struct dce *get_class_dce( CLASS *class )
+{
+    return class->dce;
+}
+
+/***********************************************************************
+ *           set_class_dce
+ */
+struct dce *set_class_dce( CLASS *class, struct dce *dce )
+{
+    if (class->dce) return class->dce;  /* already set, don't change it */
+    class->dce = dce;
+    return dce;
+}
+
+/***********************************************************************
  *	     NtUserRegisterClassExWOW   (win32u.@)
  */
 ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *name, UNICODE_STRING *version,
@@ -399,7 +417,7 @@ BOOL WINAPI NtUserUnregisterClass( UNICODE_STRING *name, HINSTANCE instance,
     TRACE( "%p\n", class );
 
     user_lock();
-    if (class->dce && user_callbacks) user_callbacks->free_dce( class->dce, 0 );
+    if (class->dce) free_dce( class->dce, 0 );
     list_remove( &class->entry );
     if (class->hbrBackground > (HBRUSH)(COLOR_GRADIENTINACTIVECAPTION + 1))
         NtGdiDeleteObjectApp( class->hbrBackground );
