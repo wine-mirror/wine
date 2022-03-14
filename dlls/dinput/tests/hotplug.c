@@ -961,6 +961,8 @@ static void test_windows_gaming_input(void)
     EventRegistrationToken controller_removed_token;
     IVectorView_RawGameController *controller_view;
     EventRegistrationToken controller_added_token;
+    IIterable_RawGameController *iterable;
+    IIterator_RawGameController *iterator;
     IRawGameControllerStatics *statics;
     HANDLE hwnd, thread, stop_event;
     IInspectable *tmp_inspectable;
@@ -968,7 +970,8 @@ static void test_windows_gaming_input(void)
     HSTRING str;
     UINT32 size;
     HRESULT hr;
-    DWORD ret;
+    DWORD res;
+    BOOL ret;
     MSG msg;
 
     if (!load_combase_functions()) return;
@@ -1080,6 +1083,28 @@ static void test_windows_gaming_input(void)
     ok( hr == S_OK, "get_Size returned %#lx\n", hr );
     ok( size == 1, "got size %u\n", size );
 
+    hr = IVectorView_RawGameController_QueryInterface( controller_view, &IID_IIterable_RawGameController,
+                                                       (void **)&iterable );
+    ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
+    hr = IIterable_RawGameController_First( iterable, &iterator );
+    ok( hr == S_OK, "First returned %#lx\n", hr );
+    IIterable_RawGameController_Release( iterable );
+
+    hr = IIterator_RawGameController_get_HasCurrent( iterator, &ret );
+    ok( hr == S_OK, "First returned %#lx\n", hr );
+    ok( ret == TRUE, "got HasCurrent %u\n", ret );
+    hr = IIterator_RawGameController_MoveNext( iterator, &ret );
+    ok( hr == S_OK, "First returned %#lx\n", hr );
+    todo_wine
+    ok( ret == FALSE, "got MoveNext %u\n", ret );
+    hr = IIterator_RawGameController_get_HasCurrent( iterator, &ret );
+    ok( hr == S_OK, "First returned %#lx\n", hr );
+    ok( ret == FALSE, "got MoveNext %u\n", ret );
+    hr = IIterator_RawGameController_MoveNext( iterator, &ret );
+    ok( hr == S_OK, "First returned %#lx\n", hr );
+    ok( ret == FALSE, "got MoveNext %u\n", ret );
+    IIterator_RawGameController_Release( iterator );
+
     IVectorView_RawGameController_Release( controller_view );
     hr = IRawGameControllerStatics_get_RawGameControllers( statics, &controller_view );
     ok( hr == S_OK, "get_RawGameControllers returned %#lx\n", hr );
@@ -1112,9 +1137,9 @@ static void test_windows_gaming_input(void)
     thread = CreateThread( NULL, 0, dinput_test_device_thread, stop_event, 0, NULL );
     ok( !!thread, "CreateThread failed, error %lu\n", GetLastError() );
     wait_for_events( 1, &controller_added.event, INFINITE );
-    ret = wait_for_events( 1, &custom_factory.added_event, 500 );
+    res = wait_for_events( 1, &custom_factory.added_event, 500 );
     todo_wine
-    ok( !ret, "wait_for_events returned %#lx\n", ret );
+    ok( !res, "wait_for_events returned %#lx\n", res );
     hr = IRawGameControllerStatics_get_RawGameControllers( statics, &controller_view );
     ok( hr == S_OK, "get_RawGameControllers returned %#lx\n", hr );
     hr = IVectorView_RawGameController_GetAt( controller_view, 0, &raw_controller );
@@ -1159,9 +1184,9 @@ next:
     IGameController_Release( game_controller );
     IRawGameController_Release( raw_controller );
     SetEvent( stop_event );
-    ret = wait_for_events( 1, &custom_factory.removed_event, 500 );
+    res = wait_for_events( 1, &custom_factory.removed_event, 500 );
     todo_wine
-    ok( !ret, "wait_for_events returned %#lx\n", ret );
+    ok( !res, "wait_for_events returned %#lx\n", res );
     wait_for_events( 1, &controller_removed.event, INFINITE );
 
     hr = IRawGameControllerStatics_remove_RawGameControllerAdded( statics, controller_added_token );
