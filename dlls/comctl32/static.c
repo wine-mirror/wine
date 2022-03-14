@@ -849,13 +849,16 @@ static void STATIC_PaintBitmapfn(HWND hwnd, HDC hdc, HBRUSH hbrush, DWORD style 
 {
     HDC hMemDC;
     HBITMAP hBitmap, oldbitmap;
+    RECT rcClient;
+
+    GetClientRect( hwnd, &rcClient );
+    FillRect( hdc, &rcClient, hbrush );
 
     if ((hBitmap = STATIC_GetImage( hwnd, IMAGE_BITMAP, style ))
          && (GetObjectType(hBitmap) == OBJ_BITMAP)
          && (hMemDC = CreateCompatibleDC( hdc )))
     {
         BITMAP bm;
-        RECT rcClient;
         LOGBRUSH brush;
         BLENDFUNCTION blend = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
         struct static_extra_info *extra = get_extra_ptr( hwnd, FALSE );
@@ -870,10 +873,8 @@ static void STATIC_PaintBitmapfn(HWND hwnd, HDC hdc, HBRUSH hbrush, DWORD style 
             if (brush.lbStyle == BS_SOLID)
                 SetBkColor(hdc, brush.lbColor);
         }
-        GetClientRect(hwnd, &rcClient);
         if (style & SS_CENTERIMAGE)
         {
-            FillRect( hdc, &rcClient, hbrush );
             rcClient.left = (rcClient.right - rcClient.left)/2 - bm.bmWidth/2;
             rcClient.top = (rcClient.bottom - rcClient.top)/2 - bm.bmHeight/2;
             rcClient.right = rcClient.left + bm.bmWidth;
