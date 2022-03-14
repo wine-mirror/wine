@@ -473,7 +473,8 @@ LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
         {
             SetWindowLongPtrW( hwnd, HFONT_GWL_OFFSET, wParam );
             if (LOWORD(lParam))
-                RedrawWindow( hwnd, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_ALLCHILDREN );
+                NtUserRedrawWindow( hwnd, NULL, 0, RDW_INVALIDATE | RDW_ERASE |
+                                    RDW_UPDATENOW | RDW_ALLCHILDREN );
         }
         break;
 

@@ -3751,7 +3751,7 @@ BOOL WINAPI EnableMenuItem( HMENU hMenu, UINT id, UINT wFlags )
         /* Refresh the frame to reflect the change */
         WIN_GetRectangles(hwnd, COORDS_CLIENT, &rc, NULL);
         rc.bottom = 0;
-        RedrawWindow(hwnd, &rc, 0, RDW_FRAME | RDW_INVALIDATE | RDW_NOCHILDREN);
+        NtUserRedrawWindow( hwnd, &rc, 0, RDW_FRAME | RDW_INVALIDATE | RDW_NOCHILDREN );
     }
     else
         release_menu_ptr(menu);

@@ -2735,7 +2735,7 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     if (parent) SystemParametersInfoW( SPI_GETDRAGFULLWINDOWS, 0, &DragFullWindows, 0 );
 
     /* repaint the window before moving it around */
-    RedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_ALLCHILDREN );
+    NtUserRedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_ALLCHILDREN );
 
     SendMessageW( hwnd, WM_ENTERSIZEMOVE, 0, 0 );
     set_capture_window( hwnd, GUI_INMOVESIZE, NULL );

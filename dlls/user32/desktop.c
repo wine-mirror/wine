@@ -219,6 +219,6 @@ BOOL update_wallpaper( const WCHAR *wallpaper, const WCHAR *pattern )
         }
     }
     init_wallpaper( wallpaper );
-    RedrawWindow( GetDesktopWindow(), 0, 0, RDW_INVALIDATE | RDW_ERASE | RDW_NOCHILDREN );
+    NtUserRedrawWindow( GetDesktopWindow(), 0, 0, RDW_INVALIDATE | RDW_ERASE | RDW_NOCHILDREN );
     return TRUE;
 }

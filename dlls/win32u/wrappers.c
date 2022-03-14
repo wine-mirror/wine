@@ -894,6 +894,12 @@ UINT WINAPI NtUserMapVirtualKeyEx( UINT code, UINT type, HKL layout )
     return unix_funcs->pNtUserMapVirtualKeyEx( code, type, layout );
 }
 
+BOOL WINAPI NtUserRedrawWindow( HWND hwnd, const RECT *rect, HRGN hrgn, UINT flags )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserRedrawWindow( hwnd, rect, hrgn, flags );
+}
+
 ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *name, UNICODE_STRING *version,
                                       struct client_menu_name *client_menu_name, DWORD fnid, DWORD flags,
                                       DWORD *wow )

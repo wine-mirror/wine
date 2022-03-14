@@ -1120,7 +1120,7 @@
 @ stub NtUserRealChildWindowFromPoint
 @ stub NtUserRealInternalGetMessage
 @ stub NtUserRealWaitMessageEx
-@ stub NtUserRedrawWindow
+@ stdcall NtUserRedrawWindow(long ptr long long)
 @ stub NtUserRegisterBSDRWindow
 @ stdcall NtUserRegisterClassExWOW(ptr ptr ptr ptr long long long)
 @ stub NtUserRegisterDManipHook

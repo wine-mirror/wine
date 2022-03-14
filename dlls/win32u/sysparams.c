@@ -4540,8 +4540,7 @@ BOOL WINAPI NtUserSetSysColors( INT count, const INT *colors, const COLORREF *va
     user_callbacks->pSendMessageTimeoutW( HWND_BROADCAST, WM_SYSCOLORCHANGE, 0, 0,
                                           SMTO_ABORTIFHUNG, 2000, NULL );
     /* Repaint affected portions of all visible windows */
-    user_callbacks->pRedrawWindow( 0, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW |
-                                   RDW_ALLCHILDREN );
+    NtUserRedrawWindow( 0, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_ALLCHILDREN );
     return TRUE;
 }
 

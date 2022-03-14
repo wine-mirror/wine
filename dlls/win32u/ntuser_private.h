@@ -32,7 +32,6 @@ struct user_callbacks
     HANDLE (WINAPI *pCopyImage)( HANDLE, UINT, INT, INT, UINT );
     BOOL (WINAPI *pHideCaret)( HWND hwnd );
     BOOL (WINAPI *pPostMessageW)( HWND, UINT, WPARAM, LPARAM );
-    BOOL (WINAPI *pRedrawWindow)( HWND, const RECT*, HRGN, UINT );
     UINT (WINAPI *pSendInput)( UINT count, INPUT *inputs, int size );
     LRESULT (WINAPI *pSendMessageTimeoutW)( HWND, UINT, WPARAM, LPARAM, UINT, UINT, PDWORD_PTR );
     LRESULT (WINAPI *pSendMessageW)( HWND, UINT, WPARAM, LPARAM );

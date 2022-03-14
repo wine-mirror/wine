@@ -1812,7 +1812,7 @@ BOOL WINAPI NtUserFlashWindowEx( FLASHWINFO *info )
 
     if (is_iconic( info->hwnd ))
     {
-        user_callbacks->pRedrawWindow( info->hwnd, 0, 0, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_FRAME );
+        NtUserRedrawWindow( info->hwnd, 0, 0, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_FRAME );
 
         win = get_win_ptr( info->hwnd );
         if (!win || win == WND_OTHER_PROCESS || win == WND_DESKTOP) return FALSE;

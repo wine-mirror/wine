@@ -590,7 +590,7 @@
 # @ stub ReasonCodeNeedsBugID
 # @ stub ReasonCodeNeedsComment
 # @ stub RecordShutdownReason
-@ stdcall RedrawWindow(long ptr long long)
+@ stdcall RedrawWindow(long ptr long long) NtUserRedrawWindow
 @ stdcall RegisterClassA(ptr)
 @ stdcall RegisterClassExA(ptr)
 @ stdcall RegisterClassExW(ptr)

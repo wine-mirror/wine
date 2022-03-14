@@ -1001,7 +1001,7 @@ static void CBDropDown( LPHEADCOMBO lphc )
 
 
    if( !(lphc->wState & CBF_NOREDRAW) )
-     RedrawWindow( lphc->self, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW );
+     NtUserRedrawWindow( lphc->self, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW );
 
    EnableWindow( lphc->hWndLBox, TRUE );
    if (GetCapture() != lphc->self)
@@ -1056,8 +1056,8 @@ static void CBRollUp( LPHEADCOMBO lphc, BOOL ok, BOOL bButton )
 	   }
 
 	   if( bButton && !(lphc->wState & CBF_NOREDRAW) )
-	       RedrawWindow( hWnd, &rect, 0, RDW_INVALIDATE |
-			       RDW_ERASE | RDW_UPDATENOW | RDW_NOCHILDREN );
+	       NtUserRedrawWindow( hWnd, &rect, 0, RDW_INVALIDATE |
+                                   RDW_ERASE | RDW_UPDATENOW | RDW_NOCHILDREN );
 	   CB_NOTIFY( lphc, CBN_CLOSEUP );
        }
    }
@@ -1423,7 +1423,7 @@ static void CBResetPos(HEADCOMBO *combo, BOOL redraw)
         }
 
         if (redraw && !(combo->wState & CBF_NOREDRAW))
-            RedrawWindow(combo->self, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW);
+            NtUserRedrawWindow( combo->self, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW );
     }
 }
 

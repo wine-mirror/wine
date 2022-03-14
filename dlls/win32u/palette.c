@@ -602,14 +602,13 @@ BOOL WINAPI NtGdiUpdateColors( HDC hDC )
     HWND hwnd;
 
     if (!size) return FALSE;
-    if (!user_callbacks) return TRUE;
 
     hwnd = NtUserWindowFromDC( hDC );
 
     /* Docs say that we have to remap current drawable pixel by pixel
      * but it would take forever given the speed of XGet/PutPixel.
      */
-    if (hwnd && size) user_callbacks->pRedrawWindow( hwnd, NULL, 0, RDW_INVALIDATE );
+    if (hwnd && size) NtUserRedrawWindow( hwnd, NULL, 0, RDW_INVALIDATE );
     return TRUE;
 }
 

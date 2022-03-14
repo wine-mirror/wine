@@ -147,6 +147,44 @@ done:
 }
 
 /***********************************************************************
+ *           dump_rdw_flags
+ */
+static void dump_rdw_flags(UINT flags)
+{
+    TRACE("flags:");
+    if (flags & RDW_INVALIDATE) TRACE(" RDW_INVALIDATE");
+    if (flags & RDW_INTERNALPAINT) TRACE(" RDW_INTERNALPAINT");
+    if (flags & RDW_ERASE) TRACE(" RDW_ERASE");
+    if (flags & RDW_VALIDATE) TRACE(" RDW_VALIDATE");
+    if (flags & RDW_NOINTERNALPAINT) TRACE(" RDW_NOINTERNALPAINT");
+    if (flags & RDW_NOERASE) TRACE(" RDW_NOERASE");
+    if (flags & RDW_NOCHILDREN) TRACE(" RDW_NOCHILDREN");
+    if (flags & RDW_ALLCHILDREN) TRACE(" RDW_ALLCHILDREN");
+    if (flags & RDW_UPDATENOW) TRACE(" RDW_UPDATENOW");
+    if (flags & RDW_ERASENOW) TRACE(" RDW_ERASENOW");
+    if (flags & RDW_FRAME) TRACE(" RDW_FRAME");
+    if (flags & RDW_NOFRAME) TRACE(" RDW_NOFRAME");
+
+#define RDW_FLAGS \
+    (RDW_INVALIDATE | \
+     RDW_INTERNALPAINT | \
+     RDW_ERASE | \
+     RDW_VALIDATE | \
+     RDW_NOINTERNALPAINT | \
+     RDW_NOERASE | \
+     RDW_NOCHILDREN | \
+     RDW_ALLCHILDREN | \
+     RDW_UPDATENOW | \
+     RDW_ERASENOW | \
+     RDW_FRAME | \
+     RDW_NOFRAME)
+
+    if (flags & ~RDW_FLAGS) TRACE(" %04x", flags & ~RDW_FLAGS);
+    TRACE("\n");
+#undef RDW_FLAGS
+}
+
+/***********************************************************************
  *           update_visible_region
  *
  * Set the visible region and X11 drawable for the DC associated to
@@ -791,6 +829,53 @@ static HRGN get_update_region( HWND hwnd, UINT *flags, HWND *child )
 }
 
 /***********************************************************************
+ *           redraw_window_rects
+ *
+ * Redraw part of a window.
+ */
+static BOOL redraw_window_rects( HWND hwnd, UINT flags, const RECT *rects, UINT count )
+{
+    BOOL ret;
+
+    if (!(flags & (RDW_INVALIDATE|RDW_VALIDATE|RDW_INTERNALPAINT|RDW_NOINTERNALPAINT)))
+        return TRUE;  /* nothing to do */
+
+    SERVER_START_REQ( redraw_window )
+    {
+        req->window = wine_server_user_handle( hwnd );
+        req->flags  = flags;
+        wine_server_add_data( req, rects, count * sizeof(RECT) );
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+/***********************************************************************
+ *           get_update_flags
+ *
+ * Get only the update flags, not the update region.
+ */
+static BOOL get_update_flags( HWND hwnd, HWND *child, UINT *flags )
+{
+    BOOL ret;
+
+    SERVER_START_REQ( get_update_region )
+    {
+        req->window     = wine_server_user_handle( hwnd );
+        req->from_child = wine_server_user_handle( child ? *child : 0 );
+        req->flags      = *flags | UPDATE_NOREGION;
+        if ((ret = !wine_server_call_err( req )))
+        {
+            if (child) *child = wine_server_ptr_handle( reply->child );
+            *flags = reply->flags;
+        }
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+/***********************************************************************
  *           send_ncpaint
  *
  * Send a WM_NCPAINT message if needed, and return the resulting update region (in screen coords).
@@ -937,4 +1022,119 @@ BOOL WINAPI NtUserEndPaint( HWND hwnd, const PAINTSTRUCT *ps )
     if (!ps) return FALSE;
     release_dc( hwnd, ps->hdc, TRUE );
     return TRUE;
+}
+
+/***********************************************************************
+ *           erase_now
+ *
+ * Implementation of RDW_ERASENOW behavior.
+ */
+void erase_now( HWND hwnd, UINT rdw_flags )
+{
+    HWND child = 0;
+    HRGN hrgn;
+    BOOL need_erase = FALSE;
+
+    /* loop while we find a child to repaint */
+    for (;;)
+    {
+        UINT flags = UPDATE_NONCLIENT | UPDATE_ERASE;
+
+        if (rdw_flags & RDW_NOCHILDREN) flags |= UPDATE_NOCHILDREN;
+        else if (rdw_flags & RDW_ALLCHILDREN) flags |= UPDATE_ALLCHILDREN;
+        if (need_erase) flags |= UPDATE_DELAYED_ERASE;
+
+        if (!(hrgn = send_ncpaint( hwnd, &child, &flags ))) break;
+        need_erase = send_erase( child, flags, hrgn, NULL, NULL );
+
+        if (!flags) break;  /* nothing more to do */
+        if ((rdw_flags & RDW_NOCHILDREN) && !need_erase) break;
+    }
+}
+
+/***********************************************************************
+ *           update_now
+ *
+ * Implementation of RDW_UPDATENOW behavior.
+ */
+static void update_now( HWND hwnd, UINT rdw_flags )
+{
+    HWND child = 0;
+
+    /* desktop window never gets WM_PAINT, only WM_ERASEBKGND */
+    if (hwnd == get_desktop_window()) erase_now( hwnd, rdw_flags | RDW_NOCHILDREN );
+
+    /* loop while we find a child to repaint */
+    for (;;)
+    {
+        UINT flags = UPDATE_PAINT | UPDATE_INTERNALPAINT;
+
+        if (rdw_flags & RDW_NOCHILDREN) flags |= UPDATE_NOCHILDREN;
+        else if (rdw_flags & RDW_ALLCHILDREN) flags |= UPDATE_ALLCHILDREN;
+
+        if (!get_update_flags( hwnd, &child, &flags )) break;
+        if (!flags) break;  /* nothing more to do */
+
+        send_message( child, WM_PAINT, 0, 0 );
+        if (rdw_flags & RDW_NOCHILDREN) break;
+    }
+}
+
+/***********************************************************************
+ *           NtUserRedrawWindow (win32u.@)
+ */
+BOOL WINAPI NtUserRedrawWindow( HWND hwnd, const RECT *rect, HRGN hrgn, UINT flags )
+{
+    static const RECT empty;
+    BOOL ret;
+
+    if (TRACE_ON(win))
+    {
+        if (hrgn)
+        {
+            RECT r;
+            NtGdiGetRgnBox( hrgn, &r );
+            TRACE( "%p region %p box %s ", hwnd, hrgn, wine_dbgstr_rect(&r) );
+        }
+        else if (rect)
+            TRACE( "%p rect %s ", hwnd, wine_dbgstr_rect(rect) );
+        else
+            TRACE( "%p whole window ", hwnd );
+
+        dump_rdw_flags(flags);
+    }
+
+    /* process pending expose events before painting */
+    if (flags & RDW_UPDATENOW) user_driver->pMsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_PAINT, 0 );
+
+    if (rect && !hrgn)
+    {
+        if (IsRectEmpty( rect )) rect = &empty;
+        ret = redraw_window_rects( hwnd, flags, rect, 1 );
+    }
+    else if (!hrgn)
+    {
+        ret = redraw_window_rects( hwnd, flags, NULL, 0 );
+    }
+    else  /* need to build a list of the region rectangles */
+    {
+        DWORD size;
+        RGNDATA *data;
+
+        if (!(size = NtGdiGetRegionData( hrgn, 0, NULL ))) return FALSE;
+        if (!(data = malloc( size ))) return FALSE;
+        NtGdiGetRegionData( hrgn, size, data );
+        if (!data->rdh.nCount)  /* empty region -> use a single all-zero rectangle */
+            ret = redraw_window_rects( hwnd, flags, &empty, 1 );
+        else
+            ret = redraw_window_rects( hwnd, flags, (const RECT *)data->Buffer, data->rdh.nCount );
+        free( data );
+    }
+
+    if (!hwnd) hwnd = get_desktop_window();
+
+    if (flags & RDW_UPDATENOW) update_now( hwnd, flags );
+    else if (flags & RDW_ERASENOW) erase_now( hwnd, flags );
+
+    return ret;
 }

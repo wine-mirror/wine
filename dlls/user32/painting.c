@@ -36,45 +36,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(win);
 
 
 /***********************************************************************
- *           dump_rdw_flags
- */
-static void dump_rdw_flags(UINT flags)
-{
-    TRACE("flags:");
-    if (flags & RDW_INVALIDATE) TRACE(" RDW_INVALIDATE");
-    if (flags & RDW_INTERNALPAINT) TRACE(" RDW_INTERNALPAINT");
-    if (flags & RDW_ERASE) TRACE(" RDW_ERASE");
-    if (flags & RDW_VALIDATE) TRACE(" RDW_VALIDATE");
-    if (flags & RDW_NOINTERNALPAINT) TRACE(" RDW_NOINTERNALPAINT");
-    if (flags & RDW_NOERASE) TRACE(" RDW_NOERASE");
-    if (flags & RDW_NOCHILDREN) TRACE(" RDW_NOCHILDREN");
-    if (flags & RDW_ALLCHILDREN) TRACE(" RDW_ALLCHILDREN");
-    if (flags & RDW_UPDATENOW) TRACE(" RDW_UPDATENOW");
-    if (flags & RDW_ERASENOW) TRACE(" RDW_ERASENOW");
-    if (flags & RDW_FRAME) TRACE(" RDW_FRAME");
-    if (flags & RDW_NOFRAME) TRACE(" RDW_NOFRAME");
-
-#define RDW_FLAGS \
-    (RDW_INVALIDATE | \
-    RDW_INTERNALPAINT | \
-    RDW_ERASE | \
-    RDW_VALIDATE | \
-    RDW_NOINTERNALPAINT | \
-    RDW_NOERASE | \
-    RDW_NOCHILDREN | \
-    RDW_ALLCHILDREN | \
-    RDW_UPDATENOW | \
-    RDW_ERASENOW | \
-    RDW_FRAME | \
-    RDW_NOFRAME)
-
-    if (flags & ~RDW_FLAGS) TRACE(" %04x", flags & ~RDW_FLAGS);
-    TRACE("\n");
-#undef RDW_FLAGS
-}
-
-
-/***********************************************************************
  *           free_dce
  *
  * Free a class or window DCE.
@@ -215,30 +176,6 @@ static BOOL get_update_flags( HWND hwnd, HWND *child, UINT *flags )
             if (child) *child = wine_server_ptr_handle( reply->child );
             *flags = reply->flags;
         }
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-
-/***********************************************************************
- *           redraw_window_rects
- *
- * Redraw part of a window.
- */
-static BOOL redraw_window_rects( HWND hwnd, UINT flags, const RECT *rects, UINT count )
-{
-    BOOL ret;
-
-    if (!(flags & (RDW_INVALIDATE|RDW_VALIDATE|RDW_INTERNALPAINT|RDW_NOINTERNALPAINT)))
-        return TRUE;  /* nothing to do */
-
-    SERVER_START_REQ( redraw_window )
-    {
-        req->window = wine_server_user_handle( hwnd );
-        req->flags  = flags;
-        wine_server_add_data( req, rects, count * sizeof(RECT) );
-        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
     return ret;
@@ -469,35 +406,6 @@ void move_window_bits_parent( HWND hwnd, HWND parent, const RECT *window_rect, c
 }
 
 
-/***********************************************************************
- *           update_now
- *
- * Implementation of RDW_UPDATENOW behavior.
- */
-static void update_now( HWND hwnd, UINT rdw_flags )
-{
-    HWND child = 0;
-
-    /* desktop window never gets WM_PAINT, only WM_ERASEBKGND */
-    if (hwnd == GetDesktopWindow()) erase_now( hwnd, rdw_flags | RDW_NOCHILDREN );
-
-    /* loop while we find a child to repaint */
-    for (;;)
-    {
-        UINT flags = UPDATE_PAINT | UPDATE_INTERNALPAINT;
-
-        if (rdw_flags & RDW_NOCHILDREN) flags |= UPDATE_NOCHILDREN;
-        else if (rdw_flags & RDW_ALLCHILDREN) flags |= UPDATE_ALLCHILDREN;
-
-        if (!get_update_flags( hwnd, &child, &flags )) break;
-        if (!flags) break;  /* nothing more to do */
-
-        SendMessageW( child, WM_PAINT, 0, 0 );
-        if (rdw_flags & RDW_NOCHILDREN) break;
-    }
-}
-
-
 /*************************************************************************
  *             fix_caret
  *
@@ -619,66 +527,6 @@ BOOL WINAPI LockWindowUpdate( HWND hwnd )
 
 
 /***********************************************************************
- *		RedrawWindow (USER32.@)
- */
-BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rect, HRGN hrgn, UINT flags )
-{
-    static const RECT empty;
-    BOOL ret;
-
-    if (TRACE_ON(win))
-    {
-        if (hrgn)
-        {
-            RECT r;
-            GetRgnBox( hrgn, &r );
-            TRACE( "%p region %p box %s ", hwnd, hrgn, wine_dbgstr_rect(&r) );
-        }
-        else if (rect)
-            TRACE( "%p rect %s ", hwnd, wine_dbgstr_rect(rect) );
-        else
-            TRACE( "%p whole window ", hwnd );
-
-        dump_rdw_flags(flags);
-    }
-
-    /* process pending expose events before painting */
-    if (flags & RDW_UPDATENOW) USER_Driver->pMsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_PAINT, 0 );
-
-    if (rect && !hrgn)
-    {
-        if (IsRectEmpty( rect )) rect = &empty;
-        ret = redraw_window_rects( hwnd, flags, rect, 1 );
-    }
-    else if (!hrgn)
-    {
-        ret = redraw_window_rects( hwnd, flags, NULL, 0 );
-    }
-    else  /* need to build a list of the region rectangles */
-    {
-        DWORD size;
-        RGNDATA *data;
-
-        if (!(size = GetRegionData( hrgn, 0, NULL ))) return FALSE;
-        if (!(data = HeapAlloc( GetProcessHeap(), 0, size ))) return FALSE;
-        GetRegionData( hrgn, size, data );
-        if (!data->rdh.nCount)  /* empty region -> use a single all-zero rectangle */
-            ret = redraw_window_rects( hwnd, flags, &empty, 1 );
-        else
-            ret = redraw_window_rects( hwnd, flags, (const RECT *)data->Buffer, data->rdh.nCount );
-        HeapFree( GetProcessHeap(), 0, data );
-    }
-
-    if (!hwnd) hwnd = GetDesktopWindow();
-
-    if (flags & RDW_UPDATENOW) update_now( hwnd, flags );
-    else if (flags & RDW_ERASENOW) erase_now( hwnd, flags );
-
-    return ret;
-}
-
-
-/***********************************************************************
  *		UpdateWindow (USER32.@)
  */
 BOOL WINAPI UpdateWindow( HWND hwnd )
@@ -689,7 +537,7 @@ BOOL WINAPI UpdateWindow( HWND hwnd )
         return FALSE;
     }
 
-    return RedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_ALLCHILDREN );
+    return NtUserRedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_ALLCHILDREN );
 }
 
 
@@ -704,7 +552,7 @@ BOOL WINAPI InvalidateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
         return FALSE;
     }
 
-    return RedrawWindow(hwnd, NULL, hrgn, RDW_INVALIDATE | (erase ? RDW_ERASE : 0) );
+    return NtUserRedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE | (erase ? RDW_ERASE : 0) );
 }
 
 
@@ -724,7 +572,7 @@ BOOL WINAPI InvalidateRect( HWND hwnd, const RECT *rect, BOOL erase )
         rect = NULL;
     }
 
-    return RedrawWindow( hwnd, rect, 0, flags );
+    return NtUserRedrawWindow( hwnd, rect, 0, flags );
 }
 
 
@@ -739,7 +587,7 @@ BOOL WINAPI ValidateRgn( HWND hwnd, HRGN hrgn )
         return FALSE;
     }
 
-    return RedrawWindow( hwnd, NULL, hrgn, RDW_VALIDATE );
+    return NtUserRedrawWindow( hwnd, NULL, hrgn, RDW_VALIDATE );
 }
 
 
@@ -759,7 +607,7 @@ BOOL WINAPI ValidateRect( HWND hwnd, const RECT *rect )
         rect = NULL;
     }
 
-    return RedrawWindow( hwnd, rect, 0, flags );
+    return NtUserRedrawWindow( hwnd, rect, 0, flags );
 }
 
 
@@ -917,7 +765,7 @@ static INT scroll_window( HWND hwnd, INT dx, INT dy, const RECT *rect, const REC
             NtUserReleaseDC( hwnd, hDC );
 
             if (!bUpdate)
-                RedrawWindow( hwnd, NULL, hrgnUpdate, rdw_flags);
+                NtUserRedrawWindow( hwnd, NULL, hrgnUpdate, rdw_flags);
         }
 
         /* If the windows has an update region, this must be
@@ -936,7 +784,7 @@ static INT scroll_window( HWND hwnd, INT dx, INT dy, const RECT *rect, const REC
             CombineRgn( hrgnTemp, hrgnTemp, hrgnClip, RGN_AND );
             if( !bOwnRgn)
                 CombineRgn( hrgnWinupd, hrgnWinupd, hrgnTemp, RGN_OR );
-            RedrawWindow( hwnd, NULL, hrgnTemp, rdw_flags);
+            NtUserRedrawWindow( hwnd, NULL, hrgnTemp, rdw_flags);
 
            /* Catch the case where the scrolling amount exceeds the size of the
             * original window. This generated a second update area that is the
@@ -993,8 +841,8 @@ static INT scroll_window( HWND hwnd, INT dx, INT dy, const RECT *rect, const REC
     }
 
     if( flags & (SW_INVALIDATE | SW_ERASE) )
-        RedrawWindow( hwnd, NULL, hrgnUpdate, rdw_flags |
-                      ((flags & SW_SCROLLCHILDREN) ? RDW_ALLCHILDREN : 0 ) );
+        NtUserRedrawWindow( hwnd, NULL, hrgnUpdate, rdw_flags |
+                            ((flags & SW_SCROLLCHILDREN) ? RDW_ALLCHILDREN : 0 ) );
 
     if( hrgnWinupd) {
         CombineRgn( hrgnUpdate, hrgnUpdate, hrgnWinupd, RGN_OR);
