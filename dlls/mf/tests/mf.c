@@ -6685,7 +6685,6 @@ static void test_h264_decoder(void)
     ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
     init_media_type(media_type, default_outputs[0], -1);
     hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "SetOutputType returned %#lx.\n", hr);
     ret = IMFMediaType_Release(media_type);
     ok(ret == 0, "Release returned %lu\n", ret);
@@ -6806,10 +6805,8 @@ static void test_h264_decoder(void)
         init_media_type(media_type, output_type_desc_win7, ARRAY_SIZE(output_type_desc_win7) - 1);
         hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
     }
-    todo_wine
     ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
     ret = IMFMediaType_Release(media_type);
-    todo_wine
     ok(ret == 1, "Release returned %lu\n", ret);
 
     flags = MFT_INPUT_STREAM_WHOLE_SAMPLES | MFT_INPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER | MFT_INPUT_STREAM_FIXED_SAMPLE_SIZE;

@@ -47,6 +47,7 @@ struct h264_decoder
     IMFTransform IMFTransform_iface;
     LONG refcount;
     IMFMediaType *input_type;
+    IMFMediaType *output_type;
 };
 
 static struct h264_decoder *impl_from_IMFTransform(IMFTransform *iface)
@@ -184,6 +185,8 @@ static ULONG WINAPI transform_Release(IMFTransform *iface)
     {
         if (decoder->input_type)
             IMFMediaType_Release(decoder->input_type);
+        if (decoder->output_type)
+            IMFMediaType_Release(decoder->output_type);
         free(decoder);
     }
 
@@ -340,6 +343,12 @@ static HRESULT WINAPI transform_SetInputType(IMFTransform *iface, DWORD id, IMFM
     if (i == ARRAY_SIZE(h264_decoder_input_types))
         return MF_E_INVALIDMEDIATYPE;
 
+    if (decoder->output_type)
+    {
+        IMFMediaType_Release(decoder->output_type);
+        decoder->output_type = NULL;
+    }
+
     if (decoder->input_type)
         IMFMediaType_Release(decoder->input_type);
     IMFMediaType_AddRef((decoder->input_type = type));
@@ -349,8 +358,34 @@ static HRESULT WINAPI transform_SetInputType(IMFTransform *iface, DWORD id, IMFM
 
 static HRESULT WINAPI transform_SetOutputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
 {
-    FIXME("iface %p, id %#lx, type %p, flags %#lx stub!\n", iface, id, type, flags);
-    return E_NOTIMPL;
+    struct h264_decoder *decoder = impl_from_IMFTransform(iface);
+    GUID major, subtype;
+    HRESULT hr;
+    ULONG i;
+
+    TRACE("iface %p, id %#lx, type %p, flags %#lx.\n", iface, id, type, flags);
+
+    if (!decoder->input_type)
+        return MF_E_TRANSFORM_TYPE_NOT_SET;
+
+    if (FAILED(hr = IMFMediaType_GetGUID(type, &MF_MT_MAJOR_TYPE, &major)) ||
+            FAILED(hr = IMFMediaType_GetGUID(type, &MF_MT_SUBTYPE, &subtype)))
+        return hr;
+
+    if (!IsEqualGUID(&major, &MFMediaType_Video))
+        return MF_E_INVALIDMEDIATYPE;
+
+    for (i = 0; i < ARRAY_SIZE(h264_decoder_output_types); ++i)
+        if (IsEqualGUID(&subtype, h264_decoder_output_types[i]))
+            break;
+    if (i == ARRAY_SIZE(h264_decoder_output_types))
+        return MF_E_INVALIDMEDIATYPE;
+
+    if (decoder->output_type)
+        IMFMediaType_Release(decoder->output_type);
+    IMFMediaType_AddRef((decoder->output_type = type));
+
+    return S_OK;
 }
 
 static HRESULT WINAPI transform_GetInputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **type)
