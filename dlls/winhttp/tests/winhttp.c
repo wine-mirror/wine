@@ -482,6 +482,41 @@ static void test_WinHttpSendRequest (void)
     ok(ret == TRUE, "WinHttpCloseHandle failed on closing session, got %d.\n", ret);
 }
 
+static void test_connect_error(void)
+{
+    static const WCHAR content_type[] = L"Content-Type: application/x-www-form-urlencoded";
+    DWORD header_len, optional_len, total_len, err, t1, t2;
+    HINTERNET session, request, connection;
+    static char post_data[] = "mode=Test";
+    BOOL ret;
+
+    header_len = ~0u;
+    total_len = optional_len = sizeof(post_data);
+
+    session = WinHttpOpen(L"winetest", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+            WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+    ok(!!session, "WinHttpOpen failed to open session.\n");
+
+    connection = WinHttpConnect (session, L"127.0.0.1", 12345, 0);
+    ok(!!connection, "WinHttpConnect failed to open a connection, error %lu.\n", GetLastError());
+
+    request = WinHttpOpenRequest(connection, L"POST", L"tests/post.php", NULL, WINHTTP_NO_REFERER,
+            WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_BYPASS_PROXY_CACHE);
+    ok(!!request, "WinHttpOpenrequest failed to open a request, error: %lu\n", GetLastError());
+
+    t1 = GetTickCount();
+    ret = WinHttpSendRequest(request, content_type, header_len, post_data, optional_len, total_len, 0);
+    t2 = GetTickCount();
+    err = GetLastError();
+    ok(!ret, "WinHttpSendRequest() succeeded.\n");
+    ok(err == ERROR_WINHTTP_CANNOT_CONNECT, "Got unexpected err %lu.\n", err);
+    ok(t2 - t1 < 5000, "Unexpected connect failure delay %lums.\n", t2 - t1);
+
+    WinHttpCloseHandle(request);
+    WinHttpCloseHandle(connection);
+    WinHttpCloseHandle(session);
+}
+
 static void test_WinHttpTimeFromSystemTime(void)
 {
     BOOL ret;
@@ -5557,6 +5592,7 @@ START_TEST (winhttp)
 
     test_WinHttpOpenRequest();
     test_WinHttpSendRequest();
+    test_connect_error();
     test_WinHttpTimeFromSystemTime();
     test_WinHttpTimeToSystemTime();
     test_WinHttpAddHeaders();

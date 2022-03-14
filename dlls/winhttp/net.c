@@ -228,13 +228,19 @@ DWORD netconn_create( struct hostdata *host, const struct sockaddr_storage *sock
         ret = WSAGetLastError();
         if (ret == WSAEWOULDBLOCK || ret == WSAEINPROGRESS)
         {
-            FD_SET set;
             TIMEVAL timeval = { timeout / 1000, (timeout % 1000) * 1000 };
+            FD_SET set_read, set_error;
             int res;
 
-            FD_ZERO( &set );
-            FD_SET( conn->socket, &set );
-            if ((res = select( conn->socket + 1, NULL, &set, NULL, &timeval )) > 0) ret = ERROR_SUCCESS;
+            FD_ZERO( &set_read );
+            FD_SET( conn->socket, &set_read );
+            FD_ZERO( &set_error );
+            FD_SET( conn->socket, &set_error );
+            if ((res = select( conn->socket + 1, NULL, &set_read, &set_error, &timeval )) > 0)
+            {
+                if (FD_ISSET(conn->socket, &set_read)) ret = ERROR_SUCCESS;
+                else                                   assert( FD_ISSET(conn->socket, &set_error) );
+            }
             else if (!res) ret = ERROR_WINHTTP_TIMEOUT;
         }
     }
