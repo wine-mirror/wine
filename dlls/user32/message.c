@@ -3943,7 +3943,7 @@ LRESULT WINAPI DECLSPEC_HOTPATCH DispatchMessageA( const MSG* msg )
     {
         /* send a WM_NCPAINT and WM_ERASEBKGND if the non-client area is still invalid */
         HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
-        GetUpdateRgn( msg->hwnd, hrgn, TRUE );
+        NtUserGetUpdateRgn( msg->hwnd, hrgn, TRUE );
         DeleteObject( hrgn );
     }
     return retval;
@@ -4014,7 +4014,7 @@ LRESULT WINAPI DECLSPEC_HOTPATCH DispatchMessageW( const MSG* msg )
     {
         /* send a WM_NCPAINT and WM_ERASEBKGND if the non-client area is still invalid */
         HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
-        GetUpdateRgn( msg->hwnd, hrgn, TRUE );
+        NtUserGetUpdateRgn( msg->hwnd, hrgn, TRUE );
         DeleteObject( hrgn );
     }
     return retval;

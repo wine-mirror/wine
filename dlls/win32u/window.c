@@ -1763,6 +1763,156 @@ INT WINAPI NtUserInternalGetWindowText( HWND hwnd, WCHAR *text, INT count )
 }
 
 /*******************************************************************
+ *         get_windows_offset
+ *
+ * Calculate the offset between the origin of the two windows. Used
+ * to implement MapWindowPoints.
+ */
+static BOOL get_windows_offset( HWND hwnd_from, HWND hwnd_to, BOOL *mirrored, POINT *ret_offset )
+{
+    WND *win;
+    POINT offset;
+    BOOL mirror_from, mirror_to, ret;
+    HWND hwnd;
+
+    offset.x = offset.y = 0;
+    *mirrored = mirror_from = mirror_to = FALSE;
+
+    /* Translate source window origin to screen coords */
+    if (hwnd_from)
+    {
+        if (!(win = get_win_ptr( hwnd_from )))
+        {
+            SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+            return FALSE;
+        }
+        if (win == WND_OTHER_PROCESS) goto other_process;
+        if (win != WND_DESKTOP)
+        {
+            if (win->dwExStyle & WS_EX_LAYOUTRTL)
+            {
+                mirror_from = TRUE;
+                offset.x += win->client_rect.right - win->client_rect.left;
+            }
+            while (win->parent)
+            {
+                offset.x += win->client_rect.left;
+                offset.y += win->client_rect.top;
+                hwnd = win->parent;
+                release_win_ptr( win );
+                if (!(win = get_win_ptr( hwnd ))) break;
+                if (win == WND_OTHER_PROCESS) goto other_process;
+                if (win == WND_DESKTOP) break;
+                if (win->flags & WIN_CHILDREN_MOVED)
+                {
+                    release_win_ptr( win );
+                    goto other_process;
+                }
+            }
+            if (win && win != WND_DESKTOP) release_win_ptr( win );
+            offset = map_dpi_point( offset, get_dpi_for_window( hwnd_from ), get_thread_dpi() );
+        }
+    }
+
+    /* Translate origin to destination window coords */
+    if (hwnd_to)
+    {
+        if (!(win = get_win_ptr( hwnd_to )))
+        {
+            SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+            return FALSE;
+        }
+        if (win == WND_OTHER_PROCESS) goto other_process;
+        if (win != WND_DESKTOP)
+        {
+            POINT pt = { 0, 0 };
+            if (win->dwExStyle & WS_EX_LAYOUTRTL)
+            {
+                mirror_to = TRUE;
+                pt.x += win->client_rect.right - win->client_rect.left;
+            }
+            while (win->parent)
+            {
+                pt.x += win->client_rect.left;
+                pt.y += win->client_rect.top;
+                hwnd = win->parent;
+                release_win_ptr( win );
+                if (!(win = get_win_ptr( hwnd ))) break;
+                if (win == WND_OTHER_PROCESS) goto other_process;
+                if (win == WND_DESKTOP) break;
+                if (win->flags & WIN_CHILDREN_MOVED)
+                {
+                    release_win_ptr( win );
+                    goto other_process;
+                }
+            }
+            if (win && win != WND_DESKTOP) release_win_ptr( win );
+            pt = map_dpi_point( pt, get_dpi_for_window( hwnd_to ), get_thread_dpi() );
+            offset.x -= pt.x;
+            offset.y -= pt.y;
+        }
+    }
+
+    *mirrored = mirror_from ^ mirror_to;
+    if (mirror_from) offset.x = -offset.x;
+    *ret_offset = offset;
+    return TRUE;
+
+other_process:  /* one of the parents may belong to another process, do it the hard way */
+    SERVER_START_REQ( get_windows_offset )
+    {
+        req->from = wine_server_user_handle( hwnd_from );
+        req->to   = wine_server_user_handle( hwnd_to );
+        req->dpi  = get_thread_dpi();
+        if ((ret = !wine_server_call_err( req )))
+        {
+            ret_offset->x = reply->x;
+            ret_offset->y = reply->y;
+            *mirrored = reply->mirror;
+        }
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+/* map coordinates of a window region */
+void map_window_region( HWND from, HWND to, HRGN hrgn )
+{
+    BOOL mirrored;
+    POINT offset;
+    UINT i, size;
+    RGNDATA *data;
+    HRGN new_rgn;
+    RECT *rect;
+
+    if (!get_windows_offset( from, to, &mirrored, &offset )) return;
+
+    if (!mirrored)
+    {
+        NtGdiOffsetRgn( hrgn, offset.x, offset.y );
+        return;
+    }
+    if (!(size = NtGdiGetRegionData( hrgn, 0, NULL ))) return;
+    if (!(data = malloc( size ))) return;
+    NtGdiGetRegionData( hrgn, size, data );
+    rect = (RECT *)data->Buffer;
+    for (i = 0; i < data->rdh.nCount; i++)
+    {
+        int tmp = -(rect[i].left + offset.x);
+        rect[i].left    = -(rect[i].right + offset.x);
+        rect[i].right   = tmp;
+        rect[i].top    += offset.y;
+        rect[i].bottom += offset.y;
+    }
+    if ((new_rgn = NtGdiExtCreateRegion( NULL, data->rdh.dwSize + data->rdh.nRgnSize, data )))
+    {
+        NtGdiCombineRgn( hrgn, new_rgn, 0, RGN_COPY );
+        NtGdiDeleteObjectApp( new_rgn );
+    }
+    free( data );
+}
+
+/*******************************************************************
  *           update_window_state
  *
  * Trigger an update of the window's driver state and surface.

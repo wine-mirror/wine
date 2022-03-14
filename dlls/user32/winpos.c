@@ -404,43 +404,6 @@ static BOOL WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, BOOL *mirrored, POI
     return ret;
 }
 
-/* map coordinates of a window region */
-void map_window_region( HWND from, HWND to, HRGN hrgn )
-{
-    BOOL mirrored;
-    POINT offset;
-    UINT i, size;
-    RGNDATA *data;
-    HRGN new_rgn;
-    RECT *rect;
-
-    if (!WINPOS_GetWinOffset( from, to, &mirrored, &offset )) return;
-
-    if (!mirrored)
-    {
-        OffsetRgn( hrgn, offset.x, offset.y );
-        return;
-    }
-    if (!(size = GetRegionData( hrgn, 0, NULL ))) return;
-    if (!(data = HeapAlloc( GetProcessHeap(), 0, size ))) return;
-    GetRegionData( hrgn, size, data );
-    rect = (RECT *)data->Buffer;
-    for (i = 0; i < data->rdh.nCount; i++)
-    {
-        int tmp = -(rect[i].left + offset.x);
-        rect[i].left    = -(rect[i].right + offset.x);
-        rect[i].right   = tmp;
-        rect[i].top    += offset.y;
-        rect[i].bottom += offset.y;
-    }
-    if ((new_rgn = ExtCreateRegion( NULL, data->rdh.dwSize + data->rdh.nRgnSize, data )))
-    {
-        CombineRgn( hrgn, new_rgn, 0, RGN_COPY );
-        DeleteObject( new_rgn );
-    }
-    HeapFree( GetProcessHeap(), 0, data );
-}
-
 
 /*******************************************************************
  *		MapWindowPoints (USER32.@)

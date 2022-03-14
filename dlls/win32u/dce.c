@@ -548,7 +548,7 @@ void invalidate_dce( WND *win, const RECT *extra_rect )
     if (!win->parent) return;
 
     context = set_thread_dpi_awareness_context( get_window_dpi_awareness_context( win->obj.handle ));
-    get_window_rects( win->obj.handle, COORDS_SCREEN, &window_rect, NULL, get_thread_dpi() );
+    get_window_rect( win->obj.handle, &window_rect, get_thread_dpi() );
 
     TRACE("%p parent %p %s (%s)\n",
           win->obj.handle, win->parent, wine_dbgstr_rect(&window_rect), wine_dbgstr_rect(extra_rect) );
@@ -576,7 +576,7 @@ void invalidate_dce( WND *win, const RECT *extra_rect )
         if (win->parent == dce->hwnd || is_child( win->parent, dce->hwnd ))
         {
             RECT dce_rect, tmp;
-            get_window_rects( dce->hwnd, COORDS_SCREEN, &dce_rect, NULL, get_thread_dpi() );
+            get_window_rect( dce->hwnd, &dce_rect, get_thread_dpi() );
             if (intersect_rect( &tmp, &dce_rect, &window_rect ) ||
                 (extra_rect && intersect_rect( &tmp, &dce_rect, extra_rect )))
                 make_dc_dirty( dce );
@@ -1137,4 +1137,33 @@ BOOL WINAPI NtUserRedrawWindow( HWND hwnd, const RECT *rect, HRGN hrgn, UINT fla
     else if (flags & RDW_ERASENOW) erase_now( hwnd, flags );
 
     return ret;
+}
+
+/***********************************************************************
+ *           NtUserGetUpdateRgn (win32u.@)
+ */
+INT WINAPI NtUserGetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
+{
+    DPI_AWARENESS_CONTEXT context;
+    INT retval = ERROR;
+    UINT flags = UPDATE_NOCHILDREN;
+    HRGN update_rgn;
+
+    context = set_thread_dpi_awareness_context( get_window_dpi_awareness_context( hwnd ));
+
+    if (erase) flags |= UPDATE_NONCLIENT | UPDATE_ERASE;
+
+    if ((update_rgn = send_ncpaint( hwnd, NULL, &flags )))
+    {
+        retval = NtGdiCombineRgn( hrgn, update_rgn, 0, RGN_COPY );
+        if (send_erase( hwnd, flags, update_rgn, NULL, NULL ))
+        {
+            flags = UPDATE_DELAYED_ERASE;
+            get_update_flags( hwnd, NULL, &flags );
+        }
+        /* map region to client coordinates */
+        map_window_region( 0, hwnd, hrgn );
+    }
+    set_thread_dpi_awareness_context( context );
+    return retval;
 }

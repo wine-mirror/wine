@@ -612,36 +612,6 @@ BOOL WINAPI ValidateRect( HWND hwnd, const RECT *rect )
 
 
 /***********************************************************************
- *		GetUpdateRgn (USER32.@)
- */
-INT WINAPI GetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
-{
-    DPI_AWARENESS_CONTEXT context;
-    INT retval = ERROR;
-    UINT flags = UPDATE_NOCHILDREN;
-    HRGN update_rgn;
-
-    context = SetThreadDpiAwarenessContext( GetWindowDpiAwarenessContext( hwnd ));
-
-    if (erase) flags |= UPDATE_NONCLIENT | UPDATE_ERASE;
-
-    if ((update_rgn = send_ncpaint( hwnd, NULL, &flags )))
-    {
-        retval = CombineRgn( hrgn, update_rgn, 0, RGN_COPY );
-        if (send_erase( hwnd, flags, update_rgn, NULL, NULL ))
-        {
-            flags = UPDATE_DELAYED_ERASE;
-            get_update_flags( hwnd, NULL, &flags );
-        }
-        /* map region to client coordinates */
-        map_window_region( 0, hwnd, hrgn );
-    }
-    SetThreadDpiAwarenessContext( context );
-    return retval;
-}
-
-
-/***********************************************************************
  *		GetUpdateRect (USER32.@)
  */
 BOOL WINAPI GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
@@ -685,7 +655,7 @@ BOOL WINAPI GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
 INT WINAPI ExcludeUpdateRgn( HDC hdc, HWND hwnd )
 {
     HRGN update_rgn = CreateRectRgn( 0, 0, 0, 0 );
-    INT ret = GetUpdateRgn( hwnd, update_rgn, FALSE );
+    INT ret = NtUserGetUpdateRgn( hwnd, update_rgn, FALSE );
 
     if (ret != ERROR)
     {
@@ -772,7 +742,7 @@ static INT scroll_window( HWND hwnd, INT dx, INT dy, const RECT *rect, const REC
          * scrolled as well. Keep a copy in hrgnWinupd
          * to be added to hrngUpdate at the end. */
         hrgnTemp = CreateRectRgn( 0, 0, 0, 0 );
-        retVal = GetUpdateRgn( hwnd, hrgnTemp, FALSE );
+        retVal = NtUserGetUpdateRgn( hwnd, hrgnTemp, FALSE );
         if (retVal != NULLREGION)
         {
             HRGN hrgnClip = CreateRectRgnIndirect(&cliprc);

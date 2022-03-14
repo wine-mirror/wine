@@ -858,6 +858,12 @@ INT WINAPI NtUserGetKeyNameText( LONG lparam, WCHAR *buffer, INT size )
     return unix_funcs->pNtUserGetKeyNameText( lparam, buffer, size );
 }
 
+INT WINAPI NtUserGetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserGetUpdateRgn( hwnd, hrgn, erase );
+}
+
 BOOL WINAPI NtUserMoveWindow( HWND hwnd, INT x, INT y, INT cx, INT cy, BOOL repaint )
 {
     if (!unix_funcs) return 0;

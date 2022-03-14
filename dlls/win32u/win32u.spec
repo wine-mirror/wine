@@ -1003,7 +1003,7 @@
 @ stub NtUserGetTouchValidationStatus
 @ stub NtUserGetUniformSpaceMapping
 @ stub NtUserGetUpdateRect
-@ stub NtUserGetUpdateRgn
+@ stdcall NtUserGetUpdateRgn(long long long)
 @ stdcall NtUserGetUpdatedClipboardFormats(ptr long ptr)
 @ stub NtUserGetWOWClass
 @ stub NtUserGetWindowBand
