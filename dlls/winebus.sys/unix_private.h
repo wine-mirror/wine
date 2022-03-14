@@ -138,12 +138,23 @@ enum haptics_waveform_ordinal
     HAPTICS_WAVEFORM_LAST_ORDINAL = HAPTICS_WAVEFORM_BUZZ_ORDINAL,
 };
 
+#include "pshpack1.h"
+struct hid_haptics_feature
+{
+    WORD waveform;
+    WORD duration;
+    UINT cutoff_time_ms;
+};
+
 struct hid_haptics_features
 {
     WORD waveform_list[HAPTICS_WAVEFORM_LAST_ORDINAL - HAPTICS_WAVEFORM_FIRST_ORDINAL + 1];
     WORD duration_list[HAPTICS_WAVEFORM_LAST_ORDINAL - HAPTICS_WAVEFORM_FIRST_ORDINAL + 1];
     UINT waveform_cutoff_time_ms;
+    struct hid_haptics_feature rumble;
+    struct hid_haptics_feature buzz;
 };
+#include "poppack.h"
 
 struct hid_haptics
 {
@@ -151,6 +162,7 @@ struct hid_haptics
     UINT16 waveform_intensity[HAPTICS_WAVEFORM_LAST_ORDINAL + 1];
     BYTE features_report;
     BYTE waveform_report;
+    BYTE intensity_report;
 };
 
 /* must match the order and number of usages in the
