@@ -6665,9 +6665,7 @@ static void test_h264_decoder(void)
         goto failed;
 
     hr = IMFTransform_GetAttributes(transform, &attributes);
-    todo_wine
     ok(hr == S_OK, "GetAttributes returned %#lx\n", hr);
-    if (hr != S_OK) MFCreateAttributes(&attributes, 0);
     hr = IMFAttributes_SetUINT32(attributes, &MF_LOW_LATENCY, 1);
     ok(hr == S_OK, "SetUINT32 returned %#lx\n", hr);
     IMFAttributes_Release(attributes);
