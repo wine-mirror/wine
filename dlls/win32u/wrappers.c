@@ -149,6 +149,12 @@ INT WINAPI NtGdiEndPage( HDC hdc )
     return unix_funcs->pNtGdiEndPage( hdc );
 }
 
+BOOL WINAPI NtUserEndPaint( HWND hwnd, const PAINTSTRUCT *ps )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserEndPaint( hwnd, ps );
+}
+
 BOOL WINAPI NtGdiEnumFonts( HDC hdc, ULONG type, ULONG win32_compat, ULONG face_name_len,
                             const WCHAR *face_name, ULONG charset, ULONG *count, void *buf )
 {

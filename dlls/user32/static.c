@@ -385,7 +385,7 @@ LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
                 (staticPaintFunc[style])( hwnd, hdc, hbrush, full_style );
             SelectClipRgn( hdc, hrgn );
             if (hrgn) DeleteObject( hrgn );
-            if (!wParam) EndPaint(hwnd, &ps);
+            if (!wParam) NtUserEndPaint( hwnd, &ps );
         }
         break;
 

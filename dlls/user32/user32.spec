@@ -211,7 +211,7 @@
 @ stdcall EndDeferWindowPos(long)
 @ stdcall EndDialog(long long)
 @ stdcall EndMenu()
-@ stdcall EndPaint(long ptr)
+@ stdcall EndPaint(long ptr) NtUserEndPaint
 @ stub EndTask
 # @ stub EnterReaderModeHelper
 @ stdcall EnumChildWindows(long ptr long)

@@ -1523,7 +1523,7 @@ LRESULT WINAPI USER_ScrollBarProc( HWND hwnd, UINT message, WPARAM wParam, LPARA
             PAINTSTRUCT ps;
             HDC hdc = wParam ? (HDC)wParam : NtUserBeginPaint( hwnd, &ps );
             SCROLL_DrawScrollBar( hwnd, hdc, SB_CTL, g_tracking_info.hit_test, &g_tracking_info, TRUE, TRUE );
-            if (!wParam) EndPaint(hwnd, &ps);
+            if (!wParam) NtUserEndPaint( hwnd, &ps );
         }
         break;
 

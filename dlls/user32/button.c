@@ -253,7 +253,7 @@ LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
             (btnPaintFunc[btn_type])( hWnd, hdc, ODA_DRAWENTIRE );
             SetBkMode(hdc, nOldMode); /*  reset painting mode */
         }
-        if ( !wParam ) EndPaint( hWnd, &ps );
+        if (!wParam) NtUserEndPaint( hWnd, &ps );
         break;
     }
 

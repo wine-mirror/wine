@@ -38,6 +38,7 @@ struct user_callbacks
     LRESULT (WINAPI *pSendMessageW)( HWND, UINT, WPARAM, LPARAM );
     BOOL (WINAPI *pSendNotifyMessageW)( HWND, UINT, WPARAM, LPARAM );
     BOOL (WINAPI *pSetWindowPos)( HWND, HWND, INT, INT, INT, INT, UINT );
+    BOOL (WINAPI *pShowCaret)( HWND hwnd );
     DWORD (WINAPI *pWaitForInputIdle)( HANDLE, DWORD );
     void (CDECL *notify_ime)( HWND hwnd, UINT param );
     void (CDECL *register_builtin_classes)(void);

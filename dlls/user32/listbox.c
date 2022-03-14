@@ -3092,7 +3092,7 @@ LRESULT ListBoxWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
             PAINTSTRUCT ps;
             HDC hdc = ( wParam ) ? ((HDC)wParam) :  NtUserBeginPaint( descr->self, &ps );
             ret = LISTBOX_Paint( descr, hdc );
-            if( !wParam ) EndPaint( descr->self, &ps );
+            if (!wParam) NtUserEndPaint( descr->self, &ps );
         }
         return ret;
     case WM_SIZE:

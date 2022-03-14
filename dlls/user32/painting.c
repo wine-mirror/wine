@@ -551,19 +551,6 @@ static HWND fix_caret(HWND hWnd, const RECT *scroll_rect, INT dx, INT dy,
 
 
 /***********************************************************************
- *		EndPaint (USER32.@)
- */
-BOOL WINAPI EndPaint( HWND hwnd, const PAINTSTRUCT *lps )
-{
-    ShowCaret( hwnd );
-    flush_window_surfaces( FALSE );
-    if (!lps) return FALSE;
-    release_dc( hwnd, lps->hdc, TRUE );
-    return TRUE;
-}
-
-
-/***********************************************************************
  *		GetDC (USER32.@)
  *
  * Get a device context.

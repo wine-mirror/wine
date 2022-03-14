@@ -926,3 +926,15 @@ HDC WINAPI NtUserBeginPaint( HWND hwnd, PAINTSTRUCT *ps )
     ps->hdc = hdc;
     return hdc;
 }
+
+/***********************************************************************
+ *           NtUserEndPaint (win32u.@)
+ */
+BOOL WINAPI NtUserEndPaint( HWND hwnd, const PAINTSTRUCT *ps )
+{
+    if (user_callbacks) user_callbacks->pShowCaret( hwnd );
+    flush_window_surfaces( FALSE );
+    if (!ps) return FALSE;
+    release_dc( hwnd, ps->hdc, TRUE );
+    return TRUE;
+}

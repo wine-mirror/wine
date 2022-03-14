@@ -832,8 +832,8 @@ static LRESULT COMBO_Paint(LPHEADCOMBO lphc, HDC hParamDC)
 	SelectObject( hDC, hPrevBrush );
   }
 
-  if( !hParamDC )
-    EndPaint(lphc->self, &ps);
+  if (!hParamDC)
+    NtUserEndPaint( lphc->self, &ps );
 
   return 0;
 }

@@ -381,7 +381,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                         wine_dbgstr_rect(&ps.rcPaint));
                   DrawIcon( hdc, x, y, hIcon );
               }
-              EndPaint( hwnd, &ps );
+              NtUserEndPaint( hwnd, &ps );
             }
             return 0;
         }

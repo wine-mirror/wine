@@ -874,7 +874,7 @@
 @ stub NtUserEnableWindowResizeOptimization
 @ stub NtUserEndDeferWindowPosEx
 @ stub NtUserEndMenu
-@ stub NtUserEndPaint
+@ stdcall NtUserEndPaint(long ptr)
 @ stdcall NtUserEnumDisplayDevices(ptr long ptr long)
 @ stdcall NtUserEnumDisplayMonitors(long ptr ptr long)
 @ stdcall NtUserEnumDisplaySettings(ptr long ptr long)
