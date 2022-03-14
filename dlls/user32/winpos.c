@@ -1976,10 +1976,11 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
     BOOL ret, needs_update = FALSE;
     RECT visible_rect, old_visible_rect, old_window_rect, old_client_rect, extra_rects[3];
     struct window_surface *old_surface, *new_surface = NULL;
+    struct window_surface *dummy_surface = (struct window_surface *)NtUserCallHwnd( 0, NtUserGetDummySurface );
 
     if (!parent || parent == GetDesktopWindow())
     {
-        new_surface = &dummy_surface;  /* provide a default surface for top-level windows */
+        new_surface = dummy_surface;  /* provide a default surface for top-level windows */
         window_surface_add_ref( new_surface );
     }
     visible_rect = *window_rect;
@@ -2017,8 +2018,8 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
     old_client_rect = win->client_rect;
     old_surface = win->surface;
     if (old_surface != new_surface) swp_flags |= SWP_FRAMECHANGED;  /* force refreshing non-client area */
-    if (new_surface == &dummy_surface) swp_flags |= SWP_NOREDRAW;
-    else if (old_surface == &dummy_surface)
+    if (new_surface == dummy_surface) swp_flags |= SWP_NOREDRAW;
+    else if (old_surface == dummy_surface)
     {
         swp_flags |= SWP_NOCOPYBITS;
         valid_rects = NULL;

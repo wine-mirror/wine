@@ -280,6 +280,12 @@ extern BOOL get_clip_cursor( RECT *rect ) DECLSPEC_HIDDEN;
 extern ULONG_PTR get_icon_param( HICON handle ) DECLSPEC_HIDDEN;
 extern ULONG_PTR set_icon_param( HICON handle, ULONG_PTR param ) DECLSPEC_HIDDEN;
 
+/* dce.c */
+extern struct window_surface dummy_surface DECLSPEC_HIDDEN;
+extern void flush_window_surfaces( BOOL idle ) DECLSPEC_HIDDEN;
+extern void register_window_surface( struct window_surface *old,
+                                     struct window_surface *new ) DECLSPEC_HIDDEN;
+
 /* hook.c */
 extern LRESULT call_current_hook( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam ) DECLSPEC_HIDDEN;
 extern LRESULT call_hooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL unicode ) DECLSPEC_HIDDEN;
@@ -327,13 +333,10 @@ extern BOOL get_window_placement( HWND hwnd, WINDOWPLACEMENT *placement ) DECLSP
 extern DWORD get_window_thread( HWND hwnd, DWORD *process ) DECLSPEC_HIDDEN;
 extern HWND is_current_thread_window( HWND hwnd ) DECLSPEC_HIDDEN;
 extern BOOL is_iconic( HWND hwnd ) DECLSPEC_HIDDEN;
-extern void flush_window_surfaces( BOOL idle ) DECLSPEC_HIDDEN;
 extern DWORD get_window_long( HWND hwnd, INT offset ) DECLSPEC_HIDDEN;
 extern BOOL get_window_rect( HWND hwnd, RECT *rect, UINT dpi ) DECLSPEC_HIDDEN;
 extern HWND *list_window_children( HDESK desktop, HWND hwnd, UNICODE_STRING *class,
                                    DWORD tid ) DECLSPEC_HIDDEN;
-extern void register_window_surface( struct window_surface *old,
-                                     struct window_surface *new ) DECLSPEC_HIDDEN;
 extern void update_window_state( HWND hwnd ) DECLSPEC_HIDDEN;
 
 /* to release pointers retrieved by win_get_ptr */

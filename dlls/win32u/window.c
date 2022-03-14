@@ -23,7 +23,6 @@
 #pragma makedep unix
 #endif
 
-#include <pthread.h>
 #include <assert.h>
 
 #include "ntstatus.h"
@@ -39,9 +38,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(win);
 #define USER_HANDLE_TO_INDEX(hwnd) ((LOWORD(hwnd) - FIRST_USER_HANDLE) >> 1)
 
 static void *user_handles[NB_USER_HANDLES];
-
-static struct list window_surfaces = LIST_INIT( window_surfaces );
-static pthread_mutex_t surfaces_lock = PTHREAD_MUTEX_INITIALIZER;
 
 /***********************************************************************
  *           alloc_user_handle
@@ -204,43 +200,6 @@ HWND get_full_window_handle( HWND hwnd )
         SERVER_END_REQ;
     }
     return hwnd;
-}
-
-/*******************************************************************
- *           register_window_surface
- *
- * Register a window surface in the global list, possibly replacing another one.
- */
-void register_window_surface( struct window_surface *old, struct window_surface *new )
-{
-    if (old == new) return;
-    pthread_mutex_lock( &surfaces_lock );
-    if (old) list_remove( &old->entry );
-    if (new) list_add_tail( &window_surfaces, &new->entry );
-    pthread_mutex_unlock( &surfaces_lock );
-}
-
-/*******************************************************************
- *           flush_window_surfaces
- *
- * Flush pending output from all window surfaces.
- */
-void flush_window_surfaces( BOOL idle )
-{
-    static DWORD last_idle;
-    DWORD now;
-    struct window_surface *surface;
-
-    pthread_mutex_lock( &surfaces_lock );
-    now = NtGetTickCount();
-    if (idle) last_idle = now;
-    /* if not idle, we only flush if there's evidence that the app never goes idle */
-    else if ((int)(now - last_idle) < 50) goto done;
-
-    LIST_FOR_EACH_ENTRY( surface, &window_surfaces, struct window_surface, entry )
-        surface->funcs->flush( surface );
-done:
-    pthread_mutex_unlock( &surfaces_lock );
 }
 
 /*******************************************************************
@@ -1896,6 +1855,8 @@ ULONG_PTR WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
     /* temporary exports */
     case NtUserCreateDesktopWindow:
         return user_driver->pCreateDesktopWindow( hwnd );
+    case NtUserGetDummySurface:
+        return (UINT_PTR)&dummy_surface;
     default:
         FIXME( "invalid code %u\n", code );
         return 0;

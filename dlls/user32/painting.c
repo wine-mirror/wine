@@ -169,9 +169,11 @@ static void update_visible_region( struct dce *dce )
  */
 static void release_dce( struct dce *dce )
 {
+    struct window_surface *dummy_surface = (struct window_surface *)NtUserCallHwnd( 0, NtUserGetDummySurface );
+
     if (!dce->hwnd) return;  /* already released */
 
-    __wine_set_visible_region( dce->hdc, 0, &dummy_surface.rect, &dummy_surface.rect, &dummy_surface );
+    __wine_set_visible_region( dce->hdc, 0, &dummy_surface->rect, &dummy_surface->rect, dummy_surface );
     USER_Driver->pReleaseDC( dce->hwnd, dce->hdc );
 
     if (dce->clip_rgn) DeleteObject( dce->clip_rgn );

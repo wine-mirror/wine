@@ -366,72 +366,6 @@ BOOL is_desktop_window( HWND hwnd )
 
 
 /*******************************************************************
- * Dummy window surface for windows that shouldn't get painted.
- */
-
-static void CDECL dummy_surface_lock( struct window_surface *window_surface )
-{
-    /* nothing to do */
-}
-
-static void CDECL dummy_surface_unlock( struct window_surface *window_surface )
-{
-    /* nothing to do */
-}
-
-static void *CDECL dummy_surface_get_bitmap_info( struct window_surface *window_surface, BITMAPINFO *info )
-{
-    static DWORD dummy_data;
-
-    info->bmiHeader.biSize          = sizeof( info->bmiHeader );
-    info->bmiHeader.biWidth         = dummy_surface.rect.right;
-    info->bmiHeader.biHeight        = dummy_surface.rect.bottom;
-    info->bmiHeader.biPlanes        = 1;
-    info->bmiHeader.biBitCount      = 32;
-    info->bmiHeader.biCompression   = BI_RGB;
-    info->bmiHeader.biSizeImage     = 0;
-    info->bmiHeader.biXPelsPerMeter = 0;
-    info->bmiHeader.biYPelsPerMeter = 0;
-    info->bmiHeader.biClrUsed       = 0;
-    info->bmiHeader.biClrImportant  = 0;
-    return &dummy_data;
-}
-
-static RECT *CDECL dummy_surface_get_bounds( struct window_surface *window_surface )
-{
-    static RECT dummy_bounds;
-    return &dummy_bounds;
-}
-
-static void CDECL dummy_surface_set_region( struct window_surface *window_surface, HRGN region )
-{
-    /* nothing to do */
-}
-
-static void CDECL dummy_surface_flush( struct window_surface *window_surface )
-{
-    /* nothing to do */
-}
-
-static void CDECL dummy_surface_destroy( struct window_surface *window_surface )
-{
-    /* nothing to do */
-}
-
-static const struct window_surface_funcs dummy_surface_funcs =
-{
-    dummy_surface_lock,
-    dummy_surface_unlock,
-    dummy_surface_get_bitmap_info,
-    dummy_surface_get_bounds,
-    dummy_surface_set_region,
-    dummy_surface_flush,
-    dummy_surface_destroy
-};
-
-struct window_surface dummy_surface = { &dummy_surface_funcs, { NULL, NULL }, 1, { 0, 0, 1, 1 } };
-
-/*******************************************************************
  * Off-screen window surface.
  */
 
@@ -569,8 +503,6 @@ void create_offscreen_window_surface( const RECT *visible_rect, struct window_su
  */
 void register_window_surface( struct window_surface *old, struct window_surface *new )
 {
-    if (old == &dummy_surface) old = NULL;
-    if (new == &dummy_surface) new = NULL;
     NtUserCallTwoParam( (UINT_PTR)old, (UINT_PTR)new, NtUserRegisterWindowSurface );
 }
 

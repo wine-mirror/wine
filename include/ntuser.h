@@ -151,6 +151,7 @@ enum
     NtUserIsWindowVisible,
     /* temporary exports */
     NtUserCreateDesktopWindow,
+    NtUserGetDummySurface,
 };
 
 /* NtUserCallHwndParam codes, not compatible with Windows */
