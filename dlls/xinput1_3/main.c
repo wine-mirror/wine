@@ -81,10 +81,8 @@ struct xinput_controller
         char *feature_report_buf;
 
         BYTE haptics_report;
-        BYTE haptics_none_ordinal;
-        BYTE haptics_stop_ordinal;
-        BYTE haptics_rumble_ordinal;
-        BYTE haptics_buzz_ordinal;
+        HIDP_VALUE_CAPS haptics_rumble_caps;
+        HIDP_VALUE_CAPS haptics_buzz_caps;
     } hid;
 };
 
@@ -153,16 +151,74 @@ static void check_value_caps(struct xinput_controller *controller, USHORT usage,
     }
 }
 
+static void check_waveform_caps(struct xinput_controller *controller, HANDLE device, PHIDP_PREPARSED_DATA preparsed,
+                                HIDP_LINK_COLLECTION_NODE *collections, HIDP_VALUE_CAPS *caps)
+{
+    USHORT count, report_len = controller->hid.caps.FeatureReportByteLength;
+    char *report_buf = controller->hid.feature_report_buf;
+    ULONG parent = caps->LinkCollection, waveform = 0;
+    HIDP_VALUE_CAPS value_caps;
+    USAGE_AND_PAGE phy_usages;
+    NTSTATUS status;
+
+    while (collections[parent].LinkUsagePage != HID_USAGE_PAGE_HAPTICS ||
+           collections[parent].LinkUsage != HID_USAGE_HAPTICS_SIMPLE_CONTROLLER)
+        if (!(parent = collections[parent].Parent)) break;
+
+    if (collections[parent].LinkUsagePage != HID_USAGE_PAGE_HAPTICS ||
+        collections[parent].LinkUsage != HID_USAGE_HAPTICS_SIMPLE_CONTROLLER)
+    {
+        WARN("Failed to find haptics simple controller collection\n");
+        return;
+    }
+    phy_usages.UsagePage = collections[collections[parent].Parent].LinkUsagePage;
+    phy_usages.Usage = collections[collections[parent].Parent].LinkUsage;
+
+    status = HidP_InitializeReportForID(HidP_Feature, caps->ReportID, preparsed, report_buf, report_len);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_InitializeReportForID returned %#lx\n", status);
+    if (!HidD_GetFeature(device, report_buf, report_len))
+    {
+        WARN("Failed to get waveform list report, error %lu\n", GetLastError());
+        return;
+    }
+
+    status = HidP_GetUsageValue(HidP_Feature, caps->UsagePage, caps->LinkCollection, caps->NotRange.Usage,
+                                &waveform, preparsed, report_buf, report_len);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue returned %#lx\n", status);
+
+    count = 1;
+    status = HidP_GetSpecificValueCaps(HidP_Output, HID_USAGE_PAGE_HAPTICS, parent, HID_USAGE_HAPTICS_INTENSITY,
+                                       &value_caps, &count, preparsed);
+    if (status != HIDP_STATUS_SUCCESS || !count) WARN("Failed to get waveform intensity caps, status %#lx\n", status);
+    else if (phy_usages.UsagePage == HID_USAGE_PAGE_GENERIC && phy_usages.Usage == HID_USAGE_GENERIC_Z)
+        TRACE( "Ignoring left rumble caps\n" );
+    else if (phy_usages.UsagePage == HID_USAGE_PAGE_GENERIC && phy_usages.Usage == HID_USAGE_GENERIC_RZ)
+        TRACE( "Ignoring right rumble caps\n" );
+    else if (waveform == HID_USAGE_HAPTICS_WAVEFORM_RUMBLE)
+    {
+        TRACE("Found rumble caps, report %u collection %u\n", value_caps.ReportID, value_caps.LinkCollection);
+        controller->hid.haptics_report = value_caps.ReportID;
+        controller->hid.haptics_rumble_caps = value_caps;
+    }
+    else if (waveform == HID_USAGE_HAPTICS_WAVEFORM_BUZZ)
+    {
+        TRACE("Found buzz caps, report %u collection %u\n", value_caps.ReportID, value_caps.LinkCollection);
+        controller->hid.haptics_report = value_caps.ReportID;
+        controller->hid.haptics_buzz_caps = value_caps;
+    }
+    else FIXME("Unsupported waveform type %#lx\n", waveform);
+}
+
 static BOOL controller_check_caps(struct xinput_controller *controller, HANDLE device, PHIDP_PREPARSED_DATA preparsed)
 {
-    ULONG collections_count = 0, report_len = controller->hid.caps.FeatureReportByteLength;
-    char *report_buf = controller->hid.feature_report_buf;
+    USHORT caps_count = 0, waveform_caps_count = 0;
     XINPUT_CAPABILITIES *caps = &controller->caps;
-    HIDP_VALUE_CAPS *value_caps, waveform_cap;
-    int i, u, waveform_list, button_count = 0;
     HIDP_LINK_COLLECTION_NODE *collections;
+    HIDP_VALUE_CAPS waveform_caps[8];
     HIDP_BUTTON_CAPS *button_caps;
-    USHORT caps_count = 0;
+    ULONG collections_count = 0;
+    HIDP_VALUE_CAPS *value_caps;
+    int i, u, button_count = 0;
     NTSTATUS status;
 
     /* Count buttons */
@@ -220,61 +276,23 @@ static BOOL controller_check_caps(struct xinput_controller *controller, HANDLE d
     else for (i = 0; i < collections_count; ++i)
     {
         if (collections[i].LinkUsagePage != HID_USAGE_PAGE_HAPTICS) continue;
-        if (collections[i].LinkUsage == HID_USAGE_HAPTICS_WAVEFORM_LIST) break;
+        if (collections[i].LinkUsage == HID_USAGE_HAPTICS_WAVEFORM_LIST)
+        {
+            caps_count = ARRAY_SIZE(waveform_caps) - waveform_caps_count;
+            value_caps = waveform_caps + waveform_caps_count;
+            status = HidP_GetSpecificValueCaps(HidP_Feature, HID_USAGE_PAGE_ORDINAL, i, 0, value_caps, &caps_count, preparsed);
+            if (status == HIDP_STATUS_SUCCESS) waveform_caps_count += caps_count;
+        }
     }
+    for (i = 0; i < waveform_caps_count; ++i) check_waveform_caps(controller, device, preparsed, collections, waveform_caps + i);
     free(collections);
-    if (status != HIDP_STATUS_SUCCESS || i == collections_count)
-    {
-        WARN("could not find haptics waveform list collection\n");
-        return TRUE;
-    }
-    waveform_list = i;
 
-    caps_count = 1;
-    status = HidP_GetSpecificValueCaps(HidP_Feature, HID_USAGE_PAGE_ORDINAL, waveform_list, 3, &waveform_cap, &caps_count, preparsed);
-    if (status != HIDP_STATUS_SUCCESS || !caps_count)
-    {
-        WARN("could not find haptics waveform list report id, status %#lx\n", status);
-        return TRUE;
-    }
-
-    status = HidP_InitializeReportForID(HidP_Feature, waveform_cap.ReportID, preparsed, report_buf, report_len);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_InitializeReportForID returned %#lx\n", status);
-    if (!HidD_GetFeature(device, report_buf, report_len))
-    {
-        WARN("failed to get waveform list report, error %lu\n", GetLastError());
-        return TRUE;
-    }
-
-    controller->hid.haptics_none_ordinal = 1; /* implicit None waveform ordinal, from the HID spec */
-    controller->hid.haptics_stop_ordinal = 2; /* implicit Stop waveform ordinal, from the HID spec */
-    controller->hid.haptics_buzz_ordinal = 0;
-    controller->hid.haptics_rumble_ordinal = 0;
-    for (i = 3; status == HIDP_STATUS_SUCCESS; ++i)
-    {
-        ULONG waveform = 0;
-        status = HidP_GetUsageValue(HidP_Feature, HID_USAGE_PAGE_ORDINAL, waveform_list,
-                                    i, &waveform, preparsed, report_buf, report_len);
-        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue returned %#lx\n", status);
-        else if (waveform == HID_USAGE_HAPTICS_WAVEFORM_BUZZ) controller->hid.haptics_buzz_ordinal = i;
-        else if (waveform == HID_USAGE_HAPTICS_WAVEFORM_RUMBLE) controller->hid.haptics_rumble_ordinal = i;
-    }
-
-    if (!controller->hid.haptics_buzz_ordinal) WARN("haptics buzz not supported\n");
-    if (!controller->hid.haptics_rumble_ordinal) WARN("haptics rumble not supported\n");
-    if (!controller->hid.haptics_rumble_ordinal && !controller->hid.haptics_buzz_ordinal) return TRUE;
-
-    caps_count = 1;
-    status = HidP_GetSpecificValueCaps(HidP_Output, HID_USAGE_PAGE_HAPTICS, 0, HID_USAGE_HAPTICS_MANUAL_TRIGGER,
-                                       &waveform_cap, &caps_count, preparsed);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetSpecificValueCaps MANUAL_TRIGGER returned %#lx\n", status);
-    else if (!caps_count) WARN("haptics manual trigger not supported\n");
-    else
+    if (controller->hid.haptics_rumble_caps.UsagePage ||
+        controller->hid.haptics_buzz_caps.UsagePage)
     {
         caps->Flags |= XINPUT_CAPS_FFB_SUPPORTED;
         caps->Vibration.wLeftMotorSpeed = 255;
         caps->Vibration.wRightMotorSpeed = 255;
-        controller->hid.haptics_report = waveform_cap.ReportID;
     }
 
     return TRUE;
@@ -285,9 +303,10 @@ static DWORD HID_set_state(struct xinput_controller *controller, XINPUT_VIBRATIO
     ULONG report_len = controller->hid.caps.OutputReportByteLength;
     PHIDP_PREPARSED_DATA preparsed = controller->hid.preparsed;
     char *report_buf = controller->hid.output_report_buf;
-    BYTE report_id = controller->hid.haptics_report;
-    BOOL update_rumble, update_buzz;
+    BOOL ret, update_rumble, update_buzz;
+    USHORT collection;
     NTSTATUS status;
+    BYTE report_id;
 
     if (!(controller->caps.Flags & XINPUT_CAPS_FFB_SUPPORTED)) return ERROR_SUCCESS;
 
@@ -297,82 +316,25 @@ static DWORD HID_set_state(struct xinput_controller *controller, XINPUT_VIBRATIO
     controller->vibration.wRightMotorSpeed = state->wRightMotorSpeed;
 
     if (!controller->enabled) return ERROR_SUCCESS;
+    if (!update_rumble && !update_buzz) return ERROR_SUCCESS;
 
-    if (!state->wLeftMotorSpeed && !state->wRightMotorSpeed)
-    {
-        status = HidP_InitializeReportForID(HidP_Output, report_id, preparsed, report_buf, report_len);
-        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_InitializeReportForID returned %#lx\n", status);
-        status = HidP_SetUsageValue(HidP_Output, HID_USAGE_PAGE_HAPTICS, 0, HID_USAGE_HAPTICS_MANUAL_TRIGGER,
-                                    controller->hid.haptics_stop_ordinal, preparsed, report_buf, report_len);
-        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_SetUsageValue MANUAL_TRIGGER returned %#lx\n", status);
-        if (!HidD_SetOutputReport(controller->device, report_buf, report_len))
-        {
-            WARN("HidD_SetOutputReport failed with error %lu\n", GetLastError());
-            return GetLastError();
-        }
+    report_id = controller->hid.haptics_report;
+    status = HidP_InitializeReportForID(HidP_Output, report_id, preparsed, report_buf, report_len);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_InitializeReportForID returned %#lx\n", status);
 
-        return 0;
-    }
+    collection = controller->hid.haptics_rumble_caps.LinkCollection;
+    status = HidP_SetUsageValue(HidP_Output, HID_USAGE_PAGE_HAPTICS, collection, HID_USAGE_HAPTICS_INTENSITY,
+                                state->wLeftMotorSpeed, preparsed, report_buf, report_len);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_SetUsageValue INTENSITY returned %#lx\n", status);
 
-    if (update_rumble)
-    {
-        /* send haptics rumble report (left motor) */
-        status = HidP_InitializeReportForID(HidP_Output, report_id, preparsed, report_buf, report_len);
-        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_InitializeReportForID returned %#lx\n", status);
-        status = HidP_SetUsageValue(HidP_Output, HID_USAGE_PAGE_HAPTICS, 0, HID_USAGE_HAPTICS_INTENSITY,
-                                    state->wLeftMotorSpeed, preparsed, report_buf, report_len);
-        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_SetUsageValue INTENSITY returned %#lx\n", status);
-        status = HidP_SetUsageValue(HidP_Output, HID_USAGE_PAGE_HAPTICS, 0, HID_USAGE_HAPTICS_MANUAL_TRIGGER,
-                                    controller->hid.haptics_rumble_ordinal, preparsed, report_buf, report_len);
-        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_SetUsageValue MANUAL_TRIGGER returned %#lx\n", status);
-        status = HidP_SetUsageValue(HidP_Output, HID_USAGE_PAGE_HAPTICS, 0, HID_USAGE_HAPTICS_REPEAT_COUNT,
-                                    0, preparsed, report_buf, report_len);
-        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_SetUsageValue REPEAT_COUNT returned %#lx\n", status);
-        if (!HidD_SetOutputReport(controller->device, report_buf, report_len))
-        {
-            WARN("HidD_SetOutputReport failed with error %lu\n", GetLastError());
-            return GetLastError();
-        }
-    }
+    collection = controller->hid.haptics_buzz_caps.LinkCollection;
+    status = HidP_SetUsageValue(HidP_Output, HID_USAGE_PAGE_HAPTICS, collection, HID_USAGE_HAPTICS_INTENSITY,
+                                state->wRightMotorSpeed, preparsed, report_buf, report_len);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_SetUsageValue INTENSITY returned %#lx\n", status);
 
-    if (update_buzz)
-    {
-        /* send haptics buzz report (right motor) */
-        status = HidP_InitializeReportForID(HidP_Output, report_id, preparsed, report_buf, report_len);
-        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_InitializeReportForID returned %#lx\n", status);
-        status = HidP_SetUsageValue(HidP_Output, HID_USAGE_PAGE_HAPTICS, 0, HID_USAGE_HAPTICS_INTENSITY,
-                                    state->wRightMotorSpeed, preparsed, report_buf, report_len);
-        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_SetUsageValue INTENSITY returned %#lx\n", status);
-        status = HidP_SetUsageValue(HidP_Output, HID_USAGE_PAGE_HAPTICS, 0, HID_USAGE_HAPTICS_MANUAL_TRIGGER,
-                                    controller->hid.haptics_buzz_ordinal, preparsed, report_buf, report_len);
-        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_SetUsageValue MANUAL_TRIGGER returned %#lx\n", status);
-        status = HidP_SetUsageValue(HidP_Output, HID_USAGE_PAGE_HAPTICS, 0, HID_USAGE_HAPTICS_REPEAT_COUNT,
-                                    0, preparsed, report_buf, report_len);
-        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_SetUsageValue REPEAT_COUNT returned %#lx\n", status);
-        if (!HidD_SetOutputReport(controller->device, report_buf, report_len))
-        {
-            WARN("HidD_SetOutputReport failed with error %lu\n", GetLastError());
-            return GetLastError();
-        }
-    }
-
-    if (update_rumble || update_buzz)
-    {
-        /* trigger haptics waveforms */
-        status = HidP_InitializeReportForID(HidP_Output, report_id, preparsed, report_buf, report_len);
-        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_InitializeReportForID returned %#lx\n", status);
-        status = HidP_SetUsageValue(HidP_Output, HID_USAGE_PAGE_HAPTICS, 0, HID_USAGE_HAPTICS_MANUAL_TRIGGER,
-                                    controller->hid.haptics_none_ordinal, preparsed, report_buf, report_len);
-        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_SetUsageValue MANUAL_TRIGGER returned %#lx\n", status);
-        status = HidP_SetUsageValue(HidP_Output, HID_USAGE_PAGE_HAPTICS, 0, HID_USAGE_HAPTICS_REPEAT_COUNT,
-                                    1, preparsed, report_buf, report_len);
-        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_SetUsageValue REPEAT_COUNT returned %#lx\n", status);
-        if (!HidD_SetOutputReport(controller->device, report_buf, report_len))
-        {
-            WARN("HidD_SetOutputReport failed with error %lu\n", GetLastError());
-            return GetLastError();
-        }
-    }
+    ret = HidD_SetOutputReport(controller->device, report_buf, report_len);
+    if (!ret) WARN("HidD_SetOutputReport failed with error %lu\n", GetLastError());
+    return 0;
 
     return ERROR_SUCCESS;
 }
