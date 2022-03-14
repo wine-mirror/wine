@@ -158,6 +158,7 @@ static void * const syscalls[] =
     NtUserSetWindowsHookEx,
     NtUserUnhookWinEvent,
     NtUserUnhookWindowsHookEx,
+    NtUserWindowFromDC,
 };
 
 static BYTE arguments[ARRAY_SIZE(syscalls)];

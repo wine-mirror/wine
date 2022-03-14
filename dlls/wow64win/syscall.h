@@ -142,6 +142,7 @@
     SYSCALL_ENTRY( NtUserSetWinEventHook ) \
     SYSCALL_ENTRY( NtUserSetWindowsHookEx ) \
     SYSCALL_ENTRY( NtUserUnhookWinEvent ) \
-    SYSCALL_ENTRY( NtUserUnhookWindowsHookEx )
+    SYSCALL_ENTRY( NtUserUnhookWindowsHookEx ) \
+    SYSCALL_ENTRY( NtUserWindowFromDC )
 
 #endif /* __WOW64WIN_SYSCALL_H */

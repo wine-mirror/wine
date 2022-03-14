@@ -17,6 +17,7 @@ C_SRCS = \
 	clipping.c \
 	cursoricon.c \
 	dc.c \
+	dce.c \
 	dib.c \
 	dibdrv/bitblt.c \
 	dibdrv/dc.c \

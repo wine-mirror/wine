@@ -151,7 +151,6 @@ static const struct user_callbacks user_funcs =
     SendNotifyMessageW,
     SetWindowPos,
     WaitForInputIdle,
-    WindowFromDC,
     free_dce,
     notify_ime,
     register_builtin_classes,

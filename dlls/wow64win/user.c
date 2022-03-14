@@ -206,6 +206,13 @@ NTSTATUS WINAPI wow64_NtUserGetWindowRgnEx( UINT *args )
     return NtUserGetWindowRgnEx( hwnd, hrgn, unk );
 }
 
+NTSTATUS WINAPI wow64_NtUserWindowFromDC( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+
+    return HandleToUlong( NtUserWindowFromDC( hdc ));
+}
+
 NTSTATUS WINAPI wow64_NtUserBuildHwndList( UINT *args )
 {
     HDESK desktop = get_handle( &args );

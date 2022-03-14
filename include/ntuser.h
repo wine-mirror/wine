@@ -407,6 +407,7 @@ BOOL    WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *p
                                           const BLENDFUNCTION *blend, DWORD flags, const RECT *dirty );
 WORD    WINAPI NtUserVkKeyScanEx( WCHAR chr, HKL layout );
 DWORD   WINAPI NtUserWaitForInputIdle( HANDLE process, DWORD timeout, BOOL wow );
+HWND    WINAPI NtUserWindowFromDC( HDC hdc );
 HWND    WINAPI NtUserWindowFromPoint( LONG x, LONG y );
 
 #endif /* _NTUSER_ */

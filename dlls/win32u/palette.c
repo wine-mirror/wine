@@ -516,7 +516,7 @@ HPALETTE WINAPI NtUserSelectPalette( HDC hdc, HPALETTE hpal, WORD bkg )
 
     if (!bkg && hpal != get_stock_object( DEFAULT_PALETTE ))
     {
-        HWND hwnd = user_callbacks->pWindowFromDC( hdc );
+        HWND hwnd = NtUserWindowFromDC( hdc );
         if (hwnd)
         {
             /* set primary palette if it's related to current active */
@@ -582,7 +582,7 @@ UINT realize_palette( HDC hdc )
     if (realized && is_primary)
     {
         /* send palette change notification */
-        HWND hwnd = user_callbacks->pWindowFromDC( hdc );
+        HWND hwnd = NtUserWindowFromDC( hdc );
         if (hwnd) user_callbacks->pSendMessageTimeoutW( HWND_BROADCAST, WM_PALETTECHANGED,
                                                         HandleToUlong(hwnd), 0, SMTO_ABORTIFHUNG,
                                                         2000, NULL );
@@ -590,9 +590,6 @@ UINT realize_palette( HDC hdc )
     return realized;
 }
 
-
-typedef HWND (WINAPI *WindowFromDC_funcptr)( HDC );
-typedef BOOL (WINAPI *RedrawWindow_funcptr)( HWND, const RECT *, HRGN, UINT );
 
 /**********************************************************************
  *           NtGdiUpdateColors    (win32u.@)
@@ -607,7 +604,7 @@ BOOL WINAPI NtGdiUpdateColors( HDC hDC )
     if (!size) return FALSE;
     if (!user_callbacks) return TRUE;
 
-    hwnd = user_callbacks->pWindowFromDC( hDC );
+    hwnd = NtUserWindowFromDC( hDC );
 
     /* Docs say that we have to remap current drawable pixel by pixel
      * but it would take forever given the speed of XGet/PutPixel.

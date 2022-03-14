@@ -35,17 +35,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 
 
-struct dce
-{
-    struct list entry;         /* entry in global DCE list */
-    HDC         hdc;
-    HWND        hwnd;
-    HRGN        clip_rgn;
-    DWORD       flags;
-    LONG        count;         /* usage count; 0 or 1 for cache DCEs, always 1 for window DCEs,
-                                  always >= 1 for class DCEs */
-};
-
 static struct list dce_list = LIST_INIT(dce_list);
 
 #define DCE_CACHE_SIZE 64
@@ -1161,22 +1150,6 @@ HDC WINAPI GetWindowDC( HWND hwnd )
 INT WINAPI ReleaseDC( HWND hwnd, HDC hdc )
 {
     return release_dc( hwnd, hdc, FALSE );
-}
-
-
-/**********************************************************************
- *		WindowFromDC (USER32.@)
- */
-HWND WINAPI WindowFromDC( HDC hdc )
-{
-    struct dce *dce;
-    HWND hwnd = 0;
-
-    USER_Lock();
-    dce = (struct dce *)GetDCHook( hdc, NULL );
-    if (dce) hwnd = dce->hwnd;
-    USER_Unlock();
-    return hwnd;
 }
 
 

@@ -818,7 +818,7 @@
 @ stdcall WinHelpA(long str long long)
 @ stdcall WinHelpW(long wstr long long)
 # @ stub WinOldAppHackoMatic
-@ stdcall WindowFromDC(long)
+@ stdcall WindowFromDC(long) NtUserWindowFromDC
 @ stdcall WindowFromPoint(int64)
 @ stdcall WindowFromPhysicalPoint(int64)
 # @ stub YieldTask

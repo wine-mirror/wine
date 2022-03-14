@@ -38,7 +38,6 @@ struct user_callbacks
     BOOL (WINAPI *pSendNotifyMessageW)( HWND, UINT, WPARAM, LPARAM );
     BOOL (WINAPI *pSetWindowPos)( HWND, HWND, INT, INT, INT, INT, UINT );
     DWORD (WINAPI *pWaitForInputIdle)( HANDLE, DWORD );
-    HWND (WINAPI *pWindowFromDC)( HDC );
     void (WINAPI *free_dce)( struct dce *dce, HWND hwnd );
     void (CDECL *notify_ime)( HWND hwnd, UINT param );
     void (CDECL *register_builtin_classes)(void);
@@ -195,6 +194,18 @@ typedef struct tagWINDOWPROC
 #define BUILTIN_WINPROC(index) ((WNDPROC)(ULONG_PTR)((index) | (WINPROC_HANDLE << 16)))
 
 #define MAX_ATOM_LEN 255
+
+/* FIXME: make it private to dce.c */
+struct dce
+{
+    struct list entry;         /* entry in global DCE list */
+    HDC         hdc;
+    HWND        hwnd;
+    HRGN        clip_rgn;
+    DWORD       flags;
+    LONG        count;         /* usage count; 0 or 1 for cache DCEs, always 1 for window DCEs,
+                                  always >= 1 for class DCEs */
+};
 
 /* Built-in class names (see _Undocumented_Windows_ p.418) */
 #define POPUPMENU_CLASS_ATOM MAKEINTATOM(32768)  /* PopupMenu */

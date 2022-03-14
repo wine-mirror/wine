@@ -1309,7 +1309,7 @@
 @ stub NtUserWaitForMsgAndEvent
 @ stub NtUserWaitForRedirectionStartComplete
 @ stub NtUserWaitMessage
-@ stub NtUserWindowFromDC
+@ stdcall -syscall NtUserWindowFromDC(long)
 @ stub NtUserWindowFromPhysicalPoint
 @ stdcall NtUserWindowFromPoint(long long)
 @ stub NtUserYieldTask
