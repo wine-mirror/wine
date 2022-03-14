@@ -3435,7 +3435,7 @@ static unsigned int opentype_layout_is_glyph_covered(const struct dwrite_fonttab
 
 static inline unsigned int dwrite_popcount(unsigned int x)
 {
-#if defined(__GNUC__) && (__GNUC__ >= 4)
+#if defined(__MINGW32__)
     return __builtin_popcount(x);
 #else
     x -= x >> 1 & 0x55555555;
