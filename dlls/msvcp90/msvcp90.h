@@ -58,11 +58,11 @@ typedef struct
     void *tail;
 } critical_section;
 
-extern critical_section* (__thiscall *critical_section_ctor)(critical_section*);
-extern void (__thiscall *critical_section_dtor)(critical_section*);
-extern void (__thiscall *critical_section_lock)(critical_section*);
-extern void (__thiscall *critical_section_unlock)(critical_section*);
-extern bool (__thiscall *critical_section_trylock)(critical_section*);
+extern void cs_init(critical_section*);
+extern void cs_destroy(critical_section*);
+extern void cs_lock(critical_section*);
+extern void cs_unlock(critical_section*);
+extern bool cs_trylock(critical_section*);
 #endif
 
 #if _MSVCP_VER >= 100

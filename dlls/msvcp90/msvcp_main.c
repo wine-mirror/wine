@@ -57,11 +57,54 @@ DEFINE_VTBL_WRAPPER(56);
 void* (__cdecl *MSVCRT_set_new_handler)(void*);
 
 #if _MSVCP_VER >= 110
-critical_section* (__thiscall *critical_section_ctor)(critical_section*);
-void (__thiscall *critical_section_dtor)(critical_section*);
-void (__thiscall *critical_section_lock)(critical_section*);
-void (__thiscall *critical_section_unlock)(critical_section*);
-bool (__thiscall *critical_section_trylock)(critical_section*);
+#ifdef __ASM_USE_THISCALL_WRAPPER
+
+extern void *call_thiscall_func;
+__ASM_GLOBAL_FUNC(call_thiscall_func,
+        "popl %eax\n\t"
+        "popl %edx\n\t"
+        "popl %ecx\n\t"
+        "pushl %eax\n\t"
+        "jmp *%edx\n\t")
+
+#define call_func1(func,this) ((void* (WINAPI*)(void*,void*))&call_thiscall_func)(func,this)
+
+#else /* __i386__ */
+
+#define call_func1(func,this) func(this)
+
+#endif /* __i386__ */
+
+static critical_section* (__thiscall *critical_section_ctor)(critical_section*);
+static void (__thiscall *critical_section_dtor)(critical_section*);
+static void (__thiscall *critical_section_lock)(critical_section*);
+static void (__thiscall *critical_section_unlock)(critical_section*);
+static bool (__thiscall *critical_section_trylock)(critical_section*);
+
+void cs_init(critical_section *cs)
+{
+    call_func1(critical_section_ctor, cs);
+}
+
+void cs_destroy(critical_section *cs)
+{
+    call_func1(critical_section_dtor, cs);
+}
+
+void cs_lock(critical_section *cs)
+{
+    call_func1(critical_section_lock, cs);
+}
+
+void cs_unlock(critical_section *cs)
+{
+    call_func1(critical_section_unlock, cs);
+}
+
+bool cs_trylock(critical_section *cs)
+{
+    return call_func1(critical_section_trylock, cs);
+}
 #endif
 
 #if _MSVCP_VER >= 100

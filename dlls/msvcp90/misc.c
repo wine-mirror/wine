@@ -706,24 +706,6 @@ unsigned int __cdecl _Random_device(void)
 #endif
 
 #if _MSVCP_VER >= 110
-#ifdef __ASM_USE_THISCALL_WRAPPER
-
-extern void *call_thiscall_func;
-__ASM_GLOBAL_FUNC(call_thiscall_func,
-        "popl %eax\n\t"
-        "popl %edx\n\t"
-        "popl %ecx\n\t"
-        "pushl %eax\n\t"
-        "jmp *%edx\n\t")
-
-#define call_func1(func,this) ((void* (WINAPI*)(void*,void*))&call_thiscall_func)(func,this)
-
-#else /* __i386__ */
-
-#define call_func1(func,this) func(this)
-
-#endif /* __i386__ */
-
 #define MTX_PLAIN 0x1
 #define MTX_TRY 0x2
 #define MTX_TIMED 0x4
@@ -753,7 +735,7 @@ void __cdecl _Mtx_init_in_situ(_Mtx_t mtx, int flags)
         FIXME("unknown flags ignored: %x\n", flags);
 
     mtx->flags = flags;
-    call_func1(critical_section_ctor, &mtx->cs);
+    cs_init(&mtx->cs);
     mtx->thread_id = -1;
     mtx->count = 0;
 }
@@ -767,12 +749,12 @@ int __cdecl _Mtx_init(_Mtx_t *mtx, int flags)
 
 void __cdecl _Mtx_destroy_in_situ(_Mtx_t mtx)
 {
-    call_func1(critical_section_dtor, &mtx->cs);
+    cs_destroy(&mtx->cs);
 }
 
 void __cdecl _Mtx_destroy(_Mtx_arg_t mtx)
 {
-    call_func1(critical_section_dtor, &MTX_T_FROM_ARG(mtx)->cs);
+    cs_destroy(&MTX_T_FROM_ARG(mtx)->cs);
     operator_delete(MTX_T_FROM_ARG(mtx));
 }
 
@@ -784,7 +766,7 @@ int __cdecl _Mtx_current_owns(_Mtx_arg_t mtx)
 int __cdecl _Mtx_lock(_Mtx_arg_t mtx)
 {
     if(MTX_T_FROM_ARG(mtx)->thread_id != GetCurrentThreadId()) {
-        call_func1(critical_section_lock, &MTX_T_FROM_ARG(mtx)->cs);
+        cs_lock(&MTX_T_FROM_ARG(mtx)->cs);
         MTX_T_FROM_ARG(mtx)->thread_id = GetCurrentThreadId();
     }else if(!(MTX_T_FROM_ARG(mtx)->flags & MTX_RECURSIVE)
             && MTX_T_FROM_ARG(mtx)->flags != MTX_PLAIN) {
@@ -801,14 +783,14 @@ int __cdecl _Mtx_unlock(_Mtx_arg_t mtx)
         return 0;
 
     MTX_T_FROM_ARG(mtx)->thread_id = -1;
-    call_func1(critical_section_unlock, &MTX_T_FROM_ARG(mtx)->cs);
+    cs_unlock(&MTX_T_FROM_ARG(mtx)->cs);
     return 0;
 }
 
 int __cdecl _Mtx_trylock(_Mtx_arg_t mtx)
 {
     if(MTX_T_FROM_ARG(mtx)->thread_id != GetCurrentThreadId()) {
-        if(!call_func1(critical_section_trylock, &MTX_T_FROM_ARG(mtx)->cs))
+        if(!cs_trylock(&MTX_T_FROM_ARG(mtx)->cs))
             return MTX_LOCKED;
         MTX_T_FROM_ARG(mtx)->thread_id = GetCurrentThreadId();
     }else if(!(MTX_T_FROM_ARG(mtx)->flags & MTX_RECURSIVE)
