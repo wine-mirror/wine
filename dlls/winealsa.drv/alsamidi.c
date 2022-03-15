@@ -471,6 +471,60 @@ static UINT midi_out_open(WORD dev_id, MIDIOPENDESC *midi_desc, UINT flags, stru
     return MMSYSERR_NOERROR;
 }
 
+static UINT midi_out_close(WORD dev_id, struct notify_context *notify)
+{
+    struct midi_dest *dest;
+
+    TRACE("(%04X);\n", dev_id);
+
+    if (dev_id >= num_dests)
+    {
+        WARN("bad device ID : %d\n", dev_id);
+        return MMSYSERR_BADDEVICEID;
+    }
+
+    dest = dests + dev_id;
+
+    if (dest->midiDesc.hMidi == 0)
+    {
+        WARN("device not opened !\n");
+        return MMSYSERR_ERROR;
+    }
+
+    /* FIXME: should test that no pending buffer is still in the queue for
+     * playing */
+
+    if (dest->seq == NULL)
+    {
+        WARN("can't close !\n");
+        return MMSYSERR_ERROR;
+    }
+
+    switch (dest->caps.wTechnology)
+    {
+    case MOD_FMSYNTH:
+    case MOD_MIDIPORT:
+    case MOD_SYNTH:
+        seq_lock();
+        TRACE("Deleting port :%d, connected to %d:%d\n", dest->port_out, dest->addr.client, dest->addr.port);
+        snd_seq_delete_simple_port(dest->seq, dest->port_out);
+        dest->port_out = -1;
+        seq_unlock();
+        seq_close();
+        dest->seq = NULL;
+        break;
+    default:
+        WARN("Technology not supported (yet) %d !\n", dest->caps.wTechnology);
+        return MMSYSERR_NOTENABLED;
+    }
+
+    set_out_notify(notify, dest, dev_id, MOM_CLOSE, 0, 0);
+
+    dest->midiDesc.hMidi = 0;
+
+    return MMSYSERR_NOERROR;
+}
+
 NTSTATUS midi_out_message(void *args)
 {
     struct midi_out_message_params *params = args;
@@ -487,6 +541,9 @@ NTSTATUS midi_out_message(void *args)
         break;
     case MODM_OPEN:
         *params->err = midi_out_open(params->dev_id, (MIDIOPENDESC *)params->param_1, params->param_2, params->notify);
+        break;
+    case MODM_CLOSE:
+        *params->err = midi_out_close(params->dev_id, params->notify);
         break;
     default:
         TRACE("Unsupported message\n");

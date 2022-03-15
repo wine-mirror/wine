@@ -122,7 +122,6 @@ static void MIDI_NotifyClient(UINT wDevID, WORD wMsg,
 	  wDevID, wMsg, dwParam1, dwParam2);
 
     switch (wMsg) {
-    case MOM_CLOSE:
     case MOM_DONE:
     case MOM_POSITIONCB:
 	if (wDevID > MODM_NumDevs) return;
@@ -632,50 +631,6 @@ static DWORD modGetDevCaps(WORD wDevID, LPMIDIOUTCAPSW lpCaps, DWORD dwSize)
 }
 
 /**************************************************************************
- * 			modClose				[internal]
- */
-static DWORD modClose(WORD wDevID)
-{
-    int	ret = MMSYSERR_NOERROR;
-
-    TRACE("(%04X);\n", wDevID);
-
-    if (MidiOutDev[wDevID].midiDesc.hMidi == 0) {
-	WARN("device not opened !\n");
-	return MMSYSERR_ERROR;
-    }
-    /* FIXME: should test that no pending buffer is still in the queue for
-     * playing */
-
-    if (MidiOutDev[wDevID].seq == NULL) {
-	WARN("can't close !\n");
-	return MMSYSERR_ERROR;
-    }
-
-    switch (MidiOutDev[wDevID].caps.wTechnology) {
-    case MOD_FMSYNTH:
-    case MOD_MIDIPORT:
-    case MOD_SYNTH:
-        seq_lock();
-        TRACE("Deleting port :%d, connected to %d:%d\n", MidiOutDev[wDevID].port_out, MidiOutDev[wDevID].addr.client, MidiOutDev[wDevID].addr.port);
-        snd_seq_delete_simple_port(MidiOutDev[wDevID].seq, MidiOutDev[wDevID].port_out);
-        MidiOutDev[wDevID].port_out = -1;
-        seq_unlock();
-        midiCloseSeq();
-        MidiOutDev[wDevID].seq = NULL;
-	break;
-    default:
-	WARN("Technology not supported (yet) %d !\n",
-	     MidiOutDev[wDevID].caps.wTechnology);
-	return MMSYSERR_NOTENABLED;
-    }
-
-    MIDI_NotifyClient(wDevID, MOM_CLOSE, 0L, 0L);
-    MidiOutDev[wDevID].midiDesc.hMidi = 0;
-    return ret;
-}
-
-/**************************************************************************
  * 			modData					[internal]
  */
 static DWORD modData(WORD wDevID, DWORD dwParam)
@@ -1051,8 +1006,6 @@ DWORD WINAPI ALSA_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
     case DRVM_INIT:
         ALSA_MidiInit();
         return 0;
-    case MODM_CLOSE:
-	return modClose(wDevID);
     case MODM_DATA:
 	return modData(wDevID, dwParam1);
     case MODM_LONGDATA:
