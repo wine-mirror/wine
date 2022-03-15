@@ -807,6 +807,13 @@ critical_section* __cdecl _Mtx_getconcrtcs(_Mtx_arg_t mtx)
     return &MTX_T_FROM_ARG(mtx)->cs;
 }
 
+void __cdecl _Mtx_clear_owner(_Mtx_arg_t mtx)
+{
+    _Mtx_t m = MTX_T_FROM_ARG(mtx);
+    m->thread_id = -1;
+    m->count--;
+}
+
 static inline LONG interlocked_dec_if_nonzero( LONG *dest )
 {
     LONG val, tmp;

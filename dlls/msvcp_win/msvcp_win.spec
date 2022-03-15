@@ -3672,7 +3672,7 @@
 @ cdecl _Lstat(wstr ptr) msvcp140._Lstat
 @ cdecl _Make_dir(wstr) msvcp140._Make_dir
 @ cdecl _Mbrtowc(ptr ptr long ptr ptr) msvcp140._Mbrtowc
-@ stub _Mtx_clear_owner
+@ cdecl _Mtx_clear_owner(ptr) msvcp140._Mtx_clear_owner
 @ cdecl _Mtx_current_owns(ptr) msvcp140._Mtx_current_owns
 @ cdecl _Mtx_destroy(ptr) msvcp140._Mtx_destroy
 @ cdecl _Mtx_destroy_in_situ(ptr) msvcp140._Mtx_destroy_in_situ

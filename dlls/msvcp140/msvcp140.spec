@@ -3672,18 +3672,18 @@
 @ cdecl _Lstat(wstr ptr)
 @ cdecl _Make_dir(wstr) tr2_sys__Make_dir_wchar
 @ cdecl _Mbrtowc(ptr ptr long ptr ptr)
-@ stub _Mtx_clear_owner
-@ cdecl _Mtx_current_owns(ptr) _Mtx_current_owns
-@ cdecl _Mtx_destroy(ptr) _Mtx_destroy
-@ cdecl _Mtx_destroy_in_situ(ptr) _Mtx_destroy_in_situ
-@ cdecl _Mtx_getconcrtcs(ptr) _Mtx_getconcrtcs
-@ cdecl _Mtx_init(ptr long) _Mtx_init
-@ cdecl _Mtx_init_in_situ(ptr long) _Mtx_init_in_situ
-@ cdecl _Mtx_lock(ptr) _Mtx_lock
+@ cdecl _Mtx_clear_owner(ptr)
+@ cdecl _Mtx_current_owns(ptr)
+@ cdecl _Mtx_destroy(ptr)
+@ cdecl _Mtx_destroy_in_situ(ptr)
+@ cdecl _Mtx_getconcrtcs(ptr)
+@ cdecl _Mtx_init(ptr long)
+@ cdecl _Mtx_init_in_situ(ptr long)
+@ cdecl _Mtx_lock(ptr)
 @ stub _Mtx_reset_owner
 @ stub _Mtx_timedlock
-@ cdecl _Mtx_trylock(ptr) _Mtx_trylock
-@ cdecl _Mtx_unlock(ptr) _Mtx_unlock
+@ cdecl _Mtx_trylock(ptr)
+@ cdecl _Mtx_unlock(ptr)
 @ stub _Mtxdst
 @ stub _Mtxinit
 @ stub _Mtxlock
