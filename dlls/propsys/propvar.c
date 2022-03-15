@@ -672,6 +672,21 @@ HRESULT WINAPI InitVariantFromBuffer(const VOID *pv, UINT cb, VARIANT *pvar)
     return S_OK;
 }
 
+HRESULT WINAPI InitVariantFromFileTime(const FILETIME *ft, VARIANT *var)
+{
+    SYSTEMTIME st;
+
+    TRACE("%p, %p\n", ft, var);
+
+    VariantInit(var);
+    if (!FileTimeToSystemTime(ft, &st))
+        return E_INVALIDARG;
+    if (!SystemTimeToVariantTime(&st, &V_DATE(var)))
+        return E_INVALIDARG;
+    V_VT(var) = VT_DATE;
+    return S_OK;
+}
+
 static inline DWORD PROPVAR_HexToNum(const WCHAR *hex)
 {
     DWORD ret;
