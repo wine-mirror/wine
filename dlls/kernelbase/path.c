@@ -2433,7 +2433,7 @@ HRESULT WINAPI PathMatchSpecExA(const char *path, const char *mask, DWORD flags)
     TRACE("%s, %s\n", wine_dbgstr_a(path), wine_dbgstr_a(mask));
 
     if (flags)
-        FIXME("Ignoring flags %#lx.", flags);
+        FIXME("Ignoring flags %#lx.\n", flags);
 
     if (!lstrcmpA(mask, "*.*"))
         return S_OK; /* Matches every path */
@@ -2488,7 +2488,7 @@ HRESULT WINAPI PathMatchSpecExW(const WCHAR *path, const WCHAR *mask, DWORD flag
     TRACE("%s, %s\n", wine_dbgstr_w(path), wine_dbgstr_w(mask));
 
     if (flags)
-        FIXME("Ignoring flags %#lx.", flags);
+        FIXME("Ignoring flags %#lx.\n", flags);
 
     if (!lstrcmpW(mask, L"*.*"))
         return S_OK; /* Matches every path */
