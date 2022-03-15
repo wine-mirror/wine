@@ -30,11 +30,11 @@
 
 #include "tmarshal.h"
 
-#define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08x\n", hr)
+#define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error %#08lx\n", hr)
 static inline void release_iface_(unsigned int line, void *iface)
 {
     ULONG ref = IUnknown_Release((IUnknown *)iface);
-    ok_(__FILE__, line)(!ref, "Got outstanding refcount %d.\n", ref);
+    ok_(__FILE__, line)(!ref, "Got outstanding refcount %ld.\n", ref);
     if (ref == 1) IUnknown_Release((IUnknown *)iface);
 }
 #define release_iface(a) release_iface_(__LINE__, a)
@@ -169,7 +169,7 @@ static void release_host_object(DWORD tid)
 static void end_host_object(DWORD tid, HANDLE thread)
 {
     BOOL ret = PostThreadMessageA(tid, WM_QUIT, 0, 0);
-    ok(ret, "PostThreadMessage failed with error %d\n", GetLastError());
+    ok(ret, "PostThreadMessage failed with error %ld\n", GetLastError());
     /* be careful of races - don't return until hosting thread has terminated */
     WaitForSingleObject(thread, INFINITE);
     CloseHandle(thread);
@@ -199,8 +199,8 @@ static DWORD WINAPI ExternalConnection_AddConnection(IExternalConnection *iface,
 {
     trace("add connection\n");
 
-    ok(extconn == EXTCONN_STRONG, "extconn = %d\n", extconn);
-    ok(!reserved, "reserved = %x\n", reserved);
+    ok(extconn == EXTCONN_STRONG, "extconn = %ld\n", extconn);
+    ok(!reserved, "reserved = %lx\n", reserved);
     return ++external_connections;
 }
 
@@ -209,8 +209,8 @@ static DWORD WINAPI ExternalConnection_ReleaseConnection(IExternalConnection *if
 {
     trace("release connection\n");
 
-    ok(extconn == EXTCONN_STRONG, "extconn = %d\n", extconn);
-    ok(!reserved, "reserved = %x\n", reserved);
+    ok(extconn == EXTCONN_STRONG, "extconn = %ld\n", extconn);
+    ok(!reserved, "reserved = %lx\n", reserved);
 
     ok(fLastReleaseCloses == expect_last_release_closes, "fLastReleaseCloses = %x, expected %x\n",
        fLastReleaseCloses, expect_last_release_closes);
@@ -816,7 +816,7 @@ static HRESULT WINAPI Widget_DoSomething(
     ok(number == 3.141, "number(%f) != 3.141\n", number);
     ok(*str2 == '\0', "str2(%s) != \"\"\n", wine_dbgstr_w(str2));
     ok(V_VT(opt) == VT_ERROR, "V_VT(opt) should be VT_ERROR instead of 0x%x\n", V_VT(opt));
-    ok(V_ERROR(opt) == DISP_E_PARAMNOTFOUND, "V_ERROR(opt) should be DISP_E_PARAMNOTFOUND instead of 0x%08x\n", V_ERROR(opt));
+    ok(V_ERROR(opt) == DISP_E_PARAMNOTFOUND, "V_ERROR(opt) should be DISP_E_PARAMNOTFOUND instead of 0x%08lx\n", V_ERROR(opt));
     *str1 = SysAllocString(szString);
 
     return S_FALSE;
@@ -853,7 +853,7 @@ static HRESULT WINAPI Widget_SetOleColor(
     IWidget * iface,
     OLE_COLOR val)
 {
-    trace("SetOleColor(0x%x)\n", val);
+    trace("SetOleColor(0x%lx)\n", val);
     return S_OK;
 }
 
@@ -923,24 +923,24 @@ static HRESULT WINAPI Widget_VarArg(
     trace("VarArg(%p)\n", values);
 
     hr = SafeArrayGetLBound(values, 1, &lbound);
-    ok(hr == S_OK, "SafeArrayGetLBound failed with %x\n", hr);
-    ok(lbound == 0, "SafeArrayGetLBound returned %d\n", lbound);
+    ok(hr == S_OK, "SafeArrayGetLBound failed with %lx\n", hr);
+    ok(lbound == 0, "SafeArrayGetLBound returned %ld\n", lbound);
 
     hr = SafeArrayGetUBound(values, 1, &ubound);
-    ok(hr == S_OK, "SafeArrayGetUBound failed with %x\n", hr);
-    ok(ubound == numexpect-1, "SafeArrayGetUBound returned %d, but expected %d\n", ubound, numexpect-1);
+    ok(hr == S_OK, "SafeArrayGetUBound failed with %lx\n", hr);
+    ok(ubound == numexpect-1, "SafeArrayGetUBound returned %ld, but expected %d\n", ubound, numexpect-1);
 
     hr = SafeArrayAccessData(values, (LPVOID)&data);
-    ok(hr == S_OK, "SafeArrayAccessData failed with %x\n", hr);
+    ok(hr == S_OK, "SafeArrayAccessData failed with %lx\n", hr);
 
     for (i=0; i<=ubound-lbound; i++)
     {
-        ok(V_VT(&data[i]) == VT_I4, "V_VT(&data[%d]) was %d\n", i, V_VT(&data[i]));
-        ok(V_I4(&data[i]) == i, "V_I4(&data[%d]) was %d\n", i, V_I4(&data[i]));
+        ok(V_VT(&data[i]) == VT_I4, "V_VT(&data[%ld]) was %d\n", i, V_VT(&data[i]));
+        ok(V_I4(&data[i]) == i, "V_I4(&data[%ld]) was %ld\n", i, V_I4(&data[i]));
     }
 
     hr = SafeArrayUnaccessData(values);
-    ok(hr == S_OK, "SafeArrayUnaccessData failed with %x\n", hr);
+    ok(hr == S_OK, "SafeArrayUnaccessData failed with %lx\n", hr);
 
     return S_OK;
 }
@@ -964,8 +964,8 @@ static HRESULT WINAPI Widget_CloneInterface(
 static HRESULT WINAPI Widget_put_prop_with_lcid(
     IWidget* iface, LONG lcid, INT i)
 {
-    trace("put_prop_with_lcid(%08x, %x)\n", lcid, i);
-    ok(lcid == MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), "got lcid %08x\n", lcid);
+    trace("put_prop_with_lcid(%08lx, %x)\n", lcid, i);
+    ok(lcid == MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), "got lcid %08lx\n", lcid);
     ok(i == 0xcafe, "got %08x\n", i);
     return S_OK;
 }
@@ -973,8 +973,8 @@ static HRESULT WINAPI Widget_put_prop_with_lcid(
 static HRESULT WINAPI Widget_get_prop_with_lcid(
     IWidget* iface, LONG lcid, INT *i)
 {
-    trace("get_prop_with_lcid(%08x, %p)\n", lcid, i);
-    ok(lcid == MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), "got lcid %08x\n", lcid);
+    trace("get_prop_with_lcid(%08lx, %p)\n", lcid, i);
+    ok(lcid == MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), "got lcid %08lx\n", lcid);
     *i = lcid;
     return S_OK;
 }
@@ -1049,22 +1049,22 @@ static HRESULT WINAPI Widget_VarArg_Run(
     ok(!lstrcmpW(name, catW), "got %s\n", wine_dbgstr_w(name));
 
     hr = SafeArrayGetLBound(params, 1, &bound);
-    ok(hr == S_OK, "SafeArrayGetLBound error %#x\n", hr);
-    ok(bound == 0, "expected 0, got %d\n", bound);
+    ok(hr == S_OK, "SafeArrayGetLBound error %#lx\n", hr);
+    ok(bound == 0, "expected 0, got %ld\n", bound);
 
     hr = SafeArrayGetUBound(params, 1, &bound);
-    ok(hr == S_OK, "SafeArrayGetUBound error %#x\n", hr);
-    ok(bound == 0, "expected 0, got %d\n", bound);
+    ok(hr == S_OK, "SafeArrayGetUBound error %#lx\n", hr);
+    ok(bound == 0, "expected 0, got %ld\n", bound);
 
     hr = SafeArrayAccessData(params, (void **)&var);
-    ok(hr == S_OK, "SafeArrayAccessData failed with %x\n", hr);
+    ok(hr == S_OK, "SafeArrayAccessData failed with %lx\n", hr);
 
     ok(V_VT(&var[0]) == VT_BSTR, "expected VT_BSTR, got %d\n", V_VT(&var[0]));
     bstr = V_BSTR(&var[0]);
     ok(!lstrcmpW(bstr, supermanW), "got %s\n", wine_dbgstr_w(bstr));
 
     hr = SafeArrayUnaccessData(params);
-    ok(hr == S_OK, "SafeArrayUnaccessData error %#x\n", hr);
+    ok(hr == S_OK, "SafeArrayUnaccessData error %#lx\n", hr);
 
     return S_OK;
 }
@@ -1084,22 +1084,22 @@ static HRESULT WINAPI Widget_VarArg_Ref_Run(
     ok(!lstrcmpW(name, catW), "got %s\n", wine_dbgstr_w(name));
 
     hr = SafeArrayGetLBound(*params, 1, &bound);
-    ok(hr == S_OK, "SafeArrayGetLBound error %#x\n", hr);
-    ok(bound == 0, "expected 0, got %d\n", bound);
+    ok(hr == S_OK, "SafeArrayGetLBound error %#lx\n", hr);
+    ok(bound == 0, "expected 0, got %ld\n", bound);
 
     hr = SafeArrayGetUBound(*params, 1, &bound);
-    ok(hr == S_OK, "SafeArrayGetUBound error %#x\n", hr);
-    ok(bound == 0, "expected 0, got %d\n", bound);
+    ok(hr == S_OK, "SafeArrayGetUBound error %#lx\n", hr);
+    ok(bound == 0, "expected 0, got %ld\n", bound);
 
     hr = SafeArrayAccessData(*params, (void **)&var);
-    ok(hr == S_OK, "SafeArrayAccessData error %#x\n", hr);
+    ok(hr == S_OK, "SafeArrayAccessData error %#lx\n", hr);
 
     ok(V_VT(&var[0]) == VT_BSTR, "expected VT_BSTR, got %d\n", V_VT(&var[0]));
     bstr = V_BSTR(&var[0]);
     ok(!lstrcmpW(bstr, supermanW), "got %s\n", wine_dbgstr_w(bstr));
 
     hr = SafeArrayUnaccessData(*params);
-    ok(hr == S_OK, "SafeArrayUnaccessData error %#x\n", hr);
+    ok(hr == S_OK, "SafeArrayUnaccessData error %#lx\n", hr);
 
     return S_OK;
 }
@@ -1110,11 +1110,11 @@ static HRESULT WINAPI Widget_basetypes_in(IWidget *iface, signed char c, short s
 {
     ok(c == 5, "Got char %d.\n", c);
     ok(s == -123, "Got short %d.\n", s);
-    ok(l == -100000, "Got int %d.\n", l);
+    ok(l == -100000, "Got int %ld.\n", l);
     ok(h == (LONGLONG)-100000 * 1000000, "Got hyper %s.\n", wine_dbgstr_longlong(h));
     ok(uc == 0, "Got unsigned char %u.\n", uc);
     ok(us == 456, "Got unsigned short %u.\n", us);
-    ok(ul == 0xdeadbeef, "Got unsigned int %u.\n", ul);
+    ok(ul == 0xdeadbeef, "Got unsigned int %lu.\n", ul);
     ok(uh == (ULONGLONG)1234567890 * 9876543210, "Got unsigned hyper %s.\n", wine_dbgstr_longlong(uh));
     ok(f == (float)M_PI, "Got float %f.\n", f);
     ok(d == M_E, "Got double %f.\n", d);
@@ -1155,12 +1155,12 @@ static HRESULT WINAPI Widget_float_abi(IWidget *iface, float f, double d, int i,
 
 static HRESULT WINAPI Widget_long_ptr(IWidget *iface, LONG *in, LONG *out, LONG *in_out)
 {
-    ok(*in == 123, "Got [in] %d.\n", *in);
+    ok(*in == 123, "Got [in] %ld.\n", *in);
     if (testmode == 0)  /* Invoke() */
-        ok(*out == 456, "Got [out] %d.\n", *out);
+        ok(*out == 456, "Got [out] %ld.\n", *out);
     else if (testmode == 1)
-        ok(!*out, "Got [out] %d.\n", *out);
-    ok(*in_out == 789, "Got [in, out] %d.\n", *in_out);
+        ok(!*out, "Got [out] %ld.\n", *out);
+    ok(*in_out == 789, "Got [in, out] %ld.\n", *in_out);
 
     *in = 987;
     *out = 654;
@@ -1189,8 +1189,8 @@ static HRESULT WINAPI Widget_long_ptr_ptr(IWidget *iface, LONG **in, LONG **out,
     }
     else if (testmode == 2)
     {
-        ok(**in == 123, "Got [in] %d.\n", **in);
-        ok(**in_out == 789, "Got [in, out] %d.\n", **in_out);
+        ok(**in == 123, "Got [in] %ld.\n", **in);
+        ok(**in_out == 789, "Got [in, out] %ld.\n", **in_out);
 
         *out = CoTaskMemAlloc(sizeof(int));
         **out = 654;
@@ -1198,7 +1198,7 @@ static HRESULT WINAPI Widget_long_ptr_ptr(IWidget *iface, LONG **in, LONG **out,
     }
     else if (testmode == 3)
     {
-        ok(**in_out == 789, "Got [in, out] %d.\n", **in_out);
+        ok(**in_out == 789, "Got [in, out] %ld.\n", **in_out);
         *in_out = NULL;
     }
 
@@ -1213,14 +1213,14 @@ static void check_iface_marshal(IUnknown *unk, IDispatch *disp, ISomethingFromDi
     HRESULT hr;
 
     hr = IUnknown_QueryInterface(unk, &IID_ISomethingFromDispatch, (void **)&sfd2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ISomethingFromDispatch_Release(sfd2);
 
     hr = IDispatch_GetTypeInfo(disp, 0xdeadbeef, 0, &typeinfo);
-    ok(hr == 0xbeefdead, "Got hr %#x.\n", hr);
+    ok(hr == 0xbeefdead, "Got hr %#lx.\n", hr);
 
     hr = ISomethingFromDispatch_anotherfn(sfd);
-    ok(hr == 0x01234567, "Got hr %#x.\n", hr);
+    ok(hr == 0x01234567, "Got hr %#lx.\n", hr);
 }
 
 static HRESULT WINAPI Widget_iface_in(IWidget *iface, IUnknown *unk, IDispatch *disp, ISomethingFromDispatch *sfd)
@@ -1260,9 +1260,9 @@ static HRESULT WINAPI Widget_iface_ptr(IWidget *iface, ISomethingFromDispatch **
     if (testmode == 0 || testmode == 1)
     {
         hr = ISomethingFromDispatch_anotherfn(*in);
-        ok(hr == 0x01234567, "Got hr %#x.\n", hr);
+        ok(hr == 0x01234567, "Got hr %#lx.\n", hr);
         hr = ISomethingFromDispatch_anotherfn(*in_out);
-        ok(hr == 0x01234567, "Got hr %#x.\n", hr);
+        ok(hr == 0x01234567, "Got hr %#lx.\n", hr);
     }
 
     if (testmode == 1)
@@ -1280,7 +1280,7 @@ static HRESULT WINAPI Widget_iface_ptr(IWidget *iface, ISomethingFromDispatch **
     else if (testmode == 3)
     {
         hr = ISomethingFromDispatch_anotherfn(*in_out);
-        ok(hr == 0x01234567, "Got hr %#x.\n", hr);
+        ok(hr == 0x01234567, "Got hr %#lx.\n", hr);
         ISomethingFromDispatch_Release(*in_out);
         *in_out = NULL;
     }
@@ -1332,12 +1332,12 @@ static HRESULT WINAPI Widget_variant(IWidget *iface, VARIANT in, VARIANT *out, V
     if (testmode == 0)
     {
         ok(V_VT(out) == VT_I4, "Got wrong type %u.\n", V_VT(out));
-        ok(V_I4(out) == 1, "Got wrong value %d.\n", V_I4(out));
+        ok(V_I4(out) == 1, "Got wrong value %ld.\n", V_I4(out));
     }
     else
         ok(V_VT(out) == VT_EMPTY, "Got wrong type %u.\n", V_VT(out));
     ok(V_VT(in_ptr) == VT_I4, "Got wrong type %u.\n", V_VT(in_ptr));
-    ok(V_I4(in_ptr) == -1, "Got wrong value %d.\n", V_I4(in_ptr));
+    ok(V_I4(in_ptr) == -1, "Got wrong value %ld.\n", V_I4(in_ptr));
     ok(V_VT(in_out) == VT_BSTR, "Got wrong type %u.\n", V_VT(in_out));
     ok(!lstrcmpW(V_BSTR(in_out), test_bstr2), "Got wrong value %s.\n",
             wine_dbgstr_w(V_BSTR(in_out)));
@@ -1374,14 +1374,14 @@ static void check_safearray(SAFEARRAY *sa, LONG expect)
 
     hr = SafeArrayGetUBound(sa, 1, &len);
     len++;
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(len == expect, "Expected len %d, got %d.\n", expect, len);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(len == expect, "Expected len %ld, got %ld.\n", expect, len);
 
     hr = SafeArrayAccessData(sa, (void **)&data);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     for (i = 0; i < len; ++i)
-        ok(data[i] == len + i, "Expected data %d at %d, got %d.\n", len + i, i, data[i]);
+        ok(data[i] == len + i, "Expected data %ld at %ld, got %ld.\n", len + i, i, data[i]);
 
     SafeArrayUnaccessData(sa);
 }
@@ -1396,7 +1396,7 @@ static HRESULT WINAPI Widget_safearray(IWidget *iface, SAFEARRAY *in, SAFEARRAY 
     check_safearray(*in_out, 9);
 
     hr = SafeArrayDestroy(*in_out);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     *out = make_safearray(4);
     *in_out = make_safearray(6);
@@ -1453,12 +1453,12 @@ static HRESULT WINAPI Widget_complex_struct(IWidget *iface, struct complex in)
     ok(*in.pi == 2, "Got int pointer %d.\n", *in.pi);
     ok(**in.ppi == 10, "Got int double pointer %d.\n", **in.ppi);
     hr = ISomethingFromDispatch_anotherfn(in.iface);
-    ok(hr == 0x01234567, "Got wrong hr %#x.\n", hr);
+    ok(hr == 0x01234567, "Got wrong hr %#lx.\n", hr);
     hr = ISomethingFromDispatch_anotherfn(*in.iface_ptr);
-    ok(hr == 0x01234567, "Got wrong hr %#x.\n", hr);
+    ok(hr == 0x01234567, "Got wrong hr %#lx.\n", hr);
     ok(!lstrcmpW(in.bstr, test_bstr2), "Got string %s.\n", wine_dbgstr_w(in.bstr));
     ok(V_VT(&in.var) == VT_I4, "Got wrong type %u.\n", V_VT(&in.var));
-    ok(V_I4(&in.var) == 123, "Got wrong value %d.\n", V_I4(&in.var));
+    ok(V_I4(&in.var) == 123, "Got wrong value %ld.\n", V_I4(&in.var));
     ok(!memcmp(&in.mystruct, &test_mystruct1, sizeof(MYSTRUCT)), "Structs didn't match.\n");
     ok(!memcmp(in.arr, test_array1, sizeof(array_t)), "Arrays didn't match.\n");
     ok(in.myint == 456, "Got int %d.\n", in.myint);
@@ -1483,9 +1483,9 @@ static HRESULT WINAPI Widget_array(IWidget *iface, array_t in, array_t out, arra
 static HRESULT WINAPI Widget_variant_array(IWidget *iface, VARIANT in[2], VARIANT out[2], VARIANT in_out[2])
 {
     ok(V_VT(&in[0]) == VT_I4, "Got wrong type %u.\n", V_VT(&in[0]));
-    ok(V_I4(&in[0]) == 1, "Got wrong value %d.\n", V_I4(&in[0]));
+    ok(V_I4(&in[0]) == 1, "Got wrong value %ld.\n", V_I4(&in[0]));
     ok(V_VT(&in[1]) == (VT_BYREF|VT_I4), "Got wrong type %u.\n", V_VT(&in[1]));
-    ok(*V_I4REF(&in[1]) == 2, "Got wrong value %d.\n", *V_I4REF(&in[1]));
+    ok(*V_I4REF(&in[1]) == 2, "Got wrong value %ld.\n", *V_I4REF(&in[1]));
     ok(V_VT(&out[0]) == VT_EMPTY, "Got wrong type %u.\n", V_VT(&out[0]));
     ok(V_VT(&out[1]) == VT_EMPTY, "Got wrong type %u.\n", V_VT(&out[1]));
     ok(V_VT(&in_out[0]) == VT_I4, "Got wrong type %u.\n", V_VT(&in_out[0]));
@@ -1523,13 +1523,13 @@ static HRESULT WINAPI Widget_Coclass(IWidget *iface, Coclass1 *class1, Coclass2 
     HRESULT hr;
 
     hr = ICoclass1_test((ICoclass1 *)class1);
-    ok(hr == 1, "Got hr %#x.\n", hr);
+    ok(hr == 1, "Got hr %#lx.\n", hr);
 
     hr = ICoclass2_test((ICoclass2 *)class2);
-    ok(hr == 2, "Got hr %#x.\n", hr);
+    ok(hr == 2, "Got hr %#lx.\n", hr);
 
     hr = ICoclass1_test((ICoclass1 *)class3);
-    ok(hr == 1, "Got hr %#x.\n", hr);
+    ok(hr == 1, "Got hr %#lx.\n", hr);
 
     return S_OK;
 }
@@ -1543,9 +1543,9 @@ static HRESULT WINAPI Widget_Coclass_ptr(IWidget *iface, Coclass1 **in, Coclass1
     if (testmode == 0 || testmode == 1)
     {
         hr = ICoclass1_test((ICoclass1 *)*in);
-        ok(hr == 1, "Got hr %#x.\n", hr);
+        ok(hr == 1, "Got hr %#lx.\n", hr);
         hr = ICoclass1_test((ICoclass1 *)*in_out);
-        ok(hr == 1, "Got hr %#x.\n", hr);
+        ok(hr == 1, "Got hr %#lx.\n", hr);
     }
 
     if (testmode == 1)
@@ -1566,7 +1566,7 @@ static HRESULT WINAPI Widget_Coclass_ptr(IWidget *iface, Coclass1 **in, Coclass1
     else if (testmode == 3)
     {
         hr = ICoclass1_test((ICoclass1 *)*in_out);
-        ok(hr == 1, "Got hr %#x.\n", hr);
+        ok(hr == 1, "Got hr %#lx.\n", hr);
         ICoclass1_Release((ICoclass1 *)*in_out);
         *in_out = NULL;
     }
@@ -1579,13 +1579,13 @@ static HRESULT WINAPI Widget_Coclass_noptr(IWidget *iface, Coclass1 class1, Cocl
     HRESULT hr;
 
     hr = ICoclass1_test(class1.iface);
-    ok(hr == 1, "Got hr %#x.\n", hr);
+    ok(hr == 1, "Got hr %#lx.\n", hr);
 
     hr = ICoclass2_test(class2.iface);
-    ok(hr == 2, "Got hr %#x.\n", hr);
+    ok(hr == 2, "Got hr %#lx.\n", hr);
 
     hr = ICoclass1_test(class3.iface);
-    ok(hr == 1, "Got hr %#x.\n", hr);
+    ok(hr == 1, "Got hr %#lx.\n", hr);
 
     return S_OK;
 }
@@ -2004,11 +2004,11 @@ static void test_marshal_basetypes(IWidget *widget, IDispatch *disp)
     V_VT(&arg[0])  = VT_I4;     V_I4(&arg[0])  = STATE_WIDGETIFIED;
     hr = IDispatch_Invoke(disp, DISPID_TM_BASETYPES_IN, &IID_NULL, LOCALE_NEUTRAL,
             DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IWidget_basetypes_in(widget, 5, -123, -100000, (LONGLONG)-100000 * 1000000, 0, 456,
             0xdeadbeef, (ULONGLONG)1234567890 * 9876543210, M_PI, M_E, STATE_WIDGETIFIED);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     c = s = l = h = uc = us = ul = uh = f = d = st = 0;
 
@@ -2025,14 +2025,14 @@ static void test_marshal_basetypes(IWidget *widget, IDispatch *disp)
     V_VT(&arg[0])  = VT_BYREF|VT_I4;  V_I4REF(&arg[0])  = (LONG *)&st;
     hr = IDispatch_Invoke(disp, DISPID_TM_BASETYPES_OUT, &IID_NULL, LOCALE_NEUTRAL,
             DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(c == 10, "Got char %d.\n", c);
     ok(s == -321, "Got short %d.\n", s);
-    ok(l == -200000, "Got int %d.\n", l);
+    ok(l == -200000, "Got int %ld.\n", l);
     ok(h == (LONGLONG)-200000 * 1000000L, "Got hyper %s.\n", wine_dbgstr_longlong(h));
     ok(uc == 254, "Got unsigned char %u.\n", uc);
     ok(us == 256, "Got unsigned short %u.\n", us);
-    ok(ul == 0xf00dfade, "Got unsigned int %i.\n", ul);
+    ok(ul == 0xf00dfade, "Got unsigned int %li.\n", ul);
     ok(uh == ((((ULONGLONG)0xabcdef01) << 32) | (ULONGLONG)0x23456789),
             "Got unsigned hyper %s.\n", wine_dbgstr_longlong(uh));
     ok(f == (float)M_LN2, "Got float %f.\n", f);
@@ -2042,14 +2042,14 @@ static void test_marshal_basetypes(IWidget *widget, IDispatch *disp)
     c = s = l = h = uc = us = ul = uh = f = d = st = 0;
 
     hr = IWidget_basetypes_out(widget, &c, &s, &l, &h, &uc, &us, &ul, &uh, &f, &d, &st);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(c == 10, "Got char %d.\n", c);
     ok(s == -321, "Got short %d.\n", s);
-    ok(l == -200000, "Got int %d.\n", l);
+    ok(l == -200000, "Got int %ld.\n", l);
     ok(h == (LONGLONG)-200000 * 1000000L, "Got hyper %s.\n", wine_dbgstr_longlong(h));
     ok(uc == 254, "Got unsigned char %u.\n", uc);
     ok(us == 256, "Got unsigned short %u.\n", us);
-    ok(ul == 0xf00dfade, "Got unsigned int %i.\n", ul);
+    ok(ul == 0xf00dfade, "Got unsigned int %li.\n", ul);
     ok(uh == ((((ULONGLONG)0xabcdef01) << 32) | (ULONGLONG)0x23456789),
             "Got unsigned hyper %s.\n", wine_dbgstr_longlong(uh));
     ok(f == (float)M_LN2, "Got float %f.\n", f);
@@ -2062,12 +2062,12 @@ static void test_marshal_basetypes(IWidget *widget, IDispatch *disp)
     i2 = 789;
     pi = &i2;
     hr = IWidget_myint(widget, 123, &i, &pi);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     /* Test that different float ABIs are correctly handled. */
 
     hr = IWidget_float_abi(widget, 1.0f, 2.0, 3, 4.0f, 5.0);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 }
 
 static void test_marshal_pointer(IWidget *widget, IDispatch *disp)
@@ -2087,10 +2087,10 @@ static void test_marshal_pointer(IWidget *widget, IDispatch *disp)
     V_VT(&arg[0]) = VT_BYREF|VT_I4; V_I4REF(&arg[0]) = &in_out;
     hr = IDispatch_Invoke(disp, DISPID_TM_INT_PTR, &IID_NULL, LOCALE_NEUTRAL,
             DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(in == 987, "Got [in] %d.\n", in);
-    ok(out == 654, "Got [out] %d.\n", out);
-    ok(in_out == 321, "Got [in, out] %d.\n", in_out);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(in == 987, "Got [in] %ld.\n", in);
+    ok(out == 654, "Got [out] %ld.\n", out);
+    ok(in_out == 321, "Got [in, out] %ld.\n", in_out);
 
     testmode = 1;
 
@@ -2098,26 +2098,26 @@ static void test_marshal_pointer(IWidget *widget, IDispatch *disp)
     out = 456;
     in_out = 789;
     hr = IWidget_long_ptr(widget, &in, &out, &in_out);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(in == 123, "Got [in] %d.\n", in);
-    ok(out == 654, "Got [out] %d.\n", out);
-    ok(in_out == 321, "Got [in, out] %d.\n", in_out);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(in == 123, "Got [in] %ld.\n", in);
+    ok(out == 654, "Got [out] %ld.\n", out);
+    ok(in_out == 321, "Got [in, out] %ld.\n", in_out);
 
     out = in_out = -1;
     hr = IWidget_long_ptr(widget, NULL, &out, &in_out);
-    ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "Got hr %#x.\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "Got hr %#lx.\n", hr);
     ok(!out, "[out] parameter should have been cleared.\n");
     ok(in_out == -1, "[in, out] parameter should not have been cleared.\n");
 
     in = in_out = -1;
     hr = IWidget_long_ptr(widget, &in, NULL, &in_out);
-    ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "Got hr %#x.\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "Got hr %#lx.\n", hr);
     ok(in == -1, "[in] parameter should not have been cleared.\n");
     ok(in_out == -1, "[in, out] parameter should not have been cleared.\n");
 
     in = out = -1;
     hr = IWidget_long_ptr(widget, &in, &out, NULL);
-    ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "Got hr %#x.\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "Got hr %#lx.\n", hr);
     ok(in == -1, "[in] parameter should not have been cleared.\n");
     ok(!out, "[out] parameter should have been cleared.\n");
 
@@ -2127,16 +2127,16 @@ static void test_marshal_pointer(IWidget *widget, IDispatch *disp)
     testmode = 0;
     in_ptr = out_ptr = in_out_ptr = NULL;
     hr = IWidget_long_ptr_ptr(widget, &in_ptr, &out_ptr, &in_out_ptr);
-    ok(hr == S_OK, "Got hr %#x\n", hr);
+    ok(hr == S_OK, "Got hr %#lx\n", hr);
     ok(!in_ptr, "Got [in] %p.\n", in_ptr);
     ok(!out_ptr, "Got [out] %p.\n", out_ptr);
     ok(!in_out_ptr, "Got [in, out] %p.\n", in_out_ptr);
 
     testmode = 1;
     hr = IWidget_long_ptr_ptr(widget, &in_ptr, &out_ptr, &in_out_ptr);
-    ok(hr == S_OK, "Got hr %#x\n", hr);
-    ok(*out_ptr == 654, "Got [out] %d.\n", *out_ptr);
-    ok(*in_out_ptr == 321, "Got [in, out] %d.\n", *in_out_ptr);
+    ok(hr == S_OK, "Got hr %#lx\n", hr);
+    ok(*out_ptr == 654, "Got [out] %ld.\n", *out_ptr);
+    ok(*in_out_ptr == 321, "Got [in, out] %ld.\n", *in_out_ptr);
     CoTaskMemFree(out_ptr);
     CoTaskMemFree(in_out_ptr);
 
@@ -2148,38 +2148,38 @@ static void test_marshal_pointer(IWidget *widget, IDispatch *disp)
     out_ptr = &out;
     in_out_ptr = &in_out;
     hr = IWidget_long_ptr_ptr(widget, &in_ptr, &out_ptr, &in_out_ptr);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(out_ptr != &out, "[out] ptr should have changed.\n");
     ok(in_out_ptr == &in_out, "[in, out] ptr should not have changed.\n");
-    ok(*out_ptr == 654, "Got [out] %d.\n", *out_ptr);
-    ok(*in_out_ptr == 321, "Got [in, out] %d.\n", *in_out_ptr);
+    ok(*out_ptr == 654, "Got [out] %ld.\n", *out_ptr);
+    ok(*in_out_ptr == 321, "Got [in, out] %ld.\n", *in_out_ptr);
 
     testmode = 3;
     in_ptr = out_ptr = NULL;
     in_out = 789;
     in_out_ptr = &in_out;
     hr = IWidget_long_ptr_ptr(widget, &in_ptr, &out_ptr, &in_out_ptr);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!in_out_ptr, "Got [in, out] %p.\n", in_out_ptr);
 
     out_ptr = &out;
     in_out_ptr = &in_out;
     hr = IWidget_long_ptr_ptr(widget, NULL, &out_ptr, &in_out_ptr);
-    ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "Got hr %#x.\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "Got hr %#lx.\n", hr);
     ok(!out_ptr, "[out] parameter should have been cleared.\n");
     ok(in_out_ptr == &in_out, "[in, out] parameter should not have been cleared.\n");
 
     in_ptr = &in;
     in_out_ptr = &in_out;
     hr = IWidget_long_ptr_ptr(widget, &in_ptr, NULL, &in_out_ptr);
-    ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "Got hr %#x.\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "Got hr %#lx.\n", hr);
     ok(in_ptr == &in, "[in] parameter should not have been cleared.\n");
     ok(in_out_ptr == &in_out, "[in, out] parameter should not have been cleared.\n");
 
     in_ptr = &in;
     out_ptr = &out;
     hr = IWidget_long_ptr_ptr(widget, &in_ptr, &out_ptr, NULL);
-    ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "Got hr %#x.\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "Got hr %#lx.\n", hr);
     ok(in_ptr == &in, "[in] parameter should not have been cleared.\n");
     ok(!out_ptr, "[out] parameter should have been cleared.\n");
 }
@@ -2202,21 +2202,21 @@ static void test_marshal_iface(IWidget *widget, IDispatch *disp)
     sfd3 = create_disp_obj();
     hr = IWidget_iface_in(widget, (IUnknown *)sfd1,
             (IDispatch *)sfd2, sfd3);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     release_iface(sfd1);
     release_iface(sfd2);
     release_iface(sfd3);
 
     testmode = 1;
     hr = IWidget_iface_in(widget, NULL, NULL, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     testmode = 0;
     proxy_unk = (IUnknown *)0xdeadbeef;
     proxy_disp = (IDispatch *)0xdeadbeef;
     proxy_sfd = (ISomethingFromDispatch *)0xdeadbeef;
     hr = IWidget_iface_out(widget, &proxy_unk, &proxy_disp, &proxy_sfd);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     check_iface_marshal(proxy_unk, proxy_disp, proxy_sfd);
     release_iface(proxy_unk);
     release_iface(proxy_disp);
@@ -2224,7 +2224,7 @@ static void test_marshal_iface(IWidget *widget, IDispatch *disp)
 
     testmode = 1;
     hr = IWidget_iface_out(widget, &proxy_unk, &proxy_disp, &proxy_sfd);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!proxy_unk, "Got unexpected proxy %p.\n", proxy_unk);
     ok(!proxy_disp, "Got unexpected proxy %p.\n", proxy_disp);
     ok(!proxy_sfd, "Got unexpected proxy %p.\n", proxy_sfd);
@@ -2234,7 +2234,7 @@ static void test_marshal_iface(IWidget *widget, IDispatch *disp)
     sfd_out = sfd2 = create_disp_obj();
     sfd_in_out = sfd3 = create_disp_obj();
     hr = IWidget_iface_ptr(widget, &sfd_in, &sfd_out, &sfd_in_out);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(sfd_in == sfd1, "[in] parameter should not have changed.\n");
     ok(!sfd_out, "[out] parameter should have been cleared.\n");
     ok(sfd_in_out == sfd3, "[in, out] parameter should not have changed.\n");
@@ -2247,12 +2247,12 @@ static void test_marshal_iface(IWidget *widget, IDispatch *disp)
     sfd_in_out = sfd3 = create_disp_obj();
     ISomethingFromDispatch_AddRef(sfd_in_out);
     hr = IWidget_iface_ptr(widget, &sfd_in, &sfd_out, &sfd_in_out);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = ISomethingFromDispatch_anotherfn(sfd_out);
-    ok(hr == 0x01234567, "Got hr %#x.\n", hr);
+    ok(hr == 0x01234567, "Got hr %#lx.\n", hr);
     ok(sfd_in_out != sfd3, "[in, out] parameter should have changed.\n");
     hr = ISomethingFromDispatch_anotherfn(sfd_in_out);
-    ok(hr == 0x01234567, "Got hr %#x.\n", hr);
+    ok(hr == 0x01234567, "Got hr %#lx.\n", hr);
     release_iface(sfd_out);
     release_iface(sfd_in_out);
     release_iface(sfd1);
@@ -2261,10 +2261,10 @@ static void test_marshal_iface(IWidget *widget, IDispatch *disp)
     testmode = 2;
     sfd_in = sfd_out = sfd_in_out = NULL;
     hr = IWidget_iface_ptr(widget, &sfd_in, &sfd_out, &sfd_in_out);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!sfd_out, "[out] parameter should not have been set.\n");
     hr = ISomethingFromDispatch_anotherfn(sfd_in_out);
-    ok(hr == 0x01234567, "Got hr %#x.\n", hr);
+    ok(hr == 0x01234567, "Got hr %#lx.\n", hr);
     release_iface(sfd_in_out);
 
     testmode = 3;
@@ -2272,7 +2272,7 @@ static void test_marshal_iface(IWidget *widget, IDispatch *disp)
     sfd_in_out = sfd3 = create_disp_obj();
     ISomethingFromDispatch_AddRef(sfd_in_out);
     hr = IWidget_iface_ptr(widget, &sfd_in, &sfd_out, &sfd_in_out);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!sfd_in_out, "Got [in, out] %p.\n", sfd_in_out);
     release_iface(sfd3);
 
@@ -2283,7 +2283,7 @@ static void test_marshal_iface(IWidget *widget, IDispatch *disp)
     disp_noptr.lpVtbl = (IDispatchVtbl *)sfd2;
     sfd_noptr.lpVtbl = (ISomethingFromDispatchVtbl *)sfd3;
     hr = IWidget_iface_noptr(widget, unk_noptr, disp_noptr, sfd_noptr);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     release_iface(sfd1);
     release_iface(sfd2);
     release_iface(sfd3);
@@ -2301,14 +2301,14 @@ static void test_marshal_iface(IWidget *widget, IDispatch *disp)
     V_VT(&arg[0]) = VT_UNKNOWN;  V_UNKNOWN(&arg[0]) = (IUnknown *)sfd3;
     hr = IDispatch_Invoke(disp, DISPID_TM_IFACE_IN, &IID_NULL, LOCALE_NEUTRAL,
             DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     V_VT(&arg[2]) = VT_DISPATCH; V_DISPATCH(&arg[2]) = (IDispatch *)sfd1;
     V_VT(&arg[1]) = VT_DISPATCH; V_DISPATCH(&arg[1]) = (IDispatch *)sfd2;
     V_VT(&arg[0]) = VT_DISPATCH; V_DISPATCH(&arg[0]) = (IDispatch *)sfd3;
     hr = IDispatch_Invoke(disp, DISPID_TM_IFACE_IN, &IID_NULL, LOCALE_NEUTRAL,
             DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     release_iface(sfd1);
     release_iface(sfd2);
@@ -2320,7 +2320,7 @@ static void test_marshal_iface(IWidget *widget, IDispatch *disp)
     V_VT(&arg[0]) = VT_UNKNOWN;  V_UNKNOWN(&arg[0]) = NULL;
     hr = IDispatch_Invoke(disp, DISPID_TM_IFACE_IN, &IID_NULL, LOCALE_NEUTRAL,
             DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     testmode = 0;
     proxy_unk = proxy_unk2 = NULL;
@@ -2331,10 +2331,10 @@ static void test_marshal_iface(IWidget *widget, IDispatch *disp)
     hr = IDispatch_Invoke(disp, DISPID_TM_IFACE_OUT, &IID_NULL, LOCALE_NEUTRAL,
             DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
     todo_wine
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 if (hr == S_OK) {
     hr = IUnknown_QueryInterface(proxy_unk2, &IID_ISomethingFromDispatch, (void **)&proxy_sfd);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     check_iface_marshal(proxy_unk, proxy_disp, proxy_sfd);
     ISomethingFromDispatch_Release(proxy_sfd);
     release_iface(proxy_unk);
@@ -2348,7 +2348,7 @@ if (hr == S_OK) {
     hr = IDispatch_Invoke(disp, DISPID_TM_IFACE_OUT, &IID_NULL, LOCALE_NEUTRAL,
             DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
     todo_wine
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!proxy_unk, "Got unexpected proxy %p.\n", proxy_unk);
     ok(!proxy_disp, "Got unexpected proxy %p.\n", proxy_disp);
     ok(!proxy_unk2, "Got unexpected proxy %p.\n", proxy_unk2);
@@ -2365,7 +2365,7 @@ if (hr == S_OK) {
     hr = IDispatch_Invoke(disp, DISPID_TM_IFACE_PTR, &IID_NULL, LOCALE_NEUTRAL,
             DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
     todo_wine
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(unk_in == (IUnknown *)sfd1, "[in] parameter should not have changed.\n");
     ok(!unk_out, "[out] parameter should have been cleared.\n");
     ok(unk_in_out == (IUnknown *)sfd3, "[in, out] parameter should not have changed.\n");
@@ -2382,20 +2382,20 @@ if (hr == S_OK) {
     hr = IDispatch_Invoke(disp, DISPID_TM_IFACE_PTR, &IID_NULL, LOCALE_NEUTRAL,
             DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
     todo_wine
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
 if (hr == S_OK) {
     hr = IUnknown_QueryInterface(unk_out, &IID_ISomethingFromDispatch, (void **)&sfd_out);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = ISomethingFromDispatch_anotherfn(sfd_out);
-    ok(hr == 0x01234567, "Got hr %#x.\n", hr);
+    ok(hr == 0x01234567, "Got hr %#lx.\n", hr);
     ISomethingFromDispatch_Release(sfd_out);
 
     ok(unk_in_out != (IUnknown *)sfd3, "[in, out] parameter should have changed.\n");
     hr = IUnknown_QueryInterface(unk_in_out, &IID_ISomethingFromDispatch, (void **)&sfd_in_out);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = ISomethingFromDispatch_anotherfn(sfd_in_out);
-    ok(hr == 0x01234567, "Got hr %#x.\n", hr);
+    ok(hr == 0x01234567, "Got hr %#lx.\n", hr);
     ISomethingFromDispatch_Release(sfd_in_out);
 
     release_iface(unk_out);
@@ -2410,14 +2410,14 @@ if (hr == S_OK) {
     hr = IDispatch_Invoke(disp, DISPID_TM_IFACE_PTR, &IID_NULL, LOCALE_NEUTRAL,
             DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
     todo_wine
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     ok(!unk_out, "[out] parameter should not have been set.\n");
 if (hr == S_OK) {
     hr = IUnknown_QueryInterface(unk_in_out, &IID_ISomethingFromDispatch, (void **)&sfd_in_out);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = ISomethingFromDispatch_anotherfn(sfd_in_out);
-    ok(hr == 0x01234567, "Got hr %#x.\n", hr);
+    ok(hr == 0x01234567, "Got hr %#lx.\n", hr);
     ISomethingFromDispatch_Release(sfd_in_out);
 
     release_iface(unk_in_out);
@@ -2431,7 +2431,7 @@ if (hr == S_OK) {
     hr = IDispatch_Invoke(disp, DISPID_TM_IFACE_PTR, &IID_NULL, LOCALE_NEUTRAL,
             DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
 todo_wine {
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!unk_in_out, "[in, out] parameter should have been cleared.\n");
     release_iface(sfd3);
 }
@@ -2457,7 +2457,7 @@ static void test_marshal_bstr(IWidget *widget, IDispatch *disp)
     V_VT(&arg[0]) = VT_BSTR|VT_BYREF;   V_BSTRREF(&arg[0]) = &in_out;
     hr = IDispatch_Invoke(disp, DISPID_TM_BSTR, &IID_NULL, LOCALE_NEUTRAL,
             DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(in[1] == test_bstr1[1], "[in] parameter should not be changed.\n");
     ok(in_ptr[1] == 'X', "[in] pointer should be changed.\n");
     ok(in_out[1] == 'X', "[in, out] parameter should be changed.\n");
@@ -2471,7 +2471,7 @@ static void test_marshal_bstr(IWidget *widget, IDispatch *disp)
     SysFreeString(out);
     out = (BSTR)0xdeadbeef;
     hr = IWidget_bstr(widget, in, &out, &in_ptr, &in_out);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(in[1] == test_bstr1[1], "[in] parameter should not be changed.\n");
     ok(in_ptr[1] == test_bstr2[1], "[in] pointer should not be changed.\n");
     ok(in_out[1] == 'X', "[in, out] parameter should be changed.\n");
@@ -2486,11 +2486,11 @@ static void test_marshal_bstr(IWidget *widget, IDispatch *disp)
     testmode = 1;
     out = in_ptr = in_out = NULL;
     hr = IWidget_bstr(widget, NULL, &out, &in_ptr, &in_out);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     in = SysAllocString(L"test");
     hr = IWidget_no_in_out(widget, in, 5);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 }
 
 static void test_marshal_variant(IWidget *widget, IDispatch *disp)
@@ -2517,7 +2517,7 @@ static void test_marshal_variant(IWidget *widget, IDispatch *disp)
     V_VT(&arg[0]) = VT_VARIANT|VT_BYREF; V_VARIANTREF(&arg[0]) = &in_out;
     hr = IDispatch_Invoke(disp, DISPID_TM_VARIANT, &IID_NULL, LOCALE_NEUTRAL,
             DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(V_VT(&arg[3]) == VT_CY, "Got wrong type %u.\n", V_VT(&arg[3]));
     ok(V_VT(&out) == VT_UI1, "Got wrong type %u.\n", V_VT(&out));
     ok(V_UI1(&out) == 3, "Got wrong value %d.\n", V_UI1(&out));
@@ -2535,7 +2535,7 @@ static void test_marshal_variant(IWidget *widget, IDispatch *disp)
     V_VT(&in_out) = VT_BSTR;
     V_BSTR(&in_out) = bstr = SysAllocString(test_bstr2);
     hr = IWidget_variant(widget, arg[3], &out, &in_ptr, &in_out);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(V_VT(&arg[3]) == VT_CY, "Got wrong type %u.\n", V_VT(&arg[3]));
     ok(V_VT(&out) == VT_UI1, "Got wrong type %u.\n", V_VT(&out));
     ok(V_UI1(&out) == 3, "Got wrong value %d.\n", V_UI1(&out));
@@ -2555,7 +2555,7 @@ static void test_marshal_safearray(IWidget *widget, IDispatch *disp)
     in_ptr = make_safearray(7);
     in_out = make_safearray(9);
     hr = IWidget_safearray(widget, in, &out, &in_ptr, &in_out);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     check_safearray(in, 3);
     check_safearray(out, 4);
     check_safearray(out2, 5);
@@ -2582,7 +2582,7 @@ static void test_marshal_struct(IWidget *widget, IDispatch *disp)
     memcpy(&in_ptr, &test_mystruct3, sizeof(MYSTRUCT));
     memcpy(&in_out, &test_mystruct4, sizeof(MYSTRUCT));
     hr = IWidget_mystruct(widget, test_mystruct1, &out, &in_ptr, &in_out);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!memcmp(&out, &test_mystruct5, sizeof(MYSTRUCT)), "Structs didn't match.\n");
     ok(!memcmp(&in_ptr, &test_mystruct3, sizeof(MYSTRUCT)), "Structs didn't match.\n");
     ok(!memcmp(&in_out, &test_mystruct7, sizeof(MYSTRUCT)), "Structs didn't match.\n");
@@ -2590,12 +2590,12 @@ static void test_marshal_struct(IWidget *widget, IDispatch *disp)
     memcpy(&in_ptr, &test_mystruct1, sizeof(MYSTRUCT));
     in_ptr_ptr = &in_ptr;
     hr = IWidget_mystruct_ptr_ptr(widget, &in_ptr_ptr);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     /* Make sure that "thin" structs (<=8 bytes) are handled correctly in x86-64. */
 
     hr = IWidget_thin_struct(widget, test_thin_struct);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     /* Make sure we can handle an imported type. */
 
@@ -2603,7 +2603,7 @@ static void test_marshal_struct(IWidget *widget, IDispatch *disp)
     rect_in_ptr = test_rect3;
     rect_in_out = test_rect4;
     hr = IWidget_rect(widget, test_rect1, &rect_out, &rect_in_ptr, &rect_in_out);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(EqualRect(&rect_out, &test_rect5), "Rects didn't match.\n");
     ok(EqualRect(&rect_in_ptr, &test_rect3), "Rects didn't match.\n");
     ok(EqualRect(&rect_in_out, &test_rect7), "Rects didn't match.\n");
@@ -2625,7 +2625,7 @@ static void test_marshal_struct(IWidget *widget, IDispatch *disp)
     memcpy(complex.arr, test_array1, sizeof(array_t));
     complex.myint = 456;
     hr = IWidget_complex_struct(widget, complex);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 }
 
 static void test_marshal_array(IWidget *widget, IDispatch *disp)
@@ -2641,7 +2641,7 @@ static void test_marshal_array(IWidget *widget, IDispatch *disp)
     memcpy(out, test_array2, sizeof(array_t));
     memcpy(in_out, test_array3, sizeof(array_t));
     hr = IWidget_array(widget, in, out, in_out);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!memcmp(&in, &test_array1, sizeof(array_t)), "Arrays didn't match.\n");
     ok(!memcmp(&out, &test_array5, sizeof(array_t)), "Arrays didn't match.\n");
     ok(!memcmp(&in_out, &test_array6, sizeof(array_t)), "Arrays didn't match.\n");
@@ -2653,12 +2653,12 @@ static void test_marshal_array(IWidget *widget, IDispatch *disp)
     V_VT(&var_in_out[0]) = VT_I4;      V_I4(&var_in_out[0])   = 5;
     V_VT(&var_in_out[1]) = VT_BSTR;    V_BSTR(&var_in_out[1]) = SysAllocString(test_bstr1);
     hr = IWidget_variant_array(widget, var_in, var_out, var_in_out);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(V_VT(&var_in[0]) == VT_I4, "Got wrong type %u.\n", V_VT(&var_in[0]));
-    ok(V_I4(&var_in[0]) == 1, "Got wrong value %d.\n", V_I4(&var_in[0]));
+    ok(V_I4(&var_in[0]) == 1, "Got wrong value %ld.\n", V_I4(&var_in[0]));
     ok(V_VT(&var_in[1]) == (VT_BYREF|VT_I4), "Got wrong type %u.\n", V_VT(&var_in[1]));
     ok(V_I4REF(&var_in[1]) == &l, "Got wrong value %p.\n", V_I4REF(&var_in[1]));
-    ok(l == 2, "Got wrong value %d.\n", l);
+    ok(l == 2, "Got wrong value %ld.\n", l);
     ok(V_VT(&var_out[0]) == VT_I1, "Got wrong type %u.\n", V_VT(&var_out[0]));
     ok(V_I1(&var_out[0]) == 9, "Got wrong value %u.\n", V_VT(&var_out[0]));
     ok(V_VT(&var_out[1]) == VT_BSTR, "Got wrong type %u.\n", V_VT(&var_out[1]));
@@ -2667,16 +2667,16 @@ static void test_marshal_array(IWidget *widget, IDispatch *disp)
     ok(V_I1(&var_in_out[0]) == 11, "Got wrong value %u.\n", V_VT(&var_in_out[0]));
     ok(V_VT(&var_in_out[1]) == VT_UNKNOWN, "Got wrong type %u.\n", V_VT(&var_in_out[1]));
     hr = IUnknown_QueryInterface(V_UNKNOWN(&var_in_out[1]), &IID_ISomethingFromDispatch, (void **)&proxy_sfd);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = ISomethingFromDispatch_anotherfn(proxy_sfd);
-    ok(hr == 0x01234567, "Got hr %#x.\n", hr);
+    ok(hr == 0x01234567, "Got hr %#lx.\n", hr);
     ISomethingFromDispatch_Release(proxy_sfd);
     release_iface(V_UNKNOWN(&var_in_out[1]));
 
     memcpy(&struct_in[0], &test_mystruct1, sizeof(MYSTRUCT));
     memcpy(&struct_in[1], &test_mystruct2, sizeof(MYSTRUCT));
     hr = IWidget_mystruct_array(widget, struct_in);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 }
 
 static void test_marshal_coclass(IWidget *widget, IDispatch *disp)
@@ -2697,11 +2697,11 @@ static void test_marshal_coclass(IWidget *widget, IDispatch *disp)
 
     hr = IWidget_Coclass(widget, (Coclass1 *)&class1->ICoclass1_iface,
             (Coclass2 *)&class2->ICoclass1_iface, (Coclass3 *)&class3->ICoclass1_iface);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IWidget_Coclass(widget, (Coclass1 *)&class1->ICoclass2_iface,
             (Coclass2 *)&class2->ICoclass2_iface, (Coclass3 *)&class3->ICoclass2_iface);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     release_iface(&class1->ICoclass1_iface);
     release_iface(&class2->ICoclass1_iface);
@@ -2715,7 +2715,7 @@ static void test_marshal_coclass(IWidget *widget, IDispatch *disp)
     out = &class2->ICoclass1_iface;
     in_out = &class3->ICoclass1_iface;
     hr = IWidget_Coclass_ptr(widget, (Coclass1 **)&in, (Coclass1 **)&out, (Coclass1 **)&in_out);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(in == &class1->ICoclass1_iface, "[in] parameter should not have changed.\n");
     ok(!out, "[out] parameter should have been cleared.\n");
     ok(in_out == &class3->ICoclass1_iface, "[in, out] parameter should not have changed.\n");
@@ -2731,12 +2731,12 @@ static void test_marshal_coclass(IWidget *widget, IDispatch *disp)
     ICoclass1_AddRef(in_out);
     hr = IWidget_Coclass_ptr(widget, (Coclass1 **)&in,
             (Coclass1 **)&out, (Coclass1 **)&in_out);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = ICoclass1_test(out);
-    ok(hr == 1, "Got hr %#x.\n", hr);
+    ok(hr == 1, "Got hr %#lx.\n", hr);
     ok(in_out != &class3->ICoclass1_iface, "[in, out] parameter should have changed.\n");
     hr = ICoclass1_test(in_out);
-    ok(hr == 1, "Got hr %#x.\n", hr);
+    ok(hr == 1, "Got hr %#lx.\n", hr);
     release_iface(out);
     release_iface(in_out);
     release_iface(&class1->ICoclass1_iface);
@@ -2746,9 +2746,9 @@ static void test_marshal_coclass(IWidget *widget, IDispatch *disp)
     in = out = in_out = NULL;
     hr = IWidget_Coclass_ptr(widget, (Coclass1 **)&in,
             (Coclass1 **)&out, (Coclass1 **)&in_out);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = ICoclass1_test(in_out);
-    ok(hr == 1, "Got hr %#x.\n", hr);
+    ok(hr == 1, "Got hr %#lx.\n", hr);
     release_iface(in_out);
 
     testmode = 3;
@@ -2757,7 +2757,7 @@ static void test_marshal_coclass(IWidget *widget, IDispatch *disp)
     in_out = &class3->ICoclass1_iface;
     hr = IWidget_Coclass_ptr(widget, (Coclass1 **)&in,
             (Coclass1 **)&out, (Coclass1 **)&in_out);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!in_out, "Got [in, out] %p.\n", in_out);
 
     class1 = create_coclass_obj();
@@ -2767,7 +2767,7 @@ static void test_marshal_coclass(IWidget *widget, IDispatch *disp)
     class2_noptr.iface = &class2->ICoclass2_iface;
     class3_noptr.iface = &class3->ICoclass1_iface;
     hr = IWidget_Coclass_noptr(widget, class1_noptr, class2_noptr, class3_noptr);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     release_iface(&class1->ICoclass1_iface);
     release_iface(&class2->ICoclass1_iface);
     release_iface(&class3->ICoclass1_iface);
@@ -2784,21 +2784,21 @@ static void test_marshal_coclass(IWidget *widget, IDispatch *disp)
     V_VT(&arg[0]) = VT_UNKNOWN;  V_UNKNOWN(&arg[0]) = (IUnknown *)&class3->ICoclass1_iface;
     hr = IDispatch_Invoke(disp, DISPID_TM_COCLASS, &IID_NULL, LOCALE_NEUTRAL,
             DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     V_VT(&arg[2]) = VT_UNKNOWN;  V_UNKNOWN(&arg[2]) = (IUnknown *)&class1->ICoclass2_iface;
     V_VT(&arg[1]) = VT_UNKNOWN;  V_UNKNOWN(&arg[1]) = (IUnknown *)&class2->ICoclass2_iface;
     V_VT(&arg[0]) = VT_UNKNOWN;  V_UNKNOWN(&arg[0]) = (IUnknown *)&class3->ICoclass2_iface;
     hr = IDispatch_Invoke(disp, DISPID_TM_COCLASS, &IID_NULL, LOCALE_NEUTRAL,
             DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     V_VT(&arg[2]) = VT_DISPATCH; V_DISPATCH(&arg[2]) = (IDispatch *)&class1->ICoclass1_iface;
     V_VT(&arg[1]) = VT_DISPATCH; V_DISPATCH(&arg[1]) = (IDispatch *)&class2->ICoclass1_iface;
     V_VT(&arg[0]) = VT_DISPATCH; V_DISPATCH(&arg[0]) = (IDispatch *)&class3->ICoclass1_iface;
     hr = IDispatch_Invoke(disp, DISPID_TM_COCLASS, &IID_NULL, LOCALE_NEUTRAL,
             DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     release_iface(&class1->ICoclass1_iface);
     release_iface(&class2->ICoclass1_iface);
@@ -2816,7 +2816,7 @@ static void test_marshal_coclass(IWidget *widget, IDispatch *disp)
     hr = IDispatch_Invoke(disp, DISPID_TM_COCLASS_PTR, &IID_NULL, LOCALE_NEUTRAL,
             DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
     todo_wine
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(unk_in == (IUnknown *)&class1->ICoclass1_iface, "[in] parameter should not have changed.\n");
     ok(!unk_out, "[out] parameter should have been cleared.\n");
     ok(unk_in_out == (IUnknown *)&class3->ICoclass1_iface, "[in, out] parameter should not have changed.\n");
@@ -2833,20 +2833,20 @@ static void test_marshal_coclass(IWidget *widget, IDispatch *disp)
     hr = IDispatch_Invoke(disp, DISPID_TM_COCLASS_PTR, &IID_NULL, LOCALE_NEUTRAL,
             DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
     todo_wine
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
 if (hr == S_OK) {
     hr = IUnknown_QueryInterface(unk_out, &IID_ICoclass1, (void **)&out);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = ICoclass1_test(out);
-    ok(hr == 1, "Got hr %#x.\n", hr);
+    ok(hr == 1, "Got hr %#lx.\n", hr);
     ICoclass1_Release(out);
 
     ok(unk_in_out != (IUnknown *)&class3->ICoclass1_iface, "[in, out] parameter should have changed.\n");
     hr = IUnknown_QueryInterface(unk_in_out, &IID_ICoclass1, (void **)&in_out);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = ICoclass1_test(in_out);
-    ok(hr == 1, "Got hr %#x.\n", hr);
+    ok(hr == 1, "Got hr %#lx.\n", hr);
     ICoclass1_Release(in_out);
 
     release_iface(unk_out);
@@ -2861,14 +2861,14 @@ if (hr == S_OK) {
     hr = IDispatch_Invoke(disp, DISPID_TM_COCLASS_PTR, &IID_NULL, LOCALE_NEUTRAL,
             DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
     todo_wine
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     ok(!unk_out, "[out] parameter should not have been set.\n");
 if (hr == S_OK) {
     hr = IUnknown_QueryInterface(unk_in_out, &IID_ICoclass1, (void **)&in_out);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = ICoclass1_test(in_out);
-    ok(hr == 1, "Got hr %#x.\n", hr);
+    ok(hr == 1, "Got hr %#lx.\n", hr);
     ICoclass1_Release(in_out);
 
     release_iface(unk_in_out);
@@ -2882,7 +2882,7 @@ if (hr == S_OK) {
     hr = IDispatch_Invoke(disp, DISPID_TM_COCLASS_PTR, &IID_NULL, LOCALE_NEUTRAL,
             DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
     todo_wine
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     todo_wine
     ok(!unk_in_out, "[in, out] parameter should have been cleared.\n");
 
@@ -2954,7 +2954,7 @@ static void test_typelibmarshal(void)
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_NAME, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_PROPERTYPUT, &dispparams, &varresult, &excepinfo, NULL);
     ok_ole_success(hr, IDispatch_Invoke);
     ok(excepinfo.wCode == 0x0 && excepinfo.scode == S_OK,
-        "EXCEPINFO differs from expected: wCode = 0x%x, scode = 0x%08x\n",
+        "EXCEPINFO differs from expected: wCode = 0x%x, scode = 0x%08lx\n",
         excepinfo.wCode, excepinfo.scode);
     VariantClear(&varresult);
 
@@ -2973,7 +2973,7 @@ static void test_typelibmarshal(void)
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_NAME, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_PROPERTYGET, &dispparams, &varresult, &excepinfo, NULL);
     ok_ole_success(hr, IDispatch_Invoke);
     ok(excepinfo.wCode == 0x0 && excepinfo.scode == S_OK,
-        "EXCEPINFO differs from expected: wCode = 0x%x, scode = 0x%08x\n",
+        "EXCEPINFO differs from expected: wCode = 0x%x, scode = 0x%08lx\n",
         excepinfo.wCode, excepinfo.scode);
     trace("Name = %s\n", wine_dbgstr_w(V_BSTR(&varresult)));
     VariantClear(&varresult);
@@ -3135,7 +3135,7 @@ static void test_typelibmarshal(void)
     ok_ole_success(hr, IDispatch_Invoke);
 
     ok(excepinfo.wCode == 0x0 && excepinfo.scode == S_OK,
-        "EXCEPINFO differs from expected: wCode = 0x%x, scode = 0x%08x\n",
+        "EXCEPINFO differs from expected: wCode = 0x%x, scode = 0x%08lx\n",
         excepinfo.wCode, excepinfo.scode);
 
     ok(V_VT(&varresult) == VT_I2, "V_VT(&varresult) was %d instead of VT_I2\n", V_VT(&varresult));
@@ -3152,7 +3152,7 @@ static void test_typelibmarshal(void)
     ok_ole_success(hr, IDispatch_Invoke);
 
     ok(excepinfo.wCode == 0x0 && excepinfo.scode == S_OK,
-       "EXCEPINFO differs from expected: wCode = 0x%x, scode = 0x%08x\n",
+       "EXCEPINFO differs from expected: wCode = 0x%x, scode = 0x%08lx\n",
        excepinfo.wCode, excepinfo.scode);
 
     ok(V_VT(&varresult) == VT_DISPATCH, "V_VT(&varresult) was %d instead of VT_DISPATCH\n", V_VT(&varresult));
@@ -3172,7 +3172,7 @@ static void test_typelibmarshal(void)
     ok_ole_success(hr, IDispatch_Invoke);
 
     ok(excepinfo.wCode == 0x0 && excepinfo.scode == S_OK,
-        "EXCEPINFO differs from expected: wCode = 0x%x, scode = 0x%08x\n",
+        "EXCEPINFO differs from expected: wCode = 0x%x, scode = 0x%08lx\n",
         excepinfo.wCode, excepinfo.scode);
 
     ok(V_VT(&varresult) == VT_I2, "V_VT(&varresult) was %d instead of VT_I2\n", V_VT(&varresult));
@@ -3188,7 +3188,7 @@ static void test_typelibmarshal(void)
     dispparams.rgdispidNamedArgs = NULL;
     dispparams.rgvarg = vararg;
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_ARRAY, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
-    ok(hr == DISP_E_TYPEMISMATCH || hr == DISP_E_BADVARTYPE, "expected DISP_E_TYPEMISMATCH, got %#x\n", hr);
+    ok(hr == DISP_E_TYPEMISMATCH || hr == DISP_E_BADVARTYPE, "expected DISP_E_TYPEMISMATCH, got %#lx\n", hr);
     SysFreeString(V_BSTR(&vararg[0]));
 
     /* call ArrayPtr with BSTR argument - type mismatch */
@@ -3200,7 +3200,7 @@ static void test_typelibmarshal(void)
     dispparams.rgdispidNamedArgs = NULL;
     dispparams.rgvarg = vararg;
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_VARARRAYPTR, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
-    ok(hr == DISP_E_TYPEMISMATCH || hr == DISP_E_BADVARTYPE, "expected DISP_E_TYPEMISMATCH, got %#x\n", hr);
+    ok(hr == DISP_E_TYPEMISMATCH || hr == DISP_E_BADVARTYPE, "expected DISP_E_TYPEMISMATCH, got %#lx\n", hr);
     SysFreeString(V_BSTR(&vararg[0]));
 
     /* call VarArg */
@@ -3228,7 +3228,7 @@ static void test_typelibmarshal(void)
     dispparams.cNamedArgs = 1;
     dispparams.rgdispidNamedArgs = &dispidNamed;
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_VARARG, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
-    ok(hr == DISP_E_NONAMEDARGS, "IDispatch_Invoke should have returned DISP_E_NONAMEDARGS instead of 0x%08x\n", hr);
+    ok(hr == DISP_E_NONAMEDARGS, "IDispatch_Invoke should have returned DISP_E_NONAMEDARGS instead of 0x%08lx\n", hr);
     dispidNamed = DISPID_PROPERTYPUT;
 
     /* call VarArg_Run */
@@ -3270,9 +3270,9 @@ static void test_typelibmarshal(void)
     dispparams.rgvarg = NULL;
     VariantInit(&varresult);
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_ERROR, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, NULL, &excepinfo, NULL);
-    ok(hr == DISP_E_EXCEPTION, "IDispatch_Invoke should have returned DISP_E_EXCEPTION instead of 0x%08x\n", hr);
+    ok(hr == DISP_E_EXCEPTION, "IDispatch_Invoke should have returned DISP_E_EXCEPTION instead of 0x%08lx\n", hr);
     ok(excepinfo.wCode == 0x0 && excepinfo.scode == E_NOTIMPL,
-        "EXCEPINFO differs from expected: wCode = 0x%x, scode = 0x%08x\n",
+        "EXCEPINFO differs from expected: wCode = 0x%x, scode = 0x%08lx\n",
         excepinfo.wCode, excepinfo.scode);
     VariantClear(&varresult);
 
@@ -3295,10 +3295,10 @@ static void test_typelibmarshal(void)
     dispparams.rgdispidNamedArgs = NULL;
     dispparams.rgvarg = NULL;
     hr = ITypeInfo_Invoke(pTypeInfo, &NonOleAutomation, DISPID_NOA_ERROR, DISPATCH_METHOD, &dispparams, &varresult, &excepinfo, NULL);
-    ok(hr == DISP_E_EXCEPTION, "ITypeInfo_Invoke should have returned DISP_E_EXCEPTION instead of 0x%08x\n", hr);
+    ok(hr == DISP_E_EXCEPTION, "ITypeInfo_Invoke should have returned DISP_E_EXCEPTION instead of 0x%08lx\n", hr);
     ok(V_VT(&varresult) == VT_EMPTY, "V_VT(&varresult) should be VT_EMPTY instead of %d\n", V_VT(&varresult));
     ok(excepinfo.wCode == 0x0 && excepinfo.scode == E_NOTIMPL,
-        "EXCEPINFO differs from expected: wCode = 0x%x, scode = 0x%08x\n",
+        "EXCEPINFO differs from expected: wCode = 0x%x, scode = 0x%08lx\n",
         excepinfo.wCode, excepinfo.scode);
     VariantClear(&varresult);
 
@@ -3312,7 +3312,7 @@ static void test_typelibmarshal(void)
     dispparams.rgvarg = vararg;
     VariantInit(&varresult);
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_NAME, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_PROPERTYPUT, &dispparams, &varresult, &excepinfo, NULL);
-    ok(hr == DISP_E_PARAMNOTFOUND, "IDispatch_Invoke should have returned DISP_E_PARAMNOTFOUND instead of 0x%08x\n", hr);
+    ok(hr == DISP_E_PARAMNOTFOUND, "IDispatch_Invoke should have returned DISP_E_PARAMNOTFOUND instead of 0x%08lx\n", hr);
     VariantClear(&varresult);
 
     /* tests param type that cannot be coerced */
@@ -3325,7 +3325,7 @@ static void test_typelibmarshal(void)
     dispparams.rgvarg = vararg;
     VariantInit(&varresult);
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_NAME, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_PROPERTYPUT, &dispparams, &varresult, &excepinfo, NULL);
-    ok(hr == DISP_E_TYPEMISMATCH, "IDispatch_Invoke should have returned DISP_E_TYPEMISMATCH instead of 0x%08x\n", hr);
+    ok(hr == DISP_E_TYPEMISMATCH, "IDispatch_Invoke should have returned DISP_E_TYPEMISMATCH instead of 0x%08lx\n", hr);
     VariantClear(&varresult);
 
     /* tests bad param type */
@@ -3338,7 +3338,7 @@ static void test_typelibmarshal(void)
     dispparams.rgvarg = vararg;
     VariantInit(&varresult);
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_NAME, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_PROPERTYPUT, &dispparams, &varresult, &excepinfo, NULL);
-    ok(hr == DISP_E_BADVARTYPE, "IDispatch_Invoke should have returned DISP_E_BADVARTYPE instead of 0x%08x\n", hr);
+    ok(hr == DISP_E_BADVARTYPE, "IDispatch_Invoke should have returned DISP_E_BADVARTYPE instead of 0x%08lx\n", hr);
     VariantClear(&varresult);
 
     /* tests too small param count */
@@ -3348,7 +3348,7 @@ static void test_typelibmarshal(void)
     dispparams.rgvarg = NULL;
     VariantInit(&varresult);
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_DOSOMETHING, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, &varresult, &excepinfo, NULL);
-    ok(hr == DISP_E_BADPARAMCOUNT, "IDispatch_Invoke should have returned DISP_E_BADPARAMCOUNT instead of 0x%08x\n", hr);
+    ok(hr == DISP_E_BADPARAMCOUNT, "IDispatch_Invoke should have returned DISP_E_BADPARAMCOUNT instead of 0x%08lx\n", hr);
     VariantClear(&varresult);
 
     /* tests propget function with large param count */
@@ -3362,7 +3362,7 @@ static void test_typelibmarshal(void)
     dispparams.rgdispidNamedArgs = NULL;
     dispparams.rgvarg = vararg;
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_STATE, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_PROPERTYGET, &dispparams, &varresult, &excepinfo, NULL);
-    ok(hr == DISP_E_NOTACOLLECTION, "IDispatch_Invoke should have returned DISP_E_NOTACOLLECTION instead of 0x%08x\n", hr);
+    ok(hr == DISP_E_NOTACOLLECTION, "IDispatch_Invoke should have returned DISP_E_NOTACOLLECTION instead of 0x%08lx\n", hr);
 
     /* test propput with lcid */
 
@@ -3388,7 +3388,7 @@ static void test_typelibmarshal(void)
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_PROP_WITH_LCID, &IID_NULL, 0x40c, DISPATCH_PROPERTYGET, &dispparams, &varresult, &excepinfo, NULL);
     ok_ole_success(hr, ITypeInfo_Invoke);
     ok(V_VT(&varresult) == VT_I4, "got %x\n", V_VT(&varresult));
-    ok(V_I4(&varresult) == 0x409, "got %x\n", V_I4(&varresult));
+    ok(V_I4(&varresult) == 0x409, "got %lx\n", V_I4(&varresult));
     VariantClear(&varresult);
 
     /* test propget of INT value */
@@ -3399,7 +3399,7 @@ static void test_typelibmarshal(void)
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_PROP_INT, &IID_NULL, 0x40c, DISPATCH_PROPERTYGET, &dispparams, &varresult, &excepinfo, NULL);
     ok_ole_success(hr, ITypeInfo_Invoke);
     ok(V_VT(&varresult) == VT_I4, "got %x\n", V_VT(&varresult));
-    ok(V_I4(&varresult) == -13, "got %x\n", V_I4(&varresult));
+    ok(V_I4(&varresult) == -13, "got %lx\n", V_I4(&varresult));
     VariantClear(&varresult);
 
     /* test propget of INT value */
@@ -3410,7 +3410,7 @@ static void test_typelibmarshal(void)
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_PROP_UINT, &IID_NULL, 0x40c, DISPATCH_PROPERTYGET, &dispparams, &varresult, &excepinfo, NULL);
     ok_ole_success(hr, ITypeInfo_Invoke);
     ok(V_VT(&varresult) == VT_UI4, "got %x\n", V_VT(&varresult));
-    ok(V_UI4(&varresult) == 42, "got %x\n", V_UI4(&varresult));
+    ok(V_UI4(&varresult) == 42, "got %lx\n", V_UI4(&varresult));
     VariantClear(&varresult);
 
     /* test byref marshalling */
@@ -3427,7 +3427,7 @@ static void test_typelibmarshal(void)
     ok(V_VT(&varresult) == VT_EMPTY, "varresult should be VT_EMPTY\n");
     ok(V_VT(&vararg[0]) == (VT_UI4|VT_BYREF), "arg VT not unmarshalled correctly: %x\n", V_VT(&vararg[0]));
     ok(V_UI4REF(&vararg[0]) == (ULONG *)&uval, "Byref pointer not preserved: %p/%p\n", &uval, V_UI4REF(&vararg[0]));
-    ok(*V_UI4REF(&vararg[0]) == 42, "Expected 42 to be returned instead of %u\n", *V_UI4REF(&vararg[0]));
+    ok(*V_UI4REF(&vararg[0]) == 42, "Expected 42 to be returned instead of %lu\n", *V_UI4REF(&vararg[0]));
     VariantClear(&varresult);
     VariantClear(&vararg[0]);
 
@@ -3467,7 +3467,7 @@ static void test_typelibmarshal(void)
     dispparams.rgvarg = NULL;
     VariantInit(&varresult);
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_RESTRICTED, &IID_NULL, 0x40c, DISPATCH_METHOD, &dispparams, &varresult, &excepinfo, NULL);
-    ok( hr == DISP_E_MEMBERNOTFOUND, "got %08x\n", hr );
+    ok( hr == DISP_E_MEMBERNOTFOUND, "got %08lx\n", hr );
     VariantClear(&varresult);
 
     /* restricted member with -ve memid (not restricted) */
@@ -3477,9 +3477,9 @@ static void test_typelibmarshal(void)
     dispparams.rgvarg = NULL;
     VariantInit(&varresult);
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_NEG_RESTRICTED, &IID_NULL, 0x40c, DISPATCH_METHOD, &dispparams, &varresult, &excepinfo, NULL);
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %08lx\n", hr );
     ok(V_VT(&varresult) == VT_I4, "got %x\n", V_VT(&varresult));
-    ok(V_I4(&varresult) == DISPID_TM_NEG_RESTRICTED, "got %x\n", V_I4(&varresult));
+    ok(V_I4(&varresult) == DISPID_TM_NEG_RESTRICTED, "got %lx\n", V_I4(&varresult));
     VariantClear(&varresult);
 
     test_marshal_basetypes(pWidget, pDispatch);
@@ -3586,7 +3586,7 @@ static void test_libattr(void)
     ok_ole_success(hr, GetLibAttr);
     if (SUCCEEDED(hr))
     {
-        ok(pattr->lcid == MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), "lcid %x\n", pattr->lcid);
+        ok(pattr->lcid == MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), "lcid %lx\n", pattr->lcid);
 
         ITypeLib_ReleaseTLibAttr(pTypeLib, pattr);
     }
@@ -3612,13 +3612,13 @@ static void test_external_connection(void)
     /* Marshaling an interface increases external connection count. */
     expect_last_release_closes = FALSE;
     hres = CreateStreamOnHGlobal(NULL, TRUE, &stream);
-    ok(hres == S_OK, "CreateStreamOnHGlobal failed: %08x\n", hres);
+    ok(hres == S_OK, "CreateStreamOnHGlobal failed: %08lx\n", hres);
     tid = start_host_object(stream, &IID_ItestDual, (IUnknown*)&TestDual, MSHLFLAGS_NORMAL, &thread);
     ok(external_connections == 1, "external_connections = %d\n", external_connections);
 
     IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
     hres = CoUnmarshalInterface(stream, &IID_ItestDual, (void**)&iface);
-    ok(hres == S_OK, "CoUnmarshalInterface failed: %08x\n", hres);
+    ok(hres == S_OK, "CoUnmarshalInterface failed: %08lx\n", hres);
     if (FAILED(hres))
     {
         end_host_object(tid, thread);
@@ -3632,7 +3632,7 @@ static void test_external_connection(void)
 
     /* Creating a stub for new iface causes new external connection. */
     hres = ItestDual_QueryInterface(iface, &IID_ITestSecondDisp, (void**)&second);
-    ok(hres == S_OK, "Could not get ITestSecondDisp iface: %08x\n", hres);
+    ok(hres == S_OK, "Could not get ITestSecondDisp iface: %08lx\n", hres);
     todo_wine
     ok(external_connections == 2, "external_connections = %d\n", external_connections);
 
@@ -3648,42 +3648,42 @@ static void test_external_connection(void)
 
     /* A test with direct CoMarshalInterface call. */
     hres = CreateStreamOnHGlobal(NULL, TRUE, &stream);
-    ok(hres == S_OK, "CreateStreamOnHGlobal failed: %08x\n", hres);
+    ok(hres == S_OK, "CreateStreamOnHGlobal failed: %08lx\n", hres);
 
     expect_last_release_closes = FALSE;
     hres = CoMarshalInterface(stream, &IID_ItestDual, (IUnknown*)&TestDual, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
-    ok(hres == S_OK, "CoMarshalInterface failed: %08x\n", hres);
+    ok(hres == S_OK, "CoMarshalInterface failed: %08lx\n", hres);
     ok(external_connections == 1, "external_connections = %d\n", external_connections);
 
     expect_last_release_closes = TRUE;
     IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
     hres = CoReleaseMarshalData(stream);
-    ok(hres == S_OK, "CoReleaseMarshalData failed: %08x\n", hres);
+    ok(hres == S_OK, "CoReleaseMarshalData failed: %08lx\n", hres);
     ok(external_connections == 0, "external_connections = %d\n", external_connections);
 
     /* Two separated marshal data are still one external connection. */
     hres = CreateStreamOnHGlobal(NULL, TRUE, &stream2);
-    ok(hres == S_OK, "CreateStreamOnHGlobal failed: %08x\n", hres);
+    ok(hres == S_OK, "CreateStreamOnHGlobal failed: %08lx\n", hres);
 
     expect_last_release_closes = FALSE;
     IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
     hres = CoMarshalInterface(stream, &IID_ItestDual, (IUnknown*)&TestDual, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
-    ok(hres == S_OK, "CoMarshalInterface failed: %08x\n", hres);
+    ok(hres == S_OK, "CoMarshalInterface failed: %08lx\n", hres);
     ok(external_connections == 1, "external_connections = %d\n", external_connections);
 
     hres = CoMarshalInterface(stream2, &IID_ItestDual, (IUnknown*)&TestDual, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
-    ok(hres == S_OK, "CoMarshalInterface failed: %08x\n", hres);
+    ok(hres == S_OK, "CoMarshalInterface failed: %08lx\n", hres);
     ok(external_connections == 1, "external_connections = %d\n", external_connections);
 
     IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
     hres = CoReleaseMarshalData(stream);
-    ok(hres == S_OK, "CoReleaseMarshalData failed: %08x\n", hres);
+    ok(hres == S_OK, "CoReleaseMarshalData failed: %08lx\n", hres);
     ok(external_connections == 1, "external_connections = %d\n", external_connections);
 
     expect_last_release_closes = TRUE;
     IStream_Seek(stream2, zero, STREAM_SEEK_SET, NULL);
     hres = CoReleaseMarshalData(stream2);
-    ok(hres == S_OK, "CoReleaseMarshalData failed: %08x\n", hres);
+    ok(hres == S_OK, "CoReleaseMarshalData failed: %08lx\n", hres);
     ok(external_connections == 0, "external_connections = %d\n", external_connections);
 
     IStream_Release(stream);
@@ -3691,21 +3691,21 @@ static void test_external_connection(void)
 
     /* Weak table marshaling does not increment external connections */
     hres = CreateStreamOnHGlobal(NULL, TRUE, &stream);
-    ok(hres == S_OK, "CreateStreamOnHGlobal failed: %08x\n", hres);
+    ok(hres == S_OK, "CreateStreamOnHGlobal failed: %08lx\n", hres);
 
     hres = CoMarshalInterface(stream, &IID_ItestDual, (IUnknown*)&TestDual, MSHCTX_INPROC, NULL, MSHLFLAGS_TABLEWEAK);
-    ok(hres == S_OK, "CoMarshalInterface failed: %08x\n", hres);
+    ok(hres == S_OK, "CoMarshalInterface failed: %08lx\n", hres);
     ok(external_connections == 0, "external_connections = %d\n", external_connections);
 
     IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
     hres = CoUnmarshalInterface(stream, &IID_ItestDual, (void**)&iface);
-    ok(hres == S_OK, "CoUnmarshalInterface failed: %08x\n", hres);
+    ok(hres == S_OK, "CoUnmarshalInterface failed: %08lx\n", hres);
     ok(external_connections == 0, "external_connections = %d\n", external_connections);
     ItestDual_Release(iface);
 
     IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
     hres = CoReleaseMarshalData(stream);
-    ok(hres == S_OK, "CoReleaseMarshalData failed: %08x\n", hres);
+    ok(hres == S_OK, "CoReleaseMarshalData failed: %08lx\n", hres);
     ok(external_connections == 0, "external_connections = %d\n", external_connections);
 
     IStream_Release(stream);
@@ -3728,18 +3728,18 @@ static void test_marshal_dispinterface(void)
     tid = start_host_object(stream, &DIID_ItestIF4, (IUnknown *)disp_obj, MSHLFLAGS_NORMAL, &thread);
     IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
     hr = CoUnmarshalInterface(stream, &DIID_ItestIF4, (void **)&proxy_disp);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IDispatch_GetTypeInfo(proxy_disp, 0xdeadbeef, 0, &typeinfo);
-    ok(hr == 0xbeefdead, "Got hr %#x.\n", hr);
+    ok(hr == 0xbeefdead, "Got hr %#lx.\n", hr);
 
     ref = IDispatch_Release(proxy_disp);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
     ref = IStream_Release(stream);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
     end_host_object(tid, thread);
     ref = ISomethingFromDispatch_Release(disp_obj);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
 START_TEST(tmarshal)
