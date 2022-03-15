@@ -686,7 +686,7 @@
 @ stdcall SetMenuItemInfoW(long long long ptr)
 @ stdcall SetMessageExtraInfo(long)
 @ stdcall SetMessageQueue(long)
-@ stdcall SetParent(long long)
+@ stdcall SetParent(long long) NtUserSetParent
 @ stdcall SetPhysicalCursorPos(long long)
 @ stdcall SetProcessDPIAware()
 @ stdcall SetProcessDefaultLayout(long)

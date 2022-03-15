@@ -548,7 +548,7 @@ static LRESULT COMBO_Create( HWND hwnd, LPHEADCOMBO lphc, HWND hwndParent, LONG 
 	    if( CB_GETTYPE(lphc) != CBS_SIMPLE )
 	    {
               /* Now do the trick with parent */
-	      SetParent(lphc->hWndLBox, HWND_DESKTOP);
+              NtUserSetParent( lphc->hWndLBox, HWND_DESKTOP );
               /*
                * If the combo is a dropdown, we must resize the control
 	       * to fit only the text area and button. To do this,

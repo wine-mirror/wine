@@ -2118,7 +2118,7 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
         else
         {
             WIN_ReleasePtr( wndPtr );
-            return (ULONG_PTR)SetParent( hwnd, (HWND)newval );
+            return (ULONG_PTR)NtUserSetParent( hwnd, (HWND)newval );
         }
     case GWLP_WNDPROC:
     {
@@ -2607,108 +2607,6 @@ DWORD WINAPI GetWindowThreadProcessId( HWND hwnd, LPDWORD process )
 HWND WINAPI GetParent( HWND hwnd )
 {
     return UlongToHandle( NtUserCallHwnd( hwnd, NtUserGetParent ));
-}
-
-
-/*****************************************************************
- *		SetParent (USER32.@)
- */
-HWND WINAPI SetParent( HWND hwnd, HWND parent )
-{
-    WINDOWPOS winpos;
-    HWND full_handle;
-    HWND old_parent = 0;
-    BOOL was_visible;
-    WND *wndPtr;
-    BOOL ret;
-    DPI_AWARENESS_CONTEXT context;
-    RECT window_rect, old_screen_rect, new_screen_rect;
-
-    TRACE("(%p %p)\n", hwnd, parent);
-
-    if (is_broadcast(hwnd) || is_broadcast(parent))
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return 0;
-    }
-
-    if (!parent) parent = GetDesktopWindow();
-    else if (parent == HWND_MESSAGE) parent = get_hwnd_message_parent();
-    else parent = WIN_GetFullHandle( parent );
-
-    if (!IsWindow( parent ))
-    {
-        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-        return 0;
-    }
-
-    /* Some applications try to set a child as a parent */
-    if (IsChild(hwnd, parent))
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
-    }
-
-    if (!(full_handle = WIN_IsCurrentThread( hwnd )))
-        return (HWND)SendMessageW( hwnd, WM_WINE_SETPARENT, (WPARAM)parent, 0 );
-
-    if (full_handle == parent)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
-    }
-
-    /* Windows hides the window first, then shows it again
-     * including the WM_SHOWWINDOW messages and all */
-    was_visible = ShowWindow( hwnd, SW_HIDE );
-
-    wndPtr = WIN_GetPtr( hwnd );
-    if (!wndPtr || wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return 0;
-
-    context = SetThreadDpiAwarenessContext( GetWindowDpiAwarenessContext( hwnd ));
-    WIN_GetRectangles( hwnd, COORDS_PARENT, &window_rect, NULL );
-    SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
-    WIN_GetRectangles( hwnd, COORDS_SCREEN, &old_screen_rect, NULL );
-    SetThreadDpiAwarenessContext( context );
-
-    SERVER_START_REQ( set_parent )
-    {
-        req->handle = wine_server_user_handle( hwnd );
-        req->parent = wine_server_user_handle( parent );
-        if ((ret = !wine_server_call_err( req )))
-        {
-            old_parent = wine_server_ptr_handle( reply->old_parent );
-            wndPtr->parent = parent = wine_server_ptr_handle( reply->full_parent );
-            wndPtr->dpi = reply->dpi;
-            wndPtr->dpi_awareness = reply->awareness;
-        }
-
-    }
-    SERVER_END_REQ;
-    WIN_ReleasePtr( wndPtr );
-    if (!ret) return 0;
-
-    context = SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
-    WIN_GetRectangles( hwnd, COORDS_SCREEN, &new_screen_rect, NULL );
-    SetThreadDpiAwarenessContext( GetWindowDpiAwarenessContext( hwnd ));
-
-    USER_Driver->pSetParent( full_handle, parent, old_parent );
-
-    winpos.hwnd = hwnd;
-    winpos.hwndInsertAfter = HWND_TOP;
-    winpos.x = window_rect.left;
-    winpos.y = window_rect.top;
-    winpos.cx = 0;
-    winpos.cy = 0;
-    winpos.flags = SWP_NOSIZE;
-
-    USER_SetWindowPos( &winpos, new_screen_rect.left - old_screen_rect.left,
-                       new_screen_rect.top - old_screen_rect.top );
-
-    if (was_visible) ShowWindow( hwnd, SW_SHOW );
-
-    SetThreadDpiAwarenessContext( context );
-    return old_parent;
 }
 
 

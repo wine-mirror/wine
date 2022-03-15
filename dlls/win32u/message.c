@@ -44,6 +44,9 @@ LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     case WM_WINE_SETWINDOWPOS:
         if (is_desktop_window( hwnd )) return 0;
         return set_window_pos( (WINDOWPOS *)lparam, 0, 0 );
+    case WM_WINE_SETPARENT:
+        if (is_desktop_window( hwnd )) return 0;
+        return HandleToUlong( NtUserSetParent( hwnd, UlongToHandle(wparam) ));
     case WM_WINE_SETACTIVEWINDOW:
         if (!wparam && NtUserGetForegroundWindow() == hwnd) return 0;
         return (LRESULT)NtUserSetActiveWindow( (HWND)wparam );

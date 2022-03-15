@@ -1015,6 +1015,12 @@ BOOL WINAPI NtUserSetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alph
     return unix_funcs->pNtUserSetLayeredWindowAttributes( hwnd, key, alpha, flags );
 }
 
+HWND WINAPI NtUserSetParent( HWND hwnd, HWND parent )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserSetParent( hwnd, parent );
+}
+
 BOOL WINAPI NtUserSetSysColors( INT count, const INT *colors, const COLORREF *values )
 {
     if (!unix_funcs) return FALSE;

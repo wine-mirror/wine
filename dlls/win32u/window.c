@@ -381,6 +381,103 @@ static HWND get_parent( HWND hwnd )
     return retval;
 }
 
+/*****************************************************************
+ *           NtUserSetParent (win32u.@)
+ */
+HWND WINAPI NtUserSetParent( HWND hwnd, HWND parent )
+{
+    RECT window_rect, old_screen_rect, new_screen_rect;
+    DPI_AWARENESS_CONTEXT context;
+    WINDOWPOS winpos;
+    HWND full_handle;
+    HWND old_parent = 0;
+    BOOL was_visible;
+    WND *win;
+    BOOL ret;
+
+    TRACE("(%p %p)\n", hwnd, parent);
+
+    if (is_broadcast(hwnd) || is_broadcast(parent))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    if (!parent) parent = get_desktop_window();
+    else if (parent == HWND_MESSAGE) parent = get_hwnd_message_parent();
+    else parent = get_full_window_handle( parent );
+
+    if (!is_window( parent ))
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+
+    /* Some applications try to set a child as a parent */
+    if (is_child( hwnd, parent ))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    if (!(full_handle = is_current_thread_window( hwnd )))
+        return UlongToHandle( send_message( hwnd, WM_WINE_SETPARENT, (WPARAM)parent, 0 ));
+
+    if (full_handle == parent)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    /* Windows hides the window first, then shows it again
+     * including the WM_SHOWWINDOW messages and all */
+    was_visible = NtUserShowWindow( hwnd, SW_HIDE );
+
+    win = get_win_ptr( hwnd );
+    if (!win || win == WND_OTHER_PROCESS || win == WND_DESKTOP) return 0;
+
+    get_window_rects( hwnd, COORDS_PARENT, &window_rect, NULL, get_dpi_for_window(hwnd) );
+    get_window_rects( hwnd, COORDS_SCREEN, &old_screen_rect, NULL, 0 );
+
+    SERVER_START_REQ( set_parent )
+    {
+        req->handle = wine_server_user_handle( hwnd );
+        req->parent = wine_server_user_handle( parent );
+        if ((ret = !wine_server_call_err( req )))
+        {
+            old_parent = wine_server_ptr_handle( reply->old_parent );
+            win->parent = parent = wine_server_ptr_handle( reply->full_parent );
+            win->dpi = reply->dpi;
+            win->dpi_awareness = reply->awareness;
+        }
+
+    }
+    SERVER_END_REQ;
+    release_win_ptr( win );
+    if (!ret) return 0;
+
+    get_window_rects( hwnd, COORDS_SCREEN, &new_screen_rect, NULL, 0 );
+    context = set_thread_dpi_awareness_context( get_window_dpi_awareness_context( hwnd ));
+
+    user_driver->pSetParent( full_handle, parent, old_parent );
+
+    winpos.hwnd = hwnd;
+    winpos.hwndInsertAfter = HWND_TOP;
+    winpos.x = window_rect.left;
+    winpos.y = window_rect.top;
+    winpos.cx = 0;
+    winpos.cy = 0;
+    winpos.flags = SWP_NOSIZE;
+
+    set_window_pos( &winpos, new_screen_rect.left - old_screen_rect.left,
+                    new_screen_rect.top - old_screen_rect.top );
+
+    if (was_visible) NtUserShowWindow( hwnd, SW_SHOW );
+
+    set_thread_dpi_awareness_context( context );
+    return old_parent;
+}
+
 /* see GetWindow */
 static HWND get_window_relative( HWND hwnd, UINT rel )
 {
@@ -740,7 +837,7 @@ DPI_AWARENESS_CONTEXT get_window_dpi_awareness_context( HWND hwnd )
 }
 
 /* see GetDpiForWindow */
-static UINT get_dpi_for_window( HWND hwnd )
+UINT get_dpi_for_window( HWND hwnd )
 {
     WND *win;
     UINT ret = 0;
@@ -1688,6 +1785,14 @@ BOOL get_window_placement( HWND hwnd, WINDOWPLACEMENT *placement )
            placement->ptMaxPosition.x, placement->ptMaxPosition.y,
            wine_dbgstr_rect(&placement->rcNormalPosition) );
     return TRUE;
+}
+
+/*****************************************************************************
+ *           NtUserShowWindow (win32u.@)
+ */
+BOOL WINAPI NtUserShowWindow( HWND hwnd, INT cmd )
+{
+    return user_callbacks && user_callbacks->pShowWindow( hwnd, cmd );
 }
 
 /*****************************************************************************

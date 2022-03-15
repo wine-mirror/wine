@@ -150,6 +150,7 @@ static const struct user_callbacks user_funcs =
     SendMessageW,
     SendNotifyMessageW,
     ShowCaret,
+    ShowWindow,
     WaitForInputIdle,
     notify_ime,
     register_builtin_classes,

@@ -1864,9 +1864,6 @@ LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     case WM_WINE_SHOWWINDOW:
         if (is_desktop_window( hwnd )) return 0;
         return ShowWindow( hwnd, wparam );
-    case WM_WINE_SETPARENT:
-        if (is_desktop_window( hwnd )) return 0;
-        return (LRESULT)SetParent( hwnd, (HWND)wparam );
     case WM_WINE_SETWINDOWLONG:
         return WIN_SetWindowLong( hwnd, (short)LOWORD(wparam), HIWORD(wparam), lparam, TRUE );
     case WM_WINE_SETSTYLE:

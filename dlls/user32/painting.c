@@ -292,35 +292,6 @@ static BOOL send_erase( HWND hwnd, UINT flags, HRGN client_rgn,
 
 
 /***********************************************************************
- *           erase_now
- *
- * Implementation of RDW_ERASENOW behavior.
- */
-void erase_now( HWND hwnd, UINT rdw_flags )
-{
-    HWND child = 0;
-    HRGN hrgn;
-    BOOL need_erase = FALSE;
-
-    /* loop while we find a child to repaint */
-    for (;;)
-    {
-        UINT flags = UPDATE_NONCLIENT | UPDATE_ERASE;
-
-        if (rdw_flags & RDW_NOCHILDREN) flags |= UPDATE_NOCHILDREN;
-        else if (rdw_flags & RDW_ALLCHILDREN) flags |= UPDATE_ALLCHILDREN;
-        if (need_erase) flags |= UPDATE_DELAYED_ERASE;
-
-        if (!(hrgn = send_ncpaint( hwnd, &child, &flags ))) break;
-        need_erase = send_erase( child, flags, hrgn, NULL, NULL );
-
-        if (!flags) break;  /* nothing more to do */
-        if ((rdw_flags & RDW_NOCHILDREN) && !need_erase) break;
-    }
-}
-
-
-/***********************************************************************
  *           copy_bits_from_surface
  *
  * Copy bits from a window surface; helper for move_window_bits and move_window_bits_parent.

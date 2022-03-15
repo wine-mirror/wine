@@ -91,10 +91,6 @@ static DWORD CDECL nulldrv_MsgWaitForMultipleObjectsEx( DWORD count, const HANDL
                                      timeout, flags & MWMO_ALERTABLE );
 }
 
-static void CDECL nulldrv_SetParent( HWND hwnd, HWND parent, HWND old_parent )
-{
-}
-
 static void CDECL nulldrv_SetWindowIcon( HWND hwnd, UINT type, HICON icon )
 {
 }
@@ -191,7 +187,7 @@ static struct user_driver_funcs lazy_load_driver =
     NULL,
     NULL,
     NULL,
-    nulldrv_SetParent,
+    NULL,
     NULL,
     nulldrv_SetWindowIcon,
     nulldrv_SetWindowStyle,
@@ -233,7 +229,6 @@ void CDECL __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT v
     SET_USER_FUNC(CreateWindow);
     SET_USER_FUNC(DestroyWindow);
     SET_USER_FUNC(MsgWaitForMultipleObjectsEx);
-    SET_USER_FUNC(SetParent);
     SET_USER_FUNC(SetWindowIcon);
     SET_USER_FUNC(SetWindowStyle);
     SET_USER_FUNC(SetWindowText);
