@@ -43,33 +43,12 @@
 #include "wine/debug.h"
 #include "wine/unixlib.h"
 
-#include <alsa/asoundlib.h>
-
 #include "unixlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(midi);
 
-typedef struct {
-    int			state;                  /* -1 disabled, 0 is no recording started, 1 in recording, bit 2 set if in sys exclusive recording */
-    MIDIOPENDESC	midiDesc;
-    WORD		wFlags;
-    LPMIDIHDR	 	lpQueueHdr;
-    DWORD		startTime;
-    MIDIINCAPSW         caps;
-    snd_seq_addr_t      addr;
-} WINE_MIDIIN;
-
-typedef struct {
-    BOOL                bEnabled;
-    MIDIOPENDESC	midiDesc;
-    WORD		wFlags;
-    MIDIOUTCAPSW        caps;
-    snd_seq_addr_t      addr;
-    int                 port_out;
-} WINE_MIDIOUT;
-
-static WINE_MIDIIN	MidiInDev [MAX_MIDIINDRV ];
-static WINE_MIDIOUT	MidiOutDev[MAX_MIDIOUTDRV];
+static WINE_MIDIIN	*MidiInDev;
+static WINE_MIDIOUT	*MidiOutDev;
 
 /* this is the total number of MIDI out devices found (synth and port) */
 static	int 		MODM_NumDevs = 0;
@@ -123,39 +102,6 @@ static void error_handler(const char* file, int line, const char* function, int 
     va_end(arg);
 }
 #endif
-
-/**************************************************************************
- * 			MIDI_unixToWindowsDeviceType  		[internal]
- *
- * return the Windows equivalent to a Unix Device Type
- *
- */
-static	int 	MIDI_AlsaToWindowsDeviceType(unsigned int type)
-{
-    /* MOD_MIDIPORT     output port
-     * MOD_SYNTH        generic internal synth
-     * MOD_SQSYNTH      square wave internal synth
-     * MOD_FMSYNTH      FM internal synth
-     * MOD_MAPPER       MIDI mapper
-     * MOD_WAVETABLE    hardware wavetable internal synth
-     * MOD_SWSYNTH      software internal synth
-     */
-
-    /* FIXME Is this really the correct equivalence from ALSA to
-       Windows Sound type? */
-
-    if (type & SND_SEQ_PORT_TYPE_SYNTH)
-        return MOD_FMSYNTH;
-
-    if (type & (SND_SEQ_PORT_TYPE_DIRECT_SAMPLE|SND_SEQ_PORT_TYPE_SAMPLE))
-        return MOD_SYNTH;
-
-    if (type & (SND_SEQ_PORT_TYPE_MIDI_GENERIC|SND_SEQ_PORT_TYPE_APPLICATION))
-        return MOD_MIDIPORT;
-    
-    ERR("Cannot determine the type (alsa type is %x) of this midi device. Assuming FM Synth\n", type);
-    return MOD_FMSYNTH;
-}
 
 /**************************************************************************
  * 			MIDI_NotifyClient			[internal]
@@ -1121,134 +1067,6 @@ static DWORD modReset(WORD wDevID)
 }
 
 
-/**************************************************************************
- *                      ALSA_AddMidiPort			[internal]
- *
- * Helper for ALSA_MidiInit
- */
-static void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* pinfo, unsigned int cap, unsigned int type)
-{
-    char midiPortName[MAXPNAMELEN];
-
-    if (cap & SND_SEQ_PORT_CAP_WRITE) {
-	TRACE("OUT (%d:%s:%s:%d:%s:%x)\n",snd_seq_client_info_get_client(cinfo),
-					  snd_seq_client_info_get_name(cinfo),
-					  snd_seq_client_info_get_type(cinfo) == SND_SEQ_USER_CLIENT ? "user" : "kernel",
-					  snd_seq_port_info_get_port(pinfo),
-					  snd_seq_port_info_get_name(pinfo),
-					  type);
-		
-	if (MODM_NumDevs >= MAX_MIDIOUTDRV)
-	    return;
-	if (!type)
-            return;
-
-	MidiOutDev[MODM_NumDevs].addr = *snd_seq_port_info_get_addr(pinfo);
-
-	/* Manufac ID. We do not have access to this with soundcard.h
-	 * Does not seem to be a problem, because in mmsystem.h only
-	 * Microsoft's ID is listed.
-	 */
-	MidiOutDev[MODM_NumDevs].caps.wMid = 0x00FF;
-	MidiOutDev[MODM_NumDevs].caps.wPid = 0x0001; 	/* FIXME Product ID  */
-	/* Product Version. We simply say "1" */
-	MidiOutDev[MODM_NumDevs].caps.vDriverVersion = 0x001;
-	/* The following are mandatory for MOD_MIDIPORT */
-	MidiOutDev[MODM_NumDevs].caps.wChannelMask   = 0xFFFF;
-	MidiOutDev[MODM_NumDevs].caps.wVoices        = 0;
-	MidiOutDev[MODM_NumDevs].caps.wNotes         = 0;
-	MidiOutDev[MODM_NumDevs].caps.dwSupport      = 0;
-
-	/* Try to use both client and port names, if this is too long take the port name only.
-           In the second case the port name should be explicit enough due to its big size.
-	 */
-	if ( (strlen(snd_seq_client_info_get_name(cinfo)) + strlen(snd_seq_port_info_get_name(pinfo)) + 3) < MAXPNAMELEN ) {
-	    sprintf(midiPortName, "%s - %s", snd_seq_client_info_get_name(cinfo), snd_seq_port_info_get_name(pinfo));
-	} else {
-	    lstrcpynA(midiPortName, snd_seq_port_info_get_name(pinfo), MAXPNAMELEN);
-	}
-        MultiByteToWideChar(CP_UNIXCP, 0, midiPortName, -1, MidiOutDev[MODM_NumDevs].caps.szPname,
-                            ARRAY_SIZE(MidiOutDev[MODM_NumDevs].caps.szPname));
-
-	MidiOutDev[MODM_NumDevs].caps.wTechnology = MIDI_AlsaToWindowsDeviceType(type);
-
-	if (MOD_MIDIPORT != MidiOutDev[MODM_NumDevs].caps.wTechnology) {
-	    /* FIXME Do we have this information?
-	     * Assuming the soundcards can handle
-	     * MIDICAPS_VOLUME and MIDICAPS_LRVOLUME but
-	     * not MIDICAPS_CACHE.
-	     */
-	    MidiOutDev[MODM_NumDevs].caps.dwSupport = MIDICAPS_VOLUME|MIDICAPS_LRVOLUME;
-	    MidiOutDev[MODM_NumDevs].caps.wVoices   = 16;
-
-            /* FIXME Is it possible to know the maximum
-             * number of simultaneous notes of a soundcard ?
-             * I believe we don't have this information, but
-             * it's probably equal or more than wVoices
-             */
-	    MidiOutDev[MODM_NumDevs].caps.wNotes    = 16;
-	}
-	MidiOutDev[MODM_NumDevs].bEnabled    = TRUE;
-	MidiOutDev[MODM_NumDevs].port_out    = -1;
-
-	TRACE("MidiOut[%d]\tname='%s' techn=%d voices=%d notes=%d chnMsk=%04x support=%d\n"
-            "\tALSA info: midi dev-type=%x, capa=0\n",
-              MODM_NumDevs, wine_dbgstr_w(MidiOutDev[MODM_NumDevs].caps.szPname),
-              MidiOutDev[MODM_NumDevs].caps.wTechnology,
-              MidiOutDev[MODM_NumDevs].caps.wVoices, MidiOutDev[MODM_NumDevs].caps.wNotes,
-              MidiOutDev[MODM_NumDevs].caps.wChannelMask, MidiOutDev[MODM_NumDevs].caps.dwSupport,
-              type);
-		
-	MODM_NumDevs++;
-    }
-    if (cap & SND_SEQ_PORT_CAP_READ) {
-        TRACE("IN  (%d:%s:%s:%d:%s:%x)\n",snd_seq_client_info_get_client(cinfo),
-			                  snd_seq_client_info_get_name(cinfo),
-					  snd_seq_client_info_get_type(cinfo) == SND_SEQ_USER_CLIENT ? "user" : "kernel",
-					  snd_seq_port_info_get_port(pinfo),
-					  snd_seq_port_info_get_name(pinfo),
-					  type);
-		
-	if (MIDM_NumDevs >= MAX_MIDIINDRV)
-	    return;
-	if (!type)
-	    return;
-
-	MidiInDev[MIDM_NumDevs].addr = *snd_seq_port_info_get_addr(pinfo);
-
-	/* Manufac ID. We do not have access to this with soundcard.h
-	 * Does not seem to be a problem, because in mmsystem.h only
-	 * Microsoft's ID is listed.
-	 */
-	MidiInDev[MIDM_NumDevs].caps.wMid = 0x00FF;
-	MidiInDev[MIDM_NumDevs].caps.wPid = 0x0001; 	/* FIXME Product ID  */
-	/* Product Version. We simply say "1" */
-	MidiInDev[MIDM_NumDevs].caps.vDriverVersion = 0x001;
-	MidiInDev[MIDM_NumDevs].caps.dwSupport = 0; /* mandatory with MIDIINCAPS */
-
-	/* Try to use both client and port names, if this is too long take the port name only.
-           In the second case the port name should be explicit enough due to its big size.
-	 */
-	if ( (strlen(snd_seq_client_info_get_name(cinfo)) + strlen(snd_seq_port_info_get_name(pinfo)) + 3) < MAXPNAMELEN ) {
-	    sprintf(midiPortName, "%s - %s", snd_seq_client_info_get_name(cinfo), snd_seq_port_info_get_name(pinfo));
-	} else {
-	    lstrcpynA(midiPortName, snd_seq_port_info_get_name(pinfo), MAXPNAMELEN);
-        }
-        MultiByteToWideChar(CP_UNIXCP, 0, midiPortName, -1, MidiInDev[MIDM_NumDevs].caps.szPname,
-                            ARRAY_SIZE(MidiInDev[MIDM_NumDevs].caps.szPname));
-	MidiInDev[MIDM_NumDevs].state = 0;
-
-	TRACE("MidiIn [%d]\tname='%s' support=%d\n"
-              "\tALSA info: midi dev-type=%x, capa=0\n",
-              MIDM_NumDevs, wine_dbgstr_w(MidiInDev[MIDM_NumDevs].caps.szPname),
-              MidiInDev[MIDM_NumDevs].caps.dwSupport,
-              type);
-
-	MIDM_NumDevs++;
-    }
-}
-
-
 /*======================================================================*
  *                  	    MIDI entry points 				*
  *======================================================================*/
@@ -1260,59 +1078,19 @@ static void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* 
  */
 static BOOL ALSA_MidiInit(void)
 {
-    static	BOOL	bInitDone = FALSE;
-    snd_seq_client_info_t *cinfo;
-    snd_seq_port_info_t *pinfo;
+    struct midi_init_params params;
+    UINT err;
 
-    if (bInitDone)
-	return TRUE;
+    params.err = &err;
+    ALSA_CALL(midi_init, &params);
 
-    TRACE("Initializing the MIDI variables.\n");
-    bInitDone = TRUE;
-
-    /* try to open device */
-    if (midiOpenSeq(FALSE) == -1) {
-	return TRUE;
+    if (!err)
+    {
+        MODM_NumDevs = params.num_dests;
+        MIDM_NumDevs = params.num_srcs;
+        MidiOutDev = params.dests;
+        MidiInDev = params.srcs;
     }
-
-#if 0 /* Debug purpose */
-    snd_lib_error_set_handler(error_handler);
-#endif
-    cinfo = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, snd_seq_client_info_sizeof() );
-    pinfo = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, snd_seq_port_info_sizeof() );
-
-    /* First, search for all internal midi devices */
-    snd_seq_client_info_set_client(cinfo, -1);
-    while(snd_seq_query_next_client(midiSeq, cinfo) >= 0) {
-        snd_seq_port_info_set_client(pinfo, snd_seq_client_info_get_client(cinfo));
-	snd_seq_port_info_set_port(pinfo, -1);
-	while (snd_seq_query_next_port(midiSeq, pinfo) >= 0) {
-	    unsigned int cap = snd_seq_port_info_get_capability(pinfo);
-	    unsigned int type = snd_seq_port_info_get_type(pinfo);
-	    if (!(type & SND_SEQ_PORT_TYPE_PORT))
-	        ALSA_AddMidiPort(cinfo, pinfo, cap, type);
-	}
-    }
-
-    /* Second, search for all external ports */
-    snd_seq_client_info_set_client(cinfo, -1);
-    while(snd_seq_query_next_client(midiSeq, cinfo) >= 0) {
-        snd_seq_port_info_set_client(pinfo, snd_seq_client_info_get_client(cinfo));
-	snd_seq_port_info_set_port(pinfo, -1);
-	while (snd_seq_query_next_port(midiSeq, pinfo) >= 0) {
-	    unsigned int cap = snd_seq_port_info_get_capability(pinfo);
-	    unsigned int type = snd_seq_port_info_get_type(pinfo);
-	    if (type & SND_SEQ_PORT_TYPE_PORT)
-	        ALSA_AddMidiPort(cinfo, pinfo, cap, type);
-	}
-    }
-
-    /* close file and exit */
-    midiCloseSeq();
-    HeapFree( GetProcessHeap(), 0, cinfo );
-    HeapFree( GetProcessHeap(), 0, pinfo );
-
-    TRACE("End\n");
     return TRUE;
 }
 

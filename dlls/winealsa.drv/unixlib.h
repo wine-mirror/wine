@@ -207,6 +207,37 @@ struct get_prop_value_params
     unsigned int *buffer_size;
 };
 
+#include <alsa/asoundlib.h>
+#include "mmddk.h"
+
+typedef struct midi_src
+{
+    int                 state;          /* -1 disabled, 0 is no recording started, 1 in recording, bit 2 set if in sys exclusive recording */
+    MIDIOPENDESC        midiDesc;
+    WORD                wFlags;
+    MIDIHDR            *lpQueueHdr;
+    UINT                startTime;
+    MIDIINCAPSW         caps;
+    snd_seq_addr_t      addr;
+} WINE_MIDIIN;
+
+typedef struct midi_dest
+{
+    BOOL                bEnabled;
+    MIDIOPENDESC        midiDesc;
+    WORD                wFlags;
+    MIDIOUTCAPSW        caps;
+    snd_seq_addr_t      addr;
+    int                 port_out;
+} WINE_MIDIOUT;
+
+struct midi_init_params
+{
+    UINT *err;
+    unsigned int num_dests, num_srcs;
+    void *dests, *srcs;
+};
+
 enum alsa_funcs
 {
     alsa_get_endpoint_ids,
@@ -232,9 +263,12 @@ enum alsa_funcs
     alsa_set_event_handle,
     alsa_is_started,
     alsa_get_prop_value,
+    alsa_midi_init,
 
     alsa_midi_seq_lock, /* temporary */
 };
+
+NTSTATUS midi_init(void *args) DECLSPEC_HIDDEN;
 
 NTSTATUS midi_seq_lock(void *args) DECLSPEC_HIDDEN;
 
