@@ -142,6 +142,45 @@ typedef struct {
     void *arg;
 } _Threadpool_chore;
 
+typedef struct
+{
+    HANDLE hnd;
+    DWORD  id;
+} _Thrd_t;
+
+typedef struct cs_queue
+{
+    struct cs_queue *next;
+    BOOL free;
+    int unknown;
+} cs_queue;
+
+typedef struct
+{
+    ULONG_PTR unk_thread_id;
+    cs_queue unk_active;
+    void *unknown[2];
+    cs_queue *head;
+    void *tail;
+} critical_section;
+
+typedef struct
+{
+    DWORD flags;
+    critical_section cs;
+    DWORD thread_id;
+    DWORD count;
+} *_Mtx_t;
+
+typedef void *_Cnd_t;
+
+typedef struct {
+    __time64_t sec;
+    int nsec;
+} xtime;
+
+typedef int (__cdecl *_Thrd_start_t)(void*);
+
 enum file_type {
     file_not_found = -1,
     none_file,
@@ -172,6 +211,20 @@ static void (__thiscall *p__TaskEventLogger__LogWorkItemStarted)(_TaskEventLogge
 static int (__cdecl *p__Schedule_chore)(_Threadpool_chore*);
 static int (__cdecl *p__Reschedule_chore)(const _Threadpool_chore*);
 static void (__cdecl *p__Release_chore)(_Threadpool_chore*);
+static int (__cdecl *p__Mtx_init)(_Mtx_t*, int);
+static void (__cdecl *p__Mtx_destroy)(_Mtx_t);
+static int (__cdecl *p__Mtx_lock)(_Mtx_t);
+static int (__cdecl *p__Mtx_unlock)(_Mtx_t);
+static int (__cdecl *p__Cnd_init)(_Cnd_t*);
+static void (__cdecl *p__Cnd_destroy)(_Cnd_t);
+static int (__cdecl *p__Cnd_wait)(_Cnd_t, _Mtx_t);
+static int (__cdecl *p__Cnd_timedwait)(_Cnd_t, _Mtx_t, const xtime*);
+static int (__cdecl *p__Cnd_broadcast)(_Cnd_t);
+static int (__cdecl *p__Cnd_signal)(_Cnd_t);
+static int (__cdecl *p__Thrd_create)(_Thrd_t*, _Thrd_start_t, void*);
+static int (__cdecl *p__Thrd_join)(_Thrd_t, int*);
+static int (__cdecl *p__Xtime_diff_to_millis2)(const xtime*, const xtime*);
+static int (__cdecl *p_xtime_get)(xtime*, int);
 
 static void (__cdecl *p_Close_dir)(void*);
 static MSVCP_bool (__cdecl *p_Current_get)(WCHAR *);
@@ -268,6 +321,21 @@ static BOOL init(void)
         SET(p__Winerror_message, "?_Winerror_message@std@@YAKKPADK@Z");
         SET(p__Syserror_map, "?_Syserror_map@std@@YAPBDH@Z");
     }
+
+    SET(p__Mtx_init, "_Mtx_init");
+    SET(p__Mtx_destroy, "_Mtx_destroy");
+    SET(p__Mtx_lock, "_Mtx_lock");
+    SET(p__Mtx_unlock, "_Mtx_unlock");
+    SET(p__Cnd_init, "_Cnd_init");
+    SET(p__Cnd_destroy, "_Cnd_destroy");
+    SET(p__Cnd_wait, "_Cnd_wait");
+    SET(p__Cnd_timedwait, "_Cnd_timedwait");
+    SET(p__Cnd_broadcast, "_Cnd_broadcast");
+    SET(p__Cnd_signal, "_Cnd_signal");
+    SET(p__Thrd_create, "_Thrd_create");
+    SET(p__Thrd_join, "_Thrd_join");
+    SET(p__Xtime_diff_to_millis2, "_Xtime_diff_to_millis2");
+    SET(p_xtime_get, "xtime_get");
 
     SET(p_Close_dir, "_Close_dir");
     SET(p_Current_get, "_Current_get");
@@ -1385,6 +1453,128 @@ static void test_Equivalent(void)
     ok(SetCurrentDirectoryW(current_path), "SetCurrentDirectoryW failed\n");
 }
 
+#define NUM_THREADS 10
+#define TIMEDELTA 250  /* 250 ms uncertainty allowed */
+struct cndmtx
+{
+    HANDLE initialized;
+    LONG started;
+    int thread_no;
+
+    _Cnd_t cnd;
+    _Mtx_t mtx;
+    BOOL timed_wait;
+};
+
+static int __cdecl cnd_wait_thread(void *arg)
+{
+    struct cndmtx *cm = arg;
+    int r;
+
+    p__Mtx_lock(cm->mtx);
+
+    if(InterlockedIncrement(&cm->started) == cm->thread_no)
+        SetEvent(cm->initialized);
+
+    if(cm->timed_wait) {
+        xtime xt;
+
+        p_xtime_get(&xt, 1);
+        xt.sec += 2;
+        r = p__Cnd_timedwait(cm->cnd, cm->mtx, &xt);
+        ok(!r, "timed wait failed\n");
+    } else {
+        r = p__Cnd_wait(cm->cnd, cm->mtx);
+        ok(!r, "wait failed\n");
+    }
+
+    p__Mtx_unlock(cm->mtx);
+    return 0;
+}
+
+static void test_cnd(void)
+{
+    _Thrd_t threads[NUM_THREADS];
+    xtime xt, before, after;
+    struct cndmtx cm;
+    int r, i, diff;
+    _Cnd_t cnd;
+    _Mtx_t mtx;
+
+    r = p__Cnd_init(&cnd);
+    ok(!r, "failed to init cnd\n");
+
+    r = p__Mtx_init(&mtx, 0);
+    ok(!r, "failed to init mtx\n");
+
+    p__Cnd_destroy(NULL);
+
+    /* test _Cnd_signal/_Cnd_wait */
+    cm.initialized = CreateEventW(NULL, FALSE, FALSE, NULL);
+    cm.started = 0;
+    cm.thread_no = 1;
+    cm.cnd = cnd;
+    cm.mtx = mtx;
+    cm.timed_wait = FALSE;
+    p__Thrd_create(&threads[0], cnd_wait_thread, (void*)&cm);
+
+    WaitForSingleObject(cm.initialized, INFINITE);
+    p__Mtx_lock(mtx);
+    p__Mtx_unlock(mtx);
+
+    r = p__Cnd_signal(cm.cnd);
+    ok(!r, "failed to signal\n");
+    p__Thrd_join(threads[0], NULL);
+
+    /* test _Cnd_timedwait time out */
+    p__Mtx_lock(mtx);
+    p_xtime_get(&before, 1);
+    xt = before;
+    xt.sec += 1;
+    /* try to avoid failures on spurious wakeup */
+    p__Cnd_timedwait(cnd, mtx, &xt);
+    r = p__Cnd_timedwait(cnd, mtx, &xt);
+    p_xtime_get(&after, 1);
+    p__Mtx_unlock(mtx);
+
+    diff = p__Xtime_diff_to_millis2(&after, &before);
+    ok(r == 2, "should have timed out\n");
+    ok(diff > 1000 - TIMEDELTA, "got %d\n", diff);
+
+    /* test _Cnd_timedwait */
+    cm.started = 0;
+    cm.timed_wait = TRUE;
+    p__Thrd_create(&threads[0], cnd_wait_thread, (void*)&cm);
+
+    WaitForSingleObject(cm.initialized, INFINITE);
+    p__Mtx_lock(mtx);
+    p__Mtx_unlock(mtx);
+
+    r = p__Cnd_signal(cm.cnd);
+    ok(!r, "failed to signal\n");
+    p__Thrd_join(threads[0], NULL);
+
+    /* test _Cnd_broadcast */
+    cm.started = 0;
+    cm.thread_no = NUM_THREADS;
+
+    for(i = 0; i < cm.thread_no; i++)
+        p__Thrd_create(&threads[i], cnd_wait_thread, (void*)&cm);
+
+    WaitForSingleObject(cm.initialized, INFINITE);
+    p__Mtx_lock(mtx);
+    p__Mtx_unlock(mtx);
+
+    r = p__Cnd_broadcast(cnd);
+    ok(!r, "failed to broadcast\n");
+    for(i = 0; i < cm.thread_no; i++)
+        p__Thrd_join(threads[i], NULL);
+
+    p__Cnd_destroy(cnd);
+    p__Mtx_destroy(mtx);
+    CloseHandle(cm.initialized);
+}
+
 START_TEST(msvcp140)
 {
     if(!init()) return;
@@ -1410,5 +1600,6 @@ START_TEST(msvcp140)
     test__Winerror_map();
     test__Syserror_map();
     test_Equivalent();
+    test_cnd();
     FreeLibrary(msvcp);
 }
