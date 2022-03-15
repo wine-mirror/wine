@@ -159,8 +159,9 @@ struct authinfo
 
 struct queue
 {
-    TP_POOL *pool;
-    TP_CALLBACK_ENVIRON env;
+    SRWLOCK lock;
+    struct list queued_tasks;
+    BOOL callback_running;
 };
 
 enum request_flags
@@ -277,6 +278,7 @@ typedef void (*TASK_CALLBACK)( void *ctx );
 
 struct task_header
 {
+    struct list entry;
     TASK_CALLBACK callback;
     struct object_header *obj;
 };
@@ -355,6 +357,7 @@ BOOL free_handle( HINTERNET ) DECLSPEC_HIDDEN;
 
 void send_callback( struct object_header *, DWORD, LPVOID, DWORD ) DECLSPEC_HIDDEN;
 void close_connection( struct request * ) DECLSPEC_HIDDEN;
+void init_queue( struct queue *queue ) DECLSPEC_HIDDEN;
 void stop_queue( struct queue * ) DECLSPEC_HIDDEN;
 
 void netconn_close( struct netconn * ) DECLSPEC_HIDDEN;

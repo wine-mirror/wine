@@ -122,54 +122,82 @@ static const WCHAR *attribute_table[] =
     NULL                            /* WINHTTP_QUERY_PASSPORT_CONFIG            = 78 */
 };
 
-static DWORD start_queue( struct queue *queue )
+void init_queue( struct queue *queue )
 {
-    if (queue->pool) return ERROR_SUCCESS;
-
-    if (!(queue->pool = CreateThreadpool( NULL ))) return GetLastError();
-    SetThreadpoolThreadMinimum( queue->pool, 1 );
-    SetThreadpoolThreadMaximum( queue->pool, 1 );
-
-    memset( &queue->env, 0, sizeof(queue->env) );
-    queue->env.Version = 1;
-    queue->env.Pool = queue->pool;
-
-    TRACE("started %p\n", queue);
-    return ERROR_SUCCESS;
+    InitializeSRWLock( &queue->lock );
+    list_init( &queue->queued_tasks );
+    queue->callback_running = FALSE;
 }
 
 void stop_queue( struct queue *queue )
 {
-    if (!queue->pool) return;
-    CloseThreadpool( queue->pool );
-    queue->pool = NULL;
+    assert( list_empty( &queue->queued_tasks ));
     TRACE("stopped %p\n", queue);
 }
 
-static void CALLBACK task_callback( TP_CALLBACK_INSTANCE *instance, void *ctx, TP_WORK *work )
+static struct task_header *get_next_task( struct queue *queue )
 {
-    struct task_header *task_hdr = ctx;
+    struct list *entry;
 
-    task_hdr->callback( task_hdr );
-    release_object( task_hdr->obj );
-    free( task_hdr );
+    AcquireSRWLockExclusive( &queue->lock );
+    assert( queue->callback_running );
+    if ((entry = list_head( &queue->queued_tasks )))
+        list_remove( entry );
+    else
+        queue->callback_running = FALSE;
+    ReleaseSRWLockExclusive( &queue->lock );
+    if (!entry) return NULL;
+    return LIST_ENTRY( entry, struct task_header, entry );
+}
+
+static void CALLBACK task_callback( TP_CALLBACK_INSTANCE *instance, void *ctx )
+{
+    struct task_header *task, *next_task;
+    struct queue *queue = ctx;
+
+    TRACE( "instance %p.\n", instance );
+
+    task = get_next_task( queue );
+    while (task)
+    {
+        task->callback( task );
+        /* Queue object may be freed by release_object() unless there is another task referencing it. */
+        next_task = get_next_task( queue );
+        release_object( task->obj );
+        free( task );
+        task = next_task;
+    }
+    TRACE( "instance %p exiting.\n", instance );
 }
 
 static DWORD queue_task( struct queue *queue, TASK_CALLBACK task, struct task_header *task_hdr,
                          struct object_header *obj )
 {
-    TP_WORK *work;
-    DWORD ret;
+    BOOL callback_running;
 
-    if ((ret = start_queue( queue ))) return ret;
-
-    if (!(work = CreateThreadpoolWork( task_callback, task_hdr, &queue->env ))) return GetLastError();
     TRACE("queueing %p in %p\n", task_hdr, queue);
     task_hdr->callback = task;
     task_hdr->obj = obj;
     addref_object( obj );
-    SubmitThreadpoolWork( work );
-    CloseThreadpoolWork( work );
+
+    AcquireSRWLockExclusive( &queue->lock );
+    list_add_tail( &queue->queued_tasks, &task_hdr->entry );
+    if (!(callback_running = queue->callback_running))
+    {
+        if ((queue->callback_running = TrySubmitThreadpoolCallback( task_callback, queue, NULL )))
+            callback_running = TRUE;
+        else
+            list_remove( &task_hdr->entry );
+    }
+    ReleaseSRWLockExclusive( &queue->lock );
+
+    if (!callback_running)
+    {
+        release_object( obj );
+        free( task_hdr );
+        ERR( "Submiting threadpool callback failed, err %lu.\n", GetLastError() );
+        return ERROR_OUTOFMEMORY;
+    }
 
     return ERROR_SUCCESS;
 }
@@ -3096,6 +3124,8 @@ HINTERNET WINAPI WinHttpWebSocketCompleteUpgrade( HINTERNET hrequest, DWORD_PTR 
     socket->hdr.notify_mask = request->hdr.notify_mask;
     socket->hdr.context = context;
     InitializeSRWLock( &socket->send_lock );
+    init_queue( &socket->send_q );
+    init_queue( &socket->recv_q );
 
     addref_object( &request->hdr );
     socket->request = request;
