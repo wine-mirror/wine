@@ -1104,17 +1104,17 @@ static HRESULT WINAPI Widget_VarArg_Ref_Run(
     return S_OK;
 }
 
-static HRESULT WINAPI Widget_basetypes_in(IWidget *iface, signed char c, short s, int i, hyper h,
-        unsigned char uc, unsigned short us, unsigned int ui, MIDL_uhyper uh,
+static HRESULT WINAPI Widget_basetypes_in(IWidget *iface, signed char c, short s, LONG l, hyper h,
+        unsigned char uc, unsigned short us, ULONG ul, MIDL_uhyper uh,
         float f, double d, STATE st)
 {
     ok(c == 5, "Got char %d.\n", c);
     ok(s == -123, "Got short %d.\n", s);
-    ok(i == -100000, "Got int %d.\n", i);
+    ok(l == -100000, "Got int %d.\n", l);
     ok(h == (LONGLONG)-100000 * 1000000, "Got hyper %s.\n", wine_dbgstr_longlong(h));
     ok(uc == 0, "Got unsigned char %u.\n", uc);
     ok(us == 456, "Got unsigned short %u.\n", us);
-    ok(ui == 0xdeadbeef, "Got unsigned int %i.\n", ui);
+    ok(ul == 0xdeadbeef, "Got unsigned int %u.\n", ul);
     ok(uh == (ULONGLONG)1234567890 * 9876543210, "Got unsigned hyper %s.\n", wine_dbgstr_longlong(uh));
     ok(f == (float)M_PI, "Got float %f.\n", f);
     ok(d == M_E, "Got double %f.\n", d);
@@ -1123,17 +1123,17 @@ static HRESULT WINAPI Widget_basetypes_in(IWidget *iface, signed char c, short s
     return S_OK;
 }
 
-static HRESULT WINAPI Widget_basetypes_out(IWidget *iface, signed char *c, short *s, int *i, hyper *h,
-        unsigned char *uc, unsigned short *us, unsigned int *ui, MIDL_uhyper *uh,
+static HRESULT WINAPI Widget_basetypes_out(IWidget *iface, signed char *c, short *s, LONG *l, hyper *h,
+        unsigned char *uc, unsigned short *us, ULONG *ul, MIDL_uhyper *uh,
         float *f, double *d, STATE *st)
 {
     *c = 10;
     *s = -321;
-    *i = -200000;
+    *l = -200000;
     *h = (LONGLONG)-200000 * 1000000;
     *uc = 254;
     *us = 256;
-    *ui = 0xf00dfade;
+    *ul = 0xf00dfade;
     *uh = (((ULONGLONG)0xabcdef01) << 32) | (ULONGLONG)0x23456789;
     *f = M_LN2;
     *d = M_LN10;
@@ -1153,7 +1153,7 @@ static HRESULT WINAPI Widget_float_abi(IWidget *iface, float f, double d, int i,
     return S_OK;
 }
 
-static HRESULT WINAPI Widget_int_ptr(IWidget *iface, int *in, int *out, int *in_out)
+static HRESULT WINAPI Widget_long_ptr(IWidget *iface, LONG *in, LONG *out, LONG *in_out)
 {
     ok(*in == 123, "Got [in] %d.\n", *in);
     if (testmode == 0)  /* Invoke() */
@@ -1169,7 +1169,7 @@ static HRESULT WINAPI Widget_int_ptr(IWidget *iface, int *in, int *out, int *in_
     return S_OK;
 }
 
-static HRESULT WINAPI Widget_int_ptr_ptr(IWidget *iface, int **in, int **out, int **in_out)
+static HRESULT WINAPI Widget_long_ptr_ptr(IWidget *iface, LONG **in, LONG **out, LONG **in_out)
 {
     ok(!*out, "Got [out] %p.\n", *out);
     if (testmode == 0)
@@ -1637,8 +1637,8 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_basetypes_in,
     Widget_basetypes_out,
     Widget_float_abi,
-    Widget_int_ptr,
-    Widget_int_ptr_ptr,
+    Widget_long_ptr,
+    Widget_long_ptr_ptr,
     Widget_iface_in,
     Widget_iface_out,
     Widget_iface_ptr,
@@ -1980,11 +1980,12 @@ static void test_marshal_basetypes(IWidget *widget, IDispatch *disp)
 
     signed char c;
     short s;
+    LONG l;
     int i, i2, *pi;
     hyper h;
     unsigned char uc;
     unsigned short us;
-    unsigned int ui;
+    ULONG ul;
     MIDL_uhyper uh;
     float f;
     double d;
@@ -2009,46 +2010,46 @@ static void test_marshal_basetypes(IWidget *widget, IDispatch *disp)
             0xdeadbeef, (ULONGLONG)1234567890 * 9876543210, M_PI, M_E, STATE_WIDGETIFIED);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    c = s = i = h = uc = us = ui = uh = f = d = st = 0;
+    c = s = l = h = uc = us = ul = uh = f = d = st = 0;
 
     V_VT(&arg[10]) = VT_BYREF|VT_I1;  V_I1REF(&arg[10]) = &c;
     V_VT(&arg[9])  = VT_BYREF|VT_I2;  V_I2REF(&arg[9])  = &s;
-    V_VT(&arg[8])  = VT_BYREF|VT_I4;  V_I4REF(&arg[8])  = &i;
+    V_VT(&arg[8])  = VT_BYREF|VT_I4;  V_I4REF(&arg[8])  = &l;
     V_VT(&arg[7])  = VT_BYREF|VT_I8;  V_I8REF(&arg[7])  = &h;
     V_VT(&arg[6])  = VT_BYREF|VT_UI1; V_UI1REF(&arg[6]) = &uc;
     V_VT(&arg[5])  = VT_BYREF|VT_UI2; V_UI2REF(&arg[5]) = &us;
-    V_VT(&arg[4])  = VT_BYREF|VT_UI4; V_UI4REF(&arg[4]) = &ui;
+    V_VT(&arg[4])  = VT_BYREF|VT_UI4; V_UI4REF(&arg[4]) = &ul;
     V_VT(&arg[3])  = VT_BYREF|VT_UI8; V_UI8REF(&arg[3]) = &uh;
     V_VT(&arg[2])  = VT_BYREF|VT_R4;  V_R4REF(&arg[2])  = &f;
     V_VT(&arg[1])  = VT_BYREF|VT_R8;  V_R8REF(&arg[1])  = &d;
-    V_VT(&arg[0])  = VT_BYREF|VT_I4;  V_I4REF(&arg[0])  = (int *)&st;
+    V_VT(&arg[0])  = VT_BYREF|VT_I4;  V_I4REF(&arg[0])  = (LONG *)&st;
     hr = IDispatch_Invoke(disp, DISPID_TM_BASETYPES_OUT, &IID_NULL, LOCALE_NEUTRAL,
             DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(c == 10, "Got char %d.\n", c);
     ok(s == -321, "Got short %d.\n", s);
-    ok(i == -200000, "Got int %d.\n", i);
+    ok(l == -200000, "Got int %d.\n", l);
     ok(h == (LONGLONG)-200000 * 1000000L, "Got hyper %s.\n", wine_dbgstr_longlong(h));
     ok(uc == 254, "Got unsigned char %u.\n", uc);
     ok(us == 256, "Got unsigned short %u.\n", us);
-    ok(ui == 0xf00dfade, "Got unsigned int %i.\n", ui);
+    ok(ul == 0xf00dfade, "Got unsigned int %i.\n", ul);
     ok(uh == ((((ULONGLONG)0xabcdef01) << 32) | (ULONGLONG)0x23456789),
             "Got unsigned hyper %s.\n", wine_dbgstr_longlong(uh));
     ok(f == (float)M_LN2, "Got float %f.\n", f);
     ok(d == M_LN10, "Got double %f.\n", d);
     ok(st == STATE_UNWIDGETIFIED, "Got state %u.\n", st);
 
-    c = s = i = h = uc = us = ui = uh = f = d = st = 0;
+    c = s = l = h = uc = us = ul = uh = f = d = st = 0;
 
-    hr = IWidget_basetypes_out(widget, &c, &s, &i, &h, &uc, &us, &ui, &uh, &f, &d, &st);
+    hr = IWidget_basetypes_out(widget, &c, &s, &l, &h, &uc, &us, &ul, &uh, &f, &d, &st);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(c == 10, "Got char %d.\n", c);
     ok(s == -321, "Got short %d.\n", s);
-    ok(i == -200000, "Got int %d.\n", i);
+    ok(l == -200000, "Got int %d.\n", l);
     ok(h == (LONGLONG)-200000 * 1000000L, "Got hyper %s.\n", wine_dbgstr_longlong(h));
     ok(uc == 254, "Got unsigned char %u.\n", uc);
     ok(us == 256, "Got unsigned short %u.\n", us);
-    ok(ui == 0xf00dfade, "Got unsigned int %i.\n", ui);
+    ok(ul == 0xf00dfade, "Got unsigned int %i.\n", ul);
     ok(uh == ((((ULONGLONG)0xabcdef01) << 32) | (ULONGLONG)0x23456789),
             "Got unsigned hyper %s.\n", wine_dbgstr_longlong(uh));
     ok(f == (float)M_LN2, "Got float %f.\n", f);
@@ -2073,7 +2074,7 @@ static void test_marshal_pointer(IWidget *widget, IDispatch *disp)
 {
     VARIANTARG arg[3];
     DISPPARAMS dispparams = {arg, NULL, ARRAY_SIZE(arg), 0};
-    int in, out, in_out, *in_ptr, *out_ptr, *in_out_ptr;
+    LONG in, out, in_out, *in_ptr, *out_ptr, *in_out_ptr;
     HRESULT hr;
 
     testmode = 0;
@@ -2096,26 +2097,26 @@ static void test_marshal_pointer(IWidget *widget, IDispatch *disp)
     in = 123;
     out = 456;
     in_out = 789;
-    hr = IWidget_int_ptr(widget, &in, &out, &in_out);
+    hr = IWidget_long_ptr(widget, &in, &out, &in_out);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(in == 123, "Got [in] %d.\n", in);
     ok(out == 654, "Got [out] %d.\n", out);
     ok(in_out == 321, "Got [in, out] %d.\n", in_out);
 
     out = in_out = -1;
-    hr = IWidget_int_ptr(widget, NULL, &out, &in_out);
+    hr = IWidget_long_ptr(widget, NULL, &out, &in_out);
     ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "Got hr %#x.\n", hr);
     ok(!out, "[out] parameter should have been cleared.\n");
     ok(in_out == -1, "[in, out] parameter should not have been cleared.\n");
 
     in = in_out = -1;
-    hr = IWidget_int_ptr(widget, &in, NULL, &in_out);
+    hr = IWidget_long_ptr(widget, &in, NULL, &in_out);
     ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "Got hr %#x.\n", hr);
     ok(in == -1, "[in] parameter should not have been cleared.\n");
     ok(in_out == -1, "[in, out] parameter should not have been cleared.\n");
 
     in = out = -1;
-    hr = IWidget_int_ptr(widget, &in, &out, NULL);
+    hr = IWidget_long_ptr(widget, &in, &out, NULL);
     ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "Got hr %#x.\n", hr);
     ok(in == -1, "[in] parameter should not have been cleared.\n");
     ok(!out, "[out] parameter should have been cleared.\n");
@@ -2125,14 +2126,14 @@ static void test_marshal_pointer(IWidget *widget, IDispatch *disp)
 
     testmode = 0;
     in_ptr = out_ptr = in_out_ptr = NULL;
-    hr = IWidget_int_ptr_ptr(widget, &in_ptr, &out_ptr, &in_out_ptr);
+    hr = IWidget_long_ptr_ptr(widget, &in_ptr, &out_ptr, &in_out_ptr);
     ok(hr == S_OK, "Got hr %#x\n", hr);
     ok(!in_ptr, "Got [in] %p.\n", in_ptr);
     ok(!out_ptr, "Got [out] %p.\n", out_ptr);
     ok(!in_out_ptr, "Got [in, out] %p.\n", in_out_ptr);
 
     testmode = 1;
-    hr = IWidget_int_ptr_ptr(widget, &in_ptr, &out_ptr, &in_out_ptr);
+    hr = IWidget_long_ptr_ptr(widget, &in_ptr, &out_ptr, &in_out_ptr);
     ok(hr == S_OK, "Got hr %#x\n", hr);
     ok(*out_ptr == 654, "Got [out] %d.\n", *out_ptr);
     ok(*in_out_ptr == 321, "Got [in, out] %d.\n", *in_out_ptr);
@@ -2146,7 +2147,7 @@ static void test_marshal_pointer(IWidget *widget, IDispatch *disp)
     in_ptr = &in;
     out_ptr = &out;
     in_out_ptr = &in_out;
-    hr = IWidget_int_ptr_ptr(widget, &in_ptr, &out_ptr, &in_out_ptr);
+    hr = IWidget_long_ptr_ptr(widget, &in_ptr, &out_ptr, &in_out_ptr);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(out_ptr != &out, "[out] ptr should have changed.\n");
     ok(in_out_ptr == &in_out, "[in, out] ptr should not have changed.\n");
@@ -2157,27 +2158,27 @@ static void test_marshal_pointer(IWidget *widget, IDispatch *disp)
     in_ptr = out_ptr = NULL;
     in_out = 789;
     in_out_ptr = &in_out;
-    hr = IWidget_int_ptr_ptr(widget, &in_ptr, &out_ptr, &in_out_ptr);
+    hr = IWidget_long_ptr_ptr(widget, &in_ptr, &out_ptr, &in_out_ptr);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!in_out_ptr, "Got [in, out] %p.\n", in_out_ptr);
 
     out_ptr = &out;
     in_out_ptr = &in_out;
-    hr = IWidget_int_ptr_ptr(widget, NULL, &out_ptr, &in_out_ptr);
+    hr = IWidget_long_ptr_ptr(widget, NULL, &out_ptr, &in_out_ptr);
     ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "Got hr %#x.\n", hr);
     ok(!out_ptr, "[out] parameter should have been cleared.\n");
     ok(in_out_ptr == &in_out, "[in, out] parameter should not have been cleared.\n");
 
     in_ptr = &in;
     in_out_ptr = &in_out;
-    hr = IWidget_int_ptr_ptr(widget, &in_ptr, NULL, &in_out_ptr);
+    hr = IWidget_long_ptr_ptr(widget, &in_ptr, NULL, &in_out_ptr);
     ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "Got hr %#x.\n", hr);
     ok(in_ptr == &in, "[in] parameter should not have been cleared.\n");
     ok(in_out_ptr == &in_out, "[in, out] parameter should not have been cleared.\n");
 
     in_ptr = &in;
     out_ptr = &out;
-    hr = IWidget_int_ptr_ptr(widget, &in_ptr, &out_ptr, NULL);
+    hr = IWidget_long_ptr_ptr(widget, &in_ptr, &out_ptr, NULL);
     ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "Got hr %#x.\n", hr);
     ok(in_ptr == &in, "[in] parameter should not have been cleared.\n");
     ok(!out_ptr, "[out] parameter should have been cleared.\n");
@@ -2634,7 +2635,7 @@ static void test_marshal_array(IWidget *widget, IDispatch *disp)
     array_t in, out, in_out;
     MYSTRUCT struct_in[2];
     HRESULT hr;
-    int i = 2;
+    LONG l = 2;
 
     memcpy(in, test_array1, sizeof(array_t));
     memcpy(out, test_array2, sizeof(array_t));
@@ -2646,7 +2647,7 @@ static void test_marshal_array(IWidget *widget, IDispatch *disp)
     ok(!memcmp(&in_out, &test_array6, sizeof(array_t)), "Arrays didn't match.\n");
 
     V_VT(&var_in[0]) = VT_I4;          V_I4(&var_in[0])       = 1;
-    V_VT(&var_in[1]) = VT_BYREF|VT_I4; V_I4REF(&var_in[1])    = &i;
+    V_VT(&var_in[1]) = VT_BYREF|VT_I4; V_I4REF(&var_in[1])    = &l;
     V_VT(&var_out[0]) = VT_I4;         V_I4(&var_out[0])      = 3;
     V_VT(&var_out[1]) = VT_I4;         V_I4(&var_out[1])      = 4;
     V_VT(&var_in_out[0]) = VT_I4;      V_I4(&var_in_out[0])   = 5;
@@ -2656,8 +2657,8 @@ static void test_marshal_array(IWidget *widget, IDispatch *disp)
     ok(V_VT(&var_in[0]) == VT_I4, "Got wrong type %u.\n", V_VT(&var_in[0]));
     ok(V_I4(&var_in[0]) == 1, "Got wrong value %d.\n", V_I4(&var_in[0]));
     ok(V_VT(&var_in[1]) == (VT_BYREF|VT_I4), "Got wrong type %u.\n", V_VT(&var_in[1]));
-    ok(V_I4REF(&var_in[1]) == &i, "Got wrong value %p.\n", V_I4REF(&var_in[1]));
-    ok(i == 2, "Got wrong value %d.\n", i);
+    ok(V_I4REF(&var_in[1]) == &l, "Got wrong value %p.\n", V_I4REF(&var_in[1]));
+    ok(l == 2, "Got wrong value %d.\n", l);
     ok(V_VT(&var_out[0]) == VT_I1, "Got wrong type %u.\n", V_VT(&var_out[0]));
     ok(V_I1(&var_out[0]) == 9, "Got wrong value %u.\n", V_VT(&var_out[0]));
     ok(V_VT(&var_out[1]) == VT_BSTR, "Got wrong type %u.\n", V_VT(&var_out[1]));
@@ -3054,7 +3055,7 @@ static void test_typelibmarshal(void)
     the_state = STATE_WIDGETIFIED;
     VariantInit(&vararg[0]);
     V_VT(&vararg[0]) = VT_BYREF|VT_I4;
-    V_I4REF(&vararg[0]) = (int *)&the_state;
+    V_I4REF(&vararg[0]) = (LONG *)&the_state;
     dispparams.cNamedArgs = 1;
     dispparams.cArgs = 1;
     dispparams.rgdispidNamedArgs = &dispidNamed;
@@ -3416,7 +3417,7 @@ static void test_typelibmarshal(void)
     uval = 666;
     VariantInit(&vararg[0]);
     V_VT(&vararg[0]) = VT_UI4|VT_BYREF;
-    V_UI4REF(&vararg[0]) = &uval;
+    V_UI4REF(&vararg[0]) = (ULONG *)&uval;
     dispparams.cNamedArgs = 0;
     dispparams.cArgs = 1;
     dispparams.rgvarg = vararg;
@@ -3425,7 +3426,7 @@ static void test_typelibmarshal(void)
     ok_ole_success(hr, ITypeInfo_Invoke);
     ok(V_VT(&varresult) == VT_EMPTY, "varresult should be VT_EMPTY\n");
     ok(V_VT(&vararg[0]) == (VT_UI4|VT_BYREF), "arg VT not unmarshalled correctly: %x\n", V_VT(&vararg[0]));
-    ok(V_UI4REF(&vararg[0]) == &uval, "Byref pointer not preserved: %p/%p\n", &uval, V_UI4REF(&vararg[0]));
+    ok(V_UI4REF(&vararg[0]) == (ULONG *)&uval, "Byref pointer not preserved: %p/%p\n", &uval, V_UI4REF(&vararg[0]));
     ok(*V_UI4REF(&vararg[0]) == 42, "Expected 42 to be returned instead of %u\n", *V_UI4REF(&vararg[0]));
     VariantClear(&varresult);
     VariantClear(&vararg[0]);
