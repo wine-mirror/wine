@@ -5872,7 +5872,6 @@ static void test_MFCreate2DMediaBuffer(void)
     hr = IMFMediaBuffer_Lock(buffer, &data, NULL, NULL);
     ok(hr == S_OK, "Failed to lock buffer, hr %#lx.\n", hr);
 
-    todo_wine
     ok(memcmp(data, eight_bbs, sizeof(eight_bbs)) == 0, "Invalid data instead of 0xbb.\n");
 
     hr = IMFMediaBuffer_Unlock(buffer);

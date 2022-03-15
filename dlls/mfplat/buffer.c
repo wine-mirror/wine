@@ -311,6 +311,10 @@ static HRESULT WINAPI memory_1d_2d_buffer_Lock(IMFMediaBuffer *iface, BYTE **dat
     {
         if (!(buffer->_2d.linear_buffer = malloc(ALIGN_SIZE(buffer->_2d.plane_size, MF_64_BYTE_ALIGNMENT))))
             hr = E_OUTOFMEMORY;
+
+        if (SUCCEEDED(hr))
+            copy_image(buffer, buffer->_2d.linear_buffer, buffer->_2d.width, buffer->data, buffer->_2d.pitch,
+                    buffer->_2d.width, buffer->_2d.height);
     }
 
     if (SUCCEEDED(hr))
