@@ -622,9 +622,9 @@ static const char *debug_cs_op(enum wined3d_cs_op op)
     return wine_dbg_sprintf("UNKNOWN_OP(%#x)", op);
 }
 
-static struct wined3d_cs_packet *wined3d_next_cs_packet(const uint8_t *data, SIZE_T *offset)
+static struct wined3d_cs_packet *wined3d_next_cs_packet(const uint8_t *data, SIZE_T *offset, SIZE_T mask)
 {
-    struct wined3d_cs_packet *packet = (struct wined3d_cs_packet *)&data[WINED3D_CS_QUEUE_MASK(*offset)];
+    struct wined3d_cs_packet *packet = (struct wined3d_cs_packet *)&data[*offset & mask];
 
     *offset += offsetof(struct wined3d_cs_packet, data[packet->size]);
 
@@ -2882,7 +2882,7 @@ static void wined3d_cs_exec_execute_command_list(struct wined3d_cs *cs, const vo
 
     while (start < end)
     {
-        const struct wined3d_cs_packet *packet = wined3d_next_cs_packet(cs_data, &start);
+        const struct wined3d_cs_packet *packet = wined3d_next_cs_packet(cs_data, &start, WINED3D_CS_QUEUE_MASK);
         enum wined3d_cs_op opcode = *(const enum wined3d_cs_op *)packet->data;
 
         if (opcode >= WINED3D_CS_OP_STOP)
@@ -3139,7 +3139,7 @@ static void wined3d_cs_queue_submit(struct wined3d_cs_queue *queue, struct wined
     struct wined3d_cs_packet *packet;
     size_t packet_size;
 
-    packet = (struct wined3d_cs_packet *)&queue->data[WINED3D_CS_QUEUE_MASK(queue->head)];
+    packet = (struct wined3d_cs_packet *)&queue->data[queue->head & WINED3D_CS_QUEUE_MASK];
     TRACE("Queuing op %s at %p.\n", debug_cs_op(*(const enum wined3d_cs_op *)packet->data), packet);
     packet_size = FIELD_OFFSET(struct wined3d_cs_packet, data[packet->size]);
     InterlockedExchange((LONG *)&queue->head, queue->head + packet_size);
@@ -3163,7 +3163,7 @@ static void *wined3d_cs_queue_require_space(struct wined3d_cs_queue *queue, size
     size_t queue_size = ARRAY_SIZE(queue->data);
     size_t header_size, packet_size, remaining;
     struct wined3d_cs_packet *packet;
-    ULONG head = WINED3D_CS_QUEUE_MASK(queue->head);
+    ULONG head = queue->head & WINED3D_CS_QUEUE_MASK;
 
     header_size = FIELD_OFFSET(struct wined3d_cs_packet, data[0]);
     packet_size = FIELD_OFFSET(struct wined3d_cs_packet, data[size]);
@@ -3190,19 +3190,19 @@ static void *wined3d_cs_queue_require_space(struct wined3d_cs_queue *queue, size
             nop->opcode = WINED3D_CS_OP_NOP;
 
         wined3d_cs_queue_submit(queue, cs);
-        head = WINED3D_CS_QUEUE_MASK(queue->head);
+        head = queue->head & WINED3D_CS_QUEUE_MASK;
         assert(!head);
     }
 
     for (;;)
     {
-        ULONG tail = WINED3D_CS_QUEUE_MASK(*(volatile ULONG *)&queue->tail);
+        ULONG tail = (*(volatile ULONG *)&queue->tail) & WINED3D_CS_QUEUE_MASK;
         ULONG new_pos;
 
         /* Empty. */
         if (head == tail)
             break;
-        new_pos = WINED3D_CS_QUEUE_MASK(head + packet_size);
+        new_pos = (head + packet_size) & WINED3D_CS_QUEUE_MASK;
         /* Head ahead of tail. We checked the remaining size above, so we only
          * need to make sure we don't make head equal to tail. */
         if (head > tail && (new_pos != tail))
@@ -3346,7 +3346,7 @@ static DWORD WINAPI wined3d_cs_run(void *ctx)
         spin_count = 0;
 
         tail = queue->tail;
-        packet = wined3d_next_cs_packet(queue->data, &tail);
+        packet = wined3d_next_cs_packet(queue->data, &tail, WINED3D_CS_QUEUE_MASK);
         if (packet->size)
         {
             opcode = *(const enum wined3d_cs_op *)packet->data;
@@ -3998,7 +3998,7 @@ static void wined3d_deferred_context_submit(struct wined3d_device_context *conte
     struct wined3d_cs_packet *packet;
 
     assert(queue_id == WINED3D_CS_QUEUE_DEFAULT);
-    packet = wined3d_next_cs_packet(deferred->data, &deferred->data_size);
+    packet = wined3d_next_cs_packet(deferred->data, &deferred->data_size, ~(SIZE_T)0);
     wined3d_cs_packet_incref_objects(packet);
 }
 
@@ -4241,7 +4241,7 @@ void CDECL wined3d_deferred_context_destroy(struct wined3d_device_context *conte
 
     while (offset < deferred->data_size)
     {
-        packet = wined3d_next_cs_packet(deferred->data, &offset);
+        packet = wined3d_next_cs_packet(deferred->data, &offset, ~(SIZE_T)0);
         wined3d_cs_packet_decref_objects(packet);
     }
 
@@ -4372,7 +4372,7 @@ ULONG CDECL wined3d_command_list_decref(struct wined3d_command_list *list)
         offset = 0;
         while (offset < list->data_size)
         {
-            packet = wined3d_next_cs_packet(list->data, &offset);
+            packet = wined3d_next_cs_packet(list->data, &offset, ~(SIZE_T)0);
             wined3d_cs_packet_decref_objects(packet);
         }
 
