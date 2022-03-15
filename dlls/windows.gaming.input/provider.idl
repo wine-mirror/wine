@@ -33,6 +33,7 @@ import "windows.gaming.input.custom.idl";
 namespace Windows.Gaming.Input.Custom {
     typedef enum WineGameControllerType WineGameControllerType;
     typedef struct WineGameControllerState WineGameControllerState;
+    typedef struct WineGameControllerVibration WineGameControllerVibration;
     interface IWineGameControllerProvider;
     runtimeclass WineGameControllerProvider;
 
@@ -48,6 +49,14 @@ namespace Windows.Gaming.Input.Custom {
         DOUBLE axes[32];
         BOOLEAN buttons[128];
         Windows.Gaming.Input.GameControllerSwitchPosition switches[4];
+    };
+
+    struct WineGameControllerVibration
+    {
+        UINT16 rumble;
+        UINT16 buzz;
+        UINT16 left;
+        UINT16 right;
     };
 
     [
@@ -73,6 +82,8 @@ namespace Windows.Gaming.Input.Custom {
         [propget] HRESULT SwitchCount([out, retval] INT32 *value);
 
         [propget] HRESULT State([out, retval] WineGameControllerState *state);
+        [propget] HRESULT Vibration([out, retval] WineGameControllerVibration *vibration);
+        [propput] HRESULT Vibration([in] WineGameControllerVibration vibration);
     }
 
     [

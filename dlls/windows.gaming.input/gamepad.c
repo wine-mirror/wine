@@ -217,14 +217,36 @@ DEFINE_IINSPECTABLE_OUTER( gamepad, IGamepad, struct gamepad, IGameController_ou
 
 static HRESULT WINAPI gamepad_get_Vibration( IGamepad *iface, struct GamepadVibration *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct gamepad *impl = impl_from_IGamepad( iface );
+    struct WineGameControllerVibration vibration;
+    HRESULT hr;
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    if (FAILED(hr = IWineGameControllerProvider_get_Vibration( impl->wine_provider, &vibration ))) return hr;
+
+    value->LeftMotor = vibration.rumble / 65535.;
+    value->RightMotor = vibration.buzz / 65535.;
+    value->LeftTrigger = vibration.left / 65535.;
+    value->RightTrigger = vibration.right / 65535.;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI gamepad_put_Vibration( IGamepad *iface, struct GamepadVibration value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, &value );
-    return E_NOTIMPL;
+    struct gamepad *impl = impl_from_IGamepad( iface );
+    struct WineGameControllerVibration vibration =
+    {
+        .rumble = value.LeftMotor * 65535.,
+        .buzz = value.RightMotor * 65535.,
+        .left = value.LeftTrigger * 65535.,
+        .right = value.RightTrigger * 65535.,
+    };
+
+    TRACE( "iface %p, value %p.\n", iface, &value );
+
+    return IWineGameControllerProvider_put_Vibration( impl->wine_provider, vibration );
 }
 
 static HRESULT WINAPI gamepad_GetCurrentReading( IGamepad *iface, struct GamepadReading *value )

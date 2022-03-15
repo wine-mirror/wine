@@ -20,8 +20,10 @@
 #include "private.h"
 
 #include "initguid.h"
+#include "ddk/hidsdi.h"
 #include "dinput.h"
 #include "provider.h"
+#include "hidusage.h"
 
 #include "wine/debug.h"
 
@@ -49,6 +51,18 @@ struct provider
     IDirectInputDevice8W *dinput_device;
     WCHAR device_path[MAX_PATH];
     struct list entry;
+
+    struct WineGameControllerVibration vibration;
+
+    char *report_buf;
+    PHIDP_PREPARSED_DATA preparsed;
+    HIDP_VALUE_CAPS haptics_rumble_caps;
+    HIDP_VALUE_CAPS haptics_buzz_caps;
+    HIDP_VALUE_CAPS haptics_left_caps;
+    HIDP_VALUE_CAPS haptics_right_caps;
+    BYTE haptics_report;
+    HIDP_CAPS caps;
+    HANDLE device;
 };
 
 static inline struct provider *impl_from_IWineGameControllerProvider( IWineGameControllerProvider *iface )
@@ -100,6 +114,9 @@ static ULONG WINAPI wine_provider_Release( IWineGameControllerProvider *iface )
     if (!ref)
     {
         IDirectInputDevice8_Release( impl->dinput_device );
+        HidD_FreePreparsedData( impl->preparsed );
+        CloseHandle( impl->device );
+        free( impl->report_buf );
         free( impl );
     }
 
@@ -245,6 +262,58 @@ static HRESULT WINAPI wine_provider_get_State( IWineGameControllerProvider *ifac
     return S_OK;
 }
 
+static HRESULT WINAPI wine_provider_get_Vibration( IWineGameControllerProvider *iface, struct WineGameControllerVibration *out )
+{
+    struct provider *impl = impl_from_IWineGameControllerProvider( iface );
+    TRACE( "iface %p, out %p.\n", iface, out );
+    *out = impl->vibration;
+    return S_OK;
+}
+
+static HRESULT WINAPI wine_provider_put_Vibration( IWineGameControllerProvider *iface, struct WineGameControllerVibration value )
+{
+    struct provider *impl = impl_from_IWineGameControllerProvider( iface );
+    ULONG report_len = impl->caps.OutputReportByteLength;
+    PHIDP_PREPARSED_DATA preparsed = impl->preparsed;
+    char *report_buf = impl->report_buf;
+    USHORT collection;
+    NTSTATUS status;
+    BOOL ret;
+
+    TRACE( "iface %p, value %p.\n", iface, &value );
+
+    if (!memcmp( &impl->vibration, &value, sizeof(value) )) return S_OK;
+    impl->vibration = value;
+
+    status = HidP_InitializeReportForID( HidP_Output, impl->haptics_report, preparsed, report_buf, report_len );
+    if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_InitializeReportForID returned %#lx\n", status );
+
+    collection = impl->haptics_rumble_caps.LinkCollection;
+    status = HidP_SetUsageValue( HidP_Output, HID_USAGE_PAGE_HAPTICS, collection, HID_USAGE_HAPTICS_INTENSITY,
+                                 impl->vibration.rumble, preparsed, report_buf, report_len );
+    if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_SetUsageValue INTENSITY returned %#lx\n", status );
+
+    collection = impl->haptics_buzz_caps.LinkCollection;
+    status = HidP_SetUsageValue( HidP_Output, HID_USAGE_PAGE_HAPTICS, collection, HID_USAGE_HAPTICS_INTENSITY,
+                                 impl->vibration.buzz, preparsed, report_buf, report_len );
+    if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_SetUsageValue INTENSITY returned %#lx\n", status );
+
+    collection = impl->haptics_left_caps.LinkCollection;
+    status = HidP_SetUsageValue( HidP_Output, HID_USAGE_PAGE_HAPTICS, collection, HID_USAGE_HAPTICS_INTENSITY,
+                                 impl->vibration.left, preparsed, report_buf, report_len );
+    if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_SetUsageValue INTENSITY returned %#lx\n", status );
+
+    collection = impl->haptics_right_caps.LinkCollection;
+    status = HidP_SetUsageValue( HidP_Output, HID_USAGE_PAGE_HAPTICS, collection, HID_USAGE_HAPTICS_INTENSITY,
+                                 impl->vibration.right, preparsed, report_buf, report_len );
+    if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_SetUsageValue INTENSITY returned %#lx\n", status );
+
+    ret = HidD_SetOutputReport( impl->device, report_buf, report_len );
+    if (!ret) WARN( "HidD_SetOutputReport failed with error %lu\n", GetLastError() );
+
+    return S_OK;
+}
+
 static const struct IWineGameControllerProviderVtbl wine_provider_vtbl =
 {
     wine_provider_QueryInterface,
@@ -260,6 +329,8 @@ static const struct IWineGameControllerProviderVtbl wine_provider_vtbl =
     wine_provider_get_ButtonCount,
     wine_provider_get_SwitchCount,
     wine_provider_get_State,
+    wine_provider_get_Vibration,
+    wine_provider_put_Vibration,
 };
 
 DEFINE_IINSPECTABLE( game_provider, IGameControllerProvider, struct provider, IWineGameControllerProvider_iface )
@@ -325,6 +396,122 @@ static const struct IGameControllerProviderVtbl game_provider_vtbl =
     game_provider_get_IsConnected,
 };
 
+static void check_haptics_caps( struct provider *provider, HANDLE device, PHIDP_PREPARSED_DATA preparsed,
+                                HIDP_LINK_COLLECTION_NODE *collections, HIDP_VALUE_CAPS *caps )
+{
+    USHORT count, report_len = provider->caps.FeatureReportByteLength;
+    ULONG parent = caps->LinkCollection, waveform = 0;
+    char *report_buf = provider->report_buf;
+    HIDP_VALUE_CAPS value_caps;
+    USAGE_AND_PAGE phy_usages;
+    NTSTATUS status;
+
+    while (collections[parent].LinkUsagePage != HID_USAGE_PAGE_HAPTICS ||
+           collections[parent].LinkUsage != HID_USAGE_HAPTICS_SIMPLE_CONTROLLER)
+        if (!(parent = collections[parent].Parent)) break;
+
+    if (collections[parent].LinkUsagePage != HID_USAGE_PAGE_HAPTICS ||
+        collections[parent].LinkUsage != HID_USAGE_HAPTICS_SIMPLE_CONTROLLER)
+    {
+        WARN( "Failed to find haptics simple controller collection\n" );
+        return;
+    }
+    phy_usages.UsagePage = collections[collections[parent].Parent].LinkUsagePage;
+    phy_usages.Usage = collections[collections[parent].Parent].LinkUsage;
+
+    status = HidP_InitializeReportForID( HidP_Feature, caps->ReportID, preparsed, report_buf, report_len );
+    if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_InitializeReportForID returned %#lx\n", status );
+    if (!HidD_GetFeature( device, report_buf, report_len ))
+    {
+        WARN( "Failed to get waveform list report, error %lu\n", GetLastError() );
+        return;
+    }
+
+    status = HidP_GetUsageValue( HidP_Feature, caps->UsagePage, caps->LinkCollection,
+                                 caps->NotRange.Usage, &waveform, preparsed, report_buf, report_len );
+    if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_GetUsageValue returned %#lx\n", status );
+
+    count = 1;
+    status = HidP_GetSpecificValueCaps( HidP_Output, HID_USAGE_PAGE_HAPTICS, parent,
+                                        HID_USAGE_HAPTICS_INTENSITY, &value_caps, &count, preparsed );
+    if (status != HIDP_STATUS_SUCCESS || !count) WARN( "Failed to get waveform intensity caps, status %#lx\n", status );
+    else if (phy_usages.UsagePage == HID_USAGE_PAGE_GENERIC && phy_usages.Usage == HID_USAGE_GENERIC_Z)
+    {
+        TRACE( "Found left rumble caps, report %u collection %u\n", value_caps.ReportID, value_caps.LinkCollection );
+        provider->haptics_report = value_caps.ReportID;
+        provider->haptics_left_caps = value_caps;
+    }
+    else if (phy_usages.UsagePage == HID_USAGE_PAGE_GENERIC && phy_usages.Usage == HID_USAGE_GENERIC_RZ)
+    {
+        TRACE( "Found right rumble caps, report %u collection %u\n", value_caps.ReportID, value_caps.LinkCollection );
+        provider->haptics_report = value_caps.ReportID;
+        provider->haptics_right_caps = value_caps;
+    }
+    else if (waveform == HID_USAGE_HAPTICS_WAVEFORM_RUMBLE)
+    {
+        TRACE( "Found rumble caps, report %u collection %u\n", value_caps.ReportID, value_caps.LinkCollection );
+        provider->haptics_report = value_caps.ReportID;
+        provider->haptics_rumble_caps = value_caps;
+    }
+    else if (waveform == HID_USAGE_HAPTICS_WAVEFORM_BUZZ)
+    {
+        TRACE( "Found buzz caps, report %u collection %u\n", value_caps.ReportID, value_caps.LinkCollection );
+        provider->haptics_report = value_caps.ReportID;
+        provider->haptics_buzz_caps = value_caps;
+    }
+    else FIXME( "Unsupported waveform type %#lx\n", waveform );
+}
+
+static void open_haptics_device( struct provider *provider )
+{
+    HIDP_LINK_COLLECTION_NODE *collections;
+    PHIDP_PREPARSED_DATA preparsed = NULL;
+    ULONG i, size, coll_count = 0;
+    USHORT count, caps_count = 0;
+    HIDP_VALUE_CAPS caps[8];
+    NTSTATUS status;
+    HANDLE device;
+
+    device = CreateFileW( provider->device_path, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                          NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED | FILE_FLAG_NO_BUFFERING, 0 );
+    if (device == INVALID_HANDLE_VALUE) return;
+
+    if (!HidD_GetPreparsedData( device, &preparsed )) goto failed;
+    if (HidP_GetCaps( preparsed, &provider->caps ) != HIDP_STATUS_SUCCESS) goto failed;
+
+    size = max( provider->caps.OutputReportByteLength, provider->caps.FeatureReportByteLength );
+    if (!(provider->report_buf = malloc( size ))) goto failed;
+
+    coll_count = provider->caps.NumberLinkCollectionNodes;
+    if (!(collections = malloc( sizeof(*collections) * coll_count ))) goto failed;
+
+    status = HidP_GetLinkCollectionNodes( collections, &coll_count, preparsed );
+    if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_GetLinkCollectionNodes returned %#lx\n", status );
+    else for (i = 0; i < coll_count; ++i)
+    {
+        if (collections[i].LinkUsagePage != HID_USAGE_PAGE_HAPTICS) continue;
+        if (collections[i].LinkUsage == HID_USAGE_HAPTICS_WAVEFORM_LIST)
+        {
+            count = ARRAY_SIZE(caps) - caps_count;
+            status = HidP_GetSpecificValueCaps( HidP_Feature, HID_USAGE_PAGE_ORDINAL, i, 0,
+                                                caps + caps_count, &count, preparsed );
+            if (status == HIDP_STATUS_SUCCESS) caps_count += count;
+        }
+    }
+    for (i = 0; i < caps_count; ++i) check_haptics_caps( provider, device, preparsed, collections, caps + i );
+    free( collections );
+
+    provider->preparsed = preparsed;
+    provider->device = device;
+    return;
+
+failed:
+    free( provider->report_buf );
+    provider->report_buf = NULL;
+    HidD_FreePreparsedData( preparsed );
+    CloseHandle( device );
+}
+
 void provider_create( const WCHAR *device_path )
 {
     IDirectInputDevice8W *dinput_device;
@@ -361,6 +548,8 @@ void provider_create( const WCHAR *device_path )
 
     wcscpy( impl->device_path, device_path );
     list_init( &impl->entry );
+    open_haptics_device( impl );
+
     provider = &impl->IGameControllerProvider_iface;
     TRACE( "created WineGameControllerProvider %p\n", provider );
 
