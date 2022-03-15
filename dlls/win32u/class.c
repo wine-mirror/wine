@@ -259,7 +259,8 @@ static CLASS *find_class( HINSTANCE module, UNICODE_STRING *name )
         }
         else
         {
-            if (wcsnicmp( class->name, name->Buffer, name->Length / sizeof(WCHAR) )) continue;
+            if (wcsnicmp( class->name, name->Buffer, name->Length / sizeof(WCHAR) ) ||
+                class->name[name->Length / sizeof(WCHAR)]) continue;
         }
         if (!class->local || !module || (class->instance & ~0xffff) == instance)
         {

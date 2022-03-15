@@ -1049,6 +1049,11 @@ if (0) { /* crashes under XP */
     ok(ret, "GetClassInfoExA() error %ld\n", GetLastError());
     ok(wcx.cbSize == sizeof(wcx) + 1, "expected sizeof(wcx)+1, got %u\n", wcx.cbSize);
     ok(wcx.lpfnWndProc != NULL, "got null proc\n");
+
+    wcx.cbSize = sizeof(wcx);
+    ret = GetClassInfoExA(0, "stati", &wcx);
+    ok(!ret && GetLastError() == ERROR_CLASS_DOES_NOT_EXIST,
+       "GetClassInfoExA() returned %x %ld\n", ret, GetLastError());
 }
 
 static void test_icons(void)
