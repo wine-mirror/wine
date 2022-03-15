@@ -9253,7 +9253,7 @@ msgstr "&Blankt passord"
 
 #: dlls/oledb32/version.rc:84
 msgid "Allow &saving password"
-msgstr "Tillat lagring av pa%ssord"
+msgstr "Tillat lagring av pa&ssord"
 
 #: dlls/oledb32/version.rc:85
 msgid "3. Enter the &initial catalog to use:"
