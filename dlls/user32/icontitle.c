@@ -91,7 +91,7 @@ static BOOL ICONTITLE_SetTitlePos( HWND hwnd, HWND owner )
     /* point is relative to owner, make it relative to parent */
     MapWindowPoints( owner, GetParent(hwnd), &pt, 1 );
 
-    SetWindowPos( hwnd, owner, pt.x, pt.y, cx, cy, SWP_NOACTIVATE );
+    NtUserSetWindowPos( hwnd, owner, pt.x, pt.y, cx, cy, SWP_NOACTIVATE );
     return TRUE;
 }
 

@@ -88,12 +88,6 @@ static inline struct user_thread_info *get_user_thread_info(void)
     return (struct user_thread_info *)NtCurrentTeb()->Win32ClientInfo;
 }
 
-/* check if hwnd is a broadcast magic handle */
-static inline BOOL is_broadcast( HWND hwnd )
-{
-    return (hwnd == HWND_BROADCAST || hwnd == HWND_TOPMOST);
-}
-
 extern HMODULE user32_module DECLSPEC_HIDDEN;
 
 struct dce;

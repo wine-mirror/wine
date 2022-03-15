@@ -497,9 +497,9 @@ static void LISTBOX_UpdateSize( LB_DESCR *descr )
         {
             TRACE("[%p]: changing height %d -> %d\n",
                   descr->self, descr->height, descr->height - remaining );
-            SetWindowPos( descr->self, 0, 0, 0, rect.right - rect.left,
-                          rect.bottom - rect.top - remaining,
-                          SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE );
+            NtUserSetWindowPos( descr->self, 0, 0, 0, rect.right - rect.left,
+                                rect.bottom - rect.top - remaining,
+                                SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE );
             return;
         }
     }

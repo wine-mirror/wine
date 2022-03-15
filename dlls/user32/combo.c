@@ -306,12 +306,12 @@ static void CBForceDummyResize(LPHEADCOMBO lphc)
    * message.
    */
   lphc->wState |= CBF_NORESIZE;
-  SetWindowPos( lphc->self,
-		NULL,
-		0, 0,
-		windowRect.right  - windowRect.left,
-		newComboHeight,
-		SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE );
+  NtUserSetWindowPos( lphc->self,
+                      NULL,
+                      0, 0,
+                      windowRect.right  - windowRect.left,
+                      newComboHeight,
+                      SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE );
   lphc->wState &= ~CBF_NORESIZE;
 
   CBCalcPlacement(lphc);
@@ -996,8 +996,8 @@ static void CBDropDown( LPHEADCOMBO lphc )
        r.bottom = min( r.top + nDroppedHeight, mon_info.rcWork.bottom );
    }
 
-   SetWindowPos( lphc->hWndLBox, HWND_TOPMOST, r.left, r.top, r.right - r.left, r.bottom - r.top,
-                 SWP_NOACTIVATE | SWP_SHOWWINDOW );
+   NtUserSetWindowPos( lphc->hWndLBox, HWND_TOPMOST, r.left, r.top, r.right - r.left, r.bottom - r.top,
+                       SWP_NOACTIVATE | SWP_SHOWWINDOW );
 
 
    if( !(lphc->wState & CBF_NOREDRAW) )
@@ -1404,15 +1404,15 @@ static void CBResetPos(HEADCOMBO *combo, BOOL redraw)
     /* NOTE: logs sometimes have WM_LBUTTONUP before a cascade of
      * sizing messages */
     if (combo->wState & CBF_EDIT)
-        SetWindowPos(combo->hWndEdit, 0, combo->textRect.left, combo->textRect.top,
-                combo->textRect.right - combo->textRect.left,
-                combo->textRect.bottom - combo->textRect.top,
-                SWP_NOZORDER | SWP_NOACTIVATE | (drop ? SWP_NOREDRAW : 0));
+        NtUserSetWindowPos( combo->hWndEdit, 0, combo->textRect.left, combo->textRect.top,
+                            combo->textRect.right - combo->textRect.left,
+                            combo->textRect.bottom - combo->textRect.top,
+                            SWP_NOZORDER | SWP_NOACTIVATE | (drop ? SWP_NOREDRAW : 0) );
 
-    SetWindowPos(combo->hWndLBox, 0, combo->droppedRect.left, combo->droppedRect.top,
-            combo->droppedRect.right - combo->droppedRect.left,
-            combo->droppedRect.bottom - combo->droppedRect.top,
-            SWP_NOACTIVATE | SWP_NOZORDER | (drop ? SWP_NOREDRAW : 0));
+    NtUserSetWindowPos( combo->hWndLBox, 0, combo->droppedRect.left, combo->droppedRect.top,
+                        combo->droppedRect.right - combo->droppedRect.left,
+                        combo->droppedRect.bottom - combo->droppedRect.top,
+                        SWP_NOACTIVATE | SWP_NOZORDER | (drop ? SWP_NOREDRAW : 0) );
 
     if (drop)
     {
@@ -1470,8 +1470,8 @@ static void COMBO_Size( HEADCOMBO *lphc )
     if (curComboHeight != newComboHeight)
     {
         lphc->wState |= CBF_NORESIZE;
-        SetWindowPos(lphc->self, 0, 0, 0, curComboWidth, newComboHeight,
-                SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOREDRAW);
+        NtUserSetWindowPos( lphc->self, 0, 0, 0, curComboWidth, newComboHeight,
+                            SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOREDRAW );
         lphc->wState &= ~CBF_NORESIZE;
     }
   }

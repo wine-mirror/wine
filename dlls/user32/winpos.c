@@ -519,7 +519,7 @@ BOOL WINAPI LockSetForegroundWindow( UINT lockcode )
  */
 BOOL WINAPI BringWindowToTop( HWND hwnd )
 {
-    return SetWindowPos( hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE );
+    return NtUserSetWindowPos( hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE );
 }
 
 
@@ -1000,8 +1000,8 @@ static BOOL show_window( HWND hwnd, INT cmd )
         else WIN_SetStyle( hwnd, 0, WS_VISIBLE );
     }
     else
-        SetWindowPos( hwnd, HWND_TOP, newPos.left, newPos.top,
-                      newPos.right - newPos.left, newPos.bottom - newPos.top, swp );
+        NtUserSetWindowPos( hwnd, HWND_TOP, newPos.left, newPos.top,
+                            newPos.right - newPos.left, newPos.bottom - newPos.top, swp );
 
     if (cmd == SW_HIDE)
     {
@@ -1267,21 +1267,21 @@ static BOOL WINPOS_SetPlacement( HWND hwnd, const WINDOWPLACEMENT *wndpl, UINT f
     {
         if (flags & PLACE_MIN)
         {
-            SetWindowPos( hwnd, 0, wp.ptMinPosition.x, wp.ptMinPosition.y, 0, 0,
-                          SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
+            NtUserSetWindowPos( hwnd, 0, wp.ptMinPosition.x, wp.ptMinPosition.y, 0, 0,
+                                SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
         }
     }
     else if( style & WS_MAXIMIZE )
     {
         if (flags & PLACE_MAX)
-            SetWindowPos( hwnd, 0, wp.ptMaxPosition.x, wp.ptMaxPosition.y, 0, 0,
-                          SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
+            NtUserSetWindowPos( hwnd, 0, wp.ptMaxPosition.x, wp.ptMaxPosition.y, 0, 0,
+                                SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
     }
     else if( flags & PLACE_RECT )
-        SetWindowPos( hwnd, 0, wp.rcNormalPosition.left, wp.rcNormalPosition.top,
-                      wp.rcNormalPosition.right - wp.rcNormalPosition.left,
-                      wp.rcNormalPosition.bottom - wp.rcNormalPosition.top,
-                      SWP_NOZORDER | SWP_NOACTIVATE );
+        NtUserSetWindowPos( hwnd, 0, wp.rcNormalPosition.left, wp.rcNormalPosition.top,
+                            wp.rcNormalPosition.right - wp.rcNormalPosition.left,
+                            wp.rcNormalPosition.bottom - wp.rcNormalPosition.top,
+                            SWP_NOZORDER | SWP_NOACTIVATE );
 
     ShowWindow( hwnd, wndpl->showCmd );
 
@@ -1447,39 +1447,6 @@ LONG WINPOS_HandleWindowPosChanging( HWND hwnd, WINDOWPOS *winpos )
 	}
     }
     return 0;
-}
-
-
-/***********************************************************************
- *           dump_winpos_flags
- */
-static void dump_winpos_flags(UINT flags)
-{
-    static const DWORD dumped_flags = (SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOREDRAW |
-                                       SWP_NOACTIVATE | SWP_FRAMECHANGED | SWP_SHOWWINDOW |
-                                       SWP_HIDEWINDOW | SWP_NOCOPYBITS | SWP_NOOWNERZORDER |
-                                       SWP_NOSENDCHANGING | SWP_DEFERERASE | SWP_ASYNCWINDOWPOS |
-                                       SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE | SWP_STATECHANGED);
-    TRACE("flags:");
-    if(flags & SWP_NOSIZE) TRACE(" SWP_NOSIZE");
-    if(flags & SWP_NOMOVE) TRACE(" SWP_NOMOVE");
-    if(flags & SWP_NOZORDER) TRACE(" SWP_NOZORDER");
-    if(flags & SWP_NOREDRAW) TRACE(" SWP_NOREDRAW");
-    if(flags & SWP_NOACTIVATE) TRACE(" SWP_NOACTIVATE");
-    if(flags & SWP_FRAMECHANGED) TRACE(" SWP_FRAMECHANGED");
-    if(flags & SWP_SHOWWINDOW) TRACE(" SWP_SHOWWINDOW");
-    if(flags & SWP_HIDEWINDOW) TRACE(" SWP_HIDEWINDOW");
-    if(flags & SWP_NOCOPYBITS) TRACE(" SWP_NOCOPYBITS");
-    if(flags & SWP_NOOWNERZORDER) TRACE(" SWP_NOOWNERZORDER");
-    if(flags & SWP_NOSENDCHANGING) TRACE(" SWP_NOSENDCHANGING");
-    if(flags & SWP_DEFERERASE) TRACE(" SWP_DEFERERASE");
-    if(flags & SWP_ASYNCWINDOWPOS) TRACE(" SWP_ASYNCWINDOWPOS");
-    if(flags & SWP_NOCLIENTSIZE) TRACE(" SWP_NOCLIENTSIZE");
-    if(flags & SWP_NOCLIENTMOVE) TRACE(" SWP_NOCLIENTMOVE");
-    if(flags & SWP_STATECHANGED) TRACE(" SWP_STATECHANGED");
-
-    if(flags & ~dumped_flags) TRACE(" %08x", flags & ~dumped_flags);
-    TRACE("\n");
 }
 
 
@@ -1699,8 +1666,8 @@ static HWND SWP_DoOwnedPopups(HWND hwnd, HWND hwndInsertAfter)
         if (list[i] == hwnd) break;
         if (GetWindow( list[i], GW_OWNER ) != hwnd) continue;
         TRACE( "moving %p owned by %p after %p\n", list[i], hwnd, hwndInsertAfter );
-        SetWindowPos( list[i], hwndInsertAfter, 0, 0, 0, 0,
-                      SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOSENDCHANGING | SWP_DEFERERASE );
+        NtUserSetWindowPos( list[i], hwndInsertAfter, 0, 0, 0, 0,
+                            SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOSENDCHANGING | SWP_DEFERERASE );
         hwndInsertAfter = list[i];
     }
 
@@ -2234,44 +2201,6 @@ done:
 }
 
 /***********************************************************************
- *		SetWindowPos (USER32.@)
- */
-BOOL WINAPI SetWindowPos( HWND hwnd, HWND hwndInsertAfter,
-                          INT x, INT y, INT cx, INT cy, UINT flags )
-{
-    WINDOWPOS winpos;
-
-    TRACE("hwnd %p, after %p, %d,%d (%dx%d), flags %08x\n",
-          hwnd, hwndInsertAfter, x, y, cx, cy, flags);
-    if(TRACE_ON(win)) dump_winpos_flags(flags);
-
-    if (is_broadcast(hwnd))
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
-
-    winpos.hwnd = WIN_GetFullHandle(hwnd);
-    winpos.hwndInsertAfter = WIN_GetFullHandle(hwndInsertAfter);
-    winpos.x = x;
-    winpos.y = y;
-    winpos.cx = cx;
-    winpos.cy = cy;
-    winpos.flags = flags;
-
-    map_dpi_winpos( &winpos );
-
-    if (WIN_IsCurrentThread( hwnd ))
-        return USER_SetWindowPos( &winpos, 0, 0 );
-
-    if (flags & SWP_ASYNCWINDOWPOS)
-        return SendNotifyMessageW( winpos.hwnd, WM_WINE_SETWINDOWPOS, 0, (LPARAM)&winpos );
-    else
-        return SendMessageW( winpos.hwnd, WM_WINE_SETWINDOWPOS, 0, (LPARAM)&winpos );
-}
-
-
-/***********************************************************************
  *		BeginDeferWindowPos (USER32.@)
  */
 HDWP WINAPI BeginDeferWindowPos( INT count )
@@ -2460,8 +2389,8 @@ UINT WINAPI ArrangeIconicWindows( HWND parent )
     {
         if( IsIconic( hwndChild ) )
         {
-            SetWindowPos( hwndChild, 0, pt.x, pt.y, 0, 0,
-                          SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
+            NtUserSetWindowPos( hwndChild, 0, pt.x, pt.y, 0, 0,
+                                SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
             get_next_minimized_child_pos( &rectParent, &metrics, width, height, &pt );
             count++;
         }
@@ -2796,9 +2725,9 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
                 {
                     RECT rect = sizingRect;
                     MapWindowPoints( 0, parent, (POINT *)&rect, 2 );
-                    SetWindowPos( hwnd, 0, rect.left, rect.top,
-                                  rect.right - rect.left, rect.bottom - rect.top,
-                                  (hittest == HTCAPTION) ? SWP_NOSIZE : 0 );
+                    NtUserSetWindowPos( hwnd, 0, rect.left, rect.top,
+                                        rect.right - rect.left, rect.bottom - rect.top,
+                                        (hittest == HTCAPTION) ? SWP_NOSIZE : 0 );
                 }
             }
         }
@@ -2829,18 +2758,18 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
         {
             /* NOTE: SWP_NOACTIVATE prevents document window activation in Word 6 */
             if (!DragFullWindows)
-                SetWindowPos( hwnd, 0, sizingRect.left, sizingRect.top,
-                              sizingRect.right - sizingRect.left,
-                              sizingRect.bottom - sizingRect.top,
-                              ( hittest == HTCAPTION ) ? SWP_NOSIZE : 0 );
+                NtUserSetWindowPos( hwnd, 0, sizingRect.left, sizingRect.top,
+                                    sizingRect.right - sizingRect.left,
+                                    sizingRect.bottom - sizingRect.top,
+                                    ( hittest == HTCAPTION ) ? SWP_NOSIZE : 0 );
         }
         else
         { /* restore previous size/position */
             if(DragFullWindows)
-                SetWindowPos( hwnd, 0, origRect.left, origRect.top,
-                              origRect.right - origRect.left,
-                              origRect.bottom - origRect.top,
-                              ( hittest == HTCAPTION ) ? SWP_NOSIZE : 0 );
+                NtUserSetWindowPos( hwnd, 0, origRect.left, origRect.top,
+                                    origRect.right - origRect.left,
+                                    origRect.bottom - origRect.top,
+                                    ( hittest == HTCAPTION ) ? SWP_NOSIZE : 0 );
         }
     }
 

@@ -1966,8 +1966,8 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id, UINT flags,
     }
     /* Display the window */
 
-    SetWindowPos( menu->hWnd, HWND_TOPMOST, x, y, menu->Width, menu->Height,
-                  SWP_SHOWWINDOW | SWP_NOACTIVATE );
+    NtUserSetWindowPos( menu->hWnd, HWND_TOPMOST, x, y, menu->Width, menu->Height,
+                        SWP_SHOWWINDOW | SWP_NOACTIVATE );
     UpdateWindow( menu->hWnd );
     return TRUE;
 }
@@ -4489,8 +4489,8 @@ BOOL WINAPI SetMenu( HWND hWnd, HMENU hMenu )
     if(!MENU_SetMenu(hWnd, hMenu))
         return FALSE;
  
-    SetWindowPos( hWnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
-                  SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
+    NtUserSetWindowPos( hWnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
+                        SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
     return TRUE;
 }
 
@@ -4540,8 +4540,8 @@ BOOL WINAPI DrawMenuBar( HWND hWnd )
         }
     }
 
-    return SetWindowPos( hWnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
-                         SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
+    return NtUserSetWindowPos( hWnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
+                               SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
 }
 
 /***********************************************************************

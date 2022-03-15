@@ -100,9 +100,9 @@ BOOL WINAPI SetShellWindowEx(HWND hwndShell, HWND hwndListView)
             return FALSE;
 
     if (hwndListView && hwndListView!=hwndShell)
-        SetWindowPos(hwndListView, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
+        NtUserSetWindowPos( hwndListView, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE );
 
-    SetWindowPos(hwndShell, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
+    NtUserSetWindowPos( hwndShell, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE );
 
     SERVER_START_REQ(set_global_windows)
     {

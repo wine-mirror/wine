@@ -36,7 +36,6 @@ struct user_callbacks
     LRESULT (WINAPI *pSendMessageTimeoutW)( HWND, UINT, WPARAM, LPARAM, UINT, UINT, PDWORD_PTR );
     LRESULT (WINAPI *pSendMessageW)( HWND, UINT, WPARAM, LPARAM );
     BOOL (WINAPI *pSendNotifyMessageW)( HWND, UINT, WPARAM, LPARAM );
-    BOOL (WINAPI *pSetWindowPos)( HWND, HWND, INT, INT, INT, INT, UINT );
     BOOL (WINAPI *pShowCaret)( HWND hwnd );
     DWORD (WINAPI *pWaitForInputIdle)( HANDLE, DWORD );
     void (CDECL *notify_ime)( HWND hwnd, UINT param );
@@ -112,6 +111,12 @@ typedef struct tagWND
 
 #define WND_OTHER_PROCESS ((WND *)1)  /* returned by WIN_GetPtr on unknown window handles */
 #define WND_DESKTOP       ((WND *)2)  /* returned by WIN_GetPtr on the desktop window */
+
+/* check if hwnd is a broadcast magic handle */
+static inline BOOL is_broadcast( HWND hwnd )
+{
+    return hwnd == HWND_BROADCAST || hwnd == HWND_TOPMOST;
+}
 
 WND *next_thread_window_ptr( HWND *hwnd );
 

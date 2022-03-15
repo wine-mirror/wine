@@ -1561,8 +1561,8 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
         swFlag = WINPOS_MinMaximize( hwnd, swFlag, &newPos );
         swFlag |= SWP_FRAMECHANGED; /* Frame always gets changed */
         if (!(style & WS_VISIBLE) || (style & WS_CHILD) || GetActiveWindow()) swFlag |= SWP_NOACTIVATE;
-        SetWindowPos( hwnd, 0, newPos.left, newPos.top, newPos.right - newPos.left,
-                      newPos.bottom - newPos.top, swFlag );
+        NtUserSetWindowPos( hwnd, 0, newPos.left, newPos.top, newPos.right - newPos.left,
+                            newPos.bottom - newPos.top, swFlag );
     }
 
     /* Notify the parent window only */
@@ -1589,7 +1589,7 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
         {
             SendMessageW(cs->hwndParent, WM_MDIREFRESHMENU, 0, 0);
             /* ShowWindow won't activate child windows */
-            SetWindowPos( hwnd, HWND_TOP, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOSIZE );
+            NtUserSetWindowPos( hwnd, HWND_TOP, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOSIZE );
         }
     }
 
@@ -1761,8 +1761,8 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
         if (is_child)
             ShowWindow( hwnd, SW_HIDE );
         else
-            SetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE |
-                          SWP_NOZORDER | SWP_NOACTIVATE | SWP_HIDEWINDOW );
+            NtUserSetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE |
+                                SWP_NOZORDER | SWP_NOACTIVATE | SWP_HIDEWINDOW );
     }
 
     if (!IsWindow(hwnd)) return TRUE;

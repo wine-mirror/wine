@@ -281,16 +281,16 @@ static void MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
     wtop = (mon_info.rcWork.top + mon_info.rcWork.bottom - wheight) / 2;
 
     /* Resize and center the window */
-    SetWindowPos(hwnd, 0, wleft, wtop, wwidth, wheight,
-		 SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW);
+    NtUserSetWindowPos( hwnd, 0, wleft, wtop, wwidth, wheight,
+                        SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW );
 
     /* Position the icon */
-    SetWindowPos(GetDlgItem(hwnd, MSGBOX_IDICON), 0, ileft, (tiheight - iheight) / 2, 0, 0,
-		 SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW);
+    NtUserSetWindowPos( GetDlgItem(hwnd, MSGBOX_IDICON), 0, ileft, (tiheight - iheight) / 2, 0, 0,
+                        SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW );
 
     /* Position the text */
-    SetWindowPos(GetDlgItem(hwnd, MSGBOX_IDTEXT), 0, tleft, (tiheight - theight) / 2, twidth, theight,
-		 SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW);
+    NtUserSetWindowPos( GetDlgItem(hwnd, MSGBOX_IDTEXT), 0, tleft, (tiheight - theight) / 2, twidth, theight,
+                        SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW );
 
     /* Position the buttons */
     bpos = (wwidth - (bw + bspace) * buttons + bspace) / 2;
@@ -303,15 +303,15 @@ static void MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
 		NtUserSetFocus(hItem);
 		SendMessageW( hItem, BM_SETSTYLE, BS_DEFPUSHBUTTON, TRUE );
 	    }
-	    SetWindowPos(hItem, 0, bpos, tiheight, bw, bh,
-			 SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOREDRAW);
+	    NtUserSetWindowPos( hItem, 0, bpos, tiheight, bw, bh,
+                                SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOREDRAW );
 	    bpos += bw + bspace;
 	}
     }
 
     /*handle modal message boxes*/
     if (((lpmb->dwStyle & MB_TASKMODAL) && (lpmb->hwndOwner==NULL)) || (lpmb->dwStyle & MB_SYSTEMMODAL))
-        SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+        NtUserSetWindowPos( hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE );
 
     HeapFree( GetProcessHeap(), 0, buffer );
 }

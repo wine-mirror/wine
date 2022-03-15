@@ -1861,9 +1861,6 @@ LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     {
     case WM_WINE_DESTROYWINDOW:
         return WIN_DestroyWindow( hwnd );
-    case WM_WINE_SETWINDOWPOS:
-        if (is_desktop_window( hwnd )) return 0;
-        return USER_SetWindowPos( (WINDOWPOS *)lparam, 0, 0 );
     case WM_WINE_SHOWWINDOW:
         if (is_desktop_window( hwnd )) return 0;
         return ShowWindow( hwnd, wparam );

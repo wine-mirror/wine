@@ -802,9 +802,9 @@ static INT scroll_window( HWND hwnd, INT dx, INT dy, const RECT *rect, const REC
             {
                 WIN_GetRectangles( list[i], COORDS_PARENT, &r, NULL );
                 if (!rect || IntersectRect(&dummy, &r, rect))
-                    SetWindowPos( list[i], 0, r.left + dx, r.top  + dy, 0, 0,
-                                  SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE |
-                                  SWP_NOREDRAW | SWP_DEFERERASE );
+                    NtUserSetWindowPos( list[i], 0, r.left + dx, r.top  + dy, 0, 0,
+                                        SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE |
+                                        SWP_NOREDRAW | SWP_DEFERERASE );
             }
             HeapFree( GetProcessHeap(), 0, list );
         }

@@ -931,8 +931,8 @@ BOOL WINAPI EndDialog( HWND hwnd, INT_PTR retval )
     /* Don't have to send a ShowWindow(SW_HIDE), just do
        SetWindowPos with SWP_HIDEWINDOW as done in Windows */
 
-    SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE
-                 | SWP_NOZORDER | SWP_NOACTIVATE | SWP_HIDEWINDOW);
+    NtUserSetWindowPos( hwnd, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE
+                        | SWP_NOZORDER | SWP_NOACTIVATE | SWP_HIDEWINDOW );
 
     if (hwnd == GetActiveWindow())
     {

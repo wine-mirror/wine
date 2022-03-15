@@ -122,7 +122,7 @@ static HICON STATIC_SetIcon( HWND hwnd, HICON hicon, DWORD style )
         }
         else */
         {
-            SetWindowPos( hwnd, 0, 0, 0, size.cx, size.cy, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER );
+            NtUserSetWindowPos( hwnd, 0, 0, 0, size.cx, size.cy, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER );
         }
     }
     return prevIcon;
@@ -157,8 +157,8 @@ static HBITMAP STATIC_SetBitmap( HWND hwnd, HBITMAP hBitmap, DWORD style )
         }
         else */
         {
-            SetWindowPos( hwnd, 0, 0, 0, bm.bmWidth, bm.bmHeight,
-                          SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER );
+            NtUserSetWindowPos( hwnd, 0, 0, 0, bm.bmWidth, bm.bmHeight,
+                                SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER );
         }
 	
     }
@@ -425,7 +425,8 @@ LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
                 else
                     rc.right = rc.left;
                 AdjustWindowRectEx(&rc, full_style, FALSE, GetWindowLongW(hwnd, GWL_EXSTYLE));
-                SetWindowPos(hwnd, NULL, 0, 0, rc.right - rc.left, rc.bottom - rc.top, SWP_NOMOVE | SWP_NOZORDER);
+                NtUserSetWindowPos( hwnd, NULL, 0, 0, rc.right - rc.left, rc.bottom - rc.top,
+                                    SWP_NOMOVE | SWP_NOZORDER );
             }
 
             switch (style) {
