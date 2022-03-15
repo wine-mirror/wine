@@ -2030,6 +2030,40 @@ static void test_PSCreatePropertyStoreFromObject(void)
     IPropertyStore_Release(propstore);
 }
 
+static void test_InitVariantFromFileTime(void)
+{
+    FILETIME ft = {0};
+    SYSTEMTIME st;
+    VARIANT var;
+    HRESULT hr;
+    double d;
+
+    VariantInit(&var);
+    if (0) /* crash on Windows */
+    {
+        InitVariantFromFileTime(&ft, NULL);
+        InitVariantFromFileTime(NULL, &var);
+    }
+
+    ft.dwHighDateTime = -1;
+    ft.dwLowDateTime = -1;
+    V_VT(&var) = 0xdead;
+    V_DATE(&var) = 42.0;
+    hr = InitVariantFromFileTime(&ft, &var);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&var) == VT_EMPTY, "Unexpected VT %d\n", V_VT(&var));
+    ok(V_DATE(&var) == 0.0, "got wrong value: %f, expected 0.0\n", V_DATE(&var));
+
+    GetSystemTimeAsFileTime(&ft);
+    hr = InitVariantFromFileTime(&ft, &var);
+    ok(V_VT(&var) == VT_DATE, "Unexpected VT %d\n", V_VT(&var));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    FileTimeToSystemTime(&ft, &st);
+    SystemTimeToVariantTime(&st, &d);
+    ok(V_DATE(&var) == d, "got wrong value: %f, expected %f\n", V_DATE(&var), d);
+}
+
 START_TEST(propsys)
 {
     test_PSStringFromPropertyKey();
@@ -2053,4 +2087,5 @@ START_TEST(propsys)
     test_PSCreateMemoryPropertyStore();
     test_propertystore();
     test_PSCreatePropertyStoreFromObject();
+    test_InitVariantFromFileTime();
 }
