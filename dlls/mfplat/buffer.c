@@ -1264,7 +1264,8 @@ static HRESULT memory_buffer_init(struct buffer *buffer, DWORD max_length, DWORD
 {
     size_t size;
 
-    if (!alignment) alignment = MF_64_BYTE_ALIGNMENT;
+    if (alignment < MF_16_BYTE_ALIGNMENT)
+        alignment = MF_16_BYTE_ALIGNMENT;
     alignment++;
 
     if (alignment & (alignment - 1))
