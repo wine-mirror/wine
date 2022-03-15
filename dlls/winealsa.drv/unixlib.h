@@ -241,6 +241,13 @@ struct midi_init_params
     void *dests, *srcs;
 };
 
+struct midi_seq_open_params
+{
+    int close;
+    snd_seq_t *seq;
+    int *port_in;
+};
+
 enum alsa_funcs
 {
     alsa_get_endpoint_ids,
@@ -269,11 +276,13 @@ enum alsa_funcs
     alsa_midi_init,
 
     alsa_midi_seq_lock, /* temporary */
+    alsa_midi_seq_open,
 };
 
 NTSTATUS midi_init(void *args) DECLSPEC_HIDDEN;
 
 NTSTATUS midi_seq_lock(void *args) DECLSPEC_HIDDEN;
+NTSTATUS midi_seq_open(void *args) DECLSPEC_HIDDEN;
 
 extern unixlib_handle_t alsa_handle;
 

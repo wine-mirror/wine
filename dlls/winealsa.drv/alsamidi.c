@@ -55,6 +55,7 @@ static struct midi_dest dests[MAX_MIDIOUTDRV];
 static struct midi_src srcs[MAX_MIDIINDRV];
 static snd_seq_t *midi_seq;
 static unsigned int seq_refs;
+static int port_in = -1;
 
 static void seq_lock(void)
 {
@@ -74,7 +75,7 @@ NTSTATUS midi_seq_lock(void *args)
     return STATUS_SUCCESS;
 }
 
-static int seq_open(void)
+static snd_seq_t *seq_open(int *port_in_ret)
 {
     static int midi_warn;
 
@@ -87,12 +88,28 @@ static int seq_open(void)
                 WARN("Error opening ALSA sequencer.\n");
             midi_warn = 1;
             seq_unlock();
-            return -1;
+            return NULL;
         }
+        snd_seq_set_client_name(midi_seq, "WINE midi driver");
     }
     seq_refs++;
+
+    if (port_in_ret)
+    {
+        if (port_in < 0)
+        {
+            port_in = snd_seq_create_simple_port(midi_seq, "WINE ALSA Input",
+                                                 SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_READ | SND_SEQ_PORT_CAP_SUBS_WRITE,
+                                                 SND_SEQ_PORT_TYPE_MIDI_GENERIC | SND_SEQ_PORT_TYPE_APPLICATION);
+            if (port_in < 0)
+                TRACE("Unable to create input port\n");
+            else
+                TRACE("Input port %d created successfully\n", port_in);
+        }
+        *port_in_ret = port_in;
+    }
     seq_unlock();
-    return 0;
+    return midi_seq;
 }
 
 static void seq_close(void)
@@ -100,10 +117,27 @@ static void seq_close(void)
     seq_lock();
     if (--seq_refs == 0)
     {
+        if (port_in >= 0)
+        {
+            snd_seq_delete_simple_port(midi_seq, port_in);
+            port_in = -1;
+        }
         snd_seq_close(midi_seq);
         midi_seq = NULL;
     }
     seq_unlock();
+}
+
+NTSTATUS midi_seq_open(void *args)
+{
+    struct midi_seq_open_params *params = args;
+
+    if (!params->close)
+        params->seq = seq_open(params->port_in);
+    else
+        seq_close();
+
+    return STATUS_SUCCESS;
 }
 
 static int alsa_to_win_device_type(unsigned int type)
@@ -270,6 +304,7 @@ NTSTATUS midi_init(void *args)
     static BOOL init_done;
     snd_seq_client_info_t *cinfo;
     snd_seq_port_info_t *pinfo;
+    snd_seq_t *seq;
 
     if (init_done) {
         *params->err = ERROR_ALREADY_INITIALIZED;
@@ -280,7 +315,7 @@ NTSTATUS midi_init(void *args)
     init_done = TRUE;
 
     /* try to open device */
-    if (seq_open() == -1) {
+    if (!(seq = seq_open(NULL))) {
         *params->err = ERROR_OPEN_FAILED;
         return STATUS_SUCCESS;
     }
@@ -290,10 +325,10 @@ NTSTATUS midi_init(void *args)
 
     /* First, search for all internal midi devices */
     snd_seq_client_info_set_client(cinfo, -1);
-    while (snd_seq_query_next_client(midi_seq, cinfo) >= 0) {
+    while (snd_seq_query_next_client(seq, cinfo) >= 0) {
         snd_seq_port_info_set_client(pinfo, snd_seq_client_info_get_client(cinfo));
         snd_seq_port_info_set_port(pinfo, -1);
-        while (snd_seq_query_next_port(midi_seq, pinfo) >= 0) {
+        while (snd_seq_query_next_port(seq, pinfo) >= 0) {
             unsigned int cap = snd_seq_port_info_get_capability(pinfo);
             unsigned int type = snd_seq_port_info_get_type(pinfo);
             if (!(type & SND_SEQ_PORT_TYPE_PORT))
@@ -303,10 +338,10 @@ NTSTATUS midi_init(void *args)
 
     /* Second, search for all external ports */
     snd_seq_client_info_set_client(cinfo, -1);
-    while (snd_seq_query_next_client(midi_seq, cinfo) >= 0) {
+    while (snd_seq_query_next_client(seq, cinfo) >= 0) {
         snd_seq_port_info_set_client(pinfo, snd_seq_client_info_get_client(cinfo));
         snd_seq_port_info_set_port(pinfo, -1);
-        while (snd_seq_query_next_port(midi_seq, pinfo) >= 0) {
+        while (snd_seq_query_next_port(seq, pinfo) >= 0) {
             unsigned int cap = snd_seq_port_info_get_capability(pinfo);
             unsigned int type = snd_seq_port_info_get_type(pinfo);
             if (type & SND_SEQ_PORT_TYPE_PORT)

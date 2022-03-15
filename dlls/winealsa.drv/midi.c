@@ -55,11 +55,7 @@ static	int 		MODM_NumDevs = 0;
 /* this is the total number of MIDI out devices found */
 static	int 		MIDM_NumDevs = 0;
 
-static	snd_seq_t*      midiSeq = NULL;
-static	int		numOpenMidiSeq = 0;
 static	int		numStartedMidiIn = 0;
-
-static int port_in;
 
 static CRITICAL_SECTION crit_sect;   /* protects all MidiIn buffer queues */
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -152,40 +148,18 @@ static void MIDI_NotifyClient(UINT wDevID, WORD wMsg,
     DriverCallback(dwCallBack, uFlags, hDev, wMsg, dwInstance, dwParam1, dwParam2);
 }
 
-static BOOL midi_warn = TRUE;
 /**************************************************************************
  * 			midiOpenSeq				[internal]
  */
 static snd_seq_t *midiOpenSeq(int *port_in_ret)
 {
-    seq_lock();
-    if (numOpenMidiSeq == 0) {
-	if (snd_seq_open(&midiSeq, "default", SND_SEQ_OPEN_DUPLEX, 0) < 0)
-        {
-	    if (midi_warn)
-	    {
-		WARN("Error opening ALSA sequencer.\n");
-	    }
-            midi_warn = FALSE;
-            seq_unlock();
-	    return NULL;
-	}
+    struct midi_seq_open_params params;
 
-        /* Setting the client name is the only init to do */
-        snd_seq_set_client_name(midiSeq, "WINE midi driver");
+    params.port_in = port_in_ret;
+    params.close = 0;
+    ALSA_CALL(midi_seq_open, &params);
 
-        port_in = snd_seq_create_simple_port(midiSeq, "WINE ALSA Input",
-                                             SND_SEQ_PORT_CAP_WRITE|SND_SEQ_PORT_CAP_SUBS_READ|SND_SEQ_PORT_CAP_SUBS_WRITE,
-                                             SND_SEQ_PORT_TYPE_MIDI_GENERIC|SND_SEQ_PORT_TYPE_APPLICATION);
-        if (port_in < 0)
-            TRACE("Unable to create input port\n");
-        else
-            TRACE("Input port %d created successfully\n", port_in);
-    }
-    numOpenMidiSeq++;
-    seq_unlock();
-    if (port_in_ret) *port_in_ret = port_in;
-    return midiSeq;
+    return params.seq;
 }
 
 /**************************************************************************
@@ -193,13 +167,12 @@ static snd_seq_t *midiOpenSeq(int *port_in_ret)
  */
 static int midiCloseSeq(void)
 {
-    seq_lock();
-    if (--numOpenMidiSeq == 0) {
-	snd_seq_delete_simple_port(midiSeq, port_in);
-	snd_seq_close(midiSeq);
-	midiSeq = NULL;
-    }
-    seq_unlock();
+    struct midi_seq_open_params params;
+
+    params.port_in = NULL;
+    params.close = 1;
+    ALSA_CALL(midi_seq_open, &params);
+
     return 0;
 }
 
