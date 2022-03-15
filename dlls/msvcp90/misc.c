@@ -22,9 +22,6 @@
 
 #include "msvcp90.h"
 
-#include "windef.h"
-#include "winbase.h"
-#include "winternl.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
@@ -714,7 +711,7 @@ unsigned int __cdecl _Random_device(void)
 typedef struct
 {
     DWORD flags;
-    critical_section cs;
+    cs cs;
     DWORD thread_id;
     DWORD count;
 } *_Mtx_t;
@@ -802,7 +799,7 @@ int __cdecl _Mtx_trylock(_Mtx_arg_t mtx)
     return 0;
 }
 
-critical_section* __cdecl _Mtx_getconcrtcs(_Mtx_arg_t mtx)
+void* __cdecl _Mtx_getconcrtcs(_Mtx_arg_t mtx)
 {
     return &MTX_T_FROM_ARG(mtx)->cs;
 }
@@ -825,7 +822,7 @@ void __cdecl _Mtx_reset_owner(_Mtx_arg_t mtx)
 
 typedef struct
 {
-    _Condition_variable cv;
+    cv cv;
 } *_Cnd_t;
 
 #if _MSVCP_VER >= 140
@@ -852,7 +849,7 @@ int __cdecl _Cnd_init(_Cnd_t *cnd)
 
 int __cdecl _Cnd_wait(_Cnd_arg_t cnd, _Mtx_arg_t mtx)
 {
-    _Condition_variable *cv = &CND_T_FROM_ARG(cnd)->cv;
+    cv *cv = &CND_T_FROM_ARG(cnd)->cv;
     _Mtx_t m = MTX_T_FROM_ARG(mtx);
 
     _Mtx_clear_owner(mtx);
@@ -863,7 +860,7 @@ int __cdecl _Cnd_wait(_Cnd_arg_t cnd, _Mtx_arg_t mtx)
 
 int __cdecl _Cnd_timedwait(_Cnd_arg_t cnd, _Mtx_arg_t mtx, const xtime *xt)
 {
-    _Condition_variable *cv = &CND_T_FROM_ARG(cnd)->cv;
+    cv *cv = &CND_T_FROM_ARG(cnd)->cv;
     _Mtx_t m = MTX_T_FROM_ARG(mtx);
     bool r;
 

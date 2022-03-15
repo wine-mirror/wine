@@ -19,6 +19,7 @@
 #include "stdbool.h"
 #include "stdlib.h"
 #include "windef.h"
+#include "winbase.h"
 #include "cxx.h"
 
 #define CXX_EXCEPTION       0xe06d7363
@@ -58,6 +59,12 @@ typedef struct
     void *tail;
 } critical_section;
 
+typedef union
+{
+    critical_section conc;
+    SRWLOCK win;
+} cs;
+
 typedef struct cv_queue {
     struct cv_queue *next;
     LONG expired;
@@ -69,18 +76,24 @@ typedef struct {
     critical_section lock;
 } _Condition_variable;
 
-extern void cs_init(critical_section*);
-extern void cs_destroy(critical_section*);
-extern void cs_lock(critical_section*);
-extern void cs_unlock(critical_section*);
-extern bool cs_trylock(critical_section*);
+typedef union
+{
+    _Condition_variable conc;
+    CONDITION_VARIABLE win;
+} cv;
 
-extern void cv_init(_Condition_variable*);
-extern void cv_destroy(_Condition_variable*);
-extern void cv_wait(_Condition_variable*, critical_section*);
-extern bool cv_wait_for(_Condition_variable*, critical_section*, unsigned int);
-extern void cv_notify_one(_Condition_variable*);
-extern void cv_notify_all(_Condition_variable*);
+extern void cs_init(cs*);
+extern void cs_destroy(cs*);
+extern void cs_lock(cs*);
+extern void cs_unlock(cs*);
+extern bool cs_trylock(cs*);
+
+extern void cv_init(cv*);
+extern void cv_destroy(cv*);
+extern void cv_wait(cv*, cs*);
+extern bool cv_wait_for(cv*, cs*, unsigned int);
+extern void cv_notify_one(cv*);
+extern void cv_notify_all(cv*);
 #endif
 
 #if _MSVCP_VER >= 100

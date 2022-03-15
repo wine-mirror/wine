@@ -56,7 +56,7 @@ DEFINE_VTBL_WRAPPER(56);
 
 void* (__cdecl *MSVCRT_set_new_handler)(void*);
 
-#if _MSVCP_VER >= 110
+#if _MSVCP_VER >= 110 && _MSVCP_VER <= 120
 #ifdef __ASM_USE_THISCALL_WRAPPER
 
 extern void *call_thiscall_func;
@@ -93,59 +93,112 @@ bool (__thiscall *_Condition_variable_wait_for)(_Condition_variable*,
 void (__thiscall *_Condition_variable_notify_one)(_Condition_variable*);
 void (__thiscall *_Condition_variable_notify_all)(_Condition_variable*);
 
-void cs_init(critical_section *cs)
+void cs_init(cs *cs)
 {
-    call_func1(critical_section_ctor, cs);
+    call_func1(critical_section_ctor, &cs->conc);
 }
 
-void cs_destroy(critical_section *cs)
+void cs_destroy(cs *cs)
 {
-    call_func1(critical_section_dtor, cs);
+    call_func1(critical_section_dtor, &cs->conc);
 }
 
-void cs_lock(critical_section *cs)
+void cs_lock(cs *cs)
 {
-    call_func1(critical_section_lock, cs);
+    call_func1(critical_section_lock, &cs->conc);
 }
 
-void cs_unlock(critical_section *cs)
+void cs_unlock(cs *cs)
 {
-    call_func1(critical_section_unlock, cs);
+    call_func1(critical_section_unlock, &cs->conc);
 }
 
-bool cs_trylock(critical_section *cs)
+bool cs_trylock(cs *cs)
 {
-    return call_func1(critical_section_trylock, cs);
+    return call_func1(critical_section_trylock, &cs->conc);
 }
 
-void cv_init(_Condition_variable *cv)
+void cv_init(cv *cv)
 {
-    call_func1(_Condition_variable_ctor, cv);
+    call_func1(_Condition_variable_ctor, &cv->conc);
 }
 
-void cv_destroy(_Condition_variable *cv)
+void cv_destroy(cv *cv)
 {
-    call_func1(_Condition_variable_dtor, cv);
+    call_func1(_Condition_variable_dtor, &cv->conc);
 }
 
-void cv_wait(_Condition_variable *cv, critical_section *cs)
+void cv_wait(cv *cv, cs *cs)
 {
-    call_func2(_Condition_variable_wait, cv, cs);
+    call_func2(_Condition_variable_wait, &cv->conc, &cs->conc);
 }
 
-bool cv_wait_for(_Condition_variable *cv, critical_section *cs, unsigned int timeout)
+bool cv_wait_for(cv *cv, cs *cs, unsigned int timeout)
 {
-    return call_func3(_Condition_variable_wait_for, cv, cs, timeout);
+    return call_func3(_Condition_variable_wait_for, &cv->conc, &cs->conc, timeout);
 }
 
-void cv_notify_one(_Condition_variable *cv)
+void cv_notify_one(cv *cv)
 {
-    call_func1(_Condition_variable_notify_one, cv);
+    call_func1(_Condition_variable_notify_one, &cv->conc);
 }
 
-void cv_notify_all(_Condition_variable *cv)
+void cv_notify_all(cv *cv)
 {
-    call_func1(_Condition_variable_notify_all, cv);
+    call_func1(_Condition_variable_notify_all, &cv->conc);
+}
+#elif _MSVCP_VER >= 140
+void cs_init(cs *cs)
+{
+    InitializeSRWLock(&cs->win);
+}
+
+void cs_destroy(cs *cs)
+{
+}
+
+void cs_lock(cs *cs)
+{
+    AcquireSRWLockExclusive(&cs->win);
+}
+
+void cs_unlock(cs *cs)
+{
+    ReleaseSRWLockExclusive(&cs->win);
+}
+
+bool cs_trylock(cs *cs)
+{
+    return TryAcquireSRWLockExclusive(&cs->win);
+}
+
+void cv_init(cv *cv)
+{
+    InitializeConditionVariable(&cv->win);
+}
+
+void cv_destroy(cv *cv)
+{
+}
+
+void cv_wait(cv *cv, cs *cs)
+{
+    SleepConditionVariableSRW(&cv->win, &cs->win, INFINITE, 0);
+}
+
+bool cv_wait_for(cv *cv, cs *cs, unsigned int timeout)
+{
+    return SleepConditionVariableSRW(&cv->win, &cs->win, timeout, 0);
+}
+
+void cv_notify_one(cv *cv)
+{
+    WakeConditionVariable(&cv->win);
+}
+
+void cv_notify_all(cv *cv)
+{
+    WakeAllConditionVariable(&cv->win);
 }
 #endif
 
@@ -240,7 +293,7 @@ static void init_cxx_funcs(void)
     }
 #endif
 
-#if _MSVCP_VER >= 110
+#if _MSVCP_VER >= 110 && _MSVCP_VER <= 120
     if (sizeof(void *) > sizeof(int))  /* 64-bit has different names */
     {
         critical_section_ctor = (void*)GetProcAddress(hcon, "??0critical_section@Concurrency@@QEAA@XZ");
