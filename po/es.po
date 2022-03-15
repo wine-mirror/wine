@@ -17328,7 +17328,7 @@ msgid ""
 msgstr ""
 "Utilidad de registro de DLL de Wine\n"
 "\n"
-"Proporciona servicios de registro de DLL. \n"
+"Proporciona servicios de registro de DLL.\n"
 "\n"
 
 #: programs/regsvr32/regsvr32.rc:41
@@ -17350,7 +17350,7 @@ msgid ""
 "regsvr32: Invalid or unrecognized switch [%1]\n"
 "\n"
 msgstr ""
-"regsvr32: cambio no válido o no reconocido [%1] \n"
+"regsvr32: cambio no válido o no reconocido [%1]\n"
 "\n"
 
 #: programs/regsvr32/regsvr32.rc:43
