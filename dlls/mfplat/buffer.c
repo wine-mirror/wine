@@ -1262,8 +1262,6 @@ static const IMFDXGIBufferVtbl dxgi_buffer_vtbl =
 static HRESULT memory_buffer_init(struct buffer *buffer, DWORD max_length, DWORD alignment,
         const IMFMediaBufferVtbl *vtbl)
 {
-    size_t size;
-
     if (alignment < MF_16_BYTE_ALIGNMENT)
         alignment = MF_16_BYTE_ALIGNMENT;
     alignment++;
@@ -1279,10 +1277,9 @@ static HRESULT memory_buffer_init(struct buffer *buffer, DWORD max_length, DWORD
         alignment++;
     }
 
-    size = ALIGN_SIZE(max_length, alignment - 1);
-    if (!(buffer->data = _aligned_malloc(size, alignment)))
+    if (!(buffer->data = _aligned_malloc(max_length, alignment)))
         return E_OUTOFMEMORY;
-    memset(buffer->data, 0, size);
+    memset(buffer->data, 0, max_length);
 
     buffer->IMFMediaBuffer_iface.lpVtbl = vtbl;
     buffer->refcount = 1;
