@@ -24,8 +24,7 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
+#include "ntuser.h"
 #include "winreg.h"
 #include "winternl.h"
 #include "wine/windef16.h"

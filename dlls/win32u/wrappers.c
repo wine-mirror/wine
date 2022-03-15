@@ -1112,12 +1112,6 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
     return unix_funcs->pSetDIBits( hdc, hbitmap, startscan, lines, bits, info, coloruse );
 }
 
-WORD WINAPI SetHookFlags( HDC hdc, WORD flags )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pSetHookFlags( hdc, flags );
-}
-
 BOOL CDECL __wine_get_icm_profile( HDC hdc, BOOL allow_default, DWORD *size, WCHAR *filename )
 {
     if (!unix_funcs) return FALSE;

@@ -99,6 +99,7 @@ enum
 {
     NtUserBeginDeferWindowPos,
     NtUserCreateCursorIcon,
+    NtUserEnableDC,
     NtUserGetClipCursor,
     NtUserGetCursorPos,
     NtUserGetIconParam,

@@ -1321,7 +1321,6 @@
 # Wine internal extensions
 
 # user32
-@ stdcall SetHookFlags(long long)
 @ cdecl __wine_set_visible_region(long long ptr ptr ptr)
 
 # Graphics drivers

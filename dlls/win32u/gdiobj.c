@@ -1216,7 +1216,6 @@ static struct unix_funcs unix_funcs =
     NtUserWindowFromPoint,
 
     SetDIBits,
-    SetHookFlags,
     __wine_get_brush_bitmap_info,
     __wine_get_file_outline_text_metric,
     __wine_get_icm_profile,
