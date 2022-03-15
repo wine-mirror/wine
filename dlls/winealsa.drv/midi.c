@@ -79,6 +79,14 @@ static void seq_unlock(void)
     ALSA_CALL(midi_seq_lock, (void *)(UINT_PTR)0);
 }
 
+static void notify_client(struct notify_context *notify)
+{
+    TRACE("dev_id = %d msg = %d param1 = %04lX param2 = %04lX\n", notify->dev_id, notify->msg, notify->param_1, notify->param_2);
+
+    DriverCallback(notify->callback, notify->flags, notify->device, notify->msg,
+                   notify->instance, notify->param_1, notify->param_2);
+}
+
 /*======================================================================*
  *                  Low level MIDI implementation			*
  *======================================================================*/
@@ -114,7 +122,6 @@ static void MIDI_NotifyClient(UINT wDevID, WORD wMsg,
 	  wDevID, wMsg, dwParam1, dwParam2);
 
     switch (wMsg) {
-    case MOM_OPEN:
     case MOM_CLOSE:
     case MOM_DONE:
     case MOM_POSITIONCB:
@@ -625,96 +632,6 @@ static DWORD modGetDevCaps(WORD wDevID, LPMIDIOUTCAPSW lpCaps, DWORD dwSize)
 }
 
 /**************************************************************************
- * 			modOpen					[internal]
- */
-static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
-{
-    int ret;
-    int port_out;
-    char port_out_name[32];
-    snd_seq_t *midi_seq;
-
-    TRACE("(%04X, %p, %08X);\n", wDevID, lpDesc, dwFlags);
-    if (lpDesc == NULL) {
-	WARN("Invalid Parameter !\n");
-	return MMSYSERR_INVALPARAM;
-    }
-    if (wDevID >= MODM_NumDevs) {
-	TRACE("MAX_MIDIOUTDRV reached !\n");
-	return MMSYSERR_BADDEVICEID;
-    }
-    if (MidiOutDev[wDevID].midiDesc.hMidi != 0) {
-	WARN("device already open !\n");
-	return MMSYSERR_ALLOCATED;
-    }
-    if (!MidiOutDev[wDevID].bEnabled) {
-	WARN("device disabled !\n");
-	return MIDIERR_NODEVICE;
-    }
-    if ((dwFlags & ~CALLBACK_TYPEMASK) != 0) {
-	WARN("bad dwFlags\n");
-	return MMSYSERR_INVALFLAG;
-    }
-
-    switch (MidiOutDev[wDevID].caps.wTechnology) {
-    case MOD_FMSYNTH:
-    case MOD_MIDIPORT:
-    case MOD_SYNTH:
-        if (!(midi_seq = midiOpenSeq(NULL))) {
-	    return MMSYSERR_ALLOCATED;
-	}
-	break;
-    default:
-	WARN("Technology not supported (yet) %d !\n",
-	     MidiOutDev[wDevID].caps.wTechnology);
-	return MMSYSERR_NOTENABLED;
-    }
-
-    MidiOutDev[wDevID].wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
-    MidiOutDev[wDevID].midiDesc = *lpDesc;
-    MidiOutDev[wDevID].seq = midi_seq;
-
-    seq_lock();
-    /* Create a port dedicated to a specific device */
-    /* Keep the old name without a number for the first port */
-    if (wDevID)
-	sprintf(port_out_name, "WINE ALSA Output #%d", wDevID);
-
-    port_out = snd_seq_create_simple_port(midi_seq, wDevID?port_out_name:"WINE ALSA Output",
-	    SND_SEQ_PORT_CAP_READ|SND_SEQ_PORT_CAP_SUBS_READ|SND_SEQ_PORT_CAP_SUBS_WRITE,
-	    SND_SEQ_PORT_TYPE_MIDI_GENERIC|SND_SEQ_PORT_TYPE_APPLICATION);
-
-    if (port_out < 0) {
-	TRACE("Unable to create output port\n");
-	MidiOutDev[wDevID].port_out = -1;
-    } else {
-	TRACE("Output port %d created successfully\n", port_out);
-	MidiOutDev[wDevID].port_out = port_out;
-
-	/* Connect our app port to the device port */
-	ret = snd_seq_connect_to(midi_seq, port_out, MidiOutDev[wDevID].addr.client,
-	                         MidiOutDev[wDevID].addr.port);
-
-	/* usually will happen when the port is already connected */
-	/* other errors should not be fatal either */
-	if (ret < 0)
-	    WARN("Could not connect port %d to %d:%d: %s\n",
-		 wDevID, MidiOutDev[wDevID].addr.client,
-		 MidiOutDev[wDevID].addr.port, snd_strerror(ret));
-    }
-    seq_unlock();
-
-    if (port_out < 0)
-	return MMSYSERR_NOTENABLED;
-    
-    TRACE("Output port :%d connected %d:%d\n",port_out,MidiOutDev[wDevID].addr.client,MidiOutDev[wDevID].addr.port);
-
-    MIDI_NotifyClient(wDevID, MOM_OPEN, 0L, 0L);
-    return MMSYSERR_NOERROR;
-}
-
-
-/**************************************************************************
  * 			modClose				[internal]
  */
 static DWORD modClose(WORD wDevID)
@@ -1123,6 +1040,10 @@ DWORD WINAPI ALSA_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 DWORD WINAPI ALSA_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
                              DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
+    struct midi_out_message_params params;
+    struct notify_context notify;
+    UINT err;
+
     TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
@@ -1130,13 +1051,6 @@ DWORD WINAPI ALSA_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
     case DRVM_INIT:
         ALSA_MidiInit();
         return 0;
-    case DRVM_EXIT:
-    case DRVM_ENABLE:
-    case DRVM_DISABLE:
-	/* FIXME: Pretend this is supported */
-	return 0;
-    case MODM_OPEN:
-	return modOpen(wDevID, (LPMIDIOPENDESC)dwParam1, dwParam2);
     case MODM_CLOSE:
 	return modClose(wDevID);
     case MODM_DATA:
@@ -1157,10 +1071,21 @@ DWORD WINAPI ALSA_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 	return 0;
     case MODM_RESET:
 	return modReset(wDevID);
-    default:
-	TRACE("Unsupported message\n");
     }
-    return MMSYSERR_NOTSUPPORTED;
+
+    params.dev_id = wDevID;
+    params.msg = wMsg;
+    params.user = dwUser;
+    params.param_1 = dwParam1;
+    params.param_2 = dwParam2;
+    params.err = &err;
+    params.notify = &notify;
+
+    ALSA_CALL(midi_out_message, &params);
+
+    if (!err && notify.send_notify) notify_client(&notify);
+
+    return err;
 }
 
 /**************************************************************************

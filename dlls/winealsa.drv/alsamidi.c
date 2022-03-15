@@ -362,3 +362,136 @@ NTSTATUS midi_init(void *args)
 
     return STATUS_SUCCESS;
 }
+
+static void set_out_notify(struct notify_context *notify, struct midi_dest *dest, WORD dev_id, WORD msg,
+                           UINT_PTR param_1, UINT_PTR param_2)
+{
+    notify->send_notify = TRUE;
+    notify->dev_id = dev_id;
+    notify->msg = msg;
+    notify->param_1 = param_1;
+    notify->param_2 = param_2;
+    notify->callback = dest->midiDesc.dwCallback;
+    notify->flags = dest->wFlags;
+    notify->device = dest->midiDesc.hMidi;
+    notify->instance = dest->midiDesc.dwInstance;
+}
+
+static UINT midi_out_open(WORD dev_id, MIDIOPENDESC *midi_desc, UINT flags, struct notify_context *notify)
+{
+    int ret;
+    int port_out;
+    char port_out_name[32];
+    snd_seq_t *midi_seq;
+    struct midi_dest *dest;
+
+    TRACE("(%04X, %p, %08X);\n", dev_id, midi_desc, flags);
+
+    if (midi_desc == NULL)
+    {
+        WARN("Invalid Parameter !\n");
+        return MMSYSERR_INVALPARAM;
+    }
+    if (dev_id >= num_dests)
+    {
+        TRACE("MAX_MIDIOUTDRV reached !\n");
+        return MMSYSERR_BADDEVICEID;
+    }
+    dest = dests + dev_id;
+    if (dest->midiDesc.hMidi != 0)
+    {
+        WARN("device already open !\n");
+        return MMSYSERR_ALLOCATED;
+    }
+    if (!dest->bEnabled)
+    {
+        WARN("device disabled !\n");
+        return MIDIERR_NODEVICE;
+    }
+    if ((flags & ~CALLBACK_TYPEMASK) != 0)
+    {
+        WARN("bad dwFlags\n");
+        return MMSYSERR_INVALFLAG;
+    }
+
+    switch (dest->caps.wTechnology)
+    {
+    case MOD_FMSYNTH:
+    case MOD_MIDIPORT:
+    case MOD_SYNTH:
+        if (!(midi_seq = seq_open(NULL)))
+            return MMSYSERR_ALLOCATED;
+        break;
+    default:
+        WARN("Technology not supported (yet) %d !\n", dest->caps.wTechnology);
+        return MMSYSERR_NOTENABLED;
+    }
+
+    dest->wFlags = HIWORD(flags & CALLBACK_TYPEMASK);
+    dest->midiDesc = *midi_desc;
+    dest->seq = midi_seq;
+
+    seq_lock();
+    /* Create a port dedicated to a specific device */
+    /* Keep the old name without a number for the first port */
+    if (dev_id)
+        sprintf(port_out_name, "WINE ALSA Output #%d", dev_id);
+
+    port_out = snd_seq_create_simple_port(midi_seq, dev_id ? port_out_name : "WINE ALSA Output",
+                                          SND_SEQ_PORT_CAP_READ | SND_SEQ_PORT_CAP_SUBS_READ | SND_SEQ_PORT_CAP_SUBS_WRITE,
+                                          SND_SEQ_PORT_TYPE_MIDI_GENERIC | SND_SEQ_PORT_TYPE_APPLICATION);
+
+    if (port_out < 0)
+    {
+        TRACE("Unable to create output port\n");
+        dest->port_out = -1;
+    }
+    else
+    {
+        TRACE("Output port %d created successfully\n", port_out);
+        dest->port_out = port_out;
+
+        /* Connect our app port to the device port */
+        ret = snd_seq_connect_to(midi_seq, port_out, dest->addr.client, dest->addr.port);
+
+        /* usually will happen when the port is already connected */
+        /* other errors should not be fatal either */
+        if (ret < 0)
+            WARN("Could not connect port %d to %d:%d: %s\n", dev_id, dest->addr.client,
+                 dest->addr.port, snd_strerror(ret));
+    }
+    seq_unlock();
+
+    if (port_out < 0)
+        return MMSYSERR_NOTENABLED;
+
+    TRACE("Output port :%d connected %d:%d\n", port_out, dest->addr.client, dest->addr.port);
+
+    set_out_notify(notify, dest, dev_id, MOM_OPEN, 0, 0);
+    return MMSYSERR_NOERROR;
+}
+
+NTSTATUS midi_out_message(void *args)
+{
+    struct midi_out_message_params *params = args;
+
+    params->notify->send_notify = FALSE;
+
+    switch (params->msg)
+    {
+    case DRVM_EXIT:
+    case DRVM_ENABLE:
+    case DRVM_DISABLE:
+	/* FIXME: Pretend this is supported */
+        *params->err = MMSYSERR_NOERROR;
+        break;
+    case MODM_OPEN:
+        *params->err = midi_out_open(params->dev_id, (MIDIOPENDESC *)params->param_1, params->param_2, params->notify);
+        break;
+    default:
+        TRACE("Unsupported message\n");
+        *params->err = MMSYSERR_NOTSUPPORTED;
+    }
+
+    return STATUS_SUCCESS;
+}

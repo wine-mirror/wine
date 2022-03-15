@@ -241,6 +241,30 @@ struct midi_init_params
     void *dests, *srcs;
 };
 
+struct notify_context
+{
+    BOOL send_notify;
+    WORD dev_id;
+    WORD msg;
+    UINT_PTR param_1;
+    UINT_PTR param_2;
+    UINT_PTR callback;
+    UINT flags;
+    HANDLE device;
+    UINT_PTR instance;
+};
+
+struct midi_out_message_params
+{
+    UINT dev_id;
+    UINT msg;
+    UINT_PTR user;
+    UINT_PTR param_1;
+    UINT_PTR param_2;
+    UINT *err;
+    struct notify_context *notify;
+};
+
 struct midi_seq_open_params
 {
     int close;
@@ -274,12 +298,14 @@ enum alsa_funcs
     alsa_is_started,
     alsa_get_prop_value,
     alsa_midi_init,
+    alsa_midi_out_message,
 
     alsa_midi_seq_lock, /* temporary */
     alsa_midi_seq_open,
 };
 
 NTSTATUS midi_init(void *args) DECLSPEC_HIDDEN;
+NTSTATUS midi_out_message(void *args) DECLSPEC_HIDDEN;
 
 NTSTATUS midi_seq_lock(void *args) DECLSPEC_HIDDEN;
 NTSTATUS midi_seq_open(void *args) DECLSPEC_HIDDEN;

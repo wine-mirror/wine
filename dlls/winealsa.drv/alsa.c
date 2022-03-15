@@ -2445,6 +2445,7 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     is_started,
     get_prop_value,
     midi_init,
+    midi_out_message,
 
     midi_seq_lock, /* temporary */
     midi_seq_open,
