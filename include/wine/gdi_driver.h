@@ -327,23 +327,6 @@ struct user_driver_funcs
 };
 
 extern void CDECL __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version );
-
-/* the DC hook support is only exported on Win16, the 32-bit version is a Wine extension */
-
-#define DCHC_INVALIDVISRGN      0x0001
-#define DCHC_DELETEDC           0x0002
-#define DCHF_INVALIDATEVISRGN   0x0001
-#define DCHF_VALIDATEVISRGN     0x0002
-#define DCHF_RESETDC            0x0004  /* Wine extension */
-#define DCHF_DISABLEDC          0x0008  /* Wine extension */
-#define DCHF_ENABLEDC           0x0010  /* Wine extension */
-
-typedef BOOL (CALLBACK *DCHOOKPROC)(HDC,WORD,DWORD_PTR,LPARAM);
-
-WINGDIAPI DWORD_PTR WINAPI GetDCHook(HDC,DCHOOKPROC*);
-WINGDIAPI BOOL      WINAPI SetDCHook(HDC,DCHOOKPROC,DWORD_PTR);
-WINGDIAPI WORD      WINAPI SetHookFlags(HDC,WORD);
-
 extern void CDECL __wine_set_visible_region( HDC hdc, HRGN hrgn, const RECT *vis_rect,
                                              const RECT *device_rect, struct window_surface *surface );
 extern void CDECL __wine_set_display_driver( struct user_driver_funcs *funcs, UINT version );

@@ -294,52 +294,51 @@ static void delete_clip_rgn( struct dce *dce )
     dce->clip_rgn = 0;
 
     /* make it dirty so that the vis rgn gets recomputed next time */
-    SetHookFlags( dce->hdc, DCHF_INVALIDATEVISRGN );
+    set_dce_flags( dce->hdc, DCHF_INVALIDATEVISRGN );
 }
 
 /***********************************************************************
- *           dc_hook
- *
- * See "Undoc. Windows" for hints (DC, SetDCHook, SetHookFlags)..
+ *           delete_dce
  */
-static BOOL CALLBACK dc_hook( HDC hDC, WORD code, DWORD_PTR data, LPARAM lParam )
+BOOL delete_dce( struct dce *dce )
 {
-    BOOL retv = TRUE;
-    struct dce *dce = (struct dce *)data;
+    BOOL ret = TRUE;
 
-    TRACE("hDC = %p, %u\n", hDC, code);
+    TRACE( "hdc = %p\n", dce->hdc );
 
-    if (!dce) return FALSE;
-    assert( dce->hdc == hDC );
-
-    switch( code )
+    user_lock();
+    if (!(dce->flags & DCX_CACHE))
     {
-    case DCHC_INVALIDVISRGN:
-        /* GDI code calls this when it detects that the
-         * DC is dirty (usually after SetHookFlags()). This
-         * means that we have to recompute the visible region.
-         */
-        if (dce->count) update_visible_region( dce );
+        WARN("Application trying to delete an owned DC %p\n", dce->hdc);
+        ret = FALSE;
+    }
+    else
+    {
+        list_remove( &dce->entry );
+        if (dce->clip_rgn) NtGdiDeleteObjectApp( dce->clip_rgn );
+        free( dce );
+    }
+    user_unlock();
+    return ret;
+}
+
+/***********************************************************************
+ *           update_dc
+ *
+ * Make sure the DC vis region is up to date.
+ * This function may need user lock so the GDI lock should _not_
+ * be held when calling it.
+ */
+void update_dc( DC *dc )
+{
+    if (!dc->dirty) return;
+    dc->dirty = 0;
+    if (dc->dce)
+    {
+        if (dc->dce->count) update_visible_region( dc->dce );
         else /* non-fatal but shouldn't happen */
             WARN("DC is not in use!\n");
-        break;
-    case DCHC_DELETEDC:
-        user_lock();
-        if (!(dce->flags & DCX_CACHE))
-        {
-            WARN("Application trying to delete an owned DC %p\n", dce->hdc);
-            retv = FALSE;
-        }
-        else
-        {
-            list_remove( &dce->entry );
-            if (dce->clip_rgn) NtGdiDeleteObjectApp( dce->clip_rgn );
-            free( dce );
-        }
-        user_unlock();
-        break;
     }
-    return retv;
 }
 
 /***********************************************************************
@@ -362,9 +361,7 @@ static struct dce *alloc_dce(void)
     dce->flags     = 0;
     dce->count     = 1;
 
-    /* store DCE handle in DC hook data field */
-    SetDCHook( dce->hdc, dc_hook, (DWORD_PTR)dce );
-    SetHookFlags( dce->hdc, DCHF_INVALIDATEVISRGN );
+    set_dc_dce( dce->hdc, dce );
     return dce;
 }
 
@@ -445,7 +442,7 @@ static struct dce *get_window_dce( HWND hwnd )
 
         if (dce_to_free)
         {
-            SetDCHook( dce_to_free->hdc, NULL, 0 );
+            set_dc_dce( dce_to_free->hdc, NULL );
             NtGdiDeleteObjectApp( dce_to_free->hdc );
             free( dce_to_free );
             if (dce_to_free == dce)
@@ -494,7 +491,7 @@ void free_dce( struct dce *dce, HWND hwnd )
             {
                 WARN( "GetDC() without ReleaseDC() for window %p\n", hwnd );
                 dce->count = 0;
-                SetHookFlags( dce->hdc, DCHF_DISABLEDC );
+                set_dce_flags( dce->hdc, DCHF_DISABLEDC );
             }
         }
     }
@@ -503,7 +500,7 @@ void free_dce( struct dce *dce, HWND hwnd )
 
     if (dce_to_free)
     {
-        SetDCHook( dce_to_free->hdc, NULL, 0 );
+        set_dc_dce( dce_to_free->hdc, NULL );
         NtGdiDeleteObjectApp( dce_to_free->hdc );
         free( dce_to_free );
     }
@@ -526,7 +523,7 @@ static void make_dc_dirty( struct dce *dce )
     {
         /* Set dirty bits in the hDC and DCE structs */
         TRACE("fixed up %p hwnd %p\n", dce->hdc, dce->hwnd);
-        SetHookFlags( dce->hdc, DCHF_INVALIDATEVISRGN );
+        set_dce_flags( dce->hdc, DCHF_INVALIDATEVISRGN );
     }
 }
 
@@ -596,15 +593,15 @@ static INT release_dc( HWND hwnd, HDC hdc, BOOL end_paint )
     TRACE( "%p %p\n", hwnd, hdc );
 
     user_lock();
-    dce = (struct dce *)GetDCHook( hdc, NULL );
+    dce = get_dc_dce( hdc );
     if (dce && dce->count && dce->hwnd)
     {
-        if (!(dce->flags & DCX_NORESETATTRS)) SetHookFlags( dce->hdc, DCHF_RESETDC );
+        if (!(dce->flags & DCX_NORESETATTRS)) set_dce_flags( dce->hdc, DCHF_RESETDC );
         if (end_paint || (dce->flags & DCX_CACHE)) delete_clip_rgn( dce );
         if (dce->flags & DCX_CACHE)
         {
             dce->count = 0;
-            SetHookFlags( dce->hdc, DCHF_DISABLEDC );
+            set_dce_flags( dce->hdc, DCHF_DISABLEDC );
         }
         ret = TRUE;
     }
@@ -703,7 +700,7 @@ HDC WINAPI NtUserGetDCEx( HWND hwnd, HRGN clip_rgn, DWORD flags )
         if (dce)
         {
             dce->count = 1;
-            SetHookFlags( dce->hdc, DCHF_ENABLEDC );
+            set_dce_flags( dce->hdc, DCHF_ENABLEDC );
         }
         user_unlock();
 
@@ -749,7 +746,7 @@ HDC WINAPI NtUserGetDCEx( HWND hwnd, HRGN clip_rgn, DWORD flags )
     /* cross-process invalidation is not supported yet, so always update the vis rgn */
     if (!is_current_process_window( hwnd )) update_vis_rgn = TRUE;
 
-    if (SetHookFlags( dce->hdc, DCHF_VALIDATEVISRGN )) update_vis_rgn = TRUE;  /* DC was dirty */
+    if (set_dce_flags( dce->hdc, DCHF_VALIDATEVISRGN )) update_vis_rgn = TRUE;  /* DC was dirty */
 
     if (update_vis_rgn) update_visible_region( dce );
 
@@ -775,7 +772,7 @@ HWND WINAPI NtUserWindowFromDC( HDC hdc )
     HWND hwnd = 0;
 
     user_lock();
-    dce = (struct dce *)GetDCHook( hdc, NULL );
+    dce = get_dc_dce( hdc );
     if (dce) hwnd = dce->hwnd;
     user_unlock();
     return hwnd;

@@ -326,20 +326,6 @@ void release_dc_ptr( DC *dc )
 }
 
 
-/***********************************************************************
- *           update_dc
- *
- * Make sure the DC vis region is up to date.
- * This function may call up to USER so the GDI lock should _not_
- * be held when calling it.
- */
-void update_dc( DC *dc )
-{
-    if (InterlockedExchange( &dc->dirty, 0 ) && dc->hookProc)
-        dc->hookProc( dc->hSelf, DCHC_INVALIDVISRGN, dc->dwHookData, 0 );
-}
-
-
 static void set_bk_color( DC *dc, COLORREF color )
 {
     PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetBkColor );
@@ -524,7 +510,7 @@ static BOOL DC_DeleteObject( HGDIOBJ handle )
 
     /* Call hook procedure to check whether is it OK to delete this DC,
      * gdi_lock should not be locked */
-    if (dc->hookProc && !dc->hookProc( dc->hSelf, DCHC_DELETEDC, dc->dwHookData, 0 ))
+    if (dc->dce && !delete_dce( dc->dce ))
     {
         release_dc_ptr( dc );
         return TRUE;
@@ -1035,57 +1021,43 @@ BOOL WINAPI NtGdiGetTransform( HDC hdc, DWORD which, XFORM *xform )
 
 
 /***********************************************************************
- *           SetDCHook   (win32u.@)
- *
- * Note: this doesn't exist in Win32, we add it here because user32 needs it.
+ *           set_dc_dce
  */
-BOOL WINAPI SetDCHook( HDC hdc, DCHOOKPROC hookProc, DWORD_PTR dwHookData )
+void set_dc_dce( HDC hdc, struct dce *dce )
 {
-    DC *dc = get_dc_obj( hdc );
+    DC *dc;
 
-    if (!dc) return FALSE;
+    if (!(dc = get_dc_obj( hdc ))) return;
     if (dc->attr->disabled)
     {
         GDI_ReleaseObj( hdc );
-        return 0;
+        return;
     }
-
-    dc->dwHookData = dwHookData;
-    dc->hookProc = hookProc;
+    dc->dce = dce;
+    if (dce) dc->dirty = 1;
     GDI_ReleaseObj( hdc );
-    return TRUE;
 }
 
 
 /***********************************************************************
- *           GetDCHook   (win32u.@)
- *
- * Note: this doesn't exist in Win32, we add it here because user32 needs it.
+ *           get_dc_dce
  */
-DWORD_PTR WINAPI GetDCHook( HDC hdc, DCHOOKPROC *proc )
+struct dce *get_dc_dce( HDC hdc )
 {
     DC *dc = get_dc_obj( hdc );
-    DWORD_PTR ret;
+    struct dce *ret = NULL;
 
     if (!dc) return 0;
-    if (dc->attr->disabled)
-    {
-        GDI_ReleaseObj( hdc );
-        return 0;
-    }
-    if (proc) *proc = dc->hookProc;
-    ret = dc->dwHookData;
+    if (!dc->attr->disabled) ret = dc->dce;
     GDI_ReleaseObj( hdc );
     return ret;
 }
 
 
 /***********************************************************************
- *           SetHookFlags   (win32u.@)
- *
- * Note: this doesn't exist in Win32, we add it here because user32 needs it.
+ *           set_dce_flags
  */
-WORD WINAPI SetHookFlags( HDC hdc, WORD flags )
+WORD set_dce_flags( HDC hdc, WORD flags )
 {
     DC *dc = get_dc_obj( hdc );  /* not get_dc_ptr, this needs to work from any thread */
     LONG ret = 0;
