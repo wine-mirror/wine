@@ -309,7 +309,7 @@ static HRESULT WINAPI memory_1d_2d_buffer_Lock(IMFMediaBuffer *iface, BYTE **dat
         hr = MF_E_INVALIDREQUEST;
     else if (!buffer->_2d.linear_buffer)
     {
-        if (!(buffer->_2d.linear_buffer = malloc(ALIGN_SIZE(buffer->_2d.plane_size, MF_64_BYTE_ALIGNMENT))))
+        if (!(buffer->_2d.linear_buffer = malloc(buffer->_2d.plane_size)))
             hr = E_OUTOFMEMORY;
 
         if (SUCCEEDED(hr))
@@ -384,7 +384,7 @@ static HRESULT WINAPI d3d9_surface_buffer_Lock(IMFMediaBuffer *iface, BYTE **dat
     {
         D3DLOCKED_RECT rect;
 
-        if (!(buffer->_2d.linear_buffer = malloc(ALIGN_SIZE(buffer->_2d.plane_size, MF_64_BYTE_ALIGNMENT))))
+        if (!(buffer->_2d.linear_buffer = malloc(buffer->_2d.plane_size)))
             hr = E_OUTOFMEMORY;
 
         if (SUCCEEDED(hr))
@@ -963,7 +963,7 @@ static HRESULT WINAPI dxgi_surface_buffer_Lock(IMFMediaBuffer *iface, BYTE **dat
         hr = MF_E_INVALIDREQUEST;
     else if (!buffer->_2d.linear_buffer)
     {
-        if (!(buffer->_2d.linear_buffer = malloc(ALIGN_SIZE(buffer->_2d.plane_size, MF_64_BYTE_ALIGNMENT))))
+        if (!(buffer->_2d.linear_buffer = malloc(buffer->_2d.plane_size)))
             hr = E_OUTOFMEMORY;
 
         if (SUCCEEDED(hr))
