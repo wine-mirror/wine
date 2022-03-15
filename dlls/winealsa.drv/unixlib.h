@@ -218,7 +218,9 @@ typedef struct midi_src
     MIDIHDR            *lpQueueHdr;
     UINT                startTime;
     MIDIINCAPSW         caps;
+    snd_seq_t          *seq;
     snd_seq_addr_t      addr;
+    int                 port_in;
 } WINE_MIDIIN;
 
 typedef struct midi_dest
@@ -227,6 +229,7 @@ typedef struct midi_dest
     MIDIOPENDESC        midiDesc;
     WORD                wFlags;
     MIDIOUTCAPSW        caps;
+    snd_seq_t          *seq;
     snd_seq_addr_t      addr;
     int                 port_out;
 } WINE_MIDIOUT;

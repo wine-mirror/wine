@@ -156,7 +156,7 @@ static BOOL midi_warn = TRUE;
 /**************************************************************************
  * 			midiOpenSeq				[internal]
  */
-static int midiOpenSeq(BOOL create_client)
+static snd_seq_t *midiOpenSeq(int *port_in_ret)
 {
     seq_lock();
     if (numOpenMidiSeq == 0) {
@@ -168,25 +168,24 @@ static int midiOpenSeq(BOOL create_client)
 	    }
             midi_warn = FALSE;
             seq_unlock();
-	    return -1;
+	    return NULL;
 	}
 
-        if (create_client) {
-            /* Setting the client name is the only init to do */
-            snd_seq_set_client_name(midiSeq, "WINE midi driver");
+        /* Setting the client name is the only init to do */
+        snd_seq_set_client_name(midiSeq, "WINE midi driver");
 
-            port_in = snd_seq_create_simple_port(midiSeq, "WINE ALSA Input",
-                    SND_SEQ_PORT_CAP_WRITE|SND_SEQ_PORT_CAP_SUBS_READ|SND_SEQ_PORT_CAP_SUBS_WRITE,
-                    SND_SEQ_PORT_TYPE_MIDI_GENERIC|SND_SEQ_PORT_TYPE_APPLICATION);
-            if (port_in < 0)
-                TRACE("Unable to create input port\n");
-            else
-                TRACE("Input port %d created successfully\n", port_in);
-        }
+        port_in = snd_seq_create_simple_port(midiSeq, "WINE ALSA Input",
+                                             SND_SEQ_PORT_CAP_WRITE|SND_SEQ_PORT_CAP_SUBS_READ|SND_SEQ_PORT_CAP_SUBS_WRITE,
+                                             SND_SEQ_PORT_TYPE_MIDI_GENERIC|SND_SEQ_PORT_TYPE_APPLICATION);
+        if (port_in < 0)
+            TRACE("Unable to create input port\n");
+        else
+            TRACE("Input port %d created successfully\n", port_in);
     }
     numOpenMidiSeq++;
     seq_unlock();
-    return 0;
+    if (port_in_ret) *port_in_ret = port_in;
+    return midiSeq;
 }
 
 /**************************************************************************
@@ -314,8 +313,9 @@ static void handle_midi_event(snd_seq_event_t *ev)
     }
 }
 
-static DWORD WINAPI midRecThread(LPVOID arg)
+static DWORD WINAPI midRecThread(void *arg)
 {
+    snd_seq_t *midi_seq = arg;
     int npfd;
     struct pollfd *pfd;
     int ret;
@@ -325,9 +325,9 @@ static DWORD WINAPI midRecThread(LPVOID arg)
     while(!end_thread) {
 	TRACE("Thread loop\n");
         seq_lock();
-	npfd = snd_seq_poll_descriptors_count(midiSeq, POLLIN);
+	npfd = snd_seq_poll_descriptors_count(midi_seq, POLLIN);
 	pfd = HeapAlloc(GetProcessHeap(), 0, npfd * sizeof(struct pollfd));
-	snd_seq_poll_descriptors(midiSeq, pfd, npfd, POLLIN);
+	snd_seq_poll_descriptors(midi_seq, pfd, npfd, POLLIN);
         seq_unlock();
 
 	/* Check if an event is present */
@@ -337,9 +337,9 @@ static DWORD WINAPI midRecThread(LPVOID arg)
 	}
 
 	/* Note: This definitely does not work.  
-	 * while(snd_seq_event_input_pending(midiSeq, 0) > 0) {
+	 * while(snd_seq_event_input_pending(midi_seq, 0) > 0) {
 	       snd_seq_event_t* ev;
-	       snd_seq_event_input(midiSeq, &ev);
+	       snd_seq_event_input(midi_seq, &ev);
 	       ....................
 	       snd_seq_free_event(ev);
 	   }*/
@@ -348,7 +348,7 @@ static DWORD WINAPI midRecThread(LPVOID arg)
             snd_seq_event_t *ev;
 
             seq_lock();
-            snd_seq_event_input(midiSeq, &ev);
+            snd_seq_event_input(midi_seq, &ev);
             seq_unlock();
 
             if (ev) {
@@ -357,10 +357,10 @@ static DWORD WINAPI midRecThread(LPVOID arg)
             }
 
             seq_lock();
-            ret = snd_seq_event_input_pending(midiSeq, 0);
+            ret = snd_seq_event_input_pending(midi_seq, 0);
             seq_unlock();
 	} while(ret > 0);
-	
+
 	HeapFree(GetProcessHeap(), 0, pfd);
     }
     return 0;
@@ -387,7 +387,8 @@ static DWORD midGetDevCaps(WORD wDevID, LPMIDIINCAPSW lpCaps, DWORD dwSize)
  */
 static DWORD midOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 {
-    int ret = 0;
+    int ret = 0, port_in;
+    snd_seq_t *midi_seq;
 
     TRACE("(%04X, %p, %08X);\n", wDevID, lpDesc, dwFlags);
 
@@ -420,7 +421,7 @@ static DWORD midOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 	return MMSYSERR_INVALFLAG;
     }
 
-    if (midiOpenSeq(TRUE) < 0) {
+    if (!(midi_seq = midiOpenSeq(&port_in))) {
 	return MMSYSERR_ERROR;
     }
 
@@ -430,10 +431,12 @@ static DWORD midOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
     MidiInDev[wDevID].midiDesc = *lpDesc;
     MidiInDev[wDevID].state = 0;
     MidiInDev[wDevID].startTime = 0;
+    MidiInDev[wDevID].seq = midi_seq;
+    MidiInDev[wDevID].port_in = port_in;
 
     /* Connect our app port to the device port */
     seq_lock();
-    ret = snd_seq_connect_from(midiSeq, port_in, MidiInDev[wDevID].addr.client,
+    ret = snd_seq_connect_from(midi_seq, port_in, MidiInDev[wDevID].addr.client,
                                MidiInDev[wDevID].addr.port);
     seq_unlock();
     if (ret < 0)
@@ -443,7 +446,7 @@ static DWORD midOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 
     if (numStartedMidiIn++ == 0) {
 	end_thread = 0;
-	hThread = CreateThread(NULL, 0, midRecThread, NULL, 0, NULL);
+	hThread = CreateThread(NULL, 0, midRecThread, midi_seq, 0, NULL);
 	if (!hThread) {
 	    numStartedMidiIn = 0;
 	    WARN("Couldn't create thread for midi-in\n");
@@ -479,7 +482,7 @@ static DWORD midClose(WORD wDevID)
 	return MIDIERR_STILLPLAYING;
     }
 
-    if (midiSeq == NULL) {
+    if (MidiInDev[wDevID].seq == NULL) {
 	WARN("ooops !\n");
 	return MMSYSERR_ERROR;
     }
@@ -494,12 +497,13 @@ static DWORD midClose(WORD wDevID)
     }
 
     seq_lock();
-    snd_seq_disconnect_from(midiSeq, port_in, MidiInDev[wDevID].addr.client, MidiInDev[wDevID].addr.port);
+    snd_seq_disconnect_from(MidiInDev[wDevID].seq, MidiInDev[wDevID].port_in, MidiInDev[wDevID].addr.client, MidiInDev[wDevID].addr.port);
     seq_unlock();
     midiCloseSeq();
 
     MIDI_NotifyClient(wDevID, MIM_CLOSE, 0L, 0L);
     MidiInDev[wDevID].midiDesc.hMidi = 0;
+    MidiInDev[wDevID].seq = NULL;
 
     return ret;
 }
@@ -655,6 +659,7 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
     int ret;
     int port_out;
     char port_out_name[32];
+    snd_seq_t *midi_seq;
 
     TRACE("(%04X, %p, %08X);\n", wDevID, lpDesc, dwFlags);
     if (lpDesc == NULL) {
@@ -682,7 +687,7 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
     case MOD_FMSYNTH:
     case MOD_MIDIPORT:
     case MOD_SYNTH:
-        if (midiOpenSeq(TRUE) < 0) {
+        if (!(midi_seq = midiOpenSeq(NULL))) {
 	    return MMSYSERR_ALLOCATED;
 	}
 	break;
@@ -694,6 +699,7 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 
     MidiOutDev[wDevID].wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
     MidiOutDev[wDevID].midiDesc = *lpDesc;
+    MidiOutDev[wDevID].seq = midi_seq;
 
     seq_lock();
     /* Create a port dedicated to a specific device */
@@ -701,7 +707,7 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
     if (wDevID)
 	sprintf(port_out_name, "WINE ALSA Output #%d", wDevID);
 
-    port_out = snd_seq_create_simple_port(midiSeq, wDevID?port_out_name:"WINE ALSA Output",
+    port_out = snd_seq_create_simple_port(midi_seq, wDevID?port_out_name:"WINE ALSA Output",
 	    SND_SEQ_PORT_CAP_READ|SND_SEQ_PORT_CAP_SUBS_READ|SND_SEQ_PORT_CAP_SUBS_WRITE,
 	    SND_SEQ_PORT_TYPE_MIDI_GENERIC|SND_SEQ_PORT_TYPE_APPLICATION);
 
@@ -713,7 +719,7 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 	MidiOutDev[wDevID].port_out = port_out;
 
 	/* Connect our app port to the device port */
-	ret = snd_seq_connect_to(midiSeq, port_out, MidiOutDev[wDevID].addr.client,
+	ret = snd_seq_connect_to(midi_seq, port_out, MidiOutDev[wDevID].addr.client,
 	                         MidiOutDev[wDevID].addr.port);
 
 	/* usually will happen when the port is already connected */
@@ -751,7 +757,7 @@ static DWORD modClose(WORD wDevID)
     /* FIXME: should test that no pending buffer is still in the queue for
      * playing */
 
-    if (midiSeq == NULL) {
+    if (MidiOutDev[wDevID].seq == NULL) {
 	WARN("can't close !\n");
 	return MMSYSERR_ERROR;
     }
@@ -762,10 +768,11 @@ static DWORD modClose(WORD wDevID)
     case MOD_SYNTH:
         seq_lock();
         TRACE("Deleting port :%d, connected to %d:%d\n", MidiOutDev[wDevID].port_out, MidiOutDev[wDevID].addr.client, MidiOutDev[wDevID].addr.port);
-        snd_seq_delete_simple_port(midiSeq, MidiOutDev[wDevID].port_out);
+        snd_seq_delete_simple_port(MidiOutDev[wDevID].seq, MidiOutDev[wDevID].port_out);
         MidiOutDev[wDevID].port_out = -1;
         seq_unlock();
-	midiCloseSeq();
+        midiCloseSeq();
+        MidiOutDev[wDevID].seq = NULL;
 	break;
     default:
 	WARN("Technology not supported (yet) %d !\n",
@@ -792,7 +799,7 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
     if (wDevID >= MODM_NumDevs) return MMSYSERR_BADDEVICEID;
     if (!MidiOutDev[wDevID].bEnabled) return MIDIERR_NODEVICE;
 
-    if (midiSeq == NULL) {
+    if (MidiOutDev[wDevID].seq == NULL) {
 	WARN("can't play !\n");
 	return MIDIERR_NODEVICE;
     }
@@ -886,7 +893,7 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 	    }
 	    if (handled) {
                 seq_lock();
-                snd_seq_event_output_direct(midiSeq, &event);
+                snd_seq_event_output_direct(MidiOutDev[wDevID].seq, &event);
                 seq_unlock();
             }
 	}
@@ -919,7 +926,7 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
     if (wDevID >= MODM_NumDevs) return MMSYSERR_BADDEVICEID;
     if (!MidiOutDev[wDevID].bEnabled) return MIDIERR_NODEVICE;
 
-    if (midiSeq == NULL) {
+    if (MidiOutDev[wDevID].seq == NULL) {
 	WARN("can't play !\n");
 	return MIDIERR_NODEVICE;
     }
@@ -977,7 +984,7 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 	snd_seq_ev_set_subs(&event);
 	snd_seq_ev_set_sysex(&event, lpMidiHdr->dwBufferLength + len_add, lpNewData ? lpNewData : lpData);
         seq_lock();
-	snd_seq_event_output_direct(midiSeq, &event);
+        snd_seq_event_output_direct(MidiOutDev[wDevID].seq, &event);
         seq_unlock();
         HeapFree(GetProcessHeap(), 0, lpNewData);
         break;
