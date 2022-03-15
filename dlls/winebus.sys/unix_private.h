@@ -107,7 +107,8 @@ struct hid_device_vtbl
     NTSTATUS (*start)(struct unix_device *iface);
     void (*stop)(struct unix_device *iface);
     NTSTATUS (*haptics_start)(struct unix_device *iface, UINT duration_ms,
-                              USHORT rumble_intensity, USHORT buzz_intensity);
+                              USHORT rumble_intensity, USHORT buzz_intensity,
+                              USHORT left_intensity, USHORT right_intensity);
     NTSTATUS (*haptics_stop)(struct unix_device *iface);
     NTSTATUS (*physical_device_control)(struct unix_device *iface, USAGE control);
     NTSTATUS (*physical_device_set_gain)(struct unix_device *iface, BYTE percent);
@@ -135,6 +136,8 @@ struct hid_haptics_features
 {
     struct hid_haptics_feature rumble;
     struct hid_haptics_feature buzz;
+    struct hid_haptics_feature left;
+    struct hid_haptics_feature right;
 };
 #include "poppack.h"
 

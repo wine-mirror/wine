@@ -335,6 +335,8 @@ struct hid_haptics_intensity
 {
     UINT16 rumble_intensity;
     UINT16 buzz_intensity;
+    UINT16 left_intensity;
+    UINT16 right_intensity;
 };
 #include "poppack.h"
 
@@ -389,6 +391,15 @@ BOOL hid_device_add_haptics(struct unix_device *iface)
             OUTPUT(1, Data|Var|Abs),
         END_COLLECTION,
     };
+    const BYTE trigger_template_begin[] =
+    {
+        USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+        COLLECTION(1, Physical),
+    };
+    const BYTE trigger_template_end[] =
+    {
+        END_COLLECTION,
+    };
 
     iface->hid_haptics.features_report = haptics_features_report;
     iface->hid_haptics.intensity_report = haptics_intensity_report;
@@ -398,10 +409,34 @@ BOOL hid_device_add_haptics(struct unix_device *iface)
     iface->hid_haptics.features.buzz.waveform = HID_USAGE_HAPTICS_WAVEFORM_BUZZ;
     iface->hid_haptics.features.buzz.duration = 0;
     iface->hid_haptics.features.buzz.cutoff_time_ms = 1000;
+    iface->hid_haptics.features.left.waveform = HID_USAGE_HAPTICS_WAVEFORM_RUMBLE;
+    iface->hid_haptics.features.left.duration = 0;
+    iface->hid_haptics.features.left.cutoff_time_ms = 1000;
+    iface->hid_haptics.features.right.waveform = HID_USAGE_HAPTICS_WAVEFORM_RUMBLE;
+    iface->hid_haptics.features.right.duration = 0;
+    iface->hid_haptics.features.right.cutoff_time_ms = 1000;
 
     if (!hid_report_descriptor_append(desc, haptics_template, sizeof(haptics_template)))
         return FALSE;
     if (!hid_report_descriptor_append(desc, haptics_template, sizeof(haptics_template)))
+        return FALSE;
+
+    if (!hid_report_descriptor_append_usage(desc, HID_USAGE_GENERIC_Z))
+        return FALSE;
+    if (!hid_report_descriptor_append(desc, trigger_template_begin, sizeof(trigger_template_begin)))
+        return FALSE;
+    if (!hid_report_descriptor_append(desc, haptics_template, sizeof(haptics_template)))
+        return FALSE;
+    if (!hid_report_descriptor_append(desc, trigger_template_end, sizeof(trigger_template_end)))
+        return FALSE;
+
+    if (!hid_report_descriptor_append_usage(desc, HID_USAGE_GENERIC_RZ))
+        return FALSE;
+    if (!hid_report_descriptor_append(desc, trigger_template_begin, sizeof(trigger_template_begin)))
+        return FALSE;
+    if (!hid_report_descriptor_append(desc, haptics_template, sizeof(haptics_template)))
+        return FALSE;
+    if (!hid_report_descriptor_append(desc, trigger_template_end, sizeof(trigger_template_end)))
         return FALSE;
 
     return TRUE;
@@ -1071,12 +1106,15 @@ static void hid_device_set_output_report(struct unix_device *iface, HID_XFER_PAC
         io->Information = sizeof(*report) + 1;
         assert(packet->reportBufferLen == io->Information);
 
-        if (!report->rumble_intensity && !report->buzz_intensity)
+        if (!report->rumble_intensity && !report->buzz_intensity && !report->left_intensity && !report->right_intensity)
             io->Status = iface->hid_vtbl->haptics_stop(iface);
         else
         {
             duration_ms = min(haptics->features.rumble.cutoff_time_ms, haptics->features.buzz.cutoff_time_ms);
-            io->Status = iface->hid_vtbl->haptics_start(iface, duration_ms, report->rumble_intensity, report->buzz_intensity);
+            duration_ms = min(duration_ms, haptics->features.left.cutoff_time_ms);
+            duration_ms = min(duration_ms, haptics->features.right.cutoff_time_ms);
+            io->Status = iface->hid_vtbl->haptics_start(iface, duration_ms, report->rumble_intensity, report->buzz_intensity,
+                                                        report->left_intensity, report->right_intensity);
         }
     }
     else if (packet->reportId == physical->device_control_report)
@@ -1287,6 +1325,8 @@ static void hid_device_set_feature_report(struct unix_device *iface, HID_XFER_PA
 
         haptics->features.rumble.cutoff_time_ms = features->rumble.cutoff_time_ms;
         haptics->features.buzz.cutoff_time_ms = features->buzz.cutoff_time_ms;
+        haptics->features.left.cutoff_time_ms = features->left.cutoff_time_ms;
+        haptics->features.right.cutoff_time_ms = features->right.cutoff_time_ms;
         io->Status = STATUS_SUCCESS;
     }
     else

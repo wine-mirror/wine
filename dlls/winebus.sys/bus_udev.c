@@ -867,7 +867,8 @@ static void lnxev_device_read_report(struct unix_device *iface)
 }
 
 static NTSTATUS lnxev_device_haptics_start(struct unix_device *iface, UINT duration_ms,
-                                           USHORT rumble_intensity, USHORT buzz_intensity)
+                                           USHORT rumble_intensity, USHORT buzz_intensity,
+                                           USHORT left_intensity, USHORT right_intensity)
 {
     struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);
     struct ff_effect effect =
@@ -877,8 +878,8 @@ static NTSTATUS lnxev_device_haptics_start(struct unix_device *iface, UINT durat
     };
     struct input_event event;
 
-    TRACE("iface %p, duration_ms %u, rumble_intensity %u, buzz_intensity %u.\n", iface,
-          duration_ms, rumble_intensity, buzz_intensity);
+    TRACE("iface %p, duration_ms %u, rumble_intensity %u, buzz_intensity %u, left_intensity %u, right_intensity %u.\n",
+          iface, duration_ms, rumble_intensity, buzz_intensity, left_intensity, right_intensity);
 
     effect.replay.length = duration_ms;
     effect.u.rumble.strong_magnitude = rumble_intensity;

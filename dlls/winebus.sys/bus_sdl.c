@@ -432,13 +432,14 @@ static void sdl_device_stop(struct unix_device *iface)
 }
 
 static NTSTATUS sdl_device_haptics_start(struct unix_device *iface, UINT duration_ms,
-                                         USHORT rumble_intensity, USHORT buzz_intensity)
+                                         USHORT rumble_intensity, USHORT buzz_intensity,
+                                         USHORT left_intensity, USHORT right_intensity)
 {
     struct sdl_device *impl = impl_from_unix_device(iface);
     SDL_HapticEffect effect;
 
-    TRACE("iface %p, duration_ms %u, rumble_intensity %u, buzz_intensity %u.\n", iface, duration_ms,
-          rumble_intensity, buzz_intensity);
+    TRACE("iface %p, duration_ms %u, rumble_intensity %u, buzz_intensity %u, left_intensity %u, right_intensity %u.\n",
+          iface, duration_ms, rumble_intensity, buzz_intensity, left_intensity, right_intensity);
 
     if (!(impl->effect_support & EFFECT_SUPPORT_HAPTICS)) return STATUS_NOT_SUPPORTED;
 
