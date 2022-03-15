@@ -278,12 +278,12 @@ typedef void (*TASK_CALLBACK)( void *ctx );
 struct task_header
 {
     TASK_CALLBACK callback;
+    struct object_header *obj;
 };
 
 struct send_request
 {
     struct task_header task_hdr;
-    struct request *request;
     WCHAR *headers;
     DWORD headers_len;
     void *optional;
@@ -295,20 +295,17 @@ struct send_request
 struct receive_response
 {
     struct task_header task_hdr;
-    struct request *request;
 };
 
 struct query_data
 {
     struct task_header task_hdr;
-    struct request *request;
     DWORD *available;
 };
 
 struct read_data
 {
     struct task_header task_hdr;
-    struct request *request;
     void *buffer;
     DWORD to_read;
     DWORD *read;
@@ -317,7 +314,6 @@ struct read_data
 struct write_data
 {
     struct task_header task_hdr;
-    struct request *request;
     const void *buffer;
     DWORD to_write;
     DWORD *written;
@@ -326,7 +322,6 @@ struct write_data
 struct socket_send
 {
     struct task_header task_hdr;
-    struct socket *socket;
     WINHTTP_WEB_SOCKET_BUFFER_TYPE type;
     const void *buf;
     DWORD len;
@@ -337,7 +332,6 @@ struct socket_send
 struct socket_receive
 {
     struct task_header task_hdr;
-    struct socket *socket;
     void *buf;
     DWORD len;
 };
@@ -345,7 +339,6 @@ struct socket_receive
 struct socket_shutdown
 {
     struct task_header task_hdr;
-    struct socket *socket;
     USHORT status;
     char reason[123];
     DWORD len;
