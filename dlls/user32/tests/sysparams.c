@@ -16,6 +16,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include <assert.h>
 #include <stdlib.h>
@@ -302,14 +303,14 @@ static BOOL test_error_msg ( int rc, const char *name )
         }
         else
         {
-            trace("%s failed for reason: %d. Indicating test failure and skipping remainder of test\n",name,last_error);
-            ok(rc!=0,"SystemParametersInfoA: rc=%d err=%d\n",rc,last_error);
+            trace("%s failed for reason: %ld. Indicating test failure and skipping remainder of test\n",name,last_error);
+            ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,last_error);
         }
         return FALSE;
     }
     else
     {
-        ok(rc!=0,"SystemParametersInfoA: rc=%d err=%d\n",rc,last_error);
+        ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,last_error);
         return TRUE;
     }
 }
@@ -335,12 +336,12 @@ static void _test_reg_key( LPCSTR subKey1, LPCSTR subKey2, LPCSTR valName1, LPCS
     RegCloseKey( hKey );
     if (rc==ERROR_SUCCESS)
     {
-        ok( type == exp_type, "wrong type %u/%u\n", type, exp_type );
+        ok( type == exp_type, "wrong type %lu/%lu\n", type, exp_type );
         switch (exp_type)
         {
         case REG_DWORD:
             ok( *(DWORD *)value == *(DWORD *)exp_value,
-                "Wrong value in registry: %s %s %08x/%08x\n",
+                "Wrong value in registry: %s %s %08lx/%08lx\n",
                 subKey1, valName1, *(DWORD *)value, *(DWORD *)exp_value );
             break;
         case REG_SZ:
@@ -365,12 +366,12 @@ static void _test_reg_key( LPCSTR subKey1, LPCSTR subKey2, LPCSTR valName1, LPCS
         RegCloseKey( hKey );
         if (rc==ERROR_SUCCESS)
         {
-            ok( type == exp_type, "wrong type %u/%u\n", type, exp_type );
+            ok( type == exp_type, "wrong type %lu/%lu\n", type, exp_type );
             switch (exp_type)
             {
             case REG_DWORD:
                 ok( *(DWORD *)value == *(DWORD *)exp_value,
-                    "Wrong value in registry: %s %s %08x/%08x\n",
+                    "Wrong value in registry: %s %s %08lx/%08lx\n",
                     subKey1, valName1, *(DWORD *)value, *(DWORD *)exp_value );
                 break;
             case REG_SZ:
@@ -396,12 +397,12 @@ static void _test_reg_key( LPCSTR subKey1, LPCSTR subKey2, LPCSTR valName1, LPCS
         RegCloseKey( hKey );
         if (rc==ERROR_SUCCESS)
         {
-            ok( type == exp_type, "wrong type %u/%u\n", type, exp_type );
+            ok( type == exp_type, "wrong type %lu/%lu\n", type, exp_type );
             switch (exp_type)
             {
             case REG_DWORD:
                 ok( *(DWORD *)value == *(DWORD *)exp_value,
-                    "Wrong value in registry: %s %s %08x/%08x\n",
+                    "Wrong value in registry: %s %s %08lx/%08lx\n",
                     subKey1, valName1, *(DWORD *)value, *(DWORD *)exp_value );
                 break;
             case REG_SZ:
@@ -426,12 +427,12 @@ static void _test_reg_key( LPCSTR subKey1, LPCSTR subKey2, LPCSTR valName1, LPCS
             RegCloseKey( hKey );
             if (rc==ERROR_SUCCESS)
             {
-                ok( type == exp_type, "wrong type %u/%u\n", type, exp_type );
+                ok( type == exp_type, "wrong type %lu/%lu\n", type, exp_type );
                 switch (exp_type)
                 {
                 case REG_DWORD:
                     ok( *(DWORD *)value == *(DWORD *)exp_value,
-                        "Wrong value in registry: %s %s %08x/%08x\n",
+                        "Wrong value in registry: %s %s %08lx/%08lx\n",
                         subKey1, valName1, *(DWORD *)value, *(DWORD *)exp_value );
                     break;
                 case REG_SZ:
@@ -575,48 +576,48 @@ static void test_SPI_SETBEEP( void )                   /*      2 */
     curr_val = TRUE;
     rc=SystemParametersInfoA( SPI_SETBEEP, curr_val, 0, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
     if (!test_error_msg(rc,"SPI_SETBEEP")) return;
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
     test_change_message( SPI_SETBEEP, 0 );
     test_reg_key( SPI_SETBEEP_REGKEY,
                   SPI_SETBEEP_VALNAME,
                   curr_val ? "Yes" : "No" );
     rc=SystemParametersInfoA( SPI_GETBEEP, 0, &b, 0 );
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
     eq( b, curr_val, "SPI_{GET,SET}BEEP", "%d" );
     rc=SystemParametersInfoW( SPI_GETBEEP, 0, &b, 0 );
     if (rc || GetLastError() != ERROR_CALL_NOT_IMPLEMENTED)
     {
-        ok(rc, "SystemParametersInfoW: rc=%d err=%d\n", rc, GetLastError());
+        ok(rc, "SystemParametersInfoW: rc=%d err=%ld\n", rc, GetLastError());
         eq( b, curr_val, "SystemParametersInfoW", "%d" );
     }
 
     /* is a message sent for the second change? */
     rc=SystemParametersInfoA( SPI_SETBEEP, curr_val, 0, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
     test_change_message( SPI_SETBEEP, 0 );
 
     curr_val = FALSE;
     rc=SystemParametersInfoW( SPI_SETBEEP, curr_val, 0, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
     if (rc == FALSE && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
         rc=SystemParametersInfoA( SPI_SETBEEP, curr_val, 0, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
-    ok(rc, "SystemParametersInfo: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfo: rc=%d err=%ld\n", rc, GetLastError());
     test_change_message( SPI_SETBEEP, 0 );
     test_reg_key( SPI_SETBEEP_REGKEY,
                   SPI_SETBEEP_VALNAME,
                   curr_val ? "Yes" : "No" );
     rc=SystemParametersInfoA( SPI_GETBEEP, 0, &b, 0 );
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
     eq( b, curr_val, "SPI_{GET,SET}BEEP", "%d" );
     rc=SystemParametersInfoW( SPI_GETBEEP, 0, &b, 0 );
     if (rc || GetLastError() != ERROR_CALL_NOT_IMPLEMENTED)
     {
-        ok(rc, "SystemParametersInfoW: rc=%d err=%d\n", rc, GetLastError());
+        ok(rc, "SystemParametersInfoW: rc=%d err=%ld\n", rc, GetLastError());
         eq( b, curr_val, "SystemParametersInfoW", "%d" );
     }
     ok( MessageBeep( MB_OK ), "Return value of MessageBeep when sound is disabled\n" );
 
     rc=SystemParametersInfoA( SPI_SETBEEP, old_b, 0, SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 }
 
 static const char *setmouse_valuenames[3] = {
@@ -646,7 +647,7 @@ static BOOL run_spi_setmouse_test( int curr_val[], POINT *req_change, POINT *pro
         rc=SystemParametersInfoA( SPI_SETMOUSE, 0, curr_val, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
     if (!test_error_msg(rc,"SPI_SETMOUSE")) return FALSE;
 
-    ok(rc, "SystemParametersInfo: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfo: rc=%d err=%ld\n", rc, GetLastError());
     test_change_message( SPI_SETMOUSE, 0 );
     for (i = 0; i < 3; i++)
     {
@@ -655,14 +656,14 @@ static BOOL run_spi_setmouse_test( int curr_val[], POINT *req_change, POINT *pro
     }
 
     rc=SystemParametersInfoA( SPI_GETMOUSE, 0, mi, 0 );
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
     ok(mi[0] == curr_val[0], "expected X threshold %d, got %d\n", curr_val[0], mi[0]);
     ok(mi[1] == curr_val[1], "expected Y threshold %d, got %d\n", curr_val[1], mi[1]);
     ok(mi[2] == curr_val[2] || broken(mi[2] == 1) /* Win10 1709+ */,
             "expected acceleration %d, got %d\n", curr_val[2], mi[2]);
 
     rc=SystemParametersInfoW( SPI_GETMOUSE, 0, mi, 0 );
-    ok(rc, "SystemParametersInfoW: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoW: rc=%d err=%ld\n", rc, GetLastError());
     ok(mi[0] == curr_val[0], "expected X threshold %d, got %d\n", curr_val[0], mi[0]);
     ok(mi[1] == curr_val[1], "expected Y threshold %d, got %d\n", curr_val[1], mi[1]);
     ok(mi[2] == curr_val[2] || broken(mi[2] == 1) /* Win10 1709+ */,
@@ -745,7 +746,7 @@ static void test_SPI_SETMOUSE( void )                  /*      4 */
     run_spi_setmouse_test( curr_val, req_change, proj_change8, nchange );
 
     rc=SystemParametersInfoA( SPI_SETMOUSE, 0, old_mi, SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 }
 
 static BOOL test_setborder(UINT curr_val, int usesetborder, int dpi)
@@ -757,18 +758,18 @@ static BOOL test_setborder(UINT curr_val, int usesetborder, int dpi)
 
     ncm.cbSize = FIELD_OFFSET(NONCLIENTMETRICSA, iPaddedBorderWidth);
     rc=SystemParametersInfoA( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0);
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
     if( usesetborder) {
         rc=SystemParametersInfoA( SPI_SETBORDER, curr_val, 0, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
         if (!test_error_msg(rc,"SPI_SETBORDER")) return FALSE;
-        ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+        ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
         test_change_message( SPI_SETBORDER, 1 );
     } else { /* set non client metrics */
         ncm.iBorderWidth = curr_val;
         rc=SystemParametersInfoA( SPI_SETNONCLIENTMETRICS, 0, &ncm, SPIF_UPDATEINIFILE|
                 SPIF_SENDCHANGE);
         if (!test_error_msg(rc,"SPI_SETNONCLIENTMETRICS")) return FALSE;
-        ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+        ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
         test_change_message( SPI_SETNONCLIENTMETRICS, 1 );
     }
     if( curr_val) { /* skip if 0, some windows versions return 0 others 1 */
@@ -781,11 +782,11 @@ static BOOL test_setborder(UINT curr_val, int usesetborder, int dpi)
     if (curr_val == 0) curr_val = 1;
     /* should be the same as the non client metrics */
     rc=SystemParametersInfoA( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0);
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
     eq( (UINT)ncm.iBorderWidth, curr_val, "NonClientMetric.iBorderWidth", "%d");
     /* and from SPI_GETBORDER */ 
     rc=SystemParametersInfoA( SPI_GETBORDER, 0, &border, 0 );
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
     eq( border, curr_val, "SPI_{GET,SET}BORDER", "%d");
     /* test some SystemMetrics */
     frame = curr_val + GetSystemMetrics( SM_CXDLGFRAME );
@@ -845,7 +846,7 @@ static void test_SPI_SETBORDER( void )                 /*      6 */
     rc=SystemParametersInfoA( SPI_SETNONCLIENTMETRICS, 0, &ncmsave,
             SPIF_UPDATEINIFILE| SPIF_SENDCHANGE);
     test_change_message( SPI_SETNONCLIENTMETRICS, 1 );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 }
 
 static void test_SPI_SETKEYBOARDSPEED( void )          /*     10 */
@@ -869,18 +870,18 @@ static void test_SPI_SETKEYBOARDSPEED( void )          /*     10 */
         rc=SystemParametersInfoA( SPI_SETKEYBOARDSPEED, vals[i], 0,
                                   SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
         if (!test_error_msg(rc,"SPI_SETKEYBOARDSPEED")) return;
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         test_change_message( SPI_SETKEYBOARDSPEED, 0 );
         sprintf( buf, "%d", vals[i] );
         test_reg_key( SPI_SETKEYBOARDSPEED_REGKEY, SPI_SETKEYBOARDSPEED_VALNAME, buf );
 
         rc=SystemParametersInfoA( SPI_GETKEYBOARDSPEED, 0, &v, 0 );
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         eq( v, vals[i], "SPI_{GET,SET}KEYBOARDSPEED", "%d" );
     }
 
     rc=SystemParametersInfoA( SPI_SETKEYBOARDSPEED, old_speed, 0, SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 }
 
 /* test_SPI_ICONHORIZONTALSPACING helper */
@@ -893,7 +894,7 @@ static BOOL dotest_spi_iconhorizontalspacing( INT curr_val)
     rc=SystemParametersInfoA( SPI_ICONHORIZONTALSPACING, curr_val, 0,
                               SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
     if (!test_error_msg(rc,"SPI_ICONHORIZONTALSPACING")) return FALSE;
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
     test_change_message( SPI_ICONHORIZONTALSPACING, 0 );
     curr_val = max( curr_val, min_val );
     /* The registry keys depend on the Windows version and the values too
@@ -906,14 +907,14 @@ static BOOL dotest_spi_iconhorizontalspacing( INT curr_val)
         "wrong value in registry %d, expected %d\n", regval, curr_val);
     /* compare with what SPI_ICONHORIZONTALSPACING returns */
     rc=SystemParametersInfoA( SPI_ICONHORIZONTALSPACING, 0, &spacing, 0 );
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
     eq( spacing, curr_val, "ICONHORIZONTALSPACING", "%d");
     /* and with a system metrics */
     eq( GetSystemMetrics( SM_CXICONSPACING ), curr_val, "SM_CXICONSPACING", "%d" );
     /* and with what SPI_GETICONMETRICS returns */
     im.cbSize = sizeof(ICONMETRICSA);
     rc=SystemParametersInfoA( SPI_GETICONMETRICS, sizeof(ICONMETRICSA), &im, FALSE );
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
     eq( im.iHorzSpacing, curr_val, "SPI_GETICONMETRICS", "%d" );
     return TRUE;
 }
@@ -934,7 +935,7 @@ static void test_SPI_ICONHORIZONTALSPACING( void )     /*     13 */
     dotest_spi_iconhorizontalspacing( 10); /* minimum is 32 */
     /* restore */
     rc=SystemParametersInfoA( SPI_ICONHORIZONTALSPACING, old_spacing, 0, SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 }
 
 static void test_SPI_SETSCREENSAVETIMEOUT( void )      /*     14 */
@@ -958,20 +959,20 @@ static void test_SPI_SETSCREENSAVETIMEOUT( void )      /*     14 */
         rc=SystemParametersInfoA( SPI_SETSCREENSAVETIMEOUT, vals[i], 0,
                                SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
         if (!test_error_msg(rc,"SPI_SETSCREENSAVETIMEOUT")) return;
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         test_change_message( SPI_SETSCREENSAVETIMEOUT, 0 );
         sprintf( buf, "%d", vals[i] );
         test_reg_key( SPI_SETSCREENSAVETIMEOUT_REGKEY,
                       SPI_SETSCREENSAVETIMEOUT_VALNAME, buf );
 
         rc = SystemParametersInfoA( SPI_GETSCREENSAVETIMEOUT, 0, &v, 0 );
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         eq( v, vals[i], "SPI_{GET,SET}SCREENSAVETIMEOUT", "%d" );
     }
 
     rc=SystemParametersInfoA( SPI_SETSCREENSAVETIMEOUT, old_timeout, 0,
                               SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 }
 
 static void test_SPI_SETSCREENSAVEACTIVE( void )       /*     17 */
@@ -994,20 +995,20 @@ static void test_SPI_SETSCREENSAVEACTIVE( void )       /*     17 */
         rc=SystemParametersInfoA( SPI_SETSCREENSAVEACTIVE, vals[i], 0,
                                   SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
         if (!test_error_msg(rc,"SPI_SETSCREENSAVEACTIVE")) return;
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         test_change_message( SPI_SETSCREENSAVEACTIVE, 0 );
         test_reg_key( SPI_SETSCREENSAVEACTIVE_REGKEY,
                       SPI_SETSCREENSAVEACTIVE_VALNAME,
                       vals[i] ? "1" : "0" );
 
         rc=SystemParametersInfoA( SPI_GETSCREENSAVEACTIVE, 0, &v, 0 );
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         ok(v == vals[i] || broken(! v) /* Win 7 */,
            "SPI_{GET,SET}SCREENSAVEACTIVE: got %d instead of %d\n", v, vals[i]);
     }
 
     rc=SystemParametersInfoA( SPI_SETSCREENSAVEACTIVE, old_b, 0, SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 }
 
 static void test_SPI_SETGRIDGRANULARITY( void )        /*     19 */
@@ -1036,19 +1037,19 @@ static void test_SPI_SETKEYBOARDDELAY( void )          /*     23 */
         rc=SystemParametersInfoA( SPI_SETKEYBOARDDELAY, vals[i], 0,
                                   SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
         if (!test_error_msg(rc,"SPI_SETKEYBOARDDELAY")) return;
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         test_change_message( SPI_SETKEYBOARDDELAY, 0 );
         sprintf( buf, "%d", vals[i] );
         test_reg_key( SPI_SETKEYBOARDDELAY_REGKEY,
                       SPI_SETKEYBOARDDELAY_VALNAME, buf );
 
         rc=SystemParametersInfoA( SPI_GETKEYBOARDDELAY, 0, &delay, 0 );
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         eq( delay, vals[i], "SPI_{GET,SET}KEYBOARDDELAY", "%d" );
     }
 
     rc=SystemParametersInfoA( SPI_SETKEYBOARDDELAY, old_delay, 0, SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 }
 
 
@@ -1062,7 +1063,7 @@ static BOOL dotest_spi_iconverticalspacing( INT curr_val)
     rc=SystemParametersInfoA( SPI_ICONVERTICALSPACING, curr_val, 0,
                               SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
     if (!test_error_msg(rc,"SPI_ICONVERTICALSPACING")) return FALSE;
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
     test_change_message( SPI_ICONVERTICALSPACING, 0 );
     curr_val = max( curr_val, min_val );
     /* The registry keys depend on the Windows version and the values too
@@ -1075,14 +1076,14 @@ static BOOL dotest_spi_iconverticalspacing( INT curr_val)
         "wrong value in registry %d, expected %d\n", regval, curr_val);
     /* compare with what SPI_ICONVERTICALSPACING returns */
     rc=SystemParametersInfoA( SPI_ICONVERTICALSPACING, 0, &spacing, 0 );
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
     eq( spacing, curr_val, "ICONVERTICALSPACING", "%d" );
     /* and with a system metrics */
     eq( GetSystemMetrics( SM_CYICONSPACING ), curr_val, "SM_CYICONSPACING", "%d" );
     /* and with what SPI_GETICONMETRICS returns */
     im.cbSize = sizeof(ICONMETRICSA);
     rc=SystemParametersInfoA( SPI_GETICONMETRICS, sizeof(ICONMETRICSA), &im, FALSE );
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
     eq( im.iVertSpacing, curr_val, "SPI_GETICONMETRICS", "%d" );
     return TRUE;
 }
@@ -1105,7 +1106,7 @@ static void test_SPI_ICONVERTICALSPACING( void )       /*     24 */
     /* restore */
     rc=SystemParametersInfoA( SPI_ICONVERTICALSPACING, old_spacing, 0,
                               SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 }
 
 static void test_SPI_SETICONTITLEWRAP( void )          /*     26 */
@@ -1130,7 +1131,7 @@ static void test_SPI_SETICONTITLEWRAP( void )          /*     26 */
         rc=SystemParametersInfoA( SPI_SETICONTITLEWRAP, vals[i], 0,
                                   SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
         if (!test_error_msg(rc,"SPI_SETICONTITLEWRAP")) return;
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         test_change_message( SPI_SETICONTITLEWRAP, 1 );
         regval = metricfromreg( SPI_SETICONTITLEWRAP_REGKEY2,
                 SPI_SETICONTITLEWRAP_VALNAME, dpi);
@@ -1140,17 +1141,17 @@ static void test_SPI_SETICONTITLEWRAP( void )          /*     26 */
         ok( regval == vals[i], "wrong value in registry %d, expected %d\n", regval, vals[i] );
 
         rc=SystemParametersInfoA( SPI_GETICONTITLEWRAP, 0, &v, 0 );
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         eq( v, vals[i], "SPI_{GET,SET}ICONTITLEWRAP", "%d" );
         /* and test with what SPI_GETICONMETRICS returns */
         im.cbSize = sizeof(ICONMETRICSA);
         rc=SystemParametersInfoA( SPI_GETICONMETRICS, sizeof(ICONMETRICSA), &im, FALSE );
-        ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+        ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
         eq( im.iTitleWrap, (BOOL)vals[i], "SPI_GETICONMETRICS", "%d" );
     }
 
     rc=SystemParametersInfoA( SPI_SETICONTITLEWRAP, old_b, 0, SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 }
 
 static void test_SPI_SETMENUDROPALIGNMENT( void )      /*     28 */
@@ -1173,7 +1174,7 @@ static void test_SPI_SETMENUDROPALIGNMENT( void )      /*     28 */
         rc=SystemParametersInfoA( SPI_SETMENUDROPALIGNMENT, vals[i], 0,
                                   SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
         if (!test_error_msg(rc,"SPI_SETMENUDROPALIGNMENT")) return;
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         test_change_message( SPI_SETMENUDROPALIGNMENT, 0 );
         test_reg_key_ex( SPI_SETMENUDROPALIGNMENT_REGKEY1,
                          SPI_SETMENUDROPALIGNMENT_REGKEY2,
@@ -1181,7 +1182,7 @@ static void test_SPI_SETMENUDROPALIGNMENT( void )      /*     28 */
                          vals[i] ? "1" : "0" );
 
         rc=SystemParametersInfoA( SPI_GETMENUDROPALIGNMENT, 0, &v, 0 );
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         eq( v, vals[i], "SPI_{GET,SET}MENUDROPALIGNMENT", "%d" );
         eq( GetSystemMetrics( SM_MENUDROPALIGNMENT ), (int)vals[i],
             "SM_MENUDROPALIGNMENT", "%d" );
@@ -1189,7 +1190,7 @@ static void test_SPI_SETMENUDROPALIGNMENT( void )      /*     28 */
 
     rc=SystemParametersInfoA( SPI_SETMENUDROPALIGNMENT, old_b, 0,
                               SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 }
 
 static void test_SPI_SETDOUBLECLKWIDTH( void )         /*     29 */
@@ -1223,7 +1224,7 @@ static void test_SPI_SETDOUBLECLKWIDTH( void )         /*     29 */
 
     rc=SystemParametersInfoA( SPI_SETDOUBLECLKWIDTH, old_width, 0,
                               SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 }
 
 static void test_SPI_SETDOUBLECLKHEIGHT( void )        /*     30 */
@@ -1257,7 +1258,7 @@ static void test_SPI_SETDOUBLECLKHEIGHT( void )        /*     30 */
 
     rc=SystemParametersInfoA( SPI_SETDOUBLECLKHEIGHT, old_height, 0,
                               SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 }
 
 static void test_SPI_SETDOUBLECLICKTIME( void )        /*     32 */
@@ -1288,7 +1289,7 @@ static void test_SPI_SETDOUBLECLICKTIME( void )        /*     32 */
     curr_val = 1000;
     rc=SystemParametersInfoA( SPI_SETDOUBLECLICKTIME, curr_val, 0,
                              SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
     test_change_message( SPI_SETDOUBLECLICKTIME, 0 );
     sprintf( buf, "%d", curr_val );
     test_reg_key( SPI_SETDOUBLECLICKTIME_REGKEY,
@@ -1313,7 +1314,7 @@ static void test_SPI_SETDOUBLECLICKTIME( void )        /*     32 */
     eq( GetDoubleClickTime(), curr_val, "GetDoubleClickTime", "%d" );
 
     rc=SystemParametersInfoA(SPI_SETDOUBLECLICKTIME, old_time, 0, SPIF_UPDATEINIFILE);
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 }
 
 static void test_SPI_SETMOUSEBUTTONSWAP( void )        /*     33 */
@@ -1347,7 +1348,7 @@ static void test_SPI_SETMOUSEBUTTONSWAP( void )        /*     33 */
 
     rc=SystemParametersInfoA( SPI_SETMOUSEBUTTONSWAP, old_b, 0,
                               SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 }
 
 static void test_SPI_SETFASTTASKSWITCH( void )         /*     36 */
@@ -1388,19 +1389,19 @@ static void test_SPI_SETDRAGFULLWINDOWS( void )        /*     37 */
         rc=SystemParametersInfoA( SPI_SETDRAGFULLWINDOWS, vals[i], 0,
                                   SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
         if (!test_error_msg(rc,"SPI_SETDRAGFULLWINDOWS")) return;
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         test_change_message( SPI_SETDRAGFULLWINDOWS, 0 );
         test_reg_key( SPI_SETDRAGFULLWINDOWS_REGKEY,
                       SPI_SETDRAGFULLWINDOWS_VALNAME,
                       vals[i] ? "1" : "0" );
 
         rc=SystemParametersInfoA( SPI_GETDRAGFULLWINDOWS, 0, &v, 0 );
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         eq( v, vals[i], "SPI_{GET,SET}DRAGFULLWINDOWS", "%d" );
     }
 
     rc=SystemParametersInfoA( SPI_SETDRAGFULLWINDOWS, old_b, 0, SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 }
 
 #define test_reg_metric( KEY, VAL, val) do { \
@@ -1424,7 +1425,7 @@ static void test_SPI_SETDRAGFULLWINDOWS( void )        /*     37 */
         (LF).lfWidth == lfreg.lfWidth &&\
         (LF).lfWeight == lfreg.lfWeight &&\
         !strcmp( (LF).lfFaceName, lfreg.lfFaceName)\
-        , "wrong value \"%s\" in registry %d, %d\n", VAL, (LF).lfHeight, lfreg.lfHeight);\
+        , "wrong value \"%s\" in registry %ld, %ld\n", VAL, (LF).lfHeight, lfreg.lfHeight);\
 } while(0)
 
 #define TEST_NONCLIENTMETRICS_REG( ncm) do { \
@@ -1534,11 +1535,11 @@ static void test_SPI_SETNONCLIENTMETRICS( void )               /*     44 */
     rc=SystemParametersInfoA( SPI_SETNONCLIENTMETRICS, 0, &Ncmnew, SPIF_UPDATEINIFILE|
             SPIF_SENDCHANGE);
     if (!test_error_msg(rc,"SPI_SETNONCLIENTMETRICS")) return;
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
     test_change_message( SPI_SETNONCLIENTMETRICS, 1 );
     /* get them back */
     rc=SystemParametersInfoA( SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICSA), &Ncmcur, FALSE );
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
     /* test registry entries */
     TEST_NONCLIENTMETRICS_REG( Ncmcur );
     /* test the system metrics with these settings */
@@ -1557,13 +1558,13 @@ static void test_SPI_SETNONCLIENTMETRICS( void )               /*     44 */
 
     rc=SystemParametersInfoA( SPI_SETNONCLIENTMETRICS, 0, &Ncmnew, SPIF_UPDATEINIFILE|
             SPIF_SENDCHANGE);
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
     test_change_message( SPI_SETNONCLIENTMETRICS, 1 );
     /* raw values are in registry */
     TEST_NONCLIENTMETRICS_REG( Ncmnew );
     /* get them back */
     rc=SystemParametersInfoA( SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICSA), &Ncmcur, FALSE );
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
     /* cooked values are returned */
     expect = max( Ncmnew.iMenuHeight, 2 + get_tmheight( &Ncmnew.lfMenuFont, 1));
     ok( Ncmcur.iMenuHeight == expect,
@@ -1589,7 +1590,7 @@ static void test_SPI_SETNONCLIENTMETRICS( void )               /*     44 */
     rc=SystemParametersInfoA( SPI_SETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICSA),
         &Ncmorig, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
     test_change_message( SPI_SETNONCLIENTMETRICS, 0 );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
     /* test the system metrics with these settings */
     test_GetSystemMetrics();
 }
@@ -1634,10 +1635,10 @@ static void test_SPI_SETMINIMIZEDMETRICS( void )               /*     44 */
     rc=SystemParametersInfoA( SPI_SETMINIMIZEDMETRICS, sizeof(MINIMIZEDMETRICS),
         &lpMm_cur, SPIF_UPDATEINIFILE );
     if (!test_error_msg(rc,"SPI_SETMINIMIZEDMETRICS")) return;
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
     /* read them back */
     rc=SystemParametersInfoA( SPI_GETMINIMIZEDMETRICS, sizeof(MINIMIZEDMETRICS), &lpMm_new, FALSE );
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
     /* and compare */
     eq( lpMm_new.iWidth,   lpMm_cur.iWidth,   "iWidth",   "%d" );
     eq( lpMm_new.iHorzGap, lpMm_cur.iHorzGap, "iHorzGap", "%d" );
@@ -1672,10 +1673,10 @@ static void test_SPI_SETMINIMIZEDMETRICS( void )               /*     44 */
     lpMm_cur.iArrange = - 1;
     rc=SystemParametersInfoA( SPI_SETMINIMIZEDMETRICS, sizeof(MINIMIZEDMETRICS),
         &lpMm_cur, SPIF_UPDATEINIFILE );
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
     /* read back */
     rc=SystemParametersInfoA( SPI_GETMINIMIZEDMETRICS, sizeof(MINIMIZEDMETRICS), &lpMm_new, FALSE );
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
     /* the width and H/V gaps have minimum 0, arrange is and'd with 0xf */
     eq( lpMm_new.iWidth,   0,   "iWidth",   "%d" );
     eq( lpMm_new.iHorzGap, 0, "iHorzGap", "%d" );
@@ -1710,10 +1711,10 @@ static void test_SPI_SETMINIMIZEDMETRICS( void )               /*     44 */
     /* restore */
     rc=SystemParametersInfoA( SPI_SETMINIMIZEDMETRICS, sizeof(MINIMIZEDMETRICS),
         &lpMm_orig, SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
     /* check that */
     rc=SystemParametersInfoA( SPI_GETMINIMIZEDMETRICS, sizeof(MINIMIZEDMETRICS), &lpMm_new, FALSE );
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
     eq( lpMm_new.iWidth,   lpMm_orig.iWidth,   "iWidth",   "%d" );
     eq( lpMm_new.iHorzGap, lpMm_orig.iHorzGap, "iHorzGap", "%d" );
     eq( lpMm_new.iVertGap, lpMm_orig.iVertGap, "iVertGap", "%d" );
@@ -1777,18 +1778,18 @@ static void test_SPI_SETICONMETRICS( void )               /*     46 */
 
     rc=SystemParametersInfoA( SPI_SETICONMETRICS, sizeof(ICONMETRICSA), &im_cur, SPIF_UPDATEINIFILE );
     if (!test_error_msg(rc,"SPI_SETICONMETRICS")) return;
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
 
     rc=SystemParametersInfoA( SPI_GETICONMETRICS, sizeof(ICONMETRICSA), &im_new, FALSE );
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
     /* test GET <-> SETICONMETRICS */ 
     eq( im_new.iHorzSpacing, im_cur.iHorzSpacing, "iHorzSpacing", "%d" );
     eq( im_new.iVertSpacing, im_cur.iVertSpacing, "iVertSpacing", "%d" );
     eq( im_new.iTitleWrap,   im_cur.iTitleWrap,   "iTitleWrap",   "%d" );
-    eq( im_new.lfFont.lfHeight,         im_cur.lfFont.lfHeight,         "lfHeight",         "%d" );
-    eq( im_new.lfFont.lfWidth,          im_cur.lfFont.lfWidth,          "lfWidth",          "%d" );
-    eq( im_new.lfFont.lfEscapement,     im_cur.lfFont.lfEscapement,     "lfEscapement",     "%d" );
-    eq( im_new.lfFont.lfWeight,         im_cur.lfFont.lfWeight,         "lfWeight",         "%d" );
+    eq( im_new.lfFont.lfHeight,         im_cur.lfFont.lfHeight,         "lfHeight",         "%ld" );
+    eq( im_new.lfFont.lfWidth,          im_cur.lfFont.lfWidth,          "lfWidth",          "%ld" );
+    eq( im_new.lfFont.lfEscapement,     im_cur.lfFont.lfEscapement,     "lfEscapement",     "%ld" );
+    eq( im_new.lfFont.lfWeight,         im_cur.lfFont.lfWeight,         "lfWeight",         "%ld" );
     eq( im_new.lfFont.lfItalic,         im_cur.lfFont.lfItalic,         "lfItalic",         "%d" );
     eq( im_new.lfFont.lfStrikeOut,      im_cur.lfFont.lfStrikeOut,      "lfStrikeOut",      "%d" );
     eq( im_new.lfFont.lfUnderline,      im_cur.lfFont.lfUnderline,      "lfUnderline",      "%d" );
@@ -1829,10 +1830,10 @@ static void test_SPI_SETICONMETRICS( void )               /*     46 */
         wrap, im_cur.iTitleWrap);
     /* restore old values */
     rc=SystemParametersInfoA( SPI_SETICONMETRICS, sizeof(ICONMETRICSA), &im_orig,SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 
     rc=SystemParametersInfoA( SPI_GETICONMETRICS, sizeof(ICONMETRICSA), &im_new, FALSE );
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
 
     eq( im_new.iHorzSpacing, im_orig.iHorzSpacing, "iHorzSpacing", "%d" );
     eq( im_new.iVertSpacing, im_orig.iVertSpacing, "iVertSpacing", "%d" );
@@ -1862,33 +1863,33 @@ static void test_SPI_SETWORKAREA( void )               /*     47 */
     rc=SystemParametersInfoA( SPI_SETWORKAREA, 0, &curr_val,
                               SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
     if (!test_error_msg(rc,"SPI_SETWORKAREA")) return;
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
     rc=SystemParametersInfoA( SPI_GETWORKAREA, 0, &area, 0 );
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
     if( !EqualRect( &area, &curr_val)) /* no message if rect has not changed */
         test_change_message( SPI_SETWORKAREA, 0);
-    eq( area.left,   curr_val.left,   "left",   "%d" );
-    eq( area.top,    curr_val.top,    "top",    "%d" );
+    eq( area.left,   curr_val.left,   "left",   "%ld" );
+    eq( area.top,    curr_val.top,    "top",    "%ld" );
     /* size may be rounded */
     ok( area.right >= curr_val.right - 16 && area.right < curr_val.right + 16,
-        "right: got %d instead of %d\n", area.right, curr_val.right );
+        "right: got %ld instead of %ld\n", area.right, curr_val.right );
     ok( area.bottom >= curr_val.bottom - 16 && area.bottom < curr_val.bottom + 16,
-        "bottom: got %d instead of %d\n", area.bottom, curr_val.bottom );
+        "bottom: got %ld instead of %ld\n", area.bottom, curr_val.bottom );
     curr_val = area;
     rc=SystemParametersInfoA( SPI_SETWORKAREA, 0, &old_area,
                               SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
     rc=SystemParametersInfoA( SPI_GETWORKAREA, 0, &area, 0 );
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
     if( !EqualRect( &area, &curr_val)) /* no message if rect has not changed */
         test_change_message( SPI_SETWORKAREA, 0 );
-    eq( area.left,   old_area.left,   "left",   "%d" );
-    eq( area.top,    old_area.top,    "top",    "%d" );
+    eq( area.left,   old_area.left,   "left",   "%ld" );
+    eq( area.top,    old_area.top,    "top",    "%ld" );
     /* size may be rounded */
     ok( area.right >= old_area.right - 16 && area.right < old_area.right + 16,
-        "right: got %d instead of %d\n", area.right, old_area.right );
+        "right: got %ld instead of %ld\n", area.right, old_area.right );
     ok( area.bottom >= old_area.bottom - 16 && area.bottom < old_area.bottom + 16,
-        "bottom: got %d instead of %d\n", area.bottom, old_area.bottom );
+        "bottom: got %ld instead of %ld\n", area.bottom, old_area.bottom );
 }
 
 static void test_SPI_SETSHOWSOUNDS( void )             /*     57 */
@@ -1911,21 +1912,21 @@ static void test_SPI_SETSHOWSOUNDS( void )             /*     57 */
         rc=SystemParametersInfoA( SPI_SETSHOWSOUNDS, vals[i], 0,
                                   SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
         if (!test_error_msg(rc,"SPI_SETSHOWSOUNDS")) return;
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         test_change_message( SPI_SETSHOWSOUNDS, 1 );
         test_reg_key( SPI_SETSHOWSOUNDS_REGKEY,
                       SPI_SETSHOWSOUNDS_VALNAME,
                       vals[i] ? "1" : "0" );
 
         rc=SystemParametersInfoA( SPI_GETSHOWSOUNDS, 0, &v, 0 );
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         eq( v, vals[i], "SPI_GETSHOWSOUNDS", "%d" );
         eq( GetSystemMetrics( SM_SHOWSOUNDS ), (int)vals[i],
             "SM_SHOWSOUNDS", "%d" );
     }
 
     rc=SystemParametersInfoA( SPI_SETSHOWSOUNDS, old_b, 0, SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 }
 
 static void test_SPI_SETKEYBOARDPREF( void )           /*     69 */
@@ -1948,19 +1949,19 @@ static void test_SPI_SETKEYBOARDPREF( void )           /*     69 */
         rc=SystemParametersInfoA( SPI_SETKEYBOARDPREF, vals[i], 0,
                                   SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
         if (!test_error_msg(rc,"SPI_SETKEYBOARDPREF")) return;
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         test_change_message( SPI_SETKEYBOARDPREF, 1 );
         test_reg_key_ex2( SPI_SETKEYBOARDPREF_REGKEY, SPI_SETKEYBOARDPREF_REGKEY_LEGACY,
                           SPI_SETKEYBOARDPREF_VALNAME, SPI_SETKEYBOARDPREF_VALNAME_LEGACY,
                           vals[i] ? "1" : "0" );
 
         rc=SystemParametersInfoA( SPI_GETKEYBOARDPREF, 0, &v, 0 );
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         eq( v, (BOOL)vals[i], "SPI_GETKEYBOARDPREF", "%d" );
     }
 
     rc=SystemParametersInfoA( SPI_SETKEYBOARDPREF, old_b, 0, SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 }
 
 static void test_SPI_SETSCREENREADER( void )           /*     71 */
@@ -1983,19 +1984,19 @@ static void test_SPI_SETSCREENREADER( void )           /*     71 */
         rc=SystemParametersInfoA( SPI_SETSCREENREADER, vals[i], 0,
                                   SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
         if (!test_error_msg(rc,"SPI_SETSCREENREADER")) return;
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         test_change_message( SPI_SETSCREENREADER, 1 );
         test_reg_key_ex2_optional( SPI_SETSCREENREADER_REGKEY, SPI_SETSCREENREADER_REGKEY_LEGACY,
                                    SPI_SETSCREENREADER_VALNAME, SPI_SETSCREENREADER_VALNAME_LEGACY,
                                    vals[i] ? "1" : "0" );
 
         rc=SystemParametersInfoA( SPI_GETSCREENREADER, 0, &v, 0 );
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         eq( v, (BOOL)vals[i], "SPI_GETSCREENREADER", "%d" );
     }
 
     rc=SystemParametersInfoA( SPI_SETSCREENREADER, old_b, 0, SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 }
 
 static void test_SPI_SETFONTSMOOTHING( void )         /*     75 */
@@ -2022,7 +2023,7 @@ static void test_SPI_SETFONTSMOOTHING( void )         /*     75 */
         rc=SystemParametersInfoA( SPI_SETFONTSMOOTHING, vals[i], 0,
                                   SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
         if (!test_error_msg(rc,"SPI_SETFONTSMOOTHING")) return;
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         test_change_message( SPI_SETFONTSMOOTHING, 0 );
         test_reg_key( SPI_SETFONTSMOOTHING_REGKEY,
                       SPI_SETFONTSMOOTHING_VALNAME,
@@ -2031,7 +2032,7 @@ static void test_SPI_SETFONTSMOOTHING( void )         /*     75 */
         rc=SystemParametersInfoA( SPI_SETFONTSMOOTHINGTYPE, 0, UlongToPtr(vals[i]),
                                   SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
         if (!test_error_msg(rc,"SPI_SETFONTSMOOTHINGTYPE")) return;
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         test_change_message( SPI_SETFONTSMOOTHINGTYPE, 0 );
         test_reg_key_dword( SPI_SETFONTSMOOTHING_REGKEY,
                             SPI_SETFONTSMOOTHINGTYPE_VALNAME, &vals[i] );
@@ -2039,7 +2040,7 @@ static void test_SPI_SETFONTSMOOTHING( void )         /*     75 */
         rc=SystemParametersInfoA( SPI_SETFONTSMOOTHINGCONTRAST, 0, UlongToPtr(vals[i]),
                                   SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
         if (!test_error_msg(rc,"SPI_SETFONTSMOOTHINGCONTRAST")) return;
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         test_change_message( SPI_SETFONTSMOOTHINGCONTRAST, 0 );
         test_reg_key_dword( SPI_SETFONTSMOOTHING_REGKEY,
                             SPI_SETFONTSMOOTHINGCONTRAST_VALNAME, &vals[i] );
@@ -2047,36 +2048,36 @@ static void test_SPI_SETFONTSMOOTHING( void )         /*     75 */
         rc=SystemParametersInfoA( SPI_SETFONTSMOOTHINGORIENTATION, 0, UlongToPtr(vals[i]),
                                   SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
         if (!test_error_msg(rc,"SPI_SETFONTSMOOTHINGORIENTATION")) return;
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         test_change_message( SPI_SETFONTSMOOTHINGORIENTATION, 0 );
         test_reg_key_dword( SPI_SETFONTSMOOTHING_REGKEY,
                             SPI_SETFONTSMOOTHINGORIENTATION_VALNAME, &vals[i] );
 
         rc=SystemParametersInfoA( SPI_GETFONTSMOOTHING, 0, &v, 0 );
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         eq( v, vals[i] ? 1 : 0, "SPI_GETFONTSMOOTHING", "%d" );
 
         rc=SystemParametersInfoA( SPI_GETFONTSMOOTHINGTYPE, 0, &v, 0 );
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         ok( v == vals[i], "wrong value %x/%x\n", v, vals[i] );
 
         rc=SystemParametersInfoA( SPI_GETFONTSMOOTHINGCONTRAST, 0, &v, 0 );
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         ok( v == vals[i], "wrong value %x/%x\n", v, vals[i] );
 
         rc=SystemParametersInfoA( SPI_GETFONTSMOOTHINGORIENTATION, 0, &v, 0 );
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         ok( v == vals[i], "wrong value %x/%x\n", v, vals[i] );
     }
 
     rc=SystemParametersInfoA( SPI_SETFONTSMOOTHING, old_b, 0, SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
     rc=SystemParametersInfoA( SPI_SETFONTSMOOTHINGTYPE, old_type, 0, SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
     rc=SystemParametersInfoA( SPI_SETFONTSMOOTHINGCONTRAST, old_contrast, 0, SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
     rc=SystemParametersInfoA( SPI_SETFONTSMOOTHINGORIENTATION, old_orient, 0, SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 }
 
 static void test_SPI_SETLOWPOWERACTIVE( void )         /*     85 */
@@ -2099,7 +2100,7 @@ static void test_SPI_SETLOWPOWERACTIVE( void )         /*     85 */
         rc=SystemParametersInfoA( SPI_SETLOWPOWERACTIVE, vals[i], 0,
                                   SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
         if (!test_error_msg(rc,"SPI_SETLOWPOWERACTIVE")) return;
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         test_change_message( SPI_SETLOWPOWERACTIVE, 1 );
         test_reg_key_optional( SPI_SETLOWPOWERACTIVE_REGKEY,
                                SPI_SETLOWPOWERACTIVE_VALNAME,
@@ -2108,13 +2109,13 @@ static void test_SPI_SETLOWPOWERACTIVE( void )         /*     85 */
         /* SPI_SETLOWPOWERACTIVE is not persistent in win2k3 and above */
         v = 0xdeadbeef;
         rc=SystemParametersInfoA( SPI_GETLOWPOWERACTIVE, 0, &v, 0 );
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         ok(v == vals[i] || v == 0, /* win2k3 */
            "SPI_GETLOWPOWERACTIVE: got %d instead of 0 or %d\n", v, vals[i]);
     }
 
     rc=SystemParametersInfoA( SPI_SETLOWPOWERACTIVE, old_b, 0, SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 }
 
 static void test_SPI_SETPOWEROFFACTIVE( void )         /*     86 */
@@ -2137,7 +2138,7 @@ static void test_SPI_SETPOWEROFFACTIVE( void )         /*     86 */
         rc=SystemParametersInfoA( SPI_SETPOWEROFFACTIVE, vals[i], 0,
                                   SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
         if (!test_error_msg(rc,"SPI_SETPOWEROFFACTIVE")) return;
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         test_change_message( SPI_SETPOWEROFFACTIVE, 1 );
         test_reg_key_optional( SPI_SETPOWEROFFACTIVE_REGKEY,
                                SPI_SETPOWEROFFACTIVE_VALNAME,
@@ -2146,13 +2147,13 @@ static void test_SPI_SETPOWEROFFACTIVE( void )         /*     86 */
         /* SPI_SETPOWEROFFACTIVE is not persistent in win2k3 and above */
         v = 0xdeadbeef;
         rc=SystemParametersInfoA( SPI_GETPOWEROFFACTIVE, 0, &v, 0 );
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         ok(v == vals[i] || v == 0, /* win2k3 */
            "SPI_GETPOWEROFFACTIVE: got %d instead of 0 or %d\n", v, vals[i]);
     }
 
     rc=SystemParametersInfoA( SPI_SETPOWEROFFACTIVE, old_b, 0, SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 }
 
 static void test_SPI_SETSNAPTODEFBUTTON( void )         /*     95 */
@@ -2175,19 +2176,19 @@ static void test_SPI_SETSNAPTODEFBUTTON( void )         /*     95 */
         rc=SystemParametersInfoA( SPI_SETSNAPTODEFBUTTON, vals[i], 0,
                                   SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
         if (!test_error_msg(rc,"SPI_SETSNAPTODEFBUTTON")) return;
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         test_change_message( SPI_SETSNAPTODEFBUTTON, 0 );
         test_reg_key_optional( SPI_SETSNAPTODEFBUTTON_REGKEY,
                                SPI_SETSNAPTODEFBUTTON_VALNAME,
                                vals[i] ? "1" : "0" );
 
         rc=SystemParametersInfoA( SPI_GETSNAPTODEFBUTTON, 0, &v, 0 );
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         eq( v, vals[i], "SPI_GETSNAPTODEFBUTTON", "%d" );
     }
 
     rc=SystemParametersInfoA( SPI_SETSNAPTODEFBUTTON, old_b, 0, SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 }
 
 static void test_SPI_SETMOUSEHOVERWIDTH( void )      /*     99 */
@@ -2211,20 +2212,20 @@ static void test_SPI_SETMOUSEHOVERWIDTH( void )      /*     99 */
         rc=SystemParametersInfoA( SPI_SETMOUSEHOVERWIDTH, vals[i], 0,
                                SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
         if (!test_error_msg(rc,"SPI_SETMOUSEHOVERWIDTH")) return;
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         test_change_message( SPI_SETMOUSEHOVERWIDTH, 0 );
         sprintf( buf, "%d", vals[i] );
         test_reg_key( SPI_SETMOUSEHOVERWIDTH_REGKEY,
                       SPI_SETMOUSEHOVERWIDTH_VALNAME, buf );
 
         SystemParametersInfoA( SPI_GETMOUSEHOVERWIDTH, 0, &v, 0 );
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         eq( v, vals[i], "SPI_{GET,SET}MOUSEHOVERWIDTH", "%d" );
     }
 
     rc=SystemParametersInfoA( SPI_SETMOUSEHOVERWIDTH, old_width, 0,
                               SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 }
 
 static void test_SPI_SETMOUSEHOVERHEIGHT( void )      /*     101 */
@@ -2248,20 +2249,20 @@ static void test_SPI_SETMOUSEHOVERHEIGHT( void )      /*     101 */
         rc=SystemParametersInfoA( SPI_SETMOUSEHOVERHEIGHT, vals[i], 0,
                                SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
         if (!test_error_msg(rc,"SPI_SETMOUSEHOVERHEIGHT")) return;
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         test_change_message( SPI_SETMOUSEHOVERHEIGHT, 0 );
         sprintf( buf, "%d", vals[i] );
         test_reg_key( SPI_SETMOUSEHOVERHEIGHT_REGKEY,
                       SPI_SETMOUSEHOVERHEIGHT_VALNAME, buf );
 
         SystemParametersInfoA( SPI_GETMOUSEHOVERHEIGHT, 0, &v, 0 );
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         eq( v, vals[i], "SPI_{GET,SET}MOUSEHOVERHEIGHT", "%d" );
     }
 
     rc=SystemParametersInfoA( SPI_SETMOUSEHOVERHEIGHT, old_height, 0,
                               SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 }
 
 static void test_SPI_SETMOUSEHOVERTIME( void )      /*     103 */
@@ -2289,20 +2290,20 @@ static void test_SPI_SETMOUSEHOVERTIME( void )      /*     103 */
         rc=SystemParametersInfoA( SPI_SETMOUSEHOVERTIME, vals[i], 0,
                                SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
         if (!test_error_msg(rc,"SPI_SETMOUSEHOVERTIME")) return;
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         test_change_message( SPI_SETMOUSEHOVERTIME, 0 );
         sprintf( buf, "%d", vals[i] );
         test_reg_key( SPI_SETMOUSEHOVERTIME_REGKEY,
                       SPI_SETMOUSEHOVERTIME_VALNAME, buf );
 
         SystemParametersInfoA( SPI_GETMOUSEHOVERTIME, 0, &v, 0 );
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         eq( v, vals[i], "SPI_{GET,SET}MOUSEHOVERTIME", "%d" );
     }
 
     rc=SystemParametersInfoA( SPI_SETMOUSEHOVERTIME, old_time, 0,
                               SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 }
 
 static void test_SPI_SETWHEELSCROLLLINES( void )      /*     105 */
@@ -2328,20 +2329,20 @@ static void test_SPI_SETWHEELSCROLLLINES( void )      /*     105 */
         rc=SystemParametersInfoA( SPI_SETWHEELSCROLLLINES, vals[i], 0,
                                SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
         if (!test_error_msg(rc,"SPI_SETWHEELSCROLLLINES")) return;
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         test_change_message( SPI_SETWHEELSCROLLLINES, 0 );
         sprintf( buf, "%d", vals[i] );
         test_reg_key( SPI_SETMOUSESCROLLLINES_REGKEY,
                       SPI_SETMOUSESCROLLLINES_VALNAME, buf );
 
         SystemParametersInfoA( SPI_GETWHEELSCROLLLINES, 0, &v, 0 );
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         eq( v, vals[i], "SPI_{GET,SET}WHEELSCROLLLINES", "%d" );
     }
 
     rc=SystemParametersInfoA( SPI_SETWHEELSCROLLLINES, old_lines, 0,
                               SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 }
 
 static void test_SPI_SETMENUSHOWDELAY( void )      /*     107 */
@@ -2367,20 +2368,20 @@ static void test_SPI_SETMENUSHOWDELAY( void )      /*     107 */
         rc=SystemParametersInfoA( SPI_SETMENUSHOWDELAY, vals[i], 0,
                                SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
         if (!test_error_msg(rc,"SPI_SETMENUSHOWDELAY")) return;
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         test_change_message( SPI_SETMENUSHOWDELAY, 0 );
         sprintf( buf, "%d", vals[i] );
         test_reg_key( SPI_SETMENUSHOWDELAY_REGKEY,
                       SPI_SETMENUSHOWDELAY_VALNAME, buf );
 
         SystemParametersInfoA( SPI_GETMENUSHOWDELAY, 0, &v, 0 );
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         eq( v, vals[i], "SPI_{GET,SET}MENUSHOWDELAY", "%d" );
     }
 
     rc=SystemParametersInfoA( SPI_SETMENUSHOWDELAY, old_delay, 0,
                               SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 }
 
 static void test_SPI_SETWHEELSCROLLCHARS( void )      /*     108 */
@@ -2412,13 +2413,13 @@ static void test_SPI_SETWHEELSCROLLCHARS( void )      /*     108 */
                       SPI_SETMOUSESCROLLCHARS_VALNAME, buf );
 
         SystemParametersInfoA( SPI_GETWHEELSCROLLCHARS, 0, &v, 0 );
-        ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
+        ok(rc, "%d: rc=%d err=%ld\n", i, rc, GetLastError());
         eq( v, vals[i], "SPI_{GET,SET}WHEELSCROLLCHARS", "%d" );
     }
 
     rc=SystemParametersInfoA( SPI_SETWHEELSCROLLCHARS, old_chars, 0,
                               SPIF_UPDATEINIFILE );
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 }
 
 static void test_SPI_SETWALLPAPER( void )              /*   115 */
@@ -2436,11 +2437,11 @@ static void test_SPI_SETWALLPAPER( void )              /*   115 */
     strcpy(newval, "");
     rc=SystemParametersInfoA(SPI_SETDESKWALLPAPER, 0, newval, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
     if (!test_error_msg(rc,"SPI_SETDESKWALLPAPER")) return;
-    ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "SystemParametersInfoA: rc=%d err=%ld\n", rc, GetLastError());
     test_change_message(SPI_SETDESKWALLPAPER, 0);
 
     rc=SystemParametersInfoA(SPI_SETDESKWALLPAPER, 0, oldval, SPIF_UPDATEINIFILE);
-    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
+    ok(rc, "***warning*** failed to restore the original value: rc=%d err=%ld\n", rc, GetLastError());
 
     test_reg_key(SPI_SETDESKWALLPAPER_REGKEY, SPI_SETDESKWALLPAPER_VALNAME, oldval);
 }
@@ -2492,7 +2493,7 @@ static void test_WM_DISPLAYCHANGE(void)
         displaychange_ok = FALSE;
 
         if(change_ret != DISP_CHANGE_SUCCESSFUL) {
-            skip("Setting depth %d failed(ret = %d)\n", test_bpps[i], change_ret);
+            skip("Setting depth %d failed(ret = %ld)\n", test_bpps[i], change_ret);
             ok(last_bpp == -1, "WM_DISPLAYCHANGE was sent with wParam %d despite mode change failure\n", last_bpp);
             continue;
         }
@@ -2888,7 +2889,7 @@ static void test_GetSystemMetrics( void)
                 ncm.iBorderWidth, ncm.iCaptionWidth, ncm.iCaptionHeight, IconSpacing, IconVerticalSpacing);
         trace( "MenuHeight %d MenuWidth %d ScrollHeight %d ScrollWidth %d SmCaptionHeight %d SmCaptionWidth %d\n",
                 ncm.iMenuHeight, ncm.iMenuWidth, ncm.iScrollHeight, ncm.iScrollWidth, ncm.iSmCaptionHeight, ncm.iSmCaptionWidth);
-        trace( "Captionfontchar width %d  MenuFont %d,%d CaptionWidth from registry: %d screen %d,%d\n",
+        trace( "Captionfontchar width %d  MenuFont %ld,%ld CaptionWidth from registry: %d screen %ld,%ld\n",
                 avcwCaption, tmMenuFont.tmHeight, tmMenuFont.tmExternalLeading, CaptionWidthfromreg, screen.cx, screen.cy);
     }
 
@@ -2898,9 +2899,9 @@ static void test_GetSystemMetrics( void)
 static void compare_font( const LOGFONTW *lf1, const LOGFONTW *lf2, int dpi, int custom_dpi, int line )
 {
     ok_(__FILE__,line)( lf2->lfHeight == (dpi == custom_dpi) ? lf1->lfHeight : MulDiv( lf1->lfHeight, custom_dpi, 2 * dpi ),
-                        "wrong lfHeight %d vs %d\n", lf1->lfHeight, lf2->lfHeight );
+                        "wrong lfHeight %ld vs %ld\n", lf1->lfHeight, lf2->lfHeight );
     ok_(__FILE__,line)( abs( lf1->lfWidth - MulDiv( lf2->lfWidth, dpi, custom_dpi )) <= 1,
-                        "wrong lfWidth %d vs %d\n", lf1->lfWidth, lf2->lfWidth );
+                        "wrong lfWidth %ld vs %ld\n", lf1->lfWidth, lf2->lfWidth );
     ok_(__FILE__,line)( !memcmp( &lf1->lfEscapement, &lf2->lfEscapement,
                                  offsetof( LOGFONTW, lfFaceName ) - offsetof( LOGFONTW, lfEscapement )),
                         "font differs\n" );
@@ -2924,10 +2925,10 @@ static void test_metrics_for_dpi( int custom_dpi )
 
     ncm1.cbSize = sizeof(ncm1);
     ret = SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, sizeof(ncm1), &ncm1, FALSE );
-    ok( ret, "SystemParametersInfoW failed err %u\n", GetLastError() );
+    ok( ret, "SystemParametersInfoW failed err %lu\n", GetLastError() );
     ncm2.cbSize = sizeof(ncm2);
     ret = pSystemParametersInfoForDpi( SPI_GETNONCLIENTMETRICS, sizeof(ncm2), &ncm2, FALSE, custom_dpi );
-    ok( ret, "SystemParametersInfoForDpi failed err %u\n", GetLastError() );
+    ok( ret, "SystemParametersInfoForDpi failed err %lu\n", GetLastError() );
 
     for (i = 0; i < 92; i++)
     {
@@ -3005,10 +3006,10 @@ static void test_metrics_for_dpi( int custom_dpi )
     }
     im1.cbSize = sizeof(im1);
     ret = SystemParametersInfoW( SPI_GETICONMETRICS, sizeof(im1), &im1, FALSE );
-    ok( ret, "SystemParametersInfoW failed err %u\n", GetLastError() );
+    ok( ret, "SystemParametersInfoW failed err %lu\n", GetLastError() );
     im2.cbSize = sizeof(im2);
     ret = pSystemParametersInfoForDpi( SPI_GETICONMETRICS, sizeof(im2), &im2, FALSE, custom_dpi );
-    ok( ret, "SystemParametersInfoForDpi failed err %u\n", GetLastError() );
+    ok( ret, "SystemParametersInfoForDpi failed err %lu\n", GetLastError() );
     ok( im1.iHorzSpacing == MulDiv( im2.iHorzSpacing, dpi, custom_dpi ), "wrong iHorzSpacing %u vs %u\n",
         im1.iHorzSpacing, im2.iHorzSpacing );
     ok( im1.iVertSpacing == MulDiv( im2.iVertSpacing, dpi, custom_dpi ), "wrong iVertSpacing %u vs %u\n",
@@ -3018,9 +3019,9 @@ static void test_metrics_for_dpi( int custom_dpi )
     compare_font( &im1.lfFont, &im2.lfFont, dpi, custom_dpi, __LINE__ );
 
     ret = SystemParametersInfoW( SPI_GETICONTITLELOGFONT, sizeof(lf1), &lf1, FALSE );
-    ok( ret, "SystemParametersInfoW failed err %u\n", GetLastError() );
+    ok( ret, "SystemParametersInfoW failed err %lu\n", GetLastError() );
     ret = pSystemParametersInfoForDpi( SPI_GETICONTITLELOGFONT, sizeof(lf2), &lf2, FALSE, custom_dpi );
-    ok( ret, "SystemParametersInfoForDpi failed err %u\n", GetLastError() );
+    ok( ret, "SystemParametersInfoForDpi failed err %lu\n", GetLastError() );
     compare_font( &lf1, &lf2, dpi, custom_dpi, __LINE__ );
 
     /* on high-dpi iPaddedBorderWidth is used in addition to iBorderWidth */
@@ -3057,7 +3058,7 @@ static void test_metrics_for_dpi( int custom_dpi )
         SetLastError( 0xdeadbeef );
         ret = pSystemParametersInfoForDpi( i, 0, &val, 0, custom_dpi );
         ok( !ret, "%u: SystemParametersInfoForDpi succeeded\n", i );
-            ok( GetLastError() == ERROR_INVALID_PARAMETER, "%u: wrong error %u\n", i, GetLastError() );
+            ok( GetLastError() == ERROR_INVALID_PARAMETER, "%u: wrong error %lu\n", i, GetLastError() );
     }
 }
 
@@ -3089,21 +3090,21 @@ static BOOL CALLBACK test_enum_display_settings(HMONITOR hmonitor, HDC hdc, LPRE
     memset(&mi, 0, sizeof(mi));
     mi.cbSize = sizeof(mi);
     ret = GetMonitorInfoA(hmonitor, (MONITORINFO *)&mi);
-    ok(ret, "GetMonitorInfoA failed, error %#x\n", GetLastError());
+    ok(ret, "GetMonitorInfoA failed, error %#lx\n", GetLastError());
 
     memset(&dm, 0, sizeof(dm));
     dm.dmSize = sizeof(dm);
     ret = EnumDisplaySettingsA(mi.szDevice, ENUM_CURRENT_SETTINGS, &dm);
-    ok(ret, "EnumDisplaySettingsA failed, error %#x\n", GetLastError());
+    ok(ret, "EnumDisplaySettingsA failed, error %#lx\n", GetLastError());
 
     ok((dm.dmFields & (DM_POSITION | DM_PELSWIDTH | DM_PELSHEIGHT)) == (DM_POSITION | DM_PELSWIDTH | DM_PELSHEIGHT),
-            "Unexpected dmFields %#x.\n", dm.dmFields);
-    ok(dm.dmPosition.x == mi.rcMonitor.left, "Expect dmPosition.x %d, got %d\n", mi.rcMonitor.left, dm.dmPosition.x);
-    ok(dm.dmPosition.y == mi.rcMonitor.top, "Expect dmPosition.y %d, got %d\n", mi.rcMonitor.top, dm.dmPosition.y);
+            "Unexpected dmFields %#lx.\n", dm.dmFields);
+    ok(dm.dmPosition.x == mi.rcMonitor.left, "Expect dmPosition.x %ld, got %ld\n", mi.rcMonitor.left, dm.dmPosition.x);
+    ok(dm.dmPosition.y == mi.rcMonitor.top, "Expect dmPosition.y %ld, got %ld\n", mi.rcMonitor.top, dm.dmPosition.y);
     width = mi.rcMonitor.right - mi.rcMonitor.left;
-    ok(dm.dmPelsWidth == width, "Expect dmPelsWidth %d, got %d\n", width, dm.dmPelsWidth);
+    ok(dm.dmPelsWidth == width, "Expect dmPelsWidth %d, got %ld\n", width, dm.dmPelsWidth);
     height = mi.rcMonitor.bottom - mi.rcMonitor.top;
-    ok(dm.dmPelsHeight == height, "Expect dmPelsHeight %d, got %d\n", height, dm.dmPelsHeight);
+    ok(dm.dmPelsHeight == height, "Expect dmPelsHeight %d, got %ld\n", height, dm.dmPelsHeight);
 
     return TRUE;
 }
@@ -3128,8 +3129,8 @@ static void test_EnumDisplaySettings(void)
     SetLastError(0xdeadbeef);
     ret = EnumDisplaySettingsA("invalid", ENUM_CURRENT_SETTINGS, &dm);
     ok(!ret, "EnumDisplaySettingsA succeeded\n");
-    ok(GetLastError() == 0xdeadbeef, "Expect error 0xdeadbeef, got %#x\n", GetLastError());
-    ok(dm.dmFields == 0, "Expect dmFields unchanged, got %#x\n", dm.dmFields);
+    ok(GetLastError() == 0xdeadbeef, "Expect error 0xdeadbeef, got %#lx\n", GetLastError());
+    ok(dm.dmFields == 0, "Expect dmFields unchanged, got %#lx\n", dm.dmFields);
 
     /* Monitor device names are invalid */
     memset(&dm, 0, sizeof(dm));
@@ -3137,8 +3138,8 @@ static void test_EnumDisplaySettings(void)
     SetLastError(0xdeadbeef);
     ret = EnumDisplaySettingsA("\\\\.\\DISPLAY1\\Monitor0", ENUM_CURRENT_SETTINGS, &dm);
     ok(!ret, "EnumDisplaySettingsA succeeded\n");
-    ok(GetLastError() == 0xdeadbeef, "Expect error 0xdeadbeef, got %#x\n", GetLastError());
-    ok(dm.dmFields == 0, "Expect dmFields unchanged, got %#x\n", dm.dmFields);
+    ok(GetLastError() == 0xdeadbeef, "Expect error 0xdeadbeef, got %#lx\n", GetLastError());
+    ok(dm.dmFields == 0, "Expect dmFields unchanged, got %#lx\n", dm.dmFields);
 
     /* Test that passing NULL to device name parameter means to use the primary adapter */
     memset(&dm, 0, sizeof(dm));
@@ -3148,45 +3149,45 @@ static void test_EnumDisplaySettings(void)
     ret = get_primary_adapter_name(primary_adapter);
     ok(ret, "get_primary_adapter_name failed\n");
     ret = EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &dm);
-    ok(ret, "EnumDisplaySettingsA failed, error %#x\n", GetLastError());
+    ok(ret, "EnumDisplaySettingsA failed, error %#lx\n", GetLastError());
     ret = EnumDisplaySettingsA(primary_adapter, ENUM_CURRENT_SETTINGS, &dm2);
-    ok(ret, "EnumDisplaySettingsA failed, error %#x\n", GetLastError());
+    ok(ret, "EnumDisplaySettingsA failed, error %#lx\n", GetLastError());
     ok(!memcmp(&dm, &dm2, sizeof(dm)), "Expect NULL device is the primary device.\n");
 
     /* Test dmSize */
     /* EnumDisplaySettingsA/W modify dmSize and don't check for insufficient dmSize */
     memset(&dm, 0, sizeof(dm));
     ret = EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &dm);
-    ok(ret, "EnumDisplaySettingsA failed, error %#x\n", GetLastError());
-    ok(dm.dmSize == FIELD_OFFSET(DEVMODEA, dmICMMethod), "Expect dmSize %u, got %u\n",
+    ok(ret, "EnumDisplaySettingsA failed, error %#lx\n", GetLastError());
+    ok(dm.dmSize == FIELD_OFFSET(DEVMODEA, dmICMMethod), "Expect dmSize %lu, got %u\n",
             FIELD_OFFSET(DEVMODEA, dmICMMethod), dm.dmSize);
-    ok((dm.dmFields & setting_fields) == setting_fields, "Expect dmFields to contain %#x, got %#x\n",
+    ok((dm.dmFields & setting_fields) == setting_fields, "Expect dmFields to contain %#lx, got %#lx\n",
             setting_fields, dm.dmFields);
 
     memset(&dm, 0, sizeof(dm));
     dm.dmSize = sizeof(dm);
     ret = EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &dm);
-    ok(ret, "EnumDisplaySettingsA failed, error %#x\n", GetLastError());
-    ok(dm.dmSize == FIELD_OFFSET(DEVMODEA, dmICMMethod), "Expect dmSize %u, got %u\n",
+    ok(ret, "EnumDisplaySettingsA failed, error %#lx\n", GetLastError());
+    ok(dm.dmSize == FIELD_OFFSET(DEVMODEA, dmICMMethod), "Expect dmSize %lu, got %u\n",
             FIELD_OFFSET(DEVMODEA, dmICMMethod), dm.dmSize);
-    ok((dm.dmFields & setting_fields) == setting_fields, "Expect dmFields to contain %#x, got %#x\n",
+    ok((dm.dmFields & setting_fields) == setting_fields, "Expect dmFields to contain %#lx, got %#lx\n",
             setting_fields, dm.dmFields);
 
     memset(&dmW, 0, sizeof(dmW));
     ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &dmW);
-    ok(ret, "EnumDisplaySettingsW failed, error %#x\n", GetLastError());
-    ok(dmW.dmSize == FIELD_OFFSET(DEVMODEW, dmICMMethod), "Expect dmSize %u, got %u\n",
+    ok(ret, "EnumDisplaySettingsW failed, error %#lx\n", GetLastError());
+    ok(dmW.dmSize == FIELD_OFFSET(DEVMODEW, dmICMMethod), "Expect dmSize %lu, got %u\n",
             FIELD_OFFSET(DEVMODEW, dmICMMethod), dmW.dmSize);
-    ok((dmW.dmFields & setting_fields) == setting_fields, "Expect dmFields to contain %#x, got %#x\n",
+    ok((dmW.dmFields & setting_fields) == setting_fields, "Expect dmFields to contain %#lx, got %#lx\n",
             setting_fields, dmW.dmFields);
 
     memset(&dmW, 0, sizeof(dmW));
     dmW.dmSize = sizeof(dmW);
     ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &dmW);
-    ok(ret, "EnumDisplaySettingsW failed, error %#x\n", GetLastError());
-    ok(dmW.dmSize == FIELD_OFFSET(DEVMODEW, dmICMMethod), "Expect dmSize %u, got %u\n",
+    ok(ret, "EnumDisplaySettingsW failed, error %#lx\n", GetLastError());
+    ok(dmW.dmSize == FIELD_OFFSET(DEVMODEW, dmICMMethod), "Expect dmSize %lu, got %u\n",
             FIELD_OFFSET(DEVMODEW, dmICMMethod), dmW.dmSize);
-    ok((dmW.dmFields & setting_fields) == setting_fields, "Expect dmFields to contain %#x, got %#x\n",
+    ok((dmW.dmFields & setting_fields) == setting_fields, "Expect dmFields to contain %#lx, got %#lx\n",
             setting_fields, dmW.dmFields);
 
     /* EnumDisplaySettingsExA/W need dmSize to be at least FIELD_OFFSET(DEVMODEA/W, dmFields) + 1 to have valid dmFields */
@@ -3205,34 +3206,34 @@ static void test_EnumDisplaySettings(void)
     memset(&dm, 0, sizeof(dm));
     dm.dmSize = FIELD_OFFSET(DEVMODEA, dmFields);
     ret = EnumDisplaySettingsExA(NULL, ENUM_CURRENT_SETTINGS, &dm, 0);
-    ok(ret, "EnumDisplaySettingsExA failed, error %#x\n", GetLastError());
+    ok(ret, "EnumDisplaySettingsExA failed, error %#lx\n", GetLastError());
     todo_wine ok(dm.dmSize == FIELD_OFFSET(DEVMODEA, dmFields), "Expect dmSize unchanged, got %u\n", dm.dmSize);
-    todo_wine ok(dm.dmFields == 0, "Expect dmFields unchanged, got %#x\n", dm.dmFields);
+    todo_wine ok(dm.dmFields == 0, "Expect dmFields unchanged, got %#lx\n", dm.dmFields);
 
     memset(&dm, 0, sizeof(dm));
     dm.dmSize = FIELD_OFFSET(DEVMODEA, dmFields) + 1;
     ret = EnumDisplaySettingsExA(NULL, ENUM_CURRENT_SETTINGS, &dm, 0);
-    ok(ret, "EnumDisplaySettingsExA failed, error %#x\n", GetLastError());
+    ok(ret, "EnumDisplaySettingsExA failed, error %#lx\n", GetLastError());
     todo_wine ok(dm.dmSize == FIELD_OFFSET(DEVMODEA, dmFields) + 1, "Expect dmSize unchanged, got %u\n", dm.dmSize);
     todo_wine ok((dm.dmFields & setting_fields) == (DM_POSITION | DM_DISPLAYORIENTATION),
-            "Expect dmFields to contain %#lx, got %#x\n", DM_POSITION | DM_DISPLAYORIENTATION, dm.dmFields);
+            "Expect dmFields to contain %#lx, got %#lx\n", DM_POSITION | DM_DISPLAYORIENTATION, dm.dmFields);
     /* Fields beyond dmSize don't get written */
     todo_wine ok(dm.dmPelsWidth == 0, "Expect dmPelsWidth unwritten\n");
 
     memset(&dmW, 0, sizeof(dmW));
     dmW.dmSize = FIELD_OFFSET(DEVMODEW, dmFields);
     ret = EnumDisplaySettingsExW(NULL, ENUM_CURRENT_SETTINGS, &dmW, 0);
-    ok(ret, "EnumDisplaySettingsExW failed, error %#x\n", GetLastError());
+    ok(ret, "EnumDisplaySettingsExW failed, error %#lx\n", GetLastError());
     todo_wine ok(dmW.dmSize == FIELD_OFFSET(DEVMODEW, dmFields), "Expect dmSize unchanged, got %u\n", dmW.dmSize);
-    todo_wine ok(dmW.dmFields == 0, "Expect dmFields unchanged, got %#x\n", dmW.dmFields);
+    todo_wine ok(dmW.dmFields == 0, "Expect dmFields unchanged, got %#lx\n", dmW.dmFields);
 
     memset(&dmW, 0, sizeof(dmW));
     dmW.dmSize = FIELD_OFFSET(DEVMODEW, dmFields) + 1;
     ret = EnumDisplaySettingsExW(NULL, ENUM_CURRENT_SETTINGS, &dmW, 0);
-    ok(ret, "EnumDisplaySettingsExW failed, error %#x\n", GetLastError());
+    ok(ret, "EnumDisplaySettingsExW failed, error %#lx\n", GetLastError());
     todo_wine ok(dmW.dmSize == FIELD_OFFSET(DEVMODEW, dmFields) + 1, "Expect dmSize unchanged, got %u\n", dmW.dmSize);
     todo_wine ok((dmW.dmFields & setting_fields) == (DM_POSITION | DM_DISPLAYORIENTATION),
-            "Expect dmFields to contain %#lx, got %#x\n", DM_POSITION | DM_DISPLAYORIENTATION, dmW.dmFields);
+            "Expect dmFields to contain %#lx, got %#lx\n", DM_POSITION | DM_DISPLAYORIENTATION, dmW.dmFields);
     /* Fields beyond dmSize don't get written */
     todo_wine ok(dmW.dmPelsWidth == 0, "Expect dmPelsWidth unwritten\n");
 
@@ -3243,19 +3244,19 @@ static void test_EnumDisplaySettings(void)
     memset(&dm, 0, sizeof(dm));
     dm.dmSize = sizeof(dm);
     ret = EnumDisplaySettingsExA(NULL, ENUM_CURRENT_SETTINGS, &dm, 0);
-    ok(ret, "EnumDisplaySettingsExA failed, error %#x\n", GetLastError());
-    ok((dm.dmFields & setting_fields) == setting_fields, "Expect dmFields to contain %#x, got %#x\n",
+    ok(ret, "EnumDisplaySettingsExA failed, error %#lx\n", GetLastError());
+    ok((dm.dmFields & setting_fields) == setting_fields, "Expect dmFields to contain %#lx, got %#lx\n",
             setting_fields, dm.dmFields);
-    ok(dm.dmBitsPerPel == val, "Expect dmBitsPerPel %d, got %d\n", val, dm.dmBitsPerPel);
+    ok(dm.dmBitsPerPel == val, "Expect dmBitsPerPel %ld, got %ld\n", val, dm.dmBitsPerPel);
 
     val = GetDeviceCaps(hdc, NUMCOLORS);
     if (dm.dmBitsPerPel <= 8)
     {
-        ok(val == 256, "Screen bpp is %d, NUMCOLORS returned %d\n", dm.dmBitsPerPel, val);
+        ok(val == 256, "Screen bpp is %ld, NUMCOLORS returned %ld\n", dm.dmBitsPerPel, val);
     }
     else
     {
-        ok(val == -1, "Screen bpp is %d, NUMCOLORS returned %d\n", dm.dmBitsPerPel, val);
+        ok(val == -1, "Screen bpp is %ld, NUMCOLORS returned %ld\n", dm.dmBitsPerPel, val);
     }
 
     ReleaseDC(0, hdc);
@@ -3288,24 +3289,24 @@ static void test_EnumDisplaySettings(void)
             if (mode == ENUM_CURRENT_SETTINGS)
             {
                 ok((dm.dmFields & setting_fields) == setting_fields,
-                        "Expect dmFields to contain %#x, got %#x\n", setting_fields, dm.dmFields);
+                        "Expect dmFields to contain %#lx, got %#lx\n", setting_fields, dm.dmFields);
             }
             else
             {
-                ok((dm.dmFields & mode_fields) == mode_fields, "Expect dmFields to contain %#x, got %#x\n",
+                ok((dm.dmFields & mode_fields) == mode_fields, "Expect dmFields to contain %#lx, got %#lx\n",
                         mode_fields, dm.dmFields);
             }
 
-            ok(dm.dmDisplayOrientation == DMDO_DEFAULT, "Expect dmDisplayOrientation DMDO_DEFAULT, got %#x\n",
+            ok(dm.dmDisplayOrientation == DMDO_DEFAULT, "Expect dmDisplayOrientation DMDO_DEFAULT, got %#lx\n",
                     dm.dmDisplayOrientation);
             ok(dm.dmDisplayFlags == 0, "Expect dmDisplayFlags zero\n");
 
             if (mode == ENUM_CURRENT_SETTINGS && !attached)
             {
-                ok(dm.dmBitsPerPel == 0, "Expect dmBitsPerPel zero, got %u\n", dm.dmBitsPerPel);
-                ok(dm.dmPelsWidth == 0, "Expect dmPelsWidth zero, got %u\n", dm.dmPelsWidth);
-                ok(dm.dmPelsHeight == 0, "Expect dmPelsHeight zero, got %u\n", dm.dmPelsHeight);
-                ok(dm.dmDisplayFrequency == 0, "Expect dmDisplayFrequency zero, got %u\n", dm.dmDisplayFrequency);
+                ok(dm.dmBitsPerPel == 0, "Expect dmBitsPerPel zero, got %lu\n", dm.dmBitsPerPel);
+                ok(dm.dmPelsWidth == 0, "Expect dmPelsWidth zero, got %lu\n", dm.dmPelsWidth);
+                ok(dm.dmPelsHeight == 0, "Expect dmPelsHeight zero, got %lu\n", dm.dmPelsHeight);
+                ok(dm.dmDisplayFrequency == 0, "Expect dmDisplayFrequency zero, got %lu\n", dm.dmDisplayFrequency);
             }
             else if (mode != ENUM_REGISTRY_SETTINGS)
             {
@@ -3322,7 +3323,7 @@ static void test_EnumDisplaySettings(void)
         ok(err == ERROR_NO_MORE_FILES ||
                 err == ERROR_MOD_NOT_FOUND /* Win8 */ ||
                 err == 0xdeadbeef, /* XP, 2003 */
-                "Expected ERROR_NO_MORE_FILES, ERROR_MOD_NOT_FOUND or 0xdeadbeef, got %#x\n", err);
+                "Expected ERROR_NO_MORE_FILES, ERROR_MOD_NOT_FOUND or 0xdeadbeef, got %#lx\n", err);
     }
 }
 
@@ -3333,7 +3334,7 @@ static void test_GetSysColorBrush(void)
     SetLastError(0xdeadbeef);
     hbr = GetSysColorBrush(-1);
     ok(hbr == NULL, "Expected NULL brush\n");
-    ok(GetLastError() == 0xdeadbeef, "Expected last error not set, got %x\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "Expected last error not set, got %lx\n", GetLastError());
     /* greater than max index */
     hbr = GetSysColorBrush(COLOR_MENUBAR);
     if (hbr)
@@ -3341,7 +3342,7 @@ static void test_GetSysColorBrush(void)
         SetLastError(0xdeadbeef);
         hbr = GetSysColorBrush(COLOR_MENUBAR + 1);
         ok(hbr == NULL, "Expected NULL brush\n");
-        ok(GetLastError() == 0xdeadbeef, "Expected last error not set, got %x\n", GetLastError());
+        ok(GetLastError() == 0xdeadbeef, "Expected last error not set, got %lx\n", GetLastError());
     }
     else
         win_skip("COLOR_MENUBAR unsupported\n");
@@ -3380,7 +3381,7 @@ static void test_dpi_stock_objects( HDC hdc )
             GetObjectW( obj[i], sizeof(lf), &lf );
             GetObjectW( obj2[i], sizeof(lf2), &lf2 );
             ok( lf.lfHeight == MulDiv( lf2.lfHeight, USER_DEFAULT_SCREEN_DPI, real_dpi ),
-                "%u: wrong height %d / %d\n", i, lf.lfHeight, lf2.lfHeight );
+                "%u: wrong height %ld / %ld\n", i, lf.lfHeight, lf2.lfHeight );
             break;
         default:
             ok( obj[i] == obj2[i], "%u: different object\n", i );
@@ -3452,15 +3453,15 @@ static void test_dpi_mapping(void)
         GetWindowRect( GetDesktopWindow(), &rect );
         expect = desktop;
         if (i == DPI_AWARENESS_UNAWARE) scale_rect_dpi( &expect, real_dpi, USER_DEFAULT_SCREEN_DPI );
-        ok( EqualRect( &expect, &rect ), "%lu: wrong desktop rect %s expected %s\n",
+        ok( EqualRect( &expect, &rect ), "%Iu: wrong desktop rect %s expected %s\n",
             i, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
         SetRect( &rect, 0, 0, GetSystemMetrics( SM_CXSCREEN ), GetSystemMetrics( SM_CYSCREEN ));
-        ok( EqualRect( &expect, &rect ), "%lu: wrong desktop rect %s expected %s\n",
+        ok( EqualRect( &expect, &rect ), "%Iu: wrong desktop rect %s expected %s\n",
             i, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
         if (monitor_count < 2)
         {
             SetRect( &rect, 0, 0, GetSystemMetrics( SM_CXVIRTUALSCREEN ), GetSystemMetrics( SM_CYVIRTUALSCREEN ));
-            ok( EqualRect( &expect, &rect ), "%lu: wrong virt desktop rect %s expected %s\n",
+            ok( EqualRect( &expect, &rect ), "%Iu: wrong virt desktop rect %s expected %s\n",
                 i, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
         }
         SetRect( &rect, 0, 0, 1, 1 );
@@ -3468,15 +3469,15 @@ static void test_dpi_mapping(void)
         ok( monitor != 0, "failed to get monitor\n" );
         mon_info.cbSize = sizeof(mon_info);
         ok( GetMonitorInfoW( monitor, &mon_info ), "GetMonitorInfoExW failed\n" );
-        ok( EqualRect( &expect, &mon_info.rcMonitor ), "%lu: wrong monitor rect %s expected %s\n",
+        ok( EqualRect( &expect, &mon_info.rcMonitor ), "%Iu: wrong monitor rect %s expected %s\n",
             i, wine_dbgstr_rect(&mon_info.rcMonitor), wine_dbgstr_rect(&expect) );
         hdc = CreateDCA( "display", NULL, NULL, NULL );
         SetRect( &rect, 0, 0, GetDeviceCaps( hdc, HORZRES ), GetDeviceCaps( hdc, VERTRES ));
-        ok( EqualRect( &expect, &rect ), "%lu: wrong caps desktop rect %s expected %s\n",
+        ok( EqualRect( &expect, &rect ), "%Iu: wrong caps desktop rect %s expected %s\n",
             i, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
         SetRect( &rect, 0, 0, GetDeviceCaps( hdc, DESKTOPHORZRES ), GetDeviceCaps( hdc, DESKTOPVERTRES ));
         todo_wine_if(monitor_count > 1)
-        ok( EqualRect( &desktop, &rect ), "%lu: wrong caps virt desktop rect %s expected %s\n",
+        ok( EqualRect( &desktop, &rect ), "%Iu: wrong caps virt desktop rect %s expected %s\n",
             i, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&desktop) );
         DeleteDC( hdc );
         /* test message window rect */
@@ -3485,7 +3486,7 @@ static void test_dpi_mapping(void)
         GetWindowRect( GetAncestor( hwnd, GA_PARENT ), &rect );
         SetRect( &expect, 0, 0, 100, 100 );
         if (i == DPI_AWARENESS_UNAWARE) scale_rect_dpi( &expect, real_dpi, USER_DEFAULT_SCREEN_DPI );
-        ok( EqualRect( &expect, &rect ), "%lu: wrong message rect %s expected %s\n",
+        ok( EqualRect( &expect, &rect ), "%Iu: wrong message rect %s expected %s\n",
             i, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
         DestroyWindow( hwnd );
     }
@@ -3494,10 +3495,10 @@ static void test_dpi_mapping(void)
         pSetThreadDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~i );
         hwnd = CreateWindowA( "SysParamsTestClass", "test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                               193, 177, 295, 303, 0, 0, GetModuleHandleA(0), NULL );
-        ok( hwnd != 0, "creating window failed err %u\n", GetLastError());
+        ok( hwnd != 0, "creating window failed err %lu\n", GetLastError());
         child = CreateWindowA( "SysParamsTestClass", "child", WS_CHILD | WS_VISIBLE,
                                50, 60, 70, 80, hwnd, 0, GetModuleHandleA(0), NULL );
-        ok( child != 0, "creating child failed err %u\n", GetLastError());
+        ok( child != 0, "creating child failed err %lu\n", GetLastError());
         GetWindowRect( hwnd, &orig );
         SetRect( &rect, 0, 0, 0, 0 );
         pAdjustWindowRectExForDpi( &rect, WS_OVERLAPPEDWINDOW, FALSE, 0, pGetDpiForWindow( hwnd ));
@@ -3515,47 +3516,47 @@ static void test_dpi_mapping(void)
             GetWindowRect( hwnd, &rect );
             expect = orig;
             scale_rect_dpi_aware( &expect, i, j );
-            ok( EqualRect( &expect, &rect ), "%lu/%lu: wrong window rect %s expected %s\n",
+            ok( EqualRect( &expect, &rect ), "%Iu/%Iu: wrong window rect %s expected %s\n",
                 i, j, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
             /* test client rect */
             GetClientRect( hwnd, &rect );
             expect = client;
             OffsetRect( &expect, -expect.left, -expect.top );
             scale_rect_dpi_aware( &expect, i, j );
-            ok( EqualRect( &expect, &rect ), "%lu/%lu: wrong client rect %s expected %s\n",
+            ok( EqualRect( &expect, &rect ), "%Iu/%Iu: wrong client rect %s expected %s\n",
                 i, j, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
             /* test window placement */
             GetWindowPlacement( hwnd, &wpl );
             point = wpl_orig.ptMinPosition;
             if (point.x != -1 || point.y != -1) scale_point_dpi_aware( &point, i, j );
             ok( wpl.ptMinPosition.x == point.x && wpl.ptMinPosition.y == point.y,
-                "%lu/%lu: wrong placement min pos %d,%d expected %d,%d\n", i, j,
+                "%Iu/%Iu: wrong placement min pos %ld,%ld expected %ld,%ld\n", i, j,
                 wpl.ptMinPosition.x, wpl.ptMinPosition.y, point.x, point.y );
             point = wpl_orig.ptMaxPosition;
             if (point.x != -1 || point.y != -1) scale_point_dpi_aware( &point, i, j );
             ok( wpl.ptMaxPosition.x == point.x && wpl.ptMaxPosition.y == point.y,
-                "%lu/%lu: wrong placement max pos %d,%d expected %d,%d\n", i, j,
+                "%Iu/%Iu: wrong placement max pos %ld,%ld expected %ld,%ld\n", i, j,
                 wpl.ptMaxPosition.x, wpl.ptMaxPosition.y, point.x, point.y );
             expect = wpl_orig.rcNormalPosition;
             scale_rect_dpi_aware( &expect, i, j );
             ok( EqualRect( &wpl.rcNormalPosition, &expect ),
-                "%lu/%lu: wrong placement rect %s expect %s\n", i, j,
+                "%Iu/%Iu: wrong placement rect %s expect %s\n", i, j,
                 wine_dbgstr_rect(&wpl.rcNormalPosition), wine_dbgstr_rect(&expect));
             /* test DC rect */
             hdc = GetDC( hwnd );
             GetClipBox( hdc, &rect );
             SetRect( &expect, 0, 0, client.right - client.left, client.bottom - client.top );
-            ok( EqualRect( &expect, &rect ), "%lu/%lu: wrong clip box %s expected %s\n",
+            ok( EqualRect( &expect, &rect ), "%Iu/%Iu: wrong clip box %s expected %s\n",
                 i, j, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
             /* test DC resolution */
             SetRect( &rect, 0, 0, GetDeviceCaps( hdc, HORZRES ), GetDeviceCaps( hdc, VERTRES ));
             expect = desktop;
             if (j == DPI_AWARENESS_UNAWARE) scale_rect_dpi( &expect, real_dpi, USER_DEFAULT_SCREEN_DPI );
-            ok( EqualRect( &expect, &rect ), "%lu/%lu: wrong DC resolution %s expected %s\n",
+            ok( EqualRect( &expect, &rect ), "%Iu/%Iu: wrong DC resolution %s expected %s\n",
                 i, j, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
             SetRect( &rect, 0, 0, GetDeviceCaps( hdc, DESKTOPHORZRES ), GetDeviceCaps( hdc, DESKTOPVERTRES ));
             todo_wine_if(monitor_count > 1)
-            ok( EqualRect( &desktop, &rect ), "%lu/%lu: wrong desktop resolution %s expected %s\n",
+            ok( EqualRect( &desktop, &rect ), "%Iu/%Iu: wrong desktop resolution %s expected %s\n",
                 i, j, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&desktop) );
             ReleaseDC( hwnd, hdc );
             /* test DC win rect */
@@ -3563,7 +3564,7 @@ static void test_dpi_mapping(void)
             GetClipBox( hdc, &rect );
             SetRect( &expect, 0, 0, 295, 303 );
             todo_wine
-            ok( EqualRect( &expect, &rect ), "%lu/%lu: wrong clip box win DC %s expected %s\n",
+            ok( EqualRect( &expect, &rect ), "%Iu/%Iu: wrong clip box win DC %s expected %s\n",
                 i, j, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
             ReleaseDC( hwnd, hdc );
             /* test window invalidation */
@@ -3580,11 +3581,11 @@ static void test_dpi_mapping(void)
                 GetUpdateRgn( hwnd, update, FALSE );
                 GetRgnBox( update, &rect );
                 SetRect( &expect, 20, 20, 25, 25 );
-                ok( EqualRect( &expect, &rect ), "%lu/%lu/%lu: wrong update region %s expected %s\n",
+                ok( EqualRect( &expect, &rect ), "%Iu/%Iu/%Iu: wrong update region %s expected %s\n",
                     i, j, k, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
                 GetUpdateRect( hwnd, &rect, FALSE );
                 scale_rect_dpi_aware( &expect, i, j );
-                ok( EqualRect( &expect, &rect ), "%lu/%lu/%lu: wrong update rect %s expected %s\n",
+                ok( EqualRect( &expect, &rect ), "%Iu/%Iu/%Iu: wrong update rect %s expected %s\n",
                     i, j, k, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
                 UpdateWindow( hwnd );
             }
@@ -3596,11 +3597,11 @@ static void test_dpi_mapping(void)
                 pSetThreadDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~j );
                 GetRgnBox( update, &rect );
                 SetRect( &expect, 20, 20, 25, 25 );
-                ok( EqualRect( &expect, &rect ), "%lu/%lu/%lu: wrong update region %s expected %s\n",
+                ok( EqualRect( &expect, &rect ), "%Iu/%Iu/%Iu: wrong update region %s expected %s\n",
                     i, j, k, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
                 GetUpdateRect( hwnd, &rect, FALSE );
                 scale_rect_dpi_aware( &expect, i, j );
-                ok( EqualRect( &expect, &rect ), "%lu/%lu/%lu: wrong update rect %s expected %s\n",
+                ok( EqualRect( &expect, &rect ), "%Iu/%Iu/%Iu: wrong update rect %s expected %s\n",
                     i, j, k, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
                 UpdateWindow( hwnd );
             }
@@ -3615,11 +3616,11 @@ static void test_dpi_mapping(void)
             GetUpdateRgn( hwnd, update, TRUE );
             GetRgnBox( update, &rect );
             if (i == DPI_AWARENESS_UNAWARE) scale_rect_dpi( &expect, real_dpi, USER_DEFAULT_SCREEN_DPI );
-            ok( EqualRect( &expect, &rect ), "%lu/%lu: wrong update region %s expected %s\n",
+            ok( EqualRect( &expect, &rect ), "%Iu/%Iu: wrong update region %s expected %s\n",
                 i, j, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
             GetUpdateRect( hwnd, &rect, FALSE );
             scale_rect_dpi_aware( &expect, i, j );
-            ok( EqualRect( &expect, &rect ), "%lu/%lu: wrong update rect %s expected %s\n",
+            ok( EqualRect( &expect, &rect ), "%Iu/%Iu: wrong update rect %s expected %s\n",
                 i, j, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
             UpdateWindow( hwnd );
             DeleteObject( update );
@@ -3628,7 +3629,7 @@ static void test_dpi_mapping(void)
             point.x = LOWORD( units );
             point.y = HIWORD( units );
             scale_point_dpi_aware( &point, i, j );
-            ok( LOWORD(ret) == point.x && HIWORD(ret) == point.y, "%lu/%lu: wrong units %d,%d / %d,%d\n",
+            ok( LOWORD(ret) == point.x && HIWORD(ret) == point.y, "%Iu/%Iu: wrong units %d,%d / %ld,%ld\n",
                 i, j, LOWORD(ret), HIWORD(ret), point.x, point.y );
             /* test window points mapping */
             SetRect( &rect, 0, 0, 100, 100 );
@@ -3639,7 +3640,7 @@ static void test_dpi_mapping(void)
             scale_rect_dpi_aware( &expect, i, j );
             expect.right = expect.left + 100;
             expect.bottom = expect.top + 100;
-            ok( EqualRect( &expect, &rect ), "%lu/%lu: wrong MapWindowPoints rect %s expected %s\n",
+            ok( EqualRect( &expect, &rect ), "%Iu/%Iu: wrong MapWindowPoints rect %s expected %s\n",
                 i, j, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
             SetRect( &rect, 50, 60, 70, 80 );
             scale_rect_dpi_aware( &rect, i, j );
@@ -3647,7 +3648,7 @@ static void test_dpi_mapping(void)
             OffsetRect( &expect, -rect.left, -rect.top );
             SetRect( &rect, 40, 30, 60, 80 );
             MapWindowPoints( hwnd, child, (POINT *)&rect, 2 );
-            ok( EqualRect( &expect, &rect ), "%lu/%lu: wrong MapWindowPoints child rect %s expected %s\n",
+            ok( EqualRect( &expect, &rect ), "%Iu/%Iu: wrong MapWindowPoints child rect %s expected %s\n",
                 i, j, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
             /* test logical<->physical coords mapping */
             win_dpi = pGetDpiForWindow( hwnd );
@@ -3658,42 +3659,42 @@ static void test_dpi_mapping(void)
             point.x = 373;
             point.y = 377;
             ret = pLogicalToPhysicalPointForPerMonitorDPI( hwnd, &point );
-            ok( ret, "%lu/%lu: LogicalToPhysicalPointForPerMonitorDPI failed\n", i, j );
+            ok( ret, "%Iu/%Iu: LogicalToPhysicalPointForPerMonitorDPI failed\n", i, j );
             ok( point.x == MulDiv( 373, real_dpi, win_dpi ) &&
                 point.y == MulDiv( 377, real_dpi, win_dpi ),
-                "%lu/%lu: wrong pos %d,%d dpi %u\n", i, j, point.x, point.y, win_dpi );
+                "%Iu/%Iu: wrong pos %ld,%ld dpi %u\n", i, j, point.x, point.y, win_dpi );
             point.x = 405;
             point.y = 423;
             ret = pPhysicalToLogicalPointForPerMonitorDPI( hwnd, &point );
-            ok( ret, "%lu/%lu: PhysicalToLogicalPointForPerMonitorDPI failed\n", i, j );
+            ok( ret, "%Iu/%Iu: PhysicalToLogicalPointForPerMonitorDPI failed\n", i, j );
             ok( point.x == MulDiv( 405, win_dpi, real_dpi ) &&
                 point.y == MulDiv( 423, win_dpi, real_dpi ),
-                "%lu/%lu: wrong pos %d,%d dpi %u\n", i, j, point.x, point.y, win_dpi );
+                "%Iu/%Iu: wrong pos %ld,%ld dpi %u\n", i, j, point.x, point.y, win_dpi );
             /* point outside the window fails, but note that Windows (wrongly) checks against the
              * window rect transformed relative to the thread's awareness */
             GetWindowRect( hwnd, &rect );
             point.x = rect.left - 1;
             point.y = rect.top;
             ret = pLogicalToPhysicalPointForPerMonitorDPI( hwnd, &point );
-            ok( !ret, "%lu/%lu: LogicalToPhysicalPointForPerMonitorDPI succeeded\n", i, j );
+            ok( !ret, "%Iu/%Iu: LogicalToPhysicalPointForPerMonitorDPI succeeded\n", i, j );
             point.x++;
             point.y--;
             ret = pLogicalToPhysicalPointForPerMonitorDPI( hwnd, &point );
-            ok( !ret, "%lu/%lu: LogicalToPhysicalPointForPerMonitorDPI succeeded\n", i, j );
+            ok( !ret, "%Iu/%Iu: LogicalToPhysicalPointForPerMonitorDPI succeeded\n", i, j );
             point.y++;
             ret = pLogicalToPhysicalPointForPerMonitorDPI( hwnd, &point );
-            ok( ret, "%lu/%lu: LogicalToPhysicalPointForPerMonitorDPI failed\n", i, j );
+            ok( ret, "%Iu/%Iu: LogicalToPhysicalPointForPerMonitorDPI failed\n", i, j );
             point.x = rect.right;
             point.y = rect.bottom + 1;
             ret = pLogicalToPhysicalPointForPerMonitorDPI( hwnd, &point );
-            ok( !ret, "%lu/%lu: LogicalToPhysicalPointForPerMonitorDPI succeeded\n", i, j );
+            ok( !ret, "%Iu/%Iu: LogicalToPhysicalPointForPerMonitorDPI succeeded\n", i, j );
             point.x++;
             point.y--;
             ret = pLogicalToPhysicalPointForPerMonitorDPI( hwnd, &point );
-            ok( !ret, "%lu/%lu: LogicalToPhysicalPointForPerMonitorDPI succeeded\n", i, j );
+            ok( !ret, "%Iu/%Iu: LogicalToPhysicalPointForPerMonitorDPI succeeded\n", i, j );
             point.x--;
             ret = pLogicalToPhysicalPointForPerMonitorDPI( hwnd, &point );
-            ok( ret, "%lu/%lu: LogicalToPhysicalPointForPerMonitorDPI failed\n", i, j );
+            ok( ret, "%Iu/%Iu: LogicalToPhysicalPointForPerMonitorDPI failed\n", i, j );
             /* get physical window rect */
             pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
             GetWindowRect( hwnd, &rect );
@@ -3701,25 +3702,25 @@ static void test_dpi_mapping(void)
             point.x = rect.left - 1;
             point.y = rect.top;
             ret = pPhysicalToLogicalPointForPerMonitorDPI( hwnd, &point );
-            ok( !ret, "%lu/%lu: PhysicalToLogicalPointForPerMonitorDPI succeeded\n", i, j );
+            ok( !ret, "%Iu/%Iu: PhysicalToLogicalPointForPerMonitorDPI succeeded\n", i, j );
             point.x++;
             point.y--;
             ret = pPhysicalToLogicalPointForPerMonitorDPI( hwnd, &point );
-            ok( !ret, "%lu/%lu: PhysicalToLogicalPointForPerMonitorDPI succeeded\n", i, j );
+            ok( !ret, "%Iu/%Iu: PhysicalToLogicalPointForPerMonitorDPI succeeded\n", i, j );
             point.y++;
             ret = pPhysicalToLogicalPointForPerMonitorDPI( hwnd, &point );
-            ok( ret, "%lu/%lu: PhysicalToLogicalPointForPerMonitorDPI failed\n", i, j );
+            ok( ret, "%Iu/%Iu: PhysicalToLogicalPointForPerMonitorDPI failed\n", i, j );
             point.x = rect.right;
             point.y = rect.bottom + 1;
             ret = pPhysicalToLogicalPointForPerMonitorDPI( hwnd, &point );
-            ok( !ret, "%lu/%lu: PhysicalToLogicalPointForPerMonitorDPI succeeded\n", i, j );
+            ok( !ret, "%Iu/%Iu: PhysicalToLogicalPointForPerMonitorDPI succeeded\n", i, j );
             point.x++;
             point.y--;
             ret = pPhysicalToLogicalPointForPerMonitorDPI( hwnd, &point );
-            ok( !ret, "%lu/%lu: PhysicalToLogicalPointForPerMonitorDPI succeeded\n", i, j );
+            ok( !ret, "%Iu/%Iu: PhysicalToLogicalPointForPerMonitorDPI succeeded\n", i, j );
             point.x--;
             ret = pPhysicalToLogicalPointForPerMonitorDPI( hwnd, &point );
-            ok( ret, "%lu/%lu: PhysicalToLogicalPointForPerMonitorDPI failed\n", i, j );
+            ok( ret, "%Iu/%Iu: PhysicalToLogicalPointForPerMonitorDPI failed\n", i, j );
         }
         DestroyWindow( hwnd );
     }
@@ -3776,11 +3777,11 @@ static void test_dpi_context(void)
     SetLastError( 0xdeadbeef );
     ret = pSetProcessDpiAwarenessContext( NULL );
     ok( !ret, "got %d\n", ret );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %lu\n", GetLastError() );
     SetLastError( 0xdeadbeef );
     ret = pSetProcessDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)-6 );
     ok( !ret, "got %d\n", ret );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %lu\n", GetLastError() );
     ret = pSetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT_SYSTEM_AWARE );
     todo_wine
     ok( ret, "got %d\n", ret );
@@ -3789,18 +3790,18 @@ static void test_dpi_context(void)
     SetLastError( 0xdeadbeef );
     ret = pSetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT_SYSTEM_AWARE );
     ok( !ret, "got %d\n", ret );
-    ok( GetLastError() == ERROR_ACCESS_DENIED, "wrong error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_ACCESS_DENIED, "wrong error %lu\n", GetLastError() );
     SetLastError( 0xdeadbeef );
     ret = pSetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT_UNAWARE );
     ok( !ret, "got %d\n", ret );
-    ok( GetLastError() == ERROR_ACCESS_DENIED, "wrong error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_ACCESS_DENIED, "wrong error %lu\n", GetLastError() );
 
     ret = pSetProcessDpiAwarenessInternal( DPI_AWARENESS_INVALID );
     ok( !ret, "got %d\n", ret );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %lu\n", GetLastError() );
     ret = pSetProcessDpiAwarenessInternal( DPI_AWARENESS_UNAWARE );
     ok( !ret, "got %d\n", ret );
-    ok( GetLastError() == ERROR_ACCESS_DENIED, "wrong error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_ACCESS_DENIED, "wrong error %lu\n", GetLastError() );
     ret = pGetProcessDpiAwarenessInternal( 0, &awareness );
     ok( ret, "got %d\n", ret );
     todo_wine
@@ -3824,11 +3825,11 @@ static void test_dpi_context(void)
     SetLastError( 0xdeadbeef );
     context = pSetThreadDpiAwarenessContext( 0 );
     ok( !context, "got %p\n", context );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %lu\n", GetLastError() );
     SetLastError( 0xdeadbeef );
     context = pSetThreadDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)-6 );
     ok( !context, "got %p\n", context );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %lu\n", GetLastError() );
     context = pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_UNAWARE );
     todo_wine
     ok( context == (DPI_AWARENESS_CONTEXT)(0x80000011 | flags), "wrong context %p\n", context );
@@ -3893,22 +3894,22 @@ static void test_dpi_context(void)
         {
         case 0x10:
             ok( awareness == DPI_AWARENESS_UNAWARE || awareness == DPI_AWARENESS_INVALID /* Win10 1709+ */,
-                "%lx: wrong value %u\n", i, awareness );
+                "%Ix: wrong value %u\n", i, awareness );
             break;
         case 0x11:
         case 0x12:
-            ok( awareness == (i & ~0x10), "%lx: wrong value %u\n", i, awareness );
+            ok( awareness == (i & ~0x10), "%Ix: wrong value %u\n", i, awareness );
             break;
         case 0x22:
             ok( awareness == DPI_AWARENESS_INVALID || awareness == DPI_AWARENESS_PER_MONITOR_AWARE /* Win10 1709+ */,
-                "%lx: wrong value %u\n", i, awareness );
+                "%Ix: wrong value %u\n", i, awareness );
             break;
         default:
-            ok( awareness == DPI_AWARENESS_INVALID, "%lx: wrong value %u\n", i, awareness );
+            ok( awareness == DPI_AWARENESS_INVALID, "%Ix: wrong value %u\n", i, awareness );
             break;
         }
         ret = pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)i );
-        ok( ret == (awareness != DPI_AWARENESS_INVALID), "%lx: expected %d, got %d\n",
+        ok( ret == (awareness != DPI_AWARENESS_INVALID), "%Ix: expected %d, got %d\n",
             i, (awareness != DPI_AWARENESS_INVALID), ret );
 
         awareness = pGetAwarenessFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)(i | 0x80000000) );
@@ -3916,22 +3917,22 @@ static void test_dpi_context(void)
         {
         case 0x10:
             ok( awareness == DPI_AWARENESS_UNAWARE || awareness == DPI_AWARENESS_INVALID /* Win10 1709+ */,
-                "%lx: wrong value %u\n", i | 0x80000000, awareness );
+                "%Ix: wrong value %u\n", i | 0x80000000, awareness );
             break;
         case 0x11:
         case 0x12:
-            ok( awareness == (i & ~0x10), "%lx: wrong value %u\n", i | 0x80000000, awareness );
+            ok( awareness == (i & ~0x10), "%Ix: wrong value %u\n", i | 0x80000000, awareness );
             break;
         case 0x22:
             ok( awareness == DPI_AWARENESS_INVALID || awareness == DPI_AWARENESS_PER_MONITOR_AWARE /* Win10 1709+ */,
-                "%lx: wrong value %u\n", i, awareness );
+                "%Ix: wrong value %u\n", i, awareness );
             break;
         default:
-            ok( awareness == DPI_AWARENESS_INVALID, "%lx: wrong value %u\n", i | 0x80000000, awareness );
+            ok( awareness == DPI_AWARENESS_INVALID, "%Ix: wrong value %u\n", i | 0x80000000, awareness );
             break;
         }
         ret = pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)(i | 0x80000000) );
-        ok( ret == (awareness != DPI_AWARENESS_INVALID), "%lx: expected %d, got %d\n",
+        ok( ret == (awareness != DPI_AWARENESS_INVALID), "%Ix: expected %d, got %d\n",
             (i | 0x80000000), (awareness != DPI_AWARENESS_INVALID), ret );
 
         awareness = pGetAwarenessFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~i );
@@ -3940,24 +3941,24 @@ static void test_dpi_context(void)
         case (ULONG_PTR)DPI_AWARENESS_CONTEXT_UNAWARE:
         case (ULONG_PTR)DPI_AWARENESS_CONTEXT_SYSTEM_AWARE:
         case (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE:
-            ok( awareness == i, "%lx: wrong value %u\n", ~i, awareness );
-            ok( pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~i ), "%lx: not valid\n", ~i );
+            ok( awareness == i, "%Ix: wrong value %u\n", ~i, awareness );
+            ok( pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~i ), "%Ix: not valid\n", ~i );
             break;
         case (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2:
             if (pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~i ))
-                ok( awareness == DPI_AWARENESS_PER_MONITOR_AWARE, "%lx: wrong value %u\n", ~i, awareness );
+                ok( awareness == DPI_AWARENESS_PER_MONITOR_AWARE, "%Ix: wrong value %u\n", ~i, awareness );
             else
-                ok( awareness == DPI_AWARENESS_INVALID, "%lx: wrong value %u\n", ~i, awareness );
+                ok( awareness == DPI_AWARENESS_INVALID, "%Ix: wrong value %u\n", ~i, awareness );
             break;
         case (ULONG_PTR)DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED:
             if (pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~i ))
-                ok( awareness == DPI_AWARENESS_UNAWARE, "%lx: wrong value %u\n", ~i, awareness );
+                ok( awareness == DPI_AWARENESS_UNAWARE, "%Ix: wrong value %u\n", ~i, awareness );
             else
-                ok( awareness == DPI_AWARENESS_INVALID, "%lx: wrong value %u\n", ~i, awareness );
+                ok( awareness == DPI_AWARENESS_INVALID, "%Ix: wrong value %u\n", ~i, awareness );
             break;
         default:
-            ok( awareness == DPI_AWARENESS_INVALID, "%lx: wrong value %u\n", ~i, awareness );
-            ok( !pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~i ), "%lx: valid\n", ~i );
+            ok( awareness == DPI_AWARENESS_INVALID, "%Ix: wrong value %u\n", ~i, awareness );
+            ok( !pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~i ), "%Ix: valid\n", ~i );
             break;
         }
     }
@@ -3977,7 +3978,7 @@ static LRESULT CALLBACK dpi_winproc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
     pos = GetMessagePos();
     pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
     pos2 = GetMessagePos();
-    ok( pos == pos2, "wrong pos %08x / %08x\n", pos, pos2 );
+    ok( pos == pos2, "wrong pos %08lx / %08lx\n", pos, pos2 );
     pSetThreadDpiAwarenessContext( ctx2 );
     return DefWindowProcA( hwnd, msg, wp, lp );
 }
@@ -4005,29 +4006,29 @@ static void test_dpi_window(void)
         ok( hwnd != 0, "failed to create window\n" );
         context = pGetWindowDpiAwarenessContext( hwnd );
         awareness = pGetAwarenessFromDpiAwarenessContext( context );
-        ok( awareness == i, "%lu: wrong awareness %u\n", i, awareness );
+        ok( awareness == i, "%Iu: wrong awareness %u\n", i, awareness );
         dpi = pGetDpiForWindow( hwnd );
         ok( dpi == (i == DPI_AWARENESS_UNAWARE ? USER_DEFAULT_SCREEN_DPI : real_dpi),
-            "%lu: got %u / %u\n", i, dpi, real_dpi );
+            "%Iu: got %u / %u\n", i, dpi, real_dpi );
         if (pGetDpiForMonitorInternal)
         {
             BOOL res;
             SetLastError( 0xdeadbeef );
             res = pGetDpiForMonitorInternal( MonitorFromWindow( hwnd, 0 ), 0, &dpi, NULL );
             ok( !res, "succeeded\n" );
-            ok( GetLastError() == ERROR_INVALID_ADDRESS, "wrong error %u\n", GetLastError() );
+            ok( GetLastError() == ERROR_INVALID_ADDRESS, "wrong error %lu\n", GetLastError() );
             SetLastError( 0xdeadbeef );
             res = pGetDpiForMonitorInternal( MonitorFromWindow( hwnd, 0 ), 3, &dpi, &dpi );
             ok( !res, "succeeded\n" );
-            ok( GetLastError() == ERROR_BAD_ARGUMENTS, "wrong error %u\n", GetLastError() );
+            ok( GetLastError() == ERROR_BAD_ARGUMENTS, "wrong error %lu\n", GetLastError() );
             SetLastError( 0xdeadbeef );
             res = pGetDpiForMonitorInternal( MonitorFromWindow( hwnd, 0 ), 3, &dpi, NULL );
             ok( !res, "succeeded\n" );
-            ok( GetLastError() == ERROR_BAD_ARGUMENTS, "wrong error %u\n", GetLastError() );
+            ok( GetLastError() == ERROR_BAD_ARGUMENTS, "wrong error %lu\n", GetLastError() );
             res = pGetDpiForMonitorInternal( MonitorFromWindow( hwnd, 0 ), 0, &dpi, &dpi );
-            ok( res, "failed err %u\n", GetLastError() );
+            ok( res, "failed err %lu\n", GetLastError() );
             ok( dpi == (i == DPI_AWARENESS_UNAWARE ? USER_DEFAULT_SCREEN_DPI : real_dpi),
-                "%lu: got %u / %u\n", i, dpi, real_dpi );
+                "%Iu: got %u / %u\n", i, dpi, real_dpi );
         }
         msg.hwnd = hwnd;
         for (j = DPI_AWARENESS_UNAWARE; j <= DPI_AWARENESS_PER_MONITOR_AWARE; j++)
@@ -4040,36 +4041,36 @@ static void test_dpi_window(void)
                                    WS_CHILD, 0, 0, 100, 100, hwnd, 0, GetModuleHandleA(0), NULL );
             context = pGetWindowDpiAwarenessContext( child );
             awareness = pGetAwarenessFromDpiAwarenessContext( context );
-            ok( awareness == i, "%lu/%lu: wrong awareness %u\n", i, j, awareness );
+            ok( awareness == i, "%Iu/%Iu: wrong awareness %u\n", i, j, awareness );
             dpi = pGetDpiForWindow( child );
             ok( dpi == (i == DPI_AWARENESS_UNAWARE ? USER_DEFAULT_SCREEN_DPI : real_dpi),
-                "%lu/%lu: got %u / %u\n", i, j, dpi, real_dpi );
+                "%Iu/%Iu: got %u / %u\n", i, j, dpi, real_dpi );
             ret = SetParent( child, NULL );
-            ok( ret != 0, "SetParent failed err %u\n", GetLastError() );
+            ok( ret != 0, "SetParent failed err %lu\n", GetLastError() );
             context = pGetWindowDpiAwarenessContext( child );
             awareness = pGetAwarenessFromDpiAwarenessContext( context );
-            ok( awareness == i, "%lu/%lu: wrong awareness %u\n", i, j, awareness );
+            ok( awareness == i, "%Iu/%Iu: wrong awareness %u\n", i, j, awareness );
             dpi = pGetDpiForWindow( child );
             ok( dpi == (i == DPI_AWARENESS_UNAWARE ? USER_DEFAULT_SCREEN_DPI : real_dpi),
-                "%lu/%lu: got %u / %u\n", i, j, dpi, real_dpi );
+                "%Iu/%Iu: got %u / %u\n", i, j, dpi, real_dpi );
             DestroyWindow( child );
             child = CreateWindowA( "DpiTestClass", "Test",
                                    WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, 0, 0, GetModuleHandleA(0), NULL );
             context = pGetWindowDpiAwarenessContext( child );
             awareness = pGetAwarenessFromDpiAwarenessContext( context );
-            ok( awareness == j, "%lu/%lu: wrong awareness %u\n", i, j, awareness );
+            ok( awareness == j, "%Iu/%Iu: wrong awareness %u\n", i, j, awareness );
             dpi = pGetDpiForWindow( child );
             ok( dpi == (j == DPI_AWARENESS_UNAWARE ? USER_DEFAULT_SCREEN_DPI : real_dpi),
-                "%lu/%lu: got %u / %u\n", i, j, dpi, real_dpi );
+                "%Iu/%Iu: got %u / %u\n", i, j, dpi, real_dpi );
             ret = SetParent( child, hwnd );
             ok( ret != 0 || GetLastError() == ERROR_INVALID_STATE,
-                "SetParent failed err %u\n", GetLastError() );
+                "SetParent failed err %lu\n", GetLastError() );
             context = pGetWindowDpiAwarenessContext( child );
             awareness = pGetAwarenessFromDpiAwarenessContext( context );
-            ok( awareness == (ret ? i : j), "%lu/%lu: wrong awareness %u\n", i, j, awareness );
+            ok( awareness == (ret ? i : j), "%Iu/%Iu: wrong awareness %u\n", i, j, awareness );
             dpi = pGetDpiForWindow( child );
             ok( dpi == (i == DPI_AWARENESS_UNAWARE ? USER_DEFAULT_SCREEN_DPI : real_dpi),
-                "%lu/%lu: got %u / %u\n", i, j, dpi, real_dpi );
+                "%Iu/%Iu: got %u / %u\n", i, j, dpi, real_dpi );
             DestroyWindow( child );
         }
         DestroyWindow( hwnd );
@@ -4078,12 +4079,12 @@ static void test_dpi_window(void)
     SetLastError( 0xdeadbeef );
     context = pGetWindowDpiAwarenessContext( (HWND)0xdeadbeef );
     ok( !context, "got %p\n", context );
-    ok( GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error %lu\n", GetLastError() );
     SetLastError( 0xdeadbeef );
     dpi = pGetDpiForWindow( (HWND)0xdeadbeef );
     ok( !dpi, "got %u\n", dpi );
     ok( GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == ERROR_INVALID_WINDOW_HANDLE,
-        "wrong error %u\n", GetLastError() );
+        "wrong error %lu\n", GetLastError() );
 
     SetLastError( 0xdeadbeef );
     context = pGetWindowDpiAwarenessContext( GetDesktopWindow() );
@@ -4117,11 +4118,11 @@ static void test_GetAutoRotationState(void)
     SetLastError(0xdeadbeef);
     ret = pGetAutoRotationState(NULL);
     ok(!ret, "Expected GetAutoRotationState to fail\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
 
     state = 0;
     ret = pGetAutoRotationState(&state);
-    ok(ret, "Expected GetAutoRotationState to succeed, error %d\n", GetLastError());
+    ok(ret, "Expected GetAutoRotationState to succeed, error %ld\n", GetLastError());
 }
 
 START_TEST(sysparams)
