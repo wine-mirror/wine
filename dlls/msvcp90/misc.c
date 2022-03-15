@@ -821,22 +821,11 @@ void __cdecl _Mtx_reset_owner(_Mtx_arg_t mtx)
     m->count++;
 }
 
-static inline LONG interlocked_dec_if_nonzero( LONG *dest )
-{
-    LONG val, tmp;
-    for (val = *dest;; val = tmp)
-    {
-        if (!val || (tmp = InterlockedCompareExchange( dest, val - 1, val )) == val)
-            break;
-    }
-    return val;
-}
-
 #define CND_TIMEDOUT 2
 
 typedef struct
 {
-    CONDITION_VARIABLE cv;
+    _Condition_variable cv;
 } *_Cnd_t;
 
 #if _MSVCP_VER >= 140
@@ -849,19 +838,9 @@ typedef _Cnd_t *_Cnd_arg_t;
 #define CND_T_TO_ARG(c)     (&(c))
 #endif
 
-static HANDLE keyed_event;
-
 void __cdecl _Cnd_init_in_situ(_Cnd_t cnd)
 {
-    InitializeConditionVariable(&cnd->cv);
-
-    if(!keyed_event) {
-        HANDLE event;
-
-        NtCreateKeyedEvent(&event, GENERIC_READ|GENERIC_WRITE, NULL, 0);
-        if(InterlockedCompareExchangePointer(&keyed_event, event, NULL) != NULL)
-            NtClose(event);
-    }
+    cv_init(&cnd->cv);
 }
 
 int __cdecl _Cnd_init(_Cnd_t *cnd)
@@ -873,64 +852,50 @@ int __cdecl _Cnd_init(_Cnd_t *cnd)
 
 int __cdecl _Cnd_wait(_Cnd_arg_t cnd, _Mtx_arg_t mtx)
 {
-    CONDITION_VARIABLE *cv = &CND_T_FROM_ARG(cnd)->cv;
+    _Condition_variable *cv = &CND_T_FROM_ARG(cnd)->cv;
+    _Mtx_t m = MTX_T_FROM_ARG(mtx);
 
-    InterlockedExchangeAdd( (LONG *)&cv->Ptr, 1 );
-    _Mtx_unlock(mtx);
-
-    NtWaitForKeyedEvent(keyed_event, &cv->Ptr, FALSE, NULL);
-
-    _Mtx_lock(mtx);
+    _Mtx_clear_owner(mtx);
+    cv_wait(cv, &m->cs);
+    _Mtx_reset_owner(mtx);
     return 0;
 }
 
 int __cdecl _Cnd_timedwait(_Cnd_arg_t cnd, _Mtx_arg_t mtx, const xtime *xt)
 {
-    CONDITION_VARIABLE *cv = &CND_T_FROM_ARG(cnd)->cv;
-    LARGE_INTEGER timeout;
-    NTSTATUS status;
+    _Condition_variable *cv = &CND_T_FROM_ARG(cnd)->cv;
+    _Mtx_t m = MTX_T_FROM_ARG(mtx);
+    bool r;
 
-    InterlockedExchangeAdd( (LONG *)&cv->Ptr, 1 );
-    _Mtx_unlock(mtx);
-
-    timeout.QuadPart = (ULONGLONG)(ULONG)_Xtime_diff_to_millis(xt) * -10000;
-    status = NtWaitForKeyedEvent(keyed_event, &cv->Ptr, FALSE, &timeout);
-    if (status)
-    {
-        if (!interlocked_dec_if_nonzero( (LONG *)&cv->Ptr ))
-            status = NtWaitForKeyedEvent( keyed_event, &cv->Ptr, FALSE, NULL );
-    }
-
-    _Mtx_lock(mtx);
-    return status ? CND_TIMEDOUT : 0;
+    _Mtx_clear_owner(mtx);
+    r = cv_wait_for(cv, &m->cs, _Xtime_diff_to_millis(xt));
+    _Mtx_reset_owner(mtx);
+    return r ? 0 : CND_TIMEDOUT;
 }
 
 int __cdecl _Cnd_broadcast(_Cnd_arg_t cnd)
 {
-    CONDITION_VARIABLE *cv = &CND_T_FROM_ARG(cnd)->cv;
-    LONG val = InterlockedExchange( (LONG *)&cv->Ptr, 0 );
-    while (val-- > 0)
-        NtReleaseKeyedEvent( keyed_event, &cv->Ptr, FALSE, NULL );
+    cv_notify_all(&CND_T_FROM_ARG(cnd)->cv);
     return 0;
 }
 
 int __cdecl _Cnd_signal(_Cnd_arg_t cnd)
 {
-    CONDITION_VARIABLE *cv = &CND_T_FROM_ARG(cnd)->cv;
-    if (interlocked_dec_if_nonzero( (LONG *)&cv->Ptr ))
-        NtReleaseKeyedEvent( keyed_event, &cv->Ptr, FALSE, NULL );
+    cv_notify_one(&CND_T_FROM_ARG(cnd)->cv);
     return 0;
 }
 
 void __cdecl _Cnd_destroy_in_situ(_Cnd_t cnd)
 {
     _Cnd_broadcast(CND_T_TO_ARG(cnd));
+    cv_destroy(&cnd->cv);
 }
 
 void __cdecl _Cnd_destroy(_Cnd_arg_t cnd)
 {
     if(cnd) {
         _Cnd_broadcast(cnd);
+        cv_destroy(&CND_T_FROM_ARG(cnd)->cv);
         operator_delete(CND_T_FROM_ARG(cnd));
     }
 }
@@ -1777,8 +1742,6 @@ void init_misc(void *base)
 void free_misc(void)
 {
 #if _MSVCP_VER >= 110
-    if(keyed_event)
-        NtClose(keyed_event);
     HeapFree(GetProcessHeap(), 0, broadcast_at_thread_exit.to_broadcast);
 #endif
 }

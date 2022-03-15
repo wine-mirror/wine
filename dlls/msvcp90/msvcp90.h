@@ -58,11 +58,29 @@ typedef struct
     void *tail;
 } critical_section;
 
+typedef struct cv_queue {
+    struct cv_queue *next;
+    LONG expired;
+} cv_queue;
+
+typedef struct {
+    /* cv_queue structure is not binary compatible */
+    cv_queue *queue;
+    critical_section lock;
+} _Condition_variable;
+
 extern void cs_init(critical_section*);
 extern void cs_destroy(critical_section*);
 extern void cs_lock(critical_section*);
 extern void cs_unlock(critical_section*);
 extern bool cs_trylock(critical_section*);
+
+extern void cv_init(_Condition_variable*);
+extern void cv_destroy(_Condition_variable*);
+extern void cv_wait(_Condition_variable*, critical_section*);
+extern bool cv_wait_for(_Condition_variable*, critical_section*, unsigned int);
+extern void cv_notify_one(_Condition_variable*);
+extern void cv_notify_all(_Condition_variable*);
 #endif
 
 #if _MSVCP_VER >= 100

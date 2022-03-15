@@ -68,10 +68,14 @@ __ASM_GLOBAL_FUNC(call_thiscall_func,
         "jmp *%edx\n\t")
 
 #define call_func1(func,this) ((void* (WINAPI*)(void*,void*))&call_thiscall_func)(func,this)
+#define call_func2(func,this,a) ((void* (WINAPI*)(void*,void*,void*))&call_thiscall_func)(func,this,a)
+#define call_func3(func,this,a,b) ((void* (WINAPI*)(void*,void*,void*,unsigned int))&call_thiscall_func)(func,this,a,b)
 
 #else /* __i386__ */
 
 #define call_func1(func,this) func(this)
+#define call_func2(func,this,a) func(this,a)
+#define call_func3(func,this,a,b) func(this,a,b)
 
 #endif /* __i386__ */
 
@@ -80,6 +84,14 @@ static void (__thiscall *critical_section_dtor)(critical_section*);
 static void (__thiscall *critical_section_lock)(critical_section*);
 static void (__thiscall *critical_section_unlock)(critical_section*);
 static bool (__thiscall *critical_section_trylock)(critical_section*);
+
+static _Condition_variable* (__thiscall *_Condition_variable_ctor)(_Condition_variable*);
+static void (__thiscall *_Condition_variable_dtor)(_Condition_variable*);
+static void (__thiscall *_Condition_variable_wait)(_Condition_variable*, critical_section*);
+bool (__thiscall *_Condition_variable_wait_for)(_Condition_variable*,
+        critical_section*, unsigned int);
+void (__thiscall *_Condition_variable_notify_one)(_Condition_variable*);
+void (__thiscall *_Condition_variable_notify_all)(_Condition_variable*);
 
 void cs_init(critical_section *cs)
 {
@@ -104,6 +116,36 @@ void cs_unlock(critical_section *cs)
 bool cs_trylock(critical_section *cs)
 {
     return call_func1(critical_section_trylock, cs);
+}
+
+void cv_init(_Condition_variable *cv)
+{
+    call_func1(_Condition_variable_ctor, cv);
+}
+
+void cv_destroy(_Condition_variable *cv)
+{
+    call_func1(_Condition_variable_dtor, cv);
+}
+
+void cv_wait(_Condition_variable *cv, critical_section *cs)
+{
+    call_func2(_Condition_variable_wait, cv, cs);
+}
+
+bool cv_wait_for(_Condition_variable *cv, critical_section *cs, unsigned int timeout)
+{
+    return call_func3(_Condition_variable_wait_for, cv, cs, timeout);
+}
+
+void cv_notify_one(_Condition_variable *cv)
+{
+    call_func1(_Condition_variable_notify_one, cv);
+}
+
+void cv_notify_all(_Condition_variable *cv)
+{
+    call_func1(_Condition_variable_notify_all, cv);
 }
 #endif
 
@@ -206,6 +248,16 @@ static void init_cxx_funcs(void)
         critical_section_lock = (void*)GetProcAddress(hcon, "?lock@critical_section@Concurrency@@QEAAXXZ");
         critical_section_unlock = (void*)GetProcAddress(hcon, "?unlock@critical_section@Concurrency@@QEAAXXZ");
         critical_section_trylock = (void*)GetProcAddress(hcon, "?try_lock@critical_section@Concurrency@@QEAA_NXZ");
+        _Condition_variable_ctor = (void*)GetProcAddress(hcon, "??0_Condition_variable@details@Concurrency@@QEAA@XZ");
+        _Condition_variable_dtor = (void*)GetProcAddress(hcon, "??1_Condition_variable@details@Concurrency@@QEAA@XZ");
+        _Condition_variable_wait = (void*)GetProcAddress(hcon,
+                "?wait@_Condition_variable@details@Concurrency@@QEAAXAEAVcritical_section@3@@Z");
+        _Condition_variable_wait_for = (void*)GetProcAddress(hcon,
+                "?wait_for@_Condition_variable@details@Concurrency@@QEAA_NAEAVcritical_section@3@I@Z");
+        _Condition_variable_notify_one = (void*)GetProcAddress(hcon,
+                "?notify_one@_Condition_variable@details@Concurrency@@QEAAXXZ");
+        _Condition_variable_notify_all = (void*)GetProcAddress(hcon,
+                "?notify_all@_Condition_variable@details@Concurrency@@QEAAXXZ");
     }
     else
     {
@@ -215,12 +267,32 @@ static void init_cxx_funcs(void)
         critical_section_lock = (void*)GetProcAddress(hcon, "?lock@critical_section@Concurrency@@QAAXXZ");
         critical_section_unlock = (void*)GetProcAddress(hcon, "?unlock@critical_section@Concurrency@@QAAXXZ");
         critical_section_trylock = (void*)GetProcAddress(hcon, "?try_lock@critical_section@Concurrency@@QAA_NXZ");
+        _Condition_variable_ctor = (void*)GetProcAddress(hcon, "??0_Condition_variable@details@Concurrency@@QAA@XZ");
+        _Condition_variable_dtor = (void*)GetProcAddress(hcon, "??1_Condition_variable@details@Concurrency@@QAA@XZ");
+        _Condition_variable_wait = (void*)GetProcAddress(hcon,
+                "?wait@_Condition_variable@details@Concurrency@@QAAXAAVcritical_section@3@@Z");
+        _Condition_variable_wait_for = (void*)GetProcAddress(hcon,
+                "?wait_for@_Condition_variable@details@Concurrency@@QAA_NAAVcritical_section@3@I@Z");
+        _Condition_variable_notify_one = (void*)GetProcAddress(hcon,
+                "?notify_one@_Condition_variable@details@Concurrency@@QAAXXZ");
+        _Condition_variable_notify_all = (void*)GetProcAddress(hcon,
+                "?notify_all@_Condition_variable@details@Concurrency@@QAAXXZ");
 #else
         critical_section_ctor = (void*)GetProcAddress(hcon, "??0critical_section@Concurrency@@QAE@XZ");
         critical_section_dtor = (void*)GetProcAddress(hcon, "??1critical_section@Concurrency@@QAE@XZ");
         critical_section_lock = (void*)GetProcAddress(hcon, "?lock@critical_section@Concurrency@@QAEXXZ");
         critical_section_unlock = (void*)GetProcAddress(hcon, "?unlock@critical_section@Concurrency@@QAEXXZ");
         critical_section_trylock = (void*)GetProcAddress(hcon, "?try_lock@critical_section@Concurrency@@QAE_NXZ");
+        _Condition_variable_ctor = (void*)GetProcAddress(hcon, "??0_Condition_variable@details@Concurrency@@QAE@XZ");
+        _Condition_variable_dtor = (void*)GetProcAddress(hcon, "??1_Condition_variable@details@Concurrency@@QAE@XZ");
+        _Condition_variable_wait = (void*)GetProcAddress(hcon,
+                "?wait@_Condition_variable@details@Concurrency@@QAEXAAVcritical_section@3@@Z");
+        _Condition_variable_wait_for = (void*)GetProcAddress(hcon,
+                "?wait_for@_Condition_variable@details@Concurrency@@QAE_NAAVcritical_section@3@I@Z");
+        _Condition_variable_notify_one = (void*)GetProcAddress(hcon,
+                "?notify_one@_Condition_variable@details@Concurrency@@QAEXXZ");
+        _Condition_variable_notify_all = (void*)GetProcAddress(hcon,
+                "?notify_all@_Condition_variable@details@Concurrency@@QAEXXZ");
 #endif
     }
 #endif /* _MSVCP_VER >= 110 */
