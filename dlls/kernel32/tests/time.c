@@ -395,6 +395,16 @@ static void test_FileTimeToSystemTime(void)
        "Got Year %4d Month %2d Day %2d Hour %2d Min %2d Sec %2d mSec %3d\n",
        st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond,
        st.wMilliseconds);
+
+    ft.dwHighDateTime = -1;
+    ft.dwLowDateTime  = -1;
+    SetLastError(0xdeadbeef);
+    ret = FileTimeToSystemTime(&ft, &st);
+    todo_wine {
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
+    }
 }
 
 static void test_FileTimeToLocalFileTime(void)
