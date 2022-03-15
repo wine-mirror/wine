@@ -3874,8 +3874,14 @@ BOOL WINAPI DECLSPEC_HOTPATCH FileTimeToLocalFileTime( const FILETIME *utc, FILE
 BOOL WINAPI DECLSPEC_HOTPATCH FileTimeToSystemTime( const FILETIME *ft, SYSTEMTIME *systime )
 {
     TIME_FIELDS tf;
+    const LARGE_INTEGER *li = (const LARGE_INTEGER *)ft;
 
-    RtlTimeToTimeFields( (const LARGE_INTEGER *)ft, &tf );
+    if (li->QuadPart < 0)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    RtlTimeToTimeFields( li, &tf );
     systime->wYear = tf.Year;
     systime->wMonth = tf.Month;
     systime->wDay = tf.Day;

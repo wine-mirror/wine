@@ -400,11 +400,9 @@ static void test_FileTimeToSystemTime(void)
     ft.dwLowDateTime  = -1;
     SetLastError(0xdeadbeef);
     ret = FileTimeToSystemTime(&ft, &st);
-    todo_wine {
     ok(!ret, "expected failure\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
-    }
 }
 
 static void test_FileTimeToLocalFileTime(void)
