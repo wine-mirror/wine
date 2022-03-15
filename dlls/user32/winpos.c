@@ -63,15 +63,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(win);
 #define PLACE_MAX		0x0002
 #define PLACE_RECT		0x0004
 
-typedef struct
-{
-    struct user_object obj;
-    INT       actualCount;
-    INT       suggestedCount;
-    HWND      hwndParent;
-    WINDOWPOS *winPos;
-} DWP;
-
 
 /***********************************************************************
  *		SwitchToThisWindow (USER32.@)
@@ -1451,22 +1442,6 @@ LONG WINPOS_HandleWindowPosChanging( HWND hwnd, WINDOWPOS *winpos )
 
 
 /***********************************************************************
- *           map_dpi_winpos
- */
-static void map_dpi_winpos( WINDOWPOS *winpos )
-{
-    UINT dpi_from = get_thread_dpi();
-    UINT dpi_to = GetDpiForWindow( winpos->hwnd );
-
-    if (!dpi_from) dpi_from = get_win_monitor_dpi( winpos->hwnd );
-    if (dpi_from == dpi_to) return;
-    winpos->x  = MulDiv( winpos->x, dpi_to, dpi_from );
-    winpos->y  = MulDiv( winpos->y, dpi_to, dpi_from );
-    winpos->cx = MulDiv( winpos->cx, dpi_to, dpi_from );
-    winpos->cy = MulDiv( winpos->cy, dpi_to, dpi_from );
-}
-
-/***********************************************************************
  *           SWP_DoWinPosChanging
  */
 static BOOL SWP_DoWinPosChanging( WINDOWPOS *pWinpos, RECT *old_window_rect, RECT *old_client_rect,
@@ -2205,118 +2180,17 @@ done:
  */
 HDWP WINAPI BeginDeferWindowPos( INT count )
 {
-    HDWP handle = 0;
-    DWP *pDWP;
-
-    TRACE("%d\n", count);
-
-    if (count < 0)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return 0;
-    }
-    /* Windows allows zero count, in which case it allocates context for 8 moves */
-    if (count == 0) count = 8;
-
-    if (!(pDWP = HeapAlloc( GetProcessHeap(), 0, sizeof(DWP)))) return 0;
-
-    pDWP->actualCount    = 0;
-    pDWP->suggestedCount = count;
-    pDWP->hwndParent     = 0;
-
-    if (!(pDWP->winPos = HeapAlloc( GetProcessHeap(), 0, count * sizeof(WINDOWPOS) )) ||
-        !(handle = alloc_user_handle( &pDWP->obj, NTUSER_OBJ_WINPOS )))
-    {
-        HeapFree( GetProcessHeap(), 0, pDWP->winPos );
-        HeapFree( GetProcessHeap(), 0, pDWP );
-    }
-
-    TRACE("returning hdwp %p\n", handle);
-    return handle;
+    return UlongToHandle( NtUserCallOneParam( count, NtUserBeginDeferWindowPos ));
 }
 
 
 /***********************************************************************
  *		DeferWindowPos (USER32.@)
  */
-HDWP WINAPI DeferWindowPos( HDWP hdwp, HWND hwnd, HWND hwndAfter,
-                                INT x, INT y, INT cx, INT cy,
-                                UINT flags )
+HDWP WINAPI DeferWindowPos( HDWP hdwp, HWND hwnd, HWND after, INT x, INT y,
+                            INT cx, INT cy, UINT flags )
 {
-    DWP *pDWP;
-    int i;
-    HDWP retvalue = hdwp;
-    WINDOWPOS winpos;
-
-    TRACE("hdwp %p, hwnd %p, after %p, %d,%d (%dx%d), flags %08x\n",
-          hdwp, hwnd, hwndAfter, x, y, cx, cy, flags);
-
-    winpos.hwnd = WIN_GetFullHandle( hwnd );
-    if (is_desktop_window( winpos.hwnd ) || !IsWindow( winpos.hwnd ))
-    {
-        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-        return 0;
-    }
-
-    winpos.hwndInsertAfter = WIN_GetFullHandle(hwndAfter);
-    winpos.flags = flags;
-    winpos.x = x;
-    winpos.y = y;
-    winpos.cx = cx;
-    winpos.cy = cy;
-    map_dpi_winpos( &winpos );
-
-    if (!(pDWP = get_user_handle_ptr( hdwp, NTUSER_OBJ_WINPOS ))) return 0;
-    if (pDWP == OBJ_OTHER_PROCESS)
-    {
-        FIXME( "other process handle %p?\n", hdwp );
-        return 0;
-    }
-
-    for (i = 0; i < pDWP->actualCount; i++)
-    {
-        if (pDWP->winPos[i].hwnd == winpos.hwnd)
-        {
-              /* Merge with the other changes */
-            if (!(flags & SWP_NOZORDER))
-            {
-                pDWP->winPos[i].hwndInsertAfter = winpos.hwndInsertAfter;
-            }
-            if (!(flags & SWP_NOMOVE))
-            {
-                pDWP->winPos[i].x = winpos.x;
-                pDWP->winPos[i].y = winpos.y;
-            }
-            if (!(flags & SWP_NOSIZE))
-            {
-                pDWP->winPos[i].cx = winpos.cx;
-                pDWP->winPos[i].cy = winpos.cy;
-            }
-            pDWP->winPos[i].flags &= flags | ~(SWP_NOSIZE | SWP_NOMOVE |
-                                               SWP_NOZORDER | SWP_NOREDRAW |
-                                               SWP_NOACTIVATE | SWP_NOCOPYBITS|
-                                               SWP_NOOWNERZORDER);
-            pDWP->winPos[i].flags |= flags & (SWP_SHOWWINDOW | SWP_HIDEWINDOW |
-                                              SWP_FRAMECHANGED);
-            goto END;
-        }
-    }
-    if (pDWP->actualCount >= pDWP->suggestedCount)
-    {
-        WINDOWPOS *newpos = HeapReAlloc( GetProcessHeap(), 0, pDWP->winPos,
-                                         pDWP->suggestedCount * 2 * sizeof(WINDOWPOS) );
-        if (!newpos)
-        {
-            retvalue = 0;
-            goto END;
-        }
-        pDWP->suggestedCount *= 2;
-        pDWP->winPos = newpos;
-    }
-    pDWP->winPos[pDWP->actualCount++] = winpos;
-END:
-    release_user_handle_ptr( pDWP );
-    return retvalue;
+    return NtUserDeferWindowPosAndBand( hdwp, hwnd, after, x, y, cx, cy, flags, 0, 0 );
 }
 
 
@@ -2325,33 +2199,7 @@ END:
  */
 BOOL WINAPI EndDeferWindowPos( HDWP hdwp )
 {
-    DWP *pDWP;
-    WINDOWPOS *winpos;
-    int i;
-
-    TRACE("%p\n", hdwp);
-
-    if (!(pDWP = free_user_handle( hdwp, NTUSER_OBJ_WINPOS ))) return FALSE;
-    if (pDWP == OBJ_OTHER_PROCESS)
-    {
-        FIXME( "other process handle %p?\n", hdwp );
-        return FALSE;
-    }
-
-    for (i = 0, winpos = pDWP->winPos; i < pDWP->actualCount; i++, winpos++)
-    {
-        TRACE("hwnd %p, after %p, %d,%d (%dx%d), flags %08x\n",
-               winpos->hwnd, winpos->hwndInsertAfter, winpos->x, winpos->y,
-               winpos->cx, winpos->cy, winpos->flags);
-
-        if (WIN_IsCurrentThread( winpos->hwnd ))
-            USER_SetWindowPos( winpos, 0, 0 );
-        else
-            SendMessageW( winpos->hwnd, WM_WINE_SETWINDOWPOS, 0, (LPARAM)winpos );
-    }
-    HeapFree( GetProcessHeap(), 0, pDWP->winPos );
-    HeapFree( GetProcessHeap(), 0, pDWP );
-    return TRUE;
+    return NtUserEndDeferWindowPosEx( hdwp, FALSE );
 }
 
 

@@ -2498,6 +2498,166 @@ BOOL WINAPI NtUserSetWindowPos( HWND hwnd, HWND after, INT x, INT y, INT cx, INT
         return send_message( winpos.hwnd, WM_WINE_SETWINDOWPOS, 0, (LPARAM)&winpos );
 }
 
+typedef struct
+{
+    struct user_object obj;
+    INT        count;
+    INT        suggested_count;
+    HWND       parent;
+    WINDOWPOS *winpos;
+} DWP;
+
+/* see BeginDeferWindowPos */
+HDWP begin_defer_window_pos( INT count )
+{
+    HDWP handle = 0;
+    DWP *dwp;
+
+    TRACE( "%d\n", count );
+
+    if (count < 0)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    /* Windows allows zero count, in which case it allocates context for 8 moves */
+    if (count == 0) count = 8;
+
+    if (!(dwp = malloc( sizeof(DWP) ))) return 0;
+
+    dwp->count  = 0;
+    dwp->parent = 0;
+    dwp->suggested_count = count;
+
+    if (!(dwp->winpos = malloc( count * sizeof(WINDOWPOS) )) ||
+        !(handle = alloc_user_handle( &dwp->obj, NTUSER_OBJ_WINPOS )))
+    {
+        free( dwp->winpos );
+        free( dwp );
+    }
+
+    TRACE( "returning %p\n", handle );
+    return handle;
+}
+
+/***********************************************************************
+ *           NtUserDeferWindowPosAndBand (win32u.@)
+ */
+HDWP WINAPI NtUserDeferWindowPosAndBand( HDWP hdwp, HWND hwnd, HWND after,
+                                         INT x, INT y, INT cx, INT cy,
+                                         UINT flags, UINT unk1, UINT unk2 )
+{
+    HDWP retvalue = hdwp;
+    WINDOWPOS winpos;
+    DWP *dwp;
+    int i;
+
+    TRACE( "hdwp %p, hwnd %p, after %p, %d,%d (%dx%d), flags %08x\n",
+           hdwp, hwnd, after, x, y, cx, cy, flags );
+
+    winpos.hwnd = get_full_window_handle( hwnd );
+    if (is_desktop_window( winpos.hwnd ) || !is_window( winpos.hwnd ))
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+
+    winpos.hwndInsertAfter = get_full_window_handle( after );
+    winpos.flags = flags;
+    winpos.x = x;
+    winpos.y = y;
+    winpos.cx = cx;
+    winpos.cy = cy;
+    map_dpi_winpos( &winpos );
+
+    if (!(dwp = get_user_handle_ptr( hdwp, NTUSER_OBJ_WINPOS ))) return 0;
+    if (dwp == OBJ_OTHER_PROCESS)
+    {
+        FIXME( "other process handle %p\n", hdwp );
+        return 0;
+    }
+
+    for (i = 0; i < dwp->count; i++)
+    {
+        if (dwp->winpos[i].hwnd == winpos.hwnd)
+        {
+              /* Merge with the other changes */
+            if (!(flags & SWP_NOZORDER))
+            {
+                dwp->winpos[i].hwndInsertAfter = winpos.hwndInsertAfter;
+            }
+            if (!(flags & SWP_NOMOVE))
+            {
+                dwp->winpos[i].x = winpos.x;
+                dwp->winpos[i].y = winpos.y;
+            }
+            if (!(flags & SWP_NOSIZE))
+            {
+                dwp->winpos[i].cx = winpos.cx;
+                dwp->winpos[i].cy = winpos.cy;
+            }
+            dwp->winpos[i].flags &= flags | ~(SWP_NOSIZE | SWP_NOMOVE |
+                                              SWP_NOZORDER | SWP_NOREDRAW |
+                                              SWP_NOACTIVATE | SWP_NOCOPYBITS|
+                                              SWP_NOOWNERZORDER);
+            dwp->winpos[i].flags |= flags & (SWP_SHOWWINDOW | SWP_HIDEWINDOW |
+                                             SWP_FRAMECHANGED);
+            goto done;
+        }
+    }
+    if (dwp->count >= dwp->suggested_count)
+    {
+        WINDOWPOS *newpos = realloc( dwp->winpos, dwp->suggested_count * 2 * sizeof(WINDOWPOS) );
+        if (!newpos)
+        {
+            retvalue = 0;
+            goto done;
+        }
+        dwp->suggested_count *= 2;
+        dwp->winpos = newpos;
+    }
+    dwp->winpos[dwp->count++] = winpos;
+done:
+    release_user_handle_ptr( dwp );
+    return retvalue;
+}
+
+/***********************************************************************
+ *           NtUserEndDeferWindowPosEx (win32u.@)
+ */
+BOOL WINAPI NtUserEndDeferWindowPosEx( HDWP hdwp, BOOL async )
+{
+    WINDOWPOS *winpos;
+    DWP *dwp;
+    int i;
+
+    TRACE( "%p\n", hdwp );
+
+    if (async) FIXME( "async not supported\n" );
+
+    if (!(dwp = free_user_handle( hdwp, NTUSER_OBJ_WINPOS ))) return FALSE;
+    if (dwp == OBJ_OTHER_PROCESS)
+    {
+        FIXME( "other process handle %p\n", hdwp );
+        return FALSE;
+    }
+
+    for (i = 0, winpos = dwp->winpos; i < dwp->count; i++, winpos++)
+    {
+        TRACE( "hwnd %p, after %p, %d,%d (%dx%d), flags %08x\n",
+               winpos->hwnd, winpos->hwndInsertAfter, winpos->x, winpos->y,
+               winpos->cx, winpos->cy, winpos->flags );
+
+        if (is_current_thread_window( winpos->hwnd ))
+            set_window_pos( winpos, 0, 0 );
+        else
+            send_message( winpos->hwnd, WM_WINE_SETWINDOWPOS, 0, (LPARAM)winpos );
+    }
+    free( dwp->winpos );
+    free( dwp );
+    return TRUE;
+}
+
 /*******************************************************************
  *           update_window_state
  *

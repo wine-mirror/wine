@@ -4602,7 +4602,7 @@ static void thread_detach(void)
 }
 
 /***********************************************************************
- *	     NtUserCallOneParam    (win32u.@)
+ *	     NtUserCallNoParam    (win32u.@)
  */
 ULONG_PTR WINAPI NtUserCallNoParam( ULONG code )
 {
@@ -4631,6 +4631,8 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
 {
     switch(code)
     {
+    case NtUserBeginDeferWindowPos:
+        return HandleToUlong( begin_defer_window_pos( arg ));
     case NtUserCreateCursorIcon:
         return HandleToUlong( alloc_cursoricon_handle( arg ));
     case NtUserGetClipCursor:

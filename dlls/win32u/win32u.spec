@@ -821,7 +821,7 @@
 @ stub NtUserDdeInitialize
 @ stub NtUserDefSetText
 @ stub NtUserDeferWindowDpiChanges
-@ stub NtUserDeferWindowPosAndBand
+@ stdcall NtUserDeferWindowPosAndBand(long long long long long long long long long long)
 @ stub NtUserDelegateCapturePointers
 @ stub NtUserDelegateInput
 @ stub NtUserDeleteMenu
@@ -872,7 +872,7 @@
 @ stub NtUserEnableWindowGDIScaledDpiMessage
 @ stub NtUserEnableWindowGroupPolicy
 @ stub NtUserEnableWindowResizeOptimization
-@ stub NtUserEndDeferWindowPosEx
+@ stdcall NtUserEndDeferWindowPosEx(long long)
 @ stub NtUserEndMenu
 @ stdcall NtUserEndPaint(long ptr)
 @ stdcall NtUserEnumDisplayDevices(ptr long ptr long)

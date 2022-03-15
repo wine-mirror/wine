@@ -768,6 +768,15 @@ INT WINAPI NtUserCountClipboardFormats(void)
     return unix_funcs->pNtUserCountClipboardFormats();
 }
 
+HDWP WINAPI NtUserDeferWindowPosAndBand( HDWP hdwp, HWND hwnd, HWND after,
+                                         INT x, INT y, INT cx, INT cy,
+                                         UINT flags, UINT unk1, UINT unk2 )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserDeferWindowPosAndBand( hdwp, hwnd, after, x, y, cx, cy,
+                                                     flags, unk1, unk2 );
+}
+
 BOOL WINAPI NtUserDestroyCursor( HCURSOR cursor, ULONG arg )
 {
     if (!unix_funcs) return FALSE;
@@ -779,6 +788,12 @@ BOOL WINAPI NtUserDrawIconEx( HDC hdc, INT x0, INT y0, HICON icon, INT width,
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtUserDrawIconEx( hdc, x0, y0, icon, width, height, istep, hbr, flags );
+}
+
+BOOL WINAPI NtUserEndDeferWindowPosEx( HDWP hdwp, BOOL async )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserEndDeferWindowPosEx( hdwp, async );
 }
 
 NTSTATUS WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
