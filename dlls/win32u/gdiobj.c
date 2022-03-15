@@ -1179,6 +1179,7 @@ static struct unix_funcs unix_funcs =
     NtUserGetKeyboardLayoutList,
     NtUserGetPriorityClipboardFormat,
     NtUserGetQueueStatus,
+    NtUserGetUpdateRect,
     NtUserGetUpdateRgn,
     NtUserGetUpdatedClipboardFormats,
     NtUserIsClipboardFormatAvailable,
@@ -1214,7 +1215,6 @@ static struct unix_funcs unix_funcs =
     NtUserVkKeyScanEx,
     NtUserWindowFromPoint,
 
-    GetDCHook,
     SetDIBits,
     SetHookFlags,
     __wine_get_brush_bitmap_info,

@@ -1002,7 +1002,7 @@
 @ stub NtUserGetTouchInputInfo
 @ stub NtUserGetTouchValidationStatus
 @ stub NtUserGetUniformSpaceMapping
-@ stub NtUserGetUpdateRect
+@ stdcall NtUserGetUpdateRect(long ptr long)
 @ stdcall NtUserGetUpdateRgn(long long long)
 @ stdcall NtUserGetUpdatedClipboardFormats(ptr long ptr)
 @ stub NtUserGetWOWClass
@@ -1321,7 +1321,6 @@
 # Wine internal extensions
 
 # user32
-@ stdcall GetDCHook(long ptr)
 @ stdcall SetHookFlags(long long)
 @ cdecl __wine_set_visible_region(long long ptr ptr ptr)
 

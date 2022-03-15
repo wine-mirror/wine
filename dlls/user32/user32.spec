@@ -392,7 +392,7 @@
 @ stdcall GetTitleBarInfo(long ptr)
 @ stdcall GetTopWindow(long)
 @ stdcall GetTouchInputInfo(long long ptr long)
-@ stdcall GetUpdateRect(long ptr long)
+@ stdcall GetUpdateRect(long ptr long) NtUserGetUpdateRect
 @ stdcall GetUpdateRgn(long long long) NtUserGetUpdateRgn
 @ stdcall GetUpdatedClipboardFormats(ptr long ptr) NtUserGetUpdatedClipboardFormats
 @ stdcall GetUserObjectInformationA (long long ptr long ptr)

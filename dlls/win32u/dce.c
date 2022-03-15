@@ -1167,3 +1167,35 @@ INT WINAPI NtUserGetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
     set_thread_dpi_awareness_context( context );
     return retval;
 }
+
+/***********************************************************************
+ *           NtUserGetUpdateRect (win32u.@)
+ */
+BOOL WINAPI NtUserGetUpdateRect( HWND hwnd, RECT *rect, BOOL erase )
+{
+    UINT flags = UPDATE_NOCHILDREN;
+    HRGN update_rgn;
+    BOOL need_erase;
+
+    if (erase) flags |= UPDATE_NONCLIENT | UPDATE_ERASE;
+
+    if (!(update_rgn = send_ncpaint( hwnd, NULL, &flags ))) return FALSE;
+
+    if (rect && NtGdiGetRgnBox( update_rgn, rect ) != NULLREGION)
+    {
+        HDC hdc = NtUserGetDCEx( hwnd, 0, DCX_USESTYLE );
+        DWORD layout = NtGdiSetLayout( hdc, -1, 0 );  /* map_window_points mirrors already */
+        UINT win_dpi = get_dpi_for_window( hwnd );
+        map_window_points( 0, hwnd, (POINT *)rect, 2, win_dpi );
+        *rect = map_dpi_rect( *rect, win_dpi, get_thread_dpi() );
+        NtGdiTransformPoints( hdc, (POINT *)rect, (POINT *)rect, 2, NtGdiDPtoLP );
+        NtGdiSetLayout( hdc, -1, layout );
+        NtUserReleaseDC( hwnd, hdc );
+    }
+    need_erase = send_erase( hwnd, flags, update_rgn, NULL, NULL );
+
+    /* check if we still have an update region */
+    flags = UPDATE_PAINT | UPDATE_NOCHILDREN;
+    if (need_erase) flags |= UPDATE_DELAYED_ERASE;
+    return get_update_flags( hwnd, NULL, &flags ) && (flags & UPDATE_PAINT);
+}

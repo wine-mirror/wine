@@ -873,6 +873,12 @@ INT WINAPI NtUserGetKeyNameText( LONG lparam, WCHAR *buffer, INT size )
     return unix_funcs->pNtUserGetKeyNameText( lparam, buffer, size );
 }
 
+BOOL WINAPI NtUserGetUpdateRect( HWND hwnd, RECT *rect, BOOL erase )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserGetUpdateRect( hwnd, rect, erase );
+}
+
 INT WINAPI NtUserGetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
 {
     if (!unix_funcs) return 0;
@@ -1096,12 +1102,6 @@ HWND WINAPI NtUserWindowFromPoint( LONG x, LONG y )
 {
     if (!unix_funcs) return 0;
     return unix_funcs->pNtUserWindowFromPoint( x, y );
-}
-
-DWORD_PTR WINAPI GetDCHook( HDC hdc, DCHOOKPROC *proc )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pGetDCHook( hdc, proc );
 }
 
 INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,

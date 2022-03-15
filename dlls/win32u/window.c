@@ -1873,7 +1873,7 @@ INT WINAPI NtUserInternalGetWindowText( HWND hwnd, WCHAR *text, INT count )
  * Calculate the offset between the origin of the two windows. Used
  * to implement MapWindowPoints.
  */
-static BOOL get_windows_offset( HWND hwnd_from, HWND hwnd_to, BOOL *mirrored, POINT *ret_offset )
+static BOOL get_windows_offset( HWND hwnd_from, HWND hwnd_to, UINT dpi, BOOL *mirrored, POINT *ret_offset )
 {
     WND *win;
     POINT offset;
@@ -1915,7 +1915,7 @@ static BOOL get_windows_offset( HWND hwnd_from, HWND hwnd_to, BOOL *mirrored, PO
                 }
             }
             if (win && win != WND_DESKTOP) release_win_ptr( win );
-            offset = map_dpi_point( offset, get_dpi_for_window( hwnd_from ), get_thread_dpi() );
+            offset = map_dpi_point( offset, get_dpi_for_window( hwnd_from ), dpi );
         }
     }
 
@@ -1952,7 +1952,7 @@ static BOOL get_windows_offset( HWND hwnd_from, HWND hwnd_to, BOOL *mirrored, PO
                 }
             }
             if (win && win != WND_DESKTOP) release_win_ptr( win );
-            pt = map_dpi_point( pt, get_dpi_for_window( hwnd_to ), get_thread_dpi() );
+            pt = map_dpi_point( pt, get_dpi_for_window( hwnd_to ), dpi );
             offset.x -= pt.x;
             offset.y -= pt.y;
         }
@@ -1968,7 +1968,7 @@ other_process:  /* one of the parents may belong to another process, do it the h
     {
         req->from = wine_server_user_handle( hwnd_from );
         req->to   = wine_server_user_handle( hwnd_to );
-        req->dpi  = get_thread_dpi();
+        req->dpi  = dpi;
         if ((ret = !wine_server_call_err( req )))
         {
             ret_offset->x = reply->x;
@@ -1990,7 +1990,7 @@ void map_window_region( HWND from, HWND to, HRGN hrgn )
     HRGN new_rgn;
     RECT *rect;
 
-    if (!get_windows_offset( from, to, &mirrored, &offset )) return;
+    if (!get_windows_offset( from, to, get_thread_dpi(), &mirrored, &offset )) return;
 
     if (!mirrored)
     {
@@ -2015,6 +2015,30 @@ void map_window_region( HWND from, HWND to, HRGN hrgn )
         NtGdiDeleteObjectApp( new_rgn );
     }
     free( data );
+}
+
+/* see MapWindowPoints */
+int map_window_points( HWND hwnd_from, HWND hwnd_to, POINT *points, UINT count, UINT dpi )
+{
+    BOOL mirrored;
+    POINT offset;
+    UINT i;
+
+    if (!get_windows_offset( hwnd_from, hwnd_to, dpi, &mirrored, &offset )) return 0;
+
+    for (i = 0; i < count; i++)
+    {
+        points[i].x += offset.x;
+        points[i].y += offset.y;
+        if (mirrored) points[i].x = -points[i].x;
+    }
+    if (mirrored && count == 2)  /* special case for rectangle */
+    {
+        int tmp = points[0].x;
+        points[0].x = points[1].x;
+        points[1].x = tmp;
+    }
+    return MAKELONG( LOWORD(offset.x), LOWORD(offset.y) );
 }
 
 /***********************************************************************

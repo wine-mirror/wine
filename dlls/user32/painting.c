@@ -48,22 +48,6 @@ void free_dce( struct dce *dce, HWND hwnd )
 
 
 /***********************************************************************
- *   delete_clip_rgn
- */
-static void delete_clip_rgn( struct dce *dce )
-{
-    if (!dce->clip_rgn) return;  /* nothing to do */
-
-    dce->flags &= ~(DCX_EXCLUDERGN | DCX_INTERSECTRGN);
-    DeleteObject( dce->clip_rgn );
-    dce->clip_rgn = 0;
-
-    /* make it dirty so that the vis rgn gets recomputed next time */
-    SetHookFlags( dce->hdc, DCHF_INVALIDATEVISRGN );
-}
-
-
-/***********************************************************************
  *   invalidate_dce
  *
  * It is called from SetWindowPos() - we have to
@@ -76,36 +60,6 @@ void invalidate_dce( WND *win, const RECT *extra_rect )
 {
     /* FIXME: move callers to win32u */
     NtUserCallTwoParam( (UINT_PTR)win, (UINT_PTR)extra_rect, NtUserInvalidateDCE );
-}
-
-
-/***********************************************************************
- *		release_dc
- *
- * Implementation of ReleaseDC.
- */
-static INT release_dc( HWND hwnd, HDC hdc, BOOL end_paint )
-{
-    struct dce *dce;
-    BOOL ret = FALSE;
-
-    TRACE("%p %p\n", hwnd, hdc );
-
-    USER_Lock();
-    dce = (struct dce *)GetDCHook( hdc, NULL );
-    if (dce && dce->count && dce->hwnd)
-    {
-        if (!(dce->flags & DCX_NORESETATTRS)) SetHookFlags( dce->hdc, DCHF_RESETDC );
-        if (end_paint || (dce->flags & DCX_CACHE)) delete_clip_rgn( dce );
-        if (dce->flags & DCX_CACHE)
-        {
-            dce->count = 0;
-            SetHookFlags( dce->hdc, DCHF_DISABLEDC );
-        }
-        ret = TRUE;
-    }
-    USER_Unlock();
-    return ret;
 }
 
 
@@ -154,140 +108,6 @@ static HRGN get_update_region( HWND hwnd, UINT *flags, HWND *child )
 
     if (status) SetLastError( RtlNtStatusToDosError(status) );
     return hrgn;
-}
-
-
-/***********************************************************************
- *           get_update_flags
- *
- * Get only the update flags, not the update region.
- */
-static BOOL get_update_flags( HWND hwnd, HWND *child, UINT *flags )
-{
-    BOOL ret;
-
-    SERVER_START_REQ( get_update_region )
-    {
-        req->window     = wine_server_user_handle( hwnd );
-        req->from_child = wine_server_user_handle( child ? *child : 0 );
-        req->flags      = *flags | UPDATE_NOREGION;
-        if ((ret = !wine_server_call_err( req )))
-        {
-            if (child) *child = wine_server_ptr_handle( reply->child );
-            *flags = reply->flags;
-        }
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-
-/***********************************************************************
- *           send_ncpaint
- *
- * Send a WM_NCPAINT message if needed, and return the resulting update region (in screen coords).
- * Helper for erase_now and BeginPaint.
- */
-static HRGN send_ncpaint( HWND hwnd, HWND *child, UINT *flags )
-{
-    HRGN whole_rgn = get_update_region( hwnd, flags, child );
-    HRGN client_rgn = 0;
-    DWORD style;
-
-    if (child) hwnd = *child;
-
-    if (hwnd == GetDesktopWindow()) return whole_rgn;
-
-    if (whole_rgn)
-    {
-        DPI_AWARENESS_CONTEXT context;
-        RECT client, window, update;
-        INT type;
-
-        context = SetThreadDpiAwarenessContext( GetWindowDpiAwarenessContext( hwnd ));
-
-        /* check if update rgn overlaps with nonclient area */
-        type = GetRgnBox( whole_rgn, &update );
-        WIN_GetRectangles( hwnd, COORDS_SCREEN, &window, &client );
-
-        if ((*flags & UPDATE_NONCLIENT) ||
-            update.left < client.left || update.top < client.top ||
-            update.right > client.right || update.bottom > client.bottom)
-        {
-            client_rgn = CreateRectRgnIndirect( &client );
-            CombineRgn( client_rgn, client_rgn, whole_rgn, RGN_AND );
-
-            /* check if update rgn contains complete nonclient area */
-            if (type == SIMPLEREGION && EqualRect( &window, &update ))
-            {
-                DeleteObject( whole_rgn );
-                whole_rgn = (HRGN)1;
-            }
-        }
-        else
-        {
-            client_rgn = whole_rgn;
-            whole_rgn = 0;
-        }
-
-        if (whole_rgn) /* NOTE: WM_NCPAINT allows wParam to be 1 */
-        {
-            if (*flags & UPDATE_NONCLIENT)
-            {
-                /* Mark standard scroll bars as not painted before sending WM_NCPAINT */
-                style = GetWindowLongW( hwnd, GWL_STYLE );
-                if (style & WS_HSCROLL)
-                    SCROLL_SetStandardScrollPainted( hwnd, SB_HORZ, FALSE );
-                if (style & WS_VSCROLL)
-                    SCROLL_SetStandardScrollPainted( hwnd, SB_VERT, FALSE );
-
-                SendMessageW( hwnd, WM_NCPAINT, (WPARAM)whole_rgn, 0 );
-            }
-            if (whole_rgn > (HRGN)1) DeleteObject( whole_rgn );
-        }
-        SetThreadDpiAwarenessContext( context );
-    }
-    return client_rgn;
-}
-
-
-/***********************************************************************
- *           send_erase
- *
- * Send a WM_ERASEBKGND message if needed, and optionally return the DC for painting.
- * If a DC is requested, the region is selected into it. In all cases the region is deleted.
- * Helper for erase_now and BeginPaint.
- */
-static BOOL send_erase( HWND hwnd, UINT flags, HRGN client_rgn,
-                        RECT *clip_rect, HDC *hdc_ret )
-{
-    BOOL need_erase = (flags & UPDATE_DELAYED_ERASE) != 0;
-    HDC hdc = 0;
-    RECT dummy;
-
-    if (!clip_rect) clip_rect = &dummy;
-    if (hdc_ret || (flags & UPDATE_ERASE))
-    {
-        UINT dcx_flags = DCX_INTERSECTRGN | DCX_USESTYLE;
-        if (IsIconic(hwnd)) dcx_flags |= DCX_WINDOW;
-
-        if ((hdc = NtUserGetDCEx( hwnd, client_rgn, dcx_flags )))
-        {
-            INT type = GetClipBox( hdc, clip_rect );
-
-            if (flags & UPDATE_ERASE)
-            {
-                /* don't erase if the clip box is empty */
-                if (type != NULLREGION)
-                    need_erase = !SendMessageW( hwnd, WM_ERASEBKGND, (WPARAM)hdc, 0 );
-            }
-            if (!hdc_ret) release_dc( hwnd, hdc, TRUE );
-        }
-
-        if (hdc_ret) *hdc_ret = hdc;
-    }
-    if (!hdc) DeleteObject( client_rgn );
-    return need_erase;
 }
 
 
@@ -579,44 +399,6 @@ BOOL WINAPI ValidateRect( HWND hwnd, const RECT *rect )
     }
 
     return NtUserRedrawWindow( hwnd, rect, 0, flags );
-}
-
-
-/***********************************************************************
- *		GetUpdateRect (USER32.@)
- */
-BOOL WINAPI GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
-{
-    DPI_AWARENESS_CONTEXT context;
-    UINT flags = UPDATE_NOCHILDREN;
-    HRGN update_rgn;
-    BOOL need_erase;
-
-    if (erase) flags |= UPDATE_NONCLIENT | UPDATE_ERASE;
-
-    if (!(update_rgn = send_ncpaint( hwnd, NULL, &flags ))) return FALSE;
-
-    if (rect)
-    {
-        if (GetRgnBox( update_rgn, rect ) != NULLREGION)
-        {
-            HDC hdc = NtUserGetDCEx( hwnd, 0, DCX_USESTYLE );
-            DWORD layout = SetLayout( hdc, 0 );  /* MapWindowPoints mirrors already */
-            context = SetThreadDpiAwarenessContext( GetWindowDpiAwarenessContext( hwnd ));
-            MapWindowPoints( 0, hwnd, (LPPOINT)rect, 2 );
-            SetThreadDpiAwarenessContext( context );
-            *rect = rect_win_to_thread_dpi( hwnd, *rect );
-            DPtoLP( hdc, (LPPOINT)rect, 2 );
-            SetLayout( hdc, layout );
-            NtUserReleaseDC( hwnd, hdc );
-        }
-    }
-    need_erase = send_erase( hwnd, flags, update_rgn, NULL, NULL );
-
-    /* check if we still have an update region */
-    flags = UPDATE_PAINT | UPDATE_NOCHILDREN;
-    if (need_erase) flags |= UPDATE_DELAYED_ERASE;
-    return (get_update_flags( hwnd, NULL, &flags ) && (flags & UPDATE_PAINT));
 }
 
 
