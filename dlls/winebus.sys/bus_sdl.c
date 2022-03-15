@@ -114,6 +114,7 @@ MAKE_FUNCPTR(SDL_RegisterEvents);
 MAKE_FUNCPTR(SDL_PushEvent);
 MAKE_FUNCPTR(SDL_GetTicks);
 static int (*pSDL_JoystickRumble)(SDL_Joystick *joystick, Uint16 low_frequency_rumble, Uint16 high_frequency_rumble, Uint32 duration_ms);
+static int (*pSDL_JoystickRumbleTriggers)(SDL_Joystick *joystick, Uint16 left_rumble, Uint16 right_rumble, Uint32 duration_ms);
 static Uint16 (*pSDL_JoystickGetProduct)(SDL_Joystick * joystick);
 static Uint16 (*pSDL_JoystickGetProductVersion)(SDL_Joystick * joystick);
 static Uint16 (*pSDL_JoystickGetVendor)(SDL_Joystick * joystick);
@@ -442,7 +443,11 @@ static NTSTATUS sdl_device_haptics_start(struct unix_device *iface, UINT duratio
     if (!(impl->effect_support & EFFECT_SUPPORT_HAPTICS)) return STATUS_NOT_SUPPORTED;
 
     if (impl->effect_support & WINE_SDL_JOYSTICK_RUMBLE)
+    {
         pSDL_JoystickRumble(impl->sdl_joystick, rumble_intensity, buzz_intensity, duration_ms);
+        if (pSDL_JoystickRumbleTriggers)
+            pSDL_JoystickRumbleTriggers(impl->sdl_joystick, left_intensity, right_intensity, duration_ms);
+    }
     else if (impl->effect_support & SDL_HAPTIC_LEFTRIGHT)
     {
         SDL_HapticEffect effect;
@@ -475,7 +480,11 @@ static NTSTATUS sdl_device_haptics_stop(struct unix_device *iface)
     TRACE("iface %p.\n", iface);
 
     if (impl->effect_support & WINE_SDL_JOYSTICK_RUMBLE)
+    {
         pSDL_JoystickRumble(impl->sdl_joystick, 0, 0, 0);
+        if (pSDL_JoystickRumbleTriggers)
+            pSDL_JoystickRumbleTriggers(impl->sdl_joystick, 0, 0, 0);
+    }
     else if (impl->effect_support & SDL_HAPTIC_LEFTRIGHT)
         pSDL_HapticStopAll(impl->sdl_haptic);
     else if (impl->effect_support & WINE_SDL_HAPTIC_RUMBLE)
@@ -1050,6 +1059,7 @@ NTSTATUS sdl_bus_init(void *args)
     LOAD_FUNCPTR(SDL_GetTicks);
 #undef LOAD_FUNCPTR
     pSDL_JoystickRumble = dlsym(sdl_handle, "SDL_JoystickRumble");
+    pSDL_JoystickRumbleTriggers = dlsym(sdl_handle, "SDL_JoystickRumbleTriggers");
     pSDL_JoystickGetProduct = dlsym(sdl_handle, "SDL_JoystickGetProduct");
     pSDL_JoystickGetProductVersion = dlsym(sdl_handle, "SDL_JoystickGetProductVersion");
     pSDL_JoystickGetVendor = dlsym(sdl_handle, "SDL_JoystickGetVendor");
