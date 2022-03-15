@@ -14156,11 +14156,11 @@ msgstr ""
 
 #: programs/chcp.com/chcp.rc:28
 msgid "Active code page: %1!u!\n"
-msgstr "Code de pages actif : %1!u!\n"
+msgstr "Page de code active : %1!u!\n"
 
 #: programs/chcp.com/chcp.rc:29
 msgid "Invalid code page\n"
-msgstr "Code de pages invalide.\n"
+msgstr "Page de code invalide\n"
 
 #: programs/chcp.com/chcp.rc:33
 msgid ""
@@ -14175,12 +14175,12 @@ msgid ""
 msgstr ""
 "CHCP [nombre]\n"
 "\n"
-"  Modifie ou affiche le code de pages de la console actif.\n"
+"  Modifie ou affiche la page de code de la console active.\n"
 "\n"
-"  nombre   Le code de pages de la console à activer.\n"
+"  nombre   La page de code de la console à activer.\n"
 "\n"
-"  Lancer CHCP sans nombre en paramètre pour afficher le code de pages actif "
-"de la console.\n"
+"  Lancer CHCP sans nombre en paramètre pour afficher la page de code de la "
+"console active.\n"
 "\n"
 
 #: programs/clock/clock.rc:32
