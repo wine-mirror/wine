@@ -5725,6 +5725,8 @@ static void test_MFCreate2DMediaBuffer(void)
         { 1, 4, D3DFMT_A8R8G8B8, 16, 64 },
         { 4, 1, D3DFMT_A8R8G8B8, 16, 64 },
     };
+    static const char two_aas[] = { 0xaa, 0xaa };
+    static const char eight_bbs[] = { 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb };
     DWORD max_length, length, length2;
     BYTE *buffer_start, *data, *data2;
     LONG pitch, pitch2, stride;
@@ -5783,6 +5785,8 @@ static void test_MFCreate2DMediaBuffer(void)
     ok(hr == S_OK, "Failed to lock buffer, hr %#lx.\n", hr);
     ok(max_length == length, "Unexpected length.\n");
 
+    memset(data, 0xaa, length);
+
     length = 0;
     pMFGetPlaneSize(MAKEFOURCC('N','V','1','2'), 2, 3, &length);
     ok(max_length == length && length == 9, "Unexpected length %lu.\n", length);
@@ -5835,6 +5839,10 @@ static void test_MFCreate2DMediaBuffer(void)
     ok(!!data, "Expected data pointer.\n");
     ok(pitch == 64, "Unexpected pitch %ld.\n", pitch);
 
+    for (i = 0; i < 4; i++)
+        ok(memcmp(&data[64 * i], two_aas, sizeof(two_aas)) == 0, "Invalid data instead of 0xaa.\n");
+    memset(data, 0xbb, 194);
+
     hr = IMF2DBuffer_Lock2D(_2dbuffer, &data2, &pitch);
     ok(hr == S_OK, "Failed to lock buffer, hr %#lx.\n", hr);
     ok(data == data2, "Expected data pointer.\n");
@@ -5860,6 +5868,15 @@ static void test_MFCreate2DMediaBuffer(void)
 
     hr = IMF2DBuffer_Unlock2D(_2dbuffer);
     ok(hr == HRESULT_FROM_WIN32(ERROR_WAS_UNLOCKED), "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaBuffer_Lock(buffer, &data, NULL, NULL);
+    ok(hr == S_OK, "Failed to lock buffer, hr %#lx.\n", hr);
+
+    todo_wine
+    ok(memcmp(data, eight_bbs, sizeof(eight_bbs)) == 0, "Invalid data instead of 0xbb.\n");
+
+    hr = IMFMediaBuffer_Unlock(buffer);
+    ok(hr == S_OK, "Failed to unlock buffer, hr %#lx.\n", hr);
 
     hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer2, (void **)&_2dbuffer2);
     ok(hr == S_OK || broken(hr == E_NOINTERFACE), "Failed to get interface, hr %#lx.\n", hr);
