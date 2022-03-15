@@ -16790,7 +16790,7 @@ msgstr "regedit: Kan de registersleutel '%1' niet openen.\n"
 msgid ""
 "regedit: Unsupported registry data type [0x%1!x!] encountered in '%2'.\n"
 msgstr ""
-"regedit: Register gegevenstype [0x%1!x!] aangetroffen in '%2' wordt niet \n"
+"regedit: Register gegevenstype [0x%1!x!] aangetroffen in '%2' wordt niet\n"
 "ondersteund.\n"
 
 #: programs/regedit/regedit.rc:426
@@ -18577,7 +18577,7 @@ msgid ""
 msgstr ""
 "U heeft geen C-schijf. Dit kan tot problemen leiden.\n"
 "\n"
-"Vergeet niet om m.b.v. de knop 'Toevoegen' in het 'Schijven'-tabblad een \n"
+"Vergeet niet om m.b.v. de knop 'Toevoegen' in het 'Schijven'-tabblad een\n"
 "C-schijf aan te maken!\n"
 
 #: programs/winecfg/winecfg.rc:98
