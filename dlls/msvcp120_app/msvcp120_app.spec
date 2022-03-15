@@ -3768,7 +3768,7 @@
 @ cdecl _Mtx_getconcrtcs(ptr) msvcp120._Mtx_getconcrtcs
 @ cdecl _Mtx_init(ptr long) msvcp120._Mtx_init
 @ cdecl _Mtx_lock(ptr) msvcp120._Mtx_lock
-@ stub _Mtx_reset_owner
+@ cdecl _Mtx_reset_owner(ptr) msvcp120._Mtx_reset_owner
 @ stub _Mtx_timedlock
 @ cdecl _Mtx_trylock(ptr) msvcp120._Mtx_trylock
 @ cdecl _Mtx_unlock(ptr) msvcp120._Mtx_unlock

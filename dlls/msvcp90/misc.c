@@ -814,6 +814,13 @@ void __cdecl _Mtx_clear_owner(_Mtx_arg_t mtx)
     m->count--;
 }
 
+void __cdecl _Mtx_reset_owner(_Mtx_arg_t mtx)
+{
+    _Mtx_t m = MTX_T_FROM_ARG(mtx);
+    m->thread_id = GetCurrentThreadId();
+    m->count++;
+}
+
 static inline LONG interlocked_dec_if_nonzero( LONG *dest )
 {
     LONG val, tmp;

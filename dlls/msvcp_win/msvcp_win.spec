@@ -3680,7 +3680,7 @@
 @ cdecl _Mtx_init(ptr long) msvcp140._Mtx_init
 @ cdecl _Mtx_init_in_situ(ptr long) msvcp140._Mtx_init_in_situ
 @ cdecl _Mtx_lock(ptr) msvcp140._Mtx_lock
-@ stub _Mtx_reset_owner
+@ cdecl _Mtx_reset_owner(ptr) msvcp140._Mtx_reset_owner
 @ stub _Mtx_timedlock
 @ cdecl _Mtx_trylock(ptr) msvcp140._Mtx_trylock
 @ cdecl _Mtx_unlock(ptr) msvcp140._Mtx_unlock

@@ -3680,7 +3680,7 @@
 @ cdecl _Mtx_init(ptr long)
 @ cdecl _Mtx_init_in_situ(ptr long)
 @ cdecl _Mtx_lock(ptr)
-@ stub _Mtx_reset_owner
+@ cdecl _Mtx_reset_owner(ptr)
 @ stub _Mtx_timedlock
 @ cdecl _Mtx_trylock(ptr)
 @ cdecl _Mtx_unlock(ptr)
