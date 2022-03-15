@@ -16958,7 +16958,7 @@ msgid ""
 "The value '%1\\%2' already exists in the destination key. Do you want to "
 "overwrite it?"
 msgstr ""
-"La valeur de registre « %1\\\\%2 » existe déjà. Voulez-vous la remplacer ?"
+"La valeur de registre « %1\\%2 » existe déjà. Voulez-vous la remplacer ?"
 
 #: programs/reg/reg.rc:133
 msgid "Are you sure you want to delete the registry value '%1'?"
