@@ -25,6 +25,189 @@ WINE_DEFAULT_DEBUG_CHANNEL(speech);
 
 /*
  *
+ * SpeechContinuousRecognitionSession
+ *
+ */
+
+struct session
+{
+    ISpeechContinuousRecognitionSession ISpeechContinuousRecognitionSession_iface;
+    LONG ref;
+};
+
+/*
+ *
+ * ISpeechContinuousRecognitionSession
+ *
+ */
+
+static inline struct session *impl_from_ISpeechContinuousRecognitionSession( ISpeechContinuousRecognitionSession *iface )
+{
+    return CONTAINING_RECORD(iface, struct session, ISpeechContinuousRecognitionSession_iface);
+}
+
+static HRESULT WINAPI session_QueryInterface( ISpeechContinuousRecognitionSession *iface, REFIID iid, void **out )
+{
+    struct session *impl = impl_from_ISpeechContinuousRecognitionSession(iface);
+
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) ||
+        IsEqualGUID(iid, &IID_IInspectable) ||
+        IsEqualGUID(iid, &IID_ISpeechContinuousRecognitionSession))
+    {
+        IInspectable_AddRef((*out = &impl->ISpeechContinuousRecognitionSession_iface));
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI session_AddRef( ISpeechContinuousRecognitionSession *iface )
+{
+    struct session *impl = impl_from_ISpeechContinuousRecognitionSession(iface);
+    ULONG ref = InterlockedIncrement(&impl->ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
+    return ref;
+}
+
+static ULONG WINAPI session_Release( ISpeechContinuousRecognitionSession *iface )
+{
+    struct session *impl = impl_from_ISpeechContinuousRecognitionSession(iface);
+    ULONG ref = InterlockedDecrement(&impl->ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
+
+    if (!ref)
+        free(impl);
+
+    return ref;
+}
+
+static HRESULT WINAPI session_GetIids( ISpeechContinuousRecognitionSession *iface, ULONG *iid_count, IID **iids )
+{
+    FIXME("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI session_GetRuntimeClassName( ISpeechContinuousRecognitionSession *iface, HSTRING *class_name )
+{
+    FIXME("iface %p, class_name %p stub!\n", iface, class_name);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI session_GetTrustLevel( ISpeechContinuousRecognitionSession *iface, TrustLevel *trust_level )
+{
+    FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI session_get_AutoStopSilenceTimeout( ISpeechContinuousRecognitionSession *iface, TimeSpan *value )
+{
+    FIXME("iface %p, value %p stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI session_set_AutoStopSilenceTimeout( ISpeechContinuousRecognitionSession *iface, TimeSpan value )
+{
+    FIXME("iface %p, value %#I64x stub!\n", iface, value.Duration);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI session_StartAsync( ISpeechContinuousRecognitionSession *iface, IAsyncAction **action )
+{
+    FIXME("iface %p, action %p semi stub!\n", iface, action);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI session_StartWithModeAsync( ISpeechContinuousRecognitionSession *iface,
+                                                  SpeechContinuousRecognitionMode mode,
+                                                  IAsyncAction **action )
+{
+    FIXME("iface %p, mode %u, action %p stub!\n", iface, mode, action);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI session_StopAsync( ISpeechContinuousRecognitionSession *iface, IAsyncAction **action )
+{
+    FIXME("iface %p, action %p stub!\n", iface, action);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI session_CancelAsync( ISpeechContinuousRecognitionSession *iface, IAsyncAction **action )
+{
+    FIXME("iface %p, action %p stub!\n", iface, action);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI session_PauseAsync( ISpeechContinuousRecognitionSession *iface, IAsyncAction **action )
+{
+    FIXME("iface %p, action %p stub!\n", iface, action);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI session_Resume( ISpeechContinuousRecognitionSession *iface )
+{
+    FIXME("iface %p stub!\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI session_add_Completed( ISpeechContinuousRecognitionSession *iface,
+                                             ITypedEventHandler_SpeechContinuousRecognitionSession_SpeechContinuousRecognitionCompletedEventArgs *handler,
+                                             EventRegistrationToken *token )
+{
+    FIXME("iface %p, handler %p, token %p stub!\n", iface, handler, token);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI session_remove_Completed( ISpeechContinuousRecognitionSession *iface, EventRegistrationToken token )
+{
+    FIXME("iface %p, token.value %#I64x stub!\n", iface, token.value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI session_add_ResultGenerated( ISpeechContinuousRecognitionSession *iface,
+                                                   ITypedEventHandler_SpeechContinuousRecognitionSession_SpeechContinuousRecognitionResultGeneratedEventArgs *handler,
+                                                   EventRegistrationToken *token)
+{
+    FIXME("iface %p, handler %p, token %p stub!\n", iface, handler, token);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI session_remove_ResultGenerated( ISpeechContinuousRecognitionSession *iface, EventRegistrationToken token )
+{
+    FIXME("iface %p, token.value %#I64x stub!\n", iface, token.value);
+    return E_NOTIMPL;
+}
+
+static const struct ISpeechContinuousRecognitionSessionVtbl session_vtbl =
+{
+    /* IUnknown methods */
+    session_QueryInterface,
+    session_AddRef,
+    session_Release,
+    /* IInspectable methods */
+    session_GetIids,
+    session_GetRuntimeClassName,
+    session_GetTrustLevel,
+    /* ISpeechContinuousRecognitionSession methods */
+    session_get_AutoStopSilenceTimeout,
+    session_set_AutoStopSilenceTimeout,
+    session_StartAsync,
+    session_StartWithModeAsync,
+    session_StopAsync,
+    session_CancelAsync,
+    session_PauseAsync,
+    session_Resume,
+    session_add_Completed,
+    session_remove_Completed,
+    session_add_ResultGenerated,
+    session_remove_ResultGenerated
+};
+
+/*
+ *
  * SpeechRecognizer
  *
  */
@@ -35,6 +218,8 @@ struct recognizer
     IClosable IClosable_iface;
     ISpeechRecognizer2 ISpeechRecognizer2_iface;
     LONG ref;
+
+    ISpeechContinuousRecognitionSession *session;
 };
 
 /*
@@ -96,7 +281,10 @@ static ULONG WINAPI recognizer_Release( ISpeechRecognizer *iface )
     TRACE("iface %p, ref %lu.\n", iface, ref);
 
     if (!ref)
+    {
+        ISpeechContinuousRecognitionSession_Release(impl->session);
         free(impl);
+    }
 
     return ref;
 }
@@ -433,21 +621,25 @@ DEFINE_IINSPECTABLE(recognizer_factory, ISpeechRecognizerFactory, struct recogni
 static HRESULT WINAPI recognizer_factory_Create( ISpeechRecognizerFactory *iface, ILanguage *language, ISpeechRecognizer **speechrecognizer )
 {
     struct recognizer *impl;
+    struct session *session;
 
     TRACE("iface %p, language %p, speechrecognizer %p.\n", iface, language, speechrecognizer);
 
-    if (!(impl = calloc(1, sizeof(*impl))))
-    {
-        *speechrecognizer = NULL;
-        return E_OUTOFMEMORY;
-    }
+    *speechrecognizer = NULL;
+
+    if (!(impl = calloc(1, sizeof(*impl)))) return E_OUTOFMEMORY;
+    if (!(session = calloc(1, sizeof(*session)))) return E_OUTOFMEMORY;
 
     if (language)
         FIXME("language parameter unused. Stub!\n");
 
+    session->ISpeechContinuousRecognitionSession_iface.lpVtbl = &session_vtbl;
+    session->ref = 1;
+
     impl->ISpeechRecognizer_iface.lpVtbl = &speech_recognizer_vtbl;
     impl->IClosable_iface.lpVtbl = &closable_vtbl;
     impl->ISpeechRecognizer2_iface.lpVtbl = &speech_recognizer2_vtbl;
+    impl->session = &session->ISpeechContinuousRecognitionSession_iface;
     impl->ref = 1;
 
     TRACE("created SpeechRecognizer %p.\n", impl);
