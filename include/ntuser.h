@@ -183,6 +183,7 @@ enum
     NtUserSetForegroundWindow,
     /* temporary exports */
     NtUserIsWindowDrawable,
+    NtUserSetWindowStyle,
 };
 
 /* NtUserMessageCall codes */

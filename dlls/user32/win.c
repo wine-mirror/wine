@@ -668,51 +668,10 @@ static HWND WIN_SetOwner( HWND hwnd, HWND owner )
  */
 ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits )
 {
-    BOOL ok, made_visible = FALSE;
-    STYLESTRUCT style;
-    WND *win = WIN_GetPtr( hwnd );
-
-    if (!win || win == WND_DESKTOP) return 0;
-    if (win == WND_OTHER_PROCESS)
-    {
-        if (IsWindow(hwnd))
-            return SendMessageW(hwnd, WM_WINE_SETSTYLE, set_bits, clear_bits);
-        return 0;
-    }
-    style.styleOld = win->dwStyle;
-    style.styleNew = (win->dwStyle | set_bits) & ~clear_bits;
-    if (style.styleNew == style.styleOld)
-    {
-        WIN_ReleasePtr( win );
-        return style.styleNew;
-    }
-    SERVER_START_REQ( set_window_info )
-    {
-        req->handle = wine_server_user_handle( hwnd );
-        req->flags  = SET_WIN_STYLE;
-        req->style  = style.styleNew;
-        req->extra_offset = -1;
-        if ((ok = !wine_server_call( req )))
-        {
-            style.styleOld = reply->old_style;
-            win->dwStyle = style.styleNew;
-        }
-    }
-    SERVER_END_REQ;
-
-    if (ok && ((style.styleOld ^ style.styleNew) & WS_VISIBLE))
-    {
-        made_visible = (style.styleNew & WS_VISIBLE) != 0;
-        invalidate_dce( win, NULL );
-    }
-    WIN_ReleasePtr( win );
-
-    if (!ok) return 0;
-
-    USER_Driver->pSetWindowStyle( hwnd, GWL_STYLE, &style );
-    if (made_visible) update_window_state( hwnd );
-
-    return style.styleOld;
+    /* FIXME: Use SetWindowLong or move callers to win32u instead.
+     * We use STYLESTRUCT to pass params, but meaning of its field does not match our usage. */
+    STYLESTRUCT style = { .styleNew = set_bits, .styleOld = clear_bits };
+    return NtUserCallHwndParam( hwnd, (UINT_PTR)&style, NtUserSetWindowStyle );
 }
 
 

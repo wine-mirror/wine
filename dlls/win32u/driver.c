@@ -1196,6 +1196,7 @@ static const struct user_driver_funcs lazy_load_driver =
     .pSetLayeredWindowAttributes = loaderdrv_SetLayeredWindowAttributes,
     .pSetParent = nulldrv_SetParent,
     .pSetWindowRgn = loaderdrv_SetWindowRgn,
+    .pSetWindowStyle = nulldrv_SetWindowStyle,
     .pMsgWaitForMultipleObjectsEx = nulldrv_MsgWaitForMultipleObjectsEx,
     .pReleaseDC =  nulldrv_ReleaseDC,
     .pScrollDC = nulldrv_ScrollDC,

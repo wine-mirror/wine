@@ -1051,6 +1051,60 @@ static WORD get_window_word( HWND hwnd, INT offset )
 }
 
 /***********************************************************************
+ *           set_window_style
+ *
+ * Change the style of a window.
+ */
+ULONG set_window_style( HWND hwnd, ULONG set_bits, ULONG clear_bits )
+{
+    BOOL ok, made_visible = FALSE;
+    STYLESTRUCT style;
+    WND *win = get_win_ptr( hwnd );
+
+    if (!win || win == WND_DESKTOP) return 0;
+    if (win == WND_OTHER_PROCESS)
+    {
+        if (is_window(hwnd))
+            return send_message( hwnd, WM_WINE_SETSTYLE, set_bits, clear_bits );
+        return 0;
+    }
+    style.styleOld = win->dwStyle;
+    style.styleNew = (win->dwStyle | set_bits) & ~clear_bits;
+    if (style.styleNew == style.styleOld)
+    {
+        release_win_ptr( win );
+        return style.styleNew;
+    }
+    SERVER_START_REQ( set_window_info )
+    {
+        req->handle = wine_server_user_handle( hwnd );
+        req->flags  = SET_WIN_STYLE;
+        req->style  = style.styleNew;
+        req->extra_offset = -1;
+        if ((ok = !wine_server_call( req )))
+        {
+            style.styleOld = reply->old_style;
+            win->dwStyle = style.styleNew;
+        }
+    }
+    SERVER_END_REQ;
+
+    if (ok && ((style.styleOld ^ style.styleNew) & WS_VISIBLE))
+    {
+        made_visible = (style.styleNew & WS_VISIBLE) != 0;
+        invalidate_dce( win, NULL );
+    }
+    release_win_ptr( win );
+
+    if (!ok) return 0;
+
+    user_driver->pSetWindowStyle( hwnd, GWL_STYLE, &style );
+    if (made_visible) update_window_state( hwnd );
+
+    return style.styleOld;
+}
+
+/***********************************************************************
  *           NtUserGetProp   (win32u.@)
  *
  * NOTE Native allows only ATOMs as the second argument. We allow strings
@@ -2954,6 +3008,11 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
     /* temporary exports */
     case NtUserIsWindowDrawable:
         return is_window_drawable( hwnd, param );
+    case NtUserSetWindowStyle:
+        {
+            STYLESTRUCT *style = (void *)param;
+            return set_window_style( hwnd, style->styleNew, style->styleOld );
+        }
     default:
         FIXME( "invalid code %u\n", code );
         return 0;
