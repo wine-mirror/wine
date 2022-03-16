@@ -46,6 +46,12 @@
 #define impl_from_IHandler_RecognitionResult impl_from_ITypedEventHandler_SpeechContinuousRecognitionSession_SpeechContinuousRecognitionResultGeneratedEventArgs
 #define IHandler_RecognitionResult_iface ITypedEventHandler_SpeechContinuousRecognitionSession_SpeechContinuousRecognitionResultGeneratedEventArgs_iface
 
+#define IHandler_RecognitionCompleted ITypedEventHandler_SpeechContinuousRecognitionSession_SpeechContinuousRecognitionCompletedEventArgs
+#define IHandler_RecognitionCompletedVtbl ITypedEventHandler_SpeechContinuousRecognitionSession_SpeechContinuousRecognitionCompletedEventArgsVtbl
+#define IID_IHandler_RecognitionCompleted IID_ITypedEventHandler_SpeechContinuousRecognitionSession_SpeechContinuousRecognitionCompletedEventArgs
+#define impl_from_IHandler_RecognitionCompleted impl_from_ITypedEventHandler_SpeechContinuousRecognitionSession_SpeechContinuousRecognitionCompletedEventArgs
+#define IHandler_RecognitionCompleted_iface ITypedEventHandler_SpeechContinuousRecognitionSession_SpeechContinuousRecognitionCompletedEventArgs_iface
+
 HRESULT WINAPI (*pDllGetActivationFactory)(HSTRING, IActivationFactory **);
 static BOOL is_win10_1507 = FALSE;
 
@@ -84,6 +90,72 @@ static const char *debugstr_hstring(HSTRING hstr)
     if (hstr && !((ULONG_PTR)hstr >> 16)) return "(invalid)";
     str = WindowsGetStringRawBuffer(hstr, &len);
     return wine_dbgstr_wn(str, len);
+}
+
+struct completed_event_handler
+{
+    IHandler_RecognitionCompleted IHandler_RecognitionCompleted_iface;
+    LONG ref;
+};
+
+static inline struct completed_event_handler *impl_from_IHandler_RecognitionCompleted( IHandler_RecognitionCompleted *iface )
+{
+    return CONTAINING_RECORD(iface, struct completed_event_handler, IHandler_RecognitionCompleted_iface);
+}
+
+HRESULT WINAPI completed_event_handler_QueryInterface( IHandler_RecognitionCompleted *iface, REFIID iid, void **out )
+{
+    if (IsEqualGUID(iid, &IID_IUnknown) ||
+        IsEqualGUID(iid, &IID_IHandler_RecognitionCompleted))
+    {
+        IUnknown_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    trace("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+ULONG WINAPI completed_event_handler_AddRef( IHandler_RecognitionCompleted *iface )
+{
+    struct completed_event_handler *impl = impl_from_IHandler_RecognitionCompleted(iface);
+    ULONG ref = InterlockedIncrement(&impl->ref);
+    return ref;
+}
+
+ULONG WINAPI completed_event_handler_Release( IHandler_RecognitionCompleted *iface )
+{
+    struct completed_event_handler *impl = impl_from_IHandler_RecognitionCompleted(iface);
+    ULONG ref = InterlockedDecrement(&impl->ref);
+    return ref;
+}
+
+HRESULT WINAPI completed_event_handler_Invoke( IHandler_RecognitionCompleted *iface,
+                                               ISpeechContinuousRecognitionSession *sender,
+                                               ISpeechContinuousRecognitionCompletedEventArgs *args )
+{
+    trace("iface %p, sender %p, args %p.\n", iface, sender, args);
+    return S_OK;
+}
+
+static const struct IHandler_RecognitionCompletedVtbl completed_event_handler_vtbl =
+{
+    /* IUnknown methods */
+    completed_event_handler_QueryInterface,
+    completed_event_handler_AddRef,
+    completed_event_handler_Release,
+    /* ITypedEventHandler<SpeechContinuousRecognitionSession*, SpeechContinuousRecognitionCompletedEventArgs* > methods */
+    completed_event_handler_Invoke
+};
+
+static HRESULT WINAPI completed_event_handler_create_static( struct completed_event_handler *impl )
+{
+    impl->IHandler_RecognitionCompleted_iface.lpVtbl = &completed_event_handler_vtbl;
+    impl->ref = 1;
+
+    return S_OK;
 }
 
 struct recognition_result_handler
@@ -651,6 +723,7 @@ static void test_SpeechRecognizer(void)
     IInspectable *inspectable = NULL;
     IClosable *closable = NULL;
     ILanguage *language = NULL;
+    struct completed_event_handler completed_handler;
     struct recognition_result_handler result_handler;
     EventRegistrationToken token = { .value = 0 };
     HSTRING hstr, hstr_lang;
@@ -727,6 +800,18 @@ static void test_SpeechRecognizer(void)
         ok(hr == S_OK, "ISpeechRecognizer2_get_ContinuousRecognitionSession failed, hr %#lx.\n", hr);
         check_refcount(session, 2);
         check_refcount(inspectable, 3);
+
+        hr = ISpeechContinuousRecognitionSession_add_Completed(session, NULL, &token);
+        ok(hr == E_INVALIDARG, "ISpeechContinuousRecognitionSession_add_ResultGenerated failed, hr %#lx.\n", hr);
+
+        token.value = 0xdeadbeef;
+        completed_event_handler_create_static(&completed_handler);
+        hr = ISpeechContinuousRecognitionSession_add_Completed(session, &completed_handler.IHandler_RecognitionCompleted_iface, &token);
+        ok(hr == S_OK, "ISpeechContinuousRecognitionSession_add_ResultGenerated failed, hr %#lx.\n", hr);
+        ok(token.value != 0xdeadbeef, "Got unexpexted token: %#I64x.\n", token.value);
+
+        hr = ISpeechContinuousRecognitionSession_remove_Completed(session, token);
+        ok(hr == S_OK, "ISpeechContinuousRecognitionSession_remove_ResultGenerated failed, hr %#lx.\n", hr);
 
         hr = ISpeechContinuousRecognitionSession_add_ResultGenerated(session, NULL, &token);
         ok(hr == E_INVALIDARG, "ISpeechContinuousRecognitionSession_add_ResultGenerated failed, hr %#lx.\n", hr);

@@ -34,6 +34,7 @@ struct session
     ISpeechContinuousRecognitionSession ISpeechContinuousRecognitionSession_iface;
     LONG ref;
 
+    struct list completed_handlers;
     struct list result_handlers;
 };
 
@@ -83,6 +84,7 @@ static ULONG WINAPI session_Release( ISpeechContinuousRecognitionSession *iface 
 
     if (!ref)
     {
+        typed_event_handlers_clear(&impl->completed_handlers);
         typed_event_handlers_clear(&impl->result_handlers);
         free(impl);
     }
@@ -162,14 +164,17 @@ static HRESULT WINAPI session_add_Completed( ISpeechContinuousRecognitionSession
                                              ITypedEventHandler_SpeechContinuousRecognitionSession_SpeechContinuousRecognitionCompletedEventArgs *handler,
                                              EventRegistrationToken *token )
 {
-    FIXME("iface %p, handler %p, token %p stub!\n", iface, handler, token);
-    return E_NOTIMPL;
+    struct session *impl = impl_from_ISpeechContinuousRecognitionSession(iface);
+    TRACE("iface %p, handler %p, token %p.\n", iface, handler, token);
+    if (!handler) return E_INVALIDARG;
+    return typed_event_handlers_append(&impl->completed_handlers, (ITypedEventHandler_IInspectable_IInspectable *)handler, token);
 }
 
 static HRESULT WINAPI session_remove_Completed( ISpeechContinuousRecognitionSession *iface, EventRegistrationToken token )
 {
-    FIXME("iface %p, token.value %#I64x stub!\n", iface, token.value);
-    return E_NOTIMPL;
+    struct session *impl = impl_from_ISpeechContinuousRecognitionSession(iface);
+    TRACE("iface %p, token.value %#I64x.\n", iface, token.value);
+    return typed_event_handlers_remove(&impl->completed_handlers, &token);
 }
 
 static HRESULT WINAPI session_add_ResultGenerated( ISpeechContinuousRecognitionSession *iface,
@@ -645,6 +650,7 @@ static HRESULT WINAPI recognizer_factory_Create( ISpeechRecognizerFactory *iface
 
     session->ISpeechContinuousRecognitionSession_iface.lpVtbl = &session_vtbl;
     session->ref = 1;
+    list_init(&session->completed_handlers);
     list_init(&session->result_handlers);
 
     impl->ISpeechRecognizer_iface.lpVtbl = &speech_recognizer_vtbl;
