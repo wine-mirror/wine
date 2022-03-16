@@ -210,6 +210,22 @@ BOOL WINAPI NtUserKillTimer( HWND hwnd, UINT_PTR id )
     return ret;
 }
 
+/* see KillSystemTimer */
+BOOL kill_system_timer( HWND hwnd, UINT_PTR id )
+{
+    BOOL ret;
+
+    SERVER_START_REQ( kill_win_timer )
+    {
+        req->win = wine_server_user_handle( hwnd );
+        req->msg = WM_SYSTIMER;
+        req->id  = id;
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
 /* see SendMessageW */
 LRESULT send_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {

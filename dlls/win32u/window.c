@@ -3332,6 +3332,8 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
         return get_window_word( hwnd, param );
     case NtUserIsChild:
         return is_child( hwnd, UlongToHandle(param) );
+    case NtUserKillSystemTimer:
+        return kill_system_timer( hwnd, param );
     case NtUserMonitorFromWindow:
         return HandleToUlong( monitor_from_window( hwnd, param, NtUserMonitorFromWindow ));
     case NtUserSetCaptureWindow:

@@ -178,6 +178,7 @@ enum
     NtUserGetWindowThread,
     NtUserGetWindowWord,
     NtUserIsChild,
+    NtUserKillSystemTimer,
     NtUserMonitorFromWindow,
     NtUserSetCaptureWindow,
     NtUserSetForegroundWindow,

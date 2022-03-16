@@ -4422,17 +4422,7 @@ UINT_PTR WINAPI SetTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC proc )
  */
 BOOL WINAPI KillSystemTimer( HWND hwnd, UINT_PTR id )
 {
-    BOOL ret;
-
-    SERVER_START_REQ( kill_win_timer )
-    {
-        req->win = wine_server_user_handle( hwnd );
-        req->msg = WM_SYSTIMER;
-        req->id  = id;
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
+    return NtUserCallHwndParam( hwnd, id, NtUserKillSystemTimer );
 }
 
 
