@@ -1249,6 +1249,8 @@ HRESULT WINAPI DECLSPEC_HOTPATCH ProgIDFromCLSID(REFCLSID clsid, LPOLESTR *progi
     ACTCTX_SECTION_KEYED_DATA data;
     LONG progidlen = 0;
     HKEY hkey;
+    REGSAM opposite = (sizeof(void *) > sizeof(int)) ? KEY_WOW64_32KEY : KEY_WOW64_64KEY;
+    BOOL is_wow64;
     HRESULT hr;
 
     if (!progid)
@@ -1277,8 +1279,12 @@ HRESULT WINAPI DECLSPEC_HOTPATCH ProgIDFromCLSID(REFCLSID clsid, LPOLESTR *progi
     }
 
     hr = open_key_for_clsid(clsid, L"ProgID", KEY_READ, &hkey);
-    if (FAILED(hr))
-        return hr;
+    if (FAILED(hr) && (opposite == KEY_WOW64_32KEY || (IsWow64Process(GetCurrentProcess(), &is_wow64) && is_wow64)))
+    {
+        hr = open_key_for_clsid(clsid, L"ProgID", opposite | KEY_READ, &hkey);
+        if (FAILED(hr))
+            return hr;
+    }
 
     if (RegQueryValueW(hkey, NULL, NULL, &progidlen))
         hr = REGDB_E_CLASSNOTREG;
