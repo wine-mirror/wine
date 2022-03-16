@@ -2,6 +2,7 @@ MODULE = windows.media.speech.dll
 IMPORTS = combase uuid
 
 C_SRCS = \
+	event_handlers.c \
 	listconstraint.c \
 	main.c \
 	recognizer.c \

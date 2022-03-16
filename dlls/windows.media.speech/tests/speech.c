@@ -40,6 +40,12 @@
 
 #define SPERR_WINRT_INTERNAL_ERROR 0x800455a0
 
+#define IHandler_RecognitionResult ITypedEventHandler_SpeechContinuousRecognitionSession_SpeechContinuousRecognitionResultGeneratedEventArgs
+#define IHandler_RecognitionResultVtbl ITypedEventHandler_SpeechContinuousRecognitionSession_SpeechContinuousRecognitionResultGeneratedEventArgsVtbl
+#define IID_IHandler_RecognitionResult IID_ITypedEventHandler_SpeechContinuousRecognitionSession_SpeechContinuousRecognitionResultGeneratedEventArgs
+#define impl_from_IHandler_RecognitionResult impl_from_ITypedEventHandler_SpeechContinuousRecognitionSession_SpeechContinuousRecognitionResultGeneratedEventArgs
+#define IHandler_RecognitionResult_iface ITypedEventHandler_SpeechContinuousRecognitionSession_SpeechContinuousRecognitionResultGeneratedEventArgs_iface
+
 HRESULT WINAPI (*pDllGetActivationFactory)(HSTRING, IActivationFactory **);
 static BOOL is_win10_1507 = FALSE;
 
@@ -78,6 +84,72 @@ static const char *debugstr_hstring(HSTRING hstr)
     if (hstr && !((ULONG_PTR)hstr >> 16)) return "(invalid)";
     str = WindowsGetStringRawBuffer(hstr, &len);
     return wine_dbgstr_wn(str, len);
+}
+
+struct recognition_result_handler
+{
+    IHandler_RecognitionResult IHandler_RecognitionResult_iface;
+    LONG ref;
+};
+
+static inline struct recognition_result_handler *impl_from_IHandler_RecognitionResult( IHandler_RecognitionResult *iface )
+{
+    return CONTAINING_RECORD(iface, struct recognition_result_handler, IHandler_RecognitionResult_iface);
+}
+
+HRESULT WINAPI recognition_result_handler_QueryInterface( IHandler_RecognitionResult *iface, REFIID iid, void **out )
+{
+    if (IsEqualGUID(iid, &IID_IUnknown) ||
+        IsEqualGUID(iid, &IID_IHandler_RecognitionResult))
+    {
+        IUnknown_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    trace("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+ULONG WINAPI recognition_result_handler_AddRef( IHandler_RecognitionResult *iface )
+{
+    struct recognition_result_handler *impl = impl_from_IHandler_RecognitionResult(iface);
+    ULONG ref = InterlockedIncrement(&impl->ref);
+    return ref;
+}
+
+ULONG WINAPI recognition_result_handler_Release( IHandler_RecognitionResult *iface )
+{
+    struct recognition_result_handler *impl = impl_from_IHandler_RecognitionResult(iface);
+    ULONG ref = InterlockedDecrement(&impl->ref);
+    return ref;
+}
+
+HRESULT WINAPI recognition_result_handler_Invoke( IHandler_RecognitionResult *iface,
+                                                  ISpeechContinuousRecognitionSession *sender,
+                                                  ISpeechContinuousRecognitionResultGeneratedEventArgs *args )
+{
+    trace("iface %p, sender %p, args %p.\n", iface, sender, args);
+    return S_OK;
+}
+
+static const struct IHandler_RecognitionResultVtbl recognition_result_handler_vtbl =
+{
+    /* IUnknown methods */
+    recognition_result_handler_QueryInterface,
+    recognition_result_handler_AddRef,
+    recognition_result_handler_Release,
+    /* ITypedEventHandler<SpeechContinuousRecognitionSession*, SpeechContinuousRecognitionResultGeneratedEventArgs* > methods */
+    recognition_result_handler_Invoke
+};
+
+static HRESULT WINAPI recognition_result_handler_create_static( struct recognition_result_handler *impl )
+{
+    impl->IHandler_RecognitionResult_iface.lpVtbl = &recognition_result_handler_vtbl;
+    impl->ref = 1;
+
+    return S_OK;
 }
 
 struct iterator_hstring
@@ -192,7 +264,7 @@ static const struct IIterator_HSTRINGVtbl iterator_hstring_vtbl =
     iterator_hstring_GetMany
 };
 
-static HRESULT WINAPI iterator_hstring_create_static(struct iterator_hstring *impl, HSTRING *strings, UINT32 size)
+static HRESULT WINAPI iterator_hstring_create_static( struct iterator_hstring *impl, HSTRING *strings, UINT32 size )
 {
     impl->IIterator_HSTRING_iface.lpVtbl = &iterator_hstring_vtbl;
     impl->ref = 1;
@@ -294,7 +366,7 @@ static const struct IIterable_HSTRINGVtbl iterable_hstring_vtbl =
     iterable_hstring_First
 };
 
-static HRESULT WINAPI iterable_hstring_create_static(struct iterable_hstring *impl, struct iterator_hstring *iterator)
+static HRESULT WINAPI iterable_hstring_create_static( struct iterable_hstring *impl, struct iterator_hstring *iterator )
 {
     impl->IIterable_HSTRING_iface.lpVtbl = &iterable_hstring_vtbl;
     impl->ref = 1;
@@ -579,6 +651,8 @@ static void test_SpeechRecognizer(void)
     IInspectable *inspectable = NULL;
     IClosable *closable = NULL;
     ILanguage *language = NULL;
+    struct recognition_result_handler result_handler;
+    EventRegistrationToken token = { .value = 0 };
     HSTRING hstr, hstr_lang;
     HRESULT hr;
     LONG ref;
@@ -653,6 +727,18 @@ static void test_SpeechRecognizer(void)
         ok(hr == S_OK, "ISpeechRecognizer2_get_ContinuousRecognitionSession failed, hr %#lx.\n", hr);
         check_refcount(session, 2);
         check_refcount(inspectable, 3);
+
+        hr = ISpeechContinuousRecognitionSession_add_ResultGenerated(session, NULL, &token);
+        ok(hr == E_INVALIDARG, "ISpeechContinuousRecognitionSession_add_ResultGenerated failed, hr %#lx.\n", hr);
+
+        token.value = 0xdeadbeef;
+        recognition_result_handler_create_static(&result_handler);
+        hr = ISpeechContinuousRecognitionSession_add_ResultGenerated(session, &result_handler.IHandler_RecognitionResult_iface, &token);
+        ok(hr == S_OK, "ISpeechContinuousRecognitionSession_add_ResultGenerated failed, hr %#lx.\n", hr);
+        ok(token.value != 0xdeadbeef, "Got unexpexted token: %#I64x.\n", token.value);
+
+        hr = ISpeechContinuousRecognitionSession_remove_ResultGenerated(session, token);
+        ok(hr == S_OK, "ISpeechContinuousRecognitionSession_remove_ResultGenerated failed, hr %#lx.\n", hr);
 
         ref = ISpeechContinuousRecognitionSession_Release(session);
         ok(ref == 1, "Got unexpected ref %lu.\n", ref);

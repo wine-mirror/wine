@@ -171,6 +171,7 @@ namespace Windows {
             interface Windows.Foundation.AsyncOperationCompletedHandler<boolean>;
             interface Windows.Foundation.IAsyncOperation<boolean>;
             interface Windows.Foundation.IReference<INT32>;
+            interface Windows.Foundation.TypedEventHandler<IInspectable *, IInspectable *>;
         }
     }
 }
