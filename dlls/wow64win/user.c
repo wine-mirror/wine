@@ -533,6 +533,17 @@ NTSTATUS WINAPI wow64_NtUserGetGUIThreadInfo( UINT *args )
     return TRUE;
 }
 
+NTSTATUS WINAPI wow64_NtUserSetTimer( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    UINT_PTR id = get_ulong( &args );
+    UINT timeout = get_ulong( &args );
+    TIMERPROC proc = get_ptr( &args );
+    ULONG tolerance = get_ulong( &args );
+
+    return NtUserSetTimer( hwnd, id, timeout, proc, tolerance );
+}
+
 NTSTATUS WINAPI wow64_NtUserCopyAcceleratorTable( UINT *args )
 {
     HACCEL src = get_handle( &args );

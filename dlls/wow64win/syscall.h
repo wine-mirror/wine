@@ -139,6 +139,7 @@
     SYSCALL_ENTRY( NtUserSetProcessWindowStation ) \
     SYSCALL_ENTRY( NtUserSetProp ) \
     SYSCALL_ENTRY( NtUserSetThreadDesktop ) \
+    SYSCALL_ENTRY( NtUserSetTimer ) \
     SYSCALL_ENTRY( NtUserSetWinEventHook ) \
     SYSCALL_ENTRY( NtUserSetWindowsHookEx ) \
     SYSCALL_ENTRY( NtUserUnhookWinEvent ) \

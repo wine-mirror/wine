@@ -1236,7 +1236,7 @@
 @ stub NtUserSetThreadInputBlocked
 @ stub NtUserSetThreadLayoutHandles
 @ stub NtUserSetThreadState
-@ stub NtUserSetTimer
+@ stdcall -syscall NtUserSetTimer(long long long ptr long)
 @ stdcall -syscall NtUserSetWinEventHook(long long long ptr ptr long long long)
 @ stub NtUserSetWindowArrangement
 @ stub NtUserSetWindowBand
