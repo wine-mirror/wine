@@ -443,8 +443,10 @@ DEFINE_IINSPECTABLE(recognizer2, ISpeechRecognizer2, struct recognizer, ISpeechR
 static HRESULT WINAPI recognizer2_get_ContinuousRecognitionSession( ISpeechRecognizer2 *iface,
                                                                     ISpeechContinuousRecognitionSession **session )
 {
-    FIXME("iface %p, session %p stub!\n", iface, session);
-    return E_NOTIMPL;
+    struct recognizer *impl = impl_from_ISpeechRecognizer2(iface);
+    TRACE("iface %p, session %p.\n", iface, session);
+    ISpeechContinuousRecognitionSession_QueryInterface(impl->session, &IID_ISpeechContinuousRecognitionSession, (void **)session);
+    return S_OK;
 }
 
 static HRESULT WINAPI recognizer2_get_State( ISpeechRecognizer2 *iface, SpeechRecognizerState *state )

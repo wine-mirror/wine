@@ -569,6 +569,7 @@ static void test_VoiceInformation(void)
 static void test_SpeechRecognizer(void)
 {
     static const WCHAR *speech_recognition_name = L"Windows.Media.SpeechRecognition.SpeechRecognizer";
+    ISpeechContinuousRecognitionSession *session = NULL;
     ISpeechRecognizerFactory *sr_factory = NULL;
     ISpeechRecognizerStatics *sr_statics = NULL;
     ISpeechRecognizerStatics2 *sr_statics2 = NULL;
@@ -647,6 +648,14 @@ static void test_SpeechRecognizer(void)
 
         hr = IInspectable_QueryInterface(inspectable, &IID_ISpeechRecognizer2, (void **)&recognizer2);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        hr = ISpeechRecognizer2_get_ContinuousRecognitionSession(recognizer2, &session);
+        ok(hr == S_OK, "ISpeechRecognizer2_get_ContinuousRecognitionSession failed, hr %#lx.\n", hr);
+        check_refcount(session, 2);
+        check_refcount(inspectable, 3);
+
+        ref = ISpeechContinuousRecognitionSession_Release(session);
+        ok(ref == 1, "Got unexpected ref %lu.\n", ref);
 
         hr = IInspectable_QueryInterface(inspectable, &IID_IClosable, (void **)&closable);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
