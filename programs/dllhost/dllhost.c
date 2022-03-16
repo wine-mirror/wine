@@ -327,6 +327,8 @@ int WINAPI wWinMain(HINSTANCE hinst, HINSTANCE previnst, LPWSTR cmdline, int sho
     CLSID clsid;
     struct surrogate surrogate;
 
+    TRACE("Running as %u-bit\n", (int)sizeof(void *) * 8);
+
     if (wcsnicmp(cmdline, L"/PROCESSID:", 11))
         return 0;
 
