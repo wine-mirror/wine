@@ -797,13 +797,13 @@ static void test_SpeechRecognitionListConstraint(void)
     hr = WindowsDeleteString(tag_out);
     todo_wine ok(hr == S_OK, "WindowsDeleteString failed, hr %#lx.\n", hr);
 
-    hr = ISpeechRecognitionConstraint_put_IsEnabled(constraint, TRUE);
-    todo_wine ok(hr == S_OK, "ISpeechRecognitionConstraint_put_IsEnabled failed, hr %#lx.\n", hr);
-    hr = ISpeechRecognitionConstraint_get_IsEnabled(constraint, &enabled);
-    todo_wine ok(hr == S_OK, "ISpeechRecognitionConstraint_get_IsEnabled failed, hr %#lx.\n", hr);
-    todo_wine ok(enabled, "ListConstraint didn't get enabled.\n");
-
 skip_tests:
+    hr = ISpeechRecognitionConstraint_put_IsEnabled(constraint, TRUE);
+    ok(hr == S_OK, "ISpeechRecognitionConstraint_put_IsEnabled failed, hr %#lx.\n", hr);
+    hr = ISpeechRecognitionConstraint_get_IsEnabled(constraint, &enabled);
+    ok(hr == S_OK, "ISpeechRecognitionConstraint_get_IsEnabled failed, hr %#lx.\n", hr);
+    ok(enabled, "ListConstraint didn't get enabled.\n");
+
     ref = ISpeechRecognitionConstraint_Release(constraint);
     ok(ref == 1, "Got unexpected ref %lu.\n", ref);
 

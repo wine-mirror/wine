@@ -34,6 +34,8 @@ struct list_constraint
     ISpeechRecognitionListConstraint ISpeechRecognitionListConstraint_iface;
     ISpeechRecognitionConstraint ISpeechRecognitionConstraint_iface;
     LONG ref;
+
+    BOOLEAN enabled;
 };
 
 /*
@@ -142,14 +144,18 @@ DEFINE_IINSPECTABLE(constraint, ISpeechRecognitionConstraint, struct list_constr
 
 static HRESULT WINAPI constraint_get_IsEnabled( ISpeechRecognitionConstraint *iface, BOOLEAN *value )
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
-    return E_NOTIMPL;
+    struct list_constraint *impl = impl_from_ISpeechRecognitionConstraint(iface);
+    TRACE("iface %p, value %p.\n", iface, value);
+    *value = impl->enabled;
+    return S_OK;
 }
 
 static HRESULT WINAPI constraint_put_IsEnabled( ISpeechRecognitionConstraint *iface, BOOLEAN value )
 {
-    FIXME("iface %p, value %u stub!\n", iface, value);
-    return E_NOTIMPL;
+    struct list_constraint *impl = impl_from_ISpeechRecognitionConstraint(iface);
+    TRACE("iface %p, value %u.\n", iface, value);
+    impl->enabled = value;
+    return S_OK;
 }
 
 static HRESULT WINAPI constraint_get_Tag( ISpeechRecognitionConstraint *iface, HSTRING *value )
