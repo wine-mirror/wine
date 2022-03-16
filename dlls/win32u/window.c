@@ -1421,6 +1421,22 @@ LONG_PTR WINAPI NtUserSetWindowLongPtr( HWND hwnd, INT offset, LONG_PTR newval, 
     return set_window_long( hwnd, offset, sizeof(LONG_PTR), newval, ansi );
 }
 
+static BOOL set_window_pixel_format( HWND hwnd, int format )
+{
+    WND *win = get_win_ptr( hwnd );
+
+    if (!win || win == WND_DESKTOP || win == WND_OTHER_PROCESS)
+    {
+        WARN( "setting format %d on win %p not supported\n", format, hwnd );
+        return FALSE;
+    }
+    win->pixel_format = format;
+    release_win_ptr( win );
+
+    update_window_state( hwnd );
+    return TRUE;
+}
+
 /***********************************************************************
  *           NtUserGetProp   (win32u.@)
  *
@@ -3322,6 +3338,8 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
         return set_capture_window( hwnd, param, NULL );
     case NtUserSetForegroundWindow:
         return set_foreground_window( hwnd, param );
+    case NtUserSetWindowPixelFormat:
+        return set_window_pixel_format( hwnd, param );
     /* temporary exports */
     case NtUserIsWindowDrawable:
         return is_window_drawable( hwnd, param );

@@ -259,32 +259,6 @@ static void send_parent_notify( HWND hwnd, UINT msg )
 
 
 /*******************************************************************
- *		update_window_state
- *
- * Trigger an update of the window's driver state and surface.
- */
-static void update_window_state( HWND hwnd )
-{
-    DPI_AWARENESS_CONTEXT context;
-    RECT window_rect, client_rect, valid_rects[2];
-
-    if (!WIN_IsCurrentThread( hwnd ))
-    {
-        PostMessageW( hwnd, WM_WINE_UPDATEWINDOWSTATE, 0, 0 );
-        return;
-    }
-
-    context = SetThreadDpiAwarenessContext( GetWindowDpiAwarenessContext( hwnd ));
-    WIN_GetRectangles( hwnd, COORDS_PARENT, &window_rect, &client_rect );
-    valid_rects[0] = valid_rects[1] = client_rect;
-    set_window_pos( hwnd, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE |
-                    SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW,
-                    &window_rect, &client_rect, valid_rects );
-    SetThreadDpiAwarenessContext( context );
-}
-
-
-/*******************************************************************
  *           get_hwnd_message_parent
  *
  * Return the parent for HWND_MESSAGE windows.
@@ -2726,18 +2700,7 @@ BOOL WINAPI SwitchDesktop( HDESK hDesktop)
  */
 BOOL CDECL __wine_set_pixel_format( HWND hwnd, int format )
 {
-    WND *win = WIN_GetPtr( hwnd );
-
-    if (!win || win == WND_DESKTOP || win == WND_OTHER_PROCESS)
-    {
-        WARN( "setting format %d on win %p not supported\n", format, hwnd );
-        return FALSE;
-    }
-    win->pixel_format = format;
-    WIN_ReleasePtr( win );
-
-    update_window_state( hwnd );
-    return TRUE;
+    return NtUserCallHwndParam( hwnd, format, NtUserSetWindowPixelFormat );
 }
 
 

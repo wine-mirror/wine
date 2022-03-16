@@ -181,6 +181,7 @@ enum
     NtUserMonitorFromWindow,
     NtUserSetCaptureWindow,
     NtUserSetForegroundWindow,
+    NtUserSetWindowPixelFormat,
     /* temporary exports */
     NtUserIsWindowDrawable,
     NtUserSetWindowStyle,
