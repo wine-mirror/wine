@@ -1033,6 +1033,18 @@ BOOL WINAPI NtUserSetSysColors( INT count, const INT *colors, const COLORREF *va
     return unix_funcs->pNtUserSetSysColors( count, colors, values );
 }
 
+LONG WINAPI NtUserSetWindowLong( HWND hwnd, INT offset, LONG newval, BOOL ansi )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserSetWindowLong( hwnd, offset, newval, ansi );
+}
+
+LONG_PTR WINAPI NtUserSetWindowLongPtr( HWND hwnd, INT offset, LONG_PTR newval, BOOL ansi )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserSetWindowLongPtr( hwnd, offset, newval, ansi );
+}
+
 BOOL WINAPI NtUserSetWindowPos( HWND hwnd, HWND after, INT x, INT y, INT cx, INT cy, UINT flags )
 {
     if (!unix_funcs) return 0;
@@ -1043,6 +1055,12 @@ int WINAPI NtUserSetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
 {
     if (!unix_funcs) return 0;
     return unix_funcs->pNtUserSetWindowRgn( hwnd, hrgn, redraw );
+}
+
+WORD WINAPI NtUserSetWindowWord( HWND hwnd, INT offset, WORD newval )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserSetWindowWord( hwnd, offset, newval );
 }
 
 INT WINAPI NtUserShowCursor( BOOL show )

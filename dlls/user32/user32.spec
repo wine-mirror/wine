@@ -730,7 +730,7 @@
 @ stdcall SetWindowStationUser(long long)
 @ stdcall SetWindowTextA(long str)
 @ stdcall SetWindowTextW(long wstr)
-@ stdcall SetWindowWord(long long long)
+@ stdcall SetWindowWord(long long long) NtUserSetWindowWord
 @ stdcall SetWindowsHookA(long ptr)
 @ stdcall SetWindowsHookExA(long long long long)
 @ stdcall SetWindowsHookExW(long long long long)

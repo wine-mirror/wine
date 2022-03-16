@@ -152,6 +152,17 @@ WNDPROC get_winproc( WNDPROC proc, BOOL ansi )
     }
 }
 
+/* Return the window procedure type, or the default value if not a winproc handle. */
+BOOL is_winproc_unicode( WNDPROC proc, BOOL def_val )
+{
+    WINDOWPROC *ptr = get_winproc_ptr( proc );
+
+    if (!ptr) return def_val;
+    if (ptr == WINPROC_PROC16) return FALSE;  /* 16-bit is always A */
+    if (ptr->procA && ptr->procW) return def_val;  /* can be both */
+    return ptr->procW != NULL;
+}
+
 /***********************************************************************
  *	     NtUserInitializeClientPfnArrays   (win32u.@)
  */

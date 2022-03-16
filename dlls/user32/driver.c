@@ -95,10 +95,6 @@ static void CDECL nulldrv_SetWindowIcon( HWND hwnd, UINT type, HICON icon )
 {
 }
 
-static void CDECL nulldrv_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
-{
-}
-
 static void CDECL nulldrv_SetWindowText( HWND hwnd, LPCWSTR text )
 {
 }
@@ -190,7 +186,7 @@ static struct user_driver_funcs lazy_load_driver =
     NULL,
     NULL,
     nulldrv_SetWindowIcon,
-    nulldrv_SetWindowStyle,
+    NULL,
     nulldrv_SetWindowText,
     nulldrv_ShowWindow,
     nulldrv_SysCommand,
@@ -230,7 +226,6 @@ void CDECL __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT v
     SET_USER_FUNC(DestroyWindow);
     SET_USER_FUNC(MsgWaitForMultipleObjectsEx);
     SET_USER_FUNC(SetWindowIcon);
-    SET_USER_FUNC(SetWindowStyle);
     SET_USER_FUNC(SetWindowText);
     SET_USER_FUNC(ShowWindow);
     SET_USER_FUNC(SysCommand);

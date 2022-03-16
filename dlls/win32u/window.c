@@ -892,6 +892,25 @@ static LONG_PTR get_win_data( const void *ptr, UINT size )
     }
 }
 
+/* helper for set_window_long */
+static inline void set_win_data( void *ptr, LONG_PTR val, UINT size )
+{
+    if (size == sizeof(WORD))
+    {
+        WORD newval = val;
+        memcpy( ptr, &newval, sizeof(newval) );
+    }
+    else if (size == sizeof(DWORD))
+    {
+        DWORD newval = val;
+        memcpy( ptr, &newval, sizeof(newval) );
+    }
+    else
+    {
+        memcpy( ptr, &val, sizeof(val) );
+    }
+}
+
 BOOL is_iconic( HWND hwnd )
 {
     return (get_window_long( hwnd, GWL_STYLE ) & WS_MINIMIZE) != 0;
@@ -1102,6 +1121,304 @@ ULONG set_window_style( HWND hwnd, ULONG set_bits, ULONG clear_bits )
     if (made_visible) update_window_state( hwnd );
 
     return style.styleOld;
+}
+
+static DWORD fix_exstyle( DWORD style, DWORD exstyle )
+{
+    if ((exstyle & WS_EX_DLGMODALFRAME) ||
+        (!(exstyle & WS_EX_STATICEDGE) && (style & (WS_DLGFRAME | WS_THICKFRAME))))
+        exstyle |= WS_EX_WINDOWEDGE;
+    else
+        exstyle &= ~WS_EX_WINDOWEDGE;
+    return exstyle;
+}
+
+/* Change the owner of a window. */
+static HWND set_window_owner( HWND hwnd, HWND owner )
+{
+    WND *win = get_win_ptr( hwnd );
+    HWND ret = 0;
+
+    if (!win || win == WND_DESKTOP) return 0;
+    if (win == WND_OTHER_PROCESS)
+    {
+        if (is_window(hwnd)) ERR( "cannot set owner %p on other process window %p\n", owner, hwnd );
+        return 0;
+    }
+    SERVER_START_REQ( set_window_owner )
+    {
+        req->handle = wine_server_user_handle( hwnd );
+        req->owner  = wine_server_user_handle( owner );
+        if (!wine_server_call( req ))
+        {
+            win->owner = wine_server_ptr_handle( reply->full_owner );
+            ret = wine_server_ptr_handle( reply->prev_owner );
+        }
+    }
+    SERVER_END_REQ;
+    release_win_ptr( win );
+    return ret;
+}
+
+/* Helper function for SetWindowLong(). */
+LONG_PTR set_window_long( HWND hwnd, INT offset, UINT size, LONG_PTR newval, BOOL ansi )
+{
+    BOOL ok, made_visible = FALSE;
+    LONG_PTR retval = 0;
+    STYLESTRUCT style;
+    WND *win;
+
+    TRACE( "%p %d %lx %c\n", hwnd, offset, newval, ansi ? 'A' : 'W' );
+
+    if (is_broadcast(hwnd))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    if (!(win = get_win_ptr( hwnd )))
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+    if (win == WND_DESKTOP)
+    {
+        /* can't change anything on the desktop window */
+        SetLastError( ERROR_ACCESS_DENIED );
+        return 0;
+    }
+    if (win == WND_OTHER_PROCESS)
+    {
+        if (offset == GWLP_WNDPROC)
+        {
+            SetLastError( ERROR_ACCESS_DENIED );
+            return 0;
+        }
+        if (offset > 32767 || offset < -32767)
+        {
+            SetLastError( ERROR_INVALID_INDEX );
+            return 0;
+        }
+        return send_message( hwnd, WM_WINE_SETWINDOWLONG, MAKEWPARAM( offset, size ), newval );
+    }
+
+    /* first some special cases */
+    switch( offset )
+    {
+    case GWL_STYLE:
+        style.styleOld = win->dwStyle;
+        style.styleNew = newval;
+        release_win_ptr( win );
+        send_message( hwnd, WM_STYLECHANGING, GWL_STYLE, (LPARAM)&style );
+        if (!(win = get_win_ptr( hwnd )) || win == WND_OTHER_PROCESS) return 0;
+        newval = style.styleNew;
+        /* WS_CLIPSIBLINGS can't be reset on top-level windows */
+        if (win->parent == get_desktop_window()) newval |= WS_CLIPSIBLINGS;
+        /* WS_MINIMIZE can't be reset */
+        if (win->dwStyle & WS_MINIMIZE) newval |= WS_MINIMIZE;
+        break;
+    case GWL_EXSTYLE:
+        style.styleOld = win->dwExStyle;
+        style.styleNew = newval;
+        release_win_ptr( win );
+        send_message( hwnd, WM_STYLECHANGING, GWL_EXSTYLE, (LPARAM)&style );
+        if (!(win = get_win_ptr( hwnd )) || win == WND_OTHER_PROCESS) return 0;
+        /* WS_EX_TOPMOST can only be changed through SetWindowPos */
+        newval = (style.styleNew & ~WS_EX_TOPMOST) | (win->dwExStyle & WS_EX_TOPMOST);
+        newval = fix_exstyle(win->dwStyle, newval);
+        break;
+    case GWLP_HWNDPARENT:
+        if (win->parent == get_desktop_window())
+        {
+            release_win_ptr( win );
+            return (ULONG_PTR)set_window_owner( hwnd, (HWND)newval );
+        }
+        else
+        {
+            release_win_ptr( win );
+            return (ULONG_PTR)NtUserSetParent( hwnd, (HWND)newval );
+        }
+    case GWLP_WNDPROC:
+    {
+        WNDPROC proc;
+        UINT old_flags = win->flags;
+        retval = get_window_long_ptr( hwnd, offset, ansi );
+        proc = alloc_winproc( (WNDPROC)newval, ansi );
+        if (proc) win->winproc = proc;
+        if (is_winproc_unicode( proc, !ansi )) win->flags |= WIN_ISUNICODE;
+        else win->flags &= ~WIN_ISUNICODE;
+        if (!((old_flags ^ win->flags) & WIN_ISUNICODE))
+        {
+            release_win_ptr( win );
+            return retval;
+        }
+        /* update is_unicode flag on the server side */
+        break;
+    }
+    case GWLP_ID:
+    case GWLP_HINSTANCE:
+    case GWLP_USERDATA:
+        break;
+    case DWLP_DLGPROC:
+        if ((win->cbWndExtra - sizeof(LONG_PTR) >= DWLP_DLGPROC) &&
+            (size == sizeof(LONG_PTR)) && win->dlgInfo)
+        {
+            WNDPROC *ptr = (WNDPROC *)((char *)win->wExtra + DWLP_DLGPROC);
+            retval = (ULONG_PTR)get_winproc( *ptr, ansi );
+            *ptr = alloc_winproc( (WNDPROC)newval, ansi );
+            release_win_ptr( win );
+            return retval;
+        }
+        /* fall through */
+    default:
+        if (offset < 0 || offset > (int)(win->cbWndExtra - size))
+        {
+            WARN("Invalid offset %d\n", offset );
+            release_win_ptr( win );
+            SetLastError( ERROR_INVALID_INDEX );
+            return 0;
+        }
+        else if (get_win_data( (char *)win->wExtra + offset, size ) == newval)
+        {
+            /* already set to the same value */
+            release_win_ptr( win );
+            return newval;
+        }
+        break;
+    }
+
+    SERVER_START_REQ( set_window_info )
+    {
+        req->handle = wine_server_user_handle( hwnd );
+        req->extra_offset = -1;
+        switch(offset)
+        {
+        case GWL_STYLE:
+            req->flags = SET_WIN_STYLE | SET_WIN_EXSTYLE;
+            req->style = newval;
+            req->ex_style = fix_exstyle(newval, win->dwExStyle);
+            break;
+        case GWL_EXSTYLE:
+            req->flags = SET_WIN_EXSTYLE;
+            req->ex_style = newval;
+            break;
+        case GWLP_ID:
+            req->flags = SET_WIN_ID;
+            req->extra_value = newval;
+            break;
+        case GWLP_HINSTANCE:
+            req->flags = SET_WIN_INSTANCE;
+            req->instance = wine_server_client_ptr( (void *)newval );
+            break;
+        case GWLP_WNDPROC:
+            req->flags = SET_WIN_UNICODE;
+            req->is_unicode = (win->flags & WIN_ISUNICODE) != 0;
+            break;
+        case GWLP_USERDATA:
+            req->flags = SET_WIN_USERDATA;
+            req->user_data = newval;
+            break;
+        default:
+            req->flags = SET_WIN_EXTRA;
+            req->extra_offset = offset;
+            req->extra_size = size;
+            set_win_data( &req->extra_value, newval, size );
+        }
+        if ((ok = !wine_server_call_err( req )))
+        {
+            switch(offset)
+            {
+            case GWL_STYLE:
+                win->dwStyle = newval;
+                win->dwExStyle = fix_exstyle(win->dwStyle, win->dwExStyle);
+                retval = reply->old_style;
+                break;
+            case GWL_EXSTYLE:
+                win->dwExStyle = newval;
+                retval = reply->old_ex_style;
+                break;
+            case GWLP_ID:
+                win->wIDmenu = newval;
+                retval = reply->old_id;
+                break;
+            case GWLP_HINSTANCE:
+                win->hInstance = (HINSTANCE)newval;
+                retval = (ULONG_PTR)wine_server_get_ptr( reply->old_instance );
+                break;
+            case GWLP_WNDPROC:
+                break;
+            case GWLP_USERDATA:
+                win->userdata = newval;
+                retval = reply->old_user_data;
+                break;
+            default:
+                retval = get_win_data( (char *)win->wExtra + offset, size );
+                set_win_data( (char *)win->wExtra + offset, newval, size );
+                break;
+            }
+        }
+    }
+    SERVER_END_REQ;
+
+    if ((offset == GWL_STYLE && ((style.styleOld ^ style.styleNew) & WS_VISIBLE)) ||
+        (offset == GWL_EXSTYLE && ((style.styleOld ^ style.styleNew) & WS_EX_LAYERED)))
+    {
+        made_visible = (win->dwStyle & WS_VISIBLE) != 0;
+        invalidate_dce( win, NULL );
+    }
+    release_win_ptr( win );
+
+    if (!ok) return 0;
+
+    if (offset == GWL_STYLE || offset == GWL_EXSTYLE)
+    {
+        style.styleOld = retval;
+        style.styleNew = newval;
+        user_driver->pSetWindowStyle( hwnd, offset, &style );
+        if (made_visible) update_window_state( hwnd );
+        send_message( hwnd, WM_STYLECHANGED, offset, (LPARAM)&style );
+    }
+
+    return retval;
+}
+
+/**********************************************************************
+ *           NtUserSetWindowWord (win32u.@)
+ */
+WORD WINAPI NtUserSetWindowWord( HWND hwnd, INT offset, WORD newval )
+{
+    switch(offset)
+    {
+    case GWLP_ID:
+    case GWLP_HINSTANCE:
+    case GWLP_HWNDPARENT:
+        break;
+    default:
+        if (offset < 0)
+        {
+            WARN("Invalid offset %d\n", offset );
+            SetLastError( ERROR_INVALID_INDEX );
+            return 0;
+        }
+        break;
+    }
+    return set_window_long( hwnd, offset, sizeof(WORD), newval, TRUE );
+}
+
+/**********************************************************************
+ *           NtUserSetWindowLong (win32u.@)
+ */
+LONG WINAPI NtUserSetWindowLong( HWND hwnd, INT offset, LONG newval, BOOL ansi )
+{
+    return set_window_long( hwnd, offset, sizeof(LONG), newval, ansi );
+}
+
+/*****************************************************************************
+ *           NtUserSetWindowLongPtr (win32u.@)
+ */
+LONG_PTR WINAPI NtUserSetWindowLongPtr( HWND hwnd, INT offset, LONG_PTR newval, BOOL ansi )
+{
+    return set_window_long( hwnd, offset, sizeof(LONG_PTR), newval, ansi );
 }
 
 /***********************************************************************

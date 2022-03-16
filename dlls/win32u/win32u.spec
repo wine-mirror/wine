@@ -1246,15 +1246,15 @@
 @ stub NtUserSetWindowFNID
 @ stub NtUserSetWindowFeedbackSetting
 @ stub NtUserSetWindowGroup
-@ stub NtUserSetWindowLong
-@ stub NtUserSetWindowLongPtr
+@ stdcall NtUserSetWindowLong(long long long long)
+@ stdcall NtUserSetWindowLongPtr(long long long long)
 @ stub NtUserSetWindowPlacement
 @ stdcall NtUserSetWindowPos(long long long long long long long)
 @ stdcall NtUserSetWindowRgn(long long long)
 @ stub NtUserSetWindowRgnEx
 @ stub NtUserSetWindowShowState
 @ stub NtUserSetWindowStationUser
-@ stub NtUserSetWindowWord
+@ stdcall NtUserSetWindowWord(long long long)
 @ stub NtUserSetWindowsHookAW
 @ stdcall -syscall NtUserSetWindowsHookEx(ptr ptr long long ptr long)
 @ stub NtUserShowCaret
