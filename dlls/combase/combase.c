@@ -315,7 +315,7 @@ HRESULT open_key_for_clsid(REFCLSID clsid, const WCHAR *keyname, REGSAM access, 
 
     lstrcpyW(path, clsidW);
     StringFromGUID2(clsid, path + lstrlenW(clsidW), CHARS_IN_GUID);
-    res = open_classes_key(HKEY_CLASSES_ROOT, path, keyname ? KEY_READ : access, &key);
+    res = open_classes_key(HKEY_CLASSES_ROOT, path, access, &key);
     if (res == ERROR_FILE_NOT_FOUND)
         return REGDB_E_CLASSNOTREG;
     else if (res != ERROR_SUCCESS)
@@ -350,7 +350,7 @@ HRESULT open_appidkey_from_clsid(REFCLSID clsid, REGSAM access, HKEY *subkey)
     HRESULT hr;
 
     /* read the AppID value under the class's key */
-    hr = open_key_for_clsid(clsid, NULL, KEY_READ, &hkey);
+    hr = open_key_for_clsid(clsid, NULL, access, &hkey);
     if (FAILED(hr))
         return hr;
 
@@ -2320,9 +2320,9 @@ HRESULT WINAPI CoGetPSClsid(REFIID riid, CLSID *pclsid)
     StringFromGUID2(riid, path + ARRAY_SIZE(interfaceW) - 1, CHARS_IN_GUID);
     lstrcpyW(path + ARRAY_SIZE(interfaceW) - 1 + CHARS_IN_GUID - 1, psW);
 
-    hr = get_ps_clsid_from_registry(path, 0, pclsid);
+    hr = get_ps_clsid_from_registry(path, KEY_READ, pclsid);
     if (FAILED(hr) && (opposite == KEY_WOW64_32KEY || (IsWow64Process(GetCurrentProcess(), &is_wow64) && is_wow64)))
-        hr = get_ps_clsid_from_registry(path, opposite, pclsid);
+        hr = get_ps_clsid_from_registry(path, opposite | KEY_READ, pclsid);
 
     if (hr == S_OK)
         TRACE("() Returning CLSID %s\n", debugstr_guid(pclsid));
