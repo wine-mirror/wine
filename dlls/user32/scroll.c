@@ -949,8 +949,8 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt )
                                 SB_LINEUP, (LPARAM)hwndCtl );
 	    }
 
-	    SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
-                            SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY, NULL );
+	    NtUserSetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
+                                  SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY, NULL );
         }
         else KillSystemTimer( hwnd, SCROLL_TIMER );
         break;
@@ -964,8 +964,8 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt )
                 SendMessageW( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                                 SB_PAGEUP, (LPARAM)hwndCtl );
             }
-            SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
-                              SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY, NULL );
+            NtUserSetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
+                                  SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY, NULL );
         }
         else KillSystemTimer( hwnd, SCROLL_TIMER );
         break;
@@ -1022,8 +1022,8 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt )
                 SendMessageW( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                                 SB_PAGEDOWN, (LPARAM)hwndCtl );
             }
-            SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
-                              SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY, NULL );
+            NtUserSetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
+                                  SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY, NULL );
         }
         else KillSystemTimer( hwnd, SCROLL_TIMER );
         break;
@@ -1038,8 +1038,8 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt )
                                 SB_LINEDOWN, (LPARAM)hwndCtl );
 	    }
 
-	    SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
-                            SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY, NULL );
+	    NtUserSetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
+                                  SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY, NULL );
         }
         else KillSystemTimer( hwnd, SCROLL_TIMER );
         break;

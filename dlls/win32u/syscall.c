@@ -153,6 +153,7 @@ static void * const syscalls[] =
     NtUserSetProcessDpiAwarenessContext,
     NtUserSetProcessWindowStation,
     NtUserSetProp,
+    NtUserSetSystemTimer,
     NtUserSetThreadDesktop,
     NtUserSetTimer,
     NtUserSetWinEventHook,

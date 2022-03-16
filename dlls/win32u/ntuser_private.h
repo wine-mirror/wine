@@ -49,6 +49,9 @@ struct user_callbacks
                                   const RECT *valid_rects );
 };
 
+#define WM_SYSTIMER         0x0118
+#define WM_POPUPSYSTEMMENU  0x0313
+
 struct user_object
 {
     HANDLE       handle;

@@ -36,9 +36,6 @@
 #define GET_DWORD(ptr) (*(const DWORD *)(ptr))
 #define GET_LONG(ptr) (*(const LONG *)(ptr))
 
-#define WM_SYSTIMER	    0x0118
-#define WM_POPUPSYSTEMMENU  0x0313
-
 #define WINE_MOUSE_HANDLE       ((HANDLE)1)
 #define WINE_KEYBOARD_HANDLE    ((HANDLE)2)
 
@@ -132,7 +129,6 @@ typedef LRESULT (*winproc_callback_t)( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp
                                        LRESULT *result, void *arg );
 
 extern WNDPROC WINPROC_GetProc( WNDPROC proc, BOOL unicode ) DECLSPEC_HIDDEN;
-extern WNDPROC WINPROC_AllocProc( WNDPROC func, BOOL unicode ) DECLSPEC_HIDDEN;
 extern BOOL WINPROC_IsUnicode( WNDPROC proc, BOOL def_val ) DECLSPEC_HIDDEN;
 
 extern LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UINT msg,

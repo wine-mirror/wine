@@ -4418,39 +4418,6 @@ UINT_PTR WINAPI SetTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC proc )
 
 
 /***********************************************************************
- *		SetSystemTimer (USER32.@)
- */
-UINT_PTR WINAPI SetSystemTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC proc )
-{
-    UINT_PTR ret;
-    WNDPROC winproc = 0;
-
-    if (proc) winproc = WINPROC_AllocProc( (WNDPROC)proc, FALSE );
-
-    timeout = min( max( USER_TIMER_MINIMUM, timeout ), USER_TIMER_MAXIMUM );
-
-    SERVER_START_REQ( set_win_timer )
-    {
-        req->win    = wine_server_user_handle( hwnd );
-        req->msg    = WM_SYSTIMER;
-        req->id     = id;
-        req->rate   = timeout;
-        req->lparam = (ULONG_PTR)winproc;
-        if (!wine_server_call_err( req ))
-        {
-            ret = reply->id;
-            if (!ret) ret = TRUE;
-        }
-        else ret = 0;
-    }
-    SERVER_END_REQ;
-
-    TRACE("Added %p %lx %p timeout %d\n", hwnd, id, winproc, timeout );
-    return ret;
-}
-
-
-/***********************************************************************
  *		KillTimer (USER32.@)
  */
 BOOL WINAPI KillTimer( HWND hwnd, UINT_PTR id )

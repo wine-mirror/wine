@@ -193,7 +193,7 @@ WNDPROC WINPROC_GetProc( WNDPROC proc, BOOL unicode )
  * lot of windows, it will usually only have a limited number of window procedures, so the
  * array won't grow too large, and this way we avoid the need to track allocations per window.
  */
-WNDPROC WINPROC_AllocProc( WNDPROC func, BOOL unicode )
+static WNDPROC WINPROC_AllocProc( WNDPROC func, BOOL unicode )
 {
     return (WNDPROC)NtUserCallTwoParam( (UINT_PTR)func, !unicode, NtUserAllocWinProc );
 }

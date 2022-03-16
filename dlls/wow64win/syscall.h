@@ -138,6 +138,7 @@
     SYSCALL_ENTRY( NtUserSetProcessDpiAwarenessContext ) \
     SYSCALL_ENTRY( NtUserSetProcessWindowStation ) \
     SYSCALL_ENTRY( NtUserSetProp ) \
+    SYSCALL_ENTRY( NtUserSetSystemTimer ) \
     SYSCALL_ENTRY( NtUserSetThreadDesktop ) \
     SYSCALL_ENTRY( NtUserSetTimer ) \
     SYSCALL_ENTRY( NtUserSetWinEventHook ) \
