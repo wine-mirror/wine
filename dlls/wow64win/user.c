@@ -554,6 +554,14 @@ NTSTATUS WINAPI wow64_NtUserSetTimer( UINT *args )
     return NtUserSetTimer( hwnd, id, timeout, proc, tolerance );
 }
 
+NTSTATUS WINAPI wow64_NtUserKillTimer( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    UINT_PTR id = get_ulong( &args );
+
+    return NtUserKillTimer( hwnd, id );
+}
+
 NTSTATUS WINAPI wow64_NtUserCopyAcceleratorTable( UINT *args )
 {
     HACCEL src = get_handle( &args );

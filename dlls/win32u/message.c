@@ -192,6 +192,24 @@ UINT_PTR WINAPI NtUserSetSystemTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIME
     return ret;
 }
 
+/***********************************************************************
+ *           NtUserKillTimer (win32u.@)
+ */
+BOOL WINAPI NtUserKillTimer( HWND hwnd, UINT_PTR id )
+{
+    BOOL ret;
+
+    SERVER_START_REQ( kill_win_timer )
+    {
+        req->win = wine_server_user_handle( hwnd );
+        req->msg = WM_TIMER;
+        req->id  = id;
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
 /* see SendMessageW */
 LRESULT send_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {

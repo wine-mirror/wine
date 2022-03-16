@@ -142,6 +142,7 @@ static void * const syscalls[] =
     NtUserGetWindowRgnEx,
     NtUserInitializeClientPfnArrays,
     NtUserInternalGetWindowText,
+    NtUserKillTimer,
     NtUserNotifyWinEvent,
     NtUserOpenDesktop,
     NtUserOpenInputDesktop,

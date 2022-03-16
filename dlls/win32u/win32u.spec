@@ -1059,7 +1059,7 @@
 @ stub NtUserIsTouchWindow
 @ stub NtUserIsWindowBroadcastingDpiToChildren
 @ stub NtUserIsWindowGDIScaledDpiMessageEnabled
-@ stub NtUserKillTimer
+@ stdcall -syscall NtUserKillTimer(long long)
 @ stub NtUserLayoutCompleted
 @ stub NtUserLinkDpiCursor
 @ stub NtUserLoadKeyboardLayoutEx

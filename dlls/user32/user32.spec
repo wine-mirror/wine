@@ -484,7 +484,7 @@
 @ stdcall IsWindowVisible(long)
 @ stdcall IsZoomed(long)
 @ stdcall KillSystemTimer(long long)
-@ stdcall KillTimer(long long)
+@ stdcall KillTimer(long long) NtUserKillTimer
 @ stdcall LoadAcceleratorsA(long str)
 @ stdcall LoadAcceleratorsW(long wstr)
 @ stdcall LoadBitmapA(long str)

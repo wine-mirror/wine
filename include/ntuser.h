@@ -365,6 +365,7 @@ NTSTATUS WINAPI NtUserInitializeClientPfnArrays( const struct user_client_procs 
                                                  const void *client_workers, HINSTANCE user_module );
 INT     WINAPI NtUserInternalGetWindowText( HWND hwnd, WCHAR *text, INT count );
 BOOL    WINAPI NtUserIsClipboardFormatAvailable( UINT format );
+BOOL    WINAPI NtUserKillTimer( HWND hwnd, UINT_PTR id );
 UINT    WINAPI NtUserMapVirtualKeyEx( UINT code, UINT type, HKL layout );
 BOOL    WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
                                   ULONG_PTR result_info, DWORD type, BOOL ansi );
