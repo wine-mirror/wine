@@ -3913,6 +3913,22 @@ BOOL WINAPI NtUserFlashWindowEx( FLASHWINFO *info )
     }
 }
 
+/* see GetWindowContextHelpId */
+static DWORD get_window_context_help_id( HWND hwnd )
+{
+    DWORD retval;
+    WND *win = get_win_ptr( hwnd );
+    if (!win || win == WND_DESKTOP) return 0;
+    if (win == WND_OTHER_PROCESS)
+    {
+        if (is_window( hwnd )) FIXME( "not supported on other process window %p\n", hwnd );
+        return 0;
+    }
+    retval = win->helpContext;
+    release_win_ptr( win );
+    return retval;
+}
+
 /***********************************************************************
  *           send_destroy_message
  */
@@ -4190,6 +4206,8 @@ ULONG_PTR WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
         return get_dpi_for_window( hwnd );
     case NtUserGetParent:
         return HandleToUlong( get_parent( hwnd ));
+    case NtUserGetWindowContextHelpId:
+        return get_window_context_help_id( hwnd );
     case NtUserGetWindowDpiAwarenessContext:
         return (ULONG_PTR)get_window_dpi_awareness_context( hwnd );
     case NtUserGetWindowTextLength:

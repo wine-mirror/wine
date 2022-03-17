@@ -2249,17 +2249,7 @@ BOOL WINAPI FlashWindow( HWND hWnd, BOOL bInvert )
  */
 DWORD WINAPI GetWindowContextHelpId( HWND hwnd )
 {
-    DWORD retval;
-    WND *wnd = WIN_GetPtr( hwnd );
-    if (!wnd || wnd == WND_DESKTOP) return 0;
-    if (wnd == WND_OTHER_PROCESS)
-    {
-        if (IsWindow( hwnd )) FIXME( "not supported on other process window %p\n", hwnd );
-        return 0;
-    }
-    retval = wnd->helpContext;
-    WIN_ReleasePtr( wnd );
-    return retval;
+    return NtUserCallHwnd( hwnd, NtUserGetWindowContextHelpId );
 }
 
 

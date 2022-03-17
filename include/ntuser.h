@@ -147,6 +147,7 @@ enum
 {
     NtUserGetDpiForWindow,
     NtUserGetParent,
+    NtUserGetWindowContextHelpId,
     NtUserGetWindowDpiAwarenessContext,
     NtUserGetWindowTextLength,
     NtUserIsWindow,
