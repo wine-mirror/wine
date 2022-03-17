@@ -732,8 +732,6 @@ DWORD WINAPI ALSA_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
     case DRVM_INIT:
         ALSA_MidiInit();
         return 0;
-    case MODM_GETNUMDEVS:
-	return MODM_NumDevs;
     case MODM_GETVOLUME:
 	return modGetVolume(wDevID, (DWORD*)dwParam1);
     case MODM_SETVOLUME:
