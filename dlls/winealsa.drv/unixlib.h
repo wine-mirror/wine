@@ -223,22 +223,11 @@ typedef struct midi_src
     int                 port_in;
 } WINE_MIDIIN;
 
-typedef struct midi_dest
-{
-    BOOL                bEnabled;
-    MIDIOPENDESC        midiDesc;
-    WORD                wFlags;
-    MIDIOUTCAPSW        caps;
-    snd_seq_t          *seq;
-    snd_seq_addr_t      addr;
-    int                 port_out;
-} WINE_MIDIOUT;
-
 struct midi_init_params
 {
     UINT *err;
-    unsigned int num_dests, num_srcs;
-    void *dests, *srcs;
+    unsigned int num_srcs;
+    void *srcs;
 };
 
 struct notify_context

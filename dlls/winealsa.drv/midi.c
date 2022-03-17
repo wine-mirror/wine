@@ -48,10 +48,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(midi);
 
 static WINE_MIDIIN	*MidiInDev;
-static WINE_MIDIOUT	*MidiOutDev;
 
-/* this is the total number of MIDI out devices found (synth and port) */
-static	int 		MODM_NumDevs = 0;
 /* this is the total number of MIDI out devices found */
 static	int 		MIDM_NumDevs = 0;
 
@@ -605,35 +602,6 @@ static DWORD midStop(WORD wDevID)
     return MMSYSERR_NOERROR;
 }
 
-/**************************************************************************
- * 			modReset				[internal]
- */
-static DWORD modReset(WORD wDevID)
-{
-    DWORD WINAPI ALSA_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
-                                 DWORD_PTR dwParam1, DWORD_PTR dwParam2);
-    unsigned chn;
-
-    TRACE("(%04X);\n", wDevID);
-
-    if (wDevID >= MODM_NumDevs) return MMSYSERR_BADDEVICEID;
-    if (!MidiOutDev[wDevID].bEnabled) return MIDIERR_NODEVICE;
-
-    /* stop all notes */
-    /* FIXME: check if 0x78B0 is channel dependent or not. I coded it so that
-     * it's channel dependent...
-     */
-    for (chn = 0; chn < 16; chn++) {
-        /* turn off every note */
-        ALSA_modMessage(wDevID, MODM_DATA, 0, 0x7800 | MIDI_CMD_CONTROL | chn, 0);
-        /* remove sustain on all channels */
-        ALSA_modMessage(wDevID, MODM_DATA, 0, (MIDI_CTL_SUSTAIN << 8) | MIDI_CMD_CONTROL | chn, 0);
-    }
-    /* FIXME: the LongData buffers must also be returned to the app */
-    return MMSYSERR_NOERROR;
-}
-
-
 /*======================================================================*
  *                  	    MIDI entry points 				*
  *======================================================================*/
@@ -653,9 +621,7 @@ static BOOL ALSA_MidiInit(void)
 
     if (!err)
     {
-        MODM_NumDevs = params.num_dests;
         MIDM_NumDevs = params.num_srcs;
-        MidiOutDev = params.dests;
         MidiInDev = params.srcs;
     }
     return TRUE;
@@ -721,8 +687,6 @@ DWORD WINAPI ALSA_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
     case DRVM_INIT:
         ALSA_MidiInit();
         return 0;
-    case MODM_RESET:
-	return modReset(wDevID);
     }
 
     params.dev_id = wDevID;

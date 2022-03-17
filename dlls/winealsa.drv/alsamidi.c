@@ -48,6 +48,17 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(midi);
 
+struct midi_dest
+{
+    BOOL                bEnabled;
+    MIDIOPENDESC        midiDesc;
+    WORD                wFlags;
+    MIDIOUTCAPSW        caps;
+    snd_seq_t          *seq;
+    snd_seq_addr_t      addr;
+    int                 port_out;
+};
+
 static pthread_mutex_t seq_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static unsigned int num_dests, num_srcs;
@@ -353,9 +364,7 @@ NTSTATUS midi_init(void *args)
     free( pinfo );
 
     *params->err = NOERROR;
-    params->num_dests = num_dests;
     params->num_srcs = num_srcs;
-    params->dests = dests;
     params->srcs = srcs;
 
     TRACE("End\n");
@@ -800,6 +809,31 @@ static UINT midi_out_get_volume(WORD dev_id, UINT* volume)
     return (dests[dev_id].caps.dwSupport & MIDICAPS_VOLUME) ? 0 : MMSYSERR_NOTSUPPORTED;
 }
 
+static UINT midi_out_reset(WORD dev_id)
+{
+    unsigned chn;
+
+    TRACE("(%04X);\n", dev_id);
+
+    if (dev_id >= num_dests) return MMSYSERR_BADDEVICEID;
+    if (!dests[dev_id].bEnabled) return MIDIERR_NODEVICE;
+
+    /* stop all notes */
+    /* FIXME: check if 0x78B0 is channel dependent or not. I coded it so that
+     * it's channel dependent...
+     */
+    for (chn = 0; chn < 16; chn++)
+    {
+        /* turn off every note */
+        midi_out_data(dev_id, 0x7800 | MIDI_CMD_CONTROL | chn);
+        /* remove sustain on all channels */
+        midi_out_data(dev_id, (MIDI_CTL_SUSTAIN << 8) | MIDI_CMD_CONTROL | chn);
+    }
+    /* FIXME: the LongData buffers must also be returned to the app */
+    return MMSYSERR_NOERROR;
+}
+
+
 NTSTATUS midi_out_message(void *args)
 {
     struct midi_out_message_params *params = args;
@@ -843,6 +877,9 @@ NTSTATUS midi_out_message(void *args)
         break;
     case MODM_SETVOLUME:
         *params->err = 0;
+        break;
+    case MODM_RESET:
+        *params->err = midi_out_reset(params->dev_id);
         break;
     default:
         TRACE("Unsupported message\n");
