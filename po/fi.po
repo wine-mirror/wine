@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-06-17 12:10+0300\n"
+"PO-Revision-Date: 2022-03-17 20:32+0200\n"
 "Last-Translator: Lauri Kenttä <lauri.kentta@gmail.com>\n"
 "Language-Team: Finnish\n"
 "Language: fi\n"
@@ -10491,16 +10491,16 @@ msgstr "(UTC-03:00) Saint-Pierre ja Miquelon"
 #: dlls/tzres/tzres.rc:327
 msgctxt "maximum 31 characters"
 msgid "Sao Tome Standard Time"
-msgstr "Sao Tomen normaaliaika"
+msgstr "São Tomén normaaliaika"
 
 #: dlls/tzres/tzres.rc:328
 msgctxt "maximum 31 characters"
 msgid "Sao Tome Daylight Time"
-msgstr "Sao Tomen kesäaika"
+msgstr "São Tomén kesäaika"
 
 #: dlls/tzres/tzres.rc:329
 msgid "(UTC+00:00) Sao Tome"
-msgstr "(UTC+00:00) Sao Tome"
+msgstr "(UTC+00:00) São Tomé"
 
 #: dlls/tzres/tzres.rc:249
 msgctxt "maximum 31 characters"
@@ -10531,18 +10531,14 @@ msgid "(UTC+13:00) Nuku'alofa"
 msgstr "(UTC+13:00) Nuku'alofa"
 
 #: dlls/tzres/tzres.rc:240
-#, fuzzy
-#| msgid "Mountain Standard Time (Mexico)"
 msgctxt "maximum 31 characters"
 msgid "Mountain Standard Time (Mexico)"
-msgstr "Kalliovuorten normaaliaika (Meksiko)"
+msgstr "Kalliovuorten norm.aika (Meks.)"
 
 #: dlls/tzres/tzres.rc:241
-#, fuzzy
-#| msgid "Mountain Daylight Time (Mexico)"
 msgctxt "maximum 31 characters"
 msgid "Mountain Daylight Time (Mexico)"
-msgstr "Kalliovuorten kesäaika (Meksiko)"
+msgstr "Kalliovuorten kesäaika (Meks.)"
 
 #: dlls/tzres/tzres.rc:242
 msgid "(UTC-07:00) Chihuahua, La Paz, Mazatlan"
@@ -10754,11 +10750,9 @@ msgid "(UTC+02:00) Kaliningrad"
 msgstr "(UTC+02:00) Kaliningrad"
 
 #: dlls/tzres/tzres.rc:282
-#, fuzzy
-#| msgid "Pacific Standard Time (Mexico)"
 msgctxt "maximum 31 characters"
 msgid "Pacific Standard Time (Mexico)"
-msgstr "Tyynenmeren normaaliaika (Meksiko)"
+msgstr "Tyynenmeren norm.aika (Meksiko)"
 
 #: dlls/tzres/tzres.rc:283
 msgctxt "maximum 31 characters"
@@ -10891,11 +10885,9 @@ msgid "(UTC-01:00) Azores"
 msgstr "(UTC-01:00) Azorit"
 
 #: dlls/tzres/tzres.rc:264
-#, fuzzy
-#| msgid "North Asia East Standard Time"
 msgctxt "maximum 31 characters"
 msgid "North Asia East Standard Time"
-msgstr "Itäisen Pohjois-Aasian normaaliaika"
+msgstr "It. Pohjois-Aasian normaaliaika"
 
 #: dlls/tzres/tzres.rc:265
 msgctxt "maximum 31 characters"
@@ -10930,18 +10922,14 @@ msgid "(UTC-03:00) City of Buenos Aires"
 msgstr "(UTC-03:00) Buenos Aires"
 
 #: dlls/tzres/tzres.rc:378
-#, fuzzy
-#| msgid "Turks And Caicos Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Turks And Caicos Standard Time"
-msgstr "Turks- ja Caicossaarten normaaliaika"
+msgstr "Turks ja Caicos, normaaliaika"
 
 #: dlls/tzres/tzres.rc:379
-#, fuzzy
-#| msgid "Turks And Caicos Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Turks And Caicos Daylight Time"
-msgstr "Turks- ja Caicossaarten kesäaika"
+msgstr "Turks ja Caicos, kesäaika"
 
 #: dlls/tzres/tzres.rc:380
 msgid "(UTC-05:00) Turks and Caicos"
@@ -11181,11 +11169,9 @@ msgid "(UTC+10:00) Canberra, Melbourne, Sydney"
 msgstr "(UTC+10:00) Canberra, Melbourne, Sydney"
 
 #: dlls/tzres/tzres.rc:246
-#, fuzzy
-#| msgid "N. Central Asia Standard Time"
 msgctxt "maximum 31 characters"
 msgid "N. Central Asia Standard Time"
-msgstr "Pohjoisen Keski-Aasian normaaliaika"
+msgstr "Pohj. Keski-Aasian normaaliaika"
 
 #: dlls/tzres/tzres.rc:247
 msgctxt "maximum 31 characters"
@@ -11374,11 +11360,9 @@ msgid "(UTC-02:00) Coordinated Universal Time-02"
 msgstr "(UTC-02:00) Koordinoitu yleisaika -02"
 
 #: dlls/tzres/tzres.rc:387
-#, fuzzy
-#| msgid "US Mountain Standard Time"
 msgctxt "maximum 31 characters"
 msgid "US Mountain Standard Time"
-msgstr "Kalliovuorten normaaliaika (USA)"
+msgstr "Kalliovuorten norm.aika (USA)"
 
 #: dlls/tzres/tzres.rc:388
 msgctxt "maximum 31 characters"
@@ -11469,16 +11453,14 @@ msgid "(UTC+09:00) Yakutsk"
 msgstr "(UTC+09:00) Jakutsk"
 
 #: dlls/tzres/tzres.rc:309
-#, fuzzy
-#| msgid "SA Eastern Standard Time"
 msgctxt "maximum 31 characters"
 msgid "SA Eastern Standard Time"
-msgstr "Etelä-Amerikan itäinen normaaliaika"
+msgstr "Etelä-Am. itäinen vyöhyke"
 
 #: dlls/tzres/tzres.rc:310
 msgctxt "maximum 31 characters"
 msgid "SA Eastern Daylight Time"
-msgstr "Etelä-Amerikan itäinen kesäaika"
+msgstr "Etelä-Am. itäinen kesäaika"
 
 #: dlls/tzres/tzres.rc:311
 msgid "(UTC-03:00) Cayenne, Fortaleza"
@@ -11524,7 +11506,7 @@ msgstr "Tocantinsin kesäaika"
 
 #: dlls/tzres/tzres.rc:362
 msgid "(UTC-03:00) Araguaina"
-msgstr "(UTC-03:00) Araguaina"
+msgstr "(UTC-03:00) Araguaína"
 
 #: dlls/tzres/tzres.rc:306
 msgctxt "maximum 31 characters"
@@ -11541,11 +11523,9 @@ msgid "(UTC+03:00) Moscow, St. Petersburg"
 msgstr "(UTC+03:00) Moskova, Pietari"
 
 #: dlls/tzres/tzres.rc:63
-#, fuzzy
-#| msgid "Aus Central W. Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Aus Central W. Standard Time"
-msgstr "Australian keskilännen normaaliaika"
+msgstr "Australian keskilännen vyöhyke"
 
 #: dlls/tzres/tzres.rc:64
 msgctxt "maximum 31 characters"
@@ -11568,7 +11548,7 @@ msgstr "Romaaninen kesäaika"
 
 #: dlls/tzres/tzres.rc:296
 msgid "(UTC+01:00) Brussels, Copenhagen, Madrid, Paris"
-msgstr "(UTC+01:00) Brysseli, Kööpenhamina, Madrid, Pariisi"
+msgstr "(UTC+01:00) Bryssel, Kööpenhamina, Madrid, Pariisi"
 
 #: dlls/tzres/tzres.rc:159
 msgctxt "maximum 31 characters"
@@ -11596,12 +11576,12 @@ msgstr "(UTC+12:00) Anadyr, Petropavlovsk-Kamtšatski"
 #: dlls/tzres/tzres.rc:435
 msgctxt "maximum 31 characters"
 msgid "West Bank Standard Time"
-msgstr "Länsirannikon normaaliaika"
+msgstr "Länsirannan ja Gazan norm.ika"
 
 #: dlls/tzres/tzres.rc:436
 msgctxt "maximum 31 characters"
 msgid "West Bank Daylight Time"
-msgstr "Länsirannikon kesäaika"
+msgstr "Länsirannan ja Gazan kesäaika"
 
 #: dlls/tzres/tzres.rc:437
 msgid "(UTC+02:00) Gaza, Hebron"
@@ -11622,11 +11602,9 @@ msgid "(UTC+02:00) Damascus"
 msgstr "(UTC+02:00) Damaskos"
 
 #: dlls/tzres/tzres.rc:60
-#, fuzzy
-#| msgid "AUS Central Standard Time"
 msgctxt "maximum 31 characters"
 msgid "AUS Central Standard Time"
-msgstr "Australian keskinen normaaliaika"
+msgstr "Australian keskinen norm.aika"
 
 #: dlls/tzres/tzres.rc:61
 msgctxt "maximum 31 characters"
@@ -11682,12 +11660,12 @@ msgstr "(UTC+11:00) Norfolkinsaari"
 #: dlls/tzres/tzres.rc:195
 msgctxt "maximum 31 characters"
 msgid "Israel Standard Time"
-msgstr "Israelin normaaliaika"
+msgstr "Jerusalemin normaaliaika"
 
 #: dlls/tzres/tzres.rc:196
 msgctxt "maximum 31 characters"
 msgid "Israel Daylight Time"
-msgstr "Israelin kesäaika"
+msgstr "Jerusalemin kesäaika"
 
 #: dlls/tzres/tzres.rc:197
 msgid "(UTC+02:00) Jerusalem"
@@ -11708,18 +11686,14 @@ msgid "(UTC+06:00) Dhaka"
 msgstr "(UTC+06:00) Dhaka"
 
 #: dlls/tzres/tzres.rc:312
-#, fuzzy
-#| msgid "SA Pacific Standard Time"
 msgctxt "maximum 31 characters"
 msgid "SA Pacific Standard Time"
-msgstr "Etelä-Amerikan Tyynenmeren normaaliaika"
+msgstr "Etelä-Am. Tyynenmeren norm.aika"
 
 #: dlls/tzres/tzres.rc:313
-#, fuzzy
-#| msgid "SA Pacific Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "SA Pacific Daylight Time"
-msgstr "Etelä-Amerikan Tyynenmeren kesäaika"
+msgstr "Etelä-Am. Tyynenmeren kesäaika"
 
 #: dlls/tzres/tzres.rc:314
 msgid "(UTC-05:00) Bogota, Lima, Quito, Rio Branco"
@@ -11765,7 +11739,7 @@ msgstr "Paraguayn kesäaika"
 
 #: dlls/tzres/tzres.rc:290
 msgid "(UTC-04:00) Asuncion"
-msgstr "(UTC-04:00) Asuncion"
+msgstr "(UTC-04:00) Asunción"
 
 #: dlls/tzres/tzres.rc:132
 msgctxt "maximum 31 characters"
@@ -11964,18 +11938,14 @@ msgid "(UTC+03:00) Minsk"
 msgstr "(UTC+03:00) Minsk"
 
 #: dlls/tzres/tzres.rc:315
-#, fuzzy
-#| msgid "SA Western Standard Time"
 msgctxt "maximum 31 characters"
 msgid "SA Western Standard Time"
-msgstr "Etelä-Amerikan läntinen normaaliaika"
+msgstr "Etelä-Am. läntinen normaaliaika"
 
 #: dlls/tzres/tzres.rc:316
-#, fuzzy
-#| msgid "SA Western Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "SA Western Daylight Time"
-msgstr "Etelä-Amerikan läntinen kesäaika"
+msgstr "Etelä-Am. läntinen kesäaika"
 
 #: dlls/tzres/tzres.rc:317
 msgid "(UTC-04:00) Georgetown, La Paz, Manaus, San Juan"
@@ -12145,16 +12115,14 @@ msgid "(UTC+02:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius"
 msgstr "(UTC+02:00) Helsinki, Kiova, Riika, Sofia, Tallinna, Vilna"
 
 #: dlls/tzres/tzres.rc:144
-#, fuzzy
-#| msgid "E. South America Standard Time"
 msgctxt "maximum 31 characters"
 msgid "E. South America Standard Time"
-msgstr "Itäisen Etelä-Amerikan normaaliaika"
+msgstr "Itäisen Etelä-Am. vyöhyke"
 
 #: dlls/tzres/tzres.rc:145
 msgctxt "maximum 31 characters"
 msgid "E. South America Daylight Time"
-msgstr "Itäisen Etelä-Amerikan kesäaika"
+msgstr "Itäisen Etelä-Am. kesäaika"
 
 #: dlls/tzres/tzres.rc:146
 msgid "(UTC-03:00) Brasilia"
@@ -12175,11 +12143,9 @@ msgid "(UTC+11:00) Solomon Is., New Caledonia"
 msgstr "(UTC+11:00) Salomonsaaret, Uusi-Kaledonia"
 
 #: dlls/tzres/tzres.rc:423
-#, fuzzy
-#| msgid "W. Central Africa Standard Time"
 msgctxt "maximum 31 characters"
 msgid "W. Central Africa Standard Time"
-msgstr "Läntisen Keski-Afrikan normaaliaika"
+msgstr "Läntis. Keski-Afrikan norm.aika"
 
 #: dlls/tzres/tzres.rc:424
 msgctxt "maximum 31 characters"
@@ -12188,21 +12154,17 @@ msgstr "Läntisen Keski-Afrikan kesäaika"
 
 #: dlls/tzres/tzres.rc:425
 msgid "(UTC+01:00) West Central Africa"
-msgstr "(UTC+01:00) Länsi-Afrikan aika"
+msgstr "(UTC+01:00) Läntinen Keski-Afrikka"
 
 #: dlls/tzres/tzres.rc:276
-#, fuzzy
-#| msgid "Pacific SA Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Pacific SA Standard Time"
-msgstr "Tyynenmeren Etelä-Amerikan normaaliaika"
+msgstr "Tyynenmeren Etelä-Am. norm.aika"
 
 #: dlls/tzres/tzres.rc:277
-#, fuzzy
-#| msgid "Pacific SA Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Pacific SA Daylight Time"
-msgstr "Tyynenmeren Etelä-Amerikan kesäaika"
+msgstr "Tyynenmeren Etelä-Am. kesäaika"
 
 #: dlls/tzres/tzres.rc:278
 msgid "(UTC-04:00) Santiago"
