@@ -16,6 +16,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include <stdarg.h>
 
@@ -79,7 +80,7 @@ static void wsprintfATest(void)
     int rc;
 
     rc=wsprintfA(buf, "%010ld", -1);
-    ok(rc == 10, "wsprintfA length failure: rc=%d error=%d\n",rc,GetLastError());
+    ok(rc == 10, "wsprintfA length failure: rc=%d error=%ld\n",rc,GetLastError());
     ok((lstrcmpA(buf, "-000000001") == 0),
        "wsprintfA zero padded negative value failure: buf=[%s]\n",buf);
     rc = wsprintfA(buf, "%I64X", (ULONGLONG)0);
@@ -157,7 +158,7 @@ static void wsprintfWTest(void)
         win_skip("wsprintfW is not implemented\n");
         return;
     }
-    ok(rc == 10, "wsPrintfW length failure: rc=%d error=%d\n",rc,GetLastError());
+    ok(rc == 10, "wsPrintfW length failure: rc=%d error=%ld\n",rc,GetLastError());
     ok((lstrcmpW(buf, L"-000000001") == 0),
        "wsprintfW zero padded negative value failure\n");
     rc = wsprintfW(buf, L"%I64x", (ULONGLONG)0 );
@@ -246,7 +247,7 @@ static void CharUpperTest(void)
 	   break;
 	   }
 	}
-    ok(!failed,"CharUpper failed - 16bit input (0x%0lx) returned 32bit result (0x%0lx)\n",i,out);
+    ok(!failed,"CharUpper failed - 16bit input (0x%0Ix) returned 32bit result (0x%0Ix)\n",i,out);
 }
 
 static void CharLowerTest(void)
@@ -263,7 +264,7 @@ static void CharLowerTest(void)
 	   break;
 	   }
 	}
-    ok(!failed,"CharLower failed - 16bit input (0x%0lx) returned 32bit result (0x%0lx)\n",i,out);
+    ok(!failed,"CharLower failed - 16bit input (0x%0Ix) returned 32bit result (0x%0Ix)\n",i,out);
 }
 
 
