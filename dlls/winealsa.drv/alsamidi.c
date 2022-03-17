@@ -525,6 +525,132 @@ static UINT midi_out_close(WORD dev_id, struct notify_context *notify)
     return MMSYSERR_NOERROR;
 }
 
+static UINT midi_out_data(WORD dev_id, UINT data)
+{
+    BYTE evt = LOBYTE(LOWORD(data));
+    BYTE d1  = HIBYTE(LOWORD(data));
+    BYTE d2  = LOBYTE(HIWORD(data));
+    struct midi_dest *dest;
+
+    TRACE("(%04X, %08X);\n", dev_id, data);
+
+    if (dev_id >= num_dests) return MMSYSERR_BADDEVICEID;
+    dest = dests + dev_id;
+
+    if (!dest->bEnabled) return MIDIERR_NODEVICE;
+
+    if (dest->seq == NULL)
+    {
+        WARN("can't play !\n");
+        return MIDIERR_NODEVICE;
+    }
+    switch (dest->caps.wTechnology)
+    {
+    case MOD_SYNTH:
+    case MOD_MIDIPORT:
+    {
+        int handled = 1; /* Assume event is handled */
+        snd_seq_event_t event;
+        snd_seq_ev_clear(&event);
+        snd_seq_ev_set_direct(&event);
+        snd_seq_ev_set_source(&event, dest->port_out);
+        snd_seq_ev_set_subs(&event);
+
+        switch (evt & 0xF0)
+        {
+        case MIDI_CMD_NOTE_OFF:
+            snd_seq_ev_set_noteoff(&event, evt & 0x0F, d1, d2);
+            break;
+        case MIDI_CMD_NOTE_ON:
+            snd_seq_ev_set_noteon(&event, evt & 0x0F, d1, d2);
+            break;
+        case MIDI_CMD_NOTE_PRESSURE:
+            snd_seq_ev_set_keypress(&event, evt & 0x0F, d1, d2);
+            break;
+        case MIDI_CMD_CONTROL:
+            snd_seq_ev_set_controller(&event, evt & 0x0F, d1, d2);
+            break;
+        case MIDI_CMD_BENDER:
+            snd_seq_ev_set_pitchbend(&event, evt & 0x0F, ((WORD)d2 << 7 | (WORD)d1) - 0x2000);
+            break;
+        case MIDI_CMD_PGM_CHANGE:
+            snd_seq_ev_set_pgmchange(&event, evt & 0x0F, d1);
+            break;
+        case MIDI_CMD_CHANNEL_PRESSURE:
+            snd_seq_ev_set_chanpress(&event, evt & 0x0F, d1);
+            break;
+        case MIDI_CMD_COMMON_SYSEX:
+            switch (evt & 0x0F)
+            {
+            case 0x00:	/* System Exclusive, don't do it on modData,
+                         * should require modLongData*/
+            case 0x04:	/* Undefined. */
+            case 0x05:	/* Undefined. */
+            case 0x07:	/* End of Exclusive. */
+            case 0x09:	/* Undefined. */
+            case 0x0D:	/* Undefined. */
+                handled = 0;
+                break;
+            case 0x06:	/* Tune Request */
+            case 0x08:	/* Timing Clock. */
+            case 0x0A:	/* Start. */
+            case 0x0B:	/* Continue */
+            case 0x0C:	/* Stop */
+            case 0x0E: 	/* Active Sensing. */
+            {
+                snd_midi_event_t *midi_event;
+
+                snd_midi_event_new(1, &midi_event);
+                snd_midi_event_init(midi_event);
+                snd_midi_event_encode_byte(midi_event, evt, &event);
+                snd_midi_event_free(midi_event);
+                break;
+            }
+            case 0x0F: 	/* Reset */
+                /* snd_seq_ev_set_sysex(&event, 1, &evt);
+                   this other way may be better */
+            {
+                BYTE reset_sysex_seq[] = {MIDI_CMD_COMMON_SYSEX, 0x7e, 0x7f, 0x09, 0x01, 0xf7};
+                snd_seq_ev_set_sysex(&event, sizeof(reset_sysex_seq), reset_sysex_seq);
+                break;
+            }
+            case 0x01:	/* MTC Quarter frame */
+            case 0x03:	/* Song Select. */
+            {
+                BYTE buf[2];
+                buf[0] = evt;
+                buf[1] = d1;
+                snd_seq_ev_set_sysex(&event, sizeof(buf), buf);
+                break;
+            }
+            case 0x02:	/* Song Position Pointer. */
+            {
+                BYTE buf[3];
+                buf[0] = evt;
+                buf[1] = d1;
+                buf[2] = d2;
+                snd_seq_ev_set_sysex(&event, sizeof(buf), buf);
+                break;
+            }
+            }
+            break;
+        }
+        if (handled)
+        {
+            seq_lock();
+            snd_seq_event_output_direct(dest->seq, &event);
+            seq_unlock();
+        }
+        break;
+    }
+    default:
+        WARN("Technology not supported (yet) %d !\n", dest->caps.wTechnology);
+        return MMSYSERR_NOTENABLED;
+    }
+
+    return MMSYSERR_NOERROR;
+}
+
 NTSTATUS midi_out_message(void *args)
 {
     struct midi_out_message_params *params = args;
@@ -544,6 +670,9 @@ NTSTATUS midi_out_message(void *args)
         break;
     case MODM_CLOSE:
         *params->err = midi_out_close(params->dev_id, params->notify);
+        break;
+    case MODM_DATA:
+        *params->err = midi_out_data(params->dev_id, params->param_1);
         break;
     default:
         TRACE("Unsupported message\n");
