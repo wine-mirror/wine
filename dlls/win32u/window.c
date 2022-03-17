@@ -141,7 +141,7 @@ void *free_user_handle( HANDLE handle, unsigned int type )
 /***********************************************************************
  *           next_thread_window
  */
-WND *next_thread_window_ptr( HWND *hwnd )
+static WND *next_thread_window_ptr( HWND *hwnd )
 {
     struct user_object *ptr;
     WND *win;
@@ -3256,6 +3256,52 @@ BOOL WINAPI NtUserFlashWindowEx( FLASHWINFO *info )
         send_message( hwnd, WM_NCACTIVATE, wparam, 0 );
         user_driver->pFlashWindowEx( info );
         return wparam;
+    }
+}
+
+/***********************************************************************
+ *           destroy_thread_windows
+ *
+ * Destroy all window owned by the current thread.
+ */
+void destroy_thread_windows(void)
+{
+    WND *win, *free_list = NULL;
+    HWND hwnd = 0;
+
+    user_lock();
+    while ((win = next_thread_window_ptr( &hwnd )))
+    {
+        free_dce( win->dce, win->obj.handle );
+        set_user_handle_ptr( hwnd, NULL );
+        win->obj.handle = free_list;
+        free_list = win;
+    }
+    if (free_list)
+    {
+        SERVER_START_REQ( destroy_window )
+        {
+            req->handle = 0; /* destroy all thread windows */
+            wine_server_call( req );
+        }
+        SERVER_END_REQ;
+    }
+    user_unlock();
+
+    while ((win = free_list))
+    {
+        free_list = win->obj.handle;
+        TRACE( "destroying %p\n", win );
+
+        if ((win->dwStyle & (WS_CHILD | WS_POPUP)) != WS_CHILD && win->wIDmenu)
+            NtUserDestroyMenu( UlongToHandle(win->wIDmenu) );
+        if (win->hSysMenu) NtUserDestroyMenu( win->hSysMenu );
+        if (win->surface)
+        {
+            register_window_surface( win->surface, NULL );
+            window_surface_release( win->surface );
+        }
+        if (user_callbacks) user_callbacks->free_win_ptr( win );
     }
 }
 

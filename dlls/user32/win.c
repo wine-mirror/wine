@@ -821,62 +821,6 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
 
 
 /***********************************************************************
- *           next_thread_window
- */
-static WND *next_thread_window( HWND *hwnd )
-{
-    return (WND *)NtUserCallOneParam( (UINT_PTR)hwnd, NtUserNextThreadWindow );
-}
-
-
-/***********************************************************************
- *		destroy_thread_windows
- *
- * Destroy all window owned by the current thread.
- */
-void destroy_thread_windows(void)
-{
-    WND *win, *free_list = NULL, **free_list_ptr = &free_list;
-    HWND hwnd = 0;
-
-    USER_Lock();
-    while ((win = next_thread_window( &hwnd )))
-    {
-        free_dce( win->dce, win->obj.handle );
-        NtUserCallTwoParam( HandleToUlong(hwnd), 0, NtUserSetHandlePtr );
-        win->obj.handle = *free_list_ptr;
-        free_list_ptr = (WND **)&win->obj.handle;
-    }
-    if (free_list)
-    {
-        SERVER_START_REQ( destroy_window )
-        {
-            req->handle = 0; /* destroy all thread windows */
-            wine_server_call( req );
-        }
-        SERVER_END_REQ;
-    }
-    USER_Unlock();
-
-    while ((win = free_list))
-    {
-        free_list = win->obj.handle;
-        TRACE( "destroying %p\n", win );
-
-        if ((win->dwStyle & (WS_CHILD | WS_POPUP)) != WS_CHILD && win->wIDmenu)
-            DestroyMenu( UlongToHandle(win->wIDmenu) );
-        if (win->hSysMenu) DestroyMenu( win->hSysMenu );
-        if (win->surface)
-        {
-            register_window_surface( win->surface, NULL );
-            window_surface_release( win->surface );
-        }
-        HeapFree( GetProcessHeap(), 0, win );
-    }
-}
-
-
-/***********************************************************************
  *           WIN_FixCoordinates
  *
  * Fix the coordinates - Helper for WIN_CreateWindowEx.

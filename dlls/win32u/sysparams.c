@@ -4599,6 +4599,9 @@ static void thread_detach(void)
 
     free( thread_info->key_state );
     thread_info->key_state = 0;
+
+    destroy_thread_windows();
+    NtClose( thread_info->server_queue );
 }
 
 /***********************************************************************
@@ -4689,8 +4692,6 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
         case 1: user_unlock(); return 0;
         default: user_check_not_lock(); return 0;
         }
-    case NtUserNextThreadWindow:
-        return (UINT_PTR)next_thread_window_ptr( (HWND *)arg );
     case NtUserSetCallbacks:
         return (UINT_PTR)InterlockedExchangePointer( (void **)&user_callbacks, (void *)arg );
     default:

@@ -26,10 +26,12 @@
 #include "wine/list.h"
 
 struct dce;
+struct tagWND;
 
 struct user_callbacks
 {
     HANDLE (WINAPI *pCopyImage)( HANDLE, UINT, INT, INT, UINT );
+    BOOL (WINAPI *pDestroyMenu)( HMENU );
     BOOL (WINAPI *pHideCaret)( HWND hwnd );
     BOOL (WINAPI *pPostMessageW)( HWND, UINT, WPARAM, LPARAM );
     UINT (WINAPI *pSendInput)( UINT count, INPUT *inputs, int size );
@@ -39,6 +41,7 @@ struct user_callbacks
     BOOL (WINAPI *pShowCaret)( HWND hwnd );
     BOOL (WINAPI *pShowWindow)( HWND, INT );
     DWORD (WINAPI *pWaitForInputIdle)( HANDLE, DWORD );
+    void (CDECL *free_win_ptr)( struct tagWND *win );
     void (CDECL *notify_ime)( HWND hwnd, UINT param );
     void (CDECL *register_builtin_classes)(void);
     LRESULT (WINAPI *send_ll_message)( DWORD, DWORD, UINT, WPARAM, LPARAM, UINT, UINT, PDWORD_PTR );
@@ -121,8 +124,6 @@ static inline BOOL is_broadcast( HWND hwnd )
 {
     return hwnd == HWND_BROADCAST || hwnd == HWND_TOPMOST;
 }
-
-WND *next_thread_window_ptr( HWND *hwnd );
 
 #define WM_IME_INTERNAL 0x287
 #define IME_INTERNAL_ACTIVATE 0x17

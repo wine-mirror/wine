@@ -140,9 +140,17 @@ static void CDECL notify_ime( HWND hwnd, UINT param )
     if (ime_default) SendMessageW( ime_default, WM_IME_INTERNAL, param, HandleToUlong(hwnd) );
 }
 
+static void CDECL free_win_ptr( WND *win )
+{
+    HeapFree( GetProcessHeap(), 0, win->text );
+    HeapFree( GetProcessHeap(), 0, win->pScroll );
+    HeapFree( GetProcessHeap(), 0, win );
+}
+
 static const struct user_callbacks user_funcs =
 {
     CopyImage,
+    DestroyMenu,
     HideCaret,
     PostMessageW,
     SendInput,
@@ -152,6 +160,7 @@ static const struct user_callbacks user_funcs =
     ShowCaret,
     ShowWindow,
     WaitForInputIdle,
+    free_win_ptr,
     notify_ime,
     register_builtin_classes,
     MSG_SendInternalMessageTimeout,
@@ -222,8 +231,6 @@ static void thread_detach(void)
     WDML_NotifyThreadDetach();
 
     NtUserCallNoParam( NtUserThreadDetach );
-    destroy_thread_windows();
-    CloseHandle( thread_info->server_queue );
     HeapFree( GetProcessHeap(), 0, thread_info->wmchar_data );
     HeapFree( GetProcessHeap(), 0, thread_info->rawinput );
 

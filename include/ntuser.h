@@ -119,7 +119,6 @@ enum
     NtUserHandleInternalMessage,
     NtUserIncrementKeyStateCounter,
     NtUserLock,
-    NtUserNextThreadWindow,
     NtUserSetCallbacks,
 };
 
@@ -302,6 +301,7 @@ HDWP    WINAPI NtUserDeferWindowPosAndBand( HDWP hdwp, HWND hwnd, HWND after, IN
                                             INT cx, INT cy, UINT flags, UINT unk1, UINT unk2 );
 BOOL    WINAPI NtUserDestroyAcceleratorTable( HACCEL handle );
 BOOL    WINAPI NtUserDestroyCursor( HCURSOR cursor, ULONG arg );
+BOOL    WINAPI NtUserDestroyMenu( HMENU menu );
 BOOL    WINAPI NtUserDrawIconEx( HDC hdc, INT x0, INT y0, HICON icon, INT width,
                                  INT height, UINT istep, HBRUSH hbr, UINT flags );
 BOOL    WINAPI NtUserEndDeferWindowPosEx( HDWP hdwp, BOOL async );

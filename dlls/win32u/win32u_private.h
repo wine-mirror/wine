@@ -343,6 +343,7 @@ extern void erase_now( HWND hwnd, UINT rdw_flags ) DECLSPEC_HIDDEN;
 /* window.c */
 struct tagWND;
 extern HDWP begin_defer_window_pos( INT count ) DECLSPEC_HIDDEN;
+extern void destroy_thread_windows(void) DECLSPEC_HIDDEN;
 extern HWND get_desktop_window(void) DECLSPEC_HIDDEN;
 extern UINT get_dpi_for_window( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HWND get_full_window_handle( HWND hwnd ) DECLSPEC_HIDDEN;

@@ -105,3 +105,11 @@ BOOL WINAPI NtUserDestroyAcceleratorTable( HACCEL handle )
     free( accel );
     return TRUE;
 }
+
+/**********************************************************************
+ *         NtUserDestroyMenu   (win32u.@)
+ */
+BOOL WINAPI NtUserDestroyMenu( HMENU menu )
+{
+    return user_callbacks && user_callbacks->pDestroyMenu( menu );
+}
