@@ -48,8 +48,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(win);
     (((style) & WS_THICKFRAME) && \
      !(((style) & (WS_DLGFRAME|WS_BORDER)) == WS_DLGFRAME))
 
-#define EMPTYPOINT(pt) ((pt).x == -1 && (pt).y == -1)
-
 #define ON_LEFT_BORDER(hit) \
  (((hit) == HTLEFT) || ((hit) == HTTOPLEFT) || ((hit) == HTBOTTOMLEFT))
 #define ON_RIGHT_BORDER(hit) \
@@ -548,93 +546,11 @@ static BOOL get_work_rect( HWND hwnd, RECT *rect )
  */
 MINMAXINFO WINPOS_GetMinMaxInfo( HWND hwnd )
 {
-    DPI_AWARENESS_CONTEXT context;
-    RECT rc_work, rc_primary;
-    MINMAXINFO MinMax;
-    INT xinc, yinc;
-    LONG style = GetWindowLongW( hwnd, GWL_STYLE );
-    LONG adjustedStyle;
-    LONG exstyle = GetWindowLongW( hwnd, GWL_EXSTYLE );
-    RECT rc;
-    WND *win;
-
-    context = SetThreadDpiAwarenessContext( GetWindowDpiAwarenessContext( hwnd ));
-
-    /* Compute default values */
-
-    GetWindowRect(hwnd, &rc);
-    MinMax.ptReserved.x = rc.left;
-    MinMax.ptReserved.y = rc.top;
-
-    if ((style & WS_CAPTION) == WS_CAPTION)
-        adjustedStyle = style & ~WS_BORDER; /* WS_CAPTION = WS_DLGFRAME | WS_BORDER */
-    else
-        adjustedStyle = style;
-
-    GetClientRect(NtUserGetAncestor(hwnd,GA_PARENT), &rc);
-    AdjustWindowRectEx(&rc, adjustedStyle, ((style & WS_POPUP) && GetMenu(hwnd)), exstyle);
-
-    xinc = -rc.left;
-    yinc = -rc.top;
-
-    MinMax.ptMaxSize.x = rc.right - rc.left;
-    MinMax.ptMaxSize.y = rc.bottom - rc.top;
-    if (style & (WS_DLGFRAME | WS_BORDER))
-    {
-        MinMax.ptMinTrackSize.x = GetSystemMetrics(SM_CXMINTRACK);
-        MinMax.ptMinTrackSize.y = GetSystemMetrics(SM_CYMINTRACK);
-    }
-    else
-    {
-        MinMax.ptMinTrackSize.x = 2 * xinc;
-        MinMax.ptMinTrackSize.y = 2 * yinc;
-    }
-    MinMax.ptMaxTrackSize.x = GetSystemMetrics(SM_CXMAXTRACK);
-    MinMax.ptMaxTrackSize.y = GetSystemMetrics(SM_CYMAXTRACK);
-    MinMax.ptMaxPosition.x = -xinc;
-    MinMax.ptMaxPosition.y = -yinc;
-
-    if ((win = WIN_GetPtr( hwnd )) && win != WND_DESKTOP && win != WND_OTHER_PROCESS)
-    {
-        if (!EMPTYPOINT(win->max_pos)) MinMax.ptMaxPosition = win->max_pos;
-        WIN_ReleasePtr( win );
-    }
-
-    SendMessageW( hwnd, WM_GETMINMAXINFO, 0, (LPARAM)&MinMax );
-
-    /* if the app didn't change the values, adapt them for the current monitor */
-
-    if (get_work_rect( hwnd, &rc_work ))
-    {
-        rc_primary = get_primary_monitor_rect();
-        if (MinMax.ptMaxSize.x == (rc_primary.right - rc_primary.left) + 2 * xinc &&
-            MinMax.ptMaxSize.y == (rc_primary.bottom - rc_primary.top) + 2 * yinc)
-        {
-            MinMax.ptMaxSize.x = (rc_work.right - rc_work.left) + 2 * xinc;
-            MinMax.ptMaxSize.y = (rc_work.bottom - rc_work.top) + 2 * yinc;
-        }
-        if (MinMax.ptMaxPosition.x == -xinc && MinMax.ptMaxPosition.y == -yinc)
-        {
-            MinMax.ptMaxPosition.x = rc_work.left - xinc;
-            MinMax.ptMaxPosition.y = rc_work.top - yinc;
-        }
-    }
-
-      /* Some sanity checks */
-
-    TRACE("%d %d / %d %d / %d %d / %d %d\n",
-                      MinMax.ptMaxSize.x, MinMax.ptMaxSize.y,
-                      MinMax.ptMaxPosition.x, MinMax.ptMaxPosition.y,
-                      MinMax.ptMaxTrackSize.x, MinMax.ptMaxTrackSize.y,
-                      MinMax.ptMinTrackSize.x, MinMax.ptMinTrackSize.y);
-    MinMax.ptMaxTrackSize.x = max( MinMax.ptMaxTrackSize.x,
-                                   MinMax.ptMinTrackSize.x );
-    MinMax.ptMaxTrackSize.y = max( MinMax.ptMaxTrackSize.y,
-                                   MinMax.ptMinTrackSize.y );
-
-    SetThreadDpiAwarenessContext( context );
-    return MinMax;
+    MINMAXINFO info;
+    NtUserCallHwndParam( hwnd, (UINT_PTR)&info, NtUserGetMinMaxInfo );
+    return info;
 }
+
 
 static POINT get_first_minimized_child_pos( const RECT *parent, const MINIMIZEDMETRICS *mm,
                                             int width, int height )

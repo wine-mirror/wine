@@ -3268,6 +3268,100 @@ static void send_parent_notify( HWND hwnd, UINT msg )
 }
 
 /*******************************************************************
+ *           get_min_max_info
+ *
+ * Get the minimized and maximized information for a window.
+ */
+static MINMAXINFO get_min_max_info( HWND hwnd )
+{
+    LONG style = get_window_long( hwnd, GWL_STYLE );
+    LONG exstyle = get_window_long( hwnd, GWL_EXSTYLE );
+    DPI_AWARENESS_CONTEXT context;
+    RECT rc_work, rc_primary;
+    LONG adjusted_style;
+    MINMAXINFO minmax;
+    INT xinc, yinc;
+    RECT rc;
+    WND *win;
+
+    context = set_thread_dpi_awareness_context( get_window_dpi_awareness_context( hwnd ));
+
+    /* Compute default values */
+
+    get_window_rect( hwnd, &rc, get_thread_dpi() );
+    minmax.ptReserved.x = rc.left;
+    minmax.ptReserved.y = rc.top;
+
+    if ((style & WS_CAPTION) == WS_CAPTION)
+        adjusted_style = style & ~WS_BORDER; /* WS_CAPTION = WS_DLGFRAME | WS_BORDER */
+    else
+        adjusted_style = style;
+
+    get_client_rect( NtUserGetAncestor( hwnd, GA_PARENT ), &rc );
+    if (user_callbacks)
+        user_callbacks->pAdjustWindowRectEx( &rc, adjusted_style,
+                                             (style & WS_POPUP) && get_menu( hwnd ), exstyle);
+
+    xinc = -rc.left;
+    yinc = -rc.top;
+
+    minmax.ptMaxSize.x = rc.right - rc.left;
+    minmax.ptMaxSize.y = rc.bottom - rc.top;
+    if (style & (WS_DLGFRAME | WS_BORDER))
+    {
+        minmax.ptMinTrackSize.x = get_system_metrics( SM_CXMINTRACK );
+        minmax.ptMinTrackSize.y = get_system_metrics( SM_CYMINTRACK );
+    }
+    else
+    {
+        minmax.ptMinTrackSize.x = 2 * xinc;
+        minmax.ptMinTrackSize.y = 2 * yinc;
+    }
+    minmax.ptMaxTrackSize.x = get_system_metrics( SM_CXMAXTRACK );
+    minmax.ptMaxTrackSize.y = get_system_metrics( SM_CYMAXTRACK );
+    minmax.ptMaxPosition.x = -xinc;
+    minmax.ptMaxPosition.y = -yinc;
+
+    if ((win = get_win_ptr( hwnd )) && win != WND_DESKTOP && win != WND_OTHER_PROCESS)
+    {
+        if (!empty_point( win->max_pos )) minmax.ptMaxPosition = win->max_pos;
+        release_win_ptr( win );
+    }
+
+    send_message( hwnd, WM_GETMINMAXINFO, 0, (LPARAM)&minmax );
+
+    /* if the app didn't change the values, adapt them for the current monitor */
+
+    if (get_work_rect( hwnd, &rc_work ))
+    {
+        rc_primary = get_primary_monitor_rect( get_thread_dpi() );
+        if (minmax.ptMaxSize.x == (rc_primary.right - rc_primary.left) + 2 * xinc &&
+            minmax.ptMaxSize.y == (rc_primary.bottom - rc_primary.top) + 2 * yinc)
+        {
+            minmax.ptMaxSize.x = (rc_work.right - rc_work.left) + 2 * xinc;
+            minmax.ptMaxSize.y = (rc_work.bottom - rc_work.top) + 2 * yinc;
+        }
+        if (minmax.ptMaxPosition.x == -xinc && minmax.ptMaxPosition.y == -yinc)
+        {
+            minmax.ptMaxPosition.x = rc_work.left - xinc;
+            minmax.ptMaxPosition.y = rc_work.top - yinc;
+        }
+    }
+
+    TRACE( "%d %d / %d %d / %d %d / %d %d\n",
+           minmax.ptMaxSize.x, minmax.ptMaxSize.y,
+           minmax.ptMaxPosition.x, minmax.ptMaxPosition.y,
+           minmax.ptMaxTrackSize.x, minmax.ptMaxTrackSize.y,
+           minmax.ptMinTrackSize.x, minmax.ptMinTrackSize.y );
+
+    minmax.ptMaxTrackSize.x = max( minmax.ptMaxTrackSize.x, minmax.ptMinTrackSize.x );
+    minmax.ptMaxTrackSize.y = max( minmax.ptMaxTrackSize.y, minmax.ptMinTrackSize.y );
+
+    set_thread_dpi_awareness_context( context );
+    return minmax;
+}
+
+/*******************************************************************
  *           update_window_state
  *
  * Trigger an update of the window's driver state and surface.
@@ -3671,6 +3765,9 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
         return get_class_word( hwnd, param );
     case NtUserGetClientRect:
         return get_client_rect( hwnd, (RECT *)param );
+    case NtUserGetMinMaxInfo:
+        *(MINMAXINFO *)param = get_min_max_info( hwnd );
+        return 0;
     case NtUserGetWindowInfo:
         return get_window_info( hwnd, (WINDOWINFO *)param );
     case NtUserGetWindowLongA:

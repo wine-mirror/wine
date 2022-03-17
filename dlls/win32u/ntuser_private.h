@@ -30,6 +30,7 @@ struct tagWND;
 
 struct user_callbacks
 {
+    BOOL (WINAPI *pAdjustWindowRectEx)( RECT *, DWORD, BOOL, DWORD );
     HANDLE (WINAPI *pCopyImage)( HANDLE, UINT, INT, INT, UINT );
     BOOL (WINAPI *pDestroyCaret)(void);
     BOOL (WINAPI *pDestroyMenu)( HMENU );

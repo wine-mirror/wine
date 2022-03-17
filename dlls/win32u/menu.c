@@ -106,6 +106,12 @@ BOOL WINAPI NtUserDestroyAcceleratorTable( HACCEL handle )
     return TRUE;
 }
 
+/* see GetMenu */
+HMENU get_menu( HWND hwnd )
+{
+    return UlongToHandle( get_window_long( hwnd, GWLP_ID ));
+}
+
 /**********************************************************************
  *         NtUserDestroyMenu   (win32u.@)
  */

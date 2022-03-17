@@ -154,6 +154,7 @@ static void CDECL free_win_ptr( WND *win )
 
 static const struct user_callbacks user_funcs =
 {
+    AdjustWindowRectEx,
     CopyImage,
     DestroyCaret,
     DestroyMenu,
