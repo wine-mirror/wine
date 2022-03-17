@@ -606,21 +606,6 @@ static DWORD midStop(WORD wDevID)
 }
 
 /**************************************************************************
- * 				modGetDevCaps			[internal]
- */
-static DWORD modGetDevCaps(WORD wDevID, LPMIDIOUTCAPSW lpCaps, DWORD dwSize)
-{
-    TRACE("(%04X, %p, %08X);\n", wDevID, lpCaps, dwSize);
-
-    if (wDevID >= MODM_NumDevs)	return MMSYSERR_BADDEVICEID;
-    if (lpCaps == NULL) 	return MMSYSERR_INVALPARAM;
-
-    memcpy(lpCaps, &MidiOutDev[wDevID].caps, min(dwSize, sizeof(*lpCaps)));
-
-    return MMSYSERR_NOERROR;
-}
-
-/**************************************************************************
  * 			modGetVolume				[internal]
  */
 static DWORD modGetVolume(WORD wDevID, DWORD* lpdwVolume)
@@ -747,8 +732,6 @@ DWORD WINAPI ALSA_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
     case DRVM_INIT:
         ALSA_MidiInit();
         return 0;
-    case MODM_GETDEVCAPS:
-	return modGetDevCaps(wDevID, (LPMIDIOUTCAPSW)dwParam1, dwParam2);
     case MODM_GETNUMDEVS:
 	return MODM_NumDevs;
     case MODM_GETVOLUME:
